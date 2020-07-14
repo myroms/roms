@@ -2,7 +2,7 @@
       MODULE mod_netcdf
 !
 !git $Id$
-!svn $Id: mod_netcdf.F 1028 2020-06-01 00:24:59Z arango $
+!svn $Id: mod_netcdf.F 1031 2020-07-14 01:39:55Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -1419,6 +1419,7 @@
       var_type=0
       var_ndim=0
       var_dim=0
+      status=nf90_noerr
       DO i=1,Matts
         DO j=1,LEN(att_name(1))
           att_name(i)(j:j)=' '

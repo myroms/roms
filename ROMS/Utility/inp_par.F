@@ -1,8 +1,8 @@
 #include "cppdefs.h"
-      SUBROUTINE inp_par (model)
+      MODULE inp_par_mod
 !
 !git $Id$
-!svn $Id: inp_par.F 1017 2020-04-27 22:19:14Z arango $
+!svn $Id: inp_par.F 1031 2020-07-14 01:39:55Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -13,6 +13,14 @@
 !  It also writes out these parameters to standard output.             !
 !                                                                      !
 !=======================================================================
+!
+      USE mod_kinds
+!
+      CONTAINS
+!
+!***********************************************************************
+      SUBROUTINE inp_par (model)
+!***********************************************************************
 !
       USE mod_param
       USE mod_parallel
@@ -39,7 +47,7 @@
 !  Local variable declarations.
 !
       logical :: Lwrite
-
+!
       integer :: Itile, Jtile, Nghost, Ntiles, tile
       integer :: Imin, Imax, Jmin, Jmax
       integer :: Uoff, Voff
@@ -48,11 +56,11 @@
 #endif
       integer :: ibry, inp, out, i, ic, ifield, itrc, j, ng, npts
       integer :: sequence, varid
-
+!
       real(r8) :: cff
       real(r8), parameter :: epsilon = 1.0E-8_r8
       real(r8), parameter :: spv = 0.0_r8
-
+!
       character (len=10) :: stdout_file
 !
       SourceFile=__FILE__
@@ -76,9 +84,16 @@
        stdout_file='log.roms'
 # endif
 !
+!  Open ROMS standard output file.
+!
        IF (Master) THEN
-         OPEN (stdout, FILE=TRIM(stdout_file), FORM='formatted',        &
-     &         STATUS='replace')
+         IF (Lappend) THEN
+           OPEN (stdout, FILE=TRIM(stdout_file), FORM='formatted',      &
+     &           STATUS='old', POSITION='append', ACTION='write')
+         ELSE
+           OPEN (stdout, FILE=TRIM(stdout_file), FORM='formatted',      &
+     &           STATUS='replace')
+         END IF
        END IF
 #endif
 !
@@ -92,6 +107,15 @@
       Lwrite=Master
       inp=stdinp
       out=stdout
+#endif
+#if defined SPLIT_4DVAR && SUPPRESS_REPORT
+!
+!  Supress reporting the information in the split 4D-Var algorithm when
+!  appending into standard output.
+!
+      IF (Lappend) THEN
+        Lwrite=.FALSE.
+      END IF
 #endif
 !
 !  Get current date.
@@ -107,7 +131,7 @@
 !  Read in physical model input parameters.
 !-----------------------------------------------------------------------
 !
-      IF (Lwrite) WRITE (out,10) version, TRIM(date_str)
+      IF (Master.and.Lwrite) WRITE (out,10) version, TRIM(date_str)
  10   FORMAT (80('-'),/,                                                &
               ' Model Input Parameters:  ROMS/TOMS version ',a,/,       &
      &        26x,a,/,80('-'))
@@ -164,6 +188,19 @@
 #endif
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
+
+#if defined SPLIT_4DVAR && SUPPRESS_REPORT
+!
+!  If appending into standard output file, supress the reporting of
+!  information.  Turn of "LwrtInfo" switch.
+!  appending into standard output.
+!
+      IF (Lappend) THEN
+        DO ng=1,Ngrids
+          LwrtInfo(ng)=.FALSE.
+        END DO
+      END IF
+#endif
 #ifdef BIOLOGY
 !
 !-----------------------------------------------------------------------
@@ -629,7 +666,7 @@
 !  file.
 !-----------------------------------------------------------------------
 !
-      IF (Master) THEN
+      IF (Master.and.Lwrite) THEN
         DO ng=1,Ngrids
 #ifdef SOLVE3D
           WRITE (stdout,50) ng, Lm(ng), Mm(ng), N(ng),                  &
@@ -718,7 +755,7 @@
 !  Report tile minimum and maximum fractional grid coordinates.
 !
       DO ng=1,Ngrids
-        IF (Master) THEN
+        IF (Master.and.Lwrite) THEN
           WRITE (stdout,90) ng
           DO tile=0,NtileI(ng)*NtileJ(ng)-1
             WRITE (stdout,100) tile,                                    &
@@ -786,7 +823,7 @@
         HaloSizeJ(ng)=Nghost*MaxHaloLenJ+6*Nghost
         TileSide(ng)=MAX(MaxHaloLenI,MaxHaloLenJ)
         TileSize(ng)=MaxHaloLenI*MaxHaloLenJ
-        IF (Master) THEN
+        IF (Master.and.Lwrite) THEN
           WRITE (stdout,110) ng, HaloSizeI(ng), ng, HaloSizeJ(ng),      &
      &                       ng, TileSide(ng),  ng, TileSize(ng)
  110      FORMAT (/,' Maximum halo size in XI and ETA directions:',/,   &
@@ -852,23 +889,23 @@
 !  Report tracer advection scheme.
 !-----------------------------------------------------------------------
 !
-      IF (Master) THEN
+      IF (Master.and.Lwrite) THEN
         WRITE (out,120) 'NLM'
  120    FORMAT (/,1x,'Tracer Advection Scheme: ',a,/,1x,24('='),/,      &
      &          /,1x,'Variable',t25,'Grid',t31,'Horizontal',            &
      &          t50,'Vertical', /,1x,'---------',t25,'----',            &
      &          t31,2('------------',7x))
       END IF
-      CALL tadv_report (out, iNLM, Hadvection, Vadvection)
+      CALL tadv_report (out, iNLM, Hadvection, Vadvection, Lwrite)
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
 
 # if defined ADJOINT || defined TANGENT || defined TL_IOMS
 !
-      IF (Master) THEN
+      IF (Master.and.Lwrite) THEN
         WRITE (out,120) 'TLM, RPM, and ADM'
       END IF
-      CALL tadv_report (out, iADM, ad_Hadvection, ad_Vadvection)
+      CALL tadv_report (out, iADM, ad_Hadvection, ad_Vadvection, Lwrite)
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
 # endif
@@ -905,7 +942,7 @@
 !  Report lateral boundary conditions.
 !-----------------------------------------------------------------------
 !
-      IF (Master) THEN
+      IF (Master.and.Lwrite) THEN
         WRITE (out,130) 'NLM'
  130    FORMAT (/,1x,'Lateral Boundary Conditions: ',a,/,1x,28('='),/,  &
      &          /,1x,'Variable',t25,'Grid',t31,'West Edge',             &
@@ -1208,7 +1245,7 @@
 !  Check C-preprocessing options and definitions.
 !-----------------------------------------------------------------------
 !
-      IF (Master) THEN
+      IF (Master.and.Lwrite) THEN
         CALL checkdefs
         CALL my_flush (out)
       END IF
@@ -1229,3 +1266,5 @@
 !
       RETURN
       END SUBROUTINE inp_par
+!
+      END MODULE inp_par_mod

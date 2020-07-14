@@ -3,7 +3,7 @@
 #ifdef R4DVAR
 !
 !git $Id$
-!svn $Id: r4dvar.F 1027 2020-05-27 17:06:32Z arango $
+!svn $Id: r4dvar.F 1031 2020-07-14 01:39:55Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -1200,6 +1200,21 @@
       integer :: NRMrec, STDrec, Tindex
 !
       SourceFile=__FILE__
+!
+!-----------------------------------------------------------------------
+!  Set application grid, metrics, and associated variables and
+!  parameters.
+!-----------------------------------------------------------------------
+!
+!  The ROMS application grid configuration is done once. It is usually
+!  done in the "initial" kernel routine. However, since we are calling
+!  the "normalization" routine here, we need several grid variables and
+!  parameter.  Also, if reading only water points, we need to know the
+!  land/sea mask arrays to unpack.
+!
+      IF (SetGridConfig(ng)) THEN
+        CALL set_grid (ng, iNLM)
+      END IF
 !
 !-----------------------------------------------------------------------
 !  Read in standard deviation factors for error covariance.

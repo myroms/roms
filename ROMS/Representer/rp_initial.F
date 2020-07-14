@@ -3,7 +3,7 @@
       SUBROUTINE rp_initial (ng)
 !
 !git $Id$
-!svn $Id: rp_initial.F 1022 2020-05-13 03:03:15Z arango $
+!svn $Id: rp_initial.F 1031 2020-07-14 01:39:55Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -45,7 +45,6 @@
       USE ini_adjust_mod,      ONLY : tl_ini_perturb
 # endif
       USE ini_hmixcoef_mod,    ONLY : ini_hmixcoef
-      USE metrics_mod,         ONLY : metrics
 # if !(defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET)
       USE rp_set_depth_mod,    ONLY : rp_bath
 # endif
@@ -175,6 +174,13 @@
       UBi=UBOUND(GRID(ng)%h,DIM=1)
       LBj=LBOUND(GRID(ng)%h,DIM=2)
       UBj=UBOUND(GRID(ng)%h,DIM=2)
+!
+!  Initialize global diagnostics variables.
+!
+      avgke=0.0_dp
+      avgpe=0.0_dp
+      avgkp=0.0_dp
+      volume=0.0_dp
 
 # ifdef PROFILE
 !
@@ -232,96 +238,14 @@
 !$OMP BARRIER
 # endif
 !
-!=======================================================================
-!  On first pass of ensemble run loop, initialize model configuration.
-!=======================================================================
-!
-      IF (Nrun.eq.ERstr) THEN
-!
 !-----------------------------------------------------------------------
-!  Set horizontal grid, bathymetry, and Land/Sea masking (if any).
-!  Use analytical functions or read in from a grid NetCDF.
+!  Set application grid, metrics, and associated variables and
+!  parameters.
 !-----------------------------------------------------------------------
 !
-# ifdef ANA_GRID
-        DO tile=first_tile(ng),last_tile(ng),+1
-          CALL ana_grid (ng, tile, iRPM)
-#  ifdef MASKING
-          CALL ana_mask (ng, tile, iRPM)
-#  endif
-        END DO
-!$OMP BARRIER
-# else
-!$OMP MASTER
-        CALL get_grid (ng, iRPM)
-!$OMP END MASTER
-!$OMP BARRIER
-        if (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
-# endif
-
-# ifdef SOLVE3D
-!
-!-----------------------------------------------------------------------
-!  Set vertical S-coordinate transformation function.
-!-----------------------------------------------------------------------
-!
-!$OMP MASTER
-        CALL set_scoord (ng)
-!$OMP END MASTER
-!$OMP BARRIER
-# endif
-
-# ifdef SOLVE3D
-!
-!-----------------------------------------------------------------------
-!  Set barotropic time-steps average weighting function.
-!-----------------------------------------------------------------------
-!
-!$OMP MASTER
-        CALL set_weights (ng)
-!$OMP END MASTER
-!$OMP BARRIER
-# endif
-
-# if defined WTYPE_GRID && defined ANA_WTYPE     && \
-    (defined LMD_SKPP   || defined SOLAR_SOURCE)
-!
-!-----------------------------------------------------------------------
-!  Set spatially varying Jerlov water type.
-!-----------------------------------------------------------------------
-!
-        DO tile=first_tile(ng),last_tile(ng),+1
-          CALL ana_wtype (ng, tile, iRPM)
-        END DO
-!$OMP BARRIER
-# endif
-!
-!-----------------------------------------------------------------------
-!  If appropriate, set spatially varying nudging coefficients time
-!  scales.
-!-----------------------------------------------------------------------
-!
-# ifdef ANA_NUDGCOEF
-        IF (Lnudging(ng)) THEN
-          DO tile=first_tile(ng),last_tile(ng),+1
-            CALL ana_nudgcoef (ng, tile, iRPM)
-          END DO
-!$OMP BARRIER
-        END IF
-# else
-        IF (Lnudging(ng)) THEN
-!$OMP MASTER
-          CALL get_nudgcoef (ng, iRPM)
-!$OMP END MASTER
-#  ifdef DISTRIBUTE
-          CALL mp_bcasti (ng, iRPM, exit_flag)
-#  endif
-!$OMP BARRIER
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
-        END IF
-# endif
+      IF (SetGridConfig(ng)) THEN
+        CALL set_grid (ng, iTLM)
+        SetGridConfig(ng)=.FALSE.
       END IF
 !
 !-----------------------------------------------------------------------
@@ -352,15 +276,6 @@
 !$OMP BARRIER
       END IF
 # endif
-!
-!-----------------------------------------------------------------------
-!  Compute various metric term combinations.
-!-----------------------------------------------------------------------
-!
-      DO tile=first_tile(ng),last_tile(ng),+1
-        CALL metrics (ng, tile, iRPM)
-      END DO
-!$OMP BARRIER
 !
 !=======================================================================
 !  Initialize model state variables and forcing.  This part is

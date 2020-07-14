@@ -4,7 +4,7 @@
 #if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
 !
 !git $Id$
-!svn $Id: frc_adjust.F 995 2020-01-10 04:01:28Z arango $
+!svn $Id: frc_adjust.F 1031 2020-07-14 01:39:55Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -25,10 +25,11 @@
 !=======================================================================
 !
       implicit none
-
+!
       PRIVATE
       PUBLIC :: frc_adjust
-
+      PUBLIC :: load_frc
+!
       CONTAINS
 !
 !***********************************************************************
@@ -209,8 +210,121 @@
         END IF
       END DO
 # endif
-
+!
       RETURN
       END SUBROUTINE frc_adjust_tile
+!
+      SUBROUTINE load_frc (ng, tile, Lout)
+!
+!=======================================================================
+!                                                                      !
+!  This routine surface forcing into nonlinear storage arrays. In      !
+!  4DVAR, the surface forcing adjustment are stored in arrays with     !
+!  extra dimensions to aid minimization at other times in addition     !
+!  to initialization time.                                             !
+!                                                                      !
+!  On Input:                                                           !
+!                                                                      !
+!     ng        Nested grid number.                                    !
+!     tile      Domain partition.                                      !
+!     Lout      Time index to process in storage arrays.               !
+!                                                                      !
+!=======================================================================
+!
+      USE mod_param
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: ng, tile, Lout
+!
+!  Local variable declarations.
+!
+# include "tile.h"
+!
+# ifdef PROFILE
+      CALL wclock_on (ng, iNLM, 8, __LINE__, __FILE__)
+# endif
+      CALL load_frc_tile (ng, tile,                                     &
+     &                    LBi, UBi, LBj, UBj,                           &
+     &                    IminS, ImaxS, JminS, JmaxS,                   &
+     &                    Lout)
+# ifdef PROFILE
+      CALL wclock_off (ng, iNLM, 8, __LINE__, __FILE__)
+# endif
+
+      RETURN
+      END SUBROUTINE load_frc
+!
+!***********************************************************************
+      SUBROUTINE load_frc_tile (ng, tile,                               &
+     &                          LBi, UBi, LBj, UBj,                     &
+     &                          IminS, ImaxS, JminS, JmaxS,             &
+     &                          Lout)
+!***********************************************************************
+!
+      USE mod_param
+      USE mod_forces
+      USE mod_ncparam
+      USE mod_scalars
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: ng, tile
+      integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
+      integer, intent(in) :: Lout
+!
+!  Local variable declarations.
+!
+      integer :: i, ic, j
+# ifdef SOLVE3D
+      integer :: itrc, k
+# endif
+
+# include "set_bounds.h"
+!
+!-----------------------------------------------------------------------
+!  Load nonlinear open boundary fields into storage arrays.
+!-----------------------------------------------------------------------
+!
+      LOAD_SF : IF (MOD(iic(ng)-1,nSFF(ng)).eq.0) THEN
+        SFcount(ng)=SFcount(ng)+1
+        ic=SFcount(ng)
+
+# ifdef ADJUST_WSTRESS
+!
+!  Adjust surface momentum stress.
+!
+        DO j=JstrR,JendR
+          DO i=Istr,IendR
+            FORCES(ng)%ustr(i,j,ic,Lout)=FORCES(ng)%sustr(i,j)
+          END DO
+        END DO
+        DO j=Jstr,JendR
+          DO i=IstrR,IendR
+            FORCES(ng)%vstr(i,j,ic,Lout)=FORCES(ng)%svstr(i,j)
+          END DO
+        END DO
+# endif
+
+# if defined ADJUST_STFLUX && defined SOLVE3D
+!
+!  Adjust surface tracer fluxes.
+!
+        DO itrc=1,NT(ng)
+          IF (Lstflux(itrc,ng)) THEN
+            DO j=JstrR,JendR
+              DO i=IstrR,IendR
+                FORCES(ng)%tflux(i,j,ic,Lout,itrc)=                     &
+     &                                       FORCES(ng)%stflx(i,j,itrc)
+              END DO
+            END DO
+          END IF
+        END DO
+# endif
+      END IF LOAD_SF
+!
+      RETURN
+      END SUBROUTINE load_frc_tile
 #endif
       END MODULE frc_adjust_mod

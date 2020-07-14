@@ -3,7 +3,7 @@
       SUBROUTINE get_nudgcoef (ng, model)
 !
 !git $Id$
-!svn $Id: get_nudgcoef.F 995 2020-01-10 04:01:28Z arango $
+!svn $Id: get_nudgcoef.F 1031 2020-07-14 01:39:55Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -52,15 +52,19 @@
 # ifdef SOLVE3D
       logical :: got_generic
       logical :: got_specific(NT(ng))
+!
 # endif
       integer :: tile, LBi, UBi, LBj, UBj
       integer :: gtype, i, ic, itrc
       integer :: nvatt, nvdim, status, vindex
       integer :: Vsize(4)
-
+# ifdef CHECKSUM
+      integer(i8b) :: Fhash
+# endif
+!
       real(dp) :: Fscl
       real(r8) :: Fmax, Fmin
-
+!
       character (len=40 ) :: tunits
       character (len=256) :: ncname
 !
@@ -213,7 +217,12 @@
 # ifdef MASKING
      &                    GRID(ng) % rmask,                             &
 # endif
+# ifdef CHECKSUM
+     &                    CLIMA(ng) % M2nudgcof,                        &
+     &                    checksum = Fhash)
+# else
      &                    CLIMA(ng) % M2nudgcof)
+# endif
         IF (FoundError(status, nf90_noerr, __LINE__,                    &
      &                 __FILE__)) THEN
           exit_flag=2
@@ -224,6 +233,9 @@
             WRITE (stdout,40) TRIM(Vname(2,vindex))//': '//             &
      &                        TRIM(Vname(1,vindex)),                    &
      &                        ng, TRIM(ncname), Fmin, Fmax
+# ifdef CHECKSUM
+            WRITE (stdout,50) Fhash
+# endif
           END IF
         END IF
 !
@@ -278,7 +290,12 @@
 #  ifdef MASKING
      &                    GRID(ng) % rmask,                             &
 #  endif
+#  ifdef CHECKSUM
+     &                    CLIMA(ng) % M3nudgcof,                        &
+     &                    checksum = Fhash)
+#  else
      &                    CLIMA(ng) % M3nudgcof)
+#  endif
         IF (FoundError(status, nf90_noerr, __LINE__,                    &
      &                 __FILE__)) THEN
           exit_flag=2
@@ -289,6 +306,9 @@
             WRITE (stdout,40) TRIM(Vname(2,vindex))//': '//             &
      &                        TRIM(Vname(1,vindex)),                    &
      &                        ng, TRIM(ncname), Fmin, Fmax
+#  ifdef CHECKSUM
+            WRITE (stdout,50) Fhash
+#  endif
           END IF
         END IF
 !
@@ -352,7 +372,12 @@
 #  ifdef MASKING
      &                      GRID(ng) % rmask,                           &
 #  endif
+#  ifdef CHECKSUM
+     &                      CLIMA(ng) % Tnudgcof(:,:,:,ic),             &
+     &                      checksum = Fhash)
+#  else
      &                      CLIMA(ng) % Tnudgcof(:,:,:,ic))
+#  endif
           IF (FoundError(status, nf90_noerr, __LINE__,                  &
      &                   __FILE__)) THEN
             exit_flag=2
@@ -363,6 +388,9 @@
               WRITE (stdout,40) TRIM(Vname(2,vindex))//': '//           &
      &                          TRIM(Vname(1,vindex)),                  &
      &                          ng, TRIM(ncname), Fmin, Fmax
+#  ifdef CHECKSUM
+              WRITE (stdout,50) Fhash
+#  endif
             END IF
           END IF
 !
@@ -393,6 +421,10 @@
   40  FORMAT(2x,' GET_NUDGCOEF - ',a,/,19x,                             &
      &        '(Grid = ',i2.2,', File: ',a,')',/,19x,                   &
      &        '(Min = ', 1p,e15.8,0p,' Max = ',1p,e15.8,0p,')')
+# ifdef CHECKSUM
+  50  FORMAT (19x,'(CheckSum = ',i0,')')
+# endif
+!
 #else
       SUBROUTINE get_nudgcoef
 #endif

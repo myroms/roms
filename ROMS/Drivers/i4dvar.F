@@ -4,7 +4,7 @@
 #ifdef I4DVAR
 !
 !git $Id$
-!svn $Id: i4dvar.F 1027 2020-05-27 17:06:32Z arango $
+!svn $Id: i4dvar.F 1031 2020-07-14 01:39:55Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -58,6 +58,12 @@
 !
 !  Set module internal parameters.
 !
+      logical :: LgetNRM        ! process covariance normalization
+      logical :: LgetSTD        ! process covariance standard deviation
+# ifdef SPLIT_4DVAR
+      logical :: Ldone          ! 4D-Var cycle finish switch
+# endif
+!
       integer :: LTLM1 = 1      ! trial x-space TLM IC record in ITL
       integer :: LTLM2 = 2      ! previous v-space TLM IC record in ITL
       integer :: LTLM3 = 3      ! trial v-space TLM IC record in ITL
@@ -69,6 +75,9 @@
       integer :: Rec2  = 2
       integer :: Rec3  = 3
       integer :: Rec4  = 4
+# ifdef SPLIT_4DVAR
+      integer :: Rec5  = 5
+# endif
 !
       CONTAINS
 !
@@ -118,16 +127,17 @@
 !  Local variable declarations.
 !
       integer :: i, lstr, ng, tile
-      integer :: Fcount
+      integer :: Fcount, InpRec, Tindex
 # ifdef PROFILE
       integer :: thread
 # endif
 !
       SourceFile=__FILE__
 !
-!-----------------------------------------------------------------------
-!  Initialize and set nonlinear model initial conditions.
-!-----------------------------------------------------------------------
+!=======================================================================
+!  Compute nonlinear background trajectory and interpolate the state at
+!  the observation locations.
+!=======================================================================
 
 # ifdef PROFILE
 !
@@ -140,6 +150,155 @@
         END DO
       END DO
 # endif
+
+# ifdef SPLIT_4DVAR
+!
+!-----------------------------------------------------------------------
+!  If split 4D-Var algorithm, set several variables that computed or
+!  assigned in other 4D-Var phase executable.
+!-----------------------------------------------------------------------
+!
+!  If outer>1, set ERstr=Nrun to compute the open boundary conditions
+!  (OBC_time) and surface forcing (SF_time) adjustment times, if needed.
+!
+      IF (my_outer.gt.1) THEN
+        Nrun=1+(my_outer-1)*(Ninner+1)
+        ERstr=Nrun
+      END IF
+
+#  if defined ADJUST_BOUNDARY || defined ADJUST_STFLUX || \
+      defined ADJUST_WSTRESS
+!
+!  If outer>1, reset reset surface forcing and lateral boundary output
+!  time indices to LADJ2 since they are changed in the inner loops.
+!
+      IF (my_outer.gt.1) THEN
+        DO ng=1,Ngrids
+          Lfout(ng)=LADJ2
+#   ifdef ADJUST_BOUNDARY
+          Lbout(ng)=LADJ2
+#   endif
+        END DO
+      END IF
+#  endif
+!
+!  If outer>1, open Nonlinear model initial conditions NetCDF file
+!  (INI struc) and inquire about its variable IDs. Reset the value of
+!  INI(ng)%Rindex, which is needed in "initial" to the 4D-Var analysis
+!  record.
+!
+      IF (my_outer.gt.1) THEN
+        DO ng=1,Ngrids
+          LdefINI(ng)=.FALSE.
+          CALL def_ini (ng)
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
+          INI(ng)%Rindex=Lini
+        END DO
+      END IF
+!
+!  If outer>1, open 4D-Var NetCDF file (DAV struc) and inquire about its
+!  variables.
+!
+      IF (my_outer.gt.1) THEN
+        DO ng=1,Ngrids
+          LdefMOD(ng)=.FALSE.
+          CALL def_mod (ng)
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
+          haveNLmod(ng)=.FALSE.                   ! do not read NLmodVal
+        END DO
+      END IF
+!
+!  If outer>1, read in the global observation screening and quality
+!  control scale ObsScaleGlobal ("obs_scale") that it is written in the
+!  first outer loop. Such data is in memory in the unsplit algorithm.
+!  Recall that in I4D-Var, observation variables are read and load into
+!  the arrays elements 1:Nobs(ng) for each survey time.  That is, only
+!  the values needed are read.
+!
+!  HGA: What to do in 4D-Var with nested grids?
+!
+      IF (my_outer.gt.1) THEN
+        ng=1
+        CALL netcdf_get_fvar (ng, iTLM, DAV(ng)%name,                   &
+     &                        Vname(1,idObsS), ObsScaleGlobal,          &
+     &                        ncid = DAV(ng)%ncid)
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
+      END IF
+!
+!  If outer>1, read in initial (outer=1) nonlinear cost function values
+!  from DAV file and load it into "CostNorm", its values are used for
+!  reporting normalized values.
+!
+      IF (my_outer.gt.1) THEN
+        DO ng=1,Ngrids
+          CALL netcdf_get_fvar (ng, iNLM, DAV(ng)%name,                 &
+     &                          'NLcost_function',                      &
+     &                          FOURDVAR(ng)%CostNorm(0:),              &
+     &                          ncid = DAV(ng)%ncid,                    &
+     &                          start = (/1,1/),                        &
+     &                          total = (/NobsVar(ng)+1,1/))
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
+        END DO
+      END IF
+
+# if defined ADJUST_STFLUX   || defined ADJUST_WSTRESS || \
+     defined ADJUST_BOUNDARY
+!
+!  If outer>1, read in surface forcing and or lateral boundary
+!  increments (X-space) from ITL file Rec5.
+!
+      IF (my_outer.gt.1) THEN
+        DO ng=1,Ngrids
+          LdefITL(ng)=.FALSE.
+          CALL tl_def_ini (ng)
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
+!
+          InpRec=Rec5
+          CALL get_state (ng, iTLM, 1, ITL(ng)%name, InpRec, LTLM1)
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
+        END DO
+      END IF
+#  endif
+
+#  if defined BULK_FLUXES && defined NL_BULK_FLUXES
+!
+!  If outer>1, set structure to process nonlinear surface fluxes from
+!  the initial (outer=1) NLM trajectory.
+!
+      IF (my_outer.gt.1) THEN
+        DO ng=1,Ngrids
+          WRITE (HIS(ng)%name,10) TRIM(FWD(ng)%head), 0
+          lstr=LEN_TRIM(HIS(ng)%name)
+          HIS(ng)%base=HIS(ng)%name(1:lstr-3)
+        END DO
+!
+        CALL edit_multifile ('HIS2BLK')
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
+      END IF
+#  endif
+# endif
+!
+!-----------------------------------------------------------------------
+!  Run nonlinear model.
+!-----------------------------------------------------------------------
+!
+!  Activate switch to write out initial misfit between model and
+!  observations.
+!
+      DO ng=1,Ngrids
+        IF (my_outer.eq.1) THEN
+          wrtMisfit(ng)=.TRUE.
+        ELSE
+          wrtMisfit(ng)=.FALSE.
+        END IF
+      END DO
 !
 !  Set nonlinear output history file name. Create a basic state file
 !  for each outher loop.
@@ -198,18 +357,6 @@
      &                   __FILE__)) RETURN
         END DO
       END IF
-!
-!  Create 4D-Var analysis file that used as initial conditions for the
-!  next data assimilation cycle now that grid information is known.
-!
-      IF (my_outer.eq.1) THEN
-        DO ng=1,Ngrids
-          LdefDAI(ng)=.TRUE.
-          CALL def_dai (ng)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
-        END DO
-      END IF
 
 # if defined BALANCE_OPERATOR && defined ZETA_ELLIPTIC
 !
@@ -264,7 +411,8 @@
 # endif
         wrtObsScale(ng)=.TRUE.
         IF (Master) THEN
-          WRITE (stdout,20) 'NL', ng, ntstart(ng), ntend(ng)
+          WRITE (stdout,20) 'NL', ng, my_outer, 0,                      &
+     &                      ntstart(ng), ntend(ng)
         END IF
       END DO
 !
@@ -275,8 +423,337 @@
 # endif
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
+
+# if defined ADJUST_BOUNDARY || defined ADJUST_STFLUX || \
+     defined ADJUST_WSTRESS
+!
+!  Write out initial and background surface forcing into initial
+!  INI(ng)%name NetCDF file for latter use.
 !
       DO ng=1,Ngrids
+        CALL wrt_frc (ng, Lfout(ng), Lini)
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
+!
+        IF (my_outer.eq.1) THEN
+          CALL wrt_frc (ng, Lfout(ng), Lbck)
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
+        END IF
+      END DO
+# endif
+!
+!  Write out nonlinear model misfit cost function into DAV(ng)%name
+!  NetCDF file.
+!
+      SourceFile=__FILE__ // ", background"
+      DO ng=1,Ngrids
+        CALL netcdf_put_fvar (ng, iNLM, DAV(ng)%name,                   &
+     &                        'NLcost_function',                        &
+     &                        FOURDVAR(ng)%NLobsCost(0:),               &
+     &                        (/1,my_outer/), (/NobsVar(ng)+1,1/),      &
+     &                        ncid = DAV(ng)%ncid)
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
+      END DO
+
+# ifdef PROFILE
+!
+!  Stop profile clock
+!
+      DO ng=1,Ngrids
+        DO thread=THREAD_RANGE
+          CALL wclock_off (ng, iNLM, 86, __LINE__,                      &
+     &                     __FILE__)
+        END DO
+      END DO
+# endif
+!
+ 10   FORMAT (a,'_outer',i0,'.nc')
+ 20   FORMAT (/,1x,a,1x,'ROMS: started time-stepping:',                 &
+     &        ' (Grid: ',i0,', Outer: ',i2.2,', Inner: ',i3.3,          &
+              ', TimeSteps: ',i0,' - ',i0,')',/)
+!
+      RETURN
+      END SUBROUTINE background
+!
+      SUBROUTINE increment (my_outer, RunInterval)
+!
+!=======================================================================
+!                                                                      !
+!  This routine computes the 4D-Var data assimilation state increment, !
+!  dXa, by iterating the inner loops and minimizing the cost function. !
+!                                                                      !
+!  On Input:                                                           !
+!                                                                      !
+!     my_outer        Outer-loop counter (integer)                     !
+!     RunInterval     TLM/ADM kernels time stepping window (seconds)   !
+!                                                                      !
+!=======================================================================
+!
+      USE mod_param
+      USE mod_parallel
+      USE mod_fourdvar
+      USE mod_iounits
+      USE mod_ncparam
+      USE mod_netcdf
+      USE mod_scalars
+      USE mod_stepping
+!
+# ifdef BALANCE_OPERATOR
+      USE ad_balance_mod,     ONLY : ad_balance
+# endif
+      USE ad_convolution_mod, ONLY : ad_convolution
+      USE ad_variability_mod, ONLY : ad_variability
+      USE back_cost_mod,      ONLY : back_cost
+      USE cgradient_mod,      ONLY : cgradient
+# ifdef SPLIT_4DVAR
+      USE cgradient_mod,      ONLY : cg_read
+# endif
+      USE cost_grad_mod,      ONLY : cost_grad
+# ifdef ADJUST_BOUNDARY
+      USE mod_boundary,       ONLY : initialize_boundary
+# endif
+# if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+      USE mod_forces,         ONLY : initialize_forces
+# endif
+      USE mod_ocean,          ONLY : initialize_ocean
+      USE strings_mod,        ONLY : FoundError
+# ifdef BALANCE_OPERATOR
+      USE tl_balance_mod,     ONLY : tl_balance
+# endif
+      USE tl_convolution_mod, ONLY : tl_convolution
+      USE tl_variability_mod, ONLY : tl_variability
+!
+!  Imported variable declarations
+!
+      logical :: Lweak = .FALSE.
+!
+      integer, intent(in) :: my_outer
+!
+      real(dp), intent(in) :: RunInterval
+!
+!  Local variable declarations.
+!
+      integer :: i, lstr, my_inner, ng, tile
+      integer :: Fcount, InpRec, Lcon, Lsav
+# ifdef PROFILE
+      integer :: thread
+# endif
+!
+      real(r8) :: rate
+# ifdef SPLIT_4DVAR
+      real(dp) :: stime
+# endif
+!
+      SourceFile=__FILE__
+!
+!=======================================================================
+!  Compute 4D-Var increment.
+!=======================================================================
+
+# ifdef PROFILE
+!
+!  Start profile clock.
+!
+      DO ng=1,Ngrids
+        DO thread=THREAD_RANGE
+          CALL wclock_on (ng, iTLM, 87, __LINE__,                       &
+     &                    __FILE__)
+        END DO
+      END DO
+# endif
+
+# ifdef SPLIT_4DVAR
+!
+!-----------------------------------------------------------------------
+!  If split 4D-Var algorithm, set several variables that are computed
+!  or assigned in other 4D-Var phase executable.
+!-----------------------------------------------------------------------
+!
+!  Reset Nrun counter to a value greater than one.
+!
+      IF (my_outer.gt.1) THEN
+        Nrun=1+(my_outer-1)*(Ninner+1)
+      END IF
+!
+!  Open 4D-Var NetCDF file (DAV struc) and inquire about its variables.
+!  Activate "haveNLmod" to read its values in calls to "obs_read". Its
+!  values were written in the "background" phase.
+!
+      DO ng=1,Ngrids
+        LdefMOD(ng)=.FALSE.
+        CALL def_mod (ng)
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
+        haveNLmod(ng)=.TRUE.
+      END DO
+!
+!  In the split 4D-Var algorithm, we need to read the global observation
+!  screening and quality control scale ObsScaleGlobal ("obs_scale") that
+!  it is written in the "background" phase. Such data is in memory in
+!  the unsplit algorithm.  Recall that in I4D-Var, observation variables
+!  are read and load into the arrays elements 1:Nobs(ng) for each survey
+!  time.  That is, only the values needed are read.
+!
+!  HGA: What to do in 4D-Var with nested grids?
+!
+      ng=1
+      CALL netcdf_get_fvar (ng, iTLM, DAV(ng)%name,                     &
+     &                      Vname(1,idObsS), ObsScaleGlobal,            &
+     &                      ncid = DAV(ng)%ncid)
+      IF (FoundError(exit_flag, NoError, __LINE__,                      &
+     &               __FILE__)) RETURN
+!
+!  Read in first value of NLM cost function computed at outer=1, and
+!  load it into "CostNorm" that is used in the reporting of normalized
+!  values.
+!
+      SourceFile=__FILE__ // ", increment"
+      DO ng=1,Ngrids
+        CALL netcdf_get_fvar (ng, iNLM, DAV(ng)%name,                   &
+     &                        'NLcost_function',                        &
+     &                        FOURDVAR(ng)%CostNorm(0:),                &
+     &                        ncid = DAV(ng)%ncid,                      &
+     &                        start = (/1,1/),                          &
+     &                        total = (/NobsVar(ng)+1,1/))
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
+      END DO
+!
+!  Read in current outer loop NLM cost function.
+!
+      DO ng=1,Ngrids
+        CALL netcdf_get_fvar (ng, iNLM, DAV(ng)%name,                   &
+     &                        'NLcost_function',                        &
+     &                        FOURDVAR(ng)%NLobsCost(0:),               &
+     &                        ncid = DAV(ng)%ncid,                      &
+     &                        start = (/1,my_outer/),                   &
+     &                        total = (/NobsVar(ng)+1,1/))
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                   __FILE__)) RETURN
+      END DO
+!
+!  If outer>1, read in previous background and TLM cost function to
+!  compute FOURDVAR(ng)%CostFun(0).  Its value is in memory in the
+!  unsplit driver.
+!
+      IF (my_outer.gt.1) THEN
+        DO ng=1,Ngrids
+          CALL netcdf_get_fvar (ng, iNLM, DAV(ng)%name,                 &
+     &                          'TLcost_function',                      &
+     &                          FOURDVAR(ng)%CostFunOld(0:),            &
+     &                          ncid = DAV(ng)%ncid,                    &
+     &                          start = (/Nrun-1/),                     &
+     &                          total = (/1/))
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
+!
+          CALL netcdf_get_fvar (ng, iNLM, DAV(ng)%name,                 &
+     &                          'back_function',                        &
+     &                          FOURDVAR(ng)%BackCost(0:),              &
+     &                          ncid = DAV(ng)%ncid,                    &
+     &                          start = (/Nrun-1/),                     &
+     &                          total = (/1/))
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
+!
+          FOURDVAR(ng)%CostFun(0)=FOURDVAR(ng)%CostFunOld(0)+           &
+     &                            FOURDVAR(ng)%BackCost(0)
+        END DO
+      END IF
+!
+!  If outer>1, read several conjugate gradient variables from 4D-VAR
+!  NetCDF (DAV struc) file.  In the unsplit case, such values are
+!  available in memory.
+!
+      IF (my_outer.gt.1) THEN
+        DO ng=1,Ngrids
+          CALL cg_read (ng, iTLM, my_outer)
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
+        END DO
+      END IF
+!
+!  If outer>1, open tangent linear initial conditions NetCDF file
+!  (ITL struc) and inquire about its variables IDs.
+!
+      IF (my_outer.gt.1) THEN
+        DO ng=1,Ngrids
+          LdefITL(ng)=.FALSE.
+          CALL tl_def_ini (ng)
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
+        END DO
+      END IF
+!
+!  If outer>1, open tangent linear history NetCDF file (TLM struc) and
+!  inquire about its variables IDs.
+!
+      IF (my_outer.gt.1) THEN
+        DO ng=1,Ngrids
+          LdefTLM(ng)=.FALSE.
+          CALL tl_def_his (ng, LdefTLM(ng))
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
+        END DO
+      END IF
+!
+!  Set nonlinear output history file to be used as the basis state
+!  trajectory. The 4D-Var increment phase is computed by a different
+!  executable and needs to know some of the HIS structure information.
+!
+      DO ng=1,Ngrids
+        WRITE (HIS(ng)%name,10) TRIM(FWD(ng)%head), my_outer-1
+        lstr=LEN_TRIM(HIS(ng)%name)
+        HIS(ng)%base=HIS(ng)%name(1:lstr-3)
+      END DO
+!
+!  Read in 4D-Var starting time (sec) from nonlinear trajectory.
+!  Initialize "tday" which are needed to write the correct time in
+!  the ITL NetCDF file.  It is alse need for boundary and surface
+!  forcing adjustments, if any.
+!
+      InpRec=1
+      DO ng=1,Ngrids
+        CALL netcdf_get_fvar (ng, iTLM, HIS(ng)%name,                   &
+     &                        Vname(1,idtime), stime,                   &
+     &                        start = (/InpRec/),                       &
+     &                        total = (/1/))
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
+        INItime(ng)=stime
+
+#  ifdef ADJUST_BOUNDARY
+!
+!  Set time (sec) for the open boundary adjustment.
+!
+        OBC_time(1,ng)=stime
+        DO i=2,Nbrec(ng)
+          OBC_time(i,ng)=OBC_time(i-1,ng)+nOBC(ng)*dt(ng)
+        END DO
+#  endif
+
+#  if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+!
+!  Set time (sec) for the surface forcing adjustment.
+!
+        SF_time(1,ng)=stime
+        DO i=2,Nfrec(ng)
+          SF_time(i,ng)=SF_time(i-1,ng)+nSFF(ng)*dt(ng)
+        END DO
+#  endif
+      END DO
+# endif
+!
+!-----------------------------------------------------------------------
+!  Initialize.
+!-----------------------------------------------------------------------
+!
+!  Set various switches.
+!
+      DO ng=1,Ngrids
+        LwrtCost(ng)=.TRUE.
 # ifdef AVERAGES
         LdefAVG(ng)=.FALSE.
         LwrtAVG(ng)=.FALSE.
@@ -318,139 +795,18 @@
         LreadBLK(ng)=.TRUE.
       END DO
 # endif
-
-# if defined ADJUST_BOUNDARY || defined ADJUST_STFLUX || \
-     defined ADJUST_WSTRESS
 !
-!  Write out initial and background surface forcing into initial
-!  INI(ng)%name NetCDF file for latter use.
-!
-      DO ng=1,Ngrids
-        CALL wrt_frc (ng, Lfout(ng), Lini)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
-
-        IF (my_outer.eq.1) THEN
-          CALL wrt_frc (ng, Lfout(ng), Lbck)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
-        END IF
-      END DO
-# endif
-!
-!  Write out nonlinear model misfit cost function into DAV(ng)%name
-!  NetCDF file.
-!
-      SourceFile=__FILE__ // ", background"
-      DO ng=1,Ngrids
-        CALL netcdf_put_fvar (ng, iNLM, DAV(ng)%name,                   &
-     &                        'NLcost_function',                        &
-     &                        FOURDVAR(ng)%NLobsCost(0:),               &
-     &                        (/1,my_outer/), (/NobsVar(ng)+1,1/),      &
-     &                        ncid = DAV(ng)%ncid)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
-      END DO
-
-# ifdef PROFILE
-!
-!  Stop profile clock
+!  Clear the nonlinear state arrays to make sure that the RHS terms
+!  rzeta, rubar, rvbar, ru, and rv are zero. Otherwise, those arrays
+!  will have the last computed values when running the nonlinear model
+!  if not processing the forward trajectory RHS terms. It needs to be
+!  done to get identical solutions with the split schemes.
 !
       DO ng=1,Ngrids
-        DO thread=THREAD_RANGE
-          CALL wclock_off (ng, iNLM, 86, __LINE__,                      &
-     &                     __FILE__)
+        DO tile=first_tile(ng),last_tile(ng),+1
+          CALL initialize_ocean (ng, tile, iNLM)
         END DO
       END DO
-# endif
-!
- 10   FORMAT (a,'_outer',i0,'.nc')
- 20   FORMAT (/,1x,a,1x,'ROMS/TOMS: started time-stepping:',            &
-     &        ' (Grid: ',i2.2,' TimeSteps: ',i8.8,' - ',i8.8,')',/)
-!
-      RETURN
-      END SUBROUTINE background
-!
-      SUBROUTINE increment (my_outer, RunInterval)
-!
-!=======================================================================
-!                                                                      !
-!  This routine computes the 4D-Var data assimilation state increment, !
-!  dXa, by iterating the inner loops and minimizing the cost function. !
-!                                                                      !
-!  On Input:                                                           !
-!                                                                      !
-!     my_outer        Outer-loop counter (integer)                     !
-!     RunInterval     TLM/ADM kernels time stepping window (seconds)   !
-!                                                                      !
-!=======================================================================
-!
-      USE mod_param
-      USE mod_parallel
-      USE mod_fourdvar
-      USE mod_iounits
-      USE mod_ncparam
-      USE mod_netcdf
-      USE mod_scalars
-      USE mod_stepping
-!
-# ifdef BALANCE_OPERATOR
-      USE ad_balance_mod,     ONLY : ad_balance
-# endif
-      USE ad_convolution_mod, ONLY : ad_convolution
-      USE ad_variability_mod, ONLY : ad_variability
-      USE back_cost_mod,      ONLY : back_cost
-      USE cgradient_mod,      ONLY : cgradient
-      USE cost_grad_mod,      ONLY : cost_grad
-# ifdef ADJUST_BOUNDARY
-      USE mod_boundary,       ONLY : initialize_boundary
-# endif
-# if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
-      USE mod_forces,         ONLY : initialize_forces
-# endif
-      USE mod_ocean,          ONLY : initialize_ocean
-      USE strings_mod,        ONLY : FoundError
-# ifdef BALANCE_OPERATOR
-      USE tl_balance_mod,     ONLY : tl_balance
-# endif
-      USE tl_convolution_mod, ONLY : tl_convolution
-      USE tl_variability_mod, ONLY : tl_variability
-!
-!  Imported variable declarations
-!
-      logical :: Lweak = .FALSE.
-!
-      integer, intent(in) :: my_outer
-!
-      real(dp), intent(in) :: RunInterval
-!
-!  Local variable declarations.
-!
-      integer :: i, lstr, my_inner, ng, tile
-      integer :: Fcount, Lcon, Lsav
-# ifdef PROFILE
-      integer :: thread
-# endif
-!
-      real(r8) :: rate
-!
-      SourceFile=__FILE__
-!
-!=======================================================================
-!  Compute 4D-Var increment.
-!=======================================================================
-
-# ifdef PROFILE
-!
-!  Start profile clock.
-!
-      DO ng=1,Ngrids
-        DO thread=THREAD_RANGE
-          CALL wclock_on (ng, iTLM, 87, __LINE__,                       &
-     &                    __FILE__)
-        END DO
-      END DO
-# endif
 !
 !  The minimization algorithm requires to save all the gradient
 !  solutions for each inner loop iteration.  They are used for
@@ -545,23 +901,13 @@
         END DO
 # endif
 !
-!  Activate switch to write out initial and final misfit between
-!  model and observations.
-!
-        DO ng=1,Ngrids
-          wrtMisfit(ng)=.FALSE.
-          IF (((my_outer.eq.1).and.(my_inner.eq.0)).or.                 &
-     &        ((my_outer.eq.Nouter).and.(my_inner.eq.Ninner))) THEN
-            wrtMisfit(ng)=.TRUE.
-          END IF
-        END DO
-!
 !  Run tangent linear model. Compute misfit observation cost function,
 !  Jo.
 !
         DO ng=1,Ngrids
           IF (Master) THEN
-            WRITE (stdout,30) 'TL', ng, ntstart(ng), ntend(ng)
+            WRITE (stdout,30) 'TL', ng, my_outer, my_inner,             &
+     &                        ntstart(ng), ntend(ng)
           END IF
         END DO
 !
@@ -624,7 +970,8 @@
 !
         DO ng=1,Ngrids
           IF (Master) THEN
-            WRITE (stdout,30) 'AD', ng, ntstart(ng), ntend(ng)
+            WRITE (stdout,30) 'AD', ng, my_outer, my_inner,             &
+     &                        ntstart(ng), ntend(ng)
           END IF
         END DO
 !
@@ -651,7 +998,7 @@
         END DO
 !
 !:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-!  Descent algorithm.
+!  Conjugate gradient algorithm.
 !:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 !
 !  Read TLM v-space initial conditions, record 3 in ITL(ng)%name, and
@@ -663,26 +1010,30 @@
 !
         DO ng=1,Ngrids
           IF (my_inner.eq.0) THEN
-            CALL get_state (ng, iTLM, 8, ITL(ng)%name, Rec1, LTLM1)
+            InpRec=Rec1
+            CALL get_state (ng, iTLM, 8, ITL(ng)%name, InpRec, LTLM1)
             IF (FoundError(exit_flag, NoError, __LINE__,                &
      &                     __FILE__)) RETURN
           ELSE
-            CALL get_state (ng, iTLM, 8, ITL(ng)%name, Rec3, LTLM1)
+            InpRec=Rec3
+            CALL get_state (ng, iTLM, 8, ITL(ng)%name, InpRec, LTLM1)
             IF (FoundError(exit_flag, NoError, __LINE__,                &
      &                     __FILE__)) RETURN
           END IF
 
-          CALL get_state (ng, iTLM, 8, ITL(ng)%name, Rec4, LTLM2)
+          InpRec=Rec4
+          CALL get_state (ng, iTLM, 8, ITL(ng)%name, InpRec, LTLM2)
           IF (FoundError(exit_flag, NoError, __LINE__,                  &
      &                   __FILE__)) RETURN
 
-          CALL get_state (ng, iADM, 4, ADM(ng)%name, ADM(ng)%Rindex,    &
-     &                    LADJ2)
+          InpRec=ADM(ng)%Rindex
+          CALL get_state (ng, iADM, 4, ADM(ng)%name, InpRec, LADJ2)
           IF (FoundError(exit_flag, NoError, __LINE__,                  &
      &                   __FILE__)) RETURN
 
 # ifdef BALANCE_OPERATOR
-          CALL get_state (ng, iNLM, 2, INI(ng)%name, Lini, Lini)
+          InpRec=Lini
+          CALL get_state (ng, iNLM, 2, INI(ng)%name, InpRec, Lini)
           IF (FoundError(exit_flag, NoError, __LINE__,                  &
      &                   __FILE__)) RETURN
           nrhs(ng)=Lini
@@ -735,7 +1086,8 @@
 !
         IF (my_inner.gt.0) THEN
           DO ng=1,Ngrids
-            CALL get_state (ng, iADM, 3, ADM(ng)%name, LADJ1, LADJ1)
+            InpRec=LADJ1
+            CALL get_state (ng, iADM, 3, ADM(ng)%name, InpRec, LADJ1)
             IF (FoundError(exit_flag, NoError, __LINE__,                &
      &                     __FILE__)) RETURN
           END DO
@@ -749,7 +1101,8 @@
 !
         IF (my_inner.eq.0) THEN
           DO ng=1,Ngrids
-            CALL get_state (ng, iTLM, 2, ITL(ng)%name, Rec4, LTLM2)
+            InpRec=Rec4
+            CALL get_state (ng, iTLM, 2, ITL(ng)%name, InpRec, LTLM2)
             IF (FoundError(exit_flag, NoError, __LINE__,                &
      &                     __FILE__)) RETURN
 !
@@ -802,7 +1155,7 @@
 !  previous iteration. Compute the optimality of the minimization to
 !  check the statistical hypotheses between the background and
 !  observations errors: the cost function value at the minimum, Jmin,
-!  is idealy equal to half the number of observations assimilated
+!  is ideally equal to half the number of observations assimilated
 !  (Optimality=1=2*Jmin/Nobs), for a linear system.
 !
         IF (Master) THEN
@@ -882,11 +1235,13 @@
 !  background state vectors.
 !
         DO ng=1,Ngrids
-          CALL get_state (ng, iNLM, 2, INI(ng)%name, Lini, Lini)
+          InpRec=Lini
+          CALL get_state (ng, iNLM, 2, INI(ng)%name, InpRec, Lini)
           IF (FoundError(exit_flag, NoError, __LINE__,                  &
      &                   __FILE__)) RETURN
 
-          CALL get_state (ng, iNLM, 9, INI(ng)%name, Lbck, Lbck)
+          InpRec=Lbck
+          CALL get_state (ng, iNLM, 9, INI(ng)%name, InpRec, Lbck)
           IF (FoundError(exit_flag, NoError, __LINE__,                  &
      &                   __FILE__)) RETURN
         END DO
@@ -935,6 +1290,13 @@
 !
       END DO INNER_LOOP
 !
+!  Turn of switch to write cost functions in the DAV NetCDF file. They
+!  are written in calls to "tl_wrt_ini" only inside the inner loops.
+!
+      DO ng=1,Ngrids
+        LwrtCost(ng)=.FALSE.
+      END DO
+!
 !  Close adjoint NetCDF file.
 !
       SourceFile=__FILE__ // ", increment"
@@ -970,8 +1332,9 @@
 !
  10   FORMAT (a,'_outer',i0,'.nc')
  20   FORMAT (a,'_member',i3.3,'.nc')
- 30   FORMAT (/,1x,a,1x,'ROMS/TOMS: started time-stepping:',            &
-     &        ' (Grid: ',i2.2,' TimeSteps: ',i8.8,' - ',i8.8,')',/)
+ 30   FORMAT (/,1x,a,1x,'ROMS: started time-stepping:',                 &
+     &        ' (Grid: ',i0,', Outer: ',i2.2,', Inner: ',i3.3,          &
+              ', TimeSteps: ',i0,' - ',i0,')',/)
  40   FORMAT (/,' (',i3.3,',',i3.3,'): TLM Cost Jb, J  = ',             &
      &        1p,e17.10,0p,1x,1p,e17.10,0p,t68,1p,e11.4,' %')
  50   FORMAT (/,'>(',i3.3,',',i3.3,'): NLM Cost     J  = ',             &
@@ -1007,8 +1370,11 @@
       USE mod_stepping
 !
       USE ini_adjust_mod,     ONLY : ini_adjust
-      USE ini_fields_mod,     ONLY : ini_fields
+!!    USE ini_fields_mod,     ONLY : ini_fields
       USE mod_ocean,          ONLY : initialize_ocean
+#if defined MASKING && defined SPLIT_4DVAR
+      USE set_masks_mod,      ONLY : set_masks
+#endif
       USE strings_mod,        ONLY : FoundError
       USE sum_grad_mod,       ONLY : sum_grad
       USE tl_convolution_mod, ONLY : tl_convolution
@@ -1026,20 +1392,21 @@
 !  Local variable declarations.
 !
       integer :: ng, tile
-      integer :: Fcount, Lcon
+      integer :: Fcount, Lcon, Nrec
+      integer :: InpRec, OutRec
 # ifdef PROFILE
       integer :: thread
 # endif
 !
       SourceFile=__FILE__
 !
-!-----------------------------------------------------------------------
+!=======================================================================
 !  Compute new nonlinear initial conditions by adding minimization
 !  increment to previous outer loop initial conditions:
 !
 !         Xi(outer+1) = Xi(outer) + deltaX(Lcon)
 !
-!-----------------------------------------------------------------------
+!=======================================================================
 
 # ifdef PROFILE
 !
@@ -1060,12 +1427,72 @@
           CALL initialize_ocean (ng, tile, iNLM)
         END DO
       END DO
+
+# ifdef SPLIT_4DVAR
 !
-!  Notice that "ini_fields" is called here for output purposes only.
-!  It computes the vertically integrated momentum in 3D applications.
+!-----------------------------------------------------------------------
+!  If split 4D-Var algorithm, set several variables that computed or
+!  assigned in other 4D-Var phase executable.
+!-----------------------------------------------------------------------
+!
+!  Open nonlinear model initial conditions NetCDF file (INI struc) and
+!  inquire about its variable IDs.
+!
+      DO ng=1,Ngrids
+        LdefINI(ng)=.FALSE.
+        CALL def_ini (ng)
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
+      END DO
+!
+!  Open tangent linear model initial conditions NetCDF file (ITL struc)
+!  and inquire about its variable IDs.
+!
+      DO ng=1,Ngrids
+        LdefITL(ng)=.FALSE.
+        CALL tl_def_ini (ng)
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
+      END DO
+!
+!  Open 4D-Var NetCDF file (DAV struc) and inquire about its variables.
+!  It is used in "tl_wrt_ini" to write out observation and background
+!  cost functions.
+!
+      DO ng=1,Ngrids
+        LdefMOD(ng)=.FALSE.
+        CALL def_mod (ng)
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
+        Nrec=DAV(ng)%Rindex
+      END DO
+!
+!  Set Nrun>1, set Nrun couter. The counter is only allow to increase
+!  in the "increment" phase.
+!
+      Nrun=1+(my_outer-1)*(Ninner+1)
+      ERstr=Nrun
+
+#  ifdef MASKING
+!
+!  Set internal mask arrays to process I/O NetCDF files.
+!
+      DO ng=1,Ngrids
+        DO tile=first_tile(ng),last_tile(ng),+1
+          CALL set_masks (ng, tile, iNLM)
+        END DO
+      END DO
+#  endif
+# endif
+!
+!-----------------------------------------------------------------------
+!  Compute nonlinear model initial from the 4D-Var analysis.
+!-----------------------------------------------------------------------
+!
 !  In order to use the correct fields, the model time indices are set
 !  to Lini.
-!  The appropriate tl correction for the NL model resides in record 1
+!
+!  The appropriate TLM correction for the NLM model resides in record 1
 !  of the ITL file.
 !
       DO ng=1,Ngrids
@@ -1073,17 +1500,19 @@
 # ifdef SOLVE3D
         nstp(ng)=Lini
 # endif
-        CALL get_state (ng, iNLM, 1, INI(ng)%name, Lini, Lini)
+        InpRec=Lini
+        CALL get_state (ng, iNLM, 1, INI(ng)%name, InpRec, Lini)
         IF (FoundError(exit_flag, NoError, __LINE__,                    &
      &                 __FILE__)) RETURN
-
-        CALL get_state (ng, iTLM, 1, ITL(ng)%name, LTLM1, LTLM1)
+!
+        InpRec=LTLM1
+        CALL get_state (ng, iTLM, 1, ITL(ng)%name, InpRec, LTLM1)
         IF (FoundError(exit_flag, NoError, __LINE__,                    &
      &                 __FILE__)) RETURN
 !
         DO tile=first_tile(ng),last_tile(ng),+1
           CALL ini_adjust (ng, tile, LTLM1, Lini)
-          CALL ini_fields (ng, tile, iNLM)
+!!        CALL ini_fields (ng, tile, iNLM)
         END DO
       END DO
 !
@@ -1091,24 +1520,26 @@
 !  of INI(ng)%name.
 !
       DO ng=1,Ngrids
-        INI(ng)%Rindex=0
         Fcount=INI(ng)%load
         INI(ng)%Nrec(Fcount)=1
-        CALL wrt_ini (ng, Lini)
+        OutRec=Lini
+        CALL wrt_ini (ng, Lini, OutRec)
         IF (FoundError(exit_flag, NoError, __LINE__,                    &
      &                 __FILE__)) RETURN
       END DO
 !
-! Gather the v-space increments from the final inner-loop and
-! save in record 4 of the ITL file. The current v-space increment
-! is in record 3 and the sum so far is in record 4.
+!  Gather the v-space increments from the final inner-loop and
+!  save in record 4 of the ITL file. The current v-space increment
+!  is in record 3 and the sum so far is in record 4.
 !
       DO ng=1,Ngrids
-        CALL get_state (ng, iTLM, 8, ITL(ng)%name, Rec3, LTLM1)
+        InpRec=Rec3
+        CALL get_state (ng, iTLM, 8, ITL(ng)%name, InpRec, LTLM1)
         IF (FoundError(exit_flag, NoError, __LINE__,                    &
      &                 __FILE__)) RETURN
-
-        CALL get_state (ng, iTLM, 8, ITL(ng)%name, Rec4, LTLM2)
+!
+        InpRec=Rec4
+        CALL get_state (ng, iTLM, 8, ITL(ng)%name, InpRec, LTLM2)
         IF (FoundError(exit_flag, NoError, __LINE__,                    &
      &                 __FILE__)) RETURN
 !
@@ -1151,9 +1582,11 @@
       DO ng=1,Ngrids
         Lfinp(ng)=LTLM1
 #  if defined BULK_FLUXES && !defined NL_BULK_FLUXES
-        CALL get_state (ng, iTLM, 1, ITL(ng)%name, Rec1, Lfinp(ng))
+        InpRec=Rec1
+        CALL get_state (ng, iTLM, 1, ITL(ng)%name, InpRec, Lfinp(ng))
 #  endif
 #  if defined NL_BULK_FLUXES || !defined BULK_FLUXES
+        InpRec=Rec4
         CALL get_state (ng, iTLM, 1, ITL(ng)%name, Rec4, Lfinp(ng))
         Lcon=Lfinp(ng)
 !
@@ -1168,6 +1601,19 @@
         IF (FoundError(exit_flag, NoError, __LINE__,                    &
      &                 __FILE__)) RETURN
       END DO
+
+#  ifdef SPLIT_4DVAR
+!
+!  If split 4D-Var, write out surface forcing and lateral boundary
+!  condition increments (X-space) needed for the nonlinear model into
+!  Rec5.
+!
+      DO ng=1,Ngrids
+        CALL tl_wrt_ini (ng, Lfinp(ng), Rec5)
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                     __FILE__)) RETURN
+      END DO
+#  endif
 # endif
 !
 !  Clear tangent linear state variables.
@@ -1182,7 +1628,7 @@
 !
       SourceFile=__FILE__ // ", analysis"
       DO ng=1,Ngrids
-!!      CALL netcdf_close (ng, iNLM, FWD(ng)%ncid)
+!       CALL netcdf_close (ng, iNLM, FWD(ng)%ncid)
         IF (FoundError(exit_flag, NoError, __LINE__,                    &
      &                 __FILE__)) RETURN
       END DO
@@ -1223,6 +1669,7 @@
       USE mod_ncparam
       USE mod_netcdf
       USE mod_scalars
+      USE mod_stepping
 !
       USE mod_mixing,  ONLY : initialize_mixing
       USE strings_mod, ONLY : FoundError
@@ -1234,13 +1681,150 @@
 !  Local variable declarations.
 !
       integer :: i, lstr, ng, tile
+      integer :: InpRec
+# ifdef PROFILE
+      integer :: thread
+# endif
       integer :: Fcount
 !
       SourceFile=__FILE__
 !
-!-----------------------------------------------------------------------
+!=======================================================================
 !  Run NLM initialized from estimated 4D-Var state and interpolate
 !  solution at observation locations.
+!=======================================================================
+
+# ifdef PROFILE
+!
+!  Start profile clock.
+!
+      DO ng=1,Ngrids
+        DO thread=THREAD_RANGE
+          CALL wclock_on (ng, iNLM, 88, __LINE__,                       &
+     &                    __FILE__)
+        END DO
+      END DO
+# endif
+
+# ifdef SPLIT_4DVAR
+!
+!-----------------------------------------------------------------------
+!  If split 4D-Var algorithm, set several variables that computed or
+!  assigned in other 4D-Var phase executable.
+!-----------------------------------------------------------------------
+!
+      outer=Nouter
+      inner=Ninner
+!
+!  Set Nrun>1, to read in surface forcing and open boundary conditions
+!  increments in "initial", if appropriate.
+!
+      Nrun=1+Nouter*(Ninner+1)
+!
+!  Set ERstr=Nrun, to set the open boundary condition (OBC_time) and
+!  surface forcing (SF_time) adjustment times, if needed.
+!
+      ERstr=Nrun
+!
+!  Open Nonlinear model initial conditions NetCDF file (INI struc) and
+!  inquire about its variable IDs.
+!
+      DO ng=1,Ngrids
+        LdefINI(ng)=.FALSE.
+        CALL def_ini (ng)
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
+      END DO
+!
+!  Open 4D-Var NetCDF file (DAV struc) and inquire about its variables.
+!
+      DO ng=1,Ngrids
+        LdefMOD(ng)=.FALSE.
+        CALL def_mod (ng)
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
+        haveNLmod(ng)=.FALSE.                     ! do not read NLmodVal
+      END DO
+!
+!  In the split 4D-Var algorithm, we need to read the global observation
+!  screening and quality control scale ObsScaleGlobal ("obs_scale") that
+!  it is written in the "background" phase. Such data is in memory in
+!  the unsplit algorithm.  Recall that in I4D-Var, observation variables
+!  are read and load into the arrays elements 1:Nobs(ng) for each survey
+!  time.  That is, only the values needed are read.
+!
+!  HGA: What to do in 4D-Var with nested grids?
+!
+      ng=1
+      CALL netcdf_get_fvar (ng, iTLM, DAV(ng)%name,                     &
+     &                      Vname(1,idObsS), ObsScaleGlobal,            &
+     &                      ncid = DAV(ng)%ncid)
+      IF (FoundError(exit_flag, NoError, __LINE__,                      &
+     &               __FILE__)) RETURN
+!
+!  Read initial nonlinear cost function values from DAV file and load it
+!  into CostNorm, its values are used for reporting normalized values.
+!
+      DO ng=1,Ngrids
+        CALL netcdf_get_fvar (ng, iNLM, DAV(ng)%name,                   &
+     &                        'NLcost_function',                        &
+     &                        FOURDVAR(ng)%CostNorm(0:),                &
+     &                        ncid = DAV(ng)%ncid,                      &
+     &                        start = (/1,1/),                          &
+     &                        total = (/NobsVar(ng)+1,1/))
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
+      END DO
+
+# if defined ADJUST_STFLUX   || defined ADJUST_WSTRESS || \
+     defined ADJUST_BOUNDARY
+!
+!  If split 4D-Var, read in surface forcing and or lateral boundary
+!  increments (X-space) from ITL file Rec5.
+!
+      DO ng=1,Ngrids
+        LdefITL(ng)=.FALSE.
+        CALL tl_def_ini (ng)
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
+!
+        InpRec=Rec5
+        CALL get_state (ng, iTLM, 1, ITL(ng)%name, InpRec, LTLM1)
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
+      END DO
+!
+!  If split 4D-Var, reset reset surface forcing and lateral boundary
+!  output time indices to LADJ2 since they are changed in the inner
+!  loops.
+!
+      DO ng=1,Ngrids
+        Lfout(ng)=LADJ2
+#   ifdef ADJUST_BOUNDARY
+        Lbout(ng)=LADJ2
+#   endif
+      END DO
+#  endif
+
+#  if defined BULK_FLUXES && defined NL_BULK_FLUXES
+!
+!  Set structure to process nonlinear surface fluxes from initial
+!  NLM run.
+!
+      DO ng=1,Ngrids
+        WRITE (HIS(ng)%name,10) TRIM(FWD(ng)%head), Nouter-1
+        lstr=LEN_TRIM(HIS(ng)%name)
+        HIS(ng)%base=HIS(ng)%name(1:lstr-3)
+      END DO
+!
+      CALL edit_multifile ('HIS2BLK')
+      IF (FoundError(exit_flag, NoError, __LINE__,                      &
+     &               __FILE__)) RETURN
+#  endif
+# endif
+!
+!-----------------------------------------------------------------------
+!  Run nonlinear model.
 !-----------------------------------------------------------------------
 !
 !  Set nonlinear output history file name. Create a basic state file
@@ -1272,7 +1856,9 @@
         END DO
       END DO
 !
-!  Initialize nonlinear model with estimated initial conditions.
+!  Initialize nonlinear model with estimated initial conditions.  Reset
+!  the value of INI(ng)%Rindex, which is needed in "initial" to the
+!  4D-Var analysis record.
 !
       DO ng=1,Ngrids
         wrtNLmod(ng)=.TRUE.
@@ -1281,18 +1867,21 @@
         RST(ng)%Rindex=0
         Fcount=RST(ng)%load
         RST(ng)%Nrec(Fcount)=0
+        INI(ng)%Rindex=Lini
       END DO
 !
       CALL initial
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
 !
-!  Clear NLobsCost.
+!  Clear NLobsCost. Activate switch to write out final misfit between
+!  model and observations.
 !
       DO ng=1,Ngrids
         DO i=0,NobsVar(ng)
           FOURDVAR(ng)%NLobsCost(i)=0.0_r8
         END DO
+        wrtMisfit(ng)=.TRUE.
       END DO
 !
 !  Run nonlinear model. Interpolate nonlinear model to observation
@@ -1369,10 +1958,22 @@
       DO ng=1,Ngrids
         HIS(ng)%ncid=-1
       END DO
+
+# ifdef PROFILE
+!
+!  Stop profile clock
+!
+      DO ng=1,Ngrids
+        DO thread=THREAD_RANGE
+          CALL wclock_off (ng, iNLM, 88, __LINE__,                      &
+     &                     __FILE__)
+        END DO
+      END DO
+# endif
 !
  10   FORMAT (a,'_outer',i0,'.nc')
- 20   FORMAT (/,1x,a,1x,'ROMS/TOMS: started time-stepping:',            &
-     &        ' (Grid: ',i2.2,' TimeSteps: ',i8.8,' - ',i8.8,')',/)
+ 20   FORMAT (/,1x,a,1x,'ROMS: started time-stepping:',                 &
+     &        ' (Grid: ',i0,', TimeSteps: ',i0,' - ',i0,')',/)
  30   FORMAT (/,'>(',i3.3,',',i3.3,'): NLM Cost     J  = ',             &
      &        18x,1p,e17.10,0p)
  40   FORMAT (' (',i3.3,',',i3.3,'): NLM Cost     J  = ',               &
@@ -1414,26 +2015,43 @@
       SourceFile=__FILE__
 !
 !-----------------------------------------------------------------------
+!  Set application grid, metrics, and associated variables and
+!  parameters.
+!-----------------------------------------------------------------------
+!
+!  The ROMS application grid configuration is done once. It is usually
+!  done in the "initial" kernel routine. However, since we are calling
+!  the "normalization" routine here, we need several grid variables and
+!  parameter.  Also, if reading only water points, we need to know the
+!  land/sea mask arrays to unpack.
+!
+      IF (SetGridConfig(ng)) THEN
+        CALL set_grid (ng, iNLM)
+      END IF
+!
+!-----------------------------------------------------------------------
 !  Read in standard deviation factors for error covariance.
 !-----------------------------------------------------------------------
+!
+      IF (LgetSTD) THEN
 !
 !  Initial conditions standard deviation. They are loaded in Tindex=1
 !  of the e_var(...,Tindex) state variables.
 !
-      STDrec=1
-      Tindex=1
-      CALL get_state (ng, 10, 10, STD(1,ng)%name, STDrec, Tindex)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+        STDrec=1
+        Tindex=1
+        CALL get_state (ng, 10, 10, STD(1,ng)%name, STDrec, Tindex)
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
 
 # ifdef ADJUST_BOUNDARY
 !
 !  Open boundary conditions standard deviation.
 !
-      STDrec=1
-      Tindex=1
-      CALL get_state (ng, 12, 12, STD(3,ng)%name, STDrec, Tindex)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
+        STDrec=1
+        Tindex=1
+        CALL get_state (ng, 12, 12, STD(3,ng)%name, STDrec, Tindex)
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
      &                 __FILE__)) RETURN
 # endif
 
@@ -1441,66 +2059,70 @@
 !
 !  Surface forcing standard deviation.
 !
-      STDrec=1
-      Tindex=1
-      CALL get_state (ng, 13, 13, STD(4,ng)%name, STDrec, Tindex)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
+        STDrec=1
+        Tindex=1
+        CALL get_state (ng, 13, 13, STD(4,ng)%name, STDrec, Tindex)
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
      &               __FILE__)) RETURN
 # endif
+      END IF
 !
 !-----------------------------------------------------------------------
 !  Error covariance normalization coefficients.
 !-----------------------------------------------------------------------
+!
+      IF (LgetNRM) THEN
 !
 !  Compute or read in background-error covariance normalization factors.
 !  If computing, write out factors to NetCDF. This is an expensive
 !  computation that needs to be computed only once for a particular
 !  application grid.
 !
-      IF (ANY(LwrtNRM(:,ng))) THEN
-        CALL def_norm (ng, iNLM, 1)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+        IF (ANY(LwrtNRM(:,ng))) THEN
+          CALL def_norm (ng, iNLM, 1)
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
      &                 __FILE__)) RETURN
 
 # ifdef ADJUST_BOUNDARY
-        CALL def_norm (ng, iNLM, 3)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+          CALL def_norm (ng, iNLM, 3)
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
 # endif
 
 # if defined ADJUST_WSTRESS || defined ADJUST_STFLUX
-        CALL def_norm (ng, iNLM, 4)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+          CALL def_norm (ng, iNLM, 4)
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
 # endif
+!
+          DO tile=first_tile(ng),last_tile(ng),+1
+            CALL normalization (ng, tile, 2)
+          END DO
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
+          LdefNRM(1:4,ng)=.FALSE.
+          LwrtNRM(1:4,ng)=.FALSE.
 
-        DO tile=first_tile(ng),last_tile(ng),+1
-          CALL normalization (ng, tile, 2)
-        END DO
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
-        LdefNRM(1:4,ng)=.FALSE.
-        LwrtNRM(1:4,ng)=.FALSE.
+        ELSE
 
-      ELSE
-
-        NRMrec=1
-        CALL get_state (ng, 14, 14, NRM(1,ng)%name, NRMrec, 1)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+          NRMrec=1
+          CALL get_state (ng, 14, 14, NRM(1,ng)%name, NRMrec, 1)
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
 
 # ifdef ADJUST_BOUNDARY
-        CALL get_state (ng, 16, 16, NRM(3,ng)%name, NRMrec, 1)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+          CALL get_state (ng, 16, 16, NRM(3,ng)%name, NRMrec, 1)
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
 # endif
 
 # if defined ADJUST_WSTRESS || defined ADJUST_STFLUX
-        CALL get_state (ng, 17, 17, NRM(4,ng)%name, NRMrec, 1)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+          CALL get_state (ng, 17, 17, NRM(4,ng)%name, NRMrec, 1)
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
 # endif
 
+        END IF
       END IF
 !
       RETURN

@@ -3,7 +3,7 @@
       SUBROUTINE read_FltPar (model, inp, out, Lwrite)
 !
 !git $Id$
-!svn $Id: read_fltpar.F 995 2020-01-10 04:01:28Z arango $
+!svn $Id: read_fltpar.F 1031 2020-07-14 01:39:55Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -150,7 +150,7 @@
      &                                   Fdy(nentry(igrid)+1,igrid),    &
      &                                   Fdz(nentry(igrid)+1,igrid)
                 IF (igrid.gt.Ngrids) THEN
-                  IF (Lwrite) WRITE (out,60) fposnam
+                  IF (Master) WRITE (out,60) fposnam
                   exit_flag=4
                   RETURN
                 END IF
@@ -180,7 +180,7 @@
 !  Report input parameters.
 !-----------------------------------------------------------------------
 !
-      IF (Lwrite) THEN
+      IF (Master.and.Lwrite) THEN
         DO ng=1,Ngrids
           IF (Lfloats(ng).and.Fprint(ng)) THEN
             IF (ncount(ng).ne.Nfloats(ng)) THEN
@@ -220,11 +220,13 @@
         END IF
       END IF
       exit_flag=4
-      IF (FoundError(exit_flag, NoError, __LINE__,                       &
+      IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
  50   CONTINUE
-      IF (Lwrite) WRITE (out,120) 'biological floats behavior File:  ', &
-     &                            TRIM(fname)
+      IF (Master.and.Lwrite) THEN
+        WRITE (out,120) 'biological floats behavior File:  ',           &
+     &                  TRIM(fname)
+      END IF
 # endif
 !
 !-----------------------------------------------------------------------

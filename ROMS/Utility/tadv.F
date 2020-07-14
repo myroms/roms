@@ -2,7 +2,7 @@
 #ifdef SOLVE3D
 !
 !git $Id$
-!svn $Id: tadv.F 1016 2020-04-27 02:06:37Z arango $
+!svn $Id: tadv.F 1031 2020-07-14 01:39:55Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2019 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -59,18 +59,18 @@
 ! Imported variable declarations.
 !
       integer, intent(in) :: ng, ncid
+      integer, intent(out) :: status
+!
       character (*), intent(in) :: ncname
       character (*), intent(in) :: aname
-
+!
       TYPE(T_ADV), intent(in) :: Hadv(MAXVAL(NT),Ngrids)
       TYPE(T_ADV), intent(in) :: Vadv(MAXVAL(NT),Ngrids)
-
-      integer, intent(out) :: status
 !
 ! Local variable declarations
 !
       integer :: i, ie, is, itrc, lvar, lstr, nTvar
-
+!
       character (len=   1) :: newline
       character (len=  13) :: Hstring, Vstring
       character (len=  17) :: frmt
@@ -180,7 +180,7 @@
       END SUBROUTINE tadv_putatt
 !
 !***********************************************************************
-      SUBROUTINE tadv_report (iunit, model, Hadv, Vadv)
+      SUBROUTINE tadv_report (iunit, model, Hadv, Vadv, Lwrite)
 !***********************************************************************
 !                                                                      !
 !  This routine reports horizontal and vertical advection scheme for   !
@@ -192,6 +192,8 @@
 !     model         Calling model identifier (integer)                 !
 !     Hadv          Horizontal advection type structure, TYPE(T_ADV)   !
 !     Vadv          Vertical   advection type structure, TYPE(T_ADV)   !
+!     Lwrite        Switch to report information to standard output    !
+!                     unit or file (logical)                           !
 !                                                                      !
 !***********************************************************************
 !
@@ -204,15 +206,17 @@
 !
 ! Imported variable declarations.
 !
+      logical, intent(in) :: Lwrite
+!
       integer, intent(in) :: iunit, model
-
+!
       TYPE(T_ADV), intent(in) :: Hadv(MAXVAL(NT),Ngrids)
       TYPE(T_ADV), intent(in) :: Vadv(MAXVAL(NT),Ngrids)
 !
 ! Local variable declarations
 !
       integer :: i, itrc, ng
-
+!
       character (len=11) :: Hstring(MAXVAL(NT),Ngrids)
       character (len=11) :: Vstring(MAXVAL(NT),Ngrids)
 !
@@ -262,7 +266,7 @@
 !
 !  Report.
 !
-      IF (Master) THEN
+      IF (Master.and.Lwrite) THEN
         DO itrc=1,MAXVAL(NT)
           DO ng=1,Ngrids
             IF (ng.eq.1) THEN

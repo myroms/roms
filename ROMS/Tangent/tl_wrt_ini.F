@@ -3,7 +3,7 @@
       SUBROUTINE tl_wrt_ini (ng, Tindex, OutRec)
 !
 !git $Id$
-!svn $Id: tl_wrt_ini.F 1028 2020-06-01 00:24:59Z arango $
+!svn $Id: tl_wrt_ini.F 1031 2020-07-14 01:39:55Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -493,7 +493,8 @@
 # if defined I4DVAR || defined BACKGROUND
 !
 !-----------------------------------------------------------------------
-!  Write other 4D-Var data to DAV(ng)%name file.
+!  If 4D-Var increment phase, write out cost functions to DAV(ng)%name
+!  NetCDF file.
 !-----------------------------------------------------------------------
 
 #  if defined I4DVAR
@@ -501,12 +502,15 @@
 !  Write out tangent linear model misfit cost function. Notice that it
 !  is written into DAV(ng)%name file instead of ITL(ng)%name file.
 !
-      CALL netcdf_put_fvar (ng, iTLM, DAV(ng)%name, 'TLcost_function',  &
-     &                      FOURDVAR(ng)%ObsCost(0),                    &
-     &                      (/Nrun/), (/1/),                            &
-     &                      ncid = DAV(ng)%ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (LwrtCost(ng)) THEN
+        CALL netcdf_put_fvar (ng, iTLM, DAV(ng)%name,                   &
+     &                        'TLcost_function',                        &
+     &                        FOURDVAR(ng)%ObsCost(0),                  &
+     &                        (/Nrun/), (/1/),                          &
+     &                        ncid = DAV(ng)%ncid)
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
+      END IF
 #  endif
 
 #  ifdef BACKGROUND
@@ -514,12 +518,15 @@
 !  Write out background misfit cost function, Jb. Notice that it is
 !  written into DAV(ng)%name file instead of ITL(ng)%name file.
 !
-      CALL netcdf_put_fvar (ng, iTLM, DAV(ng)%name, 'back_function',    &
-     &                      FOURDVAR(ng)%BackCost(0),                   &
-     &                      (/Nrun/), (/1/),                            &
-     &                      ncid = DAV(ng)%ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (LwrtCost(ng)) THEN
+        CALL netcdf_put_fvar (ng, iTLM, DAV(ng)%name,                   &
+     &                        'back_function',                          &
+     &                        FOURDVAR(ng)%BackCost(0),                 &
+     &                        (/Nrun/), (/1/),                          &
+     &                        ncid = DAV(ng)%ncid)
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
+      END IF
 #  endif
 
 #  if defined I4DVAR
@@ -528,11 +535,13 @@
 !  that it is written into DAV(ng)%name file instead of ITL(ng)%name
 !  file.
 !
-      CALL netcdf_put_fvar (ng, iTLM, DAV(ng)%name, 'Jmin',             &
-     &                      Optimality(ng:), (/Nrun/), (/1/),           &
-     &                      ncid = DAV(ng)%ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (LwrtCost(ng)) THEN
+        CALL netcdf_put_fvar (ng, iTLM, DAV(ng)%name, 'Jmin',           &
+     &                        Optimality(ng:), (/Nrun/), (/1/),         &
+     &                        ncid = DAV(ng)%ncid)
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
+      END IF
 #  endif
 # endif
 !
@@ -581,6 +590,8 @@
           string='v-increments   '
         ELSE IF (OutRec.eq.4) THEN
           string='v-summations   '
+        ELSE IF (OutRec.eq.5) THEN
+          string='x-increments   '
         END IF
 # endif
 # ifdef SOLVE3D

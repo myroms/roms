@@ -2,7 +2,7 @@
       SUBROUTINE close_inp (ng, model)
 !
 !git $Id$
-!svn $Id: close_io.F 1028 2020-06-01 00:24:59Z arango $
+!svn $Id: close_io.F 1031 2020-07-14 01:39:55Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -125,7 +125,7 @@
 !  Local variable declarations.
 !
       logical :: First
-
+!
       integer :: Fcount, MyError, i, ng
 !
       SourceFile=__FILE__ // ", close_out"
@@ -138,11 +138,12 @@
         IF (RST(ng)%ncid.ne.-1) THEN
           CALL netcdf_close (ng, iNLM, RST(ng)%ncid, RST(ng)%name)
         END IF
-#if defined FOUR_DVAR || defined ENKF_RESTART
+#if defined FOUR_DVAR || defined ENKF_RESTART || defined VERIFICATION
         IF (DAI(ng)%ncid.ne.-1) THEN
           CALL netcdf_close (ng, iNLM, DAI(ng)%ncid, DAI(ng)%name)
         END IF
         IF (DAV(ng)%ncid.ne.-1) THEN
+          CALL netcdf_sync (ng, iNLM, DAV(ng)%name, DAV(ng)%ncid)
           CALL netcdf_close (ng, iNLM, DAV(ng)%ncid, DAV(ng)%name)
         END IF
 #endif

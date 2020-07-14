@@ -3,7 +3,7 @@
       SUBROUTINE read_AssPar (model, inp, out, Lwrite)
 !
 !git $Id$
-!svn $Id: read_asspar.F 1026 2020-05-20 02:05:37Z arango $
+!svn $Id: read_asspar.F 1031 2020-07-14 01:39:55Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -157,7 +157,7 @@
             CASE ('Nimpact')
               Npts=load_i(Nval, Rval, 1, Ivalue)
               Nimpact=Ivalue(1)
-#  ifdef SLIP_4DVAR
+#  if defined SPLIT_4DVAR
             CASE ('OuterLoop')
               Npts=load_i(Nval, Rval, 1, Ivalue)
               OuterLoop=Ivalue(1)
@@ -726,7 +726,7 @@
 !  to Ninner.
 !
       IF ((Nvct.lt.1).or.(Nvct.gt.Ninner)) THEN
-        IF (Lwrite) THEN
+        IF (Master) THEN
           WRITE (out,55) 'Illegal parameter for array modes, Nvct = ',  &
      &                   Nvct, Ninner, '1 =< Nvct =< Ninner.'
         END IF
@@ -769,7 +769,7 @@
 !  Report input parameters.
 !-----------------------------------------------------------------------
 !
-      IF (Lwrite) THEN
+      IF (Master.and.Lwrite) THEN
         DO ng=1,Ngrids
 #  if defined FOUR_DVAR || defined VERIFICATION
           WRITE (out,60) ng
@@ -794,11 +794,11 @@
 #    ifdef I4DVAR
           WRITE (out,100) GradErr, 'GradErr',                           &
      &            'Upper bound on relative error of the gradient.'
-          WRITE (out,100) HevecErr, 'HevecErr',                         &
-     &            'Accuracy required for Hessian eigenvectors.'
           WRITE (out,70) LhessianEV, 'LhessianEV',                      &
      &            'Switch to compute Hessian eigenvectors.'
 #    endif
+          WRITE (out,100) HevecErr, 'HevecErr',                         &
+     &            'Accuracy required for eigenvectors.'
 #    ifdef WEAK_CONSTRAINT
           WRITE (out,70) LhotStart, 'LhotStart',                        &
      &            'Switch for hot start of subsequent outer loops.'
@@ -893,7 +893,7 @@
             exit_flag=5
             RETURN
           END IF
-          WRITE (out,80) TRIM(Phase4DVAR), 'Phase4DVAR',                &
+          WRITE (out,95) Phase4DVAR(1:10), 'Phase4DVAR',                &
      &            'Current 4D-Var phase (first 10 characters).'
 #   endif
 #   ifndef TLM_CHECK
@@ -1481,7 +1481,7 @@
   80  FORMAT (1x,i10,2x,a,t30,a)
   85  FORMAT (1x,i10,2x,a,'(',i2.2,')',t30,a)
   90  FORMAT (1x,i10,2x,a,t30,a,/,t32,a)
-  95  FORMAT (1x,a10,2x,a,t30,a)
+  95  FORMAT (1x,a,2x,a,t30,a)
  100  FORMAT (1p,e11.4,2x,a,t30,a)
  110  FORMAT (10x,l1,2x,a,t30,a,i2.2,':',1x,a)
  120  FORMAT (f11.3,2x,a,t30,a)

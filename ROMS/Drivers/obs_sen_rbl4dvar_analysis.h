@@ -1,7 +1,7 @@
       MODULE ocean_control_mod
 !
 !git $Id$
-!svn $Id: obs_sen_rbl4dvar_analysis.h 1026 2020-05-20 02:05:37Z arango $
+!svn $Id: obs_sen_rbl4dvar_analysis.h 1031 2020-07-14 01:39:55Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -83,6 +83,7 @@
       USE mod_netcdf
       USE mod_scalars
 !
+      USE inp_par_mod,       ONLY : inp_par
 #ifdef MCT_LIB
 # ifdef ATM_COUPLING
       USE ocean_coupler_mod, ONLY : initialize_ocn2atm_coupling
@@ -1145,7 +1146,7 @@
             CALL initialize_boundary (ng, tile, iTLM)
 # endif
           END DO
-!$OMF END PARALLEL
+!$OMP END PARALLEL
         END DO
 !
 !  Initialize nonlinear model INI(ng)%name file, record outer+2.

@@ -1,7 +1,7 @@
       MODULE ocean_control_mod
 !
 !git $Id$
-!svn $Id: correlation.h 1026 2020-05-20 02:05:37Z arango $
+!svn $Id: correlation.h 1031 2020-07-14 01:39:55Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -71,6 +71,7 @@
       USE mod_ncparam
       USE mod_scalars
 !
+      USE inp_par_mod,       ONLY : inp_par
       USE normalization_mod, ONLY : normalization
       USE strings_mod,       ONLY : FoundError
 !

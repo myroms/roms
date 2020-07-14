@@ -5,7 +5,7 @@
 #ifdef I4DVAR
 !
 !git $Id$
-!svn $Id: cgradient.F 1022 2020-05-13 03:03:15Z arango $
+!svn $Id: cgradient.F 1031 2020-07-14 01:39:55Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -129,10 +129,22 @@
 !=======================================================================
 !
       implicit none
-
-      PRIVATE
-      PUBLIC :: cgradient
-
+!
+      PUBLIC  :: cgradient
+      PUBLIC  :: cg_read
+!
+      PRIVATE :: cgradient_tile
+      PRIVATE :: cg_write
+      PRIVATE :: hessian
+      PRIVATE :: hessian_evecs
+      PRIVATE :: lanczos
+      PRIVATE :: new_cost
+      PRIVATE :: new_direction
+      PRIVATE :: new_gradient
+      PRIVATE :: precond
+      PRIVATE :: read_state
+      PRIVATE :: tl_new_state
+!
       CONTAINS
 !
 !***********************************************************************
@@ -647,10 +659,11 @@
 !  Initialize trial step size.
 !-----------------------------------------------------------------------
 !
+      RitzMaxErr=HevecErr
       Ltrans=.FALSE.
 !
       IF (Master) WRITE (stdout,10)
- 10   FORMAT (/,' <<<< Descent Algorithm >>>>',/)
+ 10   FORMAT (/,' <<<< Conjugate Gradient Algorithm >>>>',/)
 !
 !  If preconditioning, convert the total gradient ad_var(L2)
 !  from v-space to y-space.
@@ -1104,7 +1117,6 @@
 !  Calculate the converged eigenvectors of the Hessian.
 !
           IF (innLoop.eq.Ninner) THEN
-            RitzMaxErr=HevecErr
             DO i=1,innLoop
               cg_RitzErr(i,outLoop)=cg_RitzErr(i,outLoop)/              &
      &                              cg_Ritz(Ninner,outLoop)
@@ -1419,10 +1431,9 @@
           END DO
         END IF
       END IF
-
+!
       RETURN
       END SUBROUTINE cgradient_tile
-
 !
 !***********************************************************************
       SUBROUTINE tl_new_state (ng, tile, model,                         &
@@ -2345,7 +2356,7 @@
 # endif
      &                   tl_zeta, ad_zeta)
       END IF
-
+!
       RETURN
       END SUBROUTINE tl_new_state
 !
@@ -2978,7 +2989,7 @@
  10   FORMAT (' READ_STATE - unable to open NetCDF file: ',a)
  20   FORMAT (' READ_STATE - error while reading variable: ',a,2x,      &
      &        'at time record = ',i3,/,14x,'in NetCDF file: ',a)
-
+!
       RETURN
       END SUBROUTINE read_state
 
@@ -3658,7 +3669,7 @@
       END DO
 #  endif
 # endif
-
+!
       RETURN
       END SUBROUTINE new_direction
 !
@@ -4517,7 +4528,7 @@
      &                    ad_zeta(:,:,Lnew), tl_zeta(:,:,Lwrk))
 
       cg_delta(innLoop,outLoop)=dot(0)
-
+!
       RETURN
       END SUBROUTINE hessian
 !
@@ -5293,7 +5304,7 @@
      &          '<G(',i3.3,'),G(',i3.3,')> = ',1p,e15.8)
       END IF
 # endif
-
+!
       RETURN
       END SUBROUTINE lanczos
 !
@@ -5684,7 +5695,7 @@
      &                    ad_zeta(:,:,Lold), ad_zeta(:,:,Lold))
 
       cg_Greduc(innLoop,outLoop)=SQRT(dot(0))/cg_Gnorm(outLoop)
-
+!
       RETURN
       END SUBROUTINE new_gradient
 !
@@ -6476,238 +6487,8 @@
 
       RETURN
       END SUBROUTINE hessian_evecs
-
-      SUBROUTINE cg_write (ng, model, innLoop, outLoop)
 !
-!=======================================================================
-!                                                                      !
-!  This routine writes conjugate gradient vectors into 4DVAR NetCDF    !
-!  for restart purposes.                                               !
-!                                                                      !
-!=======================================================================
-!
-      USE mod_param
-      USE mod_parallel
-      USE mod_fourdvar
-      Use mod_iounits
-      USE mod_ncparam
-      USE mod_netcdf
-      USE mod_scalars
-!
-      USE strings_mod, ONLY : FoundError
-!
-      implicit none
-!
-!  Imported variable declarations
-!
-      integer, intent(in) :: ng, model, innLoop, outLoop
-!
-!  Local variable declarations.
-!
-      integer :: status
-!
-      SourceFile=__FILE__  // ", cg_write"
-!
-!-----------------------------------------------------------------------
-!  Write out conjugate gradient vectors.
-!-----------------------------------------------------------------------
-!
-!  Write out outer and inner iteration.
-!
-      CALL netcdf_put_ivar (ng, model, DAV(ng)%name, 'outer',           &
-     &                      outer, (/0/), (/0/),                        &
-     &                      ncid = DAV(ng)%ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
-
-      CALL netcdf_put_ivar (ng, model, DAV(ng)%name, 'inner',           &
-     &                      inner, (/0/), (/0/),                        &
-     &                      ncid = DAV(ng)%ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
-!
-!  Write out number of converged Ritz eigenvalues.
-!
-      IF (innLoop.eq.Ninner) THEN
-        CALL netcdf_put_ivar (ng, model, DAV(ng)%name, 'nConvRitz',     &
-     &                        nConvRitz, (/0/), (/0/),                  &
-     &                        ncid = DAV(ng)%ncid)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
-      END IF
-!
-!  Write out converged Ritz eigenvalues.
-!
-      IF (innLoop.eq.Ninner) THEN
-        CALL netcdf_put_fvar (ng, model, DAV(ng)%name, 'Ritz',          &
-     &                        Ritz, (/1/), (/nConvRitz/),               &
-     &                        ncid = DAV(ng)%ncid)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
-      END IF
-!
-!  Write out conjugate gradient norms.
-!
-      IF (innLoop.gt.0) THEN
-        CALL netcdf_put_fvar (ng, model, DAV(ng)%name, 'cg_beta',       &
-     &                        cg_beta, (/1,1/), (/Ninner+1,Nouter/),    &
-     &                        ncid = DAV(ng)%ncid)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
-      END IF
-!
-!  Write out Lanczos algorithm coefficients.
-!
-      IF (innLoop.gt.0) THEN
-        CALL netcdf_put_fvar (ng, model, DAV(ng)%name, 'cg_delta',      &
-     &                        cg_delta, (/1,1/), (/Ninner,Nouter/),     &
-     &                        ncid = DAV(ng)%ncid)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
-      END IF
-!
-      IF (innLoop.gt.0) THEN
-        CALL netcdf_put_fvar (ng, model, DAV(ng)%name, 'cg_gamma',      &
-     &                        cg_gamma, (/1,1/), (/Ninner,Nouter/),     &
-     &                        ncid = DAV(ng)%ncid)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
-      END IF
-!
-!  Initial gradient normalization factor.
-!
-      IF (innLoop.eq.0) THEN
-        CALL netcdf_put_fvar (ng, model, DAV(ng)%name, 'cg_Gnorm',      &
-     &                        cg_Gnorm, (/1/), (/Nouter/),              &
-     &                        ncid = DAV(ng)%ncid)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
-      END IF
-!
-!  Lanczos vector normalization factor.
-!
-      IF (innLoop.gt.0) THEN
-        CALL netcdf_put_fvar (ng, model, DAV(ng)%name, 'cg_QG',         &
-     &                        cg_QG, (/1,1/), (/Ninner,Nouter/),        &
-     &                        ncid = DAV(ng)%ncid)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
-      END IF
-!
-!  Reduction in the gradient norm.
-!
-      IF (innLoop.gt.0) THEN
-        CALL netcdf_put_fvar (ng, model, DAV(ng)%name, 'cg_Greduc',     &
-     &                        cg_Greduc, (/1,1/), (/Ninner,Nouter/),    &
-     &                        ncid = DAV(ng)%ncid)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
-      END IF
-!
-!  Lanczos recurrence tridiagonal matrix.
-!
-      IF (innLoop.gt.0) THEN
-        CALL netcdf_put_fvar (ng, model, DAV(ng)%name, 'cg_Tmatrix',    &
-     &                        cg_Tmatrix, (/1,1/), (/Ninner,3/),        &
-     &                        ncid = DAV(ng)%ncid)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
-      END IF
-!
-!  Lanczos tridiagonal matrix, upper diagonal elements.
-!
-      IF (innLoop.gt.0) THEN
-        CALL netcdf_put_fvar (ng, model, DAV(ng)%name, 'cg_zu',         &
-     &                        cg_zu, (/1,1/), (/Ninner,Nouter/),        &
-     &                        ncid = DAV(ng)%ncid)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
-      END IF
-!
-!  Eigenvalues of Lanczos recurrence relationship.
-!
-      IF (innLoop.gt.0) THEN
-        CALL netcdf_put_fvar (ng, model, DAV(ng)%name, 'cg_Ritz',       &
-     &                        cg_Ritz, (/1,1/), (/Ninner,Nouter/),      &
-     &                        ncid = DAV(ng)%ncid)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
-      END IF
-!
-!  Eigenvalues relative error.
-!
-      IF (innLoop.gt.0) THEN
-        CALL netcdf_put_fvar (ng, model, DAV(ng)%name, 'cg_RitzErr',    &
-     &                        cg_RitzErr, (/1,1/), (/Ninner,Nouter/),   &
-     &                        ncid = DAV(ng)%ncid)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
-      END IF
-!
-!  Eigenvectors of Lanczos recurrence relationship.
-!
-      IF (innLoop.gt.0) THEN
-        CALL netcdf_put_fvar (ng, model, DAV(ng)%name, 'cg_zv',         &
-     &                        cg_zv, (/1,1/), (/Ninner,Ninner/),        &
-     &                        ncid = DAV(ng)%ncid)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
-      END IF
-!
-!  Write out Lanczos algorithm coefficients into Lanczos vectors
-!  output file (for now adjoint history file). These coefficients
-!  can be used for preconditioning or to compute the sensitivity
-!  of the observations to the 4DVAR data assimilation system.
-!
-      IF (innLoop.gt.0) THEN
-        CALL netcdf_put_fvar (ng, model, ADM(ng)%name, 'cg_beta',       &
-     &                        cg_beta, (/1,1/), (/Ninner+1,Nouter/),    &
-     &                        ncid = ADM(ng)%ncid)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
-!
-        CALL netcdf_put_fvar (ng, model, ADM(ng)%name, 'cg_delta',      &
-     &                        cg_delta, (/1,1/), (/Ninner,Nouter/),     &
-     &                        ncid = ADM(ng)%ncid)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
-!
-        CALL netcdf_put_fvar (ng, model, ADM(ng)%name, 'cg_zv',         &
-     &                        cg_zv, (/1,1/), (/Ninner,Ninner/),        &
-     &                        ncid = ADM(ng)%ncid)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
-# ifdef EVOLVED_LCZ
-        CALL netcdf_put_fvar (ng, model, HSS(ng)%name, 'cg_beta',       &
-     &                        cg_beta, (/1,1/), (/Ninner+1,Nouter/),    &
-     &                        ncid = HSS(ng)%ncid)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
-!
-        CALL netcdf_put_fvar (ng, model, HSS(ng)%name, 'cg_delta',      &
-     &                        cg_delta, (/1,1/), (/Ninner,Nouter/),     &
-     &                        ncid = HSS(ng)%ncid)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
-!
-        CALL netcdf_put_fvar (ng, model, HSS(ng)%name, 'cg_zv',         &
-     &                        cg_zv, (/1,1/), (/Ninner,Ninner/),        &
-     &                        ncid = HSS(ng)%ncid)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
-# endif
-      END IF
-!
-!-----------------------------------------------------------------------
-!  Synchronize model/observation NetCDF file to disk.
-!-----------------------------------------------------------------------
-!
-      CALL netcdf_sync (ng, model, DAV(ng)%name, DAV(ng)%ncid)
-
-      RETURN
-      END SUBROUTINE cg_write
-!
-!=======================================================================
+!***********************************************************************
       SUBROUTINE new_cost (ng, tile, model,                             &
      &                     LBi, UBi, LBj, UBj, LBij, UBij,              &
      &                     IminS, ImaxS, JminS, JmaxS,                  &
@@ -6734,7 +6515,7 @@
      &                     nl_ubar, nl_vbar,                            &
 # endif
      &                     nl_zeta)
-!=======================================================================
+!***********************************************************************
 !
       USE mod_param
       USE mod_parallel
@@ -7834,5 +7615,400 @@
 
       RETURN
       END SUBROUTINE precond
+!
+      SUBROUTINE cg_write (ng, model, innLoop, outLoop)
+!
+!***********************************************************************
+!                                                                      !
+!  This routine writes conjugate gradient vectors into 4DVAR NetCDF    !
+!  for restart purposes.                                               !
+!                                                                      !
+!***********************************************************************
+!
+      USE mod_param
+      USE mod_parallel
+      USE mod_fourdvar
+      Use mod_iounits
+      USE mod_ncparam
+      USE mod_netcdf
+      USE mod_scalars
+!
+      USE strings_mod, ONLY : FoundError
+!
+      implicit none
+!
+!  Imported variable declarations
+!
+      integer, intent(in) :: ng, model, innLoop, outLoop
+!
+!  Local variable declarations.
+!
+      integer :: status
+!
+      SourceFile=__FILE__  // ", cg_write"
+!
+!-----------------------------------------------------------------------
+!  Write out conjugate gradient vectors.
+!-----------------------------------------------------------------------
+!
+!  Write out outer and inner iteration.
+!
+      CALL netcdf_put_ivar (ng, model, DAV(ng)%name, 'outer',           &
+     &                      outer, (/0/), (/0/),                        &
+     &                      ncid = DAV(ng)%ncid)
+      IF (FoundError(exit_flag, NoError, __LINE__,                      &
+     &               __FILE__)) RETURN
+
+      CALL netcdf_put_ivar (ng, model, DAV(ng)%name, 'inner',           &
+     &                      inner, (/0/), (/0/),                        &
+     &                      ncid = DAV(ng)%ncid)
+      IF (FoundError(exit_flag, NoError, __LINE__,                      &
+     &               __FILE__)) RETURN
+!
+!  Write out number of converged Ritz eigenvalues.
+!
+      IF (innLoop.eq.Ninner) THEN
+        CALL netcdf_put_ivar (ng, model, DAV(ng)%name, 'nConvRitz',     &
+     &                        nConvRitz, (/0/), (/0/),                  &
+     &                        ncid = DAV(ng)%ncid)
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
+      END IF
+!
+!  Write out converged Ritz eigenvalues.
+!
+      IF (innLoop.eq.Ninner) THEN
+        CALL netcdf_put_fvar (ng, model, DAV(ng)%name, 'Ritz',          &
+     &                        Ritz, (/1/), (/nConvRitz/),               &
+     &                        ncid = DAV(ng)%ncid)
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
+      END IF
+!
+!  Write out conjugate gradient norms.
+!
+      IF (innLoop.gt.0) THEN
+        CALL netcdf_put_fvar (ng, model, DAV(ng)%name, 'cg_beta',       &
+     &                        cg_beta, (/1,1/), (/Ninner+1,Nouter/),    &
+     &                        ncid = DAV(ng)%ncid)
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
+      END IF
+!
+!  Write out Lanczos algorithm coefficients.
+!
+      IF (innLoop.gt.0) THEN
+        CALL netcdf_put_fvar (ng, model, DAV(ng)%name, 'cg_delta',      &
+     &                        cg_delta, (/1,1/), (/Ninner,Nouter/),     &
+     &                        ncid = DAV(ng)%ncid)
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
+      END IF
+!
+      IF (innLoop.gt.0) THEN
+        CALL netcdf_put_fvar (ng, model, DAV(ng)%name, 'cg_gamma',      &
+     &                        cg_gamma, (/1,1/), (/Ninner,Nouter/),     &
+     &                        ncid = DAV(ng)%ncid)
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
+      END IF
+!
+!  Initial gradient normalization factor.
+!
+      IF (innLoop.eq.0) THEN
+        CALL netcdf_put_fvar (ng, model, DAV(ng)%name, 'cg_Gnorm',      &
+     &                        cg_Gnorm, (/1/), (/Nouter/),              &
+     &                        ncid = DAV(ng)%ncid)
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
+      END IF
+!
+!  Lanczos vector normalization factor.
+!
+      IF (innLoop.gt.0) THEN
+        CALL netcdf_put_fvar (ng, model, DAV(ng)%name, 'cg_QG',         &
+     &                        cg_QG, (/1,1/), (/Ninner,Nouter/),        &
+     &                        ncid = DAV(ng)%ncid)
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
+      END IF
+!
+!  Reduction in the gradient norm.
+!
+      IF (innLoop.gt.0) THEN
+        CALL netcdf_put_fvar (ng, model, DAV(ng)%name, 'cg_Greduc',     &
+     &                        cg_Greduc, (/1,1/), (/Ninner,Nouter/),    &
+     &                        ncid = DAV(ng)%ncid)
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
+      END IF
+!
+!  Lanczos recurrence tridiagonal matrix.
+!
+      IF (innLoop.gt.0) THEN
+        CALL netcdf_put_fvar (ng, model, DAV(ng)%name, 'cg_Tmatrix',    &
+     &                        cg_Tmatrix, (/1,1/), (/Ninner,3/),        &
+     &                        ncid = DAV(ng)%ncid)
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
+      END IF
+!
+!  Lanczos tridiagonal matrix, upper diagonal elements.
+!
+      IF (innLoop.gt.0) THEN
+        CALL netcdf_put_fvar (ng, model, DAV(ng)%name, 'cg_zu',         &
+     &                        cg_zu, (/1,1/), (/Ninner,Nouter/),        &
+     &                        ncid = DAV(ng)%ncid)
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
+      END IF
+!
+!  Eigenvalues of Lanczos recurrence relationship.
+!
+      IF (innLoop.gt.0) THEN
+        CALL netcdf_put_fvar (ng, model, DAV(ng)%name, 'cg_Ritz',       &
+     &                        cg_Ritz, (/1,1/), (/Ninner,Nouter/),      &
+     &                        ncid = DAV(ng)%ncid)
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
+      END IF
+!
+!  Eigenvalues relative error.
+!
+      IF (innLoop.gt.0) THEN
+        CALL netcdf_put_fvar (ng, model, DAV(ng)%name, 'cg_RitzErr',    &
+     &                        cg_RitzErr, (/1,1/), (/Ninner,Nouter/),   &
+     &                        ncid = DAV(ng)%ncid)
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
+      END IF
+!
+!  Eigenvectors of Lanczos recurrence relationship.
+!
+      IF (innLoop.gt.0) THEN
+        CALL netcdf_put_fvar (ng, model, DAV(ng)%name, 'cg_zv',         &
+     &                        cg_zv, (/1,1/), (/Ninner,Ninner/),        &
+     &                        ncid = DAV(ng)%ncid)
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
+      END IF
+!
+!  Write out Lanczos algorithm coefficients into Lanczos vectors
+!  output file (for now adjoint history file). These coefficients
+!  can be used for preconditioning or to compute the sensitivity
+!  of the observations to the 4DVAR data assimilation system.
+!
+      IF (innLoop.gt.0) THEN
+        CALL netcdf_put_fvar (ng, model, ADM(ng)%name, 'cg_beta',       &
+     &                        cg_beta, (/1,1/), (/Ninner+1,Nouter/),    &
+     &                        ncid = ADM(ng)%ncid)
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
+!
+        CALL netcdf_put_fvar (ng, model, ADM(ng)%name, 'cg_delta',      &
+     &                        cg_delta, (/1,1/), (/Ninner,Nouter/),     &
+     &                        ncid = ADM(ng)%ncid)
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
+!
+        CALL netcdf_put_fvar (ng, model, ADM(ng)%name, 'cg_zv',         &
+     &                        cg_zv, (/1,1/), (/Ninner,Ninner/),        &
+     &                        ncid = ADM(ng)%ncid)
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
+# ifdef EVOLVED_LCZ
+        CALL netcdf_put_fvar (ng, model, HSS(ng)%name, 'cg_beta',       &
+     &                        cg_beta, (/1,1/), (/Ninner+1,Nouter/),    &
+     &                        ncid = HSS(ng)%ncid)
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
+!
+        CALL netcdf_put_fvar (ng, model, HSS(ng)%name, 'cg_delta',      &
+     &                        cg_delta, (/1,1/), (/Ninner,Nouter/),     &
+     &                        ncid = HSS(ng)%ncid)
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
+!
+        CALL netcdf_put_fvar (ng, model, HSS(ng)%name, 'cg_zv',         &
+     &                        cg_zv, (/1,1/), (/Ninner,Ninner/),        &
+     &                        ncid = HSS(ng)%ncid)
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
+# endif
+      END IF
+!
+!-----------------------------------------------------------------------
+!  Synchronize model/observation NetCDF file to disk.
+!-----------------------------------------------------------------------
+!
+      CALL netcdf_sync (ng, model, DAV(ng)%name, DAV(ng)%ncid)
+!
+      RETURN
+      END SUBROUTINE cg_write
+!
+      SUBROUTINE cg_read (ng, model, outLoop)
+!
+!***********************************************************************
+!                                                                      !
+!  If split 4D-Var and outer>1, this routine reads conjugate gradient  !
+!  variables for previous outer loops from 4D-Var NetCDF (DAV) file.   !
+!                                                                      !
+!***********************************************************************
+!
+      USE mod_param
+      USE mod_fourdvar
+      Use mod_iounits
+      USE mod_netcdf
+      USE mod_scalars
+!
+      USE strings_mod, ONLY : FoundError
+!
+      implicit none
+!
+!  Imported variable declarations
+!
+      integer, intent(in) :: ng, model, outLoop
+!
+!  Local variable declarations.
+!
+      integer :: status
+!
+      SourceFile=__FILE__ // ", cg_read"
+!
+!-----------------------------------------------------------------------
+!  If split 4D-Var and outer>1, Read in conjugate gradient variables
+!  four outerloop restart.
+!-----------------------------------------------------------------------
+!
+!  Open DAV NetCDF file for reading.
+!
+      IF (DAV(ng)%ncid.eq.-1) THEN
+        CALL netcdf_open (ng, model, DAV(ng)%name, 1, DAV(ng)%ncid)
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
+      END IF
+!
+!  Read in number of converget Ritz eigenvalues
+!
+      CALL netcdf_get_ivar (ng, model, DAV(ng)%name,                    &
+     &                      'nConvRitz', nConvRitz,                     &
+     &                      ncid = DAV(ng)%ncid,                        &
+     &                      start = (/outLoop-1/),                      &
+     &                      total = (/1/))
+      IF (FoundError(exit_flag, NoError, __LINE__,                      &
+     &               __FILE__)) RETURN
+!
+!  Read in Ritz eigenvalues.
+!
+      CALL netcdf_get_fvar (ng, model, DAV(ng)%name,                    &
+     &                      'Ritz', Ritz,                               &
+     &                      ncid = DAV(ng)%ncid,                        &
+     &                      start = (/1/),                              &
+     &                      total = (/Ninner/))
+      IF (FoundError(exit_flag, NoError, __LINE__,                      &
+     &               __FILE__)) RETURN
+!
+!  Read in conjugate gradient "beta" coefficients.
+!
+      CALL netcdf_get_fvar (ng, model, DAV(ng)%name,                    &
+     &                      'cg_beta', cg_beta,                         &
+     &                      ncid = DAV(ng)%ncid,                        &
+     &                      start = (/1,1/),                            &
+     &                      total = (/Ninner+1,outLoop-1/))
+      IF (FoundError(exit_flag, NoError, __LINE__,                      &
+     &               __FILE__)) RETURN
+!
+!  Read in conjugate gradient "delta" coefficients.
+!
+      CALL netcdf_get_fvar (ng, model, DAV(ng)%name,                    &
+     &                      'cg_delta', cg_delta,                       &
+     &                      ncid = DAV(ng)%ncid,                        &
+     &                      start = (/1,1/),                            &
+     &                      total = (/Ninner,outLoop-1/))
+      IF (FoundError(exit_flag, NoError, __LINE__,                      &
+     &               __FILE__)) RETURN
+!
+!  Read in conjugate gradient "gamma" coefficients.
+!
+      CALL netcdf_get_fvar (ng, model, DAV(ng)%name,                    &
+     &                      'cg_gamma', cg_gamma,                       &
+     &                      ncid = DAV(ng)%ncid,                        &
+     &                      start = (/1,1/),                            &
+     &                      total = (/Ninner,outLoop-1/))
+      IF (FoundError(exit_flag, NoError, __LINE__,                      &
+     &               __FILE__)) RETURN
+!
+!  Read in initial gradient normalization factor.
+!
+      CALL netcdf_get_fvar (ng, model, DAV(ng)%name,                    &
+     &                      'cg_Gnorm', cg_Gnorm,                       &
+     &                      ncid = DAV(ng)%ncid,                        &
+     &                      start = (/1/),                              &
+     &                      total = (/outLoop-1/))
+      IF (FoundError(exit_flag, NoError, __LINE__,                      &
+     &               __FILE__)) RETURN
+!
+!  Read in Lanczos vector normalization factor.
+!
+      CALL netcdf_get_fvar (ng, model, DAV(ng)%name,                    &
+     &                      'cg_QG', cg_QG,                             &
+     &                      ncid = DAV(ng)%ncid,                        &
+     &                      start = (/1,1/),                            &
+     &                      total = (/Ninner+1,outLoop-1/))
+      IF (FoundError(exit_flag, NoError, __LINE__,                      &
+     &               __FILE__)) RETURN
+!
+!  Read in reduction in the gradient norm.
+!
+      CALL netcdf_get_fvar (ng, model, DAV(ng)%name,                    &
+     &                      'cg_Greduc', cg_Greduc,                     &
+     &                      ncid = DAV(ng)%ncid,                        &
+     &                      start = (/1,1/),                            &
+     &                      total = (/Ninner,outLoop-1/))
+      IF (FoundError(exit_flag, NoError, __LINE__,                      &
+     &               __FILE__)) RETURN
+!
+!  Read in tridiagonal matrix upper diagonal elements.
+!
+      CALL netcdf_get_fvar (ng, model, DAV(ng)%name,                    &
+     &                      'cg_zu', cg_zu,                             &
+     &                      ncid = DAV(ng)%ncid,                        &
+     &                      start = (/1,1/),                            &
+     &                      total = (/Ninner,outLoop-1/))
+      IF (FoundError(exit_flag, NoError, __LINE__,                      &
+     &               __FILE__)) RETURN
+!
+!  Read in eigenvalues of Lanczos recurrence relationship.
+!
+      CALL netcdf_get_fvar (ng, model, DAV(ng)%name,                    &
+     &                      'cg_Ritz', cg_Ritz,                         &
+     &                      ncid = DAV(ng)%ncid,                        &
+     &                      start = (/1,1/),                            &
+     &                      total = (/Ninner,outLoop-1/))
+      IF (FoundError(exit_flag, NoError, __LINE__,                      &
+     &               __FILE__)) RETURN
+!
+!  Read eigenvalues relative error.
+!
+      CALL netcdf_get_fvar (ng, model, DAV(ng)%name,                    &
+     &                      'cg_RitzErr', cg_RitzErr,                   &
+     &                      ncid = DAV(ng)%ncid,                        &
+     &                      start = (/1,1/),                            &
+     &                      total = (/Ninner,outLoop-1/))
+      IF (FoundError(exit_flag, NoError, __LINE__,                      &
+     &               __FILE__)) RETURN
+!
+!  Read in eigenvectors of Lanczos recurrence relationship.
+!
+      CALL netcdf_get_fvar (ng, model, DAV(ng)%name,                    &
+     &                      'cg_zv', cg_zv,                             &
+     &                      ncid = DAV(ng)%ncid,                        &
+     &                      start = (/1,1/),                            &
+     &                      total = (/Ninner,Ninner/))
+      IF (FoundError(exit_flag, NoError, __LINE__,                      &
+     &               __FILE__)) RETURN
+!
+      RETURN
+      END SUBROUTINE cg_read
 #endif
       END MODULE cgradient_mod

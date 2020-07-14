@@ -1,7 +1,7 @@
       MODULE ocean_control_mod
 !
 !git $Id$
-!svn $Id: i4dvar_ocean.h 1026 2020-05-20 02:05:37Z arango $
+!svn $Id: i4dvar_ocean.h 1031 2020-07-14 01:39:55Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -64,6 +64,8 @@
       USE mod_iounits
       USE mod_scalars
 !
+      USE i4dvar_mod
+      USE inp_par_mod,       ONLY : inp_par
 #ifdef MCT_LIB
 # ifdef ATM_COUPLING
       USE ocean_coupler_mod, ONLY : initialize_ocn2atm_coupling
@@ -72,7 +74,6 @@
       USE ocean_coupler_mod, ONLY : initialize_ocn2wav_coupling
 # endif
 #endif
-      USE i4dvar_mod,        ONLY : prior_error
       USE strings_mod,       ONLY : FoundError
 !
 !  Imported variable declarations.
@@ -191,14 +192,19 @@
 #endif
 !
 !-----------------------------------------------------------------------
-!  Proccess background prior error covariance standard deviations and
-!  normalization coefficients.
+!  Set application grid, metrics, and associated variables. Then,
+!  proccess background prior error covariance standard deviations
+!  and normalization coefficients.
 !-----------------------------------------------------------------------
 !
+      LgetSTD=.TRUE.
+      LgetNRM=.TRUE.
+
       DO ng=1,Ngrids
         CALL prior_error (ng)
         IF (FoundError(exit_flag, NoError, __LINE__,                    &
      &                 __FILE__)) RETURN
+        SetGridConfig(ng)=.FALSE.
       END DO
 !
       RETURN
@@ -255,7 +261,6 @@
       END DO
 !
       Nrun=1                ! run counter
-      inner=0               ! inner-loop counter
       ERstr=1               ! ensemble start counter
       ERend=Nouter          ! ensemble end counter
 !
@@ -263,6 +268,7 @@
 !
       OUTER_LOOP : DO my_outer=1,Nouter
         outer=my_outer
+        inner=0
 !
 !  Compute nonlinear background state trajectory, Xb(t)|n-1. Interpolate
 !  the background at the observation locations, and compute the quality
@@ -315,6 +321,8 @@
       USE mod_ncparam
       USE mod_scalars
 !
+      USE strings_mod,  ONLY : FoundError
+!
 !  Local variable declarations.
 !
       integer :: Fcount, ng, tile, thread
@@ -332,7 +340,14 @@
 !
       IF (exit_flag.eq.NoError) THEN
         DO ng=1,Ngrids
+          LdefDAI(ng)=.TRUE.
+          CALL def_dai (ng)
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
+!
           CALL wrt_dai (ng, tile)
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
         END DO
       END IF
 !

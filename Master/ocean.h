@@ -1,7 +1,7 @@
       PROGRAM ocean
 !
 !git $Id$
-!svn $Id: ocean.h 995 2020-01-10 04:01:28Z arango $
+!svn $Id: ocean.h 1031 2020-07-14 01:39:55Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -123,5 +123,14 @@
 #if defined DISTRIBUTE && defined MPI
       CALL mpi_finalize (MyError)
 #endif
-
+!
+!-----------------------------------------------------------------------
+!  If error, issue abort signal. It is expected that the Unix or POSIX
+!  environment should handle this as a return errorcode from the ROMS
+!  main to abort. It facilitates error handling in scripting.
+!-----------------------------------------------------------------------
+!
+!!    IF ((exit_flag.ne.NoError).or.(blowup.ne.0)) STOP 911   ! F-2003
+      IF ((exit_flag.ne.NoError).or.(blowup.ne.0)) ERROR STOP ! F-2008
+!
       END PROGRAM ocean

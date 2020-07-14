@@ -3,7 +3,7 @@
       SUBROUTINE def_mod (ng)
 !
 !git $Id$
-!svn $Id: def_mod.F 1028 2020-06-01 00:24:59Z arango $
+!svn $Id: def_mod.F 1031 2020-07-14 01:39:55Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -51,6 +51,7 @@
 
       integer :: iterDim, datumDim, recordDim
       integer :: stateDim, stateDimp, surveyDim
+      integer :: Fcount
 # ifdef RPCG
       integer :: datumDimp, NouterDimp
 # endif
@@ -2264,6 +2265,16 @@
           RETURN
         END IF
 # endif
+
+# if defined I4DVAR || defined BACKGROUND
+!
+!  Set unlimited time record dimension to the appropriate value.
+!
+        DAV(ng)%Rindex=rec_size
+        Fcount=DAV(ng)%Fcount
+        DAV(ng)%Nrec(Fcount)=rec_size
+# endif
+
       END IF QUERY
 
   10  FORMAT (/,6x,'DEF_MOD   - creating model/observation data',       &

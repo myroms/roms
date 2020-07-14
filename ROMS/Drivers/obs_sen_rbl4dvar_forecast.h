@@ -81,6 +81,7 @@
       USE mod_netcdf
       USE mod_scalars
 !
+      USE inp_par_mod,       ONLY : inp_par
 #ifdef MCT_LIB
 # ifdef ATM_COUPLING
       USE ocean_coupler_mod, ONLY : initialize_ocn2atm_coupling
@@ -753,6 +754,15 @@
 !
 !  Initialize the adjoint model: initialize using dI/dxf is appropriate.
 !
+!  TODO: There is problem with the "haveObsMeta" flag. It is always
+!        FALSE on the first call to OBS_READ, so "ObsMeta" is zero
+!  for the radials. The reason this is happening is because that
+!  NetCDF file had already been opened somewhere prior to calling
+!  OBS_INITIAL in TL_INITIAL (and AD_INITIAL when appropriate),
+!  so the obs arrays were not getting initialized properly by
+!  these routines. For now, the solution is to close the NetCDF
+!  file before each call to TL_INITIAL and AD_INITIAL.
+!
       DO ng=1,Ngrids
         Lstiffness=.FALSE.
 #ifdef OBS_SPACE
@@ -766,6 +776,7 @@
         LsenPSAS(ng)=.TRUE.
         LsenFCT(ng)=.FALSE.
 #endif
+        CALL netcdf_close (ng, iADM, OBS(ng)%ncid, OBS(ng)%name)
 !$OMP PARALLEL
         CALL ad_initial (ng)
 !$OMP END PARALLEL
@@ -904,6 +915,7 @@
           LsenPSAS(ng)=.TRUE.
           LsenFCT(ng)=.FALSE.
 #endif
+          CALL netcdf_close (ng, iADM, OBS(ng)%ncid, OBS(ng)%name)
 !$OMP PARALLEL
           CALL ad_initial (ng)
 !$OMP END PARALLEL
@@ -1100,6 +1112,7 @@
           LsenFCT(ng)=.FALSE.
 #endif
 !!AMM
+          CALL netcdf_close (ng, iADM, OBS(ng)%ncid, OBS(ng)%name)
 !$OMP PARALLEL
           CALL ad_initial (ng)
 !$OMP END PARALLEL
@@ -1378,6 +1391,7 @@
 !
         DO ng=1,Ngrids
           ITL(ng)%Rindex=Rec1
+          CALL netcdf_close (ng, iTLM, OBS(ng)%ncid, OBS(ng)%name)
 !$OMP PARALLEL
           CALL tl_initial (ng)
 !$OMP END PARALLEL
@@ -1500,6 +1514,7 @@
             LadjVAR(ng)=.TRUE.
 #  endif
 # endif
+            CALL netcdf_close (ng, iADM, OBS(ng)%ncid, OBS(ng)%name)
 !$OMP PARALLEL
             CALL ad_initial (ng)
 !$OMP END PARALLEL
@@ -1616,6 +1631,7 @@
 !
           DO ng=1,Ngrids
             ITL(ng)%Rindex=Rec1
+            CALL netcdf_close (ng, iTLM, OBS(ng)%ncid, OBS(ng)%name)
 !$OMP PARALLEL
             CALL tl_initial (ng)
 !$OMP END PARALLEL
@@ -1784,6 +1800,7 @@
 !
         DO ng=1,Ngrids
           ITL(ng)%Rindex=Rec1
+          CALL netcdf_close (ng, iTLM, OBS(ng)%ncid, OBS(ng)%name)
 !$OMP PARALLEL
           CALL tl_initial (ng)
 !$OMP END PARALLEL
@@ -1911,6 +1928,7 @@
 !
         DO ng=1,Ngrids
           ITL(ng)%Rindex=Rec1
+          CALL netcdf_close (ng, iTLM, OBS(ng)%ncid, OBS(ng)%name)
 !$OMP PARALLEL
           CALL tl_initial (ng)
 !$OMP END PARALLEL
@@ -2039,6 +2057,7 @@
 !
         DO ng=1,Ngrids
           ITL(ng)%Rindex=Rec1
+          CALL netcdf_close (ng, iTLM, OBS(ng)%ncid, OBS(ng)%name)
 !$OMP PARALLEL
           CALL tl_initial (ng)
 !$OMP END PARALLEL
