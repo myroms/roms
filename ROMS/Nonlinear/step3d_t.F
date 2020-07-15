@@ -3,7 +3,7 @@
 #if !defined TS_FIXED && (defined NONLINEAR && defined SOLVE3D)
 !
 !git $Id$
-!svn $Id: step3d_t.F 1029 2020-07-11 02:11:09Z arango $
+!svn $Id: step3d_t.F 1034 2020-07-15 21:16:28Z arango $
 !=======================================================================
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -1317,9 +1317,9 @@
 !  J. Levin (Jupiter Intelligence Inc.) and J. Wilkin
 !
       IF (LwSrc(ng)) THEN
-        IF (.not.((Hadvection(itrc,ng)%MPDATA).and.                     &
-     &            (Vadvection(itrc,ng)%MPDATA))) THEN
-          DO itrc=1,NT(ng)
+        DO itrc=1,NT(ng)
+          IF (.not.((Hadvection(itrc,ng)%MPDATA).and.                   &
+     &              (Vadvection(itrc,ng)%MPDATA))) THEN
             DO is=1,Nsrc(ng)
               Isrc=SOURCES(ng)%Isrc(is)
               Jsrc=SOURCES(ng)%Jsrc(is)
@@ -1341,8 +1341,8 @@
                 END DO
               END IF
             END DO
-          END DO
-        END IF
+          END IF
+        END DO
       END IF
 !
 !-----------------------------------------------------------------------

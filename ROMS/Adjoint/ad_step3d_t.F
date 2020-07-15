@@ -5,7 +5,7 @@
 #if !defined TS_FIXED && (defined ADJOINT && defined SOLVE3D)
 !
 !git $Id$
-!svn $Id: ad_step3d_t.F 1029 2020-07-11 02:11:09Z arango $
+!svn $Id: ad_step3d_t.F 1034 2020-07-15 21:16:28Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -943,9 +943,9 @@
 !  J. Levin (Jupiter Intelligence Inc.) and J. Wilkin
 !
       IF (LwSrc(ng)) THEN
-        IF (.not.((ad_Hadvection(itrc,ng)%MPDATA).and.                  &
-     &            (ad_Vadvection(itrc,ng)%MPDATA))) THEN
-          DO itrc=1,NT(ng)
+        DO itrc=1,NT(ng)
+          IF (.not.((ad_Hadvection(itrc,ng)%MPDATA).and.                &
+     &              (ad_Vadvection(itrc,ng)%MPDATA))) THEN
             DO is=1,Nsrc(ng)
               Isrc=SOURCES(ng)%Isrc(is)
               Jsrc=SOURCES(ng)%Jsrc(is)
@@ -961,6 +961,25 @@
                   ELSE
                     cff3=t(Isrc,Jsrc,k,3,itrc)
                   END IF
+# ifdef SPLINES_VDIFF
+!>                tl_t(Isrc,Jsrc,k,nnew,itrc)=                          &
+!>   &                                  tl_t(Isrc,Jsrc,k,nnew,itrc)+    &
+!>   &                                  cff*(SOURCES(ng)%tl_Qsrc(is,k)* &
+!>   &                                       cff3+                      &
+!>   &                                       SOURCES(ng)%Qsrc(is,k)*    &
+!>   &                                       tl_cff3)+                  &
+!>   &                                  tl_cff*SOURCES(ng)%Qsrc(is,k)*  &
+!>   &                                         cff3
+!>
+                  adfac=cff*ad_t(Isrc,Jsrc,k,nnew,itrc)
+                  SOURCES(ng)%ad_Qsrc(is,k)=SOURCES(ng)%ad_Qsrc(is,k)+  &
+     &                                      cff3*adfac
+                  ad_cff3=ad_cff3+                                      &
+     &                    SOURCES(ng)%Qsrc(is,k)*adfac
+                  ad_cff=ad_cff+                                        &
+     &                   SOURCES(ng)%Qsrc(is,k)*cff3*                   &
+     &                   ad_t(Isrc,Jsrc,k,nnew,itrc)
+# else
 !>                tl_t(Isrc,Jsrc,k,nnew,itrc)=                          &
 !>   &                                  tl_t(Isrc,Jsrc,k,nnew,itrc)+    &
 !>   &                                  cff*(SOURCES(ng)%tl_Qsrc(is,k)* &
@@ -973,6 +992,7 @@
      &                                      cff3*adfac
                   ad_cff3=ad_cff3+                                      &
      &                    SOURCES(ng)%Qsrc(is,k)*adfac
+# endif
                   IF (LtracerSrc(itrc,ng)) THEN
 !>                  tl_cff3=SOURCES(ng)%tl_Tsrc(is,k,itrc)
 !>
@@ -986,11 +1006,18 @@
      &                                       ad_cff3
                   END IF
                   ad_cff3=0.0_r8
+# ifdef SPLINES_VDIFF
+!>                tl_cff=cff*tl_oHz(Isrc,Jsrc,k)
+!>
+                  ad_oHz(Isrc,Jsrc,k)=ad_oHz(Isrc,Jsrc,k)+              &
+     &                                cff*ad_cff
+                  ad_cff=0.0_r8
+# endif
                 END DO
               END IF
             END DO
-          END DO
-        END IF
+          END IF
+        END DO
       END IF
 !
 !-----------------------------------------------------------------------
