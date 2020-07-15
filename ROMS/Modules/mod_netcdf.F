@@ -2,7 +2,7 @@
       MODULE mod_netcdf
 !
 !git $Id$
-!svn $Id: mod_netcdf.F 1031 2020-07-14 01:39:55Z arango $
+!svn $Id: mod_netcdf.F 1033 2020-07-15 00:59:34Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -29,30 +29,30 @@
         MODULE PROCEDURE netcdf_get_fvar_3d
         MODULE PROCEDURE netcdf_get_fvar_4d
       END INTERFACE netcdf_get_fvar
-
+!
       INTERFACE netcdf_get_lvar
         MODULE PROCEDURE netcdf_get_lvar_0d
         MODULE PROCEDURE netcdf_get_lvar_1d
       END INTERFACE netcdf_get_lvar
-
+!
       INTERFACE netcdf_get_ivar
         MODULE PROCEDURE netcdf_get_ivar_0d
         MODULE PROCEDURE netcdf_get_ivar_1d
         MODULE PROCEDURE netcdf_get_ivar_2d
       END INTERFACE netcdf_get_ivar
-
+!
       INTERFACE netcdf_get_svar
         MODULE PROCEDURE netcdf_get_svar_0d
         MODULE PROCEDURE netcdf_get_svar_1d
         MODULE PROCEDURE netcdf_get_svar_2d
         MODULE PROCEDURE netcdf_get_svar_3d
       END INTERFACE netcdf_get_svar
-
+!
       INTERFACE netcdf_get_time
         MODULE PROCEDURE netcdf_get_time_0d
         MODULE PROCEDURE netcdf_get_time_1d
       END INTERFACE netcdf_get_time
-
+!
       INTERFACE netcdf_put_fvar
 #ifdef SINGLE_PRECISION
         MODULE PROCEDURE netcdf_put_fvar_0dp
@@ -65,19 +65,19 @@
         MODULE PROCEDURE netcdf_put_fvar_3d
         MODULE PROCEDURE netcdf_put_fvar_4d
       END INTERFACE netcdf_put_fvar
-
+!
       INTERFACE netcdf_put_ivar
         MODULE PROCEDURE netcdf_put_ivar_0d
         MODULE PROCEDURE netcdf_put_ivar_1d
         MODULE PROCEDURE netcdf_put_ivar_2d
       END INTERFACE netcdf_put_ivar
-
+!
       INTERFACE netcdf_put_lvar
         MODULE PROCEDURE netcdf_put_lvar_0d
         MODULE PROCEDURE netcdf_put_lvar_1d
         MODULE PROCEDURE netcdf_put_lvar_2d
       END INTERFACE netcdf_put_lvar
-
+!
       INTERFACE netcdf_put_svar
         MODULE PROCEDURE netcdf_put_svar_0d
         MODULE PROCEDURE netcdf_put_svar_1d
@@ -124,9 +124,9 @@
       integer :: var_ndim(Mvars)        ! variables number of dimensions
       integer :: var_dim(NvarD,Mvars)   ! variables dimensions ID
 !
-      character (len=40) :: att_name(Matts)      ! attribute names
-      character (len=40) :: dim_name(Mdims)      ! dimension names
-      character (len=40) :: var_name(Mvars)      ! variable names
+      character (len=100) :: att_name(Matts)     ! attribute names
+      character (len=100) :: dim_name(Mdims)     ! dimension names
+      character (len=100) :: var_name(Mvars)     ! variable names
 !
 !  Generic information about requested current variable.
 !
@@ -138,8 +138,8 @@
       integer :: var_Aint(NvarA)        ! attribute integer values
       real(r8) :: var_Afloat(NvarA)     ! attribute float values
 !
-      character (len=40)   :: var_Aname(NvarA)   ! Attribute names
-      character (len=40)   :: var_Dname(NvarD)   ! dimension names
+      character (len=100)  :: var_Aname(NvarA)   ! Attribute names
+      character (len=100)  :: var_Dname(NvarD)   ! dimension names
       character (len=1024) :: var_Achar(NvarA)   ! Attribute char values
 !
 !  External data representation for floating-point variables.
