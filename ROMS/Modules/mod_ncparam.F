@@ -2,7 +2,7 @@
       MODULE mod_ncparam
 !
 !git $Id$
-!svn $Id: mod_ncparam.F 1022 2020-05-13 03:03:15Z arango $
+!svn $Id: mod_ncparam.F 1035 2020-07-28 00:49:02Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -216,6 +216,7 @@
         integer  :: idMtls        ! turbulent length scale
         integer  :: idM2nc        ! 2D momentum nudging coefficients
         integer  :: idM3nc        ! 2D momentum nudging coefficients
+        integer  :: idNLmf        ! final NLM at observation locations
         integer  :: idNLmi        ! initial NLM at observation locations
         integer  :: idNLmo        ! NLM at observations locations
         integer  :: idNobs        ! number of observations
@@ -1837,6 +1838,8 @@
               idIncr=varid
             CASE ('idInno')
               idInno=varid
+            CASE ('idNLmf')
+              idNLmf=varid
             CASE ('idNLmi')
               idNLmi=varid
             CASE ('idNLmo')

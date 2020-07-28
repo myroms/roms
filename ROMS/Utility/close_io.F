@@ -2,7 +2,7 @@
       SUBROUTINE close_inp (ng, model)
 !
 !git $Id$
-!svn $Id: close_io.F 1031 2020-07-14 01:39:55Z arango $
+!svn $Id: close_io.F 1035 2020-07-28 00:49:02Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -148,7 +148,8 @@
         END IF
 #endif
 #if defined FORWARD_READ || defined FORWARD_WRITE
-        IF ((FWD(ng)%ncid.ne.-1).and.(FWD(ng)%ncid.eq.HIS(ng)%ncid)) THEN
+        IF ((FWD(ng)%ncid.ne.-1).and.                                  &
+     &      (FWD(ng)%ncid.eq.HIS(ng)%ncid)) THEN
           FWD(ng)%ncid=-1
         END IF
         IF (FWD(ng)%ncid.ne.-1) THEN

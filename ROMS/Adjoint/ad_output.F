@@ -3,7 +3,7 @@
       SUBROUTINE ad_output (ng)
 !
 !git $Id$
-!svn $Id: ad_output.F 1017 2020-04-27 22:19:14Z arango $
+!svn $Id: ad_output.F 1035 2020-07-28 00:49:02Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -76,6 +76,7 @@
           END IF
           IF ((nrrec(ng).ne.0).and.(iic(ng).eq.ntstart(ng))) THEN
             IF ((iic(ng)-1).eq.idefADJ(ng)) THEN
+              ADM(ng)%load=0                  ! restart, reset counter
               Ldefine=.FALSE.                 ! finished file, delay
             ELSE                              ! creation of next file
               Ldefine=.TRUE.

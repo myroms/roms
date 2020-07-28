@@ -1,9 +1,10 @@
 #include "cppdefs.h"
       MODULE rbl4dvar_mod
+
 #ifdef RBL4DVAR
 !
 !git $Id$
-!svn $Id: rbl4dvar.F 1031 2020-07-14 01:39:55Z arango $
+!svn $Id: rbl4dvar.F 1035 2020-07-28 00:49:02Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -340,13 +341,24 @@
       USE mod_parallel
       USE mod_fourdvar
       USE mod_iounits
-#ifdef SPLIT_4DVAR
+# ifdef SPLIT_4DVAR
       USE mod_ncparam
-#endif
+# endif
       USE mod_netcdf
       USE mod_scalars
       USE mod_stepping
 !
+# ifdef RPCG
+      USE rpcg_lanczos_mod, ONLY : rpcg_lanczos
+#  ifdef SPLIT_4DVAR
+      USE rpcg_lanczos_mod, ONLY : cg_read_rpcg
+#  endif
+# else
+      USE congrad_mod,      ONLY : congrad
+#  ifdef SPLIT_4DVAR
+      USE congrad_mod,      ONLY : cg_read_congrad
+#  endif
+# endif
       USE convolve_mod,     ONLY : error_covariance
 #ifdef ADJUST_BOUNDARY
       USE mod_boundary,     ONLY : initialize_boundary
@@ -382,7 +394,7 @@
 !
       logical :: Lcgini, Linner, Lposterior
 !
-      integer :: i, lstr, my_inner, ng, tile
+      integer :: i, ifile, lstr, my_inner, ng, tile
       integer :: Fcount, InpRec
 # ifdef RPCG
       integer :: ADrec, nLAST
@@ -402,7 +414,8 @@
       real(dp) :: stime
 # endif
 !
-      character (len=8) :: driver = 'rbl4dvar'
+      character (len=8 ) :: driver = 'rbl4dvar'
+      character (len=10) :: suffix
 !
       SourceFile=__FILE__ // ", increment"
 !
@@ -495,21 +508,22 @@
      &                 __FILE__)) RETURN
         haveNLmod(ng)=.FALSE.        ! because is activated in "def_mod"
       END DO
-
-#  ifdef RPCG
 !
 !  If split 4D-Var and outer>1, read several variables from 4D-VAR
-!  NetCDF (DAV struc) file.  In the unsplit case, such values are
-!  available in memory.
+!  NetCDF (DAV struc) file needed in the conjugate gradient algorithm.
+!  In the unsplit case, such values are available in memory.
 !
       IF (my_outer.gt.1) THEN
         DO ng=1,Ngrids
+#  ifdef RPCG
           CALL cg_read_rpcg (ng, iTLM, my_outer)
+#  else
+          CALL cg_read_congrad (ng, iTLM, my_outer)
+#  endif
           IF (FoundError(exit_flag, NoError, __LINE__,                  &
      &                   __FILE__)) RETURN
         END DO
       END IF
-#  endif
 !
 !  In the split 4D-Var algorithm, we need to read in initial NLmodVal
 !  ("NLmodel_initial") and ObsScale ("obs_scale"), computed in the
@@ -550,7 +564,7 @@
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
 !
-!  Set nonlinear output history file to be used as the basis state
+!  Set nonlinear output history file to be used as the basic state
 !  trajectory. The 4D-Var increment phase is computed by a different
 !  executable and needs to know some of the HIS structure information.
 !
@@ -558,6 +572,15 @@
         WRITE (HIS(ng)%name,10) TRIM(FWD(ng)%head), my_outer-1
         lstr=LEN_TRIM(HIS(ng)%name)
         HIS(ng)%base=HIS(ng)%name(1:lstr-3)
+        IF (HIS(ng)%Nfiles.gt.1) THEN
+          DO ifile=1,HIS(ng)%Nfiles
+            WRITE (suffix,"('_',i4.4,'.nc')") ifile
+            HIS(ng)%files(ifile)=TRIM(HIS(ng)%base)//TRIM(suffix)
+          END DO
+          HIS(ng)%name=TRIM(HIS(ng)%files(1))
+        ELSE
+          HIS(ng)%files(1)=TRIM(HIS(ng)%name)
+        END IF
       END DO
 !
 !  Read in 4D-Var starting time (sec) from nonlinear trajectory.
@@ -963,6 +986,19 @@
 # endif
           IF (FoundError(exit_flag, NoError, __LINE__,                  &
      &                   __FILE__)) RETURN
+!
+!  Activate "LwrtState2d" switch to write the correct ad_ubar, ad_vbar,
+!  ad_zeta here instead of ad_ubar_sol, ad_vbar_sol, and ad_zeta_sol in
+!  the calls to "ad_wrt_his" below (HGA).
+!  Here, ad_zeta(:,:,kout)=ad_zeta_sol. However, ad_ubar and ad_vbar
+!  not equal to ad_ubar_sol and ad_vbar_sol, respectively. It is
+!  irrelevant because ubar and vbar are not part of the state in
+!  3D application.  Notice that "LwrtState2d" will be turned off at
+!  the bottom of "error_covariance".
+!
+          DO ng=1,Ngrids
+            LwrtState2d(ng)=.TRUE.
+          END DO
 
 # ifndef WEAK_NOINTERP
 !
@@ -978,13 +1014,10 @@
 # endif
 !
 !  Write out adjoint initial condition record into the adjoint
-!  history file. Activate switch to write the correct ad_ubar,
-!  ad_vbar, ad_zeta instead of ad_ubar_sol, ad_vbar_sol, and
-!  ad_zeta_sol.
+!  history file.
 !
           DO ng=1,Ngrids
             WRTforce(ng)=.FALSE.
-            LwrtState2d(ng)=.TRUE.
             CALL ad_wrt_his (ng)
             IF (FoundError(exit_flag, NoError, __LINE__,                &
      &                     __FILE__)) RETURN
@@ -1688,7 +1721,7 @@
 !
 !  Local variable declarations.
 !
-      integer :: i, lstr, ng, tile
+      integer :: i, ifile, lstr, ng, tile
       integer :: Fcount
 # ifdef PROFILE
       integer :: thread
@@ -1696,6 +1729,7 @@
 !
       integer, dimension(Ngrids) :: indxSave
 !
+      character (len=10) :: suffix
       character (len=20) :: string
 !
       SourceFile=__FILE__  // ", analysis"
@@ -1781,14 +1815,24 @@
 
 #  if defined BULK_FLUXES && defined NL_BULK_FLUXES
 !
-!  If not first NLM run, setl BLK structure to the previous outer loop
+!  If not first NLM run, set BLK structure to the previous outer loop
 !  forward trajectory.
 !
       DO ng=1,Ngrids
         WRITE (BLK(ng)%name,10) TRIM(FWD(ng)%head), my_outer-1
+        lstr=LEN_TRIM(BLK(ng)%name)
+        BLK(ng)%base=BLK(ng)%name(1:lstr-3)
+        IF (HIS(ng)%Nfiles.gt.1) THEN
+          DO ifile=1,HIS(ng)%Nfiles
+            WRITE (suffix,"('_',i4.4,'.nc')") ifile
+            BLK(ng)%files(ifile)=TRIM(BLK(ng)%base)//TRIM(suffix)
+          END DO
+          BLK(ng)%name=TRIM(BLK(ng)%files(1))
+        ELSE
+          BLK(ng)%files(1)=TRIM(BLK(ng)%name)
+        END IF
       END DO
 #  endif
-
 # endif
 !
 !-----------------------------------------------------------------------
@@ -1814,6 +1858,15 @@
         WRITE (HIS(ng)%name,10) TRIM(FWD(ng)%head), my_outer
         lstr=LEN_TRIM(HIS(ng)%name)
         HIS(ng)%base=HIS(ng)%name(1:lstr-3)
+        IF (HIS(ng)%Nfiles.gt.1) THEN
+          DO ifile=1,HIS(ng)%Nfiles
+            WRITE (suffix,"('_',i4.4,'.nc')") ifile
+            HIS(ng)%files(ifile)=TRIM(HIS(ng)%base)//TRIM(suffix)
+          END DO
+          HIS(ng)%name=TRIM(HIS(ng)%files(1))
+        ELSE
+          HIS(ng)%files(1)=TRIM(HIS(ng)%name)
+        END IF
       END DO
 !
 !  If weak constraint, the impulses are time-interpolated at each

@@ -1,7 +1,7 @@
       MODULE ocean_control_mod
 !
 !git $Id$
-!svn $Id: r4dvar_ocean.h 1031 2020-07-14 01:39:55Z arango $
+!svn $Id: r4dvar_ocean.h 1035 2020-07-28 00:49:02Z arango $
 !=================================================== Andrew M. Moore ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group      Hernan G. Arango   !
 !    Licensed under a MIT/X style license                              !
@@ -326,15 +326,23 @@
       USE mod_parallel
       USE mod_iounits
       USE mod_ncparam
+      USE mod_netcdf
       USE mod_scalars
+      USE mod_stepping
+!
+      USE strings_mod, ONLY : FoundError
 !
 !  Local variable declarations.
 !
-      integer :: Fcount, ng, tile, thread
+      integer :: Fcount, InpRec, Nfiles, Tindex
+      integer :: ifile, lstr, ng, tile, thread
+!
+      character (len=10) :: suffix
 !
 !-----------------------------------------------------------------------
-!  Write out 4D-Var analysis fields that used as initial conditions for
-!  the next data assimilation cycle.
+!  Write out 4D-Var analysis fields that can be used as the initial
+!  conditions for the next data assimilation cycle. Here, use the
+!  last record of the RPM for the final outer loop.
 !-----------------------------------------------------------------------
 !
 #ifdef DISTRIBUTE
@@ -345,7 +353,41 @@
 !
       IF (exit_flag.eq.NoError) THEN
         DO ng=1,Ngrids
+          LdefDAI(ng)=.TRUE.
+          CALL def_dai (ng)
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
+!
+          WRITE (TLM(ng)%name,10) TRIM(FWD(ng)%head), Nouter
+ 10       FORMAT (a,'_outer',i0,'.nc')
+          lstr=LEN_TRIM(TLM(ng)%name)
+          TLM(ng)%base=TLM(ng)%name(1:lstr-3)
+          IF (TLM(ng)%Nfiles.gt.1) THEN
+            Nfiles=TLM(ng)%Nfiles
+            DO ifile=1,Nfiles
+              WRITE (suffix,"('_',i4.4,'.nc')") ifile
+              TLM(ng)%files(ifile)=TRIM(TLM(ng)%base)//TRIM(suffix)
+            END DO
+            TLM(ng)%name=TRIM(TLM(ng)%files(Nfiles))
+          ELSE
+            TLM(ng)%files(1)=TRIM(TLM(ng)%name)
+          END IF
+!
+          CALL netcdf_get_dim (ng, iRPM, TLM(ng)%name,                  &
+     &                         DimName = 'ocean_time',                  &
+     &                         DimSize = InpRec)
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
+          Tindex=1
+          CALL get_state (ng, iRPM, 1, TLM(ng)%name, InpRec, Tindex)
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
+!
+          KOUT=Tindex
+          NOUT=Tindex
           CALL wrt_dai (ng, tile)
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
         END DO
       END IF
 !
@@ -368,8 +410,8 @@
       IF (exit_flag.eq.1) THEN
         DO ng=1,Ngrids
           IF (LwrtRST(ng)) THEN
-            IF (Master) WRITE (stdout,10)
- 10         FORMAT (/,' Blowing-up: Saving latest model state into ',   &
+            IF (Master) WRITE (stdout,20)
+ 20         FORMAT (/,' Blowing-up: Saving latest model state into ',   &
      &                ' RESTART file',/)
             Fcount=RST(ng)%load
             IF (LcycleRST(ng).and.(RST(ng)%Nrec(Fcount).ge.2)) THEN
@@ -391,8 +433,8 @@
 !  Stop time clocks.
 !
       IF (Master) THEN
-        WRITE (stdout,20)
- 20     FORMAT (/,'Elapsed wall CPU time for each process (seconds):',/)
+        WRITE (stdout,30)
+ 30     FORMAT (/,'Elapsed wall CPU time for each process (seconds):',/)
       END IF
 !
       DO ng=1,Ngrids

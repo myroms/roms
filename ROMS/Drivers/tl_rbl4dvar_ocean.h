@@ -1,7 +1,7 @@
       MODULE ocean_control_mod
 !
 !git $Id$
-!svn $Id: tl_rbl4dvar_ocean.h 1031 2020-07-14 01:39:55Z arango $
+!svn $Id: tl_rbl4dvar_ocean.h 1035 2020-07-28 00:49:02Z arango $
 !=================================================== Andrew M. Moore ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group      Hernan G. Arango   !
 !    Licensed under a MIT/X style license                              !
@@ -282,6 +282,11 @@
       USE mod_scalars
       USE mod_stepping
 !
+#ifdef RPCG
+      USE rpcg_lanczos_mod,  ONLY : rpcg_lanczos
+#else
+      USE congrad_mod,       ONLY : congrad
+#endif
       USE convolve_mod,      ONLY : error_covariance
 #ifdef ADJUST_BOUNDARY
       USE mod_boundary,      ONLY : initialize_boundary

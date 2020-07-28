@@ -1,9 +1,10 @@
 #include "cppdefs.h"
       MODULE r4dvar_mod
+
 #ifdef R4DVAR
 !
 !git $Id$
-!svn $Id: r4dvar.F 1031 2020-07-14 01:39:55Z arango $
+!svn $Id: r4dvar.F 1035 2020-07-28 00:49:02Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -65,6 +66,10 @@
 !
 !  Set module internal parameters.
 !
+# ifdef SPLIT_4DVAR
+      logical :: Ldone
+!
+# endif
       integer :: Lini = 1       ! NLM initial conditions record in INI
       integer :: Lbck = 2       ! background record in INI
       integer :: Rec1 = 1
@@ -163,16 +168,6 @@
      &                 __FILE__)) RETURN
       END DO
 !
-!  Create 4D-Var analysis file that used as initial conditions for the
-!  next data assimilation cycle now that grid information is known.
-!
-      DO ng=1,Ngrids
-        LdefDAI(ng)=.TRUE.
-        CALL def_dai (ng)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
-      END DO
-!
 !  Set nonlinear output history file as the initial basic state
 !  trajectory.
 !
@@ -184,25 +179,6 @@
         HIS(ng)%base=HIS(ng)%name(1:lstr-3)
       END DO
 !
-!  Define tangent linear initial conditions file.
-!
-      DO ng=1,Ngrids
-        LdefITL(ng)=.TRUE.
-        CALL tl_def_ini (ng)
-        LdefITL(ng)=.FALSE.
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
-      END DO
-!
-!  Define TLM/RPM impulse forcing NetCDF file.
-!
-      DO ng=1,Ngrids
-        LdefTLF(ng)=.TRUE.
-        CALL def_impulse (ng)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
-      END DO
-!
 !  Define output 4DVAR NetCDF file containing all processed data
 !  at observation locations.
 !
@@ -212,34 +188,6 @@
         IF (FoundError(exit_flag, NoError, __LINE__,                    &
      &                 __FILE__)) RETURN
       END DO
-
-# if defined POSTERIOR_EOFS    || defined POSTERIOR_ERROR_I || \
-     defined POSTERIOR_ERROR_F
-!
-!  Define output Hessian NetCDF file that will eventually contain
-!  the intermediate posterior analysis error covariance matrix
-!  fields or its EOFs.
-!
-      DO ng=1,Ngrids
-        LdefHSS(ng)=.TRUE.
-        CALL def_hessian (ng)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
-      END DO
-# endif
-
-# if defined POSTERIOR_ERROR_I || defined POSTERIOR_ERROR_F
-!
-!  Define output initial or final full posterior error covariance
-!  (diagonal) matrix NetCDF.
-!
-      DO ng=1,Ngrids
-        LdefERR (ng)=.TRUE.
-        CALL def_error (ng)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
-      END DO
-# endif
 !
 !-----------------------------------------------------------------------
 !  Run nonlinear model and compute basic state trajectory. It processes
@@ -258,7 +206,8 @@
 # endif
         wrtObsScale(ng)=.TRUE.
         IF (Master) THEN
-          WRITE (stdout,20) 'NL', ng, ntstart(ng), ntend(ng)
+          WRITE (stdout,20) 'NL', ng, my_outer, 0,                      &
+     &                      ntstart(ng), ntend(ng)
         END IF
       END DO
 !
@@ -275,22 +224,6 @@
         wrtObsScale(ng)=.FALSE.
       END DO
 
-# if defined BULK_FLUXES && defined NL_BULK_FLUXES
-!
-!  Set structure for the nonlinear surface fluxes to be processed by
-!  by the tangent linear and adjoint models. Also, set switches to
-!  process the BLK structure in routine "check_multifile".  Notice that
-!  it is possible to split solution into multiple NetCDF files to reduce
-!  their size.
-!
-      CALL edit_multifile ('HIS2BLK')
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
-      DO ng=1,Ngrids
-        LreadBLK(ng)=.TRUE.
-      END DO
-# endif
-
 # ifdef PROFILE
 !
 !  Stop profile clock
@@ -304,8 +237,9 @@
 # endif
 !
  10   FORMAT (a,'_outer',i0,'.nc')
- 20   FORMAT (/,1x,a,1x,'ROMS/TOMS: started time-stepping:',            &
-     &        ' (Grid: ',i2.2,' TimeSteps: ',i8.8,' - ',i8.8,')',/)
+ 20   FORMAT (/,1x,a,1x,'ROMS: started time-stepping:',                 &
+     &        ' (Grid: ',i0,', Outer: ',i2.2,', Inner: ',i3.3,          &
+              ', TimeSteps: ',i0,' - ',i0,')',/)
 !
       RETURN
       END SUBROUTINE background
@@ -362,11 +296,16 @@
       USE mod_scalars
       USE mod_stepping
 !
+      USE congrad_mod,      ONLY : congrad
+# ifdef SPLIT_4DVAR
+      USE congrad_mod,      ONLY : cg_read_congrad
+# endif
       USE convolve_mod,     ONLY : error_covariance
 # ifdef ADJUST_BOUNDARY
       USE mod_boundary,     ONLY : initialize_boundary
 # endif
       USE mod_forces,       ONLY : initialize_forces
+      USE mod_ocean,        ONLY : initialize_ocean
       USE strings_mod,      ONLY : FoundError
 # if defined BALANCE_OPERATOR && defined ZETA_ELLIPTIC
       USE zeta_balance_mod, ONLY : balance_ref, biconj
@@ -382,14 +321,22 @@
 !
       logical :: Lcgini, Linner, Lposterior, add
 !
-      integer :: i, lstr, my_inner, ng, tile
-      integer :: Fcount
+      integer :: i, ifile, lstr, my_inner, ng, tile
+      integer :: Fcount, InpRec, Tindex
 # ifdef PROFILE
       integer :: thread
 # endif
+# ifdef SPLIT_4DVAR
 !
-      character (len=6 ) :: driver = 'r4dvar'
-      character (len=20) :: string
+      real(dp) :: stime
+# endif
+!
+      character (len=6  ) :: driver = 'r4dvar'
+      character (len=10 ) :: suffix
+      character (len=20 ) :: string
+# ifdef SPLIT_4DVAR
+      character (len=256) :: ncname
+# endif
 !
       SourceFile=__FILE__
 !
@@ -410,15 +357,301 @@
         END DO
       END DO
 # endif
+
+# ifdef SPLIT_4DVAR
 !
-!  Set representer model basic state trajectory file to previous outer
-!  loop file (outer-1). If outer=1, the basic state trajectory is the
-!  nonlinear model.
+!-----------------------------------------------------------------------
+!  If split 4D-Var algorithm, set several variables that are computed
+!  or assigned in other 4D-Var phase executable.
+!-----------------------------------------------------------------------
+!
+!  Reset Nrun counter to a value greater than one.
+!
+      IF (my_outer.gt.1) THEN
+        Nrun=1+(my_outer-1)*Ninner
+      END IF
+!
+!  Open Nonlinear model initial conditions NetCDF file (INI struc) and
+!  inquire about its variables IDs.
 !
       DO ng=1,Ngrids
-        WRITE (FWD(ng)%name,10) TRIM(FWD(ng)%head), my_outer-1
-        lstr=LEN_TRIM(FWD(ng)%name)
-        FWD(ng)%base=FWD(ng)%name(1:lstr-3)
+        LdefINI(ng)=.FALSE.
+        CALL def_ini (ng)
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
+      END DO
+!
+!  If outer>1, open tangent linear initial conditions NetCDF file
+!  (ITL struc) and inquire about its variables IDs.
+!
+      IF (my_outer.gt.1) THEN
+        DO ng=1,Ngrids
+          LdefITL(ng)=.FALSE.
+          CALL tl_def_ini (ng)
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
+        END DO
+      END IF
+!
+!  If outer>1, open representer model initial conditions NetCDF file
+!  (IRP struc) and inquire about its variables IDs.
+!
+      IF (my_outer.gt.1) THEN
+        DO ng=1,Ngrids
+          LdefIRP(ng)=.FALSE.
+          CALL rp_def_ini (ng)
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
+        END DO
+      END IF
+!
+!  If outer>1, open impulse forcing NetCDF file (TLF struc) and inquire
+!  about its variables IDs.
+!
+      IF (my_outer.gt.1) THEN
+        DO ng=1,Ngrids
+          LdefTLF(ng)=.FALSE.
+          CALL def_impulse (ng)
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
+        END DO
+      END IF
+!
+!  If outer>1, open adjoint history NetCDF file (ADM struc) and inquire
+!  about its variables IDs and set "FrcRec".
+!
+      IF (my_outer.gt.1) THEN
+        DO ng=1,Ngrids
+          LdefADJ(ng)=.FALSE.
+          CALL ad_def_his (ng, LdefADJ(ng))
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
+          Fcount=ADM(ng)%Fcount
+          FrcRec(ng)=ADM(ng)%Nrec(Fcount)
+        END DO
+      END IF
+!
+!  Open 4D-Var NetCDF file (DAV struc) and inquire about its variables.
+!  Deactivate "haveNLmod" since its values are read below. Otherwise,
+!  the TLM will read zero values when calling "obs_read" for outer>1.
+!  The DAV file does not have values for NLmodel_value(:,outer) yet.
+!
+      DO ng=1,Ngrids
+        LdefMOD(ng)=.FALSE.
+        CALL def_mod (ng)
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
+        haveNLmod(ng)=.FALSE.        ! because is activated in "def_mod"
+      END DO
+!
+!  If split 4D-Var and outer>1, read several variables from 4D-VAR
+!  NetCDF (DAV struc) file needed in the conjugate gradient algorithm.
+!  In the unsplit case, such values are available in memory.
+!
+      IF (my_outer.gt.1) THEN
+        DO ng=1,Ngrids
+          CALL cg_read_congrad (ng, iTLM, my_outer)
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
+        END DO
+      END IF
+!
+!  In the split 4D-Var algorithm, we need to read in initial NLmodVal
+!  ("NLmodel_initial") and ObsScale ("obs_scale"), computed in the
+!  background phase, from the DAV NetCDF file. Such data is in memory
+!  in the unsplit algorithm.
+!
+!  HGA: What to do in 4D-Var with nested grids?
+!
+      IF (my_outer.eq.1) THEN
+        ng=1                         ! initial values from "background"
+        CALL netcdf_get_fvar (ng, iTLM, DAV(ng)%name,                   &
+     &                        Vname(1,idNLmi), NLmodVal,                &
+     &                        ncid = DAV(ng)%ncid)
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
+      END IF
+!
+      ng=1
+      CALL netcdf_get_fvar (ng, iTLM, DAV(ng)%name,                     &
+     &                      Vname(1,idObsS), ObsScale,                  &
+     &                      ncid = DAV(ng)%ncid)
+      IF (FoundError(exit_flag, NoError, __LINE__,                      &
+     &               __FILE__)) RETURN
+!
+!  In the split 4D-Var alorithm, we also need to read in ObsVal
+!  ("obs_value") and ObsErr ("obs_error") from the observation file.
+!  They are used in the initialization of the conjugate gradient
+!  algorithm.
+!
+      ng=1
+      CALL netcdf_get_fvar (ng, iTLM, OBS(ng)%name,                     &
+     &                      Vname(1,idOval), ObsVal)
+      IF (FoundError(exit_flag, NoError, __LINE__,                      &
+     &               __FILE__)) RETURN
+!
+      CALL netcdf_get_fvar (ng, iTLM, OBS(ng)%name,                     &
+     &                      Vname(1,idOerr), ObsErr)
+      IF (FoundError(exit_flag, NoError, __LINE__,                      &
+     &               __FILE__)) RETURN
+!
+!  Set nonlinear output history file to be used as the basic state
+!  trajectory. The nonlinear model is run outside of the outer loops,
+!  so we need outer=0 when updating HIS structure.  Notice that this
+!  structure is needed to set the BLK structure below.
+!
+      DO ng=1,Ngrids
+        WRITE (HIS(ng)%name,10) TRIM(FWD(ng)%head), 0
+        lstr=LEN_TRIM(HIS(ng)%name)
+        HIS(ng)%base=HIS(ng)%name(1:lstr-3)
+        IF (HIS(ng)%Nfiles.gt.1) THEN
+          DO ifile=1,HIS(ng)%Nfiles
+            WRITE (suffix,"('_',i4.4,'.nc')") ifile
+            HIS(ng)%files(ifile)=TRIM(HIS(ng)%base)//TRIM(suffix)
+          END DO
+          HIS(ng)%name=TRIM(HIS(ng)%files(1))
+        ELSE
+          HIS(ng)%files(1)=TRIM(HIS(ng)%name)
+        END IF
+      END DO
+!
+!  Read in 4D-Var starting time (sec) from forward trajectory NetCDF
+!  file and set INItime. The starting time is need for boundary and
+!  surface forcing adjustments, if any.
+!
+      InpRec=1
+      DO ng=1,Ngrids
+        CALL netcdf_get_fvar (ng, iTLM, HIS(ng)%name,                   &
+     &                        Vname(1,idtime), stime,                   &
+     &                        start = (/InpRec/),                       &
+     &                        total = (/1/))
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
+        INItime(ng)=stime
+
+#  ifdef ADJUST_BOUNDARY
+!
+!  Set time (sec) for the open boundary adjustment.
+!
+        OBC_time(1,ng)=stime
+        DO i=2,Nbrec(ng)
+          OBC_time(i,ng)=OBC_time(i-1,ng)+nOBC(ng)*dt(ng)
+        END DO
+#  endif
+
+#  if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+!
+!  Set time (sec) for the surface forcing adjustment.
+!
+        SF_time(1,ng)=stime
+        DO i=2,Nfrec(ng)
+          SF_time(i,ng)=SF_time(i-1,ng)+nSFF(ng)*dt(ng)
+        END DO
+#  endif
+      END DO
+
+#  if defined ADJUST_BOUNDARY || \
+      defined ADJUST_STFLUX   || defined ADJUST_WSTRESS
+!
+!  If outer>1, read in adjust forcing arrays from IRP file (Rec2),
+!  which are computed in the previous outer loop when calling the
+!  "error_covarinace" after the inner loops. Such values are in
+!  memory in the unsplit algorithm. Use "iTLM" descriptor so the
+!  switch get_adjust=.TRUE.  Notice that all the TL arrays are
+!  cleared in the next call to "rp_initial" except the "tl_*_obc"
+!  arrays used when adjusting OBCs.
+!
+      IF (my_outer.gt.1) THEN
+        DO ng=1,Ngrids
+          InpRec=Rec2
+          Tindex=1
+          CALL get_state (ng, iTLM, 1, IRP(ng)%name, InpRec, Tindex)
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
+        END DO
+      END IF
+#  endif
+!
+!  If outer>1, set previous outer loop representer model file.
+!
+      IF (my_outer.gt.1) THEN
+        DO ng=1,Ngrids
+          WRITE (TLM(ng)%name,10) TRIM(FWD(ng)%head), my_outer-1
+          lstr=LEN_TRIM(TLM(ng)%name)
+          TLM(ng)%base=TLM(ng)%name(1:lstr-3)
+        END DO
+      END IF
+# endif
+!
+!-----------------------------------------------------------------------
+!  On first pass (outer=1), create NetCDF files and initialize all the
+!  records in the ITL file to zero.
+!-----------------------------------------------------------------------
+!
+      CHECK_OUTER1 : IF (my_outer.eq.1) THEN
+!
+!  If outer=1, define tangent linear initial conditions file.
+!
+        DO ng=1,Ngrids
+          LdefITL(ng)=.TRUE.
+          CALL tl_def_ini (ng)
+          LdefITL(ng)=.FALSE.
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
+        END DO
+!
+!  If outer=1, define TLM/RPM impulse forcing NetCDF file.
+!
+        DO ng=1,Ngrids
+          LdefTLF(ng)=.TRUE.
+          CALL def_impulse (ng)
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
+        END DO
+
+# if defined POSTERIOR_EOFS    || defined POSTERIOR_ERROR_I || \
+     defined POSTERIOR_ERROR_F
+!
+!  Define output Hessian NetCDF file that will eventually contain
+!  the intermediate posterior analysis error covariance matrix
+!  fields or its EOFs.
+!
+        DO ng=1,Ngrids
+          LdefHSS(ng)=.TRUE.
+          CALL def_hessian (ng)
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
+        END DO
+# endif
+
+# if defined POSTERIOR_ERROR_I || defined POSTERIOR_ERROR_F
+!
+!  Define output initial or final full posterior error covariance
+!  (diagonal) matrix NetCDF.
+!
+        DO ng=1,Ngrids
+          LdefERR (ng)=.TRUE.
+          CALL def_error (ng)
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
+        END DO
+# endif
+      END IF CHECK_OUTER1
+!
+!-----------------------------------------------------------------------
+!  Run finite amplitude tangent linear (representers) model.
+!-----------------------------------------------------------------------
+!
+!  Clear the nonlinear state arrays to make sure that the RHS terms
+!  rzeta, rubar, rvbar, ru, and rv are zero.  Otherwise, those arrays
+!  will have the last computed values when running the nonlinear model
+!  if not processing the forward trajectory RHS terms. This needs to
+!  be done to get identical solutions with the split schemes.
+!
+      DO ng=1,Ngrids
+        DO tile=first_tile(ng),last_tile(ng),+1
+          CALL initialize_ocean (ng, tile, iNLM)
+        END DO
       END DO
 !
 !  Set structure for the nonlinear forward trajectory to be processed
@@ -437,6 +670,22 @@
       DO ng=1,Ngrids
         LreadFWD(ng)=.TRUE.
       END DO
+
+# if defined BULK_FLUXES && defined NL_BULK_FLUXES
+!
+!  Set structure for the nonlinear surface fluxes to be processed by
+!  by the tangent linear and adjoint models. Also, set switches to
+!  process the BLK structure in routine "check_multifile".  Notice that
+!  it is possible to split solution into multiple NetCDF files to reduce
+!  their size.
+!
+      CALL edit_multifile ('HIS2BLK')
+      IF (FoundError(exit_flag, NoError, __LINE__,                      &
+     &               __FILE__)) RETURN
+      DO ng=1,Ngrids
+        LreadBLK(ng)=.TRUE.
+      END DO
+# endif
 !
 !  Set representer model output file name.  The strategy is to write
 !  the representer solution at the beginning of each outer loop.
@@ -445,7 +694,7 @@
         idefTLM(ng)=-1
         LdefTLM(ng)=.TRUE.
         LwrtTLM(ng)=.TRUE.
-        WRITE (TLM(ng)%name,10) TRIM(TLM(ng)%head), my_outer
+        WRITE (TLM(ng)%name,10) TRIM(FWD(ng)%head), my_outer
         lstr=LEN_TRIM(TLM(ng)%name)
         TLM(ng)%base=TLM(ng)%name(1:lstr-3)
       END DO
@@ -481,7 +730,8 @@
         LwrtAVG(ng)=.FALSE.
 #  endif
         IF (Master) THEN
-          WRITE (stdout,20) 'RP', ng, ntstart(ng), ntend(ng)
+          WRITE (stdout,20) 'RP', ng, my_outer, 0,                      &
+     &                      ntstart(ng), ntend(ng)
         END IF
       END DO
 !
@@ -569,9 +819,9 @@
       END IF
 #  endif
 !
-!=======================================================================
-!  Start inner loops.
-!=======================================================================
+!:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+!  4D-Var inner loops.
+!:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 !
       INNER_LOOP : DO my_inner=0,Ninner
         inner=my_inner
@@ -638,7 +888,8 @@
 !
           DO ng=1,Ngrids
             IF (Master) THEN
-              WRITE (stdout,20) 'AD', ng, ntstart(ng), ntend(ng)
+              WRITE (stdout,20) 'AD', ng, my_outer, my_inner,            &
+     &                          ntstart(ng), ntend(ng)
             END IF
           END DO
 !
@@ -650,9 +901,21 @@
           IF (FoundError(exit_flag, NoError, __LINE__,                  &
      &                   __FILE__)) RETURN
 !
+!  Activate "LwrtState2d" switch to write the correct ad_ubar, ad_vbar,
+!  ad_zeta here instead of ad_ubar_sol, ad_vbar_sol, and ad_zeta_sol in
+!  the calls to "ad_wrt_his" below (HGA).
+!  Here, ad_zeta(:,:,kout)=ad_zeta_sol. However, ad_ubar and ad_vbar
+!  not equal to ad_ubar_sol and ad_vbar_sol, respectively. It is
+!  irrelevant because ubar and vbar are not part of the state in
+!  3D application.  Notice that "LwrtState2d" will be turned off at
+!  the bottom of "error_covariance".
+!
+          DO ng=1,Ngrids
+            LwrtState2d(ng)=.TRUE.
+          END DO
+!
 !  Write out last weak-constraint forcing (WRTforce is still .TRUE.)
-!  record into the adjoint history file.  Note that the weak-constraint
-!  forcing is delayed by nADJ time-steps.
+!  record into the adjoint history file.
 !
           DO ng=1,Ngrids
             CALL ad_wrt_his (ng)
@@ -665,12 +928,15 @@
 !
           DO ng=1,Ngrids
             WRTforce(ng)=.FALSE.
+            LwrtState2d(ng)=.TRUE.
             CALL ad_wrt_his (ng)
             IF (FoundError(exit_flag, NoError, __LINE__,                &
      &                     __FILE__)) RETURN
           END DO
 !
-!  Convolve adjoint trajectory with error covariances.
+!  Convolve adjoint trajectory with error covariances.  Notice that we
+!  use iTLM to write the convolved solution into the ITL(ng)%name file
+!  (record Rec1) as the TLM initial conditions for the next inner loop.
 !
 #  ifdef POSTERIOR_ERROR_I
           Lposterior=.TRUE.
@@ -759,7 +1025,8 @@
 !
           DO ng=1,Ngrids
             IF (Master) THEN
-              WRITE (stdout,20) 'TL', ng, ntstart(ng), ntend(ng)
+              WRITE (stdout,20) 'TL', ng, my_outer, my_inner,           &
+     &                          ntstart(ng), ntend(ng)
             END IF
           END DO
 !
@@ -868,7 +1135,8 @@
 !
       DO ng=1,Ngrids
         IF (Master) THEN
-          WRITE (stdout,20) 'AD', ng, ntstart(ng), ntend(ng)
+          WRITE (stdout,20) 'AD', ng, my_outer, Ninner,                 &
+     &                      ntstart(ng), ntend(ng)
         END IF
       END DO
 !
@@ -901,7 +1169,9 @@
      &                 __FILE__)) RETURN
       END DO
 !
-!  Convolve adjoint trajectory with error covariances.
+!  Convolve adjoint trajectory with error covariances.  Notice that we
+!  use iRPM to write the convolved solution into the IRP(ng)%name file
+!  (record Rec2) as the RPM initial conditions for the next outer loop.
 !
       Lposterior=.FALSE.
       CALL error_covariance (iRPM, driver, my_outer, inner,             &
@@ -946,8 +1216,9 @@
 # endif
 !
  10   FORMAT (a,'_outer',i0,'.nc')
- 20   FORMAT (/,1x,a,1x,'ROMS/TOMS: started time-stepping:',            &
-     &        ' (Grid: ',i2.2,' TimeSteps: ',i8.8,' - ',i8.8,')',/)
+ 20   FORMAT (/,1x,a,1x,'ROMS: started time-stepping:',                 &
+     &        ' (Grid: ',i0,', Outer: ',i2.2,', Inner: ',i3.3,          &
+              ', TimeSteps: ',i0,' - ',i0,')',/)
  30   FORMAT (' (',i3.3,',',i3.3,'): ',a,' data penalty, Jdata = ',     &
      &        1p,e17.10,0p,t68,a)
  40   FORMAT (/,' Converting Convolved Adjoint Trajectory to',          &
@@ -989,11 +1260,17 @@
 !
 !  Local variable declarations.
 !
-      integer :: i, lstr, ng
+      integer :: i, ifile, lstr, ng
+      integer :: InpRec
 # ifdef PROFILE
       integer :: thread
 # endif
+# ifdef SPLIT_4DVAR
 !
+      real(dp) :: stime
+# endif
+!
+      character (len=10) :: suffix
       character (len=20) :: string
 !
       SourceFile=__FILE__
@@ -1014,6 +1291,147 @@
         END DO
       END DO
 # endif
+
+# ifdef SPLIT_4DVAR
+!
+!-----------------------------------------------------------------------
+!  If split 4D-Var algorithm, set several variables that computed or
+!  assigned in other 4D-Var phase executable.
+!-----------------------------------------------------------------------
+!
+!  Set Nrun>1, to read in surface forcing and open boundary conditions
+!  increments in "initial", if appropriate.
+!
+      Nrun=Ninner+1
+!
+!  Set ERstr=Nrun, to set the open boundary condition (OBC_time) and
+!  surface forcing (SF_time) adjustment times, if needed.
+!
+      ERstr=Nrun
+!
+!  Open 4D-Var NetCDF file (DAV struc) and inquire about its variables.
+!
+      DO ng=1,Ngrids
+        LdefMOD(ng)=.FALSE.
+        CALL def_mod (ng)
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
+      END DO
+!
+!  In the split 4D-Var algorithm, we need to read the values of ObsScale
+!  computed in the background phase from the DAV NetCDF file. Such data
+!  is in memory in the unsplit algorithm.
+!
+!  HGA: What to do in 4D-Var with nested grids?
+!
+      ng=1
+      CALL netcdf_get_fvar (ng, iRPM, DAV(ng)%name,                     &
+     &                      Vname(1,idObsS), ObsScale,                  &
+     &                      ncid = DAV(ng)%ncid)
+      IF (FoundError(exit_flag, NoError, __LINE__,                      &
+     &               __FILE__)) RETURN
+!
+!  Set nonlinear output history file to be used as the basic state
+!  trajectory. The nonlinear model is run outside of the outer loops,
+!  so we need outer=0 when updating HIS structure.
+!
+      DO ng=1,Ngrids
+        WRITE (HIS(ng)%name,10) TRIM(FWD(ng)%head), 0
+        lstr=LEN_TRIM(HIS(ng)%name)
+        HIS(ng)%base=HIS(ng)%name(1:lstr-3)
+        IF (HIS(ng)%Nfiles.gt.1) THEN
+          DO ifile=1,HIS(ng)%Nfiles
+            WRITE (suffix,"('_',i4.4,'.nc')") ifile
+            HIS(ng)%files(ifile)=TRIM(HIS(ng)%base)//TRIM(suffix)
+          END DO
+          HIS(ng)%name=TRIM(HIS(ng)%files(1))
+        ELSE
+          HIS(ng)%files(1)=TRIM(HIS(ng)%name)
+        END IF
+      END DO
+!
+!  Read in 4D-Var starting time (sec) from forward trajectory NetCDF
+!  file and set INItime. The starting time is need for boundary and
+!  surface forcing adjustments, if any.
+!
+      InpRec=1
+      DO ng=1,Ngrids
+        CALL netcdf_get_fvar (ng, iRPM, HIS(ng)%name,                   &
+     &                        Vname(1,idtime), stime,                   &
+     &                        start = (/InpRec/),                       &
+     &                        total = (/1/))
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
+        INItime(ng)=stime
+
+#  ifdef ADJUST_BOUNDARY
+!
+!  Set time (sec) for the open boundary adjustment.
+!
+        OBC_time(1,ng)=stime
+        DO i=2,Nbrec(ng)
+          OBC_time(i,ng)=OBC_time(i-1,ng)+nOBC(ng)*dt(ng)
+        END DO
+#  endif
+
+#  if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+!
+!  Set time (sec) for the surface forcing adjustment.
+!
+        SF_time(1,ng)=stime
+        DO i=2,Nfrec(ng)
+          SF_time(i,ng)=SF_time(i-1,ng)+nSFF(ng)*dt(ng)
+        END DO
+#  endif
+      END DO
+!
+!  If outer>1, set previous outer loop representer model file.
+!
+      IF (my_outer.gt.1) THEN
+        DO ng=1,Ngrids
+          WRITE (TLM(ng)%name,10) TRIM(FWD(ng)%head), my_outer-1
+          lstr=LEN_TRIM(TLM(ng)%name)
+          TLM(ng)%base=TLM(ng)%name(1:lstr-3)
+        END DO
+      END IF
+!
+!  Set basic state trajectory to either Nonlinear model (outer=1) or
+!  previous outer loop representer model (outer>1). Also, set switches
+!  to process the FWD structure in routine "check_multifile". Notice
+!  that it is possible to split solution into multiple NetCDF files to
+!  reduce their size.
+!
+      IF (my_outer.eq.1) THEN
+        CALL edit_multifile ('HIS2FWD')
+      ELSE
+        CALL edit_multifile ('TLM2FWD')
+      END IF
+      IF (FoundError(exit_flag, NoError, __LINE__,                      &
+     &               __FILE__)) RETURN
+      DO ng=1,Ngrids
+        LreadFWD(ng)=.TRUE.
+      END DO
+
+#  if defined BULK_FLUXES && defined NL_BULK_FLUXES
+!
+!  Set structure for the nonlinear surface fluxes to be processed by
+!  by the representer model. Also, set switches to process the BLK
+!  structure in routine "check_multifile".  Notice that it is possible
+!  to split solution into multiple NetCDF files to reduce their size.
+!
+      CALL edit_multifile ('HIS2BLK')
+      IF (FoundError(exit_flag, NoError, __LINE__,                      &
+     &               __FILE__)) RETURN
+      DO ng=1,Ngrids
+        LreadBLK(ng)=.TRUE.
+      END DO
+#  endif
+# endif
+!
+!-----------------------------------------------------------------------
+!  Run representer model with the new analysis initial conditions
+!  cpmputed in the "increment" phase.
+!-----------------------------------------------------------------------
 !
 !  Set new basic state trajectory for next outer loop.
 !
@@ -1073,7 +1491,8 @@
         AVG(ng)%base=AVG(ng)%name(1:lstr-3)
 # endif
         IF (Master) THEN
-          WRITE (stdout,20) 'RP', ng, ntstart(ng), ntend(ng)
+          WRITE (stdout,20) 'RP', ng, my_outer, Ninner,                 &
+     &                      ntstart(ng), ntend(ng)
         END IF
       END DO
 !
@@ -1140,12 +1559,15 @@
         wrtTLmod(ng)=.FALSE.
       END DO
 !
-!  Close current forward NetCDF file.
+!  Close current forward NetCDF file.  If last outer loop, set history
+!  file ID to closed state since we manipulated its indices with the
+!  forward file ID, which it was closed.
 !
       DO ng=1,Ngrids
         CALL netcdf_close (ng, iRPM, FWD(ng)%ncid)
         IF (FoundError(exit_flag, NoError, __LINE__,                    &
      &                 __FILE__)) RETURN
+        IF (my_outer.eq.Nouter) HIS(ng)%ncid=-1
       END DO
 
 # ifdef PROFILE
@@ -1161,8 +1583,9 @@
 # endif
 !
  10   FORMAT (a,'_outer',i0,'.nc')
- 20   FORMAT (/,1x,a,1x,'ROMS/TOMS: started time-stepping:',            &
-     &        ' (Grid: ',i2.2,' TimeSteps: ',i8.8,' - ',i8.8,')',/)
+ 20   FORMAT (/,1x,a,1x,'ROMS: started time-stepping:',                 &
+     &        ' (Grid: ',i0,', Outer: ',i2.2,', Inner: ',i3.3,          &
+              ', TimeSteps: ',i0,' - ',i0,')',/)
  30   FORMAT (' (',i3.3,',',i3.3,'): ',a,' data penalty, Jdata = ',     &
      &        1p,e17.10,0p,t68,a)
 !
