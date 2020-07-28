@@ -3,7 +3,7 @@
       SUBROUTINE obs_write (ng, tile, model)
 !
 !git $Id$
-!svn $Id: obs_write.F 1028 2020-06-01 00:24:59Z arango $
+!svn $Id: obs_write.F 1035 2020-07-28 00:49:02Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -1175,7 +1175,11 @@
 # ifndef I4DVAR_ANA_SENSITIVITY
 !
 !  Nonlinear model or first guess (background) state at observation
-!  locations.
+!  locations. If 4D-Var, the values are written for every outer loop.
+!  Also, the final value is written as individual variable to
+!  facilitate ERDDAP processing. Notice that it is always overwritten
+!  to avoid complicated logic with all the 4D-Var drivers. The last
+!  one written correspont to the final values.
 !
 #  ifdef VERIFICATION
         IF (wrtNLmod(ng)) THEN
@@ -1195,6 +1199,14 @@
      &                          (/NstrObs(ng),outer/), (/Nobs(ng),1/),  &
      &                          ncid = DAV(ng)%ncid,                    &
      &                          varid = DAV(ng)%Vid(idNLmo))
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
+!
+          CALL netcdf_put_fvar (ng, model, DAV(ng)%name,                &
+     &                          Vname(1,idNLmf), NLmodVal(Mstr:),       &
+     &                          (/NstrObs(ng)/), (/Nobs(ng)/),          &
+     &                          ncid = DAV(ng)%ncid,                    &
+     &                          varid = DAV(ng)%Vid(idNLmf))
           IF (FoundError(exit_flag, NoError, __LINE__,                  &
      &                   __FILE__)) RETURN
           haveNLmod(ng)=.TRUE.

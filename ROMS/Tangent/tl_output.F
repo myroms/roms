@@ -3,7 +3,7 @@
       SUBROUTINE tl_output (ng)
 !
 !git $Id$
-!svn $Id: tl_output.F 1022 2020-05-13 03:03:15Z arango $
+!svn $Id: tl_output.F 1035 2020-07-28 00:49:02Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -79,6 +79,7 @@
           END IF
           IF ((nrrec(ng).ne.0).and.(iic(ng).eq.ntstart(ng))) THEN
             IF ((iic(ng)-1).eq.idefTLM(ng)) THEN
+              TLM(ng)%load=0                  ! restart, reset counter
               Ldefine=.FALSE.                 ! finished file, delay
             ELSE                              ! creation of next file
               Ldefine=.TRUE.
@@ -189,6 +190,7 @@
           END IF
           IF ((nrrec(ng).ne.0).and.(iic(ng).eq.ntstart(ng))) THEN
             IF ((iic(ng)-1).eq.idefAVG(ng)) THEN
+              AVG(ng)%load=0                  ! restart, reset counter
               Ldefine=.FALSE.                 ! finished file, delay
             ELSE                              ! creation of next file
               NewFile=.FALSE.

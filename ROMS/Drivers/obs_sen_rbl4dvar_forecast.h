@@ -372,6 +372,11 @@
       USE mod_scalars
       USE mod_stepping
 !
+# ifdef RPCG
+      USE rpcg_lanczos_mod,  ONLY : rpcg_lanczos
+# else
+      USE congrad_mod,       ONLY : congrad
+# endif
       USE convolve_mod,      ONLY : error_covariance
       USE ini_adjust_mod,    ONLY : load_ADtoTL
       USE ini_adjust_mod,    ONLY : load_TLtoAD

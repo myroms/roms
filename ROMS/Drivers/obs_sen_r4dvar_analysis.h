@@ -1,7 +1,7 @@
       MODULE ocean_control_mod
 !
 !git $Id$
-!svn $Id: obs_sen_r4dvar_analysis.h 1031 2020-07-14 01:39:55Z arango $
+!svn $Id: obs_sen_r4dvar_analysis.h 1035 2020-07-28 00:49:02Z arango $
 !=================================================== Andrew M. Moore ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group      Hernan G. Arango   !
 !    Licensed under a MIT/X style license                              !
@@ -338,6 +338,7 @@
       USE mod_scalars
       USE mod_stepping
 !
+      USE congrad_mod,       ONLY : congrad
       USE convolve_mod,      ONLY : error_covariance
 #ifdef ADJUST_BOUNDARY
       USE mod_boundary,      ONLY : initialize_boundary

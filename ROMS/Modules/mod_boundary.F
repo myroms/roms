@@ -2,7 +2,7 @@
       MODULE mod_boundary
 !
 !git $Id$
-!svn $Id: mod_boundary.F 995 2020-01-10 04:01:28Z arango $
+!svn $Id: mod_boundary.F 1035 2020-07-28 00:49:02Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -2446,7 +2446,7 @@
         END IF
       END IF
 
-      IF ((model.eq.0).or.(model.eq.iTLM)) THEN
+      IF ((model.eq.0).or.(model.eq.iTLM).or.(model.eq.iRPM)) THEN
         IF (DOMAIN(ng)%NorthEast_Test(tile)) THEN
 # ifdef SOLVE3D
           BOUNDARY(ng) % tl_t_obc = IniVal

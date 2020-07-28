@@ -3,7 +3,7 @@
       SUBROUTINE def_mod (ng)
 !
 !git $Id$
-!svn $Id: def_mod.F 1031 2020-07-14 01:39:55Z arango $
+!svn $Id: def_mod.F 1035 2020-07-28 00:49:02Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -280,16 +280,22 @@
           IF (exit_flag.eq.NoError) THEN
 # if defined ARRAY_MODES
             string=uppercase('array_modes')
+# elif defined SPLIT_I4DVAR
+            string=uppercase('split_i4dvar')
 # elif defined I4DVAR
             string=uppercase('i4dvar')
 # elif defined I4DVAR_ANA_SENSITIVITY
             string=uppercase('i4dvar_ana_sensitivity')
+# elif defined SPLIT_RBL4DVAR
+            string=uppercase('split_rbl4dvar')
 # elif defined RBL4DVAR
             string=uppercase('rbl4dvar')
 # elif defined RBL4DVAR_ANA_SENSITIVITY
             string=uppercase('rbl4dvar_ana_sensitivity')
 # elif defined RBL4DVAR_FCT_SENSITIVITY
             string=uppercase('rbl4dvar_fct_sensitivity')
+# elif defined SPLIT_R4DVAR
+            string=uppercase('split_r4dvar')
 # elif defined R4DVAR
             string=uppercase('r4dvar')
 # elif defined R4DVAR_ANA_SENSITIVITY
@@ -1482,6 +1488,18 @@
         IF (FoundError(exit_flag, NoError, __LINE__,                    &
      &                 __FILE__)) RETURN
 !
+!  Final nonlinear model at observation locations.
+!
+        Vinfo( 1)=Vname(1,idNLmf)
+        Vinfo( 2)=Vname(2,idNLmf)
+        Vinfo( 3)=Vname(3,idNLmf)
+        Vinfo(24)='_FillValue'
+        Aval(6)=spval
+        status=def_var(ng, iNLM, DAV(ng)%ncid, DAV(ng)%Vid(idNLmf),     &
+     &                 NF_FRST, 1, (/datumDim/), Aval, Vinfo, ncname)
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
+!
 !  4D-Var background error standard deviation at observation locations.
 !
         Vinfo( 1)=Vname(1,idBgEr)
@@ -1659,16 +1677,13 @@
      &                 __FILE__)) RETURN
 # endif
 # ifdef WEAK_CONSTRAINT
+#  ifndef RPCG
 !
-!  Define initial gradient for minimization.
+!  Representer coefficients estimate. Needed for restarting "congrad".
 !
-        Vinfo( 1)='zgrad0'
-        Vinfo( 2)='initial gradient for minimization, observation space'
-# ifdef RPCG
-        vardim(1)=datumDimp
-# else
+        Vinfo( 1)='cg_pxsave'
+        Vinfo( 2)='representer coefficients estimatate'
         vardim(1)=datumDim
-# endif
         vardim(2)=NouterDim
         Vinfo(24)='_FillValue'
         Aval(6)=spval
@@ -1676,7 +1691,25 @@
      &                 2, vardim, Aval, Vinfo, ncname)
         IF (FoundError(exit_flag, NoError, __LINE__,                    &
      &                 __FILE__)) RETURN
-# ifdef RPCG
+#  endif
+!
+!  Define initial gradient for minimization.
+!
+        Vinfo( 1)='zgrad0'
+        Vinfo( 2)='initial gradient for minimization, observation space'
+#  ifdef RPCG
+        vardim(1)=datumDimp
+#  else
+        vardim(1)=datumDim
+#  endif
+        vardim(2)=NouterDim
+        Vinfo(24)='_FillValue'
+        Aval(6)=spval
+        status=def_var(ng, iNLM, DAV(ng)%ncid, varid, nf90_double,      &
+     &                 2, vardim, Aval, Vinfo, ncname)
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
+#  ifdef RPCG
 !
 !  Define initial gradient for minimization.
 !
@@ -1714,11 +1747,11 @@
      &                 1, vardim, Aval, Vinfo, ncname)
         IF (FoundError(exit_flag, NoError, __LINE__,                    &
      &                 __FILE__)) RETURN
-# endif
+#  endif
 !
 !  Define Lanczos vectors in observation space.
 !
-# ifdef RPCG
+#  ifdef RPCG
         Vinfo( 1)='vcglwk'
         Vinfo( 2)='Preconditioned Lanczos vectors, observation space'
         vardim(1)=datumDimp
@@ -1754,7 +1787,7 @@
      &                 3, vardim, Aval, Vinfo, ncname)
         IF (FoundError(exit_flag, NoError, __LINE__,                    &
      &                 __FILE__)) RETURN
-# else
+#  else
         Vinfo( 1)='zcglwk'
         Vinfo( 2)='Lanczos vectors, observation space'
         vardim(1)=datumDim
@@ -1766,7 +1799,7 @@
      &                 3, vardim, Aval, Vinfo, ncname)
         IF (FoundError(exit_flag, NoError, __LINE__,                    &
      &                 __FILE__)) RETURN
-# endif
+#  endif
 !
 !  Define previous values of TLmodVal.
 !
@@ -2102,6 +2135,9 @@
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idNLmi))) THEN
             got_var(idNLmi)=.TRUE.
             DAV(ng)%Vid(idNLmi)=var_id(i)
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idNLmf))) THEN
+            got_var(idNLmf)=.TRUE.
+            DAV(ng)%Vid(idNLmf)=var_id(i)
 # endif
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idNLmo))) THEN
             got_var(idNLmo)=.TRUE.
@@ -2208,6 +2244,13 @@
 # ifdef FOUR_DVAR
         IF (.not.got_var(idNLmi)) THEN
           IF (Master) WRITE (stdout,90) TRIM(Vname(1,idNLmi)),          &
+     &                                  TRIM(DAV(ng)%name)
+          exit_flag=2
+          RETURN
+        END IF
+
+        IF (.not.got_var(idNLmf)) THEN
+          IF (Master) WRITE (stdout,90) TRIM(Vname(1,idNLmf)),          &
      &                                  TRIM(DAV(ng)%name)
           exit_flag=2
           RETURN

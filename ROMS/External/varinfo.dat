@@ -2,7 +2,7 @@
 !  ROMS/TOMS IO NetCDF variables.
 !
 !git $Id$
-!svn $Id: varinfo.dat 995 2020-01-10 04:01:28Z arango $
+!svn $Id: varinfo.dat 1035 2020-07-28 00:49:02Z arango $
 !========================================================= Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                                !
 !    Licensed under a MIT/X style license                                     !
@@ -5570,6 +5570,15 @@
   'nulvar'
   1.0d0
 
+'NLmodel_final'                                    ! Output
+  'final nonlinear model at observation locations'
+  'state variable units'
+  'nulvar'
+  'datum'
+  'idNLmf'
+  'nulvar'
+  1.0d0
+
 'NLmodel_value'                                    ! Output
   'nonlinear model at observation locations'
   'state variable units'
@@ -5624,7 +5633,7 @@
   'nulvar'
   1.0d0
 
-'residual'                                       ! Output
+'residual'                                         ! Output
   '4D-Var residual: observation minus analysis, d_a = y - H(x_b + dx_a)'
   'state variable units'                           ! [state units]
   'nulvar'
