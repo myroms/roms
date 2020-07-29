@@ -3,7 +3,7 @@
       SUBROUTINE output (ng)
 !
 !git $Id$
-!svn $Id: output.F 1035 2020-07-28 00:49:02Z arango $
+!svn $Id: output.F 1036 2020-07-29 05:39:53Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -111,13 +111,22 @@
             IF (iic(ng).eq.ntstart(ng)) THEN    ! inquire existing file
               HIS(ng)%load=0                    ! reset filename counter
             END IF
+            ifile=(iic(ng)-1)/ndefHIS(ng)+1     ! next filename suffix
             HIS(ng)%load=HIS(ng)%load+1
+            IF (HIS(ng)%load.gt.HIS(ng)%Nfiles) THEN
+              IF (Master) THEN
+                WRITE (stdout,10) 'HIS(ng)%load = ', HIS(ng)%load,      &
+     &                             HIS(ng)%Nfiles, TRIM(HIS(ng)%base),  &
+     &                             ifile
+              END IF
+              exit_flag=4
+              IF (FoundError(exit_flag, NoError, __LINE__,              &
+     &                       __FILE__)) RETURN
+            END IF
             Fcount=HIS(ng)%load
             HIS(ng)%Nrec(Fcount)=0
-            ifile=(iic(ng)-1)/ndefHIS(ng)+1
             IF (Master) THEN
-              WRITE (HIS(ng)%name,10) TRIM(HIS(ng)%base), ifile
-  10          FORMAT (a,'_',i4.4,'.nc')
+              WRITE (HIS(ng)%name,20) TRIM(HIS(ng)%base), ifile
             END IF
 # ifdef DISTRIBUTE
             CALL mp_bcasts (ng, iNLM, HIS(ng)%name)
@@ -207,12 +216,22 @@
             IF (iic(ng).eq.ntstart(ng)) THEN    ! inquire existing file
               QCK(ng)%load=0                    ! reset filename counter
             END IF
+            ifile=(iic(ng)-1)/ndefQCK(ng)+1     ! next filename suffix
             QCK(ng)%load=QCK(ng)%load+1
+            IF (QCK(ng)%load.gt.QCK(ng)%Nfiles) THEN
+              IF (Master) THEN
+                WRITE (stdout,10) 'QCK(ng)%load = ', QCK(ng)%load,      &
+     &                             QCK(ng)%Nfiles, TRIM(QCK(ng)%base),  &
+     &                             ifile
+              END IF
+              exit_flag=4
+              IF (FoundError(exit_flag, NoError, __LINE__,              &
+     &                       __FILE__)) RETURN
+            END IF
             Fcount=QCK(ng)%load
             QCK(ng)%Nrec(Fcount)=0
-            ifile=(iic(ng)-1)/ndefQCK(ng)+1
             IF (Master) THEN
-              WRITE (QCK(ng)%name,10) TRIM(QCK(ng)%base), ifile
+              WRITE (QCK(ng)%name,20) TRIM(QCK(ng)%base), ifile
             END IF
 # ifdef DISTRIBUTE
             CALL mp_bcasts (ng, iNLM, QCK(ng)%name)
@@ -306,17 +325,26 @@
             IF (iic(ng).eq.ntstart(ng)) THEN
               AVG(ng)%load=0                  ! reset filename counter
             END IF
-            AVG(ng)%load=AVG(ng)%load+1
-            Fcount=AVG(ng)%load
-            AVG(ng)%Nrec(Fcount)=0
-            IF (ndefAVG(ng).eq.nAVG(ng)) THEN
+            IF (ndefAVG(ng).eq.nAVG(ng)) THEN ! next filename suffix
               ifile=(iic(ng)-1)/ndefAVG(ng)
             ELSE
               ifile=(iic(ng)-1)/ndefAVG(ng)+1
             END IF
+            AVG(ng)%load=AVG(ng)%load+1
+            IF (AVG(ng)%load.gt.AVG(ng)%Nfiles) THEN
+              IF (Master) THEN
+                WRITE (stdout,10) 'AVG(ng)%load = ', AVG(ng)%load,      &
+     &                             AVG(ng)%Nfiles, TRIM(AVG(ng)%base),  &
+     &                             ifile
+              END IF
+              exit_flag=4
+              IF (FoundError(exit_flag, NoError, __LINE__,              &
+     &                       __FILE__)) RETURN
+            END IF
+            Fcount=AVG(ng)%load
+            AVG(ng)%Nrec(Fcount)=0
             IF (Master) THEN
               WRITE (AVG(ng)%name,20) TRIM(AVG(ng)%base), ifile
-  20          FORMAT (a,'_',i4.4,'.nc')
             END IF
 #  ifdef DISTRIBUTE
             CALL mp_bcasts (ng, iNLM, AVG(ng)%name)
@@ -402,17 +430,26 @@
             IF (iic(ng).eq.ntstart(ng)) THEN
               DIA(ng)%load=0                  ! reset filename counter
             END IF
-            DIA(ng)%load=DIA(ng)%load+1
-            Fcount=DIA(ng)%load
-            DIA(ng)%Nrec(Fcount)=0
-            IF (ndefDIA(ng).eq.nDIA(ng)) THEN
+            IF (ndefDIA(ng).eq.nDIA(ng)) THEN ! next filename suffix
               ifile=(iic(ng)-1)/ndefDIA(ng)
             ELSE
               ifile=(iic(ng)-1)/ndefDIA(ng)+1
             END IF
+            DIA(ng)%load=DIA(ng)%load+1
+            IF (DIA(ng)%load.gt.DIA(ng)%Nfiles) THEN
+              IF (Master) THEN
+                WRITE (stdout,10) 'DIA(ng)%load = ', DIA(ng)%load,      &
+     &                             DIA(ng)%Nfiles, TRIM(DIA(ng)%base),  &
+     &                             ifile
+              END IF
+              exit_flag=4
+              IF (FoundError(exit_flag, NoError, __LINE__,              &
+     &                       __FILE__)) RETURN
+            END IF
+            Fcount=DIA(ng)%load
+            DIA(ng)%Nrec(Fcount)=0
             IF (Master) THEN
-              WRITE (DIA(ng)%name,30) TRIM(DIA(ng)%base), ifile
-  30          FORMAT (a,'_',i4.4,'.nc')
+              WRITE (DIA(ng)%name,20) TRIM(DIA(ng)%base), ifile
             END IF
 #  ifdef DISTRIBUTE
             CALL mp_bcasts (ng, iNLM, DIA(ng)%name)
@@ -578,6 +615,14 @@
 !
       CALL wclock_off (ng, iNLM, 8, __LINE__, __FILE__)
 # endif
+!
+ 10   FORMAT (/,' OUTPUT - multi-file counter ',a,i0,                   &
+     &          ', is greater than Nfiles = ',i0,1x,'dimension',        &
+     &        /,10x,'in structure when creating next file: ',           &
+     &           a,'_',i4.4,'.nc',                                      &
+     &        /,10x,'Incorrect OutFiles logic in ''read_phypar''.')
+ 20   FORMAT (a,'_',i4.4,'.nc')
+!
       RETURN
       END SUBROUTINE output
 #else
