@@ -2,7 +2,7 @@
       SUBROUTINE checkdefs
 !
 !git $Id$
-!svn $Id: checkdefs.F 1031 2020-07-14 01:39:55Z arango $
+!svn $Id: checkdefs.F 1037 2020-08-15 01:56:27Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -170,6 +170,15 @@
      &   'Shortwave radiation from albedo equation'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+8)=' ALBEDO,'
+#endif
+#if defined ALLOW_BOTTOM_OBS && \
+   (defined FOUR_DVAR        || \
+    defined VERIFICATION)    && defined OBSERVATIONS
+!
+      IF (Master) WRITE (stdout,20) 'ALLOW_BOTTOM_OBS',                 &
+     &   'Allow observations that lie in the lower bottom grid cell'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+18)=' ALLOW_BOTTOM_OBS,'
 #endif
 #if defined BIOLOGY && defined ANA_BIOLOGY
 !

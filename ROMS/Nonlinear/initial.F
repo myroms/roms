@@ -2,7 +2,7 @@
       SUBROUTINE initial
 !
 !git $Id$
-!svn $Id: initial.F 1031 2020-07-14 01:39:55Z arango $
+!svn $Id: initial.F 1037 2020-08-15 01:56:27Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -689,10 +689,7 @@
 !-----------------------------------------------------------------------
 !
       DO ng=1,Ngrids
-        DO tile=first_tile(ng),last_tile(ng),+1
-          CALL nesting (ng, iNLM, nmask)
-        END DO
-!$OMP BARRIER
+        CALL nesting (ng, iNLM, nmask)
       END DO
 #  endif
 !

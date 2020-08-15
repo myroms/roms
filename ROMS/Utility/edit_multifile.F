@@ -2,7 +2,7 @@
       SUBROUTINE edit_multifile (task)
 !
 !git $Id$
-!svn $Id: edit_multifile.F 1022 2020-05-13 03:03:15Z arango $
+!svn $Id: edit_multifile.F 1037 2020-08-15 01:56:27Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -91,6 +91,28 @@
               BLK(ng)%ncid=-1
               BLK(ng)%name=TRIM(HIS(ng)%name)
               BLK(ng)%files(1)=TRIM(HIS(ng)%name)
+            END IF
+!
+!  Load QCK information into the BLK structure so it can be used to
+!  process the NLM background surface forcing to be read and processed
+!  by the TLM, RPM, and ADM kernels.
+!
+          CASE ('QCK2BLK')
+            IF (ndefQCK(ng).gt.0) THEN
+              IF (QCK(ng)%ncid.ne.-1) THEN
+                CALL netcdf_close (ng, iNLM, QCK(ng)%ncid)
+              END IF
+              Nfiles=ntimes(ng)/ndefQCK(ng)
+              IF (nQCK(ng).eq.ndefQCK(ng)) Nfiles=Nfiles+1
+              CALL edit_file_struct (ng, Nfiles, BLK)
+              DO ifile=1,Nfiles
+                BLK(ng)%files(ifile)=TRIM(QCK(ng)%files(ifile))
+              END DO
+              BLK(ng)%name=TRIM(BLK(ng)%files(1))
+            ELSE
+              BLK(ng)%ncid=-1
+              BLK(ng)%name=TRIM(QCK(ng)%name)
+              BLK(ng)%files(1)=TRIM(QCK(ng)%name)
             END IF
 !
 !  Load FWD information into the BLK structure so it can be used to

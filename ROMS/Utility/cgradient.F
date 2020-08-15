@@ -5,7 +5,7 @@
 #ifdef I4DVAR
 !
 !git $Id$
-!svn $Id: cgradient.F 1035 2020-07-28 00:49:02Z arango $
+!svn $Id: cgradient.F 1037 2020-08-15 01:56:27Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -131,7 +131,7 @@
       implicit none
 !
       PUBLIC  :: cgradient
-      PUBLIC  :: cg_read
+      PUBLIC  :: cg_read_cgradient
 !
       PRIVATE :: cgradient_tile
       PRIVATE :: cg_write
@@ -7847,7 +7847,7 @@
       END SUBROUTINE cg_write
 !
 !***********************************************************************
-      SUBROUTINE cg_read (ng, model, outLoop)
+      SUBROUTINE cg_read_cgradient (ng, model, outLoop)
 !***********************************************************************
 !                                                                      !
 !  If split 4D-Var and outer>1, this routine reads conjugate gradient  !
@@ -7888,7 +7888,7 @@
      &                 __FILE__)) RETURN
       END IF
 !
-!  Read in number of converget Ritz eigenvalues
+!  Read in number of converged Ritz eigenvalues
 !
       CALL netcdf_get_ivar (ng, model, DAV(ng)%name,                    &
      &                      'nConvRitz', nConvRitz,                     &
@@ -7898,13 +7898,13 @@
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
 !
-!  Read in Ritz eigenvalues from previous outer loop.
+!  Read in converged Ritz eigenvalues.
 !
       CALL netcdf_get_fvar (ng, model, DAV(ng)%name,                    &
      &                      'Ritz', Ritz,                               &
      &                      ncid = DAV(ng)%ncid,                        &
-     &                      start = (/1,outLoop-1/),                    &
-     &                      total = (/Ninner+1,1/))
+     &                      start = (/1/),                              &
+     &                      total = (/Ninner/))
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
 !
@@ -8009,6 +8009,6 @@
      &               __FILE__)) RETURN
 !
       RETURN
-      END SUBROUTINE cg_read
+      END SUBROUTINE cg_read_cgradient
 #endif
       END MODULE cgradient_mod

@@ -2,7 +2,7 @@
 !  ROMS/TOMS Standard Input parameters.
 !
 !git $Id$
-!svn $Id: roms_wc13.in 74 2020-04-30 01:12:35Z arango $
+!svn $Id: roms_wc13.in 166 2020-05-13 03:09:07Z arango $
 !========================================================= Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                                !
 !    Licensed under a MIT/X style license                                     !
@@ -330,7 +330,7 @@ LtracerSponge == T T                            ! temperature, salinity, inert
 
      AKV_BAK == 1.0d-5                          ! m2/s
 
-  ad_AKV_fac == 1.0d0  1.0d0                    ! nondimensional
+  ad_AKV_fac == 1.0d0                           ! nondimensional
 
 ! Upper threshold values to limit vertical mixing coefficients computed
 ! from vertical mixing parameterizations. Although this is an engineering
