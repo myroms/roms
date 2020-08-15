@@ -4,7 +4,7 @@
 #ifdef NESTING
 !
 !git $Id$
-!svn $Id: nesting.F 1030 2020-07-13 01:01:08Z arango $
+!svn $Id: nesting.F 1037 2020-08-15 01:56:27Z arango $
 !=======================================================================
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license           Hernan G. Arango   !
@@ -1284,10 +1284,10 @@
 !
 !  Linear interpolation weights.
 !
-              MaskLWsum=GRID(dg)%rmask_full(Idg  ,Jdg  )+               &
-     &                  GRID(dg)%rmask_full(Idgp1,Jdg  )+               &
-     &                  GRID(dg)%rmask_full(Idgp1,Jdgp1)+               &
-     &                  GRID(dg)%rmask_full(Idg  ,Jdgp1)
+              MaskLWsum=GRID(dg)%rmask(Idg  ,Jdg  )+                    &
+     &                  GRID(dg)%rmask(Idgp1,Jdg  )+                    &
+     &                  GRID(dg)%rmask(Idgp1,Jdgp1)+                    &
+     &                  GRID(dg)%rmask(Idg  ,Jdgp1)
               IF (MaskLWsum.lt.4) THEN
 #  ifdef WET_DRY
                 Lweight(1)=Rcontact(cr)%LweightUnmasked(1,m)*           &
@@ -1341,15 +1341,15 @@
 !
 !  Quadratic interpolation weights.
 !
-              MaskQWsum=GRID(dg)%rmask_full(Idg-1, Jdg-1)+              &
-     &                  GRID(dg)%rmask_full(Idg  , Jdg-1)+              &
-     &                  GRID(dg)%rmask_full(Idgp1, Jdg-1)+              &
-     &                  GRID(dg)%rmask_full(Idg-1, Jdg  )+              &
-     &                  GRID(dg)%rmask_full(Idg  , Jdg  )+              &
-     &                  GRID(dg)%rmask_full(Idgp1, Jdg  )+              &
-     &                  GRID(dg)%rmask_full(Idg-1, Jdgp1)+              &
-     &                  GRID(dg)%rmask_full(Idg  , Jdgp1)+              &
-     &                  GRID(dg)%rmask_full(Idgp1, Jdgp1)
+              MaskQWsum=GRID(dg)%rmask(Idg-1, Jdg-1)+                   &
+     &                  GRID(dg)%rmask(Idg  , Jdg-1)+                   &
+     &                  GRID(dg)%rmask(Idgp1, Jdg-1)+                   &
+     &                  GRID(dg)%rmask(Idg-1, Jdg  )+                   &
+     &                  GRID(dg)%rmask(Idg  , Jdg  )+                   &
+     &                  GRID(dg)%rmask(Idgp1, Jdg  )+                   &
+     &                  GRID(dg)%rmask(Idg-1, Jdgp1)+                   &
+     &                  GRID(dg)%rmask(Idg  , Jdgp1)+                   &
+     &                  GRID(dg)%rmask(Idgp1, Jdgp1)
               IF (MaskQWsum.lt.9) THEN
 #   ifdef WET_DRY
                 Qweight(1)=Rcontact(cr)%QweightUnmasked(1,m)*           &
@@ -3550,8 +3550,8 @@
      &                          GRID(rg)%pm,                            &
      &                          GRID(rg)%pn,                            &
 #  ifdef MASKING
-     &                          GRID(dg)%rmask_full,                    &
-     &                          GRID(rg)%rmask_full,                    &
+     &                          GRID(dg)%rmask,                         &
+     &                          GRID(rg)%rmask,                         &
 #  endif
      &                          COUPLING(dg)%Zt_avg1,                   &
      &                          COUPLING(rg)%Zt_avg1)
@@ -3567,8 +3567,8 @@
      &                          GRID(rg)%pm,                            &
      &                          GRID(rg)%pn,                            &
 #  ifdef MASKING
-     &                          GRID(dg)%rmask_full,                    &
-     &                          GRID(rg)%rmask_full,                    &
+     &                          GRID(dg)%rmask,                         &
+     &                          GRID(rg)%rmask,                         &
 #  endif
      &                          OCEAN(dg)%zeta(:,:,Dindex2d),           &
      &                          OCEAN(rg)%zeta(:,:,Rindex2d))
@@ -3650,8 +3650,8 @@
      &                            GRID(rg)%pm,                          &
      &                            GRID(rg)%pn,                          &
 #  ifdef MASKING
-     &                            GRID(dg)%rmask_full,                  &
-     &                            GRID(rg)%rmask_full,                  &
+     &                            GRID(dg)%rmask,                       &
+     &                            GRID(rg)%rmask,                       &
 #  endif
      &                            OCEAN(dg)%t(:,:,:,Dindex3d,itrc),     &
      &                            OCEAN(rg)%t(:,:,:,Rindex3d,itrc))
@@ -3707,84 +3707,91 @@
 !-----------------------------------------------------------------------
 !
           IF (EWperiodic(rg).or.NSperiodic(rg)) THEN
+            IF (vtype.eq.r2dvar) THEN
 # ifdef SOLVE3D
-            CALL exchange_r2d_tile (rg, tile,                           &
-     &                              LBiR, UBiR, LBjR, UBjR,             &
-     &                              COUPLING(rg)%Zt_avg1)
-            DO k=1,2
+              CALL exchange_r2d_tile (rg, tile,                         &
+     &                                LBiR, UBiR, LBjR, UBjR,           &
+     &                                COUPLING(rg)%Zt_avg1)
+              DO k=1,2
+                CALL exchange_u2d_tile (rg, tile,                       &
+     &                                  LBiR, UBiR, LBjR, UBjR,         &
+     &                                  OCEAN(rg)%ubar(:,:,k))
+                CALL exchange_v2d_tile (rg, tile,                       &
+     &                                  LBiR, UBiR, LBjR, UBjR,         &
+     &                                  OCEAN(rg)%vbar(:,:,k))
+              END DO
+# else
+              CALL exchange_r2d_tile (rg, tile,                         &
+     &                                LBiR, UBiR, LBjR, UBjR,           &
+     &                                OCEAN(rg)%zeta(:,:,Rindex2d))
               CALL exchange_u2d_tile (rg, tile,                         &
      &                                LBiR, UBiR, LBjR, UBjR,           &
-     &                                OCEAN(rg)%ubar(:,:,k))
+     &                                OCEAN(rg)%ubar(:,:,Rindex2d))
               CALL exchange_v2d_tile (rg, tile,                         &
      &                                LBiR, UBiR, LBjR, UBjR,           &
-     &                                OCEAN(rg)%vbar(:,:,k))
-            END DO
-# else
-            CALL exchange_r2d_tile (rg, tile,                           &
-     &                              LBiR, UBiR, LBjR, UBjR,             &
-     &                              OCEAN(rg)%zeta(:,:,Rindex2d))
-            CALL exchange_u2d_tile (rg, tile,                           &
-     &                              LBiR, UBiR, LBjR, UBjR,             &
-     &                              OCEAN(rg)%ubar(:,:,Rindex2d))
-            CALL exchange_v2d_tile (rg, tile,                           &
-     &                              LBiR, UBiR, LBjR, UBjR,             &
-     &                              OCEAN(rg)%vbar(:,:,Rindex2d))
+     &                                OCEAN(rg)%vbar(:,:,Rindex2d))
 
 # endif
 # ifdef SOLVE3D
-            CALL exchange_u3d_tile (rg, tile,                           &
-     &                              LBiR, UBiR, LBjR, UBjR, 1, N(rg),   &
-     &                              OCEAN(rg)%u(:,:,:,Rindex3d))
-            CALL exchange_v3d_tile (rg, tile,                           &
-     &                              LBiR, UBiR, LBjR, UBjR, 1, N(rg),   &
-     &                              OCEAN(rg)%v(:,:,:,Rindex3d))
-            DO itrc=1,NT(rg)
-              CALL exchange_r3d_tile (rg, tile,                         &
+            ELSE IF (vtype.eq.r3dvar) THEN
+              CALL exchange_u3d_tile (rg, tile,                         &
      &                                LBiR, UBiR, LBjR, UBjR, 1, N(rg), &
+     &                                OCEAN(rg)%u(:,:,:,Rindex3d))
+              CALL exchange_v3d_tile (rg, tile,                         &
+     &                                LBiR, UBiR, LBjR, UBjR, 1, N(rg), &
+     &                                OCEAN(rg)%v(:,:,:,Rindex3d))
+              DO itrc=1,NT(rg)
+                CALL exchange_r3d_tile (rg, tile,                       &
+     &                                  LBiR, UBiR, LBjR, UBjR,         &
+     &                                  1, N(rg),                       &
      &                                OCEAN(rg)%t(:,:,:,Rindex3d,itrc))
-            END DO
+              END DO
 # endif
+            END IF
           END IF
 
 # ifdef DISTRIBUTE
 !
+          IF (vtype.eq.r2dvar) THEN
 #  ifdef SOLVE3D
-          CALL mp_exchange2d (rg, tile, model, 1,                       &
-     &                        LBiR, UBiR, LBjR, UBjR,                   &
-     &                        NghostPoints,                             &
-     &                        EWperiodic(rg), NSperiodic(rg),           &
-     &                        COUPLING(rg)%Zt_avg1)
-          CALL mp_exchange2d (rg, tile, model, 4,                       &
-     &                        LBiR, UBiR, LBjR, UBjR,                   &
-     &                        NghostPoints,                             &
-     &                        EWperiodic(rg), NSperiodic(rg),           &
-     &                        OCEAN(rg)%ubar(:,:,1),                    &
-     &                        OCEAN(rg)%vbar(:,:,1),                    &
-     &                        OCEAN(rg)%ubar(:,:,2),                    &
-     &                        OCEAN(rg)%vbar(:,:,2))
+            CALL mp_exchange2d (rg, tile, model, 1,                     &
+     &                          LBiR, UBiR, LBjR, UBjR,                 &
+     &                          NghostPoints,                           &
+     &                          EWperiodic(rg), NSperiodic(rg),         &
+     &                          COUPLING(rg)%Zt_avg1)
+            CALL mp_exchange2d (rg, tile, model, 4,                     &
+     &                          LBiR, UBiR, LBjR, UBjR,                 &
+     &                          NghostPoints,                           &
+     &                          EWperiodic(rg), NSperiodic(rg),         &
+     &                          OCEAN(rg)%ubar(:,:,1),                  &
+     &                          OCEAN(rg)%vbar(:,:,1),                  &
+     &                          OCEAN(rg)%ubar(:,:,2),                  &
+     &                          OCEAN(rg)%vbar(:,:,2))
 #  else
-          CALL mp_exchange2d (rg, tile, model, 3,                       &
-     &                        LBiR, UBiR, LBjR, UBjR,                   &
-     &                        NghostPoints,                             &
-     &                        EWperiodic(rg), NSperiodic(rg),           &
-     &                        OCEAN(rg)%zeta(:,:,Rindex2d),             &
-     &                        OCEAN(rg)%ubar(:,:,Rindex2d),             &
-     &                        OCEAN(rg)%vbar(:,:,Rindex2d))
+            CALL mp_exchange2d (rg, tile, model, 3,                     &
+     &                          LBiR, UBiR, LBjR, UBjR,                 &
+     &                          NghostPoints,                           &
+     &                          EWperiodic(rg), NSperiodic(rg),         &
+     &                          OCEAN(rg)%zeta(:,:,Rindex2d),           &
+     &                          OCEAN(rg)%ubar(:,:,Rindex2d),           &
+     &                          OCEAN(rg)%vbar(:,:,Rindex2d))
 #  endif
 #  ifdef SOLVE3D
-          CALL mp_exchange3d (rg, tile, model, 2,                       &
-     &                        LBiR, UBiR, LBjR, UBjR, 1, N(rg),         &
-     &                        NghostPoints,                             &
-     &                        EWperiodic(rg), NSperiodic(rg),           &
-     &                        OCEAN(rg)%u(:,:,:,Rindex3d),              &
-     &                        OCEAN(rg)%v(:,:,:,Rindex3d))
-          CALL mp_exchange4d (rg, tile, model, 1,                       &
-     &                        LBiR, UBiR, LBjR, UBjR, 1, N(rg),         &
-     &                        1, NT(rg),                                &
-     &                        NghostPoints,                             &
-     &                        EWperiodic(rg), NSperiodic(rg),           &
-     &                        OCEAN(rg)%t(:,:,:,Rindex3d,:))
+          ELSE IF (vtype.eq.r3dvar) THEN
+            CALL mp_exchange3d (rg, tile, model, 2,                     &
+     &                          LBiR, UBiR, LBjR, UBjR, 1, N(rg),       &
+     &                          NghostPoints,                           &
+     &                          EWperiodic(rg), NSperiodic(rg),         &
+     &                          OCEAN(rg)%u(:,:,:,Rindex3d),            &
+     &                          OCEAN(rg)%v(:,:,:,Rindex3d))
+            CALL mp_exchange4d (rg, tile, model, 1,                     &
+     &                          LBiR, UBiR, LBjR, UBjR, 1, N(rg),       &
+     &                          1, NT(rg),                              &
+     &                          NghostPoints,                           &
+     &                          EWperiodic(rg), NSperiodic(rg),         &
+     &                          OCEAN(rg)%t(:,:,:,Rindex3d,:))
 #  endif
+          END IF
 # endif
         END IF
       END DO
