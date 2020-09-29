@@ -1,6 +1,6 @@
 /*
 ** git $Id$
-** svn $Id: fennel_wrt.h 995 2020-01-10 04:01:28Z arango $
+** svn $Id: fennel_wrt.h 1038 2020-09-29 01:54:25Z arango $
 *************************************************** Hernan G. Arango ***
 ** Copyright (c) 2002-2020 The ROMS/TOMS Group                        **
 **   Licensed under a MIT/X style license                             **
@@ -76,6 +76,12 @@
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
 
+      CALL netcdf_put_fvar (ng, model, ncname, 'K_PO4',                 &
+     &                      K_PO4(ng), (/0/), (/0/),                    &
+     &                      ncid = ncid)
+      IF (FoundError(exit_flag, NoError, __LINE__,                      &
+     &               __FILE__)) RETURN
+
       CALL netcdf_put_fvar (ng, model, ncname, 'K_Phy',                 &
      &                      K_Phy(ng), (/0/), (/0/),                    &
      &                      ncid = ncid)
@@ -96,6 +102,12 @@
 
       CALL netcdf_put_fvar (ng, model, ncname, 'PhyCN',                 &
      &                      PhyCN(ng), (/0/), (/0/),                    &
+     &                      ncid = ncid)
+      IF (FoundError(exit_flag, NoError, __LINE__,                      &
+     &               __FILE__)) RETURN
+
+      CALL netcdf_put_fvar (ng, model, ncname, 'R_P2N',                 &
+     &                      R_P2N(ng), (/0/), (/0/),                    &
      &                      ncid = ncid)
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
@@ -192,6 +204,18 @@
 
       CALL netcdf_put_fvar (ng, model, ncname, 'SDeRRC',                &
      &                      SDeRRC(ng), (/0/), (/0/),                   &
+     &                      ncid = ncid)
+      IF (FoundError(exit_flag, NoError, __LINE__,                      &
+     &               __FILE__)) RETURN
+
+      CALL netcdf_put_fvar (ng, model, ncname, 'RDeRRN',                &
+     &                      RDeRRN(ng), (/0/), (/0/),                   &
+     &                      ncid = ncid)
+      IF (FoundError(exit_flag, NoError, __LINE__,                      &
+     &               __FILE__)) RETURN
+
+      CALL netcdf_put_fvar (ng, model, ncname, 'RDeRRC',                &
+     &                      RDeRRC(ng), (/0/), (/0/),                   &
      &                      ncid = ncid)
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN

@@ -1,7 +1,7 @@
 #include "cppdefs.h"
 !
 !git $Id$
-!svn $Id: mp_routines.F 995 2020-01-10 04:01:28Z arango $
+!svn $Id: mp_routines.F 1038 2020-09-29 01:54:25Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -23,7 +23,6 @@
 !                                                                      !
 !=======================================================================
 !
-!
 !-----------------------------------------------------------------------
       SUBROUTINE my_flush (unit)
 !-----------------------------------------------------------------------
@@ -36,14 +35,16 @@
 !
       integer, intent(in) :: unit
 !
+!  Flush the buffere of requested standard output or Fortran file unit.
+!
 #if defined CYGWIN
 #elif defined AIX
-      CALL flush_ (unit)
+!!    CALL flush_ (unit)               ! AIX Operating system routine
 #else
-      CALL flush (unit)
-!!    FLUSH (unit)                     ! Fortran 2003 standard
+!!    CALL flush (unit)                ! Operating system routine
 #endif
-
+      FLUSH (unit)                     ! Fortran 2003 standard
+!
       RETURN
       END SUBROUTINE my_flush
 
@@ -65,13 +66,15 @@
 !  Local variable declarations.
 !
       integer :: Lstr, ierror
-
+!
+!  Get argument value from command-line.
+!
 # ifdef CRAY
       CALL pxfgetarg (Iarg, Carg, Lstr, ierror)
 # else
       CALL getarg (Iarg, Carg)
 # endif
-
+!
       RETURN
       END SUBROUTINE my_getarg
 #endif
@@ -81,11 +84,13 @@
 !-----------------------------------------------------------------------
 !
       USE mod_kinds
-
+!
       implicit none
-
+!
       integer :: getpid, my_getpid
-
+!
+!  Get ID of the calling process.
+!
 #if defined CRAYX1
       my_getpid=0
 #elif defined CYGWIN
@@ -93,7 +98,7 @@
 #else
       my_getpid=getpid()
 #endif
-
+!
       RETURN
       END FUNCTION my_getpid
 !
@@ -106,7 +111,10 @@
       implicit none
 !
       integer :: my_numthreads
-
+!
+!  Get the number of Persistent Execution Threads (PET) that would
+!  execute in parallel regions.
+!
 #ifdef DISTRIBUTE
       my_numthreads=1
 #elif defined _OPENMP
@@ -122,7 +130,7 @@
 #else
       my_numthreads=1
 #endif
-
+!
       RETURN
       END FUNCTION my_numthreads
 !
@@ -135,7 +143,10 @@
       implicit none
 !
       integer :: my_threadnum
-
+!
+!  Get the Persistent Execution Thread (PET) number is working that is
+!  is working in a parallel region.
+!
 #if defined _OPENMP
       integer :: omp_get_thread_num
 
@@ -147,7 +158,7 @@
 #else
       my_threadnum=0
 #endif
-
+!
       RETURN
       END FUNCTION my_threadnum
 !
@@ -167,7 +178,10 @@
 #ifdef CRAYX1
       integer :: count, count_rate, count_max
 #endif
-
+!
+!  Get the elapsed wall time (seconds) since an arbitrary time in the
+!  past.
+!
 #if defined _OPENMP
       my_wtime=omp_get_wtime()
 #elif defined CRAYX1
@@ -177,6 +191,6 @@
       CALL cpu_time (wtime(1))
       my_wtime=wtime(1)
 #endif
-
+!
       RETURN
       END FUNCTION my_wtime

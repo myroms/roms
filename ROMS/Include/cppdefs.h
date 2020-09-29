@@ -2,7 +2,7 @@
 ** Include file "cppdefs.h"
 **
 ** git $Id$
-** svn $Id: cppdefs.h 1026 2020-05-20 02:05:37Z arango $
+** svn $Id: cppdefs.h 1038 2020-09-29 01:54:25Z arango $
 ********************************************************** Hernan G. Arango ***
 ** Copyright (c) 2002-2020 The ROMS/TOMS Group                               **
 **   Licensed under a MIT/X style license                                    **
@@ -433,13 +433,20 @@
 ** BIO_SEDIMENT            to restore fallen material to the nutrient pool   **
 ** CARBON                  to add carbon constituents                        **
 ** DENITRIFICATION         to add denitrification processes                  **
+** OCMIP_OXYGEN_SC         if O2 Schmidt number from Keeling et al. (1998)   **
 ** OXYGEN                  to add oxygen dynamics                            **
-** OCMIP_OXYGEN_SC         if Schmidt number from Keeling et al. (1998)      **
+** PCO2AIR_DATA            if pCO2 climatology from Laurent et al. (2017)    **
+** PCO2AIR_SECULAR         if pCO2 time-depedent evolution                   **
+** RW14_C02_SC             if CO2 Schmidt number from Wanninkhof (2014)      **
+** RW14_OXYGEN_SC          if O2  Schmidt number from Wanninkhof (2014)      **
+** PO4                     if phytoplanckton growth limitef by Phosphorus    **
+** RIVER_DON               if DON non-sinking source from rivers             **
 ** TALK_NONCONSERV         if nonconservative computation of alkalinity      **
 **                                                                           **
 ** Hypoxia ecosysten model OPTIONS:                                          **
 **                                                                           **
 ** HYPOXIA_SRM             if Hypoxia Simple Respiration Model               **
+** OCMIP_OXYGEN_SC         if O2 Schmidt number from Keeling et al. (1998)   **
 **                                                                           **
 ** NPZD biology model OPTIONS:                                               **
 **                                                                           **

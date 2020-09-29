@@ -2,7 +2,7 @@
       SUBROUTINE checkdefs
 !
 !git $Id$
-!svn $Id: checkdefs.F 1037 2020-08-15 01:56:27Z arango $
+!svn $Id: checkdefs.F 1038 2020-09-29 01:54:25Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -44,7 +44,7 @@
       Coptions=' '
       IF (Master) WRITE (stdout,10)
   10  FORMAT (/,' Activated C-preprocessing Options:',/)
-  20  FORMAT (1x,a,t26,a)
+  20  FORMAT (1x,a,t27,a)
 !
       IF (Master) THEN
         WRITE (stdout,20) TRIM(ADJUSTL(MyAppCPP)), TRIM(ADJUSTL(title))
@@ -1742,7 +1742,8 @@
      &   'Add oxygen dynamics'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+8)=' OXYGEN,'
-#elif !defined SURFACE_DO_SATURATION && defined HYPOXIA_SRM
+#endif
+#if defined HYPOXIA_SRM && !defined SURFACE_DO_SATURATION
 # ifdef OCMIP_OXYGEN_SC
 !
       IF (Master) WRITE (stdout,20) 'OCMIP_OXYGEN_SC',                  &
@@ -1763,6 +1764,21 @@
      &   'Parallel I/O processing'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+13)=' PARALLEL_IO,'
+#endif
+#if defined CARBON && defined BIO_FENNEL
+# if defined PC02AIR_DATA
+!
+      IF (Master) WRITE (stdout,20) 'PCO2AIR_DATA',                     &
+     &   'CO2 gas exchange from Laurent et al. (2017)'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+14)=' PCO2AIR_DATA,'
+# elif defined PCO2AIR_SECULAR
+!
+      IF (Master) WRITE (stdout,20) 'PCO2AIR_SECULAR',                  &
+     &   'CO2 gas exchange time-dependent evolution'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+17)=' PCO2AIR_SECULAR,'
+# endif
 #endif
 #ifdef PERFECT_RESTART
 !
@@ -1800,13 +1816,20 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+12)=' PJ_GRADPQ4,'
 #endif
-# if defined PRESS_COMPENSATE && defined ATM_PRESS
+#if defined PRESS_COMPENSATE && defined ATM_PRESS
 !
       IF (Master) WRITE (stdout,20) 'PRESS_COMPENSATE',                 &
      &   'Compensate for boundary data without ATM pressure effect'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+18)=' PRESS_COMPENSATE,'
-# endif
+#endif
+#if defined PO4 && defined BIO_FENNEL
+!
+      IF (Master) WRITE (stdout,20) 'PO4',                              &
+     &   'Phytoplanckton growth limited by Phosphorus'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+5)=' P04,'
+#endif
 #ifdef POSITIVE_ZERO
 !
       IF (Master) WRITE (stdout,20) 'POSITIVE_ZERO',                    &
@@ -1883,6 +1906,27 @@
      &   'Radial observations as an azimuth clockwise from NORTH'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+24)=' !RADIAL_ANGLE_CCW_EAST,'
+# endif
+#endif
+#if defined OXYGEN && defined BIO_FENNEL
+# if defined OCMIP_OXYGEN_SC
+!
+      IF (Master) WRITE (stdout,20) 'OCMIP_OXYGEN_SC',                  &
+     &   'Schmidt number from Keeling et al. (1998)'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+17)=' OCMIP_OXYGEN_SC,'
+# elif defined RW14_OXYGEN_SC
+!
+      IF (Master) WRITE (stdout,20) 'RW14_OXYGEN_SC',                   &
+     &   'O2 Schmidt number from Wanninkhof (2014)'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+16)=' RW14_OXYGEN_SC,'
+# else
+!
+      IF (Master) WRITE (stdout,20) '!RW14_OXYGEN_SC',                  &
+     &   'Schmidt number from Wanninkhof (1992)'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+17)=' !RW14_OXYGEN_SC,'
 # endif
 #endif
 #if defined GLS_MIXING || defined MY25_MIXING
@@ -2016,6 +2060,13 @@
      &   'Regressing start clock by one coupling interval'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+20)=' REGRESS_STARTCLOCK,'
+#endif
+#if defined RIVER_DON && defined BIO_FENNEL
+!
+      IF (Master) WRITE (stdout,20) 'RIVER_DON',                        &
+     &   'DON non-skinking source from rivers'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+5)=' RIVER_DON,'
 #endif
 #ifdef ROMS_STDOUT
 !

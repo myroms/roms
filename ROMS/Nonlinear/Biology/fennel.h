@@ -1,7 +1,7 @@
       SUBROUTINE biology (ng,tile)
 !
 !git $Id$
-!svn $Id: fennel.h 995 2020-01-10 04:01:28Z arango $
+!svn $Id: fennel.h 1038 2020-09-29 01:54:25Z arango $
 !***********************************************************************
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license           Hernan G. Arango   !
@@ -9,7 +9,7 @@
 !****************************************** Alexander F. Shchepetkin ***
 !                                                                      !
 !  This routine computes the  biological sources and sinks for the     !
-!  Fennel et at. (2006) ecosystem model. Then, it adds those terms     !
+!  Fennel et al. (2006) ecosystem model. Then, it adds those terms     !
 !  to the global biological fields.                                    !
 !                                                                      !
 !  This model is loosely based on the model by Fasham et al. (1990)    !
@@ -53,8 +53,40 @@
 !  used, in addition to "OXYGEN",  the Schmidt number of oxygen in     !
 !  seawater will be  computed  using the  formulation  proposed by     !
 !  Keeling et al. (1998, Global Biogeochem. Cycles,  12, 141-163).     !
-!  Otherwise, the Wanninkhof^s (1992) formula will be used.            !
+!  Otherwise,  the Wanninkhof (1992)  formula will be used. See        !
+!  Fennel et al. (2013) for more details.                              !
 !                                                                      !
+!***********************************************************************
+!  UPDATE Sept 2020                                                    !
+!                                                                      !
+!  In this  version  additional  tracers,  additional   alkalinity     !
+!  fluxes, and an updated parameterization of air-sea O2  and  CO2     !
+!  fluxes are added as described in Laurent et al. (2017).             !
+!                                                                      !
+!  If "PO4" is activated,   one  additional biological tracer   is     !
+!  added  representing phosphate.  With this option  phytoplankton     !
+!  growth can be limited by either  nitrogen and phosphorus.  This     !
+!  option was introduced in Laurent et al. (2012).                     !
+!                                                                      !
+!  If "RIVER_DON"  is activated,  an additional  biological tracer     !
+!  (or 2 if "CARBON" is defined) is added representing non-sinking     !
+!  dissolved organic matter from rivers as  described in Yu et al.     !
+!  (2015).                                                             !
+!                                                                      !
+!  If the "RW14_OXYGEN_SC" and/or  "RW14_CO2_SC" options are used,     !
+!  the model will use Wanninkhof (2014) air-sea flux parameteri-       !
+!  zation.   With the  "TALK_NONCONSERV"  option,   alkalinity  is     !
+!  affected by biological fluxes   as described in  Laurent et al.     !
+!  (2017).                                                             !
+!                                                                      !
+!  With the  "PCO2AIR_DATA"  option,   atmospheric pCO2  uses  the     !
+!  climatology of  Laurent et al. (2017).   The  "PCO2AIR_SECULAR"     !
+!  option provides an alternative time-dependent atmospheric  pCO2     !
+!  evolution.   If none of the 2 options are defined,  atmospheric     !
+!  pCO2 is constant.                                                   !
+!                                                                      !
+!                                                                      !
+!***********************************************************************
 !  References:                                                         !
 !                                                                      !
 !    Fennel, K., Wilkin, J., Levin, J., Moisan, J., O^Reilly, J.,      !
@@ -67,6 +99,25 @@
 !      Denitrification effects on air-sea CO2 flux in the coastal      !
 !      ocean: Simulations for the Northwest North Atlantic.            !
 !      Geophys. Res. Letters 35, L24608, doi:10.1029/2008GL036147.     !
+!                                                                      !
+!    Fennel, K., Hu, J., Laurent, A., Marta-Almeida, M., Hetland, R.   !
+!      2013: Sensitivity of Hypoxia Predictions for the Northern Gulf  !
+!      of Mexico to Sediment Oxygen Consumption and Model Nesting. J.  !
+!      Geophys. Res. Ocean 118 (2), 990-1002, doi:10.1002/jgrc.20077.  !
+!                                                                      !
+!    Laurent, A., Fennel, K., Hu, J., Hetland, R. 2012: Simulating     !
+!      the Effects of Phosphorus Limitation in the Mississippi and     !
+!      Atchafalaya River Plumes. Biogeosciences, 9 (11), 4707-4723,    !
+!      doi:10.5194/bg-9-4707-2012.                                     !
+!                                                                      !
+!    Yu, L., Fennel, K., Laurent, A., Murrell, M. C., Lehrter, J. C.   !
+!      2015: Numerical Analysis of the Primary Processes Controlling   !
+!      Oxygen Dynamics on the Louisiana Shelf. Biogeosciences, 12 (7), !
+!      2063-2076, doi:10.5194/bg-12-2063-2015.                         !
+!                                                                      !
+!    Wanninkhof, R. 2014: Relationship between Wind Speed and Gas      !
+!      Exchange over the Ocean Revisited. Limnol. Oceanogr. Methods    !
+!      12 (6), 351-362, doi:10.4319/lom.2014.12.351.                   !
 !                                                                      !
 !***********************************************************************
 !
@@ -155,7 +206,7 @@
      &                         rmask,                                   &
 # if defined WET_DRY
      &                         rmask_wet,                               &
-#  if def DIAGNOSTICS_BIO
+#  ifdef DIAGNOSTICS_BIO
      &                         rmask_full,                              &
 #  endif
 # endif
@@ -273,6 +324,40 @@
       real(r8) :: u10squ
 #endif
 #ifdef OXYGEN
+# if defined OCMIP_OXYGEN_SC
+!
+! Alternative formulation for Schmidt number coefficients (Sc will be
+! slightly smaller up to about 35C) using the formulation proposed by
+! Keeling et al. (1998, Global Biogeochem. Cycles, 12, 141-163).
+!
+      real(r8), parameter :: A_O2 = 1638.0_r8
+      real(r8), parameter :: B_O2 = 81.83_r8
+      real(r8), parameter :: C_O2 = 1.483_r8
+      real(r8), parameter :: D_O2 = 0.008004_r8
+      real(r8), parameter :: E_O2 = 0.0_r8
+
+# elif defined RW14_OXYGEN_SC
+!
+! Alternative formulation for Schmidt number coefficients using the
+! formulation of Wanninkhof (2014, L&O Methods, 12,351-362).
+!
+      real(r8), parameter :: A_O2 = 1920.4_r8
+      real(r8), parameter :: B_O2 = 135.6_r8
+      real(r8), parameter :: C_O2 = 5.2122_r8
+      real(r8), parameter :: D_O2 = 0.10939_r8
+      real(r8), parameter :: E_O2 = 0.00093777_r8
+
+# else
+!
+! Schmidt number coefficients using the formulation of
+! Wanninkhof (1992).
+!
+      real(r8), parameter :: A_O2 = 1953.4_r8
+      real(r8), parameter :: B_O2 = 128.0_r8
+      real(r8), parameter :: C_O2 = 3.9918_r8
+      real(r8), parameter :: D_O2 = 0.050091_r8
+      real(r8), parameter :: E_O2 = 0.0_r8
+#endif
       real(r8), parameter :: OA0 = 2.00907_r8       ! Oxygen
       real(r8), parameter :: OA1 = 3.22014_r8       ! saturation
       real(r8), parameter :: OA2 = 4.05010_r8       ! coefficients
@@ -289,12 +374,22 @@
       real(r8) :: l2mol = 1000.0_r8/22.3916_r8      ! liter to mol
 #endif
 #ifdef CARBON
+      integer :: year
       integer, parameter :: DoNewton = 0            ! pCO2 solver
 
-      real(r8), parameter :: Acoef = 2073.1_r8      ! Schmidt
-      real(r8), parameter :: Bcoef = 125.62_r8      ! number
-      real(r8), parameter :: Ccoef = 3.6276_r8      ! transfer
-      real(r8), parameter :: Dcoef = 0.043219_r8    ! coefficients
+# if defined RW14_CO2_SC
+      real(r8), parameter :: A_CO2 = 2116.8_r8      ! Schmidt number
+      real(r8), parameter :: B_CO2 = 136.25_r8      ! transfer coeff
+      real(r8), parameter :: C_CO2 = 4.7353_r8      ! according to
+      real(r8), parameter :: D_CO2 = 0.092307_r8    ! Wanninkhof (2014)
+      real(r8), parameter :: E_CO2 = 0.0007555_r8
+# else
+      real(r8), parameter :: A_CO2 = 2073.1_r8      ! Schmidt
+      real(r8), parameter :: B_CO2 = 125.62_r8      ! number
+      real(r8), parameter :: C_CO2 = 3.6276_r8      ! transfer
+      real(r8), parameter :: D_CO2 = 0.043219_r8    ! coefficients
+      real(r8), parameter :: E_CO2 = 0.0_r8
+#endif
 
       real(r8), parameter :: A1 = -60.2409_r8       ! surface
       real(r8), parameter :: A2 = 93.4517_r8        ! CO2
@@ -321,9 +416,17 @@
 
       real(r8) :: Att, AttFac, ExpAtt, Itop, PAR
       real(r8) :: Epp, L_NH4, L_NO3, LTOT, Vp
+#ifdef PO4
+      real(r8), parameter :: MinVal = 1.0e-6_r8
+
+      real(r8) :: L_PO4, LMIN, mu, cff6
+#endif
       real(r8) :: Chl2C, dtdays, t_PPmax, inhNH4
 
       real(r8) :: cff, cff1, cff2, cff3, cff4, cff5
+#ifdef RIVER_DON
+      real(r8) :: cff7, cff8
+#endif
       real(r8) :: fac1, fac2, fac3
       real(r8) :: cffL, cffR, cu, dltL, dltR
 
@@ -339,7 +442,7 @@
 #endif
 
 #ifdef CARBON
-      real(r8) :: C_Flux_Remine
+      real(r8) :: C_Flux_RemineL, C_Flux_RemineS, C_Flux_RemineR
       real(r8) :: CO2_Flux, CO2_sol, SchmidtN, TempK
 #endif
 
@@ -349,7 +452,7 @@
       real(r8) :: N_Flux_NewProd, N_Flux_RegProd
       real(r8) :: N_Flux_Nitrifi
       real(r8) :: N_Flux_Pmortal, N_Flux_Zmortal
-      real(r8) :: N_Flux_Remine
+      real(r8) :: N_Flux_RemineL, N_Flux_RemineS, N_Flux_RemineR
       real(r8) :: N_Flux_Zexcret, N_Flux_Zmetabo
 
       real(r8), dimension(Nsink) :: Wbio
@@ -622,21 +725,43 @@
                 L_NH4=cff1/(1.0_r8+cff1)
                 L_NO3=cff2*inhNH4/(1.0_r8+cff2)
                 LTOT=L_NO3+L_NH4
+#ifdef PO4
+                cff3=Bio(i,k,iPO4_)*K_PO4(ng)
+                L_PO4=cff3/(1.0_r8+cff3)
+                LMIN=MIN(LTOT,L_PO4)
+#endif
 !
 !  Nitrate and ammonium uptake by Phytoplankton.
 !
+#ifdef PO4
+                mu=dtdays*t_PPmax*LMIN
+                cff4=mu*Bio(i,k,iPhyt)*L_NO3/                           &
+     &               MAX(MinVal,LTOT)/MAX(MinVal,Bio(i,k,iNO3_))
+                cff5=mu*Bio(i,k,iPhyt)*L_NH4/                           &
+     &               MAX(MinVal,LTOT)/MAX(MinVal,Bio(i,k,iNH4_))
+                cff6=R_P2N(ng)*mu*Bio(i,k,iPhyt)/                       &
+     &               MAX(MinVal,Bio(i,k,iPO4_))
+#else
                 fac1=dtdays*t_PPmax
                 cff4=fac1*K_NO3(ng)*inhNH4/(1.0_r8+cff2)*Bio(i,k,iPhyt)
                 cff5=fac1*K_NH4(ng)/(1.0_r8+cff1)*Bio(i,k,iPhyt)
+#endif
                 Bio(i,k,iNO3_)=Bio(i,k,iNO3_)/(1.0_r8+cff4)
                 Bio(i,k,iNH4_)=Bio(i,k,iNH4_)/(1.0_r8+cff5)
+#ifdef PO4
+                Bio(i,k,iPO4_)=Bio(i,k,iPO4_)/(1.0_r8+cff6)
+#endif
                 N_Flux_NewProd=Bio(i,k,iNO3_)*cff4
                 N_Flux_RegProd=Bio(i,k,iNH4_)*cff5
                 Bio(i,k,iPhyt)=Bio(i,k,iPhyt)+                          &
      &                         N_Flux_NewProd+N_Flux_RegProd
 !
                 Bio(i,k,iChlo)=Bio(i,k,iChlo)+                          &
+#ifdef PO4
+     &                         (dtdays*t_PPmax*t_PPmax*LMIN*LMIN*       &
+#else
      &                         (dtdays*t_PPmax*t_PPmax*LTOT*LTOT*       &
+#endif
      &                          Chl2C_m(ng)*Bio(i,k,iChlo))/            &
      &                         (PhyIS(ng)*MAX(Chl2C,eps)*PAR+eps)
 #ifdef DIAGNOSTICS_BIO
@@ -667,7 +792,8 @@
 !
 !  Account for the uptake of NO3 on total alkalinity.
 !
-                Bio(i,k,iTAlk)=Bio(i,k,iTAlk)+N_Flux_NewProd
+                Bio(i,k,iTAlk)=Bio(i,k,iTAlk)+N_Flux_NewProd-           &
+     &                         N_Flux_RegProd
 # endif
 #endif
 !
@@ -697,11 +823,18 @@
                 Bio(i,k,iNH4_)=Bio(i,k,iNH4_)/(1.0_r8+cff3)
                 N_Flux_Nitrifi=Bio(i,k,iNH4_)*cff3
                 Bio(i,k,iNO3_)=Bio(i,k,iNO3_)+N_Flux_Nitrifi
+#ifdef DIAGNOSTICS_BIO
+                DiaBio3d(i,j,k,iNifx)=DiaBio3d(i,j,k,iNifx)+            &
+# ifdef WET_DRY
+     &                                rmask_full(i,j)*                  &
+# endif
+     &                                N_Flux_Nitrifi*fiter
+#endif
 #ifdef OXYGEN
                 Bio(i,k,iOxyg)=Bio(i,k,iOxyg)-2.0_r8*N_Flux_Nitrifi
 #endif
 #if defined CARBON && defined TALK_NONCONSERV
-                Bio(i,k,iTAlk)=Bio(i,k,iTAlk)-N_Flux_Nitrifi
+                Bio(i,k,iTAlk)=Bio(i,k,iTAlk)-2.0_r8*N_Flux_Nitrifi
 #endif
 !
 !  Light attenuation at the bottom of the grid cell. It is the starting
@@ -718,11 +851,18 @@
                 Bio(i,k,iNH4_)=Bio(i,k,iNH4_)/(1.0_r8+cff3)
                 N_Flux_Nitrifi=Bio(i,k,iNH4_)*cff3
                 Bio(i,k,iNO3_)=Bio(i,k,iNO3_)+N_Flux_Nitrifi
+#ifdef DIAGNOSTICS_BIO
+                DiaBio3d(i,j,k,iNifx)=DiaBio3d(i,j,k,iNifx)+            &
+# ifdef WET_DRY
+     &                                rmask_full(i,j)*                  &
+# endif
+     &                                N_Flux_Nitrifi*fiter
+#endif
 #ifdef OXYGEN
                 Bio(i,k,iOxyg)=Bio(i,k,iOxyg)-2.0_r8*N_Flux_Nitrifi
 #endif
 #if defined CARBON && defined TALK_NONCONSERV
-                Bio(i,k,iTAlk)=Bio(i,k,iTAlk)-N_Flux_Nitrifi
+                Bio(i,k,iTAlk)=Bio(i,k,iTAlk)-2.0_r8*N_Flux_Nitrifi
 #endif
               END DO
             END IF
@@ -797,6 +937,9 @@
               N_Flux_Zmortal=cff2*Bio(i,k,iZoop)
               N_Flux_Zexcret=cff3*Bio(i,k,iZoop)
               Bio(i,k,iNH4_)=Bio(i,k,iNH4_)+N_Flux_Zexcret
+#ifdef PO4
+              Bio(i,k,iPO4_)=Bio(i,k,iPO4_)+R_P2N(ng)*N_Flux_Zexcret
+#endif
               Bio(i,k,iSDeN)=Bio(i,k,iSDeN)+N_Flux_Zmortal
 !
 !  Zooplankton basal metabolism (limited by a zooplankton minimum).
@@ -804,6 +947,9 @@
               N_Flux_Zmetabo=cff1*MAX(Bio(i,k,iZoop)-ZooMin(ng),0.0_r8)
               Bio(i,k,iZoop)=Bio(i,k,iZoop)-N_Flux_Zmetabo
               Bio(i,k,iNH4_)=Bio(i,k,iNH4_)+N_Flux_Zmetabo
+#ifdef PO4
+              Bio(i,k,iPO4_)=Bio(i,k,iPO4_)+R_P2N(ng)*N_Flux_Zmetabo
+#endif
 #ifdef OXYGEN
               Bio(i,k,iOxyg)=Bio(i,k,iOxyg)-                            &
      &                       rOxNH4*(N_Flux_Zmetabo+N_Flux_Zexcret)
@@ -813,6 +959,10 @@
      &                       ZooCN(ng)*N_Flux_Zmortal
               Bio(i,k,iTIC_)=Bio(i,k,iTIC_)+                            &
      &                       ZooCN(ng)*(N_Flux_Zmetabo+N_Flux_Zexcret)
+#ifdef TALK_NONCONSERV
+              Bio(i,k,iTAlk)=Bio(i,k,iTAlk)+N_Flux_Zmetabo+             &
+     &                       N_Flux_Zexcret
+#endif
 #endif
             END DO
           END DO
@@ -856,9 +1006,36 @@
               cff4=1.0_r8/(1.0_r8+cff3)
               Bio(i,k,iSDeN)=Bio(i,k,iSDeN)*cff2
               Bio(i,k,iLDeN)=Bio(i,k,iLDeN)*cff4
-              N_Flux_Remine=Bio(i,k,iSDeN)*cff1+Bio(i,k,iLDeN)*cff3
-              Bio(i,k,iNH4_)=Bio(i,k,iNH4_)+N_Flux_Remine
-              Bio(i,k,iOxyg)=Bio(i,k,iOxyg)-N_Flux_Remine*rOxNH4
+              N_Flux_RemineS=Bio(i,k,iSDeN)*cff1
+              N_Flux_RemineL=Bio(i,k,iLDeN)*cff3
+              Bio(i,k,iNH4_)=Bio(i,k,iNH4_)+                            &
+     &                       N_Flux_RemineS+N_Flux_RemineL
+# ifdef PO4
+              Bio(i,k,iPO4_)=Bio(i,k,iPO4_)+R_P2N(ng)                   &
+     &                      *(N_Flux_RemineS+N_Flux_RemineL)
+# endif
+              Bio(i,k,iOxyg)=Bio(i,k,iOxyg)-                            &
+     &                       (N_Flux_RemineS+N_Flux_RemineL)*rOxNH4
+# if defined CARBON && defined TALK_NONCONSERV
+              Bio(i,k,iTAlk)=Bio(i,k,iTAlk)+N_Flux_RemineS+             &
+     &                       N_Flux_RemineL
+# endif
+# ifdef RIVER_DON
+              cff7=dtdays*RDeRRN(ng)*fac2
+              cff8=1.0_r8/(1.0_r8+cff7)
+              Bio(i,k,iRDeN)=Bio(i,k,iRDeN)*cff8
+              N_Flux_RemineR=Bio(i,k,iRDeN)*cff7
+              Bio(i,k,iNH4_)=Bio(i,k,iNH4_)+                            &
+     &                       N_Flux_RemineR
+#  ifdef PO4
+              Bio(i,k,iPO4_)=Bio(i,k,iPO4_)+R_P2N(ng)                   &
+     &                      *N_Flux_RemineR
+#  endif
+              Bio(i,k,iOxyg)=Bio(i,k,iOxyg)-N_Flux_RemineR*rOxNH4
+#  if defined CARBON && defined TALK_NONCONSERV
+              Bio(i,k,iTAlk)=Bio(i,k,iTAlk)+N_Flux_RemineR
+#  endif
+# endif
             END DO
           END DO
 #else
@@ -866,12 +1043,38 @@
           cff2=1.0_r8/(1.0_r8+cff1)
           cff3=dtdays*LDeRRN(ng)
           cff4=1.0_r8/(1.0_r8+cff3)
+# ifdef RIVER_DON
+          cff7=dtdays*RDeRRN(ng)
+          cff8=1.0_r8/(1.0_r8+cff7)
+# endif
           DO k=1,N(ng)
             DO i=Istr,Iend
               Bio(i,k,iSDeN)=Bio(i,k,iSDeN)*cff2
               Bio(i,k,iLDeN)=Bio(i,k,iLDeN)*cff4
-              N_Flux_Remine=Bio(i,k,iSDeN)*cff1+Bio(i,k,iLDeN)*cff3
-              Bio(i,k,iNH4_)=Bio(i,k,iNH4_)+N_Flux_Remine
+              N_Flux_RemineS=Bio(i,k,iSDeN)*cff1
+              N_Flux_RemineL=Bio(i,k,iLDeN)*cff3
+              Bio(i,k,iNH4_)=Bio(i,k,iNH4_)+                            &
+     &                       N_Flux_RemineS+N_Flux_RemineL
+# ifdef PO4
+              Bio(i,k,iPO4_)=Bio(i,k,iPO4_)+R_P2N(ng)                   &
+     &                      *(N_Flux_RemineS+N_Flux_RemineL)
+# endif
+# if defined CARBON && defined TALK_NONCONSERV
+              Bio(i,k,iTAlk)=Bio(i,k,iTAlk)+N_Flux_RemineS+             &
+     &                       N_Flux_RemineL
+# endif
+# ifdef RIVER_DON
+              Bio(i,k,iRDeN)=Bio(i,k,iRDeN)*cff8
+              N_Flux_RemineR=Bio(i,k,iRDeN)*cff7
+              Bio(i,k,iNH4_)=Bio(i,k,iNH4_)+N_Flux_RemineR
+#  ifdef PO4
+              Bio(i,k,iPO4_)=Bio(i,k,iPO4_)+R_P2N(ng)                   &
+     &                      *N_Flux_RemineR
+#  endif
+#  if defined CARBON && defined TALK_NONCONSERV
+              Bio(i,k,iTAlk)=Bio(i,k,iTAlk)+N_Flux_RemineR
+#  endif
+# endif
             END DO
           END DO
 #endif
@@ -884,7 +1087,11 @@
 !  Compute surface O2 gas exchange.
 !
           cff1=rho0*550.0_r8
+# if defined RW14_OXYGEN_SC
+          cff2=dtdays*0.251_r8*24.0_r8/100.0_r8
+# else
           cff2=dtdays*0.31_r8*24.0_r8/100.0_r8
+# endif
           k=N(ng)
           DO i=Istr,Iend
 !
@@ -896,30 +1103,9 @@
             u10squ=cff1*SQRT((0.5_r8*(sustr(i,j)+sustr(i+1,j)))**2+     &
      &                       (0.5_r8*(svstr(i,j)+svstr(i,j+1)))**2)
 # endif
-# ifdef OCMIP_OXYGEN_SC
-!
-!  Alternative formulation for Schmidt number (Sc will be slightly
-!  smaller up to about 35 C): Compute the Schmidt number of oxygen
-!  in seawater using the formulation proposed by Keeling et al.
-!  (1998, Global Biogeochem. Cycles, 12, 141-163).  Input temperature
-!  in Celsius.
-!
-            SchmidtN_Ox=1638.0_r8-                                      &
-     &                  Bio(i,k,itemp)*(81.83_r8-                       &
-     &                                  Bio(i,k,itemp)*                 &
-     &                                  (1.483_r8-                      &
-     &                                   Bio(i,k,itemp)*0.008004_r8))
-# else
-!
-!  Calculate the Schmidt number for O2 in sea water (Wanninkhof, 1992).
-!
-            SchmidtN_Ox=1953.4_r8-                                      &
-     &                  Bio(i,k,itemp)*(128.0_r8-                       &
-     &                                  Bio(i,k,itemp)*                 &
-     &                                  (3.9918_r8-                     &
-     &                                   Bio(i,k,itemp)*0.050091_r8))
-# endif
-
+            SchmidtN_Ox=A_O2-Bio(i,k,itemp)*(B_O2-Bio(i,k,itemp)*(C_O2- &
+     &                                            Bio(i,k,itemp)*(D_O2- &
+     &                                            Bio(i,k,itemp)*E_O2)))
             cff3=cff2*u10squ*SQRT(660.0_r8/SchmidtN_Ox)
 !
 !  Calculate O2 saturation concentration using Garcia and Gordon
@@ -961,14 +1147,36 @@
           cff2=1.0_r8/(1.0_r8+cff1)
           cff3=dtdays*LDeRRC(ng)
           cff4=1.0_r8/(1.0_r8+cff3)
+# ifdef RIVER_DON
+          cff7=dtdays*RDeRRC(ng)
+          cff8=1.0_r8/(1.0_r8+cff7)
+# endif
           DO k=1,N(ng)
             DO i=Istr,Iend
               Bio(i,k,iSDeC)=Bio(i,k,iSDeC)*cff2
               Bio(i,k,iLDeC)=Bio(i,k,iLDeC)*cff4
-              C_Flux_Remine=Bio(i,k,iSDeC)*cff1+Bio(i,k,iLDeC)*cff3
-              Bio(i,k,iTIC_)=Bio(i,k,iTIC_)+C_Flux_Remine
+              C_Flux_RemineS=Bio(i,k,iSDeC)*cff1
+              C_Flux_RemineL=Bio(i,k,iLDeC)*cff3
+              Bio(i,k,iTIC_)=Bio(i,k,iTIC_)+                            &
+     &                       C_Flux_RemineS+C_Flux_RemineL
+# ifdef RIVER_DON
+              Bio(i,k,iRDeC)=Bio(i,k,iRDeC)*cff8
+              C_Flux_RemineR=Bio(i,k,iRDeC)*cff7
+              Bio(i,k,iTIC_)=Bio(i,k,iTIC_)+C_Flux_RemineR
+# endif
             END DO
           END DO
+# ifndef TALK_NONCONSERV
+!
+!  Alkalinity is treated as a diagnostic variable. TAlk = f(S[PSU])
+!  following Brewer et al. (1986).
+!
+          DO k=1,N(ng)
+            DO i=Istr,Iend
+              Bio(i,k,iTAlk)=587.05_r8+50.56_r8*Bio(i,k,isalt)
+            END DO
+          END DO
+# endif
 !
 !-----------------------------------------------------------------------
 !  Surface CO2 gas exchange.
@@ -1001,7 +1209,11 @@
 !  Compute surface CO2 gas exchange.
 !
           cff1=rho0*550.0_r8
+# if defined RW14_CO2_SC
+          cff2=dtdays*0.251_r8*24.0_r8/100.0_r8
+# else
           cff2=dtdays*0.31_r8*24.0_r8/100.0_r8
+# endif
           DO i=Istr,Iend
 !
 !  Compute CO2 transfer velocity : u10squared (u10 in m/s)
@@ -1012,10 +1224,9 @@
             u10squ=cff1*SQRT((0.5_r8*(sustr(i,j)+sustr(i+1,j)))**2+     &
      &                       (0.5_r8*(svstr(i,j)+svstr(i,j+1)))**2)
 # endif
-            SchmidtN=Acoef-                                             &
-     &               Bio(i,k,itemp)*(Bcoef-                             &
-     &                               Bio(i,k,itemp)*(Ccoef-             &
-     &                               Bio(i,k,itemp)*Dcoef))
+            SchmidtN=A_CO2-Bio(i,k,itemp)*(B_CO2-Bio(i,k,itemp)*(C_CO2- &
+     &                                           Bio(i,k,itemp)*(D_CO2- &
+     &                                           Bio(i,k,itemp)*E_CO2)))
             cff3=cff2*u10squ*SQRT(660.0_r8/SchmidtN)
 !
 !  Calculate CO2 solubility [mol/(kg.atm)] using Weiss (1974) formula.
@@ -1028,14 +1239,21 @@
 !
 !  Add in CO2 gas exchange.
 !
-            CALL caldate (tdays(ng), yd_dp=yday)
-            pmonth=2003.0_dp-1951.0_dp+yday/365.0_dp
-!!          pCO2air_secular=D0+D1*pmonth*12.0_r8+                       &
-!!   &                         D2*SIN(pi2*pmonth+D3)+                   &
-!!   &                         D4*SIN(pi2*pmonth+D5)+                   &
-!!   &                         D6*SIN(pi2*pmonth+D7)
-!!          CO2_Flux=cff3*CO2_sol*(pCO2air_secular-pCO2(i))
+            CALL caldate (tdays(ng), yy_i=year, yd_dp=yday)
+            pmonth=year-1951.0_r8+yday/365.0_r8
+# if defined PCO2AIR_DATA
+            pCO2air_secular=380.464_r8+9.321_r8*SIN(pi2*yday/365.25_r8+ &
+     &                      1.068_r8)
+            CO2_Flux=cff3*CO2_sol*(pCO2air_secular-pCO2(i))
+# elif defined PCO2AIR_SECULAR
+            pCO2air_secular=D0+D1*pmonth*12.0_r8+                       &
+     &                         D2*SIN(pi2*pmonth+D3)+                   &
+     &                         D4*SIN(pi2*pmonth+D5)+                   &
+     &                         D6*SIN(pi2*pmonth+D7)
+            CO2_Flux=cff3*CO2_sol*(pCO2air_secular-pCO2(i))
+# else
             CO2_Flux=cff3*CO2_sol*(pCO2air(ng)-pCO2(i))
+# endif
             Bio(i,k,iTIC_)=Bio(i,k,iTIC_)+                              &
      &                     CO2_Flux*Hz_inv(i,k)
 # ifdef DIAGNOSTICS_BIO
@@ -1258,13 +1476,22 @@
 #   endif
      &                              (1.0_r8-cff2)*cff1*Hz(i,j,1)*fiter
 #  endif
+#  ifdef PO4
+                Bio(i,1,iPO4_)=Bio(i,1,iPO4_)+cff1*R_P2N(ng)
+#  endif
 #  ifdef OXYGEN
                 Bio(i,1,iOxyg)=Bio(i,1,iOxyg)-cff1*cff3
 #  endif
 # else
                 Bio(i,1,iNH4_)=Bio(i,1,iNH4_)+cff1
+#   ifdef PO4
+                Bio(i,1,iPO4_)=Bio(i,1,iPO4_)+cff1*R_P2N(ng)
+#   endif
 #  ifdef OXYGEN
                 Bio(i,1,iOxyg)=Bio(i,1,iOxyg)-cff1*cff4
+#  endif
+#  if defined CARBON && defined TALK_NONCONSERV
+                Bio(i,1,iTAlk)=Bio(i,1,iTAlk)+cff1
 #  endif
 # endif
               END DO
@@ -1308,6 +1535,14 @@
 !  (J. Wilkin and H. Arango, Apr 27, 2012)
 !-----------------------------------------------------------------------
 !
+#ifdef CARBON
+        DO k=1,N(ng)
+          DO i=Istr,Iend
+            Bio(i,k,iTIC_)=MIN(Bio(i,k,iTIC_),3000.0_r8)
+            Bio(i,k,iTIC_)=MAX(Bio(i,k,iTIC_),400.0_r8)
+          END DO
+        END DO
+#endif
         DO itrc=1,NBT
           ibio=idbio(itrc)
           DO k=1,N(ng)
@@ -1368,7 +1603,7 @@
 !                                                                      !
 !     pCO2       partial pressure of CO2 (ppmv).                       !
 !                                                                      !
-!  Check Value:  (T=24, S=36.6, TIC=2040, TAlk=2390, PO4=0,            !
+!  Check Value:  (T=24, S=36.6, TIC=2040, TAlk=2390, PO4b=0,           !
 !                 SiO3=0, pH=8)                                        !
 !                                                                      !
 !                pcO2= ppmv  (DoNewton=0)                              !
@@ -1668,7 +1903,7 @@
 #  ifdef MASKING
      &                       rmask,                                     &
 #  endif
-     &                       T, S, TIC, TAlk, PO4, SiO3, pH, pCO2)
+     &                       T, S, TIC, TAlk, PO4b, SiO3, pH, pCO2)
 !
 !***********************************************************************
 !                                                                      !
@@ -1694,7 +1929,7 @@
 !     S          Surface salinity (PSS).                               !
 !     TIC        Total inorganic carbon (millimol/m3).                 !
 !     TAlk       Total alkalinity (milli-equivalents/m3).              !
-!     PO4        Inorganic phosphate (millimol/m3).                    !
+!     PO4b        Inorganic phosphate (millimol/m3).                   !
 !     SiO3       Inorganic silicate (millimol/m3).                     !
 !     pH         Best pH guess.                                        !
 !                                                                      !
@@ -1702,7 +1937,7 @@
 !                                                                      !
 !     pCO2       partial pressure of CO2 (ppmv).                       !
 !                                                                      !
-!  Check Value:  (T=24, S=36.6, TIC=2040, TAlk=2390, PO4=0,            !
+!  Check Value:  (T=24, S=36.6, TIC=2040, TAlk=2390, PO4b=0,           !
 !                 SiO3=0, pH=8)                                        !
 !                                                                      !
 !                pcO2=0.35074945E+03 ppmv  (DoNewton=0)                !
@@ -1741,7 +1976,7 @@
       real(r8), intent(in) :: TAlk(IminS:ImaxS)
       real(r8), intent(inout) :: pH(LBi:UBi,LBj:UBj)
 #  endif
-      real(r8), intent(in) :: PO4
+      real(r8), intent(in) :: PO4b
       real(r8), intent(in) :: SiO3
 
       real(r8), intent(out) :: pCO2(IminS:ImaxS)
@@ -1786,7 +2021,7 @@
 
         alk=TAlk(i)*0.000001_r8
         dic=TIC(i)*0.000001_r8
-        phos=PO4*0.000001_r8
+        phos=PO4b*0.000001_r8
         sili=SiO3*0.000001_r8
 !
 !-----------------------------------------------------------------------

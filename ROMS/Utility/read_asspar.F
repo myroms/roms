@@ -3,7 +3,7 @@
       SUBROUTINE read_AssPar (model, inp, out, Lwrite)
 !
 !git $Id$
-!svn $Id: read_asspar.F 1031 2020-07-14 01:39:55Z arango $
+!svn $Id: read_asspar.F 1038 2020-09-29 01:54:25Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -1275,9 +1275,11 @@
         defined SENSITIVITY_4DVAR || defined SP4DVAR         || \
         defined TL_RBL4DVAR       || defined TL_R4DVAR
           fname=STD(2,ng)%name
-          IF (.not.find_file(ng, fname, 'STDnameM')) GO TO 30
-          WRITE (out,160) '                   Model STD File:  ',       &
-     &                    TRIM(fname)
+          IF (NSA.eq.2) THEN
+            IF (.not.find_file(ng, fname, 'STDnameM')) GO TO 30
+            WRITE (out,160) '                   Model STD File:  ',     &
+     &                      TRIM(fname)
+          END IF
 #    endif
           fname=STD(1,ng)%name
           IF (.not.find_file(ng, fname, 'STDnameI')) GO TO 30

@@ -2,7 +2,7 @@
       MODULE mod_sources
 !
 !git $Id$
-!svn $Id: mod_sources.F 1029 2020-07-11 02:11:09Z arango $
+!svn $Id: mod_sources.F 1038 2020-09-29 01:54:25Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -127,8 +127,11 @@
 !  Allocate module variables.
 !-----------------------------------------------------------------------
 !
-      IF (ng.eq.1) THEN
+      IF (.not.allocated(Msrc)) THEN
         allocate ( Msrc(Ngrids) )
+      END IF
+
+      IF (.not.allocated(Nsrc)) THEN
         allocate ( Nsrc(Ngrids) )
       END IF
 

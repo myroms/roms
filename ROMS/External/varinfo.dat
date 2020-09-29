@@ -2,7 +2,7 @@
 !  ROMS/TOMS IO NetCDF variables.
 !
 !git $Id$
-!svn $Id: varinfo.dat 1035 2020-07-28 00:49:02Z arango $
+!svn $Id: varinfo.dat 1038 2020-09-29 01:54:25Z arango $
 !========================================================= Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                                !
 !    Licensed under a MIT/X style license                                     !
@@ -709,7 +709,7 @@
   1.0d0
 
 'swflux'                                           ! Input
-  'surface net freswater flux, (E-P)'
+  'surface net freshwater flux, (E-P)'
   'centimeter day-1'                               ! Input:  [m/s]
   'surface net salt flux, scalar, series'          ! [PSU m/s]
   'swf_time'
@@ -718,7 +718,7 @@
   1.157407d-7                                      ! 0.01/86400
 
 'EminusP'                                          ! Input/Output
-  'bulk_flux surface net freswater flux, (E-P)'
+  'bulk_flux surface net freshwater flux, (E-P)'
   'meter second-1'                                 ! computed by NLM ROMS
   'EminusP, scalar, series'                        ! bulk_flux.F and
   'ocean_time'                                     ! needed in adjoint-based
@@ -1896,6 +1896,15 @@
   'nulvar'
   1.0d0
 
+'river_PO4'                                        ! Input
+  'river runoff PO4'
+  'millimole_PO4 meter-3'                          ! [millimole/m3]
+  'river_PO4, scalar, series'
+  'river_time'
+  'idRtrc(iPO4_)'
+  'nulvar'
+  1.0d0
+
 'river_DON'                                        ! Input
   'river runoff dissolved organic nitrogen'
   'millimole_nitrogen meter-3'                     ! [millimole/m3]
@@ -1932,12 +1941,48 @@
   'nulvar'
   1.0d0
 
+'river_LDeN'                                       ! Input
+  'river runoff LDeN'
+  'millimole_nitrogen meter-3'                     ! [millimole/m3]
+  'river_LDeN, scalar, series'
+  'river_time'
+  'idRtrc(iLDeN)'
+  'nulvar'
+  1.0d0
+
+'river_RDeN'                                       ! Input
+  'river runoff RDeN'
+  'millimole_nitrogen meter-3'                     ! [millimole/m3]
+  'river_RDeN, scalar, series'
+  'river_time'
+  'idRtrc(iRDeN)'
+  'nulvar'
+  1.0d0
+
 'river_SDeC'                                       ! Input
   'river runoff SDeC'
   'millimole meter-3'                              ! [millimole/m3]
   'river_SDeC, scalar, series'
   'river_time'
   'idRtrc(iSDeC)'
+  'nulvar'
+  1.0d0
+
+'river_LDeC'                                       ! Input
+  'river runoff LDeC'
+  'millimole meter-3'                              ! [millimole/m3]
+  'river_LDeC, scalar, series'
+  'river_time'
+  'idRtrc(iLDeC)'
+  'nulvar'
+  1.0d0
+
+'river_RDeC'                                       ! Input
+  'river runoff RDeC'
+  'millimole meter-3'                              ! [millimole/m3]
+  'river_RDeC, scalar, series'
+  'river_time'
+  'idRtrc(iRDeC)'
   'nulvar'
   1.0d0
 
@@ -2904,6 +2949,24 @@
   'r3dvar'
   1.0d0
 
+'PO4'                                              ! Input/Output
+  'phosphate concentration'
+  'millimole_PO4 meter-3'                          ! [millimole/m3]
+  'PO4, scalar, series'
+  'ocean_time'
+  'idTvar(iPO4_)'
+  'r3dvar'
+  1.0d0
+
+'PO4'                                              ! Input
+  'phosphate concentration functional'
+  'millimole_PO4 meter-3'                          ! [millimole/m3]
+  'PO4, scalar, series'
+  'ocean_time'
+  'idTads(iPO4_)'
+  'r3dvar'
+  1.0d0
+
 'PON'                                              ! Input/Output
   'particulate organic nitrogen concentration'
   'millimole_nitrogen meter-3'                     ! [millimole/m3]
@@ -3129,6 +3192,42 @@
   'r3dvar'
   1.0d0
 
+'RdetritusN'                                       ! Input/Output
+  'river nitrogen detritus concentration'
+  'millimole_nitrogen meter-3'                     ! [millimole/m3]
+  'RdetritusN, scalar, series'
+  'ocean_time'
+  'idTvar(iRDeN)'
+  'r3dvar'
+  1.0d0
+
+'RdetritusN'                                       ! Input
+  'river nitrogen detritus concentration functional'
+  'millimole_nitrogen meter-3'                     ! [millimole/m3]
+  'RdetritusN, scalar, series'
+  'ocean_time'
+  'idTads(iRDeN)'
+  'r3dvar'
+  1.0d0
+
+'RdetritusC'                                       ! Input/Output
+  'river carbon detritus concentration'
+  'millimole_carbon meter-3'                       ! [millimole/m3]
+  'RdetritusC, scalar, series'
+  'ocean_time'
+  'idTvar(iRDeC)'
+  'r3dvar'
+  1.0d0
+
+'RdetritusC'                                       ! Input
+  'river carbon detritus concentration functional'
+  'millimole_nitrogen meter-3'                     ! [millimole/m3]
+  'RdetritusC, scalar, series'
+  'ocean_time'
+  'idTads(iRDeC)'
+  'r3dvar'
+  1.0d0
+
 'TIC'                                              ! Input/Output
   'total inorganic carbon'
   'millimole_carbon meter-3'                       ! [millimole/m3]
@@ -3286,6 +3385,15 @@
   'r3dvar'
   1.0d0
 
+'Nitrif_flux'                                      ! Input/Output
+  'Nitrification flux'
+  'millimole_nitrogen meter-3 day-1'               ! [millimole/m3/day]
+  'Nitrif_flux, scalar, series'
+  'ocean_time'
+  'iDbio3(iNifx)'
+  'r3dvar'
+  1.0d0
+
 !
 !  Boundary variables.
 !
@@ -3323,6 +3431,42 @@
   'NO3_north, scalar, series'
   'NO3_time'
   'idTbry(inorth,iNO3_)'
+  'nulvar'
+  1.0d0
+
+'PO4_east'                                         ! Input
+  'phosphate eastern boundary condition'
+  'millimole_PO4 meter-3'                          ! [millimole/m3]
+  'PO4_east, scalar, series'
+  'PO4_time'
+  'idTbry(ieast,iPO4_)'
+  'nulvar'
+  1.0d0
+
+'PO4_west'                                         ! Input
+  'phosphate western boundary condition'
+  'millimole_PO4 meter-3'                          ! [millimole/m3]
+  'PO4_west, scalar, series'
+  'PO4_time'
+  'idTbry(iwest,iPO4_)'
+  'nulvar'
+  1.0d0
+
+'PO4_south'                                        ! Input
+  'phosphate southern boundary condition'
+  'millimole_PO4 meter-3'                          ! [millimole/m3]
+  'PO4_south, scalar, series'
+  'PO4_time'
+  'idTbry(isouth,iPO4_)'
+  'nulvar'
+  1.0d0
+
+'PO4_north'                                        ! Input
+  'phosphate northern boundary condition'
+  'millimole_PO4 meter-3'                          ! [millimole/m3]
+  'PO4_north, scalar, series'
+  'PO4_time'
+  'idTbry(inorth,iPO4_)'
   'nulvar'
   1.0d0
 
@@ -3364,7 +3508,7 @@
 
 'oxygen_east'                                      ! Input
   'oxygen eastern boundary condition'
-  'millimole_carbon meter-3'                       ! [millimole/m3]
+  'millimole_oxygen meter-3'                       ! [millimole/m3]
   'oxygen_east, scalar, series'
   'oxygen_time'
   'idTbry(ieast,iOxyg)'
@@ -3373,7 +3517,7 @@
 
 'oxygen_west'                                      ! Input
   'oxygen western boundary condition'
-  'millimole_carbon meter-3'                       ! [millimole/m3]
+  'millimole_oxygen meter-3'                       ! [millimole/m3]
   'oxygen_west, scalar, series'
   'oxygen_time'
   'idTbry(iwest,iOxyg)'
@@ -3382,7 +3526,7 @@
 
 'oxygen_north'                                     ! Input
   'oxygen northern boundary condition'
-  'millimole_carbon meter-3'                       ! [millimole/m3]
+  'millimole_oxygen meter-3'                       ! [millimole/m3]
   'oxygen_north, scalar, series'
   'oxygen_time'
   'idTbry(inorth,iOxyg)'
@@ -3391,7 +3535,7 @@
 
 'oxygen_south'                                     ! Input
   'oxygen southern boundary condition'
-  'millimole_carbon meter-3'                       ! [millimole/m3]
+  'millimole_oxygen meter-3'                       ! [millimole/m3]
   'oxygen_south, scalar, series'
   'oxygen_time'
   'idTbry(isouth,iOxyg)'
@@ -4082,6 +4226,42 @@
   'nulvar'
   1.0d0
 
+'RDeN_east'                                        ! Input
+  'river nitrogen detritus eastern boundary condition'
+  'millimole_nitrogen meter-3'                     ! [millimole/m3]
+  'RDeN_east, scalar, series'
+  'RDeN_time'
+  'idTbry(ieast,iRDeN)'
+  'nulvar'
+  1.0d0
+
+'RDeN_west'                                        ! Input
+  'river nitrogen detritus western boundary condition'
+  'millimole_nitrogen meter-3'                     ! [millimole/m3]
+  'RDeN_west, scalar, series'
+  'RDeN_time'
+  'idTbry(iwest,iRDeN)'
+  'nulvar'
+  1.0d0
+
+'RDeN_north'                                       ! Input
+  'river nitrogen detritus northern boundary condition'
+  'millimole_nitrogen meter-3'                     ! [millimole/m3]
+  'RDeN_north, scalar, series'
+  'RDeN_time'
+  'idTbry(inorth,iRDeN)'
+  'nulvar'
+  1.0d0
+
+'RDeN_south'                                       ! Input
+  'river nitrogen detritus southern boundary condition'
+  'millimole_nitrogen meter-3'                     ! [millimole/m3]
+  'RDeN_south, scalar, series'
+  'RDeN_time'
+  'idTbry(isouth,iRDeN)'
+  'nulvar'
+  1.0d0
+
 'LdeC_east'                                        ! Input
   'large fraction carbon detritus eastern boundary condition'
   'millimole_carbon meter-3'                       ! [millimole/m3]
@@ -4151,6 +4331,42 @@
   'SdeC_north, scalar, series'
   'SdeC_time'
   'idTbry(inorth,iSDeC)'
+  'nulvar'
+  1.0d0
+
+'RDeC_east'                                        ! Input
+  'river carbon detritus eastern boundary condition'
+  'millimole_carbon meter-3'                       ! [millimole/m3]
+  'RDeC_east, scalar, series'
+  'RDeC_time'
+  'idTbry(ieast,iRDeC)'
+  'nulvar'
+  1.0d0
+
+'RDeN_west'                                        ! Input
+  'river carbon detritus western boundary condition'
+  'millimole_carbon meter-3'                       ! [millimole/m3]
+  'RDeC_west, scalar, series'
+  'RDeC_time'
+  'idTbry(iwest,iRDeC)'
+  'nulvar'
+  1.0d0
+
+'RDeN_north'                                       ! Input
+  'river carbon detritus northern boundary condition'
+  'millimole_carbon meter-3'                       ! [millimole/m3]
+  'RDeC_north, scalar, series'
+  'RDeC_time'
+  'idTbry(inorth,iRDeC)'
+  'nulvar'
+  1.0d0
+
+'RDeN_south'                                       ! Input
+  'river carbon detritus southern boundary condition'
+  'millimole_carbon meter-3'                       ! [millimole/m3]
+  'RDeC_south, scalar, series'
+  'RDeC_time'
+  'idTbry(isouth,iRDeC)'
   'nulvar'
   1.0d0
 
