@@ -2,7 +2,7 @@
 ** Include file "globaldef.h"
 **
 ** git $Id$
-** svn $Id: globaldefs.h 1026 2020-05-20 02:05:37Z arango $
+** svn $Id: globaldefs.h 1038 2020-09-29 01:54:25Z arango $
 ********************************************************** Hernan G. Arango ***
 ** Copyright (c) 2002-2020 The ROMS/TOMS Group     Alexander F. Shchepetkin  **
 **   Licensed under a MIT/X style license                                    **
@@ -911,6 +911,7 @@
       defined LMD_SKPP     && !defined ANA_SRFLUX)   || \
     (!defined FRC_COUPLING && \
       defined RED_TIDE)    || \
+    (!defined ANA_BSFLUX   && defined SALINITY)      || \
     (!defined FRC_COUPLING && \
       defined SALINITY     && !defined ANA_SSFLUX    && \
      (defined BULK_FLUXES  && !defined EMINUSP))     || \

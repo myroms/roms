@@ -4,7 +4,7 @@
 #ifdef RPCG
 !
 !git $Id$
-!svn $Id: comp_Jb0.F 1031 2020-07-14 01:39:55Z arango $
+!svn $Id: comp_Jb0.F 1038 2020-09-29 01:54:25Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -164,10 +164,7 @@
       USE mod_fourdvar
       USE mod_iounits
       USE mod_netcdf
-# if defined ADJUST_STFLUX   || defined ADJUST_WSTRESS || \
-     defined ADJUST_BOUNDARY
       USE mod_scalars
-# endif
 # ifdef ADJUST_BOUNDARY
       USE mod_boundary
 # endif

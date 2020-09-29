@@ -2,7 +2,7 @@
       MODULE strings_mod
 !
 !git $Id$
-!svn $Id: strings.F 1017 2020-04-27 22:19:14Z arango $
+!svn $Id: strings.F 1038 2020-09-29 01:54:25Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -91,6 +91,7 @@
   10      FORMAT (' Found Error: ', i2.2, t20, 'Line: ', i0,            &
      &            t35, 'Source: ', a)
         END IF
+        CALL my_flush (stdout)
       END IF
 
       RETURN
@@ -185,6 +186,7 @@
   10      FORMAT (' Found Error: ', i2.2, t20, 'Line: ', i0,            &
      &            t35, 'Source: ', a)
         END IF
+        CALL my_flush (stdout)
       END IF
 
       RETURN
@@ -284,6 +286,7 @@
   10      FORMAT (' Found Error: ', i2.2, t20, 'Line: ', i0,            &
      &            t35, 'Source: ', a)
         END IF
+        CALL my_flush (stdout)
       END IF
 
       RETURN
