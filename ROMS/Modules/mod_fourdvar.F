@@ -4,7 +4,7 @@
 #if defined FOUR_DVAR || defined VERIFICATION
 !
 !git $Id$
-!svn $Id: mod_fourdvar.F 1027 2020-05-27 17:06:32Z arango $
+!svn $Id: mod_fourdvar.F 1039 2020-10-12 03:54:49Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -884,7 +884,7 @@
 !  Switch to activate reading of adjoint sensitivity initial conditions
 !  for weak constraint 4DVAR observation sensitivity.
 !
-        logical, allocatable :: LsenPSAS(:)
+        logical, allocatable :: Lsen4DVAR(:)
 #   ifdef OBS_SPACE
         logical, allocatable :: Lobspace(:)
 #    ifndef OBS_IMPACT
@@ -1095,8 +1095,8 @@
 #  if defined RBL4DVAR_ANA_SENSITIVITY || \
       defined RBL4DVAR_FCT_SENSITIVITY || \
       defined R4DVAR_ANA_SENSITIVITY
-      IF (.not.allocated(LsenPSAS)) THEN
-        allocate ( LsenPSAS(Ngrids) )
+      IF (.not.allocated(Lsen4DVAR)) THEN
+        allocate ( Lsen4DVAR(Ngrids) )
         Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
 #   ifdef OBS_SPACE

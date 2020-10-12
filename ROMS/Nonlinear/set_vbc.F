@@ -3,7 +3,7 @@
 #ifdef NONLINEAR
 !
 !git $Id$
-!svn $Id: set_vbc.F 995 2020-01-10 04:01:28Z arango $
+!svn $Id: set_vbc.F 1039 2020-10-12 03:54:49Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -87,12 +87,8 @@
      &                   FORCES(ng) % bustr,                            &
      &                   FORCES(ng) % bvstr,                            &
 #  endif
-#  if defined BULK_FLUXES || defined ATM_COUPLING
-     &                   FORCES(ng) % snhflx,                           &
-#  endif
-#  if (defined BULK_FLUXES && defined EMINUSP) || defined ATM_COUPLING
-     &                   FORCES(ng) % EminusP,                          &
-#  endif
+     &                   FORCES(ng) % stflux,                           &
+     &                   FORCES(ng) % btflux,                           &
      &                   FORCES(ng) % stflx,                            &
      &                   FORCES(ng) % btflx)
 #  ifdef PROFILE
@@ -140,12 +136,7 @@
 #  ifndef BBL_MODEL
      &                         bustr, bvstr,                            &
 #  endif
-#  if defined BULK_FLUXES || defined ATM_COUPLING
-     &                         snhflx,                                  &
-#  endif
-#  if (defined BULK_FLUXES && defined EMINUSP) || defined ATM_COUPLING
-     &                         EminusP,                                 &
-#  endif
+     &                         stflux, btflux,                          &
      &                         stflx, btflx)
 !***********************************************************************
 !
@@ -153,9 +144,9 @@
       USE mod_scalars
 !
       USE bc_2d_mod
-# ifdef DISTRIBUTE
+#  ifdef DISTRIBUTE
       USE mp_exchange_mod, ONLY : mp_exchange2d
-# endif
+#  endif
 !
 !  Imported variable declarations.
 !
@@ -192,12 +183,8 @@
 #   if defined SCORRECTION || defined SRELAXATION
       real(r8), intent(in) :: sss(LBi:,LBj:)
 #   endif
-#   if defined BULK_FLUXES || defined ATM_COUPLING
-      real(r8), intent(in) :: snhflx(LBi:,LBj:)
-#   endif
-#   if (defined BULK_FLUXES && defined EMINUSP) || defined ATM_COUPLING
-      real(r8), intent(in) :: EminusP(LBi:,LBj:)
-#   endif
+      real(r8), intent(in) :: stflux(LBi:,LBj:,:)
+      real(r8), intent(in) :: btflux(LBi:,LBj:,:)
 #   if defined ICESHELF
 #    ifdef SHORTWAVE
       real(r8), intent(inout) :: srflx(LBi:,LBj:)
@@ -239,12 +226,8 @@
 #   if defined SCORRECTION || defined SRELAXATION
       real(r8), intent(in) :: sss(LBi:UBi,LBj:UBj)
 #   endif
-#   if defined BULK_FLUXES || defined ATM_COUPLING
-      real(r8), intent(in) :: snhflx(LBi:UBi,LBj:UBj)
-#   endif
-#   if (defined BULK_FLUXES && defined EMINUSP) || defined ATM_COUPLING
-      real(r8), intent(in) :: EminusP(LBi:UBi,LBj:UBj)
-#   endif
+      real(r8), intent(in) :: stflux(LBi:UBi,LBj:UBj,NT(ng))
+      real(r8), intent(in) :: btflux(LBi:UBi,LBj:UBj,NT(ng))
 #   if defined ICESHELF
 #    ifdef SHORTWAVE
       real(r8), intent(inout) :: srflx(LBi:UBi,LBj:UBj)
@@ -275,33 +258,27 @@
 #  endif
 
 #  include "set_bounds.h"
-
-#  if defined BULK_FLUXES || defined ATM_COUPLING
 !
 !-----------------------------------------------------------------------
-!  If air-sea parameterization and or atmospheric coupling, assign
-!  surface net heat flux (degC m/s).  During model coupling, we need
-!  to make sure that this forcing is unaltered during the coupling
-!  interval when ROMS timestep size is smaller. Notice that further
-!  manipulations to state variable stflx(:,:,itemp)are allowed below.
+!  Load surface and bottom net heat flux (degC m/s) into state variables
+!  "stflx" and "btflx".
+!
+!  Notice that the forcing net heat flux stflux(:,:,itemp) is processed
+!  elsewhere from data, coupling, bulk flux parameterization,
+!  or analytical formulas.
+!
+!  During model coupling, we need to make sure that this forcing is
+!  unaltered during the coupling interval when ROMS timestep size is
+!  smaller. Notice that further manipulations to state variable
+!  stflx(:,:,itemp) are allowed below.
 !-----------------------------------------------------------------------
 !
-#   if defined FOUR_DVAR && defined NL_BULK_FLUXES
-      IF (Nrun.eq.1) THEN
-        DO j=JstrR,JendR
-          DO i=IstrR,IendR
-            stflx(i,j,itemp)=snhflx(i,j)
-          END DO
-        END DO
-      END IF
-#   else
       DO j=JstrR,JendR
         DO i=IstrR,IendR
-          stflx(i,j,itemp)=snhflx(i,j)
+          stflx(i,j,itemp)=stflux(i,j,itemp)
+          btflx(i,j,itemp)=btflux(i,j,itemp)
         END DO
       END DO
-#   endif
-#  endif
 
 #  ifdef QCORRECTION
 !
@@ -350,58 +327,47 @@
 #  ifdef SALINITY
 !
 !-----------------------------------------------------------------------
-!  Multiply fresh water flux with surface salinity. If appropriate,
-!  apply correction.
+!  Multiply freshwater fluxes with surface and bottom salinity.
+!
+!  If appropriate, apply correction. Notice that input stflux(:,:,isalt)
+!  is the net freshwater flux (E-P; m/s) from data, coupling, bulk flux
+!  parameterization, or analytical formula. It has not been multiplied
+!  by the surface and bottom salinity.
 !-----------------------------------------------------------------------
 !
-#   if defined FOUR_DVAR && defined NL_BULK_FLUXES
       DO j=JstrR,JendR
         DO i=IstrR,IendR
-          IF (Nrun.eq.1) THEN
-#    if (defined BULK_FLUXES && defined EMINUSP) || defined ATM_COUPLING
-            EmP=EminusP(i,j)
-#    else
-            EmP=stflx(i,j,isalt)
-#    endif
-          ELSE
-            EmP=stflx(i,j,isalt)
-          END IF
-#    if defined SCORRECTION
+          EmP=stflux(i,j,isalt)
+#   if defined SCORRECTION
           stflx(i,j,isalt)=EmP*t(i,j,N(ng),nrhs,isalt)-                 &
      &                     Tnudg(isalt,ng)*Hz(i,j,N(ng))*               &
      &                     (t(i,j,N(ng),nrhs,isalt)-sss(i,j))
-#    elif defined SRELAXATION
+#   elif defined SRELAXATION
           stflx(i,j,isalt)=-Tnudg(isalt,ng)*Hz(i,j,N(ng))*              &
      &                     (t(i,j,N(ng),nrhs,isalt)-sss(i,j))
-#    else
-          stflx(i,j,isalt)=EmP*t(i,j,N(ng),nrhs,isalt)
-#    endif
-          btflx(i,j,isalt)=btflx(i,j,isalt)*t(i,j,1,nrhs,isalt)
-        END DO
-      END DO
 #   else
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
-#    if (defined BULK_FLUXES && defined EMINUSP) || defined ATM_COUPLING
-          EmP=EminusP(i,j)
-#    else
-          EmP=stflx(i,j,isalt)
-#    endif
-#    if defined SCORRECTION
-          stflx(i,j,isalt)=EmP*t(i,j,N(ng),nrhs,isalt)-                 &
-     &                     Tnudg(isalt,ng)*Hz(i,j,N(ng))*               &
-     &                     (t(i,j,N(ng),nrhs,isalt)-sss(i,j))
-#    elif defined SRELAXATION
-          stflx(i,j,isalt)=-Tnudg(isalt,ng)*Hz(i,j,N(ng))*              &
-     &                     (t(i,j,N(ng),nrhs,isalt)-sss(i,j))
-#    else
           stflx(i,j,isalt)=EmP*t(i,j,N(ng),nrhs,isalt)
-#    endif
+#   endif
           btflx(i,j,isalt)=btflx(i,j,isalt)*t(i,j,1,nrhs,isalt)
         END DO
       END DO
-#   endif
 #  endif
+
+#  if defined BIOLOGY || defined SEDIMENT || defined T_PASSIVE
+!
+!-----------------------------------------------------------------------
+!  Load surface and bottom passive tracer fluxes (T m/s).
+!-----------------------------------------------------------------------
+!
+      DO itrc=NAT+1,NT(ng)
+        DO j=JstrR,JendR
+          DO i=IstrR,IendR
+            stflx(i,j,itrc)=stflux(i,j,itrc)
+          END DO
+        END DO
+      END DO
+#  endif
+
 #  ifdef ICESHELF
 !
 !-----------------------------------------------------------------------
@@ -554,6 +520,7 @@
      &                    sustr, svstr)
 #   endif
 #  endif
+
 #  ifndef BBL_MODEL
 !
 !-----------------------------------------------------------------------

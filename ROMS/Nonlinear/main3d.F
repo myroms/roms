@@ -3,7 +3,7 @@
       SUBROUTINE main3d (RunInterval)
 !
 !git $Id$
-!svn $Id: main3d.F 1031 2020-07-14 01:39:55Z arango $
+!svn $Id: main3d.F 1039 2020-10-12 03:54:49Z arango $
 !=======================================================================
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -376,7 +376,7 @@
               ng=GridNumber(ig,nl)
               DO tile=first_tile(ng),last_tile(ng),+1
 # ifdef BULK_FLUXES
-#  if defined FOUR_DVAR && defined NL_BULK_FLUXES
+#  if defined FOUR_DVAR && defined PRIOR_BULK_FLUXES
                 IF (Nrun.eq.1) CALL bulk_flux (ng, tile)
 #  else
                 CALL bulk_flux (ng, tile)

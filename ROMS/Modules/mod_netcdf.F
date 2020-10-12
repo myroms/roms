@@ -2,7 +2,7 @@
       MODULE mod_netcdf
 !
 !git $Id$
-!svn $Id: mod_netcdf.F 1033 2020-07-15 00:59:34Z arango $
+!svn $Id: mod_netcdf.F 1039 2020-10-12 03:54:49Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -597,7 +597,8 @@
               EXIT
             END IF
 #endif
-#ifdef ADJUST_BOUNDARY
+#ifndef RBL4DVAR_FCT_SENSITIVITY
+# ifdef ADJUST_BOUNDARY
           CASE ('obc_adjust')
             IF (dim_size(i).ne.Nbrec(ng)) THEN
               IF (Master) WRITE (stdout,10) TRIM(dim_name(i)),          &
@@ -606,8 +607,8 @@
               exit_flag=2
               EXIT
             END IF
-#endif
-#if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+# endif
+# if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
           CASE ('frc_adjust')
             IF (dim_size(i).ne.Nfrec(ng)) THEN
               IF (Master) WRITE (stdout,10) TRIM(dim_name(i)),          &
@@ -616,6 +617,7 @@
               exit_flag=2
               EXIT
             END IF
+# endif
 #endif
         END SELECT
       END DO

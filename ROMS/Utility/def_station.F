@@ -3,7 +3,7 @@
       SUBROUTINE def_station (ng, ldef)
 !
 !git $Id$
-!svn $Id: def_station.F 1016 2020-04-27 02:06:37Z arango $
+!svn $Id: def_station.F 1039 2020-10-12 03:54:49Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -780,7 +780,6 @@
      &                   __FILE__)) RETURN
         END IF
 #  endif
-#  if defined EMINUSP && defined BULK_FLUXES
 !
 !  Define E-P flux (as computed by bulk_flux.F).
 !
@@ -799,6 +798,7 @@
           IF (FoundError(exit_flag, NoError, __LINE__,                  &
      &                   __FILE__)) RETURN
         END IF
+#  if defined EMINUSP && defined BULK_FLUXES
 !
 !  Define evaporation rate.
 !
@@ -1702,10 +1702,10 @@
             got_var(idSrad)=.TRUE.
             STA(ng)%Vid(idSrad)=var_id(i)
 #  endif
-#  if defined EMINUSP && defined BULK_FLUXES
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idEmPf))) THEN
             got_var(idEmPf)=.TRUE.
             STA(ng)%Vid(idEmPf)=var_id(i)
+#  if defined EMINUSP && defined BULK_FLUXES
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idevap))) THEN
             got_var(idevap)=.TRUE.
             STA(ng)%Vid(idevap)=var_id(i)
@@ -2079,13 +2079,13 @@
           RETURN
         END IF
 #  endif
-#  if defined EMINUSP && defined BULK_FLUXES
         IF (.not.got_var(idEmPf).and.Sout(idEmPf,ng)) THEN
           IF (Master) WRITE (stdout,60) TRIM(Vname(1,idEmPf)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
+#  if defined EMINUSP && defined BULK_FLUXES
         IF (.not.got_var(idevap).and.Sout(idevap,ng)) THEN
           IF (Master) WRITE (stdout,60) TRIM(Vname(1,idevap)),          &
      &                                  TRIM(ncname)

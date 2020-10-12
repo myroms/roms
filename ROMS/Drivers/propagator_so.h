@@ -1,7 +1,7 @@
       SUBROUTINE propagator (RunInterval, Iter, state, ad_state)
 !
 !git $Id$
-!svn $Id: propagator_so.h 995 2020-01-10 04:01:28Z arango $
+!svn $Id: propagator_so.h 1039 2020-10-12 03:54:49Z arango $
 !************************************************** Hernan G. Arango ***
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -39,32 +39,31 @@
 !  Imported variable declarations.
 !
       integer :: Iter
-
+!
       real(dp), intent(in) :: RunInterval
-
+!
       TYPE (T_GST), intent(in) :: state(Ngrids)
       TYPE (T_GST), intent(inout) :: ad_state(Ngrids)
 !
 !  Local variable declarations.
 !
-      integer :: ng, tile
-      integer :: ktmp, ntmp
-      integer :: kout, nout
-      integer :: Fcount, Interval, IntTrap
-
-      real(r8) :: StateNorm(Ngrids)
-      real(r8) :: so_run_time
-
       logical :: SOrunTL
 #ifdef STOCH_OPT_WHITE
       logical :: SOrunAD
 #endif
 !
+      integer :: ng, tile
+      integer :: ktmp, ntmp
+      integer :: kout, nout
+      integer :: Fcount, Interval, IntTrap
+!
+      real(r8) :: StateNorm(Ngrids)
+      real(r8) :: so_run_time
+!
 !=======================================================================
 !  Forward integration of the tangent linear model.
 !=======================================================================
 !
-!$OMP MASTER
       Nrun=Nrun+1
       IF (Master) THEN
         DO ng=1,Ngrids
@@ -74,7 +73,6 @@
      &                      Nconv(ng)
         END DO
       END IF
-!$OMP END MASTER
 !
 !  Loop over the required numger if trapezoidal intervals in time.
 !
@@ -128,14 +126,11 @@
           tdays(ng)=dstart+REAL(ntimes(ng),r8)*REAL(Interval-1,r8)*     &
      &                     dt(ng)*sec2day/REAL(Nintervals,r8)
           time(ng)=tdays(ng)*day2sec
-!$OMP MASTER
           ntstart(ng)=INT((time(ng)-dstart*day2sec)/dt(ng))+1
           ntend(ng)=ntimes(ng)
           ntfirst(ng)=ntstart(ng)
           so_run_time=dt(ng)*REAL(ntend(ng)-ntstart(ng)+1,r8)
-!$OMP END MASTER
         END DO
-!$OMP BARRIER
 !
 !  Set switches and counters to manage output adjoint and tangent linear
 !  history NetCDF files.
@@ -191,7 +186,6 @@
           DO tile=first_tile(ng),last_tile(ng),+1
             CALL initialize_ocean (ng, tile, iTLM)
           END DO
-!$OMP BARRIER
         END DO
 
 #ifdef SOLVE3D
@@ -206,7 +200,6 @@
           DO tile=last_tile(ng),first_tile(ng),-1
             CALL set_depth (ng, tile, iTLM)
           END DO
-!$OMP BARRIER
         END DO
 #endif
 !
@@ -219,7 +212,6 @@
             CALL tl_unpack (ng, tile, Nstr(ng), Nend(ng),               &
      &                      state(ng)%vector)
           END DO
-!$OMP BARRIER
         END DO
 !
 !-----------------------------------------------------------------------
@@ -232,15 +224,11 @@
               CALL tl_statenorm (ng, tile, kstp(ng), nstp(ng),          &
      &                           StateNorm(ng))
             END DO
-!$OMP BARRIER
-
-!$OMP MASTER
             IF (Master) THEN
               WRITE (stdout,30) ' PROPAGATOR - Grid: ', ng,             &
      &                          ',  Tangent Initial Norm: ',            &
      &                          StateNorm(ng)
             END IF
-!$OMP END MASTER
           END DO
         END IF
 !
@@ -252,7 +240,6 @@
 !
         IF (SOrunTL) THEN              ! do not run TLM on last interval
           DO ng=1,Ngrids
-!$OMP MASTER
             CALL close_inp (ng, iTLM)
             IF (FoundError(exit_flag, NoError, __LINE__,                &
      &                     __FILE__)) RETURN
@@ -260,8 +247,6 @@
             IF (FoundError(exit_flag, NoError, __LINE__,                &
      &                     __FILE__)) RETURN
             CALL tl_get_data (ng)
-!$OMP END MASTER
-!$OMP BARRIER
             IF (FoundError(exit_flag, NoError, __LINE__,                &
      &                     __FILE__)) RETURN
           END DO
@@ -271,22 +256,18 @@
 !-----------------------------------------------------------------------
 !
           DO ng=1,Ngrids
-!$OMP MASTER
             IF (Master) THEN
               WRITE (stdout,40) 'TL', ng, ntstart(ng), ntend(ng)
             END IF
             time(ng)=time(ng)-dt(ng)
-!$OMP END MASTER
             iic(ng)=ntstart(ng)-1
           END DO
-!$OMP BARRIER
 
 #ifdef SOLVE3D
           CALL tl_main3d (so_run_time)
 #else
           CALL tl_main2d (so_run_time)
 #endif
-!$OMP BARRIER
           IF (FoundError(exit_flag, NoError, __LINE__,                  &
      &                   __FILE__)) RETURN
         END IF
@@ -303,7 +284,6 @@
             CALL initialize_coupling (ng, tile, 0)
 #endif
           END DO
-!$OMP BARRIER
         END DO
 
 #ifdef SOLVE3D
@@ -318,7 +298,6 @@
           DO tile=last_tile(ng),first_tile(ng),-1
             CALL set_depth (ng, tile, iTLM)
           END DO
-!$OMP BARRIER
         END DO
 #endif
 !
@@ -332,15 +311,11 @@
               CALL tl_statenorm (ng, tile, kstp(ng), nstp(ng),          &
      &                           StateNorm(ng))
             END DO
-!$OMP BARRIER
-
-!$OMP MASTER
             IF (Master) THEN
               WRITE (stdout,30) ' PROPAGATOR - Grid: ', ng,             &
      &                          ',  Tangent   Final Norm: ',            &
      &                          StateNorm(ng)
             END IF
-!$OMP END MASTER
           END DO
         END IF
 !
@@ -381,7 +356,6 @@
           synchro_flag(ng)=.TRUE.
           tdays(ng)=dstart+dt(ng)*REAL(ntimes(ng),r8)*sec2day
           time(ng)=tdays(ng)*day2sec
-!$OMP MASTER
           ntstart(ng)=ntimes(ng)+1
 # ifdef STOCH_OPT_WHITE
           ntend(ng)=1+(Interval-1)*ntimes(ng)/Nintervals
@@ -389,9 +363,7 @@
           ntend(ng)=1
 # endif
           ntfirst(ng)=ntend(ng)
-!$OMP END MASTER
         END DO
-!$OMP BARRIER
 !
 !-----------------------------------------------------------------------
 !  Initialize adjoint model with the final tangent linear solution
@@ -403,7 +375,6 @@
             CALL ad_ini_perturb (ng, tile,                              &
      &                           ktmp, kout, ntmp, nstp(ng))
           END DO
-!$OMP BARRIER
         END DO
 !
 !-----------------------------------------------------------------------
@@ -416,7 +387,6 @@
         IF (SOrunAD) THEN              ! do not run ADM on last interval
 #endif
           DO ng=1,Ngrids
-!$OMP MASTER
             CALL close_inp (ng, iADM)
             IF (FoundError(exit_flag, NoError, __LINE__,                &
      &                     __FILE__)) RETURN
@@ -424,26 +394,21 @@
             IF (FoundError(exit_flag, NoError, __LINE__,                &
      &                     __FILE__)) RETURN
             CALL ad_get_data (ng)
-!$OMP END MASTER
             IF (FoundError(exit_flag, NoError, __LINE__,                &
      &                     __FILE__)) RETURN
           END DO
-!$OMP BARRIER
 !
 !-----------------------------------------------------------------------
 !  Time-step the adjoint model backwards.
 !-----------------------------------------------------------------------
 !
           DO ng=1,Ngrids
-!$OMP MASTER
             IF (Master) THEN
               WRITE (stdout,40) 'AD', ng, ntstart(ng), ntend(ng)
             END IF
             time(ng)=time(ng)+dt(ng)
-!$OMP END MASTER
             iic(ng)=ntstart(ng)+1
           END DO
-!$OMP BARRIER
 
 #ifdef SOLVE3D
 # ifdef STOCH_OPT_WHITE
@@ -458,7 +423,6 @@
           CALL ad_main2d (RunInterval)
 # endif
 #endif
-!$OMP BARRIER
           IF (FoundError(exit_flag, NoError, __LINE__,                  &
      &                   __FILE__)) RETURN
 #ifdef STOCH_OPT_WHITE
@@ -478,7 +442,6 @@
             CALL initialize_coupling (ng, tile, 0)
 #endif
           END DO
-!$OMP BARRIER
         END DO
 
 #ifdef SOLVE3D
@@ -493,7 +456,6 @@
           DO tile=last_tile(ng),first_tile(ng),-1
             CALL set_depth (ng, tile, iADM)
           END DO
-!$OMP BARRIER
         END DO
 #endif
 !
@@ -511,10 +473,7 @@
      &                           IntTrap, ad_state(ng)%vector)
 # endif
           END DO
-!$OMP BARRIER
         END DO
-!
-!$OMP BARRIER
         IF (FoundError(exit_flag, NoError, __LINE__,                    &
      &                 __FILE__)) RETURN
 !
@@ -527,7 +486,6 @@
             CALL initialize_forces (ng, tile, iTLM)
             CALL initialize_forces (ng, tile, iADM)
           END DO
-!$OMP BARRIER
         END DO
 
       END DO INTERVAL_LOOP
@@ -537,6 +495,6 @@
  30   FORMAT (/,a,i2.2,a,1p,e15.6,/)
  40   FORMAT (/,1x,a,1x,'ROMS/TOMS: started time-stepping:',            &
      &        ' (Grid: ',i2.2,' TimeSteps: ',i8.8,' - ',i8.8,')')
-
+!
       RETURN
       END SUBROUTINE propagator

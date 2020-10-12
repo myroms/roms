@@ -1,7 +1,7 @@
       MODULE ocean_control_mod
 !
 !git $Id$
-!svn $Id: fte_ocean.h 1031 2020-07-14 01:39:55Z arango $
+!svn $Id: fte_ocean.h 1039 2020-10-12 03:54:49Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -34,14 +34,14 @@
 !=======================================================================
 !
       implicit none
-
+!
       PRIVATE
       PUBLIC  :: ROMS_initialize
       PUBLIC  :: ROMS_run
       PUBLIC  :: ROMS_finalize
-
+!
       CONTAINS
-
+!
       SUBROUTINE ROMS_initialize (first, mpiCOMM)
 !
 !=======================================================================
@@ -71,13 +71,13 @@
 !  Imported variable declarations.
 !
       logical, intent(inout) :: first
-
+!
       integer, intent(in), optional :: mpiCOMM
 !
 !  Local variable declarations.
 !
       logical :: allocate_vars = .TRUE.
-
+!
 #ifdef DISTRIBUTE
       integer :: MyError, MySize
 #endif
@@ -189,19 +189,27 @@
 !  the size of the state vector, Nstate.  This size is computed in
 !  routine "wpoints".
 !-----------------------------------------------------------------------
+
+#ifdef FORWARD_FLUXES
 !
-#if defined BULK_FLUXES && defined NL_BULK_FLUXES
-!  Set structure for the nonlinear surface fluxes to be processed by
-!  by the tangent linear and adjoint models. Also, set switches to
-!  process the BLK structure in routine "check_multifile".  Notice that
-!  it is possible to split solution into multiple NetCDF files to reduce
-!  their size.
+!  Set the BLK structure to contain the nonlinear model surface fluxes
+!  needed by the tangent linear and adjoint models. Also, set switches
+!  to process that structure in routine "check_multifile". Notice that
+!  it is possible to split the solution into multiple NetCDF files to
+!  reduce their size.
 !
-      CALL edit_multifile ('FWD2BLK')
+!  The switch LreadFRC is deactivated because all the atmospheric
+!  forcing, including shortwave radiation, is read from the NLM
+!  surface fluxes or is assigned during ESM coupling.  Such fluxes
+!  are available from the QCK structure. There is no need for reading
+!  and processing from the FRC structure input forcing-files.
+!
+      CALL edit_multifile ('QCK2BLK')
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
       DO ng=1,Ngrids
         LreadBLK(ng)=.TRUE.
+        LreadFRC(ng)=.FALSE.
       END DO
 #endif
 !
@@ -284,10 +292,10 @@
      &                 __FILE__)) RETURN
       END DO
 #endif
-
+!
       RETURN
       END SUBROUTINE ROMS_initialize
-
+!
       SUBROUTINE ROMS_run (RunInterval)
 !
 !=======================================================================
@@ -329,17 +337,17 @@
 #ifdef CHECKPOINTING
       logical :: LwrtGST
 #endif
-
+!
       integer :: Fcount, Is, Ie, i, icount, iter, ng, srec
       integer :: NconvRitz(Ngrids)
-
+!
       real(r8) :: Enorm
 
       real(r8), dimension(2) :: my_norm, my_Ivalue, my_Rvalue
-
+!
       TYPE (T_GST), allocatable :: state(:)
       TYPE (T_GST), allocatable :: tl_state(:)
-
+!
       character (len=55) :: string
 !
 !-----------------------------------------------------------------------
@@ -732,10 +740,10 @@
  30   FORMAT (a,'_',i3.3,'.nc')
  40   FORMAT (1x,i4.4,'-th residual',1p,e14.6,0p,                       &
      &        '  Ritz values',1pe14.6,0p,1x,1pe14.6,2x,i4.4)
-
+!
       RETURN
       END SUBROUTINE ROMS_run
-
+!
       SUBROUTINE ROMS_finalize
 !
 !=======================================================================
@@ -811,10 +819,10 @@
         CALL close_inp (ng, iTLM)
       END DO
       CALL close_out
-
+!
       RETURN
       END SUBROUTINE ROMS_finalize
-
+!
       SUBROUTINE IRAM_error (info, icall, string)
 !
 !=======================================================================
@@ -825,11 +833,10 @@
 !                                                                      !
 !=======================================================================
 !
-!
 !  imported variable declarations.
 !
       integer, intent(in) :: info, icall
-
+!
       character (len=*), intent(out) :: string
 !
 !-----------------------------------------------------------------------
@@ -891,7 +898,7 @@
       ELSE IF (info.eq.-9999) THEN
         string='Could not build and Arnoldi factorization              '
       END IF
-
+!
       RETURN
       END SUBROUTINE IRAM_error
 

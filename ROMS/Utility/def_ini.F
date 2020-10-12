@@ -3,7 +3,7 @@
       SUBROUTINE def_ini (ng)
 !
 !git $Id$
-!svn $Id: def_ini.F 1031 2020-07-14 01:39:55Z arango $
+!svn $Id: def_ini.F 1039 2020-10-12 03:54:49Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -727,7 +727,7 @@
           exit_flag=3
           RETURN
         END IF
-# ifdef ADJUST_BOUNDARY
+# if defined ADJUST_BOUNDARY && !defined RBL4DVAR_FCT_SENSITIVITY
         IF (.not.got_var(idSbry(isFsur)).and.                           &
      &      ANY(Lobc(:,isFsur,ng))) THEN
           IF (Master) WRITE (stdout,40) TRIM(Vname(1,idSbry(isFsur))),  &
@@ -777,7 +777,7 @@
           exit_flag=3
           RETURN
         END IF
-#  ifdef ADJUST_BOUNDARY
+#  if defined ADJUST_BOUNDARY && !defined RBL4DVAR_FCT_SENSITIVITY
         IF (.not.got_var(idSbry(isUvel)).and.                           &
      &      ANY(Lobc(:,isUvel,ng))) THEN
           IF (Master) WRITE (stdout,40) TRIM(Vname(1,idSbry(isUvel))),  &
@@ -800,7 +800,7 @@
             exit_flag=3
             RETURN
           END IF
-#  ifdef ADJUST_BOUNDARY
+#  if defined ADJUST_BOUNDARY && !defined RBL4DVAR_FCT_SENSITIVITY
           IF (.not.got_var(idSbry(isTvar(itrc))).and.                   &
      &        ANY(Lobc(:,isTvar(itrc),ng))) THEN
             IF (Master) WRITE (stdout,40)                               &
