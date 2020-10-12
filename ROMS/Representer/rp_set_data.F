@@ -3,7 +3,7 @@
       SUBROUTINE rp_set_data (ng, tile)
 !
 !git $Id$
-!svn $Id: rp_set_data.F 1022 2020-05-13 03:03:15Z arango $
+!svn $Id: rp_set_data.F 1039 2020-10-12 03:54:49Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -132,7 +132,7 @@
 #   endif
 #  endif
 
-#  if (defined BULK_FLUXES && !defined NL_BULK_FLUXES) || \
+#  if (defined BULK_FLUXES && !defined FORWARD_FLUXES) || \
       defined ECOSIM || \
       (defined SHORTWAVE && defined ANA_SRFLUX && defined ALBEDO)
 !
@@ -153,7 +153,7 @@
 #   endif
 #  endif
 
-#  if (defined BULK_FLUXES && !defined NL_BULK_FLUXES) || \
+#  if (defined BULK_FLUXES && !defined FORWARD_FLUXES) || \
       defined ECOSIM || \
       (defined SHORTWAVE && defined ANA_SRFLUX && defined ALBEDO)
 !
@@ -201,7 +201,7 @@
 #   endif
 #  endif
 
-#  if (defined BULK_FLUXES && !defined NL_BULK_FLUXES) && \
+#  if (defined BULK_FLUXES && !defined FORWARD_FLUXES) && \
       !defined LONGWAVE    && !defined LONGWAVE_OUT
 !
 !-----------------------------------------------------------------------
@@ -218,7 +218,7 @@
 #  endif
 
 #  if defined LONGWAVE_OUT && \
-      (defined BULK_FLUXES && !defined NL_BULK_FLUXES)
+      (defined BULK_FLUXES && !defined FORWARD_FLUXES)
 !
 !-----------------------------------------------------------------------
 !  Surface downwelling longwave radiation (degC m/s).
@@ -233,7 +233,7 @@
      &               __FILE__)) RETURN
 #  endif
 
-#  if (defined BULK_FLUXES && !defined NL_BULK_FLUXES) || \
+#  if (defined BULK_FLUXES && !defined FORWARD_FLUXES) || \
       defined ECOSIM
 !
 !-----------------------------------------------------------------------
@@ -300,7 +300,7 @@
 #   endif
 #  endif
 
-#  if defined BULK_FLUXES && !defined NL_BULK_FLUXES
+#  if defined BULK_FLUXES && !defined FORWARD_FLUXES
 !
 !-----------------------------------------------------------------------
 !  Set rain fall rate (kg/m2/s).
@@ -319,7 +319,7 @@
 #   endif
 #  endif
 
-#  if !defined BULK_FLUXES || defined NL_BULK_FLUXES
+#  if !defined BULK_FLUXES || defined FORWARD_FLUXES
 !
 !-----------------------------------------------------------------------
 !  Set kinematic surface net heat flux (degC m/s).
@@ -330,8 +330,8 @@
 #   else
       CALL set_2dfld_tile (ng, tile, iRPM, idTsur(itemp),               &
      &                     LBi, UBi, LBj, UBj,                          &
-     &                     FORCES(ng)%stflxG(:,:,:,itemp),              &
-     &                     FORCES(ng)%stflx (:,:,itemp),                &
+     &                     FORCES(ng)%stfluxG(:,:,:,itemp),             &
+     &                     FORCES(ng)%stflux (:,:,itemp),               &
      &                     update)
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
@@ -339,8 +339,8 @@
 #    ifdef TL_IOMS
       CALL set_2dfld_tile (ng, tile, iRPM, idTsur(itemp),               &
      &                     LBi, UBi, LBj, UBj,                          &
-     &                     FORCES(ng)%stflxG(:,:,:,itemp),              &
-     &                     FORCES(ng)%tl_stflx (:,:,itemp),             &
+     &                     FORCES(ng)%stfluxG(:,:,:,itemp),             &
+     &                     FORCES(ng)%tl_stflux (:,:,itemp),            &
      &                     update)
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
@@ -389,8 +389,8 @@
 #  else
       CALL set_2dfld_tile (ng, tile, iRPM, idTbot(itemp),               &
      &                     LBi, UBi, LBj, UBj,                          &
-     &                     FORCES(ng)%btflxG(:,:,:,itemp),              &
-     &                     FORCES(ng)%btflx (:,:,itemp),                &
+     &                     FORCES(ng)%btfluxG(:,:,:,itemp),             &
+     &                     FORCES(ng)%btflux (:,:,itemp),               &
      &                     update)
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
@@ -398,8 +398,8 @@
 #   ifdef TL_IOMS
       CALL set_2dfld_tile (ng, tile, iRPM, idTbot(itemp),               &
      &                     LBi, UBi, LBj, UBj,                          &
-     &                     FORCES(ng)%btflxG(:,:,:,itemp),              &
-     &                     FORCES(ng)%tl_btflx (:,:,itemp),             &
+     &                     FORCES(ng)%btfluxG(:,:,:,itemp),             &
+     &                     FORCES(ng)%tl_btflux(:,:,itemp),             &
      &                     update)
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
@@ -415,11 +415,12 @@
 #   ifdef ANA_SSFLUX
       CALL ana_stflux (ng, tile, iRPM, isalt)
 #   else
-#    if !(defined EMINUSP || defined SRELAXATION)
+#    if !(defined EMINUSP      || defined FORWARD_FLUXES || \
+          defined FRC_COUPLING || defined SRELAXATION)
       CALL set_2dfld_tile (ng, tile, iRPM, idsfwf,                      &
      &                     LBi, UBi, LBj, UBj,                          &
-     &                     FORCES(ng)%stflxG(:,:,:,isalt),              &
-     &                     FORCES(ng)%stflx (:,:,isalt),                &
+     &                     FORCES(ng)%stfluxG(:,:,:,isalt),             &
+     &                     FORCES(ng)%stflux (:,:,isalt),               &
      &                     update)
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
@@ -427,19 +428,19 @@
 #     ifdef TL_IOMS
       CALL set_2dfld_tile (ng, tile, iRPM, idsfwf,                      &
      &                     LBi, UBi, LBj, UBj,                          &
-     &                     FORCES(ng)%stflxG(:,:,:,isalt),              &
-     &                     FORCES(ng)%tl_stflx (:,:,isalt),             &
+     &                     FORCES(ng)%stfluxG(:,:,:,isalt),             &
+     &                     FORCES(ng)%tl_stflux(:,:,isalt),             &
      &                     update)
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
 #     endif
-#    endif
 
-#    if defined EMINUSP && defined NL_BULK_FLUXES
+#    elif (defined EMINUSP      || defined FORWARD_FLUXES || \
+           defined FRC_COUPLING)
       CALL set_2dfld_tile (ng, tile, iRPM, idEmPf,                      &
      &                     LBi, UBi, LBj, UBj,                          &
-     &                     FORCES(ng)%stflxG(:,:,:,isalt),              &
-     &                     FORCES(ng)%stflx (:,:,isalt),                &
+     &                     FORCES(ng)%stfluxG(:,:,:,isalt),             &
+     &                     FORCES(ng)%stflux (:,:,isalt),               &
      &                     update)
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
@@ -447,8 +448,8 @@
 #     ifdef TL_IOMS
       CALL set_2dfld_tile (ng, tile, iRPM, idEmPf,                      &
      &                     LBi, UBi, LBj, UBj,                          &
-     &                     FORCES(ng)%stflxG(:,:,:,isalt),              &
-     &                     FORCES(ng)%tl_stflx (:,:,isalt),             &
+     &                     FORCES(ng)%stfluxG(:,:,:,isalt),             &
+     &                     FORCES(ng)%tl_stflux (:,:,isalt),            &
      &                     update)
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
@@ -484,8 +485,8 @@
 #   else
       CALL set_2dfld_tile (ng, tile, iRPM, idTbot(isalt),               &
      &                     LBi, UBi, LBj, UBj,                          &
-     &                     FORCES(ng)%btflxG(:,:,:,isalt),              &
-     &                     FORCES(ng)%btflx (:,:,isalt),                &
+     &                     FORCES(ng)%btfluxG(:,:,:,isalt),             &
+     &                     FORCES(ng)%btflux (:,:,isalt),               &
      &                     update)
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
@@ -493,8 +494,8 @@
 #    ifdef TL_IOMS
       CALL set_2dfld_tile (ng, tile, iRPM, idTbot(isalt),               &
      &                     LBi, UBi, LBj, UBj,                          &
-     &                     FORCES(ng)%btflxG(:,:,:,isalt),              &
-     &                     FORCES(ng)%tl_btflx (:,:,isalt),             &
+     &                     FORCES(ng)%btfluxG(:,:,:,isalt),             &
+     &                     FORCES(ng)%tl_btflux(:,:,isalt),             &
      &                     update)
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
@@ -505,7 +506,7 @@
 #  if defined BIOLOGY || defined SEDIMENT || defined T_PASSIVE
 !
 !-----------------------------------------------------------------------
-!  Set kinematic surface and bottom pasive tracer fluxes (T m/s).
+!  Set kinematic surface and bottom passive tracer fluxes (T m/s).
 !-----------------------------------------------------------------------
 !
       DO itrc=NAT+1,NT(ng)
@@ -514,8 +515,8 @@
 #   else
         CALL set_2dfld_tile (ng, tile, iRPM, idTsur(itrc),              &
      &                       LBi, UBi, LBj, UBj,                        &
-     &                       FORCES(ng)%stflxG(:,:,:,itrc),             &
-     &                       FORCES(ng)%stflx (:,:,itrc),               &
+     &                       FORCES(ng)%stfluxG(:,:,:,itrc),            &
+     &                       FORCES(ng)%stflux (:,:,itrc),              &
      &                       update)
         IF (FoundError(exit_flag, NoError, __LINE__,                    &
      &                 __FILE__)) RETURN
@@ -523,8 +524,8 @@
 #    ifdef TL_IOMS
         CALL set_2dfld_tile (ng, tile, iRPM, idTsur(itrc),              &
      &                       LBi, UBi, LBj, UBj,                        &
-     &                       FORCES(ng)%stflxG(:,:,:,itrc),             &
-     &                       FORCES(ng)%tl_stflx (:,:,itrc),            &
+     &                       FORCES(ng)%stfluxG(:,:,:,itrc),            &
+     &                       FORCES(ng)%tl_stflux (:,:,itrc),           &
      &                       update)
         IF (FoundError(exit_flag, NoError, __LINE__,                    &
      &                 __FILE__)) RETURN
@@ -536,17 +537,17 @@
 #   else
         CALL set_2dfld_tile (ng, tile, iRPM, idTbot(itrc),              &
      &                       LBi, UBi, LBj, UBj,                        &
-     &                       FORCES(ng)%btflxG(:,:,:,itrc),             &
-     &                       FORCES(ng)%btflx (:,:,itrc),               &
+     &                       FORCES(ng)%btfluxG(:,:,:,itrc),            &
+     &                       FORCES(ng)%btflux (:,:,itrc),              &
      &                       update)
         IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                  __FILE__)) RETURN
+     &                 __FILE__)) RETURN
 
 #    ifdef TL_IOMS
         CALL set_2dfld_tile (ng, tile, iRPM, idTbot(itrc),              &
      &                       LBi, UBi, LBj, UBj,                        &
-     &                       FORCES(ng)%btflxG(:,:,:,itrc),             &
-     &                       FORCES(ng)%tl_btflx (:,:,itrc),            &
+     &                       FORCES(ng)%btfluxG(:,:,:,itrc),            &
+     &                       FORCES(ng)%tl_btflux(:,:,itrc),            &
      &                       update)
         IF (FoundError(exit_flag, NoError, __LINE__,                    &
      &                 __FILE__)) RETURN
@@ -556,16 +557,16 @@
 #  endif
 # endif
 
-# ifndef FRC_COUPLING
-#  if !defined BULK_FLUXES || defined NL_BULK_FLUXES
+# if !defined BULK_FLUXES  || defined FORWARD_FLUXES || \
+      defined FRC_COUPLING
 !
 !-----------------------------------------------------------------------
 !  Set kinematic surface momentum flux (m2/s2).
 !-----------------------------------------------------------------------
 !
-#   ifdef ANA_SMFLUX
+#  ifdef ANA_SMFLUX
       CALL ana_smflux (ng, tile, iRPM)
-#   else
+#  else
       CALL set_2dfld_tile (ng, tile, iRPM, idUsms,                      &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     FORCES(ng)%sustrG,                           &
@@ -573,7 +574,7 @@
      &                     update)
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
-
+!
       CALL set_2dfld_tile (ng, tile, iRPM, idVsms,                      &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     FORCES(ng)%svstrG,                           &
@@ -582,7 +583,7 @@
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
 
-#    ifdef TL_IOMS
+#   ifdef TL_IOMS
       CALL set_2dfld_tile (ng, tile, iRPM, idUsms,                      &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     FORCES(ng)%sustrG,                           &
@@ -590,7 +591,7 @@
      &                     update)
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
-
+!
       CALL set_2dfld_tile (ng, tile, iRPM, idVsms,                      &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     FORCES(ng)%svstrG,                           &
@@ -598,9 +599,9 @@
      &                     update)
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
-#    endif
+#   endif
 
-#    ifdef CURVGRID
+#   ifdef CURVGRID
 !
 !  If input point wind stress, rotate to curvilinear grid.  Notice
 !  that rotation is done at RHO-points. It does not matter.
@@ -616,10 +617,10 @@
      &           FORCES(ng)%sustr(i,j)*GRID(ng)%SinAngler(i,j)
             FORCES(ng)%sustr(i,j)=cff1
             FORCES(ng)%svstr(i,j)=cff2
-#     ifdef TL_IOMS
+#    ifdef TL_IOMS
             FORCES(ng)%tl_sustr(i,j)=cff1
             FORCES(ng)%tl_svstr(i,j)=cff2
-#     endif
+#    endif
           END DO
         END DO
 
@@ -630,39 +631,38 @@
           CALL exchange_v2d_tile (ng, tile,                             &
      &                            LBi, UBi, LBj, UBj,                   &
      &                            FORCES(ng)%svstr)
-#     ifdef TL_IOMS
+#    ifdef TL_IOMS
           CALL exchange_u2d_tile (ng, tile,                             &
      &                            LBi, UBi, LBj, UBj,                   &
      &                            FORCES(ng)%tl_sustr)
           CALL exchange_v2d_tile (ng, tile,                             &
      &                            LBi, UBi, LBj, UBj,                   &
      &                            FORCES(ng)%tl_svstr)
-#     endif
+#    endif
         END IF
 
-#     ifdef DISTRIBUTE
+#    ifdef DISTRIBUTE
         CALL mp_exchange2d (ng, tile, iRPM, 2,                          &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      NghostPoints,                               &
      &                      EWperiodic(ng), NSperiodic(ng),             &
      &                      FORCES(ng)%sustr,                           &
      &                      FORCES(ng)%svstr)
-#      ifdef TL_IOMS
+#     ifdef TL_IOMS
         CALL mp_exchange2d (ng, tile, iRPM, 2,                          &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      NghostPoints,                               &
      &                      EWperiodic(ng), NSperiodic(ng),             &
      &                      FORCES(ng)%tl_sustr,                        &
      &                      FORCES(ng)%tl_svstr)
-#      endif
 #     endif
-      END IF
 #    endif
+      END IF
 #   endif
 #  endif
 # endif
 
-# if (defined BULK_FLUXES && !defined NL_BULK_FLUXES) || \
+# if (defined BULK_FLUXES && !defined FORWARD_FLUXES) || \
      defined ECOSIM       || defined ATM_PRESS
 !
 !-----------------------------------------------------------------------
@@ -734,6 +734,7 @@
 #   endif
 
 #   ifdef WAVES_HEIGHT
+!
       CALL set_2dfld_tile (ng, tile, iRPM, idWamp,                      &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     FORCES(ng)%HwaveG,                           &
@@ -744,6 +745,7 @@
 #   endif
 
 #   ifdef WAVES_LENGTH
+!
       CALL set_2dfld_tile (ng, tile, iRPM, idWlen,                      &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     FORCES(ng)%LwaveG,                           &
@@ -754,6 +756,7 @@
 #   endif
 
 #   ifdef WAVES_TOP_PERIOD
+!
       CALL set_2dfld_tile (ng, tile, iRPM, idWptp,                      &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     FORCES(ng)%Pwave_topG,                       &
@@ -764,6 +767,7 @@
 #   endif
 
 #   ifdef WAVES_BOT_PERIOD
+!
       CALL set_2dfld_tile (ng, tile, iRPM, idWpbt,                      &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     FORCES(ng)%Pwave_botG,                       &
@@ -774,6 +778,7 @@
 #   endif
 
 #   if defined WAVES_UB
+!
       CALL set_2dfld_tile (ng, tile, iRPM, idWorb,                      &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     FORCES(ng)%Ub_swanG,                         &
@@ -784,6 +789,7 @@
 #   endif
 
 #   if defined TKE_WAVEDISS
+!
       CALL set_2dfld_tile (ng, tile, iRPM, idWdis,                      &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     FORCES(ng)%Wave_dissipG,                     &
@@ -794,6 +800,7 @@
 #   endif
 
 #   if defined SVENDSEN_ROLLER
+!
       CALL set_2dfld_tile (ng, tile, iRPM, idWbrk,                      &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     FORCES(ng)%Wave_breakG,                      &
@@ -1599,7 +1606,7 @@
      &                       update)
         IF (FoundError(exit_flag, NoError, __LINE__,                    &
      &                 __FILE__)) RETURN
-
+!
         CALL set_2dfld_tile (ng, tile, iRPM, idRu2d,                    &
      &                       LBi, UBi, LBj, UBj,                        &
      &                       OCEAN(ng)%rubarG,                          &
@@ -1607,7 +1614,7 @@
      &                       update)
         IF (FoundError(exit_flag, NoError, __LINE__,                    &
      &                 __FILE__)) RETURN
-
+!
         CALL set_2dfld_tile (ng, tile, iRPM, idRv2d,                    &
      &                       LBi, UBi, LBj, UBj,                        &
      &                       OCEAN(ng)%rvbarG,                          &
@@ -1629,7 +1636,7 @@
      &                     update)
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
-
+!
       CALL set_2dfld_tile (ng, tile, iRPM, idUfx2,                      &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     COUPLING(ng)%DU_avg2G,                       &
@@ -1637,7 +1644,7 @@
      &                     update)
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
-
+!
       CALL set_2dfld_tile (ng, tile, iRPM, idVfx1,                      &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     COUPLING(ng)%DV_avg1G,                       &
@@ -1645,7 +1652,7 @@
      &                     update)
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
-
+!
       CALL set_2dfld_tile (ng, tile, iRPM, idVfx2,                      &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     COUPLING(ng)%DV_avg2G,                       &
@@ -1664,7 +1671,7 @@
      &                       update)
         IF (FoundError(exit_flag, NoError, __LINE__,                    &
      &                 __FILE__)) RETURN
-
+!
         CALL set_3dfld_tile (ng, tile, iRPM, idVvel,                    &
      &                       LBi, UBi, LBj, UBj, 1, N(ng),              &
      &                       OCEAN(ng)%vG,                              &
@@ -1686,7 +1693,7 @@
      &                       update)
         IF (FoundError(exit_flag, NoError, __LINE__,                    &
      &                 __FILE__)) RETURN
-
+!
         CALL set_3dfld_tile (ng, tile, iRPM, idRv3d,                    &
      &                       LBi, UBi, LBj, UBj, 1, N(ng),              &
      &                       OCEAN(ng)%rvG,                             &
@@ -1724,7 +1731,7 @@
         IF (FoundError(exit_flag, NoError, __LINE__,                    &
      &                 __FILE__)) RETURN
       END DO
-
+!
       CALL set_3dfld_tile (ng, tile, iRPM, idVvis,                      &
      &                     LBi, UBi, LBj, UBj, 0, N(ng),                &
      &                     MIXING(ng)%AkvG,                             &
@@ -1874,9 +1881,7 @@
      &                       update)
         IF (FoundError(exit_flag, NoError, __LINE__,                    &
      &                 __FILE__)) RETURN
-#   endif
-
-#   ifdef SOLVE3D
+#   else
 !
 !  Set 3D momentum forcing.
 !
@@ -1887,7 +1892,7 @@
      &                       update)
         IF (FoundError(exit_flag, NoError, __LINE__,                    &
      &                 __FILE__)) RETURN
-
+!
         CALL set_3dfld_tile (ng, tile, iRPM, idVtlf,                    &
      &                       LBi, UBi, LBj, UBj, 1, N(ng),              &
      &                       OCEAN(ng)%f_vG,                            &
@@ -1911,7 +1916,7 @@
       END IF
 #  endif
 # endif
-
+!
       RETURN
       END SUBROUTINE rp_set_data_tile
 #else

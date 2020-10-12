@@ -1,7 +1,7 @@
       MODULE ocean_control_mod
 !
 !git $Id$
-!svn $Id: nl_ocean.h 1031 2020-07-14 01:39:55Z arango $
+!svn $Id: nl_ocean.h 1039 2020-10-12 03:54:49Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -353,11 +353,9 @@
 !  Compute and report model-observation comparison statistics.
 !-----------------------------------------------------------------------
 !
-      IF (exit_flag.eq.NoError) THEN
-        DO ng=1,Ngrids
-          CALL stats_modobs (ng)
-        END DO
-      END IF
+      DO ng=1,Ngrids
+        CALL stats_modobs (ng)
+      END DO
 #endif
 !
 !-----------------------------------------------------------------------

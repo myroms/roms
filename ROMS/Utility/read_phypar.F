@@ -2,7 +2,7 @@
       SUBROUTINE read_PhyPar (model, inp, out, Lwrite)
 !
 !git $Id$
-!svn $Id: read_phypar.F 1036 2020-07-29 05:39:53Z arango $
+!svn $Id: read_phypar.F 1039 2020-10-12 03:54:49Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -641,6 +641,19 @@
               Npts=load_i(Nval, Rval, Ngrids, ndefHIS)
             CASE ('NQCK')
               Npts=load_i(Nval, Rval, Ngrids, nQCK)
+#if defined FORWARD_FLUXES && \
+   (defined BULK_FLUXES    || defined FRC_COUPLING)
+              DO ng=1,Ngrids
+                IF (nQCK(ng).le.0) THEN
+                  WRITE (text,'(a,i2.2,a)') 'nQCK(', ng, ') = '
+                  IF (Master) WRITE (out,260) TRIM(text), nQCK(ng),    &
+     &               'must be greater than zero because the QCK '//    &
+     &               'file is used as surface forcing basic state.'
+                  exit_flag=5
+                  RETURN
+                END IF
+              END DO
+#endif
             CASE ('NDEFQCK')
               Npts=load_i(Nval, Rval, Ngrids, ndefQCK)
             CASE ('NTSAVG')
@@ -675,18 +688,32 @@
             CASE ('NOBC')
               Npts=load_i(Nval, Rval, Ngrids, nOBC)
 #ifdef ADJUST_BOUNDARY
+# ifdef RBL4DVAR_FCT_SENSITIVITY
+              DO ng=1,Ngrids
+                Nbrec(ng)=1+ntimes_ana(ng)/nOBC(ng)
+              END DO
+              allocate ( OBC_time(MAXVAL(Nbrec),Ngrids) )
+# else
               DO ng=1,Ngrids
                 Nbrec(ng)=1+ntimes(ng)/nOBC(ng)
               END DO
               allocate ( OBC_time(MAXVAL(Nbrec),Ngrids) )
+# endif
 #endif
             CASE ('NSFF')
               Npts=load_i(Nval, Rval, Ngrids, nSFF)
 #if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+# ifdef RBL4DVAR_FCT_SENSITIVITY
+              DO ng=1,Ngrids
+                Nfrec(ng)=1+ntimes_ana(ng)/nSFF(ng)
+              END DO
+              allocate ( SF_time(MAXVAL(Nfrec),Ngrids) )
+# else
               DO ng=1,Ngrids
                 Nfrec(ng)=1+ntimes(ng)/nSFF(ng)
               END DO
               allocate ( SF_time(MAXVAL(Nfrec),Ngrids) )
+# endif
 #endif
             CASE ('LmultiGST')
               Npts=load_l(Nval, Cval, 1, Lvalue)
@@ -3428,54 +3455,73 @@
 !  source will be applies twice.
 !
       DO ng=1,Ngrids
-       IF (LuvSrc(ng).and.LwSrc(ng)) THEN
-         IF (Master) THEN
-           WRITE (out,260) 'LuvSrc', LuvSrc(ng),                        &
-     &           'Because LwSrc  is also ON; only one method is legal.'
-           WRITE (out,260) 'LwSrc', LwSrc(ng),                          &
-     &           'Because LuvSrc is also ON; only one method is legal.'
-         END IF
-         exit_flag=4
-         RETURN
-       END IF
-     END DO
+        IF (LuvSrc(ng).and.LwSrc(ng)) THEN
+          IF (Master) THEN
+            WRITE (out,260) 'LuvSrc', LuvSrc(ng),                       &
+     &            'Because LwSrc  is also ON; only one method is legal.'
+            WRITE (out,260) 'LwSrc', LwSrc(ng),                         &
+     &            'Because LuvSrc is also ON; only one method is legal.'
+          END IF
+          exit_flag=4
+          RETURN
+        END IF
+      END DO
 
 #ifdef SP4DVAR
 !
 !  Check if the number of split time intervals (Nsaddle) in the saddle-
 !  point 4D-Var is legal for a simulation.
 !
-     DO ng=1,Ngrids
-       IF (MOD((ntimes(ng)/nHIS(ng)),Nsaddle).ne.0) THEN
-         IF (Master) THEN
-           WRITE (out,350) 'Nsaddle = ', Nsaddle, ng,                   &
-    &                      'ntimes/nHIS = ', ntimes(ng)/nHIS(ng),       &
-    &                      'MOD(ntimes/nHis,Nsaddle) = ',               &
-    &                      MOD((ntimes(ng)/nHIS(ng)),Nsaddle),          &
-    &                      'must be zero for legal computations.',      &
-    &                      'Revise input parameters.'
-         END IF
-         exit_flag=4
-         RETURN
-       END IF
-     END DO
+      DO ng=1,Ngrids
+        IF (MOD((ntimes(ng)/nHIS(ng)),Nsaddle).ne.0) THEN
+          IF (Master) THEN
+            WRITE (out,350) 'Nsaddle = ', Nsaddle, ng,                  &
+     &                      'ntimes/nHIS = ', ntimes(ng)/nHIS(ng),      &
+     &                      'MOD(ntimes/nHis,Nsaddle) = ',              &
+     &                      MOD((ntimes(ng)/nHIS(ng)),Nsaddle),         &
+     &                      'must be zero for legal computations.',     &
+     &                      'Revise input parameters.'
+          END IF
+          exit_flag=4
+          RETURN
+        END IF
+      END DO
 #endif
 
-#if defined BULK_FLUXES && defined NL_BULK_FLUXES
+# if defined FORWARD_FLUXES && \
+    (defined BULK_FLUXES    || defined FRC_COUPLING)
 !
 !  Make sure that logical output switches are activated for wind
-!  stress and surface active tracers fluxes when using fluxes from
-!  the nonlinear model via (bulk_flux).
+!  stress, shortwave radiation, and surface active tracers fluxes
+!  when using fluxes from the nonlinear model via (bulk_flux).
 !
       DO ng=1,Ngrids
-        Hout(idUsms,ng)=.TRUE.
-        Hout(idVsms,ng)=.TRUE.
+        Qout(idUsms,ng)=.TRUE.
+        Qout(idVsms,ng)=.TRUE.
+# ifdef ATM_PRESS
+        Qout(idPair,ng)=.TRUE.
+# endif
 # ifdef SOLVE3D
-        Hout(idTsur(itemp),ng)=.TRUE.
-#  ifdef EMINUSP
-        Hout(idEmPf,ng)=.TRUE.
+        Qout(idSrad,ng)=.TRUE.
+        Qout(idTsur(itemp),ng)=.TRUE.
+#  if defined EMINUSP || defined FRC_COUPLING
+        Qout(idEmPf,ng)=.TRUE.
 #  endif
 # endif
+      END DO
+#endif
+
+#if defined FORWARD_MIXING && defined SOLVE3D    && \
+   (defined GLS_MIXING     || defined LMD_MIXING || \
+    defined MY25_MIXING)
+!
+!  Make sure that logical output switches are activated for vertical
+!  diffusion and viscosity mixing coefficients.
+!
+      DO ng=1,Ngrids
+        Hout(idSdif,ng)=.TRUE.
+        Hout(idTdif,ng)=.TRUE.
+        Hout(idVvis,ng)=.TRUE.
       END DO
 #endif
 
@@ -3851,13 +3897,13 @@
 #endif
       END DO
 
-#ifdef BULK_FLUXES
+#ifdef FORWARD_FLUXES
 !
 !  Allocate and initialize BLK I/O structure with the same values as
-!  HIS.
+!  QCK.
 !
       DO ng=1,Ngrids
-        OutFiles=HIS(ng)%Nfiles
+        OutFiles=QCK(ng)%Nfiles
         allocate ( BLK(ng)%Nrec(OutFiles) )
         allocate ( BLK(ng)%time_min(OutFiles) )
         allocate ( BLK(ng)%time_max(OutFiles) )
@@ -3874,6 +3920,17 @@
         BLK(ng)%time_min=0.0_dp
         BLK(ng)%time_max=0.0_dp
         BLK(ng)%label='BLK - nonlinear model bulk fluxes'
+        lstr=LEN(BLK(ng)%name)
+        DO i=1,lstr
+          BLK(ng)%head(i:i)=blank
+          BLK(ng)%base(i:i)=blank
+          BLK(ng)%name(i:i)=blank
+        END DO
+        DO k=1,OutFiles
+          DO i=1,lstr
+            BLK(ng)%files(k)(i:i)=blank
+          END DO
+        END DO
       END DO
 #endif
 !
@@ -5098,7 +5155,7 @@
      &         'Hout(idSrad)',                                          &
      &         'Write out shortwave radiation flux.'
 # endif
-# ifdef BULK_FLUXES
+# if defined BULK_FLUXES || defined FRC_COUPLING
             IF (Hout(idLrad,ng)) WRITE (out,170) Hout(idLrad,ng),       &
      &         'Hout(idLrad)',                                          &
      &         'Write out longwave radiation flux.'
@@ -5108,10 +5165,12 @@
             IF (Hout(idShea,ng)) WRITE (out,170) Hout(idShea,ng),       &
      &         'Hout(idShea)',                                          &
      &         'Write out sensible heat flux.'
-#  ifdef EMINUSP
+#  if defined EMINUSP || defined FRC_COUPLING
             IF (Hout(idEmPf,ng)) WRITE (out,170) Hout(idEmPf,ng),       &
      &         'Hout(idEmPf)',                                          &
      &         'Write out E-P flux.'
+#  endif
+#  ifdef EMINUSP
             IF (Hout(idevap,ng)) WRITE (out,170) Hout(idevap,ng),       &
      &         'Hout(idevap)',                                          &
      &         'Write out evaporation rate.'
@@ -5411,7 +5470,7 @@
      &         'Qout(idSrad)',                                          &
      &         'Write out shortwave radiation flux.'
 # endif
-# ifdef BULK_FLUXES
+# if defined BULK_FLUXES || defined FRC_COUPLING
             IF (Qout(idLrad,ng)) WRITE (out,170) Qout(idLrad,ng),       &
      &         'Qout(idLrad)',                                          &
      &         'Write out longwave radiation flux.'
@@ -5421,10 +5480,12 @@
             IF (Qout(idShea,ng)) WRITE (out,170) Qout(idShea,ng),       &
      &         'Qout(idShea)',                                          &
      &         'Write out sensible heat flux.'
-#  ifdef EMINUSP
+#  if defined EMINUSP || defined FRC_COUPLING
             IF (Qout(idEmPf,ng)) WRITE (out,170) Qout(idEmPf,ng),       &
      &         'Qout(idEmPf)',                                          &
      &         'Write out E-P flux.'
+#  endif
+#  ifdef EMINUSP
             IF (Qout(idevap,ng)) WRITE (out,170) Qout(idevap,ng),       &
      &         'Qout(idevap)',                                          &
      &         'Write out evaporation rate.'

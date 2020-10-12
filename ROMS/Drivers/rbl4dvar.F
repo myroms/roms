@@ -4,7 +4,7 @@
 #ifdef RBL4DVAR
 !
 !git $Id$
-!svn $Id: rbl4dvar.F 1035 2020-07-28 00:49:02Z arango $
+!svn $Id: rbl4dvar.F 1039 2020-10-12 03:54:49Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -12,20 +12,47 @@
 !=======================================================================
 !                                                                      !
 !  This module splits the RBL4D-Var data assimilation algorithm into   !
-!  its logical components routines:                                    !
+!  its logical components routines.                                    !
 !                                                                      !
-!    background        Xb, nonlinear trajectory used to linearize the  !
-!                          tangent linear and adjoint models           !
+!    background_initialize:                                            !
 !                                                                      !
-!    increment         dXa, 4D-Var data assimilation increment: inner  !
-!                       loops and minimization solver                  !
+!      Initializes the nonlinear model kernel. It is separated from    !
+!      the 'background' phase to allow ESM coupling.                   !
 !                                                                      !
-!    analysis          Xa, analyzed state: Xa = Xb + dXa               !
+!    background:                                                       !
 !                                                                      !
-!    prior_error       Process background and model prior error        !
-!                      covariance and its normalization coefficients   !
+!      Timesteps the nonlinear model to compute the basic state Xb(t)  !
+!      used to linearize the tangent linear and adjoint models. It     !
+!      interpolates the nonlinear model trajectory to the observations !
+!      locations.                                                      !
 !                                                                      !
-!    posterior_error   Posterior error analysis                        !
+!    increment:                                                        !
+!                                                                      !
+!      Minimizes of the 4D-Var cost function over Ninner inner loops   !
+!      iterations to compute the data assimilation increment, dXa. It  !
+!      also computes the nonlinear model initial conditions by adding  !
+!      the increment to the background, Xa = Xb(t=0) + dXa. The new    !
+!      NLM initial conditions is written inot INI(ng)%name NetCDF file.!
+!                                                                      !
+!    analysis_initialize:                                              !
+!                                                                      !
+!      Initializes the nonlinear model with the 4D-Var analysis, Xa.   !
+!      It is separated from 'analysis' phase to allow ESM coupling.    !
+!                                                                      !
+!    analysis:                                                         !
+!                                                                      !
+!      Timesteps the nonlinear model to compute new state trajectory   !
+!      that becomes the basic state for the next outer loop. It also   !
+!      interpolates the solution at the observation locations.         !
+!                                                                      !
+!    prior_error:                                                      !
+!                                                                      !
+!      Processes the background and model prior error covariance and   !
+!      its normalization coefficients.                                 !
+!                                                                      !
+!    posterior_error:                                                  !
+!                                                                      !
+!      Computes the posterior error analysis.                          !
 !                                                                      !
 !                                                                      !
 !  References:                                                         !
@@ -54,8 +81,10 @@
 !
       implicit none
 !
+      PUBLIC  :: background_initialize
       PUBLIC  :: background
       PUBLIC  :: increment
+      PUBLIC  :: analysis_initialize
       PUBLIC  :: analysis
       PUBLIC  :: prior_error
 
@@ -82,20 +111,18 @@
 !
       CONTAINS
 !
-      SUBROUTINE background (my_outer, RunInterval)
+      SUBROUTINE background_initialize (my_outer)
 !
 !=======================================================================
 !                                                                      !
-!  This routine computes the backgound state trajectory, Xb_n-1(t),    !
-!  used to linearize the tangent linear and adjoint models in the      !
-!  inner loops. It interpolates the background at the observations     !
-!  locations, and computes the accept/reject quality control flag,     !
-!  ObsScale.                                                           !
+!  This routine initializes ROMS nonlinear model trajectory Xb_n-1(0)  !
+!  for each (n-1) outer loops. It is separated from the 'background'   !
+!  4D-Var phase in ESM coupling applications that use generic methods  !
+!  for 'initialize', 'run', and 'finalize'.                            !
 !                                                                      !
 !  On Input:                                                           !
 !                                                                      !
 !     my_outer        Outer-loop counter (integer)                     !
-!     RunInterval     NLM kernel time stepping window (seconds)        !
 !                                                                      !
 !=======================================================================
 !
@@ -103,8 +130,6 @@
       USE mod_parallel
       USE mod_fourdvar
       USE mod_iounits
-      USE mod_ncparam
-      USE mod_netcdf
       USE mod_scalars
 !
       USE mod_mixing,  ONLY : initialize_mixing
@@ -115,22 +140,18 @@
 !
       integer, intent(in) :: my_outer
 !
-      real(dp), intent(in) :: RunInterval
-!
 !  Local variable declarations.
 !
-      integer :: i, lstr, ng, tile
+      integer :: lstr, ng, tile
       integer :: Fcount, Tindex
 # ifdef PROFILE
       integer :: thread
 # endif
 !
-      character (len=20) :: string
-!
-      SourceFile=__FILE__  // ", background"
+      SourceFile=__FILE__  // ", background_initialize"
 !
 !-----------------------------------------------------------------------
-!  Initialize and set nonlinear model initial conditions.
+!  Initialize nonlinear model kernel.
 !-----------------------------------------------------------------------
 
 # ifdef PROFILE
@@ -144,6 +165,15 @@
         END DO
       END DO
 # endif
+
+# if defined MODEL_COUPLING && defined ESMF_LIB
+!
+!  Initialize several global parameters.
+!
+      Nrun=1                ! run counter
+      ERstr=1               ! ensemble start counter
+      ERend=Nouter          ! ensemble end counter
+# endif
 !
 !  Initialize the switch to gather weak constraint forcing.
 !
@@ -151,7 +181,7 @@
         WRTforce(ng)=.FALSE.
       END DO
 !
-!  Clear nonlinear mixing arrays.
+!  Clear TLM mixing arrays.
 !
       DO ng=1,Ngrids
         DO tile=first_tile(ng),last_tile(ng),+1
@@ -163,10 +193,12 @@
 !
       DO ng=1,Ngrids
         wrtNLmod(ng)=.TRUE.
-        wrtRPmod(ng)=.FALSE.
         wrtTLmod(ng)=.FALSE.
-# if defined BULK_FLUXES && defined NL_BULK_FLUXES
+# ifdef FORWARD_FLUXES
         LreadBLK(ng)=.FALSE.
+# endif
+# ifdef FRC_FILES
+        LreadFRC(ng)=.TRUE.
 # endif
         LreadFWD(ng)=.FALSE.
         RST(ng)%Rindex=0
@@ -180,8 +212,8 @@
 !
 !  Save nonlinear initial conditions (currently in time index 1,
 !  background) into record "Lbck" of INI(ng)%name NetCDF file. The
-!  record "Lbck" becomes the background state record and the record
-!  "Lini" becomes current nonlinear initial conditions.
+!  record "Lbck" becomes the background state and "Lini" becomes
+!  the current nonlinear initial conditions.
 !
       Tindex=1
       DO ng=1,Ngrids
@@ -204,8 +236,22 @@
         HIS(ng)%base=HIS(ng)%name(1:lstr-3)
       END DO
 !
-!  Define output 4D-Var NetCDF file (DAV struc) containing all processed
-!  data at observation locations.
+!  Set the nonlinear model to output the quicksave history file as a
+!  function of the outer loop. It may be used as the basic state
+!  trajectory for the surface fluxes (wind stress, shortwave, heat
+!  flux, and E-P) because they can be saved frequently to resolve
+!  the daily cycle while avoiding large files.
+!
+      DO ng=1,Ngrids
+        LdefQCK(ng)=.TRUE.
+        LwrtQCK(ng)=.TRUE.
+        WRITE (QCK(ng)%name,10) TRIM(QCK(ng)%head), my_outer
+        lstr=LEN_TRIM(QCK(ng)%name)
+        QCK(ng)%base=QCK(ng)%name(1:lstr-3)
+      END DO
+!
+!  Define output 4D-Var NetCDF file (DAV struc) containing all
+!  processed data at observation locations.
 !
       DO ng=1,Ngrids
         LdefMOD(ng)=.TRUE.
@@ -213,13 +259,114 @@
         IF (FoundError(exit_flag, NoError, __LINE__,                    &
      &                 __FILE__)) RETURN
       END DO
+
+# ifdef PROFILE
+!
+!  Stop profile clock
+!
+      DO ng=1,Ngrids
+        DO thread=THREAD_RANGE
+          CALL wclock_off (ng, iNLM, 86, __LINE__,                      &
+     &                     __FILE__)
+        END DO
+      END DO
+# endif
+!
+ 10   FORMAT (a,'_outer',i0,'.nc')
+!
+      RETURN
+      END SUBROUTINE background_initialize
+!
+      SUBROUTINE background (my_outer, RunInterval)
+!
+!=======================================================================
+!                                                                      !
+!  This routine computes the backgound state trajectory, Xb_n-1(t),    !
+!  used to linearize the tangent linear and adjoint models in the      !
+!  inner loops. It interpolates the background at the observations     !
+!  locations, and computes the accept/reject quality control flag,     !
+!  ObsScale.                                                           !
+!                                                                      !
+!  On Input:                                                           !
+!                                                                      !
+!     my_outer        Outer-loop counter (integer)                     !
+!     RunInterval     NLM kernel time stepping window (seconds)        !
+!                                                                      !
+!=======================================================================
+!
+      USE mod_param
+      USE mod_parallel
+      USE mod_fourdvar
+      USE mod_iounits
+      USE mod_netcdf
+      USE mod_scalars
+!
+      USE strings_mod, ONLY : FoundError
+!
+!  Imported variable declarations
+!
+      integer, intent(in) :: my_outer
+!
+      real(dp), intent(in) :: RunInterval
+!
+!  Local variable declarations.
+!
+      logical :: DoneStepping
+!
+      integer :: i, lstr, ng, tile
+      integer :: Fcount, Tindex
+# ifdef PROFILE
+      integer :: thread
+# endif
+# if defined MODEL_COUPLING && !defined MCT_LIB
+      integer :: NstrStep, NendStep, extra
+!
+      real(dp) :: ENDtime, NEXTtime
+# endif
+!
+      character (len=20) :: string
+!
+      SourceFile=__FILE__  // ", background"
+
+# if !(defined MODEL_COUPLING && defined ESMF_LIB)
+!
+!-----------------------------------------------------------------------
+!  Set nonlinear model initial conditions.
+!-----------------------------------------------------------------------
+!
+      CALL background_initialize (my_outer)
+      IF (FoundError(exit_flag, NoError, __LINE__,                      &
+     &               __FILE__)) RETURN
+# endif
 !
 !-----------------------------------------------------------------------
 !  Run nonlinear model and compute background state trajectory,
 !  Xb_n-1(t), and the background values at the observation points
 !  and times. It processes and writes the observations accept/reject
 !  flag (ObsScale) once to allow background quality control, if any.
+# if defined MODEL_COUPLING && !defined MCT_LIB
+!  Since the ROMS kernel has a delayed output and line diagnostics by
+!  one timestep, subtact an extra value to the report of starting and
+!  ending timestep for clarity. Usually, the model coupling interval
+!  is of the same size as ROMS timestep.
+# endif
 !-----------------------------------------------------------------------
+
+# ifdef PROFILE
+!
+!  Start profile clock.
+!
+      DO ng=1,Ngrids
+        DO thread=THREAD_RANGE
+          CALL wclock_on (ng, iNLM, 86, __LINE__,                       &
+     &                    __FILE__)
+        END DO
+      END DO
+# endif
+!
+!  Initialize various parameters and switches.
+!
+      MyRunInterval=RunInterval
 !
       DO ng=1,Ngrids
 # ifdef AVERAGES
@@ -240,11 +387,28 @@
         wrtObsScale(ng)=.TRUE.
         SporadicImpulse(ng)=.FALSE.
         FrequentImpulse(ng)=.FALSE.
-        IF (Master) THEN
-          WRITE (stdout,20) 'NL', ng, my_outer, 0,                      &
-     &                      ntstart(ng), ntend(ng)
+# if defined MODEL_COUPLING && !defined MCT_LIB
+!
+        NEXTtime=time(ng)+RunInterval
+        ENDtime=INItime(ng)+(ntimes(ng)-1)*dt(ng)
+        IF ((NEXTtime.eq.ENDtime).and.(ng.eq.1)) THEN
+          extra=0                                   ! last time interval
+        ELSE
+          extra=1
         END IF
+        step_counter(ng)=0
+        NstrStep=iic(ng)
+        NendStep=NstrStep+INT((MyRunInterval)/dt(ng))-extra
+        IF (Master) WRITE (stdout,20) 'NL', ng, my_outer, 0,            &
+     &                                NstrStep, NendStep
+# else
+
+        IF (Master) WRITE (stdout,20) 'NL', ng, my_outer, 0,            &
+     &                                ntstart(ng), ntend(ng)
+# endif
       END DO
+!
+!  Run nonlinear model kernel.
 !
 # ifdef SOLVE3D
       CALL main3d (RunInterval)
@@ -254,52 +418,75 @@
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
 !
-      DO ng=1,Ngrids
+!-----------------------------------------------------------------------
+!  If completed stepping, reset switches and write out cost function.
+# if defined MODEL_COUPLING && !defined MCT_LIB
+!  In coupled applications, RunInterval is much less than ntimes*dt,
+!  so we need to wait until the last coupling interval is finished.
+!  Otherwise, the control switches will be turned off prematurely.
+# endif
+!-----------------------------------------------------------------------
+!
+# if defined MODEL_COUPLING && !defined MCT_LIB
+      IF (NendStep.eq.ntend(1)) THEN
+        DoneStepping=.TRUE.
+      ELSE
+        DoneStepping=.FALSE.
+      END IF
+# else
+      DoneStepping=.TRUE.
+# endif
+!
+      IF (DoneStepping) THEN
+        DO ng=1,Ngrids
+          LdefQCK(ng)=.FALSE.
+          LwrtQCK(ng)=.FALSE.
 # ifdef AVERAGES
-        LdefAVG(ng)=.FALSE.
-        LwrtAVG(ng)=.FALSE.
+          LdefAVG(ng)=.FALSE.
+          LwrtAVG(ng)=.FALSE.
 # endif
 # ifdef DIAGNOSTICS
-        LdefDIA(ng)=.FALSE.
-        LwrtDIA(ng)=.FALSE.
+          LdefDIA(ng)=.FALSE.
+          LwrtDIA(ng)=.FALSE.
 # endif
-        wrtNLmod(ng)=.FALSE.
-        wrtObsScale(ng)=.FALSE.
-      END DO
+          wrtNLmod(ng)=.FALSE.
+          wrtObsScale(ng)=.FALSE.
+        END DO
 !
 !  Report data penalty function.
 !
-      DO ng=1,Ngrids
-        IF (Master) THEN
-          DO i=0,NobsVar(ng)
-            IF (i.eq.0) THEN
-              string='Total'
-            ELSE
-              string=ObsName(i)
-            END IF
-            IF (FOURDVAR(ng)%NLPenalty(i).ne.0.0_r8) THEN
-              WRITE (stdout,30) my_outer, 0, 'NLM',                     &
-     &                          FOURDVAR(ng)%NLPenalty(i),              &
-     &                          TRIM(string)
-            END IF
-          END DO
-        END IF
+        DO ng=1,Ngrids
+          IF (Master) THEN
+            DO i=0,NobsVar(ng)
+              IF (i.eq.0) THEN
+                string='Total'
+              ELSE
+                string=ObsName(i)
+              END IF
+              IF (FOURDVAR(ng)%NLPenalty(i).ne.0.0_r8) THEN
+                WRITE (stdout,30) my_outer, 0, 'NLM',                   &
+     &                            FOURDVAR(ng)%NLPenalty(i),            &
+     &                            TRIM(string)
+              END IF
+            END DO
+          END IF
 !
 !  Write out initial data penalty function to NetCDF file.
 !
-        SourceFile=__FILE__ // ", background"
-        CALL netcdf_put_fvar (ng, iNLM, DAV(ng)%name,                   &
-     &                        'NL_iDataPenalty',                        &
-     &                        FOURDVAR(ng)%NLPenalty(0:),               &
-     &                        (/1/), (/NobsVar(ng)+1/),                 &
-     &                        ncid = DAV(ng)%ncid)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+          SourceFile=__FILE__ // ", background"
+          CALL netcdf_put_fvar (ng, iNLM, DAV(ng)%name,                 &
+     &                          'NL_iDataPenalty',                      &
+     &                          FOURDVAR(ng)%NLPenalty(0:),             &
+     &                          (/1/), (/NobsVar(ng)+1/),               &
+     &                          ncid = DAV(ng)%ncid)
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
 !
 !  Clean penalty array before next run of NL model.
 !
-        FOURDVAR(ng)%NLPenalty=0.0_r8
-      END DO
+          FOURDVAR(ng)%NLPenalty=0.0_r8
+        END DO
+      END IF
 
 # ifdef PROFILE
 !
@@ -583,6 +770,27 @@
         END IF
       END DO
 !
+!  Set the nonlinear model quicksave-history file as the basic state for
+!  the surface fluxes computed in "bulk_flux", which may be available at
+!  more frequent intervals while avoiding large files. Since the 4D-Var
+!  increment phase is calculated by a different executable and needs to
+!  know some of the QCK structure information.
+!
+      DO ng=1,Ngrids
+        WRITE (QCK(ng)%name,10) TRIM(QCK(ng)%head), my_outer-1
+        lstr=LEN_TRIM(QCK(ng)%name)
+        QCK(ng)%base=QCK(ng)%name(1:lstr-3)
+        IF (QCK(ng)%Nfiles.gt.1) THEN
+          DO ifile=1,QCK(ng)%Nfiles
+            WRITE (suffix,"('_',i4.4,'.nc')") ifile
+            QCK(ng)%files(ifile)=TRIM(QCK(ng)%base)//TRIM(suffix)
+          END DO
+          QCK(ng)%name=TRIM(QCK(ng)%files(1))
+        ELSE
+          QCK(ng)%files(1)=TRIM(QCK(ng)%name)
+        END IF
+      END DO
+!
 !  Read in 4D-Var starting time (sec) from nonlinear trajectory.
 !  Initialize "tday" which are needed to write the correct time in
 !  the ITL NetCDF file.  It is alse need for boundary and surface
@@ -637,19 +845,27 @@
         LreadFWD(ng)=.TRUE.
       END DO
 
-# if defined BULK_FLUXES && defined NL_BULK_FLUXES
+# ifdef FORWARD_FLUXES
 !
-!  Set structure for the nonlinear surface fluxes to be processed by
-!  by the tangent linear and adjoint models. Also, set switches to
-!  process the BLK structure in routine "check_multifile".  Notice that
-!  it is possible to split solution into multiple NetCDF files to reduce
-!  their size.
+!  Set the BLK structure to contain the nonlinear model surface fluxes
+!  needed by the tangent linear and adjoint models. Also, set switches
+!  to process that structure in routine "check_multifile". Notice that
+!  it is possible to split the solution into multiple NetCDF files to
+!  reduce their size.
 !
-      CALL edit_multifile ('HIS2BLK')
+!  The switch LreadFRC is deactivated because all the atmospheric
+!  forcing, including shortwave radiation, is read from the NLM
+!  surface fluxes or is assigned during ESM coupling.  Such fluxes
+!  are available from the QCK structure. There is no need for reading
+!  and processing from the FRC structure input forcing-files.
+!
+      CALL edit_multifile ('QCK2BLK')
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
       DO ng=1,Ngrids
         LreadBLK(ng)=.TRUE.
+        LreadFRC(ng)=.FALSE.
+        LreadQCK(ng)=.FALSE.
       END DO
 # endif
 
@@ -1682,18 +1898,18 @@
       RETURN
       END SUBROUTINE increment
 !
-      SUBROUTINE analysis (my_outer, RunInterval)
+      SUBROUTINE analysis_initialize (my_outer)
 !
 !=======================================================================
 !                                                                      !
-!  This routine computes 4D-Var data assimilation analysis, Xa. The    !
-!  nonlinear model initial conditions are computed by adding the       !
-!  4D-Var increments to the current background:  Xa = Xb + dXa.        !
+!  This routine initializes the nonlinear kernel with the 4D-Var new   !
+!  state estimate Xa = Xb + dXa.  It is separated from the 'analysis'  !
+!  4D-Var phase in ESM coupling applications that use generic methods  !
+!  for 'initialize', 'run', and 'finalize'.                            !
 !                                                                      !
 !  On Input:                                                           !
 !                                                                      !
 !     my_outer        Outer-loop counter (integer)                     !
-!     RunInterval     NLM kernel time stepping window (seconds)        !
 !                                                                      !
 !=======================================================================
 !
@@ -1705,9 +1921,9 @@
       USE mod_netcdf
       USE mod_scalars
 !
-#ifdef ADJUST_BOUNDARY
+# ifdef ADJUST_BOUNDARY
       USE mod_boundary, ONLY : initialize_boundary
-#endif
+# endif
       USE mod_forces,   ONLY : initialize_forces
       USE mod_mixing,   ONLY : initialize_mixing
       USE mod_ocean,    ONLY : initialize_ocean
@@ -1717,11 +1933,9 @@
 !
       integer, intent(in) :: my_outer
 !
-      real(dp), intent(in) :: RunInterval
-!
 !  Local variable declarations.
 !
-      integer :: i, ifile, lstr, ng, tile
+      integer :: ifile, lstr, ng, tile
       integer :: Fcount
 # ifdef PROFILE
       integer :: thread
@@ -1730,14 +1944,12 @@
       integer, dimension(Ngrids) :: indxSave
 !
       character (len=10) :: suffix
-      character (len=20) :: string
 !
-      SourceFile=__FILE__  // ", analysis"
+      SourceFile=__FILE__  // ", analysis_initialize"
 !
-!=======================================================================
-!  Run nonlinear model and compute a "new estimate" of the state
-!  trajectory, Xb(t)|n.
-!=======================================================================
+!-----------------------------------------------------------------------
+!  Initialize nonlinear model kernel with new 4D-Var state estimate.
+!-----------------------------------------------------------------------
 
 # ifdef PROFILE
 !
@@ -1750,6 +1962,20 @@
         END DO
       END DO
 # endif
+!
+!  Clear tangent arrays and the nonlinear model mixing arrays
+!  before running nonlinear model (important).
+!
+      DO ng=1,Ngrids
+        DO tile=first_tile(ng),last_tile(ng),+1
+          CALL initialize_ocean (ng, tile, iTLM)
+          CALL initialize_forces (ng, tile, iTLM)
+# ifdef ADJUST_BOUNDARY
+          CALL initialize_boundary (ng, tile, iTLM)
+# endif
+          CALL initialize_mixing (ng, tile, iNLM)
+        END DO
+      END DO
 
 # ifdef SPLIT_4DVAR
 !
@@ -1767,6 +1993,9 @@
 !  surface forcing (SF_time) adjustment times, if needed.
 !
       ERstr=Nrun
+#  if defined MODEL_COUPLING && defined ESMF_LIB
+      ERend=Nouter
+#  endif
 !
 !  Open Nonlinear model initial conditions NetCDF file (INI struc) and
 !  inquire about its variable IDs. In particular, set the current value
@@ -1813,37 +2042,32 @@
      &                 __FILE__)) RETURN
       END IF
 
-#  if defined BULK_FLUXES && defined NL_BULK_FLUXES
+#  ifdef FORWARD_FLUXES
 !
 !  If not first NLM run, set BLK structure to the previous outer loop
-!  forward trajectory.
+!  quicksave trajectory.  There is a logic in "get_data" that reads
+!  from BLK.
+!  (HGA: This probably legacy code that it is no longer needed)
 !
       DO ng=1,Ngrids
-        WRITE (BLK(ng)%name,10) TRIM(FWD(ng)%head), my_outer-1
-        lstr=LEN_TRIM(BLK(ng)%name)
-        BLK(ng)%base=BLK(ng)%name(1:lstr-3)
-        IF (HIS(ng)%Nfiles.gt.1) THEN
-          DO ifile=1,HIS(ng)%Nfiles
-            WRITE (suffix,"('_',i4.4,'.nc')") ifile
-            BLK(ng)%files(ifile)=TRIM(BLK(ng)%base)//TRIM(suffix)
-          END DO
-          BLK(ng)%name=TRIM(BLK(ng)%files(1))
-        ELSE
-          BLK(ng)%files(1)=TRIM(BLK(ng)%name)
-        END IF
+        WRITE (QCK(ng)%name,10) TRIM(QCK(ng)%head), my_outer-1
+        lstr=LEN_TRIM(QCK(ng)%name)
+        QCK(ng)%base=QCK(ng)%name(1:lstr-3)
       END DO
+!
+      CALL edit_multifile ('QCK2BLK')
+      IF (FoundError(exit_flag, NoError, __LINE__,                      &
+     &               __FILE__)) RETURN
 #  endif
 # endif
 !
 !-----------------------------------------------------------------------
-!  Run nonlinear model with the new analysis initial conditions
-!  cpmputed in the "increment" phase.
+!  Initialize nonlinear model.
 !-----------------------------------------------------------------------
 !
 !  Set new basic state trajectory for next outer loop.  Notice that the
-!  LreadBLK and LreadFWD switches are turned off to suppress processing
-!  of the structures when "check_multifile" during nonlinear model
-!  execution.
+!  LreadFWD switch is turned off to suppress processing of the structure
+!  when "check_multifile" during nonlinear model execution.
 !
       DO ng=1,Ngrids
         idefHIS(ng)=-1
@@ -1851,8 +2075,8 @@
         LwrtHIS(ng)=.TRUE.
         wrtNLmod(ng)=.TRUE.
         wrtTLmod(ng)=.FALSE.
-# if defined BULK_FLUXES && defined NL_BULK_FLUXES
-        LreadBLK(ng)=.FALSE.
+# ifdef FRC_FILES
+        LreadFRC(ng)=.TRUE.
 # endif
         LreadFWD(ng)=.FALSE.
         WRITE (HIS(ng)%name,10) TRIM(FWD(ng)%head), my_outer
@@ -1866,6 +2090,32 @@
           HIS(ng)%name=TRIM(HIS(ng)%files(1))
         ELSE
           HIS(ng)%files(1)=TRIM(HIS(ng)%name)
+        END IF
+      END DO
+!
+!  Set nonlinear output quicksave history file for the next outer loop.
+!  Notice that the LreadBLK switch is turned off to suppress processing
+!  of the structure when "check_multifile" during nonlinear model
+!  execution.
+!
+      DO ng=1,Ngrids
+        idefQCK(ng)=-1
+        LdefQCK(ng)=.TRUE.
+        LwrtQCK(ng)=.TRUE.
+# ifdef FORWARD_FLUXES
+        LreadBLK(ng)=.FALSE.
+# endif
+        WRITE (QCK(ng)%name,10) TRIM(QCK(ng)%head), my_outer
+        lstr=LEN_TRIM(QCK(ng)%name)
+        QCK(ng)%base=QCK(ng)%name(1:lstr-3)
+        IF (QCK(ng)%Nfiles.gt.1) THEN
+          DO ifile=1,QCK(ng)%Nfiles
+            WRITE (suffix,"('_',i4.4,'.nc')") ifile
+            QCK(ng)%files(ifile)=TRIM(QCK(ng)%base)//TRIM(suffix)
+          END DO
+          QCK(ng)%name=TRIM(QCK(ng)%files(1))
+        ELSE
+          QCK(ng)%files(1)=TRIM(QCK(ng)%name)
         END IF
       END DO
 !
@@ -1883,20 +2133,6 @@
         IF (FrcRec(ng).gt.3) THEN
           FrequentImpulse(ng)=.TRUE.
         END IF
-      END DO
-!
-!  Clear tangent arrays and the nonlinear model mixing arrays
-!  before running nonlinear model (important).
-!
-      DO ng=1,Ngrids
-        DO tile=first_tile(ng),last_tile(ng),+1
-          CALL initialize_ocean (ng, tile, iTLM)
-          CALL initialize_forces (ng, tile, iTLM)
-# ifdef ADJUST_BOUNDARY
-          CALL initialize_boundary (ng, tile, iTLM)
-# endif
-          CALL initialize_mixing (ng, tile, iNLM)
-        END DO
       END DO
 !
 !  Initialize nonlinear model INI(ng)%name file, record outer+2.
@@ -1928,8 +2164,98 @@
         END DO
       END IF
 !
-!  Run nonlinear forced by convolved adjoint trajectory impulses and
-!  compute new basic state trajectory X_n.
+ 10   FORMAT (a,'_outer',i0,'.nc')
+!
+      RETURN
+      END SUBROUTINE analysis_initialize
+!
+      SUBROUTINE analysis (my_outer, RunInterval)
+!
+!=======================================================================
+!                                                                      !
+!  This routine computes 4D-Var data assimilation analysis, Xa. The    !
+!  nonlinear model initial conditions are computed by adding the       !
+!  4D-Var increments to the current background:  Xa = Xb + dXa.        !
+!                                                                      !
+!  On Input:                                                           !
+!                                                                      !
+!     my_outer        Outer-loop counter (integer)                     !
+!     RunInterval     NLM kernel time stepping window (seconds)        !
+!                                                                      !
+!=======================================================================
+!
+      USE mod_param
+      USE mod_parallel
+      USE mod_fourdvar
+      USE mod_iounits
+      USE mod_ncparam
+      USE mod_netcdf
+      USE mod_scalars
+!
+      USE strings_mod,  ONLY : FoundError
+!
+!  Imported variable declarations
+!
+      integer, intent(in) :: my_outer
+!
+      real(dp), intent(in) :: RunInterval
+!
+!  Local variable declarations.
+!
+      logical :: DoneStepping
+!
+      integer :: i, lstr, ng
+      integer :: Fcount
+# ifdef PROFILE
+      integer :: thread
+# endif
+# if defined MODEL_COUPLING && !defined MCT_LIB
+      integer :: NstrStep, NendStep, extra
+!
+      real(dp) :: ENDtime, NEXTtime
+# endif
+!
+      character (len=20) :: string
+!
+      SourceFile=__FILE__  // ", analysis"
+!
+# if !(defined MODEL_COUPLING && defined ESMF_LIB)
+!
+!-----------------------------------------------------------------------
+!  Set nonlinear model initial conditions.
+!-----------------------------------------------------------------------
+!
+      CALL analysis_initialize (my_outer)
+      IF (FoundError(exit_flag, NoError, __LINE__,                      &
+     &               __FILE__)) RETURN
+# endif
+!
+!-----------------------------------------------------------------------
+!  Run nonlinear model and compute a "new estimate" of the state
+!  trajectory, Xb(t)|n.
+# if defined MODEL_COUPLING && !defined MCT_LIB
+!  Since the ROMS kernel has a delayed output and line diagnostics by
+!  one timestep, subtact an extra value to the report of starting and
+!  ending timestep for clarity. Usually, the model coupling interval
+!  is of the same size as ROMS timestep.
+# endif
+!-----------------------------------------------------------------------
+
+# ifdef PROFILE
+!
+!  Start profile clock.
+!
+      DO ng=1,Ngrids
+        DO thread=THREAD_RANGE
+          CALL wclock_on (ng, iNLM, 88, __LINE__,                       &
+     &                    __FILE__)
+        END DO
+      END DO
+# endif
+!
+!  Initialize various parameters and switches.
+!
+      MyRunInterval=RunInterval
 !
       DO ng=1,Ngrids
 # ifdef AVERAGES
@@ -1948,11 +2274,27 @@
         lstr=LEN_TRIM(DIA(ng)%name)
         DIA(ng)%base=DIA(ng)%name(1:lstr-3)
 # endif
-        IF (Master) THEN
-          WRITE (stdout,20) 'NL', ng, my_outer, Ninner,                 &
-     &                      ntstart(ng), ntend(ng)
+# if defined MODEL_COUPLING && !defined MCT_LIB
+!
+        NEXTtime=time(ng)+RunInterval
+        ENDtime=INItime(ng)+(ntimes(ng)-1)*dt(ng)
+        IF ((NEXTtime.eq.ENDtime).and.(ng.eq.1)) THEN
+          extra=0                                   ! last time interval
+        ELSE
+          extra=1
         END IF
+        step_counter(ng)=0
+        NstrStep=iic(ng)
+        NendStep=NstrStep+INT((MyRunInterval)/dt(ng))-extra
+        IF (Master) WRITE (stdout,20) 'NL', ng, my_outer, Ninner,       &
+     &                                NstrStep, NendStep
+# else
+        IF (Master) WRITE (stdout,20) 'NL', ng, my_outer, Ninner,       &
+     &                                ntstart(ng), ntend(ng)
+# endif
       END DO
+!
+!  Run nonlinear model kernel.
 !
 # ifdef SOLVE3D
       CALL main3d (RunInterval)
@@ -1962,18 +2304,38 @@
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
 !
-      DO ng=1,Ngrids
+!-----------------------------------------------------------------------
+!  If completed stepping, reset switches and write out cost function.
+# if defined MODEL_COUPLING && !defined MCT_LIB
+!  In coupled applications, RunInterval is much less than ntimes*dt,
+!  so we need to wait until the last coupling interval is finished.
+!  Otherwise, the control switches will be turned off prematurely.
+# endif
+!-----------------------------------------------------------------------
+!
+# if defined MODEL_COUPLING && !defined MCT_LIB
+      IF (NendStep.eq.ntend(1)) THEN
+        DoneStepping=.TRUE.
+      ELSE
+        DoneStepping=.FALSE.
+      END IF
+# else
+      DoneStepping=.TRUE.
+# endif
+!
+      IF (DoneStepping) THEN
+        DO ng=1,Ngrids
 # ifdef AVERAGES
-        LdefAVG(ng)=.FALSE.
-        LwrtAVG(ng)=.FALSE.
+          LdefAVG(ng)=.FALSE.
+          LwrtAVG(ng)=.FALSE.
 # endif
 # ifdef DIAGNOSTICS
-        LdefDIA(ng)=.FALSE.
-        LwrtDIA(ng)=.FALSE.
+          LdefDIA(ng)=.FALSE.
+          LwrtDIA(ng)=.FALSE.
 # endif
-        wrtNLmod(ng)=.FALSE.
-        wrtTLmod(ng)=.FALSE.
-      END DO
+          wrtNLmod(ng)=.FALSE.
+          wrtTLmod(ng)=.FALSE.
+        END DO
 !
 !  Set structure for the nonlinear forward trajectory to be processed
 !  by the tangent linear and adjoint models. Also, set switches to
@@ -1981,62 +2343,63 @@
 !  it is possible to split solution into multiple NetCDF files to reduce
 !  their size.
 !
-      CALL edit_multifile ('HIS2FWD')
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
-      DO ng=1,Ngrids
-        LreadFWD(ng)=.TRUE.
-      END DO
+        CALL edit_multifile ('HIS2FWD')
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
+        DO ng=1,Ngrids
+          LreadFWD(ng)=.TRUE.
+        END DO
 
-# if defined BULK_FLUXES && defined NL_BULK_FLUXES
+# ifdef FORWARD_FLUXES
 !
-!  Set structure for the nonlinear surface fluxes to be processed by
-!  by the tangent linear and adjoint models. Also, set switches to
-!  process the BLK structure in routine "check_multifile".  Notice that
-!  it is possible to split solution into multiple NetCDF files to reduce
-!  their size.
+!  Set the BLK structure to contain the nonlinear model surface fluxes
+!  needed by the tangent linear and adjoint models. Also, set switches
+!  to process that structure in routine "check_multifile". Notice that
+!  it is possible to split the solution into multiple NetCDF files to
+!  reduce their size.
 !
-      CALL edit_multifile ('HIS2BLK')
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
-      DO ng=1,Ngrids
-        LreadBLK(ng)=.TRUE.
-      END DO
+        CALL edit_multifile ('QCK2BLK')
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
+        DO ng=1,Ngrids
+          LreadBLK(ng)=.TRUE.
+        END DO
 # endif
 !
 !  Report data penalty function.
 !
-      DO ng=1,Ngrids
-        IF (Master) THEN
-          DO i=0,NobsVar(ng)
-            IF (i.eq.0) THEN
-              string='Total'
-            ELSE
-              string=ObsName(i)
-            END IF
-            IF (FOURDVAR(ng)%NLPenalty(i).ne.0.0_r8) THEN
+        DO ng=1,Ngrids
+          IF (Master) THEN
+            DO i=0,NobsVar(ng)
+              IF (i.eq.0) THEN
+                string='Total'
+              ELSE
+                string=ObsName(i)
+              END IF
+              IF (FOURDVAR(ng)%NLPenalty(i).ne.0.0_r8) THEN
                 WRITE (stdout,30) my_outer, Ninner, 'NLM',              &
      &                            FOURDVAR(ng)%NLPenalty(i),            &
      &                            TRIM(string)
-            END IF
-          END DO
-        END IF
+              END IF
+            END DO
+          END IF
 !
 !  Write out final data penalty function to NetCDF file.
 !
-        SourceFile=__FILE__ // ", analysis"
-        CALL netcdf_put_fvar (ng, iNLM, DAV(ng)%name,                   &
-     &                        'NL_fDataPenalty',                        &
-     &                        FOURDVAR(ng)%NLPenalty(0:),               &
-     &                        (/1,my_outer/), (/NobsVar(ng)+1,1/),      &
-     &                        ncid = DAV(ng)%ncid)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+          SourceFile=__FILE__ // ", analysis"
+          CALL netcdf_put_fvar (ng, iNLM, DAV(ng)%name,                 &
+     &                          'NL_fDataPenalty',                      &
+     &                          FOURDVAR(ng)%NLPenalty(0:),             &
+     &                          (/1,my_outer/), (/NobsVar(ng)+1,1/),    &
+     &                          ncid = DAV(ng)%ncid)
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
 !
 !  Clean penalty array before next run of NL model.
 !
-        FOURDVAR(ng)%NLPenalty=0.0_r8
-      END DO
+          FOURDVAR(ng)%NLPenalty=0.0_r8
+        END DO
+      END IF
 
 # ifdef PROFILE
 !

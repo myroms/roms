@@ -1,7 +1,7 @@
       MODULE ocean_control_mod
 !
 !git $Id$
-!svn $Id: r4dvar_ocean.h 1035 2020-07-28 00:49:02Z arango $
+!svn $Id: r4dvar_ocean.h 1039 2020-10-12 03:54:49Z arango $
 !=================================================== Andrew M. Moore ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group      Hernan G. Arango   !
 !    Licensed under a MIT/X style license                              !
@@ -395,11 +395,9 @@
 !  Compute and report model-observation comparison statistics.
 !-----------------------------------------------------------------------
 !
-      IF (exit_flag.eq.NoError) THEN
-        DO ng=1,Ngrids
-          CALL stats_modobs (ng)
-        END DO
-      END IF
+      DO ng=1,Ngrids
+        CALL stats_modobs (ng)
+      END DO
 !
 !-----------------------------------------------------------------------
 !  If blowing-up, save latest model state into RESTART NetCDF file.

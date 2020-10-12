@@ -4,7 +4,7 @@
 #ifdef R4DVAR
 !
 !git $Id$
-!svn $Id: r4dvar.F 1035 2020-07-28 00:49:02Z arango $
+!svn $Id: r4dvar.F 1039 2020-10-12 03:54:49Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -117,6 +117,11 @@
 # ifdef PROFILE
       integer :: thread
 # endif
+# if defined MODEL_COUPLING && !defined MCT_LIB
+      integer :: NstrStep, NendStep, extra
+!
+      real(dp) :: ENDtime, NEXTtime
+# endif
 !
       SourceFile=__FILE__
 !
@@ -193,7 +198,16 @@
 !  Run nonlinear model and compute basic state trajectory. It processes
 !  and writes the observations accept/reject flag (ObsScale) once to
 !  allow background quality control, if any.
+# if defined MODEL_COUPLING && !defined MCT_LIB
+!  Since the ROMS kernel has a delayed output and line diagnostics by
+!  one timestep, subtact an extra value to the report of starting and
+!  ending timestep for clarity. Usually, the model coupling interval
+!  is of the same size as ROMS timestep.
+# endif
 !-----------------------------------------------------------------------
+!
+      MyRunInterval=RunInterval
+      IF (Master) WRITE (stdout,'(1x)')
 !
       DO ng=1,Ngrids
 # ifdef RP_AVERAGES
@@ -205,10 +219,24 @@
         AVG(ng)%base=AVG(ng)%name(1:lstr-3)
 # endif
         wrtObsScale(ng)=.TRUE.
-        IF (Master) THEN
-          WRITE (stdout,20) 'NL', ng, my_outer, 0,                      &
-     &                      ntstart(ng), ntend(ng)
+# if defined MODEL_COUPLING && !defined MCT_LIB
+!
+        NEXTtime=time(ng)+RunInterval
+        ENDtime=INItime(ng)+(ntimes(ng)-1)*dt(ng)
+        IF ((NEXTtime.eq.ENDtime).and.(ng.eq.1)) THEN
+          extra=0                                   ! last time interval
+        ELSE
+          extra=1
         END IF
+        step_counter(ng)=0
+        NstrStep=iic(ng)
+        NendStep=NstrStep+INT((MyRunInterval)/dt(ng))-extra
+        IF (Master) WRITE (stdout,20) 'NL', ng, my_outer, 0,            &
+     &                                NstrStep, NendStep
+# else
+        IF (Master) WRITE (stdout,20) 'NL', ng, my_outer, 0,            &
+     &                                ntstart(ng), ntend(ng)
+# endif
       END DO
 !
 # ifdef SOLVE3D
@@ -671,19 +699,26 @@
         LreadFWD(ng)=.TRUE.
       END DO
 
-# if defined BULK_FLUXES && defined NL_BULK_FLUXES
+# ifdef FORWARD_FLUXES
 !
-!  Set structure for the nonlinear surface fluxes to be processed by
-!  by the tangent linear and adjoint models. Also, set switches to
-!  process the BLK structure in routine "check_multifile".  Notice that
-!  it is possible to split solution into multiple NetCDF files to reduce
-!  their size.
+!  Set the BLK structure to contain the nonlinear model surface fluxes
+!  needed by the tangent linear and adjoint models. Also, set switches
+!  to process that structure in routine "check_multifile". Notice that
+!  it is possible to split the solution into multiple NetCDF files to
+!  reduce their size.
 !
-      CALL edit_multifile ('HIS2BLK')
+!  The switch LreadFRC is deactivated because all the atmospheric
+!  forcing, including shortwave radiation, is read from the NLM
+!  surface fluxes or is assigned during ESM coupling.  Such fluxes
+!  are available from the QCK structure. There is no need for reading
+!  and processing from the FRC structure input forcing-files.
+!
+      CALL edit_multifile ('QCK2BLK')
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
       DO ng=1,Ngrids
         LreadBLK(ng)=.TRUE.
+        LreadFRC(ng)=.FALSE.
       END DO
 # endif
 !
@@ -1412,18 +1447,26 @@
         LreadFWD(ng)=.TRUE.
       END DO
 
-#  if defined BULK_FLUXES && defined NL_BULK_FLUXES
+#  ifdef FORWARD_FLUXES
 !
-!  Set structure for the nonlinear surface fluxes to be processed by
-!  by the representer model. Also, set switches to process the BLK
-!  structure in routine "check_multifile".  Notice that it is possible
-!  to split solution into multiple NetCDF files to reduce their size.
+!  Set the BLK structure to contain the nonlinear model surface fluxes
+!  needed by the tangent linear and adjoint models. Also, set switches
+!  to process that structure in routine "check_multifile". Notice that
+!  it is possible to split the solution into multiple NetCDF files to
+!  reduce their size.
 !
-      CALL edit_multifile ('HIS2BLK')
+!  The switch LreadFRC is deactivated because all the atmospheric
+!  forcing, including shortwave radiation, is read from the NLM
+!  surface fluxes or is assigned during ESM coupling.  Such fluxes
+!  are available from the QCK structure. There is no need for reading
+!  and processing from the FRC structure input forcing-files.
+!
+      CALL edit_multifile ('QCK2BLK')
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
       DO ng=1,Ngrids
         LreadBLK(ng)=.TRUE.
+        LreadFRC(ng)=.FALSE.
       END DO
 #  endif
 # endif

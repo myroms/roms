@@ -2,7 +2,7 @@
       SUBROUTINE def_quick (ng, ldef)
 !
 !git $Id$
-!svn $Id: def_quick.F 995 2020-01-10 04:01:28Z arango $
+!svn $Id: def_quick.F 1039 2020-10-12 03:54:49Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -1345,9 +1345,8 @@
         END IF
 #  endif
 # endif
-# if (defined BULK_FLUXES && defined EMINUSP) || defined ATM_COUPLING
 !
-!  Define E-P flux (as computed by bulk_flux.F).
+!  Define E-P flux.
 !
         IF (Qout(idEmPf,ng)) THEN
           Vinfo( 1)=Vname(1,idEmPf)
@@ -1357,9 +1356,9 @@
           Vinfo(12)='downward flux, salting (net evaporation)'
           Vinfo(14)=Vname(4,idEmPf)
           Vinfo(16)=Vname(1,idtime)
-#  if defined WRITE_WATER && defined MASKING
+# if defined WRITE_WATER && defined MASKING
           Vinfo(20)='mask_rho'
-#  endif
+# endif
           Vinfo(22)='coordinates'
           Aval(5)=REAL(Iinfo(1,idEmPf,ng),r8)
           status=def_var(ng, iNLM, QCK(ng)%ncid, QCK(ng)%Vid(idEmPf),   &
@@ -1367,7 +1366,6 @@
           IF (FoundError(exit_flag, NoError, __LINE__,                  &
      &                   __FILE__)) RETURN
         END IF
-# endif
 # ifdef SHORTWAVE
 !
 !  Define shortwave radiation flux.
@@ -2467,11 +2465,9 @@
             QCK(ng)%Vid(idrain)=var_id(i)
 #  endif
 # endif
-# if (defined BULK_FLUXES && defined EMINUSP) || defined ATM_COUPLING
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idEmPf))) THEN
             got_var(idEmPf)=.TRUE.
             QCK(ng)%Vid(idEmPf)=var_id(i)
-# endif
 # ifdef SHORTWAVE
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idSrad))) THEN
             got_var(idSrad)=.TRUE.
@@ -2995,14 +2991,12 @@
         END IF
 #  endif
 # endif
-# if (defined BULK_FLUXES && defined EMINUSP) || defined ATM_COUPLING
         IF (.not.got_var(idEmPf).and.Qout(idEmPf,ng)) THEN
           IF (Master) WRITE (stdout,70) TRIM(Vname(1,idEmPf)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
-# endif
 # ifdef SHORTWAVE
         IF (.not.got_var(idSrad).and.Qout(idSrad,ng)) THEN
           IF (Master) WRITE (stdout,70) TRIM(Vname(1,idSrad)),          &

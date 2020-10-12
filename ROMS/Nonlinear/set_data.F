@@ -3,7 +3,7 @@
       SUBROUTINE set_data (ng, tile)
 !
 !git $Id$
-!svn $Id: set_data.F 1022 2020-05-13 03:03:15Z arango $
+!svn $Id: set_data.F 1039 2020-10-12 03:54:49Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -34,7 +34,7 @@
 # ifdef PROFILE
       CALL wclock_off (ng, iNLM, 4, __LINE__, __FILE__)
 # endif
-
+!
       RETURN
       END SUBROUTINE set_data
 !
@@ -88,15 +88,15 @@
 !
 !  Local variable declarations.
 !
-      logical :: SetBC
+      logical :: Lprocess, SetBC
       logical :: update = .FALSE.
 # if defined WET_DRY
       logical :: bry_update
 # endif
-
+!
       integer :: ILB, IUB, JLB, JUB
       integer :: i, ic, itrc, j, k, my_tile
-
+!
       real(r8) :: cff, cff1, cff2
 
 # include "set_bounds.h"
@@ -108,78 +108,148 @@
       IUB=BOUNDS(ng)%UBi(my_tile)
       JLB=BOUNDS(ng)%LBj(my_tile)
       JUB=BOUNDS(ng)%UBj(my_tile)
+!
+!=======================================================================
+!  Set point Sources/Sinks (river runoff).
+!=======================================================================
+!
+!  Point Source/Sink vertically integrated mass transport.
+!
+# ifdef ANA_PSOURCE
+      IF (LuvSrc(ng).or.LwSrc(ng).or.ANY(LtracerSrc(:,ng))) THEN
+        CALL ana_psource (ng, tile, iNLM)
+      END IF
+# else
+      IF (DOMAIN(ng)%SouthWest_Test(tile)) THEN
+        IF (LuvSrc(ng).or.LwSrc(ng)) THEN
+          CALL set_ngfld (ng, iNLM, idRtra, 1, Nsrc(ng), 1,             &
+     &                    1, Nsrc(ng), 1,                               &
+     &                    SOURCES(ng) % QbarG,                          &
+     &                    SOURCES(ng) % Qbar,                           &
+     &                    update)
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
+
+#  ifdef SOLVE3D
+          DO k=1,N(ng)
+            DO i=1,Nsrc(ng)
+              SOURCES(ng)%Qsrc(i,k)=SOURCES(ng)%Qbar(i)*                &
+     &                              SOURCES(ng)%Qshape(i,k)
+            END DO
+          END DO
+#  endif
+        END IF
+
+#  ifdef SOLVE3D
+!
+!  Tracer Sources/Sinks.
+!
+        DO itrc=1,NT(ng)
+          IF (LtracerSrc(itrc,ng)) THEN
+            CALL set_ngfld (ng, iNLM, idRtrc(itrc), 1, Nsrc(ng), N(ng), &
+     &                      1, Nsrc(ng), N(ng),                         &
+     &                      SOURCES(ng) % TsrcG(:,:,:,itrc),            &
+     &                      SOURCES(ng) % Tsrc(:,:,itrc),               &
+     &                      update)
+            IF (FoundError(exit_flag, NoError, __LINE__,                &
+     &                     __FILE__)) RETURN
+          END IF
+        END DO
+#  endif
+      END IF
+# endif
+!
+!=======================================================================
+!  Set forcing data.
+!=======================================================================
+!
+!  Set switch to process surface atmospheric fields.
+!
+# if defined FOUR_DVAR   && \
+     defined BULK_FLUXES && defined PRIOR_BULK_FLUXES
+!  In 4D-Var data assimilation applications, the user have the option
+!  to fix the prior (background phase) surface fluxes in the successive
+!  outer loops (Nouter>1) or the final analysis phase. In such case, the
+!  fluxes are read from the background trajector
+!
+      IF (Nrun.eq.1) THEN
+        Lprocess=.TRUE.
+      ELSE
+         Lprocess=.FALSE.
+      END IF
+# else
+      Lprocess=.TRUE.
+# endif
 
 # ifdef SOLVE3D
 
 #  ifdef CLOUDS
 !
-!-----------------------------------------------------------------------
 !  Set cloud fraction (nondimensional).  Notice that clouds are
 !  processed first in case that they are used to adjust shortwave
 !  radiation.
-!-----------------------------------------------------------------------
 !
+      IF (Lprocess) THEN
 #   ifdef ANA_CLOUD
-      CALL ana_cloud (ng, tile, iNLM)
+        CALL ana_cloud (ng, tile, iNLM)
 #   elif (defined FRC_COUPLING && defined TIME_INTERP) || \
          !defined FRC_COUPLING
-      CALL set_2dfld_tile (ng, tile, iNLM, idCfra,                      &
-     &                     LBi, UBi, LBj, UBj,                          &
-     &                     FORCES(ng)%cloudG,                           &
-     &                     FORCES(ng)%cloud,                            &
-     &                     update)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+        CALL set_2dfld_tile (ng, tile, iNLM, idCfra,                    &
+     &                       LBi, UBi, LBj, UBj,                        &
+     &                       FORCES(ng)%cloudG,                         &
+     &                       FORCES(ng)%cloud,                          &
+     &                       update)
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
 #   endif
+      END IF
 #  endif
 
 #  if defined BULK_FLUXES || defined ECOSIM  || \
     (defined SHORTWAVE && defined ANA_SRFLUX && defined ALBEDO)
 !
-!-----------------------------------------------------------------------
 !  Set surface air temperature (degC).
-!-----------------------------------------------------------------------
 !
+      IF (Lprocess) THEN
 #   ifdef ANA_TAIR
-      CALL ana_tair (ng, tile, iNLM)
+        CALL ana_tair (ng, tile, iNLM)
 #   elif (defined FRC_COUPLING && defined TIME_INTERP) || \
          !defined FRC_COUPLING
-      CALL set_2dfld_tile (ng, tile, iNLM, idTair,                      &
-     &                     LBi, UBi, LBj, UBj,                          &
-     &                     FORCES(ng)%TairG,                            &
-     &                     FORCES(ng)%Tair,                             &
-     &                     update)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+        CALL set_2dfld_tile (ng, tile, iNLM, idTair,                    &
+     &                       LBi, UBi, LBj, UBj,                        &
+     &                       FORCES(ng)%TairG,                          &
+     &                       FORCES(ng)%Tair,                           &
+     &                       update)
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
 #   endif
+      END IF
 #  endif
 
 #  if defined BULK_FLUXES || defined ECOSIM   || \
      (defined SHORTWAVE && defined ANA_SRFLUX && defined ALBEDO)
 !
-!-----------------------------------------------------------------------
 !  Set surface air relative or specific humidity.
-!-----------------------------------------------------------------------
 !
+      IF (Lprocess) THEN
 #   ifdef ANA_HUMIDITY
-      CALL ana_humid (ng, tile, iNLM)
+        CALL ana_humid (ng, tile, iNLM)
 #   elif (defined FRC_COUPLING && defined TIME_INTERP) || \
          !defined FRC_COUPLING
-      CALL set_2dfld_tile (ng, tile, iNLM, idQair,                      &
-     &                     LBi, UBi, LBj, UBj,                          &
-     &                     FORCES(ng)%HairG,                            &
-     &                     FORCES(ng)%Hair,                             &
-     &                     update)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+        CALL set_2dfld_tile (ng, tile, iNLM, idQair,                    &
+     &                       LBi, UBi, LBj, UBj,                        &
+     &                       FORCES(ng)%HairG,                          &
+     &                       FORCES(ng)%Hair,                           &
+     &                       update)
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
 #   endif
+      END IF
 #  endif
 
 #  ifdef SHORTWAVE
 !
-!-----------------------------------------------------------------------
 !  Set kinematic surface solar shortwave radiation flux (degC m/s).
-!-----------------------------------------------------------------------
 !
 #   ifdef ANA_SRFLUX
       CALL ana_srflux (ng, tile, iNLM)
@@ -205,10 +275,8 @@
 
 #  if defined RED_TIDE && defined DAILY_SHORTWAVE
 !
-!-----------------------------------------------------------------------
 !  Set kinematic daily-averaged surface solar shortwave radiation flux
 !  (degC m/s).
-!-----------------------------------------------------------------------
 !
       CALL set_2dfld_tile (ng, tile, iNLM, idAsrf,                      &
      &                     LBi, UBi, LBj, UBj,                          &
@@ -224,128 +292,126 @@
      ( (defined FRC_COUPLING  && defined TIME_INTERP)  || \
        !defined FRC_COUPLING )
 !
-!-----------------------------------------------------------------------
 !  Surface net longwave radiation (degC m/s).
-!-----------------------------------------------------------------------
 !
-      CALL set_2dfld_tile (ng, tile, iNLM, idLrad,                      &
-     &                     LBi, UBi, LBj, UBj,                          &
-     &                     FORCES(ng)%lrflxG,                           &
-     &                     FORCES(ng)%lrflx,                            &
-     &                     update)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (Lprocess) THEN
+        CALL set_2dfld_tile (ng, tile, iNLM, idLrad,                    &
+     &                       LBi, UBi, LBj, UBj,                        &
+     &                       FORCES(ng)%lrflxG,                         &
+     &                       FORCES(ng)%lrflx,                          &
+     &                       update)
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
+      END IF
 #  endif
 
 #  if defined LONGWAVE_OUT   && defined BULK_FLUXES  && \
      ( (defined FRC_COUPLING && defined TIME_INTERP) || \
        !defined FRC_COUPLING )
 !
-!-----------------------------------------------------------------------
 !  Surface downwelling longwave radiation (degC m/s).
-!-----------------------------------------------------------------------
 !
-      CALL set_2dfld_tile (ng, tile, iNLM, idLdwn,                      &
-     &                     LBi, UBi, LBj, UBj,                          &
-     &                     FORCES(ng)%lrflxG,                           &
-     &                     FORCES(ng)%lrflx,                            &
-     &                     update)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (Lprocess) THEN
+        CALL set_2dfld_tile (ng, tile, iNLM, idLdwn,                    &
+     &                       LBi, UBi, LBj, UBj,                        &
+     &                       FORCES(ng)%lrflxG,                         &
+     &                       FORCES(ng)%lrflx,                          &
+     &                       update)
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
+      END IF
 #  endif
 
 #  if defined BULK_FLUXES || defined ECOSIM
 !
-!-----------------------------------------------------------------------
 !  Set surface winds (m/s).
-!-----------------------------------------------------------------------
 !
+      IF (Lprocess) THEN
 #   ifdef ANA_WINDS
-      CALL ana_winds (ng, tile, iNLM)
+        CALL ana_winds (ng, tile, iNLM)
 #   elif (defined FRC_COUPLING && defined TIME_INTERP) || \
          !defined FRC_COUPLING
-      CALL set_2dfld_tile (ng, tile, iNLM, idUair,                      &
-     &                     LBi, UBi, LBj, UBj,                          &
-     &                     FORCES(ng)%UwindG,                           &
-     &                     FORCES(ng)%Uwind,                            &
-     &                     update)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
-
-      CALL set_2dfld_tile (ng, tile, iNLM, idVair,                      &
-     &                     LBi, UBi, LBj, UBj,                          &
-     &                     FORCES(ng)%VwindG,                           &
-     &                     FORCES(ng)%Vwind,                            &
-     &                     update)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+        CALL set_2dfld_tile (ng, tile, iNLM, idUair,                    &
+     &                       LBi, UBi, LBj, UBj,                        &
+     &                       FORCES(ng)%UwindG,                         &
+     &                       FORCES(ng)%Uwind,                          &
+     &                       update)
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
+!
+        CALL set_2dfld_tile (ng, tile, iNLM, idVair,                    &
+     &                       LBi, UBi, LBj, UBj,                        &
+     &                       FORCES(ng)%VwindG,                         &
+     &                       FORCES(ng)%Vwind,                          &
+     &                       update)
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
 
 #    ifdef CURVGRID
 !
 !  If input point surface winds or interpolated from coarse data, rotate
 !  to curvilinear grid.
 !
-      IF (.not.Linfo(1,idUair,ng).or.                                   &
-     &    (Iinfo(5,idUair,ng).ne.Lm(ng)+2).or.                          &
-     &    (Iinfo(6,idUair,ng).ne.Mm(ng)+2)) THEN
-        DO j=JstrR,JendR
-          DO i=IstrR,IendR
-            cff1=FORCES(ng)%Uwind(i,j)*GRID(ng)%CosAngler(i,j)+         &
-     &           FORCES(ng)%Vwind(i,j)*GRID(ng)%SinAngler(i,j)
-            cff2=FORCES(ng)%Vwind(i,j)*GRID(ng)%CosAngler(i,j)-         &
-     &           FORCES(ng)%Uwind(i,j)*GRID(ng)%SinAngler(i,j)
-            FORCES(ng)%Uwind(i,j)=cff1
-            FORCES(ng)%Vwind(i,j)=cff2
+        IF (.not.Linfo(1,idUair,ng).or.                                 &
+     &      (Iinfo(5,idUair,ng).ne.Lm(ng)+2).or.                        &
+     &      (Iinfo(6,idUair,ng).ne.Mm(ng)+2)) THEN
+          DO j=JstrR,JendR
+            DO i=IstrR,IendR
+              cff1=FORCES(ng)%Uwind(i,j)*GRID(ng)%CosAngler(i,j)+       &
+     &             FORCES(ng)%Vwind(i,j)*GRID(ng)%SinAngler(i,j)
+              cff2=FORCES(ng)%Vwind(i,j)*GRID(ng)%CosAngler(i,j)-       &
+     &             FORCES(ng)%Uwind(i,j)*GRID(ng)%SinAngler(i,j)
+              FORCES(ng)%Uwind(i,j)=cff1
+              FORCES(ng)%Vwind(i,j)=cff2
+            END DO
           END DO
-        END DO
 
-        IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
-          CALL exchange_r2d_tile (ng, tile,                             &
-     &                            LBi, UBi, LBj, UBj,                   &
-     &                            FORCES(ng)%UWind)
-          CALL exchange_r2d_tile (ng, tile,                             &
-     &                            LBi, UBi, LBj, UBj,                   &
-     &                            FORCES(ng)%VWind)
-        END IF
+          IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
+            CALL exchange_r2d_tile (ng, tile,                           &
+     &                              LBi, UBi, LBj, UBj,                 &
+     &                              FORCES(ng)%UWind)
+            CALL exchange_r2d_tile (ng, tile,                           &
+     &                              LBi, UBi, LBj, UBj,                 &
+     &                              FORCES(ng)%VWind)
+          END IF
 
 #     ifdef DISTRIBUTE
-        CALL mp_exchange2d (ng, tile, iNLM, 2,                          &
-     &                      LBi, UBi, LBj, UBj,                         &
-     &                      NghostPoints,                               &
-     &                      EWperiodic(ng), NSperiodic(ng),             &
-     &                      FORCES(ng)%UWind,                           &
-     &                      FORCES(ng)%VWind)
+          CALL mp_exchange2d (ng, tile, iNLM, 2,                        &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        NghostPoints,                             &
+     &                        EWperiodic(ng), NSperiodic(ng),           &
+     &                        FORCES(ng)%UWind,                         &
+     &                        FORCES(ng)%VWind)
 #     endif
-      END IF
+        END IF
 #    endif
 #   endif
+      END IF
 #  endif
 
 #  ifdef BULK_FLUXES
 !
-!-----------------------------------------------------------------------
 !  Set rain fall rate (kg/m2/s).
-!-----------------------------------------------------------------------
 !
+      IF (Lprocess) THEN
 #   ifdef ANA_RAIN
-      CALL ana_rain (ng, tile, iNLM)
+        CALL ana_rain (ng, tile, iNLM)
 #   elif (defined FRC_COUPLING && defined TIME_INTERP) || \
          !defined FRC_COUPLING
-      CALL set_2dfld_tile (ng, tile, iNLM, idrain,                      &
-     &                     LBi, UBi, LBj, UBj,                          &
-     &                     FORCES(ng)%rainG,                            &
-     &                     FORCES(ng)%rain,                             &
-     &                     update)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+        CALL set_2dfld_tile (ng, tile, iNLM, idrain,                    &
+     &                       LBi, UBi, LBj, UBj,                        &
+     &                       FORCES(ng)%rainG,                          &
+     &                       FORCES(ng)%rain,                           &
+     &                       update)
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
 #   endif
+      END IF
 #  endif
 
 #  ifndef BULK_FLUXES
 !
-!-----------------------------------------------------------------------
 !  Set kinematic surface net heat flux (degC m/s).
-!-----------------------------------------------------------------------
 !
 #   ifdef ANA_STFLUX
       CALL ana_stflux (ng, tile, iNLM, itemp)
@@ -353,38 +419,18 @@
          !defined FRC_COUPLING
       CALL set_2dfld_tile (ng, tile, iNLM, idTsur(itemp),               &
      &                     LBi, UBi, LBj, UBj,                          &
-     &                     FORCES(ng)%stflxG(:,:,:,itemp),              &
-     &                     FORCES(ng)%stflx (:,:,itemp),                &
+     &                     FORCES(ng)%stfluxG(:,:,:,itemp),             &
+     &                     FORCES(ng)%stflux (:,:,itemp),               &
      &                     update)
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
 #   endif
 #  endif
 
-#  if !defined ANA_STFLUX  && defined FOUR_DVAR      && \
-       defined BULK_FLUXES && defined NL_BULK_FLUXES
-!
-!-----------------------------------------------------------------------
-!  If not first NLM run, set surface net heat flux from first NLM run.
-!-----------------------------------------------------------------------
-!
-      IF (Nrun.gt.1) THEN
-        CALL set_2dfld_tile (ng, tile, iNLM, idTsur(itemp),             &
-     &                       LBi, UBi, LBj, UBj,                        &
-     &                       FORCES(ng)%stflxG(:,:,:,itemp),            &
-     &                       FORCES(ng)%stflx (:,:,itemp),              &
-     &                       update)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
-      END IF
-#  endif
-
 #  ifdef QCORRECTION
 !
-!-----------------------------------------------------------------------
 !  Set sea surface temperature (SST) and heat flux sensitivity to
 !  SST (dQdSST) which are used for surface heat flux correction.
-!-----------------------------------------------------------------------
 !
 #   ifdef ANA_SST
       CALL ana_sst (ng, tile, iNLM)
@@ -411,82 +457,60 @@
 #   endif
 #  endif
 !
-!-----------------------------------------------------------------------
 !  Set kinematic bottom net heat flux (degC m/s).
-!-----------------------------------------------------------------------
 !
 #  ifdef ANA_BTFLUX
       CALL ana_btflux (ng, tile, iNLM, itemp)
 #  else
       CALL set_2dfld_tile (ng, tile, iNLM, idTbot(itemp),               &
      &                     LBi, UBi, LBj, UBj,                          &
-     &                     FORCES(ng)%btflxG(:,:,:,itemp),              &
-     &                     FORCES(ng)%btflx (:,:,itemp),                &
+     &                     FORCES(ng)%btfluxG(:,:,:,itemp),             &
+     &                     FORCES(ng)%btflux (:,:,itemp),               &
      &                     update)
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
 #  endif
 
 #  ifdef SALINITY
-#   if !defined ANA_STFLUX  && defined FOUR_DVAR      && \
-        defined BULK_FLUXES && defined NL_BULK_FLUXES
-!
-!-----------------------------------------------------------------------
-!  If not first NLM run, set kinematic surface freshwater (E-P) flux
-!  (m/s) from first NLM run.
-!-----------------------------------------------------------------------
-!
-#   else
-!
-!-----------------------------------------------------------------------
-!  Set kinematic surface freshwater (E-P) flux (m/s).
-!-----------------------------------------------------------------------
-!
-#   endif
 #   ifdef ANA_SSFLUX
+!
+!  Surface freshwater (E-P) flux (m/s) from analytical function.
+!
       CALL ana_stflux (ng, tile, iNLM, isalt)
 #   else
-#    if defined NL_BULK_FLUXES && !defined BULK_FLUXES
-      CALL set_2dfld_tile (ng, tile, iNLM, idEmPf,                      &
-     &                     LBi, UBi, LBj, UBj,                          &
-     &                     FORCES(ng)%stflxG(:,:,:,isalt),              &
-     &                     FORCES(ng)%stflx (:,:,isalt),                &
-     &                     update)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
 
-#    elif !(defined EMINUSP      || defined SRELAXATION) && \
-         ( (defined FRC_COUPLING && defined TIME_INTERP) || \
-           !defined FRC_COUPLING )
-
+#    if !(defined BULK_FLUXES  || defined EMINUSP      || \
+          defined FRC_COUPLING || defined SRELAXATION)
+!
+!  Surface freshwater (E-P) flux (m/s) from NetCDF variable "swflux".
+!
       CALL set_2dfld_tile (ng, tile, iNLM, idsfwf,                      &
      &                     LBi, UBi, LBj, UBj,                          &
-     &                     FORCES(ng)%stflxG(:,:,:,isalt),              &
-     &                     FORCES(ng)%stflx (:,:,isalt),                &
+     &                     FORCES(ng)%stfluxG(:,:,:,isalt),             &
+     &                     FORCES(ng)%stflux (:,:,isalt),               &
      &                     update)
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
-#    endif
-#   endif
 
-#   if !defined ANA_STFLUX  && defined FOUR_DVAR      && \
-        defined BULK_FLUXES && defined NL_BULK_FLUXES
-      IF (Nrun.gt.1) THEN
+#    elif defined BULK_FLUXES  && !defined EMINUSP
+!
+!  Surface freshwater (E-P) flux (m/s) from NetCDF variable "EminusP".
+!
+      IF (Lprocess) THEN
         CALL set_2dfld_tile (ng, tile, iNLM, idEmPf,                    &
      &                       LBi, UBi, LBj, UBj,                        &
-     &                       FORCES(ng)%stflxG(:,:,:,isalt),            &
-     &                       FORCES(ng)%stflx (:,:,isalt),              &
+     &                       FORCES(ng)%stfluxG(:,:,:,isalt),           &
+     &                       FORCES(ng)%stflux (:,:,isalt),             &
      &                       update)
         IF (FoundError(exit_flag, NoError, __LINE__,                    &
      &                 __FILE__)) RETURN
       END IF
+#    endif
 #   endif
 
 #   if defined SCORRECTION || defined SRELAXATION
 !
-!-----------------------------------------------------------------------
 !  Set surface salinity for freshwater flux correction.
-!-----------------------------------------------------------------------
 !
 #    ifdef ANA_SSS
       CALL ana_sss (ng, tile, iNLM)
@@ -501,17 +525,15 @@
 #    endif
 #   endif
 !
-!-----------------------------------------------------------------------
 !  Set kinematic bottom salt flux (m/s).
-!-----------------------------------------------------------------------
 !
 #   ifdef ANA_BSFLUX
       CALL ana_btflux (ng, tile, iNLM, isalt)
 #   else
       CALL set_2dfld_tile (ng, tile, iNLM, idTbot(isalt),               &
      &                     LBi, UBi, LBj, UBj,                          &
-     &                     FORCES(ng)%btflxG(:,:,:,isalt),              &
-     &                     FORCES(ng)%btflx (:,:,isalt),                &
+     &                     FORCES(ng)%btfluxG(:,:,:,isalt),             &
+     &                     FORCES(ng)%btflux (:,:,isalt),               &
      &                     update)
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
@@ -520,9 +542,7 @@
 
 #  if defined BIOLOGY || defined SEDIMENT || defined T_PASSIVE
 !
-!-----------------------------------------------------------------------
-!  Set kinematic surface and bottom pasive tracer fluxes (T m/s).
-!-----------------------------------------------------------------------
+!  Set kinematic surface and bottom passive tracer fluxes (T m/s).
 !
       DO itrc=NAT+1,NT(ng)
 #   ifdef ANA_SPFLUX
@@ -530,8 +550,8 @@
 #   else
         CALL set_2dfld_tile (ng, tile, iNLM, idTsur(itrc),              &
      &                       LBi, UBi, LBj, UBj,                        &
-     &                       FORCES(ng)%stflxG(:,:,:,itrc),             &
-     &                       FORCES(ng)%stflx (:,:,itrc),               &
+     &                       FORCES(ng)%stfluxG(:,:,:,itrc),            &
+     &                       FORCES(ng)%stflux (:,:,itrc),              &
      &                       update)
         IF (FoundError(exit_flag, NoError, __LINE__,                    &
      &                 __FILE__)) RETURN
@@ -541,8 +561,8 @@
 #   else
         CALL set_2dfld_tile (ng, tile, iNLM, idTbot(itrc),              &
      &                       LBi, UBi, LBj, UBj,                        &
-     &                       FORCES(ng)%btflxG(:,:,:,itrc),             &
-     &                       FORCES(ng)%btflx (:,:,itrc),               &
+     &                       FORCES(ng)%btfluxG(:,:,:,itrc),            &
+     &                       FORCES(ng)%btflux (:,:,itrc),              &
      &                       update)
         IF (FoundError(exit_flag, NoError, __LINE__,                    &
      &                 __FILE__)) RETURN
@@ -553,9 +573,7 @@
 
 # ifndef BULK_FLUXES
 !
-!-----------------------------------------------------------------------
 !  Set kinematic surface momentum flux (m2/s2).
-!-----------------------------------------------------------------------
 !
 #  ifdef ANA_SMFLUX
       CALL ana_smflux (ng, tile, iNLM)
@@ -568,7 +586,7 @@
      &                     update)
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
-
+!
       CALL set_2dfld_tile (ng, tile, iNLM, idVsms,                      &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     FORCES(ng)%svstrG,                           &
@@ -618,60 +636,31 @@
 #  endif
 # endif
 
-# if !defined FRC_COUPLING && defined FOUR_DVAR      && \
-      defined BULK_FLUXES  && defined NL_BULK_FLUXES
-!
-!-----------------------------------------------------------------------
-!  If not first NLM run, set surface wind stress components from first
-!  NLM run.
-!-----------------------------------------------------------------------
-!
-      IF (Nrun.gt.1) THEN
-        CALL set_2dfld_tile (ng, tile, iNLM, idUsms,                    &
-     &                       LBi, UBi, LBj, UBj,                        &
-     &                       FORCES(ng)%sustrG,                         &
-     &                       FORCES(ng)%sustr,                          &
-     &                       update)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
-
-        CALL set_2dfld_tile (ng, tile, iNLM, idVsms,                    &
-     &                       LBi, UBi, LBj, UBj,                        &
-     &                       FORCES(ng)%svstrG,                         &
-     &                       FORCES(ng)%svstr,                          &
-     &                       update)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
-      END IF
-# endif
-
 # if defined BULK_FLUXES || defined ECOSIM || defined ATM_PRESS
 !
-!-----------------------------------------------------------------------
 !  Set surface air pressure (mb).
-!-----------------------------------------------------------------------
 !
+      IF (Lprocess) THEN
 #  ifdef ANA_PAIR
-      CALL ana_pair (ng, tile, iNLM)
+        CALL ana_pair (ng, tile, iNLM)
 #  elif (defined FRC_COUPLING && defined TIME_INTERP) || \
         !defined FRC_COUPLING
-      SetBC=.TRUE.
-!     SetBC=.FALSE.
-      CALL set_2dfld_tile (ng, tile, iNLM, idPair,                      &
-     &                     LBi, UBi, LBj, UBj,                          &
-     &                     FORCES(ng)%PairG,                            &
-     &                     FORCES(ng)%Pair,                             &
-     &                     update, SetBC)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+        SetBC=.TRUE.
+!       SetBC=.FALSE.
+        CALL set_2dfld_tile (ng, tile, iNLM, idPair,                    &
+     &                       LBi, UBi, LBj, UBj,                        &
+     &                       FORCES(ng)%PairG,                          &
+     &                       FORCES(ng)%Pair,                           &
+     &                       update, SetBC)
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
 #  endif
+      END IF
 # endif
 
 # ifdef WAVE_DATA
 !
-!-----------------------------------------------------------------------
-!  Set surface wind-induced wave amplitude, direction and period.
-!-----------------------------------------------------------------------
+!  Set surface wind-induced wave properties.
 !
 #  ifdef ANA_WWAVE
       CALL ana_wwave (ng, tile, iNLM)
@@ -714,6 +703,7 @@
      &                    FORCES(ng)%Dwave)
 #     endif
 #    endif
+!
 #   endif
 
 #   ifdef WAVES_HEIGHT
@@ -724,6 +714,7 @@
      &                     update)
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
+!
 #   endif
 
 #   ifdef WAVES_LENGTH
@@ -734,6 +725,7 @@
      &                     update)
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
+!
 #   endif
 
 #   ifdef WAVES_TOP_PERIOD
@@ -744,6 +736,7 @@
      &                     update)
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
+!
 #   endif
 
 #   ifdef WAVES_BOT_PERIOD
@@ -754,6 +747,7 @@
      &                     update)
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
+!
 #   endif
 
 #   if defined WAVES_UB
@@ -764,6 +758,7 @@
      &                     update)
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
+!
 #   endif
 
 #   if defined TKE_WAVEDISS
@@ -774,6 +769,7 @@
      &                     update)
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
+!
 #   endif
 
 #   if defined SVENDSEN_ROLLER
@@ -790,74 +786,23 @@
 
 # if defined ECOSIM && defined SOLVE3D
 !
-!-----------------------------------------------------------------------
 !  Compute spectral irradiance and cosine of average zenith angle of
 !  downwelling spectral photons.
-!-----------------------------------------------------------------------
 !
       CALL ana_specir (ng, tile, iNLM)
 # endif
 
 # ifdef ANA_SPINNING
 !
-!-----------------------------------------------------------------------
 !  Set time-varying rotation force (centripetal accelerations) for
 !  polar coordinate grids.
-!-----------------------------------------------------------------------
 !
       CALL ana_spinning (ng, tile, iNLM)
-# endif
-!
-!-----------------------------------------------------------------------
-!  Set point Sources/Sinks (river runoff).
-!-----------------------------------------------------------------------
-!
-# ifdef ANA_PSOURCE
-      IF (LuvSrc(ng).or.LwSrc(ng).or.ANY(LtracerSrc(:,ng))) THEN
-        CALL ana_psource (ng, tile, iNLM)
-      END IF
-# else
-      IF (DOMAIN(ng)%SouthWest_Test(tile)) THEN
-        IF (LuvSrc(ng).or.LwSrc(ng)) THEN
-          CALL set_ngfld (ng, iNLM, idRtra, 1, Nsrc(ng), 1,             &
-     &                    1, Nsrc(ng), 1,                               &
-     &                    SOURCES(ng) % QbarG,                          &
-     &                    SOURCES(ng) % Qbar,                           &
-     &                    update)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
-
-#  ifdef SOLVE3D
-          DO k=1,N(ng)
-            DO i=1,Nsrc(ng)
-              SOURCES(ng)%Qsrc(i,k)=SOURCES(ng)%Qbar(i)*                &
-     &                              SOURCES(ng)%Qshape(i,k)
-            END DO
-          END DO
-#  endif
-        END IF
-
-#  ifdef SOLVE3D
-        DO itrc=1,NT(ng)
-          IF (LtracerSrc(itrc,ng)) THEN
-            CALL set_ngfld (ng, iNLM, idRtrc(itrc), 1, Nsrc(ng), N(ng), &
-     &                      1, Nsrc(ng), N(ng),                         &
-     &                      SOURCES(ng) % TsrcG(:,:,:,itrc),            &
-     &                      SOURCES(ng) % Tsrc(:,:,itrc),               &
-     &                      update)
-            IF (FoundError(exit_flag, NoError, __LINE__,                &
-     &                     __FILE__)) RETURN
-          END IF
-        END DO
-#  endif
-      END IF
 # endif
 
 # ifdef HYPOXIA_SRM
 !
-!-----------------------------------------------------------------------
 !  Total respiration rate for hypoxia.
-!-----------------------------------------------------------------------
 !
 #  ifdef ANA_RESPIRATION
       CALL ana_respiration (ng, tile, iNLM)
@@ -874,9 +819,7 @@
 
 # ifdef RED_TIDE
 !
-!-----------------------------------------------------------------------
 !  Red tide Observed Dissolved Inorganic Nutrient.
-!-----------------------------------------------------------------------
 !
       CALL set_3dfld_tile (ng, tile, iNLM, idODIN,                      &
      &                     LBi, UBi, LBj, UBj, 1, N(ng),                &
@@ -886,12 +829,91 @@
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
 # endif
+
+#if defined FOUR_DVAR   && \
+    defined BULK_FLUXES && defined PRIOR_BULK_FLUXES
 !
-!-----------------------------------------------------------------------
+!=======================================================================
+!  In 4D-Var data assimilation algorithms, the user has the option to
+!  impose the prior (background phase) surface fluxes in the successive
+!  outer loops (Nouter>1) or the final analysis phase. Such fluxes were
+!  computed by routine "bulk_fluxes" and stored in the NLM background
+!  trajectory, BLK structure. Notice that "bulk_fluxes" is called in
+!  "main3d" only during the prior trajectory computation.
+!
+!  Therefore, the fluxes are time interpolated from the pior snapshots.
+!=======================================================================
+!
+      IF (.not.Lprocess) THEN
+!
+!  Set prior surface wind stress components.
+!
+        CALL set_2dfld_tile (ng, tile, iNLM, idUsms,                    &
+     &                       LBi, UBi, LBj, UBj,                        &
+     &                       FORCES(ng)%sustrG,                         &
+     &                       FORCES(ng)%sustr,                          &
+     &                       update)
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
+!
+        CALL set_2dfld_tile (ng, tile, iNLM, idVsms,                    &
+     &                       LBi, UBi, LBj, UBj,                        &
+     &                       FORCES(ng)%svstrG,                         &
+     &                       FORCES(ng)%svstr,                          &
+     &                       update)
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
+
+# ifdef ATM_PRESS
+!
+!  Set prior surface air pressure.
+!
+        SetBC=.TRUE.
+!!      SetBC=.FALSE.
+        CALL set_2dfld_tile (ng, tile, iNLM, idPair,                    &
+     &                       LBi, UBi, LBj, UBj,                        &
+     &                       FORCES(ng)%PairG,                          &
+     &                       FORCES(ng)%Pair,                           &
+     &                       update, SetBC)
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
+# endif
+
+# ifdef SOLVE3D
+#  ifndef ANA_STFLUX
+!
+!  Set prior surface net heat flux.
+!
+        CALL set_2dfld_tile (ng, tile, iNLM, idTsur(itemp),             &
+     &                       LBi, UBi, LBj, UBj,                        &
+     &                       FORCES(ng)%stfluxG(:,:,:,itemp),           &
+     &                       FORCES(ng)%stflux (:,:,itemp),             &
+     &                       update)
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
+#  endif
+
+#  if defined SALINITY && !defined ANA_SSFLUX
+!
+!  Set prior surface freshwater flux.
+!
+        CALL set_2dfld_tile (ng, tile, iNLM, idEmPf,                    &
+     &                       LBi, UBi, LBj, UBj,                        &
+     &                       FORCES(ng)%stfluxG(:,:,:,isalt),           &
+     &                       FORCES(ng)%stflux (:,:,isalt),             &
+     &                       update)
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
+#  endif
+# endif
+      END IF
+#endif
+!
+!=======================================================================
 !  Set open boundary conditions fields.
-!-----------------------------------------------------------------------
+!=======================================================================
 !
-!  Free-surface
+!  Set free-surface open boundary conditions.
 !
       IF (LprocessOBC(ng)) THEN
 # ifdef ANA_FSOBC
@@ -907,7 +929,7 @@
             IF (FoundError(exit_flag, NoError, __LINE__,                &
      &                     __FILE__)) RETURN
           END IF
-
+!
           IF (LBC(ieast,isFsur,ng)%acquire) THEN
             CALL set_ngfld (ng, iNLM, idZbry(ieast), JLB, JUB, 1,       &
      &                      0, Mm(ng)+1, 1,                             &
@@ -917,7 +939,7 @@
             IF (FoundError(exit_flag, NoError, __LINE__,                &
      &                     __FILE__)) RETURN
           END IF
-
+!
           IF (LBC(isouth,isFsur,ng)%acquire) THEN
             CALL set_ngfld (ng, iNLM, idZbry(isouth), ILB, IUB, 1,      &
      &                      0, Lm(ng)+1 ,1,                             &
@@ -927,7 +949,7 @@
             IF (FoundError(exit_flag, NoError, __LINE__,                &
      &                     __FILE__)) RETURN
           END IF
-
+!
           IF (LBC(inorth,isFsur,ng)%acquire) THEN
             CALL set_ngfld (ng, iNLM, idZbry(inorth), ILB, IUB, 1,      &
      &                      0, Lm(ng)+1, 1,                             &
@@ -942,7 +964,7 @@
 
 # if defined WET_DRY
 !
-! Ensure that water level on boundary cells is above bed elevation.
+!  Ensure that water level on boundary cells is above bed elevation.
 !
         IF (LBC(iwest,isFsur,ng)%acquire) THEN
           bry_update=.FALSE.
@@ -961,7 +983,7 @@
      &                      BOUNDARY(ng)%zeta_west)
 #  endif
         END IF
-
+!
         IF (LBC(ieast,isFsur,ng)%acquire) THEN
           bry_update=.FALSE.
           IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
@@ -979,7 +1001,7 @@
      &                      BOUNDARY(ng)%zeta_east)
 #  endif
         END IF
-
+!
         IF (LBC(isouth,isFsur,ng)%acquire) THEN
           bry_update=.FALSE.
           IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
@@ -997,7 +1019,7 @@
      &                      BOUNDARY(ng)%zeta_south)
 #  endif
         END IF
-
+!
         IF (LBC(inorth,isFsur,ng)%acquire) THEN
           bry_update=.FALSE.
           IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
@@ -1018,7 +1040,7 @@
 # endif
       END IF
 !
-!  2D momentum.
+!  Set 2D momentum component open boundary conditions.
 !
       IF (LprocessOBC(ng)) THEN
 # ifdef ANA_M2OBC
@@ -1034,7 +1056,7 @@
             IF (FoundError(exit_flag, NoError, __LINE__,                &
      &                     __FILE__)) RETURN
           END IF
-
+!
           IF (LBC(iwest,isVbar,ng)%acquire) THEN
             CALL set_ngfld (ng, iNLM, idV2bc(iwest), JLB, JUB, 1,       &
      &                      1, Mm(ng)+1, 1,                             &
@@ -1044,7 +1066,7 @@
             IF (FoundError(exit_flag, NoError, __LINE__,                &
      &                     __FILE__)) RETURN
           END IF
-
+!
           IF (LBC(ieast,isUbar,ng)%acquire) THEN
             CALL set_ngfld (ng, iNLM, idU2bc(ieast), JLB, JUB, 1,       &
      &                      0, Mm(ng)+1, 1,                             &
@@ -1054,7 +1076,7 @@
             IF (FoundError(exit_flag, NoError, __LINE__,                &
      &                     __FILE__)) RETURN
           END IF
-
+!
           IF (LBC(ieast,isVbar,ng)%acquire) THEN
             CALL set_ngfld (ng, iNLM, idV2bc(ieast), JLB, JUB, 1,       &
      &                      1, Mm(ng)+1, 1,                             &
@@ -1064,7 +1086,7 @@
             IF (FoundError(exit_flag, NoError, __LINE__,                &
      &                     __FILE__)) RETURN
           END IF
-
+!
           IF (LBC(isouth,isUbar,ng)%acquire) THEN
             CALL set_ngfld (ng, iNLM, idU2bc(isouth), ILB, IUB, 1,      &
      &                      1, Lm(ng)+1, 1,                             &
@@ -1074,7 +1096,7 @@
             IF (FoundError(exit_flag, NoError, __LINE__,                &
      &                     __FILE__)) RETURN
           END IF
-
+!
           IF (LBC(isouth,isVbar,ng)%acquire) THEN
             CALL set_ngfld (ng, iNLM, idV2bc(isouth), ILB, IUB, 1,      &
      &                      0, Lm(ng)+1, 1,                             &
@@ -1084,7 +1106,7 @@
             IF (FoundError(exit_flag, NoError, __LINE__,                &
      &                     __FILE__)) RETURN
           END IF
-
+!
           IF (LBC(inorth,isUbar,ng)%acquire) THEN
             CALL set_ngfld (ng, iNLM, idU2bc(inorth), ILB, IUB, 1,      &
      &                      1, Lm(ng)+1, 1,                             &
@@ -1094,7 +1116,7 @@
             IF (FoundError(exit_flag, NoError, __LINE__,                &
      &                     __FILE__)) RETURN
           END IF
-
+!
           IF (LBC(inorth,isVbar,ng)%acquire) THEN
             CALL set_ngfld (ng, iNLM, idV2bc(inorth), ILB, IUB, 1,      &
      &                      0, Lm(ng)+1, 1,                             &
@@ -1110,7 +1132,7 @@
 
 # ifdef SOLVE3D
 !
-!  3D momentum.
+!  Set 3D momentum components open boundary conditions.
 !
       IF (LprocessOBC(ng)) THEN
 #  ifdef ANA_M3OBC
@@ -1126,7 +1148,7 @@
             IF (FoundError(exit_flag, NoError, __LINE__,                &
      &                     __FILE__)) RETURN
           END IF
-
+!
           IF (LBC(iwest,isVvel,ng)%acquire) THEN
             CALL set_ngfld (ng, iNLM, idV3bc(iwest), JLB, JUB, N(ng),   &
      &                      1, Mm(ng)+1, N(ng),                         &
@@ -1136,7 +1158,7 @@
             IF (FoundError(exit_flag, NoError, __LINE__,                &
      &                     __FILE__)) RETURN
           END IF
-
+!
           IF (LBC(ieast,isUvel,ng)%acquire) THEN
             CALL set_ngfld (ng, iNLM, idU3bc(ieast), JLB, JUB, N(ng),   &
      &                      0, Mm(ng)+1, N(ng),                         &
@@ -1146,7 +1168,7 @@
             IF (FoundError(exit_flag, NoError, __LINE__,                &
      &                     __FILE__)) RETURN
           END IF
-
+!
           IF (LBC(ieast,isVvel,ng)%acquire) THEN
             CALL set_ngfld (ng, iNLM, idV3bc(ieast), JLB, JUB, N(ng),   &
      &                      1, Mm(ng)+1, N(ng),                         &
@@ -1156,7 +1178,7 @@
             IF (FoundError(exit_flag, NoError, __LINE__,                &
      &                     __FILE__)) RETURN
           END IF
-
+!
           IF (LBC(isouth,isUvel,ng)%acquire) THEN
             CALL set_ngfld (ng, iNLM, idU3bc(isouth), ILB, IUB, N(ng),  &
      &                      1, Lm(ng)+1, N(ng),                         &
@@ -1166,7 +1188,7 @@
             IF (FoundError(exit_flag, NoError, __LINE__,                &
      &                     __FILE__)) RETURN
           END IF
-
+!
           IF (LBC(isouth,isVvel,ng)%acquire) THEN
             CALL set_ngfld (ng, iNLM, idV3bc(isouth), ILB, IUB, N(ng),  &
      &                      0, Lm(ng)+1, N(ng),                         &
@@ -1176,7 +1198,7 @@
             IF (FoundError(exit_flag, NoError, __LINE__,                &
      &                     __FILE__)) RETURN
           END IF
-
+!
           IF (LBC(inorth,isUvel,ng)%acquire) THEN
             CALL set_ngfld (ng, iNLM, idU3bc(inorth), ILB, IUB, N(ng),  &
      &                      1, Lm(ng)+1, N(ng),                         &
@@ -1186,7 +1208,7 @@
             IF (FoundError(exit_flag, NoError, __LINE__,                &
      &                     __FILE__)) RETURN
           END IF
-
+!
           IF (LBC(inorth,isVvel,ng)%acquire) THEN
             CALL set_ngfld (ng, iNLM, idV3bc(inorth), ILB, IUB, N(ng),  &
      &                      0, Lm(ng)+1, N(ng),                         &
@@ -1200,7 +1222,7 @@
 #  endif
       END IF
 !
-!  Tracers.
+!  Set tracer variables open boundary conditions.
 !
       IF (LprocessOBC(ng)) THEN
 #  ifdef ANA_TOBC
@@ -1217,7 +1239,7 @@
               IF (FoundError(exit_flag, NoError, __LINE__,              &
      &                       __FILE__)) RETURN
             END IF
-
+!
             IF (LBC(ieast,isTvar(itrc),ng)%acquire) THEN
               CALL set_ngfld (ng, iNLM, idTbry(ieast,itrc),             &
      &                        JLB, JUB, N(ng), 0, Mm(ng)+1, N(ng),      &
@@ -1227,7 +1249,7 @@
               IF (FoundError(exit_flag, NoError, __LINE__,              &
      &                       __FILE__)) RETURN
             END IF
-
+!
             IF (LBC(isouth,isTvar(itrc),ng)%acquire) THEN
               CALL set_ngfld (ng, iNLM, idTbry(isouth,itrc),            &
      &                        ILB, IUB, N(ng), 0, Lm(ng)+1, N(ng),      &
@@ -1237,7 +1259,7 @@
               IF (FoundError(exit_flag, NoError, __LINE__,              &
      &                       __FILE__)) RETURN
             END IF
-
+!
             IF (LBC(inorth,isTvar(itrc),ng)%acquire) THEN
               CALL set_ngfld (ng, iNLM, idTbry(inorth,itrc),            &
      &                        ILB, IUB, N(ng), 0, Lm(ng)+1, N(ng),      &
@@ -1253,9 +1275,11 @@
       END IF
 # endif
 !
-!-----------------------------------------------------------------------
+!=======================================================================
+!  Set climatology data.
+!=====================================================================
+!
 !  Set sea surface height climatology (m).
-!-----------------------------------------------------------------------
 !
       IF (LsshCLM(ng)) THEN
 # ifdef ANA_SSH
@@ -1271,9 +1295,7 @@
 # endif
       END IF
 !
-!-----------------------------------------------------------------------
-!  Set 2D momentum climatology (m/s).
-!-----------------------------------------------------------------------
+!  Set 2D momentum components climatology (m/s).
 !
       IF (Lm2CLM(ng)) THEN
 # ifdef ANA_M2CLIMA
@@ -1299,9 +1321,7 @@
 
 # ifdef SOLVE3D
 !
-!-----------------------------------------------------------------------
-!  Set 3D momentum climatology (m/s).
-!-----------------------------------------------------------------------
+!  Set 3D momentum components climatology (m/s).
 !
       IF (Lm3CLM(ng)) THEN
 #  ifdef ANA_M3CLIMA
@@ -1325,9 +1345,7 @@
 #  endif
       END IF
 !
-!-----------------------------------------------------------------------
-!  Set tracers climatology.
-!-----------------------------------------------------------------------
+!  Set tracer variables climatology.
 !
 #  ifdef ANA_TCLIMA
       IF (ANY(LtracerCLM(:,ng))) THEN
@@ -1356,9 +1374,9 @@
      defined RBL4DVAR_FCT_SENSITIVITY || \
      defined SP4DVAR
 !
-!-----------------------------------------------------------------------
+!=======================================================================
 !  Set weak contraint forcing.
-!-----------------------------------------------------------------------
+!=======================================================================
 !
       IF (FrequentImpulse(ng)) THEN
 !
@@ -1426,7 +1444,7 @@
 #  endif
       END IF
 # endif
-
+!
       RETURN
       END SUBROUTINE set_data_tile
 #else

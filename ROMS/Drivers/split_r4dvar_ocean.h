@@ -1,23 +1,44 @@
       MODULE ocean_control_mod
 !
 !git $Id$
-!svn $Id: rbl4dvar_ocean.h 1039 2020-10-12 03:54:49Z arango $
-!================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2020 The ROMS/TOMS Group       Andrew M. Moore   !
+!svn $Id: split_r4dvar_ocean.h 1039 2020-10-12 03:54:49Z arango $
+!=================================================== Andrew M. Moore ===
+!  Copyright (c) 2002-2020 The ROMS/TOMS Group      Hernan G. Arango   !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
 !=======================================================================
 !                                                                      !
-!  ROMS Strong/Weak Constraint 4-Dimensional Variational Data          !
-!       Assimilation Driver: Restricted, B-preconditoned Lanczos       !
-!                            (W4D-RBLanczos)                           !
+!  ROMS Strong/Weak Constraint Split 4-Dimensional Variational Data    !
+!            Assimilation Driver: Indirect Representer Approach        !
+!                                 (R4D-Var).                           !
 !                                                                      !
 !  This driver is used for the dual formulation (observation space),   !
 !  strong or weak constraint 4D-Var where errors may be considered     !
 !  in both model and observations.                                     !
 !                                                                      !
+!  The R4D-Var algorithm is split into multiple executables to         !
+!  facilitate various configurations:                                  !
+!                                                                      !
+!    (1) Executable A computes ROMS nonlinear trajectory used to       !
+!        linearize the tangent linear and adjoint models used in       !
+!        the iterations of the inner loop for the minimization of      !
+!        the cost function. It allows the nonlinear trajectory to      !
+!        be part of a coupling system and or include nested grids.     !
+!        It calls either the RBL4D-Var "background" or "analysis"      !
+!        routines.                                                     !
+!                                                                      !
+!    (2) Executable B calls either R4D-Var "increment" or              !
+!        "posterior_error". The R4D-Var increment is obtained by       !
+!        minimizing the cost function over Ninner loops. It is         !
+!        possible to use a coarser grid resolution in the inner        !
+!        loop.  If so, the finer background trajectory needs to        !
+!        be interpolated into the coarser grid. Then, at the end       !
+!        of inner loops, the coarse grid increment needs to be         !
+!        interpolated to the finer grid.  The increment phase          !
+!        may be run at a lower precision.                              !
+!                                                                      !
 !  The routines in this driver control the initialization,  time-      !
-!  stepping, and finalization of ROMS  model following ESMF/NUOPC      !
+!  stepping, and finalization of ROMS model following ESMF/NUOPC       !
 !  conventions:                                                        !
 !                                                                      !
 !     ROMS_initialize                                                  !
@@ -38,11 +59,6 @@
 !      variational data assimilations systems, Part II - Performance   !
 !      and application to the California Current System, Prog.         !
 !      Oceanogr., 91, 50-73, doi:10.1016/j.pocean.2011.05.003.         !
-!                                                                      !
-!    Gurol, S., A.T. Weaver, A.M. Moore, A. Piacentini, H.G. Arango,   !
-!      S. Gratton, 2014: B-preconditioned minimization algorithms for  !
-!      data assimilation with the dual formulation, QJRMS, 140,        !
-!      539-556.                                                        !
 !                                                                      !
 !=======================================================================
 !
@@ -79,8 +95,9 @@
       USE ocean_coupler_mod, ONLY : initialize_ocn2wav_coupling
 # endif
 #endif
-      USE strings_mod,       ONLY : FoundError
-      USE rbl4dvar_mod,      ONLY : prior_error
+      USE r4dvar_mod,        ONLY : prior_error
+      USE stdinp_mod,        ONLY : getpar_s
+      USE strings_mod,       ONLY : FoundError, uppercase
 !
 !  Imported variable declarations.
 !
@@ -95,7 +112,7 @@
 #ifdef DISTRIBUTE
       integer :: MyError, MySize
 #endif
-      integer :: chunk_size, ng, thread, tile
+      integer :: chunk_size, ng, thread
 #ifdef _OPENMP
       integer :: my_threadnum
 #endif
@@ -130,6 +147,26 @@
 !
         CALL initialize_parallel
 !
+!  Get 4D-Var phase from APARNAM input script file.
+!
+        CALL getpar_s (MyRank, aparnam, 'APARNAM')
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
+!
+        CALL getpar_s (MyRank, Phase4DVAR, 'Phase4DVAR', aparnam)
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
+!
+!  Determine ROMS standard output append switch. It is only relevant
+!  "ROMS_STDINP" is activated. The standard output is created in the
+!  "background" phase and open to append in the other phases.
+!
+        IF (INDEX(TRIM(uppercase(Phase4DVAR)),'BACKG').ne.0) THEN
+          Lappend=.FALSE.
+        ELSE
+          Lappend=.TRUE.
+        END IF
+!
 !  Read in model tunable parameters from standard input. Allocate and
 !  initialize variables in several modules after the number of nested
 !  grids and dimension parameters are known.
@@ -143,17 +180,17 @@
 !  are private for each parallel thread/node.
 !
 #if defined _OPENMP
-        MyThread=my_threadnum()
+      MyThread=my_threadnum()
 #elif defined DISTRIBUTE
-        MyThread=MyRank
+      MyThread=MyRank
 #else
-        MyThread=0
+      MyThread=0
 #endif
-        DO ng=1,Ngrids
-          chunk_size=(NtileX(ng)*NtileE(ng)+numthreads-1)/numthreads
-          first_tile(ng)=MyThread*chunk_size
-          last_tile (ng)=first_tile(ng)+chunk_size-1
-        END DO
+      DO ng=1,Ngrids
+        chunk_size=(NtileX(ng)*NtileE(ng)+numthreads-1)/numthreads
+        first_tile(ng)=MyThread*chunk_size
+        last_tile (ng)=first_tile(ng)+chunk_size-1
+      END DO
 !
 !  Initialize internal wall clocks. Notice that the timings does not
 !  includes processing standard input because several parameters are
@@ -199,7 +236,7 @@
 !
 !-----------------------------------------------------------------------
 !  Set application grid, metrics, and associated variables. Then,
-!  Proccess background and model prior error covariance standard
+!  proccess background and mode prior error covariance standard
 !  deviations and normalization coefficients.
 !-----------------------------------------------------------------------
 !
@@ -217,9 +254,9 @@
 !
 !=======================================================================
 !                                                                      !
-!  This routine runs the Strong or Weak constraint, Restricted,        !
-!  B-preconditioned Lanczos 4D-Var data assimilation (W4D-RBLancsos)   !
-!  algorithm. It time-steps ROMS nonlinear, tangent linear and         !
+!  This subroutine runs the Strong or Weak constraint, Indirect        !
+!  Representers 4D-Var data assimilation (R4D-Var) algorithm. It       !
+!  time-steps ROMS nonlinear, representer, tangent linear, and         !
 !  adjoint kernels.                                                    !
 !                                                                      !
 !  On Input:                                                           !
@@ -229,17 +266,18 @@
 !=======================================================================
 !
       USE mod_param
+      USE mod_parallel
       USE mod_iounits
       USE mod_scalars
       USE mod_stepping
 !
-      USE strings_mod,  ONLY : FoundError
-      USE rbl4dvar_mod, ONLY : background, increment, analysis
+      USE r4dvar_mod
 
 #if defined POSTERIOR_ERROR_I || defined POSTERIOR_ERROR_F || \
     defined POSTERIOR_EOFS
-      USE rbl4dvar_mod, ONLY : posterior_error
+      USE r4dvar_mod,  ONLY : posterior_error
 #endif
+      USE strings_mod, ONLY : FoundError, uppercase
 !
 !  Imported variable declarations
 !
@@ -249,10 +287,8 @@
 !
       integer :: my_outer, ng
 !
-      SourceFile=__FILE__ // ", ROMS_run"
-!
 !=======================================================================
-!  Run RBL4D-Var Data Assimilation algorithm.
+!  Run Split R4D-Var Data Assimilation algorithm.
 !=======================================================================
 !
 !  Initialize several global parameters.
@@ -270,10 +306,15 @@
         Lnew(ng)=2          ! new minimization time index
       END DO
 !
+      Ldone=.FALSE.         ! 4D-Var cycle finish switch
       Nrun=1                ! run counter
-      outer=0               ! outer-loop counter
       ERstr=1               ! ensemble start counter
       ERend=Nouter          ! ensemble end counter
+!
+!  Select R4D-Var phase to execute.
+!
+      SELECT CASE (uppercase(Phase4DVAR(1:6)))
+
 !
 !  Compute nonlinear background state trajectory, Xb(t)|n-1. Interpolate
 !  the background at the observation locations, and compute the quality
@@ -281,43 +322,83 @@
 !  to linearize the tangent linear and adjoint models during the
 !  minimization.
 !
-      CALL background (outer, RunInterval)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
-!
-!  Start outer loop iterations.
-!
-      OUTER_LOOP : DO my_outer=1,Nouter
+        CASE ('BACKGR')
 
-        outer=my_outer
-        inner=0
+          my_outer=0
+          outer=0
+          inner=0
+
+          CALL background (outer, RunInterval)
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
 !
 !  Compute 4D-Var data assimilation increment, dXa, by iterating over
 !  the inner loops, and minimizing the cost function.
 !
-        CALL increment (my_outer, RunInterval)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        CASE ('INCREM')
+
+          my_outer=OuterLoop
+          outer=OuterLoop
+          inner=0
+
+          CALL increment (my_outer, RunInterval)
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
 !
 !  Compute 4D-Var data assimilation analysis, Xa = Xb + dXa.  Set
 !  nonlinear model initial conditions for next outer loop.
 !
-        CALL analysis (my_outer, RunInterval)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        CASE ('ANALYS')
 
-      END DO OUTER_LOOP
+          my_outer=OuterLoop
+          outer=OuterLoop
+          inner=Ninner
 
-#if defined POSTERIOR_ERROR_I || defined POSTERIOR_ERROR_F || \
+          CALL analysis (my_outer, RunInterval)
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
+
+
+#if defined POSTERIOR_ERROR_I || \
+    defined POSTERIOR_ERROR_F || \
     defined POSTERIOR_EOFS
 !
 !  Compute full (diagonal) posterior analysis error covariance matrix.
 !  (NOTE: Currently, this code only works for a single outer-loop).
 !
-      CALL posterior_error (RunInterval)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+        CASE ('POST_E')
+
+          CALL posterior_error (RunInterval)
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
 #endif
+!
+!  Issue an error if incorrect 4D-Var phase.
+!
+        CASE DEFAULT
+
+          IF (Master) THEN
+            WRITE (stdout,10) TRIM(Phase4DVAR)
+ 10         FORMAT (' ROMS_run - illegal 4D-Var phase: ''',a,'''')
+          END IF
+          exit_flag=5
+          RETURN
+
+      END SELECT
+!
+!  Set finish R4D-Var cycle switch.
+!
+      IF ((OuterLoop.eq.Nouter).and.                                   &
+#if defined POSTERIOR_ERROR_I || \
+    defined POSTERIOR_ERROR_F || \
+    defined POSTERIOR_EOFS
+     &    (INDEX(TRIM(uppercase(Phase4DVAR)),'POST_E').ne.0)) THEN
+        Ldone=.TRUE.
+#else
+     &    (INDEX(TRIM(uppercase(Phase4DVAR)),'ANALYS').ne.0)) THEN
+        Ldone=.TRUE.
+#endif
+      END IF
 !
       RETURN
       END SUBROUTINE ROMS_run
@@ -326,7 +407,7 @@
 !
 !=======================================================================
 !                                                                      !
-!  This routine terminates ROMS W4D-RBLanczos execution.               !
+!  This routine terminates ROMS R4D-Var execution.                     !
 !                                                                      !
 !=======================================================================
 !
@@ -334,17 +415,24 @@
       USE mod_parallel
       USE mod_iounits
       USE mod_ncparam
+      USE mod_netcdf
       USE mod_scalars
+      USE mod_stepping
 !
-      USE strings_mod,  ONLY : FoundError
+      USE r4dvar_mod,  ONLY : Ldone
+      USE strings_mod, ONLY : FoundError
 !
 !  Local variable declarations.
 !
-      integer :: Fcount, ng, tile, thread
+      integer :: Fcount, InpRec, Nfiles, Tindex
+      integer :: ifile, lstr, ng, tile, thread
+!
+      character (len=10) :: suffix
 !
 !-----------------------------------------------------------------------
-!  Write out 4D-Var analysis fields that used as initial conditions for
-!  the next data assimilation cycle.
+!  Write out 4D-Var analysis fields that can be used as the initial
+!  conditions for the next data assimilation cycle. Here, use the
+!  last record of the RPM for the final outer loop.
 !-----------------------------------------------------------------------
 !
 #ifdef DISTRIBUTE
@@ -353,13 +441,40 @@
       tile=-1
 #endif
 !
-      IF (exit_flag.eq.NoError) THEN
+      IF (Ldone.and.(exit_flag.eq.NoError)) THEN
         DO ng=1,Ngrids
           LdefDAI(ng)=.TRUE.
           CALL def_dai (ng)
           IF (FoundError(exit_flag, NoError, __LINE__,                  &
      &                   __FILE__)) RETURN
 !
+          WRITE (TLM(ng)%name,10) TRIM(FWD(ng)%head), Nouter
+ 10       FORMAT (a,'_outer',i0,'.nc')
+          lstr=LEN_TRIM(TLM(ng)%name)
+          TLM(ng)%base=TLM(ng)%name(1:lstr-3)
+          IF (TLM(ng)%Nfiles.gt.1) THEN
+            Nfiles=TLM(ng)%Nfiles
+            DO ifile=1,Nfiles
+              WRITE (suffix,"('_',i4.4,'.nc')") ifile
+              TLM(ng)%files(ifile)=TRIM(TLM(ng)%base)//TRIM(suffix)
+            END DO
+            TLM(ng)%name=TRIM(TLM(ng)%files(Nfiles))
+          ELSE
+            TLM(ng)%files(1)=TRIM(TLM(ng)%name)
+          END IF
+!
+          CALL netcdf_get_dim (ng, iRPM, TLM(ng)%name,                  &
+     &                         DimName = 'ocean_time',                  &
+     &                         DimSize = InpRec)
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
+          Tindex=1
+          CALL get_state (ng, iRPM, 1, TLM(ng)%name, InpRec, Tindex)
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
+     &                   __FILE__)) RETURN
+!
+          KOUT=Tindex
+          NOUT=Tindex
           CALL wrt_dai (ng, tile)
           IF (FoundError(exit_flag, NoError, __LINE__,                  &
      &                   __FILE__)) RETURN
@@ -370,9 +485,11 @@
 !  Compute and report model-observation comparison statistics.
 !-----------------------------------------------------------------------
 !
-      DO ng=1,Ngrids
-        CALL stats_modobs (ng)
-      END DO
+      IF (Ldone.or.(exit_flag.eq.1)) THEN
+        DO ng=1,Ngrids
+          CALL stats_modobs (ng)
+        END DO
+      END IF
 !
 !-----------------------------------------------------------------------
 !  If blowing-up, save latest model state into RESTART NetCDF file.
@@ -383,8 +500,8 @@
       IF (exit_flag.eq.1) THEN
         DO ng=1,Ngrids
           IF (LwrtRST(ng)) THEN
-            IF (Master) WRITE (stdout,10)
- 10         FORMAT (/,' Blowing-up: Saving latest model state into ',   &
+            IF (Master) WRITE (stdout,20)
+ 20         FORMAT (/,' Blowing-up: Saving latest model state into ',   &
      &                ' RESTART file',/)
             Fcount=RST(ng)%load
             IF (LcycleRST(ng).and.(RST(ng)%Nrec(Fcount).ge.2)) THEN
@@ -406,8 +523,8 @@
 !  Stop time clocks.
 !
       IF (Master) THEN
-        WRITE (stdout,20)
- 20     FORMAT (/,'Elapsed wall CPU time for each process (seconds):',/)
+        WRITE (stdout,30)
+ 30     FORMAT (/,'Elapsed wall CPU time for each process (seconds):',/)
       END IF
 !
       DO ng=1,Ngrids

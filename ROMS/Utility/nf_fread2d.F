@@ -2,7 +2,7 @@
       MODULE nf_fread2d_mod
 !
 !git $Id$
-!svn $Id: nf_fread2d.F 1031 2020-07-14 01:39:55Z arango $
+!svn $Id: nf_fread2d.F 1039 2020-10-12 03:54:49Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -515,52 +515,67 @@
       IF (interpolate.and.(status.eq.nf90_noerr)) THEN
         SELECT CASE (ABS(MyType))
           CASE (p2dvar, p3dvar)
-            CALL regrid (ng, model, ncname, ncid, ncvname, ncvarid,     &
-     &                   MyType, InterpFlag,                            &
+            CALL regrid (ng, model, ncname, ncid,                       &
+     &                   ncvname, ncvarid, MyType, InterpFlag,          &
      &                   Ilen, Jlen, Awrk, Amin, Amax,                  &
      &                   LBi, UBi, LBj, UBj,                            &
      &                   Imin, Imax, Jmin, Jmax,                        &
+# ifdef MASKING
+     &                   GRID(ng) % pmask,                              &
+# endif
      &                   GRID(ng) % MyLon,                              &
      &                   GRID(ng) % lonp,                               &
      &                   GRID(ng) % latp,                               &
      &                   A)
           CASE (r2dvar, r3dvar)
-            CALL regrid (ng, model, ncname, ncid, ncvname, ncvarid,     &
-     &                   MyType, InterpFlag,                            &
+            CALL regrid (ng, model, ncname, ncid,                       &
+     &                   ncvname, ncvarid, MyType, InterpFlag,          &
      &                   Ilen, Jlen, Awrk, Amin, Amax,                  &
      &                   LBi, UBi, LBj, UBj,                            &
      &                   Imin, Imax, Jmin, Jmax,                        &
+# ifdef MASKING
+     &                   GRID(ng) % rmask,                              &
+# endif
      &                   GRID(ng) % MyLon,                              &
      &                   GRID(ng) % lonr,                               &
      &                   GRID(ng) % latr,                               &
      &                   A)
           CASE (u2dvar, u3dvar)
-            CALL regrid (ng, model, ncname, ncid, ncvname, ncvarid,     &
-     &                   MyType, InterpFlag,                            &
+            CALL regrid (ng, model, ncname, ncid,                       &
+     &                   ncvname, ncvarid, MyType, InterpFlag,          &
      &                   Ilen, Jlen, Awrk, Amin, Amax,                  &
      &                   LBi, UBi, LBj, UBj,                            &
      &                   Imin, Imax, Jmin, Jmax,                        &
+# ifdef MASKING
+     &                   GRID(ng) % umask,                              &
+# endif
      &                   GRID(ng) % MyLon,                              &
      &                   GRID(ng) % lonu,                               &
      &                   GRID(ng) % latu,                               &
      &                   A)
           CASE (v2dvar, v3dvar)
-            CALL regrid (ng, model, ncname, ncid, ncvname, ncvarid,     &
-     &                   MyType, InterpFlag,                            &
+            CALL regrid (ng, model, ncname, ncid,                       &
+     &                   ncvname, ncvarid, MyType, InterpFlag,          &
      &                   Ilen, Jlen, Awrk, Amin, Amax,                  &
      &                   LBi, UBi, LBj, UBj,                            &
      &                   Imin, Imax, Jmin, Jmax,                        &
+# ifdef MASKING
+     &                   GRID(ng) % vmask,                              &
+# endif
      &                   GRID(ng) % MyLon,                              &
      &                   GRID(ng) % lonv,                               &
      &                   GRID(ng) % latv,                               &
      &                   A)
 
           CASE DEFAULT
-            CALL regrid (ng, model, ncname, ncid, ncvname, ncvarid,     &
-     &                   MyType, InterpFlag,                            &
+            CALL regrid (ng, model, ncname, ncid,                       &
+     &                   ncvname, ncvarid, MyType, InterpFlag,          &
      &                   Ilen, Jlen, Awrk, Amin, Amax,                  &
      &                   LBi, UBi, LBj, UBj,                            &
      &                   Imin, Imax, Jmin, Jmax,                        &
+# ifdef MASKING
+     &                   GRID(ng) % rmask,                              &
+# endif
      &                   GRID(ng) % MyLon,                              &
      &                   GRID(ng) % lonr,                               &
      &                   GRID(ng) % latr,                               &
@@ -954,52 +969,67 @@
       IF (interpolate) THEN
         SELECT CASE (ABS(MyType))
           CASE (p2dvar, p3dvar)
-            CALL regrid (ng, model, ncname, ncid, ncvname, ncvarid,     &
-     &                   MyType, InterpFlag,                            &
+            CALL regrid (ng, model, ncname, ncid,                       &
+     &                   ncvname, ncvarid, MyType, InterpFlag,          &
      &                   Ilen, Jlen, wrk, Amin, Amax,                   &
      &                   LBi, UBi, LBj, UBj,                            &
      &                   Imin, Imax, Jmin, Jmax,                        &
+# ifdef MASKING
+     &                   Amask,                                         &
+# endif
      &                   GRID(ng) % MyLon,                              &
      &                   GRID(ng) % lonp,                               &
      &                   GRID(ng) % latp,                               &
      &                   A)
           CASE (r2dvar, r3dvar)
-            CALL regrid (ng, model, ncname, ncid, ncvname, ncvarid,     &
-     &                   MyType, InterpFlag,                            &
+            CALL regrid (ng, model, ncname, ncid,                       &
+     &                   ncvname, ncvarid, MyType, InterpFlag,          &
      &                   Ilen, Jlen, wrk, Amin, Amax,                   &
      &                   LBi, UBi, LBj, UBj,                            &
      &                   Imin, Imax, Jmin, Jmax,                        &
+# ifdef MASKING
+     &                   GRID(ng) % rmask,                              &
+# endif
      &                   GRID(ng) % MyLon,                              &
      &                   GRID(ng) % lonr,                               &
      &                   GRID(ng) % latr,                               &
      &                   A)
           CASE (u2dvar, u3dvar)
-            CALL regrid (ng, model, ncname, ncid, ncvname, ncvarid,     &
-     &                   MyType, InterpFlag,                            &
+            CALL regrid (ng, model, ncname, ncid,                       &
+     &                   ncvname, ncvarid, MyType, InterpFlag,          &
      &                   Ilen, Jlen, wrk, Amin, Amax,                   &
      &                   LBi, UBi, LBj, UBj,                            &
      &                   Imin, Imax, Jmin, Jmax,                        &
+# ifdef MASKING
+     &                   GRID(ng) % umask,                              &
+# endif
      &                   GRID(ng) % MyLon,                              &
      &                   GRID(ng) % lonu,                               &
      &                   GRID(ng) % latu,                               &
      &                   A)
           CASE (v2dvar, v3dvar)
-            CALL regrid (ng, model, ncname, ncid, ncvname, ncvarid,     &
-     &                   MyType, InterpFlag,                            &
+            CALL regrid (ng, model, ncname, ncid,                       &
+     &                   ncvname, ncvarid, MyType, InterpFlag,          &
      &                   Ilen, Jlen, wrk, Amin, Amax,                   &
      &                   LBi, UBi, LBj, UBj,                            &
      &                   Imin, Imax, Jmin, Jmax,                        &
+# ifdef MASKING
+     &                   GRID(ng) % vmask,                              &
+# endif
      &                   GRID(ng) % MyLon,                              &
      &                   GRID(ng) % lonv,                               &
      &                   GRID(ng) % latv,                               &
      &                   A)
 
           CASE DEFAULT
-            CALL regrid (ng, model, ncname, ncid, ncvname, ncvarid,     &
-     &                   MyType, InterpFlag,                            &
+            CALL regrid (ng, model, ncname, ncid,                       &
+     &                   ncvname, ncvarid, MyType, InterpFlag,          &
      &                   Ilen, Jlen, wrk, Amin, Amax,                   &
      &                   LBi, UBi, LBj, UBj,                            &
      &                   Imin, Imax, Jmin, Jmax,                        &
+# ifdef MASKING
+     &                   GRID(ng) % rmask,                              &
+# endif
      &                   GRID(ng) % MyLon,                              &
      &                   GRID(ng) % lonr,                               &
      &                   GRID(ng) % latr,                               &

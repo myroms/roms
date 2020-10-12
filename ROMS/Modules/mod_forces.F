@@ -2,7 +2,7 @@
       MODULE mod_forces
 !
 !git $Id$
-!svn $Id: mod_forces.F 995 2020-01-10 04:01:28Z arango $
+!svn $Id: mod_forces.F 1039 2020-10-12 03:54:49Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -11,20 +11,20 @@
 !                                                                      !
 !  Surface momentum stresses.                                          !
 !                                                                      !
-!  sustr        Kinematic surface momentum flux (wind stress) in       !
-!                 the XI-direction (m2/s2) at horizontal U-points.     !
+!  sustr        Surface momentum flux (wind stress) in the             !
+!                 XI-direction (m2/s2) at horizontal U-points.         !
 !  sustrG       Latest two-time snapshots of input "sustr" grided      !
 !                 data used for interpolation.                         !
-!  svstr        Kinematic surface momentum flux (wind stress) in       !
-!                 the ETA-direction (m2/s2) at horizontal V-points.    !
+!  svstr        Surface momentum flux (wind stress) in the             !
+!                 ETA-direction (m2/s2) at horizontal V-points.        !
 !  svstrG       Latest two-time snapshots of input "svstr" grided      !
 !                 data used for interpolation.                         !
 !                                                                      !
 !  Bottom momentum stresses.                                           !
 !                                                                      !
-!  bustr        Kinematic bottom momentum flux (bottom stress) in      !
-!                 the XI-direction (m2/s2) at horizontal U-points.     !
-!  bvstr        Kinematic bottom momentum flux (bottom stress) in      !
+!  bustr        Bottom momentum flux (bottom stress) in the            !
+!                 XI-direction (m2/s2) at horizontal U-points.         !
+!  bvstr        Bottom momentum flux (bottom stress) in the            !
 !                 ETA-direction (m2/s2) at horizontal V-points.        !
 !                                                                      !
 !  Surface wind induced waves.                                         !
@@ -56,8 +56,8 @@
 !                                                                      !
 !  Solar shortwave radiation flux.                                     !
 !                                                                      !
-!  srflx        Kinematic surface shortwave solar radiation flux       !
-!                 (Celsius m/s) at horizontal RHO-points               !
+!  srflx        Surface shortwave solar radiation flux (degC m/s)      !
+!                  at horizontal RHO-points                            !
 !  srflxG       Latest two-time snapshots of input "srflx" grided      !
 !                 data used for interpolation.                         !
 !                                                                      !
@@ -69,10 +69,9 @@
 !                                                                      !
 !  Surface heat fluxes, Atmosphere-Ocean bulk parameterization.        !
 !                                                                      !
-!  lhflx        Kinematic latent heat flux (degC m/s).                 !
-!  lrflx        Kinematic longwave radiation (degC m/s).               !
-!  snhflx       Kinematic surface net heat flux (degC m/s).            !
-!  shflx        Kinematic sensible heat flux (degC m/s).               !
+!  lhflx        Latent heat flux (degC m/s).                           !
+!  lrflx        Longwave radiation (degC m/s).                         !
+!  shflx        Sensible heat flux (degC m/s).                         !
 !                                                                      !
 !  Surface air humidity.                                               !
 !                                                                      !
@@ -112,23 +111,44 @@
 !                                                                      !
 !  Surface tracer fluxes.                                              !
 !                                                                      !
-!  stflx        Kinematic surface flux of tracer type variables        !
-!                 (temperature: degC m/s; salinity: PSU m/s) at        !
-!                 horizontal RHO-points.                               !
-!  stflxG       Latest two-time snapshots of input "stflx" grided      !
+!  stflux       Forcing surface flux of tracer type variables from     !
+!                 data, coupling, bulk flux parameterization, or       !
+!                 analytical formulas.                                 !
+!                                                                      !
+!                 stflux(:,:,itemp)  surface net heat flux             !
+!                 stflux(:,:,isalt)  surface net freshwater flux (E-P) !
+!                                                                      !
+!  stfluxG      Latest two-time snapshots of input "stflux" grided     !
 !                 data used for interpolation.                         !
+!                                                                      !
+!  stflx        ROMS state surface flux of tracer type variables       !
+!                 (TracerUnits m/s) at horizontal RHO-points, as used  !
+!                 in the governing equations.                          !
+
+#if defined ADJUST_STFLUX && defined FOUR_DVAR
+!                                                                      !
+!  tflux        Surface tracer flux adjustments (:,:,Nfrec,2,itrc)     !
+#endif
 !                                                                      !
 !  Bottom tracer fluxes.                                               !
 !                                                                      !
-!  btflx        Kinematic bottom flux of tracer type variables         !
-!                 (temperature: degC m/s; salinity: PSU m/s) at        !
-!                horizontal RHO-points.                                !
-!  btflxG       Latest two-time snapshots of input "btflx" grided      !
+!  btflux       Forcing bottom flux of tracer type variables from      !
+!                 data or analytical formulas. Usually, the bottom     !
+!                 flux of tracer is zero.                              !
+!                                                                      !
+!                 btflux(:,:,itemp)  bottom heat flux                  !
+!                 btflux(:,:,isalt)  bottom freshwater flux            !
+!                                                                      !
+!  btfluxG      Latest two-time snapshots of input "vtflux" grided     !
 !                 data used for interpolation.                         !
+!                                                                      !
+!  btflx        ROMS state bottom flux of tracer type variables        !
+!                 (TracerUnits m/s) at horizontal RHO-points, as used  !
+!                 in the governing equations.                          !
 !                                                                      !
 !  Surface heat flux correction.                                       !
 !                                                                      !
-!  dqdt         Kinematic surface net heat flux sensitivity to SST,    !
+!  dqdt         Surface net heat flux sensitivity to SST,              !
 !                 d(Q)/d(SST), (m/s).                                  !
 !  dqdtG        Latest two-time snapshots of input "dqdt" grided       !
 !                 data used for interpolation.                         !
@@ -162,7 +182,7 @@
           real(r8), pointer :: sustr(:,:)
           real(r8), pointer :: svstr(:,:)
 #if !defined ANA_SMFLUX     && !defined BULK_FLUXES || \
-     defined NL_BULK_FLUXES
+     defined FORWARD_FLUXES
           real(r8), pointer :: sustrG(:,:,:)
           real(r8), pointer :: svstrG(:,:,:)
 #endif
@@ -295,26 +315,23 @@
           real(r8), pointer :: evap(:,:)
 #  endif
 # endif
-# if (defined BULK_FLUXES && defined EMINUSP) || defined ATM_COUPLING
-          real(r8), pointer :: EminusP(:,:)
-# endif
-# if defined BULK_FLUXES || defined ATM_COUPLING
-          real(r8), pointer :: snhflx(:,:)
-# endif
 
-          real(r8), pointer :: stflx(:,:,:)
+          real(r8), pointer :: stflux(:,:,:)
 # if !defined ANA_STFLUX || !defined ANA_SSFLUX || \
      !defined ANA_SPFLUX
-          real(r8), pointer :: stflxG(:,:,:,:)
+          real(r8), pointer :: stfluxG(:,:,:,:)
 # endif
+          real(r8), pointer :: stflx(:,:,:)
 # ifdef ADJUST_STFLUX
           real(r8), pointer :: tflux(:,:,:,:,:)
 # endif
-          real(r8), pointer :: btflx(:,:,:)
+
+          real(r8), pointer :: btflux(:,:,:)
 # if !defined ANA_BTFLUX || !defined ANA_BSFLUX || \
      !defined ANA_BPFLUX
-          real(r8), pointer :: btflxG(:,:,:,:)
+          real(r8), pointer :: btfluxG(:,:,:,:)
 # endif
+          real(r8), pointer :: btflx(:,:,:)
 
 # ifdef QCORRECTION
           real(r8), pointer :: dqdt(:,:)
@@ -351,8 +368,10 @@
           real(r8), pointer :: tl_bustr(:,:)
           real(r8), pointer :: tl_bvstr(:,:)
 # ifdef SOLVE3D
-          real(r8), pointer :: tl_stflx(:,:,:)
-          real(r8), pointer :: tl_btflx(:,:,:)
+          real(r8), pointer :: tl_stflux(:,:,:)
+          real(r8), pointer :: tl_stflx (:,:,:)
+          real(r8), pointer :: tl_btflux(:,:,:)
+          real(r8), pointer :: tl_btflx (:,:,:)
 #  ifdef ADJUST_STFLUX
           real(r8), pointer :: tl_tflux(:,:,:,:,:)
 #  endif
@@ -483,7 +502,7 @@
       Dmem(ng)=Dmem(ng)+size2d
 
 #if !defined ANA_SMFLUX     && !defined BULK_FLUXES || \
-     defined NL_BULK_FLUXES
+     defined FORWARD_FLUXES
       allocate ( FORCES(ng) % sustrG(LBi:UBi,LBj:UBj,2) )
       Dmem(ng)=Dmem(ng)+2.0_r8*size2d
 
@@ -679,38 +698,38 @@
       Dmem(ng)=Dmem(ng)+size2d
 #  endif
 # endif
-# if (defined BULK_FLUXES && defined EMINUSP) || defined ATM_COUPLING
-      allocate ( FORCES(ng) % EminusP(LBi:UBi,LBj:UBj) )
-      Dmem(ng)=Dmem(ng)+size2d
-# endif
 
-# if defined BULK_FLUXES || defined ATM_COUPLING
-      allocate ( FORCES(ng) % snhflx(LBi:UBi,LBj:UBj) )
-      Dmem(ng)=Dmem(ng)+size2d
-# endif
-      allocate ( FORCES(ng) % stflx(LBi:UBi,LBj:UBj,NT(ng)) )
+      allocate ( FORCES(ng) % stflux(LBi:UBi,LBj:UBj,NT(ng)) )
       Dmem(ng)=Dmem(ng)+REAL(NT(ng),r8)*size2d
 
 # if !defined ANA_STFLUX || !defined ANA_SSFLUX || \
      !defined ANA_SPFLUX
-      allocate ( FORCES(ng) % stflxG(LBi:UBi,LBj:UBj,2,NT(ng)) )
+      allocate ( FORCES(ng) % stfluxG(LBi:UBi,LBj:UBj,2,NT(ng)) )
       Dmem(ng)=Dmem(ng)+2.0_r8*REAL(NT(ng),r8)*size2d
 
 # endif
+
+      allocate ( FORCES(ng) % stflx(LBi:UBi,LBj:UBj,NT(ng)) )
+      Dmem(ng)=Dmem(ng)+REAL(NT(ng),r8)*size2d
+
 # ifdef ADJUST_STFLUX
       allocate ( FORCES(ng) % tflux(LBi:UBi,LBj:UBj,nfrec(ng),          &
      &                              2,NT(ng)) )
       Dmem(ng)=Dmem(ng)+2.0_r8*REAL(nfrec(ng)*NT(ng),r8)*size2d
 
 # endif
-      allocate ( FORCES(ng) % btflx(LBi:UBi,LBj:UBj,NT(ng)) )
+
+      allocate ( FORCES(ng) % btflux(LBi:UBi,LBj:UBj,NT(ng)) )
       Dmem(ng)=Dmem(ng)+REAL(NT(ng),r8)*size2d
 
 # if !defined ANA_BTFLUX || !defined ANA_BSFLUX || \
      !defined ANA_BPFLUX
-      allocate ( FORCES(ng) % btflxG(LBi:UBi,LBj:UBj,2,NT(ng)) )
+      allocate ( FORCES(ng) % btfluxG(LBi:UBi,LBj:UBj,2,NT(ng)) )
       Dmem(ng)=Dmem(ng)+2.0_r8*REAL(NT(ng),r8)*size2d
 # endif
+
+      allocate ( FORCES(ng) % btflx(LBi:UBi,LBj:UBj,NT(ng)) )
+      Dmem(ng)=Dmem(ng)+REAL(NT(ng),r8)*size2d
 
 # ifdef QCORRECTION
       allocate ( FORCES(ng) % dqdt(LBi:UBi,LBj:UBj) )
@@ -770,7 +789,13 @@
       allocate ( FORCES(ng) % tl_bvstr(LBi:UBi,LBj:UBj) )
       Dmem(ng)=Dmem(ng)+size2d
 # ifdef SOLVE3D
+      allocate ( FORCES(ng) % tl_stflux(LBi:UBi,LBj:UBj,NT(ng)) )
+      Dmem(ng)=Dmem(ng)+REAL(NT(ng),r8)*size2d
+
       allocate ( FORCES(ng) % tl_stflx(LBi:UBi,LBj:UBj,NT(ng)) )
+      Dmem(ng)=Dmem(ng)+REAL(NT(ng),r8)*size2d
+
+      allocate ( FORCES(ng) % tl_btflux(LBi:UBi,LBj:UBj,NT(ng)) )
       Dmem(ng)=Dmem(ng)+REAL(NT(ng),r8)*size2d
 
       allocate ( FORCES(ng) % tl_btflx(LBi:UBi,LBj:UBj,NT(ng)) )
@@ -994,7 +1019,7 @@
             FORCES(ng) % sustr(i,j) = IniVal
             FORCES(ng) % svstr(i,j) = IniVal
 #if !defined ANA_SMFLUX     && !defined BULK_FLUXES || \
-     defined NL_BULK_FLUXES
+     defined FORWARD_FLUXES
             FORCES(ng) % sustrG(i,j,1) = IniVal
             FORCES(ng) % sustrG(i,j,2) = IniVal
             FORCES(ng) % svstrG(i,j,1) = IniVal
@@ -1106,12 +1131,6 @@
             FORCES(ng) % evap(i,j) = IniVal
 #  endif
 # endif
-# if (defined BULK_FLUXES && defined EMINUSP) || defined ATM_COUPLING
-            FORCES(ng) % EminusP(i,j) = IniVal
-# endif
-# if defined BULK_FLUXES || defined ATM_COUPLING
-            FORCES(ng) % snhflx(i,j) = IniVal
-# endif
 # if !defined LONGWAVE && defined BULK_FLUXES
             FORCES(ng) % lrflxG(i,j,1) = IniVal
             FORCES(ng) % lrflxG(i,j,2) = IniVal
@@ -1156,24 +1175,27 @@
 #  endif
 # endif
             DO itrc=1,NT(ng)
+              FORCES(ng) % stflux(i,j,itrc) = IniVal
+# if !defined ANA_STFLUX || !defined ANA_SSFLUX || \
+     !defined ANA_SPFLUX
+              FORCES(ng) % stfluxG(i,j,1,itrc) = IniVal
+              FORCES(ng) % stfluxG(i,j,2,itrc) = IniVal
+# endif
+              FORCES(ng) % stflx(i,j,itrc) = IniVal
 # ifdef ADJUST_STFLUX
               DO k=1,Nfrec(ng)
                 FORCES(ng) % tflux(i,j,k,1,itrc) = IniVal
                 FORCES(ng) % tflux(i,j,k,2,itrc) = IniVal
               END DO
 # endif
-              FORCES(ng) % stflx(i,j,itrc) = IniVal
-              FORCES(ng) % btflx(i,j,itrc) = IniVal
-# if !defined ANA_STFLUX || !defined ANA_SSFLUX || \
-     !defined ANA_SPFLUX
-              FORCES(ng) % stflxG(i,j,1,itrc) = IniVal
-              FORCES(ng) % stflxG(i,j,2,itrc) = IniVal
-# endif
+
+              FORCES(ng) % btflux(i,j,itrc) = IniVal
 # if !defined ANA_BTFLUX || !defined ANA_BSFLUX || \
      !defined ANA_BPFLUX
-              FORCES(ng) % btflxG(i,j,1,itrc) = IniVal
-              FORCES(ng) % btflxG(i,j,2,itrc) = IniVal
+              FORCES(ng) % btfluxG(i,j,1,itrc) = IniVal
+              FORCES(ng) % btfluxG(i,j,2,itrc) = IniVal
 # endif
+              FORCES(ng) % btflx(i,j,itrc) = IniVal
             END DO
 # ifdef ECOSIM
             DO itrc=1,NBands
@@ -1230,8 +1252,10 @@
                 FORCES(ng) % tl_tflux(i,j,k,2,itrc) = IniVal
               END DO
 #  endif
-              FORCES(ng) % tl_stflx(i,j,itrc) = IniVal
-              FORCES(ng) % tl_btflx(i,j,itrc) = IniVal
+              FORCES(ng) % tl_stflux(i,j,itrc) = IniVal
+              FORCES(ng) % tl_stflx (i,j,itrc) = IniVal
+              FORCES(ng) % tl_btflux(i,j,itrc) = IniVal
+              FORCES(ng) % tl_btflx (i,j,itrc) = IniVal
             END DO
           END DO
 # endif

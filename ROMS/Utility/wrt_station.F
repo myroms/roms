@@ -3,7 +3,7 @@
       SUBROUTINE wrt_station (ng)
 !
 !git $Id$
-!svn $Id: wrt_station.F 1026 2020-05-20 02:05:37Z arango $
+!svn $Id: wrt_station.F 1039 2020-10-12 03:54:49Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -756,7 +756,7 @@
         scale=1.0_dp
         CALL extract_sta2d (ng, iNLM, Cgrid, idEmPf, r2dvar,            &
      &                      LBi, UBi, LBj, UBj,                         &
-     &                      scale, FORCES(ng)%EminusP,                  &
+     &                      scale, FORCES(ng)%stflux(:,:,isalt),        &
      &                      Nstation(ng), Xpos, Ypos, psta)
         CALL netcdf_put_fvar (ng, iNLM, STA(ng)%name,                   &
      &                        TRIM(Vname(1,idEmPf)), psta,              &

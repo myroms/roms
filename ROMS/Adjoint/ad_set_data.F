@@ -3,7 +3,7 @@
       SUBROUTINE ad_set_data (ng, tile)
 !
 !git $Id$
-!svn $Id: ad_set_data.F 1022 2020-05-13 03:03:15Z arango $
+!svn $Id: ad_set_data.F 1039 2020-10-12 03:54:49Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -135,7 +135,7 @@
 #   endif
 #  endif
 
-#  if (defined BULK_FLUXES && !defined NL_BULK_FLUXES) || \
+#  if (defined BULK_FLUXES && !defined FORWARD_FLUXES) || \
       defined ECOSIM || \
       (defined SHORTWAVE && defined ANA_SRFLUX && defined ALBEDO)
 !
@@ -156,7 +156,7 @@
 #   endif
 #  endif
 
-#  if (defined BULK_FLUXES && !defined NL_BULK_FLUXES) || \
+#  if (defined BULK_FLUXES && !defined FORWARD_FLUXES) || \
       defined ECOSIM || \
       (defined SHORTWAVE && defined ANA_SRFLUX && defined ALBEDO)
 !
@@ -203,7 +203,7 @@
 #   endif
 #  endif
 
-#  if (defined BULK_FLUXES && !defined NL_BULK_FLUXES) && \
+#  if (defined BULK_FLUXES && !defined FORWARD_FLUXES) && \
       !defined LONGWAVE    && !defined LONGWAVE_OUT
 !
 !-----------------------------------------------------------------------
@@ -220,7 +220,7 @@
 #  endif
 
 #  if defined LONGWAVE_OUT && \
-      (defined BULK_FLUXES && !defined NL_BULK_FLUXES)
+      (defined BULK_FLUXES && !defined FORWARD_FLUXES)
 !
 !-----------------------------------------------------------------------
 !  Surface downwelling longwave radiation (degC m/s).
@@ -235,7 +235,7 @@
      &               __FILE__)) RETURN
 #  endif
 
-#  if (defined BULK_FLUXES && !defined NL_BULK_FLUXES) || \
+#  if (defined BULK_FLUXES && !defined FORWARD_FLUXES) || \
       defined ECOSIM
 !
 !-----------------------------------------------------------------------
@@ -302,7 +302,7 @@
 #   endif
 #  endif
 
-#  if defined BULK_FLUXES && !defined NL_BULK_FLUXES
+#  if defined BULK_FLUXES && !defined FORWARD_FLUXES
 !
 !-----------------------------------------------------------------------
 !  Set rain fall rate (kg/m2/s).
@@ -321,7 +321,7 @@
 #   endif
 #  endif
 
-#  if !defined BULK_FLUXES || defined NL_BULK_FLUXES
+#  if !defined BULK_FLUXES || defined FORWARD_FLUXES
 !
 !-----------------------------------------------------------------------
 !  Set kinematic surface net heat flux (degC m/s).
@@ -332,8 +332,8 @@
 #   else
       CALL set_2dfldr_tile (ng, tile, iADM, idTsur(itemp),              &
      &                      LBi, UBi, LBj, UBj,                         &
-     &                      FORCES(ng)%stflxG(:,:,:,itemp),             &
-     &                      FORCES(ng)%stflx (:,:,itemp),               &
+     &                      FORCES(ng)%stfluxG(:,:,:,itemp),            &
+     &                      FORCES(ng)%stflux (:,:,itemp),              &
      &                      update)
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
@@ -381,8 +381,8 @@
 #  else
       CALL set_2dfldr_tile (ng, tile, iADM, idTbot(itemp),              &
      &                      LBi, UBi, LBj, UBj,                         &
-     &                      FORCES(ng)%btflxG(:,:,:,itemp),             &
-     &                      FORCES(ng)%btflx (:,:,itemp),               &
+     &                      FORCES(ng)%btfluxG(:,:,:,itemp),            &
+     &                      FORCES(ng)%btflux (:,:,itemp),              &
      &                      update)
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
@@ -397,21 +397,22 @@
 #   ifdef ANA_SSFLUX
       CALL ana_stflux (ng, tile, iADM, isalt)
 #   else
-#    if !(defined EMINUSP || defined SRELAXATION)
+#    if !(defined EMINUSP      || defined FORWARD_FLUXES || \
+          defined FRC_COUPLING || defined SRELAXATION)
       CALL set_2dfldr_tile (ng, tile, iADM, idsfwf,                     &
      &                      LBi, UBi, LBj, UBj,                         &
-     &                      FORCES(ng)%stflxG(:,:,:,isalt),             &
-     &                      FORCES(ng)%stflx (:,:,isalt),               &
+     &                      FORCES(ng)%stfluxG(:,:,:,isalt),            &
+     &                      FORCES(ng)%stflux (:,:,isalt),              &
      &                      update)
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
-#    endif
 
-#    if defined EMINUSP && defined NL_BULK_FLUXES
+#    elif (defined EMINUSP      || defined FORWARD_FLUXES || \
+           defined FRC_COUPLING)
       CALL set_2dfldr_tile (ng, tile, iADM, idEmPf,                     &
      &                      LBi, UBi, LBj, UBj,                         &
-     &                      FORCES(ng)%stflxG(:,:,:,isalt),             &
-     &                      FORCES(ng)%stflx (:,:,isalt),               &
+     &                      FORCES(ng)%stfluxG(:,:,:,isalt),            &
+     &                      FORCES(ng)%stflux (:,:,isalt),              &
      &                      update)
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
@@ -446,8 +447,8 @@
 #   else
       CALL set_2dfldr_tile (ng, tile, iADM, idTbot(isalt),              &
      &                      LBi, UBi, LBj, UBj,                         &
-     &                      FORCES(ng)%btflxG(:,:,:,isalt),             &
-     &                      FORCES(ng)%btflx (:,:,isalt),               &
+     &                      FORCES(ng)%btfluxG(:,:,:,isalt),            &
+     &                      FORCES(ng)%btflux (:,:,isalt),              &
      &                      update)
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
@@ -457,7 +458,7 @@
 #  if defined BIOLOGY || defined SEDIMENT || defined T_PASSIVE
 !
 !-----------------------------------------------------------------------
-!  Set kinematic surface and bottom pasive tracer fluxes (T m/s).
+!  Set kinematic surface and bottom passive tracer fluxes (T m/s).
 !-----------------------------------------------------------------------
 !
       DO itrc=NAT+1,NT(ng)
@@ -466,8 +467,8 @@
 #   else
         CALL set_2dfldr_tile (ng, tile, iADM, idTsur(itrc),             &
      &                        LBi, UBi, LBj, UBj,                       &
-     &                        FORCES(ng)%stflxG(:,:,:,itrc),            &
-     &                        FORCES(ng)%stflx (:,:,itrc),              &
+     &                        FORCES(ng)%stfluxG(:,:,:,itrc),           &
+     &                        FORCES(ng)%stflux (:,:,itrc),             &
      &                        update)
         IF (FoundError(exit_flag, NoError, __LINE__,                    &
      &                 __FILE__)) RETURN
@@ -478,8 +479,8 @@
 #   else
         CALL set_2dfldr_tile (ng, tile, iADM, idTbot(itrc),             &
      &                        LBi, UBi, LBj, UBj,                       &
-     &                        FORCES(ng)%btflxG(:,:,:,itrc),            &
-     &                        FORCES(ng)%btflx (:,:,itrc),              &
+     &                        FORCES(ng)%btfluxG(:,:,:,itrc),           &
+     &                        FORCES(ng)%btflux (:,:,itrc),             &
      &                        update)
         IF (FoundError(exit_flag, NoError, __LINE__,                    &
      &                 __FILE__)) RETURN
@@ -488,16 +489,16 @@
 #  endif
 # endif
 
-# ifndef FRC_COUPLING
-#  if !defined BULK_FLUXES || defined NL_BULK_FLUXES
+# if !defined BULK_FLUXES  || defined FORWARD_FLUXES || \
+      defined FRC_COUPLING
 !
 !-----------------------------------------------------------------------
 !  Set kinematic surface momentum flux (m2/s2).
 !-----------------------------------------------------------------------
 !
-#   ifdef ANA_SMFLUX
+#  ifdef ANA_SMFLUX
       CALL ana_smflux (ng, tile, iADM)
-#   else
+#  else
       CALL set_2dfldr_tile (ng, tile, iADM, idUsms,                     &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      FORCES(ng)%sustrG,                          &
@@ -514,7 +515,7 @@
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
 
-#    ifdef CURVGRID
+#   ifdef CURVGRID
 !
 !  If input point wind stress, rotate to curvilinear grid.  Notice
 !  that rotation is done at RHO-points. It does not matter.
@@ -542,21 +543,20 @@
      &                            FORCES(ng)%svstr)
         END IF
 
-#     ifdef DISTRIBUTE
+#    ifdef DISTRIBUTE
         CALL mp_exchange2d (ng, tile, iADM, 2,                          &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      NghostPoints,                               &
      &                      EWperiodic(ng), NSperiodic(ng),             &
      &                      FORCES(ng)%sustr,                           &
      &                      FORCES(ng)%svstr)
-#     endif
-      END IF
 #    endif
+      END IF
 #   endif
 #  endif
 # endif
 
-# if (defined BULK_FLUXES && !defined NL_BULK_FLUXES) || \
+# if (defined BULK_FLUXES && !defined FORWARD_FLUXES) || \
      defined ECOSIM       || defined ATM_PRESS
 !
 !-----------------------------------------------------------------------
@@ -1534,7 +1534,7 @@
 !  Free-surface.
 !
 #  ifdef SENSITIVITY_4DVAR
-      IF (LsenPSAS(ng)) THEN
+      IF (Lsen4DVAR(ng)) THEN
 #  endif
         IF (SCALARS(ng)%Lstate(isFsur)) THEN
           CALL set_2dfldr_tile (ng, tile, iADM, idZads,                 &

@@ -1,7 +1,7 @@
       MODULE ocean_control_mod
 !
 !git $Id$
-!svn $Id: optobs_ocean.h 1031 2020-07-14 01:39:55Z arango $
+!svn $Id: optobs_ocean.h 1039 2020-10-12 03:54:49Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group           W. G. Zhang   !
 !    Licensed under a MIT/X style license                              !
@@ -39,14 +39,14 @@
 !=======================================================================
 !
       implicit none
-
+!
       PRIVATE
       PUBLIC  :: ROMS_initialize
       PUBLIC  :: ROMS_run
       PUBLIC  :: ROMS_finalize
-
+!
       CONTAINS
-
+!
       SUBROUTINE ROMS_initialize (first, mpiCOMM)
 !
 !=======================================================================
@@ -76,13 +76,13 @@
 !  Imported variable declarations.
 !
       logical, intent(inout) :: first
-
+!
       integer, intent(in), optional :: mpiCOMM
 !
 !  Local variable declarations.
 !
       logical :: allocate_vars = .TRUE.
-
+!
 #ifdef DISTRIBUTE
       integer :: MyError, MySize
 #endif
@@ -134,7 +134,6 @@
 !  computed only once since the "first_tile" and "last_tile" values
 !  are private for each parallel thread/node.
 !
-!$OMP PARALLEL
 #if defined _OPENMP
       MyThread=my_threadnum()
 #elif defined DISTRIBUTE
@@ -147,7 +146,6 @@
         first_tile(ng)=MyThread*chunk_size
         last_tile (ng)=first_tile(ng)+chunk_size-1
       END DO
-!$OMP END PARALLEL
 !
 !  Initialize internal wall clocks. Notice that the timings does not
 !  includes processing standard input because several parameters are
@@ -159,18 +157,14 @@
         END IF
 !
         DO ng=1,Ngrids
-!$OMP PARALLEL
           DO thread=THREAD_RANGE
             CALL wclock_on (ng, iADM, 0, __LINE__, __FILE__)
           END DO
-!$OMP END PARALLEL
         END DO
 !
 !  Allocate and initialize all model state arrays.
 !
-!$OMP PARALLEL
         CALL mod_arrays (allocate_vars)
-!$OMP END PARALLEL
 !
 !  Allocate and initialize observation arrays.
 !
@@ -247,10 +241,10 @@
         END DO
 #endif
       END IF
-
+!
       RETURN
       END SUBROUTINE ROMS_initialize
-
+!
       SUBROUTINE ROMS_run (RunInterval)
 !
 !=======================================================================
@@ -284,13 +278,13 @@
 !  Local variable declarations.
 !
       logical :: Lposterior
-
+!
       integer :: ng, tile
       integer :: Lbck, Lini, Rec, Rec1, Rec2
       integer :: NRMrec
-
+!
       real (r8) :: str_day, end_day
-
+!
       character (len=6) :: driver
 !
 !=======================================================================
@@ -310,19 +304,26 @@
       Rec2=2
       driver='optobs'
 
-if defined BULK_FLUXES && defined NL_BULK_FLUXES
+#ifdef FORWARD_FLUXES
 !
-!  Set structure for the nonlinear surface fluxes to be processed by
-!  by the tangent linear and adjoint models. Also, set switches to
-!  process the BLK structure in routine "check_multifile".  Notice that
-!  it is possible to split solution into multiple NetCDF files to reduce
-!  their size.
+!  Set the BLK structure to contain the nonlinear model surface fluxes
+!  needed by the tangent linear and adjoint models. Also, set switches
+!  to process that structure in routine "check_multifile". Notice that
+!  it is possible to split the solution into multiple NetCDF files to
+!  reduce their size.
 !
-      CALL edit_multifile ('FWD2BLK')
+!  The switch LreadFRC is deactivated because all the atmospheric
+!  forcing, including shortwave radiation, is read from the NLM
+!  surface fluxes or is assigned during ESM coupling.  Such fluxes
+!  are available from the QCK structure. There is no need for reading
+!  and processing from the FRC structure input forcing-files.
+!
+      CALL edit_multifile ('QCK2BLK')
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
       DO ng=1,Ngrids
         LreadBLK(ng)=.TRUE.
+        LreadFRC(ng)=.FALSE.
       END DO
 #endif
 #ifdef BALANCE_OPERATOR
@@ -345,12 +346,10 @@ if defined BULK_FLUXES && defined NL_BULK_FLUXES
           IF (FoundError(exit_flag, NoError, __LINE__,                  &
      &                   __FILE__)) RETURN
 !
-!$OMP PARALLEL
           DO tile=first_tile(ng),last_tile(ng),+1
             CALL balance_ref (ng, tile, Lini)
             CALL biconj (ng, tile, iNLM, Lini)
           END DO
-!$OMP END PARALLEL
           wrtZetaRef(ng)=.TRUE.
         END DO
       END IF
@@ -363,9 +362,7 @@ if defined BULK_FLUXES && defined NL_BULK_FLUXES
 !
       DO ng=1,Ngrids
         Lstiffness=.FALSE.
-!$OMP PARALLEL
         CALL ad_initial (ng)
-!$OMP END PARALLEL
         IF (FoundError(exit_flag, NoError, __LINE__,                    &
      &                 __FILE__)) RETURN
       END DO
@@ -421,11 +418,9 @@ if defined BULK_FLUXES && defined NL_BULK_FLUXES
      &                   __FILE__)) RETURN
 #endif
 
-!$OMP PARALLEL
           DO tile=first_tile(ng),last_tile(ng),+1
             CALL normalization (ng, tile, 2)
           END DO
-!$OMP END PARALLEL
            LdefNRM(1:4,ng)=.FALSE.
            LwrtNRM(1:4,ng)=.FALSE.
         ELSE
@@ -489,14 +484,12 @@ if defined BULK_FLUXES && defined NL_BULK_FLUXES
           WRITE (stdout,30) 'AD', ng, ntstart(ng), ntend(ng)
         END IF
       END DO
-
-!$OMP PARALLEL
+!
 #ifdef SOLVE3D
       CALL ad_main3d (RunInterval)
 #else
       CALL ad_main2d (RunInterval)
 #endif
-!$OMP END PARALLEL
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
 !
@@ -517,9 +510,7 @@ if defined BULK_FLUXES && defined NL_BULK_FLUXES
 !  Initialize tangent linear model.
 !
       DO ng=1,Ngrids
-!$OMP PARALLEL
         CALL tl_initial (ng)
-!$OMP END PARALLEL
         IF (FoundError(exit_flag, NoError, __LINE__,                    &
      &                 __FILE__)) RETURN
       END DO
@@ -539,14 +530,12 @@ if defined BULK_FLUXES && defined NL_BULK_FLUXES
           WRITE (stdout,30) 'TL', ng, ntstart(ng), ntend(ng)
         END IF
       END DO
-
-!$OMP PARALLEL
+!
 #ifdef SOLVE3D
       CALL tl_main3d (RunInterval)
 #else
       CALL tl_main2d (RunInterval)
 #endif
-!$OMP END PARALLEL
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
 !
@@ -556,10 +545,10 @@ if defined BULK_FLUXES && defined NL_BULK_FLUXES
      &        ' It must be between ',f12.4,' and ',f12.4)
  20   FORMAT (/,1x,a,1x,'ROMS/TOMS: started time-stepping:',            &
      &        ' (Grid: ',i2.2,' TimeSteps: ',i8.8,' - ',i8.8,')',/)
-
+!
       RETURN
       END SUBROUTINE ROMS_run
-
+!
       SUBROUTINE ROMS_finalize
 !
 !=======================================================================
@@ -614,18 +603,14 @@ if defined BULK_FLUXES && defined NL_BULK_FLUXES
       END IF
 !
       DO ng=1,Ngrids
-!$OMP PARALLEL
         DO thread=THREAD_RANGE
           CALL wclock_off (ng, iADM, 0, __LINE__, __FILE__)
         END DO
-!$OMP END PARALLEL
       END DO
 !
 !  Report dynamic memory and automatic memory requirements.
 !
-!$OMP PARALLEL
       CALL memory
-!$OMP END PARALLEL
 !
 !  Close IO files.
 !
@@ -633,7 +618,7 @@ if defined BULK_FLUXES && defined NL_BULK_FLUXES
         CALL close_inp (ng, iADM)
       END DO
       CALL close_out
-
+!
       RETURN
       END SUBROUTINE ROMS_finalize
 

@@ -2,7 +2,7 @@
       MODULE mod_ncparam
 !
 !git $Id$
-!svn $Id: mod_ncparam.F 1035 2020-07-28 00:49:02Z arango $
+!svn $Id: mod_ncparam.F 1039 2020-10-12 03:54:49Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -219,6 +219,8 @@
         integer  :: idNLmf        ! final NLM at observation locations
         integer  :: idNLmi        ! initial NLM at observation locations
         integer  :: idNLmo        ! NLM at observations locations
+        integer  :: idNLmp        ! unvetted prior NLM at obs locations
+        integer  :: idNLmu        ! unvetted NLM at obs locations
         integer  :: idNobs        ! number of observations
         integer  :: idObsD        ! observations depth
         integer  :: idObsS        ! observations screening scale
@@ -1844,6 +1846,10 @@
               idNLmi=varid
             CASE ('idNLmo')
               idNLmo=varid
+            CASE ('idNLmp')
+              idNLmp=varid
+            CASE ('idNLmu')
+              idNLmu=varid
             CASE ('idNobs')
               idNobs=varid
             CASE ('idObsD')

@@ -2,7 +2,7 @@
       SUBROUTINE wrt_quick (ng, tile)
 !
 !git $Id$
-!svn $Id: wrt_quick.F 1028 2020-06-01 00:24:59Z arango $
+!svn $Id: wrt_quick.F 1039 2020-10-12 03:54:49Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -1240,7 +1240,6 @@
       END IF
 #  endif
 # endif
-# if (defined BULK_FLUXES && defined EMINUSP) || defined ATM_COUPLING
 !
 !  Write out E-P (m/s).
 !
@@ -1250,10 +1249,10 @@
         status=nf_fwrite2d(ng, iNLM, QCK(ng)%ncid, QCK(ng)%Vid(idEmPf), &
      &                     QCK(ng)%Rindex, gtype,                       &
      &                     LBi, UBi, LBj, UBj, scale,                   &
-#  ifdef MASKING
+# ifdef MASKING
      &                     GRID(ng) % rmask,                            &
-#  endif
-     &                     FORCES(ng) % EminusP)
+# endif
+     &                     FORCES(ng) % stflux(:,:,isalt))
         IF (FoundError(status, nf90_noerr, __LINE__,                    &
      &                 __FILE__)) THEN
           IF (Master) THEN
@@ -1264,7 +1263,6 @@
           RETURN
         END IF
       END IF
-# endif
 # ifdef SHORTWAVE
 !
 !  Write out shortwave radiation flux.

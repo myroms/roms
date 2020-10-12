@@ -1,7 +1,7 @@
       MODULE ocean_control_mod
 !
 !git $Id$
-!svn $Id: tl_r4dvar_ocean.h 1035 2020-07-28 00:49:02Z arango $
+!svn $Id: tl_r4dvar_ocean.h 1039 2020-10-12 03:54:49Z arango $
 !=================================================== Andrew M. Moore ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group      Hernan G. Arango   !
 !    Licensed under a MIT/X style license                              !
@@ -380,7 +380,7 @@
         WRITE (HIS(ng)%name,10) TRIM(FWD(ng)%base), outer
       END DO
 
-#if defined BULK_FLUXES && defined NL_BULK_FLUXES
+#ifdef FORWARD_FLUXES
 !
 !  Set file name containing the nonlinear model bulk fluxes to be read
 !  and processed by other algorithms.

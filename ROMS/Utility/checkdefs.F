@@ -2,7 +2,7 @@
       SUBROUTINE checkdefs
 !
 !git $Id$
-!svn $Id: checkdefs.F 1038 2020-09-29 01:54:25Z arango $
+!svn $Id: checkdefs.F 1039 2020-10-12 03:54:49Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -1040,6 +1040,13 @@
       Coptions(is:is+12)=' FORCING_SV,'
       idriver=idriver+1
 #endif
+#if defined FORWARD_FLUXES
+!
+      IF (Master) WRITE (stdout,20) 'FORWARD_FLUXES',                   &
+     &   'Using nonlinear model Forward fluxes for Tangent/Adjoint'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+16)=' FORWARD_FLUXES,'
+#endif
 #if defined FORWARD_MIXING && defined SOLVE3D
 !
       IF (Master) WRITE (stdout,20) 'FORWARD_MIXING',                   &
@@ -1555,13 +1562,6 @@
       Coptions(is:is+15)=' NESTING_DEBUG,'
 # endif
 #endif
-#if defined NL_BULK_FLUXES
-!
-      IF (Master) WRITE (stdout,20) 'NL_BULK_FLUXES',                   &
-     &   'Using bulk fluxes computed by nonlinear model'
-      is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+16)=' NL_BULK_FLUXES,'
-#endif
 #if defined NLM_OUTER && defined WEAK_CONSTRAINT
 !
       IF (Master) WRITE (stdout,20) 'NLM_OUTER',                        &
@@ -1830,6 +1830,14 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+5)=' P04,'
 #endif
+#if defined PRIOR_BULK_FLUXES && defined BULK_FLUXES && \
+    defined FOUR_DVAR
+!
+      IF (Master) WRITE (stdout,20) 'PRIOR_BULK_FLUXES',                &
+     &   'Impose prior surface fluxes in other outer loops and analysis'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+19)=' PRIOR_BULK_FLUXES,'
+#endif
 #ifdef POSITIVE_ZERO
 !
       IF (Master) WRITE (stdout,20) 'POSITIVE_ZERO',                    &
@@ -2060,6 +2068,13 @@
      &   'Regressing start clock by one coupling interval'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+20)=' REGRESS_STARTCLOCK,'
+#endif
+#ifdef REGRID_SHAPIRO
+!
+      IF (Master) WRITE (stdout,20) 'REGRID_SHAPIRO',                   &
+     &   'Applying Shapiro filter to regridded data'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+16)=' REGRID_SHAPIRO,'
 #endif
 #if defined RIVER_DON && defined BIO_FENNEL
 !

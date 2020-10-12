@@ -2,7 +2,7 @@
 !  ROMS/TOMS IO NetCDF variables.
 !
 !git $Id$
-!svn $Id: varinfo.dat 1038 2020-09-29 01:54:25Z arango $
+!svn $Id: varinfo.dat 1039 2020-10-12 03:54:49Z arango $
 !========================================================= Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                                !
 !    Licensed under a MIT/X style license                                     !
@@ -5777,6 +5777,15 @@
   'w3dvar'
   1.0d0
 
+'NLmodel_unvetted'                                  ! Output
+  'initial nonlinear model at observation locations unvetted by quality control'
+  'state variable units'
+  'nulvar'
+  'datum'
+  'idNLmp'
+  'nulvar'
+  1.0d0
+
 'NLmodel_initial'                                  ! Output
   'initial nonlinear model at observation locations'
   'state variable units'
@@ -5795,8 +5804,17 @@
   'nulvar'
   1.0d0
 
+'NLmodel_value_unvetted'                           ! Output
+  'nonlinear model at observation locations unvetted by quality control per outer-loop'
+  'state variable units'
+  'nulvar'
+  'datum'
+  'idNLmu'
+  'nulvar'
+  1.0d0
+
 'NLmodel_value'                                    ! Output
-  'nonlinear model at observation locations'
+  'nonlinear model at observation locations per outer-loop'
   'state variable units'
   'nulvar'
   'datum'

@@ -1,7 +1,7 @@
       MODULE ocean_control_mod
 !
 !git $Id$
-!svn $Id: symmetry.h 1031 2020-07-14 01:39:55Z arango $
+!svn $Id: symmetry.h 1039 2020-10-12 03:54:49Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -26,14 +26,14 @@
 !=======================================================================
 !
       implicit none
-
+!
       PRIVATE
       PUBLIC  :: ROMS_initialize
       PUBLIC  :: ROMS_run
       PUBLIC  :: ROMS_finalize
-
+!
       CONTAINS
-
+!
       SUBROUTINE ROMS_initialize (first, mpiCOMM)
 !
 !=======================================================================
@@ -55,13 +55,13 @@
 !  Imported variable declarations.
 !
       logical, intent(inout) :: first
-
+!
       integer, intent(in), optional :: mpiCOMM
 !
 !  Local variable declarations.
 !
       logical :: allocate_vars = .TRUE.
-
+!
 #ifdef DISTRIBUTE
       integer :: MyError, MySize
 #endif
@@ -113,7 +113,6 @@
 !  computed only once since the "first_tile" and "last_tile" values
 !  are private for each parallel thread/node.
 !
-!$OMP PARALLEL
 #if defined _OPENMP
       MyThread=my_threadnum()
 #elif defined DISTRIBUTE
@@ -126,7 +125,6 @@
         first_tile(ng)=MyThread*chunk_size
         last_tile (ng)=first_tile(ng)+chunk_size-1
       END DO
-!$OMP END PARALLEL
 !
 !  Initialize internal wall clocks. Notice that the timings does not
 !  includes processing standard input because several parameters are
@@ -138,18 +136,14 @@
         END IF
 !
         DO ng=1,Ngrids
-!$OMP PARALLEL
           DO thread=THREAD_RANGE
             CALL wclock_on (ng, iNLM, 0, __LINE__, __FILE__)
           END DO
-!$OMP END PARALLEL
         END DO
 !
 !  Allocate and initialize modules variables.
 !
-!$OMP PARALLEL
         CALL mod_arrays (allocate_vars)
-!$OMP END PARALLEL
 !
 !  Allocate and initialize observation arrays.
 !
@@ -209,10 +203,10 @@
      &                 __FILE__)) RETURN
       END DO
 #endif
-
+!
       RETURN
       END SUBROUTINE ROMS_initialize
-
+!
       SUBROUTINE ROMS_run (RunInterval)
 !
 !=======================================================================
@@ -244,7 +238,7 @@
 !  Local variable declarations.
 !
       logical :: BOUNDED_TL
-
+!
       integer :: i, j, ng, tile
       integer :: Lbck, Lini, Lstate, NRMrec
       integer :: IperAD, JperAD, KperAD, ivarAD
@@ -255,9 +249,9 @@
       integer, dimension(Ngrids) :: Nrec
 
       integer, allocatable :: StateVar(:)
-
+!
       real(r8), allocatable :: R(:,:,:), Rerr(:,:)
-
+!
       character (len=8 ) :: driver
       character (len=20) :: frmt
 !
@@ -278,10 +272,7 @@
         wrtRPmod(ng)=.FALSE.
         wrtTLmod(ng)=.FALSE.
       END DO
-
-!$OMP PARALLEL
       CALL initial
-!$OMP END PARALLEL
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
 !
@@ -292,14 +283,12 @@
           WRITE (stdout,10) 'NL', ng, ntstart(ng), ntend(ng)
         END IF
       END DO
-
-!$OMP PARALLEL
+!
 #ifdef SOLVE3D
       CALL main3d (RunInterval)
 #else
       CALL main2d (RunInterval)
 #endif
-!$OMP END PARALLEL
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
 !
@@ -316,19 +305,26 @@
         LreadFWD(ng)=.TRUE.
       END DO
 
-#if defined BULK_FLUXES && defined NL_BULK_FLUXES
+#ifdef FORWARD_FLUXES
 !
-!  Set structure for the nonlinear surface fluxes to be processed by
-!  by the tangent linear and adjoint models. Also, set switches to
-!  process the BLK structure in routine "check_multifile".  Notice that
-!  it is possible to split solution into multiple NetCDF files to reduce
-!  their size.
+!  Set the BLK structure to contain the nonlinear model surface fluxes
+!  needed by the tangent linear and adjoint models. Also, set switches
+!  to process that structure in routine "check_multifile". Notice that
+!  it is possible to split the solution into multiple NetCDF files to
+!  reduce their size.
 !
-      CALL edit_multifile ('HIS2BLK')
+!  The switch LreadFRC is deactivated because all the atmospheric
+!  forcing, including shortwave radiation, is read from the NLM
+!  surface fluxes or is assigned during ESM coupling.  Such fluxes
+!  are available from the QCK structure. There is no need for reading
+!  and processing from the FRC structure input forcing-files.
+!
+      CALL edit_multifile ('QCK2BLK')
       IF (FoundError(exit_flag, NoError, __LINE__,                      &
      &               __FILE__)) RETURN
       DO ng=1,Ngrids
         LreadBLK(ng)=.TRUE.
+        LreadFRC(ng)=.FALSE.
       END DO
 #endif
 !
@@ -362,11 +358,10 @@
           IF (FoundError(exit_flag, NoError, __LINE__,                  &
      &                   __FILE__)) RETURN
 #endif
-!$OMP PARALLEL
+
           DO tile=first_tile(ng),last_tile(ng),+1
             CALL normalization (ng, tile, 2)
           END DO
-!$OMP END PARALLEL
           LdefNRM(1:4,ng)=.FALSE.
           LwrtNRM(1:4,ng)=.FALSE.
         ELSE
@@ -468,9 +463,7 @@
         TLmodel=.FALSE.
         DO ng=1,Ngrids
           Lold(ng)=1
-!$OMP PARALLEL
           CALL ad_initial (ng)
-!$OMP END PARALLEL
           IF (FoundError(exit_flag, NoError, __LINE__,                  &
      &                   __FILE__)) RETURN
           Fcount=ADM(ng)%load
@@ -485,14 +478,12 @@
             WRITE (stdout,10) 'AD', ng, ntstart(ng), ntend(ng)
           END IF
         END DO
-
-!$OMP PARALLEL
+!
 #ifdef SOLVE3D
         CALL ad_main3d (RunInterval)
 #else
         CALL ad_main2d (RunInterval)
 #endif
-!$OMP END PARALLEL
         IF (FoundError(exit_flag, NoError, __LINE__,                    &
      &                 __FILE__)) RETURN
 !
@@ -539,9 +530,7 @@
         TLmodel=.FALSE.
         DO ng=1,Ngrids
           wrtTLmod(ng)=.FALSE.
-!$OMP PARALLEL
           CALL tl_initial (ng)
-!$OMP END PARALLEL
           IF (FoundError(exit_flag, NoError, __LINE__,                  &
      &                   __FILE__)) RETURN
         END DO
@@ -555,14 +544,12 @@
             WRITE (stdout,10) 'TL', ng, ntstart(ng), ntend(ng)
           END IF
         END DO
-
-!$OMP PARALLEL
+!
 #ifdef SOLVE3D
         CALL tl_main3d (RunInterval)
 #else
         CALL tl_main2d (RunInterval)
 #endif
-!$OMP END PARALLEL
         IF (FoundError(exit_flag, NoError, __LINE__,                    &
      &                 __FILE__)) RETURN
 !
@@ -633,10 +620,10 @@
  20   FORMAT (/,1x,a,/,/,3x,a,' i = ',i4.4,' j = ',i4.4,' k = ',i4.4,   &
      &                 /,3x,a,' i = ',i4.4,' j = ',i4.4,' k = ',i4.4)
  30   FORMAT (/,1x,a,/)
-
+!
       RETURN
       END SUBROUTINE ROMS_run
-
+!
       SUBROUTINE ROMS_finalize
 !
 !=======================================================================
@@ -702,18 +689,14 @@
       END IF
 !
       DO ng=1,Ngrids
-!$OMP PARALLEL
         DO thread=THREAD_RANGE
           CALL wclock_off (ng, iNLM, 0, __LINE__, __FILE__)
         END DO
-!$OMP END PARALLEL
       END DO
 !
 !  Report dynamic memory and automatic memory requirements.
 !
-!$OMP PARALLEL
       CALL memory
-!$OMP END PARALLEL
 !
 !  Close IO files.
 !
@@ -721,7 +704,7 @@
         CALL close_inp (ng, iNLM)
       END DO
       CALL close_out
-
+!
       RETURN
       END SUBROUTINE ROMS_finalize
 

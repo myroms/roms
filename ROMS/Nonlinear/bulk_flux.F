@@ -3,7 +3,7 @@
 #ifdef BULK_FLUXES
 !
 !git $Id$
-!svn $Id: bulk_flux.F 995 2020-01-10 04:01:28Z arango $
+!svn $Id: bulk_flux.F 1039 2020-10-12 03:54:49Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -127,11 +127,10 @@
      &                     FORCES(ng) % lrflx,                          &
      &                     FORCES(ng) % shflx,                          &
      &                     FORCES(ng) % srflx,                          &
-     &                     FORCES(ng) % snhflx,                         &
 # ifdef EMINUSP
-     &                     FORCES(ng) % EminusP,                        &
      &                     FORCES(ng) % evap,                           &
 # endif
+     &                     FORCES(ng) % stflux,                         &
      &                     FORCES(ng) % sustr,                          &
      &                     FORCES(ng) % svstr)
 # ifdef PROFILE
@@ -170,12 +169,11 @@
      (defined COARE_TAYLOR_YELLAND || defined COARE_OOST)
      &                           Lwave,                                 &
 # endif
-     &                           rain, lhflx, lrflx, shflx,             &
-     &                           srflx, snhflx,                         &
+     &                           rain, lhflx, lrflx, shflx, srflx,      &
 # ifdef EMINUSP
-     &                           EminusP, evap,                         &
+     &                           evap,                                  &
 # endif
-     &                           sustr, svstr)
+     &                           stflux, sustr, svstr)
 !***********************************************************************
 !
       USE mod_param
@@ -236,10 +234,9 @@
       real(r8), intent(inout) :: lrflx(LBi:,LBj:)
       real(r8), intent(inout) :: shflx(LBi:,LBj:)
       real(r8), intent(inout) :: srflx(LBi:,LBj:)
-      real(r8), intent(inout) :: snhflx(LBi:,LBj:)
+      real(r8), intent(inout) :: stflux(LBi:,LBj:,:)
 
 #  ifdef EMINUSP
-      real(r8), intent(out) :: EminusP(LBi:,LBj:)
       real(r8), intent(out) :: evap(LBi:,LBj:)
 #  endif
       real(r8), intent(out) :: sustr(LBi:,LBj:)
@@ -287,10 +284,9 @@
       real(r8), intent(inout) :: lrflx(LBi:UBi,LBj:UBj)
       real(r8), intent(inout) :: shflx(LBi:UBi,LBj:UBj)
       real(r8), intent(inout) :: srflx(LBi:UBi,LBj:UBj)
-      real(r8), intent(inout) :: snhflx(LBi:UBi,LBj:UBj)
+      real(r8), intent(inout) :: stflux(LBi:UBi,LBj:UBj,NT(ng))
 
 #  ifdef EMINUSP
-      real(r8), intent(out) :: EminusP(LBi:UBi,LBj:UBj)
       real(r8), intent(out) :: evap(LBi:UBi,LBj:UBj)
 #  endif
       real(r8), intent(out) :: sustr(LBi:UBi,LBj:UBj)
@@ -862,10 +858,10 @@
 !  Note that if evaporating, the salt flux is positive
 !        and if     raining, the salt flux is negative
 !
-!  Note that fresh water flux is positive out of the ocean and the
-!  salt flux (stflx(isalt)) is positive into the ocean. It is converted
-!  to (psu m/s) for stflx(isalt) in "set_vbc.F". The E-P value is
-!  saved in variable EminusP for I/O purposes.
+!  Note that stflux(:,:,isalt) is the E-P flux. The fresh water flux
+!  is positive out of the ocean and the salt flux is positive into the
+!  ocean. It is  multiplied by surface salinity when computing state
+!  variable stflx(:,:,isalt) in "set_vbc.F".
 !
       Hscale=1.0_r8/(rho0*Cp)
       cff=1.0_r8/rhow
@@ -874,13 +870,13 @@
           lrflx(i,j)=LRad(i,j)*Hscale
           lhflx(i,j)=-LHeat(i,j)*Hscale
           shflx(i,j)=-SHeat(i,j)*Hscale
-          snhflx(i,j)=(srflx(i,j)+lrflx(i,j)+                           &
-     &                 lhflx(i,j)+shflx(i,j))
+          stflux(i,j,itemp)=(srflx(i,j)+lrflx(i,j)+                     &
+     &                       lhflx(i,j)+shflx(i,j))
 # ifdef MASKING
-          snhflx(i,j)=snhflx(i,j)*rmask(i,j)
+          stflux(i,j,itemp)=stflux(i,j,itemp)*rmask(i,j)
 # endif
 # ifdef WET_DRY
-          snhflx(i,j)=snhflx(i,j)*rmask_wet(i,j)
+          stflux(i,j,itemp)=stflux(i,j,itemp)*rmask_wet(i,j)
 # endif
 # ifdef EMINUSP
           evap(i,j)=LHeat(i,j)/Hlv(i,j)
@@ -890,12 +886,12 @@
 #  ifdef WET_DRY
           evap(i,j)=evap(i,j)*rmask_wet(i,j)
 #  endif
-          EminusP(i,j)=cff*(evap(i,j)-rain(i,j))
+          stflux(i,j,isalt)=cff*(evap(i,j)-rain(i,j))
 #  ifdef MASKING
-          EminusP(i,j)=EminusP(i,j)*rmask(i,j)
+          stflux(i,j,isalt)=stflux(i,j,isalt)*rmask(i,j)
 #  endif
 #  ifdef WET_DRY
-          EminusP(i,j)=EminusP(i,j)*rmask_wet(i,j)
+          stflux(i,j,isalt)=stflux(i,j,isalt)*rmask_wet(i,j)
 #  endif
 # endif
         END DO
@@ -943,14 +939,14 @@
      &                          shflx)
         CALL exchange_r2d_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj,                     &
-     &                          snhflx)
+     &                          stflux(:,:,itemp))
 # ifdef EMINUSP
         CALL exchange_r2d_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          evap)
         CALL exchange_r2d_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj,                     &
-     &                          EminusP)
+     &                          stflux(:,:,isalt))
 # endif
         CALL exchange_u2d_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj,                     &
@@ -965,13 +961,15 @@
      &                    LBi, UBi, LBj, UBj,                           &
      &                    NghostPoints,                                 &
      &                    EWperiodic(ng), NSperiodic(ng),               &
-     &                    lrflx, lhflx, shflx, snhflx)
+     &                    lrflx, lhflx, shflx,                          &
+     &                    stflux(:,:,itemp))
 #  ifdef EMINUSP
       CALL mp_exchange2d (ng, tile, iNLM, 2,                            &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    NghostPoints,                                 &
      &                    EWperiodic(ng), NSperiodic(ng),               &
-     &                    evap, EminusP)
+     &                    evap,                                         &
+     &                    stflux(:,:,isalt))
 #  endif
       CALL mp_exchange2d (ng, tile, iNLM, 2,                            &
      &                    LBi, UBi, LBj, UBj,                           &

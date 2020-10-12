@@ -3,7 +3,7 @@
       SUBROUTINE tl_main3d (RunInterval)
 !
 !git $Id$
-!svn $Id: tl_main3d.F 1017 2020-04-27 22:19:14Z arango $
+!svn $Id: tl_main3d.F 1039 2020-10-12 03:54:49Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -51,7 +51,7 @@
 # ifdef BBL_MODEL_NOT_YET
 !!    USE tl_bbl_mod, ONLY : tl_bblm
 # endif
-# if defined BULK_FLUXES_NOT_YET && !defined NL_BULK_FLUXES
+# if defined BULK_FLUXES_NOT_YET && !defined PRIOR_BULK_FLUXES
 !!    USE tl_bulk_flux_mod,    ONLY : tl_bulk_flux
 # endif
 # ifdef BVF_MIXING_NOT_YET
@@ -345,7 +345,7 @@
 !
         DO ng=1,Ngrids
           DO tile=first_tile(ng),last_tile(ng),+1
-# if defined BULK_FLUXES_NOT_YET && !defined NL_BULK_FLUXES
+# if defined BULK_FLUXES_NOT_YET && !defined PRIOR_BULK_FLUXES
             CALL tl_bulk_flux (ng, tile)
 # endif
 # ifdef BBL_MODEL_NOT_YET

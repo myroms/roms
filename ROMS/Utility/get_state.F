@@ -2,7 +2,7 @@
       SUBROUTINE get_state (ng, model, msg, ncname, IniRec, Tindex)
 !
 !git $Id$
-!svn $Id: get_state.F 1031 2020-07-14 01:39:55Z arango $
+!svn $Id: get_state.F 1039 2020-10-12 03:54:49Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -393,9 +393,10 @@
       lstr=SCAN(ncname,'/',BACK=.TRUE.)+1
       lend=LEN_TRIM(ncname)
       IF (Master) THEN
-        CALL time_string (INPtime, t_code)
         IF ((10.le.model).and.(model.le.17)) THEN
           t_code=' '              ! time is meaningless for these fields
+        ELSE
+          CALL time_string (INPtime, t_code)
         END IF
         WRITE (Tstring,'(f15.4)') tdays(ng)
 #if defined I4DVAR          || defined I4DVAR_ANA_SENSITIVITY || \
