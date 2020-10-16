@@ -3,7 +3,7 @@
       SUBROUTINE set_data (ng, tile)
 !
 !git $Id$
-!svn $Id: set_data.F 1039 2020-10-12 03:54:49Z arango $
+!svn $Id: set_data.F 1041 2020-10-16 00:00:17Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -480,7 +480,7 @@
 #   else
 
 #    if !(defined BULK_FLUXES  || defined EMINUSP      || \
-          defined FRC_COUPLING || defined SRELAXATION)
+          defined FRC_COUPLING)
 !
 !  Surface freshwater (E-P) flux (m/s) from NetCDF variable "swflux".
 !

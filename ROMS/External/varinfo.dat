@@ -2,7 +2,7 @@
 !  ROMS/TOMS IO NetCDF variables.
 !
 !git $Id$
-!svn $Id: varinfo.dat 1039 2020-10-12 03:54:49Z arango $
+!svn $Id: varinfo.dat 1041 2020-10-16 00:00:17Z arango $
 !========================================================= Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                                !
 !    Licensed under a MIT/X style license                                     !
@@ -54,11 +54,11 @@
 ! Notice that we use the prefix 'ocean' in the variable name to differentiate
 ! between oceanic and atmospheric time clocks in fully coupled applications.
 !
-! Notice that salinity does not have physical units. A commented [PSU] can
+! Notice that salinity does not have physical units. A commented [PSS] can
 ! be found below to indicate that the practical salinity scale was used to
 ! determine conductivity. See,
 !
-! http://marine.rutgers.edu/po/users/forum/viewtopic.php?t=294
+! https://www.myroms.org/forum/viewtopic.php?t=294
 !
 !------------------------------------------------------------------------------
 !  SVN Repository
@@ -246,7 +246,7 @@
 
 'salt'                                             ! Input/Output
   'salinity'
-  'nondimensional'                                 ! [PSU]
+  'nondimensional'                                 ! [PSS]
   'salinity, scalar, series'
   'ocean_time'
   'idTvar(isalt)'
@@ -264,7 +264,7 @@
 
 'salt_sur'                                         ! Output
   'surface salinity'
-  'nondimensional'                                 ! [PSU]
+  'nondimensional'                                 ! [PSS]
   'salinity, scalar, series'
   'ocean_time'
   'idsurT(isalt)'
@@ -528,7 +528,7 @@
 
 'salt_tide'                                        ! Input/Output
   'time-accumulated salinity tide harmonics'
-  'nondimensional'                                 ! [PSU]
+  'nondimensional'                                 ! [PSS]
   'salt_tide, scalar'
   'ocean_time'
   'idTrcH(isalt)'
@@ -537,7 +537,7 @@
 
 'salt_detided'                                     ! Output
   'detided potential temperature'
-  'nondimensional'                                 ! [PSU]
+  'nondimensional'                                 ! [PSS]
   'salt_detided, scalar, series'
   'ocean_time'
   'idTrcD(isalt)'
@@ -700,8 +700,8 @@
   1.0d0
 
 'ssflux'                                           ! Output
-  'surface net salt flux, (E-P)*SALT'
-  'meter second-1'                                 ! [PSU m/s]
+  'kinematic surface net salt flux, SALT*(E-P)/rhow'
+  'meter second-1'                                 ! [PSS m/s]
   'surface net salt flux, scalar, series'
   'ssf_time'
   'idTsur(isalt)'
@@ -709,20 +709,20 @@
   1.0d0
 
 'swflux'                                           ! Input
-  'surface net freshwater flux, (E-P)'
-  'centimeter day-1'                               ! Input:  [m/s]
-  'surface net salt flux, scalar, series'          ! [PSU m/s]
+  'data surface net freshwater flux, (E-P)/rhow'
+  'meter second-1'                                 ! Input:  [m/s]
+  'surface net freshwater flux, scalar, series'    ! [PSS m/s]
   'swf_time'
   'idsfwf'
   'r2dvar'
-  1.157407d-7                                      ! 0.01/86400
+  1.0d0
 
 'EminusP'                                          ! Input/Output
-  'bulk_flux surface net freshwater flux, (E-P)'
+  'modeled surface net freshwater flux, (E-P)/rhow'
   'meter second-1'                                 ! computed by NLM ROMS
-  'EminusP, scalar, series'                        ! bulk_flux.F and
-  'ocean_time'                                     ! needed in adjoint-based
-  'idEmPf'                                         ! applications
+  'EminusP, scalar, series'                        ! bulk_flux.F or coupling
+  'ocean_time'
+  'idEmPf'
   'r2dvar'
   1.0d0
 
@@ -738,7 +738,7 @@
 'bwflux'                                           ! Input
   'bottom net freshwater flux'
   'centimeter day-1'                               ! Input:  [m/s]
-  'bottom water flux, scalar, series'              ! [PSU m/s]
+  'bottom water flux, scalar, series'              ! [PSS m/s]
   'bwf_time'
   'idTbot(isalt)'
   'r2dvar'
@@ -1322,7 +1322,7 @@
 
 'salt_west'                                        ! Input
   'salinity western boundary condition'
-  'nondimensional'                                 ! [PSU]
+  'nondimensional'                                 ! [PSS]
   'salt_west, scalar, series'
   'salt_time'
   'idTbry(iwest,isalt)'
@@ -1331,7 +1331,7 @@
 
 'salt_east'                                        ! Input
   'salinity eastern boundary condition'
-  'nondimensional'                                 ! [PSU]
+  'nondimensional'                                 ! [PSS]
   'salt_east, scalar, series'
   'salt_time'
   'idTbry(ieast,isalt)'
@@ -1340,7 +1340,7 @@
 
 'salt_south'                                       ! Input
   'salinity southern boundary condition'
-  'nondimensional'                                 ! [PSU]
+  'nondimensional'                                 ! [PSS]
   'salt_south, scalar, series'
   'salt_time'
   'idTbry(isouth,isalt)'
@@ -1349,7 +1349,7 @@
 
 'salt_north'                                       ! Input
   'salinity northern boundary condition'
-  'nondimensional'                                 ! [PSU]
+  'nondimensional'                                 ! [PSS]
   'salt_north, scalar, series'
   'salt_time'
   'idTbry(inorth,isalt)'
@@ -1835,7 +1835,7 @@
 
 'river_salt'                                       ! Input
   'river runoff salinity'
-  'nondimensional'                                 ! [PSU]
+  'nondimensional'                                 ! [PSS]
   'river_salt, scalar, series'
   'river_time'
   'idRtrc(isalt)'
@@ -2091,7 +2091,7 @@
 
 'SSS'                                              ! Input
   'sea surface salinity climatology'
-  'nondimensional'                                 ! [PSU]
+  'nondimensional'                                 ! [PSS]
   'SSS, scalar, series'
   'sss_time'
   'idSSSc'
@@ -2216,7 +2216,7 @@
 
 'salt'                                             ! Input
   'salinity functional'
-  'nondimensional'                                 ! [PSU]
+  'nondimensional'                                 ! [PSS]
   'salt_time, scalar, series'
   'salt_time'
   'idTads(isalt)'
@@ -2290,7 +2290,7 @@
 
 'salt'                                             ! Input
   'salinity impulse forcing'
-  'nondimensional'                                 ! [PSU]
+  'nondimensional'                                 ! [PSS]
   'salt_time, scalar, series'
   'salt_time'
   'idTtlf(isalt)'
