@@ -2,7 +2,7 @@
 ** Include file "cppdefs.h"
 **
 ** git $Id$
-** svn $Id: cppdefs.h 1039 2020-10-12 03:54:49Z arango $
+** svn $Id: cppdefs.h 1041 2020-10-16 00:00:17Z arango $
 ********************************************************** Hernan G. Arango ***
 ** Copyright (c) 2002-2020 The ROMS/TOMS Group                               **
 **   Licensed under a MIT/X style license                                    **
@@ -106,7 +106,6 @@
 **   sea surface temperature; (3) provide net longwave radiation (default).  **
 **                                                                           **
 ** BULK_FLUXES             if bulk fluxes computation                        **
-** NL_BULK_FLUXES          if bulk fluxes computed by nonlinear model        **
 ** COOL_SKIN               if cool skin correction                           **
 ** LONGWAVE                if computing net longwave radiation               **
 ** LONGWAVE_OUT            if computing outgoing longwave radiation          **
@@ -563,6 +562,7 @@
 ** PNETCDF                 if parallel I/O with pnetcdf (classic format)     **
 ** POSITIVE_ZERO           to impose positive zero in ouput data             **
 ** READ_WATER              if only reading water points data                 **
+** REGRID_SHAPIRO          to apply Shapiro Filter to regridded data         **
 ** WRITE_WATER             if only writing water points data                 **
 ** RST_SINGLE              if writing single precision restart fields        **
 ** OUT_DOUBLE              if writing double precision output fields         **

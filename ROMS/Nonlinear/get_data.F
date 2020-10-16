@@ -2,7 +2,7 @@
       SUBROUTINE get_data (ng)
 !
 !git $Id$
-!svn $Id: get_data.F 1039 2020-10-12 03:54:49Z arango $
+!svn $Id: get_data.F 1041 2020-10-16 00:00:17Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -531,7 +531,7 @@
 
 # if !defined ANA_SSFLUX     && defined SALINITY
 #  if !(defined BULK_FLUXES  || defined EMINUSP     || \
-        defined FRC_COUPLING || defined SRELAXATION)
+        defined FRC_COUPLING)
 !
 !  Surface net freshwater flux: E-P from NetCDF variable "swflux".
 !

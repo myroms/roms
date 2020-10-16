@@ -10,7 +10,7 @@
      &                   MyXout, Xout, Yout, Fout)
 !
 !git $Id$
-!svn $Id: regrid.F 1039 2020-10-12 03:54:49Z arango $
+!svn $Id: regrid.F 1041 2020-10-16 00:00:17Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -95,7 +95,9 @@
 
       real(r8), intent(inout) :: MyXout(LBi:UBi,LBj:UBj)
 
+#ifdef MASKING
       real(r8), intent(in) :: MyMask(LBi:UBi,LBj:UBj)
+#endif
       real(r8), intent(in) :: Xout(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: Yout(LBi:UBi,LBj:UBj)
 
