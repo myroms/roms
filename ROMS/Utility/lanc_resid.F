@@ -4,7 +4,7 @@
 #if defined I4DVAR
 !
 !git $Id$
-!svn $Id: lanc_resid.F 1022 2020-05-13 03:03:15Z arango $
+!svn $Id: lanc_resid.F 1043 2020-11-12 04:56:14Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -291,7 +291,7 @@
 !
       DO j=JstrR,JendR
         DO i=IstrR,IendR
-          ad_zeta(i,j,Lout)=-tl_zeta(i,j,Linp)+                        &
+          ad_zeta(i,j,Lout)=-tl_zeta(i,j,Linp)+                         &
      &                      ad_zeta(i,j,Lout )
         END DO
       END DO

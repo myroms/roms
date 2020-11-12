@@ -3,7 +3,7 @@
 #if defined AD_AVERAGES && defined ADJOINT
 !
 !git $Id$
-!svn $Id: ad_set_avg.F 1022 2020-05-13 03:03:15Z arango $
+!svn $Id: ad_set_avg.F 1043 2020-11-12 04:56:14Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -1292,7 +1292,7 @@
           DO j=JstrR,JendR
             DO i=IstrR,IendR
               AVERAGE(ng)%avgstf(i,j)=rfac(i,j)*                        &
-    &                                 AVERAGE(ng)%avgstf(i,j)
+     &                                AVERAGE(ng)%avgstf(i,j)
             END DO
           END DO
         END IF
@@ -1313,7 +1313,7 @@
           DO j=JstrR,JendR
             DO i=IstrR,IendR
               AVERAGE(ng)%avgsrf(i,j)=rfac(i,j)*                        &
-    &                                 AVERAGE(ng)%avgsrf(i,j)
+     &                                AVERAGE(ng)%avgsrf(i,j)
             END DO
           END DO
         END IF

@@ -2,7 +2,7 @@
       SUBROUTINE read_PhyPar (model, inp, out, Lwrite)
 !
 !git $Id$
-!svn $Id: read_phypar.F 1039 2020-10-12 03:54:49Z arango $
+!svn $Id: read_phypar.F 1043 2020-11-12 04:56:14Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -646,8 +646,8 @@
               DO ng=1,Ngrids
                 IF (nQCK(ng).le.0) THEN
                   WRITE (text,'(a,i2.2,a)') 'nQCK(', ng, ') = '
-                  IF (Master) WRITE (out,260) TRIM(text), nQCK(ng),    &
-     &               'must be greater than zero because the QCK '//    &
+                  IF (Master) WRITE (out,260) TRIM(text), nQCK(ng),     &
+     &               'must be greater than zero because the QCK '//     &
      &               'file is used as surface forcing basic state.'
                   exit_flag=5
                   RETURN
@@ -3315,7 +3315,7 @@
               label='CLM - climatology fields'
               DO ng=1,Ngrids
                 IF (nCLMfiles(ng).lt.0) THEN
-                  IF (Master) WRITE (out,290) 'nCLMfiles = ',         &
+                  IF (Master) WRITE (out,290) 'nCLMfiles = ',           &
      &                                        nCLMfiles(ng),            &
      &              'KeyWord ''NCLMFILES'' unread or misssing from '//  &
      &              'input script ''roms.in''.'
@@ -6433,7 +6433,7 @@
         IF (ABS(RunTimeSec(1)-RunTimeSec(ng)).ne.0.0_r8) THEN
           IF (Master) THEN
             WRITE (out,340)  1, RunTimeSec( 1), RunTimeDay( 1),         &
-    &                       ng, RunTimeSec(ng), RunTimeDay(ng)
+     &                       ng, RunTimeSec(ng), RunTimeDay(ng)
           END IF
           exit_flag=5
           RETURN

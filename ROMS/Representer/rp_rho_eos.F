@@ -3,7 +3,7 @@
 #if defined TL_IOMS && defined SOLVE3D
 !
 !git $Id$
-!svn $Id: rp_rho_eos.F 995 2020-01-10 04:01:28Z arango $
+!svn $Id: rp_rho_eos.F 1043 2020-11-12 04:56:14Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -12,7 +12,7 @@
 !                                                                      !
 !  This routine computes  "in situ" density and other associated       !
 !  quantitites as a function of potential temperature,  salinity,      !
-!  and pressure from a polynomial expression (Jackett & McDougall,     !
+!  and pressure from a polynomial expression (Jackett and McDougall,   !
 !  1992). The polynomial expression was found from fitting to 248      !
 !  values  in the  oceanographic  ranges of  salinity,  potential      !
 !  temperature,  and pressure.  It  assumes no pressure variation      !

@@ -1,7 +1,7 @@
       MODULE ocean_control_mod
 !
 !git $Id$
-!svn $Id: split_r4dvar_ocean.h 1039 2020-10-12 03:54:49Z arango $
+!svn $Id: split_r4dvar_ocean.h 1043 2020-11-12 04:56:14Z arango $
 !=================================================== Andrew M. Moore ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group      Hernan G. Arango   !
 !    Licensed under a MIT/X style license                              !
@@ -157,14 +157,18 @@
         IF (FoundError(exit_flag, NoError, __LINE__,                    &
      &                 __FILE__)) RETURN
 !
-!  Determine ROMS standard output append switch. It is only relevant
+!  Determine ROMS standard output append switch. It is only relevant if
 !  "ROMS_STDINP" is activated. The standard output is created in the
-!  "background" phase and open to append in the other phases.
+!  "background" phase and open to append in the other phases. Set
+!  switch so the "stiffness" routine is only called in the "background"
+!  phase.
 !
         IF (INDEX(TRIM(uppercase(Phase4DVAR)),'BACKG').ne.0) THEN
           Lappend=.FALSE.
+          Lstiffness=.TRUE.
         ELSE
           Lappend=.TRUE.
+          Lstiffness=.FALSE.
         END IF
 !
 !  Read in model tunable parameters from standard input. Allocate and
@@ -175,22 +179,29 @@
         IF (FoundError(exit_flag, NoError, __LINE__,                    &
      &                 __FILE__)) RETURN
 !
+!  Initialize counters. The 'Nrun' counter will be recomputed in the
+!  RBL4D-Var phases to process the obervation operator correctly.
+!
+        Nrun=1                ! run counter
+        ERstr=1               ! ensemble start counter
+        ERend=Nouter          ! ensemble end counter
+!
 !  Set domain decomposition tile partition range.  This range is
 !  computed only once since the "first_tile" and "last_tile" values
 !  are private for each parallel thread/node.
 !
 #if defined _OPENMP
-      MyThread=my_threadnum()
+        MyThread=my_threadnum()
 #elif defined DISTRIBUTE
-      MyThread=MyRank
+        MyThread=MyRank
 #else
-      MyThread=0
+        MyThread=0
 #endif
-      DO ng=1,Ngrids
-        chunk_size=(NtileX(ng)*NtileE(ng)+numthreads-1)/numthreads
-        first_tile(ng)=MyThread*chunk_size
-        last_tile (ng)=first_tile(ng)+chunk_size-1
-      END DO
+        DO ng=1,Ngrids
+          chunk_size=(NtileX(ng)*NtileE(ng)+numthreads-1)/numthreads
+          first_tile(ng)=MyThread*chunk_size
+          last_tile (ng)=first_tile(ng)+chunk_size-1
+        END DO
 !
 !  Initialize internal wall clocks. Notice that the timings does not
 !  includes processing standard input because several parameters are
@@ -307,9 +318,6 @@
       END DO
 !
       Ldone=.FALSE.         ! 4D-Var cycle finish switch
-      Nrun=1                ! run counter
-      ERstr=1               ! ensemble start counter
-      ERend=Nouter          ! ensemble end counter
 !
 !  Select R4D-Var phase to execute.
 !
@@ -388,7 +396,7 @@
 !
 !  Set finish R4D-Var cycle switch.
 !
-      IF ((OuterLoop.eq.Nouter).and.                                   &
+      IF ((OuterLoop.eq.Nouter).and.                                    &
 #if defined POSTERIOR_ERROR_I || \
     defined POSTERIOR_ERROR_F || \
     defined POSTERIOR_EOFS

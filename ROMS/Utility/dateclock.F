@@ -2,7 +2,7 @@
       MODULE dateclock_mod
 !
 !git $Id$
-!svn $Id: dateclock.F 1039 2020-10-12 03:54:49Z arango $
+!svn $Id: dateclock.F 1043 2020-11-12 04:56:14Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -1146,7 +1146,7 @@
       END SUBROUTINE ref_clock
 !
 !**********************************************************************
-      SUBROUTINE ROMS_clock (year, month, day, hour, minutes, seconds, &
+      SUBROUTINE ROMS_clock (year, month, day, hour, minutes, seconds,  &
      &                       ClockTime)
 !***********************************************************************
 !                                                                      !
@@ -1195,7 +1195,7 @@
 !
 !  Convert requested date into date number.
 !
-      CALL datenum (DateNumber, year, month, day,                      &
+      CALL datenum (DateNumber, year, month, day,                       &
      &              hour, minutes, seconds)
 !
 !  Compute ROMS clock elapsed time in seconds.

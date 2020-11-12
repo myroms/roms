@@ -1,7 +1,7 @@
       SUBROUTINE biology (ng,tile)
 !
 !git $Id$
-!svn $Id: fennel.h 1038 2020-09-29 01:54:25Z arango $
+!svn $Id: fennel.h 1043 2020-11-12 04:56:14Z arango $
 !***********************************************************************
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license           Hernan G. Arango   !
@@ -339,7 +339,7 @@
 # elif defined RW14_OXYGEN_SC
 !
 ! Alternative formulation for Schmidt number coefficients using the
-! formulation of Wanninkhof (2014, L&O Methods, 12,351-362).
+! formulation of Wanninkhof (2014, L and O Methods, 12,351-362).
 !
       real(r8), parameter :: A_O2 = 1920.4_r8
       real(r8), parameter :: B_O2 = 135.6_r8
@@ -872,7 +872,7 @@
 !  Phytoplankton grazing by zooplankton (rate: ZooGR), phytoplankton
 !  assimilated to zooplankton (fraction: ZooAE_N) and egested to small
 !  detritus, and phytoplankton mortality (rate: PhyMR) to small
-!  detritus. [Landry 1993 L&O 38:468-472]
+!  detritus. [Landry 1993 L and O 38:468-472]
 !-----------------------------------------------------------------------
 !
           fac1=dtdays*ZooGR(ng)
@@ -1109,7 +1109,7 @@
             cff3=cff2*u10squ*SQRT(660.0_r8/SchmidtN_Ox)
 !
 !  Calculate O2 saturation concentration using Garcia and Gordon
-!  L&O (1992) formula, (EXP(AA) is in ml/l).
+!  L and O (1992) formula, (EXP(AA) is in ml/l).
 !
             TS=LOG((298.15_r8-Bio(i,k,itemp))/                          &
      &             (273.15_r8+Bio(i,k,itemp)))

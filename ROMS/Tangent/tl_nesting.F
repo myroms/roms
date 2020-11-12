@@ -4,7 +4,7 @@
 #if defined NESTING && defined TANGENT
 !
 !git $Id$
-!svn $Id: tl_nesting.F 995 2020-01-10 04:01:28Z arango $
+!svn $Id: tl_nesting.F 1043 2020-11-12 04:56:14Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -2344,8 +2344,8 @@
             END DO
 # else
 !>          CALL exchange_r2d_tile (rg, tile,                           &
-!>     &                            LBiR, UBiR, LBjR, UBjR,             &
-!>     &                            OCEAN(rg)%zeta(:,:,Rindex2d))
+!>   &                              LBiR, UBiR, LBjR, UBjR,             &
+!>   &                              OCEAN(rg)%zeta(:,:,Rindex2d))
 !>
             CALL exchange_r2d_tile (rg, tile,                           &
      &                              LBiR, UBiR, LBjR, UBjR,             &
@@ -3153,25 +3153,25 @@
 
 #  ifdef NESTING_DEBUG
 !
-!>      CALL mp_assemble (ng, model, NptsWE, spv,                        &
+!>      CALL mp_assemble (ng, model, NptsWE, spv,                       &
 !>   &                    BRY_CONTACT(iwest ,cr)%Mflux(JLB:))
 !>
-        CALL mp_assemble (ng, model, NptsWE, spv,                        &
+        CALL mp_assemble (ng, model, NptsWE, spv,                       &
      &                    BRY_CONTACT(iwest ,cr)%tl_Mflux(JLB:))
-!>      CALL mp_assemble (ng, model, NptsWE, spv,                        &
+!>      CALL mp_assemble (ng, model, NptsWE, spv,                       &
 !>   &                    BRY_CONTACT(ieast ,cr)%Mflux(JLB:))
 !>
-        CALL mp_assemble (ng, model, NptsWE, spv,                        &
+        CALL mp_assemble (ng, model, NptsWE, spv,                       &
      &                    BRY_CONTACT(ieast ,cr)%tl_Mflux(JLB:))
-!>      CALL mp_assemble (ng, model, NptsSN, spv,                        &
+!>      CALL mp_assemble (ng, model, NptsSN, spv,                       &
 !>   &                    BRY_CONTACT(isouth,cr)%Mflux(ILB:))
 !>
-        CALL mp_assemble (ng, model, NptsSN, spv,                        &
+        CALL mp_assemble (ng, model, NptsSN, spv,                       &
      &                    BRY_CONTACT(isouth,cr)%tl_Mflux(ILB:))
-!>      CALL mp_assemble (ng, model, NptsSN, spv,                        &
-!>    &                    BRY_CONTACT(inorth,cr)%Mflux(ILB:))
+!>      CALL mp_assemble (ng, model, NptsSN, spv,                       &
+!>   &                    BRY_CONTACT(inorth,cr)%Mflux(ILB:))
 !>
-        CALL mp_assemble (ng, model, NptsSN, spv,                        &
+        CALL mp_assemble (ng, model, NptsSN, spv,                       &
      &                    BRY_CONTACT(inorth,cr)%tl_Mflux(ILB:))
 #  endif
       END IF
@@ -4867,7 +4867,7 @@
               ELSE
                 MFratio=1.0_r8
               END IF
-              WRITE (301,30) Ibc, REFINED(cr)%DV_avg2(1,m,tnew),         &
+              WRITE (301,30) Ibc, REFINED(cr)%DV_avg2(1,m,tnew),        &
      &                       NorthSum, MFratio
 # endif
             END IF
@@ -4877,21 +4877,21 @@
 !
 !  Collect data from all nodes.
 !
-          CALL mp_assemble (dg, model, NptsWE, spv,                      &
+          CALL mp_assemble (dg, model, NptsWE, spv,                     &
      &                      BRY_CONTACT(iwest ,cjcr)%Mflux(JLB:))
-          CALL mp_assemble (dg, model, NptsWE, spv,                      &
+          CALL mp_assemble (dg, model, NptsWE, spv,                     &
      &                      BRY_CONTACT(ieast ,cjcr)%Mflux(JLB:))
-          CALL mp_assemble (dg, model, NptsSN, spv,                      &
+          CALL mp_assemble (dg, model, NptsSN, spv,                     &
      &                      BRY_CONTACT(isouth,cjcr)%Mflux(ILB:))
-          CALL mp_assemble (dg, model, NptsSN, spv,                      &
+          CALL mp_assemble (dg, model, NptsSN, spv,                     &
      &                      BRY_CONTACT(inorth,cjcr)%Mflux(ILB:))
-          CALL mp_assemble (dg, model, NptsWE, spv,                      &
+          CALL mp_assemble (dg, model, NptsWE, spv,                     &
      &                      BRY_CONTACT(iwest ,cjcr)%tl_Mflux(JLB:))
-          CALL mp_assemble (dg, model, NptsWE, spv,                      &
+          CALL mp_assemble (dg, model, NptsWE, spv,                     &
      &                      BRY_CONTACT(ieast ,cjcr)%tl_Mflux(JLB:))
-          CALL mp_assemble (dg, model, NptsSN, spv,                      &
+          CALL mp_assemble (dg, model, NptsSN, spv,                     &
      &                      BRY_CONTACT(isouth,cjcr)%tl_Mflux(ILB:))
-          CALL mp_assemble (dg, model, NptsSN, spv,                      &
+          CALL mp_assemble (dg, model, NptsSN, spv,                     &
      &                      BRY_CONTACT(inorth,cjcr)%tl_Mflux(ILB:))
 # endif
         END IF

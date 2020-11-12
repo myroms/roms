@@ -5,7 +5,7 @@
       SUBROUTINE time_corr (ng, tile, model, INPncname)
 !
 !git $Id$
-!svn $Id: time_corr.F 995 2020-01-10 04:01:28Z arango $
+!svn $Id: time_corr.F 1043 2020-11-12 04:56:14Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -790,13 +790,13 @@
       IF (Master)  WRITE (stdout,50) Nrec-1, TRIM(TLF(ng)%name)
 !
   10  FORMAT (/,' TIME_CORR - unable to open input NetCDF file: ',a)
-  20  FORMAT (/,' TIME_CORR - error while reading variable: ',a,2x,    &
+  20  FORMAT (/,' TIME_CORR - error while reading variable: ',a,2x,     &
      &        'at time record = ',i3,/,17x,'in input NetCDF file: ',a)
-  30  FORMAT (/,' TIME_CORR - error while writing variable: ',a,2x,    &
+  30  FORMAT (/,' TIME_CORR - error while writing variable: ',a,2x,     &
      &        'at time record = ',i3,/,17x,'into NetCDF file: ',a)
-  40  FORMAT (/,' TIME_CORR - cannot find state variable: ',a,         &
+  40  FORMAT (/,' TIME_CORR - cannot find state variable: ',a,          &
      &        /,12x,'in input NetCDF file: ',a)
-  50  FORMAT (4x,'TIME_CORR - wrote convolved adjoint impulses, ',     &
+  50  FORMAT (4x,'TIME_CORR - wrote convolved adjoint impulses, ',      &
      &           'records: 001 to ',i3.3,/,18x,'file: ',a)
 
       RETURN

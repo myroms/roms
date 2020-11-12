@@ -2,7 +2,7 @@
       SUBROUTINE checkadj
 !
 !git $Id$
-!svn $Id: checkadj.F 1039 2020-10-12 03:54:49Z arango $
+!svn $Id: checkadj.F 1043 2020-11-12 04:56:14Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -526,6 +526,7 @@
      &                               'not allowed, FATAL ERROR'
       END IF
 !
+# if defined TANGENT || defined TL_IOMS
       IF (ANY(tl_Hadvection(:,:)%MPDATA).or.                            &
      &    ANY(tl_Vadvection(:,:)%MPDATA)) THEN
         string=uppercase('mpdata')
@@ -558,6 +559,7 @@
      &                                 'not coded, FATAL ERROR'
         END IF
       END IF
+# endif
 !
       string=uppercase('ts_smagorinsky')
       ifound=INDEX(TRIM(Coptions), TRIM(string))

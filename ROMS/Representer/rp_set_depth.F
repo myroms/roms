@@ -3,7 +3,7 @@
 #ifdef TL_IOMS
 !
 !git $Id$
-!svn $Id: rp_set_depth.F 995 2020-01-10 04:01:28Z arango $
+!svn $Id: rp_set_depth.F 1043 2020-11-12 04:56:14Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -883,7 +883,7 @@
           END DO
         END IF
 
-        IF (tl_LBC(inorth,isFsur,ng)%acquire.and.                        &
+        IF (tl_LBC(inorth,isFsur,ng)%acquire.and.                       &
      &      DOMAIN(ng)%Northern_Edge(tile)) THEN
           j=BOUNDS(ng)%edge(inorth,r2dvar)
           DO i=IstrT,IendT

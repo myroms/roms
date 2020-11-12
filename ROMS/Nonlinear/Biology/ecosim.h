@@ -1,7 +1,7 @@
       SUBROUTINE biology (ng, tile)
 !
 !git $Id$
-!svn $Id: ecosim.h 995 2020-01-10 04:01:28Z arango $
+!svn $Id: ecosim.h 1043 2020-11-12 04:56:14Z arango $
 !************************************************** Hernan G. Arango ***
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -785,11 +785,11 @@
                     s_phy(i,k,iband)=s_phy(i,k,iband)+par_s
                     b_phy(i,k,iband)=b_phy(i,k,iband)+par_b
                     DiaBio4d(i,j,k,iband,idsPHY)=DiaBio4d(i,j,k,iband,  &
-    &                                                     idsPHY)+      &
-    &                                            s_phy(i,k,iband)
+     &                                                    idsPHY)+      &
+     &                                           s_phy(i,k,iband)
                     DiaBio4d(i,j,k,iband,idbPHY)=DiaBio4d(i,j,k,iband,  &
-    &                                                     idbPHY)+      &
-    &                                            b_phy(i,k,iband)
+     &                                                    idbPHY)+      &
+     &                                           b_phy(i,k,iband)
 #endif
 !
 !  However, for omega0 calculation, "par_s" must be spectral, so use

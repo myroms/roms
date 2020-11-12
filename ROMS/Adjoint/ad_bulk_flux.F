@@ -3,7 +3,7 @@
 #if defined ADJOINT && defined BULK_FLUXES_NOT_YET
 !
 !git $Id$
-!svn $Id: ad_bulk_flux.F 1022 2020-05-13 03:03:15Z arango $
+!svn $Id: ad_bulk_flux.F 1043 2020-11-12 04:56:14Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -851,7 +851,7 @@
           cff=(1.0007_r8+3.46E-6_r8*PairM)*6.1121_r8*                   &
      &            EXP(17.502_r8*TseaC(i)/(240.97_r8+TseaC(i)))
 !
-!  Vapor Pressure reduced for salinity (Kraus & Businger, 1994, pp 42).
+!  Vapor Pressure reduced for salinity (Kraus and Businger, 1994, pp42).
 !
           cff=cff*0.98_r8
 !
@@ -1365,7 +1365,7 @@
           cff=(1.0007_r8+3.46E-6_r8*PairM)*6.1121_r8*                   &
      &            EXP(17.502_r8*TseaC(i)/(240.97_r8+TseaC(i)))
 !
-!  Vapor Pressure reduced for salinity (Kraus & Businger, 1994, pp 42).
+!  Vapor Pressure reduced for salinity (Kraus and Businger, 1994, pp42).
 !
           cff=cff*0.98_r8
 !
@@ -2176,7 +2176,7 @@
           cff=(1.0007_r8+3.46E-6_r8*PairM)*6.1121_r8*                   &
      &            EXP(17.502_r8*TseaC(i)/(240.97_r8+TseaC(i)))
 !
-!  Vapor Pressure reduced for salinity (Kraus & Businger, 1994, pp 42).
+!  Vapor Pressure reduced for salinity (Kraus and Businger, 1994, pp42).
 !
           cff=cff*0.98_r8
 !
@@ -2522,7 +2522,7 @@
           ad_fac=0.0_r8
 !
 !  Adjoint Vapor Pressure reduced for salinity
-!  (Kraus & Businger, 1994, pp 42).
+!  (Kraus and Businger, 1994, pp 42).
 !
 !>        tl_cff=tl_cff*0.98_r8
 !>
@@ -2681,9 +2681,9 @@
      &       LOG(0.5_r8*(1.0_r8+x*x))-                                  &
      &       2.0_r8*ATAN(x)+0.5_r8*pi
         tl_psik=tl_x/(0.5_r8*(1.0_r8+x))+                               &
-     &       tl_x*x/(0.5_r8*(1.0_r8+x*x))-                              &
-     &       2.0_r8*tl_x/(1.0_r8+x*x)
-!     &       2.0_r8*tl_x/SQRT(1.0_r8+x*x)
+     &          tl_x*x/(0.5_r8*(1.0_r8+x*x))-                           &
+     &          2.0_r8*tl_x/(1.0_r8+x*x)
+!!   &          2.0_r8*tl_x/SQRT(1.0_r8+x*x)
 !
 !  For very unstable conditions, use free-convection (Fairall).
 !
@@ -2695,8 +2695,8 @@
         psic=1.5_r8*LOG(r3*(1.0_r8+y+y*y))-                             &
      &       cff*ATAN(fac)+pi/cff
         tl_psic=tl_y*(1.0_r8+2.0_r8*y)*1.5_r8/(1.0_r8+y+y*y)-           &
-     &       cff*tl_fac/(1.0_r8+fac*fac)
-!     &       cff*tl_fac/SQRT(1.0_r8+fac*fac)
+     &          cff*tl_fac/(1.0_r8+fac*fac)
+!!   &          cff*tl_fac/SQRT(1.0_r8+fac*fac)
 !
 !  Match Kansas and free-convection forms with weighting Fw.
 !
@@ -2777,8 +2777,8 @@
         psic=1.5_r8*LOG(r3*(1.0_r8+y+y*y))-                             &
      &       cff*ATAN(fac)+pi/cff
         tl_psic=tl_y*(1.0_r8+2.0_r8*y)*1.5_r8/(1.0_r8+y+y*y)-           &
-     &       cff*tl_fac/(1.0_r8+fac*fac)
-!     &       cff*tl_fac/SQRT(1.0_r8+fac*fac)
+     &          cff*tl_fac/(1.0_r8+fac*fac)
+!!   &          cff*tl_fac/SQRT(1.0_r8+fac*fac)
 !
 !  Match Kansas and free-convection forms with weighting Fw.
 !
@@ -2797,7 +2797,7 @@
         fac=EXP(cff)
         tl_fac=tl_cff*fac
         ad_bulk_psit=-(3.0_r8*tl_ZoL*(1.0_r8+2.0_r8*ZoL)**0.5_r8+       &
-     &            0.6667_r8*tl_ZoL/fac-                                 &
+     &               0.6667_r8*tl_ZoL/fac-                              &
      &               tl_fac*0.6667_r8*(ZoL-14.28_r8)/(fac*fac))
       END IF
       RETURN

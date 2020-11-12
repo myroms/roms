@@ -1,7 +1,7 @@
       SUBROUTINE biology (ng,tile)
 !
 !git $Id$
-!svn $Id: hypoxia_srm.h 995 2020-01-10 04:01:28Z arango $
+!svn $Id: hypoxia_srm.h 1043 2020-11-12 04:56:14Z arango $
 !************************************************** Hernan G. Arango ***
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -333,7 +333,7 @@
 !-----------------------------------------------------------------------
 !
 !  Calculate O2 saturation concentration using Garcia and Gordon
-!  L&O (1992) formula, (EXP(AA) is in ml/l).
+!  L and O (1992) formula, (EXP(AA) is in ml/l).
 !
           k=N(ng)
           DO i=Istr,Iend
@@ -392,7 +392,7 @@
             cff4=cff3*u10squ*SQRT(660.0_r8/SchmidtN_Ox)
 !
 !  Calculate O2 saturation concentration using Garcia and Gordon
-!  L&O (1992) formula, (EXP(AA) is in ml/l).
+!  L and O (1992) formula, (EXP(AA) is in ml/l).
 !
             TS=LOG((298.15_r8-Bio(i,k,itemp))/                          &
      &             (273.15_r8+Bio(i,k,itemp)))

@@ -5,7 +5,7 @@
 #if defined WEAK_CONSTRAINT && defined RPCG
 !
 !git $Id$
-!svn $Id: rpcg_lanczos.F 1035 2020-07-28 00:49:02Z arango $
+!svn $Id: rpcg_lanczos.F 1043 2020-11-12 04:56:14Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group       Selime Gurol      !
 !    Licensed under a MIT/X style license            Andrew M. Moore   !
@@ -557,13 +557,13 @@
             ELSE
               DO iobs=1,Ndatum(ng)
 !AMM            Jopt=Jopt-                                              &
-!AMM     &           (px(iobs)+cg_pxsave(iobs))*cg_innov(iobs)
+!AMM &               (px(iobs)+cg_pxsave(iobs))*cg_innov(iobs)
                 IF (ObsErr(iobs).ne.0.0_r8) THEN
                   Jf=Jf+cg_innov(iobs)*cg_innov(iobs)
                 END IF
 !AMM            Jdata=Jdata+                                            &
-!AMM     &            (px(iobs)+cg_pxsave(iobs))*                       &
-!AMM     &            (px(iobs)+cg_pxsave(iobs))
+!AMM &                (px(iobs)+cg_pxsave(iobs))*                       &
+!AMM &                (px(iobs)+cg_pxsave(iobs))
               END DO
               Jmod=Jopt-Jdata
             END IF
@@ -672,7 +672,7 @@
             DO ivec=1,innLoop-1
               Jb=Jb+ztemp2(ivec)*ztemp2(ivec)
 !TEST         Jact=Jact-ztemp1(ivec)*ztemp2(ivec)+                      &
-!TEST     &        2.0_r8*ztemp2(ivec)*ztemp3(ivec)
+!    &             2.0_r8*ztemp2(ivec)*ztemp3(ivec)
               Jact=Jact-ztemp1(ivec)*ztemp2(ivec)
             END DO
             DO iobs=1,Ndatum(ng)
@@ -867,7 +867,7 @@
      &                                    FOURDVAR(ng)%cg_pxsave(iobs)
               FOURDVAR(ng)%cg_pxsave(iobs)=px(iobs)
 !AMM          FOURDVAR(ng)%cg_pxsum(iobs)=FOURDVAR(ng)%cg_pxsum(iobs)+  &
-!AMM     &                                px(iobs)
+!AMM &                                    px(iobs)
             END DO
           ELSE
 !
@@ -1387,8 +1387,8 @@
 !  NOTE: We still need the code for Lscale=-1.
 !
            IF (Lscale.eq.1) THEN
-             facritz=cg_beta(NinnLoop+1,nol)*                          &
-     &               cg_zv(NinnLoop,NinnLoop+1-nvec,nol)/              &
+             facritz=cg_beta(NinnLoop+1,nol)*                           &
+     &               cg_zv(NinnLoop,NinnLoop+1-nvec,nol)/               &
      &               cg_Ritz(NinnLoop+1-nvec,nol)
              DO iobs=1,Ndatum(ng)
                py(iobs)=py(iobs)+                                       &

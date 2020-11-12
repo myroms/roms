@@ -1,7 +1,7 @@
       SUBROUTINE read_SedPar (model, inp, out, Lwrite)
 !
 !git $Id$
-!svn $Id: sediment_inp.h 1031 2020-07-14 01:39:55Z arango $
+!svn $Id: sediment_inp.h 1043 2020-11-12 04:56:14Z arango $
 !=======================================================================
 !                                                                      !
 !  This routine reads in cohesive and non-cohesive sediment model      !
@@ -1578,76 +1578,76 @@
               WRITE (out,'(1x)')
               DO i=1,NST
                 itrc=idsed(i)
-                IF (Dout(idDtrc(itrc,iTrate),ng))                         &
-     &            WRITE (out,160) .TRUE., 'Dout(iTrate)',                 &
-     &              'Write out rate of change of tracer ', itrc,          &
+                IF (Dout(idDtrc(itrc,iTrate),ng))                       &
+     &            WRITE (out,160) .TRUE., 'Dout(iTrate)',               &
+     &              'Write out rate of change of tracer ', itrc,        &
      &              TRIM(Vname(1,idTvar(itrc)))
               END DO
               DO i=1,NST
                 itrc=idsed(i)
-                IF (Dout(idDtrc(itrc,iThadv),ng))                         &
-     &            WRITE (out,160) .TRUE., 'Dout(iThadv)',                 &
-     &              'Write out horizontal advection, tracer ', itrc,      &
+                IF (Dout(idDtrc(itrc,iThadv),ng))                       &
+     &            WRITE (out,160) .TRUE., 'Dout(iThadv)',               &
+     &              'Write out horizontal advection, tracer ', itrc,    &
      &              TRIM(Vname(1,idTvar(itrc)))
               END DO
               DO i=1,NST
                 itrc=idsed(i)
-                IF (Dout(idDtrc(itrc,iTxadv),ng))                         &
-     &            WRITE (out,160) .TRUE., 'Dout(iTxadv)',                 &
-     &              'Write out horizontal X-advection, tracer ', itrc,    &
+                IF (Dout(idDtrc(itrc,iTxadv),ng))                       &
+     &            WRITE (out,160) .TRUE., 'Dout(iTxadv)',               &
+     &              'Write out horizontal X-advection, tracer ', itrc,  &
      &              TRIM(Vname(1,idTvar(itrc)))
               END DO
               DO i=1,NST
                 itrc=idsed(i)
-                IF (Dout(idDtrc(itrc,iTyadv),ng))                         &
-     &            WRITE (out,160) .TRUE., 'Dout(iTyadv)',                 &
-     &              'Write out horizontal Y-advection, tracer ', itrc,    &
+                IF (Dout(idDtrc(itrc,iTyadv),ng))                       &
+     &            WRITE (out,160) .TRUE., 'Dout(iTyadv)',               &
+     &              'Write out horizontal Y-advection, tracer ', itrc,  &
      &              TRIM(Vname(1,idTvar(itrc)))
               END DO
               DO i=1,NST
                 itrc=idsed(i)
-                IF (Dout(idDtrc(itrc,iTvadv),ng))                         &
-     &            WRITE (out,160) .TRUE., 'Dout(iTvadv)',                 &
-     &              'Write out vertical advection, tracer ', itrc,        &
+                IF (Dout(idDtrc(itrc,iTvadv),ng))                       &
+     &            WRITE (out,160) .TRUE., 'Dout(iTvadv)',               &
+     &              'Write out vertical advection, tracer ', itrc,      &
      &              TRIM(Vname(1,idTvar(itrc)))
               END DO
 # if defined TS_DIF2 || defined TS_DIF4
               DO i=1,NST
                 itrc=idsed(i)
-                IF (Dout(idDtrc(itrc,iThdif),ng))                         &
-     &            WRITE (out,160) .TRUE., 'Dout(iThdif)',                 &
-     &              'Write out horizontal diffusion, tracer ', itrc,      &
+                IF (Dout(idDtrc(itrc,iThdif),ng))                       &
+     &            WRITE (out,160) .TRUE., 'Dout(iThdif)',               &
+     &              'Write out horizontal diffusion, tracer ', itrc,    &
      &              TRIM(Vname(1,idTvar(itrc)))
               END DO
               DO i=1,NST
                 itrc=idsed(i)
-                IF (Dout(idDtrc(i,iTxdif),ng))                            &
-     &            WRITE (out,160) .TRUE., 'Dout(iTxdif)',                 &
-     &              'Write out horizontal X-diffusion, tracer ', itrc,    &
+                IF (Dout(idDtrc(i,iTxdif),ng))                          &
+     &            WRITE (out,160) .TRUE., 'Dout(iTxdif)',               &
+     &              'Write out horizontal X-diffusion, tracer ', itrc,  &
      &              TRIM(Vname(1,idTvar(itrc)))
               END DO
               DO i=1,NST
                 itrc=idsed(i)
-                IF (Dout(idDtrc(itrc,iTydif),ng))                         &
-     &            WRITE (out,160) .TRUE., 'Dout(iTydif)',                 &
-     &              'Write out horizontal Y-diffusion, tracer ', itrc,    &
+                IF (Dout(idDtrc(itrc,iTydif),ng))                       &
+     &            WRITE (out,160) .TRUE., 'Dout(iTydif)',               &
+     &              'Write out horizontal Y-diffusion, tracer ', itrc,  &
      &              TRIM(Vname(1,idTvar(itrc)))
               END DO
 #  if defined MIX_GEO_TS || defined MIX_ISO_TS
               DO i=1,NST
                 itrc=idsed(i)
-                IF (Dout(idDtrc(itrc,iTsdif),ng))                         &
-     &            WRITE (out,160) .TRUE., 'Dout(iTsdif)',                 &
-     &              'Write out horizontal S-diffusion, tracer ', itrc,    &
+                IF (Dout(idDtrc(itrc,iTsdif),ng))                       &
+     &            WRITE (out,160) .TRUE., 'Dout(iTsdif)',               &
+     &              'Write out horizontal S-diffusion, tracer ', itrc,  &
      &              TRIM(Vname(1,idTvar(itrc)))
               END DO
 #  endif
 # endif
               DO i=1,NST
                 itrc=idsed(i)
-                IF (Dout(idDtrc(itrc,iTvdif),ng))                         &
-     &            WRITE (out,160) .TRUE., 'Dout(iTvdif)',                 &
-     &              'Write out vertical diffusion, tracer ', itrc,        &
+                IF (Dout(idDtrc(itrc,iTvdif),ng))                       &
+     &            WRITE (out,160) .TRUE., 'Dout(iTvdif)',               &
+     &              'Write out vertical diffusion, tracer ', itrc,      &
      &              TRIM(Vname(1,idTvar(itrc)))
               END DO
             END IF

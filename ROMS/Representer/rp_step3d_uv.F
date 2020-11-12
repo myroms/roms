@@ -3,7 +3,7 @@
 #if defined TL_IOMS && defined SOLVE3D
 !
 !git $Id$
-!svn $Id: rp_step3d_uv.F 1029 2020-07-11 02:11:09Z arango $
+!svn $Id: rp_step3d_uv.F 1043 2020-11-12 04:56:14Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -570,7 +570,7 @@
             tl_DC(i,k)=tl_DC(i,k)*AK(i,k)+DC(i,k)*tl_AK(i,k)
 #  ifdef TL_IOMS
 !           tl_DC(i,k)=tl_DC(i,k)-                                      &
-!     &                DC(i,k)*AK(i,k)    ! needed if tl_AK is computed
+!    &                 DC(i,k)*AK(i,k)    ! needed if tl_AK is computed
 #  endif
             DC(i,k)=DC(i,k)*AK(i,k)
 !>          cff=dt(ng)*oHz(i,k)*(DC(i,k)-DC(i,k-1))

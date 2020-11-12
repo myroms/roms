@@ -3,7 +3,7 @@
 #ifdef ADJOINT
 !
 !git $Id$
-!svn $Id: ad_ini_fields.F 1022 2020-05-13 03:03:15Z arango $
+!svn $Id: ad_ini_fields.F 1043 2020-11-12 04:56:14Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -318,7 +318,7 @@
 !!            tl_t(i,j,k,nnew,itrc)=tl_cff1
 !>
               ad_cff1=ad_cff1+ad_t(i,j,k,nstp,itrc)
-!!  &                        ad_t(i,j,k,nnew,itrc)
+!!   &                        ad_t(i,j,k,nnew,itrc)
               ad_t(i,j,k,nstp,itrc)=0.0_r8
 !!            ad_t(i,j,k,nnew,itrc)=0.0_r8
 #  ifdef MASKING
@@ -886,7 +886,7 @@
 !!          tl_u(i,j,k,nnew)=tl_cff1
 !>
             ad_cff1=ad_cff1+ad_u(i,j,k,nstp)
-!!    &                    +ad_u(i,j,k,nnew)          ! only nstp needed
+!!   &                     +ad_u(i,j,k,nnew)          ! only nstp needed
             ad_u(i,j,k,nstp)=0.0_r8
 !!          ad_u(i,j,k,nnew)=0.0_r8
 #  ifdef MASKING

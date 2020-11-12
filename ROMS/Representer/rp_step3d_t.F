@@ -5,7 +5,7 @@
 #if !defined TS_FIXED && (defined TL_IOMS && defined SOLVE3D)
 !
 !git $Id$
-!svn $Id: rp_step3d_t.F 1034 2020-07-15 21:16:28Z arango $
+!svn $Id: rp_step3d_t.F 1043 2020-11-12 04:56:14Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -1249,7 +1249,7 @@
 !
       IF (LwSrc(ng)) THEN
         DO itrc=1,NT(ng)
-          IF (.not.((tl_Hadvection(itrc,ng)%MPDATA).and.                  &
+          IF (.not.((tl_Hadvection(itrc,ng)%MPDATA).and.                &
      &              (tl_Vadvection(itrc,ng)%MPDATA))) THEN
             DO is=1,Nsrc(ng)
               Isrc=SOURCES(ng)%Isrc(is)

@@ -3,7 +3,7 @@
 #ifdef BULK_FLUXES
 !
 !git $Id$
-!svn $Id: bulk_flux.F 1039 2020-10-12 03:54:49Z arango $
+!svn $Id: bulk_flux.F 1043 2020-11-12 04:56:14Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -541,7 +541,7 @@
           cff=(1.0007_r8+3.46E-6_r8*PairM)*6.1121_r8*                   &
      &        EXP(17.502_r8*TseaC(i)/(240.97_r8+TseaC(i)))
 !
-!  Vapor Pressure reduced for salinity (Kraus & Businger, 1994, pp 42).
+!  Vapor Pressure reduced for salinity (Kraus and Businger, 1994, pp42).
 !
           cff=cff*0.98_r8
 !

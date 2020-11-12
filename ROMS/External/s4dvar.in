@@ -1,7 +1,7 @@
 !  4D-Var assimilation input parameters.
 !
 !git $Id$
-!svn $Id: s4dvar.in 1026 2020-05-20 02:05:37Z arango $
+!svn $Id: s4dvar.in 1043 2020-11-12 04:56:14Z arango $
 !========================================================= Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                                !
 !    Licensed under a MIT/X style license                                     !
@@ -441,8 +441,8 @@ HdecayF(isTsur) == 100.0d+3  100.0d+3             ! 1:NT surface tracers flux
 ! impacts during the analysis-forecast cycle when the forecast is initialized
 ! with the 4D-Var analysis (OIFnameA) or the 4D-Var background (OIFnameB).
 
-      OIFnameA == roms_oif_a.nc
-      OIFnameB == roms_oif_b.nc
+       OIFnameA == roms_oif_a.nc
+       OIFnameB == roms_oif_b.nc
 
 !
 !  GLOSSARY:

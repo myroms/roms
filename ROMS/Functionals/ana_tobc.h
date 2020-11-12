@@ -1,7 +1,7 @@
       SUBROUTINE ana_tobc (ng, tile, model)
 !
 !! git $Id$
-!! svn $Id: ana_tobc.h 1016 2020-04-27 02:06:37Z arango $
+!! svn $Id: ana_tobc.h 1043 2020-11-12 04:56:14Z arango $
 !!======================================================================
 !! Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !!   Licensed under a MIT/X style license                              !
@@ -173,7 +173,7 @@
         END DO
       END IF
 
-      IF (ANY(LBC(isouth,isTvar(:),ng)%acquire).and.                     &
+      IF (ANY(LBC(isouth,isTvar(:),ng)%acquire).and.                    &
      &    DOMAIN(ng)%Southern_Edge(tile)) THEN
         DO k=1,N(ng)
           DO i=IstrT,IendT

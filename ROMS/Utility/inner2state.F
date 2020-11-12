@@ -3,7 +3,7 @@
 #if defined HESSIAN_FSV || defined HESSIAN_SO || defined HESSIAN_SV
 !
 !git $Id$
-!svn $Id: inner2state.F 1022 2020-05-13 03:03:15Z arango $
+!svn $Id: inner2state.F 1043 2020-11-12 04:56:14Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -2458,7 +2458,7 @@
       real(r8), intent(inout) :: tl_zeta(LBi:UBi,LBj:UBj,3)
 #  ifdef ADJUST_BOUNDARY
 #   ifdef SOLVE3D
-      real(r8), intent(inout) :: t_obc(LBij:UBij,N(ng),4,            &
+      real(r8), intent(inout) :: t_obc(LBij:UBij,N(ng),4,               &
      &                                    Nbrec(ng),2,NT(ng))
       real(r8), intent(inout) :: u_obc(LBij:UBij,N(ng),4,Nbrec(ng),2)
       real(r8), intent(inout) :: v_obc(LBij:UBij,N(ng),4,Nbrec(ng),2)
@@ -2472,7 +2472,7 @@
       real(r8), intent(inout) :: vstr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
 #  endif
 #  if defined ADJUST_STFLUX && defined SOLVE3D
-      real(r8), intent(inout) :: tflux(LBi:UBi,LBj:UBj,              &
+      real(r8), intent(inout) :: tflux(LBi:UBi,LBj:UBj,                 &
      &                                    Nfrec(ng),2,NT(ng))
 #  endif
 #  ifdef SOLVE3D

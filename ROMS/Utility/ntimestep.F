@@ -2,7 +2,7 @@
       SUBROUTINE ntimesteps (model, RunInterval, nl, Nsteps, Rsteps)
 !
 !git $Id$
-!svn $Id: ntimestep.F 995 2020-01-10 04:01:28Z arango $
+!svn $Id: ntimestep.F 1043 2020-11-12 04:56:14Z arango $
 !=======================================================================
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -83,7 +83,7 @@
          DO ig=1,GridsInLayer(il)
            ng=GridNumber(ig,il)
            IF (Telescoping(ng).and.                                     &
-    &          (RefineStepsCounter(ng).lt.RefineSteps(ng))) THEN
+     &         (RefineStepsCounter(ng).lt.RefineSteps(ng))) THEN
              nl=il
            END IF
          END DO

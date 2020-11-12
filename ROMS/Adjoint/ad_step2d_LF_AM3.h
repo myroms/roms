@@ -3,7 +3,7 @@
       SUBROUTINE ad_step2d (ng, tile)
 !
 !git $Id$
-!svn $Id: ad_step2d_LF_AM3.h 1029 2020-07-11 02:11:09Z arango $
+!svn $Id: ad_step2d_LF_AM3.h 1043 2020-11-12 04:56:14Z arango $
 !=======================================================================
 !                                                                      !
 !  Adjoint shallow-water primitive equations predictor (Leap-frog)     !
@@ -4445,8 +4445,8 @@
         DO j=Jstr,Jend
           DO i=Istr,Iend
 # if defined WET_DRY_NOT_YET && defined MASKING
-!>          tl_zeta(i,j,knew)=tl_zeta(i,j,knew)-                          &
-!>    &                       tl_h(i,j)*(1.0_r8-rmask(i,j))
+!>          tl_zeta(i,j,knew)=tl_zeta(i,j,knew)-                        &
+!>   &                        tl_h(i,j)*(1.0_r8-rmask(i,j))
 !>
             ad_h(i,j)=ad_h(i,j)+(1.0_r8-rmask(i,j))*ad_zeta(i,j,knew)
 # endif

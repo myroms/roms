@@ -4,7 +4,7 @@
       SUBROUTINE biology (ng,tile)
 !
 !git $Id$
-!svn $Id: red_tide.h 995 2020-01-10 04:01:28Z arango $
+!svn $Id: red_tide.h 1043 2020-11-12 04:56:14Z arango $
 !******************************************************** Ruoying He ***
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -329,11 +329,11 @@
 !  of bottom temperature.
 !
             temp=Bio(i,1,itemp)                         ! bottom, k=1
-            GermL=(1.50_r8+                                              &
-     &             (8.72_r8-1.50_r8)*0.5_r8*                             &
+            GermL=(1.50_r8+                                             &
+     &             (8.72_r8-1.50_r8)*0.5_r8*                            &
      &             (TANH(0.790_r8*temp-6.27_r8)+1.0_r8))*oNsedLayers
-            GermD=(1.04_r8+                                              &
-     &             (4.26_r8-1.04_r8)*0.5_r8*                             &
+            GermD=(1.04_r8+                                             &
+     &             (4.26_r8-1.04_r8)*0.5_r8*                            &
      &             (TANH(0.394_r8*temp-3.33_r8)+1.0_r8))*oNsedLayers
 !
 !  Compute non-spectral irradiance flux at each sediment layer.  Then,

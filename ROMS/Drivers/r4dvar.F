@@ -4,7 +4,7 @@
 #ifdef R4DVAR
 !
 !git $Id$
-!svn $Id: r4dvar.F 1039 2020-10-12 03:54:49Z arango $
+!svn $Id: r4dvar.F 1043 2020-11-12 04:56:14Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -923,7 +923,7 @@
 !
           DO ng=1,Ngrids
             IF (Master) THEN
-              WRITE (stdout,20) 'AD', ng, my_outer, my_inner,            &
+              WRITE (stdout,20) 'AD', ng, my_outer, my_inner,           &
      &                          ntstart(ng), ntend(ng)
             END IF
           END DO

@@ -4,7 +4,7 @@
 #ifdef FOUR_DVAR
 !
 !git $Id$
-!svn $Id: convolve.F 1035 2020-07-28 00:49:02Z arango $
+!svn $Id: convolve.F 1043 2020-11-12 04:56:14Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -244,7 +244,7 @@
  10       FORMAT (/,' Convolving Adjoint Trajectory...')
         ELSE
           WRITE (stdout,20) outLoop, innLoop
- 20       FORMAT (/,' Convolving Adjoint Trajectory: Outer = ',i3.3,     &
+ 20       FORMAT (/,' Convolving Adjoint Trajectory: Outer = ',i3.3,    &
      &            ' Inner = ',i3.3)
         END IF
       END IF

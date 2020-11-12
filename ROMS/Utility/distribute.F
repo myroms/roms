@@ -3,7 +3,7 @@
 #ifdef DISTRIBUTE
 !
 !git $Id$
-!svn $Id: distribute.F 1026 2020-05-20 02:05:37Z arango $
+!svn $Id: distribute.F 1043 2020-11-12 04:56:14Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -1947,7 +1947,7 @@
 !  Structure Filenames.
 !
       Nchars=LEN(S(ng)%head)
-      CALL mpi_bcast (S(ng)%head, Nchars, MPI_BYTE, MyMaster,            &
+      CALL mpi_bcast (S(ng)%head, Nchars, MPI_BYTE, MyMaster,           &
      &                MyCOMM, MyError)
       IF (MyError.ne.MPI_SUCCESS) THEN
         CALL mpi_error_string (MyError, string, Lstr, Serror)
@@ -1958,7 +1958,7 @@
       END IF
 !
       Nchars=LEN(S(ng)%base)
-      CALL mpi_bcast (S(ng)%base, Nchars, MPI_BYTE, MyMaster,            &
+      CALL mpi_bcast (S(ng)%base, Nchars, MPI_BYTE, MyMaster,           &
      &                MyCOMM, MyError)
       IF (MyError.ne.MPI_SUCCESS) THEN
         CALL mpi_error_string (MyError, string, Lstr, Serror)
@@ -1969,7 +1969,7 @@
       END IF
 !
       Nchars=LEN(S(ng)%name)
-      CALL mpi_bcast (S(ng)%name, Nchars, MPI_BYTE, MyMaster,            &
+      CALL mpi_bcast (S(ng)%name, Nchars, MPI_BYTE, MyMaster,           &
      &                MyCOMM, MyError)
       IF (MyError.ne.MPI_SUCCESS) THEN
         CALL mpi_error_string (MyError, string, Lstr, Serror)
@@ -1980,7 +1980,7 @@
       END IF
 !
       Nchars=LEN(S(ng)%files(1))*S(ng)%Nfiles
-      CALL mpi_bcast (S(ng)%files, Nchars, MPI_BYTE, MyMaster,            &
+      CALL mpi_bcast (S(ng)%files, Nchars, MPI_BYTE, MyMaster,          &
      &                MyCOMM, MyError)
       IF (MyError.ne.MPI_SUCCESS) THEN
         CALL mpi_error_string (MyError, string, Lstr, Serror)

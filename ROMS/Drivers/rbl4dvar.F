@@ -4,7 +4,7 @@
 #ifdef RBL4DVAR
 !
 !git $Id$
-!svn $Id: rbl4dvar.F 1039 2020-10-12 03:54:49Z arango $
+!svn $Id: rbl4dvar.F 1043 2020-11-12 04:56:14Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -164,15 +164,6 @@
      &                    __FILE__)
         END DO
       END DO
-# endif
-
-# if defined MODEL_COUPLING && defined ESMF_LIB
-!
-!  Initialize several global parameters.
-!
-      Nrun=1                ! run counter
-      ERstr=1               ! ensemble start counter
-      ERend=Nouter          ! ensemble end counter
 # endif
 !
 !  Initialize the switch to gather weak constraint forcing.
