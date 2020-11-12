@@ -2,7 +2,7 @@
       SUBROUTINE checkdefs
 !
 !git $Id$
-!svn $Id: checkdefs.F 1043 2020-11-12 04:56:14Z arango $
+!svn $Id: checkdefs.F 1045 2020-11-12 16:17:59Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -2603,7 +2603,7 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+11)=' TLM_CHECK,'
 #endif
-#if defined TRACING && define PROFILE
+#if defined TRACING && defined PROFILE
 !
       IF (Master) WRITE (stdout,20) 'TRACING',                          &
      &   'Tracing sequence of routine calls for debugging'
