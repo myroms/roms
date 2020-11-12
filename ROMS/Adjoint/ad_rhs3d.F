@@ -3,7 +3,7 @@
 #if defined ADJOINT && defined SOLVE3D
 !
 !git $Id$
-!svn $Id: ad_rhs3d.F 995 2020-01-10 04:01:28Z arango $
+!svn $Id: ad_rhs3d.F 1043 2020-11-12 04:56:14Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -2913,8 +2913,8 @@
 #   endif
         DO j=JstrV-1,Jend
           DO i=Istr,Iend+1
-!>           tl_Huee(i,j)=tl_Huon(i,j-1,k)-2.0_r8*tl_Huon(i,j,k)+
-!>     &                  tl_Huon(i,j+1,k)
+!>           tl_Huee(i,j)=tl_Huon(i,j-1,k)-2.0_r8*tl_Huon(i,j,k)+       &
+!>   &                    tl_Huon(i,j+1,k)
 !>
             ad_Huon(i,j-1,k)=ad_Huon(i,j-1,k)+ad_Huee(i,j)
             ad_Huon(i,j  ,k)=ad_Huon(i,j  ,k)-2.0_r8*ad_Huee(i,j)

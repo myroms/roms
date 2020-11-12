@@ -2,7 +2,7 @@
 #ifdef SOLVE3D
 !
 !git $Id$
-!svn $Id: tadv.F 1031 2020-07-14 01:39:55Z arango $
+!svn $Id: tadv.F 1043 2020-11-12 04:56:14Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2019 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -411,7 +411,7 @@
  20   FORMAT (t26,i2,t31,a,t50,a)
  30   FORMAT (1x,a,t13,a)
  40   FORMAT (/,'TADV_REPORT - Illegal tracer advection scheme for ''', &
-    &         a,''' in grid: ',i0,/,14x,'''',a,'''',1x,a,'.',/)
+     &        a,''' in grid: ',i0,/,14x,'''',a,'''',1x,a,'.',/)
 !
       RETURN
       END SUBROUTINE tadv_report

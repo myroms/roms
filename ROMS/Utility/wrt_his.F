@@ -2,7 +2,7 @@
       SUBROUTINE wrt_his (ng, tile)
 !
 !git $Id$
-!svn $Id: wrt_his.F 1039 2020-10-12 03:54:49Z arango $
+!svn $Id: wrt_his.F 1043 2020-11-12 04:56:14Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -312,7 +312,7 @@
         DO k=1,N(ng)
           DO j=JstrV-1,Jend+1
             DO i=Istr-1,Iend+1
-              GRID(ng)%z_v(i,j,k)=0.5_r8*(GRID(ng)%z_r(i,j-1,k)+       &
+              GRID(ng)%z_v(i,j,k)=0.5_r8*(GRID(ng)%z_r(i,j-1,k)+        &
      &                                    GRID(ng)%z_r(i,j  ,k))
             END DO
           END DO

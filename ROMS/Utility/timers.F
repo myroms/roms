@@ -3,7 +3,7 @@
 !
 
 !git $Id$
-!svn $Id: timers.F 1028 2020-06-01 00:24:59Z arango $
+!svn $Id: timers.F 1043 2020-11-12 04:56:14Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -65,6 +65,13 @@
 !-----------------------------------------------------------------------
 !  Initialize timing for all threads.
 !-----------------------------------------------------------------------
+#ifdef TRACING
+!
+      IF (Master) THEN
+        WRITE (stdout,'(a,a)') '==> Entering ', TRIM(routine)
+        CALL my_flush (stdout)
+      END IF
+#endif
 !
 !  Set number of subdivisions, same as for global reductions.
 !
@@ -206,6 +213,13 @@
 !-----------------------------------------------------------------------
 !  Compute elapsed wall time for all threads.
 !-----------------------------------------------------------------------
+#ifdef TRACING
+!
+      IF (Master) THEN
+        WRITE (stdout,'(a,a)') '<== Exiting  ', TRIM(routine)
+        CALL my_flush (stdout)
+      END IF
+#endif
 !
 !  Set number of subdivisions, same as for global reductions.
 !
@@ -515,8 +529,8 @@
               END DO
             END DO
             IF (Master.and.(total.gt.0.0_r8)) THEN
-               WRITE (stdout,90) uppercase('mpi'),                         &
-     &                      'communications profile over all nested grids:'
+               WRITE (stdout,90) uppercase('mpi'),                      &
+     &                'communications profile over all nested grids:'
  90            FORMAT (/,1x,a,1x,a,/)
             END IF
             IF (total.gt.0.0_r8) THEN

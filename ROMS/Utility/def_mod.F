@@ -3,7 +3,7 @@
       SUBROUTINE def_mod (ng)
 !
 !git $Id$
-!svn $Id: def_mod.F 1039 2020-10-12 03:54:49Z arango $
+!svn $Id: def_mod.F 1043 2020-11-12 04:56:14Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -28,6 +28,7 @@
       USE mod_scalars
       USE mod_strings
 !
+      USE dateclock_mod,  ONLY : time_string
       USE def_var_mod,    ONLY : def_var
 # ifdef DISTRIBUTE
       USE distribute_mod, ONLY : mp_bcasti
@@ -46,7 +47,7 @@
 !
       logical, dimension(NV) :: got_var(NV)
       logical :: foundAtt(2), foundit
-
+!
       integer, parameter :: Natt = 25
 
       integer :: iterDim, datumDim, recordDim
@@ -72,9 +73,11 @@
       integer :: ibuffer(2)
 # endif
       integer :: def_dim
-
+!
+      real(dp) :: Tstart, Tfinal
       real(r8) :: Aval(6)
-
+!
+      character (len=22 )  :: str_date, end_date
       character (len=40 )  :: Aname, AttName(2)
       character (len=80 )  :: string
       character (len=120)  :: Vinfo(Natt)
@@ -315,6 +318,61 @@
             IF (FoundError(status, nf90_noerr, __LINE__,                &
      &                     __FILE__)) THEN
               WRITE (stdout,50) 'type', TRIM(ncname)
+              exit_flag=3
+              ioerror=status
+            END IF
+          END IF
+!
+!  Set cycle start and final time and dates attributes.
+!
+          IF (INItime(ng).lt.0.0_dp) THEN
+            Tstart=time(ng)+dt(ng)             ! called after 'initial'
+          ELSE
+            Tstart=INItime(ng)
+          END IF
+          Tfinal=Tstart+ntimes(ng)*dt(ng)
+          CALL time_string (Tstart, str_date)
+          CALL time_string (Tfinal, end_date)
+!
+          IF (exit_flag.eq.NoError) THEN
+            status=nf90_put_att(DAV(ng)%ncid, nf90_global,              &
+     &                          'str_day', Tstart*sec2day)
+            IF (FoundError(status, nf90_noerr, __LINE__,                &
+     &                     __FILE__)) THEN
+              WRITE (stdout,50) 'str_day', TRIM(ncname)
+              exit_flag=3
+              ioerror=status
+            END IF
+          END IF
+!
+          IF (exit_flag.eq.NoError) THEN
+            status=nf90_put_att(DAV(ng)%ncid, nf90_global,              &
+     &                          'end_day', Tfinal*sec2day)
+            IF (FoundError(status, nf90_noerr, __LINE__,                &
+     &                     __FILE__)) THEN
+              WRITE (stdout,50) 'end_day', TRIM(ncname)
+              exit_flag=3
+              ioerror=status
+            END IF
+          END IF
+!
+          IF (exit_flag.eq.NoError) THEN
+            status=nf90_put_att(DAV(ng)%ncid, nf90_global,              &
+     &                          'str_date', str_date)
+            IF (FoundError(status, nf90_noerr, __LINE__,                &
+     &                     __FILE__)) THEN
+              WRITE (stdout,50) 'str_date', TRIM(ncname)
+              exit_flag=3
+              ioerror=status
+            END IF
+          END IF
+!
+          IF (exit_flag.eq.NoError) THEN
+            status=nf90_put_att(DAV(ng)%ncid, nf90_global,              &
+     &                          'end_date', end_date)
+            IF (FoundError(status, nf90_noerr, __LINE__,                &
+     &                     __FILE__)) THEN
+              WRITE (stdout,50) 'end_date', TRIM(ncname)
               exit_flag=3
               ioerror=status
             END IF

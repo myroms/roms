@@ -4,7 +4,7 @@
 #if defined ADJOINT && defined SOLVE3D
 !
 !git $Id$
-!svn $Id: ad_step3d_uv.F 1029 2020-07-11 02:11:09Z arango $
+!svn $Id: ad_step3d_uv.F 1043 2020-11-12 04:56:14Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -684,20 +684,20 @@
                   ad_CFs(i,0)=ad_CFs(i,0)-ad_v_stokes(i,j,k)
 # endif
 # ifdef WET_DRY_NOT_YET
-!>                tl_v(i,j,k,nnew)=tl_v(i,j,k,nnew)*                     &
+!>                tl_v(i,j,k,nnew)=tl_v(i,j,k,nnew)*                    &
 !>   &                             vmask_wet(i,j)
 !>
-                  ad_v(i,j,k,nnew)=ad_v(i,j,k,nnew)*                     &
+                  ad_v(i,j,k,nnew)=ad_v(i,j,k,nnew)*                    &
      &                             vmask_wet(i,j)
 # endif
 # ifdef MASKING
-!>                tl_v(i,j,k,nnew)=tl_v(i,j,k,nnew)*                     &
+!>                tl_v(i,j,k,nnew)=tl_v(i,j,k,nnew)*                    &
 !>   &                             vmask(i,j)
 !>
-                  ad_v(i,j,k,nnew)=ad_v(i,j,k,nnew)*                     &
+                  ad_v(i,j,k,nnew)=ad_v(i,j,k,nnew)*                    &
      &                             vmask(i,j)
 # endif
-!>                tl_v(i,j,k,nnew)=tl_v(i,j,k,nnew)-                     &
+!>                tl_v(i,j,k,nnew)=tl_v(i,j,k,nnew)-                    &
 !>   &                             tl_CF(i,0)
 !>
                   ad_CF(i,0)=ad_CF(i,0)-ad_v(i,j,k,nnew)

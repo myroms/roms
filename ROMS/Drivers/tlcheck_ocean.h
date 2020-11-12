@@ -1,7 +1,7 @@
       MODULE ocean_control_mod
 !
 !git $Id$
-!svn $Id: tlcheck_ocean.h 1039 2020-10-12 03:54:49Z arango $
+!svn $Id: tlcheck_ocean.h 1043 2020-11-12 04:56:14Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -504,7 +504,7 @@
 !
       DO ng=1,Ngrids
         IF (Master) THEN
-                                                                                                                                                                                                                   WRITE (stdout,80)                                             &
+          WRITE (stdout,80)                                             &
      &      'TLM Test - Dot Products Summary: p, g1, g2, (g1-g2)/g1'
           inner=1
           DO i=1,MIN(ig1count,ig2count)

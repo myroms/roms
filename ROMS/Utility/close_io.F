@@ -2,7 +2,7 @@
       SUBROUTINE close_inp (ng, model)
 !
 !git $Id$
-!svn $Id: close_io.F 1035 2020-07-28 00:49:02Z arango $
+!svn $Id: close_io.F 1043 2020-11-12 04:56:14Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -86,9 +86,9 @@
         DO i=1,nCLMfiles(ng)
           IF ((CLM(i,ng)%Nfiles.gt.0).and.(CLM(i,ng)%ncid.ne.-1)) THEN
             Fcount=CLM(i,ng)%Fcount
-            CALL netcdf_close (ng, model, CLM(i,ng)%ncid,                 &
+            CALL netcdf_close (ng, model, CLM(i,ng)%ncid,               &
      &                         CLM(i,ng)%files(Fcount),  .FALSE.)
-            IF (FoundError(exit_flag, NoError, __LINE__,                  &
+            IF (FoundError(exit_flag, NoError, __LINE__,                &
      &                   __FILE__)) RETURN
             CLMids=-1
             ncCLMid=-1
@@ -148,7 +148,7 @@
         END IF
 #endif
 #if defined FORWARD_READ || defined FORWARD_WRITE
-        IF ((FWD(ng)%ncid.ne.-1).and.                                  &
+        IF ((FWD(ng)%ncid.ne.-1).and.                                   &
      &      (FWD(ng)%ncid.eq.HIS(ng)%ncid)) THEN
           FWD(ng)%ncid=-1
         END IF

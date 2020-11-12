@@ -8,7 +8,7 @@
      &                            NinnLoop, Lcgini)
 !
 !git $Id$
-!svn $Id: tl_rpcg_lanczos.F 1022 2020-05-13 03:03:15Z arango $
+!svn $Id: tl_rpcg_lanczos.F 1043 2020-11-12 04:56:14Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group       Selime Gurol      !
 !    Licensed under a MIT/X style license            Andrew M. Moore   !
@@ -249,11 +249,11 @@
 !>            Lscale=1                 ! Spectral LMP
 !>            Laug=.FALSE.
 !>            CALL rprecond (ng, Lscale, Laug, outLoop, NinnLoop-1,     &
-!>     &                     FOURDVAR(ng)%cg_Dpxsum)
+!>   &                       FOURDVAR(ng)%cg_Dpxsum)
 !>            DO iobs=1,Ndatum(ng)+1
 !>              FOURDVAR(ng)%cg_Dpxsum(iobs)=                           &
-!>     &                               -FOURDVAR(ng)%cg_Dpxsum(iobs)+
-!>     &                                FOURDVAR(ng)%cg_pxsum(iobs)
+!>   &                                 -FOURDVAR(ng)%cg_Dpxsum(iobs)+
+!>   &                                  FOURDVAR(ng)%cg_pxsum(iobs)
 !>            END DO
 !>          END IF
           END IF
@@ -332,7 +332,7 @@
 !>          Lscale=1                 ! Spectral LMP
 !>          Laug=.TRUE.
 !>          CALL rprecond (ng, Lscale, Laug, outLoop, NinnLoop-1,       &
-!>     &                   pgrad)
+!>   &                     pgrad)
 !>        END IF
 !>
 !
@@ -1116,12 +1116,12 @@
             END DO
             DO iobs=1,Ndatum(ng)+1
 !>            FOURDVAR(ng)%cg_pxsum(iobs)=FOURDVAR(ng)%cg_pxsum(iobs)+  &
-!>     &                                  FOURDVAR(ng)%cg_pxsave(iobs)
+!>   &                                    FOURDVAR(ng)%cg_pxsave(iobs)
 !>            FOURDVAR(ng)%cg_pxsave(iobs)=px(iobs)
 !>
               FOURDVAR(ng)%tl_cg_pxsave(iobs)=tl_px(iobs)
-!!AMM         FOURDVAR(ng)%cg_pxsum(iobs)=FOURDVAR(ng)%cg_pxsum(iobs)+  &
-!!AMM  &                                  px(iobs)
+!AMM         FOURDVAR(ng)%cg_pxsum(iobs)=FOURDVAR(ng)%cg_pxsum(iobs)+   &
+!AMM &                                   px(iobs)
             END DO
           ELSE
 !

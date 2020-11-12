@@ -3,7 +3,7 @@
       SUBROUTINE output (ng)
 !
 !git $Id$
-!svn $Id: output.F 1036 2020-07-29 05:39:53Z arango $
+!svn $Id: output.F 1043 2020-11-12 04:56:14Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -380,7 +380,7 @@
      &                   __FILE__)) RETURN
 #  if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
           CALL wrt_tides (ng)
-          IF (FoundError(exit_flag, NoError, __LINE__,                   &
+          IF (FoundError(exit_flag, NoError, __LINE__,                  &
      &                   __FILE__)) RETURN
 #  endif
         END IF

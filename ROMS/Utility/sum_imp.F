@@ -3,7 +3,7 @@
 #if defined WEAK_CONSTRAINT && defined RPCG
 !
 !git $Id$
-!svn $Id: sum_imp.F 995 2020-01-10 04:01:28Z arango $
+!svn $Id: sum_imp.F 1043 2020-11-12 04:56:14Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -39,40 +39,40 @@
 # include "tile.h"
 !
       CALL sum_imp_tile (ng, tile,                                      &
-     &                    LBi, UBi, LBj, UBj, LBij, UBij,               &
-     &                    IminS, ImaxS, JminS, JmaxS,                   &
-     &                    Lout,                                         &
+     &                   LBi, UBi, LBj, UBj, LBij, UBij,                &
+     &                   IminS, ImaxS, JminS, JmaxS,                    &
+     &                   Lout,                                          &
 # ifdef SOLVE3D
-     &                    OCEAN(ng) % tl_t,                             &
-     &                    OCEAN(ng) % tl_u,                             &
-     &                    OCEAN(ng) % tl_v,                             &
-     &                    OCEAN(ng) % f_t,                              &
-     &                    OCEAN(ng) % f_u,                              &
-     &                    OCEAN(ng) % f_v,                              &
+     &                   OCEAN(ng) % tl_t,                              &
+     &                   OCEAN(ng) % tl_u,                              &
+     &                   OCEAN(ng) % tl_v,                              &
+     &                   OCEAN(ng) % f_t,                               &
+     &                   OCEAN(ng) % f_u,                               &
+     &                   OCEAN(ng) % f_v,                               &
 # else
-     &                    OCEAN(ng) % tl_ubar,                          &
-     &                    OCEAN(ng) % tl_vbar,                          &
-     &                    OCEAN(ng) % f_ubar,                           &
-     &                    OCEAN(ng) % f_vbar,                           &
+     &                   OCEAN(ng) % tl_ubar,                           &
+     &                   OCEAN(ng) % tl_vbar,                           &
+     &                   OCEAN(ng) % f_ubar,                            &
+     &                   OCEAN(ng) % f_vbar,                            &
 # endif
-     &                    OCEAN(ng) % tl_zeta,                          &
-     &                    OCEAN(ng) % f_zeta)
+     &                   OCEAN(ng) % tl_zeta,                           &
+     &                   OCEAN(ng) % f_zeta)
       RETURN
       END SUBROUTINE sum_imp
 !
 !***********************************************************************
-      SUBROUTINE sum_imp_tile (ng, tile,                               &
-     &                          LBi, UBi, LBj, UBj, LBij, UBij,         &
-     &                          IminS, ImaxS, JminS, JmaxS,             &
-     &                          Lout,                                   &
+      SUBROUTINE sum_imp_tile (ng, tile,                                &
+     &                         LBi, UBi, LBj, UBj, LBij, UBij,          &
+     &                         IminS, ImaxS, JminS, JmaxS,              &
+     &                         Lout,                                    &
 # ifdef SOLVE3D
-     &                          tl_t, tl_u, tl_v,                       &
-     &                          f_t, f_u, f_v,                          &
+     &                         tl_t, tl_u, tl_v,                        &
+     &                         f_t, f_u, f_v,                           &
 # else
-     &                          tl_ubar, tl_vbar,                       &
-     &                          f_ubar, f_vbar,                         &
+     &                         tl_ubar, tl_vbar,                        &
+     &                         f_ubar, f_vbar,                          &
 # endif
-     &                          tl_zeta, f_zeta)
+     &                         tl_zeta, f_zeta)
 !***********************************************************************
 !
       USE mod_param

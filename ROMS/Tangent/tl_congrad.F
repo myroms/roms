@@ -9,7 +9,7 @@
      &                       Lcgini)
 !
 !git $Id$
-!svn $Id: tl_congrad.F 1022 2020-05-13 03:03:15Z arango $
+!svn $Id: tl_congrad.F 1043 2020-11-12 04:56:14Z arango $
 !=================================================== Andrew M. Moore ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group      Hernan G. Arango   !
 !    Licensed under a MIT/X style license                              !
@@ -295,7 +295,7 @@
 !>            Lscale=2                 ! SQRT spectral LMP
 !>            Ltrans=.FALSE.
 !>            CALL rprecond (ng, Lscale, Ltrans, outLoop, NinnLoop,     &
-!>     &                     ADmodVal)
+!>   &                       ADmodVal)
 !>          END IF
 !
 ! Convert ADmodVal from v-space to x-space.
@@ -445,7 +445,7 @@
 !>            IF (Lprecond.and.(outLoop.gt.1)) THEN
 !>              Lscale=2                 ! SQRT spectral LMP
 !>              Ltrans=.FALSE.
-!>              CALL rprecond(ng, Lscale, Ltrans, outLoop, NinnLoop,     &
+!>              CALL rprecond(ng, Lscale, Ltrans, outLoop, NinnLoop,    &
 !>   &                        ADmodVal)
 !>            END IF
 !>

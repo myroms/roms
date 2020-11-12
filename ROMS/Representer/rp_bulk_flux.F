@@ -3,7 +3,7 @@
 #if defined TL_IOMS && defined BULK_FLUXES_NOT_YET
 !
 !git $Id$
-!svn $Id: rp_bulk_flux.F 1039 2020-10-12 03:54:49Z arango $
+!svn $Id: rp_bulk_flux.F 1043 2020-11-12 04:56:14Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -613,7 +613,7 @@
      &           (1.0_r8-fac)*cff
 # endif
 !
-!  Vapor Pressure reduced for salinity (Kraus & Businger, 1994, pp 42).
+!  Vapor Pressure reduced for salinity (Kraus and Businger, 1994, pp42).
 !
           cff=cff*0.98_r8
           tl_cff=tl_cff*0.98_r8
@@ -781,7 +781,7 @@
 !
 !  Note delW is a constant at this point so we do not need tl_fac.
 !
-!>        Ri(i)=-fac*g*blk_ZW(ng)*((delT(i)-delTc(i))+                &
+!>        Ri(i)=-fac*g*blk_ZW(ng)*((delT(i)-delTc(i))+                  &
 !>   &                              0.61_r8*TairK(i)*delQ(i))
 !>
           Ri(i)=-g*blk_ZW(ng)*((delT(i)-delTc(i))+                      &
@@ -872,9 +872,9 @@
           tl_fac3=tl_bulk_psit(tl_fac1,fac1,pi)
 # endif
 !>        Tstar(i)=-(delT(i)-delTc(i))*vonKar/                          &
-!>     &           (fac2-bulk_psit(fac1,pi))
+!>   &             (fac2-bulk_psit(fac1,pi))
 !>        Tstar(i)=-(delT(i)-delTc(i))*vonKar/                          &
-!>     &           (fac2-fac3)
+!>   &             (fac2-fac3)
 !>
           Tstar(i)=-(delT(i)-delTc(i))*vonKar/                          &
      &             (LOG(blk_ZT(ng)/ZoT10(i))-                           &
@@ -907,9 +907,9 @@
           tl_fac3=tl_bulk_psit(tl_fac1,fac1,pi)
 # endif
 !>        Qstar(i)=-(delQ(i)-delQc(i))*vonKar/                          &
-!>     &           (fac2-bulk_psit(fac1,pi))
+!>   &             (fac2-bulk_psit(fac1,pi))
 !>        Qstar(i)=-(delQ(i)-delQc(i))*vonKar/                          &
-!>     &           (fac2-fac3)
+!>   &             (fac2-fac3)
 !>
           Qstar(i)=-(delQ(i)-delQc(i))*vonKar/                          &
      &             (LOG(blk_ZQ(ng)/ZoT10(i))-                           &

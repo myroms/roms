@@ -1,7 +1,7 @@
       SUBROUTINE ad_t3dmix4 (ng, tile)
 !
 !git $Id$
-!svn $Id: ad_t3dmix4_iso.h 995 2020-01-10 04:01:28Z arango $
+!svn $Id: ad_t3dmix4_iso.h 1043 2020-11-12 04:56:14Z arango $
 !************************************************** Hernan G. Arango ***
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -1427,8 +1427,8 @@
      &            CompositeGrid(iwest ,ng).or.EWperiodic(ng))) THEN
           IF (DOMAIN(ng)%SouthWest_Corner(tile)) THEN
             DO k=1,N(ng)
-!>            tl_LapT(Istr-1,Jstr-1,k)=0.5_r8*                        &
-!>   &                                 (tl_LapT(Istr  ,Jstr-1,k)+     &
+!>            tl_LapT(Istr-1,Jstr-1,k)=0.5_r8*                          &
+!>   &                                 (tl_LapT(Istr  ,Jstr-1,k)+       &
 !>                                      tl_LapT(Istr-1,Jstr  ,k))
 !>
               adfac=0.5_r8*ad_LapT(Istr-1,Jstr-1,k)
@@ -1743,7 +1743,7 @@
      &                om_v(i,j)
 # endif
 #else
-                  cff=0.25_r8*(diff4(i,j,itrc)+diff4(i,j-1,itrc))*        &
+                  cff=0.25_r8*(diff4(i,j,itrc)+diff4(i,j-1,itrc))*      &
      &                om_v(i,j)
 #endif
                   FE(i,j)=cff*                                          &

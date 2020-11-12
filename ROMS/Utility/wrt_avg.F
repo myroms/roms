@@ -6,7 +6,7 @@
       SUBROUTINE wrt_avg (ng)
 !
 !git $Id$
-!svn $Id: wrt_avg.F 1028 2020-06-01 00:24:59Z arango $
+!svn $Id: wrt_avg.F 1043 2020-11-12 04:56:14Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -110,7 +110,7 @@
 # endif
      &                     AVERAGE(ng) % avgzeta)
         IF (FoundError(status, nf90_noerr, __LINE__,                    &
-    &                  __FILE__)) THEN
+     &                 __FILE__)) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,idFsur)), AVG(ng)%Rindex
           END IF

@@ -2,7 +2,7 @@
       SUBROUTINE get_state (ng, model, msg, ncname, IniRec, Tindex)
 !
 !git $Id$
-!svn $Id: get_state.F 1039 2020-10-12 03:54:49Z arango $
+!svn $Id: get_state.F 1043 2020-11-12 04:56:14Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -3022,7 +3022,7 @@
 !
         DO itrc=1,NT(ng)
           IF (get_var(idTsur(itrc)).and.get_adjust.and.                 &
-    &        Lstflux(itrc,ng)) THEN
+     &        Lstflux(itrc,ng)) THEN
             foundit=find_string(var_name, n_var,                        &
      &                          TRIM(Vname(1,idTsur(itrc))), varid)
             IF (foundit) THEN

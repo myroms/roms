@@ -5,7 +5,7 @@
      &                       Lcgini)
 !
 !git $Id$
-!svn $Id: ad_congrad.F 1022 2020-05-13 03:03:15Z arango $
+!svn $Id: ad_congrad.F 1043 2020-11-12 04:56:14Z arango $
 !=================================================== Andrew M. Moore ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group      Hernan G. Arango   !
 !    Licensed under a MIT/X style license                              !
@@ -864,7 +864,7 @@
               END DO
             END DO
 !
-            CALL ad_sqlq (innLoop, ztriT, ad_ztriT, tau, ad_tau,       &
+            CALL ad_sqlq (innLoop, ztriT, ad_ztriT, tau, ad_tau,        &
      &                    zwork1, ad_zwork1)
 !
             DO i=2,innLoop

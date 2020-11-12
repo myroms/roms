@@ -1,7 +1,7 @@
       MODULE ocean_control_mod
 !
 !git $Id$
-!svn $Id: i4dvar_ocean.h 1031 2020-07-14 01:39:55Z arango $
+!svn $Id: i4dvar_ocean.h 1043 2020-11-12 04:56:14Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -132,22 +132,29 @@
         IF (FoundError(exit_flag, NoError, __LINE__,                    &
      &                 __FILE__)) RETURN
 !
+!  Initialize counters. The 'Nrun' counter will be recomputed in the
+!  RBL4D-Var phases to process the obervation operator correctly.
+!
+        Nrun=1                ! run counter
+        ERstr=1               ! ensemble start counter
+        ERend=Nouter          ! ensemble end counter
+!
 !  Set domain decomposition tile partition range.  This range is
 !  computed only once since the "first_tile" and "last_tile" values
 !  are private for each parallel thread/node.
 !
 #if defined _OPENMP
-      MyThread=my_threadnum()
+        MyThread=my_threadnum()
 #elif defined DISTRIBUTE
-      MyThread=MyRank
+        MyThread=MyRank
 #else
-      MyThread=0
+        MyThread=0
 #endif
-      DO ng=1,Ngrids
-        chunk_size=(NtileX(ng)*NtileE(ng)+numthreads-1)/numthreads
-        first_tile(ng)=MyThread*chunk_size
-        last_tile (ng)=first_tile(ng)+chunk_size-1
-      END DO
+        DO ng=1,Ngrids
+          chunk_size=(NtileX(ng)*NtileE(ng)+numthreads-1)/numthreads
+          first_tile(ng)=MyThread*chunk_size
+          last_tile (ng)=first_tile(ng)+chunk_size-1
+        END DO
 !
 !  Initialize internal wall clocks. Notice that the timings does not
 !  includes processing standard input because several parameters are
@@ -161,7 +168,7 @@
         DO ng=1,Ngrids
           DO thread=THREAD_RANGE
             CALL wclock_on (ng, iNLM, 0, __LINE__,                      &
-    &                       __FILE__)
+     &                      __FILE__)
           END DO
         END DO
 !
@@ -259,10 +266,6 @@
         Lold(ng)=1          ! old minimization time index
         Lnew(ng)=2          ! new minimization time index
       END DO
-!
-      Nrun=1                ! run counter
-      ERstr=1               ! ensemble start counter
-      ERend=Nouter          ! ensemble end counter
 !
 !  Start outer loop iterations.
 !

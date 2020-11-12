@@ -2,7 +2,7 @@
       MODULE metrics_mod
 !
 !git $Id$
-!svn $Id: metrics.F 1031 2020-07-14 01:39:55Z arango $
+!svn $Id: metrics.F 1043 2020-11-12 04:56:14Z arango $
 !=======================================================================
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -1100,8 +1100,8 @@
         DO cr=1,Ncontact
           dg=donor_grid(cr)
           rg=receiver_grid(cr)
-          IF (RefinedGrid(rg).and.                                        &
-     &        (RefineScale(rg).gt.0).and.                                 &
+          IF (RefinedGrid(rg).and.                                      &
+     &        (RefineScale(rg).gt.0).and.                               &
      &         DXmax(dg).gt.DXmax(rg)) THEN
             CoarserDonor(rg)=dg
           END IF
@@ -1115,8 +1115,8 @@
         DO cr=1,Ncontact
           dg=donor_grid(cr)
           rg=receiver_grid(cr)
-          IF (RefinedGrid(dg).and.                                        &
-     &        (RefineScale(dg).gt.0).and.                                 &
+          IF (RefinedGrid(dg).and.                                      &
+     &        (RefineScale(dg).gt.0).and.                               &
      &        DXmax(dg).gt.DXmax(rg)) THEN
             FinerDonor(dg)=rg
           END IF
