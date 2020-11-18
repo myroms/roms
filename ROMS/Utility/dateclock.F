@@ -2,7 +2,7 @@
       MODULE dateclock_mod
 !
 !git $Id$
-!svn $Id: dateclock.F 1043 2020-11-12 04:56:14Z arango $
+!svn $Id: dateclock.F 1046 2020-11-18 22:36:52Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -370,7 +370,7 @@
         y01=MyYear/100
         MyYear=MyYear-y01*100
         MyDay=(146097*y01/4) + (1461*MyYear/4) + ((153*MyMonth+2)/5) +  &
-              day + 1721119
+     &        day + 1721119
 !
 !-----------------------------------------------------------------------
 !  Date mumber for the 360_day Calendar: the year has a length of 360
