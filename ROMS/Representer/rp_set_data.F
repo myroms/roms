@@ -3,7 +3,7 @@
       SUBROUTINE rp_set_data (ng, tile)
 !
 !git $Id$
-!svn $Id: rp_set_data.F 1039 2020-10-12 03:54:49Z arango $
+!svn $Id: rp_set_data.F 1046 2020-11-18 22:36:52Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -192,7 +192,7 @@
      &               __FILE__)) RETURN
 #   endif
 
-#   ifdef DIURNAL_SRFLUX
+#   if defined DIURNAL_SRFLUX && !defined FORWARD_FLUXES
 !
 !  Modulate the averaged shortwave radiation flux by the local diurnal
 !  cycle.
