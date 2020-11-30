@@ -3,7 +3,7 @@
       SUBROUTINE tl_main2d (RunInterval)
 !
 !git $Id$
-!svn $Id: tl_main2d.F 1017 2020-04-27 22:19:14Z arango $
+!svn $Id: tl_main2d.F 1049 2020-11-30 04:34:51Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -76,7 +76,11 @@
 # ifdef FLOATS_NOT_YET
       integer :: Lend, Lstr, chunk_size
 # endif
+!
       real(r8) :: MaxDT, my_StepTime
+!
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__
 !
 !=======================================================================
 !  Time-step tangent linear vertically integrated equations.
@@ -110,8 +114,7 @@
           CALL tl_get_data (ng)
 !$OMP END MASTER
 !$OMP BARRIER
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END DO
 !
 !-----------------------------------------------------------------------
@@ -125,8 +128,7 @@
           END DO
 !$OMP BARRIER
         END DO
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
 # if (defined WEAK_CONSTRAINT || defined FORCING_SV) && \
      !defined SP4DVAR
@@ -321,8 +323,7 @@
           CALL tl_output (ng)
 !$OMP END MASTER
 !$OMP BARRIER
-          IF ((FoundError(exit_flag, NoError, __LINE__,                 &
-     &                    __FILE__)).or.                                &
+          IF ((FoundError(exit_flag, NoError, __LINE__, MyFile)).or.    &
      &        ((iic(ng).eq.(ntend(ng)+1)).and.(ng.eq.Ngrids))) RETURN
         END DO
 !
@@ -415,7 +416,7 @@
         END DO
 # endif
       END DO STEP_LOOP
-
+!
       RETURN
       END SUBROUTINE tl_main2d
 #else

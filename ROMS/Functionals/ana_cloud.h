@@ -1,7 +1,7 @@
       SUBROUTINE ana_cloud (ng, tile, model)
 !
 !! git $Id$
-!! svn $Id: ana_cloud.h 995 2020-01-10 04:01:28Z arango $
+!! svn $Id: ana_cloud.h 1049 2020-11-30 04:34:51Z arango $
 !!======================================================================
 !! Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !!   Licensed under a MIT/X style license                              !
@@ -19,7 +19,12 @@
 ! Imported variable declarations.
 !
       integer, intent(in) :: ng, tile, model
-
+!
+! Local variable declarations.
+!
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__
+!
 #include "tile.h"
 !
       CALL ana_cloud_tile (ng, tile, model,                             &
@@ -34,9 +39,9 @@
 #else
       IF (Lanafile.and.(tile.eq.0)) THEN
 #endif
-        ANANAME( 4)=__FILE__
+        ANANAME( 4)=MyFile
       END IF
-
+!
       RETURN
       END SUBROUTINE ana_cloud
 !
@@ -73,10 +78,12 @@
 !  Local variable declarations.
 !
       integer  :: i, j
+!
       real(r8) :: Cval
       real(dp) :: yday
 
 #ifdef PAPA_CLM
+!
       real(dp), dimension(14) :: Coktas =                               &
      &         (/ 6.29_r8, 6.26_r8, 6.31_r8, 6.31_r8, 6.32_r8,          &
      &            6.70_r8, 7.12_r8, 7.26_r8, 6.93_r8, 6.25_r8,          &
@@ -135,6 +142,6 @@
      &                    EWperiodic(ng), NSperiodic(ng),               &
      &                    cloud)
 #endif
-
+!
       RETURN
       END SUBROUTINE ana_cloud_tile

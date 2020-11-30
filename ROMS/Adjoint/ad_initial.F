@@ -3,7 +3,7 @@
       SUBROUTINE ad_initial (ng)
 !
 !git $Id$
-!svn $Id: ad_initial.F 1039 2020-10-12 03:54:49Z arango $
+!svn $Id: ad_initial.F 1049 2020-11-30 04:34:51Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -81,12 +81,15 @@
 !  Local variable declarations.
 !
       logical :: update = .FALSE.
-
+!
       integer :: LBi, UBi, LBj, UBj
       integer :: Fcount, IniRec, Tindex
       integer :: thread, tile
-
+!
       real(dp) :: my_dstart
+!
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__
 !
 !=======================================================================
 !   Initialize model variables.
@@ -189,7 +192,7 @@
 !-----------------------------------------------------------------------
 !
       DO thread=THREAD_RANGE
-        CALL wclock_on (ng, iADM, 2, __LINE__, __FILE__)
+        CALL wclock_on (ng, iADM, 2, __LINE__, MyFile)
       END DO
 # endif
 
@@ -382,8 +385,7 @@
 #   ifdef DISTRIBUTE
       CALL mp_bcasti (ng, iADM, exit_flag)
 #   endif
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #  else
       IF (nrrec(ng).ne.0) THEN
         CALL get_state (ng, iADM, 1, IAD(ng)%name, IniRec, Tindex)
@@ -391,8 +393,7 @@
 #   ifdef DISTRIBUTE
         CALL mp_bcasti (ng, iADM, exit_flag)
 #   endif
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
       END IF
 #  endif
 # endif
@@ -410,8 +411,7 @@
 #  ifdef DISTRIBUTE
         CALL mp_bcasti (ng, iADM, exit_flag)
 #  endif
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
       ELSE
         DO tile=first_tile(ng),last_tile(ng),+1
           CALL wetdry (ng, tile, Tindex(ng), .TRUE.)
@@ -441,8 +441,7 @@
 # ifdef RBL4DVAR_FCT_SENSITIVITY
       END IF
 # endif
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 # endif
 
 # if defined ANA_PERTURB  && \
@@ -518,8 +517,7 @@
 # ifdef DISTRIBUTE
       CALL mp_bcasti (ng, iADM, exit_flag)
 # endif
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !-----------------------------------------------------------------------
 !  Read in initial forcing, climatology and assimilation data from
@@ -532,8 +530,7 @@
 # ifdef DISTRIBUTE
       CALL mp_bcasti (ng, iADM, exit_flag)
 # endif
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
 # ifdef MASKING
 !
@@ -643,7 +640,7 @@
 !-----------------------------------------------------------------------
 !
       DO thread=THREAD_RANGE
-        CALL wclock_off (ng, iADM, 2, __LINE__, __FILE__)
+        CALL wclock_off (ng, iADM, 2, __LINE__, MyFile)
       END DO
 # endif
       RETURN

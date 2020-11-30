@@ -1,7 +1,7 @@
       SUBROUTINE propagator (RunInterval, state, ad_state)
 !
 !git $Id$
-!svn $Id: propagator_fsv.h 1039 2020-10-12 03:54:49Z arango $
+!svn $Id: propagator_fsv.h 1049 2020-11-30 04:34:51Z arango $
 !************************************************** Hernan G. Arango ***
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -57,6 +57,9 @@
       integer :: ktmp, ntmp
 !
       real(r8) :: StateNorm(Ngrids)
+!
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__
 !
 !=======================================================================
 !  Forward integration of the tangent linear model.
@@ -156,14 +159,13 @@
 !
       DO ng=1,Ngrids
         CALL close_inp (ng, iTLM)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+
         CALL tl_get_idata (ng)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+
         CALL tl_get_data (ng)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
       END DO
 !
 !-----------------------------------------------------------------------
@@ -183,8 +185,7 @@
 #else
       CALL tl_main2d (RunInterval)
 #endif
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !-----------------------------------------------------------------------
 !  Clear nonlinear (basic state) and adjoint state variables.
@@ -279,14 +280,13 @@
 !
       DO ng=1,Ngrids
         CALL close_inp (ng, iADM)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+
         CALL ad_get_idata (ng)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+
         CALL ad_get_data (ng)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
       END DO
 !
 !-----------------------------------------------------------------------
@@ -306,8 +306,7 @@
 #else
       CALL ad_main2d (RunInterval)
 #endif
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !-----------------------------------------------------------------------
 !  Clear nonlinear state (basic state) variables for next iteration
@@ -349,8 +348,7 @@
      &                  ad_state(ng)%vector)
         END DO
       END DO
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !-----------------------------------------------------------------------
 !  Clear forcing variables for next iteration.

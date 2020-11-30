@@ -5,7 +5,7 @@
       SUBROUTINE bblm (ng, tile)
 !
 !git $Id$
-!svn $Id: ssw_bbl.h 1043 2020-11-12 04:56:14Z arango $
+!svn $Id: ssw_bbl.h 1049 2020-11-30 04:34:51Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group        Chris Sherwood   !
 !    Licensed under a MIT/X style license               Rich Signell   !
@@ -39,10 +39,13 @@
 !
 !  Local variable declarations.
 !
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__
+!
 #include "tile.h"
 !
 #ifdef PROFILE
-      CALL wclock_on (ng, iNLM, 37, __LINE__, __FILE__)
+      CALL wclock_on (ng, iNLM, 37, __LINE__, MyFile)
 #endif
       CALL bblm_tile (ng, tile,                                         &
      &                LBi, UBi, LBj, UBj,                               &
@@ -85,8 +88,9 @@
      &                FORCES(ng) % bustr,                               &
      &                FORCES(ng) % bvstr)
 #ifdef PROFILE
-      CALL wclock_off (ng, iNLM, 37, __LINE__, __FILE__)
+      CALL wclock_off (ng, iNLM, 37, __LINE__, MyFile)
 #endif
+!
       RETURN
       END SUBROUTINE bblm
 !
@@ -827,11 +831,12 @@
      &                    bottom(:,:,izbfm),                            &
      &                    bottom(:,:,izwbl))
 #endif
-
+!
       RETURN
       END SUBROUTINE bblm_tile
 
 #ifdef SGWC
+!
       SUBROUTINE sg_bstress (sg_row, sg_zrozn, sg_phicw, sg_ubokur,     &
      &                       sg_ubouc, sg_mu, sg_epsilon, sg_ro,        &
      &                       sg_fofx)
@@ -1001,9 +1006,10 @@
           sg_fofx=-sg_ubouc+sg_ubokur*sg_epsilon*LOG(sg_zrozn)
         END IF
       END IF
+!
       RETURN
       END SUBROUTINE sg_bstress
-
+!
       SUBROUTINE  sg_purewave (sg_row, sg_ubouwm, sg_znotp, sg_ro)
 !
 !=======================================================================
@@ -1105,9 +1111,10 @@
           sg_ubouwm=sg_ubouwmn
         END IF
       END DO
+!
       RETURN
       END SUBROUTINE  sg_purewave
-
+!
       SUBROUTINE sg_kelvin8m (x, ber, bei, ker, kei, berp, beip,        &
      &                        kerp, keip)
 !
@@ -1184,9 +1191,10 @@
      &        19.41182758_r8*xp(8)-4.65950823_r8*xp(12)+                &
      &        0.33049424_r8*xp(16)-0.00926707_r8*xp(20)+                &
      &        0.00011997_r8*xp(24))
+!
       RETURN
       END SUBROUTINE sg_kelvin8m
-
+!
       SUBROUTINE sg_kelvin8p (x, ker, kei, ber, bei, kerp, keip,        &
      &                        berp, beip)
 !
@@ -1273,11 +1281,13 @@
 !
       berp=REAL(gofx*phip)-keip/pi
       beip=AIMAG(gofx*phip)+kerp/pi
+!
       RETURN
       END SUBROUTINE sg_kelvin8p
 #endif
 
 #ifdef M94WC
+!
       SUBROUTINE madsen94 (ubr, wr, ucr, zr, phiwc, kN,                 &
      &                     ustrc, ustrwm, ustrr, fwc, zoa)
 !
@@ -1431,7 +1441,7 @@
       phicwc=phiwc
       zoa=EXP(LOG(dwc(i))-(ustrc/ustrr)*LOG(dwc(i)/zo))       ! Eq 11
       fwc=fwci(i)
-
+!
       RETURN
       END SUBROUTINE madsen94
 #endif

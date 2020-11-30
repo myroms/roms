@@ -3,7 +3,7 @@
       SUBROUTINE def_dai (ng)
 !
 !git $Id$
-!svn $Id: def_dai.F 995 2020-01-10 04:01:28Z arango $
+!svn $Id: def_dai.F 1049 2020-11-30 04:34:51Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -44,7 +44,7 @@
 !  Local variable declarations.
 !
       logical :: got_var(NV)
-
+!
       integer, parameter :: Natt = 25
 
       integer :: i, j, itrc, nvd3, nvd4
@@ -57,20 +57,22 @@
 # endif
 
       integer :: def_dim
-
+!
       real(r8) :: Aval(6)
-
+!
       character (len=120) :: Vinfo(Natt)
       character (len=256) :: ncname
+
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__
 !
-      SourceFile=__FILE__
+      SourceFile=MyFile
 !
 !-----------------------------------------------------------------------
 !  Set and report file name.
 !-----------------------------------------------------------------------
 !
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
       ncname=DAI(ng)%name
 !
       IF (Master) THEN
@@ -87,8 +89,7 @@
 !
       DEFINE : IF (LdefDAI(ng)) THEN
         CALL netcdf_create (ng, iNLM, TRIM(ncname), DAI(ng)%ncid)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) THEN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) THEN
           IF (Master) WRITE (stdout,30) TRIM(ncname)
           RETURN
         END IF
@@ -101,121 +102,99 @@
 !
         status=def_dim(ng, iNLM, DAI(ng)%ncid, ncname, 'xi_rho',        &
      &                 IOBOUNDS(ng)%xi_rho, DimIDs( 1))
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
         status=def_dim(ng, iNLM, DAI(ng)%ncid, ncname, 'xi_u',          &
      &                 IOBOUNDS(ng)%xi_u, DimIDs( 2))
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
         status=def_dim(ng, iNLM, DAI(ng)%ncid, ncname, 'xi_v',          &
      &                 IOBOUNDS(ng)%xi_v, DimIDs( 3))
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
         status=def_dim(ng, iNLM, DAI(ng)%ncid, ncname, 'xi_psi',        &
      &                 IOBOUNDS(ng)%xi_psi, DimIDs( 4))
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
         status=def_dim(ng, iNLM, DAI(ng)%ncid, ncname, 'eta_rho',       &
      &                 IOBOUNDS(ng)%eta_rho, DimIDs( 5))
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
         status=def_dim(ng, iNLM, DAI(ng)%ncid, ncname, 'eta_u',         &
      &                 IOBOUNDS(ng)%eta_u, DimIDs( 6))
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
         status=def_dim(ng, iNLM, DAI(ng)%ncid, ncname, 'eta_v',         &
      &                 IOBOUNDS(ng)%eta_v, DimIDs( 7))
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
         status=def_dim(ng, iNLM, DAI(ng)%ncid, ncname, 'eta_psi',       &
      &                 IOBOUNDS(ng)%eta_psi, DimIDs( 8))
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
 # ifdef SOLVE3D
         status=def_dim(ng, iNLM, DAI(ng)%ncid, ncname, 'N',             &
      &                 N(ng), DimIDs( 9))
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
         status=def_dim(ng, iNLM, DAI(ng)%ncid, ncname, 's_rho',         &
      &                 N(ng), DimIDs( 9))
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
         status=def_dim(ng, iNLM, DAI(ng)%ncid, ncname, 's_w',           &
      &                 N(ng)+1, DimIDs(10))
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
         status=def_dim(ng, iNLM, DAI(ng)%ncid, ncname, 'tracer',        &
      &                 NT(ng), DimIDs(11))
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
 #  ifdef SEDIMENT
         status=def_dim(ng, iNLM, DAI(ng)%ncid, ncname, 'NST',           &
      &                 NST, DimIDs(32))
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
         status=def_dim(ng, iNLM, DAI(ng)%ncid, ncname, 'Nbed',          &
      &                 Nbed, DimIDs(16))
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #  endif
 #  ifdef ECOSIM
         status=def_dim(ng, iNLM, DAI(ng)%ncid, ncname, 'Nbands',        &
      &                 NBands, DimIDs(33))
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
         status=def_dim(ng, iNLM, DAI(ng)%ncid, ncname, 'Nphy',          &
      &                 Nphy, DimIDs(25))
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
         status=def_dim(ng, iNLM, DAI(ng)%ncid, ncname, 'Nbac',          &
      &                 Nbac, DimIDs(26))
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
         status=def_dim(ng, iNLM, DAI(ng)%ncid, ncname, 'Ndom',          &
      &                 Ndom, DimIDs(27))
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
         status=def_dim(ng, iNLM, DAI(ng)%ncid, ncname, 'Nfec',          &
      &                 Nfec, DimIDs(28))
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #  endif
 # endif
 
         status=def_dim(ng, iNLM, DAI(ng)%ncid, ncname, 'boundary',      &
      &                 4, DimIDs(14))
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
 #ifdef FOUR_DVAR
         status=def_dim(ng, iNLM, DAI(ng)%ncid, ncname, 'Nstate',        &
      &                 NstateVar(ng), DimIDs(29))
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #endif
 
         status=def_dim(ng, iNLM, DAI(ng)%ncid, ncname,                  &
      &                 TRIM(ADJUSTL(Vname(5,idtime))),                  &
      &                 nf90_unlimited, DimIDs(12))
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
         recdim=DimIDs(12)
 !
@@ -289,8 +268,7 @@
 !-----------------------------------------------------------------------
 !
         CALL def_info (ng, iNLM, DAI(ng)%ncid, ncname, DimIDs)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
 # ifdef SOLVE3D
 !
@@ -305,8 +283,7 @@
         status=def_var(ng, iNLM, DAI(ng)%ncid, DAI(ng)%Vid(idpthR),     &
      &                 NF_FRST, nvd3, t3dgrd, Aval, Vinfo, ncname,      &
      &                 SetFillVal = .FALSE.)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Define time independent (unperturb) depths of U-points.
 !
@@ -319,8 +296,7 @@
         status=def_var(ng, iNLM, DAI(ng)%ncid, DAI(ng)%Vid(idpthU),     &
      &                 NF_FRST, nvd3, u3dgrd, Aval, Vinfo, ncname,      &
      &                 SetFillVal = .FALSE.)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Define time independent (unperturb) depths of V-points.
 !
@@ -333,8 +309,7 @@
         status=def_var(ng, iNLM, DAI(ng)%ncid, DAI(ng)%Vid(idpthV),     &
      &                 NF_FRST, nvd3, v3dgrd, Aval, Vinfo, ncname,      &
      &                 SetFillVal = .FALSE.)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Define time independent (unperturb) depths of W-points.
 !
@@ -347,8 +322,7 @@
         status=def_var(ng, iNLM, DAI(ng)%ncid, DAI(ng)%Vid(idpthW),     &
      &                 NF_FRST, nvd3, w3dgrd, Aval, Vinfo, ncname,      &
      &                 SetFillVal = .FALSE.)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 # endif
 !
 !-----------------------------------------------------------------------
@@ -365,8 +339,7 @@
         status=def_var(ng, iNLM, DAI(ng)%ncid, DAI(ng)%Vid(idtime),     &
      &                 NF_TOUT, 1, (/recdim/), Aval, Vinfo, ncname,     &
      &                 SetParAccess = .TRUE.)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Define free-surface.
 !
@@ -385,8 +358,7 @@
      &                 NF_FRST, nvd3, t2dgrd, Aval, Vinfo, ncname)
 
 # endif
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Define 2D momentum in the XI-direction.
 !
@@ -399,8 +371,7 @@
         Aval(5)=REAL(Iinfo(1,idUbar,ng),r8)
         status=def_var(ng, iNLM, DAI(ng)%ncid, DAI(ng)%Vid(idUbar),     &
      &                 NF_FRST, nvd3, u2dgrd, Aval, Vinfo, ncname)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Define 2D momentum in the ETA-direction.
 !
@@ -413,8 +384,7 @@
         Aval(5)=REAL(Iinfo(1,idVbar,ng),r8)
         status=def_var(ng, iNLM, DAI(ng)%ncid, DAI(ng)%Vid(idVbar),     &
      &                 NF_FRST, nvd3, v2dgrd, Aval, Vinfo, ncname)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
 # ifdef SOLVE3D
 !
@@ -429,8 +399,7 @@
         Aval(5)=REAL(Iinfo(1,idUvel,ng),r8)
         status=def_var(ng, iNLM, DAI(ng)%ncid, DAI(ng)%Vid(idUvel),     &
      &                 NF_FRST, nvd4, u3dgrd, Aval, Vinfo, ncname)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Define 3D momentum component in the ETA-direction.
 !
@@ -443,8 +412,7 @@
         Aval(5)=REAL(Iinfo(1,idVvel,ng),r8)
         status=def_var(ng, iNLM, DAI(ng)%ncid, DAI(ng)%Vid(idVvel),     &
      &                 NF_FRST, nvd4, v3dgrd, Aval, Vinfo, ncname)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Define tracer type variables.
 !
@@ -465,8 +433,7 @@
           Aval(5)=REAL(r3dvar,r8)
           status=def_var(ng, iNLM, DAI(ng)%ncid, DAI(ng)%Tid(itrc),     &
      &                   NF_FRST, nvd4, t3dgrd, Aval, Vinfo, ncname)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END DO
 !
 !  Define vertical viscosity coefficient.
@@ -481,8 +448,7 @@
         status=def_var(ng, iNLM, DAI(ng)%ncid, DAI(ng)%Vid(idVvis),     &
      &                   NF_FRST, nvd4, w3dgrd, Aval, Vinfo, ncname,    &
      &                   SetFillVal = .FALSE.)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Define vertical diffusion coefficient for potential temperature.
 !
@@ -496,8 +462,7 @@
         status=def_var(ng, iNLM, DAI(ng)%ncid, DAI(ng)%Vid(idTdif),     &
      &                 NF_FRST, nvd4, w3dgrd, Aval, Vinfo, ncname,      &
      &                 SetFillVal = .FALSE.)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #  ifdef SALINITY
 !
 !  Define vertical diffusion coefficient for salinity.
@@ -512,8 +477,7 @@
         status=def_var(ng, iNLM, DAI(ng)%ncid, DAI(ng)%Vid(idSdif),     &
      &                 NF_FRST, nvd4, w3dgrd, Aval, Vinfo, ncname,      &
      &                 SetFillVal = .FALSE.)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #  endif
 # endif
 !
@@ -522,16 +486,14 @@
 !-----------------------------------------------------------------------
 !
         CALL netcdf_enddef (ng, iNLM, ncname, DAI(ng)%ncid)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !-----------------------------------------------------------------------
 !  Write out time-recordless, information variables.
 !-----------------------------------------------------------------------
 !
         CALL wrt_info (ng, iNLM, DAI(ng)%ncid, ncname)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       END IF DEFINE
 !
@@ -546,8 +508,7 @@
 !  Open restart file for read/write.
 !
         CALL netcdf_open (ng, iNLM, ncname, 1, DAI(ng)%ncid)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) THEN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) THEN
           WRITE (stdout,60) TRIM(ncname)
           RETURN
         END IF
@@ -556,15 +517,13 @@
 !
         CALL netcdf_check_dim (ng, iNLM, ncname,                        &
      &                         ncid = DAI(ng)%ncid)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Inquire about the variables.
 !
         CALL netcdf_inq_var (ng, iNLM, ncname,                          &
      &                       ncid = DAI(ng)%ncid)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Initialize logical switches.
 !
@@ -703,7 +662,7 @@
      &        ' NetCDF file: ',a)
   70  FORMAT (/,' DEF_DAI - unable to find variable: ',a,2x,            &
      &        ' in DA initial/restart NetCDF file: ',a)
-
+!
       RETURN
       END SUBROUTINE def_dai
 #else

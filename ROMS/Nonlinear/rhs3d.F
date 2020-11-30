@@ -3,7 +3,7 @@
 #if defined NONLINEAR && defined SOLVE3D
 !
 !git $Id$
-!svn $Id: rhs3d.F 995 2020-01-10 04:01:28Z arango $
+!svn $Id: rhs3d.F 1049 2020-11-30 04:34:51Z arango $
 !=======================================================================
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -62,6 +62,9 @@
 !
 !  Local variable declarations.
 !
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__
+!
 # include "tile.h"
 !
 !-----------------------------------------------------------------------
@@ -100,7 +103,7 @@
 !-----------------------------------------------------------------------
 !
 # ifdef PROFILE
-      CALL wclock_on (ng, iNLM, 21, __LINE__, __FILE__)
+      CALL wclock_on (ng, iNLM, 21, __LINE__, MyFile)
 # endif
       CALL rhs3d_tile (ng, tile,                                        &
      &                 LBi, UBi, LBj, UBj,                              &
@@ -146,7 +149,7 @@
      &                 OCEAN(ng) % ru,                                  &
      &                 OCEAN(ng) % rv)
 # ifdef PROFILE
-      CALL wclock_off (ng, iNLM, 21, __LINE__, __FILE__)
+      CALL wclock_off (ng, iNLM, 21, __LINE__, MyFile)
 # endif
 # ifdef UV_VIS2
 !
@@ -164,7 +167,7 @@
 !
       CALL uv3dmix4 (ng, tile)
 # endif
-
+!
       RETURN
       END SUBROUTINE rhs3d
 !
@@ -1664,7 +1667,7 @@
 # endif
         END IF
       END DO J_LOOP
-
+!
       RETURN
       END SUBROUTINE rhs3d_tile
 #endif

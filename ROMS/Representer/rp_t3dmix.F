@@ -1,5 +1,4 @@
 #include "cppdefs.h"
-
       MODULE rp_t3dmix_mod
 
 #ifdef TL_IOMS
@@ -8,7 +7,7 @@
 
 !
 !git $Id$
-!svn $Id: rp_t3dmix.F 995 2020-01-10 04:01:28Z arango $
+!svn $Id: rp_t3dmix.F 1049 2020-11-30 04:34:51Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -21,7 +20,7 @@
 !=======================================================================
 !
       implicit none
-
+!
       PRIVATE
 #  ifdef TS_DIF2
       PUBLIC rp_t3dmix2
@@ -29,9 +28,9 @@
 #  ifdef TS_DIF4
       PUBLIC rp_t3dmix4
 #  endif
-
+!
       CONTAINS
-
+!
 #  ifdef TS_DIF2
 #   if defined MIX_S_TS
 #    include "rp_t3dmix2_s.h"

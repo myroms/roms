@@ -3,7 +3,7 @@
 #ifdef ADJOINT
 !
 !git $Id$
-!svn $Id: ad_ini_fields.F 1043 2020-11-12 04:56:14Z arango $
+!svn $Id: ad_ini_fields.F 1049 2020-11-30 04:34:51Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -48,10 +48,13 @@
 !
 !  Local variable declarations.
 !
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__
+!
 # include "tile.h"
 !
 # ifdef PROFILE
-      CALL wclock_on (ng, iADM, 2, __LINE__, __FILE__)
+      CALL wclock_on (ng, iADM, 2, __LINE__, MyFile)
 # endif
       CALL ad_ini_fields_tile (ng, tile, model,                         &
      &                         LBi, UBi, LBj, UBj,                      &
@@ -83,9 +86,9 @@
      &                         OCEAN(ng) % zeta,                        &
      &                         OCEAN(ng) % ad_zeta)
 # ifdef PROFILE
-      CALL wclock_off (ng, iADM, 2, __LINE__, __FILE__)
+      CALL wclock_off (ng, iADM, 2, __LINE__, MyFile)
 # endif
-
+!
       RETURN
       END SUBROUTINE ad_ini_fields
 !
@@ -902,7 +905,7 @@
         END DO
       END DO
 # endif
-
+!
       RETURN
       END SUBROUTINE ad_ini_fields_tile
 
@@ -925,10 +928,13 @@
 !
 !  Local variable declarations.
 !
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__//", ad_ini_zeta"
+!
 # include "tile.h"
 !
 # ifdef PROFILE
-      CALL wclock_on (ng, iADM, 2, __LINE__, __FILE__)
+      CALL wclock_on (ng, iADM, 2, __LINE__, MyFile)
 # endif
       CALL ad_ini_zeta_tile (ng, tile, model,                           &
      &                       LBi, UBi, LBj, UBj,                        &
@@ -952,8 +958,9 @@
      &                       OCEAN(ng) % ad_zeta_sol,                   &
      &                       OCEAN(ng) % ad_zeta)
 # ifdef PROFILE
-      CALL wclock_off (ng, iADM, 2, __LINE__, __FILE__)
+      CALL wclock_off (ng, iADM, 2, __LINE__, MyFile)
 # endif
+!
       RETURN
       END SUBROUTINE ad_ini_zeta
 !
@@ -1334,7 +1341,7 @@
           ad_zeta_sol(i,j)=ad_zeta(i,j,kstp)
         END DO
       END DO
-
+!
       RETURN
       END SUBROUTINE ad_ini_zeta_tile
 !
@@ -1359,10 +1366,13 @@
 !
 !  Local variable declarations.
 !
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__//", ad_out_fields"
+!
 # include "tile.h"
 !
 # ifdef PROFILE
-      CALL wclock_on (ng, iADM, 2, __LINE__, __FILE__)
+      CALL wclock_on (ng, iADM, 2, __LINE__, MyFile)
 # endif
       CALL ad_out_fields_tile (ng, tile, model,                         &
      &                         LBi, UBi, LBj, UBj,                      &
@@ -1391,9 +1401,9 @@
      &                         OCEAN(ng) % ad_vbar,                     &
      &                         OCEAN(ng) % ad_zeta)
 # ifdef PROFILE
-      CALL wclock_off (ng, iADM, 2, __LINE__, __FILE__)
+      CALL wclock_off (ng, iADM, 2, __LINE__, MyFile)
 # endif
-
+!
       RETURN
       END SUBROUTINE ad_out_fields
 !
@@ -1752,10 +1762,9 @@
         END DO
       END DO
 # endif
-
+!
       RETURN
       END SUBROUTINE ad_out_fields_tile
-
 !
 !***********************************************************************
       SUBROUTINE ad_out_zeta (ng, tile, model)
@@ -1775,10 +1784,13 @@
 !
 !  Local variable declarations.
 !
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__//", ad_out_zeta"
+!
 # include "tile.h"
 !
 # ifdef PROFILE
-      CALL wclock_on (ng, iADM, 2, __LINE__, __FILE__)
+      CALL wclock_on (ng, iADM, 2, __LINE__, MyFile)
 # endif
       CALL ad_out_zeta_tile (ng, tile, model,                           &
      &                       LBi, UBi, LBj, UBj,                        &
@@ -1802,9 +1814,9 @@
      &                       OCEAN(ng) % ad_zeta_sol,                   &
      &                       OCEAN(ng) % ad_zeta)
 # ifdef PROFILE
-      CALL wclock_off (ng, iADM, 2, __LINE__, __FILE__)
+      CALL wclock_off (ng, iADM, 2, __LINE__, MyFile)
 # endif
-
+!
       RETURN
       END SUBROUTINE ad_out_zeta
 !
@@ -1986,7 +1998,7 @@
 # endif
         END DO
       END DO
-
+!
       RETURN
       END SUBROUTINE ad_out_zeta_tile
 #endif

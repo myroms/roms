@@ -1,7 +1,7 @@
       SUBROUTINE ana_wwave (ng, tile, model)
 !
 !! git $Id$
-!! svn $Id: ana_wwave.h 995 2020-01-10 04:01:28Z arango $
+!! svn $Id: ana_wwave.h 1049 2020-11-30 04:34:51Z arango $
 !!======================================================================
 !! Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !!   Licensed under a MIT/X style license                              !
@@ -21,7 +21,12 @@
 ! Imported variable declarations.
 !
       integer, intent(in) :: ng, tile, model
-
+!
+!  Local variable declarations.
+!
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__
+!
 #include "tile.h"
 !
       CALL ana_wwave_tile (ng, tile, model,                             &
@@ -58,9 +63,9 @@
 #else
       IF (Lanafile.and.(tile.eq.0)) THEN
 #endif
-        ANANAME(37)=__FILE__
+        ANANAME(37)=MyFile
       END IF
-
+!
       RETURN
       END SUBROUTINE ana_wwave
 !
@@ -161,6 +166,7 @@
 !  Local variable declarations.
 !
       integer :: i, j
+!
       real(r8) :: cff, wdir
 #if defined LAKE_SIGNELL
       real(r8) :: cff1, mxst, ramp_u, ramp_time, ramp_d
@@ -333,6 +339,6 @@
      &                    wave_dissip)
 # endif
 #endif
-
+!
       RETURN
       END SUBROUTINE ana_wwave_tile

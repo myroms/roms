@@ -1,7 +1,7 @@
       SUBROUTINE ana_btflux (ng, tile, model, itrc)
 !
 !! git $Id$
-!! svn $Id: ana_btflux.h 1039 2020-10-12 03:54:49Z arango $
+!! svn $Id: ana_btflux.h 1049 2020-11-30 04:34:51Z arango $
 !!======================================================================
 !! Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !!   Licensed under a MIT/X style license                              !
@@ -21,7 +21,12 @@
 ! Imported variable declarations.
 !
       integer, intent(in) :: ng, tile, model, itrc
-
+!
+! Local variable declarations.
+!
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__
+!
 #include "tile.h"
 !
       CALL ana_btflux_tile (ng, tile, model, itrc,                      &
@@ -36,9 +41,9 @@
 #else
       IF (Lanafile.and.(tile.eq.0)) THEN
 #endif
-        ANANAME( 3)=__FILE__
+        ANANAME( 3)=MyFile
       END IF
-
+!
       RETURN
       END SUBROUTINE ana_btflux
 !

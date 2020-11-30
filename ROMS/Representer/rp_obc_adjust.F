@@ -4,7 +4,7 @@
 #ifdef ADJUST_BOUNDARY
 !
 !git $Id$
-!svn $Id: rp_obc_adjust.F 995 2020-01-10 04:01:28Z arango $
+!svn $Id: rp_obc_adjust.F 1049 2020-11-30 04:34:51Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -45,19 +45,22 @@
 !
 !  Local variable declarations.
 !
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__
+!
 # include "tile.h"
 !
 # ifdef PROFILE
-      CALL wclock_on (ng, iRPM, 7, __LINE__, __FILE__)
+      CALL wclock_on (ng, iRPM, 7, __LINE__, MyFile)
 # endif
       CALL rp_obc_adjust_tile (ng, tile,                                &
      &                         LBi, UBi, LBj, UBj, LBij, UBij,          &
      &                         IminS, ImaxS, JminS, JmaxS,              &
      &                         Linp)
 # ifdef PROFILE
-      CALL wclock_off (ng, iRPM, 7, __LINE__, __FILE__)
+      CALL wclock_off (ng, iRPM, 7, __LINE__, MyFile)
 # endif
-
+!
       RETURN
       END SUBROUTINE rp_obc_adjust
 !
@@ -498,7 +501,7 @@
         END DO
       END IF
 # endif
-
+!
       RETURN
       END SUBROUTINE rp_obc_adjust_tile
 
@@ -517,10 +520,13 @@
 !
 !  Local variable declarations.
 !
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__//", rp_obc2d_adjust"
+!
 #  include "tile.h"
 !
 #  ifdef PROFILE
-      CALL wclock_on (ng, iRPM, 7, __LINE__, __FILE__)
+      CALL wclock_on (ng, iRPM, 7, __LINE__, MyFile)
 #  endif
       CALL rp_obc2d_adjust_tile (ng, tile,                              &
      &                           LBi, UBi, LBj, UBj, LBij, UBij,        &
@@ -535,9 +541,9 @@
      &                           GRID(ng) % tl_Hz,                      &
      &                           GRID(ng) % tl_Hz_bry)
 #  ifdef PROFILE
-      CALL wclock_off (ng, iRPM, 7, __LINE__, __FILE__)
+      CALL wclock_off (ng, iRPM, 7, __LINE__, MyFile)
 #  endif
-
+!
       RETURN
       END SUBROUTINE rp_obc2d_adjust
 !
@@ -904,7 +910,7 @@
      &                                  tl_cff2
         END DO
       END IF
-
+!
       RETURN
       END SUBROUTINE rp_obc2d_adjust_tile
 # endif

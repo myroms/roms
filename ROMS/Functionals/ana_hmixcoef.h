@@ -1,7 +1,7 @@
       SUBROUTINE ana_sponge (ng, tile, model)
 !
 !! git $Id$
-!! svn $Id: ana_hmixcoef.h 1016 2020-04-27 02:06:37Z arango $
+!! svn $Id: ana_hmixcoef.h 1049 2020-11-30 04:34:51Z arango $
 !!================================================= Hernan G. Arango ===
 !! Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !!   Licensed under a MIT/X style license                              !
@@ -21,14 +21,17 @@
 !
       USE mod_param
 !
-!  Imported variable declarations.
+! Imported variable declarations.
 !
       integer, intent(in) :: ng, tile, model
 !
-!  Local variable declarations.
+! Local variable declarations.
+!
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__
 !
 #include "tile.h"
-
+!
       CALL ana_sponge_tile (ng, tile, model,                            &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      IminS, ImaxS, JminS, JmaxS)
@@ -40,9 +43,9 @@
 #else
       IF (Lanafile.and.(tile.eq.0)) THEN
 #endif
-        ANANAME( 8)=__FILE__
+        ANANAME( 8)=MyFile
       END IF
-
+!
       RETURN
       END SUBROUTINE ana_sponge
 !
@@ -74,6 +77,7 @@
 !  Local variable declarations.
 !
       integer :: Iwrk, i, itrc, j
+!
       real(r8) :: cff, cff1, cff2, fac
 #ifdef WC13
       real(r8) :: cff_t, cff_s, cff1_t, cff2_t, cff1_s, cff2_s
@@ -312,6 +316,6 @@
 #  endif
 # endif
 #endif
-
+!
       RETURN
       END SUBROUTINE ana_sponge_tile

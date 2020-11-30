@@ -3,7 +3,7 @@
       SUBROUTINE def_station (ng, ldef)
 !
 !git $Id$
-!svn $Id: def_station.F 1039 2020-10-12 03:54:49Z arango $
+!svn $Id: def_station.F 1049 2020-11-30 04:34:51Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -45,9 +45,9 @@
 !  Local variable declarations.
 !
       integer, parameter :: Natt = 25
-
+!
       logical :: got_var(NV)
-
+!
       integer :: i, j, recdim, stadim
       integer :: status
 
@@ -60,20 +60,22 @@
 
       integer :: bgrd(3), rgrd(3), wgrd(3)
 # endif
-
+!
       real(r8) :: Aval(6)
-
+!
       character (len=120) :: Vinfo(Natt)
       character (len=256) :: ncname
 !
-      SourceFile=__FILE__
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__
+!
+      SourceFile=MyFile
 !
 !-----------------------------------------------------------------------
 !  Set and report file name.
 !-----------------------------------------------------------------------
 !
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
       ncname=STA(ng)%name
 !
       IF (Master) THEN
@@ -90,8 +92,7 @@
 !
       DEFINE : IF (ldef) THEN
         CALL netcdf_create (ng, iNLM, TRIM(ncname), STA(ng)%ncid)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) THEN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) THEN
           IF (Master) WRITE (stdout,30) TRIM(ncname)
           RETURN
         END IF
@@ -105,81 +106,67 @@
 # ifdef SOLVE3D
         status=def_dim(ng, iNLM, STA(ng)%ncid, ncname, 's_rho',         &
      &                 N(ng), DimIDs( 9))
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
         status=def_dim(ng, iNLM, STA(ng)%ncid, ncname, 's_w',           &
      &                 N(ng)+1, DimIDs(10))
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
         status=def_dim(ng, iNLM, STA(ng)%ncid, ncname, 'tracer',        &
      &                 NT(ng), DimIDs(11))
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
 #  ifdef SEDIMENT
         status=def_dim(ng, iNLM, STA(ng)%ncid, ncname, 'NST',           &
      &                 NST, DimIDs(32))
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
         status=def_dim(ng, iNLM, STA(ng)%ncid, ncname, 'Nbed',          &
      &                 Nbed, DimIDs(16))
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #  endif
 
 #  ifdef ECOSIM
         status=def_dim(ng, iNLM, STA(ng)%ncid, ncname, 'Nbands',        &
      &                 NBands, DimIDs(33))
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
         status=def_dim(ng, iNLM, STA(ng)%ncid, ncname, 'Nphy',          &
      &                 Nphy, DimIDs(25))
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
         status=def_dim(ng, iNLM, STA(ng)%ncid, ncname, 'Nbac',          &
      &                 Nbac, DimIDs(26))
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
         status=def_dim(ng, iNLM, STA(ng)%ncid, ncname, 'Ndom',          &
      &                 Ndom, DimIDs(27))
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
         status=def_dim(ng, iNLM, STA(ng)%ncid, ncname, 'Nfec',          &
      &                 Nfec, DimIDs(28))
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #  endif
 # endif
 
         status=def_dim(ng, iNLM, STA(ng)%ncid, ncname, 'station' ,      &
      &                 Nstation(ng), DimIDs(13))
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
         status=def_dim(ng, iNLM, STA(ng)%ncid, ncname, 'boundary',      &
      &                 4, DimIDs(14))
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
 # ifdef FOUR_DVAR
         status=def_dim(ng, iNLM, STA(ng)%ncid, ncname, 'Nstate',        &
      &                 NstateVar(ng), DimIDs(29))
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 # endif
 
         status=def_dim(ng, iNLM, STA(ng)%ncid, ncname,                  &
      &                 TRIM(ADJUSTL(Vname(5,idtime))),                  &
      &                 nf90_unlimited, DimIDs(12))
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
         recdim=DimIDs(12)
         stadim=DimIDs(13)
@@ -229,8 +216,7 @@
 !-----------------------------------------------------------------------
 !
         CALL def_info (ng, iNLM, STA(ng)%ncid, ncname, DimIDs)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !-----------------------------------------------------------------------
 !  Define variables and their attributes.
@@ -246,8 +232,7 @@
         status=def_var(ng, iNLM, STA(ng)%ncid, STA(ng)%Vid(idtime),     &
      &                 NF_TOUT, 1, (/recdim/), Aval, Vinfo, ncname,     &
      &                 SetParAccess = .TRUE.)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Define free-surface.
 !
@@ -265,8 +250,7 @@
      &                   SetFillVal = .TRUE.,                           &
 # endif
      &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 
 # if defined SEDIMENT && defined SED_MORPH
@@ -283,8 +267,7 @@
      &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .FALSE.,                          &
      &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 # endif
 !
@@ -300,8 +283,7 @@
      &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 !
 !  Define 2D momentum in the ETA-direction.
@@ -316,8 +298,7 @@
      &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 !
 !  Define 2D Eastward momentum component at RHO-points.
@@ -332,8 +313,7 @@
      &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 !
 !  Define 2D Northward momentum component at RHO-points.
@@ -348,8 +328,7 @@
      &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 
 # ifdef SOLVE3D
@@ -366,8 +345,7 @@
      &                   NF_FOUT, 3, rgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 !
 !  Define 3D momentum component in the ETA-direction.
@@ -382,8 +360,7 @@
      &                   NF_FOUT, 3, rgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 !
 !  Define 3D Eastward momentum component at RHO-points.
@@ -398,8 +375,7 @@
      &                   NF_FOUT, 3, rgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 !
 !  Define 3D Northward momentum component at RHO-points.
@@ -414,8 +390,7 @@
      &                   NF_FOUT, 3, rgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 !
 !  Define 3D momentum component in the S-direction.
@@ -430,8 +405,7 @@
      &                   NF_FOUT, 3, wgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 !
 !  Define S-coordinate vertical "omega" momentum component (m3/s).
@@ -446,8 +420,7 @@
      &                   NF_FOUT, 3, wgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 !
 !  Define tracer type variables.
@@ -470,8 +443,7 @@
      &                     NF_FOUT, 3, rgrd, Aval, Vinfo, ncname,       &
      &                     SetFillVal = .TRUE.,                         &
      &                     SetParAccess = .TRUE.)
-            IF (FoundError(exit_flag, NoError, __LINE__,                &
-     &                     __FILE__)) RETURN
+            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
           END IF
         END DO
 !
@@ -487,8 +459,7 @@
      &                   NF_FOUT, 3, rgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 
 #  ifdef LMD_SKPP
@@ -505,8 +476,7 @@
      &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 #  endif
 #  ifdef LMD_BKPP
@@ -523,8 +493,7 @@
      &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 #  endif
 !
@@ -540,8 +509,7 @@
      &                   NF_FOUT, 3, wgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 !
 !  Define vertical diffusion coefficient for potential temperature.
@@ -556,8 +524,7 @@
      &                   NF_FOUT, 3, wgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 
 #  ifdef SALINITY
@@ -574,8 +541,7 @@
      &                   NF_FOUT, 3, wgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 #  endif
 #  if defined GLS_MIXING || defined MY25_MIXING
@@ -592,8 +558,7 @@
      &                   NF_FOUT, 3, wgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 !
 !  Define turbulent kinetic energy time length scale.
@@ -608,8 +573,7 @@
      &                   NF_FOUT, 3, wgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 #  endif
 #  if defined BULK_FLUXES || defined ECOSIM || defined ATM_PRESS
@@ -626,8 +590,7 @@
      &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 #  endif
 #  if defined BULK_FLUXES || defined ECOSIM
@@ -644,8 +607,7 @@
      &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 
         IF (Sout(idVair,ng)) THEN
@@ -658,8 +620,7 @@
      &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 #  endif
 !
@@ -678,8 +639,7 @@
      &                   2, pgrd, Aval, Vinfo, ncname,                  &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 
 #  ifdef SALINITY
@@ -699,8 +659,7 @@
      &                   2, pgrd, Aval, Vinfo, ncname,                  &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 #  endif
 
@@ -720,8 +679,7 @@
      &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 !
 !  Define sensible heat flux.
@@ -738,8 +696,7 @@
      &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 !
 !  Define longwave radiation flux.
@@ -756,8 +713,7 @@
      &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 #  endif
 #  ifdef SHORTWAVE
@@ -776,8 +732,7 @@
      &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 #  endif
 !
@@ -795,8 +750,7 @@
      &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 #  if defined EMINUSP && defined BULK_FLUXES
 !
@@ -814,8 +768,7 @@
      &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 !
 !  Define precipitation rate.
@@ -832,8 +785,7 @@
      &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 #  endif
 # endif
@@ -850,8 +802,7 @@
      &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 !
 !  Define surface V-momentum stress.
@@ -866,8 +817,7 @@
      &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 !
 !  Define bottom U-momentum stress.
@@ -882,8 +832,7 @@
      &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 !
 !  Define bottom V-momentum stress.
@@ -898,8 +847,7 @@
      &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 
 # ifdef SOLVE3D
@@ -917,8 +865,7 @@
      &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 !
 !  Define bottom V-current stress.
@@ -933,8 +880,7 @@
      &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 !
 !  Define wind-induced, bottom U-wave stress.
@@ -949,8 +895,7 @@
      &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 !
 !  Define bottom wind-induced, bottom V-wave stress.
@@ -965,8 +910,7 @@
      &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 !
 !  Define maximum wind and current, bottom U-wave stress.
@@ -981,8 +925,7 @@
      &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 !
 !  Define maximum wind and current, bottom V-wave stress.
@@ -997,8 +940,7 @@
      &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 !
 !  Define wind-induced, bed wave orbital U-velocity.
@@ -1013,8 +955,7 @@
      &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 !
 !  Define wind-induced, bed wave orbital V-velocity.
@@ -1029,8 +970,7 @@
      &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 !
 !  Define bottom U-momentum above bed.
@@ -1045,8 +985,7 @@
      &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 !
 !  Define bottom V-momentum above bed.
@@ -1061,8 +1000,7 @@
      &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 #  endif
 #  ifdef SEDIMENT
@@ -1082,8 +1020,7 @@
      &                     3, bgrd, Aval, Vinfo, ncname,                &
      &                     SetFillVal = .TRUE.,                         &
      &                     SetParAccess = .TRUE.)
-            IF (FoundError(exit_flag, NoError, __LINE__,                &
-     &                     __FILE__)) RETURN
+            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
           END IF
 !
 !  Define sediment mass of each size class in each bed layer.
@@ -1100,8 +1037,7 @@
      &                     3, bgrd, Aval, Vinfo, ncname,                &
      &                     SetFillVal = .TRUE.,                         &
      &                     SetParAccess = .TRUE.)
-            IF (FoundError(exit_flag, NoError, __LINE__,                &
-     &                     __FILE__)) RETURN
+            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
           END IF
         END DO
 !
@@ -1119,8 +1055,7 @@
      &                     3, bgrd, Aval, Vinfo, ncname,                &
      &                     SetFillVal = .TRUE.,                         &
      &                     SetParAccess = .TRUE.)
-            IF (FoundError(exit_flag, NoError, __LINE__,                &
-     &                     __FILE__)) RETURN
+            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
           END IF
         END DO
 #  endif
@@ -1140,8 +1075,7 @@
      &                     2, pgrd, Aval, Vinfo, ncname,                &
      &                     SetFillVal = .TRUE.,                         &
      &                     SetParAccess = .TRUE.)
-            IF (FoundError(exit_flag, NoError, __LINE__,                &
-     &                     __FILE__)) RETURN
+            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
           END IF
         END DO
 #  endif
@@ -1160,8 +1094,7 @@
      &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 !
 !  Define 2D radiation stress, Sxy-component.
@@ -1176,8 +1109,7 @@
      &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 !
 !  Define 2D radiation stress, Syy-component.
@@ -1192,8 +1124,7 @@
      &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 !
 !  Define 2D total u-radiation stress.
@@ -1208,8 +1139,7 @@
      &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 !
 !  Define 2D total v-radiation stress.
@@ -1224,8 +1154,7 @@
      &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 !
 !  Define 2D u-Stokes drift velocity.
@@ -1240,8 +1169,7 @@
      &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 !
 !  Define 2D v-Stokes drift velocity.
@@ -1256,8 +1184,7 @@
      &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 
 #  ifdef SOLVE3D
@@ -1274,8 +1201,7 @@
      &                   NF_FOUT, 3, rgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 !
 !  Define 3D radiation stress, Sxy-component.
@@ -1290,8 +1216,7 @@
      &                   NF_FOUT, 3, rgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 !
 !  Define 3D radiation stress, Syy-component.
@@ -1306,8 +1231,7 @@
      &                   NF_FOUT, 3, rgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 
 #   ifdef NEARSHORE_MELLOR05
@@ -1324,8 +1248,7 @@
      &                   NF_FOUT, 3, rgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 !
 !  Define 3D radiation stress, Szy-component.
@@ -1340,8 +1263,7 @@
      &                   NF_FOUT, 3, rgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 #   endif
 !
@@ -1357,8 +1279,7 @@
      &                   NF_FOUT, 3, rgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 !
 !  Define 3D total v-radiation stress.
@@ -1373,8 +1294,7 @@
      &                   NF_FOUT, 3, rgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 !
 !  Define 3D u-Stokes velocity.
@@ -1389,8 +1309,7 @@
      &                   NF_FOUT, 3, rgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 !
 !  Define 3D v-Stokes velocity.
@@ -1405,8 +1324,7 @@
      &                   NF_FOUT, 3, rgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 #  endif
 # endif
@@ -1424,8 +1342,7 @@
      &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 # endif
 # ifdef WAVES_LENGTH
@@ -1442,8 +1359,7 @@
      &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 # endif
 # ifdef WAVES_DIR
@@ -1460,8 +1376,7 @@
      &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 # endif
 # ifdef WAVES_TOP_PERIOD
@@ -1478,8 +1393,7 @@
      &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 
 # endif
@@ -1497,8 +1411,7 @@
      &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 
 # endif
@@ -1516,8 +1429,7 @@
      &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 # endif
 # if defined TKE_WAVEDISS || defined WAV_COUPLING
@@ -1534,8 +1446,7 @@
      &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 # endif
 !
@@ -1544,16 +1455,14 @@
 !-----------------------------------------------------------------------
 !
         CALL netcdf_enddef (ng, iNLM, ncname, STA(ng)%ncid)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !-----------------------------------------------------------------------
 !  Write out time-recordless, information variables.
 !-----------------------------------------------------------------------
 !
         CALL wrt_info (ng, iNLM, STA(ng)%ncid, ncname)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       END IF DEFINE
 !
@@ -1568,8 +1477,7 @@
 !  Open stations file for read/write.
 !
         CALL netcdf_open (ng, iNLM, ncname, 1, STA(ng)%ncid)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) THEN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) THEN
           WRITE (stdout,50) TRIM(ncname)
           RETURN
         END IF
@@ -1578,15 +1486,13 @@
 !
         CALL netcdf_check_dim (ng, iNLM, ncname,                        &
      &                         ncid = STA(ng)%ncid)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Inquire about the variables.
 !
         CALL netcdf_inq_var (ng, iNLM, ncname,                          &
      &                       ncid = STA(ng)%ncid)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Initialize logical switches.
 !
@@ -2408,7 +2314,7 @@
      &        a)
   60  FORMAT (/,' DEF_STATION - unable to find variable: ',a,2x,        &
      &        ' in stations NetCDF file: ',a)
-
+!
       RETURN
       END SUBROUTINE def_station
 #else

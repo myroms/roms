@@ -3,7 +3,7 @@
 #if defined NONLINEAR && (defined SSH_TIDES || defined UV_TIDES)
 !
 !git $Id$
-!svn $Id: set_tides.F 995 2020-01-10 04:01:28Z arango $
+!svn $Id: set_tides.F 1049 2020-11-30 04:34:51Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group        Robert Hetland   !
 !    Licensed under a MIT/X style license                              !
@@ -50,10 +50,14 @@
 !
 #  endif
 # endif
+
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__
+!
 # include "tile.h"
 !
 # ifdef PROFILE
-      CALL wclock_on (ng, iNLM, 11, __LINE__, __FILE__)
+      CALL wclock_on (ng, iNLM, 11, __LINE__, MyFile)
 # endif
       CALL set_tides_tile (ng, tile,                                    &
      &                     LBi, UBi, LBj, UBj,                          &
@@ -103,9 +107,9 @@
 #  endif
 # endif
 # ifdef PROFILE
-      CALL wclock_off (ng, iNLM, 11, __LINE__, __FILE__)
+      CALL wclock_off (ng, iNLM, 11, __LINE__, MyFile)
 # endif
-
+!
       RETURN
       END SUBROUTINE set_tides
 !
@@ -635,7 +639,7 @@
         END IF
 # endif
       END IF NEEDED
-
+!
       RETURN
       END SUBROUTINE set_tides_tile
 #endif

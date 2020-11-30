@@ -4,7 +4,7 @@
 #if defined NESTING && defined TANGENT
 !
 !git $Id$
-!svn $Id: tl_nesting.F 1043 2020-11-12 04:56:14Z arango $
+!svn $Id: tl_nesting.F 1049 2020-11-30 04:34:51Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -151,8 +151,12 @@
 !  Local variable declarations.
 !
       logical :: LputFsur
+!
       integer :: subs, tile, thread
       integer :: ngc
+!
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__
 
 # ifdef PROFILE
 !
@@ -160,7 +164,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, model, 36, __LINE__, __FILE__)
+      CALL wclock_on (ng, model, 36, __LINE__, MyFile)
 # endif
 # ifdef SOLVE3D
 !
@@ -289,8 +293,7 @@
             CALL tl_fine2coarse (ng, model, r2dvar, tile)
           END DO
 !$OMP BARRIER
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
 #  ifdef SOLVE3D
 !
@@ -313,8 +316,7 @@
             CALL tl_fine2coarse (ng, model, r3dvar, tile)
           END DO
 !$OMP BARRIER
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #  endif
 # else
 !
@@ -359,9 +361,9 @@
 !  Turn off time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, model, 36, __LINE__, __FILE__)
+      CALL wclock_off (ng, model, 36, __LINE__, MyFile)
 # endif
-
+!
       RETURN
       END SUBROUTINE tl_nesting
 !
@@ -720,7 +722,7 @@
 
         END IF
       END DO
-
+!
       RETURN
       END SUBROUTINE tl_get_composite
 !
@@ -1008,7 +1010,7 @@
 # endif
         END IF
       END DO
-
+!
       RETURN
       END SUBROUTINE tl_get_refine
 !
@@ -1397,7 +1399,7 @@
 
         END IF
       END DO CR_LOOP
-
+!
       RETURN
       END SUBROUTINE tl_put_composite
 !
@@ -1490,7 +1492,7 @@
           END IF
         END IF
       END DO
-
+!
       RETURN
       END SUBROUTINE tl_put_refine
 
@@ -1552,7 +1554,7 @@
       CALL tl_correct_tracer_tile (ng, ngf, model, tile,                &
                                    LBi, UBi, LBj, UBj,                  &
      &                             IminS, ImaxS, JminS, JmaxS)
-
+!
       RETURN
       END SUBROUTINE tl_correct_tracer
 !
@@ -2011,7 +2013,7 @@
      &                    EWperiodic(ngc), NSperiodic(ngc),             &
      &                    OCEAN(ngc)%tl_t(:,:,:,Tindex,:))
 #  endif
-
+!
       RETURN
       END SUBROUTINE tl_correct_tracer_tile
 # endif
@@ -2075,6 +2077,7 @@
 !  Local variable declarations.
 !
       logical :: AreaAvg
+!
       integer :: LBiD, UBiD, LBjD, UBjD
       integer :: LBiR, UBiR, LBjR, UBjR
       integer :: Dindex2d, Rindex2d
@@ -2085,6 +2088,9 @@
 # ifdef SOLVE3D
       integer :: itrc
 # endif
+!
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__//", tl_fine2coarse"
 !
 !-----------------------------------------------------------------------
 !  Average interior fine grid state variable data to the coarse grid
@@ -2184,8 +2190,7 @@
      &                          OCEAN(dg)%tl_zeta(:,:,Dindex2d),        &
      &                          OCEAN(rg)%tl_zeta(:,:,Rindex2d))
 # endif
-            IF (FoundError(exit_flag, NoError, __LINE__,                &
-     &                     __FILE__)) RETURN
+            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Process 2D momentum components (ubar,vbar).
 !
@@ -2211,8 +2216,7 @@
 # else
      &                          OCEAN(rg)%tl_ubar(:,:,Rindex2d))
 # endif
-            IF (FoundError(exit_flag, NoError, __LINE__,                &
-     &                     __FILE__)) RETURN
+            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
             CALL fine2coarse2d (rg, dg, model, tile,                    &
      &                          v2dvar, Vname(1,idVbar),                &
@@ -2235,8 +2239,7 @@
 # else
      &                          OCEAN(rg)%tl_vbar(:,:,Rindex2d))
 # endif
-            IF (FoundError(exit_flag, NoError, __LINE__,                &
-     &                     __FILE__)) RETURN
+            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
 # ifdef SOLVE3D
 !
@@ -2266,8 +2269,8 @@
 #  endif
      &                            OCEAN(dg)%tl_t(:,:,:,Dindex3d,itrc),  &
      &                            OCEAN(rg)%tl_t(:,:,:,Rindex3d,itrc))
-              IF (FoundError(exit_flag, NoError, __LINE__,              &
-     &                       __FILE__)) RETURN
+              IF (FoundError(exit_flag, NoError,                        &
+     &                       __LINE__, MyFile)) RETURN
             END DO
 !
 !  Process 3D momentum components (u, v).
@@ -2289,8 +2292,7 @@
 #  endif
      &                          OCEAN(dg)%tl_u(:,:,:,Dindex3d),         &
      &                          OCEAN(rg)%tl_u(:,:,:,Rindex3d))
-            IF (FoundError(exit_flag, NoError, __LINE__,                &
-     &                     __FILE__)) RETURN
+            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
             CALL fine2coarse3d (rg, dg, model, tile,                    &
      &                          v3dvar, Vname(1,idVvel),                &
@@ -2308,8 +2310,7 @@
 #  endif
      &                          OCEAN(dg)%tl_v(:,:,:,Dindex3d),         &
      &                          OCEAN(rg)%tl_v(:,:,:,Rindex3d))
-            IF (FoundError(exit_flag, NoError, __LINE__,                &
-     &                     __FILE__)) RETURN
+            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 # endif
           END IF
 !
@@ -2473,7 +2474,7 @@
 # endif
         END IF
       END DO
-
+!
       RETURN
       END SUBROUTINE tl_fine2coarse
 !
@@ -2534,19 +2535,22 @@
 !  Local variable declarations.
 !
       logical :: Uboundary, Vboundary
-
+!
 # ifdef DISTRIBUTE
       integer :: ILB, IUB, JLB, JUB, NptsSN, NptsWE, my_tile
 # endif
       integer :: NSUB, i, irec, j, m, tnew, told
       integer :: Idg, Jdg
-
+!
 # ifdef DISTRIBUTE
       real(r8), parameter :: spv = 0.0_r8
 # endif
       real(dp) :: Wnew, Wold, SecScale, fac
       real(r8) :: cff, cff1, tl_cff
       real(r8) :: my_value, tl_my_value
+!
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__//", tl_put_refined2d"
 
 # include "set_bounds.h"
 !
@@ -2610,8 +2614,7 @@
      &                        INT(RollingTime(tnew,cr))
           END IF
           exit_flag=8
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
       END IF
 !
@@ -3191,7 +3194,7 @@
      &        /,2x,  'time(ng) = ',i7.7,                                &
      &          3x,'time(told) = ',i7.7,                                &
      &          3x,'time(tnew) = ',i7.7)
-
+!
       RETURN
       END SUBROUTINE tl_put_refine2d
 
@@ -3248,11 +3251,15 @@
 !
 # ifdef NESTING_DEBUG
       logical, save :: first = .TRUE.
+!
 # endif
       integer :: i, itrc, j, k, m, tnew, told
-
+!
       real(dp) :: Wnew, Wold, SecScale, fac
       real(r8) :: my_value, tl_my_value
+!
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__//", tl_put_refine3d"
 
 #  include "set_bounds.h"
 !
@@ -3289,8 +3296,7 @@
      &                        INT(RollingTime(tnew,cr))
           END IF
           exit_flag=8
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
       END IF
 
@@ -3560,7 +3566,7 @@
      &        /,2x,  'time(ng) = ',i7.7,                                &
      &          3x,'time(told) = ',i7.7,                                &
      &          3x,'time(tnew) = ',i7.7)
-
+!
       RETURN
       END SUBROUTINE tl_put_refine3d
 # endif
@@ -3614,6 +3620,7 @@
 
       integer, parameter :: ispv = 0
 #  endif
+!
       real(r8), parameter :: spv = 0.0_r8
 
       real(r8) :: Zbot, Zr, Ztop, dz, r1, r2
@@ -3621,6 +3628,9 @@
 
       real(r8), allocatable :: Zd(:,:,:)
       real(r8), allocatable :: tl_Zd(:,:,:)
+!
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__//", tl_z_weights"
 !
 !=======================================================================
 !  Compute vertical indices and weights for each contact region.
@@ -3740,11 +3750,10 @@
 !  Exchange data between all parallel nodes.
 !
             CALL mp_assemble (dg, model, Nzpts, spv, Zd)
-            IF (FoundError(exit_flag, NoError, __LINE__,                &
-     &                     __FILE__)) RETURN
+            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+
             CALL mp_assemble (dg, model, Nzpts, spv, tl_Zd)
-            IF (FoundError(exit_flag, NoError, __LINE__,                &
-     &                     __FILE__)) RETURN
+            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #  endif
 !
 !  Determine donor grid vertical indices (Kdg) and weights (Vweight)
@@ -3836,17 +3845,14 @@
 !  Exchange data between all parallel nodes.
 !
           CALL mp_assemble (rg, model, Nkpts, ispv, Rcontact(cr)%Kdg)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
           CALL mp_assemble (rg, model, Nwpts, spv, Rcontact(cr)%Vweight)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
           CALL mp_assemble (rg, model, Nwpts, spv,                      &
      &                      Rcontact(cr)%tl_Vweight)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #  endif
 !
 !  Deallocate local work arrays.
@@ -3974,11 +3980,10 @@
 !  Exchange data between all parallel nodes.
 !
             CALL mp_assemble (dg, model, Nzpts, spv, Zd)
-            IF (FoundError(exit_flag, NoError, __LINE__,                &
-     &                     __FILE__)) RETURN
+            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+
             CALL mp_assemble (dg, model, Nzpts, spv, tl_Zd)
-            IF (FoundError(exit_flag, NoError, __LINE__,                &
-     &                     __FILE__)) RETURN
+            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #  endif
 !
 !  Determine donor grid vertical indices (Kdg) and weights (Vweight)
@@ -4072,17 +4077,14 @@
 !  Exchange data between all parallel nodes.
 !
           CALL mp_assemble (rg, model, Nkpts, ispv, Ucontact(cr)%Kdg)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
           CALL mp_assemble (rg, model, Nwpts, spv, Ucontact(cr)%Vweight)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
           CALL mp_assemble (rg, model, Nwpts, spv,                      &
      &                      Ucontact(cr)%tl_Vweight)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #  endif
 !
 !  Deallocate local work arrays.
@@ -4206,12 +4208,10 @@
 !  Exchange data between all parallel nodes.
 !
             CALL mp_assemble (dg, model, Nzpts, spv, Zd)
-            IF (FoundError(exit_flag, NoError, __LINE__,                &
-     &                     __FILE__)) RETURN
+            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
             CALL mp_assemble (dg, model, Nzpts, spv, tl_Zd)
-            IF (FoundError(exit_flag, NoError, __LINE__,                &
-     &                     __FILE__)) RETURN
+            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #  endif
 !
 !  Determine donor grid vertical indices (Kdg) and weights (Vweight)
@@ -4305,17 +4305,14 @@
 !  Exchange data between all parallel nodes.
 !
           CALL mp_assemble (rg, model, Nkpts, ispv, Vcontact(cr)%Kdg)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
           CALL mp_assemble (rg, model, Nwpts, spv, Vcontact(cr)%Vweight)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
           CALL mp_assemble (rg, model, Nwpts, spv,                      &
      &                                          Vcontact(cr)%tl_Vweight)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #  endif
 !
 !  Deallocate local work arrays.
@@ -4329,9 +4326,8 @@
 
         END IF
       END DO
-
+!
       RETURN
-
       END SUBROUTINE tl_z_weights
 # endif
 
@@ -4516,7 +4512,7 @@
           END IF
         END DO
       END DO
-
+!
       RETURN
       END SUBROUTINE tl_put_contact3d
 # endif
@@ -4913,7 +4909,7 @@
      &        'SUM(DV_avg2)',/)
   30  FORMAT (4x,i4.4,3(3x,1p,e15.8))
 # endif
-
+!
       RETURN
       END SUBROUTINE tl_check_massflux
 #endif

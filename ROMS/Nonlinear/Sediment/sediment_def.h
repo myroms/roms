@@ -1,6 +1,6 @@
 /*
 ** git $Id$
-** svn $Id: sediment_def.h 995 2020-01-10 04:01:28Z arango $
+** svn $Id: sediment_def.h 1049 2020-11-30 04:34:51Z arango $
 *************************************************** Hernan G. Arango ***
 ** Copyright (c) 2002-2020 The ROMS/TOMS Group                        **
 **   Licensed under a MIT/X style license                             **
@@ -22,8 +22,7 @@
       status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
      &               1, (/0/), Aval, Vinfo, ncname,                     &
      &               SetParAccess = .FALSE.)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       Vinfo( 1)='newlayer_thick'
       Vinfo( 2)='depositional bed thickness criteria to crate a '//     &
@@ -32,8 +31,7 @@
       status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
      &               1, (/0/), Aval, Vinfo, ncname,                     &
      &               SetParAccess = .FALSE.)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
 #ifdef BEDLOAD
       Vinfo( 1)='bedload_coeff'
@@ -41,8 +39,7 @@
       status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
      &               1, (/0/), Aval, Vinfo, ncname,                     &
      &               SetParAccess = .FALSE.)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #endif
 
 #ifdef ANA_SEDIMENT
@@ -53,8 +50,7 @@
       status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
      &               1, (/seddim/), Aval, Vinfo, ncname,                &
      &               SetParAccess = .FALSE.)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       Vinfo( 1)='Srho'
       Vinfo( 2)='sediment grain density used in '//                     &
@@ -63,8 +59,7 @@
       status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
      &               1, (/seddim/), Aval, Vinfo, ncname,                &
      &               SetParAccess = .FALSE.)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       Vinfo( 1)='Csed'
       Vinfo( 2)='sediment concentration used in '//                     &
@@ -73,8 +68,7 @@
       status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
      &               1, (/seddim/), Aval, Vinfo, ncname,                &
      &               SetParAccess = .FALSE.)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #endif
 
       Vinfo( 1)='Wsed'
@@ -83,8 +77,7 @@
       status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
      &               1, (/seddim/), Aval, Vinfo, ncname,                &
      &               SetParAccess = .FALSE.)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       Vinfo( 1)='Erate'
       Vinfo( 2)='sediment surface layer erosing rate'
@@ -92,8 +85,7 @@
       status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
      &               1, (/seddim/), Aval, Vinfo, ncname,                &
      &               SetParAccess = .FALSE.)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       Vinfo( 1)='tau_ce'
       Vinfo( 2)='sediment critical shear for erosion'
@@ -101,8 +93,7 @@
       status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
      &               1, (/seddim/), Aval, Vinfo, ncname,                &
      &               SetParAccess = .FALSE.)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       Vinfo( 1)='tau_cd'
       Vinfo( 2)='sediment critical shear for deposition'
@@ -110,13 +101,11 @@
       status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
      &               1, (/seddim/), Aval, Vinfo, ncname,                &
      &               SetParAccess = .FALSE.)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       Vinfo( 1)='poros'
       Vinfo( 2)='sediment porosity'
       status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
      &               1, (/seddim/), Aval, Vinfo, ncname,                &
      &               SetParAccess = .FALSE.)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN

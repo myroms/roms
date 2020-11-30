@@ -1,7 +1,7 @@
       SUBROUTINE ana_initial (ng, tile, model)
 !
 !! git $Id$
-!! svn $Id: ana_initial.h 995 2020-01-10 04:01:28Z arango $
+!! svn $Id: ana_initial.h 1049 2020-11-30 04:34:51Z arango $
 !!======================================================================
 !! Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !!   Licensed under a MIT/X style license                              !
@@ -22,7 +22,12 @@
 ! Imported variable declarations.
 !
       integer, intent(in) :: ng, tile, model
-
+!
+! Local variable declarations.
+!
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__
+!
 #include "tile.h"
 !
       IF (model.eq.iNLM) THEN
@@ -55,9 +60,9 @@
 #else
       IF (Lanafile.and.(tile.eq.0)) THEN
 #endif
-        ANANAME(10)=__FILE__
+        ANANAME(10)=MyFile
       END IF
-
+!
       RETURN
       END SUBROUTINE ana_initial
 !
@@ -139,10 +144,11 @@
 !  Local variable declarations.
 !
       logical, save :: first = .TRUE.
-
+!
       integer :: Iless, Iplus, i, itrc, j, k
+!
       real(r8) :: depth, dx, val1, val2, val3, val4, x, x0, y, y0
-
+!
       TYPE (T_STATS), save :: Stats(7)   ! ubar, vbar, zeta, u, v, t, s
 
 #include "set_bounds.h"
@@ -333,6 +339,6 @@
   10  FORMAT (3x,' ANA_INITIAL - ',a,/,19x,                             &
      &        '(Grid = ',i2.2,', Min = ',1p,e15.8,0p,                   &
      &                         ' Max = ',1p,e15.8,0p,')')
-
+!
       RETURN
       END SUBROUTINE ana_NLMinitial_tile

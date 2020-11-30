@@ -3,7 +3,7 @@
       SUBROUTINE wrt_impulse (ng, tile, model, INPncname)
 !
 !git $Id$
-!svn $Id: wrt_impulse.F 1035 2020-07-28 00:49:02Z arango $
+!svn $Id: wrt_impulse.F 1049 2020-11-30 04:34:51Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -69,10 +69,13 @@
       real(r8) :: Fmin, Fmax
       real(dp) :: scale
       real(dp) :: inp_time(1)
+!
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__
 
 # include "set_bounds.h"
 !
-      SourceFile=__FILE__
+      SourceFile=MyFile
 !
       LBi=LBOUND(GRID(ng)%h,DIM=1)
       UBi=UBOUND(GRID(ng)%h,DIM=1)
@@ -86,15 +89,13 @@
 !  Inquire about the dimensions and check for consistency.
 !
       CALL netcdf_check_dim (ng, model, INPncname)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
       Nrec=rec_size
 !
 !  Inquire about the variables.
 !
       CALL netcdf_inq_var (ng, model, INPncname)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Set Vsize to zero to deactivate interpolation of input data to model
 !  grid in "nf_fread2d".
@@ -117,8 +118,7 @@
 !  Open input NetCDF file.
 !
       CALL netcdf_open (ng, model, INPncname, 0, INPncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) THEN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) THEN
         WRITE (stdout,20) TRIM(INPncname)
         RETURN
       END IF
@@ -152,15 +152,13 @@
      &                          Rclock%DateNumber, inp_time,            &
      &                          ncid = INPncid,                         &
      &                          start = (/Irec/), total = (/1/))
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
           CALL netcdf_put_fvar (ng, model, TLF(ng)%name,                &
      &                          Vname(1,idtime), inp_time,              &
      &                          (/Iout/), (/1/),                        &
      &                          ncid = TLF(ng)%ncid)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         ELSE
           IF (Master) WRITE (stdout,30) TRIM(Vname(1,idtime)),          &
      &                                  TRIM(INPncname)
@@ -186,8 +184,7 @@
 # else
      &                      OCEAN(ng) % ad_zeta(:,:,Iinp))
 # endif
-          IF (FoundError(status, nf90_noerr, __LINE__,                  &
-     &                   __FILE__)) THEN
+          IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
             IF (Master) THEN
               WRITE (stdout,40) TRIM(Vname(1,idZtlf)), Irec,            &
      &                          TRIM(INPncname)
@@ -215,8 +212,7 @@
      &                       GRID(ng) % rmask,                          &
 # endif
      &                       OCEAN(ng) % ad_zeta(:,:,Iinp))
-          IF (FoundError(status, nf90_noerr, __LINE__,                  &
-     &                   __FILE__)) THEN
+          IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
             IF (Master) THEN
               WRITE (stdout,60) TRIM(Vname(1,idZtlf)), Irec,            &
      &                          TRIM(TLF(ng)%name)
@@ -253,8 +249,7 @@
 #  else
      &                      OCEAN(ng) % ad_ubar(:,:,Iinp))
 #  endif
-          IF (FoundError(status, nf90_noerr, __LINE__,                  &
-     &                   __FILE__)) THEN
+          IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
             IF (Master) THEN
               WRITE (stdout,40) TRIM(Vname(1,idUbtf)), Irec,            &
      &                          TRIM(INPncname)
@@ -282,8 +277,7 @@
      &                       GRID(ng) % umask_full,                     &
 #  endif
      &                       OCEAN(ng) % ad_ubar(:,:,Iinp))
-          IF (FoundError(status, nf90_noerr, __LINE__,                  &
-     &                   __FILE__)) THEN
+          IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
             IF (Master) THEN
               WRITE (stdout,60) TRIM(Vname(1,idUbtf)), Irec,            &
      &                          TRIM(TLF(ng)%name)
@@ -318,8 +312,7 @@
 #  else
      &                      OCEAN(ng) % ad_vbar(:,:,Iinp))
 #  endif
-          IF (FoundError(status, nf90_noerr, __LINE__,                  &
-     &                   __FILE__)) THEN
+          IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
             IF (Master) THEN
               WRITE (stdout,40) TRIM(Vname(1,idVbtf)), Irec,            &
      &                          TRIM(INPncname)
@@ -347,8 +340,7 @@
      &                       GRID(ng) % vmask_full,                     &
 #  endif
      &                       OCEAN(ng) % ad_vbar(:,:,Iinp))
-          IF (FoundError(status, nf90_noerr, __LINE__,                  &
-     &                   __FILE__)) THEN
+          IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
             IF (Master) THEN
               WRITE (stdout,60) TRIM(Vname(1,idVbtf)), Irec,            &
      &                          TRIM(TLF(ng)%name)
@@ -385,8 +377,7 @@
 #  else
      &                      OCEAN(ng) % ad_u(:,:,:,Iinp))
 #  endif
-          IF (FoundError(status, nf90_noerr, __LINE__,                  &
-     &                   __FILE__)) THEN
+          IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
             IF (Master) THEN
               WRITE (stdout,40) TRIM(Vname(1,idUtlf)), Irec,            &
      &                          TRIM(INPncname)
@@ -413,8 +404,7 @@
      &                       GRID(ng) % umask_full,                     &
 #  endif
      &                       OCEAN(ng) % ad_u(:,:,:,Iinp))
-          IF (FoundError(status, nf90_noerr, __LINE__,                  &
-     &                   __FILE__)) THEN
+          IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
             IF (Master) THEN
               WRITE (stdout,60) TRIM(Vname(1,idUtlf)), Irec,            &
      &                          TRIM(TLF(ng)%name)
@@ -449,8 +439,7 @@
 #  else
      &                      OCEAN(ng) % ad_v(:,:,:,Iinp))
 #  endif
-          IF (FoundError(status, nf90_noerr, __LINE__,                  &
-     &                   __FILE__)) THEN
+          IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
             IF (Master) THEN
               WRITE (stdout,40) TRIM(Vname(1,idVtlf)), Irec,            &
      &                          TRIM(INPncname)
@@ -477,8 +466,7 @@
      &                       GRID(ng) % vmask_full,                     &
 #  endif
      &                       OCEAN(ng) % ad_v(:,:,:,Iinp))
-          IF (FoundError(status, nf90_noerr, __LINE__,                  &
-     &                   __FILE__)) THEN
+          IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
             IF (Master) THEN
               WRITE (stdout,60) TRIM(Vname(1,idVtlf)), Irec,            &
      &                          TRIM(TLF(ng)%name)
@@ -515,8 +503,7 @@
 #  else
      &                        OCEAN(ng) % ad_t(:,:,:,Iinp,i))
 #  endif
-            IF (FoundError(status, nf90_noerr, __LINE__,                &
-     &                     __FILE__)) THEN
+            IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
               IF (Master) THEN
                 WRITE (stdout,40) TRIM(Vname(1,idTtlf(i))), Irec,       &
      &                            TRIM(INPncname)
@@ -542,8 +529,7 @@
      &                         GRID(ng) % rmask,                        &
 #  endif
      &                         OCEAN(ng) % ad_t(:,:,:,Iinp,i))
-            IF (FoundError(status, nf90_noerr, __LINE__,                &
-     &                     __FILE__)) THEN
+            IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
               IF (Master) THEN
                 WRITE (stdout,60) TRIM(Vname(1,idTtlf(i))), Irec,       &
      &                            TRIM(TLF(ng)%name)
@@ -565,8 +551,7 @@
 !  Close input NetCDF file.
 !
       CALL netcdf_close (ng, model, INPncid, INPncname, .FALSE.)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) THEN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) THEN
         WRITE (stdout,70) TRIM(INPncname)
         RETURN
       END IF
@@ -577,8 +562,7 @@
 !-----------------------------------------------------------------------
 !
       CALL netcdf_sync (ng, model, INPncname, TLF(ng)%ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
   10  FORMAT (4x,'WRT_IMPULSE - processing convolved adjoint ',         &
      &           'impulses, records: 1 to ',i0,/,18x,'file: ',a)

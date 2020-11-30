@@ -3,7 +3,7 @@
       SUBROUTINE read_FltPar (model, inp, out, Lwrite)
 !
 !git $Id$
-!svn $Id: read_fltpar.F 1031 2020-07-14 01:39:55Z arango $
+!svn $Id: read_fltpar.F 1049 2020-11-30 04:34:51Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -30,6 +30,7 @@
 !  Imported variable declarations
 !
       logical, intent(in) :: Lwrite
+!
       integer, intent(in) :: model, inp, out
 !
 !  Local variable declarations.
@@ -40,20 +41,23 @@
       integer, dimension(Ngrids) :: ncount, nentry
 
       integer, allocatable :: Fcoor(:,:), Fcount(:,:), Ftype(:,:)
-
+!
       real(r8) :: xfloat, yfloat, zfloat
 
       real(dp), dimension(nRval) :: Rval
 
       real(r8), allocatable :: Ft0(:,:), Fx0(:,:), Fy0(:,:), Fz0(:,:)
       real(r8), allocatable :: Fdt(:,:), Fdx(:,:), Fdy(:,:), Fdz(:,:)
-
+!
       character (len=1  ), parameter :: blank = ' '
 
       character (len=35 ) :: frmt
       character (len=40 ) :: KeyWord
       character (len=256) :: fname, line
       character (len=256), dimension(nCval) :: Cval
+
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__
 !
 !-----------------------------------------------------------------------
 !  Read in initial float locations.
@@ -220,8 +224,7 @@
         END IF
       END IF
       exit_flag=4
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
  50   CONTINUE
       IF (Master.and.Lwrite) THEN
         WRITE (out,120) 'biological floats behavior File:  ',           &

@@ -3,7 +3,7 @@
       SUBROUTINE wrt_dai (ng, tile)
 !
 !git $Id$
-!svn $Id: wrt_dai.F 1035 2020-07-28 00:49:02Z arango $
+!svn $Id: wrt_dai.F 1049 2020-11-30 04:34:51Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -45,6 +45,9 @@
       integer :: Fcount, gfactor, gtype, status, varid
 !
       real(dp) :: scale
+!
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__
 
 # include "set_bounds.h"
 !
@@ -53,14 +56,13 @@
       LBj=LBOUND(GRID(ng)%h,DIM=2)
       UBj=UBOUND(GRID(ng)%h,DIM=2)
 !
-      SourceFile=__FILE__
+      SourceFile=MyFile
 !
 !-----------------------------------------------------------------------
 !  Write out Data Assimilation initial/restart fields.
 !-----------------------------------------------------------------------
 !
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Set grid type factor to write full (gfactor=1) fields.
 !
@@ -91,8 +93,7 @@
 #  endif
      &                   GRID(ng) % z0_r,                               &
      &                   SetFillVal = .FALSE.)
-      IF (FoundError(status, nf90_noerr, __LINE__,                      &
-     &               __FILE__)) THEN
+      IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
         IF (Master) THEN
           WRITE (stdout,10) TRIM(Vname(1,idpthR))
         END IF
@@ -121,8 +122,7 @@
 #  endif
      &                   GRID(ng) % z_v,                                &
      &                   SetFillVal = .FALSE.)
-      IF (FoundError(status, nf90_noerr, __LINE__,                      &
-     &               __FILE__)) THEN
+      IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
         IF (Master) THEN
           WRITE (stdout,10) TRIM(Vname(1,idpthU))
         END IF
@@ -151,8 +151,7 @@
 #  endif
      &                   GRID(ng) % z_v,                                &
      &                   SetFillVal = .FALSE.)
-      IF (FoundError(status, nf90_noerr, __LINE__,                      &
-     &               __FILE__)) THEN
+      IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
         IF (Master) THEN
           WRITE (stdout,10) TRIM(Vname(1,idpthV))
         END IF
@@ -173,8 +172,7 @@
 #  endif
      &                   GRID(ng) % z0_w,                               &
      &                   SetFillVal = .FALSE.)
-      IF (FoundError(status, nf90_noerr, __LINE__,                      &
-     &               __FILE__)) THEN
+      IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
         IF (Master) THEN
           WRITE (stdout,10) TRIM(Vname(1,idpthW))
         END IF
@@ -191,8 +189,7 @@
      &                      (/DAI(ng)%Rindex/), (/1/),                  &
      &                      ncid = DAI(ng)%ncid,                        &
      &                      varid = DAI(ng)%Vid(idtime))
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Write out free-surface (m).
 !
@@ -219,8 +216,7 @@
      &                   OCEAN(ng) % zeta(:,:,KOUT))
 #  endif
 # endif
-      IF (FoundError(status, nf90_noerr, __LINE__,                      &
-     &               __FILE__)) THEN
+      IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
         IF (Master) THEN
           WRITE (stdout,20) TRIM(Vname(1,idFsur)), DAI(ng)%Rindex
         END IF
@@ -244,8 +240,7 @@
 # else
      &                   OCEAN(ng) % ubar(:,:,KOUT))
 # endif
-      IF (FoundError(status, nf90_noerr, __LINE__,                      &
-     &               __FILE__)) THEN
+      IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
         IF (Master) THEN
           WRITE (stdout,20) TRIM(Vname(1,idUbar)), DAI(ng)%Rindex
         END IF
@@ -269,8 +264,7 @@
 # else
      &                   OCEAN(ng) % vbar(:,:,KOUT))
 # endif
-      IF (FoundError(status, nf90_noerr, __LINE__,                      &
-     &               __FILE__)) THEN
+      IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
         IF (Master) THEN
           WRITE (stdout,20) TRIM(Vname(1,idVbar)), DAI(ng)%Rindex
         END IF
@@ -296,8 +290,7 @@
 #  else
      &                   OCEAN(ng) % u(:,:,:,NOUT))
 #  endif
-      IF (FoundError(status, nf90_noerr, __LINE__,                      &
-     &               __FILE__)) THEN
+      IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
         IF (Master) THEN
           WRITE (stdout,20) TRIM(Vname(1,idUvel)), DAI(ng)%Rindex
         END IF
@@ -321,8 +314,7 @@
 #  else
      &                   OCEAN(ng) % v(:,:,:,NOUT))
 #  endif
-      IF (FoundError(status, nf90_noerr, __LINE__,                      &
-     &               __FILE__)) THEN
+      IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
         IF (Master) THEN
           WRITE (stdout,20) TRIM(Vname(1,idVvel)), DAI(ng)%Rindex
         END IF
@@ -347,8 +339,7 @@
 #  else
      &                     OCEAN(ng) % t(:,:,:,NOUT,itrc))
 #  endif
-        IF (FoundError(status, nf90_noerr, __LINE__,                    &
-     &                 __FILE__)) THEN
+        IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idTvar(itrc))), DAI(ng)%Rindex
           END IF
@@ -370,8 +361,7 @@
 #  endif
      &                   MIXING(ng) % Akv,                              &
      &                   SetFillVal = .FALSE.)
-      IF (FoundError(status, nf90_noerr, __LINE__,                      &
-     &               __FILE__)) THEN
+      IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
         IF (Master) THEN
           WRITE (stdout,20) TRIM(Vname(1,idVvis)), DAI(ng)%Rindex
         END IF
@@ -392,8 +382,7 @@
 #  endif
      &                   MIXING(ng) % Akt(:,:,:,itemp),                 &
      &                   SetFillVal = .FALSE.)
-      IF (FoundError(status, nf90_noerr, __LINE__,                      &
-     &               __FILE__)) THEN
+      IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
         IF (Master) THEN
           WRITE (stdout,20) TRIM(Vname(1,idTdif)), DAI(ng)%Rindex
         END IF
@@ -416,8 +405,7 @@
 #   endif
      &                   MIXING(ng) % Akt(:,:,:,isalt),                 &
      &                   SetFillVal = .FALSE.)
-      IF (FoundError(status, nf90_noerr, __LINE__,                      &
-     &               __FILE__)) THEN
+      IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
         IF (Master) THEN
           WRITE (stdout,20) TRIM(Vname(1,idSdif)), DAI(ng)%Rindex
         END IF
@@ -433,8 +421,7 @@
 !-----------------------------------------------------------------------
 !
       CALL netcdf_sync (ng, iNLM, DAI(ng)%name, DAI(ng)%ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
 # ifdef SOLVE3D
 #  ifdef NESTING

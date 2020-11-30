@@ -1,7 +1,7 @@
       MODULE ocean_control_mod
 !
 !git $Id$
-!svn $Id: pert_ocean.h 1039 2020-10-12 03:54:49Z arango $
+!svn $Id: pert_ocean.h 1049 2020-11-30 04:34:51Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -105,6 +105,9 @@
 #ifdef _OPENMP
       integer :: my_threadnum
 #endif
+!
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__//", ROMS_initialize"
 
 #ifdef DISTRIBUTE
 !
@@ -141,8 +144,7 @@
 !  grids and dimension parameters are known.
 !
         CALL inp_par (iNLM)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Set domain decomposition tile partition range.  This range is
 !  computed only once since the "first_tile" and "last_tile" values
@@ -172,7 +174,7 @@
 !
         DO ng=1,Ngrids
           DO thread=THREAD_RANGE
-            CALL wclock_on (ng, iNLM, 0, __LINE__, __FILE__)
+            CALL wclock_on (ng, iNLM, 0, __LINE__, MyFile)
           END DO
         END DO
 !
@@ -244,6 +246,9 @@
 
       real(r8), dimension(4,Ngrids) :: val
 #endif
+!
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__//", ROMS_run"
 !
 !=======================================================================
 !  Run model for all nested grids, if any.
@@ -322,8 +327,7 @@
 !  and processing from the FRC structure input forcing-files.
 
       CALL edit_multifile ('QCK2BLK')
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
       DO ng=1,Ngrids
         LreadBLK(ng)=.TRUE.
         LreadFRC(ng)=.FALSE.
@@ -344,8 +348,7 @@
         ADmodel=.FALSE.
         DO ng=1,Ngrids
           CALL tl_initial (ng)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
           IF (Master) THEN
             WRITE (stdout,10) 'TL', ng, ntstart(ng), ntend(ng)
@@ -357,8 +360,7 @@
 #else
         CALL tl_main2d (RunInterval)
 #endif
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
 #ifdef SANITY_CHECK
 !
@@ -461,8 +463,7 @@
         ADmodel=.TRUE.
         DO ng=1,Ngrids
           CALL ad_initial (ng)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
           IF (Master) THEN
             WRITE (stdout,10) 'AD', ng, ntstart(ng), ntend(ng)
@@ -474,8 +475,7 @@
 #else
         CALL ad_main2d (RunInterval)
 #endif
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
 #ifdef SANITY_CHECK
 !
@@ -639,12 +639,10 @@
 !
 !  Close current forward NetCDF file.
 !
-        SourceFile=__FILE__ // ", ROMS_run"
-
+        SourceFile=MyFile
         DO ng=1,Ngrids
           CALL netcdf_close (ng, iTLM, FWD(ng)%ncid, Lupdate = .FALSE.)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END DO
 
       END DO PERT_LOOP
@@ -688,6 +686,9 @@
 !
       integer :: Fcount, ng, thread
 !
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__//", ROMS_finalize"
+!
 !-----------------------------------------------------------------------
 !  If blowing-up, save latest model state into RESTART NetCDF file.
 !-----------------------------------------------------------------------
@@ -726,7 +727,7 @@
 !
       DO ng=1,Ngrids
         DO thread=THREAD_RANGE
-          CALL wclock_off (ng, iNLM, 0, __LINE__, __FILE__)
+          CALL wclock_off (ng, iNLM, 0, __LINE__, MyFile)
         END DO
       END DO
 !

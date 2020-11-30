@@ -1,7 +1,7 @@
       SUBROUTINE read_BioPar (model, inp, out, Lwrite)
 !
 !git $Id$
-!svn $Id: ecosim_inp.h 1043 2020-11-12 04:56:14Z arango $
+!svn $Id: ecosim_inp.h 1049 2020-11-30 04:34:51Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -867,12 +867,6 @@
       aDOC300(irct)=EXP(0.0145_r8*(410.0_r8-300.0_r8))
 
 #if defined DIAGNOSTICS && defined DIAGNOSTICS_BIO
-!
-!  Set number of spectral irrandiance bands to process for the
-!  diagnostics terms. It is possible to reduce its number for the
-!  analysis of few selected spectral bands (TODO).
-!
-      NDbands=NBands
 !
 !  Allocate center wavelenght of spectral irradiance bands for diagnostic
 !  terms.

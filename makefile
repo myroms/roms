@@ -341,7 +341,8 @@ ifndef FORT
 endif
 
 ifneq ($(MAKECMDGOALS),clean)
-  include $(COMPILERS)/$(OS)-$(strip $(FORT)).mk
+  MKFILE := $(COMPILERS)/$(OS)-$(strip $(FORT)).mk
+  include $(MKFILE)
 endif
 
 ifdef USE_MPI

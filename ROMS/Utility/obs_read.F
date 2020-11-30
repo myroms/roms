@@ -3,7 +3,7 @@
       SUBROUTINE obs_read (ng, model, backward)
 !
 !git $Id$
-!svn $Id: obs_read.F 1022 2020-05-13 03:03:15Z arango $
+!svn $Id: obs_read.F 1049 2020-11-30 04:34:51Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -32,19 +32,22 @@
 !  Imported variable declarations.
 !
       logical, intent(in) :: backward
-
+!
       integer, intent(in) :: ng, model
 !
 !  Local variable declarations.
 !
       logical :: readNLmod, readTLmod
-
+!
       integer :: Mstr, Mend
       integer :: i, iobs, itrc, status
-
-      character (len=22) :: t_code
 !
-      SourceFile=__FILE__
+      character (len=22) :: t_code
+
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__
+!
+      SourceFile=MyFile
 !
 !---------------------------------------------------------------------
 !  Read observation variables needed for interpolating the model
@@ -110,8 +113,7 @@
      &                        ncid = OBS(ng)%ncid,                      &
      &                        start = (/NstrObs(ng)/),                  &
      &                        total = (/Nobs(ng)/))
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Read in observation provenance identifier.
 !
@@ -120,8 +122,7 @@
      &                        ncid = OBS(ng)%ncid,                      &
      &                        start = (/NstrObs(ng)/),                  &
      &                        total = (/Nobs(ng)/))
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Read in observation time (days).
 !
@@ -130,8 +131,7 @@
      &                        ncid = OBS(ng)%ncid,                      &
      &                        start = (/NstrObs(ng)/),                  &
      &                        total = (/Nobs(ng)/))
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Read in observation X-location (grid units).
 !
@@ -140,8 +140,7 @@
      &                        ncid = OBS(ng)%ncid,                      &
      &                        start = (/NstrObs(ng)/),                  &
      &                        total = (/Nobs(ng)/))
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Read in observation Y-location (grid units).
 !
@@ -150,8 +149,7 @@
      &                        ncid = OBS(ng)%ncid,                      &
      &                        start = (/NstrObs(ng)/),                  &
      &                        total = (/Nobs(ng)/))
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
 # ifdef SOLVE3D
 !
@@ -168,8 +166,7 @@
      &                          ncid = OBS(ng)%ncid,                    &
      &                          start = (/NstrObs(ng)/),                &
      &                          total = (/Nobs(ng)/))
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         ELSE
           CALL netcdf_get_fvar (ng, model, OBS(ng)%name,                &
      &                          Vname(1,idObsD),                        &
@@ -177,8 +174,7 @@
      &                          ncid = OBS(ng)%ncid,                    &
      &                          start = (/NstrObs(ng)/),                &
      &                          total = (/Nobs(ng)/))
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
         Load_Zobs(ng)=.FALSE.
         IF ((MINVAL(Zobs).lt.0.0_r8).or.                                &
@@ -205,8 +201,7 @@
      &                        ncid = OBS(ng)%ncid,                      &
      &                        start = (/NstrObs(ng)/),                  &
      &                        total = (/Nobs(ng)/))
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  If appropriate, read in observation meta values.
 !
@@ -217,8 +212,7 @@
      &                          ncid = OBS(ng)%ncid,                    &
      &                          start = (/NstrObs(ng)/),                &
      &                          total = (/Nobs(ng)/))
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 !
 # ifdef WEAK_CONSTRAINT
@@ -233,8 +227,7 @@
      &                        ncid = OBS(ng)%ncid,                      &
      &                        start = (/NstrObs(ng)/),                  &
      &                        total = (/Nobs(ng)/))
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
 # ifndef WEAK_CONSTRAINT
         DO iobs=1,Nobs(ng)
@@ -252,8 +245,7 @@
      &                          ncid = DAV(ng)%ncid,                    &
      &                          start = (/NstrObs(ng)/),                &
      &                          total = (/Nobs(ng)/))
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 # else
           CALL netcdf_get_fvar (ng, model, DAV(ng)%name,                &
      &                          Vname(1,idNLmo),                        &
@@ -261,8 +253,7 @@
      &                          ncid = DAV(ng)%ncid,                    &
      &                          start = (/NstrObs(ng),outer/),          &
      &                          total = (/Nobs(ng),1/))
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 # endif
 # ifdef BGQC_NOT_NEEDED
           CALL netcdf_get_fvar (ng, model, DAV(ng)%name,                &
@@ -271,16 +262,14 @@
      &                          ncid = DAV(ng)%ncid,                    &
      &                          start = (/NstrObs(ng)/),                &
      &                          total = (/Nobs(ng)/))
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
           CALL netcdf_get_fvar (ng, model, DAV(ng)%name,                &
      &                          Vname(1,idObsS),                        &
      &                          ObsScale(Mstr:),                        &
      &                          ncid = DAV(ng)%ncid,                    &
      &                          start = (/NstrObs(ng)/),                &
      &                          total = (/Nobs(ng)/))
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 # endif
         END IF
 
@@ -296,8 +285,7 @@
      &                          ncid = DAV(ng)%ncid,                    &
      &                          start = (/NstrObs(ng)/),                &
      &                          total = (/Nobs(ng)/))
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
 #  if defined I4DVAR
 !

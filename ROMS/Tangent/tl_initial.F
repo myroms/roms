@@ -3,7 +3,7 @@
       SUBROUTINE tl_initial (ng)
 !
 !git $Id$
-!svn $Id: tl_initial.F 1031 2020-07-14 01:39:55Z arango $
+!svn $Id: tl_initial.F 1049 2020-11-30 04:34:51Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -90,12 +90,15 @@
 !  Local variable declarations.
 !
       logical :: update = .FALSE.
-
+!
       integer :: LBi, UBi, LBj, UBj
       integer :: Fcount, IniRec, Tindex, wrtRec
       integer :: thread, tile
-
+!
       real(dp) :: my_dstart
+!
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__
 !
 !=======================================================================
 !   Initialize model variables.
@@ -195,8 +198,7 @@
 !-----------------------------------------------------------------------
 !
       DO thread=THREAD_RANGE
-        CALL wclock_on (ng, iTLM, 2, __LINE__,                          &
-     &                  __FILE__)
+        CALL wclock_on (ng, iTLM, 2, __LINE__, MyFile)
       END DO
 # endif
 
@@ -230,14 +232,13 @@
       IF ((Nrun.eq.ERstr).and.(inner.eq.0)) THEN
         LdefITL(ng)=.TRUE.
         CALL tl_def_ini (ng)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+
         CALL tl_wrt_ini (ng, Tindex, 1)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+
         CALL tl_wrt_ini (ng, Tindex, 2)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
       END IF
 #   endif
 #   ifndef WEAK_CONSTRAINT
@@ -370,8 +371,7 @@
         IF (Nrun.gt.1) THEN
           wrtRec=1
           CALL tl_wrt_ini (ng, Tindex, wrtRec)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
       END IF
 #   endif
@@ -466,14 +466,12 @@
 !
 #  ifdef INI_FILE
       CALL get_state (ng, iTLM, 1, ITL(ng)%name, IniRec, Tindex)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
       time(ng)=io_time                       ! needed for shared-memory
 #  else
       IF (nrrec(ng).ne.0) THEN
         CALL get_state (ng, iTLM, 1, ITL(ng)%name, IniRec, Tindex)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         time(ng)=io_time                     ! needed for shared-memory
       END IF
 #  endif
@@ -492,8 +490,7 @@
 #  ifdef DISTRIBUTE
         CALL mp_bcasti (ng, iTLM, exit_flag)
 #  endif
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
       ELSE
         DO tile=first_tile(ng),last_tile(ng),+1
           CALL wetdry (ng, tile, Tindex(ng), .TRUE.)
@@ -512,8 +509,7 @@
 !-----------------------------------------------------------------------
 !
       CALL obs_initial (ng, iTLM, .FALSE.)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 # endif
 
 # if defined ANA_PERTURB && defined SANITY_CHECK
@@ -602,8 +598,7 @@
 # ifdef DISTRIBUTE
       CALL mp_bcasti (ng, iTLM, exit_flag)
 # endif
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !-----------------------------------------------------------------------
 !  Read in initial forcing, climatology and assimilation data from
@@ -616,8 +611,7 @@
 # ifdef DISTRIBUTE
       CALL mp_bcasti (ng, iTLM, exit_flag)
 # endif
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
 # ifdef MASKING
 !
@@ -657,8 +651,7 @@
       IF (nADJ(ng).lt.ntimes(ng)) THEN
         IniRec=1
         CALL get_state (ng, 7, 7, TLF(ng)%name, IniRec, 1)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
       END IF
 # endif
 
@@ -724,8 +717,7 @@
 !-----------------------------------------------------------------------
 !
       DO thread=THREAD_RANGE
-        CALL wclock_off (ng, iTLM, 2, __LINE__,                         &
-     &                   __FILE__)
+        CALL wclock_off (ng, iTLM, 2, __LINE__, MyFile)
       END DO
 # endif
 !

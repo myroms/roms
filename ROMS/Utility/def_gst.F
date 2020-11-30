@@ -3,7 +3,7 @@
       SUBROUTINE def_gst (ng, model)
 !
 !git $Id$
-!svn $Id: def_gst.F 995 2020-01-10 04:01:28Z arango $
+!svn $Id: def_gst.F 1049 2020-11-30 04:34:51Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -36,7 +36,7 @@
 !  Local variable declarations.
 !
       integer, parameter :: Natt = 25
-
+!
       integer :: Mstatedim, NCVdim, SworkDdim, SworkLdim
       integer :: char1dim, char2dim, iaitrdim, iaupddim, iaup2dim
       integer :: iparamdim, ipntrdim, laitrdim, laup2dim, raitrdim
@@ -45,20 +45,22 @@
       integer :: DimIDs(nDimID), vardim(2)
 
       integer :: def_dim
-
+!
       real(r8) :: Aval(6)
-
+!
       character (len=120) :: Vinfo(Natt)
       character (len=256) :: ncname
+
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__
 !
-      SourceFile=__FILE__
+      SourceFile=MyFile
 !
 !-----------------------------------------------------------------------
 !  Set and report file name.
 !-----------------------------------------------------------------------
 !
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
       ncname=GST(ng)%name
 !
       IF (Master) THEN
@@ -75,8 +77,7 @@
 !
       DEFINE : IF (.not.LrstGST) THEN
         CALL netcdf_create (ng, model, TRIM(ncname), GST(ng)%ncid)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) THEN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) THEN
           IF (Master) WRITE (stdout,30) TRIM(ncname)
           RETURN
         END IF
@@ -87,81 +88,66 @@
 !
         status=def_dim(ng, model, GST(ng)%ncid, ncname, 'Mstate',       &
      &                 Mstate(ng), Mstatedim)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
         status=def_dim(ng, model, GST(ng)%ncid, ncname, 'NCV',          &
      &                 NCV, NCVdim)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
         status=def_dim(ng, model, GST(ng)%ncid, ncname, 'LworkD',       &
      &                 3*Mstate(ng), SworkDdim)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
         status=def_dim(ng, model, GST(ng)%ncid, ncname, 'LworkL',       &
      &                 LworkL, SworkLdim)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
         status=def_dim(ng, model, GST(ng)%ncid, ncname, 'iparam',       &
      &                 SIZE(iparam), iparamdim)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
         status=def_dim(ng, model, GST(ng)%ncid, ncname, 'ipntr',        &
      &                 SIZE(ipntr), ipntrdim)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
         status=def_dim(ng, model, GST(ng)%ncid, ncname, 'iaupd',        &
      &                 SIZE(iaupd), iaupddim)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
         status=def_dim(ng, model, GST(ng)%ncid, ncname, 'laitr',        &
      &                 SIZE(laitr), laitrdim)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
         status=def_dim(ng, model, GST(ng)%ncid, ncname, 'iaitr',        &
      &                 SIZE(iaitr), iaitrdim)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
         status=def_dim(ng, model, GST(ng)%ncid, ncname, 'raitr',        &
      &                 SIZE(raitr), raitrdim)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
         status=def_dim(ng, model, GST(ng)%ncid, ncname, 'laup2',        &
      &                 SIZE(laup2), laup2dim)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
         status=def_dim(ng, model, GST(ng)%ncid, ncname, 'iaup2',        &
      &                 SIZE(iaup2), iaup2dim)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
         status=def_dim(ng, model, GST(ng)%ncid, ncname, 'raup2',        &
      &                 SIZE(raup2), raup2dim)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
         status=def_dim(ng, model, GST(ng)%ncid, ncname, 'char2',        &
      &                 2, char2dim)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !-----------------------------------------------------------------------
 !  Define global attributes.
 !-----------------------------------------------------------------------
 !
         CALL def_info (ng, model, GST(ng)%ncid, ncname, DimIDs)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !-----------------------------------------------------------------------
 !  Define variables and their attributes.
@@ -185,8 +171,7 @@
         status=def_var(ng, model, GST(ng)%ncid, varid, nf90_int,        &
      &                 1, (/0/), Aval, Vinfo, ncname,                   &
      &                 SetParAccess = .FALSE.)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Define number of Lanczos vectors to compute.
 !
@@ -195,8 +180,7 @@
         status=def_var(ng, model, GST(ng)%ncid, varid, nf90_int,        &
      &                 1, (/0/), Aval, Vinfo, ncname,                   &
      &                 SetParAccess = .FALSE.)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Define size of eigenvalue problem.
 !
@@ -205,8 +189,7 @@
         status=def_var(ng, model, GST(ng)%ncid, varid, nf90_int,        &
      &                 1, (/0/), Aval, Vinfo, ncname,                   &
      &                 SetParAccess = .FALSE.)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Define iteration number.
 !
@@ -215,8 +198,7 @@
         status=def_var(ng, model, GST(ng)%ncid, varid, nf90_int,        &
      &                 1, (/0/), Aval, Vinfo, ncname,                   &
      &                 SetParAccess = .FALSE.)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Define reverse communications flag.
 !
@@ -225,8 +207,7 @@
         status=def_var(ng, model, GST(ng)%ncid, varid, nf90_int,        &
      &                 1, (/0/), Aval, Vinfo, ncname,                   &
      &                 SetParAccess = .FALSE.)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Define information and error flag.
 !
@@ -235,8 +216,7 @@
         status=def_var(ng, model, GST(ng)%ncid, varid, nf90_int,        &
      &                 1, (/0/), Aval, Vinfo, ncname,                   &
      &                 SetParAccess = .FALSE.)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Define eigenvalue problem type.
 !
@@ -245,8 +225,7 @@
         status=def_var(ng, model, GST(ng)%ncid, varid, nf90_char,       &
      &                 1, (/0/), Aval, Vinfo, ncname,                   &
      &                 SetParAccess = .FALSE.)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Define Ritz eigenvalues to compute.
 !
@@ -255,8 +234,7 @@
         status=def_var(ng, model, GST(ng)%ncid, varid, nf90_char,       &
      &                 1, (/char2dim/), Aval, Vinfo, ncname,            &
      &                 SetParAccess = .FALSE.)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Define form of basis function.
 !
@@ -265,8 +243,7 @@
         status=def_var(ng, model, GST(ng)%ncid, varid, nf90_char,       &
      &                 1, (/0/), Aval, Vinfo, ncname,                   &
      &                 SetParAccess = .FALSE.)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Define relative accuracy of computed Ritz values.
 !
@@ -275,8 +252,7 @@
         status=def_var(ng, model, GST(ng)%ncid, varid, NF_TOUT,         &
      &                 1, (/0/), Aval, Vinfo, ncname,                   &
      &                 SetParAccess = .FALSE.)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Define eigenproblem parameters.
 !
@@ -285,8 +261,7 @@
         status=def_var(ng, model, GST(ng)%ncid, varid, nf90_int,        &
      &                 1, (/iparamdim/), Aval, Vinfo, ncname,           &
      &                 SetParAccess = .FALSE.)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Define pointers to mark starting location in work arrays.
 !
@@ -295,8 +270,7 @@
         status=def_var(ng, model, GST(ng)%ncid,varid, nf90_int,         &
      &                 1, (/ipntrdim/), Aval, Vinfo, ncname,            &
      &                 SetParAccess = .FALSE.)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Define ARPACK internal integer parameters to _aupd routines.
 !
@@ -305,8 +279,7 @@
         status=def_var(ng, model, GST(ng)%ncid, varid, nf90_int,        &
      &                 1, (/iaupddim/), Aval, Vinfo, ncname,            &
      &                 SetParAccess = .FALSE.)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Define ARPACK internal integer parameters to _aitr routines.
 !
@@ -315,8 +288,7 @@
         status=def_var(ng, model, GST(ng)%ncid, varid, nf90_int,        &
      &                 1, (/iaitrdim/), Aval, Vinfo, ncname,            &
      &                 SetParAccess = .FALSE.)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Define ARPACK internal integer parameters to _aup2 routines.
 !
@@ -325,8 +297,7 @@
         status=def_var(ng, model, GST(ng)%ncid, varid, nf90_int,        &
      &                 1, (/iaup2dim/), Aval, Vinfo, ncname,            &
      &                 SetParAccess = .FALSE.)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Define ARPACK internal logical parameters to _aitr routines.
 !
@@ -337,8 +308,7 @@
         status=def_var(ng, model, GST(ng)%ncid, varid, nf90_int,        &
      &                 1, (/laitrdim/), Aval, Vinfo, ncname,            &
      &                 SetParAccess = .FALSE.)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Define ARPACK internal logical parameters to _aup2 routines.
 !
@@ -349,8 +319,7 @@
         status=def_var(ng, model, GST(ng)%ncid, varid, nf90_int,        &
      &                 1, (/laup2dim/), Aval, Vinfo, ncname,            &
      &                 SetParAccess = .FALSE.)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Define ARPACK internal real parameters to _aitr routines.
 !
@@ -359,8 +328,7 @@
         status=def_var(ng, model, GST(ng)%ncid, varid, NF_FRST,         &
      &                 1, (/raitrdim/), Aval, Vinfo, ncname,            &
      &                 SetParAccess = .FALSE.)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Define ARPACK internal real parameters to _aup2 routines.
 !
@@ -369,8 +337,7 @@
         status=def_var(ng, model, GST(ng)%ncid, varid, NF_FRST,         &
      &                 1, (/raup2dim/), Aval, Vinfo, ncname,            &
      &                 SetParAccess = .FALSE.)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Define Lanczos/Arnoldi basis vectors.
 !
@@ -380,8 +347,7 @@
         vardim(2)=NCVdim
         status=def_var(ng, model, GST(ng)%ncid, varid, NF_FRST,         &
      &                 2, vardim, Aval, Vinfo, ncname)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Define eigenproblem residual vector.
 !
@@ -389,8 +355,7 @@
         Vinfo( 2)='eigenproblem residual vector'
         status=def_var(ng, model, GST(ng)%ncid, varid, NF_FRST,         &
      &                 1, (/Mstatedim/), Aval, Vinfo, ncname)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Define state reverse communications work array.
 !
@@ -398,8 +363,7 @@
         Vinfo( 2)='reverse communications state array'
         status=def_var(ng, model, GST(ng)%ncid, varid, NF_FRST,         &
      &                 1, (/SworkDdim/), Aval, Vinfo, ncname)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Define eigenproblem work array.
 !
@@ -407,16 +371,14 @@
         Vinfo( 2)='eigenproblem work array'
         status=def_var(ng, model, GST(ng)%ncid, varid, NF_FRST,         &
      &                 1, (/SworkLdim/), Aval, Vinfo, ncname)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !-----------------------------------------------------------------------
 !  Leave definition mode.
 !-----------------------------------------------------------------------
 !
         CALL netcdf_enddef (ng, model, ncname, GST(ng)%ncid)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       END IF DEFINE
 !
@@ -426,7 +388,7 @@
      &        ': ', a)
   30  FORMAT (/,' DEF_GST - unable to create checkpointing NetCDF',     &
      &          ' file: ', a)
-
+!
       RETURN
       END SUBROUTINE def_gst
 #else

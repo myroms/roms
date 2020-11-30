@@ -3,7 +3,7 @@
 #if defined TANGENT && defined SOLVE3D
 !
 !git $Id$
-!svn $Id: tl_rhs3d.F 1022 2020-05-13 03:03:15Z arango $
+!svn $Id: tl_rhs3d.F 1049 2020-11-30 04:34:51Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -72,6 +72,9 @@
 !
 !  Local variable declarations.
 !
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__
+!
 # include "tile.h"
 !
 !-----------------------------------------------------------------------
@@ -122,7 +125,7 @@
 !-----------------------------------------------------------------------
 !
 # ifdef PROFILE
-      CALL wclock_on (ng, iTLM, 21, __LINE__, __FILE__)
+      CALL wclock_on (ng, iTLM, 21, __LINE__, MyFile)
 # endif
       CALL tl_rhs3d_tile (ng, tile,                                     &
      &                    LBi, UBi, LBj, UBj,                           &
@@ -180,7 +183,7 @@
      &                    OCEAN(ng) % tl_ru,                            &
      &                    OCEAN(ng) % tl_rv)
 # ifdef PROFILE
-      CALL wclock_off (ng, iTLM, 21, __LINE__, __FILE__)
+      CALL wclock_off (ng, iTLM, 21, __LINE__, MyFile)
 # endif
 # ifdef UV_VIS2
 !
@@ -2932,7 +2935,7 @@
 # endif
         END IF
       END DO J_LOOP
-
+!
       RETURN
       END SUBROUTINE tl_rhs3d_tile
 #endif

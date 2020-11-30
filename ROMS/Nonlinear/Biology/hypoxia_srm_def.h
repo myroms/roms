@@ -1,6 +1,6 @@
 /*
 ** git $Id$
-** svn $Id: hypoxia_srm_def.h 995 2020-01-10 04:01:28Z arango $
+** svn $Id: hypoxia_srm_def.h 1049 2020-11-30 04:34:51Z arango $
 *************************************************** Hernan G. Arango ***
 ** Copyright (c) 2002-2020 The ROMS/TOMS Group                        **
 **   Licensed under a MIT/X style license                             **
@@ -21,8 +21,7 @@
       status=def_var(ng, model, ncid, varid, nf90_int,                  &
      &               1, (/0/), Aval, Vinfo, ncname,                     &
      &               SetParAccess = .FALSE.)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       Vinfo( 1)='ResRate'
       Vinfo( 2)='total biological respiration rate'
@@ -30,5 +29,4 @@
       status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
      &               1, (/0/), Aval, Vinfo, ncname,                     &
      &               SetParAccess = .FALSE.)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN

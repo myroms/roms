@@ -1,6 +1,6 @@
 /*
 ** git $Id$
-** svn $Id: red_tide_def.h 995 2020-01-10 04:01:28Z arango $
+** svn $Id: red_tide_def.h 1049 2020-11-30 04:34:51Z arango $
 *************************************************** Hernan G. Arango ***
 ** Copyright (c) 2002-2020 The ROMS/TOMS Group                        **
 **   Licensed under a MIT/X style license                             **
@@ -23,8 +23,7 @@
       status=def_var(ng, model, ncid, varid, nf90_int,                  &
      &               1, (/0/), Aval, Vinfo, ncname,                     &
      &               SetParAccess = .FALSE.)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       Vinfo( 1)='Gmax'
       Vinfo( 2)='maximum grow rate at optimal T/S'
@@ -32,8 +31,7 @@
       status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
      &               1, (/0/), Aval, Vinfo, ncname,                     &
      &               SetParAccess = .FALSE.)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       Vinfo( 1)='Dg'
       Vinfo( 2)='depth of sediment for cysts germination'
@@ -41,8 +39,7 @@
       status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
      &               1, (/0/), Aval, Vinfo, ncname,                     &
      &               SetParAccess = .FALSE.)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       Vinfo( 1)='Kn'
       Vinfo( 2)='half-saturation for nutrient limited growth'
@@ -50,8 +47,7 @@
       status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
      &               1, (/0/), Aval, Vinfo, ncname,                     &
      &               SetParAccess = .FALSE.)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       Vinfo( 1)='G_eff'
       Vinfo( 2)='growth efficiency'
@@ -59,8 +55,7 @@
       status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
      &               1, (/0/), Aval, Vinfo, ncname,                     &
      &               SetParAccess = .FALSE.)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       Vinfo( 1)='G_r'
       Vinfo( 2)='maintanenance respiration rate'
@@ -68,8 +63,7 @@
       status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
      &               1, (/0/), Aval, Vinfo, ncname,                     &
      &               SetParAccess = .FALSE.)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       Vinfo( 1)='AttW'
       Vinfo( 2)='mean light diffuse attenuation in water column'
@@ -77,8 +71,7 @@
       status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
      &               1, (/0/), Aval, Vinfo, ncname,                     &
      &               SetParAccess = .FALSE.)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       Vinfo( 1)='AttS'
       Vinfo( 2)='mean light diffuse attenuation in sediment'
@@ -86,8 +79,7 @@
       status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
      &               1, (/0/), Aval, Vinfo, ncname,                     &
      &               SetParAccess = .FALSE.)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       Vinfo( 1)='E_light'
       Vinfo( 2)='light level for germination under light conditions'
@@ -95,8 +87,7 @@
       status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
      &               1, (/0/), Aval, Vinfo, ncname,                     &
      &               SetParAccess = .FALSE.)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       Vinfo( 1)='E_dark'
       Vinfo( 2)='light level for germination under dark conditions'
@@ -104,8 +95,7 @@
       status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
      &               1, (/0/), Aval, Vinfo, ncname,                     &
      &               SetParAccess = .FALSE.)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       Vinfo( 1)='Tmin_growth'
       Vinfo( 2)='coldest temperature used in growth factor cubic ' //   &
@@ -114,8 +104,7 @@
       status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
      &               1, (/0/), Aval, Vinfo, ncname,                     &
      &               SetParAccess = .FALSE.)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       Vinfo( 1)='DIN_Cdepth'
       Vinfo( 2)='Dissolved Inorganic Nutrient concentration below ' //  &
@@ -124,8 +113,7 @@
       status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
      &               1, (/0/), Aval, Vinfo, ncname,                     &
      &               SetParAccess = .FALSE.)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       Vinfo( 1)='wDino'
       Vinfo( 2)='Dinoflagellate swimming/migration rate'
@@ -135,8 +123,7 @@
       status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
      &               1, (/0/), Aval, Vinfo, ncname,                     &
      &               SetParAccess = .FALSE.)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       Vinfo( 1)='Mor_a'
       Vinfo( 2)='Mortality rate equation, Q10 amplitude term'
@@ -144,8 +131,7 @@
       status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
      &               1, (/0/), Aval, Vinfo, ncname,                     &
      &               SetParAccess = .FALSE.)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       Vinfo( 1)='Mor_b'
       Vinfo( 2)='Mortality rate equation, Q10 intercept term'
@@ -153,16 +139,14 @@
       status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
      &               1, (/0/), Aval, Vinfo, ncname,                     &
      &               SetParAccess = .FALSE.)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       Vinfo( 1)='Mor_Q10'
       Vinfo( 2)='Mortality rate equation, Q10 reaction rate base'
       status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
      &               1, (/0/), Aval, Vinfo, ncname,                     &
      &               SetParAccess = .FALSE.)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       Vinfo( 1)='Mor_T0'
       Vinfo( 2)='Mortality rate equation, Q10 background temperature'
@@ -170,5 +154,4 @@
       status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
      &               1, (/0/), Aval, Vinfo, ncname,                     &
      &               SetParAccess = .FALSE.)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN

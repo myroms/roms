@@ -2,7 +2,7 @@
       MODULE mod_sources
 !
 !git $Id$
-!svn $Id: mod_sources.F 1038 2020-09-29 01:54:25Z arango $
+!svn $Id: mod_sources.F 1049 2020-11-30 04:34:51Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -123,6 +123,9 @@
 
       real(r8), parameter :: IniVal = 0.0_r8
 !
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__//", allocate_sources"
+!
 !-----------------------------------------------------------------------
 !  Allocate module variables.
 !-----------------------------------------------------------------------
@@ -149,8 +152,7 @@
      &                           VarID = Vid,                           &
      &                           nVardim = nvdim,                       &
      &                           nVarAtt = nvatt)
-            IF (FoundError(exit_flag, NoError, __LINE__,                &
-     &                     __FILE__//", allocate_sources")) RETURN
+            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
             IF (foundit) THEN
               Nsrc(mg)=var_Dsize(1)         ! first dimension

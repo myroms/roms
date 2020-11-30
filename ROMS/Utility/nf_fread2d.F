@@ -2,7 +2,7 @@
       MODULE nf_fread2d_mod
 !
 !git $Id$
-!svn $Id: nf_fread2d.F 1039 2020-10-12 03:54:49Z arango $
+!svn $Id: nf_fread2d.F 1049 2020-11-30 04:34:51Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -43,7 +43,7 @@
 !=======================================================================
 !
       implicit none
-
+!
       CONTAINS
 
 #if defined PARALLEL_IO && defined DISTRIBUTE
@@ -135,6 +135,9 @@
 !
       character (len= 3), dimension(2) :: op_handle
       character (len=12), dimension(3) :: AttName
+
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__
 !
 !-----------------------------------------------------------------------
 !  Set starting and ending indices to process.
@@ -230,8 +233,7 @@
       CALL netcdf_get_fatt (ng, model, ncname, ncvarid, AttName,        &
      &                      AttValue, foundit,                          &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) THEN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) THEN
         nf_fread2d=ioerror
         RETURN
       END IF
@@ -602,7 +604,7 @@
       IF (allocated(wrk)) THEN
         deallocate (wrk)
       END IF
-
+!
       RETURN
       END FUNCTION nf_fread2d
 
@@ -689,6 +691,9 @@
       real(r8), allocatable :: wrk(:)
 !
       character (len=12), dimension(3) :: AttName
+
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__
 !
 !-----------------------------------------------------------------------
 !  Set starting and ending indices to process.
@@ -786,8 +791,7 @@
       CALL netcdf_get_fatt (ng, model, ncname, ncvarid, AttName,        &
      &                      AttValue, foundit,                          &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) THEN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) THEN
         nf_fread2d=ioerror
         RETURN
       END IF
@@ -910,8 +914,7 @@
 # ifdef DISTRIBUTE
       CALL mp_bcasti (ng, model, status)
 # endif
-      IF (FoundError(status, nf90_noerr, __LINE__,                      &
-     &               __FILE__)) THEN
+      IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
         exit_flag=2
         ioerror=status
         nf_fread2d=status
@@ -1046,7 +1049,7 @@
       END IF
 
       nf_fread2d=status
-
+!
       RETURN
       END FUNCTION nf_fread2d
 #endif
