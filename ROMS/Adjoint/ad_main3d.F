@@ -3,7 +3,7 @@
       SUBROUTINE ad_main3d (RunInterval)
 !
 !git $Id$
-!svn $Id: ad_main3d.F 1039 2020-10-12 03:54:49Z arango $
+!svn $Id: ad_main3d.F 1049 2020-11-30 04:34:51Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -165,6 +165,9 @@
 !
       real(r8) :: HalfDT, MaxDT, my_StepTime
 !
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__
+!
 !=======================================================================
 !  Time-step adjoint 3D primitive equations backwards.
 !=======================================================================
@@ -191,8 +194,7 @@
 !
         DO ng=1,Ngrids
           CALL ad_get_data (ng)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END DO
 !
 !-----------------------------------------------------------------------
@@ -207,8 +209,7 @@
 # endif
           END DO
         END DO
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
 # ifdef FORWARD_READ
 !
@@ -454,8 +455,7 @@
               CALL ad_misfit (ng, tile, iADM)
 #  endif
             END DO
-            IF (FoundError(exit_flag, NoError, __LINE__,                &
-     &                     __FILE__)) RETURN
+            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #  ifdef SENSITIVITY_4DVAR
           END IF
 #  endif
@@ -639,8 +639,7 @@
 # endif
           END DO
         END DO
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
 # ifdef FORCING_SV
 !
@@ -821,8 +820,7 @@
 !
         DO ng=1,Ngrids
           CALL ad_output (ng)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END DO
 
 # if defined WEAK_CONSTRAINT && !defined SP4DVAR

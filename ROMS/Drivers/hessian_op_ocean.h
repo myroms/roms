@@ -1,7 +1,7 @@
       MODULE ocean_control_mod
 !
 !git $Id$
-!svn $Id: hessian_op_ocean.h 1039 2020-10-12 03:54:49Z arango $
+!svn $Id: hessian_op_ocean.h 1049 2020-11-30 04:34:51Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -85,6 +85,9 @@
 #ifdef _OPENMP
       integer :: my_threadnum
 #endif
+!
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__//", ROMS_initialize"
 
 #ifdef DISTRIBUTE
 !
@@ -121,8 +124,7 @@
 !  grids and dimension parameters are known.
 !
         CALL inp_par (iTLM)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Set domain decomposition tile partition range.  This range is
 !  computed only once since the "first_tile" and "last_tile" values
@@ -152,7 +154,7 @@
 !
         DO ng=1,Ngrids
           DO thread=THREAD_RANGE
-            CALL wclock_on (ng, iTLM, 0, __LINE__, __FILE__)
+            CALL wclock_on (ng, iTLM, 0, __LINE__, MyFile)
           END DO
         END DO
 !
@@ -203,8 +205,7 @@
 !  and processing from the FRC structure input forcing-files.
 !
       CALL edit_multifile ('QCK2BLK')
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
       DO ng=1,Ngrids
         LreadBLK(ng)=.TRUE.
         LreadFRC(ng)=.FALSE.
@@ -216,8 +217,7 @@
       DO ng=1,Ngrids
         LreadFWD(ng)=.TRUE
         CALL tl_initial (ng)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
       END DO
 !
 !-----------------------------------------------------------------------
@@ -230,16 +230,14 @@
 !  by solving a tri-diagonal system that uses "cg_beta" and "cg_gamma".
 !-----------------------------------------------------------------------
 !
-      SourceFile=__FILE__ // ", ROMS_initialize"
+      SourceFile=MyFile
       DO ng=1,Ngrids
         CALL netcdf_get_fvar (ng, iADM, LCZ(ng)%name, 'cg_beta',        &
      &                        cg_beta)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         CALL netcdf_get_fvar (ng, iADM, LCZ(ng)%name, 'cg_delta',       &
      &                        cg_delta)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
       END DO
 !
 !  Allocate arrays associated with Generalized Stability Theory (GST)
@@ -314,8 +312,7 @@
         ELSE
           CALL def_gst (ng, iTLM)
         END IF
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
       END DO
 #endif
 !
@@ -382,6 +379,9 @@
       TYPE (T_GST), allocatable :: state(:)
 !
       character (len=55) :: string
+
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__//", ROMS_run"
 !
 !-----------------------------------------------------------------------
 !  Implicit Restarted Arnoldi Method (IRAM) for the computation of
@@ -413,7 +413,7 @@
 !
         DO ng=1,Ngrids
 #ifdef PROFILE
-          CALL wclock_on (ng, iTLM, 38, __LINE__, __FILE__)
+          CALL wclock_on (ng, iTLM, 38, __LINE__, MyFile)
 #endif
           IF (Master) THEN
             CALL dsaupd (ido(ng), bmat, Nsize(ng), which, NEV,          &
@@ -426,7 +426,7 @@
             Nconv(ng)=iaup2(4)
           END IF
 #ifdef PROFILE
-          CALL wclock_off (ng, iTLM, 38, __LINE__, __FILE__)
+          CALL wclock_off (ng, iTLM, 38, __LINE__, MyFile)
 #endif
 #ifdef DISTRIBUTE
 !
@@ -452,8 +452,7 @@
           IF ((MOD(iter,nGST).eq.0).or.(iter.ge.MaxIterGST).or.         &
      &        (ANY(ido.eq.99))) THEN
             CALL wrt_gst (ng, iTLM)
-            IF (FoundError(exit_flag, NoError, __LINE__,                &
-     &                     __FILE__)) RETURN
+            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
           END IF
 #endif
         END DO
@@ -499,8 +498,7 @@
           END DO
 !
           CALL propagator (RunInterval, state, ad_state)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         ELSE
           IF (ANY(info.ne.0)) THEN
             DO ng=1,Ngrids
@@ -528,7 +526,7 @@
      &                            iparam(3,ng)
               END IF
 #ifdef PROFILE
-              CALL wclock_on (ng, iTLM, 38, __LINE__, __FILE__)
+              CALL wclock_on (ng, iTLM, 38, __LINE__, MyFile)
 #endif
               IF (Master) THEN
                 CALL dseupd (Lrvec, howmany, select(1,ng),              &
@@ -553,7 +551,7 @@
               CALL mp_bcastf (ng, iTLM, STORAGE(ng)%Rvector)
 #endif
 #ifdef PROFILE
-              CALL wclock_off (ng, iTLM, 38, __LINE__, __FILE__)
+              CALL wclock_off (ng, iTLM, 38, __LINE__, MyFile)
 #endif
             END DO
 
@@ -611,8 +609,8 @@
                 END DO
 !
                 CALL propagator (RunInterval, state, ad_state)
-                IF (FoundError(exit_flag, NoError, __LINE__,            &
-     &                         __FILE__)) RETURN
+                IF (FoundError(exit_flag, NoError,                      &
+     &                         __LINE__, MyFile)) RETURN
 !
                 DO ng=1,Ngrids
                   CALL r_norm2 (ng, iTLM, 1, Ninner,                    &
@@ -630,7 +628,7 @@
 !  twice in the TLM file for the initial and final perturbation of
 !  the eigenvector.
 !
-                SourceFile=__FILE__ // ", ROMS_run"
+                SourceFile=MyFile
                 DO ng=1,Ngrids
                   my_norm(1)=norm(i,ng)
                   my_norm(2)=my_norm(1)
@@ -644,8 +642,8 @@
      &                                    start = (/TLM(ng)%Rindex-1/), &
      &                                    total = (/2/),                &
      &                                    ncid = TLM(ng)%ncid)
-                    IF (FoundError(exit_flag, NoError, __LINE__,        &
-     &                             __FILE__)) RETURN
+                    IF (FoundError(exit_flag, NoError,                  &
+     &                             __LINE__, MyFile)) RETURN
 
                     CALL netcdf_put_fvar (ng, iTLM, TLM(ng)%name,       &
      &                                    'Ritz_norm',                  &
@@ -653,14 +651,14 @@
      &                                    start = (/TLM(ng)%Rindex-1/), &
      &                                    total = (/2/),                &
      &                                    ncid = TLM(ng)%ncid)
-                    IF (FoundError(exit_flag, NoError, __LINE__,        &
-     &                             __FILE__)) RETURN
+                    IF (FoundError(exit_flag, NoError,                  &
+     &                             __LINE__, MyFile)) RETURN
 
                     IF (LmultiGST) THEN
                       CALL netcdf_close (ng, iTLM, TLM(ng)%ncid,        &
      &                                   TLM(ng)%name)
-                      IF (FoundError(exit_flag, NoError, __LINE__,      &
-     &                               __FILE__)) RETURN
+                      IF (FoundError(exit_flag, NoError,                &
+     &                               __LINE__, MyFile)) RETURN
                     END IF
                   END IF
                   IF (LwrtADJ(ng)) THEN
@@ -670,8 +668,8 @@
      &                                    start = (/ADM(ng)%Rindex/),   &
      &                                    total = (/1/),                &
      &                                    ncid = ADM(ng)%ncid)
-                    IF (FoundError(exit_flag, NoError, __LINE__,        &
-     &                             __FILE__)) RETURN
+                    IF (FoundError(exit_flag, NoError,                  &
+     &                             __LINE__, MyFile)) RETURN
 
                     CALL netcdf_put_fvar (ng, iADM, ADM(ng)%name,       &
      &                                    'Ritz_norm',                  &
@@ -679,14 +677,14 @@
      &                                    start = (/ADM(ng)%Rindex/),   &
      &                                    total = (/1/),                &
      &                                    ncid = ADM(ng)%ncid)
-                    IF (FoundError(exit_flag, NoError, __LINE__,        &
-     &                             __FILE__)) RETURN
+                    IF (FoundError(exit_flag, NoError,                  &
+     &                             __LINE__, MyFile)) RETURN
 
                     IF (LmultiGST) THEN
                       CALL netcdf_close (ng, iADM, ADM(ng)%ncid,        &
      &                                   ADM(ng)%name)
-                      IF (FoundError(exit_flag, NoError, __LINE__,      &
-     &                               __FILE__)) RETURN
+                      IF (FoundError(exit_flag, NoError,                &
+     &                               __LINE__, MyFile)) RETURN
                     END IF
                   END IF
                 END DO
@@ -726,6 +724,9 @@
 !
       integer :: Fcount, ng, thread
 !
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__//", ROMS_finalize"
+!
 !-----------------------------------------------------------------------
 !  If blowing-up, save latest model state into RESTART NetCDF file.
 !-----------------------------------------------------------------------
@@ -764,7 +765,7 @@
 !
       DO ng=1,Ngrids
         DO thread=THREAD_RANGE
-          CALL wclock_off (ng, iTLM, 0, __LINE__, __FILE__)
+          CALL wclock_off (ng, iTLM, 0, __LINE__, MyFile)
         END DO
       END DO
 !

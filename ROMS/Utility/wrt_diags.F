@@ -3,7 +3,7 @@
       SUBROUTINE wrt_diags (ng)
 !
 !git $Id$
-!svn $Id: wrt_diags.F 1028 2020-06-01 00:24:59Z arango $
+!svn $Id: wrt_diags.F 1049 2020-11-30 04:34:51Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -52,7 +52,10 @@
       real(r8) :: dtBIO
 # endif
 !
-      SourceFile=__FILE__
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__
+!
+      SourceFile=MyFile
 !
       LBi=LBOUND(GRID(ng)%h,DIM=1)
       UBi=UBOUND(GRID(ng)%h,DIM=1)
@@ -63,8 +66,7 @@
 !  Write out time-averaged diagnostic fields when appropriate.
 !-----------------------------------------------------------------------
 !
-      if (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      if (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Set grid type factor to write full (gfactor=1) fields or water
 !  points (gfactor=-1) fields only.
@@ -88,8 +90,7 @@
      &                      (/DIA(ng)%Rindex/), (/1/),                  &
      &                      ncid = DIA(ng)%ncid,                        &
      &                      varid = DIA(ng)%Vid(idtime))
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
 # ifdef DIAGNOSTICS_UV
 !
@@ -109,8 +110,7 @@
 #  endif
      &                       DIAGS(ng) % DiaU2d(:,:,ivar),              &
      &                       SetFillVal = .FALSE.)
-          IF (FoundError(status, nf90_noerr, __LINE__,                  &
-     &                   __FILE__)) THEN
+          IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
             IF (Master) THEN
               WRITE (stdout,10) TRIM(Vname(1,ifield)), DIA(ng)%Rindex
             END IF
@@ -133,8 +133,7 @@
 #  endif
      &                       DIAGS(ng) % DiaV2d(:,:,ivar),              &
      &                       SetFillVal = .FALSE.)
-          IF (FoundError(status, nf90_noerr, __LINE__,                  &
-     &                   __FILE__)) THEN
+          IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
             IF (Master) THEN
               WRITE (stdout,10) TRIM(Vname(1,ifield)), DIA(ng)%Rindex
             END IF
@@ -163,8 +162,7 @@
 #   endif
      &                       DIAGS(ng) % DiaU3d(:,:,:,ivar),            &
      &                       SetFillVal = .FALSE.)
-          IF (FoundError(status, nf90_noerr, __LINE__,                  &
-     &                   __FILE__)) THEN
+          IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
             IF (Master) THEN
               WRITE (stdout,10) TRIM(Vname(1,ifield)), DIA(ng)%Rindex
             END IF
@@ -187,8 +185,7 @@
 #   endif
      &                       DIAGS(ng) % DiaV3d(:,:,:,ivar),            &
      &                       SetFillVal = .FALSE.)
-          IF (FoundError(status, nf90_noerr, __LINE__,                  &
-     &                   __FILE__)) THEN
+          IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
             IF (Master) THEN
               WRITE (stdout,10) TRIM(Vname(1,ifield)), DIA(ng)%Rindex
             END IF
@@ -219,8 +216,7 @@
 #  endif
      &                         DIAGS(ng) % DiaTrc(:,:,:,itrc,ivar),     &
      &                         SetFillVal = .FALSE.)
-            IF (FoundError(status, nf90_noerr, __LINE__,                &
-     &                     __FILE__)) THEN
+            IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
               IF (Master) THEN
                 WRITE (stdout,10) TRIM(Vname(1,ifield)), DIA(ng)%Rindex
               END IF
@@ -257,8 +253,7 @@
 #   endif
      &                       DIAGS(ng) % DiaBio2d(:,:,ivar),            &
      &                       SetFillVal = .FALSE.)
-          IF (FoundError(status, nf90_noerr, __LINE__,                  &
-     &                   __FILE__)) THEN
+          IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
             IF (Master) THEN
               WRITE (stdout,10) TRIM(Vname(1,ifield)), DIA(ng)%Rindex
             END IF
@@ -287,8 +282,7 @@
 #   endif
      &                       DIAGS(ng) % DiaBio3d(:,:,:,ivar),          &
      &                       SetFillVal = .FALSE.)
-          IF (FoundError(status, nf90_noerr, __LINE__,                  &
-     &                   __FILE__)) THEN
+          IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
             IF (Master) THEN
               WRITE (stdout,10) TRIM(Vname(1,ifield)), DIA(ng)%Rindex
             END IF
@@ -317,8 +311,7 @@
 #   endif
      &                       DIAGS(ng) % DiaBio3d(:,:,:,ivar),          &
      &                       SetFillVal = .FALSE.)
-          IF (FoundError(status, nf90_noerr, __LINE__,                  &
-     &                   __FILE__)) THEN
+          IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
             IF (Master) THEN
               WRITE (stdout,10) TRIM(Vname(1,ifield)), DIA(ng)%Rindex
             END IF
@@ -347,8 +340,7 @@
 #   endif
      &                       DIAGS(ng) % DiaBio4d(:,:,:,:,ivar),        &
      &                       SetFillVal = .FALSE.)
-          IF (FoundError(status, nf90_noerr, __LINE__,                  &
-     &                   __FILE__)) THEN
+          IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
             IF (Master) THEN
               WRITE (stdout,10) TRIM(Vname(1,ifield)), DIA(ng)%Rindex
             END IF
@@ -365,8 +357,7 @@
 !  to access data immediately after it is written.
 !
       CALL netcdf_sync (ng, iNLM, DIA(ng)%name, DIA(ng)%ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
 # ifdef NESTING
       IF (Master) WRITE (stdout,20) DIA(ng)%Rindex, ng

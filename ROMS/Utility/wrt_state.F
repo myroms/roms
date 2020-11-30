@@ -99,6 +99,9 @@
       character (len=15) :: Tstring
       character (len=22) :: t_code
       character (len=50) :: string
+
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__
 !
       LBi=LBOUND(GRID(ng)%h,DIM=1)
       UBi=UBOUND(GRID(ng)%h,DIM=1)
@@ -109,7 +112,7 @@
       UBij=BOUNDS(ng)%UBij
 # endif
 !
-      SourceFile=__FILE__
+      SourceFile=MyFile
 !
 !-----------------------------------------------------------------------
 !  Write out tangent linear or adjoint state fields.
@@ -118,16 +121,14 @@
 !
 !  Turn on time wall clock.
 !
-      CALL wclock_on (ng, model, 81, __LINE__,                          &
-     &                __FILE__)
+      CALL wclock_on (ng, model, 81, __LINE__, MyFile)
 #endif
 !
 !  Open output NetCDF file.
 !
       omode=1                                    ! read and write access
       CALL netcdf_open (ng, model, S(ng)%name, omode, ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Set grid type factor to write full (gfactor=1) fields or water
 !  points (gfactor=-1) fields only.
@@ -177,8 +178,7 @@
      &                      (/OutRec/), (/1/),                          &
      &                      ncid = ncid,                                &
      &                      varid = S(ng)%Vid(idtime))
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Write out free-surface.
 !
@@ -849,8 +849,7 @@
 !-----------------------------------------------------------------------
 !
       CALL netcdf_sync (ng, iTLM, S(ng)%name, ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
       CALL netcdf_close (ng, iTLM, ncid, S(ng)%name, .FALSE.)
 
@@ -858,8 +857,7 @@
 !
 !  Turn off time wall clock.
 !
-      CALL wclock_off (ng, model, 81, __LINE__,                         &
-     &                 __FILE__)
+      CALL wclock_off (ng, model, 81, __LINE__, MyFile)
 #endif
 !
   10  FORMAT (1x,a,': WRT_STATE - ',a,t75,a,                            &

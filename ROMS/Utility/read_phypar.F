@@ -2,7 +2,7 @@
       SUBROUTINE read_PhyPar (model, inp, out, Lwrite)
 !
 !git $Id$
-!svn $Id: read_phypar.F 1043 2020-11-12 04:56:14Z arango $
+!svn $Id: read_phypar.F 1049 2020-11-30 04:34:51Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -74,7 +74,7 @@
       logical, allocatable :: Ladsen(:)
 # endif
 #endif
-
+!
       integer :: Npts, Nval, i, itrc, ivar, k, lstr, ng, nl, status
       integer :: ifield, ifile, igrid, itracer, nline, max_Ffiles
       integer :: ibcfile, iclmfile
@@ -87,7 +87,7 @@
       integer, allocatable :: Ncount(:,:)
       integer, allocatable :: NBCcount(:,:)
       integer, allocatable :: NCLMcount(:,:)
-
+!
       real(dp), allocatable :: Dtracer(:,:)
       real(r8), allocatable :: Rtracer(:,:)
       real(r8), allocatable :: tracer(:,:)
@@ -98,12 +98,15 @@
       real(r8) :: Rvalue(1)
 
       real(dp), dimension(nRval) :: Rval
-
+!
       character (len=1  ), parameter :: blank = ' '
       character (len=40 ) :: KeyWord, text
       character (len=50 ) :: label
       character (len=256) :: fname, line
       character (len=256), dimension(nCval) :: Cval
+
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__
 !
 !-----------------------------------------------------------------------
 !  Initialize.
@@ -400,8 +403,8 @@
      &                       itracer, 1, NAT+NPT,                       &
      &                       Vname(1,idTvar(itrc)),                     &
      &                       Hadvection)
-              IF (FoundError(exit_flag, NoError, __LINE__,              &
-     &                       __FILE__)) RETURN
+              IF (FoundError(exit_flag, NoError,                        &
+     &                       __LINE__, MyFile)) RETURN
             CASE ('Vadvection')
               IF (itracer.lt.(NAT+NPT)) THEN
                 itracer=itracer+1
@@ -413,8 +416,8 @@
      &                       itracer, 1, NAT+NPT,                       &
      &                       Vname(1,idTvar(itrc)),                     &
      &                       Vadvection)
-              IF (FoundError(exit_flag, NoError, __LINE__,              &
-     &                       __FILE__)) RETURN
+              IF (FoundError(exit_flag, NoError,                        &
+     &                       __LINE__, MyFile)) RETURN
 # if defined ADJOINT || defined TANGENT || defined TL_IOMS
             CASE ('ad_Hadvection')
               IF (itracer.lt.(NAT+NPT)) THEN
@@ -427,8 +430,8 @@
      &                       itracer, 1, NAT+NPT,                       &
      &                       Vname(1,idTvar(itrc)),                     &
      &                       ad_Hadvection)
-              IF (FoundError(exit_flag, NoError, __LINE__,              &
-     &                       __FILE__)) RETURN
+              IF (FoundError(exit_flag, NoError,                        &
+     &                       __LINE__, MyFile)) RETURN
             CASE ('ad_Vadvection')
               IF (itracer.lt.(NAT+NPT)) THEN
                 itracer=itracer+1
@@ -440,8 +443,8 @@
      &                       itracer, 1, NAT+NPT,                       &
      &                       Vname(1,idTvar(itracer)),                  &
      &                       ad_Vadvection)
-              IF (FoundError(exit_flag, NoError, __LINE__,              &
-     &                       __FILE__)) RETURN
+              IF (FoundError(exit_flag, NoError,                        &
+     &                       __LINE__, MyFile)) RETURN
 # endif
 #endif
             CASE ('LBC(isFsur)')
@@ -3402,8 +3405,7 @@
               END DO
               USRname=TRIM(ADJUSTL(Cval(Nval)))
           END SELECT
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
       END DO
   10  IF (Master) WRITE (out,50) line
@@ -6371,8 +6373,7 @@
             END IF
           END IF
           exit_flag=4
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
   40      CONTINUE
         END DO
         IF (Nuser.gt.0) THEN

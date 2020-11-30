@@ -3,7 +3,7 @@
 #if defined NONLINEAR && defined GLS_MIXING && defined SOLVE3D
 !
 !git $Id$
-!svn $Id: gls_corstep.F 995 2020-01-10 04:01:28Z arango $
+!svn $Id: gls_corstep.F 1049 2020-11-30 04:34:51Z arango $
 !=======================================================================
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license           Hernan G. Arango   !
@@ -22,10 +22,10 @@
 !=======================================================================
 !
       implicit none
-
+!
       PRIVATE
       PUBLIC  :: gls_corstep
-
+!
       CONTAINS
 !
 !***********************************************************************
@@ -45,10 +45,13 @@
 !
 !  Local variable declarations.
 !
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__
+!
 # include "tile.h"
 !
 # ifdef PROFILE
-      CALL wclock_on (ng, iNLM, 19, __LINE__, __FILE__)
+      CALL wclock_on (ng, iNLM, 19, __LINE__, MyFile)
 # endif
       CALL gls_corstep_tile (ng, tile,                                  &
      &                       LBi, UBi, LBj, UBj,                        &
@@ -88,8 +91,9 @@
      &                       MIXING(ng) % gls,                          &
      &                       MIXING(ng) % tke)
 # ifdef PROFILE
-      CALL wclock_off (ng, iNLM, 19, __LINE__, __FILE__)
+      CALL wclock_off (ng, iNLM, 19, __LINE__, MyFile)
 # endif
+!
       RETURN
       END SUBROUTINE gls_corstep
 !
@@ -1136,7 +1140,7 @@
      &                    EWperiodic(ng), NSperiodic(ng),               &
      &                    Akt)
 # endif
-
+!
       RETURN
       END SUBROUTINE gls_corstep_tile
 #endif

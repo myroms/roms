@@ -1,7 +1,7 @@
       SUBROUTINE ana_sponge (ng, tile, model)
 !
 !! git $Id$
-!! svn $Id: ana_sponge.h 995 2020-01-10 04:01:28Z arango $
+!! svn $Id: ana_sponge.h 1049 2020-11-30 04:34:51Z arango $
 !!================================================= Hernan G. Arango ===
 !! Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !!   Licensed under a MIT/X style license                              !
@@ -74,6 +74,9 @@
 !
 !  Local variable declarations.
 !
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__
+!
 #include "tile.h"
 
       CALL ana_sponge_tile (ng, tile, model,                            &
@@ -87,9 +90,9 @@
 #else
       IF (Lanafile.and.(tile.eq.0)) THEN
 #endif
-        ANANAME( 8)=__FILE__
+        ANANAME( 8)=MyFile
       END IF
-
+!
       RETURN
       END SUBROUTINE ana_sponge
 !
@@ -121,9 +124,9 @@
 !  Local variable declarations.
 !
       integer :: i, itrc, j
-
+!
       real(r8) :: cff, innerF, outerF, val, width
-
+!
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: factor
 
 #include "set_bounds.h"
@@ -377,6 +380,6 @@
 #  endif
 # endif
 #endif
-
+!
       RETURN
       END SUBROUTINE ana_sponge_tile

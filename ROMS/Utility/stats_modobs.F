@@ -3,7 +3,7 @@
       SUBROUTINE stats_modobs (ng)
 !
 !git $Id$
-!svn $Id: stats_modobs.F 1046 2020-11-18 22:36:52Z arango $
+!svn $Id: stats_modobs.F 1049 2020-11-30 04:34:51Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -87,8 +87,11 @@
       character (len=11), dimension(NobsVar(ng)) :: text, svar_name
 
       character (len=30) :: F1, F2, F3, F4
+
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__
 !
-      SourceFile=__FILE__
+      SourceFile=MyFile
 !
       LBi=LBOUND(GRID(ng)%h,DIM=1)
       UBi=UBOUND(GRID(ng)%h,DIM=1)
@@ -113,8 +116,7 @@
 !
       CALL netcdf_inq_var (ng, iNLM, OBS(ng)%name,                      &
      &                     ncid = OBS(ng)%ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Read in and write out number of observations per survey.
 !
@@ -122,14 +124,12 @@
      &                      survey_Nobs,                                &
      &                      ncid = OBS(ng)%ncid,                        &
      &                      start = (/1/), total = (/Nsurvey(ng)/))
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       CALL netcdf_put_ivar (ng, iNLM, DAV(ng)%name, Vname(1,idNobs),    &
      &                      survey_Nobs, (/1/), (/Nsurvey(ng)/),        &
      &                      ncid = DAV(ng)%ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Read in and write out survey time.
 !
@@ -137,14 +137,12 @@
      &                      Rclock%DateNumber, survey,                  &
      &                      ncid = OBS(ng)%ncid,                        &
      &                      start = (/1/), total = (/Nsurvey(ng)/))
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       CALL netcdf_put_fvar (ng, iNLM, DAV(ng)%name, Vname(1,idOday),    &
      &                      survey, (/1/), (/Nsurvey(ng)/),             &
      &                      ncid = DAV(ng)%ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Read in and write out observation type identifier.
 !
@@ -152,14 +150,12 @@
      &                      obs_type,                                   &
      &                      ncid = OBS(ng)%ncid,                        &
      &                      start = (/1/), total = (/Ndatum(ng)/))
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       CALL netcdf_put_ivar (ng, iNLM, DAV(ng)%name, Vname(1,idOtyp),    &
      &                      obs_type, (/1/), (/Ndatum(ng)/),            &
      &                      ncid = DAV(ng)%ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Read in and write out observation provenance.
 !
@@ -167,14 +163,12 @@
      &                      provenance,                                 &
      &                      ncid = OBS(ng)%ncid,                        &
      &                      start = (/1/), total = (/Ndatum(ng)/))
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       CALL netcdf_put_ivar (ng, iNLM, DAV(ng)%name, Vname(1,idOpro),    &
      &                      provenance, (/1/), (/Ndatum(ng)/),          &
      &                      ncid = DAV(ng)%ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Read in and write out observation time.
 !
@@ -182,14 +176,12 @@
      &                      Rclock%DateNumber, obs_time,                &
      &                      ncid = OBS(ng)%ncid,                        &
      &                      start = (/1/), total = (/Ndatum(ng)/))
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       CALL netcdf_put_fvar (ng, iNLM, DAV(ng)%name, Vname(1,idObsT),    &
      &                      obs_time, (/1/), (/Ndatum(ng)/),            &
      &                      ncid = DAV(ng)%ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Read in and write out observation longitude.
 !
@@ -198,14 +190,12 @@
      &                        obs_work,                                 &
      &                        ncid = OBS(ng)%ncid,                      &
      &                        start = (/1/), total = (/Ndatum(ng)/))
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
         CALL netcdf_put_fvar (ng, iNLM, DAV(ng)%name, Vname(1,idOlon),  &
      &                        obs_work, (/1/), (/Ndatum(ng)/),          &
      &                        ncid = DAV(ng)%ncid)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
       END IF
 !
 !  Read in and write out observation latitude.
@@ -215,14 +205,12 @@
      &                        obs_work,                                 &
      &                        ncid = OBS(ng)%ncid,                      &
      &                        start = (/1/), total = (/Ndatum(ng)/))
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
         CALL netcdf_put_fvar (ng, iNLM, DAV(ng)%name, Vname(1,idOlat),  &
      &                        obs_work, (/1/), (/Ndatum(ng)/),          &
      &                        ncid = DAV(ng)%ncid)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
       END IF
 !
 !  Read in observation depth.
@@ -231,8 +219,7 @@
      &                      obs_depths,                                 &
      &                      ncid = OBS(ng)%ncid,                        &
      &                      start = (/1/), total = (/Ndatum(ng)/))
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Read in and write out X-fractional coordinate.
 !
@@ -240,14 +227,12 @@
      &                      obs_Xgrid,                                  &
      &                      ncid = OBS(ng)%ncid,                        &
      &                      start = (/1/), total = (/Ndatum(ng)/))
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       CALL netcdf_put_fvar (ng, iNLM, DAV(ng)%name, Vname(1,idObsX),    &
      &                      obs_Xgrid, (/1/), (/Ndatum(ng)/),           &
      &                      ncid = DAV(ng)%ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Read in and write out Y-fractional coordinate.
 !
@@ -255,14 +240,12 @@
      &                      obs_Ygrid,                                  &
      &                      ncid = OBS(ng)%ncid,                        &
      &                      start = (/1/), total = (/Ndatum(ng)/))
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       CALL netcdf_put_fvar (ng, iNLM, DAV(ng)%name, Vname(1,idObsY),    &
      &                      obs_Ygrid, (/1/), (/Ndatum(ng)/),           &
      &                      ncid = DAV(ng)%ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Read in and write out observations total error covariance
 !  (instrument + sampling + representation).
@@ -271,14 +254,12 @@
      &                      obs_work,                                   &
      &                      ncid = OBS(ng)%ncid,                        &
      &                      start = (/1/), total = (/Ndatum(ng)/))
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       CALL netcdf_put_fvar (ng, iNLM, DAV(ng)%name, Vname(1,idOerr),    &
      &                      obs_work, (/1/), (/Ndatum(ng)/),            &
      &                      ncid = DAV(ng)%ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Read in and write out observation values.
 !
@@ -286,14 +267,12 @@
      &                      obs_value,                                  &
      &                      ncid = OBS(ng)%ncid,                        &
      &                      start = (/1/), total = (/Ndatum(ng)/))
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       CALL netcdf_put_fvar (ng, iNLM, DAV(ng)%name, Vname(1,idOval),    &
      &                      obs_value, (/1/), (/Ndatum(ng)/),           &
      &                      ncid = DAV(ng)%ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Read in and write out observation meta values.
 !
@@ -302,14 +281,12 @@
      &                        obs_work,                                 &
      &                        ncid = OBS(ng)%ncid,                      &
      &                        start = (/1/), total = (/Ndatum(ng)/))
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
         CALL netcdf_put_fvar (ng, iNLM, DAV(ng)%name, Vname(1,idOmet),  &
      &                        obs_work, (/1/), (/Ndatum(ng)/),          &
      &                        ncid = DAV(ng)%ncid)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
       END IF
 !
 !  Read in observation screening flag.
@@ -318,8 +295,7 @@
      &                      obs_scale,                                  &
      &                      ncid = DAV(ng)%ncid,                        &
      &                      start = (/1/), total = (/Ndatum(ng)/))
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Read in model values at observation locations.
 !
@@ -343,8 +319,7 @@
      &                      total = (/Ndatum(ng),1/))
 #  endif
 # endif
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !-----------------------------------------------------------------------
 !  If appropriate, convert depth in vertical fractional coordinates to
@@ -374,8 +349,7 @@
       CALL netcdf_put_fvar (ng, iNLM, DAV(ng)%name, Vname(1,idObsD),    &
      &                      obs_work, (/1/), (/Ndatum(ng)/),            &
      &                      ncid = DAV(ng)%ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
 # if defined RBL4DVAR_ANA_SENSITIVITY || \
      defined RBL4DVAR_FCT_SENSITIVITY || \
@@ -389,8 +363,7 @@
 !  Inquire about input observations variables.
 !
       CALL netcdf_inq_var (ng, iNLM, LCZ(ng)%name)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  4D-Var innovation (observation minus background).
 !
@@ -398,14 +371,12 @@
         CALL netcdf_get_fvar (ng, iNLM, LCZ(ng)%name, Vname(1,idInno),  &
      &                        obs_work,                                 &
      &                        start = (/1/), total = (/Ndatum(ng)/))
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
         CALL netcdf_put_fvar (ng, iNLM, DAV(ng)%name, Vname(1,idInno),  &
      &                        obs_work, (/1/), (/Ndatum(ng)/),          &
      &                        ncid = DAV(ng)%ncid)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
       END IF
 !
 !  4D-Var increment (analysis minus background).
@@ -414,14 +385,12 @@
         CALL netcdf_get_fvar (ng, iNLM, LCZ(ng)%name, Vname(1,idIncr),  &
      &                        obs_work,                                 &
      &                        start = (/1/), total = (/Ndatum(ng)/))
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
         CALL netcdf_put_fvar (ng, iNLM, DAV(ng)%name, Vname(1,idIncr),  &
      &                        obs_work, (/1/), (/Ndatum(ng)/),          &
      &                        ncid = DAV(ng)%ncid)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
       END IF
 !
 !  4D-Var residual (observation minus analysis).
@@ -430,14 +399,12 @@
         CALL netcdf_get_fvar (ng, iNLM, LCZ(ng)%name, Vname(1,idResi),  &
      &                        obs_work,                                 &
      &                        start = (/1/), total = (/Ndatum(ng)/))
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
         CALL netcdf_put_fvar (ng, iNLM, DAV(ng)%name, Vname(1,idResi),  &
      &                        obs_work, (/1/), (/Ndatum(ng)/),          &
      &                        ncid = DAV(ng)%ncid)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
       END IF
 !
 !  4D-Var initial model-observation misfit.
@@ -446,14 +413,12 @@
         CALL netcdf_get_fvar (ng, iNLM, LCZ(ng)%name, Vname(1,idMOMi),  &
      &                        obs_work,                                 &
      &                        start = (/1/), total = (/Ndatum(ng)/))
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
         CALL netcdf_put_fvar (ng, iNLM, DAV(ng)%name, Vname(1,idMOMi),  &
      &                        obs_work, (/1/), (/Ndatum(ng)/),          &
      &                        ncid = DAV(ng)%ncid)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
       END IF
 !
 !  4D-Var final model-observation misfit.
@@ -462,14 +427,12 @@
         CALL netcdf_get_fvar (ng, iNLM, LCZ(ng)%name, Vname(1,idMOMf),  &
      &                        obs_work,                                 &
      &                        start = (/1/), total = (/Ndatum(ng)/))
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
         CALL netcdf_put_fvar (ng, iNLM, DAV(ng)%name, Vname(1,idMOMf),  &
      &                        obs_work, (/1/), (/Ndatum(ng)/),          &
      &                        ncid = DAV(ng)%ncid)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
       END IF
 !
 !  Unvetted initial NLM at observation locations.
@@ -478,14 +441,12 @@
         CALL netcdf_get_fvar (ng, iNLM, LCZ(ng)%name, Vname(1,idNLmp),  &
      &                        obs_work,                                 &
      &                        start = (/1/), total = (/Ndatum(ng)/))
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
         CALL netcdf_put_fvar (ng, iNLM, DAV(ng)%name, Vname(1,idNLmp),  &
      &                        obs_work, (/1/), (/Ndatum(ng)/),          &
      &                        ncid = DAV(ng)%ncid)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
       END IF
 !
 !  Final NLM at observation locations.
@@ -494,14 +455,12 @@
         CALL netcdf_get_fvar (ng, iNLM, LCZ(ng)%name, Vname(1,idNLmf),  &
      &                        obs_work,                                 &
      &                        start = (/1/), total = (/Ndatum(ng)/))
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
         CALL netcdf_put_fvar (ng, iNLM, DAV(ng)%name, Vname(1,idNLmf),  &
      &                        obs_work, (/1/), (/Ndatum(ng)/),          &
      &                        ncid = DAV(ng)%ncid)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
       END IF
 !
 !  Unvetted NLM at observation locations per outer-loop.
@@ -512,14 +471,12 @@
      &                          obs_work,                               &
      &                          start = (/1,i/),                        &
                                 total = (/Ndatum(ng),1/))
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
           CALL netcdf_put_fvar (ng, iNLM, DAV(ng)%name, Vname(1,idNLmu),&
      &                          obs_work, (/1,i/), (/Ndatum(ng),1/),    &
      &                          ncid = DAV(ng)%ncid)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END DO
       END IF
 !
@@ -531,14 +488,12 @@
      &                          obs_work,                               &
      &                          start = (/1,i/),                        &
                                 total = (/Ndatum(ng),1/))
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
           CALL netcdf_put_fvar (ng, iNLM, DAV(ng)%name, Vname(1,idNLmo),&
      &                          obs_work, (/1,i/), (/Ndatum(ng),1/),    &
      &                          ncid = DAV(ng)%ncid)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END DO
       END IF
 # endif
@@ -669,64 +624,54 @@
         CALL netcdf_put_ivar (ng, iNLM, DAV(ng)%name, 'Nused_obs',      &
      &                        Ncount, (/1/), (/NobsVar(ng)/),           &
      &                        ncid = DAV(ng)%ncid)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
         CALL netcdf_put_fvar (ng, iNLM, DAV(ng)%name, 'obs_mean',       &
      &                        obs_mean, (/1/), (/NobsVar(ng)/),         &
      &                        ncid = DAV(ng)%ncid)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
         CALL netcdf_put_fvar (ng, iNLM, DAV(ng)%name, 'obs_std',        &
      &                        obs_std, (/1/), (/NobsVar(ng)/),          &
      &                        ncid = DAV(ng)%ncid)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
         CALL netcdf_put_fvar (ng, iNLM, DAV(ng)%name, 'model_mean',     &
      &                        mod_mean, (/1/), (/NobsVar(ng)/),         &
      &                        ncid = DAV(ng)%ncid)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
         CALL netcdf_put_fvar (ng, iNLM, DAV(ng)%name, 'model_std',      &
      &                        mod_std, (/1/), (/NobsVar(ng)/),          &
      &                        ncid = DAV(ng)%ncid)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
         CALL netcdf_put_fvar (ng, iNLM, DAV(ng)%name, 'model_bias',     &
      &                        MB, (/1/), (/NobsVar(ng)/),               &
      &                        ncid = DAV(ng)%ncid)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
         CALL netcdf_put_fvar (ng, iNLM, DAV(ng)%name, 'SDE',            &
      &                        SDE, (/1/), (/NobsVar(ng)/),              &
      &                        ncid = DAV(ng)%ncid)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
         CALL netcdf_put_fvar (ng, iNLM, DAV(ng)%name, 'CC',             &
      &                        CC, (/1/), (/NobsVar(ng)/),               &
      &                        ncid = DAV(ng)%ncid)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
         CALL netcdf_put_fvar (ng, iNLM, DAV(ng)%name, 'MSE',            &
      &                        MSE, (/1/), (/NobsVar(ng)/),              &
      &                        ncid = DAV(ng)%ncid)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
       END IF
 # endif
 !
 !  Synchronize NetCDF file to disk.
 !
       CALL netcdf_sync (ng, iNLM, DAV(ng)%name, DAV(ng)%ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Reset "exit_flag" to its saved value when entering this routine.
 !

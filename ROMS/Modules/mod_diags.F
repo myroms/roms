@@ -3,7 +3,7 @@
 #ifdef DIAGNOSTICS
 !
 !git $Id$
-!svn $Id: mod_diags.F 995 2020-01-10 04:01:28Z arango $
+!svn $Id: mod_diags.F 1049 2020-11-30 04:34:51Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -42,9 +42,9 @@
 !=======================================================================
 !
         USE mod_kinds
-
+!
         implicit none
-
+!
         TYPE T_DIAGS
 
 # ifdef DIAGNOSTICS_BIO
@@ -87,9 +87,9 @@
         END TYPE T_DIAGS
 
         TYPE (T_DIAGS), allocatable :: DIAGS(:)
-
+!
       CONTAINS
-
+!
       SUBROUTINE allocate_diags (ng, LBi, UBi, LBj, UBj)
 !
 !=======================================================================
@@ -100,6 +100,9 @@
 !=======================================================================
 !
       USE mod_param
+# if defined DIAGNOSTICS_BIO && defined ECOSIM
+      USE mod_biology
+# endif
 !
 !  Local variable declarations.
 !
@@ -206,10 +209,10 @@
 #  endif
 
 # endif
-
+!
       RETURN
       END SUBROUTINE allocate_diags
-
+!
       SUBROUTINE initialize_diags (ng, tile)
 !
 !=======================================================================
@@ -223,6 +226,9 @@
 !=======================================================================
 !
       USE mod_param
+# if defined DIAGNOSTICS_BIO && defined ECOSIM
+      USE mod_biology
+# endif
 !
 !  Imported variable declarations.
 !
@@ -381,7 +387,7 @@
 #  endif
 # endif
       END DO
-
+!
       RETURN
       END SUBROUTINE initialize_diags
 #endif

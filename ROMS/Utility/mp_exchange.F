@@ -3,7 +3,7 @@
 #ifdef DISTRIBUTE
 !
 !git $Id$
-!svn $Id: mp_exchange.F 995 2020-01-10 04:01:28Z arango $
+!svn $Id: mp_exchange.F 1049 2020-11-30 04:34:51Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -304,7 +304,7 @@
 !  Imported variable declarations.
 !
       logical, intent(in) :: EW_periodic, NS_periodic
-
+!
       integer, intent(in) :: ng, tile, model, Nvar
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: Nghost
@@ -326,7 +326,7 @@
 !  Local variable declarations.
 !
       logical :: Wexchange, Sexchange, Eexchange, Nexchange
-
+!
       integer :: i, icS, icN, ioff, Imin, Imax, Ilen
       integer :: j, jcW, jcE, joff, Jmin, Jmax, Jlen
       integer :: m, mc, Ierror, Lstr, pp
@@ -346,8 +346,11 @@
 
       real(r8), dimension(Nvar*HaloSizeI(ng)) :: sendS, sendN
       real(r8), dimension(Nvar*HaloSizeI(ng)) :: recvS, recvN
-
+!
       character (len=MPI_MAX_ERROR_STRING) :: string
+
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__//", mp_exchange2d"
 
 # include "set_bounds.h"
 
@@ -357,8 +360,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, model, 60, __LINE__,                          &
-     &                __FILE__//":mp_exchange2d")
+      CALL wclock_on (ng, model, 60, __LINE__, MyFile)
 # endif
 !
 !-----------------------------------------------------------------------
@@ -887,16 +889,16 @@
           END DO
         END IF
       END IF
+
 # ifdef PROFILE
 !
 !-----------------------------------------------------------------------
 !  Turn off time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, model, 60, __LINE__,                         &
-     &                 __FILE__//":mp_exchange2d")
+      CALL wclock_off (ng, model, 60, __LINE__,  MyFile)
 # endif
-
+!
       RETURN
       END SUBROUTINE mp_exchange2d
 !
@@ -917,7 +919,7 @@
 !  Imported variable declarations.
 !
       logical, intent(in) :: EW_periodic, NS_periodic
-
+!
       integer, intent(in) :: ng, tile, model, Nvar, boundary
       integer, intent(in) :: LBij, UBij
       integer, intent(in) :: Nghost
@@ -939,7 +941,7 @@
 !  Local variable declarations.
 !
       logical :: Wexchange, Sexchange, Eexchange, Nexchange
-
+!
       integer :: i, icS, icN
       integer :: j, jcW, jcE
       integer :: m, Ierror, Lstr, pp
@@ -959,8 +961,11 @@
 
       real(r8), dimension(Nvar*HaloBry(ng)) :: sendS, sendN
       real(r8), dimension(Nvar*HaloBry(ng)) :: recvS, recvN
-
+!
       character (len=MPI_MAX_ERROR_STRING) :: string
+
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__//", mp_exchange2d_bry"
 
 # include "set_bounds.h"
 
@@ -970,8 +975,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, model, 63, __LINE__,                          &
-     &                __FILE__//":mp_exchange2d_bry")
+      CALL wclock_on (ng, model, 63, __LINE__,  MyFile)
 # endif
 !
 !-----------------------------------------------------------------------
@@ -1400,10 +1404,9 @@
 !  Turn off time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, model, 63, __LINE__,                         &
-     &                 __FILE__//":mp_exchange2d_bry")
+      CALL wclock_off (ng, model, 63, __LINE__, MyFile)
 # endif
-
+!
       RETURN
       END SUBROUTINE mp_exchange2d_bry
 !
@@ -1424,7 +1427,7 @@
 !  Imported variable declarations.
 !
       logical, intent(in) :: EW_periodic, NS_periodic
-
+!
       integer, intent(in) :: ng, tile, model, Nvar
       integer, intent(in) :: LBi, UBi, LBj, UBj, LBk, UBk
       integer, intent(in) :: Nghost
@@ -1446,7 +1449,7 @@
 !  Local variable declarations.
 !
       logical :: Wexchange, Sexchange, Eexchange, Nexchange
-
+!
       integer :: i, ikS, ikN, ioff, Imin, Imax, Ilen, IKlen
       integer :: j, jkW, jkE, joff, Jmin, Jmax, Jlen, JKlen
       integer :: k, kc,  m, mc, Ierror, Klen, Lstr, pp
@@ -1470,8 +1473,11 @@
      &                          (UBk-LBk+1)) :: sendS, sendN
       real(r8), dimension(Nvar*HaloSizeI(ng)*                           &
      &                          (UBk-LBk+1)) :: recvS, recvN
-
+!
       character (len=MPI_MAX_ERROR_STRING) :: string
+
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__//", mp_exchange3d"
 
 # include "set_bounds.h"
 
@@ -1481,8 +1487,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, model, 61, __LINE__,                          &
-     &                __FILE__//":mp_exchange3d")
+      CALL wclock_on (ng, model, 61, __LINE__, MyFile)
 # endif
 !
 !-----------------------------------------------------------------------
@@ -2110,16 +2115,16 @@
           END DO
         END IF
       END IF
+
 # ifdef PROFILE
 !
 !-----------------------------------------------------------------------
 !  Turn off time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, model, 61, __LINE__,                         &
-     &                 __FILE__//":mp_exchange3d")
+      CALL wclock_off (ng, model, 61, __LINE__, MyFile)
 # endif
-
+!
       RETURN
       END SUBROUTINE mp_exchange3d
 
@@ -2141,7 +2146,7 @@
 !  Imported variable declarations.
 !
       logical, intent(in) :: EW_periodic, NS_periodic
-
+!
       integer, intent(in) :: ng, tile, model, Nvar, boundary
       integer, intent(in) :: LBij, UBij, LBk, UBk
       integer, intent(in) :: Nghost
@@ -2163,7 +2168,7 @@
 !  Local variable declarations.
 !
       logical :: Wexchange, Sexchange, Eexchange, Nexchange
-
+!
       integer :: i, ikS, ikN, ioff
       integer :: j, jkW, jkE, joff
       integer :: k, m, mc, Ierror, Klen, Lstr, pp
@@ -2182,8 +2187,11 @@
       real(r8), dimension(Nvar*HaloBry(ng)*(UBk-LBk+1)) :: recvW, recvE
       real(r8), dimension(Nvar*HaloBry(ng)*(UBk-LBk+1)) :: sendS, sendN
       real(r8), dimension(Nvar*HaloBry(ng)*(UBk-LBk+1)) :: recvS, recvN
-
+!
       character (len=MPI_MAX_ERROR_STRING) :: string
+
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__//", mp_exchange3d_bry"
 
 # include "set_bounds.h"
 
@@ -2193,8 +2201,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, model, 63, __LINE__,                          &
-     &                __FILE__//":mp_exchange3d_bry")
+      CALL wclock_on (ng, model, 63, __LINE__, MyFile)
 # endif
 !
 !-----------------------------------------------------------------------
@@ -2736,10 +2743,9 @@
 !  Turn off time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, model, 63, __LINE__,                         &
-     &                 __FILE__//":mp_exchange3d_bry")
+      CALL wclock_off (ng, model, 63, __LINE__, MyFile)
 # endif
-
+!
       RETURN
       END SUBROUTINE mp_exchange3d_bry
 
@@ -2761,7 +2767,7 @@
 !  Imported variable declarations.
 !
       logical, intent(in) :: EW_periodic, NS_periodic
-
+!
       integer, intent(in) :: ng, tile, model, Nvar
       integer, intent(in) :: LBi, UBi, LBj, UBj, LBk, UBk, LBt, UBt
       integer, intent(in) :: Nghost
@@ -2784,7 +2790,7 @@
 !  Local variable declarations.
 !
       logical :: Wexchange, Sexchange, Eexchange, Nexchange
-
+!
       integer :: i, ikS, ikN, ioff, Imin, Imax, Ilen, IKlen, IKTlen
       integer :: j, jkW, jkE, joff, Jmin, Jmax, Jlen, JKlen, JKTlen
       integer :: k, kc, m, mc, Ierror, Klen, Lstr, Tlen, pp
@@ -2809,8 +2815,11 @@
      &                    (UBk-LBk+1)*(UBt-LBt+1)) :: sendS, sendN
       real(r8), dimension(Nvar*HaloSizeI(ng)*                           &
      &                    (UBk-LBk+1)*(UBt-LBt+1)) :: recvS, recvN
-
+!
       character (len=MPI_MAX_ERROR_STRING) :: string
+
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__//", mp_exchange4d"
 
 # include "set_bounds.h"
 
@@ -2820,8 +2829,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, model, 62, __LINE__,                          &
-     &                __FILE__//":mp_exchange4d")
+      CALL wclock_on (ng, model, 62, __LINE__, MyFile)
 # endif
 !
 !-----------------------------------------------------------------------
@@ -3408,16 +3416,16 @@
           END DO
         END IF
       END IF
+
 # ifdef PROFILE
 !
 !-----------------------------------------------------------------------
 !  Turn off time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, model, 62, __LINE__,                         &
-     &                 __FILE__//":mp_exchange4d")
+      CALL wclock_off (ng, model, 62, __LINE__, MyFile)
 # endif
-
+!
       RETURN
       END SUBROUTINE mp_exchange4d
 
@@ -3440,11 +3448,11 @@
 !  Imported variable declarations.
 !
       logical, intent(in) :: EW_periodic, NS_periodic
-
+!
       integer, intent(in) :: ng, tile, model, Nvar
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: Nghost
-
+!
 #  ifdef ASSUMED_SHAPE
       real(r8), intent(inout) :: ad_A(LBi:,LBj:)
 
@@ -3462,7 +3470,7 @@
 !  Local variable declarations.
 !
       logical :: Wexchange, Sexchange, Eexchange, Nexchange
-
+!
       integer :: i, icS, icN, ioff, Imin, Imax, Ilen
       integer :: j, jcW, jcE, joff, Jmin, Jmax, Jlen
       integer :: m, mc, Ierror, Lstr, pp
@@ -3482,18 +3490,21 @@
 
       real(r8), dimension(Nvar*HaloSizeI(ng)) :: sendS, sendN
       real(r8), dimension(Nvar*HaloSizeI(ng)) :: recvS, recvN
-
+!
       character (len=MPI_MAX_ERROR_STRING) :: string
 
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__//", ad_mp_exchange2d"
+
 #  include "set_bounds.h"
+
 #  ifdef PROFILE
 !
 !-----------------------------------------------------------------------
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, model, 60, __LINE__,                          &
-     &                __FILE__//":ad_mp_exchange2d")
+      CALL wclock_on (ng, model, 60, __LINE__, MyFile)
 #  endif
 !
 !-----------------------------------------------------------------------
@@ -4156,16 +4167,16 @@
           END DO
         END IF
       END IF
+
 #  ifdef PROFILE
 !
 !-----------------------------------------------------------------------
 !  Turn off time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, model, 60, __LINE__,                         &
-     &                 __FILE__//":ad_mp_exchange2d")
+      CALL wclock_off (ng, model, 60, __LINE__, MyFile)
 #  endif
-
+!
       RETURN
       END SUBROUTINE ad_mp_exchange2d
 
@@ -4187,7 +4198,7 @@
 !  Imported variable declarations.
 !
       logical, intent(in) :: EW_periodic, NS_periodic
-
+!
       integer, intent(in) :: ng, tile, model, Nvar, boundary
       integer, intent(in) :: LBij, UBij
       integer, intent(in) :: Nghost
@@ -4209,7 +4220,7 @@
 !  Local variable declarations.
 !
       logical :: Wexchange, Sexchange, Eexchange, Nexchange
-
+!
       integer :: i, icS, icN
       integer :: j, jcW, jcE
       integer :: m, Ierror, Lstr, pp
@@ -4229,18 +4240,21 @@
 
       real(r8), dimension(Nvar*HaloBry(ng)) :: sendS, sendN
       real(r8), dimension(Nvar*HaloBry(ng)) :: recvS, recvN
-
+!
       character (len=MPI_MAX_ERROR_STRING) :: string
 
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__//", ad_mp_exchange2d_bry"
+
 #  include "set_bounds.h"
+
 #  ifdef PROFILE
 !
 !-----------------------------------------------------------------------
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, model, 63, __LINE__,                          &
-     &                __FILE__//":ad_mp_exchange2d_bry")
+      CALL wclock_on (ng, model, 63, __LINE__, MyFile)
 #  endif
 !
 !-----------------------------------------------------------------------
@@ -4803,10 +4817,9 @@
 !  Turn off time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, model, 63, __LINE__,                         &
-     &                 __FILE__//":ad_mp_exchange2d_bry")
+      CALL wclock_off (ng, model, 63, __LINE__, MyFile)
 #  endif
-
+!
       RETURN
       END SUBROUTINE ad_mp_exchange2d_bry
 
@@ -4828,7 +4841,7 @@
 !  Imported variable declarations.
 !
       logical, intent(in) :: EW_periodic, NS_periodic
-
+!
       integer, intent(in) :: ng, tile, model, Nvar
       integer, intent(in) :: LBi, UBi, LBj, UBj, LBk, UBk
       integer, intent(in) :: Nghost
@@ -4850,7 +4863,7 @@
 !  Local variable declarations.
 !
       logical :: Wexchange, Sexchange, Eexchange, Nexchange
-
+!
       integer :: i, ikS, ikN, ioff, Imin, Imax, Ilen, IKlen
       integer :: j, jkW, jkE, joff, Jmin, Jmax, Jlen, JKlen
       integer :: k, kc, m, mc, Ierror, Klen, Lstr, pp
@@ -4874,18 +4887,21 @@
      &                           (UBk-LBk+1)) :: recvW, recvE
       real(r8), dimension(Nvar*HaloSizeI(ng)*                           &
      &                           (UBk-LBk+1)) :: recvS, recvN
-
+!
       character (len=MPI_MAX_ERROR_STRING) :: string
 
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__//", ad_mp_exchange3d"
+
 #  include "set_bounds.h"
+
 #  ifdef PROFILE
 !
 !-----------------------------------------------------------------------
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, model, 61, __LINE__,                          &
-     &                __FILE__//":ad_mp_exchange3d")
+      CALL wclock_on (ng, model, 61, __LINE__, MyFile)
 #  endif
 !
 !-----------------------------------------------------------------------
@@ -5647,16 +5663,16 @@
           END DO
         END IF
       END IF
+
 #  ifdef PROFILE
 !
 !-----------------------------------------------------------------------
 !  Turn off time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, model, 61, __LINE__,                         &
-     &                 __FILE__//":ad_mp_exchange3d")
+      CALL wclock_off (ng, model, 61, __LINE__, MyFile)
 #  endif
-
+!
       RETURN
       END SUBROUTINE ad_mp_exchange3d
 !
@@ -5677,7 +5693,7 @@
 !  Imported variable declarations.
 !
       logical, intent(in) :: EW_periodic, NS_periodic
-
+!
       integer, intent(in) :: ng, tile, model, Nvar, boundary
       integer, intent(in) :: LBij, UBij, LBk, UBk
       integer, intent(in) :: Nghost
@@ -5699,7 +5715,7 @@
 !  Local variable declarations.
 !
       logical :: Wexchange, Sexchange, Eexchange, Nexchange
-
+!
       integer :: i, ikS, ikN, ioff
       integer :: j, jkW, jkE, joff
       integer :: k, m, mc, Ierror, Klen, Lstr, pp
@@ -5718,8 +5734,11 @@
       real(r8), dimension(Nvar*HaloBry(ng)*(UBk-LBk+1)) :: recvW, recvE
       real(r8), dimension(Nvar*HaloBry(ng)*(UBk-LBk+1)) :: sendS, sendN
       real(r8), dimension(Nvar*HaloBry(ng)*(UBk-LBk+1)) :: recvS, recvN
-
+!
       character (len=MPI_MAX_ERROR_STRING) :: string
+
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__//", ad_mp_exchange3d_bry"
 
 #  include "set_bounds.h"
 
@@ -5729,8 +5748,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, model, 63, __LINE__,                          &
-     &                __FILE__//":ad_mp_exchange3d_bry")
+      CALL wclock_on (ng, model, 63, __LINE__, MyFile)
 #  endif
 !
 !-----------------------------------------------------------------------
@@ -6406,10 +6424,9 @@
 !  Turn off time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, model, 63, __LINE__,                         &
-     &                 __FILE__//":ad_mp_exchange3d_bry")
+      CALL wclock_off (ng, model, 63, __LINE__, MyFile)
 #  endif
-
+!
       RETURN
       END SUBROUTINE ad_mp_exchange3d_bry
 !
@@ -6431,7 +6448,7 @@
 !  Imported variable declarations.
 !
       logical, intent(in) :: EW_periodic, NS_periodic
-
+!
       integer, intent(in) :: ng, tile, model, Nvar
       integer, intent(in) :: LBi, UBi, LBj, UBj, LBk, UBk, LBt, UBt
       integer, intent(in) :: Nghost
@@ -6453,7 +6470,7 @@
 !  Local variable declarations.
 !
       logical :: Wexchange, Sexchange, Eexchange, Nexchange
-
+!
       integer :: i, ikS, ikN, ioff, Imin, Imax, Ilen, IKlen, IKTlen
       integer :: j, jkW, jkE, joff, Jmin, Jmax, Jlen, JKlen, JKTlen
       integer :: k, kc, m, mc, Ierror, Klen, Lstr, Tlen, pp
@@ -6478,18 +6495,21 @@
      &                                      (UBt-LBt+1)) :: recvW, recvE
       real(r8), dimension(Nvar*HaloSizeI(ng)*(UBk-LBk+1)*               &
      &                                      (UBt-LBt+1)) :: recvS, recvN
-
+!
       character (len=MPI_MAX_ERROR_STRING) :: string
 
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__//", ad_mp_exchange4d"
+
 #  include "set_bounds.h"
+
 #  ifdef PROFILE
 !
 !-----------------------------------------------------------------------
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, model, 62, __LINE__,                          &
-     &                __FILE__//":ad_mp_exchange4d")
+      CALL wclock_on (ng, model, 62, __LINE__, MyFile)
 #  endif
 !
 !-----------------------------------------------------------------------
@@ -7192,10 +7212,9 @@
 !  Turn off time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, model, 62, __LINE__,                         &
-     &                __FILE__//":ad_mp_exchange4d")
+      CALL wclock_off (ng, model, 62, __LINE__, MyFile)
 #  endif
-
+!
       RETURN
       END SUBROUTINE ad_mp_exchange4d
 # endif

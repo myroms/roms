@@ -3,7 +3,7 @@
       SUBROUTINE ad_output (ng)
 !
 !git $Id$
-!svn $Id: ad_output.F 1036 2020-07-29 05:39:53Z arango $
+!svn $Id: ad_output.F 1049 2020-11-30 04:34:51Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -41,7 +41,10 @@
 
       integer :: Fcount, ifile, status
 !
-      SourceFile=__FILE__
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__
+!
+      SourceFile=MyFile
 
 # ifdef PROFILE
 !
@@ -49,7 +52,7 @@
 !  Turn on output data time wall clock.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, iADM, 8, __LINE__, __FILE__)
+      CALL wclock_on (ng, iADM, 8, __LINE__, MyFile)
 # endif
 !
 !-----------------------------------------------------------------------
@@ -106,8 +109,8 @@
      &                            ifile
               END IF
               exit_flag=4
-              IF (FoundError(exit_flag, NoError, __LINE__,              &
-     &                       __FILE__)) RETURN
+              IF (FoundError(exit_flag, NoError,                        &
+     &                       __LINE__, MyFile)) RETURN
             END IF
             Fcount=ADM(ng)%load
             ADM(ng)%Nrec(Fcount)=0
@@ -122,8 +125,7 @@
               CALL netcdf_close (ng, iADM, ADM(ng)%ncid)
             END IF
             CALL ad_def_his (ng, NewFile)
-            IF (FoundError(exit_flag, NoError, __LINE__,                &
-     &                     __FILE__)) RETURN
+            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
           END IF
           IF ((iic(ng).eq.ntstart(ng)).and.(nrrec(ng).ne.0)) THEN
             LwrtADJ(ng)=.FALSE.                 ! avoid writing initial
@@ -133,8 +135,7 @@
         ELSE
           IF (iic(ng).eq.ntstart(ng)) THEN
             CALL ad_def_his (ng, ldefout(ng))
-            IF (FoundError(exit_flag, NoError, __LINE__,                &
-     &                     __FILE__)) RETURN
+            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
             LwrtADJ(ng)=.TRUE.
             LdefADJ(ng)=.FALSE.
           END IF
@@ -148,8 +149,7 @@
           IF ((iic(ng).ne.ntstart(ng)).and.                             &
      &        (MOD(iic(ng)-1,nADJ(ng)).eq.0)) THEN
             CALL ad_wrt_his (ng)
-            IF (FoundError(exit_flag, NoError, __LINE__,                &
-     &                     __FILE__)) RETURN
+            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
           END IF
         ELSE
 # ifdef HESSIAN_SO
@@ -172,8 +172,7 @@
 # endif
           IF (wrtHIS) THEN
             CALL ad_wrt_his (ng)
-            IF (FoundError(exit_flag, NoError, __LINE__,                &
-     &                     __FILE__)) RETURN
+            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
           END IF
         END IF
       END IF
@@ -233,8 +232,8 @@
      &                            ifile
               END IF
               exit_flag=4
-              IF (FoundError(exit_flag, NoError, __LINE__,              &
-     &                       __FILE__)) RETURN
+              IF (FoundError(exit_flag, NoError,                        &
+     &                       __LINE__, MyFile)) RETURN
             END IF
             Fcount=AVG(ng)%load
             AVG(ng)%Nrec(Fcount)=0
@@ -249,15 +248,13 @@
               CALL netcdf_close (ng, iADM, AVG(ng)%ncid)
             END IF
             CALL def_avg (ng, Newfile)
-            IF (FoundError(exit_flag, NoError, __LINE__,                &
-     &                     __FILE__)) RETURN
+            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
             LwrtAVG(ng)=.TRUE.
           END IF
         ELSE
           IF (iic(ng).eq.ntstart(ng)) THEN
             CALL def_avg (ng, ldefout(ng))
-            IF (FoundError(exit_flag, NoError, __LINE__,                &
-     &                     __FILE__)) RETURN
+            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
             LwrtAVG(ng)=.TRUE.
             LdefAVG(ng)=.FALSE.
           END IF
@@ -270,8 +267,7 @@
         IF ((iic(ng).ne.ntstart(ng)).and.                               &
      &      (MOD(iic(ng),nAVG(ng)).eq.1)) THEN
           CALL wrt_avg (ng)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
       END IF
 # endif
@@ -282,7 +278,7 @@
 !  Turn off output data time wall clock.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, iADM, 8, __LINE__, __FILE__)
+      CALL wclock_off (ng, iADM, 8, __LINE__, MyFile)
 # endif
 !
  10   FORMAT (/,' AD_OUTPUT - multi-file counter ',a,i0,                &

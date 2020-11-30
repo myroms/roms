@@ -7,7 +7,7 @@
     defined SOLVE3D
 !
 !git $Id$
-!svn $Id: tl_t3drelax.F 1022 2020-05-13 03:03:15Z arango $
+!svn $Id: tl_t3drelax.F 1049 2020-11-30 04:34:51Z arango $
 !=================================================== Andrew M. Moore ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group      Hernan G. Arango   !
 !    Licensed under a MIT/X style license                              !
@@ -38,10 +38,13 @@
 !
 !  Local variable declarations.
 !
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__
+!
 # include "tile.h"
 !
 # ifdef PROFILE
-      CALL wclock_on (ng, iTLM, 24, __LINE__, __FILE__)
+      CALL wclock_on (ng, iTLM, 24, __LINE__, MyFile)
 # endif
       CALL tl_t3drelax_tile (ng, tile,                                  &
      &                       LBi, UBi, LBj, UBj,                        &
@@ -58,8 +61,9 @@
      &                       GRID(ng) % pn,                             &
      &                       OCEAN(ng) % tl_t)
 # ifdef PROFILE
-      CALL wclock_off (ng, iTLM, 24, __LINE__, __FILE__)
+      CALL wclock_off (ng, iTLM, 24, __LINE__, MyFile)
 # endif
+!
       RETURN
       END SUBROUTINE tl_t3drelax
 !
@@ -174,6 +178,7 @@
           END DO
         END IF
       END DO
+!
       RETURN
       END SUBROUTINE tl_t3drelax_tile
 #endif

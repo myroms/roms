@@ -1,7 +1,7 @@
       SUBROUTINE ana_tobc (ng, tile, model)
 !
 !! git $Id$
-!! svn $Id: ana_tobc.h 1043 2020-11-12 04:56:14Z arango $
+!! svn $Id: ana_tobc.h 1049 2020-11-30 04:34:51Z arango $
 !!======================================================================
 !! Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !!   Licensed under a MIT/X style license                              !
@@ -23,7 +23,12 @@
 ! Imported variable declarations.
 !
       integer, intent(in) :: ng, tile, model
-
+!
+!  Local variable declarations.
+!
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__
+!
 #include "tile.h"
 !
       CALL ana_tobc_tile (ng, tile, model,                              &
@@ -40,9 +45,9 @@
 #else
       IF (Lanafile.and.(tile.eq.0)) THEN
 #endif
-        ANANAME(34)=__FILE__
+        ANANAME(34)=MyFile
       END IF
-
+!
       RETURN
       END SUBROUTINE ana_tobc
 !
@@ -81,6 +86,7 @@
 !  Local variable declarations.
 !
       integer :: i, ised, itrc, j, k
+!
       real(r8) :: cff
 
 #include "set_bounds.h"
@@ -279,6 +285,6 @@
         END DO
       END IF
 #endif
-
+!
       RETURN
       END SUBROUTINE ana_tobc_tile

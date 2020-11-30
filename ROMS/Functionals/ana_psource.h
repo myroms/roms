@@ -1,7 +1,7 @@
       SUBROUTINE ana_psource (ng, tile, model)
 !
 !! git $Id$
-!! svn $Id: ana_psource.h 1016 2020-04-27 02:06:37Z arango $
+!! svn $Id: ana_psource.h 1049 2020-11-30 04:34:51Z arango $
 !!======================================================================
 !! Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !!   Licensed under a MIT/X style license                              !
@@ -19,8 +19,15 @@
       USE mod_ocean
       USE mod_stepping
 !
+!  Imported variable declarations
+!
       integer, intent(in) :: ng, tile, model
-
+!
+!  Local variable declarations.
+!
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__
+!
 #include "tile.h"
 !
       CALL ana_psource_tile (ng, tile, model,                           &
@@ -46,9 +53,9 @@
 #else
       IF (Lanafile.and.(tile.eq.0)) THEN
 #endif
-        ANANAME(20)=__FILE__
+        ANANAME(20)=MyFile
       END IF
-
+!
       RETURN
       END SUBROUTINE ana_psource
 !
@@ -114,7 +121,7 @@
 !  Local variable declarations.
 !
       integer :: Npts, NSUB, is, i, j, k, ised
-
+!
       real(r8) :: Pspv = 0.0_r8
       real(r8), save :: area_east, area_west
       real(r8) :: cff, fac, my_area_east, my_area_west
@@ -124,7 +131,7 @@
 #endif
 #if defined DISTRIBUTE
       real(r8), dimension(2) :: buffer
-
+!
       character (len=3), dimension(2) :: io_handle
 #endif
 
@@ -476,6 +483,6 @@
 # endif
       END IF TRACERS
 #endif
-
+!
       RETURN
       END SUBROUTINE ana_psource_tile

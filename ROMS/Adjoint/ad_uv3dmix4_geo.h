@@ -1,7 +1,7 @@
       SUBROUTINE ad_uv3dmix4 (ng, tile)
 !
 !git $Id$
-!svn $Id: ad_uv3dmix4_geo.h 1009 2020-03-03 20:38:52Z arango $
+!svn $Id: ad_uv3dmix4_geo.h 1049 2020-11-30 04:34:51Z arango $
 !************************************************** Hernan G. Arango ***
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -49,10 +49,13 @@
 !
 !  Local variable declarations.
 !
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__
+!
 #include "tile.h"
 !
 #ifdef PROFILE
-      CALL wclock_on (ng, iADM, 33, __LINE__, __FILE__)
+      CALL wclock_on (ng, iADM, 33, __LINE__, MyFile)
 #endif
       CALL ad_uv3dmix4_tile (ng, tile,                                  &
      &                       LBi, UBi, LBj, UBj,                        &
@@ -105,8 +108,9 @@
      &                       COUPLING(ng) % ad_rufrc,                   &
      &                       COUPLING(ng) % ad_rvfrc)
 #ifdef PROFILE
-      CALL wclock_off (ng, iADM, 33, __LINE__, __FILE__)
+      CALL wclock_off (ng, iADM, 33, __LINE__, MyFile)
 #endif
+!
       RETURN
       END SUBROUTINE ad_uv3dmix4
 !
@@ -5457,5 +5461,6 @@
         k2=k1
         k1=kt
       END DO K_LOOP3
+!
       RETURN
       END SUBROUTINE ad_uv3dmix4_tile

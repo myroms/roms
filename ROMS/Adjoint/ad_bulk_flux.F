@@ -3,7 +3,7 @@
 #if defined ADJOINT && defined BULK_FLUXES_NOT_YET
 !
 !git $Id$
-!svn $Id: ad_bulk_flux.F 1043 2020-11-12 04:56:14Z arango $
+!svn $Id: ad_bulk_flux.F 1049 2020-11-30 04:34:51Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -45,10 +45,10 @@
 !=======================================================================
 !
       implicit none
-
+!
       PRIVATE
       PUBLIC  :: ad_bulk_flux
-
+!
       CONTAINS
 !
 !***********************************************************************
@@ -68,10 +68,13 @@
 !
 !  Local variable declarations.
 !
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__
+!
 # include "tile.h"
 !
 # ifdef PROFILE
-      CALL wclock_on (ng, iADM, 17, __LINE__, __FILE__)
+      CALL wclock_on (ng, iADM, 17, __LINE__, MyFile)
 # endif
       CALL ad_bulk_flux_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
@@ -120,8 +123,9 @@
      &                        FORCES(ng) % ad_svstr)
 
 # ifdef PROFILE
-      CALL wclock_off (ng, iADM, 17, __LINE__, __FILE__)
+      CALL wclock_off (ng, iADM, 17, __LINE__, MyFile)
 # endif
+!
       RETURN
       END SUBROUTINE ad_bulk_flux
 !
@@ -401,9 +405,9 @@
 
 # include "set_bounds.h"
 !
-!-------------------------------------------------------------------------
+!------------------------------------------------------------------------
 !  Initialize adjoint private variables.
-!-------------------------------------------------------------------------
+!------------------------------------------------------------------------
 !
       ad_wet_bulb=0.0_r8
       ad_Wspeed=0.0_r8
@@ -2635,9 +2639,10 @@
           ad_TseaC(i)=0.0_r8
         END DO
       END DO
+!
       RETURN
       END SUBROUTINE ad_bulk_flux_tile
-
+!
       FUNCTION ad_bulk_psiu (tl_ZoL, ZoL, pi)
 !
 !=======================================================================
@@ -2717,9 +2722,10 @@
         ad_bulk_psiu=-(tl_ZoL+0.6667_r8*tl_ZoL/fac-                     &
      &                 tl_fac*0.6667_r8*(ZoL-14.28_r8)/(fac*fac))
       END IF
+!
       RETURN
       END FUNCTION ad_bulk_psiu
-
+!
       FUNCTION ad_bulk_psit (tl_ZoL, ZoL, pi)
 !
 !=======================================================================
@@ -2800,6 +2806,7 @@
      &               0.6667_r8*tl_ZoL/fac-                              &
      &               tl_fac*0.6667_r8*(ZoL-14.28_r8)/(fac*fac))
       END IF
+!
       RETURN
       END FUNCTION ad_bulk_psit
 #endif

@@ -4,7 +4,7 @@
 #ifdef RPCG
 !
 !git $Id$
-!svn $Id: comp_Jb0.F 1038 2020-09-29 01:54:25Z arango $
+!svn $Id: comp_Jb0.F 1049 2020-11-30 04:34:51Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -17,11 +17,11 @@
 !=======================================================================
 !
       implicit none
-
+!
       PRIVATE
       PUBLIC comp_Jb0
       PUBLIC aug_oper
-
+!
       CONTAINS
 !
 !***********************************************************************
@@ -108,6 +108,7 @@
      &                    OCEAN(ng) % ad_vbar,                          &
 # endif
      &                    OCEAN(ng) % ad_zeta)
+!
       RETURN
       END SUBROUTINE comp_Jb0
 !
@@ -282,6 +283,9 @@
 !  Local variable declarations.
 !
       real(r8), dimension(0:NstateVar(ng)) :: dot
+!
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__//", comp_Jb0_tile"
 
 # include "set_bounds.h"
 !
@@ -339,8 +343,7 @@
      &                      'Jb0', Jb0(0:),                             &
      &                      (/1/), (/Nouter+1/),                        &
      &                      ncid = DAV(ng)%ncid)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
       RETURN
       END SUBROUTINE comp_Jb0_tile
@@ -397,7 +400,7 @@
      &                    OCEAN(ng) % tl_vbar,                          &
 # endif
      &                    OCEAN(ng) % tl_zeta)
-
+!
       RETURN
       END SUBROUTINE aug_oper
 !
@@ -875,7 +878,7 @@
       END DO
 #  endif
 # endif
-
+!
       RETURN
       END SUBROUTINE aug_oper_tile
 #endif

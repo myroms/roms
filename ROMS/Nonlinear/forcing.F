@@ -7,7 +7,7 @@
 
 !
 !git $Id$
-!svn $Id: forcing.F 1022 2020-05-13 03:03:15Z arango $
+!svn $Id: forcing.F 1049 2020-11-30 04:34:51Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -20,10 +20,10 @@
 !=======================================================================
 !
       implicit none
-
+!
       PRIVATE
       PUBLIC  :: forcing
-
+!
       CONTAINS
 !
 !***********************************************************************
@@ -67,7 +67,7 @@
      &                   COUPLING(ng) % Zt_avg1,                        &
 # endif
      &                   OCEAN(ng) % zeta)
-
+!
       RETURN
       END SUBROUTINE forcing
 !
@@ -235,7 +235,7 @@
         END DO
       END DO
 # endif
-
+!
       RETURN
       END SUBROUTINE forcing_tile
 #endif

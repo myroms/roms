@@ -4,7 +4,7 @@
 #if defined FOUR_DVAR || defined VERIFICATION
 !
 !git $Id$
-!svn $Id: mod_fourdvar.F 1039 2020-10-12 03:54:49Z arango $
+!svn $Id: mod_fourdvar.F 1049 2020-11-30 04:34:51Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -1568,7 +1568,10 @@
 # endif
       real(r8), parameter :: IniVal = 0.0_r8
 !
-      SourceFile=__FILE__ // ", initialize_fourdvar"
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__//", initialize_fourdvar"
+
+      SourceFile=MyFile
 
 # ifdef OBSERVATIONS
 !
@@ -1582,8 +1585,7 @@
 !
       DO ng=1,Ngrids
         CALL netcdf_get_dim(ng, iNLM, TRIM(OBS(ng)%name))
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
         Ndatum(ng)=0
         Nsurvey(ng)=0
@@ -1905,8 +1907,7 @@
      &                        FOURDVAR(ng)%NobsSurvey,                  &
      &                        start = (/1/),                            &
      &                        total = (/Nsurvey(ng)/))
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Read in the time of each observation survey.
 !
@@ -1915,8 +1916,7 @@
      &                        FOURDVAR(ng)%SurveyTime,                  &
      &                        start = (/1/),                            &
      &                        total = (/Nsurvey(ng)/))
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Determine maximum size of observation arrays.
 !

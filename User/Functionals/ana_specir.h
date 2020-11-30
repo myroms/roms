@@ -1,7 +1,7 @@
       SUBROUTINE ana_specir (ng, tile, model)
 !
 !! git $Id$
-!! svn $Id: ana_specir.h 995 2020-01-10 04:01:28Z arango $
+!! svn $Id: ana_specir.h 1049 2020-11-30 04:34:51Z arango $
 !!======================================================================
 !! Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !!   Licensed under a MIT/X style license                              !
@@ -28,7 +28,12 @@
 ! Imported variable declarations.
 !
       integer, intent(in) :: ng, tile, model
-
+!
+! Local variable declarations.
+!
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__
+!
 #include "tile.h"
 !
       CALL ana_specir_tile (ng, tile, model,                            &
@@ -52,9 +57,9 @@
 #else
       IF (Lanafile.and.(tile.eq.0)) THEN
 #endif
-        ANANAME(25)=__FILE__
+        ANANAME(25)=MyFile
       END IF
-
+!
       RETURN
       END SUBROUTINE ana_specir
 !
@@ -125,7 +130,7 @@
 !  Local variable declarations.
 !
       integer :: i, iband, ic, j, nc
-
+!
       real(dp) :: hour, yday
       real(r8) :: Dangle, Hangle, LatRad, LonRad
       real(r8) :: cff, cff1, cff2
@@ -137,9 +142,9 @@
       real(r8) :: ros, rospd, rosps, rpls
       real(r8) :: sumx, sumx2, sumxy, sumy
       real(r8) :: taa, tas, to3, wa, wspeed, zenith
-
+!
       real(r8), dimension(NBands) :: Fo, Edir, Edif, Ed, qlam
-
+!
       real(r8), dimension(3) :: a_arr, dndr
       real(r8), dimension(3) :: ro     = (/ 0.03_r8, 0.24_r8, 2.00_r8 /)
       real(r8), dimension(3) :: r_arr  = (/ 0.10_r8, 1.00_r8, 10.0_r8 /)
@@ -434,6 +439,6 @@
      &                    EWperiodic(ng), NSperiodic(ng),               &
      &                    SpecIr, avcos)
 #endif
-
+!
       RETURN
       END SUBROUTINE ana_specir_tile

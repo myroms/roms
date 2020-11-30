@@ -1,7 +1,7 @@
       MODULE ocean_control_mod
 !
 !git $Id$
-!svn $Id: split_rbl4dvar_ocean.h 1043 2020-11-12 04:56:14Z arango $
+!svn $Id: split_rbl4dvar_ocean.h 1049 2020-11-30 04:34:51Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -128,6 +128,9 @@
 #ifdef _OPENMP
       integer :: my_threadnum
 #endif
+!
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__//", ROMS_initialize"
 
 #ifdef DISTRIBUTE
 !
@@ -162,16 +165,13 @@
 !  Get 4D-Var phase from APARNAM input script file.
 !
         CALL getpar_s (MyRank, aparnam, 'APARNAM')
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
         CALL getpar_i (MyRank, OuterLoop, 'OuterLoop', aparnam)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
         CALL getpar_s (MyRank, Phase4DVAR, 'Phase4DVAR', aparnam)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Determine ROMS standard output append switch. It is only relevant if
 !  "ROMS_STDINP" is activated. The standard output is created in the
@@ -192,8 +192,7 @@
 !  grids and dimension parameters are known.
 !
         CALL inp_par (iNLM)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Initialize counters. The 'Nrun' counter will be recomputed in the
 !  RBL4D-Var phases to process the obervation operator correctly.
@@ -230,8 +229,7 @@
 !
         DO ng=1,Ngrids
           DO thread=THREAD_RANGE
-            CALL wclock_on (ng, iNLM, 0, __LINE__,                      &
-     &                      __FILE__)
+            CALL wclock_on (ng, iNLM, 0, __LINE__, MyFile)
           END DO
         END DO
 !
@@ -276,15 +274,13 @@
           outer=0
           inner=0
           CALL background_initialize (my_outer)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         CASE ('ANALYS')
           my_outer=OuterLoop
           outer=OuterLoop
           inner=Ninner
           CALL analysis_initialize (my_outer)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         CASE DEFAULT
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Phase4DVAR)
@@ -304,8 +300,7 @@
 !
       DO ng=1,Ngrids
         CALL prior_error (ng)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         SetGridConfig(ng)=.FALSE.
       END DO
 !
@@ -343,8 +338,11 @@
 !  Local variable declarations.
 !
       integer :: my_outer, ng
+
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__//", ROMS_run"
 !
-      SourceFile=__FILE__ // ", ROMS_run"
+      SourceFile=MyFile
 !
 !=======================================================================
 !  Run Split RBL4D-Var Data Assimilation algorithm.
@@ -384,8 +382,7 @@
           inner=0
 
           CALL background (outer, RunInterval)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Compute 4D-Var data assimilation increment, dXa, by iterating over
 !  the inner loops, and minimizing the cost function.
@@ -397,8 +394,7 @@
           inner=0
 
           CALL increment (my_outer, RunInterval)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Compute 4D-Var data assimilation analysis, Xa = Xb + dXa.  Set
 !  nonlinear model initial conditions for next outer loop.
@@ -410,8 +406,7 @@
           inner=Ninner
 
           CALL analysis (my_outer, RunInterval)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
 #if defined POSTERIOR_ERROR_I || \
     defined POSTERIOR_ERROR_F || \
@@ -423,8 +418,7 @@
         CASE ('POST_E')
 
           CALL posterior_error (RunInterval)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &               __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #endif
 !
 !  Issue an error if incorrect 4D-Var phase.
@@ -478,6 +472,9 @@
 !
       integer :: Fcount, ng, tile, thread
 !
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__//", ROMS_finalize"
+!
 !-----------------------------------------------------------------------
 !  Create DAI NetCDF file and write out 4D-Var analysis fields that
 !  used as initial conditions for the next data assimilation cycle.
@@ -493,12 +490,10 @@
         DO ng=1,Ngrids
           LdefDAI(ng)=.TRUE.
           CALL def_dai (ng)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
           CALL wrt_dai (ng, tile)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END DO
       END IF
 !
@@ -550,8 +545,7 @@
 !
       DO ng=1,Ngrids
         DO thread=THREAD_RANGE
-          CALL wclock_off (ng, iNLM, 0, __LINE__,                       &
-     &                     __FILE__)
+          CALL wclock_off (ng, iNLM, 0, __LINE__, MyFile)
         END DO
       END DO
 !

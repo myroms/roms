@@ -2,7 +2,7 @@
       MODULE nf_fread3d_mod
 !
 !git $Id$
-!svn $Id: nf_fread3d.F 1031 2020-07-14 01:39:55Z arango $
+!svn $Id: nf_fread3d.F 1049 2020-11-30 04:34:51Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -44,7 +44,7 @@
 !=======================================================================
 !
       implicit none
-
+!
       CONTAINS
 
 #if defined PARALLEL_IO && defined DISTRIBUTE
@@ -134,6 +134,9 @@
 !
       character (len= 3), dimension(2) :: op_handle
       character (len=12), dimension(3) :: AttName
+
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__
 !
 !-----------------------------------------------------------------------
 !  Set starting and ending indices to process.
@@ -213,8 +216,7 @@
       CALL netcdf_get_fatt (ng, model, ncname, ncvarid, AttName,        &
      &                      AttValue, foundit,                          &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) THEN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) THEN
         nf_fread3d=ioerror
         RETURN
       END IF
@@ -489,7 +491,7 @@
       IF (allocated(wrk)) THEN
         deallocate (wrk)
       END IF
-
+!
       RETURN
       END FUNCTION nf_fread3d
 
@@ -569,7 +571,7 @@
       integer, dimension(4) :: start, total
 
       integer :: nf_fread3d
-
+!
       real(r8) :: Afactor, Aoffset, Aspval
 
       real(r8), dimension(3) :: AttValue
@@ -579,7 +581,11 @@
 # else
       real(r8), dimension(2+(Lm(ng)+2)*(Mm(ng)+2)*(UBk-LBk+1)) :: wrk
 # endif
+!
       character (len=12), dimension(3) :: AttName
+
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__
 !
 !-----------------------------------------------------------------------
 !  Set starting and ending indices to process.
@@ -649,8 +655,7 @@
       CALL netcdf_get_fatt (ng, model, ncname, ncvarid, AttName,        &
      &                      AttValue, foundit,                          &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) THEN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) THEN
         nf_fread3d=ioerror
         RETURN
       END IF
@@ -798,8 +803,7 @@
 # ifdef DISTRIBUTE
         CALL mp_bcasti (ng, model, status)
 # endif
-        IF (FoundError(status, nf90_noerr, __LINE__,                    &
-     &                 __FILE__)) THEN
+        IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           exit_flag=2
           ioerror=status
           nf_fread3d=status
@@ -858,7 +862,7 @@
 # endif
 
       nf_fread3d=status
-
+!
       RETURN
       END FUNCTION nf_fread3d
 #endif

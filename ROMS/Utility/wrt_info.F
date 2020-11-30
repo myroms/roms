@@ -2,7 +2,7 @@
       SUBROUTINE wrt_info (ng, model, ncid, ncname)
 !
 !git $Id$
-!svn $Id: wrt_info.F 1026 2020-05-20 02:05:37Z arango $
+!svn $Id: wrt_info.F 1049 2020-11-30 04:34:51Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -94,7 +94,10 @@
       real(r8), dimension(Nstation(ng)) :: Zpos, wrk
 #endif
 !
-      SourceFile=__FILE__
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__
+!
+      SourceFile=MyFile
 !
       LBi=LBOUND(GRID(ng)%h,DIM=1)
       UBi=UBOUND(GRID(ng)%h,DIM=1)
@@ -108,92 +111,78 @@
 !  Inquire about the variables.
 !
       CALL netcdf_inq_var (ng, model, ncname, ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Time stepping parameters.
 !
       CALL netcdf_put_ivar (ng, model, ncname, 'ntimes',                &
      &                      ntimes(ng), (/0/), (/0/),                   &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       CALL netcdf_put_ivar (ng, model, ncname, 'ndtfast',               &
      &                      ndtfast(ng), (/0/), (/0/),                  &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       CALL netcdf_put_fvar (ng, model, ncname, 'dt',                    &
      &                      dt(ng), (/0/), (/0/),                       &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       CALL netcdf_put_fvar (ng, model, ncname, 'dtfast',                &
      &                      dtfast(ng), (/0/), (/0/),                   &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       CALL netcdf_put_fvar (ng, model, ncname, 'dstart',                &
      &                      dstart, (/0/), (/0/),                       &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
 #ifdef RBL4DVAR_FCT_SENSITIVITY
       CALL netcdf_put_ivar (ng, model, ncname, 'ntimes_ana',            &
      &                      ntimes_ana(ng), (/0/), (/0/),               &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       CALL netcdf_put_ivar (ng, model, ncname, 'ntimes_fct',            &
      &                      ntimes_fct(ng), (/0/), (/0/),               &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #endif
 
 #if defined HDF5 && defined DEFLATE
       CALL netcdf_put_ivar (ng, model, ncname, 'shuffle',               &
      &                      shuffle, (/0/), (/0/),                      &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       CALL netcdf_put_ivar (ng, model, ncname, 'deflate',               &
      &                      deflate, (/0/), (/0/),                      &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       CALL netcdf_put_ivar (ng, model, ncname, 'deflate_level',         &
      &                      deflate_level, (/0/), (/0/),                &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #endif
 
       CALL netcdf_put_ivar (ng, model, ncname, 'nHIS',                  &
      &                      nHIS(ng), (/0/), (/0/),                     &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       CALL netcdf_put_ivar (ng, model, ncname, 'ndefHIS',               &
      &                      ndefHIS(ng), (/0/), (/0/),                  &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       CALL netcdf_put_ivar (ng, model, ncname, 'nRST',                  &
      &                      nRST(ng), (/0/), (/0/),                     &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
 #if defined AVERAGES    || \
    (defined AD_AVERAGES && defined ADJOINT) || \
@@ -202,150 +191,128 @@
       CALL netcdf_put_ivar (ng, model, ncname, 'ntsAVG',                &
      &                      ntsAVG(ng), (/0/), (/0/),                   &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       CALL netcdf_put_ivar (ng, model, ncname, 'nAVG',                  &
      &                      nAVG(ng), (/0/), (/0/),                     &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       CALL netcdf_put_ivar (ng, model, ncname, 'ndefAVG',               &
      &                      ndefAVG(ng), (/0/), (/0/),                  &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #endif
 
 #ifdef ADJOINT
       CALL netcdf_put_ivar (ng, model, ncname, 'nADJ',                  &
      &                      nADJ(ng), (/0/), (/0/),                     &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       CALL netcdf_put_ivar (ng, model, ncname, 'ndefADJ',               &
      &                      ndefADJ(ng), (/0/), (/0/),                  &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #endif
 
 #ifdef TANGENT
       CALL netcdf_put_ivar (ng, model, ncname, 'nTLM',                  &
      &                      nTLM(ng), (/0/), (/0/),                     &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       CALL netcdf_put_ivar (ng, model, ncname, 'ndefTLM',               &
      &                      ndefTLM(ng), (/0/), (/0/),                  &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #endif
 
 #ifdef ADJUST_BOUNDARY
       CALL netcdf_put_ivar (ng, model, ncname, 'nOBC',                  &
      &                      nOBC(ng), (/0/), (/0/),                     &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #endif
 
 #if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
       CALL netcdf_put_ivar (ng, model, ncname, 'nSFF',                  &
      &                      nSFF(ng), (/0/), (/0/),                     &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #endif
 
 #ifdef PROPAGATOR
       CALL netcdf_put_lvar (ng, model, ncname, 'LmultiGST',             &
      &                      LmultiGST, (/0/), (/0/),                    &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       CALL netcdf_put_lvar (ng, model, ncname, 'LrstGST',               &
      &                      LrstGST, (/0/), (/0/),                      &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       CALL netcdf_put_ivar (ng, model, ncname, 'MaxIterGST',            &
      &                      MaxIterGST, (/0/), (/0/),                   &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       CALL netcdf_put_ivar (ng, model, ncname, 'nGST',                  &
      &                      nGST, (/0/), (/0/),                         &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       CALL netcdf_put_ivar (ng, model, ncname, 'NEV',                   &
      &                      NEV, (/0/), (/0/),                          &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       CALL netcdf_put_ivar (ng, model, ncname, 'NCV',                   &
      &                      NCV, (/0/), (/0/),                          &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       CALL netcdf_put_fvar (ng, model, ncname, 'Ritz_tol',              &
      &                      Ritz_tol, (/0/), (/0/),                     &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #endif
 
 #ifdef DIAGNOSTICS
       CALL netcdf_put_ivar (ng, model, ncname, 'ntsDIA',                &
      &                      ntsDIA(ng), (/0/), (/0/),                   &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       CALL netcdf_put_ivar (ng, model, ncname, 'nDIA',                  &
      &                      nDIA(ng), (/0/), (/0/),                     &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       CALL netcdf_put_ivar (ng, model, ncname, 'ndefDIA',               &
      &                      ndefDIA(ng), (/0/), (/0/),                  &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #endif
 
 #ifdef STATIONS
       CALL netcdf_put_ivar (ng, model, ncname, 'nSTA',                  &
      &                      nSTA(ng), (/0/), (/0/),                     &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #endif
 
 #ifdef FOUR_DVAR
       CALL netcdf_put_ivar (ng, model, ncname, 'Nouter',                &
      &                      Nouter, (/0/), (/0/),                       &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       CALL netcdf_put_ivar (ng, model, ncname, 'Ninner',                &
      &                      Ninner, (/0/), (/0/),                       &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #endif
 
 #if defined POWER_LAW && defined SOLVE3D
@@ -356,20 +323,17 @@
       CALL netcdf_put_fvar (ng, model, ncname, 'Falpha',                &
      &                      Falpha, (/0/), (/0/),                       &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       CALL netcdf_put_fvar (ng, model, ncname, 'Fbeta',                 &
      &                      Fbeta, (/0/), (/0/),                        &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       CALL netcdf_put_fvar (ng, model, ncname, 'Fgamma',                &
      &                      Fgamma, (/0/), (/0/),                       &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #endif
 !
 !  Horizontal mixing coefficients.
@@ -378,23 +342,20 @@
       CALL netcdf_put_fvar (ng, model, ncname, 'nl_tnu2',               &
      &                      nl_tnu2(:,ng), (/1/), (/NT(ng)/),           &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
 # ifdef ADJOINT
       CALL netcdf_put_fvar (ng, model, ncname, 'ad_tnu2',               &
      &                      ad_tnu2(:,ng), (/1/), (/NT(ng)/),           &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 # endif
 
 # if defined TANGENT || defined TL_IOMS
       CALL netcdf_put_fvar (ng, model, ncname, 'tl_tnu2',               &
      &                      tl_tnu2(:,ng), (/1/), (/NT(ng)/),           &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 # endif
 
 #endif
@@ -406,8 +367,7 @@
       CALL netcdf_put_fvar (ng, model, ncname, 'nl_tnu4',               &
      &                      diff, (/1/), (/NT(ng)/),                    &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
 # ifdef ADJOINT
       DO itrc=1,NT(ng)
@@ -416,8 +376,7 @@
       CALL netcdf_put_fvar (ng, model, ncname, 'ad_tnu4',               &
      &                      diff, (/1/), (/NT(ng)/),                    &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 # endif
 
 # if defined TANGENT || defined TL_IOMS
@@ -427,8 +386,7 @@
       CALL netcdf_put_fvar (ng, model, ncname, 'tl_tnu4',               &
      &                      diff, (/1/), (/NT(ng)/),                    &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 # endif
 #endif
 
@@ -436,23 +394,20 @@
       CALL netcdf_put_fvar (ng, model, ncname, 'nl_visc2',              &
      &                      nl_visc2(ng), (/0/), (/0/),                 &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
 # ifdef ADJOINT
       CALL netcdf_put_fvar (ng, model, ncname, 'ad_visc2',              &
      &                      ad_visc2(ng), (/0/), (/0/),                 &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 # endif
 
 # if defined TANGENT || defined TL_IOMS
       CALL netcdf_put_fvar (ng, model, ncname, 'tl_visc2',              &
      &                      tl_visc2(ng), (/0/), (/0/),                 &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 # endif
 #endif
 
@@ -460,23 +415,20 @@
       CALL netcdf_put_fvar (ng, model, ncname, 'nl_visc4',              &
      &                      nl_visc4(ng)**2, (/0/), (/0/),              &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
 # ifdef ADJOINT
       CALL netcdf_put_fvar (ng, model, ncname, 'ad_visc4',              &
      &                      ad_visc4(ng)**2, (/0/), (/0/),              &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 # endif
 
 # if defined TANGENT || defined TL_IOMS
       CALL netcdf_put_fvar (ng, model, ncname, 'tl_visc4',              &
      &                      tl_visc4(ng)**2, (/0/), (/0/),              &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 # endif
 #endif
 
@@ -485,16 +437,14 @@
       CALL netcdf_put_fvar (ng, model, ncname, 'tkenu2',                &
      &                      tkenu2(ng), (/0/), (/0/),                   &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 # endif
 
 # ifdef TKE_DIF4
       CALL netcdf_put_fvar (ng, model, ncname, 'tkenu4',                &
      &                      tkenu4(ng)**2, (/0/), (/0/),                &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 # endif
 #endif
 
@@ -502,16 +452,14 @@
       CALL netcdf_put_lvar (ng, model, ncname, 'LuvSponge',             &
      &                      LuvSponge(ng), (/0/), (/0/),                &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #endif
 
 #if (defined TS_DIF2 || defined TS_DIF4) && defined SOLVE3D
       CALL netcdf_put_lvar (ng, model, ncname, 'LtracerSponge',         &
      &                      LtracerSponge(:,ng), (/1/), (/NT(ng)/),     &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #endif
 
 #ifdef SOLVE3D
@@ -521,27 +469,23 @@
       CALL netcdf_put_fvar (ng, model, ncname, 'Akt_bak',               &
      &                      Akt_bak(:,ng), (/1/), (/NT(ng)/),           &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       CALL netcdf_put_fvar (ng, model, ncname, 'Akv_bak',               &
      &                      Akv_bak(ng), (/0/), (/0/),                  &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
 # if defined MY25_MIXING || defined GLS_MIXING
       CALL netcdf_put_fvar (ng, model, ncname, 'Akk_bak',               &
      &                      Akk_bak(ng), (/0/), (/0/),                  &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       CALL netcdf_put_fvar (ng, model, ncname, 'Akp_bak',               &
      &                      Akp_bak(ng), (/0/), (/0/),                  &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 # endif
 
 # ifdef FORWARD_MIXING
@@ -552,32 +496,28 @@
       CALL netcdf_put_fvar (ng, model, ncname, 'ad_Akt_fac',            &
      &                      ad_Akt_fac(:,ng), (/1/), (/NT(ng)/),        &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #  endif
 
 #  if defined TANGENT || defined TL_IOMS
       CALL netcdf_put_fvar (ng, model, ncname, 'tl_Akt_fac',            &
      &                      tl_Akt_fac(:,ng), (/1/), (/NT(ng)/),        &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #  endif
 
 #  ifdef ADJOINT
       CALL netcdf_put_fvar (ng, model, ncname, 'ad_Akv_fac',            &
      &                      ad_Akv_fac(ng), (/0/), (/0/),               &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #  endif
 
 #  if defined TANGENT || defined TL_IOMS
       CALL netcdf_put_fvar (ng, model, ncname, 'tl_Akv_fac',            &
      &                      tl_Akv_fac(ng), (/0/), (/0/),               &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #  endif
 # endif
 #endif
@@ -587,27 +527,23 @@
       CALL netcdf_put_fvar (ng, model, ncname, 'rdrg',                  &
      &                      rdrg(ng), (/0/), (/0/),                     &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       CALL netcdf_put_fvar (ng, model, ncname, 'rdrg2',                 &
      &                      rdrg2(ng), (/0/), (/0/),                    &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
 #ifdef SOLVE3D
       CALL netcdf_put_fvar (ng, model, ncname, 'Zob',                   &
      &                      Zob(ng), (/0/), (/0/),                      &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       CALL netcdf_put_fvar (ng, model, ncname, 'Zos',                   &
      &                      Zos(ng), (/0/), (/0/),                      &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #endif
 
 #if defined SOLVE3D && defined GLS_MIXING
@@ -617,98 +553,82 @@
       CALL netcdf_put_fvar (ng, model, ncname, 'gls_p',                 &
      &                      gls_p(ng), (/0/), (/0/),                    &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       CALL netcdf_put_fvar (ng, model, ncname, 'gls_m',                 &
      &                      gls_m(ng), (/0/), (/0/),                    &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       CALL netcdf_put_fvar (ng, model, ncname, 'gls_n',                 &
      &                      gls_n(ng), (/0/), (/0/),                    &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       CALL netcdf_put_fvar (ng, model, ncname, 'gls_cmu0',              &
      &                      gls_cmu0(ng), (/0/), (/0/),                 &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       CALL netcdf_put_fvar (ng, model, ncname, 'gls_c1',                &
      &                      gls_c1(ng), (/0/), (/0/),                   &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       CALL netcdf_put_fvar (ng, model, ncname, 'gls_c2',                &
      &                      gls_c2(ng), (/0/), (/0/),                   &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       CALL netcdf_put_fvar (ng, model, ncname, 'gls_c3m',               &
      &                      gls_c3m(ng), (/0/), (/0/),                  &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       CALL netcdf_put_fvar (ng, model, ncname, 'gls_c3p',               &
      &                      gls_c3p(ng), (/0/), (/0/),                  &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       CALL netcdf_put_fvar (ng, model, ncname, 'gls_sigk',              &
      &                      gls_sigk(ng), (/0/), (/0/),                 &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       CALL netcdf_put_fvar (ng, model, ncname, 'gls_sigp',              &
      &                      gls_sigp(ng), (/0/), (/0/),                 &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       CALL netcdf_put_fvar (ng, model, ncname, 'gls_Kmin',              &
      &                      gls_Kmin(ng), (/0/), (/0/),                 &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       CALL netcdf_put_fvar (ng, model, ncname, 'gls_Pmin',              &
      &                      gls_Pmin(ng), (/0/), (/0/),                 &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       CALL netcdf_put_fvar (ng, model, ncname, 'Charnok_alpha',         &
      &                      charnok_alpha(ng), (/0/), (/0/),            &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       CALL netcdf_put_fvar (ng, model, ncname, 'Zos_hsig_alpha',        &
      &                      zos_hsig_alpha(ng), (/0/), (/0/),           &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       CALL netcdf_put_fvar (ng, model, ncname, 'sz_alpha',              &
      &                      sz_alpha(ng), (/0/), (/0/),                 &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       CALL netcdf_put_fvar (ng, model, ncname, 'CrgBan_cw',             &
      &                      crgban_cw(ng), (/0/), (/0/),                &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #endif
 !
 !  Nudging inverse time scales used in various tasks.
@@ -716,21 +636,18 @@
       CALL netcdf_put_fvar (ng, model, ncname, 'Znudg',                 &
      &                      Znudg(ng)/sec2day, (/0/), (/0/),            &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       CALL netcdf_put_fvar (ng, model, ncname, 'M2nudg',                &
      &                      M2nudg(ng)/sec2day, (/0/), (/0/),           &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
 #ifdef SOLVE3D
       CALL netcdf_put_fvar (ng, model, ncname, 'M3nudg',                &
      &                      M3nudg(ng)/sec2day, (/0/), (/0/),           &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       DO itrc=1,NT(ng)
         nudg(itrc)=Tnudg(itrc,ng)/sec2day
@@ -738,8 +655,7 @@
       CALL netcdf_put_fvar (ng, model, ncname, 'Tnudg',                 &
      &                      nudg, (/1/), (/NT(ng)/),                    &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #endif
 
 #ifndef DEBUGGING
@@ -750,26 +666,22 @@
         CALL netcdf_put_fvar (ng, model, ncname, 'FSobc_in',            &
      &                        FSobc_in(ng,:), (/1/), (/4/),             &
      &                        ncid = ncid)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
         CALL netcdf_put_fvar (ng, model, ncname, 'FSobc_out',           &
      &                        FSobc_out(ng,:), (/1/), (/4/),            &
      &                        ncid = ncid)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
         CALL netcdf_put_fvar (ng, model, ncname, 'M2obc_in',            &
      &                        M2obc_in(ng,:), (/1/), (/4/),             &
      &                        ncid = ncid)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
         CALL netcdf_put_fvar (ng, model, ncname, 'M2obc_out',           &
      &                        M2obc_out(ng,:), (/1/), (/4/),            &
      &                        ncid = ncid)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
 # ifdef SOLVE3D
         DO ibry=1,4
@@ -780,8 +692,7 @@
         CALL netcdf_put_fvar (ng, model, ncname, 'Tobc_in',             &
      &                        Tobc, (/1,1/), (/NT(ng),4/),              &
      &                        ncid = ncid)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
         DO ibry=1,4
           DO itrc=1,NT(ng)
@@ -791,20 +702,17 @@
         CALL netcdf_put_fvar (ng, model, ncname, 'Tobc_out',            &
      &                        Tobc, (/1,1/), (/NT(ng),4/),              &
      &                        ncid = ncid)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
         CALL netcdf_put_fvar (ng, model, ncname, 'M3obc_in',            &
      &                        M3obc_in(ng,:), (/1/), (/4/),             &
      &                        ncid = ncid)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
         CALL netcdf_put_fvar (ng, model, ncname, 'M3obc_out',           &
      &                        M3obc_out(ng,:), (/1/), (/4/),            &
      &                      ncid = ncid)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 # endif
       END IF
 #endif
@@ -814,15 +722,13 @@
       CALL netcdf_put_fvar (ng, model, ncname, 'rho0',                  &
      &                      rho0, (/0/), (/0/),                         &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
 #if defined SOLVE3D && defined PROPAGATOR
       CALL netcdf_put_fvar (ng, model, ncname, 'bvf_bak',               &
      &                      bvf_bak, (/0/), (/0/),                      &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #endif
 
 #if defined SOLVE3D     && \
@@ -830,20 +736,17 @@
       CALL netcdf_put_fvar (ng, model, ncname, 'R0',                    &
      &                      R0(ng), (/0/), (/0/),                       &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       CALL netcdf_put_fvar (ng, model, ncname, 'Tcoef',                 &
      &                      Tcoef(ng), (/0/), (/0/),                    &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       CALL netcdf_put_fvar (ng, model, ncname, 'Scoef',                 &
      &                      Scoef(ng), (/0/), (/0/),                    &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #endif
 #ifdef SOLVE3D
 # ifdef BODYFORCE
@@ -853,14 +756,12 @@
       CALL netcdf_put_ivar (ng, model, ncname, 'levsfrc',               &
      &                      levsfrc(ng), (/0/), (/0/),                  &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       CALL netcdf_put_ivar (ng, model, ncname, 'levbfrc',               &
      &                      levbfrc(ng), (/0/), (/0/),                  &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 # endif
 #endif
 !
@@ -869,8 +770,7 @@
       CALL netcdf_put_fvar (ng, model, ncname, 'gamma2',                &
      &                      gamma2(ng), (/0/), (/0/),                   &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 ! Logical switches to activate horizontal momentum transport
 ! point Sources/Sinks (like river runoff transport) and mass point
@@ -879,14 +779,12 @@
       CALL netcdf_put_lvar (ng, model, ncname, 'LuvSrc',                &
      &                      LuvSrc(ng), (/0/), (/0/),                   &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       CALL netcdf_put_lvar (ng, model, ncname, 'LwSrc',                 &
      &                      LwSrc(ng), (/0/), (/0/),                    &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
 #ifdef SOLVE3D
 !
@@ -895,8 +793,7 @@
       CALL netcdf_put_lvar (ng, model, ncname, 'LtracerSrc',            &
      &                      LtracerSrc(:,ng), (/1/), (/NT(ng)/),        &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #endif
 !
 !  Logical switches to process climatology fields.
@@ -904,27 +801,23 @@
       CALL netcdf_put_lvar (ng, model, ncname, 'LsshCLM',               &
      &                      LsshCLM(ng), (/0/), (/0/),                  &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       CALL netcdf_put_lvar (ng, model, ncname, 'Lm2CLM',                &
      &                      Lm2CLM(ng), (/0/), (/0/),                   &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
 #ifdef SOLVE3D
       CALL netcdf_put_lvar (ng, model, ncname, 'Lm3CLM',                &
      &                      Lm3CLM(ng), (/0/), (/0/),                   &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       CALL netcdf_put_lvar (ng, model, ncname, 'LtracerCLM',            &
      &                      LtracerCLM(:,ng), (/1/), (/NT(ng)/),        &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #endif
 !
 !  Logical switches for nudging climatology fields.
@@ -932,21 +825,18 @@
       CALL netcdf_put_lvar (ng, model, ncname, 'LnudgeM2CLM',           &
      &                      LnudgeM2CLM(ng), (/0/), (/0/),              &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
 #ifdef SOLVE3D
       CALL netcdf_put_lvar (ng, model, ncname, 'LnudgeM3CLM',           &
      &                      LnudgeM3CLM(ng), (/0/), (/0/),              &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       CALL netcdf_put_lvar (ng, model, ncname, 'LnudgeTCLM',            &
      &                      LnudgeTCLM(:,ng), (/1/), (/NT(ng)/),        &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #endif
 
 #ifdef FOUR_DVAR
@@ -957,50 +847,43 @@
       CALL netcdf_put_lvar (ng, model, ncname, 'Lstflux',               &
      &                      Lstflux(:,ng), (/1/), (/NT(ng)/),           &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 # endif
 # ifdef ADJUST_BOUNDARY
       CALL netcdf_put_lvar (ng, model, ncname, 'Lobc',                  &
      &                      Lobc(:,:,ng), (/1,1/), (/4,NstateVar(ng)/), &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 # endif
 # ifndef I4DVAR_ANA_SENSITIVITY
       CALL netcdf_put_lvar (ng, model, ncname, 'LhessianEV',            &
      &                      LhessianEV, (/0/), (/0/),                   &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
 #  ifdef WEAK_CONSTRAINT
       CALL netcdf_put_lvar (ng, model, ncname, 'LhotStart',             &
      &                      LhotStart, (/0/), (/0/),                    &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #  endif
 
       CALL netcdf_put_lvar (ng, model, ncname, 'Lprecond',              &
      &                      Lprecond, (/0/), (/0/),                     &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       CALL netcdf_put_lvar (ng, model, ncname, 'Lritz',                 &
      &                      Lritz, (/0/), (/0/),                        &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
 #  ifdef WEAK_CONSTRAINT
       IF (Lprecond.and.(NritzEV.gt.0)) THEN
         CALL netcdf_put_ivar (ng, model, ncname, 'NritzEV',             &
      &                        NritzEV, (/0/), (/0/),                    &
      &                        ncid = ncid)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
       END IF
 #  endif
 # endif
@@ -1022,115 +905,99 @@
       CALL netcdf_put_fvar (ng, model, ncname, 'GradErr',               &
      &                      GradErr, (/0/), (/0/),                      &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       CALL netcdf_put_fvar (ng, model, ncname, 'HevecErr',              &
      &                      HevecErr, (/0/), (/0/),                     &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 # endif
 
       CALL netcdf_put_ivar (ng, model, ncname, 'Nmethod',               &
      &                      Nmethod(ng), (/0/), (/0/),                  &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       CALL netcdf_put_ivar (ng, model, ncname, 'Rscheme',               &
      &                      Rscheme(ng), (/0/), (/0/),                  &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       CALL netcdf_put_ivar (ng, model, ncname, 'Nrandom',               &
      &                      Nrandom, (/0/), (/0/),                      &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       CALL netcdf_put_fvar (ng, model, ncname, 'Hgamma',                &
      &                      Hgamma(1), (/0/), (/0/),                    &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
 # ifdef WEAK_CONSTRAINT
       CALL netcdf_put_fvar (ng, model, ncname, 'HgammaM',               &
      &                      Hgamma(2), (/0/), (/0/),                    &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 # endif
 
 # ifdef ADJUST_BOUNDARY
       CALL netcdf_put_fvar (ng, model, ncname, 'HgammaB',               &
      &                      Hgamma(3), (/0/), (/0/),                    &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 # endif
 
 # ifdef ADJUST_STFLUX
       CALL netcdf_put_fvar (ng, model, ncname, 'HgammaF',               &
      &                      Hgamma(4), (/0/), (/0/),                    &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 # endif
 
 # ifdef SOLVE3D
       CALL netcdf_put_fvar (ng, model, ncname, 'Vgamma',                &
      &                      Vgamma(1), (/0/), (/0/),                    &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
 #  ifdef WEAK_CONSTRAINT
       CALL netcdf_put_fvar (ng, model, ncname, 'VgammaM',               &
      &                      Vgamma(2), (/0/), (/0/),                    &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #  endif
 
 #  ifdef ADJUST_BOUNDARY
       CALL netcdf_put_fvar (ng, model, ncname, 'VgammaB',               &
      &                      Vgamma(3), (/0/), (/0/),                    &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #  endif
 # endif
 
       CALL netcdf_put_fvar (ng, model, ncname, 'Hdecay',                &
      &                      Hdecay(1,:,ng), (/1/), (/NstateVar(ng)/),   &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
 # ifdef SOLVE3D
       CALL netcdf_put_fvar (ng, model, ncname, 'Vdecay',                &
      &                      Vdecay(1,:,ng), (/1/), (/NstateVar(ng)/),   &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 # endif
 
       IF (NSA.eq.2) THEN
         CALL netcdf_put_fvar (ng, model, ncname, 'HdecayM',             &
      &                        Hdecay(2,:,ng), (/1/), (/NstateVar(ng)/), &
      &                        ncid = ncid)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
 # ifdef SOLVE3D
         CALL netcdf_put_fvar (ng, model, ncname, 'VdecayM',             &
      &                        Vdecay(2,:,ng), (/1/), (/NstateVar(ng)/), &
      &                        ncid = ncid)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 # endif
       END IF
 
@@ -1139,16 +1006,14 @@
      &                      HdecayB(:,:,ng),                            &
      &                      (/1,1/), (/NstateVar(ng),4/),               &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
 #  ifdef SOLVE3D
       CALL netcdf_put_fvar (ng, model, ncname, 'VdecayB',               &
      &                      VdecayB(:,:,ng),                            &
      &                      (/1,1/), (/NstateVar(ng),4/),               &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #  endif
 # endif
 
@@ -1156,21 +1021,18 @@
       CALL netcdf_put_fvar (ng, model, ncname, 'tl_M2diff',             &
      &                      tl_M2diff(ng), (/0/), (/0/),                &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
 #  ifdef SOLVE3D
       CALL netcdf_put_fvar (ng, model, ncname, 'tl_M3diff',             &
      &                      tl_M3diff(ng), (/0/), (/0/),                &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       CALL netcdf_put_fvar (ng, model, ncname, 'tl_Tdiff',              &
      &                      tl_Tdiff(:,ng), (/1/), (/NT(ng)/),          &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #  endif
 # endif
 
@@ -1184,32 +1046,27 @@
       CALL netcdf_put_lvar (ng, model, ncname, 'Lbalance',              &
      &                      balance, (/1/), (/NstateVar(ng)/),          &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       CALL netcdf_put_ivar (ng, model, ncname, 'LNM_flag',              &
      &                      LNM_flag, (/0/), (/0/),                     &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       CALL netcdf_put_fvar (ng, model, ncname, 'LNM_depth',             &
      &                      LNM_depth(ng), (/0/), (/0/),                &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       CALL netcdf_put_fvar (ng, model, ncname, 'dTdz_min',              &
      &                      dTdz_min(ng), (/0/), (/0/),                 &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       CALL netcdf_put_fvar (ng, model, ncname, 'ml_depth',              &
      &                      ml_depth(ng), (/0/), (/0/),                 &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 # endif
 #endif
 
@@ -1223,56 +1080,48 @@
      &                      SCALARS(ng)%Lstate(isFsur),                 &
      &                      (/0/), (/0/),                               &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       CALL netcdf_put_lvar (ng, model, ncname, 'Lubar',                 &
      &                      SCALARS(ng)%Lstate(isUbar),                 &
      &                      (/0/), (/0/),                               &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       CALL netcdf_put_lvar (ng, model, ncname, 'Lvbar',                 &
      &                      SCALARS(ng)%Lstate(isVbar),                 &
      &                      (/0/), (/0/),                               &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
 # ifdef SOLVE3D
       CALL netcdf_put_lvar (ng, model, ncname, 'Luvel',                 &
      &                      SCALARS(ng)%Lstate(isUvel),                 &
      &                      (/0/), (/0/),                               &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       CALL netcdf_put_lvar (ng, model, ncname, 'Lvvel',                 &
      &                      SCALARS(ng)%Lstate(isVvel),                 &
      &                      (/0/), (/0/),                               &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       CALL netcdf_put_lvar (ng, model, ncname, 'Ltracer',               &
      &                      SCALARS(ng)%Lstate(isTvar(:)),              &
      &                      (/1/), (/NT(ng)/),                          &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       CALL netcdf_put_ivar (ng, model, ncname, 'KstrS',                 &
      &                      KstrS(ng), (/0/), (/0/),                    &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       CALL netcdf_put_ivar (ng, model, ncname, 'KendS',                 &
      &                      KendS(ng), (/0/), (/0/),                    &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 # endif
 #endif
 
@@ -1284,23 +1133,20 @@
      &                      SCALARS(ng)%Fstate(isFsur),                 &
      &                      (/0/), (/0/),                               &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
 # ifndef SOLVE3D
       CALL netcdf_put_lvar (ng, model, ncname, 'Fubar',                 &
      &                      SCALARS(ng)%Fstate(isUbar),                 &
      &                      (/0/), (/0/),                               &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       CALL netcdf_put_lvar (ng, model, ncname, 'Fvbar',                 &
      &                      SCALARS(ng)%Fstate(isVbar),                 &
      &                      (/0/), (/0/),                               &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
 # else
 
@@ -1308,45 +1154,39 @@
      &                      SCALARS(ng)%Fstate(isUvel),                 &
      &                      (/0/), (/0/),                               &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       CALL netcdf_put_lvar (ng, model, ncname, 'Fvvel',                 &
      &                      SCALARS(ng)%Fstate(isVvel),                 &
      &                      (/0/), (/0/),                               &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       CALL netcdf_put_lvar (ng, model, ncname, 'Ftracer',               &
      &                      SCALARS(ng)%Fstate(isTvar(:)),              &
      &                      (/1/), (/NT(ng)/),                          &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 # endif
 
       CALL netcdf_put_lvar (ng, model, ncname, 'Fsustr',                &
      &                      SCALARS(ng)%Fstate(isUstr),                 &
      &                      (/0/), (/0/),                               &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       CALL netcdf_put_lvar (ng, model, ncname, 'Fsvstr',                &
      &                      SCALARS(ng)%Fstate(isVstr),                 &
      &                      (/0/), (/0/),                               &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
 # ifdef SOLVE3D
       CALL netcdf_put_lvar (ng, model, ncname, 'Fstflx',                &
      &                      SCALARS(ng)%Fstate(isTsur(:)),              &
      &                      (/1/), (/NT(ng)/),                          &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 # endif
 #endif
 
@@ -1355,48 +1195,41 @@
       CALL netcdf_put_fvar (ng, model, ncname, 'SO_decay',              &
      &                      SO_decay(ng), (/0/), (/0/),                 &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 # endif
 
       CALL netcdf_put_fvar (ng, model, ncname, 'SO_trace',              &
      &                      TRnorm(ng), (/0/), (/0/),                   &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       CALL netcdf_put_fvar (ng, model, ncname, 'SOsdev_zeta',           &
      &                      SO_sdev(isFsur,ng), (/0/), (/0/),           &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
 # ifndef SOLVE3D
       CALL netcdf_put_fvar (ng, model, ncname, 'SOsdev_ubar',           &
      &                      SO_sdev(isUbar,ng), (/0/), (/0/),           &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       CALL netcdf_put_fvar (ng, model, ncname, 'SOsdev_vbar',           &
      &                      SO_sdev(isUbar,ng), (/0/), (/0/),           &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
 # else
 
       CALL netcdf_put_fvar (ng, model, ncname, 'SOsdev_uvel',           &
      &                      SO_sdev(isUvel,ng), (/0/), (/0/),           &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       CALL netcdf_put_fvar (ng, model, ncname, 'SOsdev_vvel',           &
      &                      SO_sdev(isVvel,ng), (/0/), (/0/),           &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       DO itrc=1,NT(ng)
         nudg(itrc)=SO_sdev(isTvar(itrc),ng)
@@ -1404,22 +1237,19 @@
       CALL netcdf_put_fvar (ng, model, ncname, 'SOsdev_tracer',         &
      &                      nudg, (/1/), (/NT(ng)/),                    &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 # endif
 
       CALL netcdf_put_fvar (ng, model, ncname, 'SOsdev_sustr',          &
      &                      SO_sdev(isUstr,ng), (/0/), (/0/),           &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
 
       CALL netcdf_put_fvar (ng, model, ncname, 'SOsdev_svstr',          &
      &                      SO_sdev(isVstr,ng), (/0/), (/0/),           &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
 # ifdef SOLVE3D
       DO itrc=1,NT(ng)
@@ -1428,8 +1258,7 @@
       CALL netcdf_put_fvar (ng, model, ncname, 'SOsdev_stflx',          &
      &                      nudg, (/1/), (/NT(ng)/),                    &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 # endif
 #endif
 
@@ -1474,22 +1303,19 @@
       CALL netcdf_put_lvar (ng, model, ncname, 'spherical',             &
      &                      spherical, (/0/), (/0/),                    &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Domain Length.
 !
       CALL netcdf_put_fvar (ng, model, ncname, 'xl',                    &
      &                      xl(ng), (/0/), (/0/),                       &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       CALL netcdf_put_fvar (ng, model, ncname, 'el',                    &
      &                      el(ng), (/0/), (/0/),                       &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
 #ifdef SOLVE3D
 !
@@ -1498,38 +1324,32 @@
       CALL netcdf_put_ivar (ng, model, ncname, 'Vtransform',            &
      &                      Vtransform(ng), (/0/), (/0/),               &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       CALL netcdf_put_ivar (ng, model, ncname, 'Vstretching',           &
      &                      Vstretching(ng), (/0/), (/0/),              &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       CALL netcdf_put_fvar (ng, model, ncname, 'theta_s',               &
      &                      theta_s(ng), (/0/), (/0/),                  &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       CALL netcdf_put_fvar (ng, model, ncname, 'theta_b',               &
      &                      theta_b(ng), (/0/), (/0/),                  &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       CALL netcdf_put_fvar (ng, model, ncname, 'Tcline',                &
      &                      Tcline(ng), (/0/), (/0/),                   &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       CALL netcdf_put_fvar (ng, model, ncname, 'hc',                    &
      &                      hc(ng), (/0/), (/0/),                       &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  SGRID conventions for staggered data on structured grids. The value
 !  is arbitrary but is set to unity so it can be used as logical during
@@ -1538,36 +1358,31 @@
       CALL netcdf_put_ivar (ng, model, ncname, 'grid',                  &
      &                      (/1/), (/0/), (/0/),                        &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  S-coordinate non-dimensional independent variables.
 !
       CALL netcdf_put_fvar (ng, model, ncname, 's_rho',                 &
      &                      SCALARS(ng)%sc_r(:), (/1/), (/N(ng)/),      &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       CALL netcdf_put_fvar (ng, model, ncname, 's_w',                   &
      &                      SCALARS(ng)%sc_w(0:), (/1/), (/N(ng)+1/),   &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  S-coordinate non-dimensional stretching curves.
 !
       CALL netcdf_put_fvar (ng, model, ncname, 'Cs_r',                  &
      &                      SCALARS(ng)%Cs_r(:), (/1/), (/N(ng)/),      &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       CALL netcdf_put_fvar (ng, model, ncname, 'Cs_w',                  &
      &                      SCALARS(ng)%Cs_w(0:), (/1/), (/N(ng)+1/),   &
      &                      ncid = ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #endif
 !
 !  User generic parameters.
@@ -1576,8 +1391,7 @@
         CALL netcdf_put_fvar (ng, model, ncname, 'user',                &
      &                        user, (/1/), (/Nuser/),                   &
      &                        ncid = ncid)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
       END IF
 
 #ifdef STATIONS
@@ -1588,14 +1402,12 @@
         CALL netcdf_put_fvar (ng, model, ncname, 'Ipos',                &
      &                        SCALARS(ng)%SposX(:), (/1/),              &
      &                        (/Nstation(ng)/), ncid = ncid)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
         CALL netcdf_put_fvar (ng, model, ncname, 'Jpos',                &
      &                        SCALARS(ng)%SposY(:), (/1/),              &
      &                        (/Nstation(ng)/), ncid = ncid)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
       END IF
 #endif
 
@@ -1619,8 +1431,7 @@
 # endif
      &                           GRID(ng) % h,                          &
      &                           SetFillVal = .FALSE.)
-              IF (FoundError(status, nf90_noerr, __LINE__,              &
-     &                       __FILE__)) THEN
+              IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
                 IF (Master) WRITE (stdout,10) 'h', TRIM(ncname)
                 exit_flag=3
                 ioerror=status
@@ -1640,8 +1451,7 @@
             CALL netcdf_put_fvar (ng, model, ncname, 'h',               &
      &                            wrk, (/1/), (/Nstation(ng)/),         &
      &                            ncid = ncid)
-            IF (FoundError(exit_flag, NoError, __LINE__,                &
-     &                     __FILE__)) RETURN
+            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 # endif
           END IF
         END IF
@@ -1660,8 +1470,7 @@
 #endif
      &                           GRID(ng) % f,                          &
      &                           SetFillVal = .FALSE.)
-              IF (FoundError(status, nf90_noerr, __LINE__,              &
-     &                       __FILE__)) THEN
+              IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
                 IF (Master) WRITE (stdout,10) 'f', TRIM(ncname)
                 exit_flag=3
                 ioerror=status
@@ -1687,8 +1496,7 @@
 #endif
      &                           GRID(ng) % pm,                         &
      &                           SetFillVal = .FALSE.)
-              IF (FoundError(status, nf90_noerr, __LINE__,              &
-     &                       __FILE__)) THEN
+              IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
                 IF (Master) WRITE (stdout,10) 'pm', TRIM(ncname)
                 exit_flag=3
                 ioerror=status
@@ -1712,8 +1520,7 @@
 #endif
      &                           GRID(ng) % pn,                         &
      &                           SetFillVal = .FALSE.)
-              IF (FoundError(status, nf90_noerr, __LINE__,              &
-     &                       __FILE__)) THEN
+              IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
                 IF (Master) WRITE (stdout,10) 'pn', TRIM(ncname)
                 exit_flag=3
                 ioerror=status
@@ -1740,8 +1547,8 @@
 #endif
      &                             GRID(ng) % lonr,                     &
      &                             SetFillVal = .FALSE.)
-                IF (FoundError(status, nf90_noerr, __LINE__,            &
-     &                         __FILE__)) THEN
+                IF (FoundError(status, nf90_noerr,                      &
+     &                         __LINE__, MyFile)) THEN
                   IF (Master) WRITE (stdout,10) 'lon_rho', TRIM(ncname)
                   exit_flag=3
                   ioerror=status
@@ -1761,8 +1568,8 @@
               CALL netcdf_put_fvar (ng, model, ncname, 'lon_rho',       &
      &                              wrk, (/1/), (/Nstation(ng)/),       &
      &                              ncid = ncid)
-              IF (FoundError(exit_flag, NoError, __LINE__,              &
-     &                       __FILE__)) RETURN
+              IF (FoundError(exit_flag, NoError,                        &
+     &                       __LINE__, MyFile)) RETURN
 #endif
             END IF
           END IF
@@ -1778,8 +1585,8 @@
 #endif
      &                             GRID(ng) % latr,                     &
      &                             SetFillVal = .FALSE.)
-                IF (FoundError(status, nf90_noerr, __LINE__,            &
-     &                         __FILE__)) THEN
+                IF (FoundError(status, nf90_noerr,                      &
+     &                         __LINE__, MyFile)) THEN
                   IF (Master) WRITE (stdout,10) 'lat_rho', TRIM(ncname)
                   exit_flag=3
                   ioerror=status
@@ -1799,8 +1606,8 @@
               CALL netcdf_put_fvar (ng, model, ncname, 'lat_rho',       &
      &                              wrk, (/1/), (/Nstation(ng)/),       &
      &                              ncid = ncid)
-              IF (FoundError(exit_flag, NoError, __LINE__,              &
-     &                       __FILE__)) RETURN
+              IF (FoundError(exit_flag, NoError,                        &
+     &                       __LINE__, MyFile)) RETURN
 #endif
             END IF
           END IF
@@ -1818,8 +1625,8 @@
 #endif
      &                             GRID(ng) % xr,                       &
      &                             SetFillVal = .FALSE.)
-                IF (FoundError(status, nf90_noerr, __LINE__,            &
-     &                         __FILE__)) THEN
+                IF (FoundError(status, nf90_noerr,                      &
+     &                         __LINE__, MyFile)) THEN
                   IF (Master) WRITE (stdout,10) 'x_rho', TRIM(ncname)
                   exit_flag=3
                   ioerror=status
@@ -1839,8 +1646,8 @@
               CALL netcdf_put_fvar (ng, model, ncname, 'x_rho',         &
      &                              wrk, (/1/), (/Nstation(ng)/),       &
      &                              ncid = ncid)
-              IF (FoundError(exit_flag, NoError, __LINE__,              &
-     &                       __FILE__)) RETURN
+              IF (FoundError(exit_flag, NoError,                        &
+     &                       __LINE__, MyFile)) RETURN
 #endif
             END IF
           END IF
@@ -1856,8 +1663,8 @@
 #endif
      &                             GRID(ng) % yr,                       &
      &                             SetFillVal = .FALSE.)
-                IF (FoundError(status, nf90_noerr, __LINE__,            &
-     &                         __FILE__)) THEN
+                IF (FoundError(status, nf90_noerr,                      &
+     &                         __LINE__, MyFile)) THEN
                   IF (Master) WRITE (stdout,10) 'y_rho', TRIM(ncname)
                   exit_flag=3
                   ioerror=status
@@ -1877,8 +1684,8 @@
               CALL netcdf_put_fvar (ng, model, ncname, 'y_rho',         &
      &                              wrk, (/1/), (/Nstation(ng)/),       &
      &                              ncid = ncid)
-              IF (FoundError(exit_flag, NoError, __LINE__,              &
-     &                       __FILE__)) RETURN
+              IF (FoundError(exit_flag, NoError,                        &
+     &                       __LINE__, MyFile)) RETURN
 # endif
             END IF
           END IF
@@ -1898,8 +1705,8 @@
 #endif
      &                             GRID(ng) % lonu,                     &
      &                             SetFillVal = .FALSE.)
-                IF (FoundError(status, nf90_noerr, __LINE__,            &
-     &                         __FILE__)) THEN
+                IF (FoundError(status, nf90_noerr,                      &
+     &                         __LINE__, MyFile)) THEN
                   IF (Master) WRITE (stdout,10) 'lon_u', TRIM(ncname)
                   exit_flag=3
                   ioerror=status
@@ -1923,8 +1730,8 @@
 #endif
      &                             GRID(ng) % latu,                     &
      &                             SetFillVal = .FALSE.)
-                IF (FoundError(status, nf90_noerr, __LINE__,            &
-     &                         __FILE__)) THEN
+                IF (FoundError(status, nf90_noerr,                      &
+     &                         __LINE__, MyFile)) THEN
                   IF (Master) WRITE (stdout,10) 'lat_u', TRIM(ncname)
                   exit_flag=3
                   ioerror=status
@@ -1950,8 +1757,8 @@
 #endif
      &                             GRID(ng) % xu,                       &
      &                             SetFillVal = .FALSE.)
-                IF (FoundError(status, nf90_noerr, __LINE__,            &
-     &                         __FILE__)) THEN
+                IF (FoundError(status, nf90_noerr,                      &
+     &                         __LINE__, MyFile)) THEN
                   IF (Master) WRITE (stdout,10) 'x_u', TRIM(ncname)
                   exit_flag=3
                   ioerror=status
@@ -1975,8 +1782,8 @@
 #endif
      &                             GRID(ng) % yu,                       &
      &                             SetFillVal = .FALSE.)
-                IF (FoundError(status, nf90_noerr, __LINE__,            &
-     &                         __FILE__)) THEN
+                IF (FoundError(status, nf90_noerr,                      &
+     &                         __LINE__, MyFile)) THEN
                   IF (Master) WRITE (stdout,10) 'y_u', TRIM(ncname)
                   exit_flag=3
                   ioerror=status
@@ -2004,8 +1811,8 @@
 #endif
      &                             GRID(ng) % lonv,                     &
      &                             SetFillVal = .FALSE.)
-                IF (FoundError(status, nf90_noerr, __LINE__,            &
-     &                         __FILE__)) THEN
+                IF (FoundError(status, nf90_noerr,                      &
+     &                         __LINE__, MyFile)) THEN
                   IF (Master) WRITE (stdout,10) 'lon_v', TRIM(ncname)
                   exit_flag=3
                   ioerror=status
@@ -2029,8 +1836,8 @@
 #endif
      &                             GRID(ng) % latv,                     &
      &                             SetFillVal = .FALSE.)
-                IF (FoundError(status, nf90_noerr, __LINE__,            &
-     &                         __FILE__)) THEN
+                IF (FoundError(status, nf90_noerr,                      &
+     &                         __LINE__, MyFile)) THEN
                   IF (Master) WRITE (stdout,10) 'lat_v', TRIM(ncname)
                   exit_flag=3
                   ioerror=status
@@ -2056,8 +1863,8 @@
 #endif
      &                             GRID(ng) % xv,                       &
      &                             SetFillVal = .FALSE.)
-                IF (FoundError(status, nf90_noerr, __LINE__,            &
-     &                         __FILE__)) THEN
+                IF (FoundError(status, nf90_noerr,                      &
+     &                         __LINE__, MyFile)) THEN
                   IF (Master) WRITE (stdout,10) 'x_v', TRIM(ncname)
                   exit_flag=3
                   ioerror=status
@@ -2081,8 +1888,8 @@
 #endif
      &                             GRID(ng) % yv,                       &
      &                             SetFillVal = .FALSE.)
-                IF (FoundError(status, nf90_noerr, __LINE__,            &
-     &                         __FILE__)) THEN
+                IF (FoundError(status, nf90_noerr,                      &
+     &                         __LINE__, MyFile)) THEN
                   IF (Master) WRITE (stdout,10) 'y_v', TRIM(ncname)
                   exit_flag=3
                   ioerror=status
@@ -2110,8 +1917,8 @@
 #endif
      &                             GRID(ng) % lonp,                     &
      &                             SetFillVal = .FALSE.)
-                IF (FoundError(status, nf90_noerr, __LINE__,            &
-     &                         __FILE__)) THEN
+                IF (FoundError(status, nf90_noerr,                      &
+     &                         __LINE__, MyFile)) THEN
                   IF (Master) WRITE (stdout,10) 'lon_p', TRIM(ncname)
                   exit_flag=3
                   ioerror=status
@@ -2135,8 +1942,8 @@
 #endif
      &                             GRID(ng) % latp,                     &
      &                             SetFillVal = .FALSE.)
-                IF (FoundError(status, nf90_noerr, __LINE__,            &
-     &                         __FILE__)) THEN
+                IF (FoundError(status, nf90_noerr,                      &
+     &                         __LINE__, MyFile)) THEN
                   IF (Master) WRITE (stdout,10) 'lat_p', TRIM(ncname)
                   exit_flag=3
                   ioerror=status
@@ -2162,8 +1969,8 @@
 #endif
      &                             GRID(ng) % xp,                       &
      &                             SetFillVal = .FALSE.)
-                IF (FoundError(status, nf90_noerr, __LINE__,            &
-     &                         __FILE__)) THEN
+                IF (FoundError(status, nf90_noerr,                      &
+     &                         __LINE__, MyFile)) THEN
                   IF (Master) WRITE (stdout,10) 'x_p', TRIM(ncname)
                   exit_flag=3
                   ioerror=status
@@ -2187,8 +1994,8 @@
 #endif
      &                             GRID(ng) % yp,                       &
      &                             SetFillVal = .FALSE.)
-                IF (FoundError(status, nf90_noerr, __LINE__,            &
-     &                         __FILE__)) THEN
+                IF (FoundError(status, nf90_noerr,                      &
+     &                         __LINE__, MyFile)) THEN
                   IF (Master) WRITE (stdout,10) 'y_p', TRIM(ncname)
                   exit_flag=3
                   ioerror=status
@@ -2217,8 +2024,7 @@
 # endif
      &                           GRID(ng) % angler,                     &
      &                           SetFillVal = .FALSE.)
-              IF (FoundError(status, nf90_noerr, __LINE__,              &
-     &                       __FILE__)) THEN
+              IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
                 IF (Master) WRITE (stdout,10) 'angle', TRIM(ncname)
                 exit_flag=3
                 ioerror=status
@@ -2238,8 +2044,7 @@
             CALL netcdf_put_fvar (ng, model, ncname, 'angle',           &
      &                            wrk, (/1/), (/Nstation(ng)/),         &
      &                            ncid = ncid)
-            IF (FoundError(exit_flag, NoError, __LINE__,                &
-     &                     __FILE__)) RETURN
+            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 # endif
           END IF
         END IF
@@ -2258,8 +2063,7 @@
      &                           GRID(ng) % rmask,                      &
      &                           GRID(ng) % rmask,                      &
      &                           SetFillVal = .FALSE.)
-              IF (FoundError(status, nf90_noerr, __LINE__,              &
-     &                       __FILE__)) THEN
+              IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
                 IF (Master) WRITE (stdout,10) 'mask_rho', TRIM(ncname)
                 exit_flag=3
                 ioerror=status
@@ -2281,8 +2085,7 @@
      &                           GRID(ng) % umask,                      &
      &                           GRID(ng) % umask,                      &
      &                           SetFillVal = .FALSE.)
-              IF (FoundError(status, nf90_noerr, __LINE__,              &
-     &                       __FILE__)) THEN
+              IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
                 IF (Master) WRITE (stdout,10) 'mask_u', TRIM(ncname)
                 exit_flag=3
                 ioerror=status
@@ -2304,8 +2107,7 @@
      &                           GRID(ng) % vmask,                      &
      &                           GRID(ng) % vmask,                      &
      &                           SetFillVal = .FALSE.)
-              IF (FoundError(status, nf90_noerr, __LINE__,              &
-     &                       __FILE__)) THEN
+              IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
                 IF (Master) WRITE (stdout,10) 'mask_v', TRIM(ncname)
                 exit_flag=3
                 ioerror=status
@@ -2327,8 +2129,7 @@
      &                           GRID(ng) % pmask,                      &
      &                           GRID(ng) % pmask,                      &
      &                           SetFillVal = .FALSE.)
-              IF (FoundError(status, nf90_noerr, __LINE__,              &
-     &                       __FILE__)) THEN
+              IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
                 IF (Master) WRITE (stdout,10) 'mask_psi', TRIM(ncname)
                 exit_flag=3
                 ioerror=status
@@ -2359,8 +2160,7 @@
 # endif
      &                           GRID(ng) % Rscope,                     &
      &                           SetFillVal = .FALSE.)
-              IF (FoundError(status, nf90_noerr, __LINE__,              &
-     &                       __FILE__)) THEN
+              IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
                 IF (Master) WRITE (stdout,10) 'scope_rho', TRIM(ncname)
                 exit_flag=3
                 ioerror=status
@@ -2384,8 +2184,7 @@
 # endif
      &                           GRID(ng) % Uscope,                     &
      &                           SetFillVal = .FALSE.)
-              IF (FoundError(status, nf90_noerr, __LINE__,              &
-     &                       __FILE__)) THEN
+              IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
                 IF (Master) WRITE (stdout,10) 'scope_u', TRIM(ncname)
                 exit_flag=3
                 ioerror=status
@@ -2409,8 +2208,7 @@
 # endif
      &                           GRID(ng) % Vscope,                     &
      &                           SetFillVal = .FALSE.)
-              IF (FoundError(status, nf90_noerr, __LINE__,              &
-     &                       __FILE__)) THEN
+              IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
                 IF (Master) WRITE (stdout,10) 'scope_v', TRIM(ncname)
                 exit_flag=3
                 ioerror=status
@@ -2440,8 +2238,7 @@
 #  endif
      &                           GRID(ng) % ZoBot,                      &
      &                           SetFillVal = .FALSE.)
-              IF (FoundError(status, nf90_noerr, __LINE__,              &
-     &                       __FILE__)) THEN
+              IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
                 IF (Master) WRITE (stdout,10) TRIM(Vname(1,idZoBL)),    &
      &                                        TRIM(ncname)
                 exit_flag=3
@@ -2464,8 +2261,7 @@
 #  endif
      &                           GRID(ng) % rdrag,                      &
      &                           SetFillVal = .FALSE.)
-              IF (FoundError(status, nf90_noerr, __LINE__,              &
-     &                       __FILE__)) THEN
+              IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
                 IF (Master) WRITE (stdout,10) TRIM(Vname(1,idragL)),    &
      &                                        TRIM(ncname)
                 exit_flag=3
@@ -2488,8 +2284,7 @@
 #  endif
      &                           GRID(ng) % rdrag2,                     &
      &                           SetFillVal = .FALSE.)
-              IF (FoundError(status, nf90_noerr, __LINE__,              &
-     &                       __FILE__)) THEN
+              IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
                 IF (Master) WRITE (stdout,10) TRIM(Vname(1,idragQ)),    &
      &                                        TRIM(ncname)
                 exit_flag=3
@@ -2513,8 +2308,7 @@
 !-----------------------------------------------------------------------
 !
       CALL netcdf_sync (ng, model, ncname, ncid)
-      IF (FoundError(exit_flag, NoError, __LINE__,                      &
-     &               __FILE__)) RETURN
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
 #if !defined PARALLEL_IO  && defined DISTRIBUTE
 !

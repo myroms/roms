@@ -3,7 +3,7 @@
       SUBROUTINE obs_write (ng, tile, model)
 !
 !git $Id$
-!svn $Id: obs_write.F 1039 2020-10-12 03:54:49Z arango $
+!svn $Id: obs_write.F 1049 2020-11-30 04:34:51Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -46,6 +46,7 @@
 !  Local variable declarations.
 !
       logical :: Lwrote
+!
       integer :: LBi, UBi, LBj, UBj
       integer :: Mstr, Mend, ObsSum, ObsVoid
       integer :: i, ic, ie, is, iobs, itrc, iweight, status, varid
@@ -55,6 +56,7 @@
 # ifdef DISTRIBUTE
       integer :: Ncollect
 # endif
+!
       real(r8), parameter :: IniVal = 0.0_r8
 
       real(r8) :: angle
@@ -66,12 +68,15 @@
 # ifndef VERIFICATION
       real(r8) :: uBgErr(Mobs), vBgErr(Mobs)
 # endif
-
+!
       character (len=50) :: string
+
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__
 
 # include "set_bounds.h"
 !
-      SourceFile=__FILE__
+      SourceFile=MyFile
 !
       LBi=LBOUND(GRID(ng)%h,DIM=1)
       UBi=UBOUND(GRID(ng)%h,DIM=1)
@@ -1052,32 +1057,28 @@
      &                            (/NstrObs(ng)/), (/Nobs(ng)/),        &
      &                            ncid = DAV(ng)%ncid,                  &
      &                            varid = DAV(ng)%Vid(idNLmu))
-            IF (FoundError(exit_flag, NoError, __LINE__,                &
-     &                     __FILE__)) RETURN
+            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
             CALL netcdf_put_fvar (ng, model, DAV(ng)%name,              &
      &                            Vname(1,idNLmi), NLmodVal(Mstr:),     &
      &                            (/NstrObs(ng)/), (/Nobs(ng)/),        &
      &                            ncid = DAV(ng)%ncid,                  &
      &                            varid = DAV(ng)%Vid(idNLmi))
-            IF (FoundError(exit_flag, NoError, __LINE__,                &
-     &                     __FILE__)) RETURN
+            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
             CALL netcdf_put_fvar (ng, model, DAV(ng)%name,              &
      &                            Vname(1,idMOMi), misfit(Mstr:),       &
      &                            (/NstrObs(ng)/), (/Nobs(ng)/),        &
      &                            ncid = DAV(ng)%ncid,                  &
      &                            varid = DAV(ng)%Vid(idMOMi))
-            IF (FoundError(exit_flag, NoError, __LINE__,                &
-     &                     __FILE__)) RETURN
+            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
           ELSE
             CALL netcdf_put_fvar (ng, model, DAV(ng)%name,              &
      &                            Vname(1,idMOMf), misfit(Mstr:),       &
      &                            (/NstrObs(ng)/), (/Nobs(ng)/),        &
      &                            ncid = DAV(ng)%ncid,                  &
      &                            varid = DAV(ng)%Vid(idMOMf))
-            IF (FoundError(exit_flag, NoError, __LINE__,                &
-     &                     __FILE__)) RETURN
+            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
           END IF
         END IF
 
@@ -1088,8 +1089,7 @@
      &                          (/NstrObs(ng)/), (/Nobs(ng)/),          &
      &                          ncid = DAV(ng)%ncid,                    &
      &                          varid = DAV(ng)%Vid(idBgTh))
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 #  endif
 # endif
@@ -1111,8 +1111,7 @@
      &                            (/NstrObs(ng)/), (/Nobs(ng)/),        &
      &                            ncid = DAV(ng)%ncid,                  &
      &                            varid = DAV(ng)%Vid(idBgEr))
-            IF (FoundError(exit_flag, NoError, __LINE__,                &
-     &                      __FILE__)) RETURN
+            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
           END IF
 !
 !  4D-Var innovation vector: observation minus background. Save initial
@@ -1129,8 +1128,7 @@
      &                            (/NstrObs(ng)/), (/Nobs(ng)/),        &
      &                            ncid = DAV(ng)%ncid,                  &
      &                            varid = DAV(ng)%Vid(idInno))
-            IF (FoundError(exit_flag, NoError, __LINE__,                &
-     &                     __FILE__)) RETURN
+            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
           END IF
 !
 !  4D-Var increment (analysis minus background) and residual
@@ -1148,15 +1146,13 @@
      &                            (/NstrObs(ng)/), (/Nobs(ng)/),        &
      &                            ncid = DAV(ng)%ncid,                  &
      &                            varid = DAV(ng)%Vid(idIncr))
-            IF (FoundError(exit_flag, NoError, __LINE__,                &
-     &                     __FILE__)) RETURN
+            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
             CALL netcdf_put_fvar (ng, model, DAV(ng)%name,              &
      &                            Vname(1,idResi), residual(Mstr:),     &
      &                            (/NstrObs(ng)/), (/Nobs(ng)/),        &
      &                            ncid = DAV(ng)%ncid,                  &
      &                            varid = DAV(ng)%Vid(idResi))
-            IF (FoundError(exit_flag, NoError, __LINE__,                &
-     &                     __FILE__)) RETURN
+            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
           END IF
         END IF
 # endif
@@ -1172,14 +1168,12 @@
           CALL netcdf_put_ivar (ng, model, DAV(ng)%name, 'outer',       &
      &                          outer, (/0/), (/0/),                    &
      &                          ncid = DAV(ng)%ncid)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
           CALL netcdf_put_ivar (ng, model, DAV(ng)%name, 'inner',       &
      &                          inner, (/0/), (/0/),                    &
      &                          ncid = DAV(ng)%ncid)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 #endif
 !
@@ -1191,8 +1185,7 @@
      &                          (/NstrObs(ng)/), (/Nobs(ng)/),          &
      &                          ncid = DAV(ng)%ncid,                    &
      &                          varid = DAV(ng)%Vid(idObsS))
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 
 # ifndef I4DVAR_ANA_SENSITIVITY
@@ -1211,8 +1204,7 @@
      &                          (/NstrObs(ng)/), (/Nobs(ng)/),          &
      &                          ncid = DAV(ng)%ncid,                    &
      &                          varid = DAV(ng)%Vid(idNLmo))
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
           haveNLmod(ng)=.TRUE.
         END IF
 #  else
@@ -1222,24 +1214,21 @@
      &                          (/NstrObs(ng),outer/), (/Nobs(ng),1/),  &
      &                          ncid = DAV(ng)%ncid,                    &
      &                          varid = DAV(ng)%Vid(idNLmu))
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
           CALL netcdf_put_fvar (ng, model, DAV(ng)%name,                &
      &                          Vname(1,idNLmo), NLmodVal(Mstr:),       &
      &                          (/NstrObs(ng),outer/), (/Nobs(ng),1/),  &
      &                          ncid = DAV(ng)%ncid,                    &
      &                          varid = DAV(ng)%Vid(idNLmo))
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
           CALL netcdf_put_fvar (ng, model, DAV(ng)%name,                &
      &                          Vname(1,idNLmf), NLmodVal(Mstr:),       &
      &                          (/NstrObs(ng)/), (/Nobs(ng)/),          &
      &                          ncid = DAV(ng)%ncid,                    &
      &                          varid = DAV(ng)%Vid(idNLmf))
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
           haveNLmod(ng)=.TRUE.
         END IF
 #  endif
@@ -1254,8 +1243,7 @@
      &                          (/NstrObs(ng)/), (/Nobs(ng)/),          &
      &                          ncid = DAV(ng)%ncid,                    &
      &                          varid = DAV(ng)%Vid(idTLmo))
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
           haveTLmod(ng)=.TRUE.
         END IF
 #  ifdef I4DVAR_ANA_SENSITIVITY
@@ -1268,8 +1256,7 @@
      &                          'ObsImpact_total', TLmodVal(Mstr:),     &
      &                          (/NstrObs(ng)/), (/Nobs(ng)/),          &
      &                          ncid = DAV(ng)%ncid)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 #   endif
 #   ifdef OBS_IMPACT_SPLIT
@@ -1281,8 +1268,7 @@
      &                          'ObsImpact_IC', TLmodVal(Mstr:),        &
      &                          (/NstrObs(ng)/), (/Nobs(ng)/),          &
      &                          ncid = DAV(ng)%ncid)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 #    if defined ADJUST_WSTRESS || defined ADJUST_STFLUX
 !
@@ -1293,8 +1279,7 @@
      &                          'ObsImpact_FC', TLmodVal(Mstr:),        &
      &                          (/NstrObs(ng)/), (/Nobs(ng)/),          &
      &                          ncid = DAV(ng)%ncid)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 #    endif
 #    if defined ADJUST_BOUNDARY
@@ -1306,8 +1291,7 @@
      &                          'ObsImpact_BC', TLmodVal(Mstr:),        &
      &                          (/NstrObs(ng)/), (/Nobs(ng)/),          &
      &                          ncid = DAV(ng)%ncid)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 #    endif
 #   endif
@@ -1323,8 +1307,7 @@
      &                          'RPmodel_initial', TLmodVal(Mstr:),     &
      &                          (/NstrObs(ng)/), (/Nobs(ng)/) ,         &
      &                          ncid = DAV(ng)%ncid)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 # endif
 # ifdef SOLVE3D
@@ -1339,8 +1322,7 @@
      &                          (/NstrObs(ng)/), (/Nobs(ng)/),          &
      &                          ncid = DAV(ng)%ncid,                    &
      &                          varid = DAV(ng)%Vid(idObsZ))
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 !
 !  Write Z-location of observation in grid coordinates, if applicable.
@@ -1362,8 +1344,7 @@
      &                          (/NstrObs(ng)/), (/Nobs(ng)/),          &
      &                          ncid = OBS(ng)%ncid,                    &
      &                          varid = OBS(ng)%Vid(idObsZ))
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
           IF (model.eq.iADM) THEN
             Lwrote=ObsSurvey(ng).eq.1
@@ -1385,8 +1366,7 @@
      &                       GRID(ng) % rmask,                          &
 #  endif
      &                       FOURDVAR(ng) % zeta_ref)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
           wrtZetaRef(ng)=.FALSE.
         END IF
 # endif
@@ -1397,14 +1377,12 @@
 !
         IF (wrtNLmod(ng).or.wrtTLmod(ng).or.wrtRPmod(ng)) THEN
           CALL netcdf_sync (ng, model, DAV(ng)%name, DAV(ng)%ncid)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
 # ifdef SOLVE3D
           IF (Load_Zobs(ng)) THEN
             CALL netcdf_sync (ng, model, OBS(ng)%name, OBS(ng)%ncid)
-            IF (FoundError(exit_flag, NoError, __LINE__,                &
-     &                     __FILE__)) RETURN
+            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
           END IF
 # endif
         END IF

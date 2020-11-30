@@ -4,7 +4,7 @@
 #ifdef FOUR_DVAR
 !
 !git $Id$
-!svn $Id: convolve.F 1043 2020-11-12 04:56:14Z arango $
+!svn $Id: convolve.F 1049 2020-11-30 04:34:51Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -37,14 +37,14 @@
 !=======================================================================
 !
       implicit none
-
+!
       PRIVATE
       PUBLIC  :: convolve
       PUBLIC  :: error_covariance
 # ifdef SP4DVAR
       PUBLIC  :: saddlec
 # endif
-
+!
       CONTAINS
 !
 !***********************************************************************
@@ -74,17 +74,20 @@
       integer, intent(in) :: Rini
       integer, intent(in) :: Rold(Ngrids)
       integer, intent(in) :: Rnew(Ngrids)
-
+!
       character (len=*), intent(in) :: driver
 !
 !  Local variable declarations.
 !
       logical :: Lweak, add
+!
       integer :: IniRec
       integer :: ng, tile
 !
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__
 !
-      SourceFile=__FILE__ // ", convolve"
+      SourceFile=MyFile
 !
 !-----------------------------------------------------------------------
 !  Specify spatial error covariance on the TLM control vector, at time
@@ -100,8 +103,7 @@
       IniRec=Rini
       DO ng=1,Ngrids
         CALL get_state (ng, iNLM, 2, INI(ng)%name, IniRec, IniRec)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         nrhs(ng)=Rini
       END DO
 # endif
@@ -117,8 +119,7 @@
       add=.FALSE.
       DO ng=1,Ngrids
 # ifdef PROFILE
-        CALL wclock_on (ng, iADM, 82, __LINE__,                         &
-     &                  __FILE__)
+        CALL wclock_on (ng, iADM, 82, __LINE__, MyFile)
 # endif
         DO tile=first_tile(ng),last_tile(ng),+1
           CALL load_TLtoAD (ng, tile, Rold(ng), Rold(ng), add)
@@ -129,8 +130,7 @@
           CALL ad_convolution (ng, tile, Rold(ng), Lweak, 2)
         END DO
 # ifdef PROFILE
-        CALL wclock_off (ng, iADM, 82, __LINE__,                        &
-     &                   __FILE__)
+        CALL wclock_off (ng, iADM, 82, __LINE__, MyFile)
 # endif
       END DO
 !
@@ -144,8 +144,7 @@
       add=.FALSE.
       DO ng=1,Ngrids
 # ifdef PROFILE
-        CALL wclock_on (ng, iTLM, 82, __LINE__,                         &
-     &                  __FILE__)
+        CALL wclock_on (ng, iTLM, 82, __LINE__, MyFile)
 # endif
         DO tile=first_tile(ng),last_tile(ng),+1
           CALL load_ADtoTL (ng, tile, Rold(ng), Rnew(ng), add)
@@ -156,11 +155,10 @@
 # endif
         END DO
 # ifdef PROFILE
-        CALL wclock_off (ng, iTLM, 82, __LINE__,                        &
-     &                   __FILE__)
+        CALL wclock_off (ng, iTLM, 82, __LINE__, MyFile)
 # endif
       END DO
-
+!
       RETURN
       END SUBROUTINE convolve
 
@@ -214,25 +212,29 @@
 !  Imported variable declarations.
 !
       logical, intent(in) :: Lposterior
+!
       integer, intent(in) :: model, outLoop, innLoop
       integer, intent(in) :: Rbck, Rini, Rec1, Rec2
       integer, intent(in) :: Rold(Ngrids)
       integer, intent(in) :: Rnew(Ngrids)
-
+!
       character (len=*), intent(in) :: driver
 !
 !  Local variable declarations.
 !
       logical :: Lweak, add
+!
       integer :: ADrec, BckRec, Fcount, IniRec
       integer :: i, irec, ng, tile
 # ifdef RPCG
       integer :: LTLM1, LTLM2, Rec5, jrec, nADrec
 # endif
-
       integer, dimension(Ngrids) :: Nrec
 !
-      SourceFile=__FILE__ // ", error_covariance"
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__//", error_covariance"
+!
+      SourceFile=MyFile
 !
 !-----------------------------------------------------------------------
 !  Convolve adjoint trajectory.
@@ -283,8 +285,7 @@
         ADrec=Nrec(ng)
         FrcRec(ng)=Nrec(ng)
         CALL get_state (ng, iTLM, 4, ADM(ng)%name, ADrec, Rold(ng))
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
       END DO
 
 # ifdef BALANCE_OPERATOR
@@ -295,8 +296,7 @@
       IniRec=Rini
       DO ng=1,Ngrids
         CALL get_state (ng, iNLM, 2, INI(ng)%name, IniRec, IniRec)
-        IF (FoundError(exit_flag, NoError, __LINE__,                    &
-     &                 __FILE__)) RETURN
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         nrhs(ng)=Rini
       END DO
 # endif
@@ -313,8 +313,7 @@
       add=.FALSE.
       DO ng=1,Ngrids
 # ifdef PROFILE
-        CALL wclock_on (ng, model, 82, __LINE__,                        &
-     &                  __FILE__)
+        CALL wclock_on (ng, model, 82, __LINE__, MyFile)
 # endif
         DO tile=first_tile(ng),last_tile(ng),+1
           CALL load_TLtoAD (ng, tile, Rold(ng), Rold(ng), add)
@@ -330,8 +329,7 @@
 # endif
         END DO
 # ifdef PROFILE
-        CALL wclock_off (ng, model, 82, __LINE__,                       &
-     &                   __FILE__)
+        CALL wclock_off (ng, model, 82, __LINE__, MyFile)
 # endif
       END DO
 !
@@ -346,8 +344,7 @@
       add=.FALSE.
       DO ng=1,Ngrids
 # ifdef PROFILE
-        CALL wclock_on (ng, model, 82, __LINE__,                        &
-     &                  __FILE__)
+        CALL wclock_on (ng, model, 82, __LINE__, MyFile)
 # endif
         DO tile=first_tile(ng),last_tile(ng),+1
           CALL load_ADtoTL (ng, tile, Rold(ng), Rold(ng), add)
@@ -370,8 +367,7 @@
         END IF
 # endif
 # ifdef PROFILE
-        CALL wclock_off (ng, model, 82, __LINE__,                       &
-     &                   __FILE__)
+        CALL wclock_off (ng, model, 82, __LINE__, MyFile)
 # endif
       END DO
 
@@ -388,8 +384,7 @@
         BckRec=Rbck
         DO ng=1,Ngrids
           CALL get_state (ng, iNLM, 9, INI(ng)%name, BckRec, Rnew(ng))
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END DO
 !
         add=.FALSE.
@@ -414,8 +409,7 @@
         BckRec=Rbck
         DO ng=1,Ngrids
           CALL get_state (ng, iNLM, 9, INI(ng)%name, BckRec, Rnew(ng))
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END DO
 !
         add=.FALSE.
@@ -437,29 +431,25 @@
       IF (model.eq.iTLM) THEN
         DO ng=1,Ngrids
           CALL tl_wrt_ini (ng, Rold(ng), Rec1)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END DO
 # if defined ARRAY_MODES            || defined R4DVAR || \
      defined R4DVAR_ANA_SENSITIVITY
       ELSE IF (model.eq.iRPM) THEN
         DO ng=1,Ngrids
           CALL rp_wrt_ini (ng, Rold(ng), Rec2)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END DO
 # elif (defined RBL4DVAR || defined RBL4DVAR_ANA_SENSITIVITY) && \
        !defined RPCG
       ELSE IF (model.eq.iNLM) THEN
         DO ng=1,Ngrids
           CALL wrt_ini (ng, Rnew(ng))
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #  if defined ADJUST_STFLUX || defined ADJUST_WSTRESS || \
       defined ADJUST_BOUNDARY
           CALL wrt_frc_AD (ng, Rold(ng), INI(ng)%Rindex)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #  endif
         END DO
 # endif
@@ -474,8 +464,7 @@
       IF (model.eq.iNLM) THEN
         DO ng=1,Ngrids
           CALL tl_wrt_ini (ng, Rold(ng), Rec2)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END DO
       END IF
 # endif
@@ -489,8 +478,7 @@
       IF (Lposterior.and.(inner.ne.0)) THEN
         DO ng=1,Ngrids
           CALL wrt_hessian (ng, Rold(ng), Rold(ng))
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END DO
       END IF
 # endif
@@ -518,8 +506,7 @@
 !  sum.
 !
             CALL get_state (ng, iTLM, 4, ITL(ng)%name, jrec, LTLM1)
-            IF (FoundError(exit_flag, NoError, __LINE__,                &
-     &                     __FILE__)) RETURN
+            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
             DO tile=first_tile(ng),last_tile(ng),+1
               CALL aug_oper (ng, tile, LTLM1, LTLM2)
@@ -533,8 +520,7 @@
 !
             ADrec=(Nrec(ng)-1)-(irec-1)
             CALL get_state (ng, iTLM, 4, ADM(ng)%name, ADrec, LTLM1)
-            IF (FoundError(exit_flag, NoError, __LINE__,                &
-     &                     __FILE__)) RETURN
+            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
             DO tile=first_tile(ng),last_tile(ng),+1
               CALL sum_grad (ng, tile, LTLM1, LTLM2)
@@ -544,8 +530,7 @@
 !  ITL file.
 !
             CALL tl_wrt_ini (ng, LTLM2, jrec)
-            IF (FoundError(exit_flag, NoError, __LINE__,                &
-     &                     __FILE__)) RETURN
+            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
           END DO
         END DO
@@ -568,8 +553,7 @@
       DO ng=1,Ngrids
         IF (Nrec(ng).gt.3) THEN
 #  ifdef PROFILE
-          CALL wclock_on (ng, model, 82, __LINE__,                      &
-     &                    __FILE__)
+          CALL wclock_on (ng, model, 82, __LINE__, MyFile)
 #  endif
           DO irec=1,Nrec(ng)-1
 !
@@ -579,8 +563,7 @@
 !
             ADrec=irec
             CALL get_state (ng, iTLM, 4, ADM(ng)%name, ADrec, Rold(ng))
-            IF (FoundError(exit_flag, NoError, __LINE__,                &
-     &                     __FILE__)) RETURN
+            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Load interior solution, read above, into adjoint state arrays.
 !  Then, multiply adjoint solution by the background-error standard
@@ -614,14 +597,12 @@
             nstp(ng)=Rold(ng)
 #  endif
             CALL ad_wrt_his (ng)
-            IF (FoundError(exit_flag, NoError, __LINE__,                &
-     &                     __FILE__)) RETURN
+            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
           END DO
           LwrtState2d(ng)=.FALSE.
           LwrtTime(ng)=.TRUE.
 #  ifdef PROFILE
-        CALL wclock_off (ng, model, 82, __LINE__,                       &
-     &                   __FILE__)
+        CALL wclock_off (ng, model, 82, __LINE__, MyFile)
 #  endif
         END IF
       END DO
@@ -633,16 +614,14 @@
         TLF(ng)%Rindex=0
         DO tile=first_tile(ng),last_tile(ng),+1
           CALL time_corr (ng, tile, iADM, ADM(ng)%name)
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   __FILE__)) RETURN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END DO
       END DO
 !
       DO ng=1,Ngrids
         IF (Nrec(ng).gt.3) THEN
 #  ifdef PROFILE
-          CALL wclock_on (ng, model, 82, __LINE__,                      &
-     &                    __FILE__)
+          CALL wclock_on (ng, model, 82, __LINE__, MyFile)
 #  endif
           ADM(ng)%Rindex=0
           LwrtState2d(ng)=.TRUE.
@@ -656,8 +635,7 @@
 !
             ADrec=irec
             CALL get_state (ng, 6, 6, TLF(ng)%name, ADrec, Rold(ng))
-            IF (FoundError(exit_flag, NoError, __LINE__,                &
-     &                     __FILE__)) RETURN
+            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
             Lweak=.TRUE.
             add=.FALSE.
@@ -678,14 +656,12 @@
             nstp(ng)=Rold(ng)
 #  endif
             CALL ad_wrt_his (ng)
-            IF (FoundError(exit_flag, NoError, __LINE__,                &
-     &                     __FILE__)) RETURN
+            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
           END DO
           LwrtState2d(ng)=.FALSE.
           LwrtTime(ng)=.TRUE.
 #  ifdef PROFILE
-          CALL wclock_off (ng, model, 82, __LINE__,                     &
-     &                     __FILE__)
+          CALL wclock_off (ng, model, 82, __LINE__, MyFile)
 #  endif
         END IF
       END DO
@@ -702,8 +678,7 @@
       DO ng=1,Ngrids
         IF (Nrec(ng).gt.3) THEN
 #  ifdef PROFILE
-          CALL wclock_on (ng, model, 82, __LINE__,                      &
-     &                    __FILE__)
+          CALL wclock_on (ng, model, 82, __LINE__, MyFile)
 #  endif
           DO irec=1,Nrec(ng)-1
 !
@@ -713,8 +688,7 @@
 !
             ADrec=irec
             CALL get_state (ng, iTLM, 4, ADM(ng)%name, ADrec, Rold(ng))
-            IF (FoundError(exit_flag, NoError, __LINE__,                &
-     &                     __FILE__)) RETURN
+            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Load interior solution, read above, into adjoint state arrays.
 !  Then, multiply adjoint solution by the background-error standard
@@ -767,19 +741,17 @@
             nstp(ng)=Rold(ng)
 #  endif
             CALL ad_wrt_his (ng)
-            IF (FoundError(exit_flag, NoError, __LINE__,                &
-     &                     __FILE__)) RETURN
+            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
           END DO
           LwrtState2d(ng)=.FALSE.
           LwrtTime(ng)=.TRUE.
 #  ifdef PROFILE
-          CALL wclock_off (ng, model, 82, __LINE__,                     &
-     &                     __FILE__)
+          CALL wclock_off (ng, model, 82, __LINE__, MyFile)
 #  endif
         END IF
       END DO
 # endif
-
+!
       RETURN
       END SUBROUTINE error_covariance
 
@@ -813,18 +785,22 @@
       integer, intent(in) :: Rini
       integer, intent(in) :: Rold(Ngrids)
       integer, intent(in) :: Rnew(Ngrids)
-
+!
       logical, intent(in) :: Lselect
-
+!
       character (len=*), intent(in) :: driver
 !
 !  Local variable declarations.
 !
       logical :: Lweak, add
+!
       integer :: IniRec
       integer :: ng, tile
 !
-      SourceFile=__FILE__ // ", saddlec"
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__//", saddlec"
+!
+      SourceFile=MyFile
 !
 !-----------------------------------------------------------------------
 !  Specify spatial error covariance on the TLM control vector, at time
@@ -856,8 +832,7 @@
       add=.FALSE.
       DO ng=1,Ngrids
 # ifdef PROFILE
-        CALL wclock_on (ng, iADM, 82, __LINE__,                         &
-     &                  __FILE__)
+        CALL wclock_on (ng, iADM, 82, __LINE__, MyFile)
 # endif
         DO tile=first_tile(ng),last_tile(ng),+1
           CALL load_TLtoAD (ng, tile, Rold(ng), Rold(ng), add)
@@ -871,8 +846,7 @@
           CALL initialize_forces (ng, tile, iTLM)
         END DO
 # ifdef PROFILE
-        CALL wclock_off (ng, iADM, 82, __LINE__,                        &
-     &                   __FILE__)
+        CALL wclock_off (ng, iADM, 82, __LINE__, MyFile)
 # endif
       END DO
 !
@@ -886,8 +860,7 @@
       add=.FALSE.
       DO ng=1,Ngrids
 # ifdef PROFILE
-        CALL wclock_on (ng, iTLM, 82, __LINE__,                         &
-     &                  __FILE__)
+        CALL wclock_on (ng, iTLM, 82, __LINE__, MyFile)
 # endif
         DO tile=first_tile(ng),last_tile(ng),+1
           CALL load_ADtoTL (ng, tile, Rold(ng), Rnew(ng), add)
@@ -898,11 +871,10 @@
 # endif
         END DO
 # ifdef PROFILE
-        CALL wclock_off (ng, iTLM, 82, __LINE__,                        &
-     &                   __FILE__)
+        CALL wclock_off (ng, iTLM, 82, __LINE__, MyFile)
 # endif
       END DO
-
+!
       RETURN
       END SUBROUTINE saddlec
 # endif
