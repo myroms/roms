@@ -2,7 +2,7 @@
       MODULE inp_par_mod
 !
 !git $Id$
-!svn $Id: inp_par.F 1049 2020-11-30 04:34:51Z arango $
+!svn $Id: inp_par.F 1051 2020-12-04 23:09:05Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -139,7 +139,7 @@
               ' Model Input Parameters:  ROMS/TOMS version ',a,/,       &
      &        26x,a,/,80('-'))
 
-#ifdef MODEL_COUPLING
+#if defined MODEL_COUPLING || defined JEDI
 !
 !  In multiple model coupling, the ocean input physical parameter
 !  script needs to be opened and processed as a regular file.
