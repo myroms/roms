@@ -17,14 +17,16 @@ https://www.myroms.org/wiki
 This version is mirrored from the community repositories at www.myroms.org for 
 usage within the JCSDA Project and does not require registration on the ROMS 
 website, and can be checkout from:
-
+```
 git clone https://github.com/JCSDA-internal/roms_src <source_dir>
+```
 
 Registered users of ROMS have access to:
 
 - Official svn and git repositories
   ```
   svn checkout --username joe_roms https://www.myroms.org/svn/src/trunk <source_dir>
+
   git clone https://joe_roms@www.myroms.org/git/src  <source_dir>
   ```
 
