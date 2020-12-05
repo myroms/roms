@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 # git $Id$
-# svn $Id: my_build_paths.sh 1019 2020-04-30 20:46:51Z arango $
+# svn $Id: my_build_paths.sh 1051 2020-12-04 23:09:05Z arango $
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # Copyright (c) 2002-2020 The ROMS/TOMS Group                           :::
 #   Licensed under a MIT/X style license                                :::
@@ -156,26 +156,28 @@ case "$FORT" in
       export   PARPACK_LIBDIR=${MPI_SOFT}/PARPACK
     fi
 
-    if [ -n "${USE_NETCDF4:+1}" ]; then
-      if [ -n "${USE_PARALLEL_IO:+1}" ] && [ -n "${USE_MPI:+1}" ]; then
-        export       ESMF_DIR=${MPI_SOFT}/esmf_nc4
-        export         NETCDF=${MPI_SOFT}/netcdf4
-        export      NF_CONFIG=${NETCDF}/bin/nf-config
-        export  NETCDF_INCDIR=${NETCDF}/include
-        export        NETCDF4=1
+    if [ ! -n "${SINGULARITY_COMMAND:+1}" ]; then
+      if [ -n "${USE_NETCDF4:+1}" ]; then
+        if [ -n "${USE_PARALLEL_IO:+1}" ] && [ -n "${USE_MPI:+1}" ]; then
+          export       ESMF_DIR=${MPI_SOFT}/esmf_nc4
+          export         NETCDF=${MPI_SOFT}/netcdf4
+          export      NF_CONFIG=${NETCDF}/bin/nf-config
+          export  NETCDF_INCDIR=${NETCDF}/include
+          export        NETCDF4=1
+        else
+          export       ESMF_DIR=${MPI_SOFT}/esmf_nc4
+          export         NETCDF=/opt/intelsoft/serial/netcdf4
+          export      NF_CONFIG=${NETCDF}/bin/nf-config
+          export  NETCDF_INCDIR=${NETCDF}/include
+          export        NETCDF4=1
+        fi
       else
-        export       ESMF_DIR=${MPI_SOFT}/esmf_nc4
-        export         NETCDF=/opt/intelsoft/serial/netcdf4
-        export      NF_CONFIG=${NETCDF}/bin/nf-config
-        export  NETCDF_INCDIR=${NETCDF}/include
-        export        NETCDF4=1
+        export         ESMF_DIR=${MPI_SOFT}/esmf_nc3
+        export           NETCDF=/opt/intelsoft/serial/netcdf3
+        export    NETCDF_INCDIR=${NETCDF}/include
+        export    NETCDF_LIBDIR=${NETCDF}/lib
+        export   NETCDF_classic=1
       fi
-    else
-      export         ESMF_DIR=${MPI_SOFT}/esmf_nc3
-      export           NETCDF=/opt/intelsoft/serial/netcdf3
-      export    NETCDF_INCDIR=${NETCDF}/include
-      export    NETCDF_LIBDIR=${NETCDF}/lib
-      export   NETCDF_classic=1
     fi
 
     if [ -n "${USE_HDF5:+1}" ]; then
@@ -218,26 +220,28 @@ case "$FORT" in
       export   PARPACK_LIBDIR=${MPI_SOFT}/PARPACK
     fi
 
-    if [ -n "${USE_NETCDF4:+1}" ]; then
-      if [ -n "${USE_PARALLEL_IO:+1}" ] && [ -n "${USE_MPI:+1}" ]; then
-        export       ESMF_DIR=${MPI_SOFT}/esmf_nc4
-        export         NETCDF=${MPI_SOFT}/netcdf4
-        export      NF_CONFIG=${NETCDF}/bin/nf-config
-        export  NETCDF_INCDIR=${NETCDF}/include
-        export        NETCDF4=1
+    if [ ! -n "${SINGULARITY_COMMAND:+1}" ]; then
+      if [ -n "${USE_NETCDF4:+1}" ]; then
+        if [ -n "${USE_PARALLEL_IO:+1}" ] && [ -n "${USE_MPI:+1}" ]; then
+          export       ESMF_DIR=${MPI_SOFT}/esmf_nc4
+          export         NETCDF=${MPI_SOFT}/netcdf4
+          export      NF_CONFIG=${NETCDF}/bin/nf-config
+          export  NETCDF_INCDIR=${NETCDF}/include
+          export        NETCDF4=1
+        else
+          export       ESMF_DIR=${MPI_SOFT}/esmf_nc4
+          export         NETCDF=/opt/pgisoft/serial/netcdf4
+          export      NF_CONFIG=${NETCDF}/bin/nf-config
+          export  NETCDF_INCDIR=${NETCDF}/include
+          export        NETCDF4=1
+        fi
       else
-        export       ESMF_DIR=${MPI_SOFT}/esmf_nc4
-        export         NETCDF=/opt/pgisoft/serial/netcdf4
-        export      NF_CONFIG=${NETCDF}/bin/nf-config
-        export  NETCDF_INCDIR=${NETCDF}/include
-        export        NETCDF4=1
+        export         ESMF_DIR=${MPI_SOFT}/esmf_nc3
+        export           NETCDF=/opt/pgisoft/serial/netcdf3
+        export    NETCDF_INCDIR=${NETCDF}/include
+        export    NETCDF_LIBDIR=${NETCDF}/lib
+        export   NETCDF_classic=1
       fi
-    else
-      export         ESMF_DIR=${MPI_SOFT}/esmf_nc3
-      export           NETCDF=/opt/pgisoft/serial/netcdf3
-      export    NETCDF_INCDIR=${NETCDF}/include
-      export    NETCDF_LIBDIR=${NETCDF}/lib
-      export   NETCDF_classic=1
     fi
 
     if [ -n "${USE_HDF5:+1}" ]; then
@@ -278,26 +282,28 @@ case "$FORT" in
       export   PARPACK_LIBDIR=${MPI_SOFT}/PARPACK
     fi
 
-    if [ -n "${USE_NETCDF4:+1}" ]; then
-      if [ -n "${USE_PARALLEL_IO:+1}" ] && [ -n "${USE_MPI:+1}" ]; then
-        export       ESMF_DIR=${MPI_SOFT}/esmf_nc4
-        export         NETCDF=${MPI_SOFT}/netcdf4
-        export      NF_CONFIG=${NETCDF}/bin/nf-config
-        export  NETCDF_INCDIR=${NETCDF}/include
-        export        NETCDF4=1
+    if [ ! -n "${SINGULARITY_COMMAND:+1}" ]; then
+      if [ -n "${USE_NETCDF4:+1}" ]; then
+        if [ -n "${USE_PARALLEL_IO:+1}" ] && [ -n "${USE_MPI:+1}" ]; then
+          export       ESMF_DIR=${MPI_SOFT}/esmf_nc4
+          export         NETCDF=${MPI_SOFT}/netcdf4
+          export      NF_CONFIG=${NETCDF}/bin/nf-config
+          export  NETCDF_INCDIR=${NETCDF}/include
+          export        NETCDF4=1
+        else
+          export       ESMF_DIR=${MPI_SOFT}/esmf_nc4
+          export         NETCDF=/opt/gfortransoft/serial/netcdf4
+          export      NF_CONFIG=${NETCDF}/bin/nf-config
+          export  NETCDF_INCDIR=${NETCDF}/include
+          export        NETCDF4=1
+        fi
       else
-        export       ESMF_DIR=${MPI_SOFT}/esmf_nc4
-        export         NETCDF=/opt/gfortransoft/serial/netcdf4
-        export      NF_CONFIG=${NETCDF}/bin/nf-config
-        export  NETCDF_INCDIR=${NETCDF}/include
-        export        NETCDF4=1
+        export         ESMF_DIR=${MPI_SOFT}/esmf_nc3
+        export           NETCDF=/opt/gfortransoft/serial/netcdf3
+        export    NETCDF_INCDIR=${NETCDF}/include
+        export    NETCDF_LIBDIR=${NETCDF}/lib
+        export   NETCDF_classic=1
       fi
-    else
-      export         ESMF_DIR=${MPI_SOFT}/esmf_nc3
-      export           NETCDF=/opt/gfortransoft/serial/netcdf3
-      export    NETCDF_INCDIR=${NETCDF}/include
-      export    NETCDF_LIBDIR=${NETCDF}/lib
-      export   NETCDF_classic=1
     fi
 
     if [ -n "${USE_HDF5:+1}" ]; then
