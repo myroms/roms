@@ -9,10 +9,7 @@ Kaminski (1998). The discrete adjoint is exact and is defined relative to
 the inner product that prescribes the L2-norm.
 
 Detailed information about its numerical discretization, algorithms, usage, and 
-tutorials can be found in the WikiROMS documentation portal:
-```
-https://www.myroms.org/wiki
-```
+tutorials can be found in the WikiROMS documentation portal at www.myroms.org/wiki
 
 This version is mirrored from the community repositories at www.myroms.org for 
 usage within the JCSDA Project and does not require registration on the ROMS 
