@@ -1,7 +1,7 @@
 #!/bin/csh -ef
 #
 # git $Id$
-# svn $Id: cbuild_roms.csh 1051 2020-12-04 23:09:05Z arango $
+# svn $Id: cbuild_roms.csh 1053 2020-12-29 00:41:48Z arango $
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # Copyright (c) 2002-2020 The ROMS/TOMS Group                           :::
 #   Licensed under a MIT/X style license                                :::
@@ -58,6 +58,7 @@ while ( ($#argv) > 0 )
 
     case "-p"
       shift
+      set clean = 0
       set dprint = 1
       set debug = "$1"
       shift
@@ -116,22 +117,7 @@ end
 #
 # Valid options are SHARED, STATIC, and BOTH.
 
- setenv LIBTYPE              BOTH
-
-# Set the path to the users header (REQUIRED).
-
- setenv MY_HEADER_DIR        ${MY_PROJECT_DIR}
-
-# If you have custom analytical functions to include, enter the path here.
-
- setenv MY_ANALYTICAL_DIR    ${MY_PROJECT_DIR}
-
-# Does your application includes a biological or sediment model?
-# The logic here needs adjusting. For now, leave commented unless you want
-# a biological model
-
-#setenv BIOLOGY              ON
-#setenv SEDIMENT             ON
+ setenv LIBTYPE              STATIC
 
 # Do you want to build the ROMS executable?
 # Valid values are: ON (build the executable) and OFF (do NOT build the
@@ -166,18 +152,21 @@ end
 # Compilation options and paths.
 #--------------------------------------------------------------------------
 
- setenv USE_MPI             on               # distributed-memory
- setenv USE_MPIF90          on               # compile with mpif90 script
-#setenv which_MPI           mpich            # compile with MPICH library
-#setenv which_MPI           mpich2           # compile with MPICH2 library
-#setenv which_MPI           mvapich2         # compile with MVAPICH2 library
- setenv which_MPI           openmpi          # compile with OpenMPI library
+#setenv USE_ECBUILD          on              # use "ecbuild" wrapper
 
- setenv FORT                ifort
-#setenv FORT                gfortran
-#setenv FORT                pgi
+ setenv USE_MPI              on              # distributed-memory
+ setenv USE_MPIF90           on              # compile with mpif90 script
+#setenv which_MPI            mpich           # compile with MPICH library
+#setenv which_MPI            mpich2          # compile with MPICH2 library
+#setenv which_MPI            mvapich2        # compile with MVAPICH2 library
+ setenv which_MPI            openmpi         # compile with OpenMPI library
 
- setenv FC                  mpifort          # ENV var that CMake looks for
+ setenv FORT                 ifort
+#setenv FORT                 gfortran
+#setenv FORT                 pgi
+
+#setenv USE_DEBUG            on              # use Fortran debugging flags
+#setenv USE_NETCDF4          on              # use NetCDF4
 
 #--------------------------------------------------------------------------
 # If applicable, use my specified library paths.
@@ -192,13 +181,25 @@ if ($USE_MY_LIBS == 'yes') then
   source ${MY_PATHS} ${MY_PATHS}
 endif
 
+# Set location of the application header file.
+
+ setenv MY_HEADER_DIR        ${MY_PROJECT_DIR}
+
+# If you have custom analytical functions to include, enter the path here.
+
+ setenv MY_ANALYTICAL_DIR    ${MY_PROJECT_DIR}
+
 # Put the CMake files in a project specific Build directory to avoid conflict
 # with other projects.
 
-if ($?USE_DEBUG) then
-  setenv SCRATCH_DIR        ${MY_PROJECT_DIR}/CBuild_romsG
+if ( $?USE_DEBUG ) then
+  if ( "${USE_DEBUG}" = "on" ) then
+    setenv SCRATCH_DIR       ${MY_PROJECT_DIR}/CBuild_romsG
+  else
+    setenv SCRATCH_DIR       ${MY_PROJECT_DIR}/CBuild_roms
+  endif
 else
-  setenv SCRATCH_DIR        ${MY_PROJECT_DIR}/CBuild_roms
+  setenv SCRATCH_DIR         ${MY_PROJECT_DIR}/CBuild_roms
 endif
 
 # Create the build directory specified above and change into it.
@@ -278,34 +279,37 @@ else
   set roms_exec=""
 endif
 
-if ( $?BIOLOGY ) then
-  if ( "${BIOLOGY}" == "ON" ) then
-    set bio="-DBIOLOGY=ON"
+if ( $?USE_DEBUG ) then
+  if ( "${USE_DEBUG}" == "on" ) then
+    set dbg="-DCMAKE_BUILD_TYPE=Debug"
   else
-    set bio=""
+    set dbg="-DCMAKE_BUILD_TYPE=Release"
   endif
 else
-  set bio=""
-endif
-
-if ( $?SEDIMENT ) then
-  if ( "${SEDIMENT}" == "ON" ) then
-    set sediment="-DSEDIMENT=ON"
-  else
-    set sediment=""
-  endif
-else
-  set sediment=""
+  set dbg="-DCMAKE_BUILD_TYPE=Release"
 endif
 
 #--------------------------------------------------------------------------
-# Run the ecbuild command.
+# Run the chosen build command.
 #--------------------------------------------------------------------------
 
 set my_hdir="-DMY_HEADER_DIR=${MY_HEADER_DIR}"
 
 if ( $dprint == 0 ) then
-  ecbuild -DAPP=${ROMS_APPLICATION} \
+  if ( $?USE_ECBUILD ) then
+    if ( "${USE_ECBUILD}" == "on" ) then
+      set conf_com = "ecbuild"
+    else if ( "${USE_ECBUILD}" == "off" ) then
+      set conf_com = "cmake"
+    else
+      set conf_com = "Unknown"
+    endif
+  else
+    set conf_com = "cmake"
+  endif
+
+  if ( "${conf_com}" == "cmake" ) then
+    cmake -DAPP=${ROMS_APPLICATION} \
                 ${my_hdir} \
                 ${ltype} \
                 ${extra_flags} \
@@ -313,9 +317,23 @@ if ( $dprint == 0 ) then
                 ${arpack_ldir} \
                 ${mpi} \
                 ${roms_exec} \
-                ${bio} \
-                ${sediment} \
+                ${dbg} \
                 ${MY_ROMS_SRC}
+  else if ( "${conf_com}" == "ecbuild" ) then
+    ecbuild -DAPP=${ROMS_APPLICATION} \
+                  ${my_hdir} \
+                  ${ltype} \
+                  ${extra_flags} \
+                  ${parpack_ldir} \
+                  ${arpack_ldir} \
+                  ${mpi} \
+                  ${roms_exec} \
+                  ${dbg} \
+                  ${MY_ROMS_SRC}
+  else
+    echo "Unrecognized value, '${USE_ECBUILD}' set for USE_ECBUILD"
+    exit 1
+  endif
 endif
 
 #--------------------------------------------------------------------------
@@ -336,21 +354,22 @@ endif
 
 cd ${MY_PROJECT_DIR}
 
-# This needs more logic and a way to chose the right executable name.
+# Create symlink to executable. This should work even if ROMS was
+# linked to the shared library (libROMS.{so|dylib}) because
+# CMAKE_BUILD_WITH_INSTALL_RPATH is set to FALSE so that
+# RPATH/RUNPATH are set correctly for both the build tree and
+# installed locations of the ROMS executable.
 
 if ( $dprint == 0 ) then
-  if ( ! -h romsM ) then
-    ln -s ${SCRATCH_DIR}/romsM
-  endif
-endif
-
-# The alternative to this is to set your LD_LIBRARY_PATH appropriately
-# outside of this script.
-
-if ( $dprint == 0 ) then
-  if ( "${LIBTYPE}" == "SHARED" || "${LIBTYPE}" == "BOTH" ) then
-    if ( ! -h libROMS.so ) then
-      ln -s ${SCRATCH_DIR}/libROMS.so
+  if ( $?USE_DEBUG ) then
+    if ( "${USE_DEBUG}" == "on" ) then
+      ln -sfv ${SCRATCH_DIR}/romsG
     endif
+  else if ( $?USE_MPI ) then
+    if ( "${USE_MPI}" == "on" ) then
+      ln -sfv ${SCRATCH_DIR}/romsM
+    endif
+  else
+    ln -sfv ${SCRATCH_DIR}/romsS
   endif
 endif

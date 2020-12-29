@@ -2,7 +2,7 @@
       SUBROUTINE def_info (ng, model, ncid, ncname, DimIDs)
 !
 !git $Id$
-!svn $Id: def_info.F 1049 2020-11-30 04:34:51Z arango $
+!svn $Id: def_info.F 1053 2020-12-29 00:41:48Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -691,7 +691,7 @@
             IF (exit_flag.eq.NoError) THEN
               CALL join_string (BRY(i,ng)%files, BRY(i,ng)%Nfiles,      &
      &                          string, lstr)
-              WRITE (bryatt,30) 'clm_file_', i
+              WRITE (bryatt,30) 'bry_file_', i
               status=nf90_put_att(ncid, nf90_global, bryatt,            &
      &                            string(1:lstr))
               IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN

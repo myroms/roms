@@ -3,7 +3,7 @@
 #ifdef NONLINEAR
 !
 !git $Id$
-!svn $Id: set_vbc.F 1049 2020-11-30 04:34:51Z arango $
+!svn $Id: set_vbc.F 1053 2020-12-29 00:41:48Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -366,6 +366,7 @@
         DO j=JstrR,JendR
           DO i=IstrR,IendR
             stflx(i,j,itrc)=stflux(i,j,itrc)
+            btflx(i,j,itrc)=btflux(i,j,itrc)
           END DO
         END DO
       END DO
