@@ -3,7 +3,7 @@
 #ifdef TL_IOMS
 !
 !git $Id$
-!svn $Id: rp_set_vbc.F 1049 2020-11-30 04:34:51Z arango $
+!svn $Id: rp_set_vbc.F 1053 2020-12-29 00:41:48Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -488,6 +488,9 @@
 !>          stflx(i,j,itrc)=stflux(i,j,itrc)
 !>
             rp_stflx(i,j,itrc)=0.0_r8
+!>          btflx(i,j,itrc)=btflux(i,j,itrc)
+!>
+            rp_btflx(i,j,itrc)=0.0_r8
           END DO
         END DO
       END DO

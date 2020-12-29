@@ -3,7 +3,7 @@
 #ifdef ADJOINT
 !
 !git $Id$
-!svn $Id: ad_set_vbc.F 1049 2020-11-30 04:34:51Z arango $
+!svn $Id: ad_set_vbc.F 1053 2020-12-29 00:41:48Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -1039,6 +1039,9 @@
       DO itrc=NAT+1,NT(ng)
         DO j=JstrR,JendR
           DO i=IstrR,IendR
+!>          tl_btflx(i,j,itrc)=0.0_r8
+!>
+            ad_btflx(i,j,itrc)=0.0_r8
 !>          tl_stflx(i,j,itrc)=0.0_r8
 !>
             ad_stflx(i,j,itrc)=0.0_r8
@@ -1210,7 +1213,7 @@
         DO i=IstrR,IendR
 !>        tl_btflx(i,j,itemp)=0.0_r8                ! not needed in TLM
 !>
-!!        ad_stflx(i,j,itemp)=0.0_r8                ! not needed in ADM
+!!        ad_btflx(i,j,itemp)=0.0_r8                ! not needed in ADM
 !>        tl_stflx(i,j,itemp)=0.0_r8                ! not needed in TLM
 !>
 !!        ad_stflx(i,j,itemp)=0.0_r8                ! not needed in ADM

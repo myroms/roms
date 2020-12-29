@@ -1,5 +1,5 @@
 # git $Id$
-# svn $Id: CMakeLists.txt 1051 2020-12-04 23:09:05Z arango $
+# svn $Id: CMakeLists.txt 1053 2020-12-29 00:41:48Z arango $
 #:::::::::::::::::::::::::::::::::::::::::::::::::::::: David Robertson :::
 # Copyright (c) 2002-2020 The ROMS/TOMS Group                           :::
 #   Licensed under a MIT/X style license                                :::
@@ -9,7 +9,7 @@
 # Source code list for sub-directory "ROMS/Representer/Biology"
 
 list( APPEND _files
-      ROMS/Adjoint/Biology/rp_biology.F
+      ROMS/Representer/Biology/rp_biology.F
 )
 
 set ( ROMS_Representer_Biology_files

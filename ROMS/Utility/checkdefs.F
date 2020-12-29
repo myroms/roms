@@ -2,7 +2,7 @@
       SUBROUTINE checkdefs
 !
 !git $Id$
-!svn $Id: checkdefs.F 1051 2020-12-04 23:09:05Z arango $
+!svn $Id: checkdefs.F 1053 2020-12-29 00:41:48Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2020 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -656,7 +656,7 @@
       IF (Master) WRITE (stdout,20) '!BOUNDARY_ALLGATHER',              &
      &   'Using mpi_allreduce in mp_boundary routine'
       is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+11)=' !BOUNDARY_ALLGATHER,'
+      Coptions(is:is+21)=' !BOUNDARY_ALLGATHER,'
 # endif
 #endif
 #ifdef BULK_FLUXES

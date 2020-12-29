@@ -1,5 +1,5 @@
 # git $Id$
-# svn $Id: roms_functions.cmake 1051 2020-12-04 23:09:05Z arango $
+# svn $Id: roms_functions.cmake 1053 2020-12-29 00:41:48Z arango $
 #:::::::::::::::::::::::::::::::::::::::::::::::::::::: David Robertson :::
 # Copyright (c) 2002-2020 The ROMS/TOMS Group                           :::
 #   Licensed under a MIT/X style license                                :::
@@ -9,35 +9,44 @@
 # Functions used in CMake to overcome its rudimentary capabilities.
 
 find_program(
+  GREP
+  NAMES grep egrep
+  DOC "Grep command"
+)
+
+find_program(
   PERL
-  NAMES "perl"
+  NAMES perl
   DOC "Perl command"
 )
 
 find_program(
   CPP_CLEAN
-  NAMES "cpp_clean"
+  NAMES cpp_clean
   HINTS "${CMAKE_SOURCE_DIR}/ROMS/Bin/"
   DOC "ROMS CPP Clean command"
 )
 
 find_program(
   CPP_EXECUTABLE
-  NAMES "cpp"
+  NAMES cpp
   DOC "C-preprocessor command"
 )
 
-# This function teaches CMake how to use CPP to create .f90 files from
-# ROMS .F source files. It is imperative that we generate .f90 files
-# BEFORE CMake attempts to determine Fortran dependencies because
-# its Fortran dependency tracker is inconsistent and easily confused
-# by C-preprocessor if-directives.
-#
+###########################################################################
+# The "preprocess_fortran" function teaches CMake how to use CPP to
+# create .f90 files from ROMS .F source files. It is imperative that
+# we generate processed .f90 files BEFORE CMake attempts to determine
+# Fortran dependencies because its Fortran dependency tracker is
+# inconsistent and easily confused by C-preprocessor nested
+# if-directives.
+###########################################################################
+
 # First, make the directory for the .f90 files.
 
 file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/f90")
 
-function(preprocess_fortran f90srcs)
+function(preprocess_fortran)
 
    # Determine include directories.
 
@@ -111,20 +120,107 @@ function(preprocess_fortran f90srcs)
    set(f90srcs "${fsrcs}" PARENT_SCOPE)
 endfunction()
 
-# UNDER CONSTRUCTION. This function is not working quite right yet.
+###########################################################################
+# The "use_4dvar" function is used by roms_config.cmake to determine if
+# the adjoint, tangent linear, and/or representer model(s) are needed
+# and add ARPACK/PARPACK to link into the executable.
+###########################################################################
 
-function(link_netcdf)
-  set(NF-CONFIG $ENV{NETCDF}/bin/nf-config)
-  execute_process(COMMAND ${NF-CONFIG} --flibs
-                  OUTPUT_VARIABLE tmp
+function(use_4dvar roms_header)
+
+  # Set ROMS_HEADER C-Preprocessor flag.
+
+  set( APP_HEADER -DROMS_HEADER="${roms_header}" )
+
+  # If MY_CPP_FLAGS was set and passed, cycle through the list and add the -D.
+
+  set(defflags)
+  foreach(d ${ARGN})
+    list(APPEND defflags "-D${d}")
+  endforeach()
+
+  execute_process(
+    COMMAND ${CPP_EXECUTABLE} ${CPPFLAGS} ${APP_HEADER} ${defflags} ${CMAKE_CURRENT_SOURCE_DIR}/Compilers/defs_cmake.h
+    COMMAND ${GREP} -v ^[[:space:]]*\$
+    COMMAND_ECHO STDOUT
+    RESULT_VARIABLE status
+    ERROR_VARIABLE err
+    OUTPUT_VARIABLE models_libs
   )
 
-  # Strip out massive trailing whitespace.
+  # Check whether the cpp command above produced an error and stop CMake if it did.
 
-  string(STRIP "${tmp}" linkline)
-  string(REGEX MATCHALL "-L[^ \t]*" ldirs ${linkline})
-  string(REGEX MATCHALL "-l[^ \t]*" libs ${linkline})
-  set(netcdf_ldirs "${ldirs}" PARENT_SCOPE)
-  set(netcdf_libs "${libs}" PARENT_SCOPE)
-  Message(STATUS "netcdf_libs = ${libs} netcdf_ldirs = ${ldirs}")
+  if( status AND NOT status EQUAL 0 )
+    message( FATAL_ERROR "use_4dvar error: ${err}" )
+  endif()
+
+  # Return needed Models/Libraries.
+
+  set(defs "${models_libs}" PARENT_SCOPE)
+endfunction()
+
+
+###########################################################################
+# Determine how to link to NetCDF
+###########################################################################
+
+function(link_netcdf)
+  if( DEFINED ENV{NF_CONFIG} )
+    Message( STATUS "Using $ENV{NF_CONFIG}" )
+
+    # Get link line to break down below
+
+    execute_process( COMMAND $ENV{NF_CONFIG} --flibs
+                     OUTPUT_VARIABLE tmp
+    )
+
+    if( DEFINED ENV{NETCDF_INCDIR} )
+      set( idir "$ENV{NETCDF_INCDIR}" )                          # Set include directory
+    else()
+
+      # Retrieve include direcotry
+
+      execute_process( COMMAND $ENV{NF_CONFIG} --includedir
+                       OUTPUT_VARIABLE idir
+      )
+    endif()
+
+    string( STRIP "${tmp}" linkline )                            # Strip trailing whitespace
+    string( REGEX MATCHALL "-L[^ \t]*" ldirs ${linkline} )       # Create list of dirs
+    string( REGEX MATCHALL "-l[^ \t]*" libs ${linkline} )        # Create list of libs
+
+  elseif( DEFINED ENV{NETCDF_LIBS} )
+    string( REGEX MATCHALL "-L[^ \t]*" ldirs $ENV{NETCDF_LIBS} ) # Create list of dirs
+    string( REGEX MATCHALL "-l[^ \t]*" libs $ENV{NETCDF_LIBS} )  # Create list of libs
+    if( DEFINED ENV{NETCDF_INCDIR} )
+      set( idir  "$ENV{NETCDF_INCDIR}" )                         # Set include directory
+    elseif( DEFINED ENV{NETCDF} )
+      set( idir  "$ENV{NETCDF}/include" )                        # Construct include path
+    else()
+      Message( FATAL_ERROR "NetCDF includes not found!" )
+    endif()
+  else()
+    if( DEFINED ENV{NETCDF_INCDIR} AND DEFINED ENV{NETCDF_LIBDIR} )
+      set( ldirs "$ENV{NETCDF_LIBDIR}" )                         # Set lib directory
+      set( libs  "netcdf" )                                      # Set NetCDF3 lib name
+      set( idir  "$ENV{NETCDF_INCDIR}" )                         # Set include directory
+    else()
+      Message( FATAL_ERROR "No NetCDF found!" )
+    endif()
+  endif()
+
+  list( TRANSFORM libs  REPLACE "-l([^ \t]*)" "\\1" )           # remove "-l" from libs
+  list( TRANSFORM ldirs REPLACE "-L([^ \t]*)" "\\1" )           # remove "-L" from dirs
+
+  if( "${libs}" STREQUAL "" )
+    message( FATAL_ERROR "NetCDF library name not found" )
+  endif()
+
+  set( netcdf_ldirs "${ldirs}" PARENT_SCOPE )
+  set( netcdf_libs "${libs}" PARENT_SCOPE )
+  set( netcdf_idir "${idir}" PARENT_SCOPE )
+
+  Message( STATUS " netcdf_libs = ${libs}" )
+  Message( STATUS "netcdf_ldirs = ${ldirs}" )
+  Message( STATUS " netcdf_idir = ${idir}" )
 endfunction()

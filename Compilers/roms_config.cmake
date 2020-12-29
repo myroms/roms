@@ -1,5 +1,5 @@
 # git $Id$
-# svn $Id: roms_config.cmake 1051 2020-12-04 23:09:05Z arango $
+# svn $Id: roms_config.cmake 1053 2020-12-29 00:41:48Z arango $
 #:::::::::::::::::::::::::::::::::::::::::::::::::::::: David Robertson :::
 # Copyright (c) 2002-2020 The ROMS/TOMS Group                           :::
 #   Licensed under a MIT/X style license                                :::
@@ -52,22 +52,6 @@ else()
   Message( FATAL_ERROR "Invalid value for ROMS_EXECUTABLE. Valid values are ON and OFF" )
 endif()
 
-# Does the application have a biological model?
-
-if( DEFINED BIOLOGY )
-  option( BIOLOGY "Turn on/off Biological Models" ON )
-else()
-  option( BIOLOGY "Turn on/off Biological Models" OFF )
-endif()
-
-#Does the application have a sediment model?
-
-if( DEFINED SEDIMENT )
-  option( SEDIMENT "Turn on/off Sediment Transport Model" ON )
-else()
-  option( SEDIMENT "Turn on/off Sediment Transport Model" OFF )
-endif()
-
 # Where is your <application>.h file?
 
 set( HEADER_DIR  ${MY_HEADER_DIR} )
@@ -118,8 +102,11 @@ add_definitions(
 
 # Set ROMS Executable Name.
 
-if( ${CMAKE_BUILD_TYPE} EQUAL "Debug" )
+if( ${CMAKE_BUILD_TYPE} MATCHES "Debug" )
   set( BIN "romsG" )
+  if( MPI )
+    add_definitions( -DMPI )
+  endif()
 elseif( MPI )
   set( BIN "romsM" )
   add_definitions( -DMPI )
@@ -131,84 +118,37 @@ if( MY_CPP_FLAGS )
   foreach( flag ${MY_CPP_FLAGS} )
     add_definitions( -D${flag} )
   endforeach()
-  list( APPEND check_flags ${MY_CPP_FLAGS} )
+  use_4dvar( ${ROMS_HEADER} ${MY_CPP_FLAGS} )
+else()
+  use_4dvar( ${ROMS_HEADER} )
 endif()
 
-list( APPEND USE_ADJOINT
-      "ARRAY_MODES"
-      "I4DVAR"
-      "I4DVAR_ANA_SENSITIVITY"
-      "NORMALIZATION"
-      "RBL4DVAR"
-      "R4DVAR"
-      "SPLIT_I4DVAR"
-      "SPLIT_RBL4DVAR"
-      "SPLIT_R4DVAR"
-      "SPLIT_SP4DVAR"
-      "SP4DVAR"
-)
+# If use_4dvar returns a line containing "CPPDEFS" then somehow ROMS_HEADER
+# was not defined and the build script configuation or CMake command should
+# be checked.
 
-list( APPEND USE_REPRESENTER
-      "ARRAY_MODES"
-      "R4DVAR"
-      "R4DVAR_ANA_SENSITIVITY"
-)
+if( "${defs}" MATCHES "CPPDEFS" )
+  message( FATAL_ERROR "The C-preprocessor was unable to find your application's header file please check you configuation" )
+endif()
 
-list( APPEND USE_TANGENT
-      "ARRAY_MODES"
-      "I4DVAR"
-      "I4DVAR_ANA_SENSITIVITY"
-      "NORMALIZATION"
-      "RBL4DVAR"
-      "R4DVAR"
-      "SPLIT_I4DVAR"
-      "SPLIT_RBL4DVAR"
-      "SPLIT_R4DVAR"
-      "SPLIT_SP4DVAR"
-      "SP4DVAR"
-)
+if( "${defs}" MATCHES "ADJOINT" )
+  option( ADJOINT "Turn on/off Adjoint Model" ON )
+  Message( STATUS "Adjoint Model ENABLED" )
+endif()
 
-# ARPACK/PARPACK
+if( "${defs}" MATCHES "REPRESENTER" )
+  option( REPRESENTER "Turn on/off Representer Model" ON )
+  Message( STATUS "Representer Model ENABLED" )
+endif()
 
-list( APPEND USE_ARPACK
-      "ARRAY_MODES"
-      "CLIPPING"
-      "I4DVAR"
-      "PROPAGATOR"
-      "RBL4DVAR"
-      "RBL4DVAR_ANA_SENSITIVITY"
-      "R4DVAR"
-      "R4DVAR_ANA_SENSITIVITY"
-      "SP4DVAR"
-)
+if( "${defs}" MATCHES "TANGENT" )
+  option( TANGENT "Turn on/off Tangent Linear Model" ON )
+  message( STATUS "Tangent Linear Model ENABLED" )
+endif()
 
-foreach( flag ${check_flags} )
+if( "${defs}" MATCHES "ARPACK" )
+  option( ARPACK "ARPACK/PARPACK Library" ON )
+  message( STATUS "ROMS Link With ARPACK/PARPACK ENABLED" )
+endif()
 
-  # Be very careful with the IN_LIST syntax it must be no quotes around
-  # the variable containing the string you are looking for and just the
-  # name of the list (listename) not the list variable (${listname})
-
-  if( NOT ADJOINT AND ( ${flag} IN_LIST USE_ADJOINT ) )
-    option( ADJOINT "Turn on/off Adjoint Model" ON )
-    Message( STATUS "Adjoint Model ENABLED" )
-  endif()
-
-  # If running ARRAY_MODES R4DVAR R4DVAR_ANA_SENSITIVITY enable
-  # the Representer model.
-
-  if( NOT REPRESENTER AND ( ${flag} IN_LIST USE_REPRESENTER ) )
-    option( ADJOINT "Turn on/off Representer Model" ON )
-    Message( STATUS "Representer Model ENABLED" )
-  endif()
-
-  if( NOT TANGENT AND ( ${flag} IN_LIST USE_TANGENT ) )
-    option( TANGENT "Turn on/off Tangent Linear Model" ON )
-    message( STATUS "Tangent Linear Model ENABLED" )
-  endif()
-
-  if( NOT ARPACK AND ( ${flag} IN_LIST USE_ARPACK ) )
-    option( ARPACK "ARPACK" ON )
-  endif()
-
-endforeach()
 
