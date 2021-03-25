@@ -3,7 +3,7 @@
       SUBROUTINE read_AssPar (model, inp, out, Lwrite)
 !
 !git $Id$
-!svn $Id: read_asspar.F 1054 2021-03-06 19:47:12Z arango $
+!svn $Id: read_asspar.F 1058 2021-03-25 19:04:23Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -1193,21 +1193,21 @@
           END IF
           IF (bgqc_type(ng).eq.1) THEN
             WRITE (out,100) S_bgqc(isFsur,ng), 'S_bgqc(isFsur)',        &
-     &            'Quality control reject threshold, free-surface.'
+     &        'Quality control reject squared threshold, free-surface.'
 #     ifndef SOLVE3D
             WRITE (out,100) S_bgqc(isUbar,ng), 'S_bgqc(isUbar)',        &
-     &            'Quality control reject threshold, 2D U-momentum.'
+     &        'Quality control reject squared threshold, 2D U-momentum.'
             WRITE (out,100) S_bgqc(isVbar,ng), 'S_bgqc(isVbar)',        &
-     &            'Quality control reject threshold, 2D V-momentum.'
+     &        'Quality control reject squared threshold, 2D V-momentum.'
 #     else
             WRITE (out,100) S_bgqc(isUvel,ng), 'S_bgqc(isUvel)',        &
-     &            'Quality control reject threshold, 3D U-momentum.'
+     &        'Quality control reject squared threshold, 3D U-momentum.'
             WRITE (out,100) S_bgqc(isVvel,ng), 'S_bgqc(isVvel)',        &
-     &            'Quality control reject threshold, 3D V-momentum.'
+     &        'Quality control reject squared threshold, 3D V-momentum.'
             DO itrc=1,NT(ng)
               WRITE (out,190) S_bgqc(isTvar(itrc),ng),                  &
      &            'S_bgqc(idTvar)',                                     &
-     &            'Quality control reject threshold, ',                 &
+     &            'Quality control reject squared threshold, ',         &
      &            TRIM(Vname(1,idTvar(itrc)))
             END DO
 #     endif
@@ -1216,7 +1216,7 @@
      &            'Number of provenances to Quality control.'
             DO i=1,Nprovenance(ng)
               WRITE (out,200) P_bgqc(i,ng), 'P_bgqc', i,                &
-     &            'Quality control reject threshold for provenance',    &
+     &       'Quality control reject squared threshold for provenance', &
      &            Iprovenance(i,ng)
             END DO
           END IF
