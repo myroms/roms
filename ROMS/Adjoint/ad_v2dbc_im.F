@@ -3,7 +3,7 @@
 #ifdef ADJOINT
 !
 !git $Id$
-!svn $Id: ad_v2dbc_im.F 1054 2021-03-06 19:47:12Z arango $
+!svn $Id: ad_v2dbc_im.F 1058 2021-03-25 19:04:23Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -167,8 +167,10 @@
 !
       IF (.not.(EWperiodic(ng).or.NSperiodic(ng))) THEN
         IF (DOMAIN(ng)%NorthEast_Corner(tile)) THEN
-          IF (LBC_apply(ng)%north(Iend+1).and.                          &
-     &        LBC_apply(ng)%east (Jend+1)) THEN
+          IF ((LBC_apply(ng)%north(Iend+1).and.                         &
+     &         LBC_apply(ng)%east (Jend+1)).or.                         &
+     &        (LBC(ieast,isUbar,ng)%nested.and.                         &
+     &         LBC(inorth,isUbar,ng)%nested)) THEN
 !>          cff1=ABS(ABS(GRID(ng)%vmask_wet(Iend+1,Jend+1))-1.0_r8)
 !>          cff2=0.5_r8+DSIGN(0.5_r8,vbar(Iend+1,Jend+1,kout))*         &
 !>   &                  GRID(ng)%vmask_wet(Iend+1,Jend+1)
@@ -178,8 +180,10 @@
           END IF
         END IF
         IF (DOMAIN(ng)%NorthWest_Corner(tile)) THEN
-          IF (LBC_apply(ng)%north(Istr-1).and.                          &
-     &        LBC_apply(ng)%west (Jend+1)) THEN
+          IF ((LBC_apply(ng)%north(Istr-1).and.                         &
+     &         LBC_apply(ng)%west (Jend+1)).or.                         &
+     &        (LBC(iwest,isUbar,ng)%nested.and.                         &
+     &         LBC(inorth,isUbar,ng)%nested)) THEN
 !>          cff1=ABS(ABS(GRID(ng)%vmask_wet(Istr-1,Jend+1))-1.0_r8)
 !>          cff2=0.5_r8+DSIGN(0.5_r8,vbar(Istr-1,Jend+1,kout))*         &
 !>   &                  GRID(ng)%vmask_wet(Istr-1,Jend+1)
@@ -189,8 +193,10 @@
           END IF
         END IF
         IF (DOMAIN(ng)%SouthEast_Corner(tile)) THEN
-          IF (LBC_apply(ng)%south(Iend+1).and.                          &
-     &        LBC_apply(ng)%east (Jstr  )) THEN
+          IF ((LBC_apply(ng)%south(Iend+1).and.                         &
+     &         LBC_apply(ng)%east (Jstr  )).or.                         &
+     &        (LBC(ieast,isUbar,ng)%nested.and.                         &
+     &         LBC(isouth,isUbar,ng)%nested)) THEN
 !>          cff1=ABS(ABS(GRID(ng)%vmask_wet(Iend+1,Jstr))-1.0_r8)
 !>          cff2=0.5_r8+DSIGN(0.5_r8,vbar(Iend+1,Jstr,kout))*           &
 !>   &                  GRID(ng)%vmask_wet(Iend+1,Jstr)
@@ -200,8 +206,10 @@
           END IF
         END IF
         IF (DOMAIN(ng)%SouthWest_Corner(tile)) THEN
-          IF (LBC_apply(ng)%south(Istr-1).and.                          &
-     &        LBC_apply(ng)%west (Jstr  )) THEN
+          IF ((LBC_apply(ng)%south(Istr-1).and.                         &
+     &         LBC_apply(ng)%west (Jstr  )).or.                         &
+     &        (LBC(iwest,isUbar,ng)%nested.and.                         &
+     &         LBC(isouth,isUbar,ng)%nested)) THEN
 !>          cff1=ABS(ABS(GRID(ng)%vmask_wet(Istr-1,Jstr))-1.0_r8)
 !>          cff2=0.5_r8+DSIGN(0.5_r8,vbar(Istr-1,Jstr,kout))*           &
 !>   &                  GRID(ng)%vmask_wet(Istr-1,Jstr)
@@ -211,11 +219,12 @@
           END IF
         END IF
       END IF
-
+!
       IF (.not.NSperiodic(ng)) THEN
         IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
           DO i=Istr,Iend
-            IF (LBC_apply(ng)%north(i)) THEN
+            IF (LBC_apply(ng)%north(i).or.                              &
+     &          LBC(inorth,isVbar,ng)%nested) THEN
 !>            cff1=ABS(ABS(GRID(ng)%vmask_wet(i,Jend+1))-1.0_r8)
 !>            cff2=0.5_r8+DSIGN(0.5_r8,vbar(i,Jend+1,kout))*            &
 !>   &                    GRID(ng)%vmask_wet(i,Jend+1)
@@ -227,7 +236,8 @@
         END IF
         IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
           DO i=Istr,Iend
-            IF (LBC_apply(ng)%south(i)) THEN
+            IF (LBC_apply(ng)%south(i).or.                              &
+     &          LBC(isouth,isVbar,ng)%nested) THEN
 !>            cff1=ABS(ABS(GRID(ng)%vmask_wet(i,Jstr))-1.0_r8)
 !>            cff2=0.5_r8+DSIGN(0.5_r8,vbar(i,Jstr,kout))*              &
 !>   &                    GRID(ng)%vmask_wet(i,Jstr)
@@ -238,11 +248,12 @@
           END DO
         END IF
       END IF
-
+!
       IF (.not.EWperiodic(ng)) THEN
         IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
           DO j=JstrV,Jend
-            IF (LBC_apply(ng)%east(j)) THEN
+            IF (LBC_apply(ng)%east(j).or.                               &
+     &          LBC(ieast,isVbar,ng)%nested) THEN
 !>            cff1=ABS(ABS(GRID(ng)%vmask_wet(Iend+1,j))-1.0_r8)
 !>            cff2=0.5_r8+DSIGN(0.5_r8,vbar(Iend+1,j,kout))*            &
 !>   &                    GRID(ng)%vmask_wet(Iend+1,j)
@@ -254,7 +265,8 @@
         END IF
         IF (DOMAIN(ng)%Western_Edge(tile)) THEN
           DO j=JstrV,Jend
-            IF (LBC_apply(ng)%west(j)) THEN
+            IF (LBC_apply(ng)%west(j).or.                               &
+     &          LBC(iwest,isVbar,ng)%nested) THEN
 !>            cff1=ABS(ABS(GRID(ng)%vmask_wet(Istr-1,j))-1.0_r8)
 !>            cff2=0.5_r8+DSIGN(0.5_r8,vbar(Istr-1,j,kout))*            &
 !>   &                    GRID(ng)%vmask_wet(Istr-1,j)
@@ -1201,8 +1213,22 @@
 !>            tl_cff1=-0.5_r8*cff1*tl_cff/cff
 !>
               ad_cff=ad_cff-                                            &
-     &               0.5_r8*cff1*ad_cff/cff
+     &               0.5_r8*cff1*ad_cff1/cff
               ad_cff1=0.0_r8
+
+# ifdef WET_DRY_NOT_YET
+!>            tl_cff=0.5_r8*(GRID(ng)%tl_h(i,Jend  )+                   &
+!>   &                       tl_zeta(i,Jend  ,know)+                    &
+!>   &                       GRID(ng)%tl_h(i,Jend+1)+                   &
+!>   &                       tl_zeta(i,Jend+1,know))
+!>
+              adfac=0.5_r8*ad_cff
+              GRID(ng)%ad_h(i,Jend  )=GRID(ng)%ad_h(i,Jend  )+adfac
+              GRID(ng)%ad_h(i,Jend+1)=GRID(ng)%ad_h(i,Jend+1)+adfac
+              ad_zeta(i,Jend  ,know)=ad_zeta(i,Jend  ,know)+adfac
+              ad_zeta(i,Jend+1,know)=ad_zeta(i,Jend+1,know)+adfac
+              ad_cff=0.0_r8
+# else
 !>            tl_cff=0.5_r8*(GRID(ng)%tl_h(i,Jend  )+                   &
 !>   &                       GRID(ng)%tl_h(i,Jend+1))
 !>
@@ -1210,6 +1236,7 @@
               GRID(ng)%ad_h(i,Jend  )=GRID(ng)%ad_h(i,Jend  )+adfac
               GRID(ng)%ad_h(i,Jend+1)=GRID(ng)%ad_h(i,Jend+1)+adfac
               ad_cff=0.0_r8
+# endif
 
 # if defined SSH_TIDES_NOT_YET && !defined UV_TIDES_NOT_YET
               IF (ad_LBC(inorth,isFsur,ng)%acquire) THEN
@@ -1990,8 +2017,22 @@
 !>            tl_cff1=-0.5_r8*cff1*tl_cff/cff
 !>
               ad_cff=ad_cff-                                            &
-     &               0.5_r8*cff1*ad_cff/cff
+     &               0.5_r8*cff1*ad_cff1/cff
               ad_cff1=0.0_r8
+
+# ifdef WET_DRY_NOT_YET
+!>            tl_cff=0.5_r8*(GRID(ng)%tl_h(i,Jstr-1)+                   &
+!>   &                       tl_zeta(i,Jstr-1,know)+                    &
+!>   &                       GRID(ng)%tl_h(i,Jstr  )+                   &
+!>   &                       tl_zeta(i,Jstr  ,know))
+!>
+              adfac=0.5_r8*ad_cff
+              GRID(ng)%ad_h(i,Jstr-1)=GRID(ng)%ad_h(i,Jstr-1)+adfac
+              GRID(ng)%ad_h(i,Jstr  )=GRID(ng)%ad_h(i,Jstr  )+adfac
+              ad_zeta(i,Jstr-1,know)=ad_zeta(i,Jstr-1,know)+adfac
+              ad_zeta(i,Jstr  ,know)=ad_zeta(i,Jstr  ,know)+adfac
+              ad_cff=0.0_r8
+# else
 !>            tl_cff=0.5_r8*(GRID(ng)%tl_h(i,Jstr-1)+                   &
 !>   &                       GRID(ng)%tl_h(i,Jstr  ))
 !>
@@ -1999,6 +2040,7 @@
               GRID(ng)%ad_h(i,Jstr-1)=GRID(ng)%ad_h(i,Jstr-1)+adfac
               GRID(ng)%ad_h(i,Jstr  )=GRID(ng)%ad_h(i,Jstr  )+adfac
               ad_cff=0.0_r8
+# endif
 
 # if defined SSH_TIDES_NOT_YET && !defined UV_TIDES_NOT_YET
               IF (ad_LBC(isouth,isFsur,ng)%acquire) THEN

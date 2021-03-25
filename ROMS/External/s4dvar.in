@@ -1,7 +1,7 @@
 !  4D-Var assimilation input parameters.
 !
 !git $Id$
-!svn $Id: s4dvar.in 1054 2021-03-06 19:47:12Z arango $
+!svn $Id: s4dvar.in 1058 2021-03-25 19:04:23Z arango $
 !========================================================= Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                                !
 !    Licensed under a MIT/X style license                                     !
@@ -327,37 +327,39 @@ HdecayF(isTsur) == 100.0d+3  100.0d+3             ! 1:NT surface tracers flux
 
       bgqc_type == 1
 
-! If BGQC is in terms of state variables, set number of standard deviations
-! threshold to use in the quality control rejection of observations.
+! If BGQC is in terms of state variables, set the threshold, squared number
+! of standard deviations to use in the quality control rejection of
+! observations.
 !
 !   Use a large value (say, 1.0d+5) if you do not want to reject observations
 !   associated with a particular state variable.
 !
-!   Use a small value (typically, 4 standard deviations) to perform quality
-!   control of observations for a particular state variable.
+!   Use a small value (typically, 16 to rejecting based on on 4 standard
+!   deviations) to perform quality control of observations for a particular
+!   state variable.
 
  S_bgqc(isFsur) == 1.0d+5                                 ! free-surface
  S_bgqc(isUbar) == 1.0d+5                                 ! 2D U-momentum
  S_bgqc(isVbar) == 1.0d+5                                 ! 2D V-momentum
  S_bgqc(isUvel) == 1.0d+5                                 ! 3D U-momentum
  S_bgqc(isVvel) == 1.0d+5                                 ! 3D V-momentum
- S_bgqc(isTvar) == 4.0d0  4.0d0                           ! 1:NT tracers
+ S_bgqc(isTvar) == 16.0d0  16.0d0                         ! 1:NT tracers
 
-! If BGQC is in terms of observation provenance, set number of standard
-! deviations threshold to use in the quality control rejection of
+! If BGQC is in terms of observation provenance, set the threshold, squared
+! number of standard deviations to use in the quality control rejection of
 ! observations.
 !
-!   Use a small value (say, 4 standard deviations) to perform quality
-!   control for the desired observation provenance(s).
+!   Use a small value (say, 16 to rejecting based on on 4 standard deviations)
+!   to perform quality control for the desired observation provenance(s).
 !
 !   Nprovenance:   Number of observation provenances to quality control
 !   Iprovenance:   Observation provenance indices to process [1:Nprovenance]
 !   P_bgqc:        Standard deviation threshold [1:Nprovenance]
 
     Nprovenance == 2
-    Iprovenance == 6     7                ! ARGO Temperature and Salinity
+    Iprovenance == 6      7               ! ARGO Temperature and Salinity
 
-         P_bgqc == 4.0d0 4.0d0
+         P_bgqc == 16.0d0 16.0d0
 
 ! If applicable, set switches (T/F) used to adjust surface tracer flux,
 ! [1:NT,1:Ngrids].
@@ -866,9 +868,9 @@ HdecayF(isTsur) == 100.0d+3  100.0d+3             ! 1:NT surface tracers flux
 !                                     or instrument. For example, temperature
 !                                     observation from ARGO buoys.
 !
-!  S_bgqc         Number of standard deviations threshold to use in the quality
-!                 control rejection of observations in terms of the state
-!                 variable index.
+!  S_bgqc         Threshold, squared number of standard deviations to use in
+!                 the quality control rejection of observations in terms of
+!                 the state variable index.
 !
 !                    S_bgqc(isFsur)             free-surface
 !                    S_bgqc(isUbar)             2D U-momentum
@@ -879,7 +881,8 @@ HdecayF(isTsur) == 100.0d+3  100.0d+3             ! 1:NT surface tracers flux
 !
 !                 It used when bgqc_type = 1. Use a large value (say 1.0d+5)
 !                 to indicate that the observations are spread out over a wider
-!                 range of background values.
+!                 range of background values. Otherwise, you use values like
+!                 16 for rejecting observations based on 2 standard deviations.
 !
 !  Nprovenance    Number of observation provenances to consider for background
 !                 quality control.  Used when bgqc_type = 2.
@@ -890,10 +893,10 @@ HdecayF(isTsur) == 100.0d+3  100.0d+3             ! 1:NT surface tracers flux
 !                 1:Nprovenance values are expected for each nested grid.
 !                 Used when bgqc_type = 2.
 !
-!  P_bgqc         Number of standard deviations threshold to use in the quality
-!                 control rejection of observations in terms of the provenance
-!                 index, 1:Nprovenance values are expected for each nested
-!                 grid. Used when bgqc_type = 2.
+!  P_bgqc         Threshold, squared number of standard deviations to use in
+!                 the quality control rejection of observations in terms of
+!                 the provenance index, 1:Nprovenance values are expected for
+!                 each nested grid. Used when bgqc_type = 2.
 !
 !------------------------------------------------------------------------------
 ! 4D-Var adjustment switches.

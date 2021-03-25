@@ -4,7 +4,7 @@
 #ifdef NESTING
 !
 !git $Id$
-!svn $Id: nesting.F 1054 2021-03-06 19:47:12Z arango $
+!svn $Id: nesting.F 1058 2021-03-25 19:04:23Z arango $
 !=======================================================================
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license           Hernan G. Arango   !
@@ -2480,7 +2480,7 @@
 
 # ifdef SOLVE3D
 !
-!  Extract time-veraged fluxes (DU_avg2, DV_avg2).  We will use latter
+!  Extract time-averaged fluxes (DU_avg2, DV_avg2).  We will use latter
 !  only the values at the finer grid physical boundary to impose mass
 !  flux conservation in routine "put_refine2d".
 !
@@ -3553,7 +3553,7 @@
      &                          GRID(rg)%pm,                            &
      &                          GRID(rg)%pn,                            &
 #  ifdef MASKING
-     &                          GRID(dg)%rmask,                         &
+     &                          GRID(dg)%rmask_full,                    &
      &                          GRID(rg)%rmask,                         &
 #  endif
      &                          COUPLING(dg)%Zt_avg1,                   &
@@ -4117,7 +4117,11 @@
 # endif
               END DO
             END DO
-            IF (my_count.gt.0.0_r8) my_avg=my_sum/my_count
+            IF (my_count.gt.0.0_r8) THEN
+              my_avg=my_sum/my_count
+            ELSE
+              my_avg=C1(Ic,Jc)
+            END IF
 # ifdef MASKING
             my_avg=my_avg*Cmsk(Ic,Jc)
 # endif
