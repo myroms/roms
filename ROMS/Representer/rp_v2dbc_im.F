@@ -3,7 +3,7 @@
 #ifdef TL_IOMS
 !
 !git $Id$
-!svn $Id: rp_v2dbc_im.F 1058 2021-03-25 19:04:23Z arango $
+!svn $Id: rp_v2dbc_im.F 1060 2021-04-24 03:32:24Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -1812,8 +1812,8 @@
         IF (DOMAIN(ng)%SouthWest_Corner(tile)) THEN
           IF ((LBC_apply(ng)%south(Istr-1).and.                         &
      &         LBC_apply(ng)%west (Jstr  )).or.                         &
-     &        (LBC(iwest,isUbar,ng)%nested.and.                         &
-     &         LBC(isouth,isUbar,ng)%nested)) THEN
+     &        (LBC(iwest,isVbar,ng)%nested.and.                         &
+     &         LBC(isouth,isVbar,ng)%nested)) THEN
 !>          cff1=ABS(ABS(GRID(ng)%vmask_wet(Istr-1,Jstr))-1.0_r8)
 !>          cff2=0.5_r8+DSIGN(0.5_r8,vbar(Istr-1,Jstr,kout))*           &
 !>   &                  GRID(ng)%vmask_wet(Istr-1,Jstr)
@@ -1825,8 +1825,8 @@
         IF (DOMAIN(ng)%SouthEast_Corner(tile)) THEN
           IF ((LBC_apply(ng)%south(Iend+1).and.                         &
      &         LBC_apply(ng)%east (Jstr  )).or.                         &
-     &        (LBC(ieast,isUbar,ng)%nested.and.                         &
-     &         LBC(isouth,isUbar,ng)%nested)) THEN
+     &        (LBC(ieast,isVbar,ng)%nested.and.                         &
+     &         LBC(isouth,isVbar,ng)%nested)) THEN
 !>          cff1=ABS(ABS(GRID(ng)%vmask_wet(Iend+1,Jstr))-1.0_r8)
 !>          cff2=0.5_r8+DSIGN(0.5_r8,vbar(Iend+1,Jstr,kout))*           &
 !>   &                  GRID(ng)%vmask_wet(Iend+1,Jstr)
@@ -1838,8 +1838,8 @@
         IF (DOMAIN(ng)%NorthWest_Corner(tile)) THEN
           IF ((LBC_apply(ng)%north(Istr-1).and.                         &
      &         LBC_apply(ng)%west (Jend+1)).or.                         &
-     &        (LBC(iwest,isUbar,ng)%nested.and.                         &
-     &         LBC(inorth,isUbar,ng)%nested)) THEN
+     &        (LBC(iwest,isVbar,ng)%nested.and.                         &
+     &         LBC(inorth,isVbar,ng)%nested)) THEN
 !>          cff1=ABS(ABS(GRID(ng)%vmask_wet(Istr-1,Jend+1))-1.0_r8)
 !>          cff2=0.5_r8+DSIGN(0.5_r8,vbar(Istr-1,Jend+1,kout))*         &
 !>   &                  GRID(ng)%vmask_wet(Istr-1,Jend+1)
@@ -1851,8 +1851,8 @@
         IF (DOMAIN(ng)%NorthEast_Corner(tile)) THEN
           IF ((LBC_apply(ng)%north(Iend+1).and.                         &
      &         LBC_apply(ng)%east (Jend+1)).or.                         &
-     &        (LBC(ieast,isUbar,ng)%nested.and.                         &
-     &         LBC(inorth,isUbar,ng)%nested)) THEN
+     &        (LBC(ieast,isVbar,ng)%nested.and.                         &
+     &         LBC(inorth,isVbar,ng)%nested)) THEN
 !>          cff1=ABS(ABS(GRID(ng)%vmask_wet(Iend+1,Jend+1))-1.0_r8)
 !>          cff2=0.5_r8+DSIGN(0.5_r8,vbar(Iend+1,Jend+1,kout))*         &
 !>   &                  GRID(ng)%vmask_wet(Iend+1,Jend+1)
