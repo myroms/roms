@@ -5,7 +5,7 @@
       MODULE interpolate_mod
 !
 !git $Id$
-!svn $Id: interpolate.F 1054 2021-03-06 19:47:12Z arango $
+!svn $Id: interpolate.F 1060 2021-04-24 03:32:24Z arango $
 !=======================================================================
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -24,19 +24,98 @@
 !                                                                      !
 !=======================================================================
 !
-      USE mod_kinds
-
+      USE mod_param
+      USE mod_parallel
+      USE mod_scalars
+!
+      USE mod_iounits, ONLY : stdout
+      USE strings_mod, ONLY : FoundError
+!
       implicit none
+!
+!-----------------------------------------------------------------------
+!  Set ROMS interpolation structure for Object Oriented Programming.
+!-----------------------------------------------------------------------
+!
+      TYPE :: roms_interp_type
 
+        logical :: rectangular = .FALSE.            ! plaid grid switch
+!
+        integer :: ng                               ! nested grid number
+!
+        real(r8):: spval = 0.0_r8                   ! unbounded value
+!
+!  Source grid array declaration bounds, tile partition range,
+!  longitude/latitude, curvilinear angle, and land/sea mask
+!
+        integer :: LBi_src, UBi_src, LBj_src, UBj_src
+        integer :: Istr_src, Iend_src, Jstr_src, Jend_src
+!
+        real(r8) :: min_src, max_src
+!
+        real(r8), pointer, dimension(:,:) :: lon_src   => NULL()
+        real(r8), pointer, dimension(:,:) :: lat_src   => NULL()
+
+        real(r8), pointer, dimension(:,:) :: angle_src => NULL()
+        real(r8), pointer, dimension(:,:) :: mask_src  => NULL()
+!
+!  Destination grid array declaration bounds, tile partition range,
+!  longitude/latitude, fractional coordinates, and land/sea mask.
+!
+        integer :: LBi_dst, UBi_dst, LBj_dst, UBj_dst
+        integer :: Istr_dst, Iend_dst, Jstr_dst, Jend_dst
+!
+        real(r8) :: min_dst, max_dst
+!
+        real(r8), pointer, dimension(:,:) :: lon_dst  => NULL()
+        real(r8), pointer, dimension(:,:) :: lat_dst  => NULL()
+
+        real(r8), pointer, dimension(:,:) :: x_dst    => NULL()
+        real(r8), pointer, dimension(:,:) :: y_dst    => NULL()
+
+        real(r8), pointer, dimension(:,:) :: mask_dst => NULL()
+
+      END TYPE roms_interp_type
+!
+!  Interpolation methods available
+!
+      integer, parameter :: BilinearMethod = 0    ! bilinear
+      integer, parameter :: BicubicMethod = 1     ! bicubic
+!
+!-----------------------------------------------------------------------
+!  Interface for same name routine overloading.
+!-----------------------------------------------------------------------
+!
+     INTERFACE roms_horiz_interp
+       MODULE PROCEDURE roms_horiz_interp_2d
+       MODULE PROCEDURE roms_horiz_interp_3d
+     END INTERFACE roms_horiz_interp
+!
+!-----------------------------------------------------------------------
+!  Interpolation routines.
+!-----------------------------------------------------------------------
+!
+      PUBLIC  :: linterp2d
+      PUBLIC  :: cinterp2d
+      PUBLIC  :: hindices
+!
+      PUBLIC  :: roms_interp_delete
+      PUBLIC  :: roms_interp_fractional
+!
+      PRIVATE :: inside
+      PRIVATE :: try_range
+!
+!-----------------------------------------------------------------------
       CONTAINS
-
+!-----------------------------------------------------------------------
+!
       SUBROUTINE linterp2d (ng, LBx, UBx, LBy, UBy,                     &
      &                      Xinp, Yinp, Finp,                           &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      Istr, Iend, Jstr, Jend,                     &
      &                      Iout, Jout,                                 &
      &                      Xout, Yout,                                 &
-     &                      Fout, Fmin, Fmax)
+     &                      Fout, MinVal, MaxVal)
 !
 !=======================================================================
 !                                                                      !
@@ -72,13 +151,10 @@
 !  On Output:                                                          !
 !                                                                      !
 !     Fout       Interpolated 2D field.                                !
-!     Fmin       Interpolated field minimum value.                     !
-!     Fmax       Interpolated field maximum value.                     !
+!     MinVal     Interpolated field minimum value (Optional).          !
+!     MaxVal     Interpolated field maximum value (Optional).          !
 !                                                                      !
 !=======================================================================
-!
-      USE mod_param
-      USE mod_scalars
 !
 !  Imported variable declarations.
 !
@@ -97,13 +173,15 @@
 
       real(r8), intent(out) :: Fout(LBi:UBi,LBj:UBj)
 !
-      real(r8), intent(out) :: Fmin, Fmax
+      real(r8), intent(out), optional :: MinVal
+      real(r8), intent(out), optional :: MaxVal
 !
 !  Local variable declarations.
 !
       integer :: i, i1, i2, j, j1, j2
-
+!
       real(r8) :: p1, p2, q1, q2
+      real(r8) :: Fmin, Fmax
 !
 !-----------------------------------------------------------------------
 !  Linearly interpolate requested field
@@ -132,16 +210,26 @@
           END IF
         END DO
       END DO
-
+!
+!  Return minimum and maximum values.
+!
+      IF (PRESENT(MinVal)) THEN
+        MinVal=Fmin
+      END IF
+      IF (PRESENT(MaxVal)) THEN
+        MaxVal=Fmax
+      END IF
+!
+      RETURN
       END SUBROUTINE linterp2d
-
+!
       SUBROUTINE cinterp2d (ng, LBx, UBx, LBy, UBy,                     &
      &                      Xinp, Yinp, Finp,                           &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      Istr, Iend, Jstr, Jend,                     &
      &                      Iout, Jout,                                 &
      &                      Xout, Yout,                                 &
-     &                      Fout, Fmin, Fmax)
+     &                      Fout, MinVal, MaxVal)
 !
 !=======================================================================
 !                                                                      !
@@ -178,13 +266,10 @@
 !  On Output:                                                          !
 !                                                                      !
 !     Fout       Interpolated 2D field.                                !
-!     Fmin       Interpolated field minimum value.                     !
-!     Fmax       Interpolated field maximum value.                     !
+!     MinVal     Interpolated field minimum value (OPTIONAL).          !
+!     MaxVal     Interpolated field maximum value (OPTIONAL).          !
 !                                                                      !
 !=======================================================================
-!
-      USE mod_param
-      USE mod_scalars
 !
 !  Imported variable declarations.
 !
@@ -203,17 +288,18 @@
 
       real(r8), intent(out) :: Fout(LBi:UBi,LBj:UBj)
 !
-      real(r8), intent(out) :: Fmin, Fmax
+      real(r8), intent(out), optional :: MinVal
+      real(r8), intent(out), optional :: MaxVal
 !
 !  Local variable declarations.
 !
       integer i, ic, iter, i1, i2, j, jc, j1, j2
-
+!
       real(r8) :: a11, a12, a21, a22
       real(r8) :: e11, e12, e21, e22
       real(r8) :: cff, d1, d2, dfc, dx, dy, eta, xi, xy, yx
       real(r8) :: f0, fx, fxx, fxxx, fxxy, fxy, fxyy, fy, fyy, fyyy
-
+!
       real(r8), parameter :: C01 = 1.0_r8/48.0_r8
       real(r8), parameter :: C02 = 1.0_r8/32.0_r8
       real(r8), parameter :: C03 = 0.0625_r8                  ! 1/16
@@ -228,6 +314,8 @@
       real(r8), parameter :: LIMTR = 3.0_r8
       real(r8), parameter :: spv = 0.0_r8            ! HGA need work
 
+      real(r8) :: Fmin, Fmax
+!
       real(r8), dimension(-1:2,-1:2) :: dfx, dfy, f
 !
 !-----------------------------------------------------------------------
@@ -563,10 +651,19 @@
           END IF
         END DO
       END DO
-
+!
+!  Return minimum and maximum values.
+!
+      IF (PRESENT(MinVal)) THEN
+        MinVal=Fmin
+      END IF
+      IF (PRESENT(MaxVal)) THEN
+        MaxVal=Fmax
+      END IF
+!
       RETURN
       END SUBROUTINE cinterp2d
-
+!
       SUBROUTINE hindices (ng, LBi, UBi, LBj, UBj,                      &
      &                     Is, Ie, Js, Je,                              &
      &                     angler, Xgrd, Ygrd,                          &
@@ -619,9 +716,6 @@
 !  Calls:    Try_Range                                                 !
 !                                                                      !
 !=======================================================================
-!
-      USE mod_param
-      USE mod_scalars
 !
 !  Imported variable declarations.
 !
@@ -780,10 +874,10 @@
           END IF
         END DO
       END DO
-
+!
       RETURN
       END SUBROUTINE hindices
-
+!
       LOGICAL FUNCTION try_range (ng, LBi, UBi, LBj, UBj, Xgrd, Ygrd,   &
      &                            Imin, Imax, Jmin, Jmax, Xo, Yo)
 !
@@ -798,8 +892,6 @@
 !  Calls:   inside                                                     !
 !                                                                      !
 !=======================================================================
-!
-      USE mod_param
 !
 !  Imported variable declarations.
 !
@@ -858,9 +950,10 @@
 !-----------------------------------------------------------------------
 !
       try_range=inside(Nb, Xb, Yb, Xo, Yo)
+!
       RETURN
       END FUNCTION try_range
-
+!
       LOGICAL FUNCTION inside (Nb, Xb, Yb, Xo, Yo)
 !
 !=======================================================================
@@ -1018,7 +1111,224 @@
       ELSE
         inside=.TRUE.
       END IF
+!
       RETURN
       END FUNCTION inside
+!
+      SUBROUTINE roms_horiz_interp_2d (S, fld_src, fld_dst, method)
+!
+!=======================================================================
+!                                                                      !
+!  Horizontal interpolates a 2D ROMS field.                            !
+!                                                                      !
+!  On Input:                                                           !
+!                                                                      !
+!     S          Interpolation structure, TYPE(roms_interp_type),      !
+!                  initialized elsewhere.                              !
+!     fld_src    2D field source data (real).                          !
+!     method     Interpolation method flag (integer)                   !
+!                  BilinearMethod => bilinear interpolation            !
+!                  BicubicMethod  => bicubic  interpolation            !
+!                                                                      !
+!  On Output:                                                          !
+!                                                                      !
+!     fld_src    2D inrwepolated field data (real).                    !
+!                                                                      !
+!=======================================================================
+!
+!  Imported variable declarations.
+!
+      TYPE (roms_interp_type), intent(inout) :: S
+!
+      real(r8), intent( in) :: fld_src(:,:)
+      real(r8), intent(out) :: fld_dst(:,:)
+!
+      integer,  intent( in) :: method
+!
+!  Local variable declarations.
+!
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__//", roms_horiz_interp_2d"
+!
+!-----------------------------------------------------------------------
+!  Interpolate 2D field.
+!-----------------------------------------------------------------------
+!
+      SELECT CASE (method)
+        CASE (BilinearMethod)
+          CALL linterp2d (S%ng,                                         &
+     &                    S%LBi_src, S%UBi_src, S%LBj_src, S%UBj_src,   &
+     &                    S%lon_src, S%lat_src, fld_src,                &
+     &                    S%LBi_dst, S%UBi_dst, S%LBj_dst, S%UBj_dst,   &
+     &                    S%Istr_dst, S%Iend_dst,                       &
+     &                    S%Jstr_dst, S%Jend_dst,                       &
+     &                    S%x_dst, S%y_dst, S%lon_dst, S%lat_dst,       &
+     &                    fld_dst,                                      &
+     &                    MinVal = S%min_dst,                           &
+     &                    MaxVal = S%max_dst)
+        CASE (BicubicMethod)
+          CALL cinterp2d (S%ng,                                         &
+     &                    S%LBi_src, S%UBi_src, S%LBj_src, S%UBj_src,   &
+     &                    S%lon_src, S%lat_src, fld_src,                &
+     &                    S%LBi_dst, S%UBi_dst, S%LBj_dst, S%UBj_dst,   &
+     &                    S%Istr_dst, S%Iend_dst,                       &
+     &                    S%Jstr_dst, S%Jend_dst,                       &
+     &                    S%x_dst, S%y_dst, S%lon_dst, S%lat_dst,       &
+     &                    fld_dst,                                      &
+     &                    MinVal = S%min_dst,                           &
+     &                    MaxVal = S%max_dst)
+        CASE DEFAULT
+          IF (Master) WRITE(stdout,10) method
+          exit_flag=5
+      END SELECT
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+!
+  10  FORMAT (' ROMS_HORIZ_INTERP_2D - Illegal interpolation method =', &
+     &        i0)
+!
+      RETURN
+      END SUBROUTINE roms_horiz_interp_2d
+!
+      SUBROUTINE roms_horiz_interp_3d (S, fld_src, fld_dst, method)
+!
+!=======================================================================
+!                                                                      !
+!  Horizontal interpolates a 3D ROMS field level-by-level. There is    !
+!  no vertical interpolation.                                          !
+!                                                                      !
+!  On Input:                                                           !
+!                                                                      !
+!     S          Interpolation structure, TYPE(roms_interp_type),      !
+!                  initialized elsewhere.                              !
+!     fld_src    3D field source data (real).                          !
+!     method     Interpolation method flag (integer)                   !
+!                  BilinearMethod => bilinear interpolation            !
+!                  BicubicMethod  => bicubic  interpolation            !
+!                                                                      !
+!  On Output:                                                          !
+!                                                                      !
+!     fld_src    3D interpolated field data (real).                    !
+!                                                                      !
+!=======================================================================
+!
+!  Imported variable declarations.
+!
+      TYPE (roms_interp_type), intent(inout) :: S
+!
+      real(r8), intent( in) :: fld_src(:,:,:)
+      real(r8), intent(out) :: fld_dst(:,:,:)
+!
+      integer,  intent( in) :: method
+!
+!  Local variable declarations.
+!
+      integer :: k, nk
+!
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__//", roms_horiz_interp_3d"
+!
+!-----------------------------------------------------------------------
+!  Interpolate 3D field level-by-level.
+!-----------------------------------------------------------------------
+!
+      nk=SIZE(fld_src, DIM=3)!
+!
+      SELECT CASE (method)
+        CASE (BilinearMethod)
+          DO k=1,nk
+            CALL linterp2d (S%ng,                                       &
+     &                      S%LBi_src, S%UBi_src, S%LBj_src, S%UBj_src, &
+     &                      S%lon_src, S%lat_src, fld_src(:,:,k),       &
+     &                      S%LBi_dst, S%UBi_dst, S%LBj_dst, S%UBj_dst, &
+     &                      S%Istr_dst, S%Iend_dst,                     &
+     &                      S%Jstr_dst, S%Jend_dst,                     &
+     &                      S%x_dst, S%y_dst, S%lon_dst, S%lat_dst,     &
+     &                      fld_dst(:,:,k),                             &
+     &                      MinVal = S%min_dst,                         &
+     &                      MaxVal = S%max_dst)
+          END DO
+        CASE (BicubicMethod)
+          DO k=1,nk
+            CALL cinterp2d (S%ng,                                       &
+     &                      S%LBi_src, S%UBi_src, S%LBj_src, S%UBj_src, &
+     &                      S%lon_src, S%lat_src, fld_src(:,:,k),       &
+     &                      S%LBi_dst, S%UBi_dst, S%LBj_dst, S%UBj_dst, &
+     &                      S%Istr_dst, S%Iend_dst,                     &
+     &                      S%Jstr_dst, S%Jend_dst,                     &
+     &                      S%x_dst, S%y_dst, S%lon_dst, S%lat_dst,     &
+     &                      fld_dst(:,:,k),                             &
+     &                      MinVal = S%min_dst,                         &
+     &                      MaxVal = S%max_dst)
+          END DO
+        CASE DEFAULT
+          IF (Master) WRITE(stdout,10) method
+          exit_flag=5
+      END SELECT
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+!
+  10  FORMAT (' ROMS_HORIZ_INTERP_3D - Illegal interpolation method =', &
+     &        i0)
+!
+      RETURN
+      END SUBROUTINE roms_horiz_interp_3d
+!
+      SUBROUTINE roms_interp_delete (S)
+!
+!=======================================================================
+!                                                                      !
+!  Deallocates pointer arrays in the intepolation structure, S.        !
+!                                                                      !
+!=======================================================================
+!
+!  Imported variable declarations.
+!
+      TYPE (roms_interp_type), intent(inout) :: S
+!
+!-----------------------------------------------------------------------
+!  Deallocate interpolation structure.
+!-----------------------------------------------------------------------
+!
+      IF (associated(S%angle_src)) deallocate (S%angle_src)
+      IF (associated(S%lon_src))   deallocate (S%lon_src)
+      IF (associated(S%lat_src))   deallocate (S%lat_src)
+      IF (associated(S%mask_src))  deallocate (S%mask_src)
 
+      IF (associated(S%lon_dst))   deallocate (S%lon_dst)
+      IF (associated(S%lat_dst))   deallocate (S%lat_dst)
+      IF (associated(S%mask_dst))  deallocate (S%mask_dst)
+      IF (associated(S%x_dst))     deallocate (S%x_dst)
+      IF (associated(S%y_dst))     deallocate (S%y_dst)
+!
+      RETURN
+      END SUBROUTINE roms_interp_delete
+!
+      SUBROUTINE roms_interp_fractional (S)
+!
+!=======================================================================
+!                                                                      !
+!  Computes the horizontal fractional coordinates (S%x_dst, S%y_dst)   !
+!  of the source cells containing the destination values.              !
+!                                                                      !
+!=======================================================================
+!
+!  Imported variable declarations.
+!
+      TYPE (roms_interp_type), intent(inout) :: S
+!
+!-----------------------------------------------------------------------
+!  Determine the horizontal fractional coordinates
+!-----------------------------------------------------------------------
+!
+      CALL hindices (S%ng,                                              &
+     &               S%LBi_src,   S%UBi_src,  S%LBj_src,  S%UBj_src,    &
+     &               S%Istr_src , S%Iend_src, S%Jstr_src, S%Jend_src,   &
+     &               S%angle_src, S%lon_src,  S%lat_src,                &
+     &               S%LBi_dst,   S%UBi_dst,  S%LBj_dst,  S%UBj_dst,    &
+     &               S%Istr_dst,  S%Iend_dst, S%Jstr_src, S%Jend_dst,   &
+     &               S%lon_dst,   S%lat_dst,  S%x_dst,    S%y_dst,      &
+     &               S%spval,     S%rectangular)
+!
+      RETURN
+      END SUBROUTINE roms_interp_fractional
+!
       END MODULE interpolate_mod
