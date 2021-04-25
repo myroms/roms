@@ -1,5 +1,5 @@
 # git $Id$
-# svn $Id: compiler_flags_Intel_Fortran.cmake 1054 2021-03-06 19:47:12Z arango $
+# svn $Id: compiler_flags_Intel_Fortran.cmake 1061 2021-04-25 20:09:38Z arango $
 #:::::::::::::::::::::::::::::::::::::::::::::::::::::: David Robertson :::
 # Copyright (c) 2002-2021 The ROMS/TOMS Group                           :::
 #   Licensed under a MIT/X style license                                :::
@@ -13,7 +13,11 @@
 ###########################################################################
 
 if( MPI )
-  set( CMAKE_Fortran_COMPILER mpif90 )
+  if( ${COMM} MATCHES "intel")
+    set( CMAKE_Fortran_COMPILER mpiifort )
+  else()
+    set( CMAKE_Fortran_COMPILER mpif90 )
+  endif()
 else()
   set( CMAKE_Fortran_COMPILER ifort )
 endif()

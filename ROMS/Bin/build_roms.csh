@@ -1,7 +1,7 @@
 #!/bin/csh -f
 #
 # git $Id$
-# svn $Id: build_roms.csh 1054 2021-03-06 19:47:12Z arango $
+# svn $Id: build_roms.csh 1061 2021-04-25 20:09:38Z arango $
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # Copyright (c) 2002-2021 The ROMS/TOMS Group                           :::
 #   Licensed under a MIT/X style license                                :::
@@ -161,6 +161,7 @@ setenv MY_PROJECT_DIR        ${PWD}
 
  setenv USE_MPI             on          # distributed-memory parallelism
  setenv USE_MPIF90          on          # compile with mpif90 script
+#setenv which_MPI           intel       # compile with mpiifort library
 #setenv which_MPI           mpich       # compile with MPICH library
 #setenv which_MPI           mpich2      # compile with MPICH2 library
 #setenv which_MPI           mvapich2    # compile with MVAPICH2 library
