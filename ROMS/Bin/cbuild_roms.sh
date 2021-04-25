@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 # git $Id$
-# svn $Id: cbuild_roms.sh 1054 2021-03-06 19:47:12Z arango $
+# svn $Id: cbuild_roms.sh 1061 2021-04-25 20:09:38Z arango $
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # Copyright (c) 2002-2021 The ROMS/TOMS Group                           :::
 #   Licensed under a MIT/X style license                                :::
@@ -161,6 +161,7 @@ export     MY_PROJECT_DIR=${PWD}
 
  export           USE_MPI=on               # distributed-memory parallelism
  export        USE_MPIF90=on               # compile with mpif90 script
+#export         which_MPI=intel            # compile with mpiifort library
 #export         which_MPI=mpich            # compile with MPICH library
 #export         which_MPI=mpich2           # compile with MPICH2 library
 #export         which_MPI=mvapich2         # compile with MVAPICH2 library
@@ -263,6 +264,12 @@ else
   mpi=""
 fi
 
+if [[ ! -z "${USE_MPIF90}" && "${USE_MPIF90}" == "on" ]]; then
+  comm="-DCOMM=${which_MPI}"
+else
+  comm=""
+fi
+
 if [ ! -z "${ROMS_EXECUTABLE}" ]; then
   if [[ "${ROMS_EXECUTABLE}" == "ON" ]]; then
     roms_exec="-DROMS_EXECUTABLE=ON"
@@ -295,6 +302,7 @@ if [ $dprint -eq 0 ]; then
                 ${parpack_ldir} \
                 ${arpack_ldir} \
                 ${mpi} \
+                ${comm} \
                 ${roms_exec} \
                 ${dbg} \
                 ${MY_ROMS_SRC}
@@ -307,6 +315,7 @@ if [ $dprint -eq 0 ]; then
                   ${parpack_ldir} \
                   ${arpack_ldir} \
                   ${mpi} \
+                  ${comm} \
                   ${roms_exec} \
                   ${dbg} \
                   ${MY_ROMS_SRC}

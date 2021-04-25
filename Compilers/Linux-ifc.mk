@@ -1,5 +1,5 @@
 # git $Id$
-# svn $Id: Linux-ifc.mk 1054 2021-03-06 19:47:12Z arango $
+# svn $Id: Linux-ifc.mk 1061 2021-04-25 20:09:38Z arango $
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # Copyright (c) 2002-2021 The ROMS/TOMS Group                           :::
 #   Licensed under a MIT/X style license                                :::
@@ -66,9 +66,13 @@ endif
 ifdef USE_MPI
          CPPFLAGS += -DMPI
  ifdef USE_MPIF90
-               FC := /opt/intelsoft/mpich2/bin/mpif90
+  ifeq ($(which_MPI), intel)
+               FC := mpiifort
+  else
+               FC := mpif90
+  endif
  else
-             LIBS += -lfmpi-pgi -lmpi-pgi
+             LIBS += -lfmpi -lmpi
  endif
 endif
 
