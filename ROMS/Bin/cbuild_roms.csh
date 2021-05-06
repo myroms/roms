@@ -1,7 +1,7 @@
 #!/bin/csh -ef
 #
 # git $Id$
-# svn $Id: cbuild_roms.csh 1061 2021-04-25 20:09:38Z arango $
+# svn $Id: cbuild_roms.csh 1062 2021-05-06 01:50:38Z arango $
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # Copyright (c) 2002-2021 The ROMS/TOMS Group                           :::
 #   Licensed under a MIT/X style license                                :::
@@ -220,17 +220,55 @@ else
   else
     echo "-noclean option activated when the build directory didn't exist"
     echo "creating the directory and disabling -noclean"
-    clean=1
+    set clean = 1
     mkdir ${SCRATCH_DIR}
     cd ${SCRATCH_DIR}
   endif
 endif
 
 #--------------------------------------------------------------------------
+# Add enviromental variables constructed in 'makefile' to MY_CPP_FLAGS
+# so can be passed to ROMS.
+#--------------------------------------------------------------------------
+
+set ANALYTICAL_DIR = "ANALYTICAL_DIR='${MY_ANALYTICAL_DIR}'"
+set HEADER = `echo ${ROMS_APPLICATION} | tr '[:upper:]' '[:lower:]'`.h
+set HEADER_DIR = "HEADER_DIR='${MY_HEADER_DIR}'"
+set ROOT_DIR = "ROOT_DIR='${MY_ROMS_SRC}'"
+
+setenv MY_CPP_FLAGS "${MY_CPP_FLAGS} -D${ANALYTICAL_DIR}"
+setenv MY_CPP_FLAGS "${MY_CPP_FLAGS} -D${HEADER_DIR}"
+setenv MY_CPP_FLAGS "${MY_CPP_FLAGS} -D${ROOT_DIR}"
+
+if ( -d ${MY_ROMS_SRC}/.git ) then
+  cd ${MY_ROMS_SRC}
+  set GITURL  = "`git config --get remote.origin.url`"
+  set GITREV  = "`git rev-parse --verify HEAD`"
+  set GIT_URL = "GIT_URL='${GITURL}'"
+  set GIT_REV = "GIT_REV='${GITREV}'"
+  set SVN_URL = "SVN_URL='https://www.myroms.org/svn/src'"
+
+  setenv MY_CPP_FLAGS "${MY_CPP_FLAGS} -D${GIT_URL}"
+  setenv MY_CPP_FLAGS "${MY_CPP_FLAGS} -D${GIT_REV}"
+  setenv MY_CPP_FLAGS "${MY_CPP_FLAGS} -D${SVN_URL}"
+  cd ${SCRATCH_DIR}
+else
+  cd ${MY_ROMS_SRC}
+  set SVNURL  = "`svn info | grep '^URL:' | sed 's/URL: //'`"
+  set SVNREV  = "`svn info | grep '^Revision:' | sed 's/Revision: //'`"
+  set SVN_URL = "SVN_URL='${SVNURL}'"
+  set SVN_REV = "SVN_REV='${SVNREV}'"
+
+  setenv MY_CPP_FLAGS "${MY_CPP_FLAGS} -D${SVN_URL}"
+  setenv MY_CPP_FLAGS "${MY_CPP_FLAGS} -D${SVN_REV}"
+  cd ${SCRATCH_DIR}
+endif
+
+#--------------------------------------------------------------------------
 # Configure.
 #--------------------------------------------------------------------------
 
-# Construct the ecbuild command.
+# Construct the cmake/ecbuild command.
 
 if ( $?LIBTYPE ) then
   set ltype="-DLIBTYPE=${LIBTYPE}"
@@ -327,6 +365,7 @@ if ( $dprint == 0 ) then
                 ${parpack_ldir} \
                 ${arpack_ldir} \
                 ${mpi} \
+                ${comm} \
                 ${roms_exec} \
                 ${dbg} \
                 ${MY_ROMS_SRC}
@@ -338,6 +377,7 @@ if ( $dprint == 0 ) then
                   ${parpack_ldir} \
                   ${arpack_ldir} \
                   ${mpi} \
+                  ${comm} \
                   ${roms_exec} \
                   ${dbg} \
                   ${MY_ROMS_SRC}
