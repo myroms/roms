@@ -2,7 +2,7 @@
 ** Include file "globaldef.h"
 **
 ** git $Id$
-** svn $Id: globaldefs.h 1054 2021-03-06 19:47:12Z arango $
+** svn $Id: globaldefs.h 1062 2021-05-06 01:50:38Z arango $
 ********************************************************** Hernan G. Arango ***
 ** Copyright (c) 2002-2021 The ROMS/TOMS Group     Alexander F. Shchepetkin  **
 **   Licensed under a MIT/X style license                                    **
@@ -778,6 +778,7 @@
 #if defined MODEL_COUPLING && \
     defined ESMF_LIB
 # define REGRESS_STARTCLOCK
+# define ESM_SETRUNCLOCK
 #endif
 
 /*

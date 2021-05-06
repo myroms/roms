@@ -2,7 +2,7 @@
       SUBROUTINE checkdefs
 !
 !git $Id$
-!svn $Id: checkdefs.F 1054 2021-03-06 19:47:12Z arango $
+!svn $Id: checkdefs.F 1063 2021-05-06 02:05:21Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -981,6 +981,14 @@
      &   'Ensemble Forecasting Propagator'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+10)=' ENSEMBLE,'
+#endif
+#if defined ESM_SETRUNCLOCK && defined MODEL_COUPLING && \
+    defined ESMF_LIB
+!
+      IF (Master) WRITE (stdout,20) 'ESM_SETRUNCLOCK',                     &
+     &   'Sets coupled component specialized SetRunClock method'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+17)=' ESM_SETRUNCLOCK,'
 #endif
 #if defined EVOLVED_LCZ && defined FOUR_DVAR
 !

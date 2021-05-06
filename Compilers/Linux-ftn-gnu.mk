@@ -1,5 +1,5 @@
 # git $Id$
-# svn $Id: Linux-ftn-gnu.mk 1054 2021-03-06 19:47:12Z arango $
+# svn $Id: Linux-ftn-gnu.mk 1062 2021-05-06 01:50:38Z arango $
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # Copyright (c) 2002-2021 The ROMS/TOMS Group                           :::
 #   Licensed under a MIT/X style license                                :::
@@ -117,7 +117,7 @@ ifdef USE_WRF
              LIBS += $(WRF_LIB_DIR)/external/io_grib1/libio_grib1.a
              LIBS += $(WRF_LIB_DIR)/external/io_grib_share/libio_grib_share.a
              LIBS += $(WRF_LIB_DIR)/external/io_int/libwrfio_int.a
-             LIBS += $(WRF_LIB_DIR)/external/esmf_time_f90/libmyesmf_time.a
+             LIBS += $(WRF_LIB_DIR)/external/esmf_time_f90/libesmf_time.a
              LIBS += $(WRF_LIB_DIR)/external/RSL_LITE/librsl_lite.a
              LIBS += $(WRF_LIB_DIR)/frame/module_internal_header_util.o
              LIBS += $(WRF_LIB_DIR)/frame/pack_utils.o
@@ -130,7 +130,7 @@ ifdef USE_WRF
              LIBS += $(WRF_LIB_DIR)/libio_grib1.a
              LIBS += $(WRF_LIB_DIR)/libio_grib_share.a
              LIBS += $(WRF_LIB_DIR)/libwrfio_int.a
-             LIBS += $(WRF_LIB_DIR)/libmyesmf_time.a
+             LIBS += $(WRF_LIB_DIR)/libesmf_time.a
              LIBS += $(WRF_LIB_DIR)/librsl_lite.a
              LIBS += $(WRF_LIB_DIR)/module_internal_header_util.o
              LIBS += $(WRF_LIB_DIR)/pack_utils.o
