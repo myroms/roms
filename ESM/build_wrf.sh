@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 # git $Id$
-# svn $Id: build_wrf.sh 1062 2021-05-06 01:50:38Z arango $
+# svn $Id: build_wrf.sh 1064 2021-05-10 19:55:56Z arango $
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # Copyright (c) 2002-2021 The ROMS/TOMS Group                           :::
 #::::::::::::::::::::::::::::::::::::::::::::::::::::: Hernan G. Arango :::
@@ -229,7 +229,7 @@ export  WRF_BIN_DIR=${WRF_BUILD_DIR}/Bin
 # column for distributed-memory configuration.
 #--------------------------------------------------------------------------
 
-# Clean source code and remove build directory.
+# Clean source code.
 
 if [ "$clean" -eq "1" ]; then
   echo ""
@@ -237,8 +237,7 @@ if [ "$clean" -eq "1" ]; then
   echo "Cleaning WRF source code:  ${WRF_ROOT_DIR}/clean -a"
   echo "${separator}"
   echo ""
-  ${WRF_ROOT_DIR}/clean -a            # clean source code
-  /bin/rm -rf ${WRF_BUILD_DIR}        # remove existing build directories
+  ${WRF_ROOT_DIR}/clean -a
 fi
 
 if [ -n "${USE_DEBUG:+1}" ]; then
@@ -362,6 +361,17 @@ fi
 export WRF_DA_CORE=0             # no Data Assimilation core
 export WRF_EM_CORE=1             # Eurelian Mass-coordinate core
 export WRF_NMM_CORE=0            # Nonhydrostatic Mesoscale Model core
+
+# Remove existing build directory.
+
+if [ "$clean" -eq "1" ]; then
+  echo ""
+  echo "${separator}"
+  echo "Removing WRF build directory:  ${WRF_BUILD_DIR}"
+  echo "${separator}"
+  echo ""
+  /bin/rm -rf ${WRF_BUILD_DIR}
+fi
 
 # Compile (the binary will go to BINDIR set above).
 

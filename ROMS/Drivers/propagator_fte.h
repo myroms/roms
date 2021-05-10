@@ -1,7 +1,7 @@
       SUBROUTINE propagator (RunInterval, state, tl_state)
 !
 !git $Id$
-!svn $Id: propagator_fte.h 1054 2021-03-06 19:47:12Z arango $
+!svn $Id: propagator_fte.h 1064 2021-05-10 19:55:56Z arango $
 !************************************************** Hernan G. Arango ***
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -34,6 +34,7 @@
       USE mod_scalars
       USE mod_stepping
 !
+      USE close_io_mod,   ONLY : close_inp
       USE dotproduct_mod, ONLY : tl_statenorm
       USE packing_mod,    ONLY : tl_unpack, tl_pack
 #ifdef SOLVE3D

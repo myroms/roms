@@ -1,7 +1,7 @@
 #!/bin/csh -ef
 #
 # git $Id$
-# svn $Id: cbuild_roms.csh 1062 2021-05-06 01:50:38Z arango $
+# svn $Id: cbuild_roms.csh 1064 2021-05-10 19:55:56Z arango $
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # Copyright (c) 2002-2021 The ROMS/TOMS Group                           :::
 #   Licensed under a MIT/X style license                                :::
@@ -149,8 +149,11 @@ end
 #    setenv MY_CPP_FLAGS "${MY_CPP_FLAGS} -DDEBUGGING"
 
 #--------------------------------------------------------------------------
-# Compilation options and paths.
+# Compilation options.
 #--------------------------------------------------------------------------
+
+# Set this option to "on" if you wish to use the "ecbuild" CMake wrapper.
+# Setting this to "off" or commenting it out will use cmake directly.
 
 #setenv USE_ECBUILD          on              # use "ecbuild" wrapper
 
@@ -167,7 +170,22 @@ end
 #setenv FORT                 pgi
 
 #setenv USE_DEBUG            on              # use Fortran debugging flags
-#setenv USE_NETCDF4          on              # use NetCDF4
+
+# ROMS I/O choices and combinations. A more complete description of the
+# available options can be found in the wiki (https://myroms.org/wiki/IO).
+# Most users will want to enable at least USE_NETCDF4 because that will
+# instruct the ROMS build system to use nf-config to determine the
+# necessary libraries and paths to link into the ROMS executable.
+
+ setenv USE_NETCDF4          on              # compile with NetCDF4 library
+#setenv USE_PARALLEL_IO      on              # Parallel I/O with NetCDF-4/HDF5
+#setenv USE_PIO              on              # Parallel I/O with PIO library
+#setenv USE_SCORPIO          on              # Parallel I/O with SCORPIO library
+
+# If any of the coupling component use the HDF5 Fortran API for primary
+# I/O, we need to compile the main driver with the HDF5 library.
+
+#setenv USE_HDF5             on              # compile with HDF5 library
 
 #--------------------------------------------------------------------------
 # If applicable, use my specified library paths.
@@ -295,6 +313,23 @@ else
   set arpack_ldir=""
 endif
 
+if ( $?PIO_LIBDIR && $?PIO_INCDIR ) then
+  set pio_ldir="-DPIO_LIBDIR=${PIO_LIBDIR}"
+  set pio_idir="-DPIO_INCDIR=${PIO_INCDIR}"
+  if ( $?PNETCDF_LIBDIR && $?PNETCDF_INCDIR ) then
+    set pnetcdf_ldir="-DPNETCDF_LIBDIR=${PNETCDF_LIBDIR}"
+    set pnetcdf_idir="-DPNETCDF_INCDIR=${PNETCDF_INCDIR}"
+  else
+    set pnetcdf_ldir=""
+    set pnetcdf_idir=""
+  endif
+else
+  set pio_ldir=""
+  set pio_idir=""
+  set pnetcdf_ldir=""
+  set pnetcdf_idir=""
+endif
+
 # The nested ifs are required to avoid breaking the script, as tcsh
 # apparently does not short-circuit if when the first truth is found
 
@@ -364,6 +399,10 @@ if ( $dprint == 0 ) then
                 ${extra_flags} \
                 ${parpack_ldir} \
                 ${arpack_ldir} \
+                ${pio_ldir} \
+                ${pio_idir} \
+                ${pnetcdf_ldir} \
+                ${pnetcdf_idir} \
                 ${mpi} \
                 ${comm} \
                 ${roms_exec} \
@@ -376,6 +415,10 @@ if ( $dprint == 0 ) then
                   ${extra_flags} \
                   ${parpack_ldir} \
                   ${arpack_ldir} \
+                  ${pio_ldir} \
+                  ${pio_idir} \
+                  ${pnetcdf_ldir} \
+                  ${pnetcdf_idir} \
                   ${mpi} \
                   ${comm} \
                   ${roms_exec} \

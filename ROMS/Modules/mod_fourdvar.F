@@ -4,7 +4,7 @@
 #if defined FOUR_DVAR || defined VERIFICATION
 !
 !git $Id$
-!svn $Id: mod_fourdvar.F 1054 2021-03-06 19:47:12Z arango $
+!svn $Id: mod_fourdvar.F 1064 2021-05-10 19:55:56Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -232,6 +232,15 @@
 #  endif
         real(r8), allocatable :: ADmodVal(:)
         real(r8), allocatable :: NLmodVal(:)
+
+        real(r8), allocatable :: misfit(:)
+        real(r8), allocatable :: unvetted(:)
+        real(r8), allocatable :: uradial(:)
+        real(r8), allocatable :: vradial(:)
+#  ifndef VERIFICATION
+        real(r8), allocatable :: uBgErr(:)
+        real(r8), allocatable :: vBgErr(:)
+#  endif
 #  ifdef SP4DVAR
         real(r8), allocatable :: ADmodVal_S(:,:)
         real(r8), allocatable :: harnoldi(:,:,:)
@@ -1258,6 +1267,32 @@
         deallocate (NLmodVal)
       END IF
 
+      IF (allocated(misfit)) THEN
+        deallocate (misfit)
+      END IF
+
+      IF (allocated(unvetted)) THEN
+        deallocate (unvetted)
+      END IF
+
+      IF (allocated(uradial)) THEN
+        deallocate (uradial)
+      END IF
+
+      IF (allocated(vradial)) THEN
+        deallocate (vradial)
+      END IF
+
+#  ifndef VERIFICATION
+      IF (allocated(uBgErr)) THEN
+        deallocate (uBgErr)
+      END IF
+
+      IF (allocated(vBgErr)) THEN
+        deallocate (vBgErr)
+      END IF
+#  endif
+
 #  ifdef FOUR_DVAR
       IF (allocated(BgErr)) THEN
         deallocate (BgErr)
@@ -1553,6 +1588,9 @@
       USE mod_iounits
       USE mod_ncparam
       USE mod_netcdf
+# if defined PIO_LIB && defined DISTRIBUTE
+      USE mod_pio_netcdf
+# endif
 !
       USE strings_mod, ONLY : FoundError
       USE strings_mod, ONLY : uppercase
@@ -1584,7 +1622,17 @@
 !  "survey" dimension.
 !
       DO ng=1,Ngrids
-        CALL netcdf_get_dim(ng, iNLM, TRIM(OBS(ng)%name))
+        SELECT CASE (OBS(ng)%IOtype)
+          CASE (io_nf90)
+            CALL netcdf_get_dim (ng, iNLM, TRIM(OBS(ng)%name))
+#  if defined PIO_LIB && defined DISTRIBUTE
+          CASE (io_pio)
+            CALL pio_netcdf_get_dim (ng, iNLM, TRIM(OBS(ng)%name))
+#  endif
+          CASE DEFAULT
+            IF (Master) WRITE (stdout,10) OBS(ng)%IOtype
+            exit_flag=3
+        END SELECT
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
         Ndatum(ng)=0
@@ -1599,12 +1647,12 @@
           END IF
         END DO
         IF (Ndatum(ng).eq.0) THEN
-          WRITE (stdout,10) 'datum', TRIM(OBS(ng)%name)
+          WRITE (stdout,20) 'datum', TRIM(OBS(ng)%name)
           exit_flag=2
           RETURN
         END IF
         IF (Nsurvey(ng).eq.0) THEN
-          WRITE (stdout,10) 'survey', TRIM(OBS(ng)%name)
+          WRITE (stdout,20) 'survey', TRIM(OBS(ng)%name)
           exit_flag=2
           RETURN
         END IF
@@ -1900,23 +1948,42 @@
 !
       DO ng=1,Ngrids
 !
-!  Read in number of observations available per survey.
+!  Read in number of observations available per survey and the time of
+!  each observation survey.
 !
-        CALL netcdf_get_ivar (ng, iNLM, TRIM(OBS(ng)%name),             &
-     &                        TRIM(Vname(1,idNobs)),                    &
-     &                        FOURDVAR(ng)%NobsSurvey,                  &
-     &                        start = (/1/),                            &
-     &                        total = (/Nsurvey(ng)/))
-        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        SELECT CASE (OBS(ng)%IOtype)
+          CASE (io_nf90)
+            CALL netcdf_get_ivar (ng, iNLM, TRIM(OBS(ng)%name),         &
+     &                            TRIM(Vname(1,idNobs)),                &
+     &                            FOURDVAR(ng)%NobsSurvey,              &
+     &                            start = (/1/),                        &
+     &                            total = (/Nsurvey(ng)/))
+            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
-!  Read in the time of each observation survey.
+            CALL netcdf_get_fvar (ng, iNLM, TRIM(OBS(ng)%name),         &
+     &                            TRIM(Vname(1,idOday)),                &
+     &                            FOURDVAR(ng)%SurveyTime,              &
+     &                            start = (/1/),                        &
+     &                            total = (/Nsurvey(ng)/))
+            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+
+#  if defined PIO_LIB && defined DISTRIBUTE
+          CASE (io_pio)
+            CALL pio_netcdf_get_ivar (ng, iNLM, TRIM(OBS(ng)%name),     &
+     &                                TRIM(Vname(1,idNobs)),            &
+     &                                FOURDVAR(ng)%NobsSurvey,          &
+     &                                start = (/1/),                    &
+     &                                total = (/Nsurvey(ng)/))
+            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
-        CALL netcdf_get_fvar (ng, iNLM, TRIM(OBS(ng)%name),             &
-     &                        TRIM(Vname(1,idOday)),                    &
-     &                        FOURDVAR(ng)%SurveyTime,                  &
-     &                        start = (/1/),                            &
-     &                        total = (/Nsurvey(ng)/))
-        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+            CALL pio_netcdf_get_fvar (ng, iNLM, TRIM(OBS(ng)%name),     &
+     &                                TRIM(Vname(1,idOday)),            &
+     &                                FOURDVAR(ng)%SurveyTime,          &
+     &                                start = (/1/),                    &
+     &                                total = (/Nsurvey(ng)/))
+            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+#  endif
+        END SELECT
 !
 !  Determine maximum size of observation arrays.
 !
@@ -2035,6 +2102,44 @@
         Dmem(1)=Dmem(1)+REAL(Mobs,r8)
       END IF
       NLmodVal = IniVal
+
+      IF (.not.allocated(misfit)) THEN
+        allocate ( misfit(Mobs) )
+        Dmem(1)=Dmem(1)+REAL(Mobs,r8)
+      END IF
+      misfit = IniVal
+
+      IF (.not.allocated(unvetted)) THEN
+        allocate ( unvetted(Mobs) )
+        Dmem(1)=Dmem(1)+REAL(Mobs,r8)
+      END IF
+      unvetted = IniVal
+
+      IF (.not.allocated(uradial)) THEN
+        allocate ( uradial(Mobs) )
+        Dmem(1)=Dmem(1)+REAL(Mobs,r8)
+      END IF
+      uradial = IniVal
+
+      IF (.not.allocated(vradial)) THEN
+        allocate ( vradial(Mobs) )
+        Dmem(1)=Dmem(1)+REAL(Mobs,r8)
+      END IF
+      vradial = IniVal
+
+#  ifndef VERIFICATION
+      IF (.not.allocated(uBgErr)) THEN
+        allocate ( uBgErr(Mobs) )
+        Dmem(1)=Dmem(1)+REAL(Mobs,r8)
+      END IF
+      uBgErr = IniVal
+
+      IF (.not.allocated(vBgErr)) THEN
+        allocate ( vBgErr(Mobs) )
+        Dmem(1)=Dmem(1)+REAL(Mobs,r8)
+      END IF
+      vBgErr = IniVal
+#  endif
 
 #  ifdef SP4DVAR
       IF (.not.allocated(ADmodVal_S)) THEN
@@ -2954,8 +3059,10 @@
 
 # ifdef OBSERVATIONS
 !
- 10   FORMAT (/,' MOD_FOURDVAR - error inquiring dimension: ',a,2x,     &
-     &          ' in input NetCDF file: ',a)
+ 10   FORMAT (/,' INITIALIZE_FOURDVAR - Illegal output type,',          &
+     &        ' io_type = ',i0)
+ 20   FORMAT (/,' INITIALIZE_FOURDVAR - error inquiring dimension:',    &
+     &        1x,a,2x,'in input NetCDF file: ',a)
 # endif
 
       RETURN

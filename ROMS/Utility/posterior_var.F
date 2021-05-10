@@ -7,7 +7,7 @@
 
 !
 !git $Id$
-!svn $Id: posterior_var.F 1054 2021-03-06 19:47:12Z arango $
+!svn $Id: posterior_var.F 1064 2021-05-10 19:55:56Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -19,18 +19,8 @@
 !                                                                      !
 !=======================================================================
 !
-      implicit none
-
-      PRIVATE
-      PUBLIC :: posterior_var
-
-      CONTAINS
-!
-!***********************************************************************
-      SUBROUTINE posterior_var (ng, tile, model, outLoop)
-!***********************************************************************
-!
       USE mod_param
+      USE mod_parallel
 # ifdef ADJUST_BOUNDARY
       USE mod_boundary
 # endif
@@ -40,10 +30,34 @@
 # if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
       USE mod_forces
 # endif
+      USE mod_fourdvar
       USE mod_grid
+      USE mod_iounits
+      USE mod_ncparam
       USE mod_ocean
-      USE mod_stepping
       USE mod_scalars
+      USE mod_stepping
+!
+# ifdef DISTRIBUTE
+      USE distribute_mod,       ONLY : mp_bcastf, mp_bcasti
+      USE distribute_mod,       ONLY : mp_reduce
+# endif
+      USE state_addition_mod,   ONLY : state_addition
+      USE state_copy_mod,       ONLY : state_copy
+      USE state_initialize_mod, ONLY : state_initialize
+      USE state_product_mod,    ONLY : state_product
+      USE state_read_mod,       ONLY : state_read
+!
+      implicit none
+!
+      PRIVATE
+      PUBLIC  :: posterior_var
+!
+      CONTAINS
+!
+!***********************************************************************
+      SUBROUTINE posterior_var (ng, tile, model, outLoop)
+!***********************************************************************
 !
 !  Imported variable declarations.
 !
@@ -293,23 +307,6 @@
 # endif
      &                               ad_zeta)
 !***********************************************************************
-!
-      USE mod_param
-      USE mod_ncparam
-      USE mod_parallel
-      USE mod_fourdvar
-      USE mod_iounits
-      USE mod_scalars
-
-# ifdef DISTRIBUTE
-!
-      USE distribute_mod, ONLY : mp_bcastf, mp_bcasti
-# endif
-      USE state_copy_mod, ONLY : state_copy
-      USE state_product_mod, ONLY : state_product
-      USE state_addition_mod, ONLY : state_addition
-      USE state_initialize_mod, ONLY : state_initialize
-      USE posterior_mod, ONLY : read_state
 !
 !  Imported variable declarations.
 !
@@ -596,6 +593,9 @@
 
 # include "set_bounds.h"
 !
+      CalledFrom=MyFile
+      SourceFile=MyFile
+!
 !-----------------------------------------------------------------------
 !  Computes the full (diagonal) posterior analysis error covariance
 # if defined POSTERIOR_ERROR_I
@@ -722,7 +722,7 @@
 !  Read vectors stored in hessian netcdf file using ad_var(L1) as
 !  temporary storage.
 !
-        CALL read_state (ng, tile, model,                               &
+        CALL state_read (ng, tile, model, HSS(ng)%IOtype,               &
      &                   LBi, UBi, LBj, UBj, LBij, UBij,                &
      &                   L1, rec,                                       &
      &                   0, HSS(ng)%ncid, ncname,                       &
@@ -862,7 +862,7 @@
 !  Read vectors stored in hessian netcdf file using ad_var(L2) as
 !  temporary storage.
 !
-          CALL read_state (ng, tile, model,                             &
+          CALL state_read (ng, tile, model, HSS(ng)%IOtype,             &
      &                     LBi, UBi, LBj, UBj, LBij, UBij,              &
      &                     L2, rec,                                     &
      &                     0, HSS(ng)%ncid, ncname,                     &
@@ -1093,18 +1093,6 @@
 # endif
      &                         s1_zeta)
 !***********************************************************************
-!
-      USE mod_param
-      USE mod_parallel
-      USE mod_ncparam
-# if defined ADJUST_BOUNDARY || defined ADJUST_STFLUX || \
-     defined ADJUST_WSTRESS
-      USE mod_scalars
-# endif
-# ifdef DISTRIBUTE
-!
-      USE distribute_mod, ONLY : mp_reduce
-# endif
 !
 !  Imported variable declarations.
 !

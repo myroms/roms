@@ -3,7 +3,7 @@
       SUBROUTINE tl_main3d (RunInterval)
 !
 !git $Id$
-!svn $Id: tl_main3d.F 1054 2021-03-06 19:47:12Z arango $
+!svn $Id: tl_main3d.F 1064 2021-05-10 19:55:56Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -283,6 +283,9 @@
             CALL tl_diag (ng, tile)
 # ifdef FORWARD_READ
             CALL omega (ng, tile, iTLM)
+# endif
+# ifdef TLM_CHECK
+            CALL tl_dotproduct (ng, tile, Lnew(ng))
 # endif
           END DO
 !$OMP BARRIER

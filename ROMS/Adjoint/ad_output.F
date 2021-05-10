@@ -3,7 +3,7 @@
       SUBROUTINE ad_output (ng)
 !
 !git $Id$
-!svn $Id: ad_output.F 1054 2021-03-06 19:47:12Z arango $
+!svn $Id: ad_output.F 1064 2021-05-10 19:55:56Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -21,13 +21,21 @@
       USE mod_parallel
       USE mod_iounits
       USE mod_ncparam
-      USE mod_netcdf
       USE mod_scalars
 !
+      USE ad_def_his_mod, ONLY : ad_def_his
+      USE ad_wrt_his_mod, ONLY : ad_wrt_his
+      USE close_io_mod,   ONLY : close_file
+# ifdef AD_AVERAGES
+      USE def_avg_mod,    ONLY : def_avg
+# endif
 # ifdef DISTRIBUTE
       USE distribute_mod, ONLY : mp_bcasts
 # endif
-      USE strings_mod, ONLY : FoundError
+      USE strings_mod,    ONLY : FoundError
+# ifdef AD_AVERAGES
+      USE wrt_avg_mod,    ONLY : wrt_avg
+# endif
 !
       implicit none
 !
@@ -121,9 +129,7 @@
             CALL mp_bcasts (ng, iADM, ADM(ng)%name)
 # endif
             ADM(ng)%files(Fcount)=TRIM(ADM(ng)%name)
-            IF (ADM(ng)%ncid.ne.-1) THEN
-              CALL netcdf_close (ng, iADM, ADM(ng)%ncid)
-            END IF
+            CALL close_file (ng, iADM, ADM(ng), ADM(ng)%name)
             CALL ad_def_his (ng, NewFile)
             IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
           END IF
@@ -148,7 +154,11 @@
         IF (LwrtPER(ng)) THEN
           IF ((iic(ng).ne.ntstart(ng)).and.                             &
      &        (MOD(iic(ng)-1,nADJ(ng)).eq.0)) THEN
-            CALL ad_wrt_his (ng)
+# ifdef DISTRIBUTE
+            CALL ad_wrt_his (ng, MyRank)
+# else
+            CALL ad_wrt_his (ng, -1)
+# endif
             IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
           END IF
         ELSE
@@ -171,7 +181,11 @@
           END IF
 # endif
           IF (wrtHIS) THEN
-            CALL ad_wrt_his (ng)
+# ifdef DISTRIBUTE
+            CALL ad_wrt_his (ng, MyRank)
+# else
+            CALL ad_wrt_his (ng, -1)
+# endif
             IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
           END IF
         END IF
@@ -244,9 +258,7 @@
             CALL mp_bcasts (ng, iADM, AVG(ng)%name)
 #  endif
             AVG(ng)%files(Fcount)=TRIM(AVG(ng)%name)
-            IF (AVG(ng)%ncid.ne.-1) THEN
-              CALL netcdf_close (ng, iADM, AVG(ng)%ncid)
-            END IF
+            CALL close_file (ng, iADM, ADM(ng), ADM(ng)%name)
             CALL def_avg (ng, Newfile)
             IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
             LwrtAVG(ng)=.TRUE.
@@ -266,7 +278,11 @@
       IF (LwrtAVG(ng)) THEN
         IF ((iic(ng).ne.ntstart(ng)).and.                               &
      &      (MOD(iic(ng),nAVG(ng)).eq.1)) THEN
-          CALL wrt_avg (ng)
+#  ifdef DISTRIBUTE
+          CALL wrt_avg (ng, MyRank)
+#  else
+          CALL wrt_avg (ng, -1)
+#  endif
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
       END IF

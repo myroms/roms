@@ -12,7 +12,7 @@
      defined TANGENT)
 !
 !git $Id$
-!svn $Id: ini_adjust.F 1054 2021-03-06 19:47:12Z arango $
+!svn $Id: ini_adjust.F 1064 2021-05-10 19:55:56Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -2867,8 +2867,8 @@
         CALL exchange_v2d_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          vbar(:,:,Lout))
-      END IF
 #  endif
+      END IF
 
 #  ifdef DISTRIBUTE
 !
@@ -3394,6 +3394,11 @@
      &                          LBi, UBi, LBj, UBj,                     &
      &                          IminS, ImaxS, JminS, JmaxS,             &
      &                          nstp(ng), nnew(ng), Linp, Lout,         &
+#  ifdef MASKING
+     &                          GRID(ng) % rmask,                       &
+     &                          GRID(ng) % umask,                       &
+     &                          GRID(ng) % vmask,                       &
+#  endif
 #  ifdef SOLVE3D
 #   if defined SEDIMENT && defined SED_MORPH
      &                          SEDBED(ng) % tl_bed_thick,              &
@@ -3440,6 +3445,9 @@
      &                                LBi, UBi, LBj, UBj,               &
      &                                IminS, ImaxS, JminS, JmaxS,       &
      &                                nstp, nnew, Linp, Lout,           &
+#  ifdef MASKING
+     &                                rmask, umask, vmask,              &
+#  endif
 #  ifdef SOLVE3D
 #   if defined SEDIMENT && defined SED_MORPH
      &                                tl_bed_thick,                     &
@@ -3869,7 +3877,7 @@
         DO itrc=1,NT(ng)
           CALL exchange_r3d_tile (ng, tile,                             &
      &                            LBi, UBi, LBj, UBj, 1, N(ng),         &
-     &                            t(:,:,:,Lout,itrc))
+     &                            tl_t(:,:,:,Lout,itrc))
         END DO
       END IF
 

@@ -2,7 +2,7 @@
       SUBROUTINE checkadj
 !
 !git $Id$
-!svn $Id: checkadj.F 1054 2021-03-06 19:47:12Z arango $
+!svn $Id: checkadj.F 1064 2021-05-10 19:55:56Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -131,7 +131,7 @@
       string=uppercase('nl_bulk_fluxes')
       ic=ic+1
       IF (Master) WRITE(stdout,20) TRIM(string),                        &
-     &                             'deprecated option, used ' //        &
+     &                             'deprecated option, use ' //         &
      &                         uppercase('forward_fluxes')//' and ' //  &
      &                         uppercase('prior_bulk_fluxes') //        &
      &                             ' instead, FATAL ERROR'

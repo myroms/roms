@@ -3,7 +3,7 @@
 #if defined SSH_TIDES || defined UV_TIDES
 !
 !git $Id$
-!svn $Id: mod_tides.F 1054 2021-03-06 19:47:12Z arango $
+!svn $Id: mod_tides.F 1064 2021-05-10 19:55:56Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -139,8 +139,10 @@
       USE mod_param
       USE mod_parallel
       USE mod_iounits
-      USE mod_ncparam
-      USE mod_netcdf
+      USE mod_ncparam#
+# if defined PIO_LIB && defined DISTRIBUTE
+      USE mod_pio_netcdf
+# endif
       USE mod_scalars
       USE mod_stepping
 !
@@ -160,6 +162,11 @@
 !
       character (len=*), parameter :: MyFile =                          &
      &  __FILE__//", allocate_tides"
+
+# if defined PIO_LIB && defined DISTRIBUTE
+!
+      TYPE (Var_desc_t)  :: my_pioVar
+# endif
 !
 !-----------------------------------------------------------------------
 !  Allocate module variables.
@@ -173,12 +180,25 @@
       IF (LprocessTides(ng)) THEN
         MTC=0
         foundit=.FALSE.
-        CALL netcdf_inq_var (ng, iNLM, TIDE(ng)%name,                   &
-     &                       MyVarName = TRIM(Vname(1,idTper)),         &
-     &                       SearchVar = foundit,                       &
-     &                       VarID = Vid,                               &
-     &                       nVardim = nvdim,                           &
-     &                       nVarAtt = nvatt)
+        SELECT CASE (TIDE(ng)%IOtype)
+          CASE (io_nf90)
+            CALL netcdf_inq_var (ng, iNLM, TIDE(ng)%name,               &
+     &                           MyVarName = Vname(1,idTper),           &
+     &                           SearchVar = foundit,                   &
+     &                           VarID = Vid,                           &
+     &                           nVardim = nvdim,                       &
+     &                           nVarAtt = nvatt)
+
+# if defined PIO_LIB && defined DISTRIBUTE
+          CASE (io_pio)
+            CALL pio_netcdf_inq_var (ng, iNLM, TIDE(ng)%name,           &
+     &                               MyVarName = Vname(1,idTper),       &
+     &                               SearchVar = foundit,               &
+     &                               pioVar = my_pioVar,                &
+     &                               nVardim = nvdim,                   &
+     &                               nVarAtt = nvatt)
+# endif
+        END SELECT
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Set maximum number of tidal components.  Allocate and initialize

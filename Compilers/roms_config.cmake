@@ -1,5 +1,5 @@
 # git $Id$
-# svn $Id: roms_config.cmake 1054 2021-03-06 19:47:12Z arango $
+# svn $Id: roms_config.cmake 1064 2021-05-10 19:55:56Z arango $
 #:::::::::::::::::::::::::::::::::::::::::::::::::::::: David Robertson :::
 # Copyright (c) 2002-2021 The ROMS/TOMS Group                           :::
 #   Licensed under a MIT/X style license                                :::
@@ -73,12 +73,12 @@ endif()
 # The decision about whether to use them in linking is computed below.
 # This CMake setup will NOT build ARPACK/PARPACK for you.
 
-if(DEFINED PARPACK_LIBDIR)
+if( DEFINED PARPACK_LIBDIR )
   set( PARPACK_LIBDIR "${PARPACK_LIBDIR}" )
 else()
   set( PARPACK_LIBDIR "" )
 endif()
-if(DEFINED ARPACK_LIBDIR)
+if( DEFINED ARPACK_LIBDIR )
   set( ARPACK_LIBDIR "${ARPACK_LIBDIR}" )
 else()
   set( ARPACK_LIBDIR "" )
@@ -86,6 +86,33 @@ endif()
 
 Message( STATUS "PARPACK_LIBDIR = ${PARPACK_LIBDIR}" )
 Message( STATUS "ARPACK_LIBDIR  = ${ARPACK_LIBDIR}" )
+
+# Locations of SCORPIO and PNetCDF libraries.
+#
+# The decision about whether to use them in linking is computed below.
+# This CMake setup will NOT build SCORPIO or PNetCDF for you.
+
+if( DEFINED PIO_LIBDIR AND DEFINED PIO_INCDIR )
+  set( PIO_LIBDIR "${PIO_LIBDIR}" )
+  set( PIO_INCDIR "${PIO_INCDIR}" )
+  Message( STATUS "    PIO_LIBDIR = ${PIO_LIBDIR}" )
+  Message( STATUS "   PIO_INCDIR  = ${PIO_INCDIR}" )
+
+  if( DEFINED PNETCDF_LIBDIR AND DEFINED PNETCDF_INCDIR )
+    set( PNETCDF_LIBDIR "${PNETCDF_LIBDIR}" )
+    set( PNETCDF_INCDIR "${PNETCDF_INCDIR}" )
+    Message( STATUS "PNETCDF_LIBDIR = ${PNETCDF_LIBDIR}" )
+    Message( STATUS "PNETCDF_INCDIR = ${PNETCDF_INCDIR}" )
+  else()
+    set( PNETCDF_LIBDIR "" )
+    set( PNETCDF_INCDIR "" )
+  endif()
+else()
+  set( PIO_LIBDIR "" )
+  set( PIO_INCDIR "" )
+endif()
+
+
 
 # Set ROMS SVN repository information.
 
@@ -118,9 +145,9 @@ if( MY_CPP_FLAGS )
   foreach( flag ${MY_CPP_FLAGS} )
     add_definitions( -D${flag} )
   endforeach()
-  use_4dvar( ${ROMS_HEADER} ${MY_CPP_FLAGS} )
+  get_options( ${ROMS_HEADER} ${MY_CPP_FLAGS} )
 else()
-  use_4dvar( ${ROMS_HEADER} )
+  get_options( ${ROMS_HEADER} )
 endif()
 
 # If use_4dvar returns a line containing "CPPDEFS" then somehow ROMS_HEADER
@@ -149,6 +176,11 @@ endif()
 if( "${defs}" MATCHES "ARPACK" )
   option( ARPACK "ARPACK/PARPACK Library" ON )
   message( STATUS "ROMS Link With ARPACK/PARPACK ENABLED" )
+endif()
+
+if( "${defs}" MATCHES "SCORPIO" )
+  option( SCORPIO "SCORPIO Library" ON )
+  message( STATUS "ROMS Link With Parallel I/O Using SCORPIO ENABLED" )
 endif()
 
 

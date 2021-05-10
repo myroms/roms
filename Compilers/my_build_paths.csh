@@ -1,7 +1,7 @@
 #!/bin/csh -f
 #
 # git $Id$
-# svn $Id: my_build_paths.csh 1054 2021-03-06 19:47:12Z arango $
+# svn $Id: my_build_paths.csh 1064 2021-05-10 19:55:56Z arango $
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # Copyright (c) 2002-2021 The ROMS/TOMS Group                           :::
 #   Licensed under a MIT/X style license                                :::
@@ -188,16 +188,22 @@ switch ($FORT)
       endif
     endif
 
-    if ($?USE_PNETCDF) then
+    if ($?USE_PIO) then
+      setenv PIO                ${MPI_SOFT}/pio
+      setenv PIO_LIBDIR         ${PIO}/lib
+      setenv PIO_INCDIR         ${PIO}/include
       setenv PNETCDF            ${MPI_SOFT}/pnetcdf
       setenv PNETCDF_LIBDIR     ${PNETCDF}/lib
       setenv PNETCDF_INCDIR     ${PNETCDF}/include
     endif
 
-    if ($?USE_PIO) then
-      setenv PIO                ${MPI_SOFT}/scorpio
-      setenv PIO_LIBDIR         ${PIO}/lib
-      setenv PIO_INCDIR         ${PIO}/include
+    if ($?USE_SCORPIO) then
+      setenv SCORPIO            ${MPI_SOFT}/scorpio
+      setenv PIO_LIBDIR         ${SCORPIO}/lib
+      setenv PIO_INCDIR         ${SCORPIO}/include
+      setenv PNETCDF            ${MPI_SOFT}/pnetcdf
+      setenv PNETCDF_LIBDIR     ${PNETCDF}/lib
+      setenv PNETCDF_INCDIR     ${PNETCDF}/include
     endif
 
     if ($?USE_HDF5) then
@@ -267,16 +273,22 @@ switch ($FORT)
       endif
     endif
 
-    if ($?USE_PNETCDF) then
+    if ($?USE_PIO) then
+      setenv PIO                ${MPI_SOFT}/pio
+      setenv PIO_LIBDIR         ${PIO}/lib
+      setenv PIO_INCDIR         ${PIO}/include
       setenv PNETCDF            ${MPI_SOFT}/pnetcdf
       setenv PNETCDF_LIBDIR     ${PNETCDF}/lib
       setenv PNETCDF_INCDIR     ${PNETCDF}/include
     endif
 
-    if ($?USE_PIO) then
-      setenv PIO                ${MPI_SOFT}/scorpio
-      setenv PIO_LIBDIR         ${PIO}/lib
-      setenv PIO_INCDIR         ${PIO}/include
+    if ($?USE_SCORPIO) then
+      setenv SCORPIO            ${MPI_SOFT}/scorpio
+      setenv PIO_LIBDIR         ${SCORPIO}/lib
+      setenv PIO_INCDIR         ${SCORPIO}/include
+      setenv PNETCDF            ${MPI_SOFT}/pnetcdf
+      setenv PNETCDF_LIBDIR     ${PNETCDF}/lib
+      setenv PNETCDF_INCDIR     ${PNETCDF}/include
     endif
 
     if ($?USE_HDF5) then
@@ -344,16 +356,22 @@ switch ($FORT)
       endif
     endif
 
-    if ($?USE_PNETCDF) then
+    if ($?USE_PIO) then
+      setenv PIO                ${MPI_SOFT}/pio
+      setenv PIO_LIBDIR         ${PIO}/lib
+      setenv PIO_INCDIR         ${PIO}/include
       setenv PNETCDF            ${MPI_SOFT}/pnetcdf
       setenv PNETCDF_LIBDIR     ${PNETCDF}/lib
       setenv PNETCDF_INCDIR     ${PNETCDF}/include
     endif
 
-    if ($?USE_PIO) then
-      setenv PIO                ${MPI_SOFT}/scorpio
-      setenv PIO_LIBDIR         ${PIO}/lib
-      setenv PIO_INCDIR         ${PIO}/include
+    if ($?USE_SCORPIO) then
+      setenv SCORPIO            ${MPI_SOFT}/scorpio
+      setenv PIO_LIBDIR         ${SCORPIO}/lib
+      setenv PIO_INCDIR         ${SCORPIO}/include
+      setenv PNETCDF            ${MPI_SOFT}/pnetcdf
+      setenv PNETCDF_LIBDIR     ${PNETCDF}/lib
+      setenv PNETCDF_INCDIR     ${PNETCDF}/include
     endif
 
     if ($?USE_HDF5) then

@@ -7,7 +7,7 @@
 
 !
 !git $Id$
-!svn $Id: forcing.F 1054 2021-03-06 19:47:12Z arango $
+!svn $Id: forcing.F 1064 2021-05-10 19:55:56Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -161,8 +161,6 @@
 !
       IF (DOMAIN(ng)%SouthWest_Corner(tile)) THEN
         IF (Master) WRITE (stdout,10) time_code(ng)
- 10     FORMAT (3x,'NL_FORCING   - added convolved adjoint impulse,',   &
-     &          t62,'t = ', a)
       END IF
 !
 !  Free-surface.
@@ -235,6 +233,9 @@
         END DO
       END DO
 # endif
+!
+ 10   FORMAT (2x,'NL_FORCING       - added convolved adjoint impulse,', &
+     &        t71,'t = ', a)
 !
       RETURN
       END SUBROUTINE forcing_tile

@@ -2,7 +2,7 @@
 ** Include file "defs_cmake.h"
 **
 ** git $Id$
-** svn $Id: defs_cmake.h 1054 2021-03-06 19:47:12Z arango $
+** svn $Id: defs_cmake.h 1064 2021-05-10 19:55:56Z arango $
 ********************************************************** Hernan G. Arango ***
 ** Copyright (c) 2002-2021 The ROMS/TOMS Group              David Robertson  **
 **   Licensed under a MIT/X style license                                    **
@@ -207,6 +207,15 @@ REPRESENTER
     defined TL_RBL4DVAR              || \
     defined TL_R4DVAR
 ARPACK
+#define FOUND
+#endif
+
+/*
+** Determine if using the NCAR parallel-IO (SCORPIO) library is needed.
+*/
+
+#ifdef PIO_LIB
+SCORPIO
 #define FOUND
 #endif
 

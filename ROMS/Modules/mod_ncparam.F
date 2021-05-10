@@ -2,7 +2,7 @@
       MODULE mod_ncparam
 !
 !git $Id$
-!svn $Id: mod_ncparam.F 1054 2021-03-06 19:47:12Z arango $
+!svn $Id: mod_ncparam.F 1064 2021-05-10 19:55:56Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -24,6 +24,11 @@
 !                                                                      !
 !  Cinfo      Input/output file names associated with each field       !
 !                                                                      !
+#if defined PIO_LIB && defined DISTRIBUTE
+!  Dinfo      Input/output fields descriptors information:             !
+!               Dinfo(1,*)  => field variable descriptor.              !
+!               Dinfo(2,*)  => associated time variable descriptor.    !
+#endif
 !  Linfo      Input/output fields logical information:                 !
 !               Linfo(1,*)  => switch indicating grided data.          !
 !               Linfo(2,*)  => switch indicating time cycling.         !
@@ -69,465 +74,497 @@
 !                                                                      !
 !=======================================================================
 !
-        USE mod_param
+      USE mod_param
 !
-        implicit none
+      implicit none
+!
+!  Set type of IO NetCDF files interface library
+!
+      integer, parameter :: io_nf90 = 1   ! standard NetCDF-3, NetCDF-4
+      integer, parameter :: io_pio  = 2   ! Parallel-IO, SCORPIO
+!
+      integer :: inp_lib                  ! input  NetCDF library
+      integer :: out_lib                  ! output NetCDF library
 !
 !  Maximum number of variables in a generic NetCDF file (MV) and
 !  maximum number of variables in information arrays (NV).
 !
-        integer, parameter :: MV = 1400
-        integer, parameter :: NV = 1400
+      integer, parameter :: MV = 1400
+      integer, parameter :: NV = 1400
 !
 !  Maximum number of dimension IDs stored in local array DimIDs used to
 !  defined variable dimensions in output NetCDF files.
 !
-        integer, parameter :: nDimID = 33
+      integer, parameter :: nDimID = 33
 !
 !  Input/output grid-type variables.
 !
-        integer, parameter :: p2dvar = 1         ! 2D PSI-variable
-        integer, parameter :: r2dvar = 2         ! 2D RHO-variable
-        integer, parameter :: u2dvar = 3         ! 2D U-variable
-        integer, parameter :: v2dvar = 4         ! 2D V-variable
-        integer, parameter :: p3dvar = 5         ! 3D PSI-variable
-        integer, parameter :: r3dvar = 6         ! 3D RHO-variable
-        integer, parameter :: u3dvar = 7         ! 3D U-variable
-        integer, parameter :: v3dvar = 8         ! 3D V-variable
-        integer, parameter :: w3dvar = 9         ! 3D W-variable
-        integer, parameter :: b3dvar = 10        ! 3D BED-sediment
-        integer, parameter :: l3dvar = 11        ! 3D spectral light
-        integer, parameter :: l4dvar = 12        ! 4D spectral light
+      integer, parameter :: p2dvar = 1         ! 2D PSI-variable
+      integer, parameter :: r2dvar = 2         ! 2D RHO-variable
+      integer, parameter :: u2dvar = 3         ! 2D U-variable
+      integer, parameter :: v2dvar = 4         ! 2D V-variable
+      integer, parameter :: p3dvar = 5         ! 3D PSI-variable
+      integer, parameter :: r3dvar = 6         ! 3D RHO-variable
+      integer, parameter :: u3dvar = 7         ! 3D U-variable
+      integer, parameter :: v3dvar = 8         ! 3D V-variable
+      integer, parameter :: w3dvar = 9         ! 3D W-variable
+      integer, parameter :: b3dvar = 10        ! 3D BED-sediment
+      integer, parameter :: l3dvar = 11        ! 3D spectral light
+      integer, parameter :: l4dvar = 12        ! 4D spectral light
+      integer, parameter :: r2dobc = 13        ! 2D OBC RHO-variable
+      integer, parameter :: u2dobc = 14        ! 2D OBC U-variable
+      integer, parameter :: v2dobc = 15        ! 2D OBC V-variable
+      integer, parameter :: r3dobc = 16        ! 3D OBC RHO-variable
+      integer, parameter :: u3dobc = 17        ! 3D OBC U-variable
+      integer, parameter :: v3dobc = 18        ! 3D OBC V-variable
 !
 !  Number of horizontal interior and boundary water points.
 !
-        integer, allocatable :: Nxyp(:)          ! PSI water points
-        integer, allocatable :: Nxyr(:)          ! RHO water points
-        integer, allocatable :: Nxyu(:)          ! U water points
-        integer, allocatable :: Nxyv(:)          ! V water points
+      integer, allocatable :: Nxyp(:)          ! PSI water points
+      integer, allocatable :: Nxyr(:)          ! RHO water points
+      integer, allocatable :: Nxyu(:)          ! U water points
+      integer, allocatable :: Nxyv(:)          ! V water points
 !
 !  Number of horizontal interior water points only.
 !
-        integer, allocatable :: NwaterR(:)       ! RHO water points
-        integer, allocatable :: NwaterU(:)       ! U water points
-        integer, allocatable :: NwaterV(:)       ! V water points
+      integer, allocatable :: NwaterR(:)       ! RHO water points
+      integer, allocatable :: NwaterU(:)       ! U water points
+      integer, allocatable :: NwaterV(:)       ! V water points
 !
 !  Lower and upper bound ranges for RHO-type variables for processing
 !  state vector and observations.
 !
-        integer, allocatable :: rILB(:)
-        integer, allocatable :: rIUB(:)
-        integer, allocatable :: rJLB(:)
-        integer, allocatable :: rJUB(:)
+      integer, allocatable :: rILB(:)
+      integer, allocatable :: rIUB(:)
+      integer, allocatable :: rJLB(:)
+      integer, allocatable :: rJUB(:)
 !
-        real(r8), allocatable :: rXmin(:)
-        real(r8), allocatable :: rXmax(:)
-        real(r8), allocatable :: rYmin(:)
-        real(r8), allocatable :: rYmax(:)
+      real(r8), allocatable :: rXmin(:)
+      real(r8), allocatable :: rXmax(:)
+      real(r8), allocatable :: rYmin(:)
+      real(r8), allocatable :: rYmax(:)
 !
 !  Lower and upper bound ranges for U-type variables for processing
 !  state vector and observations.
 !
-        integer, allocatable :: uILB(:)
-        integer, allocatable :: uIUB(:)
-        integer, allocatable :: uJLB(:)
-        integer, allocatable :: uJUB(:)
+      integer, allocatable :: uILB(:)
+      integer, allocatable :: uIUB(:)
+      integer, allocatable :: uJLB(:)
+      integer, allocatable :: uJUB(:)
 !
-        real(r8), allocatable :: uXmin(:)
-        real(r8), allocatable :: uXmax(:)
-        real(r8), allocatable :: uYmin(:)
-        real(r8), allocatable :: uYmax(:)
+      real(r8), allocatable :: uXmin(:)
+      real(r8), allocatable :: uXmax(:)
+      real(r8), allocatable :: uYmin(:)
+      real(r8), allocatable :: uYmax(:)
 !
 !  Lower and upper bound ranges for V-type variables for processing
 !  state vector and observations.
 !
-        integer, allocatable :: vILB(:)
-        integer, allocatable :: vIUB(:)
-        integer, allocatable :: vJLB(:)
-        integer, allocatable :: vJUB(:)
+      integer, allocatable :: vILB(:)
+      integer, allocatable :: vIUB(:)
+      integer, allocatable :: vJLB(:)
+      integer, allocatable :: vJUB(:)
 !
-        real(r8), allocatable :: vXmin(:)
-        real(r8), allocatable :: vXmax(:)
-        real(r8), allocatable :: vYmin(:)
-        real(r8), allocatable :: vYmax(:)
+      real(r8), allocatable :: vXmin(:)
+      real(r8), allocatable :: vXmax(:)
+      real(r8), allocatable :: vYmin(:)
+      real(r8), allocatable :: vYmax(:)
 !
 !  Switches indicating which variables are written to output files.
 !
-        logical, allocatable :: Aout(:,:)     ! average file switches
-        logical, allocatable :: Dout(:,:)     ! diagnostic file switches
-        logical, allocatable :: Hout(:,:)     ! history file switches
-        logical, allocatable :: Qout(:,:)     ! quicksave file switches
-        logical, allocatable :: Sout(:,:)     ! station file switches
+      logical, allocatable :: Aout(:,:)     ! average file switches
+      logical, allocatable :: Dout(:,:)     ! diagnostic file switches
+      logical, allocatable :: Hout(:,:)     ! history file switches
+      logical, allocatable :: Qout(:,:)     ! quicksave file switches
+      logical, allocatable :: Sout(:,:)     ! station file switches
 !
 !  Grid identification indices.
 !
-        integer  :: idXgrd = -1   ! XI-grid position
-        integer  :: idYgrd = -2   ! ETA-grid position
-        integer  :: idZgrd = -3   ! S-grid position
-        integer  :: iddpth = -4   ! depth
-        integer  :: idglon = -5   ! longitude
-        integer  :: idglat = -6   ! latitude
+      integer  :: idXgrd = -1   ! XI-grid position
+      integer  :: idYgrd = -2   ! ETA-grid position
+      integer  :: idZgrd = -3   ! S-grid position
+      integer  :: iddpth = -4   ! depth
+      integer  :: idglon = -5   ! longitude
+      integer  :: idglat = -6   ! latitude
 
 #ifdef FLOAT_OYSTER
 !
 !  Biological floats identification indices.
 !
-        integer  :: idsize = -7   ! biological float size (length)
-        integer  :: idswim = -8   ! biological float swimming time
-        integer  :: idwbio = -9   ! biological float w-velocity
-        integer  :: idwsin = -10  ! biological float sinking velocity
+      integer  :: idsize = -7   ! biological float size (length)
+      integer  :: idswim = -8   ! biological float swimming time
+      integer  :: idwbio = -9   ! biological float w-velocity
+      integer  :: idwsin = -10  ! biological float sinking velocity
 #endif
 !
 !  Input/output identification indices.
 !
-        integer  :: idAice        ! fraction of cell covered by ice
-        integer  :: idbath        ! bathymetry
-        integer  :: idBgEr        ! Background error at observations
-        integer  :: idBgTh        ! Threshold for BQC check
-        integer  :: idCfra        ! cloud fraction
-        integer  :: idCosW        ! COS(omega(k)*t)
-        integer  :: idCos2        ! COS(omega(k)*t)*COS(omega(l)*t)
-        integer  :: idDano        ! density anomaly
-        integer  :: idDiff(2)     ! temperature and salinity diffusion
-        integer  :: iddQdT        ! heat flux sensitivity to SST
-        integer  :: idEmPf        ! E-P from bulk_flux.F
-        integer  :: idevap        ! evaporation rate
-        integer  :: idFsur        ! free-surface
-        integer  :: idFsuD        ! detided free-surface
-        integer  :: idFsuH        ! free-surface tide harmonics
-        integer  :: idGhat(2)     ! KPP nonlocal transport
-        integer  :: idgTnc        ! generic tracer nudging coefficients
-        integer  :: idJWTy        ! Jerlov water type
-        integer  :: idHbbl        ! depth of bottom boundary layer
-        integer  :: idHice        ! depth of ice cover
-        integer  :: idHsbl        ! depth of surface boundary layer
-        integer  :: idHsno        ! depth of snow cover
-        integer  :: idIncr        ! 4D-Var analysis increment
-        integer  :: idInno        ! 4D-Var innovation vector
-        integer  :: idKhor        ! convolution horizontal diffusion
-        integer  :: idKver        ! convolution vertical diffusion
-        integer  :: idLdwn        ! downwelling longwave radiation flux
-        integer  :: idLhea        ! net latent heat flux
-        integer  :: idLrad        ! net longwave radiation flux
-        integer  :: idMadH        ! ADM interpolation weights
-        integer  :: idMOMi        ! Initial model-observation misfit
-        integer  :: idMOMf        ! final model-observation misfit
-        integer  :: idMtke        ! turbulent kinetic energy
-        integer  :: idMtls        ! turbulent length scale
-        integer  :: idM2nc        ! 2D momentum nudging coefficients
-        integer  :: idM3nc        ! 2D momentum nudging coefficients
-        integer  :: idNLmf        ! final NLM at observation locations
-        integer  :: idNLmi        ! initial NLM at observation locations
-        integer  :: idNLmo        ! NLM at observations locations
-        integer  :: idNLmp        ! unvetted prior NLM at obs locations
-        integer  :: idNLmu        ! unvetted NLM at obs locations
-        integer  :: idNobs        ! number of observations
-        integer  :: idObsD        ! observations depth
-        integer  :: idObsS        ! observations screening scale
-        integer  :: idObsT        ! observations time
-        integer  :: idObsX        ! observations X-grid location
-        integer  :: idObsY        ! observations Y-grid location
-        integer  :: idObsZ        ! observations Z-grid location
-        integer  :: idOday        ! observations survey time
-        integer  :: idOerr        ! observations error
-        integer  :: idOlat        ! observations latitude
-        integer  :: idOlon        ! observations longitude
-        integer  :: idOmet        ! observations meta value
-        integer  :: idOpro        ! observations provenance
-        integer  :: idOtyp        ! observations type
-        integer  :: idOval        ! observations value
-        integer  :: idOvel        ! omega vertical velocity
-        integer  :: idQair        ! surface air humidity
-        integer  :: idPair        ! surface air pressure
-        integer  :: idPbar        ! streamfunction
-        integer  :: idPwet        ! wet/dry mask on PSI-points
-        integer  :: idpthR        ! depths of RHO-points
-        integer  :: idpthU        ! depths of U-points
-        integer  :: idpthV        ! depths of V-points
-        integer  :: idpthW        ! depths of W-points
-        integer  :: idRdir        ! river runoff direction
-        integer  :: idRepo        ! river runoff ETA-positions
-        integer  :: idRflg        ! river runoff flag
-        integer  :: idRtra        ! river runoff mass transport
-        integer  :: idRuct        ! RHS of U-momentum coupling term
-        integer  :: idRu2d        ! RHS of 2D U-momentum
-        integer  :: idRu3d        ! RHS of total U-momentum
-        integer  :: idRvct        ! RHS of V-momentum coupling term
-        integer  :: idRv2d        ! RHS of 2D V-momentum
-        integer  :: idRv3d        ! RHS of total V-momentum
-        integer  :: idRxpo        ! river runoff XI-positions
-        integer  :: idRvsh        ! river runoff transport profile
-        integer  :: idRwet        ! wet/dry mask on RHO-points
-        integer  :: idRzet        ! RHS of free-surface
-        integer  :: idrain        ! rainfall rate
-        integer  :: idragL        ! bottom linear drag coefficient
-        integer  :: idragQ        ! bottom quadratic drag coefficient
-        integer  :: idSdif        ! vertical S-diffusion coefficient
-        integer  :: idSinW        ! SIN(omega(k)*t)
-        integer  :: idSin2        ! SIN(omega(k)*t)*SIN(omega(l)*t)
-        integer  :: idSrad        ! net shortwave radiation flux
-        integer  :: idSSHc        ! SSH climatology
-        integer  :: idSSSc        ! SSS climatology
-        integer  :: idSSTc        ! SST climatology
-        integer  :: idShea        ! net sensible heat flux
-        integer  :: idSWCW        ! SIN(omega(k)*t)*COS(omega(l)*t)
-        integer  :: idResi        ! 4D-Var residual vector
-        integer  :: idsfwf        ! surface freswater flux
-        integer  :: idTLmo        ! TLM at observation locations
-        integer  :: idTair        ! surface air temperature
-        integer  :: idTdif        ! vertical T-diffusion coefficient
-        integer  :: idTice        ! temperature of ice surface
-        integer  :: idtime        ! ocean time
-        integer  :: idTper        ! tidal period
-        integer  :: idTvan        ! tidal current angle
-        integer  :: idTvma        ! maximum tidal current
-        integer  :: idTvmi        ! minimum tidal current
-        integer  :: idTvph        ! tidal current phase
-        integer  :: idTzam        ! tidal elevation amplitude
-        integer  :: idTzph        ! tidal elevation phase
-        integer  :: idu2dA        ! accumulated 2D U-velocity
-        integer  :: idU2rs        ! 2D total U-radiation stress
-        integer  :: idU3rs        ! 3D total U-radiation stress
-        integer  :: idU2Sd        ! 2D U-Stokes drift velocity
-        integer  :: idU3Sd        ! 3D U-Stokes drift velocity
-        integer  :: idUads        ! 3D U-velocity adjoint sensitivity
-        integer  :: idUair        ! surface U-wind
-        integer  :: idUbar        ! 2D U-velocity
-        integer  :: idUbas        ! 2D U-velocity adjoint sensitivity
-        integer  :: idUbcl        ! 2D U-velocity climatology
-        integer  :: idUbcs        ! bottom max U-momentum-wave stress
-        integer  :: idUbed        ! bed load U-direction
-        integer  :: idUbms        ! bottom U-momentum stress
-        integer  :: idUbot        ! bed wave orbital U-velocity
-        integer  :: idUbrs        ! bottom U-current stress
-        integer  :: idUbtf        ! 2D U-velocity impulse forcing
-        integer  :: idUbur        ! bottom U-velocity above bed
-        integer  :: idUbws        ! bottom U-wave stress
-        integer  :: idUclm        ! 3D U-velocity climatology
-        integer  :: idUfx1        ! time averaged U-flux for 2D
-        integer  :: idUfx2        ! time averaged U-flux for 3D
-        integer  :: idUice        ! ice U-velocity
-        integer  :: idUsms        ! surface U-momentum stress
-        integer  :: idUsuE        ! model surface eastward velocity
-        integer  :: idUsur        ! surface U-velocity
-        integer  :: idUtlf        ! 3D U-velocity impulse forcing
-        integer  :: idUvel        ! 3D U-velocity
-        integer  :: idUwet        ! wet/dry mask on U-points
-        integer  :: idu2dD        ! detided 2D U-velocity
-        integer  :: idu2dH        ! 2D U-velocity tide harmonics
-        integer  :: idu2dE        ! 2D eastward velocity at RHO-points
-        integer  :: idu3dD        ! detided 3D U-velocity
-        integer  :: idu3dH        ! 3D U-velocity tide harmonics
-        integer  :: idu3dE        ! 3D eastward velocity at RHO-points
-        integer  :: idV2rs        ! 2D total V-radiation stress
-        integer  :: idV3rs        ! 3D total V-radiation stress
-        integer  :: idV2Sd        ! 2D U-Stokes drift velocity
-        integer  :: idV3Sd        ! 3D U-Stokes drift velocity
-        integer  :: idVads        ! 3D V-velocity adjoint sensitivity
-        integer  :: idVair        ! surface V-wind
-        integer  :: idVbar        ! 2D V-velocity
-        integer  :: idVbas        ! 2D V-velocity adjoint sensitivity
-        integer  :: idVbcl        ! 2D V-velocity climatology
-        integer  :: idVbcs        ! bottom max V-current-wave stress
-        integer  :: idVbed        ! bed load V-direction
-        integer  :: idVbms        ! bottom V-momentum stress
-        integer  :: idVbot        ! bed wave orbital V-velocity
-        integer  :: idVbrs        ! bottom V-current stress
-        integer  :: idVbtf        ! 2D V-velocity impulse forcing
-        integer  :: idVbvr        ! bottom V-velocity above bed
-        integer  :: idVbws        ! bottom V-wave stress
-        integer  :: idVclm        ! 3D V-velocity climatology
-        integer  :: idVfx1        ! 2D momentum time-averaged V-flux
-        integer  :: idVfx2        ! 3D momentum time-averaged V-flux
-        integer  :: idVice        ! ice V-velocity
-        integer  :: idVmLS        ! vertical mixing length scale
-        integer  :: idVmKK        ! Kinetic energy vertical mixing
-        integer  :: idVmKP        ! Length scale vertical mixing
-        integer  :: idVsms        ! surface V-momentum stress
-        integer  :: idVsuN        ! model surface northward velocity
-        integer  :: idVsur        ! surface V-velocity
-        integer  :: idVtlf        ! 3D V-velocity impulse forcing
-        integer  :: idVvel        ! 3D V-velocity
-        integer  :: idVvis        ! vertical viscosity coefficient
-        integer  :: idVwet        ! wet/dry mask on V-points
-        integer  :: idv2dD        ! detided 2D U-velocity
-        integer  :: idv2dH        ! 2D U-velocity tide harmonics
-        integer  :: idv2dN        ! 2D northward velocity at RHO-points
-        integer  :: idv3dD        ! detided 3D U-velocity
-        integer  :: idv3dH        ! 3D U-velocity tide harmonics
-        integer  :: idv3dN        ! 3D northward velocity at RHO-points
-        integer  :: idW2xx        ! 2D radiation stress, Sxx-component
-        integer  :: idW2xy        ! 2D radiation stress, Sxy-component
-        integer  :: idW2yy        ! 2D radiation stress, Syy-component
-        integer  :: idW3xx        ! 3D radiation stress, Sxx-component
-        integer  :: idW3xy        ! 3D radiation stress, Sxy-component
-        integer  :: idW3yy        ! 3D radiation stress, Syy-component
-        integer  :: idW3zx        ! 3D radiation stress, Szx-component
-        integer  :: idW3zy        ! 3D radiation stress, Szy-component
-        integer  :: idWads        ! 3D W-velocity adjoint sensitivity
-        integer  :: idWamp        ! wind-induced wave amplitude
-        integer  :: idWbrk        ! wind-induced wave breaking
-        integer  :: idWdis        ! wind-induced wave dissipation
-        integer  :: idWdir        ! wind-induced wave direction
-        integer  :: idWlen        ! wind-induced wave length
-        integer  :: idWptp        ! wind-induced surface wave period
-        integer  :: idWpbt        ! wind-induced bottom wave period
-        integer  :: idWorb        ! wind-induced wave orbital velocity
-        integer  :: idWvel        ! true vertical velocity
-        integer  :: idZoBL        ! bottom roughness length
-        integer  :: idZads        ! Free-surface adjoint sensitivity
-        integer  :: idZtlf        ! Free-surface impulse forcing
-        integer  :: id2dPV        ! 2D potential vorticity
-        integer  :: id2dRV        ! 2D relative vorticity
-        integer  :: id3dPV        ! 3D potential vorticity
-        integer  :: id3dRV        ! 3D relative vorticity
+      integer  :: idAice        ! fraction of cell covered by ice
+      integer  :: idbath        ! bathymetry
+      integer  :: idBgEr        ! Background error at observations
+      integer  :: idBgTh        ! Threshold for BQC check
+      integer  :: idCfra        ! cloud fraction
+      integer  :: idCosW        ! COS(omega(k)*t)
+      integer  :: idCos2        ! COS(omega(k)*t)*COS(omega(l)*t)
+      integer  :: idDano        ! density anomaly
+      integer  :: idDiff(2)     ! temperature and salinity diffusion
+      integer  :: iddQdT        ! heat flux sensitivity to SST
+      integer  :: idEmPf        ! E-P from bulk_flux.F
+      integer  :: idevap        ! evaporation rate
+      integer  :: idFsur        ! free-surface
+      integer  :: idFsuD        ! detided free-surface
+      integer  :: idFsuH        ! free-surface tide harmonics
+      integer  :: idGhat(2)     ! KPP nonlocal transport
+      integer  :: idgTnc        ! generic tracer nudging coefficients
+      integer  :: idJWTy        ! Jerlov water type
+      integer  :: idHbbl        ! depth of bottom boundary layer
+      integer  :: idHice        ! depth of ice cover
+      integer  :: idHsbl        ! depth of surface boundary layer
+      integer  :: idHsno        ! depth of snow cover
+      integer  :: idIncr        ! 4D-Var analysis increment
+      integer  :: idInno        ! 4D-Var innovation vector
+      integer  :: idKhor        ! convolution horizontal diffusion
+      integer  :: idKver        ! convolution vertical diffusion
+      integer  :: idLdwn        ! downwelling longwave radiation flux
+      integer  :: idLhea        ! net latent heat flux
+      integer  :: idLrad        ! net longwave radiation flux
+      integer  :: idMadH        ! ADM interpolation weights
+      integer  :: idMOMi        ! Initial model-observation misfit
+      integer  :: idMOMf        ! final model-observation misfit
+      integer  :: idMtke        ! turbulent kinetic energy
+      integer  :: idMtls        ! turbulent length scale
+      integer  :: idM2nc        ! 2D momentum nudging coefficients
+      integer  :: idM3nc        ! 2D momentum nudging coefficients
+      integer  :: idNLmf        ! final NLM at observation locations
+      integer  :: idNLmi        ! initial NLM at observation locations
+      integer  :: idNLmo        ! NLM at observations locations
+      integer  :: idNLmp        ! unvetted prior NLM at obs locations
+      integer  :: idNLmu        ! unvetted NLM at obs locations
+      integer  :: idNobs        ! number of observations
+      integer  :: idObsD        ! observations depth
+      integer  :: idObsS        ! observations screening scale
+      integer  :: idObsT        ! observations time
+      integer  :: idObsX        ! observations X-grid location
+      integer  :: idObsY        ! observations Y-grid location
+      integer  :: idObsZ        ! observations Z-grid location
+      integer  :: idOday        ! observations survey time
+      integer  :: idOerr        ! observations error
+      integer  :: idOlat        ! observations latitude
+      integer  :: idOlon        ! observations longitude
+      integer  :: idOmet        ! observations meta value
+      integer  :: idOpro        ! observations provenance
+      integer  :: idOtyp        ! observations type
+      integer  :: idOval        ! observations value
+      integer  :: idOvel        ! omega vertical velocity
+      integer  :: idQair        ! surface air humidity
+      integer  :: idPair        ! surface air pressure
+      integer  :: idPbar        ! streamfunction
+      integer  :: idPwet        ! wet/dry mask on PSI-points
+      integer  :: idpthR        ! depths of RHO-points
+      integer  :: idpthU        ! depths of U-points
+      integer  :: idpthV        ! depths of V-points
+      integer  :: idpthW        ! depths of W-points
+      integer  :: idRdir        ! river runoff direction
+      integer  :: idRepo        ! river runoff ETA-positions
+      integer  :: idRflg        ! river runoff flag
+      integer  :: idRtra        ! river runoff mass transport
+      integer  :: idRuct        ! RHS of U-momentum coupling term
+      integer  :: idRu2d        ! RHS of 2D U-momentum
+      integer  :: idRu3d        ! RHS of total U-momentum
+      integer  :: idRvct        ! RHS of V-momentum coupling term
+      integer  :: idRv2d        ! RHS of 2D V-momentum
+      integer  :: idRv3d        ! RHS of total V-momentum
+      integer  :: idRxpo        ! river runoff XI-positions
+      integer  :: idRvsh        ! river runoff transport profile
+      integer  :: idRwet        ! wet/dry mask on RHO-points
+      integer  :: idRzet        ! RHS of free-surface
+      integer  :: idrain        ! rainfall rate
+      integer  :: idragL        ! bottom linear drag coefficient
+      integer  :: idragQ        ! bottom quadratic drag coefficient
+      integer  :: idSdif        ! vertical S-diffusion coefficient
+      integer  :: idSinW        ! SIN(omega(k)*t)
+      integer  :: idSin2        ! SIN(omega(k)*t)*SIN(omega(l)*t)
+      integer  :: idSrad        ! net shortwave radiation flux
+      integer  :: idSSHc        ! SSH climatology
+      integer  :: idSSSc        ! SSS climatology
+      integer  :: idSSTc        ! SST climatology
+      integer  :: idShea        ! net sensible heat flux
+      integer  :: idSWCW        ! SIN(omega(k)*t)*COS(omega(l)*t)
+      integer  :: idResi        ! 4D-Var residual vector
+      integer  :: idsfwf        ! surface freswater flux
+      integer  :: idTLmo        ! TLM at observation locations
+      integer  :: idTair        ! surface air temperature
+      integer  :: idTdif        ! vertical T-diffusion coefficient
+      integer  :: idTice        ! temperature of ice surface
+      integer  :: idtime        ! ocean time
+      integer  :: idTper        ! tidal period
+      integer  :: idTvan        ! tidal current angle
+      integer  :: idTvma        ! maximum tidal current
+      integer  :: idTvmi        ! minimum tidal current
+      integer  :: idTvph        ! tidal current phase
+      integer  :: idTzam        ! tidal elevation amplitude
+      integer  :: idTzph        ! tidal elevation phase
+      integer  :: idu2dA        ! accumulated 2D U-velocity
+      integer  :: idU2rs        ! 2D total U-radiation stress
+      integer  :: idU3rs        ! 3D total U-radiation stress
+      integer  :: idU2Sd        ! 2D U-Stokes drift velocity
+      integer  :: idU3Sd        ! 3D U-Stokes drift velocity
+      integer  :: idUads        ! 3D U-velocity adjoint sensitivity
+      integer  :: idUair        ! surface U-wind
+      integer  :: idUbar        ! 2D U-velocity
+      integer  :: idUbas        ! 2D U-velocity adjoint sensitivity
+      integer  :: idUbcl        ! 2D U-velocity climatology
+      integer  :: idUbcs        ! bottom max U-momentum-wave stress
+      integer  :: idUbed        ! bed load U-direction
+      integer  :: idUbms        ! bottom U-momentum stress
+      integer  :: idUbot        ! bed wave orbital U-velocity
+      integer  :: idUbrs        ! bottom U-current stress
+      integer  :: idUbtf        ! 2D U-velocity impulse forcing
+      integer  :: idUbur        ! bottom U-velocity above bed
+      integer  :: idUbws        ! bottom U-wave stress
+      integer  :: idUclm        ! 3D U-velocity climatology
+      integer  :: idUfx1        ! time averaged U-flux for 2D
+      integer  :: idUfx2        ! time averaged U-flux for 3D
+      integer  :: idUice        ! ice U-velocity
+      integer  :: idUsms        ! surface U-momentum stress
+      integer  :: idUsuE        ! model surface eastward velocity
+      integer  :: idUsur        ! surface U-velocity
+      integer  :: idUtlf        ! 3D U-velocity impulse forcing
+      integer  :: idUvel        ! 3D U-velocity
+      integer  :: idUwet        ! wet/dry mask on U-points
+      integer  :: idu2dD        ! detided 2D U-velocity
+      integer  :: idu2dH        ! 2D U-velocity tide harmonics
+      integer  :: idu2dE        ! 2D eastward velocity at RHO-points
+      integer  :: idu3dD        ! detided 3D U-velocity
+      integer  :: idu3dH        ! 3D U-velocity tide harmonics
+      integer  :: idu3dE        ! 3D eastward velocity at RHO-points
+      integer  :: idV2rs        ! 2D total V-radiation stress
+      integer  :: idV3rs        ! 3D total V-radiation stress
+      integer  :: idV2Sd        ! 2D U-Stokes drift velocity
+      integer  :: idV3Sd        ! 3D U-Stokes drift velocity
+      integer  :: idVads        ! 3D V-velocity adjoint sensitivity
+      integer  :: idVair        ! surface V-wind
+      integer  :: idVbar        ! 2D V-velocity
+      integer  :: idVbas        ! 2D V-velocity adjoint sensitivity
+      integer  :: idVbcl        ! 2D V-velocity climatology
+      integer  :: idVbcs        ! bottom max V-current-wave stress
+      integer  :: idVbed        ! bed load V-direction
+      integer  :: idVbms        ! bottom V-momentum stress
+      integer  :: idVbot        ! bed wave orbital V-velocity
+      integer  :: idVbrs        ! bottom V-current stress
+      integer  :: idVbtf        ! 2D V-velocity impulse forcing
+      integer  :: idVbvr        ! bottom V-velocity above bed
+      integer  :: idVbws        ! bottom V-wave stress
+      integer  :: idVclm        ! 3D V-velocity climatology
+      integer  :: idVfx1        ! 2D momentum time-averaged V-flux
+      integer  :: idVfx2        ! 3D momentum time-averaged V-flux
+      integer  :: idVice        ! ice V-velocity
+      integer  :: idVmLS        ! vertical mixing length scale
+      integer  :: idVmKK        ! Kinetic energy vertical mixing
+      integer  :: idVmKP        ! Length scale vertical mixing
+      integer  :: idVsms        ! surface V-momentum stress
+      integer  :: idVsuN        ! model surface northward velocity
+      integer  :: idVsur        ! surface V-velocity
+      integer  :: idVtlf        ! 3D V-velocity impulse forcing
+      integer  :: idVvel        ! 3D V-velocity
+      integer  :: idVvis        ! vertical viscosity coefficient
+      integer  :: idVwet        ! wet/dry mask on V-points
+      integer  :: idv2dD        ! detided 2D U-velocity
+      integer  :: idv2dH        ! 2D U-velocity tide harmonics
+      integer  :: idv2dN        ! 2D northward velocity at RHO-points
+      integer  :: idv3dD        ! detided 3D U-velocity
+      integer  :: idv3dH        ! 3D U-velocity tide harmonics
+      integer  :: idv3dN        ! 3D northward velocity at RHO-points
+      integer  :: idW2xx        ! 2D radiation stress, Sxx-component
+      integer  :: idW2xy        ! 2D radiation stress, Sxy-component
+      integer  :: idW2yy        ! 2D radiation stress, Syy-component
+      integer  :: idW3xx        ! 3D radiation stress, Sxx-component
+      integer  :: idW3xy        ! 3D radiation stress, Sxy-component
+      integer  :: idW3yy        ! 3D radiation stress, Syy-component
+      integer  :: idW3zx        ! 3D radiation stress, Szx-component
+      integer  :: idW3zy        ! 3D radiation stress, Szy-component
+      integer  :: idWads        ! 3D W-velocity adjoint sensitivity
+      integer  :: idWamp        ! wind-induced wave amplitude
+      integer  :: idWbrk        ! wind-induced wave breaking
+      integer  :: idWdis        ! wind-induced wave dissipation
+      integer  :: idWdir        ! wind-induced wave direction
+      integer  :: idWlen        ! wind-induced wave length
+      integer  :: idWptp        ! wind-induced surface wave period
+      integer  :: idWpbt        ! wind-induced bottom wave period
+      integer  :: idWorb        ! wind-induced wave orbital velocity
+      integer  :: idWvel        ! true vertical velocity
+      integer  :: idZoBL        ! bottom roughness length
+      integer  :: idZads        ! Free-surface adjoint sensitivity
+      integer  :: idZtlf        ! Free-surface impulse forcing
+      integer  :: id2dPV        ! 2D potential vorticity
+      integer  :: id2dRV        ! 2D relative vorticity
+      integer  :: id3dPV        ! 3D potential vorticity
+      integer  :: id3dRV        ! 3D relative vorticity
 !
 !  Last used variable ID counter.
 !
-        integer  :: last_varid
+      integer  :: last_varid
 !
 !  Input/output identification tracer indices.
 !
-        integer, allocatable :: idRtrc(:)    ! river runoff for tracers
-        integer, allocatable :: idsurT(:)    ! model surface tracers
-        integer, allocatable :: idTads(:)    ! tracers adjoint sentivity
-        integer, allocatable :: idTbot(:)    ! bottom flux for tracers
-        integer, allocatable :: idTbry(:,:)  ! tracers boundary
-        integer, allocatable :: idTclm(:)    ! tracers climatology
-        integer, allocatable :: idTnud(:)    ! tracers nudge coefficient
-        integer, allocatable :: idTsur(:)    ! surface flux for tracers
-        integer, allocatable :: idTtlf(:)    ! tracers impulse forcing
+      integer, allocatable :: idRtrc(:)    ! river runoff for tracers
+      integer, allocatable :: idsurT(:)    ! model surface tracers
+      integer, allocatable :: idTads(:)    ! tracers adjoint sentivity
+      integer, allocatable :: idTbot(:)    ! bottom flux for tracers
+      integer, allocatable :: idTbry(:,:)  ! tracers boundary
+      integer, allocatable :: idTclm(:)    ! tracers climatology
+      integer, allocatable :: idTnud(:)    ! tracers nudge coefficient
+      integer, allocatable :: idTsur(:)    ! surface flux for tracers
+      integer, allocatable :: idTtlf(:)    ! tracers impulse forcing
 !
 !  Boundary conditions identification indices.
 !
-        integer  :: idU2bc(4)      ! 2D U-velocity boundary conditions
-        integer  :: idU3bc(4)      ! 3D U-velocity boundary conditions
-        integer  :: idV2bc(4)      ! 2D V-velocity boundary conditions
-        integer  :: idV3bc(4)      ! 3D V-velocity boundary conditions
-        integer  :: idZbry(4)      ! free-surface boundary conditions
+      integer  :: idU2bc(4)      ! 2D U-velocity boundary conditions
+      integer  :: idU3bc(4)      ! 3D U-velocity boundary conditions
+      integer  :: idV2bc(4)      ! 2D V-velocity boundary conditions
+      integer  :: idV3bc(4)      ! 3D V-velocity boundary conditions
+      integer  :: idZbry(4)      ! free-surface boundary conditions
 !
 !  Time-averaged quadratic terms IDs.
 !
-        integer  :: idU2av                    ! <ubar*ubar>
-        integer  :: idV2av                    ! <vbar*vbar>
-        integer  :: idZZav                    ! <zeta*zeta>
+      integer  :: idU2av                    ! <ubar*ubar>
+      integer  :: idV2av                    ! <vbar*vbar>
+      integer  :: idZZav                    ! <zeta*zeta>
 
-        integer  :: idHUav                    ! <Huon>
-        integer  :: idHVav                    ! <Hvom>
-        integer  :: idUUav                    ! <u*u>
-        integer  :: idUVav                    ! <u*v>
-        integer  :: idVVav                    ! <v*v>
+      integer  :: idHUav                    ! <Huon>
+      integer  :: idHVav                    ! <Hvom>
+      integer  :: idUUav                    ! <u*u>
+      integer  :: idUVav                    ! <u*v>
+      integer  :: idVVav                    ! <v*v>
 
-        integer, allocatable :: iHUTav(:)     ! <Huon*t> for active tracers
-        integer, allocatable :: iHVTav(:)     ! <Hvom*t> for active tracers
-        integer, allocatable :: idTTav(:)     ! <t*t> for active tracers
-        integer, allocatable :: idUTav(:)     ! <u*t> for active tracers
-        integer, allocatable :: idVTav(:)     ! <v*t> for active tracers
+      integer, allocatable :: iHUTav(:)     ! <Huon*t> for active tracers
+      integer, allocatable :: iHVTav(:)     ! <Hvom*t> for active tracers
+      integer, allocatable :: idTTav(:)     ! <t*t> for active tracers
+      integer, allocatable :: idUTav(:)     ! <u*t> for active tracers
+      integer, allocatable :: idVTav(:)     ! <v*t> for active tracers
 
 #ifdef DIAGNOSTICS
 !
 !  Tracer/Momentum Diagnostic variable IDs.
 !
-        integer, allocatable :: idDtrc(:,:)   ! tracers terms
-        integer, allocatable :: idDu2d(:)     ! 2D u-momentum terms
-        integer, allocatable :: idDv2d(:)     ! 2D v-momentum terms
-        integer, allocatable :: idDu3d(:)     ! 3D u-momentum terms
-        integer, allocatable :: idDv3d(:)     ! 3D v-momentum terms
+      integer, allocatable :: idDtrc(:,:)   ! tracers terms
+      integer, allocatable :: idDu2d(:)     ! 2D u-momentum terms
+      integer, allocatable :: idDv2d(:)     ! 2D v-momentum terms
+      integer, allocatable :: idDu3d(:)     ! 3D u-momentum terms
+      integer, allocatable :: idDv3d(:)     ! 3D v-momentum terms
 #endif
 !
 !  State variables indices (order is important). Notice that current
 !  extra-observations index (isRadial) needs to be initialized to zero
 !  here and reset elsewhere to the value provided by the user.
 !
-        integer  :: isFsur = 1                ! free-surface
-        integer  :: isUbar = 2                ! 2D U-velocity
-        integer  :: isVbar = 3                ! 2D V-velocity
-        integer  :: isUvel = 4                ! 3D U-velocity
-        integer  :: isVvel = 5                ! 3D V-velocity
-        integer  :: isWvel                    ! 3D W-velocity
-        integer  :: isRadial = 0              ! HF radial-velocity
-        integer  :: isUstr                    ! surface u-stress
-        integer  :: isVstr                    ! surface v-stress
-        integer  :: isMtke                    ! turbulent kinetic energy
-        integer, allocatable :: isTsur(:)     ! surface tracer flux
-        integer, allocatable :: isTvar(:)     ! tracers
-        integer, allocatable :: idBvar(:)     ! LBC variables indices
-        integer, allocatable :: idSvar(:)     ! state vector indices
-        integer, allocatable :: idSbry(:)     ! state boundaries indices
+      integer  :: isFsur = 1                ! free-surface
+      integer  :: isUbar = 2                ! 2D U-velocity
+      integer  :: isVbar = 3                ! 2D V-velocity
+      integer  :: isUvel = 4                ! 3D U-velocity
+      integer  :: isVvel = 5                ! 3D V-velocity
+      integer  :: isWvel                    ! 3D W-velocity
+      integer  :: isRadial = 0              ! HF radial-velocity
+      integer  :: isUstr                    ! surface u-stress
+      integer  :: isVstr                    ! surface v-stress
+      integer  :: isMtke                    ! turbulent kinetic energy
+      integer, allocatable :: isTsur(:)     ! surface tracer flux
+      integer, allocatable :: isTvar(:)     ! tracers
+      integer, allocatable :: idBvar(:)     ! LBC variables indices
+      integer, allocatable :: idSvar(:)     ! state vector indices
+      integer, allocatable :: idSbry(:)     ! state boundaries indices
 !
 !  Generic state variables lateral boundary indices.
 !
-        integer  :: isBp2d                    ! 2D PSI-variables
-        integer  :: isBr2d                    ! 2D RHO-variables
-        integer  :: isBu2d                    ! 2D U-variables
-        integer  :: isBv2d                    ! 2D V-variables
-        integer  :: isBp3d                    ! 3D PSI-variables
-        integer  :: isBr3d                    ! 3D RHO-variables
-        integer  :: isBu3d                    ! 3D U-variables
-        integer  :: isBv3d                    ! 3D V-variables
-        integer  :: isBw3d                    ! 3D W-variables
+      integer  :: isBp2d                    ! 2D PSI-variables
+      integer  :: isBr2d                    ! 2D RHO-variables
+      integer  :: isBu2d                    ! 2D U-variables
+      integer  :: isBv2d                    ! 2D V-variables
+      integer  :: isBp3d                    ! 3D PSI-variables
+      integer  :: isBr3d                    ! 3D RHO-variables
+      integer  :: isBu3d                    ! 3D U-variables
+      integer  :: isBv3d                    ! 3D V-variables
+      integer  :: isBw3d                    ! 3D W-variables
 !
-!  Input lateral boundary, climatology, and forcing NetCDF files IDs.
+!  Input lateral boundary, climatology, and forcing NetCDF files IDs
+!  for each processing field. It facilitates the multi-file option:
+!  each field can be in its own file.
 !
-        integer, allocatable :: ncBRYid(:,:)
-        integer, allocatable :: ncCLMid(:,:)
-        integer, allocatable :: ncFRCid(:,:)
+      integer, allocatable :: BRYncid(:,:)
+      integer, allocatable :: CLMncid(:,:)
+      integer, allocatable :: FRCncid(:,:)
+
+#if defined PIO_LIB && defined DISTRIBUTE
+!
+!  Input lateral boundary, climatology, and forcing NetCDF files
+!  descriptors for each processing field. It facilitates the
+!  multi-file option: each field can be in its own file.
+!
+      TYPE (File_desc_t), pointer :: BRYpioFile(:,:)
+      TYPE (File_desc_t), pointer :: CLMpioFile(:,:)
+      TYPE (File_desc_t), pointer :: FRCpioFile(:,:)
+#endif
 !
 !  Flags to create output files.
 !
-        integer, allocatable :: idefADJ(:)    ! adjoint file
-        integer, allocatable :: idefAVG(:)    ! averages file
-        integer, allocatable :: idefDIA(:)    ! diagnostics file
-        integer, allocatable :: idefHIS(:)    ! history file
-        integer, allocatable :: idefQCK(:)    ! quicksave file
-        integer, allocatable :: idefTLM(:)    ! tangent file
+      integer, allocatable :: idefADJ(:)    ! adjoint file
+      integer, allocatable :: idefAVG(:)    ! averages file
+      integer, allocatable :: idefDIA(:)    ! diagnostics file
+      integer, allocatable :: idefHIS(:)    ! history file
+      integer, allocatable :: idefQCK(:)    ! quicksave file
+      integer, allocatable :: idefTLM(:)    ! tangent file
 !
 !  Output NetCDF variables IDs.
 !
-        integer, allocatable :: idTvar(:)     ! tracers variables
-        integer, allocatable :: idTrcD(:)     ! detided tracer variables
-        integer, allocatable :: idTrcH(:)     ! tracer variables hamonics
+      integer, allocatable :: idTvar(:)     ! tracers variables
+      integer, allocatable :: idTrcD(:)     ! detided tracer variables
+      integer, allocatable :: idTrcH(:)     ! tracer variables hamonics
 !
 !  Input/Output information variables.
 !
-        logical, allocatable :: Linfo(:,:,:)
+      logical, allocatable :: Linfo(:,:,:)
+!
+      integer, allocatable :: Iinfo(:,:,:)
+!
+      real(dp), allocatable :: Finfo(:,:,:)
+      real(dp), allocatable :: Fpoint(:,:,:)
+      real(dp), allocatable :: Fscale(:,:)
+      real(dp), allocatable :: Tintrp(:,:,:)
+      real(dp), allocatable :: Vtime(:,:,:)
+!
+      character (len=5  ) :: version = '4.0  '
+      character (len=40 ) :: varnam(MV)
+      character (len=44 ) :: date_str
+      character (len=46 ) :: Tname(0:NV)
+      character (len=100) :: Vname(5,0:NV)
+      character (len=120) :: history
 
-        integer, allocatable :: Iinfo(:,:,:)
+      character (len=256), allocatable :: Cinfo(:,:)
 
-        real(dp), allocatable :: Finfo(:,:,:)
-        real(dp), allocatable :: Fpoint(:,:,:)
-        real(dp), allocatable :: Fscale(:,:)
-        real(dp), allocatable :: Tintrp(:,:,:)
-        real(dp), allocatable :: Vtime(:,:,:)
-
-        character (len=5  ) :: version = '3.9  '
-        character (len=40 ) :: varnam(MV)
-        character (len=44 ) :: date_str
-        character (len=46 ) :: Tname(0:NV)
-        character (len=100) :: Vname(5,0:NV)
-        character (len=120) :: history
-
-        character (len=256), allocatable :: Cinfo(:,:)
+#if defined PIO_LIB && defined DISTRIBUTE
+!
+      TYPE (My_VarDesc), pointer :: Dinfo(:,:,:)
+#endif
 !
 !  Analyical header file logical and names.
 !
-        logical :: Lanafile
-
-        character (len=256), dimension(39) :: ANANAME
+      logical :: Lanafile
+!
+      character (len=256), dimension(39) :: ANANAME
 
 #ifdef BIOLOGY
 !
 !  Biology models file logical and names.
 !
-        logical, dimension(4) :: Lbiofile
-
-        character (len=256), dimension(4) :: BIONAME
+      logical, dimension(4) :: Lbiofile
+!
+      character (len=256), dimension(4) :: BIONAME
 #endif
 !
 !  GIT and SVN revision and repository root URL.
 !
-        character (len=80 ) :: git_rev, svn_rev
-        character (len=256) :: git_url, svn_url
+      character (len=80 ) :: git_rev, svn_rev
+      character (len=256) :: git_url, svn_url
 !
       CONTAINS
 !
@@ -805,18 +842,33 @@
         Dmem(1)=Dmem(1)+REAL(MAXVAL(NSV)+1,r8)
       END IF
 
-      IF (.not.allocated(ncBRYid)) THEN
-        allocate ( ncBRYid(NV,Ngrids) )
+      IF (.not.allocated(BRYncid)) THEN
+        allocate ( BRYncid(NV,Ngrids) )
         Dmem(1)=Dmem(1)+REAL(NV*Ngrids,r8)
       END IF
-      IF (.not.allocated(ncCLMid)) THEN
-        allocate ( ncCLMid(NV,Ngrids) )
+      IF (.not.allocated(CLMncid)) THEN
+        allocate ( CLMncid(NV,Ngrids) )
         Dmem(1)=Dmem(1)+REAL(NV*Ngrids,r8)
       END IF
-      IF (.not.allocated(ncFRCid)) THEN
-        allocate ( ncFRCid(NV,Ngrids) )
+      IF (.not.allocated(FRCncid)) THEN
+        allocate ( FRCncid(NV,Ngrids) )
         Dmem(1)=Dmem(1)+REAL(NV*Ngrids,r8)
       END IF
+
+#if defined PIO_LIB && defined DISTRIBUTE
+      IF (.not.associated(BRYpioFile)) THEN
+        allocate ( BRYpioFile(NV,Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(NV*Ngrids,r8)
+      END IF
+      IF (.not.associated(CLMpioFile)) THEN
+        allocate ( CLMpioFile(NV,Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(NV*Ngrids,r8)
+      END IF
+      IF (.not.associated(FRCpioFile)) THEN
+        allocate ( FRCpioFile(NV,Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(NV*Ngrids,r8)
+      END IF
+#endif
 
       IF (.not.allocated(idefADJ)) THEN
         allocate ( idefADJ(Ngrids) )
@@ -900,6 +952,13 @@
         Dmem(1)=Dmem(1)+0.125_r8*256.0_r8*REAL(NV*Ngrids,r8)
       END IF
 
+#if defined PIO_LIB && defined DISTRIBUTE
+      IF (.not.associated(Dinfo)) THEN
+        allocate ( Dinfo(2,NV,Ngrids) )
+        Dmem(1)=Dmem(1)+2.0_r8*REAL(NV*Ngrids,r8)
+      END IF
+#endif
+!
       RETURN
       END SUBROUTINE allocate_ncparam
 
@@ -1087,6 +1146,14 @@
           Finfo(6,i,ng)=0.0_r8
           Finfo(7,i,ng)=0.0_r8
           Finfo(10,i,ng)=1.0_r8
+#if defined PIO_LIB && defined DISTRIBUTE
+          Dinfo(1,i,ng)%vd%varID=-1
+          Dinfo(1,i,ng)%dkind=-1
+          Dinfo(1,i,ng)%gtype=0
+          Dinfo(2,i,ng)%vd%varID=-1
+          Dinfo(2,i,ng)%dkind=-1
+          Dinfo(2,i,ng)%gtype=0
+#endif
           Fscale(i,ng)=1.0_r8
           Fpoint(1,i,ng)=0.0_r8
           Fpoint(2,i,ng)=0.0_r8
@@ -1094,9 +1161,14 @@
           Tintrp(2,i,ng)=0.0_dp
           Vtime(1,i,ng)=0.0_dp
           Vtime(2,i,ng)=0.0_dp
-          ncBRYid(i,ng)=-1
-          ncCLMid(i,ng)=-1
-          ncFRCid(i,ng)=-1
+          BRYncid(i,ng)=-1
+          CLMncid(i,ng)=-1
+          FRCncid(i,ng)=-1
+#if defined PIO_LIB && defined DISTRIBUTE
+          BRYpioFile(i,ng)%fh=-1
+          CLMpioFile(i,ng)%fh=-1
+          FRCpioFile(i,ng)%fh=-1
+#endif
         END DO
       END DO
 !
@@ -1980,7 +2052,7 @@
                     WRITE (Vname(1,varid),'(a,i2.2,a)')                 &
      &                    TRIM(ADJUSTL(Vinfo(1))), ic, '_age'
                     WRITE (Vname(2,varid),'(a,i2.2)')                   &
-     &                    'age concentraction, type ', ic
+     &                    'age concentration, type ', ic
                     WRITE (Vname(3,varid),'(a)')                        &
      &                    'second kilogram meter-3'
                     WRITE (Vname(4,varid),'(a,a)')                      &

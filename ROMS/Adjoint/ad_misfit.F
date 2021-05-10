@@ -4,7 +4,7 @@
     !defined WEAK_CONSTRAINT
 !
 !git $Id$
-!svn $Id: ad_misfit.F 1054 2021-03-06 19:47:12Z arango $
+!svn $Id: ad_misfit.F 1064 2021-05-10 19:55:56Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -572,9 +572,9 @@
   10        FORMAT (10x,a,t25,4(1x,i10))
   20        FORMAT (/,10x,'Total',t47,2(1x,i10),                        &
      &              /,10x,'Obs Tally',t47,2(1x,i10),/)
-  30        FORMAT (3x,' AD_MISFIT   - Added observations misfit ',     &
-     &              'forcing,',t62,'t = ',a,/,19x,'(Observation ',      &
-     &              'records = ',i7.7,' - ',i7.7,', iic = ',i7.7,')')
+  30        FORMAT (2x,' AD_MISFIT       - Added observations misfit ', &
+     &              'forcing,',t75,a,/,22x,'(Observation ',             &
+     &              'records = ',i0,' - ',i0,', iic = ',i0,')')
           END IF
         END IF
       END IF

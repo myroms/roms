@@ -1,5 +1,5 @@
 # git $Id$
-# svn $Id: Darwin-ifort.mk 1062 2021-05-06 01:50:38Z arango $
+# svn $Id: Darwin-ifort.mk 1064 2021-05-10 19:55:56Z arango $
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # Copyright (c) 2002-2021 The ROMS/TOMS Group                           :::
 #   Licensed under a MIT/X style license                                :::
@@ -22,6 +22,13 @@
 # NETCDF_INCDIR  NetCDF include directory
 # NETCDF_LIBDIR  NetCDF libary directory
 # NETCDF_LIBS    NetCDF library switches
+# PIO_INCDIR     Parallel-IO (PIO) from SCORPIO library include directory
+# PIO_LIBDIR     Parallel-IO (PIO) from SCORPIO libary directory
+# PIO_LIBS       Parallel-IO (PIO) from SCORPIO library switches
+# PNETCDF_INCDIR PNetCDF include directory
+# PNETCDF_LIBDIR PNetCDF libary directory
+# PNETCDF_LIBS   PNetCDF library switches
+
 # LD             Program to load the objects into an executable
 # LDFLAGS        Flags to the loader
 # RANLIB         Name of ranlib command
@@ -153,6 +160,30 @@ endif
 #--------------------------------------------------------------------------
 
           LDFLAGS := $(FFLAGS)
+
+ifdef USE_PIO
+       PIO_INCDIR ?= /opt/intelsoft/openmpi/pio/include
+       PIO_LIBDIR ?= /opt/intelsoft/openmpi/pio/lib
+           FFLAGS += -I$(PIO_INCDIR)
+             LIBS += -L$(PIO_LIBDIR) -lpiof -lpioc
+
+   PNETCDF_INCDIR ?= /opt/intelsoft/openmpi/pnetcdf/include
+   PNETCDF_LIBDIR ?= /opt/intelsoft/openmpi/pnetcdf/lib
+           FFLAGS += -I$(PNETCDF_INCDIR)
+             LIBS += -L$(PNETCDF_LIBDIR) -lpnetcdf
+endif
+
+ifdef USE_SCORPIO
+       PIO_INCDIR ?= /opt/intelsoft/openmpi/scorpio/include
+       PIO_LIBDIR ?= /opt/intelsoft/openmpi/scorpio/lib
+           FFLAGS += -I$(PIO_INCDIR)
+             LIBS += -L$(PIO_LIBDIR) -lpiof -lpioc
+
+   PNETCDF_INCDIR ?= /opt/intelsoft/openmpi/pnetcdf/include
+   PNETCDF_LIBDIR ?= /opt/intelsoft/openmpi/pnetcdf/lib
+           FFLAGS += -I$(PNETCDF_INCDIR)
+             LIBS += -L$(PNETCDF_LIBDIR) -lpnetcdf
+endif
 
 ifdef USE_NETCDF4
         NF_CONFIG ?= nf-config

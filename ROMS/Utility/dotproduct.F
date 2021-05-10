@@ -4,7 +4,7 @@
 #if defined TLM_CHECK || defined PROPAGATOR
 !
 !git $Id$
-!svn $Id: dotproduct.F 1054 2021-03-06 19:47:12Z arango $
+!svn $Id: dotproduct.F 1064 2021-05-10 19:55:56Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -47,6 +47,9 @@
 !=======================================================================
 !
       USE mod_param
+#  ifdef MASKING
+      USE mod_grid
+#  endif
       USE mod_ocean
       USE mod_stepping
 !

@@ -3,7 +3,7 @@
       SUBROUTINE read_AssPar (model, inp, out, Lwrite)
 !
 !git $Id$
-!svn $Id: read_asspar.F 1058 2021-03-25 19:04:23Z arango $
+!svn $Id: read_asspar.F 1064 2021-05-10 19:55:56Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -592,86 +592,86 @@
             CASE ('STDnameI')
               label='STD - initial conditions standard deviation'
               Npts=load_s1d(Nval, Cval, Cdim, line, label, igrid,       &
-     &                      Ngrids, Nfiles, 4, 1, STD)
+     &                      Ngrids, Nfiles, 4, 1, inp_lib, STD)
             CASE ('STDnameM')
               label='STD - model error standard deviation'
               Npts=load_s1d(Nval, Cval, Cdim, line, label, igrid,       &
-     &                      Ngrids, Nfiles, 4, 2, STD)
+     &                      Ngrids, Nfiles, 4, 2, inp_lib, STD)
             CASE ('STDnameB')
               label='STD - boundary conditions standard deviation'
               Npts=load_s1d(Nval, Cval, Cdim, line, label, igrid,       &
-     &                      Ngrids, Nfiles, 4, 3, STD)
+     &                      Ngrids, Nfiles, 4, 3, inp_lib, STD)
             CASE ('STDnameF')
               label='STD - surface forcing standard deviation'
               Npts=load_s1d(Nval, Cval, Cdim, line, label, igrid,       &
-     &                      Ngrids, Nfiles, 4, 4, STD)
+     &                      Ngrids, Nfiles, 4, 4, inp_lib, STD)
             CASE ('NRMnameI')
               label='NRM - initial conditions normalization'
               Npts=load_s1d(Nval, Cval, Cdim, line, label, igrid,       &
-     &                      Ngrids, Nfiles, 4, 1, NRM)
+     &                      Ngrids, Nfiles, 4, 1, inp_lib, NRM)
             CASE ('NRMnameM')
               label='NRM - model error normalization'
               Npts=load_s1d(Nval, Cval, Cdim, line, label, igrid,       &
-     &                      Ngrids, Nfiles, 4, 2, NRM)
+     &                      Ngrids, Nfiles, 4, 2, inp_lib, NRM)
             CASE ('NRMnameB')
               label='NRM - boundary conditions normalization'
               Npts=load_s1d(Nval, Cval, Cdim, line, label, igrid,       &
-     &                      Ngrids, Nfiles, 4, 3, NRM)
+     &                      Ngrids, Nfiles, 4, 3, inp_lib, NRM)
             CASE ('NRMnameF')
               label='NRM - surface forcing normalization'
               Npts=load_s1d(Nval, Cval, Cdim, line, label, igrid,       &
-     &                      Ngrids, Nfiles, 4, 4, NRM)
+     &                      Ngrids, Nfiles, 4, 4, inp_lib, NRM)
             CASE ('OBSname')
               label='OBS - data assimilation observations'
               Npts=load_s1d(Nval, Cval, Cdim, line, label, igrid,       &
-     &                      Ngrids, Nfiles, OBS)
+     &                      Ngrids, Nfiles, inp_lib, OBS)
             CASE ('HSSname')
               label='HSS - Hessian eigenvectors'
               Npts=load_s1d(Nval, Cval, Cdim, line, label, igrid,       &
-     &                      Ngrids, Nfiles, HSS)
+     &                      Ngrids, Nfiles, out_lib, HSS)
             CASE ('LCZname')
               label='LCZ - Lanczos vectors'
               Npts=load_s1d(Nval, Cval, Cdim, line, label, igrid,       &
-     &                      Ngrids, Nfiles, LCZ)
+     &                      Ngrids, Nfiles, out_lib, LCZ)
             CASE ('LZEname')
               label='LZE - Time-evolved Lanczos vectors'
               Npts=load_s1d(Nval, Cval, Cdim, line, label, igrid,       &
-     &                      Ngrids, Nfiles, LZE)
+     &                      Ngrids, Nfiles, out_lib, LZE)
             CASE ('MODname')
               label='DAV - 4D-Var data assimilation variables'
               Npts=load_s1d(Nval, Cval, Cdim, line, label, igrid,       &
-     &                      Ngrids, Nfiles, DAV)
+     &                      Ngrids, Nfiles, out_lib, DAV)
             CASE ('ERRname')
               label='ERR - 4D-Var posterior error covariance'
               Npts=load_s1d(Nval, Cval, Cdim, line, label, igrid,       &
-     &                      Ngrids, Nfiles, ERR)
+     &                      Ngrids, Nfiles, out_lib, ERR)
 #  ifdef SP4DVAR
             CASE ('SPTname')
               label='SPT - TLM Arnoldi vectors'
               Npts=load_s1d(Nval, Cval, Cdim, line, label, igrid,       &
-     &                      Ngrids, Nfiles, SPT)
+     &                      Ngrids, Nfiles, out_lib, SPT)
             CASE ('SPAname')
               label='SPA - ADM Arnoldi vectors'
               Npts=load_s1d(Nval, Cval, Cdim, line, label, igrid,       &
-     &                      Ngrids, Nfiles, SPA)
+     &                      Ngrids, Nfiles, out_lib, SPA)
             CASE ('SCTname')
               label='SCT - TLM Arnoldi vectors'
               Npts=load_s1d(Nval, Cval, Cdim, line, label, igrid,       &
-     &                      Ngrids, Nfiles, SCT)
+     &                      Ngrids, Nfiles, out_lib, SCT)
             CASE ('SCAname')
               label='SCA - ADM Arnoldi vectors'
               Npts=load_s1d(Nval, Cval, Cdim, line, label, igrid,       &
-     &                      Ngrids, Nfiles, SCA)
+     &                      Ngrids, Nfiles, out_lib, SCA)
 #  endif
 #  if defined RBL4DVAR_FCT_SENSITIVITY && defined OBS_SPACE
             CASE ('OIFnameA')
-              label='OIFA - observartion impacts forecast, analysis'
+              label='OIFA - observation impacts forecast, analysis'
               Npts=load_s1d(Nval, Cval, Cdim, line, label, igrid,       &
-     &                      Ngrids, Nfiles, OIFA)
+     &                      Ngrids, Nfiles, inp_lib, OIFA)
             CASE ('OIFnameB')
-              label='OIFB - observartion impacts forecast, background'
+              label='OIFB - observation impacts forecast, background'
               Npts=load_s1d(Nval, Cval, Cdim, line, label, igrid,       &
-     &                      Ngrids, Nfiles, OIFB)
+     &                      Ngrids, Nfiles, inp_lib, OIFB)
 #  endif
           END SELECT
         END IF

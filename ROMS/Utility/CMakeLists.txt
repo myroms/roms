@@ -1,5 +1,5 @@
 # git $Id$
-# svn $Id: CMakeLists.txt 1054 2021-03-06 19:47:12Z arango $
+# svn $Id: CMakeLists.txt 1064 2021-05-10 19:55:56Z arango $
 #:::::::::::::::::::::::::::::::::::::::::::::::::::::: David Robertson :::
 # Copyright (c) 2002-2021 The ROMS/TOMS Group                           :::
 #   Licensed under a MIT/X style license                                :::
@@ -133,6 +133,7 @@ list( APPEND _files
       ROMS/Utility/set_masks.F
       ROMS/Utility/set_ngfld.F
       ROMS/Utility/set_ngfldr.F
+      ROMS/Utility/set_pio.F
       ROMS/Utility/set_scoord.F
       ROMS/Utility/set_weights.F
       ROMS/Utility/shapiro.F
