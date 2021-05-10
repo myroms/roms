@@ -4,7 +4,7 @@
 #if defined PROPAGATOR
 !
 !git $Id$
-!svn $Id: mod_storage.F 1054 2021-03-06 19:47:12Z arango $
+!svn $Id: mod_storage.F 1064 2021-05-10 19:55:56Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -282,6 +282,8 @@
       END DO
 !
 !  Allocate other arrays.
+!
+      ng=1
 !
       allocate ( select(NCV,Ngrids) )
       Dmem(ng)=Dmem(ng)+REAL(NCV*Ngrids,r8)

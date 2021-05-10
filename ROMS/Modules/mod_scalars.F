@@ -2,7 +2,7 @@
       MODULE mod_scalars
 !
 !git $Id$
-!svn $Id: mod_scalars.F 1054 2021-03-06 19:47:12Z arango $
+!svn $Id: mod_scalars.F 1064 2021-05-10 19:55:56Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -328,7 +328,7 @@
 !
 ! Set checksum algorithm: "adler32" or "crc32"
 !
-        character (len=*), parameter :: HashMethod = "crc32"
+        character (len=*), parameter :: HashMethod = "bitsum"
 !
 ! Split 4D-Var phase.
 !
@@ -3401,6 +3401,7 @@
 #endif
       Co=1.0_r8/(2.0_r8+SQRT(2.0_r8))
       gorho0=g/rho0
+      user=0.0_r8
       DO ng=1,Ngrids
         EWperiodic(ng)=.FALSE.
         NSperiodic(ng)=.FALSE.

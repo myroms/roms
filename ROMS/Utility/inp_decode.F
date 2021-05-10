@@ -2,7 +2,7 @@
       MODULE inp_decode_mod
 !
 !git $Id$
-!svn $Id: inp_decode.F 1054 2021-03-06 19:47:12Z arango $
+!svn $Id: inp_decode.F 1064 2021-05-10 19:55:56Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -43,6 +43,15 @@
 !=======================================================================
 !
       USE mod_kinds
+      USE mod_param
+      USE mod_parallel
+      USE mod_iounits
+      USE mod_ncparam
+      USE mod_netcdf
+      USE mod_scalars
+!
+      USE strings_mod, ONLY : FoundError
+      USE strings_mod, ONLY : uppercase
 !
       implicit none
 !
@@ -133,12 +142,17 @@
 !
 !  Initialize. Use CHAR(32) for blank space.
 !
-      DO i=1,LEN(line)
-        line(i:i)=CHAR(32)
-        inpline(i:i)=CHAR(32)
-        Vstring(i:i)=CHAR(32)
-        string(i:i)=CHAR(32)
-      END DO
+      line=CHAR(32)
+      inpline=CHAR(32)
+      Vstring=CHAR(32)
+      string=CHAR(32)
+!!    Lstr=LEN(line)
+!!    DO i=1,Lstr
+!!      line(i:i)=CHAR(32)
+!!      inpline(i:i)=CHAR(32)
+!!      Vstring(i:i)=CHAR(32)
+!!      string(i:i)=CHAR(32)
+!!    END DO
 !
 !  Check input line and remove illegal characters.  Replace control
 !  ASCII characters CHAR(0) to CHAR(31) with a blank space, CHAR(32).
@@ -384,14 +398,6 @@
 !                                                                      !
 !***********************************************************************
 !
-      USE mod_param
-      USE mod_parallel
-      USE mod_iounits
-      USE mod_netcdf
-      USE mod_scalars
-!
-      USE strings_mod,   ONLY : FoundError
-!
 !  Imported variable declarations.
 !
       integer, intent(in) :: ng
@@ -449,6 +455,7 @@
         CALL netcdf_open (ng, iNLM, fname, 0, ncid)
         IF (exit_flag.eq.NoError) THEN
           foundit=.TRUE.
+          CALL netcdf_close (ng, iNLM, ncid, fname, .FALSE.)
         END IF
       END IF
 !
@@ -1545,14 +1552,6 @@
 !                                                                      !
 !***********************************************************************
 !
-      USE mod_param
-      USE mod_parallel
-      USE mod_iounits
-      USE mod_ncparam
-      USE mod_scalars
-!
-      USE strings_mod, ONLY : uppercase
-!
 !  Imported variable declarations.
 !
       integer, intent(in) :: Ninp, ifield, iTrcStr, iTrcEnd
@@ -1566,7 +1565,7 @@
 !
 !  Local variable declarations.
 !
-      integer :: Icont, i, ibry, ic
+      integer :: Icont, i, ib, ic
       integer :: load_lbc
 
       character (len=10) :: Bstring(4), string
@@ -1601,51 +1600,51 @@
 !
       ic=1
       IF ((0.lt.ifield).and.(ifield.le.nLBCvar)) THEN
-        DO ibry=1,4
-          string=uppercase(Bstring(ibry))
+        DO ib=1,4
+          string=uppercase(Bstring(ib))
           SELECT CASE (TRIM(string))
             CASE ('CHA')
-              S(ibry,ifield,igrid)%Chapman_implicit = .TRUE.
+              S(ib,ifield,igrid)%Chapman_implicit = .TRUE.
             CASE ('CHE')
-              S(ibry,ifield,igrid)%Chapman_explicit = .TRUE.
+              S(ib,ifield,igrid)%Chapman_explicit = .TRUE.
             CASE ('CLA')
-              S(ibry,ifield,igrid)%clamped = .TRUE.
-              S(ibry,ifield,igrid)%acquire = .TRUE.
+              S(ib,ifield,igrid)%clamped = .TRUE.
+              S(ib,ifield,igrid)%acquire = .TRUE.
             CASE ('CLO')
-              S(ibry,ifield,igrid)%closed = .TRUE.
+              S(ib,ifield,igrid)%closed = .TRUE.
             CASE ('FLA')
-              S(ibry,ifield,igrid)%Flather = .TRUE.
-              S(ibry,ifield,igrid)%acquire = .TRUE.
-              S(ibry,isFsur,igrid)%acquire = .TRUE.
+              S(ib,ifield,igrid)%Flather = .TRUE.
+              S(ib,ifield,igrid)%acquire = .TRUE.
+              S(ib,isFsur,igrid)%acquire = .TRUE.
             CASE ('GRA')
-              S(ibry,ifield,igrid)%gradient = .TRUE.
+              S(ib,ifield,igrid)%gradient = .TRUE.
             CASE ('NES')
-              S(ibry,ifield,igrid)%nested = .TRUE.
+              S(ib,ifield,igrid)%nested = .TRUE.
             CASE ('PER')
-              S(ibry,ifield,igrid)%periodic = .TRUE.
-              IF ((ibry.eq.ieast).or.(ibry.eq.iwest)) THEN
+              S(ib,ifield,igrid)%periodic = .TRUE.
+              IF ((ib.eq.ieast).or.(ib.eq.iwest)) THEN
                 EWperiodic(igrid)=.TRUE.
-              ELSE IF ((ibry.eq.inorth).or.(ibry.eq.isouth)) THEN
+              ELSE IF ((ib.eq.inorth).or.(ib.eq.isouth)) THEN
                 NSperiodic(igrid)=.TRUE.
               END IF
             CASE ('RAD')
-              S(ibry,ifield,igrid)%radiation = .TRUE.
+              S(ib,ifield,igrid)%radiation = .TRUE.
             CASE ('RADNUD')
-              S(ibry,ifield,igrid)%radiation = .TRUE.
-              S(ibry,ifield,igrid)%nudging = .TRUE.
-              S(ibry,ifield,igrid)%acquire = .TRUE.
+              S(ib,ifield,igrid)%radiation = .TRUE.
+              S(ib,ifield,igrid)%nudging = .TRUE.
+              S(ib,ifield,igrid)%acquire = .TRUE.
             CASE ('RED')
-              S(ibry,ifield,igrid)%reduced = .TRUE.
+              S(ib,ifield,igrid)%reduced = .TRUE.
 #if defined FSOBC_REDUCED
-              S(ibry,isFsur,igrid)%acquire = .TRUE.
+              S(ib,isFsur,igrid)%acquire = .TRUE.
 #endif
             CASE ('SHC')
-              S(ibry,ifield,igrid)%Shchepetkin = .TRUE.
-              S(ibry,ifield,igrid)%acquire = .TRUE.
-              S(ibry,isFsur,igrid)%acquire = .TRUE.
+              S(ib,ifield,igrid)%Shchepetkin = .TRUE.
+              S(ib,ifield,igrid)%acquire = .TRUE.
+              S(ib,isFsur,igrid)%acquire = .TRUE.
             CASE DEFAULT
               IF (Master) THEN
-                WRITE (stdout,10) TRIM(Vinp(ibry)), TRIM(line)
+                WRITE (stdout,10) TRIM(Vinp(ib)), TRIM(line)
               END IF
               exit_flag=2
               RETURN
@@ -1660,15 +1659,15 @@
         IF ((iTrcStr.gt.0).and.(iTrcEnd.gt.0)) THEN
           IF ((Icont.eq.0).and.(ifield.lt.isTvar(iTrcEnd))) THEN
             DO i=ifield+1,isTvar(iTrcEnd)
-              DO ibry=1,4
-                S(ibry,i,igrid)%clamped   = S(ibry,ifield,igrid)%clamped
-                S(ibry,i,igrid)%closed    = S(ibry,ifield,igrid)%closed
-                S(ibry,i,igrid)%gradient  = S(ibry,ifield,igrid)%gradient
-                S(ibry,i,igrid)%nested    = S(ibry,ifield,igrid)%nested
-                S(ibry,i,igrid)%periodic  = S(ibry,ifield,igrid)%periodic
-                S(ibry,i,igrid)%radiation = S(ibry,ifield,igrid)%radiation
-                S(ibry,i,igrid)%nudging   = S(ibry,ifield,igrid)%nudging
-                S(ibry,i,igrid)%acquire   = S(ibry,ifield,igrid)%acquire
+              DO ib=1,4
+                S(ib,i,igrid)%clamped   = S(ib,ifield,igrid)%clamped
+                S(ib,i,igrid)%closed    = S(ib,ifield,igrid)%closed
+                S(ib,i,igrid)%gradient  = S(ib,ifield,igrid)%gradient
+                S(ib,i,igrid)%nested    = S(ib,ifield,igrid)%nested
+                S(ib,i,igrid)%periodic  = S(ib,ifield,igrid)%periodic
+                S(ib,i,igrid)%radiation = S(ib,ifield,igrid)%radiation
+                S(ib,i,igrid)%nudging   = S(ib,ifield,igrid)%nudging
+                S(ib,i,igrid)%acquire   = S(ib,ifield,igrid)%acquire
               END DO
               ic=ic+1
             END DO
@@ -1708,7 +1707,7 @@
       END FUNCTION load_lbc
 !
       FUNCTION load_s1d1 (Nval, Fname, Fdim, line, label, igrid,        &
-     &                    Mgrids, Nfiles, S)
+     &                    Mgrids, Nfiles, io_type, S)
 !
 !***********************************************************************
 !                                                                      !
@@ -1725,6 +1724,7 @@
 !     igrid       Nested grid counter (integer)                        !
 !     Mgrids      Number of nested grids (integer)                     !
 !     Nfiles      Number of files per grid (integer array)             !
+!     io_type     File I/O type (integer)                              !
 !     S(Mgrids)   Derived type structure array, TYPE(T_IO)             !
 !                                                                      !
 !  On Output:                                                          !
@@ -1735,15 +1735,9 @@
 !                                                                      !
 !***********************************************************************
 !
-      USE mod_param
-      USE mod_parallel
-      USE mod_iounits
-      USE mod_ncparam
-      USE mod_scalars
-!
 !  Imported variable declarations.
 !
-      integer, intent(in)    :: Mgrids, Nval, Fdim
+      integer, intent(in)    :: Mgrids, Nval, Fdim, io_type
       integer, intent(inout) :: igrid
       integer, intent(inout) :: Nfiles(Mgrids)
 
@@ -1757,7 +1751,7 @@
 !
       logical :: load, persist
 
-      integer :: Icont, Ipipe, i, j, lstr, my_Mgrids, ng
+      integer :: Icont, Ipipe, i, is, j, lstr, my_Mgrids, ng
       integer :: load_s1d1
 
       character (len=1 ), parameter :: blank = ' '
@@ -1821,20 +1815,26 @@
 !  Allocate various fields in structure, if not continuation or pipe
 !  symbol is found which indicates end of input data.
 !
+        IF (label(1:3).eq.'FLT') THEN
+#ifdef FLOAT_BIOLOGY
+          is=-10
+#else
+          is=-6
+#endif
+        ELSE
+          is=1
+        END IF
+!
         DO ng=1,Mgrids
           allocate ( S(ng)%Nrec(Nfiles(ng)) )
           allocate ( S(ng)%time_min(Nfiles(ng)) )
           allocate ( S(ng)%time_max(Nfiles(ng)) )
-          IF (label(1:3).eq.'FLT') THEN
-#ifdef FLOAT_BIOLOGY
-            allocate ( S(ng)%Vid(-10:NV) )
-#else
-            allocate ( S(ng)%Vid(-6:NV) )
-#endif
-          ELSE
-            allocate ( S(ng)%Vid(NV) )
-          END IF
+          allocate ( S(ng)%Vid(is:NV) )
           allocate ( S(ng)%Tid(MT) )
+#if defined PIO_LIB && defined DISTRIBUTE
+          allocate ( S(ng)%pioVar(is:NV) )
+          allocate ( S(ng)%pioTrc(MT) )
+#endif
           allocate ( S(ng)%files(Nfiles(ng)) )
         END DO
 !
@@ -1858,6 +1858,7 @@
 !
         i=0
         DO ng=1,my_Mgrids
+          S(ng)%IOtype=io_type                 ! file IO type
           S(ng)%Nfiles=Nfiles(ng)              ! number of multi-files
           S(ng)%Fcount=1                       ! multi-file counter
           S(ng)%load=1                         ! filename load counter
@@ -1865,6 +1866,19 @@
           S(ng)%ncid=-1                        ! closed NetCDF state
           S(ng)%Vid=-1                         ! NetCDF variables IDs
           S(ng)%Tid=-1                         ! NetCDF tracers IDs
+#if defined PIO_LIB && defined DISTRIBUTE
+          S(ng)%pioFile%fh=-1                  ! closed file handler
+          DO j=1,NV
+            S(ng)%pioVar(j)%vd%varID=-1        ! variables IDs
+            S(ng)%pioVar(j)%dkind=-1           ! variables data kind
+            S(ng)%pioVar(j)%gtype=0            ! variables C-grid type
+          END DO
+          DO j=1,MT
+            S(ng)%pioTrc(j)%vd%varID=-1        ! tracers IDs
+            S(ng)%pioTrc(j)%dkind=-1           ! tracers data kind
+            S(ng)%pioTrc(j)%gtype=0            ! tracers C-grid type
+          END DO
+#endif
           DO j=1,Nfiles(ng)
             i=i+1
             S(ng)%files(j)=TRIM(Fname(i))      ! load multi-files
@@ -1884,6 +1898,7 @@
 !
         IF (persist) THEN
           DO ng=igrid+1,Mgrids
+            S(ng)%IOtype=io_type
             S(ng)%Nfiles=S(igrid)%Nfiles
             S(ng)%Fcount=1
             S(ng)%load=1
@@ -1891,6 +1906,19 @@
             S(ng)%ncid=-1
             S(ng)%Vid=-1
             S(ng)%Tid=-1
+#if defined PIO_LIB && defined DISTRIBUTE
+            S(ng)%pioFile%fh=-1
+            DO j=is,NV
+              S(ng)%pioVar(j)%vd%varID=-1
+              S(ng)%pioVar(j)%dkind=-1
+              S(ng)%pioVar(j)%gtype=0
+            END DO
+            DO j=1,MT
+              S(ng)%pioTrc(j)%vd%varID=-1
+              S(ng)%pioTrc(j)%dkind=-1
+              S(ng)%pioTrc(j)%gtype=0
+            END DO
+#endif
             DO j=1,S(igrid)%Nfiles
               S(ng)%files(j)=S(igrid)%files(j)
               S(ng)%Nrec(j)=0
@@ -1923,7 +1951,7 @@
       END FUNCTION load_s1d1
 !
       FUNCTION load_s1d2 (Nval, Fname, Fdim, line, label, igrid,        &
-     &                    Mgrids, Nfiles, idim, Ie, S)
+     &                    Mgrids, Nfiles, idim, Ie, io_type, S)
 !
 !***********************************************************************
 !                                                                      !
@@ -1942,6 +1970,7 @@
 !     Nfiles       Number of files per grid (integer array)            !
 !     idim         Size of structure inner dimension (integer)         !
 !     Ie           Inner dimension element to process (integer)        !
+!     io_type      File I/O type (integer)                             !
 !     S(Ie,Mgrids) Derived type structure array, TYPE(T_IO)            !
 !                                                                      !
 !  On Output:                                                          !
@@ -1960,7 +1989,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in)    :: Mgrids, Nval, Fdim, idim, Ie
+      integer, intent(in)    :: Mgrids, Nval, Fdim, Ie, idim, io_type
       integer, intent(inout) :: igrid
       integer, intent(inout) :: Nfiles(Mgrids)
 
@@ -1974,7 +2003,7 @@
 !
       logical :: load, persist
 
-      integer :: Icont, Ipipe, i, j, lstr, my_Mgrids, ng
+      integer :: Icont, Ipipe, i, is, j, lstr, my_Mgrids, ng
       integer :: load_s1d2
 
       character (len=1 ), parameter :: blank = ' '
@@ -2042,16 +2071,12 @@
           allocate ( S(Ie,ng)%Nrec(Nfiles(ng)) )
           allocate ( S(Ie,ng)%time_min(Nfiles(ng)) )
           allocate ( S(Ie,ng)%time_max(Nfiles(ng)) )
-          IF (label(1:3).eq.'FLT') THEN
-#ifdef FLOAT_BIOLOGY
-            allocate ( S(Ie,ng)%Vid(-10:NV) )
-#else
-            allocate ( S(Ie,ng)%Vid(-6:NV) )
-#endif
-          ELSE
-            allocate ( S(Ie,ng)%Vid(NV) )
-          END IF
+          allocate ( S(Ie,ng)%Vid(NV) )
           allocate ( S(Ie,ng)%Tid(MT) )
+#if defined PIO_LIB && defined DISTRIBUTE
+          allocate ( S(Ie,ng)%pioVar(NV) )
+          allocate ( S(Ie,ng)%pioTrc(MT) )
+#endif
           allocate ( S(Ie,ng)%files(Nfiles(ng)) )
         END DO
 !
@@ -2075,6 +2100,7 @@
 !
         i=0
         DO ng=1,my_Mgrids
+          S(Ie,ng)%IOtype=io_type               ! file IO type
           S(Ie,ng)%Nfiles=Nfiles(ng)            ! number of multi-files
           S(Ie,ng)%Fcount=1                     ! multi-file counter
           S(Ie,ng)%load=1                       ! filename load counter
@@ -2082,6 +2108,19 @@
           S(Ie,ng)%ncid=-1                      ! closed NetCDF state
           S(Ie,ng)%Vid=-1                       ! NetCDF variables IDs
           S(Ie,ng)%Tid=-1                       ! NetCDF tracers IDs
+#if defined PIO_LIB && defined DISTRIBUTE
+          S(Ie,ng)%pioFile%fh=-1                ! closed file handler
+          DO j=1,NV
+            S(Ie,ng)%pioVar(j)%vd%varID=-1      ! variables IDs
+            S(Ie,ng)%pioVar(j)%dkind=-1         ! variables data kind
+            S(Ie,ng)%pioVar(j)%gtype=0          ! variables C-grid type
+          END DO
+          DO j=1,MT
+            S(Ie,ng)%pioTrc(j)%vd%varID=-1      ! tracers IDs
+            S(Ie,ng)%pioTrc(j)%dkind=-1         ! tracers data kind
+            S(Ie,ng)%pioTrc(j)%gtype=0          ! tracers C-grid type
+          END DO
+#endif
           DO j=1,Nfiles(ng)
             i=i+1
             S(Ie,ng)%files(j)=TRIM(Fname(i))    ! load multi-files
@@ -2101,6 +2140,7 @@
 !
         IF (persist) THEN
           DO ng=igrid+1,Mgrids
+            S(Ie,ng)%IOtype=io_type
             S(Ie,ng)%Nfiles=S(Ie,igrid)%Nfiles
             S(Ie,ng)%Fcount=1
             S(Ie,ng)%load=1
@@ -2108,6 +2148,19 @@
             S(Ie,ng)%ncid=-1
             S(Ie,ng)%Vid=-1
             S(Ie,ng)%Tid=-1
+#if defined PIO_LIB && defined DISTRIBUTE
+            S(Ie,ng)%pioFile%fh=-1
+            DO j=1,NV
+              S(Ie,ng)%pioVar(j)%vd%varID=-1
+              S(Ie,ng)%pioVar(j)%dkind=-1
+              S(Ie,ng)%pioVar(j)%gtype=0
+            END DO
+            DO j=1,MT
+              S(Ie,ng)%pioTrc(j)%vd%varID=-1
+              S(Ie,ng)%pioTrc(j)%dkind=-1
+              S(Ie,ng)%pioTrc(j)%gtype=0
+            END DO
+#endif
             DO j=1,S(Ie,igrid)%Nfiles
               S(Ie,ng)%files(j)=S(Ie,igrid)%files(j)
               S(Ie,ng)%Nrec(j)=0
@@ -2140,7 +2193,7 @@
       END FUNCTION load_s1d2
 !
       FUNCTION load_s2d (Nval, Fname, Fdim, line, label, ifile, igrid,  &
-     &                   Mgrids, Nfiles, Ncount, idim, S)
+     &                   Mgrids, Nfiles, Ncount, idim, io_type, S)
 !
 !***********************************************************************
 !                                                                      !
@@ -2161,6 +2214,7 @@
 !     Nfiles     Number of input files per grid (integer vector)       !
 !     Ncount     Number of files per grid counter (integer array)      !
 !     idim       Size of structure inner dimension (integer)           !
+!     io_type    File I/O type (integer)                               !
 !     S          Derived type structure, TYPE(T_IO)                    !
 !                                                                      !
 !  On Output:                                                          !
@@ -2172,32 +2226,26 @@
 !                                                                      !
 !***********************************************************************
 !
-      USE mod_param
-      USE mod_parallel
-      USE mod_iounits
-      USE mod_ncparam
-      USE mod_scalars
-!
 !  Imported variable declarations.
 !
-      integer, intent(in)    :: Mgrids, Nval, Fdim, idim
+      integer, intent(in)    :: Mgrids, Nval, Fdim, idim, io_type
       integer, intent(in)    :: Nfiles(Mgrids)
       integer, intent(inout) :: ifile, igrid
       integer, intent(inout) :: Ncount(idim,Mgrids)
-
+!
       character (len=*),   intent(in) :: line
       character (len=256), intent(in) :: Fname(Fdim)
       character (len=*),   intent(inout) :: label
-
+!
       TYPE(T_IO), intent(inout) :: S(idim,Mgrids)
 !
 !  Local variable declarations.
 !
       logical :: load, persist
-
-      integer :: Icont, Ipipe, i, j, k, lstr, my_Mgrids, ng
+!
+      integer :: Icont, Ipipe, i, is, j, k, lstr, my_Mgrids, ng
       integer :: load_s2d
-
+!
       character (len=1 ), parameter :: blank = ' '
 !
 !-----------------------------------------------------------------------
@@ -2270,7 +2318,6 @@
           my_Mgrids=Mgrids
           persist=.FALSE.
         END IF
-
 !
 !  Allocate various fields in structure, if not continuation or pipe
 !  symbol is found which indicates end of input data.
@@ -2282,6 +2329,10 @@
             allocate ( S(i,ng)%time_max(Ncount(i,ng)) )
             allocate ( S(i,ng)%Vid(NV) )
             allocate ( S(i,ng)%Tid(MT) )
+#if defined PIO_LIB && defined DISTRIBUTE
+            allocate ( S(i,ng)%pioVar(NV) )
+            allocate ( S(i,ng)%pioTrc(MT) )
+#endif
             allocate ( S(i,ng)%files(Ncount(i,ng)) )
           END DO
         END DO
@@ -2309,6 +2360,7 @@
         k=0
         DO ng=1,my_Mgrids
           DO i=1,Nfiles(ng)
+            S(i,ng)%IOtype=io_type              ! file IO type
             S(i,ng)%Nfiles=Ncount(i,ng)         ! number of multi-files
             S(i,ng)%Fcount=1                    ! multi-file counter
             S(i,ng)%load=1                      ! filename load counter
@@ -2316,6 +2368,19 @@
             S(i,ng)%ncid=-1                     ! closed NetCDF state
             S(i,ng)%Vid=-1                      ! NetCDF variables IDs
             S(i,ng)%Tid=-1                      ! NetCDF tracers IDs
+#if defined PIO_LIB && defined DISTRIBUTE
+            S(i,ng)%pioFile%fh=-1               ! closed file handler
+            DO j=1,NV
+              S(i,ng)%pioVar(j)%vd%varID=-1     ! variables IDs
+              S(i,ng)%pioVar(j)%dkind=-1        ! variables data kind
+              S(i,ng)%pioVar(j)%gtype=0         ! variables C-grid type
+            END DO
+            DO j=1,MT
+              S(i,ng)%pioTrc(j)%vd%varID=-1     ! tracers IDs
+              S(i,ng)%pioTrc(j)%dkind=-1        ! tracers data kind
+              S(i,ng)%pioTrc(j)%gtype=0         ! tracers C-grid type
+            END DO
+#endif
             DO j=1,Ncount(i,ng)
               k=k+1
               S(i,ng)%files(j)=TRIM(Fname(k))   ! load multi-files
@@ -2336,6 +2401,7 @@
         IF (persist) THEN
           DO ng=igrid+1,Mgrids
             DO i=1,Nfiles(ng)
+              S(i,ng)%IOtype=io_type
               S(i,ng)%Nfiles=S(i,igrid)%Nfiles
               S(i,ng)%Fcount=1
               S(i,ng)%load=1
@@ -2343,6 +2409,19 @@
               S(i,ng)%ncid=-1
               S(i,ng)%Vid=-1
               S(i,ng)%Tid=-1
+#if defined PIO_LIB && defined DISTRIBUTE
+              S(i,ng)%pioFile%fh=-1
+              DO j=1,NV
+                S(i,ng)%pioVar(j)%vd%varID=-1
+                S(i,ng)%pioVar(j)%dkind=-1
+                S(i,ng)%pioVar(j)%gtype=0
+              END DO
+              DO j=1,MT
+                S(i,ng)%pioTrc(j)%vd%varID=-1
+                S(i,ng)%pioTrc(j)%dkind=-1
+                S(i,ng)%pioTrc(j)%gtype=0
+              END DO
+#endif
               DO j=1,S(i,igrid)%Nfiles
                 S(i,ng)%files(j)=S(i,igrid)%files(j)
                 S(i,ng)%Nrec(j)=0
@@ -2413,14 +2492,6 @@
 !     load_tadv  Number of output values processed.                    !
 !                                                                      !
 !***********************************************************************
-!
-      USE mod_param
-      USE mod_parallel
-      USE mod_iounits
-      USE mod_ncparam
-      USE mod_scalars
-!
-      USE strings_mod, ONLY : uppercase
 !
 !  Imported variable declarations.
 !

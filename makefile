@@ -1,7 +1,7 @@
 # git $Id$
 # svn $Id: makefile 968 2019-06-17 16:02:48Z arango $
 #::::::::::::::::::::::::::::::::::::::::::::::::::::: Hernan G. Arango :::
-# Copyright (c) 2002-2020 The ROMS/TOMS Group             Kate Hedstrom :::
+# Copyright (c) 2002-2021 The ROMS/TOMS Group             Kate Hedstrom :::
 #   Licensed under a MIT/X style license                                :::
 #   See License_ROMS.txt                                                :::
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -443,6 +443,10 @@ endif
                 ROMS/Functionals
 ifdef MY_HEADER_DIR
  includes +=	$(MY_HEADER_DIR)
+endif
+
+ifdef USE_PIO
+ includes +=	$(PIO_INCDIR)
 endif
 
 ifdef USE_COAMPS

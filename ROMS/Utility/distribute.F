@@ -3,7 +3,7 @@
 #ifdef DISTRIBUTE
 !
 !git $Id$
-!svn $Id: distribute.F 1054 2021-03-06 19:47:12Z arango $
+!svn $Id: distribute.F 1064 2021-05-10 19:55:56Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -46,6 +46,12 @@
 !  Notice that the tile halo exchange can be found in "mp_exchange.F"  !
 !                                                                      !
 !=======================================================================
+!
+      USE mod_param
+      USE mod_parallel
+      USE mod_iounits
+      USE mod_ncparam
+      USE mod_scalars
 !
       implicit none
 !
@@ -94,6 +100,7 @@
       END INTERFACE mp_collect
 !
       INTERFACE mp_reduce
+        MODULE PROCEDURE mp_reduce_i8    ! integer reduction
 # ifdef SINGLE_PRECISION
         MODULE PROCEDURE mp_reduce_0dp   ! double-precision reduction
         MODULE PROCEDURE mp_reduce_1dp   ! double-precision reduction
@@ -118,11 +125,6 @@
 !     InpComm    Communicator handle (integer, OPTIONAL).              !
 !                                                                      !
 !***********************************************************************
-!
-      USE mod_param
-      USE mod_parallel
-!
-      implicit none
 !
 !  Imported variable declarations.
 !
@@ -199,13 +201,6 @@
 !     A          Broadcasted variable.                                 !
 !                                                                      !
 !***********************************************************************
-!
-      USE mod_param
-      USE mod_parallel
-      USE mod_iounits
-      USE mod_scalars
-!
-      implicit none
 !
 !  Imported variable declarations.
 !
@@ -294,13 +289,6 @@
 !     A          Broadcasted 1D array.                                 !
 !                                                                      !
 !***********************************************************************
-!
-      USE mod_param
-      USE mod_parallel
-      USE mod_iounits
-      USE mod_scalars
-!
-      implicit none
 !
 !  Imported variable declarations.
 !
@@ -392,13 +380,6 @@
 !                                                                      !
 !***********************************************************************
 !
-      USE mod_param
-      USE mod_parallel
-      USE mod_iounits
-      USE mod_scalars
-!
-      implicit none
-!
 !  Imported variable declarations.
 !
       integer, intent(in) :: ng, model
@@ -486,13 +467,6 @@
 !     A          Broadcasted 1D array.                                 !
 !                                                                      !
 !***********************************************************************
-!
-      USE mod_param
-      USE mod_parallel
-      USE mod_iounits
-      USE mod_scalars
-!
-      implicit none
 !
 !  Imported variable declarations.
 !
@@ -582,13 +556,6 @@
 !     A          Broadcasted 2D array.                                 !
 !                                                                      !
 !***********************************************************************
-!
-      USE mod_param
-      USE mod_parallel
-      USE mod_iounits
-      USE mod_scalars
-!
-      implicit none
 !
 !  Imported variable declarations.
 !
@@ -683,13 +650,6 @@
 !                                                                      !
 !***********************************************************************
 !
-      USE mod_param
-      USE mod_parallel
-      USE mod_iounits
-      USE mod_scalars
-!
-      implicit none
-!
 !  Imported variable declarations.
 !
       integer, intent(in) :: ng, model
@@ -782,13 +742,6 @@
 !     A          Broadcasted 4D array.                                 !
 !                                                                      !
 !***********************************************************************
-!
-      USE mod_param
-      USE mod_parallel
-      USE mod_iounits
-      USE mod_scalars
-!
-      implicit none
 !
 !  Imported variable declarations.
 !
@@ -885,12 +838,6 @@
 !                                                                      !
 !***********************************************************************
 !
-      USE mod_param
-      USE mod_parallel
-      USE mod_iounits
-!
-      implicit none
-!
 !  Imported variable declarations.
 !
       integer, intent(in) :: ng, model
@@ -978,13 +925,6 @@
 !     A          Broadcasted 1D array.                                 !
 !                                                                      !
 !***********************************************************************
-!
-      USE mod_param
-      USE mod_parallel
-      USE mod_iounits
-      USE mod_scalars
-!
-      implicit none
 !
 !  Imported variable declarations.
 !
@@ -1074,13 +1014,6 @@
 !     A          Broadcasted 2D array.                                 !
 !                                                                      !
 !***********************************************************************
-!
-      USE mod_param
-      USE mod_parallel
-      USE mod_iounits
-      USE mod_scalars
-!
-      implicit none
 !
 !  Imported variable declarations.
 !
@@ -1174,13 +1107,6 @@
 !                                                                      !
 !***********************************************************************
 !
-      USE mod_param
-      USE mod_parallel
-      USE mod_iounits
-      USE mod_scalars
-!
-      implicit none
-!
 !  Imported variable declarations.
 !
       integer, intent(in) :: ng, model
@@ -1268,13 +1194,6 @@
 !     A          Broadcasted 1D array.                                 !
 !                                                                      !
 !***********************************************************************
-!
-      USE mod_param
-      USE mod_parallel
-      USE mod_iounits
-      USE mod_scalars
-!
-      implicit none
 !
 !  Imported variable declarations.
 !
@@ -1364,13 +1283,6 @@
 !     A          Broadcasted 2D array.                                 !
 !                                                                      !
 !***********************************************************************
-!
-      USE mod_param
-      USE mod_parallel
-      USE mod_iounits
-      USE mod_scalars
-!
-      implicit none
 !
 !  Imported variable declarations.
 !
@@ -1463,13 +1375,6 @@
 !                                                                      !
 !***********************************************************************
 !
-      USE mod_param
-      USE mod_parallel
-      USE mod_iounits
-      USE mod_scalars
-!
-      implicit none
-!
 !  Imported variable declarations.
 !
       integer, intent(in) :: ng, model
@@ -1561,13 +1466,6 @@
 !                                                                      !
 !***********************************************************************
 !
-      USE mod_param
-      USE mod_parallel
-      USE mod_iounits
-      USE mod_scalars
-!
-      implicit none
-!
 !  Imported variable declarations.
 !
       integer, intent(in) :: ng, model
@@ -1656,13 +1554,6 @@
 !     A          Broadcasted 2D array.                                 !
 !                                                                      !
 !***********************************************************************
-!
-      USE mod_param
-      USE mod_parallel
-      USE mod_iounits
-      USE mod_scalars
-!
-      implicit none
 !
 !  Imported variable declarations.
 !
@@ -1754,13 +1645,6 @@
 !     A          Broadcasted 3D array.                                 !
 !                                                                      !
 !***********************************************************************
-!
-      USE mod_param
-      USE mod_parallel
-      USE mod_iounits
-      USE mod_scalars
-!
-      implicit none
 !
 !  Imported variable declarations.
 !
@@ -1855,13 +1739,6 @@
 !                                                                      !
 !***********************************************************************
 !
-      USE mod_param
-      USE mod_parallel
-      USE mod_iounits
-      USE mod_scalars
-!
-      implicit none
-!
 !  Imported variable declarations.
 !
       integer, intent(in) :: ng, model
@@ -1915,7 +1792,8 @@
       buffer(4)=S(ng)%Rindex
       buffer(5)=S(ng)%ncid
 !
-      CALL mpi_bcast (buffer, 5, MPI_INTEGER, MyMaster,                 &
+      Npts=5
+      CALL mpi_bcast (buffer, Npts, MPI_INTEGER, MyMaster,              &
      &                MyCOMM, MyError)
       IF (MyError.ne.MPI_SUCCESS) THEN
         CALL mpi_error_string (MyError, string, Lstr, Serror)
@@ -2053,13 +1931,6 @@
 !                                                                      !
 !***********************************************************************
 !
-      USE mod_param
-      USE mod_parallel
-      USE mod_iounits
-      USE mod_scalars
-!
-      implicit none
-!
 !  Imported variable declarations.
 !
       logical, intent(in) :: update
@@ -2076,10 +1947,10 @@
 !
       real(r8), dimension((UBi-LBi+1)*(UBk-LBk+1)) :: Asend
 
-# ifdef BOUNDARY_ALLGATHER
+# if defined BOUNDARY_ALLGATHER
       real(r8), dimension((UBi-LBi+1)*(UBk-LBk+1),                      &
      &                    0:NtileI(ng)*NtileJ(ng)-1) :: Arecv
-# else
+# elif defined BOUNDARY_ALLREDUCE
       real(r8), dimension((UBi-LBi+1)*(UBk-LBk+1)) :: Arecv
 # endif
 !
@@ -2136,7 +2007,7 @@
 !-----------------------------------------------------------------------
 !
 # ifdef MPI
-#  ifdef BOUNDARY_ALLGATHER
+#  if defined BOUNDARY_ALLGATHER
       CALL mpi_allgather (Asend, Npts, MP_FLOAT, Arecv, Npts, MP_FLOAT, &
      &                    OCN_COMM_WORLD, MyError)
       IF (MyError.ne.MPI_SUCCESS) THEN
@@ -2149,7 +2020,7 @@
         exit_flag=2
         RETURN
       END IF
-#  else
+#  elif defined BOUNDARY_ALLREDUCE
       CALL mpi_allreduce (Asend, Arecv, Npts, MP_FLOAT, MPI_SUM,        &
      &                    OCN_COMM_WORLD, MyError)
       IF (MyError.ne.MPI_SUCCESS) THEN
@@ -2169,7 +2040,7 @@
 !  Unpack data: reduction sum.
 !-----------------------------------------------------------------------
 !
-# ifdef BOUNDARY_ALLGATHER
+# if defined BOUNDARY_ALLGATHER
       Nnodes=NtileI(ng)*NtileJ(ng)-1
       ik=0
       DO k=LBk,UBk
@@ -2181,7 +2052,7 @@
           END DO
         END DO
       END DO
-# else
+# elif defined BOUNDARY_ALLREDUCE
       ik=0
       DO k=LBk,UBk
         DO i=LBi,UBi
@@ -2227,13 +2098,6 @@
 !                                                                      !
 !***********************************************************************
 !
-      USE mod_param
-      USE mod_parallel
-      USE mod_iounits
-      USE mod_scalars
-!
-      implicit none
-!
 !  Imported variable declarations.
 !
       integer, intent(in) :: ng, model, Npts
@@ -2255,7 +2119,7 @@
       real(r8), dimension(Npts,0:NtileI(ng)*NtileJ(ng)-1) :: Arecv
 # elif defined ASSEMBLE_ALLREDUCE
       real(r8), dimension(Npts) :: Asend
-# else
+# elif defined ASSEMBLE_SENDRECV
       real(r8), allocatable :: Arecv(:)
 # endif
 !
@@ -2369,7 +2233,8 @@
         RETURN
       END IF
 
-# else
+# elif defined ASSEMBLE_SENDRECV
+
       IF (MyRank.eq.MyMaster) THEN
 !
 !  If master node, allocate and receive buffer.
@@ -2471,13 +2336,6 @@
 !                                                                      !
 !***********************************************************************
 !
-      USE mod_param
-      USE mod_parallel
-      USE mod_iounits
-      USE mod_scalars
-!
-      implicit none
-!
 !  Imported variable declarations.
 !
       integer, intent(in) :: ng, model, Npts
@@ -2502,7 +2360,7 @@
       real(r8), dimension(Npts) :: Asend
 # elif defined ASSEMBLE_ALLREDUCE
       real(r8), dimension(Npts) :: Arecv, Asend
-# else
+# elif defined ASSEMBLE_SENDRECV
       real(r8), allocatable :: Arecv(:)
       real(r8), dimension(Npts) :: Asend
 # endif
@@ -2628,7 +2486,7 @@
 !
       A=RESHAPE(Arecv, Asize)
 
-# else
+# elif defined ASSEMBLE_SENDRECV
 !
       IF (MyRank.eq.MyMaster) THEN
 !
@@ -2734,13 +2592,6 @@
 !                                                                      !
 !***********************************************************************
 !
-      USE mod_param
-      USE mod_parallel
-      USE mod_iounits
-      USE mod_scalars
-!
-      implicit none
-!
 !  Imported variable declarations.
 !
       integer, intent(in) :: ng, model, Npts
@@ -2765,7 +2616,7 @@
       real(r8), dimension(Npts) :: Asend
 # elif defined ASSEMBLE_ALLREDUCE
       real(r8), dimension(Npts) :: Arecv, Asend
-# else
+# elif defined ASSEMBLE_SENDRECV
       real(r8), allocatable :: Arecv(:)
       real(r8), dimension(Npts) :: Asend
 # endif
@@ -2892,7 +2743,7 @@
 !
       A=RESHAPE(Arecv, Asize)
 
-# else
+# elif defined ASSEMBLE_SENDRECV
 !
       IF (MyRank.eq.MyMaster) THEN
 !
@@ -2998,13 +2849,6 @@
 !                                                                      !
 !***********************************************************************
 !
-      USE mod_param
-      USE mod_parallel
-      USE mod_iounits
-      USE mod_scalars
-!
-      implicit none
-!
 !  Imported variable declarations.
 !
       integer, intent(in) :: ng, model, Npts
@@ -3026,7 +2870,7 @@
       integer, dimension(Npts,0:NtileI(ng)*NtileJ(ng)-1) :: Arecv
 # elif defined ASSEMBLE_ALLREDUCE
       integer, dimension(Npts) :: Asend
-# else
+# elif defined ASSEMBLE_SENDRECV
       integer, allocatable :: Arecv(:)
 # endif
 !
@@ -3141,7 +2985,8 @@
         RETURN
       END IF
 
-# else
+# elif defined ASSEMBLE_SENDRECV
+
       IF (MyRank.eq.MyMaster) THEN
 !
 !  If master node, allocate and receive buffer.
@@ -3241,13 +3086,6 @@
 !                                                                      !
 !***********************************************************************
 !
-      USE mod_param
-      USE mod_parallel
-      USE mod_iounits
-      USE mod_scalars
-!
-      implicit none
-!
 !  Imported variable declarations.
 !
       integer, intent(in) :: ng, model, Npts
@@ -3272,7 +3110,7 @@
       integer, dimension(Npts) :: Asend
 # elif defined ASSEMBLE_ALLREDUCE
       integer, dimension(Npts) :: Arecv, Asend
-# else
+# elif defined ASSEMBLE_SENDRECV
       integer, allocatable :: Arecv(:)
       integer, dimension(Npts) :: Asend
 # endif
@@ -3399,7 +3237,7 @@
 !
       A=RESHAPE(Arecv, Asize)
 
-# else
+# elif defined ASSEMBLE_SENDRECV
 !
       IF (MyRank.eq.MyMaster) THEN
 !
@@ -3503,13 +3341,6 @@
 !     A          Collected data.                                       !
 !                                                                      !
 !***********************************************************************
-!
-      USE mod_param
-      USE mod_parallel
-      USE mod_iounits
-      USE mod_scalars
-!
-      implicit none
 !
 !  Imported variable declarations.
 !
@@ -3721,13 +3552,6 @@
 !     A          Collected data.                                       !
 !                                                                      !
 !***********************************************************************
-!
-      USE mod_param
-      USE mod_parallel
-      USE mod_iounits
-      USE mod_scalars
-!
-      implicit none
 !
 !  Imported variable declarations.
 !
@@ -3954,14 +3778,6 @@
 !                  in memory.                                          !
 !                                                                      !
 !***********************************************************************
-!
-      USE mod_param
-      USE mod_parallel
-      USE mod_iounits
-      USE mod_ncparam
-      USE mod_scalars
-!
-      implicit none
 !
 !  Imported variable declarations.
 !
@@ -4291,14 +4107,6 @@
 !                  in memory.                                          !
 !                                                                      !
 !***********************************************************************
-!
-      USE mod_param
-      USE mod_parallel
-      USE mod_iounits
-      USE mod_ncparam
-      USE mod_scalars
-!
-      implicit none
 !
 !  Imported variable declarations.
 !
@@ -4634,14 +4442,6 @@
 !                                                                      !
 !***********************************************************************
 !
-      USE mod_param
-      USE mod_parallel
-      USE mod_iounits
-      USE mod_ncparam
-      USE mod_scalars
-!
-      implicit none
-!
 !  Imported variable declarations.
 !
       integer, intent(in) :: ng, model
@@ -4679,9 +4479,10 @@
 !
 !  Collect data lower and upper bound dimensions.
 !
+      np=2
       my_bounds(1)=Mstr
       my_bounds(2)=Mend
-      CALL mpi_allgather (my_bounds, 2, MPI_INTEGER, Abounds, 2,        &
+      CALL mpi_allgather (my_bounds, np, MPI_INTEGER, Abounds, np,      &
      &                    MPI_INTEGER, OCN_COMM_WORLD, MyError)
       IF (MyError.ne.MPI_SUCCESS) THEN
         CALL mpi_error_string (MyError, string, Lstr, Serror)
@@ -4758,8 +4559,9 @@
       RETURN
       END SUBROUTINE mp_gather_state
 !
-      FUNCTION mp_ncread1d (ng, model, ncid, ncvname, ncname, ncrec,    &
-     &                      LB1, UB1, Ascale, A)
+      FUNCTION mp_ncread1d (ng, model, ncid, ncvname, ncname,           &
+     &                      ncrec, LB1, UB1, Ascale, A)                 &
+     &                     RESULT (io_error)
 !
 !***********************************************************************
 !                                                                      !
@@ -4782,7 +4584,7 @@
 !  On Output:                                                          !
 !                                                                      !
 !     A            Field to read in (real).                            !
-!     mp_ncread1d  Error flag (integer).                               !
+!     io_error     Error flag (integer).                               !
 !                                                                      !
 !  Note: We cannot include "USE mod_netcdf" here because of cyclic     !
 !        dependency. Instead we need original NetCDF library module    !
@@ -4790,14 +4592,7 @@
 !                                                                      !
 !***********************************************************************
 !
-      USE mod_param
-      USE mod_parallel
-      USE mod_iounits
-      USE mod_ncparam
       USE netcdf
-      USE mod_scalars
-!
-      implicit none
 !
 !  Imported variable declarations.
 !
@@ -4815,19 +4610,18 @@
 !
       integer :: Lstr, MyError, Npts, Serror
       integer :: i, j, np, rank, request, varid
+      integer :: io_error
       integer :: ibuffer(2), my_bounds(2), start(1), total(1)
 
       integer, dimension(MPI_STATUS_SIZE) :: status
       integer, dimension(4,0:NtileI(ng)*NtileJ(ng)-1) :: Asize
-
-      integer :: mp_ncread1d
 !
       real(r8), allocatable :: Asend(:)
 !
       character (len=MPI_MAX_ERROR_STRING) :: string
 
       character (len=*), parameter :: MyFile =                          &
-     &  __FILE__//", mp_ncread1d"
+     &  __FILE__//", mp_ncread1d_nf90"
 
 # ifdef PROFILE
 !
@@ -4842,14 +4636,15 @@
 !  Read requested NetCDF file and scatter it to all nodes.
 !-----------------------------------------------------------------------
 !
-      mp_ncread1d=nf90_noerr
+      io_error=nf90_noerr
 !
 !  Collect data lower and upper bounds dimensions.
 !
+      np=2
       my_bounds(1)=LB1
       my_bounds(2)=UB1
-      CALL mpi_allgather (my_bounds, 2, MPI_INTEGER,                    &
-     &                    Asize, 2, MPI_INTEGER,                        &
+      CALL mpi_allgather (my_bounds, np, MPI_INTEGER,                   &
+     &                    Asize, np, MPI_INTEGER,                        &
      &                    OCN_COMM_WORLD, MyError)
       IF (MyError.ne.MPI_SUCCESS) THEN
         CALL mpi_error_string (MyError, string, Lstr, Serror)
@@ -4895,21 +4690,21 @@
 !
 !  If master node, loop over all nodes and read buffers to send.
 !
-        mp_ncread1d=nf90_inq_varid(ncid, TRIM(ncvname), varid)
-        IF (mp_ncread1d.ne.nf90_noerr) THEN
+        io_error=nf90_inq_varid(ncid, TRIM(ncvname), varid)
+        IF (io_error.ne.nf90_noerr) THEN
           WRITE (stdout,20) TRIM(ncvname), TRIM(ncname)
           exit_flag=2
-          ioerror=mp_ncread1d
+          ioerror=io_error
         END IF
         IF (exit_flag.eq.NoError) THEN
           DO rank=0,NtileI(ng)*NtileJ(ng)-1
             start(1)=Asize(1,rank)
             total(1)=Asize(2,rank)-Asize(1,rank)+1
-            mp_ncread1d=nf90_get_var(ncid, varid,  Asend, start, total)
-            IF (mp_ncread1d.ne.nf90_noerr) THEN
+            io_error=nf90_get_var(ncid, varid,  Asend, start, total)
+            IF (io_error.ne.nf90_noerr) THEN
               WRITE (stdout,30) TRIM(ncvname), TRIM(ncname)
               exit_flag=2
-              ioerror=mp_ncread1d
+              ioerror=io_error
               EXIT
             END IF
 !
@@ -4966,18 +4761,19 @@
       CALL wclock_off (ng, model, 67, __LINE__, MyFile)
 # endif
 !
- 10   FORMAT (/,' MP_NCREAD1D- error during ',a,' call, Node = ',       &
-     &          i3.3,' Error = ',i3,/,13x,a)
+ 10   FORMAT (/,' MP_NCREAD1D - error during ',a,' call, Node = ',i0,   &
+     &        ' Error = ',i0,/,15x,a)
  20   FORMAT (/,' MP_NCREAD1D - error while inquiring ID for',          &
-     &          ' variable: ',a,/,13x,'in file: ',a)
- 30   FORMAT (/,' MP_NCREAD1D - error while reading variable: ',        &
-     &        a,/,13x,'in file: ',a)
+     &        ' variable: ',a,/,15x,'in file: ',a)
+ 30   FORMAT (/,' MP_NCREAD1D - error while reading variable: ',a,      &
+     &        /,15x,'in file: ',a)
 !
       RETURN
       END FUNCTION mp_ncread1d
 !
-      FUNCTION mp_ncread2d (ng, model, ncid, ncvname, ncname, ncrec,    &
-     &                      LB1, UB1, LB2, UB2, Ascale, A)
+      FUNCTION mp_ncread2d (ng, model, ncid, ncvname, ncname,           &
+     &                      ncrec, LB1, UB1, LB2, UB2, Ascale, A)       &
+     &                     RESULT (io_error)
 !
 !***********************************************************************
 !                                                                      !
@@ -5002,7 +4798,7 @@
 !  On Output:                                                          !
 !                                                                      !
 !     A            Field to read in (real).                            !
-!     mp_ncread2d  Error flag (integer).                               !
+!     io_error     Error flag (integer).                               !
 !                                                                      !
 !  Note: We cannot include "USE mod_netcdf" here because of cyclic     !
 !        dependency. Instead we need original NetCDF library module    !
@@ -5010,14 +4806,7 @@
 !                                                                      !
 !***********************************************************************
 !
-      USE mod_param
-      USE mod_parallel
-      USE mod_iounits
-      USE mod_ncparam
       USE netcdf
-      USE mod_scalars
-!
-      implicit none
 !
 !  Imported variable declarations.
 !
@@ -5035,19 +4824,18 @@
 !
       integer :: Lstr, MyError, Npts, Serror
       integer :: i, j, np, rank, request, varid
+      integer :: io_error
       integer :: ibuffer(2), my_bounds(4), start(2), total(2)
 
       integer, dimension(MPI_STATUS_SIZE) :: status
       integer, dimension(4,0:NtileI(ng)*NtileJ(ng)-1) :: Asize
-
-      integer :: mp_ncread2d
 !
       real(r8), allocatable :: Asend(:)
 !
       character (len=MPI_MAX_ERROR_STRING) :: string
 
       character (len=*), parameter :: MyFile =                          &
-     &  __FILE__//", mp_ncread2d"
+     &  __FILE__//", mp_ncread2d_nf90"
 
 # ifdef PROFILE
 !
@@ -5062,16 +4850,17 @@
 !  Read requested NetCDF file and scatter it to all nodes.
 !-----------------------------------------------------------------------
 !
-      mp_ncread2d=nf90_noerr
+      io_error=nf90_noerr
 !
 !  Collect data lower and upper bounds dimensions.
 !
+      np=4
       my_bounds(1)=LB1
       my_bounds(2)=UB1
       my_bounds(3)=LB2
       my_bounds(4)=UB2
-      CALL mpi_allgather (my_bounds, 4, MPI_INTEGER,                    &
-     &                    Asize, 4, MPI_INTEGER,                        &
+      CALL mpi_allgather (my_bounds, np, MPI_INTEGER,                   &
+     &                    Asize, np, MPI_INTEGER,                       &
      &                    OCN_COMM_WORLD, MyError)
       IF (MyError.ne.MPI_SUCCESS) THEN
         CALL mpi_error_string (MyError, string, Lstr, Serror)
@@ -5120,11 +4909,11 @@
 !
 !  If master node, loop over all nodes and read buffers to send.
 !
-        mp_ncread2d=nf90_inq_varid(ncid, TRIM(ncvname), varid)
-        IF (mp_ncread2d.ne.nf90_noerr) THEN
+        io_error=nf90_inq_varid(ncid, TRIM(ncvname), varid)
+        IF (io_error.ne.nf90_noerr) THEN
           WRITE (stdout,20) TRIM(ncvname), TRIM(ncname)
           exit_flag=2
-          ioerror=mp_ncread2d
+          ioerror=io_error
         END IF
         IF (exit_flag.eq.NoError) THEN
           DO rank=0,NtileI(ng)*NtileJ(ng)-1
@@ -5132,11 +4921,11 @@
             total(1)=Asize(2,rank)-Asize(1,rank)+1
             start(2)=Asize(3,rank)
             total(2)=Asize(4,rank)-Asize(3,rank)+1
-            mp_ncread2d=nf90_get_var(ncid, varid,  Asend, start, total)
-            IF (mp_ncread2d.ne.nf90_noerr) THEN
+            io_error=nf90_get_var(ncid, varid,  Asend, start, total)
+            IF (io_error.ne.nf90_noerr) THEN
               WRITE (stdout,30) TRIM(ncvname), TRIM(ncname)
               exit_flag=2
-              ioerror=mp_ncread2d
+              ioerror=io_error
               EXIT
             END IF
 !
@@ -5196,18 +4985,19 @@
       CALL wclock_off (ng, model, 67, __LINE__, MyFile)
 # endif
 !
- 10   FORMAT (/,' MP_NCREAD2D - error during ',a,' call, Node = ',      &
-     &          i3.3,' Error = ',i3,/,13x,a)
+ 10   FORMAT (/,' MP_NCREAD2D - error during ',a,' call, Node = ',i0,   &
+     &        ' Error = ',i0,/,15x,a)
  20   FORMAT (/,' MP_NCREAD2D - error while inquiring ID for',          &
-     &          ' variable: ',a,/,13x,'in file: ',a)
- 30   FORMAT (/,' MP_NCREAD2D - error while reading variable: ',        &
-     &        a,/,13x,'in file: ',a)
+     &        ' variable: ',a,/,15x,'in file: ',a)
+ 30   FORMAT (/,' MP_NCREAD2D - error while reading variable: ',a,      &
+     &        /,15x,'in file: ',a)
 !
       RETURN
       END FUNCTION mp_ncread2d
 !
-      FUNCTION mp_ncwrite1d (ng, model, ncid, ncvname, ncname, ncrec,   &
-     &                       LB1, UB1, Ascale, A)
+      FUNCTION mp_ncwrite1d (ng, model, ncid, ncvname, ncname,          &
+     &                       ncrec, LB1, UB1, Ascale, A)                &
+     &                      RESULT (io_error)
 !
 !***********************************************************************
 !                                                                      !
@@ -5230,7 +5020,7 @@
 !                                                                      !
 !  On Output:                                                          !
 !                                                                      !
-!     mp_ncwrite1d  Error flag (integer).                              !
+!     io_error      Error flag (integer).                              !
 !                                                                      !
 !  Note: We cannot include "USE mod_netcdf" here because of cyclic     !
 !        dependency. Instead we need original NetCDF library module    !
@@ -5238,14 +5028,7 @@
 !                                                                      !
 !***********************************************************************
 !
-      USE mod_param
-      USE mod_parallel
-      USE mod_iounits
-      USE mod_ncparam
       USE netcdf
-      USE mod_scalars
-!
-      implicit none
 !
 !  Imported variable declarations.
 !
@@ -5263,12 +5046,11 @@
 !
       integer :: Lstr, MyError, Npts, Serror
       integer :: i, j, np, rank, request, varid
+      integer :: io_error
       integer :: ibuffer(2), my_bounds(2), start(1), total(1)
 
       integer, dimension(MPI_STATUS_SIZE) :: status
       integer, dimension(2,0:NtileI(ng)*NtileJ(ng)-1) :: Asize
-
-      integer :: mp_ncwrite1d
 !
       real(r8), allocatable :: Arecv(:)
 !
@@ -5290,14 +5072,15 @@
 !  Collect and write data into requested NetCDF file.
 !-----------------------------------------------------------------------
 !
-      mp_ncwrite1d=nf90_noerr
+      io_error=nf90_noerr
 !
 !  Collect data lower and upper bounds dimensions.
 !
+      np=2
       my_bounds(1)=LB1
       my_bounds(2)=UB1
-      CALL mpi_allgather (my_bounds, 2, MPI_INTEGER,                    &
-     &                    Asize, 2, MPI_INTEGER,                        &
+      CALL mpi_allgather (my_bounds, np, MPI_INTEGER,                   &
+     &                    Asize, np, MPI_INTEGER,                       &
      &                    OCN_COMM_WORLD, MyError)
       IF (MyError.ne.MPI_SUCCESS) THEN
         CALL mpi_error_string (MyError, string, Lstr, Serror)
@@ -5329,18 +5112,18 @@
           np=np+1
           Arecv(np)=A(i)
         END DO
-        mp_ncwrite1d=nf90_inq_varid(ncid, TRIM(ncvname), varid)
-        IF (mp_ncwrite1d.eq.nf90_noerr) THEN
-          mp_ncwrite1d=nf90_put_var(ncid, varid, Arecv, start, total)
-          IF (mp_ncwrite1d.ne.nf90_noerr) THEN
+        io_error=nf90_inq_varid(ncid, TRIM(ncvname), varid)
+        IF (io_error.eq.nf90_noerr) THEN
+          io_error=nf90_put_var(ncid, varid, Arecv, start, total)
+          IF (io_error.ne.nf90_noerr) THEN
             WRITE (stdout,20) TRIM(ncvname), TRIM(ncname)
             exit_flag=3
-            ioerror=mp_ncwrite1d
+            ioerror=io_error
           END IF
         ELSE
           WRITE (stdout,30) TRIM(ncvname), TRIM(ncname)
           exit_flag=3
-          ioerror=mp_ncwrite1d
+          ioerror=io_error
         END IF
 !
 !  If master node, loop over other nodes and receive the data.
@@ -5367,11 +5150,11 @@
             DO i=1,np
               Arecv(i)=Arecv(i)*Ascale
             END DO
-            mp_ncwrite1d=nf90_put_var(ncid, varid, Arecv, start, total)
-            IF (mp_ncwrite1d.ne.nf90_noerr) THEN
+            io_error=nf90_put_var(ncid, varid, Arecv, start, total)
+            IF (io_error.ne.nf90_noerr) THEN
               WRITE (stdout,20) TRIM(ncvname), TRIM(ncname)
               exit_flag=3
-              ioerror=mp_ncwrite1d
+              ioerror=io_error
               EXIT
             END IF
           END DO
@@ -5420,18 +5203,19 @@
       CALL wclock_off (ng, model, 66, __LINE__, MyFile)
 # endif
 !
- 10   FORMAT (/,' MP_NCWRITE1D - error during ',a,' call, Node = ',     &
-     &          i3.3,' Error = ',i3,/,13x,a)
- 20   FORMAT (/,' MP_NCWRITE1D - error while writing variable: ',       &
-     &        a,/,13x,'in file: ',a)
+ 10   FORMAT (/,' MP_NCWRITE1D - error during ',a,' call, Node = ',i0,  &
+     &        ' Error = ',i0,/,21x,a)
+ 20   FORMAT (/,' MP_NCWRITE1D - error while writing variable: ',a,     &
+     &        /,16x,'in file: ',a)
  30   FORMAT (/,' MP_NCWRITE1D - error while inquiring ID for',         &
-     &        ' variable: ',a,/,13x,'in file: ',a)
+     &        ' variable: ',a,/,16x,'in file: ',a)
 !
       RETURN
       END FUNCTION mp_ncwrite1d
 !
-      FUNCTION mp_ncwrite2d (ng, model, ncid, ncvname, ncname, ncrec,   &
-     &                       LB1, UB1, LB2, UB2, Ascale, A)
+      FUNCTION mp_ncwrite2d (ng, model, ncid, ncvname, ncname,          &
+     &                       ncrec, LB1, UB1, LB2, UB2, Ascale, A)      &
+     &                      RESULT (io_error)
 !
 !***********************************************************************
 !                                                                      !
@@ -5456,7 +5240,7 @@
 !                                                                      !
 !  On Output:                                                          !
 !                                                                      !
-!     mp_ncwrite2d  Error flag (integer).                              !
+!     io_error      Error flag (integer).                              !
 !                                                                      !
 !  Note: We cannot include "USE mod_netcdf" here because of cyclic     !
 !        dependency. Instead we need original NetCDF library module    !
@@ -5464,14 +5248,7 @@
 !                                                                      !
 !***********************************************************************
 !
-      USE mod_param
-      USE mod_parallel
-      USE mod_iounits
-      USE mod_ncparam
       USE netcdf
-      USE mod_scalars
-!
-      implicit none
 !
 !  Imported variable declarations.
 !
@@ -5489,19 +5266,18 @@
 !
       integer :: Lstr, MyError, Npts, Serror
       integer :: i, j, np, rank, request, varid
+      integer :: io_error
       integer :: ibuffer(2), my_bounds(4), start(2), total(2)
 
       integer, dimension(MPI_STATUS_SIZE) :: status
       integer, dimension(4,0:NtileI(ng)*NtileJ(ng)-1) :: Asize
-
-      integer :: mp_ncwrite2d
 !
       real(r8), allocatable :: Arecv(:)
 !
       character (len=MPI_MAX_ERROR_STRING) :: string
 
       character (len=*), parameter :: MyFile =                          &
-     &  __FILE__//", mp_ncwrite2d"
+     &  __FILE__//", mp_ncwrite2d_nf90"
 
 # ifdef PROFILE
 !
@@ -5516,16 +5292,17 @@
 !  Collect and write data into requested NetCDF file.
 !-----------------------------------------------------------------------
 !
-      mp_ncwrite2d=nf90_noerr
+      io_error=nf90_noerr
 !
 !  Collect data lower and upper bounds dimensions.
 !
+      np=4
       my_bounds(1)=LB1
       my_bounds(2)=UB1
       my_bounds(3)=LB2
       my_bounds(4)=UB2
-      CALL mpi_allgather (my_bounds, 4, MPI_INTEGER,                    &
-     &                    Asize, 4, MPI_INTEGER,                        &
+      CALL mpi_allgather (my_bounds, np, MPI_INTEGER,                   &
+     &                    Asize, np, MPI_INTEGER,                       &
      &                    OCN_COMM_WORLD, MyError)
       IF (MyError.ne.MPI_SUCCESS) THEN
         CALL mpi_error_string (MyError, string, Lstr, Serror)
@@ -5562,18 +5339,18 @@
             Arecv(np)=A(i,j)
           END DO
         END DO
-        mp_ncwrite2d=nf90_inq_varid(ncid, TRIM(ncvname), varid)
-        IF (mp_ncwrite2d.eq.nf90_noerr) THEN
-          mp_ncwrite2d=nf90_put_var(ncid, varid, Arecv, start, total)
-          IF (mp_ncwrite2d.ne.nf90_noerr) THEN
+        io_error=nf90_inq_varid(ncid, TRIM(ncvname), varid)
+        IF (io_error.eq.nf90_noerr) THEN
+          io_error=nf90_put_var(ncid, varid, Arecv, start, total)
+          IF (io_error.ne.nf90_noerr) THEN
             WRITE (stdout,20) TRIM(ncvname), TRIM(ncname)
             exit_flag=3
-            ioerror=mp_ncwrite2d
+            ioerror=io_error
           END IF
         ELSE
           WRITE (stdout,30) TRIM(ncvname), TRIM(ncname)
           exit_flag=3
-          ioerror=mp_ncwrite2d
+          ioerror=io_error
         END IF
 !
 !  If master node, loop over other nodes and receive the data.
@@ -5603,11 +5380,11 @@
             DO i=1,np
               Arecv(i)=Arecv(i)*Ascale
             END DO
-            mp_ncwrite2d=nf90_put_var(ncid, varid, Arecv, start, total)
-            IF (mp_ncwrite2d.ne.nf90_noerr) THEN
+            io_error=nf90_put_var(ncid, varid, Arecv, start, total)
+            IF (io_error.ne.nf90_noerr) THEN
               WRITE (stdout,20) TRIM(ncvname), TRIM(ncname)
               exit_flag=3
-              ioerror=mp_ncwrite2d
+              ioerror=io_error
               EXIT
             END IF
           END DO
@@ -5656,15 +5433,225 @@
       CALL wclock_off (ng, model, 66, __LINE__, MyFile)
 # endif
 !
- 10   FORMAT (/,' MP_NCWRITE2D - error during ',a,' call, Node = ',     &
-     &          i3.3,' Error = ',i3,/,13x,a)
- 20   FORMAT (/,' MP_NCWRITE2D - error while writing variable: ',       &
-     &        a,/,13x,'in file: ',a)
+ 10   FORMAT (/,' MP_NCWRITE2D - error during ',a,' call, Node = ',i0,  &
+     &        ' Error = ',i0,/,21x,a)
+ 20   FORMAT (/,' MP_NCWRITE2D - error while writing variable: ',a,     &
+     &        /,16x,'in file: ',a)
  30   FORMAT (/,' MP_NCWRITE2D - error while inquiring ID for',         &
-     &        ' variable: ',a,/,13x,'in file: ',a)
+     &        ' variable: ',a,/,16x,'in file: ',a)
 !
       RETURN
       END FUNCTION mp_ncwrite2d
+!
+      SUBROUTINE mp_reduce_i8 (ng, model, Asize, A, handle_op, InpComm)
+!
+!***********************************************************************
+!                                                                      !
+!  This routine collects and reduces requested 1D integer array        !
+!  variables from all nodes in the group.                              !
+!                                                                      !
+!  On Input:                                                           !
+!                                                                      !
+!     ng         Nested grid number.                                   !
+!     model      Calling model identifier.                             !
+!     Asize      Number of scalar variables to reduce.                 !
+!     A          Vector of scalar variables to reduce.                 !
+!     handle_op  Reduction operation handle (string).  The following   !
+!                  reduction operations are supported:                 !
+!                  'MIN', 'MAX', 'SUM'                                 !
+!     InpComm    Communicator handle (integer, OPTIONAL).              !
+!                                                                      !
+!  On Output:                                                          !
+!                                                                      !
+!     A          Vector of reduced scalar variables.                   !
+!                                                                      !
+!***********************************************************************
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: ng, model, Asize
+
+      integer, intent(in), optional :: InpComm
+!
+      character (len=*), intent(in) :: handle_op(Asize)
+!
+      integer(i8b), intent(inout) :: A(Asize)
+!
+!  Local variable declarations.
+!
+      integer :: Lstr, MyCOMM, MyError, Serror
+      integer :: handle, i, rank, request
+
+      integer, dimension(0:NtileI(ng)*NtileJ(ng)-1) :: Rrequest
+
+      integer, dimension(MPI_STATUS_SIZE) :: Rstatus
+      integer, dimension(MPI_STATUS_SIZE) :: Sstatus
+!
+      integer(i8b), dimension(Asize,0:NtileI(ng)*NtileJ(ng)-1) :: Arecv
+      integer(i8b), dimension(Asize) :: Areduce
+      integer(i8b), dimension(Asize) :: Asend
+!
+      character (len=MPI_MAX_ERROR_STRING) :: string
+
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__//", mp_reduce_1di"
+
+#  ifdef PROFILE
+!
+!-----------------------------------------------------------------------
+!  Turn on time clocks.
+!-----------------------------------------------------------------------
+!
+      CALL wclock_on (ng, model, 65, __LINE__, MyFile)
+#  endif
+#  ifdef MPI
+!
+!-----------------------------------------------------------------------
+!  Set distributed-memory communicator handle (context ID).
+!-----------------------------------------------------------------------
+!
+      IF (PRESENT(InpComm)) THEN
+        MyCOMM=InpComm
+      ELSE
+        MyCOMM=OCN_COMM_WORLD
+      END IF
+#  endif
+!
+!-----------------------------------------------------------------------
+!  Collect and reduce requested scalar variables.
+!-----------------------------------------------------------------------
+!
+!  Maximum automatic buffer memory size in bytes.
+!
+      BmemMax(ng)=MAX(BmemMax(ng), REAL((SIZE(Arecv)+                   &
+     &                                   2*Asize)*KIND(A),r8))
+!
+!  Pack data to reduce.
+!
+      DO i=1,Asize
+        Asend(i)=A(i)
+      END DO
+!
+!  Collect and reduce.
+!
+#  if defined REDUCE_ALLREDUCE
+      DO i=1,Asize
+        IF (handle_op(i)(1:3).eq.'MIN') THEN
+          handle=MPI_MIN
+        ELSE IF (handle_op(i)(1:3).eq.'MAX') THEN
+          handle=MPI_MAX
+        ELSE IF (handle_op(i)(1:3).eq.'SUM') THEN
+          handle=MPI_SUM
+        END IF
+        CALL mpi_allreduce (Asend(i), Areduce(i), 1, MPI_INTEGER,       &
+     &                      handle, MyCOMM, MyError)
+        IF (MyError.ne.MPI_SUCCESS) THEN
+          CALL mpi_error_string (MyError, string, Lstr, Serror)
+          Lstr=LEN_TRIM(string)
+          WRITE (stdout,10) 'MPI_ALLREDUCE', MyRank, MyError,           &
+     &                      string(1:Lstr)
+          exit_flag=2
+          RETURN
+        END IF
+      END DO
+#  elif defined REDUCE_ALLGATHER
+      CALL mpi_allgather (Asend, Asize, MPI_INTEGER,                    &
+     &                    Arecv, Asize, MPI_INTEGER,                    &
+     &                    MyCOMM, MyError)
+      IF (MyError.ne.MPI_SUCCESS) THEN
+        CALL mpi_error_string (MyError, string, Lstr, Serror)
+        Lstr=LEN_TRIM(string)
+        WRITE (stdout,10) 'MPI_ALLGATHER', MyRank, MyError,             &
+     &                    string(1:Lstr)
+        exit_flag=2
+        RETURN
+      END IF
+      DO i=1,Asize
+        Areduce(i)=Arecv(i,0)
+        DO rank=1,NtileI(ng)*NtileJ(ng)-1
+          IF (handle_op(i)(1:3).eq.'MIN') THEN
+            Areduce(i)=MIN(Areduce(i),Arecv(i,rank))
+          ELSE IF (handle_op(i)(1:3).eq.'MAX') THEN
+            Areduce(i)=MAX(Areduce(i),Arecv(i,rank))
+          ELSE IF (handle_op(i)(1:3).eq.'SUM') THEN
+            Areduce(i)=Areduce(i)+Arecv(i,rank)
+          END IF
+        END DO
+      END DO
+#  elif defined REDUCE_SENDRECV
+      IF (MyRank.eq.MyMaster) THEN
+        DO rank=1,NtileI(ng)*NtileJ(ng)-1
+          CALL mpi_irecv (Arecv(1,rank), Asize, MPI_INTEGER, rank,      &
+     &                    rank+500, MyCOMM, Rrequest(rank),             &
+     &                    MyError)
+        END DO
+        DO i=1,Asize
+          Areduce(i)=Asend(i)
+        END DO
+        DO rank=1,NtileI(ng)*NtileJ(ng)-1
+          CALL mpi_wait (Rrequest(rank), Rstatus, MyError)
+          IF (MyError.ne.MPI_SUCCESS) THEN
+            CALL mpi_error_string (MyError, string, Lstr, Serror)
+            Lstr=LEN_TRIM(string)
+            WRITE (stdout,10) 'MPI_IRECV', rank, Rerror, string(1:Lstr)
+            exit_flag=2
+            RETURN
+          END IF
+          DO i=1,Asize
+            IF (handle_op(i)(1:3).eq.'MIN') THEN
+              Areduce(i)=MIN(Areduce(i),Arecv(i,rank))
+            ELSE IF (handle_op(i)(1:3).eq.'MAX') THEN
+              Areduce(i)=MAX(Areduce(i),Arecv(i,rank))
+            ELSE IF (handle_op(i)(1:3).eq.'SUM') THEN
+              Areduce(i)=Areduce(i)+Arecv(i,rank)
+            END IF
+          END DO
+        END DO
+      ELSE
+        CALL mpi_isend (Asend, Asize, MPI_INTEGER, MyMaster,            &
+     &                  MyRank+500, MyCOMM, request, MyError)
+        CALL mpi_wait (request, Sstatus, MyError)
+        IF (MyError.ne.MPI_SUCCESS) THEN
+          CALL mpi_error_string (MyError, string, Lstr, Serror)
+          Lstr=LEN_TRIM(string)
+          WRITE (stdout,10) 'MPI_ISEND', MyRank, Serror, string(1:Lstr)
+          exit_flag=2
+          RETURN
+        END IF
+      END IF
+!
+!  Broadcast reduced variables from process to all processes in the
+!  group.
+!
+      CALL mpi_bcast (Areduce, Asize, MPI_INTEGER, MyMaster,            &
+     &                MyCOMM, MyError)
+      IF (MyError.ne.MPI_SUCCESS) THEN
+        CALL mpi_error_string (MyError, string, Lstr, Serror)
+        Lstr=LEN_TRIM(string)
+        WRITE (stdout,10) 'MPI_BCAST', MyRank, MyError, string(1:Lstr)
+        exit_flag=2
+        RETURN
+      END IF
+#  endif
+ 10   FORMAT (/,' MP_REDUCE_I8 - error during ',a,' call, Node = ',     &
+     &        i3.3,' Error = ',i3,/,16x,a)
+!
+!  Unpack.
+!
+      DO i=1,Asize
+        A(i)=Areduce(i)
+      END DO
+#  ifdef PROFILE
+!
+!-----------------------------------------------------------------------
+!  Turn off time clocks.
+!-----------------------------------------------------------------------
+!
+      CALL wclock_off (ng, model, 65, __LINE__, MyFile)
+#  endif
+!
+      RETURN
+      END SUBROUTINE mp_reduce_i8
 
 # ifdef SINGLE_PRECISION
 !
@@ -5692,13 +5679,6 @@
 !     A          Vector of reduced scalar variables.                   !
 !                                                                      !
 !***********************************************************************
-!
-      USE mod_param
-      USE mod_parallel
-      USE mod_iounits
-      USE mod_scalars
-!
-      implicit none
 !
 !  Imported variable declarations.
 !
@@ -5801,7 +5781,7 @@
           Areduce=Areduce+Arecv(rank)
         END IF
       END DO
-#  else
+#  elif defined REDUCE_SENDRECV
       IF (MyRank.eq.MyMaster) THEN
         DO rank=1,NtileI(ng)*NtileJ(ng)-1
           CALL mpi_irecv (Arecv(rank), Npts, MP_DOUBLE, rank,           &
@@ -5830,7 +5810,7 @@
         CALL mpi_isend (Asend, npts, MP_DOUBLE, MyMaster, MyRank+500,   &
      &                  MyCOMM, request, MyError)
         CALL mpi_wait (request, Sstatus, MyError)
-        IF (Serror.ne.MPI_SUCCESS) THEN
+        IF (MyError.ne.MPI_SUCCESS) THEN
           CALL mpi_error_string (MyError, string, Lstr, Serror)
           Lstr=LEN_TRIM(string)
           WRITE (stdout,10) 'MPI_ISEND', MyRank, Serror, string(1:Lstr)
@@ -5844,7 +5824,7 @@
 !
       CALL mpi_bcast (Areduce, Npts, MP_DOUBLE, MyMaster,               &
      &                MyCOMM, MyError)
-      IF (Serror.ne.MPI_SUCCESS) THEN
+      IF (MyError.ne.MPI_SUCCESS) THEN
         CALL mpi_error_string (MyError, string, Lstr, Serror)
         Lstr=LEN_TRIM(string)
         WRITE (stdout,10) 'MPI_BCAST', MyRank, MyError, string(1:Lstr)
@@ -5894,13 +5874,6 @@
 !     A          Vector of reduced scalar variables.                   !
 !                                                                      !
 !***********************************************************************
-!
-      USE mod_param
-      USE mod_parallel
-      USE mod_iounits
-      USE mod_scalars
-!
-      implicit none
 !
 !  Imported variable declarations.
 !
@@ -6013,7 +5986,7 @@
           END IF
         END DO
       END DO
-#  else
+#  elif defined REDUCE_SENDRECV
       IF (MyRank.eq.MyMaster) THEN
         DO rank=1,NtileI(ng)*NtileJ(ng)-1
           CALL mpi_irecv (Arecv(1,rank), Asize, MP_DOUBLE, rank,        &
@@ -6046,7 +6019,7 @@
         CALL mpi_isend (Asend, Asize, MP_DOUBLE, MyMaster, MyRank+500,  &
      &                  MyCOMM, request, MyError)
         CALL mpi_wait (request, Sstatus, MyError)
-        IF (Serror.ne.MPI_SUCCESS) THEN
+        IF (MyError.ne.MPI_SUCCESS) THEN
           CALL mpi_error_string (MyError, string, Lstr, Serror)
           Lstr=LEN_TRIM(string)
           WRITE (stdout,10) 'MPI_ISEND', MyRank, Serror, string(1:Lstr)
@@ -6060,7 +6033,7 @@
 !
       CALL mpi_bcast (Areduce, Asize, MP_DOUBLE, MyMaster,              &
      &                MyCOMM, MyError)
-      IF (Serror.ne.MPI_SUCCESS) THEN
+      IF (MyError.ne.MPI_SUCCESS) THEN
         CALL mpi_error_string (MyError, string, Lstr, Serror)
         Lstr=LEN_TRIM(string)
         WRITE (stdout,10) 'MPI_BCAST', MyRank, MyError, string(1:Lstr)
@@ -6113,13 +6086,6 @@
 !     A          Vector of reduced scalar variables.                   !
 !                                                                      !
 !***********************************************************************
-!
-      USE mod_param
-      USE mod_parallel
-      USE mod_iounits
-      USE mod_scalars
-!
-      implicit none
 !
 !  Imported variable declarations.
 !
@@ -6222,7 +6188,7 @@
           Areduce=Areduce+Arecv(rank)
         END IF
       END DO
-# else
+# elif defined REDUCE_SENDRECV
       IF (MyRank.eq.MyMaster) THEN
         DO rank=1,NtileI(ng)*NtileJ(ng)-1
           CALL mpi_irecv (Arecv(rank), Npts, MP_FLOAT, rank,            &
@@ -6251,7 +6217,7 @@
         CALL mpi_isend (Asend, npts, MP_FLOAT, MyMaster, MyRank+500,    &
      &                  MyCOMM, request, MyError)
         CALL mpi_wait (request, Sstatus, MyError)
-        IF (Serror.ne.MPI_SUCCESS) THEN
+        IF (MyError.ne.MPI_SUCCESS) THEN
           CALL mpi_error_string (MyError, string, Lstr, Serror)
           Lstr=LEN_TRIM(string)
           WRITE (stdout,10) 'MPI_ISEND', MyRank, Serror, string(1:Lstr)
@@ -6265,7 +6231,7 @@
 !
       CALL mpi_bcast (Areduce, Npts, MP_FLOAT, MyMaster,                &
      &                MyCOMM, MyError)
-      IF (Serror.ne.MPI_SUCCESS) THEN
+      IF (MyError.ne.MPI_SUCCESS) THEN
         CALL mpi_error_string (MyError, string, Lstr, Serror)
         Lstr=LEN_TRIM(string)
         WRITE (stdout,10) 'MPI_BCAST', MyRank, MyError, string(1:Lstr)
@@ -6315,13 +6281,6 @@
 !     A          Vector of reduced scalar variables.                   !
 !                                                                      !
 !***********************************************************************
-!
-      USE mod_param
-      USE mod_parallel
-      USE mod_iounits
-      USE mod_scalars
-!
-      implicit none
 !
 !  Imported variable declarations.
 !
@@ -6434,7 +6393,7 @@
           END IF
         END DO
       END DO
-# else
+# elif defined REDUCE_SENDRECV
       IF (MyRank.eq.MyMaster) THEN
         DO rank=1,NtileI(ng)*NtileJ(ng)-1
           CALL mpi_irecv (Arecv(1,rank), Asize, MP_FLOAT, rank,         &
@@ -6466,7 +6425,7 @@
         CALL mpi_isend (Asend, Asize, MP_FLOAT, MyMaster, MyRank+500,   &
      &                  MyCOMM, request, MyError)
         CALL mpi_wait (request, Sstatus, MyError)
-        IF (Serror.ne.MPI_SUCCESS) THEN
+        IF (MyError.ne.MPI_SUCCESS) THEN
           CALL mpi_error_string (MyError, string, Lstr, Serror)
           Lstr=LEN_TRIM(string)
           WRITE (stdout,10) 'MPI_ISEND', MyRank, Serror, string(1:Lstr)
@@ -6480,7 +6439,7 @@
 !
       CALL mpi_bcast (Areduce, Asize, MP_FLOAT, MyMaster,               &
      &                MyCOMM, MyError)
-      IF (Serror.ne.MPI_SUCCESS) THEN
+      IF (MyError.ne.MPI_SUCCESS) THEN
         CALL mpi_error_string (MyError, string, Lstr, Serror)
         Lstr=LEN_TRIM(string)
         WRITE (stdout,10) 'MPI_BCAST', MyRank, MyError, string(1:Lstr)
@@ -6536,13 +6495,6 @@
 !     A          Matrix of reduced variables and qualifiers.           !
 !                                                                      !
 !***********************************************************************
-!
-      USE mod_param
-      USE mod_parallel
-      USE mod_iounits
-      USE mod_scalars
-!
-      implicit none
 !
 !  Imported variable declarations.
 !
@@ -6689,14 +6641,6 @@
 !     Awrk       2D tiled, floating-point array.                       !
 !                                                                      !
 !***********************************************************************
-!
-      USE mod_param
-      USE mod_parallel
-      USE mod_iounits
-      USE mod_ncparam
-      USE mod_scalars
-!
-      implicit none
 !
 !  Imported variable declarations.
 !
@@ -6967,14 +6911,6 @@
 !                                                                      !
 !***********************************************************************
 !
-      USE mod_param
-      USE mod_parallel
-      USE mod_iounits
-      USE mod_ncparam
-      USE mod_scalars
-!
-      implicit none
-!
 !  Imported variable declarations.
 !
       integer, intent(in) :: ng, model
@@ -7239,14 +7175,6 @@
 !                                                                      !
 !***********************************************************************
 !
-      USE mod_param
-      USE mod_parallel
-      USE mod_iounits
-      USE mod_ncparam
-      USE mod_scalars
-!
-      implicit none
-!
 !  Imported variable declarations.
 !
       integer, intent(in) :: ng, model
@@ -7391,14 +7319,6 @@
 !                                                                      !
 !***********************************************************************
 !
-
-      USE mod_param
-      USE mod_parallel
-      USE mod_ncparam
-      USE mod_scalars
-!
-      implicit none
-!
 !  Imported variable declarations.
 !
       integer, intent(in) :: ng, tile, gtype
@@ -7539,14 +7459,6 @@
 !     Aglobal    2D global array, all tiles are aggregated.            !
 !                                                                      !
 !***********************************************************************
-!
-      USE mod_param
-      USE mod_parallel
-      USE mod_iounits
-      USE mod_ncparam
-      USE mod_scalars
-!
-      implicit none
 !
 !  Imported variable declarations.
 !
@@ -7751,14 +7663,6 @@
 !     Aglobal    3D global array, all tiles are aggregated.            !
 !                                                                      !
 !***********************************************************************
-!
-      USE mod_param
-      USE mod_parallel
-      USE mod_iounits
-      USE mod_ncparam
-      USE mod_scalars
-!
-      implicit none
 !
 !  Imported variable declarations.
 !

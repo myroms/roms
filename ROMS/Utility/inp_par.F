@@ -2,7 +2,7 @@
       MODULE inp_par_mod
 !
 !git $Id$
-!svn $Id: inp_par.F 1054 2021-03-06 19:47:12Z arango $
+!svn $Id: inp_par.F 1064 2021-05-10 19:55:56Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -30,13 +30,23 @@
 #ifdef DISTRIBUTE
       USE mod_strings
 #endif
-!
-      USE dateclock_mod,  ONLY : get_date
-#ifdef DISTRIBUTE
-      USE distribute_mod, ONLY : mp_bcasti, mp_bcasts
+#if defined PIO_LIB && defined DISTRIBUTE
+      USE set_pio_mod
 #endif
-      USE ran_state,      ONLY : ran_seed
-      USE strings_mod,    ONLY : FoundError
+!
+      USE dateclock_mod,   ONLY : get_date
+#ifdef DISTRIBUTE
+      USE distribute_mod,  ONLY : mp_bcasti, mp_bcasts
+#endif
+      USE lbc_mod,         ONLY : lbc_report
+      USE ran_state,       ONLY : ran_seed
+#ifdef NESTING
+      USE set_contact_mod, ONLY : set_contact
+#endif
+      USE strings_mod,     ONLY : FoundError
+#ifdef SOLVE3D
+      USE tadv_mod,        ONLY : tadv_report
+#endif
 !
       implicit none
 !
@@ -1245,6 +1255,16 @@
       CALL mp_bcasts (1, model, Coptions)
 #endif
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+
+#if defined PIO_LIB && defined DISTRIBUTE
+!
+!-----------------------------------------------------------------------
+!  Set PIO single and double precision data decomposition for mapping
+!  between computational and I/O processes.
+!-----------------------------------------------------------------------
+!
+      CALL set_iodecomp
+#endif
 !
 !-----------------------------------------------------------------------
 !  Initialize random number sequence so we can get identical results

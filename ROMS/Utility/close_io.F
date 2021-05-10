@@ -1,30 +1,96 @@
 #include "cppdefs.h"
-      SUBROUTINE close_inp (ng, model)
+      MODULE close_io_mod
 !
 !git $Id$
-!svn $Id: close_io.F 1054 2021-03-06 19:47:12Z arango $
+!svn $Id: close_io.F 1064 2021-05-10 19:55:56Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
 !=======================================================================
 !                                                                      !
-! This subroutine checks if input files are in close state.  It is     !
-! used during initialization to force all multi-file input fields to   !
-! in close state. This is important in iterative algorithms that run   !
-! the full model repetitevely.                                         !
+!  This module closes input and output files using either the standard !
+!  NetCDF library or the Parallel-IO (PIO) library.                    !
+!                                                                      !
+!  During initialization, the input input files need to be in closed   !
+!  state to facilitate multi-file processing. This is important in     !
+!  iterative algorithms that run the model kernels repetitevely.       !
 !                                                                      !
 !=======================================================================
 !
       USE mod_param
+      USE mod_parallel
       USE mod_iounits
       USE mod_ncparam
       USE mod_netcdf
+#if defined PIO_LIB && defined DISTRIBUTE
+      USE mod_pio_netcdf
+#endif
       USE mod_scalars
 !
-      USE strings_mod, ONLY : FoundError
+      USE dateclock_mod, ONLY : get_date
+      USE strings_mod,   ONLY : FoundError
 !
       implicit none
+!
+      PUBLIC :: close_file
+      PUBLIC :: close_inp
+      PUBLIC :: close_out
+!
+      CONTAINS
+!
+!***********************************************************************
+      SUBROUTINE close_file (ng, model, S, ncname, Lupdate)
+!***********************************************************************
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: ng, model
+!
+      TYPE(T_IO), intent(inout) :: S
+!
+      logical, intent(in), optional :: Lupdate
+!
+      character (len=*), intent(in), optional :: ncname
+!
+!  Local variable declarations.
+!
+      integer :: ClosedState = -1
+!
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__//", close_file_nf90"
+!
+!-----------------------------------------------------------------------
+!  Close specified NetCDF file.
+!-----------------------------------------------------------------------
+!
+      SELECT CASE (S%IOtype)
+        CASE (io_nf90)
+          IF (S%ncid.ne.ClosedState) THEN
+            CALL netcdf_close (ng, model, S%ncid,                       &
+     &                         TRIM(ncname), Lupdate)
+            S%ncid=ClosedState
+          END IF
+
+#if defined PIO_LIB && defined DISTRIBUTE
+        CASE (io_pio)
+          IF (ASSOCIATED(S%pioFile%iosystem)) THEN
+            IF (S%pioFile%fh.ne.ClosedState) THEN
+              CALL pio_netcdf_close (ng, model, S%pioFile,              &
+     &                               TRIM(ncname), Lupdate)
+              S%pioFile%fh=ClosedState
+            END IF
+          END IF
+#endif
+      END SELECT
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+!
+      RETURN
+      END SUBROUTINE close_file
+!
+!***********************************************************************
+      SUBROUTINE close_inp (ng, model)
+!***********************************************************************
 !
 !  Imported variable declarations.
 !
@@ -35,7 +101,7 @@
       integer :: Fcount, i
 !
       character (len=*), parameter :: MyFile =                          &
-     &  __FILE__//", close_inp.F"
+     &  __FILE__//", close_inp"
 !
       SourceFile=MyFile
 !
@@ -51,11 +117,11 @@
       DO i=1,nFfiles(ng)
         IF ((FRC(i,ng)%Nfiles.gt.0).and.(FRC(i,ng)%ncid.ne.-1)) THEN
           Fcount=FRC(i,ng)%Fcount
-          CALL netcdf_close (ng, model, FRC(i,ng)%ncid,                 &
-     &                       FRC(i,ng)%files(Fcount), .FALSE.)
+          CALL close_file (ng, model, FRC(i,ng),                        &
+     &                     FRC(i,ng)%files(Fcount), .FALSE.)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
           FRCids=-1
-          ncFRCid=-1
+          FRCncid=-1
           Fcount=1
           FRC(i,ng)%Fcount=Fcount
           FRC(i,ng)%name=TRIM(FRC(i,ng)%files(Fcount))
@@ -69,11 +135,11 @@
         DO i=1,nBCfiles(ng)
           IF ((BRY(i,ng)%Nfiles.gt.0).and.(BRY(i,ng)%ncid.ne.-1)) THEN
             Fcount=BRY(i,ng)%Fcount
-            CALL netcdf_close (ng, model, BRY(i,ng)%ncid,               &
-     &                         BRY(i,ng)%files(Fcount),  .FALSE.)
+            CALL close_file (ng, model, BRY(i,ng),                      &
+     &                       BRY(i,ng)%files(Fcount), .FALSE.)
             IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
             BRYids=-1
-            ncBRYid=-1
+            BRYncid=-1
             Fcount=1
             BRY(i,ng)%Fcount=Fcount
             BRY(i,ng)%name=TRIM(BRY(i,ng)%files(Fcount))
@@ -87,11 +153,11 @@
         DO i=1,nCLMfiles(ng)
           IF ((CLM(i,ng)%Nfiles.gt.0).and.(CLM(i,ng)%ncid.ne.-1)) THEN
             Fcount=CLM(i,ng)%Fcount
-            CALL netcdf_close (ng, model, CLM(i,ng)%ncid,               &
-     &                         CLM(i,ng)%files(Fcount),  .FALSE.)
+            CALL close_file (ng, model, CLM(i,ng),                      &
+     &                       CLM(i,ng)%files(Fcount), .FALSE.)
             IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
             CLMids=-1
-            ncCLMid=-1
+            CLMncid=-1
             Fcount=1
             CLM(i,ng)%Fcount=Fcount
             CLM(i,ng)%name=TRIM(CLM(i,ng)%files(Fcount))
@@ -110,18 +176,6 @@
 !                                                                      !
 !=======================================================================
 !
-      USE mod_param
-      USE mod_parallel
-      USE mod_iounits
-      USE mod_ncparam
-      USE mod_netcdf
-      USE mod_scalars
-      USE strings_mod, ONLY : FoundError
-!
-      USE dateclock_mod, ONLY : get_date
-!
-      implicit none
-!
 !  Local variable declarations.
 !
       logical :: First
@@ -138,104 +192,70 @@
 !-----------------------------------------------------------------------
 !
       DO ng=1,Ngrids
-        IF (RST(ng)%ncid.ne.-1) THEN
-          CALL netcdf_close (ng, iNLM, RST(ng)%ncid, RST(ng)%name)
-        END IF
+        CALL close_file (ng, iNLM, RST(ng), RST(ng)%name)
 #if defined FOUR_DVAR || defined ENKF_RESTART || defined VERIFICATION
-        IF (DAI(ng)%ncid.ne.-1) THEN
-          CALL netcdf_close (ng, iNLM, DAI(ng)%ncid, DAI(ng)%name)
-        END IF
-        IF (DAV(ng)%ncid.ne.-1) THEN
-          CALL netcdf_sync (ng, iNLM, DAV(ng)%name, DAV(ng)%ncid)
-          CALL netcdf_close (ng, iNLM, DAV(ng)%ncid, DAV(ng)%name)
-        END IF
+        CALL close_file (ng, iNLM, DAI(ng), DAI(ng)%name)
+        CALL close_file (ng, iNLM, DAV(ng), DAV(ng)%name)
 #endif
 #if defined FORWARD_READ || defined FORWARD_WRITE
-        IF ((FWD(ng)%ncid.ne.-1).and.                                   &
-     &      (FWD(ng)%ncid.eq.HIS(ng)%ncid)) THEN
-          FWD(ng)%ncid=-1
+        IF (FWD(ng)%IOtype.eq.io_nf90) THEN
+          IF ((FWD(ng)%ncid.ne.-1).and.                                 &
+     &        (FWD(ng)%ncid.eq.HIS(ng)%ncid)) THEN
+            FWD(ng)%ncid=-1
+          END IF
+# if defined PIO_LIB && defined DISTRIBUTE
+        ELSE IF (FWD(ng)%IOtype.eq.io_pio) THEN
+          IF ((FWD(ng)%pioFile%fh.ne.-1).and.                           &
+     &        (FWD(ng)%pioFile%fh.eq.HIS(ng)%pioFile%fh)) THEN
+            FWD(ng)%pioFile%fh=-1
+          END IF
+# endif
         END IF
-        IF (FWD(ng)%ncid.ne.-1) THEN
-          CALL netcdf_close (ng, iNLM, FWD(ng)%ncid, FWD(ng)%name)
-        END IF
+        CALL close_file (ng, iNLM, FWD(ng), FWD(ng)%name)
 #endif
-        IF (HIS(ng)%ncid.ne.-1) THEN
-          CALL netcdf_close (ng, iNLM, HIS(ng)%ncid, HIS(ng)%name)
-        END IF
-        IF (QCK(ng)%ncid.ne.-1) THEN
-          CALL netcdf_close (ng, iNLM, QCK(ng)%ncid, QCK(ng)%name)
-        END IF
+        CALL close_file (ng, iNLM, HIS(ng), HIS(ng)%name)
+        CALL close_file (ng, iNLM, QCK(ng), QCK(ng)%name)
 #ifdef SP4DVAR
-        IF (SPT(ng)%ncid.ne.-1) THEN
-          CALL netcdf_close (ng, iTLM, SPT(ng)%ncid, SPT(ng)%name)
-        END IF
-        IF (SCT(ng)%ncid.ne.-1) THEN
-          CALL netcdf_close (ng, iTLM, SCT(ng)%ncid, SCT(ng)%name)
-        END IF
-        IF (SPA(ng)%ncid.ne.-1) THEN
-          CALL netcdf_close (ng, iADM, SPA(ng)%ncid, SPA(ng)%name)
-        END IF
+        CALL close_file (ng, iTLM, SPT(ng), SPT(ng)%name)
+        CALL close_file (ng, iTLM, SCT(ng), SCT(ng)%name)
+        CALL close_file (ng, iADM, SPA(ng), SPA(ng)%name)
 #endif
 #ifdef ADJOINT
-        IF (ADM(ng)%ncid.ne.-1) THEN
-          CALL netcdf_close (ng, iADM, ADM(ng)%ncid, ADM(ng)%name)
-        END IF
+        CALL close_file (ng, iADM, ADM(ng), ADM(ng)%name)
 #endif
 #ifdef TANGENT
-        IF (ITL(ng)%ncid.ne.-1) THEN
-          CALL netcdf_close (ng, iTLM, ITL(ng)%ncid, ITL(ng)%name)
-        END IF
-        IF (TLM(ng)%ncid.ne.-1) THEN
-          CALL netcdf_close (ng, iTLM, TLM(ng)%ncid, TLM(ng)%name)
-        END IF
+        CALL close_file (ng, iTLM, ITL(ng), ITL(ng)%name)
+        CALL close_file (ng, iTLM, TLM(ng), TLM(ng)%name)
 #endif
 #if defined TL_IOMS && defined FOUR_DVAR
-        IF (IRP(ng)%ncid.ne.-1) THEN
-          CALL netcdf_close (ng, iRPM, IRP(ng)%ncid, IRP(ng)%name)
-        END IF
+        CALL close_file (ng, iRPM, IRP(ng), IRP(ng)%name)
 #endif
 #ifdef WEAK_CONSTRAINT
-        IF (TLF(ng)%ncid.ne.-1) THEN
-          CALL netcdf_close (ng, iTLM, TLF(ng)%ncid, TLF(ng)%name)
-        END IF
+        CALL close_file (ng, iTLM, TLF(ng), TLF(ng)%name)
 #endif
 #ifdef FOUR_DVAR
-        IF (HSS(ng)%ncid.ne.-1) THEN
-          CALL netcdf_close (ng, iADM, HSS(ng)%ncid, HSS(ng)%name)
-        END IF
-        IF (LCZ(ng)%ncid.ne.-1) THEN
-          CALL netcdf_close (ng, iADM, LCZ(ng)%ncid, LCZ(ng)%name)
-        END IF
+        CALL close_file (ng, iADM, HSS(ng), HSS(ng)%name)
+        CALL close_file (ng, iADM, LCZ(ng), LCZ(ng)%name)
 #endif
 #if defined AVERAGES    || \
    (defined AD_AVERAGES && defined ADJOINT) || \
    (defined RP_AVERAGES && defined TL_IOMS) || \
    (defined TL_AVERAGES && defined TANGENT)
-        IF (AVG(ng)%ncid.ne.-1) THEN
-          CALL netcdf_close (ng, iNLM, AVG(ng)%ncid, AVG(ng)%name)
-        END IF
+        CALL close_file (ng, iNLM, AVG(ng), AVG(ng)%name)
 #endif
 #if defined AVERAGES  && defined AVERAGES_DETIDE && \
    (defined SSH_TIDES || defined UV_TIDES)
-        IF (HAR(ng)%ncid.ne.-1) THEN
-          CALL netcdf_close (ng, iNLM, HAR(ng)%ncid, HAR(ng)%name)
-        END IF
+        CALL close_file (ng, iNLM, HAR(ng), HAR(ng)%name)
 #endif
 #ifdef DIAGNOSTICS
-        IF (DIA(ng)%ncid.ne.-1) THEN
-          CALL netcdf_close (ng, iNLM, DIA(ng)%ncid, DIA(ng)%name)
-        END IF
+        CALL close_file (ng, iNLM, DIA(ng), DIA(ng)%name)
 #endif
 #ifdef FLOATS
-        IF (FLT(ng)%ncid.ne.-1) THEN
-          CALL netcdf_close (ng, iNLM, FLT(ng)%ncid, FLT(ng)%name)
-        END IF
+        CALL close_file (ng, iNLM, FLT(ng), FLT(ng)%name)
 #endif
 #if defined WEAK_CONSTRAINT   && \
    (defined POSTERIOR_ERROR_F || defined POSTERIOR_ERROR_I)
-        IF (ERR(ng)%ncid.ne.-1) THEN
-          CALL netcdf_close (ng, iTLM, ERR(ng)%ncid, ERR(ng)%name)
-        END IF
+        CALL close_file (ng, iTLM, ERR(ng), ERR(ng)%name)
 #endif
 !
 !  Report number of time records written.
@@ -414,3 +434,5 @@
 !
       RETURN
       END SUBROUTINE close_out
+
+      END MODULE close_io_mod

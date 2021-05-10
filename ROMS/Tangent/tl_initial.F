@@ -3,7 +3,7 @@
       SUBROUTINE tl_initial (ng)
 !
 !git $Id$
-!svn $Id: tl_initial.F 1054 2021-03-06 19:47:12Z arango $
+!svn $Id: tl_initial.F 1064 2021-05-10 19:55:56Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -35,10 +35,22 @@
       USE mod_scalars
       USE mod_stepping
 !
+# ifdef ADJUST_BOUNDARY
+      USE mod_boundary,        ONLY : initialize_boundary
+# endif
+# if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+      USE mod_forces,          ONLY : initialize_forces
+# endif
+!
       USE analytical_mod
+      USE close_io_mod,        ONLY : close_inp
       USE dateclock_mod,       ONLY : time_string
 # ifdef DISTRIBUTE
       USE distribute_mod,      ONLY : mp_bcasti
+# endif
+      USE get_state_mod,       ONLY : get_state
+# ifdef WET_DRY
+      USE get_wetdry_mod,      ONLY : get_wetdry
 # endif
 # ifdef TLM_CHECK
       USE ini_adjust_mod,      ONLY : tl_ini_perturb
@@ -47,31 +59,36 @@
 # ifdef I4DVAR_ANA_SENSITIVITY
       USE ini_lanczos_mod,     ONLY : ini_lanczos
 # endif
-# ifdef ADJUST_BOUNDARY
-      USE mod_boundary,        ONLY : initialize_boundary
+# ifdef OBSERVATIONS
+      USE obs_initial_mod,     ONLY : obs_initial
 # endif
-# if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
-      USE mod_forces,          ONLY : initialize_forces
+# if defined WAV_COUPLING_NOT_YET && defined MCT_LIB
+      USE ocean_coupler_mod,   ONLY : ocn2wav_coupling
 # endif
+# ifdef SOLVE3D
+      USE set_depth_mod,       ONLY : set_depth
+# endif
+# ifdef MASKING
+      USE set_masks_mod,       ONLY : set_masks
+# endif
+      USE stiffness_mod,       ONLY : stiffness
       USE strings_mod,         ONLY : FoundError
 # if defined RBL4DVAR           || defined R4DVAR      || \
      defined SENSITIVITY_4DVAR  || defined TL_RBL4DVAR || \
      defined TL_R4DVAR
       USE tl_set_depth_mod,    ONLY : tl_bath
 # endif
+# ifdef FOUR_DVAR
+      USE tl_def_ini_mod,      ONLY : tl_def_ini
+# endif
 # ifdef SOLVE3D
-      USE set_depth_mod,       ONLY : set_depth
-      USE tl_set_depth_mod,    ONLY : tl_set_depth
       USE tl_omega_mod,        ONLY : tl_omega
       USE tl_rho_eos_mod,      ONLY : tl_rho_eos
+      USE tl_set_depth_mod,    ONLY : tl_set_depth
       USE tl_set_massflux_mod, ONLY : tl_set_massflux
 # endif
-# ifdef MASKING
-      USE set_masks_mod,       ONLY : set_masks
-# endif
-      USE stiffness_mod,       ONLY : stiffness
-# if defined WAV_COUPLING_NOT_YET && defined MCT_LIB
-      USE ocean_coupler_mod,   ONLY : ocn2wav_coupling
+# ifdef FOUR_DVAR
+      USE tl_wrt_ini_mod,      ONLY : tl_wrt_ini
 # endif
 # ifdef WET_DRY
       USE wetdry_mod,          ONLY : wetdry
@@ -91,7 +108,6 @@
 !
       logical :: update = .FALSE.
 !
-      integer :: LBi, UBi, LBj, UBj
       integer :: Fcount, IniRec, Tindex, wrtRec
       integer :: thread, tile
 !
@@ -179,11 +195,6 @@
       IniRec=nrrec(ng)
       Tindex=1
 !
-      LBi=LBOUND(GRID(ng)%h,DIM=1)
-      UBi=UBOUND(GRID(ng)%h,DIM=1)
-      LBj=LBOUND(GRID(ng)%h,DIM=2)
-      UBj=UBOUND(GRID(ng)%h,DIM=2)
-!
 !  Initialize global diagnostics variables.
 !
       avgke=0.0_dp
@@ -234,10 +245,18 @@
         CALL tl_def_ini (ng)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
-        CALL tl_wrt_ini (ng, Tindex, 1)
+#    ifdef DISTRIBUTE
+        CALL tl_wrt_ini (ng, MyRank, Tindex, 1)
+#    else
+        CALL tl_wrt_ini (ng, -1, Tindex, 1)
+#    endif
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
-        CALL tl_wrt_ini (ng, Tindex, 2)
+#    ifdef DISTRIBUTE
+        CALL tl_wrt_ini (ng, MyRank, Tindex, 2)
+#    else
+        CALL tl_wrt_ini (ng, -1, Tindex, 2)
+#    endif
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
       END IF
 #   endif
@@ -370,7 +389,11 @@
 !
         IF (Nrun.gt.1) THEN
           wrtRec=1
-          CALL tl_wrt_ini (ng, Tindex, wrtRec)
+#    ifdef DISTRIBUTE
+          CALL tl_wrt_ini (ng, MyRank, Tindex, wrtRec)
+#    else
+          CALL tl_wrt_ini (ng, -1, Tindex, wrtRec)
+#    endif
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
       END IF
@@ -465,12 +488,12 @@
 !  Read in initial conditions for initial or restart NetCDF file.
 !
 #  ifdef INI_FILE
-      CALL get_state (ng, iTLM, 1, ITL(ng)%name, IniRec, Tindex)
+      CALL get_state (ng, iTLM, 1, ITL(ng), IniRec, Tindex)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
       time(ng)=io_time                       ! needed for shared-memory
 #  else
       IF (nrrec(ng).ne.0) THEN
-        CALL get_state (ng, iTLM, 1, ITL(ng)%name, IniRec, Tindex)
+        CALL get_state (ng, iTLM, 1, ITL(ng), IniRec, Tindex)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         time(ng)=io_time                     ! needed for shared-memory
       END IF
@@ -650,7 +673,7 @@
 !
       IF (nADJ(ng).lt.ntimes(ng)) THEN
         IniRec=1
-        CALL get_state (ng, 7, 7, TLF(ng)%name, IniRec, 1)
+        CALL get_state (ng, 7, 7, TLF(ng), IniRec, 1)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
       END IF
 # endif

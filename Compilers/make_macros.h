@@ -1,6 +1,6 @@
 /*
 ** git $Id$
-** svn $Id: make_macros.h 1054 2021-03-06 19:47:12Z arango $
+** svn $Id: make_macros.h 1064 2021-05-10 19:55:56Z arango $
 ********************************************************** Hernan G. Arango ***
 ** Copyright (c) 2002-2021 The ROMS/TOMS Group                               **
 **   Licensed under a MIT/X style license                                    **
@@ -21,7 +21,6 @@
 */
 
   USE_ROMS := on
-
 
 /*
 ** Process adjoint model.

@@ -2,7 +2,7 @@
 ** Include file "globaldef.h"
 **
 ** git $Id$
-** svn $Id: globaldefs.h 1062 2021-05-06 01:50:38Z arango $
+** svn $Id: globaldefs.h 1064 2021-05-10 19:55:56Z arango $
 ********************************************************** Hernan G. Arango ***
 ** Copyright (c) 2002-2021 The ROMS/TOMS Group     Alexander F. Shchepetkin  **
 **   Licensed under a MIT/X style license                                    **
@@ -49,12 +49,59 @@
 #endif
 
 /*
-** Make sure that either "mpi_allgather" or "mpi_allreduce" is used
-** in mp_reduce.  Low-level routines give an error.
+** Make sure that either "mpi_allgather", "mpi_allreduce" or lower
+** level point-to-point comunications send/recv are used in
+** "mp_collect".  Use "mpi_allreduce" as default since it is more
+** efficient in mostly all computers.
 */
 
 #ifdef DISTRIBUTE
-# if !(defined REDUCE_ALLGATHER || defined REDUCE_ALLREDUCE)
+# if !(defined ASSEMBLE_ALLGATHER || \
+       defined ASSEMBLE_ALLREDUCE || \
+       defined ASSEMBLE_SENDRECV)
+#  define ASSEMBLE_ALLREDUCE
+# endif
+#endif
+
+/*
+** Make sure that either "mpi_allgather" or "mpi_allreduce" are used
+** in "mp_boundary".  Use "mpi_allreduce" as default since it is more
+** efficient in mostly all computers.
+*/
+
+#ifdef DISTRIBUTE
+# if !(defined BOUNDARY_ALLGATHER || \
+       defined BOUNDARY_ALLREDUCE)
+#  define BOUNDARY_ALLREDUCE
+# endif
+#endif
+
+/*
+** Make sure that either "mpi_allgather", "mpi_allreduce" or lower
+** level point-to-point comunications send/recv are used in
+** "mp_collect".  Use "mpi_allreduce" as default since it is more
+** efficient in mostly all computers.
+*/
+
+#ifdef DISTRIBUTE
+# if !(defined COLLECT_ALLGATHER || \
+       defined COLLECT_ALLREDUCE || \
+       defined COLLECT_SENDRECV)
+#  define COLLECT_ALLREDUCE
+# endif
+#endif
+
+/*
+** Make sure that either "mpi_allgather", "mpi_allreduce" or lower
+** level point-to-point comunications send/recv are used in
+** "mp_reduce". Use "mpi_allreduce" as default since it is more
+** efficient in mostly all computers.
+*/
+
+#ifdef DISTRIBUTE
+# if !(defined REDUCE_ALLGATHER || \
+       defined REDUCE_ALLREDUCE || \
+       defined REDUCE_SENDRECV)
 #  define REDUCE_ALLREDUCE
 # endif
 #endif

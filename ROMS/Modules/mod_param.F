@@ -2,7 +2,7 @@
       MODULE mod_param
 !
 !git $Id$
-!svn $Id: mod_param.F 1054 2021-03-06 19:47:12Z arango $
+!svn $Id: mod_param.F 1064 2021-05-10 19:55:56Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -98,6 +98,9 @@
 !=======================================================================
 !
       USE mod_kinds
+#if defined PIO_LIB && defined DISTRIBUTE
+      USE pio
+#endif
 !
       implicit none
 !
@@ -137,6 +140,20 @@
 !  Define derived type structure, T_IO, used to store information about
 !  the input and output files.
 !-----------------------------------------------------------------------
+
+#if defined PIO_LIB && defined DISTRIBUTE
+!
+!  Define derived type structure for ROMS variable descriptors. It is
+!  done to include additional information not available in the PIO
+!  library TYPE (Var_desc_t) variable descriptor. It includes external
+!  data representation "dkind" and C-grid type "gtype".
+!
+      TYPE My_VarDesc
+        TYPE (Var_Desc_t) :: vd              ! PIO variable descriptor
+        integer :: dkind                     ! PIO data kind
+        integer :: gtype                     ! ROMS C-grid variable type
+      END TYPE My_VarDesc
+#endif
 !
 !  This structure is used to declare the variables associated with
 !  input and output files, like TYPE(IO) :: HIS(Ngrids). It is a
@@ -145,6 +162,7 @@
 !  whereas "load" is used storing information in the structure.
 !
       TYPE T_IO
+        integer :: IOtype                        ! file IO type
         integer :: Nfiles                        ! number of multi-files
         integer :: Fcount                        ! multi-file counter
         integer :: load                          ! filename load counter
@@ -160,6 +178,11 @@
         character (len=256) :: base              ! base filename
         character (len=256) :: name              ! current name
         character (len=256), pointer :: files(:) ! multi-file names
+#if defined PIO_LIB && defined DISTRIBUTE
+        TYPE (File_desc_t) :: pioFile            ! file descriptor
+        TYPE (My_VarDesc), pointer :: pioVar(:)  ! variable descriptor
+        TYPE (My_VarDesc), pointer :: pioTrc(:)  ! tracer descriptor
+#endif
       END TYPE T_IO
 !
 !-----------------------------------------------------------------------
@@ -419,7 +442,7 @@
       TYPE (T_ADV), allocatable :: Hadvection(:,:)       ! horizontal
       TYPE (T_ADV), allocatable :: Vadvection(:,:)       ! vertical
 
-# ifdef ADJOINT
+# if defined ADJOINT || defined TANGENT || defined TL_IOMS
       TYPE (T_ADV), allocatable :: ad_Hadvection(:,:)    ! horizontal
       TYPE (T_ADV), allocatable :: ad_Vadvection(:,:)    ! vertical
 # endif
@@ -1222,7 +1245,7 @@
         END DO
       END IF
 
-# ifdef ADJOINT
+# if defined ADJOINT || defined TANGENT || defined TL_IOMS
 !
 !  Adjoint model kernel.
 !
@@ -1295,7 +1318,7 @@
       END IF
 # endif
 #endif
-
+!
       RETURN
       END SUBROUTINE initialize_param
 
