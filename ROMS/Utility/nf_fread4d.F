@@ -2,7 +2,7 @@
       MODULE nf_fread4d_mod
 !
 !git $Id$
-!svn $Id: nf_fread4d.F 1064 2021-05-10 19:55:56Z arango $
+!svn $Id: nf_fread4d.F 1066 2021-05-14 21:47:45Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -52,7 +52,7 @@
 !                                                                      !
 !     Amin       Field minimum value (real)                            !
 !     Amax       Field maximum value (real)                            !
-!     A          Field to read in (real 4D array)                      !
+!     Adat       Field to read in (real 4D array)                      !
 !     checksum   Field checksum value (32-bit integer; OPTIONAL)       !
 !     status     Result error flag (integer)                           !
 !                                                                      !
@@ -89,7 +89,7 @@
 # ifdef MASKING
      &                       Amask,                                     &
 # endif
-     &                       A, checksum) RESULT (status)
+     &                       Adat, checksum) RESULT (status)
 !***********************************************************************
 !
       USE mod_netcdf
@@ -118,12 +118,12 @@
 #  ifdef MASKING
       real(r8), intent(in) :: Amask(LBi:,LBj:)
 #  endif
-      real(r8), intent(out) :: A(LBi:,LBj:,LBk:,LBt:)
+      real(r8), intent(out) :: Adat(LBi:,LBj:,LBk:,LBt:)
 # else
 #  ifdef MASKING
       real(r8), intent(in) :: Amask(LBi:UBi,LBj:UBj)
 #  endif
-      real(r8), intent(out) :: A(LBi:UBi,LBj:UBj,LBk:UBk,LBt:UBt)
+      real(r8), intent(out) :: Adat(LBi:UBi,LBj:UBj,LBk:UBk,LBt:UBt)
 # endif
 !
 !  Local variable declarations.
@@ -144,7 +144,7 @@
 
       real(r8), parameter :: IniVal= 0.0_r8
 
-      real(r8), dimension(2) :: buffer
+      real(r8), dimension(2) :: rbuffer
       real(r8), dimension(3) :: AttValue
 
 # if defined MASKING && defined READ_WATER
@@ -358,13 +358,13 @@
 !
 !  Set minimum and maximum values: global reduction.
 !
-          buffer(1)=Amin
+          rbuffer(1)=Amin
           op_handle(1)='MIN'
-          buffer(2)=Amax
+          rbuffer(2)=Amax
           op_handle(2)='MAX'
-          CALL mp_reduce (ng, model, 2, buffer, op_handle)
-          Amin=buffer(1)
-          Amax=buffer(2)
+          CALL mp_reduce (ng, model, 2, rbuffer, op_handle)
+          Amin=rbuffer(1)
+          Amax=rbuffer(2)
 !
 !  Unpack read data.
 !
@@ -374,7 +374,7 @@
               DO j=Jmin,Jmax
                 DO i=Imin,Imax
                   ic=ic+1
-                  A(i,j,k,l)=wrk(ic)
+                  Adat(i,j,k,l)=wrk(ic)
                 END DO
               END DO
             END DO
@@ -506,7 +506,7 @@
                 jc=(j-Joff)*Isize
                 DO i=Imin,Imax
                   ij=i+Ioff+jc
-                  A(i,j,k,l)=A2d(ij)
+                  Adat(i,j,k,l)=A2d(ij)
                 END DO
               END DO
             END DO
@@ -547,7 +547,7 @@
 # ifdef MASKING
      &                       Amask,                                     &
 # endif
-     &                       A, checksum) RESULT (status)
+     &                       Adat, checksum) RESULT (status)
 !***********************************************************************
 !
       USE mod_netcdf
@@ -580,12 +580,12 @@
 #  ifdef MASKING
       real(r8), intent(in) :: Amask(LBi:,LBj:)
 #  endif
-      real(r8), intent(out) :: A(LBi:,LBj:,LBk:,LBt:)
+      real(r8), intent(out) :: Adat(LBi:,LBj:,LBk:,LBt:)
 # else
 #  ifdef MASKING
       real(r8), intent(in) :: Amask(LBi:UBi,LBj:UBj)
 #  endif
-      real(r8), intent(out) :: A(LBi:UBi,LBj:UBj,LBk:UBk,LBt:UBt)
+      real(r8), intent(out) :: Adat(LBi:UBi,LBj:UBj,LBk:UBk,LBt:UBt)
 # endif
 !
 !  Local variable declarations.
@@ -861,7 +861,7 @@
 #   if defined READ_WATER && defined MASKING
      &                     NWpts, SCALARS(ng)%IJwater(:,wtype),         &
 #   endif
-     &                     Npts, wrk, A(:,:,k,fourth))
+     &                     Npts, wrk, Adat(:,:,k,fourth))
       END DO
 #  else
         CALL mp_scatter3d (ng, model, LBi, UBi, LBj, UBj, LBk, UBk,     &
@@ -869,7 +869,7 @@
 #   if defined READ_WATER && defined MASKING
      &                     NWpts, SCALARS(ng)%IJwater(:,wtype),         &
 #   endif
-     &                     Npts, wrk, A(:,:,:,fourth))
+     &                     Npts, wrk, Adat(:,:,:,fourth))
 #  endif
 # else
         IF (MyType.gt.0) THEN
@@ -878,7 +878,7 @@
             DO j=Jmin,Jmax
               DO i=Imin,Imax
                 ic=ic+1
-                A(i,j,k,fourth)=wrk(ic)
+                Adat(i,j,k,fourth)=wrk(ic)
               END DO
             END DO
           END DO
@@ -890,9 +890,9 @@
               DO i=Imin,Imax
                 IF (Amask(i,j).gt.0.0_r8) THEN
                   ic=ic+1
-                  A(i,j,k,fourth)=wrk(ic)
+                  Adat(i,j,k,fourth)=wrk(ic)
                 ELSE
-                  A(i,j,k,fourth)=0.0_r8
+                  Adat(i,j,k,fourth)=0.0_r8
                 END IF
               END DO
             END DO
@@ -917,7 +917,7 @@
 # ifdef MASKING
      &                      Amask,                                      &
 # endif
-     &                      A, checksum) RESULT (status)
+     &                      Adat, checksum) RESULT (status)
 !***********************************************************************
 !
       USE mod_pio_netcdf
@@ -943,12 +943,12 @@
 #  ifdef MASKING
       real(r8), intent(in) :: Amask(LBi:,LBj:)
 #  endif
-      real(r8), intent(out) :: A(LBi:,LBj:,LBk:,LBt:)
+      real(r8), intent(out) :: Adat(LBi:,LBj:,LBk:,LBt:)
 # else
 #  ifdef MASKING
       real(r8), intent(in) :: Amask(LBi:UBi,LBj:UBj)
 #  endif
-      real(r8), intent(out) :: A(LBi:UBi,LBj:UBj,LBk:UBk,LBt:UBt)
+      real(r8), intent(out) :: Adat(LBi:UBi,LBj:UBj,LBk:UBk,LBt:UBt)
 # endif
 !
       TYPE (File_desc_t), intent(inout) :: pioFile
@@ -971,7 +971,7 @@
       real(r8) :: my_Amin, my_Amax
 
       real(r8), dimension(3) :: AttValue
-      real(r8), dimension(2) :: buffer
+      real(r8), dimension(2) :: rbuffer
 !
       real(r4), pointer :: Awrk4(:,:,:,:)        ! single precision
       real(r8), pointer :: Awrk8(:,:,:,:)        ! double precision
@@ -1117,10 +1117,10 @@
             DO j=Jmin,Jmax
               DO i=Imin,Imax
                 IF (ABS(Awrk8(i,j,k,l)).ge.ABS(Aspval)) THEN
-                  A(i,j,k,l)=0.0_r8             ! masked with _FillValue
+                  Adat(i,j,k,l)=0.0_r8          ! masked with _FillValue
                 ELSE
                   Avalue=Ascl*(Afactor*Awrk8(i,j,k,l)+Aoffset)
-                  A(i,j,k,l)=Avalue
+                  Adat(i,j,k,l)=Avalue
                   my_Amin=MIN(my_Amin,Avalue)
                   my_Amax=MAX(my_Amax,Avalue)
                 END IF
@@ -1144,10 +1144,10 @@
             DO j=Jmin,Jmax
               DO i=Imin,Imax
                 IF (ABS(Awrk4(i,j,k,l)).ge.ABS(Aspval)) THEN
-                  A(i,j,k,l)=0.0_r8             ! masked with _FillValue
+                  Adat(i,j,k,l)=0.0_r8          ! masked with _FillValue
                 ELSE
                   Avalue=REAL(Ascl*(Afactor*Awrk4(i,j,k,l)+Aoffset),r8)
-                  A(i,j,k,l)=Avalue
+                  Adat(i,j,k,l)=Avalue
                   my_Amin=REAL(MIN(my_Amin,Avalue),r8)
                   my_Amax=REAL(MAX(my_Amax,Avalue),r8)
                 END IF
@@ -1173,7 +1173,7 @@
             DO j=Jmin,Jmax
               DO i=Imin,Imax
                 ic=ic+1
-                Cwrk(ic)=A(i,j,k,l)
+                Cwrk(ic)=Adat(i,j,k,l)
               END DO
             END DO
           END DO
@@ -1184,13 +1184,13 @@
 !
 !  Compute global minimum and maximum values.
 !
-      buffer(1)=my_Amin
-      buffer(2)=my_Amax
+      rbuffer(1)=my_Amin
+      rbuffer(2)=my_Amax
       op_handle(1)='MIN'
       op_handle(2)='MAX'
-      CALL mp_reduce (ng, model, 2, buffer, op_handle)
-      Amin=buffer(1)
-      Amax=buffer(2)
+      CALL mp_reduce (ng, model, 2, rbuffer, op_handle)
+      Amin=rbuffer(1)
+      Amax=rbuffer(2)
 !
       IF ((ABS(Amin).ge.ABS(spval)).and.                                &
      &    (ABS(Amax).ge.ABS(spval))) THEN

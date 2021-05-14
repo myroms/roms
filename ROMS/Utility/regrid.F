@@ -2,7 +2,7 @@
       MODULE regrid_mod
 !
 !git $Id$
-!svn $Id: regrid.F 1064 2021-05-10 19:55:56Z arango $
+!svn $Id: regrid.F 1066 2021-05-14 21:47:45Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -158,7 +158,7 @@
       real(r8), dimension(LBi:UBi,LBj:UBj) :: Jout
 
 #ifdef DISTRIBUTE
-      real(r8), dimension(2) :: buffer
+      real(r8), dimension(2) :: rbuffer
 !
       character (len=3), dimension(2) :: op_handle
 #endif
@@ -350,13 +350,13 @@
 !  Notice that gridded data values are overwritten.
 !
 #ifdef DISTRIBUTE
-      buffer(1)=my_min
-      buffer(2)=my_max
+      rbuffer(1)=my_min
+      rbuffer(2)=my_max
       op_handle(1)='MIN'
       op_handle(2)='MAX'
-      CALL mp_reduce (ng, model, 2, buffer, op_handle)
-      Amin=buffer(1)
-      Amax=buffer(2)
+      CALL mp_reduce (ng, model, 2, rbuffer, op_handle)
+      Amin=rbuffer(1)
+      Amax=rbuffer(2)
 #else
       Amin=my_min
       Amax=my_max
@@ -434,7 +434,7 @@
       real(r8), dimension(LBi:UBi,LBj:UBj) :: Jout
 
 # ifdef DISTRIBUTE
-      real(r8), dimension(2) :: buffer
+      real(r8), dimension(2) :: rbuffer
 !
       character (len=3), dimension(2) :: op_handle
 # endif
@@ -626,13 +626,13 @@
 !  Notice that gridded data values are overwritten.
 !
 # ifdef DISTRIBUTE
-      buffer(1)=my_min
-      buffer(2)=my_max
+      rbuffer(1)=my_min
+      rbuffer(2)=my_max
       op_handle(1)='MIN'
       op_handle(2)='MAX'
-      CALL mp_reduce (ng, model, 2, buffer, op_handle)
-      Amin=buffer(1)
-      Amax=buffer(2)
+      CALL mp_reduce (ng, model, 2, rbuffer, op_handle)
+      Amin=rbuffer(1)
+      Amax=rbuffer(2)
 # else
       Amin=my_min
       Amax=my_max

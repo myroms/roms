@@ -2,7 +2,7 @@
       MODULE nf_fwrite3d_mod
 !
 !git $Id$
-!svn $Id: nf_fwrite3d.F 1064 2021-05-10 19:55:56Z arango $
+!svn $Id: nf_fwrite3d.F 1066 2021-05-14 21:47:45Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -42,7 +42,7 @@
 !     UBk          K-dimension Upper bound                             !
 !     Amask        land/Sea mask, if any (real)                        !
 !     Ascl         Factor to scale field before writing (real)         !
-!     A            Field to write out (real)                           !
+!     Adat         Field to write out (real)                           !
 !     SetFillVal   Logical switch to set fill value in land areas      !
 !                    (OPTIONAL)                                        !
 !                                                                      !
@@ -86,7 +86,7 @@
 # ifdef MASKING
      &                        Amask,                                    &
 # endif
-     &                        A,  SetFillVal,                           &
+     &                        Adat,  SetFillVal,                        &
      &                        MinValue, MaxValue) RESULT (status)
 !***********************************************************************
 !
@@ -110,12 +110,12 @@
 #  ifdef MASKING
       real(r8), intent(in) :: Amask(LBi:,LBj:)
 #  endif
-      real(r8), intent(in) :: A(LBi:,LBj:,LBk:)
+      real(r8), intent(in) :: Adat(LBi:,LBj:,LBk:)
 # else
 #  ifdef MASKING
       real(r8), intent(in) :: Amask(LBi:UBi,LBj:UBj)
 #  endif
-      real(r8), intent(in) :: A(LBi:UBi,LBj:UBj,LBk:UBk)
+      real(r8), intent(in) :: Adat(LBi:UBi,LBj:UBj,LBk:UBk)
 # endif
       real(r8), intent(out), optional :: MinValue
       real(r8), intent(out), optional :: MaxValue
@@ -257,7 +257,7 @@
           DO j=Jmin,Jmax
             DO i=Imin,Imax
               ic=ic+1
-              Awrk(ic)=A(i,j,k)*Ascl
+              Awrk(ic)=Adat(i,j,k)*Ascl
 # ifdef POSITIVE_ZERO
               IF (ABS(Awrk(ic)).eq.0.0_r8) THEN
                 Awrk(ic)=0.0_r8                   ! impose positive zero
@@ -340,7 +340,7 @@
             jc=(j-Joff)*Isize+kc
             DO i=Imin,Imax
               ic=i+Ioff+jc
-              Awrk(ic)=A(i,j,k)*Ascl
+              Awrk(ic)=Adat(i,j,k)*Ascl
 #  ifdef POSITIVE_ZERO
               IF (ABS(Awrk(ic)).eq.0.0_r8) THEN
                 Awrk(ic)=0.0_r8                   ! impose positive zero
@@ -402,7 +402,7 @@
 # ifdef MASKING
      &                        Amask,                                    &
 # endif
-     &                        A, SetFillVal,                            &
+     &                        Adat, SetFillVal,                         &
      &                        MinValue, MaxValue) RESULT (status)
 !***********************************************************************
 !
@@ -431,12 +431,12 @@
 #  ifdef MASKING
       real(r8), intent(in) :: Amask(LBi:,LBj:)
 #  endif
-      real(r8), intent(in) :: A(LBi:,LBj:,LBk:)
+      real(r8), intent(in) :: Adat(LBi:,LBj:,LBk:)
 # else
 #  ifdef MASKING
       real(r8), intent(in) :: Amask(LBi:UBi,LBj:UBj)
 #  endif
-      real(r8), intent(in) :: A(LBi:UBi,LBj:UBj,LBk:UBk)
+      real(r8), intent(in) :: Adat(LBi:UBi,LBj:UBj,LBk:UBk)
 # endif
       real(r8), intent(out), optional :: MinValue
       real(r8), intent(out), optional :: MaxValue
@@ -558,14 +558,14 @@
 #   ifdef MASKING
      &                    Amask,                                        &
 #   endif
-     &                    A(:,:,k), Npts, Awrk, SetFillVal)
+     &                    Adat(:,:,k), Npts, Awrk, SetFillVal)
 #  else
         CALL mp_gather3d (ng, model, LBi, UBi, LBj, UBj, LBk, UBk,      &
      &                    tindex, gtype, Ascl,                          &
 #   ifdef MASKING
      &                    Amask,                                        &
 #   endif
-     &                    A, Npts, Awrk, SetFillVal)
+     &                    Adat, Npts, Awrk, SetFillVal)
 #  endif
 !
 !-----------------------------------------------------------------------
@@ -644,7 +644,7 @@
           DO j=Jmin,Jmax
             DO i=Imin,Imax
               ic=ic+1
-              Awrk(ic)=A(i,j,k)*Ascl
+              Awrk(ic)=Adat(i,j,k)*Ascl
 #  ifdef MASKING
               IF ((Amask(i,j).eq.0.0_r8).and.LandFill) THEN
                 Awrk(ic)=spval
@@ -661,7 +661,7 @@
             DO i=Imin,Imax
               IF (Amask(i,j).gt.0.0_r8) THEN
                 Npts=Npts+1
-                Awrk(Npts)=A(i,j,k)*Ascl
+                Awrk(Npts)=Adat(i,j,k)*Ascl
               END IF
             END DO
           END DO
@@ -738,7 +738,7 @@
 # ifdef MASKING
      &                       Amask,                                     &
 # endif
-     &                       A, SetFillVal,                             &
+     &                       Adat, SetFillVal,                          &
      &                       MinValue, MaxValue) RESULT (status)
 !***********************************************************************
 !
@@ -759,12 +759,12 @@
 #  ifdef MASKING
       real(r8), intent(in) :: Amask(LBi:,LBj:)
 #  endif
-      real(r8), intent(in) :: A(LBi:,LBj:,LBk:)
+      real(r8), intent(in) :: Adat(LBi:,LBj:,LBk:)
 # else
 #  ifdef MASKING
       real(r8), intent(in) :: Amask(LBi:UBi,LBj:UBj)
 #  endif
-      real(r8), intent(in) :: A(LBi:UBi,LBj:UBj,LBk:UBk)
+      real(r8), intent(in) :: Adat(LBi:UBi,LBj:UBj,LBk:UBk)
 # endif
       real(r8), intent(out), optional :: MinValue
       real(r8), intent(out), optional :: MaxValue
@@ -786,7 +786,7 @@
 
       integer, dimension(4) :: start, total
 !
-      real(r8), dimension(2) :: buffer
+      real(r8), dimension(2) :: rbuffer
 
       real(r4), pointer :: Awrk4(:,:,:)
       real(r8), pointer :: Awrk8(:,:,:)
@@ -863,7 +863,7 @@
         DO k=LBk,UBk
           DO j=Jmin,Jmax
             DO i=Imin,Imax
-              Awrk8(i,j,k)=A(i,j,k)*Ascl
+              Awrk8(i,j,k)=Adat(i,j,k)*Ascl
 # ifdef MASKING
               IF ((Amask(i,j).eq.0.0_r8).and.LandFill) THEN
                 Awrk8(i,j,k)=spval
@@ -874,8 +874,8 @@
           END DO
         END DO
         IF (Lminmax) THEN
-          buffer(1)=MINVAL(Awrk8, MASK=Lwater)
-          buffer(2)=MAXVAL(Awrk8, MASK=Lwater)
+          rbuffer(1)=MINVAL(Awrk8, MASK=Lwater)
+          rbuffer(2)=MAXVAL(Awrk8, MASK=Lwater)
         END IF
       ELSE                                          ! single precision
         IF (.not.associated(Awrk4)) THEN
@@ -886,7 +886,7 @@
         DO k=LBk,UBk
           DO j=Jmin,Jmax
             DO i=Imin,Imax
-              Awrk4(i,j,k)=REAL(A(i,j,k)*Ascl, r4)
+              Awrk4(i,j,k)=REAL(Adat(i,j,k)*Ascl, r4)
 # ifdef MASKING
               IF ((Amask(i,j).eq.0.0_r8).and.LandFill) THEN
                 Awrk4(i,j,k)=REAL(spval, r4)
@@ -896,8 +896,8 @@
           END DO
         END DO
         IF (Lminmax) THEN
-          buffer(1)=REAL(MINVAL(Awrk4, MASK=Lwater),r8)
-          buffer(2)=REAL(MAXVAL(Awrk4, MASK=Lwater),r8)
+          rbuffer(1)=REAL(MINVAL(Awrk4, MASK=Lwater),r8)
+          rbuffer(2)=REAL(MAXVAL(Awrk4, MASK=Lwater),r8)
         END IF
       END IF
 !
@@ -932,9 +932,9 @@
       IF (Lminmax) THEN
         op_handle(1)='MIN'
         op_handle(2)='MAX'
-        CALL mp_reduce (ng, model, 2, buffer, op_handle)
-        MinValue=buffer(1)
-        MaxValue=buffer(2)
+        CALL mp_reduce (ng, model, 2, rbuffer, op_handle)
+        MinValue=rbuffer(1)
+        MaxValue=rbuffer(2)
         IF (associated(Lwater)) deallocate (Lwater)
       END IF
 !

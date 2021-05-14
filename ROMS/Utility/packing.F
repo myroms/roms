@@ -26,7 +26,7 @@
 #ifdef PROPAGATOR
 !
 !git $Id$
-!svn $Id: packing.F 1064 2021-05-10 19:55:56Z arango $
+!svn $Id: packing.F 1066 2021-05-14 21:47:45Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -8824,7 +8824,7 @@
       real(r8) :: cff, cff1, cff2
 
 #   ifdef DISTRIBUTE
-      real(r8), dimension(3) :: buffer
+      real(r8), dimension(3) :: rbuffer
 
       character (len=3), dimension(3) :: op_handle
 #   endif
@@ -8909,13 +8909,13 @@
         IF (tile_count.eq.NSUB) THEN
           tile_count=0
 #   ifdef DISTRIBUTE
-          buffer(1)=SOnorm
-          buffer(2)=SOnorm1
+          rbuffer(1)=SOnorm
+          rbuffer(2)=SOnorm1
           op_handle(1)='SUM'
           op_handle(2)='SUM'
-          CALL mp_reduce (ng, iADM, 2, buffer, op_handle)
-          SOnorm=buffer(1)
-          SOnorm1=buffer(2)
+          CALL mp_reduce (ng, iADM, 2, rbuffer, op_handle)
+          SOnorm=rbuffer(1)
+          SOnorm1=rbuffer(2)
 #   endif
         END IF
 !$OMP END CRITICAL (SO_NORM)

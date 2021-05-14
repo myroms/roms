@@ -1,7 +1,7 @@
       SUBROUTINE ana_psource (ng, tile, model)
 !
 !! git $Id$
-!! svn $Id: ana_psource.h 1054 2021-03-06 19:47:12Z arango $
+!! svn $Id: ana_psource.h 1066 2021-05-14 21:47:45Z arango $
 !!======================================================================
 !! Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !!   Licensed under a MIT/X style license                              !
@@ -129,7 +129,7 @@
       real(r8), dimension(Msrc(ng)*N(ng)) :: Pwrk
 #endif
 #if defined DISTRIBUTE
-      real(r8), dimension(2) :: buffer
+      real(r8), dimension(2) :: rbuffer
 !
       character (len=3), dimension(2) :: io_handle
 #endif

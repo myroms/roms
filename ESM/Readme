@@ -1,6 +1,6 @@
 *
 * git $Id$
-* svn $Id: Readme 1062 2021-05-06 01:50:38Z arango $
+* svn $Id: Readme 1066 2021-05-14 21:47:45Z arango $
 ***********************************************************************
 *  Copyright (c) 2002-2021 The ROMS/TOMS Group                        *
 *    Licensed under a MIT/X style license                             *
@@ -50,8 +50,7 @@ to solve such technical issues.
 WRF Notes:
 ---------
 
-* The coupling system has been tested with WRF verisons 4.1.x and
-  4.2.x
+* The coupling system has been tested with WRF verisons 4.1 and up.
 
 * To compile the coupled system with 'gfortran', you need to activate
   the environmental variable GFORTRAN_CONVERT_UNIT:

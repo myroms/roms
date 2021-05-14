@@ -3,7 +3,7 @@
 #ifdef ADJOINT
 !
 !git $Id$
-!svn $Id: ad_obc_volcons.F 1054 2021-03-06 19:47:12Z arango $
+!svn $Id: ad_obc_volcons.F 1066 2021-05-14 21:47:45Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -130,7 +130,7 @@
       real(r8) :: adfac, ad_cff, ad_my_area, ad_my_flux
 
 # ifdef DISTRIBUTE
-      real(r8), dimension(2) :: buffer
+      real(r8), dimension(2) :: rbuffer
       character (len=3), dimension(2) :: op_handle
 # endif
 !
@@ -405,7 +405,7 @@
       real(r8) :: adfac, adfac1, adfac2, adfac3
       real(r8) :: ad_my_ubar_xs
 # ifdef DISTRIBUTE
-      real(r8) :: buffer
+      real(r8) :: rbuffer
       character (len=3) :: op_handle
 # endif
 
@@ -597,10 +597,10 @@
         IF (tile_count.eq.NSUB) THEN
           tile_count=0
 # ifdef DISTRIBUTE
-          buffer=adfac3
+          rbuffer=adfac3
           op_handle='SUM'
-          CALL mp_reduce (ng, iADM, 1, buffer, op_handle)
-          adfac3=buffer
+          CALL mp_reduce (ng, iADM, 1, rbuffer, op_handle)
+          adfac3=rbuffer
 # endif
           IF (iif(ng).eq.nfast(ng)+1) THEN
             ad_ubar_xs=ad_ubar_xs+adfac3

@@ -3,7 +3,7 @@
 #ifndef ANA_GRID
 !
 !git $Id$
-!svn $Id: get_grid.F 1064 2021-05-10 19:55:56Z arango $
+!svn $Id: get_grid.F 1066 2021-05-14 21:47:45Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -3208,7 +3208,7 @@
             IF (LuvSponge(ng)) THEN
               pioVar%vd=var_desc(i)
               pioVar%gtype=r2dvar
-              IF (KIND(GRID(ng)%visc_factor).eq.8) THEN
+              IF (KIND(MIXING(ng)%visc_factor).eq.8) THEN
                 pioVar%dkind=PIO_double
                 ioDesc => ioDesc_dp_r2dvar(ng)
               ELSE
@@ -3267,7 +3267,7 @@
             IF (ANY(LtracerSponge(:,ng))) THEN
               pioVar%vd=var_desc(i)
               pioVar%gtype=r2dvar
-              IF (KIND(GRID(ng)%diff_factor).eq.8) THEN
+              IF (KIND(MIXING(ng)%diff_factor).eq.8) THEN
                 pioVar%dkind=PIO_double
                 ioDesc => ioDesc_dp_r2dvar(ng)
               ELSE

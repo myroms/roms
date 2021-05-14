@@ -2,7 +2,7 @@
       MODULE nf_fread2d_mod
 !
 !git $Id$
-!svn $Id: nf_fread2d.F 1064 2021-05-10 19:55:56Z arango $
+!svn $Id: nf_fread2d.F 1066 2021-05-14 21:47:45Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -48,7 +48,7 @@
 !                                                                      !
 !     Amin       Field minimum value (real)                            !
 !     Amax       Field maximum value (real)                            !
-!     A          Field to read in (real 2D array)                      !
+!     Adat       Field to read in (real 2D array)                      !
 !     checksum   Field checksum value (integer*8; OPTIONAL)            !
 !     Lregrid    Field regrid interpolation switch (logical; OPTIONAL) !
 !     status     Result error flag (integer)                           !
@@ -87,7 +87,7 @@
 # ifdef MASKING
      &                       Amask,                                     &
 # endif
-     &                       A, checksum, Lregrid) RESULT (status)
+     &                       Adat, checksum, Lregrid) RESULT (status)
 !***********************************************************************
 !
       USE mod_netcdf
@@ -116,12 +116,12 @@
 #  ifdef MASKING
       real(r8), intent(in) :: Amask(LBi:,LBj:)
 #  endif
-      real(r8), intent(out) :: A(LBi:,LBj:)
+      real(r8), intent(out) :: Adat(LBi:,LBj:)
 # else
 #  ifdef MASKING
       real(r8), intent(in) :: Amask(LBi:UBi,LBj:UBj)
 #  endif
-      real(r8), intent(out) :: A(LBi:UBi,LBj:UBj)
+      real(r8), intent(out) :: Adat(LBi:UBi,LBj:UBj)
 # endif
 !
 !  Local variable declarations.
@@ -143,7 +143,7 @@
 
       real(r8), parameter :: IniVal = 0.0_r8
 
-      real(r8), dimension(2) :: buffer
+      real(r8), dimension(2) :: rbuffer
       real(r8), dimension(3) :: AttValue
 
       real(r8), allocatable :: Awrk(:,:)
@@ -378,13 +378,13 @@
 !
 !  Set minimum and maximum values: global reduction.
 !
-          buffer(1)=Amin
+          rbuffer(1)=Amin
           op_handle(1)='MIN'
-          buffer(2)=Amax
+          rbuffer(2)=Amax
           op_handle(2)='MAX'
-          CALL mp_reduce (ng, model, 2, buffer, op_handle)
-          Amin=buffer(1)
-          Amax=buffer(2)
+          CALL mp_reduce (ng, model, 2, rbuffer, op_handle)
+          Amin=rbuffer(1)
+          Amax=rbuffer(2)
 !
 !  Unpack read data. If not interpolating, the data is loaded into
 !  model array.
@@ -403,7 +403,7 @@
             DO j=Jmin,Jmax
               DO i=Imin,Imax
                 ic=ic+1
-                A(i,j)=wrk(ic)
+                Adat(i,j)=wrk(ic)
               END DO
             END DO
           END IF
@@ -518,7 +518,7 @@
             jc=(j-Joff)*Isize
             DO i=Imin,Imax
               ij=i+Ioff+jc
-              A(i,j)=A2d(ij)
+              Adat(i,j)=A2d(ij)
             END DO
           END DO
         ELSE
@@ -548,7 +548,7 @@
      &                          GRID(ng) % MyLon,                       &
      &                          GRID(ng) % lonp,                        &
      &                          GRID(ng) % latp,                        &
-     &                          A)
+     &                          Adat)
             ELSE
               CALL regrid_nf90 (ng, model, ncname, ncid,                &
      &                          ncvname, ncvarid, MyType, InterpFlag,   &
@@ -561,7 +561,7 @@
      &                          GRID(ng) % MyLon,                       &
      &                          GRID(ng) % xp,                          &
      &                          GRID(ng) % yp,                          &
-     &                          A)
+     &                          Adat)
             END IF
           CASE (r2dvar, r3dvar)
             IF (spherical) THEN
@@ -576,7 +576,7 @@
      &                          GRID(ng) % MyLon,                       &
      &                          GRID(ng) % lonr,                        &
      &                          GRID(ng) % latr,                        &
-     &                          A)
+     &                          Adat)
             ELSE
               CALL regrid_nf90 (ng, model, ncname, ncid,                &
      &                          ncvname, ncvarid, MyType, InterpFlag,   &
@@ -589,7 +589,7 @@
     &                           GRID(ng) % MyLon,                       &
      &                          GRID(ng) % xr,                          &
      &                          GRID(ng) % yr,                          &
-     &                          A)
+     &                          Adat)
             END IF
           CASE (u2dvar, u3dvar)
             IF (spherical) THEN
@@ -604,7 +604,7 @@
      &                          GRID(ng) % MyLon,                       &
      &                          GRID(ng) % lonu,                        &
      &                          GRID(ng) % latu,                        &
-     &                          A)
+     &                          Adat)
             ELSE
               CALL regrid_nf90 (ng, model, ncname, ncid,                &
      &                          ncvname, ncvarid, MyType, InterpFlag,   &
@@ -617,7 +617,7 @@
      &                          GRID(ng) % MyLon,                       &
      &                          GRID(ng) % xu,                          &
      &                          GRID(ng) % yu,                          &
-     &                          A)
+     &                          Adat)
             END IF
           CASE (v2dvar, v3dvar)
             IF (spherical) THEN
@@ -632,7 +632,7 @@
      &                          GRID(ng) % MyLon,                       &
      &                          GRID(ng) % lonv,                        &
      &                          GRID(ng) % latv,                        &
-     &                          A)
+     &                          Adat)
             ELSE
               CALL regrid_nf90 (ng, model, ncname, ncid,                &
      &                          ncvname, ncvarid, MyType, InterpFlag,   &
@@ -645,7 +645,7 @@
      &                          GRID(ng) % MyLon,                       &
      &                          GRID(ng) % xv,                          &
      &                          GRID(ng) % yv,                          &
-     &                          A)
+     &                          Adat)
             END IF
           CASE DEFAULT
             IF (spherical) THEN
@@ -660,7 +660,7 @@
      &                          GRID(ng) % MyLon,                         &
      &                          GRID(ng) % lonr,                          &
      &                          GRID(ng) % latr,                          &
-     &                          A)
+     &                          Adat)
             ELSE
               CALL regrid_nf90 (ng, model, ncname, ncid,                  &
      &                          ncvname, ncvarid, MyType, InterpFlag,     &
@@ -673,7 +673,7 @@
      &                          GRID(ng) % MyLon,                         &
      &                          GRID(ng) % xr,                            &
      &                          GRID(ng) % yr,                            &
-     &                          A)
+     &                          Adat)
             END IF
         END SELECT
       END IF
@@ -713,7 +713,7 @@
 # ifdef MASKING
      &                       Amask,                                     &
 # endif
-     &                       A, checksum, Lregrid) RESULT (status)
+     &                       Adat, checksum, Lregrid) RESULT (status)
 !***********************************************************************
 !
       USE mod_netcdf
@@ -745,12 +745,12 @@
 #  ifdef MASKING
       real(r8), intent(in) :: Amask(LBi:,LBj:)
 #  endif
-      real(r8), intent(out) :: A(LBi:,LBj:)
+      real(r8), intent(out) :: Adat(LBi:,LBj:)
 # else
 #  ifdef MASKING
       real(r8), intent(in) :: Amask(LBi:UBi,LBj:UBj)
 #  endif
-      real(r8), intent(out) :: A(LBi:UBi,LBj:UBj)
+      real(r8), intent(out) :: Adat(LBi:UBi,LBj:UBj)
 # endif
 !
 !  Local variable declarations.
@@ -1016,14 +1016,14 @@
 #  if defined READ_WATER && defined MASKING
      &                     NWpts, SCALARS(ng)%IJwater(:,wtype),         &
 #  endif
-     &                     Npts, wrk, A)
+     &                     Npts, wrk, Adat)
 # else
         IF (MyType.gt.0) THEN
           ic=0
           DO j=Jmin,Jmax
             DO i=Imin,Imax
               ic=ic+1
-              A(i,j)=wrk(ic)
+              Adat(i,j)=wrk(ic)
             END DO
           END DO
 #  if defined MASKING || defined READ_WATER
@@ -1033,9 +1033,9 @@
             DO i=Imin,Imax
               IF (Amask(i,j).gt.0.0_r8) THEN
                 ic=ic+1
-                A(i,j)=wrk(ic)
+                Adat(i,j)=wrk(ic)
               ELSE
-                A(i,j)=0.0_r8
+                Adat(i,j)=0.0_r8
               END IF
             END DO
           END DO
@@ -1068,7 +1068,7 @@
      &                          GRID(ng) % MyLon,                       &
      &                          GRID(ng) % lonp,                        &
      &                          GRID(ng) % latp,                        &
-     &                          A)
+     &                          Adat)
             ELSE
               CALL regrid_nf90 (ng, model, ncname, ncid,                &
      &                          ncvname, ncvarid, MyType, InterpFlag,   &
@@ -1081,7 +1081,7 @@
      &                          GRID(ng) % MyLon,                       &
      &                          GRID(ng) % xp,                          &
      &                          GRID(ng) % yp,                          &
-     &                          A)
+     &                          Adat)
             END IF
           CASE (r2dvar, r3dvar)
             IF (spherical) THEN
@@ -1096,7 +1096,7 @@
      &                          GRID(ng) % MyLon,                       &
      &                          GRID(ng) % lonr,                        &
      &                          GRID(ng) % latr,                        &
-     &                          A)
+     &                          Adat)
             ELSE
               CALL regrid_nf90 (ng, model, ncname, ncid,                &
      &                          ncvname, ncvarid, MyType, InterpFlag,   &
@@ -1109,7 +1109,7 @@
      &                          GRID(ng) % MyLon,                       &
      &                          GRID(ng) % xr,                          &
      &                          GRID(ng) % yr,                          &
-     &                          A)
+     &                          Adat)
             END IF
           CASE (u2dvar, u3dvar)
             IF (spherical) THEN
@@ -1124,7 +1124,7 @@
      &                          GRID(ng) % MyLon,                       &
      &                          GRID(ng) % lonu,                        &
      &                          GRID(ng) % latu,                        &
-     &                          A)
+     &                          Adat)
             ELSE
               CALL regrid_nf90 (ng, model, ncname, ncid,                &
      &                          ncvname, ncvarid, MyType, InterpFlag,   &
@@ -1137,7 +1137,7 @@
      &                          GRID(ng) % MyLon,                       &
      &                          GRID(ng) % xu,                          &
      &                          GRID(ng) % yu,                          &
-     &                          A)
+     &                          Adat)
             END IF
           CASE (v2dvar, v3dvar)
             IF (spherical) THEN
@@ -1152,7 +1152,7 @@
      &                          GRID(ng) % MyLon,                       &
      &                          GRID(ng) % lonv,                        &
      &                          GRID(ng) % latv,                        &
-     &                          A)
+     &                          Adat)
             ELSE
               CALL regrid_nf90 (ng, model, ncname, ncid,                &
      &                          ncvname, ncvarid, MyType, InterpFlag,   &
@@ -1165,7 +1165,7 @@
      &                          GRID(ng) % MyLon,                       &
      &                          GRID(ng) % xv,                          &
      &                          GRID(ng) % yv,                          &
-     &                          A)
+     &                          Adat)
             END IF
           CASE DEFAULT
             IF (spherical) THEN
@@ -1180,7 +1180,7 @@
      &                          GRID(ng) % MyLon,                         &
      &                          GRID(ng) % lonr,                          &
      &                          GRID(ng) % latr,                          &
-     &                          A)
+     &                          Adat)
             ELSE
               CALL regrid_nf90 (ng, model, ncname, ncid,                  &
      &                          ncvname, ncvarid, MyType, InterpFlag,     &
@@ -1193,7 +1193,7 @@
      &                          GRID(ng) % MyLon,                         &
      &                          GRID(ng) % xr,                            &
      &                          GRID(ng) % yr,                            &
-     &                          A)
+     &                          Adat)
             END IF
         END SELECT
       END IF
@@ -1221,7 +1221,7 @@
 # ifdef MASKING
      &                      Amask,                                      &
 # endif
-     &                      A, checksum, Lregrid) RESULT (status)
+     &                      Adat, checksum, Lregrid) RESULT (status)
 !***********************************************************************
 !
       USE mod_pio_netcdf
@@ -1250,12 +1250,12 @@
 #  ifdef MASKING
       real(r8), intent(in) :: Amask(LBi:,LBj:)
 #  endif
-      real(r8), intent(out) :: A(LBi:,LBj:)
+      real(r8), intent(out) :: Adat(LBi:,LBj:)
 # else
 #  ifdef MASKING
       real(r8), intent(in) :: Amask(LBi:UBi,LBj:UBj)
 #  endif
-      real(r8), intent(out) :: A(LBi:UBi,LBj:UBj)
+      real(r8), intent(out) :: Adat(LBi:UBi,LBj:UBj)
 # endif
 !
       TYPE (File_desc_t), intent(inout) :: pioFile
@@ -1280,7 +1280,7 @@
       real(r8) :: my_Amin, my_Amax
 
       real(r8), dimension(3) :: AttValue
-      real(r8), dimension(2) :: buffer
+      real(r8), dimension(2) :: rbuffer
 !
       real(r4), pointer :: Awrk4(:,:)            ! single precision
       real(r8), pointer :: Awrk8(:,:)            ! double precision
@@ -1495,10 +1495,10 @@
           DO j=Jmin,Jmax
             DO i=Imin,Imax
               IF (ABS(Awrk8(i,j)).ge.ABS(Aspval)) THEN
-                A(i,j)=0.0_r8                  ! masked with _FillValue
+                Adat(i,j)=0.0_r8              ! masked with _FillValue
               ELSE
                 Avalue=Ascl*(Afactor*Awrk8(i,j)+Aoffset)
-                A(i,j)=Avalue
+                Adat(i,j)=Avalue
                 my_Amin=MIN(my_Amin,Avalue)
                 my_Amax=MAX(my_Amax,Avalue)
               END IF
@@ -1518,10 +1518,10 @@
           DO j=Jmin,Jmax
             DO i=Imin,Imax
               IF (ABS(Awrk4(i,j)).ge.ABS(REAL(Aspval,r4))) THEN
-                A(i,j)=0.0_r8                  ! masked with _FillValue
+                Adat(i,j)=0.0_r8               ! masked with _FillValue
               ELSE
                 Avalue=REAL(Ascl*(Afactor*Awrk4(i,j)+Aoffset),r8)
-                A(i,j)=Avalue
+                Adat(i,j)=Avalue
                 my_Amin=REAL(MIN(my_Amin,Avalue),r8)
                 my_Amax=REAL(MAX(my_Amax,Avalue),r8)
               END IF
@@ -1542,7 +1542,7 @@
           DO j=Jmin,Jmax
             DO i=Imin,Imax
               ic=ic+1
-              Cwrk(ic)=A(i,j)
+              Cwrk(ic)=Adat(i,j)
             END DO
           END DO
           CALL get_hash (Cwrk, Npts, checksum, .TRUE.)
@@ -1551,13 +1551,13 @@
 !
 !  Compute global minimum and maximum values.
 !
-        buffer(1)=my_Amin
-        buffer(2)=my_Amax
+        rbuffer(1)=my_Amin
+        rbuffer(2)=my_Amax
         op_handle(1)='MIN'
         op_handle(2)='MAX'
-        CALL mp_reduce (ng, model, 2, buffer, op_handle)
-        Amin=buffer(1)
-        Amax=buffer(2)
+        CALL mp_reduce (ng, model, 2, rbuffer, op_handle)
+        Amin=rbuffer(1)
+        Amax=rbuffer(2)
 !
         IF ((ABS(Amin).ge.ABS(spval)).and.                              &
      &      (ABS(Amax).ge.ABS(spval))) THEN
@@ -1586,7 +1586,7 @@
      &                         GRID(ng) % MyLon,                        &
      &                         GRID(ng) % lonp,                         &
      &                         GRID(ng) % latp,                         &
-     &                         A)
+     &                         Adat)
             ELSE
               CALL regrid_pio (ng, model, ncname, pioFile,              &
      &                         ncvname, pioVar, gtype, InterpFlag,      &
@@ -1599,7 +1599,7 @@
      &                         GRID(ng) % MyLon,                        &
      &                         GRID(ng) % xp,                           &
      &                         GRID(ng) % yp,                           &
-     &                         A)
+     &                         Adat)
             END IF
           CASE (r2dvar, r3dvar)
             IF (spherical) THEN
@@ -1614,7 +1614,7 @@
      &                         GRID(ng) % MyLon,                        &
      &                         GRID(ng) % lonr,                         &
      &                         GRID(ng) % latr,                         &
-     &                         A)
+     &                         Adat)
             ELSE
               CALL regrid_pio (ng, model, ncname, pioFile,              &
      &                         ncvname, pioVar, gtype, InterpFlag,      &
@@ -1627,7 +1627,7 @@
      &                         GRID(ng) % MyLon,                        &
      &                         GRID(ng) % xr,                           &
      &                         GRID(ng) % yr,                           &
-     &                         A)
+     &                         Adat)
             END IF
           CASE (u2dvar, u3dvar)
             IF (spherical) THEN
@@ -1642,7 +1642,7 @@
      &                         GRID(ng) % MyLon,                        &
      &                         GRID(ng) % lonu,                         &
      &                         GRID(ng) % latu,                         &
-     &                         A)
+     &                         Adat)
             ELSE
               CALL regrid_pio (ng, model, ncname, pioFile,              &
      &                         ncvname, pioVar, gtype, InterpFlag,      &
@@ -1655,7 +1655,7 @@
      &                         GRID(ng) % MyLon,                        &
      &                         GRID(ng) % xu,                           &
      &                         GRID(ng) % yu,                           &
-     &                         A)
+     &                         Adat)
             END IF
           CASE (v2dvar, v3dvar)
             IF (spherical) THEN
@@ -1670,7 +1670,7 @@
      &                         GRID(ng) % MyLon,                        &
      &                         GRID(ng) % lonv,                         &
      &                         GRID(ng) % latv,                         &
-     &                         A)
+     &                         Adat)
             ELSE
               CALL regrid_pio (ng, model, ncname, pioFile,              &
      &                         ncvname, pioVar, gtype, InterpFlag,      &
@@ -1683,7 +1683,7 @@
      &                         GRID(ng) % MyLon,                        &
      &                         GRID(ng) % xv,                           &
      &                         GRID(ng) % yv,                           &
-     &                         A)
+     &                         Adat)
             END IF
           CASE DEFAULT
             IF (spherical) THEN
@@ -1698,7 +1698,7 @@
      &                         GRID(ng) % MyLon,                        &
      &                         GRID(ng) % lonr,                         &
      &                         GRID(ng) % latr,                         &
-     &                         A)
+     &                         Adat)
             ELSE
               CALL regrid_pio (ng, model, ncname, pioFile,              &
      &                         ncvname, pioVar, gtype, InterpFlag,      &
@@ -1711,7 +1711,7 @@
      &                         GRID(ng) % MyLon,                        &
      &                         GRID(ng) % xr,                           &
      &                         GRID(ng) % yr,                           &
-     &                         A)
+     &                         Adat)
             END IF
         END SELECT
 !

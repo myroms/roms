@@ -9,7 +9,7 @@
      &                       Fout)
 !
 !git $Id$
-!svn $Id: get_ngfldr.F 1064 2021-05-10 19:55:56Z arango $
+!svn $Id: get_ngfldr.F 1066 2021-05-14 21:47:45Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -158,7 +158,7 @@
       real(dp) :: Tmax, Tmin, Tmono, Tscale, Tstr
       real(dp) :: Tsec, Tval
 
-      real(r8), dimension((UBi-LBi+1)*UBj) :: A
+      real(r8), dimension((UBi-LBi+1)*UBj) :: Awrk
 !
       character (len=22) :: t_code
 
@@ -291,14 +291,14 @@
      &          ((Jrec.eq.1).and.(Iinfo(7,ifield,ng).gt.0))) THEN
               npts=(Iend-Istr+1)*Jrec
               CALL netcdf_get_fvar (ng, model, ncfile,                  &
-     &                              Vname(1,ifield), A,                 &
+     &                              Vname(1,ifield), Awrk,              &
      &                              ncid = ncid,                        &
      &                              start = (/1,1,Trec/),               &
      &                              total = (/Iend-Istr+1,Jrec,1/))
             ELSE
               npts=Iend-Istr+1
               CALL netcdf_get_fvar (ng, model, ncfile,                  &
-     &                              Vname(1,ifield), A,                 &
+     &                              Vname(1,ifield), Awrk,              &
      &                              ncid = ncid,                        &
      &                              start = (/1,Trec/),                 &
      &                              total = (/Iend-Istr+1,1/))
@@ -307,13 +307,13 @@
               IF (Master) WRITE (stdout,50) TRIM(Vname(1,ifield)), Trec
               RETURN
             END IF
-            Fmin=A(1)*Fscale(ifield,ng)
-            Fmax=A(1)*Fscale(ifield,ng)
+            Fmin=Awrk(1)*Fscale(ifield,ng)
+            Fmax=Awrk(1)*Fscale(ifield,ng)
             ic=0
             DO j=1,Jrec
               DO i=Istr,Iend
                 ic=ic+1
-                Aval=A(ic)*Fscale(ifield,ng)
+                Aval=Awrk(ic)*Fscale(ifield,ng)
                 Fmin=MIN(Fmin,Aval)
                 Fmax=MAX(Fmax,Aval)
                 Fout(i,j,Tindex)=Aval
@@ -334,7 +334,7 @@
      &                            Tmin, Tmax, Tval, Fmin, Fmax
               END IF
 # ifdef CHECKSUM
-              CALL get_hash (A, npts, Fhash)
+              CALL get_hash (Awrk, npts, Fhash)
               WRITE (stdout,80) Fhash
 # endif
             END IF
@@ -437,7 +437,7 @@
       real(dp) :: Tmax, Tmin, Tmono, Tscale, Tstr
       real(dp) :: Tsec, Tval
 
-      real(r8), dimension((UBi-LBi+1)*UBj) :: A
+      real(r8), dimension((UBi-LBi+1)*UBj) :: Awrk
 !
       character (len=22) :: t_code
 
@@ -573,14 +573,14 @@
      &          ((Jrec.eq.1).and.(Iinfo(7,ifield,ng).gt.0))) THEN
               npts=(Iend-Istr+1)*Jrec
               CALL pio_netcdf_get_fvar (ng, model, ncfile,              &
-     &                                  Vname(1,ifield), A,             &
+     &                                  Vname(1,ifield), Awrk,          &
      &                                  pioFile = pioFile,              &
      &                                  start = (/1,1,Trec/),           &
      &                                  total = (/Iend-Istr+1,Jrec,1/))
             ELSE
               npts=Iend-Istr+1
               CALL pio_netcdf_get_fvar (ng, model, ncfile,              &
-     &                                  Vname(1,ifield), A,             &
+     &                                  Vname(1,ifield), Awrk,          &
      &                                  pioFile = pioFile,              &
      &                                  start = (/1,Trec/),             &
      &                                  total = (/Iend-Istr+1,1/))
@@ -589,13 +589,13 @@
               IF (Master) WRITE (stdout,50) TRIM(Vname(1,ifield)), Trec
               RETURN
             END IF
-            Fmin=A(1)*Fscale(ifield,ng)
-            Fmax=A(1)*Fscale(ifield,ng)
+            Fmin=Awrk(1)*Fscale(ifield,ng)
+            Fmax=Awrk(1)*Fscale(ifield,ng)
             ic=0
             DO j=1,Jrec
               DO i=Istr,Iend
                 ic=ic+1
-                Aval=A(ic)*Fscale(ifield,ng)
+                Aval=Awrk(ic)*Fscale(ifield,ng)
                 Fmin=MIN(Fmin,Aval)
                 Fmax=MAX(Fmax,Aval)
                 Fout(i,j,Tindex)=Aval
@@ -604,7 +604,7 @@
             Finfo(8,ifield,ng)=Fmin
             Finfo(9,ifield,ng)=Fmax
 #  ifdef CHECKSUM
-            CALL get_hash (A, npts, Fhash)    ! sum reduction not needed
+            CALL get_hash (Awrk, npts, Fhash) ! sum reduction not needed
 #  endif
             IF (Master) THEN
               IF (UBk.eq.1) THEN

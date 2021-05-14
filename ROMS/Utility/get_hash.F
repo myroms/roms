@@ -5,7 +5,7 @@
       MODULE get_hash_mod
 !
 !git $Id$
-!svn $Id: get_hash.F 1064 2021-05-10 19:55:56Z arango $
+!svn $Id: get_hash.F 1066 2021-05-14 21:47:45Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -201,7 +201,7 @@
 !
       integer(i8b) :: Ac, Asum
 #if defined PIO_LIB && defined DISTRIBUTE
-      integer(i8b) :: buffer(1)
+      integer(i8b) :: ibuffer(1)
 !
       character (len=3) :: op_handle(1)
 #endif
@@ -238,10 +238,10 @@
 !
       IF (PRESENT(Lreduce)) THEN
         IF (Lreduce) THEN
-          buffer(1)=Asum
+          ibuffer(1)=Asum
           op_handle(1)='SUM'
-          CALL mp_reduce (1, 1, 1, buffer, op_handle)
-          hash=buffer(1)
+          CALL mp_reduce (1, 1, 1, ibuffer, op_handle)
+          hash=ibuffer(1)
         END IF
       END IF
 #endif

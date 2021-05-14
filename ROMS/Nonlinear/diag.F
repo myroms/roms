@@ -2,7 +2,7 @@
       MODULE diag_mod
 !
 !git $Id$
-!svn $Id: diag.F 1054 2021-03-06 19:47:12Z arango $
+!svn $Id: diag.F 1066 2021-05-14 21:47:45Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -158,7 +158,7 @@
       integer, parameter :: Nreduce = 4
       integer, parameter :: Ncourant = 5
 # endif
-      real(r8), dimension(Nreduce) :: buffer
+      real(r8), dimension(Nreduce) :: rbuffer
       real(r8), dimension(Ncourant) :: Courant
       character (len=3), dimension(Nreduce) :: op_handle
       character (len=6), dimension(Nreduce) :: C_handle
@@ -370,12 +370,12 @@
         IF (tile_count.eq.NSUB) THEN
           tile_count=0
 #ifdef DISTRIBUTE
-          buffer(1)=volume
-          buffer(2)=avgke
-          buffer(3)=avgpe
-          buffer(4)=maxspeed(ng)
+          rbuffer(1)=volume
+          rbuffer(2)=avgke
+          rbuffer(3)=avgpe
+          rbuffer(4)=maxspeed(ng)
 # ifdef SOLVE3D
-          buffer(5)=maxrho(ng)
+          rbuffer(5)=maxrho(ng)
 # endif
           op_handle(1)='SUM'
           op_handle(2)='SUM'
@@ -384,13 +384,13 @@
 # ifdef SOLVE3D
           op_handle(5)='MAX'
 # endif
-          CALL mp_reduce (ng, iNLM, Nreduce, buffer, op_handle)
-          volume=buffer(1)
-          avgke=buffer(2)
-          avgpe=buffer(3)
-          maxspeed(ng)=buffer(4)
+          CALL mp_reduce (ng, iNLM, Nreduce, rbuffer, op_handle)
+          volume=rbuffer(1)
+          avgke=rbuffer(2)
+          avgpe=rbuffer(3)
+          maxspeed(ng)=rbuffer(4)
 # ifdef SOLVE3D
-          maxrho(ng)=buffer(5)
+          maxrho(ng)=rbuffer(5)
 # endif
 !
           Courant(1)=max_C
