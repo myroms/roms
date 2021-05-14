@@ -3,7 +3,7 @@
 #ifdef TL_IOMS
 !
 !git $Id$
-!svn $Id: rp_obc_volcons.F 1054 2021-03-06 19:47:12Z arango $
+!svn $Id: rp_obc_volcons.F 1066 2021-05-14 21:47:45Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -133,7 +133,7 @@
       real(r8) :: tl_cff, tl_my_area, tl_my_flux
 
 # ifdef DISTRIBUTE
-      real(r8), dimension(2) :: buffer
+      real(r8), dimension(2) :: rbuffer
       character (len=3), dimension(2) :: op_handle
 # endif
 
@@ -293,19 +293,19 @@
         IF (tile_count.eq.NSUB) THEN
           tile_count=0
 # ifdef DISTRIBUTE
-!>        buffer(1)=bc_area
-!>        buffer(2)=bc_flux
+!>        rbuffer(1)=bc_area
+!>        rbuffer(2)=bc_flux
 !>
-          buffer(1)=tl_bc_area
-          buffer(2)=tl_bc_flux
+          rbuffer(1)=tl_bc_area
+          rbuffer(2)=tl_bc_flux
           op_handle(1)='SUM'
           op_handle(2)='SUM'
-          CALL mp_reduce (ng, iRPM, 2, buffer, op_handle)
-!>        bc_area=buffer(1)
-!>        bc_flux=buffer(2)
+          CALL mp_reduce (ng, iRPM, 2, rbuffer, op_handle)
+!>        bc_area=rbuffer(1)
+!>        bc_flux=rbuffer(2)
 !>
-          tl_bc_area=buffer(1)
-          tl_bc_flux=buffer(2)
+          tl_bc_area=rbuffer(1)
+          tl_bc_flux=rbuffer(2)
 # endif
 !>        ubar_xs=bc_flux/bc_area
 !>

@@ -1,7 +1,7 @@
       SUBROUTINE ana_psource (ng, tile, model)
 !
 !! git $Id$
-!! svn $Id: ana_psource.h 1054 2021-03-06 19:47:12Z arango $
+!! svn $Id: ana_psource.h 1066 2021-05-14 21:47:45Z arango $
 !!======================================================================
 !! Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !!   Licensed under a MIT/X style license                              !
@@ -130,7 +130,7 @@
       real(r8), dimension(Msrc(ng)*N(ng)) :: Pwrk
 #endif
 #if defined DISTRIBUTE
-      real(r8), dimension(2) :: buffer
+      real(r8), dimension(2) :: rbuffer
 !
       character (len=3), dimension(2) :: io_handle
 #endif
@@ -399,13 +399,13 @@
         IF (tile_count.eq.NSUB) THEN
           tile_count=0
 # ifdef DISTRIBUTE
-          buffer(1)=area_west
-          buffer(2)=area_east
+          rbuffer(1)=area_west
+          rbuffer(2)=area_east
           io_handle(1)='SUM'
           io_handle(2)='SUM'
-          CALL mp_reduce (ng, iNLM, 2, buffer, io_handle)
-          area_west=buffer(1)
-          area_east=buffer(1)
+          CALL mp_reduce (ng, iNLM, 2, rbuffer, io_handle)
+          area_west=rbuffer(1)
+          area_east=rbuffer(1)
 # endif
           DO is=1,Nsrc(ng)/2
             SOURCES(ng)%Qbar(is)=Qbar(is)/area_west

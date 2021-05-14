@@ -3,7 +3,7 @@
 #if defined NONLINEAR && (defined SSH_TIDES || defined UV_TIDES)
 !
 !git $Id$
-!svn $Id: set_tides.F 1054 2021-03-06 19:47:12Z arango $
+!svn $Id: set_tides.F 1066 2021-05-14 21:47:45Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group        Robert Hetland   !
 !    Licensed under a MIT/X style license                              !
@@ -99,7 +99,7 @@
             DO itide=1,NTC(ng)
               TIDES(mg)%Tperiod (1:NTC(ng))=TIDES(ng)%Tperiod (1:NTC(ng))
               TIDES(mg)%SinOmega(1:NTC(ng))=TIDES(ng)%SinOmega(1:NTC(ng))
-              TIDES(mg)%CosOmega(1:NTC(ng))=TIDES(ng)%SinOmega(1:NTC(ng))
+              TIDES(mg)%CosOmega(1:NTC(ng))=TIDES(ng)%CosOmega(1:NTC(ng))
             END DO
           END IF
         END DO

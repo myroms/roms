@@ -1,12 +1,12 @@
 #!/bin/csh -f
 #
 # git $Id$
-# svn $Id: build_wrf.csh 1064 2021-05-10 19:55:56Z arango $
+# svn $Id: build_wrf.csh 1066 2021-05-14 21:47:45Z arango $
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # Copyright (c) 2002-2021 The ROMS/TOMS Group                           :::
 #::::::::::::::::::::::::::::::::::::::::::::::::::::: Hernan G. Arango :::
 #                                                                       :::
-# WRF Compiling CSH Script                                              :::
+# WRF Compiling CSH Script: WRF Versions 4.1 and up                     :::
 #                                                                       :::
 # Script to compile WRF where source code files are kept separate       :::
 # from the application configuration and build objects.                 :::
@@ -107,6 +107,12 @@ end
  setenv WRF_ROOT_DIR         ${HOME}/ocean/repository/WRF
  setenv WRF_SRC_DIR          ${WRF_ROOT_DIR}
 
+# Decode WRF version from its README file to decide the appropriate data
+# file links needed.
+
+ set wrf_ver = `grep 'WRF Model Version ' $WRF_ROOT_DIR/README | sed -e 's/[^0-9]*\([0-9]\.[0-9]\).*/\1/'`
+ setenv WRF_VERSION          ${wrf_ver}
+
 #--------------------------------------------------------------------------
 # Set a local environmental variable to define the path of the working
 # application directory where all this project's files are kept.
@@ -161,6 +167,8 @@ end
  setenv USE_NETCDF           on          # compile with NetCDF
 #setenv USE_NETCDF4          on          # compile with NetCDF-4 library
                                          # (Must also set USE_NETCDF)
+
+ unsetenv PNETCDF                        # disable compiling with pNetCDF
 
 #--------------------------------------------------------------------------
 # Use my specified library paths. It is not needed but it is added for
@@ -374,7 +382,7 @@ if ( $clean == 1 ) then
   /bin/rm -rf ${WRF_BUILD_DIR}
 endif
 
-# Compile (the binary will go to BINDIR set above).
+# Compile (if -move is set, the binaries will go to WRF_BIN_DIR set above).
 
 #set WRF_CASE = wrf
  set WRF_CASE = em_real
@@ -413,7 +421,7 @@ if ( $move == 1 ) then
 
   if ( ! -d ${WRF_BUILD_DIR} ) then
     /bin/mkdir -pv ${WRF_BUILD_DIR}
-    /bin/mkdir -pv ${WRF_BUILD_DIR}/Bin
+    /bin/mkdir -pv ${WRF_BIN_DIR}
     echo ""
   endif
 
@@ -525,8 +533,14 @@ if ( $WRF_CASE == "em_real" ) then
   ln -sfv ${WRF_ROOT_DIR}/run/bulkdens.asc_s_0_03_0_9 .
   ln -sfv ${WRF_ROOT_DIR}/run/bulkradii.asc_s_0_03_0_9 .
   ln -sfv ${WRF_ROOT_DIR}/run/CCN_ACTIVATE.BIN .
-  ln -sfv ${WRF_ROOT_DIR}/run/p3_lookup_table_1.dat-v4.1 .
-  ln -sfv ${WRF_ROOT_DIR}/run/p3_lookup_table_2.dat-v4.1 .
+  if ( $WRF_VERSION == "4.3" ) then
+    ln -sfv ${WRF_ROOT_DIR}/run/p3_lookupTable_1.dat-2momI_v5.1.6_oldDimax .
+    ln -sfv ${WRF_ROOT_DIR}/run/p3_lookupTable_1.dat-3momI_v5.1.6 .
+    ln -sfv ${WRF_ROOT_DIR}/run/p3_lookupTable_2.dat-4.1 .
+  else
+    ln -sfv ${WRF_ROOT_DIR}/run/p3_lookup_table_1.dat-v4.1 .
+    ln -sfv ${WRF_ROOT_DIR}/run/p3_lookup_table_2.dat-v4.1 .
+  endif
 
   if ( $?USE_REAL_DOUBLE ) then
     ln -sfv ${WRF_ROOT_DIR}/run/ETAMPNEW_DATA_DBL ETAMPNEW_DATA
@@ -553,6 +567,61 @@ if ( $WRF_CASE == "em_real" ) then
   ln -sfv ${WRF_ROOT_DIR}/run/tr67t85 .
   ln -sfv ${WRF_ROOT_DIR}/run/gribmap.txt .
   ln -sfv ${WRF_ROOT_DIR}/run/grib2map.tbl .
+
+# Set directory structure needed to compile WPS.
+
+  echo ""
+  echo "${separator}"
+  echo "Creating WPS directory layout."
+  echo "${separator}"
+  echo ""
+
+  /bin/mkdir -vp ${WRF_BUILD_DIR}/external/io_grib1
+  /bin/mkdir -vp ${WRF_BUILD_DIR}/external/io_grib_share
+  /bin/mkdir -vp ${WRF_BUILD_DIR}/external/io_int
+  /bin/mkdir -vp ${WRF_BUILD_DIR}/external/io_netcdf
+  /bin/mkdir -vp ${WRF_BUILD_DIR}/frame
+
+# We do not copy files out of the inc directory so we create a symlink
+# do that directory.
+
+  ln -sfv ${WRF_ROOT_DIR}/inc .
+
+  # io_grib1
+
+  echo "cd ${WRF_BUILD_DIR}/external/io_grib1"
+  cd ${WRF_BUILD_DIR}/external/io_grib1
+  ln -sfv ../../libio_grib1.a .
+
+  # io_grib_share
+
+  echo "cd ${WRF_BUILD_DIR}/external/io_grib_share"
+  cd ${WRF_BUILD_DIR}/external/io_grib_share
+  ln -sfv ../../libio_grib_share.a .
+  ln -sfv ../../wrf_io_flags.h     .
+  ln -sfv ../../wrf_status_codes.h .
+
+  # io_int
+
+  echo "cd ${WRF_BUILD_DIR}/external/io_int"
+  cd ${WRF_BUILD_DIR}/external/io_int
+  ln -sfv ../../libwrfio_int.a                  .
+  ln -sfv ../../module_internal_header_util.mod .
+
+  # io_netcdf
+
+  echo "cd ${WRF_BUILD_DIR}/external/io_netcdf"
+  cd ${WRF_BUILD_DIR}/external/io_netcdf
+  ln -sfv ../../libwrfio_nf.a .
+
+  # frame
+
+  echo "cd ${WRF_BUILD_DIR}/frame"
+  cd ${WRF_BUILD_DIR}/frame
+  ln -sfv ../pack_utils.o                  .
+  ln -sfv ../module_machine.o              .
+  ln -sfv ../module_internal_header_util.o .
+  ln -sfv ../module_driver_constants.o     .
 
 # Remove links in WRF/test/em_real sub-directory
 

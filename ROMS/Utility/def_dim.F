@@ -2,7 +2,7 @@
       MODULE def_dim_mod
 !
 !git $Id$
-!svn $Id: def_dim.F 1064 2021-05-10 19:55:56Z arango $
+!svn $Id: def_dim.F 1066 2021-05-14 21:47:45Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -17,6 +17,8 @@
       USE mod_parallel
       USE mod_iounits
       USE mod_scalars
+!
+      USE strings_mod, ONLY : FoundError
 !
       implicit none
 !
@@ -54,11 +56,11 @@
 !***********************************************************************
 !
       USE mod_netcdf
-!
+
 #if !defined PARALLEL_IO  && defined DISTRIBUTE
+!
       USE distribute_mod, ONLY : mp_bcasti
 #endif
-      USE strings_mod, ONLY : FoundError
 !
       implicit none
 !
@@ -76,7 +78,7 @@
       integer :: status
 
 #if !defined PARALLEL_IO  && defined DISTRIBUTE
-      integer, dimension(3) :: buffer
+      integer, dimension(3) :: ibuffer
 #endif
 !
       character (len=*), parameter :: MyFile =                          &
@@ -103,13 +105,13 @@
 !
 !  Broadcast information to all threads in the group.
 !
-      buffer(1)=DimID
-      buffer(2)=status
-      buffer(3)=exit_flag
-      CALL mp_bcasti (ng, model, buffer)
-      DimID=buffer(1)
-      status=buffer(2)
-      exit_flag=buffer(3)
+      ibuffer(1)=DimID
+      ibuffer(2)=status
+      ibuffer(3)=exit_flag
+      CALL mp_bcasti (ng, model, ibuffer)
+      DimID=ibuffer(1)
+      status=ibuffer(2)
+      exit_flag=ibuffer(3)
 #endif
 !
  10   FORMAT (/,' DEF_DIM_NF90 - error while defining dimension: ',a,   &
@@ -147,8 +149,6 @@
 !***********************************************************************
 !
       USE pio
-!
-      USE strings_mod, ONLY : FoundError
 !
 !  Imported variable declarations.
 !

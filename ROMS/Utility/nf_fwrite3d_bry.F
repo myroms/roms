@@ -2,7 +2,7 @@
       MODULE nf_fwrite3d_bry_mod
 !
 !git $Id$
-!svn $Id: nf_fwrite3d_bry.F 1064 2021-05-10 19:55:56Z arango $
+!svn $Id: nf_fwrite3d_bry.F 1066 2021-05-14 21:47:45Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -43,7 +43,7 @@
 !     UBk          K-dimension upper bound (integer)                   !
 !     Nrec         Number of boundary records (integer)                !
 !     Ascl         Factor to scale field before writing (real)         !
-!     A            Boundary field to write out (real)                  !
+!     Abry         Boundary field to write out (real)                  !
 !                                                                      !
 !  On Output:                                                          !
 !                                                                      !
@@ -87,7 +87,7 @@
      &                            ncvname, ncvarid,                     &
      &                            tindex, gtype,                        &
      &                            LBij, UBij, LBk, UBk, Nrec,           &
-     &                            Ascl, A,                              &
+     &                            Ascl, Abry,                           &
      &                            MinValue, MaxValue) RESULT(status)
 !***********************************************************************
 !
@@ -104,9 +104,9 @@
       character (len=*), intent(in) :: ncvname
 !
 #ifdef ASSUMED_SHAPE
-      real(r8), intent(in) :: A(LBij:,LBk:,:,:)
+      real(r8), intent(in) :: Abry(LBij:,LBk:,:,:)
 #else
-      real(r8), intent(in) :: A(LBij:UBij,LBk:UBk,4,Nrec)
+      real(r8), intent(in) :: Abry(LBij:UBij,LBk:UBk,4,Nrec)
 #endif
       real(r8), intent(out), optional :: MinValue
       real(r8), intent(out), optional :: MaxValue
@@ -216,7 +216,7 @@
                 kc=(k-LBk)*IorJ+bc
                 DO j=Jmin,Jmax
                   ic=1+(j-LBij)+kc
-                  Awrk(ic)=A(j,k,ib,ir)*Ascl
+                  Awrk(ic)=Abry(j,k,ib,ir)*Ascl
 #ifdef POSITIVE_ZERO
                   IF (ABS(Awrk(ic)).eq.0.0_r8) THEN
                     Awrk(ic)=0.0_r8               ! impose positive zero
@@ -229,7 +229,7 @@
                 kc=(k-LBk)*IorJ+bc
                 DO i=Imin,Imax
                   ic=1+(i-LBij)+kc
-                  Awrk(ic)=A(i,k,ib,ir)*Ascl
+                  Awrk(ic)=Abry(i,k,ib,ir)*Ascl
 #ifdef POSITIVE_ZERO
                   IF (ABS(Awrk(ic)).eq.0.0_r8) THEN
                     Awrk(ic)=0.0_r8               ! impose positive zero
@@ -295,11 +295,11 @@
      &                           ncvname, pioVar,                       &
      &                           tindex, pioDesc,                       &
      &                           LBij, UBij, LBk, UBk, Nrec,            &
-     &                           Ascl, A,                               &
+     &                           Ascl, Abry,                            &
      &                           MinValue, MaxValue) RESULT(status)
 !***********************************************************************
 !
-      USE mod_netcdf
+      USE mod_pio_netcdf
 !
 !  Imported variable declarations.
 !
@@ -312,9 +312,9 @@
       character (len=*), intent(in) :: ncvname
 !
 # ifdef ASSUMED_SHAPE
-      real(r8), intent(in) :: A(LBij:,LBk:,:,:)
+      real(r8), intent(in) :: Abry(LBij:,LBk:,:,:)
 # else
-      real(r8), intent(in) :: A(LBij:UBij,LBk:UBk,4,Nrec)
+      real(r8), intent(in) :: Abry(LBij:UBij,LBk:UBk,4,Nrec)
 # endif
       real(r8), intent(out), optional :: MinValue
       real(r8), intent(out), optional :: MaxValue
@@ -428,7 +428,7 @@
                 kc=(k-LBk)*IorJ+bc
                 DO j=Jmin,Jmax
                   ic=1+(j-LBij)+kc
-                  Awrk(ic)=A(j,k,ib,ir)*Ascl
+                  Awrk(ic)=Abry(j,k,ib,ir)*Ascl
 # ifdef POSITIVE_ZERO
                   IF (ABS(Awrk(ic)).eq.0.0_r8) THEN
                     Awrk(ic)=0.0_r8               ! impose positive zero
@@ -441,7 +441,7 @@
                 kc=(k-LBk)*IorJ+bc
                 DO i=Imin,Imax
                   ic=1+(i-LBij)+kc
-                  Awrk(ic)=A(i,k,ib,ir)*Ascl
+                  Awrk(ic)=Abry(i,k,ib,ir)*Ascl
 # ifdef POSITIVE_ZERO
                   IF (ABS(Awrk(ic)).eq.0.0_r8) THEN
                     Awrk(ic)=0.0_r8               ! impose positive zero

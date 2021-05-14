@@ -3,7 +3,7 @@
 #ifdef DISTRIBUTE
 !
 !git $Id$
-!svn $Id: distribute.F 1064 2021-05-10 19:55:56Z arango $
+!svn $Id: distribute.F 1066 2021-05-14 21:47:45Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -1750,7 +1750,7 @@
 !  Local variable declarations
 !
       integer :: Lstr, MyCOMM, MyError, Nchars, Npts, Serror
-      integer :: buffer(5)
+      integer :: ibuffer(5)
 !
       character (len=MPI_MAX_ERROR_STRING) :: string
 
@@ -1786,14 +1786,14 @@
 !
 !  Structure scalar integer variables.
 !
-      buffer(1)=S(ng)%Nfiles
-      buffer(2)=S(ng)%Fcount
-      buffer(3)=S(ng)%load
-      buffer(4)=S(ng)%Rindex
-      buffer(5)=S(ng)%ncid
+      ibuffer(1)=S(ng)%Nfiles
+      ibuffer(2)=S(ng)%Fcount
+      ibuffer(3)=S(ng)%load
+      ibuffer(4)=S(ng)%Rindex
+      ibuffer(5)=S(ng)%ncid
 !
       Npts=5
-      CALL mpi_bcast (buffer, Npts, MPI_INTEGER, MyMaster,              &
+      CALL mpi_bcast (ibuffer, Npts, MPI_INTEGER, MyMaster,             &
      &                MyCOMM, MyError)
       IF (MyError.ne.MPI_SUCCESS) THEN
         CALL mpi_error_string (MyError, string, Lstr, Serror)
@@ -1804,11 +1804,11 @@
         exit_flag=2
         RETURN
       ELSE
-        S(ng)%Nfiles=buffer(1)
-        S(ng)%Fcount=buffer(2)
-        S(ng)%load  =buffer(3)
-        S(ng)%Rindex=buffer(4)
-        S(ng)%ncid  =buffer(5)
+        S(ng)%Nfiles=ibuffer(1)
+        S(ng)%Fcount=ibuffer(2)
+        S(ng)%load  =ibuffer(3)
+        S(ng)%Rindex=ibuffer(4)
+        S(ng)%ncid  =ibuffer(5)
       END IF
 !
 !  Variables IDs.

@@ -3,7 +3,7 @@
 #ifdef TANGENT
 !
 !git $Id$
-!svn $Id: tl_diag.F 1054 2021-03-06 19:47:12Z arango $
+!svn $Id: tl_diag.F 1066 2021-05-14 21:47:45Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -135,7 +135,7 @@
       integer :: NSUB, i, j, k, trd
 
 # ifdef DISTRIBUTE
-      real(r8), dimension(3) :: buffer
+      real(r8), dimension(3) :: rbuffer
       character (len=3), dimension(3) :: op_handle
 # else
       integer :: my_threadnum
@@ -255,16 +255,16 @@
         IF (tile_count.eq.NSUB) THEN
           tile_count=0
 # ifdef DISTRIBUTE
-          buffer(1)=volume
-          buffer(2)=avgke
-          buffer(3)=avgpe
+          rbuffer(1)=volume
+          rbuffer(2)=avgke
+          rbuffer(3)=avgpe
           op_handle(1)='SUM'
           op_handle(2)='SUM'
           op_handle(3)='SUM'
-          CALL mp_reduce (ng, iTLM, 3, buffer, op_handle)
-          volume=buffer(1)
-          avgke=buffer(2)
-          avgpe=buffer(3)
+          CALL mp_reduce (ng, iTLM, 3, rbuffer, op_handle)
+          volume=rbuffer(1)
+          avgke=rbuffer(2)
+          avgpe=rbuffer(3)
           trd=MyMaster
 # else
           trd=my_threadnum()

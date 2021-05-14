@@ -1,12 +1,12 @@
-#!/bin/csh -f
+#!/bin/bash
 #
 # git $Id$
-# svn $Id$
+# svn $Id: build_wps.sh 1066 2021-05-14 21:47:45Z arango $
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Copyright (c) 2002-2021 The ROMS/TOMS Group                           :::
+# Copyright (c) 2002-2019 The ROMS/TOMS Group                           :::
 #::::::::::::::::::::::::::::::::::::::::::::::::::::: Hernan G. Arango :::
 #                                                                       :::
-# WPS Compiling CSH Script                                              :::
+# WPS Compiling BASH Script: WPS Versions 4.1 and up                    :::
 #                                                                       :::
 # Script to compile WPS where source code files are kept separate       :::
 # from the application configuration and build objects.                 :::
@@ -24,7 +24,7 @@
 #                                                                       :::
 # Usage:                                                                :::
 #                                                                       :::
-#    ./build_wps.csh [options]                                          :::
+#    ./build_wps.sh [options]                                           :::
 #                                                                       :::
 # Options:                                                              :::
 #                                                                       :::
@@ -36,38 +36,38 @@
 #                                                                       :::
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
-setenv which_MPI openmpi                        # default, overwriten below
+export which_MPI=openmpi                       # default, overwriten below
 
 # Initialize.
 
-set separator = `perl -e "print ':' x 100;"`
+separator=`perl -e "print ':' x 100;"`
 
-set parallel = 0
-set clean = 1
-set config = 1
-set move = 0
+clean=1
+config=1
+move=0
 
-setenv CPLFLAG ''
-setenv MY_CPP_FLAGS ''
+export CPLFLAG=''
+export MY_CPP_FLAGS=''
 
-while ( ($#argv) > 0 )
-  switch ($1)
-    case "-noclean"
+while [ $# -gt 0 ]
+do
+  case "$1" in
+    -noclean )
       shift
-      set clean = 0
-    breaksw
+      clean=0
+      ;;
 
-    case "-noconfig"
+    -noconfig )
       shift
-      set config = 0
-    breaksw
+      config=0
+      ;;
 
-    case "-move"
+    -move )
       shift
-      set move = 1
-    breaksw
+      move=1
+      ;;
 
-    case "-*":
+    * )
       echo ""
       echo "$0 : Unknown option [ $1 ]"
       echo ""
@@ -79,18 +79,18 @@ while ( ($#argv) > 0 )
       echo ""
       echo "-noconfig     Do not run configure compilation script"
       echo ""
-     exit 1
-    breaksw
+      exit 1
+      ;;
 
-  endsw
-end
+  esac
+done
 
 #--------------------------------------------------------------------------
 # Set a local environmental variable to define the path of the working
 # application directory where all this project's files are kept.
 #--------------------------------------------------------------------------
 
- setenv MY_PROJECT_DIR       ${PWD}
+ export MY_PROJECT_DIR=${PWD}
 
 #--------------------------------------------------------------------------
 # Set a local environmental variable to define the root path to the
@@ -99,47 +99,48 @@ end
 # linking WPS executables.
 #--------------------------------------------------------------------------
 
- setenv WPS_ROOT_DIR         ${HOME}/ocean/repository/WPS
- setenv WPS_SRC_DIR          ${WPS_ROOT_DIR}
+ export WPS_ROOT_DIR=${HOME}/ocean/repository/WPS
+ export WPS_SRC_DIR=${WPS_ROOT_DIR}
 
- setenv WRF_DIR              ${HOME}/ocean/repository/WRF
-#setenv WRF_DIR              ${MY_PROJECT_DIR}/Build_wrf
+ export WRF_DIR=${HOME}/ocean/repository/WRF
+#export WRF_DIR=${MY_PROJECT_DIR}/Build_wrf
 
 #--------------------------------------------------------------------------
 # Set Fortran compiler and MPI library to use.
 #--------------------------------------------------------------------------
 
- setenv USE_MPI              on          # distributed-memory parallelism
- setenv USE_MPIF90           on          # compile with mpif90 script
-#setenv which_MPI            intel       # compile with mpiifort library
-#setenv which_MPI            mpich       # compile with MPICH library
-#setenv which_MPI            mpich2      # compile with MPICH2 library
-#setenv which_MPI            mvapich2    # compile with MVAPICH2 library
- setenv which_MPI            openmpi     # compile with OpenMPI library
+ export USE_MPI=on             # distributed-memory parallelism
+ export USE_MPIF90=on          # compile with mpif90 script
+#export which_MPI=intel        # compile with mpiifort library
+#export which_MPI=mpich        # compile with MPICH library
+#export which_MPI=mpich2       # compile with MPICH2 library
+#export which_MPI=mvapich2     # compile with MVAPICH2 library
+ export which_MPI=openmpi      # compile with OpenMPI library
 
- setenv FORT                 ifort
-#setenv FORT                 gfortran
-#setenv FORT                 pgi
+ export FORT=ifort
+#export FORT=gfortran
+#export FORT=pgi
 
-#setenv USE_REAL_DOUBLE      on          # use real double precision (-r8)
-#setenv USE_DEBUG            on          # use Fortran debugging flags
- setenv USE_NETCDF           on          # compile with NetCDF
- setenv USE_NETCDF4          on          # compile with NetCDF-4 library
-                                         # (Must also set USE_NETCDF)
+#export USE_REAL_DOUBLE=on        # use real double precision (-r8)
+#export USE_DEBUG=on              # use Fortran debugging flags
+ export USE_HDF5=on               # compile with HDF5 library
+ export USE_NETCDF=on             # compile with NetCDF
+ export USE_NETCDF4=on            # compile with NetCDF-4 library
+                                  # (Must also set USE_NETCDF)
 
 #--------------------------------------------------------------------------
 # Use my specified library paths.
 #--------------------------------------------------------------------------
 
- setenv USE_MY_LIBS no           # use system default library paths
-#setenv USE_MY_LIBS yes          # use my customized library paths
+ export USE_MY_LIBS=no           # use system default library paths
+#export USE_MY_LIBS=yes          # use my customized library paths
 
-#set MY_PATHS = ${ROMS_SRC_DIR}/Compilers/my_build_paths.csh
- set MY_PATHS = ${HOME}/Compilers/ROMS/my_build_paths.csh
+#MY_PATHS=${ROMS_SRC_DIR}/Compilers/my_build_paths.sh
+ MY_PATHS=${HOME}/Compilers/ROMS/my_build_paths.sh
 
-if ($USE_MY_LIBS == 'yes') then
+if [ "${USE_MY_LIBS}" == 'yes' ]; then
   source ${MY_PATHS} ${MY_PATHS}
-endif
+fi
 
 #--------------------------------------------------------------------------
 # WPS build and executable directory.
@@ -148,15 +149,15 @@ endif
 # Put the *.a, .f and .f90 files in a project specific Build directory to
 # avoid conflict with other projects.
 
-if ($?USE_DEBUG) then
-  setenv  WPS_BUILD_DIR   ${MY_PROJECT_DIR}/Build_wpsG
+if [ -n "${USE_DEBUG:+1}" ]; then
+  export  WPS_BUILD_DIR=${MY_PROJECT_DIR}/Build_wpsG
 else
-  setenv  WPS_BUILD_DIR   ${MY_PROJECT_DIR}/Build_wps
-endif
+  export  WPS_BUILD_DIR=${MY_PROJECT_DIR}/Build_wps
+fi
 
 # Put WPS executables in the following directory.
 
-setenv  WPS_BIN_DIR       ${WPS_BUILD_DIR}/Bin
+export  WPS_BIN_DIR=${WPS_BUILD_DIR}/Bin
 
 # Go to the users source directory to compile. The options set above will
 # pick up the application-specific code from the appropriate place.
@@ -215,30 +216,34 @@ setenv  WPS_BIN_DIR       ${WPS_BUILD_DIR}/Bin
 
 # Clean source code.
 
-if ( $clean == 1 ) then
+if [ "$clean" -eq "1" ]; then
   echo ""
   echo "${separator}"
   echo "Cleaning WPS source code:  ${WPS_ROOT_DIR}/clean -a"
   echo "${separator}"
   echo ""
   ${WPS_ROOT_DIR}/clean -a            # clean source code
-endif
+fi
 
-if ($?USE_DEBUG) then
-   set DEBUG_FLAG = -d
-#  set DEBUG_FLAG = -D
-endif
+if [ -n "${USE_DEBUG:+1}" ]; then
+   DEBUG_FLAG=-d
+#  DEBUG_FLAG=-D
+fi
 
-setenv CONFIG_FLAGS ''
+export CONFIG_FLAGS=''
 
-if ( $config == 1 ) then
-  if ($?USE_DEBUG && $?USE_REAL_DOUBLE) then
-    setenv CONFIG_FLAGS "${CONFIG_FLAGS} ${DEBUG_FLAG} -r8"
-  else if ($?USE_DEBUG) then
-    setenv CONFIG_FLAGS "${CONFIG_FLAGS} ${DEBUG_FLAG}"
-  else if ($?USE_REAL_DOUBLE) then
-    setenv CONFIG_FLAGS "${CONFIG_FLAGS} -r8"
-  endif
+if [ "$nowrf" -eq "1" ]; then
+ export CONFIG_FLAGS="${CONFIG_FLAGS} --nowrf"
+fi
+
+if [ "$config" -eq "1" ]; then
+  if [ -n "${USE_DEBUG:+1}" -a -n "${USE_REAL_DOUBLE:+1}" ]; then
+    export CONFIG_FLAGS="${CONFIG_FLAGS} ${DEBUG_FLAG} -r8"
+  elif [ -n "${USE_DEBUG:+1}" ]; then
+    export CONFIG_FLAGS="${CONFIG_FLAGS} ${DEBUG_FLAG}"
+  elif [ "${USE_REAL_DOUBLE:+1}" ]; then
+    export CONFIG_FLAGS "${CONFIG_FLAGS} -r8"
+  fi
 
   echo ""
   echo "${separator}"
@@ -250,8 +255,8 @@ if ( $config == 1 ) then
 
 # Add the NetCDF-4 dependecies to LDFLAGS.
 
-  set NF_LIBS=`${NETCDF}/bin/nf-config --flibs`
-  setenv NF_LIBS "${NF_LIBS}"
+  NF_LIBS=`${NETCDF}/bin/nf-config --flibs`
+  export NF_LIBS="${NF_LIBS}"
   perl -i -pe 's/^LDFLAGS( *)=(.*)/LDFLAGS$1=$2 $ENV{NF_LIBS}/' ${WPS_SRC_DIR}/configure.wps
 
   echo ""
@@ -259,14 +264,14 @@ if ( $config == 1 ) then
   echo "LDFLAGS = ${NF_LIBS}"
   echo ""
 
-endif
+fi
 
 #--------------------------------------------------------------------------
 # WPS Compile script:
 #
 # Usage:
 #
-#     compile [target]
+#     compile [target] [-nowrf]
 #
 #   where target is one of
 #
@@ -291,16 +296,16 @@ endif
 
 # Remove existing build directory.
 
-if ( $clean == 1 ) then
+if [ "$clean" -eq "1" ]; then
   echo ""
   echo "${separator}"
   echo "Removing WPS build directory:  ${WPS_BUILD_DIR}"
   echo "${separator}"
   echo ""
   /bin/rm -rf ${WPS_BUILD_DIR}
-endif
+fi
 
-# Compile (if -move is set, the binares will go to WPS_BIN_DIR set above).
+# Compile (if -move is set, the binaries will go to WPS_BIN_DIR set above).
 
 echo ""
 echo "${separator}"
@@ -316,7 +321,7 @@ ${WPS_ROOT_DIR}/compile
 # Move WPS objects and executables.
 #--------------------------------------------------------------------------
 
-if ( $move == 1 ) then
+if [ "$move" -eq "1" ]; then
 
   echo ""
   echo "${separator}"
@@ -324,15 +329,15 @@ if ( $move == 1 ) then
   echo "${separator}"
   echo ""
 
-  if ( ! -d ${WPS_BUILD_DIR} ) then
+  if [ ! -d ${WPS_BUILD_DIR} ]; then
     /bin/mkdir -pv ${WPS_BUILD_DIR}
     /bin/mkdir -pv ${WPS_BIN_DIR}
     echo ""
-  endif
+  fi
 
   /bin/cp -pfv configure.wps ${WPS_BUILD_DIR}
 
   echo "WPS_ROOT_DIR = ${WPS_ROOT_DIR}"
   find ${WPS_ROOT_DIR} -type f -name "*.exe" -exec /bin/mv -fv {} ${WPS_BIN_DIR} \;
 
-endif
+fi

@@ -3,7 +3,7 @@
 #if defined SSH_TIDES || defined UV_TIDES
 !
 !git $Id$
-!svn $Id: mod_tides.F 1064 2021-05-10 19:55:56Z arango $
+!svn $Id: mod_tides.F 1066 2021-05-14 21:47:45Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -139,7 +139,8 @@
       USE mod_param
       USE mod_parallel
       USE mod_iounits
-      USE mod_ncparam#
+      USE mod_ncparam
+      USE mod_netcdf
 # if defined PIO_LIB && defined DISTRIBUTE
       USE mod_pio_netcdf
 # endif
