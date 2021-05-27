@@ -37,8 +37,11 @@
       USE mod_sediment
 #endif
 !
-      USE def_var_mod, ONLY : def_var
-      USE strings_mod, ONLY : FoundError
+      USE def_dim_mod,  ONLY : def_dim
+      USE def_info_mod, ONLY : def_info
+      USE def_var_mod,  ONLY : def_var
+      USE strings_mod,  ONLY : FoundError
+      USE wrt_info_mod, ONLY : wrt_info
 !
       implicit none
 !
@@ -128,9 +131,6 @@
 #ifdef ADJUST_BOUNDARY
       integer :: t2dobc(4)
 #endif
-
-      integer :: def_dim
-
 #ifdef SOLVE3D
       integer :: t3dgrd(4), u3dgrd(4), v3dgrd(4), w3dgrd(4)
 # ifdef ADJUST_BOUNDARY
@@ -1106,9 +1106,6 @@
 # ifdef ADJUST_BOUNDARY
       integer :: t2dobc(4)
 # endif
-
-      integer :: def_dim
-
 # ifdef SOLVE3D
       integer :: t3dgrd(4), u3dgrd(4), v3dgrd(4), w3dgrd(4)
 #  ifdef ADJUST_BOUNDARY
