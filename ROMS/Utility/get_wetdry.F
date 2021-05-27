@@ -3,7 +3,7 @@
 #ifdef WET_DRY
 !
 !git $Id$
-!svn $Id: get_wetdry.F 1064 2021-05-10 19:55:56Z arango $
+!svn $Id: get_wetdry.F 1067 2021-05-27 05:11:41Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -155,7 +155,7 @@
         exit_flag=2
         RETURN
       END IF
-      INI(ng)Vid(idPwet)=Vindex
+      INI(ng)%Vid(idPwet)=Vindex
 !
       IF (.not.find_string(var_name,n_var,TRIM(Vname(1,idRwet)),        &
      &                     vindex)) THEN
@@ -164,7 +164,7 @@
         exit_flag=2
         RETURN
       END IF
-      INI(ng)Vid(idRwet)=Vindex
+      INI(ng)%Vid(idRwet)=Vindex
 !
       IF (.not.find_string(var_name,n_var,TRIM(Vname(1,idUwet)),        &
      &                     vindex)) THEN
@@ -173,7 +173,7 @@
         exit_flag=2
         RETURN
       END IF
-      INI(ng)Vid(idUwet)=Vindex
+      INI(ng)%Vid(idUwet)=Vindex
 !
       IF (.not.find_string(var_name,n_var,TRIM(Vname(1,idVwet)),        &
      &                     vindex)) THEN
@@ -182,7 +182,7 @@
         exit_flag=2
         RETURN
       END IF
-      INI(ng)Vid(idVwet)=Vindex
+      INI(ng)%Vid(idVwet)=Vindex
 !
 !-----------------------------------------------------------------------
 !  Read in wet/dry mask from rstart file.
@@ -199,7 +199,7 @@
 !
       gtype=p2dvar
       status=nf_fread2d(ng, model, ncname, INI(ng)%ncid,                &
-     &                  Vname(1,idPwet), INI(ng)Vid(idPwet),            &
+     &                  Vname(1,idPwet), INI(ng)%Vid(idPwet),           &
      &                  IniRec, gtype, Vsize,                           &
      &                  LBi, UBi, LBj, UBj,                             &
      &                  Fscl, Fmin, Fmax,                               &
@@ -222,7 +222,7 @@
 !
       gtype=r2dvar
       status=nf_fread2d(ng, model, ncname, INI(ng)%ncid,                &
-     &                  Vname(1,idRwet), INI(ng)Vid(idRwet),            &
+     &                  Vname(1,idRwet), INI(ng)%Vid(idRwet),           &
      &                  IniRec, gtype, Vsize,                           &
      &                  LBi, UBi, LBj, UBj,                             &
      &                  Fscl, Fmin, Fmax,                               &
@@ -245,7 +245,7 @@
 !
       gtype=u2dvar
       status=nf_fread2d(ng, model, ncname, INI(ng)%ncid,                &
-     &                  Vname(1,idUwet), INI(ng)Vid(idUwet),            &
+     &                  Vname(1,idUwet), INI(ng)%Vid(idUwet),           &
      &                  IniRec, gtype, Vsize,                           &
      &                  LBi, UBi, LBj, UBj,                             &
      &                  Fscl, Fmin, Fmax,                               &
@@ -268,7 +268,7 @@
 !
       gtype=v2dvar
       status=nf_fread2d(ng, model, ncname, INI(ng)%ncid,                &
-     &                  Vname(1,idVwet), INI(ng)Vid(idVwet),            &
+     &                  Vname(1,idVwet), INI(ng)%Vid(idVwet),           &
      &                  IniRec, gtype, Vsize,                           &
      &                  LBi, UBi, LBj, UBj,                             &
      &                  Fscl, Fmin, Fmax,                               &

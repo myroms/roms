@@ -3,7 +3,7 @@
 #if defined FOUR_DVAR || defined VERIFICATION
 !
 !git $Id$
-!svn $Id: def_mod.F 1064 2021-05-10 19:55:56Z arango $
+!svn $Id: def_mod.F 1067 2021-05-27 05:11:41Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -30,12 +30,10 @@
 !
       USE dateclock_mod,  ONLY : time_string
       USE def_dim_mod,    ONLY : def_dim
-      USE def_info_mod,   ONLY : def_info
       USE def_var_mod,    ONLY : def_var
       USE strings_mod,    ONLY : find_string
       USE strings_mod,    ONLY : FoundError
       USE strings_mod,    ONLY : uppercase
-      USE wrt_info_mod,   ONLY : wrt_info
 !
       implicit none
 !

@@ -3,7 +3,7 @@
 #ifdef FOUR_DVAR
 !
 !git $Id$
-!svn $Id: def_ini.F 1064 2021-05-10 19:55:56Z arango $
+!svn $Id: def_ini.F 1067 2021-05-27 05:11:41Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -24,10 +24,8 @@
       USE mod_scalars
 !
       USE def_dim_mod,  ONLY : def_dim
-      USE def_info_mod, ONLY : def_info
       USE def_var_mod,  ONLY : def_var
       USE strings_mod,  ONLY : FoundError
-      USE wrt_info_mod, ONLY : wrt_info
 !
       implicit none
 !
