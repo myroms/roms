@@ -3,7 +3,7 @@
       SUBROUTINE tl_initial (ng)
 !
 !git $Id$
-!svn $Id: tl_initial.F 1064 2021-05-10 19:55:56Z arango $
+!svn $Id: tl_initial.F 1069 2021-05-27 21:22:51Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -509,9 +509,11 @@
 !  If restart, read in wet/dry masks.
 !
       IF (nrrec(ng).ne.0) THEN
-        CALL get_wetdry (ng, iTLM, IniRec(ng))
 #  ifdef DISTRIBUTE
+        CALL get_wetdry (ng, MyRank, iTLM, IniRec(ng))
         CALL mp_bcasti (ng, iTLM, exit_flag)
+#  else
+        CALL get_wetdry (ng, -1, iTLM, IniRec(ng))
 #  endif
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
       ELSE

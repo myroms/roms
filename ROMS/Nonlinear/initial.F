@@ -2,7 +2,7 @@
       SUBROUTINE initial
 !
 !git $Id$
-!svn $Id: initial.F 1064 2021-05-10 19:55:56Z arango $
+!svn $Id: initial.F 1069 2021-05-27 21:22:51Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -449,7 +449,11 @@
 !
         IF (nrrec(ng).ne.0) THEN
 !$OMP MASTER
-          CALL get_wetdry (ng, iNLM, IniRec(ng))
+# ifdef DISTRIBUTE
+          CALL get_wetdry (ng, MyRank, iNLM, IniRec(ng))
+# else
+          CALL get_wetdry (ng, -1, iNLM, IniRec(ng))
+# endif
 !$OMP END MASTER
 # ifdef DISTRIBUTE
           CALL mp_bcasti (ng, iNLM, exit_flag)
