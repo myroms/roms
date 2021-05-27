@@ -3,7 +3,7 @@
 #ifdef WET_DRY
 !
 !git $Id$
-!svn $Id: get_wetdry.F 1067 2021-05-27 05:11:41Z arango $
+!svn $Id: get_wetdry.F 1068 2021-05-27 14:39:29Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -33,10 +33,10 @@
 !
       implicit none
 !
-      PUBLIC  :: get_grid
-      PRIVATE :: get_grid_nf90
+      PUBLIC  :: get_wetdry
+      PRIVATE :: get_wetdry_nf90
 # if defined PIO_LIB && defined DISTRIBUTE
-      PRIVATE :: get_grid_pio
+      PRIVATE :: get_wetdry_pio
 # endif
 !
       CONTAINS
