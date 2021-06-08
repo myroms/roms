@@ -2,7 +2,7 @@
       MODULE wrt_info_mod
 !
 !git $Id$
-!svn $Id: wrt_info.F 1064 2021-05-10 19:55:56Z arango $
+!svn $Id: wrt_info.F 1070 2021-06-08 21:00:47Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -3744,7 +3744,7 @@
 !-----------------------------------------------------------------------
 !
 # ifdef NO_WRITE_GRID
-      GRID_VARS : IF (FileH.eq.ABS(STA(ng)%pioFile&fh)) THEN
+      GRID_VARS : IF (FileH.eq.ABS(STA(ng)%pioFile%fh)) THEN
 # else
       GRID_VARS : IF (FileH.ne.ABS(FLT(ng)%pioFile%fh)) THEN
 # endif

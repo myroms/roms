@@ -2,7 +2,7 @@
       SUBROUTINE get_idata (ng)
 !
 !git $Id$
-!svn $Id: get_idata.F 1064 2021-05-10 19:55:56Z arango $
+!svn $Id: get_idata.F 1070 2021-06-08 21:00:47Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -128,7 +128,7 @@
         IF (iic(ng).eq.0) THEN
           CALL get_ngfld (ng, iNLM, idTper, TIDE(ng)%ncid,              &
 # if defined PIO_LIB && defined DISTRIBUTE
-     &                    TIDE(ing)%pioFile,                            &
+     &                    TIDE(ng)%pioFile,                             &
 # endif
      &                    1, TIDE(ng), update(1),                       &
      &                    1, MTC, 1, 1, 1, NTC(ng), 1,                  &
@@ -152,7 +152,7 @@
 !
           CALL get_2dfld (ng, iNLM, idTzam, TIDE(ng)%ncid,              &
 # if defined PIO_LIB && defined DISTRIBUTE
-     &                    TIDE(ing)%pioFile,                            &
+     &                    TIDE(ng)%pioFile,                             &
 # endif
      &                    1, TIDE(ng), update(1),                       &
      &                    LBi, UBi, LBj, UBj, MTC, NTC(ng),             &
@@ -164,7 +164,7 @@
 !
           CALL get_2dfld (ng, iNLM, idTzph, TIDE(ng)%ncid,              &
 # if defined PIO_LIB && defined DISTRIBUTE
-     &                    TIDE(ing)%pioFile,                            &
+     &                    TIDE(ng)%pioFile,                             &
 # endif
      &                    1, TIDE(ng), update(1),                       &
      &                    LBi, UBi, LBj, UBj, MTC, NTC(ng),             &
@@ -192,7 +192,7 @@
 !
           CALL get_2dfld (ng, iNLM, idTvan, TIDE(ng)%ncid,              &
 # if defined PIO_LIB && defined DISTRIBUTE
-     &                    TIDE(ing)%pioFile,                            &
+     &                    TIDE(ng)%pioFile,                             &
 # endif
      &                    1, TIDE(ng), update(1),                       &
      &                    LBi, UBi, LBj, UBj, MTC, NTC(ng),             &
@@ -204,7 +204,7 @@
 !
           CALL get_2dfld (ng, iNLM, idTvph, TIDE(ng)%ncid,              &
 # if defined PIO_LIB && defined DISTRIBUTE
-     &                    TIDE(ing)%pioFile,                            &
+     &                    TIDE(ng)%pioFile,                             &
 # endif
      &                    1, TIDE(ng), update(1),                       &
      &                    LBi, UBi, LBj, UBj, MTC, NTC(ng),             &
@@ -216,7 +216,7 @@
 !
           CALL get_2dfld (ng, iNLM, idTvma, TIDE(ng)%ncid,              &
 # if defined PIO_LIB && defined DISTRIBUTE
-     &                    TIDE(ing)%pioFile,                            &
+     &                    TIDE(ng)%pioFile,                             &
 # endif
      &                    1, TIDE(ng), update(1),                       &
      &                    LBi, UBi, LBj, UBj, MTC, NTC(ng),             &
@@ -228,7 +228,7 @@
 !
           CALL get_2dfld (ng, iNLM, idTvmi, TIDE(ng)%ncid,              &
 # if defined PIO_LIB && defined DISTRIBUTE
-     &                    TIDE(ing)%pioFile,                            &
+     &                    TIDE(ng)%pioFile,                             &
 # endif
      &                    1, TIDE(ng), update(1),                       &
      &                    LBi, UBi, LBj, UBj, MTC, NTC(ng),             &
