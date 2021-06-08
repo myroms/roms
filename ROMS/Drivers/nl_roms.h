@@ -1,7 +1,7 @@
       MODULE roms_kernel_mod
 !
 !git $Id$
-!svn $Id: nl_roms.h 1064 2021-05-10 19:55:56Z arango $
+!svn $Id: nl_roms.h 1070 2021-06-08 21:00:47Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -29,6 +29,9 @@
       USE mod_ncparam
       USE mod_scalars
 !
+#ifdef VERIFICATION
+      USE def_mod_mod,       ONLY : def_mod
+#endif
       USE close_io_mod,      ONLY : close_inp, close_out
       USE inp_par_mod,       ONLY : inp_par
 #ifdef MCT_LIB

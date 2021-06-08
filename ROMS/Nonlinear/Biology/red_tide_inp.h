@@ -1,7 +1,7 @@
       SUBROUTINE read_BioPar (model, inp, out, Lwrite)
 !
 !git $Id$
-!svn $Id: red_tide_inp.h 1054 2021-03-06 19:47:12Z arango $
+!svn $Id: red_tide_inp.h 1070 2021-06-08 21:00:47Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -60,9 +60,6 @@
 !  parameters.
 !-----------------------------------------------------------------------
 !
-#ifdef ANA_BIOLOGY
-      IF (.not.allocated(BioIni)) allocate ( BioIni(MT,Ngrids) )
-#endif
       DO WHILE (.TRUE.)
         READ (inp,'(a)',ERR=10,END=20) line
         status=decode_line(line, KeyWord, Nval, Cval, Rval)

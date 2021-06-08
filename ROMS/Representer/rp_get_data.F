@@ -3,7 +3,7 @@
       SUBROUTINE rp_get_data (ng)
 !
 !git $Id$
-!svn $Id: rp_get_data.F 1064 2021-05-10 19:55:56Z arango $
+!svn $Id: rp_get_data.F 1070 2021-06-08 21:00:47Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -227,9 +227,10 @@
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 # endif
 
-# if !defined ANA_PAIR      && \
-     (defined ECOSIM        || defined ATM_PRESS)
-#  if !(defined BULK_FLUXES || defined FRC_COUPLING)
+# if !defined ANA_PAIR       && \
+     (defined ATM_PRESS      || defined BULK_FLUXES  || \
+      defined ECOSIM)
+#  if !(defined FRC_COUPLING || definedFORWARD_FLUXES)
 !
 !-----------------------------------------------------------------------
 !  Surface air pressure from input FRC file.
@@ -247,7 +248,7 @@
      &                FORCES(ng) % PairG)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
-#  elif defined BULK_FLUXES && defined FORWARD_FLUXES
+#  else
 !
 !-----------------------------------------------------------------------
 !  Surface air pressure used in NLM forward file.

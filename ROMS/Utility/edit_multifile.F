@@ -2,7 +2,7 @@
       SUBROUTINE edit_multifile (task)
 !
 !git $Id$
-!svn $Id: edit_multifile.F 1064 2021-05-10 19:55:56Z arango $
+!svn $Id: edit_multifile.F 1070 2021-06-08 21:00:47Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -365,6 +365,7 @@
 !***********************************************************************
 !
       USE mod_param
+      USE mod_ncparam, ONLY : NV
 !
 !  Imported variable declarations.
 !
