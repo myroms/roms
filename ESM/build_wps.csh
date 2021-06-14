@@ -18,9 +18,10 @@
 # WRF_DIR. Notice that the WRF I/O libraries is needed to create        :::
 # "metgrid.exe" and "real.exe".                                         :::
 #                                                                       :::
-# Q: How/why does this script work?                                     :::
+# WARNING:                                                              :::
 #                                                                       :::
-# A:                                                                    :::
+# If WRF is built with parallel enable NetCDF4/HDF5, you must choose    :::
+# the appropriate (dmpar) option for your compiler during configure.    :::
 #                                                                       :::
 # Usage:                                                                :::
 #                                                                       :::
@@ -161,7 +162,20 @@ setenv  WPS_BIN_DIR       ${WPS_BUILD_DIR}/Bin
 # Go to the users source directory to compile. The options set above will
 # pick up the application-specific code from the appropriate place.
 
- cd ${WPS_ROOT_DIR}
+cd ${WPS_ROOT_DIR}
+
+# Patch util/src/Makefile so int2nc.exe using parallel enabled NetCDF/HDF5
+# can link without errors.
+
+echo ""
+echo "${separator}"
+echo "Patching ${WPS_SRC_DIR}/util/src/Makefile"
+echo "${separator}"
+echo ""
+
+# Replace $(SFC) with $(FC) in recipe for int2nc.exe
+
+perl -i -pe 's/^(\s*)\$\(SFC\) (.*\$\(WRF_LIB\)\s*)/$1\$\(FC\) $2/' ${WPS_SRC_DIR}/util/src/Makefile
 
 #--------------------------------------------------------------------------
 # Configure. It creates configure.wps script used for compilation.
@@ -248,17 +262,29 @@ if ( $config == 1 ) then
 
   ${WPS_ROOT_DIR}/configure ${CONFIG_FLAGS}
 
-# Add the NetCDF-4 dependecies to LDFLAGS.
+# Add the NetCDF-4 dependecies to WRF_LIB.
 
-  set NF_LIBS=`${NETCDF}/bin/nf-config --flibs`
-  setenv NF_LIBS "${NF_LIBS}"
-  perl -i -pe 's/^LDFLAGS( *)=(.*)/LDFLAGS$1=$2 $ENV{NF_LIBS}/' ${WPS_SRC_DIR}/configure.wps
+  if ( -f ${NETCDF}/bin/nf-config ) then
+    set NF_LIBS=`${NETCDF}/bin/nf-config --flibs`
+    setenv NF_LIBS "${NF_LIBS}"
 
-  echo ""
-  echo "${separator}"
-  echo "LDFLAGS = ${NF_LIBS}"
-  echo ""
+    echo ""
+    echo "${separator}"
+    echo "Appending WRF_LIB += ${NF_LIBS}"
+    echo "to the end of configure.wps"
+    echo ""
+    echo "WRF_LIB += ${NF_LIBS}" >> ${WPS_SRC_DIR}/configure.wps
+  else
+    echo "${NETCDF}/bin/nf-config not found. Please check your configuration."
+    exit 1
+  endif
 
+# If which_MPI is "intel" then we need to replace DM_FC and DM_CC in configure.wps
+
+  if ( ${which_MPI} == "intel" ) then
+    perl -i -pe 's/^DM_FC(\s*)=(\s*)mpif90/DM_FC$1=$2mpiifort/' ${WPS_SRC_DIR}/configure.wps
+    perl -i -pe 's/^DM_CC(\s*)=(\s*)mpicc/DM_CC$1=$2mpiicc/' ${WPS_SRC_DIR}/configure.wps
+  endif
 endif
 
 #--------------------------------------------------------------------------
@@ -291,13 +317,15 @@ endif
 
 # Remove existing build directory.
 
-if ( $clean == 1 ) then
-  echo ""
-  echo "${separator}"
-  echo "Removing WPS build directory:  ${WPS_BUILD_DIR}"
-  echo "${separator}"
-  echo ""
-  /bin/rm -rf ${WPS_BUILD_DIR}
+if ( $move == 1 ) then
+  if ( $clean == 1 ) then
+    echo ""
+    echo "${separator}"
+    echo "Removing WPS build directory: ${WPS_BUILD_DIR}"
+    echo "${separator}"
+    echo ""
+    /bin/rm -rf ${WPS_BUILD_DIR}
+  endif
 endif
 
 # Compile (if -move is set, the binares will go to WPS_BIN_DIR set above).
@@ -320,7 +348,7 @@ if ( $move == 1 ) then
 
   echo ""
   echo "${separator}"
-  echo "Moving WPS objects to Build directory  ${WPS_BUILD_DIR}:"
+  echo "Moving WPS configuration and executables to Build directory  ${WPS_BUILD_DIR}:"
   echo "${separator}"
   echo ""
 
@@ -333,6 +361,14 @@ if ( $move == 1 ) then
   /bin/cp -pfv configure.wps ${WPS_BUILD_DIR}
 
   echo "WPS_ROOT_DIR = ${WPS_ROOT_DIR}"
-  find ${WPS_ROOT_DIR} -type f -name "*.exe" -exec /bin/mv -fv {} ${WPS_BIN_DIR} \;
+  find -H ${WPS_ROOT_DIR} -type f -name "*.exe" -exec /bin/mv -fv {} ${WPS_BIN_DIR} \;
+
+  echo ""
+  echo "${separator}"
+  echo "Removing symbolic links to executables in  ${WPS_ROOT_DIR}:"
+  echo "${separator}"
+  echo ""
+
+  find -H ${WPS_ROOT_DIR} -type l -name "*.exe" -exec /bin/rm -fv {} \;
 
 endif

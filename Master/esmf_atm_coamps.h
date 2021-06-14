@@ -1,64 +1,64 @@
-#include "cppdefs.h"
-      MODULE esmf_roms_mod
+      MODULE esmf_coamps_mod
 
-#if defined MODEL_COUPLING && defined ESMF_LIB
+#if defined COAMPS_COUPLING && defined ESMF_LIB
 !
 !git $Id$
-!svn $Id: esmf_roms.F 1071 2021-06-14 04:22:26Z arango $
+!svn $Id: esmf_atm_coamps.h 1071 2021-06-14 04:22:26Z arango $
 !=======================================================================
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license         Hernan G. Arango     !
-!    See License_ROMS.txt                         Ufuk Utku Turuncoglu !
+!    See License_ROMS.txt                                              !
 !=======================================================================
 !                                                                      !
-!  This module sets ROMS as the ocean gridded component using generic  !
-!  ESMF/NUOPC layer:                                                   !
+!  This module sets COAMPS as the atmospheric model gridded component  !
+!  using the generic ESMF/NUOPC layer:                                 !
 !                                                                      !
-!    ROMS_SetServices        Sets ROMS component shared-object entry   !
+!    ATM_SetServices         Sets ATM component shared-object entry    !
 !                            points using NUPOC generic methods for    !
 !                            "initialize", "run", and "finalize".      !
 !                                                                      !
-!    ROMS_SetInitializeP1    ROMS component phase 1 initialization:    !
+!    COAMPS_SetInitializeP1  COAMPS component phase 1 initialization:  !
 !                            sets import and export fields long and    !
 !                            short names into its respective state.    !
 !                                                                      !
-!    ROMS_SetInitializeP2    ROMS component phase 2 initialization:    !
-!                            Initializes component (ROMS_initialize),  !
-!                            sets component grid (ROMS_SetGridArrays), !
+!    COAMPS_SetInitializeP2  COAMPS component phase 2 initialization:  !
+!                            Initializes component (COAMPS_Initialize),!
+!                            sets component grid (COAMPS_SetGridArrays)!
 !                            and adds fields into import and export    !
-!                            into respective states.                   !
+!                            into respective states (COAMPS_SetStates).!
 !                                                                      !
-!    ROMS_DataInit           Exports ROMS component fields during      !
+!    COAMPS_DataInit         Exports COAMPS component fields during    !
 !                            initialization or restart.                !
 !                                                                      !
-!    ROMS_SetClock           Sets ROMS component date calendar, start  !
-!                            and stop times, and coupling interval.    !
+!    COAMPS_SetClock         Sets COAMPS component date calendar,      !
+!                            start and stop times, and coupling        !
+!                            interval.                                 !
 # ifdef ESM_SETRUNCLOCK
 !                                                                      !
-!    ROMS_SetRunClock        Sets ROMS run clock manually.             !
+!    COAMPS_SetRunClock      Sets COAMPS run clock manually.           !
 # endif
 !                                                                      !
-!    ROMS_CheckImport        Checks if ROMS component import field is  !
+!    COAMPS_CheckImport      Checks if ROMS component import field is  !
 !                            at the correct time.                      !
 !                                                                      !
-!    ROMS_SetGridArrays      Sets ROMS component staggered, horizontal !
-!                            grid arrays, grid area, and land/sea mask !
-!                            if any.                                   !
+!    COAMPS_SetGridArrays    Sets COAMPS component horizontal grid     !
+!                            arrays, grid area, and land/sea mask.     !
 !                                                                      !
-!    ROMS_SetStates          Adds ROMS component export and import     !
+!    COAMPS_SetStates        Adds COAMPS component export and import   !
 !                            fields into its respective state.         !
 !                                                                      !
-!    ROMS_ModelAdvance       Advances ROMS component for a coupling    !
+!    COAMPS_ModelAdvance     Advances COAMPS component for a coupling  !
 !                            interval. It calls import and export      !
 !                            routines.                                 !
 !                                                                      !
-!    ROMS_SetFinalize        Finalizes ROMS component execution.       !
+!    COAMPS_SetFinalize      Finalizes COAMPS component execution.     !
 !                                                                      !
-!    ROMS_Import             Imports fields into ROMS. The fields are  !
-!                            loaded into the snapshot storage arrays   !
-!                            to allow time interpolation elsewhere.    !
+!    COAMPS_Import           Imports fields into COAMPS from other     !
+!                            gridded components.                       !
 !                                                                      !
-!    ROMS_Export             Exports ROMS fields to other gridded      !
+!    COAMPS_ProcessImport    Loads or merges import COAMPS fields.     !
+!                                                                      !
+!    COAMPS_Export           Exports COAMPS fields to other gridded    !
 !                            components.                               !
 !                                                                      !
 !  ESMF:   Earth System Modeling Framework (Version 7 or higher)       !
@@ -67,8 +67,9 @@
 !  NUOPC:  National Unified Operational Prediction Capability          !
 !            https://www.earthsystemcog.org/projects/nuopc             !
 !                                                                      !
-!  ROMS:   Regional Ocean Modeling System                              !
-!            https://www.myroms.org                                    !
+!  COAMPS: Coupled Ocean-Atmosphere Mesoscale Prediction System        !
+!            https://www.nrlmry.navy.mil/coamps-web/web/home           !
+!                                                                      !
 !                                                                      !
 !=======================================================================
 !
@@ -86,36 +87,37 @@
 !
       USE mod_esmf_esm          ! ESM coupling structures and variables
 !
-      USE roms_kernel_mod, ONLY : ROMS_initialize,                      &
-     &                            ROMS_run,                             &
-     &                            ROMS_finalize
+      USE atmos_forecast, ONLY : COAMPS_Initialize => atmos_init,       &
+     &                           COAMPS_Run        => atmos_run,        &
+     &                           COAMPS_Finalize   => atmos_finalize
 !
       implicit none
 !
-      PUBLIC  :: ROMS_SetServices
+      PUBLIC  :: ATM_SetServices
 
-      PRIVATE :: ROMS_SetInitializeP1
-      PRIVATE :: ROMS_SetInitializeP2
-      PRIVATE :: ROMS_DataInit
-      PRIVATE :: ROMS_SetClock
+      PRIVATE :: COAMPS_SetInitializeP1
+      PRIVATE :: COAMPS_SetInitializeP2
+      PRIVATE :: COAMPS_DataInit
+      PRIVATE :: COAMPS_SetClock
 # ifdef ESM_SETRUNCLOCK
-      PRIVATE :: ROMS_SetRunClock
+      PRIVATE :: COAMPS_SetRunClock
 # endif
-      PRIVATE :: ROMS_CheckImport
-      PRIVATE :: ROMS_SetGridArrays
-      PRIVATE :: ROMS_SetStates
-      PRIVATE :: ROMS_ModelAdvance
-      PRIVATE :: ROMS_SetFinalize
-      PRIVATE :: ROMS_Import
-      PRIVATE :: ROMS_Export
+      PRIVATE :: COAMPS_CheckImport
+      PRIVATE :: COAMPS_SetGridArrays
+      PRIVATE :: COAMPS_SetStates
+      PRIVATE :: COAMPS_ModelAdvance
+      PRIVATE :: COAMPS_SetFinalize
+      PRIVATE :: COAMPS_Import
+      PRIVATE :: COAMPS_ProcessImport
+      PRIVATE :: COAMPS_Export
 !
       CONTAINS
 !
-      SUBROUTINE ROMS_SetServices (model, rc)
+      SUBROUTINE ATM_SetServices (model, rc)
 !
 !=======================================================================
 !                                                                      !
-!  Sets ROMS component shared-object entry points for "initialize",    !
+!  Sets COAMPS component shared-object entry points for "initialize",  !
 !  "run", and "finalize" by using NUOPC generic methods.               !
 !                                                                      !
 !=======================================================================
@@ -129,14 +131,14 @@
 !  Local variable declarations.
 !
       character (len=*), parameter :: MyFile =                          &
-     &  __FILE__//", ROMS_SetServices"
+     &  __FILE__//", ATM_SetServices"
 !
 !-----------------------------------------------------------------------
 !  Initialize return code flag to success state (no error).
 !-----------------------------------------------------------------------
 !
       IF (ESM_track) THEN
-        WRITE (trac,'(a,a,i0)') '==> Entering ROMS_SetServices',        &
+        WRITE (trac,'(a,a,i0)') '==> Entering ATM_SetServices',         &
      &                          ', PET', PETrank
         CALL my_flush (trac)
       END IF
@@ -165,7 +167,7 @@
       CALL NUOPC_CompSetEntryPoint (model,                              &
      &                              methodflag=ESMF_METHOD_INITIALIZE,  &
      &                              phaseLabelList=(/"IPDv00p1"/),      &
-     &                              userRoutine=ROMS_SetInitializeP1,   &
+     &                              userRoutine=COAMPS_SetInitializeP1, &
      &                              rc=rc)
       IF (ESMF_LogFoundError(rcToCheck=rc,                              &
      &                       msg=ESMF_LOGERR_PASSTHRU,                  &
@@ -174,12 +176,12 @@
         RETURN
       END IF
 !
-!  Set routine for Phase 2 initialization (exchange arrays).
+!  Set routine for Phase 2 initialization.
 !
       CALL NUOPC_CompSetEntryPoint (model,                              &
      &                              methodflag=ESMF_METHOD_INITIALIZE,  &
      &                              phaseLabelList=(/"IPDv00p2"/),      &
-     &                              userRoutine=ROMS_SetInitializeP2,   &
+     &                              userRoutine=COAMPS_SetInitializeP2, &
      &                              rc=rc)
       IF (ESMF_LogFoundError(rcToCheck=rc,                              &
      &                       msg=ESMF_LOGERR_PASSTHRU,                  &
@@ -189,14 +191,14 @@
       END IF
 !
 !-----------------------------------------------------------------------
-!  Attach ROMS component phase independent specializing methods.
+!  Attach COAMPS component phase independent specializing methods.
 !-----------------------------------------------------------------------
 !
 !  Set routine for export initial/restart fields.
 !
       CALL NUOPC_CompSpecialize (model,                                 &
      &                           specLabel=NUOPC_Label_DataInitialize,  &
-     &                           specRoutine=ROMS_DataInit,             &
+     &                           specRoutine=COAMPS_DataInit,           &
      &                           rc=rc)
       IF (ESMF_LogFoundError(rcToCheck=rc,                              &
      &                       msg=ESMF_LOGERR_PASSTHRU,                  &
@@ -205,11 +207,11 @@
         RETURN
       END IF
 !
-!  Set routine for setting ROMS clock.
+!  Set routine for setting COAMPS clock.
 !
       CALL NUOPC_CompSpecialize (model,                                 &
      &                           specLabel=NUOPC_Label_SetClock,        &
-     &                           specRoutine=ROMS_SetClock,             &
+     &                           specRoutine=COAMPS_SetClock,           &
      &                           rc=rc)
       IF (ESMF_LogFoundError(rcToCheck=rc,                              &
      &                       msg=ESMF_LOGERR_PASSTHRU,                  &
@@ -220,7 +222,7 @@
 
 # ifdef ESM_SETRUNCLOCK
 !
-!  Set routine for setting ROMS run clock manually. First, remove the
+!  Set routine for setting COAMPS run clock manually. First, remove the
 !  default.
 !
       CALL ESMF_MethodRemove (model,                                    &
@@ -235,7 +237,7 @@
 !
       CALL NUOPC_CompSpecialize (model,                                 &
      &                           specLabel=NUOPC_Label_SetRunClock,     &
-     &                           specRoutine=ROMS_SetRunClock,          &
+     &                           specRoutine=COAMPS_SetRunClock,        &
      &                           rc=rc)
       IF (ESMF_LogFoundError(rcToCheck=rc,                              &
      &                       msg=ESMF_LOGERR_PASSTHRU,                  &
@@ -250,7 +252,7 @@
       CALL NUOPC_CompSpecialize (model,                                 &
      &                           specLabel=NUOPC_Label_CheckImport,     &
      &                           specPhaseLabel="RunPhase1",            &
-     &                           specRoutine=ROMS_CheckImport,          &
+     &                           specRoutine=COAMPS_CheckImport,        &
      &                           rc=rc)
       IF (ESMF_LogFoundError(rcToCheck=rc,                              &
      &                       msg=ESMF_LOGERR_PASSTHRU,                  &
@@ -259,11 +261,11 @@
         RETURN
       END IF
 !
-!  Set routine for time-stepping ROMS component.
+!  Set routine for time-stepping COAMPS component.
 !
       CALL NUOPC_CompSpecialize (model,                                 &
      &                           specLabel=NUOPC_Label_Advance,         &
-     &                           specRoutine=ROMS_ModelAdvance,         &
+     &                           specRoutine=COAMPS_ModelAdvance,       &
      &                           rc=rc)
       IF (ESMF_LogFoundError(rcToCheck=rc,                              &
      &                       msg=ESMF_LOGERR_PASSTHRU,                  &
@@ -273,12 +275,12 @@
       END IF
 !
 !-----------------------------------------------------------------------
-!  Register ROMS finalize routine.
+!  Register COAMPS finalize routine.
 !-----------------------------------------------------------------------
 !
       CALL ESMF_GridCompSetEntryPoint (model,                           &
      &                                 methodflag=ESMF_METHOD_FINALIZE, &
-     &                                 userRoutine=ROMS_SetFinalize,    &
+     &                                 userRoutine=COAMPS_SetFinalize,  &
      &                                 rc=rc)
       IF (ESMF_LogFoundError(rcToCheck=rc,                              &
      &                       msg=ESMF_LOGERR_PASSTHRU,                  &
@@ -288,21 +290,21 @@
       END IF
 !
       IF (ESM_track) THEN
-        WRITE (trac,'(a,a,i0)') '<== Exiting  ROMS_SetServices',        &
+        WRITE (trac,'(a,a,i0)') '<== Exiting  ATM_SetServices',         &
      &                          ', PET', PETrank
         CALL my_flush (trac)
       END IF
 !
       RETURN
-      END SUBROUTINE ROMS_SetServices
+      END SUBROUTINE ATM_SetServices
 !
-      SUBROUTINE ROMS_SetInitializeP1 (model,                           &
-     &                                 ImportState, ExportState,        &
-     &                                 clock, rc)
+      SUBROUTINE COAMPS_SetInitializeP1 (model,                         &
+     &                                   ImportState, ExportState,      &
+     &                                   clock, rc)
 !
 !=======================================================================
 !                                                                      !
-!  ROMS component Phase 1 initialization: sets import and export       !
+!  COAMPS component Phase 1 initialization: sets import and export     !
 !  fields long and short names into its respective state.              !
 !                                                                      !
 !=======================================================================
@@ -318,56 +320,38 @@
 !
 !  Local variable declarations.
 !
-      integer :: i, ng, localPET
+      integer :: i, ng
 !
       character (len=100) :: CoupledSet, StateLabel
       character (len=240) :: StandardName, ShortName
 
       character (len=*), parameter :: MyFile =                          &
-     &  __FILE__//", ROMS_SetInitializeP1"
+     &  __FILE__//", COAMPS_SetInitializeP1"
 !
 !-----------------------------------------------------------------------
 !  Initialize return code flag to success state (no error).
 !-----------------------------------------------------------------------
 !
       IF (ESM_track) THEN
-        WRITE (trac,'(a,a,i0)') '==> Entering ROMS_SetInitializeP1',    &
+        WRITE (trac,'(a,a,i0)') '==> Entering COAMPS_SetInitializeP1',  &
      &                          ', PET', PETrank
         CALL my_flush (trac)
       END IF
       rc=ESMF_SUCCESS
 !
 !-----------------------------------------------------------------------
-!  Querry the Virtual Machine (VM) parallel environmemt for the MPI
-!  current node rank.
+!  Set COAMPS import state and fields.
 !-----------------------------------------------------------------------
 !
-      CALL ESMF_GridCompGet (model,                                     &
-     &                       localPet=localPET,                         &
-     &                       rc=rc)
-      IF (ESMF_LogFoundError(rcToCheck=rc,                              &
-     &                       msg=ESMF_LOGERR_PASSTHRU,                  &
-     &                       line=__LINE__,                             &
-     &                       file=MyFile)) THEN
-        RETURN
-      END IF
-!
-!-----------------------------------------------------------------------
-!  Set ROMS import state and fields.
-!-----------------------------------------------------------------------
-!
-!  Add ROMS import state(s). If nesting, each grid has its own import
-!  state.
-!
-      IMPORTING : IF (Nimport(Iroms).gt.0) THEN
-        DO ng=1,MODELS(Iroms)%Ngrids
-          IF (ANY(COUPLED(Iroms)%LinkedGrid(ng,:))) THEN
-            CoupledSet=TRIM(COUPLED(Iroms)%SetLabel(ng))
-            StateLabel=TRIM(COUPLED(Iroms)%ImpLabel(ng))
+      IMPORTING : IF (Nimport(Iatmos).gt.0) THEN
+        DO ng=1,MODELS(Iatmos)%Ngrids
+          IF (ANY(COUPLED(Iatmos)%LinkedGrid(ng,:))) THEN
+            CoupledSet=TRIM(COUPLED(Iatmos)%SetLabel(ng))
+            StateLabel=TRIM(COUPLED(Iatmos)%ImpLabel(ng))
             CALL NUOPC_AddNestedState (ImportState,                     &
      &                                 CplSet=TRIM(CoupledSet),         &
      &                                 nestedStateName=TRIM(StateLabel),&
-     &                                 nestedState=MODELS(Iroms)%       &
+     &                                 nestedState=MODELS(Iatmos)%      &
      &                                                 ImportState(ng), &
                                        rc=rc)
             IF (ESMF_LogFoundError(rcToCheck=rc,                        &
@@ -379,10 +363,10 @@
 !
 !  Add fields import state.
 !
-            DO i=1,Nimport(Iroms)
-              StandardName=MODELS(Iroms)%ImportField(i)%standard_name
-              ShortName   =MODELS(Iroms)%ImportField(i)%short_name
-              CALL NUOPC_Advertise (MODELS(Iroms)%ImportState(ng),      &
+            DO i=1,Nimport(Iatmos)
+              StandardName=MODELS(Iatmos)%ImportField(i)%standard_name
+              ShortName   =MODELS(Iatmos)%ImportField(i)%short_name
+              CALL NUOPC_Advertise (MODELS(Iatmos)%ImportState(ng),     &
      &                              StandardName=TRIM(StandardName),    &
      &                              name=TRIM(ShortName),               &
      &                              rc=rc)
@@ -392,45 +376,24 @@
      &                               file=MyFile)) THEN
                 RETURN
               END IF
-
-# ifdef LONGWAVE_OUT
-!
-              IF (TRIM(ShortName).eq.'LWrad') THEN
-                rc=ESMF_RC_NOT_VALID
-                IF (localPET.eq.0) THEN
-                  WRITE (cplout,10) TRIM(ShortName), 'LONGWAVE_OUT',    &
-     &                           'downward longwave radiation: dLWrad', &
-     &                           'LONGWAVE_OUT'
-                END IF
-                IF (ESMF_LogFoundError(rcToCheck=rc,                    &
-     &                                 msg=ESMF_LOGERR_PASSTHRU,        &
-     &                                 line=__LINE__,                   &
-     &                                 file=MyFile)) THEN
-                  RETURN
-                END IF
-              END IF
-# endif
             END DO
           END IF
         END DO
       END IF IMPORTING
 !
 !-----------------------------------------------------------------------
-!  Set ROMS export state and fields.
+!  Set COAMPS export state and fields.
 !-----------------------------------------------------------------------
 !
-!  Add ROMS import state. If nesting, each grid has its own import
-!  state.
-!
-      EXPORTING : IF (Nexport(Iroms).gt.0) THEN
-        DO ng=1,MODELS(Iroms)%Ngrids
-          IF (ANY(COUPLED(Iroms)%LinkedGrid(ng,:))) THEN
-            CoupledSet=TRIM(COUPLED(Iroms)%SetLabel(ng))
-            StateLabel=TRIM(COUPLED(Iroms)%ExpLabel(ng))
+      EXPORTING : IF (Nexport(Iatmos).gt.0) THEN
+        DO ng=1,MODELS(Iatmos)%Ngrids
+          IF (ANY(COUPLED(Iatmos)%LinkedGrid(ng,:))) THEN
+            CoupledSet=TRIM(COUPLED(Iatmos)%SetLabel(ng))
+            StateLabel=TRIM(COUPLED(Iatmos)%ExpLabel(ng))
             CALL NUOPC_AddNestedState (ExportState,                     &
      &                                 CplSet=TRIM(CoupledSet),         &
      &                                 nestedStateName=TRIM(StateLabel),&
-     &                                 nestedState=MODELS(Iroms)%       &
+     &                                 nestedState=MODELS(Iatmos)%      &
      &                                                 ExportState(ng), &
                                        rc=rc)
             IF (ESMF_LogFoundError(rcToCheck=rc,                        &
@@ -442,10 +405,10 @@
 !
 !  Add fields to export state.
 !
-            DO i=1,Nexport(Iroms)
-              StandardName=MODELS(Iroms)%ExportField(i)%standard_name
-              ShortName   =MODELS(Iroms)%ExportField(i)%short_name
-              CALL NUOPC_Advertise (MODELS(Iroms)%ExportState(ng),      &
+            DO i=1,Nexport(Iatmos)
+              StandardName=MODELS(Iatmos)%ExportField(i)%standard_name
+              ShortName   =MODELS(Iatmos)%ExportField(i)%short_name
+              CALL NUOPC_Advertise (MODELS(Iatmos)%ExportState(ng),     &
      &                              StandardName=TRIM(StandardName),    &
      &                              name=TRIM(ShortName),               &
      &                              rc=rc)
@@ -461,33 +424,48 @@
       END IF EXPORTING
 !
       IF (ESM_track) THEN
-        WRITE (trac,'(a,a,i0)') '<== Exiting  ROMS_SetInitializeP1',    &
+        WRITE (trac,'(a,a,i0)') '<== Exiting  COAMPS_SetInitializeP1',  &
      &                          ', PET', PETrank
         CALL my_flush (trac)
       END IF
 !
-# ifdef LONGWAVE_OUT
-  10  FORMAT (/,' ROMS_SetInitializeP1 - incorrect field to process: ', &
-     &        a,/,24x,'when activating option: ',a,/,24x,               &
-     &        'use instead ',a,/,24x,'or deactivate option: ',a,/)
-!
-# endif
       RETURN
-      END SUBROUTINE ROMS_SetInitializeP1
+      END SUBROUTINE COAMPS_SetInitializeP1
 !
-      SUBROUTINE ROMS_SetInitializeP2 (model,                           &
-     &                                 ImportState, ExportState,        &
-     &                                 clock, rc)
+      SUBROUTINE COAMPS_SetInitializeP2 (model,                         &
+     &                                   ImportState, ExportState,      &
+     &                                   clock, rc)
 !
 !=======================================================================
 !                                                                      !
-!  ROMS component Phase 2 initialization: Initializes ROMS, sets       !
+!  COAMPS component Phase 2 initialization: Initializes COAMPS, sets   !
 !  component grid, and adds import and export fields to respective     !
 !  states.                                                             !
 !                                                                      !
 !=======================================================================
 !
-      USE mod_scalars, ONLY : dt, ntfirst, ntend, NoError, exit_flag
+      USE avg_mod,      ONLY : avg_init, avg_init_fld, avg_set_ptr
+      USE avg_mod,      ONLY : fld_name, navg_fields
+      USE avg_mod,      ONLY : ifld_airrhm,                             &
+     &                         ifld_airshm,                             &
+     &                         ifld_airtmp,                             &
+     &                         ifld_heaflx,                             &
+     &                         ifld_lahflx,                             &
+     &                         ifld_lonflx,                             &
+     &                         ifld_lwdown,                             &
+     &                         ifld_mstflx,                             &
+     &                         ifld_sehflx,                             &
+     &                         ifld_slpres,                             &
+     &                         ifld_solflx,                             &
+     &                         ifld_stress_u_true,                      &
+     &                         ifld_stress_v_true,                      &
+     &                         ifld_swdown,                             &
+     &                         ifld_ttlprr,                             &
+     &                         ifld_u10_true,                           &
+     &                         ifld_v10_true
+      USE coamm_memm,   ONLY : t_nest2d_ptr
+      USE coamnl_mod,   ONLY : locean
+      USE coamps_parms, ONLY : max_grids
 !
 !  Imported variable declarations.
 !
@@ -500,27 +478,29 @@
 !
 !  Local variable declarations.
 !
-      logical, save :: first
+      logical :: got_heaflx, got_lwdown
+      logical :: ltau_0
 !
-      integer :: LBi, UBi, LBj, UBj
-      integer :: MyComm
-      integer :: ng, localPET, PETcount, tile
-!
-      real (dp) :: driverDuration, romsDuration
+      integer :: StepCount, ng
+      integer :: MyComm, localPET, PETcount
+      integer :: ExportCount, Findex, ifld
 !
       character (len=*), parameter :: MyFile =                          &
-     &  __FILE__//", ROMS_SetInitializeP2"
+     &  __FILE__//", COAMPS_SetInitializeP@"
 !
-      TYPE (ESMF_TimeInterval) :: RunDuration, TimeStep
-      TYPE (ESMF_Time)         :: CurrTime, startTime
-      TYPE (ESMF_VM)           :: vm
+      character (ESMF_MAXSTR), allocatable :: ExportNameList(:)
+!
+      TYPE (ESMF_Time)    :: CurrentTime, StartTime
+      TYPE (ESMF_VM)      :: vm
+!
+      TYPE (t_nest2d_ptr) :: ExportPointer(NgridsA,navg_fields)
 !
 !-----------------------------------------------------------------------
 !  Initialize return code flag to success state (no error).
 !-----------------------------------------------------------------------
 !
       IF (ESM_track) THEN
-        WRITE (trac,'(a,a,i0)') '==> Entering ROMS_SetInitializeP2',    &
+        WRITE (trac,'(a,a,i0)') '==> Entering COAMPS_SetInitializeP2',  &
      &                          ', PET', PETrank
         CALL my_flush (trac)
       END IF
@@ -552,111 +532,147 @@
      &                       file=MyFile)) THEN
         RETURN
       END IF
-      tile=localPET
-      ESMcomm(Iroms)=MyComm
 !
 !-----------------------------------------------------------------------
-!  Initialize ROMS component.  In nested applications, ROMS kernel will
-!  allocate and initialize all grids with a single call to
-!  "ROMS_initialize".
+!  Initialize COAMPS component. In nested applications, COAMPS kernel
+!  will allocate and initialize all grids with a single call to
+!  "COAMPS_Initialize".
 !-----------------------------------------------------------------------
 !
-      first=.TRUE.
-      CALL ROMS_initialize (first, mpiCOMM=MyComm)
-      IF (exit_flag.ne.NoError) THEN
-        rc=ESMF_RC_OBJ_INIT
-        IF (ESMF_LogFoundError(rcToCheck=rc,                            &
-     &                         msg=ESMF_LOGERR_PASSTHRU,                &
-     &                         line=__LINE__,                           &
-     &                         file=MyFile)) THEN
-          RETURN
-        END IF
+      CALL COAMPS_Initialize (MyComm, .FALSE., rc)
+      IF (ESMF_LogFoundError(rcToCheck=rc,                              &
+     &                       msg=ESMF_LOGERR_PASSTHRU,                  &
+     &                       line=__LINE__,                             &
+     &                       file=MyFile)) THEN
+        RETURN
       END IF
-
-# ifdef TIME_INTERP
 !
 !-----------------------------------------------------------------------
-!  Create field time interpolation variable attributes NetCDF file. It
-!  needs to be done after ROMS initialization since the NetCDF and
-!  mpi interface use several variables from ROMS profiling that need
-!  to be allocated.
+!  Allocate COAMPS time-averaged export fields "avg" structure in terms
+!  of the number of nested grids.
 !-----------------------------------------------------------------------
 !
-      IF (PETlayoutOption.eq.'CONCURRENT') THEN
-        CALL def_FieldAtt (vm, rc)
-        IF (ESMF_LogFoundError(rcToCheck=rc,                            &
-     &                         msg=ESMF_LOGERR_PASSTHRU,                &
-     &                         line=__LINE__,                           &
-     &                         file=MyFile)) THEN
-          RETURN
-        END IF
-      END IF
-# endif
+      CALL avg_init (MODELS(Iatmos)%Ngrids, .TRUE.)
 !
-!-----------------------------------------------------------------------
-!  Check ROMS simulation length and compare with that of the coupling
-!  driver.  We need to use the driver clock here since the ROMS
-!  component clock has been not created before this intialization
-!  phase.
-!-----------------------------------------------------------------------
+!  Get list of export fields.
 !
-      IF (MODELS(Iroms)%IsActive) THEN
-        CALL ESMF_ClockGet (ClockInfo(Idriver)%Clock,                   &
-     &                      currTime=CurrTime,                          &
-     &                      timeStep=TimeStep,                          &
-     &                      runDuration=RunDuration,                    &
-     &                      rc=rc)
-        IF (ESMF_LogFoundError(rcToCheck=rc,                            &
-     &                         msg=ESMF_LOGERR_PASSTHRU,                &
-     &                         line=__LINE__,                           &
-     &                         file=MyFile)) THEN
-          RETURN
-        END IF
-!
-# ifdef REGRESS_STARTCLOCK
-        CALL ESMF_TimeIntervalGet (RunDuration-TimeStep,                &
-     &                             s_r8=driverDuration,                 &
-     &                             rc=rc)
-        IF (ESMF_LogFoundError(rcToCheck=rc,                            &
-     &                         msg=ESMF_LOGERR_PASSTHRU,                &
-     &                         line=__LINE__,                           &
-     &                         file=MyFile)) THEN
-          RETURN
-        END IF
-# else
-        CALL ESMF_TimeIntervalGet (RunDuration,                         &
-     &                             s_r8=driverDuration,                 &
-     &                             rc=rc)
-        IF (ESMF_LogFoundError(rcToCheck=rc,                            &
-     &                         msg=ESMF_LOGERR_PASSTHRU,                &
-     &                         line=__LINE__,                           &
-     &                         file=MyFile)) THEN
-          RETURN
-        END IF
-# endif
-!
-        DO ng=1,MODELS(Iroms)%Ngrids
-          IF (ANY(COUPLED(Iroms)%LinkedGrid(ng,:))) THEN
-            romsDuration=(ntend(ng)-ntfirst(ng)+1)*dt(ng)
-            IF (romsDuration.ne.driverDuration) THEN
-              IF (localPET.eq.0) THEN
-                WRITE (cplout,10) romsDuration, driverDuration,         &
-     &                          TRIM(INPname(Iroms))
-              END IF
-              rc=ESMF_RC_NOT_VALID
-              RETURN
-            END IF
+      NESTED_LOOP : DO ng=1,MODELS(Iatmos)%Ngrids
+        IF (ANY(COUPLED(Iatmos)%LinkedGrid(ng,:))) THEN
+          CALL ESMF_StateGet (MODELS(Iatmos)%ExportState(ng),           &
+     &                        itemCount=ExportCount,                    &
+     &                        rc=rc)
+          IF (ESMF_LogFoundError(rcToCheck=rc,                          &
+     &                           msg=ESMF_LOGERR_PASSTHRU,              &
+     &                           line=__LINE__,                         &
+     &                           file=MyFile)) THEN
+            RETURN
           END IF
-        END DO
-      END IF
+!
+          IF (.not. allocated(ExportNameList)) THEN
+            allocate ( ExportNameList(ExportCount) )
+          END IF
+          CALL ESMF_StateGet (MODELS(Iatmos)%ExportState(ng),           &
+     &                        itemNameList=ExportNameList,              &
+     &                        rc=rc)
+          IF (ESMF_LogFoundError(rcToCheck=rc,                          &
+     &                           msg=ESMF_LOGERR_PASSTHRU,              &
+     &                           line=__LINE__,                         &
+     &                           file=MyFile)) THEN
+            RETURN
+          END IF
+!
+!  Allocate time-averaged export fields pointers in "avg" structure.
+!  (See coamps/src/atmos/libsrc/amlib/avg_mod.F)
+!
+          got_heaflx=.FALSE.
+          got_lwdown=.FALSE.
+          DO ifld=1,ExportCount
+            SELECT CASE (TRIM(ADJUSTL(ExportNameList(ifld))))
+              CASE ('psfc', 'Pair')
+                Findex=ifld_slpres        ! sea level pressure
+              CASE ('tsfc', 'Tair')
+                Findex=ifld_airtmp        ! air temperature
+              CASE ('Hair')
+                Findex=ifld_airshm        ! specific humidity
+              CASE ('qsfc', 'Qair')
+                Findex=ifld_airrhm        ! relative humidity
+              CASE ('nflx', 'shflux')
+                Findex=ifld_heaflx        ! net heat flux
+                got_heaflx=.TRUE.
+              CASE ('lwrd', 'LWrad')
+                Findex=ifld_lonflx        ! longwave flux
+              CASE ('dlwrd', 'dLWrad', 'lwrad_down')
+                Findex=ifld_lwdown        ! downward longwave flux
+                got_lwdown=.TRUE.
+              CASE ('swrd', 'SWrad')
+                Findex=ifld_solflx        ! shortwave flux
+              CASE ('dswrd', 'dSWrad')
+                Findex=ifld_swdown        ! downward shortwave flux
+              CASE ('lhfx', 'LHfx')
+                Findex=ifld_lahflx        ! latent heat flux
+              CASE ('shfx', 'SHfx')
+                Findex=ifld_sehflx        ! sensible heat flux
+              CASE ('swflx', 'swflux')
+                Findex=ifld_mstflx        ! moisture (E-P) flux
+              CASE ('rain')
+                Findex=ifld_ttlprr        ! total precipitation rate
+              CASE ('taux', 'taux10', 'sustr')
+                Findex=ifld_stress_u_true ! eastward wind stress
+              CASE ('tauy', 'tauy10', 'svstr')
+                Findex=ifld_stress_v_true ! northward wind stress
+              CASE ('Uwind', 'u10', 'wndu')
+                Findex=ifld_u10_true      ! eastward wind
+              CASE ('Vwind', 'v10', 'wndv')
+                Findex=ifld_v10_true      ! northward wind
+              CASE DEFAULT
+                IF (localPET.eq.0) THEN
+                  WRITE (cplout,10) TRIM(ExportNameList(ifld))
+                END IF
+                rc=ESMF_RC_NOT_FOUND
+                IF (ESMF_LogFoundError(rcToCheck=rc,                    &
+     &                                 msg=ESMF_LOGERR_PASSTHRU,        &
+     &                                 line=__LINE__,                   &
+     &                                 file=MyFile)) THEN
+                  RETURN
+                END IF
+            END SELECT
+            CALL avg_init_fld (ng, Findex)
+            CALL avg_set_ptr (ng, Findex, ExportPointer(ng,Findex)%p)
+          END DO
+        END IF
+        IF (allocated(ExportNameList)) deallocate (ExportNameList)
+!
+! If computing net heat flux, allocate time-averaged downward longwave
+! radiation for export.
+!
+        IF (.not.got_lwdown.and.got_heaflx) THEN
+          CALL avg_init_fld (ng, ifld_lwdown)
+          CALL avg_set_ptr (ng, ifld_lwdown, ExportPointer(ng,Findex)%p)
+        END IF
+      END DO NESTED_LOOP
+!
+!-----------------------------------------------------------------------
+!  Run COAMPS with no time-stepping to finalize the initialization.
+!-----------------------------------------------------------------------
+!
+      ltau_0=.TRUE.
+      StepCount=0
+      CALL COAMPS_Run (ltau_0, StepCount)
+!
+!  Activate "locean" to indicate that COAMPS is part of a coupled
+!  system. It implies that COAMPS is invoked from the ESMF/NUOPC
+!  driver as a coupled component. It is used to compute time-averaged
+!  export fields in subroutine "coamm".
+!
+      locean=.TRUE.
 !
 !-----------------------------------------------------------------------
 !  Set-up grid and load coordinate data.
 !-----------------------------------------------------------------------
 !
-      DO ng=1,MODELS(Iroms)%Ngrids
-        IF (ANY(COUPLED(Iroms)%LinkedGrid(ng,:))) THEN
-          CALL ROMS_SetGridArrays (ng, tile, model, rc)
+      DO ng=1,MODELS(Iatmos)%Ngrids
+        IF (ANY(COUPLED(Iatmos)%LinkedGrid(ng,:))) THEN
+          CALL COAMPS_SetGridArrays (ng, model, localPET, rc)
           IF (ESMF_LogFoundError(rcToCheck=rc,                          &
      &                           msg=ESMF_LOGERR_PASSTHRU,              &
      &                           line=__LINE__,                         &
@@ -670,9 +686,9 @@
 !  Set-up fields and register to import/export states.
 !-----------------------------------------------------------------------
 !
-      DO ng=1,MODELS(Iroms)%Ngrids
-        IF (ANY(COUPLED(Iroms)%LinkedGrid(ng,:))) THEN
-          CALL ROMS_SetStates (ng, tile, model, rc)
+      DO ng=1,MODELS(Iatmos)%Ngrids
+        IF (ANY(COUPLED(Iatmos)%LinkedGrid(ng,:))) THEN
+          CALL COAMPS_SetStates (ng, model, rc)
           IF (ESMF_LogFoundError(rcToCheck=rc,                          &
      &                           msg=ESMF_LOGERR_PASSTHRU,              &
      &                           line=__LINE__,                         &
@@ -683,25 +699,22 @@
       END DO
 !
       IF (ESM_track) THEN
-        WRITE (trac,'(a,a,i0)') '<== Exiting  ROMS_SetInitializeP2',    &
+        WRITE (trac,'(a,a,i0)') '<== Exiting  COAMPS_SetInitializeP2',  &
      &                          ', PET', PETrank
         CALL my_flush (trac)
       END IF
 !
-  10  FORMAT (/,' ROMS_SetInitializeP2 - inconsitent configuration ',   &
-     &        'run duration',/,24x,                                     &
-     &        'ROMS Duration     = ',f20.2,' seconds',/,24x,            &
-     &        'Coupling Duration = ',f20.2,' seconds',/,24x,            &
-     &        'Check paramenter NTIMES in ''',a,'''',a)
+  10  FORMAT (/,' COAMPS_SetInitializeP2 - unable to find time-',       &
+     &          'averaged index for Export Field: ',a)
 !
       RETURN
-      END SUBROUTINE ROMS_SetInitializeP2
+      END SUBROUTINE COAMPS_SetInitializeP2
 !
-      SUBROUTINE ROMS_DataInit (model, rc)
+      SUBROUTINE COAMPS_DataInit (model, rc)
 !
 !=======================================================================
 !                                                                      !
-!  Exports ROMS component fields during initialization or restart.     !
+!  Exports COAMPS component fields during initialization or restart.   !
 !                                                                      !
 !=======================================================================
 !
@@ -713,30 +726,47 @@
 !
 !  Local variable declarations.
 !
-      integer :: ng
+      integer :: is, ng
+      integer :: localPET, PETcount, phase
 !
       character (len=*), parameter :: MyFile =                          &
-     &  __FILE__//", ROMS_DataInit"
+     &  __FILE__//", COAMPS_DataInit"
 !
-      TYPE (ESMF_Time)  :: CurrentTime
+      TYPE (ESMF_Clock)        :: clock
+      TYPE (ESMF_Time)         :: CurrentTime
+      TYPE (ESMF_TimeInterval) :: TimeStep
 !
 !-----------------------------------------------------------------------
 !  Initialize return code flag to success state (no error).
 !-----------------------------------------------------------------------
 !
       IF (ESM_track) THEN
-        WRITE (trac,'(a,a,i0)') '==> Entering ROMS_DataInit',           &
+        WRITE (trac,'(a,a,i0)') '==> Entering COAMPS_DataInit',         &
      &                          ', PET', PETrank
         CALL my_flush (trac)
       END IF
       rc=ESMF_SUCCESS
 !
 !-----------------------------------------------------------------------
-!  Get gridded component clock current time.
+!  Get gridded component clock.
 !-----------------------------------------------------------------------
 !
-      CALL ESMF_ClockGet (ClockInfo(Iroms)%Clock,                       &
+      CALL ESMF_GridCompGet (model,                                     &
+     &                       clock=clock,                               &
+     &                       localPet=localPET,                         &
+     &                       petCount=PETcount,                         &
+     &                       currentPhase=phase,                        &
+     &                       rc=rc)
+      IF (ESMF_LogFoundError(rcToCheck=rc,                              &
+     &                       msg=ESMF_LOGERR_PASSTHRU,                  &
+     &                       line=__LINE__,                             &
+     &                       file=MyFile)) THEN
+        RETURN
+      END IF
+!
+      CALL ESMF_ClockGet (clock,                                        &
      &                    currTime=CurrentTime,                         &
+     &                    timeStep=TimeStep,                            &
      &                    rc=rc)
       IF (ESMF_LogFoundError(rcToCheck=rc,                              &
      &                       msg=ESMF_LOGERR_PASSTHRU,                  &
@@ -746,47 +776,42 @@
       END IF
 !
 !-----------------------------------------------------------------------
-!  Export initialization or restart fields.
+!  If explicit coupling from atmosphere to ocean, export initialization
+!  or restart fields.
 !-----------------------------------------------------------------------
 !
-      IF (Nexport(Iroms).gt.0) THEN
-        DO ng=1,MODELS(Iroms)%Ngrids
-          IF (ANY(COUPLED(Iroms)%LinkedGrid(ng,:))) THEN
-            CALL ROMS_Export (ng, model, rc)
-            IF (ESMF_LogFoundError(rcToCheck=rc,                        &
-     &                             msg=ESMF_LOGERR_PASSTHRU,            &
-     &                             line=__LINE__,                       &
-     &                             file=MyFile)) THEN
-              RETURN
-            END IF
+      IF ((CouplingType.eq.0).and.(Nexport(Iatmos).gt.0)) THEN
+        DO ng=1,MODELS(Iatmos)%Ngrids
+          CALL COAMPS_Export (ng, model, rc)
+          IF (ESMF_LogFoundError(rcToCheck=rc,                          &
+     &                           msg=ESMF_LOGERR_PASSTHRU,              &
+     &                           line=__LINE__,                         &
+     &                           file=MyFile)) THEN
+            RETURN
           END IF
         END DO
       END IF
 !
       IF (ESM_track) THEN
-        WRITE (trac,'(a,a,i0)') '<== Exiting  ROMS_DataInit',           &
+        WRITE (trac,'(a,a,i0)') '<== Exiting  COAMPS_DataInit',         &
      &                          ', PET', PETrank
         CALL my_flush (trac)
       END IF
 !
       RETURN
-      END SUBROUTINE ROMS_DataInit
+      END SUBROUTINE COAMPS_DataInit
 !
-      SUBROUTINE ROMS_SetClock (model, rc)
+      SUBROUTINE COAMPS_SetClock (model, rc)
 !
 !=======================================================================
 !                                                                      !
-!  Sets ROMS component date calendar, start and stop time, and         !
-!  coupling interval.  At initilization, the variable "tdays" is       !
-!  the initial time meassured in fractional days since the reference   !
-!  time.                                                               !
+!  Sets COAMPS component date calendar, start and stop time, and       !
+!  coupling interval.                                                  !
 !                                                                      !
 !=======================================================================
 !
-      USE mod_param
-      USE mod_scalars
-!
-      USE dateclock_mod, ONLY : caldate, time_string
+      USE coamnl_mod, ONLY : ktaust   ! starting time (hour, min, sec)
+      USE coamnl_mod, ONLY : ktauf    ! ending   time (hour, min, sec)
 !
 !  Imported variable declarations.
 !
@@ -796,27 +821,26 @@
 !
 !  Local variable declarations.
 !
-      integer :: ng
-      integer :: ref_year,   start_year,   stop_year
-      integer :: ref_month,  start_month,  stop_month
-      integer :: ref_day,    start_day,    stop_day
-      integer :: ref_hour,   start_hour,   stop_hour
-      integer :: ref_minute, start_minute, stop_minute
-      integer :: ref_second, start_second, stop_second
-      integer :: PETcount, localPET
+      integer :: is, ng
+      integer :: localPET, PETcount
       integer :: TimeFrac
-!
-      real(dp) :: MyStartTime, MyStopTime
+# ifdef REGRESS_STARTCLOCK
+      integer :: RegressStartDate(7)
+# endif
 !
       character (len= 22) :: Calendar
+# ifdef REGRESS_STARTCLOCK
+      character (len= 22) :: RegressStartString
+# endif
       character (len= 22) :: StartTimeString, StopTimeString
       character (len=160) :: message
 
       character (len=*), parameter :: MyFile =                          &
-     &  __FILE__//", ROMS_SetClock"
+     &  __FILE__//", COAMPS_SetClock"
 !
       TYPE (ESMF_CalKind_Flag) :: CalType
       TYPE (ESMF_Clock)        :: clock
+      TYPE (ESMF_Time)         :: StartTime
       TYPE (ESMF_VM)           :: vm
 !
 !-----------------------------------------------------------------------
@@ -824,7 +848,7 @@
 !-----------------------------------------------------------------------
 !
       IF (ESM_track) THEN
-        WRITE (trac,'(a,a,i0)') '==> Entering ROMS_SetClock',           &
+        WRITE (trac,'(a,a,i0)') '==> Entering COAMPS_SetClock',         &
      &                          ', PET', PETrank
         CALL my_flush (trac)
       END IF
@@ -848,31 +872,19 @@
       END IF
 !
 !-----------------------------------------------------------------------
-!  Create ROMS component clock.
+!  Create COAMPS component clock.
 !-----------------------------------------------------------------------
 !
-!  Set ROMS time reference: model time is meassured as seconds since
-!  reference time.  ESMF does not support the Proleptic Gregorian
-!  Calendar that extends backward the dates preceeding 15 October 1582
-!  which always have a year length of 365.2425 days.
-!
-      ref_year  =Rclock%year
-      ref_month =Rclock%month
-      ref_day   =Rclock%day
-      ref_hour  =Rclock%hour
-      ref_minute=Rclock%minutes
-      ref_second=Rclock%seconds
-      Calendar  =TRIM(Rclock%calendar)
-!
-      IF (INT(time_ref).eq.-1) THEN
-        CalType=ESMF_CALKIND_360DAY
+      Calendar=TRIM(ClockInfo(Iatmos)%CalendarString)
+      IF (TRIM(Calendar).eq.'gregorian') THEN
+        CalType=ESMF_CALKIND_GREGORIAN
       ELSE
         CalType=ESMF_CALKIND_GREGORIAN
       END IF
 !
-      ClockInfo(Iroms)%Calendar=ESMF_CalendarCreate(CalType,            &
-     &                                              name=TRIM(Calendar),&
-     &                                              rc=rc)
+      ClockInfo(Iatmos)%Calendar=ESMF_CalendarCreate(CalType,           &
+     &                                             name=TRIM(Calendar), &
+     &                                               rc=rc)
       IF (ESMF_LogFoundError(rcToCheck=rc,                              &
      &                       msg=ESMF_LOGERR_PASSTHRU,                  &
      &                       line=__LINE__,                             &
@@ -880,16 +892,16 @@
         RETURN
       END IF
 !
-!  Set reference time.
+!  Set reference time. Use driver configuration values.
 !
-      CALL ESMF_TimeSet (ClockInfo(Iroms)%ReferenceTime,                &
-     &                   yy=ref_year,                                   &
-     &                   mm=ref_month,                                  &
-     &                   dd=ref_day,                                    &
-     &                   h =ref_hour,                                   &
-     &                   m =ref_minute,                                 &
-     &                   s =ref_second,                                 &
-     &                   calendar=ClockInfo(Iroms)%Calendar,            &
+      CALL ESMF_TimeSet (ClockInfo(Iatmos)%ReferenceTime,               &
+     &                   yy=ReferenceDate(1),                           &
+     &                   mm=ReferenceDate(2),                           &
+     &                   dd=ReferenceDate(3),                           &
+     &                   h =ReferenceDate(4),                           &
+     &                   m =ReferenceDate(5),                           &
+     &                   s =ReferenceDate(6),                           &
+     &                   calendar=ClockInfo(Iatmos)%Calendar,           &
      &                   rc=rc)
       IF (ESMF_LogFoundError(rcToCheck=rc,                              &
      &                       msg=ESMF_LOGERR_PASSTHRU,                  &
@@ -900,38 +912,58 @@
 
 # ifdef REGRESS_STARTCLOCK
 !
-!  Set start time, use the minimum value of all nested grids. Notice
-!  that a coupling interval is substracted since the driver clock was
-!  regressed by that amount to properly initialize all ESM components.
+!  Use the same as driver. A coupling interval is substracted to the
+!  driver clock to properly initialize all the ESM components.
 !
-      MyStartTime=MINVAL(tdays)-ClockInfo(Iroms)%Time_Step/86400.0_dp
+      ClockInfo(Iatmos)%StartTime=ClockInfo(Idriver)%StartTime
+!
+      CALL ESMF_TimeGet (ClockInfo(Iatmos)%StartTime,                   &
+     &                   yy=RegressStartDate(1),                        &
+     &                   mm=RegressStartDate(2),                        &
+     &                   dd=RegressStartDate(3),                        &
+     &                   h= RegressStartDate(4),                        &
+     &                   m= RegressStartDate(5),                        &
+     &                   s= RegressStartDate(6),                        &
+     &                   ms=RegressStartDate(7),                        &
+     &                   timeString=RegressStartString,                 &
+     &                   rc=rc)
+      IF (ESMF_LogFoundError(rcToCheck=rc,                              &
+     &                       msg=ESMF_LOGERR_PASSTHRU,                  &
+     &                       line=__LINE__,                             &
+     &                       file=MyFile)) THEN
+        RETURN
+      END IF
 # else
 !
-!  Set start time, use the minimum value of all nested grids.
+!  Set start time. Use driver configuration values.
 !
-      MyStartTime=MINVAL(tdays)
+      CALL ESMF_TimeSet (ClockInfo(Iatmos)%StartTime,                   &
+                         yy=StartDate(1),                               &
+                         mm=StartDate(2),                               &
+                         dd=StartDate(3),                               &
+                         h =StartDate(4),                               &
+                         m =StartDate(5),                               &
+                         s =StartDate(6),                               &
+                         calendar=ClockInfo(Iatmos)%Calendar,           &
+                         rc=rc)
+      IF (ESMF_LogFoundError(rcToCheck=rc,                              &
+     &                       msg=ESMF_LOGERR_PASSTHRU,                  &
+     &                       line=__LINE__,                             &
+     &                       file=MyFile)) THEN
+        RETURN
+      END IF
 # endif
 !
-      ClockInfo(Iroms)%Time_Start=MyStartTime*86400.0_dp
-      CALL caldate (MyStartTime,                                        &
-     &              yy_i=start_year,                                    &
-     &              mm_i=start_month,                                   &
-     &              dd_i=start_day,                                     &
-     &              h_i =start_hour,                                    &
-     &              m_i =start_minute,                                  &
-     &              s_i =start_second)
-      CALL time_string (ClockInfo(Iroms)%Time_Start,                    &
-     &                  ClockInfo(Iroms)%Time_StartString)
+!  Set stop time. Use driver configuration values.
 !
-      CALL ESMF_TimeSet (ClockInfo(Iroms)%StartTime,                    &
-     &                   yy=start_year,                                 &
-     &                   mm=start_month,                                &
-     &                   dd=start_day,                                  &
-     &                   h =start_hour,                                 &
-     &                   m =start_minute,                               &
-     &                   s =start_second,                               &
-     &                   ms=0,                                          &
-     &                   calendar=ClockInfo(Iroms)%Calendar,            &
+      CALL ESMF_TimeSet (ClockInfo(Iatmos)%StopTime,                    &
+     &                   yy=StopDate(1),                                &
+     &                   mm=StopDate(2),                                &
+     &                   dd=StopDate(3),                                &
+     &                   h =StopDate(4),                                &
+     &                   m =StopDate(5),                                &
+     &                   s =StopDate(6),                                &
+     &                   calendar=ClockInfo(Iatmos)%Calendar,           &
      &                   rc=rc)
       IF (ESMF_LogFoundError(rcToCheck=rc,                              &
      &                       msg=ESMF_LOGERR_PASSTHRU,                  &
@@ -940,34 +972,8 @@
         RETURN
       END IF
 !
-!  Set stop time, use the maximum value of all nested grids.
-!
-      MyStopTime=0.0_dp
-      DO ng=1,MODELS(Iroms)%Ngrids
-        IF (ANY(COUPLED(Iroms)%LinkedGrid(ng,:))) THEN
-          MyStopTime=MAX(MyStopTime,                                    &
-     &                   tdays(ng)+(REAL(ntimes(ng),dp)*dt(ng))*sec2day)
-        END IF
-      END DO
-      ClockInfo(Iroms)%Time_Stop=MyStopTime*86400.0_dp
-      CALL caldate (MyStopTime,                                         &
-     &              yy_i=stop_year,                                     &
-     &              mm_i=stop_month,                                    &
-     &              dd_i=stop_day,                                      &
-     &              h_i =stop_hour,                                     &
-     &              m_i =stop_minute,                                   &
-     &              s_i =stop_second)
-      CALL time_string (ClockInfo(Iroms)%Time_Stop,                     &
-     &                  ClockInfo(Iroms)%Time_StopString)
-!
-      CALL ESMF_TimeSet (ClockInfo(Iroms)%StopTime,                     &
-     &                   yy=stop_year,                                  &
-     &                   mm=stop_month,                                 &
-     &                   dd=stop_day,                                   &
-     &                   h =stop_hour,                                  &
-     &                   m =stop_minute,                                &
-     &                   s =stop_second,                                &
-     &                   calendar=ClockInfo(Iroms)%Calendar,            &
+      CALL ESMF_TimeGet (ClockInfo(Iatmos)%StopTime,                    &
+     &                   timeStringISOFrac=StopTimeString,              &
      &                   rc=rc)
       IF (ESMF_LogFoundError(rcToCheck=rc,                              &
      &                       msg=ESMF_LOGERR_PASSTHRU,                  &
@@ -975,16 +981,19 @@
      &                       file=MyFile)) THEN
         RETURN
       END IF
+      is=INDEX(StopTimeString, 'T')                 ! remove 'T' in
+      IF (is.gt.0) StopTimeString(is:is)=' '        ! ISO 8601 format
+      ClockInfo(Iatmos)%Time_StopString=StopTimeString
 !
 !-----------------------------------------------------------------------
 !  Modify component clock time step.
 !-----------------------------------------------------------------------
 !
       TimeFrac=0
-      DO ng=1,MODELS(Iroms)%Ngrids
-        IF (ANY(COUPLED(Iroms)%LinkedGrid(ng,:))) THEN
+      DO ng=1,MODELS(Iatmos)%Ngrids
+        IF (ANY(COUPLED(Iatmos)%LinkedGrid(ng,:))) THEN
           TimeFrac=MAX(TimeFrac,                                        &
-     &                 MAXVAL(MODELS(Iroms)%TimeFrac(ng,:),             &
+     &                 MAXVAL(MODELS(Iatmos)%TimeFrac(ng,:),            &
      &                        mask=MODELS(:)%IsActive))
         END IF
       END DO
@@ -997,18 +1006,18 @@
           RETURN
         END IF
       END IF
-      ClockInfo(Iroms)%TimeStep=ClockInfo(Idriver)%TimeStep/TimeFrac
+      ClockInfo(Iatmos)%TimeStep=ClockInfo(Idriver)%TimeStep/TimeFrac
 !
 !-----------------------------------------------------------------------
-!  Create ROMS component clock.
+!  Create COAMPS component clock.
 !-----------------------------------------------------------------------
 !
-      ClockInfo(Iroms)%Name='ROMS_clock'
-      clock=ESMF_ClockCreate(ClockInfo(Iroms)%TimeStep,                 &
-     &                       ClockInfo(Iroms)%StartTime,                &
-     &                       stopTime =ClockInfo(Iroms)%StopTime,       &
-     &                       refTime  =ClockInfo(Iroms)%ReferenceTime,  &
-     &                       name     =TRIM(ClockInfo(Iroms)%Name),     &
+      ClockInfo(Iatmos)%Name='COAMPS_clock'
+      clock=ESMF_ClockCreate(ClockInfo(Iatmos)%TimeStep,                &
+     &                       ClockInfo(Iatmos)%StartTime,               &
+     &                       stopTime =ClockInfo(Iatmos)%StopTime,      &
+     &                       refTime  =ClockInfo(Iatmos)%ReferenceTime, &
+     &                       name     =TRIM(ClockInfo(Iatmos)%Name),    &
      &                       rc=rc)
       IF (ESMF_LogFoundError(rcToCheck=rc,                              &
      &                       msg=ESMF_LOGERR_PASSTHRU,                  &
@@ -1016,12 +1025,12 @@
      &                       file=MyFile)) THEN
         RETURN
       END IF
-      ClockInfo(Iroms)%Clock=clock
+      ClockInfo(Iatmos)%Clock=clock
 !
 !  Set ROMS component clock.
 !
       CALL ESMF_GridCompSet (model,                                     &
-     &                       clock=ClockInfo(Iroms)%Clock,              &
+     &                       clock=ClockInfo(Iatmos)%Clock,             &
      &                       rc=rc)
       IF (ESMF_LogFoundError(rcToCheck=rc,                              &
      &                       msg=ESMF_LOGERR_PASSTHRU,                  &
@@ -1032,8 +1041,8 @@
 !
 !  Get current time.
 !
-      CALL ESMF_ClockGet (ClockInfo(Iroms)%Clock,                       &
-     &                    currTime=ClockInfo(Iroms)%CurrentTime,        &
+      CALL ESMF_ClockGet (ClockInfo(Iatmos)%Clock,                      &
+     &                    currTime=ClockInfo(Iatmos)%CurrentTime,       &
      &                    rc=rc)
       IF (ESMF_LogFoundError(rcToCheck=rc,                              &
      &                       msg=ESMF_LOGERR_PASSTHRU,                  &
@@ -1043,7 +1052,7 @@
       END IF
 !
 !-----------------------------------------------------------------------
-!  Compare driver time against ROMS component time.
+!  Compare driver time against COAMPS component time.
 !-----------------------------------------------------------------------
 !
       IF (ClockInfo(Idriver)%Restarted) THEN
@@ -1055,66 +1064,58 @@
 !  Report start and stop time clocks.
 !
       IF (localPET.eq.0) THEN
-        WRITE (cplout,'(/)')
-        WRITE (cplout,10) 'DRIVER Calendar:    ',                       &
-     &                    TRIM(ClockInfo(Idriver)%CalendarString),      &
-     &                    'DRIVER Start Clock: ',                       &
-     &                    TRIM(ClockInfo(Idriver)%Time_StartString),    &
-     &                    'DRIVER Stop  Clock: ',                       &
-     &                    TRIM(ClockInfo(Idriver)%Time_StopString)
-!
-        WRITE (cplout,10) 'ROMS Calendar:      ',                       &
-     &                    TRIM(ClockInfo(Iroms)%CalendarString),        &
-     &                    'ROMS Start Clock:   ',                       &
-     &                    TRIM(ClockInfo(Iroms)%Time_StartString),      &
-     &                    'ROMS Stop  Clock:   ',                       &
-     &                    TRIM(ClockInfo(Iroms)%Time_StopString)
+        WRITE (cplout,10) 'COAMPS Calendar:    ',                       &
+     &                    TRIM(ClockInfo(Iatmos)%CalendarString),       &
+     &                    'COAMPS Start Clock: ',                       &
+     &                    TRIM(ClockInfo(Iatmos)%Time_StartString),     &
+     &                    'COAMPS Stop  Clock: ',                       &
+     &                    TRIM(ClockInfo(Iatmos )%Time_StopString)
       END IF
 !
-!  Compare Driver and ROMS clocks.
+!  Compare Driver and COAMPS clocks.
 !
-      IF (ClockInfo(Iroms)%Time_StartString(1:19).ne.                   &
-     &    StartTimeString(1:19)) THEN
+      IF (ClockInfo(Iatmos)%Time_StartString.ne.                        &
+     &    StartTimeString) THEN
         IF (localPET.eq.0) THEN
-          WRITE (cplout,20) 'ROMS   Start Time: ',                      &
-     &                      ClockInfo(Iroms)%Time_StartString(1:19),    &
+          WRITE (cplout,20) 'COAMPS Start Time: ',                      &
+     &                      TRIM(ClockInfo(Iatmos)%Time_StartString),   &
      &                      'Driver Start Time: ',                      &
      &                      TRIM(StartTimeString),                      &
      &                      '                   are not equal!'
         END IF
-        message='Driver and ROMS start times do not match: '//          &
+        message='Driver and COAMPS start times do not match: '//        &
      &          'please check the config files.'
         CALL ESMF_LogSetError (ESMF_FAILURE, rcToReturn=rc,             &
      &                         msg=TRIM(message))
         RETURN
       END IF
 !
-      IF (ClockInfo(Iroms  )%Time_StopString(1:19).ne.                  &
+      IF (ClockInfo(Iatmos )%Time_StopString(1:19).ne.                  &
      &    ClockInfo(Idriver)%Time_StopString(1:19)) THEN
         IF (localPET.eq.0) THEN
-          WRITE (cplout,20) 'ROMS   Stop Time: ',                       &
-     &                      ClockInfo(Iroms  )%Time_StopString(1:19),   &
+          WRITE (cplout,20) 'COAMPS Stop Time: ',                       &
+     &                      TRIM(ClockInfo(Iatmos )%Time_StopString),   &
      &                      'Driver Stop Time: ',                       &
      &                      TRIM(ClockInfo(Idriver)%Time_StopString),   &
      &                      '                   are not equal!'
         END IF
-        message='Driver and ROMS stop times do not match: '//           &
+        message='Driver and COAMPS stop times do not match: '//         &
      &          'please check the config files.'
         CALL ESMF_LogSetError (ESMF_FAILURE, rcToReturn=rc,             &
      &                         msg=TRIM(message))
         RETURN
       END IF
 !
-      IF (TRIM(ClockInfo(Iroms  )%CalendarString).ne.                   &
+      IF (TRIM(ClockInfo(Iatmos )%CalendarString).ne.                   &
      &    TRIM(ClockInfo(Idriver)%CalendarString)) THEN
         IF (localPET.eq.0) THEN
-          WRITE (cplout,20) 'ROMS   Calendar: ',                        &
-     &                      TRIM(ClockInfo(Iroms  )%CalendarString),    &
+          WRITE (cplout,20) 'COAMPS Calendar: ',                        &
+     &                      TRIM(ClockInfo(Iatmos )%CalendarString),    &
      &                      'Driver Calendar: ',                        &
      &                      TRIM(ClockInfo(Idriver)%CalendarString),    &
      &                      '                  are not equal!'
         END IF
-        message='Driver and ROMS calendars do not match: '//            &
+        message='Driver and COAMPS calendars do not match: '//          &
      &          'please check the config files.'
         CALL ESMF_LogSetError (ESMF_FAILURE, rcToReturn=rc,             &
      &                         msg=TRIM(message))
@@ -1122,7 +1123,7 @@
       END IF
 !
       IF (ESM_track) THEN
-        WRITE (trac,'(a,a,i0)') '<== Exiting  ROMS_SetClock',           &
+        WRITE (trac,'(a,a,i0)') '<== Exiting  COAMPS_SetClock',         &
      &                          ', PET', PETrank
         CALL my_flush (trac)
       END IF
@@ -1131,15 +1132,15 @@
  20   FORMAT (/,2x,a,a,/,2x,a,a,/,2x,a)
 !
       RETURN
-      END SUBROUTINE ROMS_SetClock
+      END SUBROUTINE COAMPS_SetClock
 
 # ifdef ESM_SETRUNCLOCK
 !
-      SUBROUTINE ROMS_SetRunClock (model, rc)
+      SUBROUTINE COAMPS_SetRunClock (model, rc)
 !
 !=======================================================================
 !                                                                      !
-!  Sets ROMS run clock manually to avoid getting zero time stamps at   !
+!  Sets COAMPS run clock manually to avoid getting zero time stamps at !
 !  the first regridding call.                                          !
 !                                                                      !
 !=======================================================================
@@ -1153,7 +1154,7 @@
 !  Local variable declarations.
 !
       character (len=*), parameter :: MyFile =                          &
-     &  __FILE__//", ROMS_SetRunClock"
+     &  __FILE__//", COAMPS_SetRunClock"
 !
       TYPE (ESMF_Clock) :: driverClock, modelClock
       TYPE (ESMF_Time)  :: currTime
@@ -1163,7 +1164,7 @@
 !-----------------------------------------------------------------------
 !
       IF (ESM_track) THEN
-        WRITE (trac,'(a,a,i0)') '==> Entering ROMS_SetRunClock',        &
+        WRITE (trac,'(a,a,i0)') '==> Entering COAMPS_SetRunClock',      &
      &                          ', PET', PETrank
         CALL my_flush (trac)
       END IF
@@ -1221,20 +1222,20 @@
       END IF
 !
       IF (ESM_track) THEN
-        WRITE (trac,'(a,a,i0)') '<== Exiting  ROMS_SetRunClock',        &
+        WRITE (trac,'(a,a,i0)') '<== Exiting  COAMPS_SetRunClock',      &
      &                          ', PET', PETrank
         CALL my_flush (trac)
       END IF
 !
       RETURN
-      END SUBROUTINE ROMS_SetRunClock
+      END SUBROUTINE COAMPS_SetRunClock
 # endif
 !
-      SUBROUTINE ROMS_CheckImport (model, rc)
+      SUBROUTINE COAMPS_CheckImport (model, rc)
 !
 !=======================================================================
 !                                                                      !
-!  Checks if ROMS component import field is at the correct time.       !
+!  Checks if COAMPS component import field is at the correct time.     !
 !                                                                      !
 !=======================================================================
 !
@@ -1255,7 +1256,7 @@
       character (len=22) :: DriverTimeString, FieldTimeString
 
       character (len=*), parameter :: MyFile =                          &
-     &  __FILE__//", ROMS_CheckImport"
+     &  __FILE__//", COAMPS_CheckImport"
 !
       character (ESMF_MAXSTR) :: string, FieldName
       character (ESMF_MAXSTR), allocatable :: ImportNameList(:)
@@ -1272,7 +1273,7 @@
 !-----------------------------------------------------------------------
 !
       IF (ESM_track) THEN
-        WRITE (trac,'(a,a,i0)') '==> Entering ROMS_CheckImport',        &
+        WRITE (trac,'(a,a,i0)') '==> Entering COAMPS_CheckImport',      &
      &                          ', PET', PETrank
         CALL my_flush (trac)
       END IF
@@ -1319,15 +1320,7 @@
         RETURN
       END IF
 !
-!  Adjust driver clock for semi-implicit coupling.
-
-      IF (CouplingType.eq.1) THEN
-        CurrentTime=DriverTime                  ! explicit coupling
-      ELSE
-        CurrentTime=DRiverTime+TimeStep         ! semi-implicit coupling
-      END IF
-!
-      CALL ESMF_TimeGet (CurrentTime,                                   &
+      CALL ESMF_TimeGet (DriverTime,                                    &
      &                   s_r8=TcurrentInSeconds,                        &
      &                   timeStringISOFrac=DriverTimeString,            &
      &                   rc=rc)
@@ -1344,10 +1337,10 @@
 !  Get list of import fields.
 !-----------------------------------------------------------------------
 !
-      IF (Nimport(Iroms).gt.0) THEN
-        NESTED_LOOP : DO ng=1,MODELS(Iroms)%Ngrids
-          IF (ANY(COUPLED(Iroms)%LinkedGrid(ng,:))) THEN
-            CALL ESMF_StateGet (MODELS(Iroms)%ImportState(ng),          &
+      IF (Nimport(Iatmos).gt.0) THEN
+        NESTED_LOOP : DO ng=1,MODELS(Iatmos)%Ngrids
+          IF (ANY(COUPLED(Iatmos)%LinkedGrid(ng,:))) THEN
+            CALL ESMF_StateGet (MODELS(Iatmos)%ImportState(ng),         &
      &                          itemCount=ImportCount,                  &
      &                          rc=rc)
             IF (ESMF_LogFoundError(rcToCheck=rc,                        &
@@ -1361,7 +1354,7 @@
               allocate ( ImportNameList(ImportCount) )
             END IF
 !
-            CALL ESMF_StateGet (MODELS(Iroms)%ImportState(ng),          &
+            CALL ESMF_StateGet (MODELS(Iatmos)%ImportState(ng),         &
      &                          itemNameList=ImportNameList,            &
      &                          rc=rc)
             IF (ESMF_LogFoundError(rcToCheck=rc,                        &
@@ -1377,7 +1370,7 @@
 !
             FIELD_LOOP : DO i=1,ImportCount
               FieldName=TRIM(ImportNameList(i))
-              CALL ESMF_StateGet (MODELS(Iroms)%ImportState(ng),        &
+              CALL ESMF_StateGet (MODELS(Iatmos)%ImportState(ng),       &
      &                            itemName=TRIM(FieldName),             &
      &                            field=field,                          &
      &                            rc=rc)
@@ -1425,7 +1418,8 @@
 !
 !  Check if import field is at the correct time.
 !
-              string='ROMS_CheckImport - '//TRIM(FieldName)//' field'
+              string='COAMPS_CheckImport - '//TRIM(FieldName)//' field'
+              CurrentTime=DriverTime
 !
               atCorrectTime=NUOPC_IsAtTime(field,                       &
      &                                     CurrentTime,                 &
@@ -1457,117 +1451,186 @@
       END IF
 !
       IF (ESM_track) THEN
-        WRITE (trac,'(a,a,i0)') '<== Exiting  ROMS_CheckImport',        &
+        WRITE (trac,'(a,a,i0)') '<== Exiting  COAMPS_CheckImport',      &
      &                          ', PET', PETrank
         CALL my_flush (trac)
       END IF
 !
-  10  FORMAT (1x,'ROMS_CheckImport - ',a,':',t32,'TimeStamp = ',a,      &
+  10  FORMAT (1x,'COAMPS_CheckImport - ',a,':',t32,'TimeStamp = ',a,    &
      &        ',  DriverTime = ',a)
 !
       RETURN
-      END SUBROUTINE ROMS_CheckImport
+      END SUBROUTINE COAMPS_CheckImport
 !
-      SUBROUTINE ROMS_SetGridArrays (ng, tile, model, rc)
+      SUBROUTINE COAMPS_SetGridArrays (ng, model, localPET, rc)
 !
 !=======================================================================
 !                                                                      !
-!  Sets ROMS component staggered, horizontal grids arrays, grid area,  !
-!  and land/sea mask, if any.                                          !
+!  Sets COAMPS component staggered, horizontal grids arrays, grid      !
+!  area, and land/sea mask.                                            !
+!                                                                      !
+!  COAMPS Grid Decomposition:                                          !
+!  ==========================                                          !
+!                                                                      !
+!  COAMPS global horizontal domain for nest "ng":                      !
+!                                                                      !
+!      full-extent area: [0:m(ng)+1, 0:n(ng)+1]                        !
+!         physical area: [1:m(ng)  , 1:n(ng)  ]                        !
+!    computational area: [2:m(ng)-1, 2:n(ng)-1]                        !
+!                                                                      !
+!  COAMPS number of horizontal subdomains is "nprdom".                 !
+!                                                                      !
+!  COAMPS number of horizontal subdomains along each dimension for     !
+!  nest "ng" is:                                                       !
+!                                                                      !
+!      domdec%ndx(ng)                                                  !
+!      domdec%ndy(ng)                                                  !
+!                                                                      !
+!  COAMPS supports only one horizontal subdomain (tile) per process    !
+!  (that is, one DE per PET).                                          !
+!                                                                      !
+!  COAMPS physical area bounds for horizontal subdomain (tile) in      !
+!  nest "ng" are:                                                      !
+!                                                                      !
+!      [nlimx(ng)%bp(tile) : nlimx(ng)%ep(tile),                       !
+!       nlimy(ng)%bp(tile) : nlimy(ng)%ep(tile)]                       !
+!                                                                      !
+!  COAMPS computational area bounds for horizontal subdomain (tile) in !
+!  nest "ng" are:                                                      !
+!                                                                      !
+!      [nlimx(ng)%b (tile) : nlimx(ng)%e (tile),                       !
+!       nlimy(nn)%b (tile) : nlimy(ng)%e (tile)]                       !
+!                                                                      !
+!  COAMPS local horizontal subdomain (tile) area bounds for nest       !
+!  "ng" are:                                                           !
+!                                                                      !
+!   Full-extent grid:   [iminf(ng) : imaxf(ng),                        !
+!                        jminf(ng) : jmaxf(ng)]                        !
+!                                                                      !
+!   Physical grid:      [iminp_nest(ng) : imaxp_nest(ng),              !
+!                        jminp_nest(ng) : jmaxp_nest(ng)]              !
+!                                                                      !
+!   Interior grid:      [imini(ng) : imaxi(ng),                        !
+!                        jmini(ng) : jmaxi(ng)]                        !
+!                                                                      !
+!  Relationship between COAMPS array and ESMF_Array subdomain regions. !
+!  The second index in the ESMF LBound/UBound arrays is the DE index,  !
+!  which is always one since COAMPS only supports one DE per PET.      !
+!  COAMPS array indexing is based on global grid index.  ESMF array    !
+!  indexing mirrors the COAMPS array indexing (ESMF_INDEX_GLOBAL).     !
+!                                                                      !
+!  * ESMF Exclusive Region  <=> COAMPS Physical Area                   !
+!      Partial halos for subdomains that contain the physical boundary !
+!      No halos otherwise                                              !
+!                                                                      !
+!      Array bounds:                                                   !
+!                                                                      !
+!      ESMF     [exclusiveLBound(1,1) : exclusiveUBound(1,1),          !
+!                exclusiveLBound(2,1) : exclusiveUBound(2,1)]          !
+!                                                                      !
+!      COAMPS   [iminp : imaxp,                                        !
+!                jminp : jmaxp]                                        !
+!                                                                      !
+!  * ESMF Computational Region  <=> COAMPS Physical Area               !
+!      Partial halos for subdomains that contain the physical boundary !
+!      No halos otherwise                                              !
+!                                                                      !
+!      Array bounds:                                                   !
+!                                                                      !
+!      ESMF     [computationalLBound(1,1) : computationalUBound(1,1),  !
+!                computationalLBound(2,1) : computationalUBound(2,1)]  !
+!                                                                      !
+!      COAMPS   [iminp : imaxp,                                        !
+!                jminp : jmaxp]                                        !
+!                                                                      !
+!  * ESMF Total Region  <=> COAMPS Full Extent Area                    !
+!      Full halos                                                      !
+!                                                                      !
+!      Array bounds:                                                   !
+!                                                                      !
+!      ESMF     [totalLBound(1,1) : totalUBound(1,1),                  !
+!                totalLBound(2,1) : totalUBound(2,1)]                  !
+!                                                                      !
+!      COAMPS   [iminf : imaxf,                                        !
+!                jminf : jmaxf]                                        !
 !                                                                      !
 !=======================================================================
 !
-      USE mod_param
-      USE mod_grid
+      USE coamm_memm, ONLY : adom
+      USE domdec,     ONLY : iminf, imaxf, jminf, jmaxf,                &
+     &                       nlimx, nlimy, nprdom, ndx, ndy
+      USE gridnl_mod, ONLY : delx, dely, m, n
 !
 !  Imported variable declarations.
 !
-      integer, intent(in)  :: ng, tile
+      integer, intent(in)  :: ng, localPET
       integer, intent(out) :: rc
 !
       TYPE (ESMF_GridComp), intent(inout) :: model
 !
 !  Local variable declarations.
 !
-      integer :: MyTile, gtype, i, ivar, j, node
-      integer :: Istr,  Iend,  Jstr,  Jend
-      integer :: IstrR, IendR, JstrR, JendR
+      integer :: gtype, i, ivar, j, node, tile
       integer :: localDE, localDEcount
-      integer :: staggerEdgeLWidth(2)
-      integer :: staggerEdgeUWidth(2)
+      integer :: LBi, UBi, LBj, UBj
+      integer :: cLB(2), cUB(2), eLB(2), eUB(2), tLB(2), tUB(2)
 !
       integer, allocatable :: deBlockList(:,:,:)
-      integer (i4b), pointer :: ptrM(:,:) => NULL()     ! land/sea mask
+      integer (i4b), pointer :: ptrM(:,:) => NULL()
 !
-      real (dp), pointer :: ptrA(:,:) => NULL()         ! area
-      real (dp), pointer :: ptrX(:,:) => NULL()         ! longitude
-      real (dp), pointer :: ptrY(:,:) => NULL()         ! latitude
+      real (dp), pointer :: ptrA(:,:) => NULL()
+      real (dp), pointer :: ptrX(:,:) => NULL()
+      real (dp), pointer :: ptrY(:,:) => NULL()
 !
+      character (len=40) :: name
+
       character (len=*), parameter :: MyFile =                          &
-     &  __FILE__//", ROMS_SetGridArrays"
+     &  __FILE__//", COAMPS_SetGridArrays"
 !
       TYPE (ESMF_DistGrid)   :: distGrid
       TYPE (ESMF_StaggerLoc) :: staggerLoc
+      TYPE (ESMF_VM)         :: vm
 !
 !-----------------------------------------------------------------------
 !  Initialize return code flag to success state (no error).
 !-----------------------------------------------------------------------
 !
       IF (ESM_track) THEN
-        WRITE (trac,'(a,a,i0)') '==> Entering ROMS_SetGridArrays',      &
+        WRITE (trac,'(a,a,i0)') '==> Entering COAMPS_SetGridArrays',    &
      &                          ', PET', PETrank
         CALL my_flush (trac)
       END IF
       rc=ESMF_SUCCESS
 !
 !-----------------------------------------------------------------------
-!  Set limits of the grid arrays based on tile decomposition (MPI rank)
-!  and nested grid number.
+!  Querry the Virtual Machine (VM) parallel environmemt for the MPI
+!  communicator handle and current node rank.
 !-----------------------------------------------------------------------
 !
-      IstrR=BOUNDS(ng)%IstrR(tile)   ! Full range I-starting (RHO)
-      IendR=BOUNDS(ng)%IendR(tile)   ! Full range I-ending   (RHO)
-      JstrR=BOUNDS(ng)%JstrR(tile)   ! Full range J-starting (RHO)
-      JendR=BOUNDS(ng)%JendR(tile)   ! Full range J-ending   (RHO)
+      CALL ESMF_GridCompGet (model,                                     &
+     &                       vm=vm,                                     &
+     &                       rc=rc)
+      IF (ESMF_LogFoundError(rcToCheck=rc,                              &
+     &                       msg=ESMF_LOGERR_PASSTHRU,                  &
+     &                       line=__LINE__,                             &
+     &                       file=MyFile)) THEN
+        RETURN
+      END IF
 !
-      Istr=BOUNDS(ng)%Istr(tile)     ! Full range I-starting (PSI, U)
-      Iend=BOUNDS(ng)%Iend(tile)     ! Full range I-ending   (PSI)
-      Jstr=BOUNDS(ng)%Jstr(tile)     ! Full range J-starting (PSI, V)
-      Jend=BOUNDS(ng)%Jend(tile)     ! Full range J-ending   (PSI)
-!
-!  Set tiles lower and upper bounds for each decomposition element.
-!  In ROMS, the "exclusive region" for each decomposition element or
-!  horizontal tile ranges is bounded by (Istr:Iend, Jstr:Jend). Each
-!  tiled array is dimensioned as (LBi:UBi, LBj:UBj) which includes
-!  halo regions (usually 2 ghost points) and padding when appropriate
-!  (total/memory region). All ROMS arrays are horizontally dimensioned
-!  with the same bounds regardless if they are variables located at
-!  RHO-, PSI-, U-, or V-points. There is no halos at the boundary edges.
-!  The physical boundary is a U-points (east/west edged) and V-points
-!  (south/north edges). The boundary for RHO-points variables are
-!  located at half grid (dx,dy) distance away from the physical boundary
-!  at array indices(i=0; i=Lm+1) and (j=0; j=Mm+1).
-!
-!               --------------------- UBj      ESMF uses a very
-!              |                     |         complicated array
-!              | Jend __________     |         regions:
-!              |     |          |    |
-!              |     |          |    |         * interior region
-!              |     |          |    |         * exclusive region
-!              | Jstr|__________|    |         * computational region
-!              |     Istr    Iend    |         * total (memory) region
-!              |                     |
-!               --------------------- LBj
-!               LBi               UBi
+!-----------------------------------------------------------------------
+!  Set tiles lower and upper bounds for each decomposition element
+!  (DE=1) in terms of global indices using the physical grid area
+!  (iminp:imaxp, jminp:jmaxp; no overlap between tiles).
+!-----------------------------------------------------------------------
 !
       IF (.not.allocated(deBlockList)) THEN
-        allocate ( deBlockList(2,2,NtileI(ng)*NtileJ(ng)) )
+        allocate ( deBlockList(2,2,nprdom) )
       END IF
-      DO MyTile=0,NtileI(ng)*NtileJ(ng)-1
-        deBlockList(1,1,MyTile+1)=BOUNDS(ng)%Istr(MyTile)
-        deBlockList(1,2,MyTile+1)=BOUNDS(ng)%Iend(MyTile)
-        deBlockList(2,1,MyTile+1)=BOUNDS(ng)%Jstr(MyTile)
-        deBlockList(2,2,MyTile+1)=BOUNDS(ng)%Jend(MyTile)
+      DO tile=1,nprdom
+        deBlockList(1,1,tile)=nlimx(ng)%bp(tile)       ! iminp
+        deBlockList(1,2,tile)=nlimx(ng)%ep(tile)       ! imaxp
+        deBlockList(2,1,tile)=nlimy(ng)%bp(tile)       ! jminp
+        deBlockList(2,2,tile)=nlimy(ng)%ep(tile)       ! jmaxp
       END DO
 !
 !-----------------------------------------------------------------------
@@ -1578,7 +1641,7 @@
 !  (PET).
 !
       distGrid=ESMF_DistGridCreate(minIndex=(/ 1, 1 /),                 &
-     &                             maxIndex=(/ Lm(ng), Mm(ng) /),       &
+     &                             maxIndex=(/ m(ng), n(ng) /),         &
      &                             deBlockList=deBlockList,             &
      &                             rc=rc)
       IF (ESMF_LogFoundError(rcToCheck=rc,                              &
@@ -1588,48 +1651,61 @@
         RETURN
       END IF
 !
-!  Report ROMS DistGrid based on model domain decomposition.
+!  Report COAMPS DistGrid based on model domain decomposition.
 !
-      IF ((tile.eq.0).and.(DebugLevel.gt.0)) THEN
+      IF ((localPET.eq.0).and.(DebugLevel.gt.0)) THEN
         WRITE (cplout,10) ng, TRIM(GridType(Icenter))//" Point",        &
-     &                    NtileI(ng), NtileJ(ng)
-        DO MyTile=1,NtileI(ng)*NtileJ(ng)
-          WRITE (cplout,20) MyTile-1, deBlockList(1,1,MyTile),          &
-     &                                deBlockList(1,2,MyTile),          &
-     &                                deBlockList(2,1,MyTile),          &
-     &                                deBlockList(2,2,MyTile)
+     &                    ndx(ng), ndy(ng)
+        DO node=1,nprdom
+          WRITE (cplout,20) node-1, deBlockList(1,1,node),              &
+     &                              deBlockList(1,2,node),              &
+     &                              deBlockList(2,1,node),              &
+     &                              deBlockList(2,2,node)
         END DO
       END IF
       IF (allocated(deBlockList)) deallocate (deBlockList)
+
+# ifdef DATA_COUPLING
+!
+!  Read in melding weights coefficients needed by COAMPS to merge
+!  imported fields from DATA and other ESM components at the specified
+!  nested grid because of incongruent grids.
+!
+      IF ((MODELS(Idata)%IsActive).and.                                 &
+     &    (ng.eq.WEIGHTS(Iatmos)%NestedGrid)) THEN
+        CALL get_weights (Iatmos, m(ng), n(ng), vm, rc)
+        IF (ESMF_LogFoundError(rcToCheck=rc,                            &
+     &                         msg=ESMF_LOGERR_PASSTHRU,                &
+     &                         line=__LINE__,                           &
+     &                         file=MyFile)) THEN
+          RETURN
+        END IF
+      END IF
+# endif
 !
 !-----------------------------------------------------------------------
 !  Set component grid coordinates.
 !-----------------------------------------------------------------------
 !
-!  Define component grid location type: Arakawa C-grid.
+!  Define component grid location type: Although COAMPS is discritased
+!  on an Arakawa C-grid, it exports and imports fields at the grid cell
+!  center.
 !
-!    Icenter:  RHO-point, cell center
-!    Icorner:  PSI-point, cell corners
-!    Iupoint:  U-point,   cell west/east sides
-!    Ivpoint:  V-point,   cell south/north sides
-!
-      IF (.not.allocated(MODELS(Iroms)%mesh)) THEN
-        allocate ( MODELS(Iroms)%mesh(4) )
-        MODELS(Iroms)%mesh(1)%gtype=Icenter
-        MODELS(Iroms)%mesh(2)%gtype=Icorner
-        MODELS(Iroms)%mesh(3)%gtype=Iupoint
-        MODELS(Iroms)%mesh(4)%gtype=Ivpoint
+      IF (.not.allocated(MODELS(Iatmos)%mesh)) THEN
+        allocate ( MODELS(Iatmos)%mesh(1) )
+        MODELS(Iatmos)%mesh(1)%gtype=Icenter
       END IF
 !
-!  Create ESMF Grid. The array indices are global following ROMS
-!  design.
+!  Create ESMF Grid.
 !
-      MODELS(Iroms)%grid(ng)=ESMF_GridCreate(distgrid=distGrid,         &
-     &                                   gridEdgeLWidth=(/1,1/),        &
-     &                                   gridEdgeUWidth=(/1,1/),        &
-     &                                   indexflag=ESMF_INDEX_GLOBAL,   &
-     &                                   name=TRIM(MODELS(Iroms)%name), &
-     &                                   rc=rc)
+      MODELS(Iatmos)%grid(ng)=ESMF_GridCreate(distgrid=distGrid,        &
+     &                                  coordSys=ESMF_COORDSYS_SPH_DEG, &
+     &                                  coordTypeKind=ESMF_TYPEKIND_R8, &
+     &                                  gridEdgeLWidth=(/0,0/),         &
+     &                                  gridEdgeUWidth=(/0,0/),         &
+     &                                  indexflag=ESMF_INDEX_GLOBAL,    &
+     &                                  name=TRIM(MODELS(Iatmos)%name), &
+     &                                  rc=rc)
       IF (ESMF_LogFoundError(rcToCheck=rc,                              &
      &                       msg=ESMF_LOGERR_PASSTHRU,                  &
      &                       line=__LINE__,                             &
@@ -1641,7 +1717,7 @@
 !  DE is associated with each Persistent Execution Thread (PETs). Thus,
 !  localDEcount=1.
 !
-      CALL ESMF_GridGet (MODELS(Iroms)%grid(ng),                        &
+      CALL ESMF_GridGet (MODELS(Iatmos)%grid(ng),                       &
      &                   localDECount=localDEcount,                     &
      &                   rc=rc)
       IF (ESMF_LogFoundError(rcToCheck=rc,                              &
@@ -1653,36 +1729,20 @@
 !
 !  Mesh coordinates for each variable type.
 !
-      MESH_LOOP : DO ivar=1,UBOUND(MODELS(Iroms)%mesh, DIM=1)
+      MESH_LOOP : DO ivar=1,UBOUND(MODELS(Iatmos)%mesh, DIM=1)
 !
 !  Set staggering type, Arakawa C-grid.
 !
-        SELECT CASE (MODELS(Iroms)%mesh(ivar)%gtype)
+        SELECT CASE (MODELS(Iatmos)%mesh(ivar)%gtype)
           CASE (Icenter)
             staggerLoc=ESMF_STAGGERLOC_CENTER
-            staggerEdgeLWidth=(/1,1/)
-            staggerEdgeUWidth=(/1,1/)
-          CASE (Icorner)
-            staggerLoc=ESMF_STAGGERLOC_CORNER
-            staggerEdgeLWidth=(/0,0/)
-            staggerEdgeUWidth=(/1,1/)
-          CASE (Iupoint)
-            staggerLoc=ESMF_STAGGERLOC_EDGE1
-            staggerEdgeLWidth=(/0,1/)
-            staggerEdgeUWidth=(/1,1/)
-          CASE (Ivpoint)
-            staggerLoc=ESMF_STAGGERLOC_EDGE2
-            staggerEdgeLWidth=(/1,0/)
-            staggerEdgeUWidth=(/1,1/)
         END SELECT
 !
 !  Allocate coordinate storage associated with staggered grid type.
 !  No coordinate values are set yet.
 !
-        CALL ESMF_GridAddCoord (MODELS(Iroms)%grid(ng),                 &
+        CALL ESMF_GridAddCoord (MODELS(Iatmos)%grid(ng),                &
      &                          staggerLoc=staggerLoc,                  &
-     &                          staggerEdgeLWidth=staggerEdgeLWidth,    &
-     &                          staggerEdgeUWidth=staggerEdgeUWidth,    &
      &                          rc=rc)
         IF (ESMF_LogFoundError(rcToCheck=rc,                            &
      &                         msg=ESMF_LOGERR_PASSTHRU,                &
@@ -1690,12 +1750,10 @@
      &                         file=MyFile)) THEN
           RETURN
         END IF
-
-# ifdef MASKING
 !
-!  Allocate storage for land/sea masking.
+!  Allocate storage for masking.
 !
-        CALL ESMF_GridAddItem (MODELS(Iroms)%grid(ng),                  &
+        CALL ESMF_GridAddItem (MODELS(Iatmos)%grid(ng),                 &
      &                         staggerLoc=staggerLoc,                   &
      &                         itemflag=ESMF_GRIDITEM_MASK,             &
      &                         rc=rc)
@@ -1705,13 +1763,19 @@
      &                         file=MyFile)) THEN
           RETURN
         END IF
-        MODELS(Iroms)%LandValue=0
-        MODELS(Iroms)%SeaValue=1
-# endif
+!
+!  The COAMPS masking is as follows, -1: inland lake
+!                                     0: sea water
+!                                     1: land
+!                                     2: sea ice
+!                                     3: land ice
+!
+        MODELS(Iatmos)%LandValue=1
+        MODELS(Iatmos)%SeaValue=0
 !
 !  Allocate storage for grid area.
 !
-        CALL ESMF_GridAddItem (MODELS(Iroms)%grid(ng),                  &
+        CALL ESMF_GridAddItem (MODELS(Iatmos)%grid(ng),                 &
      &                         staggerLoc=staggerLoc,                   &
      &                         itemflag=ESMF_GRIDITEM_AREA,             &
      &                         rc=rc)
@@ -1723,14 +1787,21 @@
         END IF
 !
 !  Get pointers and set coordinates for the grid.  Usually, the DO-loop
-!  is executed once since localDEcount=1.
+!  is executed once since localDEcount=1. Notice that the indices for
+!  the exclusive, computational, and total regions
 !
         DE_LOOP : DO localDE=0,localDEcount-1
-          CALL ESMF_GridGetCoord (MODELS(Iroms)%grid(ng),               &
+          CALL ESMF_GridGetCoord (MODELS(Iatmos)%grid(ng),              &
      &                            coordDim=1,                           &
-     &                            localDE=localDE,                      &
      &                            staggerLoc=staggerLoc,                &
+     &                            localDE=localDE,                      &
      &                            farrayPtr=ptrX,                       &
+     &                            exclusiveLBound=eLB,                  &
+     &                            exclusiveUBound=eUB,                  &
+     &                            computationalLBound=cLB,              &
+     &                            computationalUBound=cUB,              &
+     &                            totalLBound=tLB,                      &
+     &                            totalUBound=tUB,                      &
      &                            rc=rc)
           IF (ESMF_LogFoundError(rcToCheck=rc,                          &
      &                           msg=ESMF_LOGERR_PASSTHRU,              &
@@ -1739,11 +1810,17 @@
             RETURN
           END IF
 !
-          CALL ESMF_GridGetCoord (MODELS(Iroms)%grid(ng),               &
+          CALL ESMF_GridGetCoord (MODELS(Iatmos)%grid(ng),              &
      &                            coordDim=2,                           &
-     &                            localDE=localDE,                      &
      &                            staggerLoc=staggerLoc,                &
+     &                            localDE=localDE,                      &
      &                            farrayPtr=ptrY,                       &
+     &                            exclusiveLBound=eLB,                  &
+     &                            exclusiveUBound=eUB,                  &
+     &                            computationalLBound=cLB,              &
+     &                            computationalUBound=cUB,              &
+     &                            totalLBound=tLB,                      &
+     &                            totalUBound=tUB,                      &
      &                            rc=rc)
           IF (ESMF_LogFoundError(rcToCheck=rc,                          &
      &                           msg=ESMF_LOGERR_PASSTHRU,              &
@@ -1752,10 +1829,10 @@
             RETURN
           END IF
 !
-          CALL ESMF_GridGetItem (MODELS(Iroms)%grid(ng),                &
-     &                           localDE=localDE,                       &
-     &                           staggerLoc=staggerLoc,                 &
+          CALL ESMF_GridGetItem (MODELS(Iatmos)%grid(ng),               &
      &                           itemflag=ESMF_GRIDITEM_MASK,           &
+     &                           staggerLoc=staggerLoc,                 &
+     &                           localDE=localDE,                       &
      &                           farrayPtr=ptrM,                        &
      &                           rc=rc)
           IF (ESMF_LogFoundError(rcToCheck=rc,                          &
@@ -1765,10 +1842,10 @@
             RETURN
           END IF
 !
-          CALL ESMF_GridGetItem (MODELS(Iroms)%grid(ng),                &
-     &                           localDE=localDE,                       &
-     &                           staggerLoc=staggerLoc,                 &
+          CALL ESMF_GridGetItem (MODELS(Iatmos)%grid(ng),               &
      &                           itemflag=ESMF_GRIDITEM_AREA,           &
+     &                           staggerLoc=staggerLoc,                 &
+     &                           localDE=localDE,                       &
      &                           farrayPtr=ptrA,                        &
      &                           rc=rc)
           IF (ESMF_LogFoundError(rcToCheck=rc,                          &
@@ -1780,57 +1857,18 @@
 !
 !  Fill grid pointers.
 !
-          SELECT CASE (MODELS(Iroms)%mesh(ivar)%gtype)
+          SELECT CASE (MODELS(Iatmos)%mesh(ivar)%gtype)
             CASE (Icenter)
-              DO j=JstrR,JendR
-                DO i=IstrR,IendR
-                  ptrX(i,j)=GRID(ng)%lonr(i,j)
-                  ptrY(i,j)=GRID(ng)%latr(i,j)
-# ifdef MASKING
-                  ptrM(i,j)=INT(GRID(ng)%rmask(i,j))
-# else
-                  ptrM(i,j)=1
-# endif
-                  ptrA(i,j)=GRID(ng)%om_r(i,j)*GRID(ng)%on_r(i,j)
-                END DO
-              END DO
-            CASE (Icorner)
-              DO j=Jstr,Jend
-                DO i=Istr,Iend
-                  ptrX(i,j)=GRID(ng)%lonp(i,j)
-                  ptrY(i,j)=GRID(ng)%latp(i,j)
-# ifdef MASKING
-                  ptrM(i,j)=INT(GRID(ng)%pmask(i,j))
-# else
-                  ptrM(i,j)=1
-# endif
-                  ptrA(i,j)=GRID(ng)%om_p(i,j)*GRID(ng)%on_p(i,j)
-                END DO
-              END DO
-            CASE (Iupoint)
-              DO j=JstrR,JendR
-                DO i=Istr,IendR
-                  ptrX(i,j)=GRID(ng)%lonu(i,j)
-                  ptrY(i,j)=GRID(ng)%latu(i,j)
-# ifdef MASKING
-                  ptrM(i,j)=INT(GRID(ng)%umask(i,j))
-# else
-                  ptrM(i,j)=1
-# endif
-                  ptrA(i,j)=GRID(ng)%om_u(i,j)*GRID(ng)%on_u(i,j)
-                END DO
-              END DO
-            CASE (Ivpoint)
-              DO j=Jstr,JendR
-                DO i=IstrR,IendR
-                  ptrX(i,j)=GRID(ng)%lonv(i,j)
-                  ptrY(i,j)=GRID(ng)%latv(i,j)
-# ifdef MASKING
-                  ptrM(i,j)=INT(GRID(ng)%vmask(i,j))
-# else
-                  ptrM(i,j)=1
-# endif
-                  ptrA(i,j)=GRID(ng)%om_v(i,j)*GRID(ng)%on_v(i,j)
+              LBi=LBOUND(ptrX,1)
+              UBi=UBOUND(ptrX,1)
+              LBj=LBOUND(ptrX,2)
+              UBj=UBOUND(ptrX,2)
+              DO j=LBj,UBj
+                DO i=LBi,UBi
+                  ptrX(i,j)=adom(ng)%aln(i,j)
+                  ptrY(i,j)=adom(ng)%phi(i,j)
+                  ptrM(i,j)=adom(ng)%xland(i,j)
+                  ptrA(i,j)=delx(ng)*dely(ng)
                 END DO
               END DO
           END SELECT
@@ -1846,11 +1884,11 @@
 !  Debugging: write out component grid in VTK format.
 !
         IF (DebugLevel.ge.4) THEN
-          gtype=MODELS(Iroms)%mesh(ivar)%gtype
-          CALL ESMF_GridWriteVTK (MODELS(Iroms)%grid(ng),               &
-     &                            filename="roms_"//                    &
-     &                                     TRIM(GridType(gtype))//      &
-     &                                     "_point",                    &
+          gtype=MODELS(Iatmos)%mesh(ivar)%gtype
+          CALL ESMF_GridWriteVTK (MODELS(Iatmos)%grid(ng),              &
+     &                            filename="coamps_"//                  &
+     &                                      TRIM(GridType(gtype))//     &
+     &                                      "_point",                   &
      &                            staggerLoc=staggerLoc,                &
      &                            rc=rc)
           IF (ESMF_LogFoundError(rcToCheck=rc,                          &
@@ -1865,7 +1903,7 @@
 !  Assign grid to gridded component.
 !
       CALL ESMF_GridCompSet (model,                                     &
-     &                       grid=MODELS(Iroms)%grid(ng),               &
+     &                       grid=MODELS(Iatmos)%grid(ng),              &
      &                       rc=rc)
       IF (ESMF_LogFoundError(rcToCheck=rc,                              &
      &                       msg=ESMF_LOGERR_PASSTHRU,                  &
@@ -1875,53 +1913,52 @@
       END IF
 !
       IF (ESM_track) THEN
-        WRITE (trac,'(a,a,i0)') '<== Exiting  ROMS_SetGridArrays',      &
+        WRITE (trac,'(a,a,i0)') '<== Exiting  COAMPS_SetGridArrays',    &
      &                          ', PET', PETrank
         CALL my_flush (trac)
       END IF
       IF (DebugLevel.gt.0) CALL my_flush (cplout)
 !
-  10  FORMAT (2x,'ROMS_DistGrid - Grid = ',i2.2,',',3x,'Mesh = ',a,',', &
+  10  FORMAT ('COAMPS_DistGrid - Grid = ',i2.2,',',3x,'Mesh = ',a,',',  &
      &        3x,'Partition = ',i0,' x ',i0)
   20  FORMAT (18x,'node = ',i0,t32,'Istr = ',i0,t45,'Iend = ',i0,       &
      &                         t58,'Jstr = ',i0,t71,'Jend = ',i0)
 !
       RETURN
-      END SUBROUTINE ROMS_SetGridArrays
+      END SUBROUTINE COAMPS_SetGridArrays
 !
-      SUBROUTINE ROMS_SetStates (ng, tile, model, rc)
+      SUBROUTINE COAMPS_SetStates (ng, model, rc)
 !
 !=======================================================================
 !                                                                      !
-!  Adds ROMS component export and import fields into its respective    !
+!  Adds COAMPS component export and import fields into its respective  !
 !  state.                                                              !
 !                                                                      !
 !=======================================================================
 !
-      USE mod_param
+      USE domdec, ONLY : iminf, imaxf, jminf, jmaxf,                    &
+     &                   ndom,  nlimx, nlimy
 !
 !  Imported variable declarations.
 !
-      integer, intent(in)  :: ng, tile
+      integer, intent(in)  :: ng
       integer, intent(out) :: rc
 !
       TYPE (ESMF_GridComp) :: model
 !
 !  Local variable declarations.
 !
-      integer :: id, ifld
-      integer :: localDE, localDEcount, localPET
+      integer :: i, id
+      integer :: localDE, localDEcount
+      integer :: localPET, PETcount
       integer :: ExportCount, ImportCount
-      integer :: staggerEdgeLWidth(2)
-      integer :: staggerEdgeUWidth(2)
+      integer :: IminP, ImaxP, JminP, JmaxP
       integer :: haloLW(2), haloUW(2)
 !
       real (dp), dimension(:,:), pointer :: ptr2d => NULL()
 !
-      character (len=10) :: AttList(1)
-
       character (len=*), parameter :: MyFile =                          &
-     &  __FILE__//", ROMS_SetStates"
+     &  __FILE__//", COAMPS_SetStates"
 !
       character (ESMF_MAXSTR), allocatable :: ExportNameList(:)
       character (ESMF_MAXSTR), allocatable :: ImportNameList(:)
@@ -1936,29 +1973,35 @@
 !-----------------------------------------------------------------------
 !
       IF (ESM_track) THEN
-        WRITE (trac,'(a,a,i0)') '==> Entering ROMS_SetStates',          &
+        WRITE (trac,'(a,a,i0)') '==> Entering COAMPS_SetStates',        &
      &                          ', PET', PETrank
         CALL my_flush (trac)
       END IF
       rc=ESMF_SUCCESS
 !
 !-----------------------------------------------------------------------
-!  Compute lower and upper bounds tile halo widths for ESMF fields.
+!  Compute lower and upper bound tile halo widths for ESMF fields.
 !-----------------------------------------------------------------------
 !
-      haloLW(1)=BOUNDS(ng)%Istr(tile)-BOUNDS(ng)%LBi (tile)
-      haloLW(2)=BOUNDS(ng)%Jstr(tile)-BOUNDS(ng)%LBj (tile)
-      haloUW(1)=BOUNDS(ng)%UBi (tile)-BOUNDS(ng)%Iend(tile)
-      haloUW(2)=BOUNDS(ng)%UBj (tile)-BOUNDS(ng)%Jend(tile)
+      IminP=nlimx(ng)%bp(ndom)
+      ImaxP=nlimx(ng)%ep(ndom)
+      JminP=nlimy(ng)%bp(ndom)
+      JmaxP=nlimy(ng)%ep(ndom)
+!
+      haloLW(1)=IminP-iminf(ng)
+      haloLW(2)=JminP-jminf(ng)
+      haloUW(1)=imaxf(ng)-ImaxP
+      haloUW(2)=jmaxf(ng)-JmaxP
 !
 !-----------------------------------------------------------------------
-!  Query gridded component.
+!  Get gridded component information.
 !-----------------------------------------------------------------------
 !
 !  Get import and export states.
 !
       CALL ESMF_GridCompGet (model,                                     &
      &                       localPet=localPET,                         &
+     &                       petCount=PETcount,                         &
      &                       vm=vm,                                     &
      &                       rc=rc)
       IF (ESMF_LogFoundError(rcToCheck=rc,                              &
@@ -1972,7 +2015,7 @@
 !  Decomposition Element (DE) is associated with each Persistent
 !  Execution Thread (PETs). Thus, localDEcount=1.
 !
-      CALL ESMF_GridGet (MODELS(Iroms)%grid(ng),                        &
+      CALL ESMF_GridGet (MODELS(Iatmos)%grid(ng),                       &
      &                   localDECount=localDEcount,                     &
      &                   rc=rc)
       IF (ESMF_LogFoundError(rcToCheck=rc,                              &
@@ -2001,11 +2044,11 @@
 !  Add export fields into export state.
 !-----------------------------------------------------------------------
 !
-      EXPORTING : IF (Nexport(Iroms).gt.0) THEN
+      EXPORTING : IF (Nexport(Iatmos).gt.0) THEN
 !
 !  Get number of fields to export.
 !
-        CALL ESMF_StateGet (MODELS(Iroms)%ExportState(ng),              &
+        CALL ESMF_StateGet (MODELS(Iatmos)%ExportState(ng),             &
      &                      itemCount=ExportCount,                      &
      &                      rc=rc)
         IF (ESMF_LogFoundError(rcToCheck=rc,                            &
@@ -2020,7 +2063,7 @@
         IF (.not.allocated(ExportNameList)) THEN
           allocate ( ExportNameList(ExportCount) )
         END IF
-        CALL ESMF_StateGet (MODELS(Iroms)%ExportState(ng),              &
+        CALL ESMF_StateGet (MODELS(Iatmos)%ExportState(ng),             &
      &                      itemNameList=ExportNameList,                &
      &                      rc=rc)
         IF (ESMF_LogFoundError(rcToCheck=rc,                            &
@@ -2032,43 +2075,35 @@
 !
 !  Set export field(s).
 !
-        DO ifld=1,ExportCount
-          id=field_index(MODELS(Iroms)%ExportField,ExportNameList(ifld))
+        DO i=1,ExportCount
+          id=field_index(MODELS(Iatmos)%ExportField, ExportNameList(i))
 !
-          IF (NUOPC_IsConnected(MODELS(Iroms)%ExportState(ng),          &
-     &                          fieldName=TRIM(ExportNameList(ifld)),   &
+          IF (NUOPC_IsConnected(MODELS(Iatmos)%ExportState(ng),         &
+     &                          fieldName=TRIM(ExportNameList(i)),      &
      &                          rc=rc)) THEN
 !
 !  Set staggering type.
 !
-            SELECT CASE (MODELS(Iroms)%ExportField(id)%gtype)
-              CASE (Icenter)                                ! RHO-points
+            SELECT CASE (MODELS(Iatmos)%ExportField(id)%gtype)
+              CASE (Icenter)
                 staggerLoc=ESMF_STAGGERLOC_CENTER
-                staggerEdgeLWidth=(/1,1/)
-                staggerEdgeUWidth=(/1,1/)
-              CASE (Icorner)                                ! PSI-points
+              CASE (Icorner)
                 staggerLoc=ESMF_STAGGERLOC_CORNER
-                staggerEdgeLWidth=(/0,0/)
-                staggerEdgeUWidth=(/1,1/)
-              CASE (Iupoint)                                ! U-points
+              CASE (Iupoint)
                 staggerLoc=ESMF_STAGGERLOC_EDGE1
-                staggerEdgeLWidth=(/0,1/)
-                staggerEdgeUWidth=(/1,1/)
-              CASE (Ivpoint)                                ! V-points
+              CASE (Ivpoint)
                 staggerLoc=ESMF_STAGGERLOC_EDGE2
-                staggerEdgeLWidth=(/1,0/)
-                staggerEdgeUWidth=(/1,1/)
             END SELECT
 !
 !  Create 2D field from the Grid and arraySpec.
 !
-            field=ESMF_FieldCreate(MODELS(Iroms)%grid(ng),              &
+            field=ESMF_FieldCreate(MODELS(Iatmos)%grid(ng),             &
      &                             arraySpec2d,                         &
      &                             indexflag=ESMF_INDEX_GLOBAL,         &
      &                             staggerloc=staggerLoc,               &
      &                             totalLWidth=haloLW,                  &
      &                             totalUWidth=haloUW,                  &
-     &                             name=TRIM(ExportNameList(ifld)),     &
+     &                             name=TRIM(ExportNameList(i)),        &
      &                             rc=rc)
             IF (ESMF_LogFoundError(rcToCheck=rc,                        &
      &                             msg=ESMF_LOGERR_PASSTHRU,            &
@@ -2107,7 +2142,7 @@
 !
 !  Add field export state.
 !
-            CALL NUOPC_Realize (MODELS(Iroms)%ExportState(ng),          &
+            CALL NUOPC_Realize (MODELS(Iatmos)%ExportState(ng),         &
      &                          field=field,                            &
      &                          rc=rc)
             IF (ESMF_LogFoundError(rcToCheck=rc,                        &
@@ -2121,12 +2156,12 @@
 !
           ELSE
             IF (localPET.eq.0) THEN
-              WRITE (cplout,10) TRIM(ExportNameList(ifld)),             &
+              WRITE (cplout,10) TRIM(ExportNameList(i)),                &
      &                          'Export State: ',                       &
-     &                          TRIM(COUPLED(Iroms)%ExpLabel(ng))
+     &                          TRIM(COUPLED(Iatmos)%ExpLabel(ng))
             END IF
-            CALL ESMF_StateRemove (MODELS(Iroms)%ExportState(ng),       &
-     &                             (/ TRIM(ExportNameList(ifld)) /),    &
+            CALL ESMF_StateRemove (MODELS(Iatmos)%ExportState(ng),      &
+     &                             (/ TRIM(ExportNameList(i)) /),       &
      &                             rc=rc)
             IF (ESMF_LogFoundError(rcToCheck=rc,                        &
      &                             msg=ESMF_LOGERR_PASSTHRU,            &
@@ -2147,11 +2182,11 @@
 !  Add import fields into import state.
 !-----------------------------------------------------------------------
 !
-      IMPORTING : IF (Nimport(Iroms).gt.0) THEN
+      IMPORTING : IF (Nimport(Iatmos).gt.0) THEN
 !
 !  Get number of fields to import.
 !
-        CALL ESMF_StateGet (MODELS(Iroms)%ImportState(ng),              &
+        CALL ESMF_StateGet (MODELS(Iatmos)%ImportState(ng),             &
      &                      itemCount=ImportCount,                      &
      &                      rc=rc)
         IF (ESMF_LogFoundError(rcToCheck=rc,                            &
@@ -2166,7 +2201,7 @@
         IF (.not.allocated(ImportNameList)) THEN
           allocate (ImportNameList(ImportCount))
         END IF
-        CALL ESMF_StateGet (MODELS(Iroms)%ImportState(ng),              &
+        CALL ESMF_StateGet (MODELS(Iatmos)%ImportState(ng),             &
      &                      itemNameList=ImportNameList,                &
      &                      rc=rc)
         IF (ESMF_LogFoundError(rcToCheck=rc,                            &
@@ -2178,44 +2213,35 @@
 !
 !  Set import field(s).
 !
-        DO ifld=1,ImportCount
-          id=field_index(MODELS(Iroms)%ImportField,ImportNameList(ifld))
+        DO i=1,ImportCount
+          id=field_index(MODELS(Iatmos)%ImportField, ImportNameList(i))
 !
-          IF (NUOPC_IsConnected(MODELS(Iroms)%ImportState(ng),          &
-     &                          fieldName=TRIM(ImportNameList(ifld)),   &
+          IF (NUOPC_IsConnected(MODELS(Iatmos)%ImportState(ng),         &
+     &                          fieldName=TRIM(ImportNameList(i)),      &
      &                          rc=rc)) THEN
 !
 !  Set staggering type.
 !
-            SELECT CASE (MODELS(Iroms)%ImportField(id)%gtype)
-              CASE (Icenter)                                ! RHO-points
+            SELECT CASE (MODELS(Iatmos)%ImportField(id)%gtype)
+              CASE (Icenter)
                 staggerLoc=ESMF_STAGGERLOC_CENTER
-                staggerEdgeLWidth=(/1,1/)
-                staggerEdgeUWidth=(/1,1/)
-              CASE (Icorner)                                ! PSI-points
+              CASE (Icorner)
                 staggerLoc=ESMF_STAGGERLOC_CORNER
-                staggerEdgeLWidth=(/0,0/)
-                staggerEdgeUWidth=(/1,1/)
-              CASE (Iupoint)                                ! U-points
+              CASE (Iupoint)
                 staggerLoc=ESMF_STAGGERLOC_EDGE1
-                staggerEdgeLWidth=(/0,1/)
-                staggerEdgeUWidth=(/1,1/)
-              CASE (Ivpoint)                                ! V-points
+              CASE (Ivpoint)
                 staggerLoc=ESMF_STAGGERLOC_EDGE2
-                staggerEdgeLWidth=(/1,0/)
-                staggerEdgeUWidth=(/1,1/)
             END SELECT
 !
-!  Create 2D field from the Grid, arraySpec, total tile size including
-!  halos.  The array indices are global following ROMS design.
+!  Create 2D field from the Grid, arraySpec.
 !
-            field=ESMF_FieldCreate(MODELS(Iroms)%grid(ng),              &
+            field=ESMF_FieldCreate(MODELS(Iatmos)%grid(ng),             &
      &                             arraySpec2d,                         &
      &                             indexflag=ESMF_INDEX_GLOBAL,         &
      &                             staggerloc=staggerLoc,               &
      &                             totalLWidth=haloLW,                  &
      &                             totalUWidth=haloUW,                  &
-     &                             name=TRIM(ImportNameList(ifld)),     &
+     &                             name=TRIM(ImportNameList(i)),        &
      &                             rc=rc)
             IF (ESMF_LogFoundError(rcToCheck=rc,                        &
      &                             msg=ESMF_LOGERR_PASSTHRU,            &
@@ -2223,39 +2249,6 @@
      &                             file=MyFile)) THEN
               RETURN
             END IF
-
-# ifdef TIME_INTERP_NOT
-!
-!  Create standard Attribute Package for each export field. Then, nest
-!  custom Attribute Package around it.
-!
-            CALL ESMF_AttributeAdd (field,                              &
-     &                              convention='ESMF',                  &
-     &                              purpose='General',                  &
-     &                              rc=rc)
-            IF (ESMF_LogFoundError(rcToCheck=rc,                        &
-     &                             msg=ESMF_LOGERR_PASSTHRU,            &
-     &                             line=__LINE__,                       &
-     &                             file=MyFile)) THEN
-              RETURN
-            END IF
-!
-            AttList(1)='TimeInterp'
-            CALL ESMF_AttributeAdd (field,                              &
-     &                              convention='CustomConvention',      &
-     &                              purpose='General',                  &
-!!   &                              purpose='Instance',                 &
-     &                              attrList=AttList,                   &
-     &                              nestConvention='ESMF',              &
-     &                              nestPurpose='General',              &
-     &                              rc=rc)
-            IF (ESMF_LogFoundError(rcToCheck=rc,                        &
-     &                             msg=ESMF_LOGERR_PASSTHRU,            &
-     &                             line=__LINE__,                       &
-     &                             file=MyFile)) THEN
-              RETURN
-            END IF
-# endif
 !
 !  Put data into state. Usually, the DO-loop is executed once since
 !  localDEcount=1.
@@ -2287,7 +2280,7 @@
 !
 !  Add field import state.
 !
-            CALL NUOPC_Realize (MODELS(Iroms)%ImportState(ng),          &
+            CALL NUOPC_Realize (MODELS(Iatmos)%ImportState(ng),         &
      &                          field=field,                            &
      &                          rc=rc)
             IF (ESMF_LogFoundError(rcToCheck=rc,                        &
@@ -2301,12 +2294,12 @@
 !
           ELSE
             IF (localPET.eq.0) THEN
-              WRITE (cplout,10) TRIM(ImportNameList(ifld)),             &
+              WRITE (cplout,10) TRIM(ImportNameList(i)),                &
      &                          'Import State: ',                       &
-     &                          TRIM(COUPLED(Iroms)%ImpLabel(ng))
+     &                          TRIM(COUPLED(Iatmos)%ImpLabel(ng))
             END IF
-            CALL ESMF_StateRemove (MODELS(Iroms)%ImportState(ng),       &
-     &                             (/ TRIM(ImportNameList(ifld)) /),    &
+            CALL ESMF_StateRemove (MODELS(Iatmos)%ImportState(ng),      &
+     &                             (/ TRIM(ImportNameList(i)) /),       &
      &                             rc=rc)
             IF (ESMF_LogFoundError(rcToCheck=rc,                        &
      &                             msg=ESMF_LOGERR_PASSTHRU,            &
@@ -2324,44 +2317,29 @@
       END IF IMPORTING
 !
       IF (ESM_track) THEN
-        WRITE (trac,'(a,a,i0)') '<== Exiting  ROMS_SetStates',          &
+        WRITE (trac,'(a,a,i0)') '<== Exiting  COAMPS_SetStates',        &
      &                          ', PET', PETrank
         CALL my_flush (trac)
       END IF
 !
- 10   FORMAT (1x,'ROMS_SetStates - Removing field ''',a,''' from ',a,   &
-     &        '''',a,'''',/,18x,'because it is not connected.')
+!
+ 10   FORMAT ('COAMPS_SetStates - Removing field ''',a,''' from ',a,    &
+     &        '''',a,'''',/,19x,'because it is not connected.')
 !
       RETURN
-      END SUBROUTINE ROMS_SetStates
+      END SUBROUTINE COAMPS_SetStates
 !
-      SUBROUTINE ROMS_ModelAdvance (model, rc)
+      SUBROUTINE COAMPS_ModelAdvance (model, rc)
 !
 !=======================================================================
 !                                                                      !
-!  Advance ROMS component for a coupling interval (seconds) using      !
-!  "ROMS_run". It also calls "ROMS_Import" and "ROMS_Export" to        !
+!  Advance COAMPS component for a coupling interval (seconds) using    !
+!  "COAMPS_Run". It also calls "COAMPS_Import" and "COAMPS_Export" to  !
 !  import and export coupling fields, respectively.                    !
 !                                                                      !
-!  During configuration, the driver clock was decreased by a single    !
-!  coupling interval (TimeStep) to allow the proper initialization     !
-!  of the import and export fields pointers.  ROMS is not advanced     !
-!  on the first call to this routine, so the time stepping is over     !
-!  the specified application start and ending dates.                   !
-!                                                                      !
-# if defined TIME_INTERP
-!  On the first pass, it imports the LOWER time snapshot fields,       !
-!  but cannot time-step ROMS until the next call after importing       !
-!  the UPPER snapshot.  Therefore, it starts time-stepping when        !
-!  both LOWER and UPPER time snapshot fields are exchanged so that     !
-!  ROMS can perform time interpolation.                                !
-# else
-!  ROMS is actually advanced on the second call to this routine.       !
-# endif
-!                                                                      !
 !=======================================================================
 !
-      USE mod_scalars, ONLY : dt, NoError, exit_flag
+      USE coamnl_mod, ONLY : delta             ! timestep in seconds
 !
 !  Imported variable declarations.
 !
@@ -2371,24 +2349,26 @@
 !
 !  Local variable declarations.
 !
-      logical :: Ladvance
-      integer :: is, ng
-      integer :: MyTask, PETcount, localPET, phase
+      logical :: Ladvance, ltau_0
 !
-      real (dp) :: CouplingInterval, RunInterval
+      integer :: is, ng
+      integer :: localPET, PETcount, phase
+      integer :: NstrStep, NendStep, StepCount
+!
+      real (dp) :: CouplingInterval, SecondsSinceStart
       real (dp) :: TcurrentInSeconds, TstopInSeconds
 !
       character (len=22) :: Cinterval
       character (len=22) :: CurrTimeString, StopTimeString
 
       character (len=*), parameter :: MyFile =                          &
-     &  __FILE__//", ROMS_SetModelAdvance"
+     &  __FILE__//", COAMPS_SetModelAdvance"
 !
       TYPE (ESMF_Clock)        :: clock
       TYPE (ESMF_State)        :: ExportState, ImportState
-      TYPE (ESMF_Time)         :: ReferenceTime
-      TYPE (ESMF_Time)         :: CurrentTime, StopTime
       TYPE (ESMF_TimeInterval) :: TimeStep
+      TYPE (ESMF_Time)         :: ReferenceTime
+      TYPE (ESMF_Time)         :: CurrentTime, StartTime, StopTime
       TYPE (ESMF_VM)           :: vm
 !
 !-----------------------------------------------------------------------
@@ -2396,7 +2376,7 @@
 !-----------------------------------------------------------------------
 !
       IF (ESM_track) THEN
-        WRITE (trac,'(a,a,i0)') '==> Entering ROMS_ModelAdvance',       &
+        WRITE (trac,'(a,a,i0)') '==> Entering COAMPS_ModelAdvance',     &
      &                          ', PET', PETrank
         CALL my_flush (trac)
       END IF
@@ -2406,7 +2386,7 @@
 !  Get information about the gridded component.
 !-----------------------------------------------------------------------
 !
-!  Inquire about ROMS component.
+!  Inquire about COAMPS component.
 !
       CALL ESMF_GridCompGet (model,                                     &
      &                       importState=ImportState,                   &
@@ -2431,7 +2411,7 @@
      &                    timeStep=TimeStep,                            &
      &                    stopTime=StopTime,                            &
      &                    refTime=ReferenceTime,                        &
-     &                    currTime=ClockInfo(Iroms)%CurrentTime,        &
+     &                    currTime=ClockInfo(Iatmos)%CurrentTime,       &
      &                    rc=rc)
       IF (ESMF_LogFoundError(rcToCheck=rc,                              &
      &                       msg=ESMF_LOGERR_PASSTHRU,                  &
@@ -2440,9 +2420,9 @@
         RETURN
       END IF
 !
-!  Current ROMS time (seconds).
+!  Current COAMPS time (seconds).
 !
-      CALL ESMF_TimeGet (ClockInfo(Iroms)%CurrentTime,                  &
+      CALL ESMF_TimeGet (ClockInfo(Iatmos)%CurrentTime,                 &
      &                   s_r8=TcurrentInSeconds,                        &
      &                   timeStringISOFrac=CurrTimeString,              &
      &                   rc=rc)
@@ -2455,9 +2435,9 @@
       is=INDEX(CurrTimeString, 'T')                 ! remove 'T' in
       IF (is.gt.0) CurrTimeString(is:is)=' '        ! ISO 8601 format
 !
-!  ROMS stop time (seconds) for this coupling window.
+!  COAMPS stop time (seconds) for this coupling window.
 !
-      CALL ESMF_TimeGet (ClockInfo(Iroms)%CurrentTime+TimeStep,         &
+      CALL ESMF_TimeGet (ClockInfo(Iatmos)%CurrentTime+TimeStep,        &
      &                   s_r8=TstopInSeconds,                           &
      &                   timeStringISOFrac=StopTimeString,              &
      &                   rc=rc)
@@ -2482,24 +2462,41 @@
         RETURN
       END IF
 !
-!  Set ROMS running interval (seconds) for the current coupling window.
+!-----------------------------------------------------------------------
+!  Calculate run time for the current coupling window.
+!-----------------------------------------------------------------------
 !
-      RunInterval=CouplingInterval
+!  Get elapsed time in seconds since start.
 !
-!  Set local model advance time stepping switch.
+      IF (ClockInfo(Idriver)%Restarted) THEN
+        SecondsSinceStart=TcurrentInSeconds-                            &
+     &                    ClockInfo(Iatmos)%Time_Restart
+      ELSE
+        SecondsSinceStart=TcurrentInSeconds-                            &
+     &                    ClockInfo(Iatmos)%Time_Start
+      END IF
 !
-      Ladvance=.TRUE.
-# ifdef TIME_INTERP
-      IF ((MODELS(Iroms)%ImportCalls.eq.0).and.                         &
-     &    (Nimport(Iroms).gt.0)) THEN
+!  Set number of COAMPS timesteps to run.
+!
+      NstrStep=INT((SecondsSinceStart+0.001_dp)/delta)+1
+      NendStep=INT(SecondsSinceStart+CouplingInterval+0.001_dp)/delta
+      StepCount=NendStep-NstrStep+1
+
+# ifdef REGRESS_STARTCLOCK
+!
+!  If regressed driver starting clock, avoid timestepping COAMPS during
+!  the regressed coupling interval.
+!
+      IF (TcurrentInSeconds.gt.ClockInfo(Idriver)%Time_Start) THEN
+        Ladvance=.TRUE.
+      ELSE
         Ladvance=.FALSE.
       END IF
 # else
-#  ifdef REGRESS_STARTCLOCK
-      IF (TcurrentInSeconds.eq.ClockInfo(Idriver)%Time_Start) THEN
-        Ladvance=.FALSE.
-      END IF
-#  endif
+!
+!  Set model advance switch.
+!
+      Ladvance=.TRUE.
 # endif
 !
 !-----------------------------------------------------------------------
@@ -2516,10 +2513,10 @@
 !  Get import fields from other ESM components.
 !-----------------------------------------------------------------------
 !
-      IF (Nimport(Iroms).gt.0) THEN
-        DO ng=1,MODELS(Iroms)%Ngrids
-          IF (ANY(COUPLED(Iroms)%LinkedGrid(ng,:))) THEN
-            CALL ROMS_Import (ng, model, rc)
+      IF (Nimport(Iatmos).gt.0) THEN
+        DO ng=1,MODELS(Iatmos)%Ngrids
+          IF (ANY(COUPLED(Iatmos)%LinkedGrid(ng,:))) THEN
+            CALL COAMPS_Import (ng, model, rc=rc)
             IF (ESMF_LogFoundError(rcToCheck=rc,                        &
      &                             msg=ESMF_LOGERR_PASSTHRU,            &
      &                             line=__LINE__,                       &
@@ -2527,48 +2524,38 @@
               RETURN
             END IF
           END IF
-       END DO
-     END IF
+        END DO
+      END IF
 !
 !-----------------------------------------------------------------------
-!  Run ROMS component. Notice that ROMS component is advanced when
-!  ng=1.  In nested application, ROMS kernel (main2d or main3d) will
-!  advance all the nested grid in their logical order.  In nesting,
-!  the execution order of the grids is critical since nesting is
-!  two-way by default.
+!  Run COAMPS component. Notice that atmosphere component is advanced
+!  when ng=1.  In nested application, its numerical kernel will advance
+!  all the nested grids in their logical order.
 !-----------------------------------------------------------------------
 !
       IF (Ladvance) THEN
+        ltau_0=.FALSE.
         IF (ESM_track) THEN
-          WRITE (trac,'(a,a,i0)') '==> Entering ROMS_Run',              &
+          WRITE (trac,'(a,a,i0)') '==> Entering COAMPS_Run',            &
      &                            ', PET', PETrank
           CALL my_flush (trac)
         END IF
-        CALL ROMS_run (RunInterval)
+        CALL COAMPS_Run (ltau_0, StepCount)
         IF (ESM_track) THEN
-          WRITE (trac,'(a,a,i0)') '==> Exiting  ROMS_Run',              &
+          WRITE (trac,'(a,a,i0)') '==> Exiting  COAMPS_Run',            &
      &                            ', PET', PETrank
           CALL my_flush (trac)
         END IF
-      END IF
-!
-      IF (exit_flag.ne.NoError) then
-        IF (localPET.eq.0) then
-          WRITE (cplout,'(a,i1)') 'ROMS component exit with flag = ',   &
-     &                            exit_flag
-        END IF
-        CALL ROMS_finalize
-        CALL ESMF_Finalize (endflag=ESMF_END_ABORT)
       END IF
 !
 !-----------------------------------------------------------------------
 !  Put export fields.
 !-----------------------------------------------------------------------
 !
-      IF (Nexport(Iroms).gt.0) THEN
-        DO ng=1,MODELS(Iroms)%Ngrids
-          IF (ANY(COUPLED(Iroms)%LinkedGrid(ng,:))) THEN
-            CALL ROMS_Export (ng, model, rc)
+      IF (Nexport(Iatmos).gt.0) THEN
+        DO ng=1,MODELS(Iatmos)%Ngrids
+          IF (ANY(COUPLED(Iatmos)%LinkedGrid(ng,:))) THEN
+            CALL COAMPS_Export (ng, model, rc=rc)
             IF (ESMF_LogFoundError(rcToCheck=rc,                        &
      &                             msg=ESMF_LOGERR_PASSTHRU,            &
      &                             line=__LINE__,                       &
@@ -2580,28 +2567,26 @@
       END IF
 !
       IF (ESM_track) THEN
-        WRITE (trac,'(a,a,i0)') '<== Exiting  ROMS_ModelAdvance',       &
+        WRITE (trac,'(a,a,i0)') '<== Exiting  COAMPS_ModelAdvance',     &
      &                          ', PET', PETrank
         CALL my_flush (trac)
       END IF
 !
-  10  FORMAT (3x,'ModelAdvance - ESMF, Running ROMS:',t42,a,            &
+  10  FORMAT (3x,'ModelAdvance - ESMF, Running COAMPS:',t42,a,          &
      &        ' => ',a,', [',a,' s], Advance: ',l1)
 !
       RETURN
-      END SUBROUTINE ROMS_ModelAdvance
+      END SUBROUTINE COAMPS_ModelAdvance
 !
-      SUBROUTINE ROMS_SetFinalize (model,                               &
-     &                             ImportState, ExportState,            &
-     &                             clock, rc)
+      SUBROUTINE COAMPS_SetFinalize (model,                             &
+     &                               ImportState, ExportState,          &
+     &                               clock, rc)
 !
 !=======================================================================
 !                                                                      !
-!  Finalize ROMS component execution. It calls ROMS_finalize.          !
+!  Finalize COAMPS component execution. It calls COAMPS_Finalize.      !
 !                                                                      !
 !=======================================================================
-!
-      USE mod_iounits, ONLY : stdout
 !
 !  Imported variable declarations.
 !
@@ -2615,62 +2600,47 @@
 !  Local variable declarations.
 !
       character (len=*), parameter :: MyFile =                          &
-     &  __FILE__//", ROMS_SetFinalize"
+     &  __FILE__//", COAMPS_SetFinalize"
 !
 !-----------------------------------------------------------------------
 !  Initialize return code flag to success state (no error).
 !-----------------------------------------------------------------------
 !
       IF (ESM_track) THEN
-        WRITE (trac,'(a,a,i0)') '==> Entering ROMS_SetFinalize',        &
+        WRITE (trac,'(a,a,i0)') '==> Entering COAMPS_SetFinalize',      &
      &                          ', PET', PETrank
         CALL my_flush (trac)
       END IF
       rc=ESMF_SUCCESS
 !
 !-----------------------------------------------------------------------
-!  If ng=1, finalize ROMS component. In nesting applications this step
-!  needs to be done only once.
+!  Finalize COAMPS component.
 !-----------------------------------------------------------------------
 !
-      CALL ROMS_finalize
-      CALL my_flush (stdout)              ! flush standard output buffer
+      CALL COAMPS_Finalize ()
+      CALL my_flush (6)                   ! flush standard output buffer
 !
       IF (ESM_track) THEN
-        WRITE (trac,'(a,a,i0)') '<== Exiting  ROMS_SetFinalize',        &
+        WRITE (trac,'(a,a,i0)') '<== Exiting  COAMPS_SetFinalize',      &
      &                          ', PET', PETrank
         CALL my_flush (trac)
       END IF
 !
       RETURN
-      END SUBROUTINE ROMS_SetFinalize
+      END SUBROUTINE COAMPS_SetFinalize
 !
-      SUBROUTINE ROMS_Import (ng, model, rc)
+      SUBROUTINE COAMPS_Import (ng, model, rc)
 !
 !=======================================================================
 !                                                                      !
-!  Imports fields into ROMS array structures. The fields aew loaded    !
-!  into the snapshot storage arrays to allow time interpolation in     !
-!  ROMS kernel.                                                        !
+!  Imports fields into COAMPS array structure from other coupled       !
+!  gridded components.                                                 !
 !                                                                      !
 !=======================================================================
 !
-      USE mod_param
-      USE mod_grid
-      USE mod_forces
-      USE mod_ncparam
-      USE mod_scalars
-!
-      USE dateclock_mod,   ONLY : ROMS_clock
-# ifdef TIME_INTERP
-      USE mod_iounits,     ONLY : SourceFile
-      USE mod_netcdf,      ONLY : netcdf_get_ivar
-      USE mod_netcdf,      ONLY : netcdf_get_svar
-      USE mod_netcdf,      ONLY : netcdf_get_time
-# endif
-      USE exchange_2d_mod
-      USE mp_exchange_mod, ONLY : mp_exchange2d
-      USE strings_mod,     ONLY : FoundError
+      USE coamm_memm, ONLY : adom
+      USE domdec,     ONLY : iminf, imaxf, jminf, jmaxf,                &
+     &                       ndom,  nlimx, nlimy
 !
 !  Imported variable declarations.
 !
@@ -2681,77 +2651,71 @@
 !
 !  Local variable declarations.
 !
-      logical :: LoadIt, isPresent
-      logical :: got_stress(2), got_wind(2)
+      logical :: got_sst(2)
 !
-      integer :: Istr,  Iend,  Jstr,  Jend
-      integer :: IstrR, IendR, JstrR, JendR
-      integer :: LBi, UBi, LBj, UBj
-      integer :: ImportCount, Tindex
-      integer :: localDE, localDEcount, localPET, tile
+      integer :: id, ifld, i, is, j
       integer :: year, month, day, hour, minutes, seconds, sN, SD
-      integer :: gtype, id, ifield, ifld, i, is, j
+      integer :: SeaIce, SeaWater
+      integer :: ImportCount
+      integer :: localDE, localDEcount, localPET, PETcount
+      integer :: LBi, UBi, LBj, UBj
+      integer :: IminP, ImaxP, JminP, JmaxP
+      integer :: ifield(2)
 !
-# ifdef TIME_INTERP
-      integer, save :: record = 0
-!
-# endif
-      real (dp) :: TimeInDays, Time_Current, Tmin, Tmax, Tstr, Tend
-# ifdef TIME_INTERP
-      real (dp) :: MyTimeInDays
-# endif
-      real (dp) :: Fseconds, ROMSclockTime
-      real (dp) :: MyTintrp(2), MyVtime(2)
+      real (dp) :: Fseconds, TimeInDays, Time_Current
 
       real (dp) :: MyFmax(2), MyFmin(2), Fmin(2), Fmax(2), Fval
-      real (dp) :: add_offset, romsScale, scale, cff1, cff2
-      real (dp) :: FreshWaterScale, StressScale, TracerFluxScale
-      real (dp) :: AttValues(14)
+      real (dp) :: scale, add_offset
 !
-      real (dp), pointer :: ptr2d(:,:) => NULL()
+      real (dp), pointer     :: ptr2d(:,:)
 !
-      character (len=22)      :: MyDate(2)
-# ifdef TIME_INTERP
-      character (len=22)      :: MyDateString(1,1,1)
-# endif
-      character (len=22)      :: Time_CurrentString
-      character (len=40)      :: AttName
+      real (dp), allocatable :: dat_sst(:,:), ocn_sst(:,:)
+!
+      character (len=22 )     :: Time_CurrentString
 
       character (len=*), parameter :: MyFile =                          &
-     &  __FILE__//", ROMS_Import"
-
+     &  __FILE__//", COAMPS_Import"
+!
+      character (ESMF_MAXSTR) :: FieldName, fld_name(2)
       character (ESMF_MAXSTR) :: cname, ofile
       character (ESMF_MAXSTR), allocatable :: ImportNameList(:)
 !
-      TYPE (ESMF_AttPack) :: AttPack
-      TYPE (ESMF_Clock)   :: clock
-      TYPE (ESMF_Field)   :: field
-      TYPE (ESMF_Time)    :: CurrentTime
-      TYPE (ESMF_VM)      :: vm
-
-# ifdef TIME_INTERP
-!
-      SourceFile=MyFile
-# endif
+      TYPE (ESMF_Clock) :: clock
+      TYPE (ESMF_Field) :: field
+      TYPE (ESMF_State) :: ImportState
+      TYPE (ESMF_Time)  :: CurrentTime
+      TYPE (ESMF_VM)    :: vm
 !
 !-----------------------------------------------------------------------
 !  Initialize return code flag to success state (no error).
 !-----------------------------------------------------------------------
 !
       IF (ESM_track) THEN
-        WRITE (trac,'(a,a,i0)') '==> Entering ROMS_Import',             &
+        WRITE (trac,'(a,a,i0)') '==> Entering COAMPS_Import',           &
      &                          ', PET', PETrank
         CALL my_flush (trac)
       END IF
       rc=ESMF_SUCCESS
 !
 !-----------------------------------------------------------------------
+!  Compute COAMPS lower and upper bounds (non-overlapping) for physical
+!  area per nested grid and tile.
+!-----------------------------------------------------------------------
+!
+      IminP=nlimx(ng)%bp(ndom)
+      ImaxP=nlimx(ng)%ep(ndom)
+      JminP=nlimy(ng)%bp(ndom)
+      JmaxP=nlimy(ng)%ep(ndom)
+!
+!-----------------------------------------------------------------------
 !  Get information about the gridded component.
 !-----------------------------------------------------------------------
 !
       CALL ESMF_GridCompGet (model,                                     &
+     &                       importState=ImportState,                   &
      &                       clock=clock,                               &
      &                       localPet=localPET,                         &
+     &                       petCount=PETcount,                         &
      &                       vm=vm,                                     &
      &                       name=cname,                                &
      &                       rc=rc)
@@ -2766,7 +2730,7 @@
 !  DE is associated with each Persistent Execution Thread (PETs). Thus,
 !  localDEcount=1.
 !
-      CALL ESMF_GridGet (MODELS(Iroms)%grid(ng),                        &
+      CALL ESMF_GridGet (MODELS(Iatmos)%grid(ng),                       &
      &                   localDECount=localDEcount,                     &
      &                   rc=rc)
       IF (ESMF_LogFoundError(rcToCheck=rc,                              &
@@ -2775,25 +2739,6 @@
      &                       file=MyFile)) THEN
         RETURN
       END IF
-!
-!  Set size of imported tiled-arrays.
-!
-      tile=localPET
-!
-      LBi=BOUNDS(ng)%LBi(tile)        ! lower bound I-direction
-      UBi=BOUNDS(ng)%UBi(tile)        ! upper bound I-direction
-      LBj=BOUNDS(ng)%LBj(tile)        ! lower bound J-direction
-      UBj=BOUNDS(ng)%UBj(tile)        ! upper bound J-direction
-!
-      IstrR=BOUNDS(ng)%IstrR(tile)    ! Full range I-starting (RHO)
-      IendR=BOUNDS(ng)%IendR(tile)    ! Full range I-ending   (RHO)
-      JstrR=BOUNDS(ng)%JstrR(tile)    ! Full range J-starting (RHO)
-      JendR=BOUNDS(ng)%JendR(tile)    ! Full range J-ending   (RHO)
-!
-      Istr=BOUNDS(ng)%Istr(tile)      ! Full range I-starting (PSI, U)
-      Iend=BOUNDS(ng)%Iend(tile)      ! Full range I-ending   (PSI)
-      Jstr=BOUNDS(ng)%Jstr(tile)      ! Full range J-starting (PSI, V)
-      Jend=BOUNDS(ng)%Jend(tile)      ! Full range J-ending   (PSI)
 !
 !-----------------------------------------------------------------------
 !  Get current time.
@@ -2836,25 +2781,16 @@
      &                       file=MyFile)) THEN
         RETURN
       END IF
+      Fseconds=REAL(seconds,dp)+REAL(sN,dp)/REAL(sD,dp)
       TimeInDays=Time_Current/86400.0_dp
       is=INDEX(Time_CurrentString, 'T')              ! remove 'T' in
       IF (is.gt.0) Time_CurrentString(is:is)=' '     ! ISO 8601 format
 !
 !-----------------------------------------------------------------------
-!  Convert CurrentTime into ROMS clock ellapsed time since
-!  initialization in seconds from reference time.
-!  (The routine "ROMS_clock" is located in ROMS/Utility/dateclock.F)
-!-----------------------------------------------------------------------
-!
-      Fseconds=REAL(seconds,dp)+REAL(sN,dp)/REAL(sD,dp)
-      CALL ROMS_clock (year, month, day, hour, minutes, Fseconds,       &
-     &                 ROMSclockTime)
-!
-!-----------------------------------------------------------------------
 !  Get list of import fields.
 !-----------------------------------------------------------------------
 !
-      CALL ESMF_StateGet (MODELS(Iroms)%ImportState(ng),                &
+      CALL ESMF_StateGet (MODELS(Iatmos)%ImportState(ng),               &
      &                    itemCount=ImportCount,                        &
      &                    rc=rc)
       IF (ESMF_LogFoundError(rcToCheck=rc,                              &
@@ -2867,7 +2803,7 @@
       IF (.not.allocated(ImportNameList)) THEN
         allocate ( ImportNameList(ImportCount) )
       END IF
-      CALL ESMF_StateGet (MODELS(Iroms)%ImportState(ng),                &
+      CALL ESMF_StateGet (MODELS(Iatmos)%ImportState(ng),               &
      &                    itemNameList=ImportNameList,                  &
      &                    rc=rc)
       IF (ESMF_LogFoundError(rcToCheck=rc,                              &
@@ -2876,36 +2812,29 @@
      &                       file=MyFile)) THEN
         RETURN
       END IF
-
-# ifdef TIME_INTERP
-!
-!-----------------------------------------------------------------------
-!  Advance unlimited dimension counter.
-!-----------------------------------------------------------------------
-!
-      IF (PETlayoutOption.eq.'CONCURRENT') THEN
-        record=record+1
-      END IF
-# endif
 !
 !-----------------------------------------------------------------------
 !  Get import fields.
 !-----------------------------------------------------------------------
 !
-!  Set switches to rotate wind stress and wind component for curvilinear
-!  ROMS grid applications.
+!  If the regridding includes an extrapolation option to fill unmapped
+!  grid cells due to incongruents ESM grids, the land/sea mask arras
+!  are used to load only the needed data.
 !
-      got_stress(1:2)=.FALSE.
-      got_wind(1:2)=.FALSE.
+      SeaWater=0                       ! COAMPS sea water mask value
+      SeaIce=2                         ! COAMPS sea ice   mask value
 !
-!  Loop over all import fields to process.
+      got_sst(1)=.FALSE.               ! SST from OCN  component
+      got_sst(2)=.FALSE.               ! SST from DATA component
+      ifield(1)=0                      ! SST from OCN  index
+      ifield(2)=0                      ! SST from DATA index
 !
       FLD_LOOP : DO ifld=1,ImportCount
-        id=field_index(MODELS(Iroms)%ImportField, ImportNameList(ifld))
+        id=field_index(MODELS(Iatmos)%ImportField, ImportNameList(ifld))
 !
 !  Get field from import state.
 !
-        CALL ESMF_StateGet (MODELS(Iroms)%ImportState(ng),              &
+        CALL ESMF_StateGet (MODELS(Iatmos)%ImportState(ng),             &
      &                      TRIM(ImportNameList(ifld)),                 &
      &                      field,                                      &
      &                      rc=rc)
@@ -2915,117 +2844,6 @@
      &                         file=MyFile)) THEN
           RETURN
         END IF
-
-# ifdef TIME_INTERP
-!
-!  If cuncurrent coupling and importing time snapshots, update values
-!  in the MODELS(Iroms)%ImportField structure by reading import field
-!  interpolation attributes from source NetCDF file. It is very tricky
-!  to perform inter VM communications. It is easier to read them from
-!  a NetCDF file.  ROMS needs these attributes to perform the time
-!  interpolation between snapshots in its kernel.
-!  (HGA: need to figure out how to do inter VM communications)
-!
-        IF (PETlayoutOption.eq.'CONCURRENT') THEN
-          CALL netcdf_get_ivar (ng, iNLM, AttFileName, 'Tindex',        &
-     &                          MODELS(Iroms)%ImportField(id)%Tindex,   &
-     &                          start=(/Iroms,id,record/),              &
-     &                          total=(/1,1,1/))
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   MyFile)) THEN
-            rc=ESMF_RC_FILE_READ
-            RETURN
-          END IF
-!
-          is=MODELS(Iroms)%ImportField(id)%Tindex
-          CALL netcdf_get_svar (ng, iNLM, AttFileName, 'Date',          &
-     &                          MyDateString,                           &
-     &                          start=(/1,Iroms,id,record/),            &
-     &                          total=(/22,1,1,1/))
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   MyFile)) THEN
-            rc=ESMF_RC_FILE_READ
-            RETURN
-          END IF
-          MODELS(Iroms)%ImportField(id)%DateString(is)=                 &
-     &                                               MyDateString(1,1,1)
-!
-          CALL netcdf_get_time (ng, iNLM, AttFileName, 'Tcurrent',      &
-     &                          Rclock%DateNumber, MyTimeInDays,        &
-     &                          start=(/Iroms,id,record/),              &
-     &                          total=(/1,1,1/))
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   MyFile)) THEN
-            rc=ESMF_RC_FILE_READ
-            RETURN
-          END IF
-!
-          CALL netcdf_get_time (ng, iNLM, AttFileName, 'Tstr',          &
-     &                          Rclock%DateNumber,                      &
-     &                          MODELS(Iroms)%ImportField(id)%Tstr,     &
-     &                          start=(/Iroms,id,record/),              &
-     &                          total=(/1,1,1/))
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   MyFile)) THEN
-            rc=ESMF_RC_FILE_READ
-            RETURN
-          END IF
-!
-          CALL netcdf_get_time (ng, iNLM, AttFileName, 'Tend',          &
-     &                          Rclock%DateNumber,                      &
-     &                          MODELS(Iroms)%ImportField(id)%Tend,     &
-     &                          start=(/Iroms,id,record/),              &
-     &                          total=(/1,1,1/))
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   MyFile)) THEN
-            rc=ESMF_RC_FILE_READ
-            RETURN
-          END IF
-!
-          CALL netcdf_get_time (ng, iNLM, AttFileName, 'Tintrp',        &
-     &                          Rclock%DateNumber,                      &
-     &                        MODELS(Iroms)%ImportField(id)%Tintrp(is), &
-     &                          start=(/Iroms,id,record/),              &
-     &                          total=(/1,1,1/))
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   MyFile)) THEN
-            rc=ESMF_RC_FILE_READ
-            RETURN
-          END IF
-!
-          CALL netcdf_get_time (ng, iNLM, AttFileName, 'Vtime',         &
-     &                          Rclock%DateNumber,                      &
-     &                        MODELS(Iroms)%ImportField(id)%Vtime(is),  &
-     &                          start=(/Iroms,id,record/),              &
-     &                          total=(/1,1,1/))
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   MyFile)) THEN
-            rc=ESMF_RC_FILE_READ
-            RETURN
-          END IF
-          CALL netcdf_get_time (ng, iNLM, AttFileName, 'Tmin',          &
-     &                          Rclock%DateNumber,                      &
-     &                          MODELS(Iroms)%ImportField(id)%Tmin,     &
-     &                          start=(/Iroms,id,record/),              &
-     &                          total=(/1,1,1/))
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   MyFile)) THEN
-            rc=ESMF_RC_FILE_READ
-            RETURN
-          END IF
-!
-          CALL netcdf_get_time (ng, iNLM, AttFileName, 'Tmax',          &
-     &                          Rclock%DateNumber,                      &
-     &                          MODELS(Iroms)%ImportField(id)%Tmax,     &
-     &                          start=(/Iroms,id,record/),              &
-     &                          total=(/1,1,1/))
-          IF (FoundError(exit_flag, NoError, __LINE__,                  &
-     &                   MyFile)) THEN
-            rc=ESMF_RC_FILE_READ
-            RETURN
-          END IF
-        END IF
-# endif
 !
 !  Get field pointer.  Usually, the DO-loop is executed once since
 !  localDEcount=1.
@@ -3041,96 +2859,90 @@
      &                           file=MyFile)) THEN
             RETURN
           END IF
-
-# ifdef TIME_INTERP_NOT_WORKING
+          LBi=LBOUND(ptr2d,1)
+          UBi=UBOUND(ptr2d,1)
+          LBj=LBOUND(ptr2d,2)
+          UBj=UBOUND(ptr2d,2)
 !
-!  Retrieve custom Attribute Package.
+!  Initialize import field parameters.  Set "scale" and "add_offset"
+!  values need to convert imported fields to COAMPS requirements.
 !
-          CALL ESMF_AttributeGetAttPack (field,                         &
-     &                                   'CustomConvention',            &
-     &                                   'General',                     &
-!!   &                                   'Instance',                    &
-     &                                   attpack=AttPack,               &
-     &                                   isPresent=IsPresent,           &
-     &                                   rc=rc)
-          IF (ESMF_LogFoundError(rcToCheck=rc,                          &
-     &                           msg=ESMF_LOGERR_PASSTHRU,              &
-     &                           line=__LINE__,                         &
-     &                           file=MyFile)) THEN
-            RETURN
-          END IF
+          scale     =MODELS(Iatmos)%ImportField(id)%scale_factor
+          add_offset=MODELS(Iatmos)%ImportField(id)%add_offset
 !
-!  Get field custom attribute for field for time interpolation.
+          MyFmin= MISSING_dp
+          MyFmax=-MISSING_dp
 !
-          CALL ESMF_AttributeGet (field,                                &
-     &                            name='TimeInterp',                    &
-     &                            valueList=AttValues,                  &
-     &                            attpack=AttPack,                      &
-     &                            isPresent=IsPresent,                  &
-     &                            rc=rc)
-          IF (ESMF_LogFoundError(rcToCheck=rc,                          &
-     &                           msg=ESMF_LOGERR_PASSTHRU,              &
-     &                           line=__LINE__,                         &
-     &                           file=MyFile)) THEN
-            RETURN
-          END IF
-# endif
+!  Load import data into COAMPS component variable.
 !
-!  Load import data into ROMS component variable.
-# ifdef TIME_INTERP
-!  If time interpolating in ROMS kernel, loaded import data into
-!  snapshot storage arrays so time interpolating is carry out.
-!  It is a generic strategy for the case that coupling interval
-!  is greater than ROMS time-step size. Usually, time persisting
-!  of coupling data may alter ocean solution. For example, it may
-!  affect the ocean circulation/energetics if atmospheric forcing
-!  is persisted during infrequent coupling (like every 3, 6, or
-!  24 hours and so on).
-# endif
+          FieldName=ADJUSTL(ImportNameList(ifld))
 !
-          LoadIt=.TRUE.
-          scale      =MODELS(Iroms)%ImportField(id)%scale_factor
-          add_offset =MODELS(Iroms)%ImportField(id)%add_offset
-          Tindex     =MODELS(Iroms)%ImportField(id)%Tindex
-# ifdef TIME_INTERP
-          Tmin       =MODELS(Iroms)%ImportField(id)%Tmin
-          Tmax       =MODELS(Iroms)%ImportField(id)%Tmax
-          Tstr       =MODELS(Iroms)%ImportField(id)%Tstr
-          Tend       =MODELS(Iroms)%ImportField(id)%Tend
-          MyTintrp(1)=MODELS(Iroms)%ImportField(id)%Tintrp(1)
-          MyTintrp(2)=MODELS(Iroms)%ImportField(id)%Tintrp(2)
-          MyVtime(1) =MODELS(Iroms)%ImportField(id)%Vtime(1)
-          MyVtime(2) =MODELS(Iroms)%ImportField(id)%Vtime(2)
-          MyDate(1)  =MODELS(Iroms)%ImportField(id)%DateString(1)
-          MyDate(2)  =MODELS(Iroms)%ImportField(id)%DateString(2)
-# endif
+          SELECT CASE (TRIM(FieldName))
 !
-!  Set ROMS momentum fluxes and tracer flux scales to kinematic values.
-!  Recall, that all the fluxes are kinematic.
+!  Sea surface temperature from OCN component (C).
 !
-          FreshWaterScale=1.0_dp/rho0           ! Kg m-2 s-1 to m/s
-          StressScale=1.0_dp/rho0               ! Pa=N m-2 to m2/s2
-          TracerFluxScale=1.0_dp/(rho0*Cp)      ! Watts m-2 to C m/s
+            CASE ('sst', 'SST')
+              IF (.not.allocated(ocn_sst)) THEN
+                allocate ( ocn_sst(LBi:UBi,LBj:UBj) )
+                ocn_sst=MISSING_dp
+              END IF
+              IF (.not.allocated(dat_sst)) THEN
+                allocate ( dat_sst(LBi:UBi,LBj:UBj) )
+                dat_sst=MISSING_dp
+              END IF
+              got_sst(1)=.TRUE.
+              ifield(1)=ifld
+              fld_name(1)=TRIM(FieldName)
+              DO j=JminP,JmaxP
+                DO i=IminP,ImaxP
+                  IF (((NINT(adom(ng)%xland(i,j)).eq.SeaWater).or.      &
+     &                 (NINT(adom(ng)%xland(i,j)).eq.SeaIce)).and.      &
+     &                 (ABS(ptr2d(i,j)).lt.TOL_dp)) THEN
+                    MyFmin(1)=MIN(MyFmin(1),ptr2d(i,j))
+                    MyFmax(1)=MAX(MyFmax(1),ptr2d(i,j))
+                    Fval=scale*ptr2d(i,j)+add_offset
+                    MyFmin(2)=MIN(MyFmin(2),Fval)
+                    MyFmax(2)=MAX(MyFmax(2),Fval)
+                    ocn_sst(i,j)=Fval
+                  END IF
+                END DO
+              END DO
 !
-          Fval=ptr2d(IstrR,JstrR)
-          MyFmin(1)= MISSING_dp
-          MyFmax(1)=-MISSING_dp
-          MyFmin(2)= MISSING_dp
-          MyFmax(2)=-MISSING_dp
+!  Sea surface temperature from DATA component (C).  It is used to
+!  fill values in cells not covered by the OCN component.
 !
-          SELECT CASE (TRIM(ADJUSTL(ImportNameList(ifld))))
-
-# if defined BULK_FLUXES || defined ECOSIM || defined ATM_PRESS
+            CASE ('dsst', 'dSST')
+              IF (.not.allocated(ocn_sst)) THEN
+                allocate ( ocn_sst(LBi:UBi,LBj:UBj) )
+                ocn_sst=MISSING_dp
+              END IF
+              IF (.not.allocated(dat_sst)) THEN
+                allocate ( dat_sst(LBi:UBi,LBj:UBj) )
+                dat_sst=MISSING_dp
+              END IF
+              got_sst(2)=.TRUE.
+              ifield(2)=ifld
+              fld_name(2)=TRIM(FieldName)
+              DO j=JminP,JmaxP
+                DO i=IminP,ImaxP
+                  IF (((NINT(adom(ng)%xland(i,j)).eq.SeaWater).or.      &
+     &                 (NINT(adom(ng)%xland(i,j)).eq.SeaIce)).and.      &
+     &                 (ABS(ptr2d(i,j)).lt.TOL_dp)) THEN
+                    MyFmin(1)=MIN(MyFmin(1),ptr2d(i,j))
+                    MyFmax(1)=MAX(MyFmax(1),ptr2d(i,j))
+                    Fval=scale*ptr2d(i,j)+add_offset
+                    MyFmin(2)=MIN(MyFmin(2),Fval)
+                    MyFmax(2)=MAX(MyFmax(2),Fval)
+                    dat_sst(i,j)=Fval
+                  END IF
+                END DO
+              END DO
 !
-!  Surface air pressure or mean sea level pressure (mb).
+!  Wave-induced Charnock parameter.
 !
-            CASE ('psfc', 'Pair', 'Pmsl')
-              romsScale=scale
-              ifield=idPair
-              gtype=r2dvar
-              Tindex=3-Iinfo(8,ifield,ng)
-              DO j=JstrR,JendR
-                DO i=IstrR,IendR
+            CASE ('charno', 'Charnock')
+              DO j=JminP,JmaxP
+                DO i=IminP,ImaxP
                   IF (ABS(ptr2d(i,j)).lt.TOL_dp) THEN
                     Fval=scale*ptr2d(i,j)+add_offset
                   ELSE
@@ -3140,40 +2952,15 @@
                   MyFmax(1)=MAX(MyFmax(1),ptr2d(i,j))
                   MyFmin(2)=MIN(MyFmin(2),Fval)
                   MyFmax(2)=MAX(MyFmax(2),Fval)
-#  ifdef TIME_INTERP
-                  FORCES(ng)%PairG(i,j,Tindex)=Fval
-#  else
-                  FORCES(ng)%Pair(i,j)=Fval
-#  endif
+                  adom(ng)%charnock(i,j)=Fval
                 END DO
               END DO
-#  ifndef TIME_INTERP
-              IF (localDE.eq.localDEcount-1) THEN
-                IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
-                  CALL exchange_r2d_tile (ng, tile,                     &
-     &                                    LBi, UBi, LBj, UBj,           &
-     &                                    FORCES(ng)%Pair)
-                END IF
-                CALL mp_exchange2d (ng, tile, iNLM, 1,                  &
-     &                              LBi, UBi, LBj, UBj,                 &
-     &                              NghostPoints,                       &
-     &                              EWperiodic(ng), NSperiodic(ng),     &
-     &                              FORCES(ng)%Pair)
-              END IF
-#  endif
-# endif
-# if defined BULK_FLUXES || defined ECOSIM        || \
-    (defined SHORTWAVE   && defined ANA_SRFLUX    && defined ALBEDO)
 !
-!  Surface air temperature (Celsius).
+!  Surface, wave-induced eastward stress.
 !
-            CASE ('tsfc', 'Tair')
-              romsScale=scale
-              ifield=idTair
-              gtype=r2dvar
-              Tindex=3-Iinfo(8,ifield,ng)
-              DO j=JstrR,JendR
-                DO i=IstrR,IendR
+            CASE ('Wustr')
+              DO j=JminP,JmaxP
+                DO i=IminP,ImaxP
                   IF (ABS(ptr2d(i,j)).lt.TOL_dp) THEN
                     Fval=scale*ptr2d(i,j)+add_offset
                   ELSE
@@ -3183,39 +2970,15 @@
                   MyFmax(1)=MAX(MyFmax(1),ptr2d(i,j))
                   MyFmin(2)=MIN(MyFmin(2),Fval)
                   MyFmax(2)=MAX(MyFmax(2),Fval)
-#  ifdef TIME_INTERP
-                  FORCES(ng)%TairG(i,j,Tindex)=Fval
-#  else
-                  FORCES(ng)%Tair(i,j)=Fval
-#  endif
+                  adom(ng)%wvsu(i,j)=Fval
                 END DO
               END DO
-#  ifndef TIME_INTERP
-              IF (localDE.eq.localDEcount-1) THEN
-                IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
-                  CALL exchange_r2d_tile (ng, tile,                     &
-     &                                    LBi, UBi, LBj, UBj,           &
-     &                                    FORCES(ng)%Tair)
-                END IF
-                CALL mp_exchange2d (ng, tile, iNLM, 1,                  &
-     &                              LBi, UBi, LBj, UBj,                 &
-     &                              NghostPoints,                       &
-     &                              EWperiodic(ng), NSperiodic(ng),     &
-     &                              FORCES(ng)%Tair)
-              END IF
-#  endif
-# endif
-# if defined BULK_FLUXES || defined ECOSIM
 !
-!  Surface air relative humidity (percentage).
+!  Surface, wave-induced eastward stress.
 !
-            CASE ('Qair')
-              romsScale=scale
-              ifield=idQair
-              gtype=r2dvar
-              Tindex=3-Iinfo(8,ifield,ng)
-              DO j=JstrR,JendR
-                DO i=IstrR,IendR
+            CASE ('Wvstr')
+              DO j=JminP,JmaxP
+                DO i=IminP,ImaxP
                   IF (ABS(ptr2d(i,j)).lt.TOL_dp) THEN
                     Fval=scale*ptr2d(i,j)+add_offset
                   ELSE
@@ -3225,39 +2988,15 @@
                   MyFmax(1)=MAX(MyFmax(1),ptr2d(i,j))
                   MyFmin(2)=MIN(MyFmin(2),Fval)
                   MyFmax(2)=MAX(MyFmax(2),Fval)
-#  ifdef TIME_INTERP
-                  FORCES(ng)%HairG(i,j,Tindex)=Fval
-#  else
-                  FORCES(ng)%Hair(i,j)=Fval
-#  endif
+                  adom(ng)%wvsv(i,j)=Fval
                 END DO
               END DO
-#  ifndef TIME_INTERP
-              IF (localDE.eq.localDEcount-1) THEN
-                IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
-                  CALL exchange_r2d_tile (ng, tile,                     &
-     &                                    LBi, UBi, LBj, UBj,           &
-     &                                    FORCES(ng)%Hair)
-                END IF
-                CALL mp_exchange2d (ng, tile, iNLM, 1,                  &
-     &                              LBi, UBi, LBj, UBj,                 &
-     &                              NghostPoints,                       &
-     &                              EWperiodic(ng), NSperiodic(ng),     &
-     &                              FORCES(ng)%Hair)
-              END IF
-#  endif
-# endif
-# if defined BULK_FLUXES
 !
-!  Surface air specific humidity (kg kg-1).
+!  Surface, wave-induced stress magnitude.
 !
-            CASE ('Hair', 'qsfc')
-              romsScale=scale
-              ifield=idQair
-              gtype=r2dvar
-              Tindex=3-Iinfo(8,ifield,ng)
-              DO j=JstrR,JendR
-                DO i=IstrR,IendR
+            CASE ('Wstr')
+              DO j=JminP,JmaxP
+                DO i=IminP,ImaxP
                   IF (ABS(ptr2d(i,j)).lt.TOL_dp) THEN
                     Fval=scale*ptr2d(i,j)+add_offset
                   ELSE
@@ -3267,553 +3006,25 @@
                   MyFmax(1)=MAX(MyFmax(1),ptr2d(i,j))
                   MyFmin(2)=MIN(MyFmin(2),Fval)
                   MyFmax(2)=MAX(MyFmax(2),Fval)
-#  ifdef TIME_INTERP
-                  FORCES(ng)%HairG(i,j,Tindex)=Fval
-#  else
-                  FORCES(ng)%Hair(i,j)=Fval
-#  endif
+                  adom(ng)%wvst(i,j)=Fval
                 END DO
               END DO
-#  ifndef TIME_INTERP
-              IF (localDE.eq.localDEcount-1) THEN
-                IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
-                  CALL exchange_r2d_tile (ng, tile,                     &
-     &                                    LBi, UBi, LBj, UBj,           &
-     &                                    FORCES(ng)%Hair)
-                END IF
-                CALL mp_exchange2d (ng, tile, iNLM, 1,                  &
-     &                              LBi, UBi, LBj, UBj,                 &
-     &                              NghostPoints,                       &
-     &                              EWperiodic(ng), NSperiodic(ng),     &
-     &                              FORCES(ng)%Hair)
-              END IF
-#  endif
-# endif
-# if defined BULK_FLUXES
-!
-!  Surface net longwave radiation (Celcius m s-1).
-!
-            CASE ('lwrd', 'LWrad')
-              romsScale=TracerFluxScale
-              ifield=idLrad
-              gtype=r2dvar
-              Tindex=3-Iinfo(8,ifield,ng)
-              DO j=JstrR,JendR
-                DO i=IstrR,IendR
-                  IF (ABS(ptr2d(i,j)).lt.TOL_dp) THEN
-                    Fval=scale*ptr2d(i,j)+add_offset
-                  ELSE
-                    Fval=0.0_dp
-                  END IF
-                  MyFmin(1)=MIN(MyFmin(1),Fval)
-                  MyFmax(1)=MAX(MyFmax(1),Fval)
-                  Fval=Fval*romsScale
-                  MyFmin(2)=MIN(MyFmin(2),Fval)
-                  MyFmax(2)=MAX(MyFmax(2),Fval)
-#  ifdef TIME_INTERP
-                  FORCES(ng)%lrflxG(i,j,Tindex)=Fval
-#  else
-                  FORCES(ng)%lrflx(i,j)=Fval
-#  endif
-                END DO
-              END DO
-#  ifndef TIME_INTERP
-              IF (localDE.eq.localDEcount-1) THEN
-                IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
-                  CALL exchange_r2d_tile (ng, tile,                     &
-     &                                    LBi, UBi, LBj, UBj,           &
-     &                                    FORCES(ng)%lrflx)
-                END IF
-                CALL mp_exchange2d (ng, tile, iNLM, 1,                  &
-     &                              LBi, UBi, LBj, UBj,                 &
-     &                              NghostPoints,                       &
-     &                              EWperiodic(ng), NSperiodic(ng),     &
-     &                              FORCES(ng)%lrflx)
-              END IF
-#  endif
-# endif
-# if defined BULK_FLUXES && defined LONGWAVE_OUT
-!
-!  Surface downward longwave radiation (Celcius m s-1).  ROMS will
-!  substract the outgoing IR from model sea surface temperature.
-!
-            CASE ('dlwr', 'dLWrad', 'lwrad_down')
-              romsScale=TracerFluxScale
-              ifield=idLdwn
-              gtype=r2dvar
-              Tindex=3-Iinfo(8,ifield,ng)
-              DO j=JstrR,JendR
-                DO i=IstrR,IendR
-                  IF (ABS(ptr2d(i,j)).lt.TOL_dp) THEN
-                    Fval=scale*ptr2d(i,j)+add_offset
-                  ELSE
-                    Fval=0.0_dp
-                  END IF
-                  MyFmin(1)=MIN(MyFmin(1),Fval)
-                  MyFmax(1)=MAX(MyFmax(1),Fval)
-                  Fval=Fval*romsScale
-                  MyFmin(2)=MIN(MyFmin(2),Fval)
-                  MyFmax(2)=MAX(MyFmax(2),Fval)
-#  ifdef TIME_INTERP
-                  FORCES(ng)%lrflxG(i,j,Tindex)=Fval
-#  else
-                  FORCES(ng)%lrflx(i,j)=Fval
-#  endif
-                END DO
-              END DO
-#  ifndef TIME_INTERP
-              IF (localDE.eq.localDEcount-1) THEN
-                IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
-                  CALL exchange_r2d_tile (ng, tile,                     &
-     &                                    LBi, UBi, LBj, UBj,           &
-     &                                    FORCES(ng)%lrflx)
-                END IF
-                CALL mp_exchange2d (ng, tile, iNLM, 1,                  &
-     &                              LBi, UBi, LBj, UBj,                 &
-     &                              NghostPoints,                       &
-     &                              EWperiodic(ng), NSperiodic(ng),     &
-     &                              FORCES(ng)%lrflx)
-              END IF
-#  endif
-# endif
-# if defined BULK_FLUXES
-!
-!  Rain fall rate (kg m-2 s-1).
-!
-            CASE ('prec', 'rain')
-              romsScale=scale
-              ifield=idrain
-              gtype=r2dvar
-              Tindex=3-Iinfo(8,ifield,ng)
-              DO j=JstrR,JendR
-                DO i=IstrR,IendR
-                  IF (ABS(ptr2d(i,j)).lt.TOL_dp) THEN
-                    Fval=scale*ptr2d(i,j)+add_offset
-                  ELSE
-                    Fval=0.0_dp
-                  END IF
-                  MyFmin(1)=MIN(MyFmin(1),ptr2d(i,j))
-                  MyFmax(1)=MAX(MyFmax(1),ptr2d(i,j))
-                  MyFmin(2)=MIN(MyFmin(2),Fval)
-                  MyFmax(2)=MAX(MyFmax(2),Fval)
-#  ifdef TIME_INTERP
-                  FORCES(ng)%rainG(i,j,Tindex)=Fval
-#  else
-                  FORCES(ng)%rain(i,j)=Fval
-#  endif
-                END DO
-              END DO
-#  ifndef TIME_INTERP
-              IF (localDE.eq.localDEcount-1) THEN
-                IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
-                  CALL exchange_r2d_tile (ng, tile,                     &
-     &                                    LBi, UBi, LBj, UBj,           &
-     &                                    FORCES(ng)%rain)
-                END IF
-                CALL mp_exchange2d (ng, tile, iNLM, 1,                  &
-     &                              LBi, UBi, LBj, UBj,                 &
-     &                              NghostPoints,                       &
-     &                              EWperiodic(ng), NSperiodic(ng),     &
-     &                              FORCES(ng)%rain)
-              END IF
-#  endif
-# endif
-# if defined BULK_FLUXES || defined ECOSIM
-!
-!  Surface eastward wind component (m s-1).
-!
-            CASE ('wndu', 'Uwind')
-              got_wind(1)=.TRUE.
-              romsScale=scale
-              ifield=idUair
-              gtype=r2dvar
-              Tindex=3-Iinfo(8,ifield,ng)
-              DO j=JstrR,JendR
-                DO i=IstrR,IendR
-                  IF (ABS(ptr2d(i,j)).lt.TOL_dp) THEN
-                    Fval=scale*ptr2d(i,j)+add_offset
-                  ELSE
-                    Fval=0.0_dp
-                  END IF
-                  MyFmin(1)=MIN(MyFmin(1),ptr2d(i,j))
-                  MyFmax(1)=MAX(MyFmax(1),ptr2d(i,j))
-                  MyFmin(2)=MIN(MyFmin(2),Fval)
-                  MyFmax(2)=MAX(MyFmax(2),Fval)
-#  ifdef TIME_INTERP
-                  FORCES(ng)%UwindG(i,j,Tindex)=Fval
-#  else
-                  FORCES(ng)%Uwind(i,j)=Fval
-#  endif
-                END DO
-              END DO
-#  if !(defined TIME_INTERP || defined CUVILINEAR)
-              IF (localDE.eq.localDEcount-1) THEN
-                IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
-                  CALL exchange_r2d_tile (ng, tile,                     &
-     &                                    LBi, UBi, LBj, UBj,           &
-     &                                    FORCES(ng)%Uwind)
-                END IF
-                CALL mp_exchange2d (ng, tile, iNLM, 1,                  &
-     &                              LBi, UBi, LBj, UBj,                 &
-     &                              NghostPoints,                       &
-     &                              EWperiodic(ng), NSperiodic(ng),     &
-     &                              FORCES(ng)%Uwind)
-              END IF
-#  endif
-# endif
-# if defined BULK_FLUXES || defined ECOSIM
-!
-!  Surface northward wind component (m s-1).
-!
-            CASE ('wndv', 'Vwind')
-              got_wind(2)=.TRUE.
-              romsScale=scale
-              ifield=idVair
-              gtype=r2dvar
-              Tindex=3-Iinfo(8,ifield,ng)
-              DO j=JstrR,JendR
-                DO i=IstrR,IendR
-                  IF (ABS(ptr2d(i,j)).lt.TOL_dp) THEN
-                    Fval=scale*ptr2d(i,j)+add_offset
-                  ELSE
-                    Fval=0.0_dp
-                  END IF
-                  MyFmin(1)=MIN(MyFmin(1),ptr2d(i,j))
-                  MyFmax(1)=MAX(MyFmax(1),ptr2d(i,j))
-                  MyFmin(2)=MIN(MyFmin(2),Fval)
-                  MyFmax(2)=MAX(MyFmax(2),Fval)
-#  ifdef TIME_INTERP
-                  FORCES(ng)%VwindG(i,j,Tindex)=Fval
-#  else
-                  FORCES(ng)%Vwind(i,j)=Fval
-#  endif
-                END DO
-              END DO
-#  if !(defined TIME_INTERP || defined CUVILINEAR)
-              IF (localDE.eq.localDEcount-1) THEN
-                IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
-                  CALL exchange_r2d_tile (ng, tile,                     &
-     &                                    LBi, UBi, LBj, UBj,           &
-     &                                    FORCES(ng)%Vwind)
-                END IF
-                CALL mp_exchange2d (ng, tile, iNLM, 1,                  &
-     &                              LBi, UBi, LBj, UBj,                 &
-     &                              NghostPoints,                       &
-     &                              EWperiodic(ng), NSperiodic(ng),     &
-     &                              FORCES(ng)%Vwind)
-              END IF
-#  endif
-# endif
-# if defined SHORTWAVE
-!
-!  Surface solar shortwave radiation (Celsius m s-1).
-!
-            CASE ('swrd', 'swrad', 'SWrad', 'SWrad_daily')
-              romsScale=TracerFluxScale
-              ifield=idSrad
-              gtype=r2dvar
-              Tindex=3-Iinfo(8,ifield,ng)
-              DO j=JstrR,JendR
-                DO i=IstrR,IendR
-                  IF (ABS(ptr2d(i,j)).lt.TOL_dp) THEN
-                    Fval=scale*ptr2d(i,j)+add_offset
-                  ELSE
-                    Fval=0.0_dp
-                  END IF
-                  MyFmin(1)=MIN(MyFmin(1),Fval)
-                  MyFmax(1)=MAX(MyFmax(1),Fval)
-                  Fval=Fval*romsScale
-                  MyFmin(2)=MIN(MyFmin(2),Fval)
-                  MyFmax(2)=MAX(MyFmax(2),Fval)
-#  ifdef TIME_INTERP
-                  FORCES(ng)%srflxG(i,j,Tindex)=Fval
-#  else
-                  FORCES(ng)%srflx(i,j)=Fval
-#  endif
-                END DO
-              END DO
-#  ifndef TIME_INTERP
-              IF (localDE.eq.localDEcount-1) THEN
-                IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
-                  CALL exchange_r2d_tile (ng, tile,                     &
-     &                                    LBi, UBi, LBj, UBj,           &
-     &                                    FORCES(ng)%srflx)
-                END IF
-                CALL mp_exchange2d (ng, tile, iNLM, 1,                  &
-     &                              LBi, UBi, LBj, UBj,                 &
-     &                              NghostPoints,                       &
-     &                              EWperiodic(ng), NSperiodic(ng),     &
-     &                              FORCES(ng)%srflx)
-              END IF
-#  endif
-# endif
-# if !defined BULK_FLUXES
-!
-!  Surface downwelling longwave radiation (W m-2).  Used for debugging
-!  and plotting purposes to check the fluxes used for the computation
-!  of the surface net heat flux in NUOPC cap file "esmf_atm.F".
-!
-            CASE ('dlwr', 'dLWrad', 'lwrad_down')
-              romsScale=scale
-              ifield=idLdwn
-              gtype=r2dvar
-              Tindex=3-Iinfo(8,ifield,ng)
-              DO j=JstrR,JendR
-                DO i=IstrR,IendR
-                  IF (ABS(ptr2d(i,j)).lt.TOL_dp) THEN
-                    Fval=scale*ptr2d(i,j)+add_offset
-                  ELSE
-                    Fval=0.0_dp
-                  END IF
-                  MyFmin(1)=MIN(MyFmin(1),Fval)
-                  MyFmax(1)=MAX(MyFmax(1),Fval)
-                  Fval=Fval*romsScale
-                  MyFmin(2)=MIN(MyFmin(2),Fval)
-                  MyFmax(2)=MAX(MyFmax(2),Fval)
-                END DO
-              END DO
-!
-!  Surface latent heat flux (W m-2).  Used for plotting and debugging
-!  purposes (DebugLevel=3) to check the components of the net surface
-!  net heat flux computation.
-!
-            CASE ('latent', 'LHfx')
-              romsScale=TracerFluxScale
-              gtype=r2dvar
-              DO j=JstrR,JendR
-                DO i=IstrR,IendR
-                  IF (ABS(ptr2d(i,j)).lt.TOL_dp) THEN
-                    Fval=scale*ptr2d(i,j)+add_offset
-                  ELSE
-                    Fval=0.0_dp
-                  END IF
-                  MyFmin(1)=MIN(MyFmin(1),Fval)
-                  MyFmax(1)=MAX(MyFmax(1),Fval)
-                  Fval=Fval*romsScale
-                  MyFmin(2)=MIN(MyFmin(2),Fval)
-                  MyFmax(2)=MAX(MyFmax(2),Fval)
-                END DO
-              END DO
-!
-!  Surface sensible heat flux (W m-2).  Used for plotting and debugging
-!  purposes (DebugLevel=3) to check the components of the net surface
-!  net heat flux computation.
-!
-            CASE ('sensible', 'SHfx')
-              romsScale=TracerFluxScale
-              gtype=r2dvar
-              DO j=JstrR,JendR
-                DO i=IstrR,IendR
-                  IF (ABS(ptr2d(i,j)).lt.TOL_dp) THEN
-                    Fval=scale*ptr2d(i,j)+add_offset
-                  ELSE
-                    Fval=0.0_dp
-                  END IF
-                  MyFmin(1)=MIN(MyFmin(1),Fval)
-                  MyFmax(1)=MAX(MyFmax(1),Fval)
-                  Fval=Fval*romsScale
-                  MyFmin(2)=MIN(MyFmin(2),Fval)
-                  MyFmax(2)=MAX(MyFmax(2),Fval)
-                END DO
-              END DO
-!
-!  Surface net heat flux (Celsius m s-1).
-!
-            CASE ('nflx', 'shflux')
-              romsScale=TracerFluxScale
-              ifield=idTsur(itemp)
-              gtype=r2dvar
-              Tindex=3-Iinfo(8,ifield,ng)
-              DO j=JstrR,JendR
-                DO i=IstrR,IendR
-                  IF (ABS(ptr2d(i,j)).lt.TOL_dp) THEN
-                    Fval=scale*ptr2d(i,j)+add_offset
-                  ELSE
-                    Fval=0.0_dp
-                  END IF
-                  MyFmin(1)=MIN(MyFmin(1),Fval)
-                  MyFmax(1)=MAX(MyFmax(1),Fval)
-                  Fval=Fval*romsScale
-                  MyFmin(2)=MIN(MyFmin(2),Fval)
-                  MyFmax(2)=MAX(MyFmax(2),Fval)
-#  ifdef TIME_INTERP
-                  FORCES(ng)%stfluxG(i,j,Tindex,itemp)=Fval
-#  else
-                  FORCES(ng)%stflux(i,j,itemp)=Fval
-#  endif
-                END DO
-              END DO
-#  ifndef TIME_INTERP
-              IF (localDE.eq.localDEcount-1) THEN
-                IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
-                  CALL exchange_r2d_tile (ng, tile,                     &
-     &                                    LBi, UBi, LBj, UBj,           &
-     &                                    FORCES(ng)%stflux(:,:,itemp))
-                END IF
-                CALL mp_exchange2d (ng, tile, iNLM, 1,                  &
-     &                              LBi, UBi, LBj, UBj,                 &
-     &                              NghostPoints,                       &
-     &                              EWperiodic(ng), NSperiodic(ng),     &
-     &                              FORCES(ng)%stflux(:,:,itemp))
-              END IF
-#  endif
-# endif
-# if !defined BULK_FLUXES && defined SALINITY
-!
-!  Surface net freshwater flux: E-P (m s-1).
-!
-            CASE ('sflx', 'swflux')
-              romsScale=FreshWaterScale
-              ifield=idTsur(isalt)
-              gtype=r2dvar
-              Tindex=3-Iinfo(8,ifield,ng)
-              DO j=JstrR,JendR
-                DO i=IstrR,IendR
-                  IF (ABS(ptr2d(i,j)).lt.TOL_dp) THEN
-                    Fval=scale*ptr2d(i,j)+add_offset
-                  ELSE
-                    Fval=0.0_dp
-                  END IF
-                  MyFmin(1)=MIN(MyFmin(1),Fval)
-                  MyFmax(1)=MAX(MyFmax(1),Fval)
-                  Fval=Fval*romsScale
-                  MyFmin(2)=MIN(MyFmin(2),Fval)
-                  MyFmax(2)=MAX(MyFmax(2),Fval)
-#  ifdef TIME_INTERP
-                  FORCES(ng)%stfluxG(i,j,Tindex,isalt)=Fval
-#  else
-                  FORCES(ng)%stflux(i,j,isalt)=Fval
-#  endif
-                END DO
-              END DO
-#  ifndef TIME_INTERP
-              IF (localDE.eq.localDEcount-1) THEN
-                IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
-                  CALL exchange_r2d_tile (ng, tile,                     &
-     &                                    LBi, UBi, LBj, UBj,           &
-     &                                    FORCES(ng)%stflux(:,:,isalt))
-                END IF
-                CALL mp_exchange2d (ng, tile, iNLM, 1,                  &
-     &                              LBi, UBi, LBj, UBj,                 &
-     &                              NghostPoints,                       &
-     &                              EWperiodic(ng), NSperiodic(ng),     &
-     &                              FORCES(ng)%stflux(:,:,isalt))
-              END IF
-#  endif
-# endif
-# if !defined BULK_FLUXES
-!
-!  Surface eastward wind stress component (m2 s-2).
-!
-            CASE ('taux', 'sustr')
-              got_stress(1)=.TRUE.
-              romsScale=StressScale
-              ifield=idUsms
-              gtype=u2dvar
-              Tindex=3-Iinfo(8,ifield,ng)
-              DO j=JstrR,JendR
-                DO i=IstrR,IendR
-                  IF (ABS(ptr2d(i,j)).lt.TOL_dp) THEN
-                    Fval=scale*ptr2d(i,j)+add_offset
-                  ELSE
-                    Fval=0.0_dp
-                  END IF
-                  MyFmin(1)=MIN(MyFmin(1),Fval)
-                  MyFmax(1)=MAX(MyFmax(1),Fval)
-                  Fval=Fval*romsScale
-                  MyFmin(2)=MIN(MyFmin(2),Fval)
-                  MyFmax(2)=MAX(MyFmax(2),Fval)
-#  ifdef TIME_INTERP
-                  FORCES(ng)%sustrG(i,j,Tindex)=Fval
-#  else
-                  FORCES(ng)%sustr(i,j)=Fval
-#  endif
-                END DO
-              END DO
-#  if !(defined TIME_INTERP || defined CUVILINEAR)
-              IF (localDE.eq.localDEcount-1) THEN
-                IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
-                  CALL exchange_u2d_tile (ng, tile,                     &
-     &                                    LBi, UBi, LBj, UBj,           &
-     &                                    FORCES(ng)%sustr)
-                END IF
-                CALL mp_exchange2d (ng, tile, iNLM, 1,                  &
-     &                              LBi, UBi, LBj, UBj,                 &
-     &                              NghostPoints,                       &
-     &                              EWperiodic(ng), NSperiodic(ng),     &
-     &                              FORCES(ng)%sustr)
-              END IF
-#  endif
-# endif
-# if !defined BULK_FLUXES
-!
-!  Surface northward wind stress component (m2 s-2).
-!
-            CASE ('tauy', 'svstr')
-              got_stress(2)=.TRUE.
-              romsScale=StressScale
-              ifield=idVsms
-              gtype=r2dvar
-              Tindex=3-Iinfo(8,ifield,ng)
-              DO j=JstrR,JendR
-                DO i=IstrR,IendR
-                  IF (ABS(ptr2d(i,j)).lt.TOL_dp) THEN
-                    Fval=scale*ptr2d(i,j)+add_offset
-                  ELSE
-                    Fval=0.0_dp
-                  END IF
-                  MyFmin(1)=MIN(MyFmin(1),Fval)
-                  MyFmax(1)=MAX(MyFmax(1),Fval)
-                  Fval=Fval*romsScale
-                  MyFmin(2)=MIN(MyFmin(2),Fval)
-                  MyFmax(2)=MAX(MyFmax(2),Fval)
-#  ifdef TIME_INTERP
-                  FORCES(ng)%svstrG(i,j,Tindex)=Fval
-#  else
-                  FORCES(ng)%svstr(i,j)=Fval
-#  endif
-                END DO
-              END DO
-#  if !(defined TIME_INTERP || defined CUVILINEAR)
-              IF (localDE.eq.localDEcount-1) THEN
-                IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
-                  CALL exchange_v2d_tile (ng, tile,                     &
-     &                                    LBi, UBi, LBj, UBj,           &
-     &                                    FORCES(ng)%svstr)
-                END IF
-                CALL mp_exchange2d (ng, tile, iNLM, 1,                  &
-     &                              LBi, UBi, LBj, UBj,                 &
-     &                              NghostPoints,                       &
-     &                              EWperiodic(ng), NSperiodic(ng),     &
-     &                              FORCES(ng)%svstr)
-              END IF
-#  endif
-# endif
 !
 !  Import field not found.
 !
             CASE DEFAULT
               IF (localPET.eq.0) THEN
                 WRITE (cplout,10) TRIM(ImportNameList(ifld)),           &
-     &                            TRIM(Time_CurrentString),             &
      &                            TRIM(CinpName)
               END IF
-              exit_flag=9
-              IF (FoundError(exit_flag, NoError, __LINE__,              &
-     &                     MyFile)) THEN
-                rc=ESMF_RC_NOT_FOUND
+              rc=ESMF_RC_NOT_FOUND
+              IF (ESMF_LogFoundError(rcToCheck=rc,                      &
+     &                               msg=ESMF_LOGERR_PASSTHRU,          &
+     &                               line=__LINE__,                     &
+     &                               file=MyFile)) THEN
                 RETURN
               END IF
           END SELECT
-!
-!  Print pointer information.
-!
-          IF (DebugLevel.eq.4) THEN
-            WRITE (cplout,20) localPET, localDE,                        &
-     &                        LBOUND(ptr2d,DIM=1), UBOUND(ptr2d,DIM=1), &
-     &                        LBOUND(ptr2d,DIM=2), UBOUND(ptr2d,DIM=2), &
-     &                        IstrR, IendR, JstrR, JendR
-          END IF
 !
 !  Nullify pointer to make sure that it does not point on a random
 !  part in the memory.
@@ -3849,52 +3060,26 @@
           RETURN
         END IF
 !
-!  Write out import field information.
+!  Report import field information.
 !
         IF ((DebugLevel.ge.0).and.(localPET.eq.0)) THEN
-          WRITE (cplout,30) TRIM(ImportNameList(ifld)),                 &
-# ifdef TIME_INTERP
-     &                      TRIM(MyDate(Tindex)), ng,                   &
-     &                      Fmin(1), Fmax(1), Tindex
-# else
+          WRITE (cplout,20) TRIM(ImportNameList(ifld)),                 &
      &                      TRIM(Time_CurrentString), ng,               &
      &                      Fmin(1), Fmax(1)
-# endif
-          IF (romsScale.ne.1.0_dp) THEN
-            WRITE (cplout,40) Fmin(2), Fmax(2),                         &
-     &                        ' romsScale = ', romsScale
+          IF (scale.ne.1.0_dp) THEN
+            WRITE (cplout,30) Fmin(2), Fmax(2),                         &
+     &                        ' coampsScale = ', scale
           ELSE IF (add_offset.ne.0.0_dp) THEN
-            WRITE (cplout,40) Fmin(2), Fmax(2),                         &
-     &                        ' AddOffset = ', add_offset
+            WRITE (cplout,30) Fmin(2), Fmax(2),                         &
+     &                        ' AddOffset   = ', add_offset
           END IF
         END IF
-
-# ifdef TIME_INTERP
 !
-!  Load ROMS metadata information needed for time interpolation and
-!  reporting.
-!
-        IF (Loadit) THEN
-          Linfo(1,ifield,ng)=.TRUE.                          ! Lgrided
-          Linfo(3,ifield,ng)=.FALSE.                         ! Lonerec
-          Iinfo(1,ifield,ng)=gtype
-          Iinfo(8,ifield,ng)=Tindex
-          Finfo(1,ifield,ng)=Tmin
-          Finfo(2,ifield,ng)=Tmax
-          Finfo(3,ifield,ng)=Tstr
-          Finfo(4,ifield,ng)=Tend
-          Finfo(8,ifield,ng)=Fmin(1)
-          Finfo(9,ifield,ng)=Fmax(1)
-          Vtime(Tindex,ifield,ng)=MyVtime(Tindex)
-          Tintrp(Tindex,ifield,ng)=MyTintrp(Tindex)*86400.0_dp
-        END IF
-# endif
-!
-!  Debugging: write out import field into NetCDF file.
+!  Debugging: write out import field into a NetCDF file.
 !
         IF ((DebugLevel.ge.3).and.                                      &
-     &      MODELS(Iroms)%ImportField(ifld)%debug_write) THEN
-          WRITE (ofile,50) ng, TRIM(ImportNameList(ifld)),              &
+     &      MODELS(Iatmos)%ImportField(ifld)%debug_write) THEN
+          WRITE (ofile,40) ng, TRIM(ImportNameList(ifld)),              &
      &                     year, month, day, hour, minutes, seconds
           CALL ESMF_FieldWrite (field,                                  &
      &                          TRIM(ofile),                            &
@@ -3907,165 +3092,155 @@
             RETURN
           END IF
         END IF
-
       END DO FLD_LOOP
-
-# ifdef CURVILINEAR
-#  if defined BULK_FLUXES || defined ECOSIM
 !
-!  If applicable, rotate wind components to ROMS curvilinear grid.
+!  Load or merge sea surface temperature into COAMPS structure variable:
+!  adom(ng)%tsea
 !
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
-          cff1=FORCES(ng)%Uwind(i,j)*GRID(ng)%CosAngler(i,j)+           &
-     &         FORCES(ng)%Vwind(i,j)*GRID(ng)%SinAngler(i,j)
-          cff2=FORCES(ng)%Vwind(i,j)*GRID(ng)%CosAngler(i,j)-           &
-     &         FORCES(ng)%Uwind(i,j)*GRID(ng)%SinAngler(i,j)
-          FORCES(ng)%Uwind(i,j)=cff1
-          FORCES(ng)%Vwind(i,j)=cff2
-        END DO
-      END DO
-      IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
-        CALL exchange_r2d_tile (ng, tile,                               &
-     &                          LBi, UBi, LBj, UBj,                     &
-     &                          FORCES(ng)%UWind)
-        CALL exchange_r2d_tile (ng, tile,                               &
-     &                          LBi, UBi, LBj, UBj,                     &
-     &                          FORCES(ng)%VWind)
-      END IF
-      CALL mp_exchange2d (ng, tile, iNLM, 2,                            &
-     &                    LBi, UBi, LBj, UBj,                           &
-     &                    NghostPoints,                                 &
-     &                    EWperiodic(ng), NSperiodic(ng),               &
-     &                    FORCES(ng)%UWind,                             &
-     &                    FORCES(ng)%VWind)
-#  endif
-#  if !defined BULK_FLUXES
-!
-!  If applicable, rotate wind stress components to ROMS curvilinear
-!  grid.
-!
-      IF (got_stress(1).and.got_stress(2)) THEN
-        DO j=JstrR,JendR
-          DO i=IstrR,IendR
-            cff1=FORCES(ng)%sustr(i,j)*GRID(ng)%CosAngler(i,j)+         &
-     &           FORCES(ng)%svstr(i,j)*GRID(ng)%SinAngler(i,j)
-            cff2=FORCES(ng)%svstr(i,j)*GRID(ng)%CosAngler(i,j)-         &
-     &           FORCES(ng)%sustr(i,j)*GRID(ng)%SinAngler(i,j)
-            FORCES(ng)%sustr(i,j)=cff1
-            FORCES(ng)%svstr(i,j)=cff2
-          END DO
-        END DO
-        IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
-          CALL exchange_u2d_tile (ng, tile,                             &
-     &                            LBi, UBi, LBj, UBj,                   &
-     &                            FORCES(ng)%sustr)
-          CALL exchange_v2d_tile (ng, tile,                             &
-     &                            LBi, UBi, LBj, UBj,                   &
-     &                            FORCES(ng)%svstr)
+      IF (ANY(got_sst)) THEN
+        CALL COAMPS_ProcessImport (ng, model,                           &
+     &                             got_sst, ifield, fld_name,           &
+     &                             LBi, UBi, LBj, UBj,                  &
+     &                             ocn_sst, dat_sst,                    &
+     &                             rc)
+        IF (ESMF_LogFoundError(rcToCheck=rc,                            &
+     &                         msg=ESMF_LOGERR_PASSTHRU,                &
+     &                         line=__LINE__,                           &
+     &                         file=MyFile)) THEN
+          RETURN
         END IF
-        CALL mp_exchange2d (ng, tile, iNLM, 2,                          &
-     &                      LBi, UBi, LBj, UBj,                         &
-     &                      NghostPoints,                               &
-     &                      EWperiodic(ng), NSperiodic(ng),             &
-     &                      FORCES(ng)%sustr,                           &
-     &                      FORCES(ng)%svstr)
       END IF
-#  endif
-# endif
 !
 !  Deallocate local arrays.
 !
       IF (allocated(ImportNameList)) deallocate (ImportNameList)
+      IF (allocated(ocn_sst)) deallocate (ocn_sst)
+      IF (allocated(dat_sst)) deallocate (dat_sst)
 !
-!  Update ROMS import calls counter.
+!  Update COAMPS import calls counter.
 !
       IF (ImportCount.gt.0) THEN
-        MODELS(Iroms)%ImportCalls=MODELS(Iroms)%ImportCalls+1
+        MODELS(Iatmos)%ImportCalls=MODELS(Iatmos)%ImportCalls+1
       END IF
 !
       IF (ESM_track) THEN
-        WRITE (trac,'(a,a,i0)') '<== Exiting  ROMS_Import',             &
+        WRITE (trac,'(a,a,i0)') '<== Exiting  COAMPS_Import',           &
      &                          ', PET', PETrank
         CALL my_flush (trac)
       END IF
       IF (DebugLevel.gt.0) CALL my_flush (cplout)
 !
-  10  FORMAT (/,3x,' ROMS_Import - unable to find option to import: ',  &
-     &        a,t72,a,/,18x,'check ''Import(roms)'' in input script: ', &
-     &        a)
-  20  FORMAT (18x,'PET/DE [',i3.3,'/',i2.2,'],  Pointer Size: ',4i8,    &
-     &        /,36x,'Tiling Range: ',4i8)
-  30  FORMAT (3x,' ROMS_Import - ESMF: importing field ''',a,'''',      &
-     &        t72,a,2x,'Grid ',i2.2,                                    &
-# ifdef TIME_INTERP
-     &        /,19x,'(InpMin = ', 1p,e15.8,0p,' InpMax = ',1p,e15.8,0p, &
-     &        '  SnapshotIndex = ',i1,')')
-# else
-     &        /,19x,'(InpMin = ', 1p,e15.8,0p,' InpMax = ',1p,e15.8,0p, &
+  10  FORMAT (/,2x,'COAMPS_Import - unable to find option to import: ', &
+     &        a,/,18x,'check ''Import(atmos)'' in input script: ', a)
+  20  FORMAT (2x,'COAMPS_Import - ESMF: importing field ''',a,'''',     &
+     &        t72,a,2x,'Grid ',i2.2,/,                                  &
+     &        19x,'(InpMin = ', 1p,e15.8,0p,' InpMax = ',1p,e15.8,0p,   &
      &        ')')
-# endif
-  40  FORMAT (19x,'(OutMin = ', 1p,e15.8,0p,' OutMax = ',1p,e15.8,0p,   &
+  30  FORMAT (19x,'(OutMin = ', 1p,e15.8,0p,' OutMax = ',1p,e15.8,0p,   &
      &        1x,a,1p,e15.8,0p,')')
-  50  FORMAT ('roms_',i2.2,'_import_',a,'_',i4.4,2('-',i2.2),'_',       &
+  40  FORMAT ('coamps_',i2.2,'_import_',a,'_',i4.4,2('-',i2.2),'_',     &
      &        i2.2,2('.',i2.2),'.nc')
 
       RETURN
-      END SUBROUTINE ROMS_Import
+      END SUBROUTINE COAMPS_Import
 !
-      SUBROUTINE ROMS_Export (ng, model, rc)
+      SUBROUTINE COAMPS_ProcessImport (ng, model,                       &
+     &                                 got, ifield, FieldName,          &
+     &                                 LBi, UBi, LBj, UBj, Focn, Fdat,  &
+     &                                 rc)
 !
 !=======================================================================
 !                                                                      !
-!  Exports ROMS fields to other coupled gridded components.            !
+!  If both import fields Focn and Fdat are avaliable, it merges        !
+!  its values. Otherwise, it loads available data into ouput field,    !
+!  Fout. Only sea-water or sea-ice points are processed. It is         !
+!  used when atmosphere and ocean grids are incongruent. The DATA      !
+!  component provides values on those grid points not covered by       !
+!  the OCEAN component.                                                !
+!                                                                      !
+!  On Input:                                                           !
+!                                                                      !
+!     ng         Nested grid number (integer)                          !
+!     model      Gridded component object (TYPE ESMF_GridComp)         !
+!     got        Switches indicating source and availability of        !
+!                import data (logical vector):                         !
+!                    got(1)      OCEAN component switch (T/F)          !
+!                    got(2)      DATA  component switch (T/F)          !
+!     ifield     Import field index (integer vector)                   !
+!                    ifield(1)   OCEAN component field index           !
+!                    ifield(2)   DATA  component field index           !
+!     FieldName  Field short name (string array)                       !
+!     LBi        I-dimension lower bound  (integer)                    !
+!     UBi        I-dimension upper bound  (integer)                    !
+!     LBj        J-dimension lower bound  (integer)                    !
+!     UBj        J-dimension upper bound  (integer)                    !
+!     Focn       Import field from ocean component (2D real array)     !
+!     Fdat       Import field from data  component (2D real array)     !
+!                                                                      !
+!  On Output:                                                          !
+!                                                                      !
+!     rc         Return code (integer)                                 !
 !                                                                      !
 !=======================================================================
 !
-      USE mod_param
-      USE mod_grid
-      USE mod_ocean
-      USE mod_mixing
-      USE mod_scalars
-      USE mod_stepping
+      USE coamm_memm,  ONLY : adom
+      USE domdec,      ONLY : iminf, imaxf, jminf, jmaxf,               &
+     &                        ndom,  nlimx, nlimy
+      USE strings_mod, ONLY : lowercase
 !
 !  Imported variable declarations.
 !
-      integer, intent(in)  :: ng
+      logical, intent(in)  :: got(2)
+!
+      integer, intent(in)  :: ng, ifield(2)
+      integer, intent(in)  :: LBi, UBi, LBj, UBj
       integer, intent(out) :: rc
+!
+      real (dp), intent(in) :: Focn(LBi:UBi,LBj:UBj)
+      real (dp), intent(in) :: Fdat(LBi:UBi,LBj:UBj)
+!
+      character (len=*), intent(in) :: FieldName(:)
 !
       TYPE (ESMF_GridComp) :: model
 !
 !  Local variable declarations.
 !
-      integer :: Istr,  Iend,  Jstr,  Jend
-      integer :: IstrR, IendR, JstrR, JendR
-      integer :: ExportCount
-      integer :: localDE, localDEcount, localPET, tile
-      integer :: year, month, day, hour, minutes, seconds, sN, SD
-      integer :: ifld, i, is, j
+      logical :: DebugWrite(2) = (/ .FALSE., .FALSE. /)
 !
-      real (dp) :: Fmin(1), Fmax(1), Fval, MyFmin(1), MyFmax(1)
+      integer :: i, ic, is, j
+      integer :: year, month, day, hour, minutes, seconds, sN, SD
+      integer :: SeaIce, SeaWater
+      integer :: localDE, localDEcount, localPET, PETcount
+      integer :: IminP, ImaxP, JminP, JmaxP
+!
+      real (dp) :: Fseconds, TimeInDays, Time_Current
+
+      real (dp) :: Fval, MyFmax(3), MyFmin(3), Fmin(3), Fmax(3)
 !
       real (dp), pointer :: ptr2d(:,:) => NULL()
 !
-      character (len=22)      :: Time_CurrentString
+      real (KIND(adom(1)%tsea)), pointer :: Fout(:,:) => NULL()
+!
+      character (len=22 )     :: Time_CurrentString
 
       character (len=*), parameter :: MyFile =                          &
-     &  __FILE__//", ROMS_Export"
-
-      character (ESMF_MAXSTR) :: cname, ofile
-      character (ESMF_MAXSTR), allocatable :: ExportNameList(:)
+     &  __FILE__//", COAMPS_ProcessImport"
 !
-      TYPE (ESMF_Field) :: field
-      TYPE (ESMF_Time)  :: CurrentTime
-      TYPE (ESMF_VM)    :: vm
+      character (ESMF_MAXSTR) :: cname, fld_string, ofile
+!
+      TYPE (ESMF_ArraySpec)  :: arraySpec2d
+      TYPE (ESMF_Clock)      :: clock
+      TYPE (ESMF_Field)      :: Fmerge
+      TYPE (ESMF_StaggerLoc) :: staggerLoc
+      TYPE (ESMF_Time)       :: CurrentTime
+      TYPE (ESMF_VM)         :: vm
 !
 !-----------------------------------------------------------------------
 !  Initialize return code flag to success state (no error).
 !-----------------------------------------------------------------------
 !
       IF (ESM_track) THEN
-        WRITE (trac,'(a,a,i0)') '==> Entering ROMS_Export',             &
+        WRITE (trac,'(a,a,i0)') '==> Entering COAMPS_ProcessImport',    &
      &                          ', PET', PETrank
         CALL my_flush (trac)
       END IF
@@ -4076,7 +3251,9 @@
 !-----------------------------------------------------------------------
 !
       CALL ESMF_GridCompGet (model,                                     &
+     &                       clock=clock,                               &
      &                       localPet=localPET,                         &
+     &                       petCount=PETcount,                         &
      &                       vm=vm,                                     &
      &                       name=cname,                                &
      &                       rc=rc)
@@ -4091,7 +3268,7 @@
 !  DE is associated with each Persistent Execution Thread (PETs). Thus,
 !  localDEcount=1.
 !
-      CALL ESMF_GridGet (MODELS(Iroms)%grid(ng),                        &
+      CALL ESMF_GridGet (MODELS(Iatmos)%grid(ng),                       &
      &                   localDECount=localDEcount,                     &
      &                   rc=rc)
       IF (ESMF_LogFoundError(rcToCheck=rc,                              &
@@ -4101,25 +3278,9 @@
         RETURN
       END IF
 !
-!  Set horizontal tile bounds.
-!
-      tile=localPET
-
-      IstrR=BOUNDS(ng)%IstrR(tile)   ! Full range I-starting (RHO)
-      IendR=BOUNDS(ng)%IendR(tile)   ! Full range I-ending   (RHO)
-      JstrR=BOUNDS(ng)%JstrR(tile)   ! Full range J-starting (RHO)
-      JendR=BOUNDS(ng)%JendR(tile)   ! Full range J-ending   (RHO)
-!
-      Istr=BOUNDS(ng)%Istr(tile)     ! Full range I-starting (PSI, U)
-      Iend=BOUNDS(ng)%Iend(tile)     ! Full range I-ending   (PSI)
-      Jstr=BOUNDS(ng)%Jstr(tile)     ! Full range J-starting (PSI, V)
-      Jend=BOUNDS(ng)%Jend(tile)     ! Full range J-ending   (PSI)
-!
-!-----------------------------------------------------------------------
 !  Get current time.
-!-----------------------------------------------------------------------
 !
-      CALL ESMF_ClockGet (ClockInfo(Iroms)%Clock,                       &
+      CALL ESMF_ClockGet (clock,                                        &
      &                    currTime=CurrentTime,                         &
      &                    rc=rc)
       IF (ESMF_LogFoundError(rcToCheck=rc,                              &
@@ -4138,6 +3299,16 @@
      &                   s =seconds,                                    &
      &                   sN=sN,                                         &
      &                   sD=sD,                                         &
+     &                   rc=rc)
+      IF (ESMF_LogFoundError(rcToCheck=rc,                              &
+     &                       msg=ESMF_LOGERR_PASSTHRU,                  &
+     &                       line=__LINE__,                             &
+     &                       file=MyFile)) THEN
+        RETURN
+      END IF
+!
+      CALL ESMF_TimeGet (CurrentTime,                                   &
+     &                   s_r8=Time_Current,                             &
      &                   timeString=Time_CurrentString,                 &
      &                   rc=rc)
       IF (ESMF_LogFoundError(rcToCheck=rc,                              &
@@ -4146,6 +3317,456 @@
      &                       file=MyFile)) THEN
         RETURN
       END IF
+      Fseconds=REAL(seconds,dp)+REAL(sN,dp)/REAL(sD,dp)
+      TimeInDays=Time_Current/86400.0_dp
+      is=INDEX(Time_CurrentString, 'T')            ! remove 'T' in
+      IF (is.gt.0) Time_CurrentString(is:is)=' '   ! ISO 8601 format
+!
+!-----------------------------------------------------------------------
+!  Create merged field.
+!-----------------------------------------------------------------------
+!
+!  Set a 2D floating-point array descriptor.
+!
+      CALL ESMF_ArraySpecSet (arraySpec2d,                              &
+     &                        typekind=ESMF_TYPEKIND_R8,                &
+     &                        rank=2,                                   &
+     &                        rc=rc)
+      IF (ESMF_LogFoundError(rcToCheck=rc,                              &
+     &                       msg=ESMF_LOGERR_PASSTHRU,                  &
+     &                       line=__LINE__,                             &
+     &                       file=MyFile)) THEN
+        RETURN
+      END IF
+!
+!  Create 2D merge field from the Grid and arraySpec.
+!
+      IF (.not.got(2).and.got(1)) THEN
+        DebugWrite(1)=MODELS(Iatmos)%ImportField(ifield(1))%debug_write
+        fld_string=TRIM(FieldName(1))
+      ELSE IF (.not.got(1).and.got(2)) THEN
+        DebugWrite(2)=MODELS(Iatmos)%ImportField(ifield(2))%debug_write
+        fld_string=TRIM(FieldName(2))
+      ELSE IF (got(1).and.got(2)) THEN
+        DebugWrite(1)=MODELS(Iatmos)%ImportField(ifield(1))%debug_write
+        DebugWrite(2)=MODELS(Iatmos)%ImportField(ifield(2))%debug_write
+        fld_string=TRIM(FieldName(1))//'-'//TRIM(FieldName(2))
+      END IF
+      staggerLoc=ESMF_STAGGERLOC_CENTER
+!
+      Fmerge=ESMF_FieldCreate(MODELS(Iatmos)%grid(ng),                  &
+     &                        arraySpec2d,                              &
+     &                        staggerloc=staggerLoc,                    &
+     &                        name=TRIM(fld_string),                    &
+     &                        rc=rc)
+      IF (ESMF_LogFoundError(rcToCheck=rc,                              &
+     &                       msg=ESMF_LOGERR_PASSTHRU,                  &
+     &                       line=__LINE__,                             &
+     &                       file=MyFile)) THEN
+        RETURN
+      END IF
+!
+!  Get merge field pointer.
+!
+      CALL ESMF_FieldGet (Fmerge,                                       &
+     &                    farrayPtr=ptr2d,                              &
+     &                    rc=rc)
+      IF (ESMF_LogFoundError(rcToCheck=rc,                              &
+     &                       msg=ESMF_LOGERR_PASSTHRU,                  &
+     &                       line=__LINE__,                             &
+     &                       file=MyFile)) THEN
+        RETURN
+      END IF
+      ptr2d=MISSING_dp
+!
+!-----------------------------------------------------------------------
+!  Create pointer to COAMPS export field target. Here, adom(ng)%tsea
+!  has surface surface temperature values in land and ocean points.
+!  Only the ocean points are updated.
+!-----------------------------------------------------------------------
+!
+      SELECT CASE (lowercase(TRIM(fld_string)))
+        CASE ('sst', 'dsst', 'sst-dsst', 'dsst-sst')
+          Fout => adom(ng)%tsea
+        CASE DEFAULT
+          IF (localPET.eq.0) THEN
+            WRITE (cplout,10) TRIM(fld_string), TRIM(CinpName)
+          END IF
+          rc=ESMF_RC_NOT_FOUND
+          IF (ESMF_LogFoundError(rcToCheck=rc,                          &
+     &                           msg=ESMF_LOGERR_PASSTHRU,              &
+     &                           line=__LINE__,                         &
+     &                           file=MyFile)) THEN
+            RETURN
+          END IF
+      END SELECT
+!
+!  Set COAMPS lower and upper bounds (non-overlapping) for physical
+!  area per nested grid and tile.
+!
+      IminP=nlimx(ng)%bp(ndom)
+      ImaxP=nlimx(ng)%ep(ndom)
+      JminP=nlimy(ng)%bp(ndom)
+      JmaxP=nlimy(ng)%ep(ndom)
+!
+!-----------------------------------------------------------------------
+!  Set COAMPS mask value at seawater and seaice points:
+!
+!    -1: inland lake   0: sea water   1: land   2: sea ice   3: land ice
+!-----------------------------------------------------------------------
+!
+      SeaWater=0
+      SeaIce=2
+!
+!-----------------------------------------------------------------------
+!  If only one field is available, load field into output array at
+!  seawater points. Notice that Fout has the same precision as the
+!  COAMPS variable. It can be single or double precision.
+!-----------------------------------------------------------------------
+!
+      IF (.not.got(2).and.got(1)) THEN
+        MyFmin= MISSING_dp
+        MyFmax=-MISSING_dp
+        DO j=JminP,JmaxP
+          DO i=IminP,ImaxP
+            IF (((NINT(adom(ng)%xland(i,j)).eq.SeaWater).or.            &
+     &           (NINT(adom(ng)%xland(i,j)).eq.SeaIce)).and.            &
+     &           (ABS(Focn(i,j)).lt.TOL_dp)) THEN
+              Fout(i,j)=REAL(Focn(i,j), KIND(adom(ng)%tsea))
+            END IF
+            ptr2d(i,j)=REAL(Fout(i,j), dp)
+            MyFmin(1)=MIN(MyFmin(1),Fout(i,j))
+            MyFmax(1)=MAX(MyFmax(1),Fout(i,j))
+          END DO
+        END DO
+      ELSE IF (.not.got(1).and.got(2)) THEN
+        MyFmin= MISSING_dp
+        MyFmax=-MISSING_dp
+        DO j=JminP,JmaxP
+          DO i=IminP,ImaxP
+            IF (((NINT(adom(ng)%xland(i,j)).eq.SeaWater).or.            &
+     &           (NINT(adom(ng)%xland(i,j)).eq.SeaIce)).and.            &
+     &           (ABS(Fdat(i,j)).lt.TOL_dp)) THEN
+              Fout(i,j)=REAL(Fdat(i,j), KIND(adom(1)%tsea))
+            END IF
+            ptr2d(i,j)=REAL(Fout(i,j), dp)
+            MyFmin(1)=MIN(MyFmin(1),Fout(i,j))
+            MyFmax(1)=MAX(MyFmax(1),Fout(i,j))
+          END DO
+        END DO
+      END IF
+!
+!-----------------------------------------------------------------------
+!  Otherwise, merge imported fields.
+!-----------------------------------------------------------------------
+!
+      IF (got(1).and.got(2)) THEN
+!
+!  Merge Focn and Fdat at sea-water and sea-ice points.  Notice that
+!  the ESMF regridding will not fill unbounded interpolation points.
+!  Such grid cells still have the pointer initialized value MISSING_dp.
+!  The TOL_dp is used to identify such values. The user has full
+!  control of how the merging is done from the weights coefficients
+!  provided from input NetCDF file specified in "WeightsFile(atmos)".
+!
+        MyFmin= MISSING_dp
+        MyFmax=-MISSING_dp
+        DO j=JminP,JmaxP
+          DO i=IminP,ImaxP
+            IF ((NINT(adom(ng)%xland(i,j)).eq.SeaWater).or.             &
+     &          (NINT(adom(ng)%xland(i,j)).eq.SeaIce)) THEN
+              IF (ABS(Fdat(i,j)).lt.TOL_dp) THEN
+                MyFmin(2)=MIN(MyFmin(2),Fdat(i,j))
+                MyFmax(2)=MAX(MyFmax(2),Fdat(i,j))
+                Fval=Fdat(i,j)                   ! initialize with DATA
+                IF (ABS(Focn(i,j)).lt.TOL_dp) THEN
+                  MyFmin(1)=MIN(MyFmin(1),Focn(i,j))
+                  MyFmax(1)=MAX(MyFmax(1),Focn(i,j))
+                  Fval=WEIGHTS(Iatmos)%Cdat(i,j)*Fval+                  &
+     &                 WEIGHTS(Iatmos)%Cesm(i,j)*Focn(i,j)
+                END IF
+                Fout(i,j)=REAL(Fval, KIND(adom(ng)%tsea))
+                ptr2d(i,j)=REAL(Fval, dp)
+                MyFmin(3)=MIN(MyFmin(3),Fval)
+                MyFmax(3)=MAX(MyFmax(3),Fval)
+              END IF
+            ELSE
+              ptr2d(i,j)=REAL(Fout(i,j), dp)     ! include land values
+            END IF
+          END DO
+        END DO
+      END IF
+!
+!  Get merged fields minimun and maximum values.
+!
+      IF (got(1).and.got(2)) THEN
+        ic=3
+      ELSE
+        ic=1
+      END IF
+      CALL ESMF_VMAllReduce (vm,                                        &
+     &                       sendData=MyFmin,                           &
+     &                       recvData=Fmin,                             &
+     &                       count=ic,                                  &
+     &                       reduceflag=ESMF_REDUCE_MIN,                &
+     &                       rc=rc)
+      IF (ESMF_LogFoundError(rcToCheck=rc,                              &
+     &                       msg=ESMF_LOGERR_PASSTHRU,                  &
+     &                       line=__LINE__,                             &
+     &                       file=MyFile)) THEN
+        RETURN
+      END IF
+!
+      CALL ESMF_VMAllReduce (vm,                                        &
+     &                       sendData=MyFmax,                           &
+     &                       recvData=Fmax,                             &
+     &                       count=ic,                                  &
+     &                       reduceflag=ESMF_REDUCE_MAX,                &
+     &                       rc=rc)
+      IF (ESMF_LogFoundError(rcToCheck=rc,                              &
+     &                       msg=ESMF_LOGERR_PASSTHRU,                  &
+     &                       line=__LINE__,                             &
+     &                       file=MyFile)) THEN
+        RETURN
+      END IF
+!
+!  Report merged import field information.
+!
+      IF (got(1).and.got(2)) THEN
+        IF ((DebugLevel.ge.0).and.(localPET.eq.0)) THEN
+          WRITE (cplout,20) TRIM(fld_string),                           &
+     &                      TRIM(Time_CurrentString), ng,               &
+     &                      Fmin(1), Fmax(1),                           &
+     &                      Fmin(2), Fmax(2),                           &
+     &                      Fmin(3), Fmax(3)
+        END IF
+      ELSE
+        IF ((DebugLevel.ge.0).and.(localPET.eq.0)) THEN
+          WRITE (cplout,30) Fmin(1), Fmax(1)
+        END IF
+      END IF
+!
+!  Debugging: write out export field into a NetCDF file.
+!
+      IF ((DebugLevel.ge.3).and.ANY(DebugWrite)) THEN
+        WRITE (ofile,40) ng, TRIM(fld_string),                          &
+     &                   year, month, day, hour, minutes, seconds
+        CALL ESMF_FieldWrite (Fmerge,                                   &
+     &                        TRIM(ofile),                              &
+     &                        overwrite=.TRUE.,                         &
+     &                        rc=rc)
+        IF (ESMF_LogFoundError(rcToCheck=rc,                            &
+     &                         msg=ESMF_LOGERR_PASSTHRU,                &
+     &                         line=__LINE__,                           &
+     &                         file=MyFile)) THEN
+          RETURN
+        END IF
+      END IF
+!
+!  Nullify pointer to make sure that it does not point on a random
+!  part in the memory.
+!
+      IF (associated(ptr2d)) nullify (ptr2d)
+      IF (associated(Fout )) nullify (Fout)
+!
+!  Destroy merged field.
+!
+      CALL ESMF_FieldDestroy (Fmerge,                                   &
+     &                        noGarbage=.FALSE.,                        &
+     &                        rc=rc)
+      IF (ESMF_LogFoundError(rcToCheck=rc,                              &
+     &                       msg=ESMF_LOGERR_PASSTHRU,                  &
+     &                       line=__LINE__,                             &
+     &                       file=MyFile)) THEN
+        RETURN
+      END IF
+!
+      IF (ESM_track) THEN
+        WRITE (trac,'(a,a,i0)') '<== Exiting  COAMPS_ProcessImport',    &
+     &                          ', PET', PETrank
+        CALL my_flush (trac)
+      END IF
+      IF (DebugLevel.gt.0) CALL my_flush (cplout)
+!
+  10  FORMAT (/,5x,'COAMPS_ProcessImport - ',                           &
+     &         'unable to find option to import: ',a,                   &
+     &        /,25x,'check ''Import(atmos)'' in input script: ',a)
+  20  FORMAT (1x,' COAMPS_ProcessImport - ESMF merging field ''',       &
+     &        a,'''',t72,a,2x,'Grid ',i2.2,                             &
+     &        /,19x,'(OcnMin = ', 1p,e15.8,0p,                          &
+     &              ' OcnMax = ', 1p,e15.8,0p,')',                      &
+     &        /,19x,'(DatMin = ', 1p,e15.8,0p,                          &
+     &              ' DatMax = ', 1p,e15.8,0p,')',                      &
+     &        /,19x,'(OutMin = ', 1p,e15.8,0p,                          &
+     &              ' OutMax = ', 1p,e15.8,0p,')')
+  30  FORMAT (19x,  '(OutMin = ', 1p,e15.8,0p,                          &
+     &              ' OutMax = ', 1p,e15.8,0p,') COAMPS_ProcessImport')
+  40  FORMAT ('coamps_',i2.2,'_merged_',a,'_',i4.4,2('-',i2.2),'_',     &
+     &        i2.2,2('.',i2.2),'.nc')
+!
+      RETURN
+      END SUBROUTINE COAMPS_ProcessImport
+!
+      SUBROUTINE COAMPS_Export (ng, model, rc)
+!
+!=======================================================================
+!                                                                      !
+!  Exports COAMPS fields to other coupled gridded components. The      !
+!  fields in COAMPS are time-averaged over the coupling interval.      !
+!                                                                      !
+!  The time-averaging of exported surface fields is done in COAMPS     !
+!  file: ROOT_DIR/coamps/src/atmos/libsrc/amlib/avg_mod.F              !
+!                                                                      !
+!=======================================================================
+!
+      USE avg_mod,    ONLY : avg
+      USE avg_mod,    ONLY : ifld_airrhm,                               &
+     &                       ifld_airshm,                               &
+     &                       ifld_airtmp,                               &
+     &                       ifld_heaflx,                               &
+     &                       ifld_lahflx,                               &
+     &                       ifld_lonflx,                               &
+     &                       ifld_lwdown,                               &
+     &                       ifld_mstflx,                               &
+     &                       ifld_sehflx,                               &
+     &                       ifld_slpres,                               &
+     &                       ifld_solflx,                               &
+     &                       ifld_stress_u_true,                        &
+     &                       ifld_stress_v_true,                        &
+     &                       ifld_swdown,                               &
+     &                       ifld_ttlprr,                               &
+     &                       ifld_u10_true,                             &
+     &                       ifld_v10_true
+      USE coamm_memm, ONLY : adom
+      USE domdec,     ONLY : iminf, imaxf, jminf, jmaxf
+!
+!  Imported variable declarations.
+!
+      integer, intent(in)  :: ng
+      integer, intent(out) :: rc
+!
+      TYPE (ESMF_GridComp) :: model
+!
+!  Local variable declarations.
+!
+      integer :: ifld, i, is, j
+      integer :: Istr, Iend, Jstr, Jend
+      integer :: year, month, day, hour, minutes, seconds, sN, SD
+      integer :: ExportCount
+      integer :: localDE, localDEcount, localPET, PETcount
+!
+      real (dp), parameter :: Emiss = 0.97_dp         ! IR emissivity
+      real (dp), parameter :: StBolt = 5.67051E-8_dp  ! Stefan-Boltzmann
+      real (dp), parameter :: z1 = 3.0_dp             ! layer thickness
+!
+      real (dp) :: Fseconds, TimeInDays, Time_Current
+      real (dp) :: cff1, cff2, f1, scale
+
+      real (dp) :: MyFmax(1), MyFmin(1), Fmin(1), Fmax(1), Fval
+!
+      real (dp), pointer :: ptr2d(:,:) => NULL()
+!
+      character (len=22)      :: Time_CurrentString
+
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__//", COAMPS_Export"
+!
+      character (ESMF_MAXSTR) :: cname, ofile
+      character (ESMF_MAXSTR), allocatable :: ExportNameList(:)
+!
+      TYPE (ESMF_Clock) :: clock
+      TYPE (ESMF_Field) :: field
+      TYPE (ESMF_State) :: ExportState
+      TYPE (ESMF_Time)  :: CurrentTime
+      TYPE (ESMF_VM)    :: vm
+!
+!-----------------------------------------------------------------------
+!  Initialize return code flag to success state (no error).
+!-----------------------------------------------------------------------
+!
+      IF (ESM_track) THEN
+        WRITE (trac,'(a,a,i0)') '==> Entering COAMPS_Export',           &
+     &                          ', PET', PETrank
+        CALL my_flush (trac)
+      END IF
+      rc=ESMF_SUCCESS
+!
+!-----------------------------------------------------------------------
+!  Get information about the gridded component.
+!-----------------------------------------------------------------------
+!
+      CALL ESMF_GridCompGet (model,                                     &
+     &                       exportState=ExportState,                   &
+     &                       clock=clock,                               &
+     &                       localPet=localPET,                         &
+     &                       petCount=PETcount,                         &
+     &                       vm=vm,                                     &
+     &                       name=cname,                                &
+     &                       rc=rc)
+      IF (ESMF_LogFoundError(rcToCheck=rc,                              &
+     &                       msg=ESMF_LOGERR_PASSTHRU,                  &
+     &                       line=__LINE__,                             &
+     &                       file=MyFile)) THEN
+        RETURN
+      END IF
+!
+!  Get number of local decomposition elements (DEs). Usually, a single
+!  DE is associated with each Persistent Execution Thread (PETs). Thus,
+!  localDEcount=1.
+!
+      CALL ESMF_GridGet (MODELS(Iatmos)%grid(ng),                       &
+     &                   localDECount=localDEcount,                     &
+     &                   rc=rc)
+      IF (ESMF_LogFoundError(rcToCheck=rc,                              &
+     &                       msg=ESMF_LOGERR_PASSTHRU,                  &
+     &                       line=__LINE__,                             &
+     &                       file=MyFile)) THEN
+        RETURN
+      END IF
+!
+!-----------------------------------------------------------------------
+!  Get current time.
+!-----------------------------------------------------------------------
+!
+      CALL ESMF_ClockGet (clock,                                        &
+     &                    currTime=CurrentTime,                         &
+     &                    rc=rc)
+      IF (ESMF_LogFoundError(rcToCheck=rc,                              &
+     &                       msg=ESMF_LOGERR_PASSTHRU,                  &
+     &                       line=__LINE__,                             &
+     &                       file=MyFile)) THEN
+        RETURN
+      END IF
+!
+      CALL ESMF_TimeGet (CurrentTime,                                   &
+     &                   yy=year,                                       &
+     &                   mm=month,                                      &
+     &                   dd=day,                                        &
+     &                   h =hour,                                       &
+     &                   m =minutes,                                    &
+     &                   s =seconds,                                    &
+     &                   sN=sN,                                         &
+     &                   sD=sD,                                         &
+     &                   rc=rc)
+      IF (ESMF_LogFoundError(rcToCheck=rc,                              &
+     &                       msg=ESMF_LOGERR_PASSTHRU,                  &
+     &                       line=__LINE__,                             &
+     &                       file=MyFile)) THEN
+        RETURN
+      END IF
+!
+      CALL ESMF_TimeGet (CurrentTime,                                   &
+     &                   s_r8=Time_Current,                             &
+     &                   timeString=Time_CurrentString,                 &
+     &                   rc=rc)
+      IF (ESMF_LogFoundError(rcToCheck=rc,                              &
+     &                       msg=ESMF_LOGERR_PASSTHRU,                  &
+     &                       line=__LINE__,                             &
+     &                       file=MyFile)) THEN
+        RETURN
+      END IF
+      Fseconds=REAL(seconds,dp)+REAL(sN,dp)/REAL(sD,dp)
+      TimeInDays=Time_Current/86400.0_dp
       is=INDEX(Time_CurrentString, 'T')              ! remove 'T' in
       IF (is.gt.0) Time_CurrentString(is:is)=' '     ! ISO 8601 format
 !
@@ -4153,7 +3774,7 @@
 !  Get list of export fields.
 !-----------------------------------------------------------------------
 !
-      CALL ESMF_StateGet (MODELS(Iroms)%ExportState(ng),                &
+      CALL ESMF_StateGet (MODELS(Iatmos)%ExportState(ng),               &
      &                    itemCount=ExportCount,                        &
      &                    rc=rc)
       IF (ESMF_LogFoundError(rcToCheck=rc,                              &
@@ -4166,8 +3787,7 @@
       IF (.not. allocated(ExportNameList)) THEN
         allocate ( ExportNameList(ExportCount) )
       END IF
-!
-      CALL ESMF_StateGet (MODELS(Iroms)%ExportState(ng),                &
+      CALL ESMF_StateGet (MODELS(Iatmos)%ExportState(ng),               &
      &                    itemNameList=ExportNameList,                  &
      &                    rc=rc)
       IF (ESMF_LogFoundError(rcToCheck=rc,                              &
@@ -4185,7 +3805,7 @@
 !
 !   Get field from export state.
 !
-        CALL ESMF_StateGet (MODELS(Iroms)%ExportState(ng),              &
+        CALL ESMF_StateGet (MODELS(Iatmos)%ExportState(ng),             &
      &                      TRIM(ExportNameList(ifld)),                 &
      &                      field,                                      &
      &                      rc=rc)
@@ -4210,88 +3830,288 @@
      &                           file=MyFile)) THEN
             RETURN
           END IF
+          Istr=LBOUND(ptr2d,1)        ! iminf(ng)
+          Iend=UBOUND(ptr2d,1)        ! imaxf(ng)
+          Jstr=LBOUND(ptr2d,2)        ! jminf(ng)
+          Jend=UBOUND(ptr2d,2)        ! jmaxf(ng)
 !
-!  Initialize pointer to missing value.
+!  Initialize pointer.
 !
           ptr2d=MISSING_dp
 !
-!  Load field data into export state. Notice that all export fields
-!  are kept as computed by ROMS. The imported component does the
+!  Load field data into export state.  Notice that all export fields
+!  are kept as computed by COAMPS. The imported component does the
 !  proper scaling, physical units conversion, and other manipulations.
 !  It is done to avoid applying such transformations twice.
 !
           SELECT CASE (TRIM(ADJUSTL(ExportNameList(ifld))))
 !
-!  Sea surface temperature (C).
-# if defined EXCLUDE_SPONGE && \
-    (defined DATA_COUPLING  && !defined ANA_SPONGE)
-!  If using a diffusion sponge, remove the SST points in the sponge area
-!  to supress the spurious influence of open boundary conditions in the
-!  computation of the net heat flux. The SST values in the sponge are
-!  from the large scale DATA component in the merged ocean/data field
-!  imported by the atmosphere model.
-# endif
+!  Sea level pressure (Pa).
 !
-            CASE ('sst', 'SST')
+            CASE ('psfc', 'Pair')
               MyFmin(1)= MISSING_dp
               MyFmax(1)=-MISSING_dp
-              DO j=JstrR,JendR
-                DO i=IstrR,IendR
-# if defined EXCLUDE_SPONGE && \
-    (defined DATA_COUPLING  && !defined ANA_SPONGE)
-                  IF (LtracerSponge(itemp,ng).and.                      &
-     &                MIXING(ng)%diff_factor(i,j).gt.1.0_dp) THEN
-                    Fval=MISSING_dp
-                  ELSE
-                    Fval=OCEAN(ng)%t(i,j,N(ng),nstp(ng),itemp)
-#  ifdef MASKING
-                    IF (GRID(ng)%rmask(i,j).gt.0.0_r8) THEN
-                      MyFmin(1)=MIN(MyFmin(1),Fval)
-                      MyFmax(1)=MAX(MyFmax(1),Fval)
-                    END IF
-#  else
-                    MyFmin(1)=MIN(MyFmin(1),Fval)
-                    MyFmax(1)=MAX(MyFmax(1),Fval)
-#  endif
-                  END IF
-# else
-                  Fval=OCEAN(ng)%t(i,j,N(ng),nstp(ng),itemp)
-#  ifdef MASKING
-                  IF (GRID(ng)%rmask(i,j).gt.0.0_r8) THEN
-                    MyFmin(1)=MIN(MyFmin(1),Fval)
-                    MyFmax(1)=MAX(MyFmax(1),Fval)
-                  END IF
-#  else
+              DO j=Jstr,Jend
+                DO i=Istr,Iend
+                  Fval=avg(ng)%fld(ifld_slpres)%p(i,j)
                   MyFmin(1)=MIN(MyFmin(1),Fval)
                   MyFmax(1)=MAX(MyFmax(1),Fval)
-#  endif
-# endif
                   ptr2d(i,j)=Fval
                 END DO
               END DO
-
-# if defined MASKING && defined WET_DRY
 !
-!  Update wet point land/sea mask, if differs from static mask.
+!  Surface (2m) air temperature (K).
 !
-            CASE ('msk')
-              MyFmin(1)=1.0_dp
-              MyFmax(1)=0.0_dp
-              DO j=JstrR,JendR
-                DO i=IstrR,IendR
-                  IF (GRID(ng)%rmask(i,j).gt.0.0_r8) THEN
-                    IF (GRID(ng)%rmask(i,j).ne.                         &
-     &                  GRID(ng)%rmask_wet(i,j)) THEN
-                      ptr2d(i,j)=GRID(ng)%rmask_wet(i,j)
-                    ELSE
-                      ptr2d(i,j)=GRID(ng)%rmask(i,j)
-                    END IF
-                    MyFmin(1)=MIN(MyFmin(1),ptr2d(i,j))
-                    MyFmax(1)=MAX(MyFmax(1),ptr2d(i,j))
-                  END IF
+            CASE ('tsfc', 'Tair')
+              MyFmin(1)= MISSING_dp
+              MyFmax(1)=-MISSING_dp
+              DO j=Jstr,Jend
+                DO i=Istr,Iend
+                  Fval=avg(ng)%fld(ifld_airtmp)%p(i,j)
+                  MyFmin(1)=MIN(MyFmin(1),Fval)
+                  MyFmax(1)=MAX(MyFmax(1),Fval)
+                  ptr2d(i,j)=Fval
                 END DO
               END DO
-# endif
+!
+!  Surface (2m) specific humidity (kg/kg).
+!
+            CASE ('Hair')
+              MyFmin(1)= MISSING_dp
+              MyFmax(1)=-MISSING_dp
+              DO j=Jstr,Jend
+                DO i=Istr,Iend
+                  Fval=avg(ng)%fld(ifld_airshm)%p(i,j)
+                  MyFmin(1)=MIN(MyFmin(1),Fval)
+                  MyFmax(1)=MAX(MyFmax(1),Fval)
+                  ptr2d(i,j)=Fval
+                END DO
+              END DO
+!
+!  Surface (2m) relative humidity (percentage).
+!
+            CASE ('qsfc', 'Qair')
+              MyFmin(1)= MISSING_dp
+              MyFmax(1)=-MISSING_dp
+              DO j=Jstr,Jend
+                DO i=Istr,Iend
+                  Fval=avg(ng)%fld(ifld_airrhm)%p(i,j)
+                  MyFmin(1)=MIN(MyFmin(1),Fval)
+                  MyFmax(1)=MAX(MyFmax(1),Fval)
+                  ptr2d(i,j)=Fval
+                END DO
+              END DO
+!
+!  Net heat flux (W m-2) at the surface. Use shortwave, longwave,
+!  latent, sensible fluxes to compute net heat flux.  Remove outgoing
+!  IR from ocean sea surface temperature (K) using infrared emissivity
+!  (unitless) and Stefan-Boltzmann constant (W m-2 K-4).  As in COAMPS
+!  routine 'sst_skin_update', the f1 represents the shortwave flux
+!  mean absorption in the cool-skin layer (an approximation kludge).
+!  A formal approach is presented in Zeng and Beljaars (2005; GRL).
+!  Also, ROMS 'bulk_flux' routine shows a formal cool skin correction.
+!
+!  The latent and sensible flux computed in COAMPS need to have the
+!  sign reversed because of COAMPS convention of positive to for
+!  upward flux and negative for downward flux. In the ocean is the
+!  opposite.
+!
+            CASE ('nflx', 'shflux')
+              MyFmin(1)= MISSING_dp
+              MyFmax(1)=-MISSING_dp
+              f1=1.0_dp-0.27_dp*EXP(-2.80_dp*z1)-                       &
+     &                  0.45_dp*EXP(-0.07_dp*z1)
+              DO j=Jstr,Jend
+                DO i=Istr,Iend
+                  cff1=adom(ng)%tsea(i,j)*adom(ng)%tsea(i,j)*           &
+     &                 adom(ng)%tsea(i,j)*adom(ng)%tsea(i,j)
+                  cff2=Emiss*StBolt*cff1
+                  Fval=avg(ng)%fld(ifld_solflx)%p(i,j)*f1+              &
+     &                 avg(ng)%fld(ifld_lwdown)%p(i,j)-cff2-            &
+     &                 avg(ng)%fld(ifld_lahflx)%p(i,j)-                 &
+     &                 avg(ng)%fld(ifld_sehflx)%p(i,j)
+                  MyFmin(1)=MIN(MyFmin(1),Fval)
+                  MyFmax(1)=MAX(MyFmax(1),Fval)
+                  ptr2d(i,j)=Fval
+                END DO
+              END DO
+!
+!  Surface longwave radiation flux (W m-2; positive upward).
+!
+            CASE ('lwrd', 'LWrad')
+              MyFmin(1)= MISSING_dp
+              MyFmax(1)=-MISSING_dp
+              DO j=Jstr,Jend
+                DO i=Istr,Iend
+                  Fval=avg(ng)%fld(ifld_lonflx)%p(i,j)
+                  MyFmin(1)=MIN(MyFmin(1),Fval)
+                  MyFmax(1)=MAX(MyFmax(1),Fval)
+                  ptr2d(i,j)=Fval
+                END DO
+              END DO
+!
+!  Surface downward longwave radiation flux (W m-2).
+!
+            CASE ('dlwrd', 'dLWrad', 'lwrad_down')
+              MyFmin(1)= MISSING_dp
+              MyFmax(1)=-MISSING_dp
+              DO j=Jstr,Jend
+                DO i=Istr,Iend
+                  Fval=avg(ng)%fld(ifld_lwdown)%p(i,j)
+                  MyFmin(1)=MIN(MyFmin(1),Fval)
+                  MyFmax(1)=MAX(MyFmax(1),Fval)
+                  ptr2d(i,j)=Fval
+                END DO
+              END DO
+!
+!  Surface shortwave radiation (W m-2; positive into ocean).
+!
+            CASE ('swrd', 'SWrad')
+              MyFmin(1)= MISSING_dp
+              MyFmax(1)=-MISSING_dp
+              DO j=Jstr,Jend
+                DO i=Istr,Iend
+                  Fval=avg(ng)%fld(ifld_solflx)%p(i,j)
+                  MyFmin(1)=MIN(MyFmin(1),Fval)
+                  MyFmax(1)=MAX(MyFmax(1),Fval)
+                  ptr2d(i,j)=Fval
+                END DO
+              END DO
+!
+!  Surface downward shortwave radiation flux (W m-2).
+!
+            CASE ('dswrd', 'dSWrad')
+              MyFmin(1)= MISSING_dp
+              MyFmax(1)=-MISSING_dp
+              DO j=Jstr,Jend
+                DO i=Istr,Iend
+                  Fval=avg(ng)%fld(ifld_swdown)%p(i,j)
+                  MyFmin(1)=MIN(MyFmin(1),Fval)
+                  MyFmax(1)=MAX(MyFmax(1),Fval)
+                  ptr2d(i,j)=Fval
+                END DO
+              END DO
+!
+!  Surface latent heat flux (W m-2). In COAMPS, the latent heat flux
+!  is a positive upward flux. For the ocean, it is the reverse and
+!  needs to be switched to negative.
+!
+!
+            CASE ('lhfx', 'LHfx')
+              MyFmin(1)= MISSING_dp
+              MyFmax(1)=-MISSING_dp
+              DO j=Jstr,Jend
+                DO i=Istr,Iend
+                  Fval=-avg(ng)%fld(ifld_lahflx)%p(i,j)
+                  MyFmin(1)=MIN(MyFmin(1),Fval)
+                  MyFmax(1)=MAX(MyFmax(1),Fval)
+                  ptr2d(i,j)=Fval
+                END DO
+              END DO
+!
+!  Surface sensible heat flux (W m-2).  In COAMPS, the sensible heat
+!  flux is a positive upward flux. For the ocean, it is the reverse and
+!  needs to be switched to negative.
+!
+            CASE ('shfx', 'SHfx')
+              MyFmin(1)= MISSING_dp
+              MyFmax(1)=-MISSING_dp
+              DO j=Jstr,Jend
+                DO i=Istr,Iend
+                  Fval=-avg(ng)%fld(ifld_sehflx)%p(i,j)
+                  MyFmin(1)=MIN(MyFmin(1),Fval)
+                  MyFmax(1)=MAX(MyFmax(1),Fval)
+                  ptr2d(i,j)=Fval
+                END DO
+              END DO
+!
+!  Surface moisture (E-P) flux (kg m-2 s-1). In COAMPS, the evaporation
+!  is a positive upward flux. For the ocean, it is the reverse so the
+!  moisture flux needs to be switched to negative.
+!
+            CASE ('swflux')
+              MyFmin(1)= MISSING_dp
+              MyFmax(1)=-MISSING_dp
+              DO j=Jstr,Jend
+                DO i=Istr,Iend
+                  Fval=-avg(ng)%fld(ifld_mstflx)%p(i,j)
+                  MyFmin(1)=MIN(MyFmin(1),Fval)
+                  MyFmax(1)=MAX(MyFmax(1),Fval)
+                  ptr2d(i,j)=Fval
+                END DO
+              END DO
+!
+!  Precipitation tendency rate (kg m-2 s-1). In COAMPS, precipitation
+!  is averaged with cm/s units.
+!
+            CASE ('rain')
+              MyFmin(1)= MISSING_dp
+              MyFmax(1)=-MISSING_dp
+              scale=10.0_dp       ! cm/s to kg m-2 s-1 (rhow=1000 km/m3)
+              DO j=Jstr,Jend
+                DO i=Istr,Iend
+                  Fval=avg(ng)%fld(ifld_ttlprr)%p(i,j)*scale
+                  MyFmin(1)=MIN(MyFmin(1),Fval)
+                  MyFmax(1)=MAX(MyFmax(1),Fval)
+                  ptr2d(i,j)=Fval
+                END DO
+              END DO
+!
+!  Surface (10m) eastward wind stress component (millibar, mb).
+!
+            CASE ('taux', 'taux10', 'sustr')
+              MyFmin(1)= MISSING_dp
+              MyFmax(1)=-MISSING_dp
+              DO j=Jstr,Jend
+                DO i=Istr,Iend
+                  Fval=avg(ng)%fld(ifld_stress_u_true)%p(i,j)
+                  MyFmin(1)=MIN(MyFmin(1),Fval)
+                  MyFmax(1)=MAX(MyFmax(1),Fval)
+                  ptr2d(i,j)=Fval
+                END DO
+              END DO
+!
+!  Surface (10m) northward wind stress component (Pa).
+!
+            CASE ('tauy', 'tauy10', 'svstr')
+              MyFmin(1)= MISSING_dp
+              MyFmax(1)=-MISSING_dp
+              DO j=Jstr,Jend
+                DO i=Istr,Iend
+                  Fval=avg(ng)%fld(ifld_stress_v_true)%p(i,j)
+                  MyFmin(1)=MIN(MyFmin(1),Fval)
+                  MyFmax(1)=MAX(MyFmax(1),Fval)
+                  ptr2d(i,j)=Fval
+                END DO
+              END DO
+!
+!  Surface (10m) eastward wind component (m s-1).
+!
+            CASE ('Uwind', 'u10', 'wndu')
+              MyFmin(1)= MISSING_dp
+              MyFmax(1)=-MISSING_dp
+              DO j=Jstr,Jend
+                DO i=Istr,Iend
+                  Fval=avg(ng)%fld(ifld_u10_true)%p(i,j)
+                  MyFmin(1)=MIN(MyFmin(1),Fval)
+                  MyFmax(1)=MAX(MyFmax(1),Fval)
+                  ptr2d(i,j)=Fval
+                END DO
+              END DO
+!
+!  Surface (10m) northward wind component (m s-1).
+!
+            CASE ('Vwind', 'v10', 'wndv')
+              MyFmin(1)= MISSING_dp
+              MyFmax(1)=-MISSING_dp
+              DO j=Jstr,Jend
+                DO i=Istr,Iend
+                  Fval=avg(ng)%fld(ifld_v10_true)%p(i,j)
+                  MyFmin(1)=MIN(MyFmin(1),Fval)
+                  MyFmax(1)=MAX(MyFmax(1),Fval)
+                  ptr2d(i,j)=Fval
+                END DO
+              END DO
 !
 !  Export field not found.
 !
@@ -4343,18 +4163,20 @@
           RETURN
         END IF
 !
-        IF (localPET.eq.0) THEN
+!  Report export field information.
+!
+        IF ((DebugLevel.ge.0).and.(localPET.eq.0)) THEN
           WRITE (cplout,20) TRIM(ExportNameList(ifld)),                 &
      &                      TRIM(Time_CurrentString), ng,               &
      &                      Fmin(1), Fmax(1)
         END IF
 !
-!  Debugging: write out field into a NetCDF file.
+!  Debugging: write out export field into a NetCDF file.
 !
         IF ((DebugLevel.ge.3).and.                                      &
-     &      MODELS(Iroms)%ExportField(ifld)%debug_write) THEN
+     &      MODELS(Iatmos)%ExportField(ifld)%debug_write) THEN
           WRITE (ofile,30) ng, TRIM(ExportNameList(ifld)),              &
-                           year, month, day, hour, minutes, seconds
+     &                     year, month, day, hour, minutes, seconds
           CALL ESMF_FieldWrite (field,                                  &
      &                          TRIM(ofile),                            &
      &                          overwrite=.TRUE.,                       &
@@ -4370,32 +4192,32 @@
 !
 !  Deallocate local arrays.
 !
-      IF (allocated(ExportNameList)) deallocate (ExportNameList)
+      IF (allocated(ExportNameList)) deallocate(ExportNameList)
 !
-!  Update ROMS export calls counter.
+!  Update COAMPS export calls counter.
 !
       IF (ExportCount.gt.0) THEN
-        MODELS(Iroms)%ExportCalls=MODELS(Iroms)%ExportCalls+1
+        MODELS(Iatmos)%ExportCalls=MODELS(Iatmos)%ExportCalls+1
       END IF
 !
       IF (ESM_track) THEN
-        WRITE (trac,'(a,a,i0)') '<== Exiting  ROMS_Export',             &
+        WRITE (trac,'(a,a,i0)') '<== Exiting  COAMPS_Export',           &
      &                          ', PET', PETrank
         CALL my_flush (trac)
       END IF
-      CALL my_flush (cplout)
+      IF (DebugLevel.gt.0) CALL my_flush (cplout)
 !
-  10  FORMAT (/,3x,' ROMS_Export - unable to find option to export: ',  &
-     &        a,/,18x,'check ''Export(roms)'' in input script: ',a)
-  20  FORMAT (3x,' ROMS_Export - ESMF:  exporting field ''',a,'''',     &
+  10  FORMAT (/,2x,'COAMPS_Export - unable to find option to export: ', &
+     &        a,/,18x,'check ''Export(atmos)'' in input script: ',a)
+  20  FORMAT (2x,'COAMPS_Export - ESMF: exporting field ''',a,'''',     &
      &        t72,a,2x,'Grid ',i2.2,/,                                  &
-     &        18x,'(OutMin = ', 1p,e15.8,0p,' OutMax = ',1p,e15.8,0p,   &
+     &        19x,'(OutMin = ', 1p,e15.8,0p,' OutMax = ',1p,e15.8,0p,   &
      &        ')')
-  30  FORMAT ('roms_',i2.2,'_export_',a,'_',i4.4,2('-',i2.2),'_',       &
+  30  FORMAT ('coamps_',i2.2,'_export_',a,'_',i4.4,2('-',i2.2),'_',     &
      &        i2.2,2('.',i2.2),'.nc')
 
       RETURN
-      END SUBROUTINE ROMS_Export
+      END SUBROUTINE COAMPS_Export
 !
 #endif
-      END MODULE esmf_roms_mod
+      END MODULE esmf_coamps_mod
