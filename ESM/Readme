@@ -1,6 +1,6 @@
 *
 * git $Id$
-* svn $Id: Readme 1066 2021-05-14 21:47:45Z arango $
+* svn $Id: Readme 1074 2021-06-14 20:44:40Z arango $
 ***********************************************************************
 *  Copyright (c) 2002-2021 The ROMS/TOMS Group                        *
 *    Licensed under a MIT/X style license                             *
@@ -90,7 +90,7 @@ File Description:
 
   Coupling metadata defining import and export fields.
 
-* build_cice.sh:
+* build_cice.csh:
 
   A friendlier CSH script to compile CICE.
 
@@ -99,8 +99,54 @@ File Description:
   CSH and BASH compiling scripts for WRF to facilitate easy compiling
   and linking.  It also corrects several technical issues with very old
   ESMF library interference and incorrect NetCDF4 library dependencies.
+  Many of the sections of this script that do not require customization
+  have been off-loaded into sub-scripts that are called from the WRF
+  build script. They are: wrf_patch.*, wrf_links.* and wrf_move.*)
 
-The files below were adapted from WRF Version 4.1.x (April 12, 2019)
+* wrf_restore.csh, wrf_restore.sh:
+
+  CSH and BASH script to restore the WRF source code directory to its
+  original checkout state by undoing the changes made by wrf_patch.csh
+  or wrf_patch.sh.
+
+* wrf_patch.csh, wrf_patch.sh:
+
+  CSH and BASH to check whether the WRF souce code has been patched for
+  NetCDF4 library dependencies, added configure options, creating clean
+  f90 files for debugging, renaming modules to WRF_ESMF_*, and correcting
+  optional argument from defaultCalendar or defaultCalKind in
+  ESMF_Initialize call.
+
+* wrf_move.csh, wrf_move.sh:
+
+  If -move flag is used when executing build_wrf.*, this script moves
+  the WRF objects and executables needed to run WRF in the coupled
+  ESMF/NUOPC system.
+
+* wrf_links.csh, wrf_links.sh:
+
+  If -move flag is used when executeing build_wrf.* and ${WRF_CASE} is
+  set to 'em_real', this script creates the data links for running the
+  'em_real' executable.
+
+* build_wps.csh, build_wps.sh
+
+  CSH and BASH compiling scripts for WPS to facilitate easy compiling
+  and linking. It patches the util/src/Makefile to allow compiling
+  with parallel enabled NetCDF4/HDF5. If which_MPI is set to 'intel',
+  it also corrects the MPI compiler names in configure.wps.
+
+* *.runconfig
+
+  The ESMF RunSequence configuration file sets how the ESM components
+  are connected and coupled.
+
+* roms_fields.yaml (currently not used)
+
+  Right now this file is not used but we hope to use this file in the
+  future to handle exchange fields for ESMF/NUOPC coupling.
+
+The files below were adapted to work with WRF Versions 4.1.x - 4.3
 
   - wrf_configure:
 
