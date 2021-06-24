@@ -4,7 +4,7 @@
    (defined SSH_TIDES || defined UV_TIDES)
 !
 !git $Id$
-!svn $Id: def_tides.F 1064 2021-05-10 19:55:56Z arango $
+!svn $Id: def_tides.F 1075 2021-06-24 18:18:59Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -62,11 +62,11 @@
 !
       SELECT CASE (HAR(ng)%IOtype)
         CASE (io_nf90)
-          CALL def_tides_nf90 (ng)
+          CALL def_tides_nf90 (ng, ldef)
 
 # if defined PIO_LIB && defined DISTRIBUTE
         CASE (io_pio)
-          CALL def_tides_pio (ng)
+          CALL def_tides_pio (ng, ldef)
 # endif
         CASE DEFAULT
           IF (Master) THEN

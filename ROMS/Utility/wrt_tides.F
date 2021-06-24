@@ -4,7 +4,7 @@
    (defined SSH_TIDES || defined UV_TIDES)
 !
 !git $Id$
-!svn $Id: wrt_tides.F 1064 2021-05-10 19:55:56Z arango $
+!svn $Id: wrt_tides.F 1075 2021-06-24 18:18:59Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -89,7 +89,8 @@
       END SUBROUTINE wrt_tides
 !
 !***********************************************************************
-      SUBROUTINE wrt_tides_nf90 (ng, tile)
+      SUBROUTINE wrt_tides_nf90 (ng, tile,                              &
+     &                           LBi, UBi, LBj, UBj)
 !***********************************************************************
 !
       USE mod_netcdf
@@ -365,7 +366,8 @@
 # if defined PIO_LIB && defined DISTRIBUTE
 !
 !***********************************************************************
-      SUBROUTINE wrt_tides_pio (ng, tile)
+      SUBROUTINE wrt_tides_pio (ng, tile,                               &
+     &                          LBi, UBi, LBj, UBj)
 !***********************************************************************
 !
       USE mod_pio_netcdf
