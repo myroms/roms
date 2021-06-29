@@ -3,7 +3,7 @@
        SUBROUTINE grid_coords (ng, model)
 !
 !git $Id$
-!svn $Id: grid_coords.F 1054 2021-03-06 19:47:12Z arango $
+!svn $Id: grid_coords.F 1076 2021-06-29 04:08:42Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -22,11 +22,11 @@
 # endif
       USE mod_grid
       USE mod_scalars
+      USE roms_interpolate_mod
 !
 # ifdef DISTRIBUTE
       USE distribute_mod, ONLY : mp_collect
 # endif
-      USE interpolate_mod
 !
       implicit none
 !
