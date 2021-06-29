@@ -2,7 +2,7 @@
       MODULE regrid_mod
 !
 !git $Id$
-!svn $Id: regrid.F 1066 2021-05-14 21:47:45Z arango $
+!svn $Id: regrid.F 1076 2021-06-29 04:08:42Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -70,8 +70,7 @@
       USE mod_iounits
       USE mod_ncparam
       USE mod_scalars
-!
-      USE interpolate_mod
+      USE roms_interpolate_mod
 !
 #ifdef DISTRIBUTE
       USE distribute_mod,    ONLY : mp_reduce
