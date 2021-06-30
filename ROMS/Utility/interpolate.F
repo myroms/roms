@@ -5,7 +5,7 @@
       MODULE roms_interpolate_mod
 !
 !git $Id$
-!svn $Id: interpolate.F 1076 2021-06-29 04:08:42Z arango $
+!svn $Id: interpolate.F 1077 2021-06-30 02:30:08Z arango $
 !=======================================================================
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -103,11 +103,11 @@
 !
         real(r8) :: min_src, max_src
 !
-        real(r8), pointer, dimension(:,:) :: lon_src   => NULL()
-        real(r8), pointer, dimension(:,:) :: lat_src   => NULL()
+        real(r8), allocatable :: lon_src(:,:)
+        real(r8), allocatable :: lat_src(:,:)
 
-        real(r8), pointer, dimension(:,:) :: angle_src => NULL()
-        real(r8), pointer, dimension(:,:) :: mask_src  => NULL()
+        real(r8), allocatable :: angle_src(:,:)
+        real(r8), allocatable :: mask_src(:,:)
 !
 !  Destination grid array declaration bounds, tile partition range,
 !  longitude/latitude, fractional coordinates, and land/sea mask.
@@ -117,10 +117,10 @@
 !
         real(r8) :: min_dst, max_dst
 !
-        real(r8), pointer, dimension(:,:) :: lon_dst  => NULL()
-        real(r8), pointer, dimension(:,:) :: lat_dst  => NULL()
+        real(r8), allocatable :: lon_dst(:,:)
+        real(r8), allocatable :: lat_dst(:,:)
 
-        real(r8), pointer, dimension(:,:) :: mask_dst => NULL()
+        real(r8), allocatable :: mask_dst(:,:)
 
         real(r8), allocatable :: x_dst(:,:)
         real(r8), allocatable :: y_dst(:,:)
@@ -1715,15 +1715,33 @@
 !
       TYPE (roms_interp_type), intent(inout) :: S
 !
+!  Local variable declarations.
+!
+      integer :: LBi, UBi, LBj, UBj
+!
 !-----------------------------------------------------------------------
 !  Creates source component of interpolation object.
 !-----------------------------------------------------------------------
 !
 !  If applicable, destroy interpolation object.
 !
-      IF (associated(S%lon_src)) THEN
+      IF (allocated(S%lon_src)) THEN
         CALL roms_interp_delete (S)
       END IF
+!
+!  Allocate source component arrays.
+!
+      LBi=BOUNDS(ng)%LBi(tile)
+      UBi=BOUNDS(ng)%UBi(tile)
+      LBj=BOUNDS(ng)%LBj(tile)
+      UBj=BOUNDS(ng)%UBj(tile)
+!
+      allocate ( S%lon_src(LBi:UBi,LBj:UBj) )
+      allocate ( S%lat_src(LBi:UBi,LBj:UBj) )
+      allocate ( S%angle_src(LBi:UBi,LBj:UBj) )
+#ifdef MASKING
+      allocate ( S%mask_src(LBi:UBi,LBj:UBj) )
+#endif
 !
 !  Associate and assign values to source component.
 !
@@ -1733,44 +1751,45 @@
 !
       SELECT CASE (gtype)
         CASE (r2dvar, r3dvar)
-          S%lon_src   => GRID(ng)%lonr
-          S%lat_src   => GRID(ng)%latr
-          S%angle_src => GRID(ng)%angler
+          S%lon_src   = GRID(ng)%lonr
+          S%lat_src   = GRID(ng)%latr
+          S%angle_src = GRID(ng)%angler
 #ifdef MASKING
-          S%mask_src  => GRID(ng)%rmask
+          S%mask_src  = GRID(ng)%rmask
 #endif
-          S%Istr_src = BOUNDS(ng)%IstrR(tile)
-          S%Iend_src = BOUNDS(ng)%IendR(tile)
-          S%Jstr_src = BOUNDS(ng)%JstrR(tile)
-          S%Jend_src = BOUNDS(ng)%JendR(tile)
+          S%Istr_src  = BOUNDS(ng)%IstrR(tile)
+          S%Iend_src  = BOUNDS(ng)%IendR(tile)
+          S%Jstr_src  = BOUNDS(ng)%JstrR(tile)
+          S%Jend_src  = BOUNDS(ng)%JendR(tile)
         CASE (u2dvar, u3dvar)
-          S%lon_src   => GRID(ng)%lonu
-          S%lat_src   => GRID(ng)%latu
-          S%angle_src => GRID(ng)%angler
+          S%lon_src   = GRID(ng)%lonu
+          S%lat_src   = GRID(ng)%latu
+          S%angle_src = GRID(ng)%angler
 #ifdef MASKING
-          S%mask_src  => GRID(ng)%umask
+          S%mask_src  = GRID(ng)%umask
 #endif
-          S%Istr_src = BOUNDS(ng)%Istr (tile)
-          S%Iend_src = BOUNDS(ng)%IendR(tile)
-          S%Jstr_src = BOUNDS(ng)%JstrR(tile)
-          S%Jend_src = BOUNDS(ng)%JendR(tile)
+          S%Istr_src  = BOUNDS(ng)%Istr (tile)
+          S%Iend_src  = BOUNDS(ng)%IendR(tile)
+          S%Jstr_src  = BOUNDS(ng)%JstrR(tile)
+          S%Jend_src  = BOUNDS(ng)%JendR(tile)
         CASE (v2dvar, v3dvar)
-          S%lon_src   => GRID(ng)%lonv
-          S%lat_src   => GRID(ng)%latv
-          S%angle_src => GRID(ng)%angler
+          S%lon_src   = GRID(ng)%lonv
+          S%lat_src   = GRID(ng)%latv
+          S%angle_src = GRID(ng)%angler
 #ifdef MASKING
-          S%mask_src =GRID(ng)%vmask
+          S%mask_src  = GRID(ng)%vmask
 #endif
-          S%Istr_src = BOUNDS(ng)%IstrR(tile)
-          S%Iend_src = BOUNDS(ng)%IendR(tile)
-          S%Jstr_src = BOUNDS(ng)%Jstr (tile)
-          S%Jend_src = BOUNDS(ng)%JendR(tile)
+          S%Istr_src  = BOUNDS(ng)%IstrR(tile)
+          S%Iend_src  = BOUNDS(ng)%IendR(tile)
+          S%Jstr_src  = BOUNDS(ng)%Jstr (tile)
+          S%Jend_src  = BOUNDS(ng)%JendR(tile)
       END SELECT
 !
-      S%LBi_src = BOUNDS(ng)%LBi(tile)
-      S%UBi_src = BOUNDS(ng)%UBi(tile)
-      S%LBj_src = BOUNDS(ng)%LBj(tile)
-      S%UBj_src = BOUNDS(ng)%UBj(tile)
+!
+      S%LBi_src = LBi
+      S%UBi_src = UBi
+      S%LBj_src = LBj
+      S%UBj_src = UBj
 !
       RETURN
       END SUBROUTINE roms_interp_create
@@ -1791,16 +1810,16 @@
 !  Deallocate interpolation structure.
 !-----------------------------------------------------------------------
 !
-      IF (associated(S%angle_src)) nullify (S%angle_src)
-      IF (associated(S%lon_src))   nullify (S%lon_src)
-      IF (associated(S%lat_src))   nullify (S%lat_src)
-      IF (associated(S%mask_src))  nullify (S%mask_src)
+      IF (allocated(S%angle_src)) deallocate (S%angle_src)
+      IF (allocated(S%lon_src))   deallocate (S%lon_src)
+      IF (allocated(S%lat_src))   deallocate (S%lat_src)
+      IF (allocated(S%mask_src))  deallocate (S%mask_src)
 
-      IF (associated(S%lon_dst))   nullify (S%lon_dst)
-      IF (associated(S%lat_dst))   nullify (S%lat_dst)
-      IF (associated(S%mask_dst))  nullify (S%mask_dst)
-      IF (allocated (S%x_dst))     deallocate (S%x_dst)
-      IF (allocated (S%y_dst))     deallocate (S%y_dst)
+      IF (allocated(S%lon_dst))   deallocate (S%lon_dst)
+      IF (allocated(S%lat_dst))   deallocate (S%lat_dst)
+      IF (allocated(S%mask_dst))  deallocate (S%mask_dst)
+      IF (allocated(S%x_dst))     deallocate (S%x_dst)
+      IF (allocated(S%y_dst))     deallocate (S%y_dst)
 !
       RETURN
       END SUBROUTINE roms_interp_delete
