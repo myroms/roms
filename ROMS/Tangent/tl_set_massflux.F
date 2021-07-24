@@ -4,7 +4,7 @@
 #if defined TANGENT && defined SOLVE3D
 !
 !git $Id$
-!svn $Id: tl_set_massflux.F 1054 2021-03-06 19:47:12Z arango $
+!svn $Id: tl_set_massflux.F 1081 2021-07-24 02:25:06Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -161,19 +161,19 @@
       DO k=1,N(ng)
         DO j=JstrT,JendT
           DO i=IstrP,IendT
-!>          Huon(i,j,k)=0.5_r8*(Hz(i,j,k)+Hz(i-1,j,k))*u(i,j,k,nrhs)*   &
-!>   &                  on_u(i,j)
-!>
+!^          Huon(i,j,k)=0.5_r8*(Hz(i,j,k)+Hz(i-1,j,k))*u(i,j,k,nrhs)*   &
+!^   &                  on_u(i,j)
+!^
             tl_Huon(i,j,k)=0.5_r8*on_u(i,j)*                            &
      &                     ((Hz(i,j,k)+Hz(i-1,j,k))*                    &
      &                      tl_u(i,j,k,nrhs)+                           &
      &                      (tl_Hz(i,j,k)+tl_Hz(i-1,j,k))*              &
      &                      u(i,j,k,nrhs))
 # ifdef NEARSHORE_MELLOR
-!>          Huon(i,j,k)=Huon(i,j,k)+                                    &
-!>   &                  0.5_r8*(Hz(i,j,k)+Hz(i-1,j,k))*                 &
-!>   &                  u_stokes(i,j,k)*on_u(i,j)
-!>
+!^          Huon(i,j,k)=Huon(i,j,k)+                                    &
+!^   &                  0.5_r8*(Hz(i,j,k)+Hz(i-1,j,k))*                 &
+!^   &                  u_stokes(i,j,k)*on_u(i,j)
+!^
             tl_Huon(i,j,k)=tl_Huon(i,j,k)+                              &
      &                     0.5_r8*on_u(i,j)*                            &
      &                     ((Hz(i,j,k)+Hz(i-1,j,k))*                    &
@@ -185,19 +185,19 @@
         END DO
         DO j=JstrP,JendT
           DO i=IstrT,IendT
-!>          Hvom(i,j,k)=0.5_r8*(Hz(i,j,k)+Hz(i,j-1,k))*v(i,j,k,nrhs)*   &
-!>   &                  om_v(i,j)
-!>
+!^          Hvom(i,j,k)=0.5_r8*(Hz(i,j,k)+Hz(i,j-1,k))*v(i,j,k,nrhs)*   &
+!^   &                  om_v(i,j)
+!^
             tl_Hvom(i,j,k)=0.5_r8*om_v(i,j)*                            &
      &                     ((Hz(i,j,k)+Hz(i,j-1,k))*                    &
      &                      tl_v(i,j,k,nrhs)+                           &
      &                      (tl_Hz(i,j,k)+tl_Hz(i,j-1,k))*              &
      &                      v(i,j,k,nrhs))
 # ifdef NEARSHORE_MELLOR
-!>          Hvom(i,j,k)=Hvom(i,j,k)+                                    &
-!>   &                  0.5_r8*(Hz(i,j,k)+Hz(i,j-1,k))*                 &
-!>   &                  v_stokes(i,j,k)*om_v(i,j)
-!>
+!^          Hvom(i,j,k)=Hvom(i,j,k)+                                    &
+!^   &                  0.5_r8*(Hz(i,j,k)+Hz(i,j-1,k))*                 &
+!^   &                  v_stokes(i,j,k)*om_v(i,j)
+!^
             tl_Hvom(i,j,k)=tl_Hvom(i,j,k)+                              &
      &                     0.5_r8*om_v(i,j)*                            &
      &                     ((Hz(i,j,k)+Hz(i,j-1,k))*                    &
@@ -212,29 +212,29 @@
 !  Exchange boundary information.
 !
       IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
-!>      CALL exchange_u3d_tile (ng, tile,                               &
-!>   &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
-!>   &                          Huon)
-!>
+!^      CALL exchange_u3d_tile (ng, tile,                               &
+!^   &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
+!^   &                          Huon)
+!^
         CALL exchange_u3d_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
      &                          tl_Huon)
-!>      CALL exchange_v3d_tile (ng, tile,                               &
-!>   &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
-!>   &                          Hvom)
-!>
+!^      CALL exchange_v3d_tile (ng, tile,                               &
+!^   &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
+!^   &                          Hvom)
+!^
         CALL exchange_v3d_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
      &                          tl_Hvom)
       END IF
 
 # ifdef DISTRIBUTE
-!>    CALL mp_exchange3d (ng, tile, model, 2,                           &
-!>   &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
-!>   &                    NghostPoints,                                 &
-!>   &                    EWperiodic(ng), NSperiodic(ng),               &
-!>   &                    Huon, Hvom)
-!>
+!^    CALL mp_exchange3d (ng, tile, model, 2,                           &
+!^   &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
+!^   &                    NghostPoints,                                 &
+!^   &                    EWperiodic(ng), NSperiodic(ng),               &
+!^   &                    Huon, Hvom)
+!^
       CALL mp_exchange3d (ng, tile, model, 2,                           &
      &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
      &                    NghostPoints,                                 &

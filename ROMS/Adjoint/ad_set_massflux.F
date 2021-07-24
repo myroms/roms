@@ -4,7 +4,7 @@
 #if defined ADJOINT && defined SOLVE3D
 !
 !git $Id$
-!svn $Id: ad_set_massflux.F 1054 2021-03-06 19:47:12Z arango $
+!svn $Id: ad_set_massflux.F 1081 2021-07-24 02:25:06Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -168,12 +168,12 @@
 !  Exchange boundary information.
 !
 # ifdef DISTRIBUTE
-!>    CALL mp_exchange3d (ng, tile, model, 2,                           &
-!>   &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
-!>   &                    NghostPoints,                                 &
-!>   &                    EWperiodic(ng), NSperiodic(ng),               &
-!>   &                    tl_Huon, tl_Hvom)
-!>
+!^    CALL mp_exchange3d (ng, tile, model, 2,                           &
+!^   &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
+!^   &                    NghostPoints,                                 &
+!^   &                    EWperiodic(ng), NSperiodic(ng),               &
+!^   &                    tl_Huon, tl_Hvom)
+!^
       CALL ad_mp_exchange3d (ng, tile, model, 2,                        &
      &                       LBi, UBi, LBj, UBj, 1, N(ng),              &
      &                       NghostPoints,                              &
@@ -183,17 +183,17 @@
 # endif
 
       IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
-!>      CALL exchange_v3d_tile (ng, tile,                               &
-!>   &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
-!>   &                          tl_Hvom)
-!>
+!^      CALL exchange_v3d_tile (ng, tile,                               &
+!^   &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
+!^   &                          tl_Hvom)
+!^
         CALL ad_exchange_v3d_tile (ng, tile,                            &
      &                             LBi, UBi, LBj, UBj, 1, N(ng),        &
      &                             ad_Hvom)
-!>      CALL exchange_u3d_tile (ng, tile,                               &
-!>   &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
-!>   &                          tl_Huon)
-!>
+!^      CALL exchange_u3d_tile (ng, tile,                               &
+!^   &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
+!^   &                          tl_Huon)
+!^
         CALL ad_exchange_u3d_tile (ng, tile,                            &
      &                             LBi, UBi, LBj, UBj, 1, N(ng),        &
      &                             ad_Huon)
@@ -205,13 +205,13 @@
         DO j=JstrP,JendT
           DO i=IstrT,IendT
 # ifdef NEARSHORE_MELLOR
-!>          tl_Hvom(i,j,k)=tl_Hvom(i,j,k)+                              &
-!>   &                     0.5_r8*om_v(i,j)*                            &
-!>   &                     ((Hz(i,j,k)+Hz(i,j-1,k))*                    &
-!>   &                      tl_v_stokes(i,j,k)+                         &
-!>   &                      (tl_Hz(i,j,k)+tl_Hz(i,j-1,k))*              &
-!>   &                      v_stokes(i,j,k))
-!>
+!^          tl_Hvom(i,j,k)=tl_Hvom(i,j,k)+                              &
+!^   &                     0.5_r8*om_v(i,j)*                            &
+!^   &                     ((Hz(i,j,k)+Hz(i,j-1,k))*                    &
+!^   &                      tl_v_stokes(i,j,k)+                         &
+!^   &                      (tl_Hz(i,j,k)+tl_Hz(i,j-1,k))*              &
+!^   &                      v_stokes(i,j,k))
+!^
             adfac=0.5_r8*om_v(i,j)*tl_Hvom(i,j,k)
             adfac1=adfac*v_stokes(i,j,k)
             tl_v_stokes(i,j,k)=tl_v_stokes(i,j,k)+                      &
@@ -219,12 +219,12 @@
             ad_Hz(i,j-1,k)=ad_Hz(i,j-1,k)+adfac1
             ad_Hz(i,j  ,k)=ad_Hz(i,j  ,k)+adfac1
 # endif
-!>          tl_Hvom(i,j,k)=0.5_r8*om_v(i,j)*                            &
-!>   &                     ((Hz(i,j,k)+Hz(i,j-1,k))*                    &
-!>   &                      tl_v(i,j,k,nrhs)+                           &
-!>   &                      (tl_Hz(i,j,k)+tl_Hz(i,j-1,k))*              &
-!>   &                      v(i,j,k,nrhs))
-!>
+!^          tl_Hvom(i,j,k)=0.5_r8*om_v(i,j)*                            &
+!^   &                     ((Hz(i,j,k)+Hz(i,j-1,k))*                    &
+!^   &                      tl_v(i,j,k,nrhs)+                           &
+!^   &                      (tl_Hz(i,j,k)+tl_Hz(i,j-1,k))*              &
+!^   &                      v(i,j,k,nrhs))
+!^
             adfac=0.5_r8*om_v(i,j)*ad_Hvom(i,j,k)
             adfac1=adfac*v(i,j,k,nrhs)
             ad_v(i,j,k,nrhs)=ad_v(i,j,k,nrhs)+                          &
@@ -237,13 +237,13 @@
         DO j=JstrT,JendT
           DO i=IstrP,IendT
 # ifdef NEARSHORE_MELLOR
-!>          tl_Huon(i,j,k)=tl_Huon(i,j,k)+                              &
-!>   &                     0.5_r8*on_u(i,j)*                            &
-!>   &                     ((Hz(i,j,k)+Hz(i-1,j,k))*                    &
-!>   &                      tl_u_stokes(i,j,k)+                         &
-!>   &                      (tl_Hz(i,j,k)+tl_Hz(i-1,j,k))*              &
-!>   &                      u_stokes(i,j,k))
-!>
+!^          tl_Huon(i,j,k)=tl_Huon(i,j,k)+                              &
+!^   &                     0.5_r8*on_u(i,j)*                            &
+!^   &                     ((Hz(i,j,k)+Hz(i-1,j,k))*                    &
+!^   &                      tl_u_stokes(i,j,k)+                         &
+!^   &                      (tl_Hz(i,j,k)+tl_Hz(i-1,j,k))*              &
+!^   &                      u_stokes(i,j,k))
+!^
             adfac=0.5_r8*on_u(i,j)*ad_Huon(i,j,k)
             adfac1=adfac*u_stokes(i,j,k)
             ad_u_stokes(i,j,k)=ad_u_stokes(i,j,k)+                      &
@@ -251,12 +251,12 @@
             ad_Hz(i-1,j,k)=ad_Hz(i-1,j,k)+adfac1
             ad_Hz(i  ,j,k)=ad_Hz(i  ,j,k)+adfac1
 # endif
-!>          tl_Huon(i,j,k)=0.5_r8*on_u(i,j)*                            &
-!>   &                     ((Hz(i,j,k)+Hz(i-1,j,k))*                    &
-!>   &                      tl_u(i,j,k,nrhs)+                           &
-!>   &                      (tl_Hz(i,j,k)+tl_Hz(i-1,j,k))*              &
-!>   &                      u(i,j,k,nrhs))
-!>
+!^          tl_Huon(i,j,k)=0.5_r8*on_u(i,j)*                            &
+!^   &                     ((Hz(i,j,k)+Hz(i-1,j,k))*                    &
+!^   &                      tl_u(i,j,k,nrhs)+                           &
+!^   &                      (tl_Hz(i,j,k)+tl_Hz(i-1,j,k))*              &
+!^   &                      u(i,j,k,nrhs))
+!^
             adfac=0.5_r8*on_u(i,j)*ad_Huon(i,j,k)
             adfac1=adfac*u(i,j,k,nrhs)
             ad_u(i,j,k,nrhs)=ad_u(i,j,k,nrhs)+                          &

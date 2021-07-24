@@ -1,27 +1,19 @@
 #include "cppdefs.h"
-      MODULE ad_prsgrd_mod
 #if defined ADJOINT && defined SOLVE3D
-!
-!git $Id$
-!svn $Id: ad_prsgrd.F 1054 2021-03-06 19:47:12Z arango $
-!================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
-!    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                                              !
-!=======================================================================
-!                                                                      !
-!  This routine computes the adjoint baroclinic hydrostatic pressure   !
-!  gradient term.                                                      !
-!                                                                      !
-!=======================================================================
-!
-      implicit none
-
-      PRIVATE
-      PUBLIC  :: ad_prsgrd
-
-      CONTAINS
-
+!!
+!!git $Id$
+!!svn $Id: ad_prsgrd.F 1081 2021-07-24 02:25:06Z arango $
+!!================================================= Hernan G. Arango ===
+!! Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
+!!   Licensed under a MIT/X style license                              !
+!!   See License_ROMS.txt                                              !
+!!======================================================================
+!!                                                                     !
+!! This routine computes the adjoint baroclinic hydrostatic pressure   !
+!! gradient term.                                                      !
+!!                                                                     !
+!!======================================================================
+!!
 # if defined PJ_GRADPQ4
 !!#  include "ad_prsgrd44.h"
 # elif defined PJ_GRADPQ2
@@ -33,7 +25,7 @@
 # else
 #  include "ad_prsgrd31.h"
 # endif
-
-#endif
-
+#else
+      MODULE ad_prsgrd_mod
       END MODULE ad_prsgrd_mod
+#endif

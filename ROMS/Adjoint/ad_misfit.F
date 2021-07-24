@@ -1,10 +1,11 @@
 #include "cppdefs.h"
       MODULE ad_misfit_mod
+
 #if  defined ADJOINT && defined FOUR_DVAR  && defined OBSERVATIONS && \
     !defined WEAK_CONSTRAINT
 !
 !git $Id$
-!svn $Id: ad_misfit.F 1064 2021-05-10 19:55:56Z arango $
+!svn $Id: ad_misfit.F 1081 2021-07-24 02:25:06Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -21,7 +22,7 @@
 !=======================================================================
 !
       implicit none
-
+!
       CONTAINS
 !
 !***********************************************************************

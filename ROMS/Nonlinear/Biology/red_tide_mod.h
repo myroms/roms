@@ -1,6 +1,7 @@
+      MODULE mod_biology
 !
 !git $Id$
-!svn $Id: red_tide_mod.h 1054 2021-03-06 19:47:12Z arango $
+!svn $Id: red_tide_mod.h 1081 2021-07-24 02:25:06Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -94,9 +95,9 @@
 ! Normalized montly mean germination potential.
 !
       real(r8), dimension(12) :: GPN
-
+!
       CONTAINS
-
+!
       SUBROUTINE initialize_biology
 !
 !=======================================================================
@@ -249,6 +250,8 @@
       DO i=1,12
         GPN(i)=GP(i)/GPmax
       END DO
-
+!
       RETURN
       END SUBROUTINE initialize_biology
+
+      END MODULE mod_biology

@@ -1,8 +1,7 @@
 #include "cppdefs.h"
-      MODULE mod_behavior
 /*
 ** git $Id$
-** svn $Id: mod_behavior.F 1054 2021-03-06 19:47:12Z arango $
+** svn $Id: mod_behavior.F 1081 2021-07-24 02:25:06Z arango $
 *************************************************** Hernan G. Arango ***
 ** Copyright (c) 2002-2021 The ROMS/TOMS Group                        **
 **   Licensed under a MIT/X style license                             **
@@ -27,7 +26,11 @@
 #if defined FLOATS && defined FLOAT_BIOLOGY
 # if defined FLOAT_OYSTER
 #  include <oyster_floats_mod.h>
-# endif
-#endif
-
+#  else
+      MODULE mod_behavior
       END MODULE mod_behavior
+# endif
+#else
+      MODULE mod_behavior
+      END MODULE mod_behavior
+#endif

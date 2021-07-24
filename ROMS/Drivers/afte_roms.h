@@ -1,7 +1,7 @@
       MODULE roms_kernel_mod
 !
 !git $Id$
-!svn $Id: afte_roms.h 1064 2021-05-10 19:55:56Z arango $
+!svn $Id: afte_roms.h 1081 2021-07-24 02:25:06Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -455,7 +455,7 @@
             ad_state(ng)%vector => STORAGE(ng)%SworkD(Is:Ie)
           END DO
 
-          CALL propagator (RunInterval, state, ad_state)
+          CALL propagator_afte (RunInterval, state, ad_state)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
         ELSE
@@ -572,7 +572,7 @@
                     ad_state(ng)%vector => SworkR(Is:Ie)
                   END DO
 
-                  CALL propagator (RunInterval, state, ad_state)
+                  CALL propagator_afte (RunInterval, state, ad_state)
                   IF (FoundError(exit_flag, NoError,                    &
      &                           __LINE__, MyFile)) RETURN
 !
@@ -602,7 +602,7 @@
                     ad_state(ng)%vector => SworkR(Is:Ie)
                   END DO
 
-                  CALL propagator (RunInterval, state, ad_state)
+                  CALL propagator_afte (RunInterval, state, ad_state)
                   IF (FoundError(exit_flag, NoError,                    &
      &                           __LINE__, MyFile)) RETURN
 !
@@ -629,7 +629,7 @@
                     ad_state(ng)%vector => SworkR(Is:Ie)
                   END DO
 
-                  CALL propagator (RunInterval, state, ad_state)
+                  CALL propagator_afte (RunInterval, state, ad_state)
                   IF (FoundError(exit_flag, NoError,                    &
      &                           __LINE__, MyFile)) RETURN
 !

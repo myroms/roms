@@ -1,8 +1,8 @@
 #undef GEO_ROTATION
-      SUBROUTINE radiation_stress (ng, tile)
+      MODULE radiation_stress_mod
 !
 !git $Id$
-!svn $Id: nearshore_mellor05.h 1054 2021-03-06 19:47:12Z arango $
+!svn $Id: nearshore_mellor05.h 1081 2021-07-24 02:25:06Z arango $
 !***********************************************************************
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -21,6 +21,17 @@
 !    currents and surface wave equations, Journal of Physical          !
 !    Oceanography 35, 2291-2298.                                       !
 !                                                                      !
+!***********************************************************************
+!
+      implicit none
+!
+      PRIVATE
+      PUBLIC  :: radiation_stress
+!
+      CONTAINS
+!
+!***********************************************************************
+      SUBROUTINE radiation_stress (ng, tile)
 !***********************************************************************
 !
       USE mod_forces
@@ -47,72 +58,72 @@
 #ifdef PROFILE
       CALL wclock_on (ng, iNLM, 21, __LINE__, MyFile)
 #endif
-      CALL radiation_stress_tile (ng, tile,                             &
-     &                            LBi, UBi, LBj, UBj, N(ng),            &
-     &                            IminS, ImaxS, JminS, JmaxS,           &
+      CALL nearshore_mellor05_tile (ng, tile,                           &
+     &                              LBi, UBi, LBj, UBj, N(ng),          &
+     &                              IminS, ImaxS, JminS, JmaxS,         &
 #ifdef SOLVE3D
-     &                            nrhs(ng),                             &
+     &                              nrhs(ng),                           &
 #endif
 #ifdef MASKING
-     &                            GRID(ng) % pmask,                     &
-     &                            GRID(ng) % rmask,                     &
-     &                            GRID(ng) % umask,                     &
-     &                            GRID(ng) % vmask,                     &
+     &                              GRID(ng) % pmask,                   &
+     &                              GRID(ng) % rmask,                   &
+     &                              GRID(ng) % umask,                   &
+     &                              GRID(ng) % vmask,                   &
 #endif
 #ifdef WET_DRY
-     &                            GRID(ng) % umask_wet,                 &
-     &                            GRID(ng) % vmask_wet,                 &
+     &                              GRID(ng) % umask_wet,               &
+     &                              GRID(ng) % vmask_wet,               &
 #endif
-     &                            GRID(ng) % om_u,                      &
-     &                            GRID(ng) % om_v,                      &
-     &                            GRID(ng) % on_u,                      &
-     &                            GRID(ng) % on_v,                      &
-     &                            GRID(ng) % pm,                        &
-     &                            GRID(ng) % pn,                        &
-     &                            GRID(ng) % angler,                    &
+     &                              GRID(ng) % om_u,                    &
+     &                              GRID(ng) % om_v,                    &
+     &                              GRID(ng) % on_u,                    &
+     &                              GRID(ng) % on_v,                    &
+     &                              GRID(ng) % pm,                      &
+     &                              GRID(ng) % pn,                      &
+     &                              GRID(ng) % angler,                  &
 #if defined CURVGRID
-     &                            GRID(ng) % dndx,                      &
-     &                            GRID(ng) % dmde,                      &
+     &                              GRID(ng) % dndx,                    &
+     &                              GRID(ng) % dmde,                    &
 #endif
-     &                            GRID(ng) % h,                         &
-     &                            OCEAN(ng) % zeta,                     &
+     &                              GRID(ng) % h,                       &
+     &                              OCEAN(ng) % zeta,                   &
 #ifdef SOLVE3D
-     &                            GRID(ng) % Hz,                        &
-     &                            GRID(ng) % z_r,                       &
-     &                            GRID(ng) % z_w,                       &
+     &                              GRID(ng) % Hz,                      &
+     &                              GRID(ng) % z_r,                     &
+     &                              GRID(ng) % z_w,                     &
 #endif
-     &                            FORCES(ng) % Hwave,                   &
-     &                            FORCES(ng) % Dwave,                   &
-     &                            FORCES(ng) % Lwave,                   &
+     &                              FORCES(ng) % Hwave,                 &
+     &                              FORCES(ng) % Dwave,                 &
+     &                              FORCES(ng) % Lwave,                 &
 #ifdef SVENDSEN_ROLLER
-     &                            FORCES(ng) % Wave_break,              &
+     &                              FORCES(ng) % Wave_break,            &
 #endif
 #ifdef SOLVE3D
 # ifdef DIAGNOSTICS_UV
-     &                            DIAGS(ng) % DiaRU,                    &
-     &                            DIAGS(ng) % DiaRV,                    &
+     &                              DIAGS(ng) % DiaRU,                  &
+     &                              DIAGS(ng) % DiaRV,                  &
 # endif
-     &                            MIXING(ng) % Sxx,                     &
-     &                            MIXING(ng) % Sxy,                     &
-     &                            MIXING(ng) % Syy,                     &
-     &                            MIXING(ng) % Szx,                     &
-     &                            MIXING(ng) % Szy,                     &
-     &                            MIXING(ng) % rustr3d,                 &
-     &                            MIXING(ng) % rvstr3d,                 &
-     &                            OCEAN(ng) % rulag3d,                  &
-     &                            OCEAN(ng) % rvlag3d,                  &
-     &                            OCEAN(ng) % u_stokes,                 &
-     &                            OCEAN(ng) % v_stokes,                 &
+     &                              MIXING(ng) % Sxx,                   &
+     &                              MIXING(ng) % Sxy,                   &
+     &                              MIXING(ng) % Syy,                   &
+     &                              MIXING(ng) % Szx,                   &
+     &                              MIXING(ng) % Szy,                   &
+     &                              MIXING(ng) % rustr3d,               &
+     &                              MIXING(ng) % rvstr3d,               &
+     &                              OCEAN(ng) % rulag3d,                &
+     &                              OCEAN(ng) % rvlag3d,                &
+     &                              OCEAN(ng) % u_stokes,               &
+     &                              OCEAN(ng) % v_stokes,               &
 #endif
-     &                            MIXING(ng) % Sxx_bar,                 &
-     &                            MIXING(ng) % Sxy_bar,                 &
-     &                            MIXING(ng) % Syy_bar,                 &
-     &                            MIXING(ng) % rustr2d,                 &
-     &                            MIXING(ng) % rvstr2d,                 &
-     &                            OCEAN(ng) % rulag2d,                  &
-     &                            OCEAN(ng) % rvlag2d,                  &
-     &                            OCEAN(ng) % ubar_stokes,              &
-     &                            OCEAN(ng) % vbar_stokes)
+     &                              MIXING(ng) % Sxx_bar,               &
+     &                              MIXING(ng) % Sxy_bar,               &
+     &                              MIXING(ng) % Syy_bar,               &
+     &                              MIXING(ng) % rustr2d,               &
+     &                              MIXING(ng) % rvstr2d,               &
+     &                              OCEAN(ng) % rulag2d,                &
+     &                              OCEAN(ng) % rvlag2d,                &
+     &                              OCEAN(ng) % ubar_stokes,            &
+     &                              OCEAN(ng) % vbar_stokes)
 #ifdef PROFILE
       CALL wclock_off (ng, iNLM, 21, __LINE__, MyFile)
 #endif
@@ -121,45 +132,45 @@
       END SUBROUTINE radiation_stress
 !
 !***********************************************************************
-      SUBROUTINE radiation_stress_tile (ng, tile,                       &
-     &                                  LBi, UBi, LBj, UBj, UBk,        &
-     &                                  IminS, ImaxS, JminS, JmaxS,     &
+      SUBROUTINE nearshore_mellor05_tile (ng, tile,                     &
+     &                                    LBi, UBi, LBj, UBj, UBk,      &
+     &                                    IminS, ImaxS, JminS, JmaxS,   &
 #ifdef SOLVE3D
-     &                                  nrhs,                           &
+     &                                    nrhs,                         &
 #endif
 #ifdef MASKING
-     &                                  pmask, rmask, umask, vmask,     &
+     &                                    pmask, rmask, umask, vmask,   &
 #endif
 #ifdef WET_DRY
-     &                                  umask_wet, vmask_wet,           &
+     &                                    umask_wet, vmask_wet,         &
 #endif
-     &                                  om_u, om_v, on_u, on_v,         &
-     &                                  pm, pn,                         &
-     &                                  angler,                         &
+     &                                    om_u, om_v, on_u, on_v,       &
+     &                                    pm, pn,                       &
+     &                                    angler,                       &
 #if defined CURVGRID
-     &                                  dndx, dmde,                     &
+     &                                    dndx, dmde,                   &
 #endif
-     &                                  h, zeta,                        &
+     &                                    h, zeta,                      &
 #ifdef SOLVE3D
-     &                                  Hz, z_r, z_w,                   &
+     &                                    Hz, z_r, z_w,                 &
 #endif
-     &                                  Hwave, Dwave, Lwave,            &
+     &                                    Hwave, Dwave, Lwave,          &
 #ifdef SVENDSEN_ROLLER
-     &                                  Wave_break,                     &
+     &                                    Wave_break,                   &
 #endif
 #ifdef SOLVE3D
 # ifdef DIAGNOSTICS_UV
-     &                                  DiaRU, DiaRV,                   &
+     &                                    DiaRU, DiaRV,                 &
 # endif
-     &                                  Sxx, Sxy, Syy, Szx, Szy,        &
-     &                                  rustr3d,  rvstr3d,              &
-     &                                  rulag3d, rvlag3d,               &
-     &                                  u_stokes, v_stokes,             &
+     &                                    Sxx, Sxy, Syy, Szx, Szy,      &
+     &                                    rustr3d,  rvstr3d,            &
+     &                                    rulag3d, rvlag3d,             &
+     &                                    u_stokes, v_stokes,           &
 #endif
-     &                                  Sxx_bar, Sxy_bar, Syy_bar,      &
-     &                                  rustr2d, rvstr2d,               &
-     &                                  rulag2d, rvlag2d,               &
-     &                                  ubar_stokes, vbar_stokes)
+     &                                    Sxx_bar, Sxy_bar, Syy_bar,    &
+     &                                    rustr2d, rvstr2d,             &
+     &                                    rulag2d, rvlag2d,             &
+     &                                    ubar_stokes, vbar_stokes)
 !***********************************************************************
 !
       USE mod_param
@@ -1222,4 +1233,6 @@
 #endif
 !
       RETURN
-      END SUBROUTINE radiation_stress_tile
+      END SUBROUTINE radiation_stress_05_tile
+
+      END MODULE radiation_stress_mod

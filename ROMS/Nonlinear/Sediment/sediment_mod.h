@@ -1,6 +1,7 @@
+      MODULE mod_sediment
 !
 !git $Id$
-!svn $Id: sediment_mod.h 1054 2021-03-06 19:47:12Z arango $
+!svn $Id: sediment_mod.h 1081 2021-07-24 02:25:06Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group        John C. Warner   !
 !    Licensed under a MIT/X style license                              !
@@ -190,9 +191,9 @@
       real(r8), allocatable :: transC(:)       ! cohesive transition
       real(r8), allocatable :: transN(:)       ! noncohesive transition
 #endif
-
+!
       CONTAINS
-
+!
       SUBROUTINE initialize_sediment
 !
 !=======================================================================
@@ -329,6 +330,8 @@
         isand(i)=ic
         idsed(NCS+i)=isand(i)
       END DO
-
+!
       RETURN
       END SUBROUTINE initialize_sediment
+
+      END MODULE mod_sediment

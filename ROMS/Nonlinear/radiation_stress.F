@@ -1,9 +1,8 @@
 #include "cppdefs.h"
-      MODULE radiation_stress_mod
 #if defined NONLINEAR && defined NEARSHORE
 !
 !git $Id$
-!svn $Id: radiation_stress.F 1054 2021-03-06 19:47:12Z arango $
+!svn $Id: radiation_stress.F 1081 2021-07-24 02:25:06Z arango $
 !=======================================================================
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -15,18 +14,12 @@
 !                                                                      !
 !=======================================================================
 !
-      implicit none
-
-      PRIVATE
-      PUBLIC  :: radiation_stress
-
-      CONTAINS
-
 # if defined NEARSHORE_MELLOR05
 #  include <nearshore_mellor05.h>
 # elif defined NEARSHORE_MELLOR08
 #  include <nearshore_mellor08.h>
 # endif
-
-#endif
+#else
+      MODULE radiation_stress_mod
       END MODULE radiation_stress_mod
+#endif

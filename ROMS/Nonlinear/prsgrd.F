@@ -1,27 +1,19 @@
 #include "cppdefs.h"
-      MODULE prsgrd_mod
 #if defined NONLINEAR && defined SOLVE3D
-!
-!git $Id$
-!svn $Id: prsgrd.F 1054 2021-03-06 19:47:12Z arango $
-!================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
-!    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                                              !
-!=======================================================================
-!                                                                      !
-!  This routine computes the baroclinic hydrostatic pressure gradient  !
-!  term.                                                               !
-!                                                                      !
-!=======================================================================
-!
-      implicit none
-!
-      PRIVATE
-      PUBLIC  :: prsgrd
-!
-      CONTAINS
-!
+!!
+!!git $Id$
+!!svn $Id: prsgrd.F 1081 2021-07-24 02:25:06Z arango $
+!!================================================= Hernan G. Arango ===
+!! Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
+!!   Licensed under a MIT/X style license                              !
+!!   See License_ROMS.txt                                              !
+!!======================================================================
+!!                                                                     !
+!! This routine computes the baroclinic hydrostatic pressure gradient  !
+!! term.                                                               !
+!!                                                                     !
+!!======================================================================
+!!
 # if defined PJ_GRADPQ4
 #  include "prsgrd44.h"
 # elif defined PJ_GRADPQ2
@@ -33,7 +25,7 @@
 # else
 #  include "prsgrd31.h"
 # endif
-
-#endif
-
+#else
+      MODULE prsgrd_mod
       END MODULE prsgrd_mod
+#endif

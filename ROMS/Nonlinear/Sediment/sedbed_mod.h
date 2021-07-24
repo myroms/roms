@@ -1,6 +1,7 @@
+      MODULE mod_sedbed
 !
 !git $Id$
-!svn $Id: sedbed_mod.h 1054 2021-03-06 19:47:12Z arango $
+!svn $Id: sedbed_mod.h 1081 2021-07-24 02:25:06Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group        John C. Warner   !
 !    Licensed under a MIT/X style license                              !
@@ -145,11 +146,11 @@
 #endif
 
       END TYPE T_SEDBED
-
+!
       TYPE (T_SEDBED), allocatable :: SEDBED(:)
-
+!
       CONTAINS
-
+!
       SUBROUTINE allocate_sedbed (ng, LBi, UBi, LBj, UBj)
 !
 !=======================================================================
@@ -509,6 +510,8 @@
         END DO
       END IF
 #endif
-
+!
       RETURN
       END SUBROUTINE initialize_sedbed
+
+      END MODULE mod_sedbed

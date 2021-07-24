@@ -1,9 +1,8 @@
 #include "cppdefs.h"
-      MODULE ad_step2d_mod
 #ifdef ADJOINT
 !
 !git $Id$
-!svn $Id: ad_step2d.F 1054 2021-03-06 19:47:12Z arango $
+!svn $Id: ad_step2d.F 1081 2021-07-24 02:25:06Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -19,14 +18,8 @@
 !                                                                      !
 !=======================================================================
 !
-      implicit none
-!
-      PRIVATE
-      PUBLIC  :: ad_step2d
-!
-      CONTAINS
-!
 # include "ad_step2d_LF_AM3.h"
-
-#endif
+#else
+      MODULE ad_step2d_mod
       END MODULE ad_step2d_mod
+#endif

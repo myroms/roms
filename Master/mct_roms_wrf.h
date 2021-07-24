@@ -1,6 +1,6 @@
 /*
 ** git $Id$
-** svn $Id: mct_roms_wrf.h 1054 2021-03-06 19:47:12Z arango $
+** svn $Id: mct_roms_wrf.h 1081 2021-07-24 02:25:06Z arango $
 ***************************************************** John C. Warner ***
 ** Copyright (c) 2002-2021 The ROMS/TOMS Group      Hernan G. Arango  **
 **   Licensed under a MIT/X style license                             **
@@ -85,8 +85,6 @@
 !
       CALL mpi_comm_rank (OCN_COMM_WORLD, MyRank, MyError)
       CALL mpi_comm_size (OCN_COMM_WORLD, nprocs, MyError)
-
-#ifndef WAVES_OCEAN
 !
 !  Initialize MCT coupled model registry.
 !
