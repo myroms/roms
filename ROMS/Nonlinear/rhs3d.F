@@ -3,7 +3,7 @@
 #if defined NONLINEAR && defined SOLVE3D
 !
 !git $Id$
-!svn $Id: rhs3d.F 1054 2021-03-06 19:47:12Z arango $
+!svn $Id: rhs3d.F 1081 2021-07-24 02:25:06Z arango $
 !=======================================================================
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -43,17 +43,17 @@
       USE prsgrd_mod, ONLY : prsgrd
 # ifndef TS_FIXED
 #  ifdef TS_DIF2
-      USE t3dmix_mod, ONLY : t3dmix2
+      USE t3dmix2_mod, ONLY : t3dmix2
 #  endif
 #  ifdef TS_DIF4
-      USE t3dmix_mod, ONLY : t3dmix4
+      USE t3dmix4_mod, ONLY : t3dmix4
 #  endif
 # endif
 # ifdef UV_VIS2
-      USE uv3dmix_mod, ONLY : uv3dmix2
+      USE uv3dmix2_mod, ONLY : uv3dmix2
 # endif
 # ifdef UV_VIS4
-      USE uv3dmix_mod, ONLY : uv3dmix4
+      USE uv3dmix4_mod, ONLY : uv3dmix4
 # endif
 !
 !  Imported variable declarations.

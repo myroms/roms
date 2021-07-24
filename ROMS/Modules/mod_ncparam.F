@@ -2,7 +2,7 @@
       MODULE mod_ncparam
 !
 !git $Id$
-!svn $Id: mod_ncparam.F 1064 2021-05-10 19:55:56Z arango $
+!svn $Id: mod_ncparam.F 1081 2021-07-24 02:25:06Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -1203,7 +1203,7 @@
 !
       OPEN (inp, FILE=TRIM(varname), FORM='formatted', STATUS='old',    &
      &      ERR=10)
-      GOTO 20
+      GO TO 20
   10  IF (Master) WRITE(stdout,50) TRIM(varname)
       STOP
   20  CONTINUE
@@ -2590,7 +2590,7 @@
           END IF
         END IF
       END DO
-      GOTO 40
+      GO TO 40
   30  WRITE (stdout,80) TRIM(ADJUSTL(Vinfo(1)))
       STOP
   40  CLOSE (inp)

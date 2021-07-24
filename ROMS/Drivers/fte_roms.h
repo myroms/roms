@@ -1,7 +1,7 @@
       MODULE roms_kernel_mod
 !
 !git $Id$
-!svn $Id: fte_roms.h 1064 2021-05-10 19:55:56Z arango $
+!svn $Id: fte_roms.h 1081 2021-07-24 02:25:06Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -464,7 +464,7 @@
           END DO
 
 !$OMP PARALLEL
-          CALL propagator (RunInterval, state, tl_state)
+          CALL propagator_fte (RunInterval, state, tl_state)
 !$OMP END PARALLEL
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         ELSE
@@ -586,7 +586,7 @@
                   END DO
 
 !$OMP PARALLEL
-                  CALL propagator (RunInterval, state, tl_state)
+                  CALL propagator_fte (RunInterval, state, tl_state)
 !$OMP END PARALLEL
                   IF (FoundError(exit_flag, NoError,                    &
      &                           __LINE__, MyFile)) RETURN
@@ -618,7 +618,7 @@
                   END DO
 
 !$OMP PARALLEL
-                  CALL propagator (RunInterval, state, tl_state)
+                  CALL propagator_fte (RunInterval, state, tl_state)
 !$OMP END PARALLEL
                   IF (FoundError(exit_flag, NoError,                    &
      &                           __LINE__, MyFile)) RETURN
@@ -647,7 +647,7 @@
                   END DO
 
 !$OMP PARALLEL
-                  CALL propagator (RunInterval, state, tl_state)
+                  CALL propagator_fte (RunInterval, state, tl_state)
 !$OMP END PARALLEL
                   IF (FoundError(exit_flag, NoError,                    &
      &                           __LINE__, MyFile)) RETURN

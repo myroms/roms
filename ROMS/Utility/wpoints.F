@@ -17,7 +17,7 @@
    (defined MASKING && (defined READ_WATER || defined WRITE_WATER))
 !
 !git $Id$
-!svn $Id: wpoints.F 1064 2021-05-10 19:55:56Z arango $
+!svn $Id: wpoints.F 1081 2021-07-24 02:25:06Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -498,7 +498,7 @@
      &                       ioDesc_dp_resid(ng),                       &
      &                       'resid', 1)
         CALL state_iodecomp (ng, pioSystem(IpioROMS,ng), PIO_double,    &
-     &                       ioDesc_dp_SworkD(IpioROMS,ng),             &
+     &                       ioDesc_dp_SworkD(ng),                      &
      &                       'SworkD', 1)
       END IF
 # endif

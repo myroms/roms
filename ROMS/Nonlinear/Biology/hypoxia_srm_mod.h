@@ -1,6 +1,7 @@
+      MODULE mod_biology
 !
 !git $Id$
-!svn $Id: hypoxia_srm_mod.h 1054 2021-03-06 19:47:12Z arango $
+!svn $Id: hypoxia_srm_mod.h 1081 2021-07-24 02:25:06Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -31,9 +32,9 @@
       integer, allocatable :: BioIter(:)
 
       real(r8), allocatable :: ResRate(:)   ! repiration rate (1/day)
-
+!
       CONTAINS
-
+!
       SUBROUTINE initialize_biology
 !
 !=======================================================================
@@ -110,6 +111,8 @@
       END DO
       ic=ic+1
       iOxyg=ic
-
+!
       RETURN
       END SUBROUTINE initialize_biology
+
+      END MODULE mod_biology

@@ -9,7 +9,7 @@
      &                               Zscale, Z, tl_Z, tl_swdk)
 !
 !git $Id$
-!svn $Id: tl_lmd_swfrac.F 1054 2021-03-06 19:47:12Z arango $
+!svn $Id: tl_lmd_swfrac.F 1081 2021-07-24 02:25:06Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -89,9 +89,9 @@
           tl_cff1=fac1(i)*tl_Z(i,j)*cff1
           cff2=EXP(Z(i,j)*fac2(i))
           tl_cff2=fac2(i)*tl_Z(i,j)*cff2
-!>        swdk(i,j)=cff1*fac3(i)+                                       &
-!>   &              cff2*(1.0_r8-fac3(i))
-!>
+!^        swdk(i,j)=cff1*fac3(i)+                                       &
+!^   &              cff2*(1.0_r8-fac3(i))
+!^
           tl_swdk(i,j)=tl_cff1*fac3(i)+                                 &
      &                 tl_cff2*(1.0_r8-fac3(i))
         END DO

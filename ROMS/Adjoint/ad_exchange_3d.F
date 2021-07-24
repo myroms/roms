@@ -3,7 +3,7 @@
 #if defined ADJOINT && defined SOLVE3D
 !
 !git $Id$
-!svn $Id: ad_exchange_3d.F 1054 2021-03-06 19:47:12Z arango $
+!svn $Id: ad_exchange_3d.F 1081 2021-07-24 02:25:06Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -105,48 +105,48 @@
         IF (EW_exchange.and.NS_exchange) THEN
           IF (DOMAIN(ng)%NorthEast_Corner(tile)) THEN
             DO k=LBk,UBk
-!>            tl_A(-2,-2,k)=tl_A(Lm(ng)-2,Mm(ng)-2,k)
-!>
+!^            tl_A(-2,-2,k)=tl_A(Lm(ng)-2,Mm(ng)-2,k)
+!^
               ad_A(Lm(ng)-2,Mm(ng)-2,k)=ad_A(Lm(ng)-2,Mm(ng)-2,k)+      &
      &                                  ad_A(-2,-2,k)
               ad_A(-2,-2,k)=0.0_r8
-!>            tl_A(-2,-1,k)=tl_A(Lm(ng)-2,Mm(ng)-1,k)
-!>
+!^            tl_A(-2,-1,k)=tl_A(Lm(ng)-2,Mm(ng)-1,k)
+!^
               ad_A(Lm(ng)-2,Mm(ng)-1,k)=ad_A(Lm(ng)-2,Mm(ng)-1,k)+      &
      &                                  ad_A(-2,-1,k)
               ad_A(-2,-1,k)=0.0_r8
-!>            tl_A(-2, 0,k)=tl_A(Lm(ng)-2,Mm(ng)  ,k)
-!>
+!^            tl_A(-2, 0,k)=tl_A(Lm(ng)-2,Mm(ng)  ,k)
+!^
               ad_A(Lm(ng)-2,Mm(ng)  ,k)=ad_A(Lm(ng)-2,Mm(ng)  ,k)+      &
      &                                  ad_A(-2, 0,k)
               ad_A(-2, 0,k)=0.0_r8
-!>            tl_A(-1,-2,k)=tl_A(Lm(ng)-1,Mm(ng)-2,k)
-!>
+!^            tl_A(-1,-2,k)=tl_A(Lm(ng)-1,Mm(ng)-2,k)
+!^
               ad_A(Lm(ng)-1,Mm(ng)-2,k)=ad_A(Lm(ng)-1,Mm(ng)-2,k)+      &
      &                                  ad_A(-1,-2,k)
               ad_A(-1,-2,k)=0.0_r8
-!>            tl_A(-1,-1,k)=tl_A(Lm(ng)-1,Mm(ng)-1,k)
-!>
+!^            tl_A(-1,-1,k)=tl_A(Lm(ng)-1,Mm(ng)-1,k)
+!^
               ad_A(Lm(ng)-1,Mm(ng)-1,k)=ad_A(Lm(ng)-1,Mm(ng)-1,k)+      &
      &                                  ad_A(-1,-1,k)
               ad_A(-1,-1,k)=0.0_r8
-!>            tl_A(-1, 0,k)=tl_A(Lm(ng)-1,Mm(ng)  ,k)
-!>
+!^            tl_A(-1, 0,k)=tl_A(Lm(ng)-1,Mm(ng)  ,k)
+!^
               ad_A(Lm(ng)-1,Mm(ng)  ,k)=ad_A(Lm(ng)-1,Mm(ng)  ,k)+      &
      &                                  ad_A(-1, 0,k)
               ad_A(-1, 0,k)=0.0_r8
-!>            tl_A( 0,-2,k)=tl_A(Lm(ng)  ,Mm(ng)-2,k)
-!>
+!^            tl_A( 0,-2,k)=tl_A(Lm(ng)  ,Mm(ng)-2,k)
+!^
               ad_A(Lm(ng)  ,Mm(ng)-2,k)=ad_A(Lm(ng)  ,Mm(ng)-2,k)+      &
      &                                  ad_A( 0,-2,k)
               ad_A( 0,-2,k)=0.0_r8
-!>            tl_A( 0,-1,k)=tl_A(Lm(ng)  ,Mm(ng)-1,k)
-!>
+!^            tl_A( 0,-1,k)=tl_A(Lm(ng)  ,Mm(ng)-1,k)
+!^
               ad_A(Lm(ng)  ,Mm(ng)-1,k)=ad_A(Lm(ng)  ,Mm(ng)-1,k)+      &
      &                                  ad_A( 0,-1,k)
               ad_A( 0,-1,k)=0.0_r8
-!>            tl_A( 0, 0,k)=tl_A(Lm(ng)  ,Mm(ng)  ,k)
-!>
+!^            tl_A( 0, 0,k)=tl_A(Lm(ng)  ,Mm(ng)  ,k)
+!^
               ad_A(Lm(ng)  ,Mm(ng)  ,k)=ad_A(Lm(ng)  ,Mm(ng)  ,k)+      &
      &                                  ad_A( 0, 0,k)
               ad_A( 0, 0,k)=0.0_r8
@@ -155,51 +155,51 @@
 
           IF (DOMAIN(ng)%NorthWest_Corner(tile)) THEN
             DO k=LBk,UBk
-!>            tl_A(Lm(ng)+1,-2,k)=tl_A( 1,Mm(ng)-2,k)
-!>
+!^            tl_A(Lm(ng)+1,-2,k)=tl_A( 1,Mm(ng)-2,k)
+!^
               ad_A( 1,Mm(ng)-2,k)=ad_A( 1,Mm(ng)-2,k)+                  &
      &                            ad_A(Lm(ng)+1,-2,k)
               ad_A(Lm(ng)+1,-2,k)=0.0_r8
-!>            tl_A(Lm(ng)+1,-1,k)=tl_A( 1,Mm(ng)-1,k)
-!>
+!^            tl_A(Lm(ng)+1,-1,k)=tl_A( 1,Mm(ng)-1,k)
+!^
               ad_A( 1,Mm(ng)-1,k)=ad_A( 1,Mm(ng)-1,k)+                  &
      &                            ad_A(Lm(ng)+1,-1,k)
               ad_A(Lm(ng)+1,-1,k)=0.0_r8
-!>            tl_A(Lm(ng)+1, 0,k)=tl_A( 1,Mm(ng)  ,k)
-!>
+!^            tl_A(Lm(ng)+1, 0,k)=tl_A( 1,Mm(ng)  ,k)
+!^
               ad_A( 1,Mm(ng)  ,k)=ad_A( 1,Mm(ng)  ,k)+                  &
      &                            ad_A(Lm(ng)+1, 0,k)
               ad_A(Lm(ng)+1, 0,k)=0.0_r8
-!>            tl_A(Lm(ng)+2,-2,k)=tl_A( 2,Mm(ng)-2,k)
-!>
+!^            tl_A(Lm(ng)+2,-2,k)=tl_A( 2,Mm(ng)-2,k)
+!^
               ad_A( 2,Mm(ng)-2,k)=ad_A( 2,Mm(ng)-2,k)+                  &
      &                            ad_A(Lm(ng)+2,-2,k)
               ad_A(Lm(ng)+2,-2,k)=0.0_r8
-!>            tl_A(Lm(ng)+2,-1,k)=tl_A( 2,Mm(ng)-1,k)
-!>
+!^            tl_A(Lm(ng)+2,-1,k)=tl_A( 2,Mm(ng)-1,k)
+!^
               ad_A( 2,Mm(ng)-1,k)=ad_A( 2,Mm(ng)-1,k)+                  &
      &                            ad_A(Lm(ng)+2,-1,k)
               ad_A(Lm(ng)+2,-1,k)=0.0_r8
-!>            tl_A(Lm(ng)+2, 0,k)=tl_A( 2,Mm(ng)  ,k)
-!>
+!^            tl_A(Lm(ng)+2, 0,k)=tl_A( 2,Mm(ng)  ,k)
+!^
               ad_A( 2,Mm(ng)  ,k)=ad_A( 2,Mm(ng)  ,k)+                  &
      &                            ad_A(Lm(ng)+2, 0,k)
               ad_A(Lm(ng)+2, 0,k)=0.0_r8
             END DO
             IF (NghostPoints.eq.3) THEN
               DO k=LBk,UBk
-!>              tl_A(Lm(ng)+3,-2,k)=tl_A(3 ,Mm(ng)-2,k)
-!>
+!^              tl_A(Lm(ng)+3,-2,k)=tl_A(3 ,Mm(ng)-2,k)
+!^
                 ad_A(3 ,Mm(ng)-2,k)=ad_A(3 ,Mm(ng)-2,k)+                &
      &                              ad_A(Lm(ng)+3,-2,k)
                 ad_A(Lm(ng)+3,-2,k)=0.0_r8
-!>              tl_A(Lm(ng)+3,-1,k)=tl_A(3 ,Mm(ng)-1,k)
-!>
+!^              tl_A(Lm(ng)+3,-1,k)=tl_A(3 ,Mm(ng)-1,k)
+!^
                 ad_A(3 ,Mm(ng)-1,k)=ad_A(3 ,Mm(ng)-1,k)+                &
      &                              ad_A(Lm(ng)+3,-1,k)
                 ad_A(Lm(ng)+3,-1,k)=0.0_r8
-!>              tl_A(Lm(ng)+3, 0,k)=tl_A(3 ,Mm(ng)  ,k)
-!>
+!^              tl_A(Lm(ng)+3, 0,k)=tl_A(3 ,Mm(ng)  ,k)
+!^
                 ad_A(3 ,Mm(ng)  ,k)=ad_A(3 ,Mm(ng)  ,k)+                &
      &                              ad_A(Lm(ng)+3, 0,k)
                 ad_A(Lm(ng)+3, 0,k)=0.0_r8
@@ -209,51 +209,51 @@
 
           IF (DOMAIN(ng)%SouthEast_Corner(tile)) THEN
             DO k=LBk,UBk
-!>            tl_A(-2,Mm(ng)+1,k)=tl_A(Lm(ng)-2, 1,k)
-!>
+!^            tl_A(-2,Mm(ng)+1,k)=tl_A(Lm(ng)-2, 1,k)
+!^
               ad_A(Lm(ng)-2, 1,k)=ad_A(Lm(ng)-2, 1,k)+                  &
      &                            ad_A(-2,Mm(ng)+1,k)
               ad_A(-2,Mm(ng)+1,k)=0.0_r8
-!>            tl_A(-1,Mm(ng)+1,k)=tl_A(Lm(ng)-1, 1,k)
-!>
+!^            tl_A(-1,Mm(ng)+1,k)=tl_A(Lm(ng)-1, 1,k)
+!^
               ad_A(Lm(ng)-1, 1,k)=ad_A(Lm(ng)-1, 1,k)+                  &
      &                            ad_A(-1,Mm(ng)+1,k)
               ad_A(-1,Mm(ng)+1,k)=0.0_r8
-!>            tl_A( 0,Mm(ng)+1,k)=tl_A(Lm(ng)  , 1,k)
-!>
+!^            tl_A( 0,Mm(ng)+1,k)=tl_A(Lm(ng)  , 1,k)
+!^
               ad_A(Lm(ng)  , 1,k)=ad_A(Lm(ng)  , 1,k)+                  &
      &                            ad_A( 0,Mm(ng)+1,k)
               ad_A( 0,Mm(ng)+1,k)=0.0_r8
-!>            tl_A(-2,Mm(ng)+2,k)=tl_A(Lm(ng)-2, 2,k)
-!>
+!^            tl_A(-2,Mm(ng)+2,k)=tl_A(Lm(ng)-2, 2,k)
+!^
               ad_A(Lm(ng)-2, 2,k)=ad_A(Lm(ng)-2, 2,k)+                  &
      &                            ad_A(-2,Mm(ng)+2,k)
               ad_A(-2,Mm(ng)+2,k)=0.0_r8
-!>            tl_A(-1,Mm(ng)+2,k)=tl_A(Lm(ng)-1, 2,k)
-!>
+!^            tl_A(-1,Mm(ng)+2,k)=tl_A(Lm(ng)-1, 2,k)
+!^
               ad_A(Lm(ng)-1, 2,k)=ad_A(Lm(ng)-1, 2,k)+                  &
      &                            ad_A(-1,Mm(ng)+2,k)
               ad_A(-1,Mm(ng)+2,k)=0.0_r8
-!>            tl_A( 0,Mm(ng)+2,k)=tl_A(Lm(ng)  , 2,k)
-!>
+!^            tl_A( 0,Mm(ng)+2,k)=tl_A(Lm(ng)  , 2,k)
+!^
               ad_A(Lm(ng)  , 2,k)=ad_A(Lm(ng)  , 2,k)+                  &
      &                            ad_A( 0,Mm(ng)+2,k)
               ad_A( 0,Mm(ng)+2,k)=0.0_r8
             END DO
             IF (NghostPoints.eq.3) THEN
               DO k=LBk,UBk
-!>              tl_A(-2,Mm(ng)+3,k)=tl_A(Lm(ng)-2, 3,k)
-!>
+!^              tl_A(-2,Mm(ng)+3,k)=tl_A(Lm(ng)-2, 3,k)
+!^
                 ad_A(Lm(ng)-2, 3,k)=ad_A(Lm(ng)-2, 3,k)+                &
      &                              ad_A(-2,Mm(ng)+3,k)
                 ad_A(-2,Mm(ng)+3,k)=0.0_r8
-!>              tl_A(-1,Mm(ng)+3,k)=tl_A(Lm(ng)-1, 3,k)
-!>
+!^              tl_A(-1,Mm(ng)+3,k)=tl_A(Lm(ng)-1, 3,k)
+!^
                 ad_A(Lm(ng)-1, 3,k)=ad_A(Lm(ng)-1, 3,k)+                &
      &                              ad_A(-1,Mm(ng)+3,k)
                 ad_A(-1,Mm(ng)+3,k)=0.0_r8
-!>              tl_A( 0,Mm(ng)+3,k)=tl_A(Lm(ng)  , 3,k)
-!>
+!^              tl_A( 0,Mm(ng)+3,k)=tl_A(Lm(ng)  , 3,k)
+!^
                 ad_A(Lm(ng)  , 3,k)=ad_A(Lm(ng)  , 3,k)+                &
      &                              ad_A( 0,Mm(ng)+3,k)
                 ad_A( 0,Mm(ng)+3,k)=0.0_r8
@@ -263,52 +263,52 @@
 
           IF (DOMAIN(ng)%SouthWest_Corner(tile)) THEN
             DO k=LBk,UBk
-!>            tl_A(Lm(ng)+1,Mm(ng)+1,k)=tl_A( 1, 1,k)
-!>
+!^            tl_A(Lm(ng)+1,Mm(ng)+1,k)=tl_A( 1, 1,k)
+!^
               ad_A( 1, 1,k)=ad_A( 1, 1,k)+                              &
      &                      ad_A(Lm(ng)+1,Mm(ng)+1,k)
               ad_A(Lm(ng)+1,Mm(ng)+1,k)=0.0_r8
-!>            tl_A(Lm(ng)+1,Mm(ng)+2,k)=tl_A( 1, 2,k)
-!>
+!^            tl_A(Lm(ng)+1,Mm(ng)+2,k)=tl_A( 1, 2,k)
+!^
               ad_A( 1, 2,k)=ad_A( 1, 2,k)+                              &
      &                      ad_A(Lm(ng)+1,Mm(ng)+2,k)
               ad_A(Lm(ng)+1,Mm(ng)+2,k)=0.0_r8
-!>            tl_A(Lm(ng)+2,Mm(ng)+1,k)=tl_A( 2, 1,k)
-!>
+!^            tl_A(Lm(ng)+2,Mm(ng)+1,k)=tl_A( 2, 1,k)
+!^
               ad_A( 2, 1,k)=ad_A( 2, 1,k)+                              &
      &                      ad_A(Lm(ng)+2,Mm(ng)+1,k)
               ad_A(Lm(ng)+2,Mm(ng)+1,k)=0.0_r8
-!>            tl_A(Lm(ng)+2,Mm(ng)+2,k)=tl_A(2, 2,k)
-!>
+!^            tl_A(Lm(ng)+2,Mm(ng)+2,k)=tl_A(2, 2,k)
+!^
               ad_A( 2, 2,k)=ad_A( 2, 2,k)+                              &
      &                      ad_A(Lm(ng)+2,Mm(ng)+2,k)
               ad_A(Lm(ng)+2,Mm(ng)+2,k)=0.0_r8
             END DO
             IF (NghostPoints.eq.3) THEN
               DO k=LBk,UBk
-!>              tl_A(Lm(ng)+1,Mm(ng)+3,k)=tl_A( 1, 3,k)
-!>
+!^              tl_A(Lm(ng)+1,Mm(ng)+3,k)=tl_A( 1, 3,k)
+!^
                 ad_A( 1, 3,k)=ad_A( 1, 3,k)+                            &
      &                        ad_A(Lm(ng)+1,Mm(ng)+3,k)
                 ad_A(Lm(ng)+1,Mm(ng)+3,k)=0.0_r8
 
-!>              tl_A(Lm(ng)+2,Mm(ng)+3,k)=tl_A( 2, 3,k)
-!>
+!^              tl_A(Lm(ng)+2,Mm(ng)+3,k)=tl_A( 2, 3,k)
+!^
                 ad_A( 2, 3,k)=ad_A( 2, 3,k)+                            &
      &                        ad_A(Lm(ng)+2,Mm(ng)+3,k)
                 ad_A(Lm(ng)+2,Mm(ng)+3,k)=0.0_r8
-!>              tl_A(Lm(ng)+3,Mm(ng)+1,k)=tl_A( 3, 1,k)
-!>
+!^              tl_A(Lm(ng)+3,Mm(ng)+1,k)=tl_A( 3, 1,k)
+!^
                 ad_A( 3, 1,k)=ad_A( 3, 1,k)+                            &
      &                        ad_A(Lm(ng)+3,Mm(ng)+1,k)
                 ad_A(Lm(ng)+3,Mm(ng)+1,k)=0.0_r8
-!>              tl_A(Lm(ng)+3,Mm(ng)+2,k)=tl_A( 3, 2,k)
-!>
+!^              tl_A(Lm(ng)+3,Mm(ng)+2,k)=tl_A( 3, 2,k)
+!^
                 ad_A( 3, 2,k)=ad_A( 3, 2,k)+                            &
      &                        ad_A(Lm(ng)+3,Mm(ng)+2,k)
                 ad_A(Lm(ng)+3,Mm(ng)+2,k)=0.0_r8
-!>              tl_A(Lm(ng)+3,Mm(ng)+3,k)=tl_A( 3, 3,k)
-!>
+!^              tl_A(Lm(ng)+3,Mm(ng)+3,k)=tl_A( 3, 3,k)
+!^
                 ad_A( 3, 3,k)=ad_A( 3, 3,k)+                            &
      &                        ad_A(Lm(ng)+3,Mm(ng)+3,k)
                 ad_A(Lm(ng)+3,Mm(ng)+3,k)=0.0_r8
@@ -335,18 +335,18 @@
           IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
             DO k=LBk,UBk
               DO i=Imin,Imax
-!>              tl_A(i,-2,k)=tl_A(i,Mm(ng)-2,k)
-!>
+!^              tl_A(i,-2,k)=tl_A(i,Mm(ng)-2,k)
+!^
                 ad_A(i,Mm(ng)-2,k)=ad_A(i,Mm(ng)-2,k)+                  &
      &                             ad_A(i,-2,k)
                 ad_A(i,-2,k)=0.0_r8
-!>              tl_A(i,-1,k)=tl_A(i,Mm(ng)-1,k)
-!>
+!^              tl_A(i,-1,k)=tl_A(i,Mm(ng)-1,k)
+!^
                 ad_A(i,Mm(ng)-1,k)=ad_A(i,Mm(ng)-1,k)+                  &
      &                             ad_A(i,-1,k)
                 ad_A(i,-1,k)=0.0_r8
-!>              tl_A(i, 0,k)=tl_A(i,Mm(ng)  ,k)
-!>
+!^              tl_A(i, 0,k)=tl_A(i,Mm(ng)  ,k)
+!^
                 ad_A(i,Mm(ng)  ,k)=ad_A(i,Mm(ng)  ,k)+                  &
      &                             ad_A(i, 0,k)
                 ad_A(i, 0,k)=0.0_r8
@@ -357,13 +357,13 @@
           IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
             DO k=LBk,UBk
               DO i=Imin,Imax
-!>              tl_A(i,Mm(ng)+1,k)=tl_A(i,1,k)
-!>
+!^              tl_A(i,Mm(ng)+1,k)=tl_A(i,1,k)
+!^
                 ad_A(i,1,k)=ad_A(i,1,k)+                                &
      &                      ad_A(i,Mm(ng)+1,k)
                 ad_A(i,Mm(ng)+1,k)=0.0_r8
-!>              tl_A(i,Mm(ng)+2,k)=tl_A(i,2,k)
-!>
+!^              tl_A(i,Mm(ng)+2,k)=tl_A(i,2,k)
+!^
                 ad_A(i,2,k)=ad_A(i,2,k)+                                &
      &                      ad_A(i,Mm(ng)+2,k)
                 ad_A(i,Mm(ng)+2,k)=0.0_r8
@@ -373,8 +373,8 @@
               DO k=LBk,UBk
                 DO i=Imin,Imax
 
-!>                tl_A(i,Mm(ng)+3,k)=tl_A(i,3,k)
-!>
+!^                tl_A(i,Mm(ng)+3,k)=tl_A(i,3,k)
+!^
                   ad_A(i,3,k)=ad_A(i,3,k)+                              &
      &                        ad_A(i,Mm(ng)+3,k)
                   ad_A(i,Mm(ng)+3,k)=0.0_r8
@@ -402,18 +402,18 @@
           IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
             DO k=LBk,UBk
               DO j=Jmin,Jmax
-!>              tl_A(-2,j,k)=tl_A(Lm(ng)-2,j,k)
-!>
+!^              tl_A(-2,j,k)=tl_A(Lm(ng)-2,j,k)
+!^
                 ad_A(Lm(ng)-2,j,k)=ad_A(Lm(ng)-2,j,k)+                  &
      &                             ad_A(-2,j,k)
                 ad_A(-2,j,k)=0.0_r8
-!>              tl_A(-1,j,k)=tl_A(Lm(ng)-1,j,k)
-!>
+!^              tl_A(-1,j,k)=tl_A(Lm(ng)-1,j,k)
+!^
                 ad_A(Lm(ng)-1,j,k)=ad_A(Lm(ng)-1,j,k)+                  &
      &                             ad_A(-1,j,k)
                 ad_A(-1,j,k)=0.0_r8
-!>              tl_A( 0,j,k)=tl_A(Lm(ng)  ,j,k)
-!>
+!^              tl_A( 0,j,k)=tl_A(Lm(ng)  ,j,k)
+!^
                 ad_A(Lm(ng)  ,j,k)=ad_A(Lm(ng)  ,j,k)+                  &
      &                             ad_A( 0,j,k)
                 ad_A( 0,j,k)=0.0_r8
@@ -424,13 +424,13 @@
           IF (DOMAIN(ng)%Western_Edge(tile)) THEN
             DO k=LBk,UBk
               DO j=Jmin,Jmax
-!>              tl_A(Lm(ng)+1,j,k)=tl_A(1,j,k)
-!>
+!^              tl_A(Lm(ng)+1,j,k)=tl_A(1,j,k)
+!^
                 ad_A(1,j,k)=ad_A(1,j,k)+                                &
      &                      ad_A(Lm(ng)+1,j,k)
                 ad_A(Lm(ng)+1,j,k)=0.0_r8
-!>              tl_A(Lm(ng)+2,j,k)=tl_A(2,j,k)
-!>
+!^              tl_A(Lm(ng)+2,j,k)=tl_A(2,j,k)
+!^
                 ad_A(2,j,k)=ad_A(2,j,k)+                                &
      &                      ad_A(Lm(ng)+2,j,k)
                 ad_A(Lm(ng)+2,j,k)=0.0_r8
@@ -439,8 +439,8 @@
             IF (NghostPoints.eq.3) THEN
               DO k=LBk,UBk
                 DO j=Jmin,Jmax
-!>                tl_A(Lm(ng)+3,j,k)=tl_A(3,j,k)
-!>
+!^                tl_A(Lm(ng)+3,j,k)=tl_A(3,j,k)
+!^
                   ad_A(3,j,k)=ad_A(3,j,k)+                              &
      &                        ad_A(Lm(ng)+3,j,k)
                   ad_A(Lm(ng)+3,j,k)=0.0_r8
@@ -517,48 +517,48 @@
         IF (EW_exchange.and.NS_exchange) THEN
           IF (DOMAIN(ng)%NorthEast_Corner(tile)) THEN
             DO k=LBk,UBk
-!>            tl_A(-2,-2,k)=tl_A(Lm(ng)-2,Mm(ng)-2,k)
-!>
+!^            tl_A(-2,-2,k)=tl_A(Lm(ng)-2,Mm(ng)-2,k)
+!^
               ad_A(Lm(ng)-2,Mm(ng)-2,k)=ad_A(Lm(ng)-2,Mm(ng)-2,k)+      &
      &                                  ad_A(-2,-2,k)
               ad_A(-2,-2,k)=0.0_r8
-!>            tl_A(-2,-1,k)=tl_A(Lm(ng)-2,Mm(ng)-1,k)
-!>
+!^            tl_A(-2,-1,k)=tl_A(Lm(ng)-2,Mm(ng)-1,k)
+!^
               ad_A(Lm(ng)-2,Mm(ng)-1,k)=ad_A(Lm(ng)-2,Mm(ng)-1,k)+      &
      &                                  ad_A(-2,-1,k)
               ad_A(-2,-1,k)=0.0_r8
-!>            tl_A(-2, 0,k)=tl_A(Lm(ng)-2,Mm(ng)  ,k)
-!>
+!^            tl_A(-2, 0,k)=tl_A(Lm(ng)-2,Mm(ng)  ,k)
+!^
               ad_A(Lm(ng)-2,Mm(ng)  ,k)=ad_A(Lm(ng)-2,Mm(ng)  ,k)+      &
      &                                  ad_A(-2, 0,k)
               ad_A(-2, 0,k)=0.0_r8
-!>            tl_A(-1,-2,k)=tl_A(Lm(ng)-1,Mm(ng)-2,k)
-!>
+!^            tl_A(-1,-2,k)=tl_A(Lm(ng)-1,Mm(ng)-2,k)
+!^
               ad_A(Lm(ng)-1,Mm(ng)-2,k)=ad_A(Lm(ng)-1,Mm(ng)-2,k)+      &
      &                                  ad_A(-1,-2,k)
               ad_A(-1,-2,k)=0.0_r8
-!>            tl_A(-1,-1,k)=tl_A(Lm(ng)-1,Mm(ng)-1,k)
-!>
+!^            tl_A(-1,-1,k)=tl_A(Lm(ng)-1,Mm(ng)-1,k)
+!^
               ad_A(Lm(ng)-1,Mm(ng)-1,k)=ad_A(Lm(ng)-1,Mm(ng)-1,k)+      &
      &                                  ad_A(-1,-1,k)
               ad_A(-1,-1,k)=0.0_r8
-!>            tl_A(-1, 0,k)=tl_A(Lm(ng)-1,Mm(ng)  ,k)
-!>
+!^            tl_A(-1, 0,k)=tl_A(Lm(ng)-1,Mm(ng)  ,k)
+!^
               ad_A(Lm(ng)-1,Mm(ng)  ,k)=ad_A(Lm(ng)-1,Mm(ng)  ,k)+      &
      &                                  ad_A(-1, 0,k)
               ad_A(-1, 0,k)=0.0_r8
-!>            tl_A( 0,-2,k)=tl_A(Lm(ng)  ,Mm(ng)-2,k)
-!>
+!^            tl_A( 0,-2,k)=tl_A(Lm(ng)  ,Mm(ng)-2,k)
+!^
               ad_A(Lm(ng)  ,Mm(ng)-2,k)=ad_A(Lm(ng)  ,Mm(ng)-2,k)+      &
      &                                  ad_A( 0,-2,k)
               ad_A( 0,-2,k)=0.0_r8
-!>            tl_A( 0,-1,k)=tl_A(Lm(ng)  ,Mm(ng)-1,k)
-!>
+!^            tl_A( 0,-1,k)=tl_A(Lm(ng)  ,Mm(ng)-1,k)
+!^
               ad_A(Lm(ng)  ,Mm(ng)-1,k)=ad_A(Lm(ng)  ,Mm(ng)-1,k)+      &
      &                                  ad_A( 0,-1,k)
               ad_A( 0,-1,k)=0.0_r8
-!>            tl_A( 0, 0,k)=tl_A(Lm(ng)  ,Mm(ng)  ,k)
-!>
+!^            tl_A( 0, 0,k)=tl_A(Lm(ng)  ,Mm(ng)  ,k)
+!^
               ad_A(Lm(ng)  ,Mm(ng)  ,k)=ad_A(Lm(ng)  ,Mm(ng)  ,k)+      &
      &                                  ad_A( 0, 0,k)
               ad_A( 0, 0,k)=0.0_r8
@@ -567,51 +567,51 @@
 
           IF (DOMAIN(ng)%NorthWest_Corner(tile)) THEN
             DO k=LBk,UBk
-!>            tl_A(Lm(ng)+1,-2,k)=tl_A( 1,Mm(ng)-2,k)
-!>
+!^            tl_A(Lm(ng)+1,-2,k)=tl_A( 1,Mm(ng)-2,k)
+!^
               ad_A( 1,Mm(ng)-2,k)=ad_A( 1,Mm(ng)-2,k)+                  &
      &                            ad_A(Lm(ng)+1,-2,k)
               ad_A(Lm(ng)+1,-2,k)=0.0_r8
-!>            tl_A(Lm(ng)+1,-1,k)=tl_A( 1,Mm(ng)-1,k)
-!>
+!^            tl_A(Lm(ng)+1,-1,k)=tl_A( 1,Mm(ng)-1,k)
+!^
               ad_A( 1,Mm(ng)-1,k)=ad_A( 1,Mm(ng)-1,k)+                  &
      &                            ad_A(Lm(ng)+1,-1,k)
               ad_A(Lm(ng)+1,-1,k)=0.0_r8
-!>            tl_A(Lm(ng)+1, 0,k)=tl_A( 1,Mm(ng)  ,k)
-!>
+!^            tl_A(Lm(ng)+1, 0,k)=tl_A( 1,Mm(ng)  ,k)
+!^
               ad_A( 1,Mm(ng)  ,k)=ad_A( 1,Mm(ng)  ,k)+                  &
      &                            ad_A(Lm(ng)+1, 0,k)
               ad_A(Lm(ng)+1, 0,k)=0.0_r8
-!>            tl_A(Lm(ng)+2,-2,k)=tl_A( 2,Mm(ng)-2,k)
-!>
+!^            tl_A(Lm(ng)+2,-2,k)=tl_A( 2,Mm(ng)-2,k)
+!^
               ad_A( 2,Mm(ng)-2,k)=ad_A( 2,Mm(ng)-2,k)+                  &
      &                            ad_A(Lm(ng)+2,-2,k)
               ad_A(Lm(ng)+2,-2,k)=0.0_r8
-!>            tl_A(Lm(ng)+2,-1,k)=tl_A( 2,Mm(ng)-1,k)
-!>
+!^            tl_A(Lm(ng)+2,-1,k)=tl_A( 2,Mm(ng)-1,k)
+!^
               ad_A( 2,Mm(ng)-1,k)=ad_A( 2,Mm(ng)-1,k)+                  &
      &                            ad_A(Lm(ng)+2,-1,k)
               ad_A(Lm(ng)+2,-1,k)=0.0_r8
-!>            tl_A(Lm(ng)+2, 0,k)=tl_A( 2,Mm(ng)  ,k)
-!>
+!^            tl_A(Lm(ng)+2, 0,k)=tl_A( 2,Mm(ng)  ,k)
+!^
               ad_A( 2,Mm(ng)  ,k)=ad_A( 2,Mm(ng)  ,k)+                  &
      &                            ad_A(Lm(ng)+2, 0,k)
               ad_A(Lm(ng)+2, 0,k)=0.0_r8
             END DO
             IF (NghostPoints.eq.3) THEN
               DO k=LBk,UBk
-!>              tl_A(Lm(ng)+3,-2,k)=tl_A(3 ,Mm(ng)-2,k)
-!>
+!^              tl_A(Lm(ng)+3,-2,k)=tl_A(3 ,Mm(ng)-2,k)
+!^
                 ad_A(3 ,Mm(ng)-2,k)=ad_A(3 ,Mm(ng)-2,k)+                &
      &                              ad_A(Lm(ng)+3,-2,k)
                 ad_A(Lm(ng)+3,-2,k)=0.0_r8
-!>              tl_A(Lm(ng)+3,-1,k)=tl_A(3 ,Mm(ng)-1,k)
-!>
+!^              tl_A(Lm(ng)+3,-1,k)=tl_A(3 ,Mm(ng)-1,k)
+!^
                 ad_A(3 ,Mm(ng)-1,k)=ad_A(3 ,Mm(ng)-1,k)+                &
      &                              ad_A(Lm(ng)+3,-1,k)
                 ad_A(Lm(ng)+3,-1,k)=0.0_r8
-!>              tl_A(Lm(ng)+3, 0,k)=tl_A(3 ,Mm(ng)  ,k)
-!>
+!^              tl_A(Lm(ng)+3, 0,k)=tl_A(3 ,Mm(ng)  ,k)
+!^
                 ad_A(3 ,Mm(ng)  ,k)=ad_A(3 ,Mm(ng)  ,k)+                &
      &                              ad_A(Lm(ng)+3, 0,k)
                 ad_A(Lm(ng)+3, 0,k)=0.0_r8
@@ -621,51 +621,51 @@
 
           IF (DOMAIN(ng)%SouthEast_Corner(tile)) THEN
             DO k=LBk,UBk
-!>            tl_A(-2,Mm(ng)+1,k)=tl_A(Lm(ng)-2, 1,k)
-!>
+!^            tl_A(-2,Mm(ng)+1,k)=tl_A(Lm(ng)-2, 1,k)
+!^
               ad_A(Lm(ng)-2, 1,k)=ad_A(Lm(ng)-2, 1,k)+                  &
      &                            ad_A(-2,Mm(ng)+1,k)
               ad_A(-2,Mm(ng)+1,k)=0.0_r8
-!>            tl_A(-1,Mm(ng)+1,k)=tl_A(Lm(ng)-1, 1,k)
-!>
+!^            tl_A(-1,Mm(ng)+1,k)=tl_A(Lm(ng)-1, 1,k)
+!^
               ad_A(Lm(ng)-1, 1,k)=ad_A(Lm(ng)-1, 1,k)+                  &
      &                            ad_A(-1,Mm(ng)+1,k)
               ad_A(-1,Mm(ng)+1,k)=0.0_r8
-!>            tl_A( 0,Mm(ng)+1,k)=tl_A(Lm(ng)  , 1,k)
-!>
+!^            tl_A( 0,Mm(ng)+1,k)=tl_A(Lm(ng)  , 1,k)
+!^
               ad_A(Lm(ng)  , 1,k)=ad_A(Lm(ng)  , 1,k)+                  &
      &                            ad_A( 0,Mm(ng)+1,k)
               ad_A( 0,Mm(ng)+1,k)=0.0_r8
-!>            tl_A(-2,Mm(ng)+2,k)=tl_A(Lm(ng)-2, 2,k)
-!>
+!^            tl_A(-2,Mm(ng)+2,k)=tl_A(Lm(ng)-2, 2,k)
+!^
               ad_A(Lm(ng)-2, 2,k)=ad_A(Lm(ng)-2, 2,k)+                  &
      &                            ad_A(-2,Mm(ng)+2,k)
               ad_A(-2,Mm(ng)+2,k)=0.0_r8
-!>            tl_A(-1,Mm(ng)+2,k)=tl_A(Lm(ng)-1, 2,k)
-!>
+!^            tl_A(-1,Mm(ng)+2,k)=tl_A(Lm(ng)-1, 2,k)
+!^
               ad_A(Lm(ng)-1, 2,k)=ad_A(Lm(ng)-1, 2,k)+                  &
      &                            ad_A(-1,Mm(ng)+2,k)
               ad_A(-1,Mm(ng)+2,k)=0.0_r8
-!>            tl_A( 0,Mm(ng)+2,k)=tl_A(Lm(ng)  , 2,k)
-!>
+!^            tl_A( 0,Mm(ng)+2,k)=tl_A(Lm(ng)  , 2,k)
+!^
               ad_A(Lm(ng)  , 2,k)=ad_A(Lm(ng)  , 2,k)+                  &
      &                            ad_A( 0,Mm(ng)+2,k)
               ad_A( 0,Mm(ng)+2,k)=0.0_r8
             END DO
             IF (NghostPoints.eq.3) THEN
               DO k=LBk,UBk
-!>              tl_A(-2,Mm(ng)+3,k)=tl_A(Lm(ng)-2, 3,k)
-!>
+!^              tl_A(-2,Mm(ng)+3,k)=tl_A(Lm(ng)-2, 3,k)
+!^
                 ad_A(Lm(ng)-2, 3,k)=ad_A(Lm(ng)-2, 3,k)+                &
      &                              ad_A(-2,Mm(ng)+3,k)
                 ad_A(-2,Mm(ng)+3,k)=0.0_r8
-!>              tl_A(-1,Mm(ng)+3,k)=tl_A(Lm(ng)-1, 3,k)
-!>
+!^              tl_A(-1,Mm(ng)+3,k)=tl_A(Lm(ng)-1, 3,k)
+!^
                 ad_A(Lm(ng)-1, 3,k)=ad_A(Lm(ng)-1, 3,k)+                &
      &                              ad_A(-1,Mm(ng)+3,k)
                 ad_A(-1,Mm(ng)+3,k)=0.0_r8
-!>              tl_A( 0,Mm(ng)+3,k)=tl_A(Lm(ng)  , 3,k)
-!>
+!^              tl_A( 0,Mm(ng)+3,k)=tl_A(Lm(ng)  , 3,k)
+!^
                 ad_A(Lm(ng)  , 3,k)=ad_A(Lm(ng)  , 3,k)+                &
      &                              ad_A( 0,Mm(ng)+3,k)
                 ad_A( 0,Mm(ng)+3,k)=0.0_r8
@@ -675,52 +675,52 @@
 
           IF (DOMAIN(ng)%SouthWest_Corner(tile)) THEN
             DO k=LBk,UBk
-!>            tl_A(Lm(ng)+1,Mm(ng)+1,k)=tl_A( 1, 1,k)
-!>
+!^            tl_A(Lm(ng)+1,Mm(ng)+1,k)=tl_A( 1, 1,k)
+!^
               ad_A( 1, 1,k)=ad_A( 1, 1,k)+                              &
      &                      ad_A(Lm(ng)+1,Mm(ng)+1,k)
               ad_A(Lm(ng)+1,Mm(ng)+1,k)=0.0_r8
-!>            tl_A(Lm(ng)+1,Mm(ng)+2,k)=tl_A( 1, 2,k)
-!>
+!^            tl_A(Lm(ng)+1,Mm(ng)+2,k)=tl_A( 1, 2,k)
+!^
               ad_A( 1, 2,k)=ad_A( 1, 2,k)+                              &
      &                      ad_A(Lm(ng)+1,Mm(ng)+2,k)
               ad_A(Lm(ng)+1,Mm(ng)+2,k)=0.0_r8
-!>            tl_A(Lm(ng)+2,Mm(ng)+1,k)=tl_A( 2, 1,k)
-!>
+!^            tl_A(Lm(ng)+2,Mm(ng)+1,k)=tl_A( 2, 1,k)
+!^
               ad_A( 2, 1,k)=ad_A( 2, 1,k)+                              &
      &                      ad_A(Lm(ng)+2,Mm(ng)+1,k)
               ad_A(Lm(ng)+2,Mm(ng)+1,k)=0.0_r8
-!>            tl_A(Lm(ng)+2,Mm(ng)+2,k)=tl_A( 2, 2,k)
-!>
+!^            tl_A(Lm(ng)+2,Mm(ng)+2,k)=tl_A( 2, 2,k)
+!^
               ad_A( 2, 2,k)=ad_A( 2, 2,k)+                              &
      &                      ad_A(Lm(ng)+2,Mm(ng)+2,k)
               ad_A(Lm(ng)+2,Mm(ng)+2,k)=0.0_r8
             END DO
             IF (NghostPoints.eq.3) THEN
               DO k=LBk,UBk
-!>              tl_A(Lm(ng)+1,Mm(ng)+3,k)=tl_A( 1, 3,k)
-!>
+!^              tl_A(Lm(ng)+1,Mm(ng)+3,k)=tl_A( 1, 3,k)
+!^
                 ad_A( 1, 3,k)=ad_A( 1, 3,k)+                            &
      &                        ad_A(Lm(ng)+1,Mm(ng)+3,k)
                 ad_A(Lm(ng)+1,Mm(ng)+3,k)=0.0_r8
 
-!>              tl_A(Lm(ng)+2,Mm(ng)+3,k)=tl_A( 2, 3,k)
-!>
+!^              tl_A(Lm(ng)+2,Mm(ng)+3,k)=tl_A( 2, 3,k)
+!^
                 ad_A( 2, 3,k)=ad_A( 2, 3,k)+                            &
      &                        ad_A(Lm(ng)+2,Mm(ng)+3,k)
                 ad_A(Lm(ng)+2,Mm(ng)+3,k)=0.0_r8
-!>              tl_A(Lm(ng)+3,Mm(ng)+1,k)=tl_A( 3, 1,k)
-!>
+!^              tl_A(Lm(ng)+3,Mm(ng)+1,k)=tl_A( 3, 1,k)
+!^
                 ad_A( 3, 1,k)=ad_A( 3, 1,k)+                            &
      &                        ad_A(Lm(ng)+3,Mm(ng)+1,k)
                 ad_A(Lm(ng)+3,Mm(ng)+1,k)=0.0_r8
-!>              tl_A(Lm(ng)+3,Mm(ng)+2,k)=tl_A( 3, 2,k)
-!>
+!^              tl_A(Lm(ng)+3,Mm(ng)+2,k)=tl_A( 3, 2,k)
+!^
                 ad_A( 3, 2,k)=ad_A( 3, 2,k)+                            &
      &                        ad_A(Lm(ng)+3,Mm(ng)+2,k)
                 ad_A(Lm(ng)+3,Mm(ng)+2,k)=0.0_r8
-!>              tl_A(Lm(ng)+3,Mm(ng)+3,k)=tl_A( 3, 3,k)
-!>
+!^              tl_A(Lm(ng)+3,Mm(ng)+3,k)=tl_A( 3, 3,k)
+!^
                 ad_A( 3, 3,k)=ad_A( 3, 3,k)+                            &
      &                        ad_A(Lm(ng)+3,Mm(ng)+3,k)
                 ad_A(Lm(ng)+3,Mm(ng)+3,k)=0.0_r8
@@ -747,18 +747,18 @@
           IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
             DO k=LBk,UBk
               DO i=Imin,Imax
-!>              tl_A(i,-2,k)=tl_A(i,Mm(ng)-2,k)
-!>
+!^              tl_A(i,-2,k)=tl_A(i,Mm(ng)-2,k)
+!^
                 ad_A(i,Mm(ng)-2,k)=ad_A(i,Mm(ng)-2,k)+                  &
      &                             ad_A(i,-2,k)
                 ad_A(i,-2,k)=0.0_r8
-!>              tl_A(i,-1,k)=tl_A(i,Mm(ng)-1,k)
-!>
+!^              tl_A(i,-1,k)=tl_A(i,Mm(ng)-1,k)
+!^
                 ad_A(i,Mm(ng)-1,k)=ad_A(i,Mm(ng)-1,k)+                  &
      &                             ad_A(i,-1,k)
                 ad_A(i,-1,k)=0.0_r8
-!>              tl_A(i, 0,k)=tl_A(i,Mm(ng)  ,k)
-!>
+!^              tl_A(i, 0,k)=tl_A(i,Mm(ng)  ,k)
+!^
                 ad_A(i,Mm(ng)  ,k)=ad_A(i,Mm(ng)  ,k)+                  &
      &                             ad_A(i, 0,k)
                 ad_A(i, 0,k)=0.0_r8
@@ -769,13 +769,13 @@
           IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
             DO k=LBk,UBk
               DO i=Imin,Imax
-!>              tl_A(i,Mm(ng)+1,k)=tl_A(i, 1,k)
-!>
+!^              tl_A(i,Mm(ng)+1,k)=tl_A(i, 1,k)
+!^
                 ad_A(i, 1,k)=ad_A(i, 1,k)+                              &
      &                       ad_A(i,Mm(ng)+1,k)
                 ad_A(i,Mm(ng)+1,k)=0.0_r8
-!>              tl_A(i,Mm(ng)+2,k)=tl_A(i, 2,k)
-!>
+!^              tl_A(i,Mm(ng)+2,k)=tl_A(i, 2,k)
+!^
                 ad_A(i, 2,k)=ad_A(i, 2,k)+                              &
      &                       ad_A(i,Mm(ng)+2,k)
                 ad_A(i,Mm(ng)+2,k)=0.0_r8
@@ -784,8 +784,8 @@
             IF (NghostPoints.eq.3) THEN
               DO k=LBk,UBk
                 DO i=Imin,Imax
-!>                tl_A(i,Mm(ng)+3,k)=tl_A(i,3,k)
-!>
+!^                tl_A(i,Mm(ng)+3,k)=tl_A(i,3,k)
+!^
                   ad_A(i,3,k)=ad_A(i,3,k)+                              &
      &                        ad_A(i,Mm(ng)+3,k)
                   ad_A(i,Mm(ng)+3,k)=0.0_r8
@@ -813,18 +813,18 @@
           IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
             DO k=LBk,UBk
               DO j=Jmin,Jmax
-!>              tl_A(-2,j,k)=tl_A(Lm(ng)-2,j,k)
-!>
+!^              tl_A(-2,j,k)=tl_A(Lm(ng)-2,j,k)
+!^
                 ad_A(Lm(ng)-2,j,k)=ad_A(Lm(ng)-2,j,k)+                  &
      &                             ad_A(-2,j,k)
                 ad_A(-2,j,k)=0.0_r8
-!>              tl_A(-1,j,k)=tl_A(Lm(ng)-1,j,k)
-!>
+!^              tl_A(-1,j,k)=tl_A(Lm(ng)-1,j,k)
+!^
                 ad_A(Lm(ng)-1,j,k)=ad_A(Lm(ng)-1,j,k)+                  &
      &                             ad_A(-1,j,k)
                 ad_A(-1,j,k)=0.0_r8
-!>              tl_A( 0,j,k)=tl_A(Lm(ng)  ,j,k)
-!>
+!^              tl_A( 0,j,k)=tl_A(Lm(ng)  ,j,k)
+!^
                 ad_A(Lm(ng)  ,j,k)=ad_A(Lm(ng)  ,j,k)+                  &
      &                             ad_A( 0,j,k)
                 ad_A( 0,j,k)=0.0_r8
@@ -835,13 +835,13 @@
           IF (DOMAIN(ng)%Western_Edge(tile)) THEN
             DO k=LBk,UBk
               DO j=Jmin,Jmax
-!>              tl_A(Lm(ng)+1,j,k)=tl_A(1,j,k)
-!>
+!^              tl_A(Lm(ng)+1,j,k)=tl_A(1,j,k)
+!^
                 ad_A(1,j,k)=ad_A(1,j,k)+                                &
      &                      ad_A(Lm(ng)+1,j,k)
                 ad_A(Lm(ng)+1,j,k)=0.0_r8
-!>              tl_A(Lm(ng)+2,j,k)=tl_A( 2,j,k)
-!>
+!^              tl_A(Lm(ng)+2,j,k)=tl_A( 2,j,k)
+!^
                 ad_A(2,j,k)=ad_A(2,j,k)+                                &
      &                      ad_A(Lm(ng)+2,j,k)
                 ad_A(Lm(ng)+2,j,k)=0.0_r8
@@ -850,8 +850,8 @@
             IF (NghostPoints.eq.3) THEN
               DO k=LBk,UBk
                 DO j=Jmin,Jmax
-!>                tl_A(Lm(ng)+3,j,k)=tl_A(3,j,k)
-!>
+!^                tl_A(Lm(ng)+3,j,k)=tl_A(3,j,k)
+!^
                   ad_A(3,j,k)=ad_A(3,j,k)+                              &
      &                        ad_A(Lm(ng)+3,j,k)
                   ad_A(Lm(ng)+3,j,k)=0.0_r8
@@ -928,48 +928,48 @@
         IF (EW_exchange.and.NS_exchange) THEN
           IF (DOMAIN(ng)%NorthEast_Corner(tile)) THEN
             DO k=LBk,UBk
-!>            tl_A(-2,-2,k)=tl_A(Lm(ng)-2,Mm(ng)-2,k)
-!>
+!^            tl_A(-2,-2,k)=tl_A(Lm(ng)-2,Mm(ng)-2,k)
+!^
               ad_A(Lm(ng)-2,Mm(ng)-2,k)=ad_A(Lm(ng)-2,Mm(ng)-2,k)+      &
      &                                  ad_A(-2,-2,k)
               ad_A(-2,-2,k)=0.0_r8
-!>            tl_A(-2,-1,k)=tl_A(Lm(ng)-2,Mm(ng)-1,k)
-!>
+!^            tl_A(-2,-1,k)=tl_A(Lm(ng)-2,Mm(ng)-1,k)
+!^
               ad_A(Lm(ng)-2,Mm(ng)-1,k)=ad_A(Lm(ng)-2,Mm(ng)-1,k)+      &
      &                                  ad_A(-2,-1,k)
               ad_A(-2,-1,k)=0.0_r8
-!>            tl_A(-2, 0,k)=tl_A(Lm(ng)-2,Mm(ng)  ,k)
-!>
+!^            tl_A(-2, 0,k)=tl_A(Lm(ng)-2,Mm(ng)  ,k)
+!^
               ad_A(Lm(ng)-2,Mm(ng)  ,k)=ad_A(Lm(ng)-2,Mm(ng)  ,k)+      &
      &                                  ad_A(-2, 0,k)
               ad_A(-2, 0,k)=0.0_r8
-!>            tl_A(-1,-2,k)=tl_A(Lm(ng)-1,Mm(ng)-2,k)
-!>
+!^            tl_A(-1,-2,k)=tl_A(Lm(ng)-1,Mm(ng)-2,k)
+!^
               ad_A(Lm(ng)-1,Mm(ng)-2,k)=ad_A(Lm(ng)-1,Mm(ng)-2,k)+      &
      &                                  ad_A(-1,-2,k)
               ad_A(-1,-2,k)=0.0_r8
-!>            tl_A(-1,-1,k)=tl_A(Lm(ng)-1,Mm(ng)-1,k)
-!>
+!^            tl_A(-1,-1,k)=tl_A(Lm(ng)-1,Mm(ng)-1,k)
+!^
               ad_A(Lm(ng)-1,Mm(ng)-1,k)=ad_A(Lm(ng)-1,Mm(ng)-1,k)+      &
      &                                  ad_A(-1,-1,k)
               ad_A(-1,-1,k)=0.0_r8
-!>            tl_A(-1, 0,k)=tl_A(Lm(ng)-1,Mm(ng)  ,k)
-!>
+!^            tl_A(-1, 0,k)=tl_A(Lm(ng)-1,Mm(ng)  ,k)
+!^
               ad_A(Lm(ng)-1,Mm(ng)  ,k)=ad_A(Lm(ng)-1,Mm(ng)  ,k)+      &
      &                                  ad_A(-1, 0,k)
               ad_A(-1, 0,k)=0.0_r8
-!>            tl_A( 0,-2,k)=tl_A(Lm(ng)  ,Mm(ng)-2,k)
-!>
+!^            tl_A( 0,-2,k)=tl_A(Lm(ng)  ,Mm(ng)-2,k)
+!^
               ad_A(Lm(ng)  ,Mm(ng)-2,k)=ad_A(Lm(ng)  ,Mm(ng)-2,k)+      &
      &                                  ad_A( 0,-2,k)
               ad_A( 0,-2,k)=0.0_r8
-!>            tl_A( 0,-1,k)=tl_A(Lm(ng)  ,Mm(ng)-1,k)
-!>
+!^            tl_A( 0,-1,k)=tl_A(Lm(ng)  ,Mm(ng)-1,k)
+!^
               ad_A(Lm(ng)  ,Mm(ng)-1,k)=ad_A(Lm(ng)  ,Mm(ng)-1,k)+      &
      &                                  ad_A( 0,-1,k)
               ad_A( 0,-1,k)=0.0_r8
-!>            tl_A( 0, 0,k)=tl_A(Lm(ng)  ,Mm(ng)  ,k)
-!>
+!^            tl_A( 0, 0,k)=tl_A(Lm(ng)  ,Mm(ng)  ,k)
+!^
               ad_A(Lm(ng)  ,Mm(ng)  ,k)=ad_A(Lm(ng)  ,Mm(ng)  ,k)+      &
      &                                  ad_A( 0, 0,k)
               ad_A( 0, 0,k)=0.0_r8
@@ -978,51 +978,51 @@
 
           IF (DOMAIN(ng)%NorthWest_Corner(tile)) THEN
             DO k=LBk,UBk
-!>            tl_A(Lm(ng)+1,-2,k)=tl_A( 1,Mm(ng)-2,k)
-!>
+!^            tl_A(Lm(ng)+1,-2,k)=tl_A( 1,Mm(ng)-2,k)
+!^
               ad_A( 1,Mm(ng)-2,k)=ad_A( 1,Mm(ng)-2,k)+                  &
      &                            ad_A(Lm(ng)+1,-2,k)
               ad_A(Lm(ng)+1,-2,k)=0.0_r8
-!>            tl_A(Lm(ng)+1,-1,k)=tl_A( 1,Mm(ng)-1,k)
-!>
+!^            tl_A(Lm(ng)+1,-1,k)=tl_A( 1,Mm(ng)-1,k)
+!^
               ad_A( 1,Mm(ng)-1,k)=ad_A( 1,Mm(ng)-1,k)+                  &
      &                            ad_A(Lm(ng)+1,-1,k)
               ad_A(Lm(ng)+1,-1,k)=0.0_r8
-!>            tl_A(Lm(ng)+1, 0,k)=tl_A( 1,Mm(ng)  ,k)
-!>
+!^            tl_A(Lm(ng)+1, 0,k)=tl_A( 1,Mm(ng)  ,k)
+!^
               ad_A( 1,Mm(ng)  ,k)=ad_A( 1,Mm(ng)  ,k)+                  &
      &                            ad_A(Lm(ng)+1, 0,k)
               ad_A(Lm(ng)+1, 0,k)=0.0_r8
-!>            tl_A(Lm(ng)+2,-2,k)=tl_A( 2,Mm(ng)-2,k)
-!>
+!^            tl_A(Lm(ng)+2,-2,k)=tl_A( 2,Mm(ng)-2,k)
+!^
               ad_A( 2,Mm(ng)-2,k)=ad_A( 2,Mm(ng)-2,k)+                  &
      &                            ad_A(Lm(ng)+2,-2,k)
               ad_A(Lm(ng)+2,-2,k)=0.0_r8
-!>            tl_A(Lm(ng)+2,-1,k)=tl_A( 2,Mm(ng)-1,k)
-!>
+!^            tl_A(Lm(ng)+2,-1,k)=tl_A( 2,Mm(ng)-1,k)
+!^
               ad_A( 2,Mm(ng)-1,k)=ad_A( 2,Mm(ng)-1,k)+                  &
      &                            ad_A(Lm(ng)+2,-1,k)
               ad_A(Lm(ng)+2,-1,k)=0.0_r8
-!>            tl_A(Lm(ng)+2, 0,k)=tl_A( 2,Mm(ng)  ,k)
-!>
+!^            tl_A(Lm(ng)+2, 0,k)=tl_A( 2,Mm(ng)  ,k)
+!^
               ad_A( 2,Mm(ng)  ,k)=ad_A( 2,Mm(ng)  ,k)+                  &
      &                            ad_A(Lm(ng)+2, 0,k)
               ad_A(Lm(ng)+2, 0,k)=0.0_r8
             END DO
             IF (NghostPoints.eq.3) THEN
               DO k=LBk,UBk
-!>              tl_A(Lm(ng)+3,-2,k)=tl_A(3 ,Mm(ng)-2,k)
-!>
+!^              tl_A(Lm(ng)+3,-2,k)=tl_A(3 ,Mm(ng)-2,k)
+!^
                 ad_A(3 ,Mm(ng)-2,k)=ad_A(3 ,Mm(ng)-2,k)+                &
      &                              ad_A(Lm(ng)+3,-2,k)
                 ad_A(Lm(ng)+3,-2,k)=0.0_r8
-!>              tl_A(Lm(ng)+3,-1,k)=tl_A(3 ,Mm(ng)-1,k)
-!>
+!^              tl_A(Lm(ng)+3,-1,k)=tl_A(3 ,Mm(ng)-1,k)
+!^
                 ad_A(3 ,Mm(ng)-1,k)=ad_A(3 ,Mm(ng)-1,k)+                &
      &                              ad_A(Lm(ng)+3,-1,k)
                 ad_A(Lm(ng)+3,-1,k)=0.0_r8
-!>              tl_A(Lm(ng)+3, 0,k)=tl_A(3 ,Mm(ng)  ,k)
-!>
+!^              tl_A(Lm(ng)+3, 0,k)=tl_A(3 ,Mm(ng)  ,k)
+!^
                 ad_A(3 ,Mm(ng)  ,k)=ad_A(3 ,Mm(ng)  ,k)+                &
      &                              ad_A(Lm(ng)+3, 0,k)
                 ad_A(Lm(ng)+3, 0,k)=0.0_r8
@@ -1032,51 +1032,51 @@
 
           IF (DOMAIN(ng)%SouthEast_Corner(tile)) THEN
             DO k=LBk,UBk
-!>            tl_A(-2,Mm(ng)+1,k)=tl_A(Lm(ng)-2, 1,k)
-!>
+!^            tl_A(-2,Mm(ng)+1,k)=tl_A(Lm(ng)-2, 1,k)
+!^
               ad_A(Lm(ng)-2, 1,k)=ad_A(Lm(ng)-2, 1,k)+                  &
      &                            ad_A(-2,Mm(ng)+1,k)
               ad_A(-2,Mm(ng)+1,k)=0.0_r8
-!>            tl_A(-1,Mm(ng)+1,k)=tl_A(Lm(ng)-1, 1,k)
-!>
+!^            tl_A(-1,Mm(ng)+1,k)=tl_A(Lm(ng)-1, 1,k)
+!^
               ad_A(Lm(ng)-1, 1,k)=ad_A(Lm(ng)-1, 1,k)+                  &
      &                            ad_A(-1,Mm(ng)+1,k)
               ad_A(-1,Mm(ng)+1,k)=0.0_r8
-!>            tl_A( 0,Mm(ng)+1,k)=tl_A(Lm(ng)  , 1,k)
-!>
+!^            tl_A( 0,Mm(ng)+1,k)=tl_A(Lm(ng)  , 1,k)
+!^
               ad_A(Lm(ng)  , 1,k)=ad_A(Lm(ng)  , 1,k)+                  &
      &                            ad_A( 0,Mm(ng)+1,k)
               ad_A( 0,Mm(ng)+1,k)=0.0_r8
-!>            tl_A(-2,Mm(ng)+2,k)=tl_A(Lm(ng)-2, 2,k)
-!>
+!^            tl_A(-2,Mm(ng)+2,k)=tl_A(Lm(ng)-2, 2,k)
+!^
               ad_A(Lm(ng)-2, 2,k)=ad_A(Lm(ng)-2, 2,k)+                  &
      &                            ad_A(-2,Mm(ng)+2,k)
               ad_A(-2,Mm(ng)+2,k)=0.0_r8
-!>            tl_A(-1,Mm(ng)+2,k)=tl_A(Lm(ng)-1, 2,k)
-!>
+!^            tl_A(-1,Mm(ng)+2,k)=tl_A(Lm(ng)-1, 2,k)
+!^
               ad_A(Lm(ng)-1, 2,k)=ad_A(Lm(ng)-1, 2,k)+                  &
      &                            ad_A(-1,Mm(ng)+2,k)
               ad_A(-1,Mm(ng)+2,k)=0.0_r8
-!>            tl_A( 0,Mm(ng)+2,k)=tl_A(Lm(ng)  , 2,k)
-!>
+!^            tl_A( 0,Mm(ng)+2,k)=tl_A(Lm(ng)  , 2,k)
+!^
               ad_A(Lm(ng)  , 2,k)=ad_A(Lm(ng)  , 2,k)+                  &
      &                            ad_A( 0,Mm(ng)+2,k)
               ad_A( 0,Mm(ng)+2,k)=0.0_r8
             END DO
             IF (NghostPoints.eq.3) THEN
               DO k=LBk,UBk
-!>              tl_A(-2,Mm(ng)+3,k)=tl_A(Lm(ng)-2, 3,k)
-!>
+!^              tl_A(-2,Mm(ng)+3,k)=tl_A(Lm(ng)-2, 3,k)
+!^
                 ad_A(Lm(ng)-2, 3,k)=ad_A(Lm(ng)-2, 3,k)+                &
      &                              ad_A(-2,Mm(ng)+3,k)
                 ad_A(-2,Mm(ng)+3,k)=0.0_r8
-!>              tl_A(-1,Mm(ng)+3,k)=tl_A(Lm(ng)-1, 3,k)
-!>
+!^              tl_A(-1,Mm(ng)+3,k)=tl_A(Lm(ng)-1, 3,k)
+!^
                 ad_A(Lm(ng)-1, 3,k)=ad_A(Lm(ng)-1, 3,k)+                &
      &                              ad_A(-1,Mm(ng)+3,k)
                 ad_A(-1,Mm(ng)+3,k)=0.0_r8
-!>              tl_A( 0,Mm(ng)+3,k)=tl_A(Lm(ng)  , 3,k)
-!>
+!^              tl_A( 0,Mm(ng)+3,k)=tl_A(Lm(ng)  , 3,k)
+!^
                 ad_A(Lm(ng)  , 3,k)=ad_A(Lm(ng)  , 3,k)+                &
      &                              ad_A( 0,Mm(ng)+3,k)
                 ad_A( 0,Mm(ng)+3,k)=0.0_r8
@@ -1086,52 +1086,52 @@
 
           IF (DOMAIN(ng)%SouthWest_Corner(tile)) THEN
             DO k=LBk,UBk
-!>            tl_A(Lm(ng)+1,Mm(ng)+1,k)=tl_A( 1  , 1  ,k)
-!>
+!^            tl_A(Lm(ng)+1,Mm(ng)+1,k)=tl_A( 1  , 1  ,k)
+!^
               ad_A( 1, 1,k)=ad_A( 1, 1,k)+                              &
      &                      ad_A(Lm(ng)+1,Mm(ng)+1,k)
               ad_A(Lm(ng)+1,Mm(ng)+1,k)=0.0_r8
-!>            tl_A(Lm(ng)+1,Mm(ng)+2,k)=tl_A( 1  , 2,k)
-!>
+!^            tl_A(Lm(ng)+1,Mm(ng)+2,k)=tl_A( 1  , 2,k)
+!^
               ad_A( 1, 2,k)=ad_A( 1, 2,k)+                              &
      &                      ad_A(Lm(ng)+1,Mm(ng)+2,k)
               ad_A(Lm(ng)+1,Mm(ng)+2,k)=0.0_r8
-!>            tl_A(Lm(ng)+2,Mm(ng)+1,k)=tl_A( 2, 1  ,k)
-!>
+!^            tl_A(Lm(ng)+2,Mm(ng)+1,k)=tl_A( 2, 1  ,k)
+!^
               ad_A( 2, 1,k)=ad_A( 2, 1,k)+                              &
      &                      ad_A(Lm(ng)+2,Mm(ng)+1,k)
               ad_A(Lm(ng)+2,Mm(ng)+1,k)=0.0_r8
-!>            tl_A(Lm(ng)+2,Mm(ng)+2,k)=tl_A( 2, 2,k)
-!>
+!^            tl_A(Lm(ng)+2,Mm(ng)+2,k)=tl_A( 2, 2,k)
+!^
               ad_A( 2, 2,k)=ad_A( 2, 2,k)+                              &
      &                      ad_A(Lm(ng)+2,Mm(ng)+2,k)
               ad_A(Lm(ng)+2,Mm(ng)+2,k)=0.0_r8
             END DO
             IF (NghostPoints.eq.3) THEN
               DO k=LBk,UBk
-!>              tl_A(Lm(ng)+1,Mm(ng)+3,k)=tl_A( 1, 3,k)
-!>
+!^              tl_A(Lm(ng)+1,Mm(ng)+3,k)=tl_A( 1, 3,k)
+!^
                 ad_A( 1, 3,k)=ad_A( 1, 3,k)+                            &
      &                        ad_A(Lm(ng)+1,Mm(ng)+3,k)
                 ad_A(Lm(ng)+1,Mm(ng)+3,k)=0.0_r8
 
-!>              tl_A(Lm(ng)+2,Mm(ng)+3,k)=tl_A( 2, 3,k)
-!>
+!^              tl_A(Lm(ng)+2,Mm(ng)+3,k)=tl_A( 2, 3,k)
+!^
                 ad_A( 2, 3,k)=ad_A( 2, 3,k)+                            &
      &                        ad_A(Lm(ng)+2,Mm(ng)+3,k)
                 ad_A(Lm(ng)+2,Mm(ng)+3,k)=0.0_r8
-!>              tl_A(Lm(ng)+3,Mm(ng)+1,k)=tl_A( 3, 1,k)
-!>
+!^              tl_A(Lm(ng)+3,Mm(ng)+1,k)=tl_A( 3, 1,k)
+!^
                 ad_A( 3, 1,k)=ad_A( 3, 1,k)+                            &
      &                        ad_A(Lm(ng)+3,Mm(ng)+1,k)
                 ad_A(Lm(ng)+3,Mm(ng)+1,k)=0.0_r8
-!>              tl_A(Lm(ng)+3,Mm(ng)+2,k)=tl_A( 3, 2,k)
-!>
+!^              tl_A(Lm(ng)+3,Mm(ng)+2,k)=tl_A( 3, 2,k)
+!^
                 ad_A( 3, 2,k)=ad_A( 3, 2,k)+                            &
      &                        ad_A(Lm(ng)+3,Mm(ng)+2,k)
                 ad_A(Lm(ng)+3,Mm(ng)+2,k)=0.0_r8
-!>              tl_A(Lm(ng)+3,Mm(ng)+3,k)=tl_A( 3, 3,k)
-!>
+!^              tl_A(Lm(ng)+3,Mm(ng)+3,k)=tl_A( 3, 3,k)
+!^
                 ad_A( 3, 3,k)=ad_A( 3, 3,k)+                            &
      &                        ad_A(Lm(ng)+3,Mm(ng)+3,k)
                 ad_A(Lm(ng)+3,Mm(ng)+3,k)=0.0_r8
@@ -1158,18 +1158,18 @@
           IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
             DO k=LBk,UBk
               DO i=Imin,Imax
-!>              tl_A(i,-2,k)=tl_A(i,Mm(ng)-2,k)
-!>
+!^              tl_A(i,-2,k)=tl_A(i,Mm(ng)-2,k)
+!^
                 ad_A(i,Mm(ng)-2,k)=ad_A(i,Mm(ng)-2,k)+                  &
      &                             ad_A(i,-2,k)
                 ad_A(i,-2,k)=0.0_r8
-!>              tl_A(i,-1,k)=tl_A(i,Mm(ng)-1,k)
-!>
+!^              tl_A(i,-1,k)=tl_A(i,Mm(ng)-1,k)
+!^
                 ad_A(i,Mm(ng)-1,k)=ad_A(i,Mm(ng)-1,k)+                  &
      &                             ad_A(i,-1,k)
                 ad_A(i,-1,k)=0.0_r8
-!>              tl_A(i, 0,k)=tl_A(i,Mm(ng)  ,k)
-!>
+!^              tl_A(i, 0,k)=tl_A(i,Mm(ng)  ,k)
+!^
                 ad_A(i,Mm(ng)  ,k)=ad_A(i,Mm(ng)  ,k)+                  &
      &                             ad_A(i, 0,k)
                 ad_A(i, 0,k)=0.0_r8
@@ -1180,13 +1180,13 @@
           IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
             DO k=LBk,UBk
               DO i=Imin,Imax
-!>              tl_A(i,Mm(ng)+1,k)=tl_A(i,1,k)
-!>
+!^              tl_A(i,Mm(ng)+1,k)=tl_A(i,1,k)
+!^
                 ad_A(i,1,k)=ad_A(i,1,k)+                                &
      &                      ad_A(i,Mm(ng)+1,k)
                 ad_A(i,Mm(ng)+1,k)=0.0_r8
-!>              tl_A(i,Mm(ng)+2,k)=tl_A(i, 2,k)
-!>
+!^              tl_A(i,Mm(ng)+2,k)=tl_A(i, 2,k)
+!^
                 ad_A(i,2,k)=ad_A(i,2,k)+                                &
      &                      ad_A(i,Mm(ng)+2,k)
                 ad_A(i,Mm(ng)+2,k)=0.0_r8
@@ -1195,8 +1195,8 @@
             IF (NghostPoints.eq.3) THEN
               DO k=LBk,UBk
                 DO i=Imin,Imax
-!>                tl_A(i,Mm(ng)+3,k)=tl_A(i,3,k)
-!>
+!^                tl_A(i,Mm(ng)+3,k)=tl_A(i,3,k)
+!^
                   ad_A(i,3,k)=ad_A(i,3,k)+                              &
      &                        ad_A(i,Mm(ng)+3,k)
                   ad_A(i,Mm(ng)+3,k)=0.0_r8
@@ -1224,18 +1224,18 @@
           IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
             DO k=LBk,UBk
               DO j=Jmin,Jmax
-!>              tl_A(-2,j,k)=tl_A(Lm(ng)-2,j,k)
-!>
+!^              tl_A(-2,j,k)=tl_A(Lm(ng)-2,j,k)
+!^
                 ad_A(Lm(ng)-2,j,k)=ad_A(Lm(ng)-2,j,k)+                  &
      &                             ad_A(-2,j,k)
                 ad_A(-2,j,k)=0.0_r8
-!>              tl_A(-1,j,k)=tl_A(Lm(ng)-1,j,k)
-!>
+!^              tl_A(-1,j,k)=tl_A(Lm(ng)-1,j,k)
+!^
                 ad_A(Lm(ng)-1,j,k)=ad_A(Lm(ng)-1,j,k)+                  &
      &                             ad_A(-1,j,k)
                 ad_A(-1,j,k)=0.0_r8
-!>              tl_A( 0,j,k)=tl_A(Lm(ng)  ,j,k)
-!>
+!^              tl_A( 0,j,k)=tl_A(Lm(ng)  ,j,k)
+!^
                 ad_A(Lm(ng)  ,j,k)=ad_A(Lm(ng)  ,j,k)+                  &
      &                             ad_A( 0,j,k)
                 ad_A( 0,j,k)=0.0_r8
@@ -1246,13 +1246,13 @@
           IF (DOMAIN(ng)%Western_Edge(tile)) THEN
             DO k=LBk,UBk
               DO j=Jmin,Jmax
-!>              tl_A(Lm(ng)+1,j,k)=tl_A(1,j,k)
-!>
+!^              tl_A(Lm(ng)+1,j,k)=tl_A(1,j,k)
+!^
                 ad_A(1,j,k)=ad_A(1,j,k)+                                &
      &                      ad_A(Lm(ng)+1,j,k)
                 ad_A(Lm(ng)+1,j,k)=0.0_r8
-!>              tl_A(Lm(ng)+2,j,k)=tl_A( 2,j,k)
-!>
+!^              tl_A(Lm(ng)+2,j,k)=tl_A( 2,j,k)
+!^
                 ad_A(2,j,k)=ad_A(2,j,k)+                                &
      &                      ad_A(Lm(ng)+2,j,k)
                 ad_A(Lm(ng)+2,j,k)=0.0_r8
@@ -1261,8 +1261,8 @@
             IF (NghostPoints.eq.3) THEN
               DO k=LBk,UBk
                 DO j=Jmin,Jmax
-!>                tl_A(Lm(ng)+3,j,k)=tl_A(3,j,k)
-!>
+!^                tl_A(Lm(ng)+3,j,k)=tl_A(3,j,k)
+!^
                   ad_A(3,j,k)=ad_A(3,j,k)+                              &
      &                        ad_A(Lm(ng)+3,j,k)
                   ad_A(Lm(ng)+3,j,k)=0.0_r8
@@ -1339,48 +1339,48 @@
         IF (EW_exchange.and.NS_exchange) THEN
           IF (DOMAIN(ng)%NorthEast_Corner(tile)) THEN
             DO k=LBk,UBk
-!>            tl_A(-2,-2,k)=tl_A(Lm(ng)-2,Mm(ng)-2,k)
-!>
+!^            tl_A(-2,-2,k)=tl_A(Lm(ng)-2,Mm(ng)-2,k)
+!^
               ad_A(Lm(ng)-2,Mm(ng)-2,k)=ad_A(Lm(ng)-2,Mm(ng)-2,k)+      &
      &                                  ad_A(-2,-2,k)
               ad_A(-2,-2,k)=0.0_r8
-!>            tl_A(-2,-1,k)=tl_A(Lm(ng)-2,Mm(ng)-1,k)
-!>
+!^            tl_A(-2,-1,k)=tl_A(Lm(ng)-2,Mm(ng)-1,k)
+!^
               ad_A(Lm(ng)-2,Mm(ng)-1,k)=ad_A(Lm(ng)-2,Mm(ng)-1,k)+      &
      &                                  ad_A(-2,-1,k)
               ad_A(-2,-1,k)=0.0_r8
-!>            tl_A(-2, 0,k)=tl_A(Lm(ng)-2,Mm(ng)  ,k)
-!>
+!^            tl_A(-2, 0,k)=tl_A(Lm(ng)-2,Mm(ng)  ,k)
+!^
               ad_A(Lm(ng)-2,Mm(ng)  ,k)=ad_A(Lm(ng)-2,Mm(ng)  ,k)+      &
      &                                  ad_A(-2, 0,k)
               ad_A(-2, 0,k)=0.0_r8
-!>            tl_A(-1,-2,k)=tl_A(Lm(ng)-1,Mm(ng)-2,k)
-!>
+!^            tl_A(-1,-2,k)=tl_A(Lm(ng)-1,Mm(ng)-2,k)
+!^
               ad_A(Lm(ng)-1,Mm(ng)-2,k)=ad_A(Lm(ng)-1,Mm(ng)-2,k)+      &
      &                                  ad_A(-1,-2,k)
               ad_A(-1,-2,k)=0.0_r8
-!>            tl_A(-1,-1,k)=tl_A(Lm(ng)-1,Mm(ng)-1,k)
-!>
+!^            tl_A(-1,-1,k)=tl_A(Lm(ng)-1,Mm(ng)-1,k)
+!^
               ad_A(Lm(ng)-1,Mm(ng)-1,k)=ad_A(Lm(ng)-1,Mm(ng)-1,k)+      &
      &                                  ad_A(-1,-1,k)
               ad_A(-1,-1,k)=0.0_r8
-!>            tl_A(-1, 0,k)=tl_A(Lm(ng)-1,Mm(ng)  ,k)
-!>
+!^            tl_A(-1, 0,k)=tl_A(Lm(ng)-1,Mm(ng)  ,k)
+!^
               ad_A(Lm(ng)-1,Mm(ng)  ,k)=ad_A(Lm(ng)-1,Mm(ng)  ,k)+      &
      &                                  ad_A(-1, 0,k)
               ad_A(-1, 0,k)=0.0_r8
-!>            tl_A( 0,-2,k)=tl_A(Lm(ng)  ,Mm(ng)-2,k)
-!>
+!^            tl_A( 0,-2,k)=tl_A(Lm(ng)  ,Mm(ng)-2,k)
+!^
               ad_A(Lm(ng)  ,Mm(ng)-2,k)=ad_A(Lm(ng)  ,Mm(ng)-2,k)+      &
      &                                  ad_A( 0,-2,k)
               ad_A( 0,-2,k)=0.0_r8
-!>            tl_A( 0,-1,k)=tl_A(Lm(ng)  ,Mm(ng)-1,k)
-!>
+!^            tl_A( 0,-1,k)=tl_A(Lm(ng)  ,Mm(ng)-1,k)
+!^
               ad_A(Lm(ng)  ,Mm(ng)-1,k)=ad_A(Lm(ng)  ,Mm(ng)-1,k)+      &
      &                                  ad_A( 0,-1,k)
               ad_A( 0,-1,k)=0.0_r8
-!>            tl_A( 0, 0,k)=tl_A(Lm(ng)  ,Mm(ng)  ,k)
-!>
+!^            tl_A( 0, 0,k)=tl_A(Lm(ng)  ,Mm(ng)  ,k)
+!^
               ad_A(Lm(ng)  ,Mm(ng)  ,k)=ad_A(Lm(ng)  ,Mm(ng)  ,k)+      &
      &                                  ad_A( 0, 0,k)
               ad_A( 0, 0,k)=0.0_r8
@@ -1389,51 +1389,51 @@
 
           IF (DOMAIN(ng)%NorthWest_Corner(tile)) THEN
             DO k=LBk,UBk
-!>            tl_A(Lm(ng)+1,-2,k)=tl_A( 1,Mm(ng)-2,k)
-!>
+!^            tl_A(Lm(ng)+1,-2,k)=tl_A( 1,Mm(ng)-2,k)
+!^
               ad_A( 1,Mm(ng)-2,k)=ad_A( 1,Mm(ng)-2,k)+                  &
      &                            ad_A(Lm(ng)+1,-2,k)
               ad_A(Lm(ng)+1,-2,k)=0.0_r8
-!>            tl_A(Lm(ng)+1,-1,k)=tl_A( 1,Mm(ng)-1,k)
-!>
+!^            tl_A(Lm(ng)+1,-1,k)=tl_A( 1,Mm(ng)-1,k)
+!^
               ad_A( 1,Mm(ng)-1,k)=ad_A( 1,Mm(ng)-1,k)+                  &
      &                            ad_A(Lm(ng)+1,-1,k)
               ad_A(Lm(ng)+1,-1,k)=0.0_r8
-!>            tl_A(Lm(ng)+1, 0,k)=tl_A( 1,Mm(ng)  ,k)
-!>
+!^            tl_A(Lm(ng)+1, 0,k)=tl_A( 1,Mm(ng)  ,k)
+!^
               ad_A( 1,Mm(ng)  ,k)=ad_A( 1,Mm(ng)  ,k)+                  &
      &                            ad_A(Lm(ng)+1, 0,k)
               ad_A(Lm(ng)+1, 0,k)=0.0_r8
-!>            tl_A(Lm(ng)+2,-2,k)=tl_A( 2,Mm(ng)-2,k)
-!>
+!^            tl_A(Lm(ng)+2,-2,k)=tl_A( 2,Mm(ng)-2,k)
+!^
               ad_A( 2,Mm(ng)-2,k)=ad_A( 2,Mm(ng)-2,k)+                  &
      &                            ad_A(Lm(ng)+2,-2,k)
               ad_A(Lm(ng)+2,-2,k)=0.0_r8
-!>            tl_A(Lm(ng)+2,-1,k)=tl_A( 2,Mm(ng)-1,k)
-!>
+!^            tl_A(Lm(ng)+2,-1,k)=tl_A( 2,Mm(ng)-1,k)
+!^
               ad_A( 2,Mm(ng)-1,k)=ad_A( 2,Mm(ng)-1,k)+                  &
      &                            ad_A(Lm(ng)+2,-1,k)
               ad_A(Lm(ng)+2,-1,k)=0.0_r8
-!>            tl_A(Lm(ng)+2, 0,k)=tl_A( 2,Mm(ng)  ,k)
-!>
+!^            tl_A(Lm(ng)+2, 0,k)=tl_A( 2,Mm(ng)  ,k)
+!^
               ad_A( 2,Mm(ng)  ,k)=ad_A( 2,Mm(ng)  ,k)+                  &
      &                            ad_A(Lm(ng)+2, 0,k)
               ad_A(Lm(ng)+2, 0,k)=0.0_r8
             END DO
             IF (NghostPoints.eq.3) THEN
               DO k=LBk,UBk
-!>              tl_A(Lm(ng)+3,-2,k)=tl_A(3 ,Mm(ng)-2,k)
-!>
+!^              tl_A(Lm(ng)+3,-2,k)=tl_A(3 ,Mm(ng)-2,k)
+!^
                 ad_A(3 ,Mm(ng)-2,k)=ad_A(3 ,Mm(ng)-2,k)+                &
      &                              ad_A(Lm(ng)+3,-2,k)
                 ad_A(Lm(ng)+3,-2,k)=0.0_r8
-!>              tl_A(Lm(ng)+3,-1,k)=tl_A(3 ,Mm(ng)-1,k)
-!>
+!^              tl_A(Lm(ng)+3,-1,k)=tl_A(3 ,Mm(ng)-1,k)
+!^
                 ad_A(3 ,Mm(ng)-1,k)=ad_A(3 ,Mm(ng)-1,k)+                &
      &                              ad_A(Lm(ng)+3,-1,k)
                 ad_A(Lm(ng)+3,-1,k)=0.0_r8
-!>              tl_A(Lm(ng)+3, 0,k)=tl_A(3 ,Mm(ng)  ,k)
-!>
+!^              tl_A(Lm(ng)+3, 0,k)=tl_A(3 ,Mm(ng)  ,k)
+!^
                 ad_A(3 ,Mm(ng)  ,k)=ad_A(3 ,Mm(ng)  ,k)+                &
      &                              ad_A(Lm(ng)+3, 0,k)
                 ad_A(Lm(ng)+3, 0,k)=0.0_r8
@@ -1443,51 +1443,51 @@
 
           IF (DOMAIN(ng)%SouthEast_Corner(tile)) THEN
             DO k=LBk,UBk
-!>            tl_A(-2,Mm(ng)+1,k)=tl_A(Lm(ng)-2, 1,k)
-!>
+!^            tl_A(-2,Mm(ng)+1,k)=tl_A(Lm(ng)-2, 1,k)
+!^
               ad_A(Lm(ng)-2, 1,k)=ad_A(Lm(ng)-2, 1,k)+                  &
      &                            ad_A(-2,Mm(ng)+1,k)
               ad_A(-2,Mm(ng)+1,k)=0.0_r8
-!>            tl_A(-1,Mm(ng)+1,k)=tl_A(Lm(ng)-1, 1,k)
-!>
+!^            tl_A(-1,Mm(ng)+1,k)=tl_A(Lm(ng)-1, 1,k)
+!^
               ad_A(Lm(ng)-1, 1,k)=ad_A(Lm(ng)-1, 1,k)+                  &
      &                            ad_A(-1,Mm(ng)+1,k)
               ad_A(-1,Mm(ng)+1,k)=0.0_r8
-!>            tl_A( 0,Mm(ng)+1,k)=tl_A(Lm(ng)  , 1,k)
-!>
+!^            tl_A( 0,Mm(ng)+1,k)=tl_A(Lm(ng)  , 1,k)
+!^
               ad_A(Lm(ng)  , 1,k)=ad_A(Lm(ng)  , 1,k)+                  &
      &                            ad_A( 0,Mm(ng)+1,k)
               ad_A( 0,Mm(ng)+1,k)=0.0_r8
-!>            tl_A(-2,Mm(ng)+2,k)=tl_A(Lm(ng)-2, 2,k)
-!>
+!^            tl_A(-2,Mm(ng)+2,k)=tl_A(Lm(ng)-2, 2,k)
+!^
               ad_A(Lm(ng)-2, 2,k)=ad_A(Lm(ng)-2, 2,k)+                  &
      &                            ad_A(-2,Mm(ng)+2,k)
               ad_A(-2,Mm(ng)+2,k)=0.0_r8
-!>            tl_A(-1,Mm(ng)+2,k)=tl_A(Lm(ng)-1, 2,k)
-!>
+!^            tl_A(-1,Mm(ng)+2,k)=tl_A(Lm(ng)-1, 2,k)
+!^
               ad_A(Lm(ng)-1, 2,k)=ad_A(Lm(ng)-1, 2,k)+                  &
      &                            ad_A(-1,Mm(ng)+2,k)
               ad_A(-1,Mm(ng)+2,k)=0.0_r8
-!>            tl_A( 0,Mm(ng)+2,k)=tl_A(Lm(ng)  , 2,k)
-!>
+!^            tl_A( 0,Mm(ng)+2,k)=tl_A(Lm(ng)  , 2,k)
+!^
               ad_A(Lm(ng)  , 2,k)=ad_A(Lm(ng)  , 2,k)+                  &
      &                            ad_A( 0,Mm(ng)+2,k)
               ad_A( 0,Mm(ng)+2,k)=0.0_r8
             END DO
             IF (NghostPoints.eq.3) THEN
               DO k=LBk,UBk
-!>              tl_A(-2,Mm(ng)+3,k)=tl_A(Lm(ng)-2, 3,k)
-!>
+!^              tl_A(-2,Mm(ng)+3,k)=tl_A(Lm(ng)-2, 3,k)
+!^
                 ad_A(Lm(ng)-2, 3,k)=ad_A(Lm(ng)-2, 3,k)+                &
      &                              ad_A(-2,Mm(ng)+3,k)
                 ad_A(-2,Mm(ng)+3,k)=0.0_r8
-!>              tl_A(-1,Mm(ng)+3,k)=tl_A(Lm(ng)-1, 3,k)
-!>
+!^              tl_A(-1,Mm(ng)+3,k)=tl_A(Lm(ng)-1, 3,k)
+!^
                 ad_A(Lm(ng)-1, 3,k)=ad_A(Lm(ng)-1, 3,k)+                &
      &                              ad_A(-1,Mm(ng)+3,k)
                 ad_A(-1,Mm(ng)+3,k)=0.0_r8
-!>              tl_A( 0,Mm(ng)+3,k)=tl_A(Lm(ng)  , 3,k)
-!>
+!^              tl_A( 0,Mm(ng)+3,k)=tl_A(Lm(ng)  , 3,k)
+!^
                 ad_A(Lm(ng)  , 3,k)=ad_A(Lm(ng)  , 3,k)+                &
      &                              ad_A( 0,Mm(ng)+3,k)
                 ad_A( 0,Mm(ng)+3,k)=0.0_r8
@@ -1497,51 +1497,51 @@
 
           IF (DOMAIN(ng)%SouthWest_Corner(tile)) THEN
             DO k=LBk,UBk
-!>            tl_A(Lm(ng)+1,Mm(ng)+1,k)=tl_A( 1, 1,k)
-!>
+!^            tl_A(Lm(ng)+1,Mm(ng)+1,k)=tl_A( 1, 1,k)
+!^
               ad_A( 1, 1,k)=ad_A( 1, 1,k)+                              &
      &                      ad_A(Lm(ng)+1,Mm(ng)+1,k)
               ad_A(Lm(ng)+1,Mm(ng)+1,k)=0.0_r8
-!>            tl_A(Lm(ng)+1,Mm(ng)+2,k)=tl_A( 1, 2,k)
-!>
+!^            tl_A(Lm(ng)+1,Mm(ng)+2,k)=tl_A( 1, 2,k)
+!^
               ad_A( 1, 2,k)=ad_A( 1, 2,k)+                              &
      &                      ad_A(Lm(ng)+1,Mm(ng)+2,k)
               ad_A(Lm(ng)+1,Mm(ng)+2,k)=0.0_r8
-!>            tl_A(Lm(ng)+2,Mm(ng)+1,k)=tl_A( 2, 1,k)
-!>
+!^            tl_A(Lm(ng)+2,Mm(ng)+1,k)=tl_A( 2, 1,k)
+!^
               ad_A( 2, 1,k)=ad_A( 2, 1,k)+                              &
      &                      ad_A(Lm(ng)+2,Mm(ng)+1,k)
               ad_A(Lm(ng)+2,Mm(ng)+1,k)=0.0_r8
-!>            tl_A(Lm(ng)+2,Mm(ng)+2,k)=tl_A( 2, 2,k)
-!>
+!^            tl_A(Lm(ng)+2,Mm(ng)+2,k)=tl_A( 2, 2,k)
+!^
               ad_A( 2, 2,k)=ad_A( 2, 2,k)+                              &
      &                      ad_A(Lm(ng)+2,Mm(ng)+2,k)
               ad_A(Lm(ng)+2,Mm(ng)+2,k)=0.0_r8
             END DO
             IF (NghostPoints.eq.3) THEN
               DO k=LBk,UBk
-!>              tl_A(Lm(ng)+1,Mm(ng)+3,k)=tl_A( 1, 3,k)
-!>
+!^              tl_A(Lm(ng)+1,Mm(ng)+3,k)=tl_A( 1, 3,k)
+!^
                 ad_A( 1, 3,k)=ad_A( 1, 3,k)+                            &
      &                        ad_A(Lm(ng)+1,Mm(ng)+3,k)
                 ad_A(Lm(ng)+1,Mm(ng)+3,k)=0.0_r8
-!>              tl_A(Lm(ng)+2,Mm(ng)+3,k)=tl_A( 2, 3,k)
-!>
+!^              tl_A(Lm(ng)+2,Mm(ng)+3,k)=tl_A( 2, 3,k)
+!^
                 ad_A( 2, 3,k)=ad_A( 2, 3,k)+                            &
      &                        ad_A(Lm(ng)+2,Mm(ng)+3,k)
                 ad_A(Lm(ng)+2,Mm(ng)+3,k)=0.0_r8
-!>              tl_A(Lm(ng)+3,Mm(ng)+1,k)=tl_A( 3, 1,k)
-!>
+!^              tl_A(Lm(ng)+3,Mm(ng)+1,k)=tl_A( 3, 1,k)
+!^
                 ad_A( 3, 1,k)=ad_A( 3, 1,k)+                            &
      &                        ad_A(Lm(ng)+3,Mm(ng)+1,k)
                 ad_A(Lm(ng)+3,Mm(ng)+1,k)=0.0_r8
-!>              tl_A(Lm(ng)+3,Mm(ng)+2,k)=tl_A( 3, 2,k)
-!>
+!^              tl_A(Lm(ng)+3,Mm(ng)+2,k)=tl_A( 3, 2,k)
+!^
                 ad_A( 3, 2,k)=ad_A( 3, 2,k)+                            &
      &                        ad_A(Lm(ng)+3,Mm(ng)+2,k)
                 ad_A(Lm(ng)+3,Mm(ng)+2,k)=0.0_r8
-!>              tl_A(Lm(ng)+3,Mm(ng)+3,k)=tl_A( 3, 3,k)
-!>
+!^              tl_A(Lm(ng)+3,Mm(ng)+3,k)=tl_A( 3, 3,k)
+!^
                 ad_A( 3, 3,k)=ad_A( 3, 3,k)+                            &
      &                        ad_A(Lm(ng)+3,Mm(ng)+3,k)
                 ad_A(Lm(ng)+3,Mm(ng)+3,k)=0.0_r8
@@ -1568,18 +1568,18 @@
           IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
             DO k=LBk,UBk
               DO i=Imin,Imax
-!>              tl_A(i,-2,k)=tl_A(i,Mm(ng)-2,k)
-!>
+!^              tl_A(i,-2,k)=tl_A(i,Mm(ng)-2,k)
+!^
                 ad_A(i,Mm(ng)-2,k)=ad_A(i,Mm(ng)-2,k)+                  &
      &                             ad_A(i,-2,k)
                 ad_A(i,-2,k)=0.0_r8
-!>              tl_A(i,-1,k)=tl_A(i,Mm(ng)-1,k)
-!>
+!^              tl_A(i,-1,k)=tl_A(i,Mm(ng)-1,k)
+!^
                 ad_A(i,Mm(ng)-1,k)=ad_A(i,Mm(ng)-1,k)+                  &
      &                             ad_A(i,-1,k)
                 ad_A(i,-1,k)=0.0_r8
-!>              tl_A(i, 0,k)=tl_A(i,Mm(ng)  ,k)
-!>
+!^              tl_A(i, 0,k)=tl_A(i,Mm(ng)  ,k)
+!^
                 ad_A(i,Mm(ng)  ,k)=ad_A(i,Mm(ng)  ,k)+                  &
      &                             ad_A(i, 0,k)
                 ad_A(i, 0,k)=0.0_r8
@@ -1590,13 +1590,13 @@
           IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
             DO k=LBk,UBk
               DO i=Imin,Imax
-!>              tl_A(i,Mm(ng)+1,k)=tl_A(i,1,k)
-!>
+!^              tl_A(i,Mm(ng)+1,k)=tl_A(i,1,k)
+!^
                 ad_A(i,1,k)=ad_A(i,1,k)+                                &
      &                      ad_A(i,Mm(ng)+1,k)
                 ad_A(i,Mm(ng)+1,k)=0.0_r8
-!>              tl_A(i,Mm(ng)+2,k)=tl_A(i, 2,k)
-!>
+!^              tl_A(i,Mm(ng)+2,k)=tl_A(i, 2,k)
+!^
                 ad_A(i,2,k)=ad_A(i,2,k)+                                &
      &                      ad_A(i,Mm(ng)+2,k)
                 ad_A(i,Mm(ng)+2,k)=0.0_r8
@@ -1605,8 +1605,8 @@
             IF (NghostPoints.eq.3) THEN
               DO k=LBk,UBk
                 DO i=Imin,Imax
-!>                tl_A(i,Mm(ng)+3,k)=tl_A(i,3,k)
-!>
+!^                tl_A(i,Mm(ng)+3,k)=tl_A(i,3,k)
+!^
                   ad_A(i,3,k)=ad_A(i,3,k)+                              &
      &                        ad_A(i,Mm(ng)+3,k)
                   ad_A(i,Mm(ng)+3,k)=0.0_r8
@@ -1634,18 +1634,18 @@
           IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
             DO k=LBk,UBk
               DO j=Jmin,Jmax
-!>              tl_A(-2,j,k)=tl_A(Lm(ng)-2,j,k)
-!>
+!^              tl_A(-2,j,k)=tl_A(Lm(ng)-2,j,k)
+!^
                 ad_A(Lm(ng)-2,j,k)=ad_A(Lm(ng)-2,j,k)+                  &
      &                             ad_A(-2,j,k)
                 ad_A(-2,j,k)=0.0_r8
-!>              tl_A(-1,j,k)=tl_A(Lm(ng)-1,j,k)
-!>
+!^              tl_A(-1,j,k)=tl_A(Lm(ng)-1,j,k)
+!^
                 ad_A(Lm(ng)-1,j,k)=ad_A(Lm(ng)-1,j,k)+                  &
      &                             ad_A(-1,j,k)
                 ad_A(-1,j,k)=0.0_r8
-!>              tl_A( 0,j,k)=tl_A(Lm(ng)  ,j,k)
-!>
+!^              tl_A( 0,j,k)=tl_A(Lm(ng)  ,j,k)
+!^
                 ad_A(Lm(ng)  ,j,k)=ad_A(Lm(ng)  ,j,k)+                  &
      &                             ad_A( 0,j,k)
                 ad_A( 0,j,k)=0.0_r8
@@ -1656,13 +1656,13 @@
           IF (DOMAIN(ng)%Western_Edge(tile)) THEN
             DO k=LBk,UBk
               DO j=Jmin,Jmax
-!>              tl_A(Lm(ng)+1,j,k)=tl_A(1,j,k)
-!>
+!^              tl_A(Lm(ng)+1,j,k)=tl_A(1,j,k)
+!^
                 ad_A(1,j,k)=ad_A(1,j,k)+                                &
      &                      ad_A(Lm(ng)+1,j,k)
                 ad_A(Lm(ng)+1,j,k)=0.0_r8
-!>              tl_A(Lm(ng)+2,j,k)=tl_A( 2,j,k)
-!>
+!^              tl_A(Lm(ng)+2,j,k)=tl_A( 2,j,k)
+!^
                 ad_A(2,j,k)=ad_A(2,j,k)+                                &
      &                      ad_A(Lm(ng)+2,j,k)
                 ad_A(Lm(ng)+2,j,k)=0.0_r8
@@ -1671,8 +1671,8 @@
             IF (NghostPoints.eq.3) THEN
               DO k=LBk,UBk
                 DO j=Jmin,Jmax
-!>                tl_A(Lm(ng)+3,j,k)=tl_A(3,j,k)
-!>
+!^                tl_A(Lm(ng)+3,j,k)=tl_A(3,j,k)
+!^
                   ad_A(3,j,k)=ad_A(3,j,k)+                              &
      &                        ad_A(Lm(ng)+3,j,k)
                   ad_A(Lm(ng)+3,j,k)=0.0_r8
@@ -1749,48 +1749,48 @@
         IF (EW_exchange.and.NS_exchange) THEN
           IF (DOMAIN(ng)%NorthEast_Corner(tile)) THEN
             DO k=LBk,UBk
-!>            tl_A(-2,-2,k)=tl_A(Lm(ng)-2,Mm(ng)-2,k)
-!>
+!^            tl_A(-2,-2,k)=tl_A(Lm(ng)-2,Mm(ng)-2,k)
+!^
               ad_A(Lm(ng)-2,Mm(ng)-2,k)=ad_A(Lm(ng)-2,Mm(ng)-2,k)+      &
      &                                  ad_A(-2,-2,k)
               ad_A(-2,-2,k)=0.0_r8
-!>            tl_A(-2,-1,k)=tl_A(Lm(ng)-2,Mm(ng)-1,k)
-!>
+!^            tl_A(-2,-1,k)=tl_A(Lm(ng)-2,Mm(ng)-1,k)
+!^
               ad_A(Lm(ng)-2,Mm(ng)-1,k)=ad_A(Lm(ng)-2,Mm(ng)-1,k)+      &
      &                                  ad_A(-2,-1,k)
               ad_A(-2,-1,k)=0.0_r8
-!>            tl_A(-2, 0,k)=tl_A(Lm(ng)-2,Mm(ng)  ,k)
-!>
+!^            tl_A(-2, 0,k)=tl_A(Lm(ng)-2,Mm(ng)  ,k)
+!^
               ad_A(Lm(ng)-2,Mm(ng)  ,k)=ad_A(Lm(ng)-2,Mm(ng)  ,k)+      &
      &                                  ad_A(-2, 0,k)
               ad_A(-2, 0,k)=0.0_r8
-!>            tl_A(-1,-2,k)=tl_A(Lm(ng)-1,Mm(ng)-2,k)
-!>
+!^            tl_A(-1,-2,k)=tl_A(Lm(ng)-1,Mm(ng)-2,k)
+!^
               ad_A(Lm(ng)-1,Mm(ng)-2,k)=ad_A(Lm(ng)-1,Mm(ng)-2,k)+      &
      &                                  ad_A(-1,-2,k)
               ad_A(-1,-2,k)=0.0_r8
-!>            tl_A(-1,-1,k)=tl_A(Lm(ng)-1,Mm(ng)-1,k)
-!>
+!^            tl_A(-1,-1,k)=tl_A(Lm(ng)-1,Mm(ng)-1,k)
+!^
               ad_A(Lm(ng)-1,Mm(ng)-1,k)=ad_A(Lm(ng)-1,Mm(ng)-1,k)+      &
      &                                  ad_A(-1,-1,k)
               ad_A(-1,-1,k)=0.0_r8
-!>            tl_A(-1, 0,k)=tl_A(Lm(ng)-1,Mm(ng)  ,k)
-!>
+!^            tl_A(-1, 0,k)=tl_A(Lm(ng)-1,Mm(ng)  ,k)
+!^
               ad_A(Lm(ng)-1,Mm(ng)  ,k)=ad_A(Lm(ng)-1,Mm(ng)  ,k)+      &
      &                                  ad_A(-1, 0,k)
               ad_A(-1, 0,k)=0.0_r8
-!>            tl_A( 0,-2,k)=tl_A(Lm(ng)  ,Mm(ng)-2,k)
-!>
+!^            tl_A( 0,-2,k)=tl_A(Lm(ng)  ,Mm(ng)-2,k)
+!^
               ad_A(Lm(ng)  ,Mm(ng)-2,k)=ad_A(Lm(ng)  ,Mm(ng)-2,k)+      &
      &                                  ad_A( 0,-2,k)
               ad_A( 0,-2,k)=0.0_r8
-!>            tl_A( 0,-1,k)=tl_A(Lm(ng)  ,Mm(ng)-1,k)
-!>
+!^            tl_A( 0,-1,k)=tl_A(Lm(ng)  ,Mm(ng)-1,k)
+!^
               ad_A(Lm(ng)  ,Mm(ng)-1,k)=ad_A(Lm(ng)  ,Mm(ng)-1,k)+      &
      &                                  ad_A( 0,-1,k)
               ad_A( 0,-1,k)=0.0_r8
-!>            tl_A( 0, 0,k)=tl_A(Lm(ng)  ,Mm(ng)  ,k)
-!>
+!^            tl_A( 0, 0,k)=tl_A(Lm(ng)  ,Mm(ng)  ,k)
+!^
               ad_A(Lm(ng)  ,Mm(ng)  ,k)=ad_A(Lm(ng)  ,Mm(ng)  ,k)+      &
      &                                  ad_A( 0, 0,k)
               ad_A( 0, 0,k)=0.0_r8
@@ -1799,51 +1799,51 @@
 
           IF (DOMAIN(ng)%NorthWest_Corner(tile)) THEN
             DO k=LBk,UBk
-!>            tl_A(Lm(ng)+1,-2,k)=tl_A( 1,Mm(ng)-2,k)
-!>
+!^            tl_A(Lm(ng)+1,-2,k)=tl_A( 1,Mm(ng)-2,k)
+!^
               ad_A( 1,Mm(ng)-2,k)=ad_A( 1,Mm(ng)-2,k)+                  &
      &                            ad_A(Lm(ng)+1,-2,k)
               ad_A(Lm(ng)+1,-2,k)=0.0_r8
-!>            tl_A(Lm(ng)+1,-1,k)=tl_A( 1,Mm(ng)-1,k)
-!>
+!^            tl_A(Lm(ng)+1,-1,k)=tl_A( 1,Mm(ng)-1,k)
+!^
               ad_A( 1,Mm(ng)-1,k)=ad_A( 1,Mm(ng)-1,k)+                  &
      &                          ad_A(Lm(ng)+1,-1,k)
               ad_A(Lm(ng)+1,-1,k)=0.0_r8
-!>            tl_A(Lm(ng)+1, 0,k)=tl_A( 1,Mm(ng)  ,k)
-!>
+!^            tl_A(Lm(ng)+1, 0,k)=tl_A( 1,Mm(ng)  ,k)
+!^
               ad_A( 1,Mm(ng)  ,k)=ad_A( 1,Mm(ng)  ,k)+                  &
      &                            ad_A(Lm(ng)+1, 0,k)
               ad_A(Lm(ng)+1, 0,k)=0.0_r8
-!>            tl_A(Lm(ng)+2,-2,k)=tl_A( 2,Mm(ng)-2,k)
-!>
+!^            tl_A(Lm(ng)+2,-2,k)=tl_A( 2,Mm(ng)-2,k)
+!^
               ad_A( 2,Mm(ng)-2,k)=ad_A( 2,Mm(ng)-2,k)+                  &
      &                            ad_A(Lm(ng)+2,-2,k)
               ad_A(Lm(ng)+2,-2,k)=0.0_r8
-!>            tl_A(Lm(ng)+2,-1,k)=tl_A( 2,Mm(ng)-1,k)
-!>
+!^            tl_A(Lm(ng)+2,-1,k)=tl_A( 2,Mm(ng)-1,k)
+!^
               ad_A( 2,Mm(ng)-1,k)=ad_A( 2,Mm(ng)-1,k)+                  &
      &                            ad_A(Lm(ng)+2,-1,k)
               ad_A(Lm(ng)+2,-1,k)=0.0_r8
-!>            tl_A(Lm(ng)+2, 0,k)=tl_A( 2,Mm(ng)  ,k)
-!>
+!^            tl_A(Lm(ng)+2, 0,k)=tl_A( 2,Mm(ng)  ,k)
+!^
               ad_A( 2,Mm(ng)  ,k)=ad_A( 2,Mm(ng)  ,k)+                  &
      &                            ad_A(Lm(ng)+2, 0,k)
               ad_A(Lm(ng)+2, 0,k)=0.0_r8
             END DO
             IF (NghostPoints.eq.3) THEN
               DO k=LBk,UBk
-!>              tl_A(Lm(ng)+3,-2,k)=tl_A(3 ,Mm(ng)-2,k)
-!>
+!^              tl_A(Lm(ng)+3,-2,k)=tl_A(3 ,Mm(ng)-2,k)
+!^
                 ad_A(3 ,Mm(ng)-2,k)=ad_A(3 ,Mm(ng)-2,k)+                &
      &                              ad_A(Lm(ng)+3,-2,k)
                 ad_A(Lm(ng)+3,-2,k)=0.0_r8
-!>              tl_A(Lm(ng)+3,-1,k)=tl_A(3 ,Mm(ng)-1,k)
-!>
+!^              tl_A(Lm(ng)+3,-1,k)=tl_A(3 ,Mm(ng)-1,k)
+!^
                 ad_A(3 ,Mm(ng)-1,k)=ad_A(3 ,Mm(ng)-1,k)+                &
      &                              ad_A(Lm(ng)+3,-1,k)
                 ad_A(Lm(ng)+3,-1,k)=0.0_r8
-!>              tl_A(Lm(ng)+3, 0,k)=tl_A(3 ,Mm(ng)  ,k)
-!>
+!^              tl_A(Lm(ng)+3, 0,k)=tl_A(3 ,Mm(ng)  ,k)
+!^
                 ad_A(3 ,Mm(ng)  ,k)=ad_A(3 ,Mm(ng)  ,k)+                &
      &                              ad_A(Lm(ng)+3, 0,k)
                 ad_A(Lm(ng)+3, 0,k)=0.0_r8
@@ -1853,51 +1853,51 @@
 
           IF (DOMAIN(ng)%SouthEast_Corner(tile)) THEN
             DO k=LBk,UBk
-!>            tl_A(-2,Mm(ng)+1,k)=tl_A(Lm(ng)-2, 1,k)
-!>
+!^            tl_A(-2,Mm(ng)+1,k)=tl_A(Lm(ng)-2, 1,k)
+!^
               ad_A(Lm(ng)-2, 1,k)=ad_A(Lm(ng)-2, 1,k)+                  &
      &                            ad_A(-2,Mm(ng)+1,k)
               ad_A(-2,Mm(ng)+1,k)=0.0_r8
-!>            tl_A(-1,Mm(ng)+1,k)=tl_A(Lm(ng)-1, 1,k)
-!>
+!^            tl_A(-1,Mm(ng)+1,k)=tl_A(Lm(ng)-1, 1,k)
+!^
               ad_A(Lm(ng)-1, 1,k)=ad_A(Lm(ng)-1, 1,k)+                  &
      &                            ad_A(-1,Mm(ng)+1,k)
               ad_A(-1,Mm(ng)+1,k)=0.0_r8
-!>            tl_A( 0,Mm(ng)+1,k)=tl_A(Lm(ng)  , 1,k)
-!>
+!^            tl_A( 0,Mm(ng)+1,k)=tl_A(Lm(ng)  , 1,k)
+!^
               ad_A(Lm(ng)  , 1,k)=ad_A(Lm(ng)  , 1,k)+                  &
      &                            ad_A( 0,Mm(ng)+1,k)
               ad_A( 0,Mm(ng)+1,k)=0.0_r8
-!>            tl_A(-2,Mm(ng)+2,k)=tl_A(Lm(ng)-2, 2,k)
-!>
+!^            tl_A(-2,Mm(ng)+2,k)=tl_A(Lm(ng)-2, 2,k)
+!^
               ad_A(Lm(ng)-2, 2,k)=ad_A(Lm(ng)-2, 2,k)+                  &
      &                            ad_A(-2,Mm(ng)+2,k)
               ad_A(-2,Mm(ng)+2,k)=0.0_r8
-!>            tl_A(-1,Mm(ng)+2,k)=tl_A(Lm(ng)-1, 2,k)
-!>
+!^            tl_A(-1,Mm(ng)+2,k)=tl_A(Lm(ng)-1, 2,k)
+!^
               ad_A(Lm(ng)-1, 2,k)=ad_A(Lm(ng)-1, 2,k)+                  &
      &                            ad_A(-1,Mm(ng)+2,k)
               ad_A(-1,Mm(ng)+2,k)=0.0_r8
-!>            tl_A( 0,Mm(ng)+2,k)=tl_A(Lm(ng)  , 2,k)
-!>
+!^            tl_A( 0,Mm(ng)+2,k)=tl_A(Lm(ng)  , 2,k)
+!^
               ad_A(Lm(ng)  , 2,k)=ad_A(Lm(ng)  , 2,k)+                  &
      &                            ad_A( 0,Mm(ng)+2,k)
               ad_A( 0,Mm(ng)+2,k)=0.0_r8
             END DO
             IF (NghostPoints.eq.3) THEN
               DO k=LBk,UBk
-!>              tl_A(-2,Mm(ng)+3,k)=tl_A(Lm(ng)-2, 3,k)
-!>
+!^              tl_A(-2,Mm(ng)+3,k)=tl_A(Lm(ng)-2, 3,k)
+!^
                 ad_A(Lm(ng)-2, 3,k)=ad_A(Lm(ng)-2, 3,k)+                &
      &                              ad_A(-2,Mm(ng)+3,k)
                 ad_A(-2,Mm(ng)+3,k)=0.0_r8
-!>              tl_A(-1,Mm(ng)+3,k)=tl_A(Lm(ng)-1, 3,k)
-!>
+!^              tl_A(-1,Mm(ng)+3,k)=tl_A(Lm(ng)-1, 3,k)
+!^
                 ad_A(Lm(ng)-1, 3,k)=ad_A(Lm(ng)-1, 3,k)+                &
      &                              ad_A(-1,Mm(ng)+3,k)
                 ad_A(-1,Mm(ng)+3,k)=0.0_r8
-!>              tl_A( 0,Mm(ng)+3,k)=tl_A(Lm(ng)  , 3,k)
-!>
+!^              tl_A( 0,Mm(ng)+3,k)=tl_A(Lm(ng)  , 3,k)
+!^
                 ad_A(Lm(ng)  , 3,k)=ad_A(Lm(ng)  , 3,k)+                &
      &                              ad_A( 0,Mm(ng)+3,k)
                 ad_A( 0,Mm(ng)+3,k)=0.0_r8
@@ -1907,51 +1907,51 @@
 
           IF (DOMAIN(ng)%SouthWest_Corner(tile)) THEN
             DO k=LBk,UBk
-!>            tl_A(Lm(ng)+1,Mm(ng)+1,k)=tl_A( 1, 1,k)
-!>
+!^            tl_A(Lm(ng)+1,Mm(ng)+1,k)=tl_A( 1, 1,k)
+!^
               ad_A( 1, 1,k)=ad_A( 1, 1,k)+                              &
      &                      ad_A(Lm(ng)+1,Mm(ng)+1,k)
               ad_A(Lm(ng)+1,Mm(ng)+1,k)=0.0_r8
-!>            tl_A(Lm(ng)+1,Mm(ng)+2,k)=tl_A( 1, 2,k)
-!>
+!^            tl_A(Lm(ng)+1,Mm(ng)+2,k)=tl_A( 1, 2,k)
+!^
               ad_A( 1, 2,k)=ad_A( 1, 2,k)+                              &
      &                      ad_A(Lm(ng)+1,Mm(ng)+2,k)
               ad_A(Lm(ng)+1,Mm(ng)+2,k)=0.0_r8
-!>            tl_A(Lm(ng)+2,Mm(ng)+1,k)=tl_A( 2, 1,k)
-!>
+!^            tl_A(Lm(ng)+2,Mm(ng)+1,k)=tl_A( 2, 1,k)
+!^
               ad_A( 2, 1,k)=ad_A( 2, 1,k)+                              &
      &                      ad_A(Lm(ng)+2,Mm(ng)+1,k)
               ad_A(Lm(ng)+2,Mm(ng)+1,k)=0.0_r8
-!>            tl_A(Lm(ng)+2,Mm(ng)+2,k)=tl_A( 2, 2,k)
-!>
+!^            tl_A(Lm(ng)+2,Mm(ng)+2,k)=tl_A( 2, 2,k)
+!^
               ad_A( 2, 2,k)=ad_A( 2, 2,k)+                              &
      &                      ad_A(Lm(ng)+2,Mm(ng)+2,k)
               ad_A(Lm(ng)+2,Mm(ng)+2,k)=0.0_r8
             END DO
             IF (NghostPoints.eq.3) THEN
               DO k=LBk,UBk
-!>              tl_A(Lm(ng)+1,Mm(ng)+3,k)=tl_A( 1, 3,k)
-!>
+!^              tl_A(Lm(ng)+1,Mm(ng)+3,k)=tl_A( 1, 3,k)
+!^
                 ad_A( 1, 3,k)=ad_A( 1, 3,k)+                            &
      &                        ad_A(Lm(ng)+1,Mm(ng)+3,k)
                 ad_A(Lm(ng)+1,Mm(ng)+3,k)=0.0_r8
-!>              tl_A(Lm(ng)+2,Mm(ng)+3,k)=tl_A( 2, 3,k)
-!>
+!^              tl_A(Lm(ng)+2,Mm(ng)+3,k)=tl_A( 2, 3,k)
+!^
                 ad_A( 2, 3,k)=ad_A( 2, 3,k)+                            &
      &                        ad_A(Lm(ng)+2,Mm(ng)+3,k)
                 ad_A(Lm(ng)+2,Mm(ng)+3,k)=0.0_r8
-!>              tl_A(Lm(ng)+3,Mm(ng)+1,k)=tl_A( 3, 1,k)
-!>
+!^              tl_A(Lm(ng)+3,Mm(ng)+1,k)=tl_A( 3, 1,k)
+!^
                 ad_A( 3, 1,k)=ad_A( 3, 1,k)+                            &
      &                        ad_A(Lm(ng)+3,Mm(ng)+1,k)
                 ad_A(Lm(ng)+3,Mm(ng)+1,k)=0.0_r8
-!>              tl_A(Lm(ng)+3,Mm(ng)+2,k)=tl_A( 3, 2,k)
-!>
+!^              tl_A(Lm(ng)+3,Mm(ng)+2,k)=tl_A( 3, 2,k)
+!^
                 ad_A( 3, 2,k)=ad_A( 3, 2,k)+                            &
      &                        ad_A(Lm(ng)+3,Mm(ng)+2,k)
                 ad_A(Lm(ng)+3,Mm(ng)+2,k)=0.0_r8
-!>              tl_A(Lm(ng)+3,Mm(ng)+3,k)=tl_A( 3, 3,k)
-!>
+!^              tl_A(Lm(ng)+3,Mm(ng)+3,k)=tl_A( 3, 3,k)
+!^
                 ad_A( 3, 3,k)=ad_A( 3, 3,k)+                            &
      &                        ad_A(Lm(ng)+3,Mm(ng)+3,k)
                 ad_A(Lm(ng)+3,Mm(ng)+3,k)=0.0_r8
@@ -1978,18 +1978,18 @@
           IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
             DO k=LBk,UBk
               DO i=Imin,Imax
-!>              tl_A(i,-2,k)=tl_A(i,Mm(ng)-2,k)
-!>
+!^              tl_A(i,-2,k)=tl_A(i,Mm(ng)-2,k)
+!^
                 ad_A(i,Mm(ng)-2,k)=ad_A(i,Mm(ng)-2,k)+                  &
      &                             ad_A(i,-2,k)
                 ad_A(i,-2,k)=0.0_r8
-!>              tl_A(i,-1,k)=tl_A(i,Mm(ng)-1,k)
-!>
+!^              tl_A(i,-1,k)=tl_A(i,Mm(ng)-1,k)
+!^
                 ad_A(i,Mm(ng)-1,k)=ad_A(i,Mm(ng)-1,k)+                  &
      &                             ad_A(i,-1,k)
                 ad_A(i,-1,k)=0.0_r8
-!>              tl_A(i, 0,k)=tl_A(i,Mm(ng)  ,k)
-!>
+!^              tl_A(i, 0,k)=tl_A(i,Mm(ng)  ,k)
+!^
                 ad_A(i,Mm(ng)  ,k)=ad_A(i,Mm(ng)  ,k)+                  &
      &                             ad_A(i, 0,k)
                 ad_A(i, 0,k)=0.0_r8
@@ -2000,13 +2000,13 @@
           IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
             DO k=LBk,UBk
               DO i=Imin,Imax
-!>              tl_A(i,Mm(ng)+1,k)=tl_A(i,1,k)
-!>
+!^              tl_A(i,Mm(ng)+1,k)=tl_A(i,1,k)
+!^
                 ad_A(i,1,k)=ad_A(i,1 ,k)+                               &
      &                      ad_A(i,Mm(ng)+1,k)
                 ad_A(i,Mm(ng)+1,k)=0.0_r8
-!>              tl_A(i,Mm(ng)+2,k)=tl_A(i,2,k)
-!>
+!^              tl_A(i,Mm(ng)+2,k)=tl_A(i,2,k)
+!^
                 ad_A(i,2,k)=ad_A(i,2,k)+                                &
      &                      ad_A(i,Mm(ng)+2,k)
                 ad_A(i,Mm(ng)+2,k)=0.0_r8
@@ -2015,8 +2015,8 @@
             IF (NghostPoints.eq.3) THEN
               DO k=LBk,UBk
                 DO i=Imin,Imax
-!>                tl_A(i,Mm(ng)+3,k)=tl_A(i,3,k)
-!>
+!^                tl_A(i,Mm(ng)+3,k)=tl_A(i,3,k)
+!^
                   ad_A(i,3,k)=ad_A(i,3,k)+                              &
      &                        ad_A(i,Mm(ng)+3,k)
                   ad_A(i,Mm(ng)+3,k)=0.0_r8
@@ -2044,18 +2044,18 @@
           IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
             DO k=LBk,UBk
               DO j=Jmin,Jmax
-!>              tl_A(-2,j,k)=tl_A(Lm(ng)-2,j,k)
-!>
+!^              tl_A(-2,j,k)=tl_A(Lm(ng)-2,j,k)
+!^
                 ad_A(Lm(ng)-2,j,k)=ad_A(Lm(ng)-2,j,k)+                  &
      &                             ad_A(-2,j,k)
                 ad_A(-2,j,k)=0.0_r8
-!>              tl_A(-1,j,k)=tl_A(Lm(ng)-1,j,k)
-!>
+!^              tl_A(-1,j,k)=tl_A(Lm(ng)-1,j,k)
+!^
                 ad_A(Lm(ng)-1,j,k)=ad_A(Lm(ng)-1,j,k)+                  &
      &                             ad_A(-1,j,k)
                 ad_A(-1,j,k)=0.0_r8
-!>              tl_A( 0,j,k)=tl_A(Lm(ng)  ,j,k)
-!>
+!^              tl_A( 0,j,k)=tl_A(Lm(ng)  ,j,k)
+!^
                 ad_A(Lm(ng)  ,j,k)=ad_A(Lm(ng)  ,j,k)+                  &
      &                             ad_A( 0,j,k)
                 ad_A( 0,j,k)=0.0_r8
@@ -2066,13 +2066,13 @@
           IF (DOMAIN(ng)%Western_Edge(tile)) THEN
             DO k=LBk,UBk
               DO j=Jmin,Jmax
-!>              tl_A(Lm(ng)+1,j,k)=tl_A(1,j,k)
-!>
+!^              tl_A(Lm(ng)+1,j,k)=tl_A(1,j,k)
+!^
                 ad_A(1,j,k)=ad_A(1,j,k)+                                &
      &                      ad_A(Lm(ng)+1,j,k)
                 ad_A(Lm(ng)+1,j,k)=0.0_r8
-!>              tl_A(Lm(ng)+2,j,k)=tl_A( 2,j,k)
-!>
+!^              tl_A(Lm(ng)+2,j,k)=tl_A( 2,j,k)
+!^
                 ad_A(2,j,k)=ad_A(2,j,k)+                                &
      &                      ad_A(Lm(ng)+2,j,k)
                 ad_A(Lm(ng)+2,j,k)=0.0_r8
@@ -2081,8 +2081,8 @@
             IF (NghostPoints.eq.3) THEN
               DO k=LBk,UBk
                 DO j=Jmin,Jmax
-!>                tl_A(Lm(ng)+3,j,k)=tl_A(3,j,k)
-!>
+!^                tl_A(Lm(ng)+3,j,k)=tl_A(3,j,k)
+!^
                   ad_A(3,j,k)=ad_A(3,j,k)+                              &
      &                        ad_A(Lm(ng)+3,j,k)
                   ad_A(Lm(ng)+3,j,k)=0.0_r8

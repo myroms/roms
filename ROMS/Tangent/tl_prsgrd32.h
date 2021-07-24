@@ -1,12 +1,12 @@
-      SUBROUTINE tl_prsgrd (ng, tile)
+      MODULE tl_prsgrd_mod
 !
 !git $Id$
-!svn $Id: tl_prsgrd32.h 1054 2021-03-06 19:47:12Z arango $
-!************************************************** Hernan G. Arango ***
+!svn $Id: tl_prsgrd32.h 1081 2021-07-24 02:25:06Z arango $
+!================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
-!***********************************************************************
+!=======================================================================
 !                                                                      !
 !  This routine evaluates the tangent linear baroclinic, hydrostatic   !
 !  pressure gradient term using a  nonconservative  Density-Jacobian   !
@@ -28,6 +28,17 @@
 !      model with non-aligned vertical coordinate, JGR, 108,           !
 !      1-34.                                                           !
 !                                                                      !
+!=======================================================================
+!
+      implicit none
+!
+      PRIVATE
+      PUBLIC  :: tl_prsgrd
+!
+      CONTAINS
+!
+!***********************************************************************
+      SUBROUTINE tl_prsgrd (ng, tile)
 !***********************************************************************
 !
       USE mod_param
@@ -55,33 +66,33 @@
 #ifdef PROFILE
       CALL wclock_on (ng, iTLM, 23, __LINE__, MyFile)
 #endif
-      CALL tl_prsgrd_tile (ng, tile,                                    &
-     &                     LBi, UBi, LBj, UBj,                          &
-     &                     IminS, ImaxS, JminS, JmaxS,                  &
-     &                     nrhs(ng),                                    &
+      CALL tl_prsgrd32_tile (ng, tile,                                  &
+     &                       LBi, UBi, LBj, UBj,                        &
+     &                       IminS, ImaxS, JminS, JmaxS,                &
+     &                       nrhs(ng),                                  &
 #ifdef MASKING
-     &                     GRID(ng) % umask,                            &
-     &                     GRID(ng) % vmask,                            &
+     &                       GRID(ng) % umask,                          &
+     &                       GRID(ng) % vmask,                          &
 #endif
-     &                     GRID(ng) % om_v,                             &
-     &                     GRID(ng) % on_u,                             &
-     &                     GRID(ng) % Hz,                               &
-     &                     GRID(ng) % tl_Hz,                            &
-     &                     GRID(ng) % z_r,                              &
-     &                     GRID(ng) % tl_z_r,                           &
-     &                     GRID(ng) % z_w,                              &
-     &                     GRID(ng) % tl_z_w,                           &
-     &                     OCEAN(ng) % rho,                             &
-     &                     OCEAN(ng) % tl_rho,                          &
+     &                       GRID(ng) % om_v,                           &
+     &                       GRID(ng) % on_u,                           &
+     &                       GRID(ng) % Hz,                             &
+     &                       GRID(ng) % tl_Hz,                          &
+     &                       GRID(ng) % z_r,                            &
+     &                       GRID(ng) % tl_z_r,                         &
+     &                       GRID(ng) % z_w,                            &
+     &                       GRID(ng) % tl_z_w,                         &
+     &                       OCEAN(ng) % rho,                           &
+     &                       OCEAN(ng) % tl_rho,                        &
 #ifdef ATM_PRESS
-     &                     FORCES(ng) % Pair,                           &
+     &                       FORCES(ng) % Pair,                         &
 #endif
 #ifdef DIAGNOSTICS_UV
-!!   &                     DIAGS(ng) % DiaRU,                           &
-!!   &                     DIAGS(ng) % DiaRV,                           &
+!!   &                       DIAGS(ng) % DiaRU,                         &
+!!   &                       DIAGS(ng) % DiaRV,                         &
 #endif
-     &                     OCEAN(ng) % tl_ru,                           &
-     &                     OCEAN(ng) % tl_rv)
+     &                       OCEAN(ng) % tl_ru,                         &
+     &                       OCEAN(ng) % tl_rv)
 #ifdef PROFILE
       CALL wclock_off (ng, iTLM, 23, __LINE__, MyFile)
 #endif
@@ -90,25 +101,25 @@
       END SUBROUTINE tl_prsgrd
 !
 !***********************************************************************
-      SUBROUTINE tl_prsgrd_tile (ng, tile,                              &
-     &                           LBi, UBi, LBj, UBj,                    &
-     &                           IminS, ImaxS, JminS, JmaxS,            &
-     &                           nrhs,                                  &
+      SUBROUTINE tl_prsgrd32_tile (ng, tile,                            &
+     &                             LBi, UBi, LBj, UBj,                  &
+     &                             IminS, ImaxS, JminS, JmaxS,          &
+     &                             nrhs,                                &
 #ifdef MASKING
-     &                           umask, vmask,                          &
+     &                             umask, vmask,                        &
 #endif
-     &                           om_v, on_u,                            &
-     &                           Hz, tl_Hz,                             &
-     &                           z_r, tl_z_r,                           &
-     &                           z_w, tl_z_w,                           &
-     &                           rho, tl_rho,                           &
+     &                             om_v, on_u,                          &
+     &                             Hz, tl_Hz,                           &
+     &                             z_r, tl_z_r,                         &
+     &                             z_w, tl_z_w,                         &
+     &                             rho, tl_rho,                         &
 #ifdef ATM_PRESS
-     &                           Pair,                                  &
+     &                             Pair,                                &
 #endif
 #ifdef DIAGNOSTICS_UV
-!!   &                           DiaRU, DiaRV,                          &
+!!   &                             DiaRU, DiaRV,                        &
 #endif
-     &                           tl_ru, tl_rv)
+     &                             tl_ru, tl_rv)
 !***********************************************************************
 !
       USE mod_param
@@ -379,22 +390,22 @@
 !
         DO j=Jstr,Jend
           DO i=IstrU,Iend
-!>          ru(i,j,k,nrhs)=on_u(i,j)*0.5_r8*                            &
-!>   &                     (Hz(i,j,k)+Hz(i-1,j,k))*                     &
-!>   &                     (P(i-1,j,k)-P(i,j,k)-                        &
-!>   &                      HalfGRho*                                   &
-!>   &                      ((rho(i,j,k)+rho(i-1,j,k))*                 &
-!>   &                       (z_r(i,j,k)-z_r(i-1,j,k))-                 &
-!>   &                        OneFifth*                                 &
-!>   &                        ((dRx(i,j)-dRx(i-1,j))*                   &
-!>   &                         (z_r(i,j,k)-z_r(i-1,j,k)-                &
-!>   &                          OneTwelfth*                             &
-!>   &                          (dZx(i,j)+dZx(i-1,j)))-                 &
-!>   &                         (dZx(i,j)-dZx(i-1,j))*                   &
-!>   &                         (rho(i,j,k)-rho(i-1,j,k)-                &
-!>   &                          OneTwelfth*                             &
-!>   &                          (dRx(i,j)+dRx(i-1,j))))))
-!>
+!^          ru(i,j,k,nrhs)=on_u(i,j)*0.5_r8*                            &
+!^   &                     (Hz(i,j,k)+Hz(i-1,j,k))*                     &
+!^   &                     (P(i-1,j,k)-P(i,j,k)-                        &
+!^   &                      HalfGRho*                                   &
+!^   &                      ((rho(i,j,k)+rho(i-1,j,k))*                 &
+!^   &                       (z_r(i,j,k)-z_r(i-1,j,k))-                 &
+!^   &                        OneFifth*                                 &
+!^   &                        ((dRx(i,j)-dRx(i-1,j))*                   &
+!^   &                         (z_r(i,j,k)-z_r(i-1,j,k)-                &
+!^   &                          OneTwelfth*                             &
+!^   &                          (dZx(i,j)+dZx(i-1,j)))-                 &
+!^   &                         (dZx(i,j)-dZx(i-1,j))*                   &
+!^   &                         (rho(i,j,k)-rho(i-1,j,k)-                &
+!^   &                          OneTwelfth*                             &
+!^   &                          (dRx(i,j)+dRx(i-1,j))))))
+!^
             tl_ru(i,j,k,nrhs)=on_u(i,j)*0.5_r8*                         &
      &                        ((tl_Hz(i,j,k)+tl_Hz(i-1,j,k))*           &
      &                         (P(i-1,j,k)-P(i,j,k)-                    &
@@ -494,22 +505,22 @@
 !
         DO j=JstrV,Jend
           DO i=Istr,Iend
-!>          rv(i,j,k,nrhs)=om_v(i,j)*0.5_r8*                            &
-!>   &                     (Hz(i,j,k)+Hz(i,j-1,k))*                     &
-!>   &                     (P(i,j-1,k)-P(i,j,k)-                        &
-!>   &                      HalfGRho*                                   &
-!>   &                      ((rho(i,j,k)+rho(i,j-1,k))*                 &
-!>   &                       (z_r(i,j,k)-z_r(i,j-1,k))-                 &
-!>   &                        OneFifth*                                 &
-!>   &                        ((dRx(i,j)-dRx(i,j-1))*                   &
-!>   &                         (z_r(i,j,k)-z_r(i,j-1,k)-                &
-!>   &                          OneTwelfth*                             &
-!>   &                          (dZx(i,j)+dZx(i,j-1)))-                 &
-!>   &                         (dZx(i,j)-dZx(i,j-1))*                   &
-!>   &                         (rho(i,j,k)-rho(i,j-1,k)-                &
-!>   &                          OneTwelfth*                             &
-!>   &                          (dRx(i,j)+dRx(i,j-1))))))
-!>
+!^          rv(i,j,k,nrhs)=om_v(i,j)*0.5_r8*                            &
+!^   &                     (Hz(i,j,k)+Hz(i,j-1,k))*                     &
+!^   &                     (P(i,j-1,k)-P(i,j,k)-                        &
+!^   &                      HalfGRho*                                   &
+!^   &                      ((rho(i,j,k)+rho(i,j-1,k))*                 &
+!^   &                       (z_r(i,j,k)-z_r(i,j-1,k))-                 &
+!^   &                        OneFifth*                                 &
+!^   &                        ((dRx(i,j)-dRx(i,j-1))*                   &
+!^   &                         (z_r(i,j,k)-z_r(i,j-1,k)-                &
+!^   &                          OneTwelfth*                             &
+!^   &                          (dZx(i,j)+dZx(i,j-1)))-                 &
+!^   &                         (dZx(i,j)-dZx(i,j-1))*                   &
+!^   &                         (rho(i,j,k)-rho(i,j-1,k)-                &
+!^   &                          OneTwelfth*                             &
+!^   &                          (dRx(i,j)+dRx(i,j-1))))))
+!^
             tl_rv(i,j,k,nrhs)=om_v(i,j)*0.5_r8*                         &
      &                        ((tl_Hz(i,j,k)+tl_Hz(i,j-1,k))*           &
      &                         (P(i,j-1,k)-P(i,j,k)-                    &
@@ -557,4 +568,6 @@
       END DO
 !
       RETURN
-      END SUBROUTINE tl_prsgrd_tile
+      END SUBROUTINE tl_prsgrd32_tile
+
+      END MODULE tl_prsgrd_mod

@@ -1,12 +1,12 @@
-      SUBROUTINE ad_prsgrd (ng, tile)
+      MODULE ad_prsgrd_mod
 !
 !git $Id$
-!svn $Id: ad_prsgrd31.h 1054 2021-03-06 19:47:12Z arango $
-!************************************************** Hernan G. Arango ***
+!svn $Id: ad_prsgrd31.h 1081 2021-07-24 02:25:06Z arango $
+!================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
-!***********************************************************************
+!=======================================================================
 !                                                                      !
 !  This routine evalutes the adjoint baroclinic hydrostatic pressure   !
 !  gradient term using the standard and weighted Jacobians scheme of   !
@@ -24,6 +24,17 @@
 !                                                                      !
 !  BASIC STATE variables needed: Hz, rho, z_r, z_w                     !
 !                                                                      !
+!=======================================================================
+!
+      implicit none
+!
+      PRIVATE
+      PUBLIC  :: ad_prsgrd
+!
+      CONTAINS
+!
+!***********************************************************************
+      SUBROUTINE ad_prsgrd (ng, tile)
 !***********************************************************************
 !
       USE mod_param
@@ -51,29 +62,29 @@
 #ifdef PROFILE
       CALL wclock_on (ng, iADM, 23, __LINE__, MyFile)
 #endif
-      CALL ad_prsgrd_tile (ng, tile,                                    &
-     &                     LBi, UBi, LBj, UBj,                          &
-     &                     IminS, ImaxS, JminS, JmaxS,                  &
-     &                     nrhs(ng),                                    &
-     &                     GRID(ng) % om_v,                             &
-     &                     GRID(ng) % on_u,                             &
-     &                     GRID(ng) % Hz,                               &
-     &                     GRID(ng) % ad_Hz,                            &
-     &                     GRID(ng) % z_r,                              &
-     &                     GRID(ng) % ad_z_r,                           &
-     &                     GRID(ng) % z_w,                              &
-     &                     GRID(ng) % ad_z_w,                           &
-     &                     OCEAN(ng) % rho,                             &
-     &                     OCEAN(ng) % ad_rho,                          &
+      CALL ad_prsgrd31_tile (ng, tile,                                  &
+     &                       LBi, UBi, LBj, UBj,                        &
+     &                       IminS, ImaxS, JminS, JmaxS,                &
+     &                       nrhs(ng),                                  &
+     &                       GRID(ng) % om_v,                           &
+     &                       GRID(ng) % on_u,                           &
+     &                       GRID(ng) % Hz,                             &
+     &                       GRID(ng) % ad_Hz,                          &
+     &                       GRID(ng) % z_r,                            &
+     &                       GRID(ng) % ad_z_r,                         &
+     &                       GRID(ng) % z_w,                            &
+     &                       GRID(ng) % ad_z_w,                         &
+     &                       OCEAN(ng) % rho,                           &
+     &                       OCEAN(ng) % ad_rho,                        &
 #ifdef ATM_PRESS
-     &                     FORCES(ng) % Pair,                           &
+     &                       FORCES(ng) % Pair,                         &
 #endif
 #ifdef DIAGNOSTICS_UV
-!!   &                     DIAGS(ng) % DiaRU,                           &
-!!   &                     DIAGS(ng) % DiaRV,                           &
+!!   &                       DIAGS(ng) % DiaRU,                         &
+!!   &                       DIAGS(ng) % DiaRV,                         &
 #endif
-     &                     OCEAN(ng) % ad_ru,                           &
-     &                     OCEAN(ng) % ad_rv)
+     &                       OCEAN(ng) % ad_ru,                         &
+     &                       OCEAN(ng) % ad_rv)
 #ifdef PROFILE
       CALL wclock_off (ng, iADM, 23, __LINE__, MyFile)
 #endif
@@ -82,22 +93,22 @@
       END SUBROUTINE ad_prsgrd
 !
 !***********************************************************************
-      SUBROUTINE ad_prsgrd_tile (ng, tile,                              &
-     &                           LBi, UBi, LBj, UBj,                    &
-     &                           IminS, ImaxS, JminS, JmaxS,            &
-     &                           nrhs,                                  &
-     &                           om_v, on_u,                            &
-     &                           Hz, ad_Hz,                             &
-     &                           z_r, ad_z_r,                           &
-     &                           z_w, ad_z_w,                           &
-     &                           rho, ad_rho,                           &
+      SUBROUTINE ad_prsgrd31_tile (ng, tile,                            &
+     &                             LBi, UBi, LBj, UBj,                  &
+     &                             IminS, ImaxS, JminS, JmaxS,          &
+     &                             nrhs,                                &
+     &                             om_v, on_u,                          &
+     &                             Hz, ad_Hz,                           &
+     &                             z_r, ad_z_r,                         &
+     &                             z_w, ad_z_w,                         &
+     &                             rho, ad_rho,                         &
 #ifdef ATM_PRESS
-     &                           Pair,                                  &
+     &                             Pair,                                &
 #endif
 #ifdef DIAGNOSTICS_UV
-!!   &                           DiaRU, DiaRV,                          &
+!!   &                             DiaRU, DiaRV,                        &
 #endif
-     &                           ad_ru, ad_rv)
+     &                             ad_ru, ad_rv)
 !***********************************************************************
 !
       USE mod_param
@@ -206,8 +217,8 @@
 !  Compute appropriate BASIC STATE "phie".  Notice that a reverse
 !  vertical integration of "phie" is carried out over kk-index.
 !
-!>        DO k=N(ng)-1,1,-1
-!>
+!^        DO k=N(ng)-1,1,-1
+!^
           DO k=1,N(ng)-1
             DO i=Istr,Iend
               cff1=z_w(i,j  ,N(ng))-z_r(i,j  ,N(ng))+                   &
@@ -265,12 +276,12 @@
 #ifdef DIAGNOSTICS_UV
 !!            DiaRV(i,j,k,nrhs,M3pgrd)=rv(i,j,k,nrhs)
 #endif
-!>            tl_rv(i,j,k,nrhs)=-0.5_r8*om_v(i,j)*                      &
-!>   &                          ((tl_Hz(i,j,k)+tl_Hz(i,j-1,k))*         &
-!>   &                           phie(i)+                               &
-!>   &                           (Hz(i,j,k)+Hz(i,j-1,k))*               &
-!>   &                           tl_phie(i))
-!>
+!^            tl_rv(i,j,k,nrhs)=-0.5_r8*om_v(i,j)*                      &
+!^   &                          ((tl_Hz(i,j,k)+tl_Hz(i,j-1,k))*         &
+!^   &                           phie(i)+                               &
+!^   &                           (Hz(i,j,k)+Hz(i,j-1,k))*               &
+!^   &                           tl_phie(i))
+!^
               adfac=-0.5_r8*om_v(i,j)*ad_rv(i,j,k,nrhs)
               adfac1=adfac*phie(i)
               ad_phie(i)=ad_phie(i)+                                    &
@@ -295,26 +306,26 @@
      &             z_r(i,j,k  )-z_r(i,j-1,k  )
               cff4=(1.0_r8+gamma)*(z_r(i,j,k+1)-z_r(i,j-1,k+1))+        &
      &             (1.0_r8-gamma)*(z_r(i,j,k  )-z_r(i,j-1,k  ))
-!>            tl_phie(i)=tl_phie(i)+                                    &
-!>   &                   fac3*(tl_cff1*cff3+                            &
-!>   &                         cff1*tl_cff3-                            &
-!>   &                         tl_cff2*cff4-                            &
-!>   &                         cff2*tl_cff4)
-!>
+!^            tl_phie(i)=tl_phie(i)+                                    &
+!^   &                   fac3*(tl_cff1*cff3+                            &
+!^   &                         cff1*tl_cff3-                            &
+!^   &                         tl_cff2*cff4-                            &
+!^   &                         cff2*tl_cff4)
+!^
               adfac=fac3*ad_phie(i)
               ad_cff1=ad_cff1+cff3*adfac
               ad_cff2=ad_cff2-cff4*adfac
               ad_cff3=ad_cff3+cff1*adfac
               ad_cff4=ad_cff4-cff2*adfac
-!>            tl_cff4=tl_gamma*(z_r(i,j,k+1)-z_r(i,j-1,k+1)-            &
-!>   &                          z_r(i,j,k  )+z_r(i,j-1,k  ))+           &
-!>   &                (1.0_r8+gamma)*(tl_z_r(i,j  ,k+1)-                &
-!>   &                                tl_z_r(i,j-1,k+1))+               &
-!>   &                (1.0_r8-gamma)*(tl_z_r(i,j  ,k  )-                &
-!>   &                                tl_z_r(i,j-1,k  ))
-!>            tl_cff3=tl_z_r(i,j,k+1)+tl_z_r(i,j-1,k+1)-                &
-!>   &                tl_z_r(i,j,k  )-tl_z_r(i,j-1,k  )
-!>
+!^            tl_cff4=tl_gamma*(z_r(i,j,k+1)-z_r(i,j-1,k+1)-            &
+!^   &                          z_r(i,j,k  )+z_r(i,j-1,k  ))+           &
+!^   &                (1.0_r8+gamma)*(tl_z_r(i,j  ,k+1)-                &
+!^   &                                tl_z_r(i,j-1,k+1))+               &
+!^   &                (1.0_r8-gamma)*(tl_z_r(i,j  ,k  )-                &
+!^   &                                tl_z_r(i,j-1,k  ))
+!^            tl_cff3=tl_z_r(i,j,k+1)+tl_z_r(i,j-1,k+1)-                &
+!^   &                tl_z_r(i,j,k  )-tl_z_r(i,j-1,k  )
+!^
               adfac1=(1.0_r8+gamma)*ad_cff4
               adfac2=(1.0_r8-gamma)*ad_cff4
               ad_z_r(i,j-1,k  )=ad_z_r(i,j-1,k  )-adfac2-ad_cff3
@@ -326,15 +337,15 @@
      &                  z_r(i,j,k  )+z_r(i,j-1,k  ))*ad_cff4
               ad_cff4=0.0_r8
               ad_cff3=0.0_r8
-!>            tl_cff2=tl_rho(i,j,k+1)+tl_rho(i,j-1,k+1)-                &
-!>   &                tl_rho(i,j,k  )-tl_rho(i,j-1,k  )
-!>            tl_cff1=tl_gamma*(rho(i,j,k+1)-rho(i,j-1,k+1)-            &
-!>   &                          rho(i,j,k  )+rho(i,j-1,k  ))+           &
-!>   &                (1.0_r8+gamma)*(tl_rho(i,j  ,k+1)-                &
-!>   &                                tl_rho(i,j-1,k+1))+               &
-!>   &                (1.0_r8-gamma)*(tl_rho(i,j  ,k  )-                &
-!>   &                                tl_rho(i,j-1,k  ))
-!>
+!^            tl_cff2=tl_rho(i,j,k+1)+tl_rho(i,j-1,k+1)-                &
+!^   &                tl_rho(i,j,k  )-tl_rho(i,j-1,k  )
+!^            tl_cff1=tl_gamma*(rho(i,j,k+1)-rho(i,j-1,k+1)-            &
+!^   &                          rho(i,j,k  )+rho(i,j-1,k  ))+           &
+!^   &                (1.0_r8+gamma)*(tl_rho(i,j  ,k+1)-                &
+!^   &                                tl_rho(i,j-1,k+1))+               &
+!^   &                (1.0_r8-gamma)*(tl_rho(i,j  ,k  )-                &
+!^   &                                tl_rho(i,j-1,k  ))
+!^
               adfac1=(1.0_r8+gamma)*ad_cff1
               adfac2=(1.0_r8-gamma)*ad_cff1
               ad_rho(i,j-1,k  )=ad_rho(i,j-1,k  )-adfac2-ad_cff2
@@ -354,32 +365,32 @@
               cff3=z_r(i,j  ,k+1)-z_r(i,j  ,k  )-                       &
      &             z_r(i,j-1,k+1)+z_r(i,j-1,k  )
 
-!>            tl_gamma=0.125_r8*(tl_cff1*cff2*cff3+                     &
-!>   &                           cff1*(tl_cff2*cff3+                    &
-!>   &                                 cff2*tl_cff3))
-!>
+!^            tl_gamma=0.125_r8*(tl_cff1*cff2*cff3+                     &
+!^   &                           cff1*(tl_cff2*cff3+                    &
+!^   &                                 cff2*tl_cff3))
+!^
               adfac=0.125_r8*ad_gamma
               adfac1=adfac*cff1
               ad_cff3=ad_cff3+cff2*adfac1
               ad_cff2=ad_cff2+cff3*adfac1
               ad_cff1=ad_cff1+cff2*cff3*adfac
               ad_gamma=0.0_r8
-!>            tl_cff3=tl_z_r(i,j  ,k+1)-tl_z_r(i,j  ,k  )-              &
-!>   &                tl_z_r(i,j-1,k+1)+tl_z_r(i,j-1,k  )
-!>            tl_cff2=tl_z_r(i,j  ,k  )-tl_z_r(i,j-1,k  )+              &
-!>   &                tl_z_r(i,j  ,k+1)-tl_z_r(i,j-1,k+1)
-!>
+!^            tl_cff3=tl_z_r(i,j  ,k+1)-tl_z_r(i,j  ,k  )-              &
+!^   &                tl_z_r(i,j-1,k+1)+tl_z_r(i,j-1,k  )
+!^            tl_cff2=tl_z_r(i,j  ,k  )-tl_z_r(i,j-1,k  )+              &
+!^   &                tl_z_r(i,j  ,k+1)-tl_z_r(i,j-1,k+1)
+!^
               ad_z_r(i,j-1,k  )=ad_z_r(i,j-1,k  )-ad_cff2+ad_cff3
               ad_z_r(i,j  ,k  )=ad_z_r(i,j  ,k  )+ad_cff2-ad_cff3
               ad_z_r(i,j-1,k+1)=ad_z_r(i,j-1,k+1)-ad_cff2-ad_cff3
               ad_z_r(i,j  ,k+1)=ad_z_r(i,j  ,k+1)+ad_cff2+ad_cff3
               ad_cff3=0.0_r8
               ad_cff2=0.0_r8
-!>            tl_cff1=-cff1*cff1*((tl_z_r(i,j  ,k+1)-tl_z_r(i,j  ,k))*  &
-!>   &                            (z_r(i,j-1,k+1)-z_r(i,j-1,k))+        &
-!>   &                            (z_r(i,j  ,k+1)-z_r(i,j  ,k))*        &
-!>   &                            (tl_z_r(i,j-1,k+1)-tl_z_r(i,j-1,k)))
-!>
+!^            tl_cff1=-cff1*cff1*((tl_z_r(i,j  ,k+1)-tl_z_r(i,j  ,k))*  &
+!^   &                            (z_r(i,j-1,k+1)-z_r(i,j-1,k))+        &
+!^   &                            (z_r(i,j  ,k+1)-z_r(i,j  ,k))*        &
+!^   &                            (tl_z_r(i,j-1,k+1)-tl_z_r(i,j-1,k)))
+!^
               adfac=-cff1*cff1*ad_cff1
               adfac1=adfac*(z_r(i,j-1,k+1)-z_r(i,j-1,k))
               adfac2=adfac*(z_r(i,j  ,k+1)-z_r(i,j  ,k))
@@ -399,33 +410,33 @@
               cff4=z_r(i,j,k+1)-z_r(i,j-1,k+1)+                         &
      &             z_r(i,j,k  )-z_r(i,j-1,k  )
 
-!>            tl_phie(i)=tl_phie(i)+                                    &
-!>   &                   fac3*(tl_cff1*cff3+                            &
-!>   &                         cff1*tl_cff3-                            &
-!>   &                         tl_cff2*cff4-                            &
-!>   &                         cff2*tl_cff4)
-!>
+!^            tl_phie(i)=tl_phie(i)+                                    &
+!^   &                   fac3*(tl_cff1*cff3+                            &
+!^   &                         cff1*tl_cff3-                            &
+!^   &                         tl_cff2*cff4-                            &
+!^   &                         cff2*tl_cff4)
+!^
               adfac=fac3*ad_phie(i)
               ad_cff1=ad_cff1+cff3*adfac
               ad_cff2=ad_cff2-cff4*adfac
               ad_cff3=ad_cff3+cff1*adfac
               ad_cff4=ad_cff4-cff2*adfac
-!>            tl_cff4=tl_z_r(i,j,k+1)-tl_z_r(i,j-1,k+1)+                &
-!>   &                tl_z_r(i,j,k  )-tl_z_r(i,j-1,k  )
-!>            tl_cff3=tl_z_r(i,j,k+1)+tl_z_r(i,j-1,k+1)-                &
-!>   &                tl_z_r(i,j,k  )-tl_z_r(i,j-1,k  )
-!>
+!^            tl_cff4=tl_z_r(i,j,k+1)-tl_z_r(i,j-1,k+1)+                &
+!^   &                tl_z_r(i,j,k  )-tl_z_r(i,j-1,k  )
+!^            tl_cff3=tl_z_r(i,j,k+1)+tl_z_r(i,j-1,k+1)-                &
+!^   &                tl_z_r(i,j,k  )-tl_z_r(i,j-1,k  )
+!^
               ad_z_r(i,j-1,k  )=ad_z_r(i,j-1,k  )-ad_cff3-ad_cff4
               ad_z_r(i,j  ,k  )=ad_z_r(i,j  ,k  )-ad_cff3+ad_cff4
               ad_z_r(i,j-1,k+1)=ad_z_r(i,j-1,k+1)+ad_cff3-ad_cff4
               ad_z_r(i,j  ,k+1)=ad_z_r(i,j  ,k+1)+ad_cff3+ad_cff4
               ad_cff4=0.0_r8
               ad_cff3=0.0_r8
-!>            tl_cff2=tl_rho(i,j,k+1)+tl_rho(i,j-1,k+1)-                &
-!>   &                tl_rho(i,j,k  )-tl_rho(i,j-1,k  )
-!>            tl_cff1=tl_rho(i,j,k+1)-tl_rho(i,j-1,k+1)+                &
-!>   &                tl_rho(i,j,k  )-tl_rho(i,j-1,k  )
-!>
+!^            tl_cff2=tl_rho(i,j,k+1)+tl_rho(i,j-1,k+1)-                &
+!^   &                tl_rho(i,j,k  )-tl_rho(i,j-1,k  )
+!^            tl_cff1=tl_rho(i,j,k+1)-tl_rho(i,j-1,k+1)+                &
+!^   &                tl_rho(i,j,k  )-tl_rho(i,j-1,k  )
+!^
               ad_rho(i,j-1,k  )=ad_rho(i,j-1,k  )-ad_cff1-ad_cff2
               ad_rho(i,j  ,k  )=ad_rho(i,j  ,k  )+ad_cff1-ad_cff2
               ad_rho(i,j-1,k+1)=ad_rho(i,j-1,k+1)-ad_cff1+ad_cff2
@@ -453,12 +464,12 @@
 # ifdef DIAGNOSTICS_UV
 !!          DiaRV(i,j,N(ng),nrhs,M3pgrd)=rv(i,j,N(ng),nrhs)
 # endif
-!>          tl_rv(i,j,N(ng),nrhs)=-0.5_r8*om_v(i,j)*                    &
-!>   &                            ((tl_Hz(i,j  ,N(ng))+                 &
-!>   &                              tl_Hz(i,j-1,N(ng)))*phie(i)+        &
-!>   &                             (Hz(i,j  ,N(ng))+                    &
-!>   &                              Hz(i,j-1,N(ng)))*tl_phie(i))
-!>
+!^          tl_rv(i,j,N(ng),nrhs)=-0.5_r8*om_v(i,j)*                    &
+!^   &                            ((tl_Hz(i,j  ,N(ng))+                 &
+!^   &                              tl_Hz(i,j-1,N(ng)))*phie(i)+        &
+!^   &                             (Hz(i,j  ,N(ng))+                    &
+!^   &                              Hz(i,j-1,N(ng)))*tl_phie(i))
+!^
             adfac=-0.5_r8*om_v(i,j)*ad_rv(i,j,N(ng),nrhs)
             adfac1=adfac*phie(i)
             ad_phie(i)=ad_phie(i)+(Hz(i,j  ,N(ng))+                     &
@@ -467,12 +478,12 @@
             ad_Hz(i,j  ,N(ng))=ad_Hz(i,j  ,N(ng))+adfac1
             ad_rv(i,j,N(ng),nrhs)=0.0
 #ifdef RHO_SURF
-!>          tl_phie(i)=tl_phie(i)+                                      &
-!>   &                 (fac1*(tl_rho(i,j,N(ng))+tl_rho(i,j-1,N(ng))))*  &
-!>   &                 (z_w(i,j,N(ng))-z_w(i,j-1,N(ng)))+               &
-!>   &                 (fac2+fac1*(rho(i,j,N(ng))+rho(i,j-1,N(ng))))*   &
-!>   &                 (tl_z_w(i,j,N(ng))-tl_z_w(i,j-1,N(ng)))
-!>
+!^          tl_phie(i)=tl_phie(i)+                                      &
+!^   &                 (fac1*(tl_rho(i,j,N(ng))+tl_rho(i,j-1,N(ng))))*  &
+!^   &                 (z_w(i,j,N(ng))-z_w(i,j-1,N(ng)))+               &
+!^   &                 (fac2+fac1*(rho(i,j,N(ng))+rho(i,j-1,N(ng))))*   &
+!^   &                 (tl_z_w(i,j,N(ng))-tl_z_w(i,j-1,N(ng)))
+!^
             adfac1=fac1*(z_w(i,j,N(ng))-z_w(i,j-1,N(ng)))*              &
      &             ad_phie(i)
             adfac2=(fac2+fac1*(rho(i,j,N(ng))+rho(i,j-1,N(ng))))*       &
@@ -482,10 +493,10 @@
             ad_z_w(i,j-1,N(ng))=ad_z_w(i,j-1,N(ng))-adfac2
             ad_z_w(i,j  ,N(ng))=ad_z_w(i,j  ,N(ng))+adfac2
 #endif
-!>          tl_phie(i)=fac1*                                            &
-!>   &                 ((tl_rho(i,j,N(ng))-tl_rho(i,j-1,N(ng)))*cff1+   &
-!>   &                  (rho(i,j,N(ng))-rho(i,j-1,N(ng)))*tl_cff1)
-!>
+!^          tl_phie(i)=fac1*                                            &
+!^   &                 ((tl_rho(i,j,N(ng))-tl_rho(i,j-1,N(ng)))*cff1+   &
+!^   &                  (rho(i,j,N(ng))-rho(i,j-1,N(ng)))*tl_cff1)
+!^
             adfac=fac1*ad_phie(i)
             adfac1=adfac*cff1
             ad_rho(i,j-1,N(ng))=ad_rho(i,j-1,N(ng))-adfac1
@@ -493,9 +504,9 @@
             ad_cff1=ad_cff1+                                            &
      &              (rho(i,j,N(ng))-rho(i,j-1,N(ng)))*adfac
             ad_phie(i)=0.0_r8
-!>          tl_cff1=tl_z_w(i,j  ,N(ng))-tl_z_r(i,j  ,N(ng))+            &
-!>   &              tl_z_w(i,j-1,N(ng))-tl_z_r(i,j-1,N(ng))
-!>
+!^          tl_cff1=tl_z_w(i,j  ,N(ng))-tl_z_r(i,j  ,N(ng))+            &
+!^   &              tl_z_w(i,j-1,N(ng))-tl_z_r(i,j-1,N(ng))
+!^
             ad_z_r(i,j-1,N(ng))=ad_z_r(i,j-1,N(ng))-ad_cff1
             ad_z_r(i,j  ,N(ng))=ad_z_r(i,j  ,N(ng))-ad_cff1
             ad_z_w(i,j-1,N(ng))=ad_z_w(i,j-1,N(ng))+ad_cff1
@@ -511,8 +522,8 @@
 !  Compute appropriate BASIC STATE "phix".  Notice that a reverse
 !  vertical integration of "phix" is carried out over kk-index.
 !
-!>      DO k=N(ng)-1,1,-1
-!>
+!^      DO k=N(ng)-1,1,-1
+!^
         DO k=1,N(ng)-1
           DO i=IstrU,Iend
             cff1=z_w(i  ,j,N(ng))-z_r(i  ,j,N(ng))+                     &
@@ -570,12 +581,12 @@
 # ifdef DIAGNOSTICS_UV
 !!          DiaRU(i,j,k,nrhs,M3pgrd)=ru(i,j,k,nrhs)
 # endif
-!>          tl_ru(i,j,k,nrhs)=-0.5_r8*on_u(i,j)*                        &
-!>   &                        ((tl_Hz(i,j,k)+tl_Hz(i-1,j,k))*           &
-!>   &                         phix(i)+                                 &
-!>   &                         (Hz(i,j,k)+Hz(i-1,j,k))*                 &
-!>   &                         tl_phix(i))
-!>
+!^          tl_ru(i,j,k,nrhs)=-0.5_r8*on_u(i,j)*                        &
+!^   &                        ((tl_Hz(i,j,k)+tl_Hz(i-1,j,k))*           &
+!^   &                         phix(i)+                                 &
+!^   &                         (Hz(i,j,k)+Hz(i-1,j,k))*                 &
+!^   &                         tl_phix(i))
+!^
             adfac=-0.5_r8*on_u(i,j)*ad_ru(i,j,k,nrhs)
             adfac1=adfac*phix(i)
             ad_phix(i)=ad_phix(i)+                                      &
@@ -600,26 +611,26 @@
      &           z_r(i,j,k  )-z_r(i-1,j,k  )
             cff4=(1.0_r8+gamma)*(z_r(i,j,k+1)-z_r(i-1,j,k+1))+          &
      &           (1.0_r8-gamma)*(z_r(i,j,k  )-z_r(i-1,j,k  ))
-!>          tl_phix(i)=tl_phix(i)+                                      &
-!>   &                 fac3*(tl_cff1*cff3+                              &
-!>   &                       cff1*tl_cff3-                              &
-!>   &                       tl_cff2*cff4-                              &
-!>   &                       cff2*tl_cff4)
-!>
+!^          tl_phix(i)=tl_phix(i)+                                      &
+!^   &                 fac3*(tl_cff1*cff3+                              &
+!^   &                       cff1*tl_cff3-                              &
+!^   &                       tl_cff2*cff4-                              &
+!^   &                       cff2*tl_cff4)
+!^
             adfac=fac3*ad_phix(i)
             ad_cff1=ad_cff1+cff3*adfac
             ad_cff2=ad_cff2-cff4*adfac
             ad_cff3=ad_cff3+cff1*adfac
             ad_cff4=ad_cff4-cff2*adfac
-!>          tl_cff4=tl_gamma*(z_r(i,j,k+1)-z_r(i-1,j,k+1)-              &
-!>   &                        z_r(i,j,k  )+z_r(i-1,j,k  ))+             &
-!>   &              (1.0_r8+gamma)*(tl_z_r(i  ,j,k+1)-                  &
-!>   &                              tl_z_r(i-1,j,k+1))+                 &
-!>   &              (1.0_r8-gamma)*(tl_z_r(i  ,j,k  )-                  &
-!>   &                              tl_z_r(i-1,j,k  ))
-!>          tl_cff3=tl_z_r(i,j,k+1)+tl_z_r(i-1,j,k+1)-                  &
-!>   &              tl_z_r(i,j,k  )-tl_z_r(i-1,j,k  )
-!>
+!^          tl_cff4=tl_gamma*(z_r(i,j,k+1)-z_r(i-1,j,k+1)-              &
+!^   &                        z_r(i,j,k  )+z_r(i-1,j,k  ))+             &
+!^   &              (1.0_r8+gamma)*(tl_z_r(i  ,j,k+1)-                  &
+!^   &                              tl_z_r(i-1,j,k+1))+                 &
+!^   &              (1.0_r8-gamma)*(tl_z_r(i  ,j,k  )-                  &
+!^   &                              tl_z_r(i-1,j,k  ))
+!^          tl_cff3=tl_z_r(i,j,k+1)+tl_z_r(i-1,j,k+1)-                  &
+!^   &              tl_z_r(i,j,k  )-tl_z_r(i-1,j,k  )
+!^
             adfac1=(1.0_r8+gamma)*ad_cff4
             adfac2=(1.0_r8-gamma)*ad_cff4
             ad_z_r(i-1,j,k  )=ad_z_r(i-1,j,k  )-adfac2-ad_cff3
@@ -631,15 +642,15 @@
      &                z_r(i,j,k  )+z_r(i-1,j,k  ))*ad_cff4
             ad_cff4=0.0_r8
             ad_cff3=0.0_r8
-!>   &      tl_cff2=tl_rho(i,j,k+1)+tl_rho(i-1,j,k+1)-                  &
-!>   &              tl_rho(i,j,k  )-tl_rho(i-1,j,k  )
-!>          tl_cff1=tl_gamma*(rho(i,j,k+1)-rho(i-1,j,k+1)-              &
-!>   &                        rho(i,j,k  )+rho(i-1,j,k  ))+             &
-!>   &              (1.0_r8+gamma)*(tl_rho(i  ,j,k+1)-                  &
-!>   &                              tl_rho(i-1,j,k+1))+                 &
-!>   &              (1.0_r8-gamma)*(tl_rho(i  ,j,k  )-                  &
-!>   &                              tl_rho(i-1,j,k  ))
-!>
+!^   &      tl_cff2=tl_rho(i,j,k+1)+tl_rho(i-1,j,k+1)-                  &
+!^   &              tl_rho(i,j,k  )-tl_rho(i-1,j,k  )
+!^          tl_cff1=tl_gamma*(rho(i,j,k+1)-rho(i-1,j,k+1)-              &
+!^   &                        rho(i,j,k  )+rho(i-1,j,k  ))+             &
+!^   &              (1.0_r8+gamma)*(tl_rho(i  ,j,k+1)-                  &
+!^   &                              tl_rho(i-1,j,k+1))+                 &
+!^   &              (1.0_r8-gamma)*(tl_rho(i  ,j,k  )-                  &
+!^   &                              tl_rho(i-1,j,k  ))
+!^
             adfac1=(1.0_r8+gamma)*ad_cff1
             adfac2=(1.0_r8-gamma)*ad_cff1
             ad_rho(i-1,j,k  )=ad_rho(i-1,j,k  )-adfac2-ad_cff2
@@ -659,32 +670,32 @@
             cff3=z_r(i  ,j,k+1)-z_r(i  ,j,k  )-                         &
      &           z_r(i-1,j,k+1)+z_r(i-1,j,k  )
 
-!>          tl_gamma=0.125_r8*(tl_cff1*cff2*cff3+                       &
-!>   &                         cff1*(tl_cff2*cff3+                      &
-!>   &                               cff2*tl_cff3))
-!>
+!^          tl_gamma=0.125_r8*(tl_cff1*cff2*cff3+                       &
+!^   &                         cff1*(tl_cff2*cff3+                      &
+!^   &                               cff2*tl_cff3))
+!^
             adfac=0.125_r8*ad_gamma
             adfac1=adfac*cff1
             ad_cff3=ad_cff3+cff2*adfac1
             ad_cff2=ad_cff2+cff3*adfac1
             ad_cff1=ad_cff1+cff2*cff3*adfac
             ad_gamma=0.0_r8
-!>   &      tl_cff3=tl_z_r(i  ,j,k+1)-tl_z_r(i  ,j,k  )-                &
-!>   &              tl_z_r(i-1,j,k+1)+tl_z_r(i-1,j,k  )
-!>          tl_cff2=tl_z_r(i  ,j,k  )-tl_z_r(i-1,j,k  )+                &
-!>   &              tl_z_r(i  ,j,k+1)-tl_z_r(i-1,j,k+1)
-!>
+!^   &      tl_cff3=tl_z_r(i  ,j,k+1)-tl_z_r(i  ,j,k  )-                &
+!^   &              tl_z_r(i-1,j,k+1)+tl_z_r(i-1,j,k  )
+!^          tl_cff2=tl_z_r(i  ,j,k  )-tl_z_r(i-1,j,k  )+                &
+!^   &              tl_z_r(i  ,j,k+1)-tl_z_r(i-1,j,k+1)
+!^
             ad_z_r(i-1,j,k  )=ad_z_r(i-1,j,k  )-ad_cff2+ad_cff3
             ad_z_r(i  ,j,k  )=ad_z_r(i  ,j,k  )+ad_cff2-ad_cff3
             ad_z_r(i-1,j,k+1)=ad_z_r(i-1,j,k+1)-ad_cff2-ad_cff3
             ad_z_r(i  ,j,k+1)=ad_z_r(i  ,j,k+1)+ad_cff2+ad_cff3
             ad_cff3=0.0
             ad_cff2=0.0
-!>          tl_cff1=-cff1*cff1*((tl_z_r(i  ,j,k+1)-tl_z_r(i  ,j,k))*    &
-!>   &                          (z_r(i-1,j,k+1)-z_r(i-1,j,k))+          &
-!>   &                          (z_r(i  ,j,k+1)-z_r(i  ,j,k))*          &
-!>   &                          (tl_z_r(i-1,j,k+1)-tl_z_r(i-1,j,k)))
-!>
+!^          tl_cff1=-cff1*cff1*((tl_z_r(i  ,j,k+1)-tl_z_r(i  ,j,k))*    &
+!^   &                          (z_r(i-1,j,k+1)-z_r(i-1,j,k))+          &
+!^   &                          (z_r(i  ,j,k+1)-z_r(i  ,j,k))*          &
+!^   &                          (tl_z_r(i-1,j,k+1)-tl_z_r(i-1,j,k)))
+!^
             adfac=-cff1*cff1*ad_cff1
             adfac1=adfac*(z_r(i-1,j,k+1)-z_r(i-1,j,k))
             adfac2=adfac*(z_r(i  ,j,k+1)-z_r(i  ,j,k))
@@ -702,33 +713,33 @@
      &           z_r(i,j,k  )-z_r(i-1,j,k  )
             cff4=z_r(i,j,k+1)-z_r(i-1,j,k+1)+                           &
      &           z_r(i,j,k  )-z_r(i-1,j,k  )
-!>          tl_phix(i)=tl_phix(i)+                                      &
-!>   &                 fac3*(tl_cff1*cff3+                              &
-!>   &                       cff1*tl_cff3-                              &
-!>   &                       tl_cff2*cff4-                              &
-!>   &                       cff2*tl_cff4)
-!>
+!^          tl_phix(i)=tl_phix(i)+                                      &
+!^   &                 fac3*(tl_cff1*cff3+                              &
+!^   &                       cff1*tl_cff3-                              &
+!^   &                       tl_cff2*cff4-                              &
+!^   &                       cff2*tl_cff4)
+!^
             adfac=fac3*ad_phix(i)
             ad_cff1=ad_cff1+cff3*adfac
             ad_cff2=ad_cff2-cff4*adfac
             ad_cff3=ad_cff3+cff1*adfac
             ad_cff4=ad_cff4-cff2*adfac
-!>          tl_cff4=tl_z_r(i,j,k+1)-tl_z_r(i-1,j,k+1)+                  &
-!>   &              tl_z_r(i,j,k  )-tl_z_r(i-1,j,k  )
-!>          tl_cff3=tl_z_r(i,j,k+1)+tl_z_r(i-1,j,k+1)-                  &
-!>   &              tl_z_r(i,j,k  )-tl_z_r(i-1,j,k  )
-!>
+!^          tl_cff4=tl_z_r(i,j,k+1)-tl_z_r(i-1,j,k+1)+                  &
+!^   &              tl_z_r(i,j,k  )-tl_z_r(i-1,j,k  )
+!^          tl_cff3=tl_z_r(i,j,k+1)+tl_z_r(i-1,j,k+1)-                  &
+!^   &              tl_z_r(i,j,k  )-tl_z_r(i-1,j,k  )
+!^
             ad_z_r(i-1,j,k  )=ad_z_r(i-1,j,k  )-ad_cff3-ad_cff4
             ad_z_r(i  ,j,k  )=ad_z_r(i  ,j,k  )-ad_cff3+ad_cff4
             ad_z_r(i-1,j,k+1)=ad_z_r(i-1,j,k+1)+ad_cff3-ad_cff4
             ad_z_r(i  ,j,k+1)=ad_z_r(i  ,j,k+1)+ad_cff3+ad_cff4
             ad_cff4=0.0_r8
             ad_cff3=0.0_r8
-!>          tl_cff1=tl_rho(i,j,k+1)-tl_rho(i-1,j,k+1)+                  &
-!>   &              tl_rho(i,j,k  )-tl_rho(i-1,j,k  )
-!>          tl_cff2=tl_rho(i,j,k+1)+tl_rho(i-1,j,k+1)-                  &
-!>   &              tl_rho(i,j,k  )-tl_rho(i-1,j,k  )
-!>
+!^          tl_cff1=tl_rho(i,j,k+1)-tl_rho(i-1,j,k+1)+                  &
+!^   &              tl_rho(i,j,k  )-tl_rho(i-1,j,k  )
+!^          tl_cff2=tl_rho(i,j,k+1)+tl_rho(i-1,j,k+1)-                  &
+!^   &              tl_rho(i,j,k  )-tl_rho(i-1,j,k  )
+!^
             ad_rho(i-1,j,k  )=ad_rho(i-1,j,k  )-ad_cff2-ad_cff1
             ad_rho(i  ,j,k  )=ad_rho(i  ,j,k  )-ad_cff2+ad_cff1
             ad_rho(i-1,j,k+1)=ad_rho(i-1,j,k+1)+ad_cff2-ad_cff1
@@ -756,12 +767,12 @@
 #ifdef DIAGNOSTICS_UV
 !!        DiaRU(i,j,N(ng),nrhs,M3pgrd)=ru(i,j,N(ng),nrhs)
 #endif
-!>        tl_ru(i,j,N(ng),nrhs)=-0.5_r8*on_u(i,j)*                      &
-!>   &                          ((tl_Hz(i  ,j,N(ng))+                   &
-!>   &                            tl_Hz(i-1,j,N(ng)))*phix(i)+          &
-!>   &                           (Hz(i  ,j,N(ng))+                      &
-!>   &                            Hz(i-1,j,N(ng)))*tl_phix(i))
-!>
+!^        tl_ru(i,j,N(ng),nrhs)=-0.5_r8*on_u(i,j)*                      &
+!^   &                          ((tl_Hz(i  ,j,N(ng))+                   &
+!^   &                            tl_Hz(i-1,j,N(ng)))*phix(i)+          &
+!^   &                           (Hz(i  ,j,N(ng))+                      &
+!^   &                            Hz(i-1,j,N(ng)))*tl_phix(i))
+!^
           adfac=-0.5_r8*on_u(i,j)*ad_ru(i,j,N(ng),nrhs)
           adfac1=adfac*phix(i)
           ad_phix(i)=ad_phix(i)+(Hz(i  ,j,N(ng))+                       &
@@ -770,12 +781,12 @@
           ad_Hz(i  ,j,N(ng))=ad_Hz(i  ,j,N(ng))+adfac1
           ad_ru(i,j,N(ng),nrhs)=0.0_r8
 #ifdef RHO_SURF
-!>        tl_phix(i)=tl_phix(i)+                                        &
-!>   &               (fac1*(tl_rho(i,j,N(ng))+tl_rho(i-1,j,N(ng))))*    &
-!>   &               (z_w(i,j,N(ng))-z_w(i-1,j,N(ng)))+                 &
-!>   &               (fac2+fac1*(rho(i,j,N(ng))+rho(i-1,j,N(ng))))*
-!>   &               (tl_z_w(i,j,N(ng))-tl_z_w(i-1,j,N(ng)))
-!>
+!^        tl_phix(i)=tl_phix(i)+                                        &
+!^   &               (fac1*(tl_rho(i,j,N(ng))+tl_rho(i-1,j,N(ng))))*    &
+!^   &               (z_w(i,j,N(ng))-z_w(i-1,j,N(ng)))+                 &
+!^   &               (fac2+fac1*(rho(i,j,N(ng))+rho(i-1,j,N(ng))))*
+!^   &               (tl_z_w(i,j,N(ng))-tl_z_w(i-1,j,N(ng)))
+!^
           adfac1=fac1*(z_w(i,j,N(ng))-z_w(i-1,j,N(ng)))*                &
      &           ad_phix(i)
           adfac2=(fac2+fac1*(rho(i,j,N(ng))+rho(i-1,j,N(ng))))*         &
@@ -785,10 +796,10 @@
           ad_z_w(i-1,j,N(ng))=ad_z_w(i-1,j,N(ng))-adfac2
           ad_z_w(i  ,j,N(ng))=ad_z_w(i  ,j,N(ng))+adfac2
 #endif
-!>        tl_phix(i)=fac1*                                              &
-!>   &               ((tl_rho(i,j,N(ng))-tl_rho(i-1,j,N(ng)))*cff1+     &
-!>   &                (rho(i,j,N(ng))-rho(i-1,j,N(ng)))*tl_cff1)
-!>
+!^        tl_phix(i)=fac1*                                              &
+!^   &               ((tl_rho(i,j,N(ng))-tl_rho(i-1,j,N(ng)))*cff1+     &
+!^   &                (rho(i,j,N(ng))-rho(i-1,j,N(ng)))*tl_cff1)
+!^
           adfac=fac1*ad_phix(i)
           adfac1=adfac*cff1
           ad_rho(i-1,j,N(ng))=ad_rho(i-1,j,N(ng))-adfac1
@@ -796,9 +807,9 @@
           ad_cff1=ad_cff1+                                              &
      &            (rho(i,j,N(ng))-rho(i-1,j,N(ng)))*adfac
           ad_phix(i)=0.0
-!>        tl_cff1=tl_z_w(i  ,j,N(ng))-tl_z_r(i  ,j,N(ng))+              &
-!>   &            tl_z_w(i-1,j,N(ng))-tl_z_r(i-1,j,N(ng))
-!>
+!^        tl_cff1=tl_z_w(i  ,j,N(ng))-tl_z_r(i  ,j,N(ng))+              &
+!^   &            tl_z_w(i-1,j,N(ng))-tl_z_r(i-1,j,N(ng))
+!^
           ad_z_r(i-1,j,N(ng))=ad_z_r(i-1,j,N(ng))-ad_cff1
           ad_z_r(i  ,j,N(ng))=ad_z_r(i  ,j,N(ng))-ad_cff1
           ad_z_w(i-1,j,N(ng))=ad_z_w(i-1,j,N(ng))+ad_cff1
@@ -808,4 +819,6 @@
       END DO J_LOOP
 !
       RETURN
-      END SUBROUTINE ad_prsgrd_tile
+      END SUBROUTINE ad_prsgrd31_tile
+
+      END MODULE ad_prsgrd_mod

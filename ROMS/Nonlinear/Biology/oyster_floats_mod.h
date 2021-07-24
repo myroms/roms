@@ -1,6 +1,7 @@
+      MODULE mod_behavior
 !
 !git $Id$
-!svn $Id: oyster_floats_mod.h 1054 2021-03-06 19:47:12Z arango $
+!svn $Id: oyster_floats_mod.h 1081 2021-07-24 02:25:06Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group      Diego A. Narvaez   !
 !    Licensed under a MIT/X style license                              !
@@ -253,6 +254,8 @@
         allocate ( turb_slop(Ngrids) )
         Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
-
+!
       RETURN
       END SUBROUTINE allocate_behavior
+
+      END MODULE mod_behavior

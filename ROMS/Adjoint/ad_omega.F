@@ -3,7 +3,7 @@
 #if defined ADJOINT && defined SOLVE3D
 !
 !git $Id$
-!svn $Id: ad_omega.F 1054 2021-03-06 19:47:12Z arango $
+!svn $Id: ad_omega.F 1081 2021-07-24 02:25:06Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -174,22 +174,22 @@
 !  Set lateral boundary conditions.
 !
 # ifdef DISTRIBUTE
-!>    CALL mp_exchange3d (ng, tile, model, 1,                           &
-!>   &                    LBi, UBi, LBj, UBj, 0, N(ng),                 &
-!>   &                    NghostPoints,                                 &
-!>   &                    EWperiodic(ng), NSperiodic(ng),               &
-!>   &                    tl_W)
-!>
+!^    CALL mp_exchange3d (ng, tile, model, 1,                           &
+!^   &                    LBi, UBi, LBj, UBj, 0, N(ng),                 &
+!^   &                    NghostPoints,                                 &
+!^   &                    EWperiodic(ng), NSperiodic(ng),               &
+!^   &                    tl_W)
+!^
       CALL ad_mp_exchange3d (ng, tile, model, 1,                        &
      &                       LBi, UBi, LBj, UBj, 0, N(ng),              &
      &                       NghostPoints,                              &
      &                       EWperiodic(ng), NSperiodic(ng),            &
      &                       ad_W)
 # endif
-!>    CALL bc_w3d_tile (ng, tile,                                       &
-!>   &                  LBi, UBi, LBj, UBj, 0, N(ng),                   &
-!>   &                  tl_W)
-!>
+!^    CALL bc_w3d_tile (ng, tile,                                       &
+!^   &                  LBi, UBi, LBj, UBj, 0, N(ng),                   &
+!^   &                  tl_W)
+!^
       CALL ad_bc_w3d_tile (ng, tile,                                    &
      &                     LBi, UBi, LBj, UBj, 0, N(ng),                &
      &                     ad_W)
@@ -260,16 +260,16 @@
 !  Notice that barotropic mass flux divergence is not used directly.
 !
         DO i=Istr,Iend
-!>        tl_W(i,j,N(ng))=0.0_r8
-!>
+!^        tl_W(i,j,N(ng))=0.0_r8
+!^
           ad_W(i,j,N(ng))=0.0_r8
         END DO
         DO k=N(ng)-1,1,-1
           DO i=Istr,Iend
-!>          tl_W(i,j,k)=tl_W(i,j,k)-                                    &
-!>   &                  tl_wrk(i)*(z_w(i,j,k)-z_w(i,j,0))-              &
-!>   &                  wrk(i)*(tl_z_w(i,j,k)-tl_z_w(i,j,0))
-!>
+!^          tl_W(i,j,k)=tl_W(i,j,k)-                                    &
+!^   &                  tl_wrk(i)*(z_w(i,j,k)-z_w(i,j,0))-              &
+!^   &                  wrk(i)*(tl_z_w(i,j,k)-tl_z_w(i,j,0))
+!^
             adfac=wrk(i)*ad_W(i,j,k)
             ad_wrk(i)=ad_wrk(i)-                                        &
      &                ad_W(i,j,k)*(z_w(i,j,k)-z_w(i,j,0))
@@ -279,13 +279,13 @@
         END DO
         DO i=Istr,Iend
           cff=1.0_r8/(z_w(i,j,N(ng))-z_w(i,j,0))
-!>        tl_wrk(i)=tl_cff*W(i,j,N(ng))+cff*tl_W(i,j,N(ng))
-!>
+!^        tl_wrk(i)=tl_cff*W(i,j,N(ng))+cff*tl_W(i,j,N(ng))
+!^
           ad_W(i,j,N(ng))=ad_W(i,j,N(ng))+cff*ad_wrk(i)
           ad_cff=ad_cff+W(i,j,N(ng))*ad_wrk(i)
           ad_wrk(i)=0.0_r8
-!>        tl_cff=-cff*cff*(tl_z_w(i,j,N(ng))-tl_z_w(i,j,0))
-!>
+!^        tl_cff=-cff*cff*(tl_z_w(i,j,N(ng))-tl_z_w(i,j,0))
+!^
           adfac=-cff*cff*ad_cff
           ad_z_w(i,j,0    )=ad_z_w(i,j,0    )-adfac
           ad_z_w(i,j,N(ng))=ad_z_w(i,j,N(ng))+adfac
@@ -301,14 +301,14 @@
             IF (((IstrR.le.ii).and.(ii.le.IendR)).and.                  &
      &          ((JstrR.le.jj).and.(jj.le.JendR)).and.                  &
      &          (j.eq.jj)) THEN
-!>            DO k=1,N(ng)
-!>
+!^            DO k=1,N(ng)
+!^
               DO k=N(ng),1,-1
-!>              tl_W(ii,jj,k)=tl_W(ii,jj,k-1)-                          &
-!>   &                        (tl_Huon(ii+1,jj,k)-tl_Huon(ii,jj,k)+     &
-!>   &                         tl_Hvom(ii,jj+1,k)-tl_Hvom(ii,jj,k))+    &
-!>   &                        SOURCES(ng)%tl_Qsrc(is,k)
-!>
+!^              tl_W(ii,jj,k)=tl_W(ii,jj,k-1)-                          &
+!^   &                        (tl_Huon(ii+1,jj,k)-tl_Huon(ii,jj,k)+     &
+!^   &                         tl_Hvom(ii,jj+1,k)-tl_Hvom(ii,jj,k))+    &
+!^   &                        SOURCES(ng)%tl_Qsrc(is,k)
+!^
                 ad_W(ii,jj,k-1)=ad_W(ii,jj,k-1)+ad_W(ii,jj,k)
                 ad_Huon(ii  ,jj,k)=ad_Huon(ii  ,jj,k)+ad_W(ii,jj,k)
                 ad_Huon(ii+1,jj,k)=ad_Huon(ii+1,jj,k)-ad_W(ii,jj,k)
@@ -329,14 +329,14 @@
 !
 !  Adjoint of code added to clear tl_W to be consistent with adjoint.
 !
-!>      DO k=1,N(ng)
-!>
+!^      DO k=1,N(ng)
+!^
         DO k=N(ng),1,-1
           DO i=Istr,Iend
-!>          tl_W(i,j,k)=tl_W(i,j,k-1)-                                  &
-!>   &                  (tl_Huon(i+1,j,k)-tl_Huon(i,j,k)+               &
-!>   &                   tl_Hvom(i,j+1,k)-tl_Hvom(i,j,k))
-!>
+!^          tl_W(i,j,k)=tl_W(i,j,k-1)-                                  &
+!^   &                  (tl_Huon(i+1,j,k)-tl_Huon(i,j,k)+               &
+!^   &                   tl_Hvom(i,j+1,k)-tl_Hvom(i,j,k))
+!^
             ad_W(i,j,k-1)=ad_W(i,j,k-1)+ad_W(i,j,k)
             ad_Huon(i  ,j,k)=ad_Huon(i  ,j,k)+ad_W(i,j,k)
             ad_Huon(i+1,j,k)=ad_Huon(i+1,j,k)-ad_W(i,j,k)
@@ -346,8 +346,8 @@
         END DO
         DO k=1,N(ng)
           DO i=Istr,Iend
-!>          tl_W(i,j,k)=0.0_r8
-!>
+!^          tl_W(i,j,k)=0.0_r8
+!^
             ad_W(i,j,k)=0.0_r8
           END DO
         END DO
@@ -356,16 +356,16 @@
 !
         DO i=Istr,Iend
 # if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
-!>        tl_W(i,j,0)=-cff1*(tl_bed_thick(i,j,nstp)-                    &
-!>   &                       tl_bed_thick(i,j,nnew))*omn(i,j)
-!>
+!^        tl_W(i,j,0)=-cff1*(tl_bed_thick(i,j,nstp)-                    &
+!^   &                       tl_bed_thick(i,j,nnew))*omn(i,j)
+!^
           adfac=cff1*omn(i,j)*ad_W(i,j,0)
           ad_bed_thick(i,j,nnew)=ad_bed_thick(i,j,nnew)+adfac
           ad_bed_thick(i,j,nstp)=ad_bed_thick(i,j,nstp)+adfac
           ad_W(i,j,0)=0.0_r8
 # else
-!>        tl_W(i,j,0)=0.0_r8
-!>
+!^        tl_W(i,j,0)=0.0_r8
+!^
           ad_W(i,j,0)=0.0_r8
 # endif
         END DO

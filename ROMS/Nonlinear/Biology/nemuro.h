@@ -1,12 +1,12 @@
-      SUBROUTINE biology (ng,tile)
+      MODULE biology_mod
 !
 !git $Id$
-!svn $Id: nemuro.h 1054 2021-03-06 19:47:12Z arango $
-!************************************************** Hernan G. Arango ***
+!svn $Id: nemuro.h 1081 2021-07-24 02:25:06Z arango $
+!================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
-!***********************************************************************
+!=======================================================================
 !                                                                      !
 !  Nemuro Lower Trophic Level Ecosystem Model.                         !
 !                                                                      !
@@ -32,6 +32,17 @@
 !      model for the North Pacific marine ecosystem,  Ecological       !
 !      Modelling, 202, 12-25.                                          !
 !                                                                      !
+!=======================================================================
+!
+      implicit none
+!
+      PRIVATE
+      PUBLIC  :: biology
+!
+      CONTAINS
+!
+!***********************************************************************
+      SUBROUTINE biology (ng,tile)
 !***********************************************************************
 !
       USE mod_param
@@ -66,18 +77,18 @@
 #ifdef PROFILE
       CALL wclock_on (ng, iNLM, 15, __LINE__, MyFile)
 #endif
-      CALL biology_tile (ng, tile,                                      &
-     &                   LBi, UBi, LBj, UBj, N(ng), NT(ng),             &
-     &                   IminS, ImaxS, JminS, JmaxS,                    &
-     &                   nstp(ng), nnew(ng),                            &
+      CALL nemuro_tile (ng, tile,                                       &
+     &                  LBi, UBi, LBj, UBj, N(ng), NT(ng),              &
+     &                  IminS, ImaxS, JminS, JmaxS,                     &
+     &                  nstp(ng), nnew(ng),                             &
 #ifdef MASKING
-     &                   GRID(ng) % rmask,                              &
+     &                  GRID(ng) % rmask,                               &
 #endif
-     &                   GRID(ng) % Hz,                                 &
-     &                   GRID(ng) % z_r,                                &
-     &                   GRID(ng) % z_w,                                &
-     &                   FORCES(ng) % srflx,                            &
-     &                   OCEAN(ng) % t)
+     &                  GRID(ng) % Hz,                                  &
+     &                  GRID(ng) % z_r,                                 &
+     &                  GRID(ng) % z_w,                                 &
+     &                  FORCES(ng) % srflx,                             &
+     &                  OCEAN(ng) % t)
 
 #ifdef PROFILE
       CALL wclock_off (ng, iNLM, 15, __LINE__, MyFile)
@@ -87,16 +98,16 @@
       END SUBROUTINE biology
 !
 !-----------------------------------------------------------------------
-      SUBROUTINE biology_tile (ng, tile,                                &
-     &                         LBi, UBi, LBj, UBj, UBk, UBt,            &
-     &                         IminS, ImaxS, JminS, JmaxS,              &
-     &                         nstp, nnew,                              &
+      SUBROUTINE nemuro_tile (ng, tile,                                 &
+     &                        LBi, UBi, LBj, UBj, UBk, UBt,             &
+     &                        IminS, ImaxS, JminS, JmaxS,               &
+     &                        nstp, nnew,                               &
 #ifdef MASKING
-     &                         rmask,                                   &
+     &                        rmask,                                    &
 #endif
-     &                         Hz, z_r, z_w,                            &
-     &                         srflx,                                   &
-     &                         t)
+     &                        Hz, z_r, z_w,                             &
+     &                        srflx,                                    &
+     &                        t)
 !-----------------------------------------------------------------------
 !
       USE mod_param
@@ -1044,4 +1055,6 @@
       END DO J_LOOP
 !
       RETURN
-      END SUBROUTINE biology_tile
+      END SUBROUTINE nemuro_tile
+
+      END MODULE biology_mod
