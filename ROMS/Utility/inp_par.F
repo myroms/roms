@@ -2,7 +2,7 @@
       MODULE inp_par_mod
 !
 !git $Id$
-!svn $Id: inp_par.F 1064 2021-05-10 19:55:56Z arango $
+!svn $Id: inp_par.F 1083 2021-07-28 19:00:42Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -65,13 +65,14 @@
       integer :: MaxHaloLenI, MaxHaloLenJ
 #endif
       integer :: ibry, inp, out, i, ic, ifield, itrc, j, ng, npts
-      integer :: sequence, varid
+      integer :: io_err, sequence, varid
 !
       real(r8) :: cff
       real(r8), parameter :: epsilon = 1.0E-8_r8
       real(r8), parameter :: spv = 0.0_r8
 !
-      character (len=10) :: stdout_file
+      character (len=10 ) :: stdout_file
+      character (len=256) :: io_errmsg
 
       character (len=*), parameter :: MyFile =                          &
      &  __FILE__
@@ -102,11 +103,23 @@
        IF (Master) THEN
          IF (Lappend) THEN
            OPEN (stdout, FILE=TRIM(stdout_file), FORM='formatted',      &
-     &           STATUS='old', POSITION='append', ACTION='write')
+     &           STATUS='old', POSITION='append', ACTION='write',       &
+     &           IOSTAT=io_err, IOMSG=io_errmsg)
          ELSE
            OPEN (stdout, FILE=TRIM(stdout_file), FORM='formatted',      &
-     &           STATUS='replace')
+     &           STATUS='replace', IOSTAT=io_err, IOMSG=io_errmsg)
          END IF
+       END IF
+# ifdef DISTRIBUTE
+       CALL mp_bcasti (1, model, io_err)
+# endif
+       IF (io_err.ne.0) THEN
+         IF (Master) WRITE (stdout,10) TRIM(stdout_file),               &
+     &                                 TRIM(io_errmsg)
+         exit_flag=5
+ 10      FORMAT (/,' INP_PAR - Cannot open standard output file: ',a,   &
+     &           /,11x,'ERROR: ',a)
+         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
        END IF
 #endif
 !
@@ -144,8 +157,8 @@
 !  Read in physical model input parameters.
 !-----------------------------------------------------------------------
 !
-      IF (Master.and.Lwrite) WRITE (out,10) version, TRIM(date_str)
- 10   FORMAT (80('-'),/,                                                &
+      IF (Master.and.Lwrite) WRITE (out,20) version, TRIM(date_str)
+ 20   FORMAT (80('-'),/,                                                &
               ' Model Input Parameters:  ROMS/TOMS version ',a,/,       &
      &        26x,a,/,80('-'))
 
@@ -156,15 +169,14 @@
 !  Its file name is specified in the coupling standard input script.
 !
       OPEN (inp, FILE=TRIM(Iname), FORM='formatted', STATUS='old',      &
-     &      ERR=20)
-      GO TO 40
- 20   IF (Master) WRITE (stdout,30)
-      exit_flag=2
-      RETURN
- 30   FORMAT (/,' INP_PAR - Unable to open ROMS/TOMS input script ',    &
-     &              'file.')
- 40   CONTINUE
-
+     &      IOSTAT=io_err, IOMSG=io_errmsg)
+      IF (io_err.ne.0) THEN
+        IF (Master) WRITE (stdout,30) TRIM(io_errmsg)
+        exit_flag=5
+        RETURN
+ 30     FORMAT (/,' INP_PAR - Unable to open ROMS/TOMS input script ',  &
+     &              'file.',/,11x,'ERROR: ',a)
+      END IF
 #else
 # ifdef DISTRIBUTE
 !
@@ -177,21 +189,21 @@
       IF (Master) CALL my_getarg (1, Iname)
       CALL mp_bcasts (1, model, Iname)
       OPEN (inp, FILE=TRIM(Iname), FORM='formatted', STATUS='old',      &
-     &      ERR=20)
-      GO TO 40
- 20   IF (Master) WRITE (stdout,30)
-      exit_flag=2
-      RETURN
- 30   FORMAT (/,' INP_PAR - Unable to open ROMS/TOMS input script ',    &
-     &              'file.',                                            &
-     &        /,11x,'In distributed-memory applications, the input',    &
-     &        /,11x,'script file is processed in parallel. The Unix',   &
-     &        /,11x,'routine GETARG is used to get script file name.',  &
-     &        /,11x,'For example, in MPI applications make sure that',  &
-     &        /,11x,'command line is something like:',/,                &
-     &        /,11x,'mpirun -np 4 romsM roms.in',/,/,11x,'and not',/,   &
-     &        /,11x,'mpirun -np 4 romsM < roms.in',/)
- 40   CONTINUE
+     &      IOSTAT=io_err, IOMSG=io_errmsg)
+      IF (io_err.ne.0) THEN
+        IF (Master) WRITE (stdout,30) TRIM(io_errmsg)
+        exit_flag=5
+        RETURN
+ 30     FORMAT (/,' INP_PAR - Unable to open ROMS/TOMS input script ',  &
+     &              'file.',/,11x,'ERROR: ',a,/,                        &
+     &          /,11x,'In distributed-memory applications, the input',  &
+     &          /,11x,'script file is processed in parallel. The Unix', &
+     &          /,11x,'routine GETARG is used to get script file name.',&
+     &          /,11x,'For example, in MPI applications make sure that',&
+     &          /,11x,'command line is something like:',/,              &
+     &          /,11x,'mpirun -np 4 romsM roms.in',/,/,11x,'and not',/, &
+     &          /,11x,'mpirun -np 4 romsM < roms.in',/)
+      END IF
 # endif
 #endif
 !

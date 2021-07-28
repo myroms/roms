@@ -3,7 +3,7 @@
       SUBROUTINE read_AssPar (model, inp, out, Lwrite)
 !
 !git $Id$
-!svn $Id: read_asspar.F 1064 2021-05-10 19:55:56Z arango $
+!svn $Id: read_asspar.F 1083 2021-07-28 19:00:42Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -1280,26 +1280,39 @@
         defined TL_RBL4DVAR       || defined TL_R4DVAR
           fname=STD(2,ng)%name
           IF (NSA.eq.2) THEN
-            IF (.not.find_file(ng, fname, 'STDnameM')) GO TO 30
-            WRITE (out,160) '                   Model STD File:  ',     &
-     &                      TRIM(fname)
+            IF (.not.find_file(ng, out, fname, 'STDnameM')) THEN
+              IF (FoundError(exit_flag, NoError, __LINE__, MyFile))     &
+     &          RETURN
+            ELSE
+              WRITE (out,160) '                   Model STD File:  ',   &
+     &                        TRIM(fname)
+            END IF
           END IF
 #    endif
           fname=STD(1,ng)%name
-          IF (.not.find_file(ng, fname, 'STDnameI')) GO TO 30
-          WRITE (out,160) '      Initial Conditions STD File:  ',       &
-     &                    TRIM(fname)
+          IF (.not.find_file(ng, out, fname, 'STDnameI')) THEN
+            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+          ELSE
+            WRITE (out,160) '      Initial Conditions STD File:  ',     &
+     &                      TRIM(fname)
+          END IF
 #    ifdef ADJUST_BOUNDARY
           fname=STD(3,ng)%name
-          IF (.not.find_file(ng, fname, 'STDnameB')) GO TO 30
-          WRITE (out,160) '     Boundary Conditions STD File:  ',       &
-     &                    TRIM(fname)
+          IF (.not.find_file(ng, out, fname, 'STDnameB')) THEN
+            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+          ELSE
+            WRITE (out,160) '     Boundary Conditions STD File:  ',     &
+     &                      TRIM(fname)
+          END IF
 #    endif
 #    if defined ADJUST_WSTRESS || defined ADJUST_STFLUX
           fname=STD(4,ng)%name
-          IF (.not.find_file(ng, fname, 'STDnameF')) GO TO 30
-          WRITE (out,160) '         Surface Forcing STD File:  ',       &
-     &                    TRIM(fname)
+          IF (.not.find_file(ng, out, fname, 'STDnameF')) THEN
+            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+          ELSE
+            WRITE (out,160) '         Surface Forcing STD File:  ',     &
+     &                      TRIM(fname)
+          END IF
 #    endif
 #   endif
 #   if defined RBL4DVAR          || defined R4DVAR    || \
@@ -1309,14 +1322,20 @@
           WRITE (out,160) '                  Model Norm File:  ',       &
      &                    TRIM(fname)
           IF (.not.LdefNRM(2,ng)) THEN
-            IF (.not.find_file(ng, fname, 'NRMnameM')) GO TO 30
+            IF (.not.find_file(ng, out, fname, 'NRMnameM')) THEN
+              IF (FoundError(exit_flag, NoError, __LINE__, MyFile))     &
+     &          RETURN
+            END IF
           END IF
 #   elif defined CORRELATION
           fname=NRM(2,ng)%name
           WRITE (out,160) '                  Model Norm File:  ',       &
      &                    TRIM(fname)
           IF (.not.LdefNRM(2,ng).and.LwrtNRM(2,ng)) THEN
-            IF (.not.find_file(ng, fname, 'NRMnameM')) GO TO 30
+            IF (.not.find_file(ng, out, fname, 'NRMnameM')) THEN
+              IF (FoundError(exit_flag, NoError, __LINE__, MyFile))     &
+     &          RETURN
+            END IF
           END IF
 #   endif
 #   if defined CORRELATION
@@ -1324,14 +1343,20 @@
           WRITE (out,160) '     Initial Conditions Norm File:  ',       &
      &                    TRIM(fname)
           IF (.not.LdefNRM(1,ng).and.LwrtNRM(1,ng)) THEN
-            IF (.not.find_file(ng, fname, 'NRMnameI')) GO TO 30
+            IF (.not.find_file(ng, out, fname, 'NRMnameI')) THEN
+              IF (FoundError(exit_flag, NoError, __LINE__, MyFile))     &
+     &          RETURN
+            END IF
           END IF
 #   else
           fname=NRM(1,ng)%name
           WRITE (out,160) '     Initial Conditions Norm File:  ',       &
      &                    TRIM(fname)
           IF (.not.LdefNRM(1,ng)) THEN
-            IF (.not.find_file(ng, fname, 'NRMnameI')) GO TO 30
+            IF (.not.find_file(ng, out, fname, 'NRMnameI')) THEN
+              IF (FoundError(exit_flag, NoError, __LINE__, MyFile))     &
+     &          RETURN
+            END IF
           END IF
 #   endif
 #   ifdef ADJUST_BOUNDARY
@@ -1340,14 +1365,20 @@
           WRITE (out,160) '    Boundary Conditions Norm File:  ',       &
      &                    TRIM(fname)
           IF (.not.LdefNRM(3,ng).and.LwrtNRM(3,ng)) THEN
-            IF (.not.find_file(ng, fname, 'NRMnameB')) GO TO 30
+            IF (.not.find_file(ng, out, fname, 'NRMnameB')) THEN
+              IF (FoundError(exit_flag, NoError, __LINE__, MyFile))     &
+     &          RETURN
+            END IF
           END IF
 #    else
           fname=NRM(3,ng)%name
           WRITE (out,160) '    Boundary Conditions Norm File:  ',       &
      &                    TRIM(fname)
           IF (.not.LdefNRM(3,ng)) THEN
-            IF (.not.find_file(ng, fname, 'NRMnameB')) GO TO 30
+            IF (.not.find_file(ng, out, fname, 'NRMnameB')) THEN
+              IF (FoundError(exit_flag, NoError, __LINE__, MyFile))     &
+     &          RETURN
+            END IF
           END IF
 #    endif
 #   endif
@@ -1357,22 +1388,31 @@
           WRITE (out,160) '        Surface Forcing Norm File:  ',       &
      &                    TRIM(fname)
           IF (.not.LdefNRM(4,ng).and.LwrtNRM(4,ng)) THEN
-            IF (.not.find_file(ng, fname, 'NRMnameF')) GO TO 30
+            IF (.not.find_file(ng, out, fname, 'NRMnameF')) THEN
+              IF (FoundError(exit_flag, NoError, __LINE__, MyFile))     &
+     &          RETURN
+            END IF
           END IF
 #    else
           fname=NRM(4,ng)%name
           WRITE (out,160) '        Surface Forcing Norm File:  ',       &
      &                    TRIM(fname)
           IF (.not.LdefNRM(4,ng)) THEN
-            IF (.not.find_file(ng, fname, 'NRMnameF')) GO TO 30
+            IF (.not.find_file(ng, out, fname, 'NRMnameF')) THEN
+              IF (FoundError(exit_flag, NoError, __LINE__, MyFile))     &
+     &          RETURN
+            END IF
           END IF
 #    endif
 #   endif
 #   if !(defined CORRELATION || defined OPT_OBSERVATIONS)
           fname=OBS(ng)%name
-          IF (.not.find_file(ng, fname, 'OBSname')) GO TO 30
-          WRITE (out,160) '          Input observations File:  ',       &
-     &                    TRIM(fname)
+          IF (.not.find_file(ng, out, fname, 'OBSname')) THEN
+            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+          ELSE
+            WRITE (out,160) '          Input observations File:  ',     &
+     &                      TRIM(fname)
+          END IF
 #   endif
 #   if !defined CORRELATION
           WRITE (out,160) '        Input/Output Lanczos File:  ',       &
@@ -1390,9 +1430,12 @@
 #  if !defined CORRELATION
 #   ifdef VERIFICATION
           fname=OBS(ng)%name
-          IF (.not.find_file(ng, fname, 'OBSname')) GO TO 30
-          WRITE (out,160) '          Input observations File:  ',       &
-     &                    TRIM(fname)
+          IF (.not.find_file(ng, out, fname, 'OBSname')) THEN
+            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+          ELSE
+            WRITE (out,160) '          Input observations File:  ',     &
+     &                      TRIM(fname)
+          END IF
           WRITE (out,160) '         Output verification File:  ',       &
      &                    TRIM(DAV(ng)%name)
 #   else
@@ -1417,27 +1460,13 @@
 #  endif
 #  if defined RBL4DVAR_FCT_SENSITIVITY && defined OBS_SPACE
           fname=OIFA(ng)%name
-!!        IF (.not.find_file(ng, fname, 'OIFnameA')) GO TO 30
           WRITE (out,160) '  Input Obs Impacts Analysis File:  ',       &
      &                    TRIM(fname)
 !
           fname=OIFB(ng)%name
-!!        IF (.not.find_file(ng, fname, 'OIFnameB')) GO TO 30
           WRITE (out,160) 'Input Obs Impacts Background File:  ',       &
      &                    TRIM(fname)
 #   endif
-          GO TO 40
-  30      IF (Master) THEN
-            IF (LEN_TRIM(fname).eq.0) THEN
-              WRITE (out,220) ng, 'Oops unassigned file name. '//       &
-     &                            'Check assimilation input script...'
-            ELSE
-              WRITE (out,220) ng, TRIM(fname)
-            END IF
-          END IF
-          exit_flag=4
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-  40      CONTINUE
         END DO
       END IF
 

@@ -1,7 +1,7 @@
       SUBROUTINE ana_diag (ng, tile, model)
 !
 !! git $Id$
-!! svn $Id: ana_diag.h 1054 2021-03-06 19:47:12Z arango $
+!! svn $Id: ana_diag.h 1083 2021-07-28 19:00:42Z arango $
 !!======================================================================
 !! Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !!   Licensed under a MIT/X style license                              !
@@ -81,7 +81,9 @@
 !
 !  Local variable declarations.
 !
-      integer :: i, j, k
+      integer :: i, io_error, j, k
+!
+      character (len=256) :: io_errmsg
 
 #include "set_bounds.h"
 !
@@ -93,18 +95,20 @@
 !
       IF (iic(ng).eq.ntstart(ng)) THEN
         OPEN (usrout,file=USRname,form='formatted',status='unknown',    &
-     &        err=40)
-        GO TO 60
-  40    WRITE (stdout,50) USRname
-  50    FORMAT (' ANA_DIAG - unable to open output file: ',a)
-        exit_flag=2
-  60    CONTINUE
+     &        IOSTAT=io_err, IOMSG=io_errmsg)
+        IF (io_err.ne.0) THEN
+          WRITE (stdout,10) USRname, TRIM(io_errmsg)
+          exit_flag=5
+          RETURN
+  10      FORMAT (' ANA_DIAG - unable to open output file: ',a,         &
+                  /12x,'ERROR: ',a)
+        END IF
       END IF
 !
 !  Write out maximum values of velocity.
 !
-      WRITE (usrout,70) 'No user diagnostics computed.'
-  70  FORMAT (a)
+      WRITE (usrout,20) 'No user diagnostics computed.'
+  20  FORMAT (a)
 !
       RETURN
       END SUBROUTINE ana_diag_tile

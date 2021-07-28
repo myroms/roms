@@ -3,7 +3,7 @@
 #if defined MODEL_COUPLING && defined ESMF_LIB
 !
 !git $Id$
-!svn $Id: mod_esmf_esm.F 1071 2021-06-14 04:22:26Z arango $
+!svn $Id: mod_esmf_esm.F 1083 2021-07-28 19:00:42Z arango $
 !=======================================================================
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license         Hernan G. Arango     !
@@ -1141,10 +1141,10 @@
 !
 !  Local variable declarations.
 !
-      integer :: equal, ie, is, inp, out
+      integer :: equal, ie, is, inp, io_err, out
 !
       character (len= 40) :: keyword
-      character (len=256) :: line
+      character (len=256) :: io_errmsg, line
 
       character (len=*), parameter :: MyFile =                          &
      &  __FILE__//", get_atm_Ngrids"
@@ -1165,17 +1165,17 @@
       keyword='max_dom'           ! WRF "domains" namelist parameter
 # endif
       OPEN (inp, FILE=TRIM(Sname), FORM='formatted', STATUS='old',      &
-     &      ERR=10)
-      GO TO 20
-  10  IF (localPET.eq.0) WRITE (out,50) TRIM(Sname)
-      exit_flag=2
-      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-  20  CONTINUE
+     &      IOSTAT=io_err, IOMSG=io_errmsg)
+      IF (io_err.ne.0) THEN
+        IF (localPET.eq.0) WRITE (out,30) TRIM(Sname), TRIM(io_errmsg)
+        exit_flag=5
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+      END IF
 !
 !  Read script/namelist keyword parameter.
 !
       DO WHILE (.TRUE.)
-        READ (inp,'(a)',ERR=30,END=40) line
+        READ (inp,'(a)',ERR=10,END=20) line
         is=INDEX(line, TRIM(keyword))
         equal=INDEX(line, CHAR(61), BACK=.FALSE.)        ! equal sign
         IF ((is.ne.0).and.(equal.ne.0)) THEN
@@ -1183,23 +1183,23 @@
           ie=LEN_TRIM(line)
           READ (line(is:ie),*) MyValue
           IF (MyValue.le.0) THEN
-            IF (localPET.eq.0) WRITE (out,60) TRIM(keyword), MyValue,   &
+            IF (localPET.eq.0) WRITE (out,40) TRIM(keyword), MyValue,   &
      &                         'must be greater than zero.'
             exit_flag=5
             IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
           END IF
         END IF
       END DO
-  30  IF (localPET.eq.0) WRITE (out,70) line
+  10  IF (localPET.eq.0) WRITE (out,50) line
       exit_flag=4
       RETURN
-  40  CLOSE (inp)
+  20  CLOSE (inp)
 !
-  50  FORMAT (/,' get_atm_Ngrids - Unable to open ROMS/TOMS input ',    &
-     &           'script file.',/,18x,a)
-  60  FORMAT (/,' get_atm_Ngrids - Invalid input parameter, ',a,i4,/,   &
+  30  FORMAT (/,' get_atm_Ngrids - Unable to open ROMS/TOMS input ',    &
+     &            'script file.',/,18x,a,/,18x,'ERROR: ',a)
+  40  FORMAT (/,' get_atm_Ngrids - Invalid input parameter, ',a,i4,/,   &
      &        18x,a)
-  70  FORMAT (/,' get_atm_Ngrids - Error while processing line: ',/,a)
+  50  FORMAT (/,' get_atm_Ngrids - Error while processing line: ',/,a)
 
 #else
 !
@@ -1238,7 +1238,7 @@
 !
 !  Local variable declarations.
 !
-      integer :: Npts, Nval, inp, out, status
+      integer :: Npts, Nval, inp, io_err, out, status
       integer :: Ivalue(1)
 !
       real(r8) :: Rvalue(1)
@@ -1246,7 +1246,7 @@
       real(dp), dimension(nRval) :: Rval
 !
       character (len= 40) :: KeyWord
-      character (len=256) :: line
+      character (len=256) :: io_errmsg, line
       character (len=256), dimension(nCval) :: Cval
 
       character (len=*), parameter :: MyFile =                          &
@@ -1262,15 +1262,15 @@
       out=cplout
 !
       OPEN (inp, FILE=TRIM(Sname), FORM='formatted', STATUS='old',      &
-     &      ERR=10)
-      GO TO 20
-  10  IF (localPET.eq.0) WRITE (out,50) TRIM(Sname)
-      exit_flag=2
-      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-  20  CONTINUE
+     &      IOSTAT=io_err, IOMSG=io_errmsg)
+      IF (io_err.ne.0) THEN
+        IF (localPET.eq.0) WRITE (out,30) TRIM(Sname), TRIM(io_errmsg)
+        exit_flag=5
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+      END IF
 !
       DO WHILE (.TRUE.)
-        READ (inp,'(a)',ERR=30,END=40) line
+        READ (inp,'(a)',ERR=10,END=20) line
         status=decode_line(line, KeyWord, Nval, Cval, Rval)
         IF (status.gt.0) THEN
           SELECT CASE (TRIM(KeyWord))
@@ -1278,7 +1278,7 @@
               Npts=load_i(Nval, Rval, 1, Ivalue)
               MyValue=Ivalue(1)
               IF (MyValue.le.0) THEN
-                IF (localPET.eq.0) WRITE (out,60) 'Ngrids', MyValue,    &
+                IF (localPET.eq.0) WRITE (out,40) 'Ngrids', MyValue,    &
      &                             'must be greater than zero.'
                 exit_flag=5
                 IF (FoundError(exit_flag, NoError,                      &
@@ -1292,16 +1292,16 @@
           END SELECT
         END IF
       END DO
-  30  IF (localPET.eq.0) WRITE (out,70) line
+  10  IF (localPET.eq.0) WRITE (out,50) line
       exit_flag=4
       RETURN
-  40  CLOSE (inp)
+  20  CLOSE (inp)
 !
-  50  FORMAT (/,' get_roms_Ngrids - Unable to open ROMS/TOMS input ',   &
-     &          'script file.',/,19x,a)
-  60  FORMAT (/,' get_roms_Ngrids - Invalid input parameter, ',a,i4,/,  &
+  30  FORMAT (/,' get_roms_Ngrids - Unable to open ROMS/TOMS input ',   &
+     &          'script file.',/,19x,a,/,19x,a)
+  40  FORMAT (/,' get_roms_Ngrids - Invalid input parameter, ',a,i4,/,  &
      &        14x,a)
-  70  FORMAT (/,' get_roms_Ngrids - Error while processing line: ',/,a)
+  50  FORMAT (/,' get_roms_Ngrids - Error while processing line: ',/,a)
 !
       RETURN
       END FUNCTION get_roms_Ngrids
@@ -1431,7 +1431,7 @@
       integer :: ESMcount, Igrids, Jgrids, Ncplsets, Ngrd, Nstates
       integer :: ExpLstr, ImpLstr, SetLstr, lstr
       integer :: i, ic, ie, ig, is, j, jg, k, inp, ng, out, status
-      integer :: ifile, igrid
+      integer :: ifile, igrid, io_err
       integer :: maxD2A_files, maxD2I_files, maxD2R_files, maxD2W_files
       integer :: localPET, PETcount, MyComm, nPETs
       integer :: Cdim, Rdim, TimeFrac
@@ -1462,7 +1462,7 @@
       character (len= 40) :: KeyWord
       character (len= 50) :: MyLabel, label
       character (len= 80) :: string
-      character (len=256) :: fname, line
+      character (len=256) :: fname, io_errmsg, line
       character (len=256) :: ATMname, ICEname, OCNname, WAVname
       character (len=256), dimension(nCval) :: Cval
 
@@ -1543,24 +1543,23 @@
       CALL mp_bcasts (1, 1, CinpName)
       CALL mp_bcasts (1, 1, TodayDateString)
       OPEN (inp, FILE=TRIM(CinpName), FORM='formatted', STATUS='old',   &
-     &      ERR=10)
-      GO TO 30
- 10   WRITE (out,20)
-      IF (Lwrite) WRITE(out,*) 'MyRank = ', localPET, TRIM(CinpName)
-      exit_flag=4
-      rc=ESMF_RC_FILE_OPEN
-      RETURN
- 20   FORMAT (/,' read_ESMconfig - Unable to open coupling input',      &
-     &          ' script.',                                             &
-     &        /,19x,'In distributed-memory applications, the input',    &
-     &        /,19x,'script file is processed in parallel. The Unix',   &
-     &        /,19x,'routine GETARG is used to get script filename.',   &
-     &        /,19x,'For example, in MPI applications make sure that',  &
-     &        /,19x,'command line is something like:',/,                &
-     &        /,19x,'mpirun -np 4 oceanM coupling_esmf.in',/,           &
-     &        /,19x,'and not',/,                                        &
-     &        /,19x,'mpirun -np 4 oceanM < coupling_esmf.in',/)
- 30   CONTINUE
+     &      IOSTAT=io_err, IOMSG=io_errmsg)
+      IF (io_err.ne.0) THEN
+        IF (localPET.eq.0) WRITE (out,10) TRIM(io_errmsg)
+        exit_flag=5
+        rc=ESMF_RC_FILE_OPEN
+        RETURN
+ 10     FORMAT (/,' read_ESMconfig - Unable to open coupling input',    &
+     &          ' script.',/,19x,'ERROR: ',a,/,                         &
+     &          /,19x,'In distributed-memory applications, the input',  &
+     &          /,19x,'script file is processed in parallel. The Unix', &
+     &          /,19x,'routine GETARG is used to get script filename.', &
+     &          /,19x,'For example, in MPI applications make sure that',&
+     &          /,19x,'command line is something like:',/,              &
+     &          /,19x,'mpirun -np 4 romsM coupling_esmf.in',/,          &
+     &          /,19x,'and not',/,                                      &
+     &          /,19x,'mpirun -np 4 romsM < coupling_esmf.in',/)
+      END IF
 !
 !-----------------------------------------------------------------------
 !  Read in multiple models coupling parameters. Then, load input
@@ -1580,7 +1579,7 @@
 !  Read in coupling parameters.
 !
       DO WHILE (.TRUE.)
-        READ (inp,'(a)',ERR=40,END=50) line
+        READ (inp,'(a)',ERR=20,END=30) line
         status=decode_line(line, KeyWord, Nval, Cval, Rval)
         IF (status.gt.0) THEN
           SELECT CASE (TRIM(KeyWord))
@@ -2556,12 +2555,12 @@
           END SELECT
         END IF
       END DO
-  40  IF (localPET.eq.0) WRITE (out,60) line
+  20  IF (localPET.eq.0) WRITE (out,40) line
       exit_flag=4
       rc=ESMF_RC_FILE_READ
       RETURN
-  50  CLOSE (inp)
-  60  FORMAT (/,' read_ESMconfig - Error while processing line: ',/,a)
+  30  CLOSE (inp)
+  40  FORMAT (/,' read_ESMconfig - Error while processing line: ',/,a)
 !
 !-----------------------------------------------------------------------
 !  Set ESM, import state, and export state unique labels. They are
@@ -3734,7 +3733,7 @@
               DO i=1,DataSet(j)%Nfiles
                 DO ifile=1,DataSet(j)%IFS(i)%Nfiles
                   fname=DataSet(j)%IFS(i)%files(ifile)
-                  IF (find_file(ng, fname, TRIM(KeyWord))) THEN
+                  IF (find_file(ng, out, fname, TRIM(KeyWord))) THEN
                     IF (ifile.eq.1) THEN
                       WRITE (out,280) i, ': ', TRIM(fname)
                     ELSE
@@ -3987,6 +3986,7 @@
 !                                                                      !
 !=======================================================================
 !
+      USE mod_scalars, ONLY : exit_flag
       USE strings_mod, ONLY : uppercase
 !
 !  Imported variable declarations.
@@ -4001,7 +4001,7 @@
 !
       integer, parameter :: inp = 100
 
-      integer :: i, id, j, lvar, varid
+      integer :: i, id, io_err, j, lvar, varid
       integer :: localPET, PETcount
       integer :: etype, gtype, itype
 !
@@ -4009,6 +4009,7 @@
 !
       character (len=100) :: Dmodel, Sname, Smodel, Tname, units, val
       character (len=100) :: ShortName, line
+      character (len=256) :: io_errmsg
       character (len=100), dimension(12) :: Cinfo
 !
       character (len=*), parameter :: MyFile =                          &
@@ -4042,15 +4043,18 @@
 !  Open input coupling variable information file.
 !
       OPEN (inp, FILE=TRIM(CPLname), FORM='formatted', STATUS='old',    &
-     &      ERR=10)
-      GO TO 30
-  10  IF (localPET.eq.0) WRITE(cplout,20) TRIM(CPLname)
-  20  FORMAT (/,' SET_METADATA - Unable to open coupling metadata',     &
-     &        ' file: ',/,16x,a,/,16x,'Default  coupling_esmf.dat  is', &
-     &        ' located in ESM directory.')
-      rc=ESMF_RC_FILE_OPEN
-      RETURN
-  30  CONTINUE
+     &      IOSTAT=io_err, IOMSG=io_errmsg)
+      IF (io_err.ne.0) THEN
+        IF (localPET.eq.0) WRITE(cplout,10) TRIM(CPLname),              &
+     &                                      TRIM(io_errmsg)
+        exit_flag=5
+        rc=ESMF_RC_FILE_OPEN
+        RETURN
+  10    FORMAT (/,' SET_METADATA - Unable to open coupling metadata',   &
+     &          ' file: ',/,16x,a,/,16x,'ERROR: ',a,                    &
+                /,16x,'Default  coupling_esmf.dat  is located in ESM'   &
+                ' directory.')
+      END IF
 !
 !  Read in variable information.  Ignore blank and comment [char(33)=!]
 !  input lines.
@@ -4503,15 +4507,17 @@
 !  Open input coupling variable information file.
 !
       OPEN (inp, FILE=TRIM(CONFname), FORM='formatted', STATUS='old',   &
-     &      ERR=120)
-      GO TO 140
- 120  IF (localPET.eq.0) WRITE(cplout,130) TRIM(CONFname)
- 130  FORMAT (/,' SET_METADATA - Unable to open RunSequence ',          &
-     &        ' configuration file: ',/,16x,a,/,16x,'Prototypes are',   &
-     &        ' located in the ESM directory.')
-      rc=ESMF_RC_FILE_OPEN
-      RETURN
- 140  CONTINUE
+     &      IOSTAT=io_err, IOMSG=io_errmsg)
+      IF (io_err.ne.0) THEN
+        IF (localPET.eq.0) WRITE(cplout,130) TRIM(CONFname),            &
+     &                                       TRIM(io_errmsg)
+        exit_flag=5
+        rc=ESMF_RC_FILE_OPEN
+        RETURN
+ 130    FORMAT (/,' SET_METADATA - Unable to open RunSequence ',        &
+     &          ' configuration file: ',/,16x,a,/,16x,'ERROR: ',a,      &
+     &          /,16x,'Prototypes are located in the ESM directory.')
+      END IF
 !
 !  Read in and report RunSequence file. Ignore blank and comments
 !  [char(35)=#] input lines.
