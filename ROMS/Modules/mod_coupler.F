@@ -4,7 +4,7 @@
 #if defined MODEL_COUPLING && defined MCT_LIB
 !
 !git $Id$
-!svn $Id: mod_coupler.F 1054 2021-03-06 19:47:12Z arango $
+!svn $Id: mod_coupler.F 1083 2021-07-28 19:00:42Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -187,16 +187,18 @@
 !  Local variable declarations.
 !
       logical :: load
-
+!
       integer, parameter :: inp = 20
-
+!
       integer :: Nfields
       integer :: gtype, i, id, ifield, inode, lvar, model, ng, varid
-
+      integer :: io_err
+!
       real(r8) :: add_offset, scale
-
+!
       character (len=40 ) :: code
       character (len=80 ) :: string
+      character (len=256) :: io_errmsg
       character (len=120), dimension(5) :: Vinfo
 !
 !-----------------------------------------------------------------------
@@ -206,11 +208,12 @@
 !  Open input coupling variable information file.
 !
       OPEN (inp, FILE=TRIM(CPLname), FORM='formatted', STATUS='old',    &
-     &      ERR=10)
-      GO TO 20
-  10  IF (MyRank.eq.0) WRITE(stdout,50) TRIM(CPLname)
-      STOP
-  20  CONTINUE
+     &      IOSTAT=io_err, IOMSG=io_errmsg)
+      IF (io_err.ne.0) THEN
+        IF (MyRank.eq.0) WRITE(stdout,50) TRIM(CPLname), TRIM(io_errmsg)
+        exit_flag=5
+        RETURN
+      END IF
 !
 !  Read in variable information.  Ignore blank and comment [char(33)=!]
 !  input lines.
@@ -274,7 +277,6 @@
           Fields(varid) % scale     = scale
         END IF
       END DO
-      GO TO 40
   30  WRITE (stdout,80) TRIM(ADJUSTL(Vinfo(1)))
       STOP
   40  CLOSE (inp)
@@ -409,8 +411,8 @@
 
 !
  50   FORMAT (/,' MOD_COUPLER - Unable to open variable information',   &
-     &        ' file: ',/,15x,a,/,15x,'Default file is located in',     &
-     &        ' source directory.')
+     &        ' file: ',/,15x,a,/,15x,'ERROR: ',a,                      &
+              /,15x,'Default file is located in source directory.')
  60   FORMAT (/,' MOD_COUPLER - too small dimension ',                  &
      &        'parameter, MV = ',2i5,/,15x,                             &
      &        'change file  mod_ncparam.F  and recompile.')

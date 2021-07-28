@@ -2,7 +2,7 @@
       MODULE mod_ncparam
 !
 !git $Id$
-!svn $Id: mod_ncparam.F 1081 2021-07-24 02:25:06Z arango $
+!svn $Id: mod_ncparam.F 1083 2021-07-28 19:00:42Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -984,16 +984,18 @@
 !  Local variable declarations.
 !
       logical :: load
-
+!
       integer, parameter :: inp = 10
 #ifdef DISTRIBUTE
       integer :: Itile, Jtile
 #endif
-      integer :: Lvar, Ntiles, i, ic, j, ng
+      integer :: Lvar, Ntiles, i, ic, io_err, j, ng
       integer :: gtype, tile, varid
-
+!
       real(r8), parameter :: spv = 0.0_r8
       real(r8) :: offset, scale
+!
+      character (len=256) :: io_errmsg
 
       character (len=120), dimension(7) :: Vinfo
 !
@@ -1202,11 +1204,12 @@
 !  Open input variable information file.
 !
       OPEN (inp, FILE=TRIM(varname), FORM='formatted', STATUS='old',    &
-     &      ERR=10)
-      GO TO 20
-  10  IF (Master) WRITE(stdout,50) TRIM(varname)
-      STOP
-  20  CONTINUE
+     &      IOSTAT=io_err, IOMSG=io_errmsg)
+      IF (io_err.ne.0) THEN
+        IF (Master) WRITE(stdout,50) TRIM(varname), TRIM(io_errmsg)
+        exit_flag=5
+        RETURN
+      END IF
 !
 !  Read in variable information.  Ignore blank, comment [char(33)=!]
 !  input lines, and URL line [char(36)=$].
@@ -2590,7 +2593,6 @@
           END IF
         END IF
       END DO
-      GO TO 40
   30  WRITE (stdout,80) TRIM(ADJUSTL(Vinfo(1)))
       STOP
   40  CLOSE (inp)
@@ -2771,8 +2773,8 @@
       Dmem(1)=Dmem(1)+REAL(varid,r8)
 !
   50  FORMAT (/,' MOD_NCPARAM - Unable to open variable information',   &
-     &        ' file: ',/,15x,a,/,15x,'Default file is located in',     &
-     &        ' source directory.')
+     &        ' file: ',/,15x,a,/,15x,'ERROR: ',a,/,                    &
+     &        15x,'Default file is located in source directory.')
   60  FORMAT (/,' MOD_NCPARAM - too small dimension ',                  &
      &        'parameter, MV = ',2i5,/,15x,                             &
      &        'change file  mod_ncparam.F  and recompile.')
@@ -2784,7 +2786,7 @@
  100  FORMAT (a,a,i2.2)
  110  FORMAT (a)
  120  FORMAT (a,a)
-
+!
       RETURN
       END SUBROUTINE initialize_ncparam
 

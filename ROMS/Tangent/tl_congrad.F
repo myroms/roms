@@ -9,7 +9,7 @@
      &                       Lcgini)
 !
 !git $Id$
-!svn $Id: tl_congrad.F 1081 2021-07-24 02:25:06Z arango $
+!svn $Id: tl_congrad.F 1083 2021-07-28 19:00:42Z arango $
 !=================================================== Andrew M. Moore ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group      Hernan G. Arango   !
 !    Licensed under a MIT/X style license                              !
@@ -538,7 +538,6 @@
 !^          WRITE (stdout,20) cg_delta(innLoop,outLoop), outLoop,       &
 !^   &                        innLoop
 !^          exit_flag=8
-!^          GO TO 10
 !^        END IF
 !^
 !

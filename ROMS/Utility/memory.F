@@ -2,7 +2,7 @@
       SUBROUTINE memory
 !
 !git $Id$
-!svn $Id: memory.F 1054 2021-03-06 19:47:12Z arango $
+!svn $Id: memory.F 1083 2021-07-28 19:00:42Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -31,7 +31,8 @@
 #ifdef DISTRIBUTE
       USE distribute_mod, ONLY : mp_collect
 #endif
-      USE mod_netcdf, ONLY : Matts, Mdims, Mvars, NvarD, NvarA
+      USE mod_netcdf,     ONLY : Matts, Mdims, Mvars, NvarD, NvarA
+      USE mod_scalars,    ONLY : LallocatedMemory
 !
       implicit none
 !
@@ -55,6 +56,10 @@
 !-----------------------------------------------------------------------
 !  Report estimate of dynamic memory and automatic memory requirements.
 !-----------------------------------------------------------------------
+!
+!  If ROMS array have not been allocated, skip report.
+
+      IF (.not.LallocatedMemory) RETURN
 !
 !  Allocate and initialize.
 !

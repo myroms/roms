@@ -2,7 +2,7 @@
       MODULE mod_scalars
 !
 !git $Id$
-!svn $Id: mod_scalars.F 1064 2021-05-10 19:55:56Z arango $
+!svn $Id: mod_scalars.F 1083 2021-07-28 19:00:42Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -429,6 +429,12 @@
 !  Switch for spherical grid (lon,lat) configurations.
 !
         logical :: spherical = .FALSE.
+!
+!  Switch to indicate if ROMS kernel arrays have been allocated.  It
+!  used to skip memory reports during early termination.
+!
+        logical :: LallocatedMemory = .FALSE.
+!$OMP THREADPRIVATE (LallocatedMemory)
 !
 !  Switch to compute the grid stiffness.
 !

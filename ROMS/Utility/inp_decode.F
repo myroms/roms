@@ -2,7 +2,7 @@
       MODULE inp_decode_mod
 !
 !git $Id$
-!svn $Id: inp_decode.F 1064 2021-05-10 19:55:56Z arango $
+!svn $Id: inp_decode.F 1083 2021-07-28 19:00:42Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -379,7 +379,7 @@
       RETURN
       END FUNCTION decode_line
 !
-      FUNCTION find_file (ng, fname, KeyWord) RESULT (foundit)
+      FUNCTION find_file (ng, out, fname, KeyWord) RESULT (foundit)
 !
 !***********************************************************************
 !                                                                      !
@@ -388,6 +388,7 @@
 !  On Input:                                                           !
 !                                                                      !
 !     ng         Nested grid number                                    !
+!     out        Standard output unit                                  !
 !     fname      Filename (path and name)                              !
 !     KeyWord    Keyword associated with file name (string,OPTIONAL)   !
 !                                                                      !
@@ -400,7 +401,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng
+      integer, intent(in) :: ng, out
 !
       character (len=*), intent(in) :: fname
       character (len=*), intent(in) :: KeyWord
@@ -428,7 +429,7 @@
       IF (lstr.eq.0) THEN
         IF (Master) THEN
           WRITE (stdout,10) TRIM(KeyWord)
- 10       FORMAT (/,' INP_PAR:FIND_FILE - empty file name string ',     &
+ 10       FORMAT (/,' FIND_FILE - empty file name string ',             &
      &            'for standard input script KeyWord: ',a)
         END IF
         exit_flag=5
@@ -457,6 +458,15 @@
           foundit=.TRUE.
           CALL netcdf_close (ng, iNLM, ncid, fname, .FALSE.)
         END IF
+      END IF
+!
+!  Report if not found.
+!
+      IF (.not.foundit) THEN
+        IF (Master) WRITE (out,20) ng, TRIM(fname)
+ 20     FORMAT (/,' FIND_FILE - Grid ',i2.2,                           &
+                  ', cannot find input file: ',a)
+        exit_flag=5
       END IF
 !
       RETURN

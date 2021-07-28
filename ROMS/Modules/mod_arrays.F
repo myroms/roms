@@ -2,7 +2,7 @@
       SUBROUTINE mod_arrays (allocate_vars)
 !
 !git $Id$
-!svn $Id: mod_arrays.F 1054 2021-03-06 19:47:12Z arango $
+!svn $Id: mod_arrays.F 1083 2021-07-28 19:00:42Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -156,6 +156,7 @@
 !$OMP END MASTER
 !$OMP BARRIER
 #endif
+        LallocatedMemory=.TRUE.
       END IF
 !
 !-----------------------------------------------------------------------
