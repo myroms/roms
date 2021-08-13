@@ -3,7 +3,7 @@
 #if (defined FOUR_DVAR || defined VERIFICATION) && defined OBSERVATIONS
 !
 !git $Id$
-!svn $Id: stats_modobs.F 1064 2021-05-10 19:55:56Z arango $
+!svn $Id: stats_modobs.F 1085 2021-08-13 00:03:50Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -77,6 +77,12 @@
 !-----------------------------------------------------------------------
 !  Compute and write out model-observation statistics.
 !-----------------------------------------------------------------------
+!
+!  Skip if configuration error.
+!
+      IF ((exit_flag.eq.5).or.(exit_flag.eq.6)) RETURN
+!
+!  Process model-observation statistics
 !
       LBi=BOUNDS(ng)%LBi(tile)
       UBi=BOUNDS(ng)%UBi(tile)

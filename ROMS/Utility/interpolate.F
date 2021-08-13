@@ -5,7 +5,7 @@
       MODULE roms_interpolate_mod
 !
 !git $Id$
-!svn $Id: interpolate.F 1077 2021-06-30 02:30:08Z arango $
+!svn $Id: interpolate.F 1085 2021-08-13 00:03:50Z arango $
 !=======================================================================
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -1144,7 +1144,7 @@
             inc=0
             IF ((Xb(k).eq.Xo).and.(Yb(k).eq.Yo)) THEN
               crossings=1
-              goto 10
+              GO TO 10
             ELSE IF (((dx1.eq.0.0_r8).and.(Yo.ge.Yb(k  ))).or.          &
      &              ((dx2.eq.0.0_r8).and.(Yo.ge.Yb(k+1)))) THEN
               inc=1

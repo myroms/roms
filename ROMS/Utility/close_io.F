@@ -2,7 +2,7 @@
       MODULE close_io_mod
 !
 !git $Id$
-!svn $Id: close_io.F 1083 2021-07-28 19:00:42Z arango $
+!svn $Id: close_io.F 1085 2021-08-13 00:03:50Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -108,6 +108,10 @@
 !-----------------------------------------------------------------------
 !  If multi-file input fields, close several input files.
 !-----------------------------------------------------------------------
+!
+!  Skip if configuration error.
+!
+      IF ((exit_flag.eq.5).or.(exit_flag.eq.6)) RETURN
 
 #ifdef FRC_FILE
 !
@@ -192,6 +196,12 @@
 !-----------------------------------------------------------------------
 !  Close output NetCDF files. Set file indices to closed state.
 !-----------------------------------------------------------------------
+!
+!  Skip if configuration error.
+!
+      IF ((exit_flag.eq.5).or.(exit_flag.eq.6)) RETURN
+!
+!  Close output NetCDF files.
 !
       DO ng=1,Ngrids
         CALL close_file (ng, iNLM, RST(ng), RST(ng)%name)
