@@ -3,7 +3,7 @@
 #if (defined FOUR_DVAR || defined VERIFICATION) && defined OBSERVATIONS
 !
 !git $Id$
-!svn $Id: obs_read.F 1064 2021-05-10 19:55:56Z arango $
+!svn $Id: obs_read.F 1085 2021-08-13 00:03:50Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -238,11 +238,12 @@
 
 #  ifdef DISTRIBUTE
 !
-!  If distributed-memory and Zobs in meters (Zobs < 0),  zero-out
-!  Zobs values in all nodes but itself to facilitate exchages between
-!  tiles latter before writting into observation NetCDF file.
+!  If distributed-memory and SOME or ALL observations have Zobs in
+!  meters (Zobs < 0), zero-out Zobs values in all nodes but itself
+!  to facilitate exchages between tiles latter before writting into
+!  observation NetCDF file.
 !
-        IF (.not.wrote_Zobs(ng)) THEN
+        IF (.not.wrote_Zobs(ng).and.Load_Zobs(ng)) THEN
           CALL obs_depth (ng, MyRank, model)
         END IF
 #  endif
@@ -584,11 +585,12 @@
           Load_Zobs(ng)=.TRUE.
         END IF
 !
-!  If distributed-memory and Zobs in meters (Zobs < 0),  zero-out
-!  Zobs values in all nodes but itself to facilitate exchages between
-!  tiles latter before writting into observation NetCDF file.
+!  If distributed-memory and SOME or ALL observations have Zobs in
+!  meters (Zobs < 0), zero-out Zobs values in all nodes but itself
+!  to facilitate exchages between tiles latter before writting into
+!  observation NetCDF file.
 !
-        IF (.not.wrote_Zobs(ng)) THEN
+        IF (.not.wrote_Zobs(ng).and.Load_Zobs(ng)) THEN
           CALL obs_depth (ng, MyRank, model)
         END IF
 #  endif

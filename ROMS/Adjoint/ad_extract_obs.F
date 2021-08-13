@@ -3,7 +3,7 @@
 #if defined ADJOINT && defined FOUR_DVAR && defined OBSERVATIONS
 !
 !git $Id$
-!svn $Id: ad_extract_obs.F 1081 2021-07-24 02:25:06Z arango $
+!svn $Id: ad_extract_obs.F 1085 2021-08-13 00:03:50Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -382,9 +382,11 @@
             Ztop=Adepth(i1,j1,N(ng))
             Zbot=Adepth(i1,j1,1    )
             IF (Zobs(iobs).ge.Ztop) THEN
-              r1=0.0_r8                        ! If shallower, ignore.
-              r2=0.0_r8
-              ObsVetting(iobs)=0.0_r8
+              k1=N(ng)                         ! If shallower, assign to
+              k2=N(ng)                         ! top grid cell. The
+              r1=1.0_r8                        ! observation is located
+              r2=0.0_r8                        ! on the upper cell half
+              Zobs(iobs)=REAL(N(ng),r8)        ! above its middle depth.
             ELSE IF (Zbot.ge.Zobs(iobs)) THEN
               r1=0.0_r8                        ! If deeper, ignore.
               r2=0.0_r8

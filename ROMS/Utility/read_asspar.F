@@ -3,7 +3,7 @@
       SUBROUTINE read_AssPar (model, inp, out, Lwrite)
 !
 !git $Id$
-!svn $Id: read_asspar.F 1083 2021-07-28 19:00:42Z arango $
+!svn $Id: read_asspar.F 1085 2021-08-13 00:03:50Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -1029,7 +1029,7 @@
 #    if defined RBL4DVAR           || defined R4DVAR    || \
         defined SENSITIVITY_4DVAR  || defined SP4DVAR   || \
         defined TL_RBL4DVAR        || defined TL_R4DVAR
-         IF (nADJ(ng).lt.ntimes(ng)) THEN
+          IF (nADJ(ng).lt.ntimes(ng)) THEN
             WRITE (out,120) Hdecay(2,isFsur,ng), 'HdecayM(isFsur)',     &
      &            'Model decorrelation H-scale (m), free-surface.'
             WRITE (out,120) Hdecay(2,isUbar,ng), 'HdecayM(isUbar)',     &
@@ -1258,19 +1258,26 @@
      &            TRIM(ExtraName(i))
             END DO
           END IF
+        END DO
+      END IF
 !
 !-----------------------------------------------------------------------
 !  Report input files and check availability of input files.
 !-----------------------------------------------------------------------
 !
-          WRITE (out,150)
+      IF (Master.and.Lwrite) THEN
+        WRITE (out,150)
 #  ifdef VERIFICATION
-          WRITE (out,160) '     Verification Parameters File:  ',       &
-     &                    TRIM(aparnam)
+        WRITE (out,160) '     Verification Parameters File:  ',         &
+     &                  TRIM(aparnam)
 #  else
-          WRITE (out,160) '     Assimilation Parameters File:  ',       &
-     &                    TRIM(aparnam)
+        WRITE (out,160) '     Assimilation Parameters File:  ',         &
+     &                  TRIM(aparnam)
 #  endif
+      END IF
+!
+      DO ng=1,Ngrids
+
 #  if defined FOUR_DVAR           || \
      (defined HESSIAN_SV          && defined BNORM)
 #   if defined I4DVAR             || defined OBS_SENSITIVITY || \
@@ -1278,168 +1285,160 @@
 #    if defined RBL4DVAR          || defined R4DVAR          || \
         defined SENSITIVITY_4DVAR || defined SP4DVAR         || \
         defined TL_RBL4DVAR       || defined TL_R4DVAR
-          fname=STD(2,ng)%name
-          IF (NSA.eq.2) THEN
-            IF (.not.find_file(ng, out, fname, 'STDnameM')) THEN
-              IF (FoundError(exit_flag, NoError, __LINE__, MyFile))     &
-     &          RETURN
-            ELSE
-              WRITE (out,160) '                   Model STD File:  ',   &
-     &                        TRIM(fname)
-            END IF
+        fname=STD(2,ng)%name
+        IF (NSA.eq.2) THEN
+          IF (.not.find_file(ng, out, fname, 'STDnameM')) THEN
+            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+          ELSE
+            IF (Master.and.Lwrite) WRITE (out,160)                      &
+     &        '                   Model STD File:  ', TRIM(fname)
           END IF
+        END IF
 #    endif
-          fname=STD(1,ng)%name
-          IF (.not.find_file(ng, out, fname, 'STDnameI')) THEN
-            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-          ELSE
-            WRITE (out,160) '      Initial Conditions STD File:  ',     &
-     &                      TRIM(fname)
-          END IF
+        fname=STD(1,ng)%name
+        IF (.not.find_file(ng, out, fname, 'STDnameI')) THEN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        ELSE
+          IF (Master.and.Lwrite) WRITE (out,160)                        &
+     &      '      Initial Conditions STD File:  ', TRIM(fname)
+        END IF
 #    ifdef ADJUST_BOUNDARY
-          fname=STD(3,ng)%name
-          IF (.not.find_file(ng, out, fname, 'STDnameB')) THEN
-            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-          ELSE
-            WRITE (out,160) '     Boundary Conditions STD File:  ',     &
-     &                      TRIM(fname)
-          END IF
+        fname=STD(3,ng)%name
+        IF (.not.find_file(ng, out, fname, 'STDnameB')) THEN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        ELSE
+          IF (Master.and.Lwrite) WRITE (out,160)                        &
+     &      '     Boundary Conditions STD File:  ', TRIM(fname)
+        END IF
 #    endif
 #    if defined ADJUST_WSTRESS || defined ADJUST_STFLUX
-          fname=STD(4,ng)%name
-          IF (.not.find_file(ng, out, fname, 'STDnameF')) THEN
-            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-          ELSE
-            WRITE (out,160) '         Surface Forcing STD File:  ',     &
-     &                      TRIM(fname)
-          END IF
+        fname=STD(4,ng)%name
+        IF (.not.find_file(ng, out, fname, 'STDnameF')) THEN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        ELSE
+          IF (Master.and.Lwrite) WRITE (out,160)                        &
+     &      '         Surface Forcing STD File:  ', TRIM(fname)
+        END IF
 #    endif
 #   endif
 #   if defined RBL4DVAR          || defined R4DVAR    || \
        defined SENSITIVITY_4DVAR || defined SP4DVAR   || \
        defined TL_RBL4DVAR       || defined TL_R4DVAR
-          fname=NRM(2,ng)%name
-          WRITE (out,160) '                  Model Norm File:  ',       &
-     &                    TRIM(fname)
-          IF (.not.LdefNRM(2,ng)) THEN
-            IF (.not.find_file(ng, out, fname, 'NRMnameM')) THEN
-              IF (FoundError(exit_flag, NoError, __LINE__, MyFile))     &
-     &          RETURN
-            END IF
+        fname=NRM(2,ng)%name
+        IF (Master.and.Lwrite) WRITE (out,160)                          &
+     &    '                  Model Norm File:  ', TRIM(fname)
+        IF (.not.LdefNRM(2,ng)) THEN
+          IF (.not.find_file(ng, out, fname, 'NRMnameM')) THEN
+            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
           END IF
+        END IF
 #   elif defined CORRELATION
-          fname=NRM(2,ng)%name
-          WRITE (out,160) '                  Model Norm File:  ',       &
-     &                    TRIM(fname)
-          IF (.not.LdefNRM(2,ng).and.LwrtNRM(2,ng)) THEN
-            IF (.not.find_file(ng, out, fname, 'NRMnameM')) THEN
-              IF (FoundError(exit_flag, NoError, __LINE__, MyFile))     &
-     &          RETURN
-            END IF
+        fname=NRM(2,ng)%name
+        IF (Master.and.Lwrite) WRITE (out,160)                          &
+     &    '                  Model Norm File:  ', TRIM(fname)
+        IF (.not.LdefNRM(2,ng).and.LwrtNRM(2,ng)) THEN
+          IF (.not.find_file(ng, out, fname, 'NRMnameM')) THEN
+            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
           END IF
+        END IF
 #   endif
 #   if defined CORRELATION
-          fname=NRM(1,ng)%name
-          WRITE (out,160) '     Initial Conditions Norm File:  ',       &
-     &                    TRIM(fname)
-          IF (.not.LdefNRM(1,ng).and.LwrtNRM(1,ng)) THEN
-            IF (.not.find_file(ng, out, fname, 'NRMnameI')) THEN
-              IF (FoundError(exit_flag, NoError, __LINE__, MyFile))     &
-     &          RETURN
-            END IF
+        fname=NRM(1,ng)%name
+        IF (Master.and.Lwrite) WRITE (out,160)                          &
+     &    '     Initial Conditions Norm File:  ', TRIM(fname)
+        IF (.not.LdefNRM(1,ng).and.LwrtNRM(1,ng)) THEN
+          IF (.not.find_file(ng, out, fname, 'NRMnameI')) THEN
+            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
           END IF
+        END IF
 #   else
-          fname=NRM(1,ng)%name
-          WRITE (out,160) '     Initial Conditions Norm File:  ',       &
-     &                    TRIM(fname)
-          IF (.not.LdefNRM(1,ng)) THEN
-            IF (.not.find_file(ng, out, fname, 'NRMnameI')) THEN
-              IF (FoundError(exit_flag, NoError, __LINE__, MyFile))     &
-     &          RETURN
-            END IF
+        fname=NRM(1,ng)%name
+        IF (Master.and.Lwrite) WRITE (out,160)                          &
+     &    '     Initial Conditions Norm File:  ', TRIM(fname)
+        IF (.not.LdefNRM(1,ng)) THEN
+          IF (.not.find_file(ng, out, fname, 'NRMnameI')) THEN
+            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
           END IF
+        END IF
 #   endif
 #   ifdef ADJUST_BOUNDARY
 #    ifdef CORRELATION
-          fname=NRM(3,ng)%name
-          WRITE (out,160) '    Boundary Conditions Norm File:  ',       &
-     &                    TRIM(fname)
-          IF (.not.LdefNRM(3,ng).and.LwrtNRM(3,ng)) THEN
-            IF (.not.find_file(ng, out, fname, 'NRMnameB')) THEN
-              IF (FoundError(exit_flag, NoError, __LINE__, MyFile))     &
-     &          RETURN
-            END IF
+        fname=NRM(3,ng)%name
+        IF (Master.and.Lwrite) WRITE (out,160)                          &
+     &    '    Boundary Conditions Norm File:  ', TRIM(fname)
+        IF (.not.LdefNRM(3,ng).and.LwrtNRM(3,ng)) THEN
+          IF (.not.find_file(ng, out, fname, 'NRMnameB')) THEN
+            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
           END IF
+        END IF
 #    else
-          fname=NRM(3,ng)%name
-          WRITE (out,160) '    Boundary Conditions Norm File:  ',       &
-     &                    TRIM(fname)
-          IF (.not.LdefNRM(3,ng)) THEN
-            IF (.not.find_file(ng, out, fname, 'NRMnameB')) THEN
-              IF (FoundError(exit_flag, NoError, __LINE__, MyFile))     &
-     &          RETURN
-            END IF
+        fname=NRM(3,ng)%name
+        IF (Master.and.Lwrite) WRITE (out,160)                          &
+     &    '    Boundary Conditions Norm File:  ', TRIM(fname)
+        IF (.not.LdefNRM(3,ng)) THEN
+          IF (.not.find_file(ng, out, fname, 'NRMnameB')) THEN
+            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
           END IF
+        END IF
 #    endif
 #   endif
 #   if defined ADJUST_WSTRESS || defined ADJUST_STFLUX
 #    ifdef CORRELATION
-          fname=NRM(4,ng)%name
-          WRITE (out,160) '        Surface Forcing Norm File:  ',       &
-     &                    TRIM(fname)
-          IF (.not.LdefNRM(4,ng).and.LwrtNRM(4,ng)) THEN
-            IF (.not.find_file(ng, out, fname, 'NRMnameF')) THEN
-              IF (FoundError(exit_flag, NoError, __LINE__, MyFile))     &
-     &          RETURN
-            END IF
+        fname=NRM(4,ng)%name
+        IF (Master.and.Lwrite) WRITE (out,160)                          &
+     &    '        Surface Forcing Norm File:  ', TRIM(fname)
+        IF (.not.LdefNRM(4,ng).and.LwrtNRM(4,ng)) THEN
+          IF (.not.find_file(ng, out, fname, 'NRMnameF')) THEN
+            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
           END IF
+        END IF
 #    else
-          fname=NRM(4,ng)%name
-          WRITE (out,160) '        Surface Forcing Norm File:  ',       &
-     &                    TRIM(fname)
-          IF (.not.LdefNRM(4,ng)) THEN
-            IF (.not.find_file(ng, out, fname, 'NRMnameF')) THEN
-              IF (FoundError(exit_flag, NoError, __LINE__, MyFile))     &
-     &          RETURN
-            END IF
+        fname=NRM(4,ng)%name
+        IF (Master.and.Lwrite) WRITE (out,160)                          &
+     &    '        Surface Forcing Norm File:  ', TRIM(fname)
+        IF (.not.LdefNRM(4,ng)) THEN
+          IF (.not.find_file(ng, out, fname, 'NRMnameF')) THEN
+            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
           END IF
+        END IF
 #    endif
 #   endif
 #   if !(defined CORRELATION || defined OPT_OBSERVATIONS)
-          fname=OBS(ng)%name
-          IF (.not.find_file(ng, out, fname, 'OBSname')) THEN
-            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-          ELSE
-            WRITE (out,160) '          Input observations File:  ',     &
-     &                      TRIM(fname)
-          END IF
+        fname=OBS(ng)%name
+        IF (.not.find_file(ng, out, fname, 'OBSname')) THEN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        ELSE
+          IF (Master.and.Lwrite) WRITE (out,160)                        &
+     &      '          Input observations File:  ', TRIM(fname)
+        END IF
 #   endif
 #   if !defined CORRELATION
-          WRITE (out,160) '        Input/Output Lanczos File:  ',       &
-     &                    TRIM(LCZ(ng)%name)
+        IF (Master.and.Lwrite) WRITE (out,160)                          &
+     &    '        Input/Output Lanczos File:  ', TRIM(LCZ(ng)%name)
 #    ifndef I4DVAR_ANA_SENSITIVITY
-          WRITE (out,160) '        Input/Output Hessian File:  ',       &
-     &                    TRIM(HSS(ng)%name)
+        IF (Master.and.Lwrite) WRITE (out,160)                          &
+     &    '        Input/Output Hessian File:  ', TRIM(HSS(ng)%name)
 #    endif
 #    ifdef EVOLVED_LCZ
-          WRITE (out,160) '      Output evolved Lanczos File:  ',       &
-     &                    TRIM(LZE(ng)%name)
+        IF (Master.and.Lwrite) WRITE (out,160)                          &
+          '      Output evolved Lanczos File:  ', TRIM(LZE(ng)%name)
 #    endif
 #   endif
 #  endif
 #  if !defined CORRELATION
 #   ifdef VERIFICATION
-          fname=OBS(ng)%name
-          IF (.not.find_file(ng, out, fname, 'OBSname')) THEN
-            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-          ELSE
-            WRITE (out,160) '          Input observations File:  ',     &
-     &                      TRIM(fname)
-          END IF
-          WRITE (out,160) '         Output verification File:  ',       &
-     &                    TRIM(DAV(ng)%name)
+        fname=OBS(ng)%name
+        IF (.not.find_file(ng, out, fname, 'OBSname')) THEN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        ELSE
+          IF (Master.and.Lwrite) WRITE (out,160)
+     &      '          Input observations File:  ', TRIM(fname)
+        END IF
+        IF (Master.and.Lwrite) WRITE (out,160)                          &
+     &    '         Output verification File:  ', TRIM(DAV(ng)%name)
 #   else
 #    ifdef SP4DVAR
+        IF (Master.and.Lwrite) THEN
           WRITE (out,160) '    Input/Output TLM Arnoldi File:  ',       &
      &                    TRIM(SPT(ng)%name)
           WRITE (out,160) '    Input/Output ADM Arnoldi File:  ',       &
@@ -1448,27 +1447,27 @@
      &                    TRIM(SCT(ng)%name)
           WRITE (out,160) '    Input/Output ADM Scratch File:  ',       &
      &                    TRIM(SCA(ng)%name)
+        END IF
 #    endif
-          WRITE (out,160) '               Output 4D-Var File:  ',       &
-     &                    TRIM(DAV(ng)%name)
+        IF (Master.and.Lwrite) WRITE (out,160)                          &
+     &    '               Output 4D-Var File:  ', TRIM(DAV(ng)%name)
 #   endif
 #  endif
 #  if defined WEAK_CONSTRAINT   && \
      (defined POSTERIOR_ERROR_F || defined POSTERIOR_ERROR_I)
-          WRITE (out,160) '      Output Posterior Error File:  ',       &
-     &                    TRIM(ERR(ng)%name)
+        IF (Master.and.Lwrite) WRITE (out,160)                          &
+          '      Output Posterior Error File:  ', TRIM(ERR(ng)%name)
 #  endif
 #  if defined RBL4DVAR_FCT_SENSITIVITY && defined OBS_SPACE
-          fname=OIFA(ng)%name
-          WRITE (out,160) '  Input Obs Impacts Analysis File:  ',       &
-     &                    TRIM(fname)
+        fname=OIFA(ng)%name
+        IF (Master.and.Lwrite) WRITE (out,160)                          &
+     &    '  Input Obs Impacts Analysis File:  ', TRIM(fname)
 !
-          fname=OIFB(ng)%name
-          WRITE (out,160) 'Input Obs Impacts Background File:  ',       &
-     &                    TRIM(fname)
+        fname=OIFB(ng)%name
+        IF (Master.and.Lwrite) WRITE (out,160)                          &
+     &    'Input Obs Impacts Background File:  ', TRIM(fname)
 #   endif
-        END DO
-      END IF
+      END DO
 
 #  if defined WEAK_CONSTRAINT && defined RPCG
 !

@@ -2,7 +2,7 @@
       MODULE def_dim_mod
 !
 !git $Id$
-!svn $Id: def_dim.F 1066 2021-05-14 21:47:45Z arango $
+!svn $Id: def_dim.F 1085 2021-08-13 00:03:50Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -177,7 +177,7 @@
       status=PIO_noerr
 !
       status=PIO_def_dim(pioFile, TRIM(DimName), DimSize, DimId)
-      IF (FoundError(status, pio_noerr, __LINE__,                       &
+      IF (FoundError(status, PIO_noerr, __LINE__,                       &
      &                 __FILE__)) THEN
         IF (Master) WRITE (stdout,10) TRIM(DimName), TRIM(ncname)
         exit_flag=3

@@ -2,7 +2,7 @@
       MODULE inp_decode_mod
 !
 !git $Id$
-!svn $Id: inp_decode.F 1083 2021-07-28 19:00:42Z arango $
+!svn $Id: inp_decode.F 1085 2021-08-13 00:03:50Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -465,7 +465,7 @@
       IF (.not.foundit) THEN
         IF (Master) WRITE (out,20) ng, TRIM(fname)
  20     FORMAT (/,' FIND_FILE - Grid ',i2.2,                           &
-                  ', cannot find input file: ',a)
+     &          ', cannot find input file: ',a)
         exit_flag=5
       END IF
 !

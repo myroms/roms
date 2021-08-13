@@ -2,7 +2,7 @@
       MODULE nf_fread2d_bry_mod
 !
 !git $Id$
-!svn $Id: nf_fread2d_bry.F 1066 2021-05-14 21:47:45Z arango $
+!svn $Id: nf_fread2d_bry.F 1085 2021-08-13 00:03:50Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -305,6 +305,7 @@
             DO ir=1,Nrec
               DO ib=1,4
                 DO ij=LBij,UBij
+                  ic=ic+1
                   Cwrk(ic)=wrk(ij,ib,ir)
                 END DO
               END DO
@@ -590,6 +591,7 @@
           DO ir=1,Nrec
             DO ib=1,4
               DO ij=LBij,UBij
+                ic=ic+1
                 Cwrk(ic)=wrk(ij,ib,ir)
               END DO
             END DO
@@ -599,7 +601,7 @@
         END IF
       END IF
 !
-      IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+      IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
         exit_flag=2
         ioerror=status
         RETURN
