@@ -2,7 +2,7 @@
       MODULE mod_scalars
 !
 !git $Id$
-!svn $Id: mod_scalars.F 1083 2021-07-28 19:00:42Z arango $
+!svn $Id: mod_scalars.F 1086 2021-08-18 19:23:15Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -1991,10 +1991,12 @@
       END IF
       IF (.not.allocated(tdays)) THEN
         allocate ( tdays(Ngrids) )
+        tdays=0.0_dp
         Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(time)) THEN
         allocate ( time(Ngrids) )
+        time=0.0_dp
         Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
       IF (.not.allocated(time_code)) THEN

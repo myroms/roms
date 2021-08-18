@@ -3,7 +3,7 @@
 #if (defined FOUR_DVAR || defined VERIFICATION) && defined OBSERVATIONS
 !
 !git $Id$
-!svn $Id: obs_write.F 1064 2021-05-10 19:55:56Z arango $
+!svn $Id: obs_write.F 1086 2021-08-18 19:23:15Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -1220,7 +1220,7 @@
 # ifdef TLM_OBS
 !
 !  Tangent linear state vector.
-
+!
       IF (wrtTLmod(ng).or.wrtRPmod(ng)) THEN
         DO iobs=Mstr,Mend
 #  ifdef I4DVAR_ANA_SENSITIVITY
@@ -1688,13 +1688,8 @@
 !  evolve in time, the fractional level coordinate is unknow during
 !  the processing of the observations.
 !
-      IF (Load_Zobs(ng).and.                                            &
+      IF ((Nrun.eq.1).and.                                              &
      &    (wrtNLmod(ng).or.wrtTLmod(ng).or.wrtRPmod(ng))) THEN
-
-        DO iobs=Mstr,Mend
-          Zobs(iobs)=Zobs(iobs)*ObsScale(iobs)
-        END DO
-!
         CALL netcdf_put_fvar (ng, model, OBS(ng)%name,                  &
      &                        Vname(1,idObsZ),                          &
      &                        Zobs(Mstr:),                              &
@@ -1741,7 +1736,7 @@
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
 # ifdef SOLVE3D
-        IF (Load_Zobs(ng)) THEN
+        IF (Nrun.eq.1) THEN
           CALL netcdf_sync (ng, model, OBS(ng)%name, OBS(ng)%ncid)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
@@ -2141,13 +2136,8 @@
 !  evolve in time, the fractional level coordinate is unknow during
 !  the processing of the observations.
 !
-      IF (Load_Zobs(ng).and.                                            &
+      IF ((Nrun.eq.1).and.                                              &
      &    (wrtNLmod(ng).or.wrtTLmod(ng).or.wrtRPmod(ng))) THEN
-
-        DO iobs=Mstr,Mend
-          Zobs(iobs)=Zobs(iobs)*ObsScale(iobs)
-        END DO
-!
         CALL pio_netcdf_put_fvar (ng, model, OBS(ng)%name,              &
      &                            Vname(1,idObsZ),                      &
      &                            Zobs(Mstr:Mend),                      &
@@ -2201,7 +2191,7 @@
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
 #  ifdef SOLVE3D
-        IF (Load_Zobs(ng)) THEN
+        IF (Nrun.eq.1) THEN
           CALL pio_netcdf_sync (ng, model, OBS(ng)%name,                &
      &                          OBS(ng)%pioFile)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
