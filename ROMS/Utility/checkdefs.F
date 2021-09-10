@@ -2,7 +2,7 @@
       SUBROUTINE checkdefs
 !
 !git $Id$
-!svn $Id: checkdefs.F 1064 2021-05-10 19:55:56Z arango $
+!svn $Id: checkdefs.F 1087 2021-09-10 01:11:17Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -555,7 +555,7 @@
 #ifdef ATM_PRESS
 !
       IF (Master) WRITE (stdout,20) 'ATM_PRESS',                        &
-     &   'Impose atmospheric pressure onto sea surface'
+     &   'Impose inverse barometer effect in pressure gradient term'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+11)=' ATM_PRESS,'
 #endif
@@ -2442,7 +2442,7 @@
 #if defined SSH_TIDES
 !
       IF (Master) WRITE (stdout,20) 'SSH_TIDES',                        &
-     &   'Add tidal elevation to SSH climatology'
+     &   'Adding tidal elevation to SSH climatology'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+11)=' SSH_TIDES,'
 #endif
@@ -2580,6 +2580,13 @@
      &   'Tangent Linear Model'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+9)=' TANGENT,'
+#endif
+#ifdef TIDE_GENERATING_FORCES
+!
+      IF (Master) WRITE (stdout,20) 'TIDE_GENERATING_FORCES',           &
+     &   'Adding astronomical TGF term to pressure gradient'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+24)=' TIDE_GENERATING_FORCES,'
 #endif
 #if defined TIME_CONV && defined WEAK_CONSTRAINT
 !
@@ -3320,6 +3327,26 @@
         exit_flag=5
       END IF
 #endif
-
+#if defined TIDE_GENERATING_FORCES && \
+   (defined ANA_GRID               && !defined SPHERICAL)
+!
+!  Stop if activating tide generating forces on analytical Cartesian
+!  grids. This forcing is only for spherical grids since the (lon,lat)
+!  is required to compute the equilibrium tide harmonics that depend
+!  on the geographical location with respect to the Moon and Sun.
+!
+      IF (Master) THEN
+        WRITE (stdout,280) uppercase('tide_generating_forces')
+            exit_flag=5
+            EXIT
+          END IF
+        END DO
+ 280    FORMAT (/,' CHECKDEFS - cannot activate option: ',a,            &
+     &          /,13x,'in analytical Cartesian grids applications...',  &
+     &          /,13x,'The grid (lon,lat) is needed to compute the',    &
+     &          /,13x,'equilibrium tide harmonics.')
+      END IF
+#endif
+!
       RETURN
       END SUBROUTINE checkdefs

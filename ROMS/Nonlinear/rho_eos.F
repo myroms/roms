@@ -3,7 +3,7 @@
 #ifdef SOLVE3D
 !
 !git $Id$
-!svn $Id: rho_eos.F 1054 2021-03-06 19:47:12Z arango $
+!svn $Id: rho_eos.F 1087 2021-09-10 01:11:17Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -364,7 +364,8 @@
 !
 !-----------------------------------------------------------------------
 !  Compute vertical averaged density (rhoA) and density perturbation
-!  (rhoS) used in barotropic pressure gradient.
+!  (rhoS) used in barotropic pressure gradient. Both values are
+!  nondimensional.
 !-----------------------------------------------------------------------
 !
         DO i=IstrT,IendT

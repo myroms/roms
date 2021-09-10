@@ -1,7 +1,7 @@
       MODULE ad_prsgrd_mod
 !
 !git $Id$
-!svn $Id: ad_prsgrd31.h 1081 2021-07-24 02:25:06Z arango $
+!svn $Id: ad_prsgrd31.h 1087 2021-09-10 01:11:17Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -76,6 +76,10 @@
      &                       GRID(ng) % ad_z_w,                         &
      &                       OCEAN(ng) % rho,                           &
      &                       OCEAN(ng) % ad_rho,                        &
+#ifdef TIDE_GENERATING_FORCES
+     &                       OCEAN(ng) % eq_tide,                       &
+     &                       OCEAN(ng) % ad_eq_tide,                    &
+#endif
 #ifdef ATM_PRESS
      &                       FORCES(ng) % Pair,                         &
 #endif
@@ -102,6 +106,9 @@
      &                             z_r, ad_z_r,                         &
      &                             z_w, ad_z_w,                         &
      &                             rho, ad_rho,                         &
+#ifdef TIDE_GENERATING_FORCES
+     &                             eq_tide, ad_eq_tide,                 &
+#endif
 #ifdef ATM_PRESS
      &                             Pair,                                &
 #endif
@@ -131,6 +138,10 @@
 # ifdef ATM_PRESS
       real(r8), intent(in) :: Pair(LBi:,LBj:)
 # endif
+# ifdef TIDE_GENERATING_FORCES
+      real(r8), intent(in) :: eq_tide(LBi:,LBj:)
+      real(r8), intent(inout) :: ad_eq_tide(LBi:,LBj:)
+# endif
 # ifdef DIAGNOSTICS_UV
 !!    real(r8), intent(inout) :: DiaRU(LBi:,LBj:,:,:,:)
 !!    real(r8), intent(inout) :: DiaRV(LBi:,LBj:,:,:,:)
@@ -150,6 +161,10 @@
       real(r8), intent(in) :: rho(LBi:UBi,LBj:UBj,N(ng))
 # ifdef ATM_PRESS
       real(r8), intent(in) :: Pair(LBi:UBi,LBj:UBj)
+# endif
+# ifdef TIDE_GENERATING_FORCES
+      real(r8), intent(in) :: eq_tide(LBi:,LBj:)
+      real(r8), intent(out) :: ad_eq_tide(LBi:,LBj:)
 # endif
 # ifdef DIAGNOSTICS_UV
 !!    real(r8), intent(inout) :: DiaRU(LBi:UBi,LBj:UBj,N(ng),2,NDrhs)
@@ -221,8 +236,13 @@
 !^
           DO k=1,N(ng)-1
             DO i=Istr,Iend
+#ifdef TIDE_GENERATING_FORCES
+              cff1=z_w(i,j  ,N(ng))-eq_tide(i,j  )-z_r(i,j  ,N(ng))+    &
+     &             z_w(i,j-1,N(ng))-eq_tide(i,j-1)-z_r(i,j-1,N(ng))
+#else
               cff1=z_w(i,j  ,N(ng))-z_r(i,j  ,N(ng))+                   &
      &             z_w(i,j-1,N(ng))-z_r(i,j-1,N(ng))
+#endif
               phie(i)=fac1*(rho(i,j,N(ng))-rho(i,j-1,N(ng)))*cff1
 #ifdef ATM_PRESS
               phie(i)=phie(i)+fac*(Pair(i,j)-Pair(i,j-1))
@@ -450,8 +470,13 @@
 !  Compute surface adjoint baroclinic pressure gradient.
 !
           DO i=Istr,Iend
+#ifdef TIDE_GENERATING_FORCES
+            cff1=z_w(i,j  ,N(ng))-eq_tide(i,j  )-z_r(i,j  ,N(ng))+      &
+     &           z_w(i,j-1,N(ng))-eq_tide(i,j-1)-z_r(i,j-1,N(ng))
+#else
             cff1=z_w(i,j  ,N(ng))-z_r(i,j  ,N(ng))+                     &
      &           z_w(i,j-1,N(ng))-z_r(i,j-1,N(ng))
+#endif
             phie(i)=fac1*(rho(i,j,N(ng))-rho(i,j-1,N(ng)))*cff1
 #ifdef ATM_PRESS
             phie(i)=phie(i)+fac*(Pair(i,j)-Pair(i,j-1))
@@ -504,6 +529,20 @@
             ad_cff1=ad_cff1+                                            &
      &              (rho(i,j,N(ng))-rho(i,j-1,N(ng)))*adfac
             ad_phie(i)=0.0_r8
+#ifdef TIDE_GENERATING_FORCES
+!^          tl_cff1=tl_z_w(i,j  ,N(ng))-tl_eq_tide(i,j  )-              &
+!^   &              tl_z_r(i,j  ,N(ng))+                                &
+!^   &              tl_z_w(i,j-1,N(ng))-tl_eq_tide(i,j-1)-              &
+!^   &              tl_z_r(i,j-1,N(ng))
+!^
+            ad_eq_tide(i,j-1)=ad_eq_tide(i,j-1)-ad_cff1
+            ad_eq_tide(i,j  )=ad_eq_tide(i,j  )-ad_cff1
+            ad_z_r(i,j-1,N(ng))=ad_z_r(i,j-1,N(ng))-ad_cff1
+            ad_z_r(i,j  ,N(ng))=ad_z_r(i,j  ,N(ng))-ad_cff1
+            ad_z_w(i,j-1,N(ng))=ad_z_w(i,j-1,N(ng))+ad_cff1
+            ad_z_w(i,j  ,N(ng))=ad_z_w(i,j  ,N(ng))+ad_cff1
+            ad_cff1=0.0_r8
+#else
 !^          tl_cff1=tl_z_w(i,j  ,N(ng))-tl_z_r(i,j  ,N(ng))+            &
 !^   &              tl_z_w(i,j-1,N(ng))-tl_z_r(i,j-1,N(ng))
 !^
@@ -512,6 +551,7 @@
             ad_z_w(i,j-1,N(ng))=ad_z_w(i,j-1,N(ng))+ad_cff1
             ad_z_w(i,j  ,N(ng))=ad_z_w(i,j  ,N(ng))+ad_cff1
             ad_cff1=0.0_r8
+#endif
           END DO
         END IF
 !
@@ -526,8 +566,13 @@
 !^
         DO k=1,N(ng)-1
           DO i=IstrU,Iend
+#ifdef TIDE_GENERATING_FORCES
+            cff1=z_w(i  ,j,N(ng))-eq_tide(i  ,j)-z_r(i  ,j,N(ng))+      &
+     &           z_w(i-1,j,N(ng))-eq_tide(i-1,j)-z_r(i-1,j,N(ng))
+#else
             cff1=z_w(i  ,j,N(ng))-z_r(i  ,j,N(ng))+                     &
      &           z_w(i-1,j,N(ng))-z_r(i-1,j,N(ng))
+#endif
             phix(i)=fac1*(rho(i,j,N(ng))-rho(i-1,j,N(ng)))*cff1
 #ifdef ATM_PRESS
             phix(i)=phix(i)+fac*(Pair(i,j)-Pair(i-1,j))
@@ -753,8 +798,13 @@
 !  Compute surface adjoint baroclinic pressure gradient.
 !
         DO i=IstrU,Iend
+#ifdef TIDE_GENERATING_FORCES
+          cff1=z_w(i  ,j,N(ng))-eq_tide(i  ,j)-z_r(i  ,j,N(ng))+        &
+     &         z_w(i-1,j,N(ng))-eq_tide(i-1,j)-z_r(i-1,j,N(ng))
+#else
           cff1=z_w(i  ,j,N(ng))-z_r(i  ,j,N(ng))+                       &
      &         z_w(i-1,j,N(ng))-z_r(i-1,j,N(ng))
+#endif
           phix(i)=fac1*(rho(i,j,N(ng))-rho(i-1,j,N(ng)))*cff1
 #ifdef ATM_PRESS
           phix(i)=phix(i)+fac*(Pair(i,j)-Pair(i-1,j))
@@ -807,6 +857,20 @@
           ad_cff1=ad_cff1+                                              &
      &            (rho(i,j,N(ng))-rho(i-1,j,N(ng)))*adfac
           ad_phix(i)=0.0
+#ifdef TIDE_GENERATING_FORCES
+!^        tl_cff1=tl_z_w(i  ,j,N(ng))-tl_eq_tide(i  ,j)-                &
+!^   &            tl_z_r(i  ,j,N(ng))+                                  &
+!^   &            tl_z_w(i-1,j,N(ng))-tl_eq_tide(i-1,j)-                &
+!^   &            tl_z_r(i-1,j,N(ng))
+!^
+          ad_eq_tide(i-1,j)=ad_eq_tide(i-1,j)-ad_cff1
+          ad_eq_tide(i  ,j)=ad_eq_tide(i  ,j)-ad_cff1
+          ad_z_r(i-1,j,N(ng))=ad_z_r(i-1,j,N(ng))-ad_cff1
+          ad_z_r(i  ,j,N(ng))=ad_z_r(i  ,j,N(ng))-ad_cff1
+          ad_z_w(i-1,j,N(ng))=ad_z_w(i-1,j,N(ng))+ad_cff1
+          ad_z_w(i  ,j,N(ng))=ad_z_w(i  ,j,N(ng))+ad_cff1
+          ad_cff1=0.0_r8
+#else
 !^        tl_cff1=tl_z_w(i  ,j,N(ng))-tl_z_r(i  ,j,N(ng))+              &
 !^   &            tl_z_w(i-1,j,N(ng))-tl_z_r(i-1,j,N(ng))
 !^
@@ -815,6 +879,7 @@
           ad_z_w(i-1,j,N(ng))=ad_z_w(i-1,j,N(ng))+ad_cff1
           ad_z_w(i  ,j,N(ng))=ad_z_w(i  ,j,N(ng))+ad_cff1
           ad_cff1=0.0_r8
+#endif
         END DO
       END DO J_LOOP
 !

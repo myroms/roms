@@ -3,7 +3,7 @@
       SUBROUTINE read_AssPar (model, inp, out, Lwrite)
 !
 !git $Id$
-!svn $Id: read_asspar.F 1085 2021-08-13 00:03:50Z arango $
+!svn $Id: read_asspar.F 1087 2021-09-10 01:11:17Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -1431,7 +1431,7 @@
         IF (.not.find_file(ng, out, fname, 'OBSname')) THEN
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         ELSE
-          IF (Master.and.Lwrite) WRITE (out,160)
+          IF (Master.and.Lwrite) WRITE (out,160)                        &
      &      '          Input observations File:  ', TRIM(fname)
         END IF
         IF (Master.and.Lwrite) WRITE (out,160)                          &

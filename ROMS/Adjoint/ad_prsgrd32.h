@@ -1,7 +1,7 @@
       MODULE ad_prsgrd_mod
 !
 !git $Id$
-!svn $Id: ad_prsgrd32.h 1081 2021-07-24 02:25:06Z arango $
+!svn $Id: ad_prsgrd32.h 1087 2021-09-10 01:11:17Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -84,6 +84,10 @@
      &                       GRID(ng) % ad_z_w,                         &
      &                       OCEAN(ng) % rho,                           &
      &                       OCEAN(ng) % ad_rho,                        &
+#ifdef TIDE_GENERATING_FORCES
+     &                       OCEAN(ng) % eq_tide,                       &
+     &                       OCEAN(ng) % ad_eq_tide,                    &
+#endif
 #ifdef ATM_PRESS
      &                       FORCES(ng) % Pair,                         &
 #endif
@@ -113,6 +117,9 @@
      &                             z_r, ad_z_r,                         &
      &                             z_w, ad_z_w,                         &
      &                             rho, ad_rho,                         &
+#ifdef TIDE_GENERATING_FORCES
+     &                             eq_tide, ad_eq_tide,                 &
+#endif
 #ifdef ATM_PRESS
      &                             Pair,                                &
 #endif
@@ -146,6 +153,10 @@
 # ifdef ATM_PRESS
       real(r8), intent(in) :: Pair(LBi:,LBj:)
 # endif
+# ifdef TIDE_GENERATING_FORCES
+      real(r8), intent(in) :: eq_tide(LBi:,LBj:)
+      real(r8), intent(inout) :: ad_eq_tide(LBi:,LBj:)
+# endif
 # ifdef DIAGNOSTICS_UV
 !!    real(r8), intent(inout) :: DiaRU(LBi:,LBj:,:,:,:)
 !!    real(r8), intent(inout) :: DiaRV(LBi:,LBj:,:,:,:)
@@ -169,6 +180,10 @@
       real(r8), intent(in) :: rho(LBi:UBi,LBj:UBj,N(ng))
 # ifdef ATM_PRESS
       real(r8), intent(in) :: Pair(LBi:UBi,LBj:UBj)
+# endif
+# ifdef TIDE_GENERATING_FORCES
+      real(r8), intent(in) :: eq_tide(LBi:UBi,LBj:UBj)
+      real(r8), intent(inout) :: ad_eq_tide(LBi:UBi,LBj:UBj)
 # endif
 # ifdef DIAGNOSTICS_UV
 !!    real(r8), intent(inout) :: DiaRU(LBi:UBi,LBj:UBj,N(ng),2,NDrhs)
@@ -292,12 +307,15 @@
           cff1=1.0_r8/(z_r(i,j,N(ng))-z_r(i,j,N(ng)-1))
           cff2=0.5_r8*(rho(i,j,N(ng))-rho(i,j,N(ng)-1))*                &
      &         (z_w(i,j,N(ng))-z_r(i,j,N(ng)))*cff1
-          P(i,j,N(ng))=GRho0*z_w(i,j,N(ng))+                            &
+          P(i,j,N(ng))=g*z_w(i,j,N(ng))+                                &
 #ifdef ATM_PRESS
      &                 fac*(Pair(i,j)-OneAtm)+                          &
 #endif
      &                 GRho*(rho(i,j,N(ng))+cff2)*                      &
      &                 (z_w(i,j,N(ng))-z_r(i,j,N(ng)))
+#ifdef TIDE_GENERATING_FORCES
+          P(i,j,N(ng))=P(i,j,N(ng))-g*eq_tide(i,j)
+#endif
         END DO
         DO k=N(ng)-1,1,-1
           DO i=IstrU-1,Iend
@@ -829,7 +847,12 @@
           cff1=1.0_r8/(z_r(i,j,N(ng))-z_r(i,j,N(ng)-1))
           cff2=0.5_r8*(rho(i,j,N(ng))-rho(i,j,N(ng)-1))*                &
      &         (z_w(i,j,N(ng))-z_r(i,j,N(ng)))*cff1
-!^        tl_P(i,j,N(ng))=GRho0*tl_z_w(i,j,N(ng))+                      &
+#ifdef TIDE_GENERATING_FORCES
+!^        tl_P(i,j,N(ng))=tl_P(i,j,N(ng))-g*tl_eq_tide(i,j)
+!^
+          ad_eq_tide(i,j)=ad_eq_tide(i,j)-g*ad_P(i,j,N(ng))
+#endif
+!^        tl_P(i,j,N(ng))=g*tl_z_w(i,j,N(ng))+                          &
 !^   &                    GRho*((tl_rho(i,j,N(ng))+tl_cff2)*            &
 !^   &                          (z_w(i,j,N(ng))-z_r(i,j,N(ng)))+        &
 !^   &                          (rho(i,j,N(ng))+cff2)*                  &
@@ -840,7 +863,7 @@
           adfac2=adfac*(rho(i,j,N(ng))+cff2)
           ad_z_r(i,j,N(ng))=ad_z_r(i,j,N(ng))-adfac2
           ad_z_w(i,j,N(ng))=ad_z_w(i,j,N(ng))+adfac2+                   &
-     &                      GRho0*ad_P(i,j,N(ng))
+     &                      g*ad_P(i,j,N(ng))
           ad_rho(i,j,N(ng))=ad_rho(i,j,N(ng))+adfac1
           ad_cff2=ad_cff2+adfac1
           ad_P(i,j,N(ng))=0.0_r8

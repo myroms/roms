@@ -1,7 +1,7 @@
       MODULE prsgrd_mod
 !
 !git $Id$
-!svn $Id: prsgrd32.h 1081 2021-07-24 02:25:06Z arango $
+!svn $Id: prsgrd32.h 1087 2021-09-10 01:11:17Z arango $
 !=======================================================================
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -84,6 +84,9 @@
      &                    GRID(ng) % z_r,                               &
      &                    GRID(ng) % z_w,                               &
      &                    OCEAN(ng) % rho,                              &
+#ifdef TIDE_GENERATING_FORCES
+     &                    OCEAN(ng) % eq_tide,                          &
+#endif
 #ifdef ATM_PRESS
      &                    FORCES(ng) % Pair,                            &
 #endif
@@ -114,6 +117,9 @@
      &                          om_v, on_u,                             &
      &                          Hz, z_r, z_w,                           &
      &                          rho,                                    &
+#ifdef TIDE_GENERATING_FORCES
+     &                          eq_tide,                                &
+#endif
 #ifdef ATM_PRESS
      &                          Pair,                                   &
 #endif
@@ -148,6 +154,9 @@
       real(r8), intent(in) :: z_r(LBi:,LBj:,:)
       real(r8), intent(in) :: z_w(LBi:,LBj:,0:)
       real(r8), intent(in) :: rho(LBi:,LBj:,:)
+# ifdef TIDE_GENERATING_FORCES
+      real(r8), intent(in) :: eq_tide(LBi:,LBj:)
+# endif
 # ifdef ATM_PRESS
       real(r8), intent(in) :: Pair(LBi:,LBj:)
 # endif
@@ -172,6 +181,9 @@
       real(r8), intent(in) :: z_r(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(in) :: z_w(LBi:UBi,LBj:UBj,0:N(ng))
       real(r8), intent(in) :: rho(LBi:UBi,LBj:UBj,N(ng))
+# ifdef TIDE_GENERATING_FORCES
+      real(r8), intent(in) :: eq_tide(LBi:UBi,LBj:UBj)
+# endif
 # ifdef ATM_PRESS
       real(r8), intent(in) :: Pair(LBi:UBi,LBj:UBj)
 # endif
@@ -209,7 +221,7 @@
 #include "set_bounds.h"
 !
 !-----------------------------------------------------------------------
-!  Preliminary step (same for XI- and ETA-components:
+!  Preliminary step (same for XI- and ETA-components):
 !-----------------------------------------------------------------------
 !
       GRho=g/rho0
@@ -219,6 +231,8 @@
       OneAtm=1013.25_r8                  ! 1 atm = 1013.25 mb
       fac=100.0_r8/rho0
 #endif
+!
+!  Compute kinematic pressure: P/rho0 (m2/s2).
 !
       DO j=JstrV-1,Jend
         DO k=1,N(ng)-1
@@ -248,12 +262,15 @@
           cff1=1.0_r8/(z_r(i,j,N(ng))-z_r(i,j,N(ng)-1))
           cff2=0.5_r8*(rho(i,j,N(ng))-rho(i,j,N(ng)-1))*                &
      &         (z_w(i,j,N(ng))-z_r(i,j,N(ng)))*cff1
-          P(i,j,N(ng))=GRho0*z_w(i,j,N(ng))+                            &
+          P(i,j,N(ng))=g*z_w(i,j,N(ng))+                                &
 #ifdef ATM_PRESS
      &                 fac*(Pair(i,j)-OneAtm)+                          &
 #endif
      &                 GRho*(rho(i,j,N(ng))+cff2)*                      &
      &                 (z_w(i,j,N(ng))-z_r(i,j,N(ng)))
+#ifdef TIDE_GENERATING_FORCES
+          P(i,j,N(ng))=P(i,j,N(ng))-g*eq_tide(i,j)
+#endif
         END DO
         DO k=N(ng)-1,1,-1
           DO i=IstrU-1,Iend

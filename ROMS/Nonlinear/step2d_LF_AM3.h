@@ -1,7 +1,7 @@
       MODULE step2d_mod
 !
 !git $Id$
-!svn $Id: step2d_LF_AM3.h 1081 2021-07-24 02:25:06Z arango $
+!svn $Id: step2d_LF_AM3.h 1087 2021-09-10 01:11:17Z arango $
 !=======================================================================
 !                                                                      !
 !  Nonlinear shallow-water primitive equations predictor (Leap-frog)   !
@@ -96,6 +96,9 @@
      &                  OCEAN(ng) % ubar_stokes,                        &
      &                  OCEAN(ng) % vbar_stokes,                        &
 #endif
+#if defined TIDE_GENERATING_FORCES && !defined SOLVE3D
+     &                  OCEAN(ng) % eq_tide,                            &
+#endif
 #ifndef SOLVE3D
      &                  FORCES(ng) % sustr,     FORCES(ng) % svstr,     &
      &                  FORCES(ng) % bustr,     FORCES(ng) % bvstr,     &
@@ -170,6 +173,9 @@
      &                        rustr2d, rvstr2d,                         &
      &                        rulag2d, rvlag2d,                         &
      &                        ubar_stokes, vbar_stokes,                 &
+#endif
+#if defined TIDE_GENERATING_FORCES && !defined SOLVE3D
+     &                        eq_tide,                                  &
 #endif
 #ifndef SOLVE3D
      &                        sustr, svstr, bustr, bvstr,               &
@@ -274,6 +280,9 @@
       real(r8), intent(in) :: ubar_stokes(LBi:,LBj:)
       real(r8), intent(in) :: vbar_stokes(LBi:,LBj:)
 # endif
+# if defined TIDE_GENERATING_FORCES && !defined SOLVE3D
+      real(r8), intent(in) :: eq_tide(LBi:,LBj:)
+# endif
 # ifndef SOLVE3D
       real(r8), intent(in) :: sustr(LBi:,LBj:)
       real(r8), intent(in) :: svstr(LBi:,LBj:)
@@ -376,6 +385,9 @@
       real(r8), intent(in) :: rvlag2d(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: ubar_stokes(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: vbar_stokes(LBi:UBi,LBj:UBj)
+# endif
+# if defined TIDE_GENERATING_FORCES && !defined SOLVE3D
+      real(r8), intent(in) :: eq_tide(LBi:UBi,LBj:UBj)
 # endif
 # ifndef SOLVE3D
       real(r8), intent(in) :: sustr(LBi:UBi,LBj:UBj)
@@ -750,9 +762,11 @@
 !  During the first time-step, the predictor step is Forward-Euler
 !  and the corrector step is Backward-Euler. Otherwise, the predictor
 !  step is Leap-frog and the corrector step is Adams-Moulton.
-!
 #if defined VAR_RHO_2D && defined SOLVE3D
-      fac=1000.0_r8/rho0
+!  Recall that the vertical averaged density (rhoA) and density
+!  pertubation (rhoS) are nondimensional quantities.
+!
+      fac=1000.0_r8/rho0                                ! nondimensional
 #endif
       IF (FIRST_2D_STEP) THEN
         cff1=dtfast(ng)
@@ -948,7 +962,14 @@
      &                  fac3*on_u(i,j)*                                 &
      &                  (h(i-1,j)+h(i,j)+                               &
      &                   gzeta(i-1,j)+gzeta(i,j))*                      &
-     &                  (Pair(i-1,j)-Pair(i,j))
+     &                  (Pair(i,j)-Pair(i-1,j))
+#endif
+#if defined TIDE_GENERATING_FORCES && !defined SOLVE3D
+          rhs_ubar(i,j)=rhs_ubar(i,j)-                                  &
+     &                  cff1*on_u(i,j)*                                 &
+     &                  (h(i-1,j)+h(i,j)+                               &
+     &                   gzeta(i-1,j)+gzeta(i,j))*                      &
+     &                  (eq_tide(i,j)-eq_tide(i-1,j))
 #endif
 #ifdef DIAGNOSTICS_UV
           DiaU2rhs(i,j,M2pgrd)=rhs_ubar(i,j)
@@ -978,7 +999,14 @@
      &                    fac3*om_v(i,j)*                               &
      &                    (h(i,j-1)+h(i,j)+                             &
      &                     gzeta(i,j-1)+gzeta(i,j))*                    &
-     &                    (Pair(i,j-1)-Pair(i,j))
+     &                    (Pair(i,j)-Pair(i,j-1))
+#endif
+#if defined TIDE_GENERATING_FORCES && !defined SOLVE3D
+            rhs_vbar(i,j)=rhs_vbar(i,j)-                                &
+     &                    cff1*om_v(i,j)*                               &
+     &                    (h(i,j-1)+h(i,j)+                             &
+     &                     gzeta(i,j-1)+gzeta(i,j))*                    &
+     &                    (eq_tide(i,j)-eq_tide(i,j-1))
 #endif
 #ifdef DIAGNOSTICS_UV
             DiaV2rhs(i,j,M2pgrd)=rhs_vbar(i,j)

@@ -3,7 +3,7 @@
       SUBROUTINE ad_main2d (RunInterval)
 !
 !git $Id$
-!svn $Id: ad_main2d.F 1064 2021-05-10 19:55:56Z arango $
+!svn $Id: ad_main2d.F 1087 2021-09-10 01:11:17Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -72,6 +72,9 @@
 !!    USE ad_step_floats_mod,      ONLY : tl_step_floats
 # endif
       USE dateclock_mod,           ONLY : time_string
+# ifdef TIDE_GENERATING_FORCES
+      USE equilibrium_tide_mod,    ONLY : equilibrium_tide
+# endif
 # ifdef WEAK_CONSTRAINT
       USE frc_weak_mod,            ONLY : frc_ADgather, frc_clear
 # endif
@@ -151,6 +154,9 @@
             CALL ad_set_data (ng, tile)
 # ifdef AD_AVERAGES
             CALL ad_set_avg (ng, tile)
+# endif
+# ifdef TIDE_GENERATING_FORCES
+            CALL equilibrium_tide (ng, tile, iADM)
 # endif
 # ifdef DIAGNOSTICS
 !!          CALL ad_set_diags (ng, tile)

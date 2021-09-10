@@ -3,7 +3,7 @@
       SUBROUTINE ad_main3d (RunInterval)
 !
 !git $Id$
-!svn $Id: ad_main3d.F 1081 2021-07-24 02:25:06Z arango $
+!svn $Id: ad_main3d.F 1087 2021-09-10 01:11:17Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -125,6 +125,9 @@
       USE bulk_flux_mod,           ONLY : bulk_flux
 # endif
       USE dateclock_mod,           ONLY : time_string
+# ifdef TIDE_GENERATING_FORCES
+      USE equilibrium_tide_mod,    ONLY : equilibrium_tide
+# endif
 # if defined ATM_COUPLING_NOT_YET && defined MCT_LIB
       USE ocean_coupler_mod,       ONLY : atmos_coupling
 # endif
@@ -210,6 +213,9 @@
             CALL ad_set_data (ng, tile)
 # ifdef FORWARD_READ
             CALL set_depth (ng, tile, iADM)
+# endif
+# ifdef TIDE_GENERATING_FORCES
+            CALL equilibrium_tide (ng, tile, iADM)
 # endif
           END DO
         END DO

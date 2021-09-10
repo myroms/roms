@@ -1,7 +1,7 @@
       MODULE tl_prsgrd_mod
 !
 !git $Id$
-!svn $Id: tl_prsgrd32.h 1081 2021-07-24 02:25:06Z arango $
+!svn $Id: tl_prsgrd32.h 1087 2021-09-10 01:11:17Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -84,6 +84,10 @@
      &                       GRID(ng) % tl_z_w,                         &
      &                       OCEAN(ng) % rho,                           &
      &                       OCEAN(ng) % tl_rho,                        &
+#ifdef TIDE_GENERATING_FORCES
+     &                       OCEAN(ng) % eq_tide,                       &
+     &                       OCEAN(ng) % tl_eq_tide,                    &
+#endif
 #ifdef ATM_PRESS
      &                       FORCES(ng) % Pair,                         &
 #endif
@@ -113,6 +117,9 @@
      &                             z_r, tl_z_r,                         &
      &                             z_w, tl_z_w,                         &
      &                             rho, tl_rho,                         &
+#ifdef TIDE_GENERATING_FORCES
+     &                             eq_tide, tl_eq_tide,                 &
+#endif
 #ifdef ATM_PRESS
      &                             Pair,                                &
 #endif
@@ -148,6 +155,10 @@
       real(r8), intent(in) :: tl_z_r(LBi:,LBj:,:)
       real(r8), intent(in) :: tl_z_w(LBi:,LBj:,0:)
       real(r8), intent(in) :: tl_rho(LBi:,LBj:,:)
+# ifdef TIDE_GENERATING_FORCES
+      real(r8), intent(in) :: eq_tide(LBi:,LBj:)
+      real(r8), intent(in) :: tl_eq_tide(LBi:,LBj:)
+# endif
 # ifdef ATM_PRESS
       real(r8), intent(in) :: Pair(LBi:,LBj:)
 # endif
@@ -173,6 +184,10 @@
       real(r8), intent(in) :: tl_z_r(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(in) :: tl_z_w(LBi:UBi,LBj:UBj,0:N(ng))
       real(r8), intent(in) :: tl_rho(LBi:UBi,LBj:UBj,N(ng))
+# ifdef TIDE_GENERATING_FORCES
+      real(r8), intent(in) :: eq_tide(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: tl_eq_tide(LBi:UBi,LBj:UBj)
+# endif
 # ifdef ATM_PRESS
       real(r8), intent(in) :: Pair(LBi:UBi,LBj:UBj)
 # endif
@@ -285,17 +300,21 @@
      &                    (rho(i,j,N(ng))-rho(i,j,N(ng)-1))*            &
      &                    ((tl_z_w(i,j,N(ng))-tl_z_r(i,j,N(ng)))*cff1+  &
      &                     (z_w(i,j,N(ng))-z_r(i,j,N(ng)))*tl_cff1))
-          P(i,j,N(ng))=GRho0*z_w(i,j,N(ng))+                            &
+          P(i,j,N(ng))=g*z_w(i,j,N(ng))+                                &
 #ifdef ATM_PRESS
      &                 fac*(Pair(i,j)-OneAtm)+                          &
 #endif
      &                 GRho*(rho(i,j,N(ng))+cff2)*                      &
      &                 (z_w(i,j,N(ng))-z_r(i,j,N(ng)))
-          tl_P(i,j,N(ng))=GRho0*tl_z_w(i,j,N(ng))+                      &
+          tl_P(i,j,N(ng))=g*tl_z_w(i,j,N(ng))+                          &
      &                    GRho*((tl_rho(i,j,N(ng))+tl_cff2)*            &
      &                          (z_w(i,j,N(ng))-z_r(i,j,N(ng)))+        &
      &                          (rho(i,j,N(ng))+cff2)*                  &
      &                          (tl_z_w(i,j,N(ng))-tl_z_r(i,j,N(ng))))
+#ifdef TIDE_GENERATING_FORCES
+          P(i,j,N(ng))=P(i,j,N(ng))-g*eq_tide(i,j)
+          tl_P(i,j,N(ng))=tl_P(i,j,N(ng))-g*tl_eq_tide(i,j)
+#endif
         END DO
         DO k=N(ng)-1,1,-1
           DO i=IstrU-1,Iend
