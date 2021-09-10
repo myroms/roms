@@ -3,7 +3,7 @@
       SUBROUTINE main3d (RunInterval)
 !
 !git $Id$
-!svn $Id: main3d.F 1054 2021-03-06 19:47:12Z arango $
+!svn $Id: main3d.F 1087 2021-09-10 01:11:17Z arango $
 !=======================================================================
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -48,6 +48,9 @@
       USE diag_mod,             ONLY : diag
 # ifdef TLM_CHECK
       USE dotproduct_mod,       ONLY : nl_dotproduct
+# endif
+# ifdef TIDE_GENERATING_FORCES
+      USE equilibrium_tide_mod, ONLY : equilibrium_tide
 # endif
 # if defined NLM_OUTER                || \
      defined RBL4DVAR                 || \
@@ -304,6 +307,9 @@
                 CALL set_massflux (ng, tile, iNLM)
 # ifndef TS_FIXED
                 CALL rho_eos (ng, tile, iNLM)
+# endif
+# ifdef TIDE_GENERATING_FORCES
+                CALL equilibrium_tide (ng, tile, iNLM)
 # endif
                 CALL diag (ng, tile)
 # ifdef TLM_CHECK
@@ -635,9 +641,11 @@
                 IF (ANY(CompositeGrid(:,ng))) THEN
                   CALL nesting (ng, iNLM, n2dPS)
                 END IF
+#  ifdef NESTING_DEBUG
                 IF (RefinedGrid(ng).and.(RefineScale(ng).gt.0)) THEN
                   CALL nesting (ng, iNLM, nmflx)
                 END IF
+#  endif
               END DO
 # endif
 !
@@ -682,9 +690,11 @@
                 IF (ANY(CompositeGrid(:,ng))) THEN
                   CALL nesting (ng, iNLM, n2dCS)
                 END IF
+#  ifdef NESTING_DEBUG
                 IF (RefinedGrid(ng).and.(RefineScale(ng).gt.0)) THEN
                   CALL nesting (ng, iNLM, nmflx)
                 END IF
+#  endif
               END DO
 # endif
             END DO LOOP_2D
@@ -735,7 +745,7 @@
 !
             DO ig=1,GridsInLayer(nl)
               ng=GridNumber(ig,nl)
-              CALL nesting (ng, iNLM, nzwgt)
+!             CALL nesting (ng, iNLM, nzwgt)
             END DO
 # endif
 !

@@ -2,7 +2,7 @@
       MODULE mod_ncparam
 !
 !git $Id$
-!svn $Id: mod_ncparam.F 1083 2021-07-28 19:00:42Z arango $
+!svn $Id: mod_ncparam.F 1087 2021-09-10 01:11:17Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -297,6 +297,7 @@
       integer  :: idTdif        ! vertical T-diffusion coefficient
       integer  :: idTice        ! temperature of ice surface
       integer  :: idtime        ! ocean time
+      integer  :: idTref        ! tidal reference date for zero phase
       integer  :: idTper        ! tidal period
       integer  :: idTvan        ! tidal current angle
       integer  :: idTvma        ! maximum tidal current
@@ -1536,6 +1537,8 @@
               idU3Sd=varid
             CASE ('idV3Sd')
               idV3Sd=varid
+            CASE ('idTref')
+              idTref=varid
             CASE ('idTper')
               idTper=varid
             CASE ('idTzam')

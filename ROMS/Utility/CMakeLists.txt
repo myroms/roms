@@ -1,5 +1,5 @@
 # git $Id$
-# svn $Id: CMakeLists.txt 1064 2021-05-10 19:55:56Z arango $
+# svn $Id: CMakeLists.txt 1087 2021-09-10 01:11:17Z arango $
 #:::::::::::::::::::::::::::::::::::::::::::::::::::::: David Robertson :::
 # Copyright (c) 2002-2021 The ROMS/TOMS Group                           :::
 #   Licensed under a MIT/X style license                                :::
@@ -49,6 +49,7 @@ list( APPEND _files
       ROMS/Utility/distribute.F
       ROMS/Utility/dotproduct.F
       ROMS/Utility/edit_multifile.F
+      ROMS/Utility/equilibrium_tide.F
       ROMS/Utility/erf.F
       ROMS/Utility/extract_obs.F
       ROMS/Utility/extract_sta.F
@@ -154,6 +155,7 @@ list( APPEND _files
       ROMS/Utility/sum_grad.F
       ROMS/Utility/sum_imp.F
       ROMS/Utility/tadv.F
+      ROMS/Utility/tides_date.F
       ROMS/Utility/time_corr.F
       ROMS/Utility/timers.F
       ROMS/Utility/uv_rotate.F

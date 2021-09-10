@@ -2,7 +2,7 @@
       MODULE prsgrd_mod
 !
 !git $Id$
-!svn $Id: prsgrd44.h 1081 2021-07-24 02:25:06Z arango $
+!svn $Id: prsgrd44.h 1087 2021-09-10 01:11:17Z arango $
 !=======================================================================
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -44,12 +44,12 @@
 !***********************************************************************
 !
       USE mod_param
-# ifdef DIAGNOSTICS
+#ifdef DIAGNOSTICS
       USE mod_diags
-# endif
-# ifdef ATM_PRESS
+#endif
+#ifdef ATM_PRESS
       USE mod_forces
-# endif
+#endif
       USE mod_grid
       USE mod_ocean
       USE mod_stepping
@@ -63,36 +63,39 @@
       character (len=*), parameter :: MyFile =                          &
      &  __FILE__
 !
-# include "tile.h"
+#include "tile.h"
 !
-# ifdef PROFILE
+#ifdef PROFILE
       CALL wclock_on (ng, iNLM, 23, __LINE__, MyFile)
-# endif
+#endif
       CALL prsgrd44_tile (ng, tile,                                     &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    IminS, ImaxS, JminS, JmaxS,                   &
      &                    nrhs(ng),                                     &
-# ifdef WET_DRY
+#ifdef WET_DRY
      &                    GRID(ng)%umask_wet,                           &
      &                    GRID(ng)%vmask_wet,                           &
-# endif
+#endif
      &                    GRID(ng) % Hz,                                &
      &                    GRID(ng) % om_v,                              &
      &                    GRID(ng) % on_u,                              &
      &                    GRID(ng) % z_w,                               &
      &                    OCEAN(ng) % rho,                              &
-# ifdef ATM_PRESS
+#ifdef TIDE_GENERATING_FORCES
+     &                    OCEAN(ng) % eq_tide,                          &
+#endif
+#ifdef ATM_PRESS
      &                    FORCES(ng) % Pair,                            &
-# endif
-# ifdef DIAGNOSTICS_UV
+#endif
+#ifdef DIAGNOSTICS_UV
      &                    DIAGS(ng) % DiaRU,                            &
      &                    DIAGS(ng) % DiaRV,                            &
-# endif
+#endif
      &                    OCEAN(ng) % ru,                               &
      &                    OCEAN(ng) % rv)
-# ifdef PROFILE
+#ifdef PROFILE
       CALL wclock_off (ng, iNLM, 23, __LINE__, MyFile)
-# endif
+#endif
 !
       RETURN
       END SUBROUTINE prsgrd
@@ -102,17 +105,20 @@
      &                          LBi, UBi, LBj, UBj,                     &
      &                          IminS, ImaxS, JminS, JmaxS,             &
      &                          nrhs,                                   &
-# ifdef WET_DRY
+#ifdef WET_DRY
      &                          umask_wet, vmask_wet,                   &
-# endif
+#endif
      &                          Hz, om_v, on_u, z_w,                    &
      &                          rho,                                    &
-# ifdef ATM_PRESS
+#ifdef TIDE_GENERATING_FORCES
+     &                          eq_tide,                                &
+#endif
+#ifdef ATM_PRESS
      &                          Pair,                                   &
-# endif
-# ifdef DIAGNOSTICS_UV
+#endif
+#ifdef DIAGNOSTICS_UV
      &                          DiaRU, DiaRV,                           &
-# endif
+#endif
      &                          ru, rv)
 !***********************************************************************
 !
@@ -126,45 +132,51 @@
       integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: nrhs
 !
-# ifdef ASSUMED_SHAPE
-#  ifdef WET_DRY
+#ifdef ASSUMED_SHAPE
+# ifdef WET_DRY
       real(r8), intent(in) :: umask_wet(LBi:,LBj:)
       real(r8), intent(in) :: vmask_wet(LBi:,LBj:)
-#  endif
+# endif
       real(r8), intent(in) :: Hz(LBi:,LBj:,:)
       real(r8), intent(in) :: om_v(LBi:,LBj:)
       real(r8), intent(in) :: on_u(LBi:,LBj:)
       real(r8), intent(in) :: z_w(LBi:,LBj:,0:)
       real(r8), intent(in) :: rho(LBi:,LBj:,:)
-#  ifdef ATM_PRESS
+# ifdef TIDE_GENERATING_FORCES
+      real(r8), intent(in) :: eq_tide(LBi:,LBj:)
+# endif
+# ifdef ATM_PRESS
       real(r8), intent(in) :: Pair(LBi:,LBj:)
-#  endif
-#  ifdef DIAGNOSTICS_UV
+# endif
+# ifdef DIAGNOSTICS_UV
       real(r8), intent(inout) :: DiaRU(LBi:,LBj:,:,:,:)
       real(r8), intent(inout) :: DiaRV(LBi:,LBj:,:,:,:)
-#  endif
+# endif
       real(r8), intent(inout) :: ru(LBi:,LBj:,0:,:)
       real(r8), intent(inout) :: rv(LBi:,LBj:,0:,:)
-# else
-#  ifdef WET_DRY
+#else
+# ifdef WET_DRY
       real(r8), intent(in) :: umask_wet(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: vmask_wet(LBi:UBi,LBj:UBj)
-#  endif
+# endif
       real(r8), intent(in) :: Hz(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(in) :: om_v(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: on_u(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: z_w(LBi:UBi,LBj:UBj,0:N(ng))
       real(r8), intent(in) :: rho(LBi:UBi,LBj:UBj,N(ng))
-#  ifdef ATM_PRESS
+# ifdef TIDE_GENERATING_FORCES
+      real(r8), intent(in) :: eq_tide(LBi:UBi,LBj:UBj)
+# endif
+# ifdef ATM_PRESS
       real(r8), intent(in) :: Pair(LBi:UBi,LBj:UBj)
-#  endif
-#  ifdef DIAGNOSTICS_UV
+# endif
+# ifdef DIAGNOSTICS_UV
       real(r8), intent(inout) :: DiaRU(LBi:UBi,LBj:UBj,N(ng),2,NDrhs)
       real(r8), intent(inout) :: DiaRV(LBi:UBi,LBj:UBj,N(ng),2,NDrhs)
-#  endif
+# endif
       real(r8), intent(inout) :: ru(LBi:UBi,LBj:UBj,0:N(ng),2)
       real(r8), intent(inout) :: rv(LBi:UBi,LBj:UBj,0:N(ng),2)
-# endif
+#endif
 !
 !  Local variable declarations.
 !
@@ -191,16 +203,16 @@
       real(r8), dimension(IminS:ImaxS,0:N(ng)) :: d1
       real(r8), dimension(IminS:ImaxS,0:N(ng)) :: r1
 
-# include "set_bounds.h"
+#include "set_bounds.h"
 !
 !---------------------------------------------------------------------
 !  Finite-volume pressure gradient force algorithm.
 !---------------------------------------------------------------------
 !
-# ifdef ATM_PRESS
+#ifdef ATM_PRESS
       OneAtm=1013.25_r8                  ! 1 atm = 1013.25 mb
       fac=100.0_r8/g
-# endif
+#endif
       DO j=JstrV-1,Jend
         DO k=N(ng)-1,1,-1
           DO i=IstrU-1,Iend
@@ -262,13 +274,13 @@
         END DO
 !
         DO i=IstrU-1,Iend
-# ifdef NEUMANN
+#ifdef NEUMANN
           r1(i,N(ng))=1.5_r8*rho(i,j,N(ng))-0.5_r8*r1(i,N(ng)-1)
           r1(i,0)=1.5_r8*rho(i,j,1)-0.5_r8*r1(i,1)
-# else
+#else
           r1(i,N(ng))=2.0_r8*rho(i,j,N(ng))-r1(i,N(ng)-1)
           r1(i,0)=2.0_r8*rho(i,j,1)-r1(i,1)
-# endif
+#endif
         END DO
 !
 !  Power-law reconciliation step.  It starts with the computation of
@@ -359,27 +371,29 @@
           END DO
         END DO
         DO i=IstrU-1,Iend
-# ifdef NEUMANN
+#ifdef NEUMANN
           r(i,j,0)=1.5_r8*rho(i,j,1)-0.5_r8*r(i,j,1)
           r(i,j,N(ng))=1.5_r8*rho(i,j,N(ng))-0.5_r8*r(i,j,N(ng)-1)
           d(i,j,0)=0.0_r8
           d(i,j,N(ng))=0.0_r8
-# else
+#else
           r(i,j,0)=2.0_r8*rho(i,j,1)-r(i,j,1)
           r(i,j,N(ng))=2.0_r8*rho(i,j,N(ng))-r(i,j,N(ng)-1)
           d(i,j,0)=d(i,j,1)
           d(i,j,N(ng))=d(i,j,N(ng)-1)
-# endif
+#endif
         END DO
 !
 !  Compute pressure (P) and lateral pressure force (FX). Initialize
 !  pressure at the free-surface as zero
 !
         DO i=IstrU-1,Iend
-#ifdef ATM_PRESS
-          P(i,j,N(ng))=fac*(Pair(i,j)-OneAtm)
-#else
           P(i,j,N(ng))=0.0_r8
+#ifdef ATM_PRESS
+          P(i,j,N(ng))=P(i,j,N(ng))+fac*(Pair(i,j)-OneAtm)
+#endif
+#ifdef TIDE_GENERATING_FORCES
+          P(i,j,N(ng))=P(i,j,N(ng))-g*eq_tide(i,j)
 #endif
         END DO
         cff3=1.0_r8/12.0_r8
@@ -426,12 +440,12 @@
      &                            (z_w(i-1,j,N(ng))-z_w(i,j,N(ng)))+    &
      &                        cff1*(FX(i-1,j,k)-FX(i,j,k)+              &
      &                              FC(i,k)-FC(i,k-1)))*on_u(i,j)
-# ifdef WET_DRY
+#ifdef WET_DRY
               ru(i,j,k,nrhs)=ru(i,j,k,nrhs)*umask_wet(i,j)
-# endif
-# ifdef DIAGNOSTICS_UV
+#endif
+#ifdef DIAGNOSTICS_UV
               DiaRU(i,j,k,nrhs,M3pgrd)=ru(i,j,k,nrhs)
-# endif
+#endif
             END DO
           END DO
         END IF
@@ -466,12 +480,12 @@
      &                            (z_w(i,j-1,N(ng))-z_w(i,j,N(ng)))+    &
      &                        cff1*(FX(i,j-1,k)-FX(i,j,k)+              &
      &                              FC(i,k)-FC(i,k-1)))*om_v(i,j)
-# ifdef WET_DRY
+#ifdef WET_DRY
               rv(i,j,k,nrhs)=rv(i,j,k,nrhs)*vmask_wet(i,j)
-# endif
-# ifdef DIAGNOSTICS_UV
+#endif
+#ifdef DIAGNOSTICS_UV
               DiaRV(i,j,k,nrhs,M3pgrd)=rv(i,j,k,nrhs)
-# endif
+#endif
            END DO
           END DO
         END IF

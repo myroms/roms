@@ -2,7 +2,7 @@
 !  ROMS/TOMS IO NetCDF variables.
 !
 !git $Id$
-!svn $Id: varinfo.dat 1054 2021-03-06 19:47:12Z arango $
+!svn $Id: varinfo.dat 1087 2021-09-10 01:11:17Z arango $
 !========================================================= Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                                !
 !    Licensed under a MIT/X style license                                     !
@@ -1700,6 +1700,15 @@
 !  Tidal forcing variables.
 !------------------------------------------------------------------------------
 !
+
+'zero_phase_date'                                  ! Input
+  'tidal reference date for zero phase'
+  'days as %Y%m%d.%f'                              ! YYYYMMDD.dddd
+  'nulvar'
+  'nulvar'
+  'idTref'
+  'nulvar'
+  1.0d0
 
 'tide_period'                                      ! Input
   'tidal period'

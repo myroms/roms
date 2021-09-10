@@ -2,7 +2,7 @@
       MODULE mod_scalars
 !
 !git $Id$
-!svn $Id: mod_scalars.F 1086 2021-08-18 19:23:15Z arango $
+!svn $Id: mod_scalars.F 1087 2021-09-10 01:11:17Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -13,7 +13,7 @@
 #ifdef NO_4BYTE_REALS
         USE netcdf
 #endif
-!        implicit none
+!       implicit none
 !
 !-----------------------------------------------------------------------
 !  Multiple grid structure.
@@ -109,7 +109,8 @@
         real(dp) :: base               ! reference date (YYYYMMDD.dd)
         real(dp) :: DateNumber(2)      ! date number, [1]: days
                                        !              [2]: seconds
-
+        real(dp) :: tide_DateNumber(2) ! tide reference date number,
+                                       !   [1]: days  [2]: seconds
         character (len=22) :: string   ! YYYY-MM-DD hh:mm:ss.ss
         character (len=25) :: calendar ! date calendar
       END TYPE T_CLOCK
@@ -390,6 +391,11 @@
         logical, allocatable :: Lfloats(:)
         logical, allocatable :: Lsediment(:)
         logical, allocatable :: Lstations(:)
+!
+!  If equilibrium tides, switch to apply the 18.6-year lunar nodal
+!  cycle correction.
+!
+        logical :: Lnodal = .TRUE.
 !
 !-----------------------------------------------------------------------
 !  Physical constants.

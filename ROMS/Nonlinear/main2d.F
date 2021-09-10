@@ -3,7 +3,7 @@
       SUBROUTINE main2d (RunInterval)
 !
 !git $Id$
-!svn $Id: main2d.F 1054 2021-03-06 19:47:12Z arango $
+!svn $Id: main2d.F 1087 2021-09-10 01:11:17Z arango $
 !=======================================================================
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -34,6 +34,9 @@
       USE diag_mod,             ONLY : diag
 # ifdef TLM_CHECK
       USE dotproduct_mod,       ONLY : nl_dotproduct
+# endif
+# ifdef TIDE_GENERATING_FORCES
+      USE equilibrium_tide_mod, ONLY : equilibrium_tide
 # endif
 # if defined NLM_OUTER                || \
      defined RBL4DVAR                 || \
@@ -257,6 +260,9 @@
 # endif
 # ifdef DIAGNOSTICS
                 CALL set_diags (ng, tile)
+# endif
+# ifdef TIDE_GENERATING_FORCES
+                CALL equilibrium_tide (ng, tile, iNLM)
 # endif
                 CALL diag (ng, tile)
 # ifdef TLM_CHECK
