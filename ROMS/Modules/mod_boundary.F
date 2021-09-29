@@ -2,7 +2,7 @@
       MODULE mod_boundary
 !
 !git $Id$
-!svn $Id: mod_boundary.F 1054 2021-03-06 19:47:12Z arango $
+!svn $Id: mod_boundary.F 1090 2021-09-29 03:19:30Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -348,8 +348,12 @@
 !=======================================================================
 !
         USE mod_kinds
-
+!
         implicit none
+!
+        PUBLIC :: allocate_boundary
+        PUBLIC :: deallocate_boundary
+        PUBLIC :: initialize_boundary
 !
 !-----------------------------------------------------------------------
 !  Lateral boundary condition apply switches.
@@ -371,7 +375,7 @@
         TYPE (T_APPLY), allocatable :: LBC_apply(:)
 !
 !-----------------------------------------------------------------------
-!  Lateral boundary conditions structure.
+!  Define T_BOUNDARY structure.
 !-----------------------------------------------------------------------
 !
         TYPE T_BOUNDARY
@@ -699,11 +703,11 @@
 #endif
 
         END TYPE T_BOUNDARY
-
+!
         TYPE (T_BOUNDARY), allocatable ::BOUNDARY(:)
-
+!
       CONTAINS
-
+!
       SUBROUTINE allocate_boundary (ng)
 !
 !=======================================================================
@@ -815,7 +819,7 @@
         Dmem(ng)=Dmem(ng)+2.0_r8*Ysize
 #endif
       END IF
-
+!
 #if defined ADJOINT || defined TANGENT || defined TL_IOMS
       IF (   LBC(ieast,isFsur,ng)%acquire.or.                           &
      &    ad_LBC(ieast,isFsur,ng)%acquire) THEN
@@ -840,7 +844,7 @@
         Dmem(ng)=Dmem(ng)+2.0_r8*Ysize
 #endif
       END IF
-
+!
 #if defined ADJOINT || defined TANGENT || defined TL_IOMS
       IF (   LBC(isouth,isFsur,ng)%acquire.or.                          &
      &    ad_LBC(isouth,isFsur,ng)%acquire) THEN
@@ -865,7 +869,7 @@
         Dmem(ng)=Dmem(ng)+2.0_r8*Xsize
 #endif
       END IF
-
+!
 #if defined ADJOINT || defined TANGENT || defined TL_IOMS
       IF (   LBC(inorth,isFsur,ng)%acquire.or.                          &
      &    ad_LBC(inorth,isFsur,ng)%acquire) THEN
@@ -915,7 +919,7 @@
         Dmem(ng)=Dmem(ng)+2.0_r8*Ysize
 #endif
       END IF
-
+!
 #if defined ADJOINT || defined TANGENT || defined TL_IOMS
       IF (   LBC(ieast,isUbar,ng)%acquire.or.                           &
      &    ad_LBC(ieast,isUbar,ng)%acquire) THEN
@@ -940,7 +944,7 @@
         Dmem(ng)=Dmem(ng)+2.0_r8*Ysize
 #endif
       END IF
-
+!
 #if defined ADJOINT || defined TANGENT || defined TL_IOMS
       IF (   LBC(isouth,isUbar,ng)%acquire.or.                          &
      &    ad_LBC(isouth,isUbar,ng)%acquire) THEN
@@ -964,7 +968,7 @@
         Dmem(ng)=Dmem(ng)+2.0_r8*Xsize
 #endif
       END IF
-
+!
 #if defined ADJOINT || defined TANGENT || defined TL_IOMS
       IF (   LBC(inorth,isUbar,ng)%acquire.or.                          &
      &    ad_LBC(inorth,isUbar,ng)%acquire) THEN
@@ -1014,7 +1018,7 @@
         Dmem(ng)=Dmem(ng)+2.0_r8*Ysize
 #endif
       END IF
-
+!
 #if defined ADJOINT || defined TANGENT || defined TL_IOMS
       IF (   LBC(ieast,isVbar,ng)%acquire.or.                           &
      &    ad_LBC(ieast,isVbar,ng)%acquire) THEN
@@ -1039,7 +1043,7 @@
         Dmem(ng)=Dmem(ng)+2.0_r8*Ysize
 #endif
       END IF
-
+!
 #if defined ADJOINT || defined TANGENT || defined TL_IOMS
       IF (   LBC(isouth,isVbar,ng)%acquire.or.                          &
      &    ad_LBC(isouth,isVbar,ng)%acquire) THEN
@@ -1064,7 +1068,7 @@
         Dmem(ng)=Dmem(ng)+2.0_r8*Xsize
 #endif
       END IF
-
+!
 #if defined ADJOINT || defined TANGENT || defined TL_IOMS
       IF (   LBC(inorth,isVbar,ng)%acquire.or.                          &
      &    ad_LBC(inorth,isVbar,ng)%acquire) THEN
@@ -1116,7 +1120,7 @@
         Dmem(ng)=Dmem(ng)+2.0_r8*REAL(N(ng),r8)*Ysize
 # endif
       END IF
-
+!
 # if defined ADJOINT || defined TANGENT || defined TL_IOMS
       IF (   LBC(ieast,isUvel,ng)%acquire.or.                           &
      &    ad_LBC(ieast,isUvel,ng)%acquire) THEN
@@ -1141,7 +1145,7 @@
         Dmem(ng)=Dmem(ng)+2.0_r8*REAL(N(ng),r8)*Ysize
 # endif
       END IF
-
+!
 # if defined ADJOINT || defined TANGENT || defined TL_IOMS
       IF (   LBC(isouth,isUvel,ng)%acquire.or.                          &
      &    ad_LBC(isouth,isUvel,ng)%acquire) THEN
@@ -1166,7 +1170,7 @@
         Dmem(ng)=Dmem(ng)+2.0_r8*REAL(N(ng),r8)*Xsize
 # endif
       END IF
-
+!
 # if defined ADJOINT || defined TANGENT || defined TL_IOMS
       IF (   LBC(inorth,isUvel,ng)%acquire.or.                          &
      &    ad_LBC(inorth,isUvel,ng)%acquire) THEN
@@ -1216,7 +1220,7 @@
         Dmem(ng)=Dmem(ng)+2.0_r8*REAL(N(ng),r8)*Ysize
 # endif
       END IF
-
+!
 # if defined ADJOINT || defined TANGENT || defined TL_IOMS
       IF (   LBC(ieast,isVvel,ng)%acquire.or.                           &
      &    ad_LBC(ieast,isVvel,ng)%acquire) THEN
@@ -1241,7 +1245,7 @@
         Dmem(ng)=Dmem(ng)+2.0_r8*REAL(N(ng),r8)*Ysize
 # endif
       END IF
-
+!
 # if defined ADJOINT || defined TANGENT || defined TL_IOMS
       IF (   LBC(isouth,isVvel,ng)%acquire.or.                          &
      &    ad_LBC(isouth,isVvel,ng)%acquire) THEN
@@ -1266,7 +1270,7 @@
         Dmem(ng)=Dmem(ng)+2.0_r8*REAL(N(ng),r8)*Xsize
 # endif
       END IF
-
+!
 # if defined ADJOINT || defined TANGENT || defined TL_IOMS
       IF (   LBC(inorth,isVvel,ng)%acquire.or.                          &
      &    ad_LBC(inorth,isVvel,ng)%acquire) THEN
@@ -1316,7 +1320,7 @@
         Dmem(ng)=Dmem(ng)+2.0_r8*REAL(N(ng)*NT(ng),r8)*Ysize
 # endif
       END IF
-
+!
 # if defined ADJOINT || defined TANGENT || defined TL_IOMS
       IF (ANY(   LBC(ieast,isTvar(:),ng)%acquire).or.                   &
      &    ANY(ad_LBC(ieast,isTvar(:),ng)%acquire)) THEN
@@ -1341,7 +1345,7 @@
         Dmem(ng)=Dmem(ng)+2.0_r8*REAL(N(ng)*NT(ng),r8)*Ysize
 # endif
       END IF
-
+!
 # if defined ADJOINT || defined TANGENT || defined TL_IOMS
       IF (ANY(   LBC(isouth,isTvar(:),ng)%acquire).or.                  &
      &    ANY(ad_LBC(isouth,isTvar(:),ng)%acquire)) THEN
@@ -1366,7 +1370,7 @@
         Dmem(ng)=Dmem(ng)+2.0_r8*REAL(N(ng)*NT(ng),r8)*Xsize
 # endif
       END IF
-
+!
 # if defined ADJOINT || defined TANGENT || defined TL_IOMS
       IF (ANY(   LBC(inorth,isTvar(:),ng)%acquire).or.                  &
      &    ANY(ad_LBC(inorth,isTvar(:),ng)%acquire)) THEN
@@ -1774,10 +1778,1070 @@
       allocate ( BOUNDARY(ng) % e_zeta_obc(LBij:UBij,4) )
       Dmem(ng)=Dmem(ng)+4.0_r8*XYsize
 #endif
-
+!
       RETURN
       END SUBROUTINE allocate_boundary
+!
+      SUBROUTINE deallocate_boundary (ng)
+!
+!=======================================================================
+!                                                                      !
+!  This routine initializes all variables in the module for all nested !
+!  grids.  Currently, there is not parallel tiling in boundary arrays. !
+!                                                                      !
+!=======================================================================
+!
+      USE mod_param
+      USE mod_ncparam
+      USE mod_scalars
 
+#ifdef SUBOBJECT_DEALLOCATION
+!
+      USE destroy_mod, ONLY : destroy
+#endif
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: ng
+!
+!  Local variable declarations.
+!
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__//", deallocate_boundary"
+
+#ifdef SUBOBJECT_DEALLOCATION
+!
+!-----------------------------------------------------------------------
+!  Deallocate each variable in the derived-type T_APPLY and T_BOUNDARY
+!  structures separately.
+!-----------------------------------------------------------------------
+!
+!  Lateral boundary conditions apply switches.
+!
+      IF (.not.destroy(ng, LBC_apply(ng)%west, MyFile,                  &
+     &                 __LINE__, 'LBC_apply(ng)%west')) RETURN
+
+      IF (.not.destroy(ng, LBC_apply(ng)%east, MyFile,                  &
+     &                 __LINE__, 'LBC_apply(ng)%east')) RETURN
+
+      IF (.not.destroy(ng, LBC_apply(ng)%south, MyFile,                 &
+     &                 __LINE__, 'LBC_apply(ng)%south')) RETURN
+
+      IF (.not.destroy(ng, LBC_apply(ng)%north, MyFile,                 &
+     &                 __LINE__, 'LBC_apply(ng)%north')) RETURN
+!
+!  Nonlinear model state.
+!
+# if defined ADJOINT || defined TANGENT || defined TL_IOMS
+      IF (   LBC(iwest,isFsur,ng)%acquire.or.                           &
+     &    ad_LBC(iwest,isFsur,ng)%acquire) THEN
+# else
+      IF (LBC(iwest,isFsur,ng)%acquire) THEN
+# endif
+        IF (.not.destroy(ng, BOUNDARY(ng)%zeta_west, MyFile,            &
+     &                   __LINE__, 'BOUNDARY(ng)%zeta_west')) RETURN
+
+# if defined CELERITY_READ || defined CELERITY_WRITE
+        IF (.not.destroy(ng, BOUNDARY(ng)%zeta_west_C2, MyFile,         &
+     &                   __LINE__, 'BOUNDARY(ng)%zeta_west_C2')) RETURN
+
+        IF (.not.destroy(ng, BOUNDARY(ng)%zeta_west_Ce, MyFile,         &
+     &                   __LINE__, 'BOUNDARY(ng)%zeta_west_Ce')) RETURN
+
+        IF (.not.destroy(ng, BOUNDARY(ng)%zeta_west_Cx, MyFile,         &
+     &                   __LINE__, 'BOUNDARY(ng)%zeta_west_Cx')) RETURN
+# endif
+
+# ifndef ANA_FSOBC
+        IF (.not.destroy(ng, BOUNDARY(ng)%zetaG_west, MyFile,           &
+     &                   __LINE__, 'BOUNDARY(ng)%zetaG_west')) RETURN
+# endif
+      END IF
+!
+# if defined ADJOINT || defined TANGENT || defined TL_IOMS
+      IF (   LBC(ieast,isFsur,ng)%acquire.or.                           &
+     &    ad_LBC(ieast,isFsur,ng)%acquire) THEN
+# else
+      IF (LBC(ieast,isFsur,ng)%acquire) THEN
+# endif
+        IF (.not.destroy(ng, BOUNDARY(ng)%zeta_east, MyFile,            &
+     &                   __LINE__, 'BOUNDARY(ng)%zeta_east')) RETURN
+
+# if defined CELERITY_READ || defined CELERITY_WRITE
+        IF (.not.destroy(ng, BOUNDARY(ng)%zeta_east_C2, MyFile,         &
+     &                   __LINE__, 'BOUNDARY(ng)%zeta_east_C2')) RETURN
+
+        IF (.not.destroy(ng, BOUNDARY(ng)%zeta_east_Ce, MyFile,         &
+     &                   __LINE__, 'BOUNDARY(ng)%zeta_east_Ce')) RETURN
+
+        IF (.not.destroy(ng, BOUNDARY(ng)%zeta_east_Cx, MyFile,         &
+     &                   __LINE__, 'BOUNDARY(ng)%zeta_east_Cx')) RETURN
+# endif
+
+# ifndef ANA_FSOBC
+        IF (.not.destroy(ng, BOUNDARY(ng)%zetaG_east, MyFile,           &
+     &                   __LINE__, 'BOUNDARY(ng)%zetaG_east')) RETURN
+# endif
+      END IF
+!
+# if defined ADJOINT || defined TANGENT || defined TL_IOMS
+      IF (   LBC(isouth,isFsur,ng)%acquire.or.                          &
+     &    ad_LBC(isouth,isFsur,ng)%acquire) THEN
+# else
+      IF (LBC(isouth,isFsur,ng)%acquire) THEN
+# endif
+        IF (.not.destroy(ng, BOUNDARY(ng)%zeta_south, MyFile,           &
+     &                   __LINE__, 'BOUNDARY(ng)%zeta_south')) RETURN
+
+# if defined CELERITY_READ || defined CELERITY_WRITE
+        IF (.not.destroy(ng, BOUNDARY(ng)%zeta_south_C2, MyFile,        &
+     &                   __LINE__, 'BOUNDARY(ng)%zeta_south_C2')) RETURN
+
+        IF (.not.destroy(ng, BOUNDARY(ng)%zeta_south_Ce, MyFile,        &
+     &                   __LINE__, 'BOUNDARY(ng)%zeta_south_Ce')) RETURN
+
+        IF (.not.destroy(ng, BOUNDARY(ng)%zeta_south_Cx, MyFile,        &
+     &                   __LINE__, 'BOUNDARY(ng)%zeta_south_Cx')) RETURN
+# endif
+
+# ifndef ANA_FSOBC
+        IF (.not.destroy(ng, BOUNDARY(ng)%zetaG_south, MyFile,          &
+     &                   __LINE__, 'BOUNDARY(ng)%zetaG_south')) RETURN
+# endif
+      END IF
+!
+# if defined ADJOINT || defined TANGENT || defined TL_IOMS
+      IF (   LBC(inorth,isFsur,ng)%acquire.or.                          &
+     &    ad_LBC(inorth,isFsur,ng)%acquire) THEN
+# else
+      IF (LBC(inorth,isFsur,ng)%acquire) THEN
+# endif
+        IF (.not.destroy(ng, BOUNDARY(ng)%zeta_north, MyFile,           &
+     &                   __LINE__, 'BOUNDARY(ng)%zeta_north')) RETURN
+
+# if defined CELERITY_READ || defined CELERITY_WRITE
+        IF (.not.destroy(ng, BOUNDARY(ng)%zeta_north_C2, MyFile,        &
+     &                   __LINE__, 'BOUNDARY(ng)%zeta_north_C2')) RETURN
+
+        IF (.not.destroy(ng, BOUNDARY(ng)%zeta_north_Ce, MyFile,        &
+     &                   __LINE__, 'BOUNDARY(ng)%zeta_north_Ce')) RETURN
+
+        IF (.not.destroy(ng, BOUNDARY(ng)%zeta_north_Cx, MyFile,        &
+     &                   __LINE__, 'BOUNDARY(ng)%zeta_north_Cx')) RETURN
+# endif
+
+# ifndef ANA_FSOBC
+        IF (.not.destroy(ng, BOUNDARY(ng)%zetaG_north, MyFile,          &
+     &                   __LINE__, 'BOUNDARY(ng)%zetaG_north')) RETURN
+# endif
+      END IF
+!
+# if defined ADJOINT || defined TANGENT || defined TL_IOMS
+      IF (   LBC(iwest,isUbar,ng)%acquire.or.                           &
+     &    ad_LBC(iwest,isUbar,ng)%acquire) THEN
+# else
+      IF (LBC(iwest,isUbar,ng)%acquire) THEN
+# endif
+        IF (.not.destroy(ng, BOUNDARY(ng)%ubar_west, MyFile,            &
+     &                   __LINE__, 'BOUNDARY(ng)%ubar_west')) RETURN
+
+# if defined CELERITY_READ || defined CELERITY_WRITE
+        IF (.not.destroy(ng, BOUNDARY(ng)%ubar_west_C2, MyFile,         &
+     &                   __LINE__, 'BOUNDARY(ng)%ubar_west_C2')) RETURN
+
+        IF (.not.destroy(ng, BOUNDARY(ng)%ubar_west_Ce, MyFile,         &
+     &                   __LINE__, 'BOUNDARY(ng)%ubar_west_Ce')) RETURN
+
+        IF (.not.destroy(ng, BOUNDARY(ng)%ubar_west_Cx, MyFile,         &
+     &                   __LINE__, 'BOUNDARY(ng)%ubar_west_Cx')) RETURN
+# endif
+
+# ifndef ANA_M2OBC
+        IF (.not.destroy(ng, BOUNDARY(ng)%ubarG_west, MyFile,           &
+     &                   __LINE__, 'BOUNDARY(ng)%ubarG_west')) RETURN
+# endif
+      END IF
+!
+# if defined ADJOINT || defined TANGENT || defined TL_IOMS
+      IF (   LBC(ieast,isUbar,ng)%acquire.or.                           &
+     &    ad_LBC(ieast,isUbar,ng)%acquire) THEN
+# else
+      IF (LBC(ieast,isUbar,ng)%acquire) THEN
+# endif
+        IF (.not.destroy(ng, BOUNDARY(ng)%ubar_east, MyFile,            &
+     &                   __LINE__, 'BOUNDARY(ng)%ubar_east')) RETURN
+
+# if defined CELERITY_READ || defined CELERITY_WRITE
+        IF (.not.destroy(ng, BOUNDARY(ng)%ubar_east_C2, MyFile,         &
+     &                   __LINE__, 'BOUNDARY(ng)%ubar_east_C2')) RETURN
+
+        IF (.not.destroy(ng, BOUNDARY(ng)%ubar_east_Ce, MyFile,         &
+     &                   __LINE__, 'BOUNDARY(ng)%ubar_east_Ce')) RETURN
+
+        IF (.not.destroy(ng, BOUNDARY(ng)%ubar_east_Cx, MyFile,         &
+     &                   __LINE__, 'BOUNDARY(ng)%ubar_east_Cx')) RETURN
+# endif
+
+# ifndef ANA_M2OBC
+        IF (.not.destroy(ng, BOUNDARY(ng)%ubarG_east, MyFile,           &
+     &                   __LINE__, 'BOUNDARY(ng)%ubarG_east')) RETURN
+# endif
+      END IF
+!
+# if defined ADJOINT || defined TANGENT || defined TL_IOMS
+      IF (   LBC(isouth,isUbar,ng)%acquire.or.                          &
+     &    ad_LBC(isouth,isUbar,ng)%acquire) THEN
+# else
+      IF (LBC(isouth,isUbar,ng)%acquire) THEN
+# endif
+        IF (.not.destroy(ng, BOUNDARY(ng)%ubar_south, MyFile,           &
+     &                   __LINE__, 'BOUNDARY(ng)%ubar_south')) RETURN
+
+# if defined CELERITY_READ || defined CELERITY_WRITE
+        IF (.not.destroy(ng, BOUNDARY(ng)%ubar_south_C2, MyFile,        &
+     &                   __LINE__, 'BOUNDARY(ng)%ubar_south_C2')) RETURN
+
+        IF (.not.destroy(ng, BOUNDARY(ng)%ubar_south_Ce, MyFile,        &
+     &                   __LINE__, 'BOUNDARY(ng)%ubar_south_Ce')) RETURN
+
+        IF (.not.destroy(ng, BOUNDARY(ng)%ubar_south_Cx, MyFile,        &
+     &                   __LINE__, 'BOUNDARY(ng)%ubar_south_Cx')) RETURN
+# endif
+
+# ifndef ANA_M2OBC
+        IF (.not.destroy(ng, BOUNDARY(ng)%ubarG_south, MyFile,          &
+     &                   __LINE__, 'BOUNDARY(ng)%ubarG_south')) RETURN
+# endif
+      END IF
+!
+# if defined ADJOINT || defined TANGENT || defined TL_IOMS
+      IF (   LBC(inorth,isUbar,ng)%acquire.or.                          &
+     &    ad_LBC(inorth,isUbar,ng)%acquire) THEN
+# else
+      IF (LBC(inorth,isUbar,ng)%acquire) THEN
+# endif
+        IF (.not.destroy(ng, BOUNDARY(ng)%ubar_north, MyFile,           &
+     &                   __LINE__, 'BOUNDARY(ng)%ubar_north')) RETURN
+
+# if defined CELERITY_READ || defined CELERITY_WRITE
+        IF (.not.destroy(ng, BOUNDARY(ng)%ubar_north_C2, MyFile,        &
+     &                   __LINE__, 'BOUNDARY(ng)%ubar_north_C2')) RETURN
+
+        IF (.not.destroy(ng, BOUNDARY(ng)%ubar_north_Ce, MyFile,        &
+     &                   __LINE__, 'BOUNDARY(ng)%ubar_north_Ce')) RETURN
+
+        IF (.not.destroy(ng, BOUNDARY(ng)%ubar_north_Cx, MyFile,        &
+     &                   __LINE__, 'BOUNDARY(ng)%ubar_north_Cx')) RETURN
+# endif
+
+# ifndef ANA_M2OBC
+        IF (.not.destroy(ng, BOUNDARY(ng)%ubarG_north, MyFile,          &
+     &                   __LINE__, 'BOUNDARY(ng)%ubarG_north')) RETURN
+# endif
+      END IF
+!
+# if defined ADJOINT || defined TANGENT || defined TL_IOMS
+      IF (   LBC(iwest,isVbar,ng)%acquire.or.                           &
+     &    ad_LBC(iwest,isVbar,ng)%acquire) THEN
+# else
+      IF (LBC(iwest,isVbar,ng)%acquire) THEN
+# endif
+        IF (.not.destroy(ng, BOUNDARY(ng)%vbar_west, MyFile,            &
+     &                   __LINE__, 'BOUNDARY(ng)%vbar_west')) RETURN
+
+# if defined CELERITY_READ || defined CELERITY_WRITE
+        IF (.not.destroy(ng, BOUNDARY(ng)%vbar_west_C2, MyFile,         &
+     &                   __LINE__, 'BOUNDARY(ng)%vbar_west_C2')) RETURN
+
+        IF (.not.destroy(ng, BOUNDARY(ng)%vbar_west_Ce, MyFile,         &
+     &                   __LINE__, 'BOUNDARY(ng)%vbar_west_Ce')) RETURN
+
+        IF (.not.destroy(ng, BOUNDARY(ng)%vbar_west_Cx, MyFile,         &
+     &                   __LINE__, 'BOUNDARY(ng)%vbar_west_Cx')) RETURN
+# endif
+
+# ifndef ANA_M2OBC
+        IF (.not.destroy(ng, BOUNDARY(ng)%vbarG_west, MyFile,           &
+     &                   __LINE__, 'BOUNDARY(ng)%vbarG_west')) RETURN
+# endif
+      END IF
+!
+# if defined ADJOINT || defined TANGENT || defined TL_IOMS
+      IF (   LBC(ieast,isVbar,ng)%acquire.or.                           &
+     &    ad_LBC(ieast,isVbar,ng)%acquire) THEN
+# else
+      IF (LBC(ieast,isVbar,ng)%acquire) THEN
+# endif
+        IF (.not.destroy(ng, BOUNDARY(ng)%vbar_east, MyFile,            &
+     &                   __LINE__, 'BOUNDARY(ng)%vbar_east')) RETURN
+
+# if defined CELERITY_READ || defined CELERITY_WRITE
+        IF (.not.destroy(ng, BOUNDARY(ng)%vbar_east_C2, MyFile,         &
+     &                   __LINE__, 'BOUNDARY(ng)%vbar_east_C2')) RETURN
+
+        IF (.not.destroy(ng, BOUNDARY(ng)%vbar_east_Ce, MyFile,         &
+     &                   __LINE__, 'BOUNDARY(ng)%vbar_east_Ce')) RETURN
+
+        IF (.not.destroy(ng, BOUNDARY(ng)%vbar_east_Cx, MyFile,         &
+     &                   __LINE__, 'BOUNDARY(ng)%vbar_east_Cx')) RETURN
+# endif
+
+# ifndef ANA_M2OBC
+        IF (.not.destroy(ng, BOUNDARY(ng)%vbarG_east, MyFile,           &
+     &                   __LINE__, 'BOUNDARY(ng)%vbarG_east')) RETURN
+# endif
+      END IF
+!
+# if defined ADJOINT || defined TANGENT || defined TL_IOMS
+      IF (   LBC(isouth,isVbar,ng)%acquire.or.                          &
+     &    ad_LBC(isouth,isVbar,ng)%acquire) THEN
+# else
+      IF (LBC(isouth,isVbar,ng)%acquire) THEN
+# endif
+        IF (.not.destroy(ng, BOUNDARY(ng)%vbar_south, MyFile,           &
+     &                   __LINE__, 'BOUNDARY(ng)%vbar_south')) RETURN
+
+# if defined CELERITY_READ || defined CELERITY_WRITE
+        IF (.not.destroy(ng, BOUNDARY(ng)%vbar_south_C2, MyFile,        &
+     &                   __LINE__, 'BOUNDARY(ng)%vbar_south_C2')) RETURN
+
+        IF (.not.destroy(ng, BOUNDARY(ng)%vbar_south_Ce, MyFile,        &
+     &                   __LINE__, 'BOUNDARY(ng)%vbar_south_Ce')) RETURN
+
+        IF (.not.destroy(ng, BOUNDARY(ng)%vbar_south_Cx, MyFile,        &
+     &                   __LINE__, 'BOUNDARY(ng)%vbar_south_Cx')) RETURN
+# endif
+
+# ifndef ANA_M2OBC
+        IF (.not.destroy(ng, BOUNDARY(ng)%vbarG_south, MyFile,          &
+     &                   __LINE__, 'BOUNDARY(ng)%vbarG_south')) RETURN
+# endif
+      END IF
+!
+# if defined ADJOINT || defined TANGENT || defined TL_IOMS
+      IF (   LBC(inorth,isVbar,ng)%acquire.or.                          &
+     &    ad_LBC(inorth,isVbar,ng)%acquire) THEN
+# else
+      IF (LBC(inorth,isVbar,ng)%acquire) THEN
+# endif
+        IF (.not.destroy(ng, BOUNDARY(ng)%vbar_north, MyFile,           &
+     &                   __LINE__, 'BOUNDARY(ng)%vbar_north')) RETURN
+
+# if defined CELERITY_READ || defined CELERITY_WRITE
+        IF (.not.destroy(ng, BOUNDARY(ng)%vbar_north_C2, MyFile,        &
+     &                   __LINE__, 'BOUNDARY(ng)%vbar_north_C2')) RETURN
+
+        IF (.not.destroy(ng, BOUNDARY(ng)%vbar_north_Ce, MyFile,        &
+     &                   __LINE__, 'BOUNDARY(ng)%vbar_north_Ce')) RETURN
+
+        IF (.not.destroy(ng, BOUNDARY(ng)%vbar_north_Cx, MyFile,        &
+     &                   __LINE__, 'BOUNDARY(ng)%vbar_north_Cx')) RETURN
+# endif
+
+# ifndef ANA_M2OBC
+        IF (.not.destroy(ng, BOUNDARY(ng)%vbarG_north, MyFile,          &
+     &                   __LINE__, 'BOUNDARY(ng)%vbarG_north')) RETURN
+# endif
+      END IF
+
+# ifdef SOLVE3D
+!
+#  if defined ADJOINT || defined TANGENT || defined TL_IOMS
+      IF (   LBC(iwest,isUvel,ng)%acquire.or.                           &
+     &    ad_LBC(iwest,isUvel,ng)%acquire) THEN
+#  else
+      IF (LBC(iwest,isUvel,ng)%acquire) THEN
+#  endif
+        IF (.not.destroy(ng, BOUNDARY(ng)%u_west, MyFile,               &
+     &                   __LINE__, 'BOUNDARY(ng)%u_west')) RETURN
+
+#  if defined CELERITY_READ || defined CELERITY_WRITE
+        IF (.not.destroy(ng, BOUNDARY(ng)%u_west_C2, MyFile,            &
+     &                   __LINE__, 'BOUNDARY(ng)%u_west_C2')) RETURN
+
+        IF (.not.destroy(ng, BOUNDARY(ng)%u_west_Ce, MyFile,            &
+     &                   __LINE__, 'BOUNDARY(ng)%u_west_Ce')) RETURN
+
+        IF (.not.destroy(ng, BOUNDARY(ng)%u_west_Cx, MyFile,            &
+     &                   __LINE__, 'BOUNDARY(ng)%u_west_Cx')) RETURN
+#  endif
+
+#  ifndef ANA_M3OBC
+        IF (.not.destroy(ng, BOUNDARY(ng)%uG_west, MyFile,              &
+     &                   __LINE__, 'BOUNDARY(ng)%uG_west')) RETURN
+#  endif
+      END IF
+!
+#  if defined ADJOINT || defined TANGENT || defined TL_IOMS
+      IF (   LBC(ieast,isUvel,ng)%acquire.or.                           &
+     &    ad_LBC(ieast,isUvel,ng)%acquire) THEN
+#  else
+      IF (LBC(ieast,isUvel,ng)%acquire) THEN
+#  endif
+        IF (.not.destroy(ng, BOUNDARY(ng)%u_east, MyFile,               &
+     &                   __LINE__, 'BOUNDARY(ng)%u_east')) RETURN
+
+#  if defined CELERITY_READ || defined CELERITY_WRITE
+        IF (.not.destroy(ng, BOUNDARY(ng)%u_east_C2, MyFile,            &
+     &                   __LINE__, 'BOUNDARY(ng)%u_east_C2')) RETURN
+
+        IF (.not.destroy(ng, BOUNDARY(ng)%u_east_Ce, MyFile,            &
+     &                   __LINE__, 'BOUNDARY(ng)%u_east_Ce')) RETURN
+
+        IF (.not.destroy(ng, BOUNDARY(ng)%u_east_Cx, MyFile,            &
+     &                   __LINE__, 'BOUNDARY(ng)%u_east_Cx')) RETURN
+#  endif
+
+#  ifndef ANA_M3OBC
+        IF (.not.destroy(ng, BOUNDARY(ng)%uG_east, MyFile,              &
+     &                   __LINE__, 'BOUNDARY(ng)%uG_east')) RETURN
+#  endif
+      END IF
+!
+#  if defined ADJOINT || defined TANGENT || defined TL_IOMS
+      IF (   LBC(isouth,isUvel,ng)%acquire.or.                          &
+     &    ad_LBC(isouth,isUvel,ng)%acquire) THEN
+#  else
+      IF (LBC(isouth,isUvel,ng)%acquire) THEN
+#  endif
+        IF (.not.destroy(ng, BOUNDARY(ng)%u_south, MyFile,              &
+     &                   __LINE__, 'BOUNDARY(ng)%u_south')) RETURN
+
+#  if defined CELERITY_READ || defined CELERITY_WRITE
+        IF (.not.destroy(ng, BOUNDARY(ng)%u_south_C2, MyFile,           &
+     &                   __LINE__, 'BOUNDARY(ng)%u_south_C2')) RETURN
+
+        IF (.not.destroy(ng, BOUNDARY(ng)%u_south_Ce, MyFile,           &
+     &                   __LINE__, 'BOUNDARY(ng)%u_south_Ce')) RETURN
+
+        IF (.not.destroy(ng, BOUNDARY(ng)%u_south_Cx, MyFile,           &
+     &                   __LINE__, 'BOUNDARY(ng)%u_south_Cx')) RETURN
+#  endif
+
+#  ifndef ANA_M3OBC
+        IF (.not.destroy(ng, BOUNDARY(ng)%uG_south, MyFile,             &
+     &                   __LINE__, 'BOUNDARY(ng)%uG_south')) RETURN
+#  endif
+      END IF
+!
+#  if defined ADJOINT || defined TANGENT || defined TL_IOMS
+      IF (   LBC(inorth,isUvel,ng)%acquire.or.                          &
+     &    ad_LBC(inorth,isUvel,ng)%acquire) THEN
+#  else
+      IF (LBC(inorth,isUvel,ng)%acquire) THEN
+#  endif
+        IF (.not.destroy(ng, BOUNDARY(ng)%u_north, MyFile,              &
+     &                   __LINE__, 'BOUNDARY(ng)%u_north')) RETURN
+
+#  if defined CELERITY_READ || defined CELERITY_WRITE
+        IF (.not.destroy(ng, BOUNDARY(ng)%u_north_C2, MyFile,           &
+     &                   __LINE__, 'BOUNDARY(ng)%u_north_C2')) RETURN
+
+        IF (.not.destroy(ng, BOUNDARY(ng)%u_north_Ce, MyFile,           &
+     &                   __LINE__, 'BOUNDARY(ng)%u_north_Ce')) RETURN
+
+        IF (.not.destroy(ng, BOUNDARY(ng)%u_north_Cx, MyFile,           &
+     &                   __LINE__, 'BOUNDARY(ng)%u_north_Cx')) RETURN
+#  endif
+
+#  ifndef ANA_M3OBC
+        IF (.not.destroy(ng, BOUNDARY(ng)%uG_north, MyFile,             &
+     &                   __LINE__, 'BOUNDARY(ng)%uG_north')) RETURN
+#  endif
+      END IF
+!
+#  if defined ADJOINT || defined TANGENT || defined TL_IOMS
+      IF (   LBC(iwest,isVvel,ng)%acquire.or.                           &
+     &    ad_LBC(iwest,isVvel,ng)%acquire) THEN
+#  else
+      IF (LBC(iwest,isVvel,ng)%acquire) THEN
+#  endif
+        IF (.not.destroy(ng, BOUNDARY(ng)%v_west, MyFile,               &
+     &                   __LINE__, 'BOUNDARY(ng)%v_west')) RETURN
+
+#  if defined CELERITY_READ || defined CELERITY_WRITE
+        IF (.not.destroy(ng, BOUNDARY(ng)%v_west_C2, MyFile,            &
+     &                   __LINE__, 'BOUNDARY(ng)%v_west_C2')) RETURN
+
+        IF (.not.destroy(ng, BOUNDARY(ng)%v_west_Ce, MyFile,            &
+     &                   __LINE__, 'BOUNDARY(ng)%v_west_Ce')) RETURN
+
+        IF (.not.destroy(ng, BOUNDARY(ng)%v_west_Cx, MyFile,            &
+     &                   __LINE__, 'BOUNDARY(ng)%v_west_Cx')) RETURN
+#  endif
+
+#  ifndef ANA_M3OBC
+        IF (.not.destroy(ng, BOUNDARY(ng)%vG_west, MyFile,              &
+     &                   __LINE__, 'BOUNDARY(ng)%vG_west')) RETURN
+#  endif
+      END IF
+!
+#  if defined ADJOINT || defined TANGENT || defined TL_IOMS
+      IF (   LBC(ieast,isVvel,ng)%acquire.or.                           &
+     &    ad_LBC(ieast,isVvel,ng)%acquire) THEN
+#  else
+      IF (LBC(ieast,isVvel,ng)%acquire) THEN
+#  endif
+        IF (.not.destroy(ng, BOUNDARY(ng)%v_east, MyFile,               &
+     &                   __LINE__, 'BOUNDARY(ng)%v_east')) RETURN
+
+#  if defined CELERITY_READ || defined CELERITY_WRITE
+        IF (.not.destroy(ng, BOUNDARY(ng)%v_east_C2, MyFile,            &
+     &                   __LINE__, 'BOUNDARY(ng)%v_east_C2')) RETURN
+
+        IF (.not.destroy(ng, BOUNDARY(ng)%v_east_Ce, MyFile,            &
+     &                   __LINE__, 'BOUNDARY(ng)%v_east_Ce')) RETURN
+
+        IF (.not.destroy(ng, BOUNDARY(ng)%v_east_Cx, MyFile,            &
+     &                   __LINE__, 'BOUNDARY(ng)%v_east_Cx')) RETURN
+#  endif
+
+#  ifndef ANA_M3OBC
+        IF (.not.destroy(ng, BOUNDARY(ng)%vG_east, MyFile,              &
+     &                   __LINE__, 'BOUNDARY(ng)%vG_east')) RETURN
+#  endif
+      END IF
+!
+#  if defined ADJOINT || defined TANGENT || defined TL_IOMS
+      IF (   LBC(isouth,isVvel,ng)%acquire.or.                          &
+     &    ad_LBC(isouth,isVvel,ng)%acquire) THEN
+#  else
+      IF (LBC(isouth,isVvel,ng)%acquire) THEN
+#  endif
+        IF (.not.destroy(ng, BOUNDARY(ng)%v_south, MyFile,              &
+     &                   __LINE__, 'BOUNDARY(ng)%v_south')) RETURN
+
+#  if defined CELERITY_READ || defined CELERITY_WRITE
+        IF (.not.destroy(ng, BOUNDARY(ng)%v_south_C2, MyFile,           &
+     &                   __LINE__, 'BOUNDARY(ng)%v_south_C2')) RETURN
+
+        IF (.not.destroy(ng, BOUNDARY(ng)%v_south_Ce, MyFile,           &
+     &                   __LINE__, 'BOUNDARY(ng)%v_south_Ce')) RETURN
+
+        IF (.not.destroy(ng, BOUNDARY(ng)%v_south_Cx, MyFile,           &
+     &                   __LINE__, 'BOUNDARY(ng)%v_south_Cx')) RETURN
+#  endif
+
+#  ifndef ANA_M3OBC
+      IF (.not.destroy(ng, BOUNDARY(ng)%vG_south, MyFile,                     &
+     &                 __LINE__, 'BOUNDARY(ng)%vG_south')) RETURN
+#  endif
+      END IF
+!
+#  if defined ADJOINT || defined TANGENT || defined TL_IOMS
+      IF (   LBC(inorth,isVvel,ng)%acquire.or.                          &
+     &    ad_LBC(inorth,isVvel,ng)%acquire) THEN
+#  else
+      IF (LBC(inorth,isVvel,ng)%acquire) THEN
+#  endif
+        IF (.not.destroy(ng, BOUNDARY(ng)%v_north, MyFile,              &
+     &                   __LINE__, 'BOUNDARY(ng)%v_north')) RETURN
+
+#  if defined CELERITY_READ || defined CELERITY_WRITE
+        IF (.not.destroy(ng, BOUNDARY(ng)%u_north_C2, MyFile,           &
+     &                   __LINE__, 'BOUNDARY(ng)%u_north_C2')) RETURN
+
+        IF (.not.destroy(ng, BOUNDARY(ng)%u_north_Ce, MyFile,           &
+     &                   __LINE__, 'BOUNDARY(ng)%u_north_Ce')) RETURN
+
+        IF (.not.destroy(ng, BOUNDARY(ng)%u_north_Cx, MyFile,           &
+     &                   __LINE__, 'BOUNDARY(ng)%u_north_Cx')) RETURN
+#  endif
+
+#  ifndef ANA_M3OBC
+        IF (.not.destroy(ng, BOUNDARY(ng)%vG_north, MyFile,             &
+     &                   __LINE__, 'BOUNDARY(ng)%vG_north')) RETURN
+#  endif
+      END IF
+!
+#  if defined ADJOINT || defined TANGENT || defined TL_IOMS
+      IF (ANY(   LBC(iwest,isTvar(:),ng)%acquire).or.                   &
+     &    ANY(ad_LBC(iwest,isTvar(:),ng)%acquire)) THEN
+#  else
+      IF (ANY(LBC(iwest,isTvar(:),ng)%acquire)) THEN
+#  endif
+        IF (.not.destroy(ng, BOUNDARY(ng)%t_west, MyFile,               &
+     &                   __LINE__, 'BOUNDARY(ng)%t_west')) RETURN
+
+#  if defined CELERITY_READ || defined CELERITY_WRITE
+        IF (.not.destroy(ng, BOUNDARY(ng)%t_west_C2, MyFile,            &
+     &                   __LINE__, 'BOUNDARY(ng)%t_west_C2')) RETURN
+
+        IF (.not.destroy(ng, BOUNDARY(ng)%t_west_Ce, MyFile,            &
+     &                   __LINE__, 'BOUNDARY(ng)%t_west_Ce')) RETURN
+
+        IF (.not.destroy(ng, BOUNDARY(ng)%t_west_Cx, MyFile,            &
+     &                   __LINE__, 'BOUNDARY(ng)%t_west_Cx')) RETURN
+#  endif
+
+#  ifndef ANA_TOBC
+        IF (.not.destroy(ng, BOUNDARY(ng)%tG_west, MyFile,              &
+     &                   __LINE__, 'BOUNDARY(ng)%tG_west')) RETURN
+#  endif
+      END IF
+!
+#  if defined ADJOINT || defined TANGENT || defined TL_IOMS
+      IF (ANY(   LBC(ieast,isTvar(:),ng)%acquire).or.                   &
+     &    ANY(ad_LBC(ieast,isTvar(:),ng)%acquire)) THEN
+#  else
+      IF (ANY(LBC(ieast,isTvar(:),ng)%acquire)) THEN
+#  endif
+        IF (.not.destroy(ng, BOUNDARY(ng)%t_east, MyFile,               &
+     &                   __LINE__, 'BOUNDARY(ng)%t_east')) RETURN
+
+#  if defined CELERITY_READ || defined CELERITY_WRITE
+        IF (.not.destroy(ng, BOUNDARY(ng)%t_east_C2, MyFile,            &
+     &                   __LINE__, 'BOUNDARY(ng)%t_east_C2')) RETURN
+
+        IF (.not.destroy(ng, BOUNDARY(ng)%t_east_Ce, MyFile,            &
+     &                   __LINE__, 'BOUNDARY(ng)%t_east_Ce')) RETURN
+
+        IF (.not.destroy(ng, BOUNDARY(ng)%t_east_Cx, MyFile,            &
+     &                   __LINE__, 'BOUNDARY(ng)%t_east_Cx')) RETURN
+#  endif
+
+#  ifndef ANA_TOBC
+        IF (.not.destroy(ng, BOUNDARY(ng)%tG_east, MyFile,              &
+     &                   __LINE__, 'BOUNDARY(ng)%tG_east')) RETURN
+#  endif
+      END IF
+!
+#  if defined ADJOINT || defined TANGENT || defined TL_IOMS
+      IF (ANY(   LBC(isouth,isTvar(:),ng)%acquire).or.                  &
+     &    ANY(ad_LBC(isouth,isTvar(:),ng)%acquire)) THEN
+#  else
+      IF (ANY(LBC(isouth,isTvar(:),ng)%acquire)) THEN
+#  endif
+        IF (.not.destroy(ng, BOUNDARY(ng)%t_south, MyFile,              &
+     &                   __LINE__, 'BOUNDARY(ng)%t_south')) RETURN
+
+#  if defined CELERITY_READ || defined CELERITY_WRITE
+        IF (.not.destroy(ng, BOUNDARY(ng)%t_south_C2, MyFile,           &
+     &                   __LINE__, 'BOUNDARY(ng)%t_south_C2')) RETURN
+
+        IF (.not.destroy(ng, BOUNDARY(ng)%t_south_Ce, MyFile,           &
+     &                   __LINE__, 'BOUNDARY(ng)%t_south_Ce')) RETURN
+
+        IF (.not.destroy(ng, BOUNDARY(ng)%t_south_Cx, MyFile,           &
+     &                   __LINE__, 'BOUNDARY(ng)%t_south_Cx')) RETURN
+#  endif
+
+#  ifndef ANA_TOBC
+        IF (.not.destroy(ng, BOUNDARY(ng)%tG_south, MyFile,             &
+     &                   __LINE__, 'BOUNDARY(ng)%tG_south')) RETURN
+#  endif
+      END IF
+!
+#  if defined ADJOINT || defined TANGENT || defined TL_IOMS
+      IF (ANY(   LBC(inorth,isTvar(:),ng)%acquire).or.                  &
+     &    ANY(ad_LBC(inorth,isTvar(:),ng)%acquire)) THEN
+#  else
+      IF (ANY(LBC(inorth,isTvar(:),ng)%acquire)) THEN
+#  endif
+        IF (.not.destroy(ng, BOUNDARY(ng)%t_north, MyFile,              &
+     &                   __LINE__, 'BOUNDARY(ng)%t_north')) RETURN
+
+#  if defined CELERITY_READ || defined CELERITY_WRITE
+        IF (.not.destroy(ng, BOUNDARY(ng)%t_north_C2, MyFile,           &
+     &                   __LINE__, 'BOUNDARY(ng)%t_north_C2')) RETURN
+
+        IF (.not.destroy(ng, BOUNDARY(ng)%t_north_Ce, MyFile,           &
+     &                   __LINE__, 'BOUNDARY(ng)%t_north_Ce')) RETURN
+
+        IF (.not.destroy(ng, BOUNDARY(ng)%t_north_Cx, MyFile,           &
+     &                   __LINE__, 'BOUNDARY(ng)%t_north_Cx')) RETURN
+#  endif
+
+#  ifndef ANA_TOBC
+        IF (.not.destroy(ng, BOUNDARY(ng)%tG_north, MyFile,             &
+     &                   __LINE__, 'BOUNDARY(ng)%tG_north')) RETURN
+#  endif
+      END IF
+# endif
+
+# if defined TANGENT || defined TL_IOMS
+!
+!  Tangent linear model state.
+!
+      IF (tl_LBC(iwest,isFsur,ng)%acquire) THEN
+        IF (.not.destroy(ng, BOUNDARY(ng)%tl_zeta_west, MyFile,         &
+     &                   __LINE__, 'BOUNDARY(ng)%tl_zeta_west')) RETURN
+      END IF
+
+      IF (tl_LBC(ieast,isFsur,ng)%acquire) THEN
+        IF (.not.destroy(ng, BOUNDARY(ng)%tl_zeta_east, MyFile,         &
+     &                   __LINE__, 'BOUNDARY(ng)%tl_zeta_east')) RETURN
+      END IF
+
+      IF (tl_LBC(isouth,isFsur,ng)%acquire) THEN
+        IF (.not.destroy(ng, BOUNDARY(ng)%tl_zeta_south, MyFile,        &
+     &                   __LINE__, 'BOUNDARY(ng)%tl_zeta_south')) RETURN
+      END IF
+
+      IF (tl_LBC(inorth,isFsur,ng)%acquire) THEN
+        IF (.not.destroy(ng, BOUNDARY(ng)%tl_zeta_north, MyFile,        &
+     &                   __LINE__, 'BOUNDARY(ng)%tl_zeta_north')) RETURN
+      END IF
+!
+      IF (tl_LBC(iwest,isUbar,ng)%acquire) THEN
+        IF (.not.destroy(ng, BOUNDARY(ng)%tl_ubar_west, MyFile,         &
+     &                   __LINE__, 'BOUNDARY(ng)%tl_ubar_west')) RETURN
+      END IF
+
+      IF (tl_LBC(ieast,isUbar,ng)%acquire) THEN
+        IF (.not.destroy(ng, BOUNDARY(ng)%tl_ubar_east, MyFile,         &
+     &                   __LINE__, 'BOUNDARY(ng)%tl_ubar_east')) RETURN
+      END IF
+
+      IF (tl_LBC(isouth,isUbar,ng)%acquire) THEN
+        IF (.not.destroy(ng, BOUNDARY(ng)%tl_ubar_south, MyFile,        &
+     &                   __LINE__, 'BOUNDARY(ng)%tl_ubar_south')) RETURN
+      END IF
+
+      IF (tl_LBC(inorth,isUbar,ng)%acquire) THEN
+        IF (.not.destroy(ng, BOUNDARY(ng)%tl_ubar_north, MyFile,        &
+     &                   __LINE__, 'BOUNDARY(ng)%tl_ubar_north')) RETURN
+      END IF
+!
+      IF (tl_LBC(iwest,isVbar,ng)%acquire) THEN
+        IF (.not.destroy(ng, BOUNDARY(ng)%tl_vbar_west, MyFile,         &
+     &                   __LINE__, 'BOUNDARY(ng)%tl_vbar_west')) RETURN
+      END IF
+
+      IF (tl_LBC(ieast,isVbar,ng)%acquire) THEN
+        IF (.not.destroy(ng, BOUNDARY(ng)%tl_vbar_east, MyFile,         &
+     &                   __LINE__, 'BOUNDARY(ng)%tl_vbar_east')) RETURN
+      END IF
+
+      IF (tl_LBC(isouth,isVbar,ng)%acquire) THEN
+        IF (.not.destroy(ng, BOUNDARY(ng)%tl_vbar_south, MyFile,        &
+     &                   __LINE__, 'BOUNDARY(ng)%tl_vbar_south')) RETURN
+      END IF
+
+      IF (tl_LBC(inorth,isVbar,ng)%acquire) THEN
+        IF (.not.destroy(ng, BOUNDARY(ng)%tl_vbar_north, MyFile,        &
+     &                   __LINE__, 'BOUNDARY(ng)%tl_vbar_north')) RETURN
+      END IF
+
+#  ifdef SOLVE3D
+!
+      IF (tl_LBC(iwest,isUvel,ng)%acquire) THEN
+        IF (.not.destroy(ng, BOUNDARY(ng)%tl_u_west, MyFile,            &
+     &                   __LINE__, 'BOUNDARY(ng)%tl_u_west')) RETURN
+      END IF
+      IF (tl_LBC(ieast,isUvel,ng)%acquire) THEN
+        IF (.not.destroy(ng, BOUNDARY(ng)%tl_u_east, MyFile,            &
+     &                   __LINE__, 'BOUNDARY(ng)%tl_u_east')) RETURN
+      END IF
+
+      IF (tl_LBC(isouth,isUvel,ng)%acquire) THEN
+        IF (.not.destroy(ng, BOUNDARY(ng)%tl_u_south, MyFile,           &
+     &                   __LINE__, 'BOUNDARY(ng)%tl_u_south')) RETURN
+      END IF
+
+      IF (tl_LBC(inorth,isUvel,ng)%acquire) THEN
+        IF (.not.destroy(ng, BOUNDARY(ng)%tl_u_north, MyFile,           &
+     &                   __LINE__, 'BOUNDARY(ng)%tl_u_north')) RETURN
+      END IF
+!
+      IF (tl_LBC(iwest,isVvel,ng)%acquire) THEN
+        IF (.not.destroy(ng, BOUNDARY(ng)%tl_v_west, MyFile,            &
+     &                   __LINE__, 'BOUNDARY(ng)%tl_v_west')) RETURN
+      END IF
+
+      IF (tl_LBC(ieast,isVvel,ng)%acquire) THEN
+        IF (.not.destroy(ng, BOUNDARY(ng)%tl_v_east, MyFile,            &
+     &                   __LINE__, 'BOUNDARY(ng)%tl_v_east')) RETURN
+      END IF
+
+      IF (tl_LBC(isouth,isVvel,ng)%acquire) THEN
+        IF (.not.destroy(ng, BOUNDARY(ng)%tl_v_south, MyFile,           &
+     &                   __LINE__, 'BOUNDARY(ng)%tl_v_south')) RETURN
+      END IF
+
+      IF (tl_LBC(inorth,isVvel,ng)%acquire) THEN
+        IF (.not.destroy(ng, BOUNDARY(ng)%tl_v_north, MyFile,           &
+     &                   __LINE__, 'BOUNDARY(ng)%tl_v_north')) RETURN
+      END IF
+!
+      IF (ANY(tl_LBC(iwest,isTvar(:),ng)%acquire)) THEN
+        IF (.not.destroy(ng, BOUNDARY(ng)%tl_t_west, MyFile,            &
+     &                   __LINE__, 'BOUNDARY(ng)%tl_t_west')) RETURN
+      END IF
+
+      IF (ANY(tl_LBC(ieast,isTvar(:),ng)%acquire)) THEN
+        IF (.not.destroy(ng, BOUNDARY(ng)%tl_t_east, MyFile,            &
+     &                   __LINE__, 'BOUNDARY(ng)%tl_t_east')) RETURN
+      END IF
+
+      IF (ANY(tl_LBC(isouth,isTvar(:),ng)%acquire)) THEN
+        IF (.not.destroy(ng, BOUNDARY(ng)%tl_t_south, MyFile,           &
+     &                   __LINE__, 'BOUNDARY(ng)%tl_t_south')) RETURN
+      END IF
+
+      IF (ANY(tl_LBC(inorth,isTvar(:),ng)%acquire)) THEN
+        IF (.not.destroy(ng, BOUNDARY(ng)%tl_t_north, MyFile,           &
+     &                   __LINE__, 'BOUNDARY(ng)%tl_t_north')) RETURN
+      END IF
+#  endif
+# endif
+
+# ifdef ADJOINT
+!
+!  Adjoint model state.
+!
+      IF (ad_LBC(iwest,isFsur,ng)%acquire) THEN
+        IF (.not.destroy(ng, BOUNDARY(ng)%ad_zeta_west, MyFile,         &
+     &                   __LINE__, 'BOUNDARY(ng)%ad_zeta_west')) RETURN
+      END IF
+
+      IF (ad_LBC(ieast,isFsur,ng)%acquire) THEN
+        IF (.not.destroy(ng, BOUNDARY(ng)%ad_zeta_east, MyFile,         &
+     &                   __LINE__, 'BOUNDARY(ng)%ad_zeta_east')) RETURN
+      END IF
+
+      IF (ad_LBC(isouth,isFsur,ng)%acquire) THEN
+        IF (.not.destroy(ng, BOUNDARY(ng)%ad_zeta_south, MyFile,        &
+     &                   __LINE__, 'BOUNDARY(ng)%ad_zeta_south')) RETURN
+      END IF
+
+      IF (ad_LBC(inorth,isFsur,ng)%acquire) THEN
+        IF (.not.destroy(ng, BOUNDARY(ng)%ad_zeta_north, MyFile,        &
+     &                   __LINE__, 'BOUNDARY(ng)%ad_zeta_north')) RETURN
+      END IF
+!
+      IF (ad_LBC(iwest,isUbar,ng)%acquire) THEN
+        IF (.not.destroy(ng, BOUNDARY(ng)%ad_ubar_west, MyFile,         &
+     &                   __LINE__, 'BOUNDARY(ng)%ad_ubar_west')) RETURN
+      END IF
+
+      IF (ad_LBC(ieast,isUbar,ng)%acquire) THEN
+        IF (.not.destroy(ng, BOUNDARY(ng)%ad_ubar_east, MyFile,         &
+     &                   __LINE__, 'BOUNDARY(ng)%ad_ubar_east')) RETURN
+      END IF
+
+      IF (ad_LBC(isouth,isUbar,ng)%acquire) THEN
+        IF (.not.destroy(ng, BOUNDARY(ng)%ad_ubar_south, MyFile,        &
+     &                   __LINE__, 'BOUNDARY(ng)%ad_ubar_south')) RETURN
+      END IF
+
+      IF (ad_LBC(inorth,isUbar,ng)%acquire) THEN
+        IF (.not.destroy(ng, BOUNDARY(ng)%ad_ubar_north, MyFile,        &
+     &                   __LINE__, 'BOUNDARY(ng)%ad_ubar_north')) RETURN
+      END IF
+!
+      IF (ad_LBC(iwest,isVbar,ng)%acquire) THEN
+        IF (.not.destroy(ng, BOUNDARY(ng)%ad_vbar_west, MyFile,         &
+     &                   __LINE__, 'BOUNDARY(ng)%ad_vbar_west')) RETURN
+      END IF
+
+      IF (ad_LBC(ieast,isVbar,ng)%acquire) THEN
+        IF (.not.destroy(ng, BOUNDARY(ng)%ad_vbar_east, MyFile,         &
+     &                   __LINE__, 'BOUNDARY(ng)%ad_vbar_east')) RETURN
+      END IF
+
+      IF (ad_LBC(isouth,isVbar,ng)%acquire) THEN
+        IF (.not.destroy(ng, BOUNDARY(ng)%ad_vbar_south, MyFile,        &
+     &                   __LINE__, 'BOUNDARY(ng)%ad_vbar_south')) RETURN
+      END IF
+
+      IF (ad_LBC(inorth,isVbar,ng)%acquire) THEN
+        IF (.not.destroy(ng, BOUNDARY(ng)%ad_vbar_north, MyFile,        &
+     &                   __LINE__, 'BOUNDARY(ng)%ad_vbar_north')) RETURN
+      END IF
+
+#  ifdef SOLVE3D
+!
+      IF (ad_LBC(iwest,isUvel,ng)%acquire) THEN
+        IF (.not.destroy(ng, BOUNDARY(ng)%ad_u_west, MyFile,            &
+     &                   __LINE__, 'BOUNDARY(ng)%ad_u_west')) RETURN
+      END IF
+
+      IF (ad_LBC(ieast,isUvel,ng)%acquire) THEN
+        IF (.not.destroy(ng, BOUNDARY(ng)%ad_u_east, MyFile,            &
+     &                   __LINE__, 'BOUNDARY(ng)%ad_u_east')) RETURN
+      END IF
+
+      IF (ad_LBC(isouth,isUvel,ng)%acquire) THEN
+        IF (.not.destroy(ng, BOUNDARY(ng)%ad_u_south, MyFile,           &
+     &                   __LINE__, 'BOUNDARY(ng)%ad_u_south')) RETURN
+      END IF
+
+      IF (ad_LBC(isouth,isUvel,ng)%acquire) THEN
+        IF (.not.destroy(ng, BOUNDARY(ng)%ad_u_north, MyFile,           &
+     &                   __LINE__, 'BOUNDARY(ng)%ad_u_north')) RETURN
+      END IF
+!
+      IF (ad_LBC(iwest,isVvel,ng)%acquire) THEN
+        IF (.not.destroy(ng, BOUNDARY(ng)%ad_v_west, MyFile,            &
+     &                   __LINE__, 'BOUNDARY(ng)%ad_v_west')) RETURN
+      END IF
+
+      IF (ad_LBC(ieast,isVvel,ng)%acquire) THEN
+        IF (.not.destroy(ng, BOUNDARY(ng)%ad_v_east, MyFile,            &
+     &                   __LINE__, 'BOUNDARY(ng)%ad_v_east')) RETURN
+      END IF
+
+      IF (ad_LBC(isouth,isVvel,ng)%acquire) THEN
+        IF (.not.destroy(ng, BOUNDARY(ng)%ad_v_south, MyFile,           &
+     &                   __LINE__, 'BOUNDARY(ng)%ad_v_south')) RETURN
+      END IF
+
+      IF (ad_LBC(inorth,isVvel,ng)%acquire) THEN
+        IF (.not.destroy(ng, BOUNDARY(ng)%ad_v_north, MyFile,           &
+     &                   __LINE__, 'BOUNDARY(ng)%ad_v_north')) RETURN
+      END IF
+!
+      IF (ANY(ad_LBC(iwest,isTvar(:),ng)%acquire)) THEN
+        IF (.not.destroy(ng, BOUNDARY(ng)%ad_t_west, MyFile,            &
+     &                   __LINE__, 'BOUNDARY(ng)%ad_t_west')) RETURN
+      END IF
+
+      IF (ANY(ad_LBC(ieast,isTvar(:),ng)%acquire)) THEN
+        IF (.not.destroy(ng, BOUNDARY(ng)%ad_t_east, MyFile,            &
+     &                   __LINE__, 'BOUNDARY(ng)%ad_t_east')) RETURN
+      END IF
+
+      IF (ANY(ad_LBC(isouth,isTvar(:),ng)%acquire)) THEN
+        IF (.not.destroy(ng, BOUNDARY(ng)%ad_t_south, MyFile,           &
+     &                   __LINE__, 'BOUNDARY(ng)%ad_t_south')) RETURN
+      END IF
+
+      IF (ANY(ad_LBC(inorth,isTvar(:),ng)%acquire)) THEN
+        IF (.not.destroy(ng, BOUNDARY(ng)%ad_t_north, MyFile,           &
+     &                   __LINE__, 'BOUNDARY(ng)%ad_t_north')) RETURN
+      END IF
+#  endif
+# endif
+
+# ifdef ADJUST_BOUNDARY
+!
+!  Open boundaries arrays used in 4DVar adjustments.
+!
+#  ifdef SOLVE3D
+      IF (.not.destroy(ng, BOUNDARY(ng)%t_obc, MyFile,                  &
+     &                 __LINE__, 'BOUNDARY(ng)%t_obc')) RETURN
+
+      IF (.not.destroy(ng, BOUNDARY(ng)%u_obc, MyFile,                  &
+     &                 __LINE__, 'BOUNDARY(ng)%u_obc')) RETURN
+
+      IF (.not.destroy(ng, BOUNDARY(ng)%v_obc, MyFile,                  &
+     &                 __LINE__, 'BOUNDARY(ng)%v_obc')) RETURN
+!
+      IF (.not.destroy(ng, BOUNDARY(ng)%ad_t_obc, MyFile,               &
+     &                 __LINE__, 'BOUNDARY(ng)%ad_t_obc')) RETURN
+
+      IF (.not.destroy(ng, BOUNDARY(ng)%ad_u_obc, MyFile,               &
+     &                 __LINE__, 'BOUNDARY(ng)%ad_u_obc')) RETURN
+
+      IF (.not.destroy(ng, BOUNDARY(ng)%ad_v_obc, MyFile,               &
+     &                 __LINE__, 'BOUNDARY(ng)%ad_v_obc')) RETURN
+!
+      IF (.not.destroy(ng, BOUNDARY(ng)%tl_t_obc, MyFile,               &
+     &                 __LINE__, 'BOUNDARY(ng)%tl_t_obc')) RETURN
+
+      IF (.not.destroy(ng, BOUNDARY(ng)%tl_u_obc, MyFile,               &
+     &                 __LINE__, 'BOUNDARY(ng)%tl_u_obc')) RETURN
+
+      IF (.not.destroy(ng, BOUNDARY(ng)%tl_v_obc, MyFile,               &
+     &                 __LINE__, 'BOUNDARY(ng)%tl_v_obc')) RETURN
+!
+      IF (.not.destroy(ng, BOUNDARY(ng)%b_t_obc, MyFile,                &
+     &                 __LINE__, 'BOUNDARY(ng)%b_t_obc')) RETURN
+
+      IF (.not.destroy(ng, BOUNDARY(ng)%b_u_obc, MyFile,                &
+     &                 __LINE__, 'BOUNDARY(ng)%b_u_obc')) RETURN
+
+      IF (.not.destroy(ng, BOUNDARY(ng)%b_v_obc, MyFile,                &
+     &                 __LINE__, 'BOUNDARY(ng)%b_v_obc')) RETURN
+!
+      IF (.not.destroy(ng, BOUNDARY(ng)%d_t_obc, MyFile,                &
+     &                 __LINE__, 'BOUNDARY(ng)%d_t_obc')) RETURN
+
+      IF (.not.destroy(ng, BOUNDARY(ng)%d_u_obc, MyFile,                &
+     &                 __LINE__, 'BOUNDARY(ng)%d_u_obc')) RETURN
+
+      IF (.not.destroy(ng, BOUNDARY(ng)%d_v_obc, MyFile,                &
+     &                 __LINE__, 'BOUNDARY(ng)%d_v_obc')) RETURN
+!
+      IF (.not.destroy(ng, BOUNDARY(ng)%e_t_obc, MyFile,                &
+     &                 __LINE__, 'BOUNDARY(ng)%e_t_obc')) RETURN
+
+      IF (.not.destroy(ng, BOUNDARY(ng)%e_u_obc, MyFile,                &
+     &                 __LINE__, 'BOUNDARY(ng)%e_u_obc')) RETURN
+
+      IF (.not.destroy(ng, BOUNDARY(ng)%e_v_obc, MyFile,                &
+     &                 __LINE__, 'BOUNDARY(ng)%e_v_obc')) RETURN
+#  endif
+
+      IF (.not.destroy(ng, BOUNDARY(ng)%ubar_obc, MyFile,               &
+     &                 __LINE__, 'BOUNDARY(ng)%ubar_obc')) RETURN
+
+      IF (.not.destroy(ng, BOUNDARY(ng)%vbar_obc, MyFile,               &
+     &                 __LINE__, 'BOUNDARY(ng)%vbar_obc')) RETURN
+
+      IF (.not.destroy(ng, BOUNDARY(ng)%zeta_obc, MyFile,               &
+     &                 __LINE__, 'BOUNDARY(ng)%zeta_obc')) RETURN
+!
+      IF (.not.destroy(ng, BOUNDARY(ng)%ad_ubar_obc, MyFile,            &
+     &                 __LINE__, 'BOUNDARY(ng)%ad_ubar_obc')) RETURN
+
+      IF (.not.destroy(ng, BOUNDARY(ng)%ad_vbar_obc, MyFile,            &
+     &                 __LINE__, 'BOUNDARY(ng)%ad_vbar_obc')) RETURN
+
+      IF (.not.destroy(ng, BOUNDARY(ng)%ad_zeta_obc, MyFile,            &
+     &                 __LINE__, 'BOUNDARY(ng)%ad_zeta_obc')) RETURN
+!
+      IF (.not.destroy(ng, BOUNDARY(ng)%tl_ubar_obc, MyFile,            &
+     &                 __LINE__, 'BOUNDARY(ng)%tl_ubar_obc')) RETURN
+
+      IF (.not.destroy(ng, BOUNDARY(ng)%tl_vbar_obc, MyFile,            &
+     &                 __LINE__, 'BOUNDARY(ng)%tl_vbar_obc')) RETURN
+
+      IF (.not.destroy(ng, BOUNDARY(ng)%tl_zeta_obc, MyFile,            &
+     &                 __LINE__, 'BOUNDARY(ng)%tl_zeta_obc')) RETURN
+!
+      IF (.not.destroy(ng, BOUNDARY(ng)%b_ubar_obc, MyFile,             &
+     &                 __LINE__, 'BOUNDARY(ng)%b_ubar_obc')) RETURN
+
+      IF (.not.destroy(ng, BOUNDARY(ng)%b_vbar_obc, MyFile,             &
+     &                 __LINE__, 'BOUNDARY(ng)%b_vbar_obc')) RETURN
+
+      IF (.not.destroy(ng, BOUNDARY(ng)%b_zeta_obc, MyFile,             &
+     &                 __LINE__, 'BOUNDARY(ng)%b_zeta_obc')) RETURN
+!
+      IF (.not.destroy(ng, BOUNDARY(ng)%d_ubar_obc, MyFile,             &
+     &                 __LINE__, 'BOUNDARY(ng)%d_ubar_obc')) RETURN
+
+      IF (.not.destroy(ng, BOUNDARY(ng)%d_vbar_obc, MyFile,             &
+     &                 __LINE__, 'BOUNDARY(ng)%d_vbar_obc')) RETURN
+
+      IF (.not.destroy(ng, BOUNDARY(ng)%d_zeta_obc, MyFile,             &
+     &                 __LINE__, 'BOUNDARY(ng)%d_zeta_obc')) RETURN
+!
+      IF (.not.destroy(ng, BOUNDARY(ng)%e_ubar_obc, MyFile,             &
+     &                 __LINE__, 'BOUNDARY(ng)%e_ubar_obc')) RETURN
+
+      IF (.not.destroy(ng, BOUNDARY(ng)%e_vbar_obc, MyFile,             &
+     &                 __LINE__, 'BOUNDARY(ng)%e_vbar_obc')) RETURN
+
+      IF (.not.destroy(ng, BOUNDARY(ng)%e_zeta_obc, MyFile,             &
+     &                 __LINE__, 'BOUNDARY(ng)%e_zeta_obc')) RETURN
+# endif
+#endif
+!
+!-----------------------------------------------------------------------
+!  Deallocate derived-type LBC_apply and BOUNDARY structures.
+!-----------------------------------------------------------------------
+!
+      IF (ng.eq.Ngrids) THEN
+        IF (allocated(LBC_apply)) deallocate ( LBC_apply )
+        IF (allocated(BOUNDARY))  deallocate ( BOUNDARY )
+      END IF
+!
+      RETURN
+      END SUBROUTINE deallocate_boundary
+!
       SUBROUTINE initialize_boundary (ng, tile, model)
 !
 !=======================================================================

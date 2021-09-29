@@ -3,7 +3,7 @@
 #if defined PIO_LIB && defined DISTRIBUTE
 !
 !git $Id$
-!svn $Id: mod_pio_netcdf.F 1064 2021-05-10 19:55:56Z arango $
+!svn $Id: mod_pio_netcdf.F 1090 2021-09-29 03:19:30Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -542,7 +542,7 @@
       character (len=4096) :: my_Achar
 !
       character (len=*), parameter :: MyFile =                          &
-     &  __FILE__//", pio_netcdf_find_var"
+     &  __FILE__//", pio_netcdf_copy_att"
 !
       TYPE (Var_Desc_t) :: pioVar
 !
@@ -786,6 +786,7 @@
 !-----------------------------------------------------------------------
 !
       foundit=.FALSE.
+      status=PIO_noerr
       status=PIO_inq_varid(pioFile, TRIM(VarName), pioVar)
 !
       IF (status.eq.PIO_noerr) THEN
@@ -7735,8 +7736,8 @@
           FileH=pioFile%fh
           IF (Ldebug_pioFile) THEN
             IF (Master) WRITE (DBout,'(a,1x," <= ",i8,2(2x,a))')        &
-     &                        kernel(model)//' PIO: CLOSE', FileH,      &
-     &                        TRIM(my_ncname), TRIM(SourceFile)
+     &                        KernelString(model)//' PIO: CLOSE',       &
+     &                        FileH, TRIM(my_ncname), TRIM(SourceFile)
             CALL my_flush (DBout)
           END IF
           CALL pio_closefile (pioFile)
@@ -7839,8 +7840,8 @@
 !
       IF (Ldebug_pioFile) THEN
         IF (Master) WRITE (DBout,'(a," ** ",i8,2(2x,a))')               &
-     &                    kernel(model)//' PIO: CREATE', pioFile%fh,    &
-     &                    TRIM(ncname), TRIM(SourceFile)
+     &                    KernelString(model)//' PIO: CREATE',          &
+     &                    pioFile%fh, TRIM(ncname), TRIM(SourceFile)
         CALL my_flush (DBout)
       END IF
 !
@@ -7968,8 +7969,8 @@
 !
       IF (Ldebug_pioFile) THEN
         IF (Master) WRITE (DBout,'(a,2x," => ",i8,2(2x,a))')            &
-     &                    kernel(model)//' PIO: OPEN', pioFile%fh,      &
-     &                    TRIM(ncname), TRIM(SourceFile)
+     &                    KernelString(model)//' PIO: OPEN',            &
+     &                    pioFile%fh, TRIM(ncname), TRIM(SourceFile)
         CALL my_flush (DBout)
       END IF
 !

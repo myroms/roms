@@ -2,7 +2,7 @@
       SUBROUTINE ntimesteps (model, RunInterval, nl, Nsteps, Rsteps)
 !
 !git $Id$
-!svn $Id: ntimestep.F 1054 2021-03-06 19:47:12Z arango $
+!svn $Id: ntimestep.F 1090 2021-09-29 03:19:30Z arango $
 !=======================================================================
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -109,7 +109,7 @@
         DO ig=1,GridsInLayer(nl)
           ng=GridNumber(ig,nl)
 
-#if defined MODEL_COUPLING && !defined MCT_LIB
+#if defined JEDI || (defined MODEL_COUPLING && !defined MCT_LIB)
 !
 !  Set extra step parameter needed to finish the simulation due to ROMS
 !  delayed output until the next half step. If RunInterval (seconds) is

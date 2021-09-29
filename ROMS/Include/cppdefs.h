@@ -2,7 +2,7 @@
 ** Include file "cppdefs.h"
 **
 ** git $Id$
-** svn $Id: cppdefs.h 1087 2021-09-10 01:11:17Z arango $
+** svn $Id: cppdefs.h 1090 2021-09-29 03:19:30Z arango $
 ********************************************************** Hernan G. Arango ***
 ** Copyright (c) 2002-2021 The ROMS/TOMS Group                               **
 **   Licensed under a MIT/X style license                                    **
@@ -354,7 +354,7 @@
 ** I4DVAR                     if incremental 4D-Var data assimilation        **
 ** I4DVAR_ANA_SENSITIVITY     if I4D-Var observations sensitivity            **
 ** JEDI                       if using Joint Effort for DA Integration       **
-** LCZ_FINAL                  it computing 4D-Var Hessian singular vectors   **
+** LCZ_FINAL                  if computing 4D-Var Hessian singular vectors   **
 ** OPT_OBSERVATIONS           if optimal observations                        **
 ** OPT_PERTURBATION           if optimal perturbations, singular vectors     **
 ** PICARD_TEST                if representer tangent linear model test       **

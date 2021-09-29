@@ -2,7 +2,7 @@
       MODULE mod_ncparam
 !
 !git $Id$
-!svn $Id: mod_ncparam.F 1087 2021-09-10 01:11:17Z arango $
+!svn $Id: mod_ncparam.F 1090 2021-09-29 03:19:30Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -75,8 +75,19 @@
 !=======================================================================
 !
       USE mod_param
+#if defined PIO_LIB && defined DISTRIBUTE
+      USE mod_iounits
+#endif
 !
       implicit none
+!
+      PUBLIC :: allocate_ncparam
+      PUBLIC :: deallocate_ncparam
+      PUBLIC :: initialize_ncparam
+!
+!-----------------------------------------------------------------------
+!  Define variables in module.
+!-----------------------------------------------------------------------
 !
 !  Set type of IO NetCDF files interface library
 !
@@ -962,7 +973,127 @@
 !
       RETURN
       END SUBROUTINE allocate_ncparam
+!
+      SUBROUTINE deallocate_ncparam
+!
+!=======================================================================
+!                                                                      !
+!  This routine deallocates variables in the module.                   !
+!  on the number of nested grids.                                      !
+!                                                                      !
+!=======================================================================
+!
+!-----------------------------------------------------------------------
+!  Deallocate variables in module.
+!-----------------------------------------------------------------------
+!
+      IF (allocated(Nxyp))        deallocate ( Nxyp )
+      IF (allocated(Nxyr))        deallocate ( Nxyr )
+      IF (allocated(Nxyu))        deallocate ( Nxyu )
+      IF (allocated(Nxyv))        deallocate ( Nxyv )
+      IF (allocated(NwaterR))     deallocate ( NwaterR )
+      IF (allocated(NwaterU))     deallocate ( NwaterU )
+      IF (allocated(NwaterV))     deallocate ( NwaterV )
+      IF (allocated(rILB))        deallocate ( rILB )
+      IF (allocated(rIUB))        deallocate ( rIUB )
+      IF (allocated(rJLB))        deallocate ( rJLB )
+      IF (allocated(rJUB))        deallocate ( rJUB )
+      IF (allocated(rXmin))       deallocate ( rXmin )
+      IF (allocated(rXmax))       deallocate ( rXmax )
+      IF (allocated(rYmin))       deallocate ( rYmin )
+      IF (allocated(rYmax))       deallocate ( rYmax )
+      IF (allocated(uILB))        deallocate ( uILB )
+      IF (allocated(uIUB))        deallocate ( uIUB )
+      IF (allocated(uJLB))        deallocate ( uJLB )
+      IF (allocated(uJUB))        deallocate ( uJUB )
+      IF (allocated(uXmin))       deallocate ( uXmin )
+      IF (allocated(uXmax))       deallocate ( uXmax )
+      IF (allocated(uYmin))       deallocate ( uYmin )
+      IF (allocated(uYmax))       deallocate ( uYmax )
+      IF (allocated(vILB))        deallocate ( vILB )
+      IF (allocated(vIUB))        deallocate ( vIUB )
+      IF (allocated(vJLB))        deallocate ( vJLB )
+      IF (allocated(vJUB))        deallocate ( vJUB )
+      IF (allocated(vXmin))       deallocate ( vXmin )
+      IF (allocated(vXmax))       deallocate ( vXmax )
+      IF (allocated(vYmin))       deallocate ( vYmin )
+      IF (allocated(vYmax))       deallocate ( vYmax )
+!
+      IF (allocated(Aout))        deallocate ( Aout )
+      IF (allocated(Dout))        deallocate ( Dout )
+      IF (allocated(Hout))        deallocate ( Hout )
+      IF (allocated(Qout))        deallocate ( Qout )
+      IF (allocated(Sout))        deallocate ( Sout )
+!
+      IF (allocated(idRtrc))      deallocate ( idRtrc )
+      IF (allocated(idsurT))      deallocate ( idsurT )
+      IF (allocated(idTads))      deallocate ( idTads )
+      IF (allocated(idTbot))      deallocate ( idTbot )
+      IF (allocated(idTbry))      deallocate ( idTbry )
+      IF (allocated(idTclm))      deallocate ( idTclm )
+      IF (allocated(idTnud))      deallocate ( idTnud )
+      IF (allocated(idTsur))      deallocate ( idTsur )
+      IF (allocated(idTtlf))      deallocate ( idTtlf )
+!
+      IF (allocated(iHUTav))      deallocate ( iHUTav )
+      IF (allocated(iHVTav))      deallocate ( iHVTav )
+      IF (allocated(idTTav))      deallocate ( idTTav )
+      IF (allocated(idUTav))      deallocate ( idUTav )
+      IF (allocated(idVTav))      deallocate ( idVTav )
 
+#ifdef DIAGNOSTICS
+!
+      IF (allocated(idDtrc))      deallocate ( idDtrc )
+      IF (allocated(idDu2d))      deallocate ( idDu2d )
+      IF (allocated(idDv2d))      deallocate ( idDv2d )
+      IF (allocated(idDu3d))      deallocate ( idDu3d )
+      IF (allocated(idDv3d))      deallocate ( idDv3d )
+#endif
+!
+      IF (allocated(isTsur))      deallocate ( isTsur )
+      IF (allocated(isTvar))      deallocate ( isTvar )
+      IF (allocated(idBvar))      deallocate ( idBvar )
+      IF (allocated(idSvar))      deallocate ( idSvar )
+      IF (allocated(idSbry))      deallocate ( idSbry )
+!
+      IF (allocated(BRYncid))     deallocate ( BRYncid )
+      IF (allocated(CLMncid))     deallocate ( CLMncid )
+      IF (allocated(FRCncid))     deallocate ( FRCncid )
+
+#if defined PIO_LIB && defined DISTRIBUTE
+!
+      IF (associated(BRYpioFile)) deallocate ( BRYpioFile )
+      IF (associated(CLMpioFile)) deallocate ( CLMpioFile )
+      IF (associated(FRCpioFile)) deallocate ( FRCpioFile )
+#endif
+!
+      IF (allocated(idefADJ))     deallocate ( idefADJ )
+      IF (allocated(idefAVG))     deallocate ( idefAVG )
+      IF (allocated(idefDIA))     deallocate ( idefDIA )
+      IF (allocated(idefHIS))     deallocate ( idefHIS )
+      IF (allocated(idefQCK))     deallocate ( idefQCK )
+      IF (allocated(idefTLM))     deallocate ( idefTLM )
+!
+      IF (allocated(idTvar))      deallocate ( idTvar )
+      IF (allocated(idTrcD))      deallocate ( idTrcD )
+      IF (allocated(idTrcH))      deallocate ( idTrcH )
+!
+      IF (allocated(Linfo))       deallocate ( Linfo )
+      IF (allocated(Iinfo))       deallocate ( Iinfo )
+      IF (allocated(Finfo))       deallocate ( Finfo )
+      IF (allocated(Fpoint))      deallocate ( Fpoint )
+      IF (allocated(Fscale))      deallocate ( Fscale )
+      IF (allocated(Tintrp))      deallocate ( Tintrp )
+      IF (allocated(Vtime))       deallocate ( Vtime )
+      IF (allocated(Cinfo))       deallocate ( Cinfo )
+
+#if defined PIO_LIB && defined DISTRIBUTE
+      IF (associated(Dinfo))      deallocate ( Dinfo )
+#endif
+!
+      RETURN
+      END SUBROUTINE deallocate_ncparam
+!
       SUBROUTINE initialize_ncparam
 !
 !=======================================================================

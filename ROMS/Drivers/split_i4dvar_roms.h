@@ -1,7 +1,7 @@
       MODULE roms_kernel_mod
 !
 !git $Id$
-!svn $Id: split_i4dvar_roms.h 1064 2021-05-10 19:55:56Z arango $
+!svn $Id: split_i4dvar_roms.h 1090 2021-09-29 03:19:30Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -63,6 +63,7 @@
 !
       USE mod_param
       USE mod_parallel
+      USE mod_arrays
       USE mod_fourdvar
       USE mod_iounits
       USE mod_ncparam
@@ -233,11 +234,8 @@
 !
 !  Allocate and initialize modules variables.
 !
-        CALL mod_arrays (allocate_vars)
-!
-!  Allocate and initialize observation arrays.
-!
-        CALL initialize_fourdvar
+        CALL ROMS_allocate_arrays (allocate_vars)
+        CALL ROMS_initialize_arrays
 
       END IF
 

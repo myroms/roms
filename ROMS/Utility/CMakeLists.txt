@@ -1,5 +1,5 @@
 # git $Id$
-# svn $Id: CMakeLists.txt 1087 2021-09-10 01:11:17Z arango $
+# svn $Id: CMakeLists.txt 1090 2021-09-29 03:19:30Z arango $
 #:::::::::::::::::::::::::::::::::::::::::::::::::::::: David Robertson :::
 # Copyright (c) 2002-2021 The ROMS/TOMS Group                           :::
 #   Licensed under a MIT/X style license                                :::
@@ -46,6 +46,7 @@ list( APPEND _files
       ROMS/Utility/def_station.F
       ROMS/Utility/def_tides.F
       ROMS/Utility/def_var.F
+      ROMS/Utility/destroy.F
       ROMS/Utility/distribute.F
       ROMS/Utility/dotproduct.F
       ROMS/Utility/edit_multifile.F

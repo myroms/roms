@@ -3,7 +3,7 @@
 #if defined TIDE_GENERATING_FORCES
 !
 !git $Id$
-!svn $Id: equilibrium_tide.F 1087 2021-09-10 01:11:17Z arango $
+!svn $Id: equilibrium_tide.F 1090 2021-09-29 03:19:30Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group           John Wilkin   !
 !    Licensed under a MIT/X style license                              !
@@ -46,9 +46,9 @@
 # ifdef DISTRIBUTE
       USE mp_exchange_mod, ONLY : mp_exchange2d
 # endif
-      USE mod_param,       ONLY : BOUNDS, iADM, iRPM, iTLM
+      USE mod_param,       ONLY : BOUNDS, iADM, iNLM, iRPM, iTLM,       &
+     &                            NghostPoints
       USE mod_scalars,     ONLY : EWperiodic, NSperiodic, Lnodal,       &
-     &                            iNLM, NghostPoints,                   &
      &                            deg2rad, tide_start, time, Rclock
 !
       implicit none

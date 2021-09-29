@@ -2,7 +2,7 @@
       MODULE mod_iounits
 !
 !git $Id$
-!svn $Id: mod_iounits.F 1064 2021-05-10 19:55:56Z arango $
+!svn $Id: mod_iounits.F 1090 2021-09-29 03:19:30Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -123,9 +123,68 @@
 !                                                                      !
 !=======================================================================
 !
-      USE mod_param
+      USE mod_kinds
+#if defined PIO_LIB && defined DISTRIBUTE
+      USE pio
+#endif
 !
       implicit none
+!
+      PUBLIC :: allocate_iounits
+      PUBLIC :: deallocate_iounits
+!
+!-----------------------------------------------------------------------
+!  Define derived type structure, T_IO, used to store information about
+!  the input and output files.
+!-----------------------------------------------------------------------
+
+#if defined PIO_LIB && defined DISTRIBUTE
+!
+!  Define derived type structure for ROMS variable descriptors. It is
+!  done to include additional information not available in the PIO
+!  library TYPE (Var_desc_t) variable descriptor. It includes external
+!  data representation "dkind" and C-grid type "gtype".
+!
+      TYPE My_VarDesc
+        TYPE (Var_Desc_t) :: vd              ! PIO variable descriptor
+        integer :: dkind                     ! PIO data kind
+        integer :: gtype                     ! ROMS C-grid variable type
+      END TYPE My_VarDesc
+#endif
+!
+!  This structure is used to declare the variables associated with
+!  input and output files, like TYPE(IO) :: HIS(Ngrids). It is a
+!  compact way to store a lot of information.  The "Fcount" variable
+!  is used during data processing in "check_multifile" and "inquiry"
+!  whereas "load" is used storing information in the structure.
+!
+      TYPE T_IO
+        integer :: IOtype                        ! file IO type
+        integer :: Nfiles                        ! number of multi-files
+        integer :: Fcount                        ! multi-file counter
+        integer :: load                          ! filename load counter
+        integer :: Rindex                        ! NetCDF record index
+        integer :: ncid                          ! NetCDF file ID
+        integer,  pointer :: Nrec(:)             ! NetCDF record size
+        integer,  pointer :: Vid(:)              ! NetCDF variables IDs
+        integer,  pointer :: Tid(:)              ! NetCDF tracers IDs
+        real(dp), pointer :: time_min(:)         ! starting time
+        real(dp), pointer :: time_max(:)         ! ending time
+        character (len=50 ) :: label             ! structure label
+        character (len=256) :: head              ! head filename
+        character (len=256) :: base              ! base filename
+        character (len=256) :: name              ! current name
+        character (len=256), pointer :: files(:) ! multi-file names
+#if defined PIO_LIB && defined DISTRIBUTE
+        TYPE (File_desc_t) :: pioFile            ! file descriptor
+        TYPE (My_VarDesc), pointer :: pioVar(:)  ! variable descriptor
+        TYPE (My_VarDesc), pointer :: pioTrc(:)  ! tracer descriptor
+#endif
+      END TYPE T_IO
+!
+!-----------------------------------------------------------------------
+!  Define variables in module.
+!-----------------------------------------------------------------------
 !
 !  I/O units.
 !
@@ -254,7 +313,7 @@
 !
       CONTAINS
 !
-      SUBROUTINE allocate_iounits
+      SUBROUTINE allocate_iounits (Ngrids)
 !
 !=======================================================================
 !                                                                      !
@@ -262,6 +321,10 @@
 !  on the number of nested grids.                                      !
 !                                                                      !
 !=======================================================================
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: Ngrids
 !
 !  Local variable declarations.
 !
@@ -658,8 +721,90 @@
         sparnam(i:i)=blank
         sposnam(i:i)=blank
       END DO
-
+!
       RETURN
       END SUBROUTINE allocate_iounits
+!
+      SUBROUTINE deallocate_iounits
+!
+!=======================================================================
+!                                                                      !
+!  This routine deallocates variables in module.                       !
+!                                                                      !
+!=======================================================================
+!
+!-----------------------------------------------------------------------
+!  Deallocate I/O derived type structures.
+!-----------------------------------------------------------------------
+!
+      IF (allocated(ADM))       deallocate ( ADM )
+      IF (allocated(ADS))       deallocate ( ADS )
+      IF (allocated(AVG))       deallocate ( AVG )
+      IF (allocated(BLK))       deallocate ( BLK )
+      IF (allocated(DAI))       deallocate ( DAI )
+      IF (allocated(DAV))       deallocate ( DAV )
+      IF (allocated(DIA))       deallocate ( DIA )
+      IF (allocated(ERR))       deallocate ( ERR )
+      IF (allocated(FLT))       deallocate ( FLT )
+
+#ifdef RBL4DVAR_FCT_SENSITIVITY
+      IF (allocated(FCTA))      deallocate ( FCTA )
+      IF (allocated(FCTB))      deallocate ( FCTB )
+#endif
+
+#if defined RBL4DVAR_FCT_SENSITIVITY && !defined OBS_SPACE
+      IF (allocated(FOIA))      deallocate ( FOIA )
+      IF (allocated(FOIB))      deallocate ( FOIB )
+#endif
+
+      IF (allocated(FWD))       deallocate ( FWD )
+      IF (allocated(GRD))       deallocate ( GRD )
+      IF (allocated(GST))       deallocate ( GST )
+      IF (allocated(HAR))       deallocate ( HAR )
+      IF (allocated(HIS))       deallocate ( HIS )
+      IF (allocated(HSS))       deallocate ( HSS )
+      IF (allocated(IAD))       deallocate ( IAD )
+      IF (allocated(INI))       deallocate ( INI )
+      IF (allocated(IRP))       deallocate ( IRP )
+      IF (allocated(ITL))       deallocate ( ITL )
+      IF (allocated(LCZ))       deallocate ( LCZ )
+      IF (allocated(LZE))       deallocate ( LZE )
+      IF (allocated(NUD))       deallocate ( NUD )
+      IF (allocated(OBS))       deallocate ( OBS )
+
+#if defined RBL4DVAR_FCT_SENSITIVITY && defined OBS_SPACE
+      IF (allocated(OIFA))      deallocate ( OIFA )
+      IF (allocated(OIFB))      deallocate ( OIFB )
+#endif
+
+      IF (allocated(QCK))       deallocate ( QCK )
+      IF (allocated(RST))       deallocate ( RST )
+
+#ifdef SP4DVAR
+      IF (allocated(SCA))       deallocate ( SCA )
+      IF (allocated(SCT))       deallocate ( SCT )
+      IF (allocated(SPA))       deallocate ( SPA )
+      IF (allocated(SPT))       deallocate ( SPT )
+#endif
+
+      IF (allocated(SSF))       deallocate ( SSF )
+      IF (allocated(STA))       deallocate ( STA )
+      IF (allocated(TIDE))      deallocate ( TIDE )
+      IF (allocated(TLF))       deallocate ( TLF )
+      IF (allocated(TLM))       deallocate ( TLM )
+
+      IF (allocated(NRM))       deallocate ( NRM )
+      IF (allocated(STD))       deallocate ( STD )
+!
+!-----------------------------------------------------------------------
+!  Deallocate other variables in module.
+!-----------------------------------------------------------------------
+!
+      IF (allocated(nBCfiles))  deallocate ( nBCfiles )
+      IF (allocated(nCLMfiles)) deallocate ( nCLMfiles )
+      IF (allocated(nFfiles))   deallocate ( nFfiles )
+!
+      RETURN
+      END SUBROUTINE deallocate_iounits
 
       END MODULE mod_iounits

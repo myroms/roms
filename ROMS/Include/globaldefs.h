@@ -2,7 +2,7 @@
 ** Include file "globaldef.h"
 **
 ** git $Id$
-** svn $Id: globaldefs.h 1064 2021-05-10 19:55:56Z arango $
+** svn $Id: globaldefs.h 1090 2021-09-29 03:19:30Z arango $
 ********************************************************** Hernan G. Arango ***
 ** Copyright (c) 2002-2021 The ROMS/TOMS Group     Alexander F. Shchepetkin  **
 **   Licensed under a MIT/X style license                                    **
@@ -369,6 +369,7 @@
     defined INNER_PRODUCT          || \
     defined I4DVAR                 || \
     defined I4DVAR_ANA_SENSITIVITY || \
+    defined JEDI                   || \
     defined OPT_PERTURBATION       || \
     defined OPT_OBSERVATIONS       || \
     defined PICARD_TEST            || \
@@ -404,6 +405,7 @@
     defined INNER_PRODUCT          || \
     defined I4DVAR                 || \
     defined I4DVAR_ANA_SENSITIVITY || \
+    defined JEDI                   || \
     defined OPT_PERTURBATION       || \
     defined OPT_OBSERVATIONS       || \
     defined RBL4DVAR               || \
@@ -648,6 +650,7 @@
      defined CLIPPING               || \
      defined I4DVAR                 || \
      defined I4DVAR_ANA_SENSITIVITY || \
+     defined JEDI                   || \
      defined PROPAGATOR             || \
      defined RBL4DVAR               || \
      defined R4DVAR                 || \
@@ -667,6 +670,7 @@
      defined CLIPPING               || \
      defined I4DVAR                 || \
      defined I4DVAR_ANA_SENSITIVITY || \
+     defined JEDI                   || \
      defined RBL4DVAR               || \
      defined R4DVAR                 || \
      defined SENSITIVITY_4DVAR      || \

@@ -3,7 +3,7 @@
 #if defined MODEL_COUPLING && defined ESMF_LIB
 !
 !git $Id$
-!svn $Id: mod_esmf_esm.F 1083 2021-07-28 19:00:42Z arango $
+!svn $Id: mod_esmf_esm.F 1090 2021-09-29 03:19:30Z arango $
 !=======================================================================
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license         Hernan G. Arango     !
@@ -66,7 +66,7 @@
       USE NUOPC
 !
       USE mod_kinds
-      USE mod_param, ONLY : T_IO
+      USE mod_iounits, ONLY : T_IO
 !
       implicit none
 !
@@ -1670,7 +1670,7 @@
 !
               CALL mpi_comm_rank (OCN_COMM_WORLD, MyRank, MyError)
               CALL mpi_comm_size (OCN_COMM_WORLD, MySize, MyError)
-              CALL allocate_parallel
+              CALL allocate_parallel (NgridsR)
               CALL initialize_parallel
             CASE ('IsActive(atmos)')
               Npts=load_l(Nval, Cval, 1, Lvalue)
