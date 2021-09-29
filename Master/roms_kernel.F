@@ -1,7 +1,7 @@
 #include "cppdefs.h"
 !!
 !!git $Id$
-!!svn $Id: roms_kernel.F 1064 2021-05-10 19:55:56Z arango $
+!!svn $Id: roms_kernel.F 1090 2021-09-29 03:19:30Z arango $
 !!================================================= Hernan G. Arango ===
 !! Copyright (c) 2002-2021 The ROMS/TOMS Group       Andrew M. Moore   !
 !!   Licensed under a MIT/X style license                              !
@@ -33,6 +33,9 @@
 !!                                                                     !
 !! i4dvar_roms.h                Strong constraint, incremental 4D-Var  !
 !!                                data assimilation driver (I4D-Var)   !
+!!                                                                     !
+!! jedi_roms.h                  Joint Effort for DA Integration        !
+!!                                configuration                        !
 !!                                                                     !
 !! nl_roms.h                    Nonlinear model driver (default)       !
 !!                                                                     !
@@ -149,9 +152,11 @@
 #elif defined ARRAY_MODES || defined CLIPPING
 # include "array_modes.h"
 #elif defined I4DVAR && !defined SPLIT_I4DVAR
-#  include "i4dvar_roms.h"
+# include "i4dvar_roms.h"
 #elif defined I4DVAR_ANA_SENSITIVITY
 # include "obs_sen_i4dvar_analysis.h"
+#elif defined JEDI
+# include "jedi_roms.h"
 #elif defined RBL4DVAR && !defined SPLIT_RBL4DVAR
 # include "rbl4dvar_roms.h"
 #elif defined RBL4DVAR_ANA_SENSITIVITY

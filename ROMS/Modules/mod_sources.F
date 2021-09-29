@@ -2,7 +2,7 @@
       MODULE mod_sources
 !
 !git $Id$
-!svn $Id: mod_sources.F 1064 2021-05-10 19:55:56Z arango $
+!svn $Id: mod_sources.F 1090 2021-09-29 03:19:30Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -48,8 +48,12 @@
 !
         implicit none
 !
-        integer, allocatable :: Msrc(:)
-        integer, allocatable :: Nsrc(:)
+        PUBLIC :: allocate_sources
+        PUBLIC :: deallocate_sources
+!
+!-----------------------------------------------------------------------
+!  Define T_SOURCES structure.
+!-----------------------------------------------------------------------
 !
         TYPE T_SOURCES
 
@@ -83,8 +87,15 @@
 #endif
 
         END TYPE T_SOURCES
-
+!
         TYPE (T_SOURCES), allocatable :: SOURCES(:)
+!
+!-----------------------------------------------------------------------
+!  Define other variables in module.
+!-----------------------------------------------------------------------
+!
+        integer, allocatable :: Msrc(:)
+        integer, allocatable :: Nsrc(:)
 !
       CONTAINS
 !
@@ -314,4 +325,119 @@
 !
       RETURN
       END SUBROUTINE allocate_sources
+!
+      SUBROUTINE deallocate_sources (ng)
+!
+!=======================================================================
+!                                                                      !
+!  This routine deallocates all variables in the module for all nested !
+!  grids.                                                              !
+!                                                                      !
+!=======================================================================
+
+#ifdef SUBOBJECT_DEALLOCATION
+!
+      USE destroy_mod, ONLY : destroy
+#endif
+!
+!  Imported variable declarations.
+!
+      integer :: ng
+!
+!  Local variable declarations.
+!
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__//", deallocate_mixing"
+
+#ifdef SUBOBJECT_DEALLOCATION
+!
+!-----------------------------------------------------------------------
+!  Deallocate each variable in the derived-type T_SOURCES structure
+!  separately.
+!-----------------------------------------------------------------------
+!
+      IF (.not.destroy(ng, SOURCES(ng)%Isrc, MyFile,                    &
+     &                 __LINE__, 'SOURCES(ng)%Isrc')) RETURN
+
+      IF (.not.destroy(ng, SOURCES(ng)%Jsrc, MyFile,                    &
+     &                 __LINE__, 'SOURCES(ng)%Jsrc')) RETURN
+
+      IF (.not.destroy(ng, SOURCES(ng)%Dsrc, MyFile,                    &
+     &                 __LINE__, 'SOURCES(ng)%Dsrc')) RETURN
+
+      IF (.not.destroy(ng, SOURCES(ng)%Fsrc, MyFile,                    &
+     &                 __LINE__, 'SOURCES(ng)%Fsrc')) RETURN
+
+      IF (.not.destroy(ng, SOURCES(ng)%Qbar, MyFile,                    &
+     &                 __LINE__, 'SOURCES(ng)%Qbar')) RETURN
+
+      IF (.not.destroy(ng, SOURCES(ng)%Qshape, MyFile,                  &
+     &                 __LINE__, 'SOURCES(ng)%Qshape')) RETURN
+
+      IF (.not.destroy(ng, SOURCES(ng)%Qsrc, MyFile,                    &
+     &                 __LINE__, 'SOURCES(ng)%Qsrc')) RETURN
+
+      IF (.not.destroy(ng, SOURCES(ng)%Tsrc, MyFile,                    &
+     &                 __LINE__, 'SOURCES(ng)%Tsrc')) RETURN
+
+      IF (.not.destroy(ng, SOURCES(ng)%Xsrc, MyFile,                    &
+     &                 __LINE__, 'SOURCES(ng)%Xsrc')) RETURN
+
+      IF (.not.destroy(ng, SOURCES(ng)%Ysrc, MyFile,                    &
+     &                 __LINE__, 'SOURCES(ng)%Ysrc')) RETURN
+
+# ifndef ANA_PSOURCE
+      IF (.not.destroy(ng, SOURCES(ng)%QbarG, MyFile,                   &
+     &                 __LINE__, 'SOURCES(ng)%QbarG')) RETURN
+
+      IF (.not.destroy(ng, SOURCES(ng)%TsrcG, MyFile,                   &
+     &                 __LINE__, 'SOURCES(ng)%TsrcG')) RETURN
+# endif
+
+# ifdef ADJOINT
+      IF (.not.destroy(ng, SOURCES(ng)%ad_Qbar, MyFile,                 &
+     &                 __LINE__, 'SOURCES(ng)%ad_Qbar')) RETURN
+
+      IF (.not.destroy(ng, SOURCES(ng)%ad_Qsrc, MyFile,                 &
+     &                 __LINE__, 'SOURCES(ng)%ad_Qsrc')) RETURN
+
+      IF (.not.destroy(ng, SOURCES(ng)%ad_Tsrc, MyFile,                 &
+     &                 __LINE__, 'SOURCES(ng)%ad_Tsrc')) RETURN
+# endif
+
+# ifdef TANGENT
+      IF (.not.destroy(ng, SOURCES(ng)%tl_Qbar, MyFile,                 &
+     &                 __LINE__, 'SOURCES(ng)%tl_Qbar')) RETURN
+
+      IF (.not.destroy(ng, SOURCES(ng)%tl_Qsrc, MyFile,                 &
+     &                 __LINE__, 'SOURCES(ng)%tl_Qsrc')) RETURN
+
+      IF (.not.destroy(ng, SOURCES(ng)%tl_Tsrc, MyFile,                 &
+     &                 __LINE__, 'SOURCES(ng)%tl_Tsrc')) RETURN
+# endif
+#endif
+!
+!-----------------------------------------------------------------------
+!  Deallocate derived-type SOURCES structure.
+!-----------------------------------------------------------------------
+!
+      IF (ng.eq.Ngrids) THEN
+        IF (allocated(SOURCES)) deallocate ( SOURCES )
+      END IF
+!
+!-----------------------------------------------------------------------
+!  Deallocate other variables in module.
+!-----------------------------------------------------------------------
+!
+      IF (allocated(Msrc)) THEN
+        deallocate ( Msrc )
+      END IF
+
+      IF (allocated(Nsrc)) THEN
+        deallocate ( Nsrc )
+      END IF
+!
+      RETURN
+      END SUBROUTINE deallocate_sources
+
       END MODULE mod_sources

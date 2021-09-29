@@ -3,7 +3,7 @@
       SUBROUTINE tl_get_data (ng)
 !
 !git $Id$
-!svn $Id: tl_get_data.F 1070 2021-06-08 21:00:47Z arango $
+!svn $Id: tl_get_data.F 1090 2021-09-29 03:19:30Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -230,7 +230,7 @@
 # if !defined ANA_PAIR       && \
      (defined ATM_PRESS      || defined BULK_FLUXES  || \
       defined ECOSIM)
-#  if !(defined FRC_COUPLING || definedFORWARD_FLUXES)
+#  if !(defined FRC_COUPLING || defined FORWARD_FLUXES)
 !
 !-----------------------------------------------------------------------
 !  Surface air pressure from input FRC file.

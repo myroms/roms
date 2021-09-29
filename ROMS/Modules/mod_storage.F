@@ -4,7 +4,7 @@
 #if defined PROPAGATOR
 !
 !git $Id$
-!svn $Id: mod_storage.F 1064 2021-05-10 19:55:56Z arango $
+!svn $Id: mod_storage.F 1090 2021-09-29 03:19:30Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -41,8 +41,8 @@
 !                 and SworkK arrays used in the Arnoldi iterations.    !
 !  info         ARPACK Information (input) and error flag (output).    !
 !  norm         Euclidean norm.                                        !
+!  pick         ARPACK logical switch of Ritz vectors to compute.      !
 !  resid        Initial/final residual vector.                         !
-!  select       ARPACK logical switch of Ritz vectors to compute.      !
 !  sigmaR       ARPACK real part of the shifts (not referenced).       !
 !  sigmaI       ARPACK imaginary part of the shifts (not referenced).  !
 # ifdef SO_SEMI
@@ -62,10 +62,39 @@
 !
       implicit none
 !
+      PUBLIC :: allocate_storage
+      PUBLIC :: deallocate_storage
+!
+!-----------------------------------------------------------------------
+!  Define T_STORAGE structure and other module variables.
+!-----------------------------------------------------------------------
+!
+!  State work arrays structure for nested grids.
+!
+      TYPE T_STORAGE
+
+        real(r8), pointer :: Bvec(:,:)              ! [Nstr:Nend,NCV]
+        real(r8), pointer :: Rvector(:,:)           ! [Nstr:Nend,NEV+1]
+        real(r8), pointer :: SworkD(:)              ! [3*Nstate]
+        real(r8), pointer :: resid(:)               ! [Nstr:Nend]
+# ifdef STOCHASTIC_OPT
+        real(r8), pointer :: ad_Work(:)             ! [Mstate]
+# endif
+# if defined STOCHASTIC_OPT && defined HESSIAN_SO
+        real(r8), pointer :: my_state(:)            ! [Nstr:Nend]
+# endif
+# ifdef SO_SEMI
+        real(r8), pointer :: so_state(:,:)          ! [Nstr:Nend,Nsemi]
+# endif
+
+      END TYPE T_STORAGE
+!
+      TYPE (T_STORAGE), allocatable :: STORAGE(:)
+!
 !  ARPACK logical switches.
 !
       logical :: Lrvec                    ! Ritz values switch
-      logical, allocatable :: select(:,:) ! Ritz vectors, [NCV,Ngrids]
+      logical, allocatable :: pick(:,:)   ! Ritz vectors, [NCV,Ngrids]
 !
 !  Eigenproblem parameters.
 !
@@ -105,28 +134,6 @@
 # endif
       real(r8), pointer :: SworkR(:)              ! [Mstate]
 !
-!  State work arrays structure for nested grids.
-!
-        TYPE T_STORAGE
-
-          real(r8), pointer :: Bvec(:,:)            ! [Nstr:Nend,NCV]
-          real(r8), pointer :: Rvector(:,:)         ! [Nstr:Nend,NEV+1]
-          real(r8), pointer :: SworkD(:)            ! [3*Nstate]
-          real(r8), pointer :: resid(:)             ! [Nstr:Nend]
-# ifdef STOCHASTIC_OPT
-          real(r8), pointer :: ad_Work(:)           ! [Mstate]
-# endif
-# if defined STOCHASTIC_OPT && defined HESSIAN_SO
-          real(r8), pointer :: my_state(:)          ! [Nstr:Nend]
-# endif
-# ifdef SO_SEMI
-          real(r8), pointer :: so_state(:,:)        ! [Nstr:Nend,Nsemi]
-# endif
-
-        END TYPE T_STORAGE
-
-        TYPE (T_STORAGE), allocatable :: STORAGE(:)
-!
 !  ARPACK private common blocks containing parameters needed for
 !  checkpoiniting. The original include files "i_aupd.h" and
 !  "idaup2.h" have several parameters in their commom blocks. All
@@ -160,15 +167,15 @@
       integer :: msaupd, msaup2, msaitr, mseigt, msapps, msgets, mseupd
       integer :: mnaupd, mnaup2, mnaitr, mneigh, mnapps, mngets, mneupd
       integer :: mcaupd, mcaup2, mcaitr, mceigh, mcapps, mcgets, mceupd
-
+!
       common /debug/                                                    &
      &       logfil, ndigit, mgetv0,                                    &
      &       msaupd, msaup2, msaitr, mseigt, msapps, msgets, mseupd,    &
      &       mnaupd, mnaup2, mnaitr, mneigh, mnapps, mngets, mneupd,    &
      &       mcaupd, mcaup2, mcaitr, mceigh, mcapps, mcgets, mceupd
-
+!
       CONTAINS
-
+!
       SUBROUTINE allocate_storage
 !
 !=======================================================================
@@ -185,7 +192,7 @@
       integer :: i, j, ng
 
       integer, allocatable :: Mstr(:), Mend(:)
-
+!
       real(r8), parameter :: IniVal = 0.0_r8
 !
 !-----------------------------------------------------------------------
@@ -285,7 +292,7 @@
 !
       ng=1
 !
-      allocate ( select(NCV,Ngrids) )
+      allocate ( pick(NCV,Ngrids) )
       Dmem(ng)=Dmem(ng)+REAL(NCV*Ngrids,r8)
 
       allocate ( norm(NEV+1,Ngrids) )
@@ -320,7 +327,7 @@
 
       DO ng=1,Ngrids
         DO j=1,NCV
-          select(j,ng) = .TRUE.
+          pick(j,ng) = .TRUE.
           DO i=Mstr(ng),Mend(ng)
             STORAGE(ng) % Bvec(i,j) = IniVal
           END DO
@@ -374,8 +381,97 @@
           SworkL(i,ng) = IniVal
         END DO
       END DO
-
+!
       RETURN
       END SUBROUTINE allocate_storage
+!
+      SUBROUTINE deallocate_storage (ng)
+!
+!=======================================================================
+!                                                                      !
+!  This routine deallocates and initialize module variables.           !
+!                                                                      !
+!=======================================================================
+!
+      USE mod_param, ONLY : Ngrids
+!
+!  Imported variable declarations
+!
+      integer, intent(in) :: ng
+
+# ifdef SUBOBJECT_DEALLOCATION
+!
+!-----------------------------------------------------------------------
+!  Deallocate each variable in the derived-type T_STORAGE structure
+!  separately.
+!-----------------------------------------------------------------------
+!
+      IF (associated(STORAGE(ng)%Bvec)) THEN
+        deallocate ( STORAGE(ng)%Bvec )
+      END IF
+
+      IF (associated(STORAGE(ng)%Rvector)) THEN
+        deallocate ( STORAGE(ng)%Rvector )
+      END IF
+
+      IF (associated(STORAGE(ng)%SworkD)) THEN
+        deallocate ( STORAGE(ng)%SworkD )
+      END IF
+
+      IF (associated(STORAGE(ng)%resid)) THEN
+        deallocate ( STORAGE(ng)%resid )
+      END IF
+
+#  ifdef STOCHASTIC_OPT
+      IF (associated(STORAGE(ng)%ad_Work)) THEN
+        deallocate ( STORAGE(ng)%ad_Work )
+      END IF
+#  endif
+
+#  if defined STOCHASTIC_OPT && defined HESSIAN_SO
+      IF (associated(STORAGE(ng)%my_state)) THEN
+        deallocate ( STORAGE(ng)%my_state )
+      END IF
+#  endif
+
+#  ifdef SO_SEMI
+      IF (associated(STORAGE(ng)%so_state)) THEN
+        deallocate ( STORAGE(ng)%so_state )
+      END IF
+#  endif
+# endif
+!
+!-----------------------------------------------------------------------
+!  Deallocate derived-type STORAGE structure.
+!-----------------------------------------------------------------------
+!
+      IF (ng.eq.Ngrids) THEN
+        IF (allocated(STORAGE)) deallocate ( STORAGE )
+      END IF
+!
+!-----------------------------------------------------------------------
+!  Deallocate other variables in module.
+!-----------------------------------------------------------------------
+!
+      IF (allocated(Mstr))    deallocate ( Mstr )
+      IF (allocated(Mend))    deallocate ( Mend )
+      IF (allocated(ido))     deallocate ( ido )
+      IF (allocated(info))    deallocate ( info )
+      IF (allocated(LworkD))  deallocate ( LworkD )
+      IF (allocated(iparam))  deallocate ( iparam )
+      IF (allocated(ipntr))   deallocate ( ipntr )
+      IF (allocated(pick))    deallocate ( pick )
+      IF (allocated(norm))    deallocate ( norm )
+      IF (allocated(RvalueR)) deallocate ( RvalueR )
+      IF (allocated(RvalueI)) deallocate ( RvalueI )
+      IF (allocated(SworkEV)) deallocate ( SworkEV )
+      IF (allocated(SworkL))  deallocate ( SworkL )
+      IF (allocated(SworkR))  deallocate ( SworkR )
+# ifdef DISTRIBUTE
+      IF (allocated(Swork))   deallocate ( Swork )
+# endif
+!
+      RETURN
+      END SUBROUTINE deallocate_storage
 #endif
       END MODULE mod_storage

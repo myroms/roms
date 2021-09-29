@@ -22,6 +22,7 @@
       USE mod_param
       USE mod_parallel
       USE mod_pio_netcdf
+      USE mod_iounits
 # if defined PROPAGATOR && defined CHECKPOINTING
       USE mod_storage
 # endif

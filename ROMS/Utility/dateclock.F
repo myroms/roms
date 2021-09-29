@@ -2,7 +2,7 @@
       MODULE dateclock_mod
 !
 !git $Id$
-!svn $Id: dateclock.F 1054 2021-03-06 19:47:12Z arango $
+!svn $Id: dateclock.F 1090 2021-09-29 03:19:30Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -40,6 +40,8 @@
 !                   initialization from the reference date. It is      !
 !                   used when importing fields from coupled models.    !
 !                                                                      !
+!    time_iso8601 Encodes current model time to am ISO 8601 string     !
+!                                                                      !
 !    time_string  Encodes current model time to a string.              !
 !                                                                      !
 !    time_units   Decodes time attributes units.                       !
@@ -61,6 +63,7 @@
       PUBLIC :: get_date
       PUBLIC :: ref_clock
       PUBLIC :: ROMS_clock
+      PUBLIC :: time_iso8601
       PUBLIC :: time_string
       PUBLIC :: time_units
       PUBLIC :: yearday
@@ -1106,7 +1109,7 @@
 !  year length of 365.2425.
 !
       ELSE IF (INT(r_time).eq.-2) THEN          ! day 0: Nov 24, 4713 BC
-        calendar='gregorian'
+        calendar='proleptic_julian'
         iyear=1968
         month=5
         iday=23
@@ -1204,6 +1207,66 @@
 !
       RETURN
       END SUBROUTINE ROMS_clock
+!
+!***********************************************************************
+      SUBROUTINE time_iso8601 (MyTime, date_string)
+!***********************************************************************
+!                                                                      !
+!  This routine encodes current model time in seconds to a date        !
+!  string of the form:                                                 !
+!                                                                      !
+!       YYYY-MM-DDThh:mm:ssZ                                           !
+!                                                                      !
+!  On Input:                                                           !
+!                                                                      !
+!     MyTime        Current model time (seconds)                       !
+!                                                                      !
+!  On Output:                                                          !
+!                                                                      !
+!     date_string  Current model time date string (20 charactes).      !
+!                                                                      !
+!***********************************************************************
+!
+!  Imported variable declarations.
+!
+      real(dp), intent(in) :: MyTime
+
+      character (len=20), intent(out) :: date_string
+!
+!  Local variable declarations.
+!
+      integer :: day, hour, minutes, month, year, seconds
+      integer :: i
+!
+      real(dp) :: Currenttime
+!
+      character (len=20) :: string
+!
+!-----------------------------------------------------------------------
+!  Encode current model time.
+!-----------------------------------------------------------------------
+!
+!  Convert current model time to calendar date.
+!
+      CurrentTime=MyTime/86400.0_dp                  ! seconds to days
+!
+      CALL caldate (CurrentTime,                                        &
+     &              yy_i=year,                                          &
+     &              mm_i=month,                                         &
+     &              dd_i=day,                                           &
+     &              h_i=hour,                                           &
+     &              m_i=minutes,                                        &
+     &              s_i=seconds)
+!
+!  Encode calendar date into a string.
+!
+      WRITE (string,10) year, month, day, hour, minutes, seconds
+ 10   FORMAT (i4.4,'-',i2.2,'-',i2.2,'T',i2.2,':',i2.2,':',i2.2,'Z')
+!
+      date_string=TRIM(string)
+!
+      RETURN
+      END SUBROUTINE time_iso8601
 !
 !***********************************************************************
       SUBROUTINE time_string (MyTime, date_string)

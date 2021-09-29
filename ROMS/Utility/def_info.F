@@ -2,7 +2,7 @@
       MODULE def_info_mod
 !
 !git $Id$
-!svn $Id: def_info.F 1067 2021-05-27 05:11:41Z arango $
+!svn $Id: def_info.F 1090 2021-09-29 03:19:30Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -678,6 +678,20 @@
           END IF
         END IF
 # endif
+#endif
+
+#ifndef ANA_PSOURCE
+        IF (exit_flag.eq.NoError) THEN
+          IF (LuvSrc(ng).or.LwSrc(ng).or.(ANY(LtracerSrc(:,ng)))) THEN
+            status=nf90_put_att(ncid, nf90_global, 'river_file',        &
+     &                          TRIM(SSF(ng)%name))
+            IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+              IF (Master) WRITE (stdout,20) 'river_file', TRIM(ncname)
+              exit_flag=3
+              ioerror=status
+            END IF
+          END IF
+        END IF
 #endif
 
 #if defined SSH_TIDES || defined UV_TIDES
@@ -4069,6 +4083,20 @@
         END IF
       END IF
 #  endif
+# endif
+
+# ifndef ANA_PSOURCE
+      IF (exit_flag.eq.NoError) THEN
+        IF (LuvSrc(ng).or.LwSrc(ng).or.(ANY(LtracerSrc(:,ng)))) THEN
+          status=PIO_put_att(pioFile, PIO_global, 'river_file',         &
+     &                       TRIM(SSF(ng)%name))
+          IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
+            IF (Master) WRITE (stdout,20) 'river_file', TRIM(ncname)
+            exit_flag=3
+            ioerror=status
+          END IF
+        END IF
+      END IF
 # endif
 
 # if defined SSH_TIDES || defined UV_TIDES

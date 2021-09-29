@@ -1,7 +1,7 @@
       MODULE roms_kernel_mod
 !
 !git $Id$
-!svn $Id: nl_roms.h 1070 2021-06-08 21:00:47Z arango $
+!svn $Id: nl_roms.h 1090 2021-09-29 03:19:30Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -22,6 +22,7 @@
 !
       USE mod_param
       USE mod_parallel
+      USE mod_arrays
 #ifdef VERIFICATION
       USE mod_fourdvar
 #endif
@@ -163,15 +164,10 @@
 !  Allocate and initialize all model state arrays.
 !
 !$OMP PARALLEL
-        CALL mod_arrays (allocate_vars)
+        CALL ROMS_allocate_arrays (allocate_vars)
+        CALL ROMS_initialize_arrays
 !$OMP END PARALLEL
 
-#ifdef VERIFICATION
-!
-!  Allocate and initialize observation arrays.
-!
-        CALL initialize_fourdvar
-#endif
       END IF
 
 #if defined MCT_LIB && (defined ATM_COUPLING || defined WAV_COUPLING)

@@ -1,7 +1,7 @@
       MODULE roms_kernel_mod
 !
 !git $Id$
-!svn $Id: picard_roms.h 1064 2021-05-10 19:55:56Z arango $
+!svn $Id: picard_roms.h 1090 2021-09-29 03:19:30Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -34,6 +34,7 @@
 !
       USE mod_param
       USE mod_parallel
+      USE mod_arrays
       USE mod_iounits
       USE mod_ncparam
       USE mod_scalars
@@ -165,7 +166,8 @@
 !  Allocate and initialize modules variables.
 !
 !$OMP PARALLEL
-        CALL mod_arrays (allocate_vars)
+        CALL ROMS_allocate_arrays (allocate_vars)
+        CALL ROMS_initialize_arrays
 !$OMP END PARALLEL
 
       END IF

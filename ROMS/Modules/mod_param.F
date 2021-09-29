@@ -2,7 +2,7 @@
       MODULE mod_param
 !
 !git $Id$
-!svn $Id: mod_param.F 1064 2021-05-10 19:55:56Z arango $
+!svn $Id: mod_param.F 1090 2021-09-29 03:19:30Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -98,11 +98,12 @@
 !=======================================================================
 !
       USE mod_kinds
-#if defined PIO_LIB && defined DISTRIBUTE
-      USE pio
-#endif
 !
       implicit none
+!
+      PUBLIC :: allocate_param
+      PUBLIC :: deallocate_param
+      PUBLIC :: initialize_param
 !
 !-----------------------------------------------------------------------
 !  Grid nesting parameters.
@@ -135,55 +136,6 @@
 !  a particular application per nested grid.
 !
       real(r8), allocatable :: Dmem(:)          ! [Ngrids]
-!
-!-----------------------------------------------------------------------
-!  Define derived type structure, T_IO, used to store information about
-!  the input and output files.
-!-----------------------------------------------------------------------
-
-#if defined PIO_LIB && defined DISTRIBUTE
-!
-!  Define derived type structure for ROMS variable descriptors. It is
-!  done to include additional information not available in the PIO
-!  library TYPE (Var_desc_t) variable descriptor. It includes external
-!  data representation "dkind" and C-grid type "gtype".
-!
-      TYPE My_VarDesc
-        TYPE (Var_Desc_t) :: vd              ! PIO variable descriptor
-        integer :: dkind                     ! PIO data kind
-        integer :: gtype                     ! ROMS C-grid variable type
-      END TYPE My_VarDesc
-#endif
-!
-!  This structure is used to declare the variables associated with
-!  input and output files, like TYPE(IO) :: HIS(Ngrids). It is a
-!  compact way to store a lot of information.  The "Fcount" variable
-!  is used during data processing in "check_multifile" and "inquiry"
-!  whereas "load" is used storing information in the structure.
-!
-      TYPE T_IO
-        integer :: IOtype                        ! file IO type
-        integer :: Nfiles                        ! number of multi-files
-        integer :: Fcount                        ! multi-file counter
-        integer :: load                          ! filename load counter
-        integer :: Rindex                        ! NetCDF record index
-        integer :: ncid                          ! NetCDF file ID
-        integer,  pointer :: Nrec(:)             ! NetCDF record size
-        integer,  pointer :: Vid(:)              ! NetCDF variables IDs
-        integer,  pointer :: Tid(:)              ! NetCDF tracers IDs
-        real(dp), pointer :: time_min(:)         ! starting time
-        real(dp), pointer :: time_max(:)         ! ending time
-        character (len=50 ) :: label             ! structure label
-        character (len=256) :: head              ! head filename
-        character (len=256) :: base              ! base filename
-        character (len=256) :: name              ! current name
-        character (len=256), pointer :: files(:) ! multi-file names
-#if defined PIO_LIB && defined DISTRIBUTE
-        TYPE (File_desc_t) :: pioFile            ! file descriptor
-        TYPE (My_VarDesc), pointer :: pioVar(:)  ! variable descriptor
-        TYPE (My_VarDesc), pointer :: pioTrc(:)  ! tracer descriptor
-#endif
-      END TYPE T_IO
 !
 !-----------------------------------------------------------------------
 !  Lower and upper bounds indices per domain partition for all grids.
@@ -685,14 +637,15 @@
 # endif
 #endif
 !
-!  Set nonlinear, tangent linear, and adjoint models identifiers.
+!  Set nonlinear, tangent linear, representer (finite-amplitude tangent
+!  linear) and adjoint models identifiers.
 !
-      integer :: iNLM = 1
-      integer :: iTLM = 2
-      integer :: iRPM = 3
-      integer :: iADM = 4
-
-      character (len=3), dimension(4) :: kernel =                       &
+      integer, parameter :: iNLM = 1   ! nonlinear
+      integer, parameter :: iTLM = 2   ! perturbation tangent linear
+      integer, parameter :: iRPM = 3   ! finite-amplitude tangent linear
+      integer, parameter :: iADM = 4   ! adjoint
+!
+      character (len=3), dimension(4) :: KernelString =                 &
      &                                   (/ 'NLM','TLM','RPM','ADM' /)
 !
 !-----------------------------------------------------------------------
@@ -873,10 +826,386 @@
         allocate ( Nbico(Ngrids) )
       END IF
 #endif
-
+!
       RETURN
       END SUBROUTINE allocate_param
+!
+      SUBROUTINE deallocate_param
+!
+!=======================================================================
+!                                                                      !
+!  This routine deallocates som of the variables in the module.        !
+!  Notice that "destroy" cannot be use to deallocate the pointer       !
+!  variables because of cyclic dependencies.                           !
+!                                                                      !
+!=======================================================================
+!
+!  Local variable declarations.
+!
+      integer :: ng
 
+#ifdef SUBOBJECT_DEALLOCATION
+!
+!-----------------------------------------------------------------------
+!  Deallocate each variable in the derived-type T_BOUNDS structure
+!  separately.
+!-----------------------------------------------------------------------
+!
+      DO ng=1,Ngrids
+        IF (associated(BOUNDS(ng)%tile)) THEN
+          deallocate ( BOUNDS(ng)%tile )
+        END IF
+!
+        IF (associated(BOUNDS(ng)%LBi)) THEN
+          deallocate ( BOUNDS(ng)%LBi )
+        END IF
+
+        IF (associated(BOUNDS(ng)%UBi)) THEN
+          deallocate ( BOUNDS(ng)%UBi )
+        END IF
+
+        IF (associated(BOUNDS(ng)%LBj)) THEN
+          deallocate ( BOUNDS(ng)%LBj )
+        END IF
+
+        IF (associated(BOUNDS(ng)%UBj)) THEN
+          deallocate ( BOUNDS(ng)%UBj )
+        END IF
+!
+        IF (associated(BOUNDS(ng)%Istr)) THEN
+          deallocate ( BOUNDS(ng)%Istr )
+        END IF
+        IF (associated(BOUNDS(ng)%Iend)) THEN
+          deallocate ( BOUNDS(ng)%Iend )
+        END IF
+        IF (associated(BOUNDS(ng)%Jstr)) THEN
+          deallocate ( BOUNDS(ng)%Jstr )
+        END IF
+        IF (associated(BOUNDS(ng)%Jend)) THEN
+          deallocate ( BOUNDS(ng)%Jend )
+        END IF
+!
+        IF (associated(BOUNDS(ng)%IstrR)) THEN
+          deallocate ( BOUNDS(ng)%IstrR )
+        END IF
+        IF (associated(BOUNDS(ng)%IendR)) THEN
+          deallocate ( BOUNDS(ng)%IendR )
+        END IF
+        IF (associated(BOUNDS(ng)%IstrU)) THEN
+          deallocate ( BOUNDS(ng)%IstrU )
+        END IF
+!
+        IF (associated(BOUNDS(ng)%JstrR)) THEN
+          deallocate ( BOUNDS(ng)%JstrR )
+        END IF
+        IF (associated(BOUNDS(ng)%JendR)) THEN
+          deallocate ( BOUNDS(ng)%JendR )
+        END IF
+        IF (associated(BOUNDS(ng)%JstrV)) THEN
+          deallocate ( BOUNDS(ng)%JstrV )
+        END IF
+!
+        IF (associated(BOUNDS(ng)%IstrB)) THEN
+          deallocate ( BOUNDS(ng)%IstrB )
+        END IF
+        IF (associated(BOUNDS(ng)%IendB)) THEN
+          deallocate ( BOUNDS(ng)%IendB )
+        END IF
+        IF (associated(BOUNDS(ng)%IstrM)) THEN
+          deallocate ( BOUNDS(ng)%IstrM )
+        END IF
+!
+        IF (associated(BOUNDS(ng)%JstrB)) THEN
+          deallocate ( BOUNDS(ng)%JstrB )
+        END IF
+        IF (associated(BOUNDS(ng)%JendB)) THEN
+          deallocate ( BOUNDS(ng)%JendB )
+        END IF
+        IF (associated(BOUNDS(ng)%JstrM)) THEN
+          deallocate ( BOUNDS(ng)%JstrM )
+        END IF
+!
+        IF (associated(BOUNDS(ng)%IstrP)) THEN
+          deallocate ( BOUNDS(ng)%IstrP )
+        END IF
+        IF (associated(BOUNDS(ng)%IendP)) THEN
+          deallocate ( BOUNDS(ng)%IendP )
+        END IF
+        IF (associated(BOUNDS(ng)%JstrP)) THEN
+          deallocate ( BOUNDS(ng)%JstrP )
+        END IF
+        IF (associated(BOUNDS(ng)%JendP)) THEN
+          deallocate ( BOUNDS(ng)%JendP )
+        END IF
+!
+        IF (associated(BOUNDS(ng)%IstrT)) THEN
+          deallocate ( BOUNDS(ng)%IstrT )
+        END IF
+        IF (associated(BOUNDS(ng)%IendT)) THEN
+          deallocate ( BOUNDS(ng)%IendT )
+        END IF
+        IF (associated(BOUNDS(ng)%JstrT)) THEN
+          deallocate ( BOUNDS(ng)%JstrT )
+        END IF
+        IF (associated(BOUNDS(ng)%JendT)) THEN
+          deallocate ( BOUNDS(ng)%JendT )
+        END IF
+!
+        IF (associated(BOUNDS(ng)%Istrm3)) THEN
+          deallocate ( BOUNDS(ng)%Istrm3 )
+        END IF
+        IF (associated(BOUNDS(ng)%Istrm2)) THEN
+          deallocate ( BOUNDS(ng)%Istrm2 )
+        END IF
+        IF (associated(BOUNDS(ng)%Istrm1)) THEN
+          deallocate ( BOUNDS(ng)%Istrm1 )
+        END IF
+        IF (associated(BOUNDS(ng)%IstrUm2)) THEN
+          deallocate ( BOUNDS(ng)%IstrUm2 )
+        END IF
+        IF (associated(BOUNDS(ng)%IstrUm1)) THEN
+          deallocate ( BOUNDS(ng)%IstrUm1 )
+        END IF
+        IF (associated(BOUNDS(ng)%Iendp1)) THEN
+          deallocate ( BOUNDS(ng)%Iendp1 )
+        END IF
+        IF (associated(BOUNDS(ng)%Iendp2)) THEN
+          deallocate ( BOUNDS(ng)%Iendp2 )
+        END IF
+        IF (associated(BOUNDS(ng)%Iendp2i)) THEN
+          deallocate ( BOUNDS(ng)%Iendp2i )
+        END IF
+        IF (associated(BOUNDS(ng)%Iendp3)) THEN
+          deallocate ( BOUNDS(ng)%Iendp3 )
+        END IF
+!
+        IF (associated(BOUNDS(ng)%Jstrm3)) THEN
+          deallocate ( BOUNDS(ng)%Jstrm3 )
+        END IF
+        IF (associated(BOUNDS(ng)%Jstrm2)) THEN
+          deallocate ( BOUNDS(ng)%Jstrm2 )
+        END IF
+        IF (associated(BOUNDS(ng)%Jstrm1)) THEN
+          deallocate ( BOUNDS(ng)%Jstrm1 )
+        END IF
+        IF (associated(BOUNDS(ng)%JstrVm2)) THEN
+          deallocate ( BOUNDS(ng)%JstrVm2 )
+        END IF
+        IF (associated(BOUNDS(ng)%JstrVm1)) THEN
+          deallocate ( BOUNDS(ng)%JstrVm1 )
+        END IF
+        IF (associated(BOUNDS(ng)%Jendp1)) THEN
+          deallocate ( BOUNDS(ng)%Jendp1 )
+        END IF
+        IF (associated(BOUNDS(ng)%Jendp2)) THEN
+          deallocate ( BOUNDS(ng)%Jendp2 )
+        END IF
+        IF (associated(BOUNDS(ng)%Jendp2i)) THEN
+          deallocate ( BOUNDS(ng)%Jendp2i )
+        END IF
+        IF (associated(BOUNDS(ng)%Jendp3)) THEN
+          deallocate ( BOUNDS(ng)%Jendp3 )
+        END IF
+!
+        IF (associated(BOUNDS(ng)%Imin)) THEN
+          deallocate ( BOUNDS(ng)%Imin )
+        END IF
+        IF (associated(BOUNDS(ng)%Imax)) THEN
+          deallocate ( BOUNDS(ng)%Imax )
+        END IF
+        IF (associated(BOUNDS(ng)%Jmin)) THEN
+          deallocate ( BOUNDS(ng)%Jmin )
+        END IF
+        IF (associated(BOUNDS(ng)%Jmax)) THEN
+          deallocate ( BOUNDS(ng)%Jmax )
+        END IF
+      END DO
+!
+!-----------------------------------------------------------------------
+!  Deallocate each variable in the derived-type T_DOMAIN structure
+!  separately.
+!-----------------------------------------------------------------------
+!
+      DO ng=1,Ngrids
+        IF (associated(DOMAIN(ng)%Eastern_Edge)) THEN
+          deallocate ( DOMAIN(ng)%Eastern_Edge )
+        END IF
+        IF (associated(DOMAIN(ng)%Western_Edge)) THEN
+          deallocate ( DOMAIN(ng)%Western_Edge )
+        END IF
+        IF (associated(DOMAIN(ng)%Northern_Edge)) THEN
+          deallocate ( DOMAIN(ng)%Northern_Edge )
+        END IF
+        IF (associated(DOMAIN(ng)%Southern_Edge)) THEN
+          deallocate ( DOMAIN(ng)%Southern_Edge )
+        END IF
+!
+        IF (associated(DOMAIN(ng)%NorthEast_Corner)) THEN
+          deallocate ( DOMAIN(ng)%NorthEast_Corner )
+        END IF
+        IF (associated(DOMAIN(ng)%NorthWest_Corner)) THEN
+          deallocate ( DOMAIN(ng)%NorthWest_Corner )
+        END IF
+        IF (associated(DOMAIN(ng)%SouthEast_Corner)) THEN
+          deallocate ( DOMAIN(ng)%SouthEast_Corner )
+        END IF
+        IF (associated(DOMAIN(ng)%SouthWest_Corner)) THEN
+          deallocate ( DOMAIN(ng)%SouthWest_Corner )
+        END IF
+!
+        IF (associated(DOMAIN(ng)%NorthEast_Test)) THEN
+          deallocate ( DOMAIN(ng)%NorthEast_Test )
+        END IF
+        IF (associated(DOMAIN(ng)%NorthWest_Test)) THEN
+          deallocate ( DOMAIN(ng)%NorthWest_Test )
+        END IF
+        IF (associated(DOMAIN(ng)%SouthEast_Test)) THEN
+          deallocate ( DOMAIN(ng)%SouthEast_Test )
+        END IF
+        IF (associated(DOMAIN(ng)%SouthWest_Test)) THEN
+          deallocate ( DOMAIN(ng)%SouthWest_Test )
+        END IF
+!
+        IF (associated(DOMAIN(ng)%Xmin_psi)) THEN
+          deallocate ( DOMAIN(ng)%Xmin_psi )
+        END IF
+        IF (associated(DOMAIN(ng)%Xmax_psi)) THEN
+          deallocate ( DOMAIN(ng)%Xmax_psi )
+        END IF
+        IF (associated(DOMAIN(ng)%Ymin_psi)) THEN
+          deallocate ( DOMAIN(ng)%Ymin_psi )
+        END IF
+        IF (associated(DOMAIN(ng)%Ymax_psi)) THEN
+          deallocate ( DOMAIN(ng)%Ymax_psi )
+        END IF
+!
+        IF (associated(DOMAIN(ng)%Xmin_rho)) THEN
+          deallocate ( DOMAIN(ng)%Xmin_rho )
+        END IF
+        IF (associated(DOMAIN(ng)%Xmax_rho)) THEN
+          deallocate ( DOMAIN(ng)%Xmax_rho )
+        END IF
+        IF (associated(DOMAIN(ng)%Ymin_rho)) THEN
+          deallocate ( DOMAIN(ng)%Ymin_rho )
+        END IF
+        IF (associated(DOMAIN(ng)%Ymax_rho)) THEN
+          deallocate ( DOMAIN(ng)%Ymax_rho )
+        END IF
+!
+        IF (associated(DOMAIN(ng)%Xmin_u)) THEN
+          deallocate ( DOMAIN(ng)%Xmin_u )
+        END IF
+        IF (associated(DOMAIN(ng)%Xmax_u)) THEN
+          deallocate ( DOMAIN(ng)%Xmax_u )
+        END IF
+        IF (associated(DOMAIN(ng)%Ymin_u)) THEN
+          deallocate ( DOMAIN(ng)%Ymin_u )
+        END IF
+        IF (associated(DOMAIN(ng)%Ymax_u)) THEN
+          deallocate ( DOMAIN(ng)%Ymax_u )
+        END IF
+!
+        IF (associated(DOMAIN(ng)%Xmin_v)) THEN
+          deallocate ( DOMAIN(ng)%Xmin_v )
+        END IF
+        IF (associated(DOMAIN(ng)%Xmax_v)) THEN
+          deallocate ( DOMAIN(ng)%Xmax_v )
+        END IF
+        IF (associated(DOMAIN(ng)%Ymin_v)) THEN
+          deallocate ( DOMAIN(ng)%Ymin_v )
+        END IF
+        IF (associated(DOMAIN(ng)%Ymax_v)) THEN
+          deallocate ( DOMAIN(ng)%Ymax_v )
+        END IF
+      END DO
+#endif
+!
+!-----------------------------------------------------------------------
+!  Deallocate derived-type module structures:
+!-----------------------------------------------------------------------
+!
+      IF (allocated(BOUNDS))        deallocate ( BOUNDS )
+      IF (allocated(IOBOUNDS))      deallocate ( IOBOUNDS )
+      IF (allocated(DOMAIN))        deallocate ( DOMAIN )
+#ifdef SOLVE3D
+      IF (allocated(Hadvection))    deallocate ( Hadvection )
+      IF (allocated(Vadvection))    deallocate ( Vadvection )
+# if defined ADJOINT || defined TANGENT || defined TL_IOMS
+      IF (allocated(ad_Hadvection)) deallocate ( ad_Hadvection )
+      IF (allocated(ad_Vadvection)) deallocate ( ad_Vadvection )
+# endif
+# if defined TANGENT || defined TL_IOMS
+      IF (allocated(tl_Hadvection)) deallocate ( tl_Hadvection )
+      IF (allocated(tl_Vadvection)) deallocate ( tl_Vadvection )
+# endif
+#endif
+
+
+
+
+!
+!-----------------------------------------------------------------------
+!  Deallocate dimension parameters.
+!-----------------------------------------------------------------------
+!
+      IF (allocated(Lm))           deallocate ( Lm )
+      IF (allocated(Mm))           deallocate ( Mm )
+      IF (allocated(Im))           deallocate ( Im )
+      IF (allocated(Jm))           deallocate ( Jm )
+      IF (allocated(N))            deallocate ( N )
+      IF (allocated(NT))           deallocate ( NT )
+
+#if defined TIME_CONV && defined WEAK_CONSTRAINT
+      IF (allocated(NrecTC))       deallocate ( NrecTC )
+#endif
+
+      IF (allocated(NTCLM))        deallocate ( NTCLM )
+      IF (allocated(NSV))          deallocate ( NSV )
+
+      IF (allocated(NtileI))       deallocate ( NtileI )
+      IF (allocated(NtileJ))       deallocate ( NtileJ )
+      IF (allocated(NtileX))       deallocate ( NtileX )
+      IF (allocated(NtileE))       deallocate ( NtileE )
+
+      IF (allocated(HaloBry))      deallocate ( HaloBry )
+      IF (allocated(HaloSizeI))    deallocate ( HaloSizeI )
+      IF (allocated(HaloSizeJ))    deallocate ( HaloSizeJ )
+      IF (allocated(TileSide))     deallocate ( TileSide )
+      IF (allocated(TileSize))     deallocate ( TileSize )
+
+      IF (allocated(BmemMax))      deallocate ( BmemMax )
+      IF (allocated(Dmem))         deallocate ( Dmem )
+
+#ifdef PROPAGATOR
+      IF (allocated(Mstate))       deallocate ( Mstate )
+      IF (allocated(Nstate))       deallocate ( Nstate )
+      IF (allocated(Nstr))         deallocate ( Nstr )
+      IF (allocated(Nend))         deallocate ( Nend )
+      IF (allocated(Nsize))        deallocate ( Nsize )
+# ifdef SO_SEMI
+      IF (allocated(Nsemi))        deallocate ( Nsemi )
+# endif
+#endif
+
+      IF (allocated(GridsInLayer)) deallocate ( GridsInLayer )
+      IF (allocated(GridNumber))   deallocate ( GridNumber )
+
+#ifdef FLOATS
+      IF (allocated(Nfloats))      deallocate ( Nfloats )
+      IF (allocated(NFV))          deallocate ( NFV )
+#endif
+
+#ifdef STATIONS
+      IF (allocated(Nstation))     deallocate ( Nstation )
+#endif
+
+#if defined BALANCE_OPERATOR && defined ZETA_ELLIPTIC
+      IF (allocated(Nbico))        deallocate ( Nbico )
+#endif
+!
+      RETURN
+      END SUBROUTINE deallocate_param
+!
       SUBROUTINE initialize_param
 !
 !=======================================================================

@@ -1,7 +1,7 @@
       MODULE roms_kernel_mod
 !
 !git $Id$
-!svn $Id: hessian_op_roms.h 1081 2021-07-24 02:25:06Z arango $
+!svn $Id: hessian_op_roms.h 1090 2021-09-29 03:19:30Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -33,6 +33,7 @@
 !
       USE mod_param
       USE mod_parallel
+      USE mod_arrays
       USE mod_fourdvar
       USE mod_iounits
       USE mod_ncparam
@@ -181,11 +182,8 @@
 !
 !  Allocate and initialize modules variables.
 !
-        CALL mod_arrays (allocate_vars)
-!
-!  Allocate and initialize 4D-Var arrays.
-!
-        CALL initialize_fourdvar
+        CALL ROMS_allocate_arrays (allocate_vars)
+        CALL ROMS_initialize_arrays
 
       END IF
 
@@ -549,7 +547,7 @@
               CALL wclock_on (ng, iTLM, 38, __LINE__, MyFile)
 #endif
               IF (Master) THEN
-                CALL dseupd (Lrvec, howmany, select(1,ng),              &
+                CALL dseupd (Lrvec, howmany, pick(1,ng),                &
      &                       RvalueR(1,ng),                             &
      &                       STORAGE(ng)%Rvector, Nsize(ng),            &
      &                       sigmaR, bmat, Nsize, which, NEV, Ritz_tol, &

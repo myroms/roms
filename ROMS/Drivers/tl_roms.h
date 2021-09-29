@@ -1,7 +1,7 @@
       MODULE roms_kernel_mod
 !
 !git $Id$
-!svn $Id: tl_roms.h 1064 2021-05-10 19:55:56Z arango $
+!svn $Id: tl_roms.h 1090 2021-09-29 03:19:30Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -22,6 +22,7 @@
 !
       USE mod_param
       USE mod_parallel
+      USE mod_arrays
       USE mod_iounits
       USE mod_ncparam
       USE mod_scalars
@@ -105,7 +106,7 @@
 !  Initialize parallel control switches. These scalars switches are
 !  independent from standard input parameters.
 !
-        CALL initialize_parallel
+        CALL ROMS_initialize_parallel
 !
 !  Read in model tunable parameters from standard input. Allocate and
 !  initialize variables in several modules after the number of nested
@@ -153,7 +154,8 @@
 !  Allocate and initialize modules variables.
 !
 !$OMP PARALLEL
-        CALL mod_arrays (allocate_vars)
+        CALL ROMS_allocate_arrays (allocate_vars)
+        CALL ROMS_initialize_arrays
 !$OMP END PARALLEL
 
       END IF
