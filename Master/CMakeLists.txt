@@ -1,5 +1,5 @@
 # git $Id$
-# svn $Id: CMakeLists.txt 1064 2021-05-10 19:55:56Z arango $
+# svn $Id: CMakeLists.txt 1092 2021-09-29 04:30:19Z arango $
 #:::::::::::::::::::::::::::::::::::::::::::::::::::::: David Robertson :::
 # Copyright (c) 2002-2021 The ROMS/TOMS Group                           :::
 #   Licensed under a MIT/X style license                                :::
@@ -12,8 +12,6 @@ list( APPEND _files
       Master/coupler.F
       Master/esmf_roms.F
       Master/propagator.F
-      Master/roms_export.F
-      Master/roms_import.F
       Master/roms_kernel.F
 )
 
