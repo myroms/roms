@@ -2,7 +2,7 @@
       MODULE mod_arrays
 !
 !git $Id$
-!svn $Id: mod_arrays.F 1090 2021-09-29 03:19:30Z arango $
+!svn $Id: mod_arrays.F 1093 2021-09-30 21:07:14Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -52,6 +52,7 @@
       USE mod_grid,     ONLY : allocate_grid,                           &
      &                         deallocate_grid,                         &
      &                         initialize_grid
+      USE mod_iounits,  ONLY : deallocate_iounits
       USE mod_mixing,   ONLY : allocate_mixing,                         &
      &                         deallocate_mixing,                       &
      &                         initialize_mixing
@@ -292,6 +293,10 @@
 !
       CALL deallocate_fourdvar
 #endif
+!
+!  Deallocate I/O derived-type structures.
+!
+      CALL deallocate_iounits
 !
 !  Deallocate main configuration dimensions and associated parameters.
 !
