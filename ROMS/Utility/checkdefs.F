@@ -2,7 +2,7 @@
       SUBROUTINE checkdefs
 !
 !git $Id$
-!svn $Id: checkdefs.F 1090 2021-09-29 03:19:30Z arango $
+!svn $Id: checkdefs.F 1093 2021-09-30 21:07:14Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -26,16 +26,22 @@
 !
 !  Local variable declarations.
 !
-      integer :: iatms = 0
-      integer :: ibbl = 0
-      integer :: ibiology = 0
-      integer :: idriver = 0
-      integer :: ivelHadv = 0
-      integer :: ivelVadv = 0
-      integer :: ivmix = 0
-      integer :: nearshore = 0
-
+      integer :: iatms, ibbl, ibiology, idriver
+      integer :: ivelHadv, ivelVadv, ivmix, nearshore
       integer :: is, lstr, ng
+!
+!-----------------------------------------------------------------------
+!  Initialze counters
+!-----------------------------------------------------------------------
+!
+      iatms = 0
+      ibbl = 0
+      ibiology = 0
+      idriver = 0
+      ivelHadv = 0
+      ivelVadv = 0
+      ivmix = 0
+      nearshore = 0
 !
 !-----------------------------------------------------------------------
 !  Report activated C-preprocessing options.
