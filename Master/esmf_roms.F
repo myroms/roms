@@ -4,7 +4,7 @@
 #if defined MODEL_COUPLING && defined ESMF_LIB
 !
 !git $Id$
-!svn $Id: esmf_roms.F 1071 2021-06-14 04:22:26Z arango $
+!svn $Id: esmf_roms.F 1094 2021-10-13 22:12:47Z arango $
 !=======================================================================
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license         Hernan G. Arango     !
@@ -1543,7 +1543,7 @@
 !  (total/memory region). All ROMS arrays are horizontally dimensioned
 !  with the same bounds regardless if they are variables located at
 !  RHO-, PSI-, U-, or V-points. There is no halos at the boundary edges.
-!  The physical boundary is a U-points (east/west edged) and V-points
+!  The physical boundary is a U-points (east/west edges) and V-points
 !  (south/north edges). The boundary for RHO-points variables are
 !  located at half grid (dx,dy) distance away from the physical boundary
 !  at array indices(i=0; i=Lm+1) and (j=0; j=Mm+1).
