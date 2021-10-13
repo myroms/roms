@@ -2,7 +2,7 @@
 ** Include file "defs_cmake.h"
 **
 ** git $Id$
-** svn $Id: defs_cmake.h 1064 2021-05-10 19:55:56Z arango $
+** svn $Id: defs_cmake.h 1094 2021-10-13 22:12:47Z arango $
 ********************************************************** Hernan G. Arango ***
 ** Copyright (c) 2002-2021 The ROMS/TOMS Group              David Robertson  **
 **   Licensed under a MIT/X style license                                    **
@@ -127,6 +127,7 @@
     defined INNER_PRODUCT          || \
     defined I4DVAR                 || \
     defined I4DVAR_ANA_SENSITIVITY || \
+    defined JEDI                   || \
     defined OPT_PERTURBATION       || \
     defined OPT_OBSERVATIONS       || \
     defined PICARD_TEST            || \
@@ -163,6 +164,7 @@ TANGENT
     defined INNER_PRODUCT          || \
     defined I4DVAR                 || \
     defined I4DVAR_ANA_SENSITIVITY || \
+    defined JEDI                   || \
     defined OPT_PERTURBATION       || \
     defined OPT_OBSERVATIONS       || \
     defined RBL4DVAR               || \
