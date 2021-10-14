@@ -1,7 +1,7 @@
       MODULE roms_kernel_mod
 !
 !git $Id$
-!svn $Id: jedi_roms.h 1090 2021-09-29 03:19:30Z arango $
+!svn $Id: jedi_roms.h 1095 2021-10-14 23:18:45Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -60,6 +60,9 @@
 #endif
       USE stiffness_mod,     ONLY : stiffness
       USE strings_mod,       ONLY : FoundError
+#ifdef TANGENT
+      USE tl_set_depth_mod,  ONLY : tl_bath
+#endif
 #ifdef WET_DRY
       USE wetdry_mod,        ONLY : wetdry
 #endif
