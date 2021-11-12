@@ -2,7 +2,7 @@
       SUBROUTINE checkdefs
 !
 !git $Id$
-!svn $Id: checkdefs.F 1093 2021-09-30 21:07:14Z arango $
+!svn $Id: checkdefs.F 1097 2021-11-12 03:57:36Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -1832,7 +1832,7 @@
 #if defined PIO_LIB && defined DISTRIBUTE
 !
       IF (Master) WRITE (stdout,20) 'PIO_LIB',                          &
-     &   'Using Parallel-IO from the SCORPIO library'
+     &   'Using Parallel-IO from the PIO library'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+9)=' PIO_LIB,'
 #endif
@@ -2127,7 +2127,7 @@
 #ifdef ROMS_STDOUT
 !
       IF (Master) WRITE (stdout,20) 'ROMS_STDOUT',                      &
-     &   'Red tide biological model'
+     &   "Writes ROMS standard output into 'log.roms' file"
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+13)=' ROMS_STDOUT,'
 #endif

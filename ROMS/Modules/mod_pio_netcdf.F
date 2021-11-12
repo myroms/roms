@@ -3,7 +3,7 @@
 #if defined PIO_LIB && defined DISTRIBUTE
 !
 !git $Id$
-!svn $Id: mod_pio_netcdf.F 1090 2021-09-29 03:19:30Z arango $
+!svn $Id: mod_pio_netcdf.F 1097 2021-11-12 03:57:36Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -182,6 +182,9 @@
       TYPE (IO_desc_t), pointer :: ioDesc_sp_r2dvar(:) ! (i,j)
       TYPE (IO_desc_t), pointer :: ioDesc_sp_u2dvar(:) ! (i,j)
       TYPE (IO_desc_t), pointer :: ioDesc_sp_v2dvar(:) ! (i,j)
+# if defined SSH_TIDES || defined UV_TIDES
+      TYPE (IO_desc_t), pointer :: ioDesc_sp_rtides(:) ! (i,j,NTC)
+# endif
 # ifdef SOLVE3D
 #  ifdef SEDIMENT
       TYPE (IO_desc_t), pointer :: ioDesc_sp_b3dvar(:) ! (i,j,Nbed)
@@ -218,6 +221,9 @@
       TYPE (IO_desc_t), pointer :: ioDesc_dp_r2dvar(:) ! (i,j)
       TYPE (IO_desc_t), pointer :: ioDesc_dp_u2dvar(:) ! (i,j)
       TYPE (IO_desc_t), pointer :: ioDesc_dp_v2dvar(:) ! (i,j)
+# if defined SSH_TIDES || defined UV_TIDES
+      TYPE (IO_desc_t), pointer :: ioDesc_dp_rtides(:) ! (i,j,NTC)
+# endif
 # ifdef SOLVE3D
 #  ifdef SEDIMENT
       TYPE (IO_desc_t), pointer :: ioDesc_dp_b3dvar(:) ! (i,j,Nbed)
@@ -8056,7 +8062,7 @@
 !
       character (len=*), intent(in) :: ncname
 !
-      TYPE (File_desc_t), intent(in) :: pioFile
+      TYPE (File_desc_t) :: pioFile
 !
 !  Local variable declarations.
 !

@@ -2,7 +2,7 @@
       MODULE mod_ncparam
 !
 !git $Id$
-!svn $Id: mod_ncparam.F 1090 2021-09-29 03:19:30Z arango $
+!svn $Id: mod_ncparam.F 1097 2021-11-12 03:57:36Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -52,6 +52,7 @@
 !               Iinfo( 8,*) => rolling two-time levels index.          !
 !               Iinfo( 9,*) => latest processed time record.           !
 !               Iinfo(10,*) => number of field multi-files.            !
+!               Iinfo(11,*) => number of variable dimensions in file.  !
 !                                                                      !
 !  Finfo      Input/output field floating-point information:           !
 !               Finfo( 1,*) => Starting time (days) of data.           !
@@ -926,7 +927,7 @@
       END IF
 
       IF (.not.allocated(Iinfo)) THEN
-        allocate ( Iinfo(10,NV,Ngrids) )
+        allocate ( Iinfo(11,NV,Ngrids) )
         Dmem(1)=Dmem(1)+10.0_r8*REAL(NV*Ngrids,r8)
       END IF
 
@@ -1273,6 +1274,7 @@
           Iinfo(8,i,ng)=2
           Iinfo(9,i,ng)=0
           Iinfo(10,i,ng)=0
+          Iinfo(11,i,ng)=0
           Finfo(1,i,ng)=0.0_r8
           Finfo(2,i,ng)=0.0_r8
           Finfo(3,i,ng)=0.0_r8

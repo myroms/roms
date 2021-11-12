@@ -3,12 +3,12 @@
 #if defined PIO_LIB && defined DISTRIBUTE
      &                      pioFile,                                    &
 #endif
-     &                      nfiles, S, update,                          &
+     &                      nfiles, S, recordless, update,              &
      &                      LBi, UBi, UBj, UBk, Istr, Iend, Jrec,       &
      &                      Fout)
 !
 !git $Id$
-!svn $Id: get_ngfld.F 1066 2021-05-14 21:47:45Z arango $
+!svn $Id: get_ngfld.F 1097 2021-11-12 03:57:36Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -32,6 +32,7 @@
 # endif
 !     nfiles     Number of input NetCDF files.                         !
 !     S          I/O derived type structure, TYPE(T_IO).               !
+!     recordless Switch for time invariant field (logical).            !
 !     LBi        "Fout" 1st dimension lower-bound value.               !
 !     UBi        "Fout" 1st dimension upper-bound value.               !
 !     UBj        "Fout" 2nd dimension upper-bound value, if any.       !
@@ -63,6 +64,7 @@
 !
 !  Imported variable declarations.
 !
+      logical, intent(in)  :: recordless
       logical, intent(out) :: update
 !
       integer, intent(in) :: ng, model, ifield, nfiles
@@ -88,14 +90,14 @@
       SELECT CASE (S(1)%IOtype)
         CASE (io_nf90)
           CALL get_ngfld_nf90 (ng, model, ifield, ncid,                 &
-     &                         nfiles, S, update,                       &
+     &                         nfiles, S, recordless, update,           &
      &                         LBi, UBi, UBj, UBk, Istr, Iend, Jrec,    &
      &                         Fout)
 
 #if defined PIO_LIB && defined DISTRIBUTE
         CASE (io_pio)
           CALL get_ngfld_pio (ng, model, ifield, pioFile,               &
-     &                        nfiles, S, update,                        &
+     &                        nfiles, S, recordless, update,            &
      &                        LBi, UBi, UBj, UBk, Istr, Iend, Jrec,     &
      &                        Fout)
 #endif
@@ -112,7 +114,7 @@
 !
 !***********************************************************************
       SUBROUTINE get_ngfld_nf90 (ng, model, ifield, ncid,               &
-     &                           nfiles, S, update,                     &
+     &                           nfiles, S, recordless, update,         &
      &                           LBi, UBi, UBj, UBk, Istr, Iend, Jrec,  &
      &                           Fout)
 !***********************************************************************
@@ -135,6 +137,7 @@
 !
 !  Imported variable declarations.
 !
+      logical, intent(in)  :: recordless
       logical, intent(out) :: update
 !
       integer, intent(in) :: ng, model, ifield, nfiles
@@ -150,7 +153,7 @@
       logical :: Linquire, Liocycle, Lmulti, Lonerec
 !
       integer :: Nrec, Tid, Tindex, Trec, Vid, Vtype
-      integer :: i, ic, j, job, lend, lstr, npts, status
+      integer :: i, ic, j, job, lend, lstr, npts, nvdim, status
 #ifdef CHECKSUM
       integer(i8b) :: Fhash
 #endif
@@ -222,18 +225,19 @@
 !
 !  Load properties for requested field from information arrays.
 !
-        Liocycle=Linfo(2,ifield,ng)
-        Lonerec =Linfo(3,ifield,ng)
-        Vtype   =Iinfo(1,ifield,ng)
-        Vid     =Iinfo(2,ifield,ng)
-        Tid     =Iinfo(3,ifield,ng)
-        Nrec    =Iinfo(4,ifield,ng)
-        Tindex  =Iinfo(8,ifield,ng)
-        Trec    =Iinfo(9,ifield,ng)
-        Tmin    =Finfo(1,ifield,ng)
-        Tmax    =Finfo(2,ifield,ng)
-        Clength =Finfo(5,ifield,ng)
-        Tscale  =Finfo(6,ifield,ng)
+        Liocycle=Linfo( 2,ifield,ng)
+        Lonerec =Linfo( 3,ifield,ng)
+        Vtype   =Iinfo( 1,ifield,ng)
+        Vid     =Iinfo( 2,ifield,ng)
+        Tid     =Iinfo( 3,ifield,ng)
+        Nrec    =Iinfo( 4,ifield,ng)
+        Tindex  =Iinfo( 8,ifield,ng)
+        Trec    =Iinfo( 9,ifield,ng)
+        nvdim   =Iinfo(11,ifield,ng)
+        Tmin    =Finfo( 1,ifield,ng)
+        Tmax    =Finfo( 2,ifield,ng)
+        Clength =Finfo( 5,ifield,ng)
+        Tscale  =Finfo( 6,ifield,ng)
         ncfile  =Cinfo(ifield,ng)
 !
         IF (Liocycle) THEN
@@ -249,7 +253,7 @@
 !  "UBk" is unity, input data is stored in recordless array by the
 !  calling program.
 !
-          IF (UBk.eq.1) THEN
+          IF (recordless) THEN
             Tindex=1
           ELSE
             Tindex=3-Tindex
@@ -258,7 +262,7 @@
 !
 !  Read in time coordinate.
 !
-          IF ((Tid.ge.0).and.(Tid.ne.Vid)) THEN
+          IF (.not.recordless.and.(Tid.ge.0).and.(Tid.ne.Vid)) THEN
             CALL netcdf_get_time (ng, model, ncfile, Tname(ifield),     &
      &                            Rclock%DateNumber, Tval,              &
      &                            ncid = ncid,                          &
@@ -286,21 +290,36 @@
           IF (Vid.ge.0) THEN
             Fmin=0.0_r8
             Fmax=0.0_r8
-            IF ((Jrec.gt.1).or.                                         &
-     &          ((Jrec.eq.1).and.(Iinfo(7,ifield,ng).gt.0))) THEN
+            IF (nvdim.eq.1) THEN
+              npts=Iend-Istr+1
+              CALL netcdf_get_fvar (ng, model, ncfile,                  &
+     &                              Vname(1,ifield), Awrk,              &
+     &                              ncid = ncid,                        &
+     &                              start = (/1/),                      &
+     &                              total = (/Iend-Istr+1/))
+            ELSE IF (nvdim.eq.2) THEN
+              IF (recordless) THEN
+                npts=(Iend-Istr+1)*Jrec
+                CALL netcdf_get_fvar (ng, model, ncfile,                &
+     &                                Vname(1,ifield), Awrk,            &
+     &                                ncid = ncid,                      &
+     &                                start = (/1,1/),                  &
+     &                                total = (/Iend-Istr+1,Jrec/))
+              ELSE
+                npts=Iend-Istr+1
+                CALL netcdf_get_fvar (ng, model, ncfile,                &
+     &                                Vname(1,ifield), Awrk,            &
+     &                                ncid = ncid,                      &
+     &                                start = (/1,Trec/),               &
+     &                                total = (/Iend-Istr+1,1/))
+              END IF
+            ELSE IF (nvdim.eq.3) THEN
               npts=(Iend-Istr+1)*Jrec
-              CALL netcdf_get_fvar (ng, model, ncfile, Vname(1,ifield), &
-     &                              Awrk,                               &
+              CALL netcdf_get_fvar (ng, model, ncfile,                  &
+     &                              Vname(1,ifield), Awrk,              &
      &                              ncid = ncid,                        &
      &                              start = (/1,1,Trec/),               &
      &                              total = (/Iend-Istr+1,Jrec,1/))
-            ELSE
-              npts=Iend-Istr+1
-              CALL netcdf_get_fvar (ng, model, ncfile, Vname(1,ifield), &
-     &                              Awrk,                               &
-     &                              ncid = ncid,                        &
-     &                              start = (/1,Trec/),                 &
-     &                              total = (/Iend-Istr+1,1/))
             END IF
             IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) THEN
               IF (Master) WRITE (stdout,50) TRIM(Vname(1,ifield)), Trec
@@ -320,8 +339,11 @@
             END DO
             Finfo(8,ifield,ng)=Fmin
             Finfo(9,ifield,ng)=Fmax
+#ifdef CHECKSUM
+            CALL get_hash (Awrk, npts, Fhash)
+#endif
             IF (Master) THEN
-              IF (UBk.eq.1) THEN
+              IF (recordless) THEN
                 WRITE (stdout,60) TRIM(Vname(2,ifield)), ng, Fmin, Fmax
               ELSE
                 lstr=SCAN(ncfile,'/',BACK=.TRUE.)+1
@@ -333,7 +355,6 @@
      &                            Tmin, Tmax, Tval, Fmin, Fmax
               END IF
 #ifdef CHECKSUM
-              CALL get_hash (Awrk, npts, Fhash)
               WRITE (stdout,80) Fhash
 #endif
             END IF
@@ -346,7 +367,7 @@
 !  a cycle length.  Load time value (sec) into "Tintrp" which used
 !  during interpolation between snapshots.
 !
-        IF (.not.Lonerec) THEN
+        IF (.not.Lonerec.and.(.not.recordless)) THEN
           Tdelta=Vtime(Tindex,ifield,ng)-Vtime(3-Tindex,ifield,ng)
           IF (Liocycle.and.(Tdelta.lt.0.0_r8)) THEN
             Tdelta=Tdelta+Clength
@@ -387,7 +408,7 @@
 !
 !***********************************************************************
       SUBROUTINE get_ngfld_pio (ng, model, ifield, pioFile,             &
-     &                          nfiles, S, update,                      &
+     &                          nfiles, S, recordless, update,          &
      &                          LBi, UBi, UBj, UBk, Istr, Iend, Jrec,   &
      &                          Fout)
 !***********************************************************************
@@ -410,6 +431,7 @@
 !
 !  Imported variable declarations.
 !
+      logical, intent(in)  :: recordless
       logical, intent(out) :: update
 !
       integer, intent(in) :: ng, model, ifield, nfiles
@@ -425,7 +447,7 @@
       logical :: Linquire, Liocycle, Lmulti, Lonerec
 !
       integer :: Nrec, Tindex, Trec, Vtype
-      integer :: i, ic, j, job, lend, lstr, npts, status
+      integer :: i, ic, j, job, lend, lstr, npts, nvdim, status
 # ifdef CHECKSUM
       integer(i8b) :: Fhash
 # endif
@@ -499,18 +521,19 @@
 !
 !  Load properties for requested field from information arrays.
 !
-        Liocycle=Linfo(2,ifield,ng)
-        Lonerec =Linfo(3,ifield,ng)
-        Vtype   =Iinfo(1,ifield,ng)
-        VpioVar =Dinfo(1,ifield,ng)
-        TpioVar =Dinfo(2,ifield,ng)
-        Nrec    =Iinfo(4,ifield,ng)
-        Tindex  =Iinfo(8,ifield,ng)
-        Trec    =Iinfo(9,ifield,ng)
-        Tmin    =Finfo(1,ifield,ng)
-        Tmax    =Finfo(2,ifield,ng)
-        Clength =Finfo(5,ifield,ng)
-        Tscale  =Finfo(6,ifield,ng)
+        Liocycle=Linfo( 2,ifield,ng)
+        Lonerec =Linfo( 3,ifield,ng)
+        Vtype   =Iinfo( 1,ifield,ng)
+        VpioVar =Dinfo( 1,ifield,ng)
+        TpioVar =Dinfo( 2,ifield,ng)
+        Nrec    =Iinfo( 4,ifield,ng)
+        Tindex  =Iinfo( 8,ifield,ng)
+        Trec    =Iinfo( 9,ifield,ng)
+        nvdim   =Iinfo(11,ifield,ng)
+        Tmin    =Finfo( 1,ifield,ng)
+        Tmax    =Finfo( 2,ifield,ng)
+        Clength =Finfo( 5,ifield,ng)
+        Tscale  =Finfo( 6,ifield,ng)
         ncfile  =Cinfo(ifield,ng)
 !
         IF (Liocycle) THEN
@@ -526,7 +549,7 @@
 !  "UBk" is unity, input data is stored in recordless array by the
 !  calling program.
 !
-          IF (UBk.eq.1) THEN
+          IF (recordless) THEN
             Tindex=1
           ELSE
             Tindex=3-Tindex
@@ -535,7 +558,7 @@
 !
 !  Read in time coordinate.
 !
-          IF ((TpioVar%vd%varID.ge.0).and.                              &
+          IF (.not.recordless.and.(TpioVar%vd%varID.ge.0).and.          &
      &        (TpioVar%vd%varID.ne.VpioVar%vd%varID)) THEN
             CALL pio_netcdf_get_time (ng, model, ncfile, Tname(ifield), &
      &                                Rclock%DateNumber, Tval,          &
@@ -564,21 +587,37 @@
           IF (VpioVar%vd%varID.ge.0) THEN
             Fmin=0.0_r8
             Fmax=0.0_r8
-            IF ((Jrec.gt.1).or.                                         &
-     &          ((Jrec.eq.1).and.(Iinfo(7,ifield,ng).gt.0))) THEN
+            IF (nvdim.eq.1) THEN
+              npts=Iend-Istr+1
+              CALL pio_netcdf_get_fvar (ng, model, ncfile,              &
+     &                                  Vname(1,ifield), Awrk,          &
+     &                                  pioFile = pioFile,              &
+     &                                  start = (/1/),                  &
+     &                                  total = (/Iend-Istr+1/))
+            ELSE IF (nvdim.eq.2) THEN
+              IF (recordless) THEN
+                npts=(Iend-Istr+1)*Jrec
+                CALL pio_netcdf_get_fvar (ng, model, ncfile,            &
+     &                                    Vname(1,ifield), Awrk,        &
+     &                                    pioFile = pioFile,            &
+     &                                    start = (/1,1/),              &
+     &                                    total = (/Iend-Istr+1,Jrec/))
+
+              ELSE
+                npts=Iend-Istr+1
+                CALL pio_netcdf_get_fvar (ng, model, ncfile,            &
+     &                                    Vname(1,ifield), Awrk,        &
+     &                                    pioFile = pioFile,            &
+     &                                    start = (/1,Trec/),           &
+     &                                    total = (/Iend-Istr+1,1/))
+              END IF
+            ELSE IF (nvdim.eq.3) THEN
               npts=(Iend-Istr+1)*Jrec
               CALL pio_netcdf_get_fvar (ng, model, ncfile,              &
      &                                  Vname(1,ifield), Awrk,          &
      &                                  pioFile = pioFile,              &
      &                                  start = (/1,1,Trec/),           &
      &                                  total = (/Iend-Istr+1,Jrec,1/))
-            ELSE
-              npts=Iend-Istr+1
-              CALL pio_netcdf_get_fvar (ng, model, ncfile,              &
-     &                                  Vname(1,ifield), Awrk,          &
-     &                                  pioFile = pioFile,              &
-     &                                  start = (/1,Trec/),             &
-     &                                  total = (/Iend-Istr+1,1/))
             END IF
             IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) THEN
               IF (Master) WRITE (stdout,50) TRIM(Vname(1,ifield)), Trec
@@ -599,10 +638,10 @@
             Finfo(8,ifield,ng)=Fmin
             Finfo(9,ifield,ng)=Fmax
 # ifdef CHECKSUM
-            CALL get_hash (Awrk, npts, Fhash) ! sum reduction not needed
+            CALL get_hash (Awrk, npts, Fhash)
 # endif
             IF (Master) THEN
-              IF (UBk.eq.1) THEN
+              IF (recordless) THEN
                 WRITE (stdout,60) TRIM(Vname(2,ifield)), ng, Fmin, Fmax
               ELSE
                 lstr=SCAN(ncfile,'/',BACK=.TRUE.)+1
@@ -626,7 +665,7 @@
 !  a cycle length.  Load time value (sec) into "Tintrp" which used
 !  during interpolation between snapshots.
 !
-        IF (.not.Lonerec) THEN
+        IF (.not.Lonerec.and.(.not.recordless)) THEN
           Tdelta=Vtime(Tindex,ifield,ng)-Vtime(3-Tindex,ifield,ng)
           IF (Liocycle.and.(Tdelta.lt.0.0_r8)) THEN
             Tdelta=Tdelta+Clength

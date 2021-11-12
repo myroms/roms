@@ -5,7 +5,7 @@
       SUBROUTINE tides_date (ng)
 !
 !git $Id$
-!svn $Id: tides_date.F 1087 2021-09-10 01:11:17Z arango $
+!svn $Id: tides_date.F 1097 2021-11-12 03:57:36Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -127,7 +127,7 @@
      &                               SearchVar = foundit)
             IF (foundit) THEN
               CALL pio_netcdf_get_fvar (ng, iNLM, TIDE(ng)%name,        &
-     &                                  Vname(1,idTref),
+     &                                  Vname(1,idTref),                &
      &                                  zero_phase_date)
             END IF
 # endif
