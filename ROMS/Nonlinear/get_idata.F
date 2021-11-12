@@ -2,7 +2,7 @@
       SUBROUTINE get_idata (ng)
 !
 !git $Id$
-!svn $Id: get_idata.F 1070 2021-06-08 21:00:47Z arango $
+!svn $Id: get_idata.F 1097 2021-11-12 03:57:36Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -59,6 +59,8 @@
 !
 !  Local variable declarations.
 !
+      logical, save :: recordless = .TRUE.
+
       logical, dimension(3) :: update =                                 &
      &         (/ .FALSE., .FALSE., .FALSE. /)
 !
@@ -130,7 +132,7 @@
 # if defined PIO_LIB && defined DISTRIBUTE
      &                    TIDE(ng)%pioFile,                             &
 # endif
-     &                    1, TIDE(ng), update(1),                       &
+     &                    1, TIDE(ng), recordless, update(1),           &
      &                    1, MTC, 1, 1, 1, NTC(ng), 1,                  &
      &                    TIDES(ng) % Tperiod)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
@@ -314,7 +316,7 @@
 # if defined PIO_LIB && defined DISTRIBUTE
      &                  HAR(ng)%pioFile,                                &
 # endif
-     &                  1, HAR(ng), update(1),                          &
+     &                  1, HAR(ng), recordless, update(1),              &
      &                  1, MTC, 1, 1, 1, NTC(ng), 1,                    &
      &                  TIDES(ng) % CosW_sum)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
@@ -325,7 +327,7 @@
 # if defined PIO_LIB && defined DISTRIBUTE
      &                  HAR(ng)%pioFile,                                &
 # endif
-     &                  1, HAR(ng), update(1),                          &
+     &                  1, HAR(ng), recordless, update(1),              &
      &                  1, MTC, 1, 1, 1, NTC(ng), 1,                    &
      &                  TIDES(ng) % SinW_sum)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
@@ -336,7 +338,7 @@
 # if defined PIO_LIB && defined DISTRIBUTE
      &                  HAR(ng)%pioFile,                                &
 # endif
-     &                  1, HAR(ng), update(1),                          &
+     &                  1, HAR(ng), recordless, update(1),              &
      &                  1, MTC, MTC, 1, 1, NTC(ng), NTC(ng),            &
      &                  TIDES(ng) % CosWCosW)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
@@ -347,7 +349,7 @@
 # if defined PIO_LIB && defined DISTRIBUTE
      &                  HAR(ng)%pioFile,                                &
 # endif
-     &                  1, HAR(ng), update(1),                          &
+     &                  1, HAR(ng), recordless, update(1),              &
      &                  1, MTC, MTC, 1, 1, NTC(ng), NTC(ng),            &
      &                  TIDES(ng) %  SinWSinW)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
@@ -358,7 +360,7 @@
 # if defined PIO_LIB && defined DISTRIBUTE
      &                  HAR(ng)%pioFile,                                &
 # endif
-     &                  1, HAR(ng), update(1),                          &
+     &                  1, HAR(ng), recordless, update(1),              &
      &                  1, MTC, MTC, 1, 1, NTC(ng), NTC(ng),            &
      &                  TIDES(ng) %  SinWCosW)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
@@ -746,7 +748,7 @@
 # if defined PIO_LIB && defined DISTRIBUTE
      &                  SSF(ng)%pioFile,                                &
 # endif
-     &                  1, SSF(ng), update(1),                          &
+     &                  1, SSF(ng), recordless, update(1),              &
      &                  1, Nsrc(ng), 1, 1, 1, Nsrc(ng), 1,              &
      &                  SOURCES(ng) % Xsrc)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
@@ -755,7 +757,7 @@
 # if defined PIO_LIB && defined DISTRIBUTE
      &                  SSF(ng)%pioFile,                                &
 # endif
-     &                  1, SSF(ng), update(1),                          &
+     &                  1, SSF(ng), recordless, update(1),              &
      &                  1, Nsrc(ng), 1, 1, 1, Nsrc(ng), 1,              &
      &                  SOURCES(ng) % Ysrc)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
@@ -764,7 +766,7 @@
 # if defined PIO_LIB && defined DISTRIBUTE
      &                  SSF(ng)%pioFile,                                &
 # endif
-     &                  1, SSF(ng), update(1),                          &
+     &                  1, SSF(ng), recordless, update(1),              &
      &                  1, Nsrc(ng), 1, 1, 1, Nsrc(ng), 1,              &
      &                  SOURCES(ng) % Dsrc)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
@@ -774,7 +776,7 @@
 #  if defined PIO_LIB && defined DISTRIBUTE
      &                  SSF(ng)%pioFile,                                &
 #  endif
-     &                  1, SSF(ng), update(1),                          &
+     &                  1, SSF(ng), recordless, update(1),              &
      &                  1, Nsrc(ng), N(ng), 1, 1, Nsrc(ng), N(ng),      &
      &                  SOURCES(ng) % Qshape)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN

@@ -11,7 +11,7 @@
      &                      Fout)
 !
 !git $Id$
-!svn $Id: get_2dfld.F 1064 2021-05-10 19:55:56Z arango $
+!svn $Id: get_2dfld.F 1097 2021-11-12 03:57:36Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -266,7 +266,8 @@
 !  Set rolling index for two-time record storage of input data.  If
 !  "Iout" is unity, input data is stored in timeless array by the
 !  calling program.  If Irec > 1, this routine is used to read a 2D
-!  field varying in another non-time dimension.
+!  field varying in another non-time dimension like tidal constituent
+!  component.
 !
           IF (.not.special.and.(Irec.eq.1)) THEN
             IF (Iout.eq.1) THEN
@@ -279,7 +280,7 @@
 !
 !  Read in time coordinate and scale it to day units.
 !
-          IF (Tid.ge.0) THEN
+          IF (.not.special.and.(Tid.ge.0)) THEN
             CALL netcdf_get_time (ng, model, ncfile, Tname(ifield),     &
      &                            Rclock%DateNumber, Tval,              &
      &                            ncid = ncid,                          &
@@ -289,16 +290,16 @@
               IF (Master) WRITE (stdout,40) TRIM(Tname(ifield)), Trec
               RETURN
             END IF
-          END IF
-          Tval=Tval*Tscale
-          Vtime(Tindex,ifield,ng)=Tval
+            Tval=Tval*Tscale
+            Vtime(Tindex,ifield,ng)=Tval
 !
 !  Activate switch Linfo(6,ifield,ng) if processing the LAST record of
 !  the file for the LOWER time snapshot. We need to get the UPPER time
 !  snapshot from NEXT multifile.
 !
-          IF ((Trec.eq.Nrec).and.(Tval*day2sec.le.time(ng))) THEN
-            Linfo(6,ifield,ng)=.TRUE.
+            IF ((Trec.eq.Nrec).and.(Tval*day2sec.le.time(ng))) THEN
+              Linfo(6,ifield,ng)=.TRUE.
+            END IF
           END IF
 !
 !  Read in 2D-grided or point data. Notice for special 2D fields, Vtype
@@ -306,8 +307,6 @@
 !  used to read fields like tide data.
 !
           IF (Vid.ge.0) THEN
-            Fmin=0.0_r8
-            Fmax=0.0_r8
             IF (Lgridded) THEN
               IF (special) THEN
                 Vsize(3)=Irec
@@ -376,10 +375,10 @@
                 WRITE (stdout,60) Vname(2,ifield)(1:lvar), t_code,      &
      &                            ng, Trec, Tindex, ncfile(lstr:lend),  &
      &                            Tmin, Tmax, Tval, Fmin, Fmax, Rswitch
-#ifdef CHECKSUM
-                WRITE (stdout,70) Fhash
-#endif
               END IF
+#ifdef CHECKSUM
+              WRITE (stdout,70) Fhash
+#endif
             END IF
             update=.TRUE.
           END IF
@@ -390,7 +389,7 @@
 !  a cycle length.  Load time value (sec) into "Tintrp" which used
 !  during interpolation between snapshots.
 !
-        IF (.not.Lonerec) THEN
+        IF (.not.Lonerec.and.(.not.special)) THEN
           Tdelta=Vtime(Tindex,ifield,ng)-Vtime(3-Tindex,ifield,ng)
           IF (Liocycle.and.(Tdelta.lt.0.0_r8)) THEN
             Tdelta=Tdelta+Clength
@@ -480,7 +479,7 @@
       integer(i8b) :: Fhash
 # endif
 !
-      real(r8) :: Fmax, Fmin, Fval, my_Fmin, my_Fmax
+      real(r8) :: Fmax, Fmin, Fval
 
       real(dp) :: Clength, Tdelta, Tend
       real(dp) :: Tmax, Tmin, Tmono, Tscale, Tstr
@@ -580,7 +579,8 @@
 !  Set rolling index for two-time record storage of input data.  If
 !  "Iout" is unity, input data is stored in timeless array by the
 !  calling program.  If Irec > 1, this routine is used to read a 2D
-!  field varying in another non-time dimension.
+!  field varying in another non-time dimension like tidal constituent
+!  component.
 !
           IF (.not.special.and.(Irec.eq.1)) THEN
             IF (Iout.eq.1) THEN
@@ -593,7 +593,7 @@
 !
 !  Read in time coordinate and scale it to day units.
 !
-          IF (TpioVar%vd%varID.ge.0) THEN
+          IF (.not.special.and.(TpioVar%vd%varID.ge.0)) THEN
             CALL pio_netcdf_get_time (ng, model, ncfile, Tname(ifield), &
      &                                Rclock%DateNumber, Tval,          &
      &                                pioFile = pioFile,                &
@@ -603,21 +603,24 @@
               IF (Master) WRITE (stdout,40) TRIM(Tname(ifield)), Trec
               RETURN
             END IF
-          END IF
-          Tval=Tval*Tscale
-          Vtime(Tindex,ifield,ng)=Tval
+            Tval=Tval*Tscale
+            Vtime(Tindex,ifield,ng)=Tval
 !
 !  Activate switch Linfo(6,ifield,ng) if processing the LAST record of
 !  the file for the LOWER time snapshot. We need to get the UPPER time
 !  snapshot from NEXT multifile.
 !
-          IF ((Trec.eq.Nrec).and.(Tval*day2sec.le.time(ng))) THEN
-            Linfo(6,ifield,ng)=.TRUE.
+            IF ((Trec.eq.Nrec).and.(Tval*day2sec.le.time(ng))) THEN
+              Linfo(6,ifield,ng)=.TRUE.
+            END IF
           END IF
 !
 !  Read in 2D-grided or point data. Notice for special 2D fields, Vtype
-!  is augmented by four indicating reading a 3D field. This rational is
-!  used to read fields like tide data. HGA: need speciat IO descriptor!
+!  is augmented by four indicating reading a 3D field (tidal data with
+!  tidal constituents in the third dimension. Currently, all input tidal
+!  constituents data is at RHO-points.
+!
+          IF (special) Vtype=Vtype+4
 !
           IF (VpioVar%vd%varID.ge.0) THEN
             SELECT CASE (Vtype)
@@ -645,32 +648,34 @@
                 ELSE
                   ioDesc => ioDesc_sp_v2dvar(ng)
                 END IF
+# if defined SSH_TIDES || defined UV_TIDES
+              CASE (r2dvar+4)
+                IF (KIND(Fout).eq.8) THEN
+                  ioDesc => ioDesc_dp_rtides(ng)
+                ELSE
+                  ioDesc => ioDesc_sp_rtides(ng)
+                END IF
+                VpioVar%gtype=r2dvar+4
+# endif
             END SELECT
 !
             IF (Lgridded) THEN
-              Fmin=spval
-              Fmax=-spval
               IF (special) THEN
                 Vsize(3)=Irec
-                DO i=1,Irec
-                  status=nf_fread2d(ng, model, ncfile, pioFile,         &
-     &                              Vname(1,ifield), VpioVar,           &
-     &                              0, ioDesc, Vsize,                   &
-     &                              LBi, UBi, LBj, UBj,                 &
-     &                              Fscale(ifield,ng),                  &
-     &                              my_Fmin, my_Fmax,                   &
+                status=nf_fread3d(ng, model, ncfile, pioFile,           &
+     &                            Vname(1,ifield), VpioVar,             &
+     &                            0, ioDesc, Vsize,                     &
+     &                            LBi, UBi, LBj, UBj, 1, Irec,          &
+     &                            Fscale(ifield,ng), Fmin, Fmax,        &
 # ifdef MASKING
-     &                              Fmask,                              &
+     &                            Fmask,                                &
 # endif
 # ifdef CHECKSUM
-     &                              Fout(:,:,i),                        &
-     &                              checksum = Fhash)
+     &                            Fout,                                 &
+     &                            checksum = Fhash)
 # else
-     &                              Fout(:,:,i))
+     &                            Fout)
 # endif
-                  Fmin=MIN(Fmin,my_Fmin)
-                  Fmax=MAX(Fmax,my_Fmax)
-                END DO
               ELSE
                 status=nf_fread2d(ng, model, ncfile, pioFile,           &
      &                            Vname(1,ifield), VpioVar,             &
@@ -721,10 +726,10 @@
                 WRITE (stdout,60) Vname(2,ifield)(1:lvar), t_code,      &
      &                            ng, Trec, Tindex, ncfile(lstr:lend),  &
      &                            Tmin, Tmax, Tval, Fmin, Fmax, Rswitch
-# ifdef CHECKSUM
-                WRITE (stdout,70) Fhash
-# endif
               END IF
+# ifdef CHECKSUM
+              WRITE (stdout,70) Fhash
+# endif
             END IF
             update=.TRUE.
           END IF
@@ -735,7 +740,7 @@
 !  a cycle length.  Load time value (sec) into "Tintrp" which used
 !  during interpolation between snapshots.
 !
-        IF (.not.Lonerec) THEN
+        IF (.not.Lonerec.and.(.not.special)) THEN
           Tdelta=Vtime(Tindex,ifield,ng)-Vtime(3-Tindex,ifield,ng)
           IF (Liocycle.and.(Tdelta.lt.0.0_r8)) THEN
             Tdelta=Tdelta+Clength

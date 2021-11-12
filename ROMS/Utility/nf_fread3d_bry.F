@@ -2,7 +2,7 @@
       MODULE nf_fread3d_bry_mod
 !
 !git $Id$
-!svn $Id: nf_fread3d_bry.F 1085 2021-08-13 00:03:50Z arango $
+!svn $Id: nf_fread3d_bry.F 1097 2021-11-12 03:57:36Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -115,7 +115,7 @@
       logical, dimension(3) :: foundit
       logical, dimension(4) :: bounded
 !
-      integer :: ghost, i, ib, ic, ij, ir, j, k, tile
+      integer :: ghost, i, ib, ij, ir, j, k, tile
       integer :: IorJ, IJKlen, Imin, Imax, Jmin, Jmax, Klen, Npts
       integer :: Cgrid, Istr, Iend, Jstr, Jend
       integer, dimension(5) :: start, total
@@ -305,21 +305,8 @@
 !
           IF (Lchecksum) THEN
             Npts=(UBij-LBij+1)*(UBk-LBk+1)*Nrec*4
-            IF (.not.associated(Cwrk)) THEN
-              allocate ( Cwrk(Npts) )
-              Cwrk=0.0_r8
-            END IF
-            ic=0
-            DO ir=1,Nrec
-              DO ib=1,4
-                DO k=LBk,UBk
-                  DO ij=LBij,UBij
-                    ic=ic+1
-                    Cwrk(ic)=wrk(ij,k,ib,ir)
-                  END DO
-                END DO
-              END DO
-            END DO
+            IF (.not.associated(Cwrk)) allocate ( Cwrk(Npts) )
+            Cwrk=PACK(wrk(LBij:UBij, LBk:UBk, 1:4, 1:Nrec), .TRUE.)
             CALL get_hash (Cwrk, Npts, checksum)
             IF (associated(Cwrk)) deallocate (Cwrk)
           END IF
@@ -422,7 +409,7 @@
       logical, dimension(3) :: foundit
       logical, dimension(4) :: bounded
 !
-      integer :: i, ib, ic, ij, ir, j, k
+      integer :: i, ib, ij, ir, j, k
       integer :: Cgrid, dkind, ghost, gtype, tile
       integer :: IorJ, IJKlen, Imin, Imax, Jmin, Jmax, Klen, Npts
       integer :: Istr, Iend, Jstr, Jend
@@ -606,21 +593,8 @@
 !
         IF (Lchecksum) THEN
           Npts=(UBij-LBij+1)*(UBk-LBk+1)*Nrec*4
-          IF (.not.associated(Cwrk)) THEN
-            allocate ( Cwrk(Npts) )
-            Cwrk=0.0_r8
-          END IF
-          ic=0
-          DO ir=1,Nrec
-            DO ib=1,4
-              DO k=LBk,UBk
-                DO ij=LBij,UBij
-                  ic=ic+1
-                  Cwrk(ic)=wrk(ij,k,ib,ir)
-                END DO
-              END DO
-            END DO
-          END DO
+          IF (.not.associated(Cwrk)) allocate ( Cwrk(Npts) )
+          Cwrk=PACK(wrk(LBij:UBij, LBk:UBk, 1:4, 1:Nrec), .TRUE.)
           CALL get_hash (Cwrk, Npts, checksum)
           IF (associated(Cwrk)) deallocate (Cwrk)
         END IF

@@ -27,7 +27,10 @@
       USE mod_storage
 # endif
 !
-      USE strings_mod, ONLY : FoundError
+# if defined SSH_TIDES || defined UV_TIDES
+      USE mod_stepping, ONLY : NTC
+# endif
+      USE strings_mod,  ONLY : FoundError
 !
       implicit none
 !
@@ -349,6 +352,9 @@
             CALL PIO_freedecomp (pioSystem(i,ng), ioDesc_sp_r2dvar(ng))
             CALL PIO_freedecomp (pioSystem(i,ng), ioDesc_sp_u2dvar(ng))
             CALL PIO_freedecomp (pioSystem(i,ng), ioDesc_sp_v2dvar(ng))
+# if defined SSH_TIDES || defined UV_TIDES
+            CALL PIO_freedecomp (pioSystem(i,ng), ioDesc_sp_rtides(ng))
+# endif
 # ifdef SOLVE3D
 #  ifdef SEDIMENT
             CALL PIO_freedecomp (pioSystem(i,ng), ioDesc_sp_b3dvar(ng))
@@ -384,6 +390,9 @@
             CALL PIO_freedecomp (pioSystem(i,ng), ioDesc_dp_r2dvar(ng))
             CALL PIO_freedecomp (pioSystem(i,ng), ioDesc_dp_u2dvar(ng))
             CALL PIO_freedecomp (pioSystem(i,ng), ioDesc_dp_v2dvar(ng))
+# if defined SSH_TIDES || defined UV_TIDES
+            CALL PIO_freedecomp (pioSystem(i,ng), ioDesc_dp_rtides(ng))
+# endif
 # ifdef SOLVE3D
 #  ifdef SEDIMENT
             CALL PIO_freedecomp (pioSystem(i,ng), ioDesc_dp_b3dvar(ng))
@@ -783,6 +792,9 @@
       allocate ( ioDesc_sp_r2dvar(Ngrids) )
       allocate ( ioDesc_sp_u2dvar(Ngrids) )
       allocate ( ioDesc_sp_v2dvar(Ngrids) )
+# if defined SSH_TIDES || defined UV_TIDES
+      allocate ( ioDesc_sp_rtides(Ngrids) )
+# endif
 # ifdef SOLVE3D
 #  ifdef SEDIMENT
       allocate ( ioDesc_sp_b3dvar(Ngrids) )
@@ -821,6 +833,9 @@
       allocate ( ioDesc_dp_r2dvar(Ngrids) )
       allocate ( ioDesc_dp_u2dvar(Ngrids) )
       allocate ( ioDesc_dp_v2dvar(Ngrids) )
+# if defined SSH_TIDES || defined UV_TIDES
+      allocate ( ioDesc_dp_rtides(Ngrids) )
+# endif
 # ifdef SOLVE3D
 #  ifdef SEDIMENT
       allocate ( ioDesc_dp_b3dvar(Ngrids) )
@@ -942,6 +957,11 @@
         CALL field_iodecomp (ng, pioSystem(IpioROMS,ng), PIO_real,      &
      &                       ioDesc_sp_v2dvar(ng),                      &
      &                       v2dvar, 2)
+# if defined SSH_TIDES || defined UV_TIDES
+        CALL field_iodecomp (ng, pioSystem(IpioROMS,ng), PIO_real,      &
+     &                       ioDesc_sp_rtides(ng),                      &
+     &                       r2dvar+4, 3, 1, NTC(ng))
+# endif
 # ifdef SOLVE3D
 #  ifdef SEDIMENT
         CALL field_iodecomp (ng, pioSystem(IpioROMS,ng), PIO_real,      &
@@ -1024,6 +1044,11 @@
         CALL field_iodecomp (ng, pioSystem(IpioROMS,ng), PIO_double,    &
      &                       ioDesc_dp_v2dvar(ng),                      &
      &                       v2dvar, 2)
+# if defined SSH_TIDES || defined UV_TIDES
+        CALL field_iodecomp (ng, pioSystem(IpioROMS,ng), PIO_double,    &
+     &                       ioDesc_dp_rtides(ng),                      &
+     &                       r2dvar+4, 3, 1, NTC(ng))
+# endif
 # ifdef SOLVE3D
 #  ifdef SEDIMENT
         CALL field_iodecomp (ng, pioSystem(IpioROMS,ng), PIO_double,    &
@@ -1333,7 +1358,7 @@
       END IF
 !
 !  Check for correct parallel decompositon between computational and
-!  I/O processes or when splittinf is not necessary.
+!  I/O processes or when split communicator is unnecessary.
 !
       DO ng=1,Ngrids
         IF (Lsplit) THEN
@@ -1432,7 +1457,7 @@
           exit_flag=2
         END IF
 !
-!  Create dedicate I/O group associated the initial communicator.
+!  Create dedicated I/O group associated the initial communicator.
 !  Notice that at least
 !
         CALL mpi_comm_create (PEER_COMM_WORLD, grp_io,                  &

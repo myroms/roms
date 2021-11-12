@@ -2,7 +2,7 @@
       MODULE inp_par_mod
 !
 !git $Id$
-!svn $Id: inp_par.F 1083 2021-07-28 19:00:42Z arango $
+!svn $Id: inp_par.F 1097 2021-11-12 03:57:36Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -29,9 +29,6 @@
       USE mod_scalars
 #ifdef DISTRIBUTE
       USE mod_strings
-#endif
-#if defined PIO_LIB && defined DISTRIBUTE
-      USE set_pio_mod
 #endif
 !
       USE dateclock_mod,   ONLY : get_date
@@ -1267,16 +1264,6 @@
       CALL mp_bcasts (1, model, Coptions)
 #endif
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-
-#if defined PIO_LIB && defined DISTRIBUTE
-!
-!-----------------------------------------------------------------------
-!  Set PIO single and double precision data decomposition for mapping
-!  between computational and I/O processes.
-!-----------------------------------------------------------------------
-!
-      CALL set_iodecomp
-#endif
 !
 !-----------------------------------------------------------------------
 !  Initialize random number sequence so we can get identical results

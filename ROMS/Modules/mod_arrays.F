@@ -2,7 +2,7 @@
       MODULE mod_arrays
 !
 !git $Id$
-!svn $Id: mod_arrays.F 1094 2021-10-13 22:12:47Z arango $
+!svn $Id: mod_arrays.F 1097 2021-11-12 03:57:36Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -81,6 +81,9 @@
      &                         deallocate_bbl,                          &
      &                         initialize_bbl
 #endif
+#if defined PIO_LIB && defined DISTRIBUTE
+      USE set_pio_mod,  ONLY : set_iodecomp
+#endif
 !
       implicit none
 !
@@ -134,7 +137,7 @@
 #endif
 !
 !-----------------------------------------------------------------------
-!  Allocate model structures.
+!  Allocate model type-derived structures and its variables.
 !-----------------------------------------------------------------------
 !
       IF (allocate_vars) then
@@ -198,7 +201,20 @@
 !$OMP END MASTER
 !$OMP BARRIER
 #endif
+
+#if defined PIO_LIB && defined DISTRIBUTE
+!
+!  Allocate and initialize PIO single and double precision data
+!  decomposition for mapping between computational and I/O processes.
+!  It needs to done after all parameters have been allocated and
+!  initialize. In particular, we need tidal constituents and state
+!  propagator  parameters.
+!
+        CALL set_iodecomp
+#endif
+
         LallocatedMemory=.TRUE.
+
       END IF
 
 #ifdef PROFILE

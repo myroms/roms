@@ -2,7 +2,7 @@
       SUBROUTINE get_data (ng)
 !
 !git $Id$
-!svn $Id: get_data.F 1064 2021-05-10 19:55:56Z arango $
+!svn $Id: get_data.F 1097 2021-11-12 03:57:36Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -56,6 +56,8 @@
 !
       logical :: Lprocess
 
+      logical, save :: recordless = .FALSE.
+
       logical, dimension(3) :: update = (/ .FALSE., .FALSE., .FALSE. /)
 !
       integer :: ILB, IUB, JLB, JUB
@@ -102,7 +104,7 @@
 # if defined PIO_LIB && defined DISTRIBUTE
      &                  SSF(ng)%pioFile,                                &
 # endif
-     &                  1, SSF(ng), update(1),                          &
+     &                  1, SSF(ng), recordless, update(1),              &
      &                  1, Nsrc(ng), 1, 2, 1, Nsrc(ng), 1,              &
      &                  SOURCES(ng) % QbarG)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
@@ -118,7 +120,7 @@
 #  if defined PIO_LIB && defined DISTRIBUTE
      &                    SSF(ng)%pioFile,                              &
 #  endif
-     &                    1, SSF(ng), update(1),                        &
+     &                    1, SSF(ng), recordless, update(1),            &
      &                    1, Nsrc(ng), N(ng), 2, 1, Nsrc(ng), N(ng),    &
      &                    SOURCES(ng) % TsrcG(:,:,:,i))
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
@@ -867,7 +869,8 @@
 # if defined PIO_LIB && defined DISTRIBUTE
      &                    BRYpioFile(idZbry(iwest),ng),                 &
 # endif
-     &                    nBCfiles(ng), BRY(1,ng), update(1),           &
+     &                    nBCfiles(ng), BRY(1,ng),                      &
+     &                    recordless, update(1),                        &
      &                    JLB, JUB, 1, 2, 0, Mm(ng)+1, 1,               &
      &                    BOUNDARY(ng) % zetaG_west)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
@@ -879,7 +882,8 @@
 # if defined PIO_LIB && defined DISTRIBUTE
      &                    BRYpioFile(idZbry(ieast),ng),                 &
 # endif
-     &                    nBCfiles(ng), BRY(1,ng), update(1),           &
+     &                    nBCfiles(ng), BRY(1,ng),                      &
+     &                    recordless, update(1),                        &
      &                    JLB, JUB, 1, 2, 0, Mm(ng)+1, 1,               &
      &                    BOUNDARY(ng) % zetaG_east)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
@@ -891,7 +895,8 @@
 # if defined PIO_LIB && defined DISTRIBUTE
      &                    BRYpioFile(idZbry(isouth),ng),                &
 # endif
-     &                    nBCfiles(ng), BRY(1,ng), update(1),           &
+     &                    nBCfiles(ng), BRY(1,ng),                      &
+     &                    recordless, update(1),                        &
      &                    ILB, IUB, 1, 2, 0, Lm(ng)+1, 1,               &
      &                    BOUNDARY(ng) % zetaG_south)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
@@ -903,7 +908,8 @@
 # if defined PIO_LIB && defined DISTRIBUTE
      &                    BRYpioFile(idZbry(inorth),ng),                &
 # endif
-     &                    nBCfiles(ng), BRY(1,ng), update(1),           &
+     &                    nBCfiles(ng), BRY(1,ng),                      &
+     &                    recordless, update(1),                        &
      &                    ILB, IUB, 1, 2, 0, Lm(ng)+1, 1,               &
      &                    BOUNDARY(ng) % zetaG_north)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
@@ -922,7 +928,8 @@
 # if defined PIO_LIB && defined DISTRIBUTE
      &                    BRYpioFile(idU2bc(iwest),ng),                 &
 # endif
-     &                    nBCfiles(ng), BRY(1,ng), update(1),           &
+     &                    nBCfiles(ng), BRY(1,ng),                      &
+     &                    recordless, update(1),                        &
      &                    JLB, JUB, 1, 2, 0, Mm(ng)+1, 1,               &
      &                    BOUNDARY(ng) % ubarG_west)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
@@ -934,7 +941,8 @@
 # if defined PIO_LIB && defined DISTRIBUTE
      &                    BRYpioFile(idV2bc(iwest),ng),                 &
 # endif
-     &                    nBCfiles(ng), BRY(1,ng), update(1),           &
+     &                    nBCfiles(ng), BRY(1,ng),                      &
+     &                    recordless, update(1),                        &
      &                    JLB, JUB, 1, 2, 1, Mm(ng)+1, 1,               &
      &                    BOUNDARY(ng) % vbarG_west)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
@@ -946,7 +954,8 @@
 # if defined PIO_LIB && defined DISTRIBUTE
      &                    BRYpioFile(idU2bc(ieast),ng),                 &
 # endif
-     &                    nBCfiles(ng), BRY(1,ng), update(1),           &
+     &                    nBCfiles(ng), BRY(1,ng),                      &
+     &                    recordless, update(1),                        &
      &                    JLB, JUB, 1, 2, 0, Mm(ng)+1, 1,               &
      &                    BOUNDARY(ng) % ubarG_east)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
@@ -958,7 +967,8 @@
 # if defined PIO_LIB && defined DISTRIBUTE
      &                    BRYpioFile(idV2bc(ieast),ng),                 &
 # endif
-     &                    nBCfiles(ng), BRY(1,ng), update(1),           &
+     &                    nBCfiles(ng), BRY(1,ng),                      &
+     &                    recordless, update(1),                        &
      &                    JLB, JUB, 1, 2, 1, Mm(ng)+1, 1,               &
      &                    BOUNDARY(ng) % vbarG_east)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
@@ -970,7 +980,8 @@
 # if defined PIO_LIB && defined DISTRIBUTE
      &                    BRYpioFile(idU2bc(isouth),ng),                &
 # endif
-     &                    nBCfiles(ng), BRY(1,ng), update(1),           &
+     &                    nBCfiles(ng), BRY(1,ng),                      &
+     &                    recordless, update(1),                        &
      &                    ILB, IUB, 1, 2, 1, Lm(ng)+1, 1,               &
      &                    BOUNDARY(ng) % ubarG_south)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
@@ -982,7 +993,8 @@
 # if defined PIO_LIB && defined DISTRIBUTE
      &                    BRYpioFile(idV2bc(isouth),ng),                &
 # endif
-     &                    nBCfiles(ng), BRY(1,ng), update(1),           &
+     &                    nBCfiles(ng), BRY(1,ng),                      &
+     &                    recordless, update(1),                        &
      &                    ILB, IUB, 1, 2, 0, Lm(ng)+1, 1,               &
      &                    BOUNDARY(ng) % vbarG_south)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
@@ -994,7 +1006,8 @@
 # if defined PIO_LIB && defined DISTRIBUTE
      &                    BRYpioFile(idU2bc(inorth),ng),                &
 # endif
-     &                    nBCfiles(ng), BRY(1,ng), update(1),           &
+     &                    nBCfiles(ng), BRY(1,ng),                      &
+     &                    recordless, update(1),                        &
      &                    ILB, IUB, 1, 2, 1, Lm(ng)+1, 1,               &
      &                    BOUNDARY(ng) % ubarG_north)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
@@ -1006,7 +1019,8 @@
 # if defined PIO_LIB && defined DISTRIBUTE
      &                    BRYpioFile(idV2bc(inorth),ng),                &
 # endif
-     &                    nBCfiles(ng), BRY(1,ng), update(1),           &
+     &                    nBCfiles(ng), BRY(1,ng),                      &
+     &                    recordless, update(1),                        &
      &                    ILB, IUB, 1, 2, 0, Lm(ng)+1, 1,               &
      &                    BOUNDARY(ng) % vbarG_north)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
@@ -1026,7 +1040,8 @@
 #  if defined PIO_LIB && defined DISTRIBUTE
      &                    BRYpioFile(idU3bc(iwest),ng),                 &
 #  endif
-     &                    nBCfiles(ng), BRY(1,ng), update(1),           &
+     &                    nBCfiles(ng), BRY(1,ng),                      &
+     &                    recordless, update(1),                        &
      &                    JLB, JUB, N(ng), 2, 0, Mm(ng)+1, N(ng),       &
      &                    BOUNDARY(ng) % uG_west)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
@@ -1038,7 +1053,8 @@
 #  if defined PIO_LIB && defined DISTRIBUTE
      &                    BRYpioFile(idV3bc(iwest),ng),                 &
 #  endif
-     &                    nBCfiles(ng), BRY(1,ng), update(1),           &
+     &                    nBCfiles(ng), BRY(1,ng),                      &
+     &                    recordless, update(1),                        &
      &                    JLB, JUB, N(ng), 2, 1, Mm(ng)+1, N(ng),       &
      &                    BOUNDARY(ng) % vG_west)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
@@ -1050,7 +1066,8 @@
 #  if defined PIO_LIB && defined DISTRIBUTE
      &                    BRYpioFile(idU3bc(ieast),ng),                 &
 #  endif
-     &                    nBCfiles(ng), BRY(1,ng), update(1),           &
+     &                    nBCfiles(ng), BRY(1,ng),                      &
+     &                    recordless, update(1),                        &
      &                    JLB, JUB, N(ng), 2, 0, Mm(ng)+1, N(ng),       &
      &                    BOUNDARY(ng) % uG_east)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
@@ -1062,7 +1079,8 @@
 #  if defined PIO_LIB && defined DISTRIBUTE
      &                    BRYpioFile(idV3bc(ieast),ng),                 &
 #  endif
-     &                    nBCfiles(ng), BRY(1,ng), update(1),           &
+     &                    nBCfiles(ng), BRY(1,ng),                      &
+     &                    recordless, update(1),                        &
      &                    JLB, JUB, N(ng), 2, 1, Mm(ng)+1, N(ng),       &
      &                    BOUNDARY(ng) % vG_east)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
@@ -1074,7 +1092,8 @@
 #  if defined PIO_LIB && defined DISTRIBUTE
      &                    BRYpioFile(idU3bc(isouth),ng),                &
 #  endif
-     &                    nBCfiles(ng), BRY(1,ng), update(1),           &
+     &                    nBCfiles(ng), BRY(1,ng),                      &
+     &                    recordless, update(1),                        &
      &                    ILB, IUB, N(ng), 2, 1, Lm(ng)+1, N(ng),       &
      &                    BOUNDARY(ng) % uG_south)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
@@ -1086,7 +1105,8 @@
 #  if defined PIO_LIB && defined DISTRIBUTE
      &                    BRYpioFile(idV3bc(isouth),ng),                &
 #  endif
-     &                    nBCfiles(ng), BRY(1,ng), update(1),           &
+     &                    nBCfiles(ng), BRY(1,ng),                      &
+     &                    recordless, update(1),                        &
      &                    ILB, IUB, N(ng), 2, 0, Lm(ng)+1, N(ng),       &
      &                    BOUNDARY(ng) % vG_south)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
@@ -1098,7 +1118,8 @@
 #  if defined PIO_LIB && defined DISTRIBUTE
      &                    BRYpioFile(idU3bc(inorth),ng),                &
 #  endif
-     &                    nBCfiles(ng), BRY(1,ng), update(1),           &
+     &                    nBCfiles(ng), BRY(1,ng),                      &
+     &                    recordless, update(1),                        &
      &                    ILB, IUB, N(ng), 2, 1, Lm(ng)+1, N(ng),       &
      &                    BOUNDARY(ng) % uG_north)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
@@ -1110,7 +1131,8 @@
 #  if defined PIO_LIB && defined DISTRIBUTE
      &                    BRYpioFile(idV3bc(inorth),ng),                &
 #  endif
-     &                    nBCfiles(ng), BRY(1,ng), update(1),           &
+     &                    nBCfiles(ng), BRY(1,ng),                      &
+     &                    recordless, update(1),                        &
      &                    ILB, IUB, N(ng), 2, 0, Lm(ng)+1, N(ng),       &
      &                    BOUNDARY(ng) % vG_north)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
@@ -1130,7 +1152,8 @@
 #  if defined PIO_LIB && defined DISTRIBUTE
      &                      BRYpioFile(idTbry(iwest,i),ng),             &
 #  endif
-     &                      nBCfiles(ng), BRY(1,ng), update(1),         &
+     &                      nBCfiles(ng), BRY(1,ng),                    &
+     &                      recordless, update(1),                      &
      &                      JLB, JUB, N(ng), 2, 0, Mm(ng)+1, N(ng),     &
      &                      BOUNDARY(ng) % tG_west(:,:,:,i))
             IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
@@ -1144,7 +1167,8 @@
 #  if defined PIO_LIB && defined DISTRIBUTE
      &                      BRYpioFile(idTbry(ieast,i),ng),             &
 #  endif
-     &                      nBCfiles(ng), BRY(1,ng), update(1),         &
+     &                      nBCfiles(ng), BRY(1,ng),                    &
+     &                      recordless, update(1),                      &
      &                      JLB, JUB, N(ng), 2, 0, Mm(ng)+1, N(ng),     &
      &                      BOUNDARY(ng) % tG_east(:,:,:,i))
             IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
@@ -1158,7 +1182,8 @@
 #  if defined PIO_LIB && defined DISTRIBUTE
      &                      BRYpioFile(idTbry(isouth,i),ng),            &
 #  endif
-     &                      nBCfiles(ng), BRY(1,ng), update(1),         &
+     &                      nBCfiles(ng), BRY(1,ng),                    &
+     &                      recordless, update(1),                      &
      &                      ILB, IUB, N(ng), 2, 0, Lm(ng)+1, N(ng),     &
      &                      BOUNDARY(ng) % tG_south(:,:,:,i))
             IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
@@ -1172,7 +1197,8 @@
 #  if defined PIO_LIB && defined DISTRIBUTE
      &                      BRYpioFile(idTbry(inorth,i),ng),            &
 #  endif
-     &                      nBCfiles(ng), BRY(1,ng), update(1),         &
+     &                      nBCfiles(ng), BRY(1,ng),                    &
+     &                      recordless, update(1),                      &
      &                      ILB, IUB, N(ng), 2, 0, Lm(ng)+1, N(ng),     &
      &                      BOUNDARY(ng) % tG_north(:,:,:,i))
             IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN

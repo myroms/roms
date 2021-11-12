@@ -4,7 +4,7 @@
 #undef ENDPOINT_TRAPEZOIDAL
 !
 !git $Id$
-!svn $Id: time_corr.F 1064 2021-05-10 19:55:56Z arango $
+!svn $Id: time_corr.F 1097 2021-11-12 03:57:36Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -66,6 +66,8 @@
 !
 !  Local variable declarations.
 !
+      integer :: LBi, UBi, LBj, UBj
+!
       character (len=*), parameter :: MyFile =                          &
      &  __FILE__
 !
@@ -73,6 +75,11 @@
 !  Open existing nonlinear initial conditions NetCDF file and inquire
 !  about its contains and define new variables, if needed.
 !-----------------------------------------------------------------------
+!
+      LBi=BOUNDS(ng)%LBi(tile)
+      UBi=BOUNDS(ng)%UBi(tile)
+      LBj=BOUNDS(ng)%LBj(tile)
+      UBj=BOUNDS(ng)%UBj(tile)
 !
       SELECT CASE (IOtype)
         CASE (io_nf90)

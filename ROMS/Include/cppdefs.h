@@ -2,7 +2,7 @@
 ** Include file "cppdefs.h"
 **
 ** git $Id$
-** svn $Id: cppdefs.h 1090 2021-09-29 03:19:30Z arango $
+** svn $Id: cppdefs.h 1097 2021-11-12 03:57:36Z arango $
 ********************************************************** Hernan G. Arango ***
 ** Copyright (c) 2002-2021 The ROMS/TOMS Group                               **
 **   Licensed under a MIT/X style license                                    **
@@ -353,6 +353,7 @@
 ** INNER_PRODUCT              if tangent/adjoint inner product check         **
 ** I4DVAR                     if incremental 4D-Var data assimilation        **
 ** I4DVAR_ANA_SENSITIVITY     if I4D-Var observations sensitivity            **
+** INITIALIZE_AUTOMATIC       to initialize automatic arrays in step2d       **
 ** JEDI                       if using Joint Effort for DA Integration       **
 ** LCZ_FINAL                  if computing 4D-Var Hessian singular vectors   **
 ** OPT_OBSERVATIONS           if optimal observations                        **
@@ -554,6 +555,8 @@
 **                                                                           **
 ** NetCDF input/output OPTIONS:                                              **
 **                                                                           **
+** CHECKSUM                to report checksum when processing I/O            **
+** CHECK_OPEN_FILES        to report number opened/closed/created files      **
 ** DEFLATE                 to set compression NetCDF-4/HDF5 format files     **
 ** HDF5                    to create NetCDF-4/HDF5 format files              **
 ** NO_LBC_ATT              to not check NLM_LBC global attribute on restart  **
@@ -561,10 +564,12 @@
 ** NO_WRITE_GRID           if not writing grid arrays                        **
 ** PARALLEL_IO             if parallel I/O via HDF5 or pnetcdf libraries     **
 ** PERFECT_RESTART         to include perfect restart variables              **
+** PIO_LIB                 to include Parallel-IO from the PIO library       **
 ** PNETCDF                 if parallel I/O with pnetcdf (classic format)     **
 ** POSITIVE_ZERO           to impose positive zero in ouput data             **
 ** READ_WATER              if only reading water points data                 **
 ** REGRID_SHAPIRO          to apply Shapiro Filter to regridded data         **
+** ROMS_STDOUT             to write standard output into the 'log.roms' file **
 ** WRITE_WATER             if only writing water points data                 **
 ** RST_SINGLE              if writing single precision restart fields        **
 ** OUT_DOUBLE              if writing double precision output fields         **
