@@ -2,7 +2,7 @@
       MODULE state_read_mod
 !
 !git $Id$
-!svn $Id: state_read.F 1064 2021-05-10 19:55:56Z arango $
+!svn $Id: state_read.F 1098 2021-12-28 03:52:35Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -900,7 +900,7 @@
           RETURN
         ELSE
           IF (Master.and.Lreport) THEN
-            WRITE (stdout,40) TRIM(Vname(2,ifield)), Fmin, Fmax
+            WRITE (stdout,40) TRIM(Vname(2,idTvar(itrc))), Fmin, Fmax
           END IF
         END IF
       END DO

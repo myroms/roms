@@ -2,7 +2,7 @@
       SUBROUTINE checkdefs
 !
 !git $Id$
-!svn $Id: checkdefs.F 1097 2021-11-12 03:57:36Z arango $
+!svn $Id: checkdefs.F 1098 2021-12-28 03:52:35Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -67,6 +67,13 @@
      &   'Writing out time-averaged adjoint model fields'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+13)=' AD_AVERAGES,'
+#endif
+#if defined AD_OUTPUT_STATE && defined ADJOINT
+!
+      IF (Master) WRITE (stdout,20) 'AD_OUTPUT_STATE',                  &
+     &   'Writing full adjoint state solution by adding time levels'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+17)=' AD_OUTPUT_STATE,'
 #endif
 #if defined ADD_FSOBC && defined SSH_TIDES
 !

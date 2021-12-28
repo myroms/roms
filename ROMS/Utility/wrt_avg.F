@@ -6,7 +6,7 @@
    (defined TL_AVERAGES && defined TANGENT)
 !
 !git $Id$
-!svn $Id: wrt_avg.F 1064 2021-05-10 19:55:56Z arango $
+!svn $Id: wrt_avg.F 1098 2021-12-28 03:52:35Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -1666,6 +1666,8 @@
           RETURN
         END IF
       END IF
+
+#  ifdef SALINITY
 !
 !  Write out surface salt flux  (PSU m/s = kg salt/m2/s).
 !
@@ -1676,9 +1678,9 @@
      &                     AVG(ng)%Vid(idTsur(isalt)),                  &
      &                     AVG(ng)%Rindex, gtype,                       &
      &                     LBi, UBi, LBj, UBj, scale,                   &
-#  ifdef MASKING
+#   ifdef MASKING
      &                     GRID(ng) % rmask,                            &
-#  endif
+#   endif
      &                     AVERAGE(ng) % avgswf)
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
@@ -1690,6 +1692,8 @@
           RETURN
         END IF
       END IF
+#  endif
+
 #  ifdef BULK_FLUXES
 !
 !  Write out latent heat flux.
@@ -4000,6 +4004,8 @@
           RETURN
         END IF
       END IF
+
+#   ifdef SALINITY
 !
 !  Write out surface salt flux  (PSU m/s = kg salt/m2/s).
 !
@@ -4015,9 +4021,9 @@
      &                     AVG(ng)%Rindex,                              &
      &                     ioDesc,                                      &
      &                     LBi, UBi, LBj, UBj, scale,                   &
-#   ifdef MASKING
+#    ifdef MASKING
      &                     GRID(ng) % rmask,                            &
-#   endif
+#    endif
      &                     AVERAGE(ng) % avgswf)
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
@@ -4029,6 +4035,7 @@
           RETURN
         END IF
       END IF
+#   endif
 
 #   ifdef BULK_FLUXES
 !

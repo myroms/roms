@@ -3,7 +3,7 @@
       SUBROUTINE main3d (RunInterval)
 !
 !git $Id$
-!svn $Id: main3d.F 1087 2021-09-10 01:11:17Z arango $
+!svn $Id: main3d.F 1098 2021-12-28 03:52:35Z arango $
 !=======================================================================
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -187,13 +187,14 @@
 !
             DO ig=1,GridsInLayer(nl)
               ng=GridNumber(ig,nl)
-              iic(ng)=iic(ng)+1
               nstp(ng)=1+MOD(iic(ng)-ntstart(ng),2)
               nnew(ng)=3-nstp(ng)
               nrhs(ng)=nstp(ng)
-              time(ng)=time(ng)+dt(ng)
+#ifdef JEDI
+              jic(ng)=jic(ng)+1
+              time4jedi(ng)=time4jedi(ng)+dt(ng)
+#endif
               tdays(ng)=time(ng)*sec2day
-              CALL time_string (time(ng), time_code(ng))
               IF (step_counter(ng).eq.Rsteps) Time_Step=.FALSE.
             END DO
 !
@@ -904,6 +905,18 @@
               END IF
             END DO
 # endif
+!
+!-----------------------------------------------------------------------
+!  Advance time index and time clock.
+!-----------------------------------------------------------------------
+!
+            DO ig=1,GridsInLayer(nl)
+              ng=GridNumber(ig,nl)
+              iic(ng)=iic(ng)+1
+              time(ng)=time(ng)+dt(ng)
+              step_counter(ng)=step_counter(ng)-1
+              CALL time_string (time(ng), time_code(ng))
+            END DO
 
           END DO STEP_LOOP
 

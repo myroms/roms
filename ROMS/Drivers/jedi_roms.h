@@ -1,7 +1,7 @@
       MODULE roms_kernel_mod
 !
 !git $Id$
-!svn $Id: jedi_roms.h 1095 2021-10-14 23:18:45Z arango $
+!svn $Id: jedi_roms.h 1098 2021-12-28 03:52:35Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -301,33 +301,60 @@
 !  Advance ROMS dynamical/numerical kernel: NLM, TLM, or ADM
 !=======================================================================
 !
-!  JEDI will advance ROMS by smaller intervals (similar to coupling).
-!  Since the ROMS kernel has a delayed output and line diagnostics by
-!  one timestep, subtact an extra value to the report of starting and
-!  ending timestep for clarity. Usually, the JEDIinterval is of the
-!  same size as one ROMS baroclinic timestep.
+!  OOPS will advance ROMS kernels by smaller intervals, usually a single
+!  timestep. The strategy here is different to that used for coupling
+!  since ROMS delayed output. The delayed ouput last half timestep will
+!  affect the OOPS trajectory logic needed to save the NLM background
+!  fields needed to linearize the TLM and ADM kernels.
 !
       MyRunInterval=RunInterval
       IF (Master) WRITE (stdout,'(1x)')
 !
       SELECT CASE (kernel)
-        CASE (iNLM, iTLM)
+        CASE (iNLM)
           DO ng=1,Ngrids
             NEXTtime=time(ng)+RunInterval
-            ENDtime=INItime(ng)+(ntimes(ng)-1)*dt(ng)
-            IF ((NEXTtime.eq.ENDtime).and.(ng.eq.1)) THEN
-              extra=0                               ! last time interval
+            ENDtime=INItime(ng)+ntimes(ng)*dt(ng)
+            extra=1
+            step_counter(ng)=0
+            NstrStep=iic(ng)-1
+            NendStep=NstrStep+INT((MyRunInterval)/dt(ng))-extra
+            IF (Master) WRITE (stdout,10) MID(kernel), ng,              &
+     &                                    NstrStep, MAX(0,NendStep)
+          END DO
+          IF (Master) WRITE (stdout,'(1x)')
+        CASE (iTLM)
+          DO ng=1,Ngrids
+            NEXTtime=time(ng)+RunInterval
+            ENDtime=INItime(ng)+ntimes(ng)*dt(ng)
+            IF (NEXTtime.eq.ENDtime) THEN
+              extra=0                              ! last time interval
             ELSE
               extra=1
             END IF
             step_counter(ng)=0
-            NstrStep=iic(ng)
+            NstrStep=iic(ng)-1
             NendStep=NstrStep+INT((MyRunInterval)/dt(ng))-extra
             IF (Master) WRITE (stdout,10) MID(kernel), ng,              &
-     &                                    NstrStep, NendStep
+     &                                    NstrStep, MAX(0,NendStep)
           END DO
           IF (Master) WRITE (stdout,'(1x)')
         CASE (iADM)
+          DO ng=1,Ngrids
+            NEXTtime=time(ng)-RunInterval
+            ENDtime=INItime(ng)+ntimes(ng)*dt(ng)
+            IF (time(ng).eq.ENDtime) THEN
+              extra=0                              ! first time interval
+            ELSE
+              extra=1
+            END IF
+            step_counter(ng)=0
+            NstrStep=iic(ng)-1
+            NendStep=NstrStep-INT((MyRunInterval)/dt(ng))+extra
+            IF (Master) WRITE (stdout,10) MID(kernel), ng,              &
+     &                                    NstrStep, MAX(0,NendStep)
+          END DO
+          IF (Master) WRITE (stdout,'(1x)')
       END SELECT
 !
 !  Time-step ROMS kernel.
@@ -348,7 +375,7 @@
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
  10   FORMAT (1x,a,1x,'ROMS: started time-stepping:',                   &
-     &        ' (Grid: ',i2.2,' TimeSteps: ',i12.12,' - ',i12.12,')')
+     &        ' (Grid: ',i2.2,' TimeSteps: ',i0,' - ',i0,')')
 !
       RETURN
       END SUBROUTINE ROMS_run
@@ -494,6 +521,9 @@
           PREDICTOR_2D_STEP(ng)=.FALSE.
 !
           iic(ng)=0
+# ifdef JEDI
+          jic(ng)=0
+# endif
           nstp(ng)=1
           nrhs(ng)=1
           nnew(ng)=1
@@ -512,11 +542,12 @@
           first_time(ng)=0
           tdays(ng)=dstart
           time(ng)=tdays(ng)*day2sec
+#ifdef JEDI
+          time4jedi(ng)=time(ng)
+#endif
           ntstart(ng)=INT((time(ng)-dstart*day2sec)/dt(ng))+1
-          ntend(ng)=ntstart(ng)+ntimes(ng)-1
           ntfirst(ng)=ntstart(ng)
           step_counter(ng)=0
-          CALL time_string (time(ng), time_code(ng))
         END DO
 !
 !  Initialize global diagnostics variables.
@@ -802,16 +833,23 @@
 #endif
 !
 !-----------------------------------------------------------------------
-!  Initialize time-stepping counter and clock.
+!  Initialize time-stepping counter and time/date string. Save NLM
+!  initial conditions time.
+!
+!  Notice that it is allowed to modify the "simulation length" in the
+!  roms-jedi YAML file, which will affect the values of "ntimes" and
+!  "ntend".
 !-----------------------------------------------------------------------
 !
-!  Subsract one time unit to avoid special case due to initialization
-!  in the main time-stepping routine.
-!
         DO ng=1,Ngrids
-          iic(ng)=ntstart(ng)-1
-          INItime(ng)=time(ng)       ! Save NLM initial conditions time
-          time(ng)=time(ng)-dt(ng)
+          INItime(ng)=time(ng)
+          iic(ng)=ntstart(ng)
+          ntend(ng)=ntstart(ng)+ntimes(ng)-1
+#ifdef JEDI
+          jic(ng)=ntstart(ng)-1
+          time4jedi(ng)=time(ng)-dt(ng)
+#endif
+          CALL time_string (time(ng), time_code(ng))
         END DO
 
       END IF PHASE2
@@ -857,6 +895,7 @@
 !
       integer :: Fcount
       integer :: ng, thread, tile
+      integer :: lstr, ifile
 
       integer, dimension(Ngrids) :: IniRec, Tindex
 
@@ -865,6 +904,8 @@
       real(dp) :: my_dstart
 # endif
 !
+      character (len=10) :: suffix
+
       character (len=*), parameter :: MyFile =                          &
      &  __FILE__//", tlm_initial"
 
@@ -903,6 +944,9 @@
           PREDICTOR_2D_STEP(ng)=.FALSE.
 !
           iic(ng)=0
+# ifdef JEDI
+          jic(ng)=0
+# endif
           nstp(ng)=1
           nrhs(ng)=1
           nnew(ng)=1
@@ -941,11 +985,12 @@
           tdays(ng)=dstart
 # endif
           time(ng)=tdays(ng)*day2sec
+# ifdef JEDI
+          time4jedi(ng)=time(ng)
+# endif
           ntstart(ng)=INT((time(ng)-dstart*day2sec)/dt(ng))+1
           ntend(ng)=ntstart(ng)+ntimes(ng)-1
           ntfirst(ng)=ntstart(ng)
-!
-          CALL time_string (time(ng), time_code(ng))
 !
           IniRec(ng)=nrrec(ng)
           Tindex(ng)=1
@@ -1023,6 +1068,52 @@
             CALL wetdry (ng, tile, Tindex(ng), .TRUE.)
           END DO
         END DO
+# endif
+
+# ifdef FORWARD_FLUXES
+!
+!-----------------------------------------------------------------------
+!  Set the BLK structure to contain the nonlinear model surface fluxes
+!  needed by the tangent linear and adjoint models. Also, set switches
+!  to process that structure in routine "check_multifile". Notice that
+!  it is possible to split the solution into multiple NetCDF files to
+!  reduce their size.
+!-----------------------------------------------------------------------
+!
+!  Set the nonlinear model quicksave-history file as the basic state for
+!  the surface fluxes computed in "bulk_flux", which may be available at
+!  more frequent intervals while avoiding large files. Since the 4D-Var
+!  increment phase is calculated by a different executable and needs to
+!  know some of the QCK structure information.
+!
+      DO ng=1,Ngrids
+        WRITE (QCK(ng)%name,"(a,'.nc')") TRIM(QCK(ng)%head)
+        lstr=LEN_TRIM(QCK(ng)%name)
+        QCK(ng)%base=QCK(ng)%name(1:lstr-3)
+        IF (QCK(ng)%Nfiles.gt.1) THEN
+          DO ifile=1,QCK(ng)%Nfiles
+            WRITE (suffix,"('_',i4.4,'.nc')") ifile
+            QCK(ng)%files(ifile)=TRIM(QCK(ng)%base)//TRIM(suffix)
+          END DO
+          QCK(ng)%name=TRIM(QCK(ng)%files(1))
+        ELSE
+          QCK(ng)%files(1)=TRIM(QCK(ng)%name)
+        END IF
+      END DO
+!
+!  The switch LreadFRC is deactivated because all the atmospheric
+!  forcing, including shortwave radiation, is read from the NLM
+!  surface fluxes or is assigned during ESM coupling.  Such fluxes
+!  are available from the QCK structure. There is no need for reading
+!  and processing from the FRC structure input forcing-files.
+!
+      CALL edit_multifile ('QCK2BLK')
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+      DO ng=1,Ngrids
+        LreadBLK(ng)=.TRUE.
+        LreadFRC(ng)=.FALSE.
+        LreadQCK(ng)=.FALSE.
+      END DO
 # endif
 !
 !-----------------------------------------------------------------------
@@ -1112,15 +1203,26 @@
 # endif
 !
 !-----------------------------------------------------------------------
-!  Initialize time-stepping counter and clock.
+!  Initialize time-stepping counter and time/date string.
+!
+!  Notice that it is allowed to modify the "simulation length" in the
+!  roms-jedi YAML file, which will affect the values of "ntimes" and
+!  "ntend".
 !-----------------------------------------------------------------------
 !
 !  Subsract one time unit to avoid special case due to initialization
 !  in the main time-stepping routine.
 !
         DO ng=1,Ngrids
-          iic(ng)=ntstart(ng)-1
-          time(ng)=time(ng)-dt(ng)
+          iic(ng)=ntstart(ng)
+          ntend(ng)=ntstart(ng)+ntimes(ng)-1
+#ifdef JEDI
+          jic(ng)=ntstart(ng)-1
+          time4jedi(ng)=time(ng)-dt(ng)
+#endif
+          CALL time_string (time(ng), time_code(ng))
+          LdefTLM(ng)=.TRUE.
+          LwrtTLM(ng)=.TRUE.
         END DO
 
       END IF PHASE2
@@ -1213,6 +1315,9 @@
           PREDICTOR_2D_STEP(ng)=.FALSE.
 !
           iic(ng)=0
+# ifdef JEDI
+          jic(ng)=0
+# endif
 # ifdef SOLVE3D
           nstp(ng)=1
           nnew(ng)=2
@@ -1259,8 +1364,9 @@
           ntend(ng)=ntfirst(ng)
           ntfirst(ng)=ntend(ng)
 # endif
-          CALL time_string (time(ng), time_code(ng))
-
+# ifdef JEDI
+          time4jedi(ng)=time(ng)
+# endif
           IniRec(ng)=nrrec(ng)
           Tindex(ng)=1
         END DO
@@ -1434,15 +1540,19 @@
 # endif
 !
 !-----------------------------------------------------------------------
-!  Initialize time-stepping counter and clock.
+!  Initialize time-stepping counter.
 !-----------------------------------------------------------------------
 !
-!  Add one time unit to avoid special case due to initialization
-!  in the main time-stepping routine.
-!
         DO ng=1,Ngrids
-          iic(ng)=ntstart(ng)+1
-          time(ng)=time(ng)+dt(ng)
+!!        ntstart(ng)=ntstart(ng)-1
+          iic(ng)=ntstart(ng)
+#ifdef JEDI
+          jic(ng)=ntstart(ng)+1
+          time4jedi(ng)=time(ng)+dt(ng)
+#endif
+          CALL time_string (time(ng), time_code(ng))
+          LdefADJ(ng)=.TRUE.
+          LwrtADJ(ng)=.TRUE.
         END DO
 
       END IF PHASE2

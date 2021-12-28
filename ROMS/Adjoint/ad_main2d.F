@@ -3,7 +3,7 @@
       SUBROUTINE ad_main2d (RunInterval)
 !
 !git $Id$
-!svn $Id: ad_main2d.F 1087 2021-09-10 01:11:17Z arango $
+!svn $Id: ad_main2d.F 1098 2021-12-28 03:52:35Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -44,7 +44,7 @@
       USE ad_frc_adjust_mod,       ONLY : ad_frc_adjust
 # endif
       USE ad_ini_fields_mod,       ONLY : ad_ini_fields, ad_ini_zeta
-# if defined STOCHASTIC_OPT && !defined STOCH_OPT_WHITE
+# ifdef AD_OUTPUT_STATE
       USE ad_ini_fields_mod,       ONLY : ad_out_fields, ad_out_zeta
 # endif
 # if defined FOUR_DVAR && defined OBSERVATIONS
@@ -392,10 +392,13 @@
           END IF
         END DO
 # endif
-# if defined STOCHASTIC_OPT && !defined STOCH_OPT_WHITE
+# ifdef AD_OUTPUT_STATE
 !
 !-----------------------------------------------------------------------
-!  Define adjoint output arrays.
+!  Set full adjoint output arrays. Due to the predictor/corrector and
+!  multiple time level schemes, pieces of the adjoint solution are in
+!  two-time levels and need to be added in the "_sol" arrays for output
+!  purposes.
 !-----------------------------------------------------------------------
 !
         DO ng=1,Ngrids

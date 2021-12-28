@@ -2,7 +2,7 @@
       MODULE mod_ncparam
 !
 !git $Id$
-!svn $Id: mod_ncparam.F 1097 2021-11-12 03:57:36Z arango $
+!svn $Id: mod_ncparam.F 1098 2021-12-28 03:52:35Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -1210,10 +1210,12 @@
 !  Set IDs for state some state variables.
 !
       ic=5
+#ifdef SOLVE3D
       DO i=1,MT
         ic=ic+1
         isTvar(i)=ic
       END DO
+#endif
 #if defined ADJUST_WSTRESS || defined FORCING_SV     || \
     defined HESSIAN_FSV    || defined SO_SEMI        || \
     defined STOCHASTIC_OPT
@@ -1221,15 +1223,17 @@
       isVstr=ic+2
       ic=ic+2
 #endif
-#if defined ADJUST_STFLUX  || defined FORCING_SV     || \
+#ifdef SOLVE3D
+# if defined ADJUST_STFLUX  || defined FORCING_SV     || \
     defined HESSIAN_FSV    || defined SO_SEMI        || \
     defined STOCHASTIC_OPT
       DO i=1,MT
         ic=ic+1
         isTsur(i)=ic
       END DO
-#endif
+# endif
       isWvel=ic+1
+#endif
 !
 !  Set generic lateral boundary indices for LBC structure.  Use the same
 !  values of the state variables at the same C-grid location.  Generic

@@ -2,7 +2,7 @@
 ** Include file "cppdefs.h"
 **
 ** git $Id$
-** svn $Id: cppdefs.h 1097 2021-11-12 03:57:36Z arango $
+** svn $Id: cppdefs.h 1098 2021-12-28 03:52:35Z arango $
 ********************************************************** Hernan G. Arango ***
 ** Copyright (c) 2002-2021 The ROMS/TOMS Group                               **
 **   Licensed under a MIT/X style license                                    **
@@ -382,6 +382,7 @@
 ** OPTIONS associated with tangent linear, representer and adjoint models:   **
 **                                                                           **
 ** AD_IMPULSE              to force adjoint model with intermittent impulses **
+** AD_OUTPUT_STATE         to write full adjoint state by adding time levels **
 ** ADJUST_BOUNDARY         if including boundary conditions in 4DVar state   **
 ** ADJUST_STFLUX           if including surface tracer flux in 4DVar state   **
 ** ADJUST_WSTRESS          if including wind-stress in 4DVar state           **

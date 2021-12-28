@@ -2,7 +2,7 @@
 ** Include file "globaldef.h"
 **
 ** git $Id$
-** svn $Id: globaldefs.h 1090 2021-09-29 03:19:30Z arango $
+** svn $Id: globaldefs.h 1098 2021-12-28 03:52:35Z arango $
 ********************************************************** Hernan G. Arango ***
 ** Copyright (c) 2002-2021 The ROMS/TOMS Group     Alexander F. Shchepetkin  **
 **   Licensed under a MIT/X style license                                    **
@@ -469,6 +469,21 @@
 #endif
 
 /*
+** Activate switch for full adjoint output solution. Due to the
+** predictor/corrector and multiple time level schemes, pieces of
+** the adjoint solution are in two-time levels and need to be added
+** in the "_sol" arrays for output purposes.
+*/
+
+#ifdef ADJOINT
+# if !defined AD_OUTPUT_STATE && \
+      defined JEDI            || \
+     (defined STOCHASTIC_OPT  && !defined STOCH_OPT_WHITE)
+#  define AD_OUTPUT_STATE
+# endif
+#endif
+
+/*
 ** Activate bacroclinic pressure gradient response due to the
 ** perturbation of free-surface in the presence of stratification
 ** and bathymetry. This option does not pass the sanity check
@@ -650,7 +665,6 @@
      defined CLIPPING               || \
      defined I4DVAR                 || \
      defined I4DVAR_ANA_SENSITIVITY || \
-     defined JEDI                   || \
      defined PROPAGATOR             || \
      defined RBL4DVAR               || \
      defined R4DVAR                 || \

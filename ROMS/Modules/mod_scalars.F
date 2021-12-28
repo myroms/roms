@@ -2,7 +2,7 @@
       MODULE mod_scalars
 !
 !git $Id$
-!svn $Id: mod_scalars.F 1090 2021-09-29 03:19:30Z arango $
+!svn $Id: mod_scalars.F 1098 2021-12-28 03:52:35Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -189,6 +189,9 @@
 !    indx1         2D timestep rolling counter.
 !    iic           Timestep counter for 3D primitive equations.
 !    iif           Timestep counter for 2D primitive equations.
+#ifdef JEDI
+!    jic           Timestep counter for roms-jedi interface.
+#endif
 !    ndtfast       Number of barotropic timesteps between each
 !                    baroclinic timestep.
 !    nfast         Number of barotropic timesteps needed to compute
@@ -203,6 +206,9 @@
 !    io_time       Current I/O time (s) processed in "get_state".
 !    tdays         Model time clock (days).
 !    time          Model time clock (s).
+#ifdef JEDI
+!    time4jedi     Model time clock (s) to pass to roms-jedi interface.
+#endif
 !    time_code     Model time clock (string, YYYY-MM-DD hh:mm:ss.ss)
 !    AVGtime       Model time clock for averages output (s).
 !    DIAtime       Model time clock for diagnostics output (s).
@@ -229,12 +235,20 @@
         integer, allocatable :: iif(:)
 !$OMP THREADPRIVATE (indx1, iic, iif)
 
+#ifdef JEDI
+        integer, allocatable :: jic(:)
+#endif
+
         integer, allocatable :: ndtfast(:)
         integer, allocatable :: nfast(:)
 
         real(dp), allocatable :: tdays(:)                ! days
         real(dp), allocatable :: time(:)                 ! seconds
 !$OMP THREADPRIVATE (tdays, time)
+
+#ifdef JEDI
+        real(dp), allocatable :: time4jedi(:)            ! seconds
+#endif
 
         real(dp), allocatable :: dt(:)                   ! seconds
         real(dp), allocatable :: dtfast(:)               ! seconds
@@ -964,8 +978,10 @@
 !  arrays and adjoint ocean time. This is used in 4DVAR for IO
 !  maniputations.
 !
-#if defined STOCHASTIC_OPT && !defined STOCH_OPT_WHITE
+#ifdef AD_OUTPUT_STATE
         logical, allocatable :: LwrtState3d(:)
+#endif
+#if defined STOCHASTIC_OPT && !defined STOCH_OPT_WHITE
         logical, allocatable :: SOinitial(:)
 #endif
         logical, allocatable :: LwrtState2d(:)
@@ -1892,6 +1908,13 @@
         Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
 !$OMP END PARALLEL
+
+#ifdef JEDI
+      IF (.not.allocated(jic)) THEN
+        allocate ( jic(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
+      END IF
+#endif
 !
 !-----------------------------------------------------------------------
 !  Allocate variables.
@@ -2015,6 +2038,14 @@
         Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
 !$OMP END PARALLEL
+
+#ifdef JEDI
+      IF (.not.allocated(time4jedi)) THEN
+        allocate ( time4jedi(Ngrids) )
+        time4jedi=0.0_dp
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
+      END IF
+#endif
 
       IF (.not.allocated(NrecFrc)) THEN
         allocate ( NrecFrc(Ngrids) )
@@ -2750,11 +2781,13 @@
         Dmem(1)=Dmem(1)+4.0_r8*REAL(Ngrids,r8)
       END IF
 
-#if defined STOCHASTIC_OPT && !defined STOCH_OPT_WHITE
+#ifdef AD_OUTPUT_STATE
       IF (.not.allocated(LwrtState3d)) THEN
         allocate ( LwrtState3d(Ngrids) )
         Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
+#endif
+#if defined STOCHASTIC_OPT && !defined STOCH_OPT_WHITE
       IF (.not.allocated(SOinitial)) THEN
         allocate ( SOinitial(Ngrids) )
         Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
@@ -3718,9 +3751,11 @@
 
       IF (allocated(LwrtNRM))           deallocate ( LwrtNRM )
 
-#if defined STOCHASTIC_OPT && !defined STOCH_OPT_WHITE
+#ifdef AD_OUTPUT_STATE
       IF (allocated(LwrtState3d))       deallocate ( LwrtState3d )
+#endif
 
+#if defined STOCHASTIC_OPT && !defined STOCH_OPT_WHITE
       IF (allocated(SOinitial))         deallocate ( SOinitial )
 #endif
 
@@ -4375,8 +4410,10 @@
         LwrtTLM(ng)=.FALSE.
         LwrtInfo(ng)=.TRUE.
         LwrtState2d(ng)=.FALSE.
-#if defined STOCHASTIC_OPT && !defined STOCH_OPT_WHITE
+#ifdef AD_OUTPUT_STATE
         LwrtState3d(ng)=.FALSE.
+#endif
+#if defined STOCHASTIC_OPT && !defined STOCH_OPT_WHITE
         SOinitial(ng)=.FALSE.
 #endif
         LwrtTime(ng)=.TRUE.
