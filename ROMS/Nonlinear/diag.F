@@ -2,7 +2,7 @@
       MODULE diag_mod
 !
 !git $Id$
-!svn $Id: diag.F 1066 2021-05-14 21:47:45Z arango $
+!svn $Id: diag.F 1098 2021-12-28 03:52:35Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -149,6 +149,7 @@
 !  Local variable declarations.
 !
       integer :: NSUB, i, ispace, j, k, trd
+      integer :: idia, istep
       integer :: my_max_Ci, my_max_Cj, my_max_Ck
 #ifdef DISTRIBUTE
 # ifdef SOLVE3D
@@ -165,7 +166,7 @@
 #else
       integer :: my_threadnum
 #endif
-
+!
       real(r8) :: cff, my_avgke, my_avgpe, my_volume
       real(r8) :: my_C , my_max_C
       real(r8) :: my_Cu, my_max_Cu
@@ -179,8 +180,9 @@
 #endif
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: ke2d
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: pe2d
-
+!
       character (len=8 ) :: kechar, pechar, maxvalchar
+      character (len=22) :: DateTime
       character (len=60) :: frmt
 
 #include "set_bounds.h"
@@ -189,6 +191,19 @@
 !  Compute and report out volume averaged kinetic, potential
 !  total energy, volume, Courant numbers.
 !-----------------------------------------------------------------------
+!
+!  Set time timestep counter and time level indices to process. Restart
+!  counter after 10 billion steps.
+!
+      istep=INT(MOD(REAL(iic(ng)-1,r8),1.0E+10_r8))
+#ifdef SOLVE3D
+      idia=nstp
+#else
+      idia=krhs
+#endif
+      DateTime=time_code(ng)
+!
+! Compute kinetic and potential energy.
 !
       IF (MOD(iic(ng)-1,ninfo(ng)).eq.0) THEN
         my_max_C =0.0_r8
@@ -213,18 +228,18 @@
           cff=g/rho0
           DO k=N(ng),1,-1
             DO i=Istr,Iend
-              u2v2=u(i  ,j,k,nstp)*u(i  ,j,k,nstp)+                     &
-     &             u(i+1,j,k,nstp)*u(i+1,j,k,nstp)+                     &
-     &             v(i,j  ,k,nstp)*v(i,j  ,k,nstp)+                     &
-     &             v(i,j+1,k,nstp)*v(i,j+1,k,nstp)
+              u2v2=u(i  ,j,k,idia)*u(i  ,j,k,idia)+                     &
+     &             u(i+1,j,k,idia)*u(i+1,j,k,idia)+                     &
+     &             v(i,j  ,k,idia)*v(i,j  ,k,idia)+                     &
+     &             v(i,j+1,k,idia)*v(i,j+1,k,idia)
               ke2d(i,j)=ke2d(i,j)+                                      &
      &                  Hz(i,j,k)*0.25_r8*u2v2
               pe2d(i,j)=pe2d(i,j)+                                      &
      &                  cff*Hz(i,j,k)*(rho(i,j,k)+1000.0_r8)*           &
      &                  (z_r(i,j,k)-z_w(i,j,0))
-              my_Cu=0.5_r8*ABS(u(i,j,k,nstp)+u(i+1,j,k,nstp))*          &
+              my_Cu=0.5_r8*ABS(u(i,j,k,idia)+u(i+1,j,k,idia))*          &
      &              dt(ng)*pm(i,j)
-              my_Cv=0.5_r8*ABS(v(i,j,k,nstp)+v(i,j+1,k,nstp))*          &
+              my_Cv=0.5_r8*ABS(v(i,j,k,idia)+v(i,j+1,k,idia))*          &
      &              dt(ng)*pn(i,j)
               my_Cw=0.5_r8*ABS(wvel(i,j,k-1)+wvel(i,j,k))*              &
      &              dt(ng)/Hz(i,j,k)
@@ -245,15 +260,15 @@
 #else
           cff=0.5_r8*g
           DO i=Istr,Iend
-            u2v2=ubar(i  ,j,krhs)*ubar(i  ,j,krhs)+                     &
-     &           ubar(i+1,j,krhs)*ubar(i+1,j,krhs)+                     &
-     &           vbar(i,j  ,krhs)*vbar(i,j  ,krhs)+                     &
-     &           vbar(i,j+1,krhs)*vbar(i,j+1,krhs)
-            ke2d(i,j)=(zeta(i,j,krhs)+h(i,j))*0.25_r8*u2v2
-            pe2d(i,j)=cff*zeta(i,j,krhs)*zeta(i,j,krhs)
-            my_Cu=0.5_r8*ABS(ubar(i,j,krhs)+ubar(i+1,j,krhs))*          &
+            u2v2=ubar(i  ,j,idia)*ubar(i  ,j,idia)+                     &
+     &           ubar(i+1,j,idia)*ubar(i+1,j,idia)+                     &
+     &           vbar(i,j  ,idia)*vbar(i,j  ,idia)+                     &
+     &           vbar(i,j+1,idia)*vbar(i,j+1,idia)
+            ke2d(i,j)=(zeta(i,j,idia)+h(i,j))*0.25_r8*u2v2
+            pe2d(i,j)=cff*zeta(i,j,idia)*zeta(i,j,idia)
+            my_Cu=0.5_r8*ABS(ubar(i,j,idia)+ubar(i+1,j,idia))*          &
      &            dt(ng)*pn(i,j)
-            my_Cv=0.5_r8*ABS(vbar(i,j,krhs)+vbar(i,j+1,krhs))*          &
+            my_Cv=0.5_r8*ABS(vbar(i,j,idia)+vbar(i,j+1,idia))*          &
      &            dt(ng)*pn(i,j)
             my_C=my_Cu+my_Cv
             IF (my_C.gt.my_max_C) THEN
@@ -288,7 +303,7 @@
      &                     omn(i,j)*(z_w(i,j,N(ng))-z_w(i,j,0))
 #else
             pe2d(i,Jend+1)=pe2d(i,Jend+1)+                              &
-     &                     omn(i,j)*(zeta(i,j,krhs)+h(i,j))
+     &                     omn(i,j)*(zeta(i,j,idia)+h(i,j))
 #endif
             pe2d(i,Jstr-1)=pe2d(i,Jstr-1)+omn(i,j)*pe2d(i,j)
             ke2d(i,Jstr-1)=ke2d(i,Jstr-1)+omn(i,j)*ke2d(i,j)
@@ -421,6 +436,9 @@
           avgke=avgke/volume
           avgpe=avgpe/volume
           avgkp=avgke+avgpe
+!
+! Report global run diagnotics values for the nonlinear kernel.
+!
           IF (first_time(ng).eq.0) THEN
             first_time(ng)=1
             IF (Master.and.(ng.eq.1)) THEN
@@ -446,9 +464,9 @@
  20           FORMAT (21x,a,7x,a,12x,a,10x,a,7x,a,/)
             END IF
           END IF
-          IF (Master) THEN    ! restart counter after 10 billion steps
-            WRITE (stdout,30) INT(MOD(REAL(iic(ng)-1,r8),1.0E+10_r8)),  &
-                              time_code(ng),                            &
+!
+          IF (Master) THEN
+            WRITE (stdout,30) istep, DateTime,                          &
 #ifdef NESTING
      &                        avgke, avgpe, avgkp, volume, ng
 #else

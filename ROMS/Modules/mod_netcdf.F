@@ -2,7 +2,7 @@
       MODULE mod_netcdf
 !
 !git $Id$
-!svn $Id: mod_netcdf.F 1090 2021-09-29 03:19:30Z arango $
+!svn $Id: mod_netcdf.F 1098 2021-12-28 03:52:35Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -1448,7 +1448,7 @@
       integer :: att_id, my_Alen, my_Atype, my_id, my_ncid
 
 #if !defined PARALLEL_IO && defined DISTRIBUTE
-      integer, dimension(4) :: ibuffer
+      integer, dimension(5) :: ibuffer
 #endif
 !
       character (len=1024) :: text
@@ -1462,11 +1462,14 @@
 !
 !  Initialize.
 !
+      att_kind=-1
+      dim_id=0
+      dim_size=0
       n_dim=0
       n_var=0
       n_gatt=0
       rec_id=-1
-      att_kind=-1
+      rec_size=0
       var_id=0
       var_natt=0
       var_flag=0
@@ -1477,6 +1480,11 @@
       DO i=1,Matts
         DO j=1,LEN(att_name(1))
           att_name(i)(j:j)=' '
+        END DO
+      END DO
+      DO i=1,Mdims
+        DO j=1,LEN(dim_name(1))
+          dim_name(i)(j:j)=' '
         END DO
       END DO
       DO i=1,Mvars
@@ -1506,6 +1514,28 @@
           ibuffer(4)=rec_id
 #endif
 !
+!  Inquire about global dimensions: names, ID, and size.
+!
+          rec_size=-1
+          DO i=1,n_dim
+            dim_id(i)=i
+            status=nf90_inquire_dimension(my_ncid, dim_id(i),           &
+     &                                    dim_name(i), dim_size(i))
+            IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+              WRITE (stdout,10) dim_id(i), TRIM(ncname),                &
+     &                          TRIM(SourceFile), nf90_strerror(status)
+              exit_flag=2
+              ioerror=status
+              EXIT
+            END IF
+            IF (dim_id(i).eq.rec_id) THEN
+              rec_size=dim_size(i)
+#if !defined PARALLEL_IO && defined DISTRIBUTE
+              ibuffer(5)=rec_size
+#endif
+            END IF
+          END DO
+!
 !  Inquire global attribute names and their external data type.
 !
           DO i=1,MIN(Matts,n_gatt)
@@ -1533,8 +1563,8 @@
             END IF
           END DO
 !
-!  Inquire about variables: name, ID, dimensions, data type, and number
-!  of attributes.
+!  Inquire about variables: name, ID, number of dimensions, dimension
+!  IDs, data type, and number of attributes.
 !
           IF (status.eq.nf90_noerr) THEN
             DO i=1,n_var
@@ -1596,7 +1626,11 @@
         n_var=ibuffer(2)
         n_gatt=ibuffer(3)
         rec_id=ibuffer(4)
+        rec_size=ibuffer(5)
         CALL mp_bcasti (ng, model, att_kind)
+        CALL mp_bcasti (ng, model, dim_id)
+        CALL mp_bcasti (ng, model, dim_size)
+        CALL mp_bcasts (ng, model, dim_name)
         CALL mp_bcasti (ng, model, var_id)
         CALL mp_bcasti (ng, model, var_flag)
         CALL mp_bcasti (ng, model, var_type)

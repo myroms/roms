@@ -3,7 +3,7 @@
 #ifdef ADJOINT
 !
 !git $Id$
-!svn $Id: ad_ini_fields.F 1081 2021-07-24 02:25:06Z arango $
+!svn $Id: ad_ini_fields.F 1098 2021-12-28 03:52:35Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -1660,6 +1660,7 @@
           END DO
         END IF
       END DO
+
 # endif
 !
 # ifdef SOLVE3D
@@ -1706,17 +1707,20 @@
      &                    ad_u)
       END IF
 !
+!  Add second piece of the 3D adjoint momentum solution into IO arrays.
+!  The first is loaded in "ad_step3d_uv".
+!
       DO j=JstrB,JendB
         IF (j.ge.JstrM) THEN
           DO k=1,N(ng)
             DO i=IstrB,IendB
-              ad_v_sol(i,j,k)=ad_v(i,j,k,nstp)+ad_v(i,j,k,nnew)
+              ad_v_sol(i,j,k)=ad_v_sol(i,j,k)+ad_v(i,j,k,nnew)
             END DO
           END DO
         END IF
         DO k=1,N(ng)
           DO i=IstrM,IendB
-            ad_u_sol(i,j,k)=ad_u(i,j,k,nstp)+ad_u(i,j,k,nnew)
+            ad_u_sol(i,j,k)=ad_u_sol(i,j,k)+ad_u(i,j,k,nnew)
           END DO
         END DO
       END DO

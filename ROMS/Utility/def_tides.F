@@ -4,7 +4,7 @@
    (defined SSH_TIDES || defined UV_TIDES)
 !
 !git $Id$
-!svn $Id: def_tides.F 1075 2021-06-24 18:18:59Z arango $
+!svn $Id: def_tides.F 1098 2021-12-28 03:52:35Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -454,7 +454,7 @@
 !
 !  Define 3D v-momentum time-accumulated tide harmonics.
 !
-        IF (.not.got_var(idv3dH).and.Aout(idv3dD,ng)) THEN
+        IF (Aout(idv3dD,ng)) THEN
           Vinfo( 1)=Vname(1,idv3dH)
           Vinfo( 2)=Vname(2,idv3dH)
           Vinfo( 3)=Vname(3,idv3dH)
@@ -1110,7 +1110,7 @@
 !
 !  Define 3D v-momentum time-accumulated tide harmonics.
 !
-        IF (.not.got_var(idv3dH).and.Aout(idv3dD,ng)) THEN
+        IF (Aout(idv3dD,ng)) THEN
           Vinfo( 1)=Vname(1,idv3dH)
           Vinfo( 2)=Vname(2,idv3dH)
           Vinfo( 3)=Vname(3,idv3dH)

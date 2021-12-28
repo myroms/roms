@@ -2,7 +2,7 @@
       SUBROUTINE ntimesteps (model, RunInterval, nl, Nsteps, Rsteps)
 !
 !git $Id$
-!svn $Id: ntimestep.F 1090 2021-09-29 03:19:30Z arango $
+!svn $Id: ntimestep.F 1098 2021-12-28 03:52:35Z arango $
 !=======================================================================
 !  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -37,7 +37,6 @@
       USE mod_nesting
 #endif
       USE mod_scalars
-
 !
 !  Imported variable declarations.
 !
@@ -109,7 +108,7 @@
         DO ig=1,GridsInLayer(nl)
           ng=GridNumber(ig,nl)
 
-#if defined JEDI || (defined MODEL_COUPLING && !defined MCT_LIB)
+#if defined MODEL_COUPLING && !defined MCT_LIB
 !
 !  Set extra step parameter needed to finish the simulation due to ROMS
 !  delayed output until the next half step. If RunInterval (seconds) is
@@ -122,6 +121,37 @@
             extra=1
           ELSE
             extra=0
+          END IF
+
+#elif defined JEDI
+!
+! OOPS will advance ROMS kernels by smaller intervals, usually a single
+! timestep. The strategy here is different from that used for coupling
+! since OOPS controls every NLM, TLM, and ADM timestep. The exchange of
+! ROMS-to-JEDI state fields is also done one at a time and, in a delay
+! mode, to account for the modification to initial conditions and an
+! extra half step to complete the solution.
+!
+          IF (model.eq.iNLM) THEN
+            NEXTtime=time(ng)+RunInterval
+            ENDtime=INItime(ng)+ntimes(ng)*dt(ng)
+            extra=0
+          ELSE IF (model.eq.iTLM) THEN
+            NEXTtime=time(ng)+RunInterval
+            ENDtime=INItime(ng)+ntimes(ng)*dt(ng)
+            IF (iic(ng).eq.ntend(ng)) THEN
+              extra=1
+            ELSE
+              extra=0
+            END IF
+          ELSE IF (model.eq.iADM) THEN
+            NEXTtime=time(ng)-RunInterval
+            ENDtime=INItime(ng)+ntimes(ng)*dt(ng)
+            IF (iic(ng).eq.ntstart(ng)) THEN
+              extra=1
+            ELSE
+              extra=0
+            END IF
           END IF
 #else
 !
@@ -180,23 +210,19 @@
               ELSE
                 my_Nsteps(ig)=0
               END IF
-           END IF
+            END IF
 #else
-           my_Nsteps(ig)=MAX(my_Nsteps(ig), WindowSteps(ig)+extra)
-           step_counter(ng)=step_counter(ng)+WindowSteps(ig)+extra
+            my_Nsteps(ig)=MAX(my_Nsteps(ig), WindowSteps(ig)+extra)
+            step_counter(ng)=step_counter(ng)+WindowSteps(ig)+extra
 #endif
 
-#ifdef ADJOINT
+#if defined ADJOINT && !defined NESTING
 !
 !  Advancing model backwards: Adjoint model.
 !
           ELSE IF (model.eq.iADM) THEN
-            IF (ANY(CompositeGrid(:,ng))) THEN
-            ELSE IF (RefinedGrid(ng).and.(RefineScale(ng).eq.0)) THEN
-            ELSE IF (RefinedGrid(ng).and.(RefineScale(ng).gt.0)) THEN
-            ELSE
-              my_Nsteps(ig)=MAX(my_Nsteps(ig), WindowSteps(ig)+extra)
-            END IF
+            my_Nsteps(ig)=MAX(my_Nsteps(ig), WindowSteps(ig)+extra)
+            step_counter(ng)=step_counter(ng)+WindowSteps(ig)+extra
 #endif
           END IF
         END DO
@@ -231,3 +257,130 @@
 
       RETURN
       END SUBROUTINE ntimesteps
+
+#if defined NESTING && defined ADJOINT
+!
+      SUBROUTINE nlm_step_sequence (RunInterval, icount)
+!
+!git $Id$
+!svn $Id: ntimestep.F 1098 2021-12-28 03:52:35Z arango $
+!================================================== Hernan G. Arango ===
+!  Copyright (c) 2002-2021 The ROMS/TOMS Group       Andrew M. Moore   !
+!    Licensed under a MIT/X style license                              !
+!    See License_ROMS.txt                                              !
+!=======================================================================
+!                                                                      !
+!  Given a time interval window (seconds), this routine stores all the !
+!  parameters needed to timestep the adjoint model backwards in nested !
+!  applications.  It is an elegant way to have the correct parameters  !
+!  in complex setups.                                                  !
+!                                                                      !
+!  StepInfo(:,1)     NL, current nested layer number                   !
+!  StepInfo(:,2)     Nsteps, number of timesteps for grids in NL       !
+!  StepInfo(:,3)     Rsteps, number of timesteps for simulation window !
+!  StepInfo(:,ng+3)  step_counter(ng), timestep counter for each grid  !
+!                                                                      !
+!  On Input:                                                           !
+!                                                                      !
+!     RunInterval    Time interval window (seconds) to advance forward !
+!                      or backwards the primitive equations (scalar)   !
+!                                                                      !
+!  On Input:                                                           !
+!                                                                      !
+!     icount         Number of stored values in "StepInfo" (integer)   !
+!                      StepInfo(icount,Ngrid+3)                        !
+!                                                                      !
+!  It calls repetitively routine "ntimestep".                          !
+!                                                                      !
+!=======================================================================
+!
+      USE mod_param
+      USE mod_parallel
+      USE mod_iounits
+      USE mod_nesting
+      USE mod_scalars
+!
+!  Imported variable declarations.
+!
+      integer, intent(out) :: icount
+!
+      real(dp), intent(in) :: RunInterval
+!
+!  Local variable declarations.
+!
+      logical :: DoNestLayer, Time_Step
+      integer :: NL, Nsteps, Rsteps
+      integer :: dg, ig, istep, ng
+!
+!=======================================================================
+!  Compute the NLM sequence of nested timesteps parameters.
+!=======================================================================
+!
+!  If applicable, allocate and intialize parameter sequence array.  It
+!  can only be allocated in "ROMS_run" phase when the RunInterval value
+!  is known, and niot before. That value is specified by the Master or
+!  Coupler subroutine. Notice that we use the (rs-1) factor to discount
+!  the coarser grid step that other grids need to execute to arrive to
+!  the same simulation time.
+!
+      IF (.not.allocated(StepInfo)) THEN
+        dg=1
+        rs=1
+        DO ng=1,Ngrids
+          IF (RefineScale(ng).gt.0) THEN
+            rs=rs*RefineScale(ng)
+          END IF
+        END DO
+        nStepInfo=INT((RunInterval+0.5_r8*dt(dg))/dt(dg))*(rs-1)+       &
+     &            Ngrids
+        allocate ( StepInfo(nStepInfo,Ngrids+3) )
+        StepInfo=0
+      END IF
+!
+!  Initialize.
+!
+      Time_Step=.TRUE.
+      DoNestLayer=.TRUE.
+      icount=0
+!
+!  Compute and store nonlinear model sequence of NL, Nstep, Rstep, and
+!  step_counter parameters. The sequence of values will be reversed
+!  when timestepping the adjoint model backwards.
+!
+      DO WHILE (Time_Step)
+        NL=0
+        DO WHILE (DoNestLayer)
+          CALL ntimesteps (iNLM, RunInterval, NL, Nsteps, Rsteps)
+          icount=icount+1
+          IF (icount.le.nStepInfo) THEN
+            StepInfo(icount,1)=NL
+            StepInfo(icount,2)=Nsteps
+            StepInfo(icount,3)=Rsteps
+            DO ng=1,Ngrids
+              StepInfo(icount,ng+3)=step_counter(ng)
+            END DO
+!
+            IF ((NL.le.0).or.(NL.gt.NestLayers)) EXIT
+!
+            DO istep=1,Nsteps
+              DO ig=1,GridsInLayer(NL)
+                ng=GridNumber(ig,NL)
+                IF (step_counter(ng).eq.Rsteps) Time_Step=.FALSE.
+              END DO
+            END DO
+            IF (.not.Time_Step.and.NL.eq.NestLayers) EXIT
+          ELSE
+            IF (Master) WRITE(stdout,10) ', nStepInfo = ', nStepInfo,   &
+     &                                   icount
+            exit_flag=5
+            RETURN
+          END IF
+        END DO
+      END DO
+!
+  10  FORMAT (/,' NLM_STEP_SEQUENCE - too small dimension parameter ',  &
+     &        a,i0,3x,i0,/,21x,'Recompute dimensions for ''StepInfo''')
+!
+      RETURN
+      END SUBROUTINE nlm_step_sequence
+#endif
