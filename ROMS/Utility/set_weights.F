@@ -3,9 +3,9 @@
       SUBROUTINE set_weights (ng)
 !
 !git $Id$
-!svn $Id: set_weights.F 1054 2021-03-06 19:47:12Z arango $
+!svn $Id: set_weights.F 1099 2022-01-06 21:01:01Z arango $
 !=======================================================================
-!  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2022 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                           Hernan G. Arango   !
 !========================================== Alexander F. Shchepetkin ===

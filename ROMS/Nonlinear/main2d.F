@@ -3,9 +3,9 @@
       SUBROUTINE main2d (RunInterval)
 !
 !git $Id$
-!svn $Id: main2d.F 1087 2021-09-10 01:11:17Z arango $
+!svn $Id: main2d.F 1099 2022-01-06 21:01:01Z arango $
 !=======================================================================
-!  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2022 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                           Hernan G. Arango   !
 !========================================== Alexander F. Shchepetkin ===

@@ -2,9 +2,9 @@
 ** Include file "globaldef.h"
 **
 ** git $Id$
-** svn $Id: globaldefs.h 1098 2021-12-28 03:52:35Z arango $
+** svn $Id: globaldefs.h 1099 2022-01-06 21:01:01Z arango $
 ********************************************************** Hernan G. Arango ***
-** Copyright (c) 2002-2021 The ROMS/TOMS Group     Alexander F. Shchepetkin  **
+** Copyright (c) 2002-2022 The ROMS/TOMS Group     Alexander F. Shchepetkin  **
 **   Licensed under a MIT/X style license                                    **
 **   See License_ROMS.txt                                                    **
 *******************************************************************************

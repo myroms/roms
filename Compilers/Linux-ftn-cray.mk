@@ -1,7 +1,7 @@
 # git $Id$
-# svn $Id: Linux-ftn-cray.mk 1062 2021-05-06 01:50:38Z arango $
+# svn $Id: Linux-ftn-cray.mk 1099 2022-01-06 21:01:01Z arango $
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Copyright (c) 2002-2021 The ROMS/TOMS Group                           :::
+# Copyright (c) 2002-2022 The ROMS/TOMS Group                           :::
 #   Licensed under a MIT/X style license                                :::
 #   See License_ROMS.txt                                                :::
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::

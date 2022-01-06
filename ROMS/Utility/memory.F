@@ -2,9 +2,9 @@
       SUBROUTINE memory
 !
 !git $Id$
-!svn $Id: memory.F 1096 2021-10-16 02:19:24Z arango $
+!svn $Id: memory.F 1099 2022-01-06 21:01:01Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2022 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
 !=======================================================================

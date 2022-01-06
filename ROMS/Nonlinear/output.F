@@ -3,9 +3,9 @@
       SUBROUTINE output (ng)
 !
 !git $Id$
-!svn $Id: output.F 1064 2021-05-10 19:55:56Z arango $
+!svn $Id: output.F 1099 2022-01-06 21:01:01Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2022 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
 !=======================================================================
