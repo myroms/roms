@@ -4,7 +4,7 @@
 !git $Id$
 !svn $Id: roms_wc13.in 1868 2021-05-10 17:13:21Z arango $
 !========================================================= Hernan G. Arango ===
-!  Copyright (c) 2002-2021 The ROMS/TOMS Group                                !
+!  Copyright (c) 2002-2022 The ROMS/TOMS Group                                !
 !    Licensed under a MIT/X style license                                     !
 !    See License_ROMS.txt                                                     !
 !==============================================================================
@@ -197,7 +197,7 @@ ad_Vadvection == C4       \                     ! temperature
 
 ad_LBC(isFsur) ==   Cha     Cha     Clo     Cha         ! free-surface
 ad_LBC(isUbar) ==   Fla     Fla     Clo     Fla         ! 2D U-momentum
-ad_LBC(isVbar) ==   Fla     Fla     Clo     Fla         ! 2D V-momentum
+ad_LBC(isVbar) ==   Fla     Fla     Clo     Fla         ! 2D U-momentum
 ad_LBC(isUvel) ==   Cla     Cla     Clo     Cla         ! 3D U-momentum
 ad_LBC(isVvel) ==   Cla     Cla     Clo     Cla         ! 3D V-momentum
 ad_LBC(isMtke) ==   Gra     Gra     Clo     Gra         ! mixing TKE

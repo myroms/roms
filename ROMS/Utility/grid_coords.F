@@ -3,9 +3,9 @@
        SUBROUTINE grid_coords (ng, model)
 !
 !git $Id$
-!svn $Id: grid_coords.F 1076 2021-06-29 04:08:42Z arango $
+!svn $Id: grid_coords.F 1099 2022-01-06 21:01:01Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2022 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
 !=======================================================================

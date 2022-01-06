@@ -2,9 +2,9 @@
       SUBROUTINE ntimesteps (model, RunInterval, nl, Nsteps, Rsteps)
 !
 !git $Id$
-!svn $Id: ntimestep.F 1098 2021-12-28 03:52:35Z arango $
+!svn $Id: ntimestep.F 1099 2022-01-06 21:01:01Z arango $
 !=======================================================================
-!  Copyright (c) 2002-2021 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2022 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
 !================================================== Hernan G. Arango ===
@@ -263,9 +263,9 @@
       SUBROUTINE nlm_step_sequence (RunInterval, icount)
 !
 !git $Id$
-!svn $Id: ntimestep.F 1098 2021-12-28 03:52:35Z arango $
+!svn $Id: ntimestep.F 1099 2022-01-06 21:01:01Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2021 The ROMS/TOMS Group       Andrew M. Moore   !
+!  Copyright (c) 2002-2022 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
 !=======================================================================

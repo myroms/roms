@@ -1,7 +1,7 @@
       SUBROUTINE read_SedPar (model, inp, out, Lwrite)
 !
 !git $Id$
-!svn $Id: sediment_inp.h 1054 2021-03-06 19:47:12Z arango $
+!svn $Id: sediment_inp.h 1099 2022-01-06 21:01:01Z arango $
 !=======================================================================
 !                                                                      !
 !  This routine reads in cohesive and non-cohesive sediment model      !
