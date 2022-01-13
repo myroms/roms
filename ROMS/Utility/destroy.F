@@ -2,7 +2,7 @@
       MODULE destroy_mod
 !
 !git $Id$
-!svn $Id: destroy.F 1099 2022-01-06 21:01:01Z arango $
+!svn $Id: destroy.F 1103 2022-01-13 03:38:35Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2022 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -445,9 +445,9 @@
 !
       integer, intent(in) :: ng, line
 !
-      real(dp), intent(inout) :: Varray(:)
+      real(dp), pointer, intent(inout) :: Varray(:)
 !
-      character (len=*) :: Vstring
+      character (len=*) :: Vstring, routine
 !
 !  Local variable declarations.
 !
@@ -499,9 +499,9 @@
 !
       integer, intent(in) :: ng, line
 !
-      real(dp), intent(inout) :: Varray(:,:)
+      real(dp), pointer, intent(inout) :: Varray(:,:)
 !
-      character (len=*) :: Vstring
+      character (len=*) :: Vstring, routine
 !
 !  Local variable declarations.
 !
@@ -553,9 +553,9 @@
 !
       integer, intent(in) :: ng, line
 !
-      real(dp), intent(inout) :: Varray(:,:,:)
+      real(dp), pointer, intent(inout) :: Varray(:,:,:)
 !
-      character (len=*) :: Vstring
+      character (len=*) :: Vstring, routine
 !
 !  Local variable declarations.
 !
@@ -607,9 +607,9 @@
 !
       integer, intent(in) :: ng, line
 !
-      real(dp), intent(inout) :: Varray(:,:,:,:)
+      real(dp), pointer, intent(inout) :: Varray(:,:,:,:)
 !
-      character (len=*) :: Vstring
+      character (len=*) :: Vstring, routine
 !
 !  Local variable declarations.
 !
@@ -661,9 +661,9 @@
 !
       integer, intent(in) :: ng, line
 !
-      real(dp), intent(inout) :: Varray(:,:,:,:,:)
+      real(dp), pointer, intent(inout) :: Varray(:,:,:,:,:)
 !
-      character (len=*) :: Vstring
+      character (len=*) :: Vstring, routine
 !
 !  Local variable declarations.
 !

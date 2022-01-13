@@ -3,7 +3,7 @@
 #if defined TL_IOMS && defined SOLVE3D
 !
 !git $Id$
-!svn $Id: rp_omega.F 1099 2022-01-06 21:01:01Z arango $
+!svn $Id: rp_omega.F 1103 2022-01-13 03:38:35Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2022 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -209,23 +209,27 @@
 !  sum to obtain the correct net Qbar given in user input - J. Levin
 !  (Jupiter Intelligence Inc.) and J. Wilkin
 !
+!    Dsrc(is) = 2,  flow across grid cell w-face (positive or negative)
+!
         IF (LwSrc(ng)) THEN
           DO is=1,Nsrc(ng)
-            ii=SOURCES(ng)%Isrc(is)
-            jj=SOURCES(ng)%Jsrc(is)
-            IF (((IstrR.le.ii).and.(ii.le.IendR)).and.                  &
-     &          ((JstrR.le.jj).and.(jj.le.JendR)).and.                  &
-     &          (j.eq.jj)) THEN
-              DO k=1,N(ng)
-                W(ii,jj,k)=W(ii,jj,k-1)-                                &
-     &                     (Huon(ii+1,jj,k)-Huon(ii,jj,k)+              &
-     &                      Hvom(ii,jj+1,k)-Hvom(ii,jj,k))+             &
-     &                     SOURCES(ng)%Qsrc(is,k)
-                tl_W(ii,jj,k)=tl_W(ii,jj,k-1)-                          &
-     &                        (tl_Huon(ii+1,jj,k)-tl_Huon(ii,jj,k)+     &
-     &                         tl_Hvom(ii,jj+1,k)-tl_Hvom(ii,jj,k))+    &
-     &                        SOURCES(ng)%tl_Qsrc(is,k)
-              END DO
+            IF (INT(SOURCES(ng)%Dsrc(is)).eq.2) THEN
+              ii=SOURCES(ng)%Isrc(is)
+              jj=SOURCES(ng)%Jsrc(is)
+              IF (((IstrR.le.ii).and.(ii.le.IendR)).and.                &
+     &            ((JstrR.le.jj).and.(jj.le.JendR)).and.                &
+     &            (j.eq.jj)) THEN
+                DO k=1,N(ng)
+                  W(ii,jj,k)=W(ii,jj,k-1)-                              &
+     &                       (Huon(ii+1,jj,k)-Huon(ii,jj,k)+            &
+     &                        Hvom(ii,jj+1,k)-Hvom(ii,jj,k))+           &
+     &                       SOURCES(ng)%Qsrc(is,k)
+                  tl_W(ii,jj,k)=tl_W(ii,jj,k-1)-                        &
+     &                          (tl_Huon(ii+1,jj,k)-tl_Huon(ii,jj,k)+   &
+     &                           tl_Hvom(ii,jj+1,k)-tl_Hvom(ii,jj,k))+  &
+     &                          SOURCES(ng)%tl_Qsrc(is,k)
+                END DO
+              END IF
             END IF
           END DO
         END IF

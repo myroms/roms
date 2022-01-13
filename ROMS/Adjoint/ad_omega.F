@@ -3,7 +3,7 @@
 #if defined ADJOINT && defined SOLVE3D
 !
 !git $Id$
-!svn $Id: ad_omega.F 1099 2022-01-06 21:01:01Z arango $
+!svn $Id: ad_omega.F 1103 2022-01-13 03:38:35Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2022 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -233,19 +233,23 @@
 !  sum to obtain the correct net Qbar given in user input - J. Levin
 !  (Jupiter Intelligence Inc.) and J. Wilkin
 !
+!    Dsrc(is) = 2,  flow across grid cell w-face (positive or negative)
+!
         IF (LwSrc(ng)) THEN
           DO is=1,Nsrc(ng)
-            ii=SOURCES(ng)%Isrc(is)
-            jj=SOURCES(ng)%Jsrc(is)
-            IF (((IstrR.le.ii).and.(ii.le.IendR)).and.                  &
-     &          ((JstrR.le.jj).and.(jj.le.JendR)).and.                  &
-     &          (j.eq.jj)) THEN
-              DO k=1,N(ng)
-                W(ii,jj,k)=W(ii,jj,k-1)-                                &
-     &                     (Huon(ii+1,jj,k)-Huon(ii,jj,k)+              &
-     &                      Hvom(ii,jj+1,k)-Hvom(ii,jj,k))+             &
-     &                     SOURCES(ng)%Qsrc(is,k)
-              END DO
+            IF (INT(SOURCES(ng)%Dsrc(is)).eq.2) THEN
+              ii=SOURCES(ng)%Isrc(is)
+              jj=SOURCES(ng)%Jsrc(is)
+              IF (((IstrR.le.ii).and.(ii.le.IendR)).and.                &
+     &            ((JstrR.le.jj).and.(jj.le.JendR)).and.                &
+     &            (j.eq.jj)) THEN
+                DO k=1,N(ng)
+                  W(ii,jj,k)=W(ii,jj,k-1)-                              &
+     &                       (Huon(ii+1,jj,k)-Huon(ii,jj,k)+            &
+     &                        Hvom(ii,jj+1,k)-Hvom(ii,jj,k))+           &
+     &                       SOURCES(ng)%Qsrc(is,k)
+                END DO
+              END IF
             END IF
           END DO
         END IF
@@ -294,35 +298,39 @@
 !
 !  Adjoint of apply mass point sources (volume vertical influx), if any.
 !
+!    Dsrc(is) = 2,  flow across grid cell w-face (positive or negative)
+!
         IF (LwSrc(ng)) THEN
           DO is=1,Nsrc(ng)
-            ii=SOURCES(ng)%Isrc(is)
-            jj=SOURCES(ng)%Jsrc(is)
-            IF (((IstrR.le.ii).and.(ii.le.IendR)).and.                  &
-     &          ((JstrR.le.jj).and.(jj.le.JendR)).and.                  &
-     &          (j.eq.jj)) THEN
-!^            DO k=1,N(ng)
+            IF (INT(SOURCES(ng)%Dsrc(is)).eq.2) THEN
+              ii=SOURCES(ng)%Isrc(is)
+              jj=SOURCES(ng)%Jsrc(is)
+              IF (((IstrR.le.ii).and.(ii.le.IendR)).and.                &
+     &            ((JstrR.le.jj).and.(jj.le.JendR)).and.                &
+     &            (j.eq.jj)) THEN
+!^              DO k=1,N(ng)
 !^
-              DO k=N(ng),1,-1
-!^              tl_W(ii,jj,k)=tl_W(ii,jj,k-1)-                          &
-!^   &                        (tl_Huon(ii+1,jj,k)-tl_Huon(ii,jj,k)+     &
-!^   &                         tl_Hvom(ii,jj+1,k)-tl_Hvom(ii,jj,k))+    &
-!^   &                        SOURCES(ng)%tl_Qsrc(is,k)
+                DO k=N(ng),1,-1
+!^                tl_W(ii,jj,k)=tl_W(ii,jj,k-1)-                        &
+!^   &                          (tl_Huon(ii+1,jj,k)-tl_Huon(ii,jj,k)+   &
+!^   &                           tl_Hvom(ii,jj+1,k)-tl_Hvom(ii,jj,k))+  &
+!^   &                          SOURCES(ng)%tl_Qsrc(is,k)
 !^
-                ad_W(ii,jj,k-1)=ad_W(ii,jj,k-1)+ad_W(ii,jj,k)
-                ad_Huon(ii  ,jj,k)=ad_Huon(ii  ,jj,k)+ad_W(ii,jj,k)
-                ad_Huon(ii+1,jj,k)=ad_Huon(ii+1,jj,k)-ad_W(ii,jj,k)
-                ad_Hvom(ii,jj  ,k)=ad_Hvom(ii,jj  ,k)+ad_W(ii,jj,k)
-                ad_Hvom(ii,jj+1,k)=ad_Hvom(ii,jj+1,k)-ad_W(ii,jj,k)
-                SOURCES(ng)%ad_Qsrc(is,k)=SOURCES(ng)%ad_Qsrc(is,k)+    &
-     &                                    ad_W(ii,jj,k)
+                  ad_W(ii,jj,k-1)=ad_W(ii,jj,k-1)+ad_W(ii,jj,k)
+                  ad_Huon(ii  ,jj,k)=ad_Huon(ii  ,jj,k)+ad_W(ii,jj,k)
+                  ad_Huon(ii+1,jj,k)=ad_Huon(ii+1,jj,k)-ad_W(ii,jj,k)
+                  ad_Hvom(ii,jj  ,k)=ad_Hvom(ii,jj  ,k)+ad_W(ii,jj,k)
+                  ad_Hvom(ii,jj+1,k)=ad_Hvom(ii,jj+1,k)-ad_W(ii,jj,k)
+                  SOURCES(ng)%ad_Qsrc(is,k)=SOURCES(ng)%ad_Qsrc(is,k)+  &
+     &                                      ad_W(ii,jj,k)
 !
 !  We have to do this here so that we do not double count ad_W(ii,jj,k)
 !  in the next loop. It is okay here since the loop is counting
 !  backwards in k, and ad_W is cleared after the net loop.
 !
-                ad_W(ii,jj,k)=0.0_r8
-              END DO
+                  ad_W(ii,jj,k)=0.0_r8
+                END DO
+              END IF
             END IF
           END DO
         END IF

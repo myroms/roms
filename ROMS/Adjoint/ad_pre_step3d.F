@@ -5,7 +5,7 @@
 # define NEUMANN
 !
 !git $Id$
-!svn $Id: ad_pre_step3d.F 1099 2022-01-06 21:01:01Z arango $
+!svn $Id: ad_pre_step3d.F 1103 2022-01-13 03:38:35Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2022 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -1301,24 +1301,6 @@
             END DO
           END DO
 !
-!  Adjoint of apply mass point sources (volume vertical influx), if any.
-!  It is a zero adjoint contribution.
-!
-          IF (LwSrc(ng)) THEN
-            DO is=1,Nsrc(ng)
-              Isrc=SOURCES(ng)%Isrc(is)
-              Jsrc=SOURCES(ng)%Jsrc(is)
-              IF (LtracerSrc(itrc,ng).and.                              &
-     &            ((Istr.le.Isrc).and.(Isrc.le.Iend+1)).and.            &
-     &            (j.eq.Jsrc)) THEN
-                DO k=1,N(ng)-1
-!^                tl_FC(Isrc,k)=tl_FC(Isrc,k)+0.0_r8
-!^
-                END DO
-              END IF
-            END DO
-          END IF
-!
 !-----------------------------------------------------------------------
 !  Compute adjoint time rate of change of intermediate tracer due to
 !  vertical advection.
@@ -1884,6 +1866,9 @@
 !  Apply tracers point sources to the horizontal advection terms,
 !  if any.
 !
+!    Dsrc(is) = 0,  flow across grid cell u-face (positive or negative)
+!    Dsrc(is) = 1,  flow across grid cell v-face (positive or negative)
+!
           IF (LuvSrc(ng)) THEN
             DO is=1,Nsrc(ng)
               Isrc=SOURCES(ng)%Isrc(is)
@@ -1910,7 +1895,7 @@
 !^
                     ad_FX(Isrc,Jsrc)=0.0_r8
                   END IF
-                ELSE
+                ELSE IF (INT(SOURCES(ng)%Dsrc(is)).eq.1) THEN
                   IF (LtracerSrc(itrc,ng)) THEN
 !^                  tl_FE(Isrc,Jsrc)=tl_Hvom(Isrc,Jsrc,k)*              &
 !^   &                               SOURCES(ng)%Tsrc(is,k,itrc)+       &

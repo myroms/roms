@@ -2,7 +2,7 @@
       MODULE mod_sources
 !
 !git $Id$
-!svn $Id: mod_sources.F 1099 2022-01-06 21:01:01Z arango $
+!svn $Id: mod_sources.F 1103 2022-01-13 03:38:35Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2022 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -161,13 +161,13 @@
 
 #ifndef ANA_PSOURCE
 !
-!  Inquire about the number of point sources.
+!  Inquire about the number of point Sources/Sinks.
 !
       IF (ng.eq.1) THEN
         DO mg=1,Ngrids
           foundit=.FALSE.
           IF (LuvSrc(mg).or.LwSrc(mg).or.ANY(LtracerSrc(:,mg))) THEN
-            SELECT CASE (AVG(ng)%IOtype)
+            SELECT CASE (SSF(ng)%IOtype)
               CASE (io_nf90)
                 CALL netcdf_inq_var (ng, iNLM, SSF(mg)%name,            &
      &                               MyVarName = Vname(1,idRxpo),       &
@@ -190,6 +190,10 @@
             IF (foundit) THEN
               Nsrc(mg)=var_Dsize(1)         ! first dimension
               Msrc(mg)=Nsrc(mg)
+              CALL check_sources (mg, SSF(mg)%name, Nsrc(mg))
+              IF (FoundError(exit_flag, NoError, __LINE__,              &
+     &                       MyFile)) RETURN
+
             END IF
           END IF
         END DO
@@ -439,5 +443,117 @@
 !
       RETURN
       END SUBROUTINE deallocate_sources
+!
+      SUBROUTINE check_sources (ng, ncname, Npsrc)
+!
+!=======================================================================
+!                                                                      !
+!  It checks input NetCDF file for correctness in the spefication of   !
+!  the point Source/Sink grid-cell face flag values (0, 1, 2) and the  !
+!  implementation methodology using "LuvSrc" and or "LwSrc".           !
+!                                                                      !
+!=======================================================================
+!
+      USE mod_param
+      USE mod_parallel
+      USE mod_iounits
+      USE mod_netcdf
+#if defined PIO_LIB && defined DISTRIBUTE
+      USE mod_pio_netcdf
+#endif
+      USE mod_scalars
+!
+      USE strings_mod, ONLY : FoundError
 
+!  Imported variable declarations.
+!
+      integer, intent(in) :: ng, Npsrc
+!
+      character (len=*), intent(in) :: ncname
+!
+!  Local variable declarations.
+!
+      integer :: i, ic_u, ic_v, ic_w
+!
+      real(r8) :: Dsrc_min, Dsrc_max
+!
+      real(r8) :: Dsrc(Npsrc)
+!
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__//", check_sources"
+!
+!-----------------------------------------------------------------------
+!  Read in Point Source/Sink cell-face flag and check for correct values
+!  according to the implementation methodology:
+!
+!    If LuvSrc = T,  needs Dsrc = 0 (flow across grid cell u-face) or
+!                          Dsrc = 1 (flow across grid cell v-face)
+!
+!    If LwSrc = T,   needs Dsrc = 2 (flow across grid cell w-face)
+!-----------------------------------------------------------------------
+!
+!  Read in Source/Sink cell-face flag.
+!
+      SELECT CASE (SSF(ng)%IOtype)
+        CASE (io_nf90)
+          CALL netcdf_get_fvar (ng, iNLM, ncname,                       &
+     &                          Vname(1,idRdir),  Dsrc,                 &
+     &                          min_val = Dsrc_min,                     &
+     &                          max_val = Dsrc_max)
+
+# if defined PIO_LIB && defined DISTRIBUTE
+        CASE (io_pio)
+          CALL pio_netcdf_get_fvar (ng, iNLM, ncname,                   &
+     &                              Vname(1,idRdir),  Dsrc,             &
+     &                              min_val = Dsrc_min,                 &
+     &                              max_val = Dsrc_max)
+# endif
+      END SELECT
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+!
+!  Count and report Source/Sink for each cell-face flag value.
+!
+      ic_u=0
+      ic_v=0
+      ic_w=0
+!
+      DO i=1,NpSrc
+        IF (INT(Dsrc(i)).eq.0) ic_u=ic_u+1
+        IF (INT(Dsrc(i)).eq.1) ic_v=ic_v+1
+        IF (INT(Dsrc(i)).eq.2) ic_w=ic_w+1
+      END DO
+!
+      IF (Master) THEN
+        IF (ng.eq.1) WRITE (stdout,10)
+        WRITE (stdout,20) ng, TRIM(ncname),                             &
+                          LuvSrc(ng), ic_u,                             &
+                          LuvSrc(ng), ic_v,                             &
+                          LwSrc(ng),  ic_w
+      END IF
+!
+!  Stop if illegal configuration.
+!
+      IF (.not.LwSrc(ng).and.LuvSrc(ng).and.                            &
+          (ic_u.eq.0).and.(ic_v.eq.0)) THEN
+        IF (Master) WRITE (stdout,30) 'LuvSrc'
+        exit_flag=5
+      END IF
+      IF (.not.LuvSrc(ng).and.LwSrc(ng).and.(ic_w.eq.0)) THEN
+        IF (Master) WRITE (stdout,30) 'LwSrc'
+        exit_flag=5
+      END IF
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+!
+  10  FORMAT (/,1x,'Point Sources/Sinks grid-cell flag locations ',     &
+     &        'counter:',/)
+  20  FORMAT (4x,'Grid: ',i0,', file: ',a,/,                            &
+     &        19x,'LuvSrc = ',l1,2x,'u-face = ',i0,/,                   &
+     &        19x,'LuvSrc = ',l1,2x,'v-face = ',i0,/,                   &
+     &        19x,'LwSrc  = ',l1,2x,'w-face = ',i0)
+  30  FORMAT (/,' CHECK_SOURCES - Cannot find point Souces/Sinks ',     &
+     &        "the '",a,"' method.")
+!
+      RETURN
+      END SUBROUTINE check_sources
+!
       END MODULE mod_sources

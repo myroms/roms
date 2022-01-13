@@ -2,7 +2,7 @@
       MODULE ad_step2d_mod
 !
 !git $Id$
-!svn $Id: ad_step2d_LF_AM3.h 1099 2022-01-06 21:01:01Z arango $
+!svn $Id: ad_step2d_LF_AM3.h 1103 2022-01-13 03:38:35Z arango $
 !=======================================================================
 !                                                                      !
 !  Adjoint shallow-water primitive equations predictor (Leap-frog)     !
@@ -956,7 +956,7 @@
                 ad_zeta(i-1,j,knew)=ad_zeta(i-1,j,knew)+adfac
                 ad_zeta(i  ,j,knew)=ad_zeta(i  ,j,knew)+adfac
                 ad_cff=0.0_r8
-              ELSE
+              ELSE IF (INT(SOURCES(ng)%Dsrc(is)).eq.1) THEN
                 cff=1.0_r8/(om_v(i,j)*                                  &
      &                      0.5_r8*(zeta(i,j-1,knew)+h(i,j-1)+          &
      &                              zeta(i,j  ,knew)+h(i,j  )))
@@ -4451,12 +4451,14 @@
 !
         IF (LwSrc(ng)) THEN
           DO is=1,Nsrc(ng)
-            i=SOURCES(ng)%Isrc(is)
-            j=SOURCES(ng)%Jsrc(is)
-            IF (((IstrR.le.i).and.(i.le.IendR)).and.                    &
-     &          ((JstrR.le.j).and.(j.le.JendR))) THEN
-!^            tl_zeta(i,j,knew)=tl_zeta(i,j,knew)+0.0_r8
+            IF (INT(SOURCES(ng)%Dsrc(is)).eq.2) THEN
+              i=SOURCES(ng)%Isrc(is)
+              j=SOURCES(ng)%Jsrc(is)
+              IF (((IstrR.le.i).and.(i.le.IendR)).and.                  &
+     &            ((JstrR.le.j).and.(j.le.JendR))) THEN
+!^              tl_zeta(i,j,knew)=tl_zeta(i,j,knew)+0.0_r8
 !^
+              END IF
             END IF
           END DO
         END IF
