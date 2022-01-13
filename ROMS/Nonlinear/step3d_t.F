@@ -3,7 +3,7 @@
 #if !defined TS_FIXED && (defined NONLINEAR && defined SOLVE3D)
 !
 !git $Id$
-!svn $Id: step3d_t.F 1099 2022-01-06 21:01:01Z arango $
+!svn $Id: step3d_t.F 1103 2022-01-13 03:38:35Z arango $
 !=======================================================================
 !  Copyright (c) 2002-2022 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -729,6 +729,9 @@
 !  Apply tracers point sources to the horizontal advection terms,
 !  if any.
 !
+!    Dsrc(is) = 0,  flow across grid cell u-face (positive or negative)
+!    Dsrc(is) = 1,  flow across grid cell v-face (positive or negative)
+!
           IF (LuvSrc(ng)) THEN
             DO is=1,Nsrc(ng)
               Isrc=SOURCES(ng)%Isrc(is)
@@ -1129,25 +1132,29 @@
 !  advection schemes LwSrc is applied after the vertical advection
 !  is completed (J. Wilkin).
 !
+!    Dsrc(is) = 2,  flow across grid cell w-face (positive or negative)
+!
           IF (LwSrc(ng)) THEN
             IF (Hadvection(itrc,ng)%MPDATA) THEN
               DO is=1,Nsrc(ng)
-                Isrc=SOURCES(ng)%Isrc(is)
-                Jsrc=SOURCES(ng)%Jsrc(is)
-                IF (((Istr.le.Isrc).and.(Isrc.le.Iend+1)).and.          &
-     &               ((Jstr.le.Jsrc).and.(Jsrc.le.Jend+1)).and.         &
-     &               (j.eq.Jsrc)) THEN
-                  DO k=1,N(ng)
-                    cff=dt(ng)*pm(i,j)*pn(i,j)
-                    IF (LtracerSrc(itrc,ng)) THEN
-                      cff3=SOURCES(ng)%Tsrc(is,k,itrc)
-                    ELSE
-                      cff3=t(Isrc,Jsrc,k,3,itrc)
-                    END IF
-                    Ta(Isrc,Jsrc,k,itrc)=Ta(Isrc,Jsrc,k,itrc)+          &
-     &                                   cff*SOURCES(ng)%Qsrc(is,k)*    &
-     &                                   cff3
-                  END DO
+                IF (INT(SOURCES(ng)%Dsrc(is)).eq.2) THEN
+                  Isrc=SOURCES(ng)%Isrc(is)
+                  Jsrc=SOURCES(ng)%Jsrc(is)
+                  IF (((Istr.le.Isrc).and.(Isrc.le.Iend+1)).and.        &
+     &                 ((Jstr.le.Jsrc).and.(Jsrc.le.Jend+1)).and.       &
+     &                 (j.eq.Jsrc)) THEN
+                    DO k=1,N(ng)
+                      cff=dt(ng)*pm(i,j)*pn(i,j)
+                      IF (LtracerSrc(itrc,ng)) THEN
+                        cff3=SOURCES(ng)%Tsrc(is,k,itrc)
+                      ELSE
+                        cff3=t(Isrc,Jsrc,k,3,itrc)
+                      END IF
+                      Ta(Isrc,Jsrc,k,itrc)=Ta(Isrc,Jsrc,k,itrc)+        &
+     &                                     cff*SOURCES(ng)%Qsrc(is,k)*  &
+     &                                     cff3
+                    END DO
+                  END IF
                 END IF
               END DO
             END IF
@@ -1320,29 +1327,33 @@
 !  added volume to keep the receiving cell concentration unchanged.
 !  J. Levin (Jupiter Intelligence Inc.) and J. Wilkin
 !
+!    Dsrc(is) = 2,  flow across grid cell w-face (positive or negative)
+!
       IF (LwSrc(ng)) THEN
         DO itrc=1,NT(ng)
           IF (.not.((Hadvection(itrc,ng)%MPDATA).and.                   &
      &              (Vadvection(itrc,ng)%MPDATA))) THEN
             DO is=1,Nsrc(ng)
-              Isrc=SOURCES(ng)%Isrc(is)
-              Jsrc=SOURCES(ng)%Jsrc(is)
-              IF (((Istr.le.Isrc).and.(Isrc.le.Iend+1)).and.            &
-     &            ((Jstr.le.Jsrc).and.(Jsrc.le.Jend+1))) THEN
-                DO k=1,N(ng)
-                  cff=dt(ng)*pm(i,j)*pn(i,j)
+             IF (INT(SOURCES(ng)%Dsrc(is)).eq.2) THEN
+                Isrc=SOURCES(ng)%Isrc(is)
+                Jsrc=SOURCES(ng)%Jsrc(is)
+                IF (((Istr.le.Isrc).and.(Isrc.le.Iend+1)).and.          &
+     &              ((Jstr.le.Jsrc).and.(Jsrc.le.Jend+1))) THEN
+                  DO k=1,N(ng)
+                    cff=dt(ng)*pm(i,j)*pn(i,j)
 # ifdef SPLINES_VDIFF
-                  cff=cff*oHz(Isrc,Jsrc,k)
+                    cff=cff*oHz(Isrc,Jsrc,k)
 # endif
-                  IF (LtracerSrc(itrc,ng)) THEN
-                    cff3=SOURCES(ng)%Tsrc(is,k,itrc)
-                  ELSE
-                    cff3=t(Isrc,Jsrc,k,3,itrc)
-                  END IF
-                  t(Isrc,Jsrc,k,nnew,itrc)=t(Isrc,Jsrc,k,nnew,itrc)+    &
-     &                                     cff*SOURCES(ng)%Qsrc(is,k)*  &
-     &                                     cff3
-                END DO
+                    IF (LtracerSrc(itrc,ng)) THEN
+                      cff3=SOURCES(ng)%Tsrc(is,k,itrc)
+                    ELSE
+                      cff3=t(Isrc,Jsrc,k,3,itrc)
+                    END IF
+                    t(Isrc,Jsrc,k,nnew,itrc)=t(Isrc,Jsrc,k,nnew,itrc)+  &
+     &                                       cff*SOURCES(ng)%Qsrc(is,k)*&
+     &                                       cff3
+                  END DO
+                END IF
               END IF
             END DO
           END IF

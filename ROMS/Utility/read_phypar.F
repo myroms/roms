@@ -2,7 +2,7 @@
       SUBROUTINE read_PhyPar (model, inp, out, Lwrite)
 !
 !git $Id$
-!svn $Id: read_phypar.F 1099 2022-01-06 21:01:01Z arango $
+!svn $Id: read_phypar.F 1103 2022-01-13 03:38:35Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2022 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -3672,23 +3672,6 @@
         END IF
       END IF
 #endif
-!
-!  Check if both point sources methodologies are activated.  Only one
-!  method is allowed for a particular grid.  Otherwise, the point
-!  source will be applies twice.
-!
-      DO ng=1,Ngrids
-        IF (LuvSrc(ng).and.LwSrc(ng)) THEN
-          IF (Master) THEN
-            WRITE (out,260) 'LuvSrc', LuvSrc(ng),                       &
-     &            'Because LwSrc  is also ON; only one method is legal.'
-            WRITE (out,260) 'LwSrc', LwSrc(ng),                         &
-     &            'Because LuvSrc is also ON; only one method is legal.'
-          END IF
-          exit_flag=4
-          RETURN
-        END IF
-      END DO
 
 #ifdef SP4DVAR
 !

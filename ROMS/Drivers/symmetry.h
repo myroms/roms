@@ -1,7 +1,7 @@
       MODULE roms_kernel_mod
 !
 !git $Id$
-!svn $Id: symmetry.h 1099 2022-01-06 21:01:01Z arango $
+!svn $Id: symmetry.h 1103 2022-01-13 03:38:35Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2022 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -162,6 +162,7 @@
 !
         CALL ROMS_allocate_arrays (allocate_vars)
         CALL ROMS_initialize_arrays
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       END IF
 !

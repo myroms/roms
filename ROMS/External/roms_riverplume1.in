@@ -2,7 +2,7 @@
 !  ROMS/TOMS Standard Input parameters.
 !
 !git $Id$
-!svn $Id: roms_riverplume1.in 1099 2022-01-06 21:01:01Z arango $
+!svn $Id: roms_riverplume1.in 1103 2022-01-13 03:38:35Z arango $
 !========================================================= Hernan G. Arango ===
 !  Copyright (c) 2002-2022 The ROMS/TOMS Group                                !
 !    Licensed under a MIT/X style license                                     !
@@ -455,7 +455,7 @@ LtracerSponge == F F                            ! temperature, salinity, inert
 ! Sources/Sinks (like volume vertical influx), [1:Ngrids].
 
       LuvSrc == T                          ! horizontal momentum transport
-       LwSrc == F                          ! volume vertical influx
+       LwSrc == T                          ! volume vertical influx
 
 ! Logical switches (TRUE/FALSE) to activate tracers point Sources/Sinks
 ! (like river runoff) and to specify which tracer variables to consider:

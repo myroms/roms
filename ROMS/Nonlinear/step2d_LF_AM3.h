@@ -1,7 +1,7 @@
       MODULE step2d_mod
 !
 !git $Id$
-!svn $Id: step2d_LF_AM3.h 1099 2022-01-06 21:01:01Z arango $
+!svn $Id: step2d_LF_AM3.h 1103 2022-01-13 03:38:35Z arango $
 !=======================================================================
 !                                                                      !
 !  Nonlinear shallow-water primitive equations predictor (Leap-frog)   !
@@ -892,15 +892,19 @@
 !
 !  Apply mass point sources (volume vertical influx), if any.
 !
+!    Dsrc(is) = 2,  flow across grid cell w-face (positive or negative)
+!
       IF (LwSrc(ng)) THEN
         DO is=1,Nsrc(ng)
-          i=SOURCES(ng)%Isrc(is)
-          j=SOURCES(ng)%Jsrc(is)
-          IF (((IstrR.le.i).and.(i.le.IendR)).and.                      &
-     &        ((JstrR.le.j).and.(j.le.JendR))) THEN
-            zeta(i,j,knew)=zeta(i,j,knew)+                              &
-     &                     SOURCES(ng)%Qbar(is)*                        &
-     &                     pm(i,j)*pn(i,j)*dtfast(ng)
+          IF (INT(SOURCES(ng)%Dsrc(is)).eq.2) THEN
+            i=SOURCES(ng)%Isrc(is)
+            j=SOURCES(ng)%Jsrc(is)
+            IF (((IstrR.le.i).and.(i.le.IendR)).and.                    &
+     &          ((JstrR.le.j).and.(j.le.JendR))) THEN
+              zeta(i,j,knew)=zeta(i,j,knew)+                            &
+     &                       SOURCES(ng)%Qbar(is)*                      &
+     &                       pm(i,j)*pn(i,j)*dtfast(ng)
+            END IF
           END IF
         END DO
       END IF
@@ -2473,6 +2477,9 @@
 !
 !-----------------------------------------------------------------------
 !  Apply momentum transport point sources (like river runoff), if any.
+!
+!    Dsrc(is) = 0,  flow across grid cell u-face (positive or negative)
+!    Dsrc(is) = 1,  flow across grid cell v-face (positive or negative)
 !-----------------------------------------------------------------------
 !
       IF (LuvSrc(ng)) THEN
@@ -2486,7 +2493,7 @@
      &                    0.5_r8*(zeta(i-1,j,knew)+h(i-1,j)+            &
      &                            zeta(i  ,j,knew)+h(i  ,j)))
               ubar(i,j,knew)=SOURCES(ng)%Qbar(is)*cff
-            ELSE
+            ELSE IF (INT(SOURCES(ng)%Dsrc(is)).eq.1) THEN
               cff=1.0_r8/(om_v(i,j)*                                    &
      &                    0.5_r8*(zeta(i,j-1,knew)+h(i,j-1)+            &
      &                            zeta(i,j  ,knew)+h(i,j  )))

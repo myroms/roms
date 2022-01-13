@@ -1,7 +1,7 @@
       MODULE roms_kernel_mod
 !
 !git $Id$
-!svn $Id: array_modes.h 1099 2022-01-06 21:01:01Z arango $
+!svn $Id: array_modes.h 1103 2022-01-13 03:38:35Z arango $
 !=================================================== Andrew M. Moore ===
 !  Copyright (c) 2002-2022 The ROMS/TOMS Group      Hernan G. Arango   !
 !    Licensed under a MIT/X style license                              !
@@ -217,10 +217,7 @@
 !
         CALL ROMS_allocate_arrays (allocate_vars)
         CALL ROMS_initialize_arrays
-!
-!  Allocate and initialize observation arrays.
-!
-        CALL initialize_fourdvar
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       END IF
 
