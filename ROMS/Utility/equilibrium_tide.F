@@ -3,7 +3,7 @@
 #if defined TIDE_GENERATING_FORCES
 !
 !git $Id$
-!svn $Id: equilibrium_tide.F 1099 2022-01-06 21:01:01Z arango $
+!svn $Id: equilibrium_tide.F 1106 2022-01-26 02:36:18Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2022 The ROMS/TOMS Group           John Wilkin   !
 !    Licensed under a MIT/X style license                              !
@@ -187,27 +187,27 @@
 !
       DO j=JstrT,JendT
         DO i=IstrT,IendT
-          eq_tide(i,j)=Q1.Afl*SinLat2(i,j)*                             &
-     &                 COS(Q1.omega*t_time_sec+                         &
-     &                     deg2rad*(lonr(i,j)+Q1.chi+Q1.nu))+           &
-     &                 O1.Afl*SinLat2(i,j)*                             &
-     &                 COS(O1.omega*t_time_sec+                         &
-     &                     deg2rad*(lonr(i,j)+O1.chi+O1.nu))+           &
-     &                 K1.Afl*SinLat2(i,j)*                             &
-     &                 COS(K1.omega*t_time_sec+                         &
-     &                     deg2rad*(lonr(i,j)+K1.chi+K1.nu))+           &
-     &                 N2.Afl*Cos2Lat(i,j)*                             &
-     &                 COS(N2.omega*t_time_sec+                         &
-     &                     deg2rad*(2.0_r8*lonr(i,j)+N2.chi+N2.nu))+    &
-     &                 M2.Afl*Cos2Lat(i,j)*                             &
-     &                 COS(M2.omega*t_time_sec+                         &
-     &                     deg2rad*(2.0_r8*lonr(i,j)+M2.chi+M2.nu))+    &
-     &                 S2.Afl*Cos2Lat(i,j)*                             &
-     &                 COS(S2.omega*t_time_sec+                         &
-     &                     deg2rad*(2.0+r8*lonr(i,j)+S2.chi+S2.nu))+    &
-     &                 K2.Afl*Cos2Lat(i,j)*                             &
-     &                 COS(K2.omega*t_time_sec+                         &
-     &                     deg2rad*(2.0_r8*lonr(i,j)+K2.chi+K2.nu))
+          eq_tide(i,j)=Q1%Afl*SinLat2(i,j)*                             &
+     &                 COS(Q1%omega*t_time_sec+                         &
+     &                     deg2rad*(lonr(i,j)+Q1%chi+Q1%nu))+           &
+     &                 O1%Afl*SinLat2(i,j)*                             &
+     &                 COS(O1%omega*t_time_sec+                         &
+     &                     deg2rad*(lonr(i,j)+O1%chi+O1%nu))+           &
+     &                 K1%Afl*SinLat2(i,j)*                             &
+     &                 COS(K1%omega*t_time_sec+                         &
+     &                     deg2rad*(lonr(i,j)+K1%chi+K1%nu))+           &
+     &                 N2%Afl*Cos2Lat(i,j)*                             &
+     &                 COS(N2%omega*t_time_sec+                         &
+     &                     deg2rad*(2.0_r8*lonr(i,j)+N2%chi+N2%nu))+    &
+     &                 M2%Afl*Cos2Lat(i,j)*                             &
+     &                 COS(M2%omega*t_time_sec+                         &
+     &                     deg2rad*(2.0_r8*lonr(i,j)+M2%chi+M2%nu))+    &
+     &                 S2%Afl*Cos2Lat(i,j)*                             &
+     &                 COS(S2%omega*t_time_sec+                         &
+     &                     deg2rad*(2.0+r8*lonr(i,j)+S2%chi+S2%nu))+    &
+     &                 K2%Afl*Cos2Lat(i,j)*                             &
+     &                 COS(K2%omega*t_time_sec+                         &
+     &                     deg2rad*(2.0_r8*lonr(i,j)+K2%chi+K2%nu))
         END DO
       END DO
 !
@@ -303,89 +303,89 @@
 !  cycle.
 !
       IF (Lnodal) THEN                                 ! f nodal factor
-        O1.f=1.009_r8+0.187_r8*COS(N)-0.015_r8*COS(2.0_r8*N)
-        K1.f=1.006_r8+0.115_r8*COS(N)-0.009_r8*COS(2.0_r8*N)
-        M2.f=1.0_r8-0.037_r8*COS(N)
-        S2.f=1.0_r8
-        K2.f=1.024_r8+0.286_r8*COS(N)+0.008_r8*COS(2.0_r8*N)
+        O1%f=1.009_r8+0.187_r8*COS(N)-0.015_r8*COS(2.0_r8*N)
+        K1%f=1.006_r8+0.115_r8*COS(N)-0.009_r8*COS(2.0_r8*N)
+        M2%f=1.0_r8-0.037_r8*COS(N)
+        S2%f=1.0_r8
+        K2%f=1.024_r8+0.286_r8*COS(N)+0.008_r8*COS(2.0_r8*N)
       ELSE
-        O1.f=1.0_r8
-        K1.f=1.0_r8
-        M2.f=1.0_r8
-        S2.f=1.0_r8
-        K2.f=1.0_r8
+        O1%f=1.0_r8
+        K1%f=1.0_r8
+        M2%f=1.0_r8
+        S2%f=1.0_r8
+        K2%f=1.0_r8
       END IF
-      Q1.f=O1.f
-      N2.f=M2.f
+      Q1%f=O1%f
+      N2%f=M2%f
 !
       IF (Lnodal) THEN                                 ! nu nodal factor
-        O1.nu=10.8_r8*SIN(N)-1.3_r8*SIN(2.0_r8*N)
-        K1.nu=-8.9_r8*SIN(N)+0.7_r8*SIN(2.0_r8*N)
-        M2.nu=-2.1_r8*SIN(N)
-        S2.nu=0.0_r8
-        K2.nu=-17.7_r8*SIN(N)+0.7_r8*SIN(2.0_r8*N)
+        O1%nu=10.8_r8*SIN(N)-1.3_r8*SIN(2.0_r8*N)
+        K1%nu=-8.9_r8*SIN(N)+0.7_r8*SIN(2.0_r8*N)
+        M2%nu=-2.1_r8*SIN(N)
+        S2%nu=0.0_r8
+        K2%nu=-17.7_r8*SIN(N)+0.7_r8*SIN(2.0_r8*N)
       ELSE
-        O1.nu=0.0_r8
-        K1.nu=0.0_r8
-        M2.nu=0.0_r8
-        S2.nu=0.0_r8
-        K2.nu=0.0_r8
+        O1%nu=0.0_r8
+        K1%nu=0.0_r8
+        M2%nu=0.0_r8
+        S2%nu=0.0_r8
+        K2%nu=0.0_r8
       END IF
-      Q1.nu=O1.nu
-      N2.nu=M2.nu
+      Q1%nu=O1%nu
+      N2%nu=M2%nu
 !
 !  Compute tidal constituent phase "chi" (degrees) at Greenwich meridian,
 !  lambda = 0.
 !
-      Q1.chi=h-3.0_r8*s+p-90.0_r8
-      O1.chi=h-2.0_r8*s-90.0_r8
-      K1.chi=h+90.0_r8
-      N2.chi=2.0_r8*h-3.0_r8*s+p
-      M2.chi=2.0_r8*h-2.0_r8*s
-      S2.chi=0.0_r8
-      K2.chi=2.0_r8*h
+      Q1%chi=h-3.0_r8*s+p-90.0_r8
+      O1%chi=h-2.0_r8*s-90.0_r8
+      K1%chi=h+90.0_r8
+      N2%chi=2.0_r8*h-3.0_r8*s+p
+      M2%chi=2.0_r8*h-2.0_r8*s
+      S2%chi=0.0_r8
+      K2%chi=2.0_r8*h
 !
 !  Compute tidal constituent frequency (1/s).
 !
-      Q1.omega=0.6495854E-4_r8
-      O1.omega=0.6759774E-4_r8
-      K1.omega=0.7292117E-4_r8
-      N2.omega=1.378797E-4_r8
-      M2.omega=1.405189E-4_r8
-      S2.omega=1.454441E-4_r8
-      K2.omega=1.458423E-4_r8
+      Q1%omega=0.6495854E-4_r8
+      O1%omega=0.6759774E-4_r8
+      K1%omega=0.7292117E-4_r8
+      N2%omega=1.378797E-4_r8
+      M2%omega=1.405189E-4_r8
+      S2%omega=1.454441E-4_r8
+      K2%omega=1.458423E-4_r8
 !
 !  Compute tidal constituent amplitude (m).
 !
-      Q1.amp= 1.9273E-2_r8
-      O1.amp=10.0661E-2_r8
-      K1.amp=14.1565E-2_r8
-      N2.amp= 4.6397E-2_r8
-      M2.amp=24.2334E-2_r8
-      S2.amp=11.2743E-2_r8
-      K2.amp= 3.0684E-2_r8
+      Q1%amp= 1.9273E-2_r8
+      O1%amp=10.0661E-2_r8
+      K1%amp=14.1565E-2_r8
+      N2%amp= 4.6397E-2_r8
+      M2%amp=24.2334E-2_r8
+      S2%amp=11.2743E-2_r8
+      K2%amp= 3.0684E-2_r8
 !
 !  Compute tidal constituent Love number factors (1+k2-h2).  The Love
 !  number is defined as the ratio of the body tide to the height of
 !  the static equilibrium tide.
 !
-      Q1.love=0.695_r8
-      O1.love=0.695_r8
-      K1.love=0.736_r8
-      N2.love=0.693_r8
-      M2.love=0.693_r8
-      S2.love=0.693_r8
-      K2.love=0.693_r8
+      Q1%love=0.695_r8
+      O1%love=0.695_r8
+      K1%love=0.736_r8
+      N2%love=0.693_r8
+      M2%love=0.693_r8
+      S2%love=0.693_r8
+      K2%love=0.693_r8
 !
 !  Compute product of amp*f*love.
 !
-      Q1.Afl=Q1.amp*Q1.f*Q1.love
-      O1.Afl=O1.amp*O1.f*O1.love
-      K1.Afl=K1.amp*K1.f*K1.love
-      N2.Afl=N2.amp*N2.f*N2.love
-      M2.Afl=M2.amp*M2.f*M2.love
-      S2.Afl=S2.amp*S2.f*S2.love
-      K2.Afl=K2.amp*K2.f*K2.love
+      Q1%Afl=Q1%amp*Q1%f*Q1%love
+      O1%Afl=O1%amp*O1%f*O1%love
+      K1%Afl=K1%amp*K1%f*K1%love
+      N2%Afl=N2%amp*N2%f*N2%love
+      M2%Afl=M2%amp*M2%f*M2%love
+      S2%Afl=S2%amp*S2%f*S2%love
+      K2%Afl=K2%amp*K2%f*K2%love
 !
       RETURN
       END SUBROUTINE harmonic_constituents
