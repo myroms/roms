@@ -1,5 +1,7 @@
 # Regional Ocean Modeling System (ROMS)
 
+![roms-jedi logo](https://www.myroms.org/trac/roms_src_600px.png)
+
 The dynamical kernel of ROMS is comprised of four separate models, including the 
 nonlinear (NLM), perturbation tangent linear (TLM), finite amplitude tangent 
 linear (RPM), and adjoint (ADM). They are located in the Nonlinear, Tangent, 
