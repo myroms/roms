@@ -2,7 +2,7 @@
       MODULE def_info_mod
 !
 !git $Id$
-!svn $Id: def_info.F 1099 2022-01-06 21:01:01Z arango $
+!svn $Id: def_info.F 1107 2022-01-31 00:06:54Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2022 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -3035,7 +3035,7 @@
         Vinfo( 2)='user generic parameters'
         Vinfo(14)='user, scalar'
         Vinfo(24)='_FillValue'
-        Aval(6)=0.0_r8
+        Aval(6)=spval
         status=def_var(ng, model, ncid, varid, NF_TYPE,                 &
      &                 1, (/usrdim/), Aval, Vinfo, ncname,              &
      &               SetParAccess = .FALSE.)
@@ -6429,7 +6429,7 @@
         Vinfo( 2)='user generic parameters'
         Vinfo(14)='user, scalar'
         Vinfo(24)='_FillValue'
-        Aval(6)=0.0_r8
+        Aval(6)=spval
         status=def_var(ng, model, pioFile, pioVar, PIO_TYPE,            &
      &                 1, (/usrdim/), Aval, Vinfo, ncname,              &
      &               SetParAccess = .FALSE.)
