@@ -1,7 +1,7 @@
 #!/bin/csh -f
 #
 # git $Id$
-# svn $Id: build_roms.csh 1099 2022-01-06 21:01:01Z arango $
+# svn $Id: build_roms.csh 1108 2022-02-25 20:23:31Z arango $
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # Copyright (c) 2002-2022 The ROMS/TOMS Group                           :::
 #   Licensed under a MIT/X style license                                :::
@@ -190,7 +190,7 @@ setenv MY_PROJECT_DIR        ${PWD}
 # If any of the coupling component use the HDF5 Fortran API for primary
 # I/O, we need to compile the main driver with the HDF5 library.
 
-#setevn USE_HDF5            on          # compile with HDF5 library
+#setenv USE_HDF5            on          # compile with HDF5 library
 
 #--------------------------------------------------------------------------
 # If coupling Earth Systems Models (ESM), set the location of the ESM
