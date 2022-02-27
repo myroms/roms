@@ -2,7 +2,7 @@
 !  ROMS/TOMS Standard Input parameters.
 !
 !git $Id$
-!svn $Id: roms_sed_toy.in 1099 2022-01-06 21:01:01Z arango $
+!svn $Id: roms_sed_toy.in 1110 2022-02-27 21:37:32Z arango $
 !========================================================= Hernan G. Arango ===
 !  Copyright (c) 2002-2022 The ROMS/TOMS Group                                !
 !    Licensed under a MIT/X style license                                     !
@@ -74,7 +74,7 @@
 ! Input variable information file name.  This file needs to be processed
 ! first so all information arrays can be initialized properly.
 
-     VARNAME = ROMS/External/varinfo.dat
+     VARNAME = ROMS/External/varinfo.yaml
 
 ! Number of nested grids.
 

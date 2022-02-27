@@ -3,7 +3,7 @@
 #ifdef FOUR_DVAR
 !
 !git $Id$
-!svn $Id: def_norm.F 1099 2022-01-06 21:01:01Z arango $
+!svn $Id: def_norm.F 1110 2022-02-27 21:37:32Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2022 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -412,6 +412,7 @@
         WRITE (Vinfo( 3),'(a,a)') 'seconds since ', TRIM(Rclock%string)
         Vinfo( 4)=TRIM(Rclock%calendar)
         Vinfo(14)=Vname(4,idtime)
+        Vinfo(21)=Vname(6,idtime)
         status=def_var(ng, iTLM, NRM(ifile,ng)%ncid,                    &
      &                 NRM(ifile,ng)%Vid(idtime),                       &
      &                 NF_TOUT, 1, (/recdim/), Aval, Vinfo, ncname,     &
@@ -439,6 +440,7 @@
 # if defined WRITE_WATER && defined MASKING
           Vinfo(20)='mask_rho'
 # endif
+          Vinfo(21)=Vname(6,idFsur)
           Vinfo(22)='coordinates'
           Aval(5)=REAL(Iinfo(1,idFsur,ng),r8)
           status=def_var(ng, iTLM, NRM(ifile,ng)%ncid,                  &
@@ -456,6 +458,7 @@
 # if defined WRITE_WATER && defined MASKING
           Vinfo(20)='mask_u'
 # endif
+          Vinfo(21)=Vname(6,idUbar)
           Vinfo(22)='coordinates'
           Aval(5)=REAL(Iinfo(1,idUbar,ng),r8)
           status=def_var(ng, iTLM, NRM(ifile,ng)%ncid,                  &
@@ -473,6 +476,7 @@
 # if defined WRITE_WATER && defined MASKING
           Vinfo(20)='mask_v'
 # endif
+          Vinfo(21)=Vname(6,idVbar)
           Vinfo(22)='coordinates'
           Aval(5)=REAL(Iinfo(1,idVbar,ng),r8)
           status=def_var(ng, iTLM, NRM(ifile,ng)%ncid,                  &
@@ -492,6 +496,7 @@
 #  if defined WRITE_WATER && defined MASKING
           Vinfo(20)='mask_u'
 #  endif
+          Vinfo(21)=Vname(6,idUvel)
           Vinfo(22)='coordinates'
           Aval(5)=REAL(Iinfo(1,idUvel,ng),r8)
           status=def_var(ng, iTLM, NRM(ifile,ng)%ncid,                  &
@@ -509,6 +514,7 @@
 #  if defined WRITE_WATER && defined MASKING
           Vinfo(20)='mask_v'
 #  endif
+          Vinfo(21)=Vname(6,idVvel)
           Vinfo(22)='coordinates'
           Aval(5)=REAL(Iinfo(1,idVvel,ng),r8)
           status=def_var(ng, iTLM, NRM(ifile,ng)%ncid,                  &
@@ -534,6 +540,7 @@
 #  if defined WRITE_WATER && defined MASKING
             Vinfo(20)='mask_rho'
 #  endif
+            Vinfo(21)=Vname(6,idTvar(itrc))
             Vinfo(22)='coordinates'
             Aval(5)=REAL(r3dvar,r8)
             status=def_var(ng, iTLM, NRM(ifile,ng)%ncid,                &
@@ -561,6 +568,7 @@
             Vinfo( 3)=Vname(3,ifield)
             Vinfo(14)=Vname(4,ifield)
             Vinfo(16)=Vname(1,idtime)
+            Vinfo(21)=Vname(6,ifield)
             Aval(5)=REAL(Iinfo(1,ifield,ng),r8)
             status=def_var(ng, iTLM, NRM(ifile,ng)%ncid,                &
      &                     NRM(ifile,ng)%Vid(ifield),                   &
@@ -578,6 +586,7 @@
             Vinfo( 3)=Vname(3,ifield)
             Vinfo(14)=Vname(4,ifield)
             Vinfo(16)=Vname(1,idtime)
+            Vinfo(21)=Vname(6,ifield)
             Aval(5)=REAL(Iinfo(1,ifield,ng),r8)
             status=def_var(ng, iTLM, NRM(ifile,ng)%ncid,                &
      &                     NRM(ifile,ng)%Vid(ifield),                   &
@@ -595,6 +604,7 @@
             Vinfo( 3)=Vname(3,ifield)
             Vinfo(14)=Vname(4,ifield)
             Vinfo(16)=Vname(1,idtime)
+            Vinfo(21)=Vname(6,ifield)
             Aval(5)=REAL(Iinfo(1,ifield,ng),r8)
             status=def_var(ng, iTLM, NRM(ifile,ng)%ncid,                &
      &                     NRM(ifile,ng)%Vid(ifield),                   &
@@ -614,6 +624,7 @@
             Vinfo( 3)=Vname(3,ifield)
             Vinfo(14)=Vname(4,ifield)
             Vinfo(16)=Vname(1,idtime)
+            Vinfo(21)=Vname(6,ifield)
             Aval(5)=REAL(Iinfo(1,ifield,ng),r8)
             status=def_var(ng, iTLM, NRM(ifile,ng)%ncid,                &
      &                     NRM(ifile,ng)%Vid(ifield),                   &
@@ -631,6 +642,7 @@
             Vinfo( 3)=Vname(3,ifield)
             Vinfo(14)=Vname(4,ifield)
             Vinfo(16)=Vname(1,idtime)
+            Vinfo(21)=Vname(6,ifield)
             Aval(5)=REAL(Iinfo(1,ifield,ng),r8)
             status=def_var(ng, iTLM, NRM(ifile,ng)%ncid,                &
      &                     NRM(ifile,ng)%Vid(ifield),                   &
@@ -656,6 +668,7 @@
                 END IF
               END DO
 #   endif
+              Vinfo(21)=Vname(6,ifield)
               Aval(5)=REAL(Iinfo(1,ifield,ng),r8)
               status=def_var(ng, iTLM, NRM(ifile,ng)%ncid,              &
      &                       NRM(ifile,ng)%Vid(ifield),                 &
@@ -689,6 +702,7 @@
 #   if defined WRITE_WATER && defined MASKING
           Vinfo(20)='mask_u'
 #   endif
+          Vinfo(21)=Vname(6,idUsms)
           Vinfo(22)='coordinates'
           Aval(5)=REAL(u2dvar,r8)
           status=def_var(ng, iTLM, NRM(ifile,ng)%ncid,                  &
@@ -707,6 +721,7 @@
 #   if defined WRITE_WATER && defined MASKING
           Vinfo(20)='mask_v'
 #   endif
+          Vinfo(21)=Vname(6,idVsms)
           Vinfo(22)='coordinates'
           Aval(5)=REAL(v2dvar,r8)
           status=def_var(ng, iTLM, NRM(ifile,ng)%ncid,                  &
@@ -730,6 +745,7 @@
 #   if defined WRITE_WATER && defined MASKING
               Vinfo(20)='mask_rho'
 #   endif
+              Vinfo(21)=Vname(6,idTsur(itrc))
               Vinfo(22)='coordinates'
               Aval(5)=REAL(r2dvar,r8)
               status=def_var(ng, iTLM, NRM(ifile,ng)%ncid,              &
@@ -1338,6 +1354,7 @@
         WRITE (Vinfo( 3),'(a,a)') 'seconds since ', TRIM(Rclock%string)
         Vinfo( 4)=TRIM(Rclock%calendar)
         Vinfo(14)=Vname(4,idtime)
+        Vinfo(21)=Vname(6,idtime)
         NRM(ifile,ng)%pioVar(idtime)%dkind=PIO_TOUT
         NRM(ifile,ng)%pioVar(idtime)%gtype=0
 !
@@ -1368,6 +1385,7 @@
 # if defined WRITE_WATER && defined MASKING
           Vinfo(20)='mask_rho'
 # endif
+          Vinfo(21)=Vname(6,idFsur)
           Vinfo(22)='coordinates'
           Aval(5)=REAL(Iinfo(1,idFsur,ng),r8)
           NRM(ifile,ng)%pioVar(idFsur)%dkind=PIO_FOUT
@@ -1388,6 +1406,7 @@
 # if defined WRITE_WATER && defined MASKING
           Vinfo(20)='mask_u'
 # endif
+          Vinfo(21)=Vname(6,idUbar)
           Vinfo(22)='coordinates'
           Aval(5)=REAL(Iinfo(1,idUbar,ng),r8)
           NRM(ifile,ng)%pioVar(idUbar)%dkind=PIO_FOUT
@@ -1408,6 +1427,7 @@
 # if defined WRITE_WATER && defined MASKING
           Vinfo(20)='mask_v'
 # endif
+          Vinfo(21)=Vname(6,idVbar)
           Vinfo(22)='coordinates'
           Aval(5)=REAL(Iinfo(1,idVbar,ng),r8)
           NRM(ifile,ng)%pioVar(idVbar)%dkind=PIO_FOUT
@@ -1430,6 +1450,7 @@
 #  if defined WRITE_WATER && defined MASKING
           Vinfo(20)='mask_u'
 #  endif
+          Vinfo(21)=Vname(6,idUvel)
           Vinfo(22)='coordinates'
           Aval(5)=REAL(Iinfo(1,idUvel,ng),r8)
           NRM(ifile,ng)%pioVar(idUvel)%dkind=PIO_FOUT
@@ -1450,6 +1471,7 @@
 #  if defined WRITE_WATER && defined MASKING
           Vinfo(20)='mask_v'
 #  endif
+          Vinfo(21)=Vname(6,idVvel)
           Vinfo(22)='coordinates'
           Aval(5)=REAL(Iinfo(1,idVvel,ng),r8)
           NRM(ifile,ng)%pioVar(idVvel)%dkind=PIO_FOUT
@@ -1478,6 +1500,7 @@
 #  if defined WRITE_WATER && defined MASKING
             Vinfo(20)='mask_rho'
 #  endif
+            Vinfo(21)=Vname(6,idTvar(itrc))
             Vinfo(22)='coordinates'
             Aval(5)=REAL(r3dvar,r8)
             NRM(ifile,ng)%pioTrc(itrc)%dkind=PIO_FOUT
@@ -1508,6 +1531,7 @@
             Vinfo( 3)=Vname(3,ifield)
             Vinfo(14)=Vname(4,ifield)
             Vinfo(16)=Vname(1,idtime)
+            Vinfo(21)=Vname(6,ifield)
             Aval(5)=REAL(Iinfo(1,ifield,ng),r8)
             NRM(ifile,ng)%pioVar(ifield)%dkind=PIO_FOUT
             NRM(ifile,ng)%pioVar(ifield)%gtype=r2dobc
@@ -1528,6 +1552,7 @@
             Vinfo( 3)=Vname(3,ifield)
             Vinfo(14)=Vname(4,ifield)
             Vinfo(16)=Vname(1,idtime)
+            Vinfo(21)=Vname(6,ifield)
             Aval(5)=REAL(Iinfo(1,ifield,ng),r8)
             NRM(ifile,ng)%pioVar(ifield)%dkind=PIO_FOUT
             NRM(ifile,ng)%pioVar(ifield)%gtype=u2dobc
@@ -1548,6 +1573,7 @@
             Vinfo( 3)=Vname(3,ifield)
             Vinfo(14)=Vname(4,ifield)
             Vinfo(16)=Vname(1,idtime)
+            Vinfo(21)=Vname(6,ifield)
             Aval(5)=REAL(Iinfo(1,ifield,ng),r8)
             NRM(ifile,ng)%pioVar(ifield)%dkind=PIO_FOUT
             NRM(ifile,ng)%pioVar(ifield)%gtype=v2dobc
@@ -1570,6 +1596,7 @@
             Vinfo( 3)=Vname(3,ifield)
             Vinfo(14)=Vname(4,ifield)
             Vinfo(16)=Vname(1,idtime)
+            Vinfo(21)=Vname(6,ifield)
             Aval(5)=REAL(Iinfo(1,ifield,ng),r8)
             NRM(ifile,ng)%pioVar(ifield)%dkind=PIO_FOUT
             NRM(ifile,ng)%pioVar(ifield)%gtype=u3dobc
@@ -1590,6 +1617,7 @@
             Vinfo( 3)=Vname(3,ifield)
             Vinfo(14)=Vname(4,ifield)
             Vinfo(16)=Vname(1,idtime)
+            Vinfo(21)=Vname(6,ifield)
             Aval(5)=REAL(Iinfo(1,ifield,ng),r8)
             NRM(ifile,ng)%pioVar(ifield)%dkind=PIO_FOUT
             NRM(ifile,ng)%pioVar(ifield)%gtype=v3dobc
@@ -1618,6 +1646,7 @@
                 END IF
               END DO
 #   endif
+              Vinfo(21)=Vname(6,ifield)
               Aval(5)=REAL(Iinfo(1,ifield,ng),r8)
               NRM(ifile,ng)%pioVar(ifield)%dkind=PIO_FOUT
               NRM(ifile,ng)%pioVar(ifield)%gtype=r3dobc
@@ -1654,6 +1683,7 @@
 #   if defined WRITE_WATER && defined MASKING
           Vinfo(20)='mask_u'
 #   endif
+          Vinfo(21)=Vname(6,idUsms)
           Vinfo(22)='coordinates'
           Aval(5)=REAL(u2dvar,r8)
           NRM(ifile,ng)%pioVar(idUsms)%dkind=PIO_FOUT
@@ -1675,6 +1705,7 @@
 #   if defined WRITE_WATER && defined MASKING
           Vinfo(20)='mask_v'
 #   endif
+          Vinfo(21)=Vname(6,idVsms)
           Vinfo(22)='coordinates'
           Aval(5)=REAL(v2dvar,r8)
           NRM(ifile,ng)%pioVar(idVsms)%dkind=PIO_FOUT
@@ -1701,6 +1732,7 @@
 #   if defined WRITE_WATER && defined MASKING
               Vinfo(20)='mask_rho'
 #   endif
+              Vinfo(21)=Vname(6,idTsur(itrc))
               Vinfo(22)='coordinates'
               Aval(5)=REAL(r2dvar,r8)
               NRM(ifile,ng)%pioVar(idTsur(itrc))%dkind=PIO_FOUT

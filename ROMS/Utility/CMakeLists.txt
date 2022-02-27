@@ -1,5 +1,5 @@
 # git $Id$
-# svn $Id: CMakeLists.txt 1099 2022-01-06 21:01:01Z arango $
+# svn $Id: CMakeLists.txt 1110 2022-02-27 21:37:32Z arango $
 #:::::::::::::::::::::::::::::::::::::::::::::::::::::: David Robertson :::
 # Copyright (c) 2002-2022 The ROMS/TOMS Group                           :::
 #   Licensed under a MIT/X style license                                :::
@@ -65,6 +65,7 @@ list( APPEND _files
       ROMS/Utility/get_grid.F
       ROMS/Utility/get_gst.F
       ROMS/Utility/get_hash.F
+      ROMS/Utility/get_metadata.F
       ROMS/Utility/get_ngfld.F
       ROMS/Utility/get_ngfldr.F
       ROMS/Utility/get_nudgcoef.F
@@ -181,6 +182,7 @@ list( APPEND _files
       ROMS/Utility/wrt_state.F
       ROMS/Utility/wrt_station.F
       ROMS/Utility/wrt_tides.F
+      ROMS/Utility/yaml_parser.F
       ROMS/Utility/zeta_balance.F
 )
 

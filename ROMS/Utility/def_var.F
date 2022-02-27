@@ -2,7 +2,7 @@
       MODULE def_var_mod
 !
 !git $Id$
-!svn $Id: def_var.F 1099 2022-01-06 21:01:01Z arango $
+!svn $Id: def_var.F 1110 2022-02-27 21:37:32Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2022 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -359,11 +359,29 @@
           END IF
         END IF
 !
-!  Define "longname" attribute.
+!  If applicable, define "standard_name" attribute.
 !
         IF (exit_flag.eq.NoError) THEN
-          latt=LEN_TRIM(Vinfo(2))
-          IF (latt.gt.0) THEN
+          latt=LEN_TRIM(Vinfo(21))
+          IF (latt.gt.0.and.(Vinfo(21)(1:6).ne.'nulval')) THEN
+            status=nf90_put_att(ncid, Vid, 'standard_name',             &
+     &                          Vinfo(21)(1:latt))
+            IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+              IF (Master) WRITE (stdout,30) 'standard_name',            &
+     &                                      TRIM(Vinfo(1)),             &
+     &                                      TRIM(ncname)
+              exit_flag=3
+              ioerror=status
+            END IF
+          END IF
+        END IF
+!
+!  Define "long_name" attribute.
+!
+        IF (exit_flag.eq.NoError) THEN
+          IF (LEN_TRIM(Vinfo(2)).gt.0) THEN
+            vinfo(2)=TRIM(ADJUSTL(vinfo(2)))
+            latt=LEN_TRIM(Vinfo(2))
             status=nf90_put_att(ncid, Vid, 'long_name',                 &
      &                          Vinfo(2)(1:latt))
             IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
@@ -659,6 +677,30 @@
           END IF
         END IF
 !
+!  If applicable, define "cell_methods" attribute.
+!
+        IF (exit_flag.eq.NoError) THEN
+          IF (((ABS(INT(Aval(5))).le.4).and.(nVdim.gt.2)).or.           &
+     &        ((ABS(INT(Aval(5))).gt.4).and.(nVdim.gt.3))) THEN
+            IF ((ncid.eq.AVG(ng)%ncid).or.                              &
+     &          (ncid.eq.DIA(ng)%ncid)) THEN
+              text='ocean_time: mean'
+            ELSE
+              text='ocean_time: point'
+            END IF
+            latt=LEN_TRIM(text)
+            status=nf90_put_att(ncid, Vid, 'cell_methods',              &
+     &                          text(1:latt))
+            IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+              IF (Master) WRITE (stdout,30) 'cell_methods',             &
+     &                                      text(1:latt),               &
+     &                                      TRIM(ncname)
+              exit_flag=3
+              ioerror=status
+            END IF
+          END IF
+        END IF
+!
 !  If applicable, define "missing_value" attribute.
 !
         IF (exit_flag.eq.NoError) THEN
@@ -752,23 +794,6 @@
      &                          Vinfo(20)(1:latt))
             IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
               IF (Master) WRITE (stdout,30) 'water_points',             &
-     &                                      TRIM(Vinfo(1)),             &
-     &                                      TRIM(ncname)
-              exit_flag=3
-              ioerror=status
-            END IF
-          END IF
-        END IF
-!
-!  If applicable, define "standard_name" attribute.
-!
-        IF (exit_flag.eq.NoError) THEN
-          latt=LEN_TRIM(Vinfo(21))
-          IF (latt.gt.0) THEN
-            status=nf90_put_att(ncid, Vid, 'standard_name',             &
-     &                          Vinfo(21)(1:latt))
-            IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-              IF (Master) WRITE (stdout,30) 'standard_name',            &
      &                                      TRIM(Vinfo(1)),             &
      &                                      TRIM(ncname)
               exit_flag=3
@@ -1055,7 +1080,7 @@
       logical, intent(in), optional :: SetFillVal
       logical, intent(in), optional :: SetParAccess
 !
-      integer, intent(in) :: ng, model, Vtype, nVdim
+      integer, intent(in) :: ng, model, FileH, Vtype, nVdim
 
       integer, dimension(:), intent (in) :: Vdim
 !
@@ -1086,6 +1111,10 @@
 !-----------------------------------------------------------------------
 !
       status=PIO_noerr
+!
+!  Get NetCDF file handle from descriptor.
+!
+      FileH=ABS(pioFile%fh)
 !
 !  Define variable.
 !
@@ -1276,11 +1305,12 @@
         END IF
       END IF
 !
-!  Define "longname" attribute.
+!  Define "long_name" attribute.
 !
       IF (exit_flag.eq.NoError) THEN
-        latt=LEN_TRIM(Vinfo(2))
-        IF (latt.gt.0) THEN
+        IF (LEN_TRIM(Vinfo(2)).gt.0) THEN
+          vinfo(2)=TRIM(ADJUSTL(vinfo(2)))
+          latt=LEN_TRIM(Vinfo(2))
           status=PIO_put_att(pioFile, pioVar, 'long_name',              &
      &                       Vinfo(2)(1:latt))
           IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
@@ -1575,6 +1605,30 @@
           END IF
         END IF
       END IF
+!
+!  If applicable, define "cell_methods" attribute.
+!
+        IF (exit_flag.eq.NoError) THEN
+          IF (((ABS(INT(Aval(5))).le.4).and.(nVdim.gt.2)).or.           &
+     &        ((ABS(INT(Aval(5))).gt.4).and.(nVdim.gt.3))) THEN
+            IF ((FileH.eq.ABS(AVG(ng)%pioFile%fh)).or.                  &
+     &          (FileH.eq.ABS(DIA(ng)%pioFile%fh))) THEN
+              text='ocean_time: mean'
+            ELSE
+              text='ocean_time: point'
+            END IF
+            latt=LEN_TRIM(text)
+            status=PIO_put_att(pioFile, pioVar, 'cell_methods',        &
+     &                         text(1:latt))
+            IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
+              IF (Master) WRITE (stdout,30) 'cell_methods',             &
+     &                                      text(1:latt),               &
+     &                                      TRIM(ncname)
+              exit_flag=3
+              ioerror=status
+            END IF
+          END IF
+        END IF
 !
 !  If applicable, define "missing_value" attribute.
 !

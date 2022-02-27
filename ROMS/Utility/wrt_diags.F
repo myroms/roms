@@ -3,7 +3,7 @@
 #ifdef DIAGNOSTICS
 !
 !git $Id$
-!svn $Id: wrt_diags.F 1099 2022-01-06 21:01:01Z arango $
+!svn $Id: wrt_diags.F 1110 2022-02-27 21:37:32Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2022 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -148,6 +148,26 @@
      &                      ncid = DIA(ng)%ncid,                        &
      &                      varid = DIA(ng)%Vid(idtime))
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+!
+!  Write out time-averaged free-surface (m).
+!
+      scale=1.0_dp
+      gtype=gfactor*r2dvar
+      status=nf_fwrite2d(ng, iNLM, DIA(ng)%ncid, DIA(ng)%Vid(idFsur),   &
+     &                   DIA(ng)%Rindex, gtype,                         &
+     &                   LBi, UBi, LBj, UBj, scale,                     &
+# ifdef MASKING
+     &                   GRID(ng) % rmask,                              &
+# endif
+     &                   DIAGS(ng) % avgzeta)
+      IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+        IF (Master) THEN
+          WRITE (stdout,10) TRIM(Vname(1,idFsur)), DIA(ng)%Rindex
+        END IF
+        exit_flag=3
+        ioerror=status
+        RETURN
+      END IF
 
 # ifdef DIAGNOSTICS_UV
 !
@@ -485,6 +505,32 @@
      &                          pioFile = DIA(ng)%pioFile,              &
      &                          pioVar = DIA(ng)%pioVar(idtime)%vd)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+!
+!  Write out time-averaged free-surface (m).
+!
+      scale=1.0_dp
+      IF (DIA(ng)%pioVar(idFsur)%dkind.eq.PIO_double) THEN
+        ioDesc => ioDesc_dp_r2dvar(ng)
+      ELSE
+        ioDesc => ioDesc_sp_r2dvar(ng)
+      END IF
+      status=nf_fwrite2d(ng, iNLM, DIA(ng)%pioFile,                     &
+     &                   DIA(ng)%pioVar(idFsur),                        &
+     &                   DIA(ng)%Rindex,                                &
+     &                   ioDesc,                                        &
+     &                   LBi, UBi, LBj, UBj, scale,                     &
+#  ifdef MASKING
+     &                   GRID(ng) % rmask,                              &
+#  endif
+     &                   DIAGS(ng) % avgzeta)
+      IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+        IF (Master) THEN
+          WRITE (stdout,10) TRIM(Vname(1,idFsur)), DIA(ng)%Rindex
+        END IF
+        exit_flag=3
+        ioerror=status
+        RETURN
+      END IF
 
 #  ifdef DIAGNOSTICS_UV
 !
