@@ -2,7 +2,7 @@
       MODULE mod_ncparam
 !
 !git $Id$
-!svn $Id: mod_ncparam.F 1099 2022-01-06 21:01:01Z arango $
+!svn $Id: mod_ncparam.F 1110 2022-02-27 21:37:32Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2022 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -18,8 +18,9 @@
 !               Vname(1,*)  => field variable name.                    !
 !               Vname(2,*)  => long-name attribute.                    !
 !               Vname(3,*)  => units attribute.                        !
-!               Vname(4,*)  => field type attribute.                   !
+!               Vname(4,*)  => field attribute.                        !
 !               Vname(5,*)  => associated time variable name.          !
+!               Vname(6,*)  => standard-name attribute.                !
 !  Tname      Input/output associated time variables names.            !
 !                                                                      !
 !  Cinfo      Input/output file names associated with each field       !
@@ -108,27 +109,6 @@
 !  defined variable dimensions in output NetCDF files.
 !
       integer, parameter :: nDimID = 33
-!
-!  Input/output grid-type variables.
-!
-      integer, parameter :: p2dvar = 1         ! 2D PSI-variable
-      integer, parameter :: r2dvar = 2         ! 2D RHO-variable
-      integer, parameter :: u2dvar = 3         ! 2D U-variable
-      integer, parameter :: v2dvar = 4         ! 2D V-variable
-      integer, parameter :: p3dvar = 5         ! 3D PSI-variable
-      integer, parameter :: r3dvar = 6         ! 3D RHO-variable
-      integer, parameter :: u3dvar = 7         ! 3D U-variable
-      integer, parameter :: v3dvar = 8         ! 3D V-variable
-      integer, parameter :: w3dvar = 9         ! 3D W-variable
-      integer, parameter :: b3dvar = 10        ! 3D BED-sediment
-      integer, parameter :: l3dvar = 11        ! 3D spectral light
-      integer, parameter :: l4dvar = 12        ! 4D spectral light
-      integer, parameter :: r2dobc = 13        ! 2D OBC RHO-variable
-      integer, parameter :: u2dobc = 14        ! 2D OBC U-variable
-      integer, parameter :: v2dobc = 15        ! 2D OBC V-variable
-      integer, parameter :: r3dobc = 16        ! 3D OBC RHO-variable
-      integer, parameter :: u3dobc = 17        ! 3D OBC U-variable
-      integer, parameter :: v3dobc = 18        ! 3D OBC V-variable
 !
 !  Number of horizontal interior and boundary water points.
 !
@@ -545,12 +525,12 @@
       real(dp), allocatable :: Tintrp(:,:,:)
       real(dp), allocatable :: Vtime(:,:,:)
 !
-      character (len=5  ) :: version = '4.0  '
+      character (len=5  ) :: version = '4.1  '
       character (len=40 ) :: varnam(MV)
       character (len=44 ) :: date_str
       character (len=46 ) :: Tname(0:NV)
-      character (len=100) :: Vname(5,0:NV)
       character (len=120) :: history
+      character (len=120) :: Vname(6,0:NV)
 
       character (len=256), allocatable :: Cinfo(:,:)
 
@@ -1114,23 +1094,27 @@
       USE mod_sediment
 #endif
 !
+      USE get_metadata_mod, ONLY : io_metadata
+      USE strings_mod,      ONLY : FoundError, StandardName
+!
 !  Local variable declarations.
 !
-      logical :: load
+      logical :: Ldone, load
 !
-      integer, parameter :: inp = 10
 #ifdef DISTRIBUTE
       integer :: Itile, Jtile
 #endif
-      integer :: Lvar, Ntiles, i, ic, io_err, j, ng
+      integer :: Lvar, Ntiles, i, ic, j, ng
       integer :: gtype, tile, varid
 !
-      real(r8), parameter :: spv = 0.0_r8
-      real(r8) :: offset, scale
+      real(dp), parameter :: spv = 0.0_dp
+      real(dp) :: add_offset, scale
 !
-      character (len=256) :: io_errmsg
+      character (len=120) :: string
+      character (len=120), dimension(8) :: Vinfo
 
-      character (len=120), dimension(7) :: Vinfo
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__//"initialize_ncparam"
 !
 !-----------------------------------------------------------------------
 !  Initialize several variables.
@@ -1336,777 +1320,758 @@
 #endif
 !
 !-----------------------------------------------------------------------
-!  Define names of variables for Input/Output NetCDF files.
+!  Process ROMS Input/Output metadata file and define variables
+!  information arrays.
 !-----------------------------------------------------------------------
 !
-!  Open input variable information file.
-!
-      OPEN (inp, FILE=TRIM(varname), FORM='formatted', STATUS='old',    &
-     &      IOSTAT=io_err, IOMSG=io_errmsg)
-      IF (io_err.ne.0) THEN
-        IF (Master) WRITE(stdout,50) TRIM(varname), TRIM(io_errmsg)
-        exit_flag=5
-        RETURN
-      END IF
-!
-!  Read in variable information.  Ignore blank, comment [char(33)=!]
-!  input lines, and URL line [char(36)=$].
-!
       varid=0
-      DO WHILE (.TRUE.)
-        READ (inp,*,ERR=30,END=40) Vinfo(1)
-        Lvar=LEN_TRIM(Vinfo(1))
+      Ldone=.FALSE.
 !
-!  Read in other variable information.
+      METADATA_LOOP : DO WHILE (.not.Ldone)
 !
-        IF ((Lvar.gt.0).and.                                            &
-     &      (Vinfo(1)(1:1).ne.CHAR(33)).and.                            &
-     &      (Vinfo(1)(1:1).ne.CHAR(36))) THEN
-          READ (inp,*,ERR=30) Vinfo(2)
-          READ (inp,*,ERR=30) Vinfo(3)
-          READ (inp,*,ERR=30) Vinfo(4)
-          READ (inp,*,ERR=30) Vinfo(5)
-          READ (inp,*,ERR=30) Vinfo(6)
-          READ (inp,*,ERR=30) Vinfo(7)
-          READ (inp,*,ERR=30) scale
+!  Load I/O metadata information.
+!
+        Ldone = io_metadata(Vinfo, scale, add_offset)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        IF (Ldone) EXIT
 !
 !  Determine staggered C-grid variable.
 !
-          SELECT CASE (TRIM(ADJUSTL(Vinfo(7))))
-            CASE ('p2dvar')
-              gtype=p2dvar
-            CASE ('r2dvar')
-              gtype=r2dvar
-            CASE ('u2dvar')
-              gtype=u2dvar
-            CASE ('v2dvar')
-              gtype=v2dvar
-            CASE ('p3dvar')
-              gtype=p3dvar
-            CASE ('r3dvar')
-              gtype=r3dvar
-            CASE ('u3dvar')
-              gtype=u3dvar
-            CASE ('v3dvar')
-              gtype=v3dvar
-            CASE ('w3dvar')
-              gtype=w3dvar
-            CASE ('b3dvar')
-              gtype=b3dvar
+        SELECT CASE (TRIM(ADJUSTL(Vinfo(7))))
+          CASE ('p2dvar')
+            gtype=p2dvar
+          CASE ('r2dvar')
+            gtype=r2dvar
+          CASE ('u2dvar')
+            gtype=u2dvar
+          CASE ('v2dvar')
+            gtype=v2dvar
+          CASE ('p3dvar')
+            gtype=p3dvar
+          CASE ('r3dvar')
+            gtype=r3dvar
+          CASE ('u3dvar')
+            gtype=u3dvar
+          CASE ('v3dvar')
+            gtype=v3dvar
+          CASE ('w3dvar')
+            gtype=w3dvar
+          CASE ('b3dvar')
+            gtype=b3dvar
 #if defined ECOSIM && defined DIAGNOSTICS_BIO
-            CASE ('l3dvar')
-              gtype=l3dvar
-            CASE ('l4dvar')
-              gtype=l4dvar
+          CASE ('l3dvar')
+            gtype=l3dvar
+          CASE ('l4dvar')
+            gtype=l4dvar
 #endif
-            CASE DEFAULT
-              gtype=0
-          END SELECT
+          CASE DEFAULT
+            gtype=0
+        END SELECT
 !
 !  Assign identification indices.
 !
-          load=.TRUE.
-          varid=varid+1
-          SELECT CASE (TRIM(ADJUSTL(Vinfo(6))))
-            CASE ('idtime')
-              idtime=varid
-            CASE ('idbath')
-              idbath=varid
-            CASE ('idpthR')
-              idpthR=varid
-            CASE ('idpthU')
-              idpthU=varid
-            CASE ('idpthV')
-              idpthV=varid
-            CASE ('idpthW')
-              idpthW=varid
-            CASE ('idFsur')
-              idFsur=varid
-            CASE ('idRzet')
-              idRzet=varid
-            CASE ('idUbar')
-              idUbar=varid
-            CASE ('idu2dE')
-              idu2dE=varid
-            CASE ('idRu2d')
-              idRu2d=varid
-            CASE ('idVbar')
-              idVbar=varid
-            CASE ('idv2dN')
-              idv2dN=varid
-            CASE ('idRv2d')
-              idRv2d=varid
-            CASE ('idUsur')
-              idUsur=varid
-            CASE ('idUsuE')
-              idUsuE=varid
-            CASE ('idUvel')
-              idUvel=varid
-            CASE ('idu3dE')
-              idu3dE=varid
-            CASE ('idRu3d')
-              idRu3d=varid
-            CASE ('idVsur')
-              idVsur=varid
-            CASE ('idVsuN')
-              idVsuN=varid
-            CASE ('idVvel')
-              idVvel=varid
-            CASE ('idv3dN')
-              idv3dN=varid
-            CASE ('idRv3d')
-              idRv3d=varid
-            CASE ('idWvel')
-              idWvel=varid
-            CASE ('idOvel')
-              idOvel=varid
-            CASE ('idDano')
-              idDano=varid
-            CASE ('idsurT(itemp)')
-              idsurT(itemp)=varid
+        load=.TRUE.
+        varid=varid+1
+        SELECT CASE (TRIM(ADJUSTL(Vinfo(8))))
+          CASE ('idtime')
+            idtime=varid
+          CASE ('idbath')
+            idbath=varid
+          CASE ('idpthR')
+            idpthR=varid
+          CASE ('idpthU')
+            idpthU=varid
+          CASE ('idpthV')
+            idpthV=varid
+          CASE ('idpthW')
+            idpthW=varid
+          CASE ('idFsur')
+            idFsur=varid
+          CASE ('idRzet')
+            idRzet=varid
+          CASE ('idUbar')
+            idUbar=varid
+          CASE ('idu2dE')
+            idu2dE=varid
+          CASE ('idRu2d')
+            idRu2d=varid
+          CASE ('idVbar')
+            idVbar=varid
+          CASE ('idv2dN')
+            idv2dN=varid
+          CASE ('idRv2d')
+            idRv2d=varid
+          CASE ('idUsur')
+            idUsur=varid
+          CASE ('idUsuE')
+            idUsuE=varid
+          CASE ('idUvel')
+            idUvel=varid
+          CASE ('idu3dE')
+            idu3dE=varid
+          CASE ('idRu3d')
+            idRu3d=varid
+          CASE ('idVsur')
+            idVsur=varid
+          CASE ('idVsuN')
+            idVsuN=varid
+          CASE ('idVvel')
+            idVvel=varid
+          CASE ('idv3dN')
+            idv3dN=varid
+          CASE ('idRv3d')
+            idRv3d=varid
+          CASE ('idWvel')
+            idWvel=varid
+          CASE ('idOvel')
+            idOvel=varid
+          CASE ('idDano')
+            idDano=varid
+          CASE ('idsurT(itemp)')
+            idsurT(itemp)=varid
 #ifdef SALINITY
-            CASE ('idsurT(isalt)')
-              idsurT(isalt)=varid
+          CASE ('idsurT(isalt)')
+            idsurT(isalt)=varid
 #endif
-            CASE ('idTvar(itemp)')
-              idTvar(itemp)=varid
+          CASE ('idTvar(itemp)')
+            idTvar(itemp)=varid
 #ifdef SALINITY
-            CASE ('idTvar(isalt)')
-              idTvar(isalt)=varid
+          CASE ('idTvar(isalt)')
+            idTvar(isalt)=varid
 #endif
-            CASE ('idUsms')
-              idUsms=varid
-            CASE ('idVsms')
-              idVsms=varid
-            CASE ('idUbms')
-              idUbms=varid
-            CASE ('idVbms')
-              idVbms=varid
-            CASE ('idUbws')
-              idUbws=varid
-            CASE ('idUbcs')
-              idUbcs=varid
-            CASE ('idVbws')
-              idVbws=varid
-            CASE ('idVbcs')
-              idVbcs=varid
-            CASE ('idTsur(itemp)')
-              idTsur(itemp)=varid
-            CASE ('iddQdT')
-              iddQdT=varid
-            CASE ('idsfwf')
-              idsfwf=varid
+          CASE ('idUsms')
+            idUsms=varid
+          CASE ('idVsms')
+            idVsms=varid
+          CASE ('idUbms')
+            idUbms=varid
+          CASE ('idVbms')
+            idVbms=varid
+          CASE ('idUbws')
+            idUbws=varid
+          CASE ('idUbcs')
+            idUbcs=varid
+          CASE ('idVbws')
+            idVbws=varid
+          CASE ('idVbcs')
+            idVbcs=varid
+          CASE ('idTsur(itemp)')
+            idTsur(itemp)=varid
+          CASE ('iddQdT')
+            iddQdT=varid
+          CASE ('idsfwf')
+            idsfwf=varid
 #ifdef SALINITY
-            CASE ('idTsur(isalt)')
-              idTsur(isalt)=varid
+          CASE ('idTsur(isalt)')
+            idTsur(isalt)=varid
 #endif
-            CASE ('idTbot(itemp)')
-              idTbot(itemp)=varid
+          CASE ('idTbot(itemp)')
+            idTbot(itemp)=varid
 #ifdef SALINITY
-            CASE ('idTbot(isalt)')
-              idTbot(isalt)=varid
+          CASE ('idTbot(isalt)')
+            idTbot(isalt)=varid
 #endif
-            CASE ('idGhat(itemp)')
-              idGhat(itemp)=varid
+          CASE ('idGhat(itemp)')
+            idGhat(itemp)=varid
 #ifdef SALINITY
-            CASE ('idGhat(isalt)')
-              idGhat(isalt)=varid
+          CASE ('idGhat(isalt)')
+            idGhat(isalt)=varid
 #endif
-            CASE ('idMtke')
-              idMtke=varid
-            CASE ('idMtls')
-              idMtls=varid
-            CASE ('idVvis')
-              idVvis=varid
-            CASE ('idTdif')
-              idTdif=varid
-              idDiff(itemp)=idTdif
+          CASE ('idMtke')
+            idMtke=varid
+          CASE ('idMtls')
+            idMtls=varid
+          CASE ('idVvis')
+            idVvis=varid
+          CASE ('idTdif')
+            idTdif=varid
+            idDiff(itemp)=idTdif
 #ifdef SALINITY
-            CASE ('idSdif')
-              idSdif=varid
-              idDiff(isalt)=idSdif
+          CASE ('idSdif')
+            idSdif=varid
+            idDiff(isalt)=idSdif
 #endif
-            CASE ('idVmLS')
-              idVmLS=varid
-            CASE ('idVmKK')
-              idVmKK=varid
-            CASE ('idVmKP')
-              idVmKP=varid
-            CASE ('idZbry(iwest)')
-              idZbry(iwest)=varid
-            CASE ('idZbry(ieast)')
-              idZbry(ieast)=varid
-            CASE ('idZbry(isouth)')
-              idZbry(isouth)=varid
-            CASE ('idZbry(inorth)')
-              idZbry(inorth)=varid
-            CASE ('idU2bc(iwest)')
-              idU2bc(iwest)=varid
-            CASE ('idU2bc(ieast)')
-              idU2bc(ieast)=varid
-            CASE ('idU2bc(isouth)')
-              idU2bc(isouth)=varid
-            CASE ('idU2bc(inorth)')
-              idU2bc(inorth)=varid
-            CASE ('idV2bc(iwest)')
-              idV2bc(iwest)=varid
-            CASE ('idV2bc(ieast)')
-              idV2bc(ieast)=varid
-            CASE ('idV2bc(isouth)')
-              idV2bc(isouth)=varid
-            CASE ('idV2bc(inorth)')
-              idV2bc(inorth)=varid
-            CASE ('idU3bc(iwest)')
-              idU3bc(iwest)=varid
-            CASE ('idU3bc(ieast)')
-              idU3bc(ieast)=varid
-            CASE ('idU3bc(isouth)')
-              idU3bc(isouth)=varid
-            CASE ('idU3bc(inorth)')
-              idU3bc(inorth)=varid
-            CASE ('idV3bc(iwest)')
-              idV3bc(iwest)=varid
-            CASE ('idV3bc(ieast)')
-              idV3bc(ieast)=varid
-            CASE ('idV3bc(isouth)')
-              idV3bc(isouth)=varid
-            CASE ('idV3bc(inorth)')
-              idV3bc(inorth)=varid
-            CASE ('idTbry(iwest,itemp)')
-              idTbry(iwest,itemp)=varid
-            CASE ('idTbry(ieast,itemp)')
-              idTbry(ieast,itemp)=varid
-            CASE ('idTbry(isouth,itemp)')
-              idTbry(isouth,itemp)=varid
-            CASE ('idTbry(inorth,itemp)')
-              idTbry(inorth,itemp)=varid
+          CASE ('idVmLS')
+            idVmLS=varid
+          CASE ('idVmKK')
+            idVmKK=varid
+          CASE ('idVmKP')
+            idVmKP=varid
+          CASE ('idZbry(iwest)')
+            idZbry(iwest)=varid
+          CASE ('idZbry(ieast)')
+            idZbry(ieast)=varid
+          CASE ('idZbry(isouth)')
+            idZbry(isouth)=varid
+          CASE ('idZbry(inorth)')
+            idZbry(inorth)=varid
+          CASE ('idU2bc(iwest)')
+            idU2bc(iwest)=varid
+          CASE ('idU2bc(ieast)')
+            idU2bc(ieast)=varid
+          CASE ('idU2bc(isouth)')
+            idU2bc(isouth)=varid
+          CASE ('idU2bc(inorth)')
+            idU2bc(inorth)=varid
+          CASE ('idV2bc(iwest)')
+            idV2bc(iwest)=varid
+          CASE ('idV2bc(ieast)')
+            idV2bc(ieast)=varid
+          CASE ('idV2bc(isouth)')
+            idV2bc(isouth)=varid
+          CASE ('idV2bc(inorth)')
+            idV2bc(inorth)=varid
+          CASE ('idU3bc(iwest)')
+            idU3bc(iwest)=varid
+          CASE ('idU3bc(ieast)')
+            idU3bc(ieast)=varid
+          CASE ('idU3bc(isouth)')
+            idU3bc(isouth)=varid
+          CASE ('idU3bc(inorth)')
+            idU3bc(inorth)=varid
+          CASE ('idV3bc(iwest)')
+            idV3bc(iwest)=varid
+          CASE ('idV3bc(ieast)')
+            idV3bc(ieast)=varid
+          CASE ('idV3bc(isouth)')
+            idV3bc(isouth)=varid
+          CASE ('idV3bc(inorth)')
+            idV3bc(inorth)=varid
+          CASE ('idTbry(iwest,itemp)')
+            idTbry(iwest,itemp)=varid
+          CASE ('idTbry(ieast,itemp)')
+            idTbry(ieast,itemp)=varid
+          CASE ('idTbry(isouth,itemp)')
+            idTbry(isouth,itemp)=varid
+          CASE ('idTbry(inorth,itemp)')
+            idTbry(inorth,itemp)=varid
 #ifdef SALINITY
-            CASE ('idTbry(iwest,isalt)')
-              idTbry(iwest,isalt)=varid
-            CASE ('idTbry(ieast,isalt)')
-              idTbry(ieast,isalt)=varid
-            CASE ('idTbry(isouth,isalt)')
-              idTbry(isouth,isalt)=varid
-            CASE ('idTbry(inorth,isalt)')
-              idTbry(inorth,isalt)=varid
+          CASE ('idTbry(iwest,isalt)')
+            idTbry(iwest,isalt)=varid
+          CASE ('idTbry(ieast,isalt)')
+            idTbry(ieast,isalt)=varid
+          CASE ('idTbry(isouth,isalt)')
+            idTbry(isouth,isalt)=varid
+          CASE ('idTbry(inorth,isalt)')
+            idTbry(inorth,isalt)=varid
 #endif
-            CASE ('idPwet')
-              idPwet=varid
-            CASE ('idRwet')
-              idRwet=varid
-            CASE ('idUwet')
-              idUwet=varid
-            CASE ('idVwet')
-              idVwet=varid
-            CASE ('idPair')
-              idPair=varid
-            CASE ('idTair')
-              idTair=varid
-            CASE ('idQair')
-              idQair=varid
-            CASE ('idCfra')
-              idCfra=varid
-            CASE ('idSrad')
-              idSrad=varid
-            CASE ('idLdwn')
-              idLdwn=varid
-            CASE ('idLrad')
-              idLrad=varid
-            CASE ('idLhea')
-              idLhea=varid
-            CASE ('idShea')
-              idShea=varid
-            CASE ('idrain')
-              idrain=varid
-            CASE ('idEmPf')
-              idEmPf=varid
-            CASE ('idevap')
-              idevap=varid
-            CASE ('idUair')
-              idUair=varid
-            CASE ('idVair')
-              idVair=varid
-            CASE ('idWamp')
-              idWamp=varid
-            CASE ('idWbrk')
-              idWbrk=varid
-            CASE ('idWdis')
-              idWdis=varid
-            CASE ('idWdir')
-              idWdir=varid
-            CASE ('idWlen')
-              idWlen=varid
-            CASE ('idWptp')
-              idWptp=varid
-            CASE ('idWpbt')
-              idWpbt=varid
-            CASE ('idWorb')
-              idWorb=varid
-            CASE ('idW2xx')
-              idW2xx=varid
-            CASE ('idW2xy')
-              idW2xy=varid
-            CASE ('idW2yy')
-              idW2yy=varid
-            CASE ('idW3xx')
-              idW3xx=varid
-            CASE ('idW3xy')
-              idW3xy=varid
-            CASE ('idW3yy')
-              idW3yy=varid
-            CASE ('idW3zx')
-              idW3zx=varid
-            CASE ('idW3zy')
-              idW3zy=varid
-            CASE ('idU2rs')
-              idU2rs=varid
-            CASE ('idV2rs')
-              idV2rs=varid
-            CASE ('idU2Sd')
-              idU2Sd=varid
-            CASE ('idV2Sd')
-              idV2Sd=varid
-            CASE ('idU3rs')
-              idU3rs=varid
-            CASE ('idV3rs')
-              idV3rs=varid
-            CASE ('idU3Sd')
-              idU3Sd=varid
-            CASE ('idV3Sd')
-              idV3Sd=varid
-            CASE ('idTref')
-              idTref=varid
-            CASE ('idTper')
-              idTper=varid
-            CASE ('idTzam')
-              idTzam=varid
-            CASE ('idTzph')
-              idTzph=varid
-            CASE ('idTvph')
-              idTvph=varid
-            CASE ('idTvan')
-              idTvan=varid
-            CASE ('idTvma')
-              idTvma=varid
-            CASE ('idTvmi')
-              idTvmi=varid
-            CASE ('idRxpo')
-              idRxpo=varid
-            CASE ('idRepo')
-              idRepo=varid
-            CASE ('idRdir')
-              idRdir=varid
-            CASE ('idRvsh')
-              idRvsh=varid
-            CASE ('idRtra')
-              idRtra=varid
-            CASE ('idRflg')
-              idRflg=varid
-            CASE ('idRtrc(itemp)')
-              idRtrc(itemp)=varid
+          CASE ('idPwet')
+            idPwet=varid
+          CASE ('idRwet')
+            idRwet=varid
+          CASE ('idUwet')
+            idUwet=varid
+          CASE ('idVwet')
+            idVwet=varid
+          CASE ('idPair')
+            idPair=varid
+          CASE ('idTair')
+            idTair=varid
+          CASE ('idQair')
+            idQair=varid
+          CASE ('idCfra')
+            idCfra=varid
+          CASE ('idSrad')
+            idSrad=varid
+          CASE ('idLdwn')
+            idLdwn=varid
+          CASE ('idLrad')
+            idLrad=varid
+          CASE ('idLhea')
+            idLhea=varid
+          CASE ('idShea')
+            idShea=varid
+          CASE ('idrain')
+            idrain=varid
+          CASE ('idEmPf')
+            idEmPf=varid
+          CASE ('idevap')
+            idevap=varid
+          CASE ('idUair')
+            idUair=varid
+          CASE ('idVair')
+            idVair=varid
+          CASE ('idWamp')
+            idWamp=varid
+          CASE ('idWbrk')
+            idWbrk=varid
+          CASE ('idWdis')
+            idWdis=varid
+          CASE ('idWdir')
+            idWdir=varid
+          CASE ('idWlen')
+            idWlen=varid
+          CASE ('idWptp')
+            idWptp=varid
+          CASE ('idWpbt')
+            idWpbt=varid
+          CASE ('idWorb')
+            idWorb=varid
+          CASE ('idW2xx')
+            idW2xx=varid
+          CASE ('idW2xy')
+            idW2xy=varid
+          CASE ('idW2yy')
+            idW2yy=varid
+          CASE ('idW3xx')
+            idW3xx=varid
+          CASE ('idW3xy')
+            idW3xy=varid
+          CASE ('idW3yy')
+            idW3yy=varid
+          CASE ('idW3zx')
+            idW3zx=varid
+          CASE ('idW3zy')
+            idW3zy=varid
+          CASE ('idU2rs')
+            idU2rs=varid
+          CASE ('idV2rs')
+            idV2rs=varid
+          CASE ('idU2Sd')
+            idU2Sd=varid
+          CASE ('idV2Sd')
+            idV2Sd=varid
+          CASE ('idU3rs')
+            idU3rs=varid
+          CASE ('idV3rs')
+            idV3rs=varid
+          CASE ('idU3Sd')
+            idU3Sd=varid
+          CASE ('idV3Sd')
+            idV3Sd=varid
+          CASE ('idTref')
+            idTref=varid
+          CASE ('idTper')
+            idTper=varid
+          CASE ('idTzam')
+            idTzam=varid
+          CASE ('idTzph')
+            idTzph=varid
+          CASE ('idTvph')
+            idTvph=varid
+          CASE ('idTvan')
+            idTvan=varid
+          CASE ('idTvma')
+            idTvma=varid
+          CASE ('idTvmi')
+            idTvmi=varid
+          CASE ('idRxpo')
+            idRxpo=varid
+          CASE ('idRepo')
+            idRepo=varid
+          CASE ('idRdir')
+            idRdir=varid
+          CASE ('idRvsh')
+            idRvsh=varid
+          CASE ('idRtra')
+            idRtra=varid
+          CASE ('idRflg')
+            idRflg=varid
+          CASE ('idRtrc(itemp)')
+            idRtrc(itemp)=varid
 #ifdef SALINITY
-            CASE ('idRtrc(isalt)')
-              idRtrc(isalt)=varid
+          CASE ('idRtrc(isalt)')
+            idRtrc(isalt)=varid
 #endif
-            CASE ('idHsbl')
-              idHsbl=varid
-            CASE ('idHbbl')
-              idHbbl=varid
+          CASE ('idHsbl')
+            idHsbl=varid
+          CASE ('idHbbl')
+            idHbbl=varid
 #ifdef UV_DRAG_GRID
-            CASE ('idragL')
-              idragL=varid
-            CASE ('idragQ')
-              idragQ=varid
-            CASE ('idZoBL')
-              idZoBL=varid
+          CASE ('idragL')
+            idragL=varid
+          CASE ('idragQ')
+            idragQ=varid
+          CASE ('idZoBL')
+            idZoBL=varid
 #endif
-            CASE ('idUbot')
-              idUbot=varid
-            CASE ('idVbot')
-              idVbot=varid
-            CASE ('idUbur')
-              idUbur=varid
-            CASE ('idVbvr')
-              idVbvr=varid
-            CASE ('idUbrs')
-              idUbrs=varid
-            CASE ('idVbrs')
-              idVbrs=varid
-            CASE ('idSSHc')
-              idSSHc=varid
-            CASE ('idUbcl')
-              idUbcl=varid
-            CASE ('idVbcl')
-              idVbcl=varid
-            CASE ('idUclm')
-              idUclm=varid
-            CASE ('idVclm')
-              idVclm=varid
-            CASE ('idSSSc')
-              idSSSc=varid
-            CASE ('idSSTc')
-              idSSTc=varid
+          CASE ('idUbot')
+            idUbot=varid
+          CASE ('idVbot')
+            idVbot=varid
+          CASE ('idUbur')
+            idUbur=varid
+          CASE ('idVbvr')
+            idVbvr=varid
+          CASE ('idUbrs')
+            idUbrs=varid
+          CASE ('idVbrs')
+            idVbrs=varid
+          CASE ('idSSHc')
+            idSSHc=varid
+          CASE ('idUbcl')
+            idUbcl=varid
+          CASE ('idVbcl')
+            idVbcl=varid
+          CASE ('idUclm')
+            idUclm=varid
+          CASE ('idVclm')
+            idVclm=varid
+          CASE ('idSSSc')
+            idSSSc=varid
+          CASE ('idSSTc')
+            idSSTc=varid
 #if defined AD_SENSITIVITY   || defined I4DVAR_ANA_SENSITIVITY || \
     defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR      || \
     defined SO_SEMI
-            CASE ('idZads')
-              idZads=varid
-            CASE ('idUbas')
-              idUbas=varid
-            CASE ('idVbas')
-              idVbas=varid
-            CASE ('idUads')
-              idUads=varid
-            CASE ('idVads')
-              idVads=varid
-            CASE ('idTads(itemp)')
-              idTads(itemp)=varid
+          CASE ('idZads')
+            idZads=varid
+          CASE ('idUbas')
+            idUbas=varid
+          CASE ('idVbas')
+            idVbas=varid
+          CASE ('idUads')
+            idUads=varid
+          CASE ('idVads')
+            idVads=varid
+          CASE ('idTads(itemp)')
+            idTads(itemp)=varid
 # ifdef SALINITY
-            CASE ('idTads(isalt)')
-              idTads(isalt)=varid
+          CASE ('idTads(isalt)')
+            idTads(isalt)=varid
 # endif
-            CASE ('idWads')
-              idWads=varid
+          CASE ('idWads')
+            idWads=varid
 #endif
 #ifdef WEAK_CONSTRAINT
-            CASE ('idZtlf')
-              idZtlf=varid
-            CASE ('idUbtf')
-              idUbtf=varid
-            CASE ('idVbtf')
-              idVbtf=varid
-            CASE ('idUtlf')
-              idUtlf=varid
-            CASE ('idVtlf')
-              idVtlf=varid
-            CASE ('idTtlf(itemp)')
-              idTtlf(itemp)=varid
+          CASE ('idZtlf')
+            idZtlf=varid
+          CASE ('idUbtf')
+            idUbtf=varid
+          CASE ('idVbtf')
+            idVbtf=varid
+          CASE ('idUtlf')
+            idUtlf=varid
+          CASE ('idVtlf')
+            idVtlf=varid
+          CASE ('idTtlf(itemp)')
+            idTtlf(itemp)=varid
 # ifdef SALINITY
-            CASE ('idTtlf(isalt)')
-              idTtlf(isalt)=varid
+          CASE ('idTtlf(isalt)')
+            idTtlf(isalt)=varid
 # endif
 #endif
-            CASE ('idM2nc')
-              idM2nc=varid
-            CASE ('idM3nc')
-              idM3nc=varid
-            CASE ('idgTnc')
-              idgTnc=varid
+          CASE ('idM2nc')
+            idM2nc=varid
+          CASE ('idM3nc')
+            idM3nc=varid
+          CASE ('idgTnc')
+            idgTnc=varid
 #ifdef AVERAGES_DETIDE
-            CASE ('idCosW')
-              idCosW=varid
-            CASE ('idCos2')
-              idCos2=varid
-            CASE ('idSinW')
-              idSinW=varid
-            CASE ('idSin2')
-              idSin2=varid
-            CASE ('idSWCW')
-              idSWCW=varid
-            CASE ('idFsuD')
-              idFsuD=varid
-            CASE ('idFsuH')
-              idFsuH=varid
-            CASE ('idu2dD')
-              idu2dD=varid
-            CASE ('idu2dH')
-              idu2dH=varid
-            CASE ('idv2dD')
-              idv2dD=varid
-            CASE ('idv2dH')
+          CASE ('idCosW')
+            idCosW=varid
+          CASE ('idCos2')
+            idCos2=varid
+          CASE ('idSinW')
+            idSinW=varid
+          CASE ('idSin2')
+            idSin2=varid
+          CASE ('idSWCW')
+            idSWCW=varid
+          CASE ('idFsuD')
+            idFsuD=varid
+          CASE ('idFsuH')
+            idFsuH=varid
+          CASE ('idu2dD')
+            idu2dD=varid
+          CASE ('idu2dH')
+            idu2dH=varid
+          CASE ('idv2dD')
+            idv2dD=varid
+          CASE ('idv2dH')
               idv2dH=varid
 # ifdef SOLVE3D
-            CASE ('idu3dD')
-              idu3dD=varid
-            CASE ('idu3dH')
-              idu3dH=varid
-            CASE ('idv3dD')
-              idv3dD=varid
-            CASE ('idv3dH')
-              idv3dH=varid
-            CASE ('idTrcD(itemp)')
-              idTrcD(itemp)=varid
-            CASE ('idTrcH(itemp)')
-              idTrcH(itemp)=varid
+          CASE ('idu3dD')
+            idu3dD=varid
+          CASE ('idu3dH')
+            idu3dH=varid
+          CASE ('idv3dD')
+            idv3dD=varid
+          CASE ('idv3dH')
+            idv3dH=varid
+          CASE ('idTrcD(itemp)')
+            idTrcD(itemp)=varid
+          CASE ('idTrcH(itemp)')
+            idTrcH(itemp)=varid
 #  ifdef SALINITY
-            CASE ('idTrcD(isalt)')
-              idTrcD(isalt)=varid
-            CASE ('idTrcH(isalt)')
-              idTrcH(isalt)=varid
+          CASE ('idTrcD(isalt)')
+            idTrcD(isalt)=varid
+          CASE ('idTrcH(isalt)')
+            idTrcH(isalt)=varid
 #  endif
 # endif
 #endif
-            CASE ('idU2av')
-              idU2av=varid
-            CASE ('idV2av')
-              idV2av=varid
-            CASE ('idZZav')
-              idZZav=varid
+          CASE ('idU2av')
+            idU2av=varid
+          CASE ('idV2av')
+            idV2av=varid
+          CASE ('idZZav')
+            idZZav=varid
 #ifdef SOLVE3D
-            CASE ('idTTav(itrc)')
-              load=.TRUE.
-            CASE ('iHUTav(itrc)')
-              load=.TRUE.
-            CASE ('iHVTav(itrc)')
-              load=.TRUE.
-            CASE ('idUTav(itrc)')
-              load=.TRUE.
-            CASE ('idVTav(itrc)')
-              load=.TRUE.
-            CASE ('idHUav')
-              idHUav=varid
-            CASE ('idHVav')
-              idHVav=varid
-            CASE ('idUUav')
-              idUUav=varid
-            CASE ('idUVav')
-              idUVav=varid
-            CASE ('idVVav')
-              idVVav=varid
+          CASE ('idTTav(itrc)')
+            load=.TRUE.
+          CASE ('iHUTav(itrc)')
+            load=.TRUE.
+          CASE ('iHVTav(itrc)')
+            load=.TRUE.
+          CASE ('idUTav(itrc)')
+            load=.TRUE.
+          CASE ('idVTav(itrc)')
+            load=.TRUE.
+          CASE ('idHUav')
+            idHUav=varid
+          CASE ('idHVav')
+            idHVav=varid
+          CASE ('idUUav')
+            idUUav=varid
+          CASE ('idUVav')
+            idUVav=varid
+          CASE ('idVVav')
+            idVVav=varid
 #endif
 #ifdef T_PASSIVE
-            CASE ('idTvar(inert(i))')
-              load=.TRUE.
-            CASE ('idTbry(iwest,inert(i))')
-              load=.TRUE.
-            CASE ('idTbry(ieast,inert(i))')
-              load=.TRUE.
-            CASE ('idTbry(isouth,inert(i))')
-              load=.TRUE.
-            CASE ('idTbry(inorth,inert(i))')
-              load=.TRUE.
-            CASE ('idRtrc(inert(i))')
-              load=.TRUE.
+          CASE ('idTvar(inert(i))')
+            load=.TRUE.
+          CASE ('idTbry(iwest,inert(i))')
+            load=.TRUE.
+          CASE ('idTbry(ieast,inert(i))')
+            load=.TRUE.
+          CASE ('idTbry(isouth,inert(i))')
+            load=.TRUE.
+          CASE ('idTbry(inorth,inert(i))')
+            load=.TRUE.
+          CASE ('idRtrc(inert(i))')
+            load=.TRUE.
 #endif
-            CASE ('id2dPV')
-              id2dPV=varid
-            CASE ('id2dRV')
-              id2dRV=varid
-            CASE ('id3dPV')
-              id3dPV=varid
-            CASE ('id3dRV')
-              id3dRV=varid
+          CASE ('id2dPV')
+            id2dPV=varid
+          CASE ('id2dRV')
+            id2dRV=varid
+          CASE ('id3dPV')
+            id3dPV=varid
+          CASE ('id3dRV')
+            id3dRV=varid
 #ifdef DIAGNOSTICS_UV
-            CASE ('idDu2d(M2pgrd)')
-              idDu2d(M2pgrd)=varid
-            CASE ('idDv2d(M2pgrd)')
-              idDv2d(M2pgrd)=varid
-            CASE ('idDu2d(M2sstr)')
-              idDu2d(M2sstr)=varid
-            CASE ('idDu2d(M2bstr)')
-              idDu2d(M2bstr)=varid
-            CASE ('idDv2d(M2sstr)')
-              idDv2d(M2sstr)=varid
-            CASE ('idDv2d(M2bstr)')
-              idDv2d(M2bstr)=varid
-            CASE ('idDu2d(M2rate)')
-              idDu2d(M2rate)=varid
-            CASE ('idDv2d(M2rate)')
-              idDv2d(M2rate)=varid
+          CASE ('idDu2d(M2pgrd)')
+            idDu2d(M2pgrd)=varid
+          CASE ('idDv2d(M2pgrd)')
+            idDv2d(M2pgrd)=varid
+          CASE ('idDu2d(M2sstr)')
+            idDu2d(M2sstr)=varid
+          CASE ('idDu2d(M2bstr)')
+            idDu2d(M2bstr)=varid
+          CASE ('idDv2d(M2sstr)')
+            idDv2d(M2sstr)=varid
+          CASE ('idDv2d(M2bstr)')
+            idDv2d(M2bstr)=varid
+          CASE ('idDu2d(M2rate)')
+            idDu2d(M2rate)=varid
+          CASE ('idDv2d(M2rate)')
+            idDv2d(M2rate)=varid
 # ifdef UV_ADV
-            CASE ('idDu2d(M2xadv)')
-              idDu2d(M2xadv)=varid
-            CASE ('idDu2d(M2yadv)')
-              idDu2d(M2yadv)=varid
-            CASE ('idDu2d(M2hadv)')
-              idDu2d(M2hadv)=varid
-            CASE ('idDv2d(M2xadv)')
-              idDv2d(M2xadv)=varid
-            CASE ('idDv2d(M2yadv)')
-              idDv2d(M2yadv)=varid
-            CASE ('idDv2d(M2hadv)')
-              idDv2d(M2hadv)=varid
+          CASE ('idDu2d(M2xadv)')
+            idDu2d(M2xadv)=varid
+          CASE ('idDu2d(M2yadv)')
+            idDu2d(M2yadv)=varid
+          CASE ('idDu2d(M2hadv)')
+            idDu2d(M2hadv)=varid
+          CASE ('idDv2d(M2xadv)')
+            idDv2d(M2xadv)=varid
+          CASE ('idDv2d(M2yadv)')
+            idDv2d(M2yadv)=varid
+          CASE ('idDv2d(M2hadv)')
+            idDv2d(M2hadv)=varid
 # endif
 # ifdef NEARSHORE_MELLOR
-            CASE ('idDu2d(M2hrad)')
-              idDu2d(M2hrad)=varid
-            CASE ('idDv2d(M2hrad)')
-              idDv2d(M2hrad)=varid
+          CASE ('idDu2d(M2hrad)')
+            idDu2d(M2hrad)=varid
+          CASE ('idDv2d(M2hrad)')
+            idDv2d(M2hrad)=varid
 # endif
 # ifdef UV_COR
-            CASE ('idDu2d(M2fcor)')
-              idDu2d(M2fcor)=varid
-            CASE ('idDv2d(M2fcor)')
-              idDv2d(M2fcor)=varid
+          CASE ('idDu2d(M2fcor)')
+            idDu2d(M2fcor)=varid
+          CASE ('idDv2d(M2fcor)')
+            idDv2d(M2fcor)=varid
 # endif
 # if defined UV_VIS2 || defined UV_VIS4
-            CASE ('idDu2d(M2hvis)')
-              idDu2d(M2hvis)=varid
-            CASE ('idDu2d(M2xvis)')
-              idDu2d(M2xvis)=varid
-            CASE ('idDu2d(M2yvis)')
-              idDu2d(M2yvis)=varid
-            CASE ('idDv2d(M2hvis)')
-              idDv2d(M2hvis)=varid
-            CASE ('idDv2d(M2xvis)')
-              idDv2d(M2xvis)=varid
-            CASE ('idDv2d(M2yvis)')
-              idDv2d(M2yvis)=varid
+          CASE ('idDu2d(M2hvis)')
+            idDu2d(M2hvis)=varid
+          CASE ('idDu2d(M2xvis)')
+            idDu2d(M2xvis)=varid
+          CASE ('idDu2d(M2yvis)')
+            idDu2d(M2yvis)=varid
+          CASE ('idDv2d(M2hvis)')
+            idDv2d(M2hvis)=varid
+          CASE ('idDv2d(M2xvis)')
+            idDv2d(M2xvis)=varid
+          CASE ('idDv2d(M2yvis)')
+            idDv2d(M2yvis)=varid
 # endif
 # ifdef SOLVE3D
-            CASE ('idDu3d(M3pgrd)')
-              idDu3d(M3pgrd)=varid
-            CASE ('idDv3d(M3pgrd)')
-              idDv3d(M3pgrd)=varid
-            CASE ('idDu3d(M3vvis)')
-              idDu3d(M3vvis)=varid
-            CASE ('idDv3d(M3vvis)')
-              idDv3d(M3vvis)=varid
-            CASE ('idDu3d(M3rate)')
-              idDu3d(M3rate)=varid
-            CASE ('idDv3d(M3rate)')
-              idDv3d(M3rate)=varid
+          CASE ('idDu3d(M3pgrd)')
+            idDu3d(M3pgrd)=varid
+          CASE ('idDv3d(M3pgrd)')
+            idDv3d(M3pgrd)=varid
+          CASE ('idDu3d(M3vvis)')
+            idDu3d(M3vvis)=varid
+          CASE ('idDv3d(M3vvis)')
+            idDv3d(M3vvis)=varid
+          CASE ('idDu3d(M3rate)')
+            idDu3d(M3rate)=varid
+          CASE ('idDv3d(M3rate)')
+            idDv3d(M3rate)=varid
 #  ifdef UV_ADV
-            CASE ('idDu3d(M3xadv)')
-              idDu3d(M3xadv)=varid
-            CASE ('idDu3d(M3yadv)')
-              idDu3d(M3yadv)=varid
-            CASE ('idDu3d(M3hadv)')
-              idDu3d(M3hadv)=varid
-            CASE ('idDv3d(M3xadv)')
-              idDv3d(M3xadv)=varid
-            CASE ('idDv3d(M3yadv)')
-              idDv3d(M3yadv)=varid
-            CASE ('idDv3d(M3hadv)')
-              idDv3d(M3hadv)=varid
-            CASE ('idDu3d(M3vadv)')
-              idDu3d(M3vadv)=varid
-            CASE ('idDv3d(M3vadv)')
-              idDv3d(M3vadv)=varid
+          CASE ('idDu3d(M3xadv)')
+            idDu3d(M3xadv)=varid
+          CASE ('idDu3d(M3yadv)')
+            idDu3d(M3yadv)=varid
+          CASE ('idDu3d(M3hadv)')
+            idDu3d(M3hadv)=varid
+          CASE ('idDv3d(M3xadv)')
+            idDv3d(M3xadv)=varid
+          CASE ('idDv3d(M3yadv)')
+            idDv3d(M3yadv)=varid
+          CASE ('idDv3d(M3hadv)')
+            idDv3d(M3hadv)=varid
+          CASE ('idDu3d(M3vadv)')
+            idDu3d(M3vadv)=varid
+          CASE ('idDv3d(M3vadv)')
+            idDv3d(M3vadv)=varid
 #  endif
 #  ifdef NEARSHORE_MELLOR
-            CASE ('idDu3d(M3hrad)')
-              idDu3d(M3hrad)=varid
-            CASE ('idDv3d(M3hrad)')
-              idDv3d(M3hrad)=varid
-            CASE ('idDu3d(M3vrad)')
-              idDu3d(M3vrad)=varid
-            CASE ('idDv3d(M3vrad)')
-              idDv3d(M3vrad)=varid
+          CASE ('idDu3d(M3hrad)')
+            idDu3d(M3hrad)=varid
+          CASE ('idDv3d(M3hrad)')
+            idDv3d(M3hrad)=varid
+          CASE ('idDu3d(M3vrad)')
+            idDu3d(M3vrad)=varid
+          CASE ('idDv3d(M3vrad)')
+            idDv3d(M3vrad)=varid
 #  endif
 #  ifdef UV_COR
-            CASE ('idDu3d(M3fcor)')
-              idDu3d(M3fcor)=varid
-            CASE ('idDv3d(M3fcor)')
-              idDv3d(M3fcor)=varid
+          CASE ('idDu3d(M3fcor)')
+            idDu3d(M3fcor)=varid
+          CASE ('idDv3d(M3fcor)')
+            idDv3d(M3fcor)=varid
 #  endif
 #  if defined UV_VIS2 || defined UV_VIS4
-            CASE ('idDu3d(M3hvis)')
-              idDu3d(M3hvis)=varid
-            CASE ('idDu3d(M3xvis)')
-              idDu3d(M3xvis)=varid
-            CASE ('idDu3d(M3yvis)')
-              idDu3d(M3yvis)=varid
-            CASE ('idDv3d(M3hvis)')
-              idDv3d(M3hvis)=varid
-            CASE ('idDv3d(M3xvis)')
-              idDv3d(M3xvis)=varid
-            CASE ('idDv3d(M3yvis)')
-              idDv3d(M3yvis)=varid
+          CASE ('idDu3d(M3hvis)')
+            idDu3d(M3hvis)=varid
+          CASE ('idDu3d(M3xvis)')
+            idDu3d(M3xvis)=varid
+          CASE ('idDu3d(M3yvis)')
+            idDu3d(M3yvis)=varid
+          CASE ('idDv3d(M3hvis)')
+            idDv3d(M3hvis)=varid
+          CASE ('idDv3d(M3xvis)')
+            idDv3d(M3xvis)=varid
+          CASE ('idDv3d(M3yvis)')
+            idDv3d(M3yvis)=varid
 #  endif
 # endif
 #endif
 #ifdef DIAGNOSTICS_TS
-            CASE ('idDtrc(iTrate)')
-              load=.TRUE.
-            CASE ('idDtrc(iThadv)')
-              load=.TRUE.
-            CASE ('idDtrc(iTxadv)')
-              load=.TRUE.
-            CASE ('idDtrc(iTyadv)')
-              load=.TRUE.
-            CASE ('idDtrc(iTvadv)')
-              load=.TRUE.
+          CASE ('idDtrc(iTrate)')
+            load=.TRUE.
+          CASE ('idDtrc(iThadv)')
+            load=.TRUE.
+          CASE ('idDtrc(iTxadv)')
+            load=.TRUE.
+          CASE ('idDtrc(iTyadv)')
+            load=.TRUE.
+          CASE ('idDtrc(iTvadv)')
+            load=.TRUE.
 # if defined TS_DIF2 || defined TS_DIF4
-            CASE ('idDtrc(iThdif)')
-              load=.TRUE.
-            CASE ('idDtrc(iTxdif)')
-              load=.TRUE.
-            CASE ('idDtrc(iTydif)')
-              load=.TRUE.
+          CASE ('idDtrc(iThdif)')
+            load=.TRUE.
+          CASE ('idDtrc(iTxdif)')
+            load=.TRUE.
+          CASE ('idDtrc(iTydif)')
+            load=.TRUE.
 #  if defined MIX_GEO_TS || defined MIX_ISO_TS
-            CASE ('idDtrc(iTsdif)')
-              load=.TRUE.
+          CASE ('idDtrc(iTsdif)')
+            load=.TRUE.
 #  endif
 # endif
-            CASE ('idDtrc(iTvdif)')
-              load=.TRUE.
+          CASE ('idDtrc(iTvdif)')
+            load=.TRUE.
 #endif
 #if defined FORWARD_READ || defined FORWARD_WRITE
-            CASE ('idRuct')
-              idRuct=varid
-            CASE ('idRvct')
-              idRvct=varid
-            CASE ('idUfx1')
-              idUfx1=varid
-            CASE ('idUfx2')
-              idUfx2=varid
-            CASE ('idVfx1')
-              idVfx1=varid
-            CASE ('idVfx2')
-              idVfx2=varid
+          CASE ('idRuct')
+            idRuct=varid
+          CASE ('idRvct')
+            idRvct=varid
+          CASE ('idUfx1')
+            idUfx1=varid
+          CASE ('idUfx2')
+            idUfx2=varid
+          CASE ('idVfx1')
+            idVfx1=varid
+          CASE ('idVfx2')
+            idVfx2=varid
 #endif
 #if defined FOUR_DVAR || defined VERIFICATION
-            CASE ('idBgEr')
-              idBgEr=varid
-            CASE ('idBgTh')
-              idBgTh=varid
-            CASE ('idIncr')
-              idIncr=varid
-            CASE ('idInno')
-              idInno=varid
-            CASE ('idNLmf')
-              idNLmf=varid
-            CASE ('idNLmi')
-              idNLmi=varid
-            CASE ('idNLmo')
-              idNLmo=varid
-            CASE ('idNLmp')
-              idNLmp=varid
-            CASE ('idNLmu')
-              idNLmu=varid
-            CASE ('idNobs')
-              idNobs=varid
-            CASE ('idObsD')
-              idObsD=varid
-            CASE ('idObsS')
-              idObsS=varid
-            CASE ('idObsT')
-              idObsT=varid
-            CASE ('idObsX')
-              idObsX=varid
-            CASE ('idObsY')
-              idObsY=varid
-            CASE ('idObsZ')
-              idObsZ=varid
-            CASE ('idOday')
-              idOday=varid
-            CASE ('idOerr')
-              idOerr=varid
-            CASE ('idOlat')
-              idOlat=varid
-            CASE ('idOlon')
-              idOlon=varid
-            CASE ('idOmet')
-              idOmet=varid
-            CASE ('idOpro')
-              idOpro=varid
-            CASE ('idOtyp')
-              idOtyp=varid
-            CASE ('idOval')
-              idOval=varid
-            CASE ('idResi')
-              idResi=varid
-            CASE ('idKhor')
-              idKhor=varid
-            CASE ('idKver')
-              idKver=varid
-            CASE ('idTLmo')
-              idTLmo=varid
-            CASE ('idMOMi')
-              idMOMi=varid
-            CASE ('idMOMf')
-              idMOMf=varid
+          CASE ('idBgEr')
+            idBgEr=varid
+          CASE ('idBgTh')
+            idBgTh=varid
+          CASE ('idIncr')
+            idIncr=varid
+          CASE ('idInno')
+            idInno=varid
+          CASE ('idNLmf')
+            idNLmf=varid
+          CASE ('idNLmi')
+            idNLmi=varid
+          CASE ('idNLmo')
+            idNLmo=varid
+          CASE ('idNLmp')
+            idNLmp=varid
+          CASE ('idNLmu')
+            idNLmu=varid
+          CASE ('idNobs')
+            idNobs=varid
+          CASE ('idObsD')
+            idObsD=varid
+          CASE ('idObsS')
+            idObsS=varid
+          CASE ('idObsT')
+            idObsT=varid
+          CASE ('idObsX')
+            idObsX=varid
+          CASE ('idObsY')
+            idObsY=varid
+          CASE ('idObsZ')
+            idObsZ=varid
+          CASE ('idOday')
+            idOday=varid
+          CASE ('idOerr')
+            idOerr=varid
+          CASE ('idOlat')
+            idOlat=varid
+          CASE ('idOlon')
+            idOlon=varid
+          CASE ('idOmet')
+            idOmet=varid
+          CASE ('idOpro')
+            idOpro=varid
+          CASE ('idOtyp')
+            idOtyp=varid
+          CASE ('idOval')
+            idOval=varid
+          CASE ('idResi')
+            idResi=varid
+          CASE ('idKhor')
+            idKhor=varid
+          CASE ('idKver')
+            idKver=varid
+          CASE ('idTLmo')
+            idTLmo=varid
+          CASE ('idMOMi')
+            idMOMi=varid
+          CASE ('idMOMf')
+            idMOMf=varid
 #endif
 
 #ifdef BIOLOGY
@@ -2133,609 +2098,673 @@
 #  include <sediment_var.h>
 #endif
 
-            CASE DEFAULT
-              load=.FALSE.
-          END SELECT
+          CASE DEFAULT
+            load=.FALSE.
+        END SELECT
 !
 !  Load variable data into information arrays.
 !
-          IF (load) THEN
-            load=.FALSE.
-            IF (varid.gt.MV) THEN
-              WRITE (stdout,60) MV, varid
-              STOP
-            END IF
-            DO i=1,5
-              Vname(i,varid)=TRIM(ADJUSTL(Vinfo(i)))
-            END DO
-            DO ng=1,Ngrids
-              Iinfo(1,varid,ng)=gtype
-              Fscale(varid,ng)=scale
-            END DO
+        IF (load) THEN
+          load=.FALSE.
+          IF (varid.gt.MV) THEN
+            WRITE (stdout,10) MV, varid
+            STOP
+          END IF
+          DO i=1,6
+            Vname(i,varid)=TRIM(ADJUSTL(Vinfo(i)))
+          END DO
+          DO ng=1,Ngrids
+            Iinfo(1,varid,ng)=gtype
+            Fscale(varid,ng)=scale
+          END DO
 
 #ifdef T_PASSIVE
 !
 !  Adjust information for all inert passive tracers.
 !
-            SELECT CASE (TRIM(ADJUSTL(Vinfo(6))))
-              CASE ('idTvar(inert(i))')
-                IF (NPT.gt.0) THEN
-                  varid=varid-1
+          SELECT CASE (TRIM(ADJUSTL(Vinfo(8))))
+            CASE ('idTvar(inert(i))')
+              IF (NPT.gt.0) THEN
+                varid=varid-1
 # ifdef AGE_MEAN
-                  ic=0
-                  DO i=1,NPT,2
-                    varid=varid+1
-                    ic=ic+1
-                    idTvar(inert(i))=varid
-                    DO ng=1,Ngrids
-                      Fscale(varid,ng)=scale
-                      Iinfo(1,varid,ng)=gtype
-                    END DO
-                    WRITE (Vname(1,varid),'(a,i2.2)')                   &
-     &                    TRIM(ADJUSTL(Vinfo(1))), ic
-                    WRITE (Vname(2,varid),'(a,a,i2.2)')                 &
-     &                    TRIM(ADJUSTL(Vinfo(2))), ', type ', ic
-                    WRITE (Vname(3,varid),'(a)')                        &
-     &                    TRIM(ADJUSTL(Vinfo(3)))
-                    WRITE (Vname(4,varid),'(a,a)')                      &
-     &                    TRIM(Vname(1,varid)), ', scalar, series'
-                    WRITE (Vname(5,varid),'(a)')                        &
-     &                    TRIM(ADJUSTL(Vinfo(5)))
+                ic=0
+                DO i=1,NPT,2
+                  varid=varid+1
+                  ic=ic+1
+                  idTvar(inert(i))=varid
+                  DO ng=1,Ngrids
+                    Fscale(varid,ng)=scale
+                    Iinfo(1,varid,ng)=gtype
                   END DO
+                  WRITE (Vname(1,varid),'(a,i2.2)')                     &
+     &                  TRIM(ADJUSTL(Vinfo(1))), ic
+                  WRITE (Vname(2,varid),'(a,a,i2.2)')                   &
+     &                  TRIM(ADJUSTL(Vinfo(2))), ', type ', ic
+                  WRITE (Vname(3,varid),'(a)')                          &
+     &                  TRIM(ADJUSTL(Vinfo(3)))
+                  WRITE (Vname(4,varid),'(a,i2.2)')                     &
+     &                  TRIM(ADJUSTL(Vinfo(4))), ic
+                  WRITE (Vname(5,varid),'(a)')                          &
+     &                  TRIM(ADJUSTL(Vinfo(5)))
+                  WRITE (Vname(6,varid),'(a,i2.2)')                     &
+     &                  TRIM(ADJUSTL(Vinfo(6))), ic
+                END DO
 !
-                  ic=0
-                  DO i=2,NPT,2
-                    varid=varid+1
-                    ic=ic+1
-                    idTvar(inert(i))=varid
-                    DO ng=1,Ngrids
-                      Fscale(varid,ng)=scale
-                      Iinfo(1,varid,ng)=gtype
-                    END DO
-                    WRITE (Vname(1,varid),'(a,i2.2,a)')                 &
-     &                    TRIM(ADJUSTL(Vinfo(1))), ic, '_age'
-                    WRITE (Vname(2,varid),'(a,i2.2)')                   &
-     &                    'age concentration, type ', ic
-                    WRITE (Vname(3,varid),'(a)')                        &
-     &                    'second kilogram meter-3'
-                    WRITE (Vname(4,varid),'(a,a)')                      &
-     &                    TRIM(Vname(1,varid)), ', scalar, series'
-                    WRITE (Vname(5,varid),'(a)')                        &
-     &                    TRIM(ADJUSTL(Vinfo(5)))
+                ic=0
+                DO i=2,NPT,2
+                  varid=varid+1
+                  ic=ic+1
+                  idTvar(inert(i))=varid
+                  DO ng=1,Ngrids
+                    Fscale(varid,ng)=scale
+                    Iinfo(1,varid,ng)=gtype
                   END DO
+                  WRITE (Vname(1,varid),'(a,i2.2,a)')                   &
+     &                  TRIM(ADJUSTL(Vinfo(1))), ic, '_age'
+                  WRITE (Vname(2,varid),'(a,i2.2)')                     &
+     &                  'age concentration, type ', ic
+                  WRITE (Vname(3,varid),'(a)')                          &
+     &                  'second kilogram meter-3'
+                  WRITE (Vname(4,varid),'(a,i2.2,a)')                   &
+     &                  TRIM(ADJUSTL(Vinfo(4))), ic, '_age'
+                  WRITE (Vname(5,varid),'(a)')                          &
+     &                  TRIM(ADJUSTL(Vinfo(5)))
+                  WRITE (Vname(6,varid),'(a,i2.2,a)')                   &
+     &                  TRIM(ADJUSTL(Vinfo(6))), ic, '_age'
+                END DO
 # else
-                  DO i=1,NPT
-                    varid=varid+1
-                    idTvar(inert(i))=varid
-                    DO ng=1,Ngrids
-                      Fscale(varid,ng)=scale
-                      Iinfo(1,varid,ng)=gtype
-                    END DO
-                    WRITE (Vname(1,varid),'(a,i2.2)')                   &
-     &                    TRIM(ADJUSTL(Vinfo(1))), i
-                    WRITE (Vname(2,varid),'(a,a,i2.2)')                 &
-     &                    TRIM(ADJUSTL(Vinfo(2))), ', type ', i
-                    WRITE (Vname(3,varid),'(a)')                        &
-     &                    TRIM(ADJUSTL(Vinfo(3)))
-                    WRITE (Vname(4,varid),'(a,a)')                      &
-     &                    TRIM(Vname(1,varid)), ', scalar, series'
-                    WRITE (Vname(5,varid),'(a)')                        &
-     &                    TRIM(ADJUSTL(Vinfo(5)))
+                DO i=1,NPT
+                  varid=varid+1
+                  idTvar(inert(i))=varid
+                  DO ng=1,Ngrids
+                    Fscale(varid,ng)=scale
+                    Iinfo(1,varid,ng)=gtype
                   END DO
+                  WRITE (Vname(1,varid),'(a,i2.2)')                     &
+     &                  TRIM(ADJUSTL(Vinfo(1))), i
+                  WRITE (Vname(2,varid),'(a,a,i2.2)')                   &
+     &                  TRIM(ADJUSTL(Vinfo(2))), ', type ', i
+                  WRITE (Vname(3,varid),'(a)')                          &
+     &                  TRIM(ADJUSTL(Vinfo(3)))
+                  WRITE (Vname(4,varid),'(a,i2.2)')                     &
+     &                  TRIM(ADJUSTL(Vinfo(4))), i
+                  WRITE (Vname(5,varid),'(a)')                          &
+     &                  TRIM(ADJUSTL(Vinfo(5)))
+                  WRITE (Vname(6,varid),'(a,i2.2)')                     &
+     &                  TRIM(ADJUSTL(Vinfo(6))), i
+                END DO
 # endif
-                END IF
-              CASE ('idTbry(iwest,inert(i))')
-                IF (NPT.gt.0) THEN
-                  varid=varid-1
-                  DO i=1,NPT
-                    varid=varid+1
-                    idTbry(iwest,inert(i))=varid
-                    DO ng=1,Ngrids
-                      Fscale(varid,ng)=scale
-                      Iinfo(1,varid,ng)=gtype
-                    END DO
-                    WRITE (Vname(1,varid),'(a,i2.2)')                   &
-     &                    TRIM(ADJUSTL(Vinfo(1))), i
-                    WRITE (Vname(2,varid),'(a,a,i2.2)')                 &
-     &                    TRIM(ADJUSTL(Vinfo(2))), ', type ', i
-                    WRITE (Vname(3,varid),'(a)')                        &
-     &                    TRIM(ADJUSTL(Vinfo(3)))
-                    WRITE (Vname(4,varid),'(a,a)')                      &
-     &                    TRIM(Vname(1,varid)), ', scalar, series'
-                    WRITE (Vname(5,varid),'(a)')                        &
-     &                    TRIM(ADJUSTL(Vinfo(5)))
+              END IF
+            CASE ('idTbry(iwest,inert(i))')
+              IF (NPT.gt.0) THEN
+                varid=varid-1
+                DO i=1,NPT
+                  varid=varid+1
+                  idTbry(iwest,inert(i))=varid
+                  DO ng=1,Ngrids
+                    Fscale(varid,ng)=scale
+                    Iinfo(1,varid,ng)=gtype
                   END DO
-                END IF
-              CASE ('idTbry(ieast,inert(i))')
-                IF (NPT.gt.0) THEN
-                  varid=varid-1
-                  DO i=1,NPT
-                    varid=varid+1
-                    idTbry(ieast,inert(i))=varid
-                    DO ng=1,Ngrids
-                      Fscale(varid,ng)=scale
-                      Iinfo(1,varid,ng)=gtype
-                    END DO
-                    WRITE (Vname(1,varid),'(a,i2.2)')                   &
-     &                    TRIM(ADJUSTL(Vinfo(1))), i
-                    WRITE (Vname(2,varid),'(a,a,i2.2)')                 &
-     &                    TRIM(ADJUSTL(Vinfo(2))), ', type ', i
-                    WRITE (Vname(3,varid),'(a)')                        &
-     &                    TRIM(ADJUSTL(Vinfo(3)))
-                    WRITE (Vname(4,varid),'(a,a)')                      &
-     &                    TRIM(Vname(1,varid)), ', scalar, series'
-                    WRITE (Vname(5,varid),'(a)')                        &
-     &                    TRIM(ADJUSTL(Vinfo(5)))
+                  WRITE (Vname(1,varid),'(a,i2.2)')                     &
+     &                  TRIM(ADJUSTL(Vinfo(1))), i
+                  WRITE (Vname(2,varid),'(a,a,i2.2)')                   &
+     &                  TRIM(ADJUSTL(Vinfo(2))), ', type ', i
+                  WRITE (Vname(3,varid),'(a)')                          &
+     &                  TRIM(ADJUSTL(Vinfo(3)))
+                  WRITE (Vname(4,varid),'(a,i2.2,a)')                   &
+     &                  TRIM(ADJUSTL(Vinfo(1))), i, ' western_boundary'
+                  WRITE (Vname(5,varid),'(a)')                          &
+     &                  TRIM(ADJUSTL(Vinfo(5)))
+                  WRITE (Vname(6,varid),'(a,i2.2)')                     &
+     &                  TRIM(ADJUSTL(Vinfo(6))), i
+                END DO
+              END IF
+            CASE ('idTbry(ieast,inert(i))')
+              IF (NPT.gt.0) THEN
+                varid=varid-1
+                DO i=1,NPT
+                  varid=varid+1
+                  idTbry(ieast,inert(i))=varid
+                  DO ng=1,Ngrids
+                    Fscale(varid,ng)=scale
+                    Iinfo(1,varid,ng)=gtype
                   END DO
-                END IF
-              CASE ('idTbry(isouth,inert(i))')
-                IF (NPT.gt.0) THEN
-                  varid=varid-1
-                  DO i=1,NPT
-                    varid=varid+1
-                    idTbry(isouth,inert(i))=varid
-                    DO ng=1,Ngrids
-                      Fscale(varid,ng)=scale
-                      Iinfo(1,varid,ng)=gtype
-                    END DO
-                    WRITE (Vname(1,varid),'(a,i2.2)')                   &
-     &                    TRIM(ADJUSTL(Vinfo(1))), i
-                    WRITE (Vname(2,varid),'(a,a,i2.2)')                 &
-     &                    TRIM(ADJUSTL(Vinfo(2))), ', type ', i
-                    WRITE (Vname(3,varid),'(a)')                        &
-     &                    TRIM(ADJUSTL(Vinfo(3)))
-                    WRITE (Vname(4,varid),'(a,a)')                      &
-     &                    TRIM(Vname(1,varid)), ', scalar, series'
-                    WRITE (Vname(5,varid),'(a)')                        &
-     &                    TRIM(ADJUSTL(Vinfo(5)))
+                  WRITE (Vname(1,varid),'(a,i2.2)')                     &
+     &                  TRIM(ADJUSTL(Vinfo(1))), i
+                  WRITE (Vname(2,varid),'(a,a,i2.2)')                   &
+     &                  TRIM(ADJUSTL(Vinfo(2))), ', type ', i
+                  WRITE (Vname(3,varid),'(a)')                          &
+     &                  TRIM(ADJUSTL(Vinfo(3)))
+                  WRITE (Vname(4,varid),'(a,i2.2,a)')                   &
+     &                  TRIM(ADJUSTL(Vinfo(1))), i, ' eastern_boundary'
+                  WRITE (Vname(5,varid),'(a)')                          &
+     &                  TRIM(ADJUSTL(Vinfo(5)))
+                  WRITE (Vname(6,varid),'(a,i2.2)')                     &
+     &                  TRIM(ADJUSTL(Vinfo(6))), i
+                END DO
+              END IF
+            CASE ('idTbry(isouth,inert(i))')
+              IF (NPT.gt.0) THEN
+                varid=varid-1
+                DO i=1,NPT
+                  varid=varid+1
+                  idTbry(isouth,inert(i))=varid
+                  DO ng=1,Ngrids
+                    Fscale(varid,ng)=scale
+                    Iinfo(1,varid,ng)=gtype
                   END DO
-                END IF
-              CASE ('idTbry(inorth,inert(i))')
-                IF (NPT.gt.0) THEN
-                  varid=varid-1
-                  DO i=1,NPT
-                    varid=varid+1
-                    idTbry(inorth,inert(i))=varid
-                    DO ng=1,Ngrids
-                      Fscale(varid,ng)=scale
-                      Iinfo(1,varid,ng)=gtype
-                    END DO
-                    WRITE (Vname(1,varid),'(a,i2.2)')                   &
-     &                    TRIM(ADJUSTL(Vinfo(1))), i
-                    WRITE (Vname(2,varid),'(a,a,i2.2)')                 &
-     &                    TRIM(ADJUSTL(Vinfo(2))), ', type ', i
-                    WRITE (Vname(3,varid),'(a)')                        &
-     &                    TRIM(ADJUSTL(Vinfo(3)))
-                    WRITE (Vname(4,varid),'(a,a)')                      &
-     &                    TRIM(Vname(1,varid)), ', scalar, series'
-                    WRITE (Vname(5,varid),'(a)')                        &
-     &                    TRIM(ADJUSTL(Vinfo(5)))
+                  WRITE (Vname(1,varid),'(a,i2.2)')                     &
+     &                  TRIM(ADJUSTL(Vinfo(1))), i
+                  WRITE (Vname(2,varid),'(a,a,i2.2)')                   &
+     &                  TRIM(ADJUSTL(Vinfo(2))), ', type ', i
+                  WRITE (Vname(3,varid),'(a)')                          &
+     &                  TRIM(ADJUSTL(Vinfo(3)))
+                  WRITE (Vname(4,varid),'(a,i2.2,a)')                   &
+     &                  TRIM(ADJUSTL(Vinfo(1))), i, ' southern_boundary'
+                  WRITE (Vname(5,varid),'(a)')                          &
+     &                  TRIM(ADJUSTL(Vinfo(5)))
+                  WRITE (Vname(6,varid),'(a,i2.2)')                     &
+     &                  TRIM(ADJUSTL(Vinfo(6))), i
+               END DO
+              END IF
+            CASE ('idTbry(inorth,inert(i))')
+              IF (NPT.gt.0) THEN
+                varid=varid-1
+                DO i=1,NPT
+                  varid=varid+1
+                  idTbry(inorth,inert(i))=varid
+                  DO ng=1,Ngrids
+                    Fscale(varid,ng)=scale
+                    Iinfo(1,varid,ng)=gtype
                   END DO
-                END IF
-              CASE ('idRtrc(inert(i))')
-                IF (NPT.gt.0) THEN
-                  varid=varid-1
-                  DO i=1,NPT
-                    varid=varid+1
-                    idRtrc(inert(i))=varid
-                    DO ng=1,Ngrids
-                      Fscale(varid,ng)=scale
-                      Iinfo(1,varid,ng)=gtype
-                    END DO
-                    WRITE (Vname(1,varid),'(a,i2.2)')                   &
-     &                    TRIM(ADJUSTL(Vinfo(1))), i
-                    WRITE (Vname(2,varid),'(a,a,i2.2)')                 &
-     &                    TRIM(ADJUSTL(Vinfo(2))), ', type ', i
-                    WRITE (Vname(3,varid),'(a)')                        &
-     &                    TRIM(ADJUSTL(Vinfo(3)))
-                    WRITE (Vname(4,varid),'(a,a)')                      &
-     &                    TRIM(Vname(1,varid)), ', scalar, series'
-                    WRITE (Vname(5,varid),'(a)')                        &
-     &                    TRIM(ADJUSTL(Vinfo(5)))
+                  WRITE (Vname(1,varid),'(a,i2.2)')                     &
+     &                  TRIM(ADJUSTL(Vinfo(1))), i
+                  WRITE (Vname(2,varid),'(a,a,i2.2)')                   &
+     &                  TRIM(ADJUSTL(Vinfo(2))), ', type ', i
+                  WRITE (Vname(3,varid),'(a)')                          &
+     &                  TRIM(ADJUSTL(Vinfo(3)))
+                  WRITE (Vname(4,varid),'(a,i2.2,a)')                   &
+     &                  TRIM(ADJUSTL(Vinfo(1))), i, ' northern_boundary'
+                  WRITE (Vname(5,varid),'(a)')                          &
+     &                  TRIM(ADJUSTL(Vinfo(5)))
+                  WRITE (Vname(6,varid),'(a,i2.2)')                     &
+     &                  TRIM(ADJUSTL(Vinfo(6))), i
+                END DO
+              END IF
+            CASE ('idRtrc(inert(i))')
+              IF (NPT.gt.0) THEN
+                varid=varid-1
+                DO i=1,NPT
+                  varid=varid+1
+                  idRtrc(inert(i))=varid
+                  DO ng=1,Ngrids
+                    Fscale(varid,ng)=scale
+                    Iinfo(1,varid,ng)=gtype
                   END DO
-                END IF
-            END SELECT
+                  WRITE (Vname(1,varid),'(a,i2.2)')                     &
+     &                  TRIM(ADJUSTL(Vinfo(1))), i
+                  WRITE (Vname(2,varid),'(a,a,i2.2)')                   &
+     &                  TRIM(ADJUSTL(Vinfo(2))), ', type ', i
+                  WRITE (Vname(3,varid),'(a)')                          &
+     &                  TRIM(ADJUSTL(Vinfo(3)))
+                  WRITE (Vname(4,varid),'(a,i2.2)')                     &
+     &                  TRIM(ADJUSTL(Vinfo(4))), i
+                  WRITE (Vname(5,varid),'(a)')                          &
+     &                  TRIM(ADJUSTL(Vinfo(5)))
+                  WRITE (Vname(6,varid),'(a,i2.2)')                     &
+     &                  TRIM(ADJUSTL(Vinfo(6))), i
+                END DO
+              END IF
+          END SELECT
 #endif
 #ifdef DIAGNOSTICS_TS
 !
 !  Adjust information for tracer diagnostic variables.  This needs to be
 !  done last because it needs all the tracers variable names.
 !
-            SELECT CASE (Vinfo(1))
-              CASE ('_rate')
-                varid=varid-1
-                DO i=1,MT
-                  varid=varid+1
-                  idDtrc(i,iTrate)=varid
-                  DO ng=1,Ngrids
-                    Fscale(varid,ng)=scale
-                    Iinfo(1,varid,ng)=gtype
-                  END DO
-                  WRITE (Vname(1,varid),'(a,a)')                        &
-     &                  TRIM(ADJUSTL(Vname(1,idTvar(i)))),              &
-     &                  TRIM(ADJUSTL(Vinfo(1)))
-                  WRITE (Vname(2,varid),'(a,", ",a)')                   &
-     &                  TRIM(ADJUSTL(Vname(2,idTvar(i)))),              &
-     &                  TRIM(ADJUSTL(Vinfo(2)))
-                  WRITE (Vname(3,varid),'(a,1x,a)')                     &
-     &                  TRIM(ADJUSTL(Vname(3,idTvar(i)))),              &
-     &                  TRIM(ADJUSTL(Vinfo(3)))
-                  WRITE (Vname(4,varid),'(a,a)')                        &
-     &                  TRIM(Vname(1,varid)), ', scalar, series'
-                  WRITE (Vname(5,varid),'(a)')                          &
-     &                  TRIM(ADJUSTL(Vinfo(5)))
+          SELECT CASE (Vinfo(1))
+            CASE ('_rate')
+              varid=varid-1
+              DO i=1,MT
+                varid=varid+1
+                idDtrc(i,iTrate)=varid
+                DO ng=1,Ngrids
+                  Fscale(varid,ng)=scale
+                  Iinfo(1,varid,ng)=gtype
                 END DO
-              CASE ('_hadv')
-                varid=varid-1
-                DO i=1,MT
-                  varid=varid+1
-                  idDtrc(i,iThadv)=varid
-                  DO ng=1,Ngrids
-                    Fscale(varid,ng)=scale
-                    Iinfo(1,varid,ng)=gtype
-                  END DO
-                  WRITE (Vname(1,varid),'(a,a)')                        &
-     &                  TRIM(ADJUSTL(Vname(1,idTvar(i)))),              &
-     &                  TRIM(ADJUSTL(Vinfo(1)))
-                  WRITE (Vname(2,varid),'(a,", ",a)')                   &
-     &                  TRIM(ADJUSTL(Vname(2,idTvar(i)))),              &
-     &                  TRIM(ADJUSTL(Vinfo(2)))
-                  WRITE (Vname(3,varid),'(a,1x,a)')                     &
-     &                  TRIM(ADJUSTL(Vname(3,idTvar(i)))),              &
-     &                  TRIM(ADJUSTL(Vinfo(3)))
-                  WRITE (Vname(4,varid),'(a,a)')                        &
-     &                  TRIM(Vname(1,varid)), ', scalar, series'
-                  WRITE (Vname(5,varid),'(a)')                          &
-     &                  TRIM(ADJUSTL(Vinfo(5)))
+                WRITE (Vname(1,varid),'(a,a)')                          &
+     &                TRIM(ADJUSTL(Vname(1,idTvar(i)))),                &
+     &                TRIM(ADJUSTL(Vinfo(1)))
+                WRITE (Vname(2,varid),'(a,", ",a)')                     &
+     &                TRIM(ADJUSTL(Vname(2,idTvar(i)))),                &
+     &                TRIM(ADJUSTL(Vinfo(2)))
+                WRITE (Vname(3,varid),'(a,1x,a)')                       &
+     &                TRIM(ADJUSTL(Vname(3,idTvar(i)))),                &
+     &                TRIM(ADJUSTL(Vinfo(3)))
+                WRITE (Vname(4,varid),'(a,1x,a)')                       &
+     &                TRIM(ADJUSTL(Vname(1,idTvar(i)))),                &
+     &                TRIM(ADJUSTL(vinfo(4)))
+                WRITE (Vname(5,varid),'(a)')                            &
+     &                TRIM(ADJUSTL(Vinfo(5)))
+                CALL StandardName (Vname(6,varid), Vname(2,idTvar(i)),  &
+     &                             prefix='sea_water_',                 &
+     &                             suffix=Vinfo(6))
+              END DO
+            CASE ('_hadv')
+              varid=varid-1
+              DO i=1,MT
+                varid=varid+1
+                idDtrc(i,iThadv)=varid
+                DO ng=1,Ngrids
+                  Fscale(varid,ng)=scale
+                  Iinfo(1,varid,ng)=gtype
                 END DO
-              CASE ('_xadv')
-                varid=varid-1
-                DO i=1,MT
-                  varid=varid+1
-                  idDtrc(i,iTxadv)=varid
-                  DO ng=1,Ngrids
-                    Fscale(varid,ng)=scale
-                    Iinfo(1,varid,ng)=gtype
-                  END DO
-                  WRITE (Vname(1,varid),'(a,a)')                        &
-     &                  TRIM(ADJUSTL(Vname(1,idTvar(i)))),              &
-     &                  TRIM(ADJUSTL(Vinfo(1)))
-                  WRITE (Vname(2,varid),'(a,", ",a)')                   &
-     &                  TRIM(ADJUSTL(Vname(2,idTvar(i)))),              &
-     &                  TRIM(ADJUSTL(Vinfo(2)))
-                  WRITE (Vname(3,varid),'(a,1x,a)')                     &
-     &                  TRIM(ADJUSTL(Vname(3,idTvar(i)))),              &
-     &                  TRIM(ADJUSTL(Vinfo(3)))
-                  WRITE (Vname(4,varid),'(a,a)')                        &
-     &                  TRIM(Vname(1,varid)), ', scalar, series'
-                  WRITE (Vname(5,varid),'(a)')                          &
-     &                  TRIM(ADJUSTL(Vinfo(5)))
+                WRITE (Vname(1,varid),'(a,a)')                          &
+     &                TRIM(ADJUSTL(Vname(1,idTvar(i)))),                &
+     &                TRIM(ADJUSTL(Vinfo(1)))
+                WRITE (Vname(2,varid),'(a,", ",a)')                     &
+     &                TRIM(ADJUSTL(Vname(2,idTvar(i)))),                &
+     &                TRIM(ADJUSTL(Vinfo(2)))
+                WRITE (Vname(3,varid),'(a,1x,a)')                       &
+     &                TRIM(ADJUSTL(Vname(3,idTvar(i)))),                &
+     &                TRIM(ADJUSTL(Vinfo(3)))
+                WRITE (Vname(4,varid),'(a,1x,a)')                       &
+     &                TRIM(ADJUSTL(Vname(1,idTvar(i)))),                &
+     &                TRIM(ADJUSTL(vinfo(4)))
+                WRITE (Vname(5,varid),'(a)')                            &
+     &                TRIM(ADJUSTL(Vinfo(5)))
+                CALL StandardName (Vname(6,varid), Vname(2,idTvar(i)),  &
+     &                             prefix='sea_water_',                 &
+     &                             suffix=Vinfo(6))
+             END DO
+            CASE ('_xadv')
+              varid=varid-1
+              DO i=1,MT
+                varid=varid+1
+                idDtrc(i,iTxadv)=varid
+                DO ng=1,Ngrids
+                  Fscale(varid,ng)=scale
+                  Iinfo(1,varid,ng)=gtype
                 END DO
-              CASE ('_yadv')
-                varid=varid-1
-                DO i=1,MT
-                  varid=varid+1
-                  idDtrc(i,iTyadv)=varid
-                  DO ng=1,Ngrids
-                    Fscale(varid,ng)=scale
-                    Iinfo(1,varid,ng)=gtype
-                  END DO
-                  WRITE (Vname(1,varid),'(a,a)')                        &
-     &                  TRIM(ADJUSTL(Vname(1,idTvar(i)))),              &
-     &                  TRIM(ADJUSTL(Vinfo(1)))
-                  WRITE (Vname(2,varid),'(a,", ",a)')                   &
-     &                  TRIM(ADJUSTL(Vname(2,idTvar(i)))),              &
-     &                  TRIM(ADJUSTL(Vinfo(2)))
-                  WRITE (Vname(3,varid),'(a,1x,a)')                     &
-     &                  TRIM(ADJUSTL(Vname(3,idTvar(i)))),              &
-     &                  TRIM(ADJUSTL(Vinfo(3)))
-                  WRITE (Vname(4,varid),'(a,a)')                        &
-     &                  TRIM(Vname(1,varid)), ', scalar, series'
-                  WRITE (Vname(5,varid),'(a)')                          &
-     &                  TRIM(ADJUSTL(Vinfo(5)))
+                WRITE (Vname(1,varid),'(a,a)')                          &
+     &                TRIM(ADJUSTL(Vname(1,idTvar(i)))),                &
+     &                TRIM(ADJUSTL(Vinfo(1)))
+                WRITE (Vname(2,varid),'(a,", ",a)')                     &
+     &                TRIM(ADJUSTL(Vname(2,idTvar(i)))),                &
+     &                TRIM(ADJUSTL(Vinfo(2)))
+                WRITE (Vname(3,varid),'(a,1x,a)')                       &
+     &                TRIM(ADJUSTL(Vname(3,idTvar(i)))),                &
+     &                TRIM(ADJUSTL(Vinfo(3)))
+                WRITE (Vname(4,varid),'(a,1x,a)')                       &
+     &                TRIM(ADJUSTL(Vname(1,idTvar(i)))),                &
+     &                TRIM(ADJUSTL(vinfo(4)))
+                WRITE (Vname(5,varid),'(a)')                            &
+     &                TRIM(ADJUSTL(Vinfo(5)))
+                CALL StandardName (Vname(6,varid), Vname(2,idTvar(i)),  &
+     &                             prefix='sea_water_',                 &
+     &                             suffix=Vinfo(6))
+              END DO
+            CASE ('_yadv')
+              varid=varid-1
+              DO i=1,MT
+                varid=varid+1
+                idDtrc(i,iTyadv)=varid
+                DO ng=1,Ngrids
+                  Fscale(varid,ng)=scale
+                  Iinfo(1,varid,ng)=gtype
                 END DO
-              CASE ('_vadv')
-                varid=varid-1
-                DO i=1,MT
-                  varid=varid+1
-                  idDtrc(i,iTvadv)=varid
-                  DO ng=1,Ngrids
-                    Fscale(varid,ng)=scale
-                    Iinfo(1,varid,ng)=gtype
-                  END DO
-                  WRITE (Vname(1,varid),'(a,a)')                        &
-     &                  TRIM(ADJUSTL(Vname(1,idTvar(i)))),              &
-     &                  TRIM(ADJUSTL(Vinfo(1)))
-                  WRITE (Vname(2,varid),'(a,", ",a)')                   &
-     &                  TRIM(ADJUSTL(Vname(2,idTvar(i)))),              &
-     &                  TRIM(ADJUSTL(Vinfo(2)))
-                  WRITE (Vname(3,varid),'(a,1x,a)')                     &
-     &                  TRIM(ADJUSTL(Vname(3,idTvar(i)))),              &
-     &                  TRIM(ADJUSTL(Vinfo(3)))
-                  WRITE (Vname(4,varid),'(a,a)')                        &
-     &                  TRIM(Vname(1,varid)), ', scalar, series'
-                  WRITE (Vname(5,varid),'(a)')                          &
-     &                  TRIM(ADJUSTL(Vinfo(5)))
+                WRITE (Vname(1,varid),'(a,a)')                          &
+     &                TRIM(ADJUSTL(Vname(1,idTvar(i)))),                &
+     &                TRIM(ADJUSTL(Vinfo(1)))
+                WRITE (Vname(2,varid),'(a,", ",a)')                     &
+     &                TRIM(ADJUSTL(Vname(2,idTvar(i)))),                &
+     &                TRIM(ADJUSTL(Vinfo(2)))
+                WRITE (Vname(3,varid),'(a,1x,a)')                       &
+     &                TRIM(ADJUSTL(Vname(3,idTvar(i)))),                &
+     &                TRIM(ADJUSTL(Vinfo(3)))
+                WRITE (Vname(4,varid),'(a,1x,a)')                       &
+     &                TRIM(ADJUSTL(Vname(1,idTvar(i)))),                &
+     &                TRIM(ADJUSTL(vinfo(4)))
+                WRITE (Vname(5,varid),'(a)')                            &
+     &                TRIM(ADJUSTL(Vinfo(5)))
+                CALL StandardName (Vname(6,varid), Vname(2,idTvar(i)),  &
+     &                             prefix='sea_water_',                 &
+     &                             suffix=Vinfo(6))
+              END DO
+            CASE ('_vadv')
+              varid=varid-1
+              DO i=1,MT
+                varid=varid+1
+                idDtrc(i,iTvadv)=varid
+                DO ng=1,Ngrids
+                  Fscale(varid,ng)=scale
+                  Iinfo(1,varid,ng)=gtype
                 END DO
+                WRITE (Vname(1,varid),'(a,a)')                          &
+     &                TRIM(ADJUSTL(Vname(1,idTvar(i)))),                &
+     &                TRIM(ADJUSTL(Vinfo(1)))
+                WRITE (Vname(2,varid),'(a,", ",a)')                     &
+     &                TRIM(ADJUSTL(Vname(2,idTvar(i)))),                &
+     &                TRIM(ADJUSTL(Vinfo(2)))
+                WRITE (Vname(3,varid),'(a,1x,a)')                       &
+     &                TRIM(ADJUSTL(Vname(3,idTvar(i)))),                &
+     &                TRIM(ADJUSTL(Vinfo(3)))
+                WRITE (Vname(4,varid),'(a,1x,a)')                       &
+     &                TRIM(ADJUSTL(Vname(1,idTvar(i)))),                &
+     &                TRIM(ADJUSTL(vinfo(4)))
+                WRITE (Vname(5,varid),'(a)')                            &
+     &                TRIM(ADJUSTL(Vinfo(5)))
+                CALL StandardName (Vname(6,varid), Vname(2,idTvar(i)),  &
+     &                             prefix='sea_water_',                 &
+     &                             suffix=Vinfo(6))
+              END DO
 # if defined TS_DIF2 || defined TS_DIF4
-              CASE ('_hdiff')
-                varid=varid-1
-                DO i=1,MT
-                  varid=varid+1
-                  idDtrc(i,iThdif)=varid
-                  DO ng=1,Ngrids
-                    Fscale(varid,ng)=scale
-                    Iinfo(1,varid,ng)=gtype
-                  END DO
-                  WRITE (Vname(1,varid),'(a,a)')                        &
-     &                  TRIM(ADJUSTL(Vname(1,idTvar(i)))),              &
-     &                  TRIM(ADJUSTL(Vinfo(1)))
-                  WRITE (Vname(2,varid),'(a,", ",a)')                   &
-     &                  TRIM(ADJUSTL(Vname(2,idTvar(i)))),              &
-     &                  TRIM(ADJUSTL(Vinfo(2)))
-                  WRITE (Vname(3,varid),'(a,1x,a)')                     &
-     &                  TRIM(ADJUSTL(Vname(3,idTvar(i)))),              &
-     &                  TRIM(ADJUSTL(Vinfo(3)))
-                  WRITE (Vname(4,varid),'(a,a)')                        &
-     &                  TRIM(Vname(1,varid)), ', scalar, series'
-                  WRITE (Vname(5,varid),'(a)')                          &
-     &                  TRIM(ADJUSTL(Vinfo(5)))
+            CASE ('_hdiff')
+              varid=varid-1
+              DO i=1,MT
+                varid=varid+1
+                idDtrc(i,iThdif)=varid
+                DO ng=1,Ngrids
+                  Fscale(varid,ng)=scale
+                  Iinfo(1,varid,ng)=gtype
                 END DO
-              CASE ('_xdiff')
-                varid=varid-1
-                DO i=1,MT
-                  varid=varid+1
-                  idDtrc(i,iTxdif)=varid
-                  DO ng=1,Ngrids
-                    Fscale(varid,ng)=scale
-                    Iinfo(1,varid,ng)=gtype
-                  END DO
-                  WRITE (Vname(1,varid),'(a,a)')                        &
-     &                  TRIM(ADJUSTL(Vname(1,idTvar(i)))),              &
-     &                  TRIM(ADJUSTL(Vinfo(1)))
-                  WRITE (Vname(2,varid),'(a,", ",a)')                   &
-     &                  TRIM(ADJUSTL(Vname(2,idTvar(i)))),              &
-     &                  TRIM(ADJUSTL(Vinfo(2)))
-                  WRITE (Vname(3,varid),'(a,1x,a)')                     &
-     &                  TRIM(ADJUSTL(Vname(3,idTvar(i)))),              &
-     &                  TRIM(ADJUSTL(Vinfo(3)))
-                  WRITE (Vname(4,varid),'(a,a)')                        &
-     &                  TRIM(Vname(1,varid)), ', scalar, series'
-                  WRITE (Vname(5,varid),'(a)')                          &
-     &                  TRIM(ADJUSTL(Vinfo(5)))
+                WRITE (Vname(1,varid),'(a,a)')                          &
+     &                TRIM(ADJUSTL(Vname(1,idTvar(i)))),                &
+     &                TRIM(ADJUSTL(Vinfo(1)))
+                WRITE (Vname(2,varid),'(a,", ",a)')                     &
+     &                TRIM(ADJUSTL(Vname(2,idTvar(i)))),                &
+     &                TRIM(ADJUSTL(Vinfo(2)))
+                WRITE (Vname(3,varid),'(a,1x,a)')                       &
+     &                TRIM(ADJUSTL(Vname(3,idTvar(i)))),                &
+     &                TRIM(ADJUSTL(Vinfo(3)))
+                WRITE (Vname(4,varid),'(a,1x,a)')                       &
+     &                TRIM(ADJUSTL(Vname(1,idTvar(i)))),                &
+     &                TRIM(ADJUSTL(vinfo(4)))
+                WRITE (Vname(5,varid),'(a)')                            &
+     &                TRIM(ADJUSTL(Vinfo(5)))
+                CALL StandardName (Vname(6,varid), Vname(2,idTvar(i)),  &
+     &                             prefix='sea_water_',                 &
+     &                             suffix=Vinfo(6))
+              END DO
+            CASE ('_xdiff')
+              varid=varid-1
+              DO i=1,MT
+                varid=varid+1
+                idDtrc(i,iTxdif)=varid
+                DO ng=1,Ngrids
+                  Fscale(varid,ng)=scale
+                  Iinfo(1,varid,ng)=gtype
                 END DO
-              CASE ('_ydiff')
-                varid=varid-1
-                DO i=1,MT
-                  varid=varid+1
-                  idDtrc(i,iTydif)=varid
-                  DO ng=1,Ngrids
-                    Fscale(varid,ng)=scale
-                    Iinfo(1,varid,ng)=gtype
-                  END DO
-                  WRITE (Vname(1,varid),'(a,a)')                        &
-     &                  TRIM(ADJUSTL(Vname(1,idTvar(i)))),              &
-     &                  TRIM(ADJUSTL(Vinfo(1)))
-                  WRITE (Vname(2,varid),'(a,", ",a)')                   &
-     &                  TRIM(ADJUSTL(Vname(2,idTvar(i)))),              &
-     &                  TRIM(ADJUSTL(Vinfo(2)))
-                  WRITE (Vname(3,varid),'(a,1x,a)')                     &
-     &                  TRIM(ADJUSTL(Vname(3,idTvar(i)))),              &
-     &                  TRIM(ADJUSTL(Vinfo(3)))
-                  WRITE (Vname(4,varid),'(a,a)')                        &
-     &                  TRIM(Vname(1,varid)), ', scalar, series'
-                  WRITE (Vname(5,varid),'(a)')                          &
-     &                  TRIM(ADJUSTL(Vinfo(5)))
+                WRITE (Vname(1,varid),'(a,a)')                          &
+     &                TRIM(ADJUSTL(Vname(1,idTvar(i)))),                &
+     &                TRIM(ADJUSTL(Vinfo(1)))
+                WRITE (Vname(2,varid),'(a,", ",a)')                     &
+     &                TRIM(ADJUSTL(Vname(2,idTvar(i)))),                &
+     &                TRIM(ADJUSTL(Vinfo(2)))
+                WRITE (Vname(3,varid),'(a,1x,a)')                       &
+     &                TRIM(ADJUSTL(Vname(3,idTvar(i)))),                &
+     &                TRIM(ADJUSTL(Vinfo(3)))
+                WRITE (Vname(4,varid),'(a,1x,a)')                       &
+     &                TRIM(ADJUSTL(Vname(1,idTvar(i)))),                &
+     &                TRIM(ADJUSTL(vinfo(4)))
+                WRITE (Vname(5,varid),'(a)')                            &
+     &                TRIM(ADJUSTL(Vinfo(5)))
+                CALL StandardName (Vname(6,varid), Vname(2,idTvar(i)),  &
+     &                             prefix='sea_water_',                 &
+     &                             suffix=Vinfo(6))
+              END DO
+            CASE ('_ydiff')
+              varid=varid-1
+              DO i=1,MT
+                varid=varid+1
+                idDtrc(i,iTydif)=varid
+                DO ng=1,Ngrids
+                  Fscale(varid,ng)=scale
+                  Iinfo(1,varid,ng)=gtype
                 END DO
+                WRITE (Vname(1,varid),'(a,a)')                          &
+     &                TRIM(ADJUSTL(Vname(1,idTvar(i)))),                &
+     &                TRIM(ADJUSTL(Vinfo(1)))
+                WRITE (Vname(2,varid),'(a,", ",a)')                     &
+     &                TRIM(ADJUSTL(Vname(2,idTvar(i)))),                &
+     &                TRIM(ADJUSTL(Vinfo(2)))
+                WRITE (Vname(3,varid),'(a,1x,a)')                       &
+     &                TRIM(ADJUSTL(Vname(3,idTvar(i)))),                &
+     &                TRIM(ADJUSTL(Vinfo(3)))
+                WRITE (Vname(4,varid),'(a,1x,a)')                       &
+     &                TRIM(ADJUSTL(Vname(1,idTvar(i)))),                &
+     &                TRIM(ADJUSTL(vinfo(4)))
+                WRITE (Vname(5,varid),'(a)')                            &
+     &                TRIM(ADJUSTL(Vinfo(5)))
+                CALL StandardName (Vname(6,varid), Vname(2,idTvar(i)),  &
+     &                             prefix='sea_water_',                 &
+     &                             suffix=Vinfo(6))
+             END DO
 #  if defined MIX_GEO_TS || defined MIX_ISO_TS
-              CASE ('_sdiff')
-                varid=varid-1
-                DO i=1,MT
-                  varid=varid+1
-                  idDtrc(i,iTsdif)=varid
-                  DO ng=1,Ngrids
-                    Fscale(varid,ng)=scale
-                    Iinfo(1,varid,ng)=gtype
-                  END DO
-                  WRITE (Vname(1,varid),'(a,a)')                        &
-     &                  TRIM(ADJUSTL(Vname(1,idTvar(i)))),              &
-     &                  TRIM(ADJUSTL(Vinfo(1)))
-                  WRITE (Vname(2,varid),'(a,", ",a)')                   &
-     &                  TRIM(ADJUSTL(Vname(2,idTvar(i)))),              &
-     &                  TRIM(ADJUSTL(Vinfo(2)))
-                  WRITE (Vname(3,varid),'(a,1x,a)')                     &
-     &                  TRIM(ADJUSTL(Vname(3,idTvar(i)))),              &
-     &                  TRIM(ADJUSTL(Vinfo(3)))
-                  WRITE (Vname(4,varid),'(a,a)')                        &
-     &                  TRIM(Vname(1,varid)), ', scalar, series'
-                  WRITE (Vname(5,varid),'(a)')                          &
-     &                  TRIM(ADJUSTL(Vinfo(5)))
+            CASE ('_sdiff')
+              varid=varid-1
+              DO i=1,MT
+                varid=varid+1
+                idDtrc(i,iTsdif)=varid
+                DO ng=1,Ngrids
+                  Fscale(varid,ng)=scale
+                  Iinfo(1,varid,ng)=gtype
                 END DO
+                WRITE (Vname(1,varid),'(a,a)')                          &
+     &                TRIM(ADJUSTL(Vname(1,idTvar(i)))),                &
+     &                TRIM(ADJUSTL(Vinfo(1)))
+                WRITE (Vname(2,varid),'(a,", ",a)')                     &
+     &                TRIM(ADJUSTL(Vname(2,idTvar(i)))),                &
+     &                TRIM(ADJUSTL(Vinfo(2)))
+                WRITE (Vname(3,varid),'(a,1x,a)')                       &
+     &                TRIM(ADJUSTL(Vname(3,idTvar(i)))),                &
+     &                TRIM(ADJUSTL(Vinfo(3)))
+                WRITE (Vname(4,varid),'(a,1x,a)')                       &
+     &                TRIM(ADJUSTL(Vname(1,idTvar(i)))),                &
+     &                TRIM(ADJUSTL(vinfo(4)))
+                WRITE (Vname(5,varid),'(a)')                            &
+     &                TRIM(ADJUSTL(Vinfo(5)))
+                CALL StandardName (Vname(6,varid), Vname(2,idTvar(i)),  &
+     &                             prefix='sea_water_',                 &
+     &                             suffix=Vinfo(6))
+              END DO
 #  endif
 # endif
-              CASE ('_vdiff')
-                varid=varid-1
-                DO i=1,MT
-                  varid=varid+1
-                  idDtrc(i,iTvdif)=varid
-                  DO ng=1,Ngrids
-                    Fscale(varid,ng)=scale
-                    Iinfo(1,varid,ng)=gtype
-                  END DO
-                  WRITE (Vname(1,varid),'(a,a)')                        &
-     &                  TRIM(ADJUSTL(Vname(1,idTvar(i)))),              &
-     &                  TRIM(ADJUSTL(Vinfo(1)))
-                  WRITE (Vname(2,varid),'(a,", ",a)')                   &
-     &                  TRIM(ADJUSTL(Vname(2,idTvar(i)))),              &
-     &                  TRIM(ADJUSTL(Vinfo(2)))
-                  WRITE (Vname(3,varid),'(a,1x,a)')                     &
-     &                  TRIM(ADJUSTL(Vname(3,idTvar(i)))),              &
-     &                  TRIM(ADJUSTL(Vinfo(3)))
-                  WRITE (Vname(4,varid),'(a,a)')                        &
-     &                  TRIM(Vname(1,varid)), ', scalar, series'
-                  WRITE (Vname(5,varid),'(a)')                          &
-     &                  TRIM(ADJUSTL(Vinfo(5)))
+            CASE ('_vdiff')
+              varid=varid-1
+              DO i=1,MT
+                varid=varid+1
+                idDtrc(i,iTvdif)=varid
+                DO ng=1,Ngrids
+                  Fscale(varid,ng)=scale
+                  Iinfo(1,varid,ng)=gtype
                 END DO
-            END SELECT
+                WRITE (Vname(1,varid),'(a,a)')                          &
+     &                TRIM(ADJUSTL(Vname(1,idTvar(i)))),                &
+     &                TRIM(ADJUSTL(Vinfo(1)))
+                WRITE (Vname(2,varid),'(a,", ",a)')                     &
+     &                TRIM(ADJUSTL(Vname(2,idTvar(i)))),                &
+     &                TRIM(ADJUSTL(Vinfo(2)))
+                WRITE (Vname(3,varid),'(a,1x,a)')                       &
+     &                TRIM(ADJUSTL(Vname(3,idTvar(i)))),                &
+     &                TRIM(ADJUSTL(Vinfo(3)))
+                WRITE (Vname(4,varid),'(a,1x,a)')                       &
+     &                TRIM(ADJUSTL(Vname(1,idTvar(i)))),                &
+     &                TRIM(ADJUSTL(vinfo(4)))
+                WRITE (Vname(5,varid),'(a)')                            &
+     &                TRIM(ADJUSTL(Vinfo(5)))
+                CALL StandardName (Vname(6,varid), Vname(2,idTvar(i)),  &
+     &                             prefix='sea_water_',                 &
+     &                             suffix=Vinfo(6))
+              END DO
+          END SELECT
 #endif
 #if defined SOLVE3D && (defined AVERAGES || defined AD_AVERAGES)
 !
 !  Determine metadata for quadratic tracer averages.
 !
-            SELECT CASE (Vinfo(1))
-              CASE ('tracer2')
-                varid=varid-1
-                DO i=1,MT
-                  varid=varid+1
-                  idTTav(i)=varid
-                  DO ng=1,Ngrids
-                    Fscale(varid,ng)=scale
-                    Iinfo(1,varid,ng)=gtype
-                  END DO
-                  WRITE (Vname(1,varid),'(a,a)')                        &
-     &                  TRIM(ADJUSTL(Vname(1,idTvar(i)))), '_2'
-                  WRITE (Vname(2,varid),'(a,1x,a)')                     &
-     &                  'time-averaged squared',                        &
-     &                  TRIM(ADJUSTL(Vname(2,idTvar(i))))
-                  IF (TRIM(ADJUSTL(Vname(3,idTvar(i)))).eq.             &
-     &                'nondimensional') THEN
-                    WRITE (Vname(3,varid),'(a)')                        &
-     &                    TRIM(ADJUSTL(Vname(3,idTvar(i))))
-                  ELSE
-                    WRITE (Vname(3,varid),'(a,a)')                      &
-     &                    TRIM(ADJUSTL(Vname(3,idTvar(i)))), '2'
-                  END IF
-                  WRITE (Vname(4,varid),'(a,a)')                        &
-     &                  TRIM(Vname(1,varid)), ', scalar, series'
-                  WRITE (Vname(5,varid),'(a)')                          &
-     &                  TRIM(ADJUSTL(Vinfo(5)))
+          SELECT CASE (Vinfo(1))
+            CASE ('tracer2')
+              varid=varid-1
+              DO i=1,MT
+                varid=varid+1
+                idTTav(i)=varid
+                DO ng=1,Ngrids
+                  Fscale(varid,ng)=scale
+                  Iinfo(1,varid,ng)=gtype
                 END DO
-              CASE ('Huontracer')
-                varid=varid-1
-                DO i=1,MT
-                  varid=varid+1
-                  iHUTav(i)=varid
-                  DO ng=1,Ngrids
-                    Fscale(varid,ng)=scale
-                    Iinfo(1,varid,ng)=gtype
-                  END DO
-                  WRITE (Vname(1,varid),'(a,a)')                        &
-     &                  'Huon_', TRIM(ADJUSTL(Vname(1,idTvar(i))))
-                  WRITE (Vname(2,varid),'(a,1x,a,1x,a)')                &
-     &                  'time-averaged',                                &
-     &                  TRIM(ADJUSTL(Vname(2,idTvar(i)))),              &
-     &                  'u-volume flux'
-                  IF (TRIM(ADJUSTL(Vname(3,idTvar(i)))).eq.             &
-     &                'nondimensional') THEN
-                    WRITE (Vname(3,varid),'(a)')                        &
-     &                    'meter3 second-1'
-                  ELSE
-                    WRITE (Vname(3,varid),'(a,1x,a)')                   &
-     &                    'meter3 second-1',                            &
-     &                    TRIM(ADJUSTL(Vname(3,idTvar(i))))
-                  END IF
-                  WRITE (Vname(4,varid),'(a,a)')                        &
-     &                  TRIM(Vname(1,varid)), ', scalar, series'
-                  WRITE (Vname(5,varid),'(a)')                          &
-     &                  TRIM(ADJUSTL(Vinfo(5)))
+                WRITE (Vname(1,varid),'(a,a)')                          &
+     &                TRIM(ADJUSTL(Vname(1,idTvar(i)))), '_2'
+                WRITE (Vname(2,varid),'(a,1x,a)')                       &
+     &                'squared',                                        &
+     &                TRIM(ADJUSTL(Vname(2,idTvar(i))))
+                IF (TRIM(ADJUSTL(Vname(3,idTvar(i)))).eq.               &
+     &              'nondimensional') THEN
+                  WRITE (Vname(3,varid),'(a)')                          &
+     &                  TRIM(ADJUSTL(Vname(3,idTvar(i))))
+                ELSE
+                  WRITE (Vname(3,varid),'(a,a)')                        &
+     &                  TRIM(ADJUSTL(Vname(3,idTvar(i)))), '2'
+                END IF
+                WRITE (Vname(4,varid),'(a,1x,a)')                       &
+     &                TRIM(ADJUSTL(Vname(2,idTvar(i)))),                &
+     &                TRIM(ADJUSTL(Vinfo(4)))
+                WRITE (Vname(5,varid),'(a)')                            &
+     &                TRIM(ADJUSTL(Vinfo(5)))
+                CALL StandardName (Vname(6,varid), Vname(2,idTvar(i)),  &
+     &                             prefix=Vinfo(6),                     &
+     &                             suffix='_in_sea_water')
+              END DO
+            CASE ('Huontracer')
+              varid=varid-1
+              DO i=1,MT
+                varid=varid+1
+                iHUTav(i)=varid
+                DO ng=1,Ngrids
+                  Fscale(varid,ng)=scale
+                  Iinfo(1,varid,ng)=gtype
                 END DO
-              CASE ('utracer')
-                varid=varid-1
-                DO i=1,MT
-                  varid=varid+1
-                  idUTav(i)=varid
-                  DO ng=1,Ngrids
-                    Fscale(varid,ng)=scale
-                    Iinfo(1,varid,ng)=gtype
-                  END DO
-                  WRITE (Vname(1,varid),'(a,a)')                        &
-     &                  'u_', TRIM(ADJUSTL(Vname(1,idTvar(i))))
-                  WRITE (Vname(2,varid),'(a,1x,a)')                     &
-     &                  'time-averaged u-momentum times',               &
-     &                  TRIM(ADJUSTL(Vname(2,idTvar(i))))
-                  IF (TRIM(ADJUSTL(Vname(3,idTvar(i)))).eq.             &
-     &                'nondimensional') THEN
-                    WRITE (Vname(3,varid),'(a)')                        &
-     &                    'meter second-1'
-                  ELSE
-                    WRITE (Vname(3,varid),'(a,1x,a)')                   &
-     &                    'meter second-1',                             &
-     &                    TRIM(ADJUSTL(Vname(3,idTvar(i))))
-                  END IF
-                  WRITE (Vname(4,varid),'(a,a)')                        &
-     &                  TRIM(Vname(1,varid)), ', scalar, series'
-                  WRITE (Vname(5,varid),'(a)')                          &
-     &                  TRIM(ADJUSTL(Vinfo(5)))
+                WRITE (Vname(1,varid),'(a,a)')                          &
+     &                'Huon_', TRIM(ADJUSTL(Vname(1,idTvar(i))))
+                WRITE (Vname(2,varid),'(a,1x,a)')                       &
+     &                TRIM(ADJUSTL(Vname(2,idTvar(i)))),                &
+     &                'u-volume flux'
+                IF (TRIM(ADJUSTL(Vname(3,idTvar(i)))).eq.               &
+     &              'nondimensional') THEN
+                  WRITE (Vname(3,varid),'(a)')                          &
+     &                  'meter3 second-1'
+                ELSE
+                  WRITE (Vname(3,varid),'(a,1x,a)')                     &
+     &                  'meter3 second-1',                              &
+     &                  TRIM(ADJUSTL(Vname(3,idTvar(i))))
+                END IF
+                WRITE (Vname(4,varid),'(a,1x,a)')                       &
+     &                TRIM(ADJUSTL(Vname(2,idTvar(i)))),                &
+     &                TRIM(ADJUSTL(Vinfo(4)))
+                WRITE (Vname(5,varid),'(a)')                            &
+     &                TRIM(ADJUSTL(Vinfo(5)))
+                CALL StandardName (Vname(6,varid), Vname(2,idTvar(i)),  &
+     &                             prefix=Vinfo(6))
+              END DO
+            CASE ('utracer')
+              varid=varid-1
+              DO i=1,MT
+                varid=varid+1
+                idUTav(i)=varid
+                DO ng=1,Ngrids
+                  Fscale(varid,ng)=scale
+                  Iinfo(1,varid,ng)=gtype
                 END DO
-              CASE ('Hvomtracer')
-                varid=varid-1
-                DO i=1,MT
-                  varid=varid+1
-                  iHVTav(i)=varid
-                  DO ng=1,Ngrids
-                    Fscale(varid,ng)=scale
-                    Iinfo(1,varid,ng)=gtype
-                  END DO
-                  WRITE (Vname(1,varid),'(a,a)')                        &
-     &                  'Hvom_', TRIM(ADJUSTL(Vname(1,idTvar(i))))
-                  WRITE (Vname(2,varid),'(a,1x,a,1x,a)')                &
-     &                  'time-averaged',                                &
-     &                  TRIM(ADJUSTL(Vname(2,idTvar(i)))),              &
-     &                  'v-volume flux'
-                  IF (TRIM(ADJUSTL(Vname(3,idTvar(i)))).eq.             &
-     &                'nondimensional') THEN
-                    WRITE (Vname(3,varid),'(a)')                        &
-     &                    'meter3 second-1'
-                  ELSE
-                    WRITE (Vname(3,varid),'(a,1x,a)')                   &
-     &                    'meter3 second-1',                            &
-     &                    TRIM(ADJUSTL(Vname(3,idTvar(i))))
-                  END IF
-                  WRITE (Vname(4,varid),'(a,a)')                        &
-     &                  TRIM(Vname(1,varid)), ', scalar, series'
-                  WRITE (Vname(5,varid),'(a)')                          &
-     &                  TRIM(ADJUSTL(Vinfo(5)))
+                WRITE (Vname(1,varid),'(a,a)')                          &
+     &                'u_', TRIM(ADJUSTL(Vname(1,idTvar(i))))
+                WRITE (Vname(2,varid),'(a,1x,a)')                       &
+     &                'u-momentum times',                               &
+     &                TRIM(ADJUSTL(Vname(2,idTvar(i))))
+                IF (TRIM(ADJUSTL(Vname(3,idTvar(i)))).eq.               &
+     &              'nondimensional') THEN
+                  WRITE (Vname(3,varid),'(a)')                          &
+     &                  'meter second-1'
+                ELSE
+                  WRITE (Vname(3,varid),'(a,1x,a)')                     &
+     &                  'meter second-1',                               &
+     &                  TRIM(ADJUSTL(Vname(3,idTvar(i))))
+                END IF
+                WRITE (Vname(4,varid),'(a,1x,a)')                       &
+     &                 TRIM(ADJUSTL(Vinfo(4))),                         &
+     &                 TRIM(ADJUSTL(Vname(2,idTvar(i))))
+                Vname(5,varid)='ocean_time'
+                CALL StandardName (Vname(6,varid), Vname(2,idTvar(i)),  &
+     &                             prefix=Vinfo(6),                     &
+     &                             suffix='_in_sea_water')
+              END DO
+            CASE ('Hvomtracer')
+              varid=varid-1
+              DO i=1,MT
+                varid=varid+1
+                iHVTav(i)=varid
+                DO ng=1,Ngrids
+                  Fscale(varid,ng)=scale
+                  Iinfo(1,varid,ng)=gtype
                 END DO
-              CASE ('vtracer')
-                varid=varid-1
-                DO i=1,MT
-                  varid=varid+1
-                  idVTav(i)=varid
-                  DO ng=1,Ngrids
-                    Fscale(varid,ng)=scale
-                    Iinfo(1,varid,ng)=gtype
-                  END DO
-                  WRITE (Vname(1,varid),'(a,a)')                        &
-     &                  'v_', TRIM(ADJUSTL(Vname(1,idTvar(i))))
-                  WRITE (Vname(2,varid),'(a,1x,a)')                     &
-     &                  'time-averaged v-momentum times',               &
-     &                  TRIM(ADJUSTL(Vname(2,idTvar(i))))
-                  IF (TRIM(ADJUSTL(Vname(3,idTvar(i)))).eq.             &
-     &                'nondimensional') THEN
-                    WRITE (Vname(3,varid),'(a)')                        &
-     &                    'meter second-1'
-                  ELSE
-                    WRITE (Vname(3,varid),'(a,1x,a)')                   &
-     &                    'meter second-1',                             &
-     &                    TRIM(ADJUSTL(Vname(3,idTvar(i))))
-                  END IF
-                  WRITE (Vname(4,varid),'(a,a)')                        &
-     &                  TRIM(Vname(1,varid)), ', scalar, series'
-                  WRITE (Vname(5,varid),'(a)')                          &
-     &                  TRIM(ADJUSTL(Vinfo(5)))
+                WRITE (Vname(1,varid),'(a,a)')                          &
+     &                'Hvom_', TRIM(ADJUSTL(Vname(1,idTvar(i))))
+                WRITE (Vname(2,varid),'(a,1x,a)')                       &
+     &                TRIM(ADJUSTL(Vname(2,idTvar(i)))),                &
+     &                'v-volume flux'
+                IF (TRIM(ADJUSTL(Vname(3,idTvar(i)))).eq.               &
+     &              'nondimensional') THEN
+                  WRITE (Vname(3,varid),'(a)')                          &
+     &                  'meter3 second-1'
+                ELSE
+                  WRITE (Vname(3,varid),'(a,1x,a)')                     &
+     &                  'meter3 second-1',                              &
+     &                  TRIM(ADJUSTL(Vname(3,idTvar(i))))
+                END IF
+                WRITE (Vname(4,varid),'(a,1x,a)')                       &
+     &                TRIM(ADJUSTL(Vname(2,idTvar(i)))),                &
+     &                TRIM(ADJUSTL(Vinfo(4)))
+                WRITE (Vname(5,varid),'(a)')                            &
+     &                TRIM(ADJUSTL(Vinfo(5)))
+                CALL StandardName (Vname(6,varid), Vname(2,idTvar(i)),  &
+     &                             prefix=Vinfo(6))
+              END DO
+            CASE ('vtracer')
+              varid=varid-1
+              DO i=1,MT
+                varid=varid+1
+                idVTav(i)=varid
+                DO ng=1,Ngrids
+                  Fscale(varid,ng)=scale
+                  Iinfo(1,varid,ng)=gtype
                 END DO
-            END SELECT
+                WRITE (Vname(1,varid),'(a,a)')                          &
+     &                'v_', TRIM(ADJUSTL(Vname(1,idTvar(i))))
+                WRITE (Vname(2,varid),'(a,1x,a)')                       &
+     &                'v-momentum times',                               &
+     &                TRIM(ADJUSTL(Vname(2,idTvar(i))))
+                IF (TRIM(ADJUSTL(Vname(3,idTvar(i)))).eq.               &
+     &              'nondimensional') THEN
+                  WRITE (Vname(3,varid),'(a)')                          &
+     &                  'meter second-1'
+                ELSE
+                  WRITE (Vname(3,varid),'(a,1x,a)')                     &
+     &                  'meter second-1',                               &
+     &                  TRIM(ADJUSTL(Vname(3,idTvar(i))))
+                END IF
+                WRITE (Vname(4,varid),'(a,1x,a)')                       &
+     &                 TRIM(ADJUSTL(Vinfo(4))),                         &
+     &                 TRIM(ADJUSTL(Vname(2,idTvar(i))))
+                Vname(5,varid)='ocean_time'
+                CALL StandardName (Vname(6,varid), Vname(2,idTvar(i)),  &
+     &                             prefix=Vinfo(6),                     &
+     &                             suffix='_in_sea_water')
+              END DO
+          END SELECT
 #endif
-          ELSE
-            varid=varid-1
-!!          WRITE (stdout,70) TRIM(ADJUSTL(Vinfo(1))),                  &
-!!   &                        TRIM(ADJUSTL(Vinfo(6)))
-          END IF
+        ELSE
+          varid=varid-1
         END IF
-      END DO
-  30  WRITE (stdout,80) TRIM(ADJUSTL(Vinfo(1)))
-      STOP
-  40  CLOSE (inp)
+      END DO METADATA_LOOP
 
 #ifdef SOLVE3D
 !
@@ -2747,7 +2776,7 @@
       DO i=NAT+1,MT
         varid=varid+1
         IF (varid.gt.MV) THEN
-          WRITE (stdout,60) MV, varid
+          WRITE (stdout,10) MV, varid
           STOP
         END IF
         idTsur(i)=varid
@@ -2761,21 +2790,24 @@
      &        TRIM(ADJUSTL(Vname(2,idTvar(i)))), ', surface flux'
         WRITE (Vname(3,varid),'(a,1x,a)')                               &
      &        TRIM(ADJUSTL(Vname(3,idTvar(i)))), 'meter second-1'
-        WRITE (Vname(4,varid),'(a,a)')                                  &
-     &        TRIM(Vname(1,varid)), ', scalar, series'
+        WRITE (Vname(4,varid),'(3a)') 'surface ',                       &
+     &        TRIM(ADJUSTL(Vname(2,idTvar(i)))), ' flux'
         WRITE (Vname(5,varid),'(a)')                                    &
-     &        TRIM(ADJUSTL(Vname(5,idTvar(i))))
+     &        TRIM(ADJUSTL(Vname(1,idTvar(i))))
+        CALL StandardName (Vname(6,varid), Vname(2,idTvar(i)),          &
+     &                     prefix='sea_surface_',                       &
+     &                     suffix='_flux')
       END DO
 !
 !-----------------------------------------------------------------------
 !  Set passive model surface tracers metadata. The variable name is the
-!  same as the basic tracer but with the _sflux suffix.
+!  same as the basic tracer but with the _sur suffix.
 !-----------------------------------------------------------------------
 !
       DO i=NAT+1,MT
         varid=varid+1
         IF (varid.gt.MV) THEN
-          WRITE (stdout,60) MV, varid
+          WRITE (stdout,10) MV, varid
           STOP
         END IF
         idsurT(i)=varid
@@ -2785,14 +2817,16 @@
         END DO
         WRITE (Vname(1,varid),'(a,a)')                                  &
      &        TRIM(ADJUSTL(Vname(1,idTvar(i)))), '_sur'
-        WRITE (Vname(2,varid),'(a,1x,a)') 'model surface',              &
+        WRITE (Vname(2,varid),'(2a)') 'surface ',                       &
      &        TRIM(ADJUSTL(Vname(2,idTvar(i))))
         WRITE (Vname(3,varid),'(a)')                                    &
      &        TRIM(ADJUSTL(Vname(3,idTvar(i))))
-        WRITE (Vname(4,varid),'(a,a)')                                  &
-     &        TRIM(Vname(1,varid)), ', scalar, series'
+        WRITE (Vname(4,varid),'(a)')                                    &
+     &        TRIM(Vname(2,varid))
         WRITE (Vname(5,varid),'(a)')                                    &
      &        TRIM(ADJUSTL(Vname(5,idTvar(i))))
+        CALL StandardName (Vname(6,varid), Vname(2,idTvar(i)),          &
+     &                     prefix='sea_surface_')
       END DO
 #endif
 #ifdef WEAK_CONSTRAINT
@@ -2807,7 +2841,7 @@
       DO i=NAT+1,MT
         varid=varid+1
         IF (varid.gt.MV) THEN
-          WRITE (stdout,60) MV, varid
+          WRITE (stdout,10) MV, varid
           STOP
         END IF
         idTtlf(i)=varid
@@ -2822,9 +2856,12 @@
         WRITE (Vname(3,varid),'(a)')                                    &
      &        TRIM(ADJUSTL(Vname(3,idTvar(i))))
         WRITE (Vname(4,varid),'(a,a)')                                  &
-     &        TRIM(Vname(1,varid)), ', scalar, series'
+     &        TRIM(ADJUSTL(Vname(2,idTvar(i)))), ' impulse'
         WRITE (Vname(5,varid),'(a)')                                    &
      &          TRIM(ADJUSTL(Vname(5,idTvar(i))))
+        CALL StandardName (Vname(6,varid), Vname(2,idTvar(i)),          &
+     &                     prefix='sea_water_',                         &
+     &                     suffix='_impulse')
       END DO
 #endif
 !
@@ -2886,7 +2923,7 @@
       DO i=1,ic
         varid=varid+1
         IF (varid.gt.MV) THEN
-          WRITE (stdout,60) MV, varid
+          WRITE (stdout,10) MV, varid
           STOP
         END IF
         idSbry(i)=varid
@@ -2912,22 +2949,11 @@
       last_varid=varid
       Dmem(1)=Dmem(1)+REAL(varid,r8)
 !
-  50  FORMAT (/,' MOD_NCPARAM - Unable to open variable information',   &
-     &        ' file: ',/,15x,a,/,15x,'ERROR: ',a,/,                    &
-     &        15x,'Default file is located in source directory.')
-  60  FORMAT (/,' MOD_NCPARAM - too small dimension ',                  &
+  10  FORMAT (/,' MOD_NCPARAM - too small dimension ',                  &
      &        'parameter, MV = ',2i5,/,15x,                             &
      &        'change file  mod_ncparam.F  and recompile.')
-  70  FORMAT (/,' MOD_NCPARM - Cannot load information for ',           &
-     &        'variable: ',a,/,15x,'Need CASE construct for: ',a)
-  80  FORMAT (/,' MOD_NCPARM - Error while reading information ',       &
-     &        'for variable: ',a)
-  90  FORMAT (a,i2.2)
- 100  FORMAT (a,a,i2.2)
- 110  FORMAT (a)
- 120  FORMAT (a,a)
 !
       RETURN
       END SUBROUTINE initialize_ncparam
-
+!
       END MODULE mod_ncparam

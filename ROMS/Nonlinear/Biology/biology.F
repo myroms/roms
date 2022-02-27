@@ -54,7 +54,7 @@
 **         red_tide_inp.h                                             **
 **                                                                    **
 **   (5) Code to assign indices to model variables during the         **
-**       reading of metadata information from "varinfo.dat":          **
+**       reading of metadata information from "varinfo.yaml":         **
 **                                                                    **
 **         ecosim_var.h                                               **
 **         fennel_var.h                                               **

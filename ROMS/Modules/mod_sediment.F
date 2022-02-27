@@ -2,7 +2,7 @@
 
 /*
 ** git $Id$
-** svn $Id: mod_sediment.F 1099 2022-01-06 21:01:01Z arango $
+** svn $Id: mod_sediment.F 1110 2022-02-27 21:37:32Z arango $
 *************************************************** Hernan G. Arango ***
 ** Copyright (c) 2002-2022 The ROMS/TOMS Group                        **
 **   Licensed under a MIT/X style license                             **
@@ -40,7 +40,7 @@
 **        sediment_inp.h                                              **
 **                                                                    **
 **   *  Code to assign indices to model variables during the          **
-**      reading of metadata information from "varinfo.dat":           **
+**      reading of metadata information from "varinfo.yaml":          **
 **                                                                    **
 **        sediment_var.h                                              **
 **                                                                    **

@@ -1,7 +1,7 @@
       MODULE roms_kernel_mod
 !
 !git $Id$
-!svn $Id: nl_roms.h 1103 2022-01-13 03:38:35Z arango $
+!svn $Id: nl_roms.h 1110 2022-02-27 21:37:32Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2022 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -318,7 +318,7 @@
 !
       character (len=*), parameter :: MyFile =                          &
      &  __FILE__//", ROMS_finalize"
-!
+
 #ifdef ENKF_RESTART
 !
 !-----------------------------------------------------------------------

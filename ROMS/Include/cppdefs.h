@@ -2,7 +2,7 @@
 ** Include file "cppdefs.h"
 **
 ** git $Id$
-** svn $Id: cppdefs.h 1099 2022-01-06 21:01:01Z arango $
+** svn $Id: cppdefs.h 1110 2022-02-27 21:37:32Z arango $
 ********************************************************** Hernan G. Arango ***
 ** Copyright (c) 2002-2022 The ROMS/TOMS Group                               **
 **   Licensed under a MIT/X style license                                    **
@@ -560,6 +560,7 @@
 ** CHECK_OPEN_FILES        to report number opened/closed/created files      **
 ** DEFLATE                 to set compression NetCDF-4/HDF5 format files     **
 ** HDF5                    to create NetCDF-4/HDF5 format files              **
+** METADATA_REPORT         to report/dump YAML metadata dictionary           **
 ** NO_LBC_ATT              to not check NLM_LBC global attribute on restart  **
 ** NO_READ_GHOST           to not include ghost points during read/scatter   **
 ** NO_WRITE_GRID           if not writing grid arrays                        **

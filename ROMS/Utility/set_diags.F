@@ -3,7 +3,7 @@
       SUBROUTINE set_diags (ng, tile)
 !
 !git $Id$
-!svn $Id: set_diags.F 1099 2022-01-06 21:01:01Z arango $
+!svn $Id: set_diags.F 1110 2022-02-27 21:37:32Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2022 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -76,13 +76,9 @@
       USE bc_4d_mod
 #  endif
 # endif
-# ifdef WET_DRY
       USE exchange_2d_mod
-# endif
 # ifdef DISTRIBUTE
-#  if defined WET_DRY || defined DIAGNOSTICS_BIO
       USE mp_exchange_mod, ONLY : mp_exchange2d
-#  endif
       USE mp_exchange_mod, ONLY : mp_exchange3d
 #  ifdef SOLVE3D
       USE mp_exchange_mod, ONLY : mp_exchange4d
@@ -163,10 +159,20 @@
           END DO
         END DO
 # endif
-# if defined DIAGNOSTICS_TS || defined DIAGNOSTICS_UV
 !
 !  Initialize.
 !
+        DO j=JstrR,JendR
+          DO i=IstrR,IendR
+            DIAGS(ng)%avgzeta(i,j)=OCEAN(ng)%zeta(i,j,Kout)
+# ifdef WET_DRY
+            DIAGS(ng)%avgzeta(i,j)=DIAGS(ng)%avgzeta(i,j)*              &
+     &                             GRID(ng)%rmask_full(i,j)
+# endif
+          END DO
+        END DO
+!
+# if defined DIAGNOSTICS_TS || defined DIAGNOSTICS_UV
 #  ifdef DIAGNOSTICS_TS
         DO idiag=1,NDT
           DO it=1,NT(ng)
@@ -277,10 +283,22 @@
           END DO
         END DO
 # endif
-# if defined DIAGNOSTICS_TS || defined DIAGNOSTICS_UV
+!
+!  Accumulate free-surface.
+!
+        DO j=JstrR,JendR
+          DO i=IstrR,IendR
+            DIAGS(ng)%avgzeta(i,j)=DIAGS(ng)%avgzeta(i,j)+              &
+# ifdef WET_DRY
+     &                             GRID(ng)%rmask_full(i,j)*            &
+# endif
+     &                             OCEAN(ng)%zeta(i,j,kout)
+          END DO
+        END DO
 !
 !  Accumulate diagnostic terms.
 !
+# if defined DIAGNOSTICS_TS || defined DIAGNOSTICS_UV
 #  ifdef DIAGNOSTICS_TS
         DO idiag=1,NDT
           DO it=1,NT(ng)
@@ -452,6 +470,12 @@
 !
 !  Convert accumulated sums to time averages.
 !
+        DO j=JstrR,JendR
+          DO i=IstrR,IendR
+            DIAGS(ng)%avgzeta(i,j)=rfac(i,j)*DIAGS(ng)%avgzeta(i,j)
+          END DO
+        END DO
+
 # ifdef DIAGNOSTICS_TS
         DO idiag=1,NDT
           DO it=1,NT(ng)
@@ -557,6 +581,21 @@
 !  Apply periodic or gradient boundary conditions for output purposes.
 !-----------------------------------------------------------------------
 !
+!  Time-averaged free surface.
+!
+      IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
+        CALL exchange_r2d_tile (ng, tile,                               &
+     &                          LBi, UBi, LBj, UBj,                     &
+     &                          DIAGS(ng)%avgzeta)
+      END IF
+#  ifdef DISTRIBUTE
+      CALL mp_exchange2d (ng, tile, iNLM, 1,                            &
+     &                    LBi, UBi, LBj, UBj,                           &
+     &                    NghostPoints,                                 &
+     &                    EWperiodic(ng), NSperiodic(ng),               &
+     &                    DIAGS(ng)%avgzeta)
+#  endif
+
 #  ifdef DIAGNOSTICS_TS
 !
 !  3D tracer diagnostics.

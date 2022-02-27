@@ -3,7 +3,7 @@
 #ifdef DISTRIBUTE
 !
 !git $Id$
-!svn $Id: distribute.F 1099 2022-01-06 21:01:01Z arango $
+!svn $Id: distribute.F 1110 2022-02-27 21:37:32Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2022 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -50,7 +50,6 @@
       USE mod_param
       USE mod_parallel
       USE mod_iounits
-      USE mod_ncparam
       USE mod_scalars
 !
       implicit none

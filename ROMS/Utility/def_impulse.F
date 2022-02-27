@@ -3,7 +3,7 @@
 #ifdef WEAK_CONSTRAINT
 !
 !git $Id$
-!svn $Id: def_impulse.F 1099 2022-01-06 21:01:01Z arango $
+!svn $Id: def_impulse.F 1110 2022-02-27 21:37:32Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2022 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -388,6 +388,7 @@
         WRITE (Vinfo( 3),'(a,a)') 'seconds since ', TRIM(Rclock%string)
         Vinfo( 4)=TRIM(Rclock%calendar)
         Vinfo(14)=Vname(4,idtime)
+        Vinfo(21)=Vname(6,idtime)
         status=def_var(ng, iTLM, TLF(ng)%ncid, TLF(ng)%Vid(idtime),     &
      &                 NF_TOUT, 1, (/recdim/), Aval, Vinfo, ncname,     &
      &                 SetParAccess = .TRUE.)
@@ -403,6 +404,7 @@
 # if defined WRITE_WATER && defined MASKING
         Vinfo(20)='mask_rho'
 # endif
+        Vinfo(21)=Vname(6,idZtlf)
         Vinfo(22)='coordinates'
         Aval(5)=REAL(Iinfo(1,idZtlf,ng),r8)
         status=def_var(ng, iTLM, TLF(ng)%ncid, TLF(ng)%Vid(idZtlf),     &
@@ -421,6 +423,7 @@
 #  if defined WRITE_WATER && defined MASKING
         Vinfo(20)='mask_u'
 #  endif
+        Vinfo(21)=Vname(6,idUbtf)
         Vinfo(22)='coordinates'
         Aval(5)=REAL(Iinfo(1,idUbtf,ng),r8)
         status=def_var(ng, iTLM, TLF(ng)%ncid, TLF(ng)%Vid(idUbtf),     &
@@ -437,6 +440,7 @@
 #  if defined WRITE_WATER && defined MASKING
         Vinfo(20)='mask_v'
 #  endif
+        Vinfo(21)=Vname(6,idVbtf)
         Vinfo(22)='coordinates'
         Aval(5)=REAL(Iinfo(1,idVbtf,ng),r8)
         status=def_var(ng, iTLM, TLF(ng)%ncid, TLF(ng)%Vid(idVbtf),     &
@@ -455,6 +459,7 @@
 #  if defined WRITE_WATER && defined MASKING
         Vinfo(20)='mask_u'
 #  endif
+        Vinfo(21)=Vname(6,idUtlf)
         Vinfo(22)='coordinates'
         Aval(5)=REAL(Iinfo(1,idUtlf,ng),r8)
         status=def_var(ng, iTLM, TLF(ng)%ncid, TLF(ng)%Vid(idUtlf),     &
@@ -471,6 +476,7 @@
 #  if defined WRITE_WATER && defined MASKING
         Vinfo(20)='mask_v'
 #  endif
+        Vinfo(21)=Vname(6,idVtlf)
         Vinfo(22)='coordinates'
         Aval(5)=REAL(Iinfo(1,idVtlf,ng),r8)
         status=def_var(ng, iTLM, TLF(ng)%ncid, TLF(ng)%Vid(idVtlf),     &
@@ -495,6 +501,7 @@
 #  if defined WRITE_WATER && defined MASKING
           Vinfo(20)='mask_rho'
 #  endif
+          Vinfo(21)=Vname(6,idTtlf(itrc))
           Vinfo(22)='coordinates'
           Aval(5)=REAL(r3dvar,r8)
           status=def_var(ng, iTLM, TLF(ng)%ncid, TLF(ng)%Tid(itrc),     &
@@ -975,6 +982,7 @@
         WRITE (Vinfo( 3),'(a,a)') 'seconds since ', TRIM(Rclock%string)
         Vinfo( 4)=TRIM(Rclock%calendar)
         Vinfo(14)=Vname(4,idtime)
+        Vinfo(21)=Vname(6,idtime)
         TLF(ng)%pioVar(idtime)%dkind=PIO_TOUT
         TLF(ng)%pioVar(idtime)%gtype=0
 !
@@ -994,6 +1002,7 @@
 # if defined WRITE_WATER && defined MASKING
         Vinfo(20)='mask_rho'
 # endif
+        Vinfo(21)=Vname(6,idZtlf)
         Vinfo(22)='coordinates'
         Aval(5)=REAL(Iinfo(1,idZtlf,ng),r8)
         TLF(ng)%pioVar(idZtlf)%dkind=PIO_FOUT
@@ -1016,6 +1025,7 @@
 #  if defined WRITE_WATER && defined MASKING
         Vinfo(20)='mask_u'
 #  endif
+        Vinfo(21)=Vname(6,idUbtf)
         Vinfo(22)='coordinates'
         Aval(5)=REAL(Iinfo(1,idUbtf,ng),r8)
         TLF(ng)%pioVar(idUbtf)%dkind=PIO_FOUT
@@ -1036,6 +1046,7 @@
 #  if defined WRITE_WATER && defined MASKING
         Vinfo(20)='mask_v'
 #  endif
+        Vinfo(21)=Vname(6,idVbtf)
         Vinfo(22)='coordinates'
         Aval(5)=REAL(Iinfo(1,idVbtf,ng),r8)
         TLF(ng)%pioVar(idVbtf)%dkind=PIO_FOUT
@@ -1058,6 +1069,7 @@
 #  if defined WRITE_WATER && defined MASKING
         Vinfo(20)='mask_u'
 #  endif
+        Vinfo(21)=Vname(6,idUtlf)
         Vinfo(22)='coordinates'
         Aval(5)=REAL(Iinfo(1,idUtlf,ng),r8)
         TLF(ng)%pioVar(idUtlf)%dkind=PIO_FOUT
@@ -1078,6 +1090,7 @@
 #  if defined WRITE_WATER && defined MASKING
         Vinfo(20)='mask_v'
 #  endif
+        Vinfo(21)=Vname(6,idVtlf)
         Vinfo(22)='coordinates'
         Aval(5)=REAL(Iinfo(1,idVtlf,ng),r8)
         TLF(ng)%pioVar(idVtlf)%dkind=PIO_FOUT
@@ -1106,6 +1119,7 @@
 #  if defined WRITE_WATER && defined MASKING
           Vinfo(20)='mask_rho'
 #  endif
+          Vinfo(21)=Vname(6,idTtlf(itrc))
           Vinfo(22)='coordinates'
           Aval(5)=REAL(r3dvar,r8)
           TLF(ng)%pioTrc(itrc)%dkind=PIO_FOUT

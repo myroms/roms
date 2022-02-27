@@ -2,7 +2,7 @@
       MODULE inp_par_mod
 !
 !git $Id$
-!svn $Id: inp_par.F 1099 2022-01-06 21:01:01Z arango $
+!svn $Id: inp_par.F 1110 2022-02-27 21:37:32Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2022 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -1273,7 +1273,55 @@
       sequence=759
       CALL ran_seed (sequence)
 !
+!!    CALL test_yaml ()
+!
       RETURN
       END SUBROUTINE inp_par
+!
+      SUBROUTINE test_yaml
+!
+!***********************************************************************
+!  It tests the YAML parser inteface.                                  *
+!***********************************************************************
+!
+      USE mod_iounits,      ONLY : USRname
+      USE mod_scalars,      ONLY : exit_flag, NoError
+      USE strings_mod,      ONLY : FoundError
+      USE get_metadata_mod, ONLY : CouplingField,                       &
+     &                             cmeps_metadata,                      &
+     &                             coupling_metadata
+      USE yaml_parser_mod,  ONLY : yaml_tree
+!
+!  Local variable declarations.
+!
+      logical :: Lcmeps = .FALSE.
+!
+      TYPE (CouplingField), allocatable :: Exp(:), Imp(:), ImpB(:), S(:)
+      TYPE (yaml_tree) :: Y
+!
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__//", test_yaml"
+!
+!-----------------------------------------------------------------------
+!  Create YAML dictionary.
+!-----------------------------------------------------------------------
+!
+      IF (Lcmeps) THEN
+        CALL cmeps_metadata (Y, TRIM(USRname), 'export',                &
+     &                       Exp)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        CALL cmeps_metadata (Y, TRIM(USRname), 'import',                &
+     &                       Imp)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        CALL cmeps_metadata (Y, TRIM(USRname), 'bulk_fluxes import',    &
+     &                       ImpB)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        CALL Y%destroy ()
+      ELSE
+        CALL coupling_metadata (TRIM(USRname), S)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+      END IF
+!
+      END SUBROUTINE test_yaml
 !
       END MODULE inp_par_mod

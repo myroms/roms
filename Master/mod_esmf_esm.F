@@ -3,7 +3,7 @@
 #if defined MODEL_COUPLING && defined ESMF_LIB
 !
 !git $Id$
-!svn $Id: mod_esmf_esm.F 1099 2022-01-06 21:01:01Z arango $
+!svn $Id: mod_esmf_esm.F 1110 2022-02-27 21:37:32Z arango $
 !=======================================================================
 !  Copyright (c) 2002-2022 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license         Hernan G. Arango     !
@@ -253,22 +253,17 @@
         character (len=20)  :: Ctarget        ! component destination
         character (len=22)  :: DateString(2)  ! date-snapshots string
 
-        character (len=100) :: short_name     ! field short name
-        character (len=100) :: standard_name  ! field standard name
-        character (len=100) :: long_name      ! field long name
-
-        character (len=100) :: dst_model      ! destination model
-        character (len=100) :: dst_name       ! destination variable name
-        character (len=100) :: dst_units      ! destination units
-        character (len=100) :: dst_gtype      ! destination grid type
-        character (len=100) :: src_model      ! source model
-        character (len=100) :: src_name       ! source variable name
-        character (len=100) :: src_units      ! source units
-        character (len=100) :: src_gtype      ! source grid type
-        character (len=100) :: nc_vname       ! NetCDF variable name
-        character (len=100) :: nc_tname       ! NetCDF time variable name
-        character (len=100) :: RegridMethod   ! regrid method
-        character (len=100) :: ExtrapMethod   ! extrapolation method
+        character (len=:), allocatable :: short_name    ! short name
+        character (len=:), allocatable :: standard_name ! standard name
+        character (len=:), allocatable :: long_name     ! long name
+        character (len=:), allocatable :: dst_gtype     ! DST grid type
+        character (len=:), allocatable :: dst_units     ! DST units
+        character (len=:), allocatable :: src_gtype     ! SRC grid type
+        character (len=:), allocatable :: src_units     ! SRC units
+        character (len=:), allocatable :: nc_vname      ! DATA Vname
+        character (len=:), allocatable :: nc_tname      ! DATA Tname
+        character (len=:), allocatable :: RegridMethod  ! regrid method
+        character (len=:), allocatable :: ExtrapMethod  ! extrapolate
 
         real (r8) :: scale_factor             ! field scale factor
         real (r8) :: add_offset               ! field add offset value
@@ -3845,7 +3840,7 @@
  330  FORMAT (6x,1p,e13.6,2x,a,t42,a)
  340  FORMAT (/,a,/, 42('='),/,/, 'Component', t13,'Grid',              &
      &        t20,'CoupledSet', t33,'ImportState', t50,'ExportState',   &
-     &        t67,'ConnectedTo',/, 103('-'))
+     &        t67,'ConnectedTo',/, 114('-'))
  350  FORMAT (a,t14,i0,t20,a,t33,a,t50,a,t67,a)
 !
       RETURN
@@ -3986,8 +3981,11 @@
 !                                                                      !
 !=======================================================================
 !
-      USE mod_scalars, ONLY : exit_flag
-      USE strings_mod, ONLY : uppercase
+      USE mod_scalars,      ONLY : NoError, exit_flag
+      USE get_metadata_mod, ONLY : CouplingField,                       &
+     &                             coupling_metadata,                   &
+     &                             metadata_has
+      USE strings_mod,      ONLY : FoundError, assign_string, uppercase
 !
 !  Imported variable declarations.
 !
@@ -3997,20 +3995,23 @@
 !
 !  Local variable declarations.
 !
-      logical :: Exist, Lreport, connected, debug_write
+      TYPE (CouplingField), allocatable :: S(:)
 !
-      integer, parameter :: inp = 100
-
+      logical :: Exist, Lreport, connected
+!
       integer :: i, id, io_err, j, lvar, varid
       integer :: localPET, PETcount
       integer :: etype, gtype, itype
 !
+      integer, parameter :: inp = 10
+!
       real(r8) :: add_offset, scale
 !
-      character (len=100) :: Dmodel, Sname, Smodel, Tname, units, val
+      character (len=:), allocatable :: Smodel
+
+      character (len=100) :: Sname, units, val
       character (len=100) :: ShortName, line
       character (len=256) :: io_errmsg
-      character (len=100), dimension(12) :: Cinfo
 !
       character (len=*), parameter :: MyFile =                          &
      &  __FILE__//", set_metadata"
@@ -4037,92 +4038,13 @@
       END IF
 !
 !-----------------------------------------------------------------------
-!  Read in ESM coupling export/import variable information.
+!  Get ESM coupling export/import variable metadata.
 !-----------------------------------------------------------------------
 !
-!  Open input coupling variable information file.
+!  The metadata structure can be read either a YAML file (extention
+!  .yaml) or deprecated ASCII file (extension .dat).
 !
-      OPEN (inp, FILE=TRIM(CPLname), FORM='formatted', STATUS='old',    &
-     &      IOSTAT=io_err, IOMSG=io_errmsg)
-      IF (io_err.ne.0) THEN
-        IF (localPET.eq.0) WRITE(cplout,10) TRIM(CPLname),              &
-     &                                      TRIM(io_errmsg)
-        exit_flag=5
-        rc=ESMF_RC_FILE_OPEN
-        RETURN
-  10    FORMAT (/,' SET_METADATA - Unable to open coupling metadata',   &
-     &          ' file: ',/,16x,a,/,16x,'ERROR: ',a,                    &
-                /,16x,'Default  coupling_esmf.dat  is located in ESM'   &
-                ' directory.')
-      END IF
-!
-!  Read in variable information.  Ignore blank and comment [char(33)=!]
-!  input lines.
-!
-      varid=0
-      DO WHILE (.TRUE.)
-        READ (inp,*,ERR=50,END=70) Cinfo( 1)     ! short name
-        Lvar=LEN_TRIM(Cinfo(1))
-!
-!  Read in other variable information.
-!
-        IF ((Lvar.gt.0).and.(Cinfo(1)(1:1).ne.CHAR(33))) THEN
-          READ (inp,*,ERR=50) Cinfo( 2)          ! standard name
-          READ (inp,*,ERR=50) Cinfo( 3)          ! descriptive name
-          READ (inp,*,ERR=50) Cinfo( 4), Smodel  ! source variable
-          READ (inp,*,ERR=50) Cinfo( 5)          ! source units
-          READ (inp,*,ERR=50) Cinfo( 6)          ! source grid-cell
-          READ (inp,*,ERR=50) Cinfo( 7), Dmodel  ! destination variable
-          READ (inp,*,ERR=50) Cinfo( 8)          ! destination units
-          READ (inp,*,ERR=50) Cinfo( 9)          ! destination grid-cell
-          READ (inp,*,ERR=50) Cinfo(10), Tname   ! NetCDF variable names
-          READ (inp,*,ERR=50) Cinfo(11)          ! regridding method
-          READ (inp,*,ERR=50) Cinfo(12)          ! extrapolation method
-          READ (inp,*,ERR=50) connected          ! connected flag
-          READ (inp,*,ERR=50) debug_write        ! write exchanged field
-          READ (inp,*,ERR=50) add_offset         ! offset value
-          READ (inp,*,ERR=50) scale              ! scale value
-!
-!  Load variable data into information arrays.
-!
-          varid=varid+1
-          IF (varid.gt.MaxNumberFields) THEN
-            IF (localPET.eq.0) WRITE (cplout,40) MaxNumberFields, varid
- 40         FORMAT (/,' SET_METADATA - too small dimension ',           &
-     &              'parameter, MaxNumberFields = ',2i5,/,16x,          &
-     &              'change file  mod_esmf_esm.F  and recompile.')
-            rc=ESMF_RC_MEM
-            RETURN
-          END IF
-          Fields(varid) % short_name    = TRIM(ADJUSTL(Cinfo( 1)))
-          Fields(varid) % standard_name = TRIM(ADJUSTL(Cinfo( 2)))
-          Fields(varid) % long_name     = TRIM(ADJUSTL(Cinfo( 3)))
-          Fields(varid) % src_model     = TRIM(ADJUSTL(Smodel))
-          Fields(varid) % src_name      = TRIM(ADJUSTL(Cinfo( 4)))
-          Fields(varid) % src_units     = TRIM(ADJUSTL(Cinfo( 5)))
-          Fields(varid) % src_gtype     = TRIM(ADJUSTL(Cinfo( 6)))
-          Fields(varid) % dst_model     = TRIM(ADJUSTL(Dmodel))
-          Fields(varid) % dst_name      = TRIM(ADJUSTL(Cinfo( 7)))
-          Fields(varid) % dst_units     = TRIM(ADJUSTL(Cinfo( 8)))
-          Fields(varid) % dst_gtype     = TRIM(ADJUSTL(Cinfo( 9)))
-          Fields(varid) % nc_vname      = TRIM(ADJUSTL(Cinfo(10)))
-          Fields(varid) % nc_tname      = TRIM(ADJUSTL(Tname))
-          Fields(varid) % RegridMethod  = TRIM(ADJUSTL(Cinfo(11)))
-          Fields(varid) % ExtrapMethod  = TRIM(ADJUSTL(Cinfo(12)))
-          Fields(varid) % connected     = connected
-          Fields(varid) % debug_write   = debug_write
-          Fields(varid) % add_offset    = add_offset
-          Fields(varid) % scale_factor  = scale
-          Fields(varid) % fid           = varid
-        END IF
-      END DO
-  50  IF (localPET.eq.0) WRITE (cplout,60) TRIM(ADJUSTL(Cinfo(1)))
-  60  FORMAT (/,' SET_METADATA - error while reading information',      &
-     &        ' for short name entry: ',a)
-      rc=ESMF_RC_FILE_READ
-      RETURN
-  70  CLOSE (inp)
-      Nfields=varid
+      CALL coupling_metadata (TRIM(CPLname), S)
 !
 !-----------------------------------------------------------------------
 !  Search IMPORT fields in metadata dictionary and load information.
@@ -4132,54 +4054,118 @@
         IF (MODELS(i)%IsActive) THEN
           DO j=1,Nimport(i)
             ShortName=MODELS(i)%ImportField(j)%short_name
-            id=field_index(Fields, TRIM(ShortName))
+            id=metadata_has(S, TRIM(ShortName))
             IF (id.gt.0) THEN
-              MODELS(i)%ImportField(j)%standard_name=                   &
-     &                                 TRIM(Fields(id)%standard_name)
-              MODELS(i)%ImportField(j)%long_name=                       &
-     &                                 TRIM(Fields(id)%long_name)
-              MODELS(i)%ImportField(j)%dst_model=                       &
-     &                                 TRIM(Fields(id)%dst_model)
-              MODELS(i)%ImportField(j)%dst_name=                        &
-     &                                 TRIM(Fields(id)%dst_name)
-              MODELS(i)%ImportField(j)%dst_units=                       &
-     &                                 TRIM(Fields(id)%dst_units)
-              MODELS(i)%ImportField(j)%dst_gtype=                       &
-     &                                 TRIM(Fields(id)%dst_gtype)
-              MODELS(i)%ImportField(j)%src_model=                       &
-     &                                 TRIM(Fields(id)%src_model)
-              MODELS(i)%ImportField(j)%src_name=                        &
-     &                                 TRIM(Fields(id)%src_name)
-              MODELS(i)%ImportField(j)%src_units=                       &
-     &                                 TRIM(Fields(id)%src_units)
-              MODELS(i)%ImportField(j)%src_gtype=                       &
-     &                                 TRIM(Fields(id)%src_gtype)
-              MODELS(i)%ImportField(j)%nc_vname=                        &
-     &                                 TRIM(Fields(id)%nc_vname)
-              MODELS(i)%ImportField(j)%nc_tname=                        &
-     &                                 TRIM(Fields(id)%nc_tname)
-              MODELS(i)%ImportField(j)%RegridMethod=                    &
-     &                                 TRIM(Fields(id)%RegridMethod)
-              MODELS(i)%ImportField(j)%ExtrapMethod=                    &
-     &                                      Fields(id)%ExtrapMethod
-              MODELS(i)%ImportField(j)%connected=                       &
-     &                                      Fields(id)%connected
-              MODELS(i)%ImportField(j)%debug_write=                     &
-     &                                      Fields(id)%debug_write
-              MODELS(i)%ImportField(j)%add_offset=                      &
-     &                                      Fields(id)%add_offset
-              MODELS(i)%ImportField(j)%scale_factor=                    &
-     &                                      Fields(id)%scale_factor
+              MODELS(i)%ImportField(j)%connected    = S(id)%connected
+              MODELS(i)%ImportField(j)%debug_write  = S(id)%debug_write
+              MODELS(i)%ImportField(j)%add_offset   = S(id)%add_offset
+              MODELS(i)%ImportField(j)%scale_factor = S(id)%scale
+!
+!                                      field short name keyword
+              IF (FoundError(assign_string(                             &
+     &                         MODELS(i)%ImportField(j)%short_name,     &
+     &                                     S(id)%short_name),           &
+     &                       NoError, __LINE__, MyFile)) THEN
+                rc=ESMF_RC_COPY_FAIL
+                RETURN
+              END IF
+!                                      field standard name
+              IF (FoundError(assign_string(                             &
+     &                         MODELS(i)%ImportField(j)%standard_name,  &
+     &                                     S(id)%standard_name),        &
+     &                       NoError, __LINE__, MyFile)) THEN
+                rc=ESMF_RC_COPY_FAIL
+                RETURN
+              END IF
+!                                      field descriptive long name
+              IF (FoundError(assign_string(                             &
+     &                         MODELS(i)%ImportField(j)%long_name,      &
+     &                                     S(id)%long_name),            &
+     &                       NoError, __LINE__, MyFile)) THEN
+                rc=ESMF_RC_COPY_FAIL
+                RETURN
+              END IF
+!                                      destination field grid-cell type
+              IF (FoundError(assign_string(                             &
+     &                         MODELS(i)%ImportField(j)%dst_gtype,      &
+     &                                     S(id)%destination_grid),     &
+     &                       NoError, __LINE__, MyFile)) THEN
+                rc=ESMF_RC_COPY_FAIL
+                RETURN
+              END IF
+!                                      destination field units
+              IF (FoundError(assign_string(                             &
+     &                         MODELS(i)%ImportField(j)%dst_units,      &
+     &                                     S(id)%destination_units),    &
+     &                       NoError, __LINE__, MyFile)) THEN
+                rc=ESMF_RC_COPY_FAIL
+                RETURN
+              END IF
+!                                      source field grid-cell type
+              IF (FoundError(assign_string(                             &
+     &                         MODELS(i)%ImportField(j)%src_gtype,      &
+     &                                     S(id)%source_grid),          &
+     &                       NoError, __LINE__, MyFile)) THEN
+                rc=ESMF_RC_COPY_FAIL
+                RETURN
+              END IF
+!                                      source field units
+              IF (FoundError(assign_string(                             &
+     &                         MODELS(i)%ImportField(j)%src_units,      &
+     &                                     S(id)%source_units),         &
+     &                       NoError, __LINE__, MyFile)) THEN
+                rc=ESMF_RC_COPY_FAIL
+                RETURN
+              END IF
+!                                      DATA NetCDF variable name
+              IF (FoundError(assign_string(                             &
+     &                         MODELS(i)%ImportField(j)%nc_vname,       &
+     &                                     S(id)%data_netcdf_vname),    &
+     &                       NoError, __LINE__, MyFile)) THEN
+                rc=ESMF_RC_COPY_FAIL
+                RETURN
+              END IF
+!                                      DATA NetCDF time variable name
+              IF (FoundError(assign_string(                             &
+     &                         MODELS(i)%ImportField(j)%nc_tname,       &
+     &                                     S(id)%data_netcdf_tname),    &
+     &                       NoError, __LINE__, MyFile)) THEN
+                rc=ESMF_RC_COPY_FAIL
+                RETURN
+              END IF
+!                                      field reggriding method
+              IF (FoundError(assign_string(                             &
+     &                         MODELS(i)%ImportField(j)%RegridMethod,   &
+     &                                     S(id)%regrid_method),        &
+     &                       NoError, __LINE__, MyFile)) THEN
+                rc=ESMF_RC_COPY_FAIL
+                RETURN
+              END IF
+!                                      unmapped extrapolation method
+              IF (FoundError(assign_string(                             &
+     &                         MODELS(i)%ImportField(j)%ExtrapMethod,   &
+     &                                     S(id)%extrapolate_method),   &
+     &                       NoError, __LINE__, MyFile)) THEN
+                rc=ESMF_RC_COPY_FAIL
+                RETURN
+              END IF
+!                                      source model (used for reporting)
+              IF (FoundError(assign_string(Smodel,                      &
+     &                                     S(id)%connected_to),         &
+     &                       NoError, __LINE__, MyFile)) THEN
+                rc=ESMF_RC_COPY_FAIL
+                RETURN
+              END IF
 !
               val=uppercase(TRIM(MODELS(i)%ImportField(j)%src_gtype))
               SELECT CASE (TRIM(val))
-                CASE ('CENTER')
+                CASE ('CENTER_CELL', 'CELL_CENTER', 'CENTER')
                   gtype=Icenter
-                CASE ('CORNER')
+                CASE ('CORNER_CELL', 'CELL_CORNER', 'CORNER')
                   gtype=Icorner
-                CASE ('U')
+                CASE ('U','LEFT_RIGHT_EDGE', 'RIGHT_LEFT_EDGE')
                   gtype=Iupoint
-                CASE ('V')
+                CASE ('V','LOWER_UPPER_EDGE', 'UPPER_LOWER_EDGE')
                   gtype=Ivpoint
                 CASE DEFAULT
                   gtype=Icenter
@@ -4221,11 +4207,8 @@
               MODELS(i)%ImportField(j)%etype=etype
             ELSE
               IF (localPET.eq.0) THEN
-                WRITE (cplout,80) 'import field short_name: ',          &
+                WRITE (cplout,30) 'import field short_name: ',          &
      &                             TRIM(ShortName), TRIM(CPLname)
-  80            FORMAT (/,' SET_METADATA - cannot find metadata for',   &
-     &                  1x,a,'''',a,'''.',/,16x,                        &
-     &                  'Add entry to metadata file: ',a)
               END IF
               rc=ESMF_RC_NOT_FOUND
               IF (ESMF_LogFoundError(rcToCheck=rc,                      &
@@ -4250,51 +4233,118 @@
         IF (MODELS(i)%IsActive) THEN
           DO j=1,Nexport(i)
             ShortName=MODELS(i)%ExportField(j)%short_name
-            id=field_index(Fields, TRIM(ShortName))
+            id=metadata_has(S, TRIM(ShortName))
             IF (id.gt.0) THEN
-              MODELS(i)%ExportField(j)%standard_name=                   &
-     &                                 TRIM(Fields(id)%standard_name)
-              MODELS(i)%ExportField(j)%long_name=                       &
-     &                                 TRIM(Fields(id)%long_name)
-              MODELS(i)%ExportField(j)%dst_model=                       &
-     &                                 TRIM(Fields(id)%dst_model)
-              MODELS(i)%ExportField(j)%dst_name=                        &
-     &                                 TRIM(Fields(id)%dst_name)
-              MODELS(i)%ExportField(j)%dst_units=                       &
-     &                                 TRIM(Fields(id)%dst_units)
-              MODELS(i)%ExportField(j)%dst_gtype=                       &
-     &                                 TRIM(Fields(id)%dst_gtype)
-              MODELS(i)%ExportField(j)%src_model=                       &
-     &                                 TRIM(Fields(id)%src_model)
-              MODELS(i)%ExportField(j)%src_name=                        &
-     &                                 TRIM(Fields(id)%src_name)
-              MODELS(i)%ExportField(j)%src_units=                       &
-     &                                 TRIM(Fields(id)%src_units)
-              MODELS(i)%ExportField(j)%src_gtype=                       &
-     &                                 TRIM(Fields(id)%src_gtype)
-              MODELS(i)%ExportField(j)%nc_vname=                        &
-     &                                 TRIM(Fields(id)%nc_vname)
-              MODELS(i)%ExportField(j)%nc_tname=                        &
-     &                                 TRIM(Fields(id)%nc_tname)
-              MODELS(i)%ExportField(j)%RegridMethod=                    &
-     &                                 TRIM(Fields(id)%RegridMethod)
-              MODELS(i)%ExportField(j)%ExtrapMethod=                    &
-     &                                 TRIM(Fields(id)%ExtrapMethod)
-              MODELS(i)%ExportField(j)%connected=                       &
-     &                                      Fields(id)%connected
-              MODELS(i)%ExportField(j)%debug_write=                     &
-     &                                      Fields(id)%debug_write
-              MODELS(i)%ExportField(j)%scale_factor=1.0_r8  ! no scaling
+              MODELS(i)%ExportField(j)%connected    = S(id)%connected
+              MODELS(i)%ExportField(j)%debug_write  = S(id)%debug_write
+              MODELS(i)%ExportField(j)%add_offset   = 0.0_r8
+              MODELS(i)%ExportField(j)%scale_factor = 1.0_r8 !no scaling
+!
+!                                      field short name keyword
+              IF (FoundError(assign_string(                             &
+     &                         MODELS(i)%ExportField(j)%short_name,     &
+     &                                     S(id)%short_name),           &
+     &                       NoError, __LINE__, MyFile)) THEN
+                rc=ESMF_RC_COPY_FAIL
+                RETURN
+              END IF
+!                                      field standard name
+              IF (FoundError(assign_string(                             &
+     &                         MODELS(i)%ExportField(j)%standard_name,  &
+     &                                     S(id)%standard_name),        &
+     &                       NoError, __LINE__, MyFile)) THEN
+                rc=ESMF_RC_COPY_FAIL
+                RETURN
+              END IF
+!                                      field descriptive long name
+              IF (FoundError(assign_string(                             &
+     &                         MODELS(i)%ExportField(j)%long_name,      &
+     &                                     S(id)%long_name),            &
+     &                       NoError, __LINE__, MyFile)) THEN
+                rc=ESMF_RC_COPY_FAIL
+                RETURN
+              END IF
+!                                      destination field grid-cell type
+              IF (FoundError(assign_string(                             &
+     &                         MODELS(i)%ExportField(j)%dst_gtype,      &
+     &                                     S(id)%destination_grid),     &
+     &                       NoError, __LINE__, MyFile)) THEN
+                rc=ESMF_RC_COPY_FAIL
+                RETURN
+              END IF
+!                                      destination field units
+              IF (FoundError(assign_string(                             &
+     &                         MODELS(i)%ExportField(j)%dst_units,      &
+     &                                     S(id)%destination_units),    &
+     &                       NoError, __LINE__, MyFile)) THEN
+                rc=ESMF_RC_COPY_FAIL
+                RETURN
+              END IF
+!                                      source field grid-cell type
+              IF (FoundError(assign_string(                             &
+     &                         MODELS(i)%ExportField(j)%src_gtype,      &
+     &                                     S(id)%source_grid),          &
+     &                       NoError, __LINE__, MyFile)) THEN
+                rc=ESMF_RC_COPY_FAIL
+                RETURN
+              END IF
+!                                      source field units
+              IF (FoundError(assign_string(                             &
+     &                         MODELS(i)%ExportField(j)%src_units,      &
+     &                                     S(id)%source_units),         &
+     &                       NoError, __LINE__, MyFile)) THEN
+                rc=ESMF_RC_COPY_FAIL
+                RETURN
+              END IF
+!                                      DATA NetCDF variable name
+              IF (FoundError(assign_string(                             &
+     &                         MODELS(i)%ExportField(j)%nc_vname,       &
+     &                                     S(id)%data_netcdf_vname),    &
+     &                       NoError, __LINE__, MyFile)) THEN
+                rc=ESMF_RC_COPY_FAIL
+                RETURN
+              END IF
+!                                      DATA NetCDF time variable name
+              IF (FoundError(assign_string(                             &
+     &                         MODELS(i)%ExportField(j)%nc_tname,       &
+     &                                     S(id)%data_netcdf_tname),    &
+     &                       NoError, __LINE__, MyFile)) THEN
+                rc=ESMF_RC_COPY_FAIL
+                RETURN
+              END IF
+!                                      field reggriding method
+              IF (FoundError(assign_string(                             &
+     &                         MODELS(i)%ExportField(j)%RegridMethod,   &
+     &                                     S(id)%regrid_method),        &
+     &                       NoError, __LINE__, MyFile)) THEN
+                rc=ESMF_RC_COPY_FAIL
+                RETURN
+              END IF
+!                                      unmapped extrapolation method
+              IF (FoundError(assign_string(                             &
+     &                         MODELS(i)%ExportField(j)%ExtrapMethod,   &
+     &                                     S(id)%extrapolate_method),   &
+     &                       NoError, __LINE__, MyFile)) THEN
+                rc=ESMF_RC_COPY_FAIL
+                RETURN
+              END IF
+!                                      source model (used for reporting)
+              IF (FoundError(assign_string(Smodel,                      &
+     &                                     S(id)%connected_to),         &
+     &                       NoError, __LINE__, MyFile)) THEN
+                rc=ESMF_RC_COPY_FAIL
+                RETURN
+              END IF
 !
               val=uppercase(TRIM(MODELS(i)%ExportField(j)%src_gtype))
               SELECT CASE (TRIM(val))
-                CASE ('CENTER')
+                CASE ('CENTER_CELL', 'CELL_CENTER', 'CENTER')
                   gtype=Icenter
-                CASE ('CORNER')
+                CASE ('CORNER_CELL', 'CELL_CORNER', 'CORNER')
                   gtype=Icorner
-                CASE ('U')
+                CASE ('U','LEFT_RIGHT_EDGE', 'RIGHT_LEFT_EDGE')
                   gtype=Iupoint
-                CASE ('V')
+                CASE ('V','LOWER_UPPER_EDGE', 'UPPER_LOWER_EDGE')
                   gtype=Ivpoint
                 CASE DEFAULT
                   gtype=Icenter
@@ -4336,7 +4386,7 @@
               MODELS(i)%ExportField(j)%etype=etype
             ELSE
               IF (localPET.eq.0) THEN
-                WRITE (cplout,80) 'export field short_name: ',          &
+                WRITE (cplout,30) 'export field short_name: ',          &
      &                             TRIM(ShortName), TRIM(CPLname)
               END IF
               rc=ESMF_RC_NOT_FOUND
@@ -4387,14 +4437,14 @@
         END IF
       END DO
 !
-!  Report import metadata.
+!  Report import fields metadata.
 !
       IF ((localPET.eq.0).and.(MODELS(Iatmos )%IsActive.or.             &
      &                         MODELS(Idata  )%IsActive.or.             &
      &                         MODELS(Iseaice)%IsActive.or.             &
      &                         MODELS(Iwave  )%IsActive)) THEN
 
-        WRITE (cplout,90) 'ESM IMPORT Fields Metadata Dictionary:'
+        WRITE (cplout,40) 'ESM IMPORT Fields Metadata Dictionary:'
 !
         DO i=1,Nmodels
           Lreport=.FALSE.
@@ -4404,7 +4454,7 @@
           END IF
           IF (Lreport) THEN
             DO j=1,Nimport(i)
-              WRITE (cplout,100)                                        &
+              WRITE (cplout,50)                                         &
      &              TRIM(Smodel),                                       &
      &              TRIM(MODELS(i)%ImportField(j)%short_name),          &
      &              TRIM(MODELS(i)%ImportField(j)%standard_name),       &
@@ -4458,14 +4508,14 @@
         END IF
       END DO
 !
-!  Report export metadata.
+!  Report export fields metadata.
 !
       IF ((localPET.eq.0).and.(MODELS(Iatmos )%IsActive.or.             &
      &                         MODELS(Idata  )%IsActive.or.             &
      &                         MODELS(Iseaice)%IsActive.or.             &
      &                         MODELS(Iwave  )%IsActive)) THEN
 
-        WRITE (cplout,90) 'ESM EXPORT Fields Metadata Dictionary:'
+        WRITE (cplout,40) 'ESM EXPORT Fields Metadata Dictionary:'
 !
         DO i=1,Nmodels
           Lreport=.FALSE.
@@ -4475,7 +4525,7 @@
           END IF
           IF (Lreport) THEN
             DO j=1,Nexport(i)
-              WRITE (cplout,100)                                        &
+              WRITE (cplout,50)                                         &
      &              TRIM(Smodel),                                       &
      &              TRIM(MODELS(i)%ExportField(j)%short_name),          &
      &              TRIM(MODELS(i)%ExportField(j)%standard_name),       &
@@ -4496,7 +4546,7 @@
      &    MODELS(Iseaice)%IsActive.or.                                  &
      &    MODELS(Iwave  )%IsActive) THEN
         IF (localPET.eq.0) THEN
-          WRITE (cplout,110)
+          WRITE (cplout,60)
         END IF
       END IF
 !
@@ -4509,49 +4559,51 @@
       OPEN (inp, FILE=TRIM(CONFname), FORM='formatted', STATUS='old',   &
      &      IOSTAT=io_err, IOMSG=io_errmsg)
       IF (io_err.ne.0) THEN
-        IF (localPET.eq.0) WRITE(cplout,130) TRIM(CONFname),            &
-     &                                       TRIM(io_errmsg)
+        IF (localPET.eq.0) WRITE(cplout,70) TRIM(CONFname),             &
+     &                                      TRIM(io_errmsg)
         exit_flag=5
         rc=ESMF_RC_FILE_OPEN
         RETURN
- 130    FORMAT (/,' SET_METADATA - Unable to open RunSequence ',        &
-     &          ' configuration file: ',/,16x,a,/,16x,'ERROR: ',a,      &
-     &          /,16x,'Prototypes are located in the ESM directory.')
       END IF
 !
 !  Read in and report RunSequence file. Ignore blank and comments
 !  [char(35)=#] input lines.
 !
       IF (localPET.eq.0) THEN
-        WRITE (cplout,150) 'ESM Coupling RunSequence:', TRIM(CONFname)
- 150    FORMAT (/,a,2x,a,/, 25('='),/)
+        WRITE (cplout,80) 'ESM Coupling RunSequence:', TRIM(CONFname)
       END IF
 !
       DO WHILE (.TRUE.)
-        READ (inp,'(a)',ERR=160,END=180) line
+        READ (inp,'(a)',ERR=10,END=20) line
         Lvar=LEN_TRIM(line)
         IF ((Lvar.gt.0).and.(line (1:1).ne.CHAR(35))) THEN
           IF (localPET.eq.0) WRITE (cplout,'(a)') TRIM(line)
         END IF
       END DO
- 160  IF (localPET.eq.0) WRITE (cplout,170) TRIM(CONFname)
- 170  FORMAT (/,' SET_METADATA - error while reading RunSequence',      &
-     &        ' configuration file: ',a)
+  10  IF (localPET.eq.0) WRITE (cplout,90) TRIM(CONFname)
       rc=ESMF_RC_FILE_READ
       RETURN
- 180  CLOSE (inp)
+  20  CLOSE (inp)
       IF (localPET.eq.0) WRITE (cplout,'(a)') CHAR(10)    ! new line
 !
 !  Flush standard output buffer.
 !
-      CALL my_flush (cplout)
+      FLUSH (cplout)
 !
-  90  FORMAT (/,a,/, 37('='),/,/, 'Model', t11,'Short Name',            &
-     &        t25,'Standard Name', t63,'G', t66,'I', t69,'E' t72,'C',   &
-     &        t75,'W',t79,'add_offset', t92,'scale_factor',/, 103('-'))
- 100  FORMAT (a, t11,a, t25,a, t63,i1, t66,i1, t69,i1, t72,l1, t75,l1,  &
-     &        t78,1p,e12.5, t92,1p,e12.5)
- 110  FORMAT (/,' G: Grid cell location,     1=Center,',                &
+!  Deallocate.
+!
+      IF (allocated(S))      deallocate (S)
+      IF (allocated(Smodel)) deallocate (Smodel)
+!
+  30  FORMAT (/,' SET_METADATA - cannot find metadata for',             &
+     &        1x,a,'''',a,'''.',/,16x,                                  &
+     &        'Add entry to metadata file: ',a)
+  40  FORMAT (/,a,/, 37('='),/,/, 'Model', t11,'Short Name',            &
+     &        t25,'Standard Name', t74,'G', t77,'I', t80,'E' t83,'C',   &
+     &        t86,'W',t90,'add_offset', t102,'scale_factor',/, 114('-'))
+  50  FORMAT (a, t11,a, t25,a, t74,i1, t77,i1, t80,i1, t83,l1, t86,l1,  &
+     &        t89,1p,e12.5, t103,1p,e12.5)
+  60  FORMAT (/,' G: Grid cell location,     1=Center,',                &
      &                                     ' 2=Corner,',                &
      &                                     ' 3=U-point,',               &
      &                                     ' 4=V-point',                &
@@ -4569,6 +4621,12 @@
      &                                     ' T=exchanged/regridded',    &
      &        /,' W: Field write to NetCDF,  F=false, T=true',          &
      &                                     ' (used if DebugLevel > 2)'/)
+  70  FORMAT (/,' SET_METADATA - Unable to open RunSequence ',          &
+     &          ' configuration file: ',/,16x,a,/,16x,'ERROR: ',a,      &
+     &          /,16x,'Prototypes are located in the ESM directory.')
+  80  FORMAT (/,a,2x,a,/, 25('='),/)
+  90  FORMAT (/,' SET_METADATA - error while reading RunSequence',      &
+     &        ' configuration file: ',a)
 !
       RETURN
       END SUBROUTINE set_metadata
