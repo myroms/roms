@@ -2,7 +2,7 @@
       MODULE mod_ncparam
 !
 !git $Id$
-!svn $Id: mod_ncparam.F 1110 2022-02-27 21:37:32Z arango $
+!svn $Id: mod_ncparam.F 1113 2022-03-01 20:31:29Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2022 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -1099,7 +1099,7 @@
 !
 !  Local variable declarations.
 !
-      logical :: Ldone, load
+      logical :: FirstPass, Ldone, load
 !
 #ifdef DISTRIBUTE
       integer :: Itile, Jtile
@@ -1326,12 +1326,13 @@
 !
       varid=0
       Ldone=.FALSE.
+      FirstPass=.TRUE.                  ! initialize metadata processing
 !
       METADATA_LOOP : DO WHILE (.not.Ldone)
 !
 !  Load I/O metadata information.
 !
-        Ldone = io_metadata(Vinfo, scale, add_offset)
+        Ldone = io_metadata(FirstPass, Vinfo, scale, add_offset)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         IF (Ldone) EXIT
 !

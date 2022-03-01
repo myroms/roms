@@ -2,7 +2,7 @@
       SUBROUTINE read_PhyPar (model, inp, out, Lwrite)
 !
 !git $Id$
-!svn $Id: read_phypar.F 1103 2022-01-13 03:38:35Z arango $
+!svn $Id: read_phypar.F 1113 2022-03-01 20:31:29Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2022 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -3168,8 +3168,15 @@
             CASE ('NUSER')
               Npts=load_i(Nval, Rval, 1, Ivalue)
               Nuser=Ivalue(1)
+              IF (Nuser.gt.0) THEN
+                IF (allocated(user)) deallocate (user)
+                allocate ( user(Nuser) )
+                user=spval
+              END IF
             CASE ('USER')
-              Npts=load_r(Nval, Rval, MAX(1,Nuser), user)
+              IF (Nuser.gt.0) THEN
+                Npts=load_r(Nval, Rval, Nuser, user)
+              END IF
             CASE ('INP_LIB')
               Npts=load_i(Nval, Rval, 1, Ivalue)
 #if defined PIO_LIB && defined DISTRIBUTE
