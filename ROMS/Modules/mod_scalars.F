@@ -2,7 +2,7 @@
       MODULE mod_scalars
 !
 !git $Id$
-!svn $Id: mod_scalars.F 1099 2022-01-06 21:01:01Z arango $
+!svn $Id: mod_scalars.F 1114 2022-03-01 21:07:01Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2022 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -778,7 +778,7 @@
 !  Vector containing USER generic parameters.
 !
         integer :: Nuser
-        real(r8), dimension(25) :: user(25)
+        real(r8), allocatable :: user(:)
 !
 !  Weights for the time average of 2D fields.
 !
