@@ -2,7 +2,7 @@
       MODULE get_metadata_mod
 !
 !git $Id$
-!svn $Id: get_metadata.F 1110 2022-02-27 21:37:32Z arango $
+!svn $Id: get_metadata.F 1113 2022-03-01 20:31:29Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2022 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -794,7 +794,8 @@
 !
       END SUBROUTINE coupling_metadata
 !
-      FUNCTION io_metadata (Vinfo, scale, offset) RESULT (Ldone)
+      FUNCTION io_metadata (FirstPass, Vinfo, scale, offset)            &
+                    RESULT (Ldone)
 !
 !=======================================================================
 !                                                                      !
@@ -802,6 +803,8 @@
 !  'varinfo.dat'  or 'varinfo.yaml' dictionary.                        !
 !                                                                      !
 !  On Output:                                                          !
+!                                                                      !
+!     FirsPass   Switch to initialize metadata processing (logical)    !
 !                                                                      !
 !     Vinfo      I/O Variable information (string array)               !
 !                  Vinfo(1):  Field variable short-name                !
@@ -836,13 +839,14 @@
 !
 !  Imported variable declarations.
 !
+      logical, intent(inout) :: FirstPass
+!
       real(dp), intent(out) :: offset, scale
 !
       character (len=*), intent(out) :: Vinfo(:)
 !
 !  Local variable declarations.
 !
-      logical, save :: FirstPass = .TRUE.
       logical, save :: IsDat     = .FALSE.
       logical, save :: IsYaml    = .FALSE.
       logical :: Ldone
@@ -863,7 +867,6 @@
 !  Initialize.
 !
       Ldone=.FALSE.
-
 !
 !  Determine metadata file extension: 'varinfo.dat'  or
 !                                     'varinfo.yaml'

@@ -2,7 +2,7 @@
       MODULE mod_netcdf
 !
 !git $Id$
-!svn $Id: mod_netcdf.F 1103 2022-01-13 03:38:35Z arango $
+!svn $Id: mod_netcdf.F 1113 2022-03-01 20:31:29Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2022 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -8548,7 +8548,7 @@
 !  with the "bio_file" attribute.
 !
         IF (.not.PRESENT(Lupdate)) THEN
-          my_Lupdate=.TRUE.
+          my_Lupdate=.FALSE.
         ELSE
           my_Lupdate=Lupdate
         END IF
