@@ -30,6 +30,10 @@ the **ROMS** website, and can be checkout from:
 git clone https://github.com/JCSDA-internal/roms_src.git                 (default)
 git clone https://github.com/JCSDA-internal/roms_src.git <source_dir>
 ```
+The **doxygen** version of **ROMS** is available at:
+```
+https://www.myroms.org/doxygen
+```
 
 Registered users of **ROMS** have access to:
 
