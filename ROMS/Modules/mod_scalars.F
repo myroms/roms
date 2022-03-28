@@ -2,7 +2,7 @@
       MODULE mod_scalars
 !
 !git $Id$
-!svn $Id: mod_scalars.F 1114 2022-03-01 21:07:01Z arango $
+!svn $Id: mod_scalars.F 1118 2022-03-28 21:16:14Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2022 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -4175,7 +4175,6 @@
 #endif
       Co=1.0_r8/(2.0_r8+SQRT(2.0_r8))
       gorho0=g/rho0
-      user=0.0_r8
       DO ng=1,Ngrids
         EWperiodic(ng)=.FALSE.
         NSperiodic(ng)=.FALSE.
