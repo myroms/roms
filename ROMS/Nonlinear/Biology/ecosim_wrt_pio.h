@@ -36,7 +36,7 @@
      &                          pioFile = pioFile)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
-      IF (ncid.ne.DIA(ng)%ncid) THEN
+      IF (FileH.ne.DIA(ng)%pioFile%fh) THEN
         CALL pio_netcdf_put_fvar (ng, model, ncname, 'light',           &
      &                            ec_wave_ab, (/1/), (/NBands/),        &
      &                            pioFile = pioFile)
