@@ -1,5 +1,5 @@
 # git $Id$
-# svn $Id: Module.mk 1099 2022-01-06 21:01:01Z arango $
+# svn $Id: Module.mk 1120 2022-04-08 19:14:36Z arango $
 #::::::::::::::::::::::::::::::::::::::::::::::::::::: Hernan G. Arango :::
 # Copyright (c) 2002-2022 The ROMS/TOMS Group             Kate Hedstrom :::
 #   Licensed under a MIT/X style license                                :::
@@ -8,9 +8,8 @@
 
 local_sub  := ROMS/Nonlinear/SeaIce
 
-local_lib  := libICE.a
 local_src  := $(wildcard $(local_sub)/*.F)
 
-$(eval $(call make-library,$(local_lib),$(local_src)))
+sources    += $(local_src)
 
 $(eval $(compile-rules))

@@ -1,5 +1,5 @@
 # git $Id$
-# svn $Id: Darwin-ifort.mk 1099 2022-01-06 21:01:01Z arango $
+# svn $Id: Darwin-ifort.mk 1120 2022-04-08 19:14:36Z arango $
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # Copyright (c) 2002-2022 The ROMS/TOMS Group                           :::
 #   Licensed under a MIT/X style license                                :::
@@ -18,9 +18,10 @@
 # HDF5_LIBDIR    HDF5 library directory
 # HDF5_LIBS      HDF5 library switches
 # LIBS           Required libraries during linking
+# ROMS_LIB       Directory and name for ROMS library
 # NF_CONFIG      NetCDF Fortran configuration script
 # NETCDF_INCDIR  NetCDF include directory
-# NETCDF_LIBDIR  NetCDF libary directory
+# NETCDF_LIBDIR  NetCDF library directory
 # NETCDF_LIBS    NetCDF library switches
 # PIO_INCDIR     Parallel-IO (PIO) from SCORPIO library include directory
 # PIO_LIBDIR     Parallel-IO (PIO) from SCORPIO libary directory
@@ -29,7 +30,7 @@
 # PNETCDF_LIBDIR PNetCDF libary directory
 # PNETCDF_LIBS   PNetCDF library switches
 
-# LD             Program to load the objects into an executable
+# LD             Program to load the objects into an executable or shared library
 # LDFLAGS        Flags to the loader
 # RANLIB         Name of ranlib command
 # MDEPFLAGS      Flags for sfmakedepend  (-s if you keep .f files)
@@ -42,11 +43,12 @@
        FIXEDFLAGS := -nofree
         FREEFLAGS := -free
               CPP := /usr/bin/cpp
-         CPPFLAGS := -P -traditional-cpp -w          # -w turns of warnings
+         CPPFLAGS := -P -traditional-cpp -w          # -w turns off warnings
            INCDIR := /usr/include /usr/local/bin
             SLIBS := -L/usr/local/lib -L/usr/lib
             ULIBS :=
-             LIBS := $(SCRATCH_DIR)/libNLM.a         # cyclic dependencies
+             LIBS :=
+         ROMS_LIB := -L$(SCRATCH_DIR) -lROMS
        MOD_SUFFIX := mod
                LD := $(FC)
           LDFLAGS :=
@@ -55,9 +57,11 @@
             MKDIR := mkdir -p
                CP := cp -p -v
                RM := rm -f
-           RANLIB := ranlib
+           RANLIB := ranlib -no_warning_for_no_symbols
              PERL := perl
              TEST := test
+      ST_LIB_NAME := libROMS.a
+      SH_LIB_NAME := libROMS.dylib
 
 #--------------------------------------------------------------------------
 # Compiling flags for ROMS Applications.
@@ -72,15 +76,23 @@ ifdef USE_ROMS
            FFLAGS += -traceback
            FFLAGS += -check uninit
            FFLAGS += -warn interfaces,nouncalled -gen-interfaces
-           FFLAGS += -Wl,-no_compact_unwind
-           FFLAGS += -Wl,-stack_size,0x64000000
  else
            FFLAGS += -ip -O3
            FFLAGS += -traceback
            FFLAGS += -check uninit
-           FFLAGS += -Wl,-no_compact_unwind
-           FFLAGS += -Wl,-stack_size,0x64000000
  endif
+          LDFLAGS += -Wl,-no_compact_unwind
+          LDFLAGS += -Wl,-stack_size,0x68000000
+ ifdef SHARED
+          LDFLAGS += -Wl,-rpath,$(SCRATCH_DIR)
+
+       SH_LDFLAGS += -dynamiclib
+       SH_LDFLAGS += -Wl,-headerpad_max_install_names
+       SH_LDFLAGS += -Wl,-undefined,dynamic_lookup
+
+       SH_LDFLAGS += -install_name @rpath/$(SH_LIB_NAME)
+ endif
+
         MDEPFLAGS := --cpp --fext=f90 --file=- --objdir=$(SCRATCH_DIR)
 endif
 
@@ -99,11 +111,11 @@ ifdef CICE_APPLICATION
            FFLAGS += -check uninit
 #          FFLAGS += -ftz -convert big_endian -assume byterecl
            FFLAGS += -warn interfaces,nouncalled -gen-interfaces
-           FFLAGS += -Wl,-no_compact_unwind
+          LDFLAGS += -Wl,-no_compact_unwind
  else
            FFLAGS := -r8 -i4 -O2 -align all -w
            FFLAGS += -ftz -convert big_endian -assume byterecl
-           FFLAGS += -Wl,-no_compact_unwind
+          LDFLAGS += -Wl,-no_compact_unwind
  endif
 endif
 
@@ -158,8 +170,6 @@ endif
 #--------------------------------------------------------------------------
 # Library locations, can be overridden by environment variables.
 #--------------------------------------------------------------------------
-
-          LDFLAGS := $(FFLAGS)
 
 ifdef USE_PIO
        PIO_INCDIR ?= /opt/intelsoft/openmpi/pio/include

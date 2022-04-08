@@ -1,7 +1,7 @@
 #!/bin/csh -ef
 #
 # git $Id$
-# svn $Id: cbuild_roms.csh 1099 2022-01-06 21:01:01Z arango $
+# svn $Id: cbuild_roms.csh 1120 2022-04-08 19:14:36Z arango $
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # Copyright (c) 2002-2022 The ROMS/TOMS Group                           :::
 #   Licensed under a MIT/X style license                                :::
@@ -212,7 +212,7 @@ endif
 # with other projects.
 
 if ( $?USE_DEBUG ) then
-  if ( "${USE_DEBUG}" = "on" ) then
+  if ( "${USE_DEBUG}" == "on" ) then
     setenv SCRATCH_DIR       ${MY_PROJECT_DIR}/CBuild_romsG
   else
     setenv SCRATCH_DIR       ${MY_PROJECT_DIR}/CBuild_roms
@@ -380,36 +380,21 @@ endif
 set my_hdir="-DMY_HEADER_DIR=${MY_HEADER_DIR}"
 
 if ( $dprint == 0 ) then
-  if ( $?USE_ECBUILD ) then
-    if ( "${USE_ECBUILD}" == "on" ) then
-      set conf_com = "ecbuild"
-    else if ( "${USE_ECBUILD}" == "off" ) then
-      set conf_com = "cmake"
+  if ( $clean == 1 ) then
+    if ( $?USE_ECBUILD ) then
+      if ( "${USE_ECBUILD}" == "on" ) then
+        set conf_com = "ecbuild"
+      else if ( "${USE_ECBUILD}" == "off" ) then
+        set conf_com = "cmake"
+      else
+        set conf_com = "Unknown"
+      endif
     else
-      set conf_com = "Unknown"
+      set conf_com = "cmake"
     endif
-  else
-    set conf_com = "cmake"
-  endif
 
-  if ( "${conf_com}" == "cmake" ) then
-    cmake -DAPP=${ROMS_APPLICATION} \
-                ${my_hdir} \
-                ${ltype} \
-                ${extra_flags} \
-                ${parpack_ldir} \
-                ${arpack_ldir} \
-                ${pio_ldir} \
-                ${pio_idir} \
-                ${pnetcdf_ldir} \
-                ${pnetcdf_idir} \
-                ${mpi} \
-                ${comm} \
-                ${roms_exec} \
-                ${dbg} \
-                ${MY_ROMS_SRC}
-  else if ( "${conf_com}" == "ecbuild" ) then
-    ecbuild -DAPP=${ROMS_APPLICATION} \
+    if ( "${conf_com}" == "cmake" ) then
+      cmake -DAPP=${ROMS_APPLICATION} \
                   ${my_hdir} \
                   ${ltype} \
                   ${extra_flags} \
@@ -424,9 +409,26 @@ if ( $dprint == 0 ) then
                   ${roms_exec} \
                   ${dbg} \
                   ${MY_ROMS_SRC}
-  else
-    echo "Unrecognized value, '${USE_ECBUILD}' set for USE_ECBUILD"
-    exit 1
+    else if ( "${conf_com}" == "ecbuild" ) then
+      ecbuild -DAPP=${ROMS_APPLICATION} \
+                    ${my_hdir} \
+                    ${ltype} \
+                    ${extra_flags} \
+                    ${parpack_ldir} \
+                    ${arpack_ldir} \
+                    ${pio_ldir} \
+                    ${pio_idir} \
+                    ${pnetcdf_ldir} \
+                    ${pnetcdf_idir} \
+                    ${mpi} \
+                    ${comm} \
+                    ${roms_exec} \
+                    ${dbg} \
+                    ${MY_ROMS_SRC}
+    else
+      echo "Unrecognized value, '${USE_ECBUILD}' set for USE_ECBUILD"
+      exit 1
+    endif
   endif
 endif
 

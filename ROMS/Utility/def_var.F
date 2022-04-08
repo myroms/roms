@@ -2,7 +2,7 @@
       MODULE def_var_mod
 !
 !git $Id$
-!svn $Id: def_var.F 1110 2022-02-27 21:37:32Z arango $
+!svn $Id: def_var.F 1120 2022-04-08 19:14:36Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2022 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -1080,7 +1080,7 @@
       logical, intent(in), optional :: SetFillVal
       logical, intent(in), optional :: SetParAccess
 !
-      integer, intent(in) :: ng, model, FileH, Vtype, nVdim
+      integer, intent(in) :: ng, model, Vtype, nVdim
 
       integer, dimension(:), intent (in) :: Vdim
 !
@@ -1097,6 +1097,7 @@
 #ifdef MASKING
       logical :: LandFill
 #endif
+      integer :: FileH
       integer :: i, j, latt
       integer :: status
 !

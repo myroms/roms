@@ -1,5 +1,5 @@
 # git $Id$
-# svn $Id: CYGWIN-gfortran.mk 1099 2022-01-06 21:01:01Z arango $
+# svn $Id: CYGWIN-gfortran.mk 1120 2022-04-08 19:14:36Z arango $
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # Copyright (c) 2002-2022 The ROMS/TOMS Group                           :::
 #   Licensed under a MIT/X style license                                :::
@@ -18,11 +18,13 @@
 # HDF5_LIBDIR    HDF5 library directory
 # HDF5_LIBS      HDF5 library switches
 # LIBS           Required libraries during linking
+# ROMS_LIB       Directory and name for ROMS library
 # NF_CONFIG      NetCDF Fortran configuration script
 # NETCDF_INCDIR  NetCDF include directory
 # NETCDF_LIBDIR  NetCDF library directory
 # NETCDF_LIBS    NetCDF library switches
-# LD             Program to load the objects into an executable
+
+# LD             Program to load the objects into an executable or shared library
 # LDFLAGS        Flags to the loader
 # RANLIB         Name of ranlib command
 # MDEPFLAGS      Flags for sfmakedepend  (-s if you keep .f files)
@@ -30,18 +32,23 @@
 # First the defaults
 #
 
+# This needs an if block to prevent building the executable
+# when none is requested.
+ifdef BIN
               BIN := $(BIN).exe
+endif
 
                FC := gfortran
            FFLAGS := -frepack-arrays
        FIXEDFLAGS := -ffixed-form
         FREEFLAGS := -ffree-form -ffree-line-length-none
               CPP := /usr/bin/cpp
-         CPPFLAGS := -P -traditional -w
+         CPPFLAGS := -P -traditional -w              # -w turns off warnings
            INCDIR := /usr/include /usr/local/bin
-            SLIBS := -L/usr/local/lib -L/usr/lib
+            SLIBS := -L/usr/local/lib -L/usr/lib -L/usr/lib64
             ULIBS :=
-             LIBS := $(SCRATCH_DIR)/libNLM.a         # cyclic dependencies
+             LIBS :=
+         ROMS_LIB := -L$(SCRATCH_DIR) -lROMS
        MOD_SUFFIX := mod
                LD := $(FC)
           LDFLAGS :=
@@ -53,6 +60,29 @@
            RANLIB := ranlib
              PERL := perl
              TEST := test
+      ST_LIB_NAME := libROMS.a
+      SH_LIB_NAME := cygROMS.dll
+
+#--------------------------------------------------------------------------
+# Checking for minimum version and versions requiring extra compile flags
+#--------------------------------------------------------------------------
+
+# Because of the recursive derived types in Utility/yaml_parser.F, gfortran
+# version 7 or greater is required.
+
+          MIN_VER := $(shell expr `$(FC) -dumpversion | cut -f1 -d.` \<= 6)
+ifeq "$(MIN_VER)" "1"
+      $(error gfortran version 7 or greater is required)
+endif
+
+# Starting with gfortran version 10, GNU takes a much stricter approach to argument
+# type and size matching. This conflicts with ROMS high level MPI calls so this flag
+# is added for compilation to complete successfully.
+
+       STRICT_VER := $(shell expr `$(FC) -dumpversion | cut -f1 -d.` \>= 10)
+ifeq "$(STRICT_VER)" "1"
+           FFLAGS += -fallow-argument-mismatch       # needed for gfortran 10 and higher
+endif
 
 #--------------------------------------------------------------------------
 # Compiling flags for ROMS Applications.
@@ -70,6 +100,11 @@ ifdef USE_ROMS
            FFLAGS += -O3
            FFLAGS += -ffast-math
  endif
+ ifdef SHARED
+           FFLAGS += -fPIC
+       SH_LDFLAGS += -shared
+ endif
+
         MDEPFLAGS := --cpp --fext=f90 --file=- --objdir=$(SCRATCH_DIR)
 endif
 
@@ -147,7 +182,6 @@ endif
 # Library locations, can be overridden by environment variables.
 #--------------------------------------------------------------------------
 
-          LDFLAGS := $(FFLAGS)
 
 ifdef USE_NETCDF4
         NF_CONFIG ?= nf-config
@@ -218,6 +252,28 @@ endif
 #--------------------------------------------------------------------------
 # ROMS specific rules.
 #--------------------------------------------------------------------------
+
+# CYGWIN can only load user compiled .dll files located in the same
+# directory as the executable. This rule will copy the cygROMS.dll
+# to the $(BINDIR) so the executable can run. This is only needed when
+# EXEC and SHARED are set and STATIC is NOT. If STATIC is set then
+# CYGWIN will automatically link with the static library.
+
+# Blank it out to be sure
+       CYG_DLL_CP :=
+
+ifdef SHARED
+ ifdef EXEC
+  ifndef STATIC
+	CYG_DLL_CP := cyg_dll_cp
+
+.PHONY: cyg_dll_cp
+cyg_dll_cp: $(BIN)
+	$(CP) $(SCRATCH_DIR)/$(SH_LIB_NAME) $(BINDIR)
+
+  endif
+ endif
+endif
 
 # Turn off bounds checking for function def_var, as "dimension(*)"
 # declarations confuse Gnu Fortran 95 bounds-checking code.
