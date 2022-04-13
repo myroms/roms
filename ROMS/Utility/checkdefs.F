@@ -2,7 +2,7 @@
       SUBROUTINE checkdefs
 !
 !git $Id$
-!svn $Id: checkdefs.F 1110 2022-02-27 21:37:32Z arango $
+!svn $Id: checkdefs.F 1122 2022-04-13 19:50:43Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2022 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -1481,6 +1481,13 @@
      &   'Bedload roughness for ripples'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+9)=' MB_Z0BL,'
+# endif
+# ifdef MB_Z0RIP
+!
+      IF (Master) WRITE (stdout,20) 'MB_Z0RIP',                         &
+     &   'Bedform roughness ripple height and length'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+10)=' MB_Z0RIP,'
 # endif
 #endif
 #if defined MCT_LIB && defined MODEL_COUPLING

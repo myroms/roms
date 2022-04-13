@@ -2,7 +2,7 @@
       MODULE def_info_mod
 !
 !git $Id$
-!svn $Id: def_info.F 1113 2022-03-01 20:31:29Z arango $
+!svn $Id: def_info.F 1122 2022-04-13 19:50:43Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2022 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -139,17 +139,17 @@
 !
       real(r8) :: Aval(6)
 !
-      character (len=11 ) :: bryatt, clmatt, frcatt
-      character (len=50 ) :: tiling
-      character (len=80 ) :: type
-      character (len=120) :: Vinfo(Natt)
+      character (len=11 )    :: bryatt, clmatt, frcatt
+      character (len=50 )    :: tiling
+      character (len=80 )    :: type
 #ifdef FOUR_DVAR
-      character (len=512) :: state_vector
+      character (len=512)    :: state_vector
 #endif
 #ifdef BIOLOGY
-      character (len=512) :: bio_file
+      character (len=512)    :: bio_file
 #endif
-      character (len=4096) :: string
+      character (len=4096)   :: string
+      character (len=MaxLen) :: Vinfo(Natt)
 
       character (len=*), parameter :: MyFile =                          &
      &  __FILE__//", def_info_nf90"
@@ -3560,17 +3560,17 @@
 !
       real(r8) :: Aval(6)
 !
-      character (len=11 ) :: bryatt, clmatt, frcatt
-      character (len=50 ) :: tiling
-      character (len=80 ) :: type
-      character (len=120) :: Vinfo(Natt)
+      character (len=11 )    :: bryatt, clmatt, frcatt
+      character (len=50 )    :: tiling
+      character (len=80 )    :: type
 # ifdef FOUR_DVAR
-      character (len=512) :: state_vector
+      character (len=512)    :: state_vector
 # endif
 # ifdef BIOLOGY
-      character (len=512) :: bio_file
+      character (len=512)    :: bio_file
 # endif
-      character (len=4096) :: string
+      character (len=4096)   :: string
+      character (len=MaxLen) :: Vinfo(Natt)
 
       character (len=*), parameter :: MyFile =                          &
      &  __FILE__//", def_info_pio"

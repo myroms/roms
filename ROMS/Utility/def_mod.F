@@ -3,7 +3,7 @@
 #if defined FOUR_DVAR || defined VERIFICATION
 !
 !git $Id$
-!svn $Id: def_mod.F 1103 2022-01-13 03:38:35Z arango $
+!svn $Id: def_mod.F 1122 2022-04-13 19:50:43Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2022 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -123,12 +123,12 @@
       real(dp) :: Tstart, Tfinal
       real(r8) :: Aval(6)
 !
-      character (len=22 )  :: str_date, end_date
-      character (len=40 )  :: Aname, AttName(2)
-      character (len=80 )  :: string
-      character (len=120)  :: Vinfo(Natt)
-      character (len=256)  :: ncname
-      character (len=2048) :: AttValue(2)
+      character (len=22 )    :: str_date, end_date
+      character (len=40 )    :: Aname, AttName(2)
+      character (len=80 )    :: string
+      character (len=256)    :: ncname
+      character (len=2048)   :: AttValue(2)
+      character (len=MaxLen) :: Vinfo(Natt)
 
       character (len=*), parameter :: MyFile =                          &
      &  __FILE__//", def_mod_nf90"
@@ -2454,12 +2454,12 @@
       real(dp) :: Tstart, Tfinal
       real(r8) :: Aval(6)
 !
-      character (len=22 )  :: str_date, end_date
-      character (len=40 )  :: Aname, AttName(2)
-      character (len=80 )  :: string
-      character (len=120)  :: Vinfo(Natt)
-      character (len=256)  :: ncname
-      character (len=2048) :: AttValue(2)
+      character (len=22 )    :: str_date, end_date
+      character (len=40 )    :: Aname, AttName(2)
+      character (len=80 )    :: string
+      character (len=256)    :: ncname
+      character (len=2048)   :: AttValue(2)
+      character (len=MaxLen) :: Vinfo(Natt)
 
       character (len=*), parameter :: MyFile =                          &
      &  __FILE__//", def_mod_pio"

@@ -3,7 +3,7 @@
 #if defined MODEL_COUPLING && defined ESMF_LIB
 !
 !git $Id$
-!svn $Id: mod_esmf_esm.F 1110 2022-02-27 21:37:32Z arango $
+!svn $Id: mod_esmf_esm.F 1122 2022-04-13 19:50:43Z arango $
 !=======================================================================
 !  Copyright (c) 2002-2022 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license         Hernan G. Arango     !
@@ -4645,6 +4645,7 @@
 !
       USE mod_parallel,   ONLY : OCN_COMM_WORLD
       USE mod_iounits,    ONLY : SourceFile, ioerror
+      USE mod_ncparam,    ONLY : MaxLen
       USE mod_scalars,    ONLY : NoError, exit_flag
 !
       USE def_dim_mod,    ONLY : def_dim
@@ -4671,8 +4672,8 @@
 !
       real(r8) :: Aval(6)
 !
-      character (len= 80) :: text
-      character (len=120) :: Vinfo(Natt)
+      character (len= 80)    :: text
+      character (len=MaxLen) :: Vinfo(Natt)
 
       character (len=*), parameter :: MyFile =                          &
      &  __FILE__//", def_FieldAtt"
