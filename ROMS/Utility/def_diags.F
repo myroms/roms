@@ -3,7 +3,7 @@
 #ifdef DIAGNOSTICS
 !
 !git $Id$
-!svn $Id: def_diags.F 1110 2022-02-27 21:37:32Z arango $
+!svn $Id: def_diags.F 1122 2022-04-13 19:50:43Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2022 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -124,9 +124,9 @@
 !
       real(r8) :: Aval(6)
 !
-      character (len= 13) :: Prefix
-      character (len=120) :: Vinfo(Natt)
-      character (len=256) :: ncname
+      character (len= 13)    :: Prefix
+      character (len=256)    :: ncname
+      character (len=MaxLen) :: Vinfo(Natt)
 
       character (len=*), parameter :: MyFile =                          &
      &  __FILE__//", def_diags_nf90"
@@ -1004,9 +1004,9 @@
 !
       real(r8) :: Aval(6)
 !
-      character (len= 13) :: Prefix
-      character (len=120) :: Vinfo(Natt)
-      character (len=256) :: ncname
+      character (len= 13)    :: Prefix
+      character (len=256)    :: ncname
+      character (len=MaxLen) :: Vinfo(Natt)
 
       character (len=*), parameter :: MyFile =                          &
      &  __FILE__//", def_diags_pio"
