@@ -1,7 +1,7 @@
       MODULE yaml_parser_mod
 !
 !git $Id$
-!svn $Id: yaml_parser.F 1119 2022-03-29 23:59:17Z arango $
+!svn $Id: yaml_parser.F 1123 2022-04-26 00:10:19Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2022 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -210,7 +210,7 @@
 !
       TYPE, PUBLIC :: yaml_Svec                      ! string structure
         character (len=:), allocatable :: value      ! scalar value
-        TYPE (yaml_Svec),  allocatable :: vector(:)  ! recursive vector
+        TYPE (yaml_Svec),  pointer :: vector(:)      ! recursive vector
       END TYPE yaml_Svec                             ! values
 !
 !  Derived-type structure, extended/inherited from parent "yaml_Svec",

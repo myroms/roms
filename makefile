@@ -1,7 +1,7 @@
 # git $Id$
-# svn $Id: makefile 968 2019-06-17 16:02:48Z arango $
+# svn $Id$
 #::::::::::::::::::::::::::::::::::::::::::::::::::::: Hernan G. Arango :::
-# Copyright (c) 2002-2021 The ROMS/TOMS Group             Kate Hedstrom :::
+# Copyright (c) 2002-2022 The ROMS/TOMS Group             Kate Hedstrom :::
 #   Licensed under a MIT/X style license                                :::
 #   See License_ROMS.txt                                                :::
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -39,6 +39,22 @@ endif
 #--------------------------------------------------------------------------
 
   sources    :=
+
+#--------------------------------------------------------------------------
+#  Check that at least one of SHARED, STATIC, or EXEC are set. If none are
+#  set, then ROMS defaults to creating a statically linked executable.
+#  This is to safeguard against old build scripts and misconfigured
+#  new ones (e.g. EXEC defined but neither SHARED nor STATIC defined).
+#--------------------------------------------------------------------------
+
+ifndef SHARED
+ ifndef STATIC
+    STATIC := on
+  ifndef EXEC
+    EXEC   := on
+  endif
+ endif
+endif
 
 #==========================================================================
 #  Start of user-defined options. In some macro definitions below: "on" or
@@ -177,8 +193,7 @@ endif
 #  step (beginning and almost the end of ROMS library list).
 #--------------------------------------------------------------------------
 
-   libraries := $(SCRATCH_DIR)/libNLM.a $(SCRATCH_DIR)/libDRIVER.a \
-		$(SCRATCH_DIR)/libUTIL.a
+   libraries :=
 
 #--------------------------------------------------------------------------
 #  Set Pattern rules.
@@ -253,15 +268,21 @@ source-dir-to-binary-dir = $(addprefix $(SCRATCH_DIR)/, $(notdir $1))
 source-to-object = $(call source-dir-to-binary-dir,   \
                    $(subst .F,.o,$1))
 
-# $(call make-library, library-name, source-file-list)
-define make-library
-   libraries += $(SCRATCH_DIR)/$1
+# $(call make-static-library, library-name, source-file-list)
+define make-static-library
    sources   += $2
 
    $(SCRATCH_DIR)/$1: $(call source-dir-to-binary-dir,    \
                       $(subst .F,.o,$2))
 	$(AR) $(ARFLAGS) $$@ $$^
 	$(RANLIB) $$@
+endef
+
+# $(call make-shared-library, library-name, source-file-list)
+define make-shared-library
+   $(SCRATCH_DIR)/$1: $(call source-dir-to-binary-dir,    \
+                      $(subst .F,.o,$2))
+	$(LD) $(FFLAGS) $(SH_LDFLAGS) -o $$@ $$^ $(LIBS)
 endef
 
 # $(call f90-source, source-file-list)
@@ -290,18 +311,20 @@ endef
 #  Set ROMS/TOMS executable file name.
 #--------------------------------------------------------------------------
 
-ifdef USE_DEBUG
-  BIN ?= $(BINDIR)/romsG
-else
- ifdef USE_MPI
-   BIN ?= $(BINDIR)/romsM
- else
-  ifdef USE_OpenMP
-    BIN ?= $(BINDIR)/romsO
+ifdef EXEC
+  ifdef USE_DEBUG
+    BIN ?= $(BINDIR)/romsG
   else
-    BIN ?= $(BINDIR)/romsS
+   ifdef USE_MPI
+     BIN ?= $(BINDIR)/romsM
+   else
+    ifdef USE_OpenMP
+      BIN ?= $(BINDIR)/romsO
+    else
+      BIN ?= $(BINDIR)/romsS
+    endif
+   endif
   endif
- endif
 endif
 
 #--------------------------------------------------------------------------
@@ -351,6 +374,14 @@ ifdef USE_MPI
  endif
 endif
 
+ifdef STATIC
+  libraries += $(SCRATCH_DIR)/$(ST_LIB_NAME)
+endif
+
+ifdef SHARED
+  libraries += $(SCRATCH_DIR)/$(SH_LIB_NAME)
+endif
+
 #--------------------------------------------------------------------------
 #  Pass the platform variables to the preprocessor as macros. Convert to
 #  valid, upper-case identifiers. Attach ROMS application  CPP options.
@@ -390,7 +421,7 @@ CPPFLAGS += -D'SVN_REV="$(SVNREV)"'
 
 .PHONY: all
 
-all: $(SCRATCH_DIR) $(SCRATCH_DIR)/MakeDepend $(BIN) rm_macros
+all: $(SCRATCH_DIR) $(SCRATCH_DIR)/MakeDepend $(libraries) $(BIN) rm_macros $(CYG_DLL_CP)
 
  modules  :=
 ifdef USE_ADJOINT
@@ -453,11 +484,6 @@ ifdef USE_COAMPS
  includes +=	$(COAMPS_LIB_DIR)
 endif
 
-ifdef USE_SWAN
- modules  +=	Waves/SWAN/Src
- includes +=	Waves/SWAN/Src
-endif
-
 ifdef USE_WRF
  ifeq "$(strip $(WRF_LIB_DIR))" "$(WRF_SRC_DIR)"
   includes +=	$(addprefix $(WRF_LIB_DIR)/,$(WRF_MOD_DIRS))
@@ -500,6 +526,14 @@ $(SCRATCH_DIR)/mod_strings.f90: CPPFLAGS += -DMY_OS='"$(OS)"' \
 #--------------------------------------------------------------------------
 #  ROMS/TOMS libraries.
 #--------------------------------------------------------------------------
+
+ifdef SHARED
+  $(eval $(call make-shared-library,$(SH_LIB_NAME),$(sources)))
+endif
+
+ifdef STATIC
+  $(eval $(call make-static-library,$(ST_LIB_NAME),$(sources)))
+endif
 
 MYLIB := libroms.a
 
