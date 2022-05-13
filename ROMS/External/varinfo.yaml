@@ -1,7 +1,7 @@
 # ROMS I/O NetCDF Metadata Dictionary
 #
 #git $Id$
-#svn $Id: varinfo.yaml 1110 2022-02-27 21:37:32Z arango $
+#svn $Id: varinfo.yaml 1126 2022-05-13 03:17:28Z arango $
 #========================================================= Hernan G. Arango ==#
 #  Copyright (c) 2002-2022 The ROMS/TOMS Group                                #
 #    Licensed under a MIT/X style license                                     #
@@ -1326,7 +1326,7 @@ metadata:
 
   - variable:       *SWRAD                                           # Input/Output
     standard_name:  net_downward_shortwave_flux_at_sea_water_surface
-    long_name:      solar shortwave radiation flux
+    long_name:      net solar shortwave radiation flux
     units:          watt meter-2                                     # Input:  [Watt/m2]
     field:          shortwave radiation                              # [Celsius m/s]
     time:           srf_time                                         # Output: [Watt/m2]
@@ -1337,7 +1337,7 @@ metadata:
 
   - variable:       lwrad_down                                       # Input
     standard_name:  surface_downward_longwave_flux
-    long_name:      downwelling longwave radiation flux
+    long_name:      downward longwave radiation flux
     units:          watt meter-2                                     # Input:  [Watt/m2]
     field:          downwelling longwave radiation                   # [Celsius m/s]
     time:           lrf_time

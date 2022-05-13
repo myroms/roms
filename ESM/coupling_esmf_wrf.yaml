@@ -1,7 +1,7 @@
 # ROMS Coupling ESMF/NUOPC System: Import/Export Metadata Dictionary
 #
 #git $Id$
-#svn $Id: coupling_esmf_wrf.yaml 1110 2022-02-27 21:37:32Z arango $
+#svn $Id: coupling_esmf_wrf.yaml 1126 2022-05-13 03:17:28Z arango $
 #========================================================== Hernan G. Arango ==#
 #  Copyright (c) 2002-2022 The ROMS/TOMS Group                                 #
 #    Licensed under a MIT/X style license                                      #
@@ -81,7 +81,7 @@ metadata:
     regrid_method:       bilinear
     extrapolate_method:  nearest
 
-  - standard_name:       surface_net_downward_longwave_flux
+  - standard_name:       surface_downward_longwave_flux
     long_name:           surface downward longwave radiation flux
     short_name:          dLWrad
     data_variables:      [lwrad_down, time]
@@ -111,7 +111,7 @@ metadata:
     regrid_method:       bilinear
     extrapolate_method:  none
 
-  - standard_name:       net_downward_shortwave_flux_at_sea_water_surface
+  - standard_name:       downward_shortwave_flux_at_sea_water_surface
     long_name:           surface downward shortwave radiation flux
     short_name:          dSWrad
     data_variables:      [dswrad, time]
@@ -127,7 +127,7 @@ metadata:
     extrapolate_method:  none
 
   - standard_name:       net_shortwave_flux_at_sea_water_surface
-    long_name:           surface shortwave radiation flux
+    long_name:           surface net shortwave radiation flux
     short_name:          SWrad
     data_variables:      [swrad, time]
     source_units:        W m-2
@@ -291,7 +291,7 @@ metadata:
     regrid_method:       bilinear
     extrapolate_method:  none
 
-  - standard_name:       surface_downward_heat_flux_in_sea_water
+  - standard_name:       surface_net_heat_flux_in_sea_water
     long_name:           surface net heat flux
     short_name:          shflux
     data_variables:      [shf, time]
@@ -300,7 +300,7 @@ metadata:
     source_grid:         cell_center
     destination_grid:    cell_center
     add_offset:          0.0d0
-    scale:               -1.0d0
+    scale:               1.0d0
     debug_write:         false
     connected_to:        *ATM
     regrid_method:       bilinear
