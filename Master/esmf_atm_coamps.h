@@ -3,7 +3,7 @@
 #if defined COAMPS_COUPLING && defined ESMF_LIB
 !
 !git $Id$
-!svn $Id: esmf_atm_coamps.h 1099 2022-01-06 21:01:01Z arango $
+!svn $Id: esmf_atm_coamps.h 1126 2022-05-13 03:17:28Z arango $
 !=======================================================================
 !  Copyright (c) 2002-2022 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license         Hernan G. Arango     !
@@ -3936,7 +3936,7 @@
                 END DO
               END DO
 !
-!  Surface longwave radiation flux (W m-2; positive upward).
+!  Surface net longwave radiation flux (W m-2; positive upward).
 !
             CASE ('lwrd', 'LWrad')
               MyFmin(1)= MISSING_dp
@@ -3964,7 +3964,7 @@
                 END DO
               END DO
 !
-!  Surface shortwave radiation (W m-2; positive into ocean).
+!  Surface net shortwave radiation (W m-2; positive into ocean).
 !
             CASE ('swrd', 'SWrad')
               MyFmin(1)= MISSING_dp

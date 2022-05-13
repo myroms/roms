@@ -3,7 +3,7 @@
 #if defined WRF_COUPLING && defined ESMF_LIB
 !
 !git $Id$
-!svn $Id: esmf_atm_wrf.h 1099 2022-01-06 21:01:01Z arango $
+!svn $Id: esmf_atm_wrf.h 1126 2022-05-13 03:17:28Z arango $
 !=======================================================================
 !  Copyright (c) 2002-2022 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license         Hernan G. Arango     !
@@ -3535,7 +3535,7 @@
       real (dp), parameter :: z1 = 3.0_dp             ! layer thickness
 !
       real (dp) :: Fseconds, TimeInDays, Time_Current
-      real (dp) :: cff1, cff2, cff3, f1
+      real (dp) :: cff1, cff2, cff3, f1, scale
       real (dp) :: MyFmax(1), MyFmin(1), Fmin(1), Fmax(1), Fval
 !
       real (dp), pointer :: ptr2d(:,:) => NULL()
@@ -3915,34 +3915,60 @@
                 END DO
               END DO
 !
-!  Net heat flux (W m-2) at the surface. Use shortwave, longwave,
-!  latent, sensible fluxes to compute net heat flux.  Remove outgoing
-!  IR from ocean sea surface temperature (K) using infrared emissivity
-!  (unitless) and Stefan-Boltzmann constant (W m-2 K-4).  As in WRF
-!  routine 'sst_skin_update', the f1 represents the shortwave flux
-!  mean absorption in the cool-skin layer (an approximation kludge).
-!  A formal approach is presented in Zeng and Beljaars (2005; GRL).
-!  Also, ROMS 'bulk_flux' routine shows a formal cool skin correction.
+!  Net heat flux (W/m2) at the surface. Use net shortwave (downward
+!  minus upward), net longwave (downward minus upward), latent, and
+!  sensible fluxes to compute the surface net heat flux for the
+!  ocean.
+!
+!  The documentation of the heat flux components is very confusing in
+!  WRF. We need a consistent an unambiguous metadata model in WRF.
+!
+!  In WRF routine 'sst_skin_update', there is an f1=0.6352 to represent
+!  the shortwave flux mean absorption in the cool-skin layer (a kludge),
+!  but this value is king of high.  A formal approach is presented in
+!  Zeng and Beljaars (2005; GRL).  Also, ROMS 'bulk_flux' routine
+!  shows a formal cool skin correction.
+!
+!  In WRF, we have downwelling shortwave flux (swdnb, downward) and
+!  upwelling shortwave flux (swupb, upward) at the atmosphere bottom.
+!  Both are positive. The net shortwave flux (gsw = swdnb - swupb) is
+!  positive and downward since 'swupb' is around 8 percent the magnitude
+!  of 'swdnb'. Notice that swdown = swdnb, what a mess. Here, we use
+!  the 'swdnb' and 'swupd' variables since they are available in the
+!  RAMS time-averaged diagnotics.
+!
+!  Similarly, in WRF we have downwelling longwave flux (lwdnb, downward)
+!  and upwelling longwave flux (lwupb, upward). The 'lwupb' variable is
+!  almost identical to StefBo * emiss * sst^4. The 'sst' the is botton
+!  land/ocean temperature (in Kelvin). Also, glw = lwdnb. Therefore,
+!  'glw' is used here because it time-average RAMS diagonostic variable
+!  is 'glw_mean' (downward, positive, W/m2). The metadata nomenclature
+!  in WRF is such a mess and confusing.
+!
+!  In WRF, 'hfx' is the sensible heat flux (W/m2) and 'lh' is the
+!  latent heat flux (W/m2). Both fluxes are positive if upward
+!  from the surface. The same applies for the time-averaged values,
+!  'hfx_mean' and 'lh_mean'. Therefore, we need to flip the sign and
+!  use MINUS when adding such components to the ocean net heat flux
+!  below. WARNING: The documentation for the direction of these fluxes
+!  is very confusing in WRF (like negative upward).
 !
             CASE ('nflx', 'shflux')
               MyFmin(1)= MISSING_dp
               MyFmax(1)=-MISSING_dp
-              f1=1.0_dp-0.27_dp*EXP(-2.80_dp*z1)-                       &
-     &                  0.45_dp*EXP(-0.07_dp*z1)
+!!            f1=1.0_dp-0.27_dp*EXP(-2.80_dp*z1)-                       &
+!!   &                  0.45_dp*EXP(-0.07_dp*z1)
               DO j=Jstr,Jend
                 DO i=Istr,Iend
-                  cff1=grid%sst(i,j)*grid%sst(i,j)*                     &
-     &                 grid%sst(i,j)*grid%sst(i,j)
-                  cff2=grid%emiss(i,j)*StBolt*cff1
 # ifdef WRF_TIMEAVG
-                  Fval=grid%gsw(i,j)*f1+                                &
-     &                 grid%glw_mean(i,j)-cff2+                         &
-     &                 grid%lh_mean (i,j)+                              &
+                  Fval=(grid%swdnb_mean(i,j)-grid%swupb_mean(i,j))+     &
+     &                 (grid%glw_mean(i,j)-grid%lwupb_mean(i,j))-       &
+     &                 grid%lh_mean (i,j)-                              &
      &                 grid%hfx_mean(i,j)
 # else
-                  Fval=grid%gsw(i,j)*f1+                                &
-     &                 grid%glw(i,j)-cff2+                              &
-     &                 grid%lh (i,j)+                                   &
+                  Fval=(grid%swdnb(i,j)-grid%swupb(i,j))+               &
+     &                 (grid%glw(i,j)-grid%lwupb(i,j))-                 &
+     &                 grid%lh (i,j)-                                   &
      &                 grid%hfx(i,j)
 # endif
                   MyFmin(1)=MIN(MyFmin(1),Fval)
@@ -3951,7 +3977,8 @@
                 END DO
               END DO
 !
-!  Longwave radiation (W m-2) at the surface.
+!  Net longwave radiation (W m-2) at the surface: downweling minus
+!  upwelling fluxes at the bottom of the atmosphere.
 !
             CASE ('lwrd', 'LWrad')
               MyFmin(1)= MISSING_dp
@@ -3959,9 +3986,9 @@
               DO j=Jstr,Jend
                 DO i=Istr,Iend
 # ifdef WRF_TIMEAVG
-                  Fval=grid%glw_mean(i,j)
+                  Fval=grid%glw_mean(i,j)-grid%lwupb_mean(i,j)
 # else
-                  Fval=grid%glw(i,j)
+                  Fval=grid%glw(i,j)-grid%lwupb(i,j)
 # endif
                   MyFmin(1)=MIN(MyFmin(1),Fval)
                   MyFmax(1)=MAX(MyFmax(1),Fval)
@@ -3987,14 +4014,19 @@
                 END DO
               END DO
 !
-!  Shortwave radiation flux (W m-2) at the surface.
+!  Net shortwave radiation flux (W m-2) at the surface: downweling
+!  minus  upwelling fluxes at the bottom of the atmosphere.
 !
             CASE ('swrd', 'SWrad')
               MyFmin(1)= MISSING_dp
               MyFmax(1)=-MISSING_dp
               DO j=Jstr,Jend
                 DO i=Istr,Iend
-                  Fval=grid%gsw(i,j)
+# ifdef WRF_TIMEAVG
+                  Fval=grid%swdnb_mean(i,j)-grid%swupb_mean(i,j)
+# else
+                  Fval=grid%swdnb(i,j)-grid%swupb(i,j)
+# endif
                   MyFmin(1)=MIN(MyFmin(1),Fval)
                   MyFmax(1)=MAX(MyFmax(1),Fval)
                   ptr2d(i,j)=Fval
@@ -4008,6 +4040,11 @@
               MyFmax(1)=-MISSING_dp
               DO j=Jstr,Jend
                 DO i=Istr,Iend
+# ifdef WRF_TIMEAVG
+                  Fval=grid%swdnb_mean(i,j)
+# else
+                  Fval=grid%swdnb(i,j)
+# endif
                   Fval=grid%swdown(i,j)
                   MyFmin(1)=MIN(MyFmin(1),Fval)
                   MyFmax(1)=MAX(MyFmax(1),Fval)
@@ -4020,12 +4057,17 @@
             CASE ('lhfx', 'LHfx')
               MyFmin(1)= MISSING_dp
               MyFmax(1)=-MISSING_dp
+# ifndef BULK_FLUXES
+              scale=-1.0_r8           ! upward positive flux, flip sign
+# else
+              scale=1.0_r8
+# endif
               DO j=Jstr,Jend
                 DO i=Istr,Iend
 # ifdef WRF_TIMEAVG
-                  Fval=grid%lh_mean(i,j)
+                  Fval=scale*grid%lh_mean(i,j)
 # else
-                  Fval=grid%lh(i,j)
+                  Fval=scale*grid%lh(i,j)
 # endif
                   MyFmin(1)=MIN(MyFmin(1),Fval)
                   MyFmax(1)=MAX(MyFmax(1),Fval)
@@ -4038,12 +4080,17 @@
             CASE ('shfx', 'SHfx')
               MyFmin(1)= MISSING_dp
               MyFmax(1)=-MISSING_dp
+# ifndef BULK_FLUXES
+              scale=-1.0_r8           ! upward positive flux, flip sign
+# else
+              scale=1.0_r8
+# endif
               DO j=Jstr,Jend
                 DO i=Istr,Iend
 # ifdef WRF_TIMEAVG
-                  Fval=grid%hfx_mean(i,j)
+                  Fval=scale*grid%hfx_mean(i,j)
 # else
-                  Fval=grid%hfx(i,j)
+                  Fval=scale*grid%hfx(i,j)
 # endif
                   MyFmin(1)=MIN(MyFmin(1),Fval)
                   MyFmax(1)=MAX(MyFmax(1),Fval)

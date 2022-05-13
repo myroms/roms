@@ -2,7 +2,7 @@
       MODULE mod_forces
 !
 !git $Id$
-!svn $Id: mod_forces.F 1099 2022-01-06 21:01:01Z arango $
+!svn $Id: mod_forces.F 1126 2022-05-13 03:17:28Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2022 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -284,13 +284,14 @@
           real(r8), pointer :: cloudG(:,:,:)
 #  endif
 # endif
-# ifdef BULK_FLUXES
+# if defined BULK_FLUXES || defined FRC_COUPLING
           real(r8), pointer :: lhflx(:,:)
           real(r8), pointer :: lrflx(:,:)
-#  ifndef LONGWAVE
-          real(r8), pointer :: lrflxG(:,:,:)
-#  endif
           real(r8), pointer :: shflx(:,:)
+# endif
+
+# if !defined LONGWAVE && defined BULK_FLUXES
+          real(r8), pointer :: lrflxG(:,:,:)
 # endif
 
 # if defined BULK_FLUXES || defined ECOSIM || \
@@ -641,20 +642,20 @@
 #  endif
 # endif
 
-# ifdef BULK_FLUXES
+# if defined BULK_FLUXES || defined FRC_COUPLING
       allocate ( FORCES(ng) % lhflx(LBi:UBi,LBj:UBj) )
       Dmem(ng)=Dmem(ng)+size2d
 
       allocate ( FORCES(ng) % lrflx(LBi:UBi,LBj:UBj) )
       Dmem(ng)=Dmem(ng)+size2d
 
-#  ifndef LONGWAVE
-      allocate ( FORCES(ng) % lrflxG(LBi:UBi,LBj:UBj,2) )
-      Dmem(ng)=Dmem(ng)+2.0_r8*size2d
-#  endif
-
       allocate ( FORCES(ng) % shflx(LBi:UBi,LBj:UBj) )
       Dmem(ng)=Dmem(ng)+size2d
+# endif
+
+# if !defined LONGWAVE && defined BULK_FLUXES
+      allocate ( FORCES(ng) % lrflxG(LBi:UBi,LBj:UBj,2) )
+      Dmem(ng)=Dmem(ng)+2.0_r8*size2d
 # endif
 
 # if defined BULK_FLUXES || defined ECOSIM || \
@@ -1111,20 +1112,20 @@
 #   endif
 #  endif
 
-#  ifdef BULK_FLUXES
+#  if defined BULK_FLUXES || defined FRC_COUPLING
       IF (.not.destroy(ng, FORCES(ng)%lhflx, MyFile,                    &
      &                 __LINE__, 'FORCES(ng)%lhflx')) RETURN
 
       IF (.not.destroy(ng, FORCES(ng)%lrflx, MyFile,                    &
      &                 __LINE__, 'FORCES(ng)%lrflx')) RETURN
 
-#   ifndef LONGWAVE
-      IF (.not.destroy(ng, FORCES(ng)%lrflxG, MyFile,                   &
-     &                 __LINE__, 'FORCES(ng)%lrflxG')) RETURN
-#   endif
-
       IF (.not.destroy(ng, FORCES(ng)%shflx, MyFile,                    &
      &                 __LINE__, 'FORCES(ng)%shflx')) RETURN
+#  endif
+
+#  if !defined LONGWAVE && defined BULK_FLUXES
+      IF (.not.destroy(ng, FORCES(ng)%lrflxG, MyFile,                   &
+     &                 __LINE__, 'FORCES(ng)%lrflxG')) RETURN
 #  endif
 
 #  if defined BULK_FLUXES || defined ECOSIM || \
@@ -1608,7 +1609,7 @@
             FORCES(ng) % cloudG(i,j,2) = IniVal
 #  endif
 # endif
-# ifdef BULK_FLUXES
+# if defined BULK_FLUXES || defined FRC_COUPLING
             FORCES(ng) % lhflx(i,j) = IniVal
             FORCES(ng) % lrflx(i,j) = IniVal
             FORCES(ng) % shflx(i,j) = IniVal

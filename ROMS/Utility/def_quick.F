@@ -2,7 +2,7 @@
       MODULE def_quick_mod
 !
 !git $Id$
-!svn $Id: def_quick.F 1122 2022-04-13 19:50:43Z arango $
+!svn $Id: def_quick.F 1126 2022-05-13 03:17:28Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2022 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -1234,7 +1234,7 @@
           END IF
         END DO
 
-# ifdef BULK_FLUXES
+# if defined BULK_FLUXES || defined FRC_COUPLING
 !
 !  Define latent heat flux.
 !
@@ -1278,7 +1278,7 @@
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 !
-!  Define longwave radiation flux.
+!  Define net longwave radiation flux.
 !
         IF (Qout(idLrad,ng)) THEN
           Vinfo( 1)=Vname(1,idLrad)
@@ -1298,6 +1298,9 @@
      &                   NF_FOUT, nvd3, t2dgrd, Aval, Vinfo, ncname)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
+# endif
+
+# ifdef BULK_FLUXES
 !
 !  Define atmospheric air temperature.
 !
@@ -1385,7 +1388,7 @@
         END IF
 # ifdef SHORTWAVE
 !
-!  Define shortwave radiation flux.
+!  Define net shortwave radiation flux.
 !
         IF (Qout(idSrad,ng)) THEN
           Vinfo( 1)=Vname(1,idSrad)
@@ -2455,7 +2458,7 @@
             got_var(idVair)=.TRUE.
             QCK(ng)%Vid(idVair)=var_id(i)
 # endif
-# ifdef BULK_FLUXES
+# if defined BULK_FLUXES || defined FRC_COUPLING
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idLhea))) THEN
             got_var(idLhea)=.TRUE.
             QCK(ng)%Vid(idLhea)=var_id(i)
@@ -2465,6 +2468,8 @@
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idLrad))) THEN
             got_var(idLrad)=.TRUE.
             QCK(ng)%Vid(idLrad)=var_id(i)
+# endif
+# ifdef BULK_FLUXES
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idTair))) THEN
             got_var(idTair)=.TRUE.
             QCK(ng)%Vid(idTair)=var_id(i)
@@ -2917,7 +2922,7 @@
           RETURN
         END IF
 # endif
-# ifdef BULK_FLUXES
+# if defined BULK_FLUXES || defined FRC_COUPLING
         IF (.not.got_var(idLhea).and.Qout(idLhea,ng)) THEN
           IF (Master) WRITE (stdout,70) TRIM(Vname(1,idLhea)),          &
      &                                  TRIM(ncname)
@@ -2936,6 +2941,8 @@
           exit_flag=3
           RETURN
         END IF
+# endif
+# ifdef BULK_FLUXES
         IF (.not.got_var(idTair).and.Qout(idTair,ng)) THEN
           IF (Master) WRITE (stdout,70) TRIM(Vname(1,idTair)),          &
      &                                  TRIM(ncname)
@@ -4625,7 +4632,7 @@
           END IF
         END DO
 
-#  ifdef BULK_FLUXES
+#  if defined BULK_FLUXES || defined FRC_COUPLING
 !
 !  Define latent heat flux.
 !
@@ -4677,7 +4684,7 @@
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 !
-!  Define longwave radiation flux.
+!  Define net longwave radiation flux.
 !
         IF (Qout(idLrad,ng)) THEN
           Vinfo( 1)=Vname(1,idLrad)
@@ -4701,6 +4708,9 @@
      &                   PIO_FOUT, nvd3, t2dgrd, Aval, Vinfo, ncname)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
+#  endif
+
+#  ifdef BULK_FLUXES
 !
 !  Define atmospheric air temperature.
 !
@@ -4805,7 +4815,7 @@
 
 #  ifdef SHORTWAVE
 !
-!  Define shortwave radiation flux.
+!  Define net shortwave radiation flux.
 !
         IF (Qout(idSrad,ng)) THEN
           Vinfo( 1)=Vname(1,idSrad)
@@ -6118,7 +6128,7 @@
             QCK(ng)%pioVar(idVair)%dkind=PIO_FOUT
             QCK(ng)%pioVar(idVair)%gtype=r2dvar
 #  endif
-#  ifdef BULK_FLUXES
+#  if defined BULK_FLUXES || defined FRC_COUPLING
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idLhea))) THEN
             got_var(idLhea)=.TRUE.
             QCK(ng)%pioVar(idLhea)%vd=var_desc(i)
@@ -6134,6 +6144,8 @@
             QCK(ng)%pioVar(idLrad)%vd=var_desc(i)
             QCK(ng)%pioVar(idLrad)%dkind=PIO_FOUT
             QCK(ng)%pioVar(idLrad)%gtype=r2dvar
+#  endif
+#  ifdef BULK_FLUXES
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idTair))) THEN
             got_var(idTair)=.TRUE.
             QCK(ng)%pioVar(idTair)%vd=var_desc(i)
@@ -6688,7 +6700,7 @@
           RETURN
         END IF
 #  endif
-#  ifdef BULK_FLUXES
+#  if defined BULK_FLUXES || defined FRC_COUPLING
         IF (.not.got_var(idLhea).and.Qout(idLhea,ng)) THEN
           IF (Master) WRITE (stdout,70) TRIM(Vname(1,idLhea)),          &
      &                                  TRIM(ncname)
@@ -6707,6 +6719,8 @@
           exit_flag=3
           RETURN
         END IF
+#  endif
+#  ifdef BULK_FLUXES
         IF (.not.got_var(idTair).and.Qout(idTair,ng)) THEN
           IF (Master) WRITE (stdout,70) TRIM(Vname(1,idTair)),          &
      &                                  TRIM(ncname)

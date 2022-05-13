@@ -3,7 +3,7 @@
 #if defined AD_AVERAGES && defined ADJOINT
 !
 !git $Id$
-!svn $Id: ad_set_avg.F 1099 2022-01-06 21:01:01Z arango $
+!svn $Id: ad_set_avg.F 1126 2022-05-13 03:17:28Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2022 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -403,7 +403,8 @@
           END DO
         END IF
 #  endif
-#  ifdef BULK_FLUXES
+
+#  if defined BULK_FLUXES || defined FRC_COUPLING
         IF (Aout(idLhea,ng)) THEN
           DO j=JstrR,JendR
             DO i=IstrR,IendR
@@ -415,6 +416,7 @@
             END DO
           END DO
         END IF
+
         IF (Aout(idLrad,ng)) THEN
           DO j=JstrR,JendR
             DO i=IstrR,IendR
@@ -426,6 +428,7 @@
             END DO
           END DO
         END IF
+
         IF (Aout(idShea,ng)) THEN
           DO j=JstrR,JendR
             DO i=IstrR,IendR
@@ -437,19 +440,20 @@
             END DO
           END DO
         END IF
-#   ifdef EMINUSP
+#  endif
+
+#  if defined BULK_FLUXES && defined EMINUSP
         IF (Aout(idevap,ng)) THEN
           DO j=JstrR,JendR
             DO i=IstrR,IendR
               AVERAGE(ng)%avgevap(i,j)=FORCES(ng)%ad_evap(i,j)
-#    ifdef WET_DRY
+#   ifdef WET_DRY
               AVERAGE(ng)%avgevap(i,j)=AVERAGE(ng)%avgevap(i,j)*        &
      &                                 GRID(ng)%rmask_full(i,j)
-#    endif
+#   endif
             END DO
           END DO
         END IF
-#   endif
 #  endif
 # endif
 !
@@ -890,7 +894,8 @@
           END DO
         END IF
 #  endif
-#  ifdef BULK_FLUXES
+
+#  if defined BULK_FLUXES || defined FRC_COUPLING
         IF (Aout(idLhea,ng)) THEN
           DO j=JstrR,JendR
             DO i=IstrR,IendR
@@ -902,6 +907,7 @@
             END DO
           END DO
         END IF
+
         IF (Aout(idLrad,ng)) THEN
           DO j=JstrR,JendR
             DO i=IstrR,IendR
@@ -913,6 +919,7 @@
             END DO
           END DO
         END IF
+
         IF (Aout(idShea,ng)) THEN
           DO j=JstrR,JendR
             DO i=IstrR,IendR
@@ -924,19 +931,20 @@
             END DO
           END DO
         END IF
-#   ifdef EMINUSP
+#  endif
+
+#  defined BULK_FLUXES && defined EMINUSP
         IF (Aout(idevap,ng)) THEN
           DO j=JstrR,JendR
             DO i=IstrR,IendR
               AVERAGE(ng)%avgevap(i,j)=AVERAGE(ng)%avgevap(i,j)+        &
-#    ifdef WET_DRY
+#   ifdef WET_DRY
      &                                 GRID(ng)%rmask_full(i,j)*        &
-#    endif
+#   endif
      &                                 FORCES(ng)%ad_evap(i,j)
             END DO
           END DO
         END IF
-#   endif
 #  endif
 # endif
 !
@@ -1322,7 +1330,8 @@
           END DO
         END IF
 #  endif
-#  ifdef BULK_FLUXES
+
+#  if defined BULK_FLUXES || defined FRC_COUPLING
         IF (Aout(idLhea,ng)) THEN
           DO j=JstrR,JendR
             DO i=IstrR,IendR
@@ -1331,6 +1340,7 @@
             END DO
           END DO
         END IF
+
         IF (Aout(idShea,ng)) THEN
           DO j=JstrR,JendR
             DO i=IstrR,IendR
@@ -1339,6 +1349,7 @@
             END DO
           END DO
         END IF
+
         IF (Aout(idLrad,ng)) THEN
           DO j=JstrR,JendR
             DO i=IstrR,IendR
@@ -1347,7 +1358,9 @@
             END DO
           END DO
         END IF
-#   ifdef EMINUSP
+#  endif
+
+#  if defined BULK_FLUXES && defined EMINUSP
         IF (Aout(idevap,ng)) THEN
           DO j=JstrR,JendR
             DO i=IstrR,IendR
@@ -1356,7 +1369,6 @@
             END DO
           END DO
         END IF
-#   endif
 #  endif
 # endif
 !
