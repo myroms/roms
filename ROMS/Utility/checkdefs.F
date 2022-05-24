@@ -2,7 +2,7 @@
       SUBROUTINE checkdefs
 !
 !git $Id$
-!svn $Id: checkdefs.F 1122 2022-04-13 19:50:43Z arango $
+!svn $Id: checkdefs.F 1129 2022-05-23 21:28:29Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2022 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -1814,7 +1814,7 @@
       Coptions(is:is+13)=' PARALLEL_IO,'
 #endif
 #if defined CARBON && defined BIO_FENNEL
-# if defined PC02AIR_DATA
+# if defined PCO2AIR_DATA
 !
       IF (Master) WRITE (stdout,20) 'PCO2AIR_DATA',                     &
      &   'CO2 gas exchange from Laurent et al. (2017)'

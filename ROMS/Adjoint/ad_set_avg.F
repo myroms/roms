@@ -3,7 +3,7 @@
 #if defined AD_AVERAGES && defined ADJOINT
 !
 !git $Id$
-!svn $Id: ad_set_avg.F 1126 2022-05-13 03:17:28Z arango $
+!svn $Id: ad_set_avg.F 1129 2022-05-23 21:28:29Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2022 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -933,7 +933,7 @@
         END IF
 #  endif
 
-#  defined BULK_FLUXES && defined EMINUSP
+#  if defined BULK_FLUXES && defined EMINUSP
         IF (Aout(idevap,ng)) THEN
           DO j=JstrR,JendR
             DO i=IstrR,IendR

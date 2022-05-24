@@ -1,7 +1,8 @@
       MODULE roms_kernel_mod
 !
+!git $Id: jedi_roms.h 1129 2022-05-23 21:28:29Z arango $
 !git $Id$
-!svn $Id: jedi_roms.h 1103 2022-01-13 03:38:35Z arango $
+!svn $Id: jedi_roms.h 1129 2022-05-23 21:28:29Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2022 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -506,7 +507,7 @@
 !
       PHASE1 : IF (Phase.eq.1) THEN
 !
-        IF (Master.and.ANY(SetGridConfig)) THEN
+        IF (Master) THEN
           WRITE (stdout,10) 'NLM_INITIAL: Phase 1 Initialization: ',    &
      &                      'Configuring ROMS nonlinear kernel ...'
         END IF
@@ -929,7 +930,7 @@
 !
       PHASE1 : IF (Phase.eq.1) THEN
 !
-        IF (Master.and.ANY(SetGridConfig)) THEN
+        IF (Master) THEN
           WRITE (stdout,10) 'TLM_INITIAL: Phase 1 Initialization: ',    &
      &                      'Configuring ROMS tangent linear kernel ...'
         END IF
@@ -1300,7 +1301,7 @@
 !
       PHASE1 : IF (Phase.eq.1) THEN
 !
-        IF (Master.and.ANY(SetGridConfig)) THEN
+        IF (Master) THEN
           WRITE (stdout,10) 'ADM_INITIAL: Phase 1 Initialization: ',    &
      &                      'Configuring ROMS nonlinear kernel ...'
         END IF
