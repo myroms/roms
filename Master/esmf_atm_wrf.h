@@ -3,7 +3,7 @@
 #if defined WRF_COUPLING && defined ESMF_LIB
 !
 !git $Id$
-!svn $Id: esmf_atm_wrf.h 1126 2022-05-13 03:17:28Z arango $
+!svn $Id: esmf_atm_wrf.h 1130 2022-06-01 20:41:14Z arango $
 !=======================================================================
 !  Copyright (c) 2002-2022 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license         Hernan G. Arango     !
@@ -1759,10 +1759,10 @@
               UBj=UBOUND(ptrX,2)
               DO j=LBj,UBj
                 DO i=LBi,UBi
-                  ptrX(i,j)=grid%xlong(i,j)
-                  ptrY(i,j)=grid%xlat(i,j)
+                  ptrX(i,j)=REAL(grid%xlong(i,j),dp)
+                  ptrY(i,j)=REAL(grid%xlat(i,j),dp)
                   ptrM(i,j)=INT(grid%landmask(i,j))
-                  ptrA(i,j)=grid%dx*grid%dy
+                  ptrA(i,j)=REAL(grid%dx*grid%dy,dp)
                 END DO
               END DO
           END SELECT
@@ -3815,15 +3815,15 @@
               DO j=Jstr,Jend
                 DO i=Istr,Iend
 # ifdef WRF_TIMEAVG
-                  Fval=grid%psfc_mean(i,j)*                             &
-     &                 EXP((9.81_dp*grid%ht(i,j))/                      &
-     &                     (287.0_dp*grid%t2_mean(i,j)*                 &
-     &                     (1.0_dp+0.61_dp*grid%q2_mean(i,j))))
+                  Fval=REAL(grid%psfc_mean(i,j),dp)*                    &
+     &                 EXP((9.81_dp*REAL(grid%ht(i,j),dp))/             &
+     &                     (287.0_dp*REAL(grid%t2_mean(i,j),dp)*        &
+     &                     (1.0_dp+0.61_dp*REAL(grid%q2_mean(i,j),dp))))
 # else
-                  Fval=grid%psfc(i,j)*                                  &
-     &                 EXP((9.81_dp*grid%ht(i,j))/                      &
-     &                     (287.0_dp*grid%t2(i,j)*                      &
-     &                     (1.0_dp+0.61_dp*grid%q2(i,j))))
+                  Fval=REAL(grid%psfc(i,j),dp)*                         &
+     &                 EXP((9.81_dp*REAL(grid%ht(i,j),dp))/             &
+     &                     (287.0_dp*REAL(grid%t2(i,j),dp)*             &
+     &                     (1.0_dp+0.61_dp*REAL(grid%q2(i,j),dp))))
 # endif
                   MyFmin(1)=MIN(MyFmin(1),Fval)
                   MyFmax(1)=MAX(MyFmax(1),Fval)
@@ -3839,9 +3839,9 @@
               DO j=Jstr,Jend
                 DO i=Istr,Iend
 # ifdef WRF_TIMEAVG
-                  Fval=grid%t2_mean(i,j)
+                  Fval=REAL(grid%t2_mean(i,j),dp)
 # else
-                  Fval=grid%t2(i,j)
+                  Fval=REAL(grid%t2(i,j),dp)
 # endif
                   MyFmin(1)=MIN(MyFmin(1),Fval)
                   MyFmax(1)=MAX(MyFmax(1),Fval)
@@ -3861,17 +3861,19 @@
               DO j=Jstr,Jend
                 DO i=Istr,Iend
 # ifdef WRF_TIMEAVG
-                  cff1=grid%psfc_mean(i,j)/                             &
+                  cff1=REAL(grid%psfc_mean(i,j),dp)/                    &
      &                 (EXP((9.81_dp*2.0_dp)/                           &
-     &                      (287.0_dp*grid%t2_mean(i,j))))
-                  Fval=grid%q2_mean(i,j)*cff1/                          &
-     &                 (grid%q2_mean(i,j)*(1.0_dp-0.622_dp)+0.622_dp)
+     &                      (287.0_dp*REAL(grid%t2_mean(i,j),dp))))
+                  Fval=REAL(grid%q2_mean(i,j),dp)*cff1/                 &
+     &                 (REAL(grid%q2_mean(i,j),dp)*                     &
+     &                  (1.0_dp-0.622_dp)+0.622_dp)
 # else
-                  cff1=grid%psfc(i,j)/                                  &
+                  cff1=REAL(grid%psfc(i,j),dp)/                         &
      &                 (EXP((9.81_dp*2.0_dp)/                           &
-     &                      (287.0_dp*grid%t2(i,j))))
-                  Fval=grid%q2(i,j)*cff1/                               &
-     &                 (grid%q2(i,j)*(1.0_dp-0.622_dp)+0.622_dp)
+     &                      (287.0_dp*REAL(grid%t2(i,j),dp))))
+                  Fval=REAL(grid%q2(i,j),dp)*cff1/                      &
+     &                 (REAL(grid%q2(i,j),dp)*                          &
+     &                  (1.0_dp-0.622_dp)+0.622_dp)
 # endif
                   MyFmin(1)=MIN(MyFmin(1),Fval)
                   MyFmax(1)=MAX(MyFmax(1),Fval)
@@ -3890,23 +3892,29 @@
               DO j=Jstr,Jend
                 DO i=Istr,Iend
 # ifdef WRF_TIMEAVG
-                  cff1=grid%psfc_mean(i,j)/                             &
+                  cff1=REAL(grid%psfc_mean(i,j),dp)/                    &
      &                 (EXP((9.81_dp*2.0_dp)/                           &
-     &                      (287.0_dp*grid%t2_mean(i,j))))
-                  cff2=grid%q2_mean(i,j)*cff1/                          &
-     &                 (grid%q2_mean(i,j)*(1.0_dp-0.622_dp)+0.622_dp)
+     &                      (287.0_dp*REAL(grid%t2_mean(i,j),dp))))
+                  cff2=REAL(grid%q2_mean(i,j),dp)*cff1/                 &
+     &                 (REAL(grid%q2_mean(i,j),dp)*                     &
+     &                  (1.0_dp-0.622_dp)+0.622_dp)
                   cff3=6.112_dp*                                        &
-     &                 EXP((17.67_dp*(grid%t2_mean(i,j)-273.15_dp))/    &
-     &                     ((grid%t2_mean(i,j)-273.15_dp)+243.5_dp))
+     &                 EXP((17.67_dp*(REAL(grid%t2_mean(i,j),dp)-       &
+     &                                273.15_dp))/                      &
+     &                     ((REAL(grid%t2_mean(i,j),dp)-273.15_dp)+     &
+     &                      243.5_dp))
 # else
-                  cff1=grid%psfc(i,j)/                                  &
+                  cff1=REAL(grid%psfc(i,j),dp)/                         &
      &                 (EXP((9.81_dp*2.0_dp)/                           &
-     &                      (287.0_dp*grid%t2(i,j))))
-                  cff2=grid%q2(i,j)*cff1/                               &
-     &                 (grid%q2(i,j)*(1.0_dp-0.622_dp)+0.622_dp)
+     &                      (287.0_dp*REAL(grid%t2(i,j),dp))))
+                  cff2=REAL(grid%q2(i,j),dp)*cff1/                      &
+     &                 (REAL(grid%q2(i,j),dp)*                          &
+     &                  (1.0_dp-0.622_dp)+0.622_dp)
                   cff3=6.112_dp*                                        &
-     &                 EXP((17.67_dp*(grid%t2(i,j)-273.15_dp))/         &
-     &                     ((grid%t2(i,j)-273.15_dp)+243.5_dp))
+     &                 EXP((17.67_dp*(REAL(grid%t2(i,j),dp)-            &
+     &                                273.15_dp))/                      &
+     &                     ((REAL(grid%t2(i,j),dp)-273.15_dp)+          &
+     &                      243.5_dp))
 # endif
                   Fval=cff2/cff3
                   MyFmin(1)=MIN(MyFmin(1),Fval)
@@ -3961,15 +3969,19 @@
               DO j=Jstr,Jend
                 DO i=Istr,Iend
 # ifdef WRF_TIMEAVG
-                  Fval=(grid%swdnb_mean(i,j)-grid%swupb_mean(i,j))+     &
-     &                 (grid%glw_mean(i,j)-grid%lwupb_mean(i,j))-       &
-     &                 grid%lh_mean (i,j)-                              &
-     &                 grid%hfx_mean(i,j)
+                  Fval=(REAL(grid%swdnb_mean(i,j),dp)-                  &
+                        REAL(grid%swupb_mean(i,j),dp))+                 &
+     &                 (REAL(grid%glw_mean(i,j),dp)-                    &
+     &                  REAL(grid%lwupb_mean(i,j),dp))-                 &
+     &                 REAL(grid%lh_mean (i,j),dp)-                     &
+     &                 REAL(grid%hfx_mean(i,j),dp)
 # else
-                  Fval=(grid%swdnb(i,j)-grid%swupb(i,j))+               &
-     &                 (grid%glw(i,j)-grid%lwupb(i,j))-                 &
-     &                 grid%lh (i,j)-                                   &
-     &                 grid%hfx(i,j)
+                  Fval=(REAL(grid%swdnb(i,j),dp)-                       &
+     &                  REAL(grid%swupb(i,j),dp))+                      &
+     &                 (REAL(grid%glw(i,j),dp)-                         &
+     &                  REAL(grid%lwupb(i,j),dp))-                      &
+     &                 REAL(grid%lh (i,j),dp)-                          &
+     &                 REAL(grid%hfx(i,j),dp)
 # endif
                   MyFmin(1)=MIN(MyFmin(1),Fval)
                   MyFmax(1)=MAX(MyFmax(1),Fval)
@@ -3986,9 +3998,11 @@
               DO j=Jstr,Jend
                 DO i=Istr,Iend
 # ifdef WRF_TIMEAVG
-                  Fval=grid%glw_mean(i,j)-grid%lwupb_mean(i,j)
+                  Fval=REAL(grid%glw_mean(i,j),dp)-                     &
+     &                 REAL(grid%lwupb_mean(i,j),dp)
 # else
-                  Fval=grid%glw(i,j)-grid%lwupb(i,j)
+                  Fval=REAL(grid%glw(i,j),dp)-                          &
+     &                 REAL(grid%lwupb(i,j),dp)
 # endif
                   MyFmin(1)=MIN(MyFmin(1),Fval)
                   MyFmax(1)=MAX(MyFmax(1),Fval)
@@ -4004,9 +4018,9 @@
               DO j=Jstr,Jend
                 DO i=Istr,Iend
 # ifdef WRF_TIMEAVG
-                  Fval=grid%glw_mean(i,j)
+                  Fval=REAL(grid%glw_mean(i,j),dp)
 # else
-                  Fval=grid%glw(i,j)
+                  Fval=REAL(grid%glw(i,j),dp)
 # endif
                   MyFmin(1)=MIN(MyFmin(1),Fval)
                   MyFmax(1)=MAX(MyFmax(1),Fval)
@@ -4023,9 +4037,11 @@
               DO j=Jstr,Jend
                 DO i=Istr,Iend
 # ifdef WRF_TIMEAVG
-                  Fval=grid%swdnb_mean(i,j)-grid%swupb_mean(i,j)
+                  Fval=REAL(grid%swdnb_mean(i,j),dp)-                   &
+     &                 REAL(grid%swupb_mean(i,j),dp)
 # else
-                  Fval=grid%swdnb(i,j)-grid%swupb(i,j)
+                  Fval=REAL(grid%swdnb(i,j),dp)-                        &
+     &                 REAL(grid%swupb(i,j),dp)
 # endif
                   MyFmin(1)=MIN(MyFmin(1),Fval)
                   MyFmax(1)=MAX(MyFmax(1),Fval)
@@ -4041,11 +4057,10 @@
               DO j=Jstr,Jend
                 DO i=Istr,Iend
 # ifdef WRF_TIMEAVG
-                  Fval=grid%swdnb_mean(i,j)
+                  Fval=REAL(grid%swdnb_mean(i,j),dp)
 # else
-                  Fval=grid%swdnb(i,j)
+                  Fval=REAL(grid%swdnb(i,j),dp)
 # endif
-                  Fval=grid%swdown(i,j)
                   MyFmin(1)=MIN(MyFmin(1),Fval)
                   MyFmax(1)=MAX(MyFmax(1),Fval)
                   ptr2d(i,j)=Fval
@@ -4058,16 +4073,16 @@
               MyFmin(1)= MISSING_dp
               MyFmax(1)=-MISSING_dp
 # ifndef BULK_FLUXES
-              scale=-1.0_r8           ! upward positive flux, flip sign
+              scale=-1.0_dp           ! upward positive flux, flip sign
 # else
-              scale=1.0_r8
+              scale=1.0_dp
 # endif
               DO j=Jstr,Jend
                 DO i=Istr,Iend
 # ifdef WRF_TIMEAVG
-                  Fval=scale*grid%lh_mean(i,j)
+                  Fval=scale*REAL(grid%lh_mean(i,j),dp)
 # else
-                  Fval=scale*grid%lh(i,j)
+                  Fval=scale*REAL(grid%lh(i,j),dp)
 # endif
                   MyFmin(1)=MIN(MyFmin(1),Fval)
                   MyFmax(1)=MAX(MyFmax(1),Fval)
@@ -4081,16 +4096,16 @@
               MyFmin(1)= MISSING_dp
               MyFmax(1)=-MISSING_dp
 # ifndef BULK_FLUXES
-              scale=-1.0_r8           ! upward positive flux, flip sign
+              scale=-1.0_dp           ! upward positive flux, flip sign
 # else
-              scale=1.0_r8
+              scale=1.0_dp
 # endif
               DO j=Jstr,Jend
                 DO i=Istr,Iend
 # ifdef WRF_TIMEAVG
-                  Fval=scale*grid%hfx_mean(i,j)
+                  Fval=scale*REAL(grid%hfx_mean(i,j),dp)
 # else
-                  Fval=scale*grid%hfx(i,j)
+                  Fval=scale*REAL(grid%hfx(i,j),dp)
 # endif
                   MyFmin(1)=MIN(MyFmin(1),Fval)
                   MyFmax(1)=MAX(MyFmax(1),Fval)
@@ -4105,8 +4120,9 @@
               MyFmax(1)=-MISSING_dp
               DO j=Jstr,Jend
                 DO i=Istr,Iend
-                  Fval=grid%qfx(i,j)-                                   &
-     &                 (grid%raincv(i,j)+grid%rainncv(i,j))/grid%dt
+                  Fval=REAL(grid%qfx(i,j),dp)-                          &
+     &                 (REAL(grid%raincv(i,j),dp)+                      &
+     &                  REAL(grid%rainncv(i,j),dp))/REAL(grid%dt,dp)
                   MyFmin(1)=MIN(MyFmin(1),Fval)
                   MyFmax(1)=MAX(MyFmax(1),Fval)
                   ptr2d(i,j)=Fval
@@ -4120,7 +4136,8 @@
               MyFmax(1)=-MISSING_dp
               DO j=Jstr,Jend
                 DO i=Istr,Iend
-                  Fval=(grid%raincv(i,j)+grid%rainncv(i,j))/grid%dt
+                  Fval=(REAL(grid%raincv(i,j),dp)+                      &
+     &                  REAL(grid%rainncv(i,j),dp))/REAL(grid%dt,dp)
                   MyFmin(1)=MIN(MyFmin(1),Fval)
                   MyFmax(1)=MAX(MyFmax(1),Fval)
                   ptr2d(i,j)=Fval
@@ -4135,7 +4152,7 @@
               MyFmax(1)=-MISSING_dp
               DO j=Jstr,Jend
                 DO i=Istr,Iend
-                  Fval=grid%qfx(i,j)
+                  Fval=REAL(grid%qfx(i,j),dp)
                   MyFmin(1)=MIN(MyFmin(1),Fval)
                   MyFmax(1)=MAX(MyFmax(1),Fval)
                   ptr2d(i,j)=Fval
@@ -4149,7 +4166,7 @@
               MyFmax(1)=-MISSING_dp
               DO j=Jstr,Jend
                 DO i=Istr,Iend
-                  Fval=grid%cldfra(i,1,j)
+                  Fval=REAL(grid%cldfra(i,1,j),dp)
                   MyFmin(1)=MIN(MyFmin(1),Fval)
                   MyFmax(1)=MAX(MyFmax(1),Fval)
                   ptr2d(i,j)=Fval
@@ -4167,18 +4184,22 @@
               MyFmax(1)=-MISSING_dp
               DO j=Jstr,Jend
                 DO i=Istr,Iend
-                  cff1=1.0_dp/(grid%alt(i,1,j)+eps)
-                  cff2=2.0_dp/                                          &
-     &                 (SQRT((grid%u_2(i  ,1,j  )+                      &
-     &                        grid%u_2(i+1,1,j  ))**2+                  &
-     &                       (grid%v_2(i  ,1,j  )+                      &
-     &                        grid%v_2(i  ,1,j+1))**2)+                 &
+                  cff1=1.0_dp/(REAL(grid%alt(i,1,j),dp)+eps)
+                  cff2=1.0_dp/                                          &
+     &                 (SQRT((0.5_dp*                                   &
+     &                        (REAL(grid%u_2(i  ,1,j  ),dp)+            &
+     &                         REAL(grid%u_2(i+1,1,j  ),dp)))**2+       &
+     &                       (0.5_dp*                                   &
+     &                        (REAL(grid%v_2(i  ,1,j  ),dp)+            &
+     &                         REAL(grid%v_2(i  ,1,j+1),dp)))**2)+      &
      &                  eps)
-                  cff3=0.5_dp*((grid%u_2(i  ,1,j  )+                    &
-     &                          grid%u_2(i+1,1,j  ))*grid%cosa(i,j)-    &
-     &                         (grid%v_2(i  ,1,j  )+                    &
-     &                          grid%v_2(i  ,1,j+1))*grid%sina(i,j))
-                  Fval=cff1*cff2*(grid%ust(i,j)**2)*cff3
+                  cff3=0.5_dp*((REAL(grid%u_2(i  ,1,j  ),dp)+           &
+     &                          REAL(grid%u_2(i+1,1,j  ),dp))*          &
+     &                         REAL(grid%cosa(i,j),dp)-                 &
+     &                         (REAL(grid%v_2(i  ,1,j  ),dp)+           &
+     &                          REAL(grid%v_2(i  ,1,j+1),dp))*          &
+     &                         REAL(grid%sina(i,j),dp))
+                  Fval=cff1*cff2*(REAL(grid%ust(i,j),dp)**2)*cff3
                   MyFmin(1)=MIN(MyFmin(1),Fval)
                   MyFmax(1)=MAX(MyFmax(1),Fval)
                   ptr2d(i,j)=Fval
@@ -4192,18 +4213,76 @@
               MyFmax(1)=-MISSING_dp
               DO j=Jstr,Jend
                 DO i=Istr,Iend
-                  cff1=1.0_dp/(grid%alt(i,1,j)+eps)
-                  cff2=2.0_dp/                                          &
-     &                 (SQRT((grid%u_2(i  ,1,j)+                        &
-     &                        grid%u_2(i+1,1,j))**2+                    &
-     &                       (grid%v_2(i,1,j  )+                        &
-     &                        grid%v_2(i,1,j+1))**2)+                   &
+                  cff1=1.0_dp/(REAL(grid%alt(i,1,j),dp)+eps)
+                  cff2=1.0_dp/                                          &
+     &                 (SQRT((0.5_dp*                                   &
+     &                        (REAL(grid%u_2(i  ,1,j),dp)+              &
+     &                         REAL(grid%u_2(i+1,1,j),dp)))**2+         &
+     &                       (0.5_dp*                                   &
+     &                        (REAL(grid%v_2(i,1,j  ),dp)+              &
+     &                         REAL(grid%v_2(i,1,j+1),dp)))**2)+        &
      &                  eps)
-                  cff3=0.5_dp*((grid%v_2(i,1,j  )+                      &
-     &                          grid%v_2(i,1,j+1))*grid%cosa(i,j)+      &
-     &                         (grid%u_2(i  ,1,j)+                      &
-     &                          grid%u_2(i+1,1,j))*grid%sina(i,j))
-                  Fval=cff1*cff2*(grid%ust(i,j)**2)*cff3
+                  cff3=0.5_dp*((REAL(grid%v_2(i,1,j  ),dp)+             &
+     &                          REAL(grid%v_2(i,1,j+1),dp))*            &
+     &                         REAL(grid%cosa(i,j),dp)+                 &
+     &                         (REAL(grid%u_2(i  ,1,j),dp)+             &
+     &                          REAL(grid%u_2(i+1,1,j),dp))*            &
+     &                         REAL(grid%sina(i,j),dp))
+                  Fval=cff1*cff2*(REAL(grid%ust(i,j),dp)**2)*cff3
+                  MyFmin(1)=MIN(MyFmin(1),Fval)
+                  MyFmax(1)=MAX(MyFmax(1),Fval)
+                  ptr2d(i,j)=Fval
+                END DO
+              END DO
+!
+!  Surface air density (km m-3) at grid center.
+!
+            CASE ('RhoAir')
+              MyFmin(1)= MISSING_dp
+              MyFmax(1)=-MISSING_dp
+              DO j=Jstr,Jend
+                DO i=Istr,Iend
+                  Fval=1.0_dp/(REAL(grid%alt(i,1,j),dp)+eps)
+                  MyFmin(1)=MIN(MyFmin(1),Fval)
+                  MyFmax(1)=MAX(MyFmax(1),Fval)
+                  ptr2d(i,j)=Fval
+                END DO
+              END DO
+!
+!  Eastward wind component (m s-1) at surface boundary layer (model
+!  level 2) rotated to geographical EAST at grid center (RHO-center).
+!
+            CASE ('Uwind_sbl', 'u_2')
+              MyFmin(1)= MISSING_dp
+              MyFmax(1)=-MISSING_dp
+              DO j=Jstr,Jend
+                DO i=Istr,Iend
+                  Fval=0.5_dp*((REAL(grid%u_2(i  ,1,j  ),dp)+           &
+     &                          REAL(grid%u_2(i+1,1,j  ),dp))*          &
+     &                         REAL(grid%cosa(i,j),dp)-                 &
+     &                         (REAL(grid%v_2(i  ,1,j  ),dp)+           &
+     &                          REAL(grid%v_2(i  ,1,j+1),dp))*          &
+     &                         REAL(grid%sina(i,j),dp))
+                  MyFmin(1)=MIN(MyFmin(1),Fval)
+                  MyFmax(1)=MAX(MyFmax(1),Fval)
+                  ptr2d(i,j)=Fval
+                END DO
+              END DO
+!
+!  Northward wind component (m s-1) at surface boundary layer (model
+!  level 2) rotated to geographical EAST at grid center (RHO-center).
+!
+            CASE ('Vwind_sbl', 'v_2')
+              MyFmin(1)= MISSING_dp
+              MyFmax(1)=-MISSING_dp
+              DO j=Jstr,Jend
+                DO i=Istr,Iend
+                  Fval=0.5_dp*((REAL(grid%v_2(i,1,j  ),dp)+             &
+     &                          REAL(grid%v_2(i,1,j+1),dp))*            &
+     &                         REAL(grid%cosa(i,j),dp)+                 &
+     &                         (REAL(grid%u_2(i  ,1,j),dp)+             &
+     &                          REAL(grid%u_2(i+1,1,j),dp))*            &
+     &                         REAL(grid%sina(i,j),dp))
                   MyFmin(1)=MIN(MyFmin(1),Fval)
                   MyFmax(1)=MAX(MyFmax(1),Fval)
                   ptr2d(i,j)=Fval
@@ -4211,7 +4290,7 @@
               END DO
 !
 !  Surface (10m) eastward wind component (m s-1) rotated to
-!  geographical EAST and NORTH component.
+!  geographical EAST.
 !
             CASE ('Uwind', 'u10', 'wndu')
               MyFmin(1)= MISSING_dp
@@ -4219,11 +4298,15 @@
               DO j=Jstr,Jend
                 DO i=Istr,Iend
 # ifdef WRF_TIMEAVG
-                  Fval=grid%u10_mean(i,j)*grid%cosa(i,j)-               &
-     &                 grid%v10_mean(i,j)*grid%sina(i,j)
+                  Fval=REAL(grid%u10_mean(i,j),dp)*                     &
+     &                 REAL(grid%cosa(i,j),dp)-                         &
+     &                 REAL(grid%v10_mean(i,j),dp)*                     &
+     &                 REAL(grid%sina(i,j),dp)
 # else
-                  Fval=grid%u10(i,j)*grid%cosa(i,j)-                    &
-     &                 grid%v10(i,j)*grid%sina(i,j)
+                  Fval=REAL(grid%u10(i,j),dp)*                          &
+     &                 REAL(grid%cosa(i,j),dp)-                         &
+     &                 REAL(grid%v10(i,j),dp)*                          &
+     &                 REAL(grid%sina(i,j),dp)
 # endif
                   MyFmin(1)=MIN(MyFmin(1),Fval)
                   MyFmax(1)=MAX(MyFmax(1),Fval)
@@ -4232,7 +4315,7 @@
               END DO
 !
 !  Surface (10m) northward wind component (m s-1) rotated to
-!  geographical EAST and NORTH component.
+!  geographical NORTH.
 !
             CASE ('Vwind', 'v10', 'wndv')
               MyFmin(1)= MISSING_dp
@@ -4240,12 +4323,31 @@
               DO j=Jstr,Jend
                 DO i=Istr,Iend
 # ifdef WRF_TIMEAVG
-                  Fval=grid%v10_mean(i,j)*grid%cosa(i,j)+               &
-     &                 grid%u10_mean(i,j)*grid%sina(i,j)
+                  Fval=REAL(grid%v10_mean(i,j),dp)*                     &
+     &                 REAL(grid%cosa(i,j),dp)+                         &
+     &                 REAL(grid%u10_mean(i,j),dp)*                     &
+     &                 REAL(grid%sina(i,j),dp)
 # else
-                  Fval=grid%v10(i,j)*grid%cosa(i,j)+                    &
-     &                 grid%u10(i,j)*grid%sina(i,j)
+                  Fval=REAL(grid%v10(i,j),dp)*                          &
+     &                 REAL(grid%cosa(i,j),dp)+                         &
+     &                 REAL(grid%u10(i,j),dp)*                          &
+     &                 REAL(grid%sina(i,j),dp)
 # endif
+                  MyFmin(1)=MIN(MyFmin(1),Fval)
+                  MyFmax(1)=MAX(MyFmax(1),Fval)
+                  ptr2d(i,j)=Fval
+                END DO
+              END DO
+!
+!  Surface frictional wind magnitude (m s-1) from similarity theory
+!  at grid center.
+!
+            CASE ('Wstar')
+              MyFmin(1)= MISSING_dp
+              MyFmax(1)=-MISSING_dp
+              DO j=Jstr,Jend
+                DO i=Istr,Iend
+                  Fval=REAL(grid%ust(i,j),dp)
                   MyFmin(1)=MIN(MyFmin(1),Fval)
                   MyFmax(1)=MAX(MyFmax(1),Fval)
                   ptr2d(i,j)=Fval
