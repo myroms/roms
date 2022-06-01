@@ -1,7 +1,7 @@
 # ROMS Coupling ESMF/NUOPC System: Import/Export Metadata Dictionary
 #
 #git $Id$
-#svn $Id: coupling_esmf_wrf.yaml 1126 2022-05-13 03:17:28Z arango $
+#svn $Id: coupling_esmf_wrf.yaml 1130 2022-06-01 20:41:14Z arango $
 #========================================================== Hernan G. Arango ==#
 #  Copyright (c) 2002-2022 The ROMS/TOMS Group                                 #
 #    Licensed under a MIT/X style license                                      #
@@ -261,8 +261,53 @@ metadata:
     regrid_method:       bilinear
     extrapolate_method:  none
 
-  - standard_name:       surface_eastward_wind
-    long_name:           surface eastward wind
+  - standard_name:       surface_air_density
+    long_name:           surface air density
+    short_name:          RhoAir
+    data_variables:      [rho, time]
+    source_units:        kg m-3
+    destination_units:   kg m-3
+    source_grid:         cell_center
+    destination_grid:    cell_center
+    add_offset:          0.0d0
+    scale:               1.0d0
+    debug_write:         false
+    connected_to:        *ATM                                   # 1/alt
+    regrid_method:       bilinear
+    extrapolate_method:  none
+
+  - standard_name:       surface_boundary_layer_eastward_wind
+    long_name:           surface boundary layer eastward wind
+    short_name:          Uwind_sbl
+    data_variables:      [uwind_sbl, time]
+    source_units:        m s-1
+    destination_units:   m s-1
+    source_grid:         cell_center
+    destination_grid:    cell_center
+    add_offset:          0.0d0
+    scale:               1.0d0
+    debug_write:         false
+    connected_to:        *ATM                                   # u_2
+    regrid_method:       bilinear
+    extrapolate_method:  none
+
+  - standard_name:       surface_boundary_layer_northward_wind
+    long_name:           surface boundary layer northward wind
+    short_name:          Vwind_sbl
+    data_variables:      [vwind_sbl, time]
+    source_units:        m s-1
+    destination_units:   m s-1
+    source_grid:         cell_center
+    destination_grid:    cell_center
+    add_offset:          0.0d0
+    scale:               1.0d0
+    debug_write:         false
+    connected_to:        *ATM                                   # v_2
+    regrid_method:       bilinear
+    extrapolate_method:  none
+
+  - standard_name:       eastward_wind_at_10m
+    long_name:           eastward wind at 10m
     short_name:          Uwind
     data_variables:      [uwind, time]
     source_units:        m s-1
@@ -276,8 +321,8 @@ metadata:
     regrid_method:       bilinear
     extrapolate_method:  none
 
-  - standard_name:       surface_northward_wind
-    long_name:           surface northward wind
+  - standard_name:       northward_wind_at_10m
+    long_name:           northward wind at 10m
     short_name:          Vwind
     data_variables:      [vwind, time]
     source_units:        m s-1
@@ -288,6 +333,21 @@ metadata:
     scale:               1.0d0
     debug_write:         false
     connected_to:        *ATM                                   # v10
+    regrid_method:       bilinear
+    extrapolate_method:  none
+
+  - standard_name:       frictional_wind_magnitude
+    long_name:           frictional wind magnitude
+    short_name:          Wstar
+    data_variables:      [ustar, time]
+    source_units:        m s-1
+    destination_units:   m s-1
+    source_grid:         cell_center
+    destination_grid:    cell_center
+    add_offset:          0.0d0
+    scale:               1.0d0
+    debug_write:         false
+    connected_to:        *ATM                                   # ust
     regrid_method:       bilinear
     extrapolate_method:  none
 

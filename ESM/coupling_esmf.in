@@ -2,7 +2,7 @@
 ! Multiple model coupling parameters: ESMF/NUOPC Library
 !
 !git $Id$
-!svn $Id: coupling_esmf.in 1099 2022-01-06 21:01:01Z arango $
+!svn $Id: coupling_esmf.in 1130 2022-06-01 20:41:14Z arango $
 !========================================================= Hernan G. Arango ===
 !  Copyright (c) 2002-2022 The ROMS/TOMS Group                                !
 !    Licensed under a MIT/X style license                                     !
@@ -241,6 +241,7 @@ WeightsFile(atmos) =  meld_weights_atm.nc
 ! Pair        atmos   roms, cice         surface air pressure
 ! Pmsl        atmos   roms               mean sea level pressure
 ! Qair        atmos   roms               surface relative humidity
+! RhoAir      atmos   roms               surface air density
 ! SWrad       atmos   roms               shortwave radiation flux
 ! SWrad_daily atmos   roms               daily averaged shortwave radiation flux
 ! LWrad       atmos   roms               surface net longwave radiation flux
@@ -248,8 +249,11 @@ WeightsFile(atmos) =  meld_weights_atm.nc
 ! rain        atmos   roms               rain fall rate
 ! Uwind       atmos   roms, cice, waves  surface U-wind component
 ! Vwind       atmos   roms, cice, waves  surface V-wind component
+! Uwind_sbl   atmos   roms               U-wind component at surface boundary layer
+! Vwind_sbl   atmos   roms               V-wind component at surface boundary layer
 ! Ustr        atmos   roms, cice         surface U-momentum stress
 ! Vstr        atmos   roms, cice         surface V-momentum stress
+! Wstar       atmos   roms               turbulent frictional wind magnitude
 !
 ! zlvl        atmos   cice               atmspheric height lowest level
 ! rhoa        atmos   cice               surface air density
