@@ -1,5 +1,5 @@
 # git $Id$
-# svn $Id: Linux-ifort.mk 1120 2022-04-08 19:14:36Z arango $
+# svn $Id: Linux-ifort.mk 1132 2022-06-15 14:37:32Z arango $
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # Copyright (c) 2002-2022 The ROMS/TOMS Group                           :::
 #   Licensed under a MIT/X style license                                :::
@@ -242,6 +242,7 @@ endif
 ifdef USE_OpenMP
          CPPFLAGS += -D_OPENMP
            FFLAGS += -qopenmp -fpp
+             LIBS += -liomp5
 endif
 
 ifdef USE_MCT
@@ -259,6 +260,7 @@ ifdef USE_ESMF
                      include $(ESMF_MK_DIR)/esmf.mk
            FFLAGS += $(ESMF_F90COMPILEPATHS)
              LIBS += $(ESMF_F90LINKPATHS) $(ESMF_F90ESMFLINKLIBS)
+             LIBS += -liomp5
 endif
 
 # Use full path of compiler.

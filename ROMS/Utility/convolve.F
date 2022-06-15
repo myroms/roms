@@ -4,7 +4,7 @@
 #ifdef FOUR_DVAR
 !
 !git $Id$
-!svn $Id: convolve.F 1099 2022-01-06 21:01:01Z arango $
+!svn $Id: convolve.F 1133 2022-06-15 19:01:40Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2022 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -458,11 +458,19 @@
        !defined RPCG
       ELSE IF (model.eq.iNLM) THEN
         DO ng=1,Ngrids
-          CALL wrt_ini (ng, Rnew(ng))
+#  ifdef DISTRIBUTE
+          CALL wrt_ini (ng, MyRank, Rnew(ng))
+#  else
+          CALL wrt_ini (ng, -1, Rnew(ng))
+#  endif
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #  if defined ADJUST_STFLUX || defined ADJUST_WSTRESS || \
       defined ADJUST_BOUNDARY
-          CALL wrt_frc_AD (ng, Rold(ng), INI(ng)%Rindex)
+#   ifdef DISTRIBUTE
+          CALL wrt_frc_AD (ng, MyRank, Rold(ng), INI(ng)%Rindex)
+#   else
+          CALL wrt_frc_AD (ng, -1, Rold(ng), INI(ng)%Rindex)
+#   endif
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #  endif
         END DO
@@ -495,13 +503,12 @@
 !  later.
 !
       IF (Lposterior.and.(inner.ne.0)) THEN
-#  ifdef DISTRIBUTE
-        tile=MyRank
-#  else
-        tile=-1
-#  endif
         DO ng=1,Ngrids
-          CALL wrt_hessian (ng, tile, Rold(ng), Rold(ng))
+#  ifdef DISTRIBUTE
+          CALL wrt_hessian (ng, MyRank, Rold(ng), Rold(ng))
+#  else
+          CALL wrt_hessian (ng, -1, Rold(ng), Rold(ng))
+#  endif
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END DO
       END IF
