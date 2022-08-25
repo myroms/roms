@@ -2,7 +2,7 @@
       MODULE dateclock_mod
 !
 !git $Id$
-!svn $Id: dateclock.F 1099 2022-01-06 21:01:01Z arango $
+!svn $Id: dateclock.F 1134 2022-08-25 17:30:21Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2022 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -1118,7 +1118,7 @@
         isec=0
         yday=yearday(iyear, month, iday)
         DateNumber(1)=2440000.0_dp              ! Truncated offset
-        DateNumber(2)=DateNumber(1)*86400_dp
+        DateNumber(2)=DateNumber(1)*86400.0_dp
       END IF
 !
 !-----------------------------------------------------------------------

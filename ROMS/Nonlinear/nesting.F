@@ -1,10 +1,11 @@
 #include "cppdefs.h"
+#undef REFINE_BOUNDARY
       MODULE nesting_mod
 
 #ifdef NESTING
 !
 !git $Id$
-!svn $Id: nesting.F 1099 2022-01-06 21:01:01Z arango $
+!svn $Id: nesting.F 1134 2022-08-25 17:30:21Z arango $
 !=======================================================================
 !  Copyright (c) 2002-2022 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license           Hernan G. Arango   !
@@ -3581,6 +3582,7 @@
      &                          GRID(dg)%on_r,                          &
      &                          GRID(rg)%pm,                            &
      &                          GRID(rg)%pn,                            &
+     &                          GRID(rg)%h,                             &
 #  ifdef MASKING
      &                          GRID(dg)%rmask_full,                    &
      &                          GRID(rg)%rmask,                         &
@@ -3598,6 +3600,7 @@
      &                          GRID(dg)%on_r,                          &
      &                          GRID(rg)%pm,                            &
      &                          GRID(rg)%pn,                            &
+     &                          GRID(rg)%h,                             &
 #  ifdef MASKING
      &                          GRID(dg)%rmask,                         &
      &                          GRID(rg)%rmask,                         &
@@ -3620,6 +3623,7 @@
      &                          GRID(dg)%on_u,                          &
      &                          GRID(rg)%pm,                            &
      &                          GRID(rg)%pn,                            &
+     &                          GRID(rg)%h,                             &
 # ifdef MASKING
      &                          GRID(dg)%umask_full,                    &
      &                          GRID(rg)%umask_full,                    &
@@ -3643,6 +3647,7 @@
      &                          GRID(dg)%on_v,                          &
      &                          GRID(rg)%pm,                            &
      &                          GRID(rg)%pn,                            &
+     &                          GRID(rg)%h,                             &
 # ifdef MASKING
      &                          GRID(dg)%vmask_full,                    &
      &                          GRID(rg)%vmask_full,                    &
@@ -3837,7 +3842,7 @@
 # else
      &                          dxF, dyF,                               &
 # endif
-     &                          pmC, pnC,                               &
+     &                          pmC, pnC, hhC,                          &
 # ifdef MASKING
 #  ifdef DISTRIBUTE
      &                          Amsk,                                   &
@@ -3889,6 +3894,7 @@
 # endif
 !     pmC        Coarser grid, inverse X-grid spacing (1/dx) at RHO    !
 !     pnC        Coarser grid, inverse Y-grid spacing (1/dy) at RHO    !
+!     hhC        Coarser grid, bathymetry at RHO                       !
 # ifdef MASKING
 #  ifdef DISTRIBUTE
 !     Amsk       Finer grid land/sea masking (2D array)                !
@@ -3937,6 +3943,7 @@
 # ifdef ASSUMED_SHAPE
       real(r8), intent(in) :: pmC(LBiC:,LBjC:)
       real(r8), intent(in) :: pnC(LBiC:,LBjC:)
+      real(r8), intent(in) :: hhC(LBiC:,LBjC:)
 #  ifdef MASKING
       real(r8), intent(in) :: Cmsk(LBiC:,LBjC:)
 #   ifdef DISTRIBUTE
@@ -3959,6 +3966,7 @@
 # else
       real(r8), intent(in) :: pmC(LBiC:UBiC,LBjC:UBjC)
       real(r8), intent(in) :: pnC(LBiC:UBiC,LBjC:UBjC)
+      real(r8), intent(in) :: hhC(LBiC:UBiC,LBjC:UBjC)
 #  ifdef MASKING
       real(r8), intent(in) :: Cmsk(LBiC:UBiC,LBjC:UBjC)
 #   ifdef DISTRIBUTE
@@ -4147,16 +4155,18 @@
 # endif
               END DO
             END DO
-            IF (my_count.gt.0.0_r8) THEN
-              my_avg=my_sum/my_count
-            ELSE
-              IF (gtype.eq.r2dvar) THEN
-                my_avg=C1(Ic,Jc)
-              END IF
-            END IF
+            IF (my_count.gt.0.0_r8) my_avg=my_sum/my_count
 # ifdef MASKING
             my_avg=my_avg*Cmsk(Ic,Jc)
+#  ifdef WET_DRY
+            IF (gtype.eq.r2dvar) THEN
+              IF (my_avg.le.(Dcrit(ng)-hhC(Ic,Jc))) THEN
+                my_avg=Dcrit(ng)-hhC(Ic,Jc)
+              END IF
+            END IF
+#  endif
 # endif
+!
             C1(Ic,Jc)=my_avg
             IF (PRESENT(C2)) THEN
               C2(Ic,Jc)=my_avg
@@ -4164,6 +4174,7 @@
           END IF
         END DO
       END IF
+# ifdef REFINE_BOUNDARY
 !
 !-----------------------------------------------------------------------
 !  Average finer grid BOUNDARY data to coarse grid U-type and V-type
@@ -4277,7 +4288,7 @@
           END IF
         END DO
       END IF
-
+# endif
 # ifdef DISTRIBUTE
 !
 !  Deallocate work array.
@@ -4629,13 +4640,7 @@
 #  endif
                 END DO
               END DO
-              IF (my_count.gt.0.0_r8) THEN
-                my_avg=my_sum/my_count
-              ELSE
-                IF (gtype.eq.r3dvar) THEN
-!!                my_avg=C(Ic,Jc,k)                ! HGA: Why? Previous
-                END IF                             !      is uncommented
-              END IF
+              IF (my_count.gt.0.0_r8) my_avg=my_sum/my_count
 #  ifdef MASKING
               my_avg=my_avg*Cmsk(Ic,Jc)
 #  endif
@@ -4644,6 +4649,7 @@
           END DO
         END DO
       END IF
+#  ifdef REFINE_BOUNDARY
 !
 !-----------------------------------------------------------------------
 !  Average finer grid BOUNDARY data to coarse grid U-type and V-type
@@ -4765,7 +4771,7 @@
           END DO
         END DO
       END IF
-
+#  endif
 #  ifdef DISTRIBUTE
 !
 !  Deallocate work array.

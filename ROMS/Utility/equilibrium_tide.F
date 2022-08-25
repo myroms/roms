@@ -3,7 +3,7 @@
 #if defined TIDE_GENERATING_FORCES
 !
 !git $Id$
-!svn $Id: equilibrium_tide.F 1106 2022-01-26 02:36:18Z arango $
+!svn $Id: equilibrium_tide.F 1134 2022-08-25 17:30:21Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2022 The ROMS/TOMS Group           John Wilkin   !
 !    Licensed under a MIT/X style license                              !
@@ -204,7 +204,7 @@
      &                     deg2rad*(2.0_r8*lonr(i,j)+M2%chi+M2%nu))+    &
      &                 S2%Afl*Cos2Lat(i,j)*                             &
      &                 COS(S2%omega*t_time_sec+                         &
-     &                     deg2rad*(2.0+r8*lonr(i,j)+S2%chi+S2%nu))+    &
+     &                     deg2rad*(2.0_r8*lonr(i,j)+S2%chi+S2%nu))+    &
      &                 K2%Afl*Cos2Lat(i,j)*                             &
      &                 COS(K2%omega*t_time_sec+                         &
      &                     deg2rad*(2.0_r8*lonr(i,j)+K2%chi+K2%nu))
