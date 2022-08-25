@@ -2,7 +2,7 @@
       MODULE get_metadata_mod
 !
 !git $Id$
-!svn $Id: get_metadata.F 1113 2022-03-01 20:31:29Z arango $
+!svn $Id: get_metadata.F 1134 2022-08-25 17:30:21Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2022 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -358,9 +358,9 @@
      &                                  S(i)%add_offset
           WRITE (stdout,'(a,1p,e15.8)') '    scale:                ',   &
      &                                  S(i)%scale
-          WRITE (stdout,'(a,l)')        '    debug_write:          ',   &
+          WRITE (stdout,'(a,l1)')       '    debug_write:          ',   &
      &                                  S(i)%debug_write
-          WRITE (stdout,'(a,l)')        '    connected:            ',   &
+          WRITE (stdout,'(a,l1)')       '    connected:            ',   &
      &                                  S(i)%connected
           WRITE (stdout,'(a,a)')        '    connected_to:         ',   &
      &                                  TRIM(S(i)%connected_to)
@@ -765,9 +765,9 @@
      &                                  S(i)%add_offset
           WRITE (stdout,'(a,1p,e15.8)') '    scale:                ',   &
      &                                  S(i)%scale
-          WRITE (stdout,'(a,l)')        '    debug_write:          ',   &
+          WRITE (stdout,'(a,l1)')       '    debug_write:          ',   &
      &                                  S(i)%debug_write
-          WRITE (stdout,'(a,l)')        '    connected:            ',   &
+          WRITE (stdout,'(a,l1)')       '    connected:            ',   &
      &                                  S(i)%connected
           WRITE (stdout,'(a,a)')        '    connected_to:         ',   &
      &                                  TRIM(S(i)%connected_to)
@@ -1024,7 +1024,7 @@
         Ldone=.TRUE.
       END IF
 !
-  30  FORMAT (/,' IO_METADATA - Unable to create YAML object for'       &
+  30  FORMAT (/,' IO_METADATA - Unable to create YAML object for',      &
      &        ' ROMS I/O metadata file: ',/,15x,a,/,                    &
      &        15x,'Default file is located in source directory.')
   40  FORMAT (/,' IO_METADATA - Unable to open ROMS I/O metadata ',     &

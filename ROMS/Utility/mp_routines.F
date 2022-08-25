@@ -1,7 +1,7 @@
 #include "cppdefs.h"
 !
 !git $Id$
-!svn $Id: mp_routines.F 1099 2022-01-06 21:01:01Z arango $
+!svn $Id: mp_routines.F 1134 2022-08-25 17:30:21Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2022 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -55,6 +55,9 @@
 !-----------------------------------------------------------------------
 !
       USE mod_kinds
+# if defined NAGFOR
+      USE f90_unix_env
+# endif
 !
       implicit none
 !
@@ -84,10 +87,16 @@
 !-----------------------------------------------------------------------
 !
       USE mod_kinds
+#if defined NAGFOR
+      USE f90_unix_env
+#endif
 !
       implicit none
 !
-      integer :: getpid, my_getpid
+#ifndef NAGFOR
+      integer :: getpid
+#endif
+      integer :: my_getpid
 !
 !  Get ID of the calling process.
 !

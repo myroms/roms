@@ -1,7 +1,7 @@
       MODULE yaml_parser_mod
 !
 !git $Id$
-!svn $Id: yaml_parser.F 1123 2022-04-26 00:10:19Z arango $
+!svn $Id: yaml_parser.F 1134 2022-08-25 17:30:21Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2022 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -131,6 +131,8 @@
 !  YAML file dictionary tree.
 !
       TYPE, PUBLIC :: yaml_tree
+
+        logical :: IsCreated = .FALSE. ! Object creation switch
 
         integer :: Nbranches           ! total number of branches
         integer :: Npairs              ! total number of pairs
@@ -347,7 +349,7 @@
 !
 !  Create and populate YAML object.
 !
-      IF (ASSOCIATED(self%list)) CALL self%destroy ()
+      IF (self%IsCreated) CALL self%destroy ()
 !
       CALL self%create ()
       IF (yaml_Error(yaml_ErrFlag, NoErr, __LINE__, MyFile)) THEN
@@ -487,8 +489,9 @@
 !
 !  Allocate YAML key/value pair list (TYPE 'yaml_pair') object.
 !
-      IF (.not.ASSOCIATED(self%list)) THEN
+      IF (.not.self%IsCreated) THEN
         ALLOCATE ( self%list(Npairs) )
+        self%IsCreated=.TRUE.
       END IF
 !
 !-----------------------------------------------------------------------
@@ -2116,7 +2119,7 @@
 !
       IF (ALLOCATED(S)) DEALLOCATE (S)
 !
-  10  FORMAT (/,' YAML_GET_IVAR_0D - Extracted value is not a scalar,'  &
+  10  FORMAT (/,' YAML_GET_IVAR_0D - Extracted value is not a scalar,', &
      &        ' key-string: ',a,/,20x,'Nvalues = ',i0,/,20x,'File: ',a)
   20  FORMAT (/,' YAML_GET_IVAR_0D - Error while converting string to', &
      &        ' integer, key: ',a,', value = ',a,/,20x,'ErrMsg: ',a)
@@ -2199,7 +2202,7 @@
 !
       IF (ALLOCATED(S)) DEALLOCATE (S)
 !
-  10  FORMAT (/,' YAML_GET_IVAR_1D - Inconsistent number of values,'    &
+  10  FORMAT (/,' YAML_GET_IVAR_1D - Inconsistent number of values,',   &
      &        ' key-string: ',a,/,20x,'YAML size = ',i0,                &
               ', Variable size = ',i0,/,20x,'File: ',a)
   20  FORMAT (/,' YAML_GET_IVAR_1D - Error while converting string to', &
@@ -2276,7 +2279,7 @@
 !
       IF (ALLOCATED(S)) DEALLOCATE (S)
 !
-  10  FORMAT (/,' YAML_GET_LVAR_0D - Extracted value is not a scalar,'  &
+  10  FORMAT (/,' YAML_GET_LVAR_0D - Extracted value is not a scalar,', &
      &        ' key-string: ',a,/,20x,'Nvalues = ',i0,/,20x,'File: ',a)
 !
       RETURN
@@ -2353,7 +2356,7 @@
 !
       IF (ALLOCATED(S)) DEALLOCATE (S)
 !
-  10  FORMAT (/,' YAML_GET_LVAR_1D - Inconsistent number of values,'    &
+  10  FORMAT (/,' YAML_GET_LVAR_1D - Inconsistent number of values,',   &
      &        ' key-string: ',a,/,20x,'YAML size = ',i0,                &
               ', Variable size = ',i0,/,20x,'File: ',a)
 !
@@ -2435,7 +2438,7 @@
 !
       IF (ALLOCATED(S)) DEALLOCATE (S)
 !
-  10  FORMAT (/,' YAML_GET_RVAR_0D - Extracted value is not a scalar,'  &
+  10  FORMAT (/,' YAML_GET_RVAR_0D - Extracted value is not a scalar,', &
      &        ' key-string: ',a,/,20x,'Nvalues = ',i0,/,20x,'File: ',a)
   20  FORMAT (/,' YAML_GET_RVAR_0D - Error while converting string to', &
      &        ' integer, key: ',a,', value = ',a,/,20x,'ErrMsg: ',a)
@@ -2520,7 +2523,7 @@
 !
       IF (ALLOCATED(S)) DEALLOCATE (S)
 !
-  10  FORMAT (/,' YAML_GET_RVAR_1D - Inconsistent number of values,'    &
+  10  FORMAT (/,' YAML_GET_RVAR_1D - Inconsistent number of values,',   &
      &        ' key-string: ',a,/,20x,'YAML size = ',i0,                &
               ', Variable size = ',i0,/,20x,'File: ',a)
   20  FORMAT (/,' YAML_GET_RVAR_1D - Error while converting string to', &
@@ -2594,7 +2597,7 @@
 !
       IF (ALLOCATED(S)) DEALLOCATE (S)
 !
-  10  FORMAT (/,' YAML_GET_SVAR_0D - Extracted value is not a scalar,'  &
+  10  FORMAT (/,' YAML_GET_SVAR_0D - Extracted value is not a scalar,', &
      &        ' key-string: ',a,/,20x,'Nvalues = ',i0,/,20x,'File: ',a)
 !
       RETURN
@@ -2667,7 +2670,7 @@
 !
       IF (ALLOCATED(S)) DEALLOCATE (S)
 !
-  10  FORMAT (/,' YAML_GET_SVAR_1D - Inconsistent number of values,'    &
+  10  FORMAT (/,' YAML_GET_SVAR_1D - Inconsistent number of values,',   &
      &        ' key-string: ',a,/,20x,'YAML size = ',i0,                &
               ', Variable size = ',i0,/,20x,'File: ',a)
 !

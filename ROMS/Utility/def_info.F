@@ -2,7 +2,7 @@
       MODULE def_info_mod
 !
 !git $Id$
-!svn $Id: def_info.F 1122 2022-04-13 19:50:43Z arango $
+!svn $Id: def_info.F 1134 2022-08-25 17:30:21Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2022 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -3491,7 +3491,7 @@
       END IF
 !
   10  FORMAT (i3.3,'x',i3.3)
-  20  FORMAT (/,' DEF_INFO_NF90 - error while creating global'          &
+  20  FORMAT (/,' DEF_INFO_NF90 - error while creating global',         &
      &        ' attribute: ',a,/,17x,a)
   30  FORMAT (a,i2.2)
 !
@@ -6905,7 +6905,7 @@
       END IF
 !
   10  FORMAT (i3.3,'x',i3.3)
-  20  FORMAT (/,' DEF_INFO_PIO - error while creating global'           &
+  20  FORMAT (/,' DEF_INFO_PIO - error while creating global',          &
      &        ' attribute: ',a,/,16x,a)
   30  FORMAT (a,i2.2)
 !

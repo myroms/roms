@@ -4,7 +4,7 @@
 #ifndef ANA_GRID
 !
 !git $Id$
-!svn $Id: get_grid.F 1099 2022-01-06 21:01:01Z arango $
+!svn $Id: get_grid.F 1134 2022-08-25 17:30:21Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2022 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -4855,10 +4855,10 @@
 !  Read in spacially varying linear drag coefficients (m/s).
 !
       IF (KIND(GRID(ng)%rdrag).eq.8) THEN
-        pioVar_rdrag%dkind=PIO_double
+        pioVar_dragL%dkind=PIO_double
         ioDesc => ioDesc_dp_r2dvar(ng)
       ELSE
-        pioVar_rdrag%dkind=PIO_real
+        pioVar_dragL%dkind=PIO_real
         ioDesc => ioDesc_sp_r2dvar(ng)
       END IF
 !
@@ -4909,10 +4909,10 @@
 !  Read in spacially varying quadratic drag coefficients.
 !
       IF (KIND(GRID(ng)%rdrag2).eq.8) THEN
-        pioVar_rdrag2%dkind=PIO_double
+        pioVar_dragQ%dkind=PIO_double
         ioDesc => ioDesc_dp_r2dvar(ng)
       ELSE
-        pioVar_rdrag2%dkind=PIO_real
+        pioVar_dragQ%dkind=PIO_real
         ioDesc => ioDesc_sp_r2dvar(ng)
       END IF
 !

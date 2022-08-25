@@ -2,7 +2,7 @@
       MODULE checkvars_mod
 !
 !git $Id$
-!svn $Id: checkvars.F 1099 2022-01-06 21:01:01Z arango $
+!svn $Id: checkvars.F 1134 2022-08-25 17:30:21Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2022 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -69,23 +69,23 @@
 !
 !***********************************************************************
       SUBROUTINE checkvars_nf90 (ng, model, ncname, ncid, string,       &
-     &                           Nrec, Nvar,tvarnam, get_var, have_var)
+     &                           Nrec, Nvar, tvarnam, get_var, have_var)
 !***********************************************************************
 !
       USE mod_netcdf
 !
 !  Imported variable declarations.
 !
-      logical, dimension(Nvar), intent(out) :: get_var
-      logical, dimension(Nvar), intent(out) :: have_var
-!
       integer, intent(in)    :: ng, model, ncid, Nvar
       integer, intent(inout) :: Nrec
-
+!
       character (len=*), intent(in) :: ncname
       character (len=*), intent(in) :: string
 
       character (len=*), intent(inout) :: tvarnam
+!
+      logical, dimension(Nvar), intent(out) :: get_var
+      logical, dimension(Nvar), intent(out) :: have_var
 !
 !  Local variable declarations.
 !

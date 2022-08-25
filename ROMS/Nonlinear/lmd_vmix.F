@@ -3,7 +3,7 @@
 #if defined NONLINEAR && defined LMD_MIXING && defined SOLVE3D
 !
 !git $Id$
-!svn $Id: lmd_vmix.F 1099 2022-01-06 21:01:01Z arango $
+!svn $Id: lmd_vmix.F 1134 2022-08-25 17:30:21Z arango $
 !=======================================================================
 !  Copyright (c) 2002-2022 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -574,9 +574,9 @@
         IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
           DO j=Jstr,Jend
             DO itrc=1,NAT
-              Akt(Iend-1,j,k,itrc)=Akt(Iend,j,k,itrc)
+              Akt(Iend+1,j,k,itrc)=Akt(Iend,j,k,itrc)
             END DO
-            Akv(Iend-1,j,k)=Akv(Iend,j,k)
+            Akv(Iend+1,j,k)=Akv(Iend,j,k)
           END DO
 
         END IF
