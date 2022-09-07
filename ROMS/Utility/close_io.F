@@ -2,7 +2,7 @@
       MODULE close_io_mod
 !
 !git $Id$
-!svn $Id: close_io.F 1099 2022-01-06 21:01:01Z arango $
+!svn $Id: close_io.F 1135 2022-09-07 21:29:27Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2022 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -182,7 +182,7 @@
 !
 !  Local variable declarations.
 !
-      logical :: First
+      logical :: First, Lupdate
 !
       integer :: Fcount, MyError, i, ivalue, ng
 !
@@ -201,13 +201,22 @@
 !
       IF ((exit_flag.eq.5).or.(exit_flag.eq.6)) RETURN
 !
+!  If appropriate, set switch for updating biology header file global
+!  attribute in output NetCDF files.
+!
+#ifdef BIOLOGY
+      Lupdate=.TRUE.
+#else
+      Lupdate=.FALSE.
+#endif
+!
 !  Close output NetCDF files.
 !
       DO ng=1,Ngrids
-        CALL close_file (ng, iNLM, RST(ng), RST(ng)%name)
+        CALL close_file (ng, iNLM, RST(ng), RST(ng)%name, Lupdate)
 #if defined FOUR_DVAR || defined ENKF_RESTART || defined VERIFICATION
-        CALL close_file (ng, iNLM, DAI(ng), DAI(ng)%name)
-        CALL close_file (ng, iNLM, DAV(ng), DAV(ng)%name)
+        CALL close_file (ng, iNLM, DAI(ng), DAI(ng)%name, Lupdate)
+        CALL close_file (ng, iNLM, DAV(ng), DAV(ng)%name, Lupdate)
 #endif
 #if defined FORWARD_READ || defined FORWARD_WRITE
         IF (FWD(ng)%IOtype.eq.io_nf90) THEN
@@ -223,51 +232,51 @@
           END IF
 # endif
         END IF
-        CALL close_file (ng, iNLM, FWD(ng), FWD(ng)%name)
+        CALL close_file (ng, iNLM, FWD(ng), FWD(ng)%name, Lupdate)
 #endif
-        CALL close_file (ng, iNLM, HIS(ng), HIS(ng)%name)
-        CALL close_file (ng, iNLM, QCK(ng), QCK(ng)%name)
+        CALL close_file (ng, iNLM, HIS(ng), HIS(ng)%name, Lupdate)
+        CALL close_file (ng, iNLM, QCK(ng), QCK(ng)%name, Lupdate)
 #ifdef SP4DVAR
-        CALL close_file (ng, iTLM, SPT(ng), SPT(ng)%name)
-        CALL close_file (ng, iTLM, SCT(ng), SCT(ng)%name)
-        CALL close_file (ng, iADM, SPA(ng), SPA(ng)%name)
+        CALL close_file (ng, iTLM, SPT(ng), SPT(ng)%name, Lupdate)
+        CALL close_file (ng, iTLM, SCT(ng), SCT(ng)%name, Lupdate)
+        CALL close_file (ng, iADM, SPA(ng), SPA(ng)%name, Lupdate)
 #endif
 #ifdef ADJOINT
-        CALL close_file (ng, iADM, ADM(ng), ADM(ng)%name)
+        CALL close_file (ng, iADM, ADM(ng), ADM(ng)%name, Lupdate)
 #endif
 #ifdef TANGENT
-        CALL close_file (ng, iTLM, ITL(ng), ITL(ng)%name)
-        CALL close_file (ng, iTLM, TLM(ng), TLM(ng)%name)
+        CALL close_file (ng, iTLM, ITL(ng), ITL(ng)%name, Lupdate)
+        CALL close_file (ng, iTLM, TLM(ng), TLM(ng)%name, Lupdate)
 #endif
 #if defined TL_IOMS && defined FOUR_DVAR
-        CALL close_file (ng, iRPM, IRP(ng), IRP(ng)%name)
+        CALL close_file (ng, iRPM, IRP(ng), IRP(ng)%name, Lupdate)
 #endif
 #ifdef WEAK_CONSTRAINT
-        CALL close_file (ng, iTLM, TLF(ng), TLF(ng)%name)
+        CALL close_file (ng, iTLM, TLF(ng), TLF(ng)%name, Lupdate)
 #endif
 #ifdef FOUR_DVAR
-        CALL close_file (ng, iADM, HSS(ng), HSS(ng)%name)
-        CALL close_file (ng, iADM, LCZ(ng), LCZ(ng)%name)
+        CALL close_file (ng, iADM, HSS(ng), HSS(ng)%name, Lupdate)
+        CALL close_file (ng, iADM, LCZ(ng), LCZ(ng)%name, Lupdate)
 #endif
 #if defined AVERAGES    || \
    (defined AD_AVERAGES && defined ADJOINT) || \
    (defined RP_AVERAGES && defined TL_IOMS) || \
    (defined TL_AVERAGES && defined TANGENT)
-        CALL close_file (ng, iNLM, AVG(ng), AVG(ng)%name)
+        CALL close_file (ng, iNLM, AVG(ng), AVG(ng)%name, Lupdate)
 #endif
 #if defined AVERAGES  && defined AVERAGES_DETIDE && \
    (defined SSH_TIDES || defined UV_TIDES)
-        CALL close_file (ng, iNLM, HAR(ng), HAR(ng)%name)
+        CALL close_file (ng, iNLM, HAR(ng), HAR(ng)%name, Lupdate)
 #endif
 #ifdef DIAGNOSTICS
-        CALL close_file (ng, iNLM, DIA(ng), DIA(ng)%name)
+        CALL close_file (ng, iNLM, DIA(ng), DIA(ng)%name, Lupdate)
 #endif
 #ifdef FLOATS
-        CALL close_file (ng, iNLM, FLT(ng), FLT(ng)%name)
+        CALL close_file (ng, iNLM, FLT(ng), FLT(ng)%name, Lupdate)
 #endif
 #if defined WEAK_CONSTRAINT   && \
    (defined POSTERIOR_ERROR_F || defined POSTERIOR_ERROR_I)
-        CALL close_file (ng, iTLM, ERR(ng), ERR(ng)%name)
+        CALL close_file (ng, iTLM, ERR(ng), ERR(ng)%name, Lupdate)
 #endif
 !
 !  Report number of time records written.
