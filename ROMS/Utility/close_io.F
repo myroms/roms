@@ -2,7 +2,7 @@
       MODULE close_io_mod
 !
 !git $Id$
-!svn $Id: close_io.F 1135 2022-09-07 21:29:27Z arango $
+!svn $Id: close_io.F 1136 2022-09-08 15:30:03Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2022 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -273,6 +273,9 @@
 #endif
 #ifdef FLOATS
         CALL close_file (ng, iNLM, FLT(ng), FLT(ng)%name, Lupdate)
+#endif
+#ifdef STATIONS
+        CALL close_file (ng, iNLM, STA(ng), STA(ng)%name, Lupdate)
 #endif
 #if defined WEAK_CONSTRAINT   && \
    (defined POSTERIOR_ERROR_F || defined POSTERIOR_ERROR_I)
