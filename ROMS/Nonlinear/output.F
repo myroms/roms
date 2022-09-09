@@ -3,7 +3,7 @@
       SUBROUTINE output (ng)
 !
 !git $Id$
-!svn $Id: output.F 1099 2022-01-06 21:01:01Z arango $
+!svn $Id: output.F 1137 2022-09-09 20:17:21Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2022 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -81,7 +81,7 @@
 !
 !  Local variable declarations.
 !
-      logical :: Ldefine, NewFile
+      logical :: Ldefine, Lupdate, NewFile
 !
       integer :: Fcount, ifile, status, tile
 !
@@ -116,6 +116,15 @@
       IF (Lanafile) THEN
         Lanafile=.FALSE.
       END IF
+!
+!  If appropriate, set switch for updating biology header file global
+!  attribute in output NetCDF files.
+!
+#ifdef BIOLOGY
+      Lupdate=.TRUE.
+#else
+      Lupdate=.FALSE.
+#endif
 !
 !  Create output history NetCDF file or prepare existing file to
 !  append new data to it.  Also,  notice that it is possible to
@@ -173,7 +182,7 @@
             CALL mp_bcasts (ng, iNLM, HIS(ng)%name)
 # endif
             HIS(ng)%files(Fcount)=TRIM(HIS(ng)%name)
-            CALL close_file (ng, iNLM, HIS(ng), HIS(ng)%name)
+            CALL close_file (ng, iNLM, HIS(ng), HIS(ng)%name, Lupdate)
             CALL def_his (ng, NewFile)
             IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
           END IF
@@ -272,7 +281,7 @@
             CALL mp_bcasts (ng, iNLM, QCK(ng)%name)
 # endif
             QCK(ng)%files(Fcount)=TRIM(QCK(ng)%name)
-            CALL close_file (ng, iNLM, QCK(ng), QCK(ng)%name)
+            CALL close_file (ng, iNLM, QCK(ng), QCK(ng)%name, Lupdate)
             CALL def_quick (ng, NewFile)
             IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
           END IF
@@ -379,7 +388,7 @@
             CALL mp_bcasts (ng, iNLM, AVG(ng)%name)
 #  endif
             AVG(ng)%files(Fcount)=TRIM(AVG(ng)%name)
-            CALL close_file (ng, iNLM, AVG(ng), AVG(ng)%name)
+            CALL close_file (ng, iNLM, AVG(ng), AVG(ng)%name, Lupdate)
             CALL def_avg (ng, Newfile)
             IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
             LwrtAVG(ng)=.TRUE.
@@ -478,7 +487,7 @@
             CALL mp_bcasts (ng, iNLM, DIA(ng)%name)
 #  endif
             DIA(ng)%files(Fcount)=TRIM(DIA(ng)%name)
-            CALL close_file (ng, iNLM, DIA(ng), DIA(ng)%name)
+            CALL close_file (ng, iNLM, DIA(ng), DIA(ng)%name, Lupdate)
             CALL def_diags (ng, Newfile)
             IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
             LwrtDIA(ng)=.TRUE.
