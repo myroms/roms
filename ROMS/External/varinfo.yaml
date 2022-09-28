@@ -1,7 +1,7 @@
 # ROMS I/O NetCDF Metadata Dictionary
 #
 #git $Id$
-#svn $Id: varinfo.yaml 1126 2022-05-13 03:17:28Z arango $
+#svn $Id: varinfo.yaml 1139 2022-09-28 16:04:42Z arango $
 #========================================================= Hernan G. Arango ==#
 #  Copyright (c) 2002-2022 The ROMS/TOMS Group                                #
 #    Licensed under a MIT/X style license                                     #
@@ -2320,6 +2320,17 @@ metadata:
     field:          adjoint salinity                                 # according to norm
     time:           salt_time
     index_code:     idTads(isalt)
+    type:           r3dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       dye_                                             # Input/Output
+    standard_name:  mass_concentration_of_dye_
+    long_name:      dye concentration functional
+    units:          kilogram meter-3                                 # [kg/m3]
+    field:          adjoint dye_
+    time:           ocean_time
+    index_code:     idTads(inert(i))
     type:           r3dvar
     add_offset:     0.0d0
     scale:          1.0d0
