@@ -2,7 +2,7 @@
       MODULE mod_ncparam
 !
 !git $Id$
-!svn $Id: mod_ncparam.F 1122 2022-04-13 19:50:43Z arango $
+!svn $Id: mod_ncparam.F 1139 2022-09-28 16:04:42Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2022 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -1729,6 +1729,10 @@
             idVads=varid
           CASE ('idTads(itemp)')
             idTads(itemp)=varid
+# ifdef T_PASSIVE
+          CASE ('idTads(inert(i))')
+            load=.TRUE.
+# endif
 # ifdef SALINITY
           CASE ('idTads(isalt)')
             idTads(isalt)=varid
@@ -2198,6 +2202,36 @@
                 END DO
 # endif
               END IF
+
+# if defined AD_SENSITIVITY   || defined I4DVAR_ANA_SENSITIVITY || \
+     defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR      || \
+     defined SO_SEMI
+          SELECT CASE (TRIM(ADJUSTL(Vinfo(8))))
+            CASE ('idTads(inert(i))')
+              IF (NPT.gt.0) THEN
+                varid=varid-1
+                DO i=1,NPT
+                  varid=varid+1
+                  idTads(inert(i))=varid
+                  DO ng=1,Ngrids
+                    Fscale(varid,ng)=scale
+                    Iinfo(1,varid,ng)=gtype
+                  END DO
+                  WRITE (Vname(1,varid),'(a,i2.2)')                     &
+     &                  TRIM(ADJUSTL(Vinfo(1))), i
+                  WRITE (Vname(2,varid),'(a,a,i2.2)')                   &
+     &                  TRIM(ADJUSTL(Vinfo(2))), ', type ', i
+                  WRITE (Vname(3,varid),'(a)')                          &
+     &                  TRIM(ADJUSTL(Vinfo(3)))
+                  WRITE (Vname(4,varid),'(a,i2.2)')                     &
+     &                  TRIM(ADJUSTL(Vinfo(4))), i
+                  WRITE (Vname(5,varid),'(a)')                          &
+     &                  TRIM(ADJUSTL(Vinfo(5)))
+                  WRITE (Vname(6,varid),'(a,i2.2)')                     &
+     &                  TRIM(ADJUSTL(Vinfo(6))), i
+                END DO
+              END IF
+# endif
             CASE ('idTbry(iwest,inert(i))')
               IF (NPT.gt.0) THEN
                 varid=varid-1
