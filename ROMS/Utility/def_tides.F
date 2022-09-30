@@ -4,7 +4,7 @@
    (defined SSH_TIDES || defined UV_TIDES)
 !
 !git $Id$
-!svn $Id: def_tides.F 1122 2022-04-13 19:50:43Z arango $
+!svn $Id: def_tides.F 1140 2022-09-30 02:00:56Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2022 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -69,13 +69,13 @@
           CALL def_tides_pio (ng, ldef)
 # endif
         CASE DEFAULT
-          IF (Master) THEN
-            WRITE (stdout,10) HAR(ng)%IOtype
-  10        FORMAT (' DEF_TIDES - Illegal output type, io_type = ',i0)
-          END IF
+          IF (Master) WRITE (stdout,10) HAR(ng)%IOtype
           exit_flag=3
       END SELECT
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+!
+  10  FORMAT (' DEF_TIDES - Illegal output file type, io_type = ',i0,   &
+     &        /,13x,'Check KeyWord ''OUT_LIB'' in ''roms.in''.')
 !
       RETURN
       END SUBROUTINE def_tides

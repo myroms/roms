@@ -98,13 +98,13 @@
      &                         LBi, UBi, LBj, UBj)
 #endif
         CASE DEFAULT
-          IF (Master) THEN
-            WRITE (stdout,10) IOtype
-  10        FORMAT (' STATE_JOIN - Illegal output type, io_type = ',i0)
-          END IF
-          exit_flag=3
+          IF (Master) WRITE (stdout,10) IOtype
+          exit_flag=2
       END SELECT
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+!
+  10  FORMAT (' STATE_JOIN - Illegal input file type, io_type = ',i0,   &
+     &        /,14x,'Check KeyWord ''INP_LIB'' in ''roms.in''.')
 !
       RETURN
       END SUBROUTINE state_join
