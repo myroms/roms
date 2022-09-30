@@ -4,7 +4,7 @@
 #undef ENDPOINT_TRAPEZOIDAL
 !
 !git $Id$
-!svn $Id: time_corr.F 1099 2022-01-06 21:01:01Z arango $
+!svn $Id: time_corr.F 1140 2022-09-30 02:00:56Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2022 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -93,11 +93,12 @@
 # endif
         CASE DEFAULT
           IF (Master) WRITE (stdout,10) IOtype
-          exit_flag=3
+          exit_flag=2
       END SELECT
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
-  10  FORMAT (' TIME_CORR - Illegal output type, io_type = ',i0)
+  10  FORMAT (' TIME_CORR - Illegal input file type, io_type = ',i0,    &
+     &        /,13x,'Check KeyWord ''INP_LIB'' in ''roms.in''.')
 !
       RETURN
       END SUBROUTINE time_corr

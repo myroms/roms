@@ -3,7 +3,7 @@
 #if defined TL_IOMS && defined FOUR_DVAR
 !
 !git $Id$
-!svn $Id: rp_def_ini.F 1122 2022-04-13 19:50:43Z arango $
+!svn $Id: rp_def_ini.F 1140 2022-09-30 02:00:56Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2022 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -63,13 +63,13 @@
           CALL rp_def_ini_pio (ng)
 # endif
         CASE DEFAULT
-          IF (Master) THEN
-            WRITE (stdout,10) IRP(ng)%IOtype
-  10        FORMAT (' RP_DEF_INI - Illegal output type, io_type = ',i0)
-          END IF
+          IF (Master) WRITE (stdout,10) IRP(ng)%IOtype
           exit_flag=3
       END SELECT
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+!
+  10  FORMAT (' RP_DEF_INI - Illegal output type, io_type = ',i0,       &
+     &        /,14x,'Check KeyWord ''OUT_LIB'' in ''roms.in''.')
 !
       RETURN
       END SUBROUTINE rp_def_ini

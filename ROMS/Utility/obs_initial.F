@@ -3,7 +3,7 @@
 #if (defined FOUR_DVAR || defined VERIFICATION) && defined OBSERVATIONS
 !
 !git $Id$
-!svn $Id: obs_initial.F 1099 2022-01-06 21:01:01Z arango $
+!svn $Id: obs_initial.F 1140 2022-09-30 02:00:56Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2022 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -65,13 +65,13 @@
           CALL obs_initial_pio (ng, model, backward)
 # endif
         CASE DEFAULT
-          IF (Master) THEN
-            WRITE (stdout,10) OBS(ng)%IOtype
-  10        FORMAT (' OBS_INITIAL - Illegal output type, io_type = ',i0)
-          END IF
-          exit_flag=3
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+          IF (Master) WRITE (stdout,10) OBS(ng)%IOtype
+          exit_flag=2
       END SELECT
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+!
+  10  FORMAT (' OBS_INITIAL - Illegal input file type, io_type = ',i0,  &
+     &        /,15x,'Check KeyWord ''INP_LIB'' in ''roms.in''.')
 !
       RETURN
       END SUBROUTINE obs_initial

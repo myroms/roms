@@ -3,7 +3,7 @@
 #ifdef DIAGNOSTICS
 !
 !git $Id$
-!svn $Id: wrt_diags.F 1110 2022-02-27 21:37:32Z arango $
+!svn $Id: wrt_diags.F 1140 2022-09-30 02:00:56Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2022 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -82,13 +82,13 @@
      &                        LBi, UBi, LBj, UBj)
 # endif
         CASE DEFAULT
-          IF (Master) THEN
-            WRITE (stdout,10) DIA(ng)%IOtype
-  10        FORMAT (' WRT_DIAGS - Illegal output type, io_type = ',i0)
-          END IF
+          IF (Master) WRITE (stdout,10) DIA(ng)%IOtype
           exit_flag=3
       END SELECT
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+!
+  10  FORMAT (' WRT_DIAGS - Illegal output file type, io_type = ',i0,   &
+     &        /,13x,'Check KeyWord ''OUT_LIB'' in ''roms.in''.')
 !
       RETURN
       END SUBROUTINE wrt_diags

@@ -3,7 +3,7 @@
 #if (defined FOUR_DVAR || defined VERIFICATION) && defined OBSERVATIONS
 !
 !git $Id$
-!svn $Id: obs_write.F 1099 2022-01-06 21:01:01Z arango $
+!svn $Id: obs_write.F 1140 2022-09-30 02:00:56Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2022 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -208,7 +208,8 @@
 
       END IF H_OPERATOR
 !
-  10  FORMAT (' OBS_WRITE - Illegal output type, io_type = ',i0)
+  10  FORMAT (' OBS_WRITE - Illegal output file type, io_type = ',i0,   &
+     &        /,13x,'Check KeyWord ''OUT_LIB'' in ''roms.in''.')
   20  FORMAT (10x,a,t25,4(1x,i10))
   30  FORMAT (/,10x,'Total',t47,2(1x,i10),                              &
      &        /,10x,'Obs Tally',t47,2(1x,i10),/)

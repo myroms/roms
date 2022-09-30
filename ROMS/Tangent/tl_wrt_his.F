@@ -3,7 +3,7 @@
 #if defined TANGENT || defined TL_IOMS
 !
 !git $Id$
-!svn $Id: tl_wrt_his.F 1099 2022-01-06 21:01:01Z arango $
+!svn $Id: tl_wrt_his.F 1140 2022-09-30 02:00:56Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2022 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -117,7 +117,8 @@
       END SELECT
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
-  10  FORMAT (' TL_WRT_HIS - Illegal output type, io_type = ',i0)
+  10  FORMAT (' TL_WRT_HIS - Illegal output file type, io_type = ',i0,  &
+     &        /,14x,'Check KeyWord ''OUT_LIB'' in ''roms.in''.')
 !
       RETURN
       END SUBROUTINE tl_wrt_his

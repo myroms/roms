@@ -4,7 +4,7 @@
 #if defined WEAK_CONSTRAINT && defined RPCG
 !
 !git $Id$
-!svn $Id: rpcg_lanczos.F 1099 2022-01-06 21:01:01Z arango $
+!svn $Id: rpcg_lanczos.F 1140 2022-09-30 02:00:56Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2022 The ROMS/TOMS Group       Selime Gurol      !
 !    Licensed under a MIT/X style license            Andrew M. Moore   !
@@ -1458,7 +1458,8 @@
       END SELECT
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
-  10  FORMAT (' CG_WRITE_RPCG - Illegal output type, io_type = ',i0)
+  10  FORMAT (' CG_WRITE_RPCG - Illegal output file type, io_type = ',  &
+     &        i0,/,17x,'Check KeyWord ''OUT_LIB'' in ''roms.in''.')
 !
       RETURN
       END SUBROUTINE cg_write_rpcg

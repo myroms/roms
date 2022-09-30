@@ -85,13 +85,13 @@
           CALL def_state_pio (ng, model, label, Lcreate, S, Lclose)
 #endif
         CASE DEFAULT
-          IF (Master) THEN
-            WRITE (stdout,10) AVG(ng)%IOtype
-  10        FORMAT (' DEF_STATE - Illegal output type, io_type = ',i0)
-          END IF
+          IF (Master) WRITE (stdout,10) AVG(ng)%IOtype
           exit_flag=3
       END SELECT
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+!
+  10  FORMAT (' DEF_STATE - Illegal output file type, io_type = ',i0,   &
+     &        /,13x,'Check KeyWord ''OUT_LIB'' in ''roms.in''.')
 !
       RETURN
       END SUBROUTINE def_state
