@@ -1,11 +1,11 @@
 #include "cppdefs.h"
-#undef REFINE_BOUNDARY
+#define REFINE_BOUNDARY
       MODULE nesting_mod
 
 #ifdef NESTING
 !
 !git $Id$
-!svn $Id: nesting.F 1134 2022-08-25 17:30:21Z arango $
+!svn $Id: nesting.F 1146 2022-11-21 20:05:53Z arango $
 !=======================================================================
 !  Copyright (c) 2002-2022 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license           Hernan G. Arango   !
@@ -4185,7 +4185,8 @@
 !
       IF (gtype.eq.u2dvar) THEN
 !
-!  Get boundary indices of the receiver coarser grid.
+!  Get indices of coarser grid (ng) corresponding to the corners of
+!  the finer grid (dg).
 !
         Ib_west=I_left(dg)
         Ib_east=I_right(dg)
@@ -4239,7 +4240,8 @@
 !
       IF (gtype.eq.v2dvar) THEN
 !
-!  Get boundary indices of the receiver coarser grid.
+!  Get indices of coarser grid (ng) corresponding to the corners of
+!  the finer grid (dg).
 !
         Ib_west=I_left(dg)
         Ib_east=I_right(dg)
@@ -4660,7 +4662,8 @@
 !
       IF (gtype.eq.u3dvar) THEN
 !
-!  Get boundary indices of the receiver coarser grid.
+!  Get indices of coarser grid (ng) corresponding to the corners of
+!  the finer grid (dg).
 !
         Ib_west=I_left(dg)
         Ib_east=I_right(dg)
@@ -4718,7 +4721,8 @@
 !
       IF (gtype.eq.v3dvar) THEN
 !
-!  Get boundary indices of the receiver coarser grid.
+!  Get indices of coarser grid (ng) corresponding to the corners of
+!  the finer grid (dg).
 !
         Ib_west=I_left(dg)
         Ib_east=I_right(dg)
