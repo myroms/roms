@@ -3,7 +3,7 @@
       SUBROUTINE main2d (RunInterval)
 !
 !git $Id$
-!svn $Id: main2d.F 1099 2022-01-06 21:01:01Z arango $
+!svn $Id: main2d.F 1146 2022-11-21 20:05:53Z arango $
 !=======================================================================
 !  Copyright (c) 2002-2022 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -101,7 +101,7 @@
      &  __FILE__
 !
 !=======================================================================
-!  Time-step vertically integrated equations.
+!  Time-step nonlinear vertically integrated equations.
 !=======================================================================
 !
 !  Time-step the 3D kernel for the specified time interval (seconds),
@@ -118,9 +118,9 @@
 !  grid application (NestLayers = 1).
 !
         nl=0
-#ifdef NESTING
+# ifdef NESTING
         TwoWayInterval(1:Ngrids)=0.0_r8
-#endif
+# endif
 !
         NEST_LAYER : DO WHILE (DoNestLayer)
 !
@@ -143,10 +143,7 @@
 !
             DO ig=1,GridsInLayer(nl)
               ng=GridNumber(ig,nl)
-              iic(ng)=iic(ng)+1
-              time(ng)=time(ng)+dt(ng)
               tdays(ng)=time(ng)*sec2day
-              CALL time_string (time(ng), time_code(ng))
               IF (step_counter(ng).eq.Rsteps) Time_Step=.FALSE.
             END DO
 
@@ -625,13 +622,25 @@
               END IF
             END DO
 # endif
+!
+!-----------------------------------------------------------------------
+!  Advance time index and time clock.
+!-----------------------------------------------------------------------
+!
+            DO ig=1,GridsInLayer(nl)
+              ng=GridNumber(ig,nl)
+              iic(ng)=iic(ng)+1
+              time(ng)=time(ng)+dt(ng)
+              step_counter(ng)=step_counter(ng)-1
+              CALL time_string (time(ng), time_code(ng))
+            END DO
 
           END DO STEP_LOOP
 
         END DO NEST_LAYER
 
       END DO KERNEL_LOOP
-
+!
       RETURN
       END SUBROUTINE main2d
 #else
