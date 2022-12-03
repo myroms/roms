@@ -2,7 +2,7 @@
       MODULE mod_ncparam
 !
 !git $Id$
-!svn $Id: mod_ncparam.F 1146 2022-11-21 20:05:53Z arango $
+!svn $Id: mod_ncparam.F 1147 2022-12-03 16:19:17Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2022 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -2202,12 +2202,10 @@
                 END DO
 # endif
               END IF
-          END SELECT
 
 # if defined AD_SENSITIVITY   || defined I4DVAR_ANA_SENSITIVITY || \
      defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR      || \
      defined SO_SEMI
-          SELECT CASE (TRIM(ADJUSTL(Vinfo(8))))
             CASE ('idTads(inert(i))')
               IF (NPT.gt.0) THEN
                 varid=varid-1
