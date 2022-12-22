@@ -3,7 +3,7 @@
 #ifdef ADJOINT
 !
 !git $Id$
-!svn $Id: ad_def_his.F 1140 2022-09-30 02:00:56Z arango $
+!svn $Id: ad_def_his.F 1148 2022-12-22 21:09:43Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2022 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -854,6 +854,22 @@
         END IF
 #  endif
 !
+!  Define S-coordinate omega vertical velocity.
+!
+        IF (Hout(idOvel,ng)) THEN
+          Vinfo( 1)=Vname(1,idOvel)
+          WRITE (Vinfo( 2),40) TRIM(Vname(2,idOvel))
+          Vinfo( 3)='meter second-1'
+          Vinfo(14)=Vname(4,idOvel)
+          Vinfo(16)=Vname(1,idtime)
+          Vinfo(21)=Vname(6,idOvel)
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idOvel,ng),r8)
+          status=def_var(ng, iADM, ADM(ng)%ncid, ADM(ng)%Vid(idOvel),   &
+     &                   NF_FOUT, nvd4, w3dgrd, Aval, Vinfo, ncname)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        END IF
+!
 !  Define tracer type variables.
 !
         DO itrc=1,NT(ng)
@@ -1198,6 +1214,9 @@
             got_var(idSbry(isVvel))=.TRUE.
             ADM(ng)%Vid(idSbry(isVvel))=var_id(i)
 #  endif
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idOvel))) THEN
+            got_var(idOvel)=.TRUE.
+            ADM(ng)%Vid(idOvel)=var_id(i)
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idDano))) THEN
             got_var(idDano)=.TRUE.
             ADM(ng)%Vid(idDano)=var_id(i)
@@ -1328,6 +1347,12 @@
           RETURN
         END IF
 #  endif
+        IF (.not.got_var(idOvel).and.Hout(idOvel,ng)) THEN
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idOvel)),          &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
         IF (.not.got_var(idDano).and.Hout(idDano,ng)) THEN
           IF (Master) WRITE (stdout,70) TRIM(Vname(1,idDano)),          &
      &                                  TRIM(ncname)
@@ -2226,6 +2251,26 @@
         END IF
 #   endif
 !
+!  Define S-coordinate omega vertical velocity.
+!
+        IF (Hout(idOvel,ng)) THEN
+          Vinfo( 1)=Vname(1,idOvel)
+          WRITE (Vinfo( 2),40) TRIM(Vname(2,idOvel))
+          Vinfo( 3)='meter second-1'
+          Vinfo(14)=Vname(4,idOvel)
+          Vinfo(16)=Vname(1,idtime)
+          Vinfo(21)=Vname(6,idOvel)
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idOvel,ng),r8)
+          ADM(ng)%pioVar(idOvel)%dkind=PIO_FOUT
+          ADM(ng)%pioVar(idOvel)%gtype=w3dvar
+!
+          status=def_var(ng, iADM, ADM(ng)%pioFile,                     &
+     &                   ADM(ng)%pioVar(idOvel)%vd,                     &
+     &                   PIO_FOUT, nvd4, v3dgrd, Aval, Vinfo, ncname)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        END IF
+!
 !  Define tracer type variables.
 !
         DO itrc=1,NT(ng)
@@ -2640,6 +2685,11 @@
             ADM(ng)%pioVar(idSbry(isVvel))%dkind=PIO_FOUT
             ADM(ng)%pioVar(idSbry(isVvel))%gtype=v3dvar
 #   endif
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idOvel))) THEN
+            got_var(idOvel)=.TRUE.
+            ADM(ng)%pioVar(idOvel)%vd=var_desc(i)
+            ADM(ng)%pioVar(idOvel)%dkind=PIO_FOUT
+            ADM(ng)%pioVar(idOvel)%gtype=w3dvar
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idDano))) THEN
             got_var(idDano)=.TRUE.
             ADM(ng)%pioVar(idDano)%vd=var_desc(i)
@@ -2784,6 +2834,12 @@
           RETURN
         END IF
 #   endif
+        IF (.not.got_var(idOvel).and.Hout(idOvel,ng)) THEN
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idOvel)),          &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
         IF (.not.got_var(idDano).and.Hout(idDano,ng)) THEN
           IF (Master) WRITE (stdout,70) TRIM(Vname(1,idDano)),          &
      &                                  TRIM(ncname)

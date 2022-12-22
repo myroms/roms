@@ -5,7 +5,7 @@
       SUBROUTINE tides_date (ng)
 !
 !git $Id$
-!svn $Id: tides_date.F 1099 2022-01-06 21:01:01Z arango $
+!svn $Id: tides_date.F 1148 2022-12-22 21:09:43Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2022 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -79,6 +79,7 @@
       USE mod_scalars
 !
       USE dateclock_mod, ONLY : datenum, datestr
+      USE strings_mod,   ONLY : FoundError
 !
 !  Imported variables declarations.
 !

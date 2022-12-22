@@ -2,7 +2,7 @@
       MODULE mod_ocean
 !
 !git $Id$
-!svn $Id: mod_ocean.F 1099 2022-01-06 21:01:01Z arango $
+!svn $Id: mod_ocean.F 1148 2022-12-22 21:09:43Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2022 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -202,6 +202,7 @@
           real(r8), pointer :: ad_t_sol(:,:,:,:)
           real(r8), pointer :: ad_u_sol(:,:,:)
           real(r8), pointer :: ad_v_sol(:,:,:)
+          real(r8), pointer :: ad_W_sol(:,:,:)
 #  if defined NEARSHORE_MELLOR
           real(r8), pointer :: ad_rulag3d(:,:,:)
           real(r8), pointer :: ad_rvlag3d(:,:,:)
@@ -626,6 +627,9 @@
 
       allocate ( OCEAN(ng) % ad_v_sol(LBi:UBi,LBj:UBj,N(ng)) )
       Dmem(ng)=Dmem(ng)+REAL(N(ng),r8)*size2d
+
+      allocate ( OCEAN(ng) % ad_W_sol(LBi:UBi,LBj:UBj,0:N(ng)) )
+      Dmem(ng)=Dmem(ng)+REAL(N(ng)+1,r8)*size2d
 
 #  if defined NEARSHORE_MELLOR
       allocate ( OCEAN(ng) % ad_rulag3d(LBi:UBi,LBj:UBj,N(ng)) )
@@ -1155,6 +1159,9 @@
 
       IF (.not.destroy(ng, OCEAN(ng)%ad_v_sol, MyFile,                  &
      &                 __LINE__, 'OCEAN(ng)%ad_v_sol')) RETURN
+
+      IF (.not.destroy(ng, OCEAN(ng)%ad_W_sol, MyFile,                  &
+     &                 __LINE__, 'OCEAN(ng)%ad_W_sol')) RETURN
 
 #   if defined NEARSHORE_MELLOR
       IF (.not.destroy(ng, OCEAN(ng)%ad_rulag3d, MyFile,                &
@@ -1711,6 +1718,7 @@
               OCEAN(ng) % ad_rv(i,j,k,2) = IniVal
 
               OCEAN(ng) % ad_W(i,j,k) = IniVal
+              OCEAN(ng) % ad_W_sol(i,j,k) = IniVal
               OCEAN(ng) % ad_wvel(i,j,k) = IniVal
             END DO
           END DO
