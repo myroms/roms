@@ -3,7 +3,7 @@
 #ifdef ADJOINT
 !
 !git $Id$
-!svn $Id: ad_wrt_his.F 1140 2022-09-30 02:00:56Z arango $
+!svn $Id: ad_wrt_his.F 1148 2022-12-22 21:09:43Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2022 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -48,6 +48,7 @@
 #  ifdef ADJUST_BOUNDARY
       USE nf_fwrite3d_bry_mod, ONLY : nf_fwrite3d_bry
 #  endif
+      USE omega_mod,           ONLY : scale_omega
 # endif
       USE strings_mod,         ONLY : FoundError
 !
@@ -151,6 +152,10 @@
 !
       real(dp) :: scale
       real(r8) :: Tval(1)
+#ifdef SOLVE3D
+!
+      real(r8), allocatable :: Wr3d(:,:,:)
+#endif
 !
       character (len=*), parameter :: MyFile =                          &
      &  __FILE__//", ad_wrt_his_nf90"
@@ -769,6 +774,39 @@
       END IF
 #  endif
 !
+!  Write out S-coordinate omega vertical velocity (m/s).
+!
+      IF (Hout(idOvel,ng)) THEN
+        IF (.not.allocated(Wr3d)) THEN
+          allocate (Wr3d(LBi:UBi,LBj:UBj,0:N(ng)))
+          Wr3d(LBi:UBi,LBj:UBj,0:N(ng))=0.0_r8
+        END IF
+        scale=1.0_dp
+        gtype=gfactor*w3dvar
+        CALL scale_omega (ng, tile, LBi, UBi, LBj, UBj, 0, N(ng),       &
+     &                    GRID(ng) % pm,                                &
+     &                    GRID(ng) % pn,                                &
+     &                    OCEAN(ng) % ad_W_sol,                         &
+     &                    Wr3d)
+        status=nf_fwrite3d(ng, iADM, ADM(ng)%ncid,                      &
+     &                     ADM(ng)%Vid(idOvel),                         &
+     &                     ADM(ng)%Rindex, gtype,                       &
+     &                     LBi, UBi, LBj, UBj, 0, N(ng), scale,         &
+# ifdef MASKING
+     &                     GRID(ng) % rmask,                            &
+# endif
+     &                     Wr3d)
+        IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+          IF (Master) THEN
+            WRITE (stdout,10) TRIM(Vname(1,idOvel)), ADM(ng)%Rindex
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+        deallocate (Wr3d)
+      END IF
+!
 !  Write out tracer type variables.
 !
       DO itrc=1,NT(ng)
@@ -1175,6 +1213,10 @@
 !
       real(dp) :: scale
       real(r8) :: Tval(1)
+#ifdef SOLVE3D
+!
+      real(r8), allocatable :: Wr3d(:,:,:)
+#endif
 !
       character (len=*), parameter :: MyFile =                          &
      &  __FILE__//", ad_wrt_his_pio"
@@ -1859,6 +1901,44 @@
         END IF
       END IF
 #   endif
+!
+!  Write out S-coordinate omega vertical velocity (m/s).
+!
+      IF (Hout(idOvel,ng)) THEN
+        IF (.not.allocated(Wr3d)) THEN
+          allocate (Wr3d(LBi:UBi,LBj:UBj,0:N(ng)))
+          Wr3d(LBi:UBi,LBj:UBj,0:N(ng))=0.0_r8
+        END IF
+        scale=1.0_dp
+        CALL scale_omega (ng, tile, LBi, UBi, LBj, UBj, 0, N(ng),       &
+     &                    GRID(ng) % pm,                                &
+     &                    GRID(ng) % pn,                                &
+     &                    OCEAN(ng) % ad_W_sol,                         &
+     &                    Wr3d)
+!
+        IF (ADM(ng)%pioVar(idOvel)%dkind.eq.PIO_double) THEN
+          ioDesc => ioDesc_dp_w3dvar(ng)
+        ELSE
+          ioDesc => ioDesc_sp_w3dvar(ng)
+        END IF
+        status=nf_fwrite3d(ng, iADM, ADM(ng)%pioFile,                   &
+     &                     ADM(ng)%pioVar(idOvel),                      &
+     &                     ADM(ng)%Rindex, ioDesc,                      &
+     &                     LBi, UBi, LBj, UBj, 0, N(ng), scale,         &
+#   ifdef MASKING
+     &                     GRID(ng) % rmask,                            &
+#   endif
+     &                     Wr3d)
+        IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+          IF (Master) THEN
+            WRITE (stdout,10) TRIM(Vname(1,idOvel)), ADM(ng)%Rindex
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+        deallocate (Wr3d)
+      END IF
 !
 !  Write out tracer type variables.
 !
