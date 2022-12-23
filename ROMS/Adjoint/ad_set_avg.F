@@ -3,7 +3,7 @@
 #if defined AD_AVERAGES && defined ADJOINT
 !
 !git $Id$
-!svn $Id: ad_set_avg.F 1129 2022-05-23 21:28:29Z arango $
+!svn $Id: ad_set_avg.F 1149 2022-12-23 16:10:11Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2022 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -226,7 +226,7 @@
           DO k=0,N(ng)
             DO j=JstrR,JendR
               DO i=IstrR,IendR
-                AVERAGE(ng)%avgw3d(i,j,k)=OCEAN(ng)%ad_W(i,j,k)*        &
+                AVERAGE(ng)%avgw3d(i,j,k)=OCEAN(ng)%ad_W_sol(i,j,k)*    &
      &                                    GRID(ng)%pm(i,j)*             &
      &                                    GRID(ng)%pn(i,j)
 #  ifdef WET_DRY
@@ -721,7 +721,7 @@
 #  ifdef WET_DRY
      &                                    GRID(ng)%rmask_full(i,j)*     &
 #  endif
-     &                                    OCEAN(ng)%ad_W(i,j,k)*        &
+     &                                    OCEAN(ng)%ad_W_sol(i,j,k)*    &
      &                                    GRID(ng)%pm(i,j)*             &
      &                                    GRID(ng)%pn(i,j)
               END DO
