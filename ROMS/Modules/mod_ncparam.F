@@ -2,9 +2,9 @@
       MODULE mod_ncparam
 !
 !git $Id$
-!svn $Id: mod_ncparam.F 1147 2022-12-03 16:19:17Z arango $
+!svn $Id: mod_ncparam.F 1151 2023-02-09 03:08:53Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2022 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
 !=======================================================================

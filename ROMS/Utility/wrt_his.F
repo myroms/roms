@@ -2,9 +2,9 @@
       MODULE wrt_his_mod
 !
 !git $Id$
-!svn $Id: wrt_his.F 1140 2022-09-30 02:00:56Z arango $
+!svn $Id: wrt_his.F 1151 2023-02-09 03:08:53Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2022 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
 !=======================================================================

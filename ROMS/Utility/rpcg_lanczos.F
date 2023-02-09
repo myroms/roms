@@ -4,9 +4,9 @@
 #if defined WEAK_CONSTRAINT && defined RPCG
 !
 !git $Id$
-!svn $Id: rpcg_lanczos.F 1140 2022-09-30 02:00:56Z arango $
+!svn $Id: rpcg_lanczos.F 1151 2023-02-09 03:08:53Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2022 The ROMS/TOMS Group       Selime Gurol      !
+!  Copyright (c) 2002-2023 The ROMS/TOMS Group       Selime Gurol      !
 !    Licensed under a MIT/X style license            Andrew M. Moore   !
 !    See License_ROMS.txt                                              !
 !=======================================================================

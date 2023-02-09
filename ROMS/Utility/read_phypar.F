@@ -2,9 +2,9 @@
       SUBROUTINE read_PhyPar (model, inp, out, Lwrite)
 !
 !git $Id$
-!svn $Id: read_phypar.F 1113 2022-03-01 20:31:29Z arango $
+!svn $Id: read_phypar.F 1151 2023-02-09 03:08:53Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2022 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
 !=======================================================================

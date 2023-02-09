@@ -2,9 +2,9 @@
       MODULE inp_par_mod
 !
 !git $Id$
-!svn $Id: inp_par.F 1124 2022-04-26 00:12:17Z arango $
+!svn $Id: inp_par.F 1151 2023-02-09 03:08:53Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2022 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
 !=======================================================================
