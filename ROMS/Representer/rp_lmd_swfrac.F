@@ -9,9 +9,9 @@
      &                               Zscale, Z, tl_Z, tl_swdk)
 !
 !git $Id$
-!svn $Id: rp_lmd_swfrac.F 1099 2022-01-06 21:01:01Z arango $
+!svn $Id: rp_lmd_swfrac.F 1151 2023-02-09 03:08:53Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2022 The ROMS/TOMS Group       Andrew M. Moore   !
+!  Copyright (c) 2002-2023 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
 !=======================================================================

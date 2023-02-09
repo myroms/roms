@@ -2,9 +2,9 @@
       MODULE get_metadata_mod
 !
 !git $Id$
-!svn $Id: get_metadata.F 1134 2022-08-25 17:30:21Z arango $
+!svn $Id: get_metadata.F 1151 2023-02-09 03:08:53Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2022 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
 !=======================================================================
