@@ -1,7 +1,7 @@
       MODULE yaml_parser_mod
 !
 !git $Id$
-!svn $Id: yaml_parser.F 1134 2022-08-25 17:30:21Z arango $
+!svn $Id: yaml_parser.F 1150 2023-02-09 01:29:59Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2022 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -552,6 +552,7 @@
 !  automatically.
 !
       IF (ASSOCIATED(self%list)) THEN
+        self%IsCreated=.FALSE.
         DEALLOCATE (self%list)
       END IF
 !
