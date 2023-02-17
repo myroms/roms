@@ -1,7 +1,7 @@
 # ROMS I/O NetCDF Metadata Dictionary
 #
 #git $Id$
-#svn $Id: varinfo.yaml 1151 2023-02-09 03:08:53Z arango $
+#svn $Id: varinfo.yaml 1153 2023-02-17 20:27:14Z arango $
 #========================================================= Hernan G. Arango ==#
 #  Copyright (c) 2002-2023 The ROMS/TOMS Group                                #
 #    Licensed under a MIT/X style license                                     #
@@ -83,7 +83,7 @@ metadata:
     scale:          1.0d0
 
   - variable:       zeta                                             # Input/Output
-    standard_name:  sea_surface_elevation_anomaly
+    standard_name:  sea_surface_height_above_geopotential_datum
     long_name:      free-surface
     units:          meter                                            # [m]
     field:          free-surface

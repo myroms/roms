@@ -1,7 +1,7 @@
       MODULE yaml_parser_mod
 !
 !git $Id$
-!svn $Id: yaml_parser.F 1151 2023-02-09 03:08:53Z arango $
+!svn $Id: yaml_parser.F 1153 2023-02-17 20:27:14Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -55,7 +55,7 @@
 !   * Multiple or continuation lines are supported, for example we can !
 !     have:                                                            !
 !                                                                      !
-!       state variables: [sea_surface_height_above_geoid,              !
+!       state variables: [sea_surface_height_above_geopotential_datum, !
 !                         barotropic_sea_water_x_velocity,             !
 !                         barotropic_sea_water_y_velocity,             !
 !                         sea_water_x_velocity,                        !

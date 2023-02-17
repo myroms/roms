@@ -1,8 +1,9 @@
       MODULE roms_kernel_mod
 !
-!git $Id: jedi_roms.h 1151 2023-02-09 03:08:53Z arango $
+!git $Id: jedi_roms.h 1153 2023-02-17 20:27:14Z arango $
+!git $Id: jedi_roms.h 1153 2023-02-17 20:27:14Z arango $
 !git $Id$
-!svn $Id: jedi_roms.h 1151 2023-02-09 03:08:53Z arango $
+!svn $Id: jedi_roms.h 1153 2023-02-17 20:27:14Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -643,7 +644,7 @@
 #ifdef SOLVE3D
 !
 !-----------------------------------------------------------------------
-!  Compute time independent (Zt_avg1=0) anf initial time dependent
+!  Compute time independent (Zt_avg1=0) and initial time dependent
 !  depths and level thicknesses.
 !-----------------------------------------------------------------------
 !
