@@ -2,7 +2,7 @@
       MODULE rp_step2d_mod
 !
 !git $Id$
-!svn $Id: rp_step2d_LF_AM3.h 1151 2023-02-09 03:08:53Z arango $
+!svn $Id: rp_step2d_LF_AM3.h 1158 2023-02-23 19:58:43Z arango $
 !=======================================================================
 !                                                                      !
 !  Representer model shallow-water primitive equations predictor       !
@@ -1544,24 +1544,17 @@
      &                      (tl_gzeta2(i-1,j)-                          &
      &                       tl_gzeta2(i  ,j)))
 #if defined ATM_PRESS && !defined SOLVE3D
-!^        rhs_ubar(i,j)=rhs_ubar(i,j)+                                  &
+!^        rhs_ubar(i,j)=rhs_ubar(i,j)-                                  &
 !^   &                  fac3*on_u(i,j)*                                 &
 !^   &                  (h(i-1,j)+h(i,j)+                               &
 !^   &                   gzeta(i-1,j)+gzeta(i,j))*                      &
 !^   &                  (Pair(i,j)-Pair(i-1,j))
 !^
-# if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
-          tl_rhs_ubar(i,j)=tl_rhs_ubar(i,j)+                            &
+          tl_rhs_ubar(i,j)=tl_rhs_ubar(i,j)-                            &
      &                     fac3*on_u(i,j)*                              &
      &                     (tl_h(i-1,j)+tl_h(i,j)+                      &
      &                      tl_gzeta(i-1,j)+tl_gzeta(i,j))*             &
      &                     (Pair(i,j)-Pair(i-1,j))
-# else
-          tl_rhs_ubar(i,j)=tl_rhs_ubar(i,j)+                            &
-     &                     fac3*on_u(i,j)*                              &
-     &                     (tl_gzeta(i-1,j)+tl_gzeta(i,j))*             &
-     &                     (Pair(i,j)-Pair(i-1,j))
-# endif
 #endif
 #if defined TIDE_GENERATING_FORCES && !defined SOLVE3D
 !^        rhs_ubar(i,j)=rhs_ubar(i,j)-                                  &
@@ -1667,24 +1660,17 @@
      &                        (tl_gzeta2(i,j-1)-                        &
      &                         tl_gzeta2(i,j  )))
 #if defined ATM_PRESS && !defined SOLVE3D
-!^          rhs_vbar(i,j)=rhs_vbar(i,j)+                                &
+!^          rhs_vbar(i,j)=rhs_vbar(i,j)-                                &
 !^   &                    fac3*om_v(i,j)*                               &
 !^   &                    (h(i,j-1)+h(i,j)+                             &
 !^   &                     gzeta(i,j-1)+gzeta(i,j))*                    &
 !^   &                    (Pair(i,j)-Pair(i,j-1))
 !^
-# if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
-            tl_rhs_vbar(i,j)=tl_rhs_vbar(i,j)+                          &
+            tl_rhs_vbar(i,j)=tl_rhs_vbar(i,j)-                          &
      &                       fac3*om_v(i,j)*                            &
      &                       (tl_h(i,j-1)+tl_h(i,j)+                    &
      &                        tl_gzeta(i,j-1)+tl_gzeta(i,j))*           &
      &                       (Pair(i,j)-Pair(i,j-1))
-# else
-            tl_rhs_vbar(i,j)=tl_rhs_vbar(i,j)+                          &
-     &                       fac3*om_v(i,j)*                            &
-     &                       (tl_gzeta(i,j-1)+tl_gzeta(i,j))*           &
-     &                       (Pair(i,j)-Pair(i,j-1))
-# endif
 #endif
 #if defined TIDE_GENERATING_FORCES && !defined SOLVE3D
 !^          rhs_vbar(i,j)=rhs_vbar(i,j)-                                &
