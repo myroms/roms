@@ -2,7 +2,7 @@
       MODULE ad_step2d_mod
 !
 !git $Id$
-!svn $Id: ad_step2d_LF_AM3.h 1151 2023-02-09 03:08:53Z arango $
+!svn $Id: ad_step2d_LF_AM3.h 1158 2023-02-23 19:58:43Z arango $
 !=======================================================================
 !                                                                      !
 !  Adjoint shallow-water primitive equations predictor (Leap-frog)     !
@@ -4228,13 +4228,13 @@
               ad_eq_tide(i,j  )=ad_eq_tide(i,j  )-adfac2
 #endif
 #if defined ATM_PRESS && !defined SOLVE3D
-!^            tl_rhs_vbar(i,j)=tl_rhs_vbar(i,j)+                        &
+!^            tl_rhs_vbar(i,j)=tl_rhs_vbar(i,j)-                        &
 !^   &                         fac3*om_v(i,j)*                          &
 !^   &                         (tl_h(i,j-1)+tl_h(i,j)+                  &
 !^   &                          tl_gzeta(i,j-1)+tl_gzeta(i,j))*         &
 !^   &                         (Pair(i,j)-Pair(i,j-1))
 !^
-              adfac=fac3*om_v(i,j)*(Pair(i,j)-Pair(i,j-1)*              &
+              adfac=-fac3*om_v(i,j)*(Pair(i,j)-Pair(i,j-1)*             &
      &              ad_rhs_vbar(i,j)
               ad_h(i,j-1)=ad_h(i,j-1)+adfac
               ad_h(i,j  )=ad_h(i,j  )+adfac
@@ -4332,13 +4332,13 @@
             ad_eq_tide(i  ,j)=ad_eq_tide(i  ,j)-adfac2
 #endif
 #if defined ATM_PRESS && !defined SOLVE3D
-!^          tl_rhs_ubar(i,j)=tl_rhs_ubar(i,j)+                          &
+!^          tl_rhs_ubar(i,j)=tl_rhs_ubar(i,j)-                          &
 !^   &                       fac3*on_u(i,j)*                            &
 !^   &                       (tl_h(i-1,j)+tl_h(i,j)+                    &
 !^   &                        tl_gzeta(i-1,j)+tl_gzeta(i,j))*           &
 !^   &                       (Pair(i,j)-Pair(i-1,j))
 !^
-            adfac=fac3*on_u(i,j)*(Pair(i,j)-Pair(i-1,j))*               &
+            adfac=-fac3*on_u(i,j)*(Pair(i,j)-Pair(i-1,j))*              &
      &            ad_rhs_ubar(i,j)
             ad_h(i-1,j)=ad_h(i-1,j)+adfac
             ad_h(i  ,j)=ad_h(i  ,j)+adfac

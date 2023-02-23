@@ -1,7 +1,7 @@
       MODULE step2d_mod
 !
 !git $Id$
-!svn $Id: step2d_LF_AM3.h 1151 2023-02-09 03:08:53Z arango $
+!svn $Id: step2d_LF_AM3.h 1158 2023-02-23 19:58:43Z arango $
 !=======================================================================
 !                                                                      !
 !  Nonlinear shallow-water primitive equations predictor (Leap-frog)   !
@@ -962,7 +962,7 @@
      &                   (gzeta2(i-1,j)-                                &
      &                    gzeta2(i  ,j)))
 #if defined ATM_PRESS && !defined SOLVE3D
-          rhs_ubar(i,j)=rhs_ubar(i,j)+                                  &
+          rhs_ubar(i,j)=rhs_ubar(i,j)-                                  &
      &                  fac3*on_u(i,j)*                                 &
      &                  (h(i-1,j)+h(i,j)+                               &
      &                   gzeta(i-1,j)+gzeta(i,j))*                      &
@@ -999,7 +999,7 @@
      &                     (gzeta2(i,j-1)-                              &
      &                      gzeta2(i,j  )))
 #if defined ATM_PRESS && !defined SOLVE3D
-            rhs_vbar(i,j)=rhs_vbar(i,j)+                                &
+            rhs_vbar(i,j)=rhs_vbar(i,j)-                                &
      &                    fac3*om_v(i,j)*                               &
      &                    (h(i,j-1)+h(i,j)+                             &
      &                     gzeta(i,j-1)+gzeta(i,j))*                    &
