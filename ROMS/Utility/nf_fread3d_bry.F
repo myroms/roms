@@ -2,7 +2,7 @@
       MODULE nf_fread3d_bry_mod
 !
 !git $Id$
-!svn $Id: nf_fread3d_bry.F 1151 2023-02-09 03:08:53Z arango $
+!svn $Id: nf_fread3d_bry.F 1159 2023-03-24 23:49:03Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -124,7 +124,7 @@
 !
       real(r8) :: Afactor, Aoffset, Aspval
 !
-      real(r8), pointer :: Cwrk(:)               ! used for checksum
+      real(r8), allocatable :: Cwrk(:)           ! used for checksum
 
       real(r8), dimension(3) :: AttValue
 
@@ -305,10 +305,10 @@
 !
           IF (Lchecksum) THEN
             Npts=(UBij-LBij+1)*(UBk-LBk+1)*Nrec*4
-            IF (.not.associated(Cwrk)) allocate ( Cwrk(Npts) )
+            IF (.not.allocated(Cwrk)) allocate ( Cwrk(Npts) )
             Cwrk=PACK(wrk(LBij:UBij, LBk:UBk, 1:4, 1:Nrec), .TRUE.)
             CALL get_hash (Cwrk, Npts, checksum)
-            IF (associated(Cwrk)) deallocate (Cwrk)
+            IF (allocated(Cwrk)) deallocate (Cwrk)
           END IF
         END IF
       END IF
@@ -419,7 +419,7 @@
 !
       real(r8) :: Afactor, Aoffset, Aspval
 !
-      real(r8), pointer :: Cwrk(:)               ! used for checksum
+      real(r8), allocatable :: Cwrk(:)           ! used for checksum
 
       real(r8), dimension(3) :: AttValue
 
@@ -593,10 +593,10 @@
 !
         IF (Lchecksum) THEN
           Npts=(UBij-LBij+1)*(UBk-LBk+1)*Nrec*4
-          IF (.not.associated(Cwrk)) allocate ( Cwrk(Npts) )
+          IF (.not.allocated(Cwrk)) allocate ( Cwrk(Npts) )
           Cwrk=PACK(wrk(LBij:UBij, LBk:UBk, 1:4, 1:Nrec), .TRUE.)
           CALL get_hash (Cwrk, Npts, checksum)
-          IF (associated(Cwrk)) deallocate (Cwrk)
+          IF (allocated(Cwrk)) deallocate (Cwrk)
         END IF
       END IF
 !

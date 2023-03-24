@@ -1,5 +1,5 @@
 # git $Id$
-# svn $Id: compiler_flags_GNU_Fortran.cmake 1151 2023-02-09 03:08:53Z arango $
+# svn $Id: compiler_flags_GNU_Fortran.cmake 1159 2023-03-24 23:49:03Z arango $
 #:::::::::::::::::::::::::::::::::::::::::::::::::::::: David Robertson :::
 # Copyright (c) 2002-2023 The ROMS/TOMS Group                           :::
 #   Licensed under a MIT/X style license                                :::
@@ -34,7 +34,7 @@ set( CMAKE_Fortran_FLAGS_RELEASE "-O3 -ffast-math" )
 # DEBUG FLAGS
 ###########################################################################
 
-set( CMAKE_Fortran_FLAGS_DEBUG   "-O0 -g -fbounds-check -fbacktrace -fcheck=all -fsanitize=address -fsanitize=undefined -finit-real=nan -ffpe-trap=invalid,zero,overflow" )
+set( CMAKE_Fortran_FLAGS_DEBUG   "-O0 -g -fbounds-check -fbacktrace -fcheck=all -finit-real=nan -ffpe-trap=invalid,zero,overflow" )
 
 ###########################################################################
 # BIT REPRODUCIBLE FLAGS
