@@ -1,5 +1,5 @@
 # git $Id$
-# svn $Id: CYGWIN-gfortran.mk 1151 2023-02-09 03:08:53Z arango $
+# svn $Id: CYGWIN-gfortran.mk 1159 2023-03-24 23:49:03Z arango $
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # Copyright (c) 2002-2023 The ROMS/TOMS Group                           :::
 #   Licensed under a MIT/X style license                                :::
@@ -118,7 +118,7 @@ ifdef CICE_APPLICATION
            FFLAGS += -g
            FFLAGS += -fbounds-check
 #          FFLAGS += -fcheck=all
-           FFLAGS += -fsanitize=address -fsanitize=undefined
+#          FFLAGS += -fsanitize=address -fsanitize=undefined
  else
            FFLAGS := -O3 -w
  endif
