@@ -1,5 +1,5 @@
 # git $Id$
-# svn $Id: compiler_flags_GNU_Fortran.cmake 1159 2023-03-24 23:49:03Z arango $
+# svn $Id: compiler_flags_GNU_Fortran.cmake 1160 2023-03-25 21:13:13Z arango $
 #:::::::::::::::::::::::::::::::::::::::::::::::::::::: David Robertson :::
 # Copyright (c) 2002-2023 The ROMS/TOMS Group                           :::
 #   Licensed under a MIT/X style license                                :::
@@ -22,7 +22,7 @@ endif()
 # FLAGS COMMON TO ALL BUILD TYPES
 ###########################################################################
 
-set( CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -frepack-arrays")
+set( CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -frepack-arrays -fallow-argument-mismatch")
 
 ###########################################################################
 # RELEASE FLAGS

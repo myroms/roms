@@ -1,7 +1,7 @@
 #!/bin/csh -ef
 #
 # git $Id$
-# svn $Id: cbuild_roms.csh 1151 2023-02-09 03:08:53Z arango $
+# svn $Id: cbuild_roms.csh 1160 2023-03-25 21:13:13Z arango $
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # Copyright (c) 2002-2023 The ROMS/TOMS Group                           :::
 #   Licensed under a MIT/X style license                                :::
@@ -39,6 +39,8 @@
 #                                                                       :::
 #    -noclean    Do not clean already compiled objects                  :::
 #                                                                       :::
+#    -v          Compile in verbose mode (VERBOSE=1)                    :::
+#                                                                       :::
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
 setenv which_MPI openmpi                      #  default, overwritten below
@@ -46,6 +48,7 @@ setenv which_MPI openmpi                      #  default, overwritten below
 set parallel = 0
 set clean = 1
 set dprint = 0
+set verbose = 0
 
 setenv MY_CPP_FLAGS ''
 
@@ -54,6 +57,11 @@ while ( ($#argv) > 0 )
     case "-noclean"
       shift
       set clean = 0
+    breaksw
+
+    case "-v"
+      shift
+      set verbose = 1
     breaksw
 
     case "-p"
@@ -88,6 +96,8 @@ while ( ($#argv) > 0 )
       echo "              For example:  cbuild_roms.csh -p FFLAGS"
       echo ""
       echo "-noclean    Do not clean already compiled objects"
+      echo ""
+      echo "-v          Compile in verbose mode"
       echo ""
       exit 1
     breaksw
@@ -223,24 +233,26 @@ endif
 
 # Create the build directory specified above and change into it.
 
-if ( -d ${SCRATCH_DIR} ) then
-  if ( $clean == 1 ) then
-    rm -rf ${SCRATCH_DIR}
-    mkdir ${SCRATCH_DIR}
-    cd ${SCRATCH_DIR}
+if ( $dprint == 0 ) then
+  if ( -d ${SCRATCH_DIR} ) then
+    if ( $clean == 1 ) then
+      rm -rf ${SCRATCH_DIR}
+      mkdir ${SCRATCH_DIR}
+      cd ${SCRATCH_DIR}
+    else
+      cd ${SCRATCH_DIR}
+    endif
   else
-    cd ${SCRATCH_DIR}
-  endif
-else
-  if ( $clean == 1 ) then
-    mkdir ${SCRATCH_DIR}
-    cd ${SCRATCH_DIR}
-  else
-    echo "-noclean option activated when the build directory didn't exist"
-    echo "creating the directory and disabling -noclean"
-    set clean = 1
-    mkdir ${SCRATCH_DIR}
-    cd ${SCRATCH_DIR}
+    if ( $clean == 1 ) then
+      mkdir ${SCRATCH_DIR}
+      cd ${SCRATCH_DIR}
+    else
+      echo "-noclean option activated when the build directory didn't exist"
+      echo "creating the directory and disabling -noclean"
+      set clean = 1
+      mkdir ${SCRATCH_DIR}
+      cd ${SCRATCH_DIR}
+    endif
   endif
 endif
 
@@ -441,9 +453,17 @@ if ( $dprint == 1 ) then
   echo "${debug}:$val"
 else
   if ( $parallel == 1 ) then
-    make $NCPUS
+    if ( $verbose == 1 ) then
+      make VERBOSE=1 $NCPUS
+    else
+      make $NCPUS
+    endif
   else
-    make
+    if ( $verbose == 1 ) then
+      make VERBOSE=1
+    else
+      make
+    endif
   endif
   make install
 endif
