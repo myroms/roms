@@ -1,7 +1,7 @@
 #!/bin/csh -ef
 #
 # git $Id$
-# svn $Id: cbuild_roms.csh 1160 2023-03-25 21:13:13Z arango $
+# svn $Id: cbuild_roms.csh 1161 2023-03-27 20:46:38Z arango $
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # Copyright (c) 2002-2023 The ROMS/TOMS Group                           :::
 #   Licensed under a MIT/X style license                                :::
@@ -48,7 +48,7 @@ setenv which_MPI openmpi                      #  default, overwritten below
 set parallel = 0
 set clean = 1
 set dprint = 0
-set verbose = 0
+set Verbose = 0
 
 setenv MY_CPP_FLAGS ''
 
@@ -61,7 +61,7 @@ while ( ($#argv) > 0 )
 
     case "-v"
       shift
-      set verbose = 1
+      set Verbose = 1
     breaksw
 
     case "-p"
@@ -306,6 +306,16 @@ else
   set ltype=""
 endif
 
+if ( $?FORT ) then
+  if ( "${FORT}" == "intel" ) then
+    set compiler="-DCMAKE_Fortran_COMPILER=ifort"
+  else if ( "${FORT}" == "gfortran" ) then
+    set compiler="-DCMAKE_Fortran_COMPILER=gfortran"
+  else
+    set compiler=""
+  endif
+endif
+
 if ( $?MY_CPP_FLAGS ) then
   set tmp=`echo ${MY_CPP_FLAGS} | sed 's/^ *-D//' | sed 's/ *-D/;/g'`
   set extra_flags="-DMY_CPP_FLAGS=${tmp}"
@@ -409,6 +419,7 @@ if ( $dprint == 0 ) then
       cmake -DAPP=${ROMS_APPLICATION} \
                   ${my_hdir} \
                   ${ltype} \
+                  ${compiler} \
                   ${extra_flags} \
                   ${parpack_ldir} \
                   ${arpack_ldir} \
@@ -425,6 +436,7 @@ if ( $dprint == 0 ) then
       ecbuild -DAPP=${ROMS_APPLICATION} \
                     ${my_hdir} \
                     ${ltype} \
+                    ${compiler} \
                     ${extra_flags} \
                     ${parpack_ldir} \
                     ${arpack_ldir} \
@@ -453,13 +465,13 @@ if ( $dprint == 1 ) then
   echo "${debug}:$val"
 else
   if ( $parallel == 1 ) then
-    if ( $verbose == 1 ) then
+    if ( $Verbose == 1 ) then
       make VERBOSE=1 $NCPUS
     else
       make $NCPUS
     endif
   else
-    if ( $verbose == 1 ) then
+    if ( $Verbose == 1 ) then
       make VERBOSE=1
     else
       make

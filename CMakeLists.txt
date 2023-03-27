@@ -1,5 +1,5 @@
 # git $Id$
-# svn $Id: CMakeLists.txt 1151 2023-02-09 03:08:53Z arango $
+# svn $Id: CMakeLists.txt 1161 2023-03-27 20:46:38Z arango $
 #:::::::::::::::::::::::::::::::::::::::::::::::::::::: David Robertson :::
 # Copyright (c) 2002-2023 The ROMS/TOMS Group                           :::
 #   Licensed under a MIT/X style license                                :::
@@ -19,7 +19,7 @@ if( DEFINED ENV{ECBUILD_MODULE_PATH} )
   set( IN_ECBUILD TRUE )
 endif()
 
-project(roms VERSION 3.9 LANGUAGES Fortran)
+project(roms VERSION 4.1 LANGUAGES Fortran)
 
 if( IN_ECBUILD )
   set( ECBUILD_DEFAULT_BUILD_TYPE Release )

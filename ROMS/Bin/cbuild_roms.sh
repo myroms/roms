@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 # git $Id$
-# svn $Id: cbuild_roms.sh 1160 2023-03-25 21:13:13Z arango $
+# svn $Id: cbuild_roms.sh 1161 2023-03-27 20:46:38Z arango $
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # Copyright (c) 2002-2023 The ROMS/TOMS Group                           :::
 #   Licensed under a MIT/X style license                                :::
@@ -49,7 +49,7 @@ export which_MPI=openmpi                       # default, overwritten below
 parallel=0
 clean=1
 dprint=0
-verbose=0
+Verbose=0
 
 export MY_CPP_FLAGS=
 
@@ -78,7 +78,7 @@ do
 
     -v )
       shift
-      verbose=1
+      Verbose=1
       ;;
 
     -noclean )
@@ -297,12 +297,22 @@ fi
 # Configure.
 #--------------------------------------------------------------------------
 
-# Construct the "ecbuild" command.
+# Construct the "cmake" or "ecbuild" command.
 
 if [ ! -z "${LIBTYPE}" ]; then
   ltype="-DLIBTYPE=${LIBTYPE}"
 else
   ltype=""
+fi
+
+if [ ! -z "${FORT}" ]; then
+  if [ ${FORT} == "intel" ]; then
+    compiler="-DCMAKE_Fortran_COMPILER=ifort"
+  elif [ ${FORT} == "gfortran" ]; then
+    compiler="-DCMAKE_Fortran_COMPILER=gfortran"
+  else
+    compiler=""
+  fi
 fi
 
 if [ ! -z "${MY_CPP_FLAGS}" ]; then
@@ -383,6 +393,7 @@ if [[ $dprint -eq 0 && $clean -eq 1 ]]; then
     cmake -DAPP=${ROMS_APPLICATION} \
                 ${my_hdir} \
                 ${ltype} \
+                ${compiler} \
                 ${extra_flags} \
                 ${parpack_ldir} \
                 ${arpack_ldir} \
@@ -400,6 +411,7 @@ if [[ $dprint -eq 0 && $clean -eq 1 ]]; then
     ecbuild -DAPP=${ROMS_APPLICATION} \
                   ${my_hdir} \
                   ${ltype} \
+                  ${compiler} \
                   ${extra_flags} \
                   ${parpack_ldir} \
                   ${arpack_ldir} \
@@ -431,13 +443,13 @@ if [ $dprint -eq 1 ]; then
   echo $debug:"${!debug}"
 else
   if [ $parallel -eq 1 ]; then
-    if [ $verbose -eq 1 ]; then
+    if [ $Verbose -eq 1 ]; then
       make VERBOSE=1 $NCPUS
     else
       make $NCPUS
     fi
   else
-    if [ $verbose -eq 1 ]; then
+    if [ $Verbose -eq 1 ]; then
       make VERBOSE=1
     else
       make
