@@ -1,5 +1,5 @@
 # git $Id$
-# svn $Id: CMakeLists.txt 1151 2023-02-09 03:08:53Z arango $
+# svn $Id: CMakeLists.txt 1163 2023-04-02 15:36:10Z arango $
 #:::::::::::::::::::::::::::::::::::::::::::::::::::::: David Robertson :::
 # Copyright (c) 2002-2023 The ROMS/TOMS Group                           :::
 #   Licensed under a MIT/X style license                                :::
@@ -62,6 +62,7 @@ list( APPEND _files
       ROMS/Utility/get_3dfldr.F
       ROMS/Utility/get_bounds.F
       ROMS/Utility/get_cycle.F
+      ROMS/Utility/get_env.F
       ROMS/Utility/get_grid.F
       ROMS/Utility/get_gst.F
       ROMS/Utility/get_hash.F
