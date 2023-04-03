@@ -2,7 +2,7 @@
       MODULE mod_ncparam
 !
 !git $Id$
-!svn $Id: mod_ncparam.F 1151 2023-02-09 03:08:53Z arango $
+!svn $Id: mod_ncparam.F 1164 2023-04-03 21:09:46Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -1224,19 +1224,21 @@
 !  Set generic lateral boundary indices for LBC structure.  Use the same
 !  values of the state variables at the same C-grid location.  Generic
 !  indices are used for testing periodicity.  The PSI-variables and
-!  W-variables are assign the same value as the RHO-variables.
+!  W-variables are assigned the same value as the RHO-variables.
 !
       isBp2d=isFsur                           ! 2D PSI-variables
       isBr2d=isFsur                           ! 2D RHO-variables
       isBu2d=isUbar                           ! 2D U-variables
       isBv2d=isVbar                           ! 2D V-variables
+#if defined SOLVE3D
       isBp3d=isTvar(1)                        ! 3D PSI-variables
       isBr3d=isTvar(1)                        ! 3D RHO-variables
       isBu3d=isUvel                           ! 3D U-variables
       isBv3d=isVvel                           ! 3D V-variables
       isBw3d=isTvar(1)                        ! 3D W-variables
-#if defined SOLVE3D && (defined GLS_MIXING || defined MY25_MIXING)
+# if defined GLS_MIXING || defined MY25_MIXING
       isMtke=isTvar(MT)+1                     ! turbulent variables
+# endif
 #endif
 !
 !  Initialize IO information variables.
