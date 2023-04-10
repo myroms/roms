@@ -2,7 +2,7 @@
       MODULE inp_par_mod
 !
 !git $Id$
-!svn $Id: inp_par.F 1151 2023-02-09 03:08:53Z arango $
+!svn $Id: inp_par.F 1165 2023-04-10 01:59:07Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -1177,6 +1177,8 @@
 #endif
 
       END DO
+
+#ifdef SOLVE3D
 !
 !-----------------------------------------------------------------------
 !  Set climatology tracers (active and passive) metadata.  It needs to
@@ -1250,6 +1252,7 @@
           idTnud(i)=0
         END IF
       END DO
+#endif
 !
 !-----------------------------------------------------------------------
 !  Check C-preprocessing options and definitions.
@@ -1273,7 +1276,55 @@
       sequence=759
       CALL ran_seed (sequence)
 !
+!!    CALL test_yaml ()
+!
       RETURN
       END SUBROUTINE inp_par
+!
+      SUBROUTINE test_yaml
+!
+!***********************************************************************
+!  It tests the YAML parser inteface.                                  *
+!***********************************************************************
+!
+      USE mod_iounits,      ONLY : USRname
+      USE mod_scalars,      ONLY : exit_flag, NoError
+      USE strings_mod,      ONLY : FoundError
+      USE get_metadata_mod, ONLY : CouplingField,                       &
+     &                             cmeps_metadata,                      &
+     &                             coupling_metadata
+      USE yaml_parser_mod,  ONLY : yaml_tree
+!
+!  Local variable declarations.
+!
+      logical :: Lcmeps = .FALSE.
+!
+      TYPE (CouplingField), allocatable :: Exp(:), Imp(:), ImpB(:), S(:)
+      TYPE (yaml_tree) :: Y
+!
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__//", test_yaml"
+!
+!-----------------------------------------------------------------------
+!  Create YAML dictionary.
+!-----------------------------------------------------------------------
+!
+      IF (Lcmeps) THEN
+        CALL cmeps_metadata (Y, TRIM(USRname), 'export',                &
+     &                       Exp)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        CALL cmeps_metadata (Y, TRIM(USRname), 'import',                &
+     &                       Imp)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        CALL cmeps_metadata (Y, TRIM(USRname), 'bulk_fluxes import',    &
+     &                       ImpB)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        CALL Y%destroy ()
+      ELSE
+        CALL coupling_metadata (TRIM(USRname), S)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+      END IF
+!
+      END SUBROUTINE test_yaml
 !
       END MODULE inp_par_mod

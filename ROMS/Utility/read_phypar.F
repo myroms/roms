@@ -2,7 +2,7 @@
       SUBROUTINE read_PhyPar (model, inp, out, Lwrite)
 !
 !git $Id$
-!svn $Id: read_phypar.F 1151 2023-02-09 03:08:53Z arango $
+!svn $Id: read_phypar.F 1165 2023-04-10 01:59:07Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -1437,6 +1437,7 @@
               END IF
               Npts=load_l(Nval, Cval, Ngrids, Lswitch)
               Hout(idv3dN,1:Ngrids)=Lswitch(1:Ngrids)
+#ifdef SOLVE3D
             CASE ('Hout(idTvar)')
               IF (MAXVAL(idTvar).eq.0) THEN
                 IF (Master) WRITE (out,280) 'idTvar'
@@ -1450,6 +1451,7 @@
                   Hout(i,ng)=Ltracer(itrc,ng)
                 END DO
               END DO
+#endif
             CASE ('Hout(idpthR)')
               IF (idpthR.eq.0) THEN
                 IF (Master) WRITE (out,280) 'idpthR'
@@ -1827,7 +1829,6 @@
               Npts=load_l(Nval, Cval, Ngrids, Lswitch)
               Hout(idVair,1:Ngrids)=Lswitch(1:Ngrids)
 # endif
-#endif
             CASE ('Hout(idTsur)')
               IF (idTsur(itemp).eq.0) THEN
                 IF (Master) WRITE (out,280) 'idTsur'
@@ -1841,6 +1842,7 @@
                   Hout(i,ng)=Ltracer(itrc,ng)
                 END DO
               END DO
+#endif
             CASE ('Hout(idLhea)')
               IF (idLhea.eq.0) THEN
                 IF (Master) WRITE (out,280) 'idLhea'
@@ -2011,6 +2013,7 @@
             CASE ('Qout(idv3dN)')
               Npts=load_l(Nval, Cval, Ngrids, Lswitch)
               Qout(idv3dN,1:Ngrids)=Lswitch(1:Ngrids)
+#ifdef SOLVE3D
             CASE ('Qout(idTvar)')
               Npts=load_l(Nval, Cval, NAT+NPT, Ngrids, Ltracer)
               DO ng=1,Ngrids
@@ -2019,6 +2022,7 @@
                   Qout(i,ng)=Ltracer(itrc,ng)
                 END DO
               END DO
+#endif
             CASE ('Qout(idUsur)')
               IF (idUsur.eq.0) THEN
                 IF (Master) WRITE (out,280) 'idUsur'
@@ -2051,6 +2055,7 @@
               END IF
               Npts=load_l(Nval, Cval, Ngrids, Lswitch)
               Qout(idVsuN,1:Ngrids)=Lswitch(1:Ngrids)
+#ifdef SOLVE3D
             CASE ('Qout(idsurT)')
               IF (MAXVAL(idsurT).eq.0) THEN
                 IF (Master) WRITE (out,280) 'idsurT'
@@ -2064,6 +2069,7 @@
                   Qout(i,ng)=Ltracer(itrc,ng)
                 END DO
               END DO
+#endif
             CASE ('Qout(idpthR)')
               Npts=load_l(Nval, Cval, Ngrids, Lswitch)
               Qout(idpthR,1:Ngrids)=Lswitch(1:Ngrids)
@@ -2216,7 +2222,6 @@
               Npts=load_l(Nval, Cval, Ngrids, Lswitch)
               Qout(idVair,1:Ngrids)=Lswitch(1:Ngrids)
 # endif
-#endif
             CASE ('Qout(idTsur)')
               Npts=load_l(Nval, Cval, NAT+NPT, Ngrids, Ltracer)
               DO ng=1,Ngrids
@@ -2225,6 +2230,7 @@
                   Qout(i,ng)=Ltracer(itrc,ng)
                 END DO
               END DO
+#endif
             CASE ('Qout(idLhea)')
               Npts=load_l(Nval, Cval, Ngrids, Lswitch)
               Qout(idLhea,1:Ngrids)=Lswitch(1:Ngrids)
@@ -2327,6 +2333,7 @@
             CASE ('Aout(idv3dN)')
               Npts=load_l(Nval, Cval, Ngrids, Lswitch)
               Aout(idv3dN,1:Ngrids)=Lswitch(1:Ngrids)
+# ifdef SOLVE3D
             CASE ('Aout(idTvar)')
               Npts=load_l(Nval, Cval, NAT+NPT, Ngrids, Ltracer)
               DO ng=1,Ngrids
@@ -2335,6 +2342,7 @@
                   Aout(i,ng)=Ltracer(itrc,ng)
                 END DO
               END DO
+# endif
             CASE ('Aout(idUsms)')
               Npts=load_l(Nval, Cval, Ngrids, Lswitch)
               Aout(idUsms,1:Ngrids)=Lswitch(1:Ngrids)
@@ -2414,7 +2422,6 @@
               Npts=load_l(Nval, Cval, Ngrids, Lswitch)
               Aout(idVair,1:Ngrids)=Lswitch(1:Ngrids)
 #  endif
-# endif
             CASE ('Aout(idTsur)')
               Npts=load_l(Nval, Cval, NAT+NPT, Ngrids, Ltracer)
               DO ng=1,Ngrids
@@ -2423,6 +2430,7 @@
                   Aout(i,ng)=Ltracer(itrc,ng)
                 END DO
               END DO
+# endif
             CASE ('Aout(idLhea)')
               Npts=load_l(Nval, Cval, Ngrids, Lswitch)
               Aout(idLhea,1:Ngrids)=Lswitch(1:Ngrids)
