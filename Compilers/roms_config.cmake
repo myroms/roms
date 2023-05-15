@@ -8,9 +8,8 @@
 #
 # CMake configuration for any ROMS application.
 
-string( TOLOWER "${APP}.h" HEADER )
-string( TOLOWER "${APP}" application )
-add_definitions( -DROOT_DIR="${CMAKE_CURRENT_SOURCE_DIR}" -D${APP} -DHEADER="${HEADER}" )
+string( TOLOWER "${ROMS_APP}.h" ROMS_APP_HEADER )
+add_definitions( -DROOT_DIR="${CMAKE_CURRENT_SOURCE_DIR}" -D${ROMS_APP} -DHEADER="${ROMS_APP_HEADER}" )
 
 # Do you want a shared or static library?
 
@@ -96,7 +95,7 @@ if( DEFINED PIO_LIBDIR AND DEFINED PIO_INCDIR )
   set( PIO_LIBDIR "${PIO_LIBDIR}" )
   set( PIO_INCDIR "${PIO_INCDIR}" )
   Message( STATUS "    PIO_LIBDIR = ${PIO_LIBDIR}" )
-  Message( STATUS "   PIO_INCDIR  = ${PIO_INCDIR}" )
+  Message( STATUS "    PIO_INCDIR = ${PIO_INCDIR}" )
 
   if( DEFINED PNETCDF_LIBDIR AND DEFINED PNETCDF_INCDIR )
     set( PNETCDF_LIBDIR "${PNETCDF_LIBDIR}" )
@@ -119,7 +118,7 @@ endif()
 set( SVN_URL "${MY_SVN_URL}" )
 set( SVN_REV "${MY_SVN_REV}" )
 
-set( ROMS_HEADER ${HEADER_DIR}/${HEADER} )
+set( ROMS_HEADER ${HEADER_DIR}/${ROMS_APP_HEADER} )
 
 add_definitions(
   -DROMS_HEADER="${ROMS_HEADER}"
@@ -160,17 +159,17 @@ endif()
 
 if( "${defs}" MATCHES "ADJOINT" )
   option( ADJOINT "Turn on/off Adjoint Model" ON )
-  Message( STATUS "Adjoint Model ENABLED" )
+  Message( STATUS "ROMS Adjoint Model ENABLED" )
 endif()
 
 if( "${defs}" MATCHES "REPRESENTER" )
   option( REPRESENTER "Turn on/off Representer Model" ON )
-  Message( STATUS "Representer Model ENABLED" )
+  Message( STATUS "ROMS Representer Model ENABLED" )
 endif()
 
 if( "${defs}" MATCHES "TANGENT" )
   option( TANGENT "Turn on/off Tangent Linear Model" ON )
-  message( STATUS "Tangent Linear Model ENABLED" )
+  message( STATUS "ROMS Tangent Linear Model ENABLED" )
 endif()
 
 if( "${defs}" MATCHES "ARPACK" )
