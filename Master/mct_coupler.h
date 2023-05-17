@@ -1,10 +1,10 @@
 #include "cppdefs.h"
-      MODULE ocean_coupler_mod
+      MODULE mct_coupler_mod
 
 #if defined MODEL_COUPLING && defined MCT_LIB
 !
 !git $Id$
-!svn $Id: mct_coupler.h 1151 2023-02-09 03:08:53Z arango $
+!svn $Id: mct_coupler.h 1166 2023-05-17 20:11:58Z arango $
 !==================================================== John C. Warner ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group      Hernan G. Arango   !
 !    Licensed under a MIT/X style license                              !
@@ -120,4 +120,4 @@
 # endif
 
 #endif
-      END MODULE ocean_coupler_mod
+      END MODULE mct_coupler_mod

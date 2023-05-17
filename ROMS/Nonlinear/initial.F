@@ -2,7 +2,7 @@
       SUBROUTINE initial
 !
 !git $Id$
-!svn $Id: initial.F 1151 2023-02-09 03:08:53Z arango $
+!svn $Id: initial.F 1166 2023-05-17 20:11:58Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -48,6 +48,9 @@
       USE ini_adjust_mod,    ONLY : ini_perturb
 #endif
       USE ini_hmixcoef_mod,  ONLY : ini_hmixcoef
+#if defined WAV_COUPLING && defined MCT_LIB
+      USE mct_coupler_mod,   ONLY : ocn2wav_coupling
+#endif
 #ifdef NESTING
       USE nesting_mod,       ONLY : nesting
 #endif
@@ -64,9 +67,6 @@
       USE set_masks_mod,     ONLY : set_masks
 #endif
       USE stiffness_mod,     ONLY : stiffness
-#if defined WAV_COUPLING && defined MCT_LIB
-      USE ocean_coupler_mod, ONLY : ocn2wav_coupling
-#endif
       USE strings_mod,       ONLY : FoundError
 #ifdef WET_DRY
       USE wetdry_mod,        ONLY : wetdry

@@ -3,7 +3,7 @@
       SUBROUTINE main2d (RunInterval)
 !
 !git $Id$
-!svn $Id: main2d.F 1151 2023-02-09 03:08:53Z arango $
+!svn $Id: main2d.F 1166 2023-05-17 20:11:58Z arango $
 !=======================================================================
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -49,6 +49,12 @@
       USE frc_adjust_mod,       ONLY : frc_adjust, load_frc
 # endif
       USE ini_fields_mod,       ONLY : ini_fields, ini_zeta
+# if defined ATM_COUPLING && defined MCT_LIB
+      USE mct_coupler_mod,      ONLY : ocn2atm_coupling
+# endif
+# if defined WAV_COUPLING && defined MCT_LIB
+      USE mct_coupler_mod,      ONLY : ocn2wav_coupling
+# endif
 # ifdef NESTING
       USE nesting_mod,          ONLY : nesting
 #  ifndef ONE_WAY
@@ -57,12 +63,6 @@
 # endif
 # if defined ADJUST_BOUNDARY
       USE obc_adjust_mod,       ONLY : obc_adjust, load_obc
-# endif
-# if defined ATM_COUPLING && defined MCT_LIB
-      USE ocean_coupler_mod,    ONLY : ocn2atm_coupling
-# endif
-# if defined WAV_COUPLING && defined MCT_LIB
-      USE ocean_coupler_mod,    ONLY : ocn2wav_coupling
 # endif
 # ifdef NEARSHORE_MELLOR
       USE radiation_stress_mod, ONLY : radiation_stress

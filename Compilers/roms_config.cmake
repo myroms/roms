@@ -1,5 +1,5 @@
 # git $Id$
-# svn $Id: roms_config.cmake 1151 2023-02-09 03:08:53Z arango $
+# svn $Id: roms_config.cmake 1166 2023-05-17 20:11:58Z arango $
 #:::::::::::::::::::::::::::::::::::::::::::::::::::::: David Robertson :::
 # Copyright (c) 2002-2023 The ROMS/TOMS Group                           :::
 #   Licensed under a MIT/X style license                                :::

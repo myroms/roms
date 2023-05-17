@@ -1,14 +1,14 @@
 #!/bin/csh -ef
 #
 # git $Id$
-# svn $Id: cbuild_roms.csh 1161 2023-03-27 20:46:38Z arango $
+# svn $Id: cbuild_roms.csh 1166 2023-05-17 20:11:58Z arango $
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # Copyright (c) 2002-2023 The ROMS/TOMS Group                           :::
 #   Licensed under a MIT/X style license                                :::
 #   See License_ROMS.txt                                                :::
 #::::::::::::::::::::::::::::::::::::::::::::::::::::: Hernan G. Arango :::
 #                                                                       :::
-# ROMS ecbuild (CMake) Compiling CSH Script                             :::
+# ROMS CMake Compiling CSH Script                                       :::
 #                                                                       :::
 # Script to compile an user application where the application-specific  :::
 # files are kept separate from the ROMS source code.                    :::
@@ -162,11 +162,6 @@ end
 # Compilation options.
 #--------------------------------------------------------------------------
 
-# Set this option to "on" if you wish to use the "ecbuild" CMake wrapper.
-# Setting this to "off" or commenting it out will use cmake directly.
-
-#setenv USE_ECBUILD          on              # use "ecbuild" wrapper
-
  setenv USE_MPI              on              # distributed-memory
  setenv USE_MPIF90           on              # compile with mpif90 script
 #setenv which_MPI            intel           # compile with mpiifort library
@@ -298,7 +293,7 @@ endif
 # Configure.
 #--------------------------------------------------------------------------
 
-# Construct the cmake/ecbuild command.
+# Construct the cmake command.
 
 if ( $?LIBTYPE ) then
   set ltype="-DLIBTYPE=${LIBTYPE}"
@@ -403,56 +398,22 @@ set my_hdir="-DMY_HEADER_DIR=${MY_HEADER_DIR}"
 
 if ( $dprint == 0 ) then
   if ( $clean == 1 ) then
-    if ( $?USE_ECBUILD ) then
-      if ( "${USE_ECBUILD}" == "on" ) then
-        set conf_com = "ecbuild"
-      else if ( "${USE_ECBUILD}" == "off" ) then
-        set conf_com = "cmake"
-      else
-        set conf_com = "Unknown"
-      endif
-    else
-      set conf_com = "cmake"
-    endif
-
-    if ( "${conf_com}" == "cmake" ) then
-      cmake -DAPP=${ROMS_APPLICATION} \
-                  ${my_hdir} \
-                  ${ltype} \
-                  ${compiler} \
-                  ${extra_flags} \
-                  ${parpack_ldir} \
-                  ${arpack_ldir} \
-                  ${pio_ldir} \
-                  ${pio_idir} \
-                  ${pnetcdf_ldir} \
-                  ${pnetcdf_idir} \
-                  ${mpi} \
-                  ${comm} \
-                  ${roms_exec} \
-                  ${dbg} \
-                  ${MY_ROMS_SRC}
-    else if ( "${conf_com}" == "ecbuild" ) then
-      ecbuild -DAPP=${ROMS_APPLICATION} \
-                    ${my_hdir} \
-                    ${ltype} \
-                    ${compiler} \
-                    ${extra_flags} \
-                    ${parpack_ldir} \
-                    ${arpack_ldir} \
-                    ${pio_ldir} \
-                    ${pio_idir} \
-                    ${pnetcdf_ldir} \
-                    ${pnetcdf_idir} \
-                    ${mpi} \
-                    ${comm} \
-                    ${roms_exec} \
-                    ${dbg} \
-                    ${MY_ROMS_SRC}
-    else
-      echo "Unrecognized value, '${USE_ECBUILD}' set for USE_ECBUILD"
-      exit 1
-    endif
+    cmake -DROMS_APP=${ROMS_APPLICATION} \
+                     ${my_hdir} \
+                     ${ltype} \
+                     ${compiler} \
+                     ${extra_flags} \
+                     ${parpack_ldir} \
+                     ${arpack_ldir} \
+                     ${pio_ldir} \
+                     ${pio_idir} \
+                     ${pnetcdf_ldir} \
+                     ${pnetcdf_idir} \
+                     ${mpi} \
+                     ${comm} \
+                     ${roms_exec} \
+                     ${dbg} \
+                     ${MY_ROMS_SRC}
   endif
 endif
 
@@ -482,6 +443,31 @@ endif
 
 cd ${MY_PROJECT_DIR}
 
+# If ROMS_EXECUTABLE is set to OFF remove the symlink from
+# previous build if present.
+
+if ( $?ROMS_EXECUTABLE ) then
+  if ( "${ROMS_EXECUTABLE}" == "OFF" ) then
+    if ( $?USE_DEBUG ) then
+      if ( "${USE_DEBUG}" == "on" ) then
+        if { test -L romsG } then
+          rm -f romsG
+        endif
+      endif
+    else if ( $?USE_MPI ) then
+      if ( "${USE_MPI}" == "on" ) then
+        if { test  -L romsM } then
+          rm -f romsM
+        endif
+      endif
+    else
+      if { test -L romsS } then
+        rm -f romsS
+      endif
+    endif
+  endif
+endif
+
 # Create symlink to executable. This should work even if ROMS was
 # linked to the shared library (libROMS.{so|dylib}) because
 # CMAKE_BUILD_WITH_INSTALL_RPATH is set to FALSE so that
@@ -489,15 +475,31 @@ cd ${MY_PROJECT_DIR}
 # installed locations of the ROMS executable.
 
 if ( $dprint == 0 ) then
-  if ( $?USE_DEBUG ) then
-    if ( "${USE_DEBUG}" == "on" ) then
-      ln -sfv ${SCRATCH_DIR}/romsG
-    endif
-  else if ( $?USE_MPI ) then
-    if ( "${USE_MPI}" == "on" ) then
-      ln -sfv ${SCRATCH_DIR}/romsM
+  if ( ! $?ROMS_EXECUTABLE ) then
+    if ( $?USE_DEBUG ) then
+      if ( "${USE_DEBUG}" == "on" ) then
+        ln -sfv ${SCRATCH_DIR}/romsG
+      endif
+    else if ( $?USE_MPI ) then
+      if ( "${USE_MPI}" == "on" ) then
+        ln -sfv ${SCRATCH_DIR}/romsM
+      endif
+    else
+      ln -sfv ${SCRATCH_DIR}/romsS
     endif
   else
-    ln -sfv ${SCRATCH_DIR}/romsS
+    if ( "${ROMS_EXECUTABLE}" == "ON" ) then
+      if ( $?USE_DEBUG ) then
+        if ( "${USE_DEBUG}" == "on" ) then
+          ln -sfv ${SCRATCH_DIR}/romsG
+        endif
+      else if ( $?USE_MPI ) then
+        if ( "${USE_MPI}" == "on" ) then
+          ln -sfv ${SCRATCH_DIR}/romsM
+        endif
+      else
+        ln -sfv ${SCRATCH_DIR}/romsS
+      endif
+    endif
   endif
 endif

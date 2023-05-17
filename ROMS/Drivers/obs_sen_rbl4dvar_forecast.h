@@ -87,15 +87,15 @@
       USE ini_adjust_mod,    ONLY : load_ADtoTL
       USE ini_adjust_mod,    ONLY : load_TLtoAD
       USE inp_par_mod,       ONLY : inp_par
-      USE normalization_mod, ONLY : normalization
 #ifdef MCT_LIB
 # ifdef ATM_COUPLING
-      USE ocean_coupler_mod, ONLY : initialize_ocn2atm_coupling
+      USE mct_coupler_mod,   ONLY : initialize_ocn2atm_coupling
 # endif
 # ifdef WAV_COUPLING
-      USE ocean_coupler_mod, ONLY : initialize_ocn2wav_coupling
+      USE mct_coupler_mod,   ONLY : initialize_ocn2wav_coupling
 # endif
 #endif
+      USE normalization_mod, ONLY : normalization
 #ifdef RPCG
       USE rpcg_lanczos_mod,  ONLY : rpcg_lanczos
 #endif
