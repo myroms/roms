@@ -1,5 +1,5 @@
 # git $Id$
-# svn $Id: CMakeLists.txt 1151 2023-02-09 03:08:53Z arango $
+# svn $Id: CMakeLists.txt 1166 2023-05-17 20:11:58Z arango $
 #:::::::::::::::::::::::::::::::::::::::::::::::::::::: David Robertson :::
 # Copyright (c) 2002-2023 The ROMS/TOMS Group                           :::
 #   Licensed under a MIT/X style license                                :::
@@ -9,6 +9,7 @@
 # Source code list for sub-directory "Master"
 
 list( APPEND _files
+      Master/cmeps_roms.F
       Master/coupler.F
       Master/esmf_roms.F
       Master/propagator.F

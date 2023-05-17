@@ -3,7 +3,7 @@
       SUBROUTINE tl_main3d (RunInterval)
 !
 !git $Id$
-!svn $Id: tl_main3d.F 1151 2023-02-09 03:08:53Z arango $
+!svn $Id: tl_main3d.F 1166 2023-05-17 20:11:58Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -40,10 +40,10 @@
       USE equilibrium_tide_mod, ONLY : equilibrium_tide
 # endif
 # if defined ATM_COUPLING_NOT_YET && defined MCT_LIB
-      USE ocean_coupler_mod,    ONLY : atmos_coupling
+      USE mct_coupler_mod,      ONLY : ocn2atm_coupling
 # endif
 # if defined WAV_COUPLING_NOT_YET && defined MCT_LIB
-      USE ocean_coupler_mod,    ONLY : waves_coupling
+      USE mct_coupler_mod,      ONLY : ocn2wav_coupling
 # endif
 # ifdef FORWARD_READ
       USE omega_mod,            ONLY : omega
@@ -369,7 +369,7 @@
               IF ((iic(ng).ne.ntstart(ng)).and.                         &
      &            MOD(iic(ng)-1,CoupleSteps(Iatmos,ng)).eq.0) THEN
                 DO tile=last_tile(ng),first_tile(ng),-1
-                  CALL atmos_coupling (ng, tile)
+                  CALL ocn2atm_coupling (ng, tile)
                 END DO
 !$OMP BARRIER
               END IF
@@ -388,7 +388,7 @@
               IF ((iic(ng).ne.ntstart(ng)).and.                         &
      &            MOD(iic(ng)-1,CoupleSteps(Iwaves,ng)).eq.0) THEN
                 DO tile=first_tile(ng),last_tile(ng),+1
-                  CALL waves_coupling (ng, tile)
+                  CALL ocn2wav_coupling (ng, tile)
                 END DO
 !$OMP BARRIER
               END IF

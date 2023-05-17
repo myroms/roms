@@ -1,7 +1,7 @@
 # ROMS I/O NetCDF Metadata Dictionary
 #
 #git $Id$
-#svn $Id: varinfo.yaml 1153 2023-02-17 20:27:14Z arango $
+#svn $Id: varinfo.yaml 1166 2023-05-17 20:11:58Z arango $
 #========================================================= Hernan G. Arango ==#
 #  Copyright (c) 2002-2023 The ROMS/TOMS Group                                #
 #    Licensed under a MIT/X style license                                     #
@@ -1978,6 +1978,39 @@ metadata:
     add_offset:     0.0d0
     scale:          1.0d0
 
+  - variable:       river_Phyt                                       # Input
+    standard_name:  mole_concentration_of_phytoplankton_transport_expressed_as_nitrogen_into_sea_water_from_rivers
+    long_name:      river runoff phytoplankton
+    units:          millimole_nitrogen meter-3                       # [millimole/m3]
+    field:          river Phyt
+    time:           river_time
+    index_code:     idRtrc(iPhyt)
+    type:           nulvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       river_Zoop                                       # Input
+    standard_name:  mole_concentration_of_zooplankton_transport_expressed_as_nitrogen_into_sea_water_from_rivers
+    long_name:      river runoff zooplankton
+    units:          millimole_nitrogen meter-3                       # [millimole/m3]
+    field:          river Zoop
+    time:           river_time
+    index_code:     idRtrc(iZoop)
+    type:           nulvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       river_Chlo                                       # Input
+    standard_name:  mole_concentration_of_chlorophyll_transport_into_sea_water_from_rivers
+    long_name:      river runoff chlorophyll
+    units:          milligrams_chlorophyll meter-3                   # [milligrams/m3]
+    field:          river Chlo
+    time:           river_time
+    index_code:     idRtrc(iChlo)
+    type:           nulvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
   - variable:       river_detritus                                   # Input
     standard_name:  mole_concentration_of_detritus_transport_expressed_as_nitrogen_into_sea_water_from_rivers
     long_name:      river runoff detritus
@@ -2066,7 +2099,7 @@ metadata:
     add_offset:     0.0d0
     scale:          1.0d0
 
-  - variable:       river_alkalinity                                 # Input
+  - variable:       river_TAlk                                       # Input
     standard_name:  alkalinity_transport_expressed_as_mole_equivalent_into_sea_water_from_rivers
     long_name:      river runoff alkalinity
     units:          milliequivalents meter-3                         # [milliequivalens/m3]
@@ -6939,7 +6972,7 @@ metadata:
 
   - variable:       increment                                        # Output
     standard_name:  data_assimilation_increment
-    long_name:      4D-Var increment: analysis minus background, dx_a = H(x_a) - H(x_b)
+    long_name:      4D-Var increment, analysis minus background, dx_a = H(x_a) - H(x_b)
     units:          state variable units                             # [state units]
     field:          4D-Var increment
     time:           datum
@@ -6950,7 +6983,7 @@ metadata:
 
   - variable:       innovation                                       # Output
     standard_name:  data_assimilation_innovation
-    long_name:      4D-Var innovation: observation minus background, d_b = y - H(x_b)
+    long_name:      4D-Var innovation, observation minus background, d_b = y - H(x_b)
     units:          state variable units                             # [state units]
     field:          4D-Var innovation
     time:           datum
@@ -6983,7 +7016,7 @@ metadata:
 
   - variable:       residual                                         # Output
     standard_name:  data_assimilation_residual
-    long_name:      4D-Var residual: observation minus analysis, d_a = y - H(x_b + dx_a)
+    long_name:      4D-Var residual, observation minus analysis, d_a = y - H(x_b + dx_a)
     units:          state variable units                             # [state units]
     field:          4D-Var residual
     time:           datum

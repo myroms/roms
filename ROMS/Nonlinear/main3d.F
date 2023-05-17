@@ -3,7 +3,7 @@
       SUBROUTINE main3d (RunInterval)
 !
 !git $Id$
-!svn $Id: main3d.F 1151 2023-02-09 03:08:53Z arango $
+!svn $Id: main3d.F 1166 2023-05-17 20:11:58Z arango $
 !=======================================================================
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -73,6 +73,12 @@
 # ifdef LMD_MIXING
       USE lmd_vmix_mod,         ONLY : lmd_vmix
 # endif
+# if defined ATM_COUPLING && defined MCT_LIB
+      USE mct_coupler_mod,      ONLY : ocn2atm_coupling
+# endif
+# if defined WAV_COUPLING && defined MCT_LIB
+      USE mct_coupler_mod,      ONLY : ocn2wav_coupling
+# endif
 # ifdef MY25_MIXING
       USE my25_corstep_mod,     ONLY : my25_corstep
       USE my25_prestep_mod,     ONLY : my25_prestep
@@ -85,12 +91,6 @@
 # endif
 # if defined ADJUST_BOUNDARY
       USE obc_adjust_mod,       ONLY : obc_adjust, load_obc
-# endif
-# if defined ATM_COUPLING && defined MCT_LIB
-      USE ocean_coupler_mod,    ONLY : ocn2atm_coupling
-# endif
-# if defined WAV_COUPLING && defined MCT_LIB
-      USE ocean_coupler_mod,    ONLY : ocn2wav_coupling
 # endif
       USE omega_mod,            ONLY : omega
 # ifdef NEARSHORE_MELLOR

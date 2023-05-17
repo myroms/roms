@@ -1,7 +1,7 @@
       MODULE roms_kernel_mod
 !
 !git $Id$
-!svn $Id: hessian_op_roms.h 1151 2023-02-09 03:08:53Z arango $
+!svn $Id: hessian_op_roms.h 1166 2023-05-17 20:11:58Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -59,10 +59,10 @@
       USE inp_par_mod,       ONLY : inp_par
 #ifdef MCT_LIB
 # ifdef ATM_COUPLING
-      USE ocean_coupler_mod, ONLY : initialize_ocn2atm_coupling
+      USE mct_coupler_mod,   ONLY : initialize_ocn2atm_coupling
 # endif
 # ifdef WAV_COUPLING
-      USE ocean_coupler_mod, ONLY : initialize_ocn2wav_coupling
+      USE mct_coupler_mod,   ONLY : initialize_ocn2wav_coupling
 # endif
 #endif
       USE packing_mod,       ONLY : r_norm2

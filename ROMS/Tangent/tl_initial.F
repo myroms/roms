@@ -3,7 +3,7 @@
       SUBROUTINE tl_initial (ng)
 !
 !git $Id$
-!svn $Id: tl_initial.F 1151 2023-02-09 03:08:53Z arango $
+!svn $Id: tl_initial.F 1166 2023-05-17 20:11:58Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -59,11 +59,11 @@
 # ifdef I4DVAR_ANA_SENSITIVITY
       USE ini_lanczos_mod,     ONLY : ini_lanczos
 # endif
+# if defined WAV_COUPLING_NOT_YET && defined MCT_LIB
+      USE mct_coupler_mod,     ONLY : ocn2wav_coupling
+# endif
 # ifdef OBSERVATIONS
       USE obs_initial_mod,     ONLY : obs_initial
-# endif
-# if defined WAV_COUPLING_NOT_YET && defined MCT_LIB
-      USE ocean_coupler_mod,   ONLY : ocn2wav_coupling
 # endif
 # ifdef SOLVE3D
       USE set_depth_mod,       ONLY : set_depth

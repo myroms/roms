@@ -3,7 +3,7 @@
       SUBROUTINE rp_initial (ng)
 !
 !git $Id$
-!svn $Id: rp_initial.F 1151 2023-02-09 03:08:53Z arango $
+!svn $Id: rp_initial.F 1166 2023-05-17 20:11:58Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -51,6 +51,9 @@
       USE ini_adjust_mod,      ONLY : tl_ini_perturb
 # endif
       USE ini_hmixcoef_mod,    ONLY : ini_hmixcoef
+# if defined WAV_COUPLING_NOT_YET && defined MCT_LIB
+      USE mct_coupler_mod,     ONLY : ocn2wav_coupling
+# endif
 # if !(defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET)
       USE rp_set_depth_mod,    ONLY : rp_bath
 # endif
@@ -75,9 +78,6 @@
 # endif
       USE stiffness_mod,       ONLY : stiffness
       USE strings_mod,         ONLY : FoundError
-# if defined WAV_COUPLING_NOT_YET && defined MCT_LIB
-      USE ocean_coupler_mod,   ONLY : ocn2wav_coupling
-# endif
 # ifdef WET_DRY
       USE wetdry_mod,          ONLY : wetdry
 # endif

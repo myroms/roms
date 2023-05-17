@@ -4,7 +4,7 @@
 #if defined MODEL_COUPLING && defined ESMF_LIB
 !
 !git $Id$
-!svn $Id: esmf_coupler.h 1151 2023-02-09 03:08:53Z arango $
+!svn $Id: esmf_coupler.h 1166 2023-05-17 20:11:58Z arango $
 !=======================================================================
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license         Hernan G. Arango     !
@@ -1003,8 +1003,10 @@
                       RETURN
                     END IF
                   CASE DEFAULT
+                    LandValue(1)=MODELS(iSrc)%LandValue
                     CALL ESMF_FieldRegridStore (srcField=srcField,      &
      &                                          dstField=dstField,      &
+     &                                 srcMaskValues=LandValue,         &
      &                                 unmappedaction=unmap,            &
      &                                 routeHandle=routeHandle,         &
      &                                 regridmethod=regridMethod,       &
