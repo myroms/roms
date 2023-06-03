@@ -1,5 +1,5 @@
 # git $Id$
-# svn $Id: roms_functions.cmake 1151 2023-02-09 03:08:53Z arango $
+# svn $Id: roms_functions.cmake 1167 2023-06-03 00:34:07Z arango $
 #:::::::::::::::::::::::::::::::::::::::::::::::::::::: David Robertson :::
 # Copyright (c) 2002-2023 The ROMS/TOMS Group                           :::
 #   Licensed under a MIT/X style license                                :::
@@ -12,26 +12,34 @@ find_program(
   GREP
   NAMES grep egrep
   DOC "Grep command"
+  REQUIRED
 )
 
 find_program(
   PERL
   NAMES perl
   DOC "Perl command"
+  REQUIRED
 )
 
 find_program(
   CPP_CLEAN
   NAMES cpp_clean
-  HINTS "${CMAKE_SOURCE_DIR}/ROMS/Bin/"
+  HINTS "${CMAKE_CURRENT_SOURCE_DIR}/ROMS/Bin/"
   DOC "ROMS CPP Clean command"
+  REQUIRED
 )
 
 find_program(
   CPP_EXECUTABLE
   NAMES cpp
   DOC "C-preprocessor command"
+  REQUIRED
 )
+
+message( STATUS "CMAKE_SOURCE_DIR=${CMAKE_SOURCE_DIR}" )
+message( STATUS "CMAKE_CURRENT_SOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR}" )
+message( STATUS "CPP_CLEAN=${CPP_CLEAN}" )
 
 ###########################################################################
 # The "preprocess_fortran" function teaches CMake how to use CPP to
