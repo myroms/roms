@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 # git $Id$
-# svn $Id: build_roms.sh 1151 2023-02-09 03:08:53Z arango $
+# svn $Id: build_roms.sh 1170 2023-06-04 20:11:16Z arango $
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # Copyright (c) 2002-2023 The ROMS/TOMS Group                           :::
 #   Licensed under a MIT/X style license                                :::
@@ -121,7 +121,8 @@ export     MY_PROJECT_DIR=${PWD}
 # machine. This script is designed to more easily allow for differing paths
 # to the code and inputs on differing machines.
 
- export       MY_ROMS_SRC=${MY_ROOT_DIR}/trunk
+#export       MY_ROMS_SRC=${MY_ROOT_DIR}/git/trunk
+ export       MY_ROMS_SRC=${MY_ROOT_DIR}/svn/trunk
 
 # Set path of the directory containing makefile configuration (*.mk) files.
 # The user has the option to specify a customized version of these files

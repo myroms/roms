@@ -1,7 +1,7 @@
 #!/bin/csh -ef
 #
 # git $Id$
-# svn $Id: cbuild_roms.csh 1166 2023-05-17 20:11:58Z arango $
+# svn $Id: cbuild_roms.csh 1170 2023-06-04 20:11:16Z arango $
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # Copyright (c) 2002-2023 The ROMS/TOMS Group                           :::
 #   Licensed under a MIT/X style license                                :::
@@ -119,7 +119,8 @@ end
 
 # The path to the user's local current ROMS source code.
 
- setenv MY_ROMS_SRC          ${MY_ROOT_DIR}/trunk
+ setenv MY_ROMS_SRC          ${MY_ROOT_DIR}/git/trunk
+#setenv MY_ROMS_SRC          ${MY_ROOT_DIR}/svn/trunk
 
 # Which type(s) of libraries would you like?
 # NOTE: If you choose both and also choose to build the ROMS executable,
