@@ -1,6 +1,5 @@
 #!/bin/bash
 #
-# git $Id$
 # svn $Id: build_roms.sh 1170 2023-06-04 20:11:16Z arango $
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # Copyright (c) 2002-2023 The ROMS/TOMS Group                           :::

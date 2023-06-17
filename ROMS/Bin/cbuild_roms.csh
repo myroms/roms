@@ -1,7 +1,6 @@
 #!/bin/csh -ef
 #
-# git $Id$
-# svn $Id: cbuild_roms.csh 1170 2023-06-04 20:11:16Z arango $
+# svn $Id: cbuild_roms.csh 1171 2023-06-17 16:36:36Z arango $
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # Copyright (c) 2002-2023 The ROMS/TOMS Group                           :::
 #   Licensed under a MIT/X style license                                :::
@@ -303,7 +302,7 @@ else
 endif
 
 if ( $?FORT ) then
-  if ( "${FORT}" == "intel" ) then
+  if ( "${FORT}" == "ifort" ) then
     set compiler="-DCMAKE_Fortran_COMPILER=ifort"
   else if ( "${FORT}" == "gfortran" ) then
     set compiler="-DCMAKE_Fortran_COMPILER=gfortran"

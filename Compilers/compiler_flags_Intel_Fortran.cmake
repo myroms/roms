@@ -1,5 +1,5 @@
-# git $Id$
-# svn $Id: compiler_flags_Intel_Fortran.cmake 1151 2023-02-09 03:08:53Z arango $
+# git $Id: compiler_flags_Intel_Fortran.cmake 1171 2023-06-17 16:36:36Z arango $
+# svn $Id: compiler_flags_Intel_Fortran.cmake 1171 2023-06-17 16:36:36Z arango $
 #:::::::::::::::::::::::::::::::::::::::::::::::::::::: David Robertson :::
 # Copyright (c) 2002-2023 The ROMS/TOMS Group                           :::
 #   Licensed under a MIT/X style license                                :::
@@ -33,6 +33,12 @@ set( CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -fp-model precise" )
 ###########################################################################
 
 set( CMAKE_Fortran_FLAGS_RELEASE "-ip -O3 -traceback -check uninit" )
+
+###########################################################################
+# RELEASE WITH DEBUG INFORMATION FLAGS
+###########################################################################
+
+set( CMAKE_Fortran_FLAGS_RELWITHDEBINFO "-ip -O3 -g -traceback -check all -check bounds" )
 
 ###########################################################################
 # DEBUG FLAGS
@@ -73,12 +79,6 @@ set( ROMS_NOBOUNDSFLAG "" )
 
 set( my_fort   "ifort" )
 set( my_fc     "${CMAKE_Fortran_COMPILER}" )
-
-if( ${CMAKE_BUILD_TYPE} MATCHES "Debug" )
-  set( my_fflags "${CMAKE_Fortran_FLAGS} ${CMAKE_Fortran_FLAGS_DEBUG}" )
-else()
-  set( my_fflags "${CMAKE_Fortran_FLAGS} ${CMAKE_Fortran_FLAGS_RELEASE}" )
-endif()
 
 # Flags for the C-preprocessor
 
