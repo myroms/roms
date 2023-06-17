@@ -1,7 +1,6 @@
 # ROMS Coupling ESMF/NUOPC System: Import/Export Metadata Dictionary
 #
-#git $Id$
-#svn $Id: coupling_esmf.yaml 1151 2023-02-09 03:08:53Z arango $
+#svn $Id: coupling_esmf.yaml 1171 2023-06-17 16:36:36Z arango $
 #========================================================== Hernan G. Arango ==#
 #  Copyright (c) 2002-2023 The ROMS/TOMS Group                                 #
 #    Licensed under a MIT/X style license                                      #
@@ -94,7 +93,7 @@ metadata:
     debug_write:         false
     connected_to:        *ATM
     regrid_method:       bilinear
-    extrapolate_method:  none
+    extrapolate_method:  nearest
 
   - standard_name:       surface_net_longwave_flux
     long_name:           surface net longwave radiation flux
@@ -109,7 +108,7 @@ metadata:
     debug_write:         false
     connected_to:        *ATM
     regrid_method:       bilinear
-    extrapolate_method:  none
+    extrapolate_method:  nearest
 
   - standard_name:       net_downward_shortwave_flux_at_sea_water_surface
     long_name:           surface downward shortwave radiation flux
@@ -124,7 +123,7 @@ metadata:
     debug_write:         false
     connected_to:        *ATM
     regrid_method:       bilinear
-    extrapolate_method:  none
+    extrapolate_method:  nearest
 
   - standard_name:       net_shortwave_flux_at_sea_water_surface
     long_name:           surface shortwave radiation flux
@@ -139,7 +138,7 @@ metadata:
     debug_write:         false
     connected_to:        *ATM
     regrid_method:       bilinear
-    extrapolate_method:  none
+    extrapolate_method:  nearest
 
   - standard_name:       surface_latent_heat_flux
     long_name:           surface latent heat flux
@@ -154,7 +153,7 @@ metadata:
     debug_write:         false
     connected_to:        *ATM
     regrid_method:       bilinear
-    extrapolate_method:  none
+    extrapolate_method:  nearest
 
   - standard_name:       surface_sensible_heat_flux
     long_name:           surface sensible heat flux
@@ -169,7 +168,7 @@ metadata:
     debug_write:         false
     connected_to:        *ATM
     regrid_method:       bilinear
-    extrapolate_method:  none
+    extrapolate_method:  nearest
 
   - standard_name:       mean_sea_level_pressure
     long_name:           mean sea level pressure
@@ -184,7 +183,7 @@ metadata:
     debug_write:         false
     connected_to:        *ATM
     regrid_method:       bilinear
-    extrapolate_method:  none
+    extrapolate_method:  nearest
 
   - standard_name:       surface_air_pressure
     long_name:           surface air pressure
@@ -199,7 +198,7 @@ metadata:
     debug_write:         false
     connected_to:        *ATM
     regrid_method:       bilinear
-    extrapolate_method:  none
+    extrapolate_method:  nearest
 
   - standard_name:       surface_air_temperature
     long_name:           surface (2m) air temperature
@@ -214,7 +213,7 @@ metadata:
     debug_write:         false
     connected_to:        *ATM
     regrid_method:       bilinear
-    extrapolate_method:  none
+    extrapolate_method:  nearest
 
   - standard_name:       surface_specific_humidity
     long_name:           surface specific humidity
@@ -229,7 +228,7 @@ metadata:
     debug_write:         false
     connected_to:        *ATM
     regrid_method:       bilinear
-    extrapolate_method:  none
+    extrapolate_method:  nearest
 
   - standard_name:       surface_relative_humidity
     long_name:           surface relative humidity
@@ -244,7 +243,7 @@ metadata:
     debug_write:         false
     connected_to:        *ATM
     regrid_method:       bilinear
-    extrapolate_method:  none
+    extrapolate_method:  nearest
 
   - standard_name:       precipitation_flux
     long_name:           total precipitation rate
@@ -259,7 +258,7 @@ metadata:
     debug_write:         false
     connected_to:        *ATM
     regrid_method:       bilinear
-    extrapolate_method:  none
+    extrapolate_method:  nearest
 
   - standard_name:       surface_eastward_wind
     long_name:           surface zonal wind component
@@ -274,7 +273,7 @@ metadata:
     debug_write:         false
     connected_to:        *ATM
     regrid_method:       bilinear
-    extrapolate_method:  none
+    extrapolate_method:  nearest
 
   - standard_name:       surface_northward_wind
     long_name:           surface meridional wind component
@@ -289,7 +288,7 @@ metadata:
     debug_write:         false
     connected_to:        *ATM
     regrid_method:       bilinear
-    extrapolate_method:  none
+    extrapolate_method:  nearest
 
   - standard_name:       surface_downward_heat_flux_in_sea_water
     long_name:           surface net heat flux
@@ -304,7 +303,7 @@ metadata:
     debug_write:         false
     connected_to:        *ATM
     regrid_method:       bilinear
-    extrapolate_method:  none
+    extrapolate_method:  nearest
 
   - standard_name:       surface_upward_water_flux
     long_name:           surface freshwater flux (E-P)
@@ -319,7 +318,7 @@ metadata:
     debug_write:         false
     connected_to:        *ATM
     regrid_method:       bilinear
-    extrapolate_method:  none
+    extrapolate_method:  nearest
 
   - standard_name:       surface_wind_x_stress
     long_name:           surface zonal wind stress component
@@ -334,7 +333,7 @@ metadata:
     debug_write:         false
     connected_to:        *ATM
     regrid_method:       bilinear
-    extrapolate_method:  none
+    extrapolate_method:  nearest
 
   - standard_name:       surface_wind_y_stress
     long_name:           surface meridional wind stress component
@@ -349,4 +348,4 @@ metadata:
     debug_write:         false
     connected_to:        *ATM
     regrid_method:       bilinear
-    extrapolate_method:  none
+    extrapolate_method:  nearest

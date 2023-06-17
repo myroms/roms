@@ -1,5 +1,5 @@
-# git $Id$
-# svn $Id: compiler_flags_GNU_Fortran.cmake 1160 2023-03-25 21:13:13Z arango $
+# git $Id: compiler_flags_GNU_Fortran.cmake 1171 2023-06-17 16:36:36Z arango $
+# svn $Id: compiler_flags_GNU_Fortran.cmake 1171 2023-06-17 16:36:36Z arango $
 #:::::::::::::::::::::::::::::::::::::::::::::::::::::: David Robertson :::
 # Copyright (c) 2002-2023 The ROMS/TOMS Group                           :::
 #   Licensed under a MIT/X style license                                :::
@@ -22,13 +22,19 @@ endif()
 # FLAGS COMMON TO ALL BUILD TYPES
 ###########################################################################
 
-set( CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -frepack-arrays -fallow-argument-mismatch")
+set( CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -frepack-arrays -fallow-argument-mismatch" )
 
 ###########################################################################
 # RELEASE FLAGS
 ###########################################################################
 
 set( CMAKE_Fortran_FLAGS_RELEASE "-O3 -ffast-math" )
+
+###########################################################################
+# RELEASE WITH DEBUG INFORMATION FLAGS
+###########################################################################
+
+set( CMAKE_Fortran_FLAGS_RELWITHDEBINFO "-O3 -g -ffast-math -fbounds-check -fbacktrace -fcheck=all" )
 
 ###########################################################################
 # DEBUG FLAGS
@@ -69,12 +75,6 @@ set( ROMS_NOBOUNDSFLAG "-fno-bounds-check" )
 
 set( my_fort   "gfortran" )
 set( my_fc     "${CMAKE_Fortran_COMPILER}" )
-
-if( ${CMAKE_BUILD_TYPE} MATCHES "Debug" )
-  set( my_fflags "${CMAKE_Fortran_FLAGS} ${CMAKE_Fortran_FLAGS_DEBUG}" )
-else()
-  set( my_fflags "${CMAKE_Fortran_FLAGS} ${CMAKE_Fortran_FLAGS_RELEASE}" )
-endif()
 
 # Flags for the C-preprocessor
 

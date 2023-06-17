@@ -1,15 +1,12 @@
-ROMS/TOMS Framework: Jun 4, 2023
+ROMS/TOMS Framework: Jun 17, 2023
 ===================
 
 Copyright (c) 2002-2023 The ROMS/TOMS Group
   Licensed under a MIT/X style license
   See License_ROMS.txt
 
-git: $URL https://www.myroms.org/git/src $
-git: $Id$
-
 svn: $HeadURL: https://www.myroms.org/svn/src/trunk/ROMS/Version $
 svn: $LastChangedBy: arango $
-svn: $LastChangedRevision: 1170 $
-svn: $LastChangedDate: 2023-06-04 16:11:16 -0400 (Sun, 04 Jun 2023) $
+svn: $LastChangedRevision: 1171 $
+svn: $LastChangedDate: 2023-06-17 12:36:36 -0400 (Sat, 17 Jun 2023) $
 

@@ -1,5 +1,5 @@
-# git $Id$
-# svn $Id: roms_compiler_flags.cmake 1151 2023-02-09 03:08:53Z arango $
+# git $Id: roms_compiler_flags.cmake 1171 2023-06-17 16:36:36Z arango $
+# svn $Id: roms_compiler_flags.cmake 1171 2023-06-17 16:36:36Z arango $
 #:::::::::::::::::::::::::::::::::::::::::::::::::::::: David Robertson :::
 # Copyright (c) 2002-2023 The ROMS/TOMS Group                           :::
 #   Licensed under a MIT/X style license                                :::
@@ -23,9 +23,23 @@ else()
   message( STATUS "Fortran compiler with ID ${CMAKE_Fortran_COMPILER_ID} will be used with CMake default options")
 endif()
 
+string( TOUPPER ${CMAKE_BUILD_TYPE} build_flags )
+message( STATUS "ROMS BUILD TYPE = ${CMAKE_BUILD_TYPE}" )
+message( STATUS "ROMS COMPILER FLAGS = ${CMAKE_Fortran_FLAGS} ${CMAKE_Fortran_FLAGS_${build_flags}}" )
+
 ###########################################################################
 # C-Preprocessor Definitions
 ###########################################################################
+
+# Set "my_fflags" used in ROMS for compiling information.
+
+if( ${CMAKE_BUILD_TYPE} MATCHES "Debug" )
+  set( my_fflags "${CMAKE_Fortran_FLAGS} ${CMAKE_Fortran_FLAGS_DEBUG}" )
+elseif( ${CMAKE_BUILD_TYPE} MATCHES "RelWithDebInfo" )
+  set( my_fflags "${CMAKE_Fortran_FLAGS} ${CMAKE_Fortran_FLAGS_RELWITHDEBINFO}" )
+else()
+  set( my_fflags "${CMAKE_Fortran_FLAGS} ${CMAKE_Fortran_FLAGS_RELEASE}" )
+endif()
 
 string( TOUPPER ${my_os} OS )
 string( TOUPPER ${my_cpu} CPU )
