@@ -1,6 +1,8 @@
 *.F          filter=id
 *.h          filter=id
 *.in         filter=id
+*.cmake      filter=id
+*.md         filter=id
 *.mk         filter=id
 *.csh        filter=id
 *.sh         filter=id
