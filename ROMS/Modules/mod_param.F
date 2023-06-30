@@ -1480,12 +1480,12 @@
 !-----------------------------------------------------------------------
 !
 #ifdef SOLVE3D
-      nLBCvar=5+MT
+      nLBCvar=5+MT                 ! zeta, ubar, vbar, u, v, Tvar(1:MT)
 # if defined GLS_MIXING || defined MY25_MIXING
-      nLBCvar=nLBCvar+1
+      nLBCvar=nLBCvar+1            ! TKE
 # endif
 #else
-      nLBCvar=3
+      nLBCvar=3                    ! zeta, ubar, vbar
 #endif
 !
       IF (.not.allocated(LBC)) THEN
