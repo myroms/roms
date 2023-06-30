@@ -450,6 +450,12 @@
 !  State variables indices (order is important). Notice that current
 !  extra-observations index (isRadial) needs to be initialized to zero
 !  here and reset elsewhere to the value provided by the user.
+!  Currently, the maximum number of state variables in 3D applications 
+!  is 9+2*MT. If MT=2 (temperature and salinity), the state variables
+!  have the following order:
+!
+!     1,   2,   3,4,5,      6,      7,  8,9,  10,  11,     12,     13
+!  zeta,ubar,vbar,u,v,Tvar(1),Tvar(2),TKE,W,Ustr,Vstr,Tsur(1),Tsur(2)
 !
       integer  :: isFsur = 1                ! free-surface
       integer  :: isUbar = 2                ! 2D U-velocity
@@ -527,7 +533,7 @@
       real(dp), allocatable :: Tintrp(:,:,:)
       real(dp), allocatable :: Vtime(:,:,:)
 !
-      character (len=5  )    :: version = '4.1  '
+      character (len=5  )    :: version = '4.2  '
       character (len=40 )    :: varnam(MV)
       character (len=44 )    :: date_str
       character (len=46 )    :: Tname(0:NV)
@@ -1201,6 +1207,12 @@
         ic=ic+1
         isTvar(i)=ic
       END DO
+# if defined GLS_MIXING || defined MY25_MIXING
+      ic=ic+1
+      isMtke=ic
+# endif
+      ic=ic+1
+      isWvel=ic
 #endif
 #if defined ADJUST_WSTRESS || defined FORCING_SV     || \
     defined HESSIAN_FSV    || defined SO_SEMI        || \
@@ -1211,14 +1223,13 @@
 #endif
 #ifdef SOLVE3D
 # if defined ADJUST_STFLUX  || defined FORCING_SV     || \
-    defined HESSIAN_FSV    || defined SO_SEMI        || \
-    defined STOCHASTIC_OPT
+     defined HESSIAN_FSV    || defined SO_SEMI        || \
+     defined STOCHASTIC_OPT
       DO i=1,MT
         ic=ic+1
         isTsur(i)=ic
       END DO
 # endif
-      isWvel=ic+1
 #endif
 !
 !  Set generic lateral boundary indices for LBC structure.  Use the same
@@ -1236,9 +1247,6 @@
       isBu3d=isUvel                           ! 3D U-variables
       isBv3d=isVvel                           ! 3D V-variables
       isBw3d=isTvar(1)                        ! 3D W-variables
-# if defined GLS_MIXING || defined MY25_MIXING
-      isMtke=isTvar(MT)+1                     ! turbulent variables
-# endif
 #endif
 !
 !  Initialize IO information variables.

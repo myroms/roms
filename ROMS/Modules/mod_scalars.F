@@ -1835,12 +1835,12 @@
         DO ng=1,Ngrids
 
 #ifdef SOLVE3D
-          allocate ( SCALARS(ng) % Fstate(8+2*MT) )
-          Dmem(ng)=Dmem(ng)+REAL(8+2*MT,r8)
+          allocate ( SCALARS(ng) % Fstate(9+2*MT) )
+          Dmem(ng)=Dmem(ng)+REAL(9+2*MT,r8)
           SCALARS(ng) % Fstate = .FALSE.
 
           allocate ( SCALARS(ng) % Lstate(8+2*MT) )
-          Dmem(ng)=Dmem(ng)+REAL(8+2*MT,r8)
+          Dmem(ng)=Dmem(ng)+REAL(9+2*MT,r8)
           SCALARS(ng) % Lstate = .FALSE.
 #else
           allocate ( SCALARS(ng) % Fstate(5) )
