@@ -2,7 +2,7 @@
       MODULE mod_ncparam
 !
 !git $Id$
-!svn $Id: mod_ncparam.F 1164 2023-04-03 21:09:46Z arango $
+!svn $Id: mod_ncparam.F 1176 2023-07-01 19:23:18Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -191,7 +191,6 @@
 !
 !  Input/output identification indices.
 !
-      integer  :: idAice        ! fraction of cell covered by ice
       integer  :: idbath        ! bathymetry
       integer  :: idBgEr        ! Background error at observations
       integer  :: idBgTh        ! Threshold for BQC check
@@ -210,9 +209,7 @@
       integer  :: idgTnc        ! generic tracer nudging coefficients
       integer  :: idJWTy        ! Jerlov water type
       integer  :: idHbbl        ! depth of bottom boundary layer
-      integer  :: idHice        ! depth of ice cover
       integer  :: idHsbl        ! depth of surface boundary layer
-      integer  :: idHsno        ! depth of snow cover
       integer  :: idIncr        ! 4D-Var analysis increment
       integer  :: idInno        ! 4D-Var innovation vector
       integer  :: idKhor        ! convolution horizontal diffusion
@@ -287,7 +284,6 @@
       integer  :: idTLmo        ! TLM at observation locations
       integer  :: idTair        ! surface air temperature
       integer  :: idTdif        ! vertical T-diffusion coefficient
-      integer  :: idTice        ! temperature of ice surface
       integer  :: idtime        ! ocean time
       integer  :: idTref        ! tidal reference date for zero phase
       integer  :: idTper        ! tidal period
@@ -318,7 +314,6 @@
       integer  :: idUclm        ! 3D U-velocity climatology
       integer  :: idUfx1        ! time averaged U-flux for 2D
       integer  :: idUfx2        ! time averaged U-flux for 3D
-      integer  :: idUice        ! ice U-velocity
       integer  :: idUsms        ! surface U-momentum stress
       integer  :: idUsuE        ! model surface eastward velocity
       integer  :: idUsur        ! surface U-velocity
@@ -351,7 +346,6 @@
       integer  :: idVclm        ! 3D V-velocity climatology
       integer  :: idVfx1        ! 2D momentum time-averaged V-flux
       integer  :: idVfx2        ! 3D momentum time-averaged V-flux
-      integer  :: idVice        ! ice V-velocity
       integer  :: idVmLS        ! vertical mixing length scale
       integer  :: idVmKK        ! Kinetic energy vertical mixing
       integer  :: idVmKP        ! Length scale vertical mixing
@@ -450,7 +444,7 @@
 !  State variables indices (order is important). Notice that current
 !  extra-observations index (isRadial) needs to be initialized to zero
 !  here and reset elsewhere to the value provided by the user.
-!  Currently, the maximum number of state variables in 3D applications 
+!  Currently, the maximum number of state variables in 3D applications
 !  is 9+2*MT. If MT=2 (temperature and salinity), the state variables
 !  have the following order:
 !
@@ -1095,6 +1089,9 @@
       USE mod_parallel
 #ifdef BIOLOGY
       USE mod_biology
+#endif
+#ifdef SEAICE
+      USE mod_ice
 #endif
       USE mod_iounits
       USE mod_scalars
@@ -2089,6 +2086,10 @@
             idMOMi=varid
           CASE ('idMOMf')
             idMOMf=varid
+#endif
+
+#ifdef SEAICE
+# include <ice_var.h>
 #endif
 
 #ifdef BIOLOGY

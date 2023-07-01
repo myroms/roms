@@ -2,7 +2,7 @@
       MODULE mod_param
 !
 !git $Id$
-!svn $Id: mod_param.F 1165 2023-04-10 01:59:07Z arango $
+!svn $Id: mod_param.F 1176 2023-07-01 19:23:18Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -355,6 +355,7 @@
         logical :: closed
         logical :: Flather
         logical :: gradient
+        logical :: mixed
         logical :: nested
         logical :: nudging
         logical :: periodic
@@ -1162,10 +1163,6 @@
       IF (allocated(tl_Vadvection)) deallocate ( tl_Vadvection )
 # endif
 #endif
-
-
-
-
 !
 !-----------------------------------------------------------------------
 !  Deallocate dimension parameters.
@@ -1500,6 +1497,7 @@
               LBC(ibry,ivar,ng)%closed = .FALSE.
               LBC(ibry,ivar,ng)%Flather = .FALSE.
               LBC(ibry,ivar,ng)%gradient = .FALSE.
+              LBC(ibry,ivar,ng)%mixed = .FALSE.
               LBC(ibry,ivar,ng)%nested = .FALSE.
               LBC(ibry,ivar,ng)%nudging = .FALSE.
               LBC(ibry,ivar,ng)%periodic = .FALSE.
@@ -1523,6 +1521,7 @@
               ad_LBC(ibry,ivar,ng)%closed = .FALSE.
               ad_LBC(ibry,ivar,ng)%Flather = .FALSE.
               ad_LBC(ibry,ivar,ng)%gradient = .FALSE.
+              ad_LBC(ibry,ivar,ng)%mixed = .FALSE.
               ad_LBC(ibry,ivar,ng)%nested = .FALSE.
               ad_LBC(ibry,ivar,ng)%nudging = .FALSE.
               ad_LBC(ibry,ivar,ng)%periodic = .FALSE.
@@ -1547,6 +1546,7 @@
               tl_LBC(ibry,ivar,ng)%closed = .FALSE.
               tl_LBC(ibry,ivar,ng)%Flather = .FALSE.
               tl_LBC(ibry,ivar,ng)%gradient = .FALSE.
+              tl_LBC(ibry,ivar,ng)%mixed = .FALSE.
               tl_LBC(ibry,ivar,ng)%nested = .FALSE.
               tl_LBC(ibry,ivar,ng)%nudging = .FALSE.
               tl_LBC(ibry,ivar,ng)%periodic =.FALSE.

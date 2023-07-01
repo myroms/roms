@@ -1,7 +1,7 @@
 # ROMS I/O NetCDF Metadata Dictionary
 #
 #git $Id$
-#svn $Id: varinfo.yaml 1166 2023-05-17 20:11:58Z arango $
+#svn $Id: varinfo.yaml 1176 2023-07-01 19:23:18Z arango $
 #========================================================= Hernan G. Arango ==#
 #  Copyright (c) 2002-2023 The ROMS/TOMS Group                                #
 #    Licensed under a MIT/X style license                                     #
@@ -5419,62 +5419,7 @@ metadata:
   ###  Sea-ice State Variables  ###
   #################################
 
-  - variable:       prate
-    standard_name:  precipitation_flux
-    long_name:      precipitation rate
-    units:          kilogram meter-2 second-1
-    field:          precipitation rate
-    time:           prate_time
-    index_code:     idPrate
-    type:           r2dvar
-    add_offset:     0.0d0
-    scale:          1.0d0
-
-  - variable:       icec
-    standard_name:  sea_ice_concentration
-    long_name:      observed ice concentration
-    units:          nondimensional
-    field:          ice concentration
-    time:           icec_time
-    index_code:     idIcec
-    type:           r2dvar
-    add_offset:     0.0d0
-    scale:          1.0d0
-
-  - variable:       skt
-    standard_name:  sea_surface_skin_temperature
-    long_name:      skin temperature
-    units:          Kelvin
-    field:          skin temperature
-    time:           skt_time
-    index_code:     idSkt
-    type:           r2dvar
-    add_offset:     0.0d0
-    scale:          1.0d0
-
-  - variable:       uice
-    standard_name:  sea_ice_x_velocity
-    long_name:      u-component of ice velocity
-    units:          meter second-1
-    field:          sea ice x-velocity
-    time:           ocean_time
-    index_code:     idUice
-    type:           u2dvar
-    add_offset:     0.0d0
-    scale:          1.0d0
-
-  - variable:       vice
-    standard_name:  sea_ice_y_velocity
-    long_name:      v-component of ice velocity
-    units:          meter second-1
-    field:          sea ice y-velocity
-    time:           ocean_time
-    index_code:     idVice
-    type:           v2dvar
-    add_offset:     0.0d0
-    scale:          1.0d0
-
-  - variable:       aice
+  - variable:       Aice                                             # Input/Output
     standard_name:  sea_ice_area_fraction
     long_name:      fraction of cell covered by ice
     units:          nondimensional
@@ -5485,10 +5430,10 @@ metadata:
     add_offset:     0.0d0
     scale:          1.0d0
 
-  - variable:       hice
+  - variable:       ice_thickness                                    # Input/Output
     standard_name:  sea_ice_thickness
     long_name:      average ice thickness in cell
-    units:          meter
+    units:          meter                                            # [m]
     field:          ice thickness
     time:           ocean_time
     index_code:     idHice
@@ -5496,10 +5441,32 @@ metadata:
     add_offset:     0.0d0
     scale:          1.0d0
 
-  - variable:       snow_thick
+  - variable:       meltpond_thickness                               # Input/Output
+    standard_name:  melt_pond_water_thickness_on_sea_ice
+    long_name:      surface melt water thickness on ice
+    units:          meter                                            # [m]
+    field:          sea ice melt water thickness
+    time:           ocean_time
+    index_code:     idHmel
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       ice_age                                          # Input/Output
+    standard_name:  age_of_sea_ice
+    long_name:      age of sea ice
+    units:          second                                           # [s]
+    field:          ice age
+    time:           ocean_time
+    index_code:     idIage
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       snow_thickness                                   # Input/Output
     standard_name:  snowfall_thickness_above_sea_ice
     long_name:      thickness of snow cover
-    units:          meter
+    units:          meter                                            # [m]
     field:          snow thickness
     time:           ocean_time
     index_code:     idHsno
@@ -5507,65 +5474,21 @@ metadata:
     add_offset:     0.0d0
     scale:          1.0d0
 
-  - variable:       tisrf
-    standard_name:  sea_ice_surface_temperature
-    long_name:      temperature of ice surface
-    units:          Celcius
-    field:          sea ice surface temperature
+  - variable:       Tice                                             # Input/Output
+    standard_name:  sea_ice_temperature
+    long_name:      interior ice temperature
+    units:          Celcius                                          # [C]
+    field:          sea ice interior temperature
     time:           ocean_time
     index_code:     idTice
     type:           r2dvar
     add_offset:     0.0d0
     scale:          1.0d0
 
-  - variable:       ti
-    standard_name:  sea_ice_temperature
-    long_name:      interior ice temperature
-    units:          Celcius
-    field:          sea ice interior temperature
-    time:           ocean_time
-    index_code:     idTimid
-    type:           r2dvar
-    add_offset:     0.0d0
-    scale:          1.0d0
-
-  - variable:       tau_iw
-    standard_name:  sea_ice_and_sea_water_friction_velocity
-    long_name:      ice-water friction velocity
-    units:          meter second-1
-    field:          sea ice friction velocity
-    time:           ocean_time
-    index_code:     idTauiw
-    type:           r2dvar
-    add_offset:     0.0d0
-    scale:          1.0d0
-
-  - variable:       chu_iw
-    standard_name:  sea_ice_and_sea_water_transfer_coefficient
-    long_name:      ice-water momentum transfer coefficient
-    units:          meter second-1
-    field:          sea ice transfer coefficient
-    time:           ocean_time
-    index_code:     idChuiw
-    type:           r2dvar
-    add_offset:     0.0d0
-    scale:          1.0d0
-
-  - variable:       s0mk
-    standard_name:  salinity_of_molecular_sub_layer_under_sea_ice
-    long_name:      salinity of molecular sub-layer under ice
-    units:          nondimensional
-    field:          under sea ice salinity
-    time:           ocean_time
-    index_code:     idS0mk
-    type:           r2dvar
-    add_offset:     0.0d0
-    scale:          1.0d0
-
-  - variable:       t0mk
+  - variable:       under_ice_temp                                   # Input/Output
     standard_name:  temperature_of_molecular_sub_layer_under_sea_ice
     long_name:      temperature of molecular sub-layer under ice
-    units:          degrees Celsius
+    units:          Celsius                                          # [C]
     field:          under sea ice temperature
     time:           ocean_time
     index_code:     idT0mk
@@ -5573,156 +5496,167 @@ metadata:
     add_offset:     0.0d0
     scale:          1.0d0
 
-  - variable:       sfwat
-    standard_name:  melt_sea_water_tickness_on_sea_ice
-    long_name:      surface melt water thickness on ice
-    units:          meter
-    field:          sea ice melt water thickness
+  - variable:       under_ice_salt                                   # Input/Output
+    standard_name:  salinity_of_molecular_sub_layer_under_sea_ice
+    long_name:      salinity of molecular sub-layer under ice
+    units:          nondimensional                                   # [PSS]
+    field:          under sea ice salinity
     time:           ocean_time
-    index_code:     idSfwat
+    index_code:     idS0mk
     type:           r2dvar
     add_offset:     0.0d0
     scale:          1.0d0
 
-  - variable:       iomflx
-    standard_name:  water_flux_out_of_sea_ice_and_sea_water
-    long_name:      ice-ocean mass flux
-    units:          meter second-1
-    field:          ice-ocean mass flux
+  - variable:       ice_sst                                          # Input/Output
+    standard_name:  sea_ice_surface_temperature
+    long_name:      temperature of ice/snow surface
+    units:          Celcius                                          # [C]
+    field:          sea ice surface temperature
     time:           ocean_time
-    index_code:     idIomflx
+    index_code:     idIsst
     type:           r2dvar
     add_offset:     0.0d0
     scale:          1.0d0
 
-  - variable:       sig11
+  - variable:       Uice                                             # Input/Output
+    standard_name:  sea_ice_x_velocity
+    long_name:      u-component of ice velocity
+    units:          meter second-1                                   # [m/s]
+    field:          sea ice x-velocity
+    time:           ocean_time
+    index_code:     idUice
+    type:           u2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       Vice                                             # Input/Output
+    standard_name:  sea_ice_y_velocity
+    long_name:      v-component of ice velocity
+    units:          meter second-1                                   # [m/s]
+    field:          sea ice y-velocity
+    time:           ocean_time
+    index_code:     idVice
+    type:           v2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+/.,mnbvc43
+  - variable:       ice_Sxx                                          # Input/Output
     standard_name:  sea_ice_internal_xx_stress
-    long_name:      internal ice stress 11 component
-    units:          Newton meter-1
+    long_name:      internal ice stress xx-component
+    units:          Newton meter-1                                   # [N/m]
     field:          sea ice xx-stress
     time:           ocean_time
-    index_code:     idSig11
+    index_code:     idISxx
     type:           r2dvar
     add_offset:     0.0d0
     scale:          1.0d0
 
-  - variable:       sig22
-    standard_name:  sea_ice_internal_yy_stress
-    long_name:      internal ice stress 22 component
-    units:          Newton meter-1
-    field:          sea ice yy-stress
-    time:           ocean_time
-    index_code:     idSig22
-    type:           r2dvar
-    add_offset:     0.0d0
-    scale:          1.0d0
-
-  - variable:       sig12
+  - variable:       ice_Sxy                                          # Input/Output
     standard_name:  sea_ice_internal_xy_stress
-    long_name:      internal ice stress 12 component
-    units:          Newton meter-1
+    long_name:      internal ice stress xy-component
+    units:          Newton meter-1                                   # [N/m]
     field:          sea ice xy-stress
     time:           ocean_time
-    index_code:     idSig12
+    index_code:     idISxy
     type:           r2dvar
     add_offset:     0.0d0
     scale:          1.0d0
 
-  - variable:       wg2d
-    standard_name:  square_of_surface_wind_gustiness_from_file
-    long_name:      surface wind gustiness squared from NCEP fluxes
-    units:          meter2 second-2
-    field:          wind gustiness square
+  - variable:       ice_Syy                                          # Input/Output
+    standard_name:  sea_ice_internal_yy_stress
+    long_name:      internal ice stress yy-component
+    units:          Newton meter-1                                   # [N/m]
+    field:          sea ice yy-stress
     time:           ocean_time
-    index_code:     idWg2d
+    index_code:     idISyy
     type:           r2dvar
     add_offset:     0.0d0
     scale:          1.0d0
 
-  - variable:       cdd
-    standard_name:  momentum_shear_stress_transfer_coefficient_from_file
-    long_name:      momentum transfer coefficient from NCEP fluxes
-    units:          nondimensional
-    field:          momentum transfer coefficient
+  - variable:       io_massflux                                      # Output
+    standard_name:  water_flux_out_of_sea_ice_and_sea_water
+    long_name:      ice-ocean mass flux
+    units:          meter second-1                                   # [m/s]
+    field:          ice-ocean mass flux
     time:           ocean_time
-    index_code:     idCdd
+    index_code:     idIOmf
     type:           r2dvar
     add_offset:     0.0d0
     scale:          1.0d0
 
-  - variable:       chd
-    standard_name:  sensible_heat_transfer_coefficient_from_file
-    long_name:      sensible heat transfer coefficient from NCEP
-    units:          nondimensional
-    field:          heat transfer coefficient
+  - variable:       io_friction_vel                                  # Output
+    standard_name:  sea_ice_and_sea_water_friction_velocity
+    long_name:      ice-ocean friction velocity                      # [m/s]
+    units:          meter second-1
+    field:          sea ice friction velocity
     time:           ocean_time
-    index_code:     idChd
+    index_code:     idIOfv
     type:           r2dvar
     add_offset:     0.0d0
     scale:          1.0d0
 
-  - variable:       ced
-    standard_name:  latent_heat_transfer_coefficient_from_file
-    long_name:      latent heat transfer coefficient from NCEP
-    units:          nondimensional
-    field:          latent transfer coefficient
+  - variable:       io_transfer_coef                                 # Output
+    standard_name:  sea_ice_and_sea_water_transfer_coefficient
+    long_name:      ice-ocean momentum transfer coefficient
+    units:          meter second-1                                   # [m/s]
+    field:          sea ice transfer coefficient
     time:           ocean_time
-    index_code:     idCed
+    index_code:     idIOmt
     type:           r2dvar
     add_offset:     0.0d0
     scale:          1.0d0
 
-  - variable:       wg2m
-    standard_name:  squared_surface_wind_gustiness_from_model
-    long_name:      surface wind gustiness squared from model
-    units:          meter2 second-2
-    field:          wind gustiness square
+  - variable:       ice_divergence                                   # Output
+    standard_name:  sea_ice_divergence_rate
+    long_name:      sea ice divergence rate
+    units:          meter3 second-1                                  # [m3/s]
+    field:          sea ice divergence rate
     time:           ocean_time
-    index_code:     idWg2m
+    index_code:     idWdiv
     type:           r2dvar
     add_offset:     0.0d0
     scale:          1.0d0
 
-  - variable:       cdm
-    standard_name:  momentum_shear_stress_transfer_coefficient_from_model
-    long_name:      momentum transfer coefficient from model
-    units:          nondimensional
-    field:          momentum transfer coefficient
+  - variable:       ai_melt_freeze                                   # Output
+    standard_name:  rate_of_melting_or_freezing_at_atmosphere_sea_ice_interface
+    long_name:      rate of melt/freeze at the atmosphere-ice interface
+    units:          meter second-1                                   # [m/s]
+    field:          air-ice melt/freeze rate
     time:           ocean_time
-    index_code:     idCdm
+    index_code:     idW_ai
     type:           r2dvar
     add_offset:     0.0d0
     scale:          1.0d0
 
-  - variable:       chm
-    standard_name:  sensible_heat_transfer_coefficient_from_model
-    long_name:      sensible heat transfer coefficient from model
-    units:          nondimensional
-    field:          sensible transfer coefficient
+  - variable:       ao_melt_freeze                                   # Output
+    standard_name:  rate_of_melting_or_freezing_at_atmosphere_ocean_interface
+    long_name:      rate of melt/freeze at the atmosphere-ocean interface
+    units:          meter second-1                                   # [m/s]
+    field:          air-ocean melt/freeze rate
     time:           ocean_time
-    index_code:     idChm
+    index_code:     idW_ao
     type:           r2dvar
     add_offset:     0.0d0
     scale:          1.0d0
 
-  - variable:       cem
-    standard_name:  latent_heat_transfer_coefficient_from_file
-    long_name:      latent heat transfer coefficient from model
-    units:          nondimensional
-    field:          latent transfer coefficient
+  - variable:       io_melt_freeze                                   # Output
+    standard_name:  rate_of_melting_or_freezing_at_sea_ice_ocean_interface
+    long_name:      rate of melt/freeze at the ice-ocean interface
+    units:          meter second-1                                   # [m/s]
+    field:          ice-ocean melt/freeze rate
     time:           ocean_time
-    index_code:     idCem
+    index_code:     idW_io
     type:           r2dvar
     add_offset:     0.0d0
     scale:          1.0d0
 
-  - variable:       rhoa
-    standard_name:  surface_air_density
-    long_name:      near-surface air density from NCEP fluxes
-    units:          kg meter-3
-    field:          air density
+  - variable:       melt_freeze_runoff                               # Output
+    standard_name:  rate_of_melting_or_freezing_runoff_into_ocean
+    long_name:      rate of melt/freeze runoff into ocean
+    units:          meter second-1                                   # [m/s]
+    field:          melt/freeze runoff rate
     time:           ocean_time
-    index_code:     idRhoa
+    index_code:     idW_ro
     type:           r2dvar
     add_offset:     0.0d0
     scale:          1.0d0

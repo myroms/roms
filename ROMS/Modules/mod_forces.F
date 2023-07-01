@@ -2,7 +2,7 @@
       MODULE mod_forces
 !
 !git $Id$
-!svn $Id: mod_forces.F 1151 2023-02-09 03:08:53Z arango $
+!svn $Id: mod_forces.F 1176 2023-07-01 19:23:18Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -128,6 +128,19 @@
 #if defined ADJUST_STFLUX && defined FOUR_DVAR
 !                                                                      !
 !  tflux        Surface tracer flux adjustments (:,:,Nfrec,2,itrc)     !
+#endif
+#if defined ICE_MODEL && defined ICE_BULK_FLUXES && defined BULK_FLUXES
+!                                                                      !
+!  Seaice fluxes.                                                      !
+!                                                                      !
+!  Qnet_ai      Surface net heat flux at the Air/Ice inteface          !
+!  Qnet_ao      Surface net heat flux at the Air/Ocean inteface        !
+!  snow         Snow fall rate on ice                                  !
+!  srflx_ice    Shortwave radiation flux on ice                        !
+!  sustr_ai     Surface U-momentum stress at the Air/Ice interface     !
+!  svstr_ai     Surface V-momentum stress at the Air/Ice interface     !
+!  sustr_ao     Surface U-momentum stress at the Air/Ocean interface   !
+!  svstr_ao     Surface V-momentum stress at the Air/Ocean interface   !
 #endif
 !                                                                      !
 !  Bottom tracer fluxes.                                               !
@@ -271,6 +284,12 @@
 #  ifndef ANA_SRFLUX
           real(r8), pointer :: srflxG(:,:,:)
 #  endif
+#  ifdef ICE_ALBEDO
+          real(r8), pointer :: albedo(:,:)
+#   ifdef ICE_MODEL
+          real(r8), pointer :: albedo_ice(:,:)
+#   endif
+#  endif
 # endif
 
 # if defined RED_TIDE && defined DAILY_SHORTWAVE
@@ -323,6 +342,18 @@
 #  ifdef EMINUSP
           real(r8), pointer :: evap(:,:)
 #  endif
+# endif
+
+# if defined ICE_MODEL       && \
+     defined ICE_BULK_FLUXES && defined BULK_FLUXES
+          real(r8), pointer :: Qnet_ai(:,:)
+          real(r8), pointer :: Qnet_ao(:,:)
+          real(r8), pointer :: srflx_ice(:,:)
+          real(r8), pointer :: sustr_ao(:,:)
+          real(r8), pointer :: svstr_ao(:,:)
+          real(r8), pointer :: sustr_ai(:,:)
+          real(r8), pointer :: svstr_ai(:,:)
+          real(r8), pointer :: snow(:,:)
 # endif
 
           real(r8), pointer :: stflux(:,:,:)
@@ -622,6 +653,14 @@
       allocate ( FORCES(ng) % srflxG(LBi:UBi,LBj:UBj,2) )
       Dmem(ng)=Dmem(ng)+size2d
 #  endif
+#  ifdef ICE_ALBEDO
+      allocate ( FORCES(ng) % albedo(LBi:UBi,LBj:UBj) )
+      Dmem(ng)=Dmem(ng)+size2d
+#   ifdef ICE_MODEL
+      allocate ( FORCES(ng) % albedo_ice(LBi:UBi,LBj:UBj) )
+      Dmem(ng)=Dmem(ng)+size2d
+#   endif
+#  endif
 # endif
 
 # if defined RED_TIDE && defined DAILY_SHORTWAVE
@@ -706,6 +745,32 @@
       allocate ( FORCES(ng) % evap(LBi:UBi,LBj:UBj) )
       Dmem(ng)=Dmem(ng)+size2d
 #  endif
+# endif
+
+# if defined ICE_MODEL && defined ICE_BULK_FLUXES && defined BULK_FLUXES
+      allocate ( FORCES(ng) % Qnet_ai(LBi:UBi,LBj:UBj) )
+      Dmem(ng)=Dmem(ng)+size2d
+
+      allocate ( FORCES(ng) % Qnet_ao(LBi:UBi,LBj:UBj) )
+      Dmem(ng)=Dmem(ng)+size2d
+
+      allocate ( FORCES(ng) % snow(LBi:UBi,LBj:UBj) )
+      Dmem(ng)=Dmem(ng)+size2d
+
+      allocate ( FORCES(ng) % srflx_ice(LBi:UBi,LBj:UBj) )
+      Dmem(ng)=Dmem(ng)+size2d
+
+      allocate ( FORCES(ng) % sustr_ao(LBi:UBi,LBj:UBj) )
+      Dmem(ng)=Dmem(ng)+size2d
+
+      allocate ( FORCES(ng) % svstr_ao(LBi:UBi,LBj:UBj) )
+      Dmem(ng)=Dmem(ng)+size2d
+
+      allocate ( FORCES(ng) % sustr_ai(LBi:UBi,LBj:UBj) )
+      Dmem(ng)=Dmem(ng)+size2d
+
+      allocate ( FORCES(ng) % svstr_ai(LBi:UBi,LBj:UBj) )
+      Dmem(ng)=Dmem(ng)+size2d
 # endif
 
       allocate ( FORCES(ng) % stflux(LBi:UBi,LBj:UBj,NT(ng)) )
@@ -1093,6 +1158,15 @@
       IF (.not.destroy(ng, FORCES(ng)%srflxG, MyFile,                   &
      &                 __LINE__, 'FORCES(ng)%srflxG')) RETURN
 #   endif
+
+#   ifdef ICE_ALBEDO
+      IF (.not.destroy(ng, FORCES(ng)%albedo, MyFile,                   &
+     &                 __LINE__, 'FORCES(ng)%albedo')) RETURN
+#    ifdef ICE_MODEL
+      IF (.not.destroy(ng, FORCES(ng)%albedo_ice, MyFile,               &
+     &                 __LINE__, 'FORCES(ng)%albedo_ice')) RETURN
+#    endif
+#   endif
 #  endif
 
 #  if defined RED_TIDE && defined DAILY_SHORTWAVE
@@ -1176,6 +1250,33 @@
       IF (.not.destroy(ng, FORCES(ng)%evap, MyFile,                     &
      &                 __LINE__, 'FORCES(ng)%evap')) RETURN
 #   endif
+#  endif
+
+#  if defined ICE_MODEL       && \
+      defined ICE_BULK_FLUXES && defined BULK_FLUXES
+      IF (.not.destroy(ng, FORCES(ng)%Qnet_ai, MyFile,                  &
+     &                 __LINE__, 'FORCES(ng)%Qnet_ai')) RETURN
+
+      IF (.not.destroy(ng, FORCES(ng)%Qnet_ao, MyFile,                  &
+     &                 __LINE__, 'FORCES(ng)%Qnet_ao')) RETURN
+
+      IF (.not.destroy(ng, FORCES(ng)%snow, MyFile,                     &
+     &                 __LINE__, 'FORCES(ng)%snow')) RETURN
+
+      IF (.not.destroy(ng, FORCES(ng)%srflx_ice, MyFile,                &
+     &                 __LINE__, 'FORCES(ng)%srflx_ice')) RETURN
+
+      IF (.not.destroy(ng, FORCES(ng)%sustr_ai, MyFile,                 &
+     &                 __LINE__, 'FORCES(ng)%sustr_ai')) RETURN
+
+      IF (.not.destroy(ng, FORCES(ng)%svstr_ai, MyFile,                 &
+     &                 __LINE__, 'FORCES(ng)%svstr_ai')) RETURN
+
+      IF (.not.destroy(ng, FORCES(ng)%sustr_ao, MyFile,                 &
+     &                 __LINE__, 'FORCES(ng)%sustr_ao')) RETURN
+
+      IF (.not.destroy(ng, FORCES(ng)%svstr_ao, MyFile,                 &
+     &                 __LINE__, 'FORCES(ng)%svstr_ao')) RETURN
 #  endif
 
       IF (.not.destroy(ng, FORCES(ng)%stflux, MyFile,                   &
@@ -1596,6 +1697,12 @@
             FORCES(ng) % srflxG(i,j,1) = IniVal
             FORCES(ng) % srflxG(i,j,2) = IniVal
 #  endif
+#  ifdef ICE_ALBEDO
+            FORCES(ng) % albedo(i,j) = IniVal
+#   ifdef ICE_MODEL
+            FORCES(ng) % albedo_ice(i,j) = IniVal
+#   endif
+#  endif
 # endif
 # if defined RED_TIDE && defined DAILY_SHORTWAVE
             FORCES(ng) % srflx_avg(i,j) = IniVal
@@ -1628,6 +1735,17 @@
 #  ifdef EMINUSP
             FORCES(ng) % evap(i,j) = IniVal
 #  endif
+# endif
+# if defined ICE_MODEL       && \
+     defined ICE_BULK_FLUXES && defined BULK_FLUXES
+            FORCES(ng) % Qnet_ai(i,j) = IniVal
+            FORCES(ng) % Qnet_ao(i,j) = IniVal
+            FORCES(ng) % snow(i,j) = IniVal
+            FORCES(ng) % srflx_ice(i,j) = IniVal
+            FORCES(ng) % sustr_ai(i,j) = IniVal
+            FORCES(ng) % svstr_ai(i,j) = IniVal
+            FORCES(ng) % sustr_ao(i,j) = IniVal
+            FORCES(ng) % svstr_ao(i,j) = IniVal
 # endif
 # if !defined LONGWAVE && defined BULK_FLUXES
             FORCES(ng) % lrflxG(i,j,1) = IniVal

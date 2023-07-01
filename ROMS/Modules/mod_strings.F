@@ -2,7 +2,7 @@
       MODULE mod_strings
 !
 !git $Id$
-!svn $Id: mod_strings.F 1151 2023-02-09 03:08:53Z arango $
+!svn $Id: mod_strings.F 1176 2023-07-01 19:23:18Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -79,7 +79,7 @@
 !                (39) Two-way coupling to Atmosphere Model             !
 !                (40) Two-way coupling to Sea Ice Model                !
 !                (41) Two-way coupling to Wave Model                   !
-!                (42) Unused 01                                        !
+!                (42) Sea-ice kernel                                   !
 !                (43) Unused 02                                        !
 !                (44) Unused 03                                        !
 !                (45) Unused 04                                        !

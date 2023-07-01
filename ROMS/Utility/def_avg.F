@@ -6,7 +6,7 @@
    (defined TL_AVERAGES && defined TANGENT)
 !
 !git $Id$
-!svn $Id: def_avg.F 1151 2023-02-09 03:08:53Z arango $
+!svn $Id: def_avg.F 1176 2023-07-01 19:23:18Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -35,11 +35,17 @@
       USE mod_sediment
 # endif
 !
-      USE def_dim_mod,  ONLY : def_dim
-      USE def_info_mod, ONLY : def_info
-      USE def_var_mod,  ONLY : def_var
-      USE strings_mod,  ONLY : FoundError
-      USE wrt_info_mod, ONLY : wrt_info
+      USE def_dim_mod,    ONLY : def_dim
+      USE def_info_mod,   ONLY : def_info
+      USE def_var_mod,    ONLY : def_var
+# ifdef ICE_MODEL
+      USE ice_output_mod, ONLY : ice_def_nf90
+#  if defined PIO_LIB && defined DISTRIBUTE
+      USE ice_output_mod, ONLY : ice_def_pio
+#  endif
+# endif
+      USE strings_mod,    ONLY : FoundError
+      USE wrt_info_mod,   ONLY : wrt_info
 !
       implicit none
 !
@@ -63,6 +69,8 @@
 !
 !  Local variable declarations.
 !
+      integer :: model
+!
       character (len=*), parameter :: MyFile =                          &
      &  __FILE__
 !
@@ -70,13 +78,19 @@
 !  Create a new history file according to IO type.
 !-----------------------------------------------------------------------
 !
+# ifdef ADJOINT
+      model=iADM
+# else
+      model=iNLM
+# endif
+!
       SELECT CASE (AVG(ng)%IOtype)
         CASE (io_nf90)
-          CALL def_avg_nf90 (ng, ldef)
+          CALL def_avg_nf90 (ng, model, ldef)
 
 # if defined PIO_LIB && defined DISTRIBUTE
         CASE (io_pio)
-          CALL def_avg_pio (ng, ldef)
+          CALL def_avg_pio (ng, model, ldef)
 # endif
         CASE DEFAULT
           IF (Master) WRITE (stdout,10) AVG(ng)%IOtype
@@ -91,14 +105,14 @@
       END SUBROUTINE def_avg
 !
 !***********************************************************************
-      SUBROUTINE def_avg_nf90 (ng, ldef)
+      SUBROUTINE def_avg_nf90 (ng, model, ldef)
 !***********************************************************************
 !
       USE mod_netcdf
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng
+      integer, intent(in) :: ng, model
 !
       logical, intent(in) :: ldef
 !
@@ -108,7 +122,7 @@
 !
       integer, parameter :: Natt = 25
 
-      integer :: i, ifield, itrc, j, model, nvd3, nvd4
+      integer :: i, ifield, itrc, j, nvd3, nvd4
 # if defined WRITE_WATER && defined MASKING
       integer :: xy_pdim, xyz_pdim
 # endif
@@ -153,11 +167,6 @@
           WRITE (stdout,20) ng, TRIM(ncname)
         END IF
       END IF
-# ifdef ADJOINT
-      model=iADM
-# else
-      model=iNLM
-# endif
 
 !
 !=======================================================================
@@ -2083,6 +2092,16 @@
         END IF
 #  endif
 # endif
+# ifdef ICE_MODEL
+!
+!-----------------------------------------------------------------------
+!  Define seaice model state variables.
+!-----------------------------------------------------------------------
+!
+        CALL ice_def_nf90 (ng, model, t2dgrd, u2dgrd, v2dgrd,           &
+     &                     Aout, AVG)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+# endif
 !
 !-----------------------------------------------------------------------
 !  Leave definition mode.
@@ -3029,14 +3048,14 @@
 # if defined PIO_LIB && defined DISTRIBUTE
 !
 !***********************************************************************
-      SUBROUTINE def_avg_pio (ng, ldef)
+      SUBROUTINE def_avg_pio (ng, model, ldef)
 !***********************************************************************
 !
       USE mod_pio_netcdf
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng
+      integer, intent(in) :: ng, model
 !
       logical, intent(in) :: ldef
 !
@@ -3046,7 +3065,7 @@
 !
       integer, parameter :: Natt = 25
 
-      integer :: i, ifield, itrc, j, model, nvd3, nvd4
+      integer :: i, ifield, itrc, j, nvd3, nvd4
       integer :: recdim, status
 
       integer :: DimIDs(nDimID)
@@ -3088,11 +3107,6 @@
           WRITE (stdout,20) ng, TRIM(ncname)
         END IF
       END IF
-#  ifdef ADJOINT
-      model=iADM
-#  else
-      model=iNLM
-#  endif
 !
 !=======================================================================
 !  Create a new averages file.
@@ -5332,6 +5346,16 @@
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 #   endif
+#  endif
+#  ifdef ICE_MODEL
+!
+!-----------------------------------------------------------------------
+!  Define seaice model state variables.
+!-----------------------------------------------------------------------
+!
+        CALL ice_def_pio (ng, model, t2dgrd, u2dgrd, v2dgrd,            &
+     &                    Aout, AVG)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #  endif
 !
 !-----------------------------------------------------------------------

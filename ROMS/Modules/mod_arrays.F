@@ -2,7 +2,7 @@
       MODULE mod_arrays
 !
 !git $Id$
-!svn $Id: mod_arrays.F 1151 2023-02-09 03:08:53Z arango $
+!svn $Id: mod_arrays.F 1176 2023-07-01 19:23:18Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -52,6 +52,11 @@
       USE mod_grid,     ONLY : allocate_grid,                           &
      &                         deallocate_grid,                         &
      &                         initialize_grid
+#ifdef ICE_MODEL
+      USE mod_ice,      ONLY : allocate_ice,                            &
+     &                         deallocate_ice,                          &
+     &                         initialize_ice
+#endif
       USE mod_iounits,  ONLY : deallocate_iounits
       USE mod_mixing,   ONLY : allocate_mixing,                         &
      &                         deallocate_mixing,                       &
@@ -175,6 +180,9 @@
 #endif
           CALL allocate_forces (ng, LBi, UBi, LBj, UBj)
           CALL allocate_grid (ng, LBi, UBi, LBj, UBj, LBij, UBij)
+#ifdef ICE_MODEL
+          CALL allocate_ice (ng, LBi, UBi, LBj, UBj, .TRUE.)
+#endif
           CALL allocate_mixing (ng, LBi, UBi, LBj, UBj)
           CALL allocate_ocean (ng, LBi, UBi, LBj, UBj)
 #if defined SEDIMENT || defined BBL_MODEL
@@ -278,6 +286,9 @@
 #endif
         CALL deallocate_forces (ng)
         CALL deallocate_grid (ng)
+#ifdef ICE_MODEL
+        CALL deallocate_ice (ng)
+#endif
         CALL deallocate_mixing (ng)
         CALL deallocate_ocean (ng)
 #if defined SEDIMENT || defined BBL_MODEL
@@ -386,6 +397,9 @@
 #endif
           CALL initialize_forces (ng, tile, model)
           CALL initialize_grid (ng, tile, model)
+#ifdef ICE_MODEL
+          CALL initialize_ice (ng, tile, model)
+#endif
           CALL initialize_mixing (ng, tile, model)
           CALL initialize_ocean (ng, tile, model)
 #if defined SEDIMENT || defined BBL_MODEL

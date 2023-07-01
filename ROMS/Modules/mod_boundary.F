@@ -2,7 +2,7 @@
       MODULE mod_boundary
 !
 !git $Id$
-!svn $Id: mod_boundary.F 1151 2023-02-09 03:08:53Z arango $
+!svn $Id: mod_boundary.F 1176 2023-07-01 19:23:18Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -793,7 +793,9 @@
       LBC_apply(ng) % north = .TRUE.
       Dmem(ng)=Dmem(ng)+Xsize
 !
+!-----------------------------------------------------------------------
 !  Nonlinear model state.
+!-----------------------------------------------------------------------
 !
 #if defined ADJOINT || defined TANGENT || defined TL_IOMS
       IF (   LBC(iwest,isFsur,ng)%acquire.or.                           &
@@ -1399,7 +1401,9 @@
 
 #if defined TANGENT || defined TL_IOMS
 !
+!-----------------------------------------------------------------------
 !  Tangent linear model state.
+!-----------------------------------------------------------------------
 !
       IF (tl_LBC(iwest,isFsur,ng)%acquire) THEN
         allocate ( BOUNDARY(ng) % tl_zeta_west(LBj:UBj) )
@@ -1527,7 +1531,9 @@
 
 #ifdef ADJOINT
 !
+!-----------------------------------------------------------------------
 !  Adjoint model state.
+!-----------------------------------------------------------------------
 !
       IF (ad_LBC(iwest,isFsur,ng)%acquire) THEN
         allocate ( BOUNDARY(ng) % ad_zeta_west(LBj:UBj) )
@@ -1655,7 +1661,9 @@
 
 #ifdef ADJUST_BOUNDARY
 !
+!-----------------------------------------------------------------------
 !  Open boundaries arrays used in 4DVar adjustments.
+!-----------------------------------------------------------------------
 !
 # ifdef SOLVE3D
       allocate ( BOUNDARY(ng) % t_obc(LBij:UBij,N(ng),4,                &
@@ -2323,7 +2331,7 @@
 #  endif
 
 #  ifndef ANA_M3OBC
-      IF (.not.destroy(ng, BOUNDARY(ng)%vG_south, MyFile,                     &
+      IF (.not.destroy(ng, BOUNDARY(ng)%vG_south, MyFile,               &
      &                 __LINE__, 'BOUNDARY(ng)%vG_south')) RETURN
 #  endif
       END IF
@@ -2871,10 +2879,8 @@
 #endif
 !
 !-----------------------------------------------------------------------
-!  Initialize module variables.
+!  Initialize nonlinear model state.
 !-----------------------------------------------------------------------
-!
-!  Nonlinear model state.
 !
       IF ((model.eq.0).or.(model.eq.iNLM)) THEN
 
@@ -3193,12 +3199,13 @@
 # endif
         END IF
 #endif
-
       END IF
 
 #if defined TANGENT || defined TL_IOMS
 !
-!  Tangent linear model state.
+!-----------------------------------------------------------------------
+!  Initialize tangent linear model state.
+!-----------------------------------------------------------------------
 !
       IF ((model.eq.0).or.(model.eq.iTLM).or.(model.eq.iRPM)) THEN
         IF (DOMAIN(ng)%NorthWest_Test(tile).and.                        &
@@ -3328,7 +3335,9 @@
 
 #ifdef ADJOINT
 !
-!  Adjoint model state.
+!-----------------------------------------------------------------------
+!  Initialize adjoint model state.
+!-----------------------------------------------------------------------
 !
       IF ((model.eq.0).or.(model.eq.iADM)) THEN
         IF (DOMAIN(ng)%NorthWest_Test(tile).and.                        &
@@ -3458,7 +3467,9 @@
 
 #ifdef ADJUST_BOUNDARY
 !
+!-----------------------------------------------------------------------
 !  Open boundaries arrays used in 4DVar adjustments.
+!-----------------------------------------------------------------------
 !
       IF ((model.eq.0).or.(model.eq.iNLM)) THEN
         IF (DOMAIN(ng)%NorthEast_Test(tile)) THEN
@@ -3523,7 +3534,7 @@
         END IF
       END IF
 #endif
-
+!
       RETURN
       END SUBROUTINE initialize_boundary
 

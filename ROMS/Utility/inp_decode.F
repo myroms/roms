@@ -2,7 +2,7 @@
       MODULE inp_decode_mod
 !
 !git $Id$
-!svn $Id: inp_decode.F 1151 2023-02-09 03:08:53Z arango $
+!svn $Id: inp_decode.F 1176 2023-07-01 19:23:18Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -1630,6 +1630,9 @@
               S(ib,isFsur,igrid)%acquire = .TRUE.
             CASE ('GRA')
               S(ib,ifield,igrid)%gradient = .TRUE.
+            CASE ('MIX')
+              S(ib,ifield,igrid)%mixed   = .TRUE.
+              S(ib,ifield,igrid)%acquire = .TRUE.
             CASE ('NES')
               S(ib,ifield,igrid)%nested = .TRUE.
             CASE ('PER')

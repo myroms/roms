@@ -2,7 +2,7 @@
       MODULE mod_stepping
 !
 !git $Id$
-!svn $Id: mod_stepping.F 1151 2023-02-09 03:08:53Z arango $
+!svn $Id: mod_stepping.F 1176 2023-07-01 19:23:18Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -81,6 +81,17 @@
         integer, allocatable :: nfm1(:)
 !$OMP THREADPRIVATE (nf, nfp1, nfm3, nfm2, nfm1)
 #endif
+
+#ifdef ICE_MODEL
+!
+        integer, allocatable :: linew(:)
+        integer, allocatable :: liold(:)
+        integer, allocatable :: liunw(:)
+        integer, allocatable :: liuol(:)
+        integer, allocatable :: lienw(:)
+        integer, allocatable :: lieol(:)
+!$OMP THREADPRIVATE (linew, liold, liunw, liuol, lienw, lieol)
+#endif
 !
 #ifdef ADJUST_BOUNDARY
         integer, allocatable :: Lbinp(:)
@@ -151,6 +162,7 @@
       nstp(1:Ngrids)=1
 
 #ifdef FLOATS
+!
       IF (.not.allocated(nf)) THEN
         allocate ( nf(Ngrids) )
       END IF
@@ -176,9 +188,43 @@
       END IF
       nfm1(1:Ngrids)=4
 #endif
+
+#ifdef ICE_MODEL
+!
+      IF (.not.allocated(linew)) THEN
+        allocate ( linew(Ngrids) )
+      END IF
+      linew(1:Ngrids) = 1
+
+      IF (.not.allocated(liold)) THEN
+        allocate ( liold(Ngrids) )
+      END IF
+      liold(1:Ngrids) = 1
+
+      IF (.not.allocated(liunw)) THEN
+        allocate ( liunw(Ngrids) )
+      END IF
+      liunw(1:Ngrids) = 1
+
+      IF (.not.allocated(liuol)) THEN
+        allocate ( liuol(Ngrids) )
+      END IF
+      liuol(1:Ngrids) = 1
+
+      IF (.not.allocated(lienw)) THEN
+        allocate ( lienw(Ngrids) )
+      END IF
+      lienw(1:Ngrids) = 1
+
+      IF (.not.allocated(lieol)) THEN
+        allocate ( lieol(Ngrids) )
+      END IF
+      lieol(1:Ngrids) = 1
+#endif
 !$OMP END PARALLEL
 
 #ifdef ADJUST_BOUNDARY
+!
       IF (.not.allocated(Lbinp)) THEN
         allocate ( Lbinp(Ngrids) )
       END IF
@@ -192,6 +238,7 @@
 
 #if defined ADJUST_BOUNDARY || defined ADJUST_STFLUX || \
     defined ADJUST_WSTRESS
+!
       IF (.not.allocated(Lfinp)) THEN
         allocate ( Lfinp(Ngrids) )
       END IF
@@ -202,7 +249,7 @@
       END IF
       Lfout(1:Ngrids)=1
 #endif
-
+!
       IF (.not.allocated(Lnew)) THEN
         allocate ( Lnew(Ngrids) )
       END IF

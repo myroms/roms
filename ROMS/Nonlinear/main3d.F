@@ -3,7 +3,7 @@
       SUBROUTINE main3d (RunInterval)
 !
 !git $Id$
-!svn $Id: main3d.F 1166 2023-05-17 20:11:58Z arango $
+!svn $Id: main3d.F 1176 2023-07-01 19:23:18Z arango $
 !=======================================================================
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -69,6 +69,9 @@
 # if defined DIFF_3DCOEF || defined VISC_3DCOEF
       USE hmixing_mod,          ONLY : hmixing
 # endif
+# if defined ICE_MODEL && defined ALBEDO && defined SHORTWAVE
+      USE ice_albedo_mod,       ONLY : ice_albedo
+# endif
       USE ini_fields_mod,       ONLY : ini_fields, ini_zeta
 # ifdef LMD_MIXING
       USE lmd_vmix_mod,         ONLY : lmd_vmix
@@ -100,6 +103,9 @@
       USE rho_eos_mod,          ONLY : rho_eos
 # endif
       USE rhs3d_mod,            ONLY : rhs3d
+# ifdef ICE_MODEL
+      USE seaice_mod,           ONLY : seaice
+# endif
 # ifdef SEDIMENT
       USE sediment_mod,         ONLY : sediment
 # endif
@@ -383,6 +389,9 @@
               ng=GridNumber(ig,nl)
               DO tile=first_tile(ng),last_tile(ng),+1
 # ifdef BULK_FLUXES
+#  if defined ICE_MODEL && defined ALBEDO && defined SHORTWAVE
+                CALL ice_albedo (ng, tile, iNLM)
+#  endif
 #  if defined FOUR_DVAR && defined PRIOR_BULK_FLUXES
                 IF (Nrun.eq.1) CALL bulk_flux (ng, tile)
 #  else
@@ -411,6 +420,15 @@
                 CALL nesting (ng, iNLM, nbstr)
               END IF
             END DO
+# endif
+
+# if defined ICE_MODEL
+!
+!-----------------------------------------------------------------------
+!  Timestep the ice model.
+!-----------------------------------------------------------------------
+!
+            CALL seaice (iNLM)
 # endif
 
 # ifdef ADJUST_BOUNDARY
