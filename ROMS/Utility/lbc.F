@@ -2,7 +2,7 @@
       MODULE lbc_mod
 !
 !git $Id$
-!svn $Id: lbc.F 1151 2023-02-09 03:08:53Z arango $
+!svn $Id: lbc.F 1176 2023-07-01 19:23:18Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -198,7 +198,6 @@
                   END IF
                   exit_flag=5
                 END IF
-
               CASE ('Cla')
                 IF (.not.S(ibry,ifield,ng)%clamped) THEN
                   IF (Master) THEN
@@ -244,6 +243,18 @@
      &                    'S(',ibry,ifield,ng,')%gradient',             &
      &                    S(ibry,ifield,ng)%gradient,                   &
      &                    TRIM(ncname)
+                  END IF
+                  exit_flag=5
+                END IF
+              CASE ('Mix')
+                IF (.not.S(ibry,ifield,ng)%mixed) THEN
+                  IF (Master) THEN
+                    WRITE (stdout,20) B(ibry),                          &
+     &                    TRIM(Vname(1,idBvar(ifield))),                &
+     &                    TRIM(string(ibry)),                           &
+     &                    'S(',ibry,ifield,ng,')%mixed',                &
+     &                     S(ibry,ifield,ng)%mixed,                     &
+     &                     TRIM(ncname)
                   END IF
                   exit_flag=5
                 END IF
@@ -539,6 +550,18 @@
      &                    'S(',ibry,ifield,ng,')%gradient',             &
      &                    S(ibry,ifield,ng)%gradient,                   &
      &                    TRIM(ncname)
+                  END IF
+                  exit_flag=5
+                END IF
+              CASE ('Mix')
+                IF (.not.S(ibry,ifield,ng)%mixed) THEN
+                  IF (Master) THEN
+                    WRITE (stdout,20) B(ibry),                          &
+     &                    TRIM(Vname(1,idBvar(ifield))),                &
+     &                    TRIM(string(ibry)),                           &
+     &                    'S(',ibry,ifield,ng,')%mixed',                &
+     &                     S(ibry,ifield,ng)%mixed,                     &
+     &                     TRIM(ncname)
                   END IF
                   exit_flag=5
                 END IF

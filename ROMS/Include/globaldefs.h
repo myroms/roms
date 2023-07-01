@@ -2,7 +2,7 @@
 ** Include file "globaldef.h"
 **
 ** git $Id$
-** svn $Id: globaldefs.h 1151 2023-02-09 03:08:53Z arango $
+** svn $Id: globaldefs.h 1176 2023-07-01 19:23:18Z arango $
 ********************************************************** Hernan G. Arango ***
 ** Copyright (c) 2002-2023 The ROMS/TOMS Group     Alexander F. Shchepetkin  **
 **   Licensed under a MIT/X style license                                    **
@@ -508,6 +508,11 @@
 #  define KOUT kstp(ng)
 #  define NOUT nrhs(ng)
 # endif
+# ifdef ICE_MODEL
+#  define IOUT linew(ng)
+#  define IUOUT liunw(ng)
+#  define IEOUT lienw(ng)
+# endif
 #else
 # if defined TANGENT || defined TL_IOMS
 #  define TKOUT kstp(ng)
@@ -781,6 +786,23 @@
 #if defined REFDIF_COUPLING && \
     defined SVENDSEN_ROLLER
 # define MONO_ROLLER
+#endif
+
+/*
+** Activate internal option for seaice model.
+*/
+
+#if defined ICE_MODEL
+# define SEAICE
+# if defined ICE_ADVECT
+#  define ICE_SMOLAR
+# endif
+# if defined ICE_MOMENTUM
+#  define ICE_EVP
+# endif
+# if defined ICE_THERMO
+#  define ICE_MK
+# endif
 #endif
 
 /*

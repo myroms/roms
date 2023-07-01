@@ -2,7 +2,7 @@
       MODULE inp_par_mod
 !
 !git $Id$
-!svn $Id: inp_par.F 1165 2023-04-10 01:59:07Z arango $
+!svn $Id: inp_par.F 1176 2023-07-01 19:23:18Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -222,15 +222,26 @@
         END DO
       END IF
 #endif
+#ifdef SEAICE
+!
+!-----------------------------------------------------------------------
+!  Read in sea-ice model input parameters.
+!-----------------------------------------------------------------------
+!
+      OPEN (15, FILE=TRIM(bparnam), FORM='formatted', STATUS='old')
+
+      CALL read_IcePar (model, 15, out, Lwrite)
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+#endif
 #ifdef BIOLOGY
 !
 !-----------------------------------------------------------------------
 !  Read in biological model input parameters.
 !-----------------------------------------------------------------------
 !
-      OPEN (15, FILE=TRIM(bparnam), FORM='formatted', STATUS='old')
+      OPEN (25, FILE=TRIM(bparnam), FORM='formatted', STATUS='old')
 
-      CALL read_BioPar (model, 15, out, Lwrite)
+      CALL read_BioPar (model, 25, out, Lwrite)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #endif
 #ifdef SEDIMENT
@@ -239,9 +250,9 @@
 !  Read in sediment model input parameters.
 !-----------------------------------------------------------------------
 !
-      OPEN (25, FILE=TRIM(sparnam), FORM='formatted', STATUS='old')
+      OPEN (35, FILE=TRIM(sparnam), FORM='formatted', STATUS='old')
 
-      CALL read_SedPar (model, 25, out, Lwrite)
+      CALL read_SedPar (model, 35, out, Lwrite)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #endif
 #ifdef NESTING

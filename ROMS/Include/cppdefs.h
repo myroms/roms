@@ -2,7 +2,7 @@
 ** Include file "cppdefs.h"
 **
 ** git $Id$
-** svn $Id: cppdefs.h 1151 2023-02-09 03:08:53Z arango $
+** svn $Id: cppdefs.h 1176 2023-07-01 19:23:18Z arango $
 ********************************************************** Hernan G. Arango ***
 ** Copyright (c) 2002-2023 The ROMS/TOMS Group                               **
 **   Licensed under a MIT/X style license                                    **
@@ -581,6 +581,24 @@
 ** problems on nodes with limited memory.                                    **
 **                                                                           **
 ** INLINE_2DIO             if processing 3D IO level by level                **
+**                                                                           **
+** Sea-ice modeling OPTIONS:                                                 **
+**                                                                           **
+** ICE_MODEL               to activate sea-ice model                         **
+** ICE_THERMO              if thermodynamic component                        **
+** ICE_MK                  if Mellor-Kantha thermodynamics (only choice)     **
+** ICE_ALB_EC92            if albedo computation from Ebert and Curry        **
+** ICE_MOMENTUM            if momentum component                             **
+** ICE_MOM_BULK            if alternate ice-water stress computation         **
+** ICE_EVP                 if elastic-viscous-plastic rheology               **
+** ICE_ADVECT              if advection of ice tracers                       **
+** ICE_SMOLAR              if MPDATA advection scheme                        **
+** ICE_UPWIND              if upwind advection scheme                        **
+** ICE_BULK_FLUXES         if ice part of bulk flux computation              **
+** ICE_CONVSNOW            if conversion of flooded snow to ice              **
+** ICE_STRENGTH_QUAD       if quadratic ice strength, a function of thickness**
+** NO_SCORRECTION_ICE      if no salinity correction under the ice           **
+** OUTFLOW_MASK            if Hibler style outflow cells                     **
 **                                                                           **
 ** OPTION to avoid writing current date and CPP options to NetCDF file       **
 ** headers. This is used to compare serial and parallel solutions where      **

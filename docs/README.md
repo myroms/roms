@@ -20,10 +20,10 @@ its dynamical and numerical kernels will affect the symmetry of the **TLM** and
 **ADM** operators. The discrete adjoint is exact and is defined relative to
 the inner product that prescribes the L2-norm.
 
-This official community version of ROMS is developed and maintained at Rutgers,
+This official community version of **ROMS** is developed and maintained at Rutgers,
 The State University of New Jersey, New Brunswick, New Jersey, USA. The scarlet
-flag in the above logo indicates the location of our institution. Currently, it
-contains the following branches:
+flag in the above logo indicates the location of our institution. Currently, this
+**git** repository contains the following branches:
 
 - **master**: Tagged versions and the latest stable release version of **ROMS**
 - **develop**: Main developing branch of **ROMS**. Not recommended for public
@@ -38,8 +38,8 @@ computers to configure, run, and analyze the results to ensure you get the
 correct solution for your application. Therefore, **we highly recommend** users
 register at https://www.myroms.org and set up a **username** and **password** to
 access the **ROMS** forum, email notifications for bugs/updates, technical
-support from the community, **trac** code maintenance, tutorials, workshops, and
-publications. The user's ROMS forum has over 24,000 posts with helpful
+support from the community, **trac** code maintenance history, tutorials, workshops,
+and publications. The user's **ROMS** forum has over 24,000 posts with helpful
 information. Technical support is limited to registered users. We **do not**
 provide user technical support, usage, or answers in **GitHub**.  
 
@@ -64,7 +64,7 @@ https://www.myroms.org/doxygen
 ```
 Registered users of **ROMS** have access to:
 
-- **ROMS** User's Forum:
+- **ROMS** User's Forum for technical support from the community:
   ```
   https://www.myroms.org/forum
   ```
