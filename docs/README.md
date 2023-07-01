@@ -49,8 +49,8 @@ Also, it is the version used in the **ROMS-JEDI** interface hosted at
 https://github.com/JCSDA-internal, which is currently private. Use the following
 command to download the **ROMS** source code:
 ```
-git clone https://github.com/myroms/roms_src.git                 (default)
-git clone https://github.com/myroms/roms_src.git <source_dir>
+git clone https://github.com/myroms/roms.git                 (default)
+git clone https://github.com/myroms/roms.git <source_dir>
 ```
 The idealized and realistic **ROMS** Test Cases and the Matlab processing
 software can be downloaded from:
