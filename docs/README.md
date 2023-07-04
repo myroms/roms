@@ -1,6 +1,6 @@
 # **Regional Ocean Modeling System (ROMS)**
 
-![roms-jedi logo](https://www.myroms.org/trac/roms_src_600px.png)
+![ROMS_Picture](https://github.com/myroms/roms/assets/23062912/d72765ed-9d55-4109-84fc-c51b05832adb)
 
 **ROMS** solves the free-surface, hydrostatic, flux form of the primitive
 equations over variable bathymetry using stretched terrain-following in the
@@ -21,8 +21,7 @@ its dynamical and numerical kernels will affect the symmetry of the **TLM** and
 the inner product that prescribes the L2-norm.
 
 This official community version of **ROMS** is developed and maintained at Rutgers,
-The State University of New Jersey, New Brunswick, New Jersey, USA. The scarlet
-flag in the above logo indicates the location of our institution. Currently, this
+The State University of New Jersey, New Brunswick, New Jersey, USA. Currently, this
 **git** repository contains the following branches:
 
 - **master**: Tagged versions and the latest stable release version of **ROMS**
