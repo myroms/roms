@@ -4,7 +4,7 @@
 
 # **License**
 
-Copyright (c) 2002-2023 The ROMS/TOMS Group
+**Copyright (c) 2002-2023 The ROMS/TOMS Group**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
@@ -34,10 +34,12 @@ The State University of New Jersey, New Brunswick, New Jersey, USA. Currently, t
 
 - **master**: Tagged versions and the latest stable release version of **ROMS**
 - **develop**: Main developing branch of **ROMS**. Not recommended for public
- consumption but passes the internal tests. It is intended for ROMS superusers
+ consumption but passes the internal tests. It is intended for **ROMS** superusers
  and beta testers.
 - **feature branches**: Research and new development branches recommended to
 superusers and beta testers.
+
+# Instructions
 
 The **ROMS**  framework is intended for users interested in ocean modeling. It
 requires an extensive background in ocean dynamics, numerical modeling, and
@@ -49,8 +51,6 @@ support from the community, **trac** code maintenance history, tutorials, worksh
 and publications. The user's **ROMS** forum has over 24,000 posts with helpful
 information. Technical support is limited to registered users. We **do not**
 provide user technical support, usage, or answers in **GitHub**.  
-
-# Instructions
 
 This **GitHub** version becomes the official **git** repository for downloading,
 updating, improving, and correcting defects/bugs to the **ROMS** source code.
@@ -77,7 +77,7 @@ Registered users of **ROMS** have access to:
   ```
   https://www.myroms.org/forum
   ```
-- **Trac** source code maintenance and evolution:
+- **ROMS Trac** source code maintenance and evolution:
   ```
   https://www.myroms.org/projects/src
   ```
