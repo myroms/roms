@@ -2,6 +2,12 @@
 
 ![ROMS_Picture](https://github.com/myroms/roms/assets/23062912/d72765ed-9d55-4109-84fc-c51b05832adb)
 
+# **License**
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+# Overview
+
 **ROMS** solves the free-surface, hydrostatic, flux form of the primitive
 equations over variable bathymetry using stretched terrain-following in the
 vertical and orthogonal curvilinear coordinates in the horizontal. The finite
@@ -41,6 +47,8 @@ support from the community, **trac** code maintenance history, tutorials, worksh
 and publications. The user's **ROMS** forum has over 24,000 posts with helpful
 information. Technical support is limited to registered users. We **do not**
 provide user technical support, usage, or answers in **GitHub**.  
+
+# Instructions
 
 This **GitHub** version becomes the official **git** repository for downloading,
 updating, improving, and correcting defects/bugs to the **ROMS** source code.
