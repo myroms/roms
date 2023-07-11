@@ -4,7 +4,7 @@
    (defined SSH_TIDES || defined UV_TIDES)
 !
 !git $Id$
-!svn $Id: wrt_tides.F 1151 2023-02-09 03:08:53Z arango $
+!svn $Id: wrt_tides.F 1178 2023-07-11 17:50:57Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -444,7 +444,7 @@
      &                          TIDES(ng) % SinW_sum,                   &
      &                          (/1/), (/NTC(ng)/),                     &
      &                          pioFile = HAR(ng)%pioFile,              &
-     &                          pioVar = HAR(ng)%pioVar(idSinW))
+     &                          pioVar = HAR(ng)%pioVar(idSinW)%vd)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Write out time-accumulated COS(omega(k)*t)*COS(omega(l)*t) harmonics.

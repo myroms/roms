@@ -2,7 +2,7 @@
       MODULE mod_mixing
 !
 !git $Id$
-!svn $Id: mod_mixing.F 1151 2023-02-09 03:08:53Z arango $
+!svn $Id: mod_mixing.F 1178 2023-07-11 17:50:57Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -116,24 +116,26 @@
 !  kbbl         Index of grid level above bottom  boundary layer.      !
 !  ksbl         Index of grid level below surface boundary layer.      !
 !                                                                      !
-#ifdef NEARSHORE_MELLOR
-!  Nearshore radiation stresses.                                       !
+#ifdef WEC
 !                                                                      !
-!  Sxx_bar      2D nearshore radiation stress, xx-component.           !
-!  Sxy_bar      2D nearshore radiation stress, xy-component.           !
-!  Syy_bar      2D nearshore radiation stress, yy-component.           !
-!  Sxx          3D Nearshore horizontal radiation stress, xx-component.!
-!  Sxy          3D Nearshore horizontal radiation stress, xx-component.!
-!  Syy          3D Nearshore horizontal radiation stress, xx-component.!
-# ifdef NEARSHORE_MELLOR05
-!  Szx          3D Nearshore vertical radiation stress, xx-component.  !
-!  Szy          3D Nearshore vertical radiation stress, xx-component.  !
-# endif
-!  rustr2d      2D radiation stress tensor in Xi-direction.            !
-!  rvstr2d      2D radiation stress tensor in ETA-direction.           !
-!  rustr3d      3D radiation stress tensor in Xi-direction.            !
-!  rvstr3d      3D radiation stress tensor in ETA-direction.           !
+!  rustr2d      2D wave-current stress tensor in XI-direction.         !
+!  rvstr2d      2D wave-current stress tensor in ETA-direction.        !
+!  rustr3d      3D wave-current stress tensor in XI-direction.         !
+!  rvstr3d      3D wave-current stress tensor in ETA-direction.        !
+#endif
 !                                                                      !
+#ifdef WEC_VF
+!                                                                      !
+!  rurol2d      2D WEC roller stress in XI-direction.                  !
+!  rvrol2d      2D WEC roller stress in ETA-direction.                 !
+!  rubrk2d      2D WEC breaking stress in XI-direction.                !
+!  rvbrk2d      2D WEC breaking stress in ETA-direction.               !
+!  rukvf2d      2D WEC K-stress in XI-direction.                       !
+!  rvkvf2d      2D WEC K-stress in ETA-direction.                      !
+!  rubst2d      2D WEC bottom streaming XI-direction.                  !
+!  rvbst2d      2D WEC bottom streaming ETA-direction.                 !
+!  russt2d      2D WEC surface streaming XI-direction.                 !
+!  rvsst2d      2D WEC surface streaming ETA-direction.                !
 #endif
 !=======================================================================
 !
@@ -189,20 +191,28 @@
           real(r8), pointer :: visc3d_r(:,:,:)
 # endif
 #endif
-#ifdef NEARSHORE_MELLOR
-          real(r8), pointer :: Sxx_bar(:,:)
-          real(r8), pointer :: Sxy_bar(:,:)
-          real(r8), pointer :: Syy_bar(:,:)
+#ifdef WEC
           real(r8), pointer :: rustr2d(:,:)
           real(r8), pointer :: rvstr2d(:,:)
-# ifdef SOLVE3D
-          real(r8), pointer :: Sxx(:,:,:)
-          real(r8), pointer :: Sxy(:,:,:)
-          real(r8), pointer :: Syy(:,:,:)
-#  ifdef NEARSHORE_MELLOR05
-          real(r8), pointer :: Szx(:,:,:)
-          real(r8), pointer :: Szy(:,:,:)
-#  endif
+#endif
+#ifdef WEC_VF
+          real(r8), pointer :: rurol2d(:,:)
+          real(r8), pointer :: rvrol2d(:,:)
+          real(r8), pointer :: rubrk2d(:,:)
+          real(r8), pointer :: rvbrk2d(:,:)
+          real(r8), pointer :: rukvf2d(:,:)
+          real(r8), pointer :: rvkvf2d(:,:)
+# ifdef BOTTOM_STREAMING
+          real(r8), pointer :: rubst2d(:,:)
+          real(r8), pointer :: rvbst2d(:,:)
+# endif
+# ifdef SURFACE_STREAMING
+          real(r8), pointer :: russt2d(:,:)
+          real(r8), pointer :: rvsst2d(:,:)
+# endif
+#endif
+#ifdef SOLVE3D
+# ifdef WEC
           real(r8), pointer :: rustr3d(:,:,:)
           real(r8), pointer :: rvstr3d(:,:,:)
 # endif
@@ -461,43 +471,42 @@
 #  endif
 # endif
 
-#ifdef NEARSHORE_MELLOR
-      allocate ( MIXING(ng) % Sxx_bar(LBi:UBi,LBj:UBj) )
-      Dmem(ng)=Dmem(ng)+size2d
-
-      allocate ( MIXING(ng) % Sxy_bar(LBi:UBi,LBj:UBj) )
-      Dmem(ng)=Dmem(ng)+size2d
-
-      allocate ( MIXING(ng) % Syy_bar(LBi:UBi,LBj:UBj) )
-      Dmem(ng)=Dmem(ng)+size2d
-
+#ifdef WEC
       allocate ( MIXING(ng) % rustr2d(LBi:UBi,LBj:UBj) )
       Dmem(ng)=Dmem(ng)+size2d
-
       allocate ( MIXING(ng) % rvstr2d(LBi:UBi,LBj:UBj) )
       Dmem(ng)=Dmem(ng)+size2d
-
-# ifdef SOLVE3D
-      allocate ( MIXING(ng) % Sxx(LBi:UBi,LBj:UBj,N(ng)) )
-      Dmem(ng)=Dmem(ng)+REAL(N(ng),r8)*size2d
-
-      allocate ( MIXING(ng) % Sxy(LBi:UBi,LBj:UBj,N(ng)) )
-      Dmem(ng)=Dmem(ng)+REAL(N(ng),r8)*size2d
-
-      allocate ( MIXING(ng) % Syy(LBi:UBi,LBj:UBj,N(ng)) )
-      Dmem(ng)=Dmem(ng)+REAL(N(ng),r8)*size2d
-
-#  ifdef NEARSHORE_MELLOR05
-      allocate ( MIXING(ng) % Szx(LBi:UBi,LBj:UBj,N(ng)) )
-      Dmem(ng)=Dmem(ng)+REAL(N(ng),r8)*size2d
-
-      allocate ( MIXING(ng) % Szy(LBi:UBi,LBj:UBj,N(ng)) )
-      Dmem(ng)=Dmem(ng)+REAL(N(ng),r8)*size2d
-#  endif
-
+#endif
+#ifdef WEC_VF
+      allocate ( MIXING(ng) % rurol2d(LBi:UBi,LBj:UBj) )
+      Dmem(ng)=Dmem(ng)+size2d
+      allocate ( MIXING(ng) % rvrol2d(LBi:UBi,LBj:UBj) )
+      Dmem(ng)=Dmem(ng)+size2d
+      allocate ( MIXING(ng) % rubrk2d(LBi:UBi,LBj:UBj) )
+      Dmem(ng)=Dmem(ng)+size2d
+      allocate ( MIXING(ng) % rvbrk2d(LBi:UBi,LBj:UBj) )
+      Dmem(ng)=Dmem(ng)+size2d
+      allocate ( MIXING(ng) % rukvf2d(LBi:UBi,LBj:UBj) )
+      Dmem(ng)=Dmem(ng)+size2d
+      allocate ( MIXING(ng) % rvkvf2d(LBi:UBi,LBj:UBj) )
+      Dmem(ng)=Dmem(ng)+size2d
+# ifdef BOTTOM_STREAMING
+      allocate ( MIXING(ng) % rubst2d(LBi:UBi,LBj:UBj) )
+      Dmem(ng)=Dmem(ng)+size2d
+      allocate ( MIXING(ng) % rvbst2d(LBi:UBi,LBj:UBj) )
+      Dmem(ng)=Dmem(ng)+size2d
+# endif
+# ifdef SURFACE_STREAMING
+      allocate ( MIXING(ng) % russt2d(LBi:UBi,LBj:UBj) )
+      Dmem(ng)=Dmem(ng)+size2d
+      allocate ( MIXING(ng) % rvsst2d(LBi:UBi,LBj:UBj) )
+      Dmem(ng)=Dmem(ng)+size2d
+# endif
+#endif
+#ifdef SOLVE3D
+# ifdef WEC
       allocate ( MIXING(ng) % rustr3d(LBi:UBi,LBj:UBj,N(ng)) )
       Dmem(ng)=Dmem(ng)+REAL(N(ng),r8)*size2d
-
       allocate ( MIXING(ng) % rvstr3d(LBi:UBi,LBj:UBj,N(ng)) )
       Dmem(ng)=Dmem(ng)+REAL(N(ng),r8)*size2d
 # endif
@@ -894,40 +903,50 @@
 #  endif
 # endif
 
-# ifdef NEARSHORE_MELLOR
-      IF (.not.destroy(ng, MIXING(ng)%Sxx_bar, MyFile,                  &
-     &                 __LINE__, 'MIXING(ng)%Sxx_bar')) RETURN
-
-      IF (.not.destroy(ng, MIXING(ng)%Sxy_bar, MyFile,                  &
-     &                 __LINE__, 'MIXING(ng)%Sxy_bar')) RETURN
-
-      IF (.not.destroy(ng, MIXING(ng)%Syy_bar, MyFile,                  &
-     &                 __LINE__, 'MIXING(ng)%Syy_bar')) RETURN
-
+# ifdef WEC
       IF (.not.destroy(ng, MIXING(ng)%rustr2d, MyFile,                  &
      &                 __LINE__, 'MIXING(ng)%rustr2d')) RETURN
 
       IF (.not.destroy(ng, MIXING(ng)%rvstr2d, MyFile,                  &
      &                 __LINE__, 'MIXING(ng)%rvstr2d')) RETURN
+# endif
+# ifdef WEC_VF
+      IF (.not.destroy(ng, MIXING(ng)%rurol2d, MyFile,                  &
+     &                 __LINE__, 'MIXING(ng)%rurol2d')) RETURN
 
-#  ifdef SOLVE3D
-      IF (.not.destroy(ng, MIXING(ng)%Sxx, MyFile,                      &
-     &                 __LINE__, 'MIXING(ng)%Sxx')) RETURN
+      IF (.not.destroy(ng, MIXING(ng)%rvrol2d, MyFile,                  &
+     &                 __LINE__, 'MIXING(ng)%rvrol2d')) RETURN
 
-      IF (.not.destroy(ng, MIXING(ng)%Sxy, MyFile,                      &
-     &                 __LINE__, 'MIXING(ng)%Sxy')) RETURN
+      IF (.not.destroy(ng, MIXING(ng)%rubrk2d, MyFile,                  &
+     &                 __LINE__, 'MIXING(ng)%rubrk2d')) RETURN
 
-      IF (.not.destroy(ng, MIXING(ng)%Syy, MyFile,                      &
-     &                 __LINE__, 'MIXING(ng)%Syy')) RETURN
+      IF (.not.destroy(ng, MIXING(ng)%rvbrk2d, MyFile,                  &
+     &                 __LINE__, 'MIXING(ng)%rvbrk2d')) RETURN
 
-#   ifdef NEARSHORE_MELLOR05
-      IF (.not.destroy(ng, MIXING(ng)%Szx, MyFile,                      &
-     &                 __LINE__, 'MIXING(ng)%Szx')) RETURN
+      IF (.not.destroy(ng, MIXING(ng)%rukvf2d, MyFile,                  &
+     &                 __LINE__, 'MIXING(ng)%rukvf2d')) RETURN
 
-      IF (.not.destroy(ng, MIXING(ng)%Szy, MyFile,                      &
-     &                 __LINE__, 'MIXING(ng)%Szy')) RETURN
-#   endif
+      IF (.not.destroy(ng, MIXING(ng)%rvkvf2d, MyFile,                  &
+     &                 __LINE__, 'MIXING(ng)%rvkvf2d')) RETURN
 
+#  ifdef BOTTOM_STREAMING
+      IF (.not.destroy(ng, MIXING(ng)%rubst2d, MyFile,                  &
+     &                 __LINE__, 'MIXING(ng)%rubst2d')) RETURN
+
+      IF (.not.destroy(ng, MIXING(ng)%rvbst2d, MyFile,                  &
+     &                 __LINE__, 'MIXING(ng)%rvbst2d')) RETURN
+#  endif
+#  ifdef SURFACE_STREAMING
+      IF (.not.destroy(ng, MIXING(ng)%russt2d, MyFile,                  &
+     &                 __LINE__, 'MIXING(ng)%russt2d')) RETURN
+
+      IF (.not.destroy(ng, MIXING(ng)%rvsst2d, MyFile,                  &
+     &                 __LINE__, 'MIXING(ng)%rvsst2d')) RETURN
+#  endif
+# endif
+
+# ifdef SOLVE3D
+#  ifdef WEC_VF
       IF (.not.destroy(ng, MIXING(ng)%rustr3d, MyFile,                  &
      &                 __LINE__, 'MIXING(ng)%rustr3d')) RETURN
 
@@ -1364,22 +1383,28 @@
           END DO
 # endif
 #endif
-#ifdef NEARSHORE_MELLOR
+#ifdef WEC
           DO i=Imin,Imax
-            MIXING(ng) % Sxx_bar(i,j) = IniVal
-            MIXING(ng) % Sxy_bar(i,j) = IniVal
-            MIXING(ng) % Syy_bar(i,j) = IniVal
             MIXING(ng) % rustr2d(i,j) = IniVal
             MIXING(ng) % rvstr2d(i,j) = IniVal
+# ifdef WEC_VF
+            MIXING(ng) % rurol2d(i,j) = IniVal
+            MIXING(ng) % rvrol2d(i,j) = IniVal
+            MIXING(ng) % rubrk2d(i,j) = IniVal
+            MIXING(ng) % rvbrk2d(i,j) = IniVal
+            MIXING(ng) % rukvf2d(i,j) = IniVal
+            MIXING(ng) % rvkvf2d(i,j) = IniVal
+#  ifdef BOTTOM_STREAMING
+            MIXING(ng) % rubst2d(i,j) = IniVal
+            MIXING(ng) % rvbst2d(i,j) = IniVal
+#  endif
+#  ifdef SURFACE_STREAMING
+            MIXING(ng) % russt2d(i,j) = IniVal
+            MIXING(ng) % rvsst2d(i,j) = IniVal
+#  endif
+# endif
 # ifdef SOLVE3D
             DO k=1,N(ng)
-              MIXING(ng) % Sxx(i,j,k) = IniVal
-              MIXING(ng) % Sxy(i,j,k) = IniVal
-              MIXING(ng) % Syy(i,j,k) = IniVal
-#  ifdef NEARSHORE_MELLOR05
-              MIXING(ng) % Szx(i,j,k) = IniVal
-              MIXING(ng) % Szy(i,j,k) = IniVal
-#  endif
               MIXING(ng) % rustr3d(i,j,k) = IniVal
               MIXING(ng) % rvstr3d(i,j,k) = IniVal
             END DO

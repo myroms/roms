@@ -1,5 +1,5 @@
-# git $Id: compiler_flags_GNU_Fortran.cmake 1171 2023-06-17 16:36:36Z arango $
-# svn $Id: compiler_flags_GNU_Fortran.cmake 1171 2023-06-17 16:36:36Z arango $
+# git $Id$
+# svn $Id: compiler_flags_GNU_Fortran.cmake 1178 2023-07-11 17:50:57Z arango $
 #:::::::::::::::::::::::::::::::::::::::::::::::::::::: David Robertson :::
 # Copyright (c) 2002-2023 The ROMS/TOMS Group                           :::
 #   Licensed under a MIT/X style license                                :::

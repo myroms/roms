@@ -3,7 +3,7 @@
 #ifdef BULK_FLUXES
 !
 !git $Id$
-!svn $Id: bulk_flux.F 1176 2023-07-01 19:23:18Z arango $
+!svn $Id: bulk_flux.F 1178 2023-07-11 17:50:57Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -144,15 +144,17 @@
 # ifdef CLOUDS
      &                     FORCES(ng) % cloud,                          &
 # endif
-# ifdef COARE_TAYLOR_YELLAND
+# if defined COARE_TAYLOR_YELLAND || defined DRENNAN
      &                     FORCES(ng) % Hwave,                          &
 # endif
-# if defined COARE_TAYLOR_YELLAND || defined COARE_OOST
+# if defined COARE_TAYLOR_YELLAND || defined COARE_OOST || \
+     defined DRENNAN
      &                     FORCES(ng) % Pwave_top,                      &
 # endif
 # if !defined DEEPWATER_WAVES      && \
-     (defined COARE_TAYLOR_YELLAND || defined COARE_OOST)
-     &                     FORCES(ng) % Lwave,                          &
+     (defined COARE_TAYLOR_YELLAND || defined COARE_OOST || \
+      defined DRENNAN)
+     &                     FORCES(ng) % Lwavep,                         &
 # endif
 # if defined ICE_MODEL  && defined ICE_BULK_FLUXES && \
      defined ICE_ALBEDO && defined SHORTWAVE
@@ -213,15 +215,17 @@
 # ifdef CLOUDS
      &                           cloud,                                 &
 # endif
-# ifdef COARE_TAYLOR_YELLAND
+# if defined COARE_TAYLOR_YELLAND || defined DRENNAN
      &                           Hwave,                                 &
 # endif
-# if defined COARE_TAYLOR_YELLAND || defined COARE_OOST
+# if defined COARE_TAYLOR_YELLAND || defined COARE_OOST || \
+     defined DRENNAN
      &                           Pwave_top,                             &
 # endif
 # if !defined DEEPWATER_WAVES      && \
-     (defined COARE_TAYLOR_YELLAND || defined COARE_OOST)
-     &                           Lwave,                                 &
+     (defined COARE_TAYLOR_YELLAND || defined COARE_OOST || \
+      defined DRENNAN)
+     &                           Lwavep,                                &
 # endif
 # if defined ICE_MODEL  && defined ICE_BULK_FLUXES && \
      defined ICE_ALBEDO && defined SHORTWAVE
@@ -281,16 +285,18 @@
 #  ifdef CLOUDS
       real(r8), intent(in   ) :: cloud(LBi:,LBj:)
 #  endif
-#  ifdef COARE_TAYLOR_YELLAND
+# if defined COARE_TAYLOR_YELLAND || defined DRENNAN
       real(r8), intent(in   ) :: Hwave(LBi:,LBj:)
-#  endif
-#  if defined COARE_TAYLOR_YELLAND || defined COARE_OOST
+# endif
+# if defined COARE_TAYLOR_YELLAND || defined COARE_OOST || \
+      defined DRENNAN
       real(r8), intent(in   ) :: Pwave_top(LBi:,LBj:)
-#  endif
-#  if !defined DEEPWATER_WAVES      && \
-     (defined COARE_TAYLOR_YELLAND || defined COARE_OOST)
-      real(r8), intent(in   ) :: Lwave(LBi:,LBj:)
-#  endif
+# endif
+# if !defined DEEPWATER_WAVES      && \
+     (defined COARE_TAYLOR_YELLAND || defined COARE_OOST || \
+      defined DRENNAN)
+      real(r8), intent(in   ) :: Lwavep(LBi:,LBj:)
+# endif
 #  if defined ICE_MODEL  && defined ICE_BULK_FLUXES && \
       defined ICE_ALBEDO && defined SHORTWAVE
       real(r8), intent(in   ) :: albedo_ice(LBi:,LBj:)
@@ -347,16 +353,19 @@
 #  ifdef CLOUDS
       real(r8), intent(in   ) :: cloud(LBi:UBi,LBj:UBj)
 #  endif
-#  ifdef COARE_TAYLOR_YELLAND
+# if defined COARE_TAYLOR_YELLAND || \
+      defined DRENNAN
       real(r8), intent(in   ) :: Hwave(LBi:UBi,LBj:UBj)
-#  endif
-#  if defined COARE_TAYLOR_YELLAND || defined COARE_OOST
+# endif
+# if defined COARE_TAYLOR_YELLAND || defined COARE_OOST || \
+      defined DRENNAN
       real(r8), intent(in   ) :: Pwave_top(LBi:UBi,LBj:UBj)
-#  endif
-#  if !defined DEEPWATER_WAVES      && \
-     (defined COARE_TAYLOR_YELLAND || defined COARE_OOST)
-      real(r8), intent(in   ) :: Lwave(LBi:UBi,LBj:UBj)
-#  endif
+# endif
+# if !defined DEEPWATER_WAVES      && \
+     (defined COARE_TAYLOR_YELLAND || defined COARE_OOST || \
+      defined DRENNAN)
+      real(r8), intent(in   ) :: Lwavep(LBi:UBi,LBj:UBj)
+# endif
 #  if defined ICE_MODEL  && defined ICE_BULK_FLUXES && \
       defined ICE_ALBEDO && defined SHORTWAVE
       real(r8), intent(in   ) :: albedo_ice(LBi:UBi,LBj:UBj)
@@ -552,7 +561,7 @@
 !  (At input the flux data is converted to Celsius m/s. Here, we need to
 !   convert back to W/m2 using 'Hscale').
 !
-          Wmag(i)=SQRT(Uair(i,j)*Uair(i,j)+Vair(i,j)*Vair(i,j))
+          Wmag(i)=SQRT(Uair(i,j)*Uair(i,j)+Vair(i,j)*Vair(i,j))+eps
           PairM=Pair(i,j)
           TairC(i)=Tair(i,j)                                 ! Celsius
           TairK(i)=TairC(i)+273.16_r8                        ! Kelvin
@@ -655,13 +664,14 @@
 !
 !  Compute specific humidity at Saturation, Qair (kg/kg).
 !
-          Qair(i)=0.62197_r8*(cff/(PairM-0.378_r8*cff))
+          Qair(i)=0.62197_r8*(cff/(PairM-0.378_r8*cff+eps))
 !
 !  Compute specific humidity, Q (kg/kg).
 !
           IF (RH.lt.2.0_r8) THEN                       !RH fraction
             cff=cff*RH                                 !Vapor pres (mb)
-            Q(i)=0.62197_r8*(cff/(PairM-0.378_r8*cff)) !Spec hum (kg/kg)
+            Q(i)=0.62197_r8*                                            &
+     &           (cff/(PairM-0.378_r8*cff+eps))        !Spec hum (kg/kg)
           ELSE          !RH input was actually specific humidity in g/kg
             Q(i)=RH/1000.0_r8                          !Spec Hum (kg/kg)
           END IF
@@ -735,7 +745,7 @@
           Ribcu(i)=-blk_ZW(ng)/(blk_Zabl*0.004_r8*blk_beta**3)
           Ri(i)=-g*blk_ZW(ng)*((delT(i)-delTc(i))+                      &
      &                          0.61_r8*TairK(i)*delQ(i))/              &
-     &          (TairK(i)*delW(i)*delW(i))
+     &          (TairK(i)*delW(i)*delW(i)+eps)
           IF (Ri(i).lt.0.0_r8) THEN
             Zetu(i)=CC(i)*Ri(i)/(1.0_r8+Ri(i)/Ribcu(i))       ! Unstable
           ELSE
@@ -765,13 +775,14 @@
           ELSE
             charn(i)=0.011_r8
           END IF
-# if defined COARE_OOST || defined COARE_TAYLOR_YELLAND
+# if defined COARE_OOST || defined COARE_TAYLOR_YELLAND ||   \
+     defined DRENNAN
 #  if defined DEEPWATER_WAVES
           Cwave(i)=g*MAX(Pwave_top(i,j),eps)*twopi_inv
           WaveLength(i)=Cwave(i)*MAX(Pwave_top(i,j),eps)
 #  else
-          Cwave(i)=Lwave(i,j)/MAX(Pwave_top(i,j),eps)
-          WaveLength(i)=Lwave(i,j)
+          Cwave(i)=Lwavep(i,j)/MAX(Pwave_top(i,j),eps)
+          WaveLength(i)=Lwavep(i,j)
 #  endif
 # endif
         END DO
@@ -791,9 +802,17 @@
             ZoW(i)=1200.0_r8*Hwave(i,j)*                                &
      &             (Hwave(i,j)/WaveLength(i))**4.5_r8+                  &
      &             0.11_r8*VisAir(i)/(Wstar(i)+eps)
+# elif defined DRENNAN
+            ZoW(i)=(3.35_r8)*Hwave(i,j)*                                &
+     &             MIN((Wstar(i)/Cwave(i)),0.1_r8)**3.4_r8+             &
+     &             0.11_r8*VisAir(i)/(Wstar(i)+eps)
 # else
             ZoW(i)=charn(i)*Wstar(i)*Wstar(i)/g+                        &
      &             0.11_r8*VisAir(i)/(Wstar(i)+eps)
+# endif
+# if defined DRAGLIM_DAVIS
+            ZoW(i)=MAX(ZoW(i),1.27E-7_r8) ! Davis et al. (2008)
+            ZoW(i)=MIN(ZoW(i),2.85E-3_r8)
 # endif
             Rr(i)=ZoW(i)*Wstar(i)/VisAir(i)
 !
@@ -912,7 +931,7 @@
           diffw=2.11E-5_r8*(TairK(i)/273.16_r8)**1.94_r8
           diffh=0.02411_r8*(1.0_r8+TairC(i)*                            &
      &                      (3.309E-3_r8-1.44E-6_r8*TairC(i)))/         &
-     &          (rhoAir(i)*blk_Cpa)
+     &          (rhoAir(i)*blk_Cpa+eps)
           cff=Qair(i)*Hlv(i,j)/(blk_Rgas*TairK(i)*TairK(i))
           wet_bulb=1.0_r8/(1.0_r8+0.622_r8*(cff*Hlv(i,j)*diffw)/        &
      &                                     (blk_Cpa*diffh))
@@ -1201,7 +1220,7 @@
           stflux(i,j,itemp)=stflux(i,j,itemp)*rmask_wet(i,j)
 # endif
 # ifdef EMINUSP
-          evap(i,j)=LHeat(i,j)/Hlv(i,j)                      ! kg/m2/s
+          evap(i,j)=LHeat(i,j)/(Hlv(i,j)+eps)                ! kg/m2/s
 #  if defined ICE_MODEL && defined ICE_BULK_FLUXES
           evap(i,j)=(1.0_r8-Si(i,j,li_stp,isAice))*evap(i,j)
 #  endif
@@ -1211,12 +1230,14 @@
 #  ifdef WET_DRY
           evap(i,j)=evap(i,j)*rmask_wet(i,j)
 #  endif
+#  ifdef SALINITY
           stflux(i,j,isalt)=cff*(evap(i,j)-rain(i,j))        ! m/s
-#  ifdef MASKING
+#   ifdef MASKING
           stflux(i,j,isalt)=stflux(i,j,isalt)*rmask(i,j)
-#  endif
-#  ifdef WET_DRY
+#   endif
+#   ifdef WET_DRY
           stflux(i,j,isalt)=stflux(i,j,isalt)*rmask_wet(i,j)
+#   endif
 #  endif
 # endif
         END DO
@@ -1317,10 +1338,11 @@
         CALL exchange_r2d_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          evap)
-
+#  ifdef SALINITY
         CALL exchange_r2d_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          stflux(:,:,isalt))
+#  endif
 # endif
         CALL exchange_u2d_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj,                     &
@@ -1367,12 +1389,18 @@
 #  endif
 
 #  ifdef EMINUSP
-      CALL mp_exchange2d (ng, tile, iNLM, 2,                            &
+      CALL mp_exchange2d (ng, tile, iNLM, 1,                            &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    NghostPoints,                                 &
      &                    EWperiodic(ng), NSperiodic(ng),               &
-     &                    evap,                                         &
+     &                    evap)
+#   ifdef SALINITY
+      CALL mp_exchange2d (ng, tile, iNLM, 1,                            &
+     &                    LBi, UBi, LBj, UBj,                           &
+     &                    NghostPoints,                                 &
+     &                    EWperiodic(ng), NSperiodic(ng),               &
      &                    stflux(:,:,isalt))
+#   endif
 #  endif
       CALL mp_exchange2d (ng, tile, iNLM, 2,                            &
      &                    LBi, UBi, LBj, UBj,                           &

@@ -242,15 +242,17 @@ endif
 MAKE_MACROS := $(shell echo ${HOME} | sed 's| |\\ |g')/make_macros.mk
 
 ifneq ($(MAKECMDGOALS),clean)
-  MACROS := $(shell cpp -P $(ROMS_CPPFLAGS) Compilers/make_macros.h > \
-              $(MAKE_MACROS); $(CLEAN) $(MAKE_MACROS))
+  ifneq ($(MAKECMDGOALS),tarfile)
+    MACROS := $(shell cpp -P $(ROMS_CPPFLAGS) Compilers/make_macros.h > \
+                $(MAKE_MACROS); $(CLEAN) $(MAKE_MACROS))
 
-  GET_MACROS := $(wildcard $(SCRATCH_DIR)/make_macros.*)
+    GET_MACROS := $(wildcard $(SCRATCH_DIR)/make_macros.*)
 
-  ifdef GET_MACROS
-    include $(SCRATCH_DIR)/make_macros.mk
-  else
-    include $(MAKE_MACROS)
+    ifdef GET_MACROS
+      include $(SCRATCH_DIR)/make_macros.mk
+    else
+      include $(MAKE_MACROS)
+    endif
   endif
 endif
 
@@ -364,8 +366,10 @@ ifndef FORT
 endif
 
 ifneq ($(MAKECMDGOALS),clean)
-  MKFILE := $(COMPILERS)/$(OS)-$(strip $(FORT)).mk
-  include $(MKFILE)
+  ifneq ($(MAKECMDGOALS),tarfile)
+    MKFILE := $(COMPILERS)/$(OS)-$(strip $(FORT)).mk
+    include $(MKFILE)
+  endif
 endif
 
 ifdef USE_MPI
@@ -492,8 +496,8 @@ ifdef USE_WRF
  endif
 endif
 
- modules  +=	Master
- includes +=	Master Compilers
+modules  +=	Master
+includes +=	Master Compilers
 
 vpath %.F $(modules)
 vpath %.h $(includes)
@@ -545,6 +549,7 @@ libraries: $(libraries)
 #  Target to create ROMS/TOMS dependecies.
 #--------------------------------------------------------------------------
 
+ifneq ($(MAKECMDGOALS),tarfile)
 $(SCRATCH_DIR)/$(NETCDF_MODFILE): | $(SCRATCH_DIR)
 	cp -f $(NETCDF_INCDIR)/$(NETCDF_MODFILE) $(SCRATCH_DIR)
 
@@ -564,6 +569,7 @@ SFMAKEDEPEND := ./ROMS/Bin/sfmakedepend
 
 depend: $(SCRATCH_DIR)
 	$(SFMAKEDEPEND) $(MDEPFLAGS) $(sources) > $(SCRATCH_DIR)/MakeDepend
+endif
 
 ifneq ($(MAKECMDGOALS),clean)
   -include $(SCRATCH_DIR)/MakeDepend

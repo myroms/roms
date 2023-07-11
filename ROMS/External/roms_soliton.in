@@ -2,7 +2,7 @@
 !  ROMS/TOMS Standard Input parameters.
 !
 !git $Id$
-!svn $Id: roms_soliton.in 1151 2023-02-09 03:08:53Z arango $
+!svn $Id: roms_soliton.in 1178 2023-07-11 17:50:57Z arango $
 !========================================================= Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                                !
 !    Licensed under a MIT/X style license                                     !
@@ -192,6 +192,13 @@ ad_Vadvection == C4       \                     ! temperature
    LBC(isTvar) ==   Per     Clo     Per     Clo \       ! temperature
                     Per     Clo     Per     Clo         ! salinity
 
+! Waves Effect on Currents lateral boundary conditions.
+
+   LBC(isU2Sd) ==   Per     Clo     Per     Clo         ! 2D U-stokes
+   LBC(isV2Sd) ==   Per     Clo     Per     Clo         ! 2D V-stokes
+   LBC(isU3Sd) ==   Per     Clo     Per     Clo         ! 3D U-stokes
+   LBC(isV3Sd) ==   Per     Clo     Per     Clo         ! 3D V-stokes
+
 ! Adjoint-based algorithms can have different lateral boundary
 ! conditions keywords.
 
@@ -371,6 +378,13 @@ LtracerSponge == F F                            ! temperature, salinity, inert
        SZ_ALPHA == 0.25d0           ! roughness from wave dissipation
       CRGBAN_CW == 100.0d0          ! Craig and Banner wave breaking
 
+! Waves Effect on Current wave dissipation action scale:
+!
+!   [0.0] All wave dissipation goes to breaking and none to roller
+!   [1.0] All wave dissipation goes to roller and none to breaking
+
+   WEC_ALPHA == 0.0d0
+
 ! Constants used in momentum stress computation.
 
         RDRG == 3.0d-04                    ! m/s
@@ -543,20 +557,20 @@ SO_sdev(isTsur) == 1.0d0 1.0d0             ! NT surface tracers flux
 ! Logical switches (TRUE/FALSE) to activate writing of fields into
 ! HISTORY output file.
 
-Hout(idUvel) == F       ! u                  3D U-velocity
-Hout(idVvel) == F       ! v                  3D V-velocity
+Hout(idUvel) == T       ! u                  3D U-velocity
+Hout(idVvel) == T       ! v                  3D V-velocity
 Hout(idu3dE) == F       ! u_eastward         3D U-eastward  at RHO-points
 Hout(idv3dN) == F       ! v_northward        3D V-northward at RHO-points
 Hout(idWvel) == F       ! w                  3D W-velocity
-Hout(idOvel) == F       ! omega              omega vertical velocity
+Hout(idOvel) == T       ! omega              omega vertical velocity
 Hout(idUbar) == T       ! ubar               2D U-velocity
 Hout(idVbar) == T       ! vbar               2D V-velocity
 Hout(idu2dE) == F       ! ubar_eastward      2D U-eastward  at RHO-points
 Hout(idv2dN) == F       ! vbar_northward     2D V-northward at RHO-points
 Hout(idFsur) == T       ! zeta               free-surface
-Hout(idBath) == T       ! bath               time-dependent bathymetry
+Hout(idBath) == F       ! bath               time-dependent bathymetry
 
-Hout(idTvar) == F F     ! temp, salt         temperature and salinity
+Hout(idTvar) == T T     ! temp, salt         temperature and salinity
 
 Hout(idpthR) == F       ! z_rho              time-varying depths of RHO-points
 Hout(idpthU) == F       ! z_u                time-varying depths of U-points
@@ -574,42 +588,52 @@ Hout(idUbws) == F       ! bustrw             bottom U-wave stress
 Hout(idVbws) == F       ! bvstrw             bottom V-wave stress
 Hout(idUbcs) == F       ! bustrcwmax         bottom max wave-current U-stress
 Hout(idVbcs) == F       ! bvstrcwmax         bottom max wave-current V-stress
+Hout(idUVwc) == F       ! bstrcwmax          bottom max wave-current stress magnitude
 
 Hout(idUbot) == F       ! Ubot               bed wave orbital U-velocity
 Hout(idVbot) == F       ! Vbot               bed wave orbital V-velocity
 Hout(idUbur) == F       ! Ur                 bottom U-velocity above bed
 Hout(idVbvr) == F       ! Vr                 bottom V-velocity above bed
 
-Hout(idW2xx) == F       ! Sxx_bar            2D radiation stress, Sxx component
-Hout(idW2xy) == F       ! Sxy_bar            2D radiation stress, Sxy component
-Hout(idW2yy) == F       ! Syy_bar            2D radiation stress, Syy component
-Hout(idU2rs) == F       ! Ubar_Rstress       2D radiation U-stress
-Hout(idV2rs) == F       ! Vbar_Rstress       2D radiation V-stress
-Hout(idU2Sd) == F       ! ubar_stokes        2D U-Stokes velocity
-Hout(idV2Sd) == F       ! vbar_stokes        2D V-Stokes velocity
+Hout(idWztw) == F       ! zetaw              WEC_VF quasi-static sea level adjustment
+Hout(idWqsp) == F       ! qsp                WEC_VF quasi-static pressure adjustment
+Hout(idWbeh) == F       ! bernoulli_head     WEC_VF Bernoulli head adjustment
 
-Hout(idW3xx) == F       ! Sxx                3D radiation stress, Sxx component
-Hout(idW3xy) == F       ! Sxy                3D radiation stress, Sxy component
-Hout(idW3yy) == F       ! Syy                3D radiation stress, Syy component
-Hout(idW3zx) == F       ! Szx                3D radiation stress, Szx component
-Hout(idW3zy) == F       ! Szy                3D radiation stress, Szy component
-Hout(idU3rs) == F       ! u_Rstress          3D U-radiation stress
-Hout(idV3rs) == F       ! v_Rstress          3D V-radiation stress
-Hout(idU3Sd) == F       ! u_stokes           3D U-Stokes velocity
-Hout(idV3Sd) == F       ! v_stokes           3D V-Stokes velocity
+Hout(idU2rs) == F       ! ubar_wec_stress    WEC 2D U-stress
+Hout(idV2rs) == F       ! vbar_wec_stress    WEC 2D V-stress
+Hout(idU3rs) == F       ! u_wec_stress       WEC 3D U-stress
+Hout(idV3rs) == F       ! v_wec_stress       WEC 3D V-stress
 
-Hout(idWamp) == F       ! Hwave              wave height
-Hout(idWlen) == F       ! Lwave              wave length
-Hout(idWdir) == F       ! Dwave              wave direction
+Hout(idU2Sd) == F       ! ubar_stokes        2D Stokes U-velocity
+Hout(idV2Sd) == F       ! vbar_stokes        2D Stokes V-velocity
+Hout(idU3Sd) == F       ! u_stokes           3D Stokes U-velocity
+Hout(idV3Sd) == F       ! v_stokes           3D Stokes V-velocity
+Hout(idW3St) == F       ! w_stokes           3D Stokes W-velocity
+Hout(idW3Sd) == F       ! omega_stokes       3D Stokes omega-velocity
+
+Hout(idWamp) == F       ! Hwave              wave significat height
+Hout(idWlen) == F       ! Lwave              wave mean wavelength
+Hout(idWlep) == F       ! Lwavep             wave peak wavelength
+Hout(idWdir) == F       ! Dwave              wave mean direction
+Hout(idWdip) == F       ! Dwavep             wave peak direction
 Hout(idWptp) == F       ! Pwave_top          wave surface period
 Hout(idWpbt) == F       ! Pwave_bot          wave bottom period
-Hout(idWorb) == F       ! Ub_swan            wave bottom orbital velocity
-Hout(idWdis) == F       ! Wave_dissip        wave dissipation
+Hout(idWorb) == F       ! Uwave_rms          wave bottom orbital velocity
+Hout(idWbrk) == F       ! Wave_break         wave breaking (percent)
+Hout(idUwav) == F       ! uWave              wave depth-averaged U-velocity
+Hout(idVwav) == F       ! vWave              wave depth-averaged V-velocity
+Hout(idWdif) == F       ! Dissip_fric        wave dissipation from bottom friction
+Hout(idWdib) == F       ! Dissip_break       wave dissipation from breaking
+Hout(idWdiw) == F       ! Dissip_wcap        wave dissipation from whitecapping
+Hout(idWdis) == F       ! Dissip_roller      wave roller dissipation
+Hout(idWrol) == F       ! roller_action      wave roller action density
 
 Hout(idPair) == F       ! Pair               surface air pressure
 Hout(idTair) == F       ! Tair               surface air temperature
-Hout(idUair) == F       ! Uair               surface U-wind component
-Hout(idVair) == F       ! Vair               surface V-wind component
+Hout(idUair) == F       ! Uwind              surface U-wind
+Hout(idVair) == F       ! Vwind              surface V-wind
+Hout(idUaiE) == F       ! Uwind_eastward     surface Eastward  U-wind
+Hout(idVaiN) == F       ! Vwind_northward    surface Northward V-wind
 
 Hout(idTsur) == F F     ! shflux, ssflux     surface net heat and salt flux
 Hout(idLhea) == F       ! latent             latent heat flux
@@ -620,7 +644,7 @@ Hout(idEmPf) == F       ! EminusP            E-P flux
 Hout(idevap) == F       ! evaporation        evaporation rate
 Hout(idrain) == F       ! rain               precipitation rate
 
-Hout(idDano) == F       ! rho                density anomaly
+Hout(idDano) == T       ! rho                density anomaly
 Hout(idVvis) == F       ! AKv                vertical viscosity
 Hout(idTdif) == F       ! AKt                vertical T-diffusion
 Hout(idSdif) == F       ! AKs                vertical Salinity diffusion
@@ -649,8 +673,8 @@ Qout(idWvel) == F       ! w                  3D W-velocity
 Qout(idOvel) == F       ! omega              omega vertical velocity
 Qout(idUbar) == T       ! ubar               2D U-velocity
 Qout(idVbar) == T       ! vbar               2D V-velocity
-Qout(idu2dE) == T       ! ubar_eastward      2D U-eastward  at RHO-points
-Qout(idv2dN) == T       ! vbar_northward     2D V-northward at RHO-points
+Qout(idu2dE) == F       ! ubar_eastward      2D U-eastward  at RHO-points
+Qout(idv2dN) == F       ! vbar_northward     2D V-northward at RHO-points
 Qout(idFsur) == T       ! zeta               free-surface
 Qout(idBath) == T       ! bath               time-dependent bathymetry
 
@@ -679,42 +703,52 @@ Qout(idUbws) == F       ! bustrw             bottom U-wave stress
 Qout(idVbws) == F       ! bvstrw             bottom V-wave stress
 Qout(idUbcs) == F       ! bustrcwmax         bottom max wave-current U-stress
 Qout(idVbcs) == F       ! bvstrcwmax         bottom max wave-current V-stress
+Qout(idUVwc) == F       ! bstrcwmax          bottom max wave-current stress magnitude
 
 Qout(idUbot) == F       ! Ubot               bed wave orbital U-velocity
 Qout(idVbot) == F       ! Vbot               bed wave orbital V-velocity
 Qout(idUbur) == F       ! Ur                 bottom U-velocity above bed
 Qout(idVbvr) == F       ! Vr                 bottom V-velocity above bed
 
-Qout(idW2xx) == F       ! Sxx_bar            2D radiation stress, Sxx component
-Qout(idW2xy) == F       ! Sxy_bar            2D radiation stress, Sxy component
-Qout(idW2yy) == F       ! Syy_bar            2D radiation stress, Syy component
-Qout(idU2rs) == F       ! Ubar_Rstress       2D radiation U-stress
-Qout(idV2rs) == F       ! Vbar_Rstress       2D radiation V-stress
-Qout(idU2Sd) == F       ! ubar_stokes        2D U-Stokes velocity
-Qout(idV2Sd) == F       ! vbar_stokes        2D V-Stokes velocity
+Qout(idWztw) == F       ! zetaw              WEC_VF quasi-static sea level adjustment
+Qout(idWqsp) == F       ! qsp                WEC_VF quasi-static pressure adjustment
+Qout(idWbeh) == F       ! bernoulli_head     WEC_VF Bernoulli head adjustment
 
-Qout(idW3xx) == F       ! Sxx                3D radiation stress, Sxx component
-Qout(idW3xy) == F       ! Sxy                3D radiation stress, Sxy component
-Qout(idW3yy) == F       ! Syy                3D radiation stress, Syy component
-Qout(idW3zx) == F       ! Szx                3D radiation stress, Szx component
-Qout(idW3zy) == F       ! Szy                3D radiation stress, Szy component
-Qout(idU3rs) == F       ! u_Rstress          3D U-radiation stress
-Qout(idV3rs) == F       ! v_Rstress          3D V-radiation stress
-Qout(idU3Sd) == F       ! u_stokes           3D U-Stokes velocity
-Qout(idV3Sd) == F       ! v_stokes           3D V-Stokes velocity
+Qout(idU2rs) == F       ! ubar_wec_stress    WEC 2D U-stress
+Qout(idV2rs) == F       ! vbar_wec_stress    WEC 2D V-stress
+Qout(idU3rs) == F       ! u_wec_stress       WEC 3D U-stress
+Qout(idV3rs) == F       ! v_wec_stress        WEC 3D V-stress
 
-Qout(idWamp) == F       ! Hwave              wave height
-Qout(idWlen) == F       ! Lwave              wave length
-Qout(idWdir) == F       ! Dwave              wave direction
+Qout(idU2Sd) == F       ! ubar_stokes        2D Stokes U-velocity
+Qout(idV2Sd) == F       ! vbar_stokes        2D Stokes V-velocity
+Qout(idU3Sd) == F       ! u_stokes           3D Stokes U-velocity
+Qout(idV3Sd) == F       ! v_stokes           3D Stokes V-velocity
+Qout(idW3St) == F       ! w_stokes           3D Stokes W-velocity
+Qout(idW3Sd) == F       ! omega_stokes       3D Stokes omega-velocity
+
+Qout(idWamp) == F       ! Hwave              wave significant height
+Qout(idWlen) == F       ! Lwave              wave mean wavelength
+Qout(idWlep) == F       ! Lwavep             wave peak wavelength
+Qout(idWdir) == F       ! Dwave              wave mean direction
+Qout(idWdip) == F       ! Dwavep             wave peak direction
 Qout(idWptp) == F       ! Pwave_top          wave surface period
 Qout(idWpbt) == F       ! Pwave_bot          wave bottom period
-Qout(idWorb) == F       ! Ub_swan            wave bottom orbital velocity
-Qout(idWdis) == F       ! Wave_dissip        wave dissipation
+Qout(idWorb) == F       ! Uwave_rms          wave bottom orbital velocity
+Qout(idWbrk) == F       ! Wave_break         wave breaking (percent)
+Qout(idUwav) == F       ! uWave              wave depth-averaged U-velocity
+Qout(idVwav) == F       ! vWave              wave depth-averaged V-velocity
+Qout(idWdif) == F       ! Dissip_fric        wave dissipation from bottom friction
+Qout(idWdib) == F       ! Dissip_break       wave dissipation from breaking
+Qout(idWdiw) == F       ! Dissip_wcap        wave dissipation from whitecapping
+Qout(idWdis) == F       ! Dissip_roller      wave roller dissipation
+Qout(idWrol) == F       ! roller_action      wave roller action density
 
 Qout(idPair) == F       ! Pair               surface air pressure
 Qout(idTair) == F       ! Tair               surface air temperature
-Qout(idUair) == F       ! Uair               surface U-wind component
-Qout(idVair) == F       ! Vair               surface V-wind component
+Qout(idUair) == F       ! Uair               surface U-wind
+Qout(idVair) == F       ! Vair               surface V-wind
+Qout(idUaiE) == F       ! Uwind_eastward     surface Eastward  U-wind
+Qout(idVaiN) == F       ! Vwind_northward    surface Northward V-wind
 
 Qout(idTsur) == F F     ! shflux, ssflux     surface net heat and salt flux
 Qout(idLhea) == F       ! latent             latent heat flux
@@ -742,52 +776,82 @@ Qout(idMtls) == F       ! gls                turbulent length scale
 ! switches can be activated using compact parameter specification.
 
  Qout(inert) == F       ! dye_01, ...        inert passive tracers
- Qout(Snert) == F       ! dye_01_sur, ..     surface inert passive tracers
+ Qout(Snert) == F       ! dye_01_sur, ...    surface inert passive tracers
 
 ! Logical switches (TRUE/FALSE) to activate writing of time-averaged
 ! fields into AVERAGE output file.
 
-Aout(idUvel) == F       ! u                  3D U-velocity
-Aout(idVvel) == F       ! v                  3D V-velocity
+Aout(idUvel) == T       ! u                  3D U-velocity
+Aout(idVvel) == T       ! v                  3D V-velocity
 Aout(idu3dE) == F       ! u_eastward         3D U-eastward  at RHO-points
 Aout(idv3dN) == F       ! v_northward        3D V-northward at RHO-points
 Aout(idWvel) == F       ! w                  3D W-velocity
-Aout(idOvel) == F       ! omega              omega vertical velocity
+Aout(idOvel) == T       ! omega              omega vertical velocity
 Aout(idUbar) == T       ! ubar               2D U-velocity
 Aout(idVbar) == T       ! vbar               2D V-velocity
 Aout(idu2dE) == F       ! ubar_eastward      2D U-eastward  at RHO-points
 Aout(idv2dN) == F       ! vbar_northward     2D V-northward at RHO-points
 Aout(idFsur) == T       ! zeta               free-surface
+Aout(idBath) == F       ! bath               time-dependent bathymetry
 
-Aout(idTvar) == F F     ! temp, salt         temperature and salinity
+Aout(idTvar) == T T     ! temp, salt         temperature and salinity
 
 Aout(idUsms) == F       ! sustr              surface U-stress
 Aout(idVsms) == F       ! svstr              surface V-stress
 Aout(idUbms) == F       ! bustr              bottom U-stress
 Aout(idVbms) == F       ! bvstr              bottom V-stress
 
-Aout(idW2xx) == F       ! Sxx_bar            2D radiation stress, Sxx component
-Aout(idW2xy) == F       ! Sxy_bar            2D radiation stress, Sxy component
-Aout(idW2yy) == F       ! Syy_bar            2D radiation stress, Syy component
-Aout(idU2rs) == F       ! Ubar_Rstress       2D radiation U-stress
-Aout(idV2rs) == F       ! Vbar_Rstress       2D radiation V-stress
-Aout(idU2Sd) == F       ! ubar_stokes        2D U-Stokes velocity
-Aout(idV2Sd) == F       ! vbar_stokes        2D V-Stokes velocity
+Aout(idUbrs) == F       ! bustrc             bottom U-current stress
+Aout(idVbrs) == F       ! bvstrc             bottom V-current stress
+Aout(idUbws) == F       ! bustrw             bottom U-wave stress
+Aout(idVbws) == F       ! bvstrw             bottom V-wave stress
+Aout(idUbcs) == F       ! bustrcwmax         bottom max wave-current U-stress
+Aout(idVbcs) == F       ! bvstrcwmax         bottom max wave-current V-stress
+Aout(idUVwc) == F       ! bstrcwmax          bottom max wave-current stress magnitude
 
-Aout(idW3xx) == F       ! Sxx                3D radiation stress, Sxx component
-Aout(idW3xy) == F       ! Sxy                3D radiation stress, Sxy component
-Aout(idW3yy) == F       ! Syy                3D radiation stress, Syy component
-Aout(idW3zx) == F       ! Szx                3D radiation stress, Szx component
-Aout(idW3zy) == F       ! Szy                3D radiation stress, Szy component
-Aout(idU3rs) == F       ! u_Rstress          3D U-radiation stress
-Aout(idV3rs) == F       ! v_Rstress          3D V-radiation stress
-Aout(idU3Sd) == F       ! u_stokes           3D U-Stokes velocity
-Aout(idV3Sd) == F       ! v_stokes           3D V-Stokes velocity
+Aout(idUbot) == F       ! Ubot               bed wave orbital U-velocity
+Aout(idVbot) == F       ! Vbot               bed wave orbital V-velocity
+Aout(idUbur) == F       ! Ur                 bottom U-velocity above bed
+Aout(idVbvr) == F       ! Vr                 bottom V-velocity above bed
+
+Aout(idWztw) == F       ! zetaw              WEC_VF quasi-static sea level adjustment
+Aout(idWqsp) == F       ! qsp                WEC_VF quasi-static pressure adjustment
+Aout(idWbeh) == F       ! bernoulli_head     WEC_VF Bernoulli head adjustment
+
+Aout(idU2rs) == F       ! ubar_wec_stress    WEC 2D U-stress
+Aout(idV2rs) == F       ! vbar_wec_stress    WEC 2D V-stress
+Aout(idU3rs) == F       ! u_wec_stress       WEC 3D U-stress
+Aout(idV3rs) == F       ! v_wec_stress       WEC 3D V-stress
+
+Aout(idU2Sd) == F       ! ubar_stokes        2D Stokes U-velocity
+Aout(idV2Sd) == F       ! vbar_stokes        2D Stokes V-velocity
+Aout(idU3Sd) == F       ! u_stokes           3D Stokes U-velocity
+Aout(idV3Sd) == F       ! v_stokes           3D Stokes V-velocity
+Aout(idW3St) == F       ! w_stokes           3D Stokes W-velocity
+Aout(idW3Sd) == F       ! omega_stokes       3D Stokes omega-velocity
+
+Aout(idWamp) == F       ! Hwave              wave significant height
+Aout(idWlen) == F       ! Lwave              wave mean wavelength
+Aout(idWlep) == F       ! Lwavep             wave peak wavelength
+Aout(idWdir) == F       ! Dwave              wave mean direction
+Aout(idWptp) == F       ! Pwave_top          wave surface period
+Aout(idWpbt) == F       ! Pwave_bot          wave bottom period
+Aout(idWorb) == F       ! Uwave_rms          wave bottom orbital velocity
+Aout(idWbrk) == F       ! Wave_break         wave breaking (percent)
+Aout(idUwav) == F       ! uWave              wave-depth averaged U-velocity
+Aout(idVwav) == F       ! vWave              wave-depth averaged V-velocity
+Aout(idWdif) == F       ! Dissip_fric        wave dissipation from bottom friction
+Aout(idWdib) == F       ! Dissip_break       wave dissipation from breaking
+Aout(idWdiw) == F       ! Dissip_wcap        wave dissipation from whitecapping
+Aout(idWdis) == F       ! Dissip_roller      wave roller dissipation
+Aout(idWrol) == F       ! roller_action      wave roller action density
 
 Aout(idPair) == F       ! Pair               surface air pressure
 Aout(idTair) == F       ! Tair               surface air temperature
-Aout(idUair) == F       ! Uair               surface U-wind component
-Aout(idVair) == F       ! Vair               surface V-wind component
+Aout(idUair) == F       ! Uwind              surface U-wind
+Aout(idVair) == F       ! Vwind              surface V-wind
+Aout(idUaiE) == F       ! Uwind_eastward     surface Eastward  U-wind
+Aout(idVaiN) == F       ! Vwind_northward    surface Northward V-wind
 
 Aout(idTsur) == F F     ! shflux, ssflux     surface net heat and salt flux
 Aout(idLhea) == F       ! latent             latent heat flux
@@ -797,7 +861,7 @@ Aout(idSrad) == F       ! swrad              shortwave radiation flux
 Aout(idevap) == F       ! evaporation        evaporation rate
 Aout(idrain) == F       ! rain               precipitation rate
 
-Aout(idDano) == F       ! rho                density anomaly
+Aout(idDano) == T       ! rho                density anomaly
 Aout(idVvis) == F       ! AKv                vertical viscosity
 Aout(idTdif) == F       ! AKt                vertical T-diffusion
 Aout(idSdif) == F       ! AKs                vertical Salinity diffusion
@@ -817,25 +881,25 @@ Aout(idFsuD) == F       ! zeta_detided       detided free-surface
 
 Aout(idTrcD) == F F     ! temp_detided, ...  detided temperature and salinity
 
-Aout(idHUav) == F       ! Huon               u-volume flux, Huon
-Aout(idHVav) == F       ! Hvom               v-volume flux, Hvom
-Aout(idUUav) == F       ! uu                 quadratic <u*u> term
-Aout(idUVav) == F       ! uv                 quadratic <u*v> term
-Aout(idVVav) == F       ! vv                 quadratic <v*v> term
-Aout(idU2av) == F       ! ubar2              quadratic <ubar*ubar> term
-Aout(idV2av) == F       ! vbar2              quadratic <vbar*vbar> term
-Aout(idZZav) == F       ! zeta2              quadratic <zeta*zeta> term
+Aout(idHUav) == T       ! Huon               u-volume flux, Huon
+Aout(idHVav) == T       ! Hvom               v-volume flux, Hvom
+Aout(idUUav) == T       ! uu                 quadratic <u*u> term
+Aout(idUVav) == T       ! uv                 quadratic <u*v> term
+Aout(idVVav) == T       ! vv                 quadratic <v*v> term
+Aout(idU2av) == T       ! ubar2              quadratic <ubar*ubar> term
+Aout(idV2av) == T       ! vbar2              quadratic <vbar*vbar> term
+Aout(idZZav) == T       ! zeta2              quadratic <zeta*zeta> term
 
-Aout(idTTav) == F F     ! temp_2, ...        quadratic <t*t> tracer terms
-Aout(idUTav) == F F     ! u_temp, ...        quadratic <u*t> tracer terms
-Aout(idVTav) == F F     ! v_temp, ...        quadratic <v*t> tracer terms
-Aout(iHUTav) == F F     ! Huon_temp, ...     tracer volume flux, <Huon*t>
-Aout(iHVTav) == F F     ! Hvom_temp, ...     tracer volume flux, <Hvom*t>
+Aout(idTTav) == T T     ! temp_2, ...        quadratic <t*t> tracer terms
+Aout(idUTav) == T T     ! u_temp, ...        quadratic <u*t> tracer terms
+Aout(idVTav) == T T     ! v_temp, ...        quadratic <v*t> tracer terms
+Aout(iHUTav) == T T     ! Huon_temp, ...     tracer volume flux, <Huon*t>
+Aout(iHVTav) == T T     ! Hvom_temp, ...     tracer volume flux, <Hvom*t>
 
 ! Logical switches (TRUE/FALSE) to activate writing of extra inert passive
 ! tracers other than biological and sediment tracers into the AVERAGE file.
 
- Aout(inert) == F       ! dye_01, ...        inert passive tracers
+ Aout(inert) == T       ! dye_01, ...        inert passive tracers
 
 ! Logical switches (TRUE/FALSE) to activate writing of time-averaged,
 ! 2D momentum (ubar,vbar) diagnostic terms into DIAGNOSTIC output file.
@@ -846,7 +910,6 @@ Dout(M2fcor) == T       ! ubar_cor, ...      Coriolis force
 Dout(M2hadv) == T       ! ubar_hadv, ...     horizontal total advection
 Dout(M2xadv) == T       ! ubar_xadv, ...     horizontal XI-advection
 Dout(M2yadv) == T       ! ubar_yadv, ...     horizontal ETA-advection
-Dout(M2hrad) == T       ! ubar_hrad, ...     horizontal total radiation stress
 Dout(M2hvis) == T       ! ubar_hvisc, ...    horizontal total viscosity
 Dout(M2xvis) == T       ! ubar_xvisc, ...    horizontal XI-viscosity
 Dout(M2yvis) == T       ! ubar_yvisc, ...    horizontal ETA-viscosity
@@ -856,34 +919,61 @@ Dout(M2bstr) == T       ! ubar_bstr, ...     bottom stress
 ! Logical switches (TRUE/FALSE) to activate writing of time-averaged,
 ! 3D momentum (u,v) diagnostic terms into DIAGNOSTIC output file.
 
-Dout(M3rate) == F       ! u_accel, ...       acceleration
-Dout(M3pgrd) == F       ! u_prsgrd, ...      pressure gradient
-Dout(M3fcor) == F       ! u_cor, ...         Coriolis force
-Dout(M3hadv) == F       ! u_hadv, ...        horizontal total advection
-Dout(M3xadv) == F       ! u_xadv, ...        horizontal XI-advection
-Dout(M3yadv) == F       ! u_yadv, ...        horizontal ETA-advection
-Dout(M3vadv) == F       ! u_vadv, ...        vertical advection
-Dout(M3hrad) == F       ! u_hrad, ...        horizontal total radiation stress
-Dout(M3vrad) == F       ! u_vrad, ...        vertical radiation stress
-Dout(M3hvis) == F       ! u_hvisc, ...       horizontal total viscosity
-Dout(M3xvis) == F       ! u_xvisc, ...       horizontal XI-viscosity
-Dout(M3yvis) == F       ! u_yvisc, ...       horizontal ETA-viscosity
-Dout(M3vvis) == F       ! u_vvisc, ...       vertical viscosity
+Dout(M3rate) == T       ! u_accel, ...       acceleration
+Dout(M3pgrd) == T       ! u_prsgrd, ...      pressure gradient
+Dout(M3fcor) == T       ! u_cor, ...         Coriolis force
+Dout(M3hadv) == T       ! u_hadv, ...        horizontal total advection
+Dout(M3xadv) == T       ! u_xadv, ...        horizontal XI-advection
+Dout(M3yadv) == T       ! u_yadv, ...        horizontal ETA-advection
+Dout(M3vadv) == T       ! u_vadv, ...        vertical advection
+Dout(M3hrad) == T       ! u_hrad, ...        horizontal total radiation stress
+Dout(M3vrad) == T       ! u_vrad, ...        vertical radiation stress
+Dout(M3hvis) == T       ! u_hvisc, ...       horizontal total viscosity
+Dout(M3xvis) == T       ! u_xvisc, ...       horizontal XI-viscosity
+Dout(M3yvis) == T       ! u_yvisc, ...       horizontal ETA-viscosity
+Dout(M3vvis) == T       ! u_vvisc, ...       vertical viscosity
+
+! Logical switches (TRUE/FALSE) to activate writing of time-averaged,
+! Waves Effect on Currents (WEC) 2D and 3D diagnostic terms into DIAGNOSTIC
+! output file.
+
+Dout(M2hjvf) == T       ! ubar_hjvf, ...     2D horizontal J vortex force
+Dout(M2kvrf) == T       ! ubar_kvrf, ...     2D K vortex force
+Dout(M2fsco) == T       ! ubar_fsco, ...     2D Stokes Coriolis
+Dout(M2sstm) == T       ! ubar_sstm, ...     2D surface streaming
+Dout(M2bstm) == T       ! ubar_bstm, ...     2D bottom streaming
+Dout(M2wrol) == T       ! ubar_wrol, ...     2D wave roller acceleration
+Dout(M2wbrk) == T       ! ubar_wbrk, ...     2D wave breaking
+Dout(M2zeta) == T       ! ubar_zeta, ...     2D Eulerian SSH adjustment
+Dout(M2zetw) == T       ! ubar_zetaw, ...    2D quasi-static SSH adjustment
+Dout(M2zqsp) == T       ! ubar_zqsp, ...     2D quasi-static pressure
+Dout(M2zbeh) == T       ! ubar_zbeh, ...     2D Bernoulli head adjustment
+Dout(M2fsgr) == T       ! ubar_fsgr, ...     2D seagrass drag force
+
+Dout(M3hjvf) == T       ! u_hjvf, ...        3D horizontal J vortex force
+Dout(M3vjvf) == T       ! u_vjvf, ...        3D vertical J vortex force
+Dout(M3kvrf) == T       ! u_kvrf, ...        3D K vortex force
+Dout(M3fsco) == T       ! u_fsco, ...        3D Stokes Coriolis
+Dout(M3sstm) == T       ! u_sstm, ...        3D surface streaming
+Dout(M3bstm) == T       ! u_bstm, ...        3D bottom streaming
+Dout(M3wrol) == T       ! u_wrol, ...        3D wave roller acceleration
+Dout(M3wbrk) == T       ! u_wbrk, ...        3D wave breaking
+Dout(M3fsgr) == T       ! u_fsgr, ...        3D seagrass drag force
 
 ! Logical switches (TRUE/FALSE) to activate writing of time-averaged,
 ! active (temperature and salinity) and passive (inert) tracer diagnostic
 ! terms into DIAGNOSTIC output file: [1:NAT+NPT,Ngrids].
 
-Dout(iTrate) == F F     ! temp_rate, ...     time rate of change
-Dout(iThadv) == F F     ! temp_hadv, ...     horizontal total advection
-Dout(iTxadv) == F F     ! temp_xadv, ...     horizontal XI-advection
-Dout(iTyadv) == F F     ! temp_yadv, ...     horizontal ETA-advection
-Dout(iTvadv) == F F     ! temp_vadv, ...     vertical advection
-Dout(iThdif) == F F     ! temp_hdiff, ...    horizontal total diffusion
-Dout(iTxdif) == F F     ! temp_xdiff, ...    horizontal XI-diffusion
-Dout(iTydif) == F F     ! temp_ydiff, ...    horizontal ETA-diffusion
-Dout(iTsdif) == F F     ! temp_sdiff, ...    horizontal S-diffusion
-Dout(iTvdif) == F F     ! temp_vdiff, ...    vertical diffusion
+Dout(iTrate) == T T     ! temp_rate, ...     time rate of change
+Dout(iThadv) == T T     ! temp_hadv, ...     horizontal total advection
+Dout(iTxadv) == T T     ! temp_xadv, ...     horizontal XI-advection
+Dout(iTyadv) == T T     ! temp_yadv, ...     horizontal ETA-advection
+Dout(iTvadv) == T T     ! temp_vadv, ...     vertical advection
+Dout(iThdif) == T T     ! temp_hdiff, ...    horizontal total diffusion
+Dout(iTxdif) == T T     ! temp_xdiff, ...    horizontal XI-diffusion
+Dout(iTydif) == T T     ! temp_ydiff, ...    horizontal ETA-diffusion
+Dout(iTsdif) == T T     ! temp_sdiff, ...    horizontal S-diffusion
+Dout(iTvdif) == T T     ! temp_vdiff, ...    vertical diffusion
 
 ! Generic User parameters, [1:NUSER].
 
@@ -1371,6 +1461,13 @@ PIO_I2C_Preq = 65                 ! Maximum pending I2C requests
 ! LBC(isVvel) 3D V-momentum, [1:4, Ngrids] values are expected.
 ! LBC(isMtke) Mixing TKE,    [1:4, Ngrids] values are expected.
 ! LBC(isTvar) Tracers,       [1:4, 1:NAT+NPT, Ngrids] values are expected.
+!
+! WEC boundary conditions for Stokes velocities:
+!
+! LBC(isU2Sd) 2D U-Stokes,   [1:4, Ngrids] values are expected.
+! LBC(isV2Sd) 2D V-Stokes,   [1:4, Ngrids] values are expected.
+! LBC(isU3Sd) 3D U-Stokes,   [1:4, Ngrids] values are expected.
+! LBC(isV3Sd) 3D V-Stokes,   [1:4, Ngrids] values are expected.
 !
 ! Similarly, the adjoint-based algorithms (ADM, TLM, RPM) can have different
 ! lateral boundary conditions keywords:
@@ -1890,6 +1987,15 @@ PIO_I2C_Preq = 65                 ! Maximum pending I2C requests
 !
 ! CRGBAN_CW        Surface flux due to Craig and Banner wave breaking,
 !                    flux:  dt * crgban_cw * u_star**3
+!
+!------------------------------------------------------------------------------
+! Constants used in the Waves Effect on Currents formulations.
+!------------------------------------------------------------------------------
+!
+!  WEC_ALPHA       Wave dissipation action scale bounds:
+!
+!                   [0.0] All dissipation goes to breaking and none to roller
+!                   [1.0] All dissipation goes to roller and none to breaking
 !
 !------------------------------------------------------------------------------
 ! Constants used in the computation of momentum stress.
@@ -2543,42 +2649,52 @@ PIO_I2C_Preq = 65                 ! Maximum pending I2C requests
 ! Hout(idVbws)   Write out wind-induced, bottom V-wave stress.
 ! Hout(idUbcs)   Write out bottom maximum wave and current U-stress.
 ! Hout(idVbcs)   Write out bottom maximum wave and current V-stress.
+! Hout(idUVwc)   Write out bottom max wave-current stress magnitude.
 !
 ! Hout(idUbot)   Write out wind-induced, bed wave orbital U-velocity.
 ! Hout(idVbot)   Write out wind-induced, bed wave orbital V-velocity.
 ! Hout(idUbur)   Write out bottom U-velocity above bed.
 ! Hout(idVbvr)   Write out bottom V-velocity above bed.
 !
-! Hout(idW2xx)   Write out 2D radiation stress, Sxx component.
-! Hout(idW2xy)   Write out 2D radiation stress, Sxy component.
-! Hout(idW2yy)   Write out 2D radiation stress, Syy component.
-! Hout(idU2rs)   Write out 2D U-radiation stress.
-! Hout(idV2rs)   Write out 2D V-radiation stress.
-! Hout(idU2Sd)   Write out 2D U-Stokes velocity.
-! Hout(idV2Sd)   Write out 2D V-Stokes velocity.
+! Hout(idWztw)   Write out WEC_VF quasi-static sea level adjustment.
+! Hout(idWqsp)   Write out WEC_VF quasi-static pressure.
+! Hout(idWbeh)   Write out WEC_VF Bernoulli head.
 !
-! Hout(idW3xx)   Write out 3D radiation stress, Sxx component.
-! Hout(idW3xy)   Write out 3D radiation stress, Sxy component.
-! Hout(idW3yy)   Write out 3D radiation stress, Syy component.
-! Hout(idW3zx)   Write out 3D radiation stress, Szx component.
-! Hout(idW3zy)   Write out 3D radiation stress, Szy component.
-! Hout(idU3rs)   Write out 3D U-radiation stress.
-! Hout(idV3rs)   Write out 3D V-radiation stress.
-! Hout(idU3Sd)   Write out 3D U-Stokes velocity.
-! Hout(idV3Sd)   Write out 3D V-Stokes velocity.
+! Hout(idU2rs)   Write out WEC 2D U-stress.
+! Hout(idV2rs)   Write out WEC 2D V-stress.
+! Hout(idU3rs)   Write out WEC 3D U-stress.
+! Hout(idV3rs)   Write out WEC 3D V-stress.
 !
-! Hout(idWamp)   Write out wave height.
-! Hout(idWlen)   Write out wave length.
-! Hout(idWdir)   Write out wave direction.
+! Hout(idU2Sd)   Write out 2D Stokes U-velocity.
+! Hout(idV2Sd)   Write out 2D Stokes V-velocity.
+! Hout(idU3Sd)   Write out 3D Stokes U-velocity.
+! Hout(idV3Sd)   Write out 3D Stokes V-velocity.
+! Hout(idW3St)   Write out 3D Stokes W-velocity.
+! Hout(idW3Sd)   Write out 3D Stokes omega-velocity.
+!
+! Hout(idWamp)   Write out wave significat height.
+! Hout(idWlen)   Write out wave mean wavelength.
+! Hout(idWlep)   Write out wave peak wavelength.
+! Hout(idWdir)   Write out wave mean direction.
+! Hout(idWdip)   Write out wave peak direction.
 ! Hout(idWptp)   Write out wave surface period.
 ! Hout(idWpbt)   Write out wave bottom period.
 ! Hout(idWorb)   Write out wave bottom orbital velocity.
-! Hout(idWdis)   Write out wave dissipation.
+! Hout(idWbrk)   Write out wave breaking (percent).
+! Hout(idUwav)   Write out wave depth-averaged U-velocity.
+! Hout(idVwav)   Write out wave depth-averaged V-velocity.
+! Hout(idWdif)   Write out wave dissipation from bottom friction.
+! Hout(idWdib)   Write out wave dissipation from breaking.
+! Hout(idWdiw)   Write out wave dissipation from whitecapping.
+! Hout(idWdis)   Write out wave roller dissipation.
+! Hout(idWrol)   Write out wave roller action density.
 !
 ! Hout(idPair)   Write out surface air pressure.
 ! Hout(idTair)   Write out surface air temperature.
 ! Hout(idUair)   Write out surface U-wind component.
 ! Hout(idVair)   Write out surface V-wind component.
+! Hout(idUaiE)   Write out surface Eastward  U-wind component.
+! Hout(idVaiN)   Write out surface Northward V-wind component.
 !
 ! Hout(idTsur)   Write out surface net heat and salt flux
 ! Hout(idLhea)   Write out latent heat flux.
@@ -2649,36 +2765,45 @@ PIO_I2C_Preq = 65                 ! Maximum pending I2C requests
 ! Qout(idUbur)   Write out bottom U-velocity above bed.
 ! Qout(idVbvr)   Write out bottom V-velocity above bed.
 !
-! Qout(idW2xx)   Write out 2D radiation stress, Sxx component.
-! Qout(idW2xy)   Write out 2D radiation stress, Sxy component.
-! Qout(idW2yy)   Write out 2D radiation stress, Syy component.
-! Qout(idU2rs)   Write out 2D U-radiation stress.
-! Qout(idV2rs)   Write out 2D V-radiation stress.
-! Qout(idU2Sd)   Write out 2D U-Stokes velocity.
-! Qout(idV2Sd)   Write out 2D V-Stokes velocity.
+! Qout(idWztw)   Write out WEC_VF quasi-static sea level adjustment.
+! Qout(idWqsp)   Write out WEC_VF quasi-static pressure.
+! Qout(idWbeh)   Write out WEC_VF Bernoulli head.
 !
-! Qout(idW3xx)   Write out 3D radiation stress, Sxx component.
-! Qout(idW3xy)   Write out 3D radiation stress, Sxy component.
-! Qout(idW3yy)   Write out 3D radiation stress, Syy component.
-! Qout(idW3zx)   Write out 3D radiation stress, Szx component.
-! Qout(idW3zy)   Write out 3D radiation stress, Szy component.
-! Qout(idU3rs)   Write out 3D U-radiation stress.
-! Qout(idV3rs)   Write out 3D V-radiation stress.
-! Qout(idU3Sd)   Write out 3D U-Stokes velocity.
-! Qout(idV3Sd)   Write out 3D V-Stokes velocity.
+! Qout(idU2rs)   Write out WEC 2D U-stress.
+! Qout(idV2rs)   Write out WEC 2D V-stress.
+! Qout(idU3rs)   Write out WEC 3D U-stress.
+! Qout(idV3rs)   Write out WEC 3D V-stress.
 !
-! Qout(idWamp)   Write out wave height.
-! Qout(idWlen)   Write out wave length.
-! Qout(idWdir)   Write out wave direction.
+! Qout(idU2Sd)   Write out 2D Stokes U-velocity.
+! Qout(idV2Sd)   Write out 2D Stokes V-velocity.
+! Qout(idU3Sd)   Write out 3D Stokes U-velocity.
+! Qout(idV3Sd)   Write out 3D Stokes V-velocity.
+! Qout(idW3St)   Write out 3D Stokes W-velocity.
+! Qout(idW3Sd)   Write out 3D Stokes omega-velocity.
+!
+! Qout(idWamp)   Write out wave significat height.
+! Qout(idWlen)   Write out wave mean wavelength.
+! Qout(idWlep)   Write out wave peak wavelength.
+! Qout(idWdir)   Write out wave mean direction.
+! Qout(idWdip)   Write out wave peak direction.
 ! Qout(idWptp)   Write out wave surface period.
 ! Qout(idWpbt)   Write out wave bottom period.
 ! Qout(idWorb)   Write out wave bottom orbital velocity.
-! Qout(idWdis)   Write out wave dissipation.
+! Qout(idWbrk)   Write out wave breaking (percent).
+! Qout(idUwav)   Write out wave depth-averaged U-velocity.
+! Qout(idVwav)   Write out wave depth-averaged V-velocity.
+! Qout(idWdif)   Write out wave dissipation from bottom friction.
+! Qout(idWdib)   Write out wave dissipation from breaking.
+! Qout(idWdiw)   Write out wave dissipation from whitecapping.
+! Qout(idWdis)   Write out wave roller dissipation.
+! Qout(idWrol)   Write out wave roller action density.
 !
 ! Qout(idPair)   Write out surface air pressure.
 ! Qout(idTair)   Write out surface air temperature.
 ! Qout(idUair)   Write out surface U-wind component.
 ! Qout(idVair)   Write out surface V-wind component.
+! Qout(idUaiE)   Write out surface Eastward  U-wind component.
+! Qout(idVaiN)   Write out surface Northward V-wind component.
 !
 ! Qout(idTsur)   Write out surface net heat and salt flux
 ! Qout(idLhea)   Write out latent heat flux.
@@ -2717,6 +2842,7 @@ PIO_I2C_Preq = 65                 ! Maximum pending I2C requests
 ! Aout(idu2dE)   Write out 2D Eastward  velocity component at RHO-points.
 ! Aout(idv2dN)   Write out 2D Northward velocity component at RHO-points.
 ! Aout(idFsur)   Write out free-surface.
+! Aout(idBath)   Write out time-dependent bathymetry.
 !
 ! Aout(idTvar)   Write out active (NAT) tracers: temperature and salinity.
 !
@@ -2725,28 +2851,58 @@ PIO_I2C_Preq = 65                 ! Maximum pending I2C requests
 ! Aout(idUbms)   Write out bottom  U-momentum stress.
 ! Aout(idVbms)   Write out bottom  V-momentum stress.
 !
-! Aout(idW2xx)   Write out 2D radiation stress, Sxx component.
-! Aout(idW2xy)   Write out 2D radiation stress, Sxy component.
-! Aout(idW2yy)   Write out 2D radiation stress, Syy component.
-! Aout(idU2rs)   Write out 2D U-radiation stress.
-! Aout(idV2rs)   Write out 2D V-radiation stress.
-! Aout(idU2Sd)   Write out 2D U-Stokes velocity.
-! Aout(idV2Sd)   Write out 2D V-Stokes velocity.
+! Aout(idUbrs)   Write out current-induced, U-momentum stress.
+! Aout(idVbrs)   Write out current-induced, V-momentum stress.
+! Aout(idUbws)   Write out wind-induced, bottom U-wave stress.
+! Aout(idVbws)   Write out wind-induced, bottom V-wave stress.
+! Aout(idUbcs)   Write out bottom maximum wave and current U-stress.
+! Aout(idVbcs)   Write out bottom maximum wave and current V-stress.
+! Aout(idUVwc)   Write out bottom max wave-current stress magnitude.
 !
-! Aout(idW3xx)   Write out 3D radiation stress, Sxx component.
-! Aout(idW3xy)   Write out 3D radiation stress, Sxy component.
-! Aout(idW3yy)   Write out 3D radiation stress, Syy component.
-! Aout(idW3zx)   Write out 3D radiation stress, Szx component.
-! Aout(idW3zy)   Write out 3D radiation stress, Szy component.
-! Aout(idU3rs)   Write out 3D U-radiation stress.
-! Aout(idV3rs)   Write out 3D V-radiation stress.
-! Aout(idU3Sd)   Write out 3D U-Stokes velocity.
-! Aout(idV3Sd)   Write out 3D V-Stokes velocity.
+! Aout(idUbot)   Write out wind-induced, bed wave orbital U-velocity.
+! Aout(idVbot)   Write out wind-induced, bed wave orbital V-velocity.
+! Aout(idUbur)   Write out bottom U-velocity above bed.
+! Aout(idVbvr)   Write out bottom V-velocity above bed.
+!
+! Aout(idWztw)   Write out WEC_VF quasi-static sea level adjustment.
+! Aout(idWqsp)   Write out WEC_VF quasi-static pressure.
+! Aout(idWbeh)   Write out WEC_VF Bernoulli head.
+!
+! Aout(idU2rs)   Write out WEC 2D U-stress.
+! Aout(idV2rs)   Write out WEC 2D V-stress.
+! Aout(idU3rs)   Write out WEC 3D U-stress.
+! Aout(idV3rs)   Write out WEC 3D V-stress.
+!
+! Aout(idU2Sd)   Write out 2D Stokes U-velocity.
+! Aout(idV2Sd)   Write out 2D Stokes V-velocity.
+! Aout(idU3Sd)   Write out 3D Stokes U-velocity.
+! Aout(idV3Sd)   Write out 3D Stokes V-velocity.
+! Aout(idW3St)   Write out 3D Stokes W-velocity.
+! Aout(idW3Sd)   Write out 3D Stokes omega-velocity.
+!
+! Aout(idWamp)   Write out wave significat height.
+! Aout(idWlen)   Write out wave mean wavelength.
+! Aout(idWlep)   Write out wave peak wavelength.
+! Aout(idWdir)   Write out wave mean direction.
+! Aout(idWdip)   Write out wave peak direction.
+! Aout(idWptp)   Write out wave surface period.
+! Aout(idWpbt)   Write out wave bottom period.
+! Aout(idWorb)   Write out wave bottom orbital velocity.
+! Aout(idWbrk)   Write out wave breaking (percent).
+! Aout(idUwav)   Write out wave depth-averaged U-velocity.
+! Aout(idVwav)   Write out wave depth-averaged V-velocity.
+! Aout(idWdif)   Write out wave dissipation from bottom friction.
+! Aout(idWdib)   Write out wave dissipation from breaking.
+! Aout(idWdiw)   Write out wave dissipation from whitecapping.
+! Aout(idWdis)   Write out wave roller dissipation.
+! Aout(idWrol)   Write out wave roller action density.
 !
 ! Aout(idPair)   Write out surface air pressure.
 ! Aout(idTair)   Write out surface air temperature.
 ! Aout(idUair)   Write out surface U-wind component.
 ! Aout(idVair)   Write out surface V-wind component.
+! Aout(idUaiE)   Write out surface Eastward  U-wind component.
+! Aout(idVaiN)   Write out surface Northward V-wind component.
 !
 ! Aout(idTsur)   Write out surface net heat and salt flux
 ! Aout(idLhea)   Write out latent heat flux.
@@ -2807,7 +2963,6 @@ PIO_I2C_Preq = 65                 ! Maximum pending I2C requests
 ! Dout(M2hadv)   Write out horizontal total advection, if UV_ADV.
 ! Dout(M2xadv)   Write out horizontal  XI-advection, if UV_ADV.
 ! Dout(M2yadv)   Write out horizontal ETA-advection, if UV_ADV.
-! Dout(M2hrad)   Write out horizontal total radiation stress, NEARSHORE_MELLOR.
 ! Dout(M2hvis)   Write out horizontal total viscosity, if UV_VIS2 or UV_VIS4.
 ! Dout(M2xvis)   Write out horizontal  XI-viscosity, if UV_VIS2 or UV_VIS4.
 ! Dout(M2yvis)   Write out horizontal ETA-viscosity, if UV_VIS2 or UV_VIS4.
@@ -2823,13 +2978,37 @@ PIO_I2C_Preq = 65                 ! Maximum pending I2C requests
 ! Dout(M3hadv)   Write out horizontal total advection, if UV_ADV.
 ! Dout(M3xadv)   Write out horizontal  XI-advection, if UV_ADV.
 ! Dout(M3yadv)   Write out horizontal ETA-advection, if UV_ADV.
-! Dout(M3hrad)   Write out horizontal total radiation stress, NEARSHORE_MELLOR.
-! Dout(M3vrad)   Write out vertical radiation stress, if NEARSHORE_MELLOR.
 ! Dout(M3hvis)   Write out horizontal total viscosity, if UV_VIS2 or UV_VIS4.
 ! Dout(M3xvis)   Write out horizontal  XI-viscosity, if UV_VIS2 or UV_VIS4.
 ! Dout(M3yvis)   Write out horizontal ETA-viscosity, if UV_VIS2 or UV_VIS4.
 ! Dout(M3yvis)   Write out horizontal ETA-viscosity, if UV_VIS2 or UV_VIS4.
 ! Dout(M3vvis)   Write out vertical viscosity.
+!
+! Time-averaged, Waves Effect on Currents diagnostic terms:
+! (if SOLVE3D, WEC, WEC_VF, and DIAGNOSTICS_UV)
+!
+! Dout(M2hjvf)   Write out 2D horizontal J vortex force.
+! Dout(M2kvrf)   Write out 2D K vortex force.
+! Dout(M2fsco)   Write out 2D Stokes Coriolis.
+! Dout(M2sstm)   Write out 2D surface streaming.
+! Dout(M2bstm)   Write out 2D bottom streaming.
+! Dout(M2wrol)   Write out 2D wave roller acceleration.
+! Dout(M2wbrk)   Write out 2D wave breaking.
+! Dout(M2zeta)   Write out 2D Eulerian sea level adjustment.
+! Dout(M2zetw)   Write out 2D quasi-static sea level adjustment.
+! Dout(M2zqsp)   Write out 2D quasi-static sea level pressure adjustment.
+! Dout(M2zbeh)   Write out 2D Bernoulli head adjustment.
+! Dout(M2fsgr)   Write out 2D seagrass drag force.
+!
+! Dout(M3hjvf)   Write out 3D horizontal J vortex force.
+! Dout(M3vjvf)   Write out 3D vertical J vortex force.
+! Dout(M3kvrf)   Write out 3D K vortex force.
+! Dout(M3fsco)   Write out 3D Stokes Coriolis.
+! Dout(M3sstm)   Write out 3D surface streaming.
+! Dout(M3bstm)   Write out 3D bottom streaming.
+! Dout(M3wrol)   Write out 3D wave roller acceleration.
+! Dout(M3wbrk)   Write out 3D wave breaking.
+! Dout(M3fsgr)   Write out 3D seagrass drag force.
 !
 ! Time-averaged, active (temperature and salinity) and passive (inert) tracer
 ! diagnostic terms, [1:NAT+NPT,Ngrids] values expected:

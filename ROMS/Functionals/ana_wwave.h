@@ -2,7 +2,7 @@
       SUBROUTINE ana_wwave (ng, tile, model)
 !
 !! git $Id$
-!! svn $Id: ana_wwave.h 1151 2023-02-09 03:08:53Z arango $
+!! svn $Id: ana_wwave.h 1178 2023-07-11 17:50:57Z arango $
 !!======================================================================
 !! Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !!   Licensed under a MIT/X style license                              !
@@ -23,7 +23,7 @@
 !
       integer, intent(in) :: ng, tile, model
 !
-!  Local variable declarations.
+! Local variable declarations.
 !
       character (len=*), parameter :: MyFile =                          &
      &  __FILE__
@@ -33,7 +33,7 @@
       CALL ana_wwave_tile (ng, tile, model,                             &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     IminS, ImaxS, JminS, JmaxS,                  &
-#if defined BBL_MODEL || defined NEARSHORE_MELLOR
+#ifdef WAVES_DIR
      &                     FORCES(ng) % Dwave,                          &
 #endif
 #ifdef WAVES_HEIGHT
@@ -49,10 +49,7 @@
      &                     FORCES(ng) % Pwave_bot,                      &
 #endif
 #ifdef WAVES_UB
-     &                     FORCES(ng) % Ub_swan,                        &
-#endif
-#ifdef TKE_WAVEDISS
-     &                     FORCES(ng) % wave_dissip,                    &
+     &                     FORCES(ng) % Uwave_rms,                      &
 #endif
      &                     GRID(ng) % angler,                           &
      &                     GRID(ng) % h)
@@ -74,7 +71,7 @@
       SUBROUTINE ana_wwave_tile (ng, tile, model,                       &
      &                           LBi, UBi, LBj, UBj,                    &
      &                           IminS, ImaxS, JminS, JmaxS,            &
-#if defined BBL_MODEL || defined NEARSHORE_MELLOR
+#ifdef WAVES_DIR
      &                           Dwave,                                 &
 #endif
 #ifdef WAVES_HEIGHT
@@ -90,10 +87,7 @@
      &                           Pwave_bot,                             &
 #endif
 #ifdef WAVES_UB
-     &                           Ub_swan,                               &
-#endif
-#ifdef TKE_WAVEDISS
-     &                           wave_dissip,                           &
+     &                           Uwave_rms,                             &
 #endif
      &                           angler, h)
 !***********************************************************************
@@ -115,7 +109,7 @@
 #ifdef ASSUMED_SHAPE
       real(r8), intent(in) :: angler(LBi:,LBj:)
       real(r8), intent(in) :: h(LBi:,LBj:)
-# if defined BBL_MODEL || defined NEARSHORE_MELLOR
+# ifdef WAVES_DIR
       real(r8), intent(inout) :: Dwave(LBi:,LBj:)
 # endif
 # ifdef WAVES_HEIGHT
@@ -131,17 +125,14 @@
       real(r8), intent(inout) :: Pwave_bot(LBi:,LBj:)
 # endif
 # ifdef WAVES_UB
-      real(r8), intent(inout) :: Ub_swan(LBi:,LBj:)
-# endif
-# ifdef TKE_WAVEDISS
-      real(r8), intent(inout) :: wave_dissip(LBi:,LBj:)
+      real(r8), intent(inout) :: Uwave_rms(LBi:,LBj:)
 # endif
 
 #else
 
       real(r8), intent(in) :: angler(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: h(LBi:UBi,LBj:UBj)
-# if defined BBL_MODEL || defined NEARSHORE_MELLOR
+# ifdef WAVES_DIR
       real(r8), intent(inout) :: Dwave(LBi:UBi,LBj:UBj)
 # endif
 # ifdef WAVES_HEIGHT
@@ -157,10 +148,7 @@
       real(r8), intent(inout) :: Pwave_bot(LBi:UBi,LBj:UBj)
 # endif
 # ifdef WAVES_UB
-      real(r8), intent(inout) :: Ub_swan(LBi:UBi,LBj:UBj)
-# endif
-# ifdef TKE_WAVEDISS
-      real(r8), intent(inout) :: wave_dissip(LBi:UBi,LBj:UBj)
+      real(r8), intent(inout) :: Uwave_rms(LBi:UBi,LBj:UBj)
 # endif
 #endif
 !
@@ -184,9 +172,15 @@
       wdir=210.0_r8*deg2rad
       DO j=JstrT,JendT
         DO i=IstrT,IendT
-          Hwave(i,j)=0.5_r8
+# ifdef WAVES_DIR
           Dwave(i,j)=wdir
+# endif
+# ifdef WAVES_HEIGHT
+          Hwave(i,j)=0.5_r8
+# endif
+# ifdef WAVES_BOT_PERIOD
           Pwave_bot(i,j)=8.0_r8
+# endif
         END DO
       END DO
 #elif defined LAKE_SIGNELL
@@ -196,13 +190,19 @@
       ramp_d=50.0_r8       ! start ramp DOWN at RAMP_DOWN (hours)
       DO j=JstrT,JendT
         DO i=IstrT,IendT
+# ifdef WAVES_DIR
           Dwave(i,j)=270.0_r8*deg2rad
+# endif
+# ifdef WAVES_HEIGHT
+          Hwave(i,j)=MAX((cff1*mxst),0.01_r8)
+# endif
+# ifdef WAVES_BOT_PERIOD
           Pwave_bot(i,j)=5.0_r8    ! wave period (seconds)
            cff1=MIN((0.5_r8*(TANH((time(ng)/3600.0_r8-ramp_u)/          &
      &                            (ramp_time/5.0_r8))+1.0_r8)),         &
      &              (1.0_r8-(0.5_r8*(TANH((time(ng)/3600.0_r8-ramp_d)/  &
      &                                    (ramp_time/5.0_r8))+1.0_r8))))
-          Hwave(i,j)=MAX((cff1*mxst),0.01_r8)
+# endif
         END DO
       END DO
 #elif defined NJ_BIGHT
@@ -216,18 +216,32 @@
       END IF
       DO j=JstrT,JendT
         DO i=IstrT,IendT
-          Hwave(i,j)=0.12_r8
+# ifdef WAVES_DIR
           Dwave(i,j)=wdir-angler(i,j)
+# endif
+# ifdef WAVES_HEIGHT
+          Hwave(i,j)=0.12_r8
+# endif
+# ifdef WAVES_BOT_PERIOD
           Pwave_bot(i,j)=10.0_r8
+# endif
         END DO
       END DO
 #elif defined SED_TOY
       DO j=JstrT,JendT
         DO i=IstrT,IendT
-          Hwave(i,j)=2.0_r8
+# ifdef WAVES_DIR
           Dwave(i,j)=90.0_r8*deg2rad
-          Pwave_bot(i,j)=8.0_r8
+# endif
+# ifdef WAVES_HEIGHT
+          Hwave(i,j)=2.0_r8
+# endif
+# ifdef WAVES_LENGTH
           Lwave(i,j)=20.0_r8
+# endif
+# ifdef WAVES_BOT_PERIOD
+          Pwave_bot(i,j)=8.0_r8
+# endif
         END DO
       END DO
 #else
@@ -315,29 +329,14 @@
       IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
         CALL exchange_r2d_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj,                     &
-     &                          Ub_swan)
+     &                          Uwave_rms)
       END IF
 # ifdef DISTRIBUTE
       CALL mp_exchange2d (ng, tile, model, 1,                           &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    NghostPoints,                                 &
      &                    EWperiodic(ng), NSperiodic(ng),               &
-     &                    Ub_swan)
-# endif
-#endif
-
-#ifdef TKE_WAVEDISS
-      IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
-        CALL exchange_r2d_tile (ng, tile,                               &
-     &                          LBi, UBi, LBj, UBj,                     &
-     &                          wave_dissip)
-      END IF
-# ifdef DISTRIBUTE
-      CALL mp_exchange2d (ng, tile, model, 1,                           &
-     &                    LBi, UBi, LBj, UBj,                           &
-     &                    NghostPoints,                                 &
-     &                    EWperiodic(ng), NSperiodic(ng),               &
-     &                    wave_dissip)
+     &                    Uwave_rms)
 # endif
 #endif
 !

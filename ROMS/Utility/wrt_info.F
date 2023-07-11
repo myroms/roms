@@ -2,7 +2,7 @@
       MODULE wrt_info_mod
 !
 !git $Id$
-!svn $Id: wrt_info.F 1151 2023-02-09 03:08:53Z arango $
+!svn $Id: wrt_info.F 1178 2023-07-11 17:50:57Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -646,6 +646,12 @@
 
       CALL netcdf_put_fvar (ng, model, ncname, 'CrgBan_cw',             &
      &                      crgban_cw(ng), (/0/), (/0/),                &
+     &                      ncid = ncid)
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+#endif
+#ifdef WEC
+      CALL netcdf_put_fvar (ng, model, ncname, 'wec_alpha',             &
+     &                      wec_alpha(ng), (/0/), (/0/),                &
      &                      ncid = ncid)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #endif
@@ -2251,7 +2257,7 @@
         IF (exit_flag.eq.NoError) THEN
           IF (ncid.ne.STA(ng)%ncid) THEN
             scale=1.0_dp
-# ifdef UV_LOGDRAG
+# if defined UV_LOGDRAG || defined BBL_MODEL
             IF (find_string(var_name, n_var, TRIM(Vname(1,idZoBL)),     &
      &                      varid)) THEN
               status=nf_fwrite2d(ng, model, ncid, varid, 0, r2dvar,     &
@@ -2947,6 +2953,12 @@
 
       CALL pio_netcdf_put_fvar (ng, model, ncname, 'CrgBan_cw',         &
      &                          crgban_cw(ng), (/0/), (/0/),            &
+     &                          pioFile = pioFile)
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+# endif
+# ifdef WEC
+      CALL pio_netcdf_put_fvar (ng, model, ncname, 'wec_alpha',         &
+     &                          wec_alpha(ng), (/0/), (/0/),            &
      &                          pioFile = pioFile)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 # endif
@@ -4840,7 +4852,7 @@
         IF (exit_flag.eq.NoError) THEN
           IF (FileH.ne.ABS(STA(ng)%pioFile%fh)) THEN
             scale=1.0_dp
-#  ifdef UV_LOGDRAG
+#  if defined UV_LOGDRAG || defined BBL_MODEL
             IF (pio_netcdf_find_var(ng, model, pioFile,                 &
      &                              Vname(1,idZoBL), pioVar%vd)) THEN
               pioVar%gtype=r2dvar

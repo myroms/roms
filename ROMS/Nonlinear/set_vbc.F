@@ -3,7 +3,7 @@
 #ifdef NONLINEAR
 !
 !git $Id$
-!svn $Id: set_vbc.F 1151 2023-02-09 03:08:53Z arango $
+!svn $Id: set_vbc.F 1178 2023-07-11 17:50:57Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -64,6 +64,12 @@
      &                   GRID(ng) % z_r,                                &
      &                   GRID(ng) % z_w,                                &
 #  endif
+#  ifdef MASKING
+     &                   GRID(ng) % rmask,                              &
+#  endif
+#  ifdef WET_DRY
+     &                   GRID(ng) % rmask_wet,                          &
+#  endif
 #  if defined ICESHELF
      &                   GRID(ng) % zice,                               &
 #  endif
@@ -116,6 +122,12 @@
 #  endif
 #  if !defined BBL_MODEL || defined ICESHELF
      &                         z_r, z_w,                                &
+#  endif
+#  if defined MASKING
+     &                         rmask,                                   &
+#  endif
+#  ifdef WET_DRY
+     &                         rmask_wet,                               &
 #  endif
 #  if defined ICESHELF
      &                         zice,                                    &
@@ -171,6 +183,12 @@
       real(r8), intent(in) :: z_r(LBi:,LBj:,:)
       real(r8), intent(in) :: z_w(LBi:,LBj:,0:)
 #   endif
+#   if defined MASKING
+      real(r8), intent(in) :: rmask(LBi:,LBj:)
+#   endif
+#   ifdef WET_DRY
+      real(r8), intent(in) :: rmask_wet(LBi:,LBj:)
+#   endif
 #   if defined ICESHELF
       real(r8), intent(in) :: zice(LBi:,LBj:)
 #   endif
@@ -213,6 +231,12 @@
 #   if !defined BBL_MODEL || defined ICESHELF
       real(r8), intent(in) :: z_r(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(in) :: z_w(LBi:UBi,LBj:UBj,0:N(ng))
+#   endif
+#   if defined MASKING
+      real(r8), intent(in) :: rmask(LBi:UBi,LBj:UBj)
+#   endif
+#   ifdef WET_DRY
+      real(r8), intent(in) :: rmask_wet(LBi:UBi,LBj:UBj)
 #   endif
 #   if defined ICESHELF
       real(r8), intent(in) :: zice(LBi:UBi,LBj:UBj)
@@ -280,6 +304,10 @@
         DO i=IstrR,IendR
           stflx(i,j,itemp)=stflux(i,j,itemp)
           btflx(i,j,itemp)=btflux(i,j,itemp)
+#  ifdef WET_DRY
+          stflx(i,j,itemp)=stflx(i,j,itemp)*rmask_wet(i,j)
+          btflx(i,j,itemp)=btflx(i,j,itemp)*rmask_wet(i,j)
+#  endif
         END DO
       END DO
 
@@ -295,6 +323,9 @@
         DO i=IstrR,IendR
           stflx(i,j,itemp)=stflx(i,j,itemp)+                            &
      &                     dqdt(i,j)*(t(i,j,N(ng),nrhs,itemp)-sst(i,j))
+#   ifdef WET_DRY
+          stflx(i,j,itemp)=stflx(i,j,itemp)*rmask_wet(i,j)
+#   endif
         END DO
       END DO
 #  endif
@@ -323,6 +354,9 @@
           cff2=stflx(i,j,itemp)
           cff3=0.5_r8*(1.0_r8+SIGN(1.0_r8,cff1-t(i,j,N(ng),nrhs,itemp)))
           stflx(i,j,itemp)=cff2-cff3*0.5_r8*(cff2-ABS(cff2))
+#   ifdef WET_DRY
+          stflx(i,j,itemp)=stflx(i,j,itemp)*rmask_wet(i,j)
+#   endif
         END DO
       END DO
 #  endif
@@ -345,11 +379,26 @@
           stflx(i,j,isalt)=EmP*t(i,j,N(ng),nrhs,isalt)-                 &
      &                     Tnudg(isalt,ng)*Hz(i,j,N(ng))*               &
      &                     (t(i,j,N(ng),nrhs,isalt)-sss(i,j))
+#    ifdef WET_DRY
+          stflx(i,j,isalt) = rmask_wet(i,j)*stflx(i,j,isalt)
+#    elif defined MASKING
+          stflx(i,j,isalt) = rmask(i,j)*stflx(i,j,isalt)
+#    endif
 #   elif defined SRELAXATION
           stflx(i,j,isalt)=-Tnudg(isalt,ng)*Hz(i,j,N(ng))*              &
      &                     (t(i,j,N(ng),nrhs,isalt)-sss(i,j))
+#    ifdef WET_DRY
+          stflx(i,j,isalt) = rmask_wet(i,j)*stflx(i,j,isalt)
+#    elif defined MASKING
+          stflx(i,j,isalt) = rmask(i,j)*stflx(i,j,isalt)
+#    endif
 #   else
           stflx(i,j,isalt)=EmP*t(i,j,N(ng),nrhs,isalt)
+#    ifdef WET_DRY
+          stflx(i,j,isalt) = rmask_wet(i,j)*stflx(i,j,isalt)
+#    elif defined MASKING
+          stflx(i,j,isalt) = rmask(i,j)*stflx(i,j,isalt)
+#    endif
 #   endif
           btflx(i,j,isalt)=btflx(i,j,isalt)*t(i,j,1,nrhs,isalt)
         END DO
@@ -766,8 +815,8 @@
 #   ifdef UV_QDRAG
       real(r8), intent(in) :: rdrag2(LBi:UBi,LBj:UBj)
 #   endif
-      real(r8), intent(in) :: ubar(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(in) :: vbar(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(in) :: ubar(LBi:UBi,LBj:UBj,:)
+      real(r8), intent(in) :: vbar(LBi:UBi,LBj:UBj,:)
       real(r8), intent(inout) :: bustr(LBi:UBi,LBj:UBj)
       real(r8), intent(inout) :: bvstr(LBi:UBi,LBj:UBj)
 #  endif
