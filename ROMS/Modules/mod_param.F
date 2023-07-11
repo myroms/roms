@@ -2,7 +2,7 @@
       MODULE mod_param
 !
 !git $Id$
-!svn $Id: mod_param.F 1176 2023-07-01 19:23:18Z arango $
+!svn $Id: mod_param.F 1178 2023-07-11 17:50:57Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -513,7 +513,7 @@
 #ifdef FLOATS
 !
 !-----------------------------------------------------------------------
-!  Floats tracjectories parameters.
+!  Floats trajectories parameters.
 !-----------------------------------------------------------------------
 !
 !  Number of trajectory time-stepping levels, [0:NFT].
@@ -1393,8 +1393,21 @@
 #   ifdef UV_ADV
       NDM2d=NDM2d+3  ! Horizontal total-, X-, and Y-advection
 #   endif
-#   ifdef NEARSHORE_MELLOR
-      NDM2d=NDM2d+1  ! Horizontal radiation stresses
+#   ifdef WEC_VF
+#    ifdef UV_COR
+      NDM2d=NDM2d+1  ! Coriolis
+#    endif
+#    ifdef BOTTOM_STREAMING
+      NDM2d=NDM2d+1  ! Bottom streaming
+#    endif
+#    ifdef SURFACE_STREAMING
+      NDM2d=NDM2d+1  ! Surface streaming
+#    endif
+      NDM2d=NDM2d+8  ! zeta, zetaw, zqsp, zbeh (all 4 = prsgrd),
+                     ! K- and Horiz- VF, roller, break
+#   endif
+#   if defined VEGETATION && defined VEG_DRAG
+      NDM2d=NDM2d+1  ! Resistance imposed on the flow by vegetation
 #   endif
 #   ifdef UV_COR
       NDM2d=NDM2d+1  ! Coriolis
@@ -1412,9 +1425,21 @@
       NDM3d=NDM3d+4  ! Horizontal (total, X, Y) and vertical advection
       NDrhs=NDrhs+4
 #   endif
-#   ifdef NEARSHORE_MELLOR
-      NDM3d=NDM3d+2  ! Horizontal and vertical radiation stresses
-      NDrhs=NDrhs+2
+#   ifdef WEC_VF
+#    ifdef UV_COR
+      NDM3d=NDM3d+1  ! Coriolis
+      NDrhs=NDrhs+1
+#    endif
+#    ifdef BOTTOM_STREAMING
+      NDM3d=NDM3d+1  ! Bottom streaming
+      NDrhs=NDrhs+1
+#    endif
+#    ifdef SURFACE_STREAMING
+      NDM3d=NDM3d+1  ! Surface streaming
+      NDrhs=NDrhs+1
+#    endif
+      NDM3d=NDM3d+5  ! wave break, roller, K- Horiz and Jvert- VF
+      NDrhs=NDrhs+5
 #   endif
 #   ifdef UV_COR
       NDM3d=NDM3d+1  ! Coriolis
@@ -1480,6 +1505,9 @@
       nLBCvar=5+MT                 ! zeta, ubar, vbar, u, v, Tvar(1:MT)
 # if defined GLS_MIXING || defined MY25_MIXING
       nLBCvar=nLBCvar+1            ! TKE
+# endif
+# ifdef WEC
+      nLBCvar=nLBCvar+4            ! (ubar, vbar, u, v)_stokes
 # endif
 #else
       nLBCvar=3                    ! zeta, ubar, vbar

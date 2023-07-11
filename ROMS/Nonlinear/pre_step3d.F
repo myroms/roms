@@ -4,7 +4,7 @@
 # define NEUMANN
 !
 !git $Id$
-!svn $Id: pre_step3d.F 1151 2023-02-09 03:08:53Z arango $
+!svn $Id: pre_step3d.F 1178 2023-07-11 17:50:57Z arango $
 !=======================================================================
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -99,6 +99,9 @@
      &                      MIXING(ng) % ghats,                         &
 # endif
      &                      OCEAN(ng) % W,                              &
+# ifdef WEC_VF
+     &                      OCEAN(ng) % W_stokes,                       &
+# endif
      &                      OCEAN(ng) % ru,                             &
      &                      OCEAN(ng) % rv,                             &
 # ifdef DIAGNOSTICS_TS
@@ -144,6 +147,9 @@
      &                            ghats,                                &
 # endif
      &                            W,                                    &
+# ifdef WEC_VF
+     &                            W_stokes,                             &
+# endif
      &                            ru, rv,                               &
 # ifdef DIAGNOSTICS_TS
      &                            DiaTwrk,                              &
@@ -207,6 +213,9 @@
       real(r8), intent(in) :: ghats(LBi:,LBj:,0:,:)
 #  endif
       real(r8), intent(in) :: W(LBi:,LBj:,0:)
+#  ifdef WEC_VF
+      real(r8), intent(in) :: W_stokes(LBi:,LBj:,0:)
+#  endif
       real(r8), intent(in) :: ru(LBi:,LBj:,0:,:)
       real(r8), intent(in) :: rv(LBi:,LBj:,0:,:)
 #  ifdef DIAGNOSTICS_TS
@@ -258,6 +267,9 @@
       real(r8), intent(in) :: ghats(LBi:UBi,LBj:UBj,0:N(ng),NAT)
 #  endif
       real(r8), intent(in) :: W(LBi:UBi,LBj:UBj,0:N(ng))
+#  ifdef WEC_VF
+      real(r8), intent(in) :: W_stokes(LBi:UBi,LBj:UBj,0:N(ng))
+#  endif
       real(r8), intent(in) :: ru(LBi:UBi,LBj:UBj,0:N(ng),2)
       real(r8), intent(in) :: rv(LBi:UBi,LBj:UBj,0:N(ng),2)
 #  ifdef DIAGNOSTICS_TS
@@ -657,7 +669,11 @@
             DO k=N(ng)-1,0,-1
               DO i=Istr,Iend
                 FC(i,k)=FC(i,k)-CF(i,k+1)*FC(i,k+1)
+#  ifdef WEC_VF
+                FC(i,k+1)=(W(i,j,k+1)+W_stokes(i,j,k+1))*FC(i,k+1)
+#  else
                 FC(i,k+1)=W(i,j,k+1)*FC(i,k+1)
+#  endif
               END DO
             END DO
             DO i=Istr,Iend
@@ -692,18 +708,18 @@
             cff1=1.0_r8/3.0_r8
             DO k=1,N(ng)-1
               DO i=Istr,Iend
+#  ifdef WEC_VF
+                FC(i,k)=(W(i,j,k)+W_stokes(i,j,k))*                     &
+#  else
                 FC(i,k)=W(i,j,k)*                                       &
+#  endif
      &                  0.5_r8*(t(i,j,k  ,nstp,itrc)+                   &
      &                          t(i,j,k+1,nstp,itrc)-                   &
      &                          cff1*(CF(i,k+1)-CF(i,k)))
               END DO
             END DO
             DO i=Istr,Iend
-#  ifdef SED_MORPH
-              FC(i,0)=W(i,j,0)*t(i,j,1,nstp,itrc)
-#  else
               FC(i,0)=0.0_r8
-#  endif
               FC(i,N(ng))=0.0_r8
             END DO
 !
@@ -713,17 +729,17 @@
 !
             DO k=1,N(ng)-1
               DO i=Istr,Iend
+#  ifdef WEC_VF
+                FC(i,k)=(W(i,j,k)+W_stokes(i,j,k))*                     &
+#  else
                 FC(i,k)=W(i,j,k)*                                       &
+#  endif
      &                  0.5_r8*(t(i,j,k  ,nstp,itrc)+                   &
      &                          t(i,j,k+1,nstp,itrc))
               END DO
             END DO
             DO i=Istr,Iend
-#  ifdef SED_MORPH
-              FC(i,0)=W(i,j,0)*t(i,j,1,nstp,itrc)
-#  else
               FC(i,0)=0.0_r8
-#  endif
               FC(i,N(ng))=0.0_r8
             END DO
 !
@@ -734,18 +750,19 @@
 !
             DO k=1,N(ng)-1
               DO i=Istr,Iend
+#  if defined WEC_VF
+                cff1=MAX(W(i,j,k)+W_stokes(i,j,k),0.0_r8)
+                cff2=MIN(W(i,j,k)+W_stokes(i,j,k),0.0_r8)
+#  else
                 cff1=MAX(W(i,j,k),0.0_r8)
                 cff2=MIN(W(i,j,k),0.0_r8)
+#  endif
                 FC(i,k)=cff1*t(i,j,k  ,nstp,itrc)+                      &
      &                  cff2*t(i,j,k+1,nstp,itrc)
               END DO
             END DO
             DO i=Istr,Iend
-#  ifdef SED_MORPH
-              FC(i,0)=W(i,j,0)*t(i,j,1,nstp,itrc)
-#  else
               FC(i,0)=0.0_r8
-#  endif
               FC(i,N(ng))=0.0_r8
             END DO
 !
@@ -759,7 +776,11 @@
             cff3=1.0_r8/12.0_r8
             DO k=2,N(ng)-2
               DO i=Istr,Iend
+#  ifdef WEC_VF
+                FC(i,k)=(W(i,j,k)+W_stokes(i,j,k))*                     &
+#  else
                 FC(i,k)=W(i,j,k)*                                       &
+#  endif
      &                  (cff2*(t(i,j,k  ,nstp,itrc)+                    &
      &                         t(i,j,k+1,nstp,itrc))-                   &
      &                   cff3*(t(i,j,k-1,nstp,itrc)+                    &
@@ -767,18 +788,20 @@
               END DO
             END DO
             DO i=Istr,Iend
-#  ifdef SED_MORPH
-              FC(i,0)=W(i,j,0)*2.0_r8*                                  &
-     &                (cff2*t(i,j,1,nstp,itrc)-                         &
-     &                 cff3*t(i,j,2,nstp,itrc))
-#  else
               FC(i,0)=0.0_r8
-#  endif
+#  ifdef WEC_VF
+              FC(i,1)=(W(i,j,1)+W_stokes(i,j,1))*                       &
+#  else
               FC(i,1)=W(i,j,1)*                                         &
+#  endif
      &                (cff1*t(i,j,1,nstp,itrc)+                         &
      &                 cff2*t(i,j,2,nstp,itrc)-                         &
      &                 cff3*t(i,j,3,nstp,itrc))
+#  ifdef WEC_VF
+              FC(i,N(ng)-1)=(W(i,j,N(ng)-1)+W_stokes(i,j,N(ng)-1))*     &
+#  else
               FC(i,N(ng)-1)=W(i,j,N(ng)-1)*                             &
+#  endif
      &                      (cff1*t(i,j,N(ng)  ,nstp,itrc)+             &
      &                       cff2*t(i,j,N(ng)-1,nstp,itrc)-             &
      &                       cff3*t(i,j,N(ng)-2,nstp,itrc))
@@ -808,6 +831,9 @@
      &                        cff*pm(i,j)*pn(i,j)*                      &
      &                        (Huon(i+1,j,k)-Huon(i,j,k)+               &
      &                         Hvom(i,j+1,k)-Hvom(i,j,k)+               &
+#  ifdef WEC_VF
+     &                        (W_stokes(i,j,k)-W_stokes(i,j,k-1))+      &
+#  endif
      &                        (W(i,j,k)-W(i,j,k-1))))
             END DO
           END DO

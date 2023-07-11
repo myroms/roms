@@ -2,7 +2,7 @@
       MODULE def_info_mod
 !
 !git $Id$
-!svn $Id: def_info.F 1151 2023-02-09 03:08:53Z arango $
+!svn $Id: def_info.F 1178 2023-07-11 17:50:57Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -1889,7 +1889,16 @@
      &               1, (/0/), Aval, Vinfo, ncname,                     &
      &               SetParAccess = .FALSE.)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-
+#endif
+#ifdef WEC
+      Vinfo( 1)='wec_alpha'
+      Vinfo( 2)='WEC wave dissipation action scale'
+      Vinfo( 9)='all goes to breaking and none to roller'
+      Vinfo(10)='all goes to roller and none to breaking'
+      status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
+     &               1, (/0/), Aval, Vinfo, ncname,                     &
+     &               SetParAccess = .FALSE.)
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #endif
 !
 !  Nudging inverse time scales used in various tasks.
@@ -3450,7 +3459,7 @@
 !  Spatially varying bottom friction parameter.
 !
         IF (ncid.ne.STA(ng)%ncid) THEN
-# ifdef UV_LOGDRAG
+# if defined UV_LOGDRAG || defined BBL_MODEL
           Vinfo( 1)=Vname(1,idZoBL)
           Vinfo( 2)=Vname(2,idZoBL)
           Vinfo( 3)=Vname(3,idZoBL)
@@ -5303,7 +5312,16 @@
      &               1, (/0/), Aval, Vinfo, ncname,                     &
      &               SetParAccess = .FALSE.)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-
+# endif
+# ifdef WEC
+      Vinfo( 1)='wec_alpha'
+      Vinfo( 2)='WEC wave dissipation action scale'
+      Vinfo( 9)='all goes to breaking and none to roller'
+      Vinfo(10)='all goes to roller and none to breaking'
+      status=def_var(ng, model, pioFile, pioVar, NF_TYPE,               &
+     &               1, (/0/), Aval, Vinfo, ncname,                     &
+     &               SetParAccess = .FALSE.)
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 # endif
 !
 !  Nudging inverse time scales used in various tasks.
@@ -6864,7 +6882,7 @@
 !  Spatially varying bottom friction parameter.
 !
         IF (FileH.ne.ABS(STA(ng)%pioFile%fh)) THEN
-#  ifdef UV_LOGDRAG
+#  if defined UV_LOGDRAG || defined BBL_MODEL
           Vinfo( 1)=Vname(1,idZoBL)
           Vinfo( 2)=Vname(2,idZoBL)
           Vinfo( 3)=Vname(3,idZoBL)

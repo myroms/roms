@@ -3,7 +3,7 @@
 #ifdef STATIONS
 !
 !git $Id$
-!svn $Id: def_station.F 1151 2023-02-09 03:08:53Z arango $
+!svn $Id: def_station.F 1178 2023-07-11 17:50:57Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -31,11 +31,17 @@
       USE mod_sediment
 # endif
 !
-      USE def_dim_mod,  ONLY : def_dim
-      USE def_info_mod, ONLY : def_info
-      USE def_var_mod,  ONLY : def_var
-      USE strings_mod,  ONLY : FoundError
-      USE wrt_info_mod, ONLY : wrt_info
+      USE def_dim_mod,    ONLY : def_dim
+      USE def_info_mod,   ONLY : def_info
+      USE def_var_mod,    ONLY : def_var
+      USE strings_mod,    ONLY : FoundError
+#if defined WEC || defined WEC_VF
+      USE wec_output_mod, ONLY : wec_def_station_nf90
+# if defined PIO_LIB && defined DISTRIBUTE
+      USE wec_output_mod, ONLY : wec_def_station_pio
+# endif
+#endif
+      USE wrt_info_mod,   ONLY : wrt_info
 !
       implicit none
 !
@@ -68,11 +74,11 @@
 !
       SELECT CASE (STA(ng)%IOtype)
         CASE (io_nf90)
-          CALL def_station_nf90 (ng, ldef)
+          CALL def_station_nf90 (ng, iNLM, ldef)
 
 # if defined PIO_LIB && defined DISTRIBUTE
         CASE (io_pio)
-          CALL def_station_pio (ng, ldef)
+          CALL def_station_pio (ng, iNLM, ldef)
 # endif
         CASE DEFAULT
           IF (Master) WRITE (stdout,10) STA(ng)%IOtype
@@ -87,14 +93,14 @@
       END SUBROUTINE def_station
 !
 !***********************************************************************
-      SUBROUTINE def_station_nf90 (ng, ldef)
+      SUBROUTINE def_station_nf90 (ng, model, ldef)
 !***********************************************************************
 !
       USE mod_netcdf
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng
+      integer, intent(in) :: ng, model
 
       logical, intent(in) :: ldef
 !
@@ -145,7 +151,7 @@
 !=======================================================================
 !
       DEFINE : IF (ldef) THEN
-        CALL netcdf_create (ng, iNLM, TRIM(ncname), STA(ng)%ncid)
+        CALL netcdf_create (ng, model, TRIM(ncname), STA(ng)%ncid)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) THEN
           IF (Master) WRITE (stdout,30) TRIM(ncname)
           RETURN
@@ -158,66 +164,66 @@
         DimIDs=0
 !
 # ifdef SOLVE3D
-        status=def_dim(ng, iNLM, STA(ng)%ncid, ncname, 's_rho',         &
+        status=def_dim(ng, model, STA(ng)%ncid, ncname, 's_rho',        &
      &                 N(ng), DimIDs( 9))
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
-        status=def_dim(ng, iNLM, STA(ng)%ncid, ncname, 's_w',           &
+        status=def_dim(ng, model, STA(ng)%ncid, ncname, 's_w',          &
      &                 N(ng)+1, DimIDs(10))
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
-        status=def_dim(ng, iNLM, STA(ng)%ncid, ncname, 'tracer',        &
+        status=def_dim(ng, model, STA(ng)%ncid, ncname, 'tracer',       &
      &                 NT(ng), DimIDs(11))
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
 #  ifdef SEDIMENT
-        status=def_dim(ng, iNLM, STA(ng)%ncid, ncname, 'NST',           &
+        status=def_dim(ng, model, STA(ng)%ncid, ncname, 'NST',          &
      &                 NST, DimIDs(32))
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
-        status=def_dim(ng, iNLM, STA(ng)%ncid, ncname, 'Nbed',          &
+        status=def_dim(ng, model, STA(ng)%ncid, ncname, 'Nbed',         &
      &                 Nbed, DimIDs(16))
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #  endif
 
 #  ifdef ECOSIM
-        status=def_dim(ng, iNLM, STA(ng)%ncid, ncname, 'Nbands',        &
+        status=def_dim(ng, model, STA(ng)%ncid, ncname, 'Nbands',       &
      &                 NBands, DimIDs(33))
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
-        status=def_dim(ng, iNLM, STA(ng)%ncid, ncname, 'Nphy',          &
+        status=def_dim(ng, model, STA(ng)%ncid, ncname, 'Nphy',         &
      &                 Nphy, DimIDs(25))
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
-        status=def_dim(ng, iNLM, STA(ng)%ncid, ncname, 'Nbac',          &
+        status=def_dim(ng, model, STA(ng)%ncid, ncname, 'Nbac',         &
      &                 Nbac, DimIDs(26))
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
-        status=def_dim(ng, iNLM, STA(ng)%ncid, ncname, 'Ndom',          &
+        status=def_dim(ng, model, STA(ng)%ncid, ncname, 'Ndom',         &
      &                 Ndom, DimIDs(27))
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
-        status=def_dim(ng, iNLM, STA(ng)%ncid, ncname, 'Nfec',          &
+        status=def_dim(ng, model, STA(ng)%ncid, ncname, 'Nfec',         &
      &                 Nfec, DimIDs(28))
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #  endif
 # endif
 
-        status=def_dim(ng, iNLM, STA(ng)%ncid, ncname, 'station' ,      &
+        status=def_dim(ng, model, STA(ng)%ncid, ncname, 'station' ,     &
      &                 Nstation(ng), DimIDs(13))
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
-        status=def_dim(ng, iNLM, STA(ng)%ncid, ncname, 'boundary',      &
+        status=def_dim(ng, model, STA(ng)%ncid, ncname, 'boundary',     &
      &                 4, DimIDs(14))
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
 # ifdef FOUR_DVAR
-        status=def_dim(ng, iNLM, STA(ng)%ncid, ncname, 'Nstate',        &
+        status=def_dim(ng, model, STA(ng)%ncid, ncname, 'Nstate',       &
      &                 NstateVar(ng), DimIDs(29))
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 # endif
 
-        status=def_dim(ng, iNLM, STA(ng)%ncid, ncname,                  &
+        status=def_dim(ng, model, STA(ng)%ncid, ncname,                 &
      &                 TRIM(ADJUSTL(Vname(5,idtime))),                  &
      &                 nf90_unlimited, DimIDs(12))
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
@@ -269,7 +275,7 @@
 !  Define time-recordless information variables.
 !-----------------------------------------------------------------------
 !
-        CALL def_info (ng, iNLM, STA(ng)%ncid, ncname, DimIDs)
+        CALL def_info (ng, model, STA(ng)%ncid, ncname, DimIDs)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !-----------------------------------------------------------------------
@@ -283,7 +289,7 @@
         WRITE (Vinfo( 3),'(a,a)') 'seconds since ', TRIM(Rclock%string)
         Vinfo( 4)=TRIM(Rclock%calendar)
         Vinfo(14)=Vname(4,idtime)
-        status=def_var(ng, iNLM, STA(ng)%ncid, STA(ng)%Vid(idtime),     &
+        status=def_var(ng, model, STA(ng)%ncid, STA(ng)%Vid(idtime),    &
      &                 NF_TOUT, 1, (/recdim/), Aval, Vinfo, ncname,     &
      &                 SetParAccess = .TRUE.)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
@@ -296,7 +302,7 @@
           Vinfo( 3)=Vname(3,idFsur)
           Vinfo(14)=Vname(4,idFsur)
           Vinfo(16)=Vname(1,idtime)
-          status=def_var(ng, iNLM, STA(ng)%ncid, STA(ng)%Vid(idFsur),   &
+          status=def_var(ng, model, STA(ng)%ncid, STA(ng)%Vid(idFsur),  &
      &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
 # ifdef WET_DRY
      &                   SetFillVal = .FALSE.,                          &
@@ -317,7 +323,7 @@
           Vinfo( 3)=Vname(3,idbath)
           Vinfo(14)=Vname(4,idbath)
           Vinfo(16)=Vname(1,idtime)
-          status=def_var(ng, iNLM, STA(ng)%ncid, STA(ng)%Vid(idbath),   &
+          status=def_var(ng, model, STA(ng)%ncid, STA(ng)%Vid(idbath),  &
      &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .FALSE.,                          &
      &                   SetParAccess = .TRUE.)
@@ -333,7 +339,7 @@
           Vinfo( 3)=Vname(3,idUbar)
           Vinfo(14)=Vname(4,idUbar)
           Vinfo(16)=Vname(1,idtime)
-          status=def_var(ng, iNLM, STA(ng)%ncid, STA(ng)%Vid(idUbar),   &
+          status=def_var(ng, model, STA(ng)%ncid, STA(ng)%Vid(idUbar),  &
      &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
@@ -348,14 +354,14 @@
           Vinfo( 3)=Vname(3,idVbar)
           Vinfo(14)=Vname(4,idVbar)
           Vinfo(16)=Vname(1,idtime)
-          status=def_var(ng, iNLM, STA(ng)%ncid, STA(ng)%Vid(idVbar),   &
+          status=def_var(ng, model, STA(ng)%ncid, STA(ng)%Vid(idVbar),  &
      &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 !
-!  Define 2D Eastward momentum component at RHO-points.
+!  Define 2D Eastward/Northward momentum component at RHO-points.
 !
         IF (Sout(idu2dE,ng)) THEN
           Vinfo( 1)=Vname(1,idu2dE)
@@ -363,14 +369,12 @@
           Vinfo( 3)=Vname(3,idu2dE)
           Vinfo(14)=Vname(4,idu2dE)
           Vinfo(16)=Vname(1,idtime)
-          status=def_var(ng, iNLM, STA(ng)%ncid, STA(ng)%Vid(idu2dE),   &
+          status=def_var(ng, model, STA(ng)%ncid, STA(ng)%Vid(idu2dE),  &
      &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
-!
-!  Define 2D Northward momentum component at RHO-points.
 !
         IF (Sout(idv2dN,ng)) THEN
           Vinfo( 1)=Vname(1,idv2dN)
@@ -378,7 +382,7 @@
           Vinfo( 3)=Vname(3,idv2dN)
           Vinfo(14)=Vname(4,idv2dN)
           Vinfo(16)=Vname(1,idtime)
-          status=def_var(ng, iNLM, STA(ng)%ncid, STA(ng)%Vid(idv2dN),   &
+          status=def_var(ng, model, STA(ng)%ncid, STA(ng)%Vid(idv2dN),  &
      &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
@@ -395,7 +399,7 @@
           Vinfo( 3)=Vname(3,idUvel)
           Vinfo(14)=Vname(4,idUvel)
           Vinfo(16)=Vname(1,idtime)
-          status=def_var(ng, iNLM, STA(ng)%ncid, STA(ng)%Vid(idUvel),   &
+          status=def_var(ng, model, STA(ng)%ncid, STA(ng)%Vid(idUvel),  &
      &                   NF_FOUT, 3, rgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
@@ -410,14 +414,14 @@
           Vinfo( 3)=Vname(3,idVvel)
           Vinfo(14)=Vname(4,idVvel)
           Vinfo(16)=Vname(1,idtime)
-          status=def_var(ng, iNLM, STA(ng)%ncid, STA(ng)%Vid(idVvel),   &
+          status=def_var(ng, model, STA(ng)%ncid, STA(ng)%Vid(idVvel),  &
      &                   NF_FOUT, 3, rgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 !
-!  Define 3D Eastward momentum component at RHO-points.
+!  Define 3D Eastward/Northward momentum component at RHO-points.
 !
         IF (Sout(idu3dE,ng)) THEN
           Vinfo( 1)=Vname(1,idu3dE)
@@ -425,14 +429,12 @@
           Vinfo( 3)=Vname(3,idu3dE)
           Vinfo(14)=Vname(4,idu3dE)
           Vinfo(16)=Vname(1,idtime)
-          status=def_var(ng, iNLM, STA(ng)%ncid, STA(ng)%Vid(idu3dE),   &
+          status=def_var(ng, model, STA(ng)%ncid, STA(ng)%Vid(idu3dE),  &
      &                   NF_FOUT, 3, rgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
-!
-!  Define 3D Northward momentum component at RHO-points.
 !
         IF (Sout(idv3dN,ng)) THEN
           Vinfo( 1)=Vname(1,idv3dN)
@@ -440,14 +442,14 @@
           Vinfo( 3)=Vname(3,idv3dN)
           Vinfo(14)=Vname(4,idv3dN)
           Vinfo(16)=Vname(1,idtime)
-          status=def_var(ng, iNLM, STA(ng)%ncid, STA(ng)%Vid(idv3dN),   &
+          status=def_var(ng, model, STA(ng)%ncid, STA(ng)%Vid(idv3dN),  &
      &                   NF_FOUT, 3, rgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 !
-!  Define 3D momentum component in the S-direction.
+!  Define "true" vertical velocity.
 !
         IF (Sout(idWvel,ng)) THEN
           Vinfo( 1)=Vname(1,idWvel)
@@ -455,14 +457,14 @@
           Vinfo( 3)=Vname(3,idWvel)
           Vinfo(14)=Vname(4,idWvel)
           Vinfo(16)=Vname(1,idtime)
-          status=def_var(ng, iNLM, STA(ng)%ncid, STA(ng)%Vid(idWvel),   &
+          status=def_var(ng, model, STA(ng)%ncid, STA(ng)%Vid(idWvel),  &
      &                   NF_FOUT, 3, wgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 !
-!  Define S-coordinate vertical "omega" momentum component (m3/s).
+!  Define S-coordinate vertical "omega" velocity (m3/s).
 !
         IF (Sout(idOvel,ng)) THEN
           Vinfo( 1)=Vname(1,idOvel)
@@ -470,7 +472,7 @@
           Vinfo( 3)='meter3 second-1'
           Vinfo(14)=Vname(4,idOvel)
           Vinfo(16)=Vname(1,idtime)
-          status=def_var(ng, iNLM, STA(ng)%ncid, STA(ng)%Vid(idOvel),   &
+          status=def_var(ng, model, STA(ng)%ncid, STA(ng)%Vid(idOvel),  &
      &                   NF_FOUT, 3, wgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
@@ -493,7 +495,7 @@
               END IF
             END DO
 #  endif
-            status=def_var(ng, iNLM, STA(ng)%ncid, STA(ng)%Tid(itrc),   &
+            status=def_var(ng, model, STA(ng)%ncid, STA(ng)%Tid(itrc),  &
      &                     NF_FOUT, 3, rgrd, Aval, Vinfo, ncname,       &
      &                     SetFillVal = .TRUE.,                         &
      &                     SetParAccess = .TRUE.)
@@ -509,7 +511,7 @@
           Vinfo( 3)=Vname(3,idDano)
           Vinfo(14)=Vname(4,idDano)
           Vinfo(16)=Vname(1,idtime)
-          status=def_var(ng, iNLM, STA(ng)%ncid, STA(ng)%Vid(idDano),   &
+          status=def_var(ng, model, STA(ng)%ncid, STA(ng)%Vid(idDano),  &
      &                   NF_FOUT, 3, rgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
@@ -526,7 +528,7 @@
           Vinfo( 3)=Vname(3,idHsbl)
           Vinfo(14)=Vname(4,idHsbl)
           Vinfo(16)=Vname(1,idtime)
-          status=def_var(ng, iNLM, STA(ng)%ncid, STA(ng)%Vid(idHsbl),   &
+          status=def_var(ng, model, STA(ng)%ncid, STA(ng)%Vid(idHsbl),  &
      &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
@@ -543,7 +545,7 @@
           Vinfo( 3)=Vname(3,idHbbl)
           Vinfo(14)=Vname(4,idHbbl)
           Vinfo(16)=Vname(1,idtime)
-          status=def_var(ng, iNLM, STA(ng)%ncid, STA(ng)%Vid(idHbbl),   &
+          status=def_var(ng, model, STA(ng)%ncid, STA(ng)%Vid(idHbbl),  &
      &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
@@ -559,7 +561,7 @@
           Vinfo( 3)=Vname(3,idVvis)
           Vinfo(14)=Vname(4,idVvis)
           Vinfo(16)=Vname(1,idtime)
-          status=def_var(ng, iNLM, STA(ng)%ncid, STA(ng)%Vid(idVvis),   &
+          status=def_var(ng, model, STA(ng)%ncid, STA(ng)%Vid(idVvis),  &
      &                   NF_FOUT, 3, wgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
@@ -574,7 +576,7 @@
           Vinfo( 3)=Vname(3,idTdif)
           Vinfo(14)=Vname(4,idTdif)
           Vinfo(16)=Vname(1,idtime)
-          status=def_var(ng, iNLM, STA(ng)%ncid, STA(ng)%Vid(idTdif),   &
+          status=def_var(ng, model, STA(ng)%ncid, STA(ng)%Vid(idTdif),  &
      &                   NF_FOUT, 3, wgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
@@ -591,7 +593,7 @@
           Vinfo( 3)=Vname(3,idSdif)
           Vinfo(14)=Vname(4,idSdif)
           Vinfo(16)=Vname(1,idtime)
-          status=def_var(ng, iNLM, STA(ng)%ncid, STA(ng)%Vid(idSdif),   &
+          status=def_var(ng, model, STA(ng)%ncid, STA(ng)%Vid(idSdif),  &
      &                   NF_FOUT, 3, wgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
@@ -608,7 +610,7 @@
           Vinfo( 3)=Vname(3,idMtke)
           Vinfo(14)=Vname(4,idMtke)
           Vinfo(16)=Vname(1,idtime)
-          status=def_var(ng, iNLM, STA(ng)%ncid, STA(ng)%Vid(idMtke),   &
+          status=def_var(ng, model, STA(ng)%ncid, STA(ng)%Vid(idMtke),  &
      &                   NF_FOUT, 3, wgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
@@ -623,7 +625,7 @@
           Vinfo( 3)=Vname(3,idMtls)
           Vinfo(14)=Vname(4,idMtls)
           Vinfo(16)=Vname(1,idtime)
-          status=def_var(ng, iNLM, STA(ng)%ncid, STA(ng)%Vid(idMtls),   &
+          status=def_var(ng, model, STA(ng)%ncid, STA(ng)%Vid(idMtls),  &
      &                   NF_FOUT, 3, wgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
@@ -640,7 +642,7 @@
           Vinfo( 3)=Vname(3,idPair)
           Vinfo(14)=Vname(4,idPair)
           Vinfo(16)=Vname(1,idtime)
-          status=def_var(ng, iNLM, STA(ng)%ncid, STA(ng)%Vid(idPair),   &
+          status=def_var(ng, model, STA(ng)%ncid, STA(ng)%Vid(idPair),  &
      &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
@@ -657,20 +659,48 @@
           Vinfo( 3)=Vname(3,idUair)
           Vinfo(14)=Vname(4,idUair)
           Vinfo(16)=Vname(1,idtime)
-          status=def_var(ng, iNLM, STA(ng)%ncid, STA(ng)%Vid(idUair),   &
+          status=def_var(ng, model, STA(ng)%ncid, STA(ng)%Vid(idUair),  &
      &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
-
+!
         IF (Sout(idVair,ng)) THEN
           Vinfo( 1)=Vname(1,idVair)
           Vinfo( 2)=Vname(2,idVair)
           Vinfo( 3)=Vname(3,idVair)
           Vinfo(14)=Vname(4,idVair)
           Vinfo(16)=Vname(1,idtime)
-          status=def_var(ng, iNLM, STA(ng)%ncid, STA(ng)%Vid(idVair),   &
+          status=def_var(ng, model, STA(ng)%ncid, STA(ng)%Vid(idVair),  &
+     &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
+     &                   SetFillVal = .TRUE.,                           &
+     &                   SetParAccess = .TRUE.)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        END IF
+!
+!  Define surface Eastward/Nortward winds.
+!
+        IF (Sout(idUaiE,ng)) THEN
+          Vinfo( 1)=Vname(1,idUaiE)
+          Vinfo( 2)=Vname(2,idUaiE)
+          Vinfo( 3)=Vname(3,idUaiE)
+          Vinfo(14)=Vname(4,idUaiE)
+          Vinfo(16)=Vname(1,idtime)
+          status=def_var(ng, model, STA(ng)%ncid, STA(ng)%Vid(idUaiE),  &
+     &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
+     &                   SetFillVal = .TRUE.,                           &
+     &                   SetParAccess = .TRUE.)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        END IF
+!
+        IF (Sout(idVaiN,ng)) THEN
+          Vinfo( 1)=Vname(1,idVaiN)
+          Vinfo( 2)=Vname(2,idVaiN)
+          Vinfo( 3)=Vname(3,idVaiN)
+          Vinfo(14)=Vname(4,idVaiN)
+          Vinfo(16)=Vname(1,idtime)
+          status=def_var(ng, model, STA(ng)%ncid, STA(ng)%Vid(idVaiN),  &
      &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
@@ -688,7 +718,7 @@
           Vinfo(12)='downward flux, heating'
           Vinfo(14)=Vname(4,idTsur(itemp))
           Vinfo(16)=Vname(1,idtime)
-          status=def_var(ng, iNLM, STA(ng)%ncid,                        &
+          status=def_var(ng, model, STA(ng)%ncid,                       &
      &                   STA(ng)%Vid(idTsur(itemp)), NF_FOUT,           &
      &                   2, pgrd, Aval, Vinfo, ncname,                  &
      &                   SetFillVal = .TRUE.,                           &
@@ -708,7 +738,7 @@
           Vinfo(12)='downward flux, salting (net evaporation)'
           Vinfo(14)=Vname(4,idTsur(isalt))
           Vinfo(16)=Vname(1,idtime)
-          status=def_var(ng, iNLM, STA(ng)%ncid,                        &
+          status=def_var(ng, model, STA(ng)%ncid,                       &
      &                   STA(ng)%Vid(idTsur(isalt)), NF_FOUT,           &
      &                   2, pgrd, Aval, Vinfo, ncname,                  &
      &                   SetFillVal = .TRUE.,                           &
@@ -729,7 +759,7 @@
           Vinfo(12)='downward flux, heating'
           Vinfo(14)=Vname(4,idLhea)
           Vinfo(16)=Vname(1,idtime)
-          status=def_var(ng, iNLM, STA(ng)%ncid, STA(ng)%Vid(idLhea),   &
+          status=def_var(ng, model, STA(ng)%ncid, STA(ng)%Vid(idLhea),  &
      &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
@@ -746,7 +776,7 @@
           Vinfo(12)='downward flux, heating'
           Vinfo(14)=Vname(4,idShea)
           Vinfo(16)=Vname(1,idtime)
-          status=def_var(ng, iNLM, STA(ng)%ncid, STA(ng)%Vid(idShea),   &
+          status=def_var(ng, model, STA(ng)%ncid, STA(ng)%Vid(idShea),  &
      &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
@@ -763,7 +793,7 @@
           Vinfo(12)='downward flux, heating'
           Vinfo(14)=Vname(4,idLrad)
           Vinfo(16)=Vname(1,idtime)
-          status=def_var(ng, iNLM, STA(ng)%ncid, STA(ng)%Vid(idLrad),   &
+          status=def_var(ng, model, STA(ng)%ncid, STA(ng)%Vid(idLrad),  &
      &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
@@ -782,13 +812,14 @@
           Vinfo(12)='downward flux, heating'
           Vinfo(14)=Vname(4,idSrad)
           Vinfo(16)=Vname(1,idtime)
-          status=def_var(ng, iNLM, STA(ng)%ncid, STA(ng)%Vid(idSrad),   &
+          status=def_var(ng, model, STA(ng)%ncid, STA(ng)%Vid(idSrad),  &
      &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 #  endif
+#  if defined EMINUSP && defined BULK_FLUXES
 !
 !  Define E-P flux (as computed by bulk_flux.F).
 !
@@ -800,13 +831,12 @@
           Vinfo(12)='downward flux, salting (net evaporation)'
           Vinfo(14)=Vname(4,idEmPf)
           Vinfo(16)=Vname(1,idtime)
-          status=def_var(ng, iNLM, STA(ng)%ncid, STA(ng)%Vid(idEmPf),   &
+          status=def_var(ng, model, STA(ng)%ncid, STA(ng)%Vid(idEmPf),  &
      &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
-#  if defined EMINUSP && defined BULK_FLUXES
 !
 !  Define evaporation rate.
 !
@@ -818,7 +848,7 @@
           Vinfo(12)='upward flux, salting (evaporation)'
           Vinfo(14)=Vname(4,idevap)
           Vinfo(16)=Vname(1,idtime)
-          status=def_var(ng, iNLM, STA(ng)%ncid, STA(ng)%Vid(idevap),   &
+          status=def_var(ng, model, STA(ng)%ncid, STA(ng)%Vid(idevap),  &
      &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
@@ -835,7 +865,7 @@
           Vinfo(12)='downward flux, freshening (precipitation)'
           Vinfo(14)=Vname(4,idrain)
           Vinfo(16)=Vname(1,idtime)
-          status=def_var(ng, iNLM, STA(ng)%ncid, STA(ng)%Vid(idrain),   &
+          status=def_var(ng, model, STA(ng)%ncid, STA(ng)%Vid(idrain),  &
      &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
@@ -852,7 +882,7 @@
           Vinfo( 3)=Vname(3,idUsms)
           Vinfo(14)=Vname(4,idUsms)
           Vinfo(16)=Vname(1,idtime)
-          status=def_var(ng, iNLM, STA(ng)%ncid, STA(ng)%Vid(idUsms),   &
+          status=def_var(ng, model, STA(ng)%ncid, STA(ng)%Vid(idUsms),  &
      &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
@@ -867,7 +897,7 @@
           Vinfo( 3)=Vname(3,idVsms)
           Vinfo(14)=Vname(4,idVsms)
           Vinfo(16)=Vname(1,idtime)
-          status=def_var(ng, iNLM, STA(ng)%ncid, STA(ng)%Vid(idVsms),   &
+          status=def_var(ng, model, STA(ng)%ncid, STA(ng)%Vid(idVsms),  &
      &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
@@ -882,7 +912,7 @@
           Vinfo( 3)=Vname(3,idUbms)
           Vinfo(14)=Vname(4,idUbms)
           Vinfo(16)=Vname(1,idtime)
-          status=def_var(ng, iNLM, STA(ng)%ncid, STA(ng)%Vid(idUbms),   &
+          status=def_var(ng, model, STA(ng)%ncid, STA(ng)%Vid(idUbms),  &
      &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
@@ -897,7 +927,7 @@
           Vinfo( 3)=Vname(3,idVbms)
           Vinfo(14)=Vname(4,idVbms)
           Vinfo(16)=Vname(1,idtime)
-          status=def_var(ng, iNLM, STA(ng)%ncid, STA(ng)%Vid(idVbms),   &
+          status=def_var(ng, model, STA(ng)%ncid, STA(ng)%Vid(idVbms),  &
      &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
@@ -907,7 +937,7 @@
 # ifdef SOLVE3D
 #  ifdef BBL_MODEL
 !
-!  Define bottom U-current stress.
+!  Define current-induced, bottom U-current stress.
 !
         IF (Sout(idUbrs,ng)) THEN
           Vinfo( 1)=Vname(1,idUbrs)
@@ -915,14 +945,14 @@
           Vinfo( 3)=Vname(3,idUbrs)
           Vinfo(14)=Vname(4,idUbrs)
           Vinfo(16)=Vname(1,idtime)
-          status=def_var(ng, iNLM, STA(ng)%ncid, STA(ng)%Vid(idUbrs),   &
+          status=def_var(ng, model, STA(ng)%ncid, STA(ng)%Vid(idUbrs),  &
      &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 !
-!  Define bottom V-current stress.
+!  Define current-induced, bottom V-current stress.
 !
         IF (Sout(idVbrs,ng)) THEN
           Vinfo( 1)=Vname(1,idVbrs)
@@ -930,7 +960,7 @@
           Vinfo( 3)=Vname(3,idVbrs)
           Vinfo(14)=Vname(4,idVbrs)
           Vinfo(16)=Vname(1,idtime)
-          status=def_var(ng, iNLM, STA(ng)%ncid, STA(ng)%Vid(idVbrs),   &
+          status=def_var(ng, model, STA(ng)%ncid, STA(ng)%Vid(idVbrs),  &
      &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
@@ -945,7 +975,7 @@
           Vinfo( 3)=Vname(3,idUbws)
           Vinfo(14)=Vname(4,idUbws)
           Vinfo(16)=Vname(1,idtime)
-          status=def_var(ng, iNLM, STA(ng)%ncid, STA(ng)%Vid(idUbws),   &
+          status=def_var(ng, model, STA(ng)%ncid, STA(ng)%Vid(idUbws),  &
      &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
@@ -960,7 +990,7 @@
           Vinfo( 3)=Vname(3,idVbws)
           Vinfo(14)=Vname(4,idVbws)
           Vinfo(16)=Vname(1,idtime)
-          status=def_var(ng, iNLM, STA(ng)%ncid, STA(ng)%Vid(idVbws),   &
+          status=def_var(ng, model, STA(ng)%ncid, STA(ng)%Vid(idVbws),  &
      &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
@@ -975,7 +1005,7 @@
           Vinfo( 3)=Vname(3,idUbcs)
           Vinfo(14)=Vname(4,idUbcs)
           Vinfo(16)=Vname(1,idtime)
-          status=def_var(ng, iNLM, STA(ng)%ncid, STA(ng)%Vid(idUbcs),   &
+          status=def_var(ng, model, STA(ng)%ncid, STA(ng)%Vid(idUbcs),  &
      &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
@@ -990,7 +1020,7 @@
           Vinfo( 3)=Vname(3,idVbcs)
           Vinfo(14)=Vname(4,idVbcs)
           Vinfo(16)=Vname(1,idtime)
-          status=def_var(ng, iNLM, STA(ng)%ncid, STA(ng)%Vid(idVbcs),   &
+          status=def_var(ng, model, STA(ng)%ncid, STA(ng)%Vid(idVbcs),  &
      &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
@@ -1005,7 +1035,7 @@
           Vinfo( 3)=Vname(3,idUbot)
           Vinfo(14)=Vname(4,idUbot)
           Vinfo(16)=Vname(1,idtime)
-          status=def_var(ng, iNLM, STA(ng)%ncid, STA(ng)%Vid(idUbot),   &
+          status=def_var(ng, model, STA(ng)%ncid, STA(ng)%Vid(idUbot),  &
      &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
@@ -1020,7 +1050,7 @@
           Vinfo( 3)=Vname(3,idVbot)
           Vinfo(14)=Vname(4,idVbot)
           Vinfo(16)=Vname(1,idtime)
-          status=def_var(ng, iNLM, STA(ng)%ncid, STA(ng)%Vid(idVbot),   &
+          status=def_var(ng, model, STA(ng)%ncid, STA(ng)%Vid(idVbot),  &
      &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
@@ -1035,7 +1065,7 @@
           Vinfo( 3)=Vname(3,idUbur)
           Vinfo(14)=Vname(4,idUbur)
           Vinfo(16)=Vname(1,idtime)
-          status=def_var(ng, iNLM, STA(ng)%ncid, STA(ng)%Vid(idUbur),   &
+          status=def_var(ng, model, STA(ng)%ncid, STA(ng)%Vid(idUbur),  &
      &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
@@ -1050,7 +1080,7 @@
           Vinfo( 3)=Vname(3,idVbvr)
           Vinfo(14)=Vname(4,idVbvr)
           Vinfo(16)=Vname(1,idtime)
-          status=def_var(ng, iNLM, STA(ng)%ncid, STA(ng)%Vid(idVbvr),   &
+          status=def_var(ng, model, STA(ng)%ncid, STA(ng)%Vid(idVbvr),  &
      &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
@@ -1069,7 +1099,7 @@
             Vinfo(14)=Vname(4,idfrac(i))
             Vinfo(16)=Vname(1,idtime)
             WRITE (Vinfo(19),40) 1000.0_r8*Sd50(i,ng)
-            status=def_var(ng, iNLM, STA(ng)%ncid,                      &
+            status=def_var(ng, model, STA(ng)%ncid,                     &
      &                     STA(ng)%Vid(idfrac(i)), NF_FOUT,             &
      &                     3, bgrd, Aval, Vinfo, ncname,                &
      &                     SetFillVal = .TRUE.,                         &
@@ -1086,7 +1116,7 @@
             Vinfo(14)=Vname(4,idBmas(i))
             Vinfo(16)=Vname(1,idtime)
             WRITE (Vinfo(19),40) 1000.0_r8*Sd50(i,ng)
-            status=def_var(ng, iNLM, STA(ng)%ncid,                      &
+            status=def_var(ng, model, STA(ng)%ncid,                     &
      &                     STA(ng)%Vid(idBmas(i)), NF_FOUT,             &
      &                     3, bgrd, Aval, Vinfo, ncname,                &
      &                     SetFillVal = .TRUE.,                         &
@@ -1104,7 +1134,7 @@
             Vinfo( 3)=Vname(3,idSbed(i))
             Vinfo(14)=Vname(4,idSbed(i))
             Vinfo(16)=Vname(1,idtime)
-            status=def_var(ng, iNLM, STA(ng)%ncid,                      &
+            status=def_var(ng, model, STA(ng)%ncid,                     &
      &                     STA(ng)%Vid(idSbed(i)), NF_FOUT,             &
      &                     3, bgrd, Aval, Vinfo, ncname,                &
      &                     SetFillVal = .TRUE.,                         &
@@ -1124,7 +1154,7 @@
             Vinfo( 3)=Vname(3,idBott(i))
             Vinfo(14)=Vname(4,idBott(i))
             Vinfo(16)=Vname(1,idtime)
-            status=def_var(ng, iNLM, STA(ng)%ncid,                      &
+            status=def_var(ng, model, STA(ng)%ncid,                     &
      &                     STA(ng)%Vid(idBott(i)), NF_FOUT,             &
      &                     2, pgrd, Aval, Vinfo, ncname,                &
      &                     SetFillVal = .TRUE.,                         &
@@ -1132,254 +1162,6 @@
             IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
           END IF
         END DO
-#  endif
-# endif
-# ifdef NEARSHORE_MELLOR
-!
-!  Define 2D radiation stress, Sxx-component.
-!
-        IF (Sout(idW2xx,ng)) THEN
-          Vinfo( 1)=Vname(1,idW2xx)
-          Vinfo( 2)=Vname(2,idW2xx)
-          Vinfo( 3)=Vname(3,idW2xx)
-          Vinfo(14)=Vname(4,idW2xx)
-          Vinfo(16)=Vname(1,idtime)
-          status=def_var(ng, iNLM, STA(ng)%ncid, STA(ng)%Vid(idW2xx),   &
-     &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
-     &                   SetFillVal = .TRUE.,                           &
-     &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-!
-!  Define 2D radiation stress, Sxy-component.
-!
-        IF (Sout(idW2xy,ng)) THEN
-          Vinfo( 1)=Vname(1,idW2xy)
-          Vinfo( 2)=Vname(2,idW2xy)
-          Vinfo( 3)=Vname(3,idW2xy)
-          Vinfo(14)=Vname(4,idW2xy)
-          Vinfo(16)=Vname(1,idtime)
-          status=def_var(ng, iNLM, STA(ng)%ncid, STA(ng)%Vid(idW2xy),   &
-     &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
-     &                   SetFillVal = .TRUE.,                           &
-     &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-!
-!  Define 2D radiation stress, Syy-component.
-!
-        IF (Sout(idW2yy,ng)) THEN
-          Vinfo( 1)=Vname(1,idW2yy)
-          Vinfo( 2)=Vname(2,idW2yy)
-          Vinfo( 3)=Vname(3,idW2yy)
-          Vinfo(14)=Vname(4,idW2yy)
-          Vinfo(16)=Vname(1,idtime)
-          status=def_var(ng, iNLM, STA(ng)%ncid, STA(ng)%Vid(idW2yy),   &
-     &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
-     &                   SetFillVal = .TRUE.,                           &
-     &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-!
-!  Define 2D total u-radiation stress.
-!
-        IF (Sout(idU2rs,ng)) THEN
-          Vinfo( 1)=Vname(1,idU2rs)
-          Vinfo( 2)=Vname(2,idU2rs)
-          Vinfo( 3)=Vname(3,idU2rs)
-          Vinfo(14)=Vname(4,idU2rs)
-          Vinfo(16)=Vname(1,idtime)
-          status=def_var(ng, iNLM, STA(ng)%ncid, STA(ng)%Vid(idU2rs),   &
-     &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
-     &                   SetFillVal = .TRUE.,                           &
-     &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-!
-!  Define 2D total v-radiation stress.
-!
-        IF (Sout(idV2rs,ng)) THEN
-          Vinfo( 1)=Vname(1,idV2rs)
-          Vinfo( 2)=Vname(2,idV2rs)
-          Vinfo( 3)=Vname(3,idV2rs)
-          Vinfo(14)=Vname(4,idV2rs)
-          Vinfo(16)=Vname(1,idtime)
-          status=def_var(ng, iNLM, STA(ng)%ncid, STA(ng)%Vid(idV2rs),   &
-     &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
-     &                   SetFillVal = .TRUE.,                           &
-     &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-!
-!  Define 2D u-Stokes drift velocity.
-!
-        IF (Sout(idU2Sd,ng)) THEN
-          Vinfo( 1)=Vname(1,idU2Sd)
-          Vinfo( 2)=Vname(2,idU2Sd)
-          Vinfo( 3)=Vname(3,idU2Sd)
-          Vinfo(14)=Vname(4,idU2Sd)
-          Vinfo(16)=Vname(1,idtime)
-          status=def_var(ng, iNLM, STA(ng)%ncid, STA(ng)%Vid(idU2Sd),   &
-     &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
-     &                   SetFillVal = .TRUE.,                           &
-     &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-!
-!  Define 2D v-Stokes drift velocity.
-!
-        IF (Sout(idV2Sd,ng)) THEN
-          Vinfo( 1)=Vname(1,idV2Sd)
-          Vinfo( 2)=Vname(2,idV2Sd)
-          Vinfo( 3)=Vname(3,idV2Sd)
-          Vinfo(14)=Vname(4,idV2Sd)
-          Vinfo(16)=Vname(1,idtime)
-          status=def_var(ng, iNLM, STA(ng)%ncid, STA(ng)%Vid(idV2Sd),   &
-     &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
-     &                   SetFillVal = .TRUE.,                           &
-     &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-
-#  ifdef SOLVE3D
-!
-!  Define 3D radiation stress, Sxx-component.
-!
-        IF (Sout(idW3xx,ng)) THEN
-          Vinfo( 1)=Vname(1,idW3xx)
-          Vinfo( 2)=Vname(2,idW3xx)
-          Vinfo( 3)=Vname(3,idW3xx)
-          Vinfo(14)=Vname(4,idW3xx)
-          Vinfo(16)=Vname(1,idtime)
-          status=def_var(ng, iNLM, STA(ng)%ncid, STA(ng)%Vid(idW3xx),   &
-     &                   NF_FOUT, 3, rgrd, Aval, Vinfo, ncname,         &
-     &                   SetFillVal = .TRUE.,                           &
-     &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-!
-!  Define 3D radiation stress, Sxy-component.
-!
-        IF (Sout(idW3xy,ng)) THEN
-          Vinfo( 1)=Vname(1,idW3xy)
-          Vinfo( 2)=Vname(2,idW3xy)
-          Vinfo( 3)=Vname(3,idW3xy)
-          Vinfo(14)=Vname(4,idW3xy)
-          Vinfo(16)=Vname(1,idtime)
-          status=def_var(ng, iNLM, STA(ng)%ncid, STA(ng)%Vid(idW3xy),   &
-     &                   NF_FOUT, 3, rgrd, Aval, Vinfo, ncname,         &
-     &                   SetFillVal = .TRUE.,                           &
-     &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-!
-!  Define 3D radiation stress, Syy-component.
-!
-        IF (Sout(idW3yy,ng)) THEN
-          Vinfo( 1)=Vname(1,idW3yy)
-          Vinfo( 2)=Vname(2,idW3yy)
-          Vinfo( 3)=Vname(3,idW3yy)
-          Vinfo(14)=Vname(4,idW3yy)
-          Vinfo(16)=Vname(1,idtime)
-          status=def_var(ng, iNLM, STA(ng)%ncid, STA(ng)%Vid(idW3yy),   &
-     &                   NF_FOUT, 3, rgrd, Aval, Vinfo, ncname,         &
-     &                   SetFillVal = .TRUE.,                           &
-     &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-
-#   ifdef NEARSHORE_MELLOR05
-!
-!  Define 3D radiation stress, Szx-component.
-!
-        IF (Sout(idW3zx,ng)) THEN
-          Vinfo( 1)=Vname(1,idW3zx)
-          Vinfo( 2)=Vname(2,idW3zx)
-          Vinfo( 3)=Vname(3,idW3zx)
-          Vinfo(14)=Vname(4,idW3zx)
-          Vinfo(16)=Vname(1,idtime)
-          status=def_var(ng, iNLM, STA(ng)%ncid, STA(ng)%Vid(idW3zx),   &
-     &                   NF_FOUT, 3, rgrd, Aval, Vinfo, ncname,         &
-     &                   SetFillVal = .TRUE.,                           &
-     &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-!
-!  Define 3D radiation stress, Szy-component.
-!
-        IF (Sout(idW3zy,ng)) THEN
-          Vinfo( 1)=Vname(1,idW3zy)
-          Vinfo( 2)=Vname(2,idW3zy)
-          Vinfo( 3)=Vname(3,idW3zy)
-          Vinfo(14)=Vname(4,idW3zy)
-          Vinfo(16)=Vname(1,idtime)
-          status=def_var(ng, iNLM, STA(ng)%ncid, STA(ng)%Vid(idW3zy),   &
-     &                   NF_FOUT, 3, rgrd, Aval, Vinfo, ncname,         &
-     &                   SetFillVal = .TRUE.,                           &
-     &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-#   endif
-!
-!  Define 3D total u-radiation stress.
-!
-        IF (Sout(idU3rs,ng)) THEN
-          Vinfo( 1)=Vname(1,idU3rs)
-          Vinfo( 2)=Vname(2,idU3rs)
-          Vinfo( 3)=Vname(3,idU3rs)
-          Vinfo(14)=Vname(4,idU3rs)
-          Vinfo(16)=Vname(1,idtime)
-          status=def_var(ng, iNLM, STA(ng)%ncid, STA(ng)%Vid(idU3rs),   &
-     &                   NF_FOUT, 3, rgrd, Aval, Vinfo, ncname,         &
-     &                   SetFillVal = .TRUE.,                           &
-     &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-!
-!  Define 3D total v-radiation stress.
-!
-        IF (Sout(idV3rs,ng)) THEN
-          Vinfo( 1)=Vname(1,idV3rs)
-          Vinfo( 2)=Vname(2,idV3rs)
-          Vinfo( 3)=Vname(3,idV3rs)
-          Vinfo(14)=Vname(4,idV3rs)
-          Vinfo(16)=Vname(1,idtime)
-          status=def_var(ng, iNLM, STA(ng)%ncid, STA(ng)%Vid(idV3rs),   &
-     &                   NF_FOUT, 3, rgrd, Aval, Vinfo, ncname,         &
-     &                   SetFillVal = .TRUE.,                           &
-     &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-!
-!  Define 3D u-Stokes velocity.
-!
-        IF (Sout(idU3Sd,ng)) THEN
-          Vinfo( 1)=Vname(1,idU3Sd)
-          Vinfo( 2)=Vname(2,idU3Sd)
-          Vinfo( 3)=Vname(3,idU3Sd)
-          Vinfo(14)=Vname(4,idU3Sd)
-          Vinfo(16)=Vname(1,idtime)
-          status=def_var(ng, iNLM, STA(ng)%ncid, STA(ng)%Vid(idU3Sd),   &
-     &                   NF_FOUT, 3, rgrd, Aval, Vinfo, ncname,         &
-     &                   SetFillVal = .TRUE.,                           &
-     &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-!
-!  Define 3D v-Stokes velocity.
-!
-        IF (Sout(idV3Sd,ng)) THEN
-          Vinfo( 1)=Vname(1,idV3Sd)
-          Vinfo( 2)=Vname(2,idV3Sd)
-          Vinfo( 3)=Vname(3,idV3Sd)
-          Vinfo(14)=Vname(4,idV3Sd)
-          Vinfo(16)=Vname(1,idtime)
-          status=def_var(ng, iNLM, STA(ng)%ncid, STA(ng)%Vid(idV3Sd),   &
-     &                   NF_FOUT, 3, rgrd, Aval, Vinfo, ncname,         &
-     &                   SetFillVal = .TRUE.,                           &
-     &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
 #  endif
 # endif
 # ifdef WAVES_HEIGHT
@@ -1392,7 +1174,7 @@
           Vinfo( 3)=Vname(3,idWamp)
           Vinfo(14)=Vname(4,idWamp)
           Vinfo(16)=Vname(1,idtime)
-          status=def_var(ng, iNLM, STA(ng)%ncid, STA(ng)%Vid(idWamp),   &
+          status=def_var(ng, model, STA(ng)%ncid, STA(ng)%Vid(idWamp),  &
      &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
@@ -1409,7 +1191,24 @@
           Vinfo( 3)=Vname(3,idWlen)
           Vinfo(14)=Vname(4,idWlen)
           Vinfo(16)=Vname(1,idtime)
-          status=def_var(ng, iNLM, STA(ng)%ncid, STA(ng)%Vid(idWlen),   &
+          status=def_var(ng, model, STA(ng)%ncid, STA(ng)%Vid(idWlen),  &
+     &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
+     &                   SetFillVal = .TRUE.,                           &
+     &                   SetParAccess = .TRUE.)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        END IF
+# endif
+# ifdef WAVES_LENGTHP
+!
+!  Define wind-induced peak wave wavelength.
+!
+        IF (Sout(idWlep,ng)) THEN
+          Vinfo( 1)=Vname(1,idWlep)
+          Vinfo( 2)=Vname(2,idWlep)
+          Vinfo( 3)=Vname(3,idWlep)
+          Vinfo(14)=Vname(4,idWlep)
+          Vinfo(16)=Vname(1,idtime)
+          status=def_var(ng, model, STA(ng)%ncid, STA(ng)%Vid(idWlep),  &
      &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
@@ -1418,7 +1217,7 @@
 # endif
 # ifdef WAVES_DIR
 !
-!  Define wind-induced wave direction.
+!  Define wind-induced mean wave direction.
 !
         IF (Sout(idWdir,ng)) THEN
           Vinfo( 1)=Vname(1,idWdir)
@@ -1426,7 +1225,24 @@
           Vinfo( 3)=Vname(3,idWdir)
           Vinfo(14)=Vname(4,idWdir)
           Vinfo(16)=Vname(1,idtime)
-          status=def_var(ng, iNLM, STA(ng)%ncid, STA(ng)%Vid(idWdir),   &
+          status=def_var(ng, model, STA(ng)%ncid, STA(ng)%Vid(idWdir),  &
+     &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
+     &                   SetFillVal = .TRUE.,                           &
+     &                   SetParAccess = .TRUE.)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        END IF
+# endif
+# ifdef WAVES_DIRP
+!
+!  Define wind-induced peak wave direction.
+!
+        IF (Sout(idWdip,ng)) THEN
+          Vinfo( 1)=Vname(1,idWdip)
+          Vinfo( 2)=Vname(2,idWdip)
+          Vinfo( 3)=Vname(3,idWdip)
+          Vinfo(14)=Vname(4,idWdip)
+          Vinfo(16)=Vname(1,idtime)
+          status=def_var(ng, model, STA(ng)%ncid, STA(ng)%Vid(idWdip),  &
      &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
@@ -1443,7 +1259,7 @@
           Vinfo( 3)=Vname(3,idWptp)
           Vinfo(14)=Vname(4,idWptp)
           Vinfo(16)=Vname(1,idtime)
-          status=def_var(ng, iNLM, STA(ng)%ncid, STA(ng)%Vid(idWptp),   &
+          status=def_var(ng, model, STA(ng)%ncid, STA(ng)%Vid(idWptp),  &
      &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
@@ -1461,7 +1277,7 @@
           Vinfo( 3)=Vname(3,idWpbt)
           Vinfo(14)=Vname(4,idWpbt)
           Vinfo(16)=Vname(1,idtime)
-          status=def_var(ng, iNLM, STA(ng)%ncid, STA(ng)%Vid(idWpbt),   &
+          status=def_var(ng, model, STA(ng)%ncid, STA(ng)%Vid(idWpbt),  &
      &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
@@ -1479,43 +1295,115 @@
           Vinfo( 3)=Vname(3,idWorb)
           Vinfo(14)=Vname(4,idWorb)
           Vinfo(16)=Vname(1,idtime)
-          status=def_var(ng, iNLM, STA(ng)%ncid, STA(ng)%Vid(idWorb),   &
+          status=def_var(ng, model, STA(ng)%ncid, STA(ng)%Vid(idWorb),  &
      &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 # endif
-# if defined TKE_WAVEDISS || defined WAV_COUPLING
+# ifdef WAVES_DSPR
 !
-!  Define wave dissipation.
+!  Define waves directional spreading.
 !
-        IF (Sout(idWdis,ng)) THEN
-          Vinfo( 1)=Vname(1,idWdis)
-          Vinfo( 2)=Vname(2,idWdis)
-          Vinfo( 3)=Vname(3,idWdis)
-          Vinfo(14)=Vname(4,idWdis)
+        IF (Sout(idWvds,ng)) THEN
+          Vinfo( 1)=Vname(1,idWvds)
+          Vinfo( 2)=Vname(2,idWvds)
+          Vinfo( 3)=Vname(3,idWvds)
+          Vinfo(14)=Vname(4,idWvds)
           Vinfo(16)=Vname(1,idtime)
-          status=def_var(ng, iNLM, STA(ng)%ncid, STA(ng)%Vid(idWdis),   &
+          status=def_var(ng, model, STA(ng)%ncid, STA(ng)%Vid(idWvds),  &
      &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
+!
+!  Define wave spectrum peakedness.
+!
+        IF (Sout(idWvqp,ng)) THEN
+          Vinfo( 1)=Vname(1,idWvqp)
+          Vinfo( 2)=Vname(2,idWvqp)
+          Vinfo( 3)=Vname(3,idWvqp)
+          Vinfo(14)=Vname(4,idWvqp)
+          Vinfo(16)=Vname(1,idtime)
+          status=def_var(ng, model, STA(ng)%ncid, STA(ng)%Vid(idWvqp),  &
+     &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
+     &                   SetFillVal = .TRUE.,                           &
+     &                   SetParAccess = .TRUE.)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        END IF
+# endif
+# ifdef WET_DRY
+!
+!  Write out wet/dry mask at RHO-points.
+!
+        IF (Sout(idRwet,ng)) THEN
+          Vinfo( 1)=Vname(1,idRwet)
+          Vinfo( 2)=Vname(2,idRwet)
+          Vinfo( 3)=Vname(3,idRwet)
+          Vinfo(14)=Vname(4,idRwet)
+          Vinfo(16)=Vname(1,idtime)
+          status=def_var(ng, model, STA(ng)%ncid, STA(ng)%Vid(idRwet),  &
+     &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
+     &                   SetFillVal = .TRUE.,                           &
+     &                   SetParAccess = .TRUE.)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        END IF
+!
+!  Write out wet/dry mask at U-points.
+!
+        IF (Sout(idUwet,ng)) THEN
+          Vinfo( 1)=Vname(1,idUwet)
+          Vinfo( 2)=Vname(2,idUwet)
+          Vinfo( 3)=Vname(3,idUwet)
+          Vinfo(14)=Vname(4,idUwet)
+          Vinfo(16)=Vname(1,idtime)
+          status=def_var(ng, model, STA(ng)%ncid, STA(ng)%Vid(idUwet),  &
+     &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
+     &                   SetFillVal = .TRUE.,                           &
+     &                   SetParAccess = .TRUE.)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        END IF
+!
+!  Write out wet/dry mask at V-points.
+!
+        IF (Sout(idUwet,ng)) THEN
+          Vinfo( 1)=Vname(1,idVwet)
+          Vinfo( 2)=Vname(2,idVwet)
+          Vinfo( 3)=Vname(3,idVwet)
+          Vinfo(14)=Vname(4,idVwet)
+          Vinfo(16)=Vname(1,idtime)
+          status=def_var(ng, model, STA(ng)%ncid, STA(ng)%Vid(idVwet),  &
+     &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
+     &                   SetFillVal = .TRUE.,                           &
+     &                   SetParAccess = .TRUE.)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        END IF
+# endif
+# if defined WEC || defined WEC_VF
+!
+!-----------------------------------------------------------------------
+!  Define Waves Effect on Currents variables.
+!-----------------------------------------------------------------------
+!
+        CALL wec_def_station_nf90 (ng, model, ldef, Sout, STA,          &
+     &                             pgrd, rgrd)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 # endif
 !
 !-----------------------------------------------------------------------
 !  Leave definition mode.
 !-----------------------------------------------------------------------
 !
-        CALL netcdf_enddef (ng, iNLM, ncname, STA(ng)%ncid)
+        CALL netcdf_enddef (ng, model, ncname, STA(ng)%ncid)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !-----------------------------------------------------------------------
 !  Write out time-recordless, information variables.
 !-----------------------------------------------------------------------
 !
-        CALL wrt_info (ng, iNLM, STA(ng)%ncid, ncname)
+        CALL wrt_info (ng, model, STA(ng)%ncid, ncname)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       END IF DEFINE
@@ -1530,7 +1418,7 @@
 !
 !  Open stations file for read/write.
 !
-        CALL netcdf_open (ng, iNLM, ncname, 1, STA(ng)%ncid)
+        CALL netcdf_open (ng, model, ncname, 1, STA(ng)%ncid)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) THEN
           WRITE (stdout,50) TRIM(ncname)
           RETURN
@@ -1538,13 +1426,13 @@
 !
 !  Inquire about the dimensions and check for consistency.
 !
-        CALL netcdf_check_dim (ng, iNLM, ncname,                        &
+        CALL netcdf_check_dim (ng, model, ncname,                       &
      &                         ncid = STA(ng)%ncid)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Inquire about the variables.
 !
-        CALL netcdf_inq_var (ng, iNLM, ncname,                          &
+        CALL netcdf_inq_var (ng, model, ncname,                         &
      &                       ncid = STA(ng)%ncid)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
@@ -1637,6 +1525,12 @@
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idVair))) THEN
             got_var(idVair)=.TRUE.
             STA(ng)%Vid(idVair)=var_id(i)
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idUaiE))) THEN
+            got_var(idUaiE)=.TRUE.
+            STA(ng)%Vid(idUaiE)=var_id(i)
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idVaiN))) THEN
+            got_var(idVaiN)=.TRUE.
+            STA(ng)%Vid(idVaiN)=var_id(i)
 #  endif
           ELSE IF (TRIM(var_name(i)).eq.                                &
      &             TRIM(Vname(1,idTsur(itemp)))) THEN
@@ -1720,60 +1614,6 @@
             STA(ng)%Vid(idVbvr)=var_id(i)
 #  endif
 # endif
-# ifdef NEARSHORE_MELLOR
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idW2xx))) THEN
-            got_var(idW2xx)=.TRUE.
-            STA(ng)%Vid(idW2xx)=var_id(i)
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idW2xy))) THEN
-            got_var(idW2xy)=.TRUE.
-            STA(ng)%Vid(idW2xy)=var_id(i)
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idW2yy))) THEN
-            got_var(idW2yy)=.TRUE.
-            STA(ng)%Vid(idW2yy)=var_id(i)
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idU2rs))) THEN
-            got_var(idU2rs)=.TRUE.
-            STA(ng)%Vid(idU2rs)=var_id(i)
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idV2rs))) THEN
-            got_var(idV2rs)=.TRUE.
-            STA(ng)%Vid(idV2rs)=var_id(i)
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idU2Sd))) THEN
-            got_var(idU2Sd)=.TRUE.
-            STA(ng)%Vid(idU2Sd)=var_id(i)
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idV2Sd))) THEN
-            got_var(idV2Sd)=.TRUE.
-            STA(ng)%Vid(idV2Sd)=var_id(i)
-#  ifdef SOLVE3D
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idW3xx))) THEN
-            got_var(idW3xx)=.TRUE.
-            STA(ng)%Vid(idW3xx)=var_id(i)
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idW3xy))) THEN
-            got_var(idW3xy)=.TRUE.
-            STA(ng)%Vid(idW3xy)=var_id(i)
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idW3yy))) THEN
-            got_var(idW3yy)=.TRUE.
-            STA(ng)%Vid(idW3yy)=var_id(i)
-#   ifdef NEARSHORE_MELLOR05
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idW3zx))) THEN
-            got_var(idW3zx)=.TRUE.
-            STA(ng)%Vid(idW3zx)=var_id(i)
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idW3zy))) THEN
-            got_var(idW3zy)=.TRUE.
-            STA(ng)%Vid(idW3zy)=var_id(i)
-#   endif
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idU3rs))) THEN
-            got_var(idU3rs)=.TRUE.
-            STA(ng)%Vid(idU3rs)=var_id(i)
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idV3rs))) THEN
-            got_var(idV3rs)=.TRUE.
-            STA(ng)%Vid(idV3rs)=var_id(i)
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idU3Sd))) THEN
-            got_var(idU3Sd)=.TRUE.
-            STA(ng)%Vid(idU3Sd)=var_id(i)
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idV3Sd))) THEN
-            got_var(idV3Sd)=.TRUE.
-            STA(ng)%Vid(idV3Sd)=var_id(i)
-#  endif
-# endif
 # ifdef WAVES_HEIGHT
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idWamp))) THEN
             got_var(idWamp)=.TRUE.
@@ -1784,10 +1624,20 @@
             got_var(idWlen)=.TRUE.
             STA(ng)%Vid(idWlen)=var_id(i)
 # endif
+# ifdef WAVES_LENGTHP
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idWlep))) THEN
+            got_var(idWlep)=.TRUE.
+            STA(ng)%Vid(idWlep)=var_id(i)
+# endif
 # ifdef WAVES_DIR
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idWdir))) THEN
             got_var(idWdir)=.TRUE.
             STA(ng)%Vid(idWdir)=var_id(i)
+# endif
+# ifdef WAVES_DIRP
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idWdip))) THEN
+            got_var(idWdip)=.TRUE.
+            STA(ng)%Vid(idWdip)=var_id(i)
 # endif
 # ifdef WAVES_TOP_PERIOD
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idWptp))) THEN
@@ -1804,10 +1654,24 @@
             got_var(idWorb)=.TRUE.
             STA(ng)%Vid(idWorb)=var_id(i)
 # endif
-# if defined TKE_WAVEDISS || defined WAV_COUPLING
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idWdis))) THEN
-            got_var(idWdis)=.TRUE.
-            STA(ng)%Vid(idWdis)=var_id(i)
+# ifdef WAVES_DSPR
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idWvds))) THEN
+            got_var(idWvds)=.TRUE.
+            STA(ng)%Vid(idWvds)=var_id(i)
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idWvqp))) THEN
+            got_var(idWvqp)=.TRUE.
+            STA(ng)%Vid(idWvqp)=var_id(i)
+# endif
+# ifdef WET_DRY
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idRwet))) THEN
+            got_var(idRwet)=.TRUE.
+            STA(ng)%Vid(idRwet)=var_id(i)
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idUwet))) THEN
+            got_var(idUwet)=.TRUE.
+            STA(ng)%Vid(idUwet)=var_id(i)
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idVwet))) THEN
+            got_var(idVwet)=.TRUE.
+            STA(ng)%Vid(idVwet)=var_id(i)
 # endif
           END IF
 # ifdef SOLVE3D
@@ -1998,6 +1862,18 @@
           exit_flag=3
           RETURN
         END IF
+        IF (.not.got_var(idUaiE).and.Sout(idUaiE,ng)) THEN
+          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idUaiE)) ,         &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idVaiN).and.Sout(idVaiN,ng)) THEN
+          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idVaiN)),          &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
 #  endif
         IF (.not.got_var(idTsur(itemp)).and.Sout(idTsur(itemp),ng)) THEN
           IF (Master) WRITE (stdout,60) TRIM(Vname(1,idTsur(itemp))),   &
@@ -2148,108 +2024,6 @@
         END IF
 #  endif
 # endif
-# ifdef NEARSHORE_MELLOR
-        IF (.not.got_var(idW2xx).and.Sout(idW2xx,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idW2xx)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-        IF (.not.got_var(idW2xy).and.Sout(idW2xy,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idW2xy)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-        IF (.not.got_var(idW2yy).and.Sout(idW2yy,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idW2yy)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-        IF (.not.got_var(idU2rs).and.Sout(idU2rs,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idU2rs)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-        IF (.not.got_var(idV2rs).and.Sout(idV2rs,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idV2rs)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-        IF (.not.got_var(idU2Sd).and.Sout(idU2Sd,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idU2Sd)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-        IF (.not.got_var(idV2Sd).and.Sout(idV2Sd,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idV2Sd)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-#  ifdef SOLVE3D
-        IF (.not.got_var(idW3xx).and.Sout(idW3xx,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idW3xx)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-        IF (.not.got_var(idW3xy).and.Sout(idW3xy,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idW3xy)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-        IF (.not.got_var(idW3yy).and.Sout(idW3yy,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idW3yy)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-#   ifdef NEARSHORE_MELLOR05
-        IF (.not.got_var(idW3zx).and.Sout(idW3zx,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idW3zx)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-        IF (.not.got_var(idW3zy).and.Sout(idW3zy,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idW3zy)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-#   endif
-        IF (.not.got_var(idU3Sd).and.Sout(idU3rs,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idU3rs)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-        IF (.not.got_var(idV3rs).and.Sout(idV3rs,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idV3rs)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-        IF (.not.got_var(idU3Sd).and.Sout(idU3Sd,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idU3Sd)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-        IF (.not.got_var(idV3Sd).and.Sout(idV3Sd,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idV3Sd)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-#  endif
-# endif
 # ifdef WAVES_HEIGHT
         IF (.not.got_var(idWamp).and.Sout(idWamp,ng)) THEN
           IF (Master) WRITE (stdout,60) TRIM(Vname(1,idWamp)),          &
@@ -2266,9 +2040,39 @@
           RETURN
         END IF
 # endif
+# ifdef WAVES_LENGTHP
+        IF (.not.got_var(idWlep).and.Sout(idWlep,ng)) THEN
+          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idWlep)),          &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+# endif
 # ifdef WAVES_DIR
         IF (.not.got_var(idWdir).and.Sout(idWdir,ng)) THEN
           IF (Master) WRITE (stdout,60) TRIM(Vname(1,idWdir)),          &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+# endif
+# ifdef WAVES_DIRP
+        IF (.not.got_var(idWdip).and.Sout(idWdip,ng)) THEN
+          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idWdip)),          &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+# endif
+# ifdef WAVES_DSPR
+        IF (.not.got_var(idWvds).and.Sout(idWvds,ng)) THEN
+          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idWvds)),          &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idWvqp).and.Sout(idWvqp,ng)) THEN
+          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idWvqp)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
@@ -2298,9 +2102,21 @@
           RETURN
         END IF
 # endif
-# if defined TKE_WAVEDISS || defined WAV_COUPLING
-        IF (.not.got_var(idWdis).and.Sout(idWdis,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idWdis)),          &
+# ifdef WET_DRY
+        IF (.not.got_var(idRwet).and.Sout(idRwet,ng)) THEN
+          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idRwet)),          &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idUwet).and.Sout(idUwet,ng)) THEN
+          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idUwet)),          &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idVwet).and.Sout(idVwet,ng)) THEN
+          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idVwet)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
@@ -2350,6 +2166,14 @@
         END DO
 #  endif
 # endif
+# if defined WEC || defined WEC_VF
+!
+!  Scan Waves Effect on Currents variables from input NetCDF and
+!  activate switches for station variables. Get variable IDs.
+!
+        CALL wec_def_station_nf90 (ng, model, ldef, Sout, STA)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+# endif
 !
 !  Set unlimited time record dimension to the appropriate value.
 !
@@ -2375,14 +2199,14 @@
 # if defined PIO_LIB && defined DISTRIBUTE
 !
 !***********************************************************************
-      SUBROUTINE def_station_pio (ng, ldef)
+      SUBROUTINE def_station_pio (ng, model, ldef)
 !***********************************************************************
 !
       USE mod_pio_netcdf
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng
+      integer, intent(in) :: ng, model
 
       logical, intent(in) :: ldef
 !
@@ -2397,11 +2221,11 @@
 
       integer :: DimIDs(nDimID), pgrd(2)
 
-# ifdef SOLVE3D
+#  ifdef SOLVE3D
       integer :: itrc
 
       integer :: bgrd(3), rgrd(3), wgrd(3)
-# endif
+#  endif
 !
       real(r8) :: Aval(6)
 !
@@ -2433,7 +2257,7 @@
 !=======================================================================
 !
       DEFINE : IF (ldef) THEN
-        CALL pio_netcdf_create (ng, iNLM, TRIM(ncname), STA(ng)%pioFile)
+        CALL pio_netcdf_create (ng, model, TRIM(ncname), STA(ng)%pioFile)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) THEN
           IF (Master) WRITE (stdout,30) TRIM(ncname)
           RETURN
@@ -2445,67 +2269,67 @@
 !
         DimIDs=0
 !
-# ifdef SOLVE3D
-        status=def_dim(ng, iNLM, STA(ng)%pioFile, ncname, 's_rho',      &
+#  ifdef SOLVE3D
+        status=def_dim(ng, model, STA(ng)%pioFile, ncname, 's_rho',     &
      &                 N(ng), DimIDs( 9))
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
-        status=def_dim(ng, iNLM, STA(ng)%pioFile, ncname, 's_w',        &
+        status=def_dim(ng, model, STA(ng)%pioFile, ncname, 's_w',       &
      &                 N(ng)+1, DimIDs(10))
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
-        status=def_dim(ng, iNLM, STA(ng)%pioFile, ncname, 'tracer',     &
+        status=def_dim(ng, model, STA(ng)%pioFile, ncname, 'tracer',    &
      &                 NT(ng), DimIDs(11))
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
-#  ifdef SEDIMENT
-        status=def_dim(ng, iNLM, STA(ng)%pioFile, ncname, 'NST',        &
+#   ifdef SEDIMENT
+        status=def_dim(ng, model, STA(ng)%pioFile, ncname, 'NST',       &
      &                 NST, DimIDs(32))
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
-        status=def_dim(ng, iNLM, STA(ng)%pioFile, ncname, 'Nbed',       &
+        status=def_dim(ng, model, STA(ng)%pioFile, ncname, 'Nbed',      &
      &                 Nbed, DimIDs(16))
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-#  endif
+#   endif
 
-#  ifdef ECOSIM
-        status=def_dim(ng, iNLM, STA(ng)%pioFile, ncname, 'Nbands',     &
+#   ifdef ECOSIM
+        status=def_dim(ng, model, STA(ng)%pioFile, ncname, 'Nbands',    &
      &                 NBands, DimIDs(33))
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
-        status=def_dim(ng, iNLM, STA(ng)%pioFile, ncname, 'Nphy',       &
+        status=def_dim(ng, model, STA(ng)%pioFile, ncname, 'Nphy',      &
      &                 Nphy, DimIDs(25))
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
-        status=def_dim(ng, iNLM, STA(ng)%pioFile, ncname, 'Nbac',       &
+        status=def_dim(ng, model, STA(ng)%pioFile, ncname, 'Nbac',      &
      &                 Nbac, DimIDs(26))
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
-        status=def_dim(ng, iNLM, STA(ng)%pioFile, ncname, 'Ndom',       &
+        status=def_dim(ng, model, STA(ng)%pioFile, ncname, 'Ndom',      &
      &                 Ndom, DimIDs(27))
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
-        status=def_dim(ng, iNLM, STA(ng)%pioFile, ncname, 'Nfec',       &
+        status=def_dim(ng, model, STA(ng)%pioFile, ncname, 'Nfec',      &
      &                 Nfec, DimIDs(28))
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+#   endif
 #  endif
-# endif
 
-        status=def_dim(ng, iNLM, STA(ng)%pioFile, ncname, 'station' ,   &
+        status=def_dim(ng, model, STA(ng)%pioFile, ncname, 'station' ,  &
      &                 Nstation(ng), DimIDs(13))
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
-        status=def_dim(ng, iNLM, STA(ng)%pioFile, ncname, 'boundary',   &
+        status=def_dim(ng, model, STA(ng)%pioFile, ncname, 'boundary',  &
      &                 4, DimIDs(14))
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
-# ifdef FOUR_DVAR
-        status=def_dim(ng, iNLM, STA(ng)%pioFile, ncname, 'Nstate',     &
+#  ifdef FOUR_DVAR
+        status=def_dim(ng, model, STA(ng)%pioFile, ncname, 'Nstate',    &
      &                 NstateVar(ng), DimIDs(29))
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-# endif
+#  endif
 
-        status=def_dim(ng, iNLM, STA(ng)%pioFile, ncname,               &
+        status=def_dim(ng, model, STA(ng)%pioFile, ncname,              &
      &                 TRIM(ADJUSTL(Vname(5,idtime))),                  &
      &                 PIO_unlimited, DimIDs(12))
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
@@ -2517,7 +2341,7 @@
 !
         pgrd(1)=DimIDs(13)
         pgrd(2)=DimIDs(12)
-# ifdef SOLVE3D
+#  ifdef SOLVE3D
 !
 !  Define dimension vector for cast variables at vertical RHO-points.
 !
@@ -2536,7 +2360,7 @@
         bgrd(1)=DimIDs(16)
         bgrd(2)=DimIDs(13)
         bgrd(3)=DimIDs(12)
-# endif
+#  endif
 !
 !  Initialize unlimited time record dimension.
 !
@@ -2557,7 +2381,7 @@
 !  Define time-recordless information variables.
 !-----------------------------------------------------------------------
 !
-        CALL def_info (ng, iNLM, STA(ng)%pioFile, ncname, DimIDs)
+        CALL def_info (ng, model, STA(ng)%pioFile, ncname, DimIDs)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !-----------------------------------------------------------------------
@@ -2574,7 +2398,7 @@
         STA(ng)%pioVar(idtime)%dkind=PIO_TOUT
         STA(ng)%pioVar(idtime)%gtype=0
 !
-        status=def_var(ng, iNLM, STA(ng)%pioFile,                       &
+        status=def_var(ng, model, STA(ng)%pioFile,                      &
      &                 STA(ng)%pioVar(idtime)%vd,                       &
      &                 PIO_TOUT, 1, (/recdim/), Aval, Vinfo, ncname,    &
      &                 SetParAccess = .TRUE.)
@@ -2591,19 +2415,19 @@
           STA(ng)%pioVar(idFsur)%dkind=PIO_FOUT
           STA(ng)%pioVar(idFsur)%gtype=0
 !
-          status=def_var(ng, iNLM, STA(ng)%pioFile,                     &
+          status=def_var(ng, model, STA(ng)%pioFile,                    &
      &                   STA(ng)%pioVar(idFsur)%vd,                     &
      &                   PIO_FOUT, 2, pgrd, Aval, Vinfo, ncname,        &
-# ifdef WET_DRY
+#  ifdef WET_DRY
      &                   SetFillVal = .FALSE.,                          &
-# else
+#  else
      &                   SetFillVal = .TRUE.,                           &
-# endif
+#  endif
      &                   SetParAccess = .TRUE.)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 
-# if defined SEDIMENT && defined SED_MORPH
+#  if defined SEDIMENT && defined SED_MORPH
 !
 !  Define time-varying bathymetry.
 !
@@ -2616,14 +2440,14 @@
           STA(ng)%pioVar(idbath)%dkind=PIO_FOUT
           STA(ng)%pioVar(idbath)%gtype=0
 !
-          status=def_var(ng, iNLM, STA(ng)%pioFile,                     &
+          status=def_var(ng, model, STA(ng)%pioFile,                    &
      &                   STA(ng)%pioVar(idbath)%vd,                     &
      &                   PIO_FOUT, 2, pgrd, Aval, Vinfo, ncname,        &
      &                   SetFillVal = .FALSE.,                          &
      &                   SetParAccess = .TRUE.)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
-# endif
+#  endif
 !
 !  Define 2D momentum in the XI-direction.
 !
@@ -2636,7 +2460,7 @@
           STA(ng)%pioVar(idUbar)%dkind=PIO_FOUT
           STA(ng)%pioVar(idUbar)%gtype=0
 !
-          status=def_var(ng, iNLM, STA(ng)%pioFile,                     &
+          status=def_var(ng, model, STA(ng)%pioFile,                    &
      &                   STA(ng)%pioVar(idUbar)%vd,                     &
      &                   PIO_FOUT, 2, pgrd, Aval, Vinfo, ncname,        &
      &                   SetFillVal = .TRUE.,                           &
@@ -2655,7 +2479,7 @@
           STA(ng)%pioVar(idVbar)%dkind=PIO_FOUT
           STA(ng)%pioVar(idVbar)%gtype=0
 !
-          status=def_var(ng, iNLM, STA(ng)%pioFile,                     &
+          status=def_var(ng, model, STA(ng)%pioFile,                    &
      &                   STA(ng)%pioVar(idVbar)%vd,                     &
      &                   PIO_FOUT, 2, pgrd, Aval, Vinfo, ncname,        &
      &                   SetFillVal = .TRUE.,                           &
@@ -2674,7 +2498,7 @@
           STA(ng)%pioVar(idu2dE)%dkind=PIO_FOUT
           STA(ng)%pioVar(idu2dE)%gtype=0
 !
-          status=def_var(ng, iNLM, STA(ng)%pioFile,                     &
+          status=def_var(ng, model, STA(ng)%pioFile,                    &
      &                   STA(ng)%pioVar(idu2dE)%vd,                     &
      &                   PIO_FOUT, 2, pgrd, Aval, Vinfo, ncname,        &
      &                   SetFillVal = .TRUE.,                           &
@@ -2693,7 +2517,7 @@
           STA(ng)%pioVar(idv2dN)%dkind=PIO_FOUT
           STA(ng)%pioVar(idv2dN)%gtype=0
 !
-          status=def_var(ng, iNLM, STA(ng)%pioFile,                     &
+          status=def_var(ng, model, STA(ng)%pioFile,                    &
      &                   STA(ng)%pioVar(idv2dN)%vd,                     &
      &                   PIO_FOUT, 2, pgrd, Aval, Vinfo, ncname,        &
      &                   SetFillVal = .TRUE.,                           &
@@ -2701,7 +2525,7 @@
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 
-# ifdef SOLVE3D
+#  ifdef SOLVE3D
 !
 !  Define 3D momentum component in the XI-direction.
 !
@@ -2714,7 +2538,7 @@
           STA(ng)%pioVar(idUvel)%dkind=PIO_FOUT
           STA(ng)%pioVar(idUvel)%gtype=0
 !
-          status=def_var(ng, iNLM, STA(ng)%pioFile,                     &
+          status=def_var(ng, model, STA(ng)%pioFile,                    &
      &                   STA(ng)%pioVar(idUvel)%vd,                     &
      &                   PIO_FOUT, 3, rgrd, Aval, Vinfo, ncname,        &
      &                   SetFillVal = .TRUE.,                           &
@@ -2733,7 +2557,7 @@
           STA(ng)%pioVar(idVvel)%dkind=PIO_FOUT
           STA(ng)%pioVar(idVvel)%gtype=0
 !
-          status=def_var(ng, iNLM, STA(ng)%pioFile,                     &
+          status=def_var(ng, model, STA(ng)%pioFile,                    &
      &                   STA(ng)%pioVar(idVvel)%vd,                     &
      &                   PIO_FOUT, 3, rgrd, Aval, Vinfo, ncname,        &
      &                   SetFillVal = .TRUE.,                           &
@@ -2752,7 +2576,7 @@
           STA(ng)%pioVar(idu3dE)%dkind=PIO_FOUT
           STA(ng)%pioVar(idu3dE)%gtype=0
 !
-          status=def_var(ng, iNLM, STA(ng)%pioFile,                     &
+          status=def_var(ng, model, STA(ng)%pioFile,                    &
      &                   STA(ng)%pioVar(idu3dE)%vd,                     &
      &                   PIO_FOUT, 3, rgrd, Aval, Vinfo, ncname,        &
      &                   SetFillVal = .TRUE.,                           &
@@ -2771,7 +2595,7 @@
           STA(ng)%pioVar(idv3dN)%dkind=PIO_FOUT
           STA(ng)%pioVar(idv3dN)%gtype=0
 !
-          status=def_var(ng, iNLM, STA(ng)%pioFile,                     &
+          status=def_var(ng, model, STA(ng)%pioFile,                    &
      &                   STA(ng)%pioVar(idv3dN)%vd,                     &
      &                   PIO_FOUT, 3, rgrd, Aval, Vinfo, ncname,        &
      &                   SetFillVal = .TRUE.,                           &
@@ -2790,7 +2614,7 @@
           STA(ng)%pioVar(idWvel)%dkind=PIO_FOUT
           STA(ng)%pioVar(idWvel)%gtype=0
 !
-          status=def_var(ng, iNLM, STA(ng)%pioFile,                     &
+          status=def_var(ng, model, STA(ng)%pioFile,                    &
      &                   STA(ng)%pioVar(idWvel)%vd,                     &
      &                   PIO_FOUT, 3, wgrd, Aval, Vinfo, ncname,        &
      &                   SetFillVal = .TRUE.,                           &
@@ -2809,7 +2633,7 @@
           STA(ng)%pioVar(idOvel)%dkind=PIO_FOUT
           STA(ng)%pioVar(idOvel)%gtype=0
 !
-          status=def_var(ng, iNLM, STA(ng)%pioFile,                     &
+          status=def_var(ng, model, STA(ng)%pioFile,                    &
      &                   STA(ng)%pioVar(idOvel)%vd,                     &
      &                   PIO_FOUT, 3, wgrd, Aval, Vinfo, ncname,        &
      &                   SetFillVal = .TRUE.,                           &
@@ -2829,15 +2653,15 @@
             STA(ng)%pioTrc(itrc)%dkind=PIO_FOUT
             STA(ng)%pioTrc(itrc)%gtype=0
 
-#  ifdef SEDIMENT
+#   ifdef SEDIMENT
             DO i=1,NST
               IF (itrc.eq.idsed(i)) THEN
                 WRITE (Vinfo(19),40) 1000.0_r8*Sd50(i,ng)
               END IF
             END DO
-#  endif
+#   endif
 !
-            status=def_var(ng, iNLM, STA(ng)%pioFile,                   &
+            status=def_var(ng, model, STA(ng)%pioFile,                  &
      &                     STA(ng)%pioTrc(itrc)%vd,                     &
      &                     PIO_FOUT, 3, rgrd, Aval, Vinfo, ncname,      &
      &                     SetFillVal = .TRUE.,                         &
@@ -2857,7 +2681,7 @@
           STA(ng)%pioVar(idDano)%dkind=PIO_FOUT
           STA(ng)%pioVar(idDano)%gtype=0
 !
-          status=def_var(ng, iNLM, STA(ng)%pioFile,                     &
+          status=def_var(ng, model, STA(ng)%pioFile,                    &
      &                   STA(ng)%pioVar(idDano)%vd,                     &
      &                   PIO_FOUT, 3, rgrd, Aval, Vinfo, ncname,        &
      &                   SetFillVal = .TRUE.,                           &
@@ -2865,7 +2689,7 @@
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 
-#  ifdef LMD_SKPP
+#   ifdef LMD_SKPP
 !
 !  Define depth of surface boundary layer.
 !
@@ -2878,15 +2702,15 @@
           STA(ng)%pioVar(idHsbl)%dkind=PIO_FOUT
           STA(ng)%pioVar(idHsbl)%gtype=0
 !
-          status=def_var(ng, iNLM, STA(ng)%pioFile,                     &
+          status=def_var(ng, model, STA(ng)%pioFile,                    &
      &                   STA(ng)%pioVar(idHsbl)%vd,                     &
      &                   PIO_FOUT, 2, pgrd, Aval, Vinfo, ncname,        &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
-#  endif
-#  ifdef LMD_BKPP
+#   endif
+#   ifdef LMD_BKPP
 !
 !  Define depth of bottom boundary layer.
 !
@@ -2899,14 +2723,14 @@
           STA(ng)%pioVar(idHbbl)%dkind=PIO_FOUT
           STA(ng)%pioVar(idHbbl)%gtype=0
 !
-          status=def_var(ng, iNLM, STA(ng)%pioFile,                     &
+          status=def_var(ng, model, STA(ng)%pioFile,                    &
      &                   STA(ng)%pioVar(idHbbl)%vd,                     &
      &                   PIO_FOUT, 2, pgrd, Aval, Vinfo, ncname,        &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
-#  endif
+#   endif
 !
 !  Define vertical viscosity coefficient.
 !
@@ -2919,7 +2743,7 @@
           STA(ng)%pioVar(idVvis)%dkind=PIO_FOUT
           STA(ng)%pioVar(idVvis)%gtype=0
 !
-          status=def_var(ng, iNLM, STA(ng)%pioFile,                     &
+          status=def_var(ng, model, STA(ng)%pioFile,                    &
      &                   STA(ng)%pioVar(idVvis)%vd,                     &
      &                   PIO_FOUT, 3, wgrd, Aval, Vinfo, ncname,        &
      &                   SetFillVal = .TRUE.,                           &
@@ -2938,7 +2762,7 @@
           STA(ng)%pioVar(idTdif)%dkind=PIO_FOUT
           STA(ng)%pioVar(idTdif)%gtype=0
 !
-          status=def_var(ng, iNLM, STA(ng)%pioFile,                     &
+          status=def_var(ng, model, STA(ng)%pioFile,                    &
      &                   STA(ng)%pioVar(idTdif)%vd,                     &
      &                   PIO_FOUT, 3, wgrd, Aval, Vinfo, ncname,        &
      &                   SetFillVal = .TRUE.,                           &
@@ -2946,7 +2770,7 @@
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 
-#  ifdef SALINITY
+#   ifdef SALINITY
 !
 !  Define vertical diffusion coefficient for salinity.
 !
@@ -2959,15 +2783,15 @@
           STA(ng)%pioVar(idSdif)%dkind=PIO_FOUT
           STA(ng)%pioVar(idSdif)%gtype=0
 !
-          status=def_var(ng, iNLM, STA(ng)%pioFile,                     &
+          status=def_var(ng, model, STA(ng)%pioFile,                    &
      &                   STA(ng)%pioVar(idSdif)%vd,                     &
      &                   PIO_FOUT, 3, wgrd, Aval, Vinfo, ncname,        &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
-#  endif
-#  if defined GLS_MIXING || defined MY25_MIXING
+#   endif
+#   if defined GLS_MIXING || defined MY25_MIXING
 !
 !  Define turbulent kinetic energy.
 !
@@ -2980,7 +2804,7 @@
           STA(ng)%pioVar(idMtke)%dkind=PIO_FOUT
           STA(ng)%pioVar(idMtke)%gtype=0
 !
-          status=def_var(ng, iNLM, STA(ng)%pioFile,                     &
+          status=def_var(ng, model, STA(ng)%pioFile,                    &
      &                   STA(ng)%pioVar(idMtke)%vd,                     &
      &                   PIO_FOUT, 3, wgrd, Aval, Vinfo, ncname,        &
      &                   SetFillVal = .TRUE.,                           &
@@ -2999,15 +2823,15 @@
           STA(ng)%pioVar(idMtls)%dkind=PIO_FOUT
           STA(ng)%pioVar(idMtls)%gtype=0
 !
-          status=def_var(ng, iNLM, STA(ng)%pioFile,                     &
+          status=def_var(ng, model, STA(ng)%pioFile,                    &
      &                   STA(ng)%pioVar(idMtls)%vd,                     &
      &                   PIO_FOUT, 3, wgrd, Aval, Vinfo, ncname,        &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
-#  endif
-#  if defined BULK_FLUXES || defined ECOSIM || defined ATM_PRESS
+#   endif
+#   if defined BULK_FLUXES || defined ECOSIM || defined ATM_PRESS
 !
 !  Define surface air pressure.
 !
@@ -3020,15 +2844,15 @@
           STA(ng)%pioVar(idPair)%dkind=PIO_FOUT
           STA(ng)%pioVar(idPair)%gtype=0
 !
-          status=def_var(ng, iNLM, STA(ng)%pioFile,                     &
+          status=def_var(ng, model, STA(ng)%pioFile,                    &
      &                   STA(ng)%pioVar(idPair)%vd,                     &
      &                   PIO_FOUT, 2, pgrd, Aval, Vinfo, ncname,        &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
-#  endif
-#  if defined BULK_FLUXES || defined ECOSIM
+#   endif
+#   if defined BULK_FLUXES || defined ECOSIM
 !
 !  Define surface winds.
 !
@@ -3041,7 +2865,7 @@
           STA(ng)%pioVar(idUair)%dkind=PIO_FOUT
           STA(ng)%pioVar(idUair)%gtype=0
 !
-          status=def_var(ng, iNLM, STA(ng)%pioFile,                     &
+          status=def_var(ng, model, STA(ng)%pioFile,                    &
      &                   STA(ng)%pioVar(idUair)%vd,                     &
      &                   PIO_FOUT, 2, pgrd, Aval, Vinfo, ncname,        &
      &                   SetFillVal = .TRUE.,                           &
@@ -3058,14 +2882,14 @@
           STA(ng)%pioVar(idVair)%dkind=PIO_FOUT
           STA(ng)%pioVar(idVair)%gtype=0
 !
-          status=def_var(ng, iNLM, STA(ng)%pioFile,                     &
+          status=def_var(ng, model, STA(ng)%pioFile,                    &
      &                   STA(ng)%pioVar(idVair)%vd,                     &
      &                   PIO_FOUT, 2, pgrd, Aval, Vinfo, ncname,        &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
-#  endif
+#   endif
 !
 !  Define surface net heat flux.
 !
@@ -3080,7 +2904,7 @@
           STA(ng)%pioVar(idTsur(itemp))%dkind=PIO_FOUT
           STA(ng)%pioVar(idTsur(itemp))%gtype=0
 !
-          status=def_var(ng, iNLM, STA(ng)%pioFile,                     &
+          status=def_var(ng, model, STA(ng)%pioFile,                    &
      &                   STA(ng)%pioVar(idTsur(itemp))%vd,              &
      &                   PIO_FOUT, 2, pgrd, Aval, Vinfo, ncname,        &
      &                   SetFillVal = .TRUE.,                           &
@@ -3088,7 +2912,7 @@
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 
-#  ifdef SALINITY
+#   ifdef SALINITY
 !
 !  Define surface net salt flux.
 !
@@ -3103,16 +2927,16 @@
           STA(ng)%pioVar(idTsur(isalt))%dkind=PIO_FOUT
           STA(ng)%pioVar(idTsur(isalt))%gtype=0
 !
-          status=def_var(ng, iNLM, STA(ng)%pioFile,                     &
+          status=def_var(ng, model, STA(ng)%pioFile,                    &
      &                   STA(ng)%pioVar(idTsur(isalt))%vd,              &
      &                   PIO_FOUT, 2, pgrd, Aval, Vinfo, ncname,        &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
-#  endif
+#   endif
 
-#  ifdef BULK_FLUXES
+#   ifdef BULK_FLUXES
 !
 !  Define latent heat flux.
 !
@@ -3127,7 +2951,7 @@
           STA(ng)%pioVar(idLhea)%dkind=PIO_FOUT
           STA(ng)%pioVar(idLhea)%gtype=0
 !
-          status=def_var(ng, iNLM, STA(ng)%pioFile,                     &
+          status=def_var(ng, model, STA(ng)%pioFile,                    &
      &                   STA(ng)%pioVar(idLhea)%vd,                     &
      &                   PIO_FOUT, 2, pgrd, Aval, Vinfo, ncname,        &
      &                   SetFillVal = .TRUE.,                           &
@@ -3148,7 +2972,7 @@
           STA(ng)%pioVar(idShea)%dkind=PIO_FOUT
           STA(ng)%pioVar(idShea)%gtype=0
 !
-          status=def_var(ng, iNLM, STA(ng)%pioFile,                     &
+          status=def_var(ng, model, STA(ng)%pioFile,                    &
      &                   STA(ng)%pioVar(idShea)%vd,                     &
      &                   PIO_FOUT, 2, pgrd, Aval, Vinfo, ncname,        &
      &                   SetFillVal = .TRUE.,                           &
@@ -3169,15 +2993,15 @@
           STA(ng)%pioVar(idLrad)%dkind=PIO_FOUT
           STA(ng)%pioVar(idLrad)%gtype=0
 !
-          status=def_var(ng, iNLM, STA(ng)%pioFile,                     &
+          status=def_var(ng, model, STA(ng)%pioFile,                    &
      &                   STA(ng)%pioVar(idLrad)%vd,                     &
      &                   PIO_FOUT, 2, pgrd, Aval, Vinfo, ncname,        &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
-#  endif
-#  ifdef SHORTWAVE
+#   endif
+#   ifdef SHORTWAVE
 !
 !  Define shortwave radiation flux.
 !
@@ -3192,14 +3016,14 @@
           STA(ng)%pioVar(idSrad)%dkind=PIO_FOUT
           STA(ng)%pioVar(idSrad)%gtype=0
 !
-          status=def_var(ng, iNLM, STA(ng)%pioFile,                     &
+          status=def_var(ng, model, STA(ng)%pioFile,                    &
      &                   STA(ng)%pioVar(idSrad)%vd,                     &
      &                   PIO_FOUT, 2, pgrd, Aval, Vinfo, ncname,        &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
-#  endif
+#   endif
 !
 !  Define E-P flux (as computed by bulk_flux.F).
 !
@@ -3214,14 +3038,14 @@
           STA(ng)%pioVar(idEmPf)%dkind=PIO_FOUT
           STA(ng)%pioVar(idEmPf)%gtype=0
 !
-          status=def_var(ng, iNLM, STA(ng)%pioFile,                     &
+          status=def_var(ng, model, STA(ng)%pioFile,                    &
      &                   STA(ng)%pioVar(idEmPf)%vd,                     &
      &                   PIO_FOUT, 2, pgrd, Aval, Vinfo, ncname,        &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
-#  if defined EMINUSP && defined BULK_FLUXES
+#   if defined EMINUSP && defined BULK_FLUXES
 !
 !  Define evaporation rate.
 !
@@ -3236,7 +3060,7 @@
           STA(ng)%pioVar(idevap)%dkind=PIO_FOUT
           STA(ng)%pioVar(idevap)%gtype=0
 !
-          status=def_var(ng, iNLM, STA(ng)%pioFile,                     &
+          status=def_var(ng, model, STA(ng)%pioFile,                    &
      &                   STA(ng)%pioVar(idevap)%vd,                     &
      &                   PIO_FOUT, 2, pgrd, Aval, Vinfo, ncname,        &
      &                   SetFillVal = .TRUE.,                           &
@@ -3257,15 +3081,15 @@
           STA(ng)%pioVar(idrain)%dkind=PIO_FOUT
           STA(ng)%pioVar(idrain)%gtype=0
 !
-          status=def_var(ng, iNLM, STA(ng)%pioFile,                     &
+          status=def_var(ng, model, STA(ng)%pioFile,                    &
      &                   STA(ng)%pioVar(idrain)%vd,                     &
      &                   PIO_FOUT, 2, pgrd, Aval, Vinfo, ncname,        &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
+#   endif
 #  endif
-# endif
 !
 !  Define surface U-momentum stress.
 !
@@ -3278,7 +3102,7 @@
           STA(ng)%pioVar(idUsms)%dkind=PIO_FOUT
           STA(ng)%pioVar(idUsms)%gtype=0
 !
-          status=def_var(ng, iNLM, STA(ng)%pioFile,                     &
+          status=def_var(ng, model, STA(ng)%pioFile,                    &
      &                   STA(ng)%pioVar(idUsms)%vd,                     &
      &                   PIO_FOUT, 2, pgrd, Aval, Vinfo, ncname,        &
      &                   SetFillVal = .TRUE.,                           &
@@ -3297,7 +3121,7 @@
           STA(ng)%pioVar(idVsms)%dkind=PIO_FOUT
           STA(ng)%pioVar(idVsms)%gtype=0
 !
-          status=def_var(ng, iNLM, STA(ng)%pioFile,                     &
+          status=def_var(ng, model, STA(ng)%pioFile,                    &
      &                   STA(ng)%pioVar(idVsms)%vd,                     &
      &                   PIO_FOUT, 2, pgrd, Aval, Vinfo, ncname,        &
      &                   SetFillVal = .TRUE.,                           &
@@ -3316,7 +3140,7 @@
           STA(ng)%pioVar(idUbms)%dkind=PIO_FOUT
           STA(ng)%pioVar(idUbms)%gtype=0
 !
-          status=def_var(ng, iNLM, STA(ng)%pioFile,                     &
+          status=def_var(ng, model, STA(ng)%pioFile,                    &
      &                   STA(ng)%pioVar(idUbms)%vd,                     &
      &                   PIO_FOUT, 2, pgrd, Aval, Vinfo, ncname,        &
      &                   SetFillVal = .TRUE.,                           &
@@ -3335,7 +3159,7 @@
           STA(ng)%pioVar(idVbms)%dkind=PIO_FOUT
           STA(ng)%pioVar(idVbms)%gtype=0
 !
-          status=def_var(ng, iNLM, STA(ng)%pioFile,                     &
+          status=def_var(ng, model, STA(ng)%pioFile,                    &
      &                   STA(ng)%pioVar(idVbms)%vd,                     &
      &                   PIO_FOUT, 2, pgrd, Aval, Vinfo, ncname,        &
      &                   SetFillVal = .TRUE.,                           &
@@ -3343,8 +3167,8 @@
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 
-# ifdef SOLVE3D
-#  ifdef BBL_MODEL
+#  ifdef SOLVE3D
+#   ifdef BBL_MODEL
 !
 !  Define bottom U-current stress.
 !
@@ -3357,7 +3181,7 @@
           STA(ng)%pioVar(idUbrs)%dkind=PIO_FOUT
           STA(ng)%pioVar(idUbrs)%gtype=0
 !
-          status=def_var(ng, iNLM, STA(ng)%pioFile,                     &
+          status=def_var(ng, model, STA(ng)%pioFile,                    &
      &                   STA(ng)%pioVar(idUbrs)%vd,                     &
      &                   PIO_FOUT, 2, pgrd, Aval, Vinfo, ncname,        &
      &                   SetFillVal = .TRUE.,                           &
@@ -3376,7 +3200,7 @@
           STA(ng)%pioVar(idVbrs)%dkind=PIO_FOUT
           STA(ng)%pioVar(idVbrs)%gtype=0
 !
-          status=def_var(ng, iNLM, STA(ng)%pioFile,                     &
+          status=def_var(ng, model, STA(ng)%pioFile,                    &
      &                   STA(ng)%pioVar(idVbrs)%vd,                     &
      &                   PIO_FOUT, 2, pgrd, Aval, Vinfo, ncname,        &
      &                   SetFillVal = .TRUE.,                           &
@@ -3395,7 +3219,7 @@
           STA(ng)%pioVar(idUbws)%dkind=PIO_FOUT
           STA(ng)%pioVar(idUbws)%gtype=0
 !
-          status=def_var(ng, iNLM, STA(ng)%pioFile,                     &
+          status=def_var(ng, model, STA(ng)%pioFile,                    &
      &                   STA(ng)%pioVar(idUbws)%vd,                     &
      &                   PIO_FOUT, 2, pgrd, Aval, Vinfo, ncname,        &
      &                   SetFillVal = .TRUE.,                           &
@@ -3414,7 +3238,7 @@
           STA(ng)%pioVar(idVbws)%dkind=PIO_FOUT
           STA(ng)%pioVar(idVbws)%gtype=0
 !
-          status=def_var(ng, iNLM, STA(ng)%pioFile,                     &
+          status=def_var(ng, model, STA(ng)%pioFile,                    &
      &                   STA(ng)%pioVar(idVbws)%vd,                     &
      &                   PIO_FOUT, 2, pgrd, Aval, Vinfo, ncname,        &
      &                   SetFillVal = .TRUE.,                           &
@@ -3433,7 +3257,7 @@
           STA(ng)%pioVar(idUbcs)%dkind=PIO_FOUT
           STA(ng)%pioVar(idUbcs)%gtype=0
 !
-          status=def_var(ng, iNLM, STA(ng)%pioFile,                     &
+          status=def_var(ng, model, STA(ng)%pioFile,                    &
      &                   STA(ng)%pioVar(idUbcs)%vd,                     &
      &                   PIO_FOUT, 2, pgrd, Aval, Vinfo, ncname,        &
      &                   SetFillVal = .TRUE.,                           &
@@ -3452,7 +3276,7 @@
           STA(ng)%pioVar(idVbcs)%dkind=PIO_FOUT
           STA(ng)%pioVar(idVbcs)%gtype=0
 !
-          status=def_var(ng, iNLM, STA(ng)%pioFile,                     &
+          status=def_var(ng, model, STA(ng)%pioFile,                    &
      &                   STA(ng)%pioVar(idVbcs)%vd,                     &
      &                   PIO_FOUT, 2, pgrd, Aval, Vinfo, ncname,        &
      &                   SetFillVal = .TRUE.,                           &
@@ -3471,7 +3295,7 @@
           STA(ng)%pioVar(idUbot)%dkind=PIO_FOUT
           STA(ng)%pioVar(idUbot)%gtype=0
 !
-          status=def_var(ng, iNLM, STA(ng)%pioFile,                     &
+          status=def_var(ng, model, STA(ng)%pioFile,                    &
      &                   STA(ng)%pioVar(idUbot)%vd,                     &
      &                   PIO_FOUT, 2, pgrd, Aval, Vinfo, ncname,        &
      &                   SetFillVal = .TRUE.,                           &
@@ -3490,7 +3314,7 @@
           STA(ng)%pioVar(idVbot)%dkind=PIO_FOUT
           STA(ng)%pioVar(idVbot)%gtype=0
 !
-          status=def_var(ng, iNLM, STA(ng)%pioFile,                     &
+          status=def_var(ng, model, STA(ng)%pioFile,                    &
      &                   STA(ng)%pioVar(idVbot)%vd,                     &
      &                   PIO_FOUT, 2, pgrd, Aval, Vinfo, ncname,        &
      &                   SetFillVal = .TRUE.,                           &
@@ -3509,7 +3333,7 @@
           STA(ng)%pioVar(idUbur)%dkind=PIO_FOUT
           STA(ng)%pioVar(idUbur)%gtype=0
 !
-          status=def_var(ng, iNLM, STA(ng)%pioFile,                     &
+          status=def_var(ng, model, STA(ng)%pioFile,                    &
      &                   STA(ng)%pioVar(idUbur)%vd,                     &
      &                   PIO_FOUT, 2, pgrd, Aval, Vinfo, ncname,        &
      &                   SetFillVal = .TRUE.,                           &
@@ -3528,15 +3352,15 @@
           STA(ng)%pioVar(idVbvr)%dkind=PIO_FOUT
           STA(ng)%pioVar(idVbvr)%gtype=0
 !
-          status=def_var(ng, iNLM, STA(ng)%pioFile,                     &
+          status=def_var(ng, model, STA(ng)%pioFile,                    &
      &                   STA(ng)%pioVar(idVbvr)%vd,                     &
      &                   PIO_FOUT, 2, pgrd, Aval, Vinfo, ncname,        &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
-#  endif
-#  ifdef SEDIMENT
+#   endif
+#   ifdef SEDIMENT
 !
 !  Define sediment fraction of each size class in each bed layer.
 !
@@ -3551,7 +3375,7 @@
             STA(ng)%pioVar(idfrac(i))%dkind=PIO_FOUT
             STA(ng)%pioVar(idfrac(i))%gtype=0
 !
-            status=def_var(ng, iNLM, STA(ng)%pioFile,                   &
+            status=def_var(ng, model, STA(ng)%pioFile,                  &
      &                     STA(ng)%pioVar(idfrac(i))%vd,                &
      &                     PIO_FOUT, 3, bgrd, Aval, Vinfo, ncname,      &
      &                     SetFillVal = .TRUE.,                         &
@@ -3571,7 +3395,7 @@
             STA(ng)%pioVar(idBmas(i))%dkind=PIO_FOUT
             STA(ng)%pioVar(idBmas(i))%gtype=0
 !
-            status=def_var(ng, iNLM, STA(ng)%pioFile,                   &
+            status=def_var(ng, model, STA(ng)%pioFile,                  &
      &                     STA(ng)%pioVar(idBmas(i))%vd,                &
      &                     PIO_FOUT, 3, bgrd, Aval, Vinfo, ncname,      &
      &                     SetFillVal = .TRUE.,                         &
@@ -3592,7 +3416,7 @@
             STA(ng)%pioVar(idSbed(i))%dkind=PIO_FOUT
             STA(ng)%pioVar(idSbed(i))%gtype=0
 !
-            status=def_var(ng, iNLM, STA(ng)%pioFile,                   &
+            status=def_var(ng, model, STA(ng)%pioFile,                  &
      &                     STA(ng)%pioVar(idSbed(i))%vd,                &
      &                     PIO_FOUT, 3, bgrd, Aval, Vinfo, ncname,      &
      &                     SetFillVal = .TRUE.,                         &
@@ -3600,8 +3424,8 @@
             IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
           END IF
         END DO
-#  endif
-#  if defined SEDIMENT || defined BBL_MODEL
+#   endif
+#   if defined SEDIMENT || defined BBL_MODEL
 !
 !  Define exposed sediment layer properties.
 !
@@ -3615,7 +3439,7 @@
             STA(ng)%pioVar(idBott(i))%dkind=PIO_FOUT
             STA(ng)%pioVar(idBott(i))%gtype=0
 !
-            status=def_var(ng, iNLM, STA(ng)%pioFile,                   &
+            status=def_var(ng, model, STA(ng)%pioFile,                  &
      &                     STA(ng)%pioVar(idBott(i))%vd,                &
      &                     PIO_FOUT, 2, pgrd, Aval, Vinfo, ncname,      &
      &                     SetFillVal = .TRUE.,                         &
@@ -3623,321 +3447,9 @@
             IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
           END IF
         END DO
-#  endif
-# endif
-# ifdef NEARSHORE_MELLOR
-!
-!  Define 2D radiation stress, Sxx-component.
-!
-        IF (Sout(idW2xx,ng)) THEN
-          Vinfo( 1)=Vname(1,idW2xx)
-          Vinfo( 2)=Vname(2,idW2xx)
-          Vinfo( 3)=Vname(3,idW2xx)
-          Vinfo(14)=Vname(4,idW2xx)
-          Vinfo(16)=Vname(1,idtime)
-          STA(ng)%pioVar(idW2xx)%dkind=PIO_FOUT
-          STA(ng)%pioVar(idW2xx)%gtype=0
-!
-          status=def_var(ng, iNLM, STA(ng)%pioFile,                     &
-     &                   STA(ng)%pioVar(idW2xx)%vd,                     &
-     &                   PIO_FOUT, 2, pgrd, Aval, Vinfo, ncname,        &
-     &                   SetFillVal = .TRUE.,                           &
-     &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-!
-!  Define 2D radiation stress, Sxy-component.
-!
-        IF (Sout(idW2xy,ng)) THEN
-          Vinfo( 1)=Vname(1,idW2xy)
-          Vinfo( 2)=Vname(2,idW2xy)
-          Vinfo( 3)=Vname(3,idW2xy)
-          Vinfo(14)=Vname(4,idW2xy)
-          Vinfo(16)=Vname(1,idtime)
-          STA(ng)%pioVar(idW2xy)%dkind=PIO_FOUT
-          STA(ng)%pioVar(idW2xy)%gtype=0
-!
-          status=def_var(ng, iNLM, STA(ng)%pioFile,                     &
-     &                   STA(ng)%pioVar(idW2xy)%vd,                     &
-     &                   PIO_FOUT, 2, pgrd, Aval, Vinfo, ncname,        &
-     &                   SetFillVal = .TRUE.,                           &
-     &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-!
-!  Define 2D radiation stress, Syy-component.
-!
-        IF (Sout(idW2yy,ng)) THEN
-          Vinfo( 1)=Vname(1,idW2yy)
-          Vinfo( 2)=Vname(2,idW2yy)
-          Vinfo( 3)=Vname(3,idW2yy)
-          Vinfo(14)=Vname(4,idW2yy)
-          Vinfo(16)=Vname(1,idtime)
-          STA(ng)%pioVar(idW2yy)%dkind=PIO_FOUT
-          STA(ng)%pioVar(idW2yy)%gtype=0
-!
-          status=def_var(ng, iNLM, STA(ng)%pioFile,                     &
-     &                   STA(ng)%pioVar(idW2yy)%vd,                     &
-     &                   PIO_FOUT, 2, pgrd, Aval, Vinfo, ncname,        &
-     &                   SetFillVal = .TRUE.,                           &
-     &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-!
-!  Define 2D total u-radiation stress.
-!
-        IF (Sout(idU2rs,ng)) THEN
-          Vinfo( 1)=Vname(1,idU2rs)
-          Vinfo( 2)=Vname(2,idU2rs)
-          Vinfo( 3)=Vname(3,idU2rs)
-          Vinfo(14)=Vname(4,idU2rs)
-          Vinfo(16)=Vname(1,idtime)
-          STA(ng)%pioVar(idU2rs)%dkind=PIO_FOUT
-          STA(ng)%pioVar(idU2rs)%gtype=0
-!
-          status=def_var(ng, iNLM, STA(ng)%pioFile,                     &
-     &                   STA(ng)%pioVar(idU2rs)%vd,                     &
-     &                   PIO_FOUT, 2, pgrd, Aval, Vinfo, ncname,        &
-     &                   SetFillVal = .TRUE.,                           &
-     &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-!
-!  Define 2D total v-radiation stress.
-!
-        IF (Sout(idV2rs,ng)) THEN
-          Vinfo( 1)=Vname(1,idV2rs)
-          Vinfo( 2)=Vname(2,idV2rs)
-          Vinfo( 3)=Vname(3,idV2rs)
-          Vinfo(14)=Vname(4,idV2rs)
-          Vinfo(16)=Vname(1,idtime)
-          STA(ng)%pioVar(idV2rs)%dkind=PIO_FOUT
-          STA(ng)%pioVar(idV2rs)%gtype=0
-!
-          status=def_var(ng, iNLM, STA(ng)%pioFile,                     &
-     &                   STA(ng)%pioVar(idV2rs)%vd,                     &
-     &                   PIO_FOUT, 2, pgrd, Aval, Vinfo, ncname,        &
-     &                   SetFillVal = .TRUE.,                           &
-     &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-!
-!  Define 2D u-Stokes drift velocity.
-!
-        IF (Sout(idU2Sd,ng)) THEN
-          Vinfo( 1)=Vname(1,idU2Sd)
-          Vinfo( 2)=Vname(2,idU2Sd)
-          Vinfo( 3)=Vname(3,idU2Sd)
-          Vinfo(14)=Vname(4,idU2Sd)
-          Vinfo(16)=Vname(1,idtime)
-          STA(ng)%pioVar(idU2Sd)%dkind=PIO_FOUT
-          STA(ng)%pioVar(idU2Sd)%gtype=0
-!
-          status=def_var(ng, iNLM, STA(ng)%pioFile,                     &
-     &                   STA(ng)%pioVar(idU2Sd)%vd,                     &
-     &                   PIO_FOUT, 2, pgrd, Aval, Vinfo, ncname,        &
-     &                   SetFillVal = .TRUE.,                           &
-     &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-!
-!  Define 2D v-Stokes drift velocity.
-!
-        IF (Sout(idV2Sd,ng)) THEN
-          Vinfo( 1)=Vname(1,idV2Sd)
-          Vinfo( 2)=Vname(2,idV2Sd)
-          Vinfo( 3)=Vname(3,idV2Sd)
-          Vinfo(14)=Vname(4,idV2Sd)
-          Vinfo(16)=Vname(1,idtime)
-          STA(ng)%pioVar(idV2Sd)%dkind=PIO_FOUT
-          STA(ng)%pioVar(idV2Sd)%gtype=0
-!
-          status=def_var(ng, iNLM, STA(ng)%pioFile,                     &
-     &                   STA(ng)%pioVar(idV2Sd)%vd,                     &
-     &                   PIO_FOUT, 2, pgrd, Aval, Vinfo, ncname,        &
-     &                   SetFillVal = .TRUE.,                           &
-     &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-
-#  ifdef SOLVE3D
-!
-!  Define 3D radiation stress, Sxx-component.
-!
-        IF (Sout(idW3xx,ng)) THEN
-          Vinfo( 1)=Vname(1,idW3xx)
-          Vinfo( 2)=Vname(2,idW3xx)
-          Vinfo( 3)=Vname(3,idW3xx)
-          Vinfo(14)=Vname(4,idW3xx)
-          Vinfo(16)=Vname(1,idtime)
-          STA(ng)%pioVar(idW3xx)%dkind=PIO_FOUT
-          STA(ng)%pioVar(idW3xx)%gtype=0
-!
-          status=def_var(ng, iNLM, STA(ng)%pioFile,                     &
-     &                   STA(ng)%pioVar(idW3xx)%vd,                     &
-     &                   PIO_FOUT, 3, rgrd, Aval, Vinfo, ncname,        &
-     &                   SetFillVal = .TRUE.,                           &
-     &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-!
-!  Define 3D radiation stress, Sxy-component.
-!
-        IF (Sout(idW3xy,ng)) THEN
-          Vinfo( 1)=Vname(1,idW3xy)
-          Vinfo( 2)=Vname(2,idW3xy)
-          Vinfo( 3)=Vname(3,idW3xy)
-          Vinfo(14)=Vname(4,idW3xy)
-          Vinfo(16)=Vname(1,idtime)
-          STA(ng)%pioVar(idW3xy)%dkind=PIO_FOUT
-          STA(ng)%pioVar(idW3xy)%gtype=0
-!
-          status=def_var(ng, iNLM, STA(ng)%pioFile,                     &
-     &                   STA(ng)%pioVar(idW3xy)%vd,                     &
-     &                   PIO_FOUT, 3, rgrd, Aval, Vinfo, ncname,        &
-     &                   SetFillVal = .TRUE.,                           &
-     &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-!
-!  Define 3D radiation stress, Syy-component.
-!
-        IF (Sout(idW3yy,ng)) THEN
-          Vinfo( 1)=Vname(1,idW3yy)
-          Vinfo( 2)=Vname(2,idW3yy)
-          Vinfo( 3)=Vname(3,idW3yy)
-          Vinfo(14)=Vname(4,idW3yy)
-          Vinfo(16)=Vname(1,idtime)
-          STA(ng)%pioVar(idW3yy)%dkind=PIO_FOUT
-          STA(ng)%pioVar(idW3yy)%gtype=0
-!
-          status=def_var(ng, iNLM, STA(ng)%pioFile,                     &
-     &                   STA(ng)%pioVar(idW3yy)%vd,                     &
-     &                   PIO_FOUT, 3, rgrd, Aval, Vinfo, ncname,        &
-     &                   SetFillVal = .TRUE.,                           &
-     &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-
-#   ifdef NEARSHORE_MELLOR05
-!
-!  Define 3D radiation stress, Szx-component.
-!
-        IF (Sout(idW3zx,ng)) THEN
-          Vinfo( 1)=Vname(1,idW3zx)
-          Vinfo( 2)=Vname(2,idW3zx)
-          Vinfo( 3)=Vname(3,idW3zx)
-          Vinfo(14)=Vname(4,idW3zx)
-          Vinfo(16)=Vname(1,idtime)
-          STA(ng)%pioVar(idW3xx)%dkind=PIO_FOUT
-          STA(ng)%pioVar(idW3xx)%gtype=0
-!
-          status=def_var(ng, iNLM, STA(ng)%pioFile,                     &
-     &                   STA(ng)%pioVar(idW3zx)%vd,                     &
-     &                   PIO_FOUT, 3, rgrd, Aval, Vinfo, ncname,        &
-     &                   SetFillVal = .TRUE.,                           &
-     &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-!
-!  Define 3D radiation stress, Szy-component.
-!
-        IF (Sout(idW3zy,ng)) THEN
-          Vinfo( 1)=Vname(1,idW3zy)
-          Vinfo( 2)=Vname(2,idW3zy)
-          Vinfo( 3)=Vname(3,idW3zy)
-          Vinfo(14)=Vname(4,idW3zy)
-          Vinfo(16)=Vname(1,idtime)
-          STA(ng)%pioVar(idW3zy)%dkind=PIO_FOUT
-          STA(ng)%pioVar(idW3zy)%gtype=0
-!
-          status=def_var(ng, iNLM, STA(ng)%pioFile,                     &
-     &                   STA(ng)%pioVar(idW3zy)%vd,                     &
-     &                   PIO_FOUT, 3, rgrd, Aval, Vinfo, ncname         &
-     &                   SetFillVal = .TRUE.,                           &
-     &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
 #   endif
-!
-!  Define 3D total u-radiation stress.
-!
-        IF (Sout(idU3rs,ng)) THEN
-          Vinfo( 1)=Vname(1,idU3rs)
-          Vinfo( 2)=Vname(2,idU3rs)
-          Vinfo( 3)=Vname(3,idU3rs)
-          Vinfo(14)=Vname(4,idU3rs)
-          Vinfo(16)=Vname(1,idtime)
-          STA(ng)%pioVar(idU3rs)%dkind=PIO_FOUT
-          STA(ng)%pioVar(idU3rs)%gtype=0
-!
-          status=def_var(ng, iNLM, STA(ng)%pioFile,                     &
-     &                   STA(ng)%pioVar(idU3rs)%vd,                     &
-     &                   PIO_FOUT, 3, rgrd, Aval, Vinfo, ncname,        &
-     &                   SetFillVal = .TRUE.,                           &
-     &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-!
-!  Define 3D total v-radiation stress.
-!
-        IF (Sout(idV3rs,ng)) THEN
-          Vinfo( 1)=Vname(1,idV3rs)
-          Vinfo( 2)=Vname(2,idV3rs)
-          Vinfo( 3)=Vname(3,idV3rs)
-          Vinfo(14)=Vname(4,idV3rs)
-          Vinfo(16)=Vname(1,idtime)
-          STA(ng)%pioVar(idV3rs)%dkind=PIO_FOUT
-          STA(ng)%pioVar(idV3rs)%gtype=0
-!
-          status=def_var(ng, iNLM, STA(ng)%pioFile,                     &
-     &                   STA(ng)%pioVar(idV3rs)%vd,                     &
-     &                   PIO_FOUT, 3, rgrd, Aval, Vinfo, ncname,        &
-     &                   SetFillVal = .TRUE.,                           &
-     &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-!
-!  Define 3D u-Stokes velocity.
-!
-        IF (Sout(idU3Sd,ng)) THEN
-          Vinfo( 1)=Vname(1,idU3Sd)
-          Vinfo( 2)=Vname(2,idU3Sd)
-          Vinfo( 3)=Vname(3,idU3Sd)
-          Vinfo(14)=Vname(4,idU3Sd)
-          Vinfo(16)=Vname(1,idtime)
-          STA(ng)%pioVar(idU3Sd)%dkind=PIO_FOUT
-          STA(ng)%pioVar(idU3Sd)%gtype=0
-!
-          status=def_var(ng, iNLM, STA(ng)%pioFile,                     &
-     &                   STA(ng)%pioVar(idU3Sd)%vd,                     &
-     &                   PIO_FOUT, 3, rgrd, Aval, Vinfo, ncname,        &
-     &                   SetFillVal = .TRUE.,                           &
-     &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-!
-!  Define 3D v-Stokes velocity.
-!
-        IF (Sout(idV3Sd,ng)) THEN
-          Vinfo( 1)=Vname(1,idV3Sd)
-          Vinfo( 2)=Vname(2,idV3Sd)
-          Vinfo( 3)=Vname(3,idV3Sd)
-          Vinfo(14)=Vname(4,idV3Sd)
-          Vinfo(16)=Vname(1,idtime)
-          STA(ng)%pioVar(idV3Sd)%dkind=PIO_FOUT
-          STA(ng)%pioVar(idV3Sd)%gtype=0
-!
-          status=def_var(ng, iNLM, STA(ng)%pioFile,                     &
-     &                   STA(ng)%pioVar(idV3Sd)%vd,                     &
-     &                   PIO_FOUT, 3, rgrd, Aval, Vinfo, ncname,        &
-     &                   SetFillVal = .TRUE.,                           &
-     &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
 #  endif
-# endif
-# ifdef WAVES_HEIGHT
+#  ifdef WAVES_HEIGHT
 !
 !  Define wind-induced significant wave height.
 !
@@ -3950,15 +3462,15 @@
           STA(ng)%pioVar(idWamp)%dkind=PIO_FOUT
           STA(ng)%pioVar(idWamp)%gtype=0
 !
-          status=def_var(ng, iNLM, STA(ng)%pioFile,                     &
+          status=def_var(ng, model, STA(ng)%pioFile,                    &
      &                   STA(ng)%pioVar(idWamp)%vd,                     &
      &                   PIO_FOUT, 2, pgrd, Aval, Vinfo, ncname,        &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
-# endif
-# ifdef WAVES_LENGTH
+#  endif
+#  ifdef WAVES_LENGTH
 !
 !  Define wind-induced mean wavelenght.
 !
@@ -3971,15 +3483,36 @@
           STA(ng)%pioVar(idWlen)%dkind=PIO_FOUT
           STA(ng)%pioVar(idWlen)%gtype=0
 !
-          status=def_var(ng, iNLM, STA(ng)%pioFile,                     &
+          status=def_var(ng, model, STA(ng)%pioFile,                    &
      &                   STA(ng)%pioVar(idWlen)%vd,                     &
      &                   PIO_FOUT, 2, pgrd, Aval, Vinfo, ncname,        &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
-# endif
-# ifdef WAVES_DIR
+#  endif
+#  ifdef WAVES_LENGTHP
+!
+!  Define wind-induced peak wave wavelength.
+!
+        IF (Sout(idWlep,ng)) THEN
+          Vinfo( 1)=Vname(1,idWlep)
+          Vinfo( 2)=Vname(2,idWlep)
+          Vinfo( 3)=Vname(3,idWlep)
+          Vinfo(14)=Vname(4,idWlep)
+          Vinfo(16)=Vname(1,idtime)
+          STA(ng)%pioVar(idWlep)%dkind=PIO_FOUT
+          STA(ng)%pioVar(idWlep)%gtype=0
+!
+          status=def_var(ng, model, STA(ng)%pioFile,                    &
+     &                   STA(ng)%pioVar(idWlep)%vd,                     &
+     &                   PIO_FOUT, 2, pgrd, Aval, Vinfo, ncname,        &
+     &                   SetFillVal = .TRUE.,                           &
+     &                   SetParAccess = .TRUE.)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        END IF
+#  endif
+#  ifdef WAVES_DIR
 !
 !  Define wind-induced wave direction.
 !
@@ -3992,15 +3525,36 @@
           STA(ng)%pioVar(idWdir)%dkind=PIO_FOUT
           STA(ng)%pioVar(idWdir)%gtype=0
 !
-          status=def_var(ng, iNLM, STA(ng)%pioFile,                     &
+          status=def_var(ng, model, STA(ng)%pioFile,                    &
      &                   STA(ng)%pioVar(idWdir)%vd,                     &
      &                   PIO_FOUT, 2, pgrd, Aval, Vinfo, ncname,        &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
-# endif
-# ifdef WAVES_TOP_PERIOD
+#  endif
+#  ifdef WAVES_DIRP
+!
+!  Define wind-induced peak wave direction.
+!
+        IF (Sout(idWdip,ng)) THEN
+          Vinfo( 1)=Vname(1,idWdip)
+          Vinfo( 2)=Vname(2,idWdip)
+          Vinfo( 3)=Vname(3,idWdip)
+          Vinfo(14)=Vname(4,idWdip)
+          Vinfo(16)=Vname(1,idtime)
+          STA(ng)%pioVar(idWdip)%dkind=PIO_FOUT
+          STA(ng)%pioVar(idWdip)%gtype=0
+!
+          status=def_var(ng, model, STA(ng)%pioFile,                    &
+     &                   STA(ng)%pioVar(idWdip)%vd,                     &
+     &                   PIO_FOUT, 2, pgrd, Aval, Vinfo, ncname,        &
+     &                   SetFillVal = .TRUE.,                           &
+     &                   SetParAccess = .TRUE.)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        END IF
+#  endif
+#  ifdef WAVES_TOP_PERIOD
 !
 !  Define wind-induced surface wave period.
 !
@@ -4013,7 +3567,7 @@
           STA(ng)%pioVar(idWptp)%dkind=PIO_FOUT
           STA(ng)%pioVar(idWptp)%gtype=0
 !
-          status=def_var(ng, iNLM, STA(ng)%pioFile,                     &
+          status=def_var(ng, model, STA(ng)%pioFile,                    &
      &                   STA(ng)%pioVar(idWptp)%vd,                     &
      &                   PIO_FOUT, 2, pgrd, Aval, Vinfo, ncname,        &
      &                   SetFillVal = .TRUE.,                           &
@@ -4021,8 +3575,8 @@
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 
-# endif
-# ifdef WAVES_BOT_PERIOD
+#  endif
+#  ifdef WAVES_BOT_PERIOD
 !
 !  Define wind-induced bottom wave period.
 !
@@ -4035,7 +3589,7 @@
           STA(ng)%pioVar(idWpbt)%dkind=PIO_FOUT
           STA(ng)%pioVar(idWpbt)%gtype=0
 !
-          status=def_var(ng, iNLM, STA(ng)%pioFile,                     &
+          status=def_var(ng, model, STA(ng)%pioFile,                    &
      &                   STA(ng)%pioVar(idWpbt)%vd,                     &
      &                   PIO_FOUT, 2, pgrd, Aval, Vinfo, ncname,        &
      &                   SetFillVal = .TRUE.,                           &
@@ -4043,8 +3597,8 @@
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 
-# endif
-# ifdef WAVES_UB
+#  endif
+#  ifdef WAVES_UB
 !
 !  Define wind-induced wave bottom orbital velocity.
 !
@@ -4057,48 +3611,136 @@
           STA(ng)%pioVar(idWorb)%dkind=PIO_FOUT
           STA(ng)%pioVar(idWorb)%gtype=0
 !
-          status=def_var(ng, iNLM, STA(ng)%pioFile,                     &
+          status=def_var(ng, model, STA(ng)%pioFile,                    &
      &                   STA(ng)%pioVar(idWorb)%vd,                     &
      &                   PIO_FOUT, 2, pgrd, Aval, Vinfo, ncname,        &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
-# endif
-# if defined TKE_WAVEDISS || defined WAV_COUPLING
+#  endif
+#  ifdef WAVES_DSPR
 !
-!  Define wave dissipation.
+!  Define waves directional spreading.
 !
-        IF (Sout(idWdis,ng)) THEN
-          Vinfo( 1)=Vname(1,idWdis)
-          Vinfo( 2)=Vname(2,idWdis)
-          Vinfo( 3)=Vname(3,idWdis)
-          Vinfo(14)=Vname(4,idWdis)
+        IF (Sout(idWvds,ng)) THEN
+          Vinfo( 1)=Vname(1,idWvds)
+          Vinfo( 2)=Vname(2,idWvds)
+          Vinfo( 3)=Vname(3,idWvds)
+          Vinfo(14)=Vname(4,idWvds)
           Vinfo(16)=Vname(1,idtime)
-          STA(ng)%pioVar(idWdis)%dkind=PIO_FOUT
-          STA(ng)%pioVar(idWdis)%gtype=0
+          STA(ng)%pioVar(idWvds)%dkind=PIO_FOUT
+          STA(ng)%pioVar(idWvds)%gtype=0
 !
-          status=def_var(ng, iNLM, STA(ng)%pioFile,                     &
-     &                   STA(ng)%pioVar(idWdis)%vd,                     &
+          status=def_var(ng, model, STA(ng)%pioFile,                    &
+     &                   STA(ng)%pioVar(idWvds)%vd,                     &
      &                   PIO_FOUT, 2, pgrd, Aval, Vinfo, ncname,        &
      &                   SetFillVal = .TRUE.,                           &
      &                   SetParAccess = .TRUE.)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
-# endif
+!
+!  Define wave spectrum peakedness.
+!
+        IF (Sout(idWvqp,ng)) THEN
+          Vinfo( 1)=Vname(1,idWvqp)
+          Vinfo( 2)=Vname(2,idWvqp)
+          Vinfo( 3)=Vname(3,idWvqp)
+          Vinfo(14)=Vname(4,idWvqp)
+          Vinfo(16)=Vname(1,idtime)
+          STA(ng)%pioVar(idWvqp)%dkind=PIO_FOUT
+          STA(ng)%pioVar(idWvqp)%gtype=0
+!
+          status=def_var(ng, model, STA(ng)%pioFile,                    &
+     &                   STA(ng)%pioVar(idWvqp)%vd,                     &
+     &                   PIO_FOUT, 2, pgrd, Aval, Vinfo, ncname,        &
+     &                   SetFillVal = .TRUE.,                           &
+     &                   SetParAccess = .TRUE.)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        END IF
+#  endif
+#  ifdef WET_DRY
+!
+!  Write out wet/dry mask at RHO-points.
+!
+        IF (Sout(idRwet,ng)) THEN
+          Vinfo( 1)=Vname(1,idRwet)
+          Vinfo( 2)=Vname(2,idRwet)
+          Vinfo( 3)=Vname(3,idRwet)
+          Vinfo(14)=Vname(4,idRwet)
+          Vinfo(16)=Vname(1,idtime)
+          STA(ng)%pioVar(idRwet)%dkind=PIO_FOUT
+          STA(ng)%pioVar(idRwet)%gtype=0
+!
+          status=def_var(ng, model, STA(ng)%pioFile,                    &
+     &                   STA(ng)%pioVar(idRwet)%vd,                     &
+     &                   PIO_FOUT, 2, pgrd, Aval, Vinfo, ncname,        &
+     &                   SetFillVal = .TRUE.,                           &
+     &                   SetParAccess = .TRUE.)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        END IF
+!
+!  Write out wet/dry mask at U-points.
+!
+        IF (Sout(idUwet,ng)) THEN
+          Vinfo( 1)=Vname(1,idUwet)
+          Vinfo( 2)=Vname(2,idUwet)
+          Vinfo( 3)=Vname(3,idUwet)
+          Vinfo(14)=Vname(4,idUwet)
+          Vinfo(16)=Vname(1,idtime)
+          STA(ng)%pioVar(idUwet)%dkind=PIO_FOUT
+          STA(ng)%pioVar(idUwet)%gtype=0
+!
+          status=def_var(ng, model, STA(ng)%pioFile,                    &
+     &                   STA(ng)%pioVar(idUwet)%vd,                     &
+     &                   PIO_FOUT, 2, pgrd, Aval, Vinfo, ncname,        &
+     &                   SetFillVal = .TRUE.,                           &
+     &                   SetParAccess = .TRUE.)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        END IF
+!
+!  Write out wet/dry mask at V-points.
+!
+        IF (Sout(idUwet,ng)) THEN
+          Vinfo( 1)=Vname(1,idVwet)
+          Vinfo( 2)=Vname(2,idVwet)
+          Vinfo( 3)=Vname(3,idVwet)
+          Vinfo(14)=Vname(4,idVwet)
+          Vinfo(16)=Vname(1,idtime)
+          STA(ng)%pioVar(idVwet)%dkind=PIO_FOUT
+          STA(ng)%pioVar(idVwet)%gtype=0
+!
+          status=def_var(ng, model, STA(ng)%pioFile,                    &
+     &                   STA(ng)%pioVar(idVwet)%vd,                     &
+     &                   PIO_FOUT, 2, pgrd, Aval, Vinfo, ncname,        &
+     &                   SetFillVal = .TRUE.,                           &
+     &                   SetParAccess = .TRUE.)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        END IF
+#  endif
+#  if defined WEC || defined WEC_VF
+!
+!-----------------------------------------------------------------------
+!  Define Waves Effect on Currents variables.
+!-----------------------------------------------------------------------
+!
+        CALL wec_def_station_pio (ng, model, ldef, Sout, STA,           &
+     &                             pgrd, rgrd)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+#  endif
 !
 !-----------------------------------------------------------------------
 !  Leave definition mode.
 !-----------------------------------------------------------------------
 !
-        CALL pio_netcdf_enddef (ng, iNLM, ncname, STA(ng)%pioFile)
+        CALL pio_netcdf_enddef (ng, model, ncname, STA(ng)%pioFile)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !-----------------------------------------------------------------------
 !  Write out time-recordless, information variables.
 !-----------------------------------------------------------------------
 !
-        CALL wrt_info (ng, iNLM, STA(ng)%pioFile, ncname)
+        CALL wrt_info (ng, model, STA(ng)%pioFile, ncname)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       END IF DEFINE
@@ -4113,7 +3755,7 @@
 !
 !  Open stations file for read/write.
 !
-        CALL pio_netcdf_open (ng, iNLM, ncname, 1, STA(ng)%pioFile)
+        CALL pio_netcdf_open (ng, model, ncname, 1, STA(ng)%pioFile)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) THEN
           WRITE (stdout,50) TRIM(ncname)
           RETURN
@@ -4121,13 +3763,13 @@
 !
 !  Inquire about the dimensions and check for consistency.
 !
-        CALL pio_netcdf_check_dim (ng, iNLM, ncname,                    &
+        CALL pio_netcdf_check_dim (ng, model, ncname,                   &
      &                             pioFile = STA(ng)%pioFile)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Inquire about the variables.
 !
-        CALL pio_netcdf_inq_var (ng, iNLM, ncname,                      &
+        CALL pio_netcdf_inq_var (ng, model, ncname,                     &
      &                           pioFile = STA(ng)%pioFile)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
@@ -4151,13 +3793,13 @@
             STA(ng)%pioVar(idFsur)%vd=var_desc(i)
             STA(ng)%pioVar(idFsur)%dkind=PIO_FOUT
             STA(ng)%pioVar(idFsur)%gtype=0
-# if defined SEDIMENT && defined SED_MORPH
+#  if defined SEDIMENT && defined SED_MORPH
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idbath))) THEN
             got_var(idbath)=.TRUE.
             STA(ng)%pioVar(idbath)%vd=var_desc(i)
             STA(ng)%pioVar(idbath)%dkind=PIO_FOUT
             STA(ng)%pioVar(idbath)%gtype=0
-# endif
+#  endif
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idUbar))) THEN
             got_var(idUbar)=.TRUE.
             STA(ng)%pioVar(idUbar)%vd=var_desc(i)
@@ -4178,7 +3820,7 @@
             STA(ng)%pioVar(idv2dN)%vd=var_desc(i)
             STA(ng)%pioVar(idv2dN)%dkind=PIO_FOUT
             STA(ng)%pioVar(idv2dN)%gtype=0
-# ifdef SOLVE3D
+#  ifdef SOLVE3D
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idUvel))) THEN
             got_var(idUvel)=.TRUE.
             STA(ng)%pioVar(idUvel)%vd=var_desc(i)
@@ -4214,20 +3856,20 @@
             STA(ng)%pioVar(idDano)%vd=var_desc(i)
             STA(ng)%pioVar(idDano)%dkind=PIO_FOUT
             STA(ng)%pioVar(idDano)%gtype=0
-#  ifdef LMD_SKPP
+#   ifdef LMD_SKPP
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idHsbl))) THEN
             got_var(idHsbl)=.TRUE.
             STA(ng)%pioVar(idHsbl)%vd=var_desc(i)
             STA(ng)%pioVar(idHsbl)%dkind=PIO_FOUT
             STA(ng)%pioVar(idHsbl)%gtype=0
-#  endif
-#  ifdef LMD_BKPP
+#   endif
+#   ifdef LMD_BKPP
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idHbbl))) THEN
             got_var(idHbbl)=.TRUE.
             STA(ng)%pioVar(idHbbl)%vd=var_desc(i)
             STA(ng)%pioVar(idHbbl)%dkind=PIO_FOUT
             STA(ng)%pioVar(idHbbl)%gtype=0
-#  endif
+#   endif
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idVvis))) THEN
             got_var(idVvis)=.TRUE.
             STA(ng)%pioVar(idVvis)%vd=var_desc(i)
@@ -4243,7 +3885,7 @@
             STA(ng)%pioVar(idSdif)%vd=var_desc(i)
             STA(ng)%pioVar(idSdif)%dkind=PIO_FOUT
             STA(ng)%pioVar(idSdif)%gtype=0
-#  if defined GLS_MIXING || defined MY25_MIXING
+#   if defined GLS_MIXING || defined MY25_MIXING
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idMtke))) THEN
             got_var(idMtke)=.TRUE.
             STA(ng)%pioVar(idMtke)%vd=var_desc(i)
@@ -4254,15 +3896,15 @@
             STA(ng)%pioVar(idMtls)%vd=var_desc(i)
             STA(ng)%pioVar(idMtls)%dkind=PIO_FOUT
             STA(ng)%pioVar(idMtls)%gtype=0
-#  endif
-#  if defined BULK_FLUXES || defined ECOSIM || defined ATM_PRESS
+#   endif
+#   if defined BULK_FLUXES || defined ECOSIM || defined ATM_PRESS
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idPair))) THEN
             got_var(idPair)=.TRUE.
             STA(ng)%pioVar(idPair)%vd=var_desc(i)
             STA(ng)%pioVar(idPair)%dkind=PIO_FOUT
             STA(ng)%pioVar(idPair)%gtype=0
-#  endif
-#  if defined BULK_FLUXES || defined ECOSIM
+#   endif
+#   if defined BULK_FLUXES || defined ECOSIM
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idUair))) THEN
             got_var(idUair)=.TRUE.
             STA(ng)%pioVar(idUair)%vd=var_desc(i)
@@ -4273,7 +3915,7 @@
             STA(ng)%pioVar(idVair)%vd=var_desc(i)
             STA(ng)%pioVar(idVair)%dkind=PIO_FOUT
             STA(ng)%pioVar(idVair)%gtype=0
-#  endif
+#   endif
           ELSE IF (TRIM(var_name(i)).eq.                                &
      &             TRIM(Vname(1,idTsur(itemp)))) THEN
             got_var(idTsur(itemp))=.TRUE.
@@ -4286,7 +3928,7 @@
             STA(ng)%pioVar(idTsur(isalt))%vd=var_desc(i)
             STA(ng)%pioVar(idTsur(isalt))%dkind=PIO_FOUT
             STA(ng)%pioVar(idTsur(isalt))%gtype=0
-#  ifdef BULK_FLUXES
+#   ifdef BULK_FLUXES
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idLhea))) THEN
             got_var(idLhea)=.TRUE.
             STA(ng)%pioVar(idLhea)%vd=var_desc(i)
@@ -4302,20 +3944,20 @@
             STA(ng)%pioVar(idLrad)%vd=var_desc(i)
             STA(ng)%pioVar(idLrad)%dkind=PIO_FOUT
             STA(ng)%pioVar(idLrad)%gtype=0
-#  endif
-#  ifdef SHORTWAVE
+#   endif
+#   ifdef SHORTWAVE
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idSrad))) THEN
             got_var(idSrad)=.TRUE.
             STA(ng)%pioVar(idSrad)%vd=var_desc(i)
             STA(ng)%pioVar(idSrad)%dkind=PIO_FOUT
             STA(ng)%pioVar(idSrad)%gtype=0
-#  endif
+#   endif
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idEmPf))) THEN
             got_var(idEmPf)=.TRUE.
             STA(ng)%pioVar(idEmPf)%vd=var_desc(i)
             STA(ng)%pioVar(idEmPf)%dkind=PIO_FOUT
             STA(ng)%pioVar(idEmPf)%gtype=0
-#  if defined EMINUSP && defined BULK_FLUXES
+#   if defined EMINUSP && defined BULK_FLUXES
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idevap))) THEN
             got_var(idevap)=.TRUE.
             STA(ng)%pioVar(idevap)%vd=var_desc(i)
@@ -4326,8 +3968,8 @@
             STA(ng)%pioVar(idrain)%vd=var_desc(i)
             STA(ng)%pioVar(idrain)%dkind=PIO_FOUT
             STA(ng)%pioVar(idrain)%gtype=0
+#   endif
 #  endif
-# endif
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idUsms))) THEN
             got_var(idUsms)=.TRUE.
             STA(ng)%pioVar(idUsms)%vd=var_desc(i)
@@ -4348,8 +3990,8 @@
             STA(ng)%pioVar(idVbms)%vd=var_desc(i)
             STA(ng)%pioVar(idVbms)%dkind=PIO_FOUT
             STA(ng)%pioVar(idVbms)%gtype=0
-# ifdef SOLVE3D
-#  ifdef BBL_MODEL
+#  ifdef SOLVE3D
+#   ifdef BBL_MODEL
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idUbrs))) THEN
             got_var(idUbrs)=.TRUE.
             STA(ng)%pioVar(idUbrs)%vd=var_desc(i)
@@ -4400,145 +4042,83 @@
             STA(ng)%pioVar(idVbvr)%vd=var_desc(i)
             STA(ng)%pioVar(idVbvr)%dkind=PIO_FOUT
             STA(ng)%pioVar(idVbvr)%gtype=0
-#  endif
-# endif
-# ifdef NEARSHORE_MELLOR
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idW2xx))) THEN
-            got_var(idW2xx)=.TRUE.
-            STA(ng)%pioVar(idW2xx)%vd=var_desc(i)
-            STA(ng)%pioVar(idW2xx)%dkind=PIO_FOUT
-            STA(ng)%pioVar(idW2xx)%gtype=0
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idW2xy))) THEN
-            got_var(idW2xy)=.TRUE.
-            STA(ng)%pioVar(idW2xy)%vd=var_desc(i)
-            STA(ng)%pioVar(idW2xy)%dkind=PIO_FOUT
-            STA(ng)%pioVar(idW2xy)%gtype=0
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idW2yy))) THEN
-            got_var(idW2yy)=.TRUE.
-            STA(ng)%pioVar(idW2yy)%vd=var_desc(i)
-            STA(ng)%pioVar(idW2xy)%dkind=PIO_FOUT
-            STA(ng)%pioVar(idW2xy)%gtype=0
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idU2rs))) THEN
-            got_var(idU2rs)=.TRUE.
-            STA(ng)%pioVar(idU2rs)%vd=var_desc(i)
-            STA(ng)%pioVar(idU2rs)%dkind=PIO_FOUT
-            STA(ng)%pioVar(idU2rs)%gtype=0
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idV2rs))) THEN
-            got_var(idV2rs)=.TRUE.
-            STA(ng)%pioVar(idV2rs)%vd=var_desc(i)
-            STA(ng)%pioVar(idV2rs)%dkind=PIO_FOUT
-            STA(ng)%pioVar(idV2rs)%gtype=0
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idU2Sd))) THEN
-            got_var(idU2Sd)=.TRUE.
-            STA(ng)%pioVar(idU2Sd)%vd=var_desc(i)
-            STA(ng)%pioVar(idU2Sd)%dkind=PIO_FOUT
-            STA(ng)%pioVar(idU2Sd)%gtype=0
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idV2Sd))) THEN
-            got_var(idV2Sd)=.TRUE.
-            STA(ng)%pioVar(idV2Sd)%vd=var_desc(i)
-            STA(ng)%pioVar(idV2Sd)%dkind=PIO_FOUT
-            STA(ng)%pioVar(idV2Sd)%gtype=0
-#  ifdef SOLVE3D
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idW3xx))) THEN
-            got_var(idW3xx)=.TRUE.
-            STA(ng)%pioVar(idW3xx)%vd=var_desc(i)
-            STA(ng)%pioVar(idW3xx)%dkind=PIO_FOUT
-            STA(ng)%pioVar(idW3xx)%gtype=0
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idW3xy))) THEN
-            got_var(idW3xy)=.TRUE.
-            STA(ng)%pioVar(idW3xy)%vd=var_desc(i)
-            STA(ng)%pioVar(idW3xy)%dkind=PIO_FOUT
-            STA(ng)%pioVar(idW3xy)%gtype=0
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idW3yy))) THEN
-            got_var(idW3yy)=.TRUE.
-            STA(ng)%pioVar(idW3yy)%vd=var_desc(i)
-            STA(ng)%pioVar(idW3yy)%dkind=PIO_FOUT
-            STA(ng)%pioVar(idW3yy)%gtype=0
-#   ifdef NEARSHORE_MELLOR05
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idW3zx))) THEN
-            got_var(idW3zx)=.TRUE.
-            STA(ng)%pioVar(idW3zx)%vd=var_desc(i)
-            STA(ng)%pioVar(idW3xx)%dkind=PIO_FOUT
-            STA(ng)%pioVar(idW3xx)%gtype=0
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idW3zy))) THEN
-            got_var(idW3zy)=.TRUE.
-            STA(ng)%pioVar(idW3zy)%vd=var_desc(i)
-            STA(ng)%pioVar(idW3zy)%dkind=PIO_FOUT
-            STA(ng)%pioVar(idW3zy)%gtype=0
 #   endif
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idU3rs))) THEN
-            got_var(idU3rs)=.TRUE.
-            STA(ng)%pioVar(idU3rs)%vd=var_desc(i)
-            STA(ng)%pioVar(idU3rs)%dkind=PIO_FOUT
-            STA(ng)%pioVar(idU3rs)%gtype=0
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idV3rs))) THEN
-            got_var(idV3rs)=.TRUE.
-            STA(ng)%pioVar(idV3rs)%vd=var_desc(i)
-            STA(ng)%pioVar(idV3rs)%dkind=PIO_FOUT
-            STA(ng)%pioVar(idV3rs)%gtype=0
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idU3Sd))) THEN
-            got_var(idU3Sd)=.TRUE.
-            STA(ng)%pioVar(idU3Sd)%vd=var_desc(i)
-            STA(ng)%pioVar(idU3Sd)%dkind=PIO_FOUT
-            STA(ng)%pioVar(idU3Sd)%gtype=0
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idV3Sd))) THEN
-            got_var(idV3Sd)=.TRUE.
-            STA(ng)%pioVar(idV3Sd)%vd=var_desc(i)
-            STA(ng)%pioVar(idV3Sd)%dkind=PIO_FOUT
-            STA(ng)%pioVar(idV3Sd)%gtype=0
 #  endif
-# endif
-# ifdef WAVES_HEIGHT
+#  ifdef WAVES_HEIGHT
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idWamp))) THEN
             got_var(idWamp)=.TRUE.
             STA(ng)%pioVar(idWamp)%vd=var_desc(i)
             STA(ng)%pioVar(idWamp)%dkind=PIO_FOUT
             STA(ng)%pioVar(idWamp)%gtype=0
-# endif
-# ifdef WAVES_LENGTH
+#  endif
+#  ifdef WAVES_LENGTH
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idWlen))) THEN
             got_var(idWlen)=.TRUE.
             STA(ng)%pioVar(idWlen)%vd=var_desc(i)
             STA(ng)%pioVar(idWlen)%dkind=PIO_FOUT
             STA(ng)%pioVar(idWlen)%gtype=0
-# endif
-# ifdef WAVES_DIR
+#  endif
+#  ifdef WAVES_LENGTHP
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idWlep))) THEN
+            got_var(idWlep)=.TRUE.
+            STA(ng)%pioVar(idWlep)%vd=var_desc(i)
+            STA(ng)%pioVar(idWlep)%dkind=PIO_FOUT
+            STA(ng)%pioVar(idWlep)%gtype=0
+#  endif
+#  ifdef WAVES_DIR
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idWdir))) THEN
             got_var(idWdir)=.TRUE.
             STA(ng)%pioVar(idWdir)%vd=var_desc(i)
             STA(ng)%pioVar(idWdir)%dkind=PIO_FOUT
             STA(ng)%pioVar(idWdir)%gtype=0
-# endif
-# ifdef WAVES_TOP_PERIOD
+#  endif
+#  ifdef WAVES_DIRP
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idWdip))) THEN
+            got_var(idWdip)=.TRUE.
+            STA(ng)%pioVar(idWdip)%vd=var_desc(i)
+            STA(ng)%pioVar(idWdip)%dkind=PIO_FOUT
+            STA(ng)%pioVar(idWdip)%gtype=0
+#  endif
+#  ifdef WAVES_TOP_PERIOD
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idWptp))) THEN
             got_var(idWptp)=.TRUE.
             STA(ng)%pioVar(idWptp)%vd=var_desc(i)
             STA(ng)%pioVar(idWptp)%dkind=PIO_FOUT
             STA(ng)%pioVar(idWptp)%gtype=0
-# endif
-# ifdef WAVES_BOT_PERIOD
+#  endif
+#  ifdef WAVES_BOT_PERIOD
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idWpbt))) THEN
             got_var(idWpbt)=.TRUE.
             STA(ng)%pioVar(idWpbt)%vd=var_desc(i)
             STA(ng)%pioVar(idWpbt)%dkind=PIO_FOUT
             STA(ng)%pioVar(idWpbt)%gtype=0
-# endif
-# ifdef WAVES_UB
+#  endif
+#  ifdef WAVES_UB
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idWorb))) THEN
             got_var(idWorb)=.TRUE.
             STA(ng)%pioVar(idWorb)%vd=var_desc(i)
             STA(ng)%pioVar(idWorb)%dkind=PIO_FOUT
             STA(ng)%pioVar(idWorb)%gtype=0
-# endif
-# if defined TKE_WAVEDISS || defined WAV_COUPLING
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idWdis))) THEN
-            got_var(idWdis)=.TRUE.
-            STA(ng)%pioVar(idWdis)%vd=var_desc(i)
-            STA(ng)%pioVar(idWdis)%dkind=PIO_FOUT
-            STA(ng)%pioVar(idWdis)%gtype=0
-# endif
+#  endif
+#  ifdef WET_DRY
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idRwet))) THEN
+            got_var(idRwet)=.TRUE.
+            STA(ng)%pioVar(idRwet)%vd=var_desc(i)
+            STA(ng)%pioVar(idRwet)%dkind=PIO_FOUT
+            STA(ng)%pioVar(idRwet)%gtype=0
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idUwet))) THEN
+            got_var(idUwet)=.TRUE.
+            STA(ng)%pioVar(idUwet)%vd=var_desc(i)
+            STA(ng)%pioVar(idUwet)%dkind=PIO_FOUT
+            STA(ng)%pioVar(idUwet)%gtype=0
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idVwet))) THEN
+            got_var(idVwet)=.TRUE.
+            STA(ng)%pioVar(idVwet)%vd=var_desc(i)
+            STA(ng)%pioVar(idVwet)%dkind=PIO_FOUT
+            STA(ng)%pioVar(idVwet)%gtype=0
+#  endif
           END IF
-# ifdef SOLVE3D
+#  ifdef SOLVE3D
           DO itrc=1,NT(ng)
             IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idTvar(itrc)))) THEN
               got_var(idTvar(itrc))=.TRUE.
@@ -4547,7 +4127,7 @@
               STA(ng)%pioTrc(itrc)%gtype=0
             END IF
           END DO
-#  ifdef SEDIMENT
+#   ifdef SEDIMENT
           DO itrc=1,NST
             IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idfrac(itrc)))) THEN
               got_var(idfrac(itrc))=.TRUE.
@@ -4570,8 +4150,8 @@
               STA(ng)%pioVar(idSbed(itrc))%gtype=0
             END IF
           END DO
-#  endif
-#  if defined SEDIMENT || defined BBL_MODEL
+#   endif
+#   if defined SEDIMENT || defined BBL_MODEL
           DO itrc=1,MBOTP
             IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idBott(itrc)))) THEN
               got_var(idBott(itrc))=.TRUE.
@@ -4580,8 +4160,8 @@
               STA(ng)%pioVar(idBott(itrc))%gtype=0
             END IF
           END DO
+#   endif
 #  endif
-# endif
         END DO
 !
 !  Check if station variables are available in input NetCDF file.
@@ -4598,14 +4178,14 @@
           exit_flag=3
           RETURN
         END IF
-# if defined SEDIMENT && defined SED_MORPH
+#  if defined SEDIMENT && defined SED_MORPH
         IF (.not.got_var(idbath).and.Sout(idbath,ng)) THEN
           IF (Master) WRITE (stdout,60) TRIM(Vname(1,idbath)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
-# endif
+#  endif
         IF (.not.got_var(idUbar).and.Sout(idUbar,ng)) THEN
           IF (Master) WRITE (stdout,60) TRIM(Vname(1,idUbar)),          &
      &                                  TRIM(ncname)
@@ -4630,7 +4210,7 @@
           exit_flag=3
           RETURN
         END IF
-# ifdef SOLVE3D
+#  ifdef SOLVE3D
         IF (.not.got_var(idUvel).and.Sout(idUvel,ng)) THEN
           IF (Master) WRITE (stdout,60) TRIM(Vname(1,idUvel)),          &
      &                                  TRIM(ncname)
@@ -4673,22 +4253,22 @@
           exit_flag=3
           RETURN
         END IF
-#  ifdef LMD_SKPP
+#   ifdef LMD_SKPP
         IF (.not.got_var(idHsbl).and.Sout(idHsbl,ng)) THEN
           IF (Master) WRITE (stdout,60) TRIM(Vname(1,idHsbl)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
-#  endif
-#  ifdef LMD_BKPP
+#   endif
+#   ifdef LMD_BKPP
         IF (.not.got_var(idHbbl).and.Sout(idHbbl,ng)) THEN
           IF (Master) WRITE (stdout,60) TRIM(Vname(1,idHbbl)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
-#  endif
+#   endif
         IF (.not.got_var(idVvis).and.Sout(idVvis,ng)) THEN
           IF (Master) WRITE (stdout,60) TRIM(Vname(1,idVvis)),          &
      &                                  TRIM(ncname)
@@ -4701,15 +4281,15 @@
           exit_flag=3
           RETURN
         END IF
-#  ifdef SALINITY
+#   ifdef SALINITY
         IF (.not.got_var(idSdif).and.Sout(idSdif,ng)) THEN
           IF (Master) WRITE (stdout,60) TRIM(Vname(1,idSdif)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
-#  endif
-#  if defined GLS_MIXING || defined MY25_MIXING
+#   endif
+#   if defined GLS_MIXING || defined MY25_MIXING
         IF (.not.got_var(idMtke).and.Sout(idMtke,ng)) THEN
           IF (Master) WRITE (stdout,60) TRIM(Vname(1,idMtke)),          &
      &                                  TRIM(ncname)
@@ -4722,16 +4302,16 @@
           exit_flag=3
           RETURN
         END IF
-#  endif
-#  if defined BULK_FLUXES || defined ECOSIM || defined ATM_PRESS
+#   endif
+#   if defined BULK_FLUXES || defined ECOSIM || defined ATM_PRESS
         IF (.not.got_var(idPair).and.Sout(idPair,ng)) THEN
           IF (Master) WRITE (stdout,60) TRIM(Vname(1,idPair)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
-#  endif
-#  if defined BULK_FLUXES || defined ECOSIM
+#   endif
+#   if defined BULK_FLUXES || defined ECOSIM
         IF (.not.got_var(idUair).and.Sout(idUair,ng)) THEN
           IF (Master) WRITE (stdout,60) TRIM(Vname(1,idUair)),          &
      &                                  TRIM(ncname)
@@ -4744,7 +4324,7 @@
           exit_flag=3
           RETURN
         END IF
-#  endif
+#   endif
         IF (.not.got_var(idTsur(itemp)).and.Sout(idTsur(itemp),ng)) THEN
           IF (Master) WRITE (stdout,60) TRIM(Vname(1,idTsur(itemp))),   &
      &                                  TRIM(ncname)
@@ -4757,7 +4337,7 @@
           exit_flag=3
           RETURN
         END IF
-#  ifdef BULK_FLUXES
+#   ifdef BULK_FLUXES
         IF (.not.got_var(idLhea).and.Sout(idLhea,ng)) THEN
           IF (Master) WRITE (stdout,60) TRIM(Vname(1,idLhea)),          &
      &                                  TRIM(ncname)
@@ -4776,22 +4356,22 @@
           exit_flag=3
           RETURN
         END IF
-#  endif
-#  ifdef SHORTWAVE
+#   endif
+#   ifdef SHORTWAVE
         IF (.not.got_var(idSrad).and.Sout(idSrad,ng)) THEN
           IF (Master) WRITE (stdout,60) TRIM(Vname(1,idSrad)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
-#  endif
+#   endif
         IF (.not.got_var(idEmPf).and.Sout(idEmPf,ng)) THEN
           IF (Master) WRITE (stdout,60) TRIM(Vname(1,idEmPf)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
-#  if defined EMINUSP && defined BULK_FLUXES
+#   if defined EMINUSP && defined BULK_FLUXES
         IF (.not.got_var(idevap).and.Sout(idevap,ng)) THEN
           IF (Master) WRITE (stdout,60) TRIM(Vname(1,idevap)),          &
      &                                  TRIM(ncname)
@@ -4804,8 +4384,8 @@
           exit_flag=3
           RETURN
         END IF
+#   endif
 #  endif
-# endif
         IF (.not.got_var(idUsms).and.Sout(idUsms,ng)) THEN
           IF (Master) WRITE (stdout,60) TRIM(Vname(1,idUsms)),          &
      &                                  TRIM(ncname)
@@ -4830,8 +4410,8 @@
           exit_flag=3
           RETURN
         END IF
-# ifdef SOLVE3D
-#  ifdef BBL_MODEL
+#  ifdef SOLVE3D
+#   ifdef BBL_MODEL
         IF (.not.got_var(idUbrs).and.Sout(idUbrs,ng)) THEN
           IF (Master) WRITE (stdout,60) TRIM(Vname(1,idUbrs)),          &
      &                                  TRIM(ncname)
@@ -4892,167 +4472,107 @@
           exit_flag=3
           RETURN
         END IF
-#  endif
-# endif
-# ifdef NEARSHORE_MELLOR
-        IF (.not.got_var(idW2xx).and.Sout(idW2xx,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idW2xx)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-        IF (.not.got_var(idW2xy).and.Sout(idW2xy,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idW2xy)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-        IF (.not.got_var(idW2yy).and.Sout(idW2yy,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idW2yy)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-        IF (.not.got_var(idU2rs).and.Sout(idU2rs,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idU2rs)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-        IF (.not.got_var(idV2rs).and.Sout(idV2rs,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idV2rs)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-        IF (.not.got_var(idU2Sd).and.Sout(idU2Sd,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idU2Sd)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-        IF (.not.got_var(idV2Sd).and.Sout(idV2Sd,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idV2Sd)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-#  ifdef SOLVE3D
-        IF (.not.got_var(idW3xx).and.Sout(idW3xx,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idW3xx)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-        IF (.not.got_var(idW3xy).and.Sout(idW3xy,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idW3xy)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-        IF (.not.got_var(idW3yy).and.Sout(idW3yy,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idW3yy)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-#   ifdef NEARSHORE_MELLOR05
-        IF (.not.got_var(idW3zx).and.Sout(idW3zx,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idW3zx)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-        IF (.not.got_var(idW3zy).and.Sout(idW3zy,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idW3zy)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
 #   endif
-        IF (.not.got_var(idU3Sd).and.Sout(idU3rs,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idU3rs)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-        IF (.not.got_var(idV3rs).and.Sout(idV3rs,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idV3rs)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-        IF (.not.got_var(idU3Sd).and.Sout(idU3Sd,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idU3Sd)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-        IF (.not.got_var(idV3Sd).and.Sout(idV3Sd,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idV3Sd)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
 #  endif
-# endif
-# ifdef WAVES_HEIGHT
+#  ifdef WAVES_HEIGHT
         IF (.not.got_var(idWamp).and.Sout(idWamp,ng)) THEN
           IF (Master) WRITE (stdout,60) TRIM(Vname(1,idWamp)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
-# endif
-# ifdef WAVES_LENGTH
+#  endif
+#  ifdef WAVES_LENGTH
         IF (.not.got_var(idWlen).and.Sout(idWlen,ng)) THEN
           IF (Master) WRITE (stdout,60) TRIM(Vname(1,idWlen)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
-# endif
-# ifdef WAVES_DIR
+#  endif
+#  ifdef WAVES_LENGTHP
+        IF (.not.got_var(idWlep).and.Sout(idWlep,ng)) THEN
+          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idWlep)),          &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+#  endif
+#  ifdef WAVES_DIR
         IF (.not.got_var(idWdir).and.Sout(idWdir,ng)) THEN
           IF (Master) WRITE (stdout,60) TRIM(Vname(1,idWdir)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
-# endif
-# ifdef WAVES_TOP_PERIOD
+#  endif
+#  ifdef WAVES_DIRP
+        IF (.not.got_var(idWdip).and.Sout(idWdip,ng)) THEN
+          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idWdip)),          &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+#  endif
+#  ifdef WAVES_TOP_PERIOD
         IF (.not.got_var(idWptp).and.Sout(idWptp,ng)) THEN
           IF (Master) WRITE (stdout,60) TRIM(Vname(1,idWptp)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
-# endif
-# ifdef WAVES_BOT_PERIOD
+#  endif
+#  ifdef WAVES_BOT_PERIOD
         IF (.not.got_var(idWpbt).and.Sout(idWpbt,ng)) THEN
           IF (Master) WRITE (stdout,60) TRIM(Vname(1,idWpbt)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
-# endif
-# ifdef WAVES_UB
+#  endif
+#  ifdef WAVES_UB
         IF (.not.got_var(idWorb).and.Sout(idWorb,ng)) THEN
           IF (Master) WRITE (stdout,60) TRIM(Vname(1,idWorb)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
-# endif
-# if defined TKE_WAVEDISS || defined WAV_COUPLING
-        IF (.not.got_var(idWdis).and.Sout(idWdis,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idWdis)),          &
+#  endif
+#  ifdef WAVES_DSPR
+        IF (.not.got_var(idWvds).and.Sout(idWvds,ng)) THEN
+          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idWvds)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
-# endif
-# ifdef SOLVE3D
+        IF (.not.got_var(idWvqp).and.Sout(idWvqp,ng)) THEN
+          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idWvqp)),          &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+#  endif
+#  ifdef WET_DRY
+        IF (.not.got_var(idRwet).and.Sout(idRwet,ng)) THEN
+          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idRwet)),          &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idUwet).and.Sout(idUwet,ng)) THEN
+          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idUwet)),          &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idVwet).and.Sout(idVwet,ng)) THEN
+          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idVwet)),          &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+#  endif
+#  ifdef SOLVE3D
         DO itrc=1,NT(ng)
           IF (.not.got_var(idTvar(itrc)).and.Sout(idTvar(itrc),ng)) THEN
             IF (Master) WRITE (stdout,60) TRIM(Vname(1,idTvar(itrc))),  &
@@ -5061,7 +4581,7 @@
             RETURN
           END IF
         END DO
-#  ifdef SEDIMENT
+#   ifdef SEDIMENT
         DO i=1,NST
           IF (.not.got_var(idfrac(i)).and.Sout(idfrac(i),ng)) THEN
             IF (Master) WRITE (stdout,60) TRIM(Vname(1,idfrac(i))),     &
@@ -5084,8 +4604,8 @@
             RETURN
           END IF
         END DO
-#  endif
-#  if defined SEDIMENT || defined BBL_MODEL
+#   endif
+#   if defined SEDIMENT || defined BBL_MODEL
         DO i=1,MBOTP
           IF (.not.got_var(idBott(i)).and.Sout(idBott(i),ng)) THEN
             IF (Master) WRITE (stdout,60) TRIM(Vname(1,idBott(i))),     &
@@ -5094,8 +4614,16 @@
             RETURN
           END IF
         END DO
+#   endif
 #  endif
-# endif
+#  if defined WEC || defined WEC_VF
+!
+!  Scan Waves Effect on Currents variables from input NetCDF and
+!  activate switches for stations variables. Get variable IDs.
+!
+        CALL wec_def_station_pio (ng, model, ldef, Sout, STA)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+#  endif
 !
 !  Set unlimited time record dimension to the appropriate value.
 !

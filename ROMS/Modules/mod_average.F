@@ -6,7 +6,7 @@
    (defined TL_AVERAGES && defined TANGENT)
 !
 !git $Id$
-!svn $Id: mod_average.F 1151 2023-02-09 03:08:53Z arango $
+!svn $Id: mod_average.F 1178 2023-07-11 17:50:57Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -26,6 +26,10 @@
 !  avgzeta    Free surface (m).                                        !
 
 # ifdef SOLVE3D
+!  avgUwind   2D wind velocity component (m/s) in the XI-direction.    !
+!  avgVwind   2D wind velocity component (m/s) in the ETA-direction.   !
+!  avgUwindE  2D wind velocity component (m/s) to the east.            !
+!  avgVwindN  2D wind velocity component (m/s) to the north.           !
 !  avgu3d     3D velocity  component (m/s) in the XI-direction.        !
 !  avgv3d     3D velocity  component (m/s) in the ETA-direction.       !
 !  avgu3dE    3D Eastward  component (m/s) at RHO-points.              !
@@ -46,6 +50,10 @@
 #  endif
 #  ifdef LMD_BKPP
 !  avghbbl    Depth of oceanic bottom boundary layer (m).              !
+#  endif
+#  ifdef UV_KIRBY
+!  avguWave   Kirby and Chen velocity in the XI-direction.             !
+!  avgvWave   Kirby and Chen velocity in the ETA- direction.           !
 #  endif
 # endif
 # if defined FORWARD_WRITE && defined SOLVE3D
@@ -81,29 +89,19 @@
 !  avgrain    Surface net rain fall (kg/m2/s).                         !
 #  endif
 # endif
-
-# ifdef NEARSHORE_MELLOR
-!  Time-averaged radiation stresses.                                   !
+# ifdef WEC
+!
+!  Time-averaged Waves Effect on Currents fields.                      !
 !                                                                      !
 !  avgu2Sd    2D stokes velocity component (m/s) in the XI-direction.  !
 !  avgv2Sd    2D stokes velocity component (m/s) in the ETA-direction. !
-!  avgu2RS    2D radiation stress tensor in the XI-direction.          !
-!  avgv2RS    2D radiation stress tensor in the ETA-direction.         !
-!  avgSxx2d   2D radiation stress, xx-component.                       !
-!  avgSxy2d   2D radiation stress, xy-component.                       !
-!  avgSyy2d   2D radiation stress, yy-component.                       !
+!  avgu2rs    2D radiation stress tensor in the XI-direction.          !
+!  avgv2rs    2D radiation stress tensor in the ETA-direction.         !
 #  ifdef SOLVE3D
 !  avgu3Sd    3D stokes velocity component (m/s) in the XI-direction.  !
 !  avgv3Sd    3D stokes velocity component (m/s) in the ETA-direction. !
-!  avgu3RS    3D radiation stress tensor in the XI-direction.          !
-!  avgv3RS    3D radiation stress tensor in the ETA-direction.         !
-!  avgSxx3d   3D radiation stress, xx-component.                       !
-!  avgSxy3d   3D radiation stress, xy-component.                       !
-!  avgSyy3d   3D radiation stress, yy-component.                       !
-#   ifdef NEARSHORE_MELLOR05
-!  avgSzx3d   3D radiation stress, zx-component.                       !
-!  avgSzy3d   3D radiation stress, zy-component.                       !
-#   endif
+!  avgu3rs    3D radiation stress tensor in the XI-direction.          !
+!  avgv3rs    3D radiation stress tensor in the ETA-direction.         !
 #  endif
 # endif
 !                                                                      !
@@ -206,16 +204,33 @@
           real(r8), pointer :: avgbus(:,:)
           real(r8), pointer :: avgbvs(:,:)
 
+# ifdef BBL_MODEL
+          real(r8), pointer :: avgUbrs(:,:)
+          real(r8), pointer :: avgVbrs(:,:)
+          real(r8), pointer :: avgUbws(:,:)
+          real(r8), pointer :: avgVbws(:,:)
+          real(r8), pointer :: avgUbcs(:,:)
+          real(r8), pointer :: avgVbcs(:,:)
+          real(r8), pointer :: avgUVwc(:,:)
+
+          real(r8), pointer :: avgUbot(:,:)
+          real(r8), pointer :: avgVbot(:,:)
+          real(r8), pointer :: avgUbur(:,:)
+          real(r8), pointer :: avgVbvr(:,:)
+# endif
+
 # ifdef SOLVE3D
 #  if defined BULK_FLUXES || defined ECOSIM || defined ATM_PRESS
           real(r8), pointer :: avgPair(:,:)
 #  endif
-#  if defined BULK_FLUXES
+#  ifdef BULK_FLUXES
           real(r8), pointer :: avgTair(:,:)
 #  endif
 #  if defined BULK_FLUXES || defined ECOSIM
           real(r8), pointer :: avgUwind(:,:)
           real(r8), pointer :: avgVwind(:,:)
+          real(r8), pointer :: avgUwindE(:,:)
+          real(r8), pointer :: avgVwindN(:,:)
 #  endif
           real(r8), pointer :: avgstf(:,:)
           real(r8), pointer :: avgswf(:,:)
@@ -233,35 +248,73 @@
 #  endif
 # endif
 
-# ifdef NEARSHORE_MELLOR
+# ifdef WEC
 !
-!  Time-averaged radiation stresses.
+!  Time-averaged Waves Effects on Currents.
 !
           real(r8), pointer :: avgu2Sd(:,:)
           real(r8), pointer :: avgv2Sd(:,:)
+          real(r8), pointer :: avgu2rs(:,:)
+          real(r8), pointer :: avgv2rs(:,:)
 
-          real(r8), pointer :: avgu2RS(:,:)
-          real(r8), pointer :: avgv2RS(:,:)
-
-          real(r8), pointer :: avgSxx2d(:,:)
-          real(r8), pointer :: avgSxy2d(:,:)
-          real(r8), pointer :: avgSyy2d(:,:)
-
+          real(r8), pointer :: avgWztw(:,:)
+          real(r8), pointer :: avgWqsp(:,:)
+          real(r8), pointer :: avgWbeh(:,:)
 #  ifdef SOLVE3D
           real(r8), pointer :: avgu3Sd(:,:,:)
           real(r8), pointer :: avgv3Sd(:,:,:)
-
-          real(r8), pointer :: avgu3RS(:,:,:)
-          real(r8), pointer :: avgv3RS(:,:,:)
-
-          real(r8), pointer :: avgSxx3d(:,:,:)
-          real(r8), pointer :: avgSxy3d(:,:,:)
-          real(r8), pointer :: avgSyy3d(:,:,:)
-#   ifdef NEARSHORE_MELLOR05
-          real(r8), pointer :: avgSzx3d(:,:,:)
-          real(r8), pointer :: avgSzy3d(:,:,:)
-#   endif
+          real(r8), pointer :: avgw3Sd(:,:,:)
+          real(r8), pointer :: avgw3St(:,:,:)
+          real(r8), pointer :: avgu3rs(:,:,:)
+          real(r8), pointer :: avgv3rs(:,:,:)
 #  endif
+# endif
+# ifdef WAVES_HEIGHT
+          real(r8), pointer :: avgWamp(:,:)
+          real(r8), pointer :: avgWam2(:,:)
+# endif
+# ifdef WAVES_LENGTH
+          real(r8), pointer :: avgWlen(:,:)
+# endif
+# ifdef WAVES_LENGTHP
+          real(r8), pointer :: avgWlep(:,:)
+# endif
+# ifdef WAVES_DIR
+          real(r8), pointer :: avgWdir(:,:)
+# endif
+# ifdef WAVES_DIRP
+          real(r8), pointer :: avgWdip(:,:)
+# endif
+# ifdef WAVES_TOP_PERIOD
+          real(r8), pointer :: avgWptp(:,:)
+# endif
+# ifdef WAVES_BOT_PERIOD
+          real(r8), pointer :: avgWpbt(:,:)
+# endif
+# if defined BBL_MODEL    || defined BEDLOAD_VANDERA || \
+     defined WAV_COUPLING
+          real(r8), pointer :: avgWorb(:,:)
+# endif
+# if (defined BOTTOM_STREAMING && defined WEC_VF) || \
+     defined WAV_COUPLING
+          real(r8), pointer :: avgWdif(:,:)
+# endif
+# if defined TKE_WAVEDISS   || defined WAV_COUPLING   || \
+     defined WDISS_THORGUZA || defined WDISS_CHURTHOR || \
+     defined WAVES_DISS     || defined WDISS_INWAVE
+          real(r8), pointer :: avgWdib(:,:)
+          real(r8), pointer :: avgWdiw(:,:)
+# endif
+# ifdef ROLLER_SVENDSEN
+          real(r8), pointer :: avgWbrk(:,:)
+# endif
+# ifdef WEC_ROLLER
+          real(r8), pointer :: avgWdis(:,:)
+          real(r8), pointer :: avgWrol(:,:)
+# endif
+# ifdef UV_KIRBY
+          real(r8), pointer :: avguWav(:,:)
+          real(r8), pointer :: avgvWav(:,:)
 # endif
 !
 !  Time-averaged quadratic fields.
@@ -402,10 +455,12 @@
         allocate ( AVERAGE(ng) % avgAKt(LBi:UBi,LBj:UBj,0:N(ng)) )
         Dmem(ng)=Dmem(ng)+REAL(N(ng)+1,r8)*size2d
       END IF
+#    ifdef SALINITY
       IF (Aout(idSdif,ng)) THEN
         allocate ( AVERAGE(ng) % avgAKs(LBi:UBi,LBj:UBj,0:N(ng)) )
         Dmem(ng)=Dmem(ng)+REAL(N(ng)+1,r8)*size2d
       END IF
+#   endif
 #  endif
 #  ifdef LMD_SKPP
       IF (Aout(idHsbl,ng)) THEN
@@ -464,6 +519,54 @@
         Dmem(ng)=Dmem(ng)+size2d
       END IF
 
+# ifdef BBL_MODEL
+      IF (Aout(idUbrs,ng)) THEN
+        allocate ( AVERAGE(ng) % avgUbrs(LBi:UBi,LBj:UBj) )
+        Dmem(ng)=Dmem(ng)+size2d
+      END IF
+      IF (Aout(idVbrs,ng)) THEN
+        allocate ( AVERAGE(ng) % avgVbrs(LBi:UBi,LBj:UBj) )
+        Dmem(ng)=Dmem(ng)+size2d
+      END IF
+      IF (Aout(idUbws,ng)) THEN
+        allocate ( AVERAGE(ng) % avgUbws(LBi:UBi,LBj:UBj) )
+        Dmem(ng)=Dmem(ng)+size2d
+      END IF
+      IF (Aout(idVbws,ng)) THEN
+        allocate ( AVERAGE(ng) % avgVbws(LBi:UBi,LBj:UBj) )
+        Dmem(ng)=Dmem(ng)+size2d
+      END IF
+      IF (Aout(idUbcs,ng)) THEN
+        allocate ( AVERAGE(ng) % avgUbcs(LBi:UBi,LBj:UBj) )
+        Dmem(ng)=Dmem(ng)+size2d
+      END IF
+      IF (Aout(idVbcs,ng)) THEN
+        allocate ( AVERAGE(ng) % avgVbcs(LBi:UBi,LBj:UBj) )
+        Dmem(ng)=Dmem(ng)+size2d
+      END IF
+      IF (Aout(idUVwc,ng)) THEN
+        allocate ( AVERAGE(ng) % avgUVwc(LBi:UBi,LBj:UBj) )
+        Dmem(ng)=Dmem(ng)+size2d
+      END IF
+
+      IF (Aout(idUbot,ng)) THEN
+        allocate ( AVERAGE(ng) % avgUbot(LBi:UBi,LBj:UBj) )
+        Dmem(ng)=Dmem(ng)+size2d
+      END IF
+      IF (Aout(idVbot,ng)) THEN
+        allocate ( AVERAGE(ng) % avgVbot(LBi:UBi,LBj:UBj) )
+        Dmem(ng)=Dmem(ng)+size2d
+      END IF
+      IF (Aout(idUbur,ng)) THEN
+        allocate ( AVERAGE(ng) % avgUbur(LBi:UBi,LBj:UBj) )
+        Dmem(ng)=Dmem(ng)+size2d
+      END IF
+      IF (Aout(idVbvr,ng)) THEN
+        allocate ( AVERAGE(ng) % avgVbvr(LBi:UBi,LBj:UBj) )
+        Dmem(ng)=Dmem(ng)+size2d
+      END IF
+# endif
+
 # ifdef SOLVE3D
 #  if defined BULK_FLUXES || defined ECOSIM || defined ATM_PRESS
       IF (Aout(idPair,ng)) THEN
@@ -471,7 +574,7 @@
         Dmem(ng)=Dmem(ng)+size2d
       END IF
 #  endif
-#  if defined BULK_FLUXES
+#  ifdef BULK_FLUXES
       IF (Aout(idTair,ng)) THEN
         allocate ( AVERAGE(ng) % avgTair(LBi:UBi,LBj:UBj) )
         Dmem(ng)=Dmem(ng)+size2d
@@ -484,6 +587,15 @@
       END IF
       IF (Aout(idVair,ng)) THEN
         allocate ( AVERAGE(ng) % avgVwind(LBi:UBi,LBj:UBj) )
+        Dmem(ng)=Dmem(ng)+size2d
+      END IF
+
+      IF (Aout(idUaiE,ng)) THEN
+        allocate ( AVERAGE(ng) % avgUwindE(LBi:UBi,LBj:UBj) )
+        Dmem(ng)=Dmem(ng)+size2d
+      END IF
+      IF (Aout(idVaiN,ng)) THEN
+        allocate ( AVERAGE(ng) % avgVwindN(LBi:UBi,LBj:UBj) )
         Dmem(ng)=Dmem(ng)+size2d
       END IF
 #  endif
@@ -529,9 +641,9 @@
 #  endif
 # endif
 
-# ifdef NEARSHORE_MELLOR
+# ifdef WEC
 !
-!  Time-averaged radiation stresses.
+!  Time-averaged Waves Effects on Currents.
 !
       IF (Aout(idU2Sd,ng)) THEN
         allocate ( AVERAGE(ng) % avgu2Sd(LBi:UBi,LBj:UBj) )
@@ -543,24 +655,24 @@
       END IF
 
       IF (Aout(idU2rs,ng)) THEN
-        allocate ( AVERAGE(ng) % avgu2RS(LBi:UBi,LBj:UBj) )
+        allocate ( AVERAGE(ng) % avgu2rs(LBi:UBi,LBj:UBj) )
         Dmem(ng)=Dmem(ng)+size2d
       END IF
       IF (Aout(idV2rs,ng)) THEN
-        allocate ( AVERAGE(ng) % avgv2RS(LBi:UBi,LBj:UBj) )
+        allocate ( AVERAGE(ng) % avgv2rs(LBi:UBi,LBj:UBj) )
         Dmem(ng)=Dmem(ng)+size2d
       END IF
 
-      IF (Aout(idW2xx,ng)) THEN
-        allocate ( AVERAGE(ng) % avgSxx2d(LBi:UBi,LBj:UBj) )
+      IF (Aout(idWztw,ng)) THEN
+        allocate ( AVERAGE(ng) % avgWztw(LBi:UBi,LBj:UBj) )
         Dmem(ng)=Dmem(ng)+size2d
       END IF
-      IF (Aout(idW2xy,ng)) THEN
-        allocate ( AVERAGE(ng) % avgSxy2d(LBi:UBi,LBj:UBj) )
+      IF (Aout(idWqsp,ng)) THEN
+        allocate ( AVERAGE(ng) % avgWqsp(LBi:UBi,LBj:UBj) )
         Dmem(ng)=Dmem(ng)+size2d
       END IF
-      IF (Aout(idW2yy,ng)) THEN
-        allocate ( AVERAGE(ng) % avgSyy2d(LBi:UBi,LBj:UBj) )
+      IF (Aout(idWbeh,ng)) THEN
+        allocate ( AVERAGE(ng) % avgWbeh(LBi:UBi,LBj:UBj) )
         Dmem(ng)=Dmem(ng)+size2d
       END IF
 
@@ -573,39 +685,134 @@
         allocate ( AVERAGE(ng) % avgv3Sd(LBi:UBi,LBj:UBj,N(ng)) )
         Dmem(ng)=Dmem(ng)+REAL(N(ng),r8)*size2d
       END IF
-
+      IF (Aout(idW3Sd,ng)) THEN
+        allocate ( AVERAGE(ng) % avgW3Sd(LBi:UBi,LBj:UBj,0:N(ng)) )
+        Dmem(ng)=Dmem(ng)+REAL(N(ng)+1,r8)*size2d
+      END IF
+      IF (Aout(idW3St,ng)) THEN
+        allocate ( AVERAGE(ng) % avgW3St(LBi:UBi,LBj:UBj,0:N(ng)) )
+        Dmem(ng)=Dmem(ng)+REAL(N(ng)+1,r8)*size2d
+      END IF
       IF (Aout(idU3rs,ng)) THEN
-        allocate ( AVERAGE(ng) % avgu3RS(LBi:UBi,LBj:UBj,N(ng)) )
+        allocate ( AVERAGE(ng) % avgu3rs(LBi:UBi,LBj:UBj,N(ng)) )
         Dmem(ng)=Dmem(ng)+REAL(N(ng),r8)*size2d
       END IF
       IF (Aout(idV3rs,ng)) THEN
-        allocate ( AVERAGE(ng) % avgv3RS(LBi:UBi,LBj:UBj,N(ng)) )
+        allocate ( AVERAGE(ng) % avgv3rs(LBi:UBi,LBj:UBj,N(ng)) )
         Dmem(ng)=Dmem(ng)+REAL(N(ng),r8)*size2d
       END IF
-
-      IF (Aout(idW3xx,ng)) THEN
-        allocate ( AVERAGE(ng) % avgSxx3d(LBi:UBi,LBj:UBj,N(ng)) )
-        Dmem(ng)=Dmem(ng)+REAL(N(ng),r8)*size2d
-      END IF
-      IF (Aout(idW3xy,ng)) THEN
-        allocate ( AVERAGE(ng) % avgSxy3d(LBi:UBi,LBj:UBj,N(ng)) )
-        Dmem(ng)=Dmem(ng)+REAL(N(ng),r8)*size2d
-      END IF
-      IF (Aout(idW3yy,ng)) THEN
-        allocate ( AVERAGE(ng) % avgSyy3d(LBi:UBi,LBj:UBj,N(ng)) )
-        Dmem(ng)=Dmem(ng)+REAL(N(ng),r8)*size2d
-      END IF
-#   ifdef NEARSHORE_MELLOR05
-      IF (Aout(idW3zx,ng)) THEN
-        allocate ( AVERAGE(ng) % avgSzx3d(LBi:UBi,LBj:UBj,N(ng)) )
-        Dmem(ng)=Dmem(ng)+REAL(N(ng),r8)*size2d
-      END IF
-      IF (Aout(idW3zy,ng)) THEN
-        allocate ( AVERAGE(ng) % avgSzy3d(LBi:UBi,LBj:UBj,N(ng)) )
-        Dmem(ng)=Dmem(ng)+REAL(N(ng),r8)*size2d
-      END IF
-#   endif
 #  endif
+# endif
+
+# ifdef WAVES_HEIGHT
+      IF (Aout(idWamp,ng)) THEN
+        allocate ( AVERAGE(ng) % avgWamp(LBi:UBi,LBj:UBj) )
+        Dmem(ng)=Dmem(ng)+size2d
+      END IF
+      IF (Aout(idWam2,ng)) THEN
+        allocate ( AVERAGE(ng) % avgWam2(LBi:UBi,LBj:UBj) )
+        Dmem(ng)=Dmem(ng)+size2d
+      END IF
+# endif
+
+# ifdef WAVES_LENGTH
+      IF (Aout(idWlen,ng)) THEN
+        allocate ( AVERAGE(ng) % avgWlen(LBi:UBi,LBj:UBj) )
+        Dmem(ng)=Dmem(ng)+size2d
+      END IF
+# endif
+
+# ifdef WAVES_LENGTHP
+      IF (Aout(idWlep,ng)) THEN
+        allocate ( AVERAGE(ng) % avgWlep(LBi:UBi,LBj:UBj) )
+        Dmem(ng)=Dmem(ng)+size2d
+      END IF
+# endif
+
+# ifdef WAVES_DIR
+      IF (Aout(idWdir,ng)) THEN
+        allocate ( AVERAGE(ng) % avgWdir(LBi:UBi,LBj:UBj) )
+        Dmem(ng)=Dmem(ng)+size2d
+      END IF
+# endif
+
+# ifdef WAVES_DIRP
+      IF (Aout(idWdip,ng)) THEN
+        allocate ( AVERAGE(ng) % avgWdip(LBi:UBi,LBj:UBj) )
+        Dmem(ng)=Dmem(ng)+size2d
+      END IF
+# endif
+
+# ifdef WAVES_TOP_PERIOD
+      IF (Aout(idWptp,ng)) THEN
+        allocate ( AVERAGE(ng) % avgWptp(LBi:UBi,LBj:UBj) )
+        Dmem(ng)=Dmem(ng)+size2d
+      END IF
+# endif
+
+# ifdef WAVES_BOT_PERIOD
+      IF (Aout(idWpbt,ng)) THEN
+        allocate ( AVERAGE(ng) % avgWpbt(LBi:UBi,LBj:UBj) )
+        Dmem(ng)=Dmem(ng)+size2d
+      END IF
+# endif
+
+# if defined BBL_MODEL    || defined BEDLOAD_VANDERA || \
+     defined WAV_COUPLING
+      IF (Aout(idWorb,ng)) THEN
+        allocate ( AVERAGE(ng) % avgWorb(LBi:UBi,LBj:UBj) )
+        Dmem(ng)=Dmem(ng)+size2d
+      END IF
+# endif
+
+# if (defined BOTTOM_STREAMING && defined WEC_VF) || \
+     defined WAV_COUPLING
+      IF (Aout(idWdif,ng)) THEN
+        allocate ( AVERAGE(ng) % avgWdif(LBi:UBi,LBj:UBj) )
+        Dmem(ng)=Dmem(ng)+size2d
+      END IF
+# endif
+
+# if defined TKE_WAVEDISS   || defined WAV_COUPLING   || \
+     defined WDISS_THORGUZA || defined WDISS_CHURTHOR || \
+     defined WAVES_DISS     || defined WDISS_INWAVE
+      IF (Aout(idWdib,ng)) THEN
+        allocate ( AVERAGE(ng) % avgWdib(LBi:UBi,LBj:UBj) )
+        Dmem(ng)=Dmem(ng)+size2d
+      END IF
+      IF (Aout(idWdiw,ng)) THEN
+        allocate ( AVERAGE(ng) % avgWdiw(LBi:UBi,LBj:UBj) )
+        Dmem(ng)=Dmem(ng)+size2d
+      END IF
+# endif
+
+# ifdef ROLLER_SVENDSEN
+      IF (Aout(idWbrk,ng)) THEN
+        allocate ( AVERAGE(ng) % avgWbrk(LBi:UBi,LBj:UBj) )
+        Dmem(ng)=Dmem(ng)+size2d
+      END IF
+# endif
+
+# ifdef WEC_ROLLER
+      IF (Aout(idWdis,ng)) THEN
+        allocate ( AVERAGE(ng) % avgWdis(LBi:UBi,LBj:UBj) )
+        Dmem(ng)=Dmem(ng)+size2d
+      END IF
+      IF (Aout(idWrol,ng)) THEN
+        allocate ( AVERAGE(ng) % avgWrol(LBi:UBi,LBj:UBj) )
+        Dmem(ng)=Dmem(ng)+size2d
+      END IF
+# endif
+
+# ifdef UV_KIRBY
+      IF (Aout(idUwav,ng)) THEN
+        allocate ( AVERAGE(ng) % avgUwav(LBi:UBi,LBj:UBj) )
+        Dmem(ng)=Dmem(ng)+size2d
+      END IF
+      IF (Aout(idVwav,ng)) THEN
+        allocate ( AVERAGE(ng) % avgVwav(LBi:UBi,LBj:UBj) )
+        Dmem(ng)=Dmem(ng)+size2d
+      END IF
 # endif
 !
 !  Time-averaged quadratic fields.
@@ -679,6 +886,7 @@
         allocate ( AVERAGE(ng) % avgrvor2d(LBi:UBi,LBj:UBj) )
         Dmem(ng)=Dmem(ng)+size2d
       END IF
+
 # ifdef SOLVE3D
       IF (Aout(id3dPV,ng)) THEN
         allocate ( AVERAGE(ng) % avgpvor3d(LBi:UBi,LBj:UBj,N(ng)) )
@@ -875,6 +1083,63 @@
      &                   __LINE__, 'AVERAGE(ng)%avgbvs')) RETURN
       END IF
 
+# ifdef BBL_MODEL
+      IF (Aout(idUbrs,ng)) THEN
+        IF (.not.destroy(ng, AVERAGE(ng)%avgUbrs, MyFile,               &
+     &                   __LINE__, 'AVERAGE(ng)%avgUbrs')) RETURN
+      END IF
+
+      IF (Aout(idVbrs,ng)) THEN
+        IF (.not.destroy(ng, AVERAGE(ng)%avgVbrs, MyFile,               &
+     &                   __LINE__, 'AVERAGE(ng)%avgVbrs')) RETURN
+      END IF
+
+      IF (Aout(idUbws,ng)) THEN
+        IF (.not.destroy(ng, AVERAGE(ng)%avgUbws, MyFile,               &
+     &                   __LINE__, 'AVERAGE(ng)%avgUbws')) RETURN
+      END IF
+
+      IF (Aout(idVbws,ng)) THEN
+        IF (.not.destroy(ng, AVERAGE(ng)%avgVbws, MyFile,               &
+     &                   __LINE__, 'AVERAGE(ng)%avgVbws')) RETURN
+      END IF
+
+      IF (Aout(idUbcs,ng)) THEN
+        IF (.not.destroy(ng, AVERAGE(ng)%avgUbcs, MyFile,               &
+     &                   __LINE__, 'AVERAGE(ng)%avgUbcs')) RETURN
+      END IF
+
+      IF (Aout(idVbcs,ng)) THEN
+        IF (.not.destroy(ng, AVERAGE(ng)%avgVbcs, MyFile,               &
+     &                   __LINE__, 'AVERAGE(ng)%avgVbcs')) RETURN
+      END IF
+
+      IF (Aout(idUVwc,ng)) THEN
+        IF (.not.destroy(ng, AVERAGE(ng)%avgUVwc, MyFile,               &
+     &                   __LINE__, 'AVERAGE(ng)%avgUVwc')) RETURN
+      END IF
+
+      IF (Aout(idUbot,ng)) THEN
+        IF (.not.destroy(ng, AVERAGE(ng)%avgUbot, MyFile,               &
+     &                   __LINE__, 'AVERAGE(ng)%avgUbot')) RETURN
+      END IF
+
+      IF (Aout(idVbot,ng)) THEN
+        IF (.not.destroy(ng, AVERAGE(ng)%avgVbot, MyFile,               &
+     &                   __LINE__, 'AVERAGE(ng)%avgVbot')) RETURN
+      END IF
+
+      IF (Aout(idUbur,ng)) THEN
+        IF (.not.destroy(ng, AVERAGE(ng)%avgUbur, MyFile,               &
+     &                   __LINE__, 'AVERAGE(ng)%avgUbur')) RETURN
+      END IF
+
+      IF (Aout(idVbvr,ng)) THEN
+        IF (.not.destroy(ng, AVERAGE(ng)%avgVbvr, MyFile,               &
+     &                   __LINE__, 'AVERAGE(ng)%avgVbvr')) RETURN
+      END IF
+# endif
+
 #  ifdef SOLVE3D
 
 #   if defined BULK_FLUXES || defined ECOSIM || defined ATM_PRESS
@@ -884,7 +1149,7 @@
       END IF
 #   endif
 
-#   if defined BULK_FLUXES
+#   ifdef BULK_FLUXES
       IF (Aout(idTair,ng)) THEN
         IF (.not.destroy(ng, AVERAGE(ng)%avgTair, MyFile,               &
      &                   __LINE__, 'AVERAGE(ng)%avgTair')) RETURN
@@ -900,6 +1165,15 @@
       IF (Aout(idVair,ng)) THEN
         IF (.not.destroy(ng, AVERAGE(ng)%avgVwind, MyFile,              &
      &                   __LINE__, 'AVERAGE(ng)%avgVwind')) RETURN
+      END IF
+
+      IF (Aout(idUaiE,ng)) THEN
+        IF (.not.destroy(ng, AVERAGE(ng)%avgUwindE, MyFile,             &
+     &                   __LINE__, 'AVERAGE(ng)%avgUwindE')) RETURN
+      END IF
+      IF (Aout(idVaiN,ng)) THEN
+        IF (.not.destroy(ng, AVERAGE(ng)%avgVwindN, MyFile,             &
+     &                   __LINE__, 'AVERAGE(ng)%avgVwindN')) RETURN
       END IF
 #   endif
 
@@ -952,9 +1226,9 @@
 #   endif
 #  endif
 
-#  ifdef NEARSHORE_MELLOR
+#  ifdef WEC
 !
-!  Time-averaged radiation stresses.
+!  Time-averaged Waves Effects on Currents.
 !
       IF (Aout(idU2Sd,ng)) THEN
         IF (.not.destroy(ng, AVERAGE(ng)%avgu2Sd, MyFile,               &
@@ -976,19 +1250,17 @@
      &                   __LINE__, 'AVERAGE(ng)%avgv2RS')) RETURN
       END IF
 
-      IF (Aout(idW2xx,ng)) THEN
-        IF (.not.destroy(ng, AVERAGE(ng)%avgSxx2d, MyFile,              &
-     &                   __LINE__, 'AVERAGE(ng)%avgSxx2d')) RETURN
+      IF (Aout(idWztw,ng)) THEN
+        IF (.not.destroy(ng, AVERAGE(ng)%avgWztw, MyFile,               &
+     &                   __LINE__, 'AVERAGE(ng)%avgWztw')) RETURN
       END IF
-
-      IF (Aout(idW2xy,ng)) THEN
-        IF (.not.destroy(ng, AVERAGE(ng)%avgSxy2d, MyFile,              &
-     &                   __LINE__, 'AVERAGE(ng)%avgSxy2d')) RETURN
+      IF (Aout(idWqsp,ng)) THEN
+        IF (.not.destroy(ng, AVERAGE(ng)%avgWqsp, MyFile,               &
+     &                   __LINE__, 'AVERAGE(ng)%avgWqsp')) RETURN
       END IF
-
-      IF (Aout(idW2yy,ng)) THEN
-        IF (.not.destroy(ng, AVERAGE(ng)%avgSyy2d, MyFile,              &
-     &                   __LINE__, 'AVERAGE(ng)%avgSyy2d')) RETURN
+      IF (Aout(idWbeh,ng)) THEN
+        IF (.not.destroy(ng, AVERAGE(ng)%avgWbeh, MyFile,               &
+     &                   __LINE__, 'AVERAGE(ng)%avgWbeh')) RETURN
       END IF
 
 #   ifdef SOLVE3D
@@ -1001,7 +1273,14 @@
         IF (.not.destroy(ng, AVERAGE(ng)%avgv3Sd, MyFile,               &
      &                   __LINE__, 'AVERAGE(ng)%avgv3Sd')) RETURN
       END IF
-
+      IF (Aout(idW3Sd,ng)) THEN
+        IF (.not.destroy(ng, AVERAGE(ng)%avgW3Sd, MyFile,               &
+     &                   __LINE__, 'AVERAGE(ng)%avgW3Sd')) RETURN
+      END IF
+      IF (Aout(idW3St,ng)) THEN
+        IF (.not.destroy(ng, AVERAGE(ng)%avgW3St, MyFile,               &
+     &                   __LINE__, 'AVERAGE(ng)%avgW3St')) RETURN
+      END IF
       IF (Aout(idU3rs,ng)) THEN
         IF (.not.destroy(ng, AVERAGE(ng)%avgu3RS, MyFile,               &
      &                   __LINE__, 'AVERAGE(ng)%avgu3RS')) RETURN
@@ -1011,34 +1290,122 @@
         IF (.not.destroy(ng, AVERAGE(ng)%avgv3RS, MyFile,               &
      &                   __LINE__, 'AVERAGE(ng)%avgv3RS')) RETURN
       END IF
-
-      IF (Aout(idW3xx,ng)) THEN
-        IF (.not.destroy(ng, AVERAGE(ng)%avgSxx3d, MyFile,              &
-     &                   __LINE__, 'AVERAGE(ng)%avgSxx3d')) RETURN
-      END IF
-
-      IF (Aout(idW3xy,ng)) THEN
-        IF (.not.destroy(ng, AVERAGE(ng)%avgSxy3d, MyFile,              &
-     &                   __LINE__, 'AVERAGE(ng)%avgSxy3d')) RETURN
-      END IF
-
-      IF (Aout(idW3yy,ng)) THEN
-        IF (.not.destroy(ng, AVERAGE(ng)%avgSyy3d, MyFile,              &
-     &                   __LINE__, 'AVERAGE(ng)%avgSyy3d')) RETURN
-      END IF
-
-#    ifdef NEARSHORE_MELLOR05
-      IF (Aout(idW3zx,ng)) THEN
-        IF (.not.destroy(ng, AVERAGE(ng)%avgSzx3d, MyFile,              &
-     &                   __LINE__, 'AVERAGE(ng)%avgSzx3d')) RETURN
-      END IF
-
-      IF (Aout(idW3zy,ng)) THEN
-        IF (.not.destroy(ng, AVERAGE(ng)%avgSzy3d, MyFile,              &
-     &                   __LINE__, 'AVERAGE(ng)%avgSzy3d')) RETURN
-      END IF
-#    endif
 #   endif
+#  endif
+
+#  ifdef WAVES_HEIGHT
+      IF (Aout(idWamp,ng)) THEN
+        IF (.not.destroy(ng, AVERAGE(ng)%avgWamp, MyFile,              &
+     &                   __LINE__, 'AVERAGE(ng)%avgWamp')) RETURN
+      END IF
+
+      IF (Aout(idWam2,ng)) THEN
+        IF (.not.destroy(ng, AVERAGE(ng)%avgWam2, MyFile,              &
+     &                   __LINE__, 'AVERAGE(ng)%avgWam2')) RETURN
+      END IF
+#  endif
+
+#  ifdef WAVES_LENGTH
+      IF (Aout(idWlen,ng)) THEN
+        IF (.not.destroy(ng, AVERAGE(ng)%avgWlen, MyFile,              &
+     &                   __LINE__, 'AVERAGE(ng)%avgWlen')) RETURN
+      END IF
+#  endif
+
+#  ifdef WAVES_LENGTHP
+      IF (Aout(idWlep,ng)) THEN
+        IF (.not.destroy(ng, AVERAGE(ng)%avgWlep, MyFile,              &
+     &                   __LINE__, 'AVERAGE(ng)%avgWlep')) RETURN
+      END IF
+#  endif
+
+#  ifdef WAVES_DIR
+      IF (Aout(idWdir,ng)) THEN
+        IF (.not.destroy(ng, AVERAGE(ng)%avgWdir, MyFile,              &
+     &                   __LINE__, 'AVERAGE(ng)%avgWdir')) RETURN
+      END IF
+#  endif
+
+#  ifdef WAVES_DIRP
+      IF (Aout(idWdip,ng)) THEN
+        IF (.not.destroy(ng, AVERAGE(ng)%avgWdip, MyFile,              &
+     &                   __LINE__, 'AVERAGE(ng)%avgWdip')) RETURN
+      END IF
+#  endif
+
+#  ifdef WAVES_TOP_PERIOD
+      IF (Aout(idWptp,ng)) THEN
+        IF (.not.destroy(ng, AVERAGE(ng)%avgWptp, MyFile,              &
+     &                   __LINE__, 'AVERAGE(ng)%avgWptp')) RETURN
+      END IF
+#  endif
+
+#  ifdef WAVES_BOT_PERIOD
+      IF (Aout(idWpbt,ng)) THEN
+        IF (.not.destroy(ng, AVERAGE(ng)%avgWpbt, MyFile,              &
+     &                   __LINE__, 'AVERAGE(ng)%avgWpbt')) RETURN
+      END IF
+#  endif
+
+#  if defined BBL_MODEL    || defined BEDLOAD_VANDERA || \
+      defined WAV_COUPLING
+      IF (Aout(idWorb,ng)) THEN
+        IF (.not.destroy(ng, AVERAGE(ng)%avgWorb, MyFile,              &
+     &                   __LINE__, 'AVERAGE(ng)%avgWorb')) RETURN
+      END IF
+#  endif
+
+# if (defined BOTTOM_STREAMING && defined WEC_VF) || \
+     defined WAV_COUPLING
+      IF (Aout(idWdif,ng)) THEN
+        IF (.not.destroy(ng, AVERAGE(ng)%avgWdif, MyFile,              &
+     &                   __LINE__, 'AVERAGE(ng)%avgWdif')) RETURN
+      END IF
+#  endif
+
+#  if defined TKE_WAVEDISS   || defined WAV_COUPLING   || \
+      defined WDISS_THORGUZA || defined WDISS_CHURTHOR || \
+      defined WAVES_DISS     || defined WDISS_INWAVE
+      IF (Aout(idWdib,ng)) THEN
+        IF (.not.destroy(ng, AVERAGE(ng)%avgWdib, MyFile,              &
+     &                   __LINE__, 'AVERAGE(ng)%avgWdib')) RETURN
+      END IF
+
+      IF (Aout(idWdiw,ng)) THEN
+        IF (.not.destroy(ng, AVERAGE(ng)%avgWdiw, MyFile,              &
+     &                   __LINE__, 'AVERAGE(ng)%avgWdiw')) RETURN
+      END IF
+#  endif
+
+#  ifdef ROLLER_SVENDSEN
+      IF (Aout(idWbrk,ng)) THEN
+        IF (.not.destroy(ng, AVERAGE(ng)%avgWbrk, MyFile,              &
+     &                   __LINE__, 'AVERAGE(ng)%avgWbrk')) RETURN
+      END IF
+#  endif
+
+#  ifdef WEC_ROLLER
+      IF (Aout(idWdis,ng)) THEN
+        IF (.not.destroy(ng, AVERAGE(ng)%avgWdis, MyFile,              &
+     &                   __LINE__, 'AVERAGE(ng)%avgWdis')) RETURN
+      END IF
+
+      IF (Aout(idWrol,ng)) THEN
+        IF (.not.destroy(ng, AVERAGE(ng)%avgWrol, MyFile,              &
+     &                   __LINE__, 'AVERAGE(ng)%avgWrol')) RETURN
+      END IF
+#  endif
+
+#  ifdef UV_KIRBY
+      IF (Aout(idUwav,ng)) THEN
+        IF (.not.destroy(ng, AVERAGE(ng)%avgUwav, MyFile,              &
+     &                   __LINE__, 'AVERAGE(ng)%avgUwav')) RETURN
+      END IF
+
+      IF (Aout(idVwav,ng)) THEN
+        IF (.not.destroy(ng, AVERAGE(ng)%avgVwav, MyFile,              &
+     &                   __LINE__, 'AVERAGE(ng)%avgVwav')) RETURN
+      END IF
 #  endif
 !
 !  Time-averaged quadratic fields.
@@ -1262,6 +1629,7 @@
           END DO
         END DO
       END IF
+
       IF (Aout(idVvel,ng)) THEN
         DO k=1,N(ng)
           DO j=Jmin,Jmax
@@ -1341,6 +1709,7 @@
           END DO
         END DO
       END IF
+
       IF (Aout(idTdif,ng)) THEN
         DO k=0,N(ng)
           DO j=Jmin,Jmax
@@ -1350,6 +1719,8 @@
           END DO
         END DO
       END IF
+
+#   ifdef SALINITY
       IF (Aout(idSdif,ng)) THEN
         DO k=0,N(ng)
           DO j=Jmin,Jmax
@@ -1359,6 +1730,7 @@
           END DO
         END DO
       END IF
+#   endif
 #  endif
 
 #  ifdef LMD_SKPP
@@ -1449,6 +1821,91 @@
         END DO
       END IF
 
+# ifdef BBL_MODEL
+      IF (Aout(idUbrs,ng)) THEN
+        DO j=Jmin,Jmax
+          DO i=Imin,Imax
+            AVERAGE(ng) % avgUbrs(i,j) = IniVal
+          END DO
+        END DO
+      END IF
+      IF (Aout(idVbrs,ng)) THEN
+        DO j=Jmin,Jmax
+          DO i=Imin,Imax
+            AVERAGE(ng) % avgVbrs(i,j) = IniVal
+          END DO
+        END DO
+      END IF
+
+      IF (Aout(idUbws,ng)) THEN
+        DO j=Jmin,Jmax
+          DO i=Imin,Imax
+            AVERAGE(ng) % avgUbws(i,j) = IniVal
+          END DO
+        END DO
+      END IF
+      IF (Aout(idVbws,ng)) THEN
+        DO j=Jmin,Jmax
+          DO i=Imin,Imax
+            AVERAGE(ng) % avgVbws(i,j) = IniVal
+          END DO
+        END DO
+      END IF
+
+      IF (Aout(idUbcs,ng)) THEN
+        DO j=Jmin,Jmax
+          DO i=Imin,Imax
+            AVERAGE(ng) % avgUbcs(i,j) = IniVal
+          END DO
+        END DO
+      END IF
+      IF (Aout(idVbcs,ng)) THEN
+        DO j=Jmin,Jmax
+          DO i=Imin,Imax
+            AVERAGE(ng) % avgVbcs(i,j) = IniVal
+          END DO
+        END DO
+      END IF
+
+      IF (Aout(idUVwc,ng)) THEN
+        DO j=Jmin,Jmax
+          DO i=Imin,Imax
+            AVERAGE(ng) % avgUVwc(i,j) = IniVal
+          END DO
+        END DO
+      END IF
+
+      IF (Aout(idUbot,ng)) THEN
+        DO j=Jmin,Jmax
+          DO i=Imin,Imax
+            AVERAGE(ng) % avgUbot(i,j) = IniVal
+          END DO
+        END DO
+      END IF
+      IF (Aout(idVbot,ng)) THEN
+        DO j=Jmin,Jmax
+          DO i=Imin,Imax
+            AVERAGE(ng) % avgVbot(i,j) = IniVal
+          END DO
+        END DO
+      END IF
+
+      IF (Aout(idUbur,ng)) THEN
+        DO j=Jmin,Jmax
+          DO i=Imin,Imax
+            AVERAGE(ng) % avgUbur(i,j) = IniVal
+          END DO
+        END DO
+      END IF
+      IF (Aout(idVbvr,ng)) THEN
+        DO j=Jmin,Jmax
+          DO i=Imin,Imax
+            AVERAGE(ng) % avgVbvr(i,j) = IniVal
+          END DO
+        END DO
+      END IF
+# endif
+
 # ifdef SOLVE3D
 #  if defined BULK_FLUXES || defined ECOSIM || defined ATM_PRESS
       IF (Aout(idPair,ng)) THEN
@@ -1459,7 +1916,8 @@
         END DO
       END IF
 #  endif
-#  if defined BULK_FLUXES
+
+#  ifdef BULK_FLUXES
       IF (Aout(idTair,ng)) THEN
         DO j=Jmin,Jmax
           DO i=Imin,Imax
@@ -1468,6 +1926,7 @@
         END DO
       END IF
 #  endif
+
 #  if defined BULK_FLUXES || defined ECOSIM
       IF (Aout(idUair,ng)) THEN
         DO j=Jmin,Jmax
@@ -1483,7 +1942,23 @@
           END DO
         END DO
       END IF
+
+      IF (Aout(idUaiE,ng)) THEN
+        DO j=Jmin,Jmax
+          DO i=Imin,Imax
+            AVERAGE(ng) % avgUwindE(i,j) = IniVal
+          END DO
+        END DO
+      END IF
+      IF (Aout(idVaiN,ng)) THEN
+        DO j=Jmin,Jmax
+          DO i=Imin,Imax
+            AVERAGE(ng) % avgVwindN(i,j) = IniVal
+          END DO
+        END DO
+      END IF
 #  endif
+
       IF (Aout(idTsur(itemp),ng)) THEN
         DO j=Jmin,Jmax
           DO i=Imin,Imax
@@ -1491,6 +1966,7 @@
           END DO
         END DO
       END IF
+
 #  ifdef SALINITY
       IF (Aout(idTsur(isalt),ng)) THEN
         DO j=Jmin,Jmax
@@ -1500,6 +1976,7 @@
         END DO
       END IF
 #  endif
+
 #  ifdef SHORTWAVE
       IF (Aout(idSrad,ng)) THEN
         DO j=Jmin,Jmax
@@ -1518,6 +1995,7 @@
           END DO
         END DO
       END IF
+
       IF (Aout(idLrad,ng)) THEN
         DO j=Jmin,Jmax
           DO i=Imin,Imax
@@ -1525,6 +2003,7 @@
           END DO
         END DO
       END IF
+
       IF (Aout(idShea,ng)) THEN
         DO j=Jmin,Jmax
           DO i=Imin,Imax
@@ -1542,6 +2021,7 @@
           END DO
         END DO
       END IF
+
       IF (Aout(idrain,ng)) THEN
         DO j=Jmin,Jmax
           DO i=Imin,Imax
@@ -1552,9 +2032,9 @@
 #  endif
 # endif
 
-# ifdef NEARSHORE_MELLOR
+# ifdef WEC
 !
-!  Time-averaged radiation stresses.
+!  Time-averaged Waves Effects on Currents.
 !
       IF (Aout(idU2Sd,ng)) THEN
         DO j=Jmin,Jmax
@@ -1574,36 +2054,38 @@
       IF (Aout(idU2rs,ng)) THEN
         DO j=Jmin,Jmax
           DO i=Imin,Imax
-            AVERAGE(ng) % avgu2RS(i,j) = IniVal
+            AVERAGE(ng) % avgu2rs(i,j) = IniVal
           END DO
         END DO
       END IF
       IF (Aout(idV2rs,ng)) THEN
         DO j=Jmin,Jmax
           DO i=Imin,Imax
-            AVERAGE(ng) % avgv2RS(i,j) = IniVal
+            AVERAGE(ng) % avgv2rs(i,j) = IniVal
           END DO
         END DO
       END IF
 
-      IF (Aout(idW2xx,ng)) THEN
+      IF (Aout(idWztw,ng)) THEN
         DO j=Jmin,Jmax
           DO i=Imin,Imax
-            AVERAGE(ng) % avgSxx2d(i,j) = IniVal
+            AVERAGE(ng) % avgWztw(i,j) = IniVal
           END DO
         END DO
       END IF
-      IF (Aout(idW2xy,ng)) THEN
+
+      IF (Aout(idWqsp,ng)) THEN
         DO j=Jmin,Jmax
           DO i=Imin,Imax
-            AVERAGE(ng) % avgSxy2d(i,j) = IniVal
+            AVERAGE(ng) % avgWqsp(i,j) = IniVal
           END DO
         END DO
       END IF
-      IF (Aout(idW2yy,ng)) THEN
+
+      IF (Aout(idWbeh,ng)) THEN
         DO j=Jmin,Jmax
           DO i=Imin,Imax
-            AVERAGE(ng) % avgSyy2d(i,j) = IniVal
+            AVERAGE(ng) % avgWbeh(i,j) = IniVal
           END DO
         END DO
       END IF
@@ -1628,11 +2110,30 @@
         END DO
       END IF
 
+      IF (Aout(idW3Sd,ng)) THEN
+        DO k=0,N(ng)
+          DO j=Jmin,Jmax
+            DO i=Imin,Imax
+              AVERAGE(ng) % avgW3Sd(i,j,k) = IniVal
+            END DO
+          END DO
+        END DO
+      END IF
+      IF (Aout(idW3St,ng)) THEN
+        DO k=0,N(ng)
+          DO j=Jmin,Jmax
+            DO i=Imin,Imax
+              AVERAGE(ng) % avgW3St(i,j,k) = IniVal
+            END DO
+          END DO
+        END DO
+      END IF
+
       IF (Aout(idU3rs,ng)) THEN
         DO k=1,N(ng)
           DO j=Jmin,Jmax
             DO i=Imin,Imax
-              AVERAGE(ng) % avgu3RS(i,j,k) = IniVal
+              AVERAGE(ng) % avgu3rs(i,j,k) = IniVal
             END DO
           END DO
         END DO
@@ -1641,60 +2142,177 @@
         DO k=1,N(ng)
           DO j=Jmin,Jmax
             DO i=Imin,Imax
-              AVERAGE(ng) % avgv3RS(i,j,k) = IniVal
+              AVERAGE(ng) % avgv3rs(i,j,k) = IniVal
             END DO
+          END DO
+        END DO
+      END IF
+#  endif
+# endif
+
+# ifdef WAVES_HEIGHT
+      IF (Aout(idWamp,ng)) THEN
+        DO j=Jmin,Jmax
+          DO i=Imin,Imax
+            AVERAGE(ng) % avgWamp(i,j) = IniVal
           END DO
         END DO
       END IF
 
-      IF (Aout(idW3xx,ng)) THEN
-        DO k=1,N(ng)
-          DO j=Jmin,Jmax
-            DO i=Imin,Imax
-              AVERAGE(ng) % avgSxx3d(i,j,k) = IniVal
-            END DO
+      IF (Aout(idWam2,ng)) THEN
+        DO j=Jmin,Jmax
+          DO i=Imin,Imax
+            AVERAGE(ng) % avgWam2(i,j) = IniVal
           END DO
         END DO
       END IF
-      IF (Aout(idW3xy,ng)) THEN
-        DO k=1,N(ng)
-          DO j=Jmin,Jmax
-            DO i=Imin,Imax
-              AVERAGE(ng) % avgSxy3d(i,j,k) = IniVal
-            END DO
+# endif
+
+# ifdef WAVES_LENGTH
+      IF (Aout(idWlen,ng)) THEN
+        DO j=Jmin,Jmax
+          DO i=Imin,Imax
+            AVERAGE(ng) % avgWlen(i,j) = IniVal
           END DO
         END DO
       END IF
-      IF (Aout(idW3yy,ng)) THEN
-        DO k=1,N(ng)
-          DO j=Jmin,Jmax
-            DO i=Imin,Imax
-              AVERAGE(ng) % avgSyy3d(i,j,k) = IniVal
-            END DO
+# endif
+
+# ifdef WAVES_LENGTHP
+      IF (Aout(idWlep,ng)) THEN
+        DO j=Jmin,Jmax
+          DO i=Imin,Imax
+            AVERAGE(ng) % avgWlep(i,j) = IniVal
           END DO
         END DO
       END IF
-#   ifdef NEARSHORE_MELLOR05
-      IF (Aout(idW3zx,ng)) THEN
-        DO k=1,N(ng)
-          DO j=Jmin,Jmax
-            DO i=Imin,Imax
-              AVERAGE(ng) % avgSzx3d(i,j,k) = IniVal
-            END DO
+# endif
+
+# ifdef WAVES_DIR
+      IF (Aout(idWdir,ng)) THEN
+        DO j=Jmin,Jmax
+          DO i=Imin,Imax
+            AVERAGE(ng) % avgWdir(i,j) = IniVal
           END DO
         END DO
       END IF
-      IF (Aout(idW3zy,ng)) THEN
-        DO k=1,N(ng)
-          DO j=Jmin,Jmax
-            DO i=Imin,Imax
-              AVERAGE(ng) % avgSzy3d(i,j,k) = IniVal
-            END DO
+# endif
+
+# ifdef WAVES_DIRP
+      IF (Aout(idWdip,ng)) THEN
+        DO j=Jmin,Jmax
+          DO i=Imin,Imax
+            AVERAGE(ng) % avgWdip(i,j) = IniVal
           END DO
         END DO
       END IF
-#   endif
-#  endif
+# endif
+
+# ifdef WAVES_TOP_PERIOD
+      IF (Aout(idWptp,ng)) THEN
+        DO j=Jmin,Jmax
+          DO i=Imin,Imax
+            AVERAGE(ng) % avgWptp(i,j) = IniVal
+          END DO
+        END DO
+      END IF
+# endif
+
+# ifdef WAVES_BOT_PERIOD
+      IF (Aout(idWpbt,ng)) THEN
+        DO j=Jmin,Jmax
+          DO i=Imin,Imax
+            AVERAGE(ng) % avgWpbt(i,j) = IniVal
+          END DO
+        END DO
+      END IF
+# endif
+
+# if defined BBL_MODEL    || defined BEDLOAD_VANDERA || \
+     defined WAV_COUPLING
+      IF (Aout(idWorb,ng)) THEN
+        DO j=Jmin,Jmax
+          DO i=Imin,Imax
+            AVERAGE(ng) % avgWorb(i,j) = IniVal
+          END DO
+        END DO
+      END IF
+# endif
+
+# if (defined BOTTOM_STREAMING && defined WEC_VF) || \
+     defined WAV_COUPLING
+      IF (Aout(idWdif,ng)) THEN
+        DO j=Jmin,Jmax
+          DO i=Imin,Imax
+            AVERAGE(ng) % avgWdif(i,j) = IniVal
+          END DO
+        END DO
+      END IF
+# endif
+
+# if defined TKE_WAVEDISS   || defined WAV_COUPLING   || \
+     defined WDISS_THORGUZA || defined WDISS_CHURTHOR || \
+     defined WAVES_DISS     || defined WDISS_INWAVE
+      IF (Aout(idWdib,ng)) THEN
+        DO j=Jmin,Jmax
+          DO i=Imin,Imax
+            AVERAGE(ng) % avgWdib(i,j) = IniVal
+          END DO
+        END DO
+      END IF
+
+      IF (Aout(idWdiw,ng)) THEN
+        DO j=Jmin,Jmax
+          DO i=Imin,Imax
+            AVERAGE(ng) % avgWdiw(i,j) = IniVal
+          END DO
+        END DO
+      END IF
+# endif
+
+# ifdef ROLLER_SVENDSEN
+      IF (Aout(idWbrk,ng)) THEN
+        DO j=Jmin,Jmax
+          DO i=Imin,Imax
+            AVERAGE(ng) % avgWbrk(i,j) = IniVal
+          END DO
+        END DO
+      END IF
+# endif
+
+# ifdef WEC_ROLLER
+      IF (Aout(idWdis,ng)) THEN
+        DO j=Jmin,Jmax
+          DO i=Imin,Imax
+            AVERAGE(ng) % avgWdis(i,j) = IniVal
+          END DO
+        END DO
+      END IF
+
+      IF (Aout(idWrol,ng)) THEN
+        DO j=Jmin,Jmax
+          DO i=Imin,Imax
+            AVERAGE(ng) % avgWrol(i,j) = IniVal
+          END DO
+        END DO
+      END IF
+# endif
+
+# ifdef UV_KIRBY
+      IF (Aout(idUwav,ng)) THEN
+        DO j=Jmin,Jmax
+          DO i=Imin,Imax
+            AVERAGE(ng) % avgUwav(i,j) = IniVal
+          END DO
+        END DO
+      END IF
+      IF (Aout(idVwav,ng)) THEN
+        DO j=Jmin,Jmax
+          DO i=Imin,Imax
+            AVERAGE(ng) % avgVwav(i,j) = IniVal
+          END DO
+        END DO
+      END IF
 # endif
 !
 !  Time-averaged quadratic fields.
@@ -1706,6 +2324,7 @@
           END DO
         END DO
       END IF
+
       IF (Aout(idU2av,ng)) THEN
         DO j=Jmin,Jmax
           DO i=Imin,Imax
@@ -1740,6 +2359,7 @@
           END DO
         END DO
       END IF
+
       IF (Aout(idUVav,ng)) THEN
         DO k=1,N(ng)
           DO j=Jmin,Jmax
@@ -1843,6 +2463,7 @@
           END DO
         END DO
       END IF
+
 # ifdef SOLVE3D
       IF (Aout(id3dPV,ng)) THEN
         DO k=1,N(ng)

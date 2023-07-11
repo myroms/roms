@@ -1,7 +1,7 @@
       MODULE prsgrd_mod
 !
 !git $Id$
-!svn $Id: prsgrd31.h 1151 2023-02-09 03:08:53Z arango $
+!svn $Id: prsgrd31.h 1178 2023-07-11 17:50:57Z arango $
 !=======================================================================
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -78,6 +78,9 @@
 #ifdef TIDE_GENERATING_FORCES
      &                    OCEAN(ng) % eq_tide,                          &
 #endif
+#ifdef WEC_VF
+     &                    OCEAN(ng) % zetat,                            &
+#endif
 #ifdef ATM_PRESS
      &                    FORCES(ng) % Pair,                            &
 #endif
@@ -106,6 +109,9 @@
      &                          rho,                                    &
 #ifdef TIDE_GENERATING_FORCES
      &                          eq_tide,                                &
+#endif
+#ifdef WEC_VF
+     &                          zetat,                                  &
 #endif
 #ifdef ATM_PRESS
      &                          Pair,                                   &
@@ -140,6 +146,9 @@
 # ifdef TIDE_GENERATING_FORCES
       real(r8), intent(in) :: eq_tide(LBi:,LBj:)
 # endif
+# ifdef WEC_VF
+      real(r8), intent(in) :: zetat(LBi:,LBj:)
+# endif
 # ifdef ATM_PRESS
       real(r8), intent(in) :: Pair(LBi:,LBj:)
 # endif
@@ -162,6 +171,9 @@
       real(r8), intent(in) :: rho(LBi:UBi,LBj:UBj,N(ng))
 # ifdef TIDE_GENERATING_FORCES
       real(r8), intent(in) :: eq_tide(LBi:UBi,LBj:UBj)
+# endif
+# ifdef WEC_VF
+      real(r8), intent(in) :: zetat(LBi:UBi,LBj:UBj)
 # endif
 # ifdef ATM_PRESS
       real(r8), intent(in) :: Pair(LBi:UBi,LBj:UBj)
@@ -211,6 +223,9 @@
      &         z_w(i-1,j,N(ng))-z_r(i-1,j,N(ng))
 #endif
           phix(i)=fac1*(rho(i,j,N(ng))-rho(i-1,j,N(ng)))*cff1
+#ifdef WEC_VF
+          phix(i)=phix(i)+zetat(i,j)-zetat(i-1,j)
+#endif
 #ifdef ATM_PRESS
           phix(i)=phix(i)+fac*(Pair(i,j)-Pair(i-1,j))
 #endif
@@ -292,6 +307,9 @@
      &           z_w(i,j-1,N(ng))-z_r(i,j-1,N(ng))
 #endif
             phie(i)=fac1*(rho(i,j,N(ng))-rho(i,j-1,N(ng)))*cff1
+#ifdef WEC_VF
+            phie(i)=phie(i)+zetat(i,j)-zetat(i,j-1)
+#endif
 #ifdef ATM_PRESS
             phie(i)=phie(i)+fac*(Pair(i,j)-Pair(i,j-1))
 #endif

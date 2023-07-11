@@ -3,7 +3,7 @@
       SUBROUTINE set_data (ng, tile)
 !
 !git $Id$
-!svn $Id: set_data.F 1151 2023-02-09 03:08:53Z arango $
+!svn $Id: set_data.F 1178 2023-07-11 17:50:57Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -71,7 +71,7 @@
       USE set_3dfld_mod
 # endif
 # ifdef DISTRIBUTE
-#  if defined WET_DRY
+#  ifdef WET_DRY
       USE distribute_mod,  ONLY : mp_boundary
 #  endif
       USE mp_exchange_mod, ONLY : mp_exchange2d
@@ -93,7 +93,7 @@
 !
       logical :: Lprocess, SetBC
       logical :: update = .FALSE.
-# if defined WET_DRY
+# ifdef WET_DRY
       logical :: bry_update
 # endif
 !
@@ -643,7 +643,7 @@
 
 # ifdef WAVE_DATA
 !
-!  Set surface wind-induced wave properties.
+!  Set surface wind-induced wave amplitude, direction and period.
 !
 #  ifdef ANA_WWAVE
       CALL ana_wwave (ng, tile, iNLM)
@@ -655,36 +655,16 @@
      &                     FORCES(ng)%Dwave,                            &
      &                     update)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-
-#    ifdef CURVGRID
 !
-!  If input point-data, rotate direction to curvilinear coordinates.
-!
-      IF (.not.Linfo(1,idWdir,ng).or.                                   &
-     &    (Iinfo(5,idWdir,ng).ne.Lm(ng)+2).or.                          &
-     &    (Iinfo(6,idWdir,ng).ne.Mm(ng)+2)) THEN
-        DO j=JstrR,JendR
-          DO i=IstrR,IendR
-            FORCES(ng)%Dwave(i,j)=FORCES(ng)%Dwave(i,j)-                &
-     &                            GRID(ng)%angler(i,j)
-          END DO
-        END DO
-      END IF
+#   endif
 
-      IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
-        CALL exchange_r2d_tile (ng, tile,                               &
-     &                          LBi, UBi, LBj, UBj,                     &
-     &                          FORCES(ng)%Dwave)
-      END IF
-
-#     ifdef DISTRIBUTE
-      CALL mp_exchange2d (ng, tile, iNLM, 1,                            &
-     &                    LBi, UBi, LBj, UBj,                           &
-     &                    NghostPoints,                                 &
-     &                    EWperiodic(ng), NSperiodic(ng),               &
-     &                    FORCES(ng)%Dwave)
-#     endif
-#    endif
+#   ifdef WAVES_DIRP
+      CALL set_2dfld_tile (ng, tile, iNLM, idWdip,                      &
+     &                     LBi, UBi, LBj, UBj,                          &
+     &                     FORCES(ng)%DwavepG,                           &
+     &                     FORCES(ng)%Dwavep,                            &
+     &                     update)
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 #   endif
 
@@ -703,6 +683,16 @@
      &                     LBi, UBi, LBj, UBj,                          &
      &                     FORCES(ng)%LwaveG,                           &
      &                     FORCES(ng)%Lwave,                            &
+     &                     update)
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+!
+#   endif
+
+#   ifdef WAVES_LENGTHP
+      CALL set_2dfld_tile (ng, tile, iNLM, idWlep,                      &
+     &                     LBi, UBi, LBj, UBj,                          &
+     &                     FORCES(ng)%LwavepG,                          &
+     &                     FORCES(ng)%Lwavep,                           &
      &                     update)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
@@ -731,30 +721,38 @@
 #   if defined WAVES_UB
       CALL set_2dfld_tile (ng, tile, iNLM, idWorb,                      &
      &                     LBi, UBi, LBj, UBj,                          &
-     &                     FORCES(ng)%Ub_swanG,                         &
-     &                     FORCES(ng)%Ub_swan,                          &
+     &                     FORCES(ng)%Uwave_rmsG,                       &
+     &                     FORCES(ng)%Uwave_rms,                        &
      &                     update)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 #   endif
 
-#   if defined TKE_WAVEDISS
-      CALL set_2dfld_tile (ng, tile, iNLM, idWdis,                      &
+#   if defined WAVES_DISS
+      CALL set_2dfld_tile (ng, tile, iNLM, idWdib,                      &
      &                     LBi, UBi, LBj, UBj,                          &
-     &                     FORCES(ng)%Wave_dissipG,                     &
-     &                     FORCES(ng)%Wave_dissip,                      &
+     &                     FORCES(ng)%Dissip_breakG,                    &
+     &                     FORCES(ng)%Dissip_break,                     &
+     &                     update)
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+!
+      CALL set_2dfld_tile (ng, tile, iNLM, idWdiw,                      &
+     &                     LBi, UBi, LBj, UBj,                          &
+     &                     FORCES(ng)%Dissip_wcapG,                     &
+     &                     FORCES(ng)%Dissip_wcap,                      &
      &                     update)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 #   endif
 
-#   if defined SVENDSEN_ROLLER
+#   if defined ROLLER_SVENDSEN
       CALL set_2dfld_tile (ng, tile, iNLM, idWbrk,                      &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     FORCES(ng)%Wave_breakG,                      &
      &                     FORCES(ng)%Wave_break,                       &
      &                     update)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+!
 #   endif
 #  endif
 # endif

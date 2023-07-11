@@ -2,7 +2,7 @@
       MODULE wrt_rst_mod
 !
 !git $Id$
-!svn $Id: wrt_rst.F 1176 2023-07-01 19:23:18Z arango $
+!svn $Id: wrt_rst.F 1178 2023-07-11 17:50:57Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -999,7 +999,8 @@
 #  ifdef MASKING
      &                     GRID(ng) % rmask,                            &
 #  endif
-     &                     SEDBED(ng) % bed_frac(:,:,:,i))
+     &                     SEDBED(ng) % bed_frac(:,:,:,i),              &
+     &                     SetFillVal = .FALSE.)
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,idfrac(i))), RST(ng)%Rindex
@@ -1022,7 +1023,8 @@
 #  ifdef MASKING
      &                     GRID(ng) % rmask,                            &
 #  endif
-     &                     SEDBED(ng) % bed_mass(:,:,:,NOUT,i))
+     &                     SEDBED(ng) % bed_mass(:,:,:,NOUT,i),         &
+     &                     SetFillVal = .FALSE.)
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,idBmas(i))), RST(ng)%Rindex
@@ -1049,7 +1051,8 @@
 #  ifdef MASKING
      &                     GRID(ng) % rmask,                            &
 #  endif
-     &                     SEDBED(ng) % bed(:,:,:,i))
+     &                     SEDBED(ng) % bed(:,:,:,i),                   &
+     &                     SetFillVal = .FALSE.)
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,idSbed(i))), RST(ng)%Rindex
@@ -1089,9 +1092,9 @@
       END DO
 # endif
 #endif
-#ifdef NEARSHORE_MELLOR
+#ifdef WEC
 !
-!  Write out 2D U-momentum stokes velocity.
+!  Write out 2D Stokes U-velocity.
 !
         scale=1.0_dp
         gtype=gfactor*u2dvar
@@ -1111,7 +1114,7 @@
           RETURN
         END IF
 !
-!  Write out 2D V-momentum stokes velocity.
+!  Write out 2D Stokes V-velocity.
 !
         scale=1.0_dp
         gtype=gfactor*v2dvar
@@ -1133,7 +1136,7 @@
 
 # ifdef SOLVE3D
 !
-!  Write out 3D U-momentum stokes velocity.
+!  Write out 3D Stokes U-velocity.
 !
         scale=1.0_dp
         gtype=gfactor*u3dvar
@@ -1153,7 +1156,7 @@
           RETURN
         END IF
 !
-!  Write out 3D V-momentum stokes velocity.
+!  Write out 3D Stokes V-velocity.
 !
         scale=1.0_dp
         gtype=gfactor*v3dvar
@@ -2306,7 +2309,8 @@
 #   ifdef MASKING
      &                     GRID(ng) % rmask,                            &
 #   endif
-     &                     SEDBED(ng) % bed_frac(:,:,:,i))
+     &                     SEDBED(ng) % bed_frac(:,:,:,i),              &
+     &                     SetFillVal = .FALSE.)
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,idfrac(i))), RST(ng)%Rindex
@@ -2334,7 +2338,8 @@
 #   ifdef MASKING
      &                     GRID(ng) % rmask,                            &
 #   endif
-     &                     SEDBED(ng) % bed_mass(:,:,:,NOUT,i))
+     &                     SEDBED(ng) % bed_mass(:,:,:,NOUT,i),         &
+     &                     SetFillVal = .FALSE.)
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,idBmas(i))), RST(ng)%Rindex
@@ -2366,7 +2371,8 @@
 #   ifdef MASKING
      &                     GRID(ng) % rmask,                            &
 #   endif
-     &                     SEDBED(ng) % bed(:,:,:,i))
+     &                     SEDBED(ng) % bed(:,:,:,i),                   &
+     &                     SetFillVal = .FALSE.)
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,idSbed(i))), RST(ng)%Rindex
@@ -2411,9 +2417,9 @@
       END DO
 #  endif
 # endif
-# ifdef NEARSHORE_MELLOR
+# ifdef WEC
 !
-!  Write out 2D U-momentum stokes velocity.
+!  Write out 2D Stokes U-velocity.
 !
         scale=1.0_dp
         IF (RST(ng)%pioVar(idU2Sd)%dkind.eq.PIO_double) THEN
@@ -2438,7 +2444,7 @@
           RETURN
         END IF
 !
-!  Write out 2D V-momentum stokes velocity.
+!  Write out 2D Stokes V-velocity.
 !
         scale=1.0_dp
         IF (RST(ng)%pioVar(idV2Sd)%dkind.eq.PIO_double) THEN
@@ -2465,7 +2471,7 @@
 
 #  ifdef SOLVE3D
 !
-!  Write out 3D U-momentum stokes velocity.
+!  Write out 3D Stokes U-velocity.
 !
         scale=1.0_dp
         IF (RST(ng)%pioVar(idU3Sd)%dkind.eq.PIO_double) THEN
@@ -2490,7 +2496,7 @@
           RETURN
         END IF
 !
-!  Write out 3D V-momentum stokes velocity.
+!  Write out 3D Stokes V-velocity.
 !
         scale=1.0_dp
         IF (RST(ng)%pioVar(idV3Sd)%dkind.eq.PIO_double) THEN

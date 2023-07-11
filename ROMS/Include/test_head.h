@@ -1,6 +1,6 @@
 /*
 ** git $Id$
-** svn $Id: test_head.h 1151 2023-02-09 03:08:53Z arango $
+** svn $Id: test_head.h 1178 2023-07-11 17:50:57Z arango $
 *******************************************************************************
 ** Copyright (c) 2002-2023 The ROMS/TOMS Group                               **
 **   Licensed under a MIT/X style license                                    **
@@ -17,7 +17,7 @@
 
 #undef  CURVGRID
 #define WET_DRY
-#define NEARSHORE_MELLOR08
+#define WEC_VF
 #define SWAN_COUPLING
 #define MASKING
 #define OUT_DOUBLE
@@ -57,7 +57,7 @@
 # define SSW_CALC_ZNOT
 # undef  SSW_LOGINT
 #endif
-#if defined MB_BBL || defined SG_BBL || defined SSW_BBL || defined NEARSHORE_MELLOR
+#if defined MB_BBL || defined SG_BBL || defined SSW_BBL || defined WEC_VF
 # undef ANA_WWAVE
 # ifndef ANA_WWAVE
 # endif

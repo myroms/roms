@@ -1,7 +1,7 @@
       MODULE bbl_mod
 !
 !git $Id$
-!svn $Id: mb_bbl.h 1151 2023-02-09 03:08:53Z arango $
+!svn $Id: mb_bbl.h 1178 2023-07-11 17:50:57Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group          Meinte Blaas   !
 !    Licensed under a MIT/X style license                              !
@@ -89,7 +89,7 @@
 # ifdef MB_CALC_UB
      &                  FORCES(ng) % Hwave,                             &
 # else
-     &                  FORCES(ng) % Ub_swan,                           &
+     &                  FORCES(ng) % Uwave_rms,                         &
 # endif
      &                  FORCES(ng) % Dwave,                             &
      &                  FORCES(ng) % Pwave_bot,                         &
@@ -125,7 +125,7 @@
 # ifdef MB_CALC_UB
      &                        Hwave,                                    &
 # else
-     &                        Ub_swan,                                  &
+     &                        Uwave_rms,                                &
 # endif
      &                        Dwave, Pwave_bot,                         &
      &                        rho, u, v, bottom,                        &
@@ -161,7 +161,7 @@
 #  ifdef MB_CALC_UB
       real(r8), intent(in) :: Hwave(LBi:,LBj:)
 #  else
-      real(r8), intent(in) :: Ub_swan(LBi:,LBj:)
+      real(r8), intent(in) :: Uwave_rms(LBi:,LBj:)
 #  endif
       real(r8), intent(in) :: Dwave(LBi:,LBj:)
       real(r8), intent(in) :: Pwave_bot(LBi:,LBj:)
@@ -192,7 +192,7 @@
 #  ifdef MB_CALC_UB
       real(r8), intent(in) :: Hwave(LBi:UBi,LBj:UBj)
 #  else
-      real(r8), intent(in) :: Ub_swan(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: Uwave_rms(LBi:UBi,LBj:UBj)
 #  endif
       real(r8), intent(in) :: Dwave(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: Pwave_bot(LBi:UBi,LBj:UBj)
@@ -322,7 +322,7 @@
           Ab=0.5_r8*Hwave(i,j)/SINH(Kbh)+eps
           Ub(i,j)=Fwave_bot*Ab
 # else
-          Ub(i,j)=Ub_swan(i,j)
+          Ub(i,j)=Uwave_rms(i,j)
           Ab=Ub(i,j)/Fwave_bot+eps
 # endif
 !
@@ -586,7 +586,7 @@
           bottom(i,j,ibwav)=Ab
           bottom(i,j,irlen)=rlen
           bottom(i,j,irhgt)=rhgt
-          bottom(i,j,izdef)=Znot
+          bottom(i,j,izdef)=Znot                       ! Zob(ng)
           bottom(i,j,izapp)=ZnotC
         END DO
       END DO
@@ -600,12 +600,24 @@
         DO i=IstrU,Iend
           angleC=Ur_mb(i,j)/(0.5*(Umag(i-1,j)+Umag(i,j)))
           bustr(i,j)=0.5_r8*(tauCW(i-1,j)+tauCW(i,j))*angleC
+# ifdef WET_DRY
+          cff2=0.75_r8*0.5_r8*(z_w(i-1,j,1)+z_w(i,j,1)-                 &
+     &                         z_w(i-1,j,0)-z_w(i,j,0))
+          bustr(i,j)=SIGN(1.0_r8,bustr(i,j))*MIN(ABS(bustr(i,j)),       &
+     &               ABS(u(i,j,1,nrhs))*cff2/dt(ng))
+# endif
         END DO
       END DO
       DO j=JstrV,Jend
         DO i=Istr,Iend
           angleC=Vr_mb(i,j)/(0.5_r8*(Umag(i,j-1)+Umag(i,j)))
           bvstr(i,j)=0.5_r8*(tauCW(i,j-1)+tauCW(i,j))*angleC
+# ifdef WET_DRY
+          cff2=0.75_r8*0.5_r8*(z_w(i,j-1,1)+z_w(i,j,1)-                 &
+     &                         z_w(i,j-1,0)-z_w(i,j,0))
+          bvstr(i,j)=SIGN(1.0_r8,bvstr(i,j))*MIN(ABS(bvstr(i,j)),       &
+     &               ABS(v(i,j,1,nrhs))*cff2/dt(ng))
+# endif
         END DO
       END DO
       DO j=Jstr,Jend

@@ -2,7 +2,7 @@
       MODULE mod_scalars
 !
 !git $Id$
-!svn $Id: mod_scalars.F 1151 2023-02-09 03:08:53Z arango $
+!svn $Id: mod_scalars.F 1178 2023-07-11 17:50:57Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -152,8 +152,18 @@
         integer :: M2hadv          ! 2D momentum, horizontal advection
         integer :: M2xadv          ! 2D momentum, horizontal X-advection
         integer :: M2yadv          ! 2D momentum, horizontal Y-advection
-#  ifdef NEARSHORE_MELLOR
-        integer :: M2hrad          ! 2D momentum, horizontal stresses
+#  ifdef WEC_VF
+        integer :: M2hjvf          ! 2D momentum, horizontal J vortex force
+        integer :: M2kvrf          ! 2D momentum, K vortex force
+        integer :: M2fsco          ! 2D momentum, coriolis-stokes
+        integer :: M2bstm          ! 2D momentum, bottom streaming
+        integer :: M2sstm          ! 2D momentum, surface streaming
+        integer :: M2wrol          ! 2D momentum, wave roller accel
+        integer :: M2wbrk          ! 2D momentum, wave breaking
+        integer :: M2zeta          ! 2D momentum, Eulerian sea level adjustment
+        integer :: M2zetw          ! 2D momentum, quasi-static sea level adjustment
+        integer :: M2zqsp          ! 2D momentum, quasi-static pressure
+        integer :: M2zbeh          ! 2D momentum, Bernoulli head
 #  endif
         integer :: M2pgrd          ! 2D momentum, pressure gradient
         integer :: M2hvis          ! 2D momentum, horizontal viscosity
@@ -168,9 +178,15 @@
         integer :: M3hadv          ! 3D momentum, horizontal advection
         integer :: M3xadv          ! 3D momentum, horizontal X-advection
         integer :: M3yadv          ! 3D momentum, horizontal Y-advection
-#   ifdef NEARSHORE_MELLOR
-        integer :: M3hrad          ! 3D momentum, horizontal stresses
-        integer :: M3vrad          ! 3D momentum, vertical stresses
+#   ifdef WEC_VF
+        integer :: M3vjvf          ! 3D momentum, vertical J vortex force
+        integer :: M3hjvf          ! 3D momentum, horizontal J vortex force
+        integer :: M3kvrf          ! 3D momentum, K vortex force
+        integer :: M3fsco          ! 3D momentum, coriolis-stokes
+        integer :: M3bstm          ! 3D momentum, bottom streaming
+        integer :: M3sstm          ! 3D momentum, surface streaming
+        integer :: M3wrol          ! 3D momentum, wave roller accel
+        integer :: M3wbrk          ! 3D momentum, wave breaking
 #   endif
         integer :: M3pgrd          ! 3D momentum, pressure gradient
         integer :: M3vvis          ! 3D momentum, vertical viscosity
@@ -233,7 +249,8 @@
         integer, allocatable :: indx1(:)
         integer, allocatable :: iic(:)
         integer, allocatable :: iif(:)
-!$OMP THREADPRIVATE (indx1, iic, iif)
+        integer, allocatable :: next_kstp(:)
+!$OMP THREADPRIVATE (indx1, iic, iif, next_kstp)
 
 #ifdef JEDI
         integer, allocatable :: jic(:)
@@ -1449,6 +1466,7 @@
 !    sg_zrmin      Minimum allowed height (m) of current above bed.
 !                    Otherwise, logarithmic interpolation is used.
 !    sg_znotcdef   Default apparent hydraulic roughness (m).
+!    sg_znotdef    Default hydraulic roughness (m).
 !
         integer, parameter :: sg_n = 20
 
@@ -1465,6 +1483,7 @@
         real(dp) :: sg_z1min = 0.20_dp         ! (m)
         real(dp) :: sg_z1p                     ! non-dimensional
         real(dp) :: sg_znotcdef = 0.01_dp      ! (m)
+        real(dp) :: sg_znotdef                 ! (m)
 
         complex(c8) :: sg_mp
 # endif
@@ -1723,6 +1742,13 @@
         real(r8), allocatable :: zos_hsig_alpha(:)
         real(r8), allocatable :: sz_alpha(:)
         real(r8), allocatable :: crgban_cw(:)
+!
+! Waves Effect on Currents dissipation energy partion scale:
+!
+!   [0.0] All wave dissipation goes to breaking and none to roller
+!   [1.0] All wave dissipation goes to roller and none to breaking
+!
+        real(r8), allocatable :: wec_alpha(:)
 
 #if defined MY25_MIXING || defined GLS_MIXING
 !
@@ -1896,6 +1922,10 @@
       END IF
       IF (.not.allocated(iif)) THEN
         allocate ( iif(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
+      END IF
+      IF (.not.allocated(next_kstp)) THEN
+        allocate ( next_kstp(Ngrids) )
         Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
 
@@ -3255,6 +3285,10 @@
         allocate ( crgban_cw(Ngrids) )
         Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
+      IF (.not.allocated(wec_alpha)) THEN
+        allocate ( wec_alpha(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
+      END IF
 !
       RETURN
       END SUBROUTINE allocate_scalars
@@ -3343,6 +3377,8 @@
       IF (allocated(iic))               deallocate ( iic )
 
       IF (allocated(iif))               deallocate ( iif )
+
+      IF (allocated(next_kstp))         deallocate ( next_kstp )
 
       IF (allocated(FrcRec))            deallocate ( FrcRec )
 
@@ -4062,8 +4098,27 @@
       M2yadv=ic+3
       ic=ic+3
 #  endif
-#  if defined NEARSHORE_MELLOR
-      M2hrad=ic+1
+#  if defined WEC_VF
+#   if defined UV_COR
+      M2fsco=ic+1
+      ic=ic+1
+#   endif
+#   ifdef BOTTOM_STREAMING
+      M2bstm=ic+1
+      ic=ic+1
+#   endif
+#   ifdef SURFACE_STREAMING
+      M2sstm=ic+1
+      ic=ic+1
+#   endif
+      M2hjvf=ic+1
+      M2kvrf=ic+2
+      M2wrol=ic+3
+      M2wbrk=ic+4
+      ic=ic+4
+#  endif
+#  if defined VEGETATION && defined VEG_DRAG
+      M2fveg=ic+1
       ic=ic+1
 #  endif
 #  if defined UV_VIS2 || defined UV_VIS4
@@ -4075,6 +4130,12 @@
       M2pgrd=ic+1
       M2sstr=ic+2             ! These indices need to be
       M2bstr=ic+3             ! specified last to allow a
+#  if defined WEC_VF
+      M2zeta=ic+4
+      M2zetw=ic+5
+      M2zqsp=ic+6
+      M2zbeh=ic+7
+#  endif
       M2rate=NDM2d            ! compact DO-loop structure
 #  ifdef SOLVE3D
 !
@@ -4096,10 +4157,29 @@
       M3yadv=ic+4
       ic=ic+4
 #   endif
-#   if defined NEARSHORE_MELLOR
-      M3hrad=ic+1
-      M3vrad=ic+2
-      ic=ic+2
+#   if defined WEC_VF
+#    if defined UV_COR
+      M3fsco=ic+1
+      ic=ic+1
+#    endif
+#    ifdef BOTTOM_STREAMING
+      M3bstm=ic+1
+      ic=ic+1
+#    endif
+#    ifdef SURFACE_STREAMING
+      M3sstm=ic+1
+      ic=ic+1
+#    endif
+      M3vjvf=ic+1
+      M3hjvf=ic+2
+      M3kvrf=ic+3
+      M3wrol=ic+4
+      M3wbrk=ic+5
+      ic=ic+5
+#   endif
+#   if defined VEGETATION && defined VEG_DRAG
+      M3fveg=ic+1
+      ic=ic+1
 #   endif
       M3pgrd=ic+1             ! needs to be here, indices below
       M3vvis=ic+2             ! require special treatment
@@ -4170,9 +4250,6 @@
 !
       one=1.0_r8
       zero=0.0_r8
-#ifdef SWAN_COUPLING
-      Infinity=one/zero
-#endif
       Co=1.0_r8/(2.0_r8+SQRT(2.0_r8))
       gorho0=g/rho0
       DO ng=1,Ngrids

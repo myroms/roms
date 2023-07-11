@@ -1,6 +1,6 @@
 /*
 ** git $Id$
-** svn $Id: shoreface.h 1151 2023-02-09 03:08:53Z arango $
+** svn $Id: shoreface.h 1178 2023-07-11 17:50:57Z arango $
 *******************************************************************************
 ** Copyright (c) 2002-2023 The ROMS/TOMS Group                               **
 **   Licensed under a MIT/X style license                                    **
@@ -20,7 +20,7 @@
 #define DIAGNOSTICS_TS
 #define AVERAGES
 #define WET_DRY
-#define NEARSHORE_MELLOR08
+#define WEC_VF
 #define OUT_DOUBLE
 #define UV_ADV
 #define DJ_GRADPS

@@ -3,17 +3,25 @@
       SUBROUTINE main3d (RunInterval)
 !
 !git $Id$
-!svn $Id: main3d.F 1176 2023-07-01 19:23:18Z arango $
+!svn $Id: main3d.F 1178 2023-07-11 17:50:57Z arango $
 !=======================================================================
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                           Hernan G. Arango   !
 !========================================== Alexander F. Shchepetkin ===
 !                                                                      !
-!  This subroutine is the main driver for nonlinear ROMS/TOMS when     !
-!  configurated as a full 3D baroclinic ocean model.  It  advances     !
-!  forward the primitive equations for all  nested  grids, if any,     !
-!  for the specified time interval (seconds), RunInterval.             !
+!  This routine is the main driver for ROMS/TOMS nonlinear model (NLM) !
+!  when configurated as a full 3D baroclinic ocean model. It advances  !
+!  forward the NLM for all nested grids, if any, for the specified     !
+!  time interval (seconds), RunInterval.                               !
+!                                                                      !
+# if defined STEP2D_FB_LF_AM3
+!  Numerical 2D time-stepping kernel: FB AB3-AM4                       !
+# elif defined STEP2D_FB_LF_AM3
+!  Numerical 2D time-stepping kernel: FB LF-AM3                        !
+# else
+!  Numerical 2D time-stepping kernel: LF-AM3 (Legacy scheme)           !
+# endif
 !                                                                      !
 !=======================================================================
 !
@@ -96,9 +104,6 @@
       USE obc_adjust_mod,       ONLY : obc_adjust, load_obc
 # endif
       USE omega_mod,            ONLY : omega
-# ifdef NEARSHORE_MELLOR
-      USE radiation_stress_mod, ONLY : radiation_stress
-# endif
 # ifndef TS_FIXED
       USE rho_eos_mod,          ONLY : rho_eos
 # endif
@@ -118,7 +123,9 @@
       USE set_tides_mod,        ONLY : set_tides
 # endif
       USE set_vbc_mod,          ONLY : set_vbc
+# if !(defined STEP2D_FB_AB3_AM4 || defined STEP2D_FB_LF_AM3)
       USE set_zeta_mod,         ONLY : set_zeta
+# endif
       USE step2d_mod,           ONLY : step2d
 # ifndef TS_FIXED
       USE step3d_t_mod,         ONLY : step3d_t
@@ -128,6 +135,22 @@
       USE step_floats_mod,      ONLY : step_floats
 # endif
       USE strings_mod,          ONLY : FoundError
+# ifdef WEC_VF
+#  if defined WDISS_THORGUZA || defined WDISS_CHURTHOR
+      USE wec_dissip_mod,       ONLY : wec_dissip
+#  endif
+#  ifdef WEC_ROLLER
+      USE wec_roller_mod,       ONLY : wec_roller
+#  endif
+      USE wec_stokes_mod,       ONLY : wec_stokes
+      USE wec_vf_mod,           ONLY : wec_vf
+#  ifdef WAVE_MIXING
+      USE wec_wave_mix_mod,     ONLY : wec_wave_mix
+#  endif
+# endif
+# ifdef WEC
+      USE wec_wvelocity_mod,    ONLY : wec_wvelocity
+# endif
       USE wvelocity_mod,        ONLY : wvelocity
 !
       implicit none
@@ -196,10 +219,10 @@
               nstp(ng)=1+MOD(iic(ng)-ntstart(ng),2)
               nnew(ng)=3-nstp(ng)
               nrhs(ng)=nstp(ng)
-#ifdef JEDI
+# ifdef JEDI
               jic(ng)=jic(ng)+1
               time4jedi(ng)=time4jedi(ng)+dt(ng)
-#endif
+# endif
               tdays(ng)=time(ng)*sec2day
               IF (step_counter(ng).eq.Rsteps) Time_Step=.FALSE.
             END DO
@@ -365,19 +388,26 @@
             END DO
 # endif
 
-# ifdef NEARSHORE_MELLOR
+# ifdef WEC_VF
 !
 !-----------------------------------------------------------------------
-!  Compute radiation stress terms.
+!  Compute wave dissipation, roller, and stokes terms.
 !-----------------------------------------------------------------------
 !
             DO ig=1,GridsInLayer(nl)
               ng=GridNumber(ig,nl)
-              DO tile=last_tile(ng),first_tile(ng),-1
-                CALL radiation_stress (ng, tile)
+              DO tile=first_tile(ng),last_tile(ng),+1
+#  if defined WDISS_THORGUZA || defined WDISS_CHURTHOR
+                CALL wec_dissip (ng, tile)
+#  endif
+#  ifdef WEC_ROLLER
+                CALL wec_roller (ng, tile)
+#  endif
+                CALL wec_stokes (ng, tile)
               END DO
 !$OMP BARRIER
             END DO
+            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 # endif
 !
 !-----------------------------------------------------------------------
@@ -492,9 +522,15 @@
 # endif
                 CALL omega (ng, tile, iNLM)
                 CALL wvelocity (ng, tile, nstp(ng))
+# ifdef WEC
+                CALL wec_wvelocity (ng, tile, nstp(ng))
+# endif
               END DO
 !$OMP BARRIER
             END DO
+
+# if !(defined STEP2D_FB_AB3_AM4 || defined STEP2D_FB_LF_AM3) || \
+       defined DIAGNOSTICS       || defined AVERAGES
 !
 !-----------------------------------------------------------------------
 !  Set free-surface to it time-averaged value.  If applicable,
@@ -505,16 +541,19 @@
             DO ig=1,GridsInLayer(nl)
               ng=GridNumber(ig,nl)
               DO tile=first_tile(ng),last_tile(ng),+1     ! irreversible
+#  if !(defined STEP2D_FB_AB3_AM4 || defined STEP2D_FB_LF_AM3)
                 CALL set_zeta (ng, tile)
-# ifdef DIAGNOSTICS
+#  endif
+#  ifdef DIAGNOSTICS
                 CALL set_diags (ng, tile)
-# endif
-# ifdef AVERAGES
+#  endif
+#  ifdef AVERAGES
                 CALL set_avg (ng, tile)
-# endif
+#  endif
               END DO
 !$OMP BARRIER
             END DO
+# endif
 
 # ifdef NESTING
 !
@@ -602,10 +641,159 @@
               END IF
             END DO
 # endif
+
+# ifdef STEP2D_FB_AB3_AM4
+!
+!-----------------------------------------------------------------------
+!  Solve nonlinear vertically integrated primitive equations for
+!  free-surface and momentum components using a generalized Forward-
+!  Backward, 3rd-order Adams-Bashforth / 4th-order Adams-Moulton
+!  (FB AB3-AM4) time stepping scheme (Shchepetkin and McWilliams,
+!  2009).
+!-----------------------------------------------------------------------
+!
+            LOOP_2D : DO my_iif=1,MAXVAL(nfast)
+
+              DO ig=1,GridsInLayer(nl)
+                ng=GridNumber(ig,nl)
+                IF (my_iif.le.nfast(ng)) THEN
+                  iif(ng)=my_iif
+                  kstp(ng)=knew(ng)
+                  knew(ng)=kstp(ng)+1
+                  IF (knew(ng).gt.4) knew(ng)=1
+
+                  IF (MOD(knew(ng),2).eq.0) THEN            ! zig-zag
+                    DO tile=first_tile(ng),last_tile(ng),+1 ! processing
+                      CALL step2d (ng, tile)                ! sequence
+                    END DO
+!$OMP BARRIER
+                  ELSE
+                    DO tile=last_tile(ng),first_tile(ng),-1
+                      CALL step2d (ng, tile)
+                    END DO
+!$OMP BARRIER
+                  END IF
+                END IF
+              END DO
+
+#  ifdef NESTING
+!
+!  If composite or mosaic grids, process additional points in the
+!  contact zone between connected grids for the state variables
+!  associated with the 2D engine CORRECTOR STEP section (KNEW INDEX).
+!
+              DO ig=1,GridsInLayer(nl)
+                ng=GridNumber(ig,nl)
+                IF (ANY(CompositeGrid(:,ng))) THEN
+                  CALL nesting (ng, iNLM, n2dCS)
+                END IF
+              END DO
+#  endif
+            END DO LOOP_2D
+
+# else
+
+#  ifdef STEP2D_FB_LF_AM3
 !
 !-----------------------------------------------------------------------
 !  Solve the vertically integrated primitive equations for the
-!  free-surface and barotropic momentum components.
+!  free-surface and barotropic momentum components using a predictor-
+!  corrector LeapFrog / 3rd-order Adams-Moulton with a Forward-Backward
+!  feeback (FB LF-AM3) stepping scheme (Shchepetkin and McWilliams,
+!  2009).
+!-----------------------------------------------------------------------
+!
+            LOOP_2D : DO my_iif=1,MAXVAL(nfast)
+!
+!  Predictor LF substep with FB-feedback.
+!
+              DO ig=1,GridsInLayer(nl)
+                ng=GridNumber(ig,nl)
+                IF (my_iif.le.nfast(ng)) THEN
+                  iif(ng)=my_iif
+                  kstp(ng)=next_kstp(ng)
+                  knew(ng)=3
+
+                  DO tile=last_tile(ng),first_tile(ng),-1
+                    CALL step2d (ng, tile)
+                  END DO
+!$OMP BARRIER
+                END IF
+              END DO
+
+#   ifdef NESTING
+!
+!  If composite or mosaic grids, process additional points in the
+!  contact zone between connected grids for the state variables
+!  associated with the 2D engine PREDICTOR STEP section.
+#    ifdef NESTING_DEBUG
+!  If refinement, check mass flux conservation between coarse and
+!  fine grids during debugging.
+!  Warning: very verbose output to fort.300 ascii file to check
+!           mass flux conservation.
+#    endif
+!
+              DO ig=1,GridsInLayer(nl)
+                ng=GridNumber(ig,nl)
+                IF (ANY(CompositeGrid(:,ng))) THEN
+                  CALL nesting (ng, iNLM, n2dPS)
+                END IF
+#    ifdef NESTING_DEBUG
+                IF (RefinedGrid(ng).and.(RefineScale(ng).gt.0)) THEN
+                  CALL nesting (ng, iNLM, nmflx)
+                END IF
+#    endif
+              END DO
+#   endif
+!
+!  Corrector AM3 substep with FB-feedback.
+!
+              DO ig=1,GridsInLayer(nl)
+                ng=GridNumber(ig,nl)
+                IF (my_iif.le.nfast(ng)) THEN
+                  knew(ng)=3-kstp(ng)
+                  next_kstp(ng)=knew(ng)
+
+                  DO tile=first_tile(ng),last_tile(ng),+1
+                    CALL step2d (ng, tile)
+                  END DO
+!$OMP BARRIER
+                END IF
+              END DO
+
+#   ifdef NESTING
+!
+!  If composite or mosaic grids, process additional points in the
+!  contact zone between connected grids for the state variables
+!  associated with the 2D engine CORRECTOR STEP section (KNEW INDEX).
+#    ifdef NESTING_DEBUG
+!  If refinement, check mass flux conservation between coarse and
+!  fine grids during debugging.
+!  Warning: very verbose output to fort.300 ascii file to check
+!           mass flux conservation.
+#    endif
+!
+              DO ig=1,GridsInLayer(nl)
+                ng=GridNumber(ig,nl)
+                IF (ANY(CompositeGrid(:,ng))) THEN
+                  CALL nesting (ng, iNLM, n2dCS)
+                END IF
+#    ifdef NESTING_DEBUG
+                IF (RefinedGrid(ng).and.(RefineScale(ng).gt.0)) THEN
+                  CALL nesting (ng, iNLM, nmflx)
+                END IF
+#    endif
+              END DO
+#   endif
+            END DO LOOP_2D
+
+#  else
+!
+!-----------------------------------------------------------------------
+!  Solve the vertically integrated primitive equations for the
+!  free-surface and barotropic momentum components using a predictor-
+!  corrector LeapFrog with 3rd-order Adams-Moulton (LF-AM3) time
+!  stepping scheme.
 !-----------------------------------------------------------------------
 !
             LOOP_2D : DO my_iif=1,MAXVAL(nfast)+1
@@ -643,30 +831,30 @@
                 END IF
               END DO
 
-# ifdef NESTING
+#   ifdef NESTING
 !
 !  If composite or mosaic grids, process additional points in the
 !  contact zone between connected grids for the state variables
-!  associated with the 2D engine Predictor Step section.
+!  associated with the 2D engine PREDICTOR STEP section.
+#    ifdef NESTING_DEBUG
 !  If refinement, check mass flux conservation between coarse and
 !  fine grids during debugging.
-#  ifdef NESTING_DEBUG
 !  Warning: very verbose output to fort.300 ascii file to check
 !           mass flux conservation.
-#  endif
+#    endif
 !
               DO ig=1,GridsInLayer(nl)
                 ng=GridNumber(ig,nl)
                 IF (ANY(CompositeGrid(:,ng))) THEN
                   CALL nesting (ng, iNLM, n2dPS)
                 END IF
-#  ifdef NESTING_DEBUG
+#    ifdef NESTING_DEBUG
                 IF (RefinedGrid(ng).and.(RefineScale(ng).gt.0)) THEN
                   CALL nesting (ng, iNLM, nmflx)
                 END IF
-#  endif
+#    endif
               END DO
-# endif
+#   endif
 !
 !  Set time indices for corrector step.
 !
@@ -692,39 +880,44 @@
                 END IF
               END DO
 
-# ifdef NESTING
+#   ifdef NESTING
 !
 !  If composite or mosaic grids, process additional points in the
 !  contact zone between connected grids for the state variables
-!  associated with the 2D engine Corrector step section.
+!  associated with the 2D engine CORRECTOR STEP section (KNEW INDEX).
+#    ifdef NESTING_DEBUG
 !  If refinement, check mass flux conservation between coarse and
 !  fine grids during debugging.
-#  ifdef NESTING_DEBUG
 !  Warning: very verbose output to fort.300 ascii file to check
 !           mass flux conservation.
-#  endif
+#    endif
 !
               DO ig=1,GridsInLayer(nl)
                 ng=GridNumber(ig,nl)
                 IF (ANY(CompositeGrid(:,ng))) THEN
                   CALL nesting (ng, iNLM, n2dCS)
                 END IF
-#  ifdef NESTING_DEBUG
+#    ifdef NESTING_DEBUG
                 IF (RefinedGrid(ng).and.(RefineScale(ng).gt.0)) THEN
                   CALL nesting (ng, iNLM, nmflx)
                 END IF
-#  endif
+#    endif
               END DO
-# endif
+#   endif
             END DO LOOP_2D
+#  endif
+
+# endif
 
 # ifdef NESTING
 #  if defined MASKING && defined WET_DRY
 !
+!-----------------------------------------------------------------------
 !  If nesting and wetting and drying, scale horizontal interpolation
 !  weights to account for land/sea masking in contact areas. This needs
 !  to be done at very time-step since the Land/Sea masking is time
 !  dependent.
+!-----------------------------------------------------------------------
 !
             DO ig=1,GridsInLayer(nl)
               ng=GridNumber(ig,nl)
@@ -732,9 +925,11 @@
             END DO
 #  endif
 !
+!-----------------------------------------------------------------------
 !  If composite or mosaic grids, process additional points in the
 !  contact zone between connected grids for the time-averaged
 !  momentum fluxes (DU_avg1, DV_avg1) and free-surface (Zt_avg).
+!-----------------------------------------------------------------------
 !
             DO ig=1,GridsInLayer(nl)
               ng=GridNumber(ig,nl)
@@ -743,6 +938,8 @@
               END IF
             END DO
 # endif
+
+# if !(defined STEP2D_FB_AB3_AM4 || defined STEP2D_FB_LF_AM3)
 !
 !-----------------------------------------------------------------------
 !  Recompute depths and thicknesses using the new time filtered
@@ -756,6 +953,7 @@
               END DO
 !$OMP BARRIER
             END DO
+# endif
 
 # ifdef NESTING
 !
@@ -810,6 +1008,9 @@
                 CALL my25_corstep (ng, tile)
 # elif defined GLS_MIXING
                 CALL gls_corstep (ng, tile)
+# endif
+# if defined WEC_VF && defined WAVE_MIXING
+                CALL wec_wave_mix (ng, tile)
 # endif
 # ifdef BIOLOGY
                 CALL biology (ng, tile)

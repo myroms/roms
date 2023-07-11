@@ -1,6 +1,6 @@
 /*
 ** git $Id$
-** svn $Id: inlet_test.h 1151 2023-02-09 03:08:53Z arango $
+** svn $Id: inlet_test.h 1178 2023-07-11 17:50:57Z arango $
 *******************************************************************************
 ** Copyright (c) 2002-2023 The ROMS/TOMS Group                               **
 **   Licensed under a MIT/X style license                                    **
@@ -27,7 +27,7 @@
 #define FSOBC_REDUCED
 #define SOLVE3D
 #define SWAN_COUPLING
-#define NEARSHORE_MELLOR08
+#define WEC_VF
 #define ANA_INITIAL
 #define ANA_SMFLUX
 #define ANA_FSOBC

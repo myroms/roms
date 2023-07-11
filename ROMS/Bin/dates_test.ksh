@@ -1,7 +1,7 @@
 #!/usr/bin/env ksh
 #
 # git $Id$
-# svn $Id: dates_test.ksh 1151 2023-02-09 03:08:53Z arango $
+# svn $Id: dates_test.ksh 1178 2023-07-11 17:50:57Z arango $
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # Copyright (c) 2002-2023 The ROMS/TOMS Group                           :::
 #   Licensed under a MIT/X style license                                :::
@@ -48,5 +48,5 @@ echo
 echo "Truncated Date:             $ds3"
 echo "Truncated Date Number:      $dn3"
 echo "Truncated Day-of-the-year:  $yd3"
-echo "Days since TRuncated date:  $d31"
+echo "Days since Truncated date:  $d31"
 echo

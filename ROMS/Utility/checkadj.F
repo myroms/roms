@@ -2,7 +2,7 @@
       SUBROUTINE checkadj
 !
 !git $Id$
-!svn $Id: checkadj.F 1151 2023-02-09 03:08:53Z arango $
+!svn $Id: checkadj.F 1178 2023-07-11 17:50:57Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -406,7 +406,7 @@
       END IF
 # endif
 !
-      string=uppercase('nearshore_mellor')
+      string=uppercase('wec')
       ifound=INDEX(TRIM(Coptions), TRIM(string))
       IF (ifound.ne.0) THEN
         ic=ic+1
