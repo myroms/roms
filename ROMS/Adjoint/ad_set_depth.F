@@ -3,7 +3,7 @@
 #if defined ADJOINT && defined SOLVE3D
 !
 !git $Id$
-!svn $Id: ad_set_depth.F 1151 2023-02-09 03:08:53Z arango $
+!svn $Id: ad_set_depth.F 1180 2023-07-13 02:42:10Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -40,9 +40,6 @@
       USE mod_coupling
       USE mod_grid
       USE mod_ocean
-# if defined SEDIMENT && defined SED_MORPH
-      USE mod_sediment
-# endif
       USE mod_stepping
 !
 !  Imported variable declarations.
@@ -68,10 +65,6 @@
 # ifdef ICESHELF
      &                        GRID(ng) % zice,                          &
 # endif
-# if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
-     &                        SEDIMENTS(ng) % ad_bed,                   &
-     &                        SEDIMEMTS(ng) % ad_bed_thick0,            &
-# endif
      &                        COUPLING(ng) % Zt_avg1,                   &
      &                        COUPLING(ng) % ad_Zt_avg1,                &
      &                        GRID(ng) % ad_Hz,                         &
@@ -92,9 +85,6 @@
      &                              h, ad_h,                            &
 # ifdef ICESHELF
      &                              zice,                               &
-# endif
-# if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
-     &                              ad_bed, bed_thick0,                 &
 # endif
      &                              Zt_avg1, ad_Zt_avg1,                &
      &                              ad_Hz, ad_z_r, ad_z_w)
@@ -125,10 +115,6 @@
 #  ifdef ICESHELF
       real(r8), intent(in) :: zice(LBi:,LBj:)
 #  endif
-#  if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
-      real(r8), intent(in) :: ad_bed(LBi:,LBj:,:,:)
-      real(r8), intent(inout):: ad_bed_thick0(LBi:,LBj:)
-#  endif
       real(r8), intent(inout) :: ad_h(LBi:,LBj:)
       real(r8), intent(inout) :: ad_Zt_avg1(LBi:,LBj:)
       real(r8), intent(inout) :: ad_Hz(LBi:,LBj:,:)
@@ -139,10 +125,6 @@
       real(r8), intent(in) :: Zt_avg1(LBi:UBi,LBj:UBj)
 #  ifdef ICESHELF
       real(r8), intent(in) :: zice(LBi:UBi,LBj:UBj)
-#  endif
-#  if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
-      real(r8), intent(inout) :: ad_bed(LBi:UBi,LBj:UBj,Nbed,MBEDP)
-      real(r8), intent(inout) :: ad_bed_thick0(LBi:UBi,LBj:UBi)
 #  endif
       real(r8), intent(inout) :: ad_h(LBi:UBi,LBj:UBj)
       real(r8), intent(inout) :: ad_Zt_avg1(LBi:UBi,LBj:UBj)
@@ -330,16 +312,6 @@
               ad_h(i,j)=0.0_r8
             END IF
 # endif
-# if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
-!^          tl_h(i,j)=tl_h(i,j)-                                        &
-!^   &                tl_bed_thick(i,j,nstp)+tl_bed_thick(i,j,nnew)
-!^
-            ad_bed_thick(i,j,nnew)=ad_bed_thick(i,j,nnew)+              &
-     &                             ad_h(i,j)
-
-            ad_bed_thick(i,j,nstp)=ad_bed_thick(i,j,nstp)-              &
-     &                             ad_h(i,j)
-# endif
           END DO
         END DO
 !
@@ -432,16 +404,6 @@
 !^
               ad_h(i,j)=0.0_r8
             END IF
-# endif
-# if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
-!^          tl_h(i,j)=tl_h(i,j)-                                        &
-!^   &                tl_bed_thick(i,j,nstp)+tl_bed_thick(i,j,nnew)
-!^
-            ad_bed_thick(i,j,nnew)=ad_bed_thick(i,j,nnew)+              &
-     &                             ad_h(i,j)
-
-            ad_bed_thick(i,j,nstp)=ad_bed_thick(i,j,nstp)-              &
-     &                             ad_h(i,j)
 # endif
           END DO
         END DO

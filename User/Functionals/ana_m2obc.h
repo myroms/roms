@@ -1,7 +1,7 @@
       SUBROUTINE ana_m2obc (ng, tile, model)
 !
 !! git $Id$
-!! svn $Id: ana_m2obc.h 1151 2023-02-09 03:08:53Z arango $
+!! svn $Id: ana_m2obc.h 1180 2023-07-13 02:42:10Z arango $
 !!======================================================================
 !! Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !!   Licensed under a MIT/X style license                              !
@@ -101,7 +101,7 @@
 # ifdef MASKING
       real(r8), intent(in) :: umask(LBi:UBi,LBj:UBj)
 # endif
-      real(r8), intent(in) :: zeta(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(in) :: zeta(LBi:UBi,LBj:UBj,:)
 #endif
 !
 !  Local variable declarations.

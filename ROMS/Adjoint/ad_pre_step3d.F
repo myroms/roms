@@ -5,7 +5,7 @@
 # define NEUMANN
 !
 !git $Id$
-!svn $Id: ad_pre_step3d.F 1151 2023-02-09 03:08:53Z arango $
+!svn $Id: ad_pre_step3d.F 1180 2023-07-13 02:42:10Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -325,8 +325,8 @@
       real(r8), intent(in) :: Akt(LBi:UBi,LBj:UBj,0:N(ng),NAT)
       real(r8), intent(in) :: Akv(LBi:UBi,LBj:UBj,0:N(ng))
 #  ifdef FOUR_DVAR
-      real(r8), intent(in) :: ad_ubar(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(in) :: ad_vbar(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(in) :: ad_ubar(LBi:UBi,LBj:UBj,:)
+      real(r8), intent(in) :: ad_vbar(LBi:UBi,LBj:UBj,:)
 #  endif
       real(r8), intent(in) :: W(LBi:UBi,LBj:UBj,0:N(ng))
       real(r8), intent(in) :: t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
@@ -1180,11 +1180,7 @@
                 FC(i,k)=cff1*t(i,j,k  ,nstp,itrc)+                      &
      &                  cff2*t(i,j,k+1,nstp,itrc)
               END DO
-#  ifdef SED_MORPH
-              FC(i,0)=W(i,j,0)*t(i,j,1,nstp,itrc)
-#  else
               FC(i,0)=0.0_r8
-#  endif
               FC(i,N(ng))=0.0_r8
             END DO
 !
@@ -1478,20 +1474,9 @@
 !^            tl_FC(i,N(ng))=0.0_r8
 !^
               ad_FC(i,N(ng))=0.0_r8
-#  ifdef SED_MORPH
-!^            tl_FC(i,0)=tl_W(i,j,0)*t(i,j,1,nstp,itrc)+                &
-!^   &                   W(i,j,0)*tl_t(i,j,1,nstp,itrc)
-!^
-              ad_W(i,j,0)=ad_W(i,j,0)+                                  &
-     &                    t(i,j,1,nstp,itrc)*ad_FC(i,0)
-              ad_t(i,j,1,nstp,itrc)=ad_t(i,j,1,nstp,itrc)+              &
-     &                              W(i,j,0)*ad_FC(i,0)
-              ad_FC(i,0)=0.0_r8
-#  else
 !^            tl_FC(i,0)=0.0_r8
 !^
               ad_FC(i,0)=0.0_r8
-#  endif
             END DO
             cff1=1.0_r8/3.0_r8
             DO k=1,N(ng)-1
@@ -1580,20 +1565,9 @@
 !^            tl_FC(i,N(ng))=0.0_r8
 !^
               ad_FC(i,N(ng))=0.0_r8
-#  ifdef SED_MORPH
-!^            tl_FC(i,0)=tl_W(i,j,0)*t(i,j,1,nstp,itrc)                 &
-!^   &                   W(i,j,0)*tl_t(i,j,1,nstp,itrc)
-!^
-              ad_W(i,j,0)=ad_W(i,j,0)+                                  &
-     &                    t(i,j,1,nstp,itrc)*ad_FC(i,0)
-              ad_t(i,j,1,nstp,itrc)=ad_t(i,j,1,nstp,itrc)+              &
-     &                              W(i,j,0)*ad_FC(i,0)
-              ad_FC(i,0)=0.0_r8
-#  else
 !^            tl_FC(i,0)=0.0_r8
 !^
               ad_FC(i,0)=0.0_r8
-#  endif
             END DO
             DO k=1,N(ng)-1
               DO i=Istr,Iend
@@ -1625,20 +1599,9 @@
 !^            tl_FC(i,N(ng))=0.0_r8
 !^
               ad_FC(i,N(ng))=0.0_r8
-#  ifdef SED_MORPH
-!^            tl_FC(i,0)=tl_W(i,j,0)*t(i,j,1,nstp,itrc)+                &
-!^   &                   W(i,j,0)*tl_t(i,j,1,nstp,itrc)
-!^
-              ad_t(i,j,1,nstp,itrc)=ad_t(i,j,1,nstp,itrc)+              &
-     &                              W(i,j,0)*ad_FC(i,0)
-              ad_W(i,j,0)=ad_W(i,j,0)+                                  &
-     &                    t(i,j,1,nstp,itrc)+ad_FC(i,0)
-              ad_FC(i,0)=0.0_r8
-#  else
 !^            tl_FC(i,0)=0.0_r8
 !^
               ad_FC(i,0)=0.0_r8
-#  endif
             END DO
             DO k=1,N(ng)-1
               DO i=Istr,Iend
@@ -1719,27 +1682,9 @@
               ad_t(i,j,2,nstp,itrc)=ad_t(i,j,2,nstp,itrc)+cff2*adfac
               ad_t(i,j,3,nstp,itrc)=ad_t(i,j,3,nstp,itrc)-cff3*adfac
               ad_FC(i,1)=0.0_r8
-#  ifdef SED_MORPH
-!^            tl_FC(i,0)=2.0_r8*(tl_W(i,j,0)*                           &
-!^   &                           (cff2*t(i,j,1,nstp,itrc)-              &
-!^   &                            cff3*t(i,j,2,nstp,itrc))+             &
-!^   &                           W(i,j,0)*                              &
-!^   &                           (cff2*tl_t(i,j,1,nstp,itrc)-           &
-!^   &                            cff3*tl_t(i,j,2,nstp,itrc)))
-!^
-              adfac=2.0_r8*ad_FC(i,0)
-              adfac1=adfac*W(i,j,0)
-              ad_W(i,j,0)=ad_W(i,j,0)+                                  &
-     &                    (cff2*t(i,j,1,nstp,itrc)-                     &
-     &                     cff3*t(i,j,2,nstp,itrc))*adfac
-              ad_t(i,j,1,nstp,itrc)=ad_t(i,j,1,nstp,itrc)+cff2*adfac1
-              ad_t(i,j,2,nstp,itrc)=ad_t(i,j,2,nstp,itrc)-cff3*adfac1
-              ad_FC(i,0)=0.0_r8
-#  else
 !^            tl_FC(i,0)=0.0_r8
 !^
               ad_FC(i,0)=0.0_r8
-#  endif
             END DO
             DO k=2,N(ng)-2
               DO i=Istr,Iend

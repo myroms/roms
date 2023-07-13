@@ -2,7 +2,7 @@
       MODULE diag_mod
 !
 !git $Id$
-!svn $Id: diag.F 1151 2023-02-09 03:08:53Z arango $
+!svn $Id: diag.F 1180 2023-07-13 02:42:10Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -50,7 +50,11 @@
       CALL diag_tile (ng, tile,                                         &
      &                LBi, UBi, LBj, UBj,                               &
      &                IminS, ImaxS, JminS, JmaxS,                       &
+#ifdef STEP2D_FB_LF_AM3
+     &                nstp(ng), kstp(ng),                               &
+#else
      &                nstp(ng), krhs(ng),                               &
+#endif
      &                GRID(ng) % h,                                     &
      &                GRID(ng) % pm,                                    &
      &                GRID(ng) % pn,                                    &
@@ -141,9 +145,9 @@
       real(r8), intent(in) :: v(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(in) :: wvel(LBi:UBi,LBj:UBj,0:N(ng))
 # endif
-      real(r8), intent(in) :: ubar(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(in) :: vbar(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(in) :: zeta(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(in) :: ubar(LBi:UBi,LBj:UBj,:)
+      real(r8), intent(in) :: vbar(LBi:UBi,LBj:UBj,:)
+      real(r8), intent(in) :: zeta(LBi:UBi,LBj:UBj,:)
 #endif
 !
 !  Local variable declarations.

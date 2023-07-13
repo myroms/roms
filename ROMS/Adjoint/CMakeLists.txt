@@ -1,5 +1,5 @@
 # git $Id$
-# svn $Id: CMakeLists.txt 1151 2023-02-09 03:08:53Z arango $
+# svn $Id: CMakeLists.txt 1180 2023-07-13 02:42:10Z arango $
 #:::::::::::::::::::::::::::::::::::::::::::::::::::::: David Robertson :::
 # Copyright (c) 2002-2023 The ROMS/TOMS Group                           :::
 #   Licensed under a MIT/X style license                                :::
@@ -35,6 +35,7 @@ list( APPEND _files
       ROMS/Adjoint/ad_ini_fields.F
       ROMS/Adjoint/ad_initial.F
       ROMS/Adjoint/ad_lmd_swfrac.F
+      ROMS/Adjoint/ad_load_sol.F
       ROMS/Adjoint/ad_main2d.F
       ROMS/Adjoint/ad_main3d.F
       ROMS/Adjoint/ad_misfit.F

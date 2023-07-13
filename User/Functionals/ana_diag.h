@@ -1,7 +1,7 @@
       SUBROUTINE ana_diag (ng, tile, model)
 !
 !! git $Id$
-!! svn $Id: ana_diag.h 1151 2023-02-09 03:08:53Z arango $
+!! svn $Id: ana_diag.h 1180 2023-07-13 02:42:10Z arango $
 !!======================================================================
 !! Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !!   Licensed under a MIT/X style license                              !
@@ -73,8 +73,8 @@
       real(r8), intent(in) :: u(LBi:,LBj:,:,:)
       real(r8), intent(in) :: v(LBi:,LBj:,:,:)
 #else
-      real(r8), intent(in) :: ubar(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(in) :: vbar(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(in) :: ubar(LBi:UBi,LBj:UBj,:)
+      real(r8), intent(in) :: vbar(LBi:UBi,LBj:UBj,:)
       real(r8), intent(in) :: u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(in) :: v(LBi:UBi,LBj:UBj,N(ng),2)
 #endif

@@ -3,7 +3,7 @@
 #ifdef TANGENT
 !
 !git $Id$
-!svn $Id: tl_u2dbc_im.F 1151 2023-02-09 03:08:53Z arango $
+!svn $Id: tl_u2dbc_im.F 1180 2023-07-13 02:42:10Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -88,13 +88,13 @@
 
       real(r8), intent(inout) :: tl_ubar(LBi:,LBj:,:)
 # else
-      real(r8), intent(in) :: ubar(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(in) :: vbar(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(in) :: zeta(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(in) :: tl_vbar(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(in) :: tl_zeta(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(in) :: ubar(LBi:UBi,LBj:UBj,:)
+      real(r8), intent(in) :: vbar(LBi:UBi,LBj:UBj,:)
+      real(r8), intent(in) :: zeta(LBi:UBi,LBj:UBj,:)
+      real(r8), intent(in) :: tl_vbar(LBi:UBi,LBj:UBj,:)
+      real(r8), intent(in) :: tl_zeta(LBi:UBi,LBj:UBj,:)
 
-      real(r8), intent(inout) :: tl_ubar(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(inout) :: tl_ubar(LBi:UBi,LBj:UBj,:)
 # endif
 !
 !  Local variable declarations.

@@ -4,7 +4,7 @@
 # define NEUMANN
 !
 !git $Id$
-!svn $Id: tl_pre_step3d.F 1151 2023-02-09 03:08:53Z arango $
+!svn $Id: tl_pre_step3d.F 1180 2023-07-13 02:42:10Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -1024,14 +1024,8 @@
               END DO
             END DO
             DO i=Istr,Iend
-#  ifdef SED_MORPH
-              FC(i,0)=W(i,j,0)*t(i,j,1,nstp,itrc)
-              tl_FC(i,0)=tl_W(i,j,0)*t(i,j,1,nstp,itrc)+                &
-     &                   W(i,j,0)*tl_t(i,j,1,nstp,itrc)
-#  else
               FC(i,0)=0.0_r8
               tl_FC(i,0)=0.0_r8
-#  endif
               FC(i,N(ng))=0.0_r8
               tl_FC(i,N(ng))=0.0_r8
             END DO
@@ -1055,14 +1049,8 @@
               END DO
             END DO
             DO i=Istr,Iend
-#  ifdef SED_MORPH
-              FC(i,0)=W(i,j,0)*t(i,j,1,nstp,itrc)
-              tl_FC(i,0)=tl_W(i,j,0)*t(i,j,1,nstp,itrc)                 &
-     &                   W(i,j,0)*tl_t(i,j,1,nstp,itrc)
-#  else
               FC(i,0)=0.0_r8
               tl_FC(i,0)=0.0_r8
-#  endif
               FC(i,N(ng))=0.0_r8
               tl_FC(i,N(ng))=0.0_r8
             END DO
@@ -1088,16 +1076,9 @@
               END DO
             END DO
             DO i=Istr,Iend
-#  ifdef SED_MORPH
-!^            FC(i,0)=W(i,j,0)*t(i,j,1,nstp,itrc)
-!^
-              tl_FC(i,0)=tl_W(i,j,0)*t(i,j,1,nstp,itrc)+                &
-     &                   W(i,j,0)*tl_t(i,j,1,nstp,itrc)
-   else
 !^            FC(i,0)=0.0_r8
 !^
               tl_FC(i,0)=0.0_r8
-#  endif
 !^            FC(i,N(ng))=0.0_r8
 !^
               tl_FC(i,N(ng))=0.0_r8
@@ -1131,20 +1112,8 @@
               END DO
             END DO
             DO i=Istr,Iend
-#  ifdef SED_MORPH
-              FC(i,0)=W(i,j,0)*2.0_r8*                                  &
-     &                (cff2*t(i,j,1,nstp,itrc)-                         &
-     &                 cff3*t(i,j,2,nstp,itrc))
-              tl_FC(i,0)=2.0_r8*(tl_W(i,j,0)*                           &
-     &                           (cff2*t(i,j,1,nstp,itrc)-              &
-     &                            cff3*t(i,j,2,nstp,itrc))+             &
-     &                           W(i,j,0)*                              &
-     &                           (cff2*tl_t(i,j,1,nstp,itrc)-           &
-     &                            cff3*tl_t(i,j,2,nstp,itrc)))
-#  else
               FC(i,0)=0.0_r8
               tl_FC(i,0)=0.0_r8
-#  endif
               FC(i,1)=W(i,j,1)*                                         &
      &                (cff1*t(i,j,1,nstp,itrc)+                         &
      &                 cff2*t(i,j,2,nstp,itrc)-                         &
