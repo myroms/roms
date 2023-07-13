@@ -3,7 +3,7 @@
 #ifdef NESTING
 !
 !git $Id$
-!svn $Id: set_contact.F 1151 2023-02-09 03:08:53Z arango $
+!svn $Id: set_contact.F 1180 2023-07-13 02:42:10Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -1256,8 +1256,8 @@
           allocate ( REFINED(cr) % vbar(4,NpointsV(cr),2) )
           allocate ( REFINED(cr) % zeta(4,NpointsR(cr),2) )
 
-          allocate ( REFINED(cr) % DU_avg2(4,NpointsU(cr),2) )
-          allocate ( REFINED(cr) % DV_avg2(4,NpointsV(cr),2) )
+          allocate ( REFINED(cr) % U2d_flux(4,NpointsU(cr),2) )
+          allocate ( REFINED(cr) % V2d_flux(4,NpointsV(cr),2) )
 
           allocate ( REFINED(cr) % on_u(NpointsU(cr)) )
           allocate ( REFINED(cr) % om_v(NpointsV(cr)) )
@@ -1271,8 +1271,8 @@
           allocate ( REFINED(cr) % tl_vbar(4,NpointsV(cr),2) )
           allocate ( REFINED(cr) % tl_zeta(4,NpointsR(cr),2) )
 
-          allocate ( REFINED(cr) % tl_DU_avg2(4,NpointsU(cr),2) )
-          allocate ( REFINED(cr) % tl_DV_avg2(4,NpointsV(cr),2) )
+          allocate ( REFINED(cr) % tl_U2d_flux(4,NpointsU(cr),2) )
+          allocate ( REFINED(cr) % tl_V2d_flux(4,NpointsV(cr),2) )
 
           Dmem(rg)=Dmem(rg)+REAL(4*NpointsR(cr),r8)
           Dmem(rg)=Dmem(rg)+3.0_r8*REAL(4*NpointsU(cr),r8)
@@ -1284,8 +1284,8 @@
           allocate ( REFINED(cr) % ad_vbar(4,NpointsV(cr),2) )
           allocate ( REFINED(cr) % ad_zeta(4,NpointsR(cr),2) )
 
-          allocate ( REFINED(cr) % ad_DU_avg2(4,NpointsU(cr),2) )
-          allocate ( REFINED(cr) % ad_DV_avg2(4,NpointsV(cr),2) )
+          allocate ( REFINED(cr) % ad_U2d_flux(4,NpointsU(cr),2) )
+          allocate ( REFINED(cr) % ad_V2d_flux(4,NpointsV(cr),2) )
 
           Dmem(rg)=Dmem(rg)+REAL(4*NpointsR(cr),r8)
           Dmem(rg)=Dmem(rg)+3.0_r8*REAL(4*NpointsU(cr),r8)
@@ -2517,8 +2517,8 @@
           allocate ( REFINED(cr) % vbar(4,NpointsV(cr),2) )
           allocate ( REFINED(cr) % zeta(4,NpointsR(cr),2) )
 
-          allocate ( REFINED(cr) % DU_avg2(4,NpointsU(cr),2) )
-          allocate ( REFINED(cr) % DV_avg2(4,NpointsV(cr),2) )
+          allocate ( REFINED(cr) % U2d_flux(4,NpointsU(cr),2) )
+          allocate ( REFINED(cr) % V2d_flux(4,NpointsV(cr),2) )
 
           allocate ( REFINED(cr) % on_u(NpointsU(cr)) )
           allocate ( REFINED(cr) % om_v(NpointsV(cr)) )
@@ -2532,8 +2532,8 @@
           allocate ( REFINED(cr) % tl_vbar(4,NpointsV(cr),2) )
           allocate ( REFINED(cr) % tl_zeta(4,NpointsR(cr),2) )
 
-          allocate ( REFINED(cr) % tl_DU_avg2(4,NpointsU(cr),2) )
-          allocate ( REFINED(cr) % tl_DV_avg2(4,NpointsV(cr),2) )
+          allocate ( REFINED(cr) % tl_U2d_flux(4,NpointsU(cr),2) )
+          allocate ( REFINED(cr) % tl_V2d_flux(4,NpointsV(cr),2) )
 
           Dmem(rg)=Dmem(rg)+REAL(4*NpointsR(cr),r8)
           Dmem(rg)=Dmem(rg)+3.0_r8*REAL(4*NpointsU(cr),r8)
@@ -2545,14 +2545,13 @@
           allocate ( REFINED(cr) % ad_vbar(4,NpointsV(cr),2) )
           allocate ( REFINED(cr) % ad_zeta(4,NpointsR(cr),2) )
 
-          allocate ( REFINED(cr) % ad_DU_avg2(4,NpointsU(cr),2) )
-          allocate ( REFINED(cr) % ad_DV_avg2(4,NpointsV(cr),2) )
+          allocate ( REFINED(cr) % ad_U2d_flux(4,NpointsU(cr),2) )
+          allocate ( REFINED(cr) % ad_V2d_flux(4,NpointsV(cr),2) )
 
           Dmem(rg)=Dmem(rg)+REAL(4*NpointsR(cr),r8)
           Dmem(rg)=Dmem(rg)+3.0_r8*REAL(4*NpointsU(cr),r8)
           Dmem(rg)=Dmem(rg)+3.0_r8*REAL(4*NpointsV(cr),r8)
 #  endif
-
 
 #  ifdef SOLVE3D
           allocate ( REFINED(cr) % u(4,N(rg),NpointsU(cr),2) )

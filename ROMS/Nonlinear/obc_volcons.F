@@ -3,7 +3,7 @@
       MODULE obc_volcons_mod
 !
 !git $Id$
-!svn $Id: obc_volcons.F 1151 2023-02-09 03:08:53Z arango $
+!svn $Id: obc_volcons.F 1180 2023-07-13 02:42:10Z arango $
 !=======================================================================
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -104,9 +104,9 @@
       real(r8), intent(in) :: h(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: om_v(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: on_u(LBi:UBi,LBj:UBj)
-      real(r8), intent(in) :: ubar(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(in) :: vbar(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(in) :: zeta(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(in) :: ubar(LBi:UBi,LBj:UBj,:)
+      real(r8), intent(in) :: vbar(LBi:UBi,LBj:UBj,:)
+      real(r8), intent(in) :: zeta(LBi:UBi,LBj:UBj,:)
 #endif
 !
 !  Local variable declarations.
@@ -279,8 +279,8 @@
 # endif
       real(r8), intent(in) :: om_v(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: on_u(LBi:UBi,LBj:UBj)
-      real(r8), intent(in) :: ubar(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(in) :: vbar(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(in) :: ubar(LBi:UBi,LBj:UBj,:)
+      real(r8), intent(in) :: vbar(LBi:UBi,LBj:UBj,:)
       real(r8), intent(in) :: Drhs(IminS:ImaxS,JminS:JmaxS)
 
       real(r8), intent(inout) :: Duon(IminS:ImaxS,JminS:JmaxS)
@@ -423,8 +423,8 @@
       real(r8), intent(in) :: vmask(LBi:UBi,LBj:UBj)
 # endif
 
-      real(r8), intent(inout) :: ubar(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(inout) :: vbar(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(inout) :: ubar(LBi:UBi,LBj:UBj,:)
+      real(r8), intent(inout) :: vbar(LBi:UBi,LBj:UBj,:)
 #endif
 !
 !  Local variable declarations.

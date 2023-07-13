@@ -4,7 +4,7 @@
 #if defined ADJOINT && (defined WEAK_CONSTRAINT || defined FORCING_SV)
 !
 !git $Id$
-!svn $Id: ad_forcing.F 1151 2023-02-09 03:08:53Z arango $
+!svn $Id: ad_forcing.F 1180 2023-07-13 02:42:10Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group      Andrew M. Moore    !
 !    Licensed under a MIT/X style license                              !
@@ -189,17 +189,17 @@
       real(r8), intent(inout) :: ad_u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(inout) :: ad_v(LBi:UBi,LBj:UBj,N(ng),2)
 #   ifdef FORCING_SV
-      real(r8), intent(inout) :: ad_ubar(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(inout) :: ad_vbar(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(inout) :: ad_ubar(LBi:UBi,LBj:UBj,:)
+      real(r8), intent(inout) :: ad_vbar(LBi:UBi,LBj:UBj,:)
 #   endif
 #  else
-      real(r8), intent(inout) :: ad_ubar(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(inout) :: ad_vbar(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(inout) :: ad_ubar(LBi:UBi,LBj:UBj,:)
+      real(r8), intent(inout) :: ad_vbar(LBi:UBi,LBj:UBj,:)
 #  endif
 #  ifdef SOLVE3D
       real(r8), intent(inout) :: ad_Zt_avg1(LBi:UBi,LBj:UBj)
 #  endif
-      real(r8), intent(inout) :: ad_zeta(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(inout) :: ad_zeta(LBi:UBi,LBj:UBj,:)
 #  ifdef SOLVE3D
       real(r8), intent(inout) :: ad_t_sol(LBi:UBi,LBj:UBj,N(ng),NT(ng))
       real(r8), intent(inout) :: ad_u_sol(LBi:UBi,LBj:UBj,N(ng))

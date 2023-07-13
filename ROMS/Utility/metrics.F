@@ -2,7 +2,7 @@
       MODULE metrics_mod
 !
 !git $Id$
-!svn $Id: metrics.F 1151 2023-02-09 03:08:53Z arango $
+!svn $Id: metrics.F 1180 2023-07-13 02:42:10Z arango $
 !=======================================================================
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -30,9 +30,6 @@
       USE mod_mixing
 #endif
       USE mod_ocean
-#if defined SEDIMENT && defined SED_MORPH && defined SOLVE3D
-      USE mod_sedbed
-#endif
       USE mod_stepping
 !
 !  Imported variable declarations.
@@ -66,9 +63,6 @@
 #ifdef SOLVE3D
 # ifdef ICESHELF
      &                   GRID(ng) % zice,                               &
-# endif
-# if defined SEDIMENT && defined SED_MORPH
-     &                   SEDBED(ng) % bed_thick,                        &
 # endif
      &                   GRID(ng) % Hz,                                 &
      &                   GRID(ng) % z_r,                                &
@@ -121,9 +115,6 @@
 #ifdef SOLVE3D
 # ifdef ICESHELF
      &                         zice,                                    &
-# endif
-# if defined SEDIMENT && defined SED_MORPH
-     &                         bed_thick,                               &
 # endif
      &                         Hz, z_r, z_w,                            &
 #endif
@@ -193,9 +184,6 @@
 #  ifdef ICESHELF
       real(r8), intent(in) :: zice(LBi:,LBj:)
 #  endif
-#  if defined SEDIMENT && defined SED_MORPH
-      real(r8), intent(in):: bed_thick(LBi:,LBj:,:)
-#  endif
 # endif
 #if defined DIFF_GRID || defined DIFF_3DCOEF || \
     defined VISC_GRID || defined VISC_3DCOEF
@@ -252,9 +240,6 @@
 # ifdef SOLVE3D
 #  ifdef ICESHELF
       real(r8), intent(in) :: zice(LBi:UBi,LBj:UBj)
-#  endif
-#  if defined SEDIMENT && defined SED_MORPH
-      real(r8), intent(in):: bed_thick(LBi:UBi,LBj:UBj,2)
 #  endif
 # endif
 #if defined DIFF_GRID || defined DIFF_3DCOEF || \
@@ -804,9 +789,6 @@
 # ifdef ICESHELF
      &                     zice,                                        &
 # endif
-# if defined SEDIMENT && defined SED_MORPH
-     &                     bed_thick,                                   &
-# endif
      &                     A2d,                                         &
      &                     Hz, z_r, z_w)
 #endif
@@ -889,8 +871,14 @@
 #ifdef MASKING
           IF (rmask(i,j).gt.0.0_r8) THEN
 #endif
+#ifdef ICESHELF
+            cff=dtfast(ng)*                                             &
+     &          SQRT(g*ABS(h(i,j)-ABS(zice(i,j)))*                      &
+     &              (pm(i,j)*pm(i,j)+pn(i,j)*pn(i,j)))
+#else
             cff=dtfast(ng)*                                             &
      &          SQRT(g*ABS(h(i,j))*(pm(i,j)*pm(i,j)+pn(i,j)*pn(i,j)))
+#endif
             my_Cg_min=MIN(my_Cg_min,cff)
             my_Cg_max=MAX(my_Cg_max,cff)
 

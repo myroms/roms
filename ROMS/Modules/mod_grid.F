@@ -2,7 +2,7 @@
       MODULE mod_grid
 !
 !git $Id$
-!svn $Id: mod_grid.F 1151 2023-02-09 03:08:53Z arango $
+!svn $Id: mod_grid.F 1180 2023-07-13 02:42:10Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -209,9 +209,8 @@
     defined BBL_MODEL  || defined SEDIMENT
           real(r8), pointer :: ZoBot(:,:)
 #endif
-#if defined UV_LDRAG
           real(r8), pointer :: rdrag(:,:)
-#elif defined UV_QDRAG
+#if defined UV_QDRAG
           real(r8), pointer :: rdrag2(:,:)
 #endif
           real(r8), pointer :: xp(:,:)
@@ -489,11 +488,10 @@
       Dmem(ng)=Dmem(ng)+size2d
 #endif
 
-#if defined UV_LDRAG
       allocate ( GRID(ng) % rdrag(LBi:UBi,LBj:UBj) )
       Dmem(ng)=Dmem(ng)+size2d
 
-#elif defined UV_QDRAG
+#if defined UV_QDRAG
       allocate ( GRID(ng) % rdrag2(LBi:UBi,LBj:UBj) )
       Dmem(ng)=Dmem(ng)+size2d
 #endif
@@ -880,11 +878,10 @@
      &                 __LINE__, 'GRID(ng)%ZoBot')) RETURN
 # endif
 
-# if defined UV_LDRAG
       IF (.not.destroy(ng, GRID(ng)%rdrag, MyFile,                      &
      &                 __LINE__, 'GRID(ng)%rdrag')) RETURN
 
-# elif defined UV_QDRAG
+# if defined UV_QDRAG
       IF (.not.destroy(ng, GRID(ng)%rdrag2, MyFile,                     &
      &                 __LINE__, 'GRID(ng)%rdrag2')) RETURN
 # endif
@@ -1256,9 +1253,8 @@
     defined BBL_MODEL  || defined SEDIMENT
             GRID(ng) % ZoBot(i,j) = Zob(ng)
 #endif
-#if defined UV_LDRAG
             GRID(ng) % rdrag(i,j) = rdrg(ng)
-#elif defined UV_QDRAG
+#if defined UV_QDRAG
             GRID(ng) % rdrag2(i,j) = rdrg2(ng)
 #endif
 

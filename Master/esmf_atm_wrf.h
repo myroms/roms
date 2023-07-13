@@ -3,7 +3,7 @@
 #if defined WRF_COUPLING && defined ESMF_LIB
 !
 !git $Id$
-!svn $Id: esmf_atm_wrf.h 1151 2023-02-09 03:08:53Z arango $
+!svn $Id: esmf_atm_wrf.h 1180 2023-07-13 02:42:10Z arango $
 !=======================================================================
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license         Hernan G. Arango     !
@@ -3524,6 +3524,7 @@
       integer :: ifld, i, is, j, ng
       integer :: Istr, Iend, Jstr, Jend
       integer :: year, month, day, hour, minutes, seconds, sN, SD
+      integer :: LakeValue, LandValue
       integer :: ExportCount
       integer :: localDE, localDEcount, localPET, PETcount
 # ifdef WRF_TIMEAVG
@@ -3600,6 +3601,14 @@
      &                       file=MyFile)) THEN
         RETURN
       END IF
+!
+!  Set WRF mask values:
+!
+!    lakemask >   0: elsewhere (land, ocean)     1: lake
+!    landmask >   0: elsewhere (ocean, lakes)    1: land
+!
+      LakeValue=1
+      LandValue=1
 !
 !-----------------------------------------------------------------------
 !  Get current time.
@@ -3983,9 +3992,19 @@
      &                 REAL(grid%lh (i,j),dp)-                          &
      &                 REAL(grid%hfx(i,j),dp)
 # endif
+# ifdef ONLY_OCEAN_FLUXES
+                  IF ((INT(grid%landmask(i,j)).ne.LandValue)) THEN
+                    MyFmin(1)=MIN(MyFmin(1),Fval)
+                    MyFmax(1)=MAX(MyFmax(1),Fval)
+                    ptr2d(i,j)=Fval
+                  ELSE
+                    ptr2d(i,j)=MISSING_dp
+                  END IF
+# else
                   MyFmin(1)=MIN(MyFmin(1),Fval)
                   MyFmax(1)=MAX(MyFmax(1),Fval)
                   ptr2d(i,j)=Fval
+# endif
                 END DO
               END DO
 !
@@ -4200,9 +4219,19 @@
      &                          REAL(grid%v_2(i  ,1,j+1),dp))*          &
      &                         REAL(grid%sina(i,j),dp))
                   Fval=cff1*cff2*(REAL(grid%ust(i,j),dp)**2)*cff3
+# ifdef ONLY_OCEAN_FLUXES
+                  IF ((INT(grid%landmask(i,j)).ne.LandValue)) THEN
+                    MyFmin(1)=MIN(MyFmin(1),Fval)
+                    MyFmax(1)=MAX(MyFmax(1),Fval)
+                    ptr2d(i,j)=Fval
+                  ELSE
+                    ptr2d(i,j)=MISSING_dp
+                  END IF
+# else
                   MyFmin(1)=MIN(MyFmin(1),Fval)
                   MyFmax(1)=MAX(MyFmax(1),Fval)
                   ptr2d(i,j)=Fval
+# endif
                 END DO
               END DO
 !
@@ -4229,9 +4258,19 @@
      &                          REAL(grid%u_2(i+1,1,j),dp))*            &
      &                         REAL(grid%sina(i,j),dp))
                   Fval=cff1*cff2*(REAL(grid%ust(i,j),dp)**2)*cff3
+# ifdef ONLY_OCEAN_FLUXES
+                  IF ((INT(grid%landmask(i,j)).ne.LandValue)) THEN
+                    MyFmin(1)=MIN(MyFmin(1),Fval)
+                    MyFmax(1)=MAX(MyFmax(1),Fval)
+                    ptr2d(i,j)=Fval
+                  ELSE
+                    ptr2d(i,j)=MISSING_dp
+                  END IF
+# else
                   MyFmin(1)=MIN(MyFmin(1),Fval)
                   MyFmax(1)=MAX(MyFmax(1),Fval)
                   ptr2d(i,j)=Fval
+# endif
                 END DO
               END DO
 !
@@ -4348,9 +4387,19 @@
               DO j=Jstr,Jend
                 DO i=Istr,Iend
                   Fval=REAL(grid%ust(i,j),dp)
+# ifdef ONLY_OCEAN_FLUXES
+                  IF ((INT(grid%landmask(i,j)).ne.LandValue)) THEN
+                    MyFmin(1)=MIN(MyFmin(1),Fval)
+                    MyFmax(1)=MAX(MyFmax(1),Fval)
+                    ptr2d(i,j)=Fval
+                  ELSE
+                    ptr2d(i,j)=MISSING_dp
+                  END IF
+# else
                   MyFmin(1)=MIN(MyFmin(1),Fval)
                   MyFmax(1)=MAX(MyFmax(1),Fval)
                   ptr2d(i,j)=Fval
+# endif
                 END DO
               END DO
 !

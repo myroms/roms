@@ -4,7 +4,7 @@
 #if defined NESTING && defined TANGENT
 !
 !git $Id$
-!svn $Id: tl_nesting.F 1151 2023-02-09 03:08:53Z arango $
+!svn $Id: tl_nesting.F 1180 2023-07-13 02:42:10Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -186,7 +186,6 @@
 !^
           CALL tl_z_weights (ng, model, tile)
         END DO
-!$OMP BARRIER
         RETURN
       END IF
 # endif
@@ -203,7 +202,6 @@
         DO tile=last_tile(ng),first_tile(ng),-1
           CALL mask_hweights (ng, model, tile)
         END DO
-!$OMP BARRIER
         RETURN
       END IF
 # endif
@@ -223,7 +221,6 @@
           DO tile=first_tile(ng),last_tile(ng),+1
             CALL get_metrics (ng, model, tile)
           END DO
-!$OMP BARRIER
 !
 !  Extract and store donor grid data at contact points.
 !
@@ -233,7 +230,6 @@
 !^
             CALL tl_get_refine (ng, model, tile)
           END DO
-!$OMP BARRIER
 !
 !  Fill refinement grid contact points variables by interpolating
 !  (space, time) from extracted donor grid data.  The free-surface
@@ -247,7 +243,6 @@
 !^
             CALL tl_put_refine (ng, model, tile, LputFsur)
           END DO
-!$OMP BARRIER
 !
           LputFsur=.FALSE.
           DO tile=first_tile(ng),last_tile(ng),+1
@@ -255,7 +250,7 @@
 !^
             CALL tl_put_refine (ng, model, tile, LputFsur)
           END DO
-!$OMP BARRIER
+
 
 # ifdef NESTING_DEBUG
 !
@@ -288,7 +283,6 @@
 !^
             CALL tl_correct_tracer (ngc, ng, model, tile)
           END DO
-!$OMP BARRIER
 #  endif
 !
 !  Replace coarse grid 2D state variables with the averaged fine grid
@@ -299,7 +293,6 @@
 !^
             CALL tl_fine2coarse (ng, model, r2dvar, tile)
           END DO
-!$OMP BARRIER
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
 #  ifdef SOLVE3D
@@ -312,7 +305,6 @@
 !^
             CALL tl_set_depth (ngc, tile, model)
           END DO
-!$OMP BARRIER
 !
 !  Replace coarse grid 3D state variables with the averaged fine grid
 !  values (two-way coupling).
@@ -322,7 +314,6 @@
 !^
             CALL tl_fine2coarse (ng, model, r3dvar, tile)
           END DO
-!$OMP BARRIER
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #  endif
 # else
@@ -348,7 +339,6 @@
 !^
           CALL tl_get_composite (ng, model, isection, tile)
         END DO
-!$OMP BARRIER
 !
 !  Fill composite grid contact points variables by interpolating from
 !  extracted donor grid data.
@@ -358,7 +348,6 @@
 !^
           CALL tl_put_composite (ng, model, isection, tile)
         END DO
-!$OMP BARRIER
 
       END IF
 

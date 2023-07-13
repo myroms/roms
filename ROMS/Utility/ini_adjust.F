@@ -12,7 +12,7 @@
      defined TANGENT)
 !
 !git $Id$
-!svn $Id: ini_adjust.F 1151 2023-02-09 03:08:53Z arango $
+!svn $Id: ini_adjust.F 1180 2023-07-13 02:42:10Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -194,17 +194,17 @@
       real(r8), intent(in) :: tl_u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(in) :: tl_v(LBi:UBi,LBj:UBj,N(ng),2)
 #    endif
-      real(r8), intent(in) :: tl_ubar(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(in) :: tl_vbar(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(in) :: tl_zeta(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(in) :: tl_ubar(LBi:UBi,LBj:UBj,:)
+      real(r8), intent(in) :: tl_vbar(LBi:UBi,LBj:UBj,:)
+      real(r8), intent(in) :: tl_zeta(LBi:UBi,LBj:UBj,:)
 #    ifdef SOLVE3D
       real(r8), intent(inout) :: t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
       real(r8), intent(inout) :: u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(inout) :: v(LBi:UBi,LBj:UBj,N(ng),2)
 #    endif
-      real(r8), intent(inout) :: ubar(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(inout) :: vbar(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(inout) :: zeta(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(inout) :: ubar(LBi:UBi,LBj:UBj,:)
+      real(r8), intent(inout) :: vbar(LBi:UBi,LBj:UBj,:)
+      real(r8), intent(inout) :: zeta(LBi:UBi,LBj:UBj,:)
 #   endif
 !
 !  Local variable declarations.
@@ -427,17 +427,17 @@
       real(r8), intent(in) :: ad_u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(in) :: ad_v(LBi:UBi,LBj:UBj,N(ng),2)
 #    endif
-      real(r8), intent(in) :: ad_ubar(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(in) :: ad_vbar(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(in) :: ad_zeta(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(in) :: ad_ubar(LBi:UBi,LBj:UBj,:)
+      real(r8), intent(in) :: ad_vbar(LBi:UBi,LBj:UBj,:)
+      real(r8), intent(in) :: ad_zeta(LBi:UBi,LBj:UBj,:)
 #    ifdef SOLVE3D
       real(r8), intent(inout) :: t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
       real(r8), intent(inout) :: u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(inout) :: v(LBi:UBi,LBj:UBj,N(ng),2)
 #    endif
-      real(r8), intent(inout) :: ubar(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(inout) :: vbar(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(inout) :: zeta(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(inout) :: ubar(LBi:UBi,LBj:UBj,:)
+      real(r8), intent(inout) :: vbar(LBi:UBi,LBj:UBj,:)
+      real(r8), intent(inout) :: zeta(LBi:UBi,LBj:UBj,:)
 #   endif
 !
 !  Local variable declarations.
@@ -695,28 +695,28 @@
       real(r8), intent(in) :: ad_u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(in) :: ad_v(LBi:UBi,LBj:UBj,N(ng),2)
 #    else
-      real(r8), intent(in) :: ad_ubar(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(in) :: ad_vbar(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(in) :: ad_ubar(LBi:UBi,LBj:UBj,:)
+      real(r8), intent(in) :: ad_vbar(LBi:UBi,LBj:UBj,:)
 #    endif
-      real(r8), intent(in) :: ad_zeta(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(in) :: ad_zeta(LBi:UBi,LBj:UBj,:)
 #    ifdef SOLVE3D
       real(r8), intent(in) :: t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
       real(r8), intent(in) :: u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(in) :: v(LBi:UBi,LBj:UBj,N(ng),2)
 #    else
-      real(r8), intent(in) :: ubar(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(in) :: vbar(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(in) :: ubar(LBi:UBi,LBj:UBj,:)
+      real(r8), intent(in) :: vbar(LBi:UBi,LBj:UBj,:)
 #    endif
-      real(r8), intent(in) :: zeta(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(in) :: zeta(LBi:UBi,LBj:UBj,:)
 #    ifdef SOLVE3D
       real(r8), intent(out) :: tl_t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
       real(r8), intent(out) :: tl_u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(out) :: tl_v(LBi:UBi,LBj:UBj,N(ng),2)
 #    else
-      real(r8), intent(out) :: tl_ubar(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(out) :: tl_vbar(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(out) :: tl_ubar(LBi:UBi,LBj:UBj,:)
+      real(r8), intent(out) :: tl_vbar(LBi:UBi,LBj:UBj,:)
 #    endif
-      real(r8), intent(out) :: tl_zeta(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(out) :: tl_zeta(LBi:UBi,LBj:UBj,:)
 #   endif
 !
 !  Local variable declarations.
@@ -1097,14 +1097,14 @@
       real(r8), intent(inout) :: ad_u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(inout) :: ad_v(LBi:UBi,LBj:UBj,N(ng),2)
 #    if defined WEAK_CONSTRAINT && defined TIME_CONV
-      real(r8), intent(inout) :: ad_ubar(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(inout) :: ad_vbar(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(inout) :: ad_ubar(LBi:UBi,LBj:UBj,:)
+      real(r8), intent(inout) :: ad_vbar(LBi:UBi,LBj:UBj,:)
 #    endif
 #   else
-      real(r8), intent(inout) :: ad_ubar(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(inout) :: ad_vbar(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(inout) :: ad_ubar(LBi:UBi,LBj:UBj,:)
+      real(r8), intent(inout) :: ad_vbar(LBi:UBi,LBj:UBj,:)
 #   endif
-      real(r8), intent(inout) :: ad_zeta(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(inout) :: ad_zeta(LBi:UBi,LBj:UBj,:)
 #   ifdef ADJUST_BOUNDARY
 #    ifdef SOLVE3D
       real(r8), intent(inout) :: tl_t_obc(LBij:UBij,N(ng),4,            &
@@ -1129,14 +1129,14 @@
       real(r8), intent(inout) :: tl_u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(inout) :: tl_v(LBi:UBi,LBj:UBj,N(ng),2)
 #    if defined WEAK_CONSTRAINT && defined TIME_CONV
-      real(r8), intent(inout) :: tl_ubar(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(inout) :: tl_vbar(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(inout) :: tl_ubar(LBi:UBi,LBj:UBj,:)
+      real(r8), intent(inout) :: tl_vbar(LBi:UBi,LBj:UBj,:)
 #    endif
 #   else
-      real(r8), intent(inout) :: tl_ubar(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(inout) :: tl_vbar(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(inout) :: tl_ubar(LBi:UBi,LBj:UBj,:)
+      real(r8), intent(inout) :: tl_vbar(LBi:UBi,LBj:UBj,:)
 #   endif
-      real(r8), intent(inout) :: tl_zeta(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(inout) :: tl_zeta(LBi:UBi,LBj:UBj,:)
 #  endif
 !
 !  Local variable declarations.
@@ -1913,14 +1913,14 @@
       real(r8), intent(inout) :: tl_u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(inout) :: tl_v(LBi:UBi,LBj:UBj,N(ng),2)
 #    if defined WEAK_CONSTRAINT && defined TIME_CONV
-      real(r8), intent(inout) :: tl_ubar(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(inout) :: tl_vbar(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(inout) :: tl_ubar(LBi:UBi,LBj:UBj,:)
+      real(r8), intent(inout) :: tl_vbar(LBi:UBi,LBj:UBj,:)
 #    endif
 #   else
-      real(r8), intent(inout) :: tl_ubar(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(inout) :: tl_vbar(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(inout) :: tl_ubar(LBi:UBi,LBj:UBj,:)
+      real(r8), intent(inout) :: tl_vbar(LBi:UBi,LBj:UBj,:)
 #   endif
-      real(r8), intent(inout) :: tl_zeta(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(inout) :: tl_zeta(LBi:UBi,LBj:UBj,:)
 #   ifdef ADJUST_BOUNDARY
 #    ifdef SOLVE3D
       real(r8), intent(inout) :: ad_t_obc(LBij:UBij,N(ng),4,            &
@@ -1945,14 +1945,14 @@
       real(r8), intent(inout) :: ad_u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(inout) :: ad_v(LBi:UBi,LBj:UBj,N(ng),2)
 #    if defined WEAK_CONSTRAINT && defined TIME_CONV
-      real(r8), intent(inout) :: ad_ubar(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(inout) :: ad_vbar(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(inout) :: ad_ubar(LBi:UBi,LBj:UBj,:)
+      real(r8), intent(inout) :: ad_vbar(LBi:UBi,LBj:UBj,:)
 #    endif
 #   else
-      real(r8), intent(inout) :: ad_ubar(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(inout) :: ad_vbar(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(inout) :: ad_ubar(LBi:UBi,LBj:UBj,:)
+      real(r8), intent(inout) :: ad_vbar(LBi:UBi,LBj:UBj,:)
 #   endif
-      real(r8), intent(inout) :: ad_zeta(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(inout) :: ad_zeta(LBi:UBi,LBj:UBj,:)
 #  endif
 !
 !  Local variable declarations.
@@ -2632,7 +2632,7 @@
 #   endif
 #   ifdef SOLVE3D
 #    if defined SEDIMENT && defined SED_MORPH
-      real(r8), intent(in) :: bed_thick(LBi:UBi,LBj:UBj,2)
+      real(r8), intent(in) :: bed_thick(LBi:UBi,LBj:UBj,3)
 #    endif
       real(r8), intent(in) :: om_v(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: on_u(LBi:UBi,LBj:UBj)
@@ -2643,9 +2643,9 @@
       real(r8), intent(in) :: ad_u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(in) :: ad_v(LBi:UBi,LBj:UBj,N(ng),2)
 #   endif
-      real(r8), intent(in) :: ad_ubar(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(in) :: ad_vbar(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(in) :: ad_zeta(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(in) :: ad_ubar(LBi:UBi,LBj:UBj,:)
+      real(r8), intent(in) :: ad_vbar(LBi:UBi,LBj:UBj,:)
+      real(r8), intent(in) :: ad_zeta(LBi:UBi,LBj:UBj,:)
 #   ifdef SOLVE3D
       real(r8), intent(inout) :: h(LBi:UBi,LBj:UBj)
       real(r8), intent(inout) :: Hz(LBi:UBi,LBj:UBj,N(ng))
@@ -2654,9 +2654,9 @@
       real(r8), intent(inout) :: u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(inout) :: v(LBi:UBi,LBj:UBj,N(ng),2)
 #   endif
-      real(r8), intent(inout) :: ubar(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(inout) :: vbar(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(inout) :: zeta(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(inout) :: ubar(LBi:UBi,LBj:UBj,:)
+      real(r8), intent(inout) :: vbar(LBi:UBi,LBj:UBj,:)
+      real(r8), intent(inout) :: zeta(LBi:UBi,LBj:UBj,:)
 #   ifdef SOLVE3D
       real(r8), intent(out) :: z_r(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(out) :: z_w(LBi:UBi,LBj:UBj,0:N(ng))
@@ -3141,19 +3141,19 @@
       real(r8), intent(in) :: Hz(LBi:UBi,LBj:UBj,N(ng))
 #   else
       real(r8), intent(in) :: h(LBi:UBi,LBj:UBj)
-      real(r8), intent(in) :: tl_ubar(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(in) :: tl_vbar(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(in) :: tl_ubar(LBi:UBi,LBj:UBj,:)
+      real(r8), intent(in) :: tl_vbar(LBi:UBi,LBj:UBj,:)
 #   endif
-      real(r8), intent(in) :: tl_zeta(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(in) :: tl_zeta(LBi:UBi,LBj:UBj,:)
 #   ifdef SOLVE3D
       real(r8), intent(in) :: tl_t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
       real(r8), intent(in) :: tl_u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(in) :: tl_v(LBi:UBi,LBj:UBj,N(ng),2)
 #   else
-      real(r8), intent(inout) :: ad_ubar(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(inout) :: ad_vbar(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(inout) :: ad_ubar(LBi:UBi,LBj:UBj,:)
+      real(r8), intent(inout) :: ad_vbar(LBi:UBi,LBj:UBj,:)
 #   endif
-      real(r8), intent(inout) :: ad_zeta(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(inout) :: ad_zeta(LBi:UBi,LBj:UBj,:)
 #   ifdef SOLVE3D
       real(r8), intent(inout) :: ad_t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
       real(r8), intent(inout) :: ad_u(LBi:UBi,LBj:UBj,N(ng),2)
@@ -3559,7 +3559,7 @@
 #   endif
 #   ifdef SOLVE3D
 #    if defined SEDIMENT && defined SED_MORPH
-      real(r8), intent(in) :: tl_bed_thick(LBi:UBi,LBj:UBj,2)
+      real(r8), intent(in) :: tl_bed_thick(LBi:UBi,LBj:UBj,3)
 #    endif
       real(r8), intent(in) :: om_v(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: on_u(LBi:UBi,LBj:UBj)
@@ -3568,17 +3568,17 @@
 #    endif
        real(r8), intent(in) :: Zt_avg1(LBi:UBi,LBj:UBj)
 #   endif
-      real(r8), intent(in) :: ubar(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(in) :: vbar(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(in) :: zeta(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(in) :: ubar(LBi:UBi,LBj:UBj,:)
+      real(r8), intent(in) :: vbar(LBi:UBi,LBj:UBj,:)
+      real(r8), intent(in) :: zeta(LBi:UBi,LBj:UBj,:)
 #   ifdef SOLVE3D
       real(r8), intent(in) :: ad_t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
       real(r8), intent(in) :: ad_u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(in) :: ad_v(LBi:UBi,LBj:UBj,N(ng),2)
 #   endif
-      real(r8), intent(in) :: ad_ubar(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(in) :: ad_vbar(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(in) :: ad_zeta(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(in) :: ad_ubar(LBi:UBi,LBj:UBj,:)
+      real(r8), intent(in) :: ad_vbar(LBi:UBi,LBj:UBj,:)
+      real(r8), intent(in) :: ad_zeta(LBi:UBi,LBj:UBj,:)
 #   ifdef SOLVE3D
       real(r8), intent(inout) :: tl_Zt_avg1(LBi:UBi,LBj:UBj)
 #   endif
@@ -3589,9 +3589,9 @@
 #   endif
       real(r8), intent(inout) :: h(LBi:UBi,LBj:UBj)
       real(r8), intent(inout) :: tl_h(LBi:UBi,LBj:UBj)
-      real(r8), intent(inout) :: tl_ubar(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(inout) :: tl_vbar(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(inout) :: tl_zeta(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(inout) :: tl_ubar(LBi:UBi,LBj:UBj,:)
+      real(r8), intent(inout) :: tl_vbar(LBi:UBi,LBj:UBj,:)
+      real(r8), intent(inout) :: tl_zeta(LBi:UBi,LBj:UBj,:)
 #   ifdef SOLVE3D
       real(r8), intent(out) :: tl_Hz(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(out) :: tl_z_r(LBi:UBi,LBj:UBj,N(ng))

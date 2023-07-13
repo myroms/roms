@@ -4,7 +4,7 @@
 #if defined FOUR_DVAR
 !
 !git $Id$
-!svn $Id: normalization.F 1151 2023-02-09 03:08:53Z arango $
+!svn $Id: normalization.F 1180 2023-07-13 02:42:10Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -441,7 +441,7 @@
       real(r8), intent(in) :: zice(LBi:UBi,LBj:UBj)
 #   endif
 #   if defined SEDIMENT && defined SED_MORPH
-      real(r8), intent(in):: bed_thick0(LBi:UBi,LBj:UBj,2)
+      real(r8), intent(in):: bed_thick0(LBi:UBi,LBj:UBj,3)
 #   endif
       real(r8), intent(inout) :: h(LBi:UBi,LBj:UBj)
 #  endif
@@ -3515,7 +3515,7 @@
       real(r8), intent(in) :: zice(LBi:UBi,LBj:UBj)
 #   endif
 #   if defined SEDIMENT && defined SED_MORPH
-      real(r8), intent(in):: bed_thick(LBi:UBi,LBj:UBj,2)
+      real(r8), intent(in):: bed_thick(LBi:UBi,LBj:UBj,3)
 #   endif
       real(r8), intent(inout) :: h(LBi:UBi,LBj:UBj)
 #  endif

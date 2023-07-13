@@ -1,11 +1,10 @@
 #include "cppdefs.h"
-#define REFINE_BOUNDARY
       MODULE nesting_mod
 
 #ifdef NESTING
 !
 !git $Id$
-!svn $Id: nesting.F 1151 2023-02-09 03:08:53Z arango $
+!svn $Id: nesting.F 1180 2023-07-13 02:42:10Z arango $
 !=======================================================================
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license           Hernan G. Arango   !
@@ -789,19 +788,18 @@
 !
 !  Load coarser grid western boundary mass flux that have been averaged
 !  from finer grid. These values can be compared with the coarser grid
-!  values REFINED(cr)%DU_avg2 to check if the mass flux between coarser
+!  values REFINED(cr)%U2d_flux to check if the mass flux between coarser
 !  and finer grid is conserved.
 !
               BRY_CONTACT(iwest,cjcr)%Mflux(Jbc)=WestSum
               IF (WestSum.ne.0) THEN
-                MFratio=REFINED(cr)%DU_avg2(1,m,tnew)/WestSum
+                MFratio=REFINED(cr)%U2d_flux(1,m,tnew)/WestSum
               ELSE
                 MFratio=1.0_r8
               END IF
-              WRITE (300,30) Jbc, REFINED(cr)%DU_avg2(1,m,tnew),        &
+              WRITE (300,30) Jbc, REFINED(cr)%U2d_flux(1,m,tnew),        &
      &                       WestSum, MFratio
               CALL my_flush (300)
-
             END IF
           END DO
 !
@@ -838,16 +836,16 @@
 !
 !  Load coarser grid eastern boundary mass flux that have been averaged
 !  from finer grid. These values can be compared with the coarser grid
-!  values REFINED(cr)%DU_avg2 to check if the mass flux between coarser
+!  values REFINED(cr)%U2d_flux to check if the mass flux between coarser
 !  and finer grid is conserved.
 !
               BRY_CONTACT(ieast,cjcr)%Mflux(Jbc)=EastSum
               IF (EastSum.ne.0) THEN
-                MFratio=REFINED(cr)%DU_avg2(1,m,tnew)/EastSum
+                MFratio=REFINED(cr)%U2d_flux(1,m,tnew)/EastSum
               ELSE
                 MFratio=1.0_r8
               END IF
-              WRITE (300,30) Jbc, REFINED(cr)%DU_avg2(1,m,tnew),        &
+              WRITE (300,30) Jbc, REFINED(cr)%U2d_flux(1,m,tnew),        &
      &                       EastSum, MFratio
               CALL my_flush (300)
             END IF
@@ -887,16 +885,16 @@
 !
 !  Load coarser grid southern boundary mass flux that have been averaged
 !  from finer grid. These values can be compared with the coarser grid
-!  values REFINED(cr)%DU_avg2 to check if the mass flux between coarser
+!  values REFINED(cr)%V2d_flux to check if the mass flux between coarser
 !  and finer grid is conserved.
 !
               BRY_CONTACT(isouth,cjcr)%Mflux(Ibc)=SouthSum
               IF (SouthSum.ne.0) THEN
-                MFratio=REFINED(cr)%DV_avg2(1,m,tnew)/SouthSum
+                MFratio=REFINED(cr)%V2d_flux(1,m,tnew)/SouthSum
               ELSE
                 MFratio=1.0_r8
               END IF
-              WRITE (300,30) Ibc, REFINED(cr)%DV_avg2(1,m,tnew),        &
+              WRITE (300,30) Ibc, REFINED(cr)%V2d_flux(1,m,tnew),        &
      &                       SouthSum, MFratio
               CALL my_flush (300)
             END IF
@@ -936,16 +934,16 @@
 !
 !  Load coarser grid northern boundary mass flux that have been averaged
 !  from finer grid. These values can be compared with the coarser grid
-!  values REFINED(cr)%DU_avg2 to check if the mass flux between coarser
+!  values REFINED(cr)%V2d_flux to check if the mass flux between coarser
 !  and finer grid is conserved.
 !
               BRY_CONTACT(inorth,cjcr)%Mflux(Ibc)=NorthSum
               IF (NorthSum.ne.0) THEN
-                MFratio=REFINED(cr)%DV_avg2(1,m,tnew)/NorthSum
+                MFratio=REFINED(cr)%V2d_flux(1,m,tnew)/NorthSum
               ELSE
                 MFratio=1.0_r8
               END IF
-              WRITE (300,30) Ibc, REFINED(cr)%DV_avg2(1,m,tnew),        &
+              WRITE (300,30) Ibc, REFINED(cr)%V2d_flux(1,m,tnew),        &
      &                       NorthSum, MFratio
             END IF
           END DO
@@ -971,13 +969,13 @@
   10  FORMAT (/,1x,a,/,/,4x,'cr = ',i2.2,4x,'dg = ',i2.2,4x,'rg = ',    &
      &        i2.2,4x,'iif(rg) = ',i3.3,4x,'iic(rg) = ',i7.7,4x,        &
      &        'time(rg) = ',i7.7,/,/,2x,'Coarse',6x,'Coarse Grid',8x,   &
-     &        'Fine Grid',11x,'Ratio',/,4x,'Jb',9x,'DU_avg2',9x,        &
-     &        'SUM(DU_avg2)',/)
+     &        'Fine Grid',11x,'Ratio',/,4x,'Jb',9x,'U2d_flux',9x,       &
+     &        'SUM(U2d_flux)',/)
   20  FORMAT (/,1x,a,/,/,4x,'cr = ',i2.2,4x,'dg = ',i2.2,4x,'rg = ',    &
      &        i2.2,4x,'iif(rg) = ',i3.3,4x,'iic(rg) = ',i7.7,4x,        &
      &        'time(rg) = ',i7.7,/,/,2x,'Coarse',6x,'Coarse Grid',8x,   &
-     &        'Fine Grid',11x,'Ratio',/,4x,'Ib',9x,'DV_avg2',9x,        &
-     &        'SUM(DV_avg2)',/)
+     &        'Fine Grid',11x,'Ratio',/,4x,'Ib',9x,'V2d_flux',9x,       &
+     &        'SUM(V2d_flux)',/)
   30  FORMAT (4x,i4.4,3(3x,1p,e15.8))
 !
       RETURN
@@ -2103,6 +2101,8 @@
      &                            COMPOSITE(cr) % zeta(:,:,rec))
             END DO
           END IF
+
+# if !(defined STEP2D_FB_AB3_AM4 || defined STEP2D_FB_LF_AM3)
 !
 !  Process free-surface equation rigth-hand-side (rzeta) term.
 !
@@ -2115,6 +2115,7 @@
      &                          OCEAN(dg) % rzeta(:,:,Tindex),          &
      &                          COMPOSITE(cr) % rzeta)
           END IF
+# endif
 !
 !  Process 2D momentum components (ubar,vbar) at the appropriate time
 !  index.
@@ -2471,7 +2472,11 @@
                 WRITE (100,10)
               END IF
               WRITE (100,20) ng, cr, dg, rg, iic(dg), iic(rg),          &
+#  ifdef SOLVE3D
      &                       3-tnew, tnew, Tindex2d, Tindex3d,          &
+#  else
+     &                       3-tnew, tnew, Tindex2d, Tindex2d,          &
+#  endif
      &                       INT(RollingTime(3-tnew,cr)),               &
      &                       INT(RollingTime(tnew,cr)),                 &
      &                       INT(time(ng))
@@ -2519,26 +2524,38 @@
      &                        LBi, UBi, LBj, UBj,                       &
      &                        OCEAN(dg) % vbar(:,:,Tindex2d),           &
      &                        REFINED(cr) % vbar(:,:,tnew))
-
-# ifdef SOLVE3D
 !
-!  Extract time-averaged fluxes (DU_avg2, DV_avg2).  We will use latter
-!  only the values at the finer grid physical boundary to impose mass
-!  flux conservation in routine "put_refine2d".
+# ifdef SOLVE3D
+!  Interpolate time-averaged fluxes (U2d_flux, V2d_flux) at contact
+# else
+!  Interpolate 2D momentum fluxes (U2d_flux, V2d_flux) at contact
+# endif
+!  points. They will be used later to impose mass flux conservation
+!  at the finer grid boundary (see routine "put_refine2d").
 !
           CALL get_persisted2d (dg, rg, model, tile,                    &
-     &                          u2dvar, 'DU_avg2',                      &
+     &                          u2dvar, 'U2d_flux',                     &
      &                          cr, Ucontact(cr)%Npoints, Ucontact,     &
      &                          LBi, UBi, LBj, UBj,                     &
+# ifdef SOLVE3D
      &                          COUPLING(dg) % DU_avg2,                 &
-     &                          REFINED(cr) % DU_avg2(:,:,tnew))
+# else
+     &                          OCEAN(dg) % DU_flux,                    &
+# endif
+     &                          REFINED(cr) % U2d_flux(:,:,tnew))
 
           CALL get_persisted2d (dg, rg, model, tile,                    &
-     &                          v2dvar, 'DV_avg2',                      &
+     &                          v2dvar, 'V2d_flux',                     &
      &                          cr, Vcontact(cr)%Npoints, Vcontact,     &
      &                          LBi, UBi, LBj, UBj,                     &
+# ifdef SOLVE3D
      &                          COUPLING(dg) % DV_avg2,                 &
-     &                          REFINED(cr) % DV_avg2(:,:,tnew))
+# else
+     &                          OCEAN(dg) % DV_flux,                    &
+# endif
+     &                          REFINED(cr) % V2d_flux(:,:,tnew))
+
+# ifdef SOLVE3D
 !
 !  Tracer-type variables.
 !
@@ -2712,6 +2729,8 @@
 # endif
             END DO
           END IF
+
+# if !(defined STEP2D_FB_AB3_AM4 || defined STEP2D_FB_LF_AM3)
 !
 !  Process free-surface equation rigth-hand-side (rzeta) term.
 !
@@ -2721,19 +2740,20 @@
      &                          r2dvar, Vname(1,idRzet),                &
      &                          cr, Rcontact(cr)%Npoints, Rcontact,     &
      &                          LBi, UBi, LBj, UBj,                     &
-# ifdef MASKING
+#  ifdef MASKING
      &                          GRID(rg) % rmask,                       &
-# endif
+#  endif
      &                          COMPOSITE(cr) % rzeta,                  &
      &                          OCEAN(rg) % rzeta(:,:,Tindex))
-# ifdef DISTRIBUTE
+#  ifdef DISTRIBUTE
             CALL mp_exchange2d (rg, tile, model, 1,                     &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          NghostPoints,                           &
      &                          EWperiodic(rg), NSperiodic(rg),         &
      &                          OCEAN(rg) % rzeta(:,:,Tindex))
-# endif
+#  endif
           END IF
+# endif
 !
 !  Process 2D momentum components (ubar,vbar) at the appropriate time
 !  index.
@@ -2745,7 +2765,7 @@
             IF (isection.eq.n3duv) THEN
               nrec=2                   ! process time records 1 and 2
             ELSE
-              nrec=1                   ! process knew record
+              nrec=1                   ! process KNEW record
             END IF
             DO rec=1,nrec
               IF (isection.eq.n3duv) THEN
@@ -5655,7 +5675,7 @@
 # ifdef DISTRIBUTE
       integer :: ILB, IUB, JLB, JUB, NptsSN, NptsWE, my_tile
 # endif
-      integer :: NSUB, i, irec, j, m, tnew, told
+      integer :: NSUB, i, irec, j, kindex, m, tnew, told
       integer :: Idg, Jdg
 !
 # ifdef DISTRIBUTE
@@ -5768,11 +5788,13 @@
               my_value=Dcrit(ng)-GRID(ng)%h(i,j)
             END IF
 # endif
+# ifdef SOLVE3D
             OCEAN(ng)%zeta(i,j,1)=my_value
             OCEAN(ng)%zeta(i,j,2)=my_value
             OCEAN(ng)%zeta(i,j,3)=my_value
-# ifdef SOLVE3D
             COUPLING(ng)%Zt_avg1(i,j)=my_value
+# else
+            OCEAN(ng)%zeta(i,j,knew(ng))=my_value
 # endif
           END IF
         END DO
@@ -5783,14 +5805,18 @@
 !  Process 2D momentum.
 !-----------------------------------------------------------------------
 !
-!  2D momentum in the XI-direction.
-# ifdef SOLVE3D
+!  Notice that contact points at the domain western, eastern, southern
+!  and northern physical boundaries are avoided for the "kindex" time
+!  record. They are  assigned in the mass flux computations below.
+!  This exception is done for adjoint correctness.
 !
-!  Notice that contact points at the domain western and eastern
-!  boundaries are avoided for indx1(ng) time record. They are be
-!  assigned in the mass flux computations below. This exception is
-!  done for adjoint correctness.
+# ifdef SOLVE3D
+        kindex=indx1(ng)
+# else
+        kindex=knew(ng)
 # endif
+!
+!  2D momentum in the XI-direction.
 !
         DO m=1,Ucontact(cr)%Npoints
           i=Ucontact(cr)%Irg(m)
@@ -5819,30 +5845,25 @@
 # ifdef WET_DRY
             my_value=my_value*GRID(ng)%umask_wet(i,j)
 # endif
-            DO irec=1,3
+            Uboundary=(m.eq.BRY_CONTACT(iwest,cr)%C2Bindex(j)).or.    &
+     &                (m.eq.BRY_CONTACT(ieast,cr)%C2Bindex(j))
 # ifdef SOLVE3D
-              Uboundary=(m.eq.BRY_CONTACT(iwest,cr)%C2Bindex(j)).or.    &
-     &                  (m.eq.BRY_CONTACT(ieast,cr)%C2Bindex(j))
-              IF(.not.(Uboundary.and.(irec.eq.indx1(ng)))) THEN
+            DO irec=1,3
+              IF(.not.(Uboundary.and.(irec.eq.kindex))) THEN
                 OCEAN(ng)%ubar(i,j,irec)=my_value
 !!            ELSE                                   ! for debugging
 !!              OCEAN(ng)%ubar(i,j,irec)=0.0_r8      ! purposes
               END IF
-# else
-              OCEAN(ng)%ubar(i,j,irec)=my_value
-# endif
             END DO
+# else
+            IF (.not.Uboundary) THEN
+              OCEAN(ng)%ubar(i,j,knew(ng))=my_value
+            END IF
+# endif
           END IF
         END DO
 !
 !  2D momentum in the ETA-direction.
-# ifdef SOLVE3D
-!
-!  Notice that contact points at the domain southern and northern
-!  boundaries are avoided for indx1(ng) time record. They are be
-!  assigned in the mass flux computations below. This exception is
-!  done for adjoint correctness.
-# endif
 !
         DO m=1,Vcontact(cr)%Npoints
           i=Vcontact(cr)%Irg(m)
@@ -5871,37 +5892,47 @@
 # ifdef WET_DRY
             my_value=my_value*GRID(ng)%vmask_wet(i,j)
 # endif
-            DO irec=1,3
+            Vboundary=(m.eq.BRY_CONTACT(isouth,cr)%C2Bindex(i)).or.     &
+     &                (m.eq.BRY_CONTACT(inorth,cr)%C2Bindex(i))
 # ifdef SOLVE3D
-              Vboundary=(m.eq.BRY_CONTACT(isouth,cr)%C2Bindex(i)).or.   &
-     &                  (m.eq.BRY_CONTACT(inorth,cr)%C2Bindex(i))
-              IF(.not.(Vboundary.and.(irec.eq.indx1(ng)))) THEN
+            DO irec=1,3
+              IF (.not.(Vboundary.and.(irec.eq.kindex))) THEN
                 OCEAN(ng)%vbar(i,j,irec)=my_value
 !!            ELSE                                   ! for debugging
 !!              OCEAN(ng)%vbar(i,j,irec)=0.0_r8      ! purposes
               END IF
-# else
-              OCEAN(ng)%vbar(i,j,irec)=my_value
-# endif
             END DO
+# else
+            IF (.not.Vboundary) THEN
+              OCEAN(ng)%vbar(i,j,knew(ng))=my_value
+            END IF
+# endif
           END IF
         END DO
-
-# ifdef SOLVE3D
 !
 !-----------------------------------------------------------------------
 !  Impose mass flux at the finer grid physical boundaries. This is only
-!  done for indx1(ng) time record.
+!  done for "kindex" time record.
 !
 !  Western/Eastern boundary:
 !
-!    ubar(Ibry,:,indx1) = DU_avg2(Ibry,:) * pn(Ibry,:) / D(Ibry,:)
+!    ubar(Ibry,:,kindex) = U2d_flux(Ibry,:) * pn(Ibry,:) / D(Ibry,:)
 !
 !  Southern/Northern boundary:
 !
-!    vbar(:,Jbry,indx1) = DV_avg2(:,Jbry) * pm(:,Jbry) / D(:,Jbry)
+!    vbar(:,Jbry,kindex) = V2d_flux(:,Jbry) * pm(:,Jbry) / D(:,Jbry)
 !
-!  We use the latest coarse grid mass flux REFINED(cr)%DU_avg(1,:,tnew)
+# ifdef SOLVE3D
+!  Notice that in 3D applications, "REFINED(cr)%U2d_flux" and
+!  "REFINED(cr)%V2d_flux" are computed from "DU_avg2" and "DV_avg2d"
+!  state variables, repectively.
+# else
+!  Notice that in 2D applications, "REFINED(cr)%U2d_flux" and
+!  "REFINED(cr)%V2d_flux" are computed from "DU_flux" and "DV_flux"
+!  state variables, repectively.
+# endif
+!
+!  Use the latest coarse grid mass flux REFINED(cr)%U2D_flux(1,:,tnew)
 !  with a linear variation (cff1) to ensure that the sum of the refined
 !  grid fluxes equals the coarse grid flux.
 !-----------------------------------------------------------------------
@@ -5915,29 +5946,29 @@
             Jdg=Ucontact(cr)%Jdg(m)                 ! purposes
             cff=0.5_r8*GRID(ng)%on_u(Istr,j)*                           &
                 (GRID(ng)%h(Istr-1,j)+                                  &
-     &           OCEAN(ng)%zeta(Istr-1,j,indx1(ng))+                    &
+     &           OCEAN(ng)%zeta(Istr-1,j,kindex)+                       &
      &           GRID(ng)%h(Istr  ,j)+                                  &
-     &           OCEAN(ng)%zeta(Istr  ,j,indx1(ng)))
+     &           OCEAN(ng)%zeta(Istr  ,j,kindex))
             cff1=GRID(ng)%on_u(Istr,j)/REFINED(cr)%on_u(m)
-#  ifdef TIME_INTERP_FLUX
-            my_value=cff1*(Wold*REFINED(cr)%DU_avg2(1,m,told)+          &
-     &                     Wnew*REFINED(cr)%DU_avg2(1,m,tnew))/cff
-#  else
-            my_value=cff1*REFINED(cr)%DU_avg2(1,m,tnew)/cff
-#  endif
-#  ifdef WEC
+# ifdef TIME_INTERP_FLUX
+            my_value=cff1*(Wold*REFINED(cr)%U2d_flux(1,m,told)+         &
+     &                     Wnew*REFINED(cr)%U2d_flux(1,m,tnew))/cff
+# else
+            my_value=cff1*REFINED(cr)%U2d_flux(1,m,tnew)/cff
+# endif
+# ifdef WEC
             my_value=my_value-OCEAN(ng)%ubar_stokes(Istr,j)
-#  endif
-#  ifdef MASKING
+# endif
+# ifdef MASKING
             my_value=my_value*GRID(ng)%umask(Istr,j)
-#  endif
-#  ifdef WET_DRY
+# endif
+# ifdef WET_DRY
             my_value=my_value*GRID(ng)%umask_wet(Istr,j)
-#  endif
-#  ifdef NESTING_DEBUG
+# endif
+# ifdef NESTING_DEBUG
             BRY_CONTACT(iwest,cr)%Mflux(j)=cff*my_value
-#  endif
-            OCEAN(ng)%ubar(Istr,j,indx1(ng))=my_value
+# endif
+            OCEAN(ng)%ubar(Istr,j,kindex)=my_value
           END DO
         END IF
 !
@@ -5950,29 +5981,29 @@
             Jdg=Ucontact(cr)%Jdg(m)                 ! purposes
             cff=0.5_r8*GRID(ng)%on_u(Iend+1,j)*                         &
      &          (GRID(ng)%h(Iend+1,j)+                                  &
-     &           OCEAN(ng)%zeta(Iend+1,j,indx1(ng))+                    &
+     &           OCEAN(ng)%zeta(Iend+1,j,kindex)+                       &
      &           GRID(ng)%h(Iend  ,j)+                                  &
-     &           OCEAN(ng)%zeta(Iend  ,j,indx1(ng)))
+     &           OCEAN(ng)%zeta(Iend  ,j,kindex))
             cff1=GRID(ng)%on_u(Iend+1,j)/REFINED(cr)%on_u(m)
-#  ifdef TIME_INTERP_FLUX
-            my_value=cff1*(Wold*REFINED(cr)%DU_avg2(1,m,told)+          &
-     &                     Wnew*REFINED(cr)%DU_avg2(1,m,tnew))/cff
-#  else
-            my_value=cff1*REFINED(cr)%DU_avg2(1,m,tnew)/cff
-#  endif
-#  ifdef WEC
+# ifdef TIME_INTERP_FLUX
+            my_value=cff1*(Wold*REFINED(cr)%U2d_flux(1,m,told)+         &
+     &                     Wnew*REFINED(cr)%U2d_flux(1,m,tnew))/cff
+# else
+            my_value=cff1*REFINED(cr)%U2d_flux(1,m,tnew)/cff
+# endif
+# ifdef WEC
             my_value=my_value-OCEAN(ng)%ubar_stokes(Iend+1,j)
-#  endif
-#  ifdef MASKING
+# endif
+# ifdef MASKING
             my_value=my_value*GRID(ng)%umask(Iend+1,j)
-#  endif
-#  ifdef WET_DRY
+# endif
+# ifdef WET_DRY
             my_value=my_value*GRID(ng)%umask_wet(Iend+1,j)
-#  endif
-#  ifdef NESTING_DEBUG
+# endif
+# ifdef NESTING_DEBUG
             BRY_CONTACT(ieast,cr)%Mflux(j)=cff*my_value
-#  endif
-            OCEAN(ng)%ubar(Iend+1,j,indx1(ng))=my_value
+# endif
+            OCEAN(ng)%ubar(Iend+1,j,kindex)=my_value
           END DO
         END IF
 !
@@ -5985,29 +6016,29 @@
             Jdg=Vcontact(cr)%Jdg(m)                 ! purposes
             cff=0.5_r8*GRID(ng)%om_v(i,Jstr)*                           &
      &          (GRID(ng)%h(i,Jstr-1)+                                  &
-     &           OCEAN(ng)%zeta(i,Jstr-1,indx1(ng))+                    &
+     &           OCEAN(ng)%zeta(i,Jstr-1,kindex)+                       &
      &           GRID(ng)%h(i,Jstr  )+                                  &
-     &           OCEAN(ng)%zeta(i,Jstr  ,indx1(ng)))
+     &           OCEAN(ng)%zeta(i,Jstr  ,kindex))
             cff1=GRID(ng)%om_v(i,Jstr)/REFINED(cr)%om_v(m)
-#  ifdef TIME_INTERP_FLUX
-            my_value=cff1*(Wold*REFINED(cr)%DV_avg2(1,m,told)+          &
-     &                     Wnew*REFINED(cr)%DV_avg2(1,m,tnew))/cff
-#  else
-            my_value=cff1*REFINED(cr)%DV_avg2(1,m,tnew)/cff
-#  endif
-#  ifdef WEC
+# ifdef TIME_INTERP_FLUX
+            my_value=cff1*(Wold*REFINED(cr)%V2d_flux(1,m,told)+         &
+     &                     Wnew*REFINED(cr)%V2d_flux(1,m,tnew))/cff
+# else
+            my_value=cff1*REFINED(cr)%V2d_flux(1,m,tnew)/cff
+# endif
+# ifdef WEC
             my_value=my_value-OCEAN(ng)%vbar_stokes(i,Jstr)
-#  endif
-#  ifdef MASKING
+# endif
+# ifdef MASKING
             my_value=my_value*GRID(ng)%vmask(i,Jstr)
-#  endif
-#  ifdef WET_DRY
+# endif
+# ifdef WET_DRY
             my_value=my_value*GRID(ng)%vmask_wet(i,Jstr)
-#  endif
-#  ifdef NESTING_DEBUG
+# endif
+# ifdef NESTING_DEBUG
             BRY_CONTACT(isouth,cr)%Mflux(i)=cff*my_value
-#  endif
-            OCEAN(ng)%vbar(i,Jstr,indx1(ng))=my_value
+# endif
+            OCEAN(ng)%vbar(i,Jstr,kindex)=my_value
           END DO
         END IF
 !
@@ -6020,32 +6051,32 @@
             Jdg=Vcontact(cr)%Jdg(m)                 ! purposes
             cff=0.5_r8*GRID(ng)%om_v(i,Jend+1)*                         &
      &          (GRID(ng)%h(i,Jend+1)+                                  &
-     &           OCEAN(ng)%zeta(i,Jend+1,indx1(ng))+                    &
+     &           OCEAN(ng)%zeta(i,Jend+1,kindex)+                       &
      &           GRID(ng)%h(i,Jend  )+                                  &
-     &           OCEAN(ng)%zeta(i,Jend  ,indx1(ng)))
+     &           OCEAN(ng)%zeta(i,Jend  ,kindex))
             cff1=GRID(ng)%om_v(i,Jend+1)/REFINED(cr)%om_v(m)
-#  ifdef TIME_INTERP_FLUX
-            my_value=cff1*(Wold*REFINED(cr)%DV_avg2(1,m,told)+          &
-     &                     Wnew*REFINED(cr)%DV_avg2(1,m,tnew))/cff
-#  else
-            my_value=cff1*REFINED(cr)%DV_avg2(1,m,tnew)/cff
-#  endif
-#  ifdef WEC
+# ifdef TIME_INTERP_FLUX
+            my_value=cff1*(Wold*REFINED(cr)%V2d_flux(1,m,told)+         &
+     &                     Wnew*REFINED(cr)%V2d_flux(1,m,tnew))/cff
+# else
+            my_value=cff1*REFINED(cr)%V2d_flux(1,m,tnew)/cff
+# endif
+# ifdef WEC
             my_value=my_value-OCEAN(ng)%vbar_stokes(i,Jend+1)
-#  endif
-#  ifdef MASKING
+# endif
+# ifdef MASKING
             my_value=my_value*GRID(ng)%vmask(i,Jend+1)
-#  endif
-#  ifdef WET_DRY
+# endif
+# ifdef WET_DRY
             my_value=my_value*GRID(ng)%vmask_wet(i,Jend+1)
-#  endif
-#  ifdef NESTING_DEBUG
+# endif
+# ifdef NESTING_DEBUG
             BRY_CONTACT(inorth,cr)%Mflux(i)=cff*my_value
-#  endif
-            OCEAN(ng)%vbar(i,Jend+1,indx1(ng))=my_value
+# endif
+            OCEAN(ng)%vbar(i,Jend+1,kindex)=my_value
           END DO
         END IF
-# endif
+
       END IF FREE_SURFACE
 
 # ifdef DISTRIBUTE
@@ -6057,25 +6088,27 @@
 !  Free-surface.
 !
       IF (LputFsur) THEN
-        CALL mp_exchange2d (ng, tile, model,                            &
 #  ifdef SOLVE3D
-     &                      4,                                          &
-#  else
-     &                      3,                                          &
-#  endif
+        CALL mp_exchange2d (ng, tile, model, 4,                         &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      NghostPoints,                               &
      &                      EWperiodic(ng), NSperiodic(ng),             &
-#  ifdef SOLVE3D
      &                      COUPLING(ng)%Zt_avg1,                       &
-#  endif
      &                      OCEAN(ng)%zeta(:,:,1),                      &
      &                      OCEAN(ng)%zeta(:,:,2),                      &
      &                      OCEAN(ng)%zeta(:,:,3))
+#  else
+        CALL mp_exchange2d (ng, tile, model, 1,                         &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      NghostPoints,                               &
+     &                      EWperiodic(ng), NSperiodic(ng),             &
+     &                      OCEAN(ng)%zeta(:,:,knew(ng)))
+#  endif
 !
 !  2D momentum.
 !
       ELSE
+#  ifdef SOLVE3D
         CALL mp_exchange2d (ng, tile, model, 3,                         &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      NghostPoints,                               &
@@ -6091,6 +6124,14 @@
      &                      OCEAN(ng)%vbar(:,:,1),                      &
      &                      OCEAN(ng)%vbar(:,:,2),                      &
      &                      OCEAN(ng)%vbar(:,:,3))
+#  else
+        CALL mp_exchange2d (ng, tile, model, 2,                         &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      NghostPoints,                               &
+     &                      EWperiodic(ng), NSperiodic(ng),             &
+     &                      OCEAN(ng)%ubar(:,:,knew(ng)),               &
+     &                      OCEAN(ng)%vbar(:,:,knew(ng)))
+#  endif
 
 #  ifdef NESTING_DEBUG
 !
