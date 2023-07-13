@@ -2,8 +2,7 @@
 #if defined ADJOINT && !defined SOLVE3D
       SUBROUTINE ad_main2d (RunInterval)
 !
-!git $Id$
-!svn $Id: ad_main2d.F 1166 2023-05-17 20:11:58Z arango $
+!svn $Id: ad_main2d.F 1939 2023-05-17 20:11:22Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
