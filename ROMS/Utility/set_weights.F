@@ -2,8 +2,7 @@
 #ifdef SOLVE3D
       SUBROUTINE set_weights (ng)
 !
-!git $Id$
-!svn $Id: set_weights.F 1151 2023-02-09 03:08:53Z arango $
+!svn $Id: set_weights.F 275 2023-02-09 03:21:09Z arango $
 !=======================================================================
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -75,7 +74,8 @@
 !  iteratively adjust "scale" to place the  centroid exactly at
 !  "ndtfast".
 !
-      gamma=Fgamma*MAX(0.0_dp, 1.0_dp-10.0_dp/REAL(ndtfast(ng),dp))
+!!    gamma=Fgamma*MAX(0.0_dp, 1.0_dp-10.0_dp/REAL(ndtfast(ng),dp))
+      gamma=0.284_dp*(1.0_dp-2.8_dp/(REAL(ndtfast(ng),dp)))
       DO iter=1,16
         nfast(ng)=0
         DO i=1,2*ndtfast(ng)

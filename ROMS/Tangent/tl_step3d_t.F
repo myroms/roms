@@ -4,7 +4,7 @@
 
 #if !defined TS_FIXED && (defined TANGENT && defined SOLVE3D)
 !
-!svn $Id: tl_step3d_t.F 1929 2023-02-09 02:46:55Z arango $
+!svn $Id: tl_step3d_t.F 275 2023-02-09 03:21:09Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -102,6 +102,10 @@
      &                       MIXING(ng) % tl_Akt,                       &
      &                       OCEAN(ng) % W,                             &
      &                       OCEAN(ng) % tl_W,                          &
+# ifdef OMEGA_IMPLICIT
+     &                       OCEAN(ng) % Wi,                            &
+     &                       OCEAN(ng) % tl_Wi,                         &
+# endif
 # if defined FLOATS_NOT_YET && defined FLOAT_VWALK
      &                       MIXING(ng) % dAktdz,                       &
 # endif
@@ -136,6 +140,9 @@
      &                             z_r, tl_z_r,                         &
      &                             Akt, tl_Akt,                         &
      &                             W, tl_W,                             &
+# ifdef OMEGA_IMPLICIT
+     &                             Wi, tl_Wi,                           &
+# endif
 # if defined FLOATS_NOT_YET && defined FLOAT_VWALK
      &                             dAktdz,                              &
 # endif
@@ -194,7 +201,9 @@
       real(r8), intent(in) :: t(LBi:,LBj:,:,:,:)
 #  endif
       real(r8), intent(in) :: W(LBi:,LBj:,0:)
-
+#  ifdef OMEGA_IMPLICIT
+      real(r8), intent(in) :: Wi(LBi:,LBj:,0:)
+#  endif
       real(r8), intent(in) :: tl_Hz(LBi:,LBj:,:)
       real(r8), intent(in) :: tl_Huon(LBi:,LBj:,:)
       real(r8), intent(in) :: tl_Hvom(LBi:,LBj:,:)
@@ -205,6 +214,9 @@
       real(r8), intent(in) :: tl_Akt(LBi:,LBj:,0:,:)
 #  endif
       real(r8), intent(in) :: tl_W(LBi:,LBj:,0:)
+#  ifdef OMEGA_IMPLICIT
+      real(r8), intent(in) :: tl_Wi(LBi:,LBj:,0:)
+#  endif
 #  ifdef DIAGNOSTICS_TS
 !!    real(r8), intent(inout) :: DiaTwrk(LBi:,LBj:,:,:,:)
 #  endif
@@ -243,13 +255,18 @@
       real(r8), intent(in) :: Akt(LBi:UBi,LBj:UBj,0:N(ng),NAT)
       real(r8), intent(in) :: t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
       real(r8), intent(in) :: W(LBi:UBi,LBj:UBj,0:N(ng))
-
+#  ifdef OMEGA_IMPLICIT
+      real(r8), intent(in) :: Wi(LBi:UBi,LBj:UBj,0:N(ng))
+#  endif
       real(r8), intent(in) :: tl_Hz(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(in) :: tl_Huon(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(in) :: tl_Hvom(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(in) :: tl_z_r(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(in) :: tl_Akt(LBi:UBi,LBj:UBj,0:N(ng),NAT)
       real(r8), intent(in) :: tl_W(LBi:UBi,LBj:UBj,0:N(ng))
+#  ifdef OMEGA_IMPLICIT
+      real(r8), intent(in) :: tl_Wi(LBi:UBi,LBj:UBj,0:N(ng))
+#  endif
 #  ifdef DIAGNOSTICS_TS
 !!    real(r8), intent(inout) :: DiaTwrk(LBi:UBi,LBj:UBj,N(ng),NT(ng),  &
 !!   &                                   NDT)
@@ -282,11 +299,19 @@
       real(r8), dimension(IminS:ImaxS,0:N(ng)) :: BC
       real(r8), dimension(IminS:ImaxS,0:N(ng)) :: DC
       real(r8), dimension(IminS:ImaxS,0:N(ng)) :: FC
+# ifdef OMEGA_IMPLICIT
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: FCmin
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: FCmax
+# endif
 
       real(r8), dimension(IminS:ImaxS,0:N(ng)) :: tl_CF
       real(r8), dimension(IminS:ImaxS,0:N(ng)) :: tl_BC
       real(r8), dimension(IminS:ImaxS,0:N(ng)) :: tl_DC
       real(r8), dimension(IminS:ImaxS,0:N(ng)) :: tl_FC
+# ifdef OMEGA_IMPLICIT
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: tl_FCmin
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: tl_FCmax
+# endif
 
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: FE
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: FX
@@ -975,14 +1000,8 @@
               END DO
             END DO
             DO i=Istr,Iend
-# ifdef SED_MORPH
-              FC(i,0)=W(i,j,0)*t(i,j,1,3,itrc)
-              tl_FC(i,0)=tl_W(i,j,0)*t(i,j,1,3,itrc)+                   &
-     &                   W(i,j,0)*tl_t(i,j,1,3,itrc)
-# else
               FC(i,0)=0.0_r8
               tl_FC(i,0)=0.0_r8
-# endif
               FC(i,N(ng))=0.0_r8
               tl_FC(i,N(ng))=0.0_r8
             END DO
@@ -1007,14 +1026,8 @@
               END DO
             END DO
             DO i=Istr,Iend
-# ifdef SED_MORPH
-              FC(i,0)=W(i,j,0)*t(i,j,1,3,itrc)
-              tl_FC(i,0)=tl_W(i,j,0)*t(i,j,1,3,itrc)+                   &
-     &                   W(i,j,0)*tl_t(i,j,1,3,itrc)
-# else
               FC(i,0)=0.0_r8
               tl_FC(i,0)=0.0_r8
-# endif
               FC(i,N(ng))=0.0_r8
               tl_FC(i,N(ng))=0.0_r8
             END DO
@@ -1063,21 +1076,8 @@
               END DO
             END DO
             DO i=Istr,Iend
-# ifdef SED_MORPH
-              FC(i,0)=W(i,j,0)*2.0_r8*                                  &
-     &                (cff2*t(i,j,1,3,itrc)-                            &
-     &                 cff3*t(i,j,2,3,itrc))
-              tl_FC(i,0)=2.0_r8*                                        &
-     &                   (tl_W(i,j,0)*                                  &
-     &                    (cff2*t(i,j,1,3,itrc)-                        &
-     &                     cff3*t(i,j,2,3,itrc))+                       &
-     &                    W(i,j,0)*                                     &
-     &                    (cff2*tl_t(i,j,1,3,itrc)-                     &
-     &                     cff3*tl_t(i,j,2,3,itrc)))
-# else
               FC(i,0)=0.0_r8
               tl_FC(i,0)=0.0_r8
-# endif
               FC(i,1)=W(i,j,1)*                                         &
      &                (cff1*t(i,j,1,3,itrc)+                            &
      &                 cff2*t(i,j,2,3,itrc)-                            &
@@ -1209,6 +1209,153 @@
           END IF
         END DO
       END IF
+
+# ifdef OMEGA_IMPLICIT
+!
+!-----------------------------------------------------------------------
+!  Add adaptive, Courant-number based implicit vertical advection term.
+!-----------------------------------------------------------------------
+!
+!  Compute off-diagonal coefficients FC [dt*Wi*pm*pn] for the implicit
+!  vertical advection term located at horizontal RHO-points and vertical
+!  W-points. Also, set FC at the top and bottom levels.
+!
+!  It needs to be before the Diffusion.
+!
+      DO j=Jstr,Jend
+        DO itrc=1,NT(ng)
+          IF (.not.Vadvection(itrc,ng)%MPDATA) THEN
+            cff=dt(ng)
+            DO k=1,N(ng)-1
+              DO i=Istr,Iend
+                cff1=cff*pm(i,j)*pn(i,j)
+                FCmax(i,k)=MAX(Wi(i,j,k),0.0_r8)*cff1
+                FCmin(i,k)=MIN(Wi(i,j,k),0.0_r8)*cff1
+                tl_FCmax(i,k)=(0.5_r8+SIGN(0.5_r8, Wi(i,j,k)))*         &
+     &                        tl_Wi(i,j,k)*cff1
+                tl_FCmin(i,k)=(0.5_r8+SIGN(0.5_r8,-Wi(i,j,k)))*         &
+     &                        tl_Wi(i,j,k)*cff1
+              END DO
+            END DO
+            DO i=Istr,Iend
+              FCmax(i,0)=0.0_r8
+              FCmin(i,0)=0.0_r8
+              FCmax(i,N(ng))=0.0_r8
+              FCmin(i,N(ng))=0.0_r8
+
+              tl_FCmax(i,0)=0.0_r8
+              tl_FCmin(i,0)=0.0_r8
+              tl_FCmax(i,N(ng))=0.0_r8
+              tl_FCmin(i,N(ng))=0.0_r8
+            END DO
+!
+!  Compute diagonal matrix coefficients BC and load right-hand-side
+!  terms for the tracer equation into DC.
+!
+            DO k=1,N(ng)
+              DO i=Istr,Iend
+                BC(i,k)=Hz(i,j,k)+FCmax(i,k)-FCmin(i,k-1)
+                tl_BC(i,k)=tl_Hz(i,j,k)+tl_FCmax(i,k)-tl_FCmin(i,k-1)
+#  ifdef SPLINES_VDIFF
+                DC(i,k)=t(i,j,k,nnew,itrc)*Hz(i,j,k)
+                tl_DC(i,k)=tl_t(i,j,k,nnew,itrc)*Hz(i,j,k)+             &
+     &                     t(i,j,k,nnew,itrc)*tl_Hz(i,j,k)
+#  else
+                DC(i,k)=t(i,j,k,nnew,itrc)
+                tl_DC(i,k)=tl_t(i,j,k,nnew,itrc)
+#  endif
+              END DO
+            END DO
+!
+!  Solve the tridiagonal system.
+!
+            DO i=Istr,Iend
+              cff=1.0_r8/BC(i,1)
+              tl_cff=-cff*cff*tl_BC(i,1)
+              CF(i,1)=cff*FCmin(i,1)
+              tl_CF(i,1)=tl_cff*FCmin(i,1)+cff*tl_FCmin(i,1)
+              DC(i,1)=cff*DC(i,1)
+              tl_DC(i,1)=tl_cff*DC(i,1)+cff*tl_DC(i,1)
+            END DO
+            DO k=2,N(ng)-1
+              DO i=Istr,Iend
+                cff=1.0_r8/(BC(i,k)+FCmax(i,k-1)*CF(i,k-1))
+                tl_cff=-cff*cff*(tl_BC(i,k)+                            &
+     &                           tl_FCmax(i,k-1)*CF(i,k-1)+             &
+     &                           FCmax(i,k-1)*tl_CF(i,k-1)) 
+                CF(i,k)=cff*FCmin(i,k)
+                tl_CF(i,k)=tl_cff*FCmin(i,k)+cff*tl_FCmin(i,k)
+                DC(i,k)=cff*(DC(i,k)+FCmax(i,k-1)*DC(i,k-1))
+                tl_DC(i,k)=tl_cff*(DC(i,k)+FCmax(i,k-1)*DC(i,k-1))+     &
+     &                     cff*(DC(i,k)+                                &
+     &                          tl_FCmax(i,k-1)*DC(i,k-1)+              &
+     &                          FCmax(i,k-1)*tl_DC(i,k-1))
+              END DO
+            END DO
+!
+!  Compute new solution by back substitution.
+!
+            DO i=Istr,Iend
+#  ifdef DIAGNOSTICS_TS
+!!            cff1=t(i,j,N(ng),nnew,itrc)*oHz(i,j,N(ng))
+#  endif
+              cff=1.0_r8/(BC(i,N(ng))+FCmax(i,N(ng)-1)*CF(i,N(ng)-1))
+              tl_cff=-cff*cff*(tl_BC(i,N(ng))+                          &
+     &                         tl_FCmax(i,N(ng)-1)*CF(i,N(ng)-1)+       &
+     &                         FCmax(i,N(ng)-1)*tl_CF(i,N(ng)-1))
+              DC(i,N(ng))=cff*(DC(i,N(ng))+                             &
+     &                         FCmax(i,N(ng)-1)*DC(i,N(ng)-1))
+              tl_DC(i,N(ng))=tl_cff*(DC(i,N(ng))+                       &
+     &                               FCmax(i,N(ng)-1)*DC(i,N(ng)-1))+   &
+     &                       cff*(tl_DC(i,N(ng))+                       &
+     &                            tl_FCmax(i,N(ng)-1)*DC(i,N(ng)-1)+    &
+     &                            FCmax(i,N(ng)-1)*tl_DC(i,N(ng)-1))
+#  ifdef SPLINES_VDIFF
+!^            t(i,j,N(ng),nnew,itrc)=DC(i,N(ng))
+!^
+              tl_t(i,j,N(ng),nnew,itrc)=tl_DC(i,N(ng))
+#  else
+!^            t(i,j,N(ng),nnew,itrc)=DC(i,N(ng))*Hz(i,j,N(ng))
+!^
+              tl_t(i,j,N(ng),nnew,itrc)=tl_DC(i,N(ng))*Hz(i,j,N(ng))+   &
+     &                                  DC(i,N(ng))*tl_Hz(i,j,N(ng))
+#  endif
+#  ifdef DIAGNOSTICS_TS
+!!            DiaTwrk(i,j,N(ng),itrc,iTvadv)=DiaTwrk(i,j,N(ng),itrc,    &
+!!   &                                               iTvadv)+           &
+!!   &                                       DC(i,N(ng))-cff1
+#  endif
+            END DO
+!
+            DO k=N(ng)-1,1,-1
+              DO i=Istr,Iend
+#  ifdef DIAGNOSTICS_TS
+!!              cff1=t(i,j,k,nnew,itrc)*oHz(i,j,k)
+#  endif
+                DC(i,k)=DC(i,k)-CF(i,k)*DC(i,k+1)
+                tl_DC(i,k)=tl_DC(i,k)-                                  &
+     &                     tl_CF(i,k)*DC(i,k+1)-                        &
+     &                     CF(i,k)*tl_DC(i,k+1)
+#  ifdef SPLINES_VDIFF
+!^              t(i,j,k,nnew,itrc)=DC(i,k)
+!^
+                tl_t(i,j,k,nnew,itrc)=tl_DC(i,k)
+#  else
+!^              t(i,j,k,nnew,itrc)=DC(i,k)*Hz(i,j,k)
+!^
+                tl_t(i,j,k,nnew,itrc)=tl_DC(i,k)*Hz(i,j,k)+             &
+     &                                DC(i,k)*tl_Hz(i,j,k)
+#  endif
+#  ifdef DIAGNOSTICS_TS
+!!              DiaTwrk(i,j,k,itrc,iTvadv)=DiaTwrk(i,j,k,itrc,iTvadv)+  &
+!!   &                                     DC(i,k)-cff1
+#  endif
+              END DO
+            END DO
+          END IF
+        END DO
+      END DO
+# endif
 !
 !-----------------------------------------------------------------------
 !  Time-step vertical diffusion term.

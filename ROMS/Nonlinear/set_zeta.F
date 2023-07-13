@@ -1,9 +1,10 @@
 #include "cppdefs.h"
       MODULE set_zeta_mod
 
-#ifdef SOLVE3D
+#if defined SOLVE3D           && \
+  !(defined STEP2D_FB_AB3_AM4 || defined STEP2D_FB_LF_AM3)
 !
-!svn $Id: set_zeta.F 1929 2023-02-09 02:46:55Z arango $
+!svn $Id: set_zeta.F 275 2023-02-09 03:21:09Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -83,7 +84,7 @@
 # else
       real(r8), intent(in) :: Zt_avg1(LBi:UBi,LBj:UBj)
 
-      real(r8), intent(out) :: zeta(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(out) :: zeta(LBi:UBi,LBj:UBj,:)
 # endif
 !
 !  Local variable declarations.

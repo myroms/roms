@@ -1,8 +1,7 @@
 #include "cppdefs.h"
 #ifdef TL_IOMS
 !
-!git $Id$
-!svn $Id: rp_step2d.F 1151 2023-02-09 03:08:53Z arango $
+!svn $Id: rp_step2d.F 275 2023-02-09 03:21:09Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !

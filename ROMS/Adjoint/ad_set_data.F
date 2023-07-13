@@ -2,7 +2,7 @@
 #ifdef ADJOINT
       SUBROUTINE ad_set_data (ng, tile)
 !
-!svn $Id: ad_set_data.F 1929 2023-02-09 02:46:55Z arango $
+!svn $Id: ad_set_data.F 275 2023-02-09 03:21:09Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -1182,7 +1182,11 @@
 !
 !  Set forward free-surface.
 !
+#  if defined STEP2D_FB_AB3_AM4 || defined STEP2D_FB_LF_AM3
+      DO k=1,4
+#  else
       DO k=1,3
+#  endif
         CALL set_2dfldr_tile (ng, tile, iADM, idFsur,                   &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        OCEAN(ng)%zetaG,                          &
@@ -1201,7 +1205,11 @@
 !
 !  Set forward 2D momentum.
 !
+#  if defined STEP2D_FB_AB3_AM4 || defined STEP2D_FB_LF_AM3
+      DO k=1,4
+#  else
       DO k=1,3
+#  endif
         CALL set_2dfldr_tile (ng, tile, iADM, idUbar,                   &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        OCEAN(ng)%ubarG,                          &
