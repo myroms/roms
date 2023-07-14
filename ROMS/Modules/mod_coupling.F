@@ -2,8 +2,7 @@
       MODULE mod_coupling
 #ifdef SOLVE3D
 !
-!git $Id$
-!svn $Id: mod_coupling.F 1151 2023-02-09 03:08:53Z arango $
+!svn $Id: mod_coupling.F 275 2023-02-09 03:21:09Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -17,8 +16,14 @@
 !  Zt_avg1   Free-surface averaged over all short time-steps (m).      !
 !  rhoA      Normalized vertical averaged density.                     !
 !  rhoS      Normalized vertical averaged density perturbation.        !
-!  rufrc     Right-hand-side forcing term for 2D U-momentum (m4/s2)    !
-!  rvfrc     Right-hand-side forcing term for 2D V-momentum (m4/s2)    !
+!  rufrc     Right-hand-side forcing term for 2D U-momentum (m4/s2).   !
+!  rvfrc     Right-hand-side forcing term for 2D V-momentum (m4/s2).   !
+# if defined STEP2D_FB_AB3_AM4 || defined STEP2D_FB_LF_AM3
+!  rufrc_bak Right-hand-side forcing term for 2D U-momentum (m4/s2)    !
+!              in the Forward-Backward AB3-AM4 time stepping scheme.   !
+!  rvfrc_bak Right-hand-side forcing term for 2D V-momentum (m4/s2)    !
+!              in the Forward-Backward AB3-AM4 time stepping scheme.   !
+# endif
 !                                                                      !
 !=======================================================================
 !
@@ -45,6 +50,10 @@
           real(r8), pointer :: Zt_avg1(:,:)
           real(r8), pointer :: rufrc(:,:)
           real(r8), pointer :: rvfrc(:,:)
+# if defined STEP2D_FB_AB3_AM4 || defined STEP2D_FB_LF_AM3
+          real(r8), pointer :: rufrc_bak(:,:,:)
+          real(r8), pointer :: rvfrc_bak(:,:,:)
+# endif
 # ifdef VAR_RHO_2D
           real(r8), pointer :: rhoA(:,:)
           real(r8), pointer :: rhoS(:,:)
@@ -59,8 +68,13 @@
           real(r8), pointer :: tl_DV_avg1(:,:)
           real(r8), pointer :: tl_DV_avg2(:,:)
           real(r8), pointer :: tl_Zt_avg1(:,:)
+
           real(r8), pointer :: tl_rufrc(:,:)
           real(r8), pointer :: tl_rvfrc(:,:)
+#  if defined STEP2D_FB_AB3_AM4 || defined STEP2D_FB_LF_AM3
+          real(r8), pointer :: tl_rufrc_bak(:,:,:)
+          real(r8), pointer :: tl_rvfrc_bak(:,:,:)
+#  endif
 #  ifdef VAR_RHO_2D
           real(r8), pointer :: tl_rhoA(:,:)
           real(r8), pointer :: tl_rhoS(:,:)
@@ -78,6 +92,10 @@
           real(r8), pointer :: ad_Zt_avg1(:,:)
           real(r8), pointer :: ad_rufrc(:,:)
           real(r8), pointer :: ad_rvfrc(:,:)
+#  if defined STEP2D_FB_AB3_AM4 || defined STEP2D_FB_LF_AM3
+          real(r8), pointer :: ad_rufrc_bak(:,:,:)
+          real(r8), pointer :: ad_rvfrc_bak(:,:,:)
+#  endif
 #  ifdef VAR_RHO_2D
           real(r8), pointer :: ad_rhoA(:,:)
           real(r8), pointer :: ad_rhoS(:,:)
@@ -156,6 +174,14 @@
       allocate ( COUPLING(ng) % rvfrc(LBi:UBi,LBj:UBj) )
       Dmem(ng)=Dmem(ng)+size2d
 
+# if defined STEP2D_FB_AB3_AM4 || defined STEP2D_FB_LF_AM3
+      allocate ( COUPLING(ng) % rufrc_bak(LBi:UBi,LBj:UBj,2) )
+      Dmem(ng)=Dmem(ng)+2.0_r8*size2d
+
+      allocate ( COUPLING(ng) % rvfrc_bak(LBi:UBi,LBj:UBj,2) )
+      Dmem(ng)=Dmem(ng)+2.0_r8*size2d
+# endif
+
 # ifdef VAR_RHO_2D
       allocate ( COUPLING(ng) % rhoA(LBi:UBi,LBj:UBj) )
       Dmem(ng)=Dmem(ng)+size2d
@@ -188,6 +214,14 @@
 
       allocate ( COUPLING(ng) % tl_rvfrc(LBi:UBi,LBj:UBj) )
       Dmem(ng)=Dmem(ng)+size2d
+
+#  if defined STEP2D_FB_AB3_AM4 || defined STEP2D_FB_LF_AM3
+      allocate ( COUPLING(ng) % tl_rufrc_bak(LBi:UBi,LBj:UBj,2) )
+      Dmem(ng)=Dmem(ng)+2.0_r8*size2d
+
+      allocate ( COUPLING(ng) % tl_rvfrc_bak(LBi:UBi,LBj:UBj,2) )
+      Dmem(ng)=Dmem(ng)+2.0_r8*size2d
+#  endif
 
 #  ifdef VAR_RHO_2D
       allocate ( COUPLING(ng) % tl_rhoA(LBi:UBi,LBj:UBj) )
@@ -222,6 +256,14 @@
 
       allocate ( COUPLING(ng) % ad_rvfrc(LBi:UBi,LBj:UBj) )
       Dmem(ng)=Dmem(ng)+size2d
+
+#  if defined STEP2D_FB_AB3_AM4 || defined STEP2D_FB_LF_AM3
+      allocate ( COUPLING(ng) % ad_rufrc_bak(LBi:UBi,LBj:UBj,2) )
+      Dmem(ng)=Dmem(ng)+2.0_r8*size2d
+
+      allocate ( COUPLING(ng) % ad_rvfrc_bak(LBi:UBi,LBj:UBj,2) )
+      Dmem(ng)=Dmem(ng)+2.0_r8*size2d
+#  endif
 
 #  ifdef VAR_RHO_2D
       allocate ( COUPLING(ng) % ad_rhoA(LBi:UBi,LBj:UBj) )
@@ -312,6 +354,14 @@
       IF (.not.destroy(ng, COUPLING(ng)%rvfrc, MyFile,                  &
      &                 __LINE__, 'COUPLING(ng)%rvfrc')) RETURN
 
+#  if defined STEP2D_FB_AB3_AM4 || defined STEP2D_FB_LF_AM3
+      IF (.not.destroy(ng, COUPLING(ng)%rufrc_bak, MyFile,              &
+     &                 __LINE__, 'COUPLING(ng)%rufrc_bak')) RETURN
+
+      IF (.not.destroy(ng, COUPLING(ng)%rvfrc_bak, MyFile,              &
+     &                 __LINE__, 'COUPLING(ng)%rvfrc_bak')) RETURN
+#  endif
+
 #  ifdef VAR_RHO_2D
       IF (.not.destroy(ng, COUPLING(ng)%rhoA, MyFile,                   &
      &                 __LINE__, 'COUPLING(ng)%rhoA')) RETURN
@@ -344,6 +394,14 @@
 
       IF (.not.destroy(ng, COUPLING(ng)%tl_rvfrc, MyFile,               &
      &                 __LINE__, 'COUPLING(ng)%tl_rvfrc')) RETURN
+
+#   if defined STEP2D_FB_AB3_AM4 || defined STEP2D_FB_LF_AM3
+      IF (.not.destroy(ng, COUPLING(ng)%tl_rufrc_bak, MyFile,           &
+     &                 __LINE__, 'COUPLING(ng)%tl_rufrc_bak')) RETURN
+
+      IF (.not.destroy(ng, COUPLING(ng)%tl_rvfrc_bak, MyFile,           &
+     &                 __LINE__, 'COUPLING(ng)%tl_rvfrc_bak')) RETURN
+#   endif
 
 #   ifdef VAR_RHO_2D
       IF (.not.destroy(ng, COUPLING(ng)%tl_rhoA, MyFile,                &
@@ -378,6 +436,14 @@
 
       IF (.not.destroy(ng, COUPLING(ng)%ad_rvfrc, MyFile,               &
      &                 __LINE__, 'COUPLING(ng)%ad_rvfrc')) RETURN
+
+#   if defined STEP2D_FB_AB3_AM4 || defined STEP2D_FB_LF_AM3
+      IF (.not.destroy(ng, COUPLING(ng)%ad_rufrc_bak, MyFile,           &
+     &                 __LINE__, 'COUPLING(ng)%ad_rufrc_bak')) RETURN
+
+      IF (.not.destroy(ng, COUPLING(ng)%ad_rvfrc_bak, MyFile,           &
+     &                 __LINE__, 'COUPLING(ng)%ad_rvfrc_bak')) RETURN
+#   endif
 
 #   ifdef VAR_RHO_2D
       IF (.not.destroy(ng, COUPLING(ng)%ad_rhoA, MyFile,                &
@@ -502,6 +568,13 @@
             COUPLING(ng) % rufrc(i,j) = IniVal
             COUPLING(ng) % rvfrc(i,j) = IniVal
 
+# if defined STEP2D_FB_AB3_AM4 || defined STEP2D_FB_LF_AM3
+            COUPLING(ng) % rufrc_bak(i,j,1) = IniVal
+            COUPLING(ng) % rufrc_bak(i,j,2) = IniVal
+            COUPLING(ng) % rvfrc_bak(i,j,1) = IniVal
+            COUPLING(ng) % rvfrc_bak(i,j,2) = IniVal
+# endif
+
 # ifdef VAR_RHO_2D
             COUPLING(ng) % rhoA(i,j) = IniVal
             COUPLING(ng) % rhoS(i,j) = IniVal
@@ -527,6 +600,13 @@
 
             COUPLING(ng) % tl_rufrc(i,j) = IniVal
             COUPLING(ng) % tl_rvfrc(i,j) = IniVal
+
+#  if defined STEP2D_FB_AB3_AM4 || defined STEP2D_FB_LF_AM3
+            COUPLING(ng) % tl_rufrc_bak(i,j,1) = IniVal
+            COUPLING(ng) % tl_rufrc_bak(i,j,2) = IniVal
+            COUPLING(ng) % tl_rvfrc_bak(i,j,1) = IniVal
+            COUPLING(ng) % tl_rvfrc_bak(i,j,2) = IniVal
+#  endif
 
 #  ifdef VAR_RHO_2D
             COUPLING(ng) % tl_rhoA(i,j) = IniVal
@@ -554,6 +634,13 @@
 
             COUPLING(ng) % ad_rufrc(i,j) = IniVal
             COUPLING(ng) % ad_rvfrc(i,j) = IniVal
+
+#  if defined STEP2D_FB_AB3_AM4 || defined STEP2D_FB_LF_AM3
+            COUPLING(ng) % ad_rufrc_bak(i,j,1) = IniVal
+            COUPLING(ng) % ad_rufrc_bak(i,j,2) = IniVal
+            COUPLING(ng) % ad_rvfrc_bak(i,j,1) = IniVal
+            COUPLING(ng) % ad_rvfrc_bak(i,j,2) = IniVal
+#  endif
 
 #  ifdef VAR_RHO_2D
             COUPLING(ng) % ad_rhoA(i,j) = IniVal
