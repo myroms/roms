@@ -3,7 +3,7 @@
 
 #if defined BALANCE_OPERATOR  && defined ZETA_ELLIPTIC
 !git $Id$
-!svn $Id: zeta_balance.F 1151 2023-02-09 03:08:53Z arango $
+!svn $Id: zeta_balance.F 1180 2023-07-13 02:42:10Z arango $
 !=================================================== Andrew M. Moore ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group      Hernan G. Arango   !
 !    Licensed under a MIT/X style license                              !
@@ -206,7 +206,7 @@
       real(r8), intent(in) :: rho(LBi:UBi,LBj:UBj,N(ng))
 #  endif
       real(r8), intent(inout) :: rhs_r2d(LBi:UBi,LBj:UBj)
-      real(r8), intent(in) :: zeta(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(in) :: zeta(LBi:UBi,LBj:UBj,:)
 # endif
 !
 !  Local variable declarations.
@@ -512,7 +512,7 @@
       real(r8), intent(in) :: pnom_v(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: pm(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: pn(LBi:UBi,LBj:UBj)
-      real(r8), intent(in) :: zeta(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(in) :: zeta(LBi:UBi,LBj:UBj,:)
       real(r8), intent(inout) :: bc_ak(Nbico(ng))
       real(r8), intent(inout) :: bc_bk(Nbico(ng))
       real(r8), intent(inout) :: zdf1(Nbico(ng))

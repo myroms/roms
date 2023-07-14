@@ -4,7 +4,7 @@
 #if defined ADJOINT && defined SOLVE3D
 !
 !git $Id$
-!svn $Id: ad_set_massflux.F 1151 2023-02-09 03:08:53Z arango $
+!svn $Id: ad_set_massflux.F 1180 2023-07-13 02:42:10Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -58,7 +58,7 @@
      &                           OCEAN(ng) % v,                         &
      &                           OCEAN(ng) % ad_u,                      &
      &                           OCEAN(ng) % ad_v,                      &
-# ifdef NEARSHORE_MELLOR
+# ifdef WEC_MELLOR
      &                           OCEAN(ng) % u_stokes,                  &
      &                           OCEAN(ng) % v_stokes,                  &
      &                           OCEAN(ng) % ad_u_stokes,               &
@@ -85,7 +85,7 @@
      &                                 nrhs,                            &
      &                                 u, v,                            &
      &                                 ad_u, ad_v,                      &
-# ifdef NEARSHORE_MELLOR
+# ifdef WEC_MELLOR
      &                                 u_stokes, v_stokes,              &
      &                                 ad_u_stokes, ad_v_stokes,        &
 # endif
@@ -112,7 +112,7 @@
 # ifdef ASSUMED_SHAPE
       real(r8), intent(in) :: u(LBi:,LBj:,:,:)
       real(r8), intent(in) :: v(LBi:,LBj:,:,:)
-#  ifdef NEARSHORE_MELLOR
+#  ifdef WEC_MELLOR
       real(r8), intent(in) :: u_stokes(LBi:,LBj:,:)
       real(r8), intent(in) :: v_stokes(LBi:,LBj:,:)
 #  endif
@@ -122,7 +122,7 @@
 
       real(r8), intent(inout) :: ad_u(LBi:,LBj:,:,:)
       real(r8), intent(inout) :: ad_v(LBi:,LBj:,:,:)
-#  ifdef NEARSHORE_MELLOR
+#  ifdef WEC_MELLOR
       real(r8), intent(inout) :: ad_u_stokes(LBi:,LBj:,:)
       real(r8), intent(inout) :: ad_v_stokes(LBi:,LBj:,:)
 #  endif
@@ -133,7 +133,7 @@
 # else
       real(r8), intent(in) :: u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(in) :: v(LBi:UBi,LBj:UBj,N(ng),2)
-#  ifdef NEARSHORE_MELLOR
+#  ifdef WEC_MELLOR
       real(r8), intent(in) :: u_stokes(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(in) :: v_stokes(LBi:UBi,LBj:UBj,N(ng))
 #  endif
@@ -143,7 +143,7 @@
 
       real(r8), intent(inout) :: ad_u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(inout) :: ad_v(LBi:UBi,LBj:UBj,N(ng),2)
-#  ifdef NEARSHORE_MELLOR
+#  ifdef WEC_MELLOR
       real(r8), intent(inout) :: ad_u_stokes(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(inout) :: ad_v_stokes(LBi:UBi,LBj:UBj,N(ng))
 #  endif
@@ -204,7 +204,7 @@
       DO k=1,N(ng)
         DO j=JstrP,JendT
           DO i=IstrT,IendT
-# ifdef NEARSHORE_MELLOR
+# ifdef WEC_MELLOR
 !^          tl_Hvom(i,j,k)=tl_Hvom(i,j,k)+                              &
 !^   &                     0.5_r8*om_v(i,j)*                            &
 !^   &                     ((Hz(i,j,k)+Hz(i,j-1,k))*                    &
@@ -236,7 +236,7 @@
         END DO
         DO j=JstrT,JendT
           DO i=IstrP,IendT
-# ifdef NEARSHORE_MELLOR
+# ifdef WEC_MELLOR
 !^          tl_Huon(i,j,k)=tl_Huon(i,j,k)+                              &
 !^   &                     0.5_r8*on_u(i,j)*                            &
 !^   &                     ((Hz(i,j,k)+Hz(i-1,j,k))*                    &

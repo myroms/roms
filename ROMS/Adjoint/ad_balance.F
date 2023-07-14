@@ -4,7 +4,7 @@
 #if defined TANGENT && defined BALANCE_OPERATOR
 !
 !git $Id$
-!svn $Id: ad_balance.F 1151 2023-02-09 03:08:53Z arango $
+!svn $Id: ad_balance.F 1180 2023-07-13 02:42:10Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -274,7 +274,7 @@
       real(r8), intent(inout) :: ad_u(LBi:UBi,LBj:UBj,2,N(ng))
       real(r8), intent(inout) :: ad_v(LBi:UBi,LBj:UBj,2,N(ng))
 #  endif
-      real(r8), intent(inout) :: ad_zeta(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(inout) :: ad_zeta(LBi:UBi,LBj:UBj,:)
 #  ifdef SOLVE3D
       real(r8), intent(out) :: ad_rho(LBi:UBi,LBj:UBj,N(ng))
 #  endif

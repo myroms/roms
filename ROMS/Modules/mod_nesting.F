@@ -4,7 +4,7 @@
 #ifdef NESTING
 !
 !git $Id$
-!svn $Id: mod_nesting.F 1151 2023-02-09 03:08:53Z arango $
+!svn $Id: mod_nesting.F 1180 2023-07-13 02:42:10Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -42,10 +42,13 @@
 !  ubar      Vertically integrated U-momentum component (m/s).         !
 !  vbar      Vertically integrated V-momentum component (m/s).         !
 !  zeta      Free surface (m).                                         !
-# ifdef SOLVE3D
+# ifndef SOLVE3D
+!  U2d_flux  U-flux for 2D equations transport (m3/s).                 !
+!  V2d_flux  V-flux for 2D equations transport (m3/s).                 !
+# else
 !                                                                      !
-!  DU_avg2   Time averaged U-flux for 3D equations coupling (m3/s).    !
-!  DV_avg2   Time averaged V-flux for 3D equations coupling (m3/s).    !
+!  U2d_flux  Time averaged U-flux for 3D equations coupling (m3/s).    !
+!  V2d_flux  Time averaged V-flux for 3D equations coupling (m3/s).    !
 !  t         Tracer type variables (active and passive).               !
 !  u         3D U-momentum component (m/s).                            !
 !  v         3D U-momentum component (m/s).                            !
@@ -418,8 +421,8 @@
         real(r8), pointer :: vbar(:,:,:)      ! [4,Npoints,t1:t2]
         real(r8), pointer :: zeta(:,:,:)      ! [4,Npoints,t1:t2]
 
-        real(r8), pointer :: DU_avg2(:,:,:)   ! [4,Npoints,t1:t2]
-        real(r8), pointer :: DV_avg2(:,:,:)   ! [4,Npoints,t1:t2]
+        real(r8), pointer :: U2d_flux(:,:,:)  ! [4,Npoints,t1:t2]
+        real(r8), pointer :: V2d_flux(:,:,:)  ! [4,Npoints,t1:t2]
 
         real(r8), pointer :: on_u(:)          ! [Npoints]
         real(r8), pointer :: om_v(:)          ! [Npoints]
@@ -1070,10 +1073,10 @@
         IF (.not.destroy(ng, REFINED(cr)%zeta, MyFile,                  &
      &                   __LINE__, 'REFINED(cr)%zeta')) RETURN
 
-        IF (.not.destroy(ng, REFINED(cr)%DU_avg2, MyFile,               &
-     &                   __LINE__, 'REFINED(cr)%DU_avg2')) RETURN
-        IF (.not.destroy(ng, REFINED(cr)%DV_avg2, MyFile,               &
-     &                   __LINE__, 'REFINED(cr)%DV_avg2')) RETURN
+        IF (.not.destroy(ng, REFINED(cr)%U2d_flux, MyFile,              &
+     &                   __LINE__, 'REFINED(cr)%U2d_flux')) RETURN
+        IF (.not.destroy(ng, REFINED(cr)%V2d_flux, MyFile,               &
+     &                   __LINE__, 'REFINED(cr)%V2d_flux')) RETURN
 
         IF (.not.destroy(ng, REFINED(cr)%on_u, MyFile,                  &
      &                   __LINE__, 'REFINED(cr)%on_u')) RETURN
@@ -1088,10 +1091,10 @@
         IF (.not.destroy(ng, REFINED(cr)%tl_zeta, MyFile,               &
      &                   __LINE__, 'REFINED(cr)%tl_zeta')) RETURN
 
-        IF (.not.destroy(ng, REFINED(cr)%tl_DU_avg2, MyFile,            &
-     &                   __LINE__, 'REFINED(cr)%tl_DU_avg2')) RETURN
-        IF (.not.destroy(ng, REFINED(cr)%tl_DV_avg2, MyFile,            &
-     &                   __LINE__, 'REFINED(cr)%tl_DV_avg2')) RETURN
+        IF (.not.destroy(ng, REFINED(cr)%tl_U2d_flux, MyFile,           &
+     &                   __LINE__, 'REFINED(cr)%tl_U2d_flux')) RETURN
+        IF (.not.destroy(ng, REFINED(cr)%tl_V2d_flux, MyFile,           &
+     &                   __LINE__, 'REFINED(cr)%tl_V2d_flux')) RETURN
 #  endif
 
 #  ifdef ADJOINT
@@ -1102,10 +1105,10 @@
         IF (.not.destroy(ng, REFINED(cr)%ad_zeta, MyFile,               &
      &                   __LINE__, 'REFINED(cr)%ad_zeta')) RETURN
 
-        IF (.not.destroy(ng, REFINED(cr)%ad_DU_avg2, MyFile,            &
-     &                   __LINE__, 'REFINED(cr)%ad_DU_avg2')) RETURN
-        IF (.not.destroy(ng, REFINED(cr)%ad_DV_avg2, MyFile,            &
-     &                   __LINE__, 'REFINED(cr)%ad_DV_avg2')) RETURN
+        IF (.not.destroy(ng, REFINED(cr)%ad_U2d_flux, MyFile,           &
+     &                   __LINE__, 'REFINED(cr)%ad_U2d_flux')) RETURN
+        IF (.not.destroy(ng, REFINED(cr)%ad_V2d_flux, MyFile,           &
+     &                   __LINE__, 'REFINED(cr)%ad_V2d_flux')) RETURN
 #  endif
 
 #  ifdef SOLVE3D
@@ -1269,8 +1272,8 @@
           REFINED(cr) % vbar = IniVal
           REFINED(cr) % zeta = IniVal
 
-          REFINED(cr) % DU_avg2 = IniVal
-          REFINED(cr) % DV_avg2 = IniVal
+          REFINED(cr) % U2d_flux = IniVal
+          REFINED(cr) % V2d_flux = IniVal
 
           REFINED(cr) % on_u = IniVal
           REFINED(cr) % om_v = IniVal

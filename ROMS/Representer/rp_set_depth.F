@@ -3,7 +3,7 @@
 #ifdef TL_IOMS
 !
 !git $Id$
-!svn $Id: rp_set_depth.F 1151 2023-02-09 03:08:53Z arango $
+!svn $Id: rp_set_depth.F 1180 2023-07-13 02:42:10Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -45,9 +45,6 @@
       USE mod_coupling
       USE mod_grid
       USE mod_ocean
-#  if defined SEDIMENT && defined SED_MORPH
-      USE mod_sedbed
-#  endif
       USE mod_stepping
 !
 !  Imported variable declarations.
@@ -73,9 +70,6 @@
 #  ifdef ICESHELF
      &                        GRID(ng) % zice,                          &
 #  endif
-#  if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
-     &                        SEDBED(ng) % tl_bed_thick,                &
-#  endif
      &                        COUPLING(ng) % Zt_avg1,                   &
      &                        COUPLING(ng) % tl_Zt_avg1,                &
      &                        GRID(ng) % tl_Hz,                         &
@@ -96,9 +90,6 @@
      &                              h, tl_h,                            &
 #  ifdef ICESHELF
      &                              zice,                               &
-#  endif
-#  if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
-     &                              tl_bed_thick,                       &
 #  endif
      &                              Zt_avg1, tl_Zt_avg1,                &
      &                              tl_Hz, tl_z_r, tl_z_w)
@@ -125,9 +116,6 @@
 #   ifdef ICESHELF
       real(r8), intent(in) :: zice(LBi:,LBj:)
 #   endif
-#   if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
-      real(r8), intent(in):: tl_bed_thick(LBi:,LBj:,:)
-#   endif
       real(r8), intent(in) :: Zt_avg1(LBi:,LBj:)
       real(r8), intent(in) :: tl_Zt_avg1(LBi:,LBj:)
       real(r8), intent(inout) :: tl_h(LBi:,LBj:)
@@ -138,9 +126,6 @@
       real(r8), intent(in) :: h(LBi:UBi,LBj:UBj)
 #   ifdef ICESHELF
       real(r8), intent(in) :: zice(LBi:UBi,LBj:UBj)
-#   endif
-#   if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
-      real(r8), intent(in):: tl_bed_thick(LBi:UBi,LBj:UBi,2)
 #   endif
       real(r8), intent(in) :: Zt_avg1(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: tl_Zt_avg1(LBi:UBi,LBj:UBj)
@@ -179,12 +164,6 @@
       IF (Vtransform(ng).eq.1) THEN
         DO j=JstrT,JendT
           DO i=IstrT,IendT
-#  if defined SEDIMENT && defined SED_MORPH
-!^          h(i,j)=h(i,j)-bed_thick(i,j,nstp)+bed_thick(i,j,nnew)
-!^
-            tl_h(i,j)=tl_h(i,j)-                                        &
-     &                tl_bed_thick(i,j,nstp)+tl_bed_thick(i,j,nnew)
-#  endif
 !^          z_w(i,j,0)=-h(i,j)
 !^
             tl_z_w(i,j,0)=-tl_h(i,j)
@@ -278,12 +257,6 @@
       ELSE IF (Vtransform(ng).eq.2) THEN
         DO j=JstrT,JendT
           DO i=IstrT,IendT
-#  if defined SEDIMENT && defined SED_MORPH
-!^          h(i,j)=h(i,j)-bed_thick(i,j,nstp)+bed_thick(i,j,nnew)
-!^
-            tl_h(i,j)=tl_h(i,j)-                                        &
-     &                tl_bed_thick(i,j,nstp)+tl_bed_thick(i,j,nnew)
-#  endif
 !^          z_w(i,j,0)=-h(i,j)
 !^
             tl_z_w(i,j,0)=-tl_h(i,j)

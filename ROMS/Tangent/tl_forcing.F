@@ -4,7 +4,7 @@
 #if defined TANGENT && (defined WEAK_CONSTRAINT || defined FORCING_SV)
 !
 !git $Id$
-!svn $Id: tl_forcing.F 1151 2023-02-09 03:08:53Z arango $
+!svn $Id: tl_forcing.F 1180 2023-07-13 02:42:10Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group   Emanuele Di Lorenzo   !
 !    Licensed under a MIT/X style license            Andrew M. Moore   !
@@ -134,12 +134,12 @@
       real(r8), intent(inout) :: tl_u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(inout) :: tl_v(LBi:UBi,LBj:UBj,N(ng),2)
 #  endif
-      real(r8), intent(inout) :: tl_ubar(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(inout) :: tl_vbar(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(inout) :: tl_ubar(LBi:UBi,LBj:UBj,:)
+      real(r8), intent(inout) :: tl_vbar(LBi:UBi,LBj:UBj,:)
 #  ifdef SOLVE3D
       real(r8), intent(inout) :: tl_Zt_avg1(LBi:UBi,LBj:UBj)
 #  endif
-      real(r8), intent(inout) :: tl_zeta(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(inout) :: tl_zeta(LBi:UBi,LBj:UBj,:)
 # endif
 !
 !  Local variable declarations.

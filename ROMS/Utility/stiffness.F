@@ -2,7 +2,7 @@
       MODULE stiffness_mod
 !
 !git $Id$
-!svn $Id: stiffness.F 1151 2023-02-09 03:08:53Z arango $
+!svn $Id: stiffness.F 1180 2023-07-13 02:42:10Z arango $
 !=======================================================================
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -118,7 +118,7 @@
       real(r8), intent(in) :: Hz(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(in) :: z_w(LBi:UBi,LBj:UBj,0:N(ng))
 # endif
-      real(r8), intent(in) :: zeta(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(in) :: zeta(LBi:UBi,LBj:UBj,:)
 #endif
 !
 !  Local variable declarations.

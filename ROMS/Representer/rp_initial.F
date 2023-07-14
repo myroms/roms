@@ -3,7 +3,7 @@
       SUBROUTINE rp_initial (ng)
 !
 !git $Id$
-!svn $Id: rp_initial.F 1166 2023-05-17 20:11:58Z arango $
+!svn $Id: rp_initial.F 1180 2023-07-13 02:42:10Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -130,6 +130,7 @@
 !
       iif(ng)=1
       indx1(ng)=1
+      next_kstp(ng)=1
       kstp(ng)=1
       krhs(ng)=1
       knew(ng)=1

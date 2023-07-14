@@ -3,7 +3,7 @@
 #if defined WEAK_CONSTRAINT && defined RPCG
 !
 !git $Id$
-!svn $Id: sum_imp.F 1151 2023-02-09 03:08:53Z arango $
+!svn $Id: sum_imp.F 1180 2023-07-13 02:42:10Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -110,12 +110,12 @@
       real(r8), intent(inout) :: f_u(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(inout) :: f_v(LBi:UBi,LBj:UBj,N(ng))
 #  else
-      real(r8), intent(inout) :: tl_ubar(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(inout) :: tl_vbar(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(inout) :: tl_ubar(LBi:UBi,LBj:UBj,:)
+      real(r8), intent(inout) :: tl_vbar(LBi:UBi,LBj:UBj,:)
       real(r8), intent(inout) :: f_ubar(LBi:UBi,LBj:UBj)
       real(r8), intent(inout) :: f_vbar(LBi:UBi,LBj:UBj)
 #  endif
-      real(r8), intent(inout) :: tl_zeta(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(inout) :: tl_zeta(LBi:UBi,LBj:UBj,:)
       real(r8), intent(inout) :: f_zeta(LBi:UBi,LBj:UBj)
 # endif
 !
