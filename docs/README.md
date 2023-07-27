@@ -67,6 +67,17 @@ software can be downloaded from:
 git clone https://github.com/myroms/roms_test.git
 git clone https://github.com/myroms/roms_matlab.git
 ```
+We highly recommend that Users define the **`ROMS_ROOT_DIR`** variable in their
+computer shell logging environment, specifying where the User cloned/downloaded
+the **ROMS** source code, Test Cases, and Matlab processing software:
+```
+setenv ROMS_ROOT_DIR  MyDownlodLocationDirectory
+```
+The **build** scripts will use this environmental variable when compiling any of
+the **ROMS Test Cases** without the need to customize the location of the
+**ROMS** source code. Also, it is used for loading the path of Matlab scripts in
+the **startup.m** configuration file.
+
 The **doxygen** version of **ROMS** is available at:
 ```
 https://www.myroms.org/doxygen
