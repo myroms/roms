@@ -1,8 +1,8 @@
 !
 !  ROMS/TOMS Standard Input parameters.
 !
-!git $Id$
-!svn $Id: roms_wc13.in 275 2023-02-09 03:21:09Z arango $
+! git $Id$
+! svn $Id: roms_wc13.in 1946 2023-07-11 17:32:58Z arango $
 !========================================================= Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                                !
 !    Licensed under a MIT/X style license                                     !
@@ -74,7 +74,7 @@
 ! Input variable information file name.  This file needs to be processed
 ! first so all information arrays can be initialized properly.
 
-     VARNAME = ../Data/varinfo.yaml
+     VARNAME = ROMS/External/varinfo.yaml
 
 ! Number of nested grids.
 
@@ -194,17 +194,17 @@ ad_Vadvection == C4       \                     ! temperature
 
 ! Waves Effect on Currents lateral boundary conditions.
 
-   LBC(isU2Sd) ==   Gra     Gra     Clo     Gra         ! 2D U-stokes
-   LBC(isV2Sd) ==   Gra     Gra     Clo     Gra         ! 2D V-stokes
-   LBC(isU3Sd) ==   Gra     Gra     Clo     Gra         ! 3D U-stokes
-   LBC(isV3Sd) ==   Gra     Gra     Clo     Gra         ! 3D V-stokes
+   LBC(isU2Sd) ==   Gra     Gra     Clo     Gra         ! 2D U-Stokes
+   LBC(isV2Sd) ==   Gra     Gra     Clo     Gra         ! 2D V-Stokes
+   LBC(isU3Sd) ==   Gra     Gra     Clo     Gra         ! 3D U-Stokes
+   LBC(isV3Sd) ==   Gra     Gra     Clo     Gra         ! 3D V-Stokes
 
 ! Adjoint-based algorithms can have different lateral boundary
 ! conditions keywords.
 
 ad_LBC(isFsur) ==   Cha     Cha     Clo     Cha         ! free-surface
 ad_LBC(isUbar) ==   Fla     Fla     Clo     Fla         ! 2D U-momentum
-ad_LBC(isVbar) ==   Fla     Fla     Clo     Fla         ! 2D U-momentum
+ad_LBC(isVbar) ==   Fla     Fla     Clo     Fla         ! 2D V-momentum
 ad_LBC(isUvel) ==   Cla     Cla     Clo     Cla         ! 3D U-momentum
 ad_LBC(isVvel) ==   Cla     Cla     Clo     Cla         ! 3D V-momentum
 ad_LBC(isMtke) ==   Gra     Gra     Clo     Gra         ! mixing TKE
@@ -373,7 +373,7 @@ LtracerSponge == T T                            ! temperature, salinity, inert
 
 ! Constants used in surface turbulent kinetic energy flux computation.
 
-  CHARNOK_ALPHA == 1400.0d0         ! Charnok surface roughness
+  CHARNOK_ALPHA == 1400.0d0         ! Charnock surface roughness
  ZOS_HSIG_ALPHA == 0.5d0            ! roughness from wave amplitude
        SZ_ALPHA == 0.25d0           ! roughness from wave dissipation
       CRGBAN_CW == 100.0d0          ! Craig and Banner wave breaking
@@ -434,7 +434,7 @@ LtracerSponge == T T                            ! temperature, salinity, inert
 ! origin for tidal forcing, and model reference time for output
 ! NetCDF units attribute.
 
-      DSTART =  13008                      ! days
+      DSTART =  13008.0d0                  ! days
   TIDE_START =  0.0d0                      ! days
     TIME_REF =  -2.0d0                     ! yyyymmdd.dd
 
@@ -531,8 +531,8 @@ Fstate(isUvel) == F                        ! 3D U-momentum
 Fstate(isVvel) == F                        ! 3D V-momentum
 Fstate(isTvar) == F F                      ! NT tracers
 
-Fstate(isUstr) == T                        ! surface U-stress
-Fstate(isVstr) == T                        ! surface V-stress
+Fstate(isUstr) == F                        ! surface U-stress
+Fstate(isVstr) == F                        ! surface V-stress
 Fstate(isTsur) == F F                      ! NT surface tracers flux
 
 ! Stochastic Optimals time decorrelation scale (days) assumed for
@@ -561,8 +561,9 @@ Hout(idUvel) == T       ! u                  3D U-velocity
 Hout(idVvel) == T       ! v                  3D V-velocity
 Hout(idu3dE) == F       ! u_eastward         3D U-eastward  at RHO-points
 Hout(idv3dN) == F       ! v_northward        3D V-northward at RHO-points
-Hout(idWvel) == F       ! w                  3D W-velocity
+Hout(idWvel) == T       ! w                  3D W-velocity
 Hout(idOvel) == T       ! omega              omega vertical velocity
+Hout(idOvil) == F       ! omega_implicit     omega implicit vertical velocity
 Hout(idUbar) == T       ! ubar               2D U-velocity
 Hout(idVbar) == T       ! vbar               2D V-velocity
 Hout(idu2dE) == F       ! ubar_eastward      2D U-eastward  at RHO-points
@@ -577,8 +578,8 @@ Hout(idpthU) == F       ! z_u                time-varying depths of U-points
 Hout(idpthV) == F       ! z_v                time-varying depths of V-points
 Hout(idpthW) == F       ! z_w                time-varying depths of W-points
 
-Hout(idUsms) == F       ! sustr              surface U-stress
-Hout(idVsms) == F       ! svstr              surface V-stress
+Hout(idUsms) == T       ! sustr              surface U-stress
+Hout(idVsms) == T       ! svstr              surface V-stress
 Hout(idUbms) == F       ! bustr              bottom U-stress
 Hout(idVbms) == F       ! bvstr              bottom V-stress
 
@@ -628,21 +629,21 @@ Hout(idWdiw) == F       ! Dissip_wcap        wave dissipation from whitecapping
 Hout(idWdis) == F       ! Dissip_roller      wave roller dissipation
 Hout(idWrol) == F       ! roller_action      wave roller action density
 
-Hout(idPair) == F       ! Pair               surface air pressure
-Hout(idTair) == F       ! Tair               surface air temperature
-Hout(idUair) == F       ! Uwind              surface U-wind
-Hout(idVair) == F       ! Vwind              surface V-wind
+Hout(idPair) == T       ! Pair               surface air pressure
+Hout(idTair) == T       ! Tair               surface air temperature
+Hout(idUair) == T       ! Uwind              surface U-wind
+Hout(idVair) == T       ! Vwind              surface V-wind
 Hout(idUaiE) == F       ! Uwind_eastward     surface Eastward  U-wind
 Hout(idVaiN) == F       ! Vwind_northward    surface Northward V-wind
 
-Hout(idTsur) == F F     ! shflux, ssflux     surface net heat and salt flux
-Hout(idLhea) == F       ! latent             latent heat flux
-Hout(idShea) == F       ! sensible           sensible heat flux
-Hout(idLrad) == F       ! lwrad              longwave radiation flux
-Hout(idSrad) == F       ! swrad              shortwave radiation flux
-Hout(idEmPf) == F       ! EminusP            E-P flux
-Hout(idevap) == F       ! evaporation        evaporation rate
-Hout(idrain) == F       ! rain               precipitation rate
+Hout(idTsur) == T T     ! shflux, ssflux     surface net heat and salt flux
+Hout(idLhea) == T       ! latent             latent heat flux
+Hout(idShea) == T       ! sensible           sensible heat flux
+Hout(idLrad) == T       ! lwrad              longwave radiation flux
+Hout(idSrad) == T       ! swrad              shortwave radiation flux
+Hout(idEmPf) == T       ! EminusP            E-P flux
+Hout(idevap) == T       ! evaporation        evaporation rate
+Hout(idrain) == T       ! rain               precipitation rate
 
 Hout(idDano) == T       ! rho                density anomaly
 Hout(idVvis) == F       ! AKv                vertical viscosity
@@ -692,8 +693,8 @@ Qout(idpthU) == F       ! z_u                time-varying depths of U-points
 Qout(idpthV) == F       ! z_v                time-varying depths of V-points
 Qout(idpthW) == F       ! z_w                time-varying depths of W-points
 
-Qout(idUsms) == F       ! sustr              surface U-stress
-Qout(idVsms) == F       ! svstr              surface V-stress
+Qout(idUsms) == T       ! sustr              surface U-stress
+Qout(idVsms) == T       ! svstr              surface V-stress
 Qout(idUbms) == F       ! bustr              bottom U-stress
 Qout(idVbms) == F       ! bvstr              bottom V-stress
 
@@ -717,7 +718,7 @@ Qout(idWbeh) == F       ! bernoulli_head     WEC_VF Bernoulli head adjustment
 Qout(idU2rs) == F       ! ubar_wec_stress    WEC 2D U-stress
 Qout(idV2rs) == F       ! vbar_wec_stress    WEC 2D V-stress
 Qout(idU3rs) == F       ! u_wec_stress       WEC 3D U-stress
-Qout(idV3rs) == F       ! v_wec_stress        WEC 3D V-stress
+Qout(idV3rs) == F       ! v_wec_stress       WEC 3D V-stress
 
 Qout(idU2Sd) == F       ! ubar_stokes        2D Stokes U-velocity
 Qout(idV2Sd) == F       ! vbar_stokes        2D Stokes V-velocity
@@ -743,21 +744,21 @@ Qout(idWdiw) == F       ! Dissip_wcap        wave dissipation from whitecapping
 Qout(idWdis) == F       ! Dissip_roller      wave roller dissipation
 Qout(idWrol) == F       ! roller_action      wave roller action density
 
-Qout(idPair) == F       ! Pair               surface air pressure
-Qout(idTair) == F       ! Tair               surface air temperature
-Qout(idUair) == F       ! Uair               surface U-wind
-Qout(idVair) == F       ! Vair               surface V-wind
+Qout(idPair) == T       ! Pair               surface air pressure
+Qout(idTair) == T       ! Tair               surface air temperature
+Qout(idUair) == T       ! Uair               surface U-wind
+Qout(idVair) == T       ! Vair               surface V-wind
 Qout(idUaiE) == F       ! Uwind_eastward     surface Eastward  U-wind
 Qout(idVaiN) == F       ! Vwind_northward    surface Northward V-wind
 
-Qout(idTsur) == F F     ! shflux, ssflux     surface net heat and salt flux
-Qout(idLhea) == F       ! latent             latent heat flux
-Qout(idShea) == F       ! sensible           sensible heat flux
-Qout(idLrad) == F       ! lwrad              longwave radiation flux
-Qout(idSrad) == F       ! swrad              shortwave radiation flux
-Qout(idEmPf) == F       ! EminusP            E-P flux
-Qout(idevap) == F       ! evaporation        evaporation rate
-Qout(idrain) == F       ! rain               precipitation rate
+Qout(idTsur) == T T     ! shflux, ssflux     surface net heat and salt flux
+Qout(idLhea) == T       ! latent             latent heat flux
+Qout(idShea) == T       ! sensible           sensible heat flux
+Qout(idLrad) == T       ! lwrad              longwave radiation flux
+Qout(idSrad) == T       ! swrad              shortwave radiation flux
+Qout(idEmPf) == T       ! EminusP            E-P flux
+Qout(idevap) == T       ! evaporation        evaporation rate
+Qout(idrain) == T       ! rain               precipitation rate
 
 Qout(idDano) == F       ! rho                density anomaly
 Qout(idVvis) == F       ! AKv                vertical viscosity
@@ -1051,7 +1052,7 @@ PIO_I2C_Preq = 65                 ! Maximum pending I2C requests
 
 ! Input NetCDF file names, [1:Ngrids].
 
-     GRDNAME == ../Data/wc13_grd.nc
+     GRDNAME == ../../../roms_test/WC13/Data/wc13_grd.nc
      ININAME == wc13_ini.nc
      ITLNAME == wc13_itl.nc
      IRPNAME == wc13_irp.nc
@@ -1068,15 +1069,15 @@ PIO_I2C_Preq = 65                 ! Maximum pending I2C requests
 ! s4dvar.in input script) will have the structure of a 4D-Var observation
 ! file.
 
-    FOInameA == roms_foi_a.nc
-    FOInameB == roms_foi_b.nc
+    FOInameA == wc13_foi_a.nc
+    FOInameB == wc13_foi_b.nc
 
 ! Input NetCDF filenames for the forecasts initialized from the analysis
 ! of the current 4D-Var cycle (FCTnameA) and initialized from the analysis
 ! of the previous 4D-Var cycle (FCTnameB).
 
-    FCTnameA == roms_fct_a.nc
-    FCTnameB == roms_fct_b.nc
+    FCTnameA == wc13_fct_a.nc
+    FCTnameB == wc13_fct_b.nc
 
 ! Nesting grids connectivity data: contact points information. This
 ! NetCDF file is special and complex. It is currently generated using
@@ -1094,7 +1095,7 @@ PIO_I2C_Preq = 65                 ! Maximum pending I2C requests
 
     NBCFILES == 1                          ! number of boundary files
 
-     BRYNAME == ../Data/wc13_ecco_bry.nc
+     BRYNAME == ../../../roms_test/WC13/Data/wc13_ecco_bry.nc
 
 ! Input climatology file names. The USER has the option to separate the
 ! climatology variables into individual NetCDF files (NCLMFILES > 1),
@@ -1140,13 +1141,13 @@ PIO_I2C_Preq = 65                 ! Maximum pending I2C requests
 
      NFFILES == 7                          ! number of unique forcing files
 
-     FRCNAME == ../Data/coamps_wc13_lwrad_down.nc \
-                ../Data/coamps_wc13_Pair.nc \
-                ../Data/coamps_wc13_Qair.nc \
-                ../Data/coamps_wc13_rain.nc \
-                ../Data/coamps_wc13_swrad.nc \
-                ../Data/coamps_wc13_Tair.nc \
-                ../Data/coamps_wc13_wind.nc
+     FRCNAME == ../../../roms_test/WC13/Data/coamps_wc13_lwrad_down.nc \
+                ../../../roms_test/WC13/Data/coamps_wc13_Pair.nc \
+                ../../../roms_test/WC13/Data/coamps_wc13_Qair.nc \
+                ../../../roms_test/WC13/Data/coamps_wc13_rain.nc \
+                ../../../roms_test/WC13/Data/coamps_wc13_swrad.nc \
+                ../../../roms_test/WC13/Data/coamps_wc13_Tair.nc \
+                ../../../roms_test/WC13/Data/coamps_wc13_wind.nc
 
 ! Output NetCDF file names, [1:Ngrids].
 
@@ -1982,7 +1983,7 @@ PIO_I2C_Preq = 65                 ! Maximum pending I2C requests
 ! energy flux in the GLS.
 !------------------------------------------------------------------------------
 !
-! CHARNOK_ALPHA    Charnok surface roughness,
+! CHARNOK_ALPHA    Charnock surface roughness,
 !                    Zos:   (charnok_alpha * u_star**2) / g
 !
 ! ZOS_HSIG_ALPHA   Roughness from wave amplitude,
@@ -2630,6 +2631,7 @@ PIO_I2C_Preq = 65                 ! Maximum pending I2C requests
 ! Hout(idv3dN)   Write out 3D Northward velocity component at RHO-points.
 ! Hout(idWvel)   Write out 3D W-velocity component.
 ! Hout(idOvel)   Write out 3D omega vertical velocity.
+! Hout(idOvil)   Write out 3D omega implicit vertical velocity.
 ! Hout(idUbar)   Write out 2D U-velocity component.
 ! Hout(idVbar)   Write out 2D V-velocity component.
 ! Hout(idu2dE)   Write out 2D Eastward  velocity component at RHO-points.

@@ -2,7 +2,7 @@
       MODULE mod_scalars
 !
 !git $Id$
-!svn $Id: mod_scalars.F 1178 2023-07-11 17:50:57Z arango $
+!svn $Id: mod_scalars.F 1184 2023-07-27 20:28:19Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -1734,7 +1734,7 @@
 !
 ! Constants used in the various formulation of surface flux boundary
 ! conditions for the GLS vertical turbulence closure in terms of
-! Charnok surface roughness (CHARNOK_ALPHA), roughness from wave
+! Charnock surface roughness (CHARNOK_ALPHA), roughness from wave
 ! amplitude (zos_hsig_alpha), wave dissipation (SZ_ALPHA), and
 ! Craig and Banner wave breaking (CRGBAN_CW).
 !

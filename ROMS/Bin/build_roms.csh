@@ -1,6 +1,7 @@
 #!/bin/csh -f
 #
-# svn $Id: build_roms.csh 1170 2023-06-04 20:11:16Z arango $
+# git $Id$
+# svn $Id: build_roms.csh 1184 2023-07-27 20:28:19Z arango $
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # Copyright (c) 2002-2023 The ROMS/TOMS Group                           :::
 #   Licensed under a MIT/X style license                                :::
@@ -32,6 +33,10 @@
 #    -j [N]      Compile in parallel using N CPUs                       :::
 #                  omit argument for all available CPUs                 :::
 #                                                                       :::
+#    -b          Compile a specific ROMS GitHub branch                  :::
+#                                                                       :::
+#                  build_roms.csh -j 5 -b feature/kernel                :::
+#                                                                       :::
 #    -p macro    Prints any Makefile macro value. For example,          :::
 #                                                                       :::
 #                  build_roms.csh -p FFLAGS                             :::
@@ -41,6 +46,11 @@
 # Notice that sometimes the parallel compilation fail to find MPI       :::
 # include file "mpif.h".                                                :::
 #                                                                       :::
+# The branch option -b is only possible for ROMS source code from       :::
+# https://github.com/myroms. Such versions are under development        :::
+# and targeted to advanced users, superusers, and beta testers.         :::
+# Regular and novice users must use the default 'develop' branch.       :::
+#                                                                       :::
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
 setenv which_MPI openmpi                      #  default, overwritten below
@@ -48,6 +58,11 @@ setenv which_MPI openmpi                      #  default, overwritten below
 set parallel = 0
 set clean = 1
 set dprint = 0
+set branch = 0
+
+set command = "build_roms.csh $argv[*]"
+
+set separator = `perl -e "print '<>' x 50;"`
 
 setenv MY_CPP_FLAGS ''
 
@@ -77,19 +92,35 @@ while ( ($#argv) > 0 )
       endif
     breaksw
 
+    case "-b"
+      shift
+      set branch = 1
+      set branch_name = `echo $1 | grep -v '^-'`
+      if ( "$branch_name" == "" ) then
+        echo "Please enter a branch name."
+        exit 1
+      endif
+      shift
+    breaksw
+
     case "-*":
       echo ""
+      echo "${separator}"
       echo "$0 : Unknown option [ $1 ]"
       echo ""
       echo "Available Options:"
       echo ""
-      echo "-j [N]      Compile in parallel using N CPUs"
-      echo "              omit argument for all avaliable CPUs"
+      echo "-j [N]          Compile in parallel using N CPUs"
+      echo "                  omit argument for all avaliable CPUs"
       echo ""
-      echo "-p macro    Prints any Makefile macro value"
-      echo "              For example:  build_roms.csh -p FFLAGS"
+      echo "-b branch_name  Compile specific ROMS GitHub branch name"
+      echo "                  For example:  build_roms.csh -b feature/kernel"
       echo ""
-      echo "-noclean    Do not clean already compiled objects"
+      echo "-p macro        Prints any Makefile macro value"
+      echo "                  For example:  build_roms.csh -p FFLAGS"
+      echo ""
+      echo "-noclean        Do not clean already compiled objects"
+      echo "${separator}"
       echo ""
       exit 1
     breaksw
@@ -104,23 +135,31 @@ end
 setenv ROMS_APPLICATION      UPWELLING
 
 # Set a local environmental variable to define the path to the directories
-# where all this project's files are kept.
+# where the ROMS source code is located (MY_ROOT_DIR), and this project's
+# configuration and files are kept (MY_PROJECT_DIR). Notice that if the
+# User sets the ROMS_ROOT_DIR environment variable in their computer logging
+# script describing the location from where the ROMS source code was cloned
+# or downloaded, it uses that value.
 
-setenv MY_ROOT_DIR           ${HOME}/ocean/repository
-setenv MY_PROJECT_DIR        ${PWD}
+if ($?ROMS_ROOT_DIR) then
+  setenv MY_ROOT_DIR         ${ROMS_ROOT_DIR}
+else
+  setenv MY_ROOT_DIR         ${HOME}/ocean/repository/git
+endif
+
+setenv   MY_PROJECT_DIR      ${PWD}n
 
 # The path to the user's local current ROMS source code.
 #
-# If using svn locally, this would be the user's Working Copy Path (WCPATH).
-# Note that one advantage of maintaining your source code locally with svn
-# is that when working simultaneously on multiple machines (e.g. a local
-# workstation, a local cluster and a remote supercomputer) you can checkout
-# the latest release and always get an up-to-date customized source on each
-# machine. This script is designed to more easily allow for differing paths
-# to the code and inputs on differing machines.
+# If downloading ROMS locally, this would be the user's Working Copy Path.
+# One advantage of maintaining your source code copy is that when working
+# simultaneously on multiple machines (e.g., a local workstation, a local
+# cluster, and a remote supercomputer), you can update with the latest ROMS
+# release and always get an up-to-date customized source on each machine.
+# This script allows for differing paths to the code and inputs on other
+# computers.
 
-#setenv MY_ROMS_SRC          ${MY_ROOT_DIR}/git/trunk
- setenv MY_ROMS_SRC          ${MY_ROOT_DIR}/svn/trunk
+ setenv  MY_ROMS_SRC         ${MY_ROOT_DIR}/roms
 
 # Set path of the directory containing makefile configuration (*.mk) files.
 # The user has the option to specify a customized version of these files
@@ -263,25 +302,73 @@ endif
 
  setenv BINDIR              ${MY_PROJECT_DIR}
 
+ echo ""
+ echo "${separator}"
+
+# Stop if activating both MPI and OpenMP at the same time.
+
+if ( ${?USE_MPI} & ${?USE_OpenMP} ) then
+  echo ""
+  echo "You cannot activate USE_MPI and USE_OpenMP at the same time!"
+  exit 1
+endif
+
 # Put the f90 files in a project specific Build directory to avoid conflict
 # with other projects.
 
 if ($?USE_DEBUG) then
-  setenv SCRATCH_DIR        ${MY_PROJECT_DIR}/Build_romsG
+  setenv BUILD_DIR          ${MY_PROJECT_DIR}/Build_romsG
 else
-  setenv SCRATCH_DIR        ${MY_PROJECT_DIR}/Build_roms
+  if ($?USE_OpenMP) then
+    setenv BUILD_DIR        ${MY_PROJECT_DIR}/Build_romsO
+  else if ($?USE_MPI) then
+    setenv BUILD_DIR        ${MY_PROJECT_DIR}/Build_romsM
+  else
+    setenv BUILD_DIR        ${MY_PROJECT_DIR}/Build_roms
+  endif
+endif
+
+# If necessary, create ROMS build directory.
+
+if ( ! -d $BUILD_DIR ) then
+  echo ""
+  echo "Creating ROMS build directory: ${BUILD_DIR}"
+  echo ""
+  mkdir $BUILD_DIR
 endif
 
 # Go to the users source directory to compile. The options set above will
 # pick up the application-specific code from the appropriate place.
 
- cd ${MY_ROMS_SRC}
+if ( $branch == 1 ) then
 
-# Stop if activating both MPI and OpenMP at the same time.
+  # Check out requested branch from ROMS GitHub.
 
-if ( ${?USE_MPI} & ${?USE_OpenMP} ) then
-  echo "You cannot activate USE_MPI and USE_OpenMP at the same time!"
-  exit 1
+  if ( ! -d ${MY_PROJECT_DIR}/src ) then
+    echo ""
+    echo "Downloading ROMS source code from GitHub: https://www.github.com/myroms"
+    echo ""
+    git clone https://www.github.com/myroms/roms.git src
+  endif
+  echo ""
+  echo "Checking out ROMS GitHub branch: $branch_name"
+  echo ""
+  cd src
+  git checkout $branch_name
+
+  # If we are using the COMPILERS from the ROMS source code
+  # overide the value set above
+
+  if ( ${COMPILERS} =~ ${MY_ROMS_SRC}* ) then
+    setenv COMPILERS ${MY_PROJECT_DIR}/src/Compilers
+  endif
+  setenv MY_ROMS_SRC ${MY_PROJECT_DIR}/src
+
+else
+  echo ""
+  echo "Using ROMS source code from: ${MY_ROMS_SRC}"
+  echo ""
+  cd ${MY_ROMS_SRC}
 endif
 
 #--------------------------------------------------------------------------
@@ -291,6 +378,9 @@ endif
 # Remove build directory.
 
 if ( $clean == 1 ) then
+  echo ""
+  echo "Cleaning ROMS build directory: ${BUILD_DIR}"
+  echo ""
   make clean
 endif
 
@@ -299,9 +389,31 @@ endif
 if ( $dprint == 1 ) then
   make $debug
 else
+  echo ""
+  echo "Compiling ROMS source code:"
+  echo ""
   if ( $parallel == 1 ) then
     make $NCPUS
   else
     make
   endif
+
+  echo ""
+  echo "${separator}"
+  echo "GNU Build script command:      ${command}"
+  echo "ROMS source directory:         ${MY_ROMS_SRC}"
+  echo "ROMS build  directory:         ${BUILD_DIR}"
+  if ( $branch == 1 ) then
+    echo "ROMS downloaded from:          https://github.com/myroms/roms.git"
+    echo "ROMS compiled branch:          $branch_name"
+  endif
+  echo "ROMS Application:              ${ROMS_APPLICATION}"
+  set FFLAGS = `make print-FFLAGS | cut -d " " -f 3-`
+  echo "Fortran compiler:              ${FORT}"
+  echo "Fortran flags:                 ${FFLAGS}"
+  if ($?MY_CPP_FLAGS) then
+    echo "Added CPP Options:            ${MY_CPP_FLAGS}"
+  endif
+  echo "${separator}"
+  echo ""
 endif

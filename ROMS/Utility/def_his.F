@@ -2,7 +2,7 @@
       MODULE def_his_mod
 !
 !git $Id$
-!svn $Id: def_his.F 1178 2023-07-11 17:50:57Z arango $
+!svn $Id: def_his.F 1182 2023-07-27 03:34:41Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -1195,7 +1195,7 @@
 !
 !  Define S-coordinate implicit vertical "omega" momentum component.
 !
-        IF (Hout(idOvel,ng)) THEN
+        IF (Hout(idOvil,ng)) THEN
           Vinfo( 1)=Vname(1,idOvil)
           Vinfo( 2)=Vname(2,idOvil)
           Vinfo( 3)='meter second-1'
@@ -3323,7 +3323,7 @@
           RETURN
         END IF
 # ifdef OMEGA_IMPLICIT
-        IF (.not.got_var(idOvil).and.Hout(idOvel,ng)) THEN
+        IF (.not.got_var(idOvil).and.Hout(idOvil,ng)) THEN
           IF (Master) WRITE (stdout,70) TRIM(Vname(1,idOvil)),          &
      &                                  TRIM(ncname)
           exit_flag=3
@@ -5072,7 +5072,7 @@
 !
 !  Define S-coordinate implicit vertical "omega" momentum component.
 !
-        IF (Hout(idOvel,ng)) THEN
+        IF (Hout(idOvil,ng)) THEN
           Vinfo( 1)=Vname(1,idOvil)
           Vinfo( 2)=Vname(2,idOvil)
           Vinfo( 3)='meter second-1'
@@ -7662,7 +7662,7 @@
           RETURN
         END IF
 #  ifdef OMEGA_IMPLICIT
-        IF (.not.got_var(idOvil).and.Hout(idOvel,ng)) THEN
+        IF (.not.got_var(idOvil).and.Hout(idOvil,ng)) THEN
           IF (Master) WRITE (stdout,70) TRIM(Vname(1,idOvil)),          &
      &                                  TRIM(ncname)
           exit_flag=3

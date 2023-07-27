@@ -3,7 +3,7 @@
 #ifdef WET_DRY
 !
 !git $Id$
-!svn $Id: wetdry.F 1151 2023-02-09 03:08:53Z arango $
+!svn $Id: wetdry.F 1184 2023-07-27 20:28:19Z arango $
 !=======================================================================
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -313,7 +313,7 @@
      &          ((JstrR.le.j).and.(j.le.JendR))) THEN
               IF (INT(SOURCES(ng)%Dsrc(is)).eq.0) THEN
                 umask_full(i,j)=1.0_r8
-              ELSE
+              ELSE IF (INT(SOURCES(ng)%Dsrc(is)).eq.1) THEN
                 vmask_full(i,j)=1.0_r8
               END IF
             END IF
@@ -517,7 +517,7 @@
      &        ((JstrR.le.j).and.(j.le.JendR))) THEN
             IF (INT(SOURCES(ng)%Dsrc(is)).eq.0) THEN
               umask_full(i,j)=1.0_r8
-            ELSE
+            ELSE IF (INT(SOURCES(ng)%Dsrc(is)).eq.1) THEN
               vmask_full(i,j)=1.0_r8
             END IF
           END IF

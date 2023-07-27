@@ -2,7 +2,7 @@
 ** Include file "cppdefs.h"
 **
 ** git $Id$
-** svn $Id: cppdefs.h 1178 2023-07-11 17:50:57Z arango $
+** svn $Id: cppdefs.h 1184 2023-07-27 20:28:19Z arango $
 ********************************************************** Hernan G. Arango ***
 ** Copyright (c) 2002-2023 The ROMS/TOMS Group                               **
 **   Licensed under a MIT/X style license                                    **
@@ -249,7 +249,7 @@
 **                                                                           **
 ** CANUTO_A                if Canuto A-stability function formulation        **
 ** CANUTO_B                if Canuto B-stability function formulation        **
-** CHARNOK                 if Charnok surface roughness from wind stress     **
+** CHARNOK                 if Charnock surface roughness from wind stress    **
 ** CRAIG_BANNER            if Craig and Banner wave breaking surface flux    **
 ** KANTHA_CLAYSON          if Kantha and Clayson stability function          **
 ** K_C2ADVECTION           if 2nd-order centered advection                   **

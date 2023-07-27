@@ -3,7 +3,8 @@
 
 #if defined ADJOINT && defined SOLVE3D
 !
-!svn $Id: ad_step3d_uv.F 275 2023-02-09 03:21:09Z arango $
+!git $Id$
+!svn $Id: ad_step3d_uv.F 1183 2023-07-27 04:20:57Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -1498,7 +1499,7 @@
                 ad_z_w(i  ,j,k  )=ad_z_w(i  ,j,k  )+adfac
                 ad_cff1=0.0_r8
               END DO
-            ELSE
+            ELSE IF (INT(SOURCES(ng)%Dsrc(is)).eq.1) THEN
               DO k=1,N(ng)
                 cff1=1.0_r8/(om_v(i,j)*                                 &
      &                       0.5_r8*(z_w(i,j-1,k)-z_w(i,j-1,k-1)+       &

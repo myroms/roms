@@ -1,5 +1,5 @@
 # git $Id$
-# svn $Id: CMakeLists.txt 1166 2023-05-17 20:11:58Z arango $
+# svn $Id: CMakeLists.txt 1184 2023-07-27 20:28:19Z arango $
 #:::::::::::::::::::::::::::::::::::::::::::::::::::::: David Robertson :::
 # Copyright (c) 2002-2023 The ROMS/TOMS Group                           :::
 #   Licensed under a MIT/X style license                                :::
@@ -406,3 +406,5 @@ if( IN_ECBUILD )
   ecbuild_install_project( NAME ${PROJECT_NAME} )
   ecbuild_print_summary()
 endif()
+
+file( WRITE ${CMAKE_CURRENT_BINARY_DIR}/fortran_flags ${my_fflags} )

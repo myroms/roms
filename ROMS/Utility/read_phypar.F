@@ -2,7 +2,7 @@
       SUBROUTINE read_PhyPar (model, inp, out, Lwrite)
 !
 !git $Id$
-!svn $Id: read_phypar.F 1178 2023-07-11 17:50:57Z arango $
+!svn $Id: read_phypar.F 1184 2023-07-27 20:28:19Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -1398,6 +1398,16 @@
               END IF
               Npts=load_l(Nval, Cval, Ngrids, Lswitch)
               Hout(idOvel,1:Ngrids)=Lswitch(1:Ngrids)
+# if defined OMEGA_IMPLICIT && defined SOLVE3D
+            CASE ('Hout(idOvil)')
+              IF (idOvil.eq.0) THEN
+                IF (Master) WRITE (out,280) 'idOvil'
+                exit_flag=5
+                RETURN
+              END IF
+              Npts=load_l(Nval, Cval, Ngrids, Lswitch)
+              Hout(idOvel,1:Ngrids)=Lswitch(1:Ngrids)
+# endif
             CASE ('Hout(idUbar)')
               IF (idUbar.eq.0) THEN
                 IF (Master) WRITE (out,280) 'idUbar'
@@ -5213,7 +5223,7 @@
           WRITE (out,200) gls_sigp(ng), 'gls_sigp',                     &
      &          'GLS constant Schmidt number for PSI.'
           WRITE (out,140) charnok_alpha(ng), 'charnok_alpha',           &
-     &          'Charnok factor for Zos calculation.'
+     &          'Charnock factor for Zos calculation.'
           WRITE (out,140) zos_hsig_alpha(ng), 'zos_hsig_alpha',         &
      &          'Factor for Zos calculation using Hsig(Awave).'
           WRITE (out,140) sz_alpha(ng), 'sz_alpha',                     &
@@ -5815,6 +5825,11 @@
             IF (Hout(idOvel,ng)) WRITE (out,170) Hout(idOvel,ng),       &
      &         'Hout(idOvel)',                                          &
      &         'Write out omega vertical velocity.'
+# ifdef OMEGA_IMPLICIT
+            IF (Hout(idOvil,ng)) WRITE (out,170) Hout(idOvil,ng),       &
+     &         'Hout(idOvil)',                                          &
+     &         'Write out omega implicit vertical velocity.'
+# endif
             DO itrc=1,NAT
               IF (Hout(idTvar(itrc),ng)) WRITE (out,180)                &
      &            Hout(idTvar(itrc),ng), 'Hout(idTvar)',                &

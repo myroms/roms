@@ -1,5 +1,5 @@
 # git $Id$
-# svn $Id: Module.mk 1151 2023-02-09 03:08:53Z arango $
+# svn $Id: Module.mk 1184 2023-07-27 20:28:19Z arango $
 #::::::::::::::::::::::::::::::::::::::::::::::::::::: Hernan G. Arango :::
 # Copyright (c) 2002-2023 The ROMS/TOMS Group             Kate Hedstrom :::
 #   Licensed under a MIT/X style license                                :::
@@ -11,7 +11,7 @@ local_sub  := Master
 ifdef EXEC
   local_src  := $(wildcard $(local_sub)/*.F)
   local_objs := $(subst .F,.o,$(local_src))
-  local_objs := $(addprefix $(SCRATCH_DIR)/, $(notdir $(local_objs)))
+  local_objs := $(addprefix $(BUILD_DIR)/, $(notdir $(local_objs)))
 
   sources    += $(local_src)
 
@@ -25,7 +25,7 @@ ifdef EXEC
 else
   local_src  := $(local_sub)/roms_kernel.F
   local_objs := $(subst .F,.o,$(local_src))
-  local_objs := $(addprefix $(SCRATCH_DIR)/, $(notdir $(local_objs)))
+  local_objs := $(addprefix $(BUILD_DIR)/, $(notdir $(local_objs)))
 
   sources    += $(local_src)
 endif

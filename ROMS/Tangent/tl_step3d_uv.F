@@ -2,7 +2,8 @@
       MODULE tl_step3d_uv_mod
 #if defined TANGENT && defined SOLVE3D
 !
-!svn $Id: tl_step3d_uv.F 275 2023-02-09 03:21:09Z arango $
+!git $Id$
+!svn $Id: tl_step3d_uv.F 1183 2023-07-27 04:20:57Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -1709,7 +1710,7 @@
                 tl_u(i,j,k,nnew)=SOURCES(ng)%tl_Qsrc(is,k)*cff1+        &
      &                           SOURCES(ng)%Qsrc(is,k)*tl_cff1
               END DO
-            ELSE
+            ELSE IF (INT(SOURCES(ng)%Dsrc(is)).eq.1) THEN
               DO k=1,N(ng)
                 cff1=1.0_r8/(om_v(i,j)*                                 &
      &                       0.5_r8*(z_w(i,j-1,k)-z_w(i,j-1,k-1)+       &
