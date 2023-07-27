@@ -2,7 +2,7 @@
 !  ROMS/TOMS Standard Input parameters.
 !
 !git $Id$
-!svn $Id: roms.in 1178 2023-07-11 17:50:57Z arango $
+!svn $Id: roms.in 1184 2023-07-27 20:28:19Z arango $
 !========================================================= Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                                !
 !    Licensed under a MIT/X style license                                     !
@@ -204,7 +204,7 @@ ad_Vadvection == C4       \                     ! temperature
 
 ad_LBC(isFsur) ==   Per     Clo     Per     Clo         ! free-surface
 ad_LBC(isUbar) ==   Per     Clo     Per     Clo         ! 2D U-momentum
-ad_LBC(isVbar) ==   Per     Clo     Per     Clo         ! 2D U-momentum
+ad_LBC(isVbar) ==   Per     Clo     Per     Clo         ! 2D V-momentum
 ad_LBC(isUvel) ==   Per     Clo     Per     Clo         ! 3D U-momentum
 ad_LBC(isVvel) ==   Per     Clo     Per     Clo         ! 3D V-momentum
 ad_LBC(isMtke) ==   Per     Clo     Per     Clo         ! mixing TKE
