@@ -2,7 +2,7 @@
       MODULE wrt_quick_mod
 !
 !git $Id$
-!svn $Id: wrt_quick.F 1178 2023-07-11 17:50:57Z arango $
+!svn $Id: wrt_quick.F 1182 2023-07-27 03:34:41Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -316,7 +316,8 @@
 # ifdef MASKING
      &                     GRID(ng) % rmask,                            &
 # endif
-     &                     GRID(ng) % z_r)
+     &                     GRID(ng) % z_r,                              &
+     &                     SetFillVal = .FALSE.)
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,idpthR)), QCK(ng)%Rindex
@@ -347,7 +348,8 @@
 # ifdef MASKING
      &                     GRID(ng) % umask,                            &
 # endif
-     &                     GRID(ng) % z_v)
+     &                     GRID(ng) % z_v,                              &
+     &                     SetFillVal = .FALSE.)
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,idpthU)), QCK(ng)%Rindex
@@ -378,7 +380,8 @@
 # ifdef MASKING
      &                     GRID(ng) % vmask,                            &
 # endif
-     &                     GRID(ng) % z_v)
+     &                     GRID(ng) % z_v,                              &
+     &                     SetFillVal = .FALSE.)
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,idpthV)), QCK(ng)%Rindex
@@ -401,7 +404,8 @@
 # ifdef MASKING
      &                     GRID(ng) % rmask,                            &
 # endif
-     &                     GRID(ng) % z_w)
+     &                     GRID(ng) % z_w,                              &
+     &                     SetFillVal = .FALSE.)
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,idpthW)), QCK(ng)%Rindex
@@ -2252,7 +2256,8 @@
 #  ifdef MASKING
      &                     GRID(ng) % rmask,                            &
 #  endif
-     &                     GRID(ng) % z_r)
+     &                     GRID(ng) % z_r,                              &
+     &                     SetFillVal = .FALSE.)
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,idpthR)), QCK(ng)%Rindex
@@ -2288,7 +2293,8 @@
 #  ifdef MASKING
      &                     GRID(ng) % umask,                            &
 #  endif
-     &                     GRID(ng) % z_v)
+     &                     GRID(ng) % z_v,                              &
+     &                     SetFillVal = .FALSE.)
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,idpthU)), QCK(ng)%Rindex
@@ -2324,7 +2330,8 @@
 #  ifdef MASKING
      &                     GRID(ng) % vmask,                            &
 #  endif
-     &                     GRID(ng) % z_v)
+     &                     GRID(ng) % z_v,                              &
+     &                     SetFillVal = .FALSE.)
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,idpthV)), QCK(ng)%Rindex
@@ -2352,7 +2359,8 @@
 #  ifdef MASKING
      &                     GRID(ng) % rmask,                            &
 #  endif
-     &                     GRID(ng) % z_w)
+     &                     GRID(ng) % z_w,                              &
+     &                     SetFillVal = .FALSE.)
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,idpthW)), QCK(ng)%Rindex
