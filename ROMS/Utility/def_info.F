@@ -2,7 +2,7 @@
       MODULE def_info_mod
 !
 !git $Id$
-!svn $Id: def_info.F 1178 2023-07-11 17:50:57Z arango $
+!svn $Id: def_info.F 1184 2023-07-27 20:28:19Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -1863,7 +1863,7 @@
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       Vinfo( 1)='Charnok_alpha'
-      Vinfo( 2)='Charnok factor for surface roughness'
+      Vinfo( 2)='Charnock factor for surface roughness'
       status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
      &               1, (/0/), Aval, Vinfo, ncname,                     &
      &               SetParAccess = .FALSE.)
@@ -5286,7 +5286,7 @@
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       Vinfo( 1)='Charnok_alpha'
-      Vinfo( 2)='Charnok factor for surface roughness'
+      Vinfo( 2)='Charnock factor for surface roughness'
       status=def_var(ng, model, pioFile, pioVar, PIO_TYPE,              &
      &               1, (/0/), Aval, Vinfo, ncname,                     &
      &               SetParAccess = .FALSE.)

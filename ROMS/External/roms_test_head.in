@@ -1,8 +1,8 @@
 !
 !  ROMS/TOMS Standard Input parameters.
 !
-!git $Id$
-!svn $Id: roms_test_head.in 1178 2023-07-11 17:50:57Z arango $
+! git $Id$
+! svn $Id: roms_test_head.in 1184 2023-07-27 20:28:19Z arango $
 !========================================================= Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                                !
 !    Licensed under a MIT/X style license                                     !
@@ -131,11 +131,11 @@ GridsInLayer =  1
 ! two letters, regardless if using uppercase or lowercase. If nested
 ! grids, specify values for each grid (see glossary below).
 
-   Hadvection == MPDATA   \                     ! temperature
-                 MPDATA                         ! salinity
+   Hadvection == U3       \                     ! temperature
+                 HSIMT                          ! salinity
 
-   Vadvection == MPDATA   \                     ! temperature
-                 MPDATA                         ! salinity
+   Vadvection == C4       \                     ! temperature
+                 HSIMT                          ! salinity
 
 ! Adjoint-based algorithms can have different horizontal and schemes
 ! for active and inert tracers.
@@ -194,17 +194,17 @@ ad_Vadvection == C4       \                     ! temperature
 
 ! Waves Effect on Currents lateral boundary conditions.
 
-   LBC(isU2Sd) ==   Gra     Clo     Gra     Clo         ! 2D U-stokes
-   LBC(isV2Sd) ==   Gra     Clo     Gra     Clo         ! 2D V-stokes
-   LBC(isU3Sd) ==   Gra     Clo     Gra     Clo         ! 3D U-stokes
-   LBC(isV3Sd) ==   Gra     Clo     Gra     Clo         ! 3D V-stokes
+   LBC(isU2Sd) ==   Gra     Clo     Gra     Clo         ! 2D U-Stokes
+   LBC(isV2Sd) ==   Gra     Clo     Gra     Clo         ! 2D V-Stokes
+   LBC(isU3Sd) ==   Gra     Clo     Gra     Clo         ! 3D U-Stokes
+   LBC(isV3Sd) ==   Gra     Clo     Gra     Clo         ! 3D V-Stokes
 
 ! Adjoint-based algorithms can have different lateral boundary
 ! conditions keywords.
 
 ad_LBC(isFsur) ==   Cla     Clo     Cla     Clo         ! free-surface
 ad_LBC(isUbar) ==   Red     Clo     Red     Clo         ! 2D U-momentum
-ad_LBC(isVbar) ==   Red     Clo     Red     Clo         ! 2D U-momentum
+ad_LBC(isVbar) ==   Red     Clo     Red     Clo         ! 2D V-momentum
 ad_LBC(isUvel) ==   Rad     Clo     Rad     Clo         ! 3D U-momentum
 ad_LBC(isVvel) ==   Rad     Clo     Rad     Clo         ! 3D V-momentum
 ad_LBC(isMtke) ==   Gra     Clo     Gra     Clo         ! mixing TKE
@@ -373,7 +373,7 @@ LtracerSponge == F F                            ! temperature, salinity, inert
 
 ! Constants used in surface turbulent kinetic energy flux computation.
 
-  CHARNOK_ALPHA == 1400.0d0         ! Charnok surface roughness
+  CHARNOK_ALPHA == 1400.0d0         ! Charnock surface roughness
  ZOS_HSIG_ALPHA == 0.5d0            ! roughness from wave amplitude
        SZ_ALPHA == 0.25d0           ! roughness from wave dissipation
       CRGBAN_CW == 100.0d0          ! Craig and Banner wave breaking
@@ -561,8 +561,9 @@ Hout(idUvel) == T       ! u                  3D U-velocity
 Hout(idVvel) == T       ! v                  3D V-velocity
 Hout(idu3dE) == F       ! u_eastward         3D U-eastward  at RHO-points
 Hout(idv3dN) == F       ! v_northward        3D V-northward at RHO-points
-Hout(idWvel) == F       ! w                  3D W-velocity
+Hout(idWvel) == T       ! w                  3D W-velocity
 Hout(idOvel) == T       ! omega              omega vertical velocity
+Hout(idOvil) == F       ! omega_implicit     omega implicit vertical velocity
 Hout(idUbar) == T       ! ubar               2D U-velocity
 Hout(idVbar) == T       ! vbar               2D V-velocity
 Hout(idu2dE) == F       ! ubar_eastward      2D U-eastward  at RHO-points
@@ -577,56 +578,56 @@ Hout(idpthU) == F       ! z_u                time-varying depths of U-points
 Hout(idpthV) == F       ! z_v                time-varying depths of V-points
 Hout(idpthW) == F       ! z_w                time-varying depths of W-points
 
-Hout(idUsms) == F       ! sustr              surface U-stress
-Hout(idVsms) == F       ! svstr              surface V-stress
-Hout(idUbms) == F       ! bustr              bottom U-stress
-Hout(idVbms) == F       ! bvstr              bottom V-stress
+Hout(idUsms) == T       ! sustr              surface U-stress
+Hout(idVsms) == T       ! svstr              surface V-stress
+Hout(idUbms) == T       ! bustr              bottom U-stress
+Hout(idVbms) == T       ! bvstr              bottom V-stress
 
-Hout(idUbrs) == F       ! bustrc             bottom U-current stress
-Hout(idVbrs) == F       ! bvstrc             bottom V-current stress
-Hout(idUbws) == F       ! bustrw             bottom U-wave stress
-Hout(idVbws) == F       ! bvstrw             bottom V-wave stress
-Hout(idUbcs) == F       ! bustrcwmax         bottom max wave-current U-stress
-Hout(idVbcs) == F       ! bvstrcwmax         bottom max wave-current V-stress
-Hout(idUVwc) == F       ! bstrcwmax          bottom max wave-current stress magnitude
+Hout(idUbrs) == T       ! bustrc             bottom U-current stress
+Hout(idVbrs) == T       ! bvstrc             bottom V-current stress
+Hout(idUbws) == T       ! bustrw             bottom U-wave stress
+Hout(idVbws) == T       ! bvstrw             bottom V-wave stress
+Hout(idUbcs) == T       ! bustrcwmax         bottom max wave-current U-stress
+Hout(idVbcs) == T       ! bvstrcwmax         bottom max wave-current V-stress
+Hout(idUVwc) == T       ! bstrcwmax          bottom max wave-current stress magnitude
 
-Hout(idUbot) == F       ! Ubot               bed wave orbital U-velocity
-Hout(idVbot) == F       ! Vbot               bed wave orbital V-velocity
-Hout(idUbur) == F       ! Ur                 bottom U-velocity above bed
-Hout(idVbvr) == F       ! Vr                 bottom V-velocity above bed
+Hout(idUbot) == T       ! Ubot               bed wave orbital U-velocity
+Hout(idVbot) == T       ! Vbot               bed wave orbital V-velocity
+Hout(idUbur) == T       ! Ur                 bottom U-velocity above bed
+Hout(idVbvr) == T       ! Vr                 bottom V-velocity above bed
 
-Hout(idWztw) == F       ! zetaw              WEC_VF quasi-static sea level adjustment
-Hout(idWqsp) == F       ! qsp                WEC_VF quasi-static pressure adjustment
-Hout(idWbeh) == F       ! bernoulli_head     WEC_VF Bernoulli head adjustment
+Hout(idWztw) == T       ! zetaw              WEC_VF quasi-static sea level adjustment
+Hout(idWqsp) == T       ! qsp                WEC_VF quasi-static pressure adjustment
+Hout(idWbeh) == T       ! bernoulli_head     WEC_VF Bernoulli head adjustment
 
-Hout(idU2rs) == F       ! ubar_wec_stress    WEC 2D U-stress
-Hout(idV2rs) == F       ! vbar_wec_stress    WEC 2D V-stress
-Hout(idU3rs) == F       ! u_wec_stress       WEC 3D U-stress
-Hout(idV3rs) == F       ! v_wec_stress       WEC 3D V-stress
+Hout(idU2rs) == T       ! ubar_wec_stress    WEC 2D U-stress
+Hout(idV2rs) == T       ! vbar_wec_stress    WEC 2D V-stress
+Hout(idU3rs) == T       ! u_wec_stress       WEC 3D U-stress
+Hout(idV3rs) == T       ! v_wec_stress       WEC 3D V-stress
 
-Hout(idU2Sd) == F       ! ubar_stokes        2D Stokes U-velocity
-Hout(idV2Sd) == F       ! vbar_stokes        2D Stokes V-velocity
-Hout(idU3Sd) == F       ! u_stokes           3D Stokes U-velocity
-Hout(idV3Sd) == F       ! v_stokes           3D Stokes V-velocity
-Hout(idW3St) == F       ! w_stokes           3D Stokes W-velocity
-Hout(idW3Sd) == F       ! omega_stokes       3D Stokes omega-velocity
+Hout(idU2Sd) == T       ! ubar_stokes        2D Stokes U-velocity
+Hout(idV2Sd) == T       ! vbar_stokes        2D Stokes V-velocity
+Hout(idU3Sd) == T       ! u_stokes           3D Stokes U-velocity
+Hout(idV3Sd) == T       ! v_stokes           3D Stokes V-velocity
+Hout(idW3St) == T       ! w_stokes           3D Stokes W-velocity
+Hout(idW3Sd) == T       ! omega_stokes       3D Stokes omega-velocity
 
-Hout(idWamp) == F       ! Hwave              wave significat height
-Hout(idWlen) == F       ! Lwave              wave mean wavelength
-Hout(idWlep) == F       ! Lwavep             wave peak wavelength
-Hout(idWdir) == F       ! Dwave              wave mean direction
-Hout(idWdip) == F       ! Dwavep             wave peak direction
-Hout(idWptp) == F       ! Pwave_top          wave surface period
-Hout(idWpbt) == F       ! Pwave_bot          wave bottom period
-Hout(idWorb) == F       ! Uwave_rms          wave bottom orbital velocity
-Hout(idWbrk) == F       ! Wave_break         wave breaking (percent)
-Hout(idUwav) == F       ! uWave              wave depth-averaged U-velocity
-Hout(idVwav) == F       ! vWave              wave depth-averaged V-velocity
-Hout(idWdif) == F       ! Dissip_fric        wave dissipation from bottom friction
-Hout(idWdib) == F       ! Dissip_break       wave dissipation from breaking
-Hout(idWdiw) == F       ! Dissip_wcap        wave dissipation from whitecapping
-Hout(idWdis) == F       ! Dissip_roller      wave roller dissipation
-Hout(idWrol) == F       ! roller_action      wave roller action density
+Hout(idWamp) == T       ! Hwave              wave significat height
+Hout(idWlen) == T       ! Lwave              wave mean wavelength
+Hout(idWlep) == T       ! Lwavep             wave peak wavelength
+Hout(idWdir) == T       ! Dwave              wave mean direction
+Hout(idWdip) == T       ! Dwavep             wave peak direction
+Hout(idWptp) == T       ! Pwave_top          wave surface period
+Hout(idWpbt) == T       ! Pwave_bot          wave bottom period
+Hout(idWorb) == T       ! Uwave_rms          wave bottom orbital velocity
+Hout(idWbrk) == T       ! Wave_break         wave breaking (percent)
+Hout(idUwav) == T       ! uWave              wave depth-averaged U-velocity
+Hout(idVwav) == T       ! vWave              wave depth-averaged V-velocity
+Hout(idWdif) == T       ! Dissip_fric        wave dissipation from bottom friction
+Hout(idWdib) == T       ! Dissip_break       wave dissipation from breaking
+Hout(idWdiw) == T       ! Dissip_wcap        wave dissipation from whitecapping
+Hout(idWdis) == T       ! Dissip_roller      wave roller dissipation
+Hout(idWrol) == T       ! roller_action      wave roller action density
 
 Hout(idPair) == F       ! Pair               surface air pressure
 Hout(idTair) == F       ! Tair               surface air temperature
@@ -635,18 +636,18 @@ Hout(idVair) == F       ! Vwind              surface V-wind
 Hout(idUaiE) == F       ! Uwind_eastward     surface Eastward  U-wind
 Hout(idVaiN) == F       ! Vwind_northward    surface Northward V-wind
 
-Hout(idTsur) == F F     ! shflux, ssflux     surface net heat and salt flux
-Hout(idLhea) == F       ! latent             latent heat flux
-Hout(idShea) == F       ! sensible           sensible heat flux
-Hout(idLrad) == F       ! lwrad              longwave radiation flux
-Hout(idSrad) == F       ! swrad              shortwave radiation flux
+Hout(idTsur) == T F     ! shflux, ssflux     surface net heat and salt flux
+Hout(idLhea) == T       ! latent             latent heat flux
+Hout(idShea) == T       ! sensible           sensible heat flux
+Hout(idLrad) == T       ! lwrad              longwave radiation flux
+Hout(idSrad) == T       ! swrad              shortwave radiation flux
 Hout(idEmPf) == F       ! EminusP            E-P flux
 Hout(idevap) == F       ! evaporation        evaporation rate
 Hout(idrain) == F       ! rain               precipitation rate
 
 Hout(idDano) == T       ! rho                density anomaly
-Hout(idVvis) == F       ! AKv                vertical viscosity
-Hout(idTdif) == F       ! AKt                vertical T-diffusion
+Hout(idVvis) == T       ! AKv                vertical viscosity
+Hout(idTdif) == T       ! AKt                vertical T-diffusion
 Hout(idSdif) == F       ! AKs                vertical Salinity diffusion
 Hout(idHsbl) == F       ! Hsbl               depth of surface boundary layer
 Hout(idHbbl) == F       ! Hbbl               depth of bottom boundary layer
@@ -717,7 +718,7 @@ Qout(idWbeh) == F       ! bernoulli_head     WEC_VF Bernoulli head adjustment
 Qout(idU2rs) == F       ! ubar_wec_stress    WEC 2D U-stress
 Qout(idV2rs) == F       ! vbar_wec_stress    WEC 2D V-stress
 Qout(idU3rs) == F       ! u_wec_stress       WEC 3D U-stress
-Qout(idV3rs) == F       ! v_wec_stress        WEC 3D V-stress
+Qout(idV3rs) == F       ! v_wec_stress       WEC 3D V-stress
 
 Qout(idU2Sd) == F       ! ubar_stokes        2D Stokes U-velocity
 Qout(idV2Sd) == F       ! vbar_stokes        2D Stokes V-velocity
@@ -785,7 +786,7 @@ Aout(idUvel) == T       ! u                  3D U-velocity
 Aout(idVvel) == T       ! v                  3D V-velocity
 Aout(idu3dE) == F       ! u_eastward         3D U-eastward  at RHO-points
 Aout(idv3dN) == F       ! v_northward        3D V-northward at RHO-points
-Aout(idWvel) == F       ! w                  3D W-velocity
+Aout(idWvel) == T       ! w                  3D W-velocity
 Aout(idOvel) == T       ! omega              omega vertical velocity
 Aout(idUbar) == T       ! ubar               2D U-velocity
 Aout(idVbar) == T       ! vbar               2D V-velocity
@@ -1051,8 +1052,8 @@ PIO_I2C_Preq = 65                 ! Maximum pending I2C requests
 
 ! Input NetCDF file names, [1:Ngrids].
 
-     GRDNAME == Data/ROMS/Grid/test_head_curv_grd.nc
-     ININAME == Data/ROMS/Initial/test_head_ini.nc
+     GRDNAME == ../../../roms_test/test_head/Data/test_head_curv_grd.nc
+     ININAME == ../../../roms_test/test_head/Data/test_head_ini.nc
      ITLNAME == roms_itl.nc
      IRPNAME == roms_irp.nc
      IADNAME == roms_iad.nc
@@ -1140,7 +1141,7 @@ PIO_I2C_Preq = 65                 ! Maximum pending I2C requests
 
      NFFILES == 1                          ! number of unique forcing files
 
-     FRCNAME == Data/ROMS/Forcing/test_head_frc.nc
+     FRCNAME == ../../../roms_test/test_head/Data/test_head_frc.nc
 
 ! Output NetCDF file names, [1:Ngrids].
 
@@ -1976,7 +1977,7 @@ PIO_I2C_Preq = 65                 ! Maximum pending I2C requests
 ! energy flux in the GLS.
 !------------------------------------------------------------------------------
 !
-! CHARNOK_ALPHA    Charnok surface roughness,
+! CHARNOK_ALPHA    Charnock surface roughness,
 !                    Zos:   (charnok_alpha * u_star**2) / g
 !
 ! ZOS_HSIG_ALPHA   Roughness from wave amplitude,
@@ -2624,6 +2625,7 @@ PIO_I2C_Preq = 65                 ! Maximum pending I2C requests
 ! Hout(idv3dN)   Write out 3D Northward velocity component at RHO-points.
 ! Hout(idWvel)   Write out 3D W-velocity component.
 ! Hout(idOvel)   Write out 3D omega vertical velocity.
+! Hout(idOvil)   Write out 3D omega implicit vertical velocity.
 ! Hout(idUbar)   Write out 2D U-velocity component.
 ! Hout(idVbar)   Write out 2D V-velocity component.
 ! Hout(idu2dE)   Write out 2D Eastward  velocity component at RHO-points.

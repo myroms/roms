@@ -1,8 +1,8 @@
 !
 !  ROMS/TOMS Standard Input parameters.
 !
-!git $Id$
-!svn $Id: roms_windbasin.in 1178 2023-07-11 17:50:57Z arango $
+! git $Id$
+! svn $Id: roms_windbasin.in 1184 2023-07-27 20:28:19Z arango $
 !========================================================= Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                                !
 !    Licensed under a MIT/X style license                                     !
@@ -131,7 +131,7 @@ GridsInLayer =  1
 ! two letters, regardless if using uppercase or lowercase. If nested
 ! grids, specify values for each grid (see glossary below).
 
- Haqadvection == U3       \                     ! temperature
+   Hadvection == U3       \                     ! temperature
                  U3                             ! salinity
 
    Vadvection == C4       \                     ! temperature
@@ -194,17 +194,17 @@ ad_Vadvection == C4       \                     ! temperature
 
 ! Waves Effect on Currents lateral boundary conditions.
 
-   LBC(isU2Sd) ==   Clo     Clo     Clo     Clo         ! 2D U-stokes
-   LBC(isV2Sd) ==   Clo     Clo     Clo     Clo         ! 2D V-stokes
-   LBC(isU3Sd) ==   Clo     Clo     Clo     Clo         ! 3D U-stokes
-   LBC(isV3Sd) ==   Clo     Clo     Clo     Clo         ! 3D V-stokes
+   LBC(isU2Sd) ==   Clo     Clo     Clo     Clo         ! 2D U-Stokes
+   LBC(isV2Sd) ==   Clo     Clo     Clo     Clo         ! 2D V-Stokes
+   LBC(isU3Sd) ==   Clo     Clo     Clo     Clo         ! 3D U-Stokes
+   LBC(isV3Sd) ==   Clo     Clo     Clo     Clo         ! 3D V-Stokes
 
 ! Adjoint-based algorithms can have different lateral boundary
 ! conditions keywords.
 
 ad_LBC(isFsur) ==   Clo     Clo     Clo     Clo         ! free-surface
 ad_LBC(isUbar) ==   Clo     Clo     Clo     Clo         ! 2D U-momentum
-ad_LBC(isVbar) ==   Clo     Clo     Clo     Clo         ! 2D U-momentum
+ad_LBC(isVbar) ==   Clo     Clo     Clo     Clo         ! 2D V-momentum
 ad_LBC(isUvel) ==   Clo     Clo     Clo     Clo         ! 3D U-momentum
 ad_LBC(isVvel) ==   Clo     Clo     Clo     Clo         ! 3D V-momentum
 ad_LBC(isMtke) ==   Clo     Clo     Clo     Clo         ! mixing TKE
@@ -373,7 +373,7 @@ LtracerSponge == F F                            ! temperature, salinity, inert
 
 ! Constants used in surface turbulent kinetic energy flux computation.
 
-  CHARNOK_ALPHA == 1400.0d0         ! Charnok surface roughness
+  CHARNOK_ALPHA == 1400.0d0         ! Charnock surface roughness
  ZOS_HSIG_ALPHA == 0.5d0            ! roughness from wave amplitude
        SZ_ALPHA == 0.25d0           ! roughness from wave dissipation
       CRGBAN_CW == 100.0d0          ! Craig and Banner wave breaking
@@ -561,8 +561,9 @@ Hout(idUvel) == T       ! u                  3D U-velocity
 Hout(idVvel) == T       ! v                  3D V-velocity
 Hout(idu3dE) == F       ! u_eastward         3D U-eastward  at RHO-points
 Hout(idv3dN) == F       ! v_northward        3D V-northward at RHO-points
-Hout(idWvel) == F       ! w                  3D W-velocity
+Hout(idWvel) == T       ! w                  3D W-velocity
 Hout(idOvel) == T       ! omega              omega vertical velocity
+Hout(idOvil) == F       ! omega_implicit     omega implicit vertical velocity
 Hout(idUbar) == T       ! ubar               2D U-velocity
 Hout(idVbar) == T       ! vbar               2D V-velocity
 Hout(idu2dE) == F       ! ubar_eastward      2D U-eastward  at RHO-points
@@ -1976,7 +1977,7 @@ PIO_I2C_Preq = 65                 ! Maximum pending I2C requests
 ! energy flux in the GLS.
 !------------------------------------------------------------------------------
 !
-! CHARNOK_ALPHA    Charnok surface roughness,
+! CHARNOK_ALPHA    Charnock surface roughness,
 !                    Zos:   (charnok_alpha * u_star**2) / g
 !
 ! ZOS_HSIG_ALPHA   Roughness from wave amplitude,
@@ -2624,6 +2625,7 @@ PIO_I2C_Preq = 65                 ! Maximum pending I2C requests
 ! Hout(idv3dN)   Write out 3D Northward velocity component at RHO-points.
 ! Hout(idWvel)   Write out 3D W-velocity component.
 ! Hout(idOvel)   Write out 3D omega vertical velocity.
+! Hout(idOvil)   Write out 3D omega implicit vertical velocity.
 ! Hout(idUbar)   Write out 2D U-velocity component.
 ! Hout(idVbar)   Write out 2D V-velocity component.
 ! Hout(idu2dE)   Write out 2D Eastward  velocity component at RHO-points.

@@ -1,8 +1,8 @@
 !
 !  ROMS/TOMS Standard Input parameters.
 !
-!git $Id$
-!svn $Id: roms_flt_test2d.in 1178 2023-07-11 17:50:57Z arango $
+! git $Id$
+! svn $Id: roms_flt_test2d.in 1184 2023-07-27 20:28:19Z arango $
 !========================================================= Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                                !
 !    Licensed under a MIT/X style license                                     !
@@ -131,20 +131,20 @@ GridsInLayer =  1
 ! two letters, regardless if using uppercase or lowercase. If nested
 ! grids, specify values for each grid (see glossary below).
 
-   Hadvection == A4       \                     ! temperature
-                 A4                             ! salinity
+   Hadvection == U3       \                     ! temperature
+                 U3                             ! salinity
 
-   Vadvection == A4       \                     ! temperature
-                 A4                             ! salinity
+   Vadvection == C4       \                     ! temperature
+                 C4                             ! salinity
 
 ! Adjoint-based algorithms can have different horizontal and schemes
 ! for active and inert tracers.
 
-ad_Hadvection == A4       \                     ! temperature
-                 A4                             ! salinity
+ad_Hadvection == U3       \                     ! temperature
+                 U3                             ! salinity
 
-ad_Vadvection == A4       \                     ! temperature
-                 A4                             ! salinity
+ad_Vadvection == C4       \                     ! temperature
+                 C4                             ! salinity
 
 ! Set lateral boundary conditions keyword. Notice that a value is expected
 ! for each boundary segment per nested grid for each state variable.
@@ -194,17 +194,17 @@ ad_Vadvection == A4       \                     ! temperature
 
 ! Waves Effect on Currents lateral boundary conditions.
 
-   LBC(isU2Sd) ==   Per     Clo     Per     Clo         ! 2D U-stokes
-   LBC(isV2Sd) ==   Per     Clo     Per     Clo         ! 2D V-stokes
-   LBC(isU3Sd) ==   Per     Clo     Per     Clo         ! 3D U-stokes
-   LBC(isV3Sd) ==   Per     Clo     Per     Clo         ! 3D V-stokes
+   LBC(isU2Sd) ==   Per     Clo     Per     Clo         ! 2D U-Stokes
+   LBC(isV2Sd) ==   Per     Clo     Per     Clo         ! 2D V-Stokes
+   LBC(isU3Sd) ==   Per     Clo     Per     Clo         ! 3D U-Stokes
+   LBC(isV3Sd) ==   Per     Clo     Per     Clo         ! 3D V-Stokes
 
 ! Adjoint-based algorithms can have different lateral boundary
 ! conditions keywords.
 
 ad_LBC(isFsur) ==   Per     Clo     Per     Clo         ! free-surface
 ad_LBC(isUbar) ==   Per     Clo     Per     Clo         ! 2D U-momentum
-ad_LBC(isVbar) ==   Per     Clo     Per     Clo         ! 2D U-momentum
+ad_LBC(isVbar) ==   Per     Clo     Per     Clo         ! 2D V-momentum
 ad_LBC(isUvel) ==   Per     Clo     Per     Clo         ! 3D U-momentum
 ad_LBC(isVvel) ==   Per     Clo     Per     Clo         ! 3D V-momentum
 ad_LBC(isMtke) ==   Per     Clo     Per     Clo         ! mixing TKE
@@ -373,7 +373,7 @@ LtracerSponge == F F                            ! temperature, salinity, inert
 
 ! Constants used in surface turbulent kinetic energy flux computation.
 
-  CHARNOK_ALPHA == 1400.0d0         ! Charnok surface roughness
+  CHARNOK_ALPHA == 1400.0d0         ! Charnock surface roughness
  ZOS_HSIG_ALPHA == 0.5d0            ! roughness from wave amplitude
        SZ_ALPHA == 0.25d0           ! roughness from wave dissipation
       CRGBAN_CW == 100.0d0          ! Craig and Banner wave breaking
@@ -557,12 +557,13 @@ SO_sdev(isTsur) == 1.0d0 1.0d0             ! NT surface tracers flux
 ! Logical switches (TRUE/FALSE) to activate writing of fields into
 ! HISTORY output file.
 
-Hout(idUvel) == T       ! u                  3D U-velocity
-Hout(idVvel) == T       ! v                  3D V-velocity
+Hout(idUvel) == F       ! u                  3D U-velocity
+Hout(idVvel) == F       ! v                  3D V-velocity
 Hout(idu3dE) == F       ! u_eastward         3D U-eastward  at RHO-points
 Hout(idv3dN) == F       ! v_northward        3D V-northward at RHO-points
 Hout(idWvel) == F       ! w                  3D W-velocity
-Hout(idOvel) == T       ! omega              omega vertical velocity
+Hout(idOvel) == F       ! omega              omega vertical velocity
+Hout(idOvil) == F       ! omega_implicit     omega implicit vertical velocity
 Hout(idUbar) == T       ! ubar               2D U-velocity
 Hout(idVbar) == T       ! vbar               2D V-velocity
 Hout(idu2dE) == F       ! ubar_eastward      2D U-eastward  at RHO-points
@@ -570,7 +571,7 @@ Hout(idv2dN) == F       ! vbar_northward     2D V-northward at RHO-points
 Hout(idFsur) == T       ! zeta               free-surface
 Hout(idBath) == F       ! bath               time-dependent bathymetry
 
-Hout(idTvar) == T T     ! temp, salt         temperature and salinity
+Hout(idTvar) == F F     ! temp, salt         temperature and salinity
 
 Hout(idpthR) == F       ! z_rho              time-varying depths of RHO-points
 Hout(idpthU) == F       ! z_u                time-varying depths of U-points
@@ -644,7 +645,7 @@ Hout(idEmPf) == F       ! EminusP            E-P flux
 Hout(idevap) == F       ! evaporation        evaporation rate
 Hout(idrain) == F       ! rain               precipitation rate
 
-Hout(idDano) == T       ! rho                density anomaly
+Hout(idDano) == F       ! rho                density anomaly
 Hout(idVvis) == F       ! AKv                vertical viscosity
 Hout(idTdif) == F       ! AKt                vertical T-diffusion
 Hout(idSdif) == F       ! AKs                vertical Salinity diffusion
@@ -717,7 +718,7 @@ Qout(idWbeh) == F       ! bernoulli_head     WEC_VF Bernoulli head adjustment
 Qout(idU2rs) == F       ! ubar_wec_stress    WEC 2D U-stress
 Qout(idV2rs) == F       ! vbar_wec_stress    WEC 2D V-stress
 Qout(idU3rs) == F       ! u_wec_stress       WEC 3D U-stress
-Qout(idV3rs) == F       ! v_wec_stress        WEC 3D V-stress
+Qout(idV3rs) == F       ! v_wec_stress       WEC 3D V-stress
 
 Qout(idU2Sd) == F       ! ubar_stokes        2D Stokes U-velocity
 Qout(idV2Sd) == F       ! vbar_stokes        2D Stokes V-velocity
@@ -781,12 +782,12 @@ Qout(idMtls) == F       ! gls                turbulent length scale
 ! Logical switches (TRUE/FALSE) to activate writing of time-averaged
 ! fields into AVERAGE output file.
 
-Aout(idUvel) == T       ! u                  3D U-velocity
-Aout(idVvel) == T       ! v                  3D V-velocity
+Aout(idUvel) == F       ! u                  3D U-velocity
+Aout(idVvel) == F       ! v                  3D V-velocity
 Aout(idu3dE) == F       ! u_eastward         3D U-eastward  at RHO-points
 Aout(idv3dN) == F       ! v_northward        3D V-northward at RHO-points
 Aout(idWvel) == F       ! w                  3D W-velocity
-Aout(idOvel) == T       ! omega              omega vertical velocity
+Aout(idOvel) == F       ! omega              omega vertical velocity
 Aout(idUbar) == T       ! ubar               2D U-velocity
 Aout(idVbar) == T       ! vbar               2D V-velocity
 Aout(idu2dE) == F       ! ubar_eastward      2D U-eastward  at RHO-points
@@ -794,7 +795,7 @@ Aout(idv2dN) == F       ! vbar_northward     2D V-northward at RHO-points
 Aout(idFsur) == T       ! zeta               free-surface
 Aout(idBath) == F       ! bath               time-dependent bathymetry
 
-Aout(idTvar) == T T     ! temp, salt         temperature and salinity
+Aout(idTvar) == F F     ! temp, salt         temperature and salinity
 
 Aout(idUsms) == F       ! sustr              surface U-stress
 Aout(idVsms) == F       ! svstr              surface V-stress
@@ -881,20 +882,20 @@ Aout(idFsuD) == F       ! zeta_detided       detided free-surface
 
 Aout(idTrcD) == F F     ! temp_detided, ...  detided temperature and salinity
 
-Aout(idHUav) == T       ! Huon               u-volume flux, Huon
-Aout(idHVav) == T       ! Hvom               v-volume flux, Hvom
-Aout(idUUav) == T       ! uu                 quadratic <u*u> term
-Aout(idUVav) == T       ! uv                 quadratic <u*v> term
-Aout(idVVav) == T       ! vv                 quadratic <v*v> term
+Aout(idHUav) == F       ! Huon               u-volume flux, Huon
+Aout(idHVav) == F       ! Hvom               v-volume flux, Hvom
+Aout(idUUav) == F       ! uu                 quadratic <u*u> term
+Aout(idUVav) == F       ! uv                 quadratic <u*v> term
+Aout(idVVav) == F       ! vv                 quadratic <v*v> term
 Aout(idU2av) == T       ! ubar2              quadratic <ubar*ubar> term
 Aout(idV2av) == T       ! vbar2              quadratic <vbar*vbar> term
 Aout(idZZav) == T       ! zeta2              quadratic <zeta*zeta> term
 
-Aout(idTTav) == T T     ! temp_2, ...        quadratic <t*t> tracer terms
-Aout(idUTav) == T T     ! u_temp, ...        quadratic <u*t> tracer terms
-Aout(idVTav) == T T     ! v_temp, ...        quadratic <v*t> tracer terms
-Aout(iHUTav) == T T     ! Huon_temp, ...     tracer volume flux, <Huon*t>
-Aout(iHVTav) == T T     ! Hvom_temp, ...     tracer volume flux, <Hvom*t>
+Aout(idTTav) == F F     ! temp_2, ...        quadratic <t*t> tracer terms
+Aout(idUTav) == F F     ! u_temp, ...        quadratic <u*t> tracer terms
+Aout(idVTav) == F F     ! v_temp, ...        quadratic <v*t> tracer terms
+Aout(iHUTav) == F F     ! Huon_temp, ...     tracer volume flux, <Huon*t>
+Aout(iHVTav) == F F     ! Hvom_temp, ...     tracer volume flux, <Hvom*t>
 
 ! Logical switches (TRUE/FALSE) to activate writing of extra inert passive
 ! tracers other than biological and sediment tracers into the AVERAGE file.
@@ -919,19 +920,19 @@ Dout(M2bstr) == T       ! ubar_bstr, ...     bottom stress
 ! Logical switches (TRUE/FALSE) to activate writing of time-averaged,
 ! 3D momentum (u,v) diagnostic terms into DIAGNOSTIC output file.
 
-Dout(M3rate) == T       ! u_accel, ...       acceleration
-Dout(M3pgrd) == T       ! u_prsgrd, ...      pressure gradient
-Dout(M3fcor) == T       ! u_cor, ...         Coriolis force
-Dout(M3hadv) == T       ! u_hadv, ...        horizontal total advection
-Dout(M3xadv) == T       ! u_xadv, ...        horizontal XI-advection
-Dout(M3yadv) == T       ! u_yadv, ...        horizontal ETA-advection
-Dout(M3vadv) == T       ! u_vadv, ...        vertical advection
-Dout(M3hrad) == T       ! u_hrad, ...        horizontal total radiation stress
-Dout(M3vrad) == T       ! u_vrad, ...        vertical radiation stress
-Dout(M3hvis) == T       ! u_hvisc, ...       horizontal total viscosity
-Dout(M3xvis) == T       ! u_xvisc, ...       horizontal XI-viscosity
-Dout(M3yvis) == T       ! u_yvisc, ...       horizontal ETA-viscosity
-Dout(M3vvis) == T       ! u_vvisc, ...       vertical viscosity
+Dout(M3rate) == F       ! u_accel, ...       acceleration
+Dout(M3pgrd) == F       ! u_prsgrd, ...      pressure gradient
+Dout(M3fcor) == F       ! u_cor, ...         Coriolis force
+Dout(M3hadv) == F       ! u_hadv, ...        horizontal total advection
+Dout(M3xadv) == F       ! u_xadv, ...        horizontal XI-advection
+Dout(M3yadv) == F       ! u_yadv, ...        horizontal ETA-advection
+Dout(M3vadv) == F       ! u_vadv, ...        vertical advection
+Dout(M3hrad) == F       ! u_hrad, ...        horizontal total radiation stress
+Dout(M3vrad) == F       ! u_vrad, ...        vertical radiation stress
+Dout(M3hvis) == F       ! u_hvisc, ...       horizontal total viscosity
+Dout(M3xvis) == F       ! u_xvisc, ...       horizontal XI-viscosity
+Dout(M3yvis) == F       ! u_yvisc, ...       horizontal ETA-viscosity
+Dout(M3vvis) == F       ! u_vvisc, ...       vertical viscosity
 
 ! Logical switches (TRUE/FALSE) to activate writing of time-averaged,
 ! Waves Effect on Currents (WEC) 2D and 3D diagnostic terms into DIAGNOSTIC
@@ -950,30 +951,30 @@ Dout(M2zqsp) == T       ! ubar_zqsp, ...     2D quasi-static pressure
 Dout(M2zbeh) == T       ! ubar_zbeh, ...     2D Bernoulli head adjustment
 Dout(M2fsgr) == T       ! ubar_fsgr, ...     2D seagrass drag force
 
-Dout(M3hjvf) == T       ! u_hjvf, ...        3D horizontal J vortex force
-Dout(M3vjvf) == T       ! u_vjvf, ...        3D vertical J vortex force
-Dout(M3kvrf) == T       ! u_kvrf, ...        3D K vortex force
-Dout(M3fsco) == T       ! u_fsco, ...        3D Stokes Coriolis
-Dout(M3sstm) == T       ! u_sstm, ...        3D surface streaming
-Dout(M3bstm) == T       ! u_bstm, ...        3D bottom streaming
-Dout(M3wrol) == T       ! u_wrol, ...        3D wave roller acceleration
-Dout(M3wbrk) == T       ! u_wbrk, ...        3D wave breaking
-Dout(M3fsgr) == T       ! u_fsgr, ...        3D seagrass drag force
+Dout(M3hjvf) == F       ! u_hjvf, ...        3D horizontal J vortex force
+Dout(M3vjvf) == F       ! u_vjvf, ...        3D vertical J vortex force
+Dout(M3kvrf) == F       ! u_kvrf, ...        3D K vortex force
+Dout(M3fsco) == F       ! u_fsco, ...        3D Stokes Coriolis
+Dout(M3sstm) == F       ! u_sstm, ...        3D surface streaming
+Dout(M3bstm) == F       ! u_bstm, ...        3D bottom streaming
+Dout(M3wrol) == F       ! u_wrol, ...        3D wave roller acceleration
+Dout(M3wbrk) == F       ! u_wbrk, ...        3D wave breaking
+Dout(M3fsgr) == F       ! u_fsgr, ...        3D seagrass drag force
 
 ! Logical switches (TRUE/FALSE) to activate writing of time-averaged,
 ! active (temperature and salinity) and passive (inert) tracer diagnostic
 ! terms into DIAGNOSTIC output file: [1:NAT+NPT,Ngrids].
 
-Dout(iTrate) == T T     ! temp_rate, ...     time rate of change
-Dout(iThadv) == T T     ! temp_hadv, ...     horizontal total advection
-Dout(iTxadv) == T T     ! temp_xadv, ...     horizontal XI-advection
-Dout(iTyadv) == T T     ! temp_yadv, ...     horizontal ETA-advection
-Dout(iTvadv) == T T     ! temp_vadv, ...     vertical advection
-Dout(iThdif) == T T     ! temp_hdiff, ...    horizontal total diffusion
-Dout(iTxdif) == T T     ! temp_xdiff, ...    horizontal XI-diffusion
-Dout(iTydif) == T T     ! temp_ydiff, ...    horizontal ETA-diffusion
-Dout(iTsdif) == T T     ! temp_sdiff, ...    horizontal S-diffusion
-Dout(iTvdif) == T T     ! temp_vdiff, ...    vertical diffusion
+Dout(iTrate) == F F     ! temp_rate, ...     time rate of change
+Dout(iThadv) == F F     ! temp_hadv, ...     horizontal total advection
+Dout(iTxadv) == F F     ! temp_xadv, ...     horizontal XI-advection
+Dout(iTyadv) == F F     ! temp_yadv, ...     horizontal ETA-advection
+Dout(iTvadv) == F F     ! temp_vadv, ...     vertical advection
+Dout(iThdif) == F F     ! temp_hdiff, ...    horizontal total diffusion
+Dout(iTxdif) == F F     ! temp_xdiff, ...    horizontal XI-diffusion
+Dout(iTydif) == F F     ! temp_ydiff, ...    horizontal ETA-diffusion
+Dout(iTsdif) == F F     ! temp_sdiff, ...    horizontal S-diffusion
+Dout(iTvdif) == F F     ! temp_vdiff, ...    vertical diffusion
 
 ! Generic User parameters, [1:NUSER].
 
@@ -1976,7 +1977,7 @@ PIO_I2C_Preq = 65                 ! Maximum pending I2C requests
 ! energy flux in the GLS.
 !------------------------------------------------------------------------------
 !
-! CHARNOK_ALPHA    Charnok surface roughness,
+! CHARNOK_ALPHA    Charnock surface roughness,
 !                    Zos:   (charnok_alpha * u_star**2) / g
 !
 ! ZOS_HSIG_ALPHA   Roughness from wave amplitude,
@@ -2624,6 +2625,7 @@ PIO_I2C_Preq = 65                 ! Maximum pending I2C requests
 ! Hout(idv3dN)   Write out 3D Northward velocity component at RHO-points.
 ! Hout(idWvel)   Write out 3D W-velocity component.
 ! Hout(idOvel)   Write out 3D omega vertical velocity.
+! Hout(idOvil)   Write out 3D omega implicit vertical velocity.
 ! Hout(idUbar)   Write out 2D U-velocity component.
 ! Hout(idVbar)   Write out 2D V-velocity component.
 ! Hout(idu2dE)   Write out 2D Eastward  velocity component at RHO-points.
