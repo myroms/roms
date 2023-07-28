@@ -1,7 +1,7 @@
 # ROMS I/O NetCDF Metadata Dictionary
 #
 #git $Id$
-#svn $Id: varinfo.yaml 1178 2023-07-11 17:50:57Z arango $
+#svn $Id: varinfo.yaml 1182 2023-07-27 03:34:41Z arango $
 #========================================================= Hernan G. Arango ==#
 #  Copyright (c) 2002-2023 The ROMS/TOMS Group                                #
 #    Licensed under a MIT/X style license                                     #
@@ -41,7 +41,7 @@
 #     field = field (source_units) * scale + add_offset
 #
 
-svn_repository: $URL: https://www.myroms.org/svn/src/trunk/ROMS/External/varinfo.yaml $
+svn_repository: $URL: https://github.com/myroms/roms/External/varinfo.yaml $
 
 convention:     CF 1.10
 
@@ -243,6 +243,17 @@ metadata:
     field:          omega
     time:           ocean_time
     index_code:     idOvel
+    type:           w3dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       omega_implicit                                   # Output
+    standard_name:  upward_sea_water_omega_implicit_velocity
+    long_name:      S-coordinate vertical implicit momentum component
+    units:          meter3 second-1                                  # [m3/s]
+    field:          omega
+    time:           ocean_time
+    index_code:     idOvil
     type:           w3dvar
     add_offset:     0.0d0
     scale:          1.0d0
@@ -787,7 +798,7 @@ metadata:
   - variable:       dQdSST                                           # Input
     standard_name:  derivative_of_surface_downward_heat_flux_wrt_sea_surface_temperature
     long_name:      surface net heat flux sensitivity to SST
-    units:          watt meter-2 Celsius-1                           # Input:  [Watt/m2]
+    units:          watt meter-2 Celsius-1                           # Input:  [Watt/m2/Celsius]
     field:          d(Q)/d(SST)                                      # [Celsius m/s]
     time:           sst_time
     index_code:     iddQdT
@@ -1568,7 +1579,7 @@ metadata:
     index_code:     idWdib
     type:           r2dvar
     add_offset:     0.0d0
-    scale:          1.0d0
+    scale:          0.00097561                                       # 1/rho0
 
   - variable:       Dissip_wcap                                      # Input
     standard_name:  sea_surface_wave_dissipation_due_to_whitecapping
@@ -1579,7 +1590,7 @@ metadata:
     index_code:     idWdiw
     type:           r2dvar
     add_offset:     0.0d0
-    scale:          1.0d0
+    scale:          0.00097561                                       # 1/rho0
 
   - variable:       Dissip_roller                                    # Input
     standard_name:  sea_surface_wave_roller_dissipation
@@ -1590,7 +1601,7 @@ metadata:
     index_code:     idWdis
     type:           r2dvar
     add_offset:     0.0d0
-    scale:          1.0d0
+    scale:          0.00097561                                       # 1/rho0
 
   - variable:       roller_action                                    # Input
     standard_name:  sea_surface_wave_roller_action_density

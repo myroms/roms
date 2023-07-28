@@ -4,7 +4,7 @@
 #if defined NONLINEAR && defined SOLVE3D
 !
 !git $Id$
-!svn $Id: step3d_uv.F 1178 2023-07-11 17:50:57Z arango $
+!svn $Id: step3d_uv.F 1183 2023-07-27 04:20:57Z arango $
 !=======================================================================
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license           Hernan G. Arango   !
@@ -1292,7 +1292,7 @@
      &                               z_w(i  ,j,k)-z_w(i  ,j,k-1)))
                 u(i,j,k,nnew)=SOURCES(ng)%Qsrc(is,k)*cff1
               END DO
-            ELSE
+            ELSE IF (INT(SOURCES(ng)%Dsrc(is)).eq.1) THEN
               DO k=1,N(ng)
                 cff1=1.0_r8/(om_v(i,j)*                                 &
      &                       0.5_r8*(z_w(i,j-1,k)-z_w(i,j-1,k-1)+       &

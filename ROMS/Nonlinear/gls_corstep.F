@@ -3,7 +3,7 @@
 #if defined NONLINEAR && defined GLS_MIXING && defined SOLVE3D
 !
 !git $Id$
-!svn $Id: gls_corstep.F 1178 2023-07-11 17:50:57Z arango $
+!svn $Id: gls_corstep.F 1184 2023-07-27 20:28:19Z arango $
 !=======================================================================
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license           Hernan G. Arango   !
@@ -841,7 +841,7 @@
 !-----------------------------------------------------------------------
 !
 !  Set Dirichlet surface and bottom boundary conditions. Compute
-!  surface roughness from wind stress (Charnok) and set Craig and
+!  surface roughness from wind stress (Charnock) and set Craig and
 !  Banner wave breaking surface flux, if appropriate.
 !
         DO i=Istr,Iend

@@ -1,8 +1,8 @@
 !
 !  ROMS/TOMS Standard Input parameters.
 !
-!git $Id$
-!svn $Id: roms_bio_toy.in 1178 2023-07-11 17:50:57Z arango $
+! git $Id$
+! svn $Id: roms_bio_toy.in 1184 2023-07-27 20:28:19Z arango $
 !========================================================= Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                                !
 !    Licensed under a MIT/X style license                                     !
@@ -194,17 +194,17 @@ ad_Vadvection == C4       \                     ! temperature
 
 ! Waves Effect on Currents lateral boundary conditions.
 
-   LBC(isU2Sd) ==   Per     Per     Per     Per         ! 2D U-stokes
-   LBC(isV2Sd) ==   Per     Per     Per     Per         ! 2D V-stokes
-   LBC(isU3Sd) ==   Per     Per     Per     Per         ! 3D U-stokes
-   LBC(isV3Sd) ==   Per     Per     Per     Per         ! 3D V-stokes
+   LBC(isU2Sd) ==   Per     Per     Per     Per         ! 2D U-Stokes
+   LBC(isV2Sd) ==   Per     Per     Per     Per         ! 2D V-Stokes
+   LBC(isU3Sd) ==   Per     Per     Per     Per         ! 3D U-Stokes
+   LBC(isV3Sd) ==   Per     Per     Per     Per         ! 3D V-Stokes
 
 ! Adjoint-based algorithms can have different lateral boundary
 ! conditions keywords.
 
 ad_LBC(isFsur) ==   Per     Per     Per     Per         ! free-surface
 ad_LBC(isUbar) ==   Per     Per     Per     Per         ! 2D U-momentum
-ad_LBC(isVbar) ==   Per     Per     Per     Per         ! 2D U-momentum
+ad_LBC(isVbar) ==   Per     Per     Per     Per         ! 2D V-momentum
 ad_LBC(isUvel) ==   Per     Per     Per     Per         ! 3D U-momentum
 ad_LBC(isVvel) ==   Per     Per     Per     Per         ! 3D V-momentum
 ad_LBC(isMtke) ==   Per     Per     Per     Per         ! mixing TKE
@@ -373,7 +373,7 @@ LtracerSponge == F F                            ! temperature, salinity, inert
 
 ! Constants used in surface turbulent kinetic energy flux computation.
 
-  CHARNOK_ALPHA == 1400.0d0         ! Charnok surface roughness
+  CHARNOK_ALPHA == 1400.0d0         ! Charnock surface roughness
  ZOS_HSIG_ALPHA == 0.5d0            ! roughness from wave amplitude
        SZ_ALPHA == 0.25d0           ! roughness from wave dissipation
       CRGBAN_CW == 100.0d0          ! Craig and Banner wave breaking
@@ -436,7 +436,7 @@ LtracerSponge == F F                            ! temperature, salinity, inert
 
       DSTART =  0.0d0                      ! days
   TIDE_START =  0.0d0                      ! days
-    TIME_REF =  0.0d0                      ! yyyymmdd.dd
+    TIME_REF =  20010101.5d0               ! yyyymmdd.dd
 
 ! Nudging/relaxation time scales, inverse scales will be computed
 ! internally, [1:Ngrids].
@@ -561,8 +561,9 @@ Hout(idUvel) == T       ! u                  3D U-velocity
 Hout(idVvel) == T       ! v                  3D V-velocity
 Hout(idu3dE) == F       ! u_eastward         3D U-eastward  at RHO-points
 Hout(idv3dN) == F       ! v_northward        3D V-northward at RHO-points
-Hout(idWvel) == F       ! w                  3D W-velocity
+Hout(idWvel) == T       ! w                  3D W-velocity
 Hout(idOvel) == T       ! omega              omega vertical velocity
+Hout(idOvil) == F       ! omega_implicit     omega implicit vertical velocity
 Hout(idUbar) == T       ! ubar               2D U-velocity
 Hout(idVbar) == T       ! vbar               2D V-velocity
 Hout(idu2dE) == F       ! ubar_eastward      2D U-eastward  at RHO-points
@@ -645,11 +646,11 @@ Hout(idevap) == F       ! evaporation        evaporation rate
 Hout(idrain) == F       ! rain               precipitation rate
 
 Hout(idDano) == T       ! rho                density anomaly
-Hout(idVvis) == F       ! AKv                vertical viscosity
-Hout(idTdif) == F       ! AKt                vertical T-diffusion
-Hout(idSdif) == F       ! AKs                vertical Salinity diffusion
-Hout(idHsbl) == F       ! Hsbl               depth of surface boundary layer
-Hout(idHbbl) == F       ! Hbbl               depth of bottom boundary layer
+Hout(idVvis) == T       ! AKv                vertical viscosity
+Hout(idTdif) == T       ! AKt                vertical T-diffusion
+Hout(idSdif) == T       ! AKs                vertical Salinity diffusion
+Hout(idHsbl) == T       ! Hsbl               depth of surface boundary layer
+Hout(idHbbl) == T       ! Hbbl               depth of bottom boundary layer
 Hout(idMtke) == F       ! tke                turbulent kinetic energy
 Hout(idMtls) == F       ! gls                turbulent length scale
 
@@ -717,7 +718,7 @@ Qout(idWbeh) == F       ! bernoulli_head     WEC_VF Bernoulli head adjustment
 Qout(idU2rs) == F       ! ubar_wec_stress    WEC 2D U-stress
 Qout(idV2rs) == F       ! vbar_wec_stress    WEC 2D V-stress
 Qout(idU3rs) == F       ! u_wec_stress       WEC 3D U-stress
-Qout(idV3rs) == F       ! v_wec_stress        WEC 3D V-stress
+Qout(idV3rs) == F       ! v_wec_stress       WEC 3D V-stress
 
 Qout(idU2Sd) == F       ! ubar_stokes        2D Stokes U-velocity
 Qout(idV2Sd) == F       ! vbar_stokes        2D Stokes V-velocity
@@ -785,7 +786,7 @@ Aout(idUvel) == T       ! u                  3D U-velocity
 Aout(idVvel) == T       ! v                  3D V-velocity
 Aout(idu3dE) == F       ! u_eastward         3D U-eastward  at RHO-points
 Aout(idv3dN) == F       ! v_northward        3D V-northward at RHO-points
-Aout(idWvel) == F       ! w                  3D W-velocity
+Aout(idWvel) == T       ! w                  3D W-velocity
 Aout(idOvel) == T       ! omega              omega vertical velocity
 Aout(idUbar) == T       ! ubar               2D U-velocity
 Aout(idVbar) == T       ! vbar               2D V-velocity
@@ -862,10 +863,10 @@ Aout(idevap) == F       ! evaporation        evaporation rate
 Aout(idrain) == F       ! rain               precipitation rate
 
 Aout(idDano) == T       ! rho                density anomaly
-Aout(idVvis) == F       ! AKv                vertical viscosity
-Aout(idTdif) == F       ! AKt                vertical T-diffusion
-Aout(idSdif) == F       ! AKs                vertical Salinity diffusion
-Aout(idHsbl) == F       ! Hsbl               depth of surface boundary layer
+Aout(idVvis) == T       ! AKv                vertical viscosity
+Aout(idTdif) == T       ! AKt                vertical T-diffusion
+Aout(idSdif) == T       ! AKs                vertical Salinity diffusion
+Aout(idHsbl) == T       ! Hsbl               depth of surface boundary layer
 Aout(idHbbl) == F       ! Hbbl               depth of bottom boundary layer
 
 Aout(id2dRV) == F       ! pvorticity_bar     2D relative vorticity
@@ -1051,11 +1052,11 @@ PIO_I2C_Preq = 65                 ! Maximum pending I2C requests
 
 ! Input NetCDF file names, [1:Ngrids].
 
-     GRDNAME == Data/ROMS/Grid/bio_toy_grd.nc
-     ININAME == Data/ROMS/Initial/bio_toy_ini_fennel.nc
-!    ININAME == Data/ROMS/Initial/bio_toy_ini_ecosim.nc
-!    ININAME == Data/ROMS/Initial/bio_toy_ini_nemuro.nc
-!    ININAME == Data/ROMS/Initial/bio_toy_ini_npzd.nc
+     GRDNAME == ../../../roms_test/bio_toy/Data/ROMS/Grid/bio_toy_grd.nc
+     ININAME == ../../../roms_test/bio_toy/Data/ROMS/Initial/bio_toy_ini_fennel.nc
+!    ININAME == ../../../roms_test/bio_toy/Data/ROMS/Initial/bio_toy_ini_ecosim.nc
+!    ININAME == ../../../roms_test/bio_toy/Data/ROMS/Initial/bio_toy_ini_nemuro.nc
+!    ININAME == ../../../roms_test/bio_toy/Data/ROMS/Initial/bio_toy_ini_npzd.nc
      ITLNAME == /dev/null
      IRPNAME == /dev/null
      IADNAME == /dev/null
@@ -1143,7 +1144,7 @@ PIO_I2C_Preq = 65                 ! Maximum pending I2C requests
 
      NFFILES == 1                          ! number of unique forcing files
 
-     FRCNAME == Data/ROMS/Forcing/bio_toy_frc.nc
+     FRCNAME == ../../../roms_test/bio_toy/Data/bio_toy_frc.nc
 
 ! Output NetCDF file names, [1:Ngrids].
 
@@ -1983,7 +1984,7 @@ PIO_I2C_Preq = 65                 ! Maximum pending I2C requests
 ! energy flux in the GLS.
 !------------------------------------------------------------------------------
 !
-! CHARNOK_ALPHA    Charnok surface roughness,
+! CHARNOK_ALPHA    Charnock surface roughness,
 !                    Zos:   (charnok_alpha * u_star**2) / g
 !
 ! ZOS_HSIG_ALPHA   Roughness from wave amplitude,
@@ -2631,6 +2632,7 @@ PIO_I2C_Preq = 65                 ! Maximum pending I2C requests
 ! Hout(idv3dN)   Write out 3D Northward velocity component at RHO-points.
 ! Hout(idWvel)   Write out 3D W-velocity component.
 ! Hout(idOvel)   Write out 3D omega vertical velocity.
+! Hout(idOvil)   Write out 3D omega implicit vertical velocity.
 ! Hout(idUbar)   Write out 2D U-velocity component.
 ! Hout(idVbar)   Write out 2D V-velocity component.
 ! Hout(idu2dE)   Write out 2D Eastward  velocity component at RHO-points.

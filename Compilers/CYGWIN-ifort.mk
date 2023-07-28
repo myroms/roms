@@ -1,5 +1,5 @@
 # git $Id$
-# svn $Id: CYGWIN-ifort.mk 1159 2023-03-24 23:49:03Z arango $
+# svn $Id: CYGWIN-ifort.mk 1184 2023-07-27 20:28:19Z arango $
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # Copyright (c) 2002-2023 The ROMS/TOMS Group                           :::
 #   Licensed under a MIT/X style license                                :::
@@ -49,7 +49,7 @@ endif
             SLIBS := -L/usr/local/lib -L/usr/lib -L/usr/lib64
             ULIBS :=
              LIBS :=
-         ROMS_LIB := -L$(SCRATCH_DIR) -lROMS
+         ROMS_LIB := -L$(BUILD_DIR) -lROMS
        MOD_SUFFIX := mod
                LD := $(FC)
           LDFLAGS := /link /stack:67108864
@@ -82,7 +82,7 @@ ifdef USE_ROMS
        SH_LDFLAGS += -shared
  endif
 
-        MDEPFLAGS := --cpp --fext=f90 --file=- --objdir=$(SCRATCH_DIR)
+        MDEPFLAGS := --cpp --fext=f90 --file=- --objdir=$(BUILD_DIR)
 endif
 
 #--------------------------------------------------------------------------
@@ -272,7 +272,7 @@ ifdef SHARED
 
 .PHONY: cyg_dll_cp
 cyg_dll_cp: $(BIN)
-	$(CP) $(SCRATCH_DIR)/$(SH_LIB_NAME) $(BINDIR)
+	$(CP) $(BUILD_DIR)/$(SH_LIB_NAME) $(BINDIR)
 
   endif
  endif
@@ -283,7 +283,7 @@ endif
 #
 
 %.o: %.f90
-	cd $(SCRATCH_DIR); $(FC) -c $(FFLAGS) $(notdir $<) /object:$(notdir $@)
+	cd $(BUILD_DIR); $(FC) -c $(FFLAGS) $(notdir $<) /object:$(notdir $@)
 
 #
 # Override rule for object files. Use .o instead of .obj
@@ -291,7 +291,7 @@ endif
 
 define one-compile-rule
   $1: $2 $3
-	cd $$(SCRATCH_DIR); $$(FC) -c $$(FFLAGS) $(notdir $2) /object:$(notdir $1)
+	cd $$(BUILD_DIR); $$(FC) -c $$(FFLAGS) $(notdir $2) /object:$(notdir $1)
 
   $2: $3
 	$$(CPP) $$(CPPFLAGS) $$(MY_CPP_FLAGS) $$< > $$@
@@ -303,19 +303,19 @@ endef
 # local directory and compilation flags inside the code.
 
 ifdef USE_ROMS
- $(SCRATCH_DIR)/mod_ncparam.o: FFLAGS += $(FREEFLAGS)
- $(SCRATCH_DIR)/mod_strings.o: FFLAGS += $(FREEFLAGS)
- $(SCRATCH_DIR)/analytical.o: FFLAGS += $(FREEFLAGS)
- $(SCRATCH_DIR)/biology.o: FFLAGS += $(FREEFLAGS)
+ $(BUILD_DIR)/mod_ncparam.o: FFLAGS += $(FREEFLAGS)
+ $(BUILD_DIR)/mod_strings.o: FFLAGS += $(FREEFLAGS)
+ $(BUILD_DIR)/analytical.o: FFLAGS += $(FREEFLAGS)
+ $(BUILD_DIR)/biology.o: FFLAGS += $(FREEFLAGS)
 
  ifdef USE_ADJOINT
-  $(SCRATCH_DIR)/ad_biology.o: FFLAGS += $(FREEFLAGS)
+  $(BUILD_DIR)/ad_biology.o: FFLAGS += $(FREEFLAGS)
  endif
  ifdef USE_REPRESENTER
-  $(SCRATCH_DIR)/rp_biology.o: FFLAGS += $(FREEFLAGS)
+  $(BUILD_DIR)/rp_biology.o: FFLAGS += $(FREEFLAGS)
  endif
  ifdef USE_TANGENT
-  $(SCRATCH_DIR)/tl_biology.o: FFLAGS += $(FREEFLAGS)
+  $(BUILD_DIR)/tl_biology.o: FFLAGS += $(FREEFLAGS)
  endif
 endif
 
@@ -326,17 +326,17 @@ endif
 # Add COAMPS library directory to include path of ESMF coupling files.
 
 ifdef USE_COAMPS
- $(SCRATCH_DIR)/esmf_atm.o: FFLAGS += -I$(COAMPS_LIB_DIR)
- $(SCRATCH_DIR)/esmf_esm.o: FFLAGS += -I$(COAMPS_LIB_DIR)
+ $(BUILD_DIR)/esmf_atm.o: FFLAGS += -I$(COAMPS_LIB_DIR)
+ $(BUILD_DIR)/esmf_esm.o: FFLAGS += -I$(COAMPS_LIB_DIR)
 endif
 
 # Add WRF library directory to include path of ESMF coupling files.
 
 ifdef USE_WRF
  ifeq "$(strip $(WRF_LIB_DIR))" "$(WRF_SRC_DIR)"
-  $(SCRATCH_DIR)/esmf_atm.o: FFLAGS += $(addprefix -I$(WRF_LIB_DIR)/,$(WRF_MOD_DIRS))
+  $(BUILD_DIR)/esmf_atm.o: FFLAGS += $(addprefix -I$(WRF_LIB_DIR)/,$(WRF_MOD_DIRS))
  else
-  $(SCRATCH_DIR)/esmf_atm.o: FFLAGS += -I$(WRF_LIB_DIR)
+  $(BUILD_DIR)/esmf_atm.o: FFLAGS += -I$(WRF_LIB_DIR)
  endif
 endif
 
@@ -344,25 +344,25 @@ endif
 # beyond column 72.
 
 ifdef USE_SWAN
- $(SCRATCH_DIR)/ocpcre.o: FFLAGS += $(FIXEDFLAGS)
- $(SCRATCH_DIR)/ocpids.o: FFLAGS += $(FIXEDFLAGS)
- $(SCRATCH_DIR)/ocpmix.o: FFLAGS += $(FIXEDFLAGS)
- $(SCRATCH_DIR)/swancom1.o: FFLAGS += $(FIXEDFLAGS)
- $(SCRATCH_DIR)/swancom2.o: FFLAGS += $(FIXEDFLAGS)
- $(SCRATCH_DIR)/swancom3.o: FFLAGS += $(FIXEDFLAGS)
- $(SCRATCH_DIR)/swancom4.o: FFLAGS += $(FIXEDFLAGS)
- $(SCRATCH_DIR)/swancom5.o: FFLAGS += $(FIXEDFLAGS)
- $(SCRATCH_DIR)/swanmain.o: FFLAGS += $(FIXEDFLAGS)
- $(SCRATCH_DIR)/swanout1.o: FFLAGS += $(FIXEDFLAGS)
- $(SCRATCH_DIR)/swanout2.o: FFLAGS += $(FIXEDFLAGS)
- $(SCRATCH_DIR)/swanparll.o: FFLAGS += $(FIXEDFLAGS)
- $(SCRATCH_DIR)/swanpre1.o: FFLAGS += $(FIXEDFLAGS)
- $(SCRATCH_DIR)/swanpre2.o: FFLAGS += $(FIXEDFLAGS)
- $(SCRATCH_DIR)/swanser.o: FFLAGS += $(FIXEDFLAGS)
- $(SCRATCH_DIR)/swmod1.o: FFLAGS += $(FIXEDFLAGS)
- $(SCRATCH_DIR)/swmod2.o: FFLAGS += $(FIXEDFLAGS)
- $(SCRATCH_DIR)/m_constants.o: FFLAGS += $(FREEFLAGS)
- $(SCRATCH_DIR)/m_fileio.o: FFLAGS += $(FREEFLAGS)
- $(SCRATCH_DIR)/mod_xnl4v5.o: FFLAGS += $(FREEFLAGS)
- $(SCRATCH_DIR)/serv_xnl4v5.o: FFLAGS += $(FREEFLAGS)
+ $(BUILD_DIR)/ocpcre.o: FFLAGS += $(FIXEDFLAGS)
+ $(BUILD_DIR)/ocpids.o: FFLAGS += $(FIXEDFLAGS)
+ $(BUILD_DIR)/ocpmix.o: FFLAGS += $(FIXEDFLAGS)
+ $(BUILD_DIR)/swancom1.o: FFLAGS += $(FIXEDFLAGS)
+ $(BUILD_DIR)/swancom2.o: FFLAGS += $(FIXEDFLAGS)
+ $(BUILD_DIR)/swancom3.o: FFLAGS += $(FIXEDFLAGS)
+ $(BUILD_DIR)/swancom4.o: FFLAGS += $(FIXEDFLAGS)
+ $(BUILD_DIR)/swancom5.o: FFLAGS += $(FIXEDFLAGS)
+ $(BUILD_DIR)/swanmain.o: FFLAGS += $(FIXEDFLAGS)
+ $(BUILD_DIR)/swanout1.o: FFLAGS += $(FIXEDFLAGS)
+ $(BUILD_DIR)/swanout2.o: FFLAGS += $(FIXEDFLAGS)
+ $(BUILD_DIR)/swanparll.o: FFLAGS += $(FIXEDFLAGS)
+ $(BUILD_DIR)/swanpre1.o: FFLAGS += $(FIXEDFLAGS)
+ $(BUILD_DIR)/swanpre2.o: FFLAGS += $(FIXEDFLAGS)
+ $(BUILD_DIR)/swanser.o: FFLAGS += $(FIXEDFLAGS)
+ $(BUILD_DIR)/swmod1.o: FFLAGS += $(FIXEDFLAGS)
+ $(BUILD_DIR)/swmod2.o: FFLAGS += $(FIXEDFLAGS)
+ $(BUILD_DIR)/m_constants.o: FFLAGS += $(FREEFLAGS)
+ $(BUILD_DIR)/m_fileio.o: FFLAGS += $(FREEFLAGS)
+ $(BUILD_DIR)/mod_xnl4v5.o: FFLAGS += $(FREEFLAGS)
+ $(BUILD_DIR)/serv_xnl4v5.o: FFLAGS += $(FREEFLAGS)
 endif
