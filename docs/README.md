@@ -32,12 +32,19 @@ This official community version of **ROMS** is developed and maintained at Rutge
 The State University of New Jersey, New Brunswick, New Jersey, USA. Currently, this
 **git** repository contains the following branches:
 
-- **master**: Tagged versions and the latest stable release version of **ROMS**
+- **main**: Tagged versions and the latest stable release version of **ROMS**
 - **develop**: Main developing branch of **ROMS**. Not recommended for public
  consumption but passes the internal tests. It is intended for **ROMS** superusers
  and beta testers.
 - **feature branches**: Research and new development branches recommended to
 superusers and beta testers.
+
+Check **wiki** for more information:
+
+```
+https://github.com/myroms/roms/wiki
+https://github.com/myroms/roms/wiki/ROMS-Branches
+```
 
 # Instructions
 
