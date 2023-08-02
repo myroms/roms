@@ -1,5 +1,5 @@
 # git $Id$
-# svn $Id: CMakeLists.txt 1184 2023-07-27 20:28:19Z arango $
+# svn $Id: CMakeLists.txt 1186 2023-08-02 01:08:21Z arango $
 #:::::::::::::::::::::::::::::::::::::::::::::::::::::: David Robertson :::
 # Copyright (c) 2002-2023 The ROMS/TOMS Group                           :::
 #   Licensed under a MIT/X style license                                :::
@@ -106,6 +106,7 @@ add_subdirectory( "ROMS/Drivers" )
 add_subdirectory( "ROMS/Functionals" )
 add_subdirectory( "ROMS/Modules" )
 add_subdirectory( "ROMS/Nonlinear" )
+add_subdirectory( "ROMS/Nonlinear/BBL" )
 add_subdirectory( "ROMS/Nonlinear/Biology" )
 add_subdirectory( "ROMS/Nonlinear/Sediment" )
 add_subdirectory( "ROMS/Nonlinear/WEC" )
@@ -121,6 +122,7 @@ include_directories(
   "ROMS/Include"
   "ROMS/Modules"
   "ROMS/Nonlinear"
+  "ROMS/Nonlinear/BBL"
   "ROMS/Nonlinear/Biology"
   "ROMS/Nonlinear/Sediment"
   "ROMS/Nonlinear/WEC"
@@ -139,6 +141,7 @@ list(APPEND srcs
      ${ROMS_Functionals_files}
      ${ROMS_Modules_files}
      ${ROMS_Nonlinear_files}
+     ${ROMS_Nonlinear_BBL_files}
      ${ROMS_Nonlinear_Biology_files}
      ${ROMS_Nonlinear_Sediment_files}
      ${ROMS_Nonlinear_WEC_files}

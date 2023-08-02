@@ -3,7 +3,7 @@
 #ifdef STATIONS
 !
 !git $Id$
-!svn $Id: def_station.F 1178 2023-07-11 17:50:57Z arango $
+!svn $Id: def_station.F 1185 2023-08-01 21:42:38Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -27,21 +27,33 @@
       USE mod_iounits
       USE mod_ncparam
       USE mod_scalars
-# if defined SEDIMENT || defined BBL_MODEL
+# ifdef SEDIMENT
       USE mod_sediment
 # endif
 !
-      USE def_dim_mod,    ONLY : def_dim
-      USE def_info_mod,   ONLY : def_info
-      USE def_var_mod,    ONLY : def_var
-      USE strings_mod,    ONLY : FoundError
-#if defined WEC || defined WEC_VF
-      USE wec_output_mod, ONLY : wec_def_station_nf90
-# if defined PIO_LIB && defined DISTRIBUTE
-      USE wec_output_mod, ONLY : wec_def_station_pio
+# if defined BBL_MODEL || defined WAVES_OUTPUT
+      USE bbl_output_mod,      ONLY : bbl_def_station_nf90
+#  if defined PIO_LIB && defined DISTRIBUTE
+      USE bbl_output_mod,      ONLY : bbl_def_station_pio
+#  endif
 # endif
-#endif
-      USE wrt_info_mod,   ONLY : wrt_info
+      USE def_dim_mod,         ONLY : def_dim
+      USE def_info_mod,        ONLY : def_info
+      USE def_var_mod,         ONLY : def_var
+# ifdef SEDIMENT
+      USE sediment_output_mod, ONLY : sediment_def_station_nf90
+#  if defined PIO_LIB && defined DISTRIBUTE
+      USE sediment_output_mod, ONLY : sediment_def_station_pio
+#  endif
+# endif
+      USE strings_mod,         ONLY : FoundError
+# if defined WEC || defined WEC_VF
+      USE wec_output_mod,      ONLY : wec_def_station_nf90
+#  if defined PIO_LIB && defined DISTRIBUTE
+      USE wec_output_mod,      ONLY : wec_def_station_pio
+#  endif
+# endif
+      USE wrt_info_mod,        ONLY : wrt_info
 !
       implicit none
 !
@@ -312,24 +324,6 @@
      &                   SetParAccess = .TRUE.)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
-
-# if defined SEDIMENT && defined SED_MORPH
-!
-!  Define time-varying bathymetry.
-!
-        IF (Sout(idbath,ng)) THEN
-          Vinfo( 1)=Vname(1,idbath)
-          Vinfo( 2)=Vname(2,idbath)
-          Vinfo( 3)=Vname(3,idbath)
-          Vinfo(14)=Vname(4,idbath)
-          Vinfo(16)=Vname(1,idtime)
-          status=def_var(ng, model, STA(ng)%ncid, STA(ng)%Vid(idbath),  &
-     &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
-     &                   SetFillVal = .FALSE.,                          &
-     &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-# endif
 !
 !  Define 2D momentum in the XI-direction.
 !
@@ -934,406 +928,6 @@
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 
-# ifdef SOLVE3D
-#  ifdef BBL_MODEL
-!
-!  Define current-induced, bottom U-current stress.
-!
-        IF (Sout(idUbrs,ng)) THEN
-          Vinfo( 1)=Vname(1,idUbrs)
-          Vinfo( 2)=Vname(2,idUbrs)
-          Vinfo( 3)=Vname(3,idUbrs)
-          Vinfo(14)=Vname(4,idUbrs)
-          Vinfo(16)=Vname(1,idtime)
-          status=def_var(ng, model, STA(ng)%ncid, STA(ng)%Vid(idUbrs),  &
-     &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
-     &                   SetFillVal = .TRUE.,                           &
-     &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-!
-!  Define current-induced, bottom V-current stress.
-!
-        IF (Sout(idVbrs,ng)) THEN
-          Vinfo( 1)=Vname(1,idVbrs)
-          Vinfo( 2)=Vname(2,idVbrs)
-          Vinfo( 3)=Vname(3,idVbrs)
-          Vinfo(14)=Vname(4,idVbrs)
-          Vinfo(16)=Vname(1,idtime)
-          status=def_var(ng, model, STA(ng)%ncid, STA(ng)%Vid(idVbrs),  &
-     &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
-     &                   SetFillVal = .TRUE.,                           &
-     &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-!
-!  Define wind-induced, bottom U-wave stress.
-!
-        IF (Sout(idUbws,ng)) THEN
-          Vinfo( 1)=Vname(1,idUbws)
-          Vinfo( 2)=Vname(2,idUbws)
-          Vinfo( 3)=Vname(3,idUbws)
-          Vinfo(14)=Vname(4,idUbws)
-          Vinfo(16)=Vname(1,idtime)
-          status=def_var(ng, model, STA(ng)%ncid, STA(ng)%Vid(idUbws),  &
-     &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
-     &                   SetFillVal = .TRUE.,                           &
-     &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-!
-!  Define bottom wind-induced, bottom V-wave stress.
-!
-        IF (Sout(idVbws,ng)) THEN
-          Vinfo( 1)=Vname(1,idVbws)
-          Vinfo( 2)=Vname(2,idVbws)
-          Vinfo( 3)=Vname(3,idVbws)
-          Vinfo(14)=Vname(4,idVbws)
-          Vinfo(16)=Vname(1,idtime)
-          status=def_var(ng, model, STA(ng)%ncid, STA(ng)%Vid(idVbws),  &
-     &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
-     &                   SetFillVal = .TRUE.,                           &
-     &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-!
-!  Define maximum wind and current, bottom U-wave stress.
-!
-        IF (Sout(idUbcs,ng)) THEN
-          Vinfo( 1)=Vname(1,idUbcs)
-          Vinfo( 2)=Vname(2,idUbcs)
-          Vinfo( 3)=Vname(3,idUbcs)
-          Vinfo(14)=Vname(4,idUbcs)
-          Vinfo(16)=Vname(1,idtime)
-          status=def_var(ng, model, STA(ng)%ncid, STA(ng)%Vid(idUbcs),  &
-     &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
-     &                   SetFillVal = .TRUE.,                           &
-     &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-!
-!  Define maximum wind and current, bottom V-wave stress.
-!
-        IF (Sout(idVbcs,ng)) THEN
-          Vinfo( 1)=Vname(1,idVbcs)
-          Vinfo( 2)=Vname(2,idVbcs)
-          Vinfo( 3)=Vname(3,idVbcs)
-          Vinfo(14)=Vname(4,idVbcs)
-          Vinfo(16)=Vname(1,idtime)
-          status=def_var(ng, model, STA(ng)%ncid, STA(ng)%Vid(idVbcs),  &
-     &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
-     &                   SetFillVal = .TRUE.,                           &
-     &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-!
-!  Define wind-induced, bed wave orbital U-velocity.
-!
-        IF (Sout(idUbot,ng)) THEN
-          Vinfo( 1)=Vname(1,idUbot)
-          Vinfo( 2)=Vname(2,idUbot)
-          Vinfo( 3)=Vname(3,idUbot)
-          Vinfo(14)=Vname(4,idUbot)
-          Vinfo(16)=Vname(1,idtime)
-          status=def_var(ng, model, STA(ng)%ncid, STA(ng)%Vid(idUbot),  &
-     &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
-     &                   SetFillVal = .TRUE.,                           &
-     &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-!
-!  Define wind-induced, bed wave orbital V-velocity.
-!
-        IF (Sout(idVbot,ng)) THEN
-          Vinfo( 1)=Vname(1,idVbot)
-          Vinfo( 2)=Vname(2,idVbot)
-          Vinfo( 3)=Vname(3,idVbot)
-          Vinfo(14)=Vname(4,idVbot)
-          Vinfo(16)=Vname(1,idtime)
-          status=def_var(ng, model, STA(ng)%ncid, STA(ng)%Vid(idVbot),  &
-     &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
-     &                   SetFillVal = .TRUE.,                           &
-     &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-!
-!  Define bottom U-momentum above bed.
-!
-        IF (Sout(idUbur,ng)) THEN
-          Vinfo( 1)=Vname(1,idUbur)
-          Vinfo( 2)=Vname(2,idUbur)
-          Vinfo( 3)=Vname(3,idUbur)
-          Vinfo(14)=Vname(4,idUbur)
-          Vinfo(16)=Vname(1,idtime)
-          status=def_var(ng, model, STA(ng)%ncid, STA(ng)%Vid(idUbur),  &
-     &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
-     &                   SetFillVal = .TRUE.,                           &
-     &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-!
-!  Define bottom V-momentum above bed.
-!
-        IF (Sout(idVbvr,ng)) THEN
-          Vinfo( 1)=Vname(1,idVbvr)
-          Vinfo( 2)=Vname(2,idVbvr)
-          Vinfo( 3)=Vname(3,idVbvr)
-          Vinfo(14)=Vname(4,idVbvr)
-          Vinfo(16)=Vname(1,idtime)
-          status=def_var(ng, model, STA(ng)%ncid, STA(ng)%Vid(idVbvr),  &
-     &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
-     &                   SetFillVal = .TRUE.,                           &
-     &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-#  endif
-#  ifdef SEDIMENT
-!
-!  Define sediment fraction of each size class in each bed layer.
-!
-        DO i=1,NST
-          IF (Sout(idfrac(i),ng)) THEN
-            Vinfo( 1)=Vname(1,idfrac(i))
-            Vinfo( 2)=Vname(2,idfrac(i))
-            Vinfo( 3)=Vname(3,idfrac(i))
-            Vinfo(14)=Vname(4,idfrac(i))
-            Vinfo(16)=Vname(1,idtime)
-            WRITE (Vinfo(19),40) 1000.0_r8*Sd50(i,ng)
-            status=def_var(ng, model, STA(ng)%ncid,                     &
-     &                     STA(ng)%Vid(idfrac(i)), NF_FOUT,             &
-     &                     3, bgrd, Aval, Vinfo, ncname,                &
-     &                     SetFillVal = .TRUE.,                         &
-     &                     SetParAccess = .TRUE.)
-            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-          END IF
-!
-!  Define sediment mass of each size class in each bed layer.
-!
-          IF (Sout(idBmas(i),ng)) THEN
-            Vinfo( 1)=Vname(1,idBmas(i))
-            Vinfo( 2)=Vname(2,idBmas(i))
-            Vinfo( 3)=Vname(3,idBmas(i))
-            Vinfo(14)=Vname(4,idBmas(i))
-            Vinfo(16)=Vname(1,idtime)
-            WRITE (Vinfo(19),40) 1000.0_r8*Sd50(i,ng)
-            status=def_var(ng, model, STA(ng)%ncid,                     &
-     &                     STA(ng)%Vid(idBmas(i)), NF_FOUT,             &
-     &                     3, bgrd, Aval, Vinfo, ncname,                &
-     &                     SetFillVal = .TRUE.,                         &
-     &                     SetParAccess = .TRUE.)
-            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-          END IF
-        END DO
-!
-!  Define sediment properties in each bed layer.
-!
-        DO i=1,MBEDP
-          IF (Sout(idSbed(i),ng)) THEN
-            Vinfo( 1)=Vname(1,idSbed(i))
-            Vinfo( 2)=Vname(2,idSbed(i))
-            Vinfo( 3)=Vname(3,idSbed(i))
-            Vinfo(14)=Vname(4,idSbed(i))
-            Vinfo(16)=Vname(1,idtime)
-            status=def_var(ng, model, STA(ng)%ncid,                     &
-     &                     STA(ng)%Vid(idSbed(i)), NF_FOUT,             &
-     &                     3, bgrd, Aval, Vinfo, ncname,                &
-     &                     SetFillVal = .TRUE.,                         &
-     &                     SetParAccess = .TRUE.)
-            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-          END IF
-        END DO
-#  endif
-#  if defined SEDIMENT || defined BBL_MODEL
-!
-!  Define exposed sediment layer properties.
-!
-        DO i=1,MBOTP
-          IF (Sout(idBott(i),ng)) THEN
-            Vinfo( 1)=Vname(1,idBott(i))
-            Vinfo( 2)=Vname(2,idBott(i))
-            Vinfo( 3)=Vname(3,idBott(i))
-            Vinfo(14)=Vname(4,idBott(i))
-            Vinfo(16)=Vname(1,idtime)
-            status=def_var(ng, model, STA(ng)%ncid,                     &
-     &                     STA(ng)%Vid(idBott(i)), NF_FOUT,             &
-     &                     2, pgrd, Aval, Vinfo, ncname,                &
-     &                     SetFillVal = .TRUE.,                         &
-     &                     SetParAccess = .TRUE.)
-            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-          END IF
-        END DO
-#  endif
-# endif
-# ifdef WAVES_HEIGHT
-!
-!  Define wind-induced significant wave height.
-!
-        IF (Sout(idWamp,ng)) THEN
-          Vinfo( 1)=Vname(1,idWamp)
-          Vinfo( 2)=Vname(2,idWamp)
-          Vinfo( 3)=Vname(3,idWamp)
-          Vinfo(14)=Vname(4,idWamp)
-          Vinfo(16)=Vname(1,idtime)
-          status=def_var(ng, model, STA(ng)%ncid, STA(ng)%Vid(idWamp),  &
-     &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
-     &                   SetFillVal = .TRUE.,                           &
-     &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-# endif
-# ifdef WAVES_LENGTH
-!
-!  Define wind-induced mean wavelenght.
-!
-        IF (Sout(idWlen,ng)) THEN
-          Vinfo( 1)=Vname(1,idWlen)
-          Vinfo( 2)=Vname(2,idWlen)
-          Vinfo( 3)=Vname(3,idWlen)
-          Vinfo(14)=Vname(4,idWlen)
-          Vinfo(16)=Vname(1,idtime)
-          status=def_var(ng, model, STA(ng)%ncid, STA(ng)%Vid(idWlen),  &
-     &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
-     &                   SetFillVal = .TRUE.,                           &
-     &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-# endif
-# ifdef WAVES_LENGTHP
-!
-!  Define wind-induced peak wave wavelength.
-!
-        IF (Sout(idWlep,ng)) THEN
-          Vinfo( 1)=Vname(1,idWlep)
-          Vinfo( 2)=Vname(2,idWlep)
-          Vinfo( 3)=Vname(3,idWlep)
-          Vinfo(14)=Vname(4,idWlep)
-          Vinfo(16)=Vname(1,idtime)
-          status=def_var(ng, model, STA(ng)%ncid, STA(ng)%Vid(idWlep),  &
-     &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
-     &                   SetFillVal = .TRUE.,                           &
-     &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-# endif
-# ifdef WAVES_DIR
-!
-!  Define wind-induced mean wave direction.
-!
-        IF (Sout(idWdir,ng)) THEN
-          Vinfo( 1)=Vname(1,idWdir)
-          Vinfo( 2)=Vname(2,idWdir)
-          Vinfo( 3)=Vname(3,idWdir)
-          Vinfo(14)=Vname(4,idWdir)
-          Vinfo(16)=Vname(1,idtime)
-          status=def_var(ng, model, STA(ng)%ncid, STA(ng)%Vid(idWdir),  &
-     &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
-     &                   SetFillVal = .TRUE.,                           &
-     &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-# endif
-# ifdef WAVES_DIRP
-!
-!  Define wind-induced peak wave direction.
-!
-        IF (Sout(idWdip,ng)) THEN
-          Vinfo( 1)=Vname(1,idWdip)
-          Vinfo( 2)=Vname(2,idWdip)
-          Vinfo( 3)=Vname(3,idWdip)
-          Vinfo(14)=Vname(4,idWdip)
-          Vinfo(16)=Vname(1,idtime)
-          status=def_var(ng, model, STA(ng)%ncid, STA(ng)%Vid(idWdip),  &
-     &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
-     &                   SetFillVal = .TRUE.,                           &
-     &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-# endif
-# ifdef WAVES_TOP_PERIOD
-!
-!  Define wind-induced surface wave period.
-!
-        IF (Sout(idWptp,ng)) THEN
-          Vinfo( 1)=Vname(1,idWptp)
-          Vinfo( 2)=Vname(2,idWptp)
-          Vinfo( 3)=Vname(3,idWptp)
-          Vinfo(14)=Vname(4,idWptp)
-          Vinfo(16)=Vname(1,idtime)
-          status=def_var(ng, model, STA(ng)%ncid, STA(ng)%Vid(idWptp),  &
-     &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
-     &                   SetFillVal = .TRUE.,                           &
-     &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-
-# endif
-# ifdef WAVES_BOT_PERIOD
-!
-!  Define wind-induced bottom wave period.
-!
-        IF (Sout(idWpbt,ng)) THEN
-          Vinfo( 1)=Vname(1,idWpbt)
-          Vinfo( 2)=Vname(2,idWpbt)
-          Vinfo( 3)=Vname(3,idWpbt)
-          Vinfo(14)=Vname(4,idWpbt)
-          Vinfo(16)=Vname(1,idtime)
-          status=def_var(ng, model, STA(ng)%ncid, STA(ng)%Vid(idWpbt),  &
-     &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
-     &                   SetFillVal = .TRUE.,                           &
-     &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-
-# endif
-# ifdef WAVES_UB
-!
-!  Define wind-induced wave bottom orbital velocity.
-!
-        IF (Sout(idWorb,ng)) THEN
-          Vinfo( 1)=Vname(1,idWorb)
-          Vinfo( 2)=Vname(2,idWorb)
-          Vinfo( 3)=Vname(3,idWorb)
-          Vinfo(14)=Vname(4,idWorb)
-          Vinfo(16)=Vname(1,idtime)
-          status=def_var(ng, model, STA(ng)%ncid, STA(ng)%Vid(idWorb),  &
-     &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
-     &                   SetFillVal = .TRUE.,                           &
-     &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-# endif
-# ifdef WAVES_DSPR
-!
-!  Define waves directional spreading.
-!
-        IF (Sout(idWvds,ng)) THEN
-          Vinfo( 1)=Vname(1,idWvds)
-          Vinfo( 2)=Vname(2,idWvds)
-          Vinfo( 3)=Vname(3,idWvds)
-          Vinfo(14)=Vname(4,idWvds)
-          Vinfo(16)=Vname(1,idtime)
-          status=def_var(ng, model, STA(ng)%ncid, STA(ng)%Vid(idWvds),  &
-     &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
-     &                   SetFillVal = .TRUE.,                           &
-     &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-!
-!  Define wave spectrum peakedness.
-!
-        IF (Sout(idWvqp,ng)) THEN
-          Vinfo( 1)=Vname(1,idWvqp)
-          Vinfo( 2)=Vname(2,idWvqp)
-          Vinfo( 3)=Vname(3,idWvqp)
-          Vinfo(14)=Vname(4,idWvqp)
-          Vinfo(16)=Vname(1,idtime)
-          status=def_var(ng, model, STA(ng)%ncid, STA(ng)%Vid(idWvqp),  &
-     &                   NF_FOUT, 2, pgrd, Aval, Vinfo, ncname,         &
-     &                   SetFillVal = .TRUE.,                           &
-     &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-# endif
 # ifdef WET_DRY
 !
 !  Write out wet/dry mask at RHO-points.
@@ -1381,10 +975,33 @@
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 # endif
+
+# if defined BBL_MODEL || defined WAVES_OUTPUT
+!
+!-----------------------------------------------------------------------
+!  Define the bottom boundary layer model or waves variables.
+!-----------------------------------------------------------------------
+!
+        CALL bbl_def_station_nf90 (ng, model, ldef, Sout, STA,          &
+     &                             pgrd, rgrd)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+# endif
+
+# ifdef SEDIMENT
+!
+!-----------------------------------------------------------------------
+!  Define the sediment model variables.
+!-----------------------------------------------------------------------
+!
+        CALL sediment_def_station_nf90 (ng, model, ldef, Sout, STA,     &
+     &                                  bgrd, pgrd, rgrd)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+# endif
+
 # if defined WEC || defined WEC_VF
 !
 !-----------------------------------------------------------------------
-!  Define Waves Effect on Currents variables.
+!  Define the Waves Effect on Currents variables.
 !-----------------------------------------------------------------------
 !
         CALL wec_def_station_nf90 (ng, model, ldef, Sout, STA,          &
@@ -1580,88 +1197,6 @@
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idVbms))) THEN
             got_var(idVbms)=.TRUE.
             STA(ng)%Vid(idVbms)=var_id(i)
-# ifdef SOLVE3D
-#  ifdef BBL_MODEL
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idUbrs))) THEN
-            got_var(idUbrs)=.TRUE.
-            STA(ng)%Vid(idUbrs)=var_id(i)
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idVbrs))) THEN
-            got_var(idVbrs)=.TRUE.
-            STA(ng)%Vid(idVbrs)=var_id(i)
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idUbws))) THEN
-            got_var(idUbws)=.TRUE.
-            STA(ng)%Vid(idUbws)=var_id(i)
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idVbws))) THEN
-            got_var(idVbws)=.TRUE.
-            STA(ng)%Vid(idVbws)=var_id(i)
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idUbcs))) THEN
-            got_var(idUbcs)=.TRUE.
-            STA(ng)%Vid(idUbcs)=var_id(i)
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idVbcs))) THEN
-            got_var(idVbcs)=.TRUE.
-            STA(ng)%Vid(idVbcs)=var_id(i)
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idUbot))) THEN
-            got_var(idUbot)=.TRUE.
-            STA(ng)%Vid(idUbot)=var_id(i)
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idVbot))) THEN
-            got_var(idVbot)=.TRUE.
-            STA(ng)%Vid(idVbot)=var_id(i)
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idUbur))) THEN
-            got_var(idUbur)=.TRUE.
-            STA(ng)%Vid(idUbur)=var_id(i)
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idVbvr))) THEN
-            got_var(idVbvr)=.TRUE.
-            STA(ng)%Vid(idVbvr)=var_id(i)
-#  endif
-# endif
-# ifdef WAVES_HEIGHT
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idWamp))) THEN
-            got_var(idWamp)=.TRUE.
-            STA(ng)%Vid(idWamp)=var_id(i)
-# endif
-# ifdef WAVES_LENGTH
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idWlen))) THEN
-            got_var(idWlen)=.TRUE.
-            STA(ng)%Vid(idWlen)=var_id(i)
-# endif
-# ifdef WAVES_LENGTHP
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idWlep))) THEN
-            got_var(idWlep)=.TRUE.
-            STA(ng)%Vid(idWlep)=var_id(i)
-# endif
-# ifdef WAVES_DIR
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idWdir))) THEN
-            got_var(idWdir)=.TRUE.
-            STA(ng)%Vid(idWdir)=var_id(i)
-# endif
-# ifdef WAVES_DIRP
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idWdip))) THEN
-            got_var(idWdip)=.TRUE.
-            STA(ng)%Vid(idWdip)=var_id(i)
-# endif
-# ifdef WAVES_TOP_PERIOD
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idWptp))) THEN
-            got_var(idWptp)=.TRUE.
-            STA(ng)%Vid(idWptp)=var_id(i)
-# endif
-# ifdef WAVES_BOT_PERIOD
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idWpbt))) THEN
-            got_var(idWpbt)=.TRUE.
-            STA(ng)%Vid(idWpbt)=var_id(i)
-# endif
-# ifdef WAVES_UB
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idWorb))) THEN
-            got_var(idWorb)=.TRUE.
-            STA(ng)%Vid(idWorb)=var_id(i)
-# endif
-# ifdef WAVES_DSPR
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idWvds))) THEN
-            got_var(idWvds)=.TRUE.
-            STA(ng)%Vid(idWvds)=var_id(i)
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idWvqp))) THEN
-            got_var(idWvqp)=.TRUE.
-            STA(ng)%Vid(idWvqp)=var_id(i)
-# endif
 # ifdef WET_DRY
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idRwet))) THEN
             got_var(idRwet)=.TRUE.
@@ -1681,32 +1216,6 @@
               STA(ng)%Tid(itrc)=var_id(i)
             END IF
           END DO
-#  ifdef SEDIMENT
-          DO itrc=1,NST
-            IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idfrac(itrc)))) THEN
-              got_var(idfrac(itrc))=.TRUE.
-              STA(ng)%Vid(idfrac(itrc))=var_id(i)
-            ELSE IF (TRIM(var_name(i)).eq.                              &
-     &               TRIM(Vname(1,idBmas(itrc)))) THEN
-              got_var(idBmas(itrc))=.TRUE.
-              STA(ng)%Vid(idBmas(itrc))=var_id(i)
-            END IF
-          END DO
-          DO itrc=1,MBEDP
-            IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idSbed(itrc)))) THEN
-              got_var(idSbed(itrc))=.TRUE.
-              STA(ng)%Vid(idSbed(itrc))=var_id(i)
-            END IF
-          END DO
-#  endif
-#  if defined SEDIMENT || defined BBL_MODEL
-          DO itrc=1,MBOTP
-            IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idBott(itrc)))) THEN
-              got_var(idBott(itrc))=.TRUE.
-              STA(ng)%Vid(idBott(itrc))=var_id(i)
-            END IF
-          END DO
-#  endif
 # endif
         END DO
 !
@@ -1960,148 +1469,6 @@
           exit_flag=3
           RETURN
         END IF
-# ifdef SOLVE3D
-#  ifdef BBL_MODEL
-        IF (.not.got_var(idUbrs).and.Sout(idUbrs,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idUbrs)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-        IF (.not.got_var(idVbrs).and.Sout(idVbrs,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idVbrs)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-        IF (.not.got_var(idUbws).and.Sout(idUbws,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idUbws)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-        IF (.not.got_var(idVbws).and.Sout(idVbws,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idVbws)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-        IF (.not.got_var(idUbcs).and.Sout(idUbcs,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idUbcs)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-        IF (.not.got_var(idVbcs).and.Sout(idVbcs,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idVbcs)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-        IF (.not.got_var(idUbot).and.Sout(idUbot,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idUbot)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-        IF (.not.got_var(idVbot).and.Sout(idVbot,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idVbot)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-        IF (.not.got_var(idUbur).and.Sout(idUbur,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idUbur)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-        IF (.not.got_var(idVbvr).and.Sout(idVbvr,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idVbvr)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-#  endif
-# endif
-# ifdef WAVES_HEIGHT
-        IF (.not.got_var(idWamp).and.Sout(idWamp,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idWamp)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-# endif
-# ifdef WAVES_LENGTH
-        IF (.not.got_var(idWlen).and.Sout(idWlen,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idWlen)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-# endif
-# ifdef WAVES_LENGTHP
-        IF (.not.got_var(idWlep).and.Sout(idWlep,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idWlep)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-# endif
-# ifdef WAVES_DIR
-        IF (.not.got_var(idWdir).and.Sout(idWdir,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idWdir)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-# endif
-# ifdef WAVES_DIRP
-        IF (.not.got_var(idWdip).and.Sout(idWdip,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idWdip)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-# endif
-# ifdef WAVES_DSPR
-        IF (.not.got_var(idWvds).and.Sout(idWvds,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idWvds)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-        IF (.not.got_var(idWvqp).and.Sout(idWvqp,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idWvqp)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-# endif
-# ifdef WAVES_TOP_PERIOD
-        IF (.not.got_var(idWptp).and.Sout(idWptp,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idWptp)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-# endif
-# ifdef WAVES_BOT_PERIOD
-        IF (.not.got_var(idWpbt).and.Sout(idWpbt,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idWpbt)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-# endif
-# ifdef WAVES_UB
-        IF (.not.got_var(idWorb).and.Sout(idWorb,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idWorb)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-# endif
 # ifdef WET_DRY
         IF (.not.got_var(idRwet).and.Sout(idRwet,ng)) THEN
           IF (Master) WRITE (stdout,60) TRIM(Vname(1,idRwet)),          &
@@ -2131,41 +1498,27 @@
             RETURN
           END IF
         END DO
-#  ifdef SEDIMENT
-        DO i=1,NST
-          IF (.not.got_var(idfrac(i)).and.Sout(idfrac(i),ng)) THEN
-            IF (Master) WRITE (stdout,60) TRIM(Vname(1,idfrac(i))),     &
-     &                                    TRIM(ncname)
-            exit_flag=3
-            RETURN
-          END IF
-          IF (.not.got_var(idBmas(i)).and.Sout(idBmas(i),ng)) THEN
-            IF (Master) WRITE (stdout,60) TRIM(Vname(1,idBmas(i))),     &
-     &                                    TRIM(ncname)
-            exit_flag=3
-            RETURN
-          END IF
-        END DO
-        DO i=1,MBEDP
-          IF (.not.got_var(idSbed(i)).and.Sout(idSbed(i),ng)) THEN
-            IF (Master) WRITE (stdout,60) TRIM(Vname(1,idSbed(i))),     &
-     &                                    TRIM(ncname)
-            exit_flag=3
-            RETURN
-          END IF
-        END DO
-#  endif
-#  if defined SEDIMENT || defined BBL_MODEL
-        DO i=1,MBOTP
-          IF (.not.got_var(idBott(i)).and.Sout(idBott(i),ng)) THEN
-            IF (Master) WRITE (stdout,60) TRIM(Vname(1,idBott(i))),     &
-     &                                    TRIM(ncname)
-            exit_flag=3
-            RETURN
-          END IF
-        END DO
-#  endif
 # endif
+
+# if defined BBL_MODEL || defined WAVES_OUTPUT
+!
+!  Scan bottom boundary layer model and waves variables from input
+!  NetCDF and activate switches for station variables. Get variable IDs.
+!
+        CALL bbl_def_station_nf90 (ng, model, ldef, Sout, STA)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+
+# endif
+
+# ifdef SEDIMENT
+!
+!  Scan sediment model variables from input NetCDF and activate
+!  switches for station variables. Get variable IDs.
+!
+        CALL sediment_def_station_nf90 (ng, model, ldef, Sout, STA)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+# endif
+
 # if defined WEC || defined WEC_VF
 !
 !  Scan Waves Effect on Currents variables from input NetCDF and
@@ -2426,28 +1779,6 @@
      &                   SetParAccess = .TRUE.)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
-
-#  if defined SEDIMENT && defined SED_MORPH
-!
-!  Define time-varying bathymetry.
-!
-        IF (Sout(idbath,ng)) THEN
-          Vinfo( 1)=Vname(1,idbath)
-          Vinfo( 2)=Vname(2,idbath)
-          Vinfo( 3)=Vname(3,idbath)
-          Vinfo(14)=Vname(4,idbath)
-          Vinfo(16)=Vname(1,idtime)
-          STA(ng)%pioVar(idbath)%dkind=PIO_FOUT
-          STA(ng)%pioVar(idbath)%gtype=0
-!
-          status=def_var(ng, model, STA(ng)%pioFile,                    &
-     &                   STA(ng)%pioVar(idbath)%vd,                     &
-     &                   PIO_FOUT, 2, pgrd, Aval, Vinfo, ncname,        &
-     &                   SetFillVal = .FALSE.,                          &
-     &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-#  endif
 !
 !  Define 2D momentum in the XI-direction.
 !
@@ -3167,498 +2498,6 @@
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 
-#  ifdef SOLVE3D
-#   ifdef BBL_MODEL
-!
-!  Define bottom U-current stress.
-!
-        IF (Sout(idUbrs,ng)) THEN
-          Vinfo( 1)=Vname(1,idUbrs)
-          Vinfo( 2)=Vname(2,idUbrs)
-          Vinfo( 3)=Vname(3,idUbrs)
-          Vinfo(14)=Vname(4,idUbrs)
-          Vinfo(16)=Vname(1,idtime)
-          STA(ng)%pioVar(idUbrs)%dkind=PIO_FOUT
-          STA(ng)%pioVar(idUbrs)%gtype=0
-!
-          status=def_var(ng, model, STA(ng)%pioFile,                    &
-     &                   STA(ng)%pioVar(idUbrs)%vd,                     &
-     &                   PIO_FOUT, 2, pgrd, Aval, Vinfo, ncname,        &
-     &                   SetFillVal = .TRUE.,                           &
-     &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-!
-!  Define bottom V-current stress.
-!
-        IF (Sout(idVbrs,ng)) THEN
-          Vinfo( 1)=Vname(1,idVbrs)
-          Vinfo( 2)=Vname(2,idVbrs)
-          Vinfo( 3)=Vname(3,idVbrs)
-          Vinfo(14)=Vname(4,idVbrs)
-          Vinfo(16)=Vname(1,idtime)
-          STA(ng)%pioVar(idVbrs)%dkind=PIO_FOUT
-          STA(ng)%pioVar(idVbrs)%gtype=0
-!
-          status=def_var(ng, model, STA(ng)%pioFile,                    &
-     &                   STA(ng)%pioVar(idVbrs)%vd,                     &
-     &                   PIO_FOUT, 2, pgrd, Aval, Vinfo, ncname,        &
-     &                   SetFillVal = .TRUE.,                           &
-     &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-!
-!  Define wind-induced, bottom U-wave stress.
-!
-        IF (Sout(idUbws,ng)) THEN
-          Vinfo( 1)=Vname(1,idUbws)
-          Vinfo( 2)=Vname(2,idUbws)
-          Vinfo( 3)=Vname(3,idUbws)
-          Vinfo(14)=Vname(4,idUbws)
-          Vinfo(16)=Vname(1,idtime)
-          STA(ng)%pioVar(idUbws)%dkind=PIO_FOUT
-          STA(ng)%pioVar(idUbws)%gtype=0
-!
-          status=def_var(ng, model, STA(ng)%pioFile,                    &
-     &                   STA(ng)%pioVar(idUbws)%vd,                     &
-     &                   PIO_FOUT, 2, pgrd, Aval, Vinfo, ncname,        &
-     &                   SetFillVal = .TRUE.,                           &
-     &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-!
-!  Define bottom wind-induced, bottom V-wave stress.
-!
-        IF (Sout(idVbws,ng)) THEN
-          Vinfo( 1)=Vname(1,idVbws)
-          Vinfo( 2)=Vname(2,idVbws)
-          Vinfo( 3)=Vname(3,idVbws)
-          Vinfo(14)=Vname(4,idVbws)
-          Vinfo(16)=Vname(1,idtime)
-          STA(ng)%pioVar(idVbws)%dkind=PIO_FOUT
-          STA(ng)%pioVar(idVbws)%gtype=0
-!
-          status=def_var(ng, model, STA(ng)%pioFile,                    &
-     &                   STA(ng)%pioVar(idVbws)%vd,                     &
-     &                   PIO_FOUT, 2, pgrd, Aval, Vinfo, ncname,        &
-     &                   SetFillVal = .TRUE.,                           &
-     &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-!
-!  Define maximum wind and current, bottom U-wave stress.
-!
-        IF (Sout(idUbcs,ng)) THEN
-          Vinfo( 1)=Vname(1,idUbcs)
-          Vinfo( 2)=Vname(2,idUbcs)
-          Vinfo( 3)=Vname(3,idUbcs)
-          Vinfo(14)=Vname(4,idUbcs)
-          Vinfo(16)=Vname(1,idtime)
-          STA(ng)%pioVar(idUbcs)%dkind=PIO_FOUT
-          STA(ng)%pioVar(idUbcs)%gtype=0
-!
-          status=def_var(ng, model, STA(ng)%pioFile,                    &
-     &                   STA(ng)%pioVar(idUbcs)%vd,                     &
-     &                   PIO_FOUT, 2, pgrd, Aval, Vinfo, ncname,        &
-     &                   SetFillVal = .TRUE.,                           &
-     &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-!
-!  Define maximum wind and current, bottom V-wave stress.
-!
-        IF (Sout(idVbcs,ng)) THEN
-          Vinfo( 1)=Vname(1,idVbcs)
-          Vinfo( 2)=Vname(2,idVbcs)
-          Vinfo( 3)=Vname(3,idVbcs)
-          Vinfo(14)=Vname(4,idVbcs)
-          Vinfo(16)=Vname(1,idtime)
-          STA(ng)%pioVar(idVbcs)%dkind=PIO_FOUT
-          STA(ng)%pioVar(idVbcs)%gtype=0
-!
-          status=def_var(ng, model, STA(ng)%pioFile,                    &
-     &                   STA(ng)%pioVar(idVbcs)%vd,                     &
-     &                   PIO_FOUT, 2, pgrd, Aval, Vinfo, ncname,        &
-     &                   SetFillVal = .TRUE.,                           &
-     &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-!
-!  Define wind-induced, bed wave orbital U-velocity.
-!
-        IF (Sout(idUbot,ng)) THEN
-          Vinfo( 1)=Vname(1,idUbot)
-          Vinfo( 2)=Vname(2,idUbot)
-          Vinfo( 3)=Vname(3,idUbot)
-          Vinfo(14)=Vname(4,idUbot)
-          Vinfo(16)=Vname(1,idtime)
-          STA(ng)%pioVar(idUbot)%dkind=PIO_FOUT
-          STA(ng)%pioVar(idUbot)%gtype=0
-!
-          status=def_var(ng, model, STA(ng)%pioFile,                    &
-     &                   STA(ng)%pioVar(idUbot)%vd,                     &
-     &                   PIO_FOUT, 2, pgrd, Aval, Vinfo, ncname,        &
-     &                   SetFillVal = .TRUE.,                           &
-     &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-!
-!  Define wind-induced, bed wave orbital V-velocity.
-!
-        IF (Sout(idVbot,ng)) THEN
-          Vinfo( 1)=Vname(1,idVbot)
-          Vinfo( 2)=Vname(2,idVbot)
-          Vinfo( 3)=Vname(3,idVbot)
-          Vinfo(14)=Vname(4,idVbot)
-          Vinfo(16)=Vname(1,idtime)
-          STA(ng)%pioVar(idVbot)%dkind=PIO_FOUT
-          STA(ng)%pioVar(idVbot)%gtype=0
-!
-          status=def_var(ng, model, STA(ng)%pioFile,                    &
-     &                   STA(ng)%pioVar(idVbot)%vd,                     &
-     &                   PIO_FOUT, 2, pgrd, Aval, Vinfo, ncname,        &
-     &                   SetFillVal = .TRUE.,                           &
-     &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-!
-!  Define bottom U-momentum above bed.
-!
-        IF (Sout(idUbur,ng)) THEN
-          Vinfo( 1)=Vname(1,idUbur)
-          Vinfo( 2)=Vname(2,idUbur)
-          Vinfo( 3)=Vname(3,idUbur)
-          Vinfo(14)=Vname(4,idUbur)
-          Vinfo(16)=Vname(1,idtime)
-          STA(ng)%pioVar(idUbur)%dkind=PIO_FOUT
-          STA(ng)%pioVar(idUbur)%gtype=0
-!
-          status=def_var(ng, model, STA(ng)%pioFile,                    &
-     &                   STA(ng)%pioVar(idUbur)%vd,                     &
-     &                   PIO_FOUT, 2, pgrd, Aval, Vinfo, ncname,        &
-     &                   SetFillVal = .TRUE.,                           &
-     &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-!
-!  Define bottom V-momentum above bed.
-!
-        IF (Sout(idVbvr,ng)) THEN
-          Vinfo( 1)=Vname(1,idVbvr)
-          Vinfo( 2)=Vname(2,idVbvr)
-          Vinfo( 3)=Vname(3,idVbvr)
-          Vinfo(14)=Vname(4,idVbvr)
-          Vinfo(16)=Vname(1,idtime)
-          STA(ng)%pioVar(idVbvr)%dkind=PIO_FOUT
-          STA(ng)%pioVar(idVbvr)%gtype=0
-!
-          status=def_var(ng, model, STA(ng)%pioFile,                    &
-     &                   STA(ng)%pioVar(idVbvr)%vd,                     &
-     &                   PIO_FOUT, 2, pgrd, Aval, Vinfo, ncname,        &
-     &                   SetFillVal = .TRUE.,                           &
-     &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-#   endif
-#   ifdef SEDIMENT
-!
-!  Define sediment fraction of each size class in each bed layer.
-!
-        DO i=1,NST
-          IF (Sout(idfrac(i),ng)) THEN
-            Vinfo( 1)=Vname(1,idfrac(i))
-            Vinfo( 2)=Vname(2,idfrac(i))
-            Vinfo( 3)=Vname(3,idfrac(i))
-            Vinfo(14)=Vname(4,idfrac(i))
-            Vinfo(16)=Vname(1,idtime)
-            WRITE (Vinfo(19),40) 1000.0_r8*Sd50(i,ng)
-            STA(ng)%pioVar(idfrac(i))%dkind=PIO_FOUT
-            STA(ng)%pioVar(idfrac(i))%gtype=0
-!
-            status=def_var(ng, model, STA(ng)%pioFile,                  &
-     &                     STA(ng)%pioVar(idfrac(i))%vd,                &
-     &                     PIO_FOUT, 3, bgrd, Aval, Vinfo, ncname,      &
-     &                     SetFillVal = .TRUE.,                         &
-     &                     SetParAccess = .TRUE.)
-            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-          END IF
-!
-!  Define sediment mass of each size class in each bed layer.
-!
-          IF (Sout(idBmas(i),ng)) THEN
-            Vinfo( 1)=Vname(1,idBmas(i))
-            Vinfo( 2)=Vname(2,idBmas(i))
-            Vinfo( 3)=Vname(3,idBmas(i))
-            Vinfo(14)=Vname(4,idBmas(i))
-            Vinfo(16)=Vname(1,idtime)
-            WRITE (Vinfo(19),40) 1000.0_r8*Sd50(i,ng)
-            STA(ng)%pioVar(idBmas(i))%dkind=PIO_FOUT
-            STA(ng)%pioVar(idBmas(i))%gtype=0
-!
-            status=def_var(ng, model, STA(ng)%pioFile,                  &
-     &                     STA(ng)%pioVar(idBmas(i))%vd,                &
-     &                     PIO_FOUT, 3, bgrd, Aval, Vinfo, ncname,      &
-     &                     SetFillVal = .TRUE.,                         &
-     &                     SetParAccess = .TRUE.)
-            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-          END IF
-        END DO
-!
-!  Define sediment properties in each bed layer.
-!
-        DO i=1,MBEDP
-          IF (Sout(idSbed(i),ng)) THEN
-            Vinfo( 1)=Vname(1,idSbed(i))
-            Vinfo( 2)=Vname(2,idSbed(i))
-            Vinfo( 3)=Vname(3,idSbed(i))
-            Vinfo(14)=Vname(4,idSbed(i))
-            Vinfo(16)=Vname(1,idtime)
-            STA(ng)%pioVar(idSbed(i))%dkind=PIO_FOUT
-            STA(ng)%pioVar(idSbed(i))%gtype=0
-!
-            status=def_var(ng, model, STA(ng)%pioFile,                  &
-     &                     STA(ng)%pioVar(idSbed(i))%vd,                &
-     &                     PIO_FOUT, 3, bgrd, Aval, Vinfo, ncname,      &
-     &                     SetFillVal = .TRUE.,                         &
-     &                     SetParAccess = .TRUE.)
-            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-          END IF
-        END DO
-#   endif
-#   if defined SEDIMENT || defined BBL_MODEL
-!
-!  Define exposed sediment layer properties.
-!
-        DO i=1,MBOTP
-          IF (Sout(idBott(i),ng)) THEN
-            Vinfo( 1)=Vname(1,idBott(i))
-            Vinfo( 2)=Vname(2,idBott(i))
-            Vinfo( 3)=Vname(3,idBott(i))
-            Vinfo(14)=Vname(4,idBott(i))
-            Vinfo(16)=Vname(1,idtime)
-            STA(ng)%pioVar(idBott(i))%dkind=PIO_FOUT
-            STA(ng)%pioVar(idBott(i))%gtype=0
-!
-            status=def_var(ng, model, STA(ng)%pioFile,                  &
-     &                     STA(ng)%pioVar(idBott(i))%vd,                &
-     &                     PIO_FOUT, 2, pgrd, Aval, Vinfo, ncname,      &
-     &                     SetFillVal = .TRUE.,                         &
-     &                     SetParAccess = .TRUE.)
-            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-          END IF
-        END DO
-#   endif
-#  endif
-#  ifdef WAVES_HEIGHT
-!
-!  Define wind-induced significant wave height.
-!
-        IF (Sout(idWamp,ng)) THEN
-          Vinfo( 1)=Vname(1,idWamp)
-          Vinfo( 2)=Vname(2,idWamp)
-          Vinfo( 3)=Vname(3,idWamp)
-          Vinfo(14)=Vname(4,idWamp)
-          Vinfo(16)=Vname(1,idtime)
-          STA(ng)%pioVar(idWamp)%dkind=PIO_FOUT
-          STA(ng)%pioVar(idWamp)%gtype=0
-!
-          status=def_var(ng, model, STA(ng)%pioFile,                    &
-     &                   STA(ng)%pioVar(idWamp)%vd,                     &
-     &                   PIO_FOUT, 2, pgrd, Aval, Vinfo, ncname,        &
-     &                   SetFillVal = .TRUE.,                           &
-     &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-#  endif
-#  ifdef WAVES_LENGTH
-!
-!  Define wind-induced mean wavelenght.
-!
-        IF (Sout(idWlen,ng)) THEN
-          Vinfo( 1)=Vname(1,idWlen)
-          Vinfo( 2)=Vname(2,idWlen)
-          Vinfo( 3)=Vname(3,idWlen)
-          Vinfo(14)=Vname(4,idWlen)
-          Vinfo(16)=Vname(1,idtime)
-          STA(ng)%pioVar(idWlen)%dkind=PIO_FOUT
-          STA(ng)%pioVar(idWlen)%gtype=0
-!
-          status=def_var(ng, model, STA(ng)%pioFile,                    &
-     &                   STA(ng)%pioVar(idWlen)%vd,                     &
-     &                   PIO_FOUT, 2, pgrd, Aval, Vinfo, ncname,        &
-     &                   SetFillVal = .TRUE.,                           &
-     &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-#  endif
-#  ifdef WAVES_LENGTHP
-!
-!  Define wind-induced peak wave wavelength.
-!
-        IF (Sout(idWlep,ng)) THEN
-          Vinfo( 1)=Vname(1,idWlep)
-          Vinfo( 2)=Vname(2,idWlep)
-          Vinfo( 3)=Vname(3,idWlep)
-          Vinfo(14)=Vname(4,idWlep)
-          Vinfo(16)=Vname(1,idtime)
-          STA(ng)%pioVar(idWlep)%dkind=PIO_FOUT
-          STA(ng)%pioVar(idWlep)%gtype=0
-!
-          status=def_var(ng, model, STA(ng)%pioFile,                    &
-     &                   STA(ng)%pioVar(idWlep)%vd,                     &
-     &                   PIO_FOUT, 2, pgrd, Aval, Vinfo, ncname,        &
-     &                   SetFillVal = .TRUE.,                           &
-     &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-#  endif
-#  ifdef WAVES_DIR
-!
-!  Define wind-induced wave direction.
-!
-        IF (Sout(idWdir,ng)) THEN
-          Vinfo( 1)=Vname(1,idWdir)
-          Vinfo( 2)=Vname(2,idWdir)
-          Vinfo( 3)=Vname(3,idWdir)
-          Vinfo(14)=Vname(4,idWdir)
-          Vinfo(16)=Vname(1,idtime)
-          STA(ng)%pioVar(idWdir)%dkind=PIO_FOUT
-          STA(ng)%pioVar(idWdir)%gtype=0
-!
-          status=def_var(ng, model, STA(ng)%pioFile,                    &
-     &                   STA(ng)%pioVar(idWdir)%vd,                     &
-     &                   PIO_FOUT, 2, pgrd, Aval, Vinfo, ncname,        &
-     &                   SetFillVal = .TRUE.,                           &
-     &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-#  endif
-#  ifdef WAVES_DIRP
-!
-!  Define wind-induced peak wave direction.
-!
-        IF (Sout(idWdip,ng)) THEN
-          Vinfo( 1)=Vname(1,idWdip)
-          Vinfo( 2)=Vname(2,idWdip)
-          Vinfo( 3)=Vname(3,idWdip)
-          Vinfo(14)=Vname(4,idWdip)
-          Vinfo(16)=Vname(1,idtime)
-          STA(ng)%pioVar(idWdip)%dkind=PIO_FOUT
-          STA(ng)%pioVar(idWdip)%gtype=0
-!
-          status=def_var(ng, model, STA(ng)%pioFile,                    &
-     &                   STA(ng)%pioVar(idWdip)%vd,                     &
-     &                   PIO_FOUT, 2, pgrd, Aval, Vinfo, ncname,        &
-     &                   SetFillVal = .TRUE.,                           &
-     &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-#  endif
-#  ifdef WAVES_TOP_PERIOD
-!
-!  Define wind-induced surface wave period.
-!
-        IF (Sout(idWptp,ng)) THEN
-          Vinfo( 1)=Vname(1,idWptp)
-          Vinfo( 2)=Vname(2,idWptp)
-          Vinfo( 3)=Vname(3,idWptp)
-          Vinfo(14)=Vname(4,idWptp)
-          Vinfo(16)=Vname(1,idtime)
-          STA(ng)%pioVar(idWptp)%dkind=PIO_FOUT
-          STA(ng)%pioVar(idWptp)%gtype=0
-!
-          status=def_var(ng, model, STA(ng)%pioFile,                    &
-     &                   STA(ng)%pioVar(idWptp)%vd,                     &
-     &                   PIO_FOUT, 2, pgrd, Aval, Vinfo, ncname,        &
-     &                   SetFillVal = .TRUE.,                           &
-     &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-
-#  endif
-#  ifdef WAVES_BOT_PERIOD
-!
-!  Define wind-induced bottom wave period.
-!
-        IF (Sout(idWpbt,ng)) THEN
-          Vinfo( 1)=Vname(1,idWpbt)
-          Vinfo( 2)=Vname(2,idWpbt)
-          Vinfo( 3)=Vname(3,idWpbt)
-          Vinfo(14)=Vname(4,idWpbt)
-          Vinfo(16)=Vname(1,idtime)
-          STA(ng)%pioVar(idWpbt)%dkind=PIO_FOUT
-          STA(ng)%pioVar(idWpbt)%gtype=0
-!
-          status=def_var(ng, model, STA(ng)%pioFile,                    &
-     &                   STA(ng)%pioVar(idWpbt)%vd,                     &
-     &                   PIO_FOUT, 2, pgrd, Aval, Vinfo, ncname,        &
-     &                   SetFillVal = .TRUE.,                           &
-     &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-
-#  endif
-#  ifdef WAVES_UB
-!
-!  Define wind-induced wave bottom orbital velocity.
-!
-        IF (Sout(idWorb,ng)) THEN
-          Vinfo( 1)=Vname(1,idWorb)
-          Vinfo( 2)=Vname(2,idWorb)
-          Vinfo( 3)=Vname(3,idWorb)
-          Vinfo(14)=Vname(4,idWorb)
-          Vinfo(16)=Vname(1,idtime)
-          STA(ng)%pioVar(idWorb)%dkind=PIO_FOUT
-          STA(ng)%pioVar(idWorb)%gtype=0
-!
-          status=def_var(ng, model, STA(ng)%pioFile,                    &
-     &                   STA(ng)%pioVar(idWorb)%vd,                     &
-     &                   PIO_FOUT, 2, pgrd, Aval, Vinfo, ncname,        &
-     &                   SetFillVal = .TRUE.,                           &
-     &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-#  endif
-#  ifdef WAVES_DSPR
-!
-!  Define waves directional spreading.
-!
-        IF (Sout(idWvds,ng)) THEN
-          Vinfo( 1)=Vname(1,idWvds)
-          Vinfo( 2)=Vname(2,idWvds)
-          Vinfo( 3)=Vname(3,idWvds)
-          Vinfo(14)=Vname(4,idWvds)
-          Vinfo(16)=Vname(1,idtime)
-          STA(ng)%pioVar(idWvds)%dkind=PIO_FOUT
-          STA(ng)%pioVar(idWvds)%gtype=0
-!
-          status=def_var(ng, model, STA(ng)%pioFile,                    &
-     &                   STA(ng)%pioVar(idWvds)%vd,                     &
-     &                   PIO_FOUT, 2, pgrd, Aval, Vinfo, ncname,        &
-     &                   SetFillVal = .TRUE.,                           &
-     &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-!
-!  Define wave spectrum peakedness.
-!
-        IF (Sout(idWvqp,ng)) THEN
-          Vinfo( 1)=Vname(1,idWvqp)
-          Vinfo( 2)=Vname(2,idWvqp)
-          Vinfo( 3)=Vname(3,idWvqp)
-          Vinfo(14)=Vname(4,idWvqp)
-          Vinfo(16)=Vname(1,idtime)
-          STA(ng)%pioVar(idWvqp)%dkind=PIO_FOUT
-          STA(ng)%pioVar(idWvqp)%gtype=0
-!
-          status=def_var(ng, model, STA(ng)%pioFile,                    &
-     &                   STA(ng)%pioVar(idWvqp)%vd,                     &
-     &                   PIO_FOUT, 2, pgrd, Aval, Vinfo, ncname,        &
-     &                   SetFillVal = .TRUE.,                           &
-     &                   SetParAccess = .TRUE.)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-#  endif
 #  ifdef WET_DRY
 !
 !  Write out wet/dry mask at RHO-points.
@@ -3718,14 +2557,37 @@
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 #  endif
+
+#  if defined BBL_MODEL || defined WAVES_OUTPUT
+!
+!-----------------------------------------------------------------------
+!  Define the bottom boundary layer model or waves variables.
+!-----------------------------------------------------------------------
+!
+        CALL bbl_def_station_pio (ng, model, ldef, Sout, STA,           &
+     &                            pgrd, rgrd)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+#  endif
+
+#  ifdef SEDIMENT
+!
+!-----------------------------------------------------------------------
+!  Define the sediment model variables.
+!-----------------------------------------------------------------------
+!
+        CALL sediment_def_station_pio (ng, model, ldef, Sout, STA,      &
+     &                                 bgrd, pgrd, rgrd)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+#  endif
+
 #  if defined WEC || defined WEC_VF
 !
 !-----------------------------------------------------------------------
-!  Define Waves Effect on Currents variables.
+!  Define the Waves Effect on Currents variables.
 !-----------------------------------------------------------------------
 !
         CALL wec_def_station_pio (ng, model, ldef, Sout, STA,           &
-     &                             pgrd, rgrd)
+     &                            pgrd, rgrd)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #  endif
 !
@@ -3793,13 +2655,6 @@
             STA(ng)%pioVar(idFsur)%vd=var_desc(i)
             STA(ng)%pioVar(idFsur)%dkind=PIO_FOUT
             STA(ng)%pioVar(idFsur)%gtype=0
-#  if defined SEDIMENT && defined SED_MORPH
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idbath))) THEN
-            got_var(idbath)=.TRUE.
-            STA(ng)%pioVar(idbath)%vd=var_desc(i)
-            STA(ng)%pioVar(idbath)%dkind=PIO_FOUT
-            STA(ng)%pioVar(idbath)%gtype=0
-#  endif
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idUbar))) THEN
             got_var(idUbar)=.TRUE.
             STA(ng)%pioVar(idUbar)%vd=var_desc(i)
@@ -3990,116 +2845,6 @@
             STA(ng)%pioVar(idVbms)%vd=var_desc(i)
             STA(ng)%pioVar(idVbms)%dkind=PIO_FOUT
             STA(ng)%pioVar(idVbms)%gtype=0
-#  ifdef SOLVE3D
-#   ifdef BBL_MODEL
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idUbrs))) THEN
-            got_var(idUbrs)=.TRUE.
-            STA(ng)%pioVar(idUbrs)%vd=var_desc(i)
-            STA(ng)%pioVar(idUbrs)%dkind=PIO_FOUT
-            STA(ng)%pioVar(idUbrs)%gtype=0
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idVbrs))) THEN
-            got_var(idVbrs)=.TRUE.
-            STA(ng)%pioVar(idVbrs)%vd=var_desc(i)
-            STA(ng)%pioVar(idVbrs)%dkind=PIO_FOUT
-            STA(ng)%pioVar(idVbrs)%gtype=0
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idUbws))) THEN
-            got_var(idUbws)=.TRUE.
-            STA(ng)%pioVar(idUbws)%vd=var_desc(i)
-            STA(ng)%pioVar(idUbws)%dkind=PIO_FOUT
-            STA(ng)%pioVar(idUbws)%gtype=0
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idVbws))) THEN
-            got_var(idVbws)=.TRUE.
-            STA(ng)%pioVar(idVbws)%vd=var_desc(i)
-            STA(ng)%pioVar(idVbws)%dkind=PIO_FOUT
-            STA(ng)%pioVar(idVbws)%gtype=0
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idUbcs))) THEN
-            got_var(idUbcs)=.TRUE.
-            STA(ng)%pioVar(idUbcs)%vd=var_desc(i)
-            STA(ng)%pioVar(idUbcs)%dkind=PIO_FOUT
-            STA(ng)%pioVar(idUbcs)%gtype=0
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idVbcs))) THEN
-            got_var(idVbcs)=.TRUE.
-            STA(ng)%pioVar(idVbcs)%vd=var_desc(i)
-            STA(ng)%pioVar(idVbcs)%dkind=PIO_FOUT
-            STA(ng)%pioVar(idVbcs)%gtype=0
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idUbot))) THEN
-            got_var(idUbot)=.TRUE.
-            STA(ng)%pioVar(idUbot)%vd=var_desc(i)
-            STA(ng)%pioVar(idUbot)%dkind=PIO_FOUT
-            STA(ng)%pioVar(idUbot)%gtype=0
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idVbot))) THEN
-            got_var(idVbot)=.TRUE.
-            STA(ng)%pioVar(idVbot)%vd=var_desc(i)
-            STA(ng)%pioVar(idVbot)%dkind=PIO_FOUT
-            STA(ng)%pioVar(idVbot)%gtype=0
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idUbur))) THEN
-            got_var(idUbur)=.TRUE.
-            STA(ng)%pioVar(idUbur)%vd=var_desc(i)
-            STA(ng)%pioVar(idUbur)%dkind=PIO_FOUT
-            STA(ng)%pioVar(idUbur)%gtype=0
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idVbvr))) THEN
-            got_var(idVbvr)=.TRUE.
-            STA(ng)%pioVar(idVbvr)%vd=var_desc(i)
-            STA(ng)%pioVar(idVbvr)%dkind=PIO_FOUT
-            STA(ng)%pioVar(idVbvr)%gtype=0
-#   endif
-#  endif
-#  ifdef WAVES_HEIGHT
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idWamp))) THEN
-            got_var(idWamp)=.TRUE.
-            STA(ng)%pioVar(idWamp)%vd=var_desc(i)
-            STA(ng)%pioVar(idWamp)%dkind=PIO_FOUT
-            STA(ng)%pioVar(idWamp)%gtype=0
-#  endif
-#  ifdef WAVES_LENGTH
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idWlen))) THEN
-            got_var(idWlen)=.TRUE.
-            STA(ng)%pioVar(idWlen)%vd=var_desc(i)
-            STA(ng)%pioVar(idWlen)%dkind=PIO_FOUT
-            STA(ng)%pioVar(idWlen)%gtype=0
-#  endif
-#  ifdef WAVES_LENGTHP
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idWlep))) THEN
-            got_var(idWlep)=.TRUE.
-            STA(ng)%pioVar(idWlep)%vd=var_desc(i)
-            STA(ng)%pioVar(idWlep)%dkind=PIO_FOUT
-            STA(ng)%pioVar(idWlep)%gtype=0
-#  endif
-#  ifdef WAVES_DIR
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idWdir))) THEN
-            got_var(idWdir)=.TRUE.
-            STA(ng)%pioVar(idWdir)%vd=var_desc(i)
-            STA(ng)%pioVar(idWdir)%dkind=PIO_FOUT
-            STA(ng)%pioVar(idWdir)%gtype=0
-#  endif
-#  ifdef WAVES_DIRP
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idWdip))) THEN
-            got_var(idWdip)=.TRUE.
-            STA(ng)%pioVar(idWdip)%vd=var_desc(i)
-            STA(ng)%pioVar(idWdip)%dkind=PIO_FOUT
-            STA(ng)%pioVar(idWdip)%gtype=0
-#  endif
-#  ifdef WAVES_TOP_PERIOD
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idWptp))) THEN
-            got_var(idWptp)=.TRUE.
-            STA(ng)%pioVar(idWptp)%vd=var_desc(i)
-            STA(ng)%pioVar(idWptp)%dkind=PIO_FOUT
-            STA(ng)%pioVar(idWptp)%gtype=0
-#  endif
-#  ifdef WAVES_BOT_PERIOD
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idWpbt))) THEN
-            got_var(idWpbt)=.TRUE.
-            STA(ng)%pioVar(idWpbt)%vd=var_desc(i)
-            STA(ng)%pioVar(idWpbt)%dkind=PIO_FOUT
-            STA(ng)%pioVar(idWpbt)%gtype=0
-#  endif
-#  ifdef WAVES_UB
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idWorb))) THEN
-            got_var(idWorb)=.TRUE.
-            STA(ng)%pioVar(idWorb)%vd=var_desc(i)
-            STA(ng)%pioVar(idWorb)%dkind=PIO_FOUT
-            STA(ng)%pioVar(idWorb)%gtype=0
-#  endif
 #  ifdef WET_DRY
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idRwet))) THEN
             got_var(idRwet)=.TRUE.
@@ -4127,40 +2872,6 @@
               STA(ng)%pioTrc(itrc)%gtype=0
             END IF
           END DO
-#   ifdef SEDIMENT
-          DO itrc=1,NST
-            IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idfrac(itrc)))) THEN
-              got_var(idfrac(itrc))=.TRUE.
-              STA(ng)%pioVar(idfrac(itrc))%vd=var_desc(i)
-              STA(ng)%pioVar(idfrac(itrc))%dkind=PIO_FOUT
-              STA(ng)%pioVar(idfrac(itrc))%gtype=0
-            ELSE IF (TRIM(var_name(i)).eq.                              &
-     &               TRIM(Vname(1,idBmas(itrc)))) THEN
-              got_var(idBmas(itrc))=.TRUE.
-              STA(ng)%pioVar(idBmas(itrc))%vd=var_desc(i)
-              STA(ng)%pioVar(idBmas(itrc))%dkind=PIO_FOUT
-              STA(ng)%pioVar(idBmas(itrc))%gtype=0
-            END IF
-          END DO
-          DO itrc=1,MBEDP
-            IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idSbed(itrc)))) THEN
-              got_var(idSbed(itrc))=.TRUE.
-              STA(ng)%pioVar(idSbed(itrc))%vd=var_desc(i)
-              STA(ng)%pioVar(idSbed(itrc))%dkind=PIO_FOUT
-              STA(ng)%pioVar(idSbed(itrc))%gtype=0
-            END IF
-          END DO
-#   endif
-#   if defined SEDIMENT || defined BBL_MODEL
-          DO itrc=1,MBOTP
-            IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idBott(itrc)))) THEN
-              got_var(idBott(itrc))=.TRUE.
-              STA(ng)%pioVar(idBott(itrc))%vd=var_desc(i)
-              STA(ng)%pioVar(idBott(itrc))%dkind=PIO_FOUT
-              STA(ng)%pioVar(idBott(itrc))%gtype=0
-            END IF
-          END DO
-#   endif
 #  endif
         END DO
 !
@@ -4178,14 +2889,7 @@
           exit_flag=3
           RETURN
         END IF
-#  if defined SEDIMENT && defined SED_MORPH
-        IF (.not.got_var(idbath).and.Sout(idbath,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idbath)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-#  endif
+
         IF (.not.got_var(idUbar).and.Sout(idUbar,ng)) THEN
           IF (Master) WRITE (stdout,60) TRIM(Vname(1,idUbar)),          &
      &                                  TRIM(ncname)
@@ -4410,148 +3114,6 @@
           exit_flag=3
           RETURN
         END IF
-#  ifdef SOLVE3D
-#   ifdef BBL_MODEL
-        IF (.not.got_var(idUbrs).and.Sout(idUbrs,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idUbrs)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-        IF (.not.got_var(idVbrs).and.Sout(idVbrs,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idVbrs)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-        IF (.not.got_var(idUbws).and.Sout(idUbws,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idUbws)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-        IF (.not.got_var(idVbws).and.Sout(idVbws,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idVbws)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-        IF (.not.got_var(idUbcs).and.Sout(idUbcs,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idUbcs)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-        IF (.not.got_var(idVbcs).and.Sout(idVbcs,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idVbcs)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-        IF (.not.got_var(idUbot).and.Sout(idUbot,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idUbot)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-        IF (.not.got_var(idVbot).and.Sout(idVbot,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idVbot)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-        IF (.not.got_var(idUbur).and.Sout(idUbur,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idUbur)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-        IF (.not.got_var(idVbvr).and.Sout(idVbvr,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idVbvr)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-#   endif
-#  endif
-#  ifdef WAVES_HEIGHT
-        IF (.not.got_var(idWamp).and.Sout(idWamp,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idWamp)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-#  endif
-#  ifdef WAVES_LENGTH
-        IF (.not.got_var(idWlen).and.Sout(idWlen,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idWlen)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-#  endif
-#  ifdef WAVES_LENGTHP
-        IF (.not.got_var(idWlep).and.Sout(idWlep,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idWlep)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-#  endif
-#  ifdef WAVES_DIR
-        IF (.not.got_var(idWdir).and.Sout(idWdir,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idWdir)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-#  endif
-#  ifdef WAVES_DIRP
-        IF (.not.got_var(idWdip).and.Sout(idWdip,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idWdip)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-#  endif
-#  ifdef WAVES_TOP_PERIOD
-        IF (.not.got_var(idWptp).and.Sout(idWptp,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idWptp)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-#  endif
-#  ifdef WAVES_BOT_PERIOD
-        IF (.not.got_var(idWpbt).and.Sout(idWpbt,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idWpbt)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-#  endif
-#  ifdef WAVES_UB
-        IF (.not.got_var(idWorb).and.Sout(idWorb,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idWorb)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-#  endif
-#  ifdef WAVES_DSPR
-        IF (.not.got_var(idWvds).and.Sout(idWvds,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idWvds)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-        IF (.not.got_var(idWvqp).and.Sout(idWvqp,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idWvqp)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-#  endif
 #  ifdef WET_DRY
         IF (.not.got_var(idRwet).and.Sout(idRwet,ng)) THEN
           IF (Master) WRITE (stdout,60) TRIM(Vname(1,idRwet)),          &
@@ -4581,41 +3143,26 @@
             RETURN
           END IF
         END DO
-#   ifdef SEDIMENT
-        DO i=1,NST
-          IF (.not.got_var(idfrac(i)).and.Sout(idfrac(i),ng)) THEN
-            IF (Master) WRITE (stdout,60) TRIM(Vname(1,idfrac(i))),     &
-     &                                    TRIM(ncname)
-            exit_flag=3
-            RETURN
-          END IF
-          IF (.not.got_var(idBmas(i)).and.Sout(idBmas(i),ng)) THEN
-            IF (Master) WRITE (stdout,60) TRIM(Vname(1,idBmas(i))),     &
-     &                                    TRIM(ncname)
-            exit_flag=3
-            RETURN
-          END IF
-        END DO
-        DO i=1,MBEDP
-          IF (.not.got_var(idSbed(i)).and.Sout(idSbed(i),ng)) THEN
-            IF (Master) WRITE (stdout,60) TRIM(Vname(1,idSbed(i))),     &
-     &                                    TRIM(ncname)
-            exit_flag=3
-            RETURN
-          END IF
-        END DO
-#   endif
-#   if defined SEDIMENT || defined BBL_MODEL
-        DO i=1,MBOTP
-          IF (.not.got_var(idBott(i)).and.Sout(idBott(i),ng)) THEN
-            IF (Master) WRITE (stdout,60) TRIM(Vname(1,idBott(i))),     &
-     &                                    TRIM(ncname)
-            exit_flag=3
-            RETURN
-          END IF
-        END DO
-#   endif
 #  endif
+
+#  if defined BBL_MODEL || defined WAVES_OUTPUT
+!
+!  Scan bottom boundary layer model and waves variables from input
+!  NetCDF and activate switches for station variables. Get variable IDs.
+!
+        CALL bbl_def_station_pio (ng, model, ldef, Sout, STA)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+#  endif
+
+#  ifdef SEDIMENT
+!
+!  Scan sediment model variables from input NetCDF and activate
+!  switches for station variables. Get variable IDs.
+!
+        CALL sediment_def_pio (ng, model, ldef, Sout, STA)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+#  endif
+
 #  if defined WEC || defined WEC_VF
 !
 !  Scan Waves Effect on Currents variables from input NetCDF and

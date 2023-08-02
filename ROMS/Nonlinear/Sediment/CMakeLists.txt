@@ -1,5 +1,5 @@
 # git $Id$
-# svn $Id: CMakeLists.txt 1151 2023-02-09 03:08:53Z arango $
+# svn $Id: CMakeLists.txt 1186 2023-08-02 01:08:21Z arango $
 #:::::::::::::::::::::::::::::::::::::::::::::::::::::: David Robertson :::
 # Copyright (c) 2002-2023 The ROMS/TOMS Group                           :::
 #   Licensed under a MIT/X style license                                :::
@@ -13,6 +13,7 @@ list( APPEND _files
       ROMS/Nonlinear/Sediment/sed_bedload.F
       ROMS/Nonlinear/Sediment/sed_fluxes.F
       ROMS/Nonlinear/Sediment/sediment.F
+      ROMS/Nonlinear/Sediment/sediment_output.F
       ROMS/Nonlinear/Sediment/sed_settling.F
       ROMS/Nonlinear/Sediment/sed_surface.F
 )
