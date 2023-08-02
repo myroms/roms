@@ -456,6 +456,7 @@ ifdef USE_TANGENT
 		ROMS/Tangent/Biology
 endif
  modules  +=	ROMS/Nonlinear \
+		ROMS/Nonlinear/BBL \
 		ROMS/Nonlinear/Biology \
 		ROMS/Nonlinear/Sediment \
 		ROMS/Functionals \
@@ -483,6 +484,7 @@ ifdef USE_TANGENT
 		ROMS/Tangent/Biology
 endif
  includes +=	ROMS/Nonlinear \
+		ROMS/Nonlinear/BBL \
 		ROMS/Nonlinear/Biology \
 		ROMS/Nonlinear/Sediment \
 		ROMS/Utility \

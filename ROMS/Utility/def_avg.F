@@ -6,7 +6,7 @@
    (defined TL_AVERAGES && defined TANGENT)
 !
 !git $Id$
-!svn $Id: def_avg.F 1178 2023-07-11 17:50:57Z arango $
+!svn $Id: def_avg.F 1185 2023-08-01 21:42:38Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -35,23 +35,35 @@
       USE mod_sediment
 # endif
 !
-      USE def_dim_mod,    ONLY : def_dim
-      USE def_info_mod,   ONLY : def_info
-      USE def_var_mod,    ONLY : def_var
-# ifdef ICE_MODEL
-      USE ice_output_mod, ONLY : ice_def_nf90
+# if (defined BBL_MODEL || defined WAVES_OUTPUT) && defined SOLVE3D
+      USE bbl_output_mod,      ONLY : bbl_def_nf90
 #  if defined PIO_LIB && defined DISTRIBUTE
-      USE ice_output_mod, ONLY : ice_def_pio
+      USE bbl_output_mod,      ONLY : bbl_def_pio
 #  endif
 # endif
-      USE strings_mod,    ONLY : FoundError
-#if defined WEC || defined WEC_VF
-      USE wec_output_mod, ONLY : wec_def_nf90
-# if defined PIO_LIB && defined DISTRIBUTE
-      USE wec_output_mod, ONLY : wec_def_pio
+      USE def_dim_mod,         ONLY : def_dim
+      USE def_info_mod,        ONLY : def_info
+      USE def_var_mod,         ONLY : def_var
+# if defined ICE_MODEL && defined SOLVE3D
+      USE ice_output_mod,      ONLY : ice_def_nf90
+#  if defined PIO_LIB && defined DISTRIBUTE
+      USE ice_output_mod,      ONLY : ice_def_pio
+#  endif
 # endif
-#endif
-      USE wrt_info_mod,   ONLY : wrt_info
+# if defined SEDIMENT && defined SOLVE3D
+      USE sediment_output_mod, ONLY : sediment_def_nf90
+#  if defined PIO_LIB && defined DISTRIBUTE
+      USE sediment_output_mod, ONLY : sediment_def_pio
+#  endif
+# endif
+      USE strings_mod,         ONLY : FoundError
+# if defined WEC_VF && defined SOLVE3D
+      USE wec_output_mod,      ONLY : wec_def_nf90
+#  if defined PIO_LIB && defined DISTRIBUTE
+      USE wec_output_mod,      ONLY : wec_def_pio
+#  endif
+# endif
+      USE wrt_info_mod,        ONLY : wrt_info
 !
       implicit none
 !
@@ -1783,507 +1795,44 @@
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 
-# ifdef BBL_MODEL
-!
-!  Define bottom current U-stress at rho points.
-!
-        IF (Aout(idUbrs,ng)) THEN
-          Vinfo( 1)=Vname(1,idUbrs)
-          WRITE (Vinfo( 2),'(a,1x,a)') Prefix, TRIM(Vname(2,idUbrs))
-          Vinfo( 3)=Vname(3,idUbrs)
-          Vinfo(14)=Vname(4,idUbrs)
-          Vinfo(16)=Vname(1,idtime)
-#  if defined WRITE_WATER && defined MASKING
-          Vinfo(20)='mask_rho'
-#  endif
-          Vinfo(21)=Vname(6,idUbrs)
-          Vinfo(22)='coordinates'
-          Aval(5)=REAL(Iinfo(1,idUbrs,ng),r8)
-          status=def_var(ng, model, AVG(ng)%ncid, AVG(ng)%Vid(idUbrs),  &
-     &                   NF_FOUT, nvd3, t2dgrd, Aval, Vinfo, ncname)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-!
-!  Define bottom current V-stress at rho points.
-!
-        IF (Aout(idVbrs,ng)) THEN
-          Vinfo( 1)=Vname(1,idVbrs)
-          WRITE (Vinfo( 2),'(a,1x,a)') Prefix, TRIM(Vname(2,idVbrs))
-          Vinfo( 3)=Vname(3,idVbrs)
-          Vinfo(14)=Vname(4,idVbrs)
-          Vinfo(16)=Vname(1,idtime)
-#  if defined WRITE_WATER && defined MASKING
-          Vinfo(20)='mask_rho'
-#  endif
-          Vinfo(21)=Vname(6,idVbrs)
-          Vinfo(22)='coordinates'
-          Aval(5)=REAL(Iinfo(1,idVbrs,ng),r8)
-          status=def_var(ng, model, AVG(ng)%ncid, AVG(ng)%Vid(idVbrs),  &
-     &                   NF_FOUT, nvd3, t2dgrd, Aval, Vinfo, ncname)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-!
-!  Define bottom wave U-stress at rho points.
-!
-        IF (Aout(idUbws,ng)) THEN
-          Vinfo( 1)=Vname(1,idUbws)
-          WRITE (Vinfo( 2),'(a,1x,a)') Prefix, TRIM(Vname(2,idUbws))
-          Vinfo( 3)=Vname(3,idUbws)
-          Vinfo(14)=Vname(4,idUbws)
-          Vinfo(16)=Vname(1,idtime)
-#  if defined WRITE_WATER && defined MASKING
-          Vinfo(20)='mask_rho'
-#  endif
-          Vinfo(21)=Vname(6,idUbws)
-          Vinfo(22)='coordinates'
-          Aval(5)=REAL(Iinfo(1,idUbws,ng),r8)
-          status=def_var(ng, model, AVG(ng)%ncid, AVG(ng)%Vid(idUbws),  &
-     &                   NF_FOUT, nvd3, t2dgrd, Aval, Vinfo, ncname)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-!
-!  Define bottom wave V-stress at rho points.
-!
-        IF (Aout(idVbws,ng)) THEN
-          Vinfo( 1)=Vname(1,idVbws)
-          WRITE (Vinfo( 2),'(a,1x,a)') Prefix, TRIM(Vname(2,idVbws))
-          Vinfo( 3)=Vname(3,idVbws)
-          Vinfo(14)=Vname(4,idVbws)
-          Vinfo(16)=Vname(1,idtime)
-#  if defined WRITE_WATER && defined MASKING
-          Vinfo(20)='mask_rho'
-#  endif
-          Vinfo(21)=Vname(6,idVbws)
-          Vinfo(22)='coordinates'
-          Aval(5)=REAL(Iinfo(1,idVbws,ng),r8)
-          status=def_var(ng, model, AVG(ng)%ncid, AVG(ng)%Vid(idVbws),  &
-     &                   NF_FOUT, nvd3, t2dgrd, Aval, Vinfo, ncname)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-!
-!  Define bottom max wave-current U-stress at rho points.
-!
-        IF (Aout(idUbcs,ng)) THEN
-          Vinfo( 1)=Vname(1,idUbcs)
-          WRITE (Vinfo( 2),'(a,1x,a)') Prefix, TRIM(Vname(2,idUbcs))
-          Vinfo( 3)=Vname(3,idUbcs)
-          Vinfo(14)=Vname(4,idUbcs)
-          Vinfo(16)=Vname(1,idtime)
-#  if defined WRITE_WATER && defined MASKING
-          Vinfo(20)='mask_rho'
-#  endif
-          Vinfo(21)=Vname(6,idUbcs)
-          Vinfo(22)='coordinates'
-          Aval(5)=REAL(Iinfo(1,idUbcs,ng),r8)
-          status=def_var(ng, model, AVG(ng)%ncid, AVG(ng)%Vid(idUbcs),  &
-     &                   NF_FOUT, nvd3, t2dgrd, Aval, Vinfo, ncname)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-!
-!  Define bottom max wave-current V-stress at rho points.
-!
-        IF (Aout(idVbcs,ng)) THEN
-          Vinfo( 1)=Vname(1,idVbcs)
-          WRITE (Vinfo( 2),'(a,1x,a)') Prefix, TRIM(Vname(2,idVbcs))
-          Vinfo( 3)=Vname(3,idVbcs)
-          Vinfo(14)=Vname(4,idVbcs)
-          Vinfo(16)=Vname(1,idtime)
-#  if defined WRITE_WATER && defined MASKING
-          Vinfo(20)='mask_rho'
-#  endif
-          Vinfo(21)=Vname(6,idVbcs)
-          Vinfo(22)='coordinates'
-          Aval(5)=REAL(Iinfo(1,idVbcs,ng),r8)
-          status=def_var(ng, model, AVG(ng)%ncid, AVG(ng)%Vid(idVbcs),  &
-     &                   NF_FOUT, nvd3, t2dgrd, Aval, Vinfo, ncname)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-!
-!  Define bottom max wave-current stress magnitude at rho points.
-!
-        IF (Aout(idUVwc,ng)) THEN
-          Vinfo( 1)=Vname(1,idUVwc)
-          WRITE (Vinfo( 2),'(a,1x,a)') Prefix, TRIM(Vname(2,idUVwc))
-          Vinfo( 3)=Vname(3,idUVwc)
-          Vinfo(14)=Vname(4,idUVwc)
-          Vinfo(16)=Vname(1,idtime)
-#  if defined WRITE_WATER && defined MASKING
-          Vinfo(20)='mask_rho'
-#  endif
-          Vinfo(21)=Vname(6,idUVwc)
-          Vinfo(22)='coordinates'
-          Aval(5)=REAL(Iinfo(1,idUVwc,ng),r8)
-          status=def_var(ng, model, AVG(ng)%ncid, AVG(ng)%Vid(idUVwc),  &
-     &                   NF_FOUT, nvd3, t2dgrd, Aval, Vinfo, ncname)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-!
-!  Define bed wave orbital U-velocity at rho points.
-!
-        IF (Aout(idUbot,ng)) THEN
-          Vinfo( 1)=Vname(1,idUbot)
-          WRITE (Vinfo( 2),'(a,1x,a)') Prefix, TRIM(Vname(2,idUbot))
-          Vinfo( 3)=Vname(3,idUbot)
-          Vinfo(14)=Vname(4,idUbot)
-          Vinfo(16)=Vname(1,idtime)
-#  if defined WRITE_WATER && defined MASKING
-          Vinfo(20)='mask_rho'
-#  endif
-          Vinfo(21)=Vname(6,idUbot)
-          Vinfo(22)='coordinates'
-          Aval(5)=REAL(Iinfo(1,idUbot,ng),r8)
-          status=def_var(ng, model, AVG(ng)%ncid, AVG(ng)%Vid(idUbot),  &
-     &                   NF_FOUT, nvd3, t2dgrd, Aval, Vinfo, ncname)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-!
-!  Define bed wave orbital V-velocity at rho points.
-!
-        IF (Aout(idVbot,ng)) THEN
-          Vinfo( 1)=Vname(1,idVbot)
-          WRITE (Vinfo( 2),'(a,1x,a)') Prefix, TRIM(Vname(2,idVbot))
-          Vinfo( 3)=Vname(3,idVbot)
-          Vinfo(14)=Vname(4,idVbot)
-          Vinfo(16)=Vname(1,idtime)
-#  if defined WRITE_WATER && defined MASKING
-          Vinfo(20)='mask_rho'
-#  endif
-          Vinfo(21)=Vname(6,idVbot)
-          Vinfo(22)='coordinates'
-          Aval(5)=REAL(Iinfo(1,idVbot,ng),r8)
-          status=def_var(ng, model, AVG(ng)%ncid, AVG(ng)%Vid(idVbot),  &
-     &                   NF_FOUT, nvd3, t2dgrd, Aval, Vinfo, ncname)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-!
-!  Define bottom U-velocity above bed at rho points.
-!
-        IF (Aout(idUbur,ng)) THEN
-          Vinfo( 1)=Vname(1,idUbur)
-          WRITE (Vinfo( 2),'(a,1x,a)') Prefix, TRIM(Vname(2,idUbur))
-          Vinfo( 3)=Vname(3,idUbur)
-          Vinfo(14)=Vname(4,idUbur)
-          Vinfo(16)=Vname(1,idtime)
-#  if defined WRITE_WATER && defined MASKING
-          Vinfo(20)='mask_rho'
-#  endif
-          Vinfo(21)=Vname(6,idUbur)
-          Vinfo(22)='coordinates'
-          Aval(5)=REAL(Iinfo(1,idUbur,ng),r8)
-          status=def_var(ng, model, AVG(ng)%ncid, AVG(ng)%Vid(idUbur),  &
-     &                   NF_FOUT, nvd3, t2dgrd, Aval, Vinfo, ncname)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-!
-!  Define bottom V-velocity above bed at rho points.
-!
-        IF (Aout(idVbvr,ng)) THEN
-          Vinfo( 1)=Vname(1,idVbvr)
-          WRITE (Vinfo( 2),'(a,1x,a)') Prefix, TRIM(Vname(2,idVbvr))
-          Vinfo( 3)=Vname(3,idVbvr)
-          Vinfo(14)=Vname(4,idVbvr)
-          Vinfo(16)=Vname(1,idtime)
-#  if defined WRITE_WATER && defined MASKING
-          Vinfo(20)='mask_rho'
-#  endif
-          Vinfo(21)=Vname(6,idVbvr)
-          Vinfo(22)='coordinates'
-          Aval(5)=REAL(Iinfo(1,idVbvr,ng),r8)
-          status=def_var(ng, model, AVG(ng)%ncid, AVG(ng)%Vid(idVbvr),  &
-     &                   NF_FOUT, nvd3, t2dgrd, Aval, Vinfo, ncname)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-# endif
-
-# if defined SEDIMENT && defined BEDLOAD
-!
-        DO i=1,NST
-!
-!  Define Bedload U-direction.
-!
-          IF (Aout(idUbld(i),ng)) THEN
-            Vinfo( 1)=Vname(1,idUbld(i))
-            WRITE (Vinfo( 2),'(a,1x,a)') Prefix,                        &
-     &                                   TRIM(Vname(2,idUbld(i)))
-            Vinfo( 3)=Vname(3,idUbld(i))
-            Vinfo(14)=Vname(4,idUbld(i))
-            Vinfo(16)=Vname(1,idtime)
-#  if defined WRITE_WATER && defined MASKING
-            Vinfo(20)='mask_u'
-#  endif
-            Vinfo(21)=Vname(6,idUbld(i))
-            Vinfo(22)='coordinates'
-            Aval(5)=REAL(Iinfo(1,idUbld(i),ng),r8)
-            status=def_var(ng, model, AVG(ng)%ncid,                     &
-     &                     AVG(ng)%Vid(idUbld(i)), NF_FOUT,             &
-     &                     nvd3, u2dgrd, Aval, Vinfo, ncname)
-            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-          END IF
-!
-!  Define Bedload V-direction.
-!
-          IF (Aout(idVbld(i),ng)) THEN
-            Vinfo( 1)=Vname(1,idVbld(i))
-            WRITE (Vinfo( 2),'(a,1x,a)') Prefix,                        &
-     &                                   TRIM(Vname(2,idVbld(i)))
-            Vinfo( 3)=Vname(3,idVbld(i))
-            Vinfo(14)=Vname(4,idVbld(i))
-            Vinfo(16)=Vname(1,idtime)
-#  if defined WRITE_WATER && defined MASKING
-            Vinfo(20)='mask_v'
-#  endif
-            Vinfo(21)=Vname(6,idVbld(i))
-            Vinfo(22)='coordinates'
-            Aval(5)=REAL(Iinfo(1,idVbld(i),ng),r8)
-            status=def_var(ng, model, AVG(ng)%ncid,                     &
-     &                     AVG(ng)%Vid(idVbld(i)), NF_FOUT,             &
-     &                     nvd3, v2dgrd, Aval, Vinfo, ncname)
-            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-          END IF
-        END DO
-# endif
-# ifdef WAVES_HEIGHT
-!
-!  Define wind-induced significant wave height.
-!
-        IF (Aout(idWamp,ng)) THEN
-          Vinfo( 1)=Vname(1,idWamp)
-          WRITE (Vinfo( 2),'(a,1x,a)') Prefix, TRIM(Vname(2,idWamp))
-          Vinfo( 3)=Vname(3,idWamp)
-          Vinfo(14)=Vname(4,idWamp)
-          Vinfo(16)=Vname(1,idtime)
-#  if defined WRITE_WATER && defined MASKING
-          Vinfo(20)='mask_rho'
-#  endif
-          Vinfo(21)=Vname(6,idWamp)
-          Vinfo(22)='coordinates'
-          Aval(5)=REAL(Iinfo(1,idWamp,ng),r8)
-          status=def_var(ng, model, AVG(ng)%ncid, AVG(ng)%Vid(idWamp),  &
-     &                   NF_FOUT, nvd3, t2dgrd, Aval, Vinfo, ncname)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-!
-!  Define wind-induced significant wave height squared.
-!
-        IF (Aout(idWam2,ng)) THEN
-          Vinfo( 1)=Vname(1,idWam2)
-          WRITE (Vinfo( 2),'(a,1x,a)') Prefix, TRIM(Vname(2,idWam2))
-          Vinfo( 3)=Vname(3,idWam2)
-          Vinfo(14)=Vname(4,idWam2)
-          Vinfo(16)=Vname(1,idtime)
-#  if defined WRITE_WATER && defined MASKING
-          Vinfo(20)='mask_rho'
-#  endif
-          Vinfo(21)=Vname(6,idWam2)
-          Vinfo(22)='coordinates'
-          Aval(5)=REAL(Iinfo(1,idWam2,ng),r8)
-          status=def_var(ng, model, AVG(ng)%ncid, AVG(ng)%Vid(idWam2),  &
-     &                   NF_FOUT, nvd3, t2dgrd, Aval, Vinfo, ncname)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-# endif
-# ifdef WAVES_LENGTH
-!
-!  Define wind-induced mean wavelength.
-!
-        IF (Aout(idWlen,ng)) THEN
-          Vinfo( 1)=Vname(1,idWlen)
-          WRITE (Vinfo( 2),'(a,1x,a)') Prefix, TRIM(Vname(2,idWlen))
-          Vinfo( 3)=Vname(3,idWlen)
-          Vinfo(14)=Vname(4,idWlen)
-          Vinfo(16)=Vname(1,idtime)
-#  if defined WRITE_WATER && defined MASKING
-          Vinfo(20)='mask_rho'
-#  endif
-          Vinfo(21)=Vname(6,idWlen)
-          Vinfo(22)='coordinates'
-          Aval(5)=REAL(Iinfo(1,idWlen,ng),r8)
-          status=def_var(ng, model, AVG(ng)%ncid, AVG(ng)%Vid(idWlen),  &
-     &                   NF_FOUT, nvd3, t2dgrd, Aval, Vinfo, ncname)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-# endif
-# ifdef WAVES_LENGTHP
-!
-!  Define wind-induced peak wave wavelength.
-!
-        IF (Aout(idWlep,ng)) THEN
-          Vinfo( 1)=Vname(1,idWlep)
-          WRITE (Vinfo( 2),'(a,1x,a)') Prefix, TRIM(Vname(2,idWlep))
-          Vinfo( 3)=Vname(3,idWlep)
-          Vinfo(14)=Vname(4,idWlep)
-          Vinfo(16)=Vname(1,idtime)
-#  if defined WRITE_WATER && defined MASKING
-          Vinfo(20)='mask_rho'
-#  endif
-          Vinfo(21)=Vname(6,idWlep)
-          Vinfo(22)='coordinates'
-          Aval(5)=REAL(Iinfo(1,idWlep,ng),r8)
-          status=def_var(ng, model, AVG(ng)%ncid, AVG(ng)%Vid(idWlep),  &
-     &                   NF_FOUT, nvd3, t2dgrd, Aval, Vinfo, ncname)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-# endif
-# ifdef WAVES_DIR
-!
-!  Define wind-induced mean wave direction.
-!
-        IF (Aout(idWdir,ng)) THEN
-          Vinfo( 1)=Vname(1,idWdir)
-          WRITE (Vinfo( 2),'(a,1x,a)') Prefix, TRIM(Vname(2,idWdir))
-          Vinfo( 3)=Vname(3,idWdir)
-          Vinfo(14)=Vname(4,idWdir)
-          Vinfo(16)=Vname(1,idtime)
-#  if defined WRITE_WATER && defined MASKING
-          Vinfo(20)='mask_rho'
-#  endif
-          Vinfo(21)=Vname(6,idWdir)
-          Vinfo(22)='coordinates'
-          Aval(5)=REAL(Iinfo(1,idWdir,ng),r8)
-          status=def_var(ng, model, AVG(ng)%ncid, AVG(ng)%Vid(idWdir),  &
-     &                   NF_FOUT, nvd3, t2dgrd, Aval, Vinfo, ncname)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-# endif
-# ifdef WAVES_DIRP
-!
-!  Define wind-induced peak wave direction.
-!
-        IF (Aout(idWdip,ng)) THEN
-          Vinfo( 1)=Vname(1,idWdip)
-          WRITE (Vinfo( 2),'(a,1x,a)') Prefix, TRIM(Vname(2,idWdip))
-          Vinfo( 3)=Vname(3,idWdip)
-          Vinfo(14)=Vname(4,idWdip)
-          Vinfo(16)=Vname(1,idtime)
-#  if defined WRITE_WATER && defined MASKING
-          Vinfo(20)='mask_rho'
-#  endif
-          Vinfo(21)=Vname(6,idWdip)
-          Vinfo(22)='coordinates'
-          Aval(5)=REAL(Iinfo(1,idWdip,ng),r8)
-          status=def_var(ng, model, AVG(ng)%ncid, AVG(ng)%Vid(idWdip),  &
-     &                   NF_FOUT, nvd3, t2dgrd, Aval, Vinfo, ncname)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-# endif
-# ifdef WAVES_TOP_PERIOD
-!
-!  Define wind-induced surface wave period.
-!
-        IF (Aout(idWptp,ng)) THEN
-          Vinfo( 1)=Vname(1,idWptp)
-          WRITE (Vinfo( 2),'(a,1x,a)') Prefix, TRIM(Vname(2,idWptp))
-          Vinfo( 3)=Vname(3,idWptp)
-          Vinfo(14)=Vname(4,idWptp)
-          Vinfo(16)=Vname(1,idtime)
-#  if defined WRITE_WATER && defined MASKING
-          Vinfo(20)='mask_rho'
-#  endif
-          Vinfo(21)=Vname(6,idWptp)
-          Vinfo(22)='coordinates'
-          Aval(5)=REAL(Iinfo(1,idWptp,ng),r8)
-          status=def_var(ng, model, AVG(ng)%ncid, AVG(ng)%Vid(idWptp),  &
-     &                   NF_FOUT, nvd3, t2dgrd, Aval, Vinfo, ncname)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-# endif
-# ifdef WAVES_BOT_PERIOD
-!
-!  Define wind-induced bottom wave period.
-!
-        IF (Aout(idWpbt,ng)) THEN
-          Vinfo( 1)=Vname(1,idWpbt)
-          WRITE (Vinfo( 2),'(a,1x,a)') Prefix, TRIM(Vname(2,idWpbt))
-          Vinfo( 3)=Vname(3,idWpbt)
-          Vinfo(14)=Vname(4,idWpbt)
-          Vinfo(16)=Vname(1,idtime)
-#  if defined WRITE_WATER && defined MASKING
-          Vinfo(20)='mask_rho'
-#  endif
-          Vinfo(21)=Vname(6,idWpbt)
-          Vinfo(22)='coordinates'
-          Aval(5)=REAL(Iinfo(1,idWpbt,ng),r8)
-          status=def_var(ng, model, AVG(ng)%ncid, AVG(ng)%Vid(idWpbt),  &
-     &                   NF_FOUT, nvd3, t2dgrd, Aval, Vinfo, ncname)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-# endif
-# if defined BBL_MODEL    || defined BEDLOAD_VANDERA || \
-     defined WAV_COUPLING
-!
-!  Define wind-induced wave bottom orbital velocity.
-!
-        IF (Aout(idWorb,ng)) THEN
-          Vinfo( 1)=Vname(1,idWorb)
-          WRITE (Vinfo( 2),'(a,1x,a)') Prefix, TRIM(Vname(2,idWorb))
-          Vinfo( 3)=Vname(3,idWorb)
-          Vinfo(14)=Vname(4,idWorb)
-          Vinfo(16)=Vname(1,idtime)
-#  if defined WRITE_WATER && defined MASKING
-          Vinfo(20)='mask_rho'
-#  endif
-          Vinfo(21)=Vname(6,idWorb)
-          Vinfo(22)='coordinates'
-          Aval(5)=REAL(Iinfo(1,idWorb,ng),r8)
-          status=def_var(ng, model, AVG(ng)%ncid, AVG(ng)%Vid(idWorb),  &
-     &                   NF_FOUT, nvd3, t2dgrd, Aval, Vinfo, ncname)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-# endif
-# ifdef UV_KIRBY
-!
-!  Define U-velocity from Kirby and Chen.
-!
-        IF (Aout(idUwav,ng)) THEN
-          Vinfo( 1)=Vname(1,idUwav)
-          WRITE (Vinfo( 2),'(a,1x,a)') Prefix, TRIM(Vname(2,idUwav))
-          Vinfo( 3)=Vname(3,idUwav)
-          Vinfo(14)=Vname(4,idUwav)
-          Vinfo(16)=Vname(1,idtime)
-#  if defined WRITE_WATER && defined MASKING
-          Vinfo(20)='mask_rho'
-#  endif
-          Vinfo(21)=Vname(6,idUwav)
-          Vinfo(22)='coordinates'
-          Aval(5)=REAL(Iinfo(1,idUwav,ng),r8)
-          status=def_var(ng, model, AVG(ng)%ncid, AVG(ng)%Vid(idUwav),  &
-     &                   NF_FOUT, nvd3, t2dgrd, Aval, Vinfo, ncname)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-!
-!  Define V-velocity from Kirby and Chen.
-!
-        IF (Aout(idVwav,ng)) THEN
-          Vinfo( 1)=Vname(1,idVwav)
-          WRITE (Vinfo( 2),'(a,1x,a)') Prefix, TRIM(Vname(2,idVwav))
-          Vinfo( 3)=Vname(3,idVwav)
-          Vinfo(14)=Vname(4,idVwav)
-          Vinfo(16)=Vname(1,idtime)
-#  if defined WRITE_WATER && defined MASKING
-          Vinfo(20)='mask_rho'
-#  endif
-          Vinfo(21)=Vname(6,idVwav)
-          Vinfo(22)='coordinates'
-          Aval(5)=REAL(Iinfo(1,idVwav,ng),r8)
-          status=def_var(ng, model, AVG(ng)%ncid, AVG(ng)%Vid(idVwav),  &
-     &                   NF_FOUT, nvd3, t2dgrd, Aval, Vinfo, ncname)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-# endif
-# ifdef ICE_MODEL
+# if (defined BBL_MODEL || defined WAVES_OUTPUT) && defined SOLVE3D
 !
 !-----------------------------------------------------------------------
-!  Define seaice model variables.
+!  Define the bottom boundary layer model or waves variables.
+!-----------------------------------------------------------------------
+!
+        CALL bbl_def_nf90 (ng, model, ldef, Aout, AVG,                  &
+     &                     t2dgrd, u2dgrd, v2dgrd)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+# endif
+
+# if defined ICE_MODEL && defined SOLVE3D
+!
+!-----------------------------------------------------------------------
+!  Define the sea-ice model variables.
 !-----------------------------------------------------------------------
 !
         CALL ice_def_nf90 (ng, model, ldef, Aout, AVG,                  &
      &                     t2dgrd, u2dgrd, v2dgrd)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 # endif
-# if defined WEC || defined WEC_VF
+
+# if defined SEDIMENT && defined SOLVE3D
 !
 !-----------------------------------------------------------------------
-!  Define Waves Effect on Currents variables.
+!  Define the sediment model variables.
+!-----------------------------------------------------------------------
+!
+        CALL sediment_def_nf90 (ng, model, ldef, Aout, AVG,             &
+     &                          t2dgrd, u2dgrd, v2dgrd,                 &
+     &                          b3dgrd)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+# endif
+
+# if defined WEC_VF && defined SOLVE3D
+!
+!-----------------------------------------------------------------------
+!  Define the Waves Effect on Currents variables.
 !-----------------------------------------------------------------------
 !
         CALL wec_def_nf90 (ng, model, ldef, Aout, AVG,                  &
@@ -2590,58 +2139,6 @@
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idVbvr))) THEN
             got_var(idVbvr)=.TRUE.
             AVG(ng)%Vid(idVbvr)=var_id(i)
-# ifdef WAVES_HEIGHT
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idWamp))) THEN
-            got_var(idWamp)=.TRUE.
-            AVG(ng)%Vid(idWamp)=var_id(i)
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idWam2))) THEN
-            got_var(idWam2)=.TRUE.
-            AVG(ng)%Vid(idWam2)=var_id(i)
-# endif
-# ifdef WAVES_LENGTH
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idWlen))) THEN
-            got_var(idWlen)=.TRUE.
-            AVG(ng)%Vid(idWlen)=var_id(i)
-# endif
-# ifdef WAVES_LENGTHP
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idWlep))) THEN
-            got_var(idWlep)=.TRUE.
-            AVG(ng)%Vid(idWlep)=var_id(i)
-# endif
-# ifdef WAVES_DIR
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idWdir))) THEN
-            got_var(idWdir)=.TRUE.
-            AVG(ng)%Vid(idWdir)=var_id(i)
-# endif
-# ifdef WAVES_DIRP
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idWdip))) THEN
-            got_var(idWdip)=.TRUE.
-            AVG(ng)%Vid(idWdip)=var_id(i)
-# endif
-# ifdef WAVES_TOP_PERIOD
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idWptp))) THEN
-            got_var(idWptp)=.TRUE.
-            AVG(ng)%Vid(idWptp)=var_id(i)
-# endif
-# ifdef WAVES_BOT_PERIOD
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idWpbt))) THEN
-            got_var(idWpbt)=.TRUE.
-            AVG(ng)%Vid(idWpbt)=var_id(i)
-# endif
-# if defined BBL_MODEL    || defined BEDLOAD_VANDERA || \
-     defined WAV_COUPLING
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idWorb))) THEN
-            got_var(idWorb)=.TRUE.
-            AVG(ng)%Vid(idWorb)=var_id(i)
-# endif
-# ifdef UV_KIRBY
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idUwav))) THEN
-            got_var(idUwav)=.TRUE.
-            AVG(ng)%Vid(idUwav)=var_id(i)
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idVwav))) THEN
-            got_var(idVwav)=.TRUE.
-            AVG(ng)%Vid(idVwav)=var_id(i)
-# endif
           END IF
 # ifdef SOLVE3D
           DO itrc=1,NT(ng)
@@ -2677,18 +2174,6 @@
             IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idTrcD(itrc)))) THEN
               got_var(idTrcD(itrc))=.TRUE.
               AVG(ng)%Vid(idTrcD(itrc))=var_id(i)
-            END IF
-          END DO
-#  endif
-#  if defined SEDIMENT && defined BEDLOAD
-          DO itrc=1,NST
-            IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idUbld(itrc)))) THEN
-              got_var(idUbld(itrc))=.true.
-              AVG(ng)%Vid(idUbld(itrc))=var_id(i)
-            ELSE IF (TRIM(var_name(i)).eq.                              &
-     &               TRIM(Vname(1,idVbld(itrc)))) THEN
-              got_var(idVbld(itrc))=.true.
-              AVG(ng)%Vid(idVbld(itrc))=var_id(i)
             END IF
           END DO
 #  endif
@@ -3073,161 +2558,6 @@
           exit_flag=3
           RETURN
         END IF
-# ifdef BBL_MODEL
-        IF (.not.got_var(idUbrs).and.Aout(idUbrs,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idUbrs)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-        IF (.not.got_var(idVbrs).and.Aout(idVbrs,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idVbrs)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-        IF (.not.got_var(idUbws).and.Aout(idUbws,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idUbws)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-        IF (.not.got_var(idVbws).and.Aout(idVbws,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idVbws)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-        IF (.not.got_var(idUbcs).and.Aout(idUbcs,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idUbcs)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-        IF (.not.got_var(idVbcs).and.Aout(idVbcs,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idVbcs)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-        IF (.not.got_var(idUVwc).and.Aout(idUVwc,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idUVwc)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-
-        IF (.not.got_var(idUbot).and.Aout(idUbot,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idUbot)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-        IF (.not.got_var(idVbot).and.Aout(idVbot,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idVbot)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-        IF (.not.got_var(idUbur).and.Aout(idUbur,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idUbur)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-        IF (.not.got_var(idVbvr).and.Aout(idVbvr,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idVbvr)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-# endif
-# ifdef WAVES_HEIGHT
-        IF (.not.got_var(idWamp).and.Aout(idWamp,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idWamp)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-        IF (.not.got_var(idWam2).and.Aout(idWam2,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idWam2)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-# endif
-# ifdef WAVES_LENGTH
-        IF (.not.got_var(idWlen).and.Aout(idWlen,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idWlen)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-            AVG(ng)%Vid(idWlen)=var_id(i)
-# endif
-# ifdef WAVES_LENGTHP
-        IF (.not.got_var(idWlep).and.Aout(idWlep,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idWlep)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-# endif
-# ifdef WAVES_DIR
-        IF (.not.got_var(idWdir).and.Aout(idWdir,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idWdir)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-# endif
-# ifdef WAVES_DIRP
-        IF (.not.got_var(idWdip).and.Aout(idWdip,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idWdip)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-# endif
-# ifdef WAVES_TOP_PERIOD
-        IF (.not.got_var(idWptp).and.Aout(idWptp,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idWptp)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-# endif
-# ifdef WAVES_BOT_PERIOD
-        IF (.not.got_var(idWpbt).and.Aout(idWpbt,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idWpbt)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-# endif
-# if defined BBL_MODEL    || defined BEDLOAD_VANDERA || \
-     defined WAV_COUPLING
-        IF (.not.got_var(idWorb).and.Aout(idWorb,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idWorb)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-# endif
-# ifdef UV_KIRBY
-        IF (.not.got_var(idUwav).and.Aout(idUwav,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idUwav)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-        IF (.not.got_var(idVwav).and.Aout(idVwav,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idVwav)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-# endif
 # ifdef SOLVE3D
         DO itrc=1,NT(ng)
           IF (.not.got_var(idTvar(itrc)).and.Aout(idTvar(itrc),ng)) THEN
@@ -3279,31 +2609,36 @@
           END IF
         END DO
 #  endif
-#  if defined SEDIMENT && defined BEDLOAD
-        DO i=1,NST
-          IF (.not.got_var(idUbld(i)).and.Aout(idUbld(i),ng)) THEN
-            IF (Master) WRITE (stdout,60) TRIM(Vname(1,idUbld(i))),     &
-     &                                    TRIM(ncname)
-            exit_flag=3
-            RETURN
-          END IF
-          IF (.not.got_var(idVbld(i)).and.Aout(idVbld(i),ng)) THEN
-            IF (Master) WRITE (stdout,60) TRIM(Vname(1,idVbld(i))),     &
-     &                                    TRIM(ncname)
-            exit_flag=3
-            RETURN
-          END IF
-        END DO
-#  endif
 # endif
-# ifdef ICE_MODEL
+
+# if (defined BBL_MODEL || defined WAVES_OUTPUT) && defined SOLVE3D
+!
+!  Scan bottom boundary layer model and waves variables from input
+!  NetCDF and activate switches for time-averaged variables. Get
+!  variable IDs.
+!
+        CALL bbl_def_nf90 (ng, model, ldef, Aout, AVG)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+# endif
+
+# if defined ICE_MODEL && defined SOLVE3D
 !
 !  Scan sea-ice variables from input NetCDF and activate switches for
 !  time-averaged variables. Get variable IDs.
 !
         CALL ice_def_nf90 (ng, model, ldef, Aout, AVG)
 # endif
-# if defined WEC || defined WEC_VF
+
+# if defined SEDIMENT && defined SOLVE3D
+!
+!  Scan sediment model variables from input NetCDF and activate
+!  switches for time-averaged variables. Get variable IDs.
+!
+        CALL sediment_def_nf90 (ng, model, ldef, Aout, AVG)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+# endif
+
+# if defined WEC_VF && defined SOLVE3D
 !
 !  Scan Waves Effect on Currents variables from input NetCDF and
 !  activate switches for time-averaged variables. Get variable IDs.
@@ -5284,600 +4619,43 @@
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 
-#  ifdef BBL_MODEL
-!
-!  Define bottom current U-stress at rho points.
-!
-        IF (Aout(idUbrs,ng)) THEN
-          Vinfo( 1)=Vname(1,idUbrs)
-          WRITE (Vinfo( 2),'(a,1x,a)') Prefix, TRIM(Vname(2,idUbrs))
-          Vinfo( 3)=Vname(3,idUbrs)
-          Vinfo(14)=Vname(4,idUbrs)
-          Vinfo(16)=Vname(1,idtime)
-#   if defined WRITE_WATER && defined MASKING
-          Vinfo(20)='mask_rho'
-#   endif
-          Vinfo(21)=Vname(6,idUbrs)
-          Vinfo(22)='coordinates'
-          Aval(5)=REAL(Iinfo(1,idUbrs,ng),r8)
-          AVG(ng)%pioVar(idUbrs)%dkind=PIO_FOUT
-          AVG(ng)%pioVar(idUbrs)%gtype=r2dvar
-!
-          status=def_var(ng, model, AVG(ng)%pioFile,                    &
-     &                   AVG(ng)%pioVar(idUbrs)%vd,                     &
-     &                   PIO_FOUT, nvd3, t2dgrd, Aval, Vinfo, ncname)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-!
-!  Define bottom current V-stress at rho points.
-!
-        IF (Aout(idVbrs,ng)) THEN
-          Vinfo( 1)=Vname(1,idVbrs)
-          WRITE (Vinfo( 2),'(a,1x,a)') Prefix, TRIM(Vname(2,idVbrs))
-          Vinfo( 3)=Vname(3,idVbrs)
-          Vinfo(14)=Vname(4,idVbrs)
-          Vinfo(16)=Vname(1,idtime)
-#   if defined WRITE_WATER && defined MASKING
-          Vinfo(20)='mask_rho'
-#   endif
-          Vinfo(21)=Vname(6,idVbrs)
-          Vinfo(22)='coordinates'
-          Aval(5)=REAL(Iinfo(1,idVbrs,ng),r8)
-          AVG(ng)%pioVar(idVbrs)%dkind=PIO_FOUT
-          AVG(ng)%pioVar(idVbrs)%gtype=r2dvar
-!
-          status=def_var(ng, model, AVG(ng)%pioFile,                    &
-     &                   AVG(ng)%pioVar(idVbrs)%vd,                     &
-     &                   PIO_FOUT, nvd3, t2dgrd, Aval, Vinfo, ncname)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-!
-!  Define bottom wave U-stress at rho points.
-!
-        IF (Aout(idUbws,ng)) THEN
-          Vinfo( 1)=Vname(1,idUbws)
-          WRITE (Vinfo( 2),'(a,1x,a)') Prefix, TRIM(Vname(2,idUbws))
-          Vinfo( 3)=Vname(3,idUbws)
-          Vinfo(14)=Vname(4,idUbws)
-          Vinfo(16)=Vname(1,idtime)
-#   if defined WRITE_WATER && defined MASKING
-          Vinfo(20)='mask_rho'
-#   endif
-          Vinfo(21)=Vname(6,idUbws)
-          Vinfo(22)='coordinates'
-          Aval(5)=REAL(Iinfo(1,idUbws,ng),r8)
-          AVG(ng)%pioVar(idUbws)%dkind=PIO_FOUT
-          AVG(ng)%pioVar(idUbws)%gtype=r2dvar
-!
-          status=def_var(ng, model, AVG(ng)%pioFile,                    &
-     &                   AVG(ng)%pioVar(idUbws)%vd,                     &
-     &                   PIO_FOUT, nvd3, t2dgrd, Aval, Vinfo, ncname)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-!
-!  Define bottom wave V-stress at rho points.
-!
-        IF (Aout(idVbws,ng)) THEN
-          Vinfo( 1)=Vname(1,idVbws)
-          WRITE (Vinfo( 2),'(a,1x,a)') Prefix, TRIM(Vname(2,idVbws))
-          Vinfo( 3)=Vname(3,idVbws)
-          Vinfo(14)=Vname(4,idVbws)
-          Vinfo(16)=Vname(1,idtime)
-#   if defined WRITE_WATER && defined MASKING
-          Vinfo(20)='mask_rho'
-#   endif
-          Vinfo(21)=Vname(6,idVbws)
-          Vinfo(22)='coordinates'
-          Aval(5)=REAL(Iinfo(1,idVbws,ng),r8)
-          AVG(ng)%pioVar(idVbws)%dkind=PIO_FOUT
-          AVG(ng)%pioVar(idVbws)%gtype=r2dvar
-!
-          status=def_var(ng, model, AVG(ng)%pioFile,                    &
-     &                   AVG(ng)%pioVar(idVbws)%vd,                     &
-     &                   PIO_FOUT, nvd3, t2dgrd, Aval, Vinfo, ncname)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-!
-!  Define bottom max wave-current U-stress at rho points.
-!
-        IF (Aout(idUbcs,ng)) THEN
-          Vinfo( 1)=Vname(1,idUbcs)
-          WRITE (Vinfo( 2),'(a,1x,a)') Prefix, TRIM(Vname(2,idUbcs))
-          Vinfo( 3)=Vname(3,idUbcs)
-          Vinfo(14)=Vname(4,idUbcs)
-          Vinfo(16)=Vname(1,idtime)
-#   if defined WRITE_WATER && defined MASKING
-          Vinfo(20)='mask_rho'
-#   endif
-          Vinfo(21)=Vname(6,idUbcs)
-          Vinfo(22)='coordinates'
-          Aval(5)=REAL(Iinfo(1,idUbcs,ng),r8)
-          AVG(ng)%pioVar(idUbcs)%dkind=PIO_FOUT
-          AVG(ng)%pioVar(idUbcs)%gtype=r2dvar
-!
-          status=def_var(ng, model, AVG(ng)%pioFile,                    &
-     &                   AVG(ng)%pioVar(idUbcs)%vd,                     &
-     &                   PIO_FOUT, nvd3, t2dgrd, Aval, Vinfo, ncname)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-!
-!  Define bottom max wave-current V-stress at rho points.
-!
-        IF (Aout(idVbcs,ng)) THEN
-          Vinfo( 1)=Vname(1,idVbcs)
-          WRITE (Vinfo( 2),'(a,1x,a)') Prefix, TRIM(Vname(2,idVbcs))
-          Vinfo( 3)=Vname(3,idVbcs)
-          Vinfo(14)=Vname(4,idVbcs)
-          Vinfo(16)=Vname(1,idtime)
-#   if defined WRITE_WATER && defined MASKING
-          Vinfo(20)='mask_rho'
-#   endif
-          Vinfo(21)=Vname(6,idVbcs)
-          Vinfo(22)='coordinates'
-          Aval(5)=REAL(Iinfo(1,idVbcs,ng),r8)
-          AVG(ng)%pioVar(idVbcs)%dkind=PIO_FOUT
-          AVG(ng)%pioVar(idVbcs)%gtype=r2dvar
-!
-          status=def_var(ng, model, AVG(ng)%pioFile,                    &
-     &                   AVG(ng)%pioVar(idVbcs)%vd,                     &
-     &                   PIO_FOUT, nvd3, t2dgrd, Aval, Vinfo, ncname)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-!
-!  Define bottom max wave-current stress magnitude at rho points.
-!
-        IF (Aout(idUVwc,ng)) THEN
-          Vinfo( 1)=Vname(1,idUVwc)
-          WRITE (Vinfo( 2),'(a,1x,a)') Prefix, TRIM(Vname(2,idUVwc))
-          Vinfo( 3)=Vname(3,idUVwc)
-          Vinfo(14)=Vname(4,idUVwc)
-          Vinfo(16)=Vname(1,idtime)
-#   if defined WRITE_WATER && defined MASKING
-          Vinfo(20)='mask_rho'
-#   endif
-          Vinfo(21)=Vname(6,idUVwc)
-          Vinfo(22)='coordinates'
-          Aval(5)=REAL(Iinfo(1,idUVwc,ng),r8)
-          AVG(ng)%pioVar(idUVwc)%dkind=PIO_FOUT
-          AVG(ng)%pioVar(idUVwc)%gtype=r2dvar
-!
-          status=def_var(ng, model, AVG(ng)%pioFile,                    &
-     &                   AVG(ng)%pioVar(idUVwc)%vd,                     &
-     &                   PIO_FOUT, nvd3, t2dgrd, Aval, Vinfo, ncname)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-!
-!  Define bed wave orbital U-velocity at rho points.
-!
-        IF (Aout(idUbot,ng)) THEN
-          Vinfo( 1)=Vname(1,idUbot)
-          WRITE (Vinfo( 2),'(a,1x,a)') Prefix, TRIM(Vname(2,idUbot))
-          Vinfo( 3)=Vname(3,idUbot)
-          Vinfo(14)=Vname(4,idUbot)
-          Vinfo(16)=Vname(1,idtime)
-#   if defined WRITE_WATER && defined MASKING
-          Vinfo(20)='mask_rho'
-#   endif
-          Vinfo(21)=Vname(6,idUbot)
-          Vinfo(22)='coordinates'
-          Aval(5)=REAL(Iinfo(1,idUbot,ng),r8)
-          AVG(ng)%pioVar(idUbot)%dkind=PIO_FOUT
-          AVG(ng)%pioVar(idUbot)%gtype=r2dvar
-!
-          status=def_var(ng, model, AVG(ng)%pioFile,                    &
-     &                   AVG(ng)%pioVar(idUbot)%vd,                     &
-     &                   PIO_FOUT, nvd3, t2dgrd, Aval, Vinfo, ncname)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-!
-!  Define bed wave orbital V-velocity at rho points.
-!
-        IF (Aout(idVbot,ng)) THEN
-          Vinfo( 1)=Vname(1,idVbot)
-          WRITE (Vinfo( 2),'(a,1x,a)') Prefix, TRIM(Vname(2,idVbot))
-          Vinfo( 3)=Vname(3,idVbot)
-          Vinfo(14)=Vname(4,idVbot)
-          Vinfo(16)=Vname(1,idtime)
-#   if defined WRITE_WATER && defined MASKING
-          Vinfo(20)='mask_rho'
-#   endif
-          Vinfo(21)=Vname(6,idVbot)
-          Vinfo(22)='coordinates'
-          Aval(5)=REAL(Iinfo(1,idVbot,ng),r8)
-          AVG(ng)%pioVar(idVbot)%dkind=PIO_FOUT
-          AVG(ng)%pioVar(idVbot)%gtype=r2dvar
-!
-          status=def_var(ng, model, AVG(ng)%pioFile,                    &
-     &                   AVG(ng)%pioVar(idVbot)%vd,                     &
-     &                   PIO_FOUT, nvd3, t2dgrd, Aval, Vinfo, ncname)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-!
-!  Define bottom U-velocity above bed at rho points.
-!
-        IF (Aout(idUbur,ng)) THEN
-          Vinfo( 1)=Vname(1,idUbur)
-          WRITE (Vinfo( 2),'(a,1x,a)') Prefix, TRIM(Vname(2,idUbur))
-          Vinfo( 3)=Vname(3,idUbur)
-          Vinfo(14)=Vname(4,idUbur)
-          Vinfo(16)=Vname(1,idtime)
-#   if defined WRITE_WATER && defined MASKING
-          Vinfo(20)='mask_rho'
-#   endif
-          Vinfo(21)=Vname(6,idUbur)
-          Vinfo(22)='coordinates'
-          Aval(5)=REAL(Iinfo(1,idUbur,ng),r8)
-          AVG(ng)%pioVar(idUbur)%dkind=PIO_FOUT
-          AVG(ng)%pioVar(idUbur)%gtype=r2dvar
-!
-          status=def_var(ng, model, AVG(ng)%pioFile,                    &
-     &                   AVG(ng)%pioVar(idUbur)%vd,                     &
-     &                   PIO_FOUT, nvd3, t2dgrd, Aval, Vinfo, ncname)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-!
-!  Define bottom V-velocity above bed at rho points.
-!
-        IF (Aout(idVbvr,ng)) THEN
-          Vinfo( 1)=Vname(1,idVbvr)
-          WRITE (Vinfo( 2),'(a,1x,a)') Prefix, TRIM(Vname(2,idVbvr))
-          Vinfo( 3)=Vname(3,idVbvr)
-          Vinfo(14)=Vname(4,idVbvr)
-          Vinfo(16)=Vname(1,idtime)
-#   if defined WRITE_WATER && defined MASKING
-          Vinfo(20)='mask_rho'
-#   endif
-          Vinfo(21)=Vname(6,idVbvr)
-          Vinfo(22)='coordinates'
-          Aval(5)=REAL(Iinfo(1,idVbvr,ng),r8)
-          AVG(ng)%pioVar(idVbur)%dkind=PIO_FOUT
-          AVG(ng)%pioVar(idVbur)%gtype=r2dvar
-!
-          status=def_var(ng, model, AVG(ng)%pioFile,                    &
-     &                   AVG(ng)%pioVar(idVbur)%vd,                     &
-     &                   PIO_FOUT, nvd3, t2dgrd, Aval, Vinfo, ncname)
-        END IF
-#  endif
-
-#  if defined SEDIMENT && defined BEDLOAD
-!
-        DO i=1,NST
-!
-!  Define Bedload U-direction.
-!
-          IF (Aout(idUbld(i),ng)) THEN
-            Vinfo( 1)=Vname(1,idUbld(i))
-            WRITE (Vinfo( 2),'(a,1x,a)') Prefix,                        &
-     &                                   TRIM(Vname(2,idUbld(i)))
-            Vinfo( 3)=Vname(3,idUbld(i))
-            Vinfo(14)=Vname(4,idUbld(i))
-            Vinfo(16)=Vname(1,idtime)
-#   if defined WRITE_WATER && defined MASKING
-            Vinfo(20)='mask_u'
-#   endif
-            Vinfo(21)=Vname(6,idUbld(i))
-            Vinfo(22)='coordinates'
-            Aval(5)=REAL(Iinfo(1,idUbld(i),ng),r8)
-            AVG(ng)%pioVar(idUbld(i))%dkind=PIO_FOUT
-            AVG(ng)%pioVar(idUbld(i))%gtype=u2dvar
-!
-            status=def_var(ng, model, AVG(ng)%pioFile,                  &
-     &                     AVG(ng)%pioVar(idUbld(i))%vd,                &
-     &                     PIO_FOUT, nvd3, u2dgrd, Aval, Vinfo, ncname)
-            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-          END IF
-!
-!  Define Bedload V-direction.
-!
-          IF (Aout(idVbld(i),ng)) THEN
-            Vinfo( 1)=Vname(1,idVbld(i))
-            WRITE (Vinfo( 2),'(a,1x,a)') Prefix,                        &
-     &                                   TRIM(Vname(2,idVbld(i)))
-            Vinfo( 3)=Vname(3,idVbld(i))
-            Vinfo(14)=Vname(4,idVbld(i))
-            Vinfo(16)=Vname(1,idtime)
-#   if defined WRITE_WATER && defined MASKING
-            Vinfo(20)='mask_v'
-#   endif
-            Vinfo(21)=Vname(6,idVbld(i))
-            Vinfo(22)='coordinates'
-            Aval(5)=REAL(Iinfo(1,idVbld(i),ng),r8)
-            AVG(ng)%pioVar(idVbld(i))%dkind=PIO_FOUT
-            AVG(ng)%pioVar(idVbld(i))%gtype=v2dvar
-!
-            status=def_var(ng, model, AVG(ng)%pioFile,                  &
-     &                     AVG(ng)%pioVar(idVbld(i))%vd,                &
-     &                     PIO_FOUT, nvd3, v2dgrd, Aval, Vinfo, ncname)
-            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-          END IF
-        END DO
-#  endif
-#  ifdef WAVES_HEIGHT
-!
-!  Define wind-induced significant wave height.
-!
-        IF (Aout(idWamp,ng)) THEN
-          Vinfo( 1)=Vname(1,idWamp)
-          WRITE (Vinfo( 2),'(a,1x,a)') Prefix, TRIM(Vname(2,idWamp))
-          Vinfo( 3)=Vname(3,idWamp)
-          Vinfo(14)=Vname(4,idWamp)
-          Vinfo(16)=Vname(1,idtime)
-#   if defined WRITE_WATER && defined MASKING
-          Vinfo(20)='mask_rho'
-#   endif
-          Vinfo(21)=Vname(6,idWamp)
-          Vinfo(22)='coordinates'
-          Aval(5)=REAL(Iinfo(1,idWamp,ng),r8)
-          AVG(ng)%pioVar(idWamp)%dkind=PIO_FOUT
-          AVG(ng)%pioVar(idWamp)%gtype=r2dvar
-!
-          status=def_var(ng, model, AVG(ng)%pioFile,                    &
-     &                   AVG(ng)%pioVar(idWamp)%vd,                     &
-     &                   PIO_FOUT, nvd3, t2dgrd, Aval, Vinfo, ncname)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-!
-!  Define wind-induced significant wave height squared.
-!
-        IF (Aout(idWam2,ng)) THEN
-          Vinfo( 1)=Vname(1,idWam2)
-          WRITE (Vinfo( 2),'(a,1x,a)') Prefix, TRIM(Vname(2,idWam2))
-          Vinfo( 3)=Vname(3,idWam2)
-          Vinfo(14)=Vname(4,idWam2)
-          Vinfo(16)=Vname(1,idtime)
-#   if defined WRITE_WATER && defined MASKING
-          Vinfo(20)='mask_rho'
-#   endif
-          Vinfo(21)=Vname(6,idWam2)
-          Vinfo(22)='coordinates'
-          Aval(5)=REAL(Iinfo(1,idWam2,ng),r8)
-          AVG(ng)%pioVar(idWam2)%dkind=PIO_FOUT
-          AVG(ng)%pioVar(idWam2)%gtype=r2dvar
-!
-          status=def_var(ng, model, AVG(ng)%pioFile,                    &
-     &                   AVG(ng)%pioVar(idWam2)%vd,                     &
-     &                   PIO_FOUT, nvd3, t2dgrd, Aval, Vinfo, ncname)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-#  endif
-#  ifdef WAVES_LENGTH
-!
-!  Define wind-induced mean wavelength.
-!
-        IF (Aout(idWlen,ng)) THEN
-          Vinfo( 1)=Vname(1,idWlen)
-          WRITE (Vinfo( 2),'(a,1x,a)') Prefix, TRIM(Vname(2,idWlen))
-          Vinfo( 3)=Vname(3,idWlen)
-          Vinfo(14)=Vname(4,idWlen)
-          Vinfo(16)=Vname(1,idtime)
-#   if defined WRITE_WATER && defined MASKING
-          Vinfo(20)='mask_rho'
-#   endif
-          Vinfo(21)=Vname(6,idWlen)
-          Vinfo(22)='coordinates'
-          Aval(5)=REAL(Iinfo(1,idWlen,ng),r8)
-          AVG(ng)%pioVar(idWlen)%dkind=PIO_FOUT
-          AVG(ng)%pioVar(idWlen)%gtype=r2dvar
-!
-          status=def_var(ng, model, AVG(ng)%pioFile,                    &
-     &                   AVG(ng)%pioVar(idWlen)%vd,                     &
-     &                   PIO_FOUT, nvd3, t2dgrd, Aval, Vinfo, ncname)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-#  endif
-#  ifdef WAVES_LENGTHP
-!
-!  Define wind-induced peak wave wavelength.
-!
-        IF (Aout(idWlep,ng)) THEN
-          Vinfo( 1)=Vname(1,idWlep)
-          WRITE (Vinfo( 2),'(a,1x,a)') Prefix, TRIM(Vname(2,idWlep))
-          Vinfo( 3)=Vname(3,idWlep)
-          Vinfo(14)=Vname(4,idWlep)
-          Vinfo(16)=Vname(1,idtime)
-#   if defined WRITE_WATER && defined MASKING
-          Vinfo(20)='mask_rho'
-#   endif
-          Vinfo(21)=Vname(6,idWlep)
-          Vinfo(22)='coordinates'
-          Aval(5)=REAL(Iinfo(1,idWlep,ng),r8)
-          AVG(ng)%pioVar(idWlep)%dkind=PIO_FOUT
-          AVG(ng)%pioVar(idWlep)%gtype=r2dvar
-!
-          status=def_var(ng, model, AVG(ng)%pioFile,                    &
-     &                   AVG(ng)%pioVar(idWlep)%vd,                     &
-     &                   PIO_FOUT, nvd3, t2dgrd, Aval, Vinfo, ncname)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-#  endif
-#  ifdef WAVES_DIR
-!
-!  Define wind-induced mean wave direction.
-!
-        IF (Aout(idWdir,ng)) THEN
-          Vinfo( 1)=Vname(1,idWdir)
-          WRITE (Vinfo( 2),'(a,1x,a)') Prefix, TRIM(Vname(2,idWdir))
-          Vinfo( 3)=Vname(3,idWdir)
-          Vinfo(14)=Vname(4,idWdir)
-          Vinfo(16)=Vname(1,idtime)
-#   if defined WRITE_WATER && defined MASKING
-          Vinfo(20)='mask_rho'
-#   endif
-          Vinfo(21)=Vname(6,idWdir)
-          Vinfo(22)='coordinates'
-          Aval(5)=REAL(Iinfo(1,idWdir,ng),r8)
-          AVG(ng)%pioVar(idWdir)%dkind=PIO_FOUT
-          AVG(ng)%pioVar(idWdir)%gtype=r2dvar
-!
-          status=def_var(ng, model, AVG(ng)%pioFile,                    &
-     &                   AVG(ng)%pioVar(idWdir)%vd,                     &
-     &                   PIO_FOUT, nvd3, t2dgrd, Aval, Vinfo, ncname)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-#  endif
-#  ifdef WAVES_DIRP
-!
-!  Define wind-induced peak wave direction.
-!
-        IF (Aout(idWdip,ng)) THEN
-          Vinfo( 1)=Vname(1,idWdip)
-          WRITE (Vinfo( 2),'(a,1x,a)') Prefix, TRIM(Vname(2,idWdip))
-          Vinfo( 3)=Vname(3,idWdip)
-          Vinfo(14)=Vname(4,idWdip)
-          Vinfo(16)=Vname(1,idtime)
-#   if defined WRITE_WATER && defined MASKING
-          Vinfo(20)='mask_rho'
-#   endif
-          Vinfo(21)=Vname(6,idWdip)
-          Vinfo(22)='coordinates'
-          Aval(5)=REAL(Iinfo(1,idWdip,ng),r8)
-          AVG(ng)%pioVar(idWdip)%dkind=PIO_FOUT
-          AVG(ng)%pioVar(idWdip)%gtype=r2dvar
-!
-          status=def_var(ng, model, AVG(ng)%pioFile,                    &
-     &                   AVG(ng)%pioVar(idWdip)%vd,                     &
-     &                   PIO_FOUT, nvd3, t2dgrd, Aval, Vinfo, ncname)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-#  endif
-#  ifdef WAVES_TOP_PERIOD
-!
-!  Define wind-induced surface wave period.
-!
-        IF (Aout(idWptp,ng)) THEN
-          Vinfo( 1)=Vname(1,idWptp)
-          WRITE (Vinfo( 2),'(a,1x,a)') Prefix, TRIM(Vname(2,idWptp))
-          Vinfo( 3)=Vname(3,idWptp)
-          Vinfo(14)=Vname(4,idWptp)
-          Vinfo(16)=Vname(1,idtime)
-#   if defined WRITE_WATER && defined MASKING
-          Vinfo(20)='mask_rho'
-#   endif
-          Vinfo(21)=Vname(6,idWptp)
-          Vinfo(22)='coordinates'
-          Aval(5)=REAL(Iinfo(1,idWptp,ng),r8)
-          AVG(ng)%pioVar(idWptp)%dkind=PIO_FOUT
-          AVG(ng)%pioVar(idWptp)%gtype=r2dvar
-!
-          status=def_var(ng, model, AVG(ng)%pioFile,                    &
-     &                   AVG(ng)%pioVar(idWptp)%vd,                     &
-     &                   PIO_FOUT, nvd3, t2dgrd, Aval, Vinfo, ncname)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-#  endif
-#  ifdef WAVES_BOT_PERIOD
-!
-!  Define wind-induced bottom wave period.
-!
-        IF (Aout(idWpbt,ng)) THEN
-          Vinfo( 1)=Vname(1,idWpbt)
-          WRITE (Vinfo( 2),'(a,1x,a)') Prefix, TRIM(Vname(2,idWpbt))
-          Vinfo( 3)=Vname(3,idWpbt)
-          Vinfo(14)=Vname(4,idWpbt)
-          Vinfo(16)=Vname(1,idtime)
-#   if defined WRITE_WATER && defined MASKING
-          Vinfo(20)='mask_rho'
-#   endif
-          Vinfo(21)=Vname(6,idWpbt)
-          Vinfo(22)='coordinates'
-          Aval(5)=REAL(Iinfo(1,idWpbt,ng),r8)
-          AVG(ng)%pioVar(idWpbt)%dkind=PIO_FOUT
-          AVG(ng)%pioVar(idWpbt)%gtype=r2dvar
-!
-          status=def_var(ng, model, AVG(ng)%pioFile,                    &
-     &                   AVG(ng)%pioVar(idWpbt)%vd,                     &
-     &                   PIO_FOUT, nvd3, t2dgrd, Aval, Vinfo, ncname)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-#  endif
-#  if defined BBL_MODEL    || defined BEDLOAD_VANDERA || \
-      defined WAV_COUPLING
-!
-!  Define wind-induced wave bottom orbital velocity.
-!
-        IF (Aout(idWorb,ng)) THEN
-          Vinfo( 1)=Vname(1,idWorb)
-          WRITE (Vinfo( 2),'(a,1x,a)') Prefix, TRIM(Vname(2,idWorb))
-          Vinfo( 3)=Vname(3,idWorb)
-          Vinfo(14)=Vname(4,idWorb)
-          Vinfo(16)=Vname(1,idtime)
-#   if defined WRITE_WATER && defined MASKING
-          Vinfo(20)='mask_rho'
-#   endif
-          Vinfo(21)=Vname(6,idWorb)
-          Vinfo(22)='coordinates'
-          Aval(5)=REAL(Iinfo(1,idWorb,ng),r8)
-          AVG(ng)%pioVar(idWorb)%dkind=PIO_FOUT
-          AVG(ng)%pioVar(idWorb)%gtype=r2dvar
-!
-          status=def_var(ng, model, AVG(ng)%pioFile,                    &
-     &                   AVG(ng)%pioVar(idWorb)%vd,                     &
-     &                   PIO_FOUT, nvd3, t2dgrd, Aval, Vinfo, ncname)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-#  endif
-#  ifdef UV_KIRBY
-!
-!  Define U-velocity from Kirby and Chen.
-!
-        IF (Aout(idUwav,ng)) THEN
-          Vinfo( 1)=Vname(1,idUwav)
-          WRITE (Vinfo( 2),'(a,1x,a)') Prefix, TRIM(Vname(2,idUwav))
-          Vinfo( 3)=Vname(3,idUwav)
-          Vinfo(14)=Vname(4,idUwav)
-          Vinfo(16)=Vname(1,idtime)
-#   if defined WRITE_WATER && defined MASKING
-          Vinfo(20)='mask_rho'
-#   endif
-          Vinfo(21)=Vname(6,idUwav)
-          Vinfo(22)='coordinates'
-          Aval(5)=REAL(Iinfo(1,idUwav,ng),r8)
-          AVG(ng)%pioVar(idUwav)%dkind=PIO_FOUT
-          AVG(ng)%pioVar(idUwav)%gtype=r2dvar
-!
-          status=def_var(ng, model, AVG(ng)%pioFile,                    &
-     &                   AVG(ng)%pioVar(idUwav)%vd,                     &
-     &                   PIO_FOUT, nvd3, t2dgrd, Aval, Vinfo, ncname)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-!
-!  Define V-velocity from Kirby and Chen.
-!
-        IF (Aout(idVwav,ng)) THEN
-          Vinfo( 1)=Vname(1,idVwav)
-          WRITE (Vinfo( 2),'(a,1x,a)') Prefix, TRIM(Vname(2,idVwav))
-          Vinfo( 3)=Vname(3,idVwav)
-          Vinfo(14)=Vname(4,idVwav)
-          Vinfo(16)=Vname(1,idtime)
-#   if defined WRITE_WATER && defined MASKING
-          Vinfo(20)='mask_rho'
-#   endif
-          Vinfo(21)=Vname(6,idVwav)
-          Vinfo(22)='coordinates'
-          Aval(5)=REAL(Iinfo(1,idVwav,ng),r8)
-          AVG(ng)%pioVar(idVwav)%dkind=PIO_FOUT
-          AVG(ng)%pioVar(idVwav)%gtype=r2dvar
-!
-          status=def_var(ng, model, AVG(ng)%pioFile,                    &
-     &                   AVG(ng)%pioVar(idVwav)%vd,                     &
-     &                   PIO_FOUT, nvd3, t2dgrd, Aval, Vinfo, ncname)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-#  endif
-#  ifdef ICE_MODEL
+#  if (defined BBL_MODEL || defined WAVES_OUTPUT) && defined SOLVE3D
 !
 !-----------------------------------------------------------------------
-!  Define sea-ice model variables.
+!  Define the bottom boundary layer model or waves variables.
+!-----------------------------------------------------------------------
+!
+        CALL bbl_def_pio (ng, model, ldef, Aout, AVG,                   &
+     &                    t2dgrd, u2dgrd, v2dgrd)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+#  endif
+
+#  if defined ICE_MODEL && defined SOLVE3D
+!
+!-----------------------------------------------------------------------
+!  Define the sea-ice model variables.
 !-----------------------------------------------------------------------
 !
         CALL ice_def_pio (ng, model, ldef, Aout, AVG,                   &
      &                    t2dgrd, u2dgrd, v2dgrd)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #  endif
-#  if defined WEC || defined WEC_VF
+
+#  if defined SEDIMENT && defined SOLVE3D
 !
 !-----------------------------------------------------------------------
-!  Define Waves Effect on Currents variables.
+!  Define the sediment model variables.
+!-----------------------------------------------------------------------
+!
+        CALL sediment_def_pio (ng, model, ldef, Aout, AVG,              &
+     &                         t2dgrd, u2dgrd, v2dgrd)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+#  endif
+
+#  if defined WEC_VF && defined SOLVE3D
+!
+!-----------------------------------------------------------------------
+!  Define the Waves Effect on Currents variables.
 !-----------------------------------------------------------------------
 !
         CALL wec_def_pio (ng, model, ldef, Aout, AVG,                   &
@@ -6320,80 +5098,6 @@
             AVG(ng)%pioVar(idVbvr)%vd=var_desc(i)
             AVG(ng)%pioVar(idVbvr)%dkind=PIO_FOUT
             AVG(ng)%pioVar(idVbvr)%gtype=v2dvar
-#  ifdef WAVES_HEIGHT
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idWamp))) THEN
-            got_var(idWamp)=.TRUE.
-            AVG(ng)%pioVar(idWamp)%vd=var_desc(i)
-            AVG(ng)%pioVar(idWamp)%dkind=PIO_FOUT
-            AVG(ng)%pioVar(idWamp)%gtype=r2dvar
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idWam2))) THEN
-            got_var(idWam2)=.TRUE.
-            AVG(ng)%pioVar(idWam2)%vd=var_desc(i)
-            AVG(ng)%pioVar(idWam2)%dkind=PIO_FOUT
-            AVG(ng)%pioVar(idWam2)%gtype=r2dvar
-#  endif
-#  ifdef WAVES_LENGTH
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idWlen))) THEN
-            got_var(idWlen)=.TRUE.
-            AVG(ng)%pioVar(idWlen)%vd=var_desc(i)
-            AVG(ng)%pioVar(idWlen)%dkind=PIO_FOUT
-            AVG(ng)%pioVar(idWlen)%gtype=r2dvar
-#  endif
-#  ifdef WAVES_LENGTHP
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idWlep))) THEN
-            got_var(idWlep)=.TRUE.
-            AVG(ng)%pioVar(idWlep)%vd=var_desc(i)
-            AVG(ng)%pioVar(idWlep)%dkind=PIO_FOUT
-            AVG(ng)%pioVar(idWlep)%gtype=r2dvar
-#  endif
-#  ifdef WAVES_DIR
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idWdir))) THEN
-            got_var(idWdir)=.TRUE.
-            AVG(ng)%pioVar(idWdir)%vd=var_desc(i)
-            AVG(ng)%pioVar(idWdir)%dkind=PIO_FOUT
-            AVG(ng)%pioVar(idWdir)%gtype=r2dvar
-#  endif
-#  ifdef WAVES_DIRP
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idWdip))) THEN
-            got_var(idWdip)=.TRUE.
-            AVG(ng)%pioVar(idWdip)%vd=var_desc(i)
-            AVG(ng)%pioVar(idWdip)%dkind=PIO_FOUT
-            AVG(ng)%pioVar(idWdip)%gtype=r2dvar
-#  endif
-#  ifdef WAVES_TOP_PERIOD
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idWptp))) THEN
-            got_var(idWptp)=.TRUE.
-            AVG(ng)%pioVar(idWptp)%vd=var_desc(i)
-            AVG(ng)%pioVar(idWptp)%dkind=PIO_FOUT
-            AVG(ng)%pioVar(idWptp)%gtype=r2dvar
-#  endif
-#  ifdef WAVES_BOT_PERIOD
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idWpbt))) THEN
-            got_var(idWpbt)=.TRUE.
-            AVG(ng)%pioVar(idWpbt)%vd=var_desc(i)
-            AVG(ng)%pioVar(idWpbt)%dkind=PIO_FOUT
-            AVG(ng)%pioVar(idWpbt)%gtype=r2dvar
-#  endif
-#  if defined BBL_MODEL    || defined BEDLOAD_VANDERA || \
-      defined WAV_COUPLING
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idWorb))) THEN
-            got_var(idWorb)=.TRUE.
-            AVG(ng)%pioVar(idWorb)%vd=var_desc(i)
-            AVG(ng)%pioVar(idWorb)%dkind=PIO_FOUT
-            AVG(ng)%pioVar(idWorb)%gtype=r2dvar
-#  endif
-#  ifdef UV_KIRBY
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idUwav))) THEN
-            got_var(idUwav)=.TRUE.
-            AVG(ng)%pioVar(idUwav)%vd=var_desc(i)
-            AVG(ng)%pioVar(idUwav)%dkind=PIO_FOUT
-            AVG(ng)%pioVar(idUwav)%gtype=r2dvar
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idVwav))) THEN
-            got_var(idVwav)=.TRUE.
-            AVG(ng)%pioVar(idVwav)%vd=var_desc(i)
-            AVG(ng)%pioVar(idVwav)%dkind=PIO_FOUT
-            AVG(ng)%pioVar(idVwav)%gtype=r2dvar
-#  endif
           END IF
 #  ifdef SOLVE3D
           DO itrc=1,NT(ng)
@@ -6443,22 +5147,6 @@
               AVG(ng)%pioVar(idTrcD(itrc))%vd=var_desc(i)
               AVG(ng)%pioVar(idTrcD(itrc))%dkind=PIO_FOUT
               AVG(ng)%pioVar(idTrcD(itrc))%gtype=r3dvar
-            END IF
-          END DO
-#   endif
-#   if defined SEDIMENT && defined BEDLOAD
-          DO itrc=1,NST
-            IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idUbld(itrc)))) THEN
-              got_var(idUbld(itrc))=.true.
-              AVG(ng)%pioVar(idUbld(itrc))%vd=var_desc(i)
-              AVG(ng)%pioVar(idUbld(itrc))%dkind=PIO_FOUT
-              AVG(ng)%pioVar(idUbld(itrc))%gtype=u2dvar
-            ELSE IF (TRIM(var_name(i)).eq.                              &
-     &               TRIM(Vname(1,idVbld(itrc)))) THEN
-              got_var(idVbld(itrc))=.true.
-              AVG(ng)%pioVar(idVbld(itrc))%vd=var_desc(i)
-              AVG(ng)%pioVar(idVbld(itrc))%dkind=PIO_FOUT
-              AVG(ng)%pioVar(idVbld(itrc))%gtype=v2dvar
             END IF
           END DO
 #   endif
@@ -6843,161 +5531,6 @@
           exit_flag=3
           RETURN
         END IF
-#  ifdef BBL_MODEL
-        IF (.not.got_var(idUbrs).and.Aout(idUbrs,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idUbrs)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-        IF (.not.got_var(idVbrs).and.Aout(idVbrs,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idVbrs)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-        IF (.not.got_var(idUbws).and.Aout(idUbws,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idUbws)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-        IF (.not.got_var(idVbws).and.Aout(idVbws,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idVbws)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-        IF (.not.got_var(idUbcs).and.Aout(idUbcs,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idUbcs)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-        IF (.not.got_var(idVbcs).and.Aout(idVbcs,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idVbcs)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-        IF (.not.got_var(idUVwc).and.Aout(idUVwc,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idUVwc)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-
-        IF (.not.got_var(idUbot).and.Aout(idUbot,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idUbot)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-        IF (.not.got_var(idVbot).and.Aout(idVbot,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idVbot)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-        IF (.not.got_var(idUbur).and.Aout(idUbur,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idUbur)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-        IF (.not.got_var(idVbvr).and.Aout(idVbvr,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idVbvr)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-#  endif
-#  ifdef WAVES_HEIGHT
-        IF (.not.got_var(idWamp).and.Aout(idWamp,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idWamp)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-        IF (.not.got_var(idWam2).and.Aout(idWam2,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idWam2)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-#  endif
-#  ifdef WAVES_LENGTH
-        IF (.not.got_var(idWlen).and.Aout(idWlen,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idWlen)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-            AVG(ng)%Vid(idWlen)=var_id(i)
-#  endif
-#  ifdef WAVES_LENGTHP
-        IF (.not.got_var(idWlep).and.Aout(idWlep,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idWlep)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-#  endif
-#  ifdef WAVES_DIR
-        IF (.not.got_var(idWdir).and.Aout(idWdir,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idWdir)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-#  endif
-#  ifdef WAVES_DIRP
-        IF (.not.got_var(idWdip).and.Aout(idWdip,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idWdip)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-#  endif
-#  ifdef WAVES_TOP_PERIOD
-        IF (.not.got_var(idWptp).and.Aout(idWptp,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idWptp)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-#  endif
-#  ifdef WAVES_BOT_PERIOD
-        IF (.not.got_var(idWpbt).and.Aout(idWpbt,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idWpbt)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-#  endif
-#  if defined BBL_MODEL    || defined BEDLOAD_VANDERA || \
-      defined WAV_COUPLING
-        IF (.not.got_var(idWorb).and.Aout(idWorb,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idWorb)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-#  endif
-#  ifdef UV_KIRBY
-        IF (.not.got_var(idUwav).and.Aout(idUwav,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idUwav)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-        IF (.not.got_var(idVwav).and.Aout(idVwav,ng)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idVwav)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-#  endif
 #  ifdef SOLVE3D
         DO itrc=1,NT(ng)
           IF (.not.got_var(idTvar(itrc)).and.Aout(idTvar(itrc),ng)) THEN
@@ -7049,31 +5582,36 @@
           END IF
         END DO
 #   endif
-#   if defined SEDIMENT && defined BEDLOAD
-        DO i=1,NST
-          IF (.not.got_var(idUbld(i)).and.Aout(idUbld(i),ng)) THEN
-            IF (Master) WRITE (stdout,60) TRIM(Vname(1,idUbld(i))),     &
-     &                                    TRIM(ncname)
-            exit_flag=3
-            RETURN
-          END IF
-          IF (.not.got_var(idVbld(i)).and.Aout(idVbld(i),ng)) THEN
-            IF (Master) WRITE (stdout,60) TRIM(Vname(1,idVbld(i))),     &
-     &                                    TRIM(ncname)
-            exit_flag=3
-            RETURN
-          END IF
-        END DO
-#   endif
 #  endif
-#  ifdef ICE_MODEL
+
+#  if (defined BBL_MODEL || defined WAVES_OUTPUT) && defined SOLVE3D
+!
+!  Scan bottom boundary layer model and waves variables from input
+!  NetCDF and activate switches for time-averaged variables. Get
+!  variable IDs.
+!
+        CALL bbl_def_pio (ng, model, ldef, Aout, AVG)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+#  endif
+
+#  if defined ICE_MODEL && defined SOLVE3D
 !
 !  Scan sea-ice variables from input NetCDF and activate switches for
 !  time-averaged variables. Get variable IDs.
 !
         CALL ice_def_pio (ng, model, ldef, Aout, AVG)
 #  endif
-#  if defined WEC || defined WEC_VF
+
+# if defined SEDIMENT && defined SOLVE3D
+!
+!  Scan sediment model variables from input NetCDF and activate
+!  switches for time-averaged variables. Get variable IDs.
+!
+        CALL sediment_def_pio (ng, model, ldef, Aout, AVG)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+# endif
+
+#  if defined WEC_VF && defined SOLVE3D
 !
 !  Scan Waves Effect on Currents variables from input NetCDF and
 !  activate switches for time-averaged variables. Get variable IDs.
