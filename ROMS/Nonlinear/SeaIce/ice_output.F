@@ -1,6 +1,6 @@
 #include "cppdefs.h"
       MODULE ice_output_mod
-#ifdef ICE_MODEL
+#if defined ICE_MODEL && defined SOLVE3D
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
@@ -9,7 +9,7 @@
 !    See License_ROMS.txt                                              !
 !=======================================================================
 !                                                                      !
-!  This module defines/writes ice model prognostic variables into      !
+!  This module defines/writes the ice model prognostic variables into  !
 !  output NetCDF files.                                                !
 !                                                                      !
 !=======================================================================
