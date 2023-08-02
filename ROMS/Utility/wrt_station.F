@@ -3,7 +3,7 @@
 #ifdef STATIONS
 !
 !git $Id$
-!svn $Id: wrt_station.F 1178 2023-07-11 17:50:57Z arango $
+!svn $Id: wrt_station.F 1185 2023-08-01 21:42:38Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -33,19 +33,31 @@
 # endif
       USE mod_stepping
 !
-      USE extract_sta_mod, ONLY : extract_sta2d
-# ifdef SOLVE3D
-      USE extract_sta_mod, ONLY : extract_sta3d
-# endif
-      USE uv_rotate_mod,   ONLY : uv_rotate2d
-# ifdef SOLVE3D
-      USE uv_rotate_mod,   ONLY : uv_rotate3d
-# endif
-      USE strings_mod,     ONLY : FoundError
-# if defined WEC || defined WEC_VF
-      USE wec_output_mod,  ONLY : wec_wrt_station_nf90
+# if defined BBL_MODEL || defined WAVES_OUTPUT
+      USE bbl_output_mod,      ONLY : bbl_wrt_station_nf90
 #  if defined PIO_LIB && defined DISTRIBUTE
-      USE wec_output_mod,  ONLY : wec_wrt_station_pio
+      USE bbl_output_mod,      ONLY : bbl_wrt_station_pio
+#  endif
+# endif
+      USE extract_sta_mod,     ONLY : extract_sta2d
+# ifdef SOLVE3D
+      USE extract_sta_mod,     ONLY : extract_sta3d
+# endif
+# ifdef SEDIMENT
+      USE sediment_output_mod, ONLY : sediment_wrt_station_nf90
+#  if defined PIO_LIB && defined DISTRIBUTE
+      USE sediment_output_mod, ONLY : sediment_wrt_station_pio
+#  endif
+# endif
+      USE uv_rotate_mod,       ONLY : uv_rotate2d
+# ifdef SOLVE3D
+      USE uv_rotate_mod,       ONLY : uv_rotate3d
+# endif
+      USE strings_mod,         ONLY : FoundError
+# if defined WEC || defined WEC_VF
+      USE wec_output_mod,      ONLY : wec_wrt_station_nf90
+#  if defined PIO_LIB && defined DISTRIBUTE
+      USE wec_output_mod,      ONLY : wec_wrt_station_pio
 #  endif
 # endif
 !
@@ -227,25 +239,6 @@
      &                        varid = STA(ng)%Vid(idFsur))
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
       END IF
-
-# if defined SEDIMENT && defined SED_MORPH
-!
-!  Write out time-varying bathymetry.
-!
-      IF (Sout(idbath,ng)) THEN
-        scale=1.0_dp
-        CALL extract_sta2d (ng, model, Cgrid, idbath, r2dvar,           &
-     &                      LBi, UBi, LBj, UBj,                         &
-     &                      scale, GRID(ng)%h,                          &
-     &                      Nstation(ng), Xpos, Ypos, psta)
-        CALL netcdf_put_fvar (ng, model, STA(ng)%name,                  &
-     &                        TRIM(Vname(1,idbath)), psta,              &
-     &                        (/1,STA(ng)%Rindex/), (/Nstation(ng),1/), &
-     &                        ncid = STA(ng)%ncid,                      &
-     &                        varid = STA(ng)%Vid(idbath))
-        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-      END IF
-# endif
 !
 !  Write out 2D momentum component (m/s) in the XI-direction.
 !
@@ -680,9 +673,9 @@
      &                    LBi, UBi, LBj, UBj,                           &
      &                    GRID(ng) % CosAngler,                         &
      &                    GRID(ng) % SinAngler,                         &
-# ifdef MASKING
+#   ifdef MASKING
      &                    GRID(ng) % rmask_full,                        &
-# endif
+#   endif
      &                    FORCES(ng) % Uwind,                           &
      &                    FORCES(ng) % Vwind,                           &
      &                    Ur2d, Vr2d)
@@ -937,429 +930,6 @@
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
       END IF
 
-# ifdef SOLVE3D
-#  ifdef BBL_MODEL
-!
-!  Write out current-induced, bottom U-stress.
-!
-      IF (Sout(idUbrs,ng)) THEN
-        scale=-rho0
-        CALL extract_sta2d (ng, model, Cgrid, idUbrs, r2dvar,           &
-     &                      LBi, UBi, LBj, UBj,                         &
-     &                      scale, BBL(ng)%bustrc,                      &
-     &                      Nstation(ng), Xpos, Ypos, psta)
-        CALL netcdf_put_fvar (ng, model, STA(ng)%name,                  &
-     &                        TRIM(Vname(1,idUbrs)), psta,              &
-     &                        (/1,STA(ng)%Rindex/), (/Nstation(ng),1/), &
-     &                        ncid = STA(ng)%ncid,                      &
-     &                        varid = STA(ng)%Vid(idUbrs))
-        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-      END IF
-!
-!  Write out current-induced, bottom V-stress.
-!
-      IF (Sout(idVbrs,ng)) THEN
-        scale=-rho0
-        CALL extract_sta2d (ng, model, Cgrid, idVbrs, r2dvar,           &
-     &                      LBi, UBi, LBj, UBj,                         &
-     &                      scale, BBL(ng)%bvstrc,                      &
-     &                      Nstation(ng), Xpos, Ypos, psta)
-        CALL netcdf_put_fvar (ng, model, STA(ng)%name,                  &
-     &                        TRIM(Vname(1,idVbrs)), psta,              &
-     &                        (/1,STA(ng)%Rindex/), (/Nstation(ng),1/), &
-     &                        ncid = STA(ng)%ncid,                      &
-     &                        varid = STA(ng)%Vid(idVbrs))
-        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-      END IF
-!
-!  Write out wind-induced, bottom U-stress.
-!
-      IF (Sout(idUbws,ng)) THEN
-        scale=rho0
-        CALL extract_sta2d (ng, model, Cgrid, idUbws, r2dvar,           &
-     &                      LBi, UBi, LBj, UBj,                         &
-     &                      scale, BBL(ng)%bustrw,                      &
-     &                      Nstation(ng), Xpos, Ypos, psta)
-        CALL netcdf_put_fvar (ng, model, STA(ng)%name,                  &
-     &                        TRIM(Vname(1,idUbws)), psta,              &
-     &                        (/1,STA(ng)%Rindex/), (/Nstation(ng),1/), &
-     &                        ncid = STA(ng)%ncid,                      &
-     &                        varid = STA(ng)%Vid(idUbws))
-        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-      END IF
-!
-!  Write out wind-induced, bottom V-wave stress.
-!
-      IF (Sout(idVbws,ng)) THEN
-        scale=rho0
-        CALL extract_sta2d (ng, model, Cgrid, idVbws, r2dvar,           &
-     &                      LBi, UBi, LBj, UBj,                         &
-     &                      scale, BBL(ng)%bvstrw,                      &
-     &                      Nstation(ng), Xpos, Ypos, psta)
-        CALL netcdf_put_fvar (ng, model, STA(ng)%name,                  &
-     &                        TRIM(Vname(1,idVbws)), psta,              &
-     &                        (/1,STA(ng)%Rindex/), (/Nstation(ng),1/), &
-     &                        ncid = STA(ng)%ncid,                      &
-     &                        varid = STA(ng)%Vid(idVbws))
-        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-      END IF
-!
-!  Write out maximum wind and current, bottom U-stress.
-!
-      IF (Sout(idUbcs,ng)) THEN
-        scale=rho0
-        CALL extract_sta2d (ng, model, Cgrid, idUbcs, r2dvar,           &
-     &                      LBi, UBi, LBj, UBj,                         &
-     &                      scale, BBL(ng)%bustrcwmax,                  &
-     &                      Nstation(ng), Xpos, Ypos, psta)
-        CALL netcdf_put_fvar (ng, model, STA(ng)%name,                  &
-     &                        TRIM(Vname(1,idUbcs)), psta,              &
-     &                        (/1,STA(ng)%Rindex/), (/Nstation(ng),1/), &
-     &                        ncid = STA(ng)%ncid,                      &
-     &                        varid = STA(ng)%Vid(idUbcs))
-        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-      END IF
-!
-!  Write out maximum wind and current, bottom V-stress.
-!
-      IF (Sout(idVbcs,ng)) THEN
-        scale=rho0
-        CALL extract_sta2d (ng, model, Cgrid, idVbcs, r2dvar,           &
-     &                      LBi, UBi, LBj, UBj,                         &
-     &                      scale, BBL(ng)%bvstrcwmax,                  &
-     &                      Nstation(ng), Xpos, Ypos, psta)
-        CALL netcdf_put_fvar (ng, model, STA(ng)%name,                  &
-     &                        TRIM(Vname(1,idVbcs)), psta,              &
-     &                        (/1,STA(ng)%Rindex/), (/Nstation(ng),1/), &
-     &                        ncid = STA(ng)%ncid,                      &
-     &                        varid = STA(ng)%Vid(idVbcs))
-        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-      END IF
-!
-!  Write out wind-induced, bed wave orbital U-velocity.
-!
-      IF (Sout(idUbot,ng)) THEN
-        scale=1.0_dp
-        CALL extract_sta2d (ng, model, Cgrid, idUbot, r2dvar,           &
-     &                      LBi, UBi, LBj, UBj,                         &
-     &                      scale, BBL(ng)%Ubot,                        &
-     &                      Nstation(ng), Xpos, Ypos, psta)
-        CALL netcdf_put_fvar (ng, model, STA(ng)%name,                  &
-     &                        TRIM(Vname(1,idUbot)), psta,              &
-     &                        (/1,STA(ng)%Rindex/), (/Nstation(ng),1/), &
-     &                        ncid = STA(ng)%ncid,                      &
-     &                        varid = STA(ng)%Vid(idUbot))
-        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-      END IF
-!
-!  Write out wind-induced, bed wave orbital V-velocity.
-!
-      IF (Sout(idVbot,ng)) THEN
-        scale=1.0_dp
-        CALL extract_sta2d (ng, model, Cgrid, idVbot, r2dvar,           &
-     &                      LBi, UBi, LBj, UBj,                         &
-     &                      scale, BBL(ng)%Vbot,                        &
-     &                      Nstation(ng), Xpos, Ypos, psta)
-        CALL netcdf_put_fvar (ng, model, STA(ng)%name,                  &
-     &                        TRIM(Vname(1,idVbot)), psta,              &
-     &                        (/1,STA(ng)%Rindex/), (/Nstation(ng),1/), &
-     &                        ncid = STA(ng)%ncid,                      &
-     &                        varid = STA(ng)%Vid(idVbot))
-        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-      END IF
-!
-!  Write out bottom U-velocity above bed.
-!
-      IF (Sout(idUbur,ng)) THEN
-        scale=1.0_dp
-        CALL extract_sta2d (ng, model, Cgrid, idUbur, r2dvar,           &
-     &                      LBi, UBi, LBj, UBj,                         &
-     &                      scale, BBL(ng)%Ur,                          &
-     &                      Nstation(ng), Xpos, Ypos, psta)
-        CALL netcdf_put_fvar (ng, model, STA(ng)%name,                  &
-     &                        TRIM(Vname(1,idUbur)), psta,              &
-     &                        (/1,STA(ng)%Rindex/), (/Nstation(ng),1/), &
-     &                        ncid = STA(ng)%ncid,                      &
-     &                        varid = STA(ng)%Vid(idUbur))
-        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-      END IF
-!
-!  Write out bottom V-velocity above bed.
-!
-      IF (Sout(idVbvr,ng)) THEN
-        scale=1.0_dp
-        CALL extract_sta2d (ng, model, Cgrid, idVbvr, r2dvar,           &
-     &                      LBi, UBi, LBj, UBj,                         &
-     &                      scale, BBL(ng)%Vr,                          &
-     &                      Nstation(ng), Xpos, Ypos, psta)
-        CALL netcdf_put_fvar (ng, model, STA(ng)%name,                  &
-     &                        TRIM(Vname(1,idVbvr)), psta,              &
-     &                        (/1,STA(ng)%Rindex/), (/Nstation(ng),1/), &
-     &                        ncid = STA(ng)%ncid,                      &
-     &                        varid = STA(ng)%Vid(idVbvr))
-        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-      END IF
-#  endif
-
-#  ifdef SEDIMENT
-!
-!  Write out sediment fraction of each size class in each bed layer.
-!
-      DO i=1,NST
-        IF (Sout(idfrac(i),ng)) THEN
-          scale=1.0_dp
-          CALL extract_sta3d (ng, model, Cgrid, idfrac(i), b3dvar,      &
-     &                        LBi, UBi, LBj, UBj, 1, Nbed,              &
-     &                        scale, SEDBED(ng)%bed_frac(:,:,:,i),      &
-     &                        NposB, XposB, YposB, ZposB, bsta)
-          CALL netcdf_put_fvar (ng, model, STA(ng)%name,                &
-     &                          TRIM(Vname(1,idfrac(i))), rsta,         &
-     &                          (/1,1,STA(ng)%Rindex/),                 &
-     &                          (/Nbed,Nstation(ng),1/),                &
-     &                          ncid = STA(ng)%ncid,                    &
-     &                          varid = STA(ng)%Vid(idfrac(i)))
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-!
-!  Write out sediment mass of each size class in each bed layer.
-!
-        IF (Sout(idBmas(i),ng)) THEN
-          scale=1.0_dp
-          CALL extract_sta3d (ng, model, Cgrid, idBmas(i), b3dvar,      &
-     &                        LBi, UBi, LBj, UBj, 1, Nbed,              &
-     &                        scale,                                    &
-     &                        SEDBED(ng)%bed_mass(:,:,:,NOUT,i),        &
-     &                        NposB, XposB, YposB, ZposB, bsta)
-          CALL netcdf_put_fvar (ng, model, STA(ng)%name,                &
-     &                          TRIM(Vname(1,idBmas(i))), rsta,         &
-     &                          (/1,1,STA(ng)%Rindex/),                 &
-     &                          (/Nbed,Nstation(ng),1/),                &
-     &                          ncid = STA(ng)%ncid,                    &
-     &                          varid = STA(ng)%Vid(idBmas(i)))
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-      END DO
-!
-!  Write out sediment properties in each bed layer.
-!
-      DO i=1,MBEDP
-        IF (Sout(idSbed(i),ng)) THEN
-          scale=1.0_dp
-          CALL extract_sta3d (ng, model, Cgrid, idSbed(i), b3dvar,      &
-     &                        LBi, UBi, LBj, UBj, 1, Nbed,              &
-     &                        scale, SEDBED(ng)%bed(:,:,:,i),           &
-     &                        NposB, XposB, YposB, ZposB, bsta)
-          CALL netcdf_put_fvar (ng, model, STA(ng)%name,                &
-     &                          TRIM(Vname(1,idSbed(i))), rsta,         &
-     &                          (/1,1,STA(ng)%Rindex/),                 &
-     &                          (/Nbed,Nstation(ng),1/),                &
-     &                          ncid = STA(ng)%ncid,                    &
-     &                          varid = STA(ng)%Vid(idSbed(i)))
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-      END DO
-#  endif
-
-#  if defined SEDIMENT || defined BBL_MODEL
-!
-!  Write out exposed sediment layer properties.
-!
-      DO i=1,MBEDP
-        IF (Sout(idBott(i),ng)) THEN
-          scale=1.0_dp
-          CALL extract_sta2d (ng, model, Cgrid, idBott(i), r2dvar,      &
-     &                        LBi, UBi, LBj, UBj,                       &
-     &                        scale, SEDBED(ng)%bottom(:,:,i),          &
-     &                        Nstation(ng), Xpos, Ypos, psta)
-          CALL netcdf_put_fvar (ng, model, STA(ng)%name,                &
-     &                          TRIM(Vname(1,idBott(i))), rsta,         &
-     &                          (/1,STA(ng)%Rindex/),                   &
-     &                          (/Nstation(ng),1/),                     &
-     &                          ncid = STA(ng)%ncid,                    &
-     &                          varid = STA(ng)%Vid(idBott(i)))
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-      END DO
-#  endif
-# endif
-# ifdef WAVES_HEIGHT
-!
-!  Write out wind-induced significant wave height.
-!
-      IF (Sout(idWamp,ng)) THEN
-        scale=1.0_dp
-        CALL extract_sta2d (ng, model, Cgrid, idWamp, r2dvar,           &
-     &                      LBi, UBi, LBj, UBj,                         &
-     &                      scale, FORCES(ng) % Hwave,                  &
-     &                      Nstation(ng), Xpos, Ypos, psta)
-        CALL netcdf_put_fvar (ng, model, STA(ng)%name,                  &
-     &                        TRIM(Vname(1,idWamp)), psta,              &
-     &                        (/1,STA(ng)%Rindex/), (/Nstation(ng),1/), &
-     &                        ncid = STA(ng)%ncid,                      &
-     &                        varid = STA(ng)%Vid(idWamp))
-        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-      END IF
-# endif
-# ifdef WAVES_LENGTH
-!
-!  Write out wind-induced mean wavelenght.
-!
-      IF (Sout(idWlen,ng)) THEN
-        scale=1.0_dp
-        CALL extract_sta2d (ng, model, Cgrid, idWlen, r2dvar,           &
-     &                      LBi, UBi, LBj, UBj,                         &
-     &                      scale, FORCES(ng) % Lwave,                  &
-     &                      Nstation(ng), Xpos, Ypos, psta)
-        CALL netcdf_put_fvar (ng, model, STA(ng)%name,                  &
-     &                        TRIM(Vname(1,idWlen)), psta,              &
-     &                        (/1,STA(ng)%Rindex/), (/Nstation(ng),1/), &
-     &                        ncid = STA(ng)%ncid,                      &
-     &                        varid = STA(ng)%Vid(idWlen))
-        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-      END IF
-# endif
-# ifdef WAVES_LENGTHP
-!
-!  Write out wind-induced peak wave wavelength.
-!
-      IF (Sout(idWlep,ng)) THEN
-        scale=1.0_dp
-        CALL extract_sta2d (ng, model, Cgrid, idWlep, r2dvar,           &
-     &                      LBi, UBi, LBj, UBj,                         &
-     &                      scale, FORCES(ng) % Lwavep,                 &
-     &                      Nstation(ng), Xpos, Ypos, psta)
-        CALL netcdf_put_fvar (ng, model, STA(ng)%name,                  &
-     &                        TRIM(Vname(1,idWlep)), psta,              &
-     &                        (/1,STA(ng)%Rindex/), (/Nstation(ng),1/), &
-     &                        ncid = STA(ng)%ncid,                      &
-     &                        varid = STA(ng)%Vid(idWlep))
-        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-      END IF
-# endif
-# ifdef WAVES_DIR
-!
-!  Write out wind-induced mean wave direction.
-!
-      IF (Sout(idWdir,ng)) THEN
-        scale=rad2deg
-        CALL extract_sta2d (ng, model, Cgrid, idWdir, r2dvar,           &
-     &                      LBi, UBi, LBj, UBj,                         &
-     &                      scale, FORCES(ng) % Dwave,                  &
-     &                      Nstation(ng), Xpos, Ypos, psta)
-        CALL netcdf_put_fvar (ng, model, STA(ng)%name,                  &
-     &                        TRIM(Vname(1,idWdir)), psta,              &
-     &                        (/1,STA(ng)%Rindex/), (/Nstation(ng),1/), &
-     &                        ncid = STA(ng)%ncid,                      &
-     &                        varid = STA(ng)%Vid(idWdir))
-        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-      END IF
-# endif
-# ifdef WAVES_DIRP
-!
-!  Write out wind-induced peak wave direction.
-!
-      IF (Sout(idWdip,ng)) THEN
-        scale=rad2deg
-        CALL extract_sta2d (ng, model, Cgrid, idWdip, r2dvar,           &
-     &                      LBi, UBi, LBj, UBj,                         &
-     &                      scale, FORCES(ng) % Dwavep,                 &
-     &                      Nstation(ng), Xpos, Ypos, psta)
-        CALL netcdf_put_fvar (ng, model, STA(ng)%name,                  &
-     &                        TRIM(Vname(1,idWdip)), psta,              &
-     &                        (/1,STA(ng)%Rindex/), (/Nstation(ng),1/), &
-     &                        ncid = STA(ng)%ncid,                      &
-     &                        varid = STA(ng)%Vid(idWdip))
-        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-      END IF
-# endif
-# ifdef WAVES_TOP_PERIOD
-!
-!  Write out wind-induced surface wave period.
-!
-      IF (Sout(idWptp,ng)) THEN
-        scale=1.0_dp
-        CALL extract_sta2d (ng, model, Cgrid, idWptp, r2dvar,           &
-     &                      LBi, UBi, LBj, UBj,                         &
-     &                      scale, FORCES(ng) % Pwave_top,              &
-     &                      Nstation(ng), Xpos, Ypos, psta)
-        CALL netcdf_put_fvar (ng, model, STA(ng)%name,                  &
-     &                        TRIM(Vname(1,idWptp)), psta,              &
-     &                        (/1,STA(ng)%Rindex/), (/Nstation(ng),1/), &
-     &                        ncid = STA(ng)%ncid,                      &
-     &                        varid = STA(ng)%Vid(idWptp))
-        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-      END IF
-# endif
-# ifdef WAVES_BOT_PERIOD
-!
-!  Write out wind-induced bottom wave period.
-!
-      IF (Sout(idWpbt,ng)) THEN
-        scale=1.0_dp
-        CALL extract_sta2d (ng, model, Cgrid, idWpbt, r2dvar,           &
-     &                      LBi, UBi, LBj, UBj,                         &
-     &                      scale, FORCES(ng) % Pwave_bot,              &
-     &                      Nstation(ng), Xpos, Ypos, psta)
-        CALL netcdf_put_fvar (ng, model, STA(ng)%name,                  &
-     &                        TRIM(Vname(1,idWpbt)), psta,              &
-     &                        (/1,STA(ng)%Rindex/), (/Nstation(ng),1/), &
-     &                        ncid = STA(ng)%ncid,                      &
-     &                        varid = STA(ng)%Vid(idWpbt))
-        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-      END IF
-# endif
-#if defined BBL_MODEL
-!
-!  Write out wind-induced wave bottom orbital velocity.
-!
-      IF (Sout(idWorb,ng)) THEN
-        scale=1.0_dp
-        CALL extract_sta2d (ng, model, Cgrid, idWorb, r2dvar,           &
-     &                      LBi, UBi, LBj, UBj,                         &
-     &                      scale, FORCES(ng) % Uwave_rms,              &
-     &                      Nstation(ng), Xpos, Ypos, psta)
-        CALL netcdf_put_fvar (ng, model, STA(ng)%name,                  &
-     &                        TRIM(Vname(1,idWorb)), psta,              &
-     &                        (/1,STA(ng)%Rindex/), (/Nstation(ng),1/), &
-     &                        ncid = STA(ng)%ncid,                      &
-     &                        varid = STA(ng)%Vid(idWorb))
-        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-      END IF
-# endif
-# if defined WAVES_DSPR
-!
-!  Write out waves directional spreading.
-!
-      IF (Sout(idWvds,ng)) THEN
-        scale=1.0_dp
-        CALL extract_sta2d (ng, model, Cgrid, idWvds, r2dvar,           &
-     &                      LBi, UBi, LBj, UBj,                         &
-     &                      scale, FORCES(ng) % Wave_ds,                &
-     &                      Nstation(ng), Xpos, Ypos, psta)
-        CALL netcdf_put_fvar (ng, model, STA(ng)%name,                  &
-     &                        TRIM(Vname(1,idWvds)), psta,              &
-     &                        (/1,STA(ng)%Rindex/), (/Nstation(ng),1/), &
-     &                        ncid = STA(ng)%ncid,                      &
-     &                        varid = STA(ng)%Vid(idWvds))
-        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-      END IF
-!
-!  Write out wave spectrum peakedness.
-!
-      IF (Sout(idWvqp,ng)) THEN
-        scale=1.0_dp
-        CALL extract_sta2d (ng, model, Cgrid, idWvqp, r2dvar,           &
-     &                      LBi, UBi, LBj, UBj,                         &
-     &                      scale, FORCES(ng) % Wave_qp,                &
-     &                      Nstation(ng), Xpos, Ypos, psta)
-        CALL netcdf_put_fvar (ng, model, STA(ng)%name,                  &
-     &                        TRIM(Vname(1,idWvqp)), psta,              &
-     &                        (/1,STA(ng)%Rindex/), (/Nstation(ng),1/), &
-     &                        ncid = STA(ng)%ncid,                      &
-     &                        varid = STA(ng)%Vid(idWvqp))
-        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-      END IF
-# endif
 # ifdef WET_DRY
 !
 !  Write out wet/dry mask at RHO-points.
@@ -1410,10 +980,35 @@
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
       END IF
 # endif
+
+# if defined BBL_MODEL || defined WAVES_OUTPUT
+!
+!-----------------------------------------------------------------------
+!  Write out the bottom boundary layer model or waves variables.
+!-----------------------------------------------------------------------
+!
+        CALL bbl_wrt_station_nf90 (ng, model, tile,                     &
+     &                             LBi, UBi, LBj, UBj,                  &
+     &                             Sout, STA)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+# endif
+
+# ifdef SEDIMENT
+!
+!-----------------------------------------------------------------------
+!  Write out the sediment model variables.
+!-----------------------------------------------------------------------
+!
+        CALL sediment_wrt_station_nf90 (ng, model, tile,                &
+     &                                  LBi, UBi, LBj, UBj,             &
+     &                                  Sout, STA)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+# endif
+
 # if defined WEC || defined WEC_VF
 !
 !-----------------------------------------------------------------------
-!  Write out Waves Effect on Currents station variables.
+!  Write out the Waves Effect on Currents station variables.
 !-----------------------------------------------------------------------
 !
       CALL wec_wrt_station_nf90 (ng, model, tile,                       &
@@ -1557,25 +1152,6 @@
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
       END IF
 
-#  if defined SEDIMENT && defined SED_MORPH
-!
-!  Write out time-varying bathymetry.
-!
-      IF (Sout(idbath,ng)) THEN
-        scale=1.0_dp
-        CALL extract_sta2d (ng, model, Cgrid, idbath, r2dvar,           &
-     &                      LBi, UBi, LBj, UBj,                         &
-     &                      scale, GRID(ng)%h,                          &
-     &                      Nstation(ng), Xpos, Ypos, psta)
-        CALL pio_netcdf_put_fvar (ng, model, STA(ng)%name,              &
-     &                            TRIM(Vname(1,idbath)), psta,          &
-     &                            (/1,STA(ng)%Rindex/),                 &
-     &                            (/Nstation(ng),1/),                   &
-     &                            pioFile = STA(ng)%pioFile,            &
-     &                            pioVar = STA(ng)%pioVar(idbath)%vd)
-        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-      END IF
-#  endif
 !
 !  Write out 2D momentum component (m/s) in the XI-direction.
 !
@@ -2019,9 +1595,9 @@
      &                    LBi, UBi, LBj, UBj,                           &
      &                    GRID(ng) % CosAngler,                         &
      &                    GRID(ng) % SinAngler,                         &
-# ifdef MASKING
+#    ifdef MASKING
      &                    GRID(ng) % rmask_full,                        &
-# endif
+#    endif
      &                    FORCES(ng) % Uwind,                           &
      &                    FORCES(ng) % Vwind,                           &
      &                    Ur2d, Vr2d)
@@ -2291,449 +1867,6 @@
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
       END IF
 
-#  ifdef SOLVE3D
-#   ifdef BBL_MODEL
-!
-!  Write out current-induced, bottom U-stress.
-!
-      IF (Sout(idUbrs,ng)) THEN
-        scale=-rho0
-        CALL extract_sta2d (ng, model, Cgrid, idUbrs, r2dvar,           &
-     &                      LBi, UBi, LBj, UBj,                         &
-     &                      scale, BBL(ng)%bustrc,                      &
-     &                      Nstation(ng), Xpos, Ypos, psta)
-        CALL pio_netcdf_put_fvar (ng, model, STA(ng)%name,              &
-     &                            TRIM(Vname(1,idUbrs)), psta,          &
-     &                            (/1,STA(ng)%Rindex/),                 &
-     &                            (/Nstation(ng),1/),                   &
-     &                            pioFile = STA(ng)%pioFile,            &
-     &                            pioVar = STA(ng)%pioVar(idUbrs)%vd)
-        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-      END IF
-!
-!  Write out current-induced, bottom V-stress.
-!
-      IF (Sout(idVbrs,ng)) THEN
-        scale=-rho0
-        CALL extract_sta2d (ng, model, Cgrid, idVbrs, r2dvar,           &
-     &                      LBi, UBi, LBj, UBj,                         &
-     &                      scale, BBL(ng)%bvstrc,                      &
-     &                      Nstation(ng), Xpos, Ypos, psta)
-        CALL pio_netcdf_put_fvar (ng, model, STA(ng)%name,              &
-     &                            TRIM(Vname(1,idVbrs)), psta,          &
-     &                            (/1,STA(ng)%Rindex/),                 &
-     &                            (/Nstation(ng),1/),                   &
-     &                            pioFile = STA(ng)%pioFile,            &
-     &                            pioVar = STA(ng)%pioVar(idVbrs)%vd)
-        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-      END IF
-!
-!  Write out wind-induced, bottom U-stress.
-!
-      IF (Sout(idUbws,ng)) THEN
-        scale=rho0
-        CALL extract_sta2d (ng, model, Cgrid, idUbws, r2dvar,           &
-     &                      LBi, UBi, LBj, UBj,                         &
-     &                      scale, BBL(ng)%bustrw,                      &
-     &                      Nstation(ng), Xpos, Ypos, psta)
-        CALL pio_netcdf_put_fvar (ng, model, STA(ng)%name,              &
-     &                            TRIM(Vname(1,idUbws)), psta,          &
-     &                            (/1,STA(ng)%Rindex/),                 &
-     &                            (/Nstation(ng),1/),                   &
-     &                            pioFile = STA(ng)%pioFile,            &
-     &                            pioVar = STA(ng)%pioVar(idUbws)%vd)
-        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-      END IF
-!
-!  Write out wind-induced, bottom V-wave stress.
-!
-      IF (Sout(idVbws,ng)) THEN
-        scale=rho0
-        CALL extract_sta2d (ng, model, Cgrid, idVbws, r2dvar,           &
-     &                      LBi, UBi, LBj, UBj,                         &
-     &                      scale, BBL(ng)%bvstrw,                      &
-     &                      Nstation(ng), Xpos, Ypos, psta)
-        CALL pio_netcdf_put_fvar (ng, model, STA(ng)%name,              &
-     &                            TRIM(Vname(1,idVbws)), psta,          &
-     &                            (/1,STA(ng)%Rindex/),                 &
-     &                            (/Nstation(ng),1/),                   &
-     &                            pioFile = STA(ng)%pioFile,            &
-     &                            pioVar = STA(ng)%pioVar(idVbws)%vd)
-        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-      END IF
-!
-!  Write out maximum wind and current, bottom U-stress.
-!
-      IF (Sout(idUbcs,ng)) THEN
-        scale=rho0
-        CALL extract_sta2d (ng, model, Cgrid, idUbcs, r2dvar,           &
-     &                      LBi, UBi, LBj, UBj,                         &
-     &                      scale, BBL(ng)%bustrcwmax,                  &
-     &                      Nstation(ng), Xpos, Ypos, psta)
-        CALL pio_netcdf_put_fvar (ng, model, STA(ng)%name,              &
-     &                            TRIM(Vname(1,idUbcs)), psta,          &
-     &                            (/1,STA(ng)%Rindex/),                 &
-     &                            (/Nstation(ng),1/),                   &
-     &                            pioFile = STA(ng)%pioFile,            &
-     &                            pioVar = STA(ng)%pioVar(idUbcs)%vd)
-        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-      END IF
-!
-!  Write out maximum wind and current, bottom V-stress.
-!
-      IF (Sout(idVbcs,ng)) THEN
-        scale=rho0
-        CALL extract_sta2d (ng, model, Cgrid, idVbcs, r2dvar,           &
-     &                      LBi, UBi, LBj, UBj,                         &
-     &                      scale, BBL(ng)%bvstrcwmax,                  &
-     &                      Nstation(ng), Xpos, Ypos, psta)
-        CALL pio_netcdf_put_fvar (ng, model, STA(ng)%name,              &
-     &                            TRIM(Vname(1,idVbcs)), psta,          &
-     &                            (/1,STA(ng)%Rindex/),                 &
-     &                            (/Nstation(ng),1/),                   &
-     &                            pioFile = STA(ng)%pioFile,            &
-     &                            pioVar = STA(ng)%pioVar(idVbcs)%vd)
-        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-      END IF
-!
-!  Write out wind-induced, bed wave orbital U-velocity.
-!
-      IF (Sout(idUbot,ng)) THEN
-        scale=1.0_dp
-        CALL extract_sta2d (ng, model, Cgrid, idUbot, r2dvar,           &
-     &                      LBi, UBi, LBj, UBj,                         &
-     &                      scale, BBL(ng)%Ubot,                        &
-     &                      Nstation(ng), Xpos, Ypos, psta)
-        CALL pio_netcdf_put_fvar (ng, model, STA(ng)%name,              &
-     &                            TRIM(Vname(1,idUbot)), psta,          &
-     &                            (/1,STA(ng)%Rindex/),                 &
-     &                            (/Nstation(ng),1/),                   &
-     &                            pioFile = STA(ng)%pioFile,            &
-     &                            pioVar = STA(ng)%pioVar(idUbot)%vd)
-        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-      END IF
-!
-!  Write out wind-induced, bed wave orbital V-velocity.
-!
-      IF (Sout(idVbot,ng)) THEN
-        scale=1.0_dp
-        CALL extract_sta2d (ng, model, Cgrid, idVbot, r2dvar,           &
-     &                      LBi, UBi, LBj, UBj,                         &
-     &                      scale, BBL(ng)%Vbot,                        &
-     &                      Nstation(ng), Xpos, Ypos, psta)
-        CALL pio_netcdf_put_fvar (ng, model, STA(ng)%name,              &
-     &                            TRIM(Vname(1,idVbot)), psta,          &
-     &                            (/1,STA(ng)%Rindex/),                 &
-     &                            (/Nstation(ng),1/),                   &
-     &                            pioFile = STA(ng)%pioFile,            &
-     &                            pioVar = STA(ng)%pioVar(idVbot)%vd)
-        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-      END IF
-!
-!  Write out bottom U-velocity above bed.
-!
-      IF (Sout(idUbur,ng)) THEN
-        scale=1.0_dp
-        CALL extract_sta2d (ng, model, Cgrid, idUbur, r2dvar,           &
-     &                      LBi, UBi, LBj, UBj,                         &
-     &                      scale, BBL(ng)%Ur,                          &
-     &                      Nstation(ng), Xpos, Ypos, psta)
-        CALL pio_netcdf_put_fvar (ng, model, STA(ng)%name,              &
-     &                            TRIM(Vname(1,idUbur)), psta,          &
-     &                            (/1,STA(ng)%Rindex/),                 &
-     &                            (/Nstation(ng),1/),                   &
-     &                            pioFile = STA(ng)%pioFile,            &
-     &                            pioVar = STA(ng)%pioVar(idUbur)%vd)
-        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-      END IF
-!
-!  Write out bottom V-velocity above bed.
-!
-      IF (Sout(idVbvr,ng)) THEN
-        scale=1.0_dp
-        CALL extract_sta2d (ng, model, Cgrid, idVbvr, r2dvar,           &
-     &                      LBi, UBi, LBj, UBj,                         &
-     &                      scale, BBL(ng)%Vr,                          &
-     &                      Nstation(ng), Xpos, Ypos, psta)
-        CALL pio_netcdf_put_fvar (ng, model, STA(ng)%name,              &
-     &                            TRIM(Vname(1,idVbvr)), psta,          &
-     &                            (/1,STA(ng)%Rindex/),                 &
-     &                            (/Nstation(ng),1/),                   &
-     &                            pioFile = STA(ng)%pioFile,            &
-     &                            pioVar = STA(ng)%pioVar(idVbvr)%vd)
-        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-      END IF
-#   endif
-
-#   ifdef SEDIMENT
-!
-!  Write out sediment fraction of each size class in each bed layer.
-!
-      DO i=1,NST
-        IF (Sout(idfrac(i),ng)) THEN
-          scale=1.0_dp
-          CALL extract_sta3d (ng, model, Cgrid, idfrac(i), b3dvar,      &
-     &                        LBi, UBi, LBj, UBj, 1, Nbed,              &
-     &                        scale, SEDBED(ng)%bed_frac(:,:,:,i),      &
-     &                        NposB, XposB, YposB, ZposB, bsta)
-          CALL pio_netcdf_put_fvar (ng, model, STA(ng)%name,            &
-     &                              TRIM(Vname(1,idfrac(i))), rsta,     &
-     &                              (/1,1,STA(ng)%Rindex/),             &
-     &                              (/Nbed,Nstation(ng),1/),            &
-     &                            pioFile = STA(ng)%pioFile,            &
-     &                            pioVar = STA(ng)%pioVar(idfrac(i))%vd)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-!
-!  Write out sediment mass of each size class in each bed layer.
-!
-        IF (Sout(idBmas(i),ng)) THEN
-          scale=1.0_dp
-          CALL extract_sta3d (ng, model, Cgrid, idBmas(i), b3dvar,      &
-     &                        LBi, UBi, LBj, UBj, 1, Nbed,              &
-     &                        scale,                                    &
-     &                        SEDBED(ng)%bed_mass(:,:,:,NOUT,i),        &
-     &                        NposB, XposB, YposB, ZposB, bsta)
-          CALL pio_netcdf_put_fvar (ng, model, STA(ng)%name,            &
-     &                              TRIM(Vname(1,idBmas(i))), rsta,     &
-     &                              (/1,1,STA(ng)%Rindex/),             &
-     &                              (/Nbed,Nstation(ng),1/),            &
-     &                            pioFile = STA(ng)%pioFile,            &
-     &                            pioVar = STA(ng)%pioVar(idBmas(i))%vd)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-      END DO
-!
-!  Write out sediment properties in each bed layer.
-!
-      DO i=1,MBEDP
-        IF (Sout(idSbed(i),ng)) THEN
-          scale=1.0_dp
-          CALL extract_sta3d (ng, model, Cgrid, idSbed(i), b3dvar,      &
-     &                        LBi, UBi, LBj, UBj, 1, Nbed,              &
-     &                        scale, SEDBED(ng)%bed(:,:,:,i),           &
-     &                        NposB, XposB, YposB, ZposB, bsta)
-          CALL pio_netcdf_put_fvar (ng, model, STA(ng)%name,            &
-     &                              TRIM(Vname(1,idSbed(i))), rsta,     &
-     &                              (/1,1,STA(ng)%Rindex/),             &
-     &                              (/Nbed,Nstation(ng),1/),            &
-     &                            pioFile = STA(ng)%pioFile,            &
-     &                            pioVar = STA(ng)%pioVar(idSbed(i))%vd)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-      END DO
-#   endif
-
-#   if defined SEDIMENT || defined BBL_MODEL
-!
-!  Write out exposed sediment layer properties.
-!
-      DO i=1,MBEDP
-        IF (Sout(idBott(i),ng)) THEN
-          scale=1.0_dp
-          CALL extract_sta2d (ng, model, Cgrid, idBott(i), r2dvar,      &
-     &                        LBi, UBi, LBj, UBj,                       &
-     &                        scale, SEDBED(ng)%bottom(:,:,i),          &
-     &                        Nstation(ng), Xpos, Ypos, psta)
-          CALL pio_netcdf_put_fvar (ng, model, STA(ng)%name,            &
-     &                              TRIM(Vname(1,idBott(i))), rsta,     &
-     &                              (/1,STA(ng)%Rindex/),               &
-     &                              (/Nstation(ng),1/),                 &
-     &                            pioFile = STA(ng)%pioFile,            &
-     &                            pioVar = STA(ng)%pioVar(idBott(i))%vd)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-      END DO
-#   endif
-#  endif
-#  ifdef WAVES_HEIGHT
-!
-!  Write out wind-induced significant wave height.
-!
-      IF (Sout(idWamp,ng)) THEN
-        scale=1.0_dp
-        CALL extract_sta2d (ng, model, Cgrid, idWamp, r2dvar,           &
-     &                      LBi, UBi, LBj, UBj,                         &
-     &                      scale, FORCES(ng) % Hwave,                  &
-     &                      Nstation(ng), Xpos, Ypos, psta)
-        CALL pio_netcdf_put_fvar (ng, model, STA(ng)%name,              &
-     &                            TRIM(Vname(1,idWamp)), psta,          &
-     &                            (/1,STA(ng)%Rindex/),                 &
-     &                            (/Nstation(ng),1/),                   &
-     &                            pioFile = STA(ng)%pioFile,            &
-     &                            pioVar = STA(ng)%pioVar(idWamp)%vd)
-        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-      END IF
-#  endif
-#  ifdef WAVES_LENGTH
-!
-!  Write out wind-induced mean wavelenght.
-!
-      IF (Sout(idWlen,ng)) THEN
-        scale=1.0_dp
-        CALL extract_sta2d (ng, model, Cgrid, idWlen, r2dvar,           &
-     &                      LBi, UBi, LBj, UBj,                         &
-     &                      scale, FORCES(ng) % Lwave,                  &
-     &                      Nstation(ng), Xpos, Ypos, psta)
-        CALL pio_netcdf_put_fvar (ng, model, STA(ng)%name,              &
-     &                            TRIM(Vname(1,idWlen)), psta,          &
-     &                            (/1,STA(ng)%Rindex/),                 &
-     &                            (/Nstation(ng),1/),                   &
-     &                            pioFile = STA(ng)%pioFile,            &
-     &                            pioVar = STA(ng)%pioVar(idWlen)%vd)
-        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-      END IF
-#  endif
-#  ifdef WAVES_LENGTHP
-!
-!  Write out wind-induced peak wave wavelength.
-!
-      IF (Sout(idWlep,ng)) THEN
-        scale=1.0_dp
-        CALL extract_sta2d (ng, model, Cgrid, idWlep, r2dvar,           &
-     &                      LBi, UBi, LBj, UBj,                         &
-     &                      scale, FORCES(ng) % Lwavep,                 &
-     &                      Nstation(ng), Xpos, Ypos, psta)
-        CALL pio_netcdf_put_fvar (ng, model, STA(ng)%name,              &
-     &                            TRIM(Vname(1,idWlep)), psta,          &
-     &                            (/1,STA(ng)%Rindex/),                 &
-     &                            (/Nstation(ng),1/),                   &
-     &                            pioFile = STA(ng)%pioFile,            &
-     &                            pioVar = STA(ng)%pioVar(idWlep)%vd)
-        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-      END IF
-#  endif
-#  ifdef WAVES_DIR
-!
-!  Write out wind-induced mean wave direction.
-!
-      IF (Sout(idWdir,ng)) THEN
-        scale=rad2deg
-        CALL extract_sta2d (ng, model, Cgrid, idWdir, r2dvar,           &
-     &                      LBi, UBi, LBj, UBj,                         &
-     &                      scale, FORCES(ng) % Dwave,                  &
-     &                      Nstation(ng), Xpos, Ypos, psta)
-        CALL pio_netcdf_put_fvar (ng, model, STA(ng)%name,              &
-     &                            TRIM(Vname(1,idWdir)), psta,          &
-     &                            (/1,STA(ng)%Rindex/),                 &
-     &                            (/Nstation(ng),1/),                   &
-     &                            pioFile = STA(ng)%pioFile,            &
-     &                            pioVar = STA(ng)%pioVar(idWdir)%vd)
-        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-      END IF
-#  endif
-#  ifdef WAVES_DIRP
-!
-!  Write out wind-induced peak wave direction.
-!
-      IF (Sout(idWdip,ng)) THEN
-        scale=rad2deg
-        CALL extract_sta2d (ng, model, Cgrid, idWdip, r2dvar,           &
-     &                      LBi, UBi, LBj, UBj,                         &
-     &                      scale, FORCES(ng) % Dwavep,                 &
-     &                      Nstation(ng), Xpos, Ypos, psta)
-        CALL pio_netcdf_put_fvar (ng, model, STA(ng)%name,              &
-     &                            TRIM(Vname(1,idWdip)), psta,          &
-     &                            (/1,STA(ng)%Rindex/),                 &
-     &                            (/Nstation(ng),1/),                   &
-     &                            pioFile = STA(ng)%pioFile,            &
-     &                            pioVar = STA(ng)%pioVar(idWdip)%vd)
-        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-      END IF
-#  endif
-#  ifdef WAVES_TOP_PERIOD
-!
-!  Write out wind-induced surface wave period.
-!
-      IF (Sout(idWptp,ng)) THEN
-        scale=rad2deg
-        CALL extract_sta2d (ng, model, Cgrid, idWptp, r2dvar,           &
-     &                      LBi, UBi, LBj, UBj,                         &
-     &                      scale, FORCES(ng) % Pwave_top,              &
-     &                      Nstation(ng), Xpos, Ypos, psta)
-        CALL pio_netcdf_put_fvar (ng, model, STA(ng)%name,              &
-     &                            TRIM(Vname(1,idWptp)), psta,          &
-     &                            (/1,STA(ng)%Rindex/),                 &
-     &                            (/Nstation(ng),1/),                   &
-     &                            pioFile = STA(ng)%pioFile,            &
-     &                            pioVar = STA(ng)%pioVar(idWptp)%vd)
-        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-      END IF
-#  endif
-#  ifdef WAVES_BOT_PERIOD
-!
-!  Write out wind-induced bottom wave period.
-!
-      IF (Sout(idWpbt,ng)) THEN
-        scale=rad2deg
-        CALL extract_sta2d (ng, model, Cgrid, idWpbt, r2dvar,           &
-     &                      LBi, UBi, LBj, UBj,                         &
-     &                      scale, FORCES(ng) % Pwave_bot,              &
-     &                      Nstation(ng), Xpos, Ypos, psta)
-        CALL pio_netcdf_put_fvar (ng, model, STA(ng)%name,              &
-     &                            TRIM(Vname(1,idWpbt)), psta,          &
-     &                            (/1,STA(ng)%Rindex/),                 &
-     &                            (/Nstation(ng),1/),                   &
-     &                            pioFile = STA(ng)%pioFile,            &
-     &                            pioVar = STA(ng)%pioVar(idWpbt)%vd)
-        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-      END IF
-#  endif
-#  ifdef BBL_MODEL
-!
-!  Write out wind-induced wave bottom orbital velocity.
-!
-      IF (Sout(idWorb,ng)) THEN
-        scale=rad2deg
-        CALL extract_sta2d (ng, model, Cgrid, idWorb, r2dvar,           &
-     &                      LBi, UBi, LBj, UBj,                         &
-     &                      scale, FORCES(ng) % Ub_swan,                &
-     &                      Nstation(ng), Xpos, Ypos, psta)
-        CALL pio_netcdf_put_fvar (ng, model, STA(ng)%name,              &
-     &                            TRIM(Vname(1,idWorb)), psta,          &
-     &                            (/1,STA(ng)%Rindex/),                 &
-     &                            (/Nstation(ng),1/),                   &
-     &                            pioFile = STA(ng)%pioFile,            &
-     &                            pioVar = STA(ng)%pioVar(idWorb)%vd)
-        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-      END IF
-#  endif
-#  if defined WAVES_DSPR
-!
-!  Write out waves directional spreading.
-!
-      IF (Sout(idWvds,ng)) THEN
-        scale=1.0_dp
-        CALL extract_sta2d (ng, model, Cgrid, idWvds, r2dvar,           &
-     &                      LBi, UBi, LBj, UBj,                         &
-     &                      scale, FORCES(ng) % Wave_ds,                &
-     &                      Nstation(ng), Xpos, Ypos, psta)
-        CALL pio_netcdf_put_fvar (ng, model, STA(ng)%name,              &
-     &                            TRIM(Vname(1,idWvds)), psta,          &
-     &                            (/1,STA(ng)%Rindex/),                 &
-     &                            (/Nstation(ng),1/),                   &
-     &                            pioFile = STA(ng)%pioFile,            &
-     &                            pioVar = STA(ng)%pioVar(idWvds)%vd)
-        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-      END IF
-!
-!  Write out wave spectrum peakedness.
-!
-      IF (Sout(idWvqp,ng)) THEN
-        scale=1.0_dp
-        CALL extract_sta2d (ng, model, Cgrid, idWvqp, r2dvar,           &
-     &                      LBi, UBi, LBj, UBj,                         &
-     &                      scale, FORCES(ng) % Wave_qp,                &
-     &                      Nstation(ng), Xpos, Ypos, psta)
-        CALL pio_netcdf_put_fvar (ng, model, STA(ng)%name,              &
-     &                            TRIM(Vname(1,idWvqp)), psta,          &
-     &                            (/1,STA(ng)%Rindex/),                 &
-     &                            (/Nstation(ng),1/),                   &
-     &                            pioFile = STA(ng)%pioFile,            &
-     &                            pioVar = STA(ng)%pioVar(idWvqp)%vd)
-        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-      END IF
-#  endif
 #  ifdef WET_DRY
 !
 !  Write out wet/dry mask at RHO-points.
@@ -2786,10 +1919,35 @@
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
       END IF
 #  endif
+
+#  if defined BBL_MODEL || defined WAVES_OUTPUT
+!
+!-----------------------------------------------------------------------
+!  Write out the bottom boundary layer model or waves variables.
+!-----------------------------------------------------------------------
+!
+        CALL bbl_wrt_station_pio (ng, model, tile,                      &
+     &                            LBi, UBi, LBj, UBj,                   &
+     &                            Sout, STA)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+#  endif
+
+#  ifdef SEDIMENT
+!
+!-----------------------------------------------------------------------
+!  Write out the sediment model variables.
+!-----------------------------------------------------------------------
+!
+        CALL sediment_wrt_station_pio (ng, model, tile,                 &
+     &                                 LBi, UBi, LBj, UBj,              &
+     &                                 Sout, STA)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+#  endif
+
 #  if defined WEC || defined WEC_VF
 !
 !-----------------------------------------------------------------------
-!  Write out Waves Effect on Currents station variables.
+!  Write out the Waves Effect on Currents station variables.
 !-----------------------------------------------------------------------
 !
       CALL wec_wrt_station_pio (ng, model, tile,                        &

@@ -1,5 +1,5 @@
 # git $Id$
-# svn $Id: CMakeLists.txt 1178 2023-07-11 17:50:57Z arango $
+# svn $Id: CMakeLists.txt 1186 2023-08-02 01:08:21Z arango $
 #:::::::::::::::::::::::::::::::::::::::::::::::::::::: David Robertson :::
 # Copyright (c) 2002-2023 The ROMS/TOMS Group                           :::
 #   Licensed under a MIT/X style license                                :::
@@ -9,7 +9,6 @@
 # Source code list for sub-directory "ROMS/Nonlinear"
 
 list( APPEND _files
-      ROMS/Nonlinear/bbl.F
       ROMS/Nonlinear/bc_2d.F
       ROMS/Nonlinear/bc_3d.F
       ROMS/Nonlinear/bc_4d.F

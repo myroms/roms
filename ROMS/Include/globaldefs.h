@@ -2,7 +2,7 @@
 ** Include file "globaldef.h"
 **
 ** git $Id$
-** svn $Id: globaldefs.h 1178 2023-07-11 17:50:57Z arango $
+** svn $Id: globaldefs.h 1185 2023-08-01 21:42:38Z arango $
 ********************************************************** Hernan G. Arango ***
 ** Copyright (c) 2002-2023 The ROMS/TOMS Group     Alexander F. Shchepetkin  **
 **   Licensed under a MIT/X style license                                    **
@@ -946,6 +946,17 @@
      !defined WDISS_WAVEMOD                  && \
      !defined WDISS_INWAVE)
 # define WAVES_DISS
+#endif
+
+#if defined WAVES_BOT_PERIOD  || \
+    defined WAVES_DIR         || \
+    defined WAVES_DIRP        || \
+    defined WAVES_DSPR        || \
+    defined WAVES_LENGTH      || \
+    defined WAVES_LENGTHP     || \
+    defined WAVES_HEIGHT      || \
+    defined WAVES_TOP_PERIOD
+# define WAVES_OUTPUT
 #endif
 
 #if !defined WAV_COUPLING          && \
