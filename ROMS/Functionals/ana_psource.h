@@ -2,7 +2,7 @@
       SUBROUTINE ana_psource (ng, tile, model)
 !
 !! git $Id$
-!! svn $Id: ana_psource.h 1180 2023-07-13 02:42:10Z arango $
+!! svn $Id: ana_psource.h 1186 2023-08-02 01:08:21Z arango $
 !!======================================================================
 !! Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !!   Licensed under a MIT/X style license                              !
@@ -264,7 +264,7 @@
 #  ifdef DISTRIBUTE
         Pwrk=RESHAPE(SOURCES(ng)%Qshape,(/Npts/))
         CALL mp_collect (ng, iNLM, Npts, Pspv, Pwrk)
-        SOURCES(ng)%Qshape=RESHAPE(Pwrk,(/Msrc,N(ng)/))
+        SOURCES(ng)%Qshape=RESHAPE(Pwrk,(/Msrc(ng),N(ng)/))
 #  endif
 
 # elif defined RIVERPLUME1
@@ -443,16 +443,16 @@
           area_east=rbuffer(1)
 # endif
           DO is=1,Nsrc(ng)/2
-            SOURCES(ng)%Qbar(is)=Qbar(is)/area_west
+            SOURCES(ng)%Qbar(is)=SOURCES(ng)%Qbar(is)/area_west
           END DO
           DO is=Nsrc(ng)/2+1,Nsrc(ng)
-            SOURCES(ng)%Qbar(is)=Qbar(is)/area_east
+            SOURCES(ng)%Qbar(is)=SOURCES(ng)%Qbar(is)/area_east
           END DO
         END IF
 !$OMP END CRITICAL (PSOURCE)
 
 # ifdef DISTRIBUTE
-        CALL mp_collect (ng, iNLM, Msrc, Pspv, SOURCES(ng)%Qbar)
+        CALL mp_collect (ng, iNLM, Msrc(ng), Pspv, SOURCES(ng)%Qbar)
 # endif
 #else
         ana_psource.h: No values provided for Qbar.
@@ -521,6 +521,11 @@
 #  endif
           END DO
         END IF
+
+# elif defined SED_TEST1
+!
+!  No tracers point sources.
+!
 # else
         ana_psource.h: No values provided for Tsrc.
 # endif

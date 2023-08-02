@@ -2,7 +2,7 @@
       MODULE wrt_quick_mod
 !
 !git $Id$
-!svn $Id: wrt_quick.F 1182 2023-07-27 03:34:41Z arango $
+!svn $Id: wrt_quick.F 1185 2023-08-01 21:42:38Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -39,26 +39,38 @@
 #endif
       USE mod_stepping
 !
-#ifdef ICE_MODEL
+#if (defined BBL_MODEL || defined WAVES_OUTPUT) && defined SOLVE3D
+      USE bbl_output_mod,      ONLY : bbl_wrt_nf90
+# if defined PIO_LIB && defined DISTRIBUTE
+      USE bbl_output_mod,      ONLY : bbl_wrt_pio
+# endif
+#endif
+#if defined ICE_MODEL && defined SOLVE3D
       USE ice_output_mod,      ONLY : ice_wrt_nf90
 # if defined PIO_LIB && defined DISTRIBUTE
       USE ice_output_mod,      ONLY : ice_wrt_pio
 # endif
 #endif
-      USE nf_fwrite2d_mod, ONLY : nf_fwrite2d
+      USE nf_fwrite2d_mod,     ONLY : nf_fwrite2d
 #ifdef SOLVE3D
-      USE nf_fwrite3d_mod, ONLY : nf_fwrite3d
-      USE omega_mod,       ONLY : scale_omega
+      USE nf_fwrite3d_mod,     ONLY : nf_fwrite3d
+      USE omega_mod,           ONLY : scale_omega
 #endif
-      USE strings_mod,     ONLY : FoundError
-      USE uv_rotate_mod,   ONLY : uv_rotate2d
-#ifdef SOLVE3D
-      USE uv_rotate_mod,   ONLY : uv_rotate3d
-#endif
-#if defined WEC || defined WEC_VF
-      USE wec_output_mod,  ONLY : wec_wrt_nf90
+#if defined SEDIMENT && defined SOLVE3D
+      USE sediment_output_mod, ONLY : sediment_wrt_nf90
 # if defined PIO_LIB && defined DISTRIBUTE
-      USE wec_output_mod,  ONLY : wec_wrt_pio
+      USE sediment_output_mod, ONLY : sediment_wrt_pio
+# endif
+#endif
+      USE strings_mod,         ONLY : FoundError
+      USE uv_rotate_mod,       ONLY : uv_rotate2d
+#ifdef SOLVE3D
+      USE uv_rotate_mod,       ONLY : uv_rotate3d
+#endif
+#if defined WEC_VF && defined SOLVE3D
+      USE wec_output_mod,      ONLY : wec_wrt_nf90
+# if defined PIO_LIB && defined DISTRIBUTE
+      USE wec_output_mod,      ONLY : wec_wrt_pio
 # endif
 #endif
 !
@@ -186,32 +198,6 @@
      &                      varid = QCK(ng)%Vid(idtime))
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
-#if defined SEDIMENT && defined SED_MORPH
-!
-!  Write out time-dependent bathymetry (m)
-!
-      IF (Qout(idBath,ng)) THEN
-        scale=1.0_dp
-        gtype=gfactor*r2dvar
-        status=nf_fwrite2d(ng, model, QCK(ng)%ncid,                     &
-     &                     QCK(ng)%Vid(idbath),                         &
-     &                     QCK(ng)%Rindex, gtype,                       &
-     &                     LBi, UBi, LBj, UBj, scale,                   &
-# ifdef MASKING
-     &                     GRID(ng) % rmask,                            &
-# endif
-     &                     GRID(ng) % h,                                &
-     &                     SetFillVal = .FALSE.)
-        IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-          IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idbath)), QCK(ng)%Rindex
-          END IF
-          exit_flag=3
-          ioerror=status
-          RETURN
-        END IF
-      END IF
-#endif
 #ifdef WET_DRY
 !
 !  Write out wet/dry mask at PSI-points.
@@ -1452,527 +1438,23 @@
           RETURN
         END IF
       END IF
-#ifdef SOLVE3D
-# ifdef BBL_MODEL
-!
-!  Write out current-induced, bottom U-stress at RHO-points.
-!
-      IF (Qout(idUbrs,ng)) THEN
-        scale=-rho0
-        gtype=gfactor*r2dvar
-        status=nf_fwrite2d(ng, model, QCK(ng)%ncid,                     &
-     &                     QCK(ng)%Vid(idUbrs),                         &
-     &                     QCK(ng)%Rindex, gtype,                       &
-     &                     LBi, UBi, LBj, UBj, scale,                   &
-#  ifdef MASKING
-     &                     GRID(ng) % rmask,                            &
-#  endif
-     &                     BBL(ng) % bustrc)
-        IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-          IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idUbrs)), QCK(ng)%Rindex
-          END IF
-          exit_flag=3
-          ioerror=status
-          RETURN
-        END IF
-      END IF
-!
-!  Write out current-induced, bottom V-stress at RHO-points.
-!
-      IF (Qout(idVbrs,ng)) THEN
-        scale=-rho0
-        gtype=gfactor*r2dvar
-        status=nf_fwrite2d(ng, model, QCK(ng)%ncid,                     &
-     &                     QCK(ng)%Vid(idVbrs),                         &
-     &                     QCK(ng)%Rindex, gtype,                       &
-     &                     LBi, UBi, LBj, UBj, scale,                   &
-#  ifdef MASKING
-     &                     GRID(ng) % rmask,                            &
-#  endif
-     &                     BBL(ng) % bvstrc)
-        IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-          IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idVbrs)), QCK(ng)%Rindex
-          END IF
-          exit_flag=3
-          ioerror=status
-          RETURN
-        END IF
-      END IF
-!
-!  Write out wind-induced, bottom U-stress at RHO-points.
-!
-      IF (Qout(idUbws,ng)) THEN
-        scale=rho0
-        gtype=gfactor*r2dvar
-        status=nf_fwrite2d(ng, model, QCK(ng)%ncid,                     &
-     &                     QCK(ng)%Vid(idUbws),                         &
-     &                     QCK(ng)%Rindex, gtype,                       &
-     &                     LBi, UBi, LBj, UBj, scale,                   &
-#  ifdef MASKING
-     &                     GRID(ng) % rmask,                            &
-#  endif
-     &                     BBL(ng) % bustrw)
-        IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-          IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idUbws)), QCK(ng)%Rindex
-          END IF
-          exit_flag=3
-          ioerror=status
-          RETURN
-        END IF
-      END IF
-!
-!  Write out wind-induced, bottom V-stress at RHO-points.
-!
-      IF (Qout(idVbws,ng)) THEN
-        scale=rho0
-        gtype=gfactor*r2dvar
-        status=nf_fwrite2d(ng, model, QCK(ng)%ncid,                     &
-     &                     QCK(ng)%Vid(idVbws),                         &
-     &                     QCK(ng)%Rindex, gtype,                       &
-     &                     LBi, UBi, LBj, UBj, scale,                   &
-#  ifdef MASKING
-     &                     GRID(ng) % rmask,                            &
-#  endif
-     &                     BBL(ng) % bvstrw)
-        IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-          IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idVbws)), QCK(ng)%Rindex
-          END IF
-          exit_flag=3
-          ioerror=status
-          RETURN
-        END IF
-      END IF
-!
-!  Write out maximum wind and current, bottom U-stress at RHO-points.
-!
-      IF (Qout(idUbcs,ng)) THEN
-        scale=rho0
-        gtype=gfactor*r2dvar
-        status=nf_fwrite2d(ng, model, QCK(ng)%ncid,                     &
-     &                     QCK(ng)%Vid(idUbcs),                         &
-     &                     QCK(ng)%Rindex, gtype,                       &
-     &                     LBi, UBi, LBj, UBj, scale,                   &
-#  ifdef MASKING
-     &                     GRID(ng) % rmask,                            &
-#  endif
-     &                     BBL(ng) % bustrcwmax)
-        IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-          IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idUbcs)), QCK(ng)%Rindex
-          END IF
-          exit_flag=3
-          ioerror=status
-          RETURN
-        END IF
-      END IF
-!
-!  Write out maximum wind and current, bottom V-stress at RHO-points.
-!
-      IF (Qout(idVbcs,ng)) THEN
-        scale=rho0
-        gtype=gfactor*r2dvar
-        status=nf_fwrite2d(ng, model, QCK(ng)%ncid,                     &
-     &                     QCK(ng)%Vid(idVbcs),                         &
-     &                     QCK(ng)%Rindex, gtype,                       &
-     &                     LBi, UBi, LBj, UBj, scale,                   &
-#  ifdef MASKING
-     &                     GRID(ng) % rmask,                            &
-#  endif
-     &                     BBL(ng) % bvstrcwmax)
-        IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-          IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idVbcs)), QCK(ng)%Rindex
-          END IF
-          exit_flag=3
-          ioerror=status
-          RETURN
-        END IF
-      END IF
-!
-!  Write out wind-induced, bed wave orbital U-velocity at RHO-points.
-!
-      IF (Qout(idUbot,ng)) THEN
-        scale=1.0_dp
-        gtype=gfactor*r2dvar
-        status=nf_fwrite2d(ng, model, QCK(ng)%ncid,                     &
-     &                     QCK(ng)%Vid(idUbot),                         &
-     &                     QCK(ng)%Rindex, gtype,                       &
-     &                     LBi, UBi, LBj, UBj, scale,                   &
-#  ifdef MASKING
-     &                     GRID(ng) % rmask,                            &
-#  endif
-     &                     BBL(ng) % Ubot)
-        IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-          IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idUbot)), QCK(ng)%Rindex
-          END IF
-          exit_flag=3
-          ioerror=status
-          RETURN
-        END IF
-      END IF
-!
-!  Write out wind-induced, bed wave orbital V-velocity at RHO-points
-!
-      IF (Qout(idVbot,ng)) THEN
-        scale=1.0_dp
-        gtype=gfactor*r2dvar
-        status=nf_fwrite2d(ng, model, QCK(ng)%ncid,                     &
-     &                     QCK(ng)%Vid(idVbot),                         &
-     &                     QCK(ng)%Rindex, gtype,                       &
-     &                     LBi, UBi, LBj, UBj, scale,                   &
-#  ifdef MASKING
-     &                     GRID(ng) % rmask,                            &
-#  endif
-     &                     BBL(ng) % Vbot)
-        IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-          IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idVbot)), QCK(ng)%Rindex
-          END IF
-          exit_flag=3
-          ioerror=status
-          RETURN
-        END IF
-      END IF
-!
-!  Write out bottom U-velocity above bed at RHO-points.
-!
-      IF (Qout(idUbur,ng)) THEN
-        scale=1.0_dp
-        gtype=gfactor*r2dvar
-        status=nf_fwrite2d(ng, model, QCK(ng)%ncid,                     &
-     &                     QCK(ng)%Vid(idUbur),                         &
-     &                     QCK(ng)%Rindex, gtype,                       &
-     &                     LBi, UBi, LBj, UBj, scale,                   &
-#  ifdef MASKING
-     &                     GRID(ng) % rmask,                            &
-#  endif
-     &                     BBL(ng) % Ur)
-        IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-          IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idUbur)), QCK(ng)%Rindex
-          END IF
-          exit_flag=3
-          ioerror=status
-          RETURN
-        END IF
-      END IF
-!
-!  Write out bottom V-velocity above bed at RHO-points.
-!
-      IF (Qout(idVbvr,ng)) THEN
-        scale=1.0_dp
-        gtype=gfactor*r2dvar
-        status=nf_fwrite2d(ng, model, QCK(ng)%ncid,                     &
-     &                     QCK(ng)%Vid(idVbvr),                         &
-     &                     QCK(ng)%Rindex, gtype,                       &
-     &                     LBi, UBi, LBj, UBj, scale,                   &
-#  ifdef MASKING
-     &                     GRID(ng) % rmask,                            &
-#  endif
-     &                     BBL(ng) % Vr)
-        IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-          IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idVbvr)), QCK(ng)%Rindex
-          END IF
-          exit_flag=3
-          ioerror=status
-          RETURN
-        END IF
-      END IF
-# endif
-# ifdef SEDIMENT
-#  ifdef BEDLOAD
-!
-!  Write out bed load transport in U-direction.
-!
-      DO i=1,NST
-        IF (Qout(idUbld(i),ng)) THEN
-          scale=1.0_dp
-          gtype=gfactor*u2dvar
-          status=nf_fwrite2d(ng, model, QCK(ng)%ncid,                   &
-     &                       QCK(ng)%Vid(idUbld(i)),                    &
-     &                       QCK(ng)%Rindex, gtype,                     &
-     &                       LBi, UBi, LBj, UBj, scale,                 &
-#   ifdef MASKING
-     &                       GRID(ng) % umask,                          &
-#   endif
-     &                       SEDBED(ng) % bedldu(:,:,i))
-          IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-            IF (Master) THEN
-              WRITE (stdout,10) TRIM(Vname(1,idUbld(i))), QCK(ng)%Rindex
-            END IF
-            exit_flag=3
-            ioerror=status
-            RETURN
-          END IF
-        END IF
-!
-!  Write out bed load transport in V-direction.
-!
-        IF (Qout(idVbld(i),ng)) THEN
-          scale=1.0_dp
-          gtype=gfactor*v2dvar
-          status=nf_fwrite2d(ng, model, QCK(ng)%ncid,                   &
-     &                       QCK(ng)%Vid(idVbld(i)),                    &
-     &                       QCK(ng)%Rindex, gtype,                     &
-     &                       LBi, UBi, LBj, UBj, scale,                 &
-#   ifdef MASKING
-     &                       GRID(ng) % vmask,                          &
-#   endif
-     &                       SEDBED(ng) % bedldv(:,:,i))
-          IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-            IF (Master) THEN
-              WRITE (stdout,10) TRIM(Vname(1,idVbld(i))), QCK(ng)%Rindex
-            END IF
-            exit_flag=3
-            ioerror=status
-            RETURN
-          END IF
-        END IF
-      END DO
-#  endif
-!
-!  Write out sediment fraction of each size class in each bed layer.
-!
-      DO i=1,NST
-        IF (Qout(idfrac(i),ng)) THEN
-          scale=1.0_dp
-          gtype=gfactor*b3dvar
-          status=nf_fwrite3d(ng, model, QCK(ng)%ncid,                   &
-     &                       QCK(ng)%Vid(idfrac(i)),                    &
-     &                       QCK(ng)%Rindex, gtype,                     &
-     &                       LBi, UBi, LBj, UBj, 1, Nbed, scale,        &
-#  ifdef MASKING
-     &                       GRID(ng) % rmask,                          &
-#  endif
-     &                       SEDBED(ng) % bed_frac(:,:,:,i))
-          IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-            IF (Master) THEN
-              WRITE (stdout,10) TRIM(Vname(1,idfrac(i))), QCK(ng)%Rindex
-            END IF
-            exit_flag=3
-            ioerror=status
-            RETURN
-          END IF
-        END IF
-      END DO
-!
-!  Write out sediment mass of each size class in each bed layer.
-!
-      DO i=1,NST
-        IF (Qout(idBmas(i),ng)) THEN
-          scale=1.0_dp
-          gtype=gfactor*b3dvar
-          status=nf_fwrite3d(ng, model, QCK(ng)%ncid,                   &
-     &                       QCK(ng)%Vid(idBmas(i)),                    &
-     &                       QCK(ng)%Rindex, gtype,                     &
-     &                       LBi, UBi, LBj, UBj, 1, Nbed, scale,        &
-#  ifdef MASKING
-     &                       GRID(ng) % rmask,                          &
-#  endif
-     &                       SEDBED(ng) % bed_mass(:,:,:,NOUT,i))
-          IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-            IF (Master) THEN
-              WRITE (stdout,10) TRIM(Vname(1,idBmas(i))), QCK(ng)%Rindex
-            END IF
-            exit_flag=3
-            ioerror=status
-            RETURN
-          END IF
-        END IF
-      END DO
-!
-!  Write out sediment properties in each bed layer.
-!
-      DO i=1,MBEDP
-        IF (Qout(idSbed(i),ng)) THEN
-          scale=1.0_dp
-          gtype=gfactor*b3dvar
-          status=nf_fwrite3d(ng, model, QCK(ng)%ncid,                   &
-     &                       QCK(ng)%Vid(idSbed(i)),                    &
-     &                       QCK(ng)%Rindex, gtype,                     &
-     &                       LBi, UBi, LBj, UBj, 1, Nbed, scale,        &
-#  ifdef MASKING
-     &                       GRID(ng) % rmask,                          &
-#  endif
-     &                       SEDBED(ng) % bed(:,:,:,i))
-          IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-            IF (Master) THEN
-              WRITE (stdout,10) TRIM(Vname(1,idSbed(i))), QCK(ng)%Rindex
-            END IF
-            exit_flag=3
-            ioerror=status
-            RETURN
-          END IF
-        END IF
-      END DO
-# endif
-# if defined SEDIMENT || defined BBL_MODEL
-!
-!  Write out exposed sediment layer properties.
-!
-      DO i=1,MBOTP
-        IF (Qout(idBott(i),ng)) THEN
-          IF (i.eq.itauc) THEN
-            scale=rho0
-          ELSE
-            scale=1.0_dp
-          END IF
-          gtype=gfactor*r2dvar
-          status=nf_fwrite2d(ng, model, QCK(ng)%ncid,                   &
-     &                       QCK(ng)%Vid(idBott(i)),                    &
-     &                       QCK(ng)%Rindex, gtype,                     &
-     &                       LBi, UBi, LBj, UBj, scale,                 &
-#  ifdef MASKING
-     &                       GRID(ng) % rmask,                          &
-#  endif
-     &                       SEDBED(ng) % bottom(:,:,i))
-          IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-            IF (Master) THEN
-              WRITE (stdout,10) TRIM(Vname(1,idBott(i))), QCK(ng)%Rindex
-            END IF
-            exit_flag=3
-            ioerror=status
-            RETURN
-          END IF
-        END IF
-      END DO
-# endif
-#endif
-#ifdef WAVES_HEIGHT
-!
-!  Write out wind-induced wave height.
-!
-      IF (Qout(idWamp,ng)) THEN
-        scale=1.0_dp
-        gtype=gfactor*r2dvar
-        status=nf_fwrite2d(ng, model, QCK(ng)%ncid,                     &
-     &                     QCK(ng)%Vid(idWamp),                         &
-     &                     QCK(ng)%Rindex, gtype,                       &
-     &                     LBi, UBi, LBj, UBj, scale,                   &
-# ifdef MASKING
-     &                     GRID(ng) % rmask,                            &
-# endif
-     &                     FORCES(ng) % Hwave)
-        IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-          IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idWamp)), QCK(ng)%Rindex
-          END IF
-          exit_flag=3
-          ioerror=status
-          RETURN
-        END IF
-      END IF
-#endif
-#ifdef WAVES_LENGTH
-!
-!  Write out wind-induced wave length.
-!
-      IF (Qout(idWlen,ng)) THEN
-        scale=1.0_dp
-        gtype=gfactor*r2dvar
-        status=nf_fwrite2d(ng, model, QCK(ng)%ncid,                     &
-     &                     QCK(ng)%Vid(idWlen),                         &
-     &                     QCK(ng)%Rindex, gtype,                       &
-     &                     LBi, UBi, LBj, UBj, scale,                   &
-# ifdef MASKING
-     &                     GRID(ng) % rmask,                            &
-# endif
-     &                     FORCES(ng) % Lwave)
-        IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-          IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idWlen)), QCK(ng)%Rindex
-          END IF
-          exit_flag=3
-          ioerror=status
-          RETURN
-        END IF
-      END IF
-#endif
-#ifdef WAVES_DIR
-!
-!  Write out wind-induced wave direction.
-!
-      IF (Qout(idWdir,ng)) THEN
-        scale=rad2deg
-        gtype=gfactor*r2dvar
-        status=nf_fwrite2d(ng, model, QCK(ng)%ncid,                     &
-     &                     QCK(ng)%Vid(idWdir),                         &
-     &                     QCK(ng)%Rindex, gtype,                       &
-     &                     LBi, UBi, LBj, UBj, scale,                   &
-# ifdef MASKING
-     &                     GRID(ng) % rmask,                            &
-# endif
-     &                     FORCES(ng) % Dwave)
-        IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-          IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idWdir)), QCK(ng)%Rindex
-          END IF
-          exit_flag=3
-          ioerror=status
-          RETURN
-        END IF
-      END IF
-#endif
-#ifdef WAVES_TOP_PERIOD
-!
-!  Write out wind-induced surface wave period.
-!
-      IF (Qout(idWptp,ng)) THEN
-        scale=1.0_dp
-        gtype=gfactor*r2dvar
-        status=nf_fwrite2d(ng, model, QCK(ng)%ncid,                     &
-     &                     QCK(ng)%Vid(idWptp),                         &
-     &                     QCK(ng)%Rindex, gtype,                       &
-     &                     LBi, UBi, LBj, UBj, scale,                   &
-# ifdef MASKING
-     &                     GRID(ng) % rmask,                            &
-# endif
-     &                     FORCES(ng) % Pwave_top)
-        IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-          IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idWptp)), QCK(ng)%Rindex
-          END IF
-          exit_flag=3
-          ioerror=status
-          RETURN
-        END IF
-      END IF
-#endif
-#ifdef WAVES_BOT_PERIOD
-!
-!  Write out wind-induced bottom wave period.
-!
-      IF (Qout(idWpbt,ng)) THEN
-        scale=1.0_dp
-        gtype=gfactor*r2dvar
-        status=nf_fwrite2d(ng, model, QCK(ng)%ncid,                     &
-     &                     QCK(ng)%Vid(idWpbt),                         &
-     &                     QCK(ng)%Rindex, gtype,                       &
-     &                     LBi, UBi, LBj, UBj, scale,                   &
-# ifdef MASKING
-     &                     GRID(ng) % rmask,                            &
-# endif
-     &                     FORCES(ng) % Pwave_bot)
-        IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-          IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idWpbt)), QCK(ng)%Rindex
-          END IF
-          exit_flag=3
-          ioerror=status
-          RETURN
-        END IF
-      END IF
-#endif
-#ifdef ICE_MODEL
+
+#if (defined BBL_MODEL || defined WAVES_OUTPUT) && defined SOLVE3D
 !
 !-----------------------------------------------------------------------
-!  Write out sea-ice model variables.
+!  Write out the bottom boundary layer model or waves variables.
+!-----------------------------------------------------------------------
+!
+        CALL bbl_wrt_nf90 (ng, model, tile,                             &
+     &                     LBi, UBi, LBj, UBj,                          &
+     &                     Qout, QCK)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+#endif
+
+#if defined ICE_MODEL && defined SOLVE3D
+!
+!-----------------------------------------------------------------------
+!  Write out the sea-ice model variables.
 !-----------------------------------------------------------------------
 !
         CALL ice_wrt_nf90 (ng, model, tile,                             &
@@ -1980,10 +1462,23 @@
      &                     Qout, QCK)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #endif
-#if defined WEC || defined WEC_VF
+
+#if defined SEDIMENT && defined SOLVE3D
 !
 !-----------------------------------------------------------------------
-!  Write out Waves Effect on Currents variables.
+!  Write out the sediment model variables.
+!-----------------------------------------------------------------------
+!
+        CALL sediment_wrt_nf90 (ng, model, tile,                        &
+     &                          LBi, UBi, LBj, UBj,                     &
+     &                          Qout, QCK)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+#endif
+
+#if defined WEC_VF && defined SOLVE3D
+!
+!-----------------------------------------------------------------------
+!  Write out the Waves Effect on Currents variables.
 !-----------------------------------------------------------------------
 !
       CALL wec_wrt_nf90 (ng, model, tile,                               &
@@ -2096,37 +1591,6 @@
      &                          pioVar = QCK(ng)%pioVar(idtime)%vd)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
-# if defined SEDIMENT && defined SED_MORPH
-!
-!  Write out time-dependent bathymetry (m)
-!
-      IF (Qout(idBath,ng)) THEN
-        scale=1.0_dp
-        IF (QCK(ng)%pioVar(idbath)%dkind.eq.PIO_double) THEN
-          ioDesc => ioDesc_dp_r2dvar(ng)
-        ELSE
-          ioDesc => ioDesc_sp_r2dvar(ng)
-        END IF
-        status=nf_fwrite2d(ng, model, QCK(ng)%pioFile,                  &
-     &                     QCK(ng)%pioVar(idbath),                      &
-     &                     QCK(ng)%Rindex,                              &
-     &                     ioDesc,                                      &
-     &                     LBi, UBi, LBj, UBj, scale,                   &
-#  ifdef MASKING
-     &                     GRID(ng) % rmask,                            &
-#  endif
-     &                     GRID(ng) % h,                                &
-     &                     SetFillVal = .FALSE.)
-        IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-          IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idbath)), QCK(ng)%Rindex
-          END IF
-          exit_flag=3
-          ioerror=status
-          RETURN
-        END IF
-      END IF
-# endif
 # ifdef WET_DRY
 !
 !  Write out wet/dry mask at PSI-points.
@@ -3620,632 +3084,22 @@
         END IF
       END IF
 
-# ifdef SOLVE3D
-#  ifdef BBL_MODEL
-!
-!  Write out current-induced, bottom U-stress at RHO-points.
-!
-      IF (Qout(idUbrs,ng)) THEN
-        scale=-rho0
-        IF (QCK(ng)%pioVar(idUbrs)%dkind.eq.PIO_double) THEN
-          ioDesc => ioDesc_dp_r2dvar(ng)
-        ELSE
-          ioDesc => ioDesc_sp_r2dvar(ng)
-        END IF
-        status=nf_fwrite2d(ng, model, QCK(ng)%pioFile,                  &
-     &                     QCK(ng)%pioVar(idUbrs),                      &
-     &                     QCK(ng)%Rindex,                              &
-     &                     ioDesc,                                      &
-     &                     LBi, UBi, LBj, UBj, scale,                   &
-#   ifdef MASKING
-     &                     GRID(ng) % rmask,                            &
-#   endif
-     &                     BBL(ng) % bustrc)
-        IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-          IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idUbrs)), QCK(ng)%Rindex
-          END IF
-          exit_flag=3
-          ioerror=status
-          RETURN
-        END IF
-      END IF
-!
-!  Write out current-induced, bottom V-stress at RHO-points.
-!
-      IF (Qout(idVbrs,ng)) THEN
-        scale=-rho0
-        IF (QCK(ng)%pioVar(idVbrs)%dkind.eq.PIO_double) THEN
-          ioDesc => ioDesc_dp_r2dvar(ng)
-        ELSE
-          ioDesc => ioDesc_sp_r2dvar(ng)
-        END IF
-        status=nf_fwrite2d(ng, model, QCK(ng)%pioFile,                  &
-     &                     QCK(ng)%pioVar(idVbrs),                      &
-     &                     QCK(ng)%Rindex,                              &
-     &                     ioDesc,                                      &
-     &                     LBi, UBi, LBj, UBj, scale,                   &
-#   ifdef MASKING
-     &                     GRID(ng) % rmask,                            &
-#   endif
-     &                     BBL(ng) % bvstrc)
-        IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-          IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idVbrs)), QCK(ng)%Rindex
-          END IF
-          exit_flag=3
-          ioerror=status
-          RETURN
-        END IF
-      END IF
-!
-!  Write out wind-induced, bottom U-stress at RHO-points.
-!
-      IF (Qout(idUbws,ng)) THEN
-        scale=rho0
-        IF (QCK(ng)%pioVar(idUbws)%dkind.eq.PIO_double) THEN
-          ioDesc => ioDesc_dp_r2dvar(ng)
-        ELSE
-          ioDesc => ioDesc_sp_r2dvar(ng)
-        END IF
-        status=nf_fwrite2d(ng, model, QCK(ng)%pioFile,                  &
-     &                     QCK(ng)%pioVar(idUbws),                      &
-     &                     QCK(ng)%Rindex,                              &
-     &                     ioDesc,                                      &
-     &                     LBi, UBi, LBj, UBj, scale,                   &
-#   ifdef MASKING
-     &                     GRID(ng) % rmask,                            &
-#   endif
-     &                     BBL(ng) % bustrw)
-        IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-          IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idUbws)), QCK(ng)%Rindex
-          END IF
-          exit_flag=3
-          ioerror=status
-          RETURN
-        END IF
-      END IF
-!
-!  Write out wind-induced, bottom V-stress at RHO-points.
-!
-      IF (Qout(idVbws,ng)) THEN
-        scale=rho0
-        IF (QCK(ng)%pioVar(idVbws)%dkind.eq.PIO_double) THEN
-          ioDesc => ioDesc_dp_r2dvar(ng)
-        ELSE
-          ioDesc => ioDesc_sp_r2dvar(ng)
-        END IF
-        status=nf_fwrite2d(ng, model, QCK(ng)%pioFile,                  &
-     &                     QCK(ng)%pioVar(idVbws),                      &
-     &                     QCK(ng)%Rindex,                              &
-     &                     ioDesc,                                      &
-     &                     LBi, UBi, LBj, UBj, scale,                   &
-#   ifdef MASKING
-     &                     GRID(ng) % rmask,                            &
-#   endif
-     &                     BBL(ng) % bvstrw)
-        IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-          IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idVbws)), QCK(ng)%Rindex
-          END IF
-          exit_flag=3
-          ioerror=status
-          RETURN
-        END IF
-      END IF
-!
-!  Write out maximum wind and current, bottom U-stress at RHO-points.
-!
-      IF (Qout(idUbcs,ng)) THEN
-        scale=rho0
-        IF (QCK(ng)%pioVar(idUbcs)%dkind.eq.PIO_double) THEN
-          ioDesc => ioDesc_dp_r2dvar(ng)
-        ELSE
-          ioDesc => ioDesc_sp_r2dvar(ng)
-        END IF
-        status=nf_fwrite2d(ng, model, QCK(ng)%pioFile,                  &
-     &                     QCK(ng)%pioVar(idUbcs),                      &
-     &                     QCK(ng)%Rindex,                              &
-     &                     ioDesc,                                      &
-     &                     LBi, UBi, LBj, UBj, scale,                   &
-#   ifdef MASKING
-     &                     GRID(ng) % rmask,                            &
-#   endif
-     &                     BBL(ng) % bustrcwmax)
-        IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-          IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idUbcs)), QCK(ng)%Rindex
-          END IF
-          exit_flag=3
-          ioerror=status
-          RETURN
-        END IF
-      END IF
-!
-!  Write out maximum wind and current, bottom V-stress at RHO-points.
-!
-      IF (Qout(idVbcs,ng)) THEN
-        scale=rho0
-        IF (QCK(ng)%pioVar(idVbcs)%dkind.eq.PIO_double) THEN
-          ioDesc => ioDesc_dp_r2dvar(ng)
-        ELSE
-          ioDesc => ioDesc_sp_r2dvar(ng)
-        END IF
-        status=nf_fwrite2d(ng, model, QCK(ng)%pioFile,                  &
-     &                     QCK(ng)%pioVar(idVbcs),                      &
-     &                     QCK(ng)%Rindex,                              &
-     &                     ioDesc,                                      &
-     &                     LBi, UBi, LBj, UBj, scale,                   &
-#   ifdef MASKING
-     &                     GRID(ng) % rmask,                            &
-#   endif
-     &                     BBL(ng) % bvstrcwmax)
-        IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-          IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idVbcs)), QCK(ng)%Rindex
-          END IF
-          exit_flag=3
-          ioerror=status
-          RETURN
-        END IF
-      END IF
-!
-!  Write out wind-induced, bed wave orbital U-velocity at RHO-points.
-!
-      IF (Qout(idUbot,ng)) THEN
-        scale=1.0_dp
-        IF (QCK(ng)%pioVar(idUbot)%dkind.eq.PIO_double) THEN
-          ioDesc => ioDesc_dp_r2dvar(ng)
-        ELSE
-          ioDesc => ioDesc_sp_r2dvar(ng)
-        END IF
-        status=nf_fwrite2d(ng, model, QCK(ng)%pioFile,                  &
-     &                     QCK(ng)%pioVar(idUbot),                      &
-     &                     QCK(ng)%Rindex,                              &
-     &                     ioDesc,                                      &
-     &                     LBi, UBi, LBj, UBj, scale,                   &
-#   ifdef MASKING
-     &                     GRID(ng) % rmask,                            &
-#   endif
-     &                     BBL(ng) % Ubot)
-        IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-          IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idUbot)), QCK(ng)%Rindex
-          END IF
-          exit_flag=3
-          ioerror=status
-          RETURN
-        END IF
-      END IF
-!
-!  Write out wind-induced, bed wave orbital V-velocity at RHO-points
-!
-      IF (Qout(idVbot,ng)) THEN
-        scale=1.0_dp
-        IF (QCK(ng)%pioVar(idVbot)%dkind.eq.PIO_double) THEN
-          ioDesc => ioDesc_dp_r2dvar(ng)
-        ELSE
-          ioDesc => ioDesc_sp_r2dvar(ng)
-        END IF
-        status=nf_fwrite2d(ng, model, QCK(ng)%pioFile,                  &
-     &                     QCK(ng)%pioVar(idVbot),                      &
-     &                     QCK(ng)%Rindex,                              &
-     &                     ioDesc,                                      &
-     &                     LBi, UBi, LBj, UBj, scale,                   &
-#   ifdef MASKING
-     &                     GRID(ng) % rmask,                            &
-#   endif
-     &                     BBL(ng) % Vbot)
-        IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-          IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idVbot)), QCK(ng)%Rindex
-          END IF
-          exit_flag=3
-          ioerror=status
-          RETURN
-        END IF
-      END IF
-!
-!  Write out bottom U-velocity above bed at RHO-points.
-!
-      IF (Qout(idUbur,ng)) THEN
-        scale=1.0_dp
-        IF (QCK(ng)%pioVar(idUbur)%dkind.eq.PIO_double) THEN
-          ioDesc => ioDesc_dp_r2dvar(ng)
-        ELSE
-          ioDesc => ioDesc_sp_r2dvar(ng)
-        END IF
-        status=nf_fwrite2d(ng, model, QCK(ng)%pioFile,                  &
-     &                     QCK(ng)%pioVar(idUbur),                      &
-     &                     QCK(ng)%Rindex,                              &
-     &                     ioDesc,                                      &
-     &                     LBi, UBi, LBj, UBj, scale,                   &
-#   ifdef MASKING
-     &                     GRID(ng) % rmask,                            &
-#   endif
-     &                     BBL(ng) % Ur)
-        IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-          IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idUbur)), QCK(ng)%Rindex
-          END IF
-          exit_flag=3
-          ioerror=status
-          RETURN
-        END IF
-      END IF
-!
-!  Write out bottom V-velocity above bed at RHO-points.
-!
-      IF (Qout(idVbvr,ng)) THEN
-        scale=1.0_dp
-        IF (QCK(ng)%pioVar(idVbvr)%dkind.eq.PIO_double) THEN
-          ioDesc => ioDesc_dp_r2dvar(ng)
-        ELSE
-          ioDesc => ioDesc_sp_r2dvar(ng)
-        END IF
-        status=nf_fwrite2d(ng, model, QCK(ng)%pioFile,                  &
-     &                     QCK(ng)%pioVar(idVbvr),                      &
-     &                     QCK(ng)%Rindex,                              &
-     &                     ioDesc,                                      &
-     &                     LBi, UBi, LBj, UBj, scale,                   &
-#   ifdef MASKING
-     &                     GRID(ng) % rmask,                            &
-#   endif
-     &                     BBL(ng) % Vr)
-        IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-          IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idVbvr)), QCK(ng)%Rindex
-          END IF
-          exit_flag=3
-          ioerror=status
-          RETURN
-        END IF
-      END IF
-#  endif
-#  ifdef SEDIMENT
-#   ifdef BEDLOAD
-!
-!  Write out bed load transport in U-direction.
-!
-      DO i=1,NST
-        IF (Qout(idUbld(i),ng)) THEN
-          scale=1.0_dp
-          IF (QCK(ng)%pioVar(idUbld(i))%dkind.eq.PIO_double) THEN
-            ioDesc => ioDesc_dp_u2dvar(ng)
-          ELSE
-            ioDesc => ioDesc_sp_u2dvar(ng)
-          END IF
-          status=nf_fwrite2d(ng, model, QCK(ng)%pioFile,                &
-     &                       QCK(ng)%pioVar(idUbld(i)),                 &
-     &                       QCK(ng)%Rindex,                            &
-     &                       ioDesc,                                    &
-     &                       LBi, UBi, LBj, UBj, scale,                 &
-#    ifdef MASKING
-     &                       GRID(ng) % umask,                          &
-#    endif
-     &                       SEDBED(ng) % bedldu(:,:,i))
-          IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-            IF (Master) THEN
-              WRITE (stdout,10) TRIM(Vname(1,idUbld(i))), QCK(ng)%Rindex
-            END IF
-            exit_flag=3
-            ioerror=status
-            RETURN
-          END IF
-        END IF
-!
-!  Write out bed load transport in V-direction.
-!
-        IF (Qout(idVbld(i),ng)) THEN
-          scale=1.0_dp
-          IF (QCK(ng)%pioVar(idVbld(i))%dkind.eq.PIO_double) THEN
-            ioDesc => ioDesc_dp_v2dvar(ng)
-          ELSE
-            ioDesc => ioDesc_sp_v2dvar(ng)
-          END IF
-          status=nf_fwrite2d(ng, model, QCK(ng)%pioFile,                &
-     &                       QCK(ng)%pioVar(idVbld(i)),                 &
-     &                       QCK(ng)%Rindex,                            &
-     &                       ioDesc,                                    &
-     &                       LBi, UBi, LBj, UBj, scale,                 &
-#    ifdef MASKING
-     &                       GRID(ng) % vmask,                          &
-#    endif
-     &                       SEDBED(ng) % bedldv(:,:,i))
-          IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-            IF (Master) THEN
-              WRITE (stdout,10) TRIM(Vname(1,idVbld(i))), QCK(ng)%Rindex
-            END IF
-            exit_flag=3
-            ioerror=status
-            RETURN
-          END IF
-        END IF
-      END DO
-#   endif
-!
-!  Write out sediment fraction of each size class in each bed layer.
-!
-      DO i=1,NST
-        IF (Qout(idfrac(i),ng)) THEN
-          scale=1.0_dp
-          IF (QCK(ng)%pioVar(idfrac(i))%dkind.eq.PIO_double) THEN
-            ioDesc => ioDesc_dp_b3dvar(ng)
-          ELSE
-            ioDesc => ioDesc_sp_b3dvar(ng)
-          END IF
-          status=nf_fwrite3d(ng, model, QCK(ng)%pioFile,                &
-     &                       QCK(ng)%pioVar(idfrac(i)),                 &
-     &                       QCK(ng)%Rindex,                            &
-     &                       ioDesc,                                    &
-     &                       LBi, UBi, LBj, UBj, 1, Nbed, scale,        &
-#   ifdef MASKING
-     &                       GRID(ng) % rmask,                          &
-#   endif
-     &                       SEDBED(ng) % bed_frac(:,:,:,i))
-          IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-            IF (Master) THEN
-              WRITE (stdout,10) TRIM(Vname(1,idfrac(i))), QCK(ng)%Rindex
-            END IF
-            exit_flag=3
-            ioerror=status
-            RETURN
-          END IF
-        END IF
-      END DO
-!
-!  Write out sediment mass of each size class in each bed layer.
-!
-      DO i=1,NST
-        IF (Qout(idBmas(i),ng)) THEN
-          scale=1.0_dp
-          IF (QCK(ng)%pioVar(idBmas(i))%dkind.eq.PIO_double) THEN
-            ioDesc => ioDesc_dp_b3dvar(ng)
-          ELSE
-            ioDesc => ioDesc_sp_b3dvar(ng)
-          END IF
-          status=nf_fwrite3d(ng, model, QCK(ng)%pioFile,                &
-     &                       QCK(ng)%pioVar(idBmas(i)),                 &
-     &                       QCK(ng)%Rindex,                            &
-     &                       ioDesc,                                    &
-     &                       LBi, UBi, LBj, UBj, 1, Nbed, scale,        &
-#   ifdef MASKING
-     &                       GRID(ng) % rmask,                          &
-#   endif
-     &                       SEDBED(ng) % bed_mass(:,:,:,NOUT,i))
-          IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-            IF (Master) THEN
-              WRITE (stdout,10) TRIM(Vname(1,idBmas(i))), QCK(ng)%Rindex
-            END IF
-            exit_flag=3
-            ioerror=status
-            RETURN
-          END IF
-        END IF
-      END DO
-!
-!  Write out sediment properties in each bed layer.
-!
-      DO i=1,MBEDP
-        IF (Qout(idSbed(i),ng)) THEN
-          scale=1.0_dp
-          IF (QCK(ng)%pioVar(idSbed(i))%dkind.eq.PIO_double) THEN
-            ioDesc => ioDesc_dp_b3dvar(ng)
-          ELSE
-            ioDesc => ioDesc_sp_b3dvar(ng)
-          END IF
-          status=nf_fwrite3d(ng, model, QCK(ng)%pioFile,                &
-     &                       QCK(ng)%pioVar(idSbed(i)),                 &
-     &                       QCK(ng)%Rindex,                            &
-     &                       ioDesc,                                    &
-     &                       LBi, UBi, LBj, UBj, 1, Nbed, scale,        &
-#   ifdef MASKING
-     &                       GRID(ng) % rmask,                          &
-#   endif
-     &                       SEDBED(ng) % bed(:,:,:,i))
-          IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-            IF (Master) THEN
-              WRITE (stdout,10) TRIM(Vname(1,idSbed(i))), QCK(ng)%Rindex
-            END IF
-            exit_flag=3
-            ioerror=status
-            RETURN
-          END IF
-        END IF
-      END DO
-#  endif
-#  if defined SEDIMENT || defined BBL_MODEL
-!
-!  Write out exposed sediment layer properties.
-!
-      DO i=1,MBOTP
-        IF (Qout(idBott(i),ng)) THEN
-          IF (i.eq.itauc) THEN
-            scale=rho0
-          ELSE
-            scale=1.0_dp
-          END IF
-          IF (QCK(ng)%pioVar(idBott(i))%dkind.eq.PIO_double) THEN
-            ioDesc => ioDesc_dp_r2dvar(ng)
-          ELSE
-            ioDesc => ioDesc_sp_r2dvar(ng)
-          END IF
-          status=nf_fwrite2d(ng, model, QCK(ng)%pioFile,                &
-     &                       QCK(ng)%pioVar(idBott(i)),                 &
-     &                       QCK(ng)%Rindex,                            &
-     &                       ioDesc,                                    &
-     &                       LBi, UBi, LBj, UBj, scale,                 &
-#   ifdef MASKING
-     &                       GRID(ng) % rmask,                          &
-#   endif
-     &                       SEDBED(ng) % bottom(:,:,i))
-          IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-            IF (Master) THEN
-              WRITE (stdout,10) TRIM(Vname(1,idBott(i))), QCK(ng)%Rindex
-            END IF
-            exit_flag=3
-            ioerror=status
-            RETURN
-          END IF
-        END IF
-      END DO
-#  endif
-# endif
-# ifdef WAVES_HEIGHT
-!
-!  Write out wind-induced wave height.
-!
-      IF (Qout(idWamp,ng)) THEN
-        scale=1.0_dp
-        IF (QCK(ng)%pioVar(idWamp)%dkind.eq.PIO_double) THEN
-          ioDesc => ioDesc_dp_r2dvar(ng)
-        ELSE
-          ioDesc => ioDesc_sp_r2dvar(ng)
-        END IF
-        status=nf_fwrite2d(ng, model, QCK(ng)%pioFile,                  &
-     &                     QCK(ng)%pioVar(idWamp),                      &
-     &                     QCK(ng)%Rindex,                              &
-     &                     ioDesc,                                      &
-     &                     LBi, UBi, LBj, UBj, scale,                   &
-#  ifdef MASKING
-     &                     GRID(ng) % rmask,                            &
-#  endif
-     &                     FORCES(ng) % Hwave)
-        IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-          IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idWamp)), QCK(ng)%Rindex
-          END IF
-          exit_flag=3
-          ioerror=status
-          RETURN
-        END IF
-      END IF
-# endif
-# ifdef WAVES_LENGTH
-!
-!  Write out wind-induced wave length.
-!
-      IF (Qout(idWlen,ng)) THEN
-        scale=1.0_dp
-        IF (QCK(ng)%pioVar(idWlen)%dkind.eq.PIO_double) THEN
-          ioDesc => ioDesc_dp_r2dvar(ng)
-        ELSE
-          ioDesc => ioDesc_sp_r2dvar(ng)
-        END IF
-        status=nf_fwrite2d(ng, model, QCK(ng)%pioFile,                  &
-     &                     QCK(ng)%pioVar(idWlen),                      &
-     &                     QCK(ng)%Rindex,                              &
-     &                     ioDesc,                                      &
-     &                     LBi, UBi, LBj, UBj, scale,                   &
-#  ifdef MASKING
-     &                     GRID(ng) % rmask,                            &
-#  endif
-     &                     FORCES(ng) % Lwave)
-        IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-          IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idWlen)), QCK(ng)%Rindex
-          END IF
-          exit_flag=3
-          ioerror=status
-          RETURN
-        END IF
-      END IF
-# endif
-# ifdef WAVES_DIR
-!
-!  Write out wind-induced wave direction.
-!
-      IF (Qout(idWdir,ng)) THEN
-        scale=rad2deg
-        IF (QCK(ng)%pioVar(idWdir)%dkind.eq.PIO_double) THEN
-          ioDesc => ioDesc_dp_r2dvar(ng)
-        ELSE
-          ioDesc => ioDesc_sp_r2dvar(ng)
-        END IF
-        status=nf_fwrite2d(ng, model, QCK(ng)%pioFile,                  &
-     &                     QCK(ng)%pioVar(idWdir),                      &
-     &                     QCK(ng)%Rindex,                              &
-     &                     ioDesc,                                      &
-     &                     LBi, UBi, LBj, UBj, scale,                   &
-#  ifdef MASKING
-     &                     GRID(ng) % rmask,                            &
-#  endif
-     &                     FORCES(ng) % Dwave)
-        IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-          IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idWdir)), QCK(ng)%Rindex
-          END IF
-          exit_flag=3
-          ioerror=status
-          RETURN
-        END IF
-      END IF
-# endif
-# ifdef WAVES_TOP_PERIOD
-!
-!  Write out wind-induced surface wave period.
-!
-      IF (Qout(idWptp,ng)) THEN
-        scale=1.0_dp
-        IF (QCK(ng)%pioVar(idWptp)%dkind.eq.PIO_double) THEN
-          ioDesc => ioDesc_dp_r2dvar(ng)
-        ELSE
-          ioDesc => ioDesc_sp_r2dvar(ng)
-        END IF
-        status=nf_fwrite2d(ng, model, QCK(ng)%pioFile,                  &
-     &                     QCK(ng)%pioVar(idWptp),                      &
-     &                     QCK(ng)%Rindex,                              &
-     &                     ioDesc,                                      &
-     &                     LBi, UBi, LBj, UBj, scale,                   &
-#  ifdef MASKING
-     &                     GRID(ng) % rmask,                            &
-#  endif
-     &                     FORCES(ng) % Pwave_top)
-        IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-          IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idWptp)), QCK(ng)%Rindex
-          END IF
-          exit_flag=3
-          ioerror=status
-          RETURN
-        END IF
-      END IF
-# endif
-# ifdef WAVES_BOT_PERIOD
-!
-!  Write out wind-induced bottom wave period.
-!
-      IF (Qout(idWpbt,ng)) THEN
-        scale=1.0_dp
-        IF (QCK(ng)%pioVar(idWpbt)%dkind.eq.PIO_double) THEN
-          ioDesc => ioDesc_dp_r2dvar(ng)
-        ELSE
-          ioDesc => ioDesc_sp_r2dvar(ng)
-        END IF
-        status=nf_fwrite2d(ng, model, QCK(ng)%pioFile,                  &
-     &                     QCK(ng)%pioVar(idWpbt),                      &
-     &                     QCK(ng)%Rindex,                              &
-     &                     ioDesc,                                      &
-     &                     LBi, UBi, LBj, UBj, scale,                   &
-#  ifdef MASKING
-     &                     GRID(ng) % rmask,                            &
-#  endif
-     &                     FORCES(ng) % Pwave_bot)
-        IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-          IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idWpbt)), QCK(ng)%Rindex
-          END IF
-          exit_flag=3
-          ioerror=status
-          RETURN
-        END IF
-      END IF
-# endif
-# ifdef ICE_MODEL
+# if (defined BBL_MODEL || defined WAVES_OUTPUT) && defined SOLVE3D
 !
 !-----------------------------------------------------------------------
-!  Write out sea-ice model variables.
+!  Write out the bottom boundary layer model or waves variables.
+!-----------------------------------------------------------------------
+!
+        CALL bbl_wrt_pio (ng, model, tile,                              &
+     &                    LBi, UBi, LBj, UBj,                           &
+     &                    Qout, QCK)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+# endif
+
+# if defined ICE_MODEL && defined SOLVE3D
+!
+!-----------------------------------------------------------------------
+!  Write out the sea-ice model variables.
 !-----------------------------------------------------------------------
 !
         CALL ice_wrt_pio (ng, model, tile,                              &
@@ -4253,10 +3107,23 @@
      &                    Qout, QCK)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 # endif
-# if defined WEC || defined WEC_VF
+
+# if defined SEDIMENT && defined SOLVE3D
 !
 !-----------------------------------------------------------------------
-!  Write out Waves Effect on Currents variables.
+!  Write out the sediment model variables.
+!-----------------------------------------------------------------------
+!
+        CALL sediment_wrt_pio (ng, model, tile,                         &
+     &                         LBi, UBi, LBj, UBj,                      &
+     &                         Qout, QCK)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+# endif
+
+# if defined WEC_VF && defined SOLVE3D
+!
+!-----------------------------------------------------------------------
+!  Write out the Waves Effect on Currents variables.
 !-----------------------------------------------------------------------
 !
       CALL wec_wrt_pio (ng, model, tile,                                &
