@@ -1534,7 +1534,7 @@
         STA(ng)%Rindex=(ntstart(ng)-1)/nSTA(ng)
       END IF QUERY
 !
-  10  FORMAT (2x,'DEF_STATION_QNF90 - creating stations file,',t56,      &
+  10  FORMAT (2x,'DEF_STATION_NF90 - creating stations file,',t56,      &
      &        'Grid ',i2.2,': ',a)
   20  FORMAT (2x,'DEF_STATION_NF90 - inquiring stations file,',t56,     &
      &        'Grid ',i2.2,': ',a)
