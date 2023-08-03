@@ -2,7 +2,7 @@
       MODULE rp_step2d_mod
 !
 !git $Id$
-!svn $Id: rp_step2d_LF_AM3.h 1180 2023-07-13 02:42:10Z arango $
+!svn $Id: rp_step2d_LF_AM3.h 1188 2023-08-03 19:26:47Z arango $
 !=======================================================================
 !                                                                      !
 !  Representer model shallow-water primitive equations predictor       !
@@ -143,7 +143,7 @@
      &                     FORCES(ng) % Pair,                           &
 # endif
 #else
-# ifdef VAR_RHO_2D
+# ifdef VAR_RHO_2D_NOT_YET
      &                     COUPLING(ng) % rhoA,                         &
      &                     COUPLING(ng) % tl_rhoA,                      &
      &                     COUPLING(ng) % rhoS,                         &
@@ -238,7 +238,7 @@
      &                           Pair,                                  &
 # endif
 #else
-# ifdef VAR_RHO_2D
+# ifdef VAR_RHO_2D_NOT_YET
      &                           rhoA, tl_rhoA,                         &
      &                           rhoS, tl_rhoS,                         &
 # endif
@@ -345,7 +345,7 @@
       real(r8), intent(in   ) :: Pair(LBi:,LBj:)
 #  endif
 # else
-#  ifdef VAR_RHO_2D
+#  ifdef VAR_RHO_2D_NOT_YET
       real(r8), intent(in   ) :: rhoA(LBi:,LBj:)
       real(r8), intent(in   ) :: rhoS(LBi:,LBj:)
       real(r8), intent(in   ) :: tl_rhoA(LBi:,LBj:)
@@ -480,7 +480,7 @@
       real(r8), intent(in   ) :: Pair(LBi:UBi,LBj:UBj)
 #  endif
 # else
-#  ifdef VAR_RHO_2D
+#  ifdef VAR_RHO_2D_NOT_YET
       real(r8), intent(in   ) :: rhoA(LBi:UBi,LBj:UBj)
       real(r8), intent(in   ) :: rhoS(LBi:UBi,LBj:UBj)
       real(r8), intent(in   ) :: tl_rhoA(LBi:UBi,LBj:UBj)
@@ -578,7 +578,7 @@
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: grad
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: gzeta
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: gzeta2
-#if defined VAR_RHO_2D && defined SOLVE3D
+#if defined VAR_RHO_2D_NOT_YET && defined SOLVE3D
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: gzetaSA
 #endif
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: rhs_ubar
@@ -618,7 +618,7 @@
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_grad
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_gzeta
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_gzeta2
-#if defined VAR_RHO_2D && defined SOLVE3D
+#if defined VAR_RHO_2D_NOT_YET && defined SOLVE3D
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_gzetaSA
 #endif
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_rhs_ubar
@@ -673,7 +673,7 @@
           grad(i,j)=IniVal
           gzeta(i,j)=IniVal
           gzeta2(i,j)=IniVal
-# if defined VAR_RHO_2D && defined SOLVE3D
+# if defined VAR_RHO_2D_NOT_YET && defined SOLVE3D
           gzetaSA(i,j)=IniVal
 # endif
           rhs_ubar(i,j)=IniVal
@@ -704,7 +704,7 @@
           tl_grad(i,j)=IniVal
           tl_gzeta(i,j)=IniVal
           tl_gzeta2(i,j)=IniVal
-# if defined VAR_RHO_2D && defined SOLVE3D
+# if defined VAR_RHO_2D_NOT_YET && defined SOLVE3D
           tl_gzetaSA(i,j)=IniVal
 # endif
           tl_rhs_ubar(i,j)=IniVal
@@ -1144,7 +1144,7 @@
 !  and the corrector step is Backward-Euler. Otherwise, the predictor
 !  step is Leap-frog and the corrector step is Adams-Moulton.
 !
-#if defined VAR_RHO_2D && defined SOLVE3D
+#if defined VAR_RHO_2D_NOT_YET && defined SOLVE3D
       fac=1000.0_r8/rho0
 #endif
       IF (FIRST_2D_STEP) THEN
@@ -1180,7 +1180,7 @@
 !
             zwrk(i,j)=0.5_r8*(zeta(i,j,kstp)+zeta_new(i,j))
             tl_zwrk(i,j)=0.5_r8*(tl_zeta(i,j,kstp)+tl_zeta_new(i,j))
-#if defined VAR_RHO_2D && defined SOLVE3D
+#if defined VAR_RHO_2D_NOT_YET && defined SOLVE3D
             gzeta(i,j)=(fac+rhoS(i,j))*zwrk(i,j)
             tl_gzeta(i,j)=(fac+rhoS(i,j))*tl_zwrk(i,j)+                 &
      &                    tl_rhoS(i,j)*zwrk(i,j)-                       &
@@ -1247,7 +1247,7 @@
      &                cff4*(zeta(i,j,kstp)+zeta_new(i,j))
             tl_zwrk(i,j)=cff5*tl_zeta(i,j,krhs)+                        &
      &                   cff4*(tl_zeta(i,j,kstp)+tl_zeta_new(i,j))
-#if defined VAR_RHO_2D && defined SOLVE3D
+#if defined VAR_RHO_2D_NOT_YET && defined SOLVE3D
             gzeta(i,j)=(fac+rhoS(i,j))*zwrk(i,j)
             tl_gzeta(i,j)=(fac+rhoS(i,j))*tl_zwrk(i,j)+                 &
      &                    tl_rhoS(i,j)*zwrk(i,j)-                       &
@@ -1311,7 +1311,7 @@
 !
             zwrk(i,j)=cff5*zeta_new(i,j)+cff4*zeta(i,j,krhs)
             tl_zwrk(i,j)=cff5*tl_zeta_new(i,j)+cff4*tl_zeta(i,j,krhs)
-#if defined VAR_RHO_2D && defined SOLVE3D
+#if defined VAR_RHO_2D_NOT_YET && defined SOLVE3D
             gzeta(i,j)=(fac+rhoS(i,j))*zwrk(i,j)
             tl_gzeta(i,j)=(fac+rhoS(i,j))*tl_zwrk(i,j)+                 &
      &                    tl_rhoS(i,j)*zwrk(i,j)-                       &
@@ -1499,7 +1499,7 @@
 !^   &                    h(i  ,j))*                                    &
 !^   &                   (gzeta(i-1,j)-                                 &
 !^   &                    gzeta(i  ,j))+                                &
-#if defined VAR_RHO_2D && defined SOLVE3D
+#if defined VAR_RHO_2D_NOT_YET && defined SOLVE3D
 !^   &                   (h(i-1,j)-                                     &
 !^   &                    h(i  ,j))*                                    &
 !^   &                   (gzetaSA(i-1,j)+                               &
@@ -1529,7 +1529,7 @@
      &                       gzeta(i  ,j))+                             &
 # endif
 #endif
-#if defined VAR_RHO_2D && defined SOLVE3D
+#if defined VAR_RHO_2D_NOT_YET && defined SOLVE3D
 # if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
      &                      (tl_h(i-1,j)-                               &
      &                       tl_h(i  ,j))*                              &
@@ -1615,7 +1615,7 @@
 !^   &                      h(i,j  ))*                                  &
 !^   &                     (gzeta(i,j-1)-                               &
 !^   &                      gzeta(i,j  ))+                              &
-#if defined VAR_RHO_2D && defined SOLVE3D
+#if defined VAR_RHO_2D_NOT_YET && defined SOLVE3D
 !^   &                     (h(i,j-1)-                                   &
 !^   &                      h(i,j  ))*                                  &
 !^   &                     (gzetaSA(i,j-1)+                             &
@@ -1645,7 +1645,7 @@
      &                         gzeta(i,j  ))+                           &
 # endif
 #endif
-#if defined VAR_RHO_2D && defined SOLVE3D
+#if defined VAR_RHO_2D_NOT_YET && defined SOLVE3D
 # if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
      &                        (tl_h(i,j-1)-                             &
      &                         tl_h(i,j  ))*                            &

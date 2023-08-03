@@ -2,7 +2,7 @@
       MODULE ad_step2d_mod
 !
 !git $Id$
-!svn $Id: ad_step2d_LF_AM3.h 1180 2023-07-13 02:42:10Z arango $
+!svn $Id: ad_step2d_LF_AM3.h 1188 2023-08-03 19:26:47Z arango $
 !=======================================================================
 !                                                                      !
 !  Adjoint shallow-water primitive equations predictor (Leap-frog)     !
@@ -122,7 +122,7 @@
      &                     FORCES(ng) % Pair,                           &
 # endif
 #else
-# ifdef VAR_RHO_2D
+# ifdef VAR_RHO_2D_NOT_YET
      &                     COUPLING(ng) % rhoA,                         &
      &                     COUPLING(ng) % ad_rhoA,                      &
      &                     COUPLING(ng) % rhoS,                         &
@@ -220,7 +220,7 @@
      &                           Pair,                                  &
 # endif
 #else
-# ifdef VAR_RHO_2D
+# ifdef VAR_RHO_2D_NOT_YET
      &                           rhoA, ad_rhoA, rhoS, ad_rhoS,          &
 # endif
      &                           ad_DU_avg1, ad_DU_avg2,                &
@@ -338,7 +338,7 @@
       real(r8), intent(in) :: Pair(LBi:,LBj:)
 # endif
 # ifdef SOLVE3D
-#  if defined VAR_RHO_2D
+#  if defined VAR_RHO_2D_NOT_YET
       real(r8), intent(in) :: rhoA(LBi:,LBj:)
       real(r8), intent(in) :: rhoS(LBi:,LBj:)
 #  endif
@@ -349,7 +349,7 @@
       real(r8), intent(inout) :: ad_DV_avg1(LBi:,LBj:)
       real(r8), intent(inout) :: ad_DV_avg2(LBi:,LBj:)
       real(r8), intent(inout) :: ad_Zt_avg1(LBi:,LBj:)
-#  if defined VAR_RHO_2D
+#  if defined VAR_RHO_2D_NOT_YET
       real(r8), intent(inout) :: ad_rhoA(LBi:,LBj:)
       real(r8), intent(inout) :: ad_rhoS(LBi:,LBj:)
 #  endif
@@ -475,7 +475,7 @@
       real(r8), intent(in) :: Pair(LBi:UBi,LBj:UBj)
 # endif
 # ifdef SOLVE3D
-#  ifdef VAR_RHO_2D
+#  ifdef VAR_RHO_2D_NOT_YET
       real(r8), intent(in) :: rhoA(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: rhoS(LBi:UBi,LBj:UBj)
 #  endif
@@ -486,7 +486,7 @@
       real(r8), intent(inout) :: ad_DV_avg1(LBi:UBi,LBj:UBj)
       real(r8), intent(inout) :: ad_DV_avg2(LBi:UBi,LBj:UBj)
       real(r8), intent(inout) :: ad_Zt_avg1(LBi:UBi,LBj:UBj)
-#  if defined VAR_RHO_2D
+#  if defined VAR_RHO_2D_NOT_YET
       real(r8), intent(inout) :: ad_rhoA(LBi:UBi,LBj:UBj)
       real(r8), intent(inout) :: ad_rhoS(LBi:UBi,LBj:UBj)
 #  endif
@@ -590,7 +590,7 @@
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: grad
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: gzeta
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: gzeta2
-#if defined VAR_RHO_2D && defined SOLVE3D
+#if defined VAR_RHO_2D_NOT_YET && defined SOLVE3D
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: gzetaSA
 #endif
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: rhs_ubar
@@ -632,7 +632,7 @@
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: ad_grad
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: ad_gzeta
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: ad_gzeta2
-#if defined VAR_RHO_2D && defined SOLVE3D
+#if defined VAR_RHO_2D_NOT_YET && defined SOLVE3D
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: ad_gzetaSA
 #endif
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: ad_rhs_ubar
@@ -690,7 +690,7 @@
           ad_grad(i,j)=IniVal
           ad_gzeta(i,j)=IniVal
           ad_gzeta2(i,j)=IniVal
-#if defined VAR_RHO_2D && defined SOLVE3D
+#if defined VAR_RHO_2D_NOT_YET && defined SOLVE3D
           ad_gzetaSA(i,j)=IniVal
 #endif
           ad_rhs_ubar(i,j)=IniVal
@@ -724,7 +724,7 @@
           grad(i,j)=IniVal
           gzeta(i,j)=IniVal
           gzeta2(i,j)=IniVal
-# if defined VAR_RHO_2D && defined SOLVE3D
+# if defined VAR_RHO_2D_NOT_YET && defined SOLVE3D
           gzetaSA(i,j)=IniVal
 # endif
           rhs_ubar(i,j)=IniVal
@@ -4137,7 +4137,7 @@
               zeta_new(i,j)=zeta_new(i,j)*rmask(i,j)
 #endif
               zwrk(i,j)=0.5_r8*(zeta(i,j,kstp)+zeta_new(i,j))
-#if defined VAR_RHO_2D && defined SOLVE3D
+#if defined VAR_RHO_2D_NOT_YET && defined SOLVE3D
               gzeta(i,j)=(fac+rhoS(i,j))*zwrk(i,j)
               gzeta2(i,j)=gzeta(i,j)*zwrk(i,j)
               gzetaSA(i,j)=zwrk(i,j)*(rhoS(i,j)-rhoA(i,j))
@@ -4165,7 +4165,7 @@
 #endif
               zwrk(i,j)=cff5*zeta(i,j,krhs)+                            &
      &                  cff4*(zeta(i,j,kstp)+zeta_new(i,j))
-#if defined VAR_RHO_2D && defined SOLVE3D
+#if defined VAR_RHO_2D_NOT_YET && defined SOLVE3D
               gzeta(i,j)=(fac+rhoS(i,j))*zwrk(i,j)
               gzeta2(i,j)=gzeta(i,j)*zwrk(i,j)
               gzetaSA(i,j)=zwrk(i,j)*(rhoS(i,j)-rhoA(i,j))
@@ -4196,7 +4196,7 @@
               zeta_new(i,j)=zeta_new(i,j)*rmask(i,j)
 #endif
               zwrk(i,j)=cff5*zeta_new(i,j)+cff4*zeta(i,j,krhs)
-#if defined VAR_RHO_2D && defined SOLVE3D
+#if defined VAR_RHO_2D_NOT_YET && defined SOLVE3D
               gzeta(i,j)=(fac+rhoS(i,j))*zwrk(i,j)
               gzeta2(i,j)=gzeta(i,j)*zwrk(i,j)
               gzetaSA(i,j)=zwrk(i,j)*(rhoS(i,j)-rhoA(i,j))
@@ -4265,7 +4265,7 @@
 !^   &                           h(i,j  ))*                             &
 !^   &                          (tl_gzeta(i,j-1)-                       &
 !^   &                           tl_gzeta(i,j  ))+                      &
-#if defined VAR_RHO_2D && defined SOLVE3D
+#if defined VAR_RHO_2D_NOT_YET && defined SOLVE3D
 !^   &                          (tl_h(i,j-1)-                           &
 !^   &                           tl_h(i,j  ))*                          &
 !^   &                          (gzetaSA(i,j-1)+                        &
@@ -4299,7 +4299,7 @@
               ad_gzeta(i,j  )=ad_gzeta(i,j  )-adfac2
               ad_gzeta2(i,j-1)=ad_gzeta2(i,j-1)+adfac
               ad_gzeta2(i,j  )=ad_gzeta2(i,j  )-adfac
-#if defined VAR_RHO_2D && defined SOLVE3D
+#if defined VAR_RHO_2D_NOT_YET && defined SOLVE3D
               adfac1=adfac*(gzetaSA(i,j-1)+                             &
      &                      gzetaSA(i,j  )+                             &
      &                      cff2*(rhoA(i,j-1)-                          &
@@ -4369,7 +4369,7 @@
 !^   &                         h(i  ,j))*                               &
 !^   &                        (tl_gzeta(i-1,j)-                         &
 !^   &                         tl_gzeta(i  ,j))+                        &
-#if defined VAR_RHO_2D && defined SOLVE3D
+#if defined VAR_RHO_2D_NOT_YET && defined SOLVE3D
 !^   &                        (tl_h(i-1,j)-                             &
 !^   &                         tl_h(i  ,j))*                            &
 !^   &                        (gzetaSA(i-1,j)+                          &
@@ -4403,7 +4403,7 @@
             ad_gzeta(i  ,j)=ad_gzeta(i  ,j)-adfac2
             ad_gzeta2(i-1,j)=ad_gzeta2(i-1,j)+adfac
             ad_gzeta2(i  ,j)=ad_gzeta2(i  ,j)-adfac
-#if defined VAR_RHO_2D && defined SOLVE3D
+#if defined VAR_RHO_2D_NOT_YET && defined SOLVE3D
             adfac1=adfac*(gzetaSA(i-1,j)+                               &
      &                    gzetaSA(i  ,j)+                               &
      &                    cff2*(rhoA(i-1,j)-                            &
@@ -4578,14 +4578,14 @@
 !  and the corrector step is Backward-Euler. Otherwise, the predictor
 !  step is Leap-frog and the corrector step is Adams-Moulton.
 !
-#if defined VAR_RHO_2D && defined SOLVE3D
+#if defined VAR_RHO_2D_NOT_YET && defined SOLVE3D
         fac=1000.0_r8/rho0
 #endif
         IF (FIRST_2D_STEP) THEN
           cff1=dtfast(ng)
           DO j=JstrV-1,Jend
             DO i=IstrU-1,Iend
-#if defined VAR_RHO_2D && defined SOLVE3D
+#if defined VAR_RHO_2D_NOT_YET && defined SOLVE3D
 !^            tl_gzetaSA(i,j)=tl_zwrk(i,j)*(rhoS(i,j)-rhoA(i,j))+       &
 !^   &                        zwrk(i,j)*(tl_rhoS(i,j)-tl_rhoA(i,j))
 !^
@@ -4656,7 +4656,7 @@
           cff5=1.0_r8-2.0_r8*cff4
           DO j=JstrV-1,Jend
             DO i=IstrU-1,Iend
-#if defined VAR_RHO_2D && defined SOLVE3D
+#if defined VAR_RHO_2D_NOT_YET && defined SOLVE3D
 !^            tl_gzetaSA(i,j)=tl_zwrk(i,j)*(rhoS(i,j)-rhoA(i,j))+       &
 !^   &                        zwrk(i,j)*(tl_rhoS(i,j)-tl_rhoA(i,j))
 !^
@@ -4731,7 +4731,7 @@
           cff5=1.0_r8-cff4
           DO j=JstrV-1,Jend
             DO i=IstrU-1,Iend
-#if defined VAR_RHO_2D && defined SOLVE3D
+#if defined VAR_RHO_2D_NOT_YET && defined SOLVE3D
 !^            tl_gzetaSA(i,j)=tl_zwrk(i,j)*(rhoS(i,j)-rhoA(i,j))+       &
 !^   &                        zwrk(i,j)*(tl_rhoS(i,j)-tl_rhoA(i,j))
 !^

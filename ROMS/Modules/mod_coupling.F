@@ -2,7 +2,8 @@
       MODULE mod_coupling
 #ifdef SOLVE3D
 !
-!svn $Id: mod_coupling.F 275 2023-02-09 03:21:09Z arango $
+!git $Id$
+!svn $Id: mod_coupling.F 1188 2023-08-03 19:26:47Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -68,14 +69,13 @@
           real(r8), pointer :: tl_DV_avg1(:,:)
           real(r8), pointer :: tl_DV_avg2(:,:)
           real(r8), pointer :: tl_Zt_avg1(:,:)
-
           real(r8), pointer :: tl_rufrc(:,:)
           real(r8), pointer :: tl_rvfrc(:,:)
 #  if defined STEP2D_FB_AB3_AM4 || defined STEP2D_FB_LF_AM3
           real(r8), pointer :: tl_rufrc_bak(:,:,:)
           real(r8), pointer :: tl_rvfrc_bak(:,:,:)
 #  endif
-#  ifdef VAR_RHO_2D
+#  ifdef VAR_RHO_2D_NOT_YET
           real(r8), pointer :: tl_rhoA(:,:)
           real(r8), pointer :: tl_rhoS(:,:)
 #  endif
@@ -96,7 +96,7 @@
           real(r8), pointer :: ad_rufrc_bak(:,:,:)
           real(r8), pointer :: ad_rvfrc_bak(:,:,:)
 #  endif
-#  ifdef VAR_RHO_2D
+#  ifdef VAR_RHO_2D_NOT_YET
           real(r8), pointer :: ad_rhoA(:,:)
           real(r8), pointer :: ad_rhoS(:,:)
 #  endif
@@ -223,7 +223,7 @@
       Dmem(ng)=Dmem(ng)+2.0_r8*size2d
 #  endif
 
-#  ifdef VAR_RHO_2D
+#  ifdef VAR_RHO_2D_NOT_YET
       allocate ( COUPLING(ng) % tl_rhoA(LBi:UBi,LBj:UBj) )
       Dmem(ng)=Dmem(ng)+size2d
 
@@ -265,7 +265,7 @@
       Dmem(ng)=Dmem(ng)+2.0_r8*size2d
 #  endif
 
-#  ifdef VAR_RHO_2D
+#  ifdef VAR_RHO_2D_NOT_YET
       allocate ( COUPLING(ng) % ad_rhoA(LBi:UBi,LBj:UBj) )
       Dmem(ng)=Dmem(ng)+size2d
 
@@ -403,7 +403,7 @@
      &                 __LINE__, 'COUPLING(ng)%tl_rvfrc_bak')) RETURN
 #   endif
 
-#   ifdef VAR_RHO_2D
+#   ifdef VAR_RHO_2D_NOT_YET
       IF (.not.destroy(ng, COUPLING(ng)%tl_rhoA, MyFile,                &
      &                 __LINE__, 'COUPLING(ng)%tl_rhoA')) RETURN
 
@@ -445,7 +445,7 @@
      &                 __LINE__, 'COUPLING(ng)%ad_rvfrc_bak')) RETURN
 #   endif
 
-#   ifdef VAR_RHO_2D
+#   ifdef VAR_RHO_2D_NOT_YET
       IF (.not.destroy(ng, COUPLING(ng)%ad_rhoA, MyFile,                &
      &                 __LINE__, 'COUPLING(ng)%ad_rhoA')) RETURN
 
@@ -608,7 +608,7 @@
             COUPLING(ng) % tl_rvfrc_bak(i,j,2) = IniVal
 #  endif
 
-#  ifdef VAR_RHO_2D
+#  ifdef VAR_RHO_2D_NOT_YET
             COUPLING(ng) % tl_rhoA(i,j) = IniVal
             COUPLING(ng) % tl_rhoS(i,j) = IniVal
 #  endif
@@ -642,7 +642,7 @@
             COUPLING(ng) % ad_rvfrc_bak(i,j,2) = IniVal
 #  endif
 
-#  ifdef VAR_RHO_2D
+#  ifdef VAR_RHO_2D_NOT_YET
             COUPLING(ng) % ad_rhoA(i,j) = IniVal
             COUPLING(ng) % ad_rhoS(i,j) = IniVal
 #  endif
