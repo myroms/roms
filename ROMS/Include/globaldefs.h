@@ -2,7 +2,7 @@
 ** Include file "globaldef.h"
 **
 ** git $Id$
-** svn $Id: globaldefs.h 1185 2023-08-01 21:42:38Z arango $
+** svn $Id: globaldefs.h 1188 2023-08-03 19:26:47Z arango $
 ********************************************************** Hernan G. Arango ***
 ** Copyright (c) 2002-2023 The ROMS/TOMS Group     Alexander F. Shchepetkin  **
 **   Licensed under a MIT/X style license                                    **
@@ -487,13 +487,12 @@
 ** Activate bacroclinic pressure gradient response due to the
 ** perturbation of free-surface in the presence of stratification
 ** and bathymetry. This option does not pass the sanity check
-** in adjoint and tangent linear applications.
+** in adjoint and tangent linear applications, so we use NOT_YET
+** in TLM, RPM, and ADM kernels.
 */
 
 #ifdef SOLVE3D
-# if !(defined ADJOINT || defined TANGENT)
-#   define VAR_RHO_2D
-# endif
+# define VAR_RHO_2D
 #endif
 
 /*
