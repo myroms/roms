@@ -4,7 +4,7 @@
 #if defined ADJOINT && defined SOLVE3D
 !
 !git $Id$
-!svn $Id: ad_rho_eos.F 1151 2023-02-09 03:08:53Z arango $
+!svn $Id: ad_rho_eos.F 1188 2023-08-03 19:26:47Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -78,19 +78,19 @@
 # ifdef MASKING
      &                      GRID(ng) % rmask,                           &
 # endif
-# ifdef VAR_RHO_2D
+# ifdef VAR_RHO_2D_NOT_YET
      &                      GRID(ng) % Hz,                              &
      &                      GRID(ng) % ad_Hz,                           &
 # endif
      &                      GRID(ng) % z_r,                             &
      &                      GRID(ng) % ad_z_r,                          &
-# if defined BV_FREQUENCY_NOT_YET || defined VAR_RHO_2D
+# if defined BV_FREQUENCY_NOT_YET || defined VAR_RHO_2D_NOT_YET
      &                      GRID(ng) % z_w,                             &
      &                      GRID(ng) % ad_z_w,                          &
 # endif
      &                      OCEAN(ng) % t,                              &
      &                      OCEAN(ng) % ad_t,                           &
-# ifdef VAR_RHO_2D
+# ifdef VAR_RHO_2D_NOT_YET
      &                      COUPLING(ng) % ad_rhoA,                     &
      &                      COUPLING(ng) % ad_rhoS,                     &
 # endif
@@ -127,15 +127,15 @@
 #  ifdef MASKING
      &                            rmask,                                &
 #  endif
-#  ifdef VAR_RHO_2D
+#  ifdef VAR_RHO_2D_NOT_YET
      &                            Hz, ad_Hz,                            &
 #  endif
      &                            z_r, ad_z_r,                          &
-#  if defined BV_FREQUENCY_NOT_YET || defined VAR_RHO_2D
+#  if defined BV_FREQUENCY_NOT_YET || defined VAR_RHO_2D_NOT_YET
      &                            z_w, ad_z_w,                          &
 #  endif
      &                            t, ad_t,                              &
-#  ifdef VAR_RHO_2D
+#  ifdef VAR_RHO_2D_NOT_YET
      &                            ad_rhoA, ad_rhoS,                     &
 #  endif
 #  ifdef BV_FREQUENCY_NOT_YET
@@ -178,25 +178,25 @@
 #   ifdef MASKING
       real(r8), intent(in) :: rmask(LBi:,LBj:)
 #   endif
-#   ifdef VAR_RHO_2D
+#   ifdef VAR_RHO_2D_NOT_YET
       real(r8), intent(in) :: Hz(LBi:,LBj:,:)
 #   endif
       real(r8), intent(in) :: z_r(LBi:,LBj:,:)
-#   if defined BV_FREQUENCY_NOT_YET || defined VAR_RHO_2D
+#   if defined BV_FREQUENCY_NOT_YET || defined VAR_RHO_2D_NOT_YET
       real(r8), intent(in) :: z_w(LBi:,LBj:,0:)
 #   endif
       real(r8), intent(in) :: t(LBi:,LBj:,:,:,:)
       real(r8), intent(in) :: rho(LBi:,LBj:,:)
 
-#   ifdef VAR_RHO_2D
+#   ifdef VAR_RHO_2D_NOT_YET
       real(r8), intent(inout) :: ad_Hz(LBi:,LBj:,:)
 #   endif
       real(r8), intent(inout) :: ad_z_r(LBi:,LBj:,:)
-#   if defined BV_FREQUENCY_NOT_YET || defined VAR_RHO_2D
+#   if defined BV_FREQUENCY_NOT_YET || defined VAR_RHO_2D_NOT_YET
       real(r8), intent(inout) :: ad_z_w(LBi:,LBj:,0:)
 #   endif
       real(r8), intent(inout) :: ad_t(LBi:,LBj:,:,:,:)
-#   ifdef VAR_RHO_2D
+#   ifdef VAR_RHO_2D_NOT_YET
       real(r8), intent(inout) :: ad_rhoA(LBi:,LBj:)
       real(r8), intent(inout) :: ad_rhoS(LBi:,LBj:)
 #   endif
@@ -219,26 +219,26 @@
 #   ifdef MASKING
       real(r8), intent(in) :: rmask(LBi:UBi,LBj:UBj)
 #   endif
-#   ifdef VAR_RHO_2D
+#   ifdef VAR_RHO_2D_NOT_YET
       real(r8), intent(in) :: Hz(LBi:UBi,LBj:UBj,N(ng))
 #   endif
       real(r8), intent(in) :: z_r(LBi:UBi,LBj:UBj,N(ng))
-#   if defined BV_FREQUENCY_NOT_YET || defined VAR_RHO_2D
+#   if defined BV_FREQUENCY_NOT_YET || defined VAR_RHO_2D_NOT_YET
       real(r8), intent(in) :: z_w(LBi:UBi,LBj:UBj,0:N(ng))
 #   endif
       real(r8), intent(in) :: t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
       real(r8), intent(in) :: rho(LBi:UBi,LBj:UBj,N(ng))
 
-#   ifdef VAR_RHO_2D
+#   ifdef VAR_RHO_2D_NOT_YET
       real(r8), intent(inout) :: ad_Hz(LBi:UBi,LBj:UBj,N(ng))
 #   endif
       real(r8), intent(inout) :: ad_z_r(LBi:UBi,LBj:UBj,N(ng))
-#   if defined BV_FREQUENCY_NOT_YET || defined VAR_RHO_2D
+#   if defined BV_FREQUENCY_NOT_YET || defined VAR_RHO_2D_NOT_YET
       real(r8), intent(inout) :: ad_z_w(LBi:UBi,LBj:UBj,0:N(ng))
 #   endif
       real(r8), intent(inout) :: ad_t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
 
-#   ifdef VAR_RHO_2D
+#   ifdef VAR_RHO_2D_NOT_YET
       real(r8), intent(inout) :: ad_rhoA(LBi:UBi,LBj:UBj)
       real(r8), intent(inout) :: ad_rhoS(LBi:UBi,LBj:UBj)
 #   endif
@@ -310,7 +310,7 @@
       real(r8), dimension(IminS:ImaxS,N(ng)) :: ad_den
       real(r8), dimension(IminS:ImaxS,N(ng)) :: ad_den1
 
-#  ifdef VAR_RHO_2D
+#  ifdef VAR_RHO_2D_NOT_YET
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: rhoA1
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: rhoS1
 #  endif
@@ -384,7 +384,7 @@
      &                       EWperiodic(ng), NSperiodic(ng),            &
      &                       ad_bvf)
 #   endif
-#   ifdef VAR_RHO_2D
+#   ifdef VAR_RHO_2D_NOT_YET
 !^    CALL mp_exchange2d (ng, tile, model, 2,                           &
 !^   &                    LBi, UBi, LBj, UBj,                           &
 !^   &                    NghostPoints,                                 &
@@ -461,7 +461,7 @@
      &                             LBi, UBi, LBj, UBj, 0, N(ng),        &
      &                             ad_bvf)
 #  endif
-#  ifdef VAR_RHO_2D
+#  ifdef VAR_RHO_2D_NOT_YET
 !^      CALL exchange_r2d_tile (ng, tile,                               &
 !^   &                          LBi, UBi, LBj, UBj,                     &
 !^   &                          tl_rhoS)
@@ -906,7 +906,7 @@
         END DO
 #  endif
 
-#  ifdef VAR_RHO_2D
+#  ifdef VAR_RHO_2D_NOT_YET
 !
 !-----------------------------------------------------------------------
 !  Compute adjoint vertical averaged density (ad_rhoA) and adjoint
@@ -1401,15 +1401,15 @@
 #  ifdef MASKING
      &                            rmask,                                &
 #  endif
-#  ifdef VAR_RHO_2D
+#  ifdef VAR_RHO_2D_NOT_YET
      &                            Hz, ad_Hz,                            &
 #  endif
      &                            z_r, ad_z_r,                          &
-#  ifdef VAR_RHO_2D
+#  ifdef VAR_RHO_2D_NOT_YET
      &                            z_w, ad_z_w,                          &
 #  endif
      &                            t, ad_t,                              &
-#  ifdef VAR_RHO_2D
+#  ifdef VAR_RHO_2D_NOT_YET
      &                            ad_rhoA, ad_rhoS,                     &
 #  endif
 #  ifdef BV_FREQUENCY_NOT_YET
@@ -1452,25 +1452,25 @@
 #   ifdef MASKING
       real(r8), intent(in) :: rmask(LBi:,LBj:)
 #   endif
-#   ifdef VAR_RHO_2D
+#   ifdef VAR_RHO_2D_NOT_YET
       real(r8), intent(in) :: Hz(LBi:,LBj:,:)
 #   endif
       real(r8), intent(in) :: z_r(LBi:,LBj:,:)
-#   ifdef VAR_RHO_2D
+#   ifdef VAR_RHO_2D_NOT_YET
       real(r8), intent(in) :: z_w(LBi:,LBj:,0:)
 #   endif
       real(r8), intent(in) :: t(LBi:,LBj:,:,:,:)
 
       real(r8), intent(in) :: rho(LBi:,LBj:,:)
-#   ifdef VAR_RHO_2D
+#   ifdef VAR_RHO_2D_NOT_YET
       real(r8), intent(inout) :: ad_Hz(LBi:,LBj:,:)
 #   endif
       real(r8), intent(inout) :: ad_z_r(LBi:,LBj:,:)
-#   ifdef VAR_RHO_2D
+#   ifdef VAR_RHO_2D_NOT_YET
       real(r8), intent(inout) :: ad_z_w(LBi:,LBj:,0:)
 #   endif
       real(r8), intent(inout) :: ad_t(LBi:,LBj:,:,:,:)
-#   ifdef VAR_RHO_2D
+#   ifdef VAR_RHO_2D_NOT_YET
       real(r8), intent(inout) :: ad_rhoA(LBi:,LBj:)
       real(r8), intent(inout) :: ad_rhoS(LBi:,LBj:)
 #   endif
@@ -1493,25 +1493,25 @@
 #   ifdef MASKING
       real(r8), intent(in) :: rmask(LBi:UBi,LBj:UBj)
 #   endif
-#   ifdef VAR_RHO_2D
+#   ifdef VAR_RHO_2D_NOT_YET
       real(r8), intent(in) :: Hz(LBi:UBi,LBj:UBj,N(ng))
 #   endif
       real(r8), intent(in) :: z_r(LBi:UBi,LBj:UBj,N(ng))
-#   ifdef VAR_RHO_2D
+#   ifdef VAR_RHO_2D_NOT_YET
       real(r8), intent(in) :: z_w(LBi:UBi,LBj:UBj,0:N(ng))
 #   endif
       real(r8), intent(in) :: t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
 
       real(r8), intent(inout) :: rho(LBi:UBi,LBj:UBj,N(ng))
-#   ifdef VAR_RHO_2D
+#   ifdef VAR_RHO_2D_NOT_YET
       real(r8), intent(inout) :: ad_Hz(LBi:UBi,LBj:UBj,N(ng))
 #   endif
       real(r8), intent(inout) :: ad_z_r(LBi:UBi,LBj:UBj,N(ng))
-#   ifdef VAR_RHO_2D
+#   ifdef VAR_RHO_2D_NOT_YET
       real(r8), intent(inout) :: ad_z_w(LBi:UBi,LBj:UBj,0:N(ng))
 #   endif
       real(r8), intent(inout) :: ad_t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
-#   ifdef VAR_RHO_2D
+#   ifdef VAR_RHO_2D_NOT_YET
       real(r8), intent(inout) :: ad_rhoA(LBi:UBi,LBj:UBj)
       real(r8), intent(inout) :: ad_rhoS(LBi:UBi,LBj:UBj)
 #   endif
@@ -1540,7 +1540,7 @@
       real(r8) :: ad_SedDen, ad_cff, ad_cff1
       real(r8) :: adfac, adfac1
 
-#  ifdef VAR_RHO_2D
+#  ifdef VAR_RHO_2D_NOT_YET
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: rhoA1
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: rhoS1
 #  endif
@@ -1569,7 +1569,7 @@
      &                       EWperiodic(ng), NSperiodic(ng),            &
      &                       ad_bvf)
 #   endif
-#   ifdef VAR_RHO_2D
+#   ifdef VAR_RHO_2D_NOT_YET
 !^    CALL mp_exchange2d (ng, tile, model, 2,                           &
 !^   &                    LBi, UBi, LBj, UBj,                           &
 !^   &                    NghostPoints,                                 &
@@ -1646,7 +1646,7 @@
      &                             LBi, UBi, LBj, UBj, 0, N(ng),        &
      &                             ad_bvf)
 #  endif
-#  ifdef VAR_RHO_2D
+#  ifdef VAR_RHO_2D_NOT_YET
 !^      CALL exchange_r2d_tile (ng, tile,                               &
 !^   &                          LBi, UBi, LBj, UBj,                     &
 !^   &                          tl_rhoS)
@@ -1784,7 +1784,7 @@
         END DO
 #  endif
 
-#  ifdef VAR_RHO_2D
+#  ifdef VAR_RHO_2D_NOT_YET
 !
 !---------------------------------------------------------------------
 !  Compute adjoint vertical averaged density (ad_rhoA) and adjoint
