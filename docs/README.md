@@ -1,8 +1,8 @@
-# **Regional Ocean Modeling System (ROMS)**
+# Regional Ocean Modeling System (ROMS)
 
 ![ROMS_Picture](https://github.com/myroms/roms/assets/23062912/d72765ed-9d55-4109-84fc-c51b05832adb)
 
-# **License**
+# License
 
 **Copyright (c) 2002-2023 The ROMS/TOMS Group**
 

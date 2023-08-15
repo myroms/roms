@@ -2,7 +2,7 @@
       SUBROUTINE ana_drag (ng, tile, model)
 !
 !! git $Id$
-!! svn $Id: ana_drag.h 1151 2023-02-09 03:08:53Z arango $
+!! svn $Id: ana_drag.h 1189 2023-08-15 21:26:58Z arango $
 !!======================================================================
 !! Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !!   Licensed under a MIT/X style license                              !
@@ -152,7 +152,8 @@
 !
       IF (first) THEN
         first=.FALSE.
-        Stats % count=0.0_r8
+        Stats % checksum=0_i8b
+        Stats % count=0
         Stats % min=Large
         Stats % max=-Large
         Stats % avg=0.0_r8

@@ -1,5 +1,5 @@
 # git $Id$
-# svn $Id: CMakeLists.txt 1186 2023-08-02 01:08:21Z arango $
+# svn $Id: CMakeLists.txt 1189 2023-08-15 21:26:58Z arango $
 #:::::::::::::::::::::::::::::::::::::::::::::::::::::: David Robertson :::
 # Copyright (c) 2002-2023 The ROMS/TOMS Group                           :::
 #   Licensed under a MIT/X style license                                :::
@@ -8,11 +8,42 @@
 #
 # Top-Level CMake File Definitions.
 
-cmake_minimum_required( VERSION 3.12.0 FATAL_ERROR )
+cmake_minimum_required( VERSION 3.13.0 FATAL_ERROR )
 
 list( APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/Compilers)
 Message( STATUS "module path = ${CMAKE_MODULE_PATH}" )
 set( CMAKE_DIRECTORY_LABELS ${PROJECT_NAME} )
+
+find_package( Git )
+if( GIT_FOUND )
+  if( EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/.git )
+    message( STATUS "Getting and setting GIT_URL and GIT_REV" )
+    execute_process(
+      COMMAND ${GIT_EXECUTABLE} config --get remote.origin.url
+      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+      OUTPUT_VARIABLE GITURL
+      OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+
+    execute_process(
+      COMMAND ${GIT_EXECUTABLE} rev-parse --verify HEAD
+      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+      OUTPUT_VARIABLE GITREV
+      OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+
+    add_compile_definitions( GIT_URL="${GITURL}" GIT_REV="${GITREV}" SVN_URL="https://www.myroms.org/svn/src" )
+  endif()
+endif()
+
+find_package( Subversion )
+if( SUBVERSION_FOUND )
+  if( EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/.svn )
+    message( STATUS "Getting and setting SVN_URL and SVN_REV" )
+    Subversion_WC_INFO(${CMAKE_CURRENT_SOURCE_DIR} roms IGNORE_SVN_FAILURE)
+    add_compile_definitions( SVN_URL="${roms_WC_URL}" SVN_REV="${roms_WC_REVISION}" )
+  endif()
+endif()
 
 # Figure out if we are using ecbuild.
 

@@ -3,7 +3,7 @@
 #if (defined TANGENT || defined TL_IOMS) && defined FOUR_DVAR
 !
 !git $Id$
-!svn $Id: tl_wrt_ini.F 1151 2023-02-09 03:08:53Z arango $
+!svn $Id: tl_wrt_ini.F 1189 2023-08-15 21:26:58Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -171,6 +171,49 @@
 !
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
+!  Report.
+!
+      IF (Master) THEN
+# if defined RPCG
+        IF (OutRec.eq.1) THEN
+          string='inner-loop initial fields          '
+        ELSE IF (OutRec.eq.2) THEN
+          string='final outer-loop increments        '
+        ELSE IF (OutRec.eq.3) THEN
+          string='sum of final outer-loop increments '
+        ELSE IF (OutRec.eq.4) THEN
+          string='sum of adjoint solutions           '
+        ELSE IF (OutRec.eq.5) THEN
+          string='augmented correction term          '
+        END IF
+# elif defined SP4DVAR
+        IF (OutRec.eq.1) THEN
+          string='TLM initial fields             '
+        ELSE IF ((2.le.OutRec).and.(OutRec.le.Nsaddle+1)) THEN
+          string='TLM saddle-point starting field'
+        ELSE IF ((Nsaddle+2.le.OutRec).and.(OutRec.le.2*Nsaddle+2)) THEN
+          string='ADM saddle-point starting field'
+        END IF
+# else
+        IF (OutRec.eq.1) THEN
+          string='initial  fields'
+        ELSE IF (OutRec.eq.2) THEN
+          string='v-increments   '
+        ELSE IF (OutRec.eq.3) THEN
+          string='v-increments   '
+        ELSE IF (OutRec.eq.4) THEN
+          string='v-summations   '
+        ELSE IF (OutRec.eq.5) THEN
+          string='x-increments   '
+        END IF
+# endif
+# ifdef SOLVE3D
+        WRITE (stdout,10) string, outer, inner, Tindex, Tindex, OutRec
+# else
+        WRITE (stdout,10) string, outer, inner, Tindex, OutRec
+# endif
+      END IF
+!
 !  Set grid type factor to write full (gfactor=1) fields or water
 !  points (gfactor=-1) fields only.
 !
@@ -196,7 +239,8 @@
 !
       scale=1.0_dp
       gtype=gfactor*r2dvar
-      status=nf_fwrite2d(ng, iTLM, ITL(ng)%ncid, ITL(ng)%Vid(idFsur),   &
+      status=nf_fwrite2d(ng, iTLM, ITL(ng)%ncid, idFsur,                &
+     &                   ITL(ng)%Vid(idFsur),                           &
      &                   OutRec, gtype,                                 &
      &                   LBi, UBi, LBj, UBj, scale,                     &
 # ifdef MASKING
@@ -245,7 +289,8 @@
 !
       scale=1.0_dp
       gtype=gfactor*u2dvar
-      status=nf_fwrite2d(ng, iTLM, ITL(ng)%ncid, ITL(ng)%Vid(idUbar),   &
+      status=nf_fwrite2d(ng, iTLM, ITL(ng)%ncid, idUbar,                &
+     &                   ITL(ng)%Vid(idUbar),                           &
      &                   OutRec, gtype,                                 &
      &                   LBi, UBi, LBj, UBj, scale,                     &
 # ifdef MASKING
@@ -289,7 +334,8 @@
 !
       scale=1.0_dp
       gtype=gfactor*v2dvar
-      status=nf_fwrite2d(ng, iTLM, ITL(ng)%ncid, ITL(ng)%Vid(idVbar),   &
+      status=nf_fwrite2d(ng, iTLM, ITL(ng)%ncid, idVbar,                &
+     &                   ITL(ng)%Vid(idVbar),                           &
      &                   OutRec, gtype,                                 &
      &                   LBi, UBi, LBj, UBj, scale,                     &
 # ifdef MASKING
@@ -336,7 +382,8 @@
 !
       scale=1.0_dp                          ! m2/s2
       gtype=gfactor*u3dvar
-      status=nf_fwrite3d(ng, iTLM, ITL(ng)%ncid, ITL(ng)%Vid(idUsms),   &
+      status=nf_fwrite3d(ng, iTLM, ITL(ng)%ncid, idUsms,                &
+     &                   ITL(ng)%Vid(idUsms),                           &
      &                   OutRec, gtype,                                 &
      &                   LBi, UBi, LBj, UBj, 1, Nfrec(ng), scale,       &
 #  ifdef MASKING
@@ -356,7 +403,8 @@
 !
       scale=1.0_dp                          ! m2/s2
       gtype=gfactor*v3dvar
-      status=nf_fwrite3d(ng, iTLM, ITL(ng)%ncid, ITL(ng)%Vid(idVsms),   &
+      status=nf_fwrite3d(ng, iTLM, ITL(ng)%ncid, idVsms,                &
+     &                   ITL(ng)%Vid(idVsms),                           &
      &                   OutRec, gtype,                                 &
      &                   LBi, UBi, LBj, UBj, 1, Nfrec(ng), scale,       &
 #  ifdef MASKING
@@ -378,7 +426,8 @@
 !
       scale=1.0_dp
       gtype=gfactor*u3dvar
-      status=nf_fwrite3d(ng, iTLM, ITL(ng)%ncid, ITL(ng)%Vid(idUvel),   &
+      status=nf_fwrite3d(ng, iTLM, ITL(ng)%ncid, idUvel,                &
+     &                   ITL(ng)%Vid(idUvel),                           &
      &                   OutRec, gtype,                                 &
      &                   LBi, UBi, LBj, UBj, 1, N(ng), scale,           &
 #  ifdef MASKING
@@ -422,7 +471,8 @@
 !
       scale=1.0_dp
       gtype=gfactor*v3dvar
-      status=nf_fwrite3d(ng, iTLM, ITL(ng)%ncid, ITL(ng)%Vid(idVvel),   &
+      status=nf_fwrite3d(ng, iTLM, ITL(ng)%ncid, idVvel,                &
+     &                   ITL(ng)%Vid(idVvel),                           &
      &                   OutRec, gtype,                                 &
      &                   LBi, UBi, LBj, UBj, 1, N(ng), scale,           &
 #  ifdef MASKING
@@ -467,7 +517,8 @@
       DO itrc=1,NT(ng)
         scale=1.0_dp
         gtype=gfactor*r3dvar
-        status=nf_fwrite3d(ng, iTLM, ITL(ng)%ncid, ITL(ng)%Tid(itrc),   &
+        status=nf_fwrite3d(ng, iTLM, ITL(ng)%ncid, idTvar(itrc),        &
+     &                     ITL(ng)%Tid(itrc),                           &
      &                     OutRec, gtype,                               &
      &                     LBi, UBi, LBj, UBj, 1, N(ng), scale,         &
 #  ifdef MASKING
@@ -521,7 +572,7 @@
         IF (Lstflux(itrc,ng)) THEN
           scale=1.0_dp                      ! kinematic flux units
           gtype=gfactor*r3dvar
-          status=nf_fwrite3d(ng, iTLM, ITL(ng)%ncid,                    &
+          status=nf_fwrite3d(ng, iTLM, ITL(ng)%ncid, idTsur(itrc),      &
      &                       ITL(ng)%Vid(idTsur(itrc)),                 &
      &                       OutRec, gtype,                             &
      &                       LBi, UBi, LBj, UBj, 1, Nfrec(ng), scale,   &
@@ -608,60 +659,16 @@
       CALL netcdf_sync (ng, iTLM, DAV(ng)%name, DAV(ng)%ncid)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 # endif
-!
-      IF (Master) THEN
-# if defined RPCG
-        IF (OutRec.eq.1) THEN
-          string='inner-loop initial fields          '
-        ELSE IF (OutRec.eq.2) THEN
-          string='final outer-loop increments        '
-        ELSE IF (OutRec.eq.3) THEN
-          string='sum of final outer-loop increments '
-        ELSE IF (OutRec.eq.4) THEN
-          string='sum of adjoint solutions           '
-        ELSE IF (OutRec.eq.5) THEN
-          string='augmented correction term          '
-        END IF
-# elif defined SP4DVAR
-        IF (OutRec.eq.1) THEN
-          string='TLM initial fields             '
-        ELSE IF ((2.le.OutRec).and.(OutRec.le.Nsaddle+1)) THEN
-          string='TLM saddle-point starting field'
-        ELSE IF ((Nsaddle+2.le.OutRec).and.(OutRec.le.2*Nsaddle+2)) THEN
-          string='ADM saddle-point starting field'
-        END IF
-# else
-        IF (OutRec.eq.1) THEN
-          string='initial  fields'
-        ELSE IF (OutRec.eq.2) THEN
-          string='v-increments   '
-        ELSE IF (OutRec.eq.3) THEN
-          string='v-increments   '
-        ELSE IF (OutRec.eq.4) THEN
-          string='v-summations   '
-        ELSE IF (OutRec.eq.5) THEN
-          string='x-increments   '
-        END IF
-# endif
-!
-# ifdef SOLVE3D
-        WRITE (stdout,30) string, outer, inner, Tindex, Tindex, OutRec
-# else
-        WRITE (stdout,30) string, outer, inner, Tindex, OutRec
-# endif
-      END IF
-!
-  10  FORMAT (/,' TL_WRT_INI_NF90 - unable to open initial NetCDF',     &
-     &        ' file: ',a)
-  20  FORMAT (/,' TL_WRT_INI_NF90 - error while writing variable: ',a,  &
-     &        /,14x,'into tangent initial file for time record: ',i0)
-  30  FORMAT (2x,'TL_WRT_INI_NF90  - wrote ',a,                         &
+      !
+10    FORMAT (2x,'TL_WRT_INI_NF90  - writing ',a,                       &
      &        ' (Outer=',i2.2,', Inner=',i3.3,', Index=',i0,            &
 # ifdef SOLVE3D
      &        ',',i0,', Rec=',i0,')')
 # else
      &        ', Rec=',i0,')')
 # endif
+  20  FORMAT (/,' TL_WRT_INI_NF90 - error while writing variable: ',a,  &
+     &        /,14x,'into tangent initial file for time record: ',i0)
 !
       RETURN
       END SUBROUTINE tl_wrt_ini_nf90
@@ -712,6 +719,49 @@
 !
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
+!  Report.
+!
+      IF (Master) THEN
+#  if defined RPCG
+        IF (OutRec.eq.1) THEN
+          string='inner-loop initial fields          '
+        ELSE IF (OutRec.eq.2) THEN
+          string='final outer-loop increments        '
+        ELSE IF (OutRec.eq.3) THEN
+          string='sum of final outer-loop increments '
+        ELSE IF (OutRec.eq.4) THEN
+          string='sum of adjoint solutions           '
+        ELSE IF (OutRec.eq.5) THEN
+          string='augmented correction term          '
+        END IF
+#  elif defined SP4DVAR
+        IF (OutRec.eq.1) THEN
+          string='TLM initial fields             '
+        ELSE IF ((2.le.OutRec).and.(OutRec.le.Nsaddle+1)) THEN
+          string='TLM saddle-point starting field'
+        ELSE IF ((Nsaddle+2.le.OutRec).and.(OutRec.le.2*Nsaddle+2)) THEN
+          string='ADM saddle-point starting field'
+        END IF
+#  else
+        IF (OutRec.eq.1) THEN
+          string='initial  fields'
+        ELSE IF (OutRec.eq.2) THEN
+          string='v-increments   '
+        ELSE IF (OutRec.eq.3) THEN
+          string='v-increments   '
+        ELSE IF (OutRec.eq.4) THEN
+          string='v-summations   '
+        ELSE IF (OutRec.eq.5) THEN
+          string='x-increments   '
+        END IF
+#  endif
+#  ifdef SOLVE3D
+        WRITE (stdout,30) string, outer, inner, Tindex, Tindex, OutRec
+#  else
+        WRITE (stdout,30) string, outer, inner, Tindex, OutRec
+#  endif
+      END IF
+!
 !  Write out model time (s). Use the "tdays" variable here because of
 !  the management of the "time" variable due to nesting.
 !
@@ -733,7 +783,7 @@
         ioDesc => ioDesc_sp_r2dvar(ng)
       END IF
 !
-      status=nf_fwrite2d(ng, iTLM, ITL(ng)%pioFile,                     &
+      status=nf_fwrite2d(ng, iTLM, ITL(ng)%pioFile, idFsur,             &
      &                   ITL(ng)%pioVar(idFsur),                        &
      &                   OutRec, ioDesc,                                &
      &                   LBi, UBi, LBj, UBj, scale,                     &
@@ -795,7 +845,7 @@
         ioDesc => ioDesc_sp_u2dvar(ng)
       END IF
 !
-      status=nf_fwrite2d(ng, iTLM, ITL(ng)%pioFile,                     &
+      status=nf_fwrite2d(ng, iTLM, ITL(ng)%pioFile, idUbar,             &
      &                   ITL(ng)%pioVar(idUbar),                        &
      &                   OutRec, ioDesc,                                &
      &                   LBi, UBi, LBj, UBj, scale,                     &
@@ -852,7 +902,7 @@
         ioDesc => ioDesc_sp_v2dvar(ng)
       END IF
 !
-      status=nf_fwrite2d(ng, iTLM, ITL(ng)%pioFile,                     &
+      status=nf_fwrite2d(ng, iTLM, ITL(ng)%pioFile, idVbar,             &
      &                   ITL(ng)%pioVar(idVbar),                        &
      &                   OutRec, ioDesc,                                &
      &                   LBi, UBi, LBj, UBj, scale,                     &
@@ -912,7 +962,7 @@
         ioDesc => ioDesc_sp_u2dfrc(ng)
       END IF
 !
-      status=nf_fwrite3d(ng, iTLM, ITL(ng)%pioFile,                     &
+      status=nf_fwrite3d(ng, iTLM, ITL(ng)%pioFile, idUsms,             &
      &                   ITL(ng)%pioVar(idUsms),                        &
      &                   OutRec, ioDesc,                                &
      &                   LBi, UBi, LBj, UBj, 1, Nfrec(ng), scale,       &
@@ -938,7 +988,7 @@
         ioDesc => ioDesc_sp_v2dfrc(ng)
       END IF
 !
-      status=nf_fwrite3d(ng, iTLM, ITL(ng)%pioFile,                     &
+      status=nf_fwrite3d(ng, iTLM, ITL(ng)%pioFile, idVsms,             &
      &                   ITL(ng)%pioVar(idVsms),                        &
      &                   OutRec, ioDesc,                                &
      &                   LBi, UBi, LBj, UBj, 1, Nfrec(ng), scale,       &
@@ -966,7 +1016,7 @@
         ioDesc => ioDesc_sp_u3dvar(ng)
       END IF
 !
-      status=nf_fwrite3d(ng, iTLM, ITL(ng)%pioFile,                     &
+      status=nf_fwrite3d(ng, iTLM, ITL(ng)%pioFile, idUvel,             &
      &                   ITL(ng)%pioVar(idUvel),                        &
      &                   OutRec, ioDesc,                                &
      &                   LBi, UBi, LBj, UBj, 1, N(ng), scale,           &
@@ -1023,7 +1073,7 @@
         ioDesc => ioDesc_sp_v3dvar(ng)
       END IF
 !
-      status=nf_fwrite3d(ng, iTLM, ITL(ng)%pioFile,                     &
+      status=nf_fwrite3d(ng, iTLM, ITL(ng)%pioFile, idVvel,             &
      &                   ITL(ng)%pioVar(idVvel),                        &
      &                   OutRec, ioDesc,                                &
      &                   LBi, UBi, LBj, UBj, 1, N(ng), scale,           &
@@ -1081,7 +1131,7 @@
           ioDesc => ioDesc_sp_r3dvar(ng)
         END IF
 !
-        status=nf_fwrite3d(ng, iTLM, ITL(ng)%pioFile,                   &
+        status=nf_fwrite3d(ng, iTLM, ITL(ng)%pioFile, idTvar(itrc),     &
      &                     ITL(ng)%pioTrc(itrc),                        &
      &                     OutRec, ioDesc,                              &
      &                     LBi, UBi, LBj, UBj, 1, N(ng), scale,         &
@@ -1148,7 +1198,7 @@
             ioDesc => ioDesc_sp_r2dfrc(ng)
           END IF
 !
-          status=nf_fwrite3d(ng, iTLM, ITL(ng)%pioFile,                 &
+          status=nf_fwrite3d(ng, iTLM, ITL(ng)%pioFile, idTsur(itrc),   &
      &                       ITL(ng)%pioVar(idTsur(itrc)),              &
      &                       OutRec, ioDesc,                            &
      &                       LBi, UBi, LBj, UBj, 1, Nfrec(ng), scale,   &
@@ -1236,59 +1286,15 @@
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #  endif
 !
-      IF (Master) THEN
-#  if defined RPCG
-        IF (OutRec.eq.1) THEN
-          string='inner-loop initial fields          '
-        ELSE IF (OutRec.eq.2) THEN
-          string='final outer-loop increments        '
-        ELSE IF (OutRec.eq.3) THEN
-          string='sum of final outer-loop increments '
-        ELSE IF (OutRec.eq.4) THEN
-          string='sum of adjoint solutions           '
-        ELSE IF (OutRec.eq.5) THEN
-          string='augmented correction term          '
-        END IF
-#  elif defined SP4DVAR
-        IF (OutRec.eq.1) THEN
-          string='TLM initial fields             '
-        ELSE IF ((2.le.OutRec).and.(OutRec.le.Nsaddle+1)) THEN
-          string='TLM saddle-point starting field'
-        ELSE IF ((Nsaddle+2.le.OutRec).and.(OutRec.le.2*Nsaddle+2)) THEN
-          string='ADM saddle-point starting field'
-        END IF
-#  else
-        IF (OutRec.eq.1) THEN
-          string='initial  fields'
-        ELSE IF (OutRec.eq.2) THEN
-          string='v-increments   '
-        ELSE IF (OutRec.eq.3) THEN
-          string='v-increments   '
-        ELSE IF (OutRec.eq.4) THEN
-          string='v-summations   '
-        ELSE IF (OutRec.eq.5) THEN
-          string='x-increments   '
-        END IF
-#  endif
-!
-#  ifdef SOLVE3D
-        WRITE (stdout,30) string, outer, inner, Tindex, Tindex, OutRec
-#  else
-        WRITE (stdout,30) string, outer, inner, Tindex, OutRec
-#  endif
-      END IF
-!
-  10  FORMAT (/,' TL_WRT_INI_PIO - unable to open initial NetCDF',      &
-     &        ' file: ',a)
-  20  FORMAT (/,' TL_WRT_INI_PIO - error while writing variable: ',a,   &
-     &        /,14x,'into tangent initial file for time record: ',i0)
-  30  FORMAT (2x,'TL_WRT_INI_PIO   - wrote ',a,                         &
+  10  FORMAT (2x,'TL_WRT_INI_PIO   - writing ',a,                       &
      &        ' (Outer=',i2.2,', Inner=',i3.3,', Index=',i0,            &
 #  ifdef SOLVE3D
      &        ',',i0,', Rec=',i0,')')
 #  else
      &        ', Rec=',i0,')')
 #  endif
+  20  FORMAT (/,' TL_WRT_INI_PIO - error while writing variable: ',a,   &
+     &        /,14x,'into tangent initial file for time record: ',i0)
 !
       RETURN
       END SUBROUTINE tl_wrt_ini_pio

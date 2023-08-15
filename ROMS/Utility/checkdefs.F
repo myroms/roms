@@ -2,7 +2,7 @@
       SUBROUTINE checkdefs
 !
 !git $Id$
-!svn $Id: checkdefs.F 1178 2023-07-11 17:50:57Z arango $
+!svn $Id: checkdefs.F 1189 2023-08-15 21:26:58Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -1903,6 +1903,13 @@
      &   'Double precision output fields in NetCDF files'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+12)=' OUT_DOUBLE,'
+#endif
+#ifdef OUTPUT_STATS
+!
+      IF (Master) WRITE (stdout,20) 'OUTPUT_STATS',                     &
+     &   'Reporting NetCDF output fields statistics'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+14)=' OUTPUT_STATS,'
 #endif
 #ifdef _OPENMP
 !

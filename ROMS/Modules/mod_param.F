@@ -2,7 +2,7 @@
       MODULE mod_param
 !
 !git $Id$
-!svn $Id: mod_param.F 1178 2023-07-11 17:50:57Z arango $
+!svn $Id: mod_param.F 1189 2023-08-15 21:26:58Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -410,7 +410,9 @@
 !-----------------------------------------------------------------------
 !
       TYPE T_STATS
-        real(r8) :: count         ! processed values count
+        integer(i8b) :: checksum  ! bit sum hash
+        integer      :: count     ! processed values count
+
         real(r8) :: min           ! minimum value
         real(r8) :: max           ! maximum value
         real(r8) :: avg           ! arithmetic mean

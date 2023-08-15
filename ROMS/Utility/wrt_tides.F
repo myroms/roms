@@ -4,7 +4,7 @@
    (defined SSH_TIDES || defined UV_TIDES)
 !
 !git $Id$
-!svn $Id: wrt_tides.F 1178 2023-07-11 17:50:57Z arango $
+!svn $Id: wrt_tides.F 1189 2023-08-15 21:26:58Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -120,6 +120,10 @@
 !
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
+!  Report.
+!
+      IF (Master) WRITE (stdout,20) ng
+!
 !  Write out number of time-accumulated harmonics.
 !
       CALL netcdf_put_ivar (ng, iNLM, HAR(ng)%name, 'Hcount',           &
@@ -205,7 +209,7 @@
       IF (Aout(idFsuD,ng)) THEN
         scale=1.0_dp
         gtype=r3dvar
-        status=nf_fwrite3d(ng, iNLM, HAR(ng)%ncid,                      &
+        status=nf_fwrite3d(ng, iNLM, HAR(ng)%ncid, idFsuH,              &
      &                     HAR(ng)%Vid(idFsuH), 0, gtype,               &
      &                     LBi, UBi, LBj, UBj, 0, 2*NTC(ng), scale,     &
 # ifdef MASKING
@@ -215,7 +219,7 @@
      &                     SetFillVal = .FALSE.)
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idFsuH)), TRIM(HAR(ng)%name)
+            WRITE (stdout,20) TRIM(Vname(1,idFsuH)), TRIM(HAR(ng)%name)
           END IF
           exit_flag=3
           ioerror=status
@@ -228,7 +232,7 @@
       IF (Aout(idu2dD,ng)) THEN
         scale=1.0_dp
         gtype=u3dvar
-        status=nf_fwrite3d(ng, iNLM, HAR(ng)%ncid,                      &
+        status=nf_fwrite3d(ng, iNLM, HAR(ng)%ncid, idu2dH,              &
      &                     HAR(ng)%Vid(idu2dH), 0, gtype,               &
      &                     LBi, UBi, LBj, UBj, 0, 2*NTC(ng), scale,     &
 # ifdef MASKING
@@ -238,7 +242,7 @@
      &                     SetFillVal = .FALSE.)
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idu2dH)), TRIM(HAR(ng)%name)
+            WRITE (stdout,20) TRIM(Vname(1,idu2dH)), TRIM(HAR(ng)%name)
           END IF
           exit_flag=3
           ioerror=status
@@ -251,7 +255,7 @@
       IF (Aout(idv2dD,ng)) THEN
         scale=1.0_dp
         gtype=v3dvar
-        status=nf_fwrite3d(ng, iNLM, HAR(ng)%ncid,                      &
+        status=nf_fwrite3d(ng, iNLM, HAR(ng)%ncid, idv2dH,              &
      &                     HAR(ng)%Vid(idv2dH), 0, gtype,               &
      &                     LBi, UBi, LBj, UBj, 0, 2*NTC(ng), scale,     &
 # ifdef MASKING
@@ -261,7 +265,7 @@
      &                     SetFillVal = .FALSE.)
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idv2dH)), TRIM(HAR(ng)%name)
+            WRITE (stdout,20) TRIM(Vname(1,idv2dH)), TRIM(HAR(ng)%name)
           END IF
           exit_flag=3
           ioerror=status
@@ -276,7 +280,7 @@
       IF (Aout(idu3dD,ng)) THEN
         scale=1.0_dp
         gtype=u3dvar
-        status=nf_fwrite4d(ng, iNLM, HAR(ng)%ncid,                      &
+        status=nf_fwrite4d(ng, iNLM, HAR(ng)%ncid, idu3dH,              &
      &                     HAR(ng)%Vid(idu3dH), 0, gtype,               &
      &                     LBi, UBi, LBj, UBj, 1, N(ng), 0, 2*NTC(ng),  &
      &                     scale,                                       &
@@ -287,7 +291,7 @@
      &                     SetFillVal = .FALSE.)
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idu3dH)), TRIM(HAR(ng)%name)
+            WRITE (stdout,20) TRIM(Vname(1,idu3dH)), TRIM(HAR(ng)%name)
           END IF
           exit_flag=3
           ioerror=status
@@ -300,7 +304,7 @@
       IF (Aout(idv3dD,ng)) THEN
         scale=1.0_dp
         gtype=v3dvar
-        status=nf_fwrite4d(ng, iNLM, HAR(ng)%ncid,                      &
+        status=nf_fwrite4d(ng, iNLM, HAR(ng)%ncid, idv3dH,              &
      &                     HAR(ng)%Vid(idv3dH), 0, gtype,               &
      &                     LBi, UBi, LBj, UBj, 1, N(ng), 0, 2*NTC(ng),  &
      &                     scale,                                       &
@@ -311,7 +315,7 @@
      &                     SetFillVal = .FALSE.)
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idv3dH)), TRIM(HAR(ng)%name)
+            WRITE (stdout,20) TRIM(Vname(1,idv3dH)), TRIM(HAR(ng)%name)
           END IF
           exit_flag=3
           ioerror=status
@@ -325,7 +329,7 @@
         IF (Aout(idTrcD(itrc),ng)) THEN
           scale=1.0_dp
           gtype=r3dvar
-          status=nf_fwrite4d(ng, iNLM, HAR(ng)%ncid,                    &
+          status=nf_fwrite4d(ng, iNLM, HAR(ng)%ncid, idTrcH(itrc),      &
      &                       HAR(ng)%Vid(idTrcH(itrc)), 0, gtype,       &
      &                       LBi, UBi, LBj, UBj, 1, N(ng), 0, 2*NTC(ng),&
      &                       scale,                                     &
@@ -336,7 +340,7 @@
      &                       SetFillVal = .FALSE.)
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
             IF (Master) THEN
-              WRITE (stdout,10) TRIM(Vname(1,idTrcH(itrc))),            &
+              WRITE (stdout,20) TRIM(Vname(1,idTrcH(itrc))),            &
      &                          TRIM(HAR(ng)%name)
             END IF
             exit_flag=3
@@ -355,12 +359,10 @@
       CALL netcdf_sync (ng, iNLM, HAR(ng)%name, HAR(ng)%ncid)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
-      IF (Master) WRITE (stdout,20) ng
-!
-  10  FORMAT (/,' WRT_TIDES_NF90 - error while writing variable: ',a,   &
-     &        /,13x,'into detide harmonics NetCDF file: ',/,13x,a)
-  20  FORMAT (2x,'WRT_TIDES_NF90   - wrote time-accumulated tide ',     &
+  10  FORMAT (2x,'WRT_TIDES_NF90   - writing time-accumulated tide ',   &
      &        'harmonics, Grid ',i2.2)
+  20  FORMAT (/,' WRT_TIDES_NF90 - error while writing variable: ',a,   &
+     &        /,13x,'into detide harmonics NetCDF file: ',/,13x,a)
 !
       RETURN
       END SUBROUTINE wrt_tides_nf90
@@ -396,6 +398,10 @@
 !-----------------------------------------------------------------------
 !
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+!
+!  Report.
+!
+      IF (Master) WRITE (stdout,10) ng
 !
 !  Write out number of time-accumulated harmonics.
 !
@@ -487,7 +493,7 @@
           ioDesc => ioDesc_sp_r2dhar(ng)
         END IF
 !
-        status=nf_fwrite3d(ng, iNLM, HAR(ng)%pioFile,                   &
+        status=nf_fwrite3d(ng, iNLM, HAR(ng)%pioFile, idFsuH,           &
      &                     HAR(ng)%pioVar(idFsuH), 0,                   &
      &                     ioDesc,                                      &
      &                     LBi, UBi, LBj, UBj, 0, 2*NTC(ng), scale,     &
@@ -498,7 +504,7 @@
      &                     SetFillVal = .FALSE.)
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idFsuH)), TRIM(HAR(ng)%name)
+            WRITE (stdout,20) TRIM(Vname(1,idFsuH)), TRIM(HAR(ng)%name)
           END IF
           exit_flag=3
           ioerror=status
@@ -516,7 +522,7 @@
           ioDesc => ioDesc_sp_u2dhar(ng)
         END IF
 !
-        status=nf_fwrite3d(ng, iNLM, HAR(ng)%pioFile,                   &
+        status=nf_fwrite3d(ng, iNLM, HAR(ng)%pioFile, idu2dH,           &
      &                     HAR(ng)%pioVar(idu2dH), 0,                   &
      &                     ioDesc,                                      &
      &                     LBi, UBi, LBj, UBj, 0, 2*NTC(ng), scale,     &
@@ -527,7 +533,7 @@
      &                     SetFillVal = .FALSE.)
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idu2dH)), TRIM(HAR(ng)%name)
+            WRITE (stdout,20) TRIM(Vname(1,idu2dH)), TRIM(HAR(ng)%name)
           END IF
           exit_flag=3
           ioerror=status
@@ -545,7 +551,7 @@
           ioDesc => ioDesc_sp_v2dhar(ng)
         END IF
 !
-        status=nf_fwrite3d(ng, iNLM, HAR(ng)%pioFile,                   &
+        status=nf_fwrite3d(ng, iNLM, HAR(ng)%pioFile, idv2dH,           &
      &                     HAR(ng)%pioVar(idv2dH), 0,                   &
      &                     ioDesc,                                      &
      &                     LBi, UBi, LBj, UBj, 0, 2*NTC(ng), scale,     &
@@ -556,7 +562,7 @@
      &                     SetFillVal = .FALSE.)
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idv2dH)), TRIM(HAR(ng)%name)
+            WRITE (stdout,20) TRIM(Vname(1,idv2dH)), TRIM(HAR(ng)%name)
           END IF
           exit_flag=3
           ioerror=status
@@ -576,7 +582,7 @@
           ioDesc => ioDesc_sp_u3dhar(ng)
         END IF
 !
-        status=nf_fwrite4d(ng, iNLM, HAR(ng)%pioFile,                   &
+        status=nf_fwrite4d(ng, iNLM, HAR(ng)%pioFile, idu3dH,           &
      &                     HAR(ng)%pioVar(idu3dH), 0,                   &
      &                     ioDesc,                                      &
      &                     LBi, UBi, LBj, UBj, 1, N(ng), 0, 2*NTC(ng),  &
@@ -588,7 +594,7 @@
      &                     SetFillVal = .FALSE.)
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idu3dH)), TRIM(HAR(ng)%name)
+            WRITE (stdout,20) TRIM(Vname(1,idu3dH)), TRIM(HAR(ng)%name)
           END IF
           exit_flag=3
           ioerror=status
@@ -606,7 +612,7 @@
           ioDesc => ioDesc_sp_v3dhar(ng)
         END IF
 !
-        status=nf_fwrite4d(ng, iNLM, HAR(ng)%pioFile,                   &
+        status=nf_fwrite4d(ng, iNLM, HAR(ng)%pioFile, idv3dH,           &
      &                     HAR(ng)%pioVar(idv3dH), 0,                   &
      &                     ioDesc,                                      &
      &                     LBi, UBi, LBj, UBj, 1, N(ng), 0, 2*NTC(ng),  &
@@ -618,7 +624,7 @@
      &                     SetFillVal = .FALSE.)
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idv3dH)), TRIM(HAR(ng)%name)
+            WRITE (stdout,20) TRIM(Vname(1,idv3dH)), TRIM(HAR(ng)%name)
           END IF
           exit_flag=3
           ioerror=status
@@ -637,7 +643,7 @@
             ioDesc => ioDesc_sp_r3dhar(ng)
           END IF
 !
-          status=nf_fwrite4d(ng, iNLM, HAR(ng)%pioFile,                 &
+          status=nf_fwrite4d(ng, iNLM, HAR(ng)%pioFile, idTrcH(itrc),   &
      &                       HAR(ng)%pioVar(idTrcH(itrc)), 0,           &
      &                       ioDesc,                                    &
      &                       LBi, UBi, LBj, UBj, 1, N(ng), 0, 2*NTC(ng),&
@@ -649,7 +655,7 @@
      &                       SetFillVal = .FALSE.)
           IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
             IF (Master) THEN
-              WRITE (stdout,10) TRIM(Vname(1,idTrcH(itrc))),            &
+              WRITE (stdout,20) TRIM(Vname(1,idTrcH(itrc))),            &
      &                          TRIM(HAR(ng)%name)
             END IF
             exit_flag=3
@@ -668,12 +674,10 @@
       CALL pio_netcdf_sync (ng, iNLM, HAR(ng)%name, HAR(ng)%pioFile)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
-      IF (Master) WRITE (stdout,20) ng
-!
-  10  FORMAT (/,' WRT_TIDES_PIO - error while writing variable: ',a,    &
-     &        /,13x,'into detide harmonics NetCDF file: ',/,13x,a)
-  20  FORMAT (2x,'WRT_TIDES_PIO    - wrote time-accumulated tide ',     &
+  10  FORMAT (2x,'WRT_TIDES_PIO    - writing time-accumulated tide ',   &
      &        'harmonics, Grid ',i2.2)
+  20  FORMAT (/,' WRT_TIDES_PIO - error while writing variable: ',a,    &
+     &        /,13x,'into detide harmonics NetCDF file: ',/,13x,a)
 !
       RETURN
       END SUBROUTINE wrt_tides_pio
