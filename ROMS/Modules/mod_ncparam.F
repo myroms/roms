@@ -2,7 +2,7 @@
       MODULE mod_ncparam
 !
 !git $Id$
-!svn $Id: mod_ncparam.F 1189 2023-08-15 21:26:58Z arango $
+!svn $Id: mod_ncparam.F 1190 2023-08-18 19:51:09Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -1251,7 +1251,7 @@
       END DO
 #endif
 !
-!  Set IDs for state some state variables.
+!  Set indices for state some state variables.
 !
       ic=5
 #ifdef SOLVE3D

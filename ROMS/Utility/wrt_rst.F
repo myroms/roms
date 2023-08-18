@@ -2,7 +2,7 @@
       MODULE wrt_rst_mod
 !
 !git $Id$
-!svn $Id: wrt_rst.F 1189 2023-08-15 21:26:58Z arango $
+!svn $Id: wrt_rst.F 1190 2023-08-18 19:51:09Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -647,7 +647,7 @@
         scale=1.0_dp
         gtype=gfactor*r3dvar
 # ifdef PERFECT_RESTART
-        status=nf_fwrite4d(ng, model, RST(ng)%ncid,                     &
+        status=nf_fwrite4d(ng, model, RST(ng)%ncid, idTvar(itrc),       &
      &                     RST(ng)%Tid(itrc),                           &
      &                     RST(ng)%Rindex, gtype,                       &
      &                     LBi, UBi, LBj, UBj, 1, N(ng), 1, 2, scale,   &
@@ -1876,7 +1876,7 @@
         ELSE
           ioDesc => ioDesc_sp_trcvar(ng)
         END IF
-        status=nf_fwrite4d(ng, model, RST(ng)%pioFile,                  &
+        status=nf_fwrite4d(ng, model, RST(ng)%pioFile, idTvar(itrc),    &
      &                     RST(ng)%pioTrc(itrc),                        &
      &                     RST(ng)%Rindex,                              &
      &                     ioDesc,                                      &

@@ -2,7 +2,7 @@
       MODULE nf_fwrite4d_mod
 !
 !git $Id$
-!svn $Id: nf_fwrite4d.F 1189 2023-08-15 21:26:58Z arango $
+!svn $Id: nf_fwrite4d.F 1190 2023-08-18 19:51:09Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -839,6 +839,9 @@
       USE mod_pio_netcdf
 !
       USE distribute_mod, ONLY : mp_reduce
+# ifdef OUTPUT_STATS
+      USE stats_mod,      ONLY : stats_4dfld
+# endif
 !
 !  Imported variable declarations.
 !
@@ -874,7 +877,7 @@
 
       logical, pointer :: Lwater(:,:,:,:)
 !
-      integer :: i, j, k, l
+      integer :: i, j, k, l, tile
       integer :: Imin, Imax, Jmin, Jmax
       integer :: Cgrid, dkind, ghost, gtype
       integer :: status
@@ -885,6 +888,11 @@
 
       real(r4), pointer :: Awrk4(:,:,:,:)
       real(r8), pointer :: Awrk8(:,:,:,:)
+
+# ifdef OUTPUT_STATS
+!
+      TYPE (T_STATS) :: Stats
+# endif
 !
       character (len= 3), dimension(2) :: op_handle
 !
@@ -940,6 +948,17 @@
       ELSE
         LandFill=tindex.gt.0
       END IF
+# endif
+# ifdef OUTPUT_STATS
+!
+!  Initialize output variable statistics structure.
+!
+      Stats % checksum=0_i8b
+      Stats % count=0
+      Stats % min=spval
+      Stats % max=-spval
+      Stats % avg=0.0_r8
+      Stats % rms=0.0_r8
 # endif
 !
 !-----------------------------------------------------------------------
@@ -1025,6 +1044,32 @@
      &                               LBk:UBk,LBt:UBt),                  &
      &                         status)
       END IF
+
+# ifdef OUTPUT_STATS
+!
+!-----------------------------------------------------------------------
+!  Compute and report output field statistics.
+!-----------------------------------------------------------------------
+!
+#  ifdef DISTRIBUTE
+      tile=MyRank
+#  else
+      tile=-1
+#  endif
+      CALL stats_4dfld (ng, tile, model, gtype, Stats,                  &
+     &                  LBi, UBi, LBj, UBj, LBk, UBk, LBt, UBt,         &
+     &                  Adat,                                           &
+#  ifdef MASKING
+     &                  Fmask = Amask,                                  &
+#  endif
+     &                  debug = .FALSE.)
+      IF (OutThread) THEN
+        WRITE (stdout,10) TRIM(Vname(1,ifield)), Stats%min, Stats%max,  &
+     &                    Stats%checksum
+  10    FORMAT (4x,'- ',a,':',t35,'Min = ',1p,e15.8,',  Max = ',        &
+     &          1p,e15.8,',  CheckSum = ',i0)
+      END IF
+# endif
 !
 !-----------------------------------------------------------------------
 !  If applicable, compute global minimum and maximum values.

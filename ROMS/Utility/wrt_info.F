@@ -2,7 +2,7 @@
       MODULE wrt_info_mod
 !
 !git $Id$
-!svn $Id: wrt_info.F 1189 2023-08-15 21:26:58Z arango $
+!svn $Id: wrt_info.F 1190 2023-08-18 19:51:09Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -4220,7 +4220,7 @@
                   pioVar%dkind=PIO_real
                   ioDesc => ioDesc_sp_r2dvar(ng)
                 END IF
-                status=nf_fwrite2d(ng, model, pioFile, idYgdR,          &
+                status=nf_fwrite2d(ng, model, pioFile, idYgrR,          &
      &                             pioVar, 0, ioDesc,                   &
      &                             LBi, UBi, LBj, UBj, scale,           &
 # ifdef MASKING

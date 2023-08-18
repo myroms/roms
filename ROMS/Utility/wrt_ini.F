@@ -4,7 +4,7 @@
 #ifdef FOUR_DVAR
 !
 !git $Id$
-!svn $Id: wrt_ini.F 1189 2023-08-15 21:26:58Z arango $
+!svn $Id: wrt_ini.F 1190 2023-08-18 19:51:09Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -815,7 +815,7 @@
           ioDesc => ioDesc_sp_r3dvar(ng)
         END IF
 !
-        status=nf_fwrite3d(ng, iNLM, INI(ng)%pioFile,                   &
+        status=nf_fwrite3d(ng, iNLM, INI(ng)%pioFile, idTvar(itrc),     &
      &                     INI(ng)%pioTrc(itrc),                        &
      &                     INI(ng)%Rindex,                              &
      &                     ioDesc,                                      &

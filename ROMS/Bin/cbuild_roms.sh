@@ -34,6 +34,10 @@
 #    -j [N]         Compile in parallel using N CPUs                    :::
 #                     omit argument for all available CPUs              :::
 #                                                                       :::
+#    -b             Compile a specific ROMS GitHub branch               :::
+#                                                                       :::
+#                     cbuild_roms.sh -j 5 -b feature/kernel             :::
+#                                                                       :::
 #    -p macro       Prints any Makefile macro value. For example,       :::
 #                                                                       :::
 #                     cbuild_roms.sh -p MY_CPP_FLAGS                    :::
@@ -41,6 +45,11 @@
 #    -noclean       Do not clean already compiled objects               :::
 #                                                                       :::
 #    -v             Compile in verbose mode (VERBOSE=1)                 :::
+#                                                                       :::
+# The branch option -b is only possible for ROMS source code from       :::
+# https://github.com/myroms. Such versions are under development        :::
+# and targeted to advanced users, superusers, and beta testers.         :::
+# Regular and novice users must use the default 'develop' branch.       :::
 #                                                                       :::
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
@@ -50,6 +59,7 @@ parallel=0
 clean=1
 dprint=0
 Verbose=0
+branch=0
 
 command="cbuild_roms.sh $@"
 
@@ -90,6 +100,17 @@ do
       clean=0
       ;;
 
+    -b )
+      shift
+      branch=1
+      branch_name=`echo $1 | grep -v '^-'`
+      if [ "$branch_name" == "" ]; then
+        echo "Please enter a ROMS GitHub branch name."
+        exit 1
+      fi
+      shift
+      ;;
+
     * )
       echo ""
       echo "${separator}"
@@ -99,6 +120,9 @@ do
       echo ""
       echo "-j [N]          Compile in parallel using N CPUs"
       echo "                  omit argument for all avaliable CPUs"
+      echo ""
+      echo "-b branch_name  Compile specific ROMS GitHub branch name"
+      echo "                  For example:  cbuild_roms.sh -b feature/kernel"
       echo ""
       echo "-p macro        Prints any Makefile macro value"
       echo "                  For example:  cbuild_roms.sh -p FFLAGS"
@@ -130,7 +154,6 @@ if [ -n "${ROMS_ROOT_DIR:+1}" ]; then
   export      MY_ROOT_DIR=${ROMS_ROOT_DIR}
 else
   export      MY_ROOT_DIR=${HOME}/ocean/repository/git
-# export      MY_ROOT_DIR=${HOME}/ocean/repository/svn
 fi
 
 export     MY_PROJECT_DIR=${PWD}
@@ -145,7 +168,7 @@ export     MY_PROJECT_DIR=${PWD}
 # This script allows for differing paths to the code and inputs on other
 # computers.
 
- export       MY_ROMS_SRC=${MY_ROOT_DIR}/trunk
+ export       MY_ROMS_SRC=${MY_ROOT_DIR}/roms
 
 # Which type(s) of libraries would you like?
 #
@@ -186,6 +209,9 @@ export     MY_PROJECT_DIR=${PWD}
 #
 #export      MY_CPP_FLAGS="${MY_CPP_FLAGS} -DAVERAGES"
 #export      MY_CPP_FLAGS="${MY_CPP_FLAGS} -DDEBUGGING"
+#
+# can be used to write time-averaged fields. Notice that you can have as
+# many definitions as you want by appending values.
 
 #--------------------------------------------------------------------------
 # Compilation options.
@@ -285,6 +311,36 @@ if [ $dprint -eq 0 ]; then
       mkdir ${BUILD_DIR}
       cd ${BUILD_DIR}
     fi
+  fi
+
+  # If requested, check out requested branch from ROMS GitHub
+
+  if [ $branch -eq 1 ]; then
+    if [ ! -d ${MY_PROJECT_DIR}/src ]; then
+      echo ""
+      echo "Downloading ROMS source code from GitHub: https://www.github.com/myroms"
+      echo ""
+      git clone https://www.github.com/myroms/roms.git src
+    fi
+    echo ""
+    echo "Checking out ROMS GitHub branch: $branch_name"
+    echo ""
+    cd src
+    git checkout $branch_name
+
+    # If we are using the COMPILERS from the ROMS source code
+    # overide the value set above
+  
+    if [[ ${COMPILERS} == ${MY_ROMS_SRC}* ]]; then
+      export COMPILERS=${MY_PROJECT_DIR}/src/Compilers
+    fi
+    export MY_ROMS_SRC=${MY_PROJECT_DIR}/src
+
+  else
+    echo ""
+    echo "Using ROMS source code from: ${MY_ROMS_SRC}"
+    echo ""
+    cd ${MY_ROMS_SRC}
   fi
 fi
 

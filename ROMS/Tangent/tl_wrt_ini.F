@@ -3,7 +3,7 @@
 #if (defined TANGENT || defined TL_IOMS) && defined FOUR_DVAR
 !
 !git $Id$
-!svn $Id: tl_wrt_ini.F 1189 2023-08-15 21:26:58Z arango $
+!svn $Id: tl_wrt_ini.F 1190 2023-08-18 19:51:09Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -756,9 +756,9 @@
         END IF
 #  endif
 #  ifdef SOLVE3D
-        WRITE (stdout,30) string, outer, inner, Tindex, Tindex, OutRec
+        WRITE (stdout,10) string, outer, inner, Tindex, Tindex, OutRec
 #  else
-        WRITE (stdout,30) string, outer, inner, Tindex, OutRec
+        WRITE (stdout,10) string, outer, inner, Tindex, OutRec
 #  endif
       END IF
 !

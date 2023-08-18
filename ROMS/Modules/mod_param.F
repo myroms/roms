@@ -2,7 +2,7 @@
       MODULE mod_param
 !
 !git $Id$
-!svn $Id: mod_param.F 1189 2023-08-15 21:26:58Z arango $
+!svn $Id: mod_param.F 1190 2023-08-18 19:51:09Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -1471,6 +1471,9 @@
         Jm(ng)=Mm(ng)+J_padd
         NT(ng)=NAT+NBT+NST+NPT
 #ifdef FLOATS
+!
+!  Number of floats variables.
+!
 # ifdef FLOAT_OYSTER
 #  ifdef FLOAT_VWALK
         NFV(ng)=NT(ng)+18
@@ -1485,17 +1488,30 @@
 #  endif
 # endif
 #endif
-        NSV(ng)=NT(ng)+5
+!
+!  Number of state variables.
+!
+        NSV(ng)=NT(ng)+6         ! zeta, ubar, vbar, u, v, W, Tvar(1:MT)
+#if defined GLS_MIXING || defined MY25_MIXING
+        NSV(ng)=NSV(ng)+1        ! TKE
+#endif
+#ifdef WEC
+        NSV(ng)=NSV(ng)+2        ! ubar_stokes, vbar_stokes
+# if defined SOLVE3D
+        NSV(ng)=NSV(ng)+2        ! u_stokes, v_stokes
+# endif
+#endif
 #ifdef ADJUST_WSTRESS
-        NSV(ng)=NSV(ng)+2
+        NSV(ng)=NSV(ng)+2        ! Ustr, Vstr
 #endif
 #ifdef ADJUST_STFLUX
-        NSV(ng)=NSV(ng)+NT(ng)
+        NSV(ng)=NSV(ng)+NT(ng)   ! Tsur(1:MT)
 #endif
       END DO
 !
-!  Set the maximum number of tracer between all nested grids. It cannot
-!  be zero.
+!  Set the maximum number of tracers between all nested grids. It cannot
+!  be zero. Usually, NAT=2 (temperature and salinity), but some Test
+!  Cases do not include salinity.
 !
       MT=MAX(1,MAX(NAT,MAXVAL(NT)))
 !

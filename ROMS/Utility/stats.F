@@ -2,7 +2,7 @@
       MODULE stats_mod
 !
 !git $Id$
-!svn $Id: stats.F 1189 2023-08-15 21:26:58Z arango $
+!svn $Id: stats.F 1190 2023-08-18 19:51:09Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -192,7 +192,7 @@
         END DO
       END IF
 !
-!  Compute data checksom value.
+!  Compute data checksum value.
 !
       Npts=(Imax-Imin+1)*(Jmax-Jmin+1)
       IF (.not.allocated(Cwrk)) allocate ( Cwrk(Npts) )
@@ -439,7 +439,7 @@
         END DO
       END IF
 !
-!  Compute data checksom value.
+!  Compute data checksum value.
 !
       Npts=(Imax-Imin+1)*(Jmax-Jmin+1)*(UBk-LBk+1)
       IF (.not.allocated(Cwrk)) allocate ( Cwrk(Npts) )
@@ -695,7 +695,7 @@
         END DO
       END IF
 !
-!  Compute data checksom value.
+!  Compute data checksum value.
 !
       Npts=(Imax-Imin+1)*(Jmax-Jmin+1)*(UBk-LBk+1)*(UBt-LBt+1)
       IF (.not.allocated(Cwrk)) allocate ( Cwrk(Npts) )
