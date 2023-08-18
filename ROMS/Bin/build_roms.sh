@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 # git $Id$
-# svn $Id: build_roms.sh 1184 2023-07-27 20:28:19Z arango $
+# svn $Id: build_roms.sh 1191 2023-08-18 21:58:31Z arango $
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # Copyright (c) 2002-2023 The ROMS/TOMS Group                           :::
 #   Licensed under a MIT/X style license                                :::
@@ -328,6 +328,11 @@ else
     export      BUILD_DIR=${MY_PROJECT_DIR}/Build_roms
   fi
 fi
+
+# For backward compatibility, set deprecated SCRATCH_DIR to compile
+# older released versions of ROMS.
+
+export SCRATCH_DIR=${BUILD_DIR}
 
 # If necessary, create ROMS build directory.
 

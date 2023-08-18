@@ -1,7 +1,7 @@
 #!/bin/csh -ef
 #
 # git $Id$
-# svn $Id: cbuild_roms.csh 1189 2023-08-15 21:26:58Z arango $
+# svn $Id: cbuild_roms.csh 1191 2023-08-18 21:58:31Z arango $
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # Copyright (c) 2002-2023 The ROMS/TOMS Group                           :::
 #   Licensed under a MIT/X style license                                :::
@@ -297,6 +297,11 @@ else if ($?USE_MPI) then
 else
   setenv BUILD_DIR           ${MY_PROJECT_DIR}/CBuild_roms
 endif
+
+# For backward compatibility, set deprecated SCRATCH_DIR to compile
+# older released versions of ROMS.
+
+setenv SCRATCH_DIR ${BUILD_DIR}
 
 # If necessary, create ROMS build directory.
 
