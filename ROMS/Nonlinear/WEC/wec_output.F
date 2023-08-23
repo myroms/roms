@@ -1532,7 +1532,8 @@
         scale=rho0
         gtype=gfactor*u2dvar
         IF (Linstataneous) THEN
-          status=nf_fwrite2d(ng, model, S(ng)%ncid, S(ng)%Vid(idU2rs),  &
+          status=nf_fwrite2d(ng, model, S(ng)%ncid, idU2rs,             &
+     &                       S(ng)%Vid(idU2rs),                         &
      &                       S(ng)%Rindex, gtype,                       &
      &                       LBi, UBi, LBj, UBj, scale,                 &
 #  ifdef MASKING
@@ -1541,7 +1542,8 @@
      &                       MIXING(ng) % rustr2d)
 #  ifdef AVERAGES
         ELSE
-          status=nf_fwrite2d(ng, model, S(ng)%ncid, S(ng)%Vid(idU2rs),  &
+          status=nf_fwrite2d(ng, model, S(ng)%ncid, idU2rs,             &
+     &                       S(ng)%Vid(idU2rs),                         &
      &                       S(ng)%Rindex, gtype,                       &
      &                       LBi, UBi, LBj, UBj, scale,                 &
 #   ifdef MASKING
@@ -1566,7 +1568,8 @@
         scale=rho0
         gtype=gfactor*v2dvar
         IF (Linstataneous) THEN
-          status=nf_fwrite2d(ng, model, S(ng)%ncid, S(ng)%Vid(idV2rs),  &
+          status=nf_fwrite2d(ng, model, S(ng)%ncid, idV2rs,             &
+     &                       S(ng)%Vid(idV2rs),                         &
      &                       S(ng)%Rindex, gtype,                       &
      &                       LBi, UBi, LBj, UBj, scale,                 &
 #  ifdef MASKING
@@ -1575,7 +1578,8 @@
      &                       MIXING(ng) % rvstr2d)
 #  ifdef AVERAGES
         ELSE
-          status=nf_fwrite2d(ng, model, S(ng)%ncid, S(ng)%Vid(idV2rs),  &
+          status=nf_fwrite2d(ng, model, S(ng)%ncid, idV2rs,             &
+     &                       S(ng)%Vid(idV2rs),                         &
      &                       S(ng)%Rindex, gtype,                       &
      &                       LBi, UBi, LBj, UBj, scale,                 &
 #   ifdef MASKING
@@ -1600,7 +1604,8 @@
         scale=1.0_dp
         gtype=gfactor*u2dvar
         IF (Linstataneous) THEN
-          status=nf_fwrite2d(ng, model, S(ng)%ncid, S(ng)%Vid(idU2sd),  &
+          status=nf_fwrite2d(ng, model, S(ng)%ncid, idU2sd,             &
+     &                       S(ng)%Vid(idU2sd),                         &
      &                       S(ng)%Rindex, gtype,                       &
      &                       LBi, UBi, LBj, UBj, scale,                 &
 #  ifdef MASKING
@@ -1609,7 +1614,8 @@
      &                       OCEAN(ng) % ubar_stokes)
 #  ifdef AVERAGES
         ELSE
-          status=nf_fwrite2d(ng, model, S(ng)%ncid, S(ng)%Vid(idU2sd),  &
+          status=nf_fwrite2d(ng, model, S(ng)%ncid, idU2sd,             &
+     &                       S(ng)%Vid(idU2sd),                         &
      &                       S(ng)%Rindex, gtype,                       &
      &                       LBi, UBi, LBj, UBj, scale,                 &
 #   ifdef MASKING
@@ -1634,7 +1640,8 @@
         scale=1.0_dp
         gtype=gfactor*v2dvar
         IF (Linstataneous) THEN
-          status=nf_fwrite2d(ng, model, S(ng)%ncid, S(ng)%Vid(idV2sd),  &
+          status=nf_fwrite2d(ng, model, S(ng)%ncid, idV2sd,             &
+     &                       S(ng)%Vid(idV2sd),                         &
      &                       S(ng)%Rindex, gtype,                       &
      &                       LBi, UBi, LBj, UBj, scale,                 &
 #  ifdef MASKING
@@ -1643,7 +1650,8 @@
      &                       OCEAN(ng) % vbar_stokes)
 #  ifdef AVERAGES
         ELSE
-          status=nf_fwrite2d(ng, model, S(ng)%ncid, S(ng)%Vid(idV2sd),  &
+          status=nf_fwrite2d(ng, model, S(ng)%ncid, idV2sd,             &
+     &                       S(ng)%Vid(idV2sd),                         &
      &                       S(ng)%Rindex, gtype,                       &
      &                       LBi, UBi, LBj, UBj, scale,                 &
 #   ifdef MASKING
@@ -1670,7 +1678,8 @@
         scale=rho0
         gtype=gfactor*u3dvar
         IF (Linstataneous) THEN
-          status=nf_fwrite3d(ng, model, S(ng)%ncid, S(ng)%Vid(idU3rs),  &
+          status=nf_fwrite3d(ng, model, S(ng)%ncid, idU3rs,             &
+     &                       S(ng)%Vid(idU3rs),                         &
      &                       S(ng)%Rindex, gtype,                       &
      &                       LBi, UBi, LBj, UBj, 1, N(ng), scale,       &
 #   ifdef MASKING
@@ -1679,7 +1688,8 @@
      &                       MIXING(ng) % rustr3d)
 #   ifdef AVERAGES
         ELSE
-          status=nf_fwrite3d(ng, model, S(ng)%ncid, S(ng)%Vid(idU3rs),  &
+          status=nf_fwrite3d(ng, model, S(ng)%ncid, idU3rs,             &
+     &                       S(ng)%Vid(idU3rs),                         &
      &                       S(ng)%Rindex, gtype,                       &
      &                       LBi, UBi, LBj, UBj, 1, N(ng), scale,       &
 #    ifdef MASKING
@@ -1704,7 +1714,8 @@
         scale=rho0
         gtype=gfactor*v3dvar
         IF (Linstataneous) THEN
-          status=nf_fwrite3d(ng, model, S(ng)%ncid, S(ng)%Vid(idV3rs),  &
+          status=nf_fwrite3d(ng, model, S(ng)%ncid, idV3rs,             &
+     &                       S(ng)%Vid(idV3rs),                         &
      &                       S(ng)%Rindex, gtype,                       &
      &                       LBi, UBi, LBj, UBj, 1, N(ng), scale,       &
 #   ifdef MASKING
@@ -1713,7 +1724,8 @@
      &                       MIXING(ng) % rvstr3d)
 #   ifdef AVERAGES
         ELSE
-          status=nf_fwrite3d(ng, model, S(ng)%ncid, S(ng)%Vid(idV3rs),  &
+          status=nf_fwrite3d(ng, model, S(ng)%ncid, idV3rs,             &
+     &                       S(ng)%Vid(idV3rs),                         &
      &                       S(ng)%Rindex, gtype,                       &
      &                       LBi, UBi, LBj, UBj, 1, N(ng), scale,       &
 #    ifdef MASKING
@@ -1738,7 +1750,8 @@
         scale=1.0_dp
         gtype=gfactor*u3dvar
         IF (Linstataneous) THEN
-          status=nf_fwrite3d(ng, model, S(ng)%ncid, S(ng)%Vid(idU3Sd),  &
+          status=nf_fwrite3d(ng, model, S(ng)%ncid, idU3Sd,             &
+     &                       S(ng)%Vid(idU3Sd),                         &
      &                       S(ng)%Rindex, gtype,                       &
      &                       LBi, UBi, LBj, UBj, 1, N(ng), scale,       &
 #   ifdef MASKING
@@ -1747,7 +1760,8 @@
      &                       OCEAN(ng) % u_stokes)
 #   ifdef AVERAGES
         ELSE
-          status=nf_fwrite3d(ng, model, S(ng)%ncid, S(ng)%Vid(idU3Sd),  &
+          status=nf_fwrite3d(ng, model, S(ng)%ncid, idU3Sd,             &
+     &                       S(ng)%Vid(idU3Sd),                         &
      &                       S(ng)%Rindex, gtype,                       &
      &                       LBi, UBi, LBj, UBj, 1, N(ng), scale,       &
 #    ifdef MASKING
@@ -1772,7 +1786,8 @@
         scale=1.0_dp
         gtype=gfactor*v3dvar
         IF (Linstataneous) THEN
-          status=nf_fwrite3d(ng, model, S(ng)%ncid, S(ng)%Vid(idV3Sd),  &
+          status=nf_fwrite3d(ng, model, S(ng)%ncid, idV3Sd,             &
+     &                       S(ng)%Vid(idV3Sd),                         &
      &                       S(ng)%Rindex, gtype,                       &
      &                       LBi, UBi, LBj, UBj, 1, N(ng), scale,       &
 #   ifdef MASKING
@@ -1781,7 +1796,8 @@
      &                       OCEAN(ng) % v_stokes)
 #   ifdef AVERAGES
         ELSE
-          status=nf_fwrite3d(ng, model, S(ng)%ncid, S(ng)%Vid(idV3Sd),  &
+          status=nf_fwrite3d(ng, model, S(ng)%ncid, idV3Sd,             &
+     &                       S(ng)%Vid(idV3Sd),                         &
      &                       S(ng)%Rindex, gtype,                       &
      &                       LBi, UBi, LBj, UBj, 1, N(ng), scale,       &
 #    ifdef MASKING
@@ -1815,7 +1831,8 @@
      &                      GRID(ng) % pn,                              &
      &                      OCEAN(ng) % W_stokes,                       &
      &                      Wr3d)
-          status=nf_fwrite3d(ng, model, S(ng)%ncid, S(ng)%Vid(idW3Sd),  &
+          status=nf_fwrite3d(ng, model, S(ng)%ncid, idW3Sd,             &
+     &                       S(ng)%Vid(idW3Sd),                         &
      &                       S(ng)%Rindex, gtype,                       &
      &                       LBi, UBi, LBj, UBj, 0, N(ng), scale,       &
 #   ifdef MASKING
@@ -1825,7 +1842,8 @@
           deallocate (Wr3d)
 #   ifdef AVERAGES
         ELSE
-          status=nf_fwrite3d(ng, model, S(ng)%ncid, S(ng)%Vid(idW3Sd),  &
+          status=nf_fwrite3d(ng, model, S(ng)%ncid, idW3Sd,             &
+     &                       S(ng)%Vid(idW3Sd),                         &
      &                       S(ng)%Rindex, gtype,                       &
      &                       LBi, UBi, LBj, UBj, 0, N(ng), scale,       &
 #    ifdef MASKING
@@ -1850,7 +1868,8 @@
         scale=1.0_dp
         gtype=gfactor*w3dvar
         IF (Linstataneous) THEN
-          status=nf_fwrite3d(ng, model, S(ng)%ncid, S(ng)%Vid(idW3St),  &
+          status=nf_fwrite3d(ng, model, S(ng)%ncid, idW3St,             &
+     &                       S(ng)%Vid(idW3St),                         &
      &                       S(ng)%Rindex, gtype,                       &
      &                       LBi, UBi, LBj, UBj, 0, N(ng), scale,       &
 #   ifdef MASKING
@@ -1859,7 +1878,8 @@
      &                       OCEAN(ng) % wstvel)
 #   ifdef AVERAGES
         ELSE
-          status=nf_fwrite3d(ng, model, S(ng)%ncid, S(ng)%Vid(idW3St),  &
+          status=nf_fwrite3d(ng, model, S(ng)%ncid, idW3St,             &
+     &                       S(ng)%Vid(idW3St),                         &
      &                       S(ng)%Rindex, gtype,                       &
      &                       LBi, UBi, LBj, UBj, 0, N(ng), scale,       &
 #    ifdef MASKING
@@ -1887,7 +1907,8 @@
         scale=1.0_dp
         gtype=gfactor*r2dvar
         IF (Linstataneous) THEN
-          status=nf_fwrite2d(ng, model, S(ng)%ncid, S(ng)%Vid(idWztw),  &
+          status=nf_fwrite2d(ng, model, S(ng)%ncid, idWztw,             &
+     &                       S(ng)%Vid(idWztw),                         &
      &                       S(ng)%Rindex, gtype,                       &
      &                       LBi, UBi, LBj, UBj, scale,                 &
 #  ifdef MASKING
@@ -1896,7 +1917,8 @@
      &                       OCEAN(ng) % zetaw)
 #  ifdef AVERAGES
         ELSE
-          status=nf_fwrite2d(ng, model, S(ng)%ncid, S(ng)%Vid(idWztw),  &
+          status=nf_fwrite2d(ng, model, S(ng)%ncid, idWztw,             &
+     &                       S(ng)%Vid(idWztw),                         &
      &                       S(ng)%Rindex, gtype,                       &
      &                       LBi, UBi, LBj, UBj, scale,                 &
 #   ifdef MASKING
@@ -1921,7 +1943,8 @@
         scale=1.0_dp
         gtype=gfactor*r2dvar
         IF (Linstataneous) THEN
-          status=nf_fwrite2d(ng, model, S(ng)%ncid, S(ng)%Vid(idWqsp),  &
+          status=nf_fwrite2d(ng, model, S(ng)%ncid, idWqsp,             &
+     &                       S(ng)%Vid(idWqsp),                         &
      &                       S(ng)%Rindex, gtype,                       &
      &                       LBi, UBi, LBj, UBj, scale,                 &
 #  ifdef MASKING
@@ -1930,7 +1953,8 @@
      &                       OCEAN(ng) % qsp)
 #  ifdef AVERAGES
         ELSE
-          status=nf_fwrite2d(ng, model, S(ng)%ncid, S(ng)%Vid(idWqsp),  &
+          status=nf_fwrite2d(ng, model, S(ng)%ncid, idWqsp,             &
+     &                       S(ng)%Vid(idWqsp),                         &
      &                       S(ng)%Rindex, gtype,                       &
      &                       LBi, UBi, LBj, UBj, scale,                 &
 #   ifdef MASKING
@@ -1955,7 +1979,8 @@
         scale=1.0_dp
         gtype=gfactor*r2dvar
         IF (Linstataneous) THEN
-          status=nf_fwrite2d(ng, model, S(ng)%ncid, S(ng)%Vid(idWbeh),  &
+          status=nf_fwrite2d(ng, model, S(ng)%ncid, idWbeh,             &
+     &                       S(ng)%Vid(idWbeh),                         &
      &                       S(ng)%Rindex, gtype,                       &
      &                       LBi, UBi, LBj, UBj, scale,                 &
 #  ifdef MASKING
@@ -1964,7 +1989,8 @@
      &                       OCEAN(ng) % bh)
 #  ifdef AVERAGES
         ELSE
-          status=nf_fwrite2d(ng, model, S(ng)%ncid, S(ng)%Vid(idWbeh),  &
+          status=nf_fwrite2d(ng, model, S(ng)%ncid, idWbeh,             &
+     &                       S(ng)%Vid(idWbeh),                         &
      &                       S(ng)%Rindex, gtype,                       &
      &                       LBi, UBi, LBj, UBj, scale,                 &
 #   ifdef MASKING
@@ -1992,7 +2018,8 @@
         scale=rho0                          ! W m /kg to W/m2
         gtype=gfactor*r2dvar
         IF (Linstataneous) THEN
-          status=nf_fwrite2d(ng, model, S(ng)%ncid, S(ng)%Vid(idWdif),  &
+          status=nf_fwrite2d(ng, model, S(ng)%ncid, idWdif,             &
+     &                       S(ng)%Vid(idWdif),                         &
      &                       S(ng)%Rindex, gtype,                       &
      &                       LBi, UBi, LBj, UBj, scale,                 &
 #  ifdef MASKING
@@ -2001,7 +2028,8 @@
      &                       FORCES(ng) % Dissip_fric)
 #  ifdef AVERAGES
         ELSE
-          status=nf_fwrite2d(ng, model, S(ng)%ncid, S(ng)%Vid(idWdif),  &
+          status=nf_fwrite2d(ng, model, S(ng)%ncid, idWdif,             &
+     &                       S(ng)%Vid(idWdif),                         &
      &                       S(ng)%Rindex, gtype,                       &
      &                       LBi, UBi, LBj, UBj, scale,                 &
 #   ifdef MASKING
@@ -2030,7 +2058,8 @@
         scale=rho0                          ! W m /kg to W/m2
         gtype=gfactor*r2dvar
         IF (Linstataneous) THEN
-          status=nf_fwrite2d(ng, model, S(ng)%ncid, S(ng)%Vid(idWdib),  &
+          status=nf_fwrite2d(ng, model, S(ng)%ncid, idWdib,             &
+     &                       S(ng)%Vid(idWdib),                         &
      &                       S(ng)%Rindex, gtype,                       &
      &                       LBi, UBi, LBj, UBj, scale,                 &
 #  ifdef MASKING
@@ -2039,7 +2068,8 @@
      &                       FORCES(ng) % Dissip_break)
 #  ifdef AVERAGES
         ELSE
-          status=nf_fwrite2d(ng, model, S(ng)%ncid, S(ng)%Vid(idWdib),  &
+          status=nf_fwrite2d(ng, model, S(ng)%ncid, idWdib,             &
+     &                       S(ng)%Vid(idWdib),                         &
      &                       S(ng)%Rindex, gtype,                       &
      &                       LBi, UBi, LBj, UBj, scale,                 &
 #   ifdef MASKING
@@ -2064,7 +2094,8 @@
         scale=rho0                          ! W m /kg to W/m2
         gtype=gfactor*r2dvar
         IF (Linstataneous) THEN
-          status=nf_fwrite2d(ng, model, S(ng)%ncid, S(ng)%Vid(idWdiw),  &
+          status=nf_fwrite2d(ng, model, S(ng)%ncid, idWdiw,             &
+     &                       S(ng)%Vid(idWdiw),                         &
      &                       S(ng)%Rindex, gtype,                       &
      &                       LBi, UBi, LBj, UBj, scale,                 &
 #  ifdef MASKING
@@ -2073,7 +2104,8 @@
      &                       FORCES(ng) % Dissip_wcap)
 #  ifdef AVERAGES
         ELSE
-          status=nf_fwrite2d(ng, model, S(ng)%ncid, S(ng)%Vid(idWdiw),  &
+          status=nf_fwrite2d(ng, model, S(ng)%ncid, idWdiw,             &
+     &                       S(ng)%Vid(idWdiw),                         &
      &                       S(ng)%Rindex, gtype,                       &
      &                       LBi, UBi, LBj, UBj, scale,                 &
 #   ifdef MASKING
@@ -2100,7 +2132,8 @@
         scale=1.0_dp
         gtype=gfactor*r2dvar
         IF (Linstataneous) THEN
-          status=nf_fwrite2d(ng, model, S(ng)%ncid, S(ng)%Vid(idWbrk),  &
+          status=nf_fwrite2d(ng, model, S(ng)%ncid, idWbrk,             &
+     &                       S(ng)%Vid(idWbrk),                         &
      &                       S(ng)%Rindex, gtype,                       &
      &                       LBi, UBi, LBj, UBj, scale,                 &
 #  ifdef MASKING
@@ -2109,7 +2142,8 @@
      &                       FORCES(ng) % Wave_break)
 #  ifdef AVERAGES
         ELSE
-          status=nf_fwrite2d(ng, model, S(ng)%ncid, S(ng)%Vid(idWbrk),  &
+          status=nf_fwrite2d(ng, model, S(ng)%ncid, idWbrk,             &
+     &                       S(ng)%Vid(idWbrk),                         &
      &                       S(ng)%Rindex, gtype,                       &
      &                       LBi, UBi, LBj, UBj, scale,                 &
 #   ifdef MASKING
@@ -2136,7 +2170,8 @@
         scale=1.0_dp
         gtype=gfactor*r2dvar
         IF (Linstataneous) THEN
-          status=nf_fwrite2d(ng, model, S(ng)%ncid, S(ng)%Vid(idWdis),  &
+          status=nf_fwrite2d(ng, model, S(ng)%ncid, idWdis,             &
+     &                       S(ng)%Vid(idWdis),                         &
      &                       S(ng)%Rindex, gtype,                       &
      &                       LBi, UBi, LBj, UBj, scale,                 &
 #  ifdef MASKING
@@ -2145,7 +2180,8 @@
      &                       FORCES(ng) % Dissip_roller)
 #  ifdef AVERAGES
         ELSE
-          status=nf_fwrite2d(ng, model, S(ng)%ncid, S(ng)%Vid(idWdis),  &
+          status=nf_fwrite2d(ng, model, S(ng)%ncid, idWdis,             &
+     &                       S(ng)%Vid(idWdis),                         &
      &                       S(ng)%Rindex, gtype,                       &
      &                       LBi, UBi, LBj, UBj, scale,                 &
 #   ifdef MASKING
@@ -2172,7 +2208,8 @@
         scale=1.0_dp
         gtype=gfactor*r2dvar
         IF (Linstataneous) THEN
-          status=nf_fwrite2d(ng, model, S(ng)%ncid, S(ng)%Vid(idWrol),  &
+          status=nf_fwrite2d(ng, model, S(ng)%ncid, idWrol,             &
+     &                       S(ng)%Vid(idWrol),                         &
      &                       S(ng)%Rindex, gtype,                       &
      &                       LBi, UBi, LBj, UBj, scale,                 &
 #  ifdef MASKING
@@ -2181,7 +2218,8 @@
      &                       FORCES(ng) % rollA)
 #  ifdef AVERAGES
         ELSE
-          status=nf_fwrite2d(ng, model, S(ng)%ncid, S(ng)%Vid(idWrol),  &
+          status=nf_fwrite2d(ng, model, S(ng)%ncid, idWrol,             &
+     &                       S(ng)%Vid(idWrol),                         &
      &                       S(ng)%Rindex, gtype,                       &
      &                       LBi, UBi, LBj, UBj, scale,                 &
 #   ifdef MASKING
@@ -3594,7 +3632,7 @@
           ioDesc => ioDesc_sp_u2dvar(ng)
         END IF
         IF (Linstataneous) THEN
-          status=nf_fwrite2d(ng, model, S(ng)%pioFile,                  &
+          status=nf_fwrite2d(ng, model, S(ng)%pioFile, idU2rs,          &
      &                       S(ng)%pioVar(idU2rs),                      &
      &                       S(ng)%Rindex,                              &
      &                       ioDesc,                                    &
@@ -3605,7 +3643,7 @@
      &                       MIXING(ng) % rustr2d
 #   ifdef AVERAGES
         ELSE
-          status=nf_fwrite2d(ng, model, S(ng)%pioFile,                  &
+          status=nf_fwrite2d(ng, model, S(ng)%pioFile, idU2rs,          &
      &                       S(ng)%pioVar(idU2rs),                      &
      &                       S(ng)%Rindex,                              &
      &                       ioDesc,                                    &
@@ -3636,7 +3674,7 @@
           ioDesc => ioDesc_sp_v2dvar(ng)
         END IF
         IF (Linstataneous) THEN
-          status=nf_fwrite2d(ng, model, S(ng)%pioFile,                  &
+          status=nf_fwrite2d(ng, model, S(ng)%pioFile, idV2rs,          &
      &                       S(ng)%pioVar(idV2rs),                      &
      &                       S(ng)%Rindex,                              &
      &                       ioDesc,                                    &
@@ -3647,7 +3685,7 @@
      &                       MIXING(ng) % rvstr2d)
 #   ifdef AVERAGES
         ELSE
-          status=nf_fwrite2d(ng, model, S(ng)%pioFile,                  &
+          status=nf_fwrite2d(ng, model, S(ng)%pioFile, idV2rs,          &
      &                       S(ng)%pioVar(idV2rs),                      &
      &                       S(ng)%Rindex,                              &
      &                       ioDesc,                                    &
@@ -3678,26 +3716,26 @@
           ioDesc => ioDesc_sp_u2dvar(ng)
         END IF
         IF (Linstataneous) THEN
-          status=nf_fwrite2d(ng, model, S(ng)%pioFile,                  &
-     &                     S(ng)%pioVar(idU2Sd),                        &
-     &                     S(ng)%Rindex,                                &
-     &                     ioDesc,                                      &
-     &                     LBi, UBi, LBj, UBj, scale,                   &
+          status=nf_fwrite2d(ng, model, S(ng)%pioFile, idU2Sd,          &
+     &                       S(ng)%pioVar(idU2Sd),                      &
+     &                       S(ng)%Rindex,                              &
+     &                       ioDesc,                                    &
+     &                       LBi, UBi, LBj, UBj, scale,                 &
 #   ifdef MASKING
-     &                     GRID(ng) % umask,                            &
+     &                       GRID(ng) % umask,                          &
 #   endif
-     &                     OCEAN(ng) % ubar_stokes)
+     &                       OCEAN(ng) % ubar_stokes)
 #   ifdef AVERAGES
         ELSE
-          status=nf_fwrite2d(ng, model, S(ng)%pioFile,                  &
-     &                     S(ng)%pioVar(idU2Sd),                        &
-     &                     S(ng)%Rindex,                                &
-     &                     ioDesc,                                      &
-     &                     LBi, UBi, LBj, UBj, scale,                   &
+          status=nf_fwrite2d(ng, model, S(ng)%pioFile, idU2Sd,          &
+     &                       S(ng)%pioVar(idU2Sd),                      &
+     &                       S(ng)%Rindex,                              &
+     &                       ioDesc,                                    &
+     &                       LBi, UBi, LBj, UBj, scale,                 &
 #    ifdef MASKING
-     &                     GRID(ng) % umask,                            &
+     &                       GRID(ng) % umask,                          &
 #    endif
-     &                     AVERAGE(ng) % avgu2Sd)
+     &                       AVERAGE(ng) % avgu2Sd)
 #   endif
         END IF
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
@@ -3720,26 +3758,26 @@
           ioDesc => ioDesc_sp_v2dvar(ng)
         END IF
         IF (Linstataneous) THEN
-          status=nf_fwrite2d(ng, model, S(ng)%pioFile,                  &
-     &                     S(ng)%pioVar(idV2Sd),                        &
-     &                     S(ng)%Rindex,                                &
-     &                     ioDesc,                                      &
-     &                     LBi, UBi, LBj, UBj, scale,                   &
+          status=nf_fwrite2d(ng, model, S(ng)%pioFile, idV2Sd,          &
+     &                       S(ng)%pioVar(idV2Sd),                      &
+     &                       S(ng)%Rindex,                              &
+     &                       ioDesc,                                    &
+     &                       LBi, UBi, LBj, UBj, scale,                 &
 #   ifdef MASKING
-     &                     GRID(ng) % vmask,                            &
+     &                       GRID(ng) % vmask,                          &
 #   endif
-     &                     OCEAN(ng) % vbar_stokes)
+     &                       OCEAN(ng) % vbar_stokes)
 #   ifdef AVERAGES
         ELSE
-          status=nf_fwrite2d(ng, model, S(ng)%pioFile,                  &
-     &                     S(ng)%pioVar(idV2Sd),                        &
-     &                     S(ng)%Rindex,                                &
-     &                     ioDesc,                                      &
-     &                     LBi, UBi, LBj, UBj, scale,                   &
+          status=nf_fwrite2d(ng, model, S(ng)%pioFile, idV2Sd,          &
+     &                       S(ng)%pioVar(idV2Sd),                      &
+     &                       S(ng)%Rindex,                              &
+     &                       ioDesc,                                    &
+     &                       LBi, UBi, LBj, UBj, scale,                 &
 #    ifdef MASKING
-     &                     GRID(ng) % vmask,                            &
+     &                       GRID(ng) % vmask,                          &
 #    endif
-     &                     AVERAGE(ng) % avgv2Sd)
+     &                       AVERAGE(ng) % avgv2Sd)
 #   endif
         END IF
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
@@ -3764,7 +3802,7 @@
           ioDesc => ioDesc_sp_u3dvar(ng)
         END IF
         IF (Linstataneous) THEN
-          status=nf_fwrite3d(ng, model, S(ng)%pioFile,                  &
+          status=nf_fwrite3d(ng, model, S(ng)%pioFile, idU3rs,          &
      &                       S(ng)%pioVar(idU3rs),                      &
      &                       S(ng)%Rindex,                              &
      &                       ioDesc,                                    &
@@ -3775,7 +3813,7 @@
      &                       MIXING(ng) % rustr3d)
 #    ifdef AVERAGES
         ELSE
-          status=nf_fwrite3d(ng, model, S(ng)%pioFile,                  &
+          status=nf_fwrite3d(ng, model, S(ng)%pioFile, idU3rs,          &
      &                       S(ng)%pioVar(idU3rs),                      &
      &                       S(ng)%Rindex,                              &
      &                       ioDesc,                                    &
@@ -3806,7 +3844,7 @@
           ioDesc => ioDesc_sp_v3dvar(ng)
         END IF
         IF (Linstataneous) THEN
-          status=nf_fwrite3d(ng, model, S(ng)%pioFile,                  &
+          status=nf_fwrite3d(ng, model, S(ng)%pioFile, idV3rs,          &
      &                       S(ng)%pioVar(idV3rs),                      &
      &                       S(ng)%Rindex,                              &
      &                       ioDesc,                                    &
@@ -3817,7 +3855,7 @@
      &                       MIXING(ng) % rvstr3d)
 #    ifdef AVERAGES
         ELSE
-          status=nf_fwrite3d(ng, model, S(ng)%pioFile,                  &
+          status=nf_fwrite3d(ng, model, S(ng)%pioFile, idV3rs,          &
      &                       S(ng)%pioVar(idV3rs),                      &
      &                       S(ng)%Rindex,                              &
      &                       ioDesc,                                    &
@@ -3848,7 +3886,7 @@
           ioDesc => ioDesc_sp_u3dvar(ng)
         END IF
         IF (Linstataneous) THEN
-          status=nf_fwrite3d(ng, model, S(ng)%pioFile,                  &
+          status=nf_fwrite3d(ng, model, S(ng)%pioFile, idU3Sd,          &
      &                       S(ng)%pioVar(idU3Sd),                      &
      &                       S(ng)%Rindex,                              &
      &                       ioDesc,                                    &
@@ -3859,7 +3897,7 @@
      &                       OCEAN(ng) % u_stokes)
 #    ifdef AVERAGES
         ELSE
-          status=nf_fwrite3d(ng, model, S(ng)%pioFile,                  &
+          status=nf_fwrite3d(ng, model, S(ng)%pioFile, idU3Sd,          &
      &                       S(ng)%pioVar(idU3Sd),                      &
      &                       S(ng)%Rindex,                              &
      &                       ioDesc,                                    &
@@ -3890,7 +3928,7 @@
           ioDesc => ioDesc_sp_v3dvar(ng)
         END IF
         IF (Linstataneous) THEN
-          status=nf_fwrite2d(ng, model, S(ng)%pioFile,                  &
+          status=nf_fwrite2d(ng, model, S(ng)%pioFile, idV3Sd,          &
      &                       S(ng)%pioVar(idV3Sd),                      &
      &                       S(ng)%Rindex,                              &
      &                       ioDesc,                                    &
@@ -3901,7 +3939,7 @@
      &                       OCEAN(ng) % v_stokes)
 #    ifdef AVERAGES
         ELSE
-          status=nf_fwrite2d(ng, model, S(ng)%pioFile,                  &
+          status=nf_fwrite2d(ng, model, S(ng)%pioFile, idV3Sd,          &
      &                       S(ng)%pioVar(idV3Sd),                      &
      &                       S(ng)%Rindex,                              &
      &                       ioDesc,                                    &
@@ -3941,7 +3979,7 @@
      &                      GRID(ng) % pn,                              &
      &                      OCEAN(ng) % W_stokes,                       &
      &                      Wr3d)
-          status=nf_fwrite3d(ng, model, S(ng)%pioFile,                  &
+          status=nf_fwrite3d(ng, model, S(ng)%pioFile, idW3Sd,          &
      &                       S(ng)%pioVar(idW3Sd),                      &
      &                       S(ng)%Rindex,                              &
      &                       ioDesc,                                    &
@@ -3953,7 +3991,7 @@
           deallocate (Wr3d)
 #    ifdef AVERAGES
         ELSE
-          status=nf_fwrite3d(ng, model, S(ng)%pioFile,                  &
+          status=nf_fwrite3d(ng, model, S(ng)%pioFile, idW3Sd,          &
      &                       S(ng)%pioVar(idW3Sd),                      &
      &                       S(ng)%Rindex,                              &
      &                       ioDesc,                                    &
@@ -3984,7 +4022,7 @@
           ioDesc => ioDesc_sp_w3dvar(ng)
         END IF
         IF (Linstataneous) THEN
-          status=nf_fwrite3d(ng, model, S(ng)%pioFile,                  &
+          status=nf_fwrite3d(ng, model, S(ng)%pioFile, idW3St,          &
      &                       S(ng)%pioVar(idW3St),                      &
      &                       S(ng)%Rindex,                              &
      &                       ioDesc,                                    &
@@ -3995,7 +4033,7 @@
      &                       OCEAN(ng) % wstvel)
 #    ifdef AVERAGES
         ELSE
-          status=nf_fwrite3d(ng, model, S(ng)%pioFile,                  &
+          status=nf_fwrite3d(ng, model, S(ng)%pioFile, idW3St,          &
      &                       S(ng)%pioVar(idW3St),                      &
      &                       S(ng)%Rindex,                              &
      &                       ioDesc,                                    &
@@ -4028,7 +4066,7 @@
           ioDesc => ioDesc_sp_r2dvar(ng)
         END IF
         IF (Linstataneous) THEN
-          status=nf_fwrite2d(ng, model, S(ng)%pioFile,                  &
+          status=nf_fwrite2d(ng, model, S(ng)%pioFile, idWztw,          &
      &                       S(ng)%pioVar(idWztw),                      &
      &                       S(ng)%Rindex,                              &
      &                       ioDesc,                                    &
@@ -4039,7 +4077,7 @@
      &                       OCEAN(ng) % zetaw)
 #    ifdef AVERAGES
         ELSE
-          status=nf_fwrite2d(ng, model, S(ng)%pioFile,                  &
+          status=nf_fwrite2d(ng, model, S(ng)%pioFile, idWztw,          &
      &                       S(ng)%pioVar(idWztw),                      &
      &                       S(ng)%Rindex,                              &
      &                       ioDesc,                                    &
@@ -4070,7 +4108,7 @@
           ioDesc => ioDesc_sp_r2dvar(ng)
         END IF
         IF (Linstataneous) THEN
-          status=nf_fwrite2d(ng, model, S(ng)%pioFile,                  &
+          status=nf_fwrite2d(ng, model, S(ng)%pioFile, idWqsp,          &
      &                       S(ng)%pioVar(idWqsp),                      &
      &                       S(ng)%Rindex,                              &
      &                       ioDesc,                                    &
@@ -4082,7 +4120,7 @@
      &                       OCEAN(ng) % qsp)
 #    ifdef AVERAGES
         ELSE
-          status=nf_fwrite2d(ng, model, S(ng)%pioFile,                  &
+          status=nf_fwrite2d(ng, model, S(ng)%pioFile, idWqsp,          &
      &                       S(ng)%pioVar(idWqsp),                      &
      &                       S(ng)%Rindex,                              &
      &                       ioDesc,                                    &
@@ -4114,7 +4152,7 @@
           ioDesc => ioDesc_sp_r2dvar(ng)
         END IF
         IF (Linstataneous) THEN
-          status=nf_fwrite2d(ng, model, S(ng)%pioFile,                  &
+          status=nf_fwrite2d(ng, model, S(ng)%pioFile, idWbeh,          &
      &                       S(ng)%pioVar(idWbeh),                      &
      &                       S(ng)%Rindex,                              &
      &                       ioDesc,                                    &
@@ -4125,7 +4163,7 @@
      &                       OCEAN(ng) % bh)
 #    ifdef AVERAGES
         ELSE
-          status=nf_fwrite2d(ng, model, S(ng)%pioFile,                  &
+          status=nf_fwrite2d(ng, model, S(ng)%pioFile, idWbeh,          &
      &                       S(ng)%pioVar(idWbeh),                      &
      &                       S(ng)%Rindex,                              &
      &                       ioDesc,                                    &
@@ -4160,7 +4198,7 @@
           ioDesc => ioDesc_sp_r2dvar(ng)
         END IF
         IF (Linstataneous) THEN
-          status=nf_fwrite2d(ng, model, S(ng)%pioFile,                  &
+          status=nf_fwrite2d(ng, model, S(ng)%pioFile, idWdif,          &
      &                       S(ng)%pioVar(idWdif),                      &
      &                       S(ng)%Rindex,                              &
      &                       ioDesc,                                    &
@@ -4171,7 +4209,7 @@
      &                       FORCES(ng) % Dissip_fric)
 #   ifdef AVERAGES
         ELSE
-          status=nf_fwrite2d(ng, model, S(ng)%pioFile,                  &
+          status=nf_fwrite2d(ng, model, S(ng)%pioFile, idWdif,          &
      &                       S(ng)%pioVar(idWdif),                      &
      &                       S(ng)%Rindex,                              &
      &                       ioDesc,                                    &
@@ -4206,7 +4244,7 @@
           ioDesc => ioDesc_sp_r2dvar(ng)
         END IF
         IF (Linstataneous) THEN
-          status=nf_fwrite2d(ng, model, S(ng)%pioFile,                  &
+          status=nf_fwrite2d(ng, model, S(ng)%pioFile, idWdib,          &
      &                       S(ng)%pioVar(idWdib),                      &
      &                       S(ng)%Rindex,                              &
      &                       ioDesc,                                    &
@@ -4217,7 +4255,7 @@
      &                       FORCES(ng) % Dissip_break)
 #   ifdef AVERAGES
         ELSE
-          status=nf_fwrite2d(ng, model, S(ng)%pioFile,                  &
+          status=nf_fwrite2d(ng, model, S(ng)%pioFile, idWdib,          &
      &                       S(ng)%pioVar(idWdib),                      &
      &                       S(ng)%Rindex,                              &
      &                       ioDesc,                                    &
@@ -4248,7 +4286,7 @@
           ioDesc => ioDesc_sp_r2dvar(ng)
         END IF
         IF (Linstataneous) THEN
-          status=nf_fwrite2d(ng, model, S(ng)%pioFile,                  &
+          status=nf_fwrite2d(ng, model, S(ng)%pioFile, idWdiw,          &
      &                       S(ng)%pioVar(idWdiw),                      &
      &                       S(ng)%Rindex,                              &
      &                       ioDesc,                                    &
@@ -4259,7 +4297,7 @@
      &                       FORCES(ng) % Dissip_wcap)
 #   ifdef AVERAGES
         ELSE
-          status=nf_fwrite2d(ng, model, S(ng)%pioFile,                  &
+          status=nf_fwrite2d(ng, model, S(ng)%pioFile, idWdiw,          &
      &                       S(ng)%pioVar(idWdiw),                      &
      &                       S(ng)%Rindex,                              &
      &                       ioDesc,                                    &
@@ -4292,7 +4330,7 @@
           ioDesc => ioDesc_sp_r2dvar(ng)
         END IF
         IF (Linstataneous) THEN
-          status=nf_fwrite2d(ng, model, S(ng)%pioFile,                  &
+          status=nf_fwrite2d(ng, model, S(ng)%pioFile, idWbrk,          &
      &                       S(ng)%pioVar(idWbrk),                      &
      &                       S(ng)%Rindex,                              &
      &                       ioDesc,                                    &
@@ -4303,7 +4341,7 @@
      &                       FORCES(ng) % Wave_break)
 #   ifdef AVERAGES
         ELSE
-          status=nf_fwrite2d(ng, model, S(ng)%pioFile,                  &
+          status=nf_fwrite2d(ng, model, S(ng)%pioFile, idWbrk,          &
      &                       S(ng)%pioVar(idWbrk),                      &
      &                       S(ng)%Rindex,                              &
      &                       ioDesc,                                    &
@@ -4336,7 +4374,7 @@
           ioDesc => ioDesc_sp_r2dvar(ng)
         END IF
         IF (Linstataneous) THEN
-          status=nf_fwrite2d(ng, model, S(ng)%pioFile,                  &
+          status=nf_fwrite2d(ng, model, S(ng)%pioFile, idWdis,          &
      &                       S(ng)%pioVar(idWdis),                      &
      &                       S(ng)%Rindex,                              &
      &                       ioDesc,                                    &
@@ -4347,7 +4385,7 @@
      &                       FORCES(ng) % Dissip_roller)
 #   ifdef AVERAGES
         ELSE
-          status=nf_fwrite2d(ng, model, S(ng)%pioFile,                  &
+          status=nf_fwrite2d(ng, model, S(ng)%pioFile, idWdis,          &
      &                       S(ng)%pioVar(idWdis),                      &
      &                       S(ng)%Rindex,                              &
      &                       ioDesc,                                    &
@@ -4380,7 +4418,7 @@
           ioDesc => ioDesc_sp_r2dvar(ng)
         END IF
         IF (Linstataneous) THEN
-          status=nf_fwrite2d(ng, model, S(ng)%pioFile,                  &
+          status=nf_fwrite2d(ng, model, S(ng)%pioFile, idWrol,          &
      &                       S(ng)%pioVar(idWrol),                      &
      &                       S(ng)%Rindex,                              &
      &                       ioDesc,                                    &
@@ -4391,7 +4429,7 @@
      &                       AVERAGE(ng) % avgWrol)
 #   ifdef AVERAGES
         ELSE
-          status=nf_fwrite2d(ng, model, S(ng)%pioFile,                  &
+          status=nf_fwrite2d(ng, model, S(ng)%pioFile, idWrol,          &
      &                       S(ng)%pioVar(idWrol),                      &
      &                       S(ng)%Rindex,                              &
      &                       ioDesc,                                    &
