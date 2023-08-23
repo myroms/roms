@@ -1,7 +1,7 @@
 #!/bin/csh -f
 #
 # git $Id$
-# svn $Id: build_roms.csh 1184 2023-07-27 20:28:19Z arango $
+# svn $Id: build_roms.csh 1192 2023-08-23 18:33:57Z arango $
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # Copyright (c) 2002-2023 The ROMS/TOMS Group                           :::
 #   Licensed under a MIT/X style license                                :::
@@ -147,7 +147,7 @@ else
   setenv MY_ROOT_DIR         ${HOME}/ocean/repository/git
 endif
 
-setenv   MY_PROJECT_DIR      ${PWD}n
+setenv   MY_PROJECT_DIR      ${PWD}
 
 # The path to the user's local current ROMS source code.
 #
@@ -254,7 +254,7 @@ setenv   MY_PROJECT_DIR      ${PWD}n
 # and cannot be moved when debugging with tools like TotalView.
 #--------------------------------------------------------------------------
 
-setenv WRF_SRC_DIR         ${HOME}/ocean/repository/WRF
+setenv WRF_SRC_DIR         ${HOME}/ocean/repository/git/WRF
 
 if ($?USE_DEBUG) then
   setenv CICE_LIB_DIR      ${MY_PROJECT_DIR}/Build_ciceG
@@ -327,6 +327,11 @@ else
     setenv BUILD_DIR        ${MY_PROJECT_DIR}/Build_roms
   endif
 endif
+
+# For backward compatibility, set deprecated SCRATCH_DIR to compile
+# older released versions of ROMS.
+
+setenv SCRATCH_DIR ${BUILD_DIR}
 
 # If necessary, create ROMS build directory.
 
