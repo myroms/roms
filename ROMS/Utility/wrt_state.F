@@ -267,7 +267,8 @@
       scale=1.0_dp
       gtype=gfactor*r2dvar
       IF (model.eq.iTLM) THEN
-        status=nf_fwrite2d(ng, model, ncid, S(ng)%Vid(idFsur),          &
+        status=nf_fwrite2d(ng, model, ncid, idFsur,                     &
+     &                     S(ng)%Vid(idFsur),                           &
      &                     OutRec, gtype,                               &
      &                     LBi, UBi, LBj, UBj, scale,                   &
 # ifdef MASKING
@@ -284,7 +285,8 @@
      &                     MaxValue = Fmax)
 # endif
       ELSE IF (model.eq.iADM) THEN
-        status=nf_fwrite2d(ng, model, ncid, S(ng)%Vid(idFsur),          &
+        status=nf_fwrite2d(ng, model, ncid, idFsur,                     &
+     &                     S(ng)%Vid(idFsur),                           &
      &                     OutRec, gtype,                               &
      &                     LBi, UBi, LBj, UBj, scale,                   &
 # ifdef MASKING
@@ -364,7 +366,8 @@
       scale=1.0_dp
       gtype=gfactor*u2dvar
       IF (model.eq.iTLM) THEN
-        status=nf_fwrite2d(ng, model, ncid, S(ng)%Vid(idUbar),          &
+        status=nf_fwrite2d(ng, model, ncid, idUbar,                     &
+     &                     S(ng)%Vid(idUbar),                           &
      &                     OutRec, gtype,                               &
      &                     LBi, UBi, LBj, UBj, scale,                   &
 # ifdef MASKING
@@ -375,7 +378,8 @@
      &                     MaxValue = Fmax)
 
       ELSE IF (model.eq.iADM) THEN
-        status=nf_fwrite2d(ng, model, ncid, S(ng)%Vid(idUbar),          &
+        status=nf_fwrite2d(ng, model, ncid, idUbar,                     &
+     &                     S(ng)%Vid(idUbar),                           &
      &                     OutRec, gtype,                               &
      &                     LBi, UBi, LBj, UBj, scale,                   &
 # ifdef MASKING
@@ -448,7 +452,8 @@
       scale=1.0_dp
       gtype=gfactor*v2dvar
       IF (model.eq.iTLM) THEN
-        status=nf_fwrite2d(ng, model, ncid, S(ng)%Vid(idVbar),          &
+        status=nf_fwrite2d(ng, model, ncid, idVbar,                     &
+     &                     S(ng)%Vid(idVbar),                           &
      &                     OutRec, gtype,                               &
      &                     LBi, UBi, LBj, UBj, scale,                   &
 # ifdef MASKING
@@ -458,7 +463,8 @@
      &                     MinValue = Fmin,                             &
      &                     MaxValue = Fmax)
       ELSE IF (model.eq.iADM) THEN
-        status=nf_fwrite2d(ng, model, ncid, S(ng)%Vid(idVbar),          &
+        status=nf_fwrite2d(ng, model, ncid, idVbar,                     &
+     &                     S(ng)%Vid(idVbar),                           &
      &                     OutRec, gtype,                               &
      &                     LBi, UBi, LBj, UBj, scale,                   &
 # ifdef MASKING
@@ -535,7 +541,8 @@
       scale=1.0_dp
       gtype=gfactor*u3dvar
       IF (model.eq.iTLM) THEN
-        status=nf_fwrite3d(ng, model, ncid, S(ng)%Vid(idUsms),          &
+        status=nf_fwrite3d(ng, model, ncid, idUsms,                     &
+     &                     S(ng)%Vid(idUsms),                           &
      &                     OutRec, gtype,                               &
      &                     LBi, UBi, LBj, UBj, 1, Nfrec(ng), scale,     &
 #  ifdef MASKING
@@ -545,7 +552,8 @@
      &                     MinValue = Fmin,                             &
      &                     MaxValue = Fmax)
       ELSE IF (model.eq.iADM) THEN
-        status=nf_fwrite3d(ng, model, ncid, S(ng)%Vid(idUsms),          &
+        status=nf_fwrite3d(ng, model, ncid, idUsms,                     &
+     &                     S(ng)%Vid(idUsms),                           &
      &                     OutRec, gtype,                               &
      &                     LBi, UBi, LBj, UBj, 1, Nfrec(ng), scale,     &
 #  ifdef MASKING
@@ -575,7 +583,8 @@
       scale=1.0_dp
       gtype=gfactor*v3dvar
       IF (model.eq.iTLM) THEN
-        status=nf_fwrite3d(ng, model, ncid, S(ng)%Vid(idVsms),          &
+        status=nf_fwrite3d(ng, model, ncid, idVsms,                     &
+     &                     S(ng)%Vid(idVsms),                           &
      &                     OutRec, gtype,                               &
      &                     LBi, UBi, LBj, UBj, 1, Nfrec(ng), scale,     &
 #  ifdef MASKING
@@ -586,7 +595,8 @@
      &                     MaxValue = Fmax)
 
       ELSE IF (model.eq.iADM) THEN
-        status=nf_fwrite3d(ng, model, ncid, S(ng)%Vid(idVsms),          &
+        status=nf_fwrite3d(ng, model, ncid, idVsms,                     &
+     &                     S(ng)%Vid(idVsms),                           &
      &                     OutRec, gtype,                               &
      &                     LBi, UBi, LBj, UBj, 1, Nfrec(ng), scale,     &
 #  ifdef MASKING
@@ -618,7 +628,8 @@
       scale=1.0_dp
       gtype=gfactor*u3dvar
       IF (model.eq.iTLM) THEN
-        status=nf_fwrite3d(ng, model, ncid, S(ng)%Vid(idUvel),          &
+        status=nf_fwrite3d(ng, model, ncid, idUvel,                     &
+     &                     S(ng)%Vid(idUvel),                           &
      &                     OutRec, gtype,                               &
      &                     LBi, UBi, LBj, UBj, 1, N(ng), scale,         &
 #  ifdef MASKING
@@ -629,7 +640,8 @@
      &                     MaxValue = Fmax)
 
       ELSE IF (model.eq.iADM) THEN
-        status=nf_fwrite3d(ng, model, ncid, S(ng)%Vid(idUvel),          &
+        status=nf_fwrite3d(ng, model, ncid, idUvel,                     &
+     &                     S(ng)%Vid(idUvel),                           &
      &                     OutRec, gtype,                               &
      &                     LBi, UBi, LBj, UBj, 1, N(ng), scale,         &
 #  ifdef MASKING
@@ -702,7 +714,8 @@
       scale=1.0_dp
       gtype=gfactor*v3dvar
       IF (model.eq.iTLM) THEN
-        status=nf_fwrite3d(ng, model, ncid, S(ng)%Vid(idVvel),          &
+        status=nf_fwrite3d(ng, model, ncid, idVvel,                     &
+     &                     S(ng)%Vid(idVvel),                           &
      &                     OutRec, gtype,                               &
      &                     LBi, UBi, LBj, UBj, 1, N(ng), scale,         &
 #  ifdef MASKING
@@ -712,7 +725,8 @@
      &                     MinValue = Fmin,                             &
      &                     MaxValue = Fmax)
       ELSE IF (model.eq.iADM) THEN
-        status=nf_fwrite3d(ng, model, ncid, S(ng)%Vid(idVvel),          &
+        status=nf_fwrite3d(ng, model, ncid, idVvel,                     &
+     &                     S(ng)%Vid(idVvel),                           &
      &                     OutRec, gtype,                               &
      &                     LBi, UBi, LBj, UBj, 1, N(ng), scale,         &
 #  ifdef MASKING
@@ -786,7 +800,8 @@
         scale=1.0_dp
         gtype=gfactor*r3dvar
         IF (model.eq.iTLM) THEN
-          status=nf_fwrite3d(ng, model, ncid, S(ng)%Tid(itrc),          &
+          status=nf_fwrite3d(ng, model, ncid, idTvar(itrc),             &
+     &                       S(ng)%Tid(itrc),                           &
      &                       OutRec, gtype,                             &
      &                       LBi, UBi, LBj, UBj, 1, N(ng), scale,       &
 #  ifdef MASKING
@@ -796,7 +811,8 @@
      &                       MinValue = Fmin,                           &
      &                       MaxValue = Fmax)
         ELSE IF (model.eq.iADM) THEN
-          status=nf_fwrite3d(ng, model, ncid, S(ng)%Tid(itrc),          &
+          status=nf_fwrite3d(ng, model, ncid, idTvar(itrc),             &
+     &                       S(ng)%Tid(itrc),                           &
      &                       OutRec, gtype,                             &
      &                       LBi, UBi, LBj, UBj, 1, N(ng), scale,       &
 #  ifdef MASKING
@@ -830,27 +846,27 @@
         IF (ANY(Lobc(:,isTvar(itrc),ng))) THEN
           scale=1.0_dp
           IF (model.eq.iTLM) THEN
-            status=nf_fwrite3d_bry (ng, model, S(ng)%name, ncid,        &
-     &                              Vname(1,idSbry(isTvar(itrc))),      &
-     &                              S(ng)%Vid(idSbry(isTvar(itrc))),    &
-     &                              OutRec, r3dvar,                     &
-     &                              LBij, UBij, 1, N(ng), Nbrec(ng),    &
-     &                              scale,                              &
-     &                              BOUNDARY(ng) % tl_t_obc(LBij:,:,:,:,&
-     &                                                Lbout(ng),itrc),  &
-     &                              MinValue = Fmin,                    &
-     &                              MaxValue = Fmax)
+            status=nf_fwrite3d_bry(ng, model, S(ng)%name, ncid,         &
+     &                             Vname(1,idSbry(isTvar(itrc))),       &
+     &                             S(ng)%Vid(idSbry(isTvar(itrc))),     &
+     &                             OutRec, r3dvar,                      &
+     &                             LBij, UBij, 1, N(ng), Nbrec(ng),     &
+     &                             scale,                               &
+     &                             BOUNDARY(ng) % tl_t_obc(LBij:,:,:,:, &
+     &                                               Lbout(ng),itrc),   &
+     &                             MinValue = Fmin,                     &
+     &                             MaxValue = Fmax)
           ELSE IF (model.eq.iADM) THEN
-            status=nf_fwrite3d_bry (ng, model, S(ng)%name, ncid,        &
-     &                              Vname(1,idSbry(isTvar(itrc))),      &
-     &                              S(ng)%Vid(idSbry(isTvar(itrc))),    &
-     &                              OutRec, r3dvar,                     &
-     &                              LBij, UBij, 1, N(ng), Nbrec(ng),    &
-     &                              scale,                              &
-     &                              BOUNDARY(ng) % ad_t_obc(LBij:,:,:,:,&
-     &                                                Lbout(ng),itrc),  &
-     &                              MinValue = Fmin,                    &
-     &                              MaxValue = Fmax)
+            status=nf_fwrite3d_bry(ng, model, S(ng)%name, ncid,         &
+     &                             Vname(1,idSbry(isTvar(itrc))),       &
+     &                             S(ng)%Vid(idSbry(isTvar(itrc))),     &
+     &                             OutRec, r3dvar,                      &
+     &                             LBij, UBij, 1, N(ng), Nbrec(ng),     &
+     &                             scale,                               &
+     &                             BOUNDARY(ng) % ad_t_obc(LBij:,:,:,:, &
+     &                                               Lbout(ng),itrc),   &
+     &                             MinValue = Fmin,                     &
+     &                             MaxValue = Fmax)
           END IF
           IF (status.ne.nf90_noerr) THEN
             IF (Master) THEN
@@ -881,7 +897,7 @@
           scale=1.0_dp                      ! kinematic flux units
           gtype=gfactor*r3dvar
           IF (model.eq.iTLM) THEN
-            status=nf_fwrite3d(ng, iTLM, ncid,                          &
+            status=nf_fwrite3d(ng, iTLM, ncid, idTsur(itrc),            &
      &                         S(ng)%Vid(idTsur(itrc)),                 &
      &                         OutRec, gtype,                           &
      &                         LBi, UBi, LBj, UBj, 1, Nfrec(ng), scale, &
@@ -893,7 +909,7 @@
      &                         MinValue = Fmin,                         &
      &                         MaxValue = Fmax)
           ELSE IF (model.eq.iADM) THEN
-            status=nf_fwrite3d(ng, iTLM, ncid,                          &
+            status=nf_fwrite3d(ng, iTLM, ncid, idTsur(itrc),            &
      &                         S(ng)%Vid(idTsur(itrc)),                 &
      &                         OutRec, gtype,                           &
      &                         LBi, UBi, LBj, UBj, 1, Nfrec(ng), scale, &
@@ -1074,7 +1090,7 @@
       END IF
 !
       IF (model.eq.iTLM) THEN
-        status=nf_fwrite2d(ng, model, pioFile,                          &
+        status=nf_fwrite2d(ng, model, pioFile, idFsur,                  &
      &                     S(ng)%pioVar(idFsur), OutRec,                &
      &                     ioDesc,                                      &
      &                     LBi, UBi, LBj, UBj, scale,                   &
@@ -1092,7 +1108,7 @@
      &                     MaxValue = Fmax)
 #  endif
       ELSE IF (model.eq.iADM) THEN
-        status=nf_fwrite2d(ng, model, pioFile,                          &
+        status=nf_fwrite2d(ng, model, pioFile, idFsur,                  &
      &                     S(ng)%pioVar(idFsur), OutRec,                &
      &                     ioDesc,                                      &
      &                     LBi, UBi, LBj, UBj, scale,                   &
@@ -1184,7 +1200,7 @@
       END IF
 !
       IF (model.eq.iTLM) THEN
-        status=nf_fwrite2d(ng, model, pioFile,                          &
+        status=nf_fwrite2d(ng, model, pioFile, idUbar,                  &
      &                     S(ng)%pioVar(idUbar), OutRec,                &
      &                     ioDesc,                                      &
      &                     LBi, UBi, LBj, UBj, scale,                   &
@@ -1196,7 +1212,7 @@
      &                     MaxValue = Fmax)
 
       ELSE IF (model.eq.iADM) THEN
-        status=nf_fwrite2d(ng, model, pioFile,                          &
+        status=nf_fwrite2d(ng, model, pioFile, idUbar,                  &
      &                     S(ng)%pioVar(idUbar), OutRec,                &
      &                     ioDesc,                                      &
      &                     LBi, UBi, LBj, UBj, scale,                   &
@@ -1281,7 +1297,7 @@
       END IF
 !
       IF (model.eq.iTLM) THEN
-        status=nf_fwrite2d(ng, model, pioFile,                          &
+        status=nf_fwrite2d(ng, model, pioFile, idVbar,                  &
      &                     S(ng)%pioVar(idVbar), OutRec,                &
      &                     ioDesc,                                      &
      &                     LBi, UBi, LBj, UBj, scale,                   &
@@ -1292,7 +1308,7 @@
      &                     MinValue = Fmin,                             &
      &                     MaxValue = Fmax)
       ELSE IF (model.eq.iADM) THEN
-        status=nf_fwrite2d(ng, model, pioFile,                          &
+        status=nf_fwrite2d(ng, model, pioFile, idVbar,                  &
      &                     S(ng)%pioVar(idVbar), OutRec,                &
      &                     ioDesc,                                      &
      &                     LBi, UBi, LBj, UBj, scale,                   &
@@ -1381,7 +1397,7 @@
       END IF
 !
       IF (model.eq.iTLM) THEN
-        status=nf_fwrite3d(ng, model, pioFile,                          &
+        status=nf_fwrite3d(ng, model, pioFile, idUsms,                  &
      &                     S(ng)%pioVar(idUsms), OutRec,                &
      &                     ioDesc,                                      &
      &                     LBi, UBi, LBj, UBj, 1, Nfrec(ng), scale,     &
@@ -1392,7 +1408,7 @@
      &                     MinValue = Fmin,                             &
      &                     MaxValue = Fmax)
       ELSE IF (model.eq.iADM) THEN
-        status=nf_fwrite3d(ng, model, pioFile,                          &
+        status=nf_fwrite3d(ng, model, pioFile, idUsms,                  &
      &                     S(ng)%pioVar(idUsms), OutRec,                &
      &                     ioDesc,                                      &
      &                     LBi, UBi, LBj, UBj, 1, Nfrec(ng), scale,     &
@@ -1427,7 +1443,7 @@
       END IF
 !
       IF (model.eq.iTLM) THEN
-        status=nf_fwrite3d(ng, model, pioFile,                          &
+        status=nf_fwrite3d(ng, model, pioFile, idVsms,                  &
      &                     S(ng)%pioVar(idVsms), OutRec,                &
      &                     ioDesc,                                      &
      &                     LBi, UBi, LBj, UBj, 1, Nfrec(ng), scale,     &
@@ -1439,7 +1455,7 @@
      &                     MaxValue = Fmax)
 
       ELSE IF (model.eq.iADM) THEN
-        status=nf_fwrite3d(ng, model, pioFile,                          &
+        status=nf_fwrite3d(ng, model, pioFile, idVsms,                  &
      &                     S(ng)%pioVar(idVsms), OutRec,                &
      &                     ioDesc,                                      &
      &                     LBi, UBi, LBj, UBj, 1, Nfrec(ng), scale,     &
@@ -1477,7 +1493,7 @@
       END IF
 !
       IF (model.eq.iTLM) THEN
-        status=nf_fwrite3d(ng, model, pioFile,                          &
+        status=nf_fwrite3d(ng, model, pioFile, idUvel,                  &
      &                     S(ng)%pioVar(idUvel), OutRec,                &
      &                     ioDesc,                                      &
      &                     LBi, UBi, LBj, UBj, 1, N(ng), scale,         &
@@ -1489,7 +1505,7 @@
      &                     MaxValue = Fmax)
 
       ELSE IF (model.eq.iADM) THEN
-        status=nf_fwrite3d(ng, model, pioFile,                          &
+        status=nf_fwrite3d(ng, model, pioFile, idUvel,                  &
      &                     S(ng)%pioVar(idUvel), OutRec,                &
      &                     ioDesc,                                      &
      &                     LBi, UBi, LBj, UBj, 1, N(ng), scale,         &
@@ -1574,7 +1590,7 @@
       END IF
 !
       IF (model.eq.iTLM) THEN
-        status=nf_fwrite3d(ng, model, pioFile,                          &
+        status=nf_fwrite3d(ng, model, pioFile, idVvel,                  &
      &                     S(ng)%pioVar(idVvel), OutRec,                &
      &                     ioDesc,                                      &
      &                     LBi, UBi, LBj, UBj, 1, N(ng), scale,         &
@@ -1585,7 +1601,7 @@
      &                     MinValue = Fmin,                             &
      &                     MaxValue = Fmax)
       ELSE IF (model.eq.iADM) THEN
-        status=nf_fwrite3d(ng, model, pioFile,                          &
+        status=nf_fwrite3d(ng, model, pioFile, idVvel,                  &
      &                     S(ng)%pioVar(idVvel), OutRec,                &
      &                     ioDesc,                                      &
      &                     LBi, UBi, LBj, UBj, 1, N(ng), scale,         &
@@ -1671,7 +1687,7 @@
         END IF
 !
         IF (model.eq.iTLM) THEN
-          status=nf_fwrite3d(ng, model, pioFile,                        &
+          status=nf_fwrite3d(ng, model, pioFile, idTvar(itrc),          &
      &                       S(ng)%pioTrc(itrc), OutRec,                &
      &                       ioDesc,                                    &
      &                       LBi, UBi, LBj, UBj, 1, N(ng), scale,       &
@@ -1682,7 +1698,7 @@
      &                       MinValue = Fmin,                           &
      &                       MaxValue = Fmax)
         ELSE IF (model.eq.iADM) THEN
-          status=nf_fwrite3d(ng, model, pioFile,                        &
+          status=nf_fwrite3d(ng, model, pioFile, idTvar(itrc),          &
      &                       S(ng)%pioTrc(itrc), OutRec,                &
      &                       ioDesc,                                    &
      &                       LBi, UBi, LBj, UBj, 1, N(ng), scale,       &
@@ -1780,7 +1796,7 @@
           END IF
 !
           IF (model.eq.iTLM) THEN
-            status=nf_fwrite3d(ng, iTLM, pioFile,                       &
+            status=nf_fwrite3d(ng, iTLM, pioFile, ifield,               &
      &                         S(ng)%pioVar(ifield),                    &
      &                         OutRec, ioDesc,                          &
      &                         LBi, UBi, LBj, UBj, 1, Nfrec(ng), scale, &
@@ -1792,7 +1808,7 @@
      &                         MinValue = Fmin,                         &
      &                         MaxValue = Fmax)
           ELSE IF (model.eq.iADM) THEN
-            status=nf_fwrite3d(ng, iTLM, pioFile,                       &
+            status=nf_fwrite3d(ng, iTLM, pioFile, ifield,               &
      &                         S(ng)%pioVar(ifield),                    &
      &                         OutRec, ioDesc,                          &
      &                         LBi, UBi, LBj, UBj, 1, Nfrec(ng), scale, &

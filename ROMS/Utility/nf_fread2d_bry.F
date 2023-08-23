@@ -2,7 +2,7 @@
       MODULE nf_fread2d_bry_mod
 !
 !git $Id$
-!svn $Id: nf_fread2d_bry.F 1159 2023-03-24 23:49:03Z arango $
+!svn $Id: nf_fread2d_bry.F 1190 2023-08-18 19:51:09Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -572,10 +572,10 @@
 !
         IF (Lchecksum) THEN
           Npts=(UBij-LBij+1)*Nrec*4
-          IF (.not.allocatable(Cwrk)) allocate ( Cwrk(Npts) )
+          IF (.not.allocated(Cwrk)) allocate ( Cwrk(Npts) )
           Cwrk=PACK(wrk(LBij:UBij, 1:4, 1:Nrec), .TRUE.)
           CALL get_hash (Cwrk, Npts, checksum)
-          IF (allocatable(Cwrk)) deallocate (Cwrk)
+          IF (allocated(Cwrk)) deallocate (Cwrk)
         END IF
       END IF
 !

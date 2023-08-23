@@ -4,7 +4,7 @@
 #if defined FOUR_DVAR
 !
 !git $Id$
-!svn $Id: normalization.F 1180 2023-07-13 02:42:10Z arango $
+!svn $Id: normalization.F 1189 2023-08-15 21:26:58Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -6016,7 +6016,8 @@
 !
       gtype=gfactor*Iinfo(1,ifield,ng)
       scale=1.0_dp
-      status=nf_fwrite2d(ng, model, ncid, ncvarid, tindex, gtype,       &
+      status=nf_fwrite2d(ng, model, ncid, ifield,                       &
+     &                   ncvarid, tindex, gtype,                        &
      &                   LBi, UBi, LBj, UBj, scale,                     &
 # ifdef MASKING
      &                   Amask,                                         &
@@ -6108,7 +6109,8 @@
 !  Write out 2D normalization field.
 !
       scale=1.0_dp
-      status=nf_fwrite2d(ng, model, pioFile, pioVar, tindex, pioDesc,   &
+      status=nf_fwrite2d(ng, model, pioFile, ifield,                    &
+     &                   pioVar, tindex, pioDesc,                       &
      &                   LBi, UBi, LBj, UBj, scale,                     &
 #  ifdef MASKING
      &                   Amask,                                         &
@@ -6205,7 +6207,8 @@
 !
       gtype=gfactor*Iinfo(1,ifield,ng)
       scale=1.0_dp
-      status=nf_fwrite3d(ng, model, ncid, ncvarid, tindex, gtype,       &
+      status=nf_fwrite3d(ng, model, ncid, ifield,                       &
+     &                   ncvarid, tindex, gtype,                        &
      &                   LBi, UBi, LBj, UBj, LBk, UBk, scale,           &
 # ifdef MASKING
      &                   Amask,                                         &
@@ -6297,7 +6300,8 @@
 !  Write out 3D normalization field.
 !
       scale=1.0_dp
-      status=nf_fwrite3d(ng, model, pioFile, pioVar, tindex, pioDesc,   &
+      status=nf_fwrite3d(ng, model, pioFile, ifield,                    &
+     &                   pioVar, tindex, pioDesc,                       &
      &                   LBi, UBi, LBj, UBj, LBk, UBk, scale,           &
 #  ifdef MASKING
      &                   Amask,                                         &

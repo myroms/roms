@@ -3,7 +3,7 @@
 #if defined PROPAGATOR && defined CHECKPOINTING
 !
 !git $Id$
-!svn $Id: wrt_gst.F 1151 2023-02-09 03:08:53Z arango $
+!svn $Id: wrt_gst.F 1189 2023-08-15 21:26:58Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -110,6 +110,10 @@
 !-----------------------------------------------------------------------
 !
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+!
+!  Report.
+!
+      IF (Master) WRITE (stdout,10) Nrun+1
 !
 !  Write out number of eigenvalues to compute.
 !
@@ -311,10 +315,8 @@
 !
       CALL netcdf_sync (ng, model, GST(ng)%name, GST(ng)%ncid)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-
-      IF (Master) WRITE (stdout,10) Nrun+1
 !
-  10  FORMAT (2x,'WRT_GST_NF90     - wrote GST checkpointing fields',   &
+  10  FORMAT (2x,'WRT_GST_NF90     - writing GST checkpointing fields', &
      &        ' at iteration: ', i0)
 
       RETURN
@@ -354,6 +356,10 @@
 !-----------------------------------------------------------------------
 !
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+!
+!  Report.
+!
+      IF (Master) WRITE (stdout,10) Nrun+1
 !
 !  Write out number of eigenvalues to compute.
 !
@@ -595,10 +601,8 @@
 !
       CALL pio_netcdf_sync (ng, model, GST(ng)%name, GST(ng)%pioFile)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-
-      IF (Master) WRITE (stdout,10) Nrun+1
 !
-  10  FORMAT (2x,'WRT_GST_PIO      - wrote GST checkpointing fields',   &
+  10  FORMAT (2x,'WRT_GST_PIO      - writing GST checkpointing fields', &
      &        ' at iteration: ', i0)
 
       RETURN

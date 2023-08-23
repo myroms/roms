@@ -2,7 +2,7 @@
       MODULE mod_ncparam
 !
 !git $Id$
-!svn $Id: mod_ncparam.F 1178 2023-07-11 17:50:57Z arango $
+!svn $Id: mod_ncparam.F 1190 2023-08-18 19:51:09Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -191,9 +191,10 @@
 !
 !  Input/output identification indices.
 !
-      integer  :: idbath        ! bathymetry
-      integer  :: idBgEr        ! Background error at observations
-      integer  :: idBgTh        ! Threshold for BQC check
+      integer  :: idangR        ! angle between XI-axis and EAST
+      integer  :: idbath        ! time-dependent bathymetry
+      integer  :: idBgEr        ! background error at observations
+      integer  :: idBgTh        ! threshold for BQC check
       integer  :: idCfra        ! cloud fraction
       integer  :: idCosW        ! COS(omega(k)*t)
       integer  :: idCos2        ! COS(omega(k)*t)*COS(omega(l)*t)
@@ -202,6 +203,7 @@
       integer  :: iddQdT        ! heat flux sensitivity to SST
       integer  :: idEmPf        ! E-P from bulk_flux.F
       integer  :: idevap        ! evaporation rate
+      integer  :: idfcor        ! Coriolis parameter
       integer  :: idFsur        ! free-surface
       integer  :: idFsuD        ! detided free-surface
       integer  :: idFsuH        ! free-surface tide harmonics
@@ -214,12 +216,24 @@
       integer  :: idInno        ! 4D-Var innovation vector
       integer  :: idKhor        ! convolution horizontal diffusion
       integer  :: idKver        ! convolution vertical diffusion
+      integer  :: idLatP        ! latitude of PSI-points
+      integer  :: idLatR        ! latitude of RHO-points
+      integer  :: idLatU        ! latitude of U-points
+      integer  :: idLatV        ! latitude of V-points
       integer  :: idLdwn        ! downwelling longwave radiation flux
+      integer  :: idLonP        ! longitude of PSI-points
+      integer  :: idLonR        ! longitude of RHO-points
+      integer  :: idLonU        ! longitude of U-points
+      integer  :: idLonV        ! longitude of V-points
       integer  :: idLhea        ! net latent heat flux
       integer  :: idLrad        ! net longwave radiation flux
       integer  :: idMadH        ! ADM interpolation weights
       integer  :: idMOMi        ! Initial model-observation misfit
       integer  :: idMOMf        ! final model-observation misfit
+      integer  :: idmskP        ! land/mask on PSI-points
+      integer  :: idmskR        ! land/mask on RHO-points
+      integer  :: idmskU        ! land/mask on U-points
+      integer  :: idmskV        ! land/mask on V-points
       integer  :: idMtke        ! turbulent kinetic energy
       integer  :: idMtls        ! turbulent length scale
       integer  :: idM2nc        ! 2D momentum nudging coefficients
@@ -249,6 +263,8 @@
       integer  :: idPair        ! surface air pressure
       integer  :: idPbar        ! streamfunction
       integer  :: idPwet        ! wet/dry mask on PSI-points
+      integer  :: idpmdx        ! inverse grid x-spacing
+      integer  :: idpndy        ! inverse grid y-spacing
       integer  :: idpthR        ! depths of RHO-points
       integer  :: idpthU        ! depths of U-points
       integer  :: idpthV        ! depths of V-points
@@ -282,10 +298,14 @@
       integer  :: idSWCW        ! SIN(omega(k)*t)*COS(omega(l)*t)
       integer  :: idResi        ! 4D-Var residual vector
       integer  :: idsfwf        ! surface freswater flux
+      integer  :: idscoR        ! ADM sensitivity scope RHO-mask
+      integer  :: idscoU        ! ADM sensitivity scope U-mask
+      integer  :: idscoV        ! ADM sensitivity scope V-mask
       integer  :: idTLmo        ! TLM at observation locations
       integer  :: idTair        ! surface air temperature
       integer  :: idTdif        ! vertical T-diffusion coefficient
       integer  :: idtime        ! ocean time
+      integer  :: idtopo        ! time-independent bathymetry
       integer  :: idTref        ! tidal reference date for zero phase
       integer  :: idTper        ! tidal period
       integer  :: idTvan        ! tidal current angle
@@ -401,6 +421,14 @@
       integer  :: idWvel        ! true vertical velocity
       integer  :: idWvqp        ! wave spectrum peakedness
       integer  :: idWztw        ! wec quasi-static sea level adjustment
+      integer  :: idXgrP        ! x-locations of PSI-points
+      integer  :: idXgrR        ! x-locations of RHO-points
+      integer  :: idXgrU        ! x-locations of U-points
+      integer  :: idXgrV        ! x-locations of V-points
+      integer  :: idYgrP        ! y-locations of PSI-points
+      integer  :: idYgrR        ! y-locations of RHO-points
+      integer  :: idYgrU        ! y-locations of U-points
+      integer  :: idYgrV        ! y-locations of V-points
       integer  :: idZoBL        ! bottom roughness length
       integer  :: idZads        ! Free-surface adjoint sensitivity
       integer  :: idZtlf        ! Free-surface impulse forcing
@@ -1223,7 +1251,7 @@
       END DO
 #endif
 !
-!  Set IDs for state some state variables.
+!  Set indices for state some state variables.
 !
       ic=5
 #ifdef SOLVE3D
@@ -1426,10 +1454,64 @@
         load=.TRUE.
         varid=varid+1
         SELECT CASE (TRIM(ADJUSTL(Vinfo(8))))
-          CASE ('idtime')
-            idtime=varid
+          CASE ('idangR')
+            idangR=varid
           CASE ('idbath')
             idbath=varid
+          CASE ('idfcor')
+            idfcor=varid
+          CASE ('idtopo')
+            idtopo=varid
+          CASE ('idpmdx')
+            idpmdx=varid
+          CASE ('idpndy')
+            idpndy=varid
+          CASE ('idLonP')
+            idLonP=varid
+          CASE ('idLatP')
+            idLatP=varid
+          CASE ('idLonR')
+            idLonR=varid
+          CASE ('idLatR')
+            idLatR=varid
+          CASE ('idLonU')
+            idLonU=varid
+          CASE ('idLatU')
+            idLatU=varid
+          CASE ('idLonV')
+            idLonV=varid
+          CASE ('idLatV')
+            idLatV=varid
+          CASE ('idmskP')
+            idmskP=varid
+          CASE ('idmskR')
+            idmskR=varid
+          CASE ('idmskU')
+            idmskU=varid
+          CASE ('idmskV')
+            idmskV=varid
+          CASE ('idscoR')
+            idscoR=varid
+          CASE ('idscoU')
+            idscoU=varid
+          CASE ('idscoV')
+            idscoV=varid
+          CASE ('idXgrP')
+            idXgrP=varid
+          CASE ('idYgrP')
+            idYgrP=varid
+          CASE ('idXgrR')
+            idXgrR=varid
+          CASE ('idYgrR')
+            idYgrR=varid
+          CASE ('idXgrU')
+            idXgrU=varid
+          CASE ('idYgrU')
+            idYgrU=varid
+          CASE ('idXgrV')
+            idXgrV=varid
+          CASE ('idYgrV')
+            idYgrV=varid
           CASE ('idpthR')
             idpthR=varid
           CASE ('idpthU')
@@ -1438,6 +1520,8 @@
             idpthV=varid
           CASE ('idpthW')
             idpthW=varid
+          CASE ('idtime')
+            idtime=varid
           CASE ('idFsur')
             idFsur=varid
           CASE ('idRzet')
