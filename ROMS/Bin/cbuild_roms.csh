@@ -1,7 +1,7 @@
 #!/bin/csh -ef
 #
 # git $Id$
-# svn $Id: cbuild_roms.csh 1191 2023-08-18 21:58:31Z arango $
+# svn $Id: cbuild_roms.csh 1192 2023-08-23 18:33:57Z arango $
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # Copyright (c) 2002-2023 The ROMS/TOMS Group                           :::
 #   Licensed under a MIT/X style license                                :::
@@ -250,6 +250,34 @@ setenv MY_PROJECT_DIR        ${PWD}
 #setenv USE_HDF5             on              # compile with HDF5 library
 
 #--------------------------------------------------------------------------
+# If coupling Earth Systems Models (ESM), set the location of the ESM
+# component libraries and modules. The strategy is to compile and link
+# each ESM component separately first, and then ROMS since it is driving
+# the coupled system. Only the ESM components activated are considered
+# and the rest are ignored.  Some components like WRF cannot be built
+# in a directory specified by the user but in its own root directory,
+# and cannot be moved when debugging with tools like TotalView.
+#--------------------------------------------------------------------------
+
+setenv WRF_SRC_DIR         ${HOME}/ocean/repository/git/WRF
+
+if ($?USE_DEBUG) then
+  setenv CICE_LIB_DIR      ${MY_PROJECT_DIR}/Build_ciceG
+  setenv COAMPS_LIB_DIR    ${MY_PROJECT_DIR}/Build_coampsG
+  setenv REGCM_LIB_DIR     ${MY_PROJECT_DIR}/Build_regcmG
+  setenv WAM_LIB_DIR       ${MY_PROJECT_DIR}/Build_wamG
+# setenv WRF_LIB_DIR       ${MY_PROJECT_DIR}/Build_wrfG
+  setenv WRF_LIB_DIR       ${WRF_SRC_DIR}
+else
+  setenv CICE_LIB_DIR      ${MY_PROJECT_DIR}/Build_cice
+  setenv COAMPS_LIB_DIR    ${MY_PROJECT_DIR}/Build_coamps
+  setenv REGCM_LIB_DIR     ${MY_PROJECT_DIR}/Build_regcm
+  setenv WAM_LIB_DIR       ${MY_PROJECT_DIR}/Build_wam
+  setenv WRF_LIB_DIR       ${MY_PROJECT_DIR}/Build_wrf
+# setenv WRF_LIB_DIR       ${WRF_SRC_DIR}
+endif
+
+#--------------------------------------------------------------------------
 # If applicable, use my specified library paths.
 #--------------------------------------------------------------------------
 
@@ -346,10 +374,10 @@ if ( $dprint == 0 ) then
     echo ""
     cd src
     git checkout $branch_name
-  
+
     # If we are using the COMPILERS from the ROMS source code
     # overide the value set above
-  
+
     if ( ${COMPILERS} =~ ${MY_ROMS_SRC}* ) then
       setenv COMPILERS ${MY_PROJECT_DIR}/src/Compilers
     endif
