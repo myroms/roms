@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 # git $Id$
-# svn $Id: build_roms.sh 1184 2023-07-27 20:28:19Z arango $
+# svn $Id: build_roms.sh 1192 2023-08-23 18:33:57Z arango $
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # Copyright (c) 2002-2023 The ROMS/TOMS Group                           :::
 #   Licensed under a MIT/X style license                                :::
@@ -99,12 +99,12 @@ do
       branch=1
       branch_name=`echo $1 | grep -v '^-'`
       if [ "$branch_name" == "" ]; then
-	echo "Please enter a ROMS GitHub branch name."
-	exit 1
+        echo "Please enter a ROMS GitHub branch name."
+        exit 1
       fi
       shift
       ;;
-      
+
     * )
       echo ""
       echo "${separator}"
@@ -255,7 +255,7 @@ export     MY_PROJECT_DIR=${PWD}
 # and cannot be moved when debugging with tools like TotalView.
 #--------------------------------------------------------------------------
 
-export        WRF_SRC_DIR=${HOME}/ocean/repository/WRF
+export        WRF_SRC_DIR=${HOME}/ocean/repository/git/WRF
 
 if [ -n "${USE_DEBUG:+1}" ]; then
   export     CICE_LIB_DIR=${MY_PROJECT_DIR}/Build_ciceG
@@ -328,6 +328,11 @@ else
     export      BUILD_DIR=${MY_PROJECT_DIR}/Build_roms
   fi
 fi
+
+# For backward compatibility, set deprecated SCRATCH_DIR to compile
+# older released versions of ROMS.
+
+export SCRATCH_DIR=${BUILD_DIR}
 
 # If necessary, create ROMS build directory.
 

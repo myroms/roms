@@ -4,7 +4,7 @@
 #if defined FOUR_DVAR || defined VERIFICATION
 !
 !git $Id$
-!svn $Id: mod_fourdvar.F 1165 2023-04-10 01:59:07Z arango $
+!svn $Id: mod_fourdvar.F 1190 2023-08-18 19:51:09Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -1695,7 +1695,16 @@
         size2d=REAL((UBi-LBi+1)*(UBj-LBj+1),r8)
 #  endif
 #  ifdef SOLVE3D
-        NstateVar(ng)=5+NT(ng)
+        NstateVar(ng)=6+NT(ng)
+#   if defined GLS_MIXING || defined MY25_MIXING
+        NstateVar(ng)=NstateVar(ng)+1
+#   endif
+#   ifdef WEC
+        NstateVar(ng)=NstateVar(ng)+2
+#    if defined SOLVE3D
+        NstateVar(ng)=NstateVar(ng)+2
+#    endif
+#   endif
 #   ifdef ADJUST_STFLUX
         NstateVar(ng)=NstateVar(ng)+NT(ng)
 #   endif

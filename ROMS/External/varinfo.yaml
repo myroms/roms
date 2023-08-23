@@ -1,7 +1,7 @@
 # ROMS I/O NetCDF Metadata Dictionary
 #
 #git $Id$
-#svn $Id: varinfo.yaml 1182 2023-07-27 03:34:41Z arango $
+#svn $Id: varinfo.yaml 1189 2023-08-15 21:26:58Z arango $
 #========================================================= Hernan G. Arango ==#
 #  Copyright (c) 2002-2023 The ROMS/TOMS Group                                #
 #    Licensed under a MIT/X style license                                     #
@@ -68,17 +68,6 @@ metadata:
     time:           ocean_time
     index_code:     idtime
     type:           nulvar
-    add_offset:     0.0d0
-    scale:          1.0d0
-
-  - variable:       bath                                             # Input/Output
-    standard_name:  sea_floor_depth
-    long_name:      bathymetry
-    units:          meter                                            # [m]
-    field:          bathymetry
-    time:           ocean_time
-    index_code:     idbath
-    type:           r2dvar
     add_offset:     0.0d0
     scale:          1.0d0
 
@@ -313,10 +302,333 @@ metadata:
     add_offset:     0.0d0
     scale:          1.0d0
 
+  #######################
+  ###  Grid Geometry  ###
+  #######################
+
+  - variable:       angle                                            # Input
+    standard_name:  grid_angle_of_rotation_from_east_to_y
+    long_name:      angle between XI-axis and EAST
+    units:          radians                                          # [rafians]
+    field:          angle
+    time:           nulvar
+    index_code:     idangR
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       bath                                             # Input/Output
+    standard_name:  sea_floor_depth
+    long_name:      time-dependent bathymetry
+    units:          meter                                            # [m; positive]
+    field:          bathymetry
+    time:           ocean_time
+    index_code:     idbath
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       f                                                # Input
+    standard_name:  coriolis_parameter
+    long_name:      Coriolis parameter
+    units:          second-1                                         # [1/s]
+    field:          coriolis
+    time:           nulvar
+    index_code:     idfcor
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       h                                                # Input
+    standard_name:  sea_floor_depth
+    long_name:      time-independent bathymetry
+    units:          meter                                            # [m; positive]
+    field:          bathymetry
+    time:           nulvar
+    index_code:     idtopo
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       lat_psi                                          # Input
+    standard_name:  grid_latitude_at_cell_corners
+    long_name:      latitude of PSI-points
+    units:          degree_north                                     # [degree_north]
+    field:          lat_psi
+    time:           nulvar
+    index_code:     idLatP
+    type:           p2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       lat_rho                                          # Input
+    standard_name:  grid_latitude_at_cell_center
+    long_name:      latitude of RHO-points
+    units:          degree_north                                     # [degree_north]
+    field:          lat_rho
+    time:           nulvar
+    index_code:     idLatR
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       lat_u                                            # Input
+    standard_name:  grid_latitude_at_cell_y_edges
+    long_name:      latitude of U-points
+    units:          degree_north                                     # [degree_north]
+    field:          lat_u
+    time:           nulvar
+    index_code:     idLatU
+    type:           u2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       lat_v                                            # Input
+    standard_name:  grid_latitude_at_cell_x_edges
+    long_name:      latitude of V-points
+    units:          degree_north                                     # [degree_north]
+    field:          lat_v
+    time:           nulvar
+    index_code:     idLatV
+    type:           v2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       lon_psi                                          # Input
+    standard_name:  grid_longitude_at_cell_corners
+    long_name:      longitude of PSI-points
+    units:          degree_east                                      # [degree_east]
+    field:          lon_psi
+    time:           nulvar
+    index_code:     idLonP
+    type:           p2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       lon_rho                                          # Input
+    standard_name:  grid_longitude_at_cell_center
+    long_name:      longitude of RHO-points
+    units:          degree_east                                      # [degree_east]
+    field:          lon_rho
+    time:           nulvar
+    index_code:     idLonR
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       lon_u                                            # Input
+    standard_name:  grid_longitude_at_cell_y_edges
+    long_name:      longitude of U-points
+    units:          degree_east                                      # [degree_east]
+    field:          lon_u
+    time:           nulvar
+    index_code:     idLonU
+    type:           u2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       lon_v                                            # Input
+    standard_name:  grid_longitude_at_cell_x_edges
+    long_name:      longitude of V-points
+    units:          degree_east                                      # [degree_east]
+    field:          lon_v
+    time:           nulvar
+    index_code:     idLonV
+    type:           v2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       mask_psi                                         # Input
+    standard_name:  land_sea_mask_at_cell_corners
+    long_name:      mask on PSI-points
+    units:          nondimensional
+    field:          mask_psi
+    time:           nulvar
+    index_code:     idmskP
+    type:           p2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       mask_rho                                         # Input
+    standard_name:  land_sea_mask_at_cell_center
+    long_name:      mask on RHO-points
+    units:          nondimensional
+    field:          mask_rho
+    time:           nulvar
+    index_code:     idmskR
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       mask_u                                           # Input
+    standard_name:  land_sea_mask_at_cell_y_edges
+    long_name:      mask on U-points
+    units:          nondimensional
+    field:          mask_u
+    time:           nulvar
+    index_code:     idmskU
+    type:           u2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       mask_v                                           # Input
+    standard_name:  land_sea_mask_at_cell_x_edges
+    long_name:      mask on V-points
+    units:          nondimensional
+    field:          mask_v
+    time:           nulvar
+    index_code:     idmskV
+    type:           v2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       pm                                               # Input
+    standard_name:  inverse_grid_x_spacing
+    long_name:      curvilinear coordinate metric in XI
+    units:          meter-1                                          # [1/m]
+    field:          pm
+    time:           nulvar
+    index_code:     idpmdx
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       pn                                               # Input
+    standard_name:  inverse_grid_y_spacing
+    long_name:      curvilinear coordinate metric in ETA
+    units:          meter-1                                          # [1/m]
+    field:          pn
+    time:           nulvar
+    index_code:     idpndy
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       scope_rho                                        # Input
+    standard_name:  adjoint_sensitivity_scope_mask_at_cell_center
+    long_name:      adjoint sensitivity spatial scope on RHO-points
+    units:          nondimensional
+    field:          scope_rho
+    time:           nulvar
+    index_code:     idscoR
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       scope_u                                          # Input
+    standard_name:  adjoint_sensitivity_scope_mask_at_cell_y_edges
+    long_name:      adjoint sensitivity spatial scope on U-points
+    units:          nondimensional
+    field:          scope_u
+    time:           nulvar
+    index_code:     idscoU
+    type:           u2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       scope_v                                          # Input
+    standard_name:  adjoint_sensitivity_scope_mask_at_cell_x_edges
+    long_name:      adjoint sensitivity spatial scope on V-points
+    units:          nondimensional
+    field:          scope_v
+    time:           nulvar
+    index_code:     idscoV
+    type:           v2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       x_psi                                            # Input
+    standard_name:  grid_x_location_at_cell_corners
+    long_name:      x-locations of PSI-points
+    units:          meter                                            # [m]
+    field:          Xp
+    time:           nulvar
+    index_code:     idXgrP
+    type:           p2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       x_rho                                            # Input
+    standard_name:  grid_x_location_at_cell_center
+    long_name:      x-locations of RHO-points
+    units:          meter                                            # [m]
+    field:          Xr
+    time:           nulvar
+    index_code:     idXgrR
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       x_u                                              # Input
+    standard_name:  grid_x_location_at_cell_y_edges
+    long_name:      x-locations of U-points
+    units:          meter                                            # [m]
+    field:          Xu
+    time:           nulvar
+    index_code:     idXgrU
+    type:           u2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       x_v                                              # Input
+    standard_name:  grid_x_location_at_cell_x_edges
+    long_name:      x-locations of V-points
+    units:          meter                                            # [m]
+    field:          Xv
+    time:           nulvar
+    index_code:     idXgrV
+    type:           v2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       y_psi                                            # Input
+    standard_name:  grid_y_location_at_cell_corners
+    long_name:      y-locations of PSI-points
+    units:          meter                                            # [m]
+    field:          Yp
+    time:           nulvar
+    index_code:     idYgrP
+    type:           p2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       y_rho                                            # Input
+    standard_name:  grid_y_location_at_cell_center
+    long_name:      y-locations of RHO-points
+    units:          meter                                            # [m]
+    field:          Yr
+    time:           nulvar
+    index_code:     idYgrR
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       y_u                                              # Input
+    standard_name:  grid_y_location_at_cell_y_edges
+    long_name:      y-locations of U-points
+    units:          meter                                            # [m]
+    field:          Yu
+    time:           nulvar
+    index_code:     idYgrU
+    type:           u2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       y_v                                              # Input
+    standard_name:  grid_y_location_at_cell_x_edges
+    long_name:      y-locations of V-points
+    units:          meter                                            # [m]
+    field:          Yv
+    time:           nulvar
+    index_code:     idYgrV
+    type:           v2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
   - variable:       z_rho                                            # Output
     standard_name:  model_level_depth_at_cell_center
     long_name:      depth of RHO-points
-    units:          meter                                            # [m]
+    units:          meter                                            # [m; negative]
     field:          Zr
     time:           ocean_time
     index_code:     idpthR
@@ -327,7 +639,7 @@ metadata:
   - variable:       z_u                                              # Output
     standard_name:  model_level_depth_at_cell_y_edges
     long_name:      depth of U-points
-    units:          meter                                            # [m]
+    units:          meter                                            # [m; negative]
     field:          Zu
     time:           ocean_time
     index_code:     idpthU
@@ -338,7 +650,7 @@ metadata:
   - variable:       z_v                                              # Output
     standard_name:  model_level_depth_at_cell_x_edges
     long_name:      depth of V-points
-    units:          meter                                            # [m]
+    units:          meter                                            # [m; negative]
     field:          Zv
     time:           ocean_time
     index_code:     idpthV
@@ -348,7 +660,7 @@ metadata:
 
   - variable:       z_w                                              # Output
     standard_name:  model_level_depth_at_cell_top_face
-    long_name:      depth of W-points                                # [m]
+    long_name:      depth of W-points                                # [m; negative]
     units:          meter
     field:          Zw
     time:           ocean_time
