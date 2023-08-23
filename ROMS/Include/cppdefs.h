@@ -2,7 +2,7 @@
 ** Include file "cppdefs.h"
 **
 ** git $Id$
-** svn $Id: cppdefs.h 1184 2023-07-27 20:28:19Z arango $
+** svn $Id: cppdefs.h 1189 2023-08-15 21:26:58Z arango $
 ********************************************************** Hernan G. Arango ***
 ** Copyright (c) 2002-2023 The ROMS/TOMS Group                               **
 **   Licensed under a MIT/X style license                                    **
@@ -604,6 +604,7 @@
 ** NO_READ_GHOST           to not include ghost points during read/scatter   **
 ** NO_WRITE_GRID           if not writing grid arrays                        **
 ** OUT_DOUBLE              if writing double precision output fields         **
+** OUTPUT_STATS            to report NetCDF output fields statistics         **
 ** PARALLEL_IO             if parallel I/O via HDF5 or pnetcdf libraries     **
 ** PERFECT_RESTART         to include perfect restart variables              **
 ** PIO_LIB                 to include Parallel-IO from the PIO library       **

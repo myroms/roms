@@ -1,5 +1,5 @@
 # git $Id$
-# svn $Id: roms_compiler_flags.cmake 1178 2023-07-11 17:50:57Z arango $
+# svn $Id: roms_compiler_flags.cmake 1189 2023-08-15 21:26:58Z arango $
 #:::::::::::::::::::::::::::::::::::::::::::::::::::::: David Robertson :::
 # Copyright (c) 2002-2023 The ROMS/TOMS Group                           :::
 #   Licensed under a MIT/X style license                                :::
@@ -44,5 +44,5 @@ endif()
 string( TOUPPER ${my_os} OS )
 string( TOUPPER ${my_cpu} CPU )
 string( TOUPPER ${my_fort} FORT )
-add_definitions ( -D${OS} -D${CPU} -D${FORT} )
+add_compile_definitions ( ${OS} ${CPU} ${FORT} )
 

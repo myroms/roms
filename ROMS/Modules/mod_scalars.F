@@ -2,7 +2,7 @@
       MODULE mod_scalars
 !
 !git $Id$
-!svn $Id: mod_scalars.F 1184 2023-07-27 20:28:19Z arango $
+!svn $Id: mod_scalars.F 1190 2023-08-18 19:51:09Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -1951,7 +1951,16 @@
 !-----------------------------------------------------------------------
 !
 #if defined FOUR_DVAR || defined VERIFICATION
-      MstateVar=5+MT
+      MstateVar=6+MT
+# if defined GLS_MIXING || defined MY25_MIXING
+      MstateVar=MstateVar+1
+# endif
+# ifdef WEC
+      MstateVar=MstateVar+2
+#  if defined SOLVE3D
+      MstateVar=MstateVar+2
+#  endif
+# endif
 # ifdef ADJUST_WSTRESS
       MstateVar=MstateVar+2
 # endif
