@@ -423,7 +423,7 @@
             END SELECT
             scale=1.0_dp
 !
-            status=nf_fwrite2d(ng, model, S(ng)%ncid,                   &
+            status=nf_fwrite2d(ng, model, S(ng)%ncid, ifield,           &
      &                         S(ng)%Vid(ifield),                       &
      &                         S(ng)%Rindex, gtype,                     &
      &                         LBi, UBi, LBj, UBj, scale,               &
@@ -468,7 +468,8 @@
 !
         scale=1.0_dp
         gtype=gfactor*r2dvar
-        status=nf_fwrite2d(ng, model, S(ng)%ncid, S(ng)%Vid(idUiER),    &
+        status=nf_fwrite2d(ng, model, S(ng)%ncid, idUiER,               &
+     &                     S(ng)%Vid(idUiER),                           &
      &                     S(ng)%Rindex, gtype,                         &
      &                     LBi, UBi, LBj, UBj, scale,                   &
 # ifdef MASKING
@@ -483,7 +484,8 @@
           RETURN
         END IF
 !
-        status=nf_fwrite2d(ng, model, S(ng)%ncid, S(ng)%Vid(idViNR),    &
+        status=nf_fwrite2d(ng, model, S(ng)%ncid, idViNR,               &
+     &                     S(ng)%Vid(idViNR),                           &
      &                     S(ng)%Rindex, gtype,                         &
      &                     LBi, UBi, LBj, UBj, scale,                   &
 # ifdef MASKING
@@ -528,7 +530,7 @@
 !
             scale=1.0_dp
             gtype=gfactor*r2dvar
-            status=nf_fwrite2d(ng, model, S(ng)%ncid,                   &
+            status=nf_fwrite2d(ng, model, S(ng)%ncid, ifield,           &
      &                         S(ng)%Vid(ifield),                       &
      &                         S(ng)%Rindex, gtype,                     &
      &                         LBi, UBi, LBj, UBj, scale,               &
@@ -984,7 +986,7 @@
             END SELECT
             scale=1.0_dp
 !
-            status=nf_fwrite2d(ng, model, S(ng)%pioFile,                &
+            status=nf_fwrite2d(ng, model, S(ng)%pioFile, ifield,        &
      &                         S(ng)%pioVar(ifield), S(ng)%Rindex,      &
      &                         ioDesc,                                  &
      &                         LBi, UBi, LBj, UBj, scale,               &
@@ -1033,7 +1035,7 @@
         ELSE
           ioDesc => ioDesc_sp_r2dvar(ng)
         END IF
-        status=nf_fwrite2d(ng, model, S(ng)%pioFile,                    &
+        status=nf_fwrite2d(ng, model, S(ng)%pioFile, idUiER,            &
      &                     S(ng)%pioVAR(idUiER), S(ng)%Rindex,          &
      &                     ioDesc,                                      &
      &                     LBi, UBi, LBj, UBj, scale,                   &
@@ -1054,7 +1056,7 @@
         ELSE
           ioDesc => ioDesc_sp_r2dvar(ng)
         END IF
-        status=nf_fwrite2d(ng, model, S(ng)%pioFile,                    &
+        status=nf_fwrite2d(ng, model, S(ng)%pioFile, idViNR,            &
      &                     S(ng)%pioVar(idViNR), S(ng)%Rindex,          &
      &                     ioDesc,                                      &
      &                     LBi, UBi, LBj, UBj, scale,                   &
@@ -1104,7 +1106,7 @@
             ELSE
               ioDesc => ioDesc_sp_r2dvar(ng)
             END IF
-            status=nf_fwrite2d(ng, model, S(ng)%pioFile,                &
+            status=nf_fwrite2d(ng, model, S(ng)%pioFile, ifield,        &
      &                         S(ng)%pioVar(ifield), S(ng)%Rindex,      &
      &                         ioDesc,                                  &
      &                         LBi, UBi, LBj, UBj, scale,               &
