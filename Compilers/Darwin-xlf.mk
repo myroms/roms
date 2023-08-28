@@ -1,5 +1,5 @@
 # git $Id$
-# svn $Id: Darwin-xlf.mk 1184 2023-07-27 20:28:19Z arango $
+# svn $Id: Darwin-xlf.mk 1193 2023-08-28 02:52:14Z arango $
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # Copyright (c) 2002-2023 The ROMS/TOMS Group                           :::
 #   Licensed under a MIT/X style license                                :::
@@ -231,10 +231,10 @@ ifdef USE_MCT
 endif
 
 ifdef USE_ESMF
+                     include $(ESMFMKFILE)
           ESMF_OS ?= $(OS)
       ESMF_SUBDIR := $(ESMF_OS).$(ESMF_COMPILER).$(ESMF_ABI).$(ESMF_COMM).$(ESMF_SITE)
       ESMF_MK_DIR ?= $(ESMF_DIR)/lib/lib$(ESMF_BOPT)/$(ESMF_SUBDIR)
-                     include $(ESMF_MK_DIR)/esmf.mk
            FFLAGS += $(ESMF_F90COMPILEPATHS)
              LIBS += $(ESMF_F90LINKPATHS) $(ESMF_F90ESMFLINKLIBS)
 endif
