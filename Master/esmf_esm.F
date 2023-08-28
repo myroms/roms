@@ -4,7 +4,7 @@
 #if defined MODEL_COUPLING && defined ESMF_LIB
 !
 !git $Id$
-!svn $Id: esmf_esm.F 1151 2023-02-09 03:08:53Z arango $
+!svn $Id: esmf_esm.F 1193 2023-08-28 02:52:14Z arango $
 !=======================================================================
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license         Hernan G. Arango     !
@@ -483,9 +483,10 @@
 !
 !  Query driver for information.
 !
-      CALL ESMF_GridCompGet(driver,                                     &
-     &                      name=name,                                  &
-     &                      rc=rc)
+      CALL ESMF_GridCompGet (driver,                                    &
+     &                       name=name,                                 &
+     &                       localPet=localPET,                         &
+     &                       rc=rc)
       IF (ESMF_LogFoundError(rcToCheck=rc,                              &
      &                       msg=ESMF_LOGERR_PASSTHRU,                  &
      &                       line=__LINE__,                             &
@@ -495,9 +496,9 @@
 !
 !  Read in free-format run sequence from configuration object.
 !
-      CALL ESMF_GridCompGet(driver,                                     &
-     &                      config=Config,                              &
-     &                      rc=rc)
+      CALL ESMF_GridCompGet (driver,                                    &
+     &                       config=Config,                             &
+     &                       rc=rc)
       IF (ESMF_LogFoundError(rcToCheck=rc,                              &
      &                       msg=ESMF_LOGERR_PASSTHRU,                  &
      &                       line=__LINE__,                             &
@@ -534,7 +535,6 @@
 !
       CALL ESMF_GridCompGet (driver,                                    &
      &                       clock=Clock,                               &
-     &                       localPet=localPET,                         &
      &                       rc=rc)
       IF (ESMF_LogFoundError(rcToCheck=rc,                              &
      &                       msg=ESMF_LOGERR_PASSTHRU,                  &
@@ -597,8 +597,8 @@
 !
 !  Destroy free format object. All internal memory is deallocated.
 !
-      CALL NUOPC_FreeFormatDestroy(runSeqFF,                            &
-     &                             rc=rc)
+      CALL NUOPC_FreeFormatDestroy (runSeqFF,                           &
+     &                              rc=rc)
       IF (ESMF_LogFoundError(rcToCheck=rc,                              &
      &                       msg=ESMF_LOGERR_PASSTHRU,                  &
      &                       line=__LINE__,                             &

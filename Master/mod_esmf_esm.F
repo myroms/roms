@@ -2,7 +2,8 @@
       MODULE mod_esmf_esm
 #if defined MODEL_COUPLING && defined ESMF_LIB
 !
-!svn $Id: mod_esmf_esm.F 1942 2023-06-17 16:35:13Z arango $
+!git $Id$
+!svn $Id: mod_esmf_esm.F 1193 2023-08-28 02:52:14Z arango $
 !=======================================================================
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license         Hernan G. Arango     !
@@ -3816,7 +3817,7 @@
  170  FORMAT (7x,a,2x,a,t42,a)
  180  FORMAT (18x,i1,2x,a,t42,a,i2.2,'.')
  190  FORMAT (18x,i1,2x,a,t42,a,i2.2)
- 195  FORMAT (17x,i2.0,2x,a,t42,a,i2.2)
+ 195  FORMAT (17x,i2,2x,a,t42,a,i2.2)
  200  FORMAT (t42,2x,i2.2,':',1x,a)
  210  FORMAT (/,' read_ESMconfig - Invalid input parameter, ',a,        &
      &          ': ',i1)

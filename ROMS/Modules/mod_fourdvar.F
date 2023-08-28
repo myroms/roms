@@ -3,8 +3,9 @@
 
 #if defined FOUR_DVAR || defined VERIFICATION
 !
+!git $Id: mod_fourdvar.F 1193 2023-08-28 02:52:14Z arango $
 !git $Id$
-!svn $Id: mod_fourdvar.F 1190 2023-08-18 19:51:09Z arango $
+!svn $Id: mod_fourdvar.F 1193 2023-08-28 02:52:14Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -1694,17 +1695,16 @@
 
         size2d=REAL((UBi-LBi+1)*(UBj-LBj+1),r8)
 #  endif
+!
+!  Number of state variables associated with data assimilation.
+!
+!    zeta, ubar, vbar, Uvel, Vvel, Tvar(1:MT)
+!    Ustr, Vstr, Tsur(1:MT)
+!
+!  The rest are ignored.
+!
 #  ifdef SOLVE3D
-        NstateVar(ng)=6+NT(ng)
-#   if defined GLS_MIXING || defined MY25_MIXING
-        NstateVar(ng)=NstateVar(ng)+1
-#   endif
-#   ifdef WEC
-        NstateVar(ng)=NstateVar(ng)+2
-#    if defined SOLVE3D
-        NstateVar(ng)=NstateVar(ng)+2
-#    endif
-#   endif
+        NstateVar(ng)=5+NT(ng)
 #   ifdef ADJUST_STFLUX
         NstateVar(ng)=NstateVar(ng)+NT(ng)
 #   endif
@@ -1714,6 +1714,7 @@
 #  ifdef ADJUST_WSTRESS
         NstateVar(ng)=NstateVar(ng)+2
 #  endif
+
         NobsVar(ng)=NstateVar(ng)+NextraObs
 
         IF (.not.allocated(FOURDVAR(ng) % NobsSurvey)) THEN
