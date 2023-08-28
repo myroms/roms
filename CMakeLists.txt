@@ -159,7 +159,6 @@ add_subdirectory( "ROMS/Nonlinear" )
 add_subdirectory( "ROMS/Nonlinear/BBL" )
 add_subdirectory( "ROMS/Nonlinear/Biology" )
 add_subdirectory( "ROMS/Nonlinear/Sediment" )
-add_subdirectory( "ROMS/Nonlinear/WEC" )
 add_subdirectory( "ROMS/Utility" )
 
 include_directories(
@@ -175,7 +174,6 @@ include_directories(
   "ROMS/Nonlinear/BBL"
   "ROMS/Nonlinear/Biology"
   "ROMS/Nonlinear/Sediment"
-  "ROMS/Nonlinear/WEC"
   "ROMS/Utility"
 )
 
