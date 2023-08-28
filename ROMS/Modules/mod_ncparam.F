@@ -1,8 +1,9 @@
 #include "cppdefs.h"
       MODULE mod_ncparam
 !
+!git $Id: mod_ncparam.F 1193 2023-08-28 02:52:14Z arango $
 !git $Id$
-!svn $Id: mod_ncparam.F 1190 2023-08-18 19:51:09Z arango $
+!svn $Id: mod_ncparam.F 1193 2023-08-28 02:52:14Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -877,19 +878,23 @@
       END IF
       IF (.not.allocated(isTvar)) THEN
         allocate ( isTvar(MT) )
+        isTvar=0
         Dmem(1)=Dmem(1)+REAL(MT,r8)
       END IF
       IF (.not.allocated(idBvar)) THEN
         allocate ( idBvar(nLBCvar) )
+        idBvar=0
         Dmem(1)=Dmem(1)+REAL(nLBCvar,r8)
       END IF
       IF (.not.allocated(idSvar)) THEN
-        allocate ( idSvar(MAXVAL(NSV)+1) )
-        Dmem(1)=Dmem(1)+REAL(MAXVAL(NSV)+1,r8)
+        allocate ( idSvar(MAXVAL(NSV)) )
+        idSvar=0
+        Dmem(1)=Dmem(1)+REAL(MAXVAL(NSV),r8)
       END IF
       IF (.not.allocated(idSbry)) THEN
-        allocate ( idSbry(MAXVAL(NSV)+1) )
-        Dmem(1)=Dmem(1)+REAL(MAXVAL(NSV)+1,r8)
+        allocate ( idSbry(MAXVAL(NSV)) )
+        idSbry=0
+        Dmem(1)=Dmem(1)+REAL(MAXVAL(NSV),r8)
       END IF
 
       IF (.not.allocated(BRYncid)) THEN
@@ -1259,31 +1264,14 @@
         ic=ic+1
         isTvar(i)=ic
       END DO
-# if defined GLS_MIXING || defined MY25_MIXING
-      ic=ic+1
-      isMtke=ic
-# endif
-# ifdef WEC
-      ic=ic+1
-      isU2Sd=ic
-      ic=ic+1
-      isV2Sd=ic
-#  if defined SOLVE3D
-      ic=ic+1
-      isU3Sd=ic
-      ic=ic+1
-      isV3Sd=ic
-#  endif
-# endif
-      ic=ic+1
-      isWvel=ic
 #endif
 #if defined ADJUST_WSTRESS || defined FORCING_SV     || \
     defined HESSIAN_FSV    || defined SO_SEMI        || \
     defined STOCHASTIC_OPT
-      isUstr=ic+1
-      isVstr=ic+2
-      ic=ic+2
+      ic=ic+1
+      isUstr=ic
+      ic=ic+1
+      isVstr=ic
 #endif
 #ifdef SOLVE3D
 # if defined ADJUST_STFLUX  || defined FORCING_SV     || \
@@ -1294,6 +1282,26 @@
         isTsur(i)=ic
       END DO
 # endif
+#endif
+#ifdef WEC
+      ic=ic+1
+      isU2Sd=ic
+      ic=ic+1
+      isV2Sd=ic
+# if defined SOLVE3D
+      ic=ic+1
+      isU3Sd=ic
+      ic=ic+1
+      isV3Sd=ic
+# endif
+#endif
+#ifdef SOLVE3D
+# if defined GLS_MIXING || defined MY25_MIXING
+      ic=ic+1
+      isMtke=ic
+# endif
+      ic=ic+1
+      isWvel=ic
 #endif
 !
 !  Set generic lateral boundary indices for LBC structure.  Use the same
@@ -3173,47 +3181,18 @@
       END DO
 # if defined GLS_MIXING || defined MY25_MIXING
       ic=ic+1
-      idBvar(ic)=idMtke
+      idBvar(isMtke)=idMtke
 # endif
 #endif
 #ifdef WEC
-      ic=ic+1
-      idBvar(ic)=idU2Sd
-      ic=ic+1
-      idBvar(ic)=idV2Sd
-# if defined SOLVE3D
-      ic=ic+1
-      idBvar(ic)=idU3Sd
-      ic=ic+1
-      idBvar(ic)=idV3Sd
-# endif
-#endif
-!
-!-----------------------------------------------------------------------
-!  Set model state variables indices.
-!-----------------------------------------------------------------------
-!
-      idSvar(isFsur)=idFsur
-      idSvar(isUbar)=idUbar
-      idSvar(isVbar)=idVbar
-      ic=3
-#ifdef SOLVE3D
-      idSvar(isUvel)=idUvel
-      idSvar(isVvel)=idVvel
       ic=ic+2
-      DO i=1,MT
-        idSvar(isTvar(i))=idTvar(i)
-        ic=ic+1
-      END DO
-#endif
-#ifdef ADJUST_WSTRESS
-      idSvar(isUstr)=idUsms
-      idSvar(isVstr)=idVsms
-#endif
-#ifdef ADJUST_STFLUX
-      DO i=1,MT
-        idSvar(isTsur(i))=idTsur(i)
-      END DO
+      idBvar(isU2Sd)=idU2Sd
+      idBvar(isV2Sd)=idV2Sd
+# if defined SOLVE3D
+      ic=ic+2
+      idBvar(isU3Sd)=idU3Sd
+      idBvar(isV3Sd)=idV3Sd
+# endif
 #endif
 #ifdef ADJUST_BOUNDARY
 !
@@ -3250,6 +3229,50 @@
 !
       last_varid=varid
       Dmem(1)=Dmem(1)+REAL(varid,r8)
+!
+!-----------------------------------------------------------------------
+!  Set model state variables metadata indices.
+!-----------------------------------------------------------------------
+!
+      idSvar(isFsur)=idFsur
+      idSvar(isUbar)=idUbar
+      idSvar(isVbar)=idVbar
+#ifdef SOLVE3D
+      idSvar(isUvel)=idUvel
+      idSvar(isVvel)=idVvel
+      DO i=1,MT
+        idSvar(isTvar(i))=idTvar(i)
+      END DO
+#endif
+#if defined ADJUST_WSTRESS || defined FORCING_SV     || \
+    defined HESSIAN_FSV    || defined SO_SEMI        || \
+    defined STOCHASTIC_OPT
+      idSvar(isUstr)=idUsms
+      idSvar(isVstr)=idVsms
+#endif
+#ifdef SOLVE3D
+# if defined ADJUST_STFLUX  || defined FORCING_SV     || \
+     defined HESSIAN_FSV    || defined SO_SEMI        || \
+     defined STOCHASTIC_OPT
+      DO i=1,MT
+        idSvar(isTsur(i))=idTsur(i)
+      END DO
+# endif
+#endif
+#ifdef WEC
+      idSvar(isU2Sd)=idU2Sd
+      idSvar(isV2Sd)=idV2Sd
+# if defined SOLVE3D
+      idSvar(isU3Sd)=idU3Sd
+      idSvar(isV3Sd)=idV3Sd
+# endif
+#endif
+#ifdef SOLVE3D
+# if defined GLS_MIXING || defined MY25_MIXING
+      idSvar(isMtke)=idMtke
+# endif
+      idSvar(isWvel)=idWvel
+#endif
 !
   10  FORMAT (/,' MOD_NCPARAM - too small dimension ',                  &
      &        'parameter, MV = ',2i5,/,15x,                             &

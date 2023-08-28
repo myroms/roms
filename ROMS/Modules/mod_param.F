@@ -1,8 +1,9 @@
 #include "cppdefs.h"
       MODULE mod_param
 !
+!git $Id: mod_param.F 1193 2023-08-28 02:52:14Z arango $
 !git $Id$
-!svn $Id: mod_param.F 1190 2023-08-18 19:51:09Z arango $
+!svn $Id: mod_param.F 1193 2023-08-28 02:52:14Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -1489,11 +1490,19 @@
 # endif
 #endif
 !
-!  Number of state variables.
+!  Number of state variables. The order is irrelevant for determining
+!  the "NSV" dimension.
 !
-        NSV(ng)=NT(ng)+6         ! zeta, ubar, vbar, u, v, W, Tvar(1:MT)
-#if defined GLS_MIXING || defined MY25_MIXING
-        NSV(ng)=NSV(ng)+1        ! TKE
+#ifdef SOLVE3D
+        NSV(ng)=5+NT(ng)         ! zeta, ubar, vbar, u, v, Tvar(1:MT)
+# ifdef ADJUST_STFLUX
+        NSV(ng)=NSV(ng)+NT(ng)   ! Tsur(1:MT)
+# endif
+#else
+        NSV(ng)=3                ! zeta, ubar, vbar
+#endif
+#ifdef ADJUST_WSTRESS
+        NSV(ng)=NSV(ng)+2        ! Ustr, Vstr
 #endif
 #ifdef WEC
         NSV(ng)=NSV(ng)+2        ! ubar_stokes, vbar_stokes
@@ -1501,11 +1510,11 @@
         NSV(ng)=NSV(ng)+2        ! u_stokes, v_stokes
 # endif
 #endif
-#ifdef ADJUST_WSTRESS
-        NSV(ng)=NSV(ng)+2        ! Ustr, Vstr
-#endif
-#ifdef ADJUST_STFLUX
-        NSV(ng)=NSV(ng)+NT(ng)   ! Tsur(1:MT)
+#ifdef SOLVE3D
+# if defined GLS_MIXING || defined MY25_MIXING
+        NSV(ng)=NSV(ng)+1        ! TKE
+# endif
+        NSV(ng)=NSV(ng)+1        ! W
 #endif
       END DO
 !
@@ -1519,16 +1528,33 @@
 !  Allocate Lateral Boundary Conditions switches structure.
 !-----------------------------------------------------------------------
 !
+!  Here, "nLBCvar" is larger than needed because it includes unused
+!  state variables that need to be included because of their indices
+!  are in a particular order due to data assimilation variables
+!  associated with the state vector.
+!
 #ifdef SOLVE3D
       nLBCvar=5+MT                 ! zeta, ubar, vbar, u, v, Tvar(1:MT)
-# if defined GLS_MIXING || defined MY25_MIXING
-      nLBCvar=nLBCvar+1            ! TKE
-# endif
-# ifdef WEC
-      nLBCvar=nLBCvar+4            ! (ubar, vbar, u, v)_stokes
+# ifdef ADJUST_STFLUX
+      nLBCvar=nLBCvar+NT(ng)       ! Tsur(1:MT); unused
 # endif
 #else
       nLBCvar=3                    ! zeta, ubar, vbar
+#endif
+#ifdef ADJUST_WSTRESS
+      nLBCvar=nLBCvar+2            ! Ustr, Vstr; unused
+       NstateVar(ng)=NstateVar(ng)+2
+#endif
+#ifdef WEC
+      nLBCvar=nLBCvar+2            ! ubar_stokes, vbar_stokes
+# ifdef SOLVE3D
+      nLBCvar=nLBCvar+2            ! u_stokes, v_stokes
+# endif
+#endif
+#ifdef SOLVE3D
+# if defined GLS_MIXING || defined MY25_MIXING
+      nLBCvar=nLBCvar+1            ! TKE
+# endif
 #endif
 !
       IF (.not.allocated(LBC)) THEN
