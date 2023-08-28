@@ -192,7 +192,6 @@ list(APPEND srcs
      ${ROMS_Nonlinear_BBL_files}
      ${ROMS_Nonlinear_Biology_files}
      ${ROMS_Nonlinear_Sediment_files}
-     ${ROMS_Nonlinear_WEC_files}
      ${ROMS_Utility_files}
 )
 
