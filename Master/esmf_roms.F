@@ -3,8 +3,9 @@
 
 #if defined MODEL_COUPLING && defined ESMF_LIB
 !
+!git $Id: esmf_roms.F 1193 2023-08-28 02:52:14Z arango $
 !git $Id$
-!svn $Id: esmf_roms.F 1166 2023-05-17 20:11:58Z arango $
+!svn $Id: esmf_roms.F 1193 2023-08-28 02:52:14Z arango $
 !=======================================================================
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license         Hernan G. Arango     !
@@ -3254,7 +3255,9 @@
 # endif
 # if defined BULK_FLUXES || defined ECOSIM
 !
-!  Surface air relative humidity (percentage).
+!  Surface air relative humidity (percentage). Notice that as the
+!  specific humidity, it is loaded to FORCES(ng)%Hair and "bulk_flux.F"
+!  will compute the specific humidity (kg/kg).
 !
             CASE ('Qair')
               romsScale=scale

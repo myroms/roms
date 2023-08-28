@@ -1,10 +1,11 @@
 #include "cppdefs.h"
       MODULE cmeps_roms_mod
 
-#if defined ESMF_LIB
+#if defined ESMF_LIB && (defined CDEPS || defined CMEPS)
 !
+!git $Id: cmeps_roms.F 1193 2023-08-28 02:52:14Z arango $
 !git $Id$
-!svn $Id: cmeps_roms.F 1166 2023-05-17 20:11:58Z arango $
+!svn $Id: cmeps_roms.F 1193 2023-08-28 02:52:14Z arango $
 !>
 !! \brief   **ROMS** ESMF/NUOPC Cap file for **CMEPS**
 !!
@@ -653,7 +654,7 @@
 !  Local variable declarations.
 !
 # ifdef METADATA_REPORT
-      logical :: Lreport = .TRUE .               ! dumps YAML dictionary
+      logical :: Lreport = .TRUE.                ! dumps YAML dictionary
 # else
       logical :: Lreport = .FALSE.
 # endif
