@@ -2,7 +2,7 @@
       MODULE stats_mod
 !
 !git $Id$
-!svn $Id: stats.F 1190 2023-08-18 19:51:09Z arango $
+!svn $Id: stats.F 1194 2023-08-29 17:14:13Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -198,9 +198,9 @@
       IF (.not.allocated(Cwrk)) allocate ( Cwrk(Npts) )
       Cwrk=PACK(F(Imin:Imax, Jmin:Jmax), .TRUE.)
 #ifdef DISTRIBUTE
-      CALL get_hash (Cwrk, Npts, S.checksum, .TRUE.)
+      CALL get_hash (Cwrk, Npts, S%checksum, .TRUE.)
 #else
-      CALL get_hash (Cwrk, Npts, S.checksum)
+      CALL get_hash (Cwrk, Npts, S%checksum)
 #endif
       IF (allocated(Cwrk)) deallocate (Cwrk)
 !
@@ -445,9 +445,9 @@
       IF (.not.allocated(Cwrk)) allocate ( Cwrk(Npts) )
       Cwrk=PACK(F(Imin:Imax, Jmin:Jmax, LBk:UBk), .TRUE.)
 #ifdef DISTRIBUTE
-      CALL get_hash (Cwrk, Npts, S.checksum, .TRUE.)
+      CALL get_hash (Cwrk, Npts, S%checksum, .TRUE.)
 #else
-      CALL get_hash (Cwrk, Npts, S.checksum)
+      CALL get_hash (Cwrk, Npts, S%checksum)
 #endif
       IF (allocated(Cwrk)) deallocate (Cwrk)
 !
@@ -701,9 +701,9 @@
       IF (.not.allocated(Cwrk)) allocate ( Cwrk(Npts) )
       Cwrk=PACK(F(Imin:Imax, Jmin:Jmax, LBk:UBk, LBt:UBt), .TRUE.)
 #ifdef DISTRIBUTE
-      CALL get_hash (Cwrk, Npts, S.checksum, .TRUE.)
+      CALL get_hash (Cwrk, Npts, S%checksum, .TRUE.)
 #else
-      CALL get_hash (Cwrk, Npts, S.checksum)
+      CALL get_hash (Cwrk, Npts, S%checksum)
 #endif
       IF (allocated(Cwrk)) deallocate (Cwrk)
 !
