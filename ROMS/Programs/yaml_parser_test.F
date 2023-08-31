@@ -1,7 +1,7 @@
-      MODULE yaml_parser_mod
+      MODULE yaml_parser
 !
 !git $Id$
-!svn $Id: yaml_parser.F 1195 2023-08-31 01:52:55Z arango $
+!svn $Id: yaml_parser_test.F 1195 2023-08-31 01:52:55Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -89,14 +89,20 @@
 !                                                                      !
 !=======================================================================
 !
-!  ROMS kernel association.
+!  Define local parameters.
 !
-      USE mod_kinds,    ONLY : kind_real    => dp     ! double-precision
-      USE mod_parallel, ONLY : yaml_Master  => Master ! master PET
-      USE mod_scalars,  ONLY : yaml_ErrFlag => exit_flag  ! error flag
-      USE mod_iounits,  ONLY : yaml_stdout  => stdout ! standard ouput
+      logical :: yaml_Master = .TRUE.          ! Master process
+      logical :: Lreport = .TRUE.              ! dumps YAML dictionaty
 !
-      implicit none
+      integer, parameter :: kind_real = SELECTED_REAL_KIND(12,300)
+      integer, parameter :: dp        = SELECTED_REAL_KIND(12,300)
+
+      integer, parameter :: yaml_stdout = 6          ! standard output
+      integer, parameter :: stdout      = 6          ! standard output
+
+      integer, parameter  :: NoError = 0             ! No error flag
+
+      integer :: yaml_ErrFlag = 0                    ! error flag
 !
 !-----------------------------------------------------------------------
 !  Structures/Objects to hold YAML dictionary lists with theirs keys and
@@ -246,6 +252,80 @@
         MODULE PROCEDURE yaml_Get_svar_0d       ! Gets string  value
         MODULE PROCEDURE yaml_Get_svar_1d       ! Gets string  values
       END INTERFACE yaml_get
+!
+!
+!-----------------------------------------------------------------------
+!  Define generic coupling field to process import and export states.
+!-----------------------------------------------------------------------
+!
+      TYPE CouplingField
+        logical :: connected
+        logical :: debug_write
+!
+        real(dp) :: add_offset
+        real(dp) :: scale
+!
+        character (len=:), allocatable :: connected_to
+        character (len=:), allocatable :: data_netcdf_vname
+        character (len=:), allocatable :: data_netcdf_tname
+        character (len=:), allocatable :: destination_grid
+        character (len=:), allocatable :: destination_units
+        character (len=:), allocatable :: extrapolate_method
+        character (len=:), allocatable :: long_name
+        character (len=:), allocatable :: map_norm
+        character (len=:), allocatable :: map_type
+        character (len=:), allocatable :: regrid_method
+        character (len=:), allocatable :: source_units
+        character (len=:), allocatable :: source_grid
+        character (len=:), allocatable :: short_name
+        character (len=:), allocatable :: standard_name
+!
+      END TYPE CouplingField
+!
+! <><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>
+!  YAML Tree Post-proccesing Variables and Structures:
+!
+!  Define generic YAML dictionary, containers, and counters used
+!  during processing.
+!-----------------------------------------------------------------------
+!
+      logical :: LdebugMetadata = .TRUE.           ! Debugging switch
+!
+!  Counters.
+!
+      integer :: Ientry                            ! entry counter
+      integer :: Nentries                          ! number of entries
+!
+!  logical scalar dummy values.
+!
+      logical, allocatable :: Ylogical1(:)
+!
+!  Real scalar dummy values.
+!
+      real(kind_real), allocatable :: Yreal1(:)
+      real(kind_real), allocatable :: Yreal2(:)
+!
+!  Derived-type dummy structures for processing string value or set
+!  of values from a sequence flow, [val1, ..., valN].
+!
+      TYPE (yaml_Svec), allocatable :: Ystring1 (:)
+      TYPE (yaml_Svec), allocatable :: Ystring2 (:)
+      TYPE (yaml_Svec), allocatable :: Ystring3 (:)
+      TYPE (yaml_Svec), allocatable :: Ystring4 (:)
+      TYPE (yaml_Svec), allocatable :: Ystring5 (:)
+      TYPE (yaml_Svec), allocatable :: Ystring6 (:)
+      TYPE (yaml_Svec), allocatable :: Ystring7 (:)
+      TYPE (yaml_Svec), allocatable :: Ystring8 (:)
+      TYPE (yaml_Svec), allocatable :: Ystring9 (:)
+      TYPE (yaml_Svec), allocatable :: Ystring10(:)
+      TYPE (yaml_Svec), allocatable :: Ystring11(:)
+      TYPE (yaml_Svec), allocatable :: Ystring12(:)
+!
+      PUBLIC  :: cmeps_metadata
+      PUBLIC  :: coupling_metadata
+      PUBLIC  :: process_yaml
+!
+! <><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>
 !
       PUBLIC  :: yaml_AssignString
       PUBLIC  :: yaml_Error
@@ -2878,7 +2958,775 @@
 !
       RETURN
       END SUBROUTINE yaml_ValueType
+!
+! <><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>
+!
+      SUBROUTINE process_yaml (yaml_file)
+!
+! Imported variable declarations.
+!
+      character (len=*), intent(in) :: yaml_file
+!
+! Local variable declarations.
+!
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__//', process_yaml'
 
+      TYPE (yaml_tree)    :: YML                ! YAML tree structure
+
+      TYPE (CouplingField), allocatable :: E(:), I(:), S(:)
+!
+!  Create YAML object and report its content.
+!
+      IF (yaml_Error(yaml_initialize(YML, TRIM(yaml_file), Lreport),    &
+     &               NoError, __LINE__, MyFile)) THEN
+        WRITE (6,10) TRIM(yaml_file)
+ 10     FORMAT (/,' PROCESS_YAML - Unable to create YAML object for:',  &
+     &          /,13x,'FileName = ',a)
+        RETURN
+      END IF
+!
+!  If CMEPS file, extract export and import states metadata.
+!
+      IF (YML%has('export').and.YML%has('import')) THEN
+        CALL cmeps_metadata (YML, TRIM(yaml_file), 'export',  E)
+        CALL cmeps_metadata (YML, TRIM(yaml_file), 'import',  I)
+        CALL YML%destroy ()
+!
+!  If ROMS coupling file, extract export nas import state metadata.
+!
+      ELSE IF (.not.YML%has('svn_repository').and.                      &
+     &              YML%has('metadata')) THEN
+        CALL coupling_metadata (YML, TRIM(yaml_file), S)
+!
+!  IF ROMS 'varingo.yaml', extract input and output variables metadata.
+!
+      ELSE IF (YML%has('svn_repository').and.                           &
+     &         YML%has('metadata')) THEN
+        CALL io_metadata (YML, TRIM(yaml_file))
+      END IF
+!
+      RETURN
+!
+      END SUBROUTINE process_yaml
+!
+      SUBROUTINE cmeps_metadata (self, filename, key, S)
+!
+!=======================================================================
+!                                                                      !
+!  It process either import or export fields which are stored as block !
+!  lists (leading key/value is hyphenated) in the YAML file. The YAML  !
+!  file is used to configure ROMS ESMF/NUOPC 'cap' module to be run by !
+!  the Community Mediator for Earth Prediction Systems (CMEPS).        !
+!                                                                      !
+!  On Input:                                                           !
+!                                                                      !
+!     self      YAML tree dictionary (TYPE yaml_tree)                  !
+!                                                                      !
+!     filename  ROMS YAML configuration filename for CMEPS (string)    !
+!                                                                      !
+!     key       Leading blocking key to process (string), for example: !
+!                 'export', 'import', or 'bulk_flux import'            !
+!                                                                      !
+!  On Output:                                                          !
+!                                                                      !
+!     S         Import or Export coupling fields (TYPE CouplingField)  !
+!                                                                      !
+!=======================================================================
+!
+!  Imported variable declarations.
+!
+      TYPE (yaml_tree),  intent(inout) :: self
+      character (len=*), intent(in   ) :: filename
+      character (len=*), intent(in   ) :: key
+      TYPE (CouplingField), allocatable, intent(out) :: S(:)
+!
+!  Local variable declarations.
+!
+      integer :: i, LenStr
+!
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__//", cmeps_metadata"
+!
 !-----------------------------------------------------------------------
+!  Process coupling import or export metadata for CMEPS.
+!-----------------------------------------------------------------------
+!
+!  If applicable, create YAML tree dictionary.
+!
+      IF (.not.ASSOCIATED(self%list)) THEN
+        IF (yaml_Error(yaml_initialize(self, TRIM(filename),            &
+     &                                 .FALSE.),                        &
+     &                 NoError, __LINE__, MyFile)) THEN
+          IF (yaml_Master) WRITE (stdout,10) TRIM(filename)
+          RETURN
+        END IF
+      END IF
+!
+!  Extract requested blocking list.
+!
+      IF (yaml_error(yaml_get(self, TRIM(key)//'.standard_name',        &
+     &                        Ystring1),                                &
+     &                 NoError, __LINE__, MyFile)) RETURN
+      Nentries=SIZE(Ystring1)
+!
+      IF (yaml_error(yaml_get(self, TRIM(key)//'.long_name',            &
+     &                        Ystring2),                                &
+     &               NoError, __LINE__, MyFile)) RETURN
+!
+      IF (yaml_error(yaml_get(self, TRIM(key)//'.short_name',           &
+     &                        Ystring3),                                &
+     &                 NoError, __LINE__, MyFile)) RETURN
+!
+      IF (yaml_error(yaml_get(self, TRIM(key)//'.data_variables',       &
+     &                        Ystring4),                                &
+     &               NoError, __LINE__, MyFile)) RETURN
+!
+      IF (yaml_error(yaml_get(self, TRIM(key)//'.source_units',         &
+     &                        Ystring5),                                &
+     &               NoError, __LINE__, MyFile)) RETURN
+!
+      IF (yaml_error(yaml_get(self, TRIM(key)//'.destination_units',    &
+     &                        Ystring6),                                &
+     &               NoError, __LINE__, MyFile)) RETURN
+!
+      IF (yaml_error(yaml_get(self, TRIM(key)//'.source_grid',          &
+     &                        Ystring7),                                &
+     &               NoError, __LINE__, MyFile)) RETURN
+!
+      IF (yaml_error(yaml_get(self, TRIM(key)//'.destination_grid',     &
+     &                        Ystring8),                                &
+     &               NoError, __LINE__, MyFile)) RETURN
+!
+      IF (yaml_error(yaml_get(self, TRIM(key)//'.connected_to',         &
+     &                        Ystring9),                                &
+     &               NoError, __LINE__, MyFile)) RETURN
+!
+      IF (yaml_error(yaml_get(self, TRIM(key)//'.map_type',             &
+     &                        Ystring10),                               &
+     &               NoError, __LINE__, MyFile)) RETURN
+!
+      IF (yaml_error(yaml_get(self, TRIM(key)//'.map_norm',             &
+     &                        Ystring11),                               &
+     &               NoError, __LINE__, MyFile)) RETURN
+!
+      IF (.not.allocated(Yreal1)) THEN
+        allocate ( Yreal1(Nentries) )
+      END IF
+      IF (yaml_error(yaml_get(self, TRIM(key)//'.add_offset',           &
+     &                        Yreal1),                                  &
+     &               NoError, __LINE__, MyFile)) RETURN
+!
+      IF (.not.allocated(Yreal2)) THEN
+        allocate ( Yreal2(Nentries) )
+      END IF
+      IF (yaml_error(yaml_get(self, TRIM(key)//'.scale',                &
+     &                        Yreal2),                                  &
+     &               NoError, __LINE__, MyFile)) RETURN
+      IF (.not.allocated(Yreal1)) THEN
+        allocate ( Yreal1(Nentries) )
+      END IF
+!
+      IF (.not.allocated(Ylogical1)) THEN
+        allocate ( Ylogical1(Nentries) )
+      END IF
+      IF (yaml_error(yaml_get(self, TRIM(key)//'.debug_write',          &
+     &                        Ylogical1),                               &
+     &               NoError, __LINE__, MyFile)) RETURN
+!
+!  Load metadata into output structure.
+!
+      IF (.not.allocated(S)) allocate ( S(Nentries) )
+!
+      DO i=1,Nentries
+        S(i)%debug_write = Ylogical1(i)
+        S(i)%add_offset  = Yreal1(i)
+        S(i)%scale       = Yreal2(i)
+!
+        IF (yaml_error(yaml_AssignString(S(i)%standard_name,            &
+     &                                   Ystring1(i)%value, LenStr),    &
+     &                 NoError, __LINE__, MyFile)) RETURN
+!
+        IF (yaml_error(yaml_AssignString(S(i)%long_name,                &
+     &                                   Ystring2(i)%value, LenStr),    &
+     &                 NoError, __LINE__, MyFile)) RETURN
+!
+        IF (yaml_error(yaml_AssignString(S(i)%short_name,               &
+     &                                   Ystring3(i)%value, LenStr),    &
+     &                 NoError, __LINE__, MyFile)) RETURN
+!
+        IF (yaml_error(yaml_AssignString(S(i)%data_netcdf_vname,        &
+     &                                   Ystring4(i)%vector(1)%value,   &
+     &                                   LenStr),                       &
+     &                 NoError, __LINE__, MyFile)) RETURN
+!
+        IF (yaml_error(yaml_AssignString(S(i)%data_netcdf_tname,        &
+     &                                   Ystring4(i)%vector(2)%value,   &
+     &                                   LenStr),                       &
+     &                 NoError, __LINE__, MyFile)) RETURN
+!
+        IF (yaml_error(yaml_AssignString(S(i)%source_units,             &
+     &                                   Ystring5(i)%value, LenStr),    &
+     &                 NoError, __LINE__, MyFile)) RETURN
+!
+        IF (yaml_error(yaml_AssignString(S(i)%destination_units,        &
+     &                                   Ystring6(i)%value, LenStr),    &
+     &                 NoError, __LINE__, MyFile)) RETURN
+!
+        IF (yaml_error(yaml_AssignString(S(i)%source_grid,              &
+     &                                   Ystring7(i)%value, LenStr),    &
+     &                 NoError, __LINE__, MyFile)) RETURN
+!
+        IF (yaml_error(yaml_AssignString(S(i)%destination_grid,         &
+     &                                   Ystring8(i)%value, LenStr),    &
+     &                 NoError, __LINE__, MyFile)) RETURN
+!
+        IF (yaml_error(yaml_AssignString(S(i)%connected_to,             &
+     &                                   Ystring9(i)%value, LenStr),    &
+     &                 NoError, __LINE__, MyFile)) RETURN
+        IF (yaml_LowerCase(S(i)%connected_to).eq.'false') THEN
+          S(i)%connected=.FALSE.
+        ELSE
+          S(i)%connected=.TRUE.
+        END IF
+!
+        IF (yaml_error(yaml_AssignString(S(i)%map_type,                 &
+     &                                   Ystring10(i)%value, LenStr),   &
+     &                 NoError, __LINE__, MyFile)) RETURN
+!
+        IF (yaml_error(yaml_AssignString(S(i)%map_norm,                 &
+     &                                   Ystring11(i)%value, LenStr),   &
+     &                 NoError, __LINE__, MyFile)) RETURN
+      END DO
+!
+!  Deallocate generic structures.
+!
+      IF (allocated(Ystring1 ))  deallocate (Ystring1 )
+      IF (allocated(Ystring2 ))  deallocate (Ystring2 )
+      IF (allocated(Ystring3 ))  deallocate (Ystring3 )
+      IF (allocated(Ystring4 ))  deallocate (Ystring4 )
+      IF (allocated(Ystring5 ))  deallocate (Ystring5 )
+      IF (allocated(Ystring6 ))  deallocate (Ystring6 )
+      IF (allocated(Ystring7 ))  deallocate (Ystring7 )
+      IF (allocated(Ystring8 ))  deallocate (Ystring8 )
+      IF (allocated(Ystring9 ))  deallocate (Ystring9 )
+      IF (allocated(Ystring10))  deallocate (Ystring10)
+      IF (allocated(Ystring11))  deallocate (Ystring11)
+      IF (allocated(Ylogical1))  deallocate (Ylogical1)
+      IF (allocated(Yreal1))     deallocate (Yreal1)
+      IF (allocated(Yreal2))     deallocate (Yreal2)
+!
+!  Report.
+!
+      IF (yaml_Master.and.LdebugMetadata) THEN
+        WRITE (stdout,'(/,3a,/,3a)')                                    &
+     &        "Coupling Metadata Dictionary, key: '", TRIM(key), "',",  &
+     &        REPEAT('=',28), '  File: ', TRIM(filename)
+        DO i=1,SIZE(S)
+          WRITE (stdout,'(/,a,a)')      '  - standard_name:        ',   &
+     &                                  TRIM(S(i)%standard_name)
+          WRITE (stdout,'(a,a)')        '    long_name:            ',   &
+     &                                  TRIM(S(i)%long_name)
+          WRITE (stdout,'(a,a)')        '    short_name:           ',   &
+     &                                  TRIM(S(i)%short_name)
+          WRITE (stdout,'(a,a)')        '    data_netcdf_variable: ',   &
+     &                                  TRIM(S(i)%data_netcdf_vname)
+          WRITE (stdout,'(a,a)')        '    data_netcdf_time:     ',   &
+     &                                  TRIM(S(i)%data_netcdf_tname)
+          WRITE (stdout,'(a,a)')        '    source_units:         ',   &
+     &                                  TRIM(S(i)%source_units)
+          WRITE (stdout,'(a,a)')        '    destination_units:    ',   &
+     &                                  TRIM(S(i)%destination_units)
+          WRITE (stdout,'(a,a)')        '    source_grid:          ',   &
+     &                                  TRIM(S(i)%source_grid)
+          WRITE (stdout,'(a,a)')        '    destination_grid:     ',   &
+     &                                  TRIM(S(i)%destination_grid)
+          WRITE (stdout,'(a,1p,e15.8)') '    add_offset:           ',   &
+     &                                  S(i)%add_offset
+          WRITE (stdout,'(a,1p,e15.8)') '    scale:                ',   &
+     &                                  S(i)%scale
+          WRITE (stdout,'(a,l1)')       '    debug_write:          ',   &
+     &                                  S(i)%debug_write
+          WRITE (stdout,'(a,l1)')       '    connected:            ',   &
+     &                                  S(i)%connected
+          WRITE (stdout,'(a,a)')        '    connected_to:         ',   &
+     &                                  TRIM(S(i)%connected_to)
+          WRITE (stdout,'(a,a)')        '    map_type:             ',   &
+     &                                  TRIM(S(i)%map_type)
+          WRITE (stdout,'(a,a)')        '    map_norm:             ',   &
+     &                                  TRIM(S(i)%map_norm)
+        END DO
+        FLUSH (stdout)
+      END IF
+!
+  10  FORMAT (/,' CMEPS_METADATA - Unable to create YAML object for',    &
+     &        ' ROMS/CMEPS configuration metadata file: ',/,21x,a,/,     &
+     &        21x,'Default file is located in source directory.')
+!
+      RETURN
+      END SUBROUTINE cmeps_metadata
+!
+      SUBROUTINE coupling_metadata (YML, filename, S)
+!
+!=======================================================================
+!                                                                      !
+!  It processes import and export field dictionary for ROMS coupling   !
+!  system with the ESMF/NUOPC library. If processes field metadata     !
+!  entry-by-entry from 'coupling_*.yaml'.                              !
+!                                                                      !
+!  On Input:                                                           !
+!                                                                      !
+!     YML       YAML tree dictionary (TYPE yaml_tree)                  !
+!                                                                      !
+!     filename  Coupling metadata filename (string)                    !
+!                                                                      !
+!  On Output:                                                          !
+!                                                                      !
+!     S         Import/Export coupling fields (TYPE CouplingField)     !
+!                                                                      !
+!=======================================================================
+!
+!  Imported variable declarations.
+!
+      character (len=*), intent(in) :: filename
+!
+      TYPE (yaml_tree),  intent(inout) :: YML
+      TYPE (CouplingField), allocatable, intent(out) :: S(:)
+!
+!  Local variable declarations.
+!
+      integer :: i
+!
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__//", coupling_metadata"
+!
+!-----------------------------------------------------------------------
+!  Process coupling import/export metadata.
+!-----------------------------------------------------------------------
+!
+!  Create YAML dictionary.
+!
+      Ientry=0
+!
+!  Extract key/value pair (blocking list).
+!
+      IF (yaml_error(yaml_get(YML, 'metadata.standard_name',            &
+     &                        Ystring1),                                &
+     &               NoError, __LINE__, MyFile)) RETURN
+      Nentries=SIZE(Ystring1)
+!
+      IF (yaml_error(yaml_get(YML, 'metadata.long_name',                &
+     &                        Ystring2),                                &
+     &               NoError, __LINE__, MyFile)) RETURN
+!
+      IF (yaml_error(yaml_get(YML, 'metadata.short_name',               &
+     &                        Ystring3),                                &
+     &               NoError, __LINE__, MyFile)) RETURN
+!
+      IF (yaml_error(yaml_get(YML, 'metadata.data_variables',           &
+     &                        Ystring4),                                &
+     &               NoError, __LINE__, MyFile)) RETURN
+!
+      IF (yaml_error(yaml_get(YML, 'metadata.source_units',             &
+     &                        Ystring5),                                &
+     &               NoError, __LINE__, MyFile)) RETURN
+!
+      IF (yaml_error(yaml_get(YML, 'metadata.destination_units',        &
+     &                        Ystring6),                                &
+     &               NoError, __LINE__, MyFile)) RETURN
+!
+      IF (yaml_error(yaml_get(YML, 'metadata.source_grid',              &
+     &                        Ystring7),                                &
+     &               NoError, __LINE__, MyFile)) RETURN
+!
+      IF (yaml_error(yaml_get(YML, 'metadata.destination_grid',         &
+     &                        Ystring8),                                &
+     &               NoError, __LINE__, MyFile)) RETURN
+!
+      IF (yaml_error(yaml_get(YML, 'metadata.connected_to',             &
+     &                        Ystring9),                                &
+     &               NoError, __LINE__, MyFile)) RETURN
+!
+      IF (yaml_error(yaml_get(YML, 'metadata.regrid_method',            &
+     &                        Ystring10),                               &
+     &               NoError, __LINE__, MyFile)) RETURN
+!
+      IF (yaml_error(yaml_get(YML, 'metadata.extrapolate_method',       &
+     &                        Ystring11),                               &
+     &               NoError, __LINE__, MyFile)) RETURN
+!
+      IF (allocated(Yreal1)) deallocate (Yreal1)
+      allocate ( Yreal1(Nentries) )
+      IF (yaml_error(yaml_get(YML, 'metadata.add_offset',               &
+     &                        Yreal1),                                  &
+     &               NoError, __LINE__, MyFile)) RETURN
+!
+      IF (allocated(Yreal2)) deallocate (Yreal2)
+      allocate ( Yreal2(Nentries) )
+      IF (yaml_error(yaml_get(YML, 'metadata.scale',                    &
+     &                        Yreal2),                                  &
+     &               NoError, __LINE__, MyFile)) RETURN
+!
+      IF (allocated(Ylogical1)) deallocate (Ylogical1)
+      allocate ( Ylogical1(Nentries) )
+      IF (yaml_error(yaml_get(YML, 'metadata.debug_write',              &
+     &                        Ylogical1),                               &
+     &               NoError, __LINE__, MyFile)) RETURN
+!
+!-----------------------------------------------------------------------
+!  Load metadata information from YAML structures.
+!-----------------------------------------------------------------------
+!
+      IF (.not.allocated(S)) allocate ( S(Nentries) )
+!
+      DO i=1,Nentries
+        S(i)%debug_write = Ylogical1(i)
+        S(i)%add_offset  = Yreal1(i)
+        S(i)%scale       = Yreal2(i)
+!
+        IF (yaml_error(yaml_AssignString(S(i)%standard_name,            &
+     &                                   Ystring1(i)%value, LenStr),    &
+     &                 NoError, __LINE__, MyFile)) RETURN
+!
+        IF (yaml_error(yaml_AssignString(S(i)%long_name,                &
+     &                                   Ystring2(i)%value, LenStr),    &
+     &                 NoError, __LINE__, MyFile)) RETURN
+!
+        IF (yaml_error(yaml_AssignString(S(i)%short_name,               &
+     &                                   Ystring3(i)%value, LenStr),    &
+     &                 NoError, __LINE__, MyFile)) RETURN
+!
+        IF (yaml_error(yaml_AssignString(S(i)%data_netcdf_vname,        &
+     &                                   Ystring4(i)%vector(1)%value,   &
+     &                                   LenStr),                       &
+     &                 NoError, __LINE__, MyFile)) RETURN
+!
+        IF (yaml_error(yaml_AssignString(S(i)%data_netcdf_tname,        &
+     &                                   Ystring4(i)%vector(2)%value,   &
+     &                                   LenStr),
+     &                 NoError, __LINE__, MyFile)) RETURN
+!
+        IF (yaml_error(yaml_AssignString(S(i)%source_units,             &
+     &                                   Ystring5(i)%value, LenStr),    &
+     &                 NoError, __LINE__, MyFile)) RETURN
+!
+        IF (yaml_error(yaml_AssignString(S(i)%destination_units,        &
+     &                                   Ystring6(i)%value, LenStr),    &
+     &                 NoError, __LINE__, MyFile)) RETURN
+!
+        IF (yaml_error(yaml_AssignString(S(i)%source_grid,              &
+     &                                   Ystring7(i)%value, LenStr),    &
+     &                 NoError, __LINE__, MyFile)) RETURN
+!
+        IF (yaml_error(yaml_AssignString(S(i)%destination_grid,         &
+     &                                   Ystring8(i)%value, LenStr),    &
+     &                 NoError, __LINE__, MyFile)) RETURN
+!
+        IF (yaml_error(yaml_AssignString(S(i)%connected_to,             &
+     &                                   Ystring9(i)%value, LenStr),    &
+     &                 NoError, __LINE__, MyFile)) RETURN
+        IF (yaml_LowerCase(S(i)%connected_to).eq.'false') THEN
+          S(i)%connected=.FALSE.
+        ELSE
+          S(i)%connected=.TRUE.
+        END IF
+!
+        IF (yaml_error(yaml_AssignString(S(i)%regrid_method,            &
+     &                                   Ystring10(i)%value, LenStr),   &
+     &                 NoError, __LINE__, MyFile)) RETURN
+!
+        IF (yaml_error(yaml_AssignString(S(i)%extrapolate_method,       &
+     &                                   Ystring11(i)%value, LenStr),   &
+     &                 NoError, __LINE__, MyFile)) RETURN
+      END DO
+!
+!  Deallocate generic structures.
+!
+      CALL YML%destroy ()
+      IF (allocated(Ystring1 ))  deallocate (Ystring1 )
+      IF (allocated(Ystring2 ))  deallocate (Ystring2 )
+      IF (allocated(Ystring3 ))  deallocate (Ystring3 )
+      IF (allocated(Ystring4 ))  deallocate (Ystring4 )
+      IF (allocated(Ystring5 ))  deallocate (Ystring5 )
+      IF (allocated(Ystring6 ))  deallocate (Ystring6 )
+      IF (allocated(Ystring7 ))  deallocate (Ystring7 )
+      IF (allocated(Ystring8 ))  deallocate (Ystring8 )
+      IF (allocated(Ystring9 ))  deallocate (Ystring9 )
+      IF (allocated(Ystring10))  deallocate (Ystring10)
+      IF (allocated(Ystring11))  deallocate (Ystring11)
+      IF (allocated(Ylogical1))  deallocate (Ylogical1)
+      IF (allocated(Yreal1))     deallocate (Yreal1)
+      IF (allocated(Yreal2))     deallocate (Yreal2)
+!
+!  Report.
+!
+      IF (yaml_Master.and.LdebugMetadata) THEN
+        WRITE (stdout,'(/,2a,/,a)')                                     &
+     &        'Coupling Metadata Dictionary, File: ',                   &
+     &        TRIM(filename), REPEAT('=',28)
+        DO i=1,SIZE(S)
+          WRITE (stdout,'(/,a,a)')      '  - standard_name:        ',   &
+     &                                  TRIM(S(i)%standard_name)
+          WRITE (stdout,'(a,a)')        '    long_name:            ',   &
+     &                                  TRIM(S(i)%long_name)
+          WRITE (stdout,'(a,a)')        '    short_name:           ',   &
+     &                                  TRIM(S(i)%short_name)
+          WRITE (stdout,'(a,a)')        '    data_netcdf_variable: ',   &
+     &                                  TRIM(S(i)%data_netcdf_vname)
+          WRITE (stdout,'(a,a)')        '    data_netcdf_time:     ',   &
+     &                                  TRIM(S(i)%data_netcdf_tname)
+          WRITE (stdout,'(a,a)')        '    source_units:         ',   &
+     &                                  TRIM(S(i)%source_units)
+          WRITE (stdout,'(a,a)')        '    destination_units:    ',   &
+     &                                  TRIM(S(i)%destination_units)
+          WRITE (stdout,'(a,a)')        '    source_grid:          ',   &
+     &                                  TRIM(S(i)%source_grid)
+          WRITE (stdout,'(a,a)')        '    destination_grid:     ',   &
+     &                                  TRIM(S(i)%destination_grid)
+          WRITE (stdout,'(a,1p,e15.8)') '    add_offset:           ',   &
+     &                                  S(i)%add_offset
+          WRITE (stdout,'(a,1p,e15.8)') '    scale:                ',   &
+     &                                  S(i)%scale
+          WRITE (stdout,'(a,l1)')       '    debug_write:          ',   &
+     &                                  S(i)%debug_write
+          WRITE (stdout,'(a,l1)')       '    connected:            ',   &
+     &                                  S(i)%connected
+          WRITE (stdout,'(a,a)')        '    connected_to:         ',   &
+     &                                  TRIM(S(i)%connected_to)
+          WRITE (stdout,'(a,a)')        '    regrid_method:        ',   &
+     &                                  TRIM(S(i)%regrid_method)
+          WRITE (stdout,'(a,a)')        '    extrapolate_method:   ',   &
+     &                                  TRIM(S(i)%extrapolate_method)
+        END DO
+        FLUSH (stdout)
+      END IF
+!
+      RETURN
+!
+  10  FORMAT (/,' COUPLING_METADATA - Unable to create YAML object',    &
+     &        ' for ROMS I/O metadata file: ',/,21x,a,/,                &
+     &        21x,'Default file is located in source directory.')
+!
+      END SUBROUTINE coupling_metadata
+!
+      SUBROUTINE io_metadata (YML, filename)
+!
+!=======================================================================
+!                                                                      !
+!  It processes ROMS input/output fields metadata entry-by-entry from  !
+!  YAML tree dictionary.                                               !
+!                                                                      !
+!  On Input:                                                           !
+!                                                                      !
+!     YML       YAML tree dictionary (TYPE yaml_tree)                  !
+!                                                                      !
+!     filename  ROMS I/O metadata filename (string)                    !
+!                                                                      !
+!  It reports internal variables metadata:                             !
+!                                                                      !
+!     Vinfo      I/O Variable information (string array)               !
+!                  Vinfo(1):  Field variable short-name                !
+!                  Vinfo(2):  Long-name attribute                      !
+!                  Vinfo(3):  Units attribute                          !
+!                  Vinfo(4):  Field attribute                          !
+!                  Vinfo(5):  Associated time variable name            !
+!                  Vinfo(6):  Standard-name attribute                  !
+!                  Vinfo(7):  Staggered C-grid variable type:          !
+!                               'nulvar' => non-grided variable        !
+!                               'p2dvar' => 2D PHI-variable            !
+!                               'r2dvar' => 2D RHO-variable            !
+!                               'u2dvar' => 2D U-variable              !
+!                               'v2dvar' => 2D V-variable              !
+!                               'p3dvar' => 3D PSI-variable            !
+!                               'r3dvar' => 3D RHO-variable            !
+!                               'u3dvar' => 3D U-variable              !
+!                               'v3dvar' => 3D V-variable              !
+!                               'w3dvar' => 3D W-variable              !
+!                               'b3dvar' => 3D BED-sediment            !
+!                               'l3dvar' => 3D spectral light variable !
+!                               'l4dvar' => 4D spectral light variable !
+!                  Vinfo(8):  Index code for information arrays        !
+!                                                                      !
+!     scale      Scale to convert input data to model units (real)     !
+!                                                                      !
+!     offeset    Value to add to input data (real)                     !
+!                                                                      !
+!     Ldone      True if end-of-file or dictionary found               !
+!                                                                      !
+!=======================================================================
+!
+!  Imported variable declarations.
+!
+      character (len=*), intent(in) :: filename
+!
+      TYPE (yaml_tree),  intent(inout) :: YML
+!
+!  Local variable declarations.
+!
+      integer :: i, j, n
+!
+      real (dp) :: offset, scale
+!
+      character (len=160) :: Vinfo(8)
 
-      END MODULE yaml_parser_mod
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__//", io_metadata"
+!
+!-----------------------------------------------------------------------
+!  On first pass, initialize metadata processing.
+!-----------------------------------------------------------------------
+!
+!  Extract values from YML tree.
+!
+      IF (yaml_error(yaml_get(YML, 'metadata.variable',                 &
+     &                        Ystring1),                                &
+     &               NoError, __LINE__, MyFile)) RETURN
+      Nentries=SIZE(Ystring1, DIM=1)
+!
+      IF (yaml_error(yaml_get(YML, 'metadata.long_name',                &
+     &                        Ystring2),                                &
+     &               NoError, __LINE__, MyFile)) RETURN
+!
+      IF (yaml_error(yaml_get(YML, 'metadata.units',                    &
+     &                        Ystring3),                                &
+     &               NoError, __LINE__, MyFile)) RETURN
+!
+      IF (yaml_error(yaml_get(YML, 'metadata.field',                    &
+     &                        Ystring4),                                &
+     &               NoError, __LINE__, MyFile)) RETURN
+!
+      IF (yaml_error(yaml_get(YML, 'metadata.time',                     &
+     &                        Ystring5),                                &
+     &               NoError, __LINE__, MyFile)) RETURN
+!
+      IF (yaml_error(yaml_get(YML, 'metadata.standard_name',            &
+     &                        Ystring6),                                &
+     &               NoError, __LINE__, MyFile)) RETURN
+!
+      IF (yaml_error(yaml_get(YML, 'metadata.type',                     &
+     &                        Ystring7),                                &
+     &               NoError, __LINE__, MyFile)) RETURN
+!
+      IF (yaml_error(yaml_get(YML, 'metadata.index_code',               &
+     &                        Ystring8),                                &
+     &               NoError, __LINE__, MyFile)) RETURN
+!
+      IF (allocated(Yreal1)) deallocate (Yreal1)
+      allocate ( Yreal1(Nentries) )
+      IF (yaml_error(yaml_get(YML, 'metadata.add_offset',               &
+     &                        Yreal1),                                  &
+     &               NoError, __LINE__, MyFile)) RETURN
+!
+      IF (allocated(Yreal2)) deallocate (Yreal2)
+      allocate ( Yreal2(Nentries) )
+      IF (yaml_error(yaml_get(YML, 'metadata.scale',                    &
+     &                        Yreal2),                                  &
+     &               NoError, __LINE__, MyFile)) RETURN
+!
+!-----------------------------------------------------------------------
+!  Process metadata entries.
+!-----------------------------------------------------------------------
+!
+!  Extract metadata information from YAML structures.
+!
+      IF (yaml_Master.and.LdebugMetadata) THEN
+        WRITE (stdout,'(/,2a,/,a)')                                     &
+     &        'ROMS I/O Metadata Dictionary, File: ',                   &
+     &        TRIM(filename), REPEAT('=',28)
+!
+        DO n=1,Nentries
+          DO j=1,SIZE(Vinfo)
+            DO i=1,LEN(Vinfo(1))
+              Vinfo(j)(i:i)=CHAR(32)
+            END DO
+          END DO
+!
+          Vinfo(1)=Ystring1(n)%value         ! 'variable'      key
+          Vinfo(2)=Ystring2(n)%value         ! 'long_name'     key
+          Vinfo(3)=Ystring3(n)%value         ! 'units'         key
+          Vinfo(4)=Ystring4(n)%value         ! 'field'         key
+          Vinfo(5)=Ystring5(n)%value         ! 'time'          key
+          Vinfo(6)=Ystring6(n)%value         ! 'standard_name' key
+          Vinfo(7)=Ystring7(n)%value         ! 'type'          key
+          Vinfo(8)=Ystring8(n)%value         ! 'index_code'    key
+          offset  =Yreal1(n)                 ! 'add_offset'    key
+          scale   =Yreal2(n)                 ! 'scale'         key
+!
+          WRITE (stdout,'(/,a,a)')      '  - variable:       ',         &
+     &                                  TRIM(Vinfo(1))
+          WRITE (stdout,'(a,a)')        '    standard_name:  ',         &
+     &                                  TRIM(Vinfo(6))
+          WRITE (stdout,'(a,a)')        '    long_name:      ',         &
+     &                                  TRIM(Vinfo(2))
+          WRITE (stdout,'(a,a)')        '    units:          ',         &
+     &                                  TRIM(Vinfo(3))
+          WRITE (stdout,'(a,a)')        '    field:          ',         &
+     &                                  TRIM(Vinfo(4))
+          WRITE (stdout,'(a,a)')        '    time:           ',         &
+     &                                  TRIM(Vinfo(5))
+          WRITE (stdout,'(a,a)')        '    index_code:     ',         &
+     &                                  TRIM(Vinfo(8))
+          WRITE (stdout,'(a,a)')        '    type:           ',         &
+     &                                  TRIM(Vinfo(7))
+          WRITE (stdout,'(a,1p,e15.8)') '    add_offset:     ',         &
+     &                                  offset
+          WRITE (stdout,'(a,1p,e15.8)') '    scale:          ',         &
+     &                                  scale
+        END DO
+        FLUSH (stdout)
+      END IF
+!
+!  Destroy and deallocate.
+!
+      CALL YML%destroy ()
+      IF (allocated(Ystring1))  deallocate (Ystring1)
+      IF (allocated(Ystring2))  deallocate (Ystring2)
+      IF (allocated(Ystring3))  deallocate (Ystring3)
+      IF (allocated(Ystring4))  deallocate (Ystring4)
+      IF (allocated(Ystring5))  deallocate (Ystring5)
+      IF (allocated(Ystring6))  deallocate (Ystring6)
+      IF (allocated(Ystring7))  deallocate (Ystring7)
+      IF (allocated(Ystring8))  deallocate (Ystring8)
+      IF (allocated(Yreal1))    deallocate (Yreal1)
+      IF (allocated(Yreal2))    deallocate (Yreal2)
+!
+      RETURN
+      END SUBROUTINE io_metadata
+!
+!-----------------------------------------------------------------------
+      END MODULE yaml_parser
+!-----------------------------------------------------------------------
+!
+      PROGRAM yaml_parser_test
+!
+!=======================================================================
+!                                                                      !
+! This program can be used to test the YAML parser available in ROMS.  !
+!                                                                      !
+!=======================================================================
+!
+      USE yaml_parser, ONLY : process_yaml
+!
+! Local variable definitions.
+!
+      character (len=120) :: yaml_file          ! YAML filename
+
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__//', read_yaml'
+!
+! Get YAML file name.
+!
+      DO WHILE (.TRUE.)
+        WRITE (6,10)
+ 10     FORMAT (/,' Enter YAML filename: ',$)
+        READ(5,'(a)',ERR=20) yaml_file
+!
+! Create and process YAML object.
+!
+        CALL process_yaml (TRIM(yaml_file))
+      END DO
+
+ 20   STOP
+
+      END PROGRAM yaml_parser_test
+
