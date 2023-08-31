@@ -2,7 +2,7 @@
       MODULE get_metadata_mod
 !
 !git $Id$
-!svn $Id: get_metadata.F 1151 2023-02-09 03:08:53Z arango $
+!svn $Id: get_metadata.F 1195 2023-08-31 01:52:55Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -236,7 +236,7 @@
         allocate ( Yreal2(Nentries) )
       END IF
       IF (FoundError(yaml_get(self, TRIM(key)//'.scale',                &
-                              Yreal2),                                  &
+     &                        Yreal2),                                  &
      &               NoError, __LINE__, MyFile)) RETURN
       IF (.not.allocated(Yreal1)) THEN
         allocate ( Yreal1(Nentries) )
@@ -507,7 +507,7 @@
         IF (allocated(Yreal2)) deallocate (Yreal2)
         allocate ( Yreal2(Nentries) )
         IF (FoundError(yaml_get(YML, 'metadata.scale',                  &
-                                Yreal2),                                &
+     &                          Yreal2),                                &
      &                 NoError, __LINE__, MyFile)) RETURN
 !
         IF (allocated(Ylogical1)) deallocate (Ylogical1)
@@ -577,7 +577,7 @@
      &                   NoError, __LINE__, MyFile)) RETURN
 !
           IF (FoundError(assign_string(S(i)%connected_to,               &
-     &                                 Ystring9(i)%value),             &
+     &                                 Ystring9(i)%value),              &
      &                   NoError, __LINE__, MyFile)) RETURN
           IF (lowercase(S(i)%connected_to).eq.'false') THEN
             S(i)%connected=.FALSE.
@@ -938,7 +938,7 @@
           IF (allocated(Yreal2)) deallocate (Yreal2)
           allocate ( Yreal2(Nentries) )
           IF (FoundError(yaml_get(YML, 'metadata.scale',                &
-                                  Yreal2),                              &
+     &                            Yreal2),                              &
      &                   NoError, __LINE__, MyFile)) RETURN
 !
 !  Otherwise, open deprecated 'varinfo.dat' file.
