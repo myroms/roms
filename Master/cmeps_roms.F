@@ -3,9 +3,9 @@
 
 #if defined ESMF_LIB && (defined CDEPS || defined CMEPS)
 !
-!git $Id: cmeps_roms.F 1193 2023-08-28 02:52:14Z arango $
+!git $Id: cmeps_roms.F 1196 2023-08-31 20:10:19Z arango $
 !git $Id$
-!svn $Id: cmeps_roms.F 1193 2023-08-28 02:52:14Z arango $
+!svn $Id: cmeps_roms.F 1196 2023-08-31 20:10:19Z arango $
 !>
 !! \brief   **ROMS** ESMF/NUOPC Cap file for **CMEPS**
 !!
@@ -665,7 +665,7 @@
       TYPE (CouplingField), allocatable :: Export(:), Import(:)
       TYPE (yaml_tree)                  :: YML
 !
-      character (len=:), allocatable :: string
+      character (len=256) :: string
 
       character (len=*), parameter :: MyFile =                          &
      &  __FILE__//", ROMS_Create"
@@ -699,14 +699,14 @@
 !
 !  Get ROMS standard input filename.
 !
-      IF (YML%has('standard_input.OCN_component')) THEN
-        IF (FoundError(yaml_get(YML, 'standard_input.OCN_component',    &
-     &                          string),                                &
+     IF (YML%has('standard_input.OCN_component')) THEN
+         IF (FoundError(yaml_get(YML, 'standard_input.OCN_component',    &
+     &                           string),                                &
      &                 NoError, __LINE__, MyFile)) THEN
           rc=ESMF_RC_COPY_FAIL
           RETURN
         END IF
-        Iname=string
+        Iname=TRIM(string)
       ELSE
         rc=ESMF_RC_NOT_FOUND
         IF (localPET.eq.0) WRITE (cplout,20)                            &
@@ -819,13 +819,17 @@
 !
 !  Extract export field metadata from dictionary.
 !
-      CALL cmeps_metadata (YML, TRIM(CPLname), 'export',                &
+      IF (YML%has('export')) THEN
+        CALL cmeps_metadata (YML, TRIM(CPLname), 'export',              &
      &                     Export)
-      IF (yaml_Error(exit_flag, NoError, __LINE__, MyFile)) THEN
-        rc=ESMF_RC_VAL_WRONG
-        RETURN
+        IF (yaml_Error(exit_flag, NoError, __LINE__, MyFile)) THEN
+          rc=ESMF_RC_VAL_WRONG
+          RETURN
+        END IF
+        Nexport(Iroms)=SIZE(Export)
+      ELSE
+        Nexport(Iroms)=0                           ! no fields to export
       END IF
-      Nexport(Iroms)=SIZE(Export)
 !
 !  Allocate export fields structure (TYPE ESM_Fields).
 !
@@ -984,17 +988,30 @@
 !  Extract ROMS import field(s) metadata for YML dictionary.
 !
 # ifdef BULK_FLUXES
-      CALL cmeps_metadata (YML, TRIM(CPLname), 'bulk_fluxes import',    &
-     &                     Import)
-# else
-      CALL cmeps_metadata (YML, TRIM(CPLname), 'import',                &
-     &                     Import)
-# endif
-      IF (yaml_Error(exit_flag, NoError, __LINE__, MyFile)) THEN
-        rc=ESMF_RC_VAL_WRONG
-        RETURN
+      IF (YML%has('bulk_fluxes import')) THEN
+        CALL cmeps_metadata (YML, TRIM(CPLname), 'bulk_fluxes import',  &
+     &                       Import)
+        IF (yaml_Error(exit_flag, NoError, __LINE__, MyFile)) THEN
+          rc=ESMF_RC_VAL_WRONG
+          RETURN
+        END IF
+        Nimport(Iroms)=SIZE(Import)
+      ELSE
+        Nimport(Iroms)=0                           ! no fields to import
       END IF
-      Nimport(Iroms)=SIZE(Import)
+# else
+      IF (YML%has('import')) THEN
+        CALL cmeps_metadata (YML, TRIM(CPLname), 'import',              &
+     &                       Import)
+        IF (yaml_Error(exit_flag, NoError, __LINE__, MyFile)) THEN
+          rc=ESMF_RC_VAL_WRONG
+          RETURN
+        END IF
+        Nimport(Iroms)=SIZE(Import)
+      ELSE
+        Nimport(Iroms)=0                           ! no fields to import
+      END IF
+# endif
 !
 !  Allocate import fields structure (TYPE ESM_Fields).
 !
@@ -1193,7 +1210,7 @@
           rc=ESMF_RC_COPY_FAIL
           RETURN
         END IF
-        COUPLED(Iroms)%SetLabel(linked_grid)=string
+        COUPLED(Iroms)%SetLabel(linked_grid)=TRIM(string)
       END IF
 !
       IF (YML%has('ExportState')) THEN
@@ -1203,7 +1220,7 @@
           rc=ESMF_RC_COPY_FAIL
           RETURN
         END IF
-        COUPLED(Iroms)%ExpLabel(linked_grid)=string
+        COUPLED(Iroms)%ExpLabel(linked_grid)=TRIM(string)
       END IF
 !
       IF (YML%has('ImportState')) THEN
@@ -1213,7 +1230,7 @@
           rc=ESMF_RC_COPY_FAIL
           RETURN
         END IF
-        COUPLED(Iroms)%ImpLabel(linked_grid)=string
+        COUPLED(Iroms)%ImpLabel(linked_grid)=TRIM(string)
       END IF
 !
 !  Coupling debugging flag.
