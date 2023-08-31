@@ -1,7 +1,7 @@
       MODULE yaml_parser_mod
 !
 !git $Id$
-!svn $Id: yaml_parser.F 1195 2023-08-31 01:52:55Z arango $
+!svn $Id: yaml_parser.F 1196 2023-08-31 20:10:19Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -1289,11 +1289,13 @@
 !  Check for compound key: val1.val2 ...
 !  (It fails if any of the compound keys is not found)
 !
+        is=1
         DO j=1,nkeys
           FoundIt=.FALSE.
-          DO i=1,SIZE(self%list)
+          DO i=is,SIZE(self%list)
             IF (self%list(i)%key.eq.K(j)%value) THEN
               FoundIt=.TRUE.
+              is=i+1
               EXIT
             END IF
           END DO
