@@ -1,5 +1,6 @@
       MODULE yaml_parser
 !
+!git $Id$
 !svn $Id: yaml_parser_test.F 1195 2023-08-31 01:52:55Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !

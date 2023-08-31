@@ -1,5 +1,5 @@
 *
-* git $Id: Readme.md 1195 2023-08-31 01:52:55Z arango $
+* git $Id$
 * svn $Id: Readme.md 1195 2023-08-31 01:52:55Z arango $
 ***********************************************************************
 *  Copyright (c) 2002-2023 The ROMS/TOMS Group                        *
