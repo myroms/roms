@@ -1,5 +1,5 @@
 # git $Id$
-# svn $Id: CMakeLists.txt 1151 2023-02-09 03:08:53Z arango $
+# svn $Id: CMakeLists.txt 1195 2023-08-31 01:52:55Z arango $
 #:::::::::::::::::::::::::::::::::::::::::::::::::::::: David Robertson :::
 # Copyright (c) 2002-2023 The ROMS/TOMS Group                           :::
 #   Licensed under a MIT/X style license                                :::
@@ -10,6 +10,7 @@
 
 list( APPEND _files
       ROMS/Programs/types.F
+      ROMS/Programs/yaml_parser_test.F
 )
 
 set ( ROMS_Programs_files

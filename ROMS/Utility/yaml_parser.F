@@ -1,7 +1,7 @@
       MODULE yaml_parser_mod
 !
 !git $Id$
-!svn $Id: yaml_parser.F 1153 2023-02-17 20:27:14Z arango $
+!svn $Id: yaml_parser.F 1195 2023-08-31 01:52:55Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -405,12 +405,12 @@
 !-----------------------------------------------------------------------
 !
       OPEN (UNIT=iunit, FILE=self%filename, FORM='formatted',           &
-            STATUS='old', IOSTAT=io_err, IOMSG=io_errmsg)
+     &      STATUS='old', IOSTAT=io_err, IOMSG=io_errmsg)
       IF (io_err.ne.0) THEN
         yaml_ErrFlag=5
         IF (yaml_Error(yaml_ErrFlag, NoErr, __LINE__, MyFile)) THEN
           IF (yaml_Master) WRITE (yaml_stdout,10) self%filename,        &
-    &                                             TRIM(io_errmsg)
+     &                                            TRIM(io_errmsg)
           RETURN
         END IF
       END IF
@@ -425,7 +425,7 @@
 !
       YAML_LINE : DO WHILE (.TRUE.)
 !
-        status=self%read_line(Nblanks, line, key, value, anchor,       &
+        status=self%read_line(Nblanks, line, key, value, anchor,        &
      &                        Lswitch)
 !
         SELECT CASE (status)
@@ -866,7 +866,7 @@
 
               IF (yaml_Master.and.LdebugYAML) THEN
                 PRINT '(3a,2(i0,a),a)', 'keystring = ',TRIM(keystring), &
-                                     ', S(', i, ')%vector(', j, ') = ', &
+     &                               ', S(', i, ')%vector(', j, ') = ', &
      &                               TRIM(S(i)%vector(j)%value)
               END IF
 
@@ -2205,7 +2205,7 @@
 !
   10  FORMAT (/,' YAML_GET_IVAR_1D - Inconsistent number of values,',   &
      &        ' key-string: ',a,/,20x,'YAML size = ',i0,                &
-              ', Variable size = ',i0,/,20x,'File: ',a)
+     &        ', Variable size = ',i0,/,20x,'File: ',a)
   20  FORMAT (/,' YAML_GET_IVAR_1D - Error while converting string to', &
      &        ' integer, key: ',a,', value = ',a,/,20x,'ErrMsg: ',a)
 !
@@ -2359,7 +2359,7 @@
 !
   10  FORMAT (/,' YAML_GET_LVAR_1D - Inconsistent number of values,',   &
      &        ' key-string: ',a,/,20x,'YAML size = ',i0,                &
-              ', Variable size = ',i0,/,20x,'File: ',a)
+     &        ', Variable size = ',i0,/,20x,'File: ',a)
 !
       RETURN
       END FUNCTION yaml_Get_lvar_1d
@@ -2526,7 +2526,7 @@
 !
   10  FORMAT (/,' YAML_GET_RVAR_1D - Inconsistent number of values,',   &
      &        ' key-string: ',a,/,20x,'YAML size = ',i0,                &
-              ', Variable size = ',i0,/,20x,'File: ',a)
+     &        ', Variable size = ',i0,/,20x,'File: ',a)
   20  FORMAT (/,' YAML_GET_RVAR_1D - Error while converting string to', &
      &        ' real, key: ',a,', value = ',a,/,20x,'ErrMsg: ',a)
 !
@@ -2673,7 +2673,7 @@
 !
   10  FORMAT (/,' YAML_GET_SVAR_1D - Inconsistent number of values,',   &
      &        ' key-string: ',a,/,20x,'YAML size = ',i0,                &
-              ', Variable size = ',i0,/,20x,'File: ',a)
+     &        ', Variable size = ',i0,/,20x,'File: ',a)
 !
       RETURN
       END FUNCTION yaml_Get_svar_1d
@@ -2867,7 +2867,7 @@
             Lswitch(6)=.TRUE.              ! integer
           END IF
         ELSE
-          IF ((value.eq.'true').or.(value.eq.'false').or.              &
+          IF ((value.eq.'true').or.(value.eq.'false').or.               &
      &        (value.eq.'TRUE').or.(value.eq.'FALSE')) THEN
             Lswitch(5)=.TRUE.              ! logical
           ELSE IF (letter.gt.0) THEN
