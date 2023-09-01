@@ -1,4 +1,4 @@
-<img width="500" alt="image" src="https://github.com/myroms/roms_test/assets/23062912/3f6cc2e1-d068-433e-a631-d44df88ee636">
+<img width="500" alt="image" src="https://github.com/myroms/roms/assets/23062912/77b5429f-1ddf-47ea-8a49-5fd97cd19ef2">
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
@@ -29,27 +29,28 @@ SOFTWARE.
 The most current official versions of this Software and associated tools and
 documentation are available at:
 
-https://github.com/myroms
-https://myroms.org/wiki
+- https://github.com/myroms
+- https://github.com/myroms/roms/wiki
+- https://myroms.org/wiki
 
-Participation in the ROMS User Forum and access to any available technical
+Participation in the **ROMS** User Forum and access to any available technical
 support is limited to registered users at:
 
 https://myroms.org/forum
 
-We ask that users appropriately acknowledge The ROMS/TOMS Group,
+We ask that users appropriately acknowledge The **ROMS/TOMS** Group,
 individual developers, participating agencies and institutions, and funding
 agencies. 
 
-The ROMS/TOMS Group consists of the scientists, engineers, and members
+The **ROMS/TOMS** Group consists of the scientists, engineers, and members
 of various academic institutes, government agencies, and the general public
-that have contributed to the development of the ROMS Framework and agree to
-the terms of the MIT/X license under which ROMS is distributed.
+that have contributed to the development of the **ROMS** Framework and agree to
+the terms of the **MIT/X** license under which **ROMS** is distributed.
 
-Contributions of source code or documentation to the ROMS Framework imply
+Contributions of source code or documentation to the **ROMS** Framework imply
 that (unless explicitly noted otherwise) the author cedes the copyright of
-that material to the ROMS/TOMS Group and accepts the license terms.
+that material to the **ROMS/TOMS** Group and accepts the license terms.
 
-Membership in The ROMS/TOMS group is conferred to all who contribute Software
-to the ROMS Framework, and implies acceptance of the copyright and terms of
+Membership in The **ROMS/TOMS** group is conferred to all who contribute Software
+to the **ROMS** Framework, and implies acceptance of the copyright and terms of
 the license.
