@@ -6,7 +6,7 @@
 !=======================================================================
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license           Hernan G. Arango   !
-!    See License_ROMS.txt                           Nirnimesh Kumar    !
+!    See License_ROMS.md                            Nirnimesh Kumar    !
 !================================================== John C. Warner ====!
 !                                                                      !
 !  This routine computes the wave induced mixing contribution to       !
