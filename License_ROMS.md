@@ -1,4 +1,5 @@
 <img width="500" alt="image" src="https://github.com/myroms/roms_test/assets/23062912/3f6cc2e1-d068-433e-a631-d44df88ee636">
+
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 # MIT License
@@ -23,7 +24,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
-********************************************************************************
+***
 
 The most current official versions of this Software and associated tools and
 documentation are available at:
