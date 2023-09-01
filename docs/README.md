@@ -11,7 +11,7 @@
 # Overview
 
 **ROMS** solves the free-surface, hydrostatic, flux form of the primitive
-equations over variable bathymetry using stretched terrain-following in the
+equations over variable bathymetry using stretched terrain following in the
 vertical and orthogonal curvilinear coordinates in the horizontal. The finite
 volume grid is discretized on a staggered Arakawa C-grid. Detailed information
 about its governing equations, numerical discretization, algorithms, usage, and
@@ -33,7 +33,7 @@ The State University of New Jersey, New Brunswick, New Jersey, USA. Currently, t
 **git** repository contains the following branches:
 
 - **main**: Tagged versions and the latest stable release version of **ROMS**
-- **develop**: Main developing branch of **ROMS**. Not recommended for public
+- **develop**: Main developing branch of **ROMS**. It is not recommended for public
  consumption but passes the internal tests. It is intended for **ROMS** superusers
  and beta testers.
 - **feature branches**: Research and new development branches recommended to
