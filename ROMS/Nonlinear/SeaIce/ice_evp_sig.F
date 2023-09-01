@@ -7,7 +7,7 @@
 !=======================================================================
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license           W. Paul Budgell    !
-!    See License_ROMS.txt                           Katherine Hedstrom !
+!    See License_ROMS.md                            Katherine Hedstrom !
 !================================================== Hernan G. Arango ===
 !                                                                      !
 !  This routine timesteps the EVP stresses term.                       !

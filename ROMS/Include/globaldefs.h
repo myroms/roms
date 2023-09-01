@@ -6,7 +6,7 @@
 ********************************************************** Hernan G. Arango ***
 ** Copyright (c) 2002-2023 The ROMS/TOMS Group     Alexander F. Shchepetkin  **
 **   Licensed under a MIT/X style license                                    **
-**   See License_ROMS.txt                                                    **
+**   See License_ROMS.md                                                     **
 *******************************************************************************
 **                                                                           **
 ** WARNING: This  file  contains  a set of  predetermined macro definitions  **

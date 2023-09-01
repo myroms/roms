@@ -4,7 +4,7 @@
 !=======================================================================
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group      Paul Budgell       !
 !    Licensed under a MIT/X style license           Katherine Hedstrom !
-!    See License_ROMS.txt                           Scott M. Durski    !
+!    See License_ROMS.md                            Scott M. Durski    !
 !================================================== Hernan G. Arango ===
 !                                                                      !
 !  It computes the ice thermodynamic growth and decay term based on    !
