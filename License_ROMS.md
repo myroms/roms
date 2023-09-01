@@ -1,4 +1,7 @@
-MIT License
+<img width="500" alt="image" src="https://github.com/myroms/roms_test/assets/23062912/3f6cc2e1-d068-433e-a631-d44df88ee636">
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+# MIT License
 
 Copyright (c) 2002-2023 Regional Ocean Modeling System (ROMS)
 

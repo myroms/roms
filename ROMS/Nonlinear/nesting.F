@@ -8,7 +8,7 @@
 !=======================================================================
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license           Hernan G. Arango   !
-!    See License_ROMS.txt                             John C. Warner   !
+!    See License_ROMS.md                              John C. Warner   !
 !=======================================================================
 !                                                                      !
 !  This module contains several routines  to process the connectivity  !

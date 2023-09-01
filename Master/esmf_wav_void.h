@@ -7,7 +7,7 @@
 !=======================================================================
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license         Hernan G. Arango     !
-!    See License_ROMS.txt                         Ufuk Utku Turuncoglu !
+!    See License_ROMS.md                          Ufuk Utku Turuncoglu !
 !=======================================================================
 !                                                                      !
 !  This module sets a void wave model gridded component using          !

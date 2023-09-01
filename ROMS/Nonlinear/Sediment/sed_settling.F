@@ -11,7 +11,7 @@
 !=======================================================================
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license           Hernan G. Arango   !
-!    See License_ROMS.txt                   Alexander F. Shchepetkin   !
+!    See License_ROMS.md                    Alexander F. Shchepetkin   !
 !==================================================== John C. Warner ===
 !                                                                      !
 !  This routine computes the vertical settling (sinking) of suspended  !
