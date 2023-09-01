@@ -5,7 +5,7 @@
 !=================================================== Andrew M. Moore ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group      Hernan G. Arango   !
 !    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                                              !
+!    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
 !  ROMS Strong/Weak Constraint Split 4-Dimensional Variational Data    !

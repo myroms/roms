@@ -4,7 +4,7 @@
 ***************************************************** John C. Warner ***
 ** Copyright (c) 2002-2023 The ROMS/TOMS Group      Hernan G. Arango  **
 **   Licensed under a MIT/X style license                             **
-**   See License_ROMS.txt                                             **
+**   See License_ROMS.md                                              **
 ************************************************************************
 **                                                                    **
 ** These routines are use couple ROMS/TOMS to WRF atmosphere model    **

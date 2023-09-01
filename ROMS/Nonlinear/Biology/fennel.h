@@ -5,7 +5,7 @@
 !=======================================================================
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license           Hernan G. Arango   !
-!    See License_ROMS.txt                               Katja Fennel   !
+!    See License_ROMS.md                                Katja Fennel   !
 !========================================== Alexander F. Shchepetkin ===
 !                                                                      !
 !  This routine computes the  biological sources and sinks for the     !

@@ -8,7 +8,7 @@
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group   Emanuele Di Lorenzo   !
 !    Licensed under a MIT/X style license            Andrew M. Moore   !
-!    See License_ROMS.txt                                              !
+!    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
 !  This routine is used to force the tangent linear state equations.   !

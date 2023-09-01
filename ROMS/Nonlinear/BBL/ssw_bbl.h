@@ -10,7 +10,7 @@
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group        Chris Sherwood   !
 !    Licensed under a MIT/X style license               Rich Signell   !
-!    See License_ROMS.txt                             John C. Warner   !
+!    See License_ROMS.md                              John C. Warner   !
 !=======================================================================
 !                                                                      !
 !  This routine compute bottom stresses for the case when the wave     !
