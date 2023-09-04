@@ -3,9 +3,9 @@
 
 #if defined ESMF_LIB && (defined CDEPS || defined CMEPS)
 !
-!git $Id: cmeps_roms.F 1196 2023-08-31 20:10:19Z arango $
+!git $Id: cmeps_roms.F 1199 2023-09-03 21:51:17Z arango $
 !git $Id$
-!svn $Id: cmeps_roms.F 1196 2023-08-31 20:10:19Z arango $
+!svn $Id: cmeps_roms.F 1199 2023-09-03 21:51:17Z arango $
 !>
 !! \brief   **ROMS** ESMF/NUOPC Cap file for **CMEPS**
 !!
@@ -120,7 +120,8 @@
      &                             exchange_u2d_tile,                   &
      &                             exchange_v2d_tile
       USE get_metadata_mod, ONLY : CouplingField,                       &
-     &                             cmeps_metadata
+     &                             cmeps_metadata,                      &
+     &                             metadata_has
       USE mod_kinds,        ONLY : dp, i4b, i8b, r4, r8
       USE mod_forces,       ONLY : FORCES
       USE mod_grid,         ONLY : GRID
@@ -149,6 +150,7 @@
       USE strings_mod,      ONLY : FoundError, assign_string, lowercase
       USE yaml_parser_mod,  ONLY : yaml_AssignString,                   &
      &                             yaml_Error,                          &
+     &                             yaml_Svec,                           &
      &                             yaml_get,                            &
      &                             yaml_initialize,                     &
      &                             yaml_tree
@@ -216,6 +218,7 @@
         logical :: debug_write                ! write exchanged field
 !
         integer :: gtype                      ! field grid mesh type
+        integer :: itype                      ! field interpolation flag
         integer :: Tindex                     ! rolling two-time indices
 !
         character (len=:), allocatable :: short_name    ! short name
@@ -386,6 +389,17 @@
      &                                        'U     ',                 &
      &                                        'V     ' /)
 !
+!  REGRID interpolation method between source and destination fields.
+!
+      integer, parameter :: Inone   = 0     ! none
+      integer, parameter :: Ibilin  = 1     ! bilinear
+      integer, parameter :: Ipatch  = 2     ! high-order patch recovery
+      integer, parameter :: Iconsvd = 3     ! 1st-order conservative, D
+      integer, parameter :: Iconsvf = 4     ! 1st-order conservative, F
+      integer, parameter :: Ifcopy  = 5     ! redist
+      integer, parameter :: InStoD  = 6     ! nearest Src 2 Dst
+      integer, parameter :: InStoDd = 7     ! nearest Src 2 Dst, consv D
+      integer, parameter :: InStoDf = 8     ! nearest Src 2 Dst, consv F
 !
 !  Standard input filename for each coupled model, [Nmodels].
 !
@@ -660,11 +674,13 @@
 # endif
       logical :: Lexist
 !
-      integer :: i, layout
+      integer :: Findex, i, layout, ng
 !
       TYPE (CouplingField), allocatable :: Export(:), Import(:)
+      TYPE (yaml_Svec), allocatable     :: Estring(:), Istring(:)
       TYPE (yaml_tree)                  :: YML
 !
+      character (len=240) :: StandardName, ShortName
       character (len=256) :: string
 
       character (len=*), parameter :: MyFile =                          &
@@ -675,7 +691,7 @@
 !-----------------------------------------------------------------------
 !
       IF (ESM_track) THEN
-        WRITE (trac,'(a,a,i0)') '==> Entering ROMS_SetServices',        &
+        WRITE (trac,'(a,a,i0)') '==> Entering ROMS_Create',             &
      &                          ', PET', PETrank
         FLUSH (trac)
       END IF
@@ -817,23 +833,39 @@
 !  Process export field(s) metadata from YAML object.
 !-----------------------------------------------------------------------
 !
-!  Extract export field metadata from dictionary.
+!  Get export variables short name to process.
 !
-      IF (YML%has('export')) THEN
-        CALL cmeps_metadata (YML, TRIM(CPLname), 'export',              &
-     &                     Export)
-        IF (yaml_Error(exit_flag, NoError, __LINE__, MyFile)) THEN
-          rc=ESMF_RC_VAL_WRONG
+      IF (YML%has('export_variables')) THEN
+        IF (FoundError(yaml_get(YML, 'export_variables',                 &
+     &                          Estring),                                &
+     &                 NoError, __LINE__, MyFile)) THEN
+          rc=ESMF_RC_COPY_FAIL
           RETURN
         END IF
-        Nexport(Iroms)=SIZE(Export)
+        Nexport(Iroms)=SIZE(Estring)
       ELSE
         Nexport(Iroms)=0                           ! no fields to export
       END IF
 !
-!  Allocate export fields structure (TYPE ESM_Fields).
+!  Extract export field metadata from dictionary.
 !
       IF (Nexport(Iroms).gt.0) THEN
+        IF (YML%has('export')) THEN
+          CALL cmeps_metadata (YML, TRIM(CPLname), 'export',            &
+     &                         Export)
+          IF (yaml_Error(exit_flag, NoError, __LINE__, MyFile)) THEN
+            rc=ESMF_RC_VAL_WRONG
+            RETURN
+          END IF
+        ELSE
+          rc=ESMF_RC_NOT_FOUND
+          IF (localPET.eq.0) WRITE (cplout,20) 'export',                &
+     &                                         TRIM(CPLname)
+          RETURN
+        END IF
+!
+!  Allocate export fields structure (TYPE ESM_Fields).
+!
         IF (.not.allocated(MODELS(Iroms)%ExportField)) THEN
           allocate ( MODELS(Iroms)%ExportField(Nexport(Iroms)) )
         END IF
@@ -841,136 +873,179 @@
 !  Load export field(s) metadata.
 !
         DO i=1,Nexport(Iroms)
-          MODELS(Iroms)%ExportField(i)%connected=Export(i)%connected
-          MODELS(Iroms)%ExportField(i)%debug_write=Export(i)%debug_write
+          ShortName=Estring(i)%value
+          Findex=metadata_has(Export, TRIM(ShortName))
+          IF (Findex.gt.0) THEN
+            MODELS(Iroms)%ExportField(i)%connected=                     &
+     &                                   Export(Findex)%connected
+            MODELS(Iroms)%ExportField(i)%debug_write=                   &
+     &                                   Export(Findex)%debug_write
 !
-          MODELS(Iroms)%ExportField(i)%add_offset=Export(i)%add_offset
-          MODELS(Iroms)%ExportField(i)%scale_factor=Export(i)%scale
+            MODELS(Iroms)%ExportField(i)%add_offset=                    &
+     &                                   Export(Findex)%add_offset
+            MODELS(Iroms)%ExportField(i)%scale_factor=                  &
+     &                                   Export(Findex)%scale
 !
 !                                      field short name
-          IF (FoundError(assign_string(                                 &
+            IF (FoundError(assign_string(                               &
      &                     MODELS(Iroms)%ExportField(i)%short_name,     &
-     &                                 Export(i)%short_name),           &
+     &                     Export(Findex)%short_name),                  &
      &                   NoError, __LINE__, MyFile)) THEN
-            rc=ESMF_RC_COPY_FAIL
-            RETURN
-          END IF
+              rc=ESMF_RC_COPY_FAIL
+              RETURN
+            END IF
 !                                      field standard name
-          IF (FoundError(assign_string(                                 &
+            IF (FoundError(assign_string(                               &
      &                     MODELS(Iroms)%ExportField(i)%standard_name,  &
-     &                                 Export(i)%standard_name),        &
+     &                     Export(Findex)%standard_name),               &
      &                   NoError, __LINE__, MyFile)) THEN
-            rc=ESMF_RC_COPY_FAIL
-            RETURN
-          END IF
+              rc=ESMF_RC_COPY_FAIL
+              RETURN
+            END IF
 !                                      field descriptive long name
-          IF (FoundError(assign_string(                                 &
+            IF (FoundError(assign_string(                               &
      &                     MODELS(Iroms)%ExportField(i)%long_name,      &
-     &                                 Export(i)%long_name),            &
+     &                     Export(Findex)%long_name),                   &
      &                   NoError, __LINE__, MyFile)) THEN
-            rc=ESMF_RC_COPY_FAIL
-            RETURN
-          END IF
+              rc=ESMF_RC_COPY_FAIL
+              RETURN
+            END IF
 !                                      field mapping normalization type
-          IF (FoundError(assign_string(                                 &
+            IF (FoundError(assign_string(                               &
      &                     MODELS(Iroms)%ExportField(i)%map_norm,       &
-     &                                 Export(i)%map_norm),             &
+     &                     Export(Findex)%map_norm),                    &
      &                   NoError, __LINE__, MyFile)) THEN
-            rc=ESMF_RC_COPY_FAIL
-            RETURN
-          END IF
+              rc=ESMF_RC_COPY_FAIL
+              RETURN
+            END IF
 !                                      field reggriding method
-          IF (FoundError(assign_string(                                 &
+            IF (FoundError(assign_string(                               &
      &                     MODELS(Iroms)%ExportField(i)%map_type,       &
-     &                                 Export(i)%map_type),             &
+     &                     Export(Findex)%map_type),                    &
      &                   NoError, __LINE__, MyFile)) THEN
-            rc=ESMF_RC_COPY_FAIL
-            RETURN
-          END IF
+              rc=ESMF_RC_COPY_FAIL
+              RETURN
+            END IF
 !                                      destination field grid-cell type
-          IF (FoundError(assign_string(                                 &
+            IF (FoundError(assign_string(                               &
      &                     MODELS(Iroms)%ExportField(i)%dst_gtype,      &
-     &                                 Export(i)%destination_grid),     &
+     &                     Export(Findex)%destination_grid),            &
      &                   NoError, __LINE__, MyFile)) THEN
-            rc=ESMF_RC_COPY_FAIL
-            RETURN
-          END IF
+              rc=ESMF_RC_COPY_FAIL
+              RETURN
+            END IF
 !                                      destination field units
-          IF (FoundError(assign_string(                                 &
+            IF (FoundError(assign_string(                               &
      &                     MODELS(Iroms)%ExportField(i)%dst_units,      &
-     &                                 Export(i)%destination_units),    &
+     &                     Export(Findex)%destination_units),           &
      &                   NoError, __LINE__, MyFile)) THEN
-            rc=ESMF_RC_COPY_FAIL
-            RETURN
-          END IF
+              rc=ESMF_RC_COPY_FAIL
+              RETURN
+            END IF
 !                                      source field grid-cell type
-          IF (FoundError(assign_string(                                 &
+            IF (FoundError(assign_string(                               &
      &                     MODELS(Iroms)%ExportField(i)%src_gtype,      &
-     &                                 Export(i)%source_grid),          &
+     &                     Export(Findex)%source_grid),                 &
      &                   NoError, __LINE__, MyFile)) THEN
-             rc=ESMF_RC_COPY_FAIL
-             RETURN
-          END IF
+              rc=ESMF_RC_COPY_FAIL
+              RETURN
+            END IF
 !                                      source field units
-          IF (FoundError(assign_string(                                 &
+            IF (FoundError(assign_string(                               &
      &                     MODELS(Iroms)%ExportField(i)%src_units,      &
-     &                                 Export(i)%source_units),         &
+     &                     Export(Findex)%source_units),                &
      &                   NoError, __LINE__, MyFile)) THEN
-            rc=ESMF_RC_COPY_FAIL
-            RETURN
-          END IF
+              rc=ESMF_RC_COPY_FAIL
+              RETURN
+            END IF
 !                                      DATA NetCDF variable name
-          IF (FoundError(assign_string(                                 &
+            IF (FoundError(assign_string(                               &
      &                     MODELS(Iroms)%ExportField(i)%nc_vname,       &
-     &                                 Export(i)%data_netcdf_vname),    &
+     &                     Export(Findex)%data_netcdf_vname),           &
      &                   NoError, __LINE__, MyFile)) THEN
-            rc=ESMF_RC_COPY_FAIL
-            RETURN
-          END IF
+              rc=ESMF_RC_COPY_FAIL
+              RETURN
+            END IF
 !                                      DATA NetCDF time variable name
-          IF (FoundError(assign_string(                                 &
+            IF (FoundError(assign_string(                               &
      &                     MODELS(Iroms)%ExportField(i)%nc_tname,       &
-     &                                 Export(i)%data_netcdf_tname),    &
+     &                     Export(Findex)%data_netcdf_tname),           &
      &                   NoError, __LINE__, MyFile)) THEN
-            rc=ESMF_RC_COPY_FAIL
-            RETURN
-          END IF
+              rc=ESMF_RC_COPY_FAIL
+              RETURN
+            END IF
 !
 !  Set grid type flag.
 !
-          SELECT CASE (lowercase(Export(i)%source_grid))
-            CASE ('center_cell', 'cell_center', 'center')
-              MODELS(Iroms)%ExportField(i)%gtype=Icenter
-            CASE ('corner_cell', 'cell_corner', 'corner')
-              MODELS(Iroms)%ExportField(i)%gtype=Icorner
-            CASE ('left_right_edge', 'right_left_edge', 'edge1')
-              MODELS(Iroms)%ExportField(i)%gtype=Iupoint
-            CASE ('lower_upper_edge', 'upper_lower_edge', 'edge2')
-              MODELS(Iroms)%ExportField(i)%gtype=Ivpoint
-            CASE DEFAULT
-              MODELS(Iroms)%ExportField(i)%gtype=Icenter
-          END SELECT
+            SELECT CASE (lowercase(Export(i)%source_grid))
+              CASE ('center_cell', 'cell_center', 'center')
+                MODELS(Iroms)%ExportField(i)%gtype=Icenter
+              CASE ('corner_cell', 'cell_corner', 'corner')
+                MODELS(Iroms)%ExportField(i)%gtype=Icorner
+              CASE ('left_right_edge', 'right_left_edge', 'edge1')
+                MODELS(Iroms)%ExportField(i)%gtype=Iupoint
+              CASE ('lower_upper_edge', 'upper_lower_edge', 'edge2')
+                MODELS(Iroms)%ExportField(i)%gtype=Ivpoint
+              CASE DEFAULT
+                MODELS(Iroms)%ExportField(i)%gtype=Icenter
+            END SELECT
+!
+!  Set map type flag.
+!
+            SELECT CASE (lowercase(Export(i)%map_type))
+              CASE ('mapbilnr')
+                MODELS(Iroms)%ExportField(i)%itype=Ibilin
+              CASE ('mappatch')
+                MODELS(Iroms)%ExportField(i)%itype=Ipatch
+              CASE ('mapconsd')
+                MODELS(Iroms)%ExportField(i)%itype=Iconsvd
+              CASE ('mapconsf')
+                MODELS(Iroms)%ExportField(i)%itype=Iconsvf
+              CASE ('mapfcopy')
+                MODELS(Iroms)%ExportField(i)%itype=Ifcopy
+              CASE ('mapnstod')
+                MODELS(Iroms)%ExportField(i)%itype=InStoD
+              CASE ('mapnstod_consd')
+                MODELS(Iroms)%ExportField(i)%itype=InStoDd
+              CASE ('mapnstod_consf')
+                MODELS(Iroms)%ExportField(i)%itype=InStoDf
+              CASE DEFAULT
+                MODELS(Iroms)%ExportField(i)%itype=Inone
+            END SELECT
 !
 !  Check if field exits in NUOPC dictionary.
 !
-          Lexist=NUOPC_FieldDictionaryHasEntry(                         &
+            Lexist=NUOPC_FieldDictionaryHasEntry(                       &
      &                     MODELS(Iroms)%ExportField(i)%standard_name,  &
      &                                        rc=rc)
-          IF (ESMF_LogFoundError(rcToCheck=rc,                          &
-     &                           msg=ESMF_LOGERR_PASSTHRU,              &
-     &                           line=__LINE__,                         &
-     &                           file=MyFile)) THEN
-            RETURN
-          END IF
+            IF (ESMF_LogFoundError(rcToCheck=rc,                        &
+     &                             msg=ESMF_LOGERR_PASSTHRU,            &
+     &                             line=__LINE__,                       &
+     &                             file=MyFile)) THEN
+              RETURN
+            END IF
 !
 !  If appropriate, add field to NUOPC dictionary.
 !
-          IF (.not.Lexist) THEN
-            CALL NUOPC_FieldDictionaryAddEntry(                         &
+            IF (.not.Lexist) THEN
+              CALL NUOPC_FieldDictionaryAddEntry(                       &
      &                     MODELS(Iroms)%ExportField(i)%standard_name,  &
      &                                         canonicalUnits =         &
      &                     MODELS(Iroms)%ExportField(i)%src_units,      &
      &                                         rc=rc)
+              IF (ESMF_LogFoundError(rcToCheck=rc,                      &
+     &                               msg=ESMF_LOGERR_PASSTHRU,          &
+     &                               line=__LINE__,                     &
+     &                               file=MyFile)) THEN
+                RETURN
+              END IF
+            END IF
+          ELSE
+            IF (localPET.eq.0) THEN
+              WRITE (cplout,30) 'export field short_name: ',            &
+     &                          TRIM(ShortName), TRIM(CPLname)
+            END IF
+            rc=ESMF_RC_NOT_FOUND
             IF (ESMF_LogFoundError(rcToCheck=rc,                        &
      &                             msg=ESMF_LOGERR_PASSTHRU,            &
      &                             line=__LINE__,                       &
@@ -985,37 +1060,39 @@
 !  Process import field(s) metadata from YAML object.
 !-----------------------------------------------------------------------
 !
+!  Get import variables short name to process.
+!
+      IF (YML%has('import_variables')) THEN
+        IF (FoundError(yaml_get(YML, 'import_variables',                 &
+     &                          Istring),                                &
+     &                 NoError, __LINE__, MyFile)) THEN
+          rc=ESMF_RC_COPY_FAIL
+          RETURN
+        END IF
+        Nimport(Iroms)=SIZE(Istring)
+      ELSE
+        Nimport(Iroms)=0                           ! no fields to import
+      END IF
+
 !  Extract ROMS import field(s) metadata for YML dictionary.
 !
-# ifdef BULK_FLUXES
-      IF (YML%has('bulk_fluxes import')) THEN
-        CALL cmeps_metadata (YML, TRIM(CPLname), 'bulk_fluxes import',  &
-     &                       Import)
-        IF (yaml_Error(exit_flag, NoError, __LINE__, MyFile)) THEN
-          rc=ESMF_RC_VAL_WRONG
+      IF (Nimport(Iroms).gt.0) THEN
+        IF (YML%has('import')) THEN
+          CALL cmeps_metadata (YML, TRIM(CPLname), 'import',            &
+     &                         Import)
+          IF (yaml_Error(exit_flag, NoError, __LINE__, MyFile)) THEN
+            rc=ESMF_RC_VAL_WRONG
+            RETURN
+          END IF
+        ELSE
+          rc=ESMF_RC_NOT_FOUND
+          IF (localPET.eq.0) WRITE (cplout,20) 'import',                &
+     &                                         TRIM(CPLname)
           RETURN
         END IF
-        Nimport(Iroms)=SIZE(Import)
-      ELSE
-        Nimport(Iroms)=0                           ! no fields to import
-      END IF
-# else
-      IF (YML%has('import')) THEN
-        CALL cmeps_metadata (YML, TRIM(CPLname), 'import',              &
-     &                       Import)
-        IF (yaml_Error(exit_flag, NoError, __LINE__, MyFile)) THEN
-          rc=ESMF_RC_VAL_WRONG
-          RETURN
-        END IF
-        Nimport(Iroms)=SIZE(Import)
-      ELSE
-        Nimport(Iroms)=0                           ! no fields to import
-      END IF
-# endif
 !
 !  Allocate import fields structure (TYPE ESM_Fields).
 !
-      IF (Nimport(Iroms).gt.0) THEN
         IF (.not.allocated(MODELS(Iroms)%ImportField)) THEN
           allocate ( MODELS(Iroms)%ImportField(Nimport(Iroms)) )
         END IF
@@ -1023,136 +1100,179 @@
 !  Load import field(s) metadata.
 !
         DO i=1,Nimport(Iroms)
-          MODELS(Iroms)%ImportField(i)%connected=Import(i)%connected
-          MODELS(Iroms)%ImportField(i)%debug_write=Import(i)%debug_write
+          ShortName=Istring(i)%value
+          Findex=metadata_has(Import, TRIM(ShortName))
+          IF (Findex.gt.0) THEN
+            MODELS(Iroms)%ImportField(i)%connected=                     &
+     &                                   Import(Findex)%connected
+            MODELS(Iroms)%ImportField(i)%debug_write=                   &
+     &                                   Import(Findex)%debug_write
 !
-          MODELS(Iroms)%ImportField(i)%add_offset=Import(i)%add_offset
-          MODELS(Iroms)%ImportField(i)%scale_factor=Import(i)%scale
+            MODELS(Iroms)%ImportField(i)%add_offset=                    &
+     &                                   Import(Findex)%add_offset
+            MODELS(Iroms)%ImportField(i)%scale_factor=                  &
+     &                                   Import(Findex)%scale
 !
 !                                      field short name
-          IF (FoundError(assign_string(                                 &
+            IF (FoundError(assign_string(                               &
      &                     MODELS(Iroms)%ImportField(i)%short_name,     &
-     &                                 Import(i)%short_name),           &
+     &                     Import(Findex)%short_name),                  &
      &                   NoError, __LINE__, MyFile)) THEN
-            rc=ESMF_RC_COPY_FAIL
-            RETURN
-          END IF
+              rc=ESMF_RC_COPY_FAIL
+              RETURN
+            END IF
 !                                      field standard name
-          IF (FoundError(assign_string(                                 &
+            IF (FoundError(assign_string(                               &
      &                     MODELS(Iroms)%ImportField(i)%standard_name,  &
-     &                                 Import(i)%standard_name),        &
+     &                     Import(Findex)%standard_name),               &
      &                   NoError, __LINE__, MyFile)) THEN
-            rc=ESMF_RC_COPY_FAIL
-            RETURN
-          END IF
+              rc=ESMF_RC_COPY_FAIL
+              RETURN
+            END IF
 !                                      field descriptive long name
-          IF (FoundError(assign_string(                                 &
+            IF (FoundError(assign_string(                               &
      &                     MODELS(Iroms)%ImportField(i)%long_name,      &
-     &                                 Import(i)%long_name),            &
+     &                     Import(Findex)%long_name),                   &
      &                   NoError, __LINE__, MyFile)) THEN
-            rc=ESMF_RC_COPY_FAIL
-            RETURN
-          END IF
+              rc=ESMF_RC_COPY_FAIL
+              RETURN
+            END IF
 !                                      field mapping normalization type
-          IF (FoundError(assign_string(                                 &
+            IF (FoundError(assign_string(                               &
      &                     MODELS(Iroms)%ImportField(i)%map_norm,       &
-     &                                 Import(i)%map_norm),             &
+     &                     Import(Findex)%map_norm),                    &
      &                   NoError, __LINE__, MyFile)) THEN
-            rc=ESMF_RC_COPY_FAIL
-            RETURN
-          END IF
+              rc=ESMF_RC_COPY_FAIL
+              RETURN
+            END IF
 !                                      field reggriding method
-          IF (FoundError(assign_string(                                 &
+            IF (FoundError(assign_string(                               &
      &                     MODELS(Iroms)%ImportField(i)%map_type,       &
-     &                                 Import(i)%map_type),             &
+     &                     Import(Findex)%map_type),                    &
      &                   NoError, __LINE__, MyFile)) THEN
-            rc=ESMF_RC_COPY_FAIL
-            RETURN
-          END IF
+              rc=ESMF_RC_COPY_FAIL
+              RETURN
+            END IF
 !                                      destination field grid-cell type
-          IF (FoundError(assign_string(                                 &
+            IF (FoundError(assign_string(                               &
      &                     MODELS(Iroms)%ImportField(i)%dst_gtype,      &
-     &                                 Import(i)%destination_grid),     &
+     &                     Import(Findex)%destination_grid),            &
      &                   NoError, __LINE__, MyFile)) THEN
-            rc=ESMF_RC_COPY_FAIL
-            RETURN
-          END IF
+              rc=ESMF_RC_COPY_FAIL
+              RETURN
+            END IF
 !                                      destination field units
-          IF (FoundError(assign_string(                                 &
+            IF (FoundError(assign_string(                               &
      &                     MODELS(Iroms)%ImportField(i)%dst_units,      &
-     &                                 Import(i)%destination_units),    &
+     &                     Import(Findex)%destination_units),           &
      &                   NoError, __LINE__, MyFile)) THEN
-             rc=ESMF_RC_COPY_FAIL
-             RETURN
-          END IF
+              rc=ESMF_RC_COPY_FAIL
+              RETURN
+            END IF
 !                                      source field grid-cell type
-          IF (FoundError(assign_string(                                 &
+            IF (FoundError(assign_string(                               &
      &                     MODELS(Iroms)%ImportField(i)%src_gtype,      &
-     &                                 Import(i)%source_grid),          &
+     &                     Import(Findex)%source_grid),                 &
      &                   NoError, __LINE__, MyFile)) THEN
-            rc=ESMF_RC_COPY_FAIL
-            RETURN
-          END IF
+              rc=ESMF_RC_COPY_FAIL
+              RETURN
+            END IF
 !                                      source field units
-          IF (FoundError(assign_string(                                 &
+            IF (FoundError(assign_string(                               &
      &                     MODELS(Iroms)%ImportField(i)%src_units,      &
-     &                                 Import(i)%source_units),         &
+     &                     Import(Findex)%source_units),                &
      &                   NoError, __LINE__, MyFile)) THEN
-             rc=ESMF_RC_COPY_FAIL
-             RETURN
-          END IF
+              rc=ESMF_RC_COPY_FAIL
+              RETURN
+            END IF
 !                                      DATA NetCDF variable name
-          IF (FoundError(assign_string(                                 &
+            IF (FoundError(assign_string(                               &
      &                     MODELS(Iroms)%ImportField(i)%nc_vname,       &
-     &                                 Import(i)%data_netcdf_vname),    &
+     &                     Import(Findex)%data_netcdf_vname),           &
      &                   NoError, __LINE__, MyFile)) THEN
-            rc=ESMF_RC_COPY_FAIL
-            RETURN
-          END IF
+              rc=ESMF_RC_COPY_FAIL
+              RETURN
+            END IF
 !                                      DATA NetCDF time variable name
-          IF (FoundError(assign_string(                                 &
+            IF (FoundError(assign_string(                               &
      &                     MODELS(Iroms)%ImportField(i)%nc_tname,       &
-     &                                 Import(i)%data_netcdf_tname),    &
+     &                     Import(Findex)%data_netcdf_tname),           &
      &                   NoError, __LINE__, MyFile)) THEN
-            rc=ESMF_RC_COPY_FAIL
-            RETURN
-          END IF
+              rc=ESMF_RC_COPY_FAIL
+              RETURN
+            END IF
 !
 !  Set grid type flag.
 !
-          SELECT CASE (lowercase(Import(i)%destination_grid))
-            CASE ('center_cell', 'cell_center', 'center')
-              MODELS(Iroms)%ImportField(i)%gtype=Icenter
-            CASE ('corner_cell', 'cell_corner', 'corner')
-              MODELS(Iroms)%ImportField(i)%gtype=Icorner
-            CASE ('left_right_edge', 'right_left_edge', 'edge1')
-              MODELS(Iroms)%ImportField(i)%gtype=Iupoint
-            CASE ('lower_upper_edge', 'upper_lower_edge', 'edge2')
-              MODELS(Iroms)%ImportField(i)%gtype=Ivpoint
-            CASE DEFAULT
-              MODELS(Iroms)%ImportField(i)%gtype=Icenter
-          END SELECT
+            SELECT CASE (lowercase(Import(i)%destination_grid))
+              CASE ('center_cell', 'cell_center', 'center')
+                MODELS(Iroms)%ImportField(i)%gtype=Icenter
+              CASE ('corner_cell', 'cell_corner', 'corner')
+                MODELS(Iroms)%ImportField(i)%gtype=Icorner
+              CASE ('left_right_edge', 'right_left_edge', 'edge1')
+                MODELS(Iroms)%ImportField(i)%gtype=Iupoint
+              CASE ('lower_upper_edge', 'upper_lower_edge', 'edge2')
+                MODELS(Iroms)%ImportField(i)%gtype=Ivpoint
+              CASE DEFAULT
+                MODELS(Iroms)%ImportField(i)%gtype=Icenter
+            END SELECT
+!
+!  Set map type flag.
+!
+            SELECT CASE (lowercase(Import(i)%map_type))
+              CASE ('mapbilnr')
+                MODELS(Iroms)%ImportField(i)%itype=Ibilin
+              CASE ('mappatch')
+                 MODELS(Iroms)%ImportField(i)%itype=Ipatch
+              CASE ('mapconsd')
+                MODELS(Iroms)%ImportField(i)%itype=Iconsvd
+              CASE ('mapconsf')
+                MODELS(Iroms)%ImportField(i)%itype=Iconsvf
+              CASE ('mapfcopy')
+                MODELS(Iroms)%ImportField(i)%itype=Ifcopy
+              CASE ('mapnstod')
+                MODELS(Iroms)%ImportField(i)%itype=InStoD
+              CASE ('mapnstod_consd')
+                MODELS(Iroms)%ImportField(i)%itype=InStoDd
+              CASE ('mapnstod_consf')
+                MODELS(Iroms)%ImportField(i)%itype=InStoDf
+              CASE DEFAULT
+                MODELS(Iroms)%ImportField(i)%itype=Inone
+            END SELECT
 !
 !  Check if field exits in NUOPC dictionary.
 !
-          Lexist=NUOPC_FieldDictionaryHasEntry(                         &
+            Lexist=NUOPC_FieldDictionaryHasEntry(                       &
      &                     MODELS(Iroms)%ImportField(i)%standard_name,  &
      &                                        rc=rc)
-          IF (ESMF_LogFoundError(rcToCheck=rc,                          &
-     &                           msg=ESMF_LOGERR_PASSTHRU,              &
-     &                           line=__LINE__,                         &
-     &                           file=MyFile)) THEN
-            RETURN
-          END IF
+            IF (ESMF_LogFoundError(rcToCheck=rc,                        &
+     &                             msg=ESMF_LOGERR_PASSTHRU,            &
+     &                             line=__LINE__,                       &
+     &                             file=MyFile)) THEN
+              RETURN
+            END IF
 !
 !  If appropriate, add field to NUOPC dictionary.
 !
-          IF (.not.Lexist) THEN
-            CALL NUOPC_FieldDictionaryAddEntry(                         &
+            IF (.not.Lexist) THEN
+              CALL NUOPC_FieldDictionaryAddEntry(                       &
      &                     MODELS(Iroms)%ImportField(i)%standard_name,  &
      &                                         canonicalUnits =         &
      &                     MODELS(Iroms)%ImportField(i)%src_units,      &
      &                                         rc=rc)
+              IF (ESMF_LogFoundError(rcToCheck=rc,                      &
+     &                               msg=ESMF_LOGERR_PASSTHRU,          &
+     &                               line=__LINE__,                     &
+     &                               file=MyFile)) THEN
+                RETURN
+              END IF
+            END IF
+          ELSE
+            IF (localPET.eq.0) THEN
+              WRITE (cplout,30) 'import field short_name: ',            &
+     &                          TRIM(ShortName), TRIM(CPLname)
+            END IF
+            rc=ESMF_RC_NOT_FOUND
             IF (ESMF_LogFoundError(rcToCheck=rc,                        &
      &                             msg=ESMF_LOGERR_PASSTHRU,            &
      &                             line=__LINE__,                       &
@@ -1258,13 +1378,52 @@
 !  Destroy YAML obeject and deallocate local structures.
 !
       CALL YML%destroy ()
-      IF (allocated(Export)) deallocate (Export)
-      IF (allocated(Import)) deallocate (Import)
+      IF (allocated(Export))  deallocate (Export)
+      IF (allocated(Import))  deallocate (Import)
+      IF (allocated(Estring)) deallocate (Estring)
+      IF (allocated(Istring)) deallocate (Istring)
 !
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '<== Exiting  ROMS_Create',             &
      &                          ', PET', PETrank
         FLUSH (trac)
+      END IF
+!
+!-----------------------------------------------------------------------
+!  Report specified import and export states.
+!-----------------------------------------------------------------------
+!
+      IF (LocalPET.eq.0) THEN
+        IF (Nimport(Iroms).gt.0) THEN
+          WRITE (cplout,40) 'ROMS IMPORT Fields Metadata:'
+          DO i=1,Nimport(Iroms)
+            WRITE (cplout,50)                                           &
+     &              TRIM(MODELS(Iroms)%ImportField(i)%short_name),      &
+     &              TRIM(MODELS(Iroms)%ImportField(i)%standard_name),   &
+     &              MODELS(Iroms)%ImportField(i)%gtype,                 &
+     &              MODELS(Iroms)%ImportField(i)%itype,                 &
+     &              MODELS(Iroms)%ImportField(i)%connected,             &
+     &              MODELS(Iroms)%ImportField(i)%debug_write,           &
+     &              MODELS(Iroms)%ImportField(i)%add_offset,            &
+     &              MODELS(Iroms)%ImportField(i)%scale_factor
+          END DO
+        END IF
+!
+        IF (Nexport(Iroms).gt.0) THEN
+          WRITE (cplout,40) 'ROMS EXPORT Fields Metadata:'
+          DO i=1,Nexport(Iroms)
+            WRITE (cplout,50)                                           &
+     &              TRIM(MODELS(Iroms)%ExportField(i)%short_name),      &
+     &              TRIM(MODELS(Iroms)%ExportField(i)%standard_name),   &
+     &              MODELS(Iroms)%ExportField(i)%gtype,                 &
+     &              MODELS(Iroms)%ExportField(i)%itype,                 &
+     &              MODELS(Iroms)%ExportField(i)%connected,             &
+     &              MODELS(Iroms)%ExportField(i)%debug_write,           &
+     &              MODELS(Iroms)%ExportField(i)%add_offset,            &
+     &              MODELS(Iroms)%ExportField(i)%scale_factor
+          END DO
+        END IF
+        WRITE (cplout,60)
       END IF
 !
   10  FORMAT (/,' ROMS_CREATE - Unable to create YAML object for',      &
@@ -1273,6 +1432,30 @@
   20  FORMAT (/," ROMS_CREATE - Unable to find key: '",a,"'",           &
      &        ' ROMS/CMEPS configuration metadata file: ',/,15x,a,/,    &
      &        /,15x,'YAML file: ',a)
+  30  FORMAT (/,' ROMS_CREATE - cannot find metadata for',              &
+     &        1x,a,'''',a,'''.',/,15x,                                  &
+     &        'Add entry to metadata file: ',a)
+  40  FORMAT (/,a,/, 27('='),/,/, 'Short Name',                         &
+     &        t15,'Standard Name', t74,'G', t77,'I', t80,'C', t83,'W',  &
+     &        t87,'add_offset', t99,'scale_factor',/, 111('-'))
+  50  FORMAT (a, t15,a, t74,i1, t77,i1, t80,l1, t83,l1,                 &
+     &        t86,1p,e12.5, t100,1p,e12.5)
+  60  FORMAT (/,' G: Grid cell location,     1=Center,',                &
+     &                                     ' 2=Corner,',                &
+     &                                     ' 3=U-point,',               &
+     &                                     ' 4=V-point',                &
+     &        /,' I: Regridding method,      1=bilinear,',              &
+     &                                     ' 2=patch,',                 &
+     &                                     ' 3=conserv D, ',            &
+     &                                     ' 4=conserv F, ',            &
+     &                                     ' 5=redist, ',               &
+     &                                     ' 6=nearest',                &
+     &                                     ' 7=nearest D, ',            &
+     &                                     ' 8=nearest F, ',            &
+     &        /,' C: Connected to coupler,   F=derived from other,',    &
+     &                                     ' T=exchanged/regridded',    &
+     &        /,' W: Field write to NetCDF,  F=false, T=true',          &
+     &                                     ' (used if DebugLevel > 2)'/)
 !
       RETURN
       END SUBROUTINE ROMS_Create
@@ -1306,6 +1489,9 @@
       TYPE (ESMF_VM)                    :: vm
       TYPE (yaml_tree)                  :: YML
 !
+# ifdef ADD_NESTED_STATE
+      character (len=100) :: CoupledSet, StateLabel
+# endif
       character (len=240) :: StandardName, ShortName
 
       character (len=*), parameter :: MyFile =                          &
@@ -1366,15 +1552,92 @@
 !-----------------------------------------------------------------------
 !  Set ROMS Import State metadata.
 !-----------------------------------------------------------------------
+
+# ifdef ADD_NESTED_STATE
 !
-!  Add fields to ROMS Import state.  Coupled NestedStates are not
-!  supported in CMEPS.
+!  Add ROMS Import state. If nesting, each grid has its own import
+!  state.
 !
       IMPORTING : IF (Nimport(Iroms).gt.0) THEN
+        DO ng=1,MODELS(Iroms)%Ngrids
+          IF (ANY(COUPLED(Iroms)%LinkedGrid(ng,:))) THEN
+            CoupledSet=TRIM(COUPLED(Iroms)%SetLabel(ng))
+            StateLabel=TRIM(COUPLED(Iroms)%ImpLabel(ng))
+            CALL NUOPC_AddNestedState (ImportState,                     &
+     &                                 CplSet=TRIM(CoupledSet),         &
+     &                                 nestedStateName=TRIM(StateLabel),&
+     &                                 nestedState=MODELS(Iroms)%       &
+     &                                                 ImportState(ng), &
+                                       rc=rc)
+            IF (ESMF_LogFoundError(rcToCheck=rc,                        &
+     &                             msg=ESMF_LOGERR_PASSTHRU,            &
+     &                             line=__LINE__,                       &
+     &                             file=MyFile)) THEN
+              RETURN
+            END IF
+            IF (LocalPET.eq.0) THEN
+              WRITE (cplout,10) 'ROMS adding Import Nested State: ',    &
+     &                          TRIM(StateLabel), ng
+            END IF
+!
+!  Add fields import state.
+!
+            DO i=1,Nimport(Iroms)
+              StandardName=MODELS(Iroms)%ImportField(i)%standard_name
+              ShortName   =MODELS(Iroms)%ImportField(i)%short_name
+              IF (LocalPET.eq.0) THEN
+                WRITE (cplout,20) 'Advertising Import Field: ',         &
+     &                            TRIM(ShortName), TRIM(StandardName)
+              END IF
+              CALL NUOPC_Advertise (MODELS(Iroms)%ImportState(ng),      &
+     &                              StandardName=TRIM(StandardName),    &
+     &                              name=TRIM(ShortName),               &
+     &                              rc=rc)
+              IF (ESMF_LogFoundError(rcToCheck=rc,                      &
+     &                               msg=ESMF_LOGERR_PASSTHRU,          &
+     &                               line=__LINE__,                     &
+     &                               file=MyFile)) THEN
+                RETURN
+              END IF
+
+#  ifdef LONGWAVE_OUT
+!
+              IF (TRIM(ShortName).eq.'LWrad') THEN
+                rc=ESMF_RC_NOT_VALID
+                IF (localPET.eq.0) THEN
+                  WRITE (cplout,30) TRIM(ShortName), 'LONGWAVE_OUT',    &
+     &                           'downward longwave radiation: dLWrad', &
+     &                           'LONGWAVE_OUT'
+                END IF
+                IF (ESMF_LogFoundError(rcToCheck=rc,                    &
+     &                                 msg=ESMF_LOGERR_PASSTHRU,        &
+     &                                 line=__LINE__,                   &
+     &                                 file=MyFile)) THEN
+                  RETURN
+                END IF
+              END IF
+#  endif
+            END DO
+          END IF
+        END DO
+      END IF IMPORTING
+# else
+!
+!  Add fields to ROMS Import state.  Coupled NestedStates are not
+!  supported in cdeps/cmeps.
+!
+      IMPORTING : IF (Nimport(Iroms).gt.0) THEN
+        IF (LocalPET.eq.0) THEN
+          WRITE (cplout,10) 'ROMS Import STATE: ', linked_grid
+        END IF
         DO i=1,Nimport(Iroms)
           StandardName=MODELS(Iroms)%ImportField(i)%standard_name
           ShortName   =MODELS(Iroms)%ImportField(i)%short_name
-          CALL NUOPC_Advertise (MODELS(Iroms)%ImportState(ng),          &
+          IF (LocalPET.eq.0) THEN
+            WRITE (cplout,20) 'Advertising Import Field: ',             &
+     &                        TRIM(ShortName), TRIM(StandardName)
+          END IF
+          CALL NUOPC_Advertise (ImportState,                            &
      &                          StandardName=TRIM(StandardName),        &
      &                          name=TRIM(ShortName),                   &
      &                          rc=rc)
@@ -1385,12 +1648,12 @@
             RETURN
           END IF
 
-# ifdef LONGWAVE_OUT
+#  ifdef LONGWAVE_OUT
 !
           IF (TRIM(ShortName).eq.'LWrad') THEN
             rc=ESMF_RC_NOT_VALID
             IF (localPET.eq.0) THEN
-              WRITE (cplout,10) TRIM(ShortName), 'LONGWAVE_OUT',        &
+              WRITE (cplout,30) TRIM(ShortName), 'LONGWAVE_OUT',        &
      &                          'downward longwave radiation: dLWrad',  &
      &                          'LONGWAVE_OUT'
             END IF
@@ -1401,22 +1664,82 @@
               RETURN
             END IF
           END IF
-# endif
+#  endif
         END DO
       END IF IMPORTING
+# endif
 !
 !-----------------------------------------------------------------------
 !  Set ROMS Export State metadata.
 !-----------------------------------------------------------------------
+
+# ifdef ADD_NESTED_STATE
 !
-!  Add fields to ROMS Export state.  Coupled NestedStates are not
-!  supported in CMEPS.
+!  Add ROMS Export state. If nesting, each grid has its own export
+!  state.
 !
       EXPORTING : IF (Nexport(Iroms).gt.0) THEN
+        DO ng=1,MODELS(Iroms)%Ngrids
+          IF (ANY(COUPLED(Iroms)%LinkedGrid(ng,:))) THEN
+            CoupledSet=TRIM(COUPLED(Iroms)%SetLabel(ng))
+            StateLabel=TRIM(COUPLED(Iroms)%ExpLabel(ng))
+            CALL NUOPC_AddNestedState (ExportState,                     &
+     &                                 CplSet=TRIM(CoupledSet),         &
+     &                                 nestedStateName=TRIM(StateLabel),&
+     &                                 nestedState=MODELS(Iroms)%       &
+     &                                                 ExportState(ng), &
+                                       rc=rc)
+            IF (ESMF_LogFoundError(rcToCheck=rc,                        &
+     &                             msg=ESMF_LOGERR_PASSTHRU,            &
+     &                             line=__LINE__,                       &
+     &                             file=MyFile)) THEN
+              RETURN
+            END IF
+            IF (LocalPET.eq.0) THEN
+              WRITE (cplout,10) 'ROMS adding Export Nested State: ',    &
+     &                          TRIM(StateLabel), ng
+            END IF
+!
+!  Add fields to export state.
+!
+            DO i=1,Nexport(Iroms)
+              StandardName=MODELS(Iroms)%ExportField(i)%standard_name
+              ShortName   =MODELS(Iroms)%ExportField(i)%short_name
+              IF (LocalPET.eq.0) THEN
+                WRITE (cplout,20) 'Advertising Export Field: ',         &
+     &                            TRIM(ShortName), TRIM(StandardName)
+              END IF
+              CALL NUOPC_Advertise (MODELS(Iroms)%ExportState(ng),      &
+     &                              StandardName=TRIM(StandardName),    &
+     &                              name=TRIM(ShortName),               &
+     &                              rc=rc)
+              IF (ESMF_LogFoundError(rcToCheck=rc,                      &
+     &                               msg=ESMF_LOGERR_PASSTHRU,          &
+     &                               line=__LINE__,                     &
+     &                               file=MyFile)) THEN
+                RETURN
+              END IF
+            END DO
+          END IF
+        END DO
+      END IF EXPORTING
+# else
+!
+!  Add fields to ROMS Export state.  Coupled NestedStates are not
+!  supported in cdeps/cmeps.
+!
+      EXPORTING : IF (Nexport(Iroms).gt.0) THEN
+        IF (LocalPET.eq.0) THEN
+          WRITE (cplout,10) 'ROMS Export STATE: ', linked_grid
+        END IF
         DO i=1,Nexport(Iroms)
           StandardName=MODELS(Iroms)%ExportField(i)%standard_name
           ShortName   =MODELS(Iroms)%ExportField(i)%short_name
-          CALL NUOPC_Advertise (MODELS(Iroms)%ExportState(ng),          &
+          IF (LocalPET.eq.0) THEN
+            WRITE (cplout,20) 'Advertising Export Field: ',             &
+     &                        TRIM(ShortName), TRIM(StandardName)
+          END IF
+          CALL NUOPC_Advertise (ExportState,                            &
      &                          StandardName=TRIM(StandardName),        &
      &                          name=TRIM(ShortName),                   &
      &                          rc=rc)
@@ -1428,18 +1751,18 @@
           END IF
         END DO
       END IF EXPORTING
+# endif
 !
-      IF (ESM_track) THEN
-        WRITE (trac,'(a,a,i0)') '<== Exiting  ROMS_SetInitializeP1',    &
-     &                          ', PET', PETrank
-        FLUSH (trac)
-      END IF
-!
+# ifdef ADD_NESTED_STATE
+  10  FORMAT (/,a,a,', ng = ',i0,/,31('='),/)
+# else
+  10  FORMAT (/,a,'ng = ',i0,/,17('='),/)
+# endif
+  20  FORMAT (2x,a,"'",a,"'",t45,a)
 # ifdef LONGWAVE_OUT
-  10  FORMAT (/,' ROMS_SetInitializeP1 - incorrect field to process: ', &
+  30  FORMAT (/,' ROMS_SetInitializeP1 - incorrect field to process: ', &
      &        a,/,24x,'when activating option: ',a,/,24x,               &
      &        'use instead ',a,/,24x,'or deactivate option: ',a,/)
-!
 # endif
 !
       RETURN
@@ -2852,8 +3175,8 @@
       END IF
       IF (DebugLevel.gt.0) FLUSH (cplout)
 !
-  10  FORMAT (2x,'ROMS_DistGrid - Grid = ',i2.2,',',3x,'Mesh = ',a,',', &
-     &        3x,'Partition = ',i0,' x ',i0)
+  10  FORMAT (/,2x,'ROMS_DistGrid - Grid = ',i2.2,',',3x,'Mesh = ',a,   &
+     &        ',',3x,'Partition = ',i0,' x ',i0)
   20  FORMAT (18x,'node = ',i0,t32,'Istr = ',i0,t45,'Iend = ',i0,       &
      &                         t58,'Jstr = ',i0,t71,'Jend = ',i0)
 !

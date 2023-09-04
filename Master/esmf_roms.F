@@ -3,9 +3,9 @@
 
 #if defined MODEL_COUPLING && defined ESMF_LIB
 !
-!git $Id: esmf_roms.F 1193 2023-08-28 02:52:14Z arango $
+!git $Id: esmf_roms.F 1199 2023-09-03 21:51:17Z arango $
 !git $Id$
-!svn $Id: esmf_roms.F 1193 2023-08-28 02:52:14Z arango $
+!svn $Id: esmf_roms.F 1199 2023-09-03 21:51:17Z arango $
 !=======================================================================
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license         Hernan G. Arango     !
@@ -435,12 +435,20 @@
      &                             file=MyFile)) THEN
               RETURN
             END IF
+            IF (LocalPET.eq.0) THEN
+              WRITE (cplout,10) 'ROMS adding Import Nested State: ',    &
+     &                          TRIM(StateLabel), ng
+            END IF
 !
 !  Add fields import state.
 !
             DO i=1,Nimport(Iroms)
               StandardName=MODELS(Iroms)%ImportField(i)%standard_name
               ShortName   =MODELS(Iroms)%ImportField(i)%short_name
+              IF (LocalPET.eq.0) THEN
+                WRITE (cplout,20) 'Advertising Import Field: ',         &
+     &                            TRIM(ShortName), TRIM(StandardName)
+              END IF
               CALL NUOPC_Advertise (MODELS(Iroms)%ImportState(ng),      &
      &                              StandardName=TRIM(StandardName),    &
      &                              name=TRIM(ShortName),               &
@@ -457,7 +465,7 @@
               IF (TRIM(ShortName).eq.'LWrad') THEN
                 rc=ESMF_RC_NOT_VALID
                 IF (localPET.eq.0) THEN
-                  WRITE (cplout,10) TRIM(ShortName), 'LONGWAVE_OUT',    &
+                  WRITE (cplout,30) TRIM(ShortName), 'LONGWAVE_OUT',    &
      &                           'downward longwave radiation: dLWrad', &
      &                           'LONGWAVE_OUT'
                 END IF
@@ -478,7 +486,7 @@
 !  Set ROMS Export State metadata.
 !-----------------------------------------------------------------------
 !
-!  Add ROMS import state. If nesting, each grid has its own import
+!  Add ROMS export state. If nesting, each grid has its own export
 !  state.
 !
       EXPORTING : IF (Nexport(Iroms).gt.0) THEN
@@ -498,12 +506,20 @@
      &                             file=MyFile)) THEN
               RETURN
             END IF
+            IF (LocalPET.eq.0) THEN
+              WRITE (cplout,10) 'ROMS adding Export Nested State: ',    &
+     &                          TRIM(StateLabel), ng
+            END IF
 !
 !  Add fields to export state.
 !
             DO i=1,Nexport(Iroms)
               StandardName=MODELS(Iroms)%ExportField(i)%standard_name
               ShortName   =MODELS(Iroms)%ExportField(i)%short_name
+              IF (LocalPET.eq.0) THEN
+                WRITE (cplout,20) 'Advertising Export Field: ',         &
+     &                            TRIM(ShortName), TRIM(StandardName)
+              END IF
               CALL NUOPC_Advertise (MODELS(Iroms)%ExportState(ng),      &
      &                              StandardName=TRIM(StandardName),    &
      &                              name=TRIM(ShortName),               &
@@ -525,8 +541,10 @@
         FLUSH (trac)
       END IF
 !
+  10  FORMAT (/,a,a,', ng = ',i0,/,31('='),/)
+  20  FORMAT (2x,a,"'",a,"'",t45,a)
 # ifdef LONGWAVE_OUT
-  10  FORMAT (/,' ROMS_SetInitializeP1 - incorrect field to process: ', &
+  30  FORMAT (/,' ROMS_SetInitializeP1 - incorrect field to process: ', &
      &        a,/,24x,'when activating option: ',a,/,24x,               &
      &        'use instead ',a,/,24x,'or deactivate option: ',a,/)
 !
@@ -1931,8 +1949,8 @@
       END IF
       IF (DebugLevel.gt.0) FLUSH (cplout)
 !
-  10  FORMAT (2x,'ROMS_DistGrid - Grid = ',i2.2,',',3x,'Mesh = ',a,',', &
-     &        3x,'Partition = ',i0,' x ',i0)
+  10  FORMAT (/,2x,'ROMS_DistGrid - Grid = ',i2.2,',',3x,'Mesh = ',a,   &
+     &        ',',3x,'Partition = ',i0,' x ',i0)
   20  FORMAT (18x,'node = ',i0,t32,'Istr = ',i0,t45,'Iend = ',i0,       &
      &                         t58,'Jstr = ',i0,t71,'Jend = ',i0)
 !
