@@ -845,6 +845,8 @@
 #endif
 
 #if defined ATM_COUPLING  || \
+    defined CDEPS         || \
+    defined CMEPS         || \
     defined DATA_COUPLING || \
     defined ICE_COUPLING  || \
     defined WAV_COUPLING

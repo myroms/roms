@@ -1,6 +1,7 @@
 #include "cppdefs.h"
       MODULE mod_esmf_esm
-#if defined MODEL_COUPLING && defined ESMF_LIB
+#if defined MODEL_COUPLING && defined ESMF_LIB && \
+  !(defined CDEPS          || defined CMEPS)
 !
 !git $Id$
 !svn $Id: mod_esmf_esm.F 1193 2023-08-28 02:52:14Z arango $

@@ -14,7 +14,7 @@
 ************************************************************************
 */
 
-#if defined MODEL_COUPLING
+#if defined MODEL_COUPLING && !(defined CDEPS || defined CMEPS)
 # if defined MCT_LIB
 #  include "mct_driver.h"
 # elif defined ESMF_LIB

@@ -115,6 +115,8 @@
           CALL ESMF_Finalize (endflag=ESMF_END_ABORT)
         END IF
       END IF
+
+#if !(defined CDEPS || defined CMEPS)
 !
 !  Read in and set import and export fields metadata. Add additional
 !  fields to NOUPC dictionary.
@@ -126,6 +128,7 @@
      &                       file=MyFile)) THEN
         CALL ESMF_Finalize (endflag=ESMF_END_ABORT)
       END IF
+#endif
 !
 !-----------------------------------------------------------------------
 !  Register ESM components.

@@ -1,7 +1,8 @@
 #include "cppdefs.h"
       MODULE esmf_esm_mod
 
-#if defined MODEL_COUPLING && defined ESMF_LIB
+#if defined MODEL_COUPLING && defined ESMF_LIB && \
+  !(defined CDEPS          || defined CMEPS)
 !
 !git $Id$
 !svn $Id: esmf_esm.F 1193 2023-08-28 02:52:14Z arango $
@@ -65,7 +66,11 @@
       USE esmf_ice_mod,     ONLY: ICE_SetServices
 #  endif
 # endif
+# if defined CDEPS || defined CMEPS
+      USE cmeps_roms_mod,   ONLY: ROMS_SetServices
+# else
       USE esmf_roms_mod,    ONLY: ROMS_SetServices
+# endif
 # ifdef WAV_COUPLING
 #  if defined WAM_COUPLING
       USE esmf_wam_mod,     ONLY: WAV_SetServices
