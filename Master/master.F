@@ -1,7 +1,7 @@
 #include "cppdefs.h"
 /*
 ** git $Id$
-** svn $Id: master.F 1151 2023-02-09 03:08:53Z arango $
+** svn $Id: master.F 1201 2023-09-25 18:28:39Z arango $
 *************************************************** Hernan G. Arango ***
 ** Copyright (c) 2002-2023 The ROMS/TOMS Group                        **
 **   Licensed under a MIT/X style license                             **
@@ -14,7 +14,7 @@
 ************************************************************************
 */
 
-#if defined MODEL_COUPLING
+#if defined MODEL_COUPLING && !(defined CDEPS || defined CMEPS)
 # if defined MCT_LIB
 #  include "mct_driver.h"
 # elif defined ESMF_LIB

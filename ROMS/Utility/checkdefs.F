@@ -2,7 +2,7 @@
       SUBROUTINE checkdefs
 !
 !git $Id$
-!svn $Id: checkdefs.F 1189 2023-08-15 21:26:58Z arango $
+!svn $Id: checkdefs.F 1201 2023-09-25 18:28:39Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -790,6 +790,13 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+8)=' CARBON,'
 #endif
+#if defined CDEPS && defined ESMF_LIB
+!
+      IF (Master) WRITE (stdout,20) 'CDEPS',                            &
+     &   'Using Community Data Models for Earth Prediction System'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+7)=' CDEPS,'
+#endif
 #if defined CELERITY_READ && defined FORWARD_READ
 !
       IF (Master) WRITE (stdout,20) 'CELERITY_READ',                    &
@@ -825,6 +832,13 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+16)=' CLIPPING_SPLIT,'
 # endif
+#endif
+#if defined CMEPS && defined ESMF_LIB
+!
+      IF (Master) WRITE (stdout,20) 'CMEPS',                            &
+     &   'Using Community Mediator for Earth Prediction Systems'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+7)=' CMEPS,'
 #endif
 #ifdef COAMPS_COUPLING
 !

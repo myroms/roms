@@ -11,7 +11,6 @@
 # CMakeList.txt.
 
 list( APPEND _files
-      Master/cmeps_roms.F
       Master/coupler.F
       Master/esmf_atm.F
       Master/esmf_data.F
