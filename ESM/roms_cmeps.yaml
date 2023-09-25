@@ -33,7 +33,7 @@
 #
 #  Field Metadata Keywords:
 #
-#    standard_name         Field standard name
+#    standard_name         Field standard name. Need to use NEMS values!
 #    long_name             Field long descriptive name
 #    short_name            Field short name private to NUOPC 'cap' module
 #    data_variables        DATA component NetCDF field and time variable names
@@ -59,7 +59,7 @@
 #      mapconsd         first order conservative mapping with
 #                        normalization type of conservative fraction.
 #      mappatch         patch mapping
-#      mapfcopy         redist mapping
+#      mapfcopy         copy and redistribute, no mapping
 #      mapnstod         nearest source to destination mapping
 #      mapnstod_consd   nearest source to destination followed by
 #                        conservative destination
@@ -86,7 +86,7 @@
 
 convention: CF
 
-project: FV3-ROMS CMEPS couping in the WATL Application
+project: UFS Costal ROMS Coupling
 
 title:   Hurricane Dorian Test
 
@@ -117,9 +117,9 @@ standard_input:
   OCN_component: roms_watl.in
   ATM_component: namelist
 
-import_variables: [dLWrad, SWrad_daily, Pair, Tair, Qair, rain, Uwind, Vwind]
+import_variables: [dLWrad, SWrad, Pair, Tair, Qair, rain, Uwind, Vwind]
 
-export_variables: [SSH, Usur, Vsur, SST]
+export_variables: [mask_rho, SSH, Usur, Vsur, SST]
 
 ################################
 ### Exported Fields Metadata ###
@@ -127,9 +127,9 @@ export_variables: [SSH, Usur, Vsur, SST]
 
 export:
 
-  - standard_name:       sea_surface_height_above_geopotential_datum
+  - standard_name:       sea_surface_height_above_sea_level
     long_name:           sea surface height
-    short_name:          SSH
+    short_name:          SSH                                    # So_h
     data_variables:      [SSH, time]                            # zeta
     source_units:        meter
     destination_units:   meter
@@ -142,9 +142,9 @@ export:
     map_type:            mapnstod
     map_norm:            none
 
-  - standard_name:       surface_eastward_sea_water_velocity
+  - standard_name:       ocn_current_zonal
     long_name:           surface eastward momentum component
-    short_name:          Usur
+    short_name:          Usur                                   # So_u
     data_variables:      [Usur, time]                           # u
     source_units:        meter second-1
     destination_units:   meter second-1
@@ -157,9 +157,9 @@ export:
     map_type:            mapbilnr
     map_norm:            none
 
-  - standard_name:       surface_northward_sea_water_velocity
+  - standard_name:       ocn_current_merid
     long_name:           surface northward momentum component
-    short_name:          Vsur
+    short_name:          Vsur                                   # So_v
     data_variables:      [Vsur, time]                           # v
     source_units:        meter second-1
     destination_units:   meter second-1
@@ -174,7 +174,7 @@ export:
 
   - standard_name:       sea_surface_temperature
     long_name:           sea surface temperature
-    short_name:          SST
+    short_name:          SST                                    # So_t
     data_variables:      [temperature, time]                    # t(:,:,:,itemp)
     source_units:        C
     destination_units:   K
@@ -187,16 +187,31 @@ export:
     map_type:            mapnstod
     map_norm:            none
 
+  - standard_name:       ocean_mask
+    long_name:           mask on RHO-points
+    short_name:          mask_rho                               # So_omask
+    data_variables:      [msk, time]
+    source_units:        nondimensional
+    destination_units:   nondimensional
+    source_grid:         cell_center
+    destination_grid:    cell_center
+    add_offset:          0.0d0
+    scale:               1.0d0
+    debug_write:         false
+    connected_to:        *ATM
+    map_type:            mapnstod
+    map_norm:            none
+
 ################################
 ### Imported Fields Metadata ###
 ################################
 
 import:
 
-  - standard_name:       surface_net_downward_longwave_flux
+  - standard_name:       mean_down_lw_flx
     long_name:           surface downward longwave radiation flux
-    short_name:          dLWrad
-    data_variables:      [lwrad_down, time]                     # dlwrfsf minus ulwrfsfc
+    short_name:          dLWrad                                 # Faxa_lwdn
+    data_variables:      [lwrad_down, time]
     source_units:        W m-2
     destination_units:   W m-2
     source_grid:         cell_center
@@ -211,7 +226,7 @@ import:
   - standard_name:       surface_net_longwave_flux
     long_name:           surface net longwave radiation flux
     short_name:          LWrad
-    data_variables:      [lwrad, time]                          # dlwrfsfc
+    data_variables:      [lwrad, time]
     source_units:        W m-2
     destination_units:   W m-2
     source_grid:         cell_center
@@ -223,10 +238,10 @@ import:
     map_type:            mapbilnr
     map_norm:            none
 
-  - standard_name:       net_downward_shortwave_flux_at_sea_water_surface
+  - standard_name:       mean_net_sw_flx
     long_name:           surface net shortwave radiation flux
-    short_name:          SWrad
-    data_variables:      [swrad_daily, time]                    # dlwrfsfc
+    short_name:          SWrad                                  # Faxa_swnet
+    data_variables:      [swrad_daily, time]
     source_units:        W m-2
     destination_units:   W m-2
     source_grid:         cell_center
@@ -241,7 +256,7 @@ import:
   - standard_name:       net_averaged_shortwave_flux_at_sea_water_surface
     long_name:           surface net averaged shortwave radiation flux
     short_name:          SWrad_daily
-    data_variables:      [swrad_daily, time]                    # dswrfsfc minus uswrfsfc
+    data_variables:      [swrad_daily, time]
     source_units:        W m-2
     destination_units:   W m-2
     source_grid:         cell_center
@@ -253,11 +268,11 @@ import:
     map_type:            mapbilnr
     map_norm:            none
 
-  - standard_name:       surface_air_pressure
+  - standard_name:       inst_pres_height_surface
     long_name:           surface air pressure
-    short_name:          Pair
-    data_variables:      [pmsl, time]
-    source_units:        N m-2
+    short_name:          Pair                                   # Sa_pslv
+    data_variables:      [Pair, time]
+    source_units:        mb
     destination_units:   mb
     source_grid:         cell_center
     destination_grid:    cell_center
@@ -268,9 +283,9 @@ import:
     map_type:            mapbilnr
     map_norm:            none
 
-  - standard_name:       surface_air_temperature
+  - standard_name:       inst_temp_height2m
     long_name:           surface (2m) air temperature
-    short_name:          Tair
+    short_name:          Tair                                   # Sa_t2m
     data_variables:      [Tair, time]
     source_units:        C
     destination_units:   C
@@ -283,10 +298,10 @@ import:
     map_type:            mapbilnr
     map_norm:            none
 
-  - standard_name:       surface_relative_humidity
+  - standard_name:       inst_spec_humid_height2m
     long_name:           surface relative humidity
-    short_name:          Qair
-    data_variables:      [rhumidity, time]
+    short_name:          Qair                                   # Sa_q2m
+    data_variables:      [Qair, time]
     source_units:        percent
     destination_units:   fraction
     source_grid:         cell_center
@@ -298,10 +313,10 @@ import:
     map_type:            mapbilnr
     map_norm:            none
 
-  - standard_name:       precipitation_flux
+  - standard_name:       mean_prec_rate
     long_name:           precipitation rate
-    short_name:          rain
-    data_variables:      [rainfall, time]
+    short_name:          rain                                   # Faxa_rain
+    data_variables:      [rain, time]
     source_units:        kg m-2 s-1
     destination_units:   kg m-2 s-1
     source_grid:         cell_center
@@ -313,10 +328,10 @@ import:
     map_type:            mapbilnr
     map_norm:            none
 
-  - standard_name:       surface_eastward_wind
+  - standard_name:       inst_zonal_wind_height10m
     long_name:           surface eastward wind at 10m
-    short_name:          Uwind
-    data_variables:      [uwind, time]
+    short_name:          Uwind                                  # Sa_u10m
+    data_variables:      [Uwind, time]
     source_units:        m s-1
     destination_units:   m s-1
     source_grid:         cell_center
@@ -328,9 +343,9 @@ import:
     map_type:            mapbilnr
     map_norm:            none
 
-  - standard_name:       surface_northward_wind
+  - standard_name:       inst_merid_wind_height10m
     long_name:           surface northward wind at 10m
-    short_name:          Vwind
+    short_name:          Vwind                                  # Sa_v10m
     data_variables:      [Vwind, time]
     source_units:        m s-1
     destination_units:   m s-1

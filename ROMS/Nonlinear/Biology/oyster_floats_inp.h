@@ -178,7 +178,7 @@
               IF (.not.allocated(Grate_table)) THEN
                 allocate ( Grate_table(Grate_Im,Grate_Jm) )
                 Grate_table=0.0_r8
-                Dmem(1)*Dmem(1)+REAL(Grate_Im*Grate_Jm,r8)
+                Dmem(1)=Dmem(1)+REAL(Grate_Im*Grate_Jm,r8)
               END IF
               READ (inp,*,ERR=20,END=30)                                &
                    ((Grate_table(i,j),i=1,Grate_Im),j=1,Grate_Jm)

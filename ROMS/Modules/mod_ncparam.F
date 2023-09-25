@@ -1386,7 +1386,7 @@
 #ifdef GIT_URL
       git_url=GIT_URL
 #else
-      git_url='https://www.myroms.org/git/src'
+      git_url='https://github.com/myroms/roms'
 #endif
 #ifdef GIT_REV
       git_rev=GIT_REV
@@ -1397,10 +1397,12 @@
 #ifdef SVN_URL
       svn_url=SVN_URL
 #else
-      svn_url='https://myroms.org/svn'
+      svn_url='https://myroms.org/svn/trunk'
 #endif
 #ifdef SVN_REV
       svn_rev=SVN_REV
+#else
+      svn_rev=' '
 #endif
 !
 !-----------------------------------------------------------------------

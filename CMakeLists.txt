@@ -72,7 +72,7 @@ include( roms_functions )
 include( roms_compiler_flags )
 include( roms_config )
 
-# Set MYDEFS to list of Compiling defeinition to check for options that require
+# Set MYDEFS to list of Compiling definition to check for options that require
 # cmake configuration adjustments
 
 get_directory_property( MYDEFS COMPILE_DEFINITIONS )
@@ -80,14 +80,16 @@ get_directory_property( MYDEFS COMPILE_DEFINITIONS )
 # Check if we need to include ESMF
 
 if( MYDEFS MATCHES "ESMF_LIB" )
-  find_package( ESMF REQUIRED )
-  if( ESMF_FOUND )
-    message( STATUS "ESMF_INCLUDE_DIRECTORIES = ${ESMF_INCLUDE_DIRECTORIES}" )
-    message( STATUS "ESMF_LIBRARY_LOCATION = ${ESMF_LIBRARY_LOCATION}" )
-    message( STATUS "ESMF_INTERFACE_LINK_LIBRARIES = ${ESMF_INTERFACE_LINK_LIBRARIES}" )
-    include_directories( ${ESMF_INCLUDE_DIRECTORIES} )
-  else()
-    message( FATAL "ESMF NOT FOUND" )
+  if( NOT ESMF_FOUND )
+    find_package( ESMF REQUIRED )
+    if( ESMF_FOUND )
+      message( STATUS "ESMF_INCLUDE_DIRECTORIES = ${ESMF_INCLUDE_DIRECTORIES}" )
+      message( STATUS "ESMF_LIBRARY_LOCATION = ${ESMF_LIBRARY_LOCATION}" )
+      message( STATUS "ESMF_INTERFACE_LINK_LIBRARIES = ${ESMF_INTERFACE_LINK_LIBRARIES}" )
+      include_directories( ${ESMF_INCLUDE_DIRECTORIES} )
+    else()
+      message( FATAL "ESMF NOT FOUND" )
+    endif()
   endif()
 endif()
 

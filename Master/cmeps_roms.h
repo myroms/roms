@@ -114,7 +114,8 @@
      &                             ROMS_finalize
 !
       USE bc_2d_mod,        ONLY : bc_r2d_tile
-      USE dateclock_mod,    ONLY : ROMS_clock, caldate, time_string
+      USE dateclock_mod,    ONLY : ROMS_clock, caldate, get_date,       &
+     &                             time_string
       USE exchange_2d_mod,  ONLY : exchange_r2d_tile,                   &
      &                             exchange_u2d_tile,                   &
      &                             exchange_v2d_tile
@@ -410,6 +411,15 @@
 !
       character (len=:), allocatable :: CPLname
 !
+!  Today date string.
+!
+      character (len=44) :: TodayDateString
+!
+!  Git URL and Revision.
+!
+      character (len=80)  :: git_url
+      character (len=256) :: git_rev
+!
 !  ESM strings.
 !
       character (len=:), allocatable :: CoupledSet
@@ -429,7 +439,7 @@
       real (r4), parameter :: TOL_r4 = 0.5E20_r4
       real (r8), parameter :: TOL_r8 = 0.5E20_r8
 !
-!  Specific parameters for cdeps/cmeps.
+!  Specific parameters for cmeps.
 !
       integer :: ScalarFieldCount
       integer :: ScalarFieldIdxGridNX
@@ -662,7 +672,7 @@
       RETURN
       END SUBROUTINE ROMS_SetServices
 !
-      SUBROUTINE ROMS_Create (localPET, rc)
+      SUBROUTINE ROMS_Create (localPET, PETcount, MyComm, rc)
 !
 !=======================================================================
 !                                                                      !
@@ -671,9 +681,11 @@
 !                                                                      !
 !=======================================================================
 !
+      USE mod_strings
+!
 !  Imported variable declarations.
 !
-      integer, intent(in ) :: localPET
+      integer, intent(in ) :: localPET, PETcount, MyComm
       integer, intent(out) :: rc
 !
 !  Local variable declarations.
@@ -793,6 +805,7 @@
       IF (.not.allocated(ESMcomm)) THEN
         allocate ( ESMcomm(Nmodels) )             ! mpi-communicator
       END IF
+      ESMcomm(Iroms)=MyComm
 !
       IF (.not.allocated(PETlayoutOption)) THEN
         allocate ( PETlayoutOption(Nmodels) )     ! PET layout
@@ -847,6 +860,14 @@
 !  Process export field(s) metadata from YAML object.
 !-----------------------------------------------------------------------
 !
+!  Allocate ExportState structure. It is still neede if there are no
+!  fields to export. It is needed for the 'scalar field' named
+!  'cpl_scalars' (see nems.configure) used by cmeps.
+!
+      IF (.not.allocated(MODELS(Iroms)%ExportState)) THEN
+        allocate ( MODELS(Iroms)%ExportState(Ngrids) )
+      END IF
+!
 !  Get export variables short name to process.
 !
       IF (YML%has('export_variables')) THEN
@@ -882,10 +903,6 @@
 !
         IF (.not.allocated(MODELS(Iroms)%ExportField)) THEN
           allocate ( MODELS(Iroms)%ExportField(Nexport(Iroms)) )
-        END IF
-!
-        IF (.not.allocated(MODELS(Iroms)%ExportState)) THEN
-          allocate ( MODELS(Iroms)%ExportState(Ngrids) )
         END IF
 !
 !  Load export field(s) metadata.
@@ -1415,11 +1432,58 @@
 !  Report specified import and export states.
 !-----------------------------------------------------------------------
 !
+      git_url=GIT_URL
+      git_rev=GIT_REV
+!
       IF (LocalPET.eq.0) THEN
+        CALL get_date (TodayDateString)
+        WRITE (cplout,40) TRIM(ESMF_VERSION_STRING),                    &
+     &                    TRIM(TodayDateString),                        &
+     &                    TRIM(git_url),                                &
+     &                    TRIM(git_rev),                                &
+     &                    TRIM(my_os),                                  &
+     &                    TRIM(my_cpu),                                 &
+     &                    TRIM(my_fort),                                &
+     &                    TRIM(my_fc),                                  &
+     &                    TRIM(my_fflags),                              &
+     &                    MyComm, PETcount
+        WRITE (cplout,50) 'Coupling Input Metadata Filename = ',        &
+     &                    TRIM(CPLname)
+        WRITE (cplout,50) '  ROMS Input Parameters Filename = ',        &
+     &                    TRIM(Iname)
+        WRITE (cplout,'(a)') CHAR(32)              ! blank space
+        WRITE (cplout,60) '          Number of nested grids = ',        &
+                          Ngrids
+        WRITE (cplout,60) '             Coupled nested grid = ',        &
+     &                    linked_grid
+        IF (CouplingType.eq.1) THEN
+          WRITE (cplout,70) '                   Coupling flag = ',      &
+     &                      CouplingType,                               &
+     &                      ',  Explicit coupling method'
+        ELSE IF (CouplingType.eq.2) THEN
+          WRITE (cplout,70) '                   Coupling flag = ',      &
+     &                      CouplingType,                               &
+     &                      ',  Semi-Implicit coupling method'
+        END IF
+        IF (layout.eq.0) THEN
+          WRITE (cplout,70) '              PETs layout option = ',      &
+     &                      layout,                                     &
+     &                      ',  Sequential'
+        ELSE IF (layout.eq.1) THEN
+          WRITE (cplout,70) '              PETs layout option = ',      &
+     &                      layout,                                     &
+     &                      ',  Concurrent'
+        END IF
+        WRITE (cplout,'(a)') CHAR(32)
+        WRITE (cplout,60) '   Coupling debugging level flag = ',        &
+     &                    DebugLevel    
+        WRITE (cplout,60) '    Execution tracing level flag = ',        &
+     &                    TraceLevel    
+!
         IF (Nimport(Iroms).gt.0) THEN
-          WRITE (cplout,40) 'ROMS IMPORT Fields Metadata:'
+          WRITE (cplout,80) 'ROMS IMPORT Fields Metadata:'
           DO i=1,Nimport(Iroms)
-            WRITE (cplout,50)                                           &
+            WRITE (cplout,90)                                           &
      &              TRIM(MODELS(Iroms)%ImportField(i)%short_name),      &
      &              TRIM(MODELS(Iroms)%ImportField(i)%standard_name),   &
      &              MODELS(Iroms)%ImportField(i)%gtype,                 &
@@ -1432,9 +1496,9 @@
         END IF
 !
         IF (Nexport(Iroms).gt.0) THEN
-          WRITE (cplout,40) 'ROMS EXPORT Fields Metadata:'
+          WRITE (cplout,80) 'ROMS EXPORT Fields Metadata:'
           DO i=1,Nexport(Iroms)
-            WRITE (cplout,50)                                           &
+            WRITE (cplout,90)                                           &
      &              TRIM(MODELS(Iroms)%ExportField(i)%short_name),      &
      &              TRIM(MODELS(Iroms)%ExportField(i)%standard_name),   &
      &              MODELS(Iroms)%ExportField(i)%gtype,                 &
@@ -1445,7 +1509,7 @@
      &              MODELS(Iroms)%ExportField(i)%scale_factor
           END DO
         END IF
-        WRITE (cplout,60)
+        WRITE (cplout,100)
       END IF
 !
   10  FORMAT (/,' ROMS_CREATE - Unable to create YAML object for',      &
@@ -1457,23 +1521,39 @@
   30  FORMAT (/,' ROMS_CREATE - cannot find metadata for',              &
      &        1x,a,'''',a,'''.',/,15x,                                  &
      &        'Add entry to metadata file: ',a)
-  40  FORMAT (/,a,/, 27('='),/,/, 'Short Name',                         &
-     &        t15,'Standard Name', t74,'G', t77,'I', t80,'C', t83,'W',  &
+  40  FORMAT (80('-'),/,                                                &
+     &        ' Earth System Models Coupling: ESMF/NUOPC Library,',     &
+     &        ' Version ',a,/,31x,a,/,                                  &
+     &        80('-'),                                                  &
+     &        /,1x,'GIT Root URL     : ',a,                             &
+     &        /,1x,'GIT Revision     : ',a,                             &
+     &        /,1x,'Operating System : ',a,                             &
+     &        /,1x,'CPU Hardware     : ',a,                             &
+     &        /,1x,'Compiler System  : ',a,                             &
+     &        /,1x,'Compiler Command : ',a,                             &
+     &        /,1x,'Compiler Flags   : ',a,                             &
+     &        /,1x,'MPI Communicator : ',i0,2x,'PET size = ',i0,        &
+     &        /,80('-'),/)
+  50  FORMAT (1x,a,a)
+  60  FORMAT (1x,a,i0)
+  70  FORMAT (1x,a,i0,a)
+  80  FORMAT (/,a,/, 27('='),/,/, 'Short Name',                         &
+     &        t15,'Standard Name', t74,'G', t77,'R', t80,'C', t83,'W',  &
      &        t87,'add_offset', t99,'scale_factor',/, 111('-'))
-  50  FORMAT (a, t15,a, t74,i1, t77,i1, t80,l1, t83,l1,                 &
+  90  FORMAT (a, t15,a, t74,i1, t77,i1, t80,l1, t83,l1,                 &
      &        t86,1p,e12.5, t100,1p,e12.5)
-  60  FORMAT (/,' G: Grid cell location,     1=Center,',                &
+ 100  FORMAT (/,' G: Grid cell location,     1=Center,',                &
      &                                     ' 2=Corner,',                &
      &                                     ' 3=U-point,',               &
      &                                     ' 4=V-point',                &
-     &        /,' I: Regridding method,      1=bilinear,',              &
+     &        /,' R: Regridding method,      1=bilin,',                 &
      &                                     ' 2=patch,',                 &
-     &                                     ' 3=conserv D, ',            &
-     &                                     ' 4=conserv F, ',            &
-     &                                     ' 5=redist, ',               &
-     &                                     ' 6=nearest',                &
-     &                                     ' 7=nearest D, ',            &
-     &                                     ' 8=nearest F, ',            &
+     &                                     ' 3=consD,',                 &
+     &                                     ' 4=consF,',                 &
+     &                                     ' 5=redist,',                &
+     &                                     ' 6=nStoD,',                 &
+     &                                     ' 7=nStoD-consD,',           &
+     &                                     ' 8=nStoD-consF',            &
      &        /,' C: Connected to coupler,   F=derived from other,',    &
      &                                     ' T=exchanged/regridded',    &
      &        /,' W: Field write to NetCDF,  F=false, T=true',          &
@@ -1603,6 +1683,9 @@
         RETURN
       END IF
 !
+!  Get 'scalar_field' parameters used by cmeps to check exchanged
+!  fields.
+!
       CALL NUOPC_CompAttributeGet (model,                               &
      &                             name='ScalarFieldName',              &
      &                             value=cfgValue,                      &
@@ -1643,8 +1726,8 @@
       ELSE
         ScalarFieldCount=0
       END IF
-      WRITE(message, '(A,I2)') 'ScalarFieldCount = ',                   &
-     &  ScalarFieldCount
+      WRITE(message, '(a,i0)') 'ScalarFieldCount = ',                   &
+     &                         ScalarFieldCount
       CALL ESMF_LogWrite(TRIM(message), ESMF_LOGMSG_INFO)
 !
       CALL NUOPC_CompAttributeGet(model,                                &
@@ -1696,15 +1779,13 @@
 !  import fields metadata are read from input YAML configuration file.
 !-----------------------------------------------------------------------
 !
-      CALL ROMS_Create (localPET, rc)
+      CALL ROMS_Create (localPET, PETcount, MyComm, rc)
       IF (ESMF_LogFoundError(rcToCheck=rc,                              &
      &                       msg=ESMF_LOGERR_PASSTHRU,                  &
      &                       line=__LINE__,                             &
      &                       file=MyFile)) THEN
         RETURN
       END IF
-!
-      ESMcomm(Iroms)=MyComm
 !
 !-----------------------------------------------------------------------
 !  Set ROMS Import State metadata.
@@ -1833,6 +1914,24 @@
 !-----------------------------------------------------------------------
 !  Set ROMS Export State metadata.
 !-----------------------------------------------------------------------
+!
+!  First, advertize 'scalar field' named 'cpl_scalars' to Export State,
+!  even if there are no fields to export. The 'cpl_scalars' is specified
+!  in 'nems.,configure'.
+!
+      ng=linked_grid
+      MODELS(Iroms)%ExportState(ng)=ExportState
+!
+      CALL NUOPC_Advertise (MODELS(Iroms)%ExportState(ng),              &
+     &                      StandardName=TRIM(ScalarFieldName),         &
+     &                      name=TRIM(ScalarFieldName),                 &
+     &                      rc=rc)
+      IF (ESMF_LogFoundError(rcToCheck=rc,                              &
+     &                       msg=ESMF_LOGERR_PASSTHRU,                  &
+     &                       line=__LINE__,                             &
+     &                       file=MyFile)) THEN
+        RETURN
+      END IF
 
 # ifdef ADD_NESTED_STATE
 !
@@ -1891,26 +1990,10 @@
 !
       EXPORTING : IF (Nexport(Iroms).gt.0) THEN
         ng=linked_grid
-        MODELS(Iroms)%ExportState(ng)=ExportState
 !
         IF (LocalPET.eq.0) THEN
           WRITE (cplout,10) 'ROMS Export STATE: ', ng
         END IF
-!
-!  First, add 'scalar field' to export state.
-!
-        CALL NUOPC_Advertise (MODELS(Iroms)%ExportState(ng),            &
-     &                        StandardName=TRIM(ScalarFieldName),       &
-     &                        name=TRIM(ScalarFieldName),               &
-     &                        rc=rc)
-        IF (ESMF_LogFoundError(rcToCheck=rc,                            &
-     &                         msg=ESMF_LOGERR_PASSTHRU,                &
-     &                         line=__LINE__,                           &
-     &                         file=MyFile)) THEN
-          RETURN
-        END IF
-!
-!  Then, add ROMS export state.
 !
         DO i=1,Nexport(Iroms)
           StandardName=MODELS(Iroms)%ExportField(i)%standard_name
@@ -1987,6 +2070,7 @@
 !
       TYPE (ESMF_TimeInterval) :: RunDuration, TimeStep
       TYPE (ESMF_Time)         :: CurrTime, startTime, stopTime
+      TYPE (ESMF_CalKind_Flag) :: calkindflag
       TYPE (ESMF_VM)           :: vm
 !
 !-----------------------------------------------------------------------
@@ -2027,7 +2111,6 @@
         RETURN
       END IF
       tile=localPET
-      ESMcomm(Iroms)=MyComm
 !
 !-----------------------------------------------------------------------
 !  Initialize ROMS component.  In nested applications, ROMS kernel will
@@ -2087,6 +2170,7 @@
      &                      stopTime=stopTime,                          &
      &                      currTime=CurrTime,                          &
      &                      timeStep=TimeStep,                          &
+     &                      calkindflag=calkindflag,                    &
      &                      runDuration=RunDuration,                    &
      &                      rc=rc)
         IF (ESMF_LogFoundError(rcToCheck=rc,                            &
@@ -2100,6 +2184,12 @@
         ClockInfo(Idriver)%CurrentTime = CurrTime
         ClockInfo(Idriver)%StartTime = StartTime
         ClockInfo(Idriver)%StopTime = StopTime
+!
+        IF (calkindflag == ESMF_CALKIND_GREGORIAN) THEN
+          ClockInfo(Idriver)%CalendarString = 'gregorian'
+        ELSE IF (calkindflag == ESMF_CALKIND_360DAY) THEN
+          ClockInfo(Idriver)%CalendarString = '360_day'
+        END IF
 !
         CALL ESMF_TimeGet (ClockInfo(Idriver)%StartTime,                &
      &                     s_r8=ClockInfo(Idriver)%Time_Start,          &
@@ -2369,15 +2459,19 @@
 !  Calendar that extends backward the dates preceeding 15 October 1582
 !  which always have a year length of 365.2425 days.
 !
+!  Using driver provided calendar since UFS Weather Model does not
+!  support Proleptic Gregorian Calendar 
+!
       ref_year  =Rclock%year
       ref_month =Rclock%month
       ref_day   =Rclock%day
       ref_hour  =Rclock%hour
       ref_minute=Rclock%minutes
       ref_second=Rclock%seconds
-      Calendar  =TRIM(Rclock%calendar)
+      Calendar  =TRIM(ClockInfo(Idriver)%CalendarString)
+      ClockInfo(Iroms)%CalendarString = TRIM(Calendar)
 !
-      IF (INT(time_ref).eq.-1) THEN
+      IF (ClockInfo(Iroms)%CalendarString == '360_day') THEN
         CalType=ESMF_CALKIND_360DAY
       ELSE
         CalType=ESMF_CALKIND_GREGORIAN
@@ -3464,7 +3558,8 @@
       END IF
       IF (DebugLevel.gt.0) FLUSH (cplout)
 !
-  10  FORMAT (/,2x,'ROMS_DistGrid - Grid = ',i2.2,',',3x,'Mesh = ',a,   &
+  10  FORMAT (/,'ROMS Domain Decomposition:',/,25('='),/,               &
+              /,2x,'ROMS_DistGrid - Grid = ',i2.2,',',3x,'Mesh = ',a,   &
      &        ',',3x,'Partition = ',i0,' x ',i0)
   20  FORMAT (18x,'node = ',i0,t32,'Istr = ',i0,t45,'Iend = ',i0,       &
      &                         t58,'Jstr = ',i0,t71,'Jend = ',i0)
@@ -6294,7 +6389,7 @@
 !
 !  Update wet point land/sea mask, if differs from static mask.
 !
-            CASE ('msk')
+            CASE ('mask_rho', 'rmask', 'msk')
               MyFmin(1)=1.0_dp
               MyFmax(1)=0.0_dp
               DO j=JstrR,JendR

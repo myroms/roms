@@ -854,7 +854,9 @@
 #endif
 
 #if defined MODEL_COUPLING && \
-    defined ESMF_LIB
+    defined ESMF_LIB       && \
+  !(defined CDEPS          || \
+    defined CMEPS)
 # define REGRESS_STARTCLOCK
 # define ESM_SETRUNCLOCK
 #endif
