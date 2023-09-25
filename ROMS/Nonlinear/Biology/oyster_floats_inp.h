@@ -1,7 +1,7 @@
       SUBROUTINE read_FltBioPar (model, inp, out, Lwrite)
 !
 !git $Id$
-!svn $Id: oyster_floats_inp.h 1151 2023-02-09 03:08:53Z arango $
+!svn $Id: oyster_floats_inp.h 1201 2023-09-25 18:28:39Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -178,7 +178,7 @@
               IF (.not.allocated(Grate_table)) THEN
                 allocate ( Grate_table(Grate_Im,Grate_Jm) )
                 Grate_table=0.0_r8
-                Dmem(1)*Dmem(1)+REAL(Grate_Im*Grate_Jm,r8)
+                Dmem(1)=Dmem(1)+REAL(Grate_Im*Grate_Jm,r8)
               END IF
               READ (inp,*,ERR=20,END=30)                                &
                    ((Grate_table(i,j),i=1,Grate_Im),j=1,Grate_Jm)

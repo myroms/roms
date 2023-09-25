@@ -1,9 +1,8 @@
 #include "cppdefs.h"
       MODULE mod_ncparam
 !
-!git $Id: mod_ncparam.F 1193 2023-08-28 02:52:14Z arango $
 !git $Id$
-!svn $Id: mod_ncparam.F 1193 2023-08-28 02:52:14Z arango $
+!svn $Id: mod_ncparam.F 1201 2023-09-25 18:28:39Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -1386,7 +1385,7 @@
 #ifdef GIT_URL
       git_url=GIT_URL
 #else
-      git_url='https://www.myroms.org/git/src'
+      git_url='https://github.com/myroms/roms'
 #endif
 #ifdef GIT_REV
       git_rev=GIT_REV
@@ -1397,10 +1396,12 @@
 #ifdef SVN_URL
       svn_url=SVN_URL
 #else
-      svn_url='https://myroms.org/svn'
+      svn_url='https://myroms.org/svn/trunk'
 #endif
 #ifdef SVN_REV
       svn_rev=SVN_REV
+#else
+      svn_rev=' '
 #endif
 !
 !-----------------------------------------------------------------------
