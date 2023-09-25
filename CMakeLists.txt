@@ -1,5 +1,5 @@
 # git $Id$
-# svn $Id: CMakeLists.txt 1192 2023-08-23 18:33:57Z arango $
+# svn $Id: CMakeLists.txt 1201 2023-09-25 18:28:39Z arango $
 #:::::::::::::::::::::::::::::::::::::::::::::::::::::: David Robertson :::
 # Copyright (c) 2002-2023 The ROMS/TOMS Group                           :::
 #   Licensed under a MIT/X style license                                :::

@@ -2,7 +2,7 @@
 ** Include file "globaldef.h"
 **
 ** git $Id$
-** svn $Id: globaldefs.h 1188 2023-08-03 19:26:47Z arango $
+** svn $Id: globaldefs.h 1201 2023-09-25 18:28:39Z arango $
 ********************************************************** Hernan G. Arango ***
 ** Copyright (c) 2002-2023 The ROMS/TOMS Group     Alexander F. Shchepetkin  **
 **   Licensed under a MIT/X style license                                    **
@@ -885,7 +885,7 @@
 ** Define internal option to process wave data.
 */
 
-#if (defined ROLLER_SVENDSEN || defined ROLLER_MONO ||	\
+#if (defined ROLLER_SVENDSEN || defined ROLLER_MONO || \
      defined ROLLER_RENIERS) && defined WEC
 # define WEC_ROLLER
 #endif

@@ -732,7 +732,7 @@
       END IF
 !
 !-----------------------------------------------------------------------
-!  Get ROMS standard input filename.  
+!  Get ROMS standard input filename.
 !-----------------------------------------------------------------------
 !
      IF (YML%has('standard_input.OCN_component')) THEN
@@ -1476,9 +1476,9 @@
         END IF
         WRITE (cplout,'(a)') CHAR(32)
         WRITE (cplout,60) '   Coupling debugging level flag = ',        &
-     &                    DebugLevel    
+     &                    DebugLevel
         WRITE (cplout,60) '    Execution tracing level flag = ',        &
-     &                    TraceLevel    
+     &                    TraceLevel
 !
         IF (Nimport(Iroms).gt.0) THEN
           WRITE (cplout,80) 'ROMS IMPORT Fields Metadata:'
@@ -1705,7 +1705,7 @@
         ScalarFieldName='cpl_scalars'
       END IF
       WRITE (message, '(a)') 'ScalarFieldName = '//                     &
-     &                       TRIM(ScalarFieldName) 
+     &                       TRIM(ScalarFieldName)
       CALL ESMF_LogWrite(TRIM(message), ESMF_LOGMSG_INFO)
 !
       CALL NUOPC_CompAttributeGet(model,                                &
@@ -1762,9 +1762,9 @@
      &                       msg=ESMF_LOGERR_PASSTHRU,                  &
      &                       line=__LINE__,                             &
      &                       file=MyFile)) THEN
-        RETURN               
-      END IF                 
-!       
+        RETURN
+      END IF
+!
       IF (isPresent.and.isSet) THEN
         READ (cfgValue,*) ScalarFieldIdxGridNY
       ELSE
@@ -2151,7 +2151,7 @@
 # endif
 !
 !-----------------------------------------------------------------------
-!  Query driver clock 
+!  Query driver clock.
 !-----------------------------------------------------------------------
 !
       IF (MODELS(Iroms)%IsActive) THEN
@@ -2460,7 +2460,7 @@
 !  which always have a year length of 365.2425 days.
 !
 !  Using driver provided calendar since UFS Weather Model does not
-!  support Proleptic Gregorian Calendar 
+!  support Proleptic Gregorian Calendar.
 !
       ref_year  =Rclock%year
       ref_month =Rclock%month
