@@ -79,8 +79,9 @@ if [ "$WRF_VERSION" == "4.3" ]; then
   ln -sfv ${WRF_ROOT_DIR}/run/p3_lookupTable_1.dat-3momI_v5.1.6 .
   ln -sfv ${WRF_ROOT_DIR}/run/p3_lookupTable_2.dat-4.1 .
 else
-  ln -sfv ${WRF_ROOT_DIR}/run/p3_lookup_table_1.dat-v4.1 .
-  ln -sfv ${WRF_ROOT_DIR}/run/p3_lookup_table_2.dat-v4.1 .
+  ln -sfv ${WRF_ROOT_DIR}/run/p3_lookupTable_1.dat-v5.4_2momI .
+  ln -sfv ${WRF_ROOT_DIR}/run/p3_lookupTable_1.dat-v5.4_3momI .
+  ln -sfv ${WRF_ROOT_DIR}/run/p3_lookupTable_2.dat-v5.3 .
 fi
 
 if [ "${USE_REAL_DOUBLE:+1}" ]; then
