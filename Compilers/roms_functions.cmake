@@ -37,9 +37,9 @@ find_program(
   REQUIRED
 )
 
-message( STATUS "CMAKE_SOURCE_DIR=${CMAKE_SOURCE_DIR}" )
-message( STATUS "CMAKE_CURRENT_SOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR}" )
-message( STATUS "CPP_CLEAN=${CPP_CLEAN}" )
+message( STATUS "CMAKE_SOURCE_DIR = ${CMAKE_SOURCE_DIR}" )
+message( STATUS "CMAKE_CURRENT_SOURCE_DIR = ${CMAKE_CURRENT_SOURCE_DIR}" )
+message( STATUS "CPP_CLEAN = ${CPP_CLEAN}" )
 
 ###########################################################################
 # The "preprocess_fortran" function teaches CMake how to use CPP to

@@ -27,7 +27,7 @@
 ************************************************************************
 */
 
-# if defined CDEPS || defined CMEPS
+# if defined CMEPS
 #  include "cmeps_roms.h"
 # else
 #  include "esmf_roms.h"

@@ -790,13 +790,6 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+8)=' CARBON,'
 #endif
-#if defined CDEPS && defined ESMF_LIB
-!
-      IF (Master) WRITE (stdout,20) 'CDEPS',                            &
-     &   'Using Community Data Models for Earth Prediction System'
-      is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+7)=' CDEPS,'
-#endif
 #if defined CELERITY_READ && defined FORWARD_READ
 !
       IF (Master) WRITE (stdout,20) 'CELERITY_READ',                    &

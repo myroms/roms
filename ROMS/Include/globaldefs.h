@@ -845,7 +845,6 @@
 #endif
 
 #if defined ATM_COUPLING  || \
-    defined CDEPS         || \
     defined CMEPS         || \
     defined DATA_COUPLING || \
     defined ICE_COUPLING  || \
@@ -855,8 +854,7 @@
 
 #if defined MODEL_COUPLING && \
     defined ESMF_LIB       && \
-  !(defined CDEPS          || \
-    defined CMEPS)
+   !defined CMEPS
 # define REGRESS_STARTCLOCK
 # define ESM_SETRUNCLOCK
 #endif
