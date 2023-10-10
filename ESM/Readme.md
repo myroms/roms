@@ -1,56 +1,85 @@
-*
-* git $Id$
-* svn $Id: Readme 1151 2023-02-09 03:08:53Z arango $
-***********************************************************************
-*  Copyright (c) 2002-2023 The ROMS/TOMS Group                        *
-*    Licensed under a MIT/X style license                             *
-*    See License_ROMS.md                                              *
-***********************************************************************
-*
 
-Earth System Model (ESM) Coupling:
-=================================
+<img width="500" alt="image" src="https://github.com/myroms/roms/assets/23062912/2fa815f4-df51-4671-b9ed-188995b87a7b">
+
+## Earth System Model (ESM) Coupling:
 
 This directory contains several files used for multi-model coupling
-using the Earth System Modeling Framework (ESMF) with the National
-Unified Operational Prediction Capability (NUOPC) layer.
+using the Earth System Modeling Framework (**ESMF**) with the National
+Unified Operational Prediction Capability (**NUOPC**) layer.
 
-The NUOPC layer is a simplified infrastructure on top of the ESMF
-library (version 8.0 or higher) that provides conventions and
-templates to facilitate the smooth coupling between ESM components.
-The ROMS coupling interface with the ESMF/NUOPC library allows both
-DRIVER and COMPONENT methods of operation.  In the DRIVER method,
-it provides all the interfaces needed to couple to other ESM
-components including the executable driver, NUOPC-based generic
-ESM component services, model gridded components or NUOPC cap files,
+The **NUOPC** layer is a simplified interface on top of the **ESMF** library
+(version **8.0** or higher) that provides conventions and templates to facilitate
+the smooth coupling between Earth System Model (**ESM**) components. **ROMS**
+offers two distinct **NUOPC**-based modules for its native coupling framework
+and a standalone interface for third-party coupling systems. That is, **ROMS**
+coupling infrastructure allows both **DRIVER** and **COMPONENT** methods of operation.
+
+<p align="center">
+    <img src="https://www.myroms.org/trac/ROMS_Coupling.png" width=50% height=50%>
+</p>
+
+In the **`DRIVER`** method, it provides all the interfaces needed to couple
+to other **ESM** components, including the executable driver, **NUOPC**-based generic
+**ESM** component services, model gridded components or **NUOPC** _cap_ modules,
 connectors between components for re-gridding source and destination
-fields, input scripts, and coupling metadata management.  A NUOPC
-model 'cap' is a Fortran code layer that sits on top of the ESM
-component, making calls to the numerical kernel via the 'initialize',
-'run', and 'finalize' phases.  Alternatively, in the COMPONENT method,
-the NUOPC ROMS 'cap' module is provided, and it can be adapted and
-incorporated into other NUOPC-based coupling systems, like the NOAA
-Environmental Modeling System (NEMS) or the NUOPC based Community
-Mediator for Earth Prediction Systems (CMEPS).
+fields, input scripts, and coupling metadata management.
 
-The strategy is to couple to other ESM components with none or minimal
-changes to the code distributed by developers or repositories.  It is
-the user responsibility to subscribe to such repositories and download
-and install the ESM component.   It expected that the coupling with
-such ESM components is not affected its version (previous, current
-or future).
+A **NUOPC** model _cap_ is a Fortran code layer that sits on top of the **ESM**
+component, making calls to the numerical kernel via the _`initialize`_,
+_`run`_, and _`finalize`_ computational phases.
 
-However, sometimes we need circumvent technical problems when coupling
-to other ESM components and provide build scripts to facilitate
-compiling and linking, and correct interference to deprecated libraries.
-Therefore, this directory contains scripts and modified ESM component
+Alternatively, in the **`COMPONENT`** method, the **NUOPC**-based **ROMS** _cap_
+module **`Master/cmeps_roms.h`** is provided, and it can be adapted and
+incorporated into other **NUOPC**-based coupling systems, like the
+[UFS_coastal Framework](https://github.com/oceanmodeling/ufs-coastal)
+using the Community Mediator for Earth Prediction Systems (**CMEPS**) and
+the Community Data Models for Earth Predictive Systems (**CDEPS**) coupling
+interfaces.
+
+Currently, the following files are avaiabled for coupling with the **ESMF/NUOPC**
+library:
+
+| $\textcolor{blue}{\textsf{Coupling Files}}$ | $\textcolor{blue}{\textsf{Description}}$ |
+|-----------------------|-------------|
+| **cmeps_roms.h**      | **ROMS** standalone interface for the **UFS** using **CDEPS/CMEPS** |
+| **coupler.F**         | **ESMF/NUOPC** or **MCT** native coupler module |
+| **esmf_coupler.h**    | **ESMF** Regridding operators using connectors |
+| **esmf_atm.F**        | Atmosphere gridded model (**ATM**) component module |
+| **esmf_atm_coamps.h** | **COAMPS** gridded component **NUOPC** layer module |
+| **esmf_atm_regcm.h**  | **RegCM** gridded component **NUOPC** layer module |
+| **esmf_atm_wrf.h**    | **WRF** gridded component **NUOPC** layer module |
+| **esmf_data.F**       | Coupling **DATA** component used in incongruent grids coupling |
+| **emsf_driver.h**     | Configures, Creates, Initialize, Run, and Finalizes the **ESM** coupling system |
+| **esmf_esm.F**        | Sets **ESM** gridded components services shared-objects and RunSequence |
+| **esmf_ice.F**        | Seaice gridded model (**SEA-ICE**) component module |
+| **esmf_ice_cice6.h**  | **CICE6** gridded component **NUOPC** layer module |
+| **esmf_roms.h**       | **ROMS** native coupling framework **NUOPC** layer module |
+| **esmf_roms.F**       | **ROMS** native or standalone Ocean component module |
+| **esmf_wav.F**        | Waves gridded component (**WAVE**) component module |
+| **esmf_wav_wam.h**    | **WAM** gridded component **NUOPC** layer module |
+| **mod_esmf_esm.F**    | **ROMS** native coupling framework support module |
+
+## Coupling Design:
+
+The strategy is to couple to other **ESM** components with no or minimal
+changes to the code distributed by developers or repositories.  The User is
+responsible for subscribing to those repositories, downloading, and installing
+the other **ESM** components. The coupling with such **ESM** components is expected
+not to be affected by its version (previous, current, or future) since the
+**NUOPC**-based layer is generic.
+
+However, sometimes, we need to circumvent technical problems when coupling
+to other **ESM** components and provide build scripts to facilitate
+compiling, linking, and correcting interference to deprecated libraries.
+Therefore, this directory also contains scripts and modified **ESM** component
 files that substitute the ones distributed from source repositories
 to solve such technical issues.
 
-WRF Notes:
----------
+---
 
-* The coupling system has been tested with WRF verisons 4.1 and up.
+## WRF Coupling Notes:
+
+* The coupling system has been tested with WRF versions 4.1 and up.
 
 * To compile the coupled system with 'gfortran', you need to activate
   the environmental variable GFORTRAN_CONVERT_UNIT:
@@ -60,8 +89,8 @@ WRF Notes:
 
   to avoid end-of-file when reading binary files like 'RRTMG_LW_DATA'
 
-* The 'gfortran' is more strict and the execution fails because
-  unassigned INTENT(OUT) variables 'fname' and 'n2' in source file
+* The 'gfortran' is more strict, and the execution fails because
+  of unassigned INTENT(OUT) variables 'fname' and 'n2' in source file
   share/mediation_integrate.F
 
 --- a/share/mediation_integrate.F
@@ -75,8 +104,7 @@ WRF Notes:
     ! since they are OUT args and may be used by callers even if oid/=0.
 
 
-File Description:
-----------------
+### File Description:
 
 * coupling_esmf.in:
 
