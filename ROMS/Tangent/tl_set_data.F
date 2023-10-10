@@ -2,8 +2,7 @@
 #ifdef TANGENT
       SUBROUTINE tl_set_data (ng, tile)
 !
-!git $Id$
-!svn $Id: tl_set_data.F 1151 2023-02-09 03:08:53Z arango $
+!svn $Id: tl_set_data.F 275 2023-02-09 03:21:09Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -1188,7 +1187,11 @@
 !
 !  Set forward free-surface.
 !
+#  if defined STEP2D_FB_AB3_AM4 || defined STEP2D_FB_LF_AM3
+      DO k=1,4
+#  else
       DO k=1,3
+#  endif
         CALL set_2dfld_tile (ng, tile, iTLM, idFsur,                    &
      &                       LBi, UBi, LBj, UBj,                        &
      &                       OCEAN(ng)%zetaG,                           &
@@ -1207,7 +1210,11 @@
 !
 !  Set forward 2D momentum.
 !
+#  if defined STEP2D_FB_AB3_AM4 || defined STEP2D_FB_LF_AM3
+      DO k=1,4
+#  else
       DO k=1,3
+#  endif
         CALL set_2dfld_tile (ng, tile, iTLM, idUbar,                    &
      &                       LBi, UBi, LBj, UBj,                        &
      &                       OCEAN(ng)%ubarG,                           &
