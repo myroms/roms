@@ -110,6 +110,9 @@ can be either static or shared. Also, an additional script (**wrf_move.csh** or 
 is supplied to move (**`-move`** option) **WRF** objects, libraries, and executables to the
 User's Project sub-directory **`./Build_wrf`** to facilitate running **WRF** as an atmospheric
 component in an **ESMF/NUOPC** coupling system and keep all the configurations in the same place.
+To run **WRF**, we need an increasing number of formatted and unformatted input data files that
+need to be located annoyingly in the Project directory. We use the **wrf_links.csh** or
+**wrf_links.sh** to create the links to those files from the source code root directory.
 
 For example, use the following command to compile and link **WRF**:
 
@@ -138,6 +141,7 @@ configure the **ESMF/NUOPC**-based coupling system:
 | **build_ufs.csh, .sh**         | **UFS** CMake compiling and linking CSH and BASH scripts     |
 | **build_wps.csh, .sh**         | **WPS** compiling and linking CSH and BASH scripts           |
 | **build_wrf.csh, .sh**         | **WRF** compiling and linking CSH and BASH scripts           |
+| **wrf_links.chs, .sh**         | Creates links to **WRF** input data files in Project directory  |
 | **wrf_move.csh, .sh**          | Moves **WRF** objects, libraries, and executables to Project directory |
 |                                |                                                              |
 | **coamps_explicit.runconfig**  | **DATA-COAMPS-ROMS** ESMF RunSequence explicit configuration |
