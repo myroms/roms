@@ -108,8 +108,8 @@ The compiling of **WRF** is archaic and convoluted. Thus, we provide a build scr
 various computer environments, including Spack-Stack. The resulting **WRF** libraries
 can be either static or shared. Also, an additional script (**wrf_move.csh** or **wrf_move.sh**)
 is supplied to move (**`-move`** option) **WRF** objects, libraries, and executables to the
-User's Project directory to facilitate running **WRF** as an atmospheric component in an
-**ESMF/NUOPC** coupling system and keep all the configurations in the same place.
+User's Project sub-directory **`./Build_wrf`** to facilitate running **WRF** as an atmospheric
+component in an **ESMF/NUOPC** coupling system and keep all the configurations in the same place.
 
 For example, use the following command to compile and link **WRF**:
 
