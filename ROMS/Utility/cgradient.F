@@ -155,6 +155,7 @@
       USE distribute_mod,       ONLY : mp_bcastf, mp_bcasti
       USE distribute_mod,       ONLY : mp_reduce
 # endif
+      USE lapack_mod,           ONLY : DSTEQR
 # ifdef ADJUST_BOUNDARY
       USE nf_fread2d_bry_mod,   ONLY : nf_fread2d_bry
 #  ifdef SOLVE3D

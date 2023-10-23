@@ -246,31 +246,10 @@ setenv   MY_PROJECT_DIR      ${PWD}
 
 #--------------------------------------------------------------------------
 # If coupling Earth Systems Models (ESM), set the location of the ESM
-# component libraries and modules. The strategy is to compile and link
-# each ESM component separately first, and then ROMS since it is driving
-# the coupled system. Only the ESM components activated are considered
-# and the rest are ignored.  Some components like WRF cannot be built
-# in a directory specified by the user but in its own root directory,
-# and cannot be moved when debugging with tools like TotalView.
+# component libraries and modules.
 #--------------------------------------------------------------------------
 
-setenv WRF_SRC_DIR         ${HOME}/ocean/repository/git/WRF
-
-if ($?USE_DEBUG) then
-  setenv CICE_LIB_DIR      ${MY_PROJECT_DIR}/Build_ciceG
-  setenv COAMPS_LIB_DIR    ${MY_PROJECT_DIR}/Build_coampsG
-  setenv REGCM_LIB_DIR     ${MY_PROJECT_DIR}/Build_regcmG
-  setenv WAM_LIB_DIR       ${MY_PROJECT_DIR}/Build_wamG
-# setenv WRF_LIB_DIR       ${MY_PROJECT_DIR}/Build_wrfG
-  setenv WRF_LIB_DIR       ${WRF_SRC_DIR}
-else
-  setenv CICE_LIB_DIR      ${MY_PROJECT_DIR}/Build_cice
-  setenv COAMPS_LIB_DIR    ${MY_PROJECT_DIR}/Build_coamps
-  setenv REGCM_LIB_DIR     ${MY_PROJECT_DIR}/Build_regcm
-  setenv WAM_LIB_DIR       ${MY_PROJECT_DIR}/Build_wam
-  setenv WRF_LIB_DIR       ${MY_PROJECT_DIR}/Build_wrf
-# setenv WRF_LIB_DIR       ${WRF_SRC_DIR}
-endif
+source ${MY_ROMS_SRC}/ESM/esm_libs.csh ${MY_ROMS_SRC}/ESM/esm_libs.csh
 
 #--------------------------------------------------------------------------
 # If applicable, use my specified library paths.
@@ -403,10 +382,13 @@ else
     make
   endif
 
+  set HEADER = `echo ${ROMS_APPLICATION} | tr '[:upper:]' '[:lower:]'`.h
+
   echo ""
   echo "${separator}"
   echo "GNU Build script command:      ${command}"
   echo "ROMS source directory:         ${MY_ROMS_SRC}"
+  echo "ROMS header file:              ${MY_HEADER_DIR}/${HEADER}"
   echo "ROMS build  directory:         ${BUILD_DIR}"
   if ( $branch == 1 ) then
     echo "ROMS downloaded from:          https://github.com/myroms/roms.git"

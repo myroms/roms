@@ -46,6 +46,7 @@
 # ifdef DISTRIBUTE
       USE distribute_mod, ONLY : mp_bcastf, mp_bcasti, mp_bcastl
 # endif
+      USE lapack_mod,     ONLY : DSTEQR
       USE strings_mod,    ONLY : FoundError
 !
       implicit none

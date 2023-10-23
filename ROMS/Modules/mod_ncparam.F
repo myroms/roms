@@ -3165,73 +3165,6 @@
 #endif
 !
 !-----------------------------------------------------------------------
-!  Set model lateral boundary variables index.
-!-----------------------------------------------------------------------
-!
-      idBvar(isFsur)=idFsur
-      idBvar(isUbar)=idUbar
-      idBvar(isVbar)=idVbar
-      ic=3
-#ifdef SOLVE3D
-      idBvar(isUvel)=idUvel
-      idBvar(isVvel)=idVvel
-      ic=ic+2
-      DO i=1,MT
-        idBvar(isTvar(i))=idTvar(i)
-        ic=ic+1
-      END DO
-# if defined GLS_MIXING || defined MY25_MIXING
-      ic=ic+1
-      idBvar(isMtke)=idMtke
-# endif
-#endif
-#ifdef WEC
-      ic=ic+2
-      idBvar(isU2Sd)=idU2Sd
-      idBvar(isV2Sd)=idV2Sd
-# if defined SOLVE3D
-      ic=ic+2
-      idBvar(isU3Sd)=idU3Sd
-      idBvar(isV3Sd)=idV3Sd
-# endif
-#endif
-#ifdef ADJUST_BOUNDARY
-!
-!-----------------------------------------------------------------------
-!  If adjusting open boundaries, set metadata variables.  The variable
-!  name is the same as the state variable but with the _obc suffix.
-!-----------------------------------------------------------------------
-!
-      DO i=1,ic
-        varid=varid+1
-        IF (varid.gt.MV) THEN
-          WRITE (stdout,10) MV, varid
-          STOP
-        END IF
-        idSbry(i)=varid
-        DO ng=1,Ngrids
-          Fscale(varid,ng)=1.0_r8
-          Iinfo(1,varid,ng)=0
-        END DO
-        WRITE (Vname(1,varid),'(a,a)')                                  &
-     &        TRIM(ADJUSTL(Vname(1,idSvar(i)))), '_obc'
-        WRITE (Vname(2,varid),'(a,a)')                                  &
-     &        TRIM(ADJUSTL(Vname(2,idSvar(i)))), ', open boundaries'
-        WRITE (Vname(3,varid),'(a)')                                    &
-     &        TRIM(ADJUSTL(Vname(3,idSvar(i))))
-        WRITE (Vname(4,varid),'(a,a)')                                  &
-     &        TRIM(Vname(1,varid)), ', scalar, series'
-        WRITE (Vname(5,varid),'(a)')                                    &
-     &        TRIM(ADJUSTL(Vname(5,idSvar(i))))
-      END DO
-#endif
-!
-!  Save last variable ID counter used.
-!
-      last_varid=varid
-      Dmem(1)=Dmem(1)+REAL(varid,r8)
-!
-!-----------------------------------------------------------------------
 !  Set model state variables metadata indices.
 !-----------------------------------------------------------------------
 !
@@ -3274,6 +3207,70 @@
 # endif
       idSvar(isWvel)=idWvel
 #endif
+!
+!-----------------------------------------------------------------------
+!  Set model lateral boundary variables index.
+!-----------------------------------------------------------------------
+!
+      idBvar(isFsur)=idFsur
+      idBvar(isUbar)=idUbar
+      idBvar(isVbar)=idVbar
+      ic=3
+#ifdef SOLVE3D
+      idBvar(isUvel)=idUvel
+      idBvar(isVvel)=idVvel
+      DO i=1,MT
+        idBvar(isTvar(i))=idTvar(i)
+      END DO
+# if defined GLS_MIXING || defined MY25_MIXING
+      idBvar(isMtke)=idMtke
+# endif
+#endif
+#ifdef WEC
+      idBvar(isU2Sd)=idU2Sd
+      idBvar(isV2Sd)=idV2Sd
+# if defined SOLVE3D
+      idBvar(isU3Sd)=idU3Sd
+      idBvar(isV3Sd)=idV3Sd
+# endif
+#endif
+#ifdef ADJUST_BOUNDARY
+!
+!-----------------------------------------------------------------------
+!  If adjusting open boundaries, set metadata variables.  The variable
+!  name is the same as the state variable but with the _obc suffix.
+!-----------------------------------------------------------------------
+!
+      DO i=1,nLBCvar
+        IF (idBvar(i).gt.0 ) THEN
+          varid=varid+1
+          IF (varid.gt.MV) THEN
+            WRITE (stdout,10) MV, varid
+            STOP
+          END IF
+          idSbry(i)=varid
+          DO ng=1,Ngrids
+            Fscale(varid,ng)=1.0_r8
+            Iinfo(1,varid,ng)=0
+          END DO
+          WRITE (Vname(1,varid),'(a,a)')                                &
+     &          TRIM(ADJUSTL(Vname(1,idSvar(i)))), '_obc'
+          WRITE (Vname(2,varid),'(a,a)')                                &
+     &          TRIM(ADJUSTL(Vname(2,idSvar(i)))), ', open boundaries'
+          WRITE (Vname(3,varid),'(a)')                                  &
+     &          TRIM(ADJUSTL(Vname(3,idSvar(i))))
+          WRITE (Vname(4,varid),'(a,a)')                                &
+     &          TRIM(Vname(1,varid)), ', scalar, series'
+          WRITE (Vname(5,varid),'(a)')                                  &
+     &          TRIM(ADJUSTL(Vname(5,idSvar(i))))
+        END IF
+      END DO
+#endif
+!
+!  Save last variable ID counter used.
+!
+      last_varid=varid
+      Dmem(1)=Dmem(1)+REAL(varid,r8)
 !
   10  FORMAT (/,' MOD_NCPARAM - too small dimension ',                  &
      &        'parameter, MV = ',2i5,/,15x,                             &

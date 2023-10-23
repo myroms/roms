@@ -57,7 +57,7 @@ access the **ROMS** forum, email notifications for bugs/updates, technical
 support from the community, **trac** code maintenance history, tutorials, workshops,
 and publications. The user's **ROMS** forum has over 24,000 posts with helpful
 information. Technical support is limited to registered users. We **do not**
-provide user technical support, usage, or answers in **GitHub**.  
+provide user technical support, usage, or answers in **GitHub**.
 
 This **GitHub** version becomes the official **git** repository for downloading,
 updating, improving, and correcting defects/bugs to the **ROMS** source code.

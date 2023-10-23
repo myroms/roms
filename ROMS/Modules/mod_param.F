@@ -1536,14 +1536,13 @@
 #ifdef SOLVE3D
       nLBCvar=5+MT                 ! zeta, ubar, vbar, u, v, Tvar(1:MT)
 # ifdef ADJUST_STFLUX
-      nLBCvar=nLBCvar+NT(ng)       ! Tsur(1:MT); unused
+      nLBCvar=nLBCvar+MT           ! Tsur(1:MT); unused
 # endif
 #else
       nLBCvar=3                    ! zeta, ubar, vbar
 #endif
 #ifdef ADJUST_WSTRESS
       nLBCvar=nLBCvar+2            ! Ustr, Vstr; unused
-       NstateVar(ng)=NstateVar(ng)+2
 #endif
 #ifdef WEC
       nLBCvar=nLBCvar+2            ! ubar_stokes, vbar_stokes

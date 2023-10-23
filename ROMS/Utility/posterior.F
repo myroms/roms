@@ -44,6 +44,7 @@
 # ifdef DISTRIBUTE
       USE distribute_mod,       ONLY : mp_bcastf, mp_bcasti
 # endif
+      USE lapack_mod,           ONLY : DSTEQR
       USE state_addition_mod,   ONLY : state_addition
       USE state_copy_mod,       ONLY : state_copy
       USE state_dotprod_mod,    ONLY : state_dotprod

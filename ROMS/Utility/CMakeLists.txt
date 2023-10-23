@@ -83,6 +83,7 @@ list( APPEND _files
       ROMS/Utility/inquiry.F
       ROMS/Utility/interpolate.F
       ROMS/Utility/lanc_resid.F
+      ROMS/Utility/lapack_mod.F
       ROMS/Utility/lbc.F
       ROMS/Utility/lubksb.F
       ROMS/Utility/ludcmp.F

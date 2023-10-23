@@ -971,14 +971,18 @@
      &          t44,'South Edge', t57,'East Edge',t70,'North Edge',     &
      &          /,1x,'---------',t25,'----',t31,4('----------',3x))
         DO ifield=1,nLBCvar
-          CALL lbc_report (out, ifield, LBC)
+          IF (idBvar(ifield).gt.0) THEN
+            CALL lbc_report (out, ifield, LBC)
+          END IF
         END DO
 
 #if defined ADJOINT || defined TANGENT || defined TL_IOMS
 !
         WRITE (out,130) 'TLM, RPM, and ADM'
         DO ifield=1,nLBCvar
-          CALL lbc_report (out, ifield, ad_LBC)
+          IF (idBvar(ifield).gt.0) THEN
+            CALL lbc_report (out, ifield, ad_LBC)
+          END IF
         END DO
 #endif
       END IF

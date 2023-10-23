@@ -2148,6 +2148,13 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+17)=' REFINE_BOUNDARY,'
 #endif
+#if defined REMOVE_LAPACK_GOTOS && defined FOUR_DVAR
+!
+      IF (Master) WRITE (stdout,20) 'REMOVE_LAPACK_GOTOS',              &
+     &   'Modernizing adapted LAPACK routines by replacing GOTOs'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+21)=' REMOVE_LAPACK_GOTOS,'
+#endif
 #if defined OXYGEN && defined BIO_FENNEL
 # if defined OCMIP_OXYGEN_SC
 !
