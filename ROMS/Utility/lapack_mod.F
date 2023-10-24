@@ -2,7 +2,7 @@
       MODULE lapack_mod
 !
 !git $Id$
-!svn $Id$
+!svn $Id: lapack_mod.F 1203 2023-10-24 19:47:59Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -30,7 +30,7 @@
 !     as an argument. However, this feature was declared obsolescent   !
 !     in Fortran95. The colon we need an explicit interface. Currently,!
 !     if fails to compile if colon are used intead of asterisk, even   !
-!     if it is inside this module.                                     !   
+!     if it is inside this module.                                     !
 !                                                                      !
 !======================================================================!
 !
@@ -1034,7 +1034,7 @@
       logical, intent(out)   :: RND
 !
       integer, intent(out)   :: BETA, EMAX, EMIN, T
-! 
+!
       real (dp), intent(out) :: EPS, RMAX, RMIN
 !
 !  Local variable declarations.
@@ -1507,7 +1507,7 @@
 !          = 'M' or 'm',   DLAMCH := emin                              !
 !          = 'U' or 'u',   DLAMCH := rmin                              !
 !          = 'L' or 'l',   DLAMCH := emax                              !
-!          = 'O' or 'o',   DLAMCH := rmax                              ! 
+!          = 'O' or 'o',   DLAMCH := rmax                              !
 !                                                                      !
 !          where                                                       !
 !                                                                      !
@@ -1545,7 +1545,7 @@
 !
       real (dp), save :: EPS, SFMIN, BASE, T, RND, EMIN, RMIN,           &
      &                   EMAX, RMAX, PREC
-      real (dp)       :: RMACH, SMALL 
+      real (dp)       :: RMACH, SMALL
 !
 !-----------------------------------------------------------------------
 !  Executable Statements ..
@@ -1924,7 +1924,7 @@
           R = -R
         END IF
       END IF
-!      
+!
       RETURN
       END SUBROUTINE DLARTG
 !
@@ -2782,7 +2782,7 @@
               DecLOOP_2 : DO                         ! forever LOOP 2
                 I = I + 1
                 IF (D(I) .LE. DMNMX) EXIT DecLOOP_2  ! terminate LOOP 2
-              END DO DecLOOP_2 
+              END DO DecLOOP_2
 !
               IF (I .LT. J) THEN
                 TMP = D(I)

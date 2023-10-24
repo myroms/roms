@@ -174,7 +174,7 @@ export     MY_PROJECT_DIR=${PWD}
  export       MY_ROMS_SRC=${MY_ROOT_DIR}/roms
 
  export      ROMS_APP_DIR=${MY_PROJECT_DIR}
- 
+
 # Which type(s) of libraries would you like?
 #
 # NOTE: If you choose both and also choose to build the ROMS executable,
@@ -258,7 +258,7 @@ export     MY_PROJECT_DIR=${PWD}
 #export       USE_SCORPIO=on               # Parallel I/O with SCORPIO library
 
 #--------------------------------------------------------------------------
-# Build definitions and options.  
+# Build definitions and options.
 #--------------------------------------------------------------------------
 
 # Set location of the application header file.
@@ -333,7 +333,7 @@ if [ $dprint -eq 0 ]; then
 
     # If we are using the COMPILERS from the ROMS source code
     # overide the value set above
-  
+
     if [[ ${COMPILERS} == ${MY_ROMS_SRC}* ]]; then
       export COMPILERS=${MY_PROJECT_DIR}/src/Compilers
     fi

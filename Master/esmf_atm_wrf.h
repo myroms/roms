@@ -3,7 +3,7 @@
 #if defined WRF_COUPLING && defined ESMF_LIB
 !
 !git $Id$
-!svn $Id: esmf_atm_wrf.h 1180 2023-07-13 02:42:10Z arango $
+!svn $Id: esmf_atm_wrf.h 1202 2023-10-24 15:36:07Z arango $
 !=======================================================================
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license         Hernan G. Arango     !
@@ -3088,7 +3088,7 @@
         CALL WRF_ProcessImport (grid, model,                            &
      &                          got_sst, sst_index, sst_name,           &
      &                          LBi, UBi, LBj, UBj,                     &
-     &                          ocn_sst, dat_sst,                       &  
+     &                          ocn_sst, dat_sst,                       &
      &                          rc)
         IF (ESMF_LogFoundError(rcToCheck=rc,                            &
      &                         msg=ESMF_LOGERR_PASSTHRU,                &
@@ -3102,7 +3102,7 @@
         CALL WRF_ProcessImport (grid, model,                            &
      &                          got_vec, vec_index, vec_name,           &
      &                          LBi, UBi, LBj, UBj, 2,                  &
-     &                          ocn_vec, dat_vec,                       &  
+     &                          ocn_vec, dat_vec,                       &
      &                          rc)
         IF (ESMF_LogFoundError(rcToCheck=rc,                            &
      &                         msg=ESMF_LOGERR_PASSTHRU,                &

@@ -4,7 +4,7 @@
 #if defined MODEL_COUPLING && defined ESMF_LIB && defined CMEPS
 !
 !git $Id$
-!svn $Id: cmeps_roms.F 1199 2023-09-03 21:51:17Z arango $
+!svn $Id: cmeps_roms.h 1202 2023-10-24 15:36:07Z arango $
 !>
 !! \brief   **ROMS** ESMF/NUOPC Cap file for **CMEPS**
 !!
@@ -22,7 +22,7 @@
 !=======================================================================
 !                                                                      !
 !  This ESMF/NUOPC module sets ROMS as an ocean gridded component in   !
-!  the cdeps/cmeps system:                                             ! 
+!  the cdeps/cmeps system:                                             !
 !                                                                      !
 !                                                                      !
 !    ROMS_SetServices        Sets ROMS component shared-object entry   !

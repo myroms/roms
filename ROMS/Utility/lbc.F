@@ -2,7 +2,7 @@
       MODULE lbc_mod
 !
 !git $Id$
-!svn $Id: lbc.F 1176 2023-07-01 19:23:18Z arango $
+!svn $Id: lbc.F 1202 2023-10-24 15:36:07Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !

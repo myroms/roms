@@ -33,7 +33,7 @@ In the **`DRIVER`** method, it provides all the interfaces needed to couple
 to other **ESM** components, including the executable driver, **NUOPC**-based generic
 **ESM** component services, model gridded components or **NUOPC** _cap_ modules,
 connectors between components for re-gridding source and destination
-fields, input scripts, and coupling metadata management. 
+fields, input scripts, and coupling metadata management.
 
 A **NUOPC** model _cap_ is a Fortran code **API** layer that sits on top of the
 **ESM** component, making calls to the numerical kernel via the _`initialize`_,
@@ -94,7 +94,7 @@ NetCDF4 dependencies and rename collisions with newer versions of the **ESMF** l
 **WRF** adopted the **ESMF** date/time management **API** several years ago and kept the same
 function names, but they were never updated. Nowadays, this patching is not required
 since we loaded the changes to **feature/fix_compile_dependencies** branch of the
-[WRF GitHub](https://github.com/wrf-model/WRF) repository, which started from 
+[WRF GitHub](https://github.com/wrf-model/WRF) repository, which started from
 **WRF** version **4.5.1** on Oct. 10,  2023.
 
 Use the following command to download **WRF** from GitHub:
@@ -154,15 +154,3 @@ configure the **ESMF/NUOPC**-based coupling system:
 | **coupling_esmf_coamps.yaml**  | **DATA-COAMPS_ROMS** system exchange fields metadata         |
 | **coupling_esmf_wrf.yaml**     | **DATA-WRF-ROMS** system exchange fields metadata            |
 | **cmeps_roms.yaml**            | **UFS-ROMS** coupling configuration with **CDEPS/CMEPS**     |
-
-
-
-
-
-
-
-
-
-
-
-  

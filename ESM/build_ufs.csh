@@ -333,10 +333,10 @@ if ( $dprint == 0 ) then
     echo ""
     cd src
     git checkout $branch_name
-  
+
     # If we are using the COMPILERS from the ROMS source code
     # overide the value set above
-  
+
     if ( ${COMPILERS} =~ ${MY_ROMS_SRC}* ) then
       setenv COMPILERS ${MY_PROJECT_DIR}/src/Compilers
     endif
