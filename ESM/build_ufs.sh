@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 # git $Id$
-# svn $Id$
+# svn $Id: build_ufs.sh 1204 2023-10-24 22:01:17Z arango $
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # Copyright (c) 2002-2023 The ROMS/TOMS Group                           :::
 #   Licensed under a MIT/X style license                                :::
@@ -286,6 +286,37 @@ fi
 
 export SCRATCH_DIR=${BUILD_DIR}
 
+# If requested, check out requested branch from ROMS GitHub
+
+if [ $dprint -eq 0 ]; then
+  if [ $branch -eq 1 ]; then
+    if [ ! -d ${MY_PROJECT_DIR}/src ]; then
+      echo ""
+      echo "Downloading ROMS source code from GitHub: https://www.github.com/myroms"
+      echo ""
+      git clone https://www.github.com/myroms/roms.git src
+    fi
+    echo ""
+    echo "Checking out ROMS GitHub branch: $branch_name"
+    echo ""
+    cd src
+    git checkout $branch_name
+    cd ${MY_PROJECT_DIR}
+
+    # If we are using the COMPILERS from the ROMS source code
+    # overide the value set above
+
+    if [[ ${COMPILERS} == ${MY_ROMS_SRC}* ]]; then
+      export COMPILERS=${MY_PROJECT_DIR}/src/Compilers
+    fi
+    export MY_ROMS_SRC=${MY_PROJECT_DIR}/src
+  else
+    echo ""
+    echo "Using ROMS source code from: ${MY_ROMS_SRC}"
+    echo ""
+  fi
+fi
+
 # If necessary, create ROMS build directory.
 
 if [ $dprint -eq 0 ]; then
@@ -314,36 +345,6 @@ if [ $dprint -eq 0 ]; then
       mkdir ${BUILD_DIR}
       cd ${BUILD_DIR}
     fi
-  fi
-
-  # If requested, check out requested branch from ROMS GitHub
-
-  if [ $branch -eq 1 ]; then
-    if [ ! -d ${MY_PROJECT_DIR}/src ]; then
-      echo ""
-      echo "Downloading ROMS source code from GitHub: https://www.github.com/myroms"
-      echo ""
-      git clone https://www.github.com/myroms/roms.git src
-    fi
-    echo ""
-    echo "Checking out ROMS GitHub branch: $branch_name"
-    echo ""
-    cd src
-    git checkout $branch_name
-
-    # If we are using the COMPILERS from the ROMS source code
-    # overide the value set above
-
-    if [[ ${COMPILERS} == ${MY_ROMS_SRC}* ]]; then
-      export COMPILERS=${MY_PROJECT_DIR}/src/Compilers
-    fi
-    export MY_ROMS_SRC=${MY_PROJECT_DIR}/src
-
-  else
-    echo ""
-    echo "Using ROMS source code from: ${MY_ROMS_SRC}"
-    echo ""
-    cd ${MY_ROMS_SRC}
   fi
 fi
 
@@ -468,7 +469,7 @@ if [[ $dprint -eq 0 && $clean -eq 1 ]]; then
   echo "Configuring CMake for ROMS application:"
   echo ""
   cmake -DROMS_APP=${ROMS_APPLICATION} \
-	           -DROMS_APP_DIR=${ROMS_APP_DIR} \
+                   -DROMS_APP_DIR=${ROMS_APP_DIR} \
                    ${my_hdir} \
                    ${ltype} \
                    ${compiler} \
@@ -483,7 +484,7 @@ if [[ $dprint -eq 0 && $clean -eq 1 ]]; then
                    ${comm} \
                    ${roms_exec} \
                    ${dbg} \
-		   -DROMS_SRC_DIR=${MY_ROMS_SRC} \
+                   -DROMS_SRC_DIR=${MY_ROMS_SRC} \
                    -DAPP=CSTLR ${MY_UFS_SRC}
 fi
 

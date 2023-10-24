@@ -1,7 +1,7 @@
 #!/bin/csh -ef
 #
 # git $Id$
-# svn $Id$
+# svn $Id: build_ufs.csh 1204 2023-10-24 22:01:17Z arango $
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # Copyright (c) 2002-2023 The ROMS/TOMS Group                           :::
 #   Licensed under a MIT/X style license                                :::
@@ -289,6 +289,37 @@ endif
 
 setenv SCRATCH_DIR ${BUILD_DIR}
 
+# If requested, check out requested branch from ROMS GitHub
+
+if ( $dprint == 0 ) then
+  if ( $branch == 1 ) then
+    if ( ! -d ${MY_PROJECT_DIR}/src ) then
+      echo ""
+      echo "Downloading ROMS source code from GitHub: https://www.github.com/myroms"
+      echo ""
+      git clone https://www.github.com/myroms/roms.git src
+    endif
+    echo ""
+    echo "Checking out ROMS GitHub branch: $branch_name"
+    echo ""
+    cd src
+    git checkout $branch_name
+
+    # If we are using the COMPILERS from the ROMS source code
+    # overide the value set above
+
+    if ( ${COMPILERS} =~ ${MY_ROMS_SRC}* ) then
+      setenv COMPILERS ${MY_PROJECT_DIR}/src/Compilers
+    endif
+    setenv MY_ROMS_SRC ${MY_PROJECT_DIR}/src
+
+  else
+    echo ""
+    echo "Using ROMS source code from: ${MY_ROMS_SRC}"
+    echo ""
+  endif
+endif
+
 # If necessary, create ROMS build directory.
 
 if ( $dprint == 0 ) then
@@ -317,35 +348,6 @@ if ( $dprint == 0 ) then
       mkdir ${BUILD_DIR}
       cd ${BUILD_DIR}
     endif
-  endif
-
-  # If requested, check out requested branch from ROMS GitHub
-
-  if ( $branch == 1 ) then
-    if ( ! -d ${MY_PROJECT_DIR}/src ) then
-      echo ""
-      echo "Downloading ROMS source code from GitHub: https://www.github.com/myroms"
-      echo ""
-      git clone https://www.github.com/myroms/roms.git src
-    endif
-    echo ""
-    echo "Checking out ROMS GitHub branch: $branch_name"
-    echo ""
-    cd src
-    git checkout $branch_name
-
-    # If we are using the COMPILERS from the ROMS source code
-    # overide the value set above
-
-    if ( ${COMPILERS} =~ ${MY_ROMS_SRC}* ) then
-      setenv COMPILERS ${MY_PROJECT_DIR}/src/Compilers
-    endif
-    setenv MY_ROMS_SRC ${MY_PROJECT_DIR}/src
-
-  else
-    echo ""
-    echo "Using ROMS source code from: ${MY_ROMS_SRC}"
-    echo ""
   endif
 endif
 
