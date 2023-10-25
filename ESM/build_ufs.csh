@@ -1,7 +1,7 @@
 #!/bin/csh -ef
 #
 # git $Id$
-# svn $Id: build_ufs.csh 1204 2023-10-24 22:01:17Z arango $
+# svn $Id: build_ufs.csh 1205 2023-10-25 02:07:09Z arango $
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # Copyright (c) 2002-2023 The ROMS/TOMS Group                           :::
 #   Licensed under a MIT/X style license                                :::
@@ -304,6 +304,7 @@ if ( $dprint == 0 ) then
     echo ""
     cd src
     git checkout $branch_name
+    cd ${MY_PROJECT_DIR}
 
     # If we are using the COMPILERS from the ROMS source code
     # overide the value set above
