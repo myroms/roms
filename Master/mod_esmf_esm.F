@@ -1,10 +1,9 @@
 #include "cppdefs.h"
       MODULE mod_esmf_esm
-#if defined MODEL_COUPLING && defined ESMF_LIB && \
-  !(defined CDEPS          || defined CMEPS)
+#if defined MODEL_COUPLING && defined ESMF_LIB && !defined CMEPS
 !
 !git $Id$
-!svn $Id: mod_esmf_esm.F 1201 2023-09-25 18:28:39Z arango $
+!svn $Id: mod_esmf_esm.F 1202 2023-10-24 15:36:07Z arango $
 !=======================================================================
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license         Hernan G. Arango     !

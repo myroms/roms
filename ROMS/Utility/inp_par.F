@@ -2,7 +2,7 @@
       MODULE inp_par_mod
 !
 !git $Id$
-!svn $Id: inp_par.F 1178 2023-07-11 17:50:57Z arango $
+!svn $Id: inp_par.F 1202 2023-10-24 15:36:07Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -971,14 +971,18 @@
      &          t44,'South Edge', t57,'East Edge',t70,'North Edge',     &
      &          /,1x,'---------',t25,'----',t31,4('----------',3x))
         DO ifield=1,nLBCvar
-          CALL lbc_report (out, ifield, LBC)
+          IF (idBvar(ifield).gt.0) THEN
+            CALL lbc_report (out, ifield, LBC)
+          END IF
         END DO
 
 #if defined ADJOINT || defined TANGENT || defined TL_IOMS
 !
         WRITE (out,130) 'TLM, RPM, and ADM'
         DO ifield=1,nLBCvar
-          CALL lbc_report (out, ifield, ad_LBC)
+          IF (idBvar(ifield).gt.0) THEN
+            CALL lbc_report (out, ifield, ad_LBC)
+          END IF
         END DO
 #endif
       END IF
