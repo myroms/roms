@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 # git $Id$
-# svn $Id: build_ufs.sh 1204 2023-10-24 22:01:17Z arango $
+# svn $Id: build_ufs.sh 1206 2023-10-27 01:44:18Z arango $
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # Copyright (c) 2002-2023 The ROMS/TOMS Group                           :::
 #   Licensed under a MIT/X style license                                :::
@@ -286,7 +286,7 @@ fi
 
 export SCRATCH_DIR=${BUILD_DIR}
 
-# If requested, check out requested branch from ROMS GitHub
+# If requested, check out requested branch from ROMS GitHub.
 
 if [ $dprint -eq 0 ]; then
   if [ $branch -eq 1 ]; then
@@ -461,9 +461,16 @@ fi
 my_hdir="-DMY_HEADER_DIR=${MY_HEADER_DIR}"
 
 if [[ $dprint -eq 0 && $clean -eq 1 ]]; then
-  export CC=mpicc
-  export CXX=mpicxx
-  export FC=mpif90
+
+  if [[ ${which_MPI} == "intel" ]]; then
+    export CC=mpiicc
+    export CXX=mpiicxx
+    export FC=mpiifort
+  else
+    export CC=mpicc
+    export CXX=mpicxx
+    export FC=mpif90
+  fi
 
   echo ""
   echo "Configuring CMake for ROMS application:"

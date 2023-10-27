@@ -1,7 +1,7 @@
 #!/bin/csh -ef
 #
 # git $Id$
-# svn $Id: build_ufs.csh 1205 2023-10-25 02:07:09Z arango $
+# svn $Id: build_ufs.csh 1206 2023-10-27 01:44:18Z arango $
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # Copyright (c) 2002-2023 The ROMS/TOMS Group                           :::
 #   Licensed under a MIT/X style license                                :::
@@ -289,7 +289,7 @@ endif
 
 setenv SCRATCH_DIR ${BUILD_DIR}
 
-# If requested, check out requested branch from ROMS GitHub
+# If requested, check out requested branch from ROMS GitHub.
 
 if ( $dprint == 0 ) then
   if ( $branch == 1 ) then
@@ -479,9 +479,16 @@ set my_hdir="-DMY_HEADER_DIR=${MY_HEADER_DIR}"
 
 if ( $dprint == 0 ) then
   if ( $clean == 1 ) then
-    setenv CC  mpicc
-    setenv CXX mpicxx
-    setenv FC  mpif90
+
+    if ( "${which_MPI}" == "intel" ) then
+      setenv CC  mpiicc
+      setenv CXX mpiicxx
+      setenv FC  mpiif90
+    else
+      setenv CC  mpicc
+      setenv CXX mpicxx
+      setenv FC  mpif90
+    endif
 
     echo ""
     echo "Configuring CMake for ROMS application:"
