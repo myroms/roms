@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 # git $Id$
-# svn $Id: wrf_links.sh 1151 2023-02-09 03:08:53Z arango $
+# svn $Id: wrf_links.sh 1202 2023-10-24 15:36:07Z arango $
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # Copyright (c) 2002-2023 The ROMS/TOMS Group                           :::
 #::::::::::::::::::::::::::::::::::::::::::::::::::::: Hernan G. Arango :::
@@ -20,8 +20,8 @@
 
 # Initialize.
 
-# ${MY_PROJECT_DIR}, ${WRF_ROOT_DIR}, ${WRF_VERSION}, ${USE_REAL_DOUBLE},
-# ${WRF_BUILD_DIR} are environment variables set in "build_wrf.sh".
+# ${MY_PROJECT_DIR}, ${WRF_ROOT_DIR}, ${USE_REAL_DOUBLE}, ${WRF_BUILD_DIR}
+# are environment variables set in "build_wrf.sh".
 
 separator=`perl -e "print ':' x 100;"`
 
@@ -33,81 +33,39 @@ echo ""
 
 cd ${MY_PROJECT_DIR}
 
-find ./ -type l -exec /bin/rm -f {} \;
+# If WRF source code is in the project directory (i.e. the -b options
+# was used), not setting 'maxdepth' will result in symlinks in the
+# source code being removed.
 
-ln -sfv ${WRF_ROOT_DIR}/run/ETAMPNEW_DATA .
-ln -sfv ${WRF_ROOT_DIR}/run/ETAMPNEW_DATA.expanded_rain .
-ln -sfv ${WRF_ROOT_DIR}/run/RRTM_DATA .
-ln -sfv ${WRF_ROOT_DIR}/run/RRTMG_LW_DATA .
-ln -sfv ${WRF_ROOT_DIR}/run/RRTMG_SW_DATA .
-ln -sfv ${WRF_ROOT_DIR}/run/CAM_ABS_DATA .
-ln -sfv ${WRF_ROOT_DIR}/run/CAM_AEROPT_DATA .
-ln -sfv ${WRF_ROOT_DIR}/run/CAMtr_volume_mixing_ratio.RCP4.5 .
-ln -sfv ${WRF_ROOT_DIR}/run/CAMtr_volume_mixing_ratio.RCP6 .
-ln -sfv ${WRF_ROOT_DIR}/run/CAMtr_volume_mixing_ratio.RCP8.5 CAMtr_volume_mixing_ratio
-ln -sfv ${WRF_ROOT_DIR}/run/CAMtr_volume_mixing_ratio.A1B .
-ln -sfv ${WRF_ROOT_DIR}/run/CAMtr_volume_mixing_ratio.A2 .
-ln -sfv ${WRF_ROOT_DIR}/run/CLM_ALB_ICE_DFS_DATA .
-ln -sfv ${WRF_ROOT_DIR}/run/CLM_ALB_ICE_DRC_DATA .
-ln -sfv ${WRF_ROOT_DIR}/run/CLM_ASM_ICE_DFS_DATA .
-ln -sfv ${WRF_ROOT_DIR}/run/CLM_ASM_ICE_DRC_DATA .
-ln -sfv ${WRF_ROOT_DIR}/run/CLM_DRDSDT0_DATA .
-ln -sfv ${WRF_ROOT_DIR}/run/CLM_EXT_ICE_DFS_DATA .
-ln -sfv ${WRF_ROOT_DIR}/run/CLM_EXT_ICE_DRC_DATA .
-ln -sfv ${WRF_ROOT_DIR}/run/CLM_KAPPA_DATA .
-ln -sfv ${WRF_ROOT_DIR}/run/CLM_TAU_DATA .
-ln -sfv ${WRF_ROOT_DIR}/run/ozone.formatted .
-ln -sfv ${WRF_ROOT_DIR}/run/ozone_lat.formatted .
-ln -sfv ${WRF_ROOT_DIR}/run/ozone_plev.formatted .
-ln -sfv ${WRF_ROOT_DIR}/run/aerosol.formatted .
-ln -sfv ${WRF_ROOT_DIR}/run/aerosol_lat.formatted .
-ln -sfv ${WRF_ROOT_DIR}/run/aerosol_lon.formatted .
-ln -sfv ${WRF_ROOT_DIR}/run/aerosol_plev.formatted .
-ln -sfv ${WRF_ROOT_DIR}/run/capacity.asc .
-ln -sfv ${WRF_ROOT_DIR}/run/coeff_p.asc .
-ln -sfv ${WRF_ROOT_DIR}/run/coeff_q.asc .
-ln -sfv ${WRF_ROOT_DIR}/run/constants.asc .
-ln -sfv ${WRF_ROOT_DIR}/run/masses.asc .
-ln -sfv ${WRF_ROOT_DIR}/run/termvels.asc .
-ln -sfv ${WRF_ROOT_DIR}/run/kernels.asc_s_0_03_0_9 .
-ln -sfv ${WRF_ROOT_DIR}/run/kernels_z.asc .
-ln -sfv ${WRF_ROOT_DIR}/run/bulkdens.asc_s_0_03_0_9 .
-ln -sfv ${WRF_ROOT_DIR}/run/bulkradii.asc_s_0_03_0_9 .
-ln -sfv ${WRF_ROOT_DIR}/run/CCN_ACTIVATE.BIN .
-if [ "$WRF_VERSION" == "4.3" ]; then
-  ln -sfv ${WRF_ROOT_DIR}/run/p3_lookupTable_1.dat-2momI_v5.1.6_oldDimax .
-  ln -sfv ${WRF_ROOT_DIR}/run/p3_lookupTable_1.dat-3momI_v5.1.6 .
-  ln -sfv ${WRF_ROOT_DIR}/run/p3_lookupTable_2.dat-4.1 .
-else
-  ln -sfv ${WRF_ROOT_DIR}/run/p3_lookup_table_1.dat-v4.1 .
-  ln -sfv ${WRF_ROOT_DIR}/run/p3_lookup_table_2.dat-v4.1 .
-fi
+find ./ -maxdepth 1 -type l -exec /bin/rm -f {} \;
 
-if [ "${USE_REAL_DOUBLE:+1}" ]; then
-  ln -sfv ${WRF_ROOT_DIR}/run/ETAMPNEW_DATA_DBL ETAMPNEW_DATA
-  ln -sfv ${WRF_ROOT_DIR}/run/ETAMPNEW_DATA.expanded_rain_DBL ETAMPNEW_DATA.expanded_rain
-  ln -sfv ${WRF_ROOT_DIR}/run/RRTM_DATA_DBL RRTM_DATA
-  ln -sfv ${WRF_ROOT_DIR}/run/RRTMG_LW_DATA_DBL RRTMG_LW_DATA
-  ln -sfv ${WRF_ROOT_DIR}/run/RRTMG_SW_DATA_DBL RRTMG_SW_DATA
-else
-  ln -sfv ${WRF_ROOT_DIR}/run/ETAMPNEW_DATA ETAMPNEW_DATA
-  ln -sfv ${WRF_ROOT_DIR}/run/ETAMPNEW_DATA.expanded_rain ETAMPNEW_DATA.expanded_rain
-  ln -sfv ${WRF_ROOT_DIR}/run/RRTM_DATA RRTM_DATA
-  ln -sfv ${WRF_ROOT_DIR}/run/RRTMG_LW_DATA RRTMG_LW_DATA
-  ln -sfv ${WRF_ROOT_DIR}/run/RRTMG_SW_DATA RRTMG_SW_DATA
-fi
+for file in ${WRF_ROOT_DIR}/run/*
+do
+  if [[ $file == *"namelist.input"* || $file == *"README"* ]]; then
+    continue
+  fi
+  if [[ $file == *"ETAMPNEW"* || $file == *"RRTM"* ]]; then
+    if [ "${USE_REAL_DOUBLE:+1}" ]; then
+      if [[ $file == *"_DBL" ]]; then
+        fout=`basename $file _DBL`
+        ln -sfv $file $fout
+      fi
+    else
+      if [[ $file != *"_DBL" ]]; then
+        ln -sfv $file .
+      fi
+    fi
+  else
+    ln -sfv $file .
+  fi
+done
 
-ln -sfv ${WRF_ROOT_DIR}/run/GENPARM.TBL .
-ln -sfv ${WRF_ROOT_DIR}/run/LANDUSE.TBL .
-ln -sfv ${WRF_ROOT_DIR}/run/SOILPARM.TBL .
-ln -sfv ${WRF_ROOT_DIR}/run/URBPARM.TBL .
-ln -sfv ${WRF_ROOT_DIR}/run/VEGPARM.TBL .
-ln -sfv ${WRF_ROOT_DIR}/run/MPTABLE.TBL .
-ln -sfv ${WRF_ROOT_DIR}/run/tr49t67 .
-ln -sfv ${WRF_ROOT_DIR}/run/tr49t85 .
-ln -sfv ${WRF_ROOT_DIR}/run/tr67t85 .
-ln -sfv ${WRF_ROOT_DIR}/run/gribmap.txt .
-ln -sfv ${WRF_ROOT_DIR}/run/grib2map.tbl .
+# The WRF_NOMOVE environment variable is used by DEVELOPERS ONLY
+# when debugging the coupled system infrastructure.
+
+# Remove all symlinks inside the WRF_BUILD_DIR
+
+find ${WRF_BUILD_DIR} -type l -exec /bin/rm -f {} \;
 
 # Set directory structure needed to compile WPS.
 
@@ -165,17 +123,3 @@ ln -sfv ../pack_utils.o                  .
 ln -sfv ../module_machine.o              .
 ln -sfv ../module_internal_header_util.o .
 ln -sfv ../module_driver_constants.o     .
-
-# Remove links in WRF/test/em_real sub-directory
-
-echo ""
-echo "${separator}"
-echo "Removing WRF data links from  ${WRF_ROOT_DIR}/test/em_real:"
-echo "${separator}"
-echo ""
-
-# The -H flag will only dereference paths on the commandline
-# (${WRF_ROOT_DIR}/test/em_real) but will allow -type l to work
-# properly for all "found" files.
-
-find -H ${WRF_ROOT_DIR}/test/em_real -type l -exec /bin/rm -fv {} \;

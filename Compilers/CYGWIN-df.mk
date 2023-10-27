@@ -1,5 +1,5 @@
 # git $Id$
-# svn $Id: CYGWIN-df.mk 1193 2023-08-28 02:52:14Z arango $
+# svn $Id: CYGWIN-df.mk 1202 2023-10-24 15:36:07Z arango $
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # Copyright (c) 2002-2023 The ROMS/TOMS Group                           :::
 #   Licensed under a MIT/X style license                                :::
@@ -125,20 +125,6 @@ ifdef CICE_APPLICATION
 endif
 
 ifdef USE_WRF
- ifeq "$(strip $(WRF_LIB_DIR))" "$(WRF_SRC_DIR)"
-             LIBS += $(WRF_LIB_DIR)/main/module_wrf_top.o
-             LIBS += $(WRF_LIB_DIR)/main/libwrflib.a
-             LIBS += $(WRF_LIB_DIR)/external/fftpack/fftpack5/libfftpack.a
-             LIBS += $(WRF_LIB_DIR)/external/io_grib1/libio_grib1.a
-             LIBS += $(WRF_LIB_DIR)/external/io_grib_share/libio_grib_share.a
-             LIBS += $(WRF_LIB_DIR)/external/io_int/libwrfio_int.a
-             LIBS += $(WRF_LIB_DIR)/external/esmf_time_f90/libesmf_time.a
-             LIBS += $(WRF_LIB_DIR)/external/RSL_LITE/librsl_lite.a
-             LIBS += $(WRF_LIB_DIR)/frame/module_internal_header_util.o
-             LIBS += $(WRF_LIB_DIR)/frame/pack_utils.o
-             LIBS += $(WRF_LIB_DIR)/external/io_netcdf/libwrfio_nf.a
-     WRF_MOD_DIRS  = main frame phys share external/esmf_time_f90
- else
              LIBS += $(WRF_LIB_DIR)/module_wrf_top.o
              LIBS += $(WRF_LIB_DIR)/libwrflib.a
              LIBS += $(WRF_LIB_DIR)/libfftpack.a
@@ -150,7 +136,6 @@ ifdef USE_WRF
              LIBS += $(WRF_LIB_DIR)/module_internal_header_util.o
              LIBS += $(WRF_LIB_DIR)/pack_utils.o
              LIBS += $(WRF_LIB_DIR)/libwrfio_nf.a
- endif
 endif
 
 #--------------------------------------------------------------------------
@@ -296,11 +281,7 @@ endif
 # Add WRF library directory to include path of ESMF coupling files.
 
 ifdef USE_WRF
- ifeq "$(strip $(WRF_LIB_DIR))" "$(WRF_SRC_DIR)"
-  $(BUILD_DIR)/esmf_atm.o: FFLAGS += $(addprefix -I$(WRF_LIB_DIR)/,$(WRF_MOD_DIRS))
- else
-  $(BUILD_DIR)/esmf_atm.o: FFLAGS += -I$(WRF_LIB_DIR)
- endif
+ $(BUILD_DIR)/esmf_atm.o: FFLAGS += -I$(WRF_LIB_DIR)
 endif
 
 # Supress free format in SWAN source files since there are comments
