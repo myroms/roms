@@ -154,3 +154,10 @@ configure the **ESMF/NUOPC**-based coupling system:
 | **coupling_esmf_coamps.yaml**  | **DATA-COAMPS_ROMS** system exchange fields metadata         |
 | **coupling_esmf_wrf.yaml**     | **DATA-WRF-ROMS** system exchange fields metadata            |
 | **cmeps_roms.yaml**            | **UFS-ROMS** coupling configuration with **CDEPS/CMEPS**     |
+
+## ROMS-UFS Applications:
+
+The BASH script **roms_test_ufs.sh** is provided to checkout just the directories
+needed for configuring and running ROMS-UFS test applications from the **roms_test**
+repository. Currently, only the Hurricane Irene application. Also, it illustrate
+to use the **sparse-checkout** feature of git.
