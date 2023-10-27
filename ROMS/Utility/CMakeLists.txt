@@ -1,5 +1,5 @@
 # git $Id$
-# svn $Id: CMakeLists.txt 1163 2023-04-02 15:36:10Z arango $
+# svn $Id: CMakeLists.txt 1202 2023-10-24 15:36:07Z arango $
 #:::::::::::::::::::::::::::::::::::::::::::::::::::::: David Robertson :::
 # Copyright (c) 2002-2023 The ROMS/TOMS Group                           :::
 #   Licensed under a MIT/X style license                                :::
@@ -83,6 +83,7 @@ list( APPEND _files
       ROMS/Utility/inquiry.F
       ROMS/Utility/interpolate.F
       ROMS/Utility/lanc_resid.F
+      ROMS/Utility/lapack_mod.F
       ROMS/Utility/lbc.F
       ROMS/Utility/lubksb.F
       ROMS/Utility/ludcmp.F

@@ -1,11 +1,10 @@
 #include "cppdefs.h"
       MODULE cmeps_roms_mod
 
-#if defined MODEL_COUPLING && defined ESMF_LIB && \
-   (defined CDEPS          || defined CMEPS)
+#if defined MODEL_COUPLING && defined ESMF_LIB && defined CMEPS
 !
 !git $Id$
-!svn $Id: cmeps_roms.F 1199 2023-09-03 21:51:17Z arango $
+!svn $Id: cmeps_roms.h 1202 2023-10-24 15:36:07Z arango $
 !>
 !! \brief   **ROMS** ESMF/NUOPC Cap file for **CMEPS**
 !!
@@ -23,7 +22,7 @@
 !=======================================================================
 !                                                                      !
 !  This ESMF/NUOPC module sets ROMS as an ocean gridded component in   !
-!  the CMEPS system:                                                   !
+!  the cdeps/cmeps system:                                             !
 !                                                                      !
 !                                                                      !
 !    ROMS_SetServices        Sets ROMS component shared-object entry   !
@@ -79,17 +78,17 @@
 !                            computational grid to geographical EAST   !
 !                            and NORTH directions or vice versa.       !
 !                                                                      !
-!  CMEPS:  Community Mediator for Earth Prediction Systems             !
-!            https://escomp.github.io/CMEPS                            !
+! 'CMEPS': Community Mediator for Earth Prediction Systems             !
+!            'https://escomp.github.io/CMEPS'                          !
 !                                                                      !
 !  ESMF:   Earth System Modeling Framework (Version 7 or higher)       !
-!            https://www.earthsystemcog.org/projects/esmf              !
+!            'https://www.earthsystemcog.org/projects/esmf'            !
 !                                                                      !
 !  NUOPC:  National Unified Operational Prediction Capability          !
-!            https://www.earthsystemcog.org/projects/nuopc             !
+!            'https://www.earthsystemcog.org/projects/nuopc'           !
 !                                                                      !
 !  ROMS:   Regional Ocean Modeling System                              !
-!            https://www.myroms.org                                    !
+!            'https://www.myroms.org'                                  !
 !                                                                      !
 !=======================================================================
 !
@@ -860,7 +859,7 @@
 !  Process export field(s) metadata from YAML object.
 !-----------------------------------------------------------------------
 !
-!  Allocate ExportState structure. It is still neede if there are no
+!  Allocate ExportState structure. It is still needed if there are no
 !  fields to export. It is needed for the 'scalar field' named
 !  'cpl_scalars' (see nems.configure) used by cmeps.
 !
@@ -1012,7 +1011,7 @@
 !
 !  Set grid type flag.
 !
-            SELECT CASE (lowercase(Export(i)%source_grid))
+            SELECT CASE (lowercase(Export(Findex)%source_grid))
               CASE ('center_cell', 'cell_center', 'center')
                 MODELS(Iroms)%ExportField(i)%gtype=Icenter
               CASE ('corner_cell', 'cell_corner', 'corner')
@@ -1027,7 +1026,7 @@
 !
 !  Set map type flag.
 !
-            SELECT CASE (lowercase(Export(i)%map_type))
+            SELECT CASE (lowercase(Export(Findex)%map_type))
               CASE ('mapbilnr')
                 MODELS(Iroms)%ExportField(i)%itype=Ibilin
               CASE ('mappatch')
@@ -1243,7 +1242,7 @@
 !
 !  Set grid type flag.
 !
-            SELECT CASE (lowercase(Import(i)%destination_grid))
+            SELECT CASE (lowercase(Import(Findex)%destination_grid))
               CASE ('center_cell', 'cell_center', 'center')
                 MODELS(Iroms)%ImportField(i)%gtype=Icenter
               CASE ('corner_cell', 'cell_corner', 'corner')
@@ -1258,7 +1257,7 @@
 !
 !  Set map type flag.
 !
-            SELECT CASE (lowercase(Import(i)%map_type))
+            SELECT CASE (lowercase(Import(Findex)%map_type))
               CASE ('mapbilnr')
                 MODELS(Iroms)%ImportField(i)%itype=Ibilin
               CASE ('mappatch')
@@ -1914,24 +1913,6 @@
 !-----------------------------------------------------------------------
 !  Set ROMS Export State metadata.
 !-----------------------------------------------------------------------
-!
-!  First, advertize 'scalar field' named 'cpl_scalars' to Export State,
-!  even if there are no fields to export. The 'cpl_scalars' is specified
-!  in 'nems.,configure'.
-!
-      ng=linked_grid
-      MODELS(Iroms)%ExportState(ng)=ExportState
-!
-      CALL NUOPC_Advertise (MODELS(Iroms)%ExportState(ng),              &
-     &                      StandardName=TRIM(ScalarFieldName),         &
-     &                      name=TRIM(ScalarFieldName),                 &
-     &                      rc=rc)
-      IF (ESMF_LogFoundError(rcToCheck=rc,                              &
-     &                       msg=ESMF_LOGERR_PASSTHRU,                  &
-     &                       line=__LINE__,                             &
-     &                       file=MyFile)) THEN
-        RETURN
-      END IF
 
 # ifdef ADD_NESTED_STATE
 !
@@ -1990,6 +1971,7 @@
 !
       EXPORTING : IF (Nexport(Iroms).gt.0) THEN
         ng=linked_grid
+        MODELS(Iroms)%ExportState(ng)=ExportState
 !
         IF (LocalPET.eq.0) THEN
           WRITE (cplout,10) 'ROMS Export STATE: ', ng
@@ -3080,8 +3062,8 @@
 !
 !=======================================================================
 !                                                                      !
-!  Sets ROMS component staggered, horizontal grids arrays              !
-!  and land/sea mask, if any.                                          !
+!  Sets ROMS component staggered, horizontal grids arrays and          !
+!  land/sea mask, if any.                                              !
 !                                                                      !
 !=======================================================================
 !
@@ -3386,6 +3368,7 @@
 !  Fill grid pointers.
 !
           SELECT CASE (MODELS(Iroms)%mesh(ivar)%gtype)
+!                                                        U-points
             CASE (Icenter)
               DO j=JstrR,JendR
                 DO i=IstrR,IendR
@@ -3399,6 +3382,7 @@
                   ptrA(i,j)=GRID(ng)%om_r(i,j)*GRID(ng)%on_r(i,j)
                 END DO
               END DO
+!                                                        PSI-points
             CASE (Icorner)
               DO j=JstrR,JendR
                 DO i=IstrR,IendR
@@ -3412,42 +3396,39 @@
                   ptrA(i,j)=GRID(ng)%om_p(i,j)*GRID(ng)%on_p(i,j)
                 END DO
               END DO
+!                              Extrapolate PSI-points at bottom edge
 !
-! Extapolate corner points at bottom edge
-!
-              IF (tile < NtileI(ng)) THEN
+              IF (tile.lt.NtileI(ng)) THEN
                 ptrX(:,Jstr-1)=2.0_dp*ptrX(:,Jstr)-ptrX(:,Jstr+1)
                 ptrY(:,Jstr-1)=2.0_dp*ptrY(:,Jstr)-ptrY(:,Jstr+1)
                 ptrM(:,Jstr-1)=ptrM(:,Jstr)
                 ptrA(:,Jstr-1)=ptrA(:,Jstr)
               END IF
+!                              Extrapolate PSI-points at left edge
 !
-! Extapolate corner points at left edge
-!
-              IF (mod(tile,NtileI(ng)) == 0) THEN
+              IF (MOD(tile,NtileI(ng)).eq.0) THEN
                 ptrX(Istr-1,:)=2.0_dp*ptrX(Istr,:)-ptrX(Istr+1,:)
                 ptrY(Istr-1,:)=2.0_dp*ptrY(Istr,:)-ptrY(Istr+1,:)
                 ptrM(Istr-1,:)=ptrM(Istr,:)
                 ptrA(Istr-1,:)=ptrA(Istr,:)
               END IF
+!                              Extrapolate PSI-points at top edge
 !
-! Extapolate corner points at top edge
-!
-              IF (tile >= NtileI(ng)*(NtileJ(ng)-1)) THEN
+              IF (tile.ge.(NtileI(ng)*(NtileJ(ng)-1))) THEN
                 ptrX(:,Jend+2)=2.0_dp*ptrX(:,Jend+1)-ptrX(:,Jend)
                 ptrY(:,Jend+2)=2.0_dp*ptrY(:,Jend+1)-ptrY(:,Jend)
                 ptrM(:,Jend+2)=ptrM(:,Jend+1)
                 ptrA(:,Jend+2)=ptrA(:,Jend+1)
               END IF
+!                             Extrapolate PSI-points at right edge
 !
-! Extapolate corner points at right edge
-!
-              IF (mod(tile+1,NtileI(ng)) == 0) THEN
+              IF (MOD(tile+1,NtileI(ng)).eq.0) THEN
                 ptrX(Iend+2,:)=2.0_dp*ptrX(Iend+1,:)-ptrX(Iend,:)
                 ptrY(Iend+2,:)=2.0_dp*ptrY(Iend+1,:)-ptrY(Iend,:)
                 ptrM(Iend+2,:)=ptrM(Iend+1,:)
                 ptrA(Iend+2,:)=ptrA(Iend+1,:)
               END IF
+!                                                        U-points
             CASE (Iupoint)
               DO j=JstrR,JendR
                 DO i=Istr,IendR
@@ -3461,24 +3442,23 @@
                   ptrA(i,j)=GRID(ng)%om_u(i,j)*GRID(ng)%on_u(i,j)
                 END DO
               END DO
+!                             Extrapolate U-points at left edge
 !
-! Extapolate u points at left edge
-!
-              IF (mod(tile,NtileI(ng)) == 0) THEN
+              IF (MOD(tile,NtileI(ng)).eq.0) THEN
                 ptrX(Istr-1,:)=2.0_dp*ptrX(Istr,:)-ptrX(Istr+1,:)
                 ptrY(Istr-1,:)=2.0_dp*ptrY(Istr,:)-ptrY(Istr+1,:)
                 ptrM(Istr-1,:)=ptrM(Istr,:)
                 ptrA(Istr-1,:)=ptrA(Istr,:)
               END IF
+!                             Extrapolate U-points at right edge
 !
-! Extapolate u points at right edge
-!
-              IF (mod(tile+1,NtileI(ng)) == 0) THEN
+              IF (MOD(tile+1,NtileI(ng)).eq.0) THEN
                 ptrX(Iend+2,:)=2.0_dp*ptrX(Iend+1,:)-ptrX(Iend,:)
                 ptrY(Iend+2,:)=2.0_dp*ptrY(Iend+1,:)-ptrY(Iend,:)
                 ptrM(Iend+2,:)=ptrM(Iend+1,:)
                 ptrA(Iend+2,:)=ptrA(Iend+1,:)
               END IF
+!                                                        V-points
             CASE (Ivpoint)
               DO j=Jstr,JendR
                 DO i=IstrR,IendR
@@ -3492,19 +3472,17 @@
                   ptrA(i,j)=GRID(ng)%om_v(i,j)*GRID(ng)%on_v(i,j)
                 END DO
               END DO
+!                             Extrapolate V-points at bottom edge
 !
-! Extapolate v points at bottom edge
-!
-              IF (tile < NtileI(ng)) THEN
+              IF (tile.lt.NtileI(ng)) THEN
                 ptrX(:,Jstr-1)=2.0_dp*ptrX(:,Jstr)-ptrX(:,Jstr+1)
                 ptrY(:,Jstr-1)=2.0_dp*ptrY(:,Jstr)-ptrY(:,Jstr+1)
                 ptrM(:,Jstr-1)=ptrM(:,Jstr)
                 ptrA(:,Jstr-1)=ptrA(:,Jstr)
               END IF
+!                             Extrapolate V-points at top edge
 !
-! Extapolate v points at top edge
-!
-              IF (tile >= NtileI(ng)*(NtileJ(ng)-1)) THEN
+              IF (tile.ge.(NtileI(ng)*(NtileJ(ng)-1))) THEN
                 ptrX(:,Jend+2)=2.0_dp*ptrX(:,Jend+1)-ptrX(:,Jend)
                 ptrY(:,Jend+2)=2.0_dp*ptrY(:,Jend+1)-ptrY(:,Jend)
                 ptrM(:,Jend+2)=ptrM(:,Jend+1)
@@ -3703,10 +3681,9 @@
      &                          fieldName=TRIM(ExportNameList(ifld)),   &
      &                          rc=rc)) THEN
 !
-!  Check if it is scalar field.
-!  Add scalar export field into export state if it is scalar field.
+!  If cmeps scalar field, 'cpl_scalars', add it to Export State.
 !
-            IF (TRIM(ExportNameList(ifld)) ==                           &
+            IF (TRIM(ExportNameList(ifld)).eq.                          &
      &          TRIM(ScalarFieldName)) THEN
 !
 !  Create scalar field.
@@ -3727,7 +3704,7 @@
               CALL SetScalarFieldValues(field,                          &
      &                                  (/ Lm(ng)+2, Mm(ng)+2 /),       &
      &                                  (/ ScalarFieldIdxGridNX,        &
-     &                                  ScalarFieldIdxGridNY /),        &
+     &                                     ScalarFieldIdxGridNY /),     &
      &                                  rc=rc)
               IF (ESMF_LogFoundError(rcToCheck=rc,                      &
      &                               msg=ESMF_LOGERR_PASSTHRU,          &
@@ -3735,6 +3712,9 @@
      &                               file=MyFile)) THEN
                 RETURN
               END IF
+!
+!  Otherwise, proccess regular ROMS export field(s).
+!
             ELSE
 !
 !  Set staggering type.
@@ -3810,7 +3790,7 @@
 !  Remove field from export state because it is not connected.
 !
           ELSE
-            IF (TRIM(ExportNameList(id)) /= TRIM(ScalarFieldName)) THEN
+            IF (TRIM(ExportNameList(id)).ne.TRIM(ScalarFieldName)) THEN
               IF (localPET.eq.0) THEN
                 WRITE (cplout,10) TRIM(ExportNameList(ifld)),           &
      &                            'Export State: ',                     &
@@ -4313,9 +4293,8 @@
 !
       CALL ROMS_finalize
       FLUSH (stdout)                      ! flush standard output buffer
-!
-      FLUSH (cplout)
-      CLOSE (cplout)
+      FLUSH (cplout)                      ! flush coupling output buffer
+      CLOSE (cplout)                      ! close coupling log file
 !
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '<== Exiting  ROMS_SetFinalize',        &
@@ -4892,7 +4871,9 @@
 # endif
 # if defined BULK_FLUXES || defined ECOSIM
 !
-!  Surface air relative humidity (percentage).
+!  Surface air relative humidity (percentage). Notice that as the
+!  specific humidity, it is loaded to FORCES(ng)%Hair and "bulk_flux.F"
+!  will compute the specific humidity (kg/kg).
 !
             CASE ('Qair')
               romsScale=scale
@@ -6618,11 +6599,23 @@
           DO j=JstrR,JendR
             DO i=Istr,IendR
               Uout(i,j)=0.5_r8*(Urot(i-1,j)+Urot(i,j))
+#  ifdef MASKING
+              Uout(i,j)=Uout(i,j)*GRID(ng)%umask(i,j)
+#  endif
+#  ifdef WET_DRY
+              Uout(i,j)=Uout(i,j)*GRID(ng)%umask_wet(i,j)
+#  endif
             END DO
           END DO
           DO j=Jstr,JendR
             DO i=IstrR,IendR
               Vout(i,j)=0.5_r8*(Vrot(i,j-1)+Vrot(i,j))
+#  ifdef MASKING
+              Vout(i,j)=Vout(i,j)*GRID(ng)%vmask(i,j)
+#  endif
+#  ifdef WET_DRY
+              Vout(i,j)=Vout(i,j)*GRID(ng)%vmask_wet(i,j)
+#  endif
             END DO
           END DO
 
@@ -6655,6 +6648,10 @@
 #  ifdef MASKING
             Uout(i,j)=Uout(i,j)*GRID(ng)%rmask(i,j)
             Vout(i,j)=Vout(i,j)*GRID(ng)%rmask(i,j)
+#  endif
+#  ifdef WET_DRY
+            Uout(i,j)=Uout(i,j)*GRID(ng)%rmask_wet(i,j)
+            Vout(i,j)=Vout(i,j)*GRID(ng)%rmask_wet(i,j)
 #  endif
           END DO
         END DO
@@ -6704,11 +6701,23 @@
         DO j=JstrR,JendR
           DO i=Istr,IendR
             Uout(i,j)=0.5_r8*(Uinp(i-1,j)+Uinp(i,j))
+#  ifdef MASKING
+            Uout(i,j)=Uout(i,j)*GRID(ng)%umask(i,j)
+#  endif
+#  ifdef WET_DRY
+            Uout(i,j)=Uout(i,j)*GRID(ng)%umask_wet(i,j)
+#  endif
           END DO
         END DO
         DO j=Jstr,JendR
           DO i=IstrR,IendR
             Vout(i,j)=0.5_r8*(Vinp(i,j-1)+Vinp(i,j))
+#  ifdef MASKING
+              Vout(i,j)=Vout(i,j)*GRID(ng)%vmask(i,j)
+#  endif
+#  ifdef WET_DRY
+              Vout(i,j)=Vout(i,j)*GRID(ng)%vmask_wet(i,j)
+#  endif
           END DO
         END DO
 !

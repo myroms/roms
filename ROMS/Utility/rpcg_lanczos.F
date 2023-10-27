@@ -4,7 +4,7 @@
 #if defined WEAK_CONSTRAINT && defined RPCG
 !
 !git $Id$
-!svn $Id: rpcg_lanczos.F 1151 2023-02-09 03:08:53Z arango $
+!svn $Id: rpcg_lanczos.F 1202 2023-10-24 15:36:07Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group       Selime Gurol      !
 !    Licensed under a MIT/X style license            Andrew M. Moore   !
@@ -46,6 +46,7 @@
 # ifdef DISTRIBUTE
       USE distribute_mod, ONLY : mp_bcastf, mp_bcasti, mp_bcastl
 # endif
+      USE lapack_mod,     ONLY : DSTEQR
       USE strings_mod,    ONLY : FoundError
 !
       implicit none

@@ -1,9 +1,8 @@
 #include "cppdefs.h"
       MODULE mod_param
 !
-!git $Id: mod_param.F 1193 2023-08-28 02:52:14Z arango $
 !git $Id$
-!svn $Id: mod_param.F 1193 2023-08-28 02:52:14Z arango $
+!svn $Id: mod_param.F 1202 2023-10-24 15:36:07Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -1536,14 +1535,13 @@
 #ifdef SOLVE3D
       nLBCvar=5+MT                 ! zeta, ubar, vbar, u, v, Tvar(1:MT)
 # ifdef ADJUST_STFLUX
-      nLBCvar=nLBCvar+NT(ng)       ! Tsur(1:MT); unused
+      nLBCvar=nLBCvar+MT           ! Tsur(1:MT); unused
 # endif
 #else
       nLBCvar=3                    ! zeta, ubar, vbar
 #endif
 #ifdef ADJUST_WSTRESS
       nLBCvar=nLBCvar+2            ! Ustr, Vstr; unused
-       NstateVar(ng)=NstateVar(ng)+2
 #endif
 #ifdef WEC
       nLBCvar=nLBCvar+2            ! ubar_stokes, vbar_stokes
