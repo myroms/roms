@@ -2,7 +2,7 @@
       SUBROUTINE checkdefs
 !
 !git $Id$
-!svn $Id: checkdefs.F 1201 2023-09-25 18:28:39Z arango $
+!svn $Id: checkdefs.F 1202 2023-10-24 15:36:07Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -789,13 +789,6 @@
      &   'Add Carbon constituents'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+8)=' CARBON,'
-#endif
-#if defined CDEPS && defined ESMF_LIB
-!
-      IF (Master) WRITE (stdout,20) 'CDEPS',                            &
-     &   'Using Community Data Models for Earth Prediction System'
-      is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+7)=' CDEPS,'
 #endif
 #if defined CELERITY_READ && defined FORWARD_READ
 !
@@ -2154,6 +2147,13 @@
      &   'Fine-to-Coarse momentum averaging at coarse grid boundary'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+17)=' REFINE_BOUNDARY,'
+#endif
+#if defined REMOVE_LAPACK_GOTOS && defined FOUR_DVAR
+!
+      IF (Master) WRITE (stdout,20) 'REMOVE_LAPACK_GOTOS',              &
+     &   'Modernizing adapted LAPACK routines by replacing GOTOs'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+21)=' REMOVE_LAPACK_GOTOS,'
 #endif
 #if defined OXYGEN && defined BIO_FENNEL
 # if defined OCMIP_OXYGEN_SC

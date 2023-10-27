@@ -3,9 +3,8 @@
 
 #if defined MODEL_COUPLING && defined ESMF_LIB
 !
-!git $Id: esmf_roms.F 1199 2023-09-03 21:51:17Z arango $
 !git $Id$
-!svn $Id: esmf_roms.F 1199 2023-09-03 21:51:17Z arango $
+!svn $Id: esmf_roms.h 1202 2023-10-24 15:36:07Z arango $
 !=======================================================================
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license         Hernan G. Arango     !
@@ -43,8 +42,7 @@
 !                            at the correct time.                      !
 !                                                                      !
 !    ROMS_SetGridArrays      Sets ROMS component staggered, horizontal !
-!                            grid arrays, grid area, and land/sea mask !
-!                            if any.                                   !
+!                            grid arrays, and land/sea mask if any.    !
 !                                                                      !
 !    ROMS_SetStates          Adds ROMS component export and import     !
 !                            fields into its respective state.         !
@@ -104,8 +102,7 @@
       USE exchange_2d_mod,  ONLY : exchange_r2d_tile,                   &
      &                             exchange_u2d_tile,                   &
      &                             exchange_v2d_tile
-      USE get_metadata_mod, ONLY : CouplingField,                       &
-     &                             cmeps_metadata
+      USE get_metadata_mod, ONLY : CouplingField
       USE mod_kinds,        ONLY : dp, i4b, i8b, r4, r8
       USE mod_forces,       ONLY : FORCES
       USE mod_grid,         ONLY : GRID
@@ -547,7 +544,6 @@
   30  FORMAT (/,' ROMS_SetInitializeP1 - incorrect field to process: ', &
      &        a,/,24x,'when activating option: ',a,/,24x,               &
      &        'use instead ',a,/,24x,'or deactivate option: ',a,/)
-!
 # endif
 !
       RETURN
@@ -603,7 +599,7 @@
       rc=ESMF_SUCCESS
 !
 !-----------------------------------------------------------------------
-!  Querry the Virtual Machine (VM) parallel environmemt for the MPI
+!  Query the Virtual Machine (VM) parallel environmemt for the MPI
 !  communicator handle and current node rank.
 !-----------------------------------------------------------------------
 !
@@ -1068,6 +1064,7 @@
           RETURN
         END IF
       END IF
+!
       ClockInfo(Iroms)%TimeStep=ClockInfo(Idriver)%TimeStep/TimeFrac
 !
 !-----------------------------------------------------------------------
@@ -1543,8 +1540,8 @@
 !
 !=======================================================================
 !                                                                      !
-!  Sets ROMS component staggered, horizontal grids arrays, grid area,  !
-!  and land/sea mask, if any.                                          !
+!  Sets ROMS component staggered, horizontal grids arrays and          !
+!  land/sea mask, if any.                                              !
 !                                                                      !
 !=======================================================================
 !
@@ -1693,8 +1690,8 @@
 !  design.
 !
       MODELS(Iroms)%grid(ng)=ESMF_GridCreate(distgrid=distGrid,         &
-     &                                   gridEdgeLWidth=(/1,1/),        &
-     &                                   gridEdgeUWidth=(/1,1/),        &
+     &                                   gridEdgeLWidth=(/2,2/),        &
+     &                                   gridEdgeUWidth=(/2,2/),        &
      &                                   indexflag=ESMF_INDEX_GLOBAL,   &
      &                                   name=TRIM(MODELS(Iroms)%name), &
      &                                   rc=rc)
@@ -1732,16 +1729,16 @@
             staggerEdgeUWidth=(/1,1/)
           CASE (Icorner)
             staggerLoc=ESMF_STAGGERLOC_CORNER
-            staggerEdgeLWidth=(/0,0/)
-            staggerEdgeUWidth=(/1,1/)
+            staggerEdgeLWidth=(/1,1/)
+            staggerEdgeUWidth=(/2,2/)
           CASE (Iupoint)
             staggerLoc=ESMF_STAGGERLOC_EDGE1
-            staggerEdgeLWidth=(/0,1/)
-            staggerEdgeUWidth=(/1,1/)
+            staggerEdgeLWidth=(/1,1/)
+            staggerEdgeUWidth=(/2,1/)
           CASE (Ivpoint)
             staggerLoc=ESMF_STAGGERLOC_EDGE2
-            staggerEdgeLWidth=(/1,0/)
-            staggerEdgeUWidth=(/1,1/)
+            staggerEdgeLWidth=(/1,1/)
+            staggerEdgeUWidth=(/1,2/)
         END SELECT
 !
 !  Allocate coordinate storage associated with staggered grid type.
@@ -1849,6 +1846,7 @@
 !  Fill grid pointers.
 !
           SELECT CASE (MODELS(Iroms)%mesh(ivar)%gtype)
+!                                                        U-points
             CASE (Icenter)
               DO j=JstrR,JendR
                 DO i=IstrR,IendR
@@ -1862,9 +1860,10 @@
                   ptrA(i,j)=GRID(ng)%om_r(i,j)*GRID(ng)%on_r(i,j)
                 END DO
               END DO
+!                                                        PSI-points
             CASE (Icorner)
-              DO j=Jstr,Jend
-                DO i=Istr,Iend
+              DO j=JstrR,JendR
+                DO i=IstrR,IendR
                   ptrX(i,j)=GRID(ng)%lonp(i,j)
                   ptrY(i,j)=GRID(ng)%latp(i,j)
 # ifdef MASKING
@@ -1875,6 +1874,39 @@
                   ptrA(i,j)=GRID(ng)%om_p(i,j)*GRID(ng)%on_p(i,j)
                 END DO
               END DO
+!                              Extrapolate PSI-points at bottom edge
+!
+              IF (tile.lt.NtileI(ng)) THEN
+                ptrX(:,Jstr-1)=2.0_dp*ptrX(:,Jstr)-ptrX(:,Jstr+1)
+                ptrY(:,Jstr-1)=2.0_dp*ptrY(:,Jstr)-ptrY(:,Jstr+1)
+                ptrM(:,Jstr-1)=ptrM(:,Jstr)
+                ptrA(:,Jstr-1)=ptrA(:,Jstr)
+              END IF
+!                              Extrapolate PSI-points at left edge
+!
+              IF (MOD(tile,NtileI(ng)).eq.0) THEN
+                ptrX(Istr-1,:)=2.0_dp*ptrX(Istr,:)-ptrX(Istr+1,:)
+                ptrY(Istr-1,:)=2.0_dp*ptrY(Istr,:)-ptrY(Istr+1,:)
+                ptrM(Istr-1,:)=ptrM(Istr,:)
+                ptrA(Istr-1,:)=ptrA(Istr,:)
+              END IF
+!                              Extrapolate PSI-points at top edge
+!
+              IF (tile.ge.(NtileI(ng)*(NtileJ(ng)-1))) THEN
+                ptrX(:,Jend+2)=2.0_dp*ptrX(:,Jend+1)-ptrX(:,Jend)
+                ptrY(:,Jend+2)=2.0_dp*ptrY(:,Jend+1)-ptrY(:,Jend)
+                ptrM(:,Jend+2)=ptrM(:,Jend+1)
+                ptrA(:,Jend+2)=ptrA(:,Jend+1)
+              END IF
+!                             Extrapolate PSI-points at right edge
+!
+              IF (MOD(tile+1,NtileI(ng)).eq.0) THEN
+                ptrX(Iend+2,:)=2.0_dp*ptrX(Iend+1,:)-ptrX(Iend,:)
+                ptrY(Iend+2,:)=2.0_dp*ptrY(Iend+1,:)-ptrY(Iend,:)
+                ptrM(Iend+2,:)=ptrM(Iend+1,:)
+                ptrA(Iend+2,:)=ptrA(Iend+1,:)
+              END IF
+!                                                        U-points
             CASE (Iupoint)
               DO j=JstrR,JendR
                 DO i=Istr,IendR
@@ -1888,6 +1920,23 @@
                   ptrA(i,j)=GRID(ng)%om_u(i,j)*GRID(ng)%on_u(i,j)
                 END DO
               END DO
+!                             Extrapolate U-points at left edge
+!
+              IF (MOD(tile,NtileI(ng)).eq.0) THEN
+                ptrX(Istr-1,:)=2.0_dp*ptrX(Istr,:)-ptrX(Istr+1,:)
+                ptrY(Istr-1,:)=2.0_dp*ptrY(Istr,:)-ptrY(Istr+1,:)
+                ptrM(Istr-1,:)=ptrM(Istr,:)
+                ptrA(Istr-1,:)=ptrA(Istr,:)
+              END IF
+!                             Extrapolate U-points at right edge
+!
+              IF (MOD(tile+1,NtileI(ng)).eq.0) THEN
+                ptrX(Iend+2,:)=2.0_dp*ptrX(Iend+1,:)-ptrX(Iend,:)
+                ptrY(Iend+2,:)=2.0_dp*ptrY(Iend+1,:)-ptrY(Iend,:)
+                ptrM(Iend+2,:)=ptrM(Iend+1,:)
+                ptrA(Iend+2,:)=ptrA(Iend+1,:)
+              END IF
+!                                                        V-points
             CASE (Ivpoint)
               DO j=Jstr,JendR
                 DO i=IstrR,IendR
@@ -1901,6 +1950,22 @@
                   ptrA(i,j)=GRID(ng)%om_v(i,j)*GRID(ng)%on_v(i,j)
                 END DO
               END DO
+!                             Extrapolate V-points at bottom edge
+!
+              IF (tile.lt.NtileI(ng)) THEN
+                ptrX(:,Jstr-1)=2.0_dp*ptrX(:,Jstr)-ptrX(:,Jstr+1)
+                ptrY(:,Jstr-1)=2.0_dp*ptrY(:,Jstr)-ptrY(:,Jstr+1)
+                ptrM(:,Jstr-1)=ptrM(:,Jstr)
+                ptrA(:,Jstr-1)=ptrA(:,Jstr)
+              END IF
+!                             Extrapolate V-points at top edge
+!
+              IF (tile.ge.(NtileI(ng)*(NtileJ(ng)-1))) THEN
+                ptrX(:,Jend+2)=2.0_dp*ptrX(:,Jend+1)-ptrX(:,Jend)
+                ptrY(:,Jend+2)=2.0_dp*ptrY(:,Jend+1)-ptrY(:,Jend)
+                ptrM(:,Jend+2)=ptrM(:,Jend+1)
+                ptrA(:,Jend+2)=ptrA(:,Jend+1)
+              END IF
           END SELECT
 !
 !  Nullify pointers.
@@ -1949,7 +2014,8 @@
       END IF
       IF (DebugLevel.gt.0) FLUSH (cplout)
 !
-  10  FORMAT (/,2x,'ROMS_DistGrid - Grid = ',i2.2,',',3x,'Mesh = ',a,   &
+  10  FORMAT (/,'ROMS Domain Decomposition:',/,25('='),/,               &
+              /,2x,'ROMS_DistGrid - Grid = ',i2.2,',',3x,'Mesh = ',a,   &
      &        ',',3x,'Partition = ',i0,' x ',i0)
   20  FORMAT (18x,'node = ',i0,t32,'Istr = ',i0,t45,'Iend = ',i0,       &
      &                         t58,'Jstr = ',i0,t71,'Jend = ',i0)
@@ -1980,7 +2046,6 @@
       integer :: ExportCount, ImportCount
       integer :: staggerEdgeLWidth(2)
       integer :: staggerEdgeUWidth(2)
-      integer :: haloLW(2), haloUW(2)
 !
       real (dp), dimension(:,:), pointer :: ptr2d => NULL()
 !
@@ -2007,15 +2072,6 @@
         FLUSH (trac)
       END IF
       rc=ESMF_SUCCESS
-!
-!-----------------------------------------------------------------------
-!  Compute lower and upper bounds tile halo widths for ESMF fields.
-!-----------------------------------------------------------------------
-!
-      haloLW(1)=BOUNDS(ng)%Istr(tile)-BOUNDS(ng)%LBi (tile)
-      haloLW(2)=BOUNDS(ng)%Jstr(tile)-BOUNDS(ng)%LBj (tile)
-      haloUW(1)=BOUNDS(ng)%UBi (tile)-BOUNDS(ng)%Iend(tile)
-      haloUW(2)=BOUNDS(ng)%UBj (tile)-BOUNDS(ng)%Jend(tile)
 !
 !-----------------------------------------------------------------------
 !  Query gridded component.
@@ -2110,20 +2166,12 @@
             SELECT CASE (MODELS(Iroms)%ExportField(id)%gtype)
               CASE (Icenter)                                ! RHO-points
                 staggerLoc=ESMF_STAGGERLOC_CENTER
-                staggerEdgeLWidth=(/1,1/)
-                staggerEdgeUWidth=(/1,1/)
               CASE (Icorner)                                ! PSI-points
                 staggerLoc=ESMF_STAGGERLOC_CORNER
-                staggerEdgeLWidth=(/0,0/)
-                staggerEdgeUWidth=(/1,1/)
               CASE (Iupoint)                                ! U-points
                 staggerLoc=ESMF_STAGGERLOC_EDGE1
-                staggerEdgeLWidth=(/0,1/)
-                staggerEdgeUWidth=(/1,1/)
               CASE (Ivpoint)                                ! V-points
                 staggerLoc=ESMF_STAGGERLOC_EDGE2
-                staggerEdgeLWidth=(/1,0/)
-                staggerEdgeUWidth=(/1,1/)
             END SELECT
 !
 !  Create 2D field from the Grid and arraySpec.
@@ -2132,8 +2180,6 @@
      &                             arraySpec2d,                         &
      &                             indexflag=ESMF_INDEX_GLOBAL,         &
      &                             staggerloc=staggerLoc,               &
-     &                             totalLWidth=haloLW,                  &
-     &                             totalUWidth=haloUW,                  &
      &                             name=TRIM(ExportNameList(ifld)),     &
      &                             rc=rc)
             IF (ESMF_LogFoundError(rcToCheck=rc,                        &
@@ -2256,31 +2302,21 @@
             SELECT CASE (MODELS(Iroms)%ImportField(id)%gtype)
               CASE (Icenter)                                ! RHO-points
                 staggerLoc=ESMF_STAGGERLOC_CENTER
-                staggerEdgeLWidth=(/1,1/)
-                staggerEdgeUWidth=(/1,1/)
               CASE (Icorner)                                ! PSI-points
                 staggerLoc=ESMF_STAGGERLOC_CORNER
-                staggerEdgeLWidth=(/0,0/)
-                staggerEdgeUWidth=(/1,1/)
               CASE (Iupoint)                                ! U-points
                 staggerLoc=ESMF_STAGGERLOC_EDGE1
-                staggerEdgeLWidth=(/0,1/)
-                staggerEdgeUWidth=(/1,1/)
               CASE (Ivpoint)                                ! V-points
                 staggerLoc=ESMF_STAGGERLOC_EDGE2
-                staggerEdgeLWidth=(/1,0/)
-                staggerEdgeUWidth=(/1,1/)
             END SELECT
 !
-!  Create 2D field from the Grid, arraySpec, total tile size including
-!  halos.  The array indices are global following ROMS design.
+!  Create 2D field from the Grid, arraySpec, total tile size.
+!  The array indices are global following ROMS design.
 !
             field=ESMF_FieldCreate(MODELS(Iroms)%grid(ng),              &
      &                             arraySpec2d,                         &
      &                             indexflag=ESMF_INDEX_GLOBAL,         &
      &                             staggerloc=staggerLoc,               &
-     &                             totalLWidth=haloLW,                  &
-     &                             totalUWidth=haloUW,                  &
      &                             name=TRIM(ImportNameList(ifld)),     &
      &                             rc=rc)
             IF (ESMF_LogFoundError(rcToCheck=rc,                        &
@@ -2697,6 +2733,8 @@
 !
       CALL ROMS_finalize
       FLUSH (stdout)                      ! flush standard output buffer
+      FLUSH (cplout)                      ! flush coupling output buffer
+      CLOSE (cplout)                      ! close coupling log file
 !
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '<== Exiting  ROMS_SetFinalize',        &
@@ -4762,22 +4800,26 @@
                 END DO
               END DO
 
-# if defined MASKING && defined WET_DRY
+# if defined MASKING
 !
 !  Update wet point land/sea mask, if differs from static mask.
 !
-            CASE ('msk')
+            CASE ('mask_rho', 'rmask', 'msk')
               MyFmin(1)=1.0_dp
               MyFmax(1)=0.0_dp
               DO j=JstrR,JendR
                 DO i=IstrR,IendR
                   IF (GRID(ng)%rmask(i,j).gt.0.0_r8) THEN
+# ifdef WET_DRY
                     IF (GRID(ng)%rmask(i,j).ne.                         &
      &                  GRID(ng)%rmask_wet(i,j)) THEN
                       ptr2d(i,j)=GRID(ng)%rmask_wet(i,j)
                     ELSE
                       ptr2d(i,j)=GRID(ng)%rmask(i,j)
                     END IF
+# else
+                    ptr2d(i,j)=GRID(ng)%rmask(i,j)
+# endif
                     MyFmin(1)=MIN(MyFmin(1),ptr2d(i,j))
                     MyFmax(1)=MAX(MyFmax(1),ptr2d(i,j))
                   END IF

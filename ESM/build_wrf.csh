@@ -1,12 +1,12 @@
 #!/bin/csh -f
 #
 # git $Id$
-# svn $Id: build_wrf.csh 1151 2023-02-09 03:08:53Z arango $
+# svn $Id: build_wrf.csh 1202 2023-10-24 15:36:07Z arango $
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # Copyright (c) 2002-2023 The ROMS/TOMS Group                           :::
 #::::::::::::::::::::::::::::::::::::::::::::::::::::: Hernan G. Arango :::
 #                                                                       :::
-# WRF Compiling CSH Script: WRF Versions 4.1 and up                     :::
+# WRF Compiling CSH Script: WRF Versions 4.5.2 and higher               :::
 #                                                                       :::
 # Script to compile WRF where source code files are kept separate       :::
 # from the application configuration and build objects.                 :::
@@ -21,15 +21,21 @@
 #                                                                       :::
 # Options:                                                              :::
 #                                                                       :::
-#    -j [N]      Compile in parallel using N CPUs                       :::
-#                  omit argument for all available CPUs                 :::
+#    -j [N]         Compile in parallel using N CPUs                    :::
+#                     omit argument for all available CPUs              :::
 #                                                                       :::
-#    -move       Move compiled objects to build directory               :::
+#    -b [branch]    Compile myroms forked WRF GitHub branch             :::
 #                                                                       :::
-#    -noclean    Do not run clean -a script                             :::
+#                     build_wrf.csh -j 5 -b                             :::
+#                     build_wrf.csh -j 5 -b feature/coupling            :::
 #                                                                       :::
-#    -noconfig   Do not run configure compilation script                :::
+#    -noclean       Do not run clean -a script                          :::
 #                                                                       :::
+#    -noconfig      Do not run configure compilation script             :::
+#                                                                       :::
+# The branch option -b will download the WRF code from the myroms fork  :::
+# of WRF (https://github.com/myroms/WRF) and checkout the given branch  :::
+# or the 'Coupling' branch if none is provided.                         :::
 #                                                                       :::
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
@@ -42,7 +48,7 @@ set separator = `perl -e "print ':' x 100;"`
 set parallel = 0
 set clean = 1
 set config = 1
-set move = 0
+set branch = 0
 
 setenv CPLFLAG ''
 setenv MY_CPP_FLAGS ''
@@ -60,6 +66,19 @@ while ( ($#argv) > 0 )
       endif
     breaksw
 
+    case "-b"
+      shift
+      set branch = 1
+      set move = 1
+      set branch_name = `echo $1 | grep -v '^-'`
+      if ( "$branch_name" == "" ) then
+        set branch_name = 'Coupling'
+      else
+        shift
+      endif
+      echo "Using myroms WRF $branch_name branch"
+    breaksw
+
     case "-noclean"
       shift
       set clean = 0
@@ -70,26 +89,22 @@ while ( ($#argv) > 0 )
       set config = 0
     breaksw
 
-    case "-move"
-      shift
-      set move = 1
-    breaksw
-
     case "-*":
       echo ""
       echo "$0 : Unknown option [ $1 ]"
       echo ""
       echo "Available Options:"
       echo ""
-      echo "-j [N]        Compile in parallel using N CPUs"
+      echo "-j [N]            Compile in parallel using N CPUs"
       echo ""
-      echo "-move         Move compiled objects to build directory"
+      echo "-b [branch_name]  Compile specific myroms forked WRF GitHub branch"
+      echo "                    For example:  build_wrf.csh -b Coupling"
       echo ""
-      echo "-noclean      Do not run clean script"
+      echo "-noclean          Do not run clean script"
       echo ""
-      echo "-noconfig     Do not run configure compilation script"
+      echo "-nocconfig        Do not run configure compilation script"
       echo ""
-     exit 1
+      exit 1
     breaksw
 
   endsw
@@ -102,21 +117,9 @@ end
 # ESMF/NUOPC Coupling (see below).
 #--------------------------------------------------------------------------
 
- setenv ROMS_SRC_DIR         ${HOME}/ocean/repository/trunk
+ setenv ROMS_SRC_DIR         ${HOME}/ocean/repository/git/roms
 
-#setenv WRF_ROOT_DIR         ${HOME}/ocean/repository/WRF.4.1.2
-#setenv WRF_ROOT_DIR         ${HOME}/ocean/repository/WRF.4.1.3
-#setenv WRF_ROOT_DIR         ${HOME}/ocean/repository/WRF.4.2.2
-#setenv WRF_ROOT_DIR         ${HOME}/ocean/repository/WRF.4.3
- setenv WRF_ROOT_DIR         ${HOME}/ocean/repository/WRF
-
- setenv WRF_SRC_DIR          ${WRF_ROOT_DIR}
-
-# Decode WRF version from its README file to decide the appropriate data
-# file links needed.
-
- set wrf_ver = `grep 'WRF Model Version ' $WRF_ROOT_DIR/README | sed -e 's/[^0-9]*\([0-9]\.[0-9]\).*/\1/'`
- setenv WRF_VERSION          ${wrf_ver}
+ setenv WRF_ROOT_DIR         ${HOME}/ocean/repository/git/WRF
 
 #--------------------------------------------------------------------------
 # Set a local environmental variable to define the path of the working
@@ -125,23 +128,6 @@ end
 
  setenv MY_PROJECT_DIR       ${PWD}
  setenv MY_PROJECT_DATA      `dirname ${PWD}`/Data
-
-#--------------------------------------------------------------------------
-# COAMPS configuration CPP options.
-#--------------------------------------------------------------------------
-
-# Sometimes it is desirable to activate one or more CPP options to
-# configure a particular application. If it is the case, specify each
-# option here using the -D syntax. Notice also that you need to use
-# shell's quoting syntax to enclose the definition. Both single or
-# double quotes work. For example,
-#
-# setenv MY_CPP_FLAGS        "${MY_CPP_FLAGS} -DHDF5"
-#
-# Notice that you can have as many definitions as you want by appending
-# values.
-
-#setenv MY_CPP_FLAGS        "${MY_CPP_FLAGS} -D"
 
 #--------------------------------------------------------------------------
 # Set Fortran compiler and MPI library to use.
@@ -204,6 +190,35 @@ endif
 # Put WRF executables in the following directory.
 
 setenv  WRF_BIN_DIR       ${WRF_BUILD_DIR}/Bin
+
+#--------------------------------------------------------------------------
+# Download WRF code if requested
+#--------------------------------------------------------------------------
+
+if ( $branch == 1 ) then
+  if ( ! -d ${MY_PROJECT_DIR}/wrf ) then
+    echo ""
+    echo "Downloading WRF source code from myroms GitHub: https://www.github.com/myroms/WRF"
+    echo ""
+    git clone https://www.github.com/myroms/WRF.git wrf
+  endif
+  echo ""
+  echo "Checking out myroms WRF GitHub branch: $branch_name"
+  echo ""
+  cd wrf
+  git checkout $branch_name
+  setenv WRF_ROOT_DIR ${PWD}
+else
+  echo ""
+  echo "Using ROMS source code from: ${MY_ROMS_SRC}"
+  echo ""
+endif
+
+# Decode WRF version from its README file to decide the appropriate data
+# file links needed.
+
+ set wrf_ver = `grep 'WRF Model Version ' ${WRF_ROOT_DIR}/README | sed -e 's/[^0-9]*\([0-9]\.[0-9]\).*/\1/'`
+ setenv WRF_VERSION          ${wrf_ver}
 
 # Go to the users source directory to compile. The options set above will
 # pick up the application-specific code from the appropriate place.
@@ -268,10 +283,6 @@ if ( $config == 1 ) then
     setenv CONFIG_FLAGS   -r8
   endif
 
-# Check if WRF needs to be patched and do so if necessary.
-
-  ${ROMS_SRC_DIR}/ESM/wrf_patch.csh
-
   echo ""
   echo "${separator}"
   echo "Configuring WRF code:  ${WRF_ROOT_DIR}/configure ${CONFIG_FLAGS}"
@@ -283,8 +294,8 @@ if ( $config == 1 ) then
 # If which_MPI is "intel" then we need to replace DM_FC and DM_CC in configure.wrf
 
   if ( "${which_MPI}" == "intel" ) then
-    perl -i -pe 's/^DM_FC(\s*)=(\s*)mpif90/DM_FC$1=$2mpiifort/' ${WRF_SRC_DIR}/configure.wrf
-    perl -i -pe 's/^DM_CC(\s*)=(\s*)mpicc/DM_CC$1=$2mpiicc/' ${WRF_SRC_DIR}/configure.wrf
+    perl -i -pe 's/^DM_FC(\s*)=(\s*)mpif90/DM_FC$1=$2mpiifort/' ${WRF_ROOT_DIR}/configure.wrf
+    perl -i -pe 's/^DM_CC(\s*)=(\s*)mpicc/DM_CC$1=$2mpiicc/' ${WRF_ROOT_DIR}/configure.wrf
   endif
 endif
 
@@ -328,15 +339,13 @@ setenv WRF_NMM_CORE 0            # Nonhydrostatic Mesoscale Model core
 
 # Remove existing build directory.
 
-if ( $move == 1 ) then
-  if ( $clean == 1 ) then
-    echo ""
-    echo "${separator}"
-    echo "Removing WRF build directory:  ${WRF_BUILD_DIR}"
-    echo "${separator}"
-    echo ""
-    /bin/rm -rf ${WRF_BUILD_DIR}
-  endif
+if ( $clean == 1 ) then
+  echo ""
+  echo "${separator}"
+  echo "Removing WRF build directory:  ${WRF_BUILD_DIR}"
+  echo "${separator}"
+  echo ""
+  /bin/rm -rf ${WRF_BUILD_DIR}
 endif
 
 # Compile (if -move is set, the binaries will go to WRF_BIN_DIR set above).
@@ -357,7 +366,7 @@ echo ""
 echo "   ${WRF_ROOT_DIR}/compile ${WRF_CASE}"
 echo "        WRF_DA_CORE = ${WRF_DA_CORE},    Data Assimilation core"
 echo "        WRF_EM_CORE = ${WRF_EM_CORE},    Eurelian Mass-coordinate core"
-echo "        WRF_NMM_CORE = ${WRF_NMM_CORE}, Nonhydrostatic Mesoscale Model core"
+echo "        WRF_NMM_CORE = ${WRF_NMM_CORE},   Nonhydrostatic Mesoscale Model core"
 echo "        J = ${J},          number of compiling CPUs"
 echo "${separator}"
 echo ""
@@ -368,16 +377,12 @@ ${WRF_ROOT_DIR}/compile ${WRF_CASE}
 # Move WRF objects and executables to working project directory.
 #--------------------------------------------------------------------------
 
-if ( $move == 1 ) then
-  ${ROMS_SRC_DIR}/ESM/wrf_move.csh
-endif
+${ROMS_SRC_DIR}/ESM/wrf_move.csh
 
 #--------------------------------------------------------------------------
 # Create WRF data links to working project directory.
 #--------------------------------------------------------------------------
 
-if ( $move == 1 ) then
- if ( $WRF_CASE == "em_real" ) then
+if ( $WRF_CASE == "em_real" ) then
   ${ROMS_SRC_DIR}/ESM/wrf_links.csh
- endif
 endif
