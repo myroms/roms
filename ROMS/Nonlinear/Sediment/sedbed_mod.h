@@ -24,6 +24,12 @@
 !                   bed(:,:,:,iaged) => layer age                      !
 !                   bed(:,:,:,iporo) => layer porosity                 !
 !                   bed(:,:,:,idiff) => layer bio-diffusivity          !
+# if defined SEDBIO_COUP
+!                   bed(:,:,:,iboxy) => layer oxygen                   !
+!                   bed(:,:,:,ibno3) => layer nitrate                  !
+!                   bed(:,:,:,ibnh4) => layer ammonium                 !
+!                   bed(:,:,:,ibodu) => layer oxygen demand units      !
+# endif
 !  bed_frac       Sediment fraction of each size class in each bed     !
 !                   layer(nondimensional: 0-1.0).  Sum of              !
 !                   bed_frac = 1.0.                                    !
@@ -37,6 +43,15 @@
 #ifdef BEDLOAD
 !  bedldu         Bed load u-transport (kg/m/s).                       !
 !  bedldv         Bed load v-transport (kg/m/s).                       !
+# ifdef BEDLOAD_VANDERA
+!  ursell_no      Ursell number of the asymmetric wave.                !
+!  RR_asymwave    Velocity skewness parameter of the asymmetric wave.  !
+!  beta_asymwave  Accleration assymetry parameter.                     !
+!  ucrest_r       Crest velocity of the asymmetric wave form (m/s).    !
+!  utrough_r      Trough velocity of the asymmetric wave form (m/s).   !
+!  T_crest        Crest time period of the asymmetric wave form (s).   !
+!  T_trough       Trough time period of the asymmetric wave form (s).  !
+# endif
 #endif
 !  bottom         Exposed sediment layer properties:                   !
 !                   bottom(:,:,isd50) => mean grain diameter           !
@@ -46,18 +61,56 @@
 !                   bottom(:,:,irlen) => ripple length                 !
 !                   bottom(:,:,irhgt) => ripple height                 !
 !                   bottom(:,:,ibwav) => bed wave excursion amplitude  !
+!                   bottom(:,:,izdef) => default bottom roughness      !
+!                   bottom(:,:,izapp) => apparent bottom roughness     !
 !                   bottom(:,:,izNik) => Nikuradse bottom roughness    !
 !                   bottom(:,:,izbio) => biological bottom roughness   !
 !                   bottom(:,:,izbfm) => bed form bottom roughness     !
 !                   bottom(:,:,izbld) => bed load bottom roughness     !
-!                   bottom(:,:,izapp) => apparent bottom roughness     !
 !                   bottom(:,:,izwbl) => wave bottom roughness         !
-!                   bottom(:,:,izdef) => default bottom roughness      !
 !                   bottom(:,:,iactv) => active layer thickness        !
 !                   bottom(:,:,ishgt) => saltation height              !
+!                   bottom(:,:,imaxD) => maximum inundation depth      !
+!                   bottom(:,:,idnet) => Erosion or deposition         !
+!                   bottom(:,:,idtbl) => Thickness of wbl              !
+!                   bottom(:,:,idubl) => Current velocity at wbl       !
+!                   bottom(:,:,idfdw) => Friction factor from currents !
+!                   bottom(:,:,idzrw) => Ref height for near bottom vel!
+!                   bottom(:,:,idksd) => Bed roughness for wbl         !
+!                   bottom(:,:,idusc) => Current friction velocity wbl !
+!                   bottom(:,:,idpcx) => Angle between currents and xi !
+!                   bottom(:,:,idpwc) => Angle between waves / currents!
+#if defined COHESIVE_BED || defined SED_BIODIFF || defined MIXED_BED
+!                   bottom(:,:,idoff) => tau critical offset           !
+!                   bottom(:,:,idslp) => tau critical slope            !
+!                   bottom(:,:,idtim) => erodibility time scale        !
+!                   bottom(:,:,idbmx) => diffusivity db_max            !
+!                   bottom(:,:,idbmm) => diffusivity db_m              !
+!                   bottom(:,:,idbzs) => diffusivity db_zs             !
+!                   bottom(:,:,idbzm) => diffusivity db_zm             !
+!                   bottom(:,:,idbzp) => diffusivity db_zphi           !
+#endif
+#if defined MIXED_BED
+!                   bottom(:,:,idprp) => cohesive behavior             !
+#endif
+#if defined SEAGRASS_BOTTOM
+!                   bottom(:,:,isgrH) => Seagrass height               !
+!                   bottom(:,:,isgrD) => Seagrass shoot density        !
+#endif
 #if defined SEDIMENT && defined SUSPLOAD
 !  ero_flux       Flux from erosion.                                   !
 !  settling_flux  Flux from settling.                                  !
+#endif
+#if defined COHESIVE_BED || defined MIXED_BED
+!  tcr_min         minimum shear for erosion
+!  tcr_max         maximum shear for erosion
+!  tcr_slp         Tau_crit profile slope
+!  tcr_off         Tau_crit profile offset
+!  tcr_tim         Tau_crit consolidation rate
+#endif
+#if defined MIXED_BED
+!  transC          cohesive transition
+!  transN          noncohesive transition
 #endif
 !                                                                      !
 !=======================================================================
@@ -98,11 +151,23 @@
 #ifdef BEDLOAD
         real(r8), pointer :: bedldu(:,:,:)
         real(r8), pointer :: bedldv(:,:,:)
+# ifdef BEDLOAD_VANDERA
+        real(r8), pointer :: ursell_no(:,:)
+        real(r8), pointer :: RR_asymwave(:,:)
+        real(r8), pointer :: beta_asymwave(:,:)
+        real(r8), pointer :: ucrest_r(:,:)
+        real(r8), pointer :: utrough_r(:,:)
+        real(r8), pointer :: T_crest(:,:)
+        real(r8), pointer :: T_trough(:,:)
+# endif
 #endif
         real(r8), pointer :: bottom(:,:,:)
 #if defined SEDIMENT && defined SUSPLOAD
         real(r8), pointer :: ero_flux(:,:,:)
         real(r8), pointer :: settling_flux(:,:,:)
+#endif
+#if defined SEDIMENT && defined SED_BIOMASS
+        real(r8), pointer :: Dstp_max(:,:,:)
 #endif
 
 #if defined TANGENT || defined TL_IOMS
@@ -203,16 +268,28 @@
 #endif
 #if defined SEDIMENT && defined SED_MORPH
       allocate ( SEDBED(ng) % bed_thick0(LBi:UBi,LBj:UBj) )
-      allocate ( SEDBED(ng) % bed_thick(LBi:UBi,LBj:UBj,3) )
+      allocate ( SEDBED(ng) % bed_thick(LBi:UBi,LBj:UBj,1:3) )
 #endif
 #ifdef BEDLOAD
       allocate ( SEDBED(ng) % bedldu(LBi:UBi,LBj:UBj,NST) )
       allocate ( SEDBED(ng) % bedldv(LBi:UBi,LBj:UBj,NST) )
+# ifdef BEDLOAD_VANDERA
+      allocate ( SEDBED(ng) % ursell_no(LBi:UBi,LBj:UBj) )
+      allocate ( SEDBED(ng) % RR_asymwave(LBi:UBi,LBj:UBj) )
+      allocate ( SEDBED(ng) % beta_asymwave(LBi:UBi,LBj:UBj) )
+      allocate ( SEDBED(ng) % ucrest_r(LBi:UBi,LBj:UBj) )
+      allocate ( SEDBED(ng) % utrough_r(LBi:UBi,LBj:UBj) )
+      allocate ( SEDBED(ng) % T_crest(LBi:UBi,LBj:UBj) )
+      allocate ( SEDBED(ng) % T_trough(LBi:UBi,LBj:UBj) )
+# endif
 #endif
       allocate ( SEDBED(ng) % bottom(LBi:UBi,LBj:UBj,MBOTP) )
 #if defined SEDIMENT && defined SUSPLOAD
       allocate ( SEDBED(ng) % ero_flux(LBi:UBi,LBj:UBj,NST) )
       allocate ( SEDBED(ng) % settling_flux(LBi:UBi,LBj:UBj,NST) )
+#endif
+#if defined SEDIMENT && defined SED_BIOMASS
+      allocate ( SEDBED(ng) % Dstp_max(LBi:UBi,LBj:UBj,24) )
 #endif
 
 #if defined TANGENT || defined TL_IOMS
@@ -226,7 +303,7 @@
 # endif
 # if defined SEDIMENT && defined SED_MORPH
       allocate ( SEDBED(ng) % tl_bed_thick0(LBi:UBi,LBj:UBj) )
-      allocate ( SEDBED(ng) % tl_bed_thick(LBi:UBi,LBj:UBj,3) )
+      allocate ( SEDBED(ng) % tl_bed_thick(LBi:UBi,LBj:UBj,1:3) )
 # endif
 # ifdef BEDLOAD
       allocate ( SEDBED(ng) % tl_bedldu(LBi:UBi,LBj:UBj,NST) )
@@ -250,7 +327,7 @@
 # endif
 # if defined SEDIMENT && defined SED_MORPH
       allocate ( SEDBED(ng) % ad_bed_thick0(LBi:UBi,LBj:UBj) )
-      allocate ( SEDBED(ng) % ad_bed_thick(LBi:UBi,LBj:UBj,3) )
+      allocate ( SEDBED(ng) % ad_bed_thick(LBi:UBi,LBj:UBj,1:3) )
 # endif
 # ifdef BEDLOAD
       allocate ( SEDBED(ng) % ad_bedldu(LBi:UBi,LBj:UBj,NST) )
@@ -262,7 +339,7 @@
       allocate ( SEDBED(ng) % ad_settling_flux(LBi:UBi,LBj:UBj,NST) )
 # endif
 #endif
-!
+
       RETURN
       END SUBROUTINE allocate_sedbed
 !
@@ -567,6 +644,17 @@
               SEDBED(ng) % bedldv(i,j,itrc) = IniVal
             END DO
           END DO
+# ifdef BEDLOAD_VANDERA
+          DO i=Imin,Imax
+            SEDBED(ng) % ursell_no(i,j)    = IniVal
+            SEDBED(ng) % RR_asymwave(i,j)  = IniVal
+            SEDBED(ng) % beta_asymwave(i,j)= IniVal
+            SEDBED(ng) % ucrest_r(i,j)     = IniVal
+            SEDBED(ng) % utrough_r(i,j)    = IniVal
+            SEDBED(ng) % T_crest(i,j)      = IniVal
+            SEDBED(ng) % T_trough(i,j)     = IniVal
+          END DO
+# endif
 #endif
           DO itrc=1,MBOTP
             DO i=Imin,Imax
@@ -578,6 +666,13 @@
             DO i=Imin,Imax
               SEDBED(ng) % ero_flux(i,j,itrc) = IniVal
               SEDBED(ng) % settling_flux(i,j,itrc) = IniVal
+            END DO
+          END DO
+#endif
+#if defined SEDIMENT && defined SED_BIOMASS
+          DO itrc=1,24
+            DO i=Imin,Imax
+              SEDBED(ng) % Dstp_max(i,j,itrc) = 0.1_r8
             END DO
           END DO
 #endif

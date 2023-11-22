@@ -74,6 +74,16 @@
      &                         deallocate_sedbed,                       &
      &                         initialize_sedbed
 #endif
+#if defined SEDIMENT && defined SED_FLOCS
+      USE mod_sedflocs, ONLY : allocate_sedflocs,                       &
+     &                         initialize_sedflocs
+!    &                         deallocate_sedflocs,                     &
+#endif
+#if defined VEGETATION 
+      USE mod_vegarr,   ONLY : allocate_vegarr,                         &
+     &                         initialize_vegarr
+!    &                         deallocate_vegarr,                       &
+#endif 
       USE mod_sources,  ONLY : allocate_sources,                        &
      &                         deallocate_sources
 #if defined SSH_TIDES || defined UV_TIDES
@@ -188,6 +198,12 @@
 #if defined SEDIMENT || defined BBL_MODEL
           CALL allocate_sedbed (ng, LBi, UBi, LBj, UBj)
 #endif
+#if defined SEDIMENT && defined SED_FLOCS
+          CALL allocate_sedflocs(ng, LBi, UBi, LBj, UBj)
+#endif
+#if defined VEGETATION
+          CALL allocate_vegarr(ng, LBi, UBi, LBj, UBj)
+#endif
 #if defined SSH_TIDES || defined UV_TIDES
           CALL allocate_tides (ng, LBi, UBi, LBj, UBj)
 #endif
@@ -294,6 +310,12 @@
 #if defined SEDIMENT || defined BBL_MODEL
         CALL deallocate_sedbed (ng)
 #endif
+#if defined SEDIMENT && defined SED_FLOCS
+!       CALL deallocate_sedflocs (ng)
+#endif
+!#if defined VEGETATION
+!       CALL deallocate_vegarr(ng)
+!#endif
 #if defined SSH_TIDES || defined UV_TIDES
         CALL deallocate_tides (ng)
 #endif
@@ -404,6 +426,12 @@
           CALL initialize_ocean (ng, tile, model)
 #if defined SEDIMENT || defined BBL_MODEL
           CALL initialize_sedbed (ng, tile, model)
+#endif
+#if defined SEDIMENT && defined SED_FLOCS
+            CALL initialize_sedflocs (ng, tile, model)
+#endif
+#if defined VEGETATION 
+            CALL initialize_vegarr (ng, tile, model)
 #endif
 #if defined SSH_TIDES || defined UV_TIDES
           CALL initialize_tides (ng, tile)

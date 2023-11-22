@@ -61,7 +61,6 @@
      &                      LBi, UBi, LBj, UBj,                         &
      &                      IminS, ImaxS, JminS, JmaxS,                 &
      &                      nstp(ng), nnew(ng),                         &
-     &                      GRID(ng) % Hz,                              &
 # ifdef WET_DRY
      &                      GRID(ng) % rmask_wet,                       &
 # endif
@@ -75,6 +74,12 @@
 # endif
      &                      FORCES(ng) % bustr,                         &
      &                      FORCES(ng) % bvstr,                         &
+# ifdef SED_DUNEFACE
+     &                      FORCES(ng) % Dissip_roller,                 &
+     &                      GRID(ng) % pm, GRID(ng) % pn,               &
+     &                      OCEAN(ng) % ubar,                           &
+     &                      OCEAN(ng) % vbar,                           &
+# endif
      &                      OCEAN(ng) % t,                              &
      &                      SEDBED(ng) % ero_flux,                      &
      &                      SEDBED(ng) % settling_flux,                 &
@@ -97,7 +102,6 @@
      &                            LBi, UBi, LBj, UBj,                   &
      &                            IminS, ImaxS, JminS, JmaxS,           &
      &                            nstp, nnew,                           &
-     &                            Hz,                                   &
 # ifdef WET_DRY
      &                            rmask_wet,                            &
 # endif
@@ -107,6 +111,11 @@
      &                            bustrcwmax, bvstrcwmax,               &
 # endif
      &                            bustr, bvstr,                         &
+# ifdef SED_DUNEFACE
+     &                            Dissip_roller,                        &
+     &                            pm, pn,                               &
+     &                            ubar, vbar,                           &
+# endif
      &                            t,                                    &
      &                            ero_flux, settling_flux,              &
 # if defined SED_MORPH
@@ -129,7 +138,6 @@
       integer, intent(in) :: nstp, nnew
 !
 # ifdef ASSUMED_SHAPE
-      real(r8), intent(in) :: Hz(LBi:,LBj:,:)
 #  ifdef WET_DRY
       real(r8), intent(in) :: rmask_wet(LBi:,LBj:)
 #  endif
@@ -143,6 +151,13 @@
 #  endif
       real(r8), intent(in) :: bustr(LBi:,LBj:)
       real(r8), intent(in) :: bvstr(LBi:,LBj:)
+#  ifdef SED_DUNEFACE
+      real(r8), intent(in) :: Dissip_roller(LBi:,LBj:)
+      real(r8), intent(in) :: pm(LBi:,LBj:)
+      real(r8), intent(in) :: pn(LBi:,LBj:)
+      real(r8), intent(in) :: ubar(LBi:,LBj:,:)
+      real(r8), intent(in) :: vbar(LBi:,LBj:,:)
+#  endif
 #  if defined SED_MORPH
       real(r8), intent(inout):: bed_thick(LBi:,LBj:,:)
 #  endif
@@ -154,7 +169,6 @@
       real(r8), intent(inout) :: bed_mass(LBi:,LBj:,:,:,:)
       real(r8), intent(inout) :: bottom(LBi:,LBj:,:)
 # else
-      real(r8), intent(in) :: Hz(LBi:UBi,LBj:UBj,N(ng))
 #  ifdef WET_DRY
       real(r8), intent(in) :: rmask_wet(LBi:UBi,LBj:UBj)
 #  endif
@@ -168,6 +182,13 @@
 #  endif
       real(r8), intent(in) :: bustr(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: bvstr(LBi:UBi,LBj:UBj)
+#  ifdef SED_DUNEFACE
+      real(r8), intent(in) :: Dissip_roller(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: pm(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: pn(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: ubar(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(in) :: vbar(LBi:UBi,LBj:UBj,3)
+#  endif
 #  if defined SED_MORPH
       real(r8), intent(inout):: bed_thick(LBi:UBi,LBj:UBj,3)
 #  endif
@@ -185,10 +206,7 @@
       integer :: Ksed, i, indx, ised, j, k, ks
       integer :: bnew
 
-      real(r8) :: cff, cff1, cff2, cff3, cff4
-
-      real(r8), dimension(IminS:ImaxS,N(ng)) :: Hz_inv
-
+      real(r8) :: cff, cff1, cff2, cff3, cff4, cff5
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tau_w
 
 # include "set_bounds.h"
@@ -241,12 +259,6 @@
 !  after both fluxes are applied.
 !
       J_LOOP : DO j=Jstr,Jend
-        DO k=1,N(ng)
-          DO i=Istr,Iend
-            Hz_inv(i,k)=1.0_r8/Hz(i,j,k)
-          END DO
-        END DO
-!
         SED_LOOP: DO ised=1,NST
           indx=idsed(ised)
           DO i=Istr,Iend
@@ -268,19 +280,52 @@
 !
             cff1=(1.0_r8-bed(i,j,1,iporo))*bed_frac(i,j,1,ised)
             cff2=dt(ng)*Erate(ised,ng)*cff1
+# ifdef SED_DUNEFACE
+            cff2=cff2+Dissip_roller(i,j)*0.0005_r8
+# endif
             cff3=Srho(ised,ng)*cff1
             cff4=bed_mass(i,j,1,bnew,ised)
+            cff5=settling_flux(i,j,ised) !CRS
+# if defined SED_TAU_CD_CONST || defined SED_TAU_CD_LIN
+            if (tau_w(i,j).GT.tau_cd(ised,ng)) then
+               cff5=0.0_r8
+            endif
+# endif
+# if defined SED_TAU_CD_LIN
+            if (tau_w(i,j).LE.tau_cd(ised,ng).AND.                      &
+     &                       tau_cd(ised,ng).GT.0.0_r8) then
+               cff5=(1.0_r8-tau_w(i,j)/tau_cd(ised,ng))*cff5
+            endif
+# endif
             ero_flux(i,j,ised)=                                         &
      &               MIN(MAX(0.0_r8,cff2*(cff*tau_w(i,j)-1.0_r8)),      &
      &                   MIN(cff3*bottom(i,j,iactv),cff4)+              &
-     &                   settling_flux(i,j,ised))
+     &                   cff5)
 !
-!  Update global tracer variables (m Tunits for nnew indx, Tuints for 3)
-!  for erosive flux.
+!  Update global tracer variables (mT units) for erosive flux.
 !
             t(i,j,1,nnew,indx)=t(i,j,1,nnew,indx)+ero_flux(i,j,ised)
+# if defined SED_TAU_CD_CONST || defined SED_TAU_CD_LIN
+            t(i,j,1,nnew,indx)=t(i,j,1,nnew,indx)+                      &
+     &                            (settling_flux(i,j,ised)-cff5)
+            settling_flux(i,j,ised)=cff5
+# endif
+
           END DO
         END DO SED_LOOP
+!
+!  Calculate net deposition and erosion.
+!
+        DO i=Istr,Iend
+          cff=0.0_r8
+          cff2=0.0_r8
+          DO ised=1,NST
+            cff=cff+settling_flux(i,j,ised)
+            cff2=cff2+ero_flux(i,j,ised)
+          END DO
+          bottom(i,j,idnet)=cff-cff2
+        END DO
+!
       END DO J_LOOP
 !
       RETURN

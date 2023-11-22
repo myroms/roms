@@ -78,21 +78,39 @@
       SUBROUTINE sediment (ng, tile)
 !***********************************************************************
 !
-# if defined COHESIVE_BED
-!!    USE sed_bed_cohesive_mod, ONLY : sed_bed_cohesive
+# if defined COHESIVE_BED  || defined MIXED_BED
+      USE sed_bed_cohesive_mod, ONLY : sed_bed_cohesive
+# elif defined NONCOHESIVE_BED2
+      USE sed_bed_mod2, ONLY : sed_bed2
 # else
       USE sed_bed_mod, ONLY : sed_bed
 # endif
-# ifdef BEDLOAD
+# if defined BEDLOAD
+#  if defined BEDLOAD_SOULSBY || defined BEDLOAD_MPM
       USE sed_bedload_mod, ONLY : sed_bedload
+#  elif defined BEDLOAD_VANDERA
+      USE mod_vandera_funcs 
+      USE sed_bedload_vandera_mod, ONLY : sed_bedload_vandera
+#  endif 
 # endif
 # if defined SED_BIODIFF
-!!    USE sed_biodiff_mod, ONLY : sed_biodiff
+    USE sed_biodiff_mod, ONLY : sed_biodiff
 # endif
 # ifdef SUSPLOAD
       USE sed_fluxes_mod, ONLY : sed_fluxes
       USE sed_settling_mod, ONLY : sed_settling
+#  if defined SED_FLOCS
+    USE sed_flocs_mod, ONLY : sed_flocmod
+#  endif
 # endif
+# if defined SEDTR_REACTIONS
+#  if defined SEDBIO_COUP
+    USE sedtr_reactions_pom_mod, ONLY : sedtr_reactions_pom
+#  elif defined SEDTR_DECAY
+    USE sedtr_decay_mod, ONLY : sedtr_decay
+#  endif
+# endif
+!
       USE sed_surface_mod, ONLY : sed_surface
 !
 !  Imported variable declarations.
@@ -105,10 +123,22 @@
 !  Compute sediment bedload transport.
 !-----------------------------------------------------------------------
 !
+#   if defined BEDLOAD_SOULSBY || defined BEDLOAD_MPM
       CALL sed_bedload (ng, tile)
+#   elif defined BEDLOAD_VANDERA
+      CALL sed_bedload_vandera(ng, tile)
+#   endif
 # endif
 
 # ifdef SUSPLOAD
+#  ifdef SED_FLOCS
+!
+!-----------------------------------------------------------------------
+!  Compute sediment flocculation
+!-----------------------------------------------------------------------
+!
+      CALL sed_flocmod (ng, tile)
+#  endif
 !
 !-----------------------------------------------------------------------
 !  Compute sediment vertical settling.
@@ -121,25 +151,39 @@
 !-----------------------------------------------------------------------
 !
       CALL sed_fluxes (ng, tile)
+!
 # endif
 !
 !-----------------------------------------------------------------------
 !  Compute sediment bed stratigraphy.
 !-----------------------------------------------------------------------
 !
-# if defined COHESIVE_BED
-!!    CALL sed_bed_cohesive (ng, tile)
+# if defined COHESIVE_BED || defined MIXED_BED
+      CALL sed_bed_cohesive (ng, tile)
+# elif defined NONCOHESIVE_BED2
+      CALL sed_bed2 (ng, tile)
 # else
       CALL sed_bed (ng, tile)
 # endif
-
-# if defined SED_BIODIFF
 !
 !-----------------------------------------------------------------------
 !  Compute sediment bed biodiffusivity.
 !-----------------------------------------------------------------------
 !
-!!    CALL sed_biodiff (ng, tile)
+# if defined SED_BIODIFF
+      CALL sed_biodiff (ng, tile)
+# endif
+!
+!-----------------------------------------------------------------------
+!  Compute reactive sediment terms.
+!-----------------------------------------------------------------------
+!
+# if defined SEDTR_REACTIONS
+#  if defined SEDBIO_COUP
+      CALL sedtr_reactions_pom (ng, tile)
+#  elif defined SEDTR_DECAY
+      CALL sedtr_decay (ng, tile)
+#  endif
 # endif
 !
 !-----------------------------------------------------------------------

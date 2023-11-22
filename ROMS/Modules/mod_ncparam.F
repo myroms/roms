@@ -436,6 +436,14 @@
       integer  :: id2dRV        ! 2D relative vorticity
       integer  :: id3dPV        ! 3D potential vorticity
       integer  :: id3dRV        ! 3D relative vorticity
+      integer  :: idHs01        ! Wave height of partition 01
+      integer  :: idHs02        ! Wave height of partition 02
+      integer  :: idTp01        ! Wave peak period of partition 01
+      integer  :: idTp02        ! Wave peak period of partition 02
+      integer  :: idWl01        ! Wave avg length of partition 01
+      integer  :: idWl02        ! Wave avg length of partition 02
+      integer  :: idDr01        ! Wave avg dir of partition 01
+      integer  :: idDr02        ! Wave avg dir of partition 02
 !
 !  Last used variable ID counter.
 !
@@ -1160,6 +1168,9 @@
 !
       USE get_metadata_mod, ONLY : io_metadata
       USE strings_mod,      ONLY : FoundError, StandardName
+#if defined VEGETATION
+      USE mod_vegetation 
+#endif 
 !
 !  Local variable declarations.
 !
@@ -1863,6 +1874,24 @@
             idHsbl=varid
           CASE ('idHbbl')
             idHbbl=varid
+#ifdef WAVE_PARTITION
+          CASE ('idHs01')
+            idHs01=varid
+          CASE ('idHs02')
+            idHs02=varid
+          CASE ('idTp01')
+            idTp01=varid
+          CASE ('idTp02')
+            idTp02=varid
+          CASE ('idWl01')
+            idWl01=varid
+          CASE ('idWl02')
+            idWl02=varid
+          CASE ('idDr01')
+            idDr01=varid
+          CASE ('idDr02')
+            idDr02=varid
+#endif
 #ifdef UV_DRAG_GRID
           CASE ('idragL')
             idragL=varid
@@ -2153,6 +2182,16 @@
             idDu3d(M3vvis)=varid
           CASE ('idDv3d(M3vvis)')
             idDv3d(M3vvis)=varid
+#  if defined VEGETATION && defined VEG_DRAG
+            CASE ('idDu3d(M3fveg)')
+              idDu3d(M3fveg)=varid
+            CASE ('idDv3d(M3fveg)')
+              idDv3d(M3fveg)=varid
+            CASE ('idDu2d(M2fveg)')
+              idDu2d(M2fveg)=varid
+            CASE ('idDv2d(M2fveg)')
+              idDv2d(M2fveg)=varid
+#  endif
           CASE ('idDu3d(M3rate)')
             idDu3d(M3rate)=varid
           CASE ('idDv3d(M3rate)')
@@ -2366,6 +2405,9 @@
 
 #if defined SEDIMENT || defined BBL_MODEL
 #  include <sediment_var.h>
+#endif
+#if defined VEGETATION 
+#  include <vegetation_var.h>
 #endif
 
           CASE DEFAULT

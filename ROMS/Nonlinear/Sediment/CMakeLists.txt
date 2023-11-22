@@ -9,13 +9,22 @@
 # Source code list for sub-directory "ROMS/Nonlinear/Sediment"
 
 list( APPEND _files
+      ROMS/Nonlinear/Sediment/mod_vandera_funcs.F
       ROMS/Nonlinear/Sediment/sed_bed.F
+      ROMS/Nonlinear/Sediment/sed_bed2.F
+      ROMS/Nonlinear/Sediment/sed_bed_cohesive.F
       ROMS/Nonlinear/Sediment/sed_bedload.F
+      ROMS/Nonlinear/Sediment/sed_bedload_vandera.F
+      ROMS/Nonlinear/Sediment/sed_biodiff.F
+      ROMS/Nonlinear/Sediment/sed_flocs.F
       ROMS/Nonlinear/Sediment/sed_fluxes.F
       ROMS/Nonlinear/Sediment/sediment.F
       ROMS/Nonlinear/Sediment/sediment_output.F
       ROMS/Nonlinear/Sediment/sed_settling.F
       ROMS/Nonlinear/Sediment/sed_surface.F
+      ROMS/Nonlinear/Sediment/sedtr_decay.F
+      ROMS/Nonlinear/Sediment/sedtr_reactions_pom.F
+      ROMS/Nonlinear/Sediment/sedtr_reactions_sed_decay.F
 )
 
 set ( ROMS_Nonlinear_Sediment_files

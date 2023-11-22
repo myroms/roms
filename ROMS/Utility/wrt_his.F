@@ -41,6 +41,10 @@
       USE mod_sedbed
       USE mod_sediment
 #endif
+#if defined VEGETATION 
+      USE mod_vegetation
+      USE mod_vegarr
+#endif
       USE mod_stepping
 !
 #if (defined BBL_MODEL || defined WAVES_OUTPUT) && defined SOLVE3D
@@ -1853,6 +1857,9 @@
      &                     Hout, HIS)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #endif
+#ifdef VEGETATION
+#include "vegetation_wrt_his.h"
+#endif 
 
 #if defined ICE_MODEL && defined SOLVE3D
 !
