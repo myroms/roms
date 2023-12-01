@@ -33,9 +33,10 @@ The State University of New Jersey, New Brunswick, New Jersey, USA. Currently, t
 **git** repository contains the following branches:
 
 - **main**: Tagged versions and the latest stable release version of **ROMS**
-- **develop**: Main developing branch of **ROMS**. It is not recommended for public
- consumption but passes the internal tests. It is intended for **ROMS** superusers
- and beta testers.
+- **develop**: Main developing branch of **ROMS**. It contains the model's
+  latest corrections, updates, and minor evolutions. It is a stable branch
+  that passes selected internal tests. It is the parent to other feature
+  branches describing new options and algorithms.
 - **feature branches**: Research and new development branches recommended to
 superusers and beta testers.
 
