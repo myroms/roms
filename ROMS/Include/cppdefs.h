@@ -2,7 +2,7 @@
 ** Include file "cppdefs.h"
 **
 ** git $Id$
-** svn $Id: cppdefs.h 1189 2023-08-15 21:26:58Z arango $
+** svn $Id: cppdefs.h 1209 2023-12-01 02:17:45Z arango $
 ********************************************************** Hernan G. Arango ***
 ** Copyright (c) 2002-2023 The ROMS/TOMS Group                               **
 **   Licensed under a MIT/X style license                                    **
@@ -44,7 +44,7 @@
 ** UV_LOGDRAG              to turn ON or OFF logarithmic bottom friction     **
 ** UV_LDRAG                to turn ON or OFF linear bottom friction          **
 ** UV_QDRAG                to turn ON or OFF quadratic bottom friction       **
-** OMEGA_IMPLICT           to add adaptive implicit vertical advection       **
+** OMEGA_IMPLICIT          to add adaptive implicit vertical advection       **
 ** SPLINES_VVISC           if splines reconstruction of vertical viscosity   **
 **                                                                           **
 ** OPTION for barotropic kernel time-stepping algorithm. Currently, the      **
@@ -427,6 +427,7 @@
 ** POSTERIOR_ERROR_I       if initial posterior analysis error covariance    **
 ** PRIOR_BULK_FLUXES       if imposing prior NLM surface fluxes              **
 ** RECOMPUTE_4DVAR         if recomputing 4DVar in analysis algorithms       **
+** REMOVE_LAPACK_GOTOS     to replace GOTOs in customized LAPACK routines    **
 ** RPCG                    if Restricted B-preconditioned Lanczos solver     **
 ** RPM_RELAXATION          if Picard iterations, Diffusive Relaxation of RPM **
 ** SKIP_NLM                to skip running NLM, reading NLM trajectory       **
