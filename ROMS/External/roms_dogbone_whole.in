@@ -2,9 +2,9 @@
 !  ROMS/TOMS Standard Input parameters.
 !
 ! ngit $Id$
-! nsvn $Id: roms_dogbone_whole.in 1184 2023-07-27 20:28:19Z arango $
+! nsvn $Id: roms_dogbone_whole.in 1210 2024-01-03 22:03:03Z arango $
 !========================================================= Hernan G. Arango ===
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group                                !
+!  Copyright (c) 2002-2024 The ROMS/TOMS Group                                !
 !    Licensed under a MIT/X style license                                     !
 !    See License_ROMS.md                                                      !
 !==============================================================================
@@ -1052,8 +1052,8 @@ PIO_I2C_Preq = 65                 ! Maximum pending I2C requests
 
 ! Input NetCDF file names, [1:Ngrids].
 
-     GRDNAME == ../../../roms_test/dogbone/Data/dogbone_grd_whole.nc
-     ININAME == ../../../roms_test/dogbone/Data/dogbone_ini_whole.nc
+     GRDNAME == ../../../../git/roms_test/dogbone/Data/dogbone_grd_whole.nc
+     ININAME == ../../../../git/roms_test/dogbone/Data/dogbone_ini_whole.nc
      ITLNAME == dogbone_itl.nc
      IRPNAME == dogbone_irp.nc
      IADNAME == dogbone_iad.nc

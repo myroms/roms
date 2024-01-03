@@ -157,7 +157,7 @@ configure the **ESMF/NUOPC**-based coupling system:
 
 ## ROMS-UFS Applications:
 
-The BASH script **roms_test_ufs.sh** is provided to **`checkout`** just the directories
-needed for configuring and running **ROMS-UFS** test applications from the **roms_test**
-repository. Currently, only the [Hurricane Irene](https://github.com/myroms/roms_test/tree/main/IRENE)
-application is available. Also, it illustrates the use of the **sparse-checkout** feature of git.
+The BASH script **roms_test_ufs.sh** is provided to checkout just the directories
+needed for configuring and running ROMS-UFS test applications from the **roms_test**
+repository. Currently, only the Hurricane Irene application. Also, it illustrate
+to use the **sparse-checkout** feature of git.
