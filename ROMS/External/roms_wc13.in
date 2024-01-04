@@ -1052,7 +1052,7 @@ PIO_I2C_Preq = 65                 ! Maximum pending I2C requests
 
 ! Input NetCDF file names, [1:Ngrids].
 
-     GRDNAME == ../../../../git/roms_test/WC13/Data/wc13_grd.nc
+     GRDNAME == ../../../roms_test/WC13/Data/wc13_grd.nc
      ININAME == wc13_ini.nc
      ITLNAME == wc13_itl.nc
      IRPNAME == wc13_irp.nc
@@ -1095,7 +1095,7 @@ PIO_I2C_Preq = 65                 ! Maximum pending I2C requests
 
     NBCFILES == 1                          ! number of boundary files
 
-     BRYNAME == ../../../../git/roms_test/WC13/Data/wc13_ecco_bry.nc
+     BRYNAME == ../../../roms_test/WC13/Data/wc13_ecco_bry.nc
 
 ! Input climatology file names. The USER has the option to separate the
 ! climatology variables into individual NetCDF files (NCLMFILES > 1),
@@ -1141,13 +1141,13 @@ PIO_I2C_Preq = 65                 ! Maximum pending I2C requests
 
      NFFILES == 7                          ! number of unique forcing files
 
-     FRCNAME == ../../../../git/roms_test/WC13/Data/coamps_wc13_lwrad_down.nc \
-                ../../../../git/roms_test/WC13/Data/coamps_wc13_Pair.nc \
-                ../../../../git/roms_test/WC13/Data/coamps_wc13_Qair.nc \
-                ../../../../git/roms_test/WC13/Data/coamps_wc13_rain.nc \
-                ../../../../git/roms_test/WC13/Data/coamps_wc13_swrad.nc \
-                ../../../../git/roms_test/WC13/Data/coamps_wc13_Tair.nc \
-                ../../../../git/roms_test/WC13/Data/coamps_wc13_wind.nc
+     FRCNAME == ../../../roms_test/WC13/Data/coamps_wc13_lwrad_down.nc \
+                ../../../roms_test/WC13/Data/coamps_wc13_Pair.nc \
+                ../../../roms_test/WC13/Data/coamps_wc13_Qair.nc \
+                ../../../roms_test/WC13/Data/coamps_wc13_rain.nc \
+                ../../../roms_test/WC13/Data/coamps_wc13_swrad.nc \
+                ../../../roms_test/WC13/Data/coamps_wc13_Tair.nc \
+                ../../../roms_test/WC13/Data/coamps_wc13_wind.nc
 
 ! Output NetCDF file names, [1:Ngrids].
 

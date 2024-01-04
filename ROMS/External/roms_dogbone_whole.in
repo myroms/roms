@@ -1052,8 +1052,8 @@ PIO_I2C_Preq = 65                 ! Maximum pending I2C requests
 
 ! Input NetCDF file names, [1:Ngrids].
 
-     GRDNAME == ../../../../git/roms_test/dogbone/Data/dogbone_grd_whole.nc
-     ININAME == ../../../../git/roms_test/dogbone/Data/dogbone_ini_whole.nc
+     GRDNAME == ../../../roms_test/dogbone/Data/dogbone_grd_whole.nc
+     ININAME == ../../../roms_test/dogbone/Data/dogbone_ini_whole.nc
      ITLNAME == dogbone_itl.nc
      IRPNAME == dogbone_irp.nc
      IADNAME == dogbone_iad.nc

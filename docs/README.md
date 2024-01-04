@@ -29,7 +29,23 @@ its dynamical and numerical kernels will affect the symmetry of the **TLM** and
 the inner product that prescribes the L2-norm.
 
 This official community version of **ROMS** is developed and maintained at Rutgers,
-The State University of New Jersey, New Brunswick, New Jersey, USA.
+The State University of New Jersey, New Brunswick, New Jersey, USA. Currently, this
+**git** repository contains the following branches:
+
+- **main**: Tagged versions and the latest stable release version of **ROMS**
+- **develop**: Main developing branch of **ROMS**. It contains the model's
+  latest corrections, updates, and minor evolutions. It is a stable branch
+  that passes selected internal tests. It is the parent to other feature
+  branches describing new options and algorithms.
+- **feature branches**: Research and new development branches recommended to
+superusers and beta testers.
+
+Check **wiki** for more information:
+
+```
+https://github.com/myroms/roms/wiki
+https://github.com/myroms/roms/wiki/ROMS-Branches
+```
 
 # Instructions
 
@@ -44,16 +60,14 @@ and publications. The user's **ROMS** forum has over 24,000 posts with helpful
 information. Technical support is limited to registered users. We **do not**
 provide user technical support, usage, or answers in **GitHub**.
 
-The **GitHub** version becomes the official **git** repository for downloading,
+This **GitHub** version becomes the official **git** repository for downloading,
 updating, improving, and correcting defects/bugs to the **ROMS** source code.
 Also, it is the version used in the **ROMS-JEDI** interface hosted at
-https://github.com/JCSDA-internal, which is currently private. We will update
-the git and svn repositories hosted at https://www.myroms.org for some time,
-but encourage the User to transition to **GitHub**, which gives you access to the
-feature branches. Use the following command to download the **ROMS** source code:
+https://github.com/JCSDA-internal, which is currently private. Use the following
+command to download the **ROMS** source code:
 ```
-git clone https://github.com/myroms/roms.git
-svn checkout --username joe_roms https://www.myroms.org/svn/src/trunk <source_dir>
+git clone https://github.com/myroms/roms.git                 (default)
+git clone https://github.com/myroms/roms.git <source_dir>
 ```
 The idealized and realistic **ROMS** Test Cases and the Matlab processing
 software can be downloaded from:

@@ -1080,10 +1080,10 @@ PIO_I2C_Preq = 65                 ! Maximum pending I2C requests
 
 ! Input NetCDF file names, [1:Ngrids].
 
-     GRDNAME == ../../../../git/roms_test/dogbone/Data/dogbone_grd_left.nc \
-                ../../../../git/roms_test/dogbone/Data/dogbone_grd_right.nc
-     ININAME == ../../../../git/roms_test/dogbone/Data/dogbone_ini_left.nc \
-                ../../../../git/roms_test/dogbone/Data/dogbone_ini_right.nc
+     GRDNAME == ../../../roms_test/dogbone/Data/dogbone_grd_left.nc \
+                ../../../roms_test/dogbone/Data/dogbone_grd_right.nc
+     ININAME == ../../../roms_test/dogbone/Data/dogbone_ini_left.nc \
+                ../../../roms_test/dogbone/Data/dogbone_ini_right.nc
      ITLNAME == dogbone_itl.nc
      IRPNAME == dogbone_irp.nc
      IADNAME == dogbone_iad.nc
@@ -1113,7 +1113,7 @@ PIO_I2C_Preq = 65                 ! Maximum pending I2C requests
 ! NetCDF file is special and complex. It is currently generated using
 ! the script "matlab/grid/contact.m" from the Matlab repository.
 
-     NGCNAME =  ../../../../git/roms_test/dogbone/Data/dogbone_ngc_composite.nc
+     NGCNAME =  ../../../roms_test/dogbone/Data/dogbone_ngc_composite.nc
 
 ! Input lateral boundary conditions file names. The USER has the option
 ! to separate the required lateral boundary variables into individual

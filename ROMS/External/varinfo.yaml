@@ -41,7 +41,7 @@
 #     field = field (source_units) * scale + add_offset
 #
 
-svn_repository: $URL: https://www.myroms.org/svn/src/trunk/ROMS/External/varinfo.yaml $
+svn_repository: $URL: https://github.com/myroms/roms/External/varinfo.yaml $
 
 convention:     CF 1.10
 

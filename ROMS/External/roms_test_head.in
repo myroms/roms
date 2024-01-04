@@ -1052,8 +1052,8 @@ PIO_I2C_Preq = 65                 ! Maximum pending I2C requests
 
 ! Input NetCDF file names, [1:Ngrids].
 
-     GRDNAME == ../../../../git/roms_test/test_head/Data/test_head_curv_grd.nc
-     ININAME == ../../../../git/roms_test/test_head/Data/test_head_ini.nc
+     GRDNAME == ../../../roms_test/test_head/Data/test_head_curv_grd.nc
+     ININAME == ../../../roms_test/test_head/Data/test_head_ini.nc
      ITLNAME == roms_itl.nc
      IRPNAME == roms_irp.nc
      IADNAME == roms_iad.nc
@@ -1141,7 +1141,7 @@ PIO_I2C_Preq = 65                 ! Maximum pending I2C requests
 
      NFFILES == 1                          ! number of unique forcing files
 
-     FRCNAME == ../../../../git/roms_test/test_head/Data/test_head_frc.nc
+     FRCNAME == ../../../roms_test/test_head/Data/test_head_frc.nc
 
 ! Output NetCDF file names, [1:Ngrids].
 

@@ -1052,7 +1052,7 @@ PIO_I2C_Preq = 65                 ! Maximum pending I2C requests
 
 ! Input NetCDF file names, [1:Ngrids].
 
-     GRDNAME == ../../../../git/roms_test/riverplume/Data/roms_riverplume1_grid.nc
+     GRDNAME == ../../../roms_test/riverplume/Data/roms_riverplume1_grid.nc
      ININAME == roms_ini.nc
      ITLNAME == roms_itl.nc
      IRPNAME == roms_irp.nc
