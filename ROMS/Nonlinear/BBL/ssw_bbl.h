@@ -8,7 +8,7 @@
 !git $Id$
 !svn $Id: ssw_bbl.h 1185 2023-08-01 21:42:38Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group        Chris Sherwood   !
+!  Copyright (c) 2002-2024 The ROMS/TOMS Group        Chris Sherwood   !
 !    Licensed under a MIT/X style license               Rich Signell   !
 !    See License_ROMS.md                              John C. Warner   !
 !=======================================================================

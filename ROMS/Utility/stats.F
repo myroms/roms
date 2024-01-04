@@ -4,7 +4,7 @@
 !git $Id$
 !svn $Id: stats.F 1194 2023-08-29 17:14:13Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2024 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.md                                               !
 !=======================================================================

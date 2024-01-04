@@ -3,7 +3,7 @@
 ** git $Id$
 ** svn $Id: mod_ice.F 1176 2023-07-01 19:23:18Z arango $
 *************************************************** Hernan G. Arango ***
-** Copyright (c) 2002-2023 The ROMS/TOMS Group                        **
+** Copyright (c) 2002-2024 The ROMS/TOMS Group                        **
 **   Licensed under a MIT/X style license                             **
 **   See License_ROMS.md                                              **
 ************************************************************************

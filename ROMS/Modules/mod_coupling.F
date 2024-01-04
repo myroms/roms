@@ -5,7 +5,7 @@
 !git $Id$
 !svn $Id: mod_coupling.F 1188 2023-08-03 19:26:47Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2024 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.md                                               !
 !=======================================================================

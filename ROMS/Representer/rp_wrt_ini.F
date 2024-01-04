@@ -5,7 +5,7 @@
 !git $Id$
 !svn $Id: rp_wrt_ini.F 1189 2023-08-15 21:26:58Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2024 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.md                                               !
 !=======================================================================

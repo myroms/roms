@@ -3,7 +3,7 @@
 # git $Id$
 # svn $Id: wrf_move.sh 1202 2023-10-24 15:36:07Z arango $
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Copyright (c) 2002-2023 The ROMS/TOMS Group                           :::
+# Copyright (c) 2002-2024 The ROMS/TOMS Group                           :::
 #::::::::::::::::::::::::::::::::::::::::::::::::::::: Hernan G. Arango :::
 #                                                                       :::
 # WRF objects move BASH Script: WRF Versions 4.1 and up                 :::
