@@ -2,9 +2,10 @@
 #ifdef SOLVE3D
       SUBROUTINE set_weights (ng)
 !
-!svn $Id: set_weights.F 275 2023-02-09 03:21:09Z arango $
+!git $Id$
+!svn $Id: set_weights.F 1210 2024-01-03 22:03:03Z arango $
 !=======================================================================
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2024 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.md                            Hernan G. Arango   !
 !========================================== Alexander F. Shchepetkin ===
