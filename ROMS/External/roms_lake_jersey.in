@@ -2,7 +2,7 @@
 !  ROMS/TOMS Standard Input parameters.
 !
 ! git $Id$
-! svn $Id: roms_lake_jersey.in 1184 2023-07-27 20:28:19Z arango $
+! svn $Id: roms_lake_jersey.in 1210 2024-01-03 22:03:03Z arango $
 !========================================================= Hernan G. Arango ===
 !  Copyright (c) 2002-2024 The ROMS/TOMS Group                                !
 !    Licensed under a MIT/X style license                                     !
@@ -1052,8 +1052,8 @@ PIO_I2C_Preq = 65                 ! Maximum pending I2C requests
 
 ! Input NetCDF file names, [1:Ngrids].
 
-     GRDNAME == ../../../roms_test/lake_jersey/Data/lake_jersey_grd_a.nc
-     ININAME == ../../../roms_test/lake_jersey/Data/lake_jersey_ini_a.nc
+     GRDNAME == ../../../../git/roms_test/lake_jersey/Data/lake_jersey_grd_a.nc
+     ININAME == ../../../../git/roms_test/lake_jersey/Data/lake_jersey_ini_a.nc
      ITLNAME == lake_jersey_itl.nc
      IRPNAME == lake_jersey_irp.nc
      IADNAME == lake_jersey_iad.nc

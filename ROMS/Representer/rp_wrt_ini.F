@@ -3,7 +3,7 @@
 #if (defined TANGENT || defined TL_IOMS) && defined FOUR_DVAR
 !
 !git $Id$
-!svn $Id: rp_wrt_ini.F 1189 2023-08-15 21:26:58Z arango $
+!svn $Id: rp_wrt_ini.F 1210 2024-01-03 22:03:03Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2024 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !

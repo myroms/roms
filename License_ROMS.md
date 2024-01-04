@@ -40,7 +40,7 @@ https://myroms.org/forum
 
 We ask that users appropriately acknowledge The **ROMS/TOMS** Group,
 individual developers, participating agencies and institutions, and funding
-agencies. 
+agencies.
 
 The **ROMS/TOMS** Group consists of the scientists, engineers, and members
 of various academic institutes, government agencies, and the general public

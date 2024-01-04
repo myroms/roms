@@ -1,5 +1,6 @@
 #!/bin/csh -f
 #
+# git $Id$
 # svn $Id: copyright.csh 1210 2024-01-03 22:03:03Z arango $
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # Copyright (c) 2002-2024 The ROMS/TOMS Group                           :::

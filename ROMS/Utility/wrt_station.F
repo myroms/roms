@@ -3,7 +3,7 @@
 #ifdef STATIONS
 !
 !git $Id$
-!svn $Id: wrt_station.F 1185 2023-08-01 21:42:38Z arango $
+!svn $Id: wrt_station.F 1210 2024-01-03 22:03:03Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2024 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -689,7 +689,7 @@
      &                        TRIM(Vname(1,idUaiE)), psta,              &
      &                        (/1,STA(ng)%Rindex/), (/Nstation(ng),1/), &
      &                        ncid = STA(ng)%ncid,                      &
-     &                        varid = STA(ng)%Vid(idUairE))
+     &                        varid = STA(ng)%Vid(idUaiE))
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
         CALL extract_sta2d (ng, model, Cgrid, idVaiN, r2dvar,           &
@@ -697,7 +697,7 @@
      &                      scale, Vr2d,                                &
      &                      Nstation(ng), Xpos, Ypos, psta)
         CALL netcdf_put_fvar (ng, model, STA(ng)%name,                  &
-     &                        TRIM(Vname(1,idVairN)), psta,             &
+     &                        TRIM(Vname(1,idVaiN)), psta,              &
      &                        (/1,STA(ng)%Rindex/), (/Nstation(ng),1/), &
      &                        ncid = STA(ng)%ncid,                      &
      &                        varid = STA(ng)%Vid(idVaiN))

@@ -2,7 +2,7 @@
 !  ROMS/TOMS Standard Input parameters.
 !
 ! git $Id$
-! svn $Id: roms_riverplume1.in 1184 2023-07-27 20:28:19Z arango $
+! svn $Id: roms_riverplume1.in 1210 2024-01-03 22:03:03Z arango $
 !========================================================= Hernan G. Arango ===
 !  Copyright (c) 2002-2024 The ROMS/TOMS Group                                !
 !    Licensed under a MIT/X style license                                     !
@@ -1115,7 +1115,7 @@ PIO_I2C_Preq = 65                 ! Maximum pending I2C requests
 
 ! Input Sources/Sinks forcing (like river runoff) file name.
 
-     SSFNAME == ../../../roms_test/riverplume/Data/roms_riverplume1_uv.nc
+     SSFNAME == ../../../../git/roms_test/riverplume/Data/roms_riverplume1_uv.nc
 
 ! Input tidal forcing file name.
 

@@ -2,7 +2,7 @@
 !  ROMS/TOMS Standard Input parameters.
 !
 ! git $Id$
-! svn $Id: roms_damee_4.in 1184 2023-07-27 20:28:19Z arango $
+! svn $Id: roms_damee_4.in 1210 2024-01-03 22:03:03Z arango $
 !========================================================= Hernan G. Arango ===
 !  Copyright (c) 2002-2024 The ROMS/TOMS Group                                !
 !    Licensed under a MIT/X style license                                     !
@@ -1052,8 +1052,8 @@ PIO_I2C_Preq = 65                 ! Maximum pending I2C requests
 
 ! Input NetCDF file names, [1:Ngrids].
 
-     GRDNAME == ../../../roms_test/DAMEE-4/Data/netcdf3/damee4_grid_b.nc
-     ININAME == ../../../roms_test/DAMEE-4/Data/netcdf3/damee4_levfeb_b.nc
+     GRDNAME == ../../../../git/roms_test/DAMEE-4/Data/netcdf3/damee4_grid_b.nc
+     ININAME == ../../../../git/roms_test/DAMEE-4/Data/netcdf3/damee4_levfeb_b.nc
      ITLNAME == damee4_itl.nc
      IRPNAME == damee4_irp.nc
      IADNAME == damee4_iad.nc
@@ -1107,11 +1107,11 @@ PIO_I2C_Preq = 65                 ! Maximum pending I2C requests
 
    NCLMFILES == 1                          ! number of climatology files
 
-     CLMNAME == ../../../roms_test/DAMEE_4/Data/netcdf3/damee4_Lclm_b.nc
+     CLMNAME == ../../../../git/roms_test/DAMEE_4/Data/netcdf3/damee4_Lclm_b.nc
 
 ! Input climatology nudging coefficients file name.
 
-     NUDNAME == ../../../roms_test/DAMEE-4/Data/netcdf3/damee4_nudgcoef_b.nc
+     NUDNAME == ../../../../git/roms_test/DAMEE-4/Data/netcdf3/damee4_nudgcoef_b.nc
 
 ! Input Sources/Sinks forcing (like river runoff) file name.
 
@@ -1141,7 +1141,7 @@ PIO_I2C_Preq = 65                 ! Maximum pending I2C requests
 
      NFFILES == 1                          ! number of unique forcing files
 
-     FRCNAME == ../../../roms_test/DAMEE-4/Data/netcdf3/damee4_coads.nc
+     FRCNAME == ../../../../git/roms_test/DAMEE-4/Data/netcdf3/damee4_coads.nc
 
 ! Output NetCDF file names, [1:Ngrids].
 
