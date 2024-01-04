@@ -4,7 +4,7 @@
 
 # MIT License
 
-Copyright (c) 2002-2023 Regional Ocean Modeling System (ROMS)
+Copyright (c) 2002-2024 Regional Ocean Modeling System (ROMS)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -40,7 +40,7 @@ https://myroms.org/forum
 
 We ask that users appropriately acknowledge The **ROMS/TOMS** Group,
 individual developers, participating agencies and institutions, and funding
-agencies. 
+agencies.
 
 The **ROMS/TOMS** Group consists of the scientists, engineers, and members
 of various academic institutes, government agencies, and the general public
