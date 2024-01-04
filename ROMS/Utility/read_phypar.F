@@ -37,6 +37,9 @@
 #if defined SEDIMENT || defined BBL_MODEL
       USE mod_sediment
 #endif
+#if defined VEGETATION
+      USE mod_vegetation
+#endif
       USE mod_stepping
 #ifdef PROPAGATOR
       USE mod_storage
@@ -375,6 +378,9 @@
 #endif
 #if defined SEDIMENT || defined BBL_MODEL
               CALL initialize_sediment
+#endif
+#ifdef VEGETATION
+              CALL initialize_vegetation
 #endif
               CALL initialize_param    ! Continue allocating/initalizing
               CALL allocate_scalars    ! variables since the application
@@ -3445,6 +3451,17 @@
                 Dout(idDu3d(M3vjvf),ng)=Lswitch(ng)
                 Dout(idDv3d(M3vjvf),ng)=Lswitch(ng)
               END DO
+            CASE ('Dout(M3hjvf)')
+              IF (M3hjvf.le.0) THEN
+                IF (Master) WRITE (out,280) 'M3hjvf'
+                exit_flag=5
+                RETURN
+              END IF
+              Npts=load_l(Nval, Cval, Ngrids, Lswitch)
+              DO ng=1,Ngrids
+                Dout(idDu3d(M3hjvf),ng)=Lswitch(ng)
+                Dout(idDv3d(M3hjvf),ng)=Lswitch(ng)
+              END DO
             CASE ('Dout(M3kvrf)')
               IF (M3kvrf.le.0) THEN
                 IF (Master) WRITE (out,280) 'M3kvrf'
@@ -3564,6 +3581,30 @@
                 Dout(idDu3d(M3vvis),ng)=Lswitch(ng)
                 Dout(idDv3d(M3vvis),ng)=Lswitch(ng)
               END DO
+#  if defined VEGETATION && defined VEG_DRAG
+            CASE ('Dout(M3fveg)')
+              IF (M3fveg.le.0) THEN
+                IF (Master) WRITE (out,280) 'M3fveg'
+                exit_flag=5
+                RETURN
+              END IF
+              Npts=load_l(Nval, Cval, Ngrids, Lswitch)
+              DO ng=1,Ngrids
+                Dout(idDu3d(M3fveg),ng)=Lswitch(ng)
+                Dout(idDv3d(M3fveg),ng)=Lswitch(ng)
+              END DO
+            CASE ('Dout(M2fveg)')
+              IF (M2fveg.le.0) THEN
+                IF (Master) WRITE (out,280) 'M2fveg'
+                exit_flag=5
+                RETURN
+              END IF
+              Npts=load_l(Nval, Cval, Ngrids, Lswitch)
+              DO ng=1,Ngrids
+                Dout(idDu2d(M2fveg),ng)=Lswitch(ng)
+                Dout(idDv2d(M2fveg),ng)=Lswitch(ng)
+              END DO
+#  endif
 # endif
 #endif
 #if defined DIAGNOSTICS_TS && defined SOLVE3D
@@ -4214,6 +4255,11 @@
                 sparnam(i:i)=blank
               END DO
               sparnam=TRIM(ADJUSTL(Cval(Nval)))
+            CASE ('VEGNAM')
+              DO i=1,LEN(vegnam)
+                vegnam(i:i)=blank
+              END DO
+              vegnam=TRIM(ADJUSTL(Cval(Nval)))
             CASE ('USRNAME')
               DO i=1,LEN(USRname)
                 USRname(i:i)=blank
@@ -7597,6 +7643,15 @@
         ELSE
           IF (Master.and.Lwrite) WRITE (out,230)                        &
      &      '         Biology Parameters File:  ', TRIM(fname)
+        END IF
+# endif
+# ifdef VEGETATION
+        fname=vegnam
+        IF (.not.find_file(ng, out, fname, 'VEGNAM')) THEN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        ELSE
+          IF (Master.and.Lwrite) WRITE (out,230)                        &
+     &      '      Vegetation Parameters File:  ', TRIM(fname)
         END IF
 # endif
 #endif
