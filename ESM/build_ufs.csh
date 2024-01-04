@@ -1,9 +1,9 @@
 #!/bin/csh -ef
 #
 # git $Id$
-# svn $Id: build_ufs.csh 1206 2023-10-27 01:44:18Z arango $
+# svn $Id: build_ufs.csh 1210 2024-01-03 22:03:03Z arango $
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Copyright (c) 2002-2023 The ROMS/TOMS Group                           :::
+# Copyright (c) 2002-2024 The ROMS/TOMS Group                           :::
 #   Licensed under a MIT/X style license                                :::
 #   See License_ROMS.md                                                 :::
 #:::::::::::::::::::::::::::::::::::::::::::::::::::::: David Robertson :::
