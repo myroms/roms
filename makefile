@@ -459,6 +459,7 @@ endif
 		ROMS/Nonlinear/BBL \
 		ROMS/Nonlinear/Biology \
 		ROMS/Nonlinear/Sediment \
+		ROMS/Nonlinear/WEC \
 		ROMS/Functionals \
 		ROMS/Utility \
 		ROMS/Drivers \
