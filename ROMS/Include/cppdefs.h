@@ -2,7 +2,7 @@
 ** Include file "cppdefs.h"
 **
 ** git $Id$
-** svn $Id: cppdefs.h 1210 2024-01-03 22:03:03Z arango $
+** svn $Id: cppdefs.h 1212 2024-01-26 20:59:21Z arango $
 ********************************************************** Hernan G. Arango ***
 ** Copyright (c) 2002-2024 The ROMS/TOMS Group                               **
 **   Licensed under a MIT/X style license                                    **
@@ -406,6 +406,7 @@
 ** BNORM                   if Background norm Hessian singular vectors       **
 ** CELERITY_WRITE          if writing radiation celerity in forward file     **
 ** CLIPPING_SPLIT          to separate analysis due to IC, forcing, and OBC  **
+** COMPUTE_MLD             to compute Mixed Layer Depth for background error **
 ** DATALESS_LOOPS          if testing convergence of Picard iterations       **
 ** ENKF_RESTART            if writting restart fields for EnKF               **
 ** FORWARD_FLUXES          if using NLM trajectory surface fluxes            **
@@ -432,6 +433,7 @@
 ** RPM_RELAXATION          if Picard iterations, Diffusive Relaxation of RPM **
 ** SKIP_NLM                to skip running NLM, reading NLM trajectory       **
 ** SO_SEMI_WHITE           to activate SO semi norm white/red noise processes**
+** STD_MODEL               if Background error standard deviation modeling   **
 ** STOCH_OPT_WHITE         to activate SO white/red noise processes          **
 ** SPLINES_VCONV           to activate implicit splines vertical convolution **
 ** TIME_CONV               if weak-constraint 4D-Var time convolutions       **
