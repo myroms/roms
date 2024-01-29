@@ -1,7 +1,7 @@
 !  4DVar assimilation input parameters.
 !
 !git $Id$
-!svn $Id: s4dvar.in 1210 2024-01-03 22:03:03Z arango $
+!svn $Id: s4dvar.in 1212 2024-01-26 20:59:21Z arango $
 !========================================================= Hernan G. Arango ===
 !  Copyright (c) 2002-2024 The ROMS/TOMS Group                                !
 !    Licensed under a MIT/X style license                                     !
@@ -27,8 +27,8 @@
 ! major order, will have the same value of "1.0d-6" for grid 1,  whereas the  !
 ! next two entries will have the same value of "5.0d-6" for grid 2.           !
 !                                                                             !
-! In multiple levels of nesting and/or multiple connected domains  step-ups,  !
-! "Ngrids" entries are expected for some of these parameters.  In such case,  !
+! In multiple levels of nesting  and/or multiple  connected domains  setups,  !
+! "Ngrids" entries are expected for some of these parameters. In such cases,  !
 ! the order of the entries for a parameter is extremely important.  It  must  !
 ! follow the same order (1:Ngrids) as in the state variable declaration. The  !
 ! USER may follow the above guidelines for specifying his/her values.  These  !
@@ -75,7 +75,7 @@ balance(isVvel) =  T                      ! 3D momentum (u, v)
 
 ! Parameter to process the Nvct eigenvector of the stabilized representer
 ! matrix when computing array modes (here, Nvct=Ninner is the most important
-! while Nvct=1 is the less important) OR cut-off parameter for the clipped
+! while Nvct=1 is the least important) OR cut-off parameter for the clipped
 ! analysis to disregard potentially unphysical array modes (that is, all
 ! the eigenvectors < Nctv are disgarded).
 
@@ -92,7 +92,7 @@ balance(isVvel) =  T                      ! 3D momentum (u, v)
 
        HevecErr = 1.0d-1
 
-! Switch (T/F) to compute approximated Hessian eigenpairs in the Lanzos
+! Switch (T/F) to compute approximated Hessian eigenpairs in the Lanczos
 ! conjugate gradient algorithm.
 
      LhessianEV = T
@@ -118,29 +118,37 @@ balance(isVvel) =  T                      ! 3D momentum (u, v)
 
         NritzEV = 0
 
-! If weak constraint 4DVar, set number of iterations in the Lanczos
+! If weak constraint 4D-Var, set number of iterations in the Lanczos
 ! algorithm used to estimate the posterior analysis error covariance
 ! matrix.
 
          NpostI = 50
 
 ! If observations impact or observations sensitivity, set the 4D-Var
-! outer loop to process. It must be less or equal that Nouter.
+! outer loop to process. It must be less or equal to Nouter.
 
         Nimpact = 1
+
+! If multiple executables 4D-Var, set the current outer counter and
+! its computation phase (string). The 4D-Var running script assigns
+! their values.
+
+      OuterLoop = MyOuterLoop
+
+     Phase4DVAR = MyPhase4DVAR
 
 ! Number of extra-observation classes (NextraObs), observation type
 ! indices (ExtraIndex), and observation type names (ExtraName) to
 ! consider in addition to the 1-to-1 associated with the state
-! variables. It is used in observation operators that require more that
-! one state variable to evaluate particular observation type like
+! variables. It is used in observation operators that require more than
+! one state variable to evaluate a particular observation type like
 ! HF radials, travel time, pressure, etc.
 !
 ! In any application, the number of observation types is computed as:
 ! NobsVar = NstateVar + NextraObs.
 !
 ! NextraObs values are expected for keywords ExtraIndex and ExtraName.
-! If NextraVar > 1, enter one observation type names per line and
+! If NextraVar > 1, enter one observation type name per line and
 ! use a backslash as the continuation.
 
       NextraObs = 0
@@ -149,7 +157,7 @@ balance(isVvel) =  T                      ! 3D momentum (u, v)
 
       ExtraName = radial
 
-! If weak constraint 4DVar, set diffusive relaxation coefficients (m2/s)
+! If weak constraint 4D-Var, set diffusive relaxation coefficients (m2/s)
 ! used to relax representer tangent linear solution to privious Picard
 ! iteration linearized trajectory.
 
@@ -163,8 +171,8 @@ balance(isVvel) =  T                      ! 3D momentum (u, v)
 ! surface forcing. If TRUE, these factors are computed and written
 ! to NRMname(1:4) NetCDF files. If FALSE, they are read from NRMname(1:4)
 ! NetCDF file. The computation of these factors is very expensive and
-! need to be computed only once for a particular application provided
-! that grid land/sea masking, and decorrelation scales remains
+! needs to be computed only once for a particular application provided
+! that grid land/sea masking, and decorrelation scales remain
 ! the same. Notice that four values are needed (1=initial conditions,
 ! 2=model, 3=boundary conditions, 4=surface forcing) per each nested
 ! grid, [1:4,1:Ngrids].
@@ -238,8 +246,8 @@ balance(isVvel) =  T                      ! 3D momentum (u, v)
 !
 !                  IC       Model    OBC      Sur For
 
-         Hgamma =  0.5      0.5      0.5      0.5       ! horizontal operator
-         Vgamma =  0.05     0.05     0.05     0.05      ! vertical operator
+         Hgamma =  0.5      0.5      0.5      0.5         ! horizontal operator
+         Vgamma =  0.05     0.05     0.05     0.05        ! vertical operator
 
 ! Model error covariance: horizontal, isotropic decorrelation scales (m).
 ! This scales are only used in weak-constraint data assimilation.
@@ -312,6 +320,36 @@ HdecayF(isUstr) == 100.0d+3                       ! surface U-momentum stress
 HdecayF(isVstr) == 100.0d+3                       ! surface V-momentum stress
 HdecayF(isTsur) == 100.0d+3  100.0d+3             ! 1:NT surface tracers flux
 
+! Modeled standard deviation (STD) of Background Error Covarinace parameters.
+!
+! The Mogensen et al. (2012) formulation assumes that the background errors
+! are proportional to vertical derivatives of the state vector field. Its
+! error has the similar field profile shape, but the difference with its
+! ture error value is due to a vertical displacement.
+!
+! If COMPUTE_MLD is activated, the mixed-layer depth is computed using the
+! criterion from kara et al. (2000). Otherwise, it will be set to uniform
+! value provided below.
+
+Sigma_max(isFsur) == 0.025d0           ! free surface  maximum STD value
+
+Sigma_max(isUvel) == 0.06d0            ! U-velocity maximum STD value
+ Sigma_ml(isUvel) == 0.05d0            ! U-velocity minimum STD at mixed layer
+ Sigma_do(isUvel) == 0.02d0            ! U-velocity minimum STD in deep ocean
+ Sigma_dz(isUvel) == 500.0d0           ! U-velocity vertical displacement
+
+Sigma_max(isVvel) == 0.06d0            ! V-velocity maximum STD
+ Sigma_ml(isVvel) == 0.05d0            ! V-velocity minimum STD at mixed layer
+ Sigma_do(isVvel) == 0.02d0            ! V-velocity minimum STD in deep ocean
+ Sigma_dz(isVvel) == 500.0d0           ! V-velocity vertical displacement
+
+Sigma_max(isTvar) == 0.33d0   0.056d0  ! 1:NT tracers maximum STD
+ Sigma_ml(isTvar) == 0.05d0   0.05d0   ! 1:NT tracers minimum STD at mixed layer
+ Sigma_do(isTvar) == 0.02d0   0.0028d0 ! 1:NT tracers minimum STD in deep ocean
+ Sigma_dz(isTvar) == 40.0d0   40.0d0   ! 1:NT tracer vertical displacement
+
+      mld_uniform == -75.0d0           ! Uniform mixed layer depth value
+
 ! Select flag for BackGround Quality Control (BGQC) of observations:
 !
 !      [1] Quality control in terms of state variable indices
@@ -319,37 +357,39 @@ HdecayF(isTsur) == 100.0d+3  100.0d+3             ! 1:NT surface tracers flux
 
       bgqc_type == 1
 
-! If BGQC is in terms of state variables, set number of standard deviations
-! threshold to use in the quality control rejection of observations.
+! If BGQC is in terms of state variables, set the threshold, squared number
+! of standard deviations to use in the quality control rejection of
+! observations.
 !
 !   Use a large value (say, 1.0d+5) if you do not want to reject observations
 !   associated with a particular state variable.
 !
-!   Use a small value (typically, 4 standard deviations) to perform quality
-!   control of observations for a particular state variable.
+!   Use a small value (typically, 16 to rejecting based on on 4 standard
+!   deviations) to perform quality control of observations for a particular
+!   state variable.
 
  S_bgqc(isFsur) == 1.0d+5                                 ! free-surface
  S_bgqc(isUbar) == 1.0d+5                                 ! 2D U-momentum
  S_bgqc(isVbar) == 1.0d+5                                 ! 2D V-momentum
  S_bgqc(isUvel) == 1.0d+5                                 ! 3D U-momentum
  S_bgqc(isVvel) == 1.0d+5                                 ! 3D V-momentum
- S_bgqc(isTvar) == 4.0d0  4.0d0                           ! 1:NT tracers
+ S_bgqc(isTvar) == 16.0d0  16.0d0                         ! 1:NT tracers
 
-! If BGQC is in terms of observation provenance, set number of standard
-! deviations threshold to use in the quality control rejection of
+! If BGQC is in terms of observation provenance, set the threshold, squared
+! number of standard deviations to use in the quality control rejection of
 ! observations.
 !
-!   Use a small value (say, 4 standard deviations) to perform quality
-!   control for the desired observation provenance(s).
+!   Use a small value (say, 16 to rejecting based on on 4 standard deviations)
+!   to perform quality control for the desired observation provenance(s).
 !
 !   Nprovenance:   Number of observation provenances to quality control
 !   Iprovenance:   Observation provenance indices to process [1:Nprovenance]
 !   P_bgqc:        Standard deviation threshold [1:Nprovenance]
 
     Nprovenance == 2
-    Iprovenance == 6     7                ! ARGO Temperature and Salinity
+    Iprovenance == 6      7               ! ARGO Temperature and Salinity
 
-         P_bgqc == 4.0d0 4.0d0
+         P_bgqc == 16.0d0 16.0d0
 
 ! If applicable, set switches (T/F) used to adjust surface tracer flux,
 ! [1:NT,1:Ngrids].
@@ -397,6 +437,13 @@ HdecayF(isTsur) == 100.0d+3  100.0d+3             ! 1:NT surface tracers flux
        STDnameB == roms_std_b.nc
        STDnameF == roms_std_f.nc
 
+! If computing the standard deviation from the background (prior) state
+! vector as an alternative to climatological values read from the
+! input NetCDF file, enter output standard deviation file name,
+! [1:Ngrids].
+
+       STDnameC == roms_std_c.nc
+
 ! Input/output model, initial conditions, boundary conditions, and surface
 ! forcing error covariance normalization factors file name, [1:Ngrids].
 
@@ -417,7 +464,7 @@ HdecayF(isTsur) == 100.0d+3  100.0d+3             ! 1:NT surface tracers flux
 
         LCZname == roms_lcz.nc
 
-! output time-evolved Lanczos vectors file name, [1:Ngrids].
+! Output time-evolved Lanczos vectors file name, [1:Ngrids].
 
         LZEname == roms_lze.nc
 
@@ -433,8 +480,8 @@ HdecayF(isTsur) == 100.0d+3  100.0d+3             ! 1:NT surface tracers flux
 ! impacts during the analysis-forecast cycle when the forecast is initialized
 ! with the 4D-Var analysis (OIFnameA) or the 4D-Var background (OIFnameB).
 
-      OIFnameA == roms_oif_a.nc
-      OIFnameB == roms_oif_b.nc
+       OIFnameA == roms_oif_a.nc
+       OIFnameB == roms_oif_b.nc
 
 !
 !  GLOSSARY:
@@ -448,13 +495,13 @@ HdecayF(isTsur) == 100.0d+3  100.0d+3             ! 1:NT surface tracers flux
 !  Nbico          Number of iterations in the biconjugate gradient algorithm
 !                 used to solve the elliptic equation for sea surface height
 !                 in the error covariance balance operator, [1:Ngrids]. We
-!                 need as many iterations are required to decrease the error
+!                 need as many iterations as required to decrease the error
 !                 value of the reference free-surface to 1E-8 or smaller. In
 !                 some applications Nbico=200 will do the job.
 !
 !                   Warning: be aware that there are 4 arrays that are
-!                   -------  allocated with this parameter may and its
-!                            value maybe constrained by available memory:
+!                   -------  allocated with this parameter array and its
+!                            value may be constrained by available memory:
 !
 !                   FOURDVAR(ng) % p_r2d (LBi:UBi,LBj:UBj,Nbico(ng))
 !                   FOURDVAR(ng) % r_r2d (LBi:UBi,LBj:UBj,Nbico(ng))
@@ -505,14 +552,14 @@ HdecayF(isTsur) == 100.0d+3  100.0d+3             ! 1:NT surface tracers flux
 !
 !                   1) The salinity contribution, balance(isSalt), depends
 !                      only on temperature. Notice that temperature is used
-!                      establish the balanced part of the other state
+!                      to establish the balanced part of the other state
 !                      variables.
 !
 !                   2) The free-surface contribution, balance(isFsur), depends
 !                      on salinity since we need to compute balanced density
 !                      and integrate properly using LNM_flag and LNM_depth.
 !                      This implies that balance(isSalt) needs to be TRUE too.
-!                      It is independent the 2D or 3D balance velocity terms.
+!                      It is independent of the 2D or 3D balance velocity terms.
 !
 !                   3) The 3D momentum, balance(isVvel), depends on salinity
 !                      since we need to compute balanced density.  This
@@ -522,12 +569,12 @@ HdecayF(isTsur) == 100.0d+3  100.0d+3             ! 1:NT surface tracers flux
 !  Array modes parameter.
 !------------------------------------------------------------------------------
 !
-!  Nvct           Either eigenvector of the stabilized representer matrix to
+!  Nvct           Which eigenvector of the stabilized representer matrix to
 !                 process to computing array modes when option ARRAY_MODES is
 !                 activated. In this case, Nvct =< Ninner,
 !
-!                   Nvct=1         less important eigenvector
-!                   Nvct=Ninner    most important eigenvector
+!                   Nvct=1         least important eigenvector
+!                   Nvct=Ninner    most  important eigenvector
 !
 !                 or cut-off eigenvector for the clipped analysis when
 !                 the option CLIPPING is activated to remove potentially
@@ -575,8 +622,8 @@ HdecayF(isTsur) == 100.0d+3  100.0d+3             ! 1:NT surface tracers flux
 !                   If zero, use HevecErr parameter to determine the number
 !                   of converged eigenpairs.
 !
-!  NpostI         If weak constraint 4DVar (RBL4DVAR or R4DVAR), set number of
-!                 iterations in the Lanczos algorithm used to estimate the
+!  NpostI         If weak constraint 4D-Var (RBL4DVAR or R4DVAR), set number
+!                 of iterations in the Lanczos algorithm used to estimate the
 !                 posterior analysis error covariance matrix.
 !
 !------------------------------------------------------------------------------
@@ -591,6 +638,24 @@ HdecayF(isTsur) == 100.0d+3  100.0d+3             ! 1:NT surface tracers flux
 !                 outer loops is combined offline.
 !
 !------------------------------------------------------------------------------
+! Outer loop counter and phase for split 4D-Var in multiple executables.
+!------------------------------------------------------------------------------
+!
+!  OuterLoop      Current outer loop counter. It is set by the running shell
+!                 script.
+!
+!  Phase4DVAR     Current split 4D-Var algorithm elementary phases to compute:
+!
+!                   Phase4DVAR = 'background'         Xb
+!                   Phase4DVAR = 'increment'          dXa
+!                   Phase4DVAR = 'analysis'           Xa = Xb + dXa
+!                   Phase4DVAR = 'post_analysis'      (posterior analysis)
+!                   Phase4DVAR = 'post_error'         (posterior error)
+!
+!                 There is a 'prior_error' phase that it is always done in
+!                 'ROMS_initialize'.
+!
+!------------------------------------------------------------------------------
 ! Additional observation operators.
 !------------------------------------------------------------------------------
 !
@@ -600,7 +665,7 @@ HdecayF(isTsur) == 100.0d+3  100.0d+3             ! 1:NT surface tracers flux
 !  NextraObs      Number of extra-observation classes to consider in addition
 !                 to those associated with the state variables (one-to-one
 !                 correspondence. They are used in observation operators that
-!                 require more that one state variable to evaluate particular
+!                 require more than one state variable to evaluate a particular
 !                 extra-observation type like HF radials, travel time,
 !                 pressure, etc.
 !
@@ -633,9 +698,9 @@ HdecayF(isTsur) == 100.0d+3  100.0d+3             ! 1:NT surface tracers flux
 ! Diffusive relaxation coefficients.
 !------------------------------------------------------------------------------
 !
-! If weak constraint 4DVar and RPM_RELAXATION flag is activated, this
-! coefficients are use to relax the representer tangent lineas solution
-! to previous outer loop linearized trajectory during the Picard
+! If weak constraint 4D-Var and RPM_RELAXATION flag is activated, these
+! coefficients are used to relax the representer tangent linear solution
+! to the previous outer loop linearized trajectory during the Picard
 ! iterations. The user may turn off relaxation on a particular variable
 ! by setting the coefficient to zero.
 !
@@ -662,7 +727,7 @@ HdecayF(isTsur) == 100.0d+3  100.0d+3             ! 1:NT surface tracers flux
 !                 coefficients is very expensive and needs to be computed
 !                 only once for a particular application provided that grid,
 !                 land/sea masking (if any), and decorrelation scales (see
-!                 below) remains the same.  The user can use this switch
+!                 below) remain the same.  The user can use this switch
 !                 in conjunction with the CnormM, CnormI, CnormB, CnormF
 !                 (see below) switches to compute each coefficient separately.
 !                 The normalization NetCDF only needs to be created once
@@ -679,8 +744,8 @@ HdecayF(isTsur) == 100.0d+3  100.0d+3             ! 1:NT surface tracers flux
 !                      LwrtNRM(3,:)   boundary conditions error covariance
 !                      LwrtNRM(4,:)   surface forcing error covariance
 !
-!                 If TRUE, these factors computed and written to NRMnameI,
-!                 NRMnameM, NRMnameB, and NRMnameF NetCDF file, respectively.
+!                 If TRUE, these factors are computed and written to NRMnameI,
+!                 NRMnameM, NRMnameB, and NRMnameF NetCDF files, respectively.
 !                 If FALSE, they are read from NRMname NetCDF file.
 !
 !  CnormM         Compute (T/F) model error covariance
@@ -733,7 +798,7 @@ HdecayF(isTsur) == 100.0d+3  100.0d+3             ! 1:NT surface tracers flux
 !                 factors using the randomization approach of Fisher and
 !                 Courtier (1995). A large number is required to be
 !                 statistically meaningful and achieve zero expectation
-!                 mean and unit variance, approximately. These factors insure
+!                 mean and unit variance, approximately. These factors ensure
 !                 that the error covariance diagonal elements are equal to
 !                 unity.
 !
@@ -814,6 +879,34 @@ HdecayF(isTsur) == 100.0d+3  100.0d+3             ! 1:NT surface tracers flux
 !                   HdecayF(isVstr)               wind V-stress
 !
 !------------------------------------------------------------------------------
+! Modeled standard deviation (STD) of Background Error Covarinace parameters.
+!------------------------------------------------------------------------------
+!
+! The user may activate STD_MODEL to compute the standard deviation directly
+! from the background (prior) field as an alternative to climatological values
+! read from the input NetCDF files. It follows the work of Mogensen et al.
+! (2012) by assuming the background errors are proportional to the vertical
+! derivatives of the background field. The field error has a similar profile
+! shape, but the difference with the actual error value is due to a vertical
+! displacement.
+!
+! The modeling of standard deviation (STD) uses the following parameters per
+! state field:
+!
+! Sigma_max(:)      Maximum STD value
+!
+! Sigma_ml(:)       Minimum STD at mixed layer
+!
+! Sigma_do(:)       Minimum STD in deep ocean
+!
+! Sigma_dz(:)       Vertical profile displacement
+!
+! If COMPUTE_MLD is activated, the mixed-layer depth is computed using the
+! approach of Kara et al. (2000). Otherwise, a constant value is used.
+!
+! mld_uniform       Uniform mixed-layer depth value
+!
+!------------------------------------------------------------------------------
 ! Background Quality Control (BCQC) of observations parameters.
 !------------------------------------------------------------------------------
 !
@@ -824,24 +917,24 @@ HdecayF(isTsur) == 100.0d+3  100.0d+3             ! 1:NT surface tracers flux
 !                                     read from the input observation NetCDF,
 !                                     variable "obs_type".
 !
-!                                     It is general because include all the
+!                                     It is general because it includes all the
 !                                     observation provenances for a particular
 !                                     state variable. For example, all the
-!                                     temperature ofservations.
+!                                     temperature observations.
 !
 !                    bgqc_type = 2    Background quality control in terms of
 !                                     the observation provenance index read
 !                                     from the input observation NetCDF,
 !                                     variable "obs_provenance".
 !
-!                                     It is specific because only include the
-!                                     observations for a particular provenance
-!                                     or instrument. For example, temperature
-!                                     observation from ARGO buoys.
+!                                     It is specific because it only includes
+!                                     the observations for a particular
+!                                     provenance or instrument. For example,
+!                                     temperature observation from ARGO buoys.
 !
-!  S_bgqc         Number of standard deviations threshold to use in the quality
-!                 control rejection of observations in terms of the state
-!                 variable index.
+!  S_bgqc         Threshold, squared number of standard deviations to use in
+!                 the quality control rejection of observations in terms of
+!                 the state variable index.
 !
 !                    S_bgqc(isFsur)             free-surface
 !                    S_bgqc(isUbar)             2D U-momentum
@@ -852,7 +945,8 @@ HdecayF(isTsur) == 100.0d+3  100.0d+3             ! 1:NT surface tracers flux
 !
 !                 It used when bgqc_type = 1. Use a large value (say 1.0d+5)
 !                 to indicate that the observations are spread out over a wider
-!                 range of background values.
+!                 range of background values. Otherwise, you use values like
+!                 16 for rejecting observations based on 2 standard deviations.
 !
 !  Nprovenance    Number of observation provenances to consider for background
 !                 quality control.  Used when bgqc_type = 2.
@@ -863,13 +957,13 @@ HdecayF(isTsur) == 100.0d+3  100.0d+3             ! 1:NT surface tracers flux
 !                 1:Nprovenance values are expected for each nested grid.
 !                 Used when bgqc_type = 2.
 !
-!  P_bgqc         Number of standard deviations threshold to use in the quality
-!                 control rejection of observations in terms of the provenance
-!                 index, 1:Nprovenance values are expected for each nested
-!                 grid. Used when bgqc_type = 2.
+!  P_bgqc         Threshold, squared number of standard deviations to use in
+!                 the quality control rejection of observations in terms of
+!                 the provenance index, 1:Nprovenance values are expected for
+!                 each nested grid. Used when bgqc_type = 2.
 !
 !------------------------------------------------------------------------------
-! 4DVAR adjustment switches.
+! 4D-Var adjustment switches.
 !------------------------------------------------------------------------------
 !
 !  Lstflux        Logical switches (T/F) used to adjust surface tracer flux,
@@ -916,6 +1010,9 @@ HdecayF(isTsur) == 100.0d+3  100.0d+3             ! 1:NT surface tracers flux
 !
 !  STDnameF       Input surface forcing error covariance
 !                   standard deviation file name.
+!
+!  STDnameC       Output standard deviation file name
+!                   computed from  background (prior) state
 !
 !  NRMnameM       Input/output model error covariance
 !                   normalization factors file name.

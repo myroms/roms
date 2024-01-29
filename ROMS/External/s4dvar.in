@@ -1,7 +1,7 @@
 !  4DVar assimilation input parameters.
 !
 !git $Id$
-!svn $Id: s4dvar.in 1210 2024-01-03 22:03:03Z arango $
+!svn $Id: s4dvar.in 1212 2024-01-26 20:59:21Z arango $
 !========================================================= Hernan G. Arango ===
 !  Copyright (c) 2002-2024 The ROMS/TOMS Group                                !
 !    Licensed under a MIT/X style license                                     !
@@ -246,8 +246,8 @@ balance(isVvel) =  T                      ! 3D momentum (u, v)
 !
 !                  IC       Model    OBC      Sur For
 
-         Hgamma =  0.5      0.5      0.5      0.5       ! horizontal operator
-         Vgamma =  0.05     0.05     0.05     0.05      ! vertical operator
+         Hgamma =  0.5      0.5      0.5      0.5         ! horizontal operator
+         Vgamma =  0.05     0.05     0.05     0.05        ! vertical operator
 
 ! Model error covariance: horizontal, isotropic decorrelation scales (m).
 ! This scales are only used in weak-constraint data assimilation.
@@ -319,6 +319,36 @@ VdecayB(isTvar) == 4*100.d0  4*100.d0                     ! (4,1:NT) tracers
 HdecayF(isUstr) == 100.0d+3                       ! surface U-momentum stress
 HdecayF(isVstr) == 100.0d+3                       ! surface V-momentum stress
 HdecayF(isTsur) == 100.0d+3  100.0d+3             ! 1:NT surface tracers flux
+
+! Modeled standard deviation (STD) of Background Error Covarinace parameters.
+!
+! The Mogensen et al. (2012) formulation assumes that the background errors
+! are proportional to vertical derivatives of the state vector field. Its
+! error has the similar field profile shape, but the difference with its
+! ture error value is due to a vertical displacement.
+!
+! If COMPUTE_MLD is activated, the mixed-layer depth is computed using the
+! criterion from kara et al. (2000). Otherwise, it will be set to uniform
+! value provided below.
+
+Sigma_max(isFsur) == 0.025d0           ! free surface  maximum STD value
+
+Sigma_max(isUvel) == 0.06d0            ! U-velocity maximum STD value
+ Sigma_ml(isUvel) == 0.05d0            ! U-velocity minimum STD at mixed layer
+ Sigma_do(isUvel) == 0.02d0            ! U-velocity minimum STD in deep ocean
+ Sigma_dz(isUvel) == 500.0d0           ! U-velocity vertical displacement
+
+Sigma_max(isVvel) == 0.06d0            ! V-velocity maximum STD
+ Sigma_ml(isVvel) == 0.05d0            ! V-velocity minimum STD at mixed layer
+ Sigma_do(isVvel) == 0.02d0            ! V-velocity minimum STD in deep ocean
+ Sigma_dz(isVvel) == 500.0d0           ! V-velocity vertical displacement
+
+Sigma_max(isTvar) == 0.33d0   0.056d0  ! 1:NT tracers maximum STD
+ Sigma_ml(isTvar) == 0.05d0   0.05d0   ! 1:NT tracers minimum STD at mixed layer
+ Sigma_do(isTvar) == 0.02d0   0.0028d0 ! 1:NT tracers minimum STD in deep ocean
+ Sigma_dz(isTvar) == 40.0d0   40.0d0   ! 1:NT tracer vertical displacement
+
+      mld_uniform == -75.0d0           ! Uniform mixed layer depth value
 
 ! Select flag for BackGround Quality Control (BGQC) of observations:
 !
@@ -406,6 +436,13 @@ HdecayF(isTsur) == 100.0d+3  100.0d+3             ! 1:NT surface tracers flux
        STDnameI == roms_std_i.nc
        STDnameB == roms_std_b.nc
        STDnameF == roms_std_f.nc
+
+! If computing the standard deviation from the background (prior) state
+! vector as an alternative to climatological values read from the
+! input NetCDF file, enter output standard deviation file name,
+! [1:Ngrids].
+
+       STDnameC == roms_std_c.nc
 
 ! Input/output model, initial conditions, boundary conditions, and surface
 ! forcing error covariance normalization factors file name, [1:Ngrids].
@@ -842,6 +879,34 @@ HdecayF(isTsur) == 100.0d+3  100.0d+3             ! 1:NT surface tracers flux
 !                   HdecayF(isVstr)               wind V-stress
 !
 !------------------------------------------------------------------------------
+! Modeled standard deviation (STD) of Background Error Covarinace parameters.
+!------------------------------------------------------------------------------
+!
+! The user may activate STD_MODEL to compute the standard deviation directly
+! from the background (prior) field as an alternative to climatological values
+! read from the input NetCDF files. It follows the work of Mogensen et al.
+! (2012) by assuming the background errors are proportional to the vertical
+! derivatives of the background field. The field error has a similar profile
+! shape, but the difference with the actual error value is due to a vertical
+! displacement.
+!
+! The modeling of standard deviation (STD) uses the following parameters per
+! state field:
+!
+! Sigma_max(:)      Maximum STD value
+!
+! Sigma_ml(:)       Minimum STD at mixed layer
+!
+! Sigma_do(:)       Minimum STD in deep ocean
+!
+! Sigma_dz(:)       Vertical profile displacement
+!
+! If COMPUTE_MLD is activated, the mixed-layer depth is computed using the
+! approach of Kara et al. (2000). Otherwise, a constant value is used.
+!
+! mld_uniform       Uniform mixed-layer depth value
+!
+!------------------------------------------------------------------------------
 ! Background Quality Control (BCQC) of observations parameters.
 !------------------------------------------------------------------------------
 !
@@ -945,6 +1010,9 @@ HdecayF(isTsur) == 100.0d+3  100.0d+3             ! 1:NT surface tracers flux
 !
 !  STDnameF       Input surface forcing error covariance
 !                   standard deviation file name.
+!
+!  STDnameC       Output standard deviation file name
+!                   computed from  background (prior) state
 !
 !  NRMnameM       Input/output model error covariance
 !                   normalization factors file name.
