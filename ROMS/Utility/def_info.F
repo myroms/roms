@@ -2,7 +2,7 @@
       MODULE def_info_mod
 !
 !git $Id$
-!svn $Id: def_info.F 1210 2024-01-03 22:03:03Z arango $
+!svn $Id: def_info.F 1212 2024-01-26 20:59:21Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2024 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -2539,6 +2539,57 @@
      &               1, (/0/), Aval, Vinfo, ncname,                     &
      &               SetParAccess = .FALSE.)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+# endif
+
+# ifdef STD_MODEL
+!
+!  Background error covariance standard deviation modeling parameters.
+!
+        Vinfo( 1)='Sigma_max'
+        Vinfo( 2)='background standard deviation, '//                   &
+     &            'maximum value'
+        Vinfo( 3)='state variable units'
+        status=def_var(ng, model, ncid, varid, NF_TYPE,                 &
+     &                 1, (/statedim/), Aval, Vinfo, ncname,            &
+     &                 SetParAccess = .FALSE.)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+
+        Vinfo( 1)='Sigma_ml'
+        Vinfo( 2)='background standard deviation, '//                   &
+     &            'maximum value at mixed layer'
+        Vinfo( 3)='state variable units'
+        status=def_var(ng, model, ncid, varid, NF_TYPE,                 &
+     &                 1, (/statedim/), Aval, Vinfo, ncname,            &
+     &                 SetParAccess = .FALSE.)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+
+        Vinfo( 1)='Sigma_do'
+        Vinfo( 2)='background standard deviation, '//                   &
+     &            'maximum value in deep ocean'
+        Vinfo( 3)='state variable units'
+        status=def_var(ng, model, ncid, varid, NF_TYPE,                 &
+     &                 1, (/statedim/), Aval, Vinfo, ncname,            &
+     &                 SetParAccess = .FALSE.)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+
+        Vinfo( 1)='Sigma_dz'
+        Vinfo( 2)='background standard deviation, '//                   &
+     &            'profile vertical displacement'
+        Vinfo( 3)='meter'
+        status=def_var(ng, model, ncid, varid, NF_TYPE,                 &
+     &                 1, (/statedim/), Aval, Vinfo, ncname,            &
+     &                 SetParAccess = .FALSE.)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+
+#  ifndef COMPUTE_MLD
+      Vinfo( 1)='mld_uniform'
+      Vinfo( 2)='constast mixed-layer depth value'
+      Vinfo( 3)='meter'
+      status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
+     &               1, (/0/), Aval, Vinfo, ncname,                     &
+     &               SetParAccess = .FALSE.)
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+#  endif
 # endif
 #endif
 
@@ -5962,6 +6013,57 @@
      &               1, (/0/), Aval, Vinfo, ncname,                     &
      &               SetParAccess = .FALSE.)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+#  endif
+
+#  ifdef STD_MODEL
+!
+!  Background error covariance standard deviation modeling parameters.
+!
+        Vinfo( 1)='Sigma_max'
+        Vinfo( 2)='background standard deviation, '//                   &
+     &            'maximum value'
+        Vinfo( 3)='state variable units'
+        status=def_var(ng, model, pioFile, pioVar, PIO_TYPE,            &
+     &                 1, (/statedim/), Aval, Vinfo, ncname,            &
+     &                 SetParAccess = .FALSE.)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+
+        Vinfo( 1)='Sigma_ml'
+        Vinfo( 2)='background standard deviation, '//                   &
+     &            'maximum value at mixed layer'
+        Vinfo( 3)='state variable units'
+        status=def_var(ng, model, pioFile, pioVar, PIO_TYPE,            &
+     &                 1, (/statedim/), Aval, Vinfo, ncname,            &
+     &                 SetParAccess = .FALSE.)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+
+        Vinfo( 1)='Sigma_do'
+        Vinfo( 2)='background standard deviation, '//                   &
+     &            'maximum value in deep ocean'
+        Vinfo( 3)='state variable units'
+        status=def_var(ng, model, pioFile, pioVar, PIO_TYPE,            &
+     &                 1, (/statedim/), Aval, Vinfo, ncname,            &
+     &                 SetParAccess = .FALSE.)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+
+        Vinfo( 1)='Sigma_dz'
+        Vinfo( 2)='background standard deviation, '//                   &
+     &            'profile vertical displacement'
+        Vinfo( 3)='meter'
+        status=def_var(ng, model, pioFile, pioVar, PIO_TYPE,            &
+     &                 1, (/statedim/), Aval, Vinfo, ncname,            &
+     &                 SetParAccess = .FALSE.)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+
+#   ifndef COMPUTE_MLD
+      Vinfo( 1)='mld_uniform'
+      Vinfo( 2)='constast mixed-layer depth value'
+      Vinfo( 3)='meter'
+      status=def_var(ng, model, pioFile, pioVar, PIO_TYPE,              &
+     &               1, (/0/), Aval, Vinfo, ncname,                     &
+     &               SetParAccess = .FALSE.)
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+#   endif
 #  endif
 # endif
 

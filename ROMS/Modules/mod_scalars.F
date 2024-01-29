@@ -2,7 +2,7 @@
       MODULE mod_scalars
 !
 !git $Id$
-!svn $Id: mod_scalars.F 1210 2024-01-03 22:03:03Z arango $
+!svn $Id: mod_scalars.F 1212 2024-01-26 20:59:21Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2024 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -971,6 +971,9 @@
         logical, allocatable :: LdefSPT(:)       ! TL Arnoldi state file
 #endif
         logical, allocatable :: LdefSTA(:)       ! Stations file
+#ifdef STD_MODEL
+        logical, allocatable :: LdefSTD(:)       ! STD file
+#endif
         logical, allocatable :: LdefTIDE(:)      ! tide forcing file
         logical, allocatable :: LdefTLM(:)       ! Tangent linear file
         logical, allocatable :: LdefTLF(:)       ! TLM/RPM impulse file
@@ -980,6 +983,7 @@
         logical, allocatable :: LreadFRC(:)      ! Read FRC files
         logical, allocatable :: LreadFWD(:)      ! Read FWD trajectory
         logical, allocatable :: LreadQCK(:)      ! Read QCK trajectory
+        logical, allocatable :: LreadSTD(:)      ! Read STD file
         logical, allocatable :: LreadTLM(:)      ! Read TLM multi-files
 
         logical, allocatable :: LwrtADJ(:)       ! Write adjoint file
@@ -989,6 +993,9 @@
         logical, allocatable :: LwrtPER(:)       ! Write during ensemble
         logical, allocatable :: LwrtQCK(:)       ! write quicksave file
         logical, allocatable :: LwrtRST(:)       ! Write restart file
+#ifdef STD_MODEL
+        logical, allocatable :: LwrtSTD(:)       ! Write STD file
+#endif
         logical, allocatable :: LwrtTLM(:)       ! Write tangent file
         logical, allocatable :: LwrtTLF(:)       ! Write impulse file
 
@@ -1337,6 +1344,33 @@
 !  of state variable indices, [MstateVar,Ngrids]
 !
         real(r8), allocatable :: S_bgqc(:,:)
+
+# ifdef STD_MODEL
+!
+!  Background error covariance, standard deviation modeling parameters.
+!
+!  This approach computes the standard deviation (STD) directly from
+!  the background (prior) field as an alternative to climatological
+!  values read from the input NetCDF files. It follows the work of
+!  Mogensen et al. (2012) by assuming the background errors are
+!  proportional to the vertical derivatives of the background field.
+!  The field error has a similar profile shape, but the difference
+!  with the actual error value is due to due to a vertical displacemnt.
+!  Thus, the parameters below, per state variable, are used to process
+!  the STD profile in terms od the location of the mixed layer where
+!  the error is larger.
+!
+        real(r8), allocatable :: Sigma_max(:,:) ! Maximum value
+        real(r8), allocatable :: Sigma_ml(:,:)  ! Minimum at mixed layer
+        real(r8), allocatable :: Sigma_do(:,:)  ! Minimum in deep ocean
+        real(r8), allocatable :: Sigma_dz(:,:)  ! vetical displacement
+!
+!  The computation of the mixed-layer depth is computed using the
+!  approach of Kara et al. (2000), if activated. Otherwiae, a constant
+!  value is used.
+!
+        real(r8), allocatable :: mld_uniform(:) ! mixed layer depth
+# endif
 #endif
 !
 !-----------------------------------------------------------------------
@@ -2773,6 +2807,10 @@
         allocate ( LreadQCK(Ngrids) )
         Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
+      IF (.not.allocated(LreadSTD)) THEN
+        allocate ( LreadSTD(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
+      END IF
       IF (.not.allocated(LreadTLM)) THEN
         allocate ( LreadTLM(Ngrids) )
         Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
@@ -2823,6 +2861,17 @@
         allocate ( LwrtNRM(4,Ngrids) )
         Dmem(1)=Dmem(1)+4.0_r8*REAL(Ngrids,r8)
       END IF
+
+#ifdef STD_MODEL
+      IF (.not.allocated(LdefSTD)) THEN
+        allocate ( LdefSTD(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
+      END IF
+      IF (.not.allocated(LwrtSTD)) THEN
+        allocate ( LwrtSTD(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
+      END IF
+#endif
 
 #ifdef AD_OUTPUT_STATE
       IF (.not.allocated(LwrtState3d)) THEN
@@ -3155,6 +3204,30 @@
         allocate ( S_bgqc(MstateVar,Ngrids) )
         Dmem(1)=Dmem(1)+REAL(MstateVar*Ngrids,r8)
       END IF
+
+# ifdef STD_MODEL
+      IF (.not.allocated(Sigma_max)) THEN
+        allocate ( Sigma_max(MstateVar,Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(MstateVar*Ngrids,r8)
+      END IF
+      IF (.not.allocated(Sigma_ml)) THEN
+        allocate ( Sigma_ml(MstateVar,Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(MstateVar*Ngrids,r8)
+      END IF
+      IF (.not.allocated(Sigma_do)) THEN
+        allocate ( Sigma_do(MstateVar,Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(MstateVar*Ngrids,r8)
+      END IF
+      IF (.not.allocated(Sigma_dz)) THEN
+        allocate ( Sigma_dz(MstateVar,Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(MstateVar*Ngrids,r8)
+      END IF
+
+      IF (.not.allocated(mld_uniform)) THEN
+        allocate ( mld_uniform(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
+      END IF
+# endif
 #endif
 
       IF (.not.allocated(obcfac)) THEN
@@ -3748,6 +3821,10 @@
 
       IF (allocated(LdefRST))           deallocate ( LdefRST )
 
+#ifdef STD_MODEL
+      IF (allocated(LdefSTD))           deallocate ( LdefSTD )
+#endif
+
 #ifdef SP4DVAR
       IF (allocated(LdefSCA))           deallocate ( LdefSCA )
 
@@ -3776,6 +3853,8 @@
 
       IF (allocated(LreadQCK))          deallocate ( LreadQCK )
 
+      IF (allocated(LreadSTD))          deallocate ( LreadSTD )
+
       IF (allocated(LreadTLM))          deallocate ( LreadTLM )
 
       IF (allocated(LwrtADJ))           deallocate ( LwrtADJ )
@@ -3791,6 +3870,10 @@
       IF (allocated(LwrtQCK))           deallocate ( LwrtQCK )
 
       IF (allocated(LwrtRST))           deallocate ( LwrtRST )
+
+#ifdef STD_MODEL
+      IF (allocated(LwrtSTD))           deallocate ( LwrtSTD )
+#endif
 
       IF (allocated(LwrtTLM))           deallocate ( LwrtTLM )
 
@@ -3953,6 +4036,18 @@
       IF (allocated(Nprovenance))       deallocate ( Nprovenance )
 
       IF (allocated(S_bgqc))            deallocate ( S_bgqc )
+
+# ifdef STD_MODEL
+      IF (allocated(Sigma_max))         deallocate ( Sigma_max )
+
+      IF (allocated(Sigma_ml))          deallocate ( Sigma_ml )
+
+      IF (allocated(Sigma_do))          deallocate ( Sigma_do )
+
+      IF (allocated(Sigma_dz))          deallocate ( Sigma_dz )
+
+      IF (allocated(mld_uniform))       deallocate ( mld_uniform )
+# endif
 #endif
 
       IF (allocated(obcfac))            deallocate ( obcfac )
@@ -4436,6 +4531,14 @@
       CnormB=.FALSE.
       HdecayB=IniVal
       VdecayB=IniVal
+
+# ifdef STD_MODEL
+      Sigma_max=IniVal
+      Sigma_ml=IniVal
+      Sigma_do=IniVal
+      Sigma_dz=IniVal
+      mld_uniform=IniVal
+# endif
 #endif
 !
 !  Initialize several IO flags.
@@ -4472,6 +4575,9 @@
         LdefQCK(ng)=.FALSE.
         LdefRST(ng)=.TRUE.
         LdefSTA(ng)=.TRUE.
+#ifdef STD_MODEL
+        LdefSTD(ng)=.FALSE.
+#endif
         LdefTLM(ng)=.FALSE.
 #if defined AVERAGES  && defined AVERAGES_DETIDE && \
    (defined SSH_TIDES || defined UV_TIDES)
@@ -4488,6 +4594,7 @@
 #endif
         LreadFWD(ng)=.FALSE.
         LreadQCK(ng)=.FALSE.
+        LreadSTD(ng)=.FALSE.
         LreadTLM(ng)=.FALSE.
         LwrtADJ(ng)=.FALSE.
         LwrtAVG(ng)=.FALSE.
@@ -4496,6 +4603,9 @@
         LwrtPER(ng)=.FALSE.
         LwrtQCK(ng)=.FALSE.
         LwrtRST(ng)=.FALSE.
+#ifdef STD_MODEL
+        LwrtSTD(ng)=.FALSE.
+#endif
         LwrtTLM(ng)=.FALSE.
         LwrtInfo(ng)=.TRUE.
         LwrtState2d(ng)=.FALSE.

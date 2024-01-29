@@ -2,7 +2,7 @@
       SUBROUTINE checkdefs
 !
 !git $Id$
-!svn $Id: checkdefs.F 1210 2024-01-03 22:03:03Z arango $
+!svn $Id: checkdefs.F 1212 2024-01-26 20:59:21Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2024 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -733,13 +733,6 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+11)=' BODYFORCE,'
 #endif
-#ifdef CHECKSUM
-!
-      IF (Master) WRITE (stdout,20) 'CHECKSUM',                         &
-     &   'Report order-invariant checksum (hash) when processing I/O'
-      is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+10)=' CHECKSUM,'
-#endif
 #ifdef DISTRIBUTE
 # if defined BOUNDARY_ALLGATHER
 !
@@ -810,6 +803,13 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+16)=' CELERITY_WRITE,'
 #endif
+#ifdef CHECKSUM
+!
+      IF (Master) WRITE (stdout,20) 'CHECKSUM',                         &
+     &   'Report order-invariant checksum (hash) when processing I/O'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+10)=' CHECKSUM,'
+#endif
 #ifdef CHECK_OPEN_FILES
 !
       IF (Master) WRITE (stdout,20) 'CHECK_OPEN_FILES',                 &
@@ -867,6 +867,13 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+18)=' COLLECT_SENDRECV,'
 # endif
+#endif
+#if defined COMPUTE_MLD && defined STD_MODEL && defined FOUR_DVAR
+!
+      IF (Master) WRITE (stdout,20) 'COMPUTE_MLD',                      &
+     &   'Compute Mixed Layer Depth for background error modeling'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+13)=' COMPUTE_MLD,'
 #endif
 #if defined CONCURRENT_KERNEL && defined DISJOINTED && \
     defined DISTRIBUTE        && defined SP4DVAR
@@ -2529,6 +2536,13 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+10)=' SUSPLOAD,'
 # endif
+#endif
+#if defined STD_MODEL && defined FOUR_DVAR
+!
+      IF (Master) WRITE (stdout,20) 'STD_MODEL',                        &
+     &   'Background error covariance Standard Deviation model'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+11)=' STD_MODEL,'
 #endif
 #if defined STEP2D_FB_AB3_AM4
 !
