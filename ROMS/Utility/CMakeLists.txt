@@ -1,5 +1,5 @@
 # git $Id$
-# svn $Id: CMakeLists.txt 1210 2024-01-03 22:03:03Z arango $
+# svn $Id: CMakeLists.txt 1212 2024-01-26 20:59:21Z arango $
 #:::::::::::::::::::::::::::::::::::::::::::::::::::::: David Robertson :::
 # Copyright (c) 2002-2024 The ROMS/TOMS Group                           :::
 #   Licensed under a MIT/X style license                                :::
@@ -12,6 +12,7 @@ list( APPEND _files
       ROMS/Utility/abort.F
       ROMS/Utility/ADfromTL.F
       ROMS/Utility/array_modes.F
+      ROMS/Utility/background_std.F
       ROMS/Utility/back_cost.F
       ROMS/Utility/cgradient.F
       ROMS/Utility/checkadj.F
@@ -44,6 +45,7 @@ list( APPEND _files
       ROMS/Utility/def_rst.F
       ROMS/Utility/def_state.F
       ROMS/Utility/def_station.F
+      ROMS/Utility/def_std.F
       ROMS/Utility/def_tides.F
       ROMS/Utility/def_var.F
       ROMS/Utility/destroy.F
@@ -183,6 +185,7 @@ list( APPEND _files
       ROMS/Utility/wrt_rst.F
       ROMS/Utility/wrt_state.F
       ROMS/Utility/wrt_station.F
+      ROMS/Utility/wrt_std.F
       ROMS/Utility/wrt_tides.F
       ROMS/Utility/yaml_parser.F
       ROMS/Utility/zeta_balance.F

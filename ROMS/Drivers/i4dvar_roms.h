@@ -1,7 +1,7 @@
       MODULE roms_kernel_mod
 !
 !git $Id$
-!svn $Id: i4dvar_roms.h 1210 2024-01-03 22:03:03Z arango $
+!svn $Id: i4dvar_roms.h 1212 2024-01-26 20:59:21Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2024 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -215,6 +215,12 @@
       LgetNRM=.TRUE.
 
       DO ng=1,Ngrids
+#ifdef STD_MODEL
+        LdefSTD(ng)=.TRUE.
+        LwrtSTD(ng)=.TRUE.
+#else
+        LreadSTD(ng)=.TRUE.
+#endif
         CALL prior_error (ng)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         SetGridConfig(ng)=.FALSE.

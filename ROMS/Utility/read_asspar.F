@@ -3,7 +3,7 @@
       SUBROUTINE read_AssPar (model, inp, out, Lwrite)
 !
 !git $Id$
-!svn $Id: read_asspar.F 1210 2024-01-03 22:03:03Z arango $
+!svn $Id: read_asspar.F 1212 2024-01-26 20:59:21Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2024 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -496,6 +496,61 @@
                 END DO
               END DO
 #  endif
+
+#  ifdef STD_MODEL
+#   ifndef COMPUTE_MLD
+            CASE ('mld_uniform')
+              Npts=load_r(Nval, Rval, Ngrids, mld_uniform(ng))
+#   endif
+            CASE ('Sigma_max(isFsur)')
+              Npts=load_r(Nval, Rval, Ngrids, Sigma_max(isFsur,:))
+#   ifdef SOLVE3D
+            CASE ('Sigma_max(isUvel)')
+              Npts=load_r(Nval, Rval, Ngrids, Sigma_max(isUvel,:))
+            CASE ('Sigma_ml(isUvel)')
+              Npts=load_r(Nval, Rval, Ngrids, Sigma_ml(isUvel,:))
+            CASE ('Sigma_do(isUvel)')
+              Npts=load_r(Nval, Rval, Ngrids, Sigma_do(isUvel,:))
+            CASE ('Sigma_dz(isUvel)')
+              Npts=load_r(Nval, Rval, Ngrids, Sigma_dz(isUvel,:))
+            CASE ('Sigma_max(isVvel)')
+              Npts=load_r(Nval, Rval, Ngrids, Sigma_max(isVvel,:))
+            CASE ('Sigma_ml(isVvel)')
+              Npts=load_r(Nval, Rval, Ngrids, Sigma_ml(isVvel,:))
+            CASE ('Sigma_do(isVvel)')
+              Npts=load_r(Nval, Rval, Ngrids, Sigma_do(isVvel,:))
+            CASE ('Sigma_dz(isVvel)')
+              Npts=load_r(Nval, Rval, Ngrids, Sigma_dz(isVvel,:))
+            CASE ('Sigma_max(isTvar)')
+              Npts=load_r(Nval, Rval, MT, Ngrids, Rtracer)
+              DO ng=1,Ngrids
+                DO itrc=1,NT(ng)
+                  Sigma_max(isTvar(itrc),ng)=Rtracer(itrc,ng)
+                END DO
+              END DO
+            CASE ('Sigma_ml(isTvar)')
+              Npts=load_r(Nval, Rval, MT, Ngrids, Rtracer)
+              DO ng=1,Ngrids
+                DO itrc=1,NT(ng)
+                  Sigma_ml(isTvar(itrc),ng)=Rtracer(itrc,ng)
+                END DO
+              END DO
+            CASE ('Sigma_do(isTvar)')
+              Npts=load_r(Nval, Rval, MT, Ngrids, Rtracer)
+              DO ng=1,Ngrids
+                DO itrc=1,NT(ng)
+                  Sigma_do(isTvar(itrc),ng)=Rtracer(itrc,ng)
+                END DO
+              END DO
+            CASE ('Sigma_dz(isTvar)')
+              Npts=load_r(Nval, Rval, MT, Ngrids, Rtracer)
+              DO ng=1,Ngrids
+                DO itrc=1,NT(ng)
+                  Sigma_dz(isTvar(itrc),ng)=Rtracer(itrc,ng)
+                END DO
+              END DO
+#   endif
+#  endif
 #  ifdef BGQC
             CASE ('bgqc_type')
               Npts=load_i(Nval, Rval, Ngrids, bgqc_type)
@@ -592,19 +647,26 @@
             CASE ('STDnameI')
               label='STD - initial conditions standard deviation'
               Npts=load_s1d(Nval, Cval, Cdim, line, label, igrid,       &
-     &                      Ngrids, Nfiles, 4, 1, inp_lib, STD)
+     &                      Ngrids, Nfiles, 5, 1, inp_lib, STD)
             CASE ('STDnameM')
               label='STD - model error standard deviation'
               Npts=load_s1d(Nval, Cval, Cdim, line, label, igrid,       &
-     &                      Ngrids, Nfiles, 4, 2, inp_lib, STD)
+     &                      Ngrids, Nfiles, 5, 2, inp_lib, STD)
             CASE ('STDnameB')
               label='STD - boundary conditions standard deviation'
               Npts=load_s1d(Nval, Cval, Cdim, line, label, igrid,       &
-     &                      Ngrids, Nfiles, 4, 3, inp_lib, STD)
+     &                      Ngrids, Nfiles, 5, 3, inp_lib, STD)
             CASE ('STDnameF')
               label='STD - surface forcing standard deviation'
               Npts=load_s1d(Nval, Cval, Cdim, line, label, igrid,       &
-     &                      Ngrids, Nfiles, 4, 4, inp_lib, STD)
+     &                      Ngrids, Nfiles, 5, 4, inp_lib, STD)
+#  ifdef STD_MODEL
+            CASE ('STDnameC')
+              label='STD - standard deviation computed from background'
+              Npts=load_s1d(Nval, Cval, Cdim, line, label, igrid,       &
+     &                      Ngrids, Nfiles, 5, 5, inp_lib, STD)
+#  endif
+
             CASE ('NRMnameI')
               label='NRM - initial conditions normalization'
               Npts=load_s1d(Nval, Cval, Cdim, line, label, igrid,       &
@@ -1183,6 +1245,50 @@
      &            TRIM(Vname(1,idTvar(itrc)))
           END DO
 #    endif
+#    ifdef STD_MODEL
+#     ifndef COMPUTE_MLD
+          WRITE (out,120) mld_uniform(ng), 'mld_uniform',               &
+     &            'Uniform mixed layer depth value (m).'
+#     endif
+          WRITE (out,190) Sigma_max(isFsur,ng), 'Sigma_max(isFsur)',    &
+     &            'Maximum STD value (m)', ', free-surface.'
+#     ifdef SOLVE3D
+          WRITE (out,190) Sigma_max(isUvel,ng), 'Sigma_max(isUvel)',    &
+     &            'Maximum STD value (m/s)', ', 3D U-momentum.'
+          WRITE (out,190) Sigma_ml(isUvel,ng), 'Sigma_ml(isUvel)',      &
+     &            'Minimum STD at mixed layer (m/s)', ', 3D U-momentum.'
+          WRITE (out,190) Sigma_do(isUvel,ng), 'Sigma_do(isUvel)',      &
+     &            'Minimum STD in deep ocean (m/s)', ', 3D U-momentum.'
+          WRITE (out,130) Sigma_dz(isUvel,ng), 'Sigma_dz(isUvel)',      &
+     &            'STD vertical displacement (m)', ', 3D U-momentum.'
+          WRITE (out,190) Sigma_max(isUvel,ng), 'Sigma_max(isVvel)',    &
+     &            'Maximum STD value (m/s)', ', 3D V-momentum.'
+          WRITE (out,190) Sigma_ml(isVvel,ng), 'Sigma_ml(isVvel)',      &
+     &            'Minimum STD at mixed layer (m/s)', ', 3D V-momentum.'
+          WRITE (out,190) Sigma_do(isVvel,ng), 'Sigma_do(isVvel)',      &
+     &            'Minimum STD in deep ocean (m/s)', ', 3D V-momentum.'
+          WRITE (out,130) Sigma_dz(isVvel,ng), 'Sigma_dz(isVvel)',      &
+     &            'STD vertical displacement (m)', ', 3D V-momentum.'
+          DO itrc=1,NT(ng)
+            WRITE (out,190) Sigma_max(isTvar(itrc),ng),                 &
+     &            'Sigma_max(idTvar)',                                  &
+     &            'Maximum STD Value, ',                                &
+     &            TRIM(Vname(1,idTvar(itrc)))
+            WRITE (out,190) Sigma_ml(isTvar(itrc),ng),                  &
+     &            'Sigma_ml(idTvar)',                                   &
+     &            'Minimum STD at mixed layer, ',                       &
+     &            TRIM(Vname(1,idTvar(itrc)))
+            WRITE (out,190) Sigma_do(isTvar(itrc),ng),                  &
+     &            'Sigma_do(idTvar)',                                   &
+     &            'Minimum STD in deep ocean, ',                        &
+     &            TRIM(Vname(1,idTvar(itrc)))
+            WRITE (out,130) Sigma_dz(isTvar(itrc),ng),                  &
+     &            'Sigma_dz(idTvar)',                                   &
+     &            'STD vertical displacement (m), ',                    &
+     &            TRIM(Vname(1,idTvar(itrc)))
+          END DO
+#     endif
+#    endif
 #    ifdef BGQC
           IF (bgqc_type(ng).eq.1) THEN
             WRITE (out,80) bgqc_type(ng), 'bgqc_type',                  &
@@ -1295,6 +1401,11 @@
           END IF
         END IF
 #    endif
+#    ifdef STD_MODEL
+        fname=STD(5,ng)%name
+        IF (Master.and.Lwrite) WRITE (out,160)                          &
+     &      '     Computed/Modeled IC STD File:  ', TRIM(fname)
+#    else
         fname=STD(1,ng)%name
         IF (.not.find_file(ng, out, fname, 'STDnameI')) THEN
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
@@ -1302,6 +1413,7 @@
           IF (Master.and.Lwrite) WRITE (out,160)                        &
      &      '      Initial Conditions STD File:  ', TRIM(fname)
         END IF
+#    endif
 #    ifdef ADJUST_BOUNDARY
         fname=STD(3,ng)%name
         IF (.not.find_file(ng, out, fname, 'STDnameB')) THEN
@@ -1510,25 +1622,25 @@
   60  FORMAT (/,/,' Assimilation Parameters, Grid: ',i2.2,              &
      &        /,  ' =================================',/)
 #  endif
-  70  FORMAT (10x,l1,2x,a,t30,a)
-  80  FORMAT (1x,i10,2x,a,t30,a)
-  85  FORMAT (1x,i10,2x,a,'(',i2.2,')',t30,a)
-  90  FORMAT (1x,i10,2x,a,t30,a,/,t32,a)
-  95  FORMAT (1x,a,2x,a,t30,a)
- 100  FORMAT (1p,e11.4,2x,a,t30,a)
- 110  FORMAT (10x,l1,2x,a,t30,a,i2.2,':',1x,a)
- 120  FORMAT (f11.3,2x,a,t30,a)
- 130  FORMAT (f11.3,2x,a,t30,a,a,'.')
+  70  FORMAT (10x,l1,2x,a,t32,a)
+  80  FORMAT (1x,i10,2x,a,t32,a)
+  85  FORMAT (1x,i10,2x,a,'(',i2.2,')',t32,a)
+  90  FORMAT (1x,i10,2x,a,t32,a,/,t34,a)
+  95  FORMAT (1x,a,2x,a,t32,a)
+ 100  FORMAT (1p,e11.4,2x,a,t32,a)
+ 110  FORMAT (10x,l1,2x,a,t32,a,i2.2,':',1x,a)
+ 120  FORMAT (f11.3,2x,a,t32,a)
+ 130  FORMAT (f11.3,2x,a,t32,a,a,'.')
 #  ifdef VERIFICATION
  150  FORMAT (/,' Input/Output Verification Files:',/)
 #  else
  150  FORMAT (/,' Input/Output Assimilation Files:',/)
 #  endif
  160  FORMAT (2x,a,a)
- 170  FORMAT (3x,4(1x,l1),2x,a,t30,a)
- 180  FORMAT (3x,4(1x,l1),2x,a,t30,a,i2.2,':',1x,a)
- 190  FORMAT (1p,e11.4,2x,a,t30,a,a,'.')
- 200  FORMAT (1p,e11.4,2x,a,'(',i2.2,')',t30,a,':',1x,i6)
+ 170  FORMAT (3x,4(1x,l1),2x,a,t32,a)
+ 180  FORMAT (3x,4(1x,l1),2x,a,t32,a,i2.2,':',1x,a)
+ 190  FORMAT (1p,e11.4,2x,a,t32,a,a,'.')
+ 200  FORMAT (1p,e11.4,2x,a,'(',i2.2,')',t32,a,':',1x,i6)
  210  FORMAT (/,' READ_ASSPAR - variable info not yet loaded, ', a)
  220  FORMAT (/,' READ_ASSPAR - Grid ', i2.2,                           &
      &        ', could not find input file:  ',a)
