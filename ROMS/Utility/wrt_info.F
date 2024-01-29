@@ -2,7 +2,7 @@
       MODULE wrt_info_mod
 !
 !git $Id$
-!svn $Id: wrt_info.F 1210 2024-01-03 22:03:03Z arango $
+!svn $Id: wrt_info.F 1212 2024-01-26 20:59:21Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2024 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -1092,6 +1092,38 @@
      &                      ml_depth(ng), (/0/), (/0/),                 &
      &                      ncid = ncid)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+# endif
+
+# ifdef STD_MODEL
+!
+!  Background error covariance standard deviation modeling parameters.
+!
+      CALL netcdf_put_fvar (ng, model, ncname, 'Sigma_max',             &
+     &                      Sigma_max(:,ng), (/1/), (/NstateVar(ng)/),  &
+     &                      ncid = ncid)
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+
+      CALL netcdf_put_fvar (ng, model, ncname, 'Sigma_ml',              &
+     &                      Sigma_ml(:,ng), (/1/), (/NstateVar(ng)/),   &
+     &                      ncid = ncid)
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+
+      CALL netcdf_put_fvar (ng, model, ncname, 'Sigma_do',              &
+     &                      Sigma_do(:,ng), (/1/), (/NstateVar(ng)/),   &
+     &                      ncid = ncid)
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+
+      CALL netcdf_put_fvar (ng, model, ncname, 'Sigma_dz',              &
+     &                      Sigma_dz(:,ng), (/1/), (/NstateVar(ng)/),   &
+     &                      ncid = ncid)
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+
+#  ifndef COMPUTE_MLD
+      CALL netcdf_put_fvar (ng, model, ncname, 'mld_uniform',           &
+     &                      mld_uniform(ng), (/0/), (/0/),              &
+     &                      ncid = ncid)
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+#  endif
 # endif
 #endif
 
@@ -3519,6 +3551,42 @@
      &                          ml_depth(ng), (/0/), (/0/),             &
      &                          pioFile = pioFile)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+#  endif
+
+#  ifdef STD_MODEL
+!
+!  Background error covariance standard deviation modeling parameters.
+!
+      CALL pio_netcdf_put_fvar (ng, model, ncname, 'Sigma_max',         &
+     &                          Sigma_max(:,ng),                        &
+     &                          (/1/), (/NstateVar(ng)/),               &
+     &                          pioFile = pioFile)
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+
+      CALL pio_netcdf_put_fvar (ng, model, ncname, 'Sigma_ml',          &
+     &                          Sigma_ml(:,ng),                         &
+     &                          (/1/), (/NstateVar(ng)/),               &
+     &                          pioFile = pioFile)
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+
+      CALL pio_netcdf_put_fvar (ng, model, ncname, 'Sigma_do',          &
+     &                          Sigma_do(:,ng),                         &
+     &                          (/1/), (/NstateVar(ng)/),               &
+     &                          pioFile = pioFile)
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+
+      CALL pio_netcdf_put_fvar (ng, model, ncname, 'Sigma_dz',          &
+     &                          Sigma_dz(:,ng),                         &
+     &                          (/1/), (/NstateVar(ng)/),               &
+     &                          pioFile = pioFile)
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+
+#   ifndef COMPUTE_MLD
+      CALL pio_netcdf_put_fvar (ng, model, ncname, 'mld_uniform',       &
+     &                          mld_uniform(ng), (/0/), (/0/),          &
+     &                          pioFile = pioFile)
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+#   endif
 #  endif
 # endif
 
