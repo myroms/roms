@@ -4,7 +4,7 @@
 #ifdef I4DVAR
 !
 !git $Id$
-!svn $Id: i4dvar.F 1212 2024-01-26 20:59:21Z arango $
+!svn $Id: i4dvar.F 1213 2024-01-29 22:21:01Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2024 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -145,6 +145,9 @@
       USE wrt_ini_mod,        ONLY : wrt_frc
 # endif
       USE wrt_ini_mod,        ONLY : wrt_ini
+# ifdef STD_MODEL
+      USE wrt_std_mod,        ONLY : wrt_std
+# endif
 # if defined BALANCE_OPERATOR && defined ZETA_ELLIPTIC
       USE zeta_balance_mod,   ONLY : balance_ref, biconj
 # endif
@@ -209,7 +212,7 @@
 # ifdef STD_MODEL
       integer :: Lstd
 # endif
-      integer :: Fcount, InpRec
+      integer :: Fcount, InpRec, Tindex
 # ifdef PROFILE
       integer :: thread
 # endif
@@ -461,14 +464,15 @@
 !  records are used in the algorithm below.
 !
       IF (my_outer.eq.1) THEN
+        Tindex=1
         DO ng=1,Ngrids
           INI(ng)%Rindex=1
           Fcount=INI(ng)%load
           INI(ng)%Nrec(Fcount)=1
 # ifdef DISTRIBUTE
-          CALL wrt_ini (ng, MyRank, 1)
+          CALL wrt_ini (ng, MyRank, Tindex)
 # else
-          CALL wrt_ini (ng, -1, 1)
+          CALL wrt_ini (ng, -1, Tindex)
 # endif
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END DO
@@ -501,7 +505,7 @@
 #  ifdef DISTRIBUTE
             CALL wrt_std (ng, MyRank, Lstd)
 #  else
-            CALL wrt_std (ng, -1, Tindex)
+            CALL wrt_std (ng, -1, Lstd)
 #  endif
             IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
           END IF

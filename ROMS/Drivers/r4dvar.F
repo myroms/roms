@@ -4,7 +4,7 @@
 #ifdef R4DVAR
 !
 !git $Id$
-!svn $Id: r4dvar.F 1212 2024-01-26 20:59:21Z arango $
+!svn $Id: r4dvar.F 1213 2024-01-29 22:21:01Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2024 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -181,7 +181,7 @@
 !  Local variable declarations.
 !
       integer :: lstr, ng
-      integer :: Fcount
+      integer :: Fcount, Tindex
 # ifdef PROFILE
       integer :: thread
 # endif
@@ -233,14 +233,15 @@
 !  record "Lbck" becomes the background state record and the record
 !  "Lini" becomes current nonlinear initial conditions.
 !
+      Tindex=1
       DO ng=1,Ngrids
         INI(ng)%Rindex=1
         Fcount=INI(ng)%load
         INI(ng)%Nrec(Fcount)=1
 # ifdef DISTRIBUTE
-        CALL wrt_ini (ng, MyRank, 1)
+        CALL wrt_ini (ng, MyRank, Tindex)
 # else
-        CALL wrt_ini (ng, -1, 1)
+        CALL wrt_ini (ng, -1, Tindex)
 # endif
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
       END DO
@@ -272,7 +273,7 @@
 #  ifdef DISTRIBUTE
             CALL wrt_std (ng, MyRank, Lstd)
 #  else
-            CALL wrt_std (ng, -1, Tindex)
+            CALL wrt_std (ng, -1, Lstd)
 #  endif
             IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
           END IF
