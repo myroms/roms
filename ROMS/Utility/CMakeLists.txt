@@ -1,5 +1,5 @@
 # git $Id$
-# svn $Id: CMakeLists.txt 1212 2024-01-26 20:59:21Z arango $
+# svn $Id: CMakeLists.txt 1214 2024-01-30 17:35:25Z arango $
 #:::::::::::::::::::::::::::::::::::::::::::::::::::::: David Robertson :::
 # Copyright (c) 2002-2024 The ROMS/TOMS Group                           :::
 #   Licensed under a MIT/X style license                                :::
@@ -9,7 +9,6 @@
 # Source code list for sub-directory "ROMS/Utility"
 
 list( APPEND _files
-      ROMS/Utility/abort.F
       ROMS/Utility/ADfromTL.F
       ROMS/Utility/array_modes.F
       ROMS/Utility/background_std.F
