@@ -1,8 +1,9 @@
 #include "cppdefs.h"
       MODULE mod_param
 !
+!git $Id: mod_param.F 1215 2024-02-09 23:11:09Z arango $
 !git $Id$
-!svn $Id: mod_param.F 1210 2024-01-03 22:03:03Z arango $
+!svn $Id: mod_param.F 1215 2024-02-09 23:11:09Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2024 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -1553,6 +1554,9 @@
 # if defined GLS_MIXING || defined MY25_MIXING
       nLBCvar=nLBCvar+1            ! TKE
 # endif
+#endif
+#ifdef ICE_MODEL
+      nLBCvar=nLBCvar+11           ! ICE varibles up to isVice=11
 #endif
 !
       IF (.not.allocated(LBC)) THEN

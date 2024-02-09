@@ -967,66 +967,46 @@
      &                  LBi, UBi, LBj, UBj,                             &
      &                  stflx(:,:,itemp))
 
-      CALL ice_bc2d_tile (ng, tile, model,                              &
+      CALL ice_bc2d_tile (ng, tile, model, IsAice,                      &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    IminS, ImaxS, JminS, JmaxS,                   &
      &                    liold, linew,                                 &
-     &                    ICE_LOBC(IsAice,ng)%ice_west (LBj:UBj),       &
-     &                    ICE_LOBC(IsAice,ng)%ice_east (LBj:UBj),       &
-     &                    ICE_LOBC(IsAice,ng)%ice_north(LBi:UBi),       &
-     &                    ICE_LOBC(IsAice,ng)%ice_south(LBi:UBi),       &
      &                    Si(:,:,:,IsUice),                             &
      &                    Si(:,:,:,IsVice),                             &
      &                    Si(:,:,:,IsAice),                             &
      &                    LBC(:,ibICE(isAice),ng))
 
-      CALL ice_bc2d_tile (ng, tile, model,                              &
+      CALL ice_bc2d_tile (ng, tile, model, isHice,                      &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    IminS, ImaxS, JminS, JmaxS,                   &
      &                    liold, linew,                                 &
-     &                    ICE_LOBC(isHice,ng)%ice_west (LBj:UBj),       &
-     &                    ICE_LOBC(isHice,ng)%ice_east (LBj:UBj),       &
-     &                    ICE_LOBC(isHice,ng)%ice_north(LBi:UBi),       &
-     &                    ICE_LOBC(isHice,ng)%ice_south(LBi:UBi),       &
      &                    Si(:,:,:,IsUice),                             &
      &                    Si(:,:,:,IsVice),                             &
      &                    Si(:,:,:,IsHice),                             &
      &                    LBC(:,ibICE(isHice),ng))
 
-      CALL ice_bc2d_tile (ng, tile, model,                              &
+      CALL ice_bc2d_tile (ng, tile, model, isHsno,                      &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    IminS, ImaxS, JminS, JmaxS,                   &
      &                    liold, linew,                                 &
-     &                    ICE_LOBC(isHsno,ng)%ice_west (LBj:UBj),       &
-     &                    ICE_LOBC(isHsno,ng)%ice_east (LBj:UBj),       &
-     &                    ICE_LOBC(isHsno,ng)%ice_north(LBi:UBi),       &
-     &                    ICE_LOBC(isHsno,ng)%ice_south(LBi:UBi),       &
      &                    Si(:,:,:,IsUice),                             &
      &                    Si(:,:,:,IsVice),                             &
      &                    Si(:,:,:,IsHsno),                             &
      &                    LBC(:,ibICE(isHsno),ng))
 
-      CALL ice_bc2d_tile (ng, tile, model,                              &
+      CALL ice_bc2d_tile (ng, tile, model, isHmel,                      &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    IminS, ImaxS, JminS, JmaxS,                   &
      &                    liold, linew,                                 &
-     &                    ICE_LOBC(isHmel,ng)%ice_west (LBj:UBj),       &
-     &                    ICE_LOBC(isHmel,ng)%ice_east (LBj:UBj),       &
-     &                    ICE_LOBC(isHmel,ng)%ice_north(LBi:UBi),       &
-     &                    ICE_LOBC(isHmel,ng)%ice_south(LBi:UBi),       &
      &                    Si(:,:,:,IsUice),                             &
      &                    Si(:,:,:,IsVice),                             &
      &                    Si(:,:,:,IsHmel),                             &
      &                    LBC(:,ibICE(isHmel),ng))
 
-      CALL ice_bc2d_tile (ng, tile, model,                              &
+      CALL ice_bc2d_tile (ng, tile, model, isIage,                      &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    IminS, ImaxS, JminS, JmaxS,                   &
      &                    liold, linew,                                 &
-     &                    ICE_LOBC(isIage,ng)%ice_west (LBj:UBj),       &
-     &                    ICE_LOBC(isIage,ng)%ice_east (LBj:UBj),       &
-     &                    ICE_LOBC(isIage,ng)%ice_north(LBi:UBi),       &
-     &                    ICE_LOBC(isIage,ng)%ice_south(LBi:UBi),       &
      &                    Si(:,:,:,IsUice),                             &
      &                    Si(:,:,:,IsVice),                             &
      &                    Si(:,:,:,IsIage),                             &

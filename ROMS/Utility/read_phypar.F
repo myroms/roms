@@ -1,8 +1,9 @@
 #include "cppdefs.h"
       SUBROUTINE read_PhyPar (model, inp, out, Lwrite)
 !
+!git $Id: read_phypar.F 1215 2024-02-09 23:11:09Z arango $
 !git $Id$
-!svn $Id: read_phypar.F 1210 2024-01-03 22:03:03Z arango $
+!svn $Id: read_phypar.F 1215 2024-02-09 23:11:09Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2024 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -17,6 +18,9 @@
       USE mod_parallel
 #ifdef BIOLOGY
       USE mod_biology
+#endif
+#ifdef ICE_MODEL
+      USE mod_ice
 #endif
 #if defined MODEL_COUPLING && defined MCT_LIB
       USE mod_coupler
@@ -92,6 +96,9 @@
       integer :: nPETs, maxPETs
       integer :: OutFiles
       integer :: Ivalue(1)
+#ifdef ICE_MODEL
+      integer :: ioff
+#endif
 
       integer, allocatable :: Nfiles(:)
       integer, allocatable :: Ncount(:,:)
@@ -515,6 +522,52 @@
               ifield=isTvar(itracer)
               Npts=load_lbc(Nval, Cval, line, nline, ifield, igrid,     &
      &                      1, NAT+NPT, Vname(1,idTvar(itracer)), LBC)
+# ifdef ICE_MODEL
+            CASE ('LBC(isAice)')
+              ioff = isAice+(nLBCvar-11)
+              Npts=load_lbc(Nval, Cval, line, nline, ioff, igrid,       &
+     &                      0, 0, Vname(1,idAice), LBC)
+            CASE ('LBC(isHice)')
+              ioff = isHice+(nLBCvar-11)
+              Npts=load_lbc(Nval, Cval, line, nline, ioff, igrid,       &
+     &                      0, 0, Vname(1,idHice), LBC)
+            CASE ('LBC(isHsno)')
+              ioff = isHsno+(nLBCvar-11)
+              Npts=load_lbc(Nval, Cval, line, nline, ioff, igrid,       &
+     &                      0, 0, Vname(1,idHsno), LBC)
+            CASE ('LBC(isTice)')
+              ioff = isTice+(nLBCvar-11)
+              Npts=load_lbc(Nval, Cval, line, nline, ioff, igrid,       &
+     &                      0, 0, Vname(1,idTice), LBC)
+            CASE ('LBC(isHmel)')
+              ioff = isHmel+(nLBCvar-11)
+              Npts=load_lbc(Nval, Cval, line, nline, ioff, igrid,       &
+     &                      0, 0, Vname(1,idHmel), LBC)
+            CASE ('LBC(isIage)')
+              ioff = isIage+(nLBCvar-11)
+              Npts=load_lbc(Nval, Cval, line, nline, ioff, igrid,       &
+     &                      0, 0, Vname(1,idIage), LBC)
+            CASE ('LBC(isISxx)')
+              ioff = isISxx+(nLBCvar-11)
+              Npts=load_lbc(Nval, Cval, line, nline, ioff, igrid,       &
+     &                      0, 0, Vname(1,idISxx), LBC)
+            CASE ('LBC(isISxy)')
+              ioff = isISxy+(nLBCvar-11)
+              Npts=load_lbc(Nval, Cval, line, nline, ioff, igrid,       &
+     &                      0, 0, Vname(1,idISxy), LBC)
+            CASE ('LBC(isISyy)')
+              ioff = isISyy+(nLBCvar-11)
+              Npts=load_lbc(Nval, Cval, line, nline, ioff, igrid,       &
+     &                      0, 0, Vname(1,idISyy), LBC)
+            CASE ('LBC(isUice)')
+              ioff = isUice+(nLBCvar-11)
+              Npts=load_lbc(Nval, Cval, line, nline, ioff, igrid,       &
+     &                      0, 0, Vname(1,idUice), LBC)
+            CASE ('LBC(isVice)')
+              ioff = isVice+(nLBCvar-11)
+              Npts=load_lbc(Nval, Cval, line, nline, ioff, igrid,       &
+     &                      0, 0, Vname(1,idVice), LBC)
+# endif
 #endif
 #if defined ADJOINT || defined TANGENT || defined TL_IOMS
             CASE ('ad_LBC(isFsur)')
@@ -4204,6 +4257,11 @@
                 fposnam(i:i)=blank
               END DO
               fposnam=TRIM(ADJUSTL(Cval(Nval)))
+            CASE ('IPARNAM')
+              DO i=1,LEN(iparnam)
+                iparnam(i:i)=blank
+              END DO
+              iparnam=TRIM(ADJUSTL(Cval(Nval)))
             CASE ('BPARNAM')
               DO i=1,LEN(bparnam)
                 bparnam(i:i)=blank
@@ -7588,6 +7646,15 @@
         ELSE
           IF (Master.and.Lwrite) WRITE (out,230)                        &
      &      '   Initial Floats Positions File:  ', TRIM(fname)
+        END IF
+# endif
+# ifdef ICE_MODEL
+        fname=iparnam
+        IF (.not.find_file(ng, out, fname, 'IPARNAM')) THEN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        ELSE
+          IF (Master.and.Lwrite) WRITE (out,230)                        &
+     &      '         Ice Model Parameters File:  ', TRIM(fname)
         END IF
 # endif
 # ifdef BIOLOGY

@@ -10,7 +10,8 @@
 !    See License_ROMS.md                            Katherine Hedstrom !
 !================================================== Hernan G. Arango ===
 !                                                                      !
-!  Sets lateral boundary conditions for any 2D ice field.              !
+!  Sets lateral boundary conditions for any 2D ice field with array    !
+!  index, ifld.
 !                                                                      !
 !=======================================================================
 !
@@ -27,18 +28,16 @@
       CONTAINS
 !
 !***********************************************************************
-      SUBROUTINE ice_bc2d_tile (ng, tile, model,                        &
+      SUBROUTINE ice_bc2d_tile (ng, tile, model, ifld,                  &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          IminS, ImaxS, JminS, JmaxS,             &
      &                          liold, linew,                           &
-     &                          field_west, field_east,                 &
-     &                          field_north, field_south,               &
      &                          ui, vi, field, S)
 !***********************************************************************
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, tile, model
+      integer, intent(in) :: ng, tile, model, ifld
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: liold, linew
@@ -49,18 +48,10 @@
       real(r8), intent(in)    :: ui(LBi:,LBj:,:)
       real(r8), intent(in)    :: vi(LBi:,LBj:,:)
       real(r8), intent(inout) :: field(LBi:,LBj:,:)
-      real(r8), intent(in)    :: field_west(LBj:)
-      real(r8), intent(in)    :: field_east(LBj:)
-      real(r8), intent(in)    :: field_north(LBi:)
-      real(r8), intent(in)    :: field_south(LBi:)
 # else
       real(r8), intent(in)    :: ui(LBi:UBi,LBj:UBj,2)
       real(r8), intent(in)    :: vi(LBi:UBi,LBj:UBj,2)
       real(r8), intent(inout) :: field(LBi:UBi,LBj:UBj,2)
-      real(r8), intent(in)    :: field_west(LBj:UBj)
-      real(r8), intent(in)    :: field_east(LBj:UBj)
-      real(r8), intent(in)    :: field_north(LBi:UBi)
-      real(r8), intent(in)    :: field_south(LBi:UBi)
 # endif
 !
 !  Local variable declarations.
@@ -127,7 +118,7 @@
      &                            (cff+Cx)
             IF (S(iwest)%nudging) THEN
               field(Istr-1,j,linew)=field(Istr-1,j,linew)+              &
-     &                              tau*(field_west(j)-                 &
+     &                              tau*(ICE_LOBC(ifld,ng)%ice_west(j)- &
      &                                   field(Istr-1,j,know))
             END IF
 # ifdef MASKING
@@ -140,7 +131,7 @@
 !
         ELSE IF (S(iwest)%clamped) THEN
           DO j=Jstr,Jend
-            field(Istr-1,j,linew)=field_west(j)
+            field(Istr-1,j,linew)=ICE_LOBC(ifld,ng)%ice_west(j)
 # ifdef MASKING
             field(Istr-1,j,linew)=field(Istr-1,j,linew)*                &
      &                            GRID(ng)%rmask(Istr-1,j)
@@ -156,7 +147,7 @@
         ELSE IF (S(iwest)%mixed) THEN
           DO j=Jstr,Jend
             IF (ui(1,j,linew).ge.0.0_r8) THEN
-              field(Istr-1,j,linew)=field_west(j)
+              field(Istr-1,j,linew)=ICE_LOBC(ifld,ng)%ice_west(j)
 # ifdef MASKING
               field(Istr-1,j,linew)=field(Istr-1,j,linew)*              &
      &                              GRID(ng)%rmask(Istr-1,j)
@@ -242,7 +233,7 @@
      &                            (cff+Cx)
             IF (S(ieast)%nudging) THEN
               field(Iend+1,j,linew)=field(Iend+1,j,linew)+              &
-     &                              tau*(field_east(j)-                 &
+     &                              tau*(ICE_LOBC(ifld,ng)%ice_east(j)- &
      &                                   field(Iend+1,j,know))
             END IF
 # ifdef MASKING
@@ -255,7 +246,7 @@
 !
         ELSE IF (S(ieast)%clamped) THEN
           DO j=Jstr,Jend
-            field(Iend+1,j,linew)=field_east(j)
+            field(Iend+1,j,linew)=ICE_LOBC(ifld,ng)%ice_east(j)
 # ifdef MASKING
             field(Iend+1,j,linew)=field(Iend+1,j,linew)*                &
      &                            GRID(ng)%rmask(Iend+1,j)
@@ -271,7 +262,7 @@
         ELSE IF (S(ieast)%mixed) THEN
           DO j=Jstr,Jend
             IF (ui(Iend+1,j,linew).le.0.0_r8) THEN
-              field(Iend+1,j,linew)=field_east(j)
+              field(Iend+1,j,linew)=ICE_LOBC(ifld,ng)%ice_east(j)
 # ifdef MASKING
               field(Iend+1,j,linew)=field(Iend+1,j,linew)*              &
      &                              GRID(ng)%rmask(Iend+1,j)
@@ -357,7 +348,7 @@
      &                            (cff+Ce)
             IF (S(isouth)%nudging) THEN
               field(i,Jstr-1,linew)=field(i,Jstr-1,linew)+              &
-     &                              tau*(field_south(i)-                &
+     &                              tau*(ICE_LOBC(ifld,ng)%ice_south(i)-&
      &                                   field(i,Jstr-1,know))
             END IF
 # ifdef MASKING
@@ -370,7 +361,7 @@
 !
         ELSE IF (S(isouth)%clamped) THEN
           DO i=Istr,Iend
-            field(i,Jstr-1,linew)=field_south(i)
+            field(i,Jstr-1,linew)=ICE_LOBC(ifld,ng)%ice_south(i)
 # ifdef MASKING
             field(i,Jstr-1,linew)=field(i,Jstr-1,linew)*                &
      &                            GRID(ng)%rmask(i,Jstr-1)
@@ -386,7 +377,7 @@
         ELSE IF (S(isouth)%mixed) THEN
           DO i=Istr,Iend
             IF (vi(i,1,linew).ge.0._r8) THEN
-              field(i,Jstr-1,linew)=field_south(i)
+              field(i,Jstr-1,linew)=ICE_LOBC(ifld,ng)%ice_south(i)
 # ifdef MASKING
               field(i,Jstr-1,linew)=field(i,Jstr-1,linew)*              &
      &                              GRID(ng)%rmask(i,Jstr-1)
@@ -472,7 +463,7 @@
      &                            (cff+Ce)
             IF (S(inorth)%nudging) THEN
               field(i,Jend+1,linew)=field(i,Jend+1,linew)+              &
-     &                              tau*(field_north(i)-                &
+     &                              tau*(ICE_LOBC(ifld,ng)%ice_north(i)-&
      &                                   field(i,Jend+1,know))
             END IF
 # ifdef MASKING
@@ -485,7 +476,7 @@
 !
         ELSE IF (S(inorth)%clamped) THEN
           DO i=Istr,Iend
-            field(i,Jend+1,linew)=field_north(i)
+            field(i,Jend+1,linew)=ICE_LOBC(ifld,ng)%ice_north(i)
 # ifdef MASKING
             field(i,Jend+1,linew)=field(i,Jend+1,linew)*                &
      &                            GRID(ng)%rmask(i,Jend+1)
@@ -501,7 +492,7 @@
         ELSE IF (S(inorth)%mixed) THEN
           DO i=Istr,Iend
             IF (vi(i,Jend+1,linew).le.0.0_r8) THEN
-              field(i,Jend+1,linew)=field_north(i)
+              field(i,Jend+1,linew)=ICE_LOBC(ifld,ng)%ice_north(i)
 # ifdef MASKING
               field(i,Jend+1,linew)=field(i,Mm(ng)+1,linew)*            &
      &                              GRID(ng)%rmask(i,Jend+1)

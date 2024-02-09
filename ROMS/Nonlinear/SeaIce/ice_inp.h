@@ -29,6 +29,10 @@
 !  Local variable declarations.
 !
       integer :: Npts, Nval, ng, status
+#ifdef AVERAGES
+      integer :: nf, ns
+#endif
+      integer :: tile, LBi, UBi, LBj, UBj
 !
       real(r8) :: Rvalue(1)
       real(r8), dimension(200) :: Rval
@@ -39,6 +43,24 @@
 
       character (len=*), parameter :: MyFile =                          &
      &  __FILE__
+!
+!-----------------------------------------------------------------------
+!  Allocate ice model parameters that depend on Ngrids/
+!-----------------------------------------------------------------------
+!
+#ifdef DISTRIBUTE
+      tile=MyRank
+#else
+      tile=0
+#endif
+      DO ng=1,Ngrids
+        LBi=BOUNDS(ng)%LBi(tile)
+        UBi=BOUNDS(ng)%UBi(tile)
+        LBj=BOUNDS(ng)%LBj(tile)
+        UBj=BOUNDS(ng)%UBj(tile)
+      END DO
+!     
+      CALL allocate_ice (ng, LBi, UBi, LBj, UBj, .FALSE.)
 !
 !-----------------------------------------------------------------------
 !  Read in ice model parameters.
@@ -666,6 +688,34 @@
 #endif
         END DO
       END IF
+
+#ifdef AVERAGES
+!
+!  Turn out switches to process time-averaged ice model state and
+!  internal variables. It is necessary to avoid recursive dependency
+!  between "mod_ncparam" and "mod_ice".
+!
+      LiceFavg=.FALSE.
+      LiceSavg=.FALSE.
+!
+      DO ng=1,Ngrids
+        DO nf=1,nIceF
+          IF (iFice(nf).gt.0) THEN
+            IF (Aout(iFice(nf),ng)) THEN
+              LiceFavg(nf,ng)=.TRUE.
+            END IF
+          END IF
+        END DO
+!
+        DO ns=1,nIceS
+          IF (iSice(ns).gt.0) THEN
+            IF (Aout(iSice(ns),ng)) THEN
+              LiceSavg(ns,ng)=.TRUE.
+            END IF
+          END IF
+        END DO
+      END DO
+#endif
 !
   30  FORMAT (/,' READ_IcePar - Error while processing line: ',/,a)
   40  FORMAT (/,/,' Ice Parameters, Grid: ',i2.2,                       &

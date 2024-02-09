@@ -287,9 +287,14 @@
 !
 !  Add thickness dependent wind ice drag (SMD).
 !
+#  ifdef ICE_MOM_BULK
+          Fi(i,j,icAIus)=0.5_r8*aix*                                    &
+     &                   (sustr_ai(i,j)+sustr_ai(i-1,j))/IceRho(ng)
+#  else          
           chuax=0.5_r8*(chuai(i,j)+chuai(i-1,j))
           Fi(i,j,icAIus)=0.5_r8*aix*chuax*                              &
      &                   (sustr_ai(i,j)+sustr_ai(i-1,j))/IceRho(ng)
+#  endif
 #  ifdef WET_DRY
           Fi(i,j,icAIus)=Fi(i,j,icAIus)*umask_wet(i,j)
 #  endif
@@ -321,9 +326,15 @@
 !
 !  Add thickness dependent wind ice drag (SMD).
 !
+#  ifdef ICE_MOM_BULK
+          Fi(i,j,icAIvs)=0.5_r8*aiy*                                    &
+     &                   (svstr_ai(i,j)+svstr_ai(i,j-1))/IceRho(ng)
+
+#  else          
           chuay=0.5_r8*(chuai(i,j)+chuai(i,j-1))
           Fi(i,j,icAIvs)=0.5_r8*aiy*chuay*                              &
      &                   (svstr_ai(i,j)+svstr_ai(i,j-1))/IceRho(ng)
+#  endif          
 #  ifdef WET_DRY
           Fi(i,j,icAIvs)=Fi(i,j,icAIvs)*vmask_wet(i,j)
 #  endif

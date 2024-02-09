@@ -1,8 +1,9 @@
 #include "cppdefs.h"
       MODULE checkvars_mod
 !
+!git $Id: checkvars.F 1215 2024-02-09 23:11:09Z arango $
 !git $Id$
-!svn $Id: checkvars.F 1210 2024-01-03 22:03:03Z arango $
+!svn $Id: checkvars.F 1215 2024-02-09 23:11:09Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2024 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -44,6 +45,9 @@
       USE mod_parallel
 #ifdef BIOLOGY
       USE mod_biology
+#endif
+#if defined ICE_MODEL && defined SOLVE3D
+      USE mod_ice
 #endif
       USE mod_iounits
       USE mod_ncparam
@@ -234,6 +238,13 @@
           get_var(idBott(itrc))=.TRUE.
         END DO
 #  endif
+# endif
+# ifdef ICE_MODEL
+        DO i=1,nIceS
+          IF (iSice(i).gt.0) THEN
+            get_var(iSice(i))=.TRUE.
+          END IF
+        END DO
 # endif
 #endif
 #ifdef PERFECT_RESTART

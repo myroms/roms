@@ -178,40 +178,28 @@
 !
 !  Apply lateral boundary conditions.
 !
-      CALL ice_bc2d_tile (ng, tile, model,                              &
+      CALL ice_bc2d_tile (ng, tile, model, isISxx,                      &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    IminS, ImaxS, JminS, JmaxS,                   &
      &                    lieol, lienw,                                 &
-     &                    ICE_LOBC(isISxx,ng)%ice_west (LBj:UBj),       &
-     &                    ICE_LOBC(isISxx,ng)%ice_east (LBj:UBj),       &
-     &                    ICE_LOBC(isISxx,ng)%ice_north(LBi:UBi),       &
-     &                    ICE_LOBC(isISxx,ng)%ice_south(LBi:UBi),       &
      &                    Si(:,:,:,isUevp),                             &
      &                    Si(:,:,:,isVevp),                             &
      &                    Si(:,:,:,isISxx),                             &
      &                    LBC(:,ibICE(isISxx),ng))
 
-      CALL ice_bc2d_tile (ng, tile, model,                              &
+      CALL ice_bc2d_tile (ng, tile, model, isISxy,                      &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    IminS, ImaxS, JminS, JmaxS,                   &
      &                    lieol, lienw,                                 &
-     &                    ICE_LOBC(isISxy,ng)%ice_west (LBj:UBj),       &
-     &                    ICE_LOBC(isISxy,ng)%ice_east (LBj:UBj),       &
-     &                    ICE_LOBC(isISxy,ng)%ice_north(LBi:UBi),       &
-     &                    ICE_LOBC(isISxy,ng)%ice_south(LBi:UBi),       &
      &                    Si(:,:,:,isUevp),                             &
      &                    Si(:,:,:,isVevp),                             &
      &                    Si(:,:,:,isISxy),                             &
      &                    LBC(:,ibICE(isISxy),ng))
 
-      CALL ice_bc2d_tile (ng, tile, model,                              &
+      CALL ice_bc2d_tile (ng, tile, model, isISyy,                      &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    IminS, ImaxS, JminS, JmaxS,                   &
      &                    lieol, lienw,                                 &
-     &                    ICE_LOBC(isISyy,ng)%ice_west (LBj:UBj),       &
-     &                    ICE_LOBC(isISyy,ng)%ice_east (LBj:UBj),       &
-     &                    ICE_LOBC(isISyy,ng)%ice_north(LBi:UBi),       &
-     &                    ICE_LOBC(isISyy,ng)%ice_south(LBi:UBi),       &
      &                    Si(:,:,:,isUevp),                             &
      &                    Si(:,:,:,isVevp),                             &
      &                    Si(:,:,:,isISyy),                             &

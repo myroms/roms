@@ -1,8 +1,9 @@
 #include "cppdefs.h"
       MODULE inp_par_mod
 !
+!git $Id: inp_par.F 1215 2024-02-09 23:11:09Z arango $
 !git $Id$
-!svn $Id: inp_par.F 1210 2024-01-03 22:03:03Z arango $
+!svn $Id: inp_par.F 1215 2024-02-09 23:11:09Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2024 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -228,7 +229,7 @@
 !  Read in sea-ice model input parameters.
 !-----------------------------------------------------------------------
 !
-      OPEN (15, FILE=TRIM(bparnam), FORM='formatted', STATUS='old')
+      OPEN (15, FILE=TRIM(iparnam), FORM='formatted', STATUS='old')
 
       CALL read_IcePar (model, 15, out, Lwrite)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN

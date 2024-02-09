@@ -29,7 +29,7 @@
 !    isEnth    enthalpy of the ice/brine system, ice heat content      !
 !    isHage    thickness associated with age of ice (m)                !
 !    isHice    average ice thickness (m), ice mass divided by area     !
-!    isHmel    surface melt water thickness on ice (m)                 !
+!    isHmel    surface meltwater thickness on ice (m)                  !
 !    isHsno    average thickness of snow coverage (m), mass snow       !
 !    isIage    age of ice(s)                                           !
 !    isISxx    internal ice stress, xx-component (N/m)                 !
@@ -98,7 +98,7 @@
       integer :: idHage       ! thickness associated with age of ice
       integer :: idHice       ! ice thickness
       integer :: idHiCL       ! ice thickness climatology
-      integer :: idHmel       ! surface melt water thickness
+      integer :: idHmel       ! surface meltwater thickness
       integer :: idHsno       ! snow cover thickness
       integer :: idIage       ! ice age
       integer :: idIOfv       ! ice-ocean friction velocity
@@ -136,7 +136,7 @@
 !
       integer, parameter :: isAice =  1 ! ice concentration
       integer, parameter :: isHice =  2 ! ice thickness
-      integer, parameter :: isHmel =  3 ! melt water thickness on ice
+      integer, parameter :: isHmel =  3 ! meltwater thickness on ice
       integer, parameter :: isHsno =  4 ! snow thickness
       integer, parameter :: isIage =  5 ! ice age
       integer, parameter :: isISxx =  6 ! internal ice xx-stress
@@ -196,6 +196,15 @@
 !-----------------------------------------------------------------------
 !  Ice model parameters.
 !-----------------------------------------------------------------------
+
+#ifdef AVERAGES
+!
+!  Switches to process time-averaged ice model state and internal
+!  variables.
+!
+      logical, allocatable :: LiceFavg(:,:)     ! internal variables
+      logical, allocatable :: LiceSavg(:,:)     ! state variables
+#endif
 !
 !  Counter and number of Elastic-Viscous-Plastic (EVP) rheology
 !  equations timesteps to resolve elastic dynamics.
@@ -293,7 +302,7 @@
 !
       TYPE (T_ICE_LOBC), allocatable :: ICE_LOBC(:,:)   ! [nIceS,Ngrids]
 
-# ifdef AVERAGES
+#ifdef AVERAGES
 !
 !-----------------------------------------------------------------------
 !  Define derived-type structure ice model state and internal arrays
@@ -303,13 +312,13 @@
 !
       TYPE T_ICE_AVG
 
-        real(r8), pointer :: var(:,:)                ! [i,j1:nIceS]
+        real(r8), pointer :: var(:,:)                ! [i,j]
 
       END TYPE T_ICE_AVG
 !
       TYPE (T_ICE_AVG), allocatable :: ICE_FAVG(:,:) ! [nIceF,Ngrids]
       TYPE (T_ICE_AVG), allocatable :: ICE_SAVG(:,:) ! [nIceS,Ngrids]
-# endif
+#endif
 !
       CONTAINS
 !
@@ -322,7 +331,7 @@
 !                                                                      !
 !=======================================================================
 !
-      USE mod_param,   ONLY : Aout, Dmem, LBC, Ngrids
+      USE mod_param,   ONLY : Dmem, LBC, Ngrids
       USE mod_scalars, ONLY : iwest, ieast, isouth, inorth
 !
 !  Imported variable declarations.
@@ -340,6 +349,82 @@
       size2d=REAL((UBi-LBi+1)*(UBj-LBj+1),r8)
       Xsize =REAL(UBi-LBi,r8)
       Ysize =REAL(UBj-LBj,r8)
+
+!
+!-----------------------------------------------------------------------
+!  Allocate ice model parameters.
+!-----------------------------------------------------------------------
+!
+      IF (.not.ice_kernel) THEN
+
+#ifdef AVERAGES
+        IF (.not.allocated(LiceFavg))                                   &
+          allocate ( LiceFavg(nIceF,Ngrids) )
+
+        IF (.not.allocated(LiceSavg))                                   &
+          allocate ( LiceSavg(nIceS,Ngrids) )
+#endif
+        IF (.not.allocated(iEVP))                                       &
+     &    allocate ( iEVP(Ngrids) )
+
+        IF (.not.allocated(nEVP))                                       &
+     &    allocate ( nEVP(Ngrids) )
+
+        IF (.not.allocated(dtice))                                      &
+     &    allocate ( dtice(Ngrids) )
+
+        IF (.not.allocated(dtevp))                                      &
+     &    allocate ( dtevp(Ngrids) )
+
+        IF (.not.allocated(AirRho))                                     &
+     &    allocate ( AirRho(Ngrids) )
+
+        IF (.not.allocated(IceRho))                                     &
+     &    allocate ( IceRho(Ngrids) )
+
+        IF (.not.allocated(SnowDryRho))                                &
+     &    allocate ( SnowDryRho(Ngrids) )
+
+        IF (.not.allocated(SnowWetRho))                                &
+     &    allocate ( SnowWetRho(Ngrids) )
+
+        IF (.not.allocated(Cd_ai))                                      &
+     &    allocate ( Cd_ai(Ngrids) )
+
+        IF (.not.allocated(Cd_io))                                      &
+     &    allocate ( Cd_io(Ngrids) )
+
+        IF (.not.allocated(Astrength))                                  &
+     &    allocate ( Astrength(Ngrids) )
+
+        IF (.not.allocated(Pstar))                                      &
+     &    allocate ( Pstar(Ngrids) )
+
+        IF (.not.allocated(min_ai))                                     &
+     &    allocate ( min_ai(Ngrids) )
+
+        IF (.not.allocated(max_ai))                                     &
+     &    allocate ( max_ai(Ngrids) )
+
+        IF (.not.allocated(min_hi))                                     &
+     &    allocate ( min_hi(Ngrids) )
+
+        IF (.not.allocated(max_hmelt))                                  &
+     &    allocate ( max_hmelt(Ngrids) )
+
+        IF (.not.allocated(zetaMin))                                    &
+     &    allocate ( zetaMin(Ngrids) )
+
+        IF (.not.allocated(zetaMax))                                    &
+     &    allocate ( zetaMax(Ngrids) )
+
+        IF (.not.allocated(stressAng))                                  &
+     &    allocate ( stressAng(Ngrids) )
+
+        IF (.not.allocated(ellip_sq))                                   &
+     &    allocate ( ellip_sq(Ngrids) )
+
+      END IF
 !
 !-----------------------------------------------------------------------
 !  Allocate derived-type structure ice model kernel variables.
@@ -411,7 +496,7 @@
 !
       IF (ice_kernel) THEN
         IF (ng.eq.1) THEN
-          allocate ( ICE_FAVG(nIceS,Ngrids) )
+          allocate ( ICE_FAVG(nIceF,Ngrids) )
           allocate ( ICE_SAVG(nIceS,Ngrids) )
         END IF
 !
@@ -420,7 +505,7 @@
 !
         DO i=1,nIceF
           IF (iFice(i).gt.0) THEN
-            IF (Aout(iFice(i),ng)) THEN
+            IF (LiceFavg(i,ng)) THEN
               allocate ( ICE_FAVG(i,ng) % var(LBi:UBi,LBj:UBj) )
               Dmem(ng)=Dmem(ng)+size2d
             END IF
@@ -432,7 +517,7 @@
 !
         DO i=1,nIceS
           IF (iSice(i).gt.0) THEN
-            IF (Aout(iSice(i),ng)) THEN
+            IF (LiceSavg(i,ng)) THEN
               allocate ( ICE_SAVG(i,ng) % var(LBi:UBi,LBj:UBj) )
               Dmem(ng)=Dmem(ng)+size2d
             END IF
@@ -440,73 +525,6 @@
         END DO
       END IF
 #endif
-!
-!-----------------------------------------------------------------------
-!  Allocate ice model parameters.
-!-----------------------------------------------------------------------
-!
-      IF (.not.ice_kernel) THEN
-        IF (.not.allocated(iEVP))                                       &
-     &    allocate ( iEVP(Ngrids) )
-
-        IF (.not.allocated(nEVP))                                       &
-     &    allocate ( nEVP(Ngrids) )
-
-        IF (.not.allocated(dtice))                                      &
-     &    allocate ( dtice(Ngrids) )
-
-        IF (.not.allocated(dtevp))                                      &
-     &    allocate ( dtevp(Ngrids) )
-
-        IF (.not.allocated(AirRho))                                     &
-     &    allocate ( AirRho(Ngrids) )
-
-        IF (.not.allocated(IceRho))                                     &
-     &    allocate ( IceRho(Ngrids) )
-
-        IF (.not.allocated(SnowDryRho))                                &
-     &    allocate ( SnowDryRho(Ngrids) )
-
-        IF (.not.allocated(SnowWetRho))                                &
-     &    allocate ( SnowWetRho(Ngrids) )
-
-        IF (.not.allocated(Cd_ai))                                      &
-     &    allocate ( Cd_ai(Ngrids) )
-
-        IF (.not.allocated(Cd_io))                                      &
-     &    allocate ( Cd_io(Ngrids) )
-
-        IF (.not.allocated(Astrength))                                  &
-     &    allocate ( Astrength(Ngrids) )
-
-        IF (.not.allocated(Pstar))                                      &
-     &    allocate ( Pstar(Ngrids) )
-
-        IF (.not.allocated(min_ai))                                     &
-     &    allocate ( min_ai(Ngrids) )
-
-        IF (.not.allocated(max_ai))                                     &
-     &    allocate ( max_ai(Ngrids) )
-
-        IF (.not.allocated(min_hi))                                     &
-     &    allocate ( min_hi(Ngrids) )
-
-        IF (.not.allocated(max_hmelt))                                  &
-     &    allocate ( max_hmelt(Ngrids) )
-
-        IF (.not.allocated(zetaMin))                                    &
-     &    allocate ( zetaMin(Ngrids) )
-
-        IF (.not.allocated(zetaMax))                                    &
-     &    allocate ( zetaMax(Ngrids) )
-
-        IF (.not.allocated(stressAng))                                  &
-     &    allocate ( stressAng(Ngrids) )
-
-        IF (.not.allocated(ellip_sq))                                   &
-     &    allocate ( ellip_sq(Ngrids) )
-
-      END IF
 !
       RETURN
       END SUBROUTINE allocate_ice
@@ -521,9 +539,6 @@
 !=======================================================================
 !
       USE mod_param,   ONLY : Ngrids
-# ifdef AVERAGES
-      USE mod_param,   ONLY : Aout
-# endif
 #ifdef SUBOBJECT_DEALLOCATION
       USE mod_param,   ONLY : LBC
       USE mod_scalars, ONLY : iwest, ieast, isouth, inorth
@@ -599,14 +614,14 @@
 !-----------------------------------------------------------------------
 !
       DO i=1,nIceF
-        IF (Aout(iFice(i),ng)) THEN
+        IF (LiceFavg(i,ng)) THEN
           IF (.not.destroy(ng, ICE_FAVG(i,ng)%var, MyFile,              &
      &                     __LINE__, 'ICE_FAVG(i,ng)%var')) RETURN
         END IF
       END DO
 !
       DO i=1,nIceS
-        IF (Aout(iSice(i),ng)) THEN
+        IF (LiceSavg(i,ng)) THEN
           IF (.not.destroy(ng, ICE_SAVG(i,ng)%var, MyFile,              &
      &                     __LINE__, 'ICE_SAVG(i,ng)%var')) RETURN
         END IF
@@ -641,9 +656,6 @@
 !=======================================================================
 !
       USE mod_param,   ONLY : BOUNDS, DOMAIN, LBC, iNLM
-#ifdef AVERAGES
-      USE mod_param,   ONLY : Aout
-#endif
       USE mod_scalars, ONLY : iwest, ieast, isouth, inorth
 !
 !  Imported variable declarations.
@@ -700,7 +712,7 @@
             ICE(ng) % Si(i,j,2,ns) = IniVal
           END DO
 !
-          DO ns=1,nIceF
+          DO nf=1,nIceF
             ICE(ng) % Fi(i,j,nf) = IniVal
           END DO
         END DO
@@ -754,7 +766,7 @@
 !
       DO nf=1,nIceF
         IF (iFice(nf).gt.0) THEN
-          IF (Aout(iFice(nf),ng)) THEN
+          IF (LiceFavg(nf,ng)) THEN
             DO j=Jmin,Jmax
               DO i=Imin,Imax
                 ICE_FAVG(nf,ng) % var(i,j) = IniVal
@@ -768,7 +780,7 @@
 !
       DO ns=1,nIceS
         IF (iSice(ns).gt.0) THEN
-          IF (Aout(iSice(ns),ng)) THEN
+          IF (LiceSavg(ns,ng)) THEN
             DO j=Jmin,Jmax
               DO i=Imin,Imax
                 ICE_SAVG(ns,ng) % var(i,j) = IniVal

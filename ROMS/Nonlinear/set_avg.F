@@ -2,8 +2,9 @@
       MODULE set_avg_mod
 #ifdef AVERAGES
 !
+!git $Id: set_avg.F 1215 2024-02-09 23:11:09Z arango $
 !git $Id$
-!svn $Id: set_avg.F 1210 2024-01-03 22:03:03Z arango $
+!svn $Id: set_avg.F 1215 2024-02-09 23:11:09Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2024 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -42,10 +43,12 @@
 # if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
       USE mod_tides
 # endif
-
-# ifdef WET_DRY
 !
-      USE set_masks_mod, ONLY : set_avg_masks
+# if defined ICE_MODEL && defined SOLVE3D
+      USE ice_set_avg_mod, ONLY : ice_set_avg_tile
+# endif
+# ifdef WET_DRY
+      USE set_masks_mod,   ONLY : set_avg_masks
 # endif
 !
 !  Imported variable declarations.
@@ -97,6 +100,13 @@
      &                    GRID(ng) % rmask_avg,                         &
      &                    GRID(ng) % umask_avg,                         &
      &                    GRID(ng) % vmask_avg)
+# endif
+
+# if defined ICE_MODEL && defined SOLVE3D
+      CALL ice_set_avg_tile (ng, tile, iNLM,                            &
+     &                       LBi, UBi, LBj, UBj,                        &
+     &                       IminS, ImaxS, JminS, JmaxS,                &
+     &                       IOUT)
 # endif
 
 # ifdef PROFILE

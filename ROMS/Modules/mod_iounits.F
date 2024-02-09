@@ -1,8 +1,9 @@
 #include "cppdefs.h"
       MODULE mod_iounits
 !
+!git $Id: mod_iounits.F 1215 2024-02-09 23:11:09Z arango $
 !git $Id$
-!svn $Id: mod_iounits.F 1212 2024-01-26 20:59:21Z arango $
+!svn $Id: mod_iounits.F 1215 2024-02-09 23:11:09Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2024 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -90,6 +91,7 @@
 !  bparnam     Input biology parameters filename.                      !
 !  fbionam     Input floats biological behavior parameters filename.   !
 !  fposnam     Input initial floats positions filename.                !
+!  iparnam     Input ice parameters file name.                         !
 !  sparnam     Input sediment transport parameters filename.           !
 !  sposnam     Input station positions file name.                      !
 !  varname     Input IO variables information file name.               !
@@ -299,6 +301,7 @@
       character (len=256) :: bparnam        ! biology model parameters
       character (len=256) :: fbionam        ! floats behavior parameters
       character (len=256) :: fposnam        ! floats positions
+      character (len=256) :: iparnam        ! ice model parameters
       character (len=256) :: sparnam        ! sediment model parameters
       character (len=256) :: sposnam        ! station positions
       character (len=256) :: varname        ! I/O metadata
