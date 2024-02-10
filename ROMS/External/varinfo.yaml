@@ -1,7 +1,7 @@
 # ROMS I/O NetCDF Metadata Dictionary
 #
 #git $Id$
-#svn $Id: varinfo.yaml 1210 2024-01-03 22:03:03Z arango $
+#svn $Id: varinfo.yaml 1215 2024-02-09 23:11:09Z arango $
 #========================================================= Hernan G. Arango ==#
 #  Copyright (c) 2002-2024 The ROMS/TOMS Group                                #
 #    Licensed under a MIT/X style license                                     #
@@ -5973,6 +5973,28 @@ metadata:
     add_offset:     0.0d0
     scale:          1.0d0
 
+  - variable:       Uice_eastward                                    # Input/Output
+    standard_name:  eastward_sea_ice_velocity
+    long_name:      eastward sea ice velocity at RHO-points
+    units:          meter second-1                                   # [m/s]
+    field:          sea ice x-velocity
+    time:           ocean_time
+    index_code:     idUiER
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       Vice_northward                                   # Input/Output
+    standard_name:  northward_sea_ice_velocity
+    long_name:      northward sea ice velocity at RHO-points
+    units:          meter second-1                                   # [m/s]
+    field:          sea ice y-velocity
+    time:           ocean_time
+    index_code:     idViNR
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
   - variable:       ice_Sxx                                          # Input/Output
     standard_name:  sea_ice_internal_xx_stress
     long_name:      internal ice stress xx-component
@@ -6068,6 +6090,17 @@ metadata:
     field:          air-ocean melt/freeze rate
     time:           ocean_time
     index_code:     idW_ao
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       frazil_freeze                                    # Output
+    standard_name:  rate_of_frazil_ice_growth
+    long_name:      rate of frazil ice growth in full water column
+    units:          meter second-1                                   # [m/s]
+    field:          frazil ice growth rate
+    time:           ocean_time
+    index_code:     idW_fr
     type:           r2dvar
     add_offset:     0.0d0
     scale:          1.0d0

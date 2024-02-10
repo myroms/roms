@@ -3,7 +3,7 @@
 #ifdef BULK_FLUXES
 !
 !git $Id$
-!svn $Id: bulk_flux.F 1210 2024-01-03 22:03:03Z arango $
+!svn $Id: bulk_flux.F 1215 2024-02-09 23:11:09Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2024 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -1089,7 +1089,7 @@
           cff1=0.39_r8-0.005_r8*SQRT(vap_p_i)
           cff2=1.0_r8-0.65_r8*cloud(i,j)
           cff3=StefBo*emmiss*(TairK(i)*TairK(i)*TairK(i))
-          cff4=cff3*TairK(i))
+          cff4=cff3*TairK(i)
           Qlw_i=cff4*cff1*cff2+                                         &
      &          4.0_r8*cff3*(TiceK-TairK(i))
           Coef_Ice(i,j)=Coef_Ice(i,j)+                                  &
