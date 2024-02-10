@@ -1,4 +1,4 @@
-ROMS/Nonlinear/SeaIce/ice_smolar.h# ROMS I/O NetCDF Metadata Dictionary
+# ROMS I/O NetCDF Metadata Dictionary
 #
 #git $Id$
 #svn $Id: varinfo.yaml 1215 2024-02-09 23:11:09Z arango $
