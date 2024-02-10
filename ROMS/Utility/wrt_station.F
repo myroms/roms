@@ -3,7 +3,7 @@
 #ifdef STATIONS
 !
 !git $Id$
-!svn $Id: wrt_station.F 1210 2024-01-03 22:03:03Z arango $
+!svn $Id: wrt_station.F 1215 2024-02-09 23:11:09Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2024 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -42,6 +42,12 @@
       USE extract_sta_mod,     ONLY : extract_sta2d
 # ifdef SOLVE3D
       USE extract_sta_mod,     ONLY : extract_sta3d
+# endif
+# ifdef ICE_MODEL
+      USE ice_output_mod,      ONLY : ice_wrt_station_nf90
+#  if defined PIO_LIB && defined DISTRIBUTE
+      USE ice_output_mod,      ONLY : ice_wrt_station_pio
+#  endif
 # endif
 # ifdef SEDIMENT
       USE sediment_output_mod, ONLY : sediment_wrt_station_nf90
@@ -987,9 +993,21 @@
 !  Write out the bottom boundary layer model or waves variables.
 !-----------------------------------------------------------------------
 !
-        CALL bbl_wrt_station_nf90 (ng, model, tile,                     &
-     &                             LBi, UBi, LBj, UBj,                  &
-     &                             Sout, STA)
+      CALL bbl_wrt_station_nf90 (ng, model, tile,                       &
+     &                           LBi, UBi, LBj, UBj,                    &
+     &                           Sout, STA)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+# endif
+
+# ifdef ICE_MODEL
+!
+!-----------------------------------------------------------------------
+!  Write out the ice model variables.
+!-----------------------------------------------------------------------
+!
+      CALL ice_wrt_station_nf90 (ng, model, tile,                       &
+     &                           LBi, UBi, LBj, UBj,                    &
+     &                           Sout, STA)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 # endif
 
@@ -999,10 +1017,10 @@
 !  Write out the sediment model variables.
 !-----------------------------------------------------------------------
 !
-        CALL sediment_wrt_station_nf90 (ng, model, tile,                &
-     &                                  LBi, UBi, LBj, UBj,             &
-     &                                  Sout, STA)
-        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+      CALL sediment_wrt_station_nf90 (ng, model, tile,                  &
+     &                                LBi, UBi, LBj, UBj,               &
+     &                                Sout, STA)
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 # endif
 
 # if defined WEC || defined WEC_VF
@@ -1926,9 +1944,21 @@
 !  Write out the bottom boundary layer model or waves variables.
 !-----------------------------------------------------------------------
 !
-        CALL bbl_wrt_station_pio (ng, model, tile,                      &
-     &                            LBi, UBi, LBj, UBj,                   &
-     &                            Sout, STA)
+      CALL bbl_wrt_station_pio (ng, model, tile,                        &
+     &                          LBi, UBi, LBj, UBj,                     &
+     &                          Sout, STA)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+#  endif
+
+#  ifdef ICE_MODEL
+!
+!-----------------------------------------------------------------------
+!  Write out the ice model variables.
+!-----------------------------------------------------------------------
+!
+      CALL ice_wrt_station_pio (ng, model, tile,                        &
+     &                          LBi, UBi, LBj, UBj,                     &
+     &                          Sout, STA)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #  endif
 
