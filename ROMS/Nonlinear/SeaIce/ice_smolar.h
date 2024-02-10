@@ -103,12 +103,12 @@
      &                      IminS, ImaxS, JminS, JmaxS,                 &
      &                      linew, liold, liunw,                        &
 #ifdef MASKING
-     &                      GRID(ng) % rmask,                           & 
+     &                      GRID(ng) % rmask,                           &
      &                      GRID(ng) % umask,                           &
      &                      GRID(ng) % vmask,                           &
 #endif
 #ifdef WET_DRY
-     &                      GRID(ng) % rmask_wet,                       & 
+     &                      GRID(ng) % rmask_wet,                       &
      &                      GRID(ng) % umask_wet,                       &
      &                      GRID(ng) % vmask_wet,                       &
 #endif
@@ -144,13 +144,13 @@
      &                      IminS, ImaxS, JminS, JmaxS,                 &
      &                      linew, liold, liunw,                        &
 #ifdef MASKING
-     &                      GRID(ng) % rmask,                           & 
+     &                      GRID(ng) % rmask,                           &
      &                      GRID(ng) % umask,                           &
      &                      GRID(ng) % vmask,                           &
 #endif
 #ifdef WET_DRY
-     &                      GRID(ng) % rmask_wet,                       & 
-     &                      GRID(ng) % umask_wet,                       & 
+     &                      GRID(ng) % rmask_wet,                       &
+     &                      GRID(ng) % umask_wet,                       &
      &                      GRID(ng) % vmask_wet,                       &
 #endif
 #ifdef ICESHELF
@@ -197,12 +197,12 @@
      &                      linew, liold, liunw,                        &
 # ifdef MASKING
      &                      GRID(ng) % rmask,                           &
-     &                      GRID(ng) % umask,                           & 
+     &                      GRID(ng) % umask,                           &
      &                      GRID(ng) % vmask,                           &
 # endif
 # ifdef WET_DRY
-     &                      GRID(ng) % rmask_wet,                       & 
-     &                      GRID(ng) % umask_wet,                       & 
+     &                      GRID(ng) % rmask_wet,                       &
+     &                      GRID(ng) % umask_wet,                       &
      &                      GRID(ng) % vmask_wet,                       &
 # endif
 # ifdef ICESHELF
@@ -237,13 +237,13 @@
      &                      IminS, ImaxS, JminS, JmaxS,                 &
      &                      linew, liold, liunw,                        &
 # ifdef MASKING
-     &                      GRID(ng) % rmask,                           & 
-     &                      GRID(ng) % umask,                           & 
+     &                      GRID(ng) % rmask,                           &
+     &                      GRID(ng) % umask,                           &
      &                      GRID(ng) % vmask,                           &
 # endif
 # ifdef WET_DRY
-     &                      GRID(ng) % rmask_wet,                       & 
-     &                      GRID(ng) % umask_wet,                       & 
+     &                      GRID(ng) % rmask_wet,                       &
+     &                      GRID(ng) % umask_wet,                       &
      &                      GRID(ng) % vmask_wet,                       &
 # endif
 # ifdef ICESHELF
@@ -279,12 +279,12 @@
      &                      linew, liold, liunw,                        &
 # ifdef MASKING
      &                      GRID(ng) % rmask,                           &
-     &                      GRID(ng) % umask,                           & 
+     &                      GRID(ng) % umask,                           &
      &                      GRID(ng) % vmask,                           &
 # endif
 # ifdef WET_DRY
      &                      GRID(ng) % rmask_wet,                       &
-     &                      GRID(ng) % umask_wet,                       & 
+     &                      GRID(ng) % umask_wet,                       &
      &                      GRID(ng) % vmask_wet,                       &
 # endif
 # ifdef ICESHELF
@@ -317,7 +317,7 @@
      &                    LBi, UBi, LBj, UBj,                           &
      &                    liold, linew,                                 &
      &                    ICE(ng) % Si(:,:,:,isUice),                   &
-     &                    ICE(ng) % Si(:,:,:,isVice),                   & 
+     &                    ICE(ng) % Si(:,:,:,isVice),                   &
      &                    ICE(ng) % Si(:,:,:,isHice),                   &
      &                    ICE(ng) % Si(:,:,:,isTice),                   &
      &                    ICE(ng) % Si(:,:,:,isEnth))
@@ -350,8 +350,8 @@
      &                      GRID(ng) % vmask,                           &
 # endif
 # ifdef WET_DRY
-     &                      GRID(ng) % rmask_wet,                       & 
-     &                      GRID(ng) % umask_wet,                       & 
+     &                      GRID(ng) % rmask_wet,                       &
+     &                      GRID(ng) % umask_wet,                       &
      &                      GRID(ng) % vmask_wet,                       &
 # endif
 # ifdef ICESHELF
@@ -395,19 +395,19 @@
 !-----------------------------------------------------------------------
 !  Advect the ice algae concentration, IcePhL.
 !-----------------------------------------------------------------------
-!       
+!
       CALL ice_mpdata_tile (ng, tile, model,                            &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      IminS, ImaxS, JminS, JmaxS,                 &
      &                      linew, liold, liunw,                        &
 # ifdef MASKING
-     &                      GRID(ng) % rmask,                           & 
-     &                      GRID(ng) % rmask,                           & 
+     &                      GRID(ng) % rmask,                           &
+     &                      GRID(ng) % rmask,                           &
      &                      GRID(ng) % vmask,                           &
 # endif
 # ifdef WET_DRY
-     &                      GRID(ng) % rmask_wet,                       & 
-     &                      GRID(ng) % umask_wet,                       & 
+     &                      GRID(ng) % rmask_wet,                       &
+     &                      GRID(ng) % umask_wet,                       &
      &                      GRID(ng) % vmask_wet,                       &
 # endif
 # ifdef ICESHELF
@@ -443,12 +443,12 @@
      &                      IminS, ImaxS, JminS, JmaxS,                 &
      &                      linew, liold, liunw,                        &
 # ifdef MASKING
-     &                      GRID(ng) % rmask,                           & 
-     &                      GRID(ng) % umask,                           & 
+     &                      GRID(ng) % rmask,                           &
+     &                      GRID(ng) % umask,                           &
      &                      GRID(ng) % vmask,                           &
 # endif
 # ifdef WET_DRY
-     &                      GRID(ng) % rmask_wet,                       & 
+     &                      GRID(ng) % rmask_wet,                       &
      &                      GRID(ng) % umask_wet,                       &
      &                      GRID(ng) % vmask_wet,                       &
 # endif
@@ -488,8 +488,8 @@
      &                      GRID(ng) % vmask,                           &
 # endif
 # ifdef WET_DRY
-     &                      GRID(ng) % rmask_wet,                       & 
-     &                      GRID(ng) % umask_wet,                       & 
+     &                      GRID(ng) % rmask_wet,                       &
+     &                      GRID(ng) % umask_wet,                       &
      &                      GRID(ng) % vmask_wet,                       &
 # endif
 # ifdef ICESHELF
@@ -842,10 +842,10 @@
 !  Step 2: Compute antidiffusive velocities .
 !
 !  This is needed to avoid touching "aif" under land mask.
-!  Note that only aif(i,j) and aif(i-1,j) are allowed to appear 
+!  Note that only aif(i,j) and aif(i-1,j) are allowed to appear
 !  explicitly in the code segment below. This is okay because if
 !  either of them is masked, then "ui" is zero at that point,
-!  and therefore no additional masking is required. 
+!  and therefore no additional masking is required.
 !
       DO j=Jstr,Jend+1
         DO i=Istr,Iend+1

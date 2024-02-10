@@ -191,7 +191,7 @@
                 Fi(i,j,icW_fr)=Fi(i,j,icW_fr)+                          &
      &                         gamma_k*Hz(i,j,k)*                       &
      &                         (1000.0_r8+rho(i,j,k))*orhoi
-                t(i,j,k,nnew,itemp)=t(i,j,k,nnew,itemp)+                &      
+                t(i,j,k,nnew,itemp)=t(i,j,k,nnew,itemp)+                &
      &                              gamma_k*                            &
      &                              (Lhat+                              &
      &                               t(i,j,k,nnew,itemp)*(1.0_r8-r))
@@ -227,7 +227,7 @@
 !
 !  If negative frazil growth, set it to zero.  It implies that the melt
 !  effect exceeded the freezing effect (SMD).
-! 
+!
           IF (Fi(i,j,icW_fr).lt.0.0_r8) THEN
             Fi(i,j,icW_fr)=0.0_r8
           END IF
@@ -279,7 +279,7 @@
       FP = -0.0543_r8*S
 !
       RETURN
-      END FUNCTION freezing_point      
+      END FUNCTION freezing_point
 #endif
       END MODULE ice_frazil_mod
 

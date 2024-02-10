@@ -332,7 +332,7 @@
 !
           DO i=Istr,Iend
             enthalpy(i,Jstr-1,linew)=ICE_LOBC(isHice,ng)%ice_south(i)*  &
-     &                               ICE_LOBC(isTice,ng)%ice_south(i)            
+     &                               ICE_LOBC(isTice,ng)%ice_south(i)
 # ifdef MASKING
             enthalpy(i,Jstr-1,linew)=enthalpy(i,Jstr-1,linew)*          &
      &                               GRID(ng)%rmask(i,Jstr-1)
@@ -355,7 +355,7 @@
           DO i=Istr,Iend
             IF (vi(i,1,linew).ge.0.0_r8) THEN
               enthalpy(i,Jstr-1,linew)=ICE_LOBC(isHice,ng)%ice_south(i)*&
-     &                                 ICE_LOBC(isTice,ng)%ice_south(i)            
+     &                                 ICE_LOBC(isTice,ng)%ice_south(i)
 # ifdef MASKING
               enthalpy(i,Jstr-1,linew)=enthalpy(i,Jstr-1,linew)*        &
      &                                 GRID(ng)%rmask(i,Jstr-1)

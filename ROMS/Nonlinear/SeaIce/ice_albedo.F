@@ -19,7 +19,7 @@
 !    Briegleb, B.P., P. Minnis, V. Ramanathan, and E. Harrison,        !
 !      1986: Comparison of Regional Clear-Sky Albedos Inferred         !
 !      from Satellite Observations and Model Computations, J.          !
-!      Climate and Appled Meteor., 25, 214-226.                        ! 
+!      Climate and Appled Meteor., 25, 214-226.                        !
 !                                                                      !
 !    Ebert, E.E. and J.A. Curry, 1992: A parameterization of ice       !
 !      cloud optical properties for climate models, J. Geophys.        !
@@ -223,7 +223,7 @@
               alb_ice=0.561632_r8
             ELSE IF (Hice.ge.1.0_r8) THEN
               alb_ice=0.07616_r8*Hice+0.414492_r8
-            ELSE            
+            ELSE
               alb_ice=0.082409_r8*LOG(Hice)+0.485472_r8
             END IF
 !
@@ -251,7 +251,7 @@
 !  ice (0.56) when melt ponds of more than a few centimeters deep are
 !  present (SMD).
 !
-            IF (Si(i,j,li_stp,isHsno).gt.0.0_r8) THEN 
+            IF (Si(i,j,li_stp,isHsno).gt.0.0_r8) THEN
               albedo_ice(i,j)=alb_snow
             ELSE IF (Si(i,j,li_stp,isHmel).gt.0.02_r8) THEN
               albedo_ice(i,j)=0.42_r8
@@ -264,7 +264,7 @@
 
 # elif defined ALBEDO_CSIM
 !
-!  Community Sea Ice Model (CSIM) formulation. 
+!  Community Sea Ice Model (CSIM) formulation.
 !
           fhi=MIN(ATAN(4.0_r8*ice_thick(i,j))/ATAN(2.0_r8), 1.0_r8)
           fsn=snow_thick(i,j)/(snow_thick(i,j)+0.02_r8)

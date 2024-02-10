@@ -140,28 +140,28 @@
       END DO
 !
 !  Timestep internal ice stress tensor term. A split explicit scheme is
-!  used with shorter steps (dts) to resolve the elastic wave velocity. 
+!  used with shorter steps (dts) to resolve the elastic wave velocity.
 !
       DO j=Jstr,Jend
         DO i=Istr,Iend
-          IF (Si(i,j,liold,isHice).gt.0.01_r8) THEN 
+          IF (Si(i,j,liold,isHice).gt.0.01_r8) THEN
             E  =2.0_r8*E0*IceRho(ng)*Si(i,j,liold,isHice)/              &
      &          (pm(i,j)*dtevp(ng))**2
-            ep =E*Fi(i,j,icPice)/(4.0_r8*Fi(i,j,icBvis)+1.0E-8_r8) 
-            ee =E/(2.0_r8*Fi(i,j,icSvis)+1.0E-8_r8) 
+            ep =E*Fi(i,j,icPice)/(4.0_r8*Fi(i,j,icBvis)+1.0E-8_r8)
+            ee =E/(2.0_r8*Fi(i,j,icSvis)+1.0E-8_r8)
             ees=E*(Fi(i,j,icSvis)-Fi(i,j,icBvis))/                      &
-     &          (4.0_r8*Fi(i,j,icSvis)*Fi(i,j,icBvis)+1.0E-8_r8) 
+     &          (4.0_r8*Fi(i,j,icSvis)*Fi(i,j,icBvis)+1.0E-8_r8)
 !
             cff  =1.0_r8/dtevp(ng)
-            alfa =cff+ee+ees 
-            beta =ees 
-            gamma=1.0_r8/dtevp(ng)+ee 
+            alfa =cff+ee+ees
+            beta =ees
+            gamma=1.0_r8/dtevp(ng)+ee
             f1=E*eps_xx(i,j)+cff*Si(i,j,lieol,isISxx)-ep
             f2=E*eps_yy(i,j)+cff*Si(i,j,lieol,isISyy)-ep
             f3=E*eps_xy(i,j)+cff*Si(i,j,lieol,isISxy)
-            f4=1.0_r8/(alfa**2-beta**2) 
+            f4=1.0_r8/(alfa**2-beta**2)
             Si(i,j,lienw,isISxx)=f4*(alfa*f1-beta*f2)
-            Si(i,j,lienw,isISxy)=f3/gamma 
+            Si(i,j,lienw,isISxy)=f3/gamma
             Si(i,j,lienw,isISyy)=f4*(alfa*f2-beta*f1)
           ELSE
             Si(i,j,lienw,isISxx)=2.0_r8*Fi(i,j,icSvis)*eps_xx(i,j)+     &
@@ -173,8 +173,8 @@
      &                           (eps_xx(i,j)+eps_yy(i,j))-             &
      &                           0.5_r8*Fi(i,j,icPice)
             Si(i,j,lienw,isISxy)=2.0_r8*Fi(i,j,icSvis)*eps_xy(i,j)
-          END IF 
-        END DO 
+          END IF
+        END DO
       END DO
 !
 !  Apply lateral boundary conditions.
@@ -205,7 +205,7 @@
      &                    Si(:,:,:,isVevp),                             &
      &                    Si(:,:,:,isISyy),                             &
      &                    LBC(:,ibICE(isISyy),ng))
-! 
+!
      IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
         CALL exchange_r2d_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj,                     &

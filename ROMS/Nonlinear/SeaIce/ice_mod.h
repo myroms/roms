@@ -22,7 +22,7 @@
 !  The ice model prognostic 'state' variable are declares in compact   !
 !  form in the derived-type structure as:                              !
 !                                                                      !
-!    ICE(ng) % state(:,:,TimeLevel,StateIndex)                         !     
+!    ICE(ng) % state(:,:,TimeLevel,StateIndex)                         !
 !                                                                      !
 !  where the 'StateIndex' are as follows:                              !
 !                                                                      !
@@ -41,7 +41,7 @@
 !    isUevp    elastic-viscous-plastic ice U-velocity (m/s)            !
 !    isVice    ice V-velocity (m/s)                                    !
 !    isVevp    elastic-viscous-plastic ice V-velocity (m/s)            !
-#if defined ICE_BIO  
+#if defined ICE_BIO
 !    isIphy    ice biology, algae                                      !
 !    isINO3    ice biology, nitrate                                    !
 !    isINH4    ice biology, ammonia                                    !
@@ -51,7 +51,7 @@
 !  The ice model internal 'field' arrays are declares in compact form  !
 !  in the derived-type structure as:                                   !
 !                                                                      !
-!    ICE(ng) % field(:,:,FieldIndex)                                   !     
+!    ICE(ng) % field(:,:,FieldIndex)                                   !
 !                                                                      !
 !  where the 'FieldIndex' are as follows:                              !
 !                                                                      !
@@ -63,7 +63,7 @@
 !    icPice    ice pressure or strength (N/m2)                         !
 !    icQcon    gradient heat conductivity over ice/snow (W/m2/K)       !
 !    icQrhs    RHS surface net heat flux over ice/snow (W/m2)          !
-!    icSvis    ice shear viscosity                                     !  
+!    icSvis    ice shear viscosity                                     !
 !    icS0mk    salinity of molecular sublayer under ice (unitless)     !
 !    icT0mk    temperature of molecular sublayer under ice (Celsius)   !
 !    icIsst    temperature at the snow/atmosphere interface (Celsius)  !
@@ -105,7 +105,7 @@
       integer :: idIOfv       ! ice-ocean friction velocity
       integer :: idIOmf       ! ice-ocean mass flux
       integer :: idIOmt       ! ice-ocean momentum transfer coefficient
-      integer :: idIsst       ! ice/snow surface temperature 
+      integer :: idIsst       ! ice/snow surface temperature
       integer :: idISxx       ! internal ice stress xx-component
       integer :: idISxy       ! internal ice stress xy-component
       integer :: idISyy       ! internal ice stress yy-component
@@ -127,7 +127,7 @@
 !
 !  Ice model state prognostic variables indices.
 !
-#if defined ICE_BIO  
+#if defined ICE_BIO
       integer, parameter :: nIceS = 19  ! number of ice state variables
 #else
       integer, parameter :: nIceS = 15  ! number of ice state variables
@@ -150,7 +150,7 @@
       integer, parameter :: isHage = 13 ! thickness linked with ice age
       integer, parameter :: isUevp = 14 ! EVP ice U-velocity
       integer, parameter :: isVevp = 15 ! EVP ice V-velocity
-#if defined ICE_BIO  
+#if defined ICE_BIO
       integer, parameter :: isIphy = 16 ! ice biology, algae
       integer, parameter :: isINO3 = 17 ! ice biology, nitrate
       integer, parameter :: isINH4 = 18 ! ice biology, ammonia
@@ -174,7 +174,7 @@
       integer, parameter :: icBvis =  3 ! ice bulk viscosity
       integer, parameter :: icHsse =  4 ! sea surface elevation
       integer, parameter :: icIOfv =  5 ! Ice-Ocean friction velocity
-      integer, parameter :: icIOmf =  6 ! Ice-Ocean mass flux 
+      integer, parameter :: icIOmf =  6 ! Ice-Ocean mass flux
       integer, parameter :: icIOmt =  7 ! Ice-Ocean momentum transfer
       integer, parameter :: icIOvs =  8 ! Ice-Ocean velocity shear
       integer, parameter :: icIsst =  9 ! ice/snow surface temperature
@@ -182,7 +182,7 @@
       integer, parameter :: icPice = 11 ! ice pressure or strength
       integer, parameter :: icQcon = 12 ! ice/snow heat conductivity
       integer, parameter :: icQrhs = 13 ! RHS heat flux over ice/snow
-      integer, parameter :: icSvis = 14 ! ice shear viscosity  
+      integer, parameter :: icSvis = 14 ! ice shear viscosity
       integer, parameter :: icS0mk = 15 ! molecular sublayer salinity
       integer, parameter :: icT0mk = 16 ! molecular sublayer temperature
       integer, parameter :: icUavg = 17 ! average mixed-layer U-velocity
@@ -772,7 +772,7 @@
               DO i=Imin,Imax
                 ICE_FAVG(nf,ng) % var(i,j) = IniVal
               END DO
-            END DO 
+            END DO
           END IF
         END IF
       END DO

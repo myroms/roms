@@ -249,7 +249,7 @@
 # endif
 !
 !  Compute strain rates. Then, compute ice pressure (strength; icPice),
-!  bulk viscosity (icBvis), and shear viscosity (icSvis). 
+!  bulk viscosity (icBvis), and shear viscosity (icSvis).
 !
       e2r = 1.0_r8/(ellip_sq(ng))
 !
@@ -269,11 +269,11 @@
      &                 Si(i  ,j-1,lieol,isUevp))*pn(i,j)
           eps_xy(i,j)=0.5_r8*(epx+epy)
 !
-          eone=eps_xx(i,j)+eps_yy(i,j) 
+          eone=eps_xx(i,j)+eps_yy(i,j)
           etwos=(eps_xx(i,j)-eps_yy(i,j))*                              &
                 (eps_xx(i,j)-eps_yy(i,j))+                              &
      &          4.0_r8*eps_xy(i,j)*eps_xy(i,j)
-! 
+!
           delta=ABS(eone**2+e2r*etwos)
           delta=MAX(SQRT(delta),epso)
 # ifdef ICE_STRENGTH_QUAD

@@ -19,7 +19,7 @@
 # ifdef MICLM_NUDGING
       USE mod_clima
 # endif
-# if defined ICE_SHOREFAST || defined ICE_KEEL 
+# if defined ICE_SHOREFAST || defined ICE_KEEL
       USE mod_coupling
 # endif
 # ifdef FASTICE_CLIMATOLOGY
@@ -226,7 +226,7 @@
       real(r8) :: Cbu, Cbv, spd, thic, uvf, vuf
 # endif
       real(r8) :: cff, f1, f2, s1, s2
-# if defined ICE_SHOREFAST || defined ICE_KEEL 
+# if defined ICE_SHOREFAST || defined ICE_KEEL
       real(r8) :: hu, hv
 # endif
       real(r8) :: pmu, pnu, pmv, pnv
@@ -253,16 +253,16 @@
           masu=masu*IceRho(ng)
           auf=MAX(0.5_r8*(Si(i-1,j,liold,isAice)+                       &
      &                    Si(i  ,j,liold,isAice)), 0.01_r8)
-          pmu=0.5_r8*(pm(i,j)+pm(i-1,j)) 
-          pnu=0.5_r8*(pn(i,j)+pn(i-1,j)) 
+          pmu=0.5_r8*(pm(i,j)+pm(i-1,j))
+          pnu=0.5_r8*(pn(i,j)+pn(i-1,j))
 !
 !  Forces from ice rheology x-direction.
 !
           s1=(Si(i  ,j,lienw,isISxx)-                                   &
-     &        Si(i-1,j,lienw,isISxx))*pmu 
+     &        Si(i-1,j,lienw,isISxx))*pmu
 #ifdef MASKING
           IF ((umask(i,j  ).gt.0.0_r8).and.                             &
-              (umask(i,j+1).lt.1.0_r8)) THEN 
+              (umask(i,j+1).lt.1.0_r8)) THEN
             f1=0.5_r8*(Si(i  ,j,lienw,isISxy)+                          &
      &                 Si(i-1,j,lienw,isISxy))
 # ifdef WET_DRY
@@ -404,7 +404,7 @@
      &           (mfv11+mfv21+mfv12+mfv22)
 !
 !  Add stress from ocean current.
-! 
+!
           uforce=uforce/area +                                          &
      &           auf*chux*rho0*Fi(i,j,icUavg)
 !
@@ -444,7 +444,7 @@
 !  Solving the ice U-momentum equation.
 !
           Si(i,j,lienw,isUevp)=(masu*Si(i,j,lieol,isUevp)+              &
-    &                           dtevp(ng)*uforce)/alfa 
+    &                           dtevp(ng)*uforce)/alfa
 !
 # ifdef MICLM_NUDGING
           cff = 0.5*(MInudgcof(i,j)+MInudgcof(i-1,j))
@@ -490,13 +490,13 @@
           masv=0.5_r8*(Si(i,j  ,liold,isHice)+                          &
      &                 Si(i,j-1,liold,isHice))
           masv=MAX(masv, 0.1_r8)
-          masv=masv*IceRho(ng) 
+          masv=masv*IceRho(ng)
           avf=MAX(0.5_r8*(Si(i,j-1,liold,isAice)+                       &
      &                    Si(i,j  ,liold,isAice)), 0.01_r8)
           chuy=0.5_r8*(Fi(i,j-1,icIOmt)+                                &
      &                 Fi(i,j  ,icIOmt))
-          pmv=0.5_r8*(pm(i,j)+pm(i,j-1)) 
-          pnv=0.5_r8*(pn(i,j)+pn(i,j-1)) 
+          pmv=0.5_r8*(pm(i,j)+pm(i,j-1))
+          pnv=0.5_r8*(pn(i,j)+pn(i,j-1))
 !
 !  Forces from ice rheology y-direction.
 !
@@ -563,7 +563,7 @@
      &                Si(i-1,j-1,lienw,isISxy)+                         &
      &                Si(i  ,j-1,lienw,isISxy))
 #endif
-          s2=(f1-f2)*pmv 
+          s2=(f1-f2)*pmv
           vforce=(s1+s2)*area
 !
 !  Add wind forcing.
@@ -686,7 +686,7 @@
 !  Solving the ice V-momentum equation.
 !
           Si(i,j,lienw,isVevp)=(masv*Si(i,j,lieol,isVevp)+              &
-     &                          dtevp(ng)*vforce)/alfa 
+     &                          dtevp(ng)*vforce)/alfa
 !
 # ifdef MICLM_NUDGING
           cff=0.5*(MInudgcof(i,j)+MInudgcof(i,j-1))
@@ -718,8 +718,8 @@
             Si(i,j,lienw,isVevp)=0.0_r8
           END IF
 # endif
-        END DO 
-      END DO 
+        END DO
+      END DO
 !
 !-----------------------------------------------------------------------
 !  Apply lateral boundary conditions.

@@ -121,7 +121,7 @@
           IF ((Si(i,j,linew,isAice).le.0.5_r8).or.                      &
      &        (Si(i,j,linew,isHice).le.0.02_r8)) THEN
             Si(i,j,linew,isIlog)=-1.0_r8
-          ELSE 
+          ELSE
             Si(i,j,linew,isIlog)=1.0_r8
           END IF
 # endif

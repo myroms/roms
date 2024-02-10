@@ -354,7 +354,7 @@
                                        sustr(i+1,j)))**2+               &
      &                        (0.5_r8*(svstr(i,j  )+                    &
      &                                 svstr(i,j+1)))**2))
-          utau(i,j)=MAX(utau(i,j), 1.0E-4_r8) 
+          utau(i,j)=MAX(utau(i,j), 1.0E-4_r8)
         END DO
       END DO
 !
@@ -424,7 +424,7 @@
 !  relationship between ice temperature and salinity.  As "isTice"
 !  approaches zero Celsius, "cot" goes to infinity and any change
 !  in "isTice" in the timestepping below is stymied, so keep the
-!  denominator here below zero (SMD).   
+!  denominator here below zero (SMD).
 !
           IF (Si(i,j,linew,isAice).gt.min_ai(ng)) THEN
             cot=-frln*sice(i,j)*hfus/                                   &
@@ -443,7 +443,7 @@
 !  the ice surface temperature or the water temperature below. This
 !  is imperfect as warmer ice can advect from elsewhere and alter
 !  its heat content, or thick ice might actually have a warmer
-!  interior temperature than either the surface or bottom. But in 
+!  interior temperature than either the surface or bottom. But in
 !  general it does not make sense that ice forms at a warmer
 !  temperature than exists in any of its surroundings (SMD).
 !
@@ -543,13 +543,13 @@
               Qsur=-(Qai(i,j)-Qi2(i,j))/(hfus1(i,j)*RhoSW)
             ELSE IF ((Si(i,j,linew,isHsno).le.eps).and.                 &
      &               (Si(i,j,linew,isHmel).gt.eps)) THEN
-              Qsur=-(Qai(i,j)-Qi2(i,j))/(hfus1(i,j)*1003.1_r8) 
-            ELSE 
+              Qsur=-(Qai(i,j)-Qi2(i,j))/(hfus1(i,j)*1003.1_r8)
+            ELSE
               Qsur=-(Qai(i,j)-Qi2(i,j))/(hfus*SnowWetRho(ng))
             END IF
 
             IF ((Si(i,j,linew,isHsno).gt.eps).and.                      &
-     &          (Fi(i,j,icIsst).ge.0.0_r8)) THEN 
+     &          (Fi(i,j,icIsst).ge.0.0_r8)) THEN
               Si(i,j,linew,isHsno)=Si(i,j,linew,isHsno)-                &
      &                             Si(i,j,linew,isAice)*                &
      &                             MAX(Qsur, 0.0_r8)*dtice(ng)
@@ -577,7 +577,7 @@
                Si(i,j,linew,isHmel)=Si(i,j,linew,isHmel)+               &
      &                              Si(i,j,linew,isAice)*               &
      &                              MAX(Qsur, 0.0_r8)*dtice(ng)
-            END IF 
+            END IF
 
             IF (rain(i,j).le.0.0_r8) THEN
               Si(i,j,linew,isHsno)=Si(i,j,linew,isHsno)+                &
@@ -602,14 +602,14 @@
               Si(i,j,linew,isHmel)=Si(i,j,linew,isHmel)+                &
      &                             Si(i,j,linew,isAice)*                &
      &                             0.5_r8*rain(i,j)/RhoSW*dtice(ng)
-            ELSE IF (Si(i,j,linew,isHmel).gt.0.0_r8) THEN 
+            ELSE IF (Si(i,j,linew,isHmel).gt.0.0_r8) THEN
               Si(i,j,linew,isHmel)=Si(i,j,linew,isHmel)+                &
      &                             Si(i,j,linew,isAice)*                &
      &                             rain(i,j)/RhoSW*dtice(ng)
             ELSE
               Fi(i,j,icW_ai)=Fi(i,j,icW_ai)-                            &
      &                       Si(i,j,linew,isAice)*rain(i,j)/IceRho(ng)
-            END IF               
+            END IF
 !
 !  Limit the amount of surface water by the smaller of a max limit and
 !  the ice thickness (SMD).
@@ -617,7 +617,7 @@
             IF (Si(i,j,linew,isHmel).gt.                                &
                 MIN(max_hmelt(ng), Si(i,j,linew,isHice))) THEN
               Fi(i,j,icW_ro)=(Si(i,j,linew,isHmel)-                     &
-     &                        MIN(max_hmelt(ng),                        & 
+     &                        MIN(max_hmelt(ng),                        &
      &                            Si(i,j,linew,isHice)))/dtice(ng)
               Si(i,j,linew,isHmel)=MIN(max_hmelt(ng),                   &
      &                                 Si(i,j,linew,isHice))
@@ -698,7 +698,7 @@
 !
 !           Fi(i,j,icS0mk)=(chs(i,j)*salt_top(i,j)+                     &
 !    &                 (Si(i,j,linew,isAice)*xwai-xtot)*sice(i,j))/     &
-!    &                (chs(i,j)+Si(i,j,linew,isAice)*xwai-xtot) 
+!    &                (chs(i,j)+Si(i,j,linew,isAice)*xwai-xtot)
 !
 !                                                               SDM s04
 !  Modify the original formulation by considering the balance
@@ -729,12 +729,12 @@
           END IF
 !
 !  Adjust surface heat flux.
-! 
+!
           fac_shflx=1.0_r8
 #ifdef ICESHELF
-          IceCavity=zice(i,j).ne.0.0_r8        
+          IceCavity=zice(i,j).ne.0.0_r8
 #else
-          IceCavity=.FALSE.        
+          IceCavity=.FALSE.
 #endif
           IF (.not.IceCavity) THEN
             IF(Si(i,j,linew,isAice).le.min_ai(ng)) THEN
@@ -769,7 +769,7 @@
 #endif
 !
 !  Adjust surface freshwater flux.
-! 
+!
 #ifdef ICE_SHOREFAST
             cff=MIN(MAX(Fi(i,j,icS0mk), 0.0_r8), 60.0_r8)
             stflx(i,j,isalt)=stflx(i,j,isalt)-                          &
@@ -795,14 +795,14 @@
 !    &                        (Fi(i,j,icW_io)-Fi(i,j,icW_ai))+          &
 !    &                        (1.0_r8-Si(i,j,linew,isAice))*            &
 !    &                        Fi(i,j,icW_ao)+                           &
-!    &                        Fi(i,j,icW_fr))*28.3_r8 
+!    &                        Fi(i,j,icW_fr))*28.3_r8
 !
 !  If we want ice to have no effect on salinity (SMD):
 !
 !           IF ((Si(i,j,linew,isAice).gt.0.01_r8).and.                  &
 !    &          (stflx(i,j,isalt).lt.0.0_r8)) THEN
 !    &        stflx(i,j,isalt)=stflx(i,j,isalt)/                        &
-!    &                         (1.0_r8-Si(i,j,linew,isAice)) 
+!    &                         (1.0_r8-Si(i,j,linew,isAice))
 !           END IF
 !
 !  Or alternatively we can include the precipitation over the ice (SMG).

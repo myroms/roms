@@ -247,7 +247,7 @@
                 CALL exchange_r2d_tile (ng, tile,                       &
      &                                  LBi, UBi, LBj, UBj,             &
      &                                  ICE_SAVG(ns,ng)%var)
-              
+
 # ifdef DISTRIBUTE
                 CALL mp_exchange2d (ng, tile, model, 1,                 &
      &                              LBi, UBi, LBj, UBj,                 &
@@ -276,7 +276,7 @@
                 CALL exchange_r2d_tile (ng, tile,                       &
      &                                  LBi, UBi, LBj, UBj,             &
      &                                  ICE_FAVG(ns,ng)%var)
-              
+
 # ifdef DISTRIBUTE
                 CALL mp_exchange2d (ng, tile, model, 1,                 &
      &                              LBi, UBi, LBj, UBj,                 &

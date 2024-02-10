@@ -244,7 +244,7 @@
           thic=Si(i,j,liold,isHice)/                                    &
      &         MAX(Si(i,j,liold,isAice), MAX(min_ai(ng), eps))
 !
-!  This parameterization for z0 seems to be designed to vary the 
+!  This parameterization for z0 seems to be designed to vary the
 !  ice-ocean drag for ice between half a meter and 5 m thick (SMD).
 !
           z0=MAX(z0ii*thic, 0.01_r8)
@@ -291,7 +291,7 @@
 #  ifdef ICE_MOM_BULK
           Fi(i,j,icAIus)=0.5_r8*aix*                                    &
      &                   (sustr_ai(i,j)+sustr_ai(i-1,j))/IceRho(ng)
-#  else          
+#  else
           chuax=0.5_r8*(chuai(i,j)+chuai(i-1,j))
           Fi(i,j,icAIus)=0.5_r8*aix*chuax*                              &
      &                   (sustr_ai(i,j)+sustr_ai(i-1,j))/IceRho(ng)
@@ -302,9 +302,9 @@
 #  ifdef ICE_BULK_FLUXES
 !
 #   ifdef ICESHELF
-          IceCavity=zice(i,j).ne.0.0_r8        
+          IceCavity=zice(i,j).ne.0.0_r8
 #   else
-          IceCavity=.FALSE.        
+          IceCavity=.FALSE.
 #   endif
           IF (.not.IceCavity) THEN
             sustr(i,j)=aix*chux*(Si(i,j,liuol,isUice)-Fi(i,j,icUavg))+  &
@@ -331,11 +331,11 @@
           Fi(i,j,icAIvs)=0.5_r8*aiy*                                    &
      &                   (svstr_ai(i,j)+svstr_ai(i,j-1))/IceRho(ng)
 
-#  else          
+#  else
           chuay=0.5_r8*(chuai(i,j)+chuai(i,j-1))
           Fi(i,j,icAIvs)=0.5_r8*aiy*chuay*                              &
      &                   (svstr_ai(i,j)+svstr_ai(i,j-1))/IceRho(ng)
-#  endif          
+#  endif
 #  ifdef WET_DRY
           Fi(i,j,icAIvs)=Fi(i,j,icAIvs)*vmask_wet(i,j)
 #  endif
@@ -343,7 +343,7 @@
 #  ifdef ICE_BULK_FLUXES
 !
 #   ifdef ICESHELF
-          IceCavity=zice(i,j).ne.0.0_r8        
+          IceCavity=zice(i,j).ne.0.0_r8
 #   else
           IceCavity=.FALSE.
 #   endif
@@ -410,7 +410,7 @@
 #  ifdef ICE_BULK_FLUXES
 !
 #   ifdef ICESHELF
-          IceCavity=zice(i,j).ne.0.0_r8        
+          IceCavity=zice(i,j).ne.0.0_r8
 #   else
           IceCavity=.FALSE.
 #   endif
@@ -446,7 +446,7 @@
 #  ifdef ICE_BULK_FLUXES
 !
 #   ifdef ICESHELF
-          IceCavity=zice(i,j).ne.0.0_r8        
+          IceCavity=zice(i,j).ne.0.0_r8
 #   else
           IceCavity=.FALSE.
 #   endif
@@ -466,7 +466,7 @@
 # endif
 !
 # ifdef ICE_MK
-!  Load sea surface elevation (isHsse), ice-ocean momentum transfer 
+!  Load sea surface elevation (isHsse), ice-ocean momentum transfer
 !  coefficient (icIOmt), ice-ocean friction velocity (icIOfv).
 # else
 !  Load sea surface elevation (isHsse).

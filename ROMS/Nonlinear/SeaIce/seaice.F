@@ -114,7 +114,7 @@
 #  ifdef ICE_EVP
 !
 !-----------------------------------------------------------------------
-!  Compute the internal ice stresses according to the 
+!  Compute the internal ice stresses according to the
 !  Elastic-Viscous-Plastic (EVP) rheology.
 !-----------------------------------------------------------------------
 !
@@ -178,7 +178,7 @@
 !
 !-----------------------------------------------------------------------
 !  Compute the advection of the ice tracer fields. Impose limiter for
-!  monotonic positive definitive advection. 
+!  monotonic positive definitive advection.
 !-----------------------------------------------------------------------
 !
         DO ig=1,GridsInLayer(nl)

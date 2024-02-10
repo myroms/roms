@@ -82,7 +82,7 @@
 
       integer :: icegrd(3)
 !
-      
+
       real(r8) :: Aval(6)
 !
       character (len=120) :: Vinfo(Natt)
@@ -134,7 +134,7 @@
             ELSE
               LdefVar=VarOut(ifield,ng)
               vtype=NF_FOUT
-            END IF    
+            END IF
             IF (Ldefvar) THEN
               Vinfo( 1)=Vname(1,ifield)
               Vinfo( 2)=Vname(2,ifield)
@@ -280,7 +280,7 @@
                 CYCLE
               END IF
             END IF
-          END DO          
+          END DO
 !
           IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idUiER))) THEN
             got_var(idUiER)=.TRUE.
@@ -347,11 +347,11 @@
       RETURN
       END SUBROUTINE ice_def_nf90
 !
-!*********************************************************************** 
+!***********************************************************************
      SUBROUTINE ice_wrt_nf90 (ng, model, tile,                          &
     &                         LBi, UBi, LBj, UBj,                       &
     &                         VarOut, S)
-!*********************************************************************** 
+!***********************************************************************
 !
       USE mod_netcdf
 !
@@ -709,7 +709,7 @@
                 CYCLE
               END IF
             END IF
-          END DO          
+          END DO
 !
           DO nf=1,nIceF
             IF (iFice(nf).gt.0) THEN
@@ -755,11 +755,11 @@
       RETURN
       END SUBROUTINE ice_def_station_nf90
 !
-!*********************************************************************** 
+!***********************************************************************
      SUBROUTINE ice_wrt_station_nf90 (ng, model, tile,                  &
     &                                  LBi, UBi, LBj, UBj,              &
     &                                  VarOut, S)
-!*********************************************************************** 
+!***********************************************************************
 !
       USE mod_netcdf
 !
@@ -945,7 +945,7 @@
               LdefVar=VarOut(ifield,ng)
               vtype=PIO_FOUT
            END IF
-           
+
             IF (Ldefvar) THEN
               Vinfo( 1)=Vname(1,ifield)
               Vinfo( 2)=Vname(2,ifield)
@@ -1122,7 +1122,7 @@
                 CYCLE
               END IF
             END IF
-          END DO          
+          END DO
 !
           IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idUiER))) THEN
             got_var(idUiER)=.TRUE.
@@ -1196,11 +1196,11 @@
       RETURN
       END SUBROUTINE ice_def_pio
 !
-!*********************************************************************** 
+!***********************************************************************
      SUBROUTINE ice_wrt_pio (ng, model, tile,                           &
     &                        LBi, UBi, LBj, UBj,                        &
     &                        VarOut, S)
-!*********************************************************************** 
+!***********************************************************************
 !
       USE mod_pio_netcdf
 !

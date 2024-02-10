@@ -60,7 +60,7 @@
         LBj=BOUNDS(ng)%LBj(tile)
         UBj=BOUNDS(ng)%UBj(tile)
       END DO
-!     
+!
       CALL allocate_ice (ng, LBi, UBi, LBj, UBj, .FALSE.)
 !
 !-----------------------------------------------------------------------
