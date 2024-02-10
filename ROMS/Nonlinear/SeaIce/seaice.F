@@ -2,6 +2,7 @@
       MODULE seaice_mod
 #ifdef ICE_MODEL
 !
+!git $Id$
 !svn $Id$
 !=======================================================================
 !  Copyright (c) 2002-2024 The ROMS/TOMS Group                         !
