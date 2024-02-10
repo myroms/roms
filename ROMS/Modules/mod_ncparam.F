@@ -2,7 +2,7 @@
       MODULE mod_ncparam
 !
 !git $Id$
-!svn $Id: mod_ncparam.F 1210 2024-01-03 22:03:03Z arango $
+!svn $Id: mod_ncparam.F 1215 2024-02-09 23:11:09Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2024 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -1168,7 +1168,7 @@
 #ifdef DISTRIBUTE
       integer :: Itile, Jtile
 #endif
-      integer :: Lvar, Ntiles, i, ic, j, ng
+      integer :: Lvar, Ntiles, i, ic, ic_brylast, j, ng
       integer :: gtype, tile, varid
 !
       real(dp), parameter :: spv = 0.0_dp
@@ -1299,8 +1299,11 @@
       ic=ic+1
       isMtke=ic
 # endif
+#endif
+      ic_brylast=ic
+#ifdef SOLVE3D
       ic=ic+1
-      isWvel=ic
+      isWvel=ic                               ! no LBC index
 #endif
 !
 !  Set generic lateral boundary indices for LBC structure.  Use the same
@@ -3215,7 +3218,6 @@
       idBvar(isFsur)=idFsur
       idBvar(isUbar)=idUbar
       idBvar(isVbar)=idVbar
-      ic=3
 #ifdef SOLVE3D
       idBvar(isUvel)=idUvel
       idBvar(isVvel)=idVvel
@@ -3233,6 +3235,20 @@
       idBvar(isU3Sd)=idU3Sd
       idBvar(isV3Sd)=idV3Sd
 # endif
+#endif
+#ifdef ICE_MODEL
+!
+!  Set ice model state boundary indices.  Currently, the last ice model
+!  LBC state variable is isVice=11.
+!
+      DO i=1,nIceS
+        ibICE(i)=i
+      END DO
+      ic=ic_brylast
+      DO i=1,isVice
+        ic=ic+1
+        idBvar(ic)=iSice(i)
+      END DO
 #endif
 #ifdef ADJUST_BOUNDARY
 !
