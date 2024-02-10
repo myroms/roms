@@ -1,7 +1,6 @@
 #include "cppdefs.h"
       MODULE checkvars_mod
 !
-!git $Id: checkvars.F 1215 2024-02-09 23:11:09Z arango $
 !git $Id$
 !svn $Id: checkvars.F 1215 2024-02-09 23:11:09Z arango $
 !================================================== Hernan G. Arango ===

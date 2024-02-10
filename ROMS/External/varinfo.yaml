@@ -1,6 +1,5 @@
-# ROMS I/O NetCDF Metadata Dictionary
+ROMS/Nonlinear/SeaIce/ice_smolar.h# ROMS I/O NetCDF Metadata Dictionary
 #
-#git $Id: varinfo.yaml 1215 2024-02-09 23:11:09Z arango $
 #git $Id$
 #svn $Id: varinfo.yaml 1215 2024-02-09 23:11:09Z arango $
 #========================================================= Hernan G. Arango ==#
@@ -42,7 +41,7 @@
 #     field = field (source_units) * scale + add_offset
 #
 
-svn_repository: $URL: https://www.myroms.org/svn/src/trunk/ROMS/External/varinfo.yaml $
+svn_repository: $URL: https://github.com/myroms/roms/External/varinfo.yaml $
 
 convention:     CF 1.10
 

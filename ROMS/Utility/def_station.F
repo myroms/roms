@@ -2,7 +2,6 @@
       MODULE def_station_mod
 #ifdef STATIONS
 !
-!git $Id: def_station.F 1215 2024-02-09 23:11:09Z arango $
 !git $Id$
 !svn $Id: def_station.F 1215 2024-02-09 23:11:09Z arango $
 !================================================== Hernan G. Arango ===

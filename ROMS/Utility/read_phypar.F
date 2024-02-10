@@ -1,7 +1,6 @@
 #include "cppdefs.h"
       SUBROUTINE read_PhyPar (model, inp, out, Lwrite)
 !
-!git $Id: read_phypar.F 1215 2024-02-09 23:11:09Z arango $
 !git $Id$
 !svn $Id: read_phypar.F 1215 2024-02-09 23:11:09Z arango $
 !================================================== Hernan G. Arango ===

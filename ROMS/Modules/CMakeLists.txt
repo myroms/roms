@@ -1,4 +1,3 @@
-# git $Id: CMakeLists.txt 1215 2024-02-09 23:11:09Z arango $
 # git $Id$
 # svn $Id: CMakeLists.txt 1215 2024-02-09 23:11:09Z arango $
 #:::::::::::::::::::::::::::::::::::::::::::::::::::::: David Robertson :::

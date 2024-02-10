@@ -3,6 +3,7 @@
 
 #if defined ICE_ADVECT || defined ICE_THERMO
 !
+!git $Id$
 !svn $Id$
 !=======================================================================
 !  Copyright (c) 2002-2024 The ROMS/TOMS Group                         !

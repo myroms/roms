@@ -3,6 +3,7 @@
 
 #if defined ICE_MOMENTUM && defined ICE_EVP
 !
+!git $Id$
 !svn $Id$
 !=======================================================================
 !  Copyright (c) 2002-2024 The ROMS/TOMS Group                         !

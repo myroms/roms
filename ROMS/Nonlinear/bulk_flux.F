@@ -2,7 +2,6 @@
       MODULE bulk_flux_mod
 #ifdef BULK_FLUXES
 !
-!git $Id: bulk_flux.F 1215 2024-02-09 23:11:09Z arango $
 !git $Id$
 !svn $Id: bulk_flux.F 1215 2024-02-09 23:11:09Z arango $
 !================================================== Hernan G. Arango ===

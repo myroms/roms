@@ -1,7 +1,6 @@
 #include "cppdefs.h"
       MODULE mod_ncparam
 !
-!git $Id: mod_ncparam.F 1215 2024-02-09 23:11:09Z arango $
 !git $Id$
 !svn $Id: mod_ncparam.F 1215 2024-02-09 23:11:09Z arango $
 !================================================== Hernan G. Arango ===

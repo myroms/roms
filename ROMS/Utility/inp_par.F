@@ -1,7 +1,6 @@
 #include "cppdefs.h"
       MODULE inp_par_mod
 !
-!git $Id: inp_par.F 1215 2024-02-09 23:11:09Z arango $
 !git $Id$
 !svn $Id: inp_par.F 1215 2024-02-09 23:11:09Z arango $
 !================================================== Hernan G. Arango ===

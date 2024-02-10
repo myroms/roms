@@ -1,7 +1,6 @@
 #include "cppdefs.h"
       MODULE get_state_mod
 !
-!git $Id: get_state.F 1215 2024-02-09 23:11:09Z arango $
 !git $Id$
 !svn $Id: get_state.F 1215 2024-02-09 23:11:09Z arango $
 !================================================== Hernan G. Arango ===
