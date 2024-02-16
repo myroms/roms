@@ -4196,7 +4196,7 @@
 !  Debugging: write out import field into NetCDF file.
 !
         IF ((DebugLevel.ge.3).and.                                      &
-     &      MODELS(Iroms)%ImportField(ifld)%debug_write) THEN
+     &      MODELS(Iroms)%ImportField(id)%debug_write) THEN
           WRITE (ofile,50) ng, TRIM(ImportNameList(ifld)),              &
      &                     year, month, day, hour, minutes, seconds
           CALL ESMF_FieldWrite (field,                                  &

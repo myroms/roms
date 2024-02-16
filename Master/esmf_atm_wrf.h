@@ -2863,7 +2863,7 @@
                 dat_sst=MISSING_dp
               END IF
               got_sst(1)=.TRUE.
-              sst_index(1)=ifld
+              sst_index(1)=id
               sst_name(1)=TRIM(FieldName)
               DO j=JminP,JmaxP
                 DO i=IminP,ImaxP
@@ -2892,7 +2892,7 @@
 !
               IF (TRIM(FieldName).eq.'Usur') THEN
                 got_vec(1,1)=.TRUE.
-                vec_index(1,1)=ifld
+                vec_index(1,1)=id
                 vec_name(1,1)=TRIM(FieldName)
                 DO j=JminP,JmaxP
                   DO i=IminP,ImaxP
@@ -2908,7 +2908,7 @@
                 END DO
               ELSE
                 got_vec(2,1)=.TRUE.
-                vec_index(2,1)=ifld
+                vec_index(2,1)=id
                 vec_name(2,1)=TRIM(FieldName)
                 DO j=JminP,JmaxP
                   DO i=IminP,ImaxP
@@ -2937,7 +2937,7 @@
                 dat_sst=MISSING_dp
               END IF
               got_sst(2)=.TRUE.
-              sst_index(2)=ifld
+              sst_index(2)=id
               sst_name(2)=TRIM(FieldName)
               DO j=JminP,JmaxP
                 DO i=IminP,ImaxP
@@ -2966,7 +2966,7 @@
 !
               IF (TRIM(FieldName).eq.'dUsur') THEN
                 got_vec(1,2)=.TRUE.
-                vec_index(1,2)=ifld
+                vec_index(1,2)=id
                 vec_name(1,2)=TRIM(FieldName)
                 DO j=JminP,JmaxP
                   DO i=IminP,ImaxP
@@ -2982,7 +2982,7 @@
                 END DO
               ELSE
                 got_vec(2,2)=.TRUE.
-                vec_index(2,2)=ifld
+                vec_index(2,2)=id
                 vec_name(2,2)=TRIM(FieldName)
                 DO j=JminP,JmaxP
                   DO i=IminP,ImaxP
@@ -3066,7 +3066,7 @@
 !  Debugging: write out import field into a NetCDF file.
 !
         IF ((DebugLevel.ge.3).and.                                      &
-     &      MODELS(Iatmos)%ImportField(ifld)%debug_write) THEN
+     &      MODELS(Iatmos)%ImportField(id)%debug_write) THEN
           WRITE (ofile,40) ng, TRIM(ImportNameList(ifld)),              &
      &                     year, month, day, hour, minutes, seconds
           CALL ESMF_FieldWrite (field,                                  &
@@ -3098,7 +3098,9 @@
         END IF
         got_sst=.FALSE.
         sst_index=0
-      ELSE IF (ANY(got_vec)) THEN
+      END IF
+!
+      IF (ANY(got_vec)) THEN
         CALL WRF_ProcessImport (grid, model,                            &
      &                          got_vec, vec_index, vec_name,           &
      &                          LBi, UBi, LBj, UBj, 2,                  &
@@ -3647,7 +3649,7 @@
 !                    got(1,2)    OCEAN V-component switch (T/F)        !
 !                    got(2,1)    DATA  U-component switch (T/F)        !
 !                    got(2,2)    DATA  V-component switch (T/F)        !
-!     ifield     Imported vector component indeces (integer array)     !
+!     ifield     Imported vector component indices (integer array)     !
 !                    ifield(1,1) OCEAN U-component field index         !
 !                    ifield(1,2) OCEAN V-component field index         !
 !                    ifield(2,1) DATA  U-component field index         !
@@ -3704,11 +3706,13 @@
       real (dp) :: MyUmax(3), MyUmin(3), Umin(3), Umax(3), Uval
       real (dp) :: MyVmax(3), MyVmin(3), Vmin(3), Vmax(3), Vval
 !
+      real (dp), parameter :: MaxOcnVelocity = 10.0_dp   ! m/s
+!
       real (dp), pointer :: ptrU2d(:,:) => NULL()
       real (dp), pointer :: ptrV2d(:,:) => NULL()
 !
-      real (KIND(grid%sst)), pointer :: Uout(:,:) => NULL()
-      real (KIND(grid%sst)), pointer :: Vout(:,:) => NULL()
+      real (KIND(grid%uoce)), pointer :: Uout(:,:) => NULL()
+      real (KIND(grid%voce)), pointer :: Vout(:,:) => NULL()
 !
       character (len=22 ) :: Time_CurrentString
 
@@ -3869,7 +3873,7 @@
       Vmerge=ESMF_FieldCreate(MODELS(Iatmos)%grid(ng),                  &
      &                        arraySpec2d,                              &
      &                        staggerloc=staggerLoc,                    &
-     &                        name=TRIM(U_string),                      &
+     &                        name=TRIM(V_string),                      &
      &                        rc=rc)
       IF (ESMF_LogFoundError(rcToCheck=rc,                              &
      &                       msg=ESMF_LOGERR_PASSTHRU,                  &
@@ -3911,7 +3915,7 @@
 !
       SELECT CASE (lowercase(TRIM(U_string)))
         CASE ('usur', 'dusur', 'usur-dusur', 'dusur-usur')
-          Uout => grid%sst                    ! HGA: need WRF variable
+          Uout => grid%uoce
         CASE DEFAULT
           IF (localPET.eq.0) THEN
             WRITE (cplout,10) TRIM(U_string), TRIM(CinpName)
@@ -3927,7 +3931,7 @@
 !
       SELECT CASE (lowercase(TRIM(V_string)))
         CASE ('vsur', 'dvsur', 'vsur-dvsur', 'dvsur-vsur')
-          Vout => grid%sst                    ! HGA: need WRF variable
+          Vout => grid%voce
         CASE DEFAULT
           IF (localPET.eq.0) THEN
             WRITE (cplout,10) TRIM(V_string), TRIM(CinpName)
@@ -3980,8 +3984,8 @@
           DO i=IminP,ImaxP
             IF ((INT(grid%landmask(i,j)).ne.LandValue).and.             &
      &          (INT(grid%lakemask(i,j)).ne.LakeValue)) THEN
-              Uout(i,j)=REAL(Focn(i,j,1), KIND(grid%sst))
-              Vout(i,j)=REAL(Focn(i,j,2), KIND(grid%sst))
+              Uout(i,j)=REAL(Focn(i,j,1), KIND(grid%uoce))
+              Vout(i,j)=REAL(Focn(i,j,2), KIND(grid%voce))
             END IF
             ptrU2d(i,j)=REAL(Uout(i,j), dp)
             ptrV2d(i,j)=REAL(Vout(i,j), dp)
@@ -4000,8 +4004,8 @@
           DO i=IminP,ImaxP
             IF ((INT(grid%landmask(i,j)).ne.LandValue).and.             &
      &          (INT(grid%lakemask(i,j)).ne.LakeValue)) THEN
-              Uout(i,j)=REAL(Fdat(i,j,1), KIND(grid%sst))
-              Vout(i,j)=REAL(Fdat(i,j,2), KIND(grid%sst))
+              Uout(i,j)=REAL(Fdat(i,j,1), KIND(grid%uoce))
+              Vout(i,j)=REAL(Fdat(i,j,2), KIND(grid%voce))
             END IF
             ptrU2d(i,j)=REAL(Uout(i,j), dp)
             ptrV2d(i,j)=REAL(Vout(i,j), dp)
@@ -4034,16 +4038,16 @@
           DO i=IminP,ImaxP
             IF ((INT(grid%landmask(i,j)).ne.LandValue).and.             &
      &          (INT(grid%lakemask(i,j)).ne.LakeValue)) THEN
-              IF ((ABS(Fdat(i,j,1)).lt.TOL_dp).and.                     &
-     &            (ABS(Fdat(i,j,2)).lt.TOL_dp)) THEN
+              IF ((ABS(Fdat(i,j,1)).lt.MaxOcnVelocity).and.             &
+     &            (ABS(Fdat(i,j,2)).lt.MaxOcnVelocity)) THEN
                 MyUmin(2)=MIN(MyUmin(2),Fdat(i,j,1))
                 MyUmax(2)=MAX(MyUmax(2),Fdat(i,j,1))
                 MyVmin(2)=MIN(MyVmin(2),Fdat(i,j,2))
                 MyVmax(2)=MAX(MyVmax(2),Fdat(i,j,2))
                 Uval=Fdat(i,j,1)                 ! initialize with DATA
                 Vval=Fdat(i,j,2)
-                IF ((ABS(Focn(i,j,1)).lt.TOL_dp).and.                   &
-     &              (ABS(Focn(i,j,1)).lt.TOL_dp)) THEN
+                IF ((ABS(Focn(i,j,1)).lt.MaxOcnVelocity).and.           &
+     &              (ABS(Focn(i,j,2)).lt.MaxOcnVelocity)) THEN
                   MyUmin(1)=MIN(MyUmin(1),Focn(i,j,1))
                   MyUmax(1)=MAX(MyUmax(1),Focn(i,j,1))
                   MyVmin(1)=MIN(MyVmin(1),Focn(i,j,2))
@@ -4053,8 +4057,8 @@
                   Vval=WEIGHTS(Iatmos)%Cdat(i,j)*Vval+                  &
      &                 WEIGHTS(Iatmos)%Cesm(i,j)*Focn(i,j,2)
                 END IF
-                Uout(i,j)=REAL(Uval, KIND(grid%sst))
-                Vout(i,j)=REAL(Vval, KIND(grid%sst))
+                Uout(i,j)=REAL(Uval, KIND(grid%uoce))
+                Vout(i,j)=REAL(Vval, KIND(grid%voce))
                 ptrU2d(i,j)=REAL(Uval, dp)
                 ptrV2d(i,j)=REAL(Vval, dp)
                 MyUmin(3)=MIN(MyUmin(3),Uval)

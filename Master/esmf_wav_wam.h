@@ -2221,7 +2221,7 @@
 !  Debugging: write field into a NetCDF file.
 !
         IF ((DebugLevel.ge.3).and.                                      &
-     &      MODELS(Iwave)%ImportField(ifld)%debug_write) THEN
+     &      MODELS(Iwave)%ImportField(id)%debug_write) THEN
           WRITE (ofile,20) 'wam_import', TRIM(ImportNameList(ifld)),    &
      &                     iyear, imonth, iday, ihour
           CALL ESMF_FieldWrite (field,                                  &

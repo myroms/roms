@@ -2891,7 +2891,7 @@
                 dat_sst=MISSING_dp
               END IF
               got_sst(1)=.TRUE.
-              ifield(1)=ifld
+              ifield(1)=id
               fld_name(1)=TRIM(FieldName)
               DO j=JminP,JmaxP
                 DO i=IminP,ImaxP
@@ -2921,7 +2921,7 @@
                 dat_sst=MISSING_dp
               END IF
               got_sst(2)=.TRUE.
-              ifield(2)=ifld
+              ifield(2)=id
               fld_name(2)=TRIM(FieldName)
               DO j=JminP,JmaxP
                 DO i=IminP,ImaxP
@@ -3078,7 +3078,7 @@
 !  Debugging: write out import field into a NetCDF file.
 !
         IF ((DebugLevel.ge.3).and.                                      &
-     &      MODELS(Iatmos)%ImportField(ifld)%debug_write) THEN
+     &      MODELS(Iatmos)%ImportField(id)%debug_write) THEN
           WRITE (ofile,40) ng, TRIM(ImportNameList(ifld)),              &
      &                     year, month, day, hour, minutes, seconds
           CALL ESMF_FieldWrite (field,                                  &
