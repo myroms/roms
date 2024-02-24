@@ -677,9 +677,9 @@
       real (r4), parameter :: MISSING_r4 = 1.0E20_r4
       real (r8), parameter :: MISSING_r8 = 1.0E20_r8
 
-      real (dp), parameter :: TOL_dp = 0.5E20_dp
-      real (r4), parameter :: TOL_r4 = 0.5E20_r4
-      real (r8), parameter :: TOL_r8 = 0.5E20_r8
+      real (dp), parameter :: TOL_dp = 0.001E20_dp
+      real (r4), parameter :: TOL_r4 = 0.001E20_r4
+      real (r8), parameter :: TOL_r8 = 0.001E20_r8
 !
       CONTAINS
 !
