@@ -3,7 +3,7 @@
 #if defined MODEL_COUPLING && defined ESMF_LIB && !defined CMEPS
 !
 !git $Id$
-!svn $Id: mod_esmf_esm.F 1210 2024-01-03 22:03:03Z arango $
+!svn $Id: mod_esmf_esm.F 1218 2024-02-24 02:32:17Z arango $
 !=======================================================================
 !  Copyright (c) 2002-2024 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license         Hernan G. Arango     !
@@ -677,9 +677,9 @@
       real (r4), parameter :: MISSING_r4 = 1.0E20_r4
       real (r8), parameter :: MISSING_r8 = 1.0E20_r8
 
-      real (dp), parameter :: TOL_dp = 0.5E20_dp
-      real (r4), parameter :: TOL_r4 = 0.5E20_r4
-      real (r8), parameter :: TOL_r8 = 0.5E20_r8
+      real (dp), parameter :: TOL_dp = 0.001E20_dp
+      real (r4), parameter :: TOL_r4 = 0.001E20_r4
+      real (r8), parameter :: TOL_r8 = 0.001E20_r8
 !
       CONTAINS
 !
