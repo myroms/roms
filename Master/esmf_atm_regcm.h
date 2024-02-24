@@ -3,7 +3,7 @@
 #if defined REGCM_COUPLING && defined ESMF_LIB
 !
 !git $Id$
-!svn $Id: esmf_atm_regcm.h 1210 2024-01-03 22:03:03Z arango $
+!svn $Id: esmf_atm_regcm.h 1218 2024-02-24 02:32:17Z arango $
 !=======================================================================
 !  Copyright (c) 2002-2024 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license         Hernan G. Arango     !
@@ -2721,7 +2721,7 @@
 !  Debugging: write out import field into a NetCDF file.
 !
         IF ((DebugLevel.ge.3).and.                                      &
-     &      MODELS(Iatmos)%ImportField(ifld)%debug_write) THEN
+     &      MODELS(Iatmos)%ImportField(id)%debug_write) THEN
           WRITE (ofile,40) ng, TRIM(ImportNameList(ifld)),              &
      &                     year, month, day, hour, minutes, seconds
           CALL ESMF_FieldWrite (field,                                  &
