@@ -2,7 +2,7 @@
       MODULE wrt_quick_mod
 !
 !git $Id$
-!svn $Id: wrt_quick.F 1210 2024-01-03 22:03:03Z arango $
+!svn $Id: wrt_quick.F 1219 2024-02-25 02:43:31Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2024 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -515,7 +515,7 @@
      &                    OCEAN(ng) % ubar(:,:,KOUT),                   &
      &                    OCEAN(ng) % vbar(:,:,KOUT),                   &
      &                    Ur2d, Vr2d)
-
+!
         scale=1.0_dp
         gtype=gfactor*r2dvar
         status=nf_fwrite2d(ng, model, QCK(ng)%ncid, idu2dE,             &
@@ -534,7 +534,7 @@
           ioerror=status
           RETURN
         END IF
-
+!
         status=nf_fwrite2d(ng, model, QCK(ng)%ncid, idv2dN,             &
      &                     QCK(ng)%Vid(idv2dN),                         &
      &                     QCK(ng)%Rindex, gtype,                       &
@@ -672,7 +672,7 @@
      &                    OCEAN(ng) % u(:,:,:,NOUT),                    &
      &                    OCEAN(ng) % v(:,:,:,NOUT),                    &
      &                    Ur3d, Vr3d)
-
+!
         IF ((Qout(idu3dE,ng).and.Qout(idv3dN,ng))) THEN
           scale=1.0_dp
           gtype=gfactor*r3dvar
@@ -692,7 +692,7 @@
             ioerror=status
             RETURN
           END IF
-
+!
           status=nf_fwrite3d(ng, model, QCK(ng)%ncid, idv3dN,           &
      &                       QCK(ng)%Vid(idv3dN),                       &
      &                       QCK(ng)%Rindex, gtype,                     &
@@ -709,6 +709,8 @@
             ioerror=status
             RETURN
           END IF
+          deallocate (Ur3d)
+          deallocate (Vr3d)
         END IF
 !
 !  Write out surface Eastward and Northward momentum components (m/s) at
@@ -1134,7 +1136,7 @@
           RETURN
         END IF
       END IF
-
+!
       IF (Qout(idVair,ng)) THEN
         scale=1.0_dp
         gtype=gfactor*r2dvar
@@ -1154,6 +1156,69 @@
           ioerror=status
           RETURN
         END IF
+      END IF
+!
+!  Write out Eastward/Northward surface wind (m/s) at RHO-points.
+!
+      IF (Qout(idUaiE,ng).and.Qout(idVaiN,ng)) THEN
+        IF (.not.allocated(Ur2d)) THEN
+          allocate (Ur2d(LBi:UBi,LBj:UBj))
+          Ur2d(LBi:UBi,LBj:UBj)=0.0_r8
+        END IF
+        IF (.not.allocated(Vr2d)) THEN
+          allocate (Vr2d(LBi:UBi,LBj:UBj))
+          Vr2d(LBi:UBi,LBj:UBj)=0.0_r8
+        END IF
+        CALL uv_rotate2d (ng, tile, .FALSE., .TRUE.,                    &
+     &                    LBi, UBi, LBj, UBj,                           &
+     &                    GRID(ng) % CosAngler,                         &
+     &                    GRID(ng) % SinAngler,                         &
+#  ifdef MASKING
+     &                    GRID(ng) % rmask_full,                        &
+#  endif
+     &                    FORCES(ng) % Uwind,                           &
+     &                    FORCES(ng) % Vwind,                           &
+     &                    Ur2d, Vr2d)
+!
+        scale=1.0_dp
+        gtype=gfactor*r2dvar
+        status=nf_fwrite2d(ng, model, QCK(ng)%ncid, idUaiE,             &
+     &                     QCK(ng)%Vid(idUaiE),                         &
+     &                     QCK(ng)%Rindex, gtype,                       &
+     &                     LBi, UBi, LBj, UBj, scale,                   &
+#  ifdef MASKING
+     &                     GRID(ng) % rmask,                            &
+#  endif
+     &                     Ur2d)
+        IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+          IF (Master) THEN
+            WRITE (stdout,20) TRIM(Vname(1,idUaiE)), QCK(ng)%Rindex
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+!
+        scale=1.0_dp
+        gtype=gfactor*r2dvar
+        status=nf_fwrite2d(ng, model, QCK(ng)%ncid, idVaiN,             &
+     &                     QCK(ng)%Vid(idVaiN),                         &
+     &                     QCK(ng)%Rindex, gtype,                       &
+     &                     LBi, UBi, LBj, UBj, scale,                   &
+#  ifdef MASKING
+     &                     GRID(ng) % rmask,                            &
+#  endif
+     &                     Vr2d)
+        IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+          IF (Master) THEN
+            WRITE (stdout,20) TRIM(Vname(1,idVaiN)), QCK(ng)%Rindex
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+        deallocate (Ur2d)
+        deallocate (Vr2d)
       END IF
 # endif
 !
@@ -2200,6 +2265,8 @@
             ioerror=status
             RETURN
           END IF
+          deallocate (Ur3d)
+          deallocate (Vr3d)
         END IF
 !
 !  Write out surface Eastward and Northward momentum components (m/s) at
@@ -2739,6 +2806,79 @@
           ioerror=status
           RETURN
         END IF
+      END IF
+!
+!  Write out Eastward/Northward surface wind (m/s) at RHO-points.
+!
+      IF (Qout(idUaiE,ng).and.Qout(idVaiN,ng)) THEN
+        IF (.not.allocated(Ur2d)) THEN
+          allocate (Ur2d(LBi:UBi,LBj:UBj))
+          Ur2d(LBi:UBi,LBj:UBj)=0.0_r8
+        END IF
+        IF (.not.allocated(Vr2d)) THEN
+          allocate (Vr2d(LBi:UBi,LBj:UBj))
+          Vr2d(LBi:UBi,LBj:UBj)=0.0_r8
+        END IF
+        CALL uv_rotate2d (ng, tile, .FALSE., .TRUE.,                    &
+     &                    LBi, UBi, LBj, UBj,                           &
+     &                    GRID(ng) % CosAngler,                         &
+     &                    GRID(ng) % SinAngler,                         &
+#   ifdef MASKING
+     &                    GRID(ng) % rmask_full,                        &
+#   endif
+     &                    FORCES(ng) % Uwind,                           &
+     &                    FORCES(ng) % Vwind,                           &
+     &                    Ur2d, Vr2d)
+!
+        scale=1.0_dp
+        IF (QCK(ng)%pioVar(idUaiE)%dkind.eq.PIO_double) THEN
+          ioDesc => ioDesc_dp_r2dvar(ng)
+        ELSE
+          ioDesc => ioDesc_sp_r2dvar(ng)
+        END IF
+        status=nf_fwrite2d(ng, model, QCK(ng)%pioFile, idUaiE,          &
+     &                     QCK(ng)%pioVar(idUaiE),                      &
+     &                     QCK(ng)%Rindex,                              &
+     &                     ioDesc,                                      &
+     &                     LBi, UBi, LBj, UBj, scale,                   &
+#   ifdef MASKING
+     &                     GRID(ng) % rmask,                            &
+#   endif
+     &                     Ur2d)
+        IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
+          IF (Master) THEN
+            WRITE (stdout,20) TRIM(Vname(1,idUaiE)), QCK(ng)%Rindex
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+!
+        scale=1.0_dp
+        IF (QCK(ng)%pioVar(idVaiN)%dkind.eq.PIO_double) THEN
+          ioDesc => ioDesc_dp_r2dvar(ng)
+        ELSE
+          ioDesc => ioDesc_sp_r2dvar(ng)
+        END IF
+        status=nf_fwrite2d(ng, model, QCK(ng)%pioFile, idVaiN,          &
+     &                     QCK(ng)%pioVar(idVaiN),                      &
+     &                     QCK(ng)%Rindex,                              &
+     &                     ioDesc,                                      &
+     &                     LBi, UBi, LBj, UBj, scale,                   &
+#   ifdef MASKING
+     &                     GRID(ng) % rmask,                            &
+#   endif
+     &                     Vr2d)
+        IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
+          IF (Master) THEN
+            WRITE (stdout,20) TRIM(Vname(1,idVaiN)), QCK(ng)%Rindex
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+        deallocate (Ur2d)
+        deallocate (Vr2d)
       END IF
 #  endif
 !
