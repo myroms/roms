@@ -1,7 +1,8 @@
 #include "cppdefs.h"
       MODULE ad_set_zeta_mod
 
-#if defined ADJOINT && defined SOLVE3D
+#if defined ADJOINT           && defined SOLVE3D           && \
+  !(defined STEP2D_FB_AB3_AM4 || defined STEP2D_FB_LF_AM3)
 !
 !git $Id$
 !svn $Id: ad_set_zeta.F 1210 2024-01-03 22:03:03Z arango $
@@ -86,7 +87,7 @@
       real(r8), intent(out) :: ad_zeta_sol(LBi:,LBj:)
 # else
       real(r8), intent(inout) :: ad_Zt_avg1(LBi:UBi,LBj:UBj)
-      real(r8), intent(inout) :: ad_zeta(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(inout) :: ad_zeta(LBi:UBi,LBj:UBj,:)
 
       real(r8), intent(out) :: ad_zeta_sol(LBi:UBi,LBj:UBj)
 # endif
