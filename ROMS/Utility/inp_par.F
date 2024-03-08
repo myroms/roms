@@ -907,6 +907,17 @@
       CALL read_StaPar (model, 55, out, Lwrite)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #endif
+!
+#ifdef VEGETATION
+!
+!-----------------------------------------------------------------------
+!  Read in vegetation model input parameters.
+!-----------------------------------------------------------------------
+!
+      OPEN (65, FILE=TRIM(vegnam), FORM='formatted', STATUS='old')
+
+      CALL read_VegPar (model, 65, out, Lwrite)
+#endif 
 #ifdef SOLVE3D
 !
 !-----------------------------------------------------------------------

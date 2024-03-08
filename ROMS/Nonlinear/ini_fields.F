@@ -1145,6 +1145,7 @@
           END DO
           bed_thick(i,j,1)=bed_thick0(i,j)
           bed_thick(i,j,2)=bed_thick0(i,j)
+          bed_thick(i,j,3)=bed_thick0(i,j)
         END DO
       END DO
 !

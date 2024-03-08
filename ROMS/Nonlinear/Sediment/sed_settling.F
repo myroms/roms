@@ -111,7 +111,7 @@
 # else
       real(r8), intent(in) :: Hz(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(in) :: z_w(LBi:UBi,LBj:UBj,0:N(ng))
-      real(r8), intent(inout) :: settling_flux(LBi:UBi,LBj:UBj,NST)
+      real(r8), intent(inout) :: settling_flux(LBi:UBi,LBj:UBj,NST(ng))
       real(r8), intent(inout) :: t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
 # endif
 !
@@ -168,7 +168,7 @@
           indx=idsed(ised)
           DO k=1,N(ng)
             DO i=Istr,Iend
-              qc(i,k)=t(i,j,k,nnew,indx)*Hz_inv(i,k)
+              qc(i,k)=t(i,j,k,nstp,indx)
             END DO
           END DO
 !
@@ -331,7 +331,7 @@
           END DO
           DO i=Istr,Iend
             DO k=1,N(ng)
-              t(i,j,k,nnew,indx)=qc(i,k)*Hz(i,j,k)+(FC(i,k)-FC(i,k-1))
+              t(i,j,k,nnew,indx)=t(i,j,k,nnew,indx)+(FC(i,k)-FC(i,k-1))
             END DO
             settling_flux(i,j,ised)=FC(i,0)
           END DO
