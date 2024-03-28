@@ -55,7 +55,7 @@
 # ifdef TLM_CHECK
       USE ini_adjust_mod,      ONLY : tl_ini_perturb
 # endif
-# ifdef SOLVE3D
+# if defined SOLVE3D && defined NONLINEAR
       USE ini_fields_mod,      ONLY : set_zeta_timeavg
 # endif
       USE ini_hmixcoef_mod,    ONLY : ini_hmixcoef
@@ -636,7 +636,9 @@
 !-----------------------------------------------------------------------
 !
       DO tile=first_tile(ng),last_tile(ng),+1
+#  ifdef NONLINEAR
         CALL set_zeta_timeavg (ng, tile, iTLM)
+#  endif
         CALL set_depth (ng, tile, iTLM)
       END DO
 # endif

@@ -47,7 +47,7 @@
 #ifdef TLM_CHECK
       USE ini_adjust_mod,    ONLY : ini_perturb
 #endif
-#ifdef SOLVE3D
+#if defined SOLVE3D && defined NONLINEAR
       USE ini_fields_mod,    ONLY : set_zeta_timeavg
 #endif
       USE ini_hmixcoef_mod,  ONLY : ini_hmixcoef

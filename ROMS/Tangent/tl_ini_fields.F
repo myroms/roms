@@ -1263,8 +1263,8 @@
       CALL tl_set_zeta_timeavg_tile (ng, tile, model,                   &
      &                               LBi, UBi, LBj, UBj,                &
      &                               kstp(ng),                          &
-     &                               COUPLING(ng) % Zt_avg1,            &
-     &                               OCEAN(ng) % zeta)
+     &                               COUPLING(ng) % tl_Zt_avg1,         &
+     &                               OCEAN(ng) % tl_zeta)
 #  ifdef PROFILE
       CALL wclock_off (ng, model, 2, __LINE__, MyFile)
 #  endif
@@ -1334,9 +1334,9 @@
      &                    EWperiodic(ng), NSperiodic(ng),               &
      &                    tl_Zt_avg1)
 #  endif
-# endif
 !
       RETURN
       END SUBROUTINE tl_set_zeta_timeavg_tile
+# endif
 #endif
       END MODULE tl_ini_fields_mod

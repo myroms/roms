@@ -57,6 +57,9 @@
       USE get_wetdry_mod,    ONLY : get_wetdry
 # endif
       USE get_state_mod,     ONLY : get_state
+# if defined SOLVE3D && defined NONLINEAR
+      USE ini_fields_mod,    ONLY : set_zeta_timeavg
+# endif
       USE ini_hmixcoef_mod,  ONLY : ini_hmixcoef
 # if defined WAV_COUPLING_NOT_YET && defined MCT_LIB
       USE mct_coupler_mod,   ONLY : ocn2wav_coupling
@@ -554,6 +557,20 @@
       CALL mp_bcasti (ng, iADM, exit_flag)
 # endif
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+
+# if defined SOLVE3D && defined ADM_DRIVER
+!
+!-----------------------------------------------------------------------
+!  Compute nonlinear initial time-evolving depths.
+!-----------------------------------------------------------------------
+!
+      DO tile=first_tile(ng),last_tile(ng),+1
+#  ifdef NONLINEAR
+        CALL set_zeta_timeavg (ng, tile, iTLM)
+#  endif
+        CALL set_depth (ng, tile, iTLM)
+      END DO
+# endif
 
 # ifdef MASKING
 !
