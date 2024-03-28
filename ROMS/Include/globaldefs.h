@@ -2,7 +2,7 @@
 ** Include file "globaldef.h"
 **
 ** git $Id$
-** svn $Id: globaldefs.h 1210 2024-01-03 22:03:03Z arango $
+** svn $Id$
 ********************************************************** Hernan G. Arango ***
 ** Copyright (c) 2002-2024 The ROMS/TOMS Group     Alexander F. Shchepetkin  **
 **   Licensed under a MIT/X style license                                    **
@@ -206,7 +206,8 @@
 #endif
 
 /*
-** Choice of double/single precision for real type variables.
+** Choice of double/single precision for real type variables and
+** associated intrinsic functions.
 */
 
 #if (defined CRAY || defined CRAYT3E) && !defined CRAYX1
@@ -215,34 +216,38 @@
 # endif
 #endif
 
-/*
-** Choice of double/single precision for ARPACK/PARPACK library.
-*/
-
 #ifdef DOUBLE_PRECISION
 # ifdef DISTRIBUTE
 #  define PDNAUPD pdnaupd
 #  define PDNEUPD pdneupd
 #  define PDSAUPD pdsaupd
 #  define PDSEUPD pdseupd
+#  define PDNORM2 pdnorm2
 # else
 #  define DNAUPD dnaupd
 #  define DNEUPD dneupd
 #  define DSAUPD dsaupd
 #  define DSEUPD dseupd
+#  define DNRM2 dnrm2
 # endif
+# define DAXPY daxpy
+# define DSTEQR dsteqr
 #else
 # ifdef DISTRIBUTE
 #  define PDNAUPD psnaupd
 #  define PDNEUPD psneupd
 #  define PDSAUPD pssaupd
 #  define PDSEUPD psseupd
+#  define PDNORM2 psnorm2
 # else
 #  define DNAUPD snaupd
 #  define DNEUPD sneupd
 #  define DSAUPD ssaupd
 #  define DSEUPD sseupd
+#  define DNRM2 snrm2
 # endif
+#  define DAXPY saxpy
+#  define DSTEQR ssteqr
 #endif
 
 /*
@@ -445,7 +450,6 @@
 
 #define NONLINEAR
 #if defined AD_SENSITIVITY   || \
-    defined ADM_DRIVER       || \
     defined AFT_EIGENMODES   || \
     defined FORCING_SV       || \
     defined FT_EIGENMODES    || \
@@ -456,11 +460,9 @@
     defined OPT_OBSERVATIONS || \
     defined OPT_PERTURBATION || \
     defined PICARD_TEST      || \
-    defined RPM_DRIVER       || \
     defined SANITY_CHECK     || \
     defined SO_SEMI          || \
-    defined STOCHASTIC_OPT   || \
-    defined TLM_DRIVER
+    defined STOCHASTIC_OPT
 # undef NONLINEAR
 #endif
 
@@ -546,7 +548,7 @@
     (defined LMD_MIXING      || \
      defined GLS_MIXING      || \
      defined MY25_MIXING)
-# define FORWARD_MIXING
+/* # define FORWARD_MIXING */
 #endif
 
 /*
@@ -840,7 +842,6 @@
 #endif
 
 #if defined ATM_COUPLING  || \
-    defined CMEPS         || \
     defined DATA_COUPLING || \
     defined ICE_COUPLING  || \
     defined WAV_COUPLING
@@ -848,8 +849,7 @@
 #endif
 
 #if defined MODEL_COUPLING && \
-    defined ESMF_LIB       && \
-   !defined CMEPS
+    defined ESMF_LIB
 # define REGRESS_STARTCLOCK
 # define ESM_SETRUNCLOCK
 #endif
@@ -878,7 +878,7 @@
 ** Define internal option to process wave data.
 */
 
-#if (defined ROLLER_SVENDSEN || defined ROLLER_MONO || \
+#if (defined ROLLER_SVENDSEN || defined ROLLER_MONO ||	\
      defined ROLLER_RENIERS) && defined WEC
 # define WEC_ROLLER
 #endif
