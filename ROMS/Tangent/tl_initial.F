@@ -55,6 +55,9 @@
 # ifdef TLM_CHECK
       USE ini_adjust_mod,      ONLY : tl_ini_perturb
 # endif
+# ifdef SOLVE3D
+      USE ini_fields_mod,      ONLY : set_zeta_timeavg
+# endif
       USE ini_hmixcoef_mod,    ONLY : ini_hmixcoef
 # ifdef I4DVAR_ANA_SENSITIVITY
       USE ini_lanczos_mod,     ONLY : ini_lanczos
@@ -67,7 +70,6 @@
 # endif
 # ifdef SOLVE3D
       USE set_depth_mod,       ONLY : set_depth
-      USE ini_fields_mod,      ONLY : set_zeta_timeavg (ng, tile, iTLM)
 # endif
 # ifdef MASKING
       USE set_masks_mod,       ONLY : set_masks

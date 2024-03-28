@@ -47,6 +47,9 @@
 #ifdef TLM_CHECK
       USE ini_adjust_mod,    ONLY : ini_perturb
 #endif
+#ifdef SOLVE3D
+      USE ini_fields_mod,    ONLY : set_zeta_timeavg
+#endif
       USE ini_hmixcoef_mod,  ONLY : ini_hmixcoef
 #if defined WAV_COUPLING && defined MCT_LIB
       USE mct_coupler_mod,   ONLY : ocn2wav_coupling

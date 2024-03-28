@@ -23,11 +23,11 @@
       USE mod_coupling
 # endif
       USE mod_ocean
+      USE mod_scalars
 # if defined SOLVE3D && (defined SEDIMENT || defined BBL_MODEL)
       USE mod_sedbed
       USE mod_sediment
 # endif
-      USE mod_scalars
 !
       USE exchange_2d_mod
 # ifdef SOLVE3D
@@ -1123,14 +1123,17 @@
 # endif
 !
       RETURN
+!
+      END SUBROUTINE ini_zeta_tile
 
 # ifdef SOLVE3D
 !
-      END SUBROUTINE ini_zeta_tile
 !
 !***********************************************************************
       SUBROUTINE set_zeta_timeavg (ng, tile, model)
 !***********************************************************************
+!
+      USE mod_stepping
 !
 !  Imported variable declarations.
 !

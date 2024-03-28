@@ -450,7 +450,6 @@
 
 #define NONLINEAR
 #if defined AD_SENSITIVITY   || \
-    defined ADM_DRIVER       || \
     defined AFT_EIGENMODES   || \
     defined FORCING_SV       || \
     defined FT_EIGENMODES    || \
@@ -461,11 +460,9 @@
     defined OPT_OBSERVATIONS || \
     defined OPT_PERTURBATION || \
     defined PICARD_TEST      || \
-    defined RPM_DRIVER       || \
     defined SANITY_CHECK     || \
     defined SO_SEMI          || \
-    defined STOCHASTIC_OPT   || \
-    defined TLM_DRIVER
+    defined STOCHASTIC_OPT
 # undef NONLINEAR
 #endif
 
