@@ -3,7 +3,7 @@
 #ifdef NONLINEAR
 !
 !git $Id$
-!svn $Id: ini_fields.F 1210 2024-01-03 22:03:03Z arango $
+!svn $Id$
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2024 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
@@ -16,11 +16,48 @@
 !                                                                      !
 !=======================================================================
 !
+      USE mod_param
+      USE mod_grid
+      USE mod_ncparam
+# ifdef SOLVE3D
+      USE mod_coupling
+# endif
+      USE mod_ocean
+      USE mod_scalars
+# if defined SOLVE3D && (defined SEDIMENT || defined BBL_MODEL)
+      USE mod_sedbed
+      USE mod_sediment
+# endif
+!
+      USE exchange_2d_mod
+# ifdef SOLVE3D
+      USE exchange_3d_mod
+# endif
+# ifdef DISTRIBUTE
+      USE mp_exchange_mod, ONLY : mp_exchange2d
+#  ifdef SOLVE3D
+      USE mp_exchange_mod, ONLY : mp_exchange3d, mp_exchange4d
+#  else
+#   ifdef PERFECT_RESTART
+      USE mp_exchange_mod, ONLY : mp_exchange3d
+#   endif
+#  endif
+# endif
+# ifdef SOLVE3D
+      USE t3dbc_mod,       ONLY : t3dbc_tile
+      USE u3dbc_mod,       ONLY : u3dbc_tile
+      USE v3dbc_mod,       ONLY : v3dbc_tile
+# endif
+      USE u2dbc_mod,       ONLY : u2dbc_tile
+      USE v2dbc_mod,       ONLY : v2dbc_tile
+      USE zetabc_mod,      ONLY : zetabc_tile
+!
       implicit none
 !
       PRIVATE
       PUBLIC :: ini_fields
       PUBLIC :: ini_zeta
+      PUBLIC :: set_zeta_timeavg
 !
       CONTAINS
 !
@@ -28,15 +65,6 @@
       SUBROUTINE ini_fields (ng, tile, model)
 !***********************************************************************
 !
-      USE mod_param
-      USE mod_grid
-# ifdef SOLVE3D
-      USE mod_coupling
-# endif
-      USE mod_ocean
-# if defined SOLVE3D && (defined SEDIMENT || defined BBL_MODEL)
-      USE mod_sedbed
-# endif
       USE mod_stepping
 !
 !  Imported variable declarations.
@@ -51,7 +79,7 @@
 # include "tile.h"
 !
 # ifdef PROFILE
-      CALL wclock_on (ng, iNLM, 2, __LINE__, MyFile)
+      CALL wclock_on (ng, model, 2, __LINE__, MyFile)
 # endif
       CALL ini_fields_tile (ng, tile, model,                            &
      &                      LBi, UBi, LBj, UBj,                         &
@@ -97,7 +125,7 @@
      &                      OCEAN(ng) % vbar,                           &
      &                      OCEAN(ng) % zeta)
 # ifdef PROFILE
-      CALL wclock_off (ng, iNLM, 2, __LINE__, MyFile)
+      CALL wclock_off (ng, model, 2, __LINE__, MyFile)
 # endif
 !
       RETURN
@@ -135,35 +163,6 @@
 # endif
      &                            ubar, vbar, zeta)
 !***********************************************************************
-!
-      USE mod_param
-      USE mod_ncparam
-      USE mod_scalars
-# if defined SEDIMENT || defined BBL_MODEL
-      USE mod_sediment
-# endif
-!
-      USE exchange_2d_mod
-# ifdef SOLVE3D
-      USE exchange_3d_mod
-# endif
-# ifdef DISTRIBUTE
-      USE mp_exchange_mod, ONLY : mp_exchange2d
-#  ifdef SOLVE3D
-      USE mp_exchange_mod, ONLY : mp_exchange3d, mp_exchange4d
-#  else
-#   ifdef PERFECT_RESTART
-      USE mp_exchange_mod, ONLY : mp_exchange3d
-#   endif
-#  endif
-# endif
-# ifdef SOLVE3D
-      USE t3dbc_mod, ONLY : t3dbc_tile
-      USE u3dbc_mod, ONLY : u3dbc_tile
-      USE v3dbc_mod, ONLY : v3dbc_tile
-# endif
-      USE u2dbc_mod, ONLY : u2dbc_tile
-      USE v2dbc_mod, ONLY : v2dbc_tile
 !
 !  Imported variable declarations.
 !
@@ -801,15 +800,6 @@
       SUBROUTINE ini_zeta (ng, tile, model)
 !***********************************************************************
 !
-      USE mod_param
-      USE mod_grid
-# ifdef SOLVE3D
-      USE mod_coupling
-# endif
-      USE mod_ocean
-# if defined SOLVE3D && defined SEDIMENT && defined SED_MORPH
-      USE mod_sedbed
-# endif
       USE mod_stepping
 !
 !  Imported variable declarations.
@@ -824,7 +814,7 @@
 # include "tile.h"
 !
 # ifdef PROFILE
-      CALL wclock_on (ng, iNLM, 2, __LINE__, MyFile)
+      CALL wclock_on (ng, model, 2, __LINE__, MyFile)
 # endif
       CALL ini_zeta_tile (ng, tile, model,                              &
      &                    LBi, UBi, LBj, UBj,                           &
@@ -843,11 +833,10 @@
      &                    SEDBED(ng) % bed_thick0,                      &
      &                    SEDBED(ng) % bed_thick,                       &
 #  endif
-     &                    COUPLING(ng) % Zt_avg1,                       &
 # endif
      &                    OCEAN(ng) % zeta)
 # ifdef PROFILE
-      CALL wclock_off (ng, iNLM, 2, __LINE__, MyFile)
+      CALL wclock_off (ng, model, 2, __LINE__, MyFile)
 # endif
 !
       RETURN
@@ -869,23 +858,9 @@
 #  if defined SEDIMENT && defined SED_MORPH
      &                          bed, bed_thick0, bed_thick,             &
 #  endif
-     &                          Zt_avg1,                                &
 # endif
      &                          zeta)
 !***********************************************************************
-!
-      USE mod_param
-      USE mod_ncparam
-      USE mod_scalars
-# if defined SEDIMENT && defined SED_MORPH
-      USE mod_sediment
-# endif
-!
-      USE exchange_2d_mod, ONLY : exchange_r2d_tile
-# ifdef DISTRIBUTE
-      USE mp_exchange_mod, ONLY : mp_exchange2d
-# endif
-      USE zetabc_mod, ONLY : zetabc_tile
 !
 !  Imported variable declarations.
 !
@@ -909,9 +884,6 @@
 #  ifdef WET_DRY
       real(r8), intent(inout) :: rmask_wet(LBi:,LBj:)
 #  endif
-#  ifdef SOLVE3D
-      real(r8), intent(inout) :: Zt_avg1(LBi:,LBj:)
-#  endif
       real(r8), intent(inout) :: zeta(LBi:,LBj:,:)
 
 # else
@@ -929,9 +901,6 @@
 #  endif
 #  ifdef WET_DRY
       real(r8), intent(inout) :: rmask_wet(LBi:UBi,LBj:UBj)
-#  endif
-#  ifdef SOLVE3D
-      real(r8), intent(inout) :: Zt_avg1(LBi:UBi,LBj:UBj)
 #  endif
       real(r8), intent(inout) :: zeta(LBi:UBi,LBj:UBj,:)
 # endif
@@ -1111,25 +1080,7 @@
 !  free-surface
 !-----------------------------------------------------------------------
 !
-      DO j=JstrT,JendT
-        DO i=IstrT,IendT
-          Zt_avg1(i,j)=zeta(i,j,kstp)
-        END DO
-      END DO
-!
-      IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
-        CALL exchange_r2d_tile (ng, tile,                               &
-     &                          LBi, UBi, LBj, UBj,                     &
-     &                          Zt_avg1)
-      END IF
-
-#  ifdef DISTRIBUTE
-      CALL mp_exchange2d (ng, tile, model, 1,                           &
-     &                    LBi, UBi, LBj, UBj,                           &
-     &                    NghostPoints,                                 &
-     &                    EWperiodic(ng), NSperiodic(ng),               &
-     &                    Zt_avg1)
-#  endif
+      CALL set_zeta_timeavg (ng, tile, model)
 
 #  if defined SEDIMENT && defined SED_MORPH
 !
@@ -1172,6 +1123,100 @@
 # endif
 !
       RETURN
+!
       END SUBROUTINE ini_zeta_tile
+
+# ifdef SOLVE3D
+!
+!
+!***********************************************************************
+      SUBROUTINE set_zeta_timeavg (ng, tile, model)
+!***********************************************************************
+!
+      USE mod_stepping
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: ng, tile, model
+!
+!  Local variable declarations.
+!
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__//", set_zeta_timeavg"
+!
+#  include "tile.h"
+!
+#  ifdef PROFILE
+      CALL wclock_on (ng, model, 2, __LINE__, MyFile)
+#  endif
+      CALL set_zeta_timeavg_tile (ng, tile, model,                      &
+     &                            LBi, UBi, LBj, UBj,                   &
+     &                            kstp(ng),                             &
+     &                            OCEAN(ng) % zeta,                     &
+     &                            COUPLING(ng) % Zt_avg1)
+#  ifdef PROFILE
+      CALL wclock_off (ng, model, 2, __LINE__, MyFile)
+#  endif
+!
+      RETURN
+      END SUBROUTINE set_zeta_timeavg
+!
+!***********************************************************************
+      SUBROUTINE set_zeta_timeavg_tile (ng, tile, model,                &
+     &                                  LBi, UBi, LBj, UBj,             &
+     &                                  kstp,                           &
+     &                                  zeta,                           &
+     &                                  Zt_avg1)
+!***********************************************************************
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: ng, tile, model
+      integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: kstp
+!
+#  ifdef ASSUMED_SHAPE
+      real(r8), intent(in)    :: zeta(LBi:,LBj:,:)
+      real(r8), intent(inout) :: Zt_avg1(LBi:,LBj:)
+#  else
+      real(r8), intent(in)    :: zeta(LBi:UBi,LBj:UBj,:)
+      real(r8), intent(inout) :: Zt_avg1(LBi:UBi,LBj:UBj)
+#  endif
+!
+!  Local variable declarations.
+!
+      integer :: i, j
+!
+#  include "set_bounds.h"
+!
+!-----------------------------------------------------------------------
+!  Initialize fast-time averaged free-surface (Zt_avg1) with the inital
+!  free-surface.
+!-----------------------------------------------------------------------
+!
+      DO j=JstrT,JendT
+        DO i=IstrT,IendT
+          Zt_avg1(i,j)=zeta(i,j,kstp)
+        END DO
+      END DO
+!
+      IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
+        CALL exchange_r2d_tile (ng, tile,                               &
+     &                          LBi, UBi, LBj, UBj,                     &
+     &                          Zt_avg1)
+      END IF
+
+#  ifdef DISTRIBUTE
+!
+      CALL mp_exchange2d (ng, tile, model, 1,                           &
+     &                    LBi, UBi, LBj, UBj,                           &
+     &                    NghostPoints,                                 &
+     &                    EWperiodic(ng), NSperiodic(ng),               &
+     &                    Zt_avg1)
+#  endif
+!
+      RETURN
+      END SUBROUTINE set_zeta_timeavg_tile
+# endif
 #endif
       END MODULE ini_fields_mod

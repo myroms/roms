@@ -55,6 +55,9 @@
 # ifdef TLM_CHECK
       USE ini_adjust_mod,      ONLY : tl_ini_perturb
 # endif
+# ifdef SOLVE3D
+      USE ini_fields_mod,      ONLY : set_zeta_timeavg
+# endif
       USE ini_hmixcoef_mod,    ONLY : ini_hmixcoef
 # ifdef I4DVAR_ANA_SENSITIVITY
       USE ini_lanczos_mod,     ONLY : ini_lanczos
@@ -401,18 +404,6 @@
 #  endif
 # endif
 
-# if defined SOLVE3D && !defined INI_FILE
-!
-!-----------------------------------------------------------------------
-!  If analytical initial conditions, compute initial time-evolving
-!  depths with zero free-surface.
-!-----------------------------------------------------------------------
-!
-      DO tile=first_tile(ng),last_tile(ng),+1
-        CALL set_depth (ng, tile, iTLM)
-      END DO
-# endif
-
 # if defined RBL4DVAR          || defined R4DVAR      || \
      defined SENSITIVITY_4DVAR || defined TL_RBL4DVAR || \
      defined TL_R4DVAR
@@ -637,6 +628,18 @@
       CALL mp_bcasti (ng, iTLM, exit_flag)
 # endif
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+
+# if defined SOLVE3D && defined TLM_DRIVER
+!
+!-----------------------------------------------------------------------
+!  Compute nonlinear initial time-evolving depths.
+!-----------------------------------------------------------------------
+!
+      DO tile=first_tile(ng),last_tile(ng),+1
+        CALL set_zeta_timeavg (ng, tile, iTLM)
+        CALL set_depth (ng, tile, iTLM)
+      END DO
+# endif
 
 # ifdef MASKING
 !
