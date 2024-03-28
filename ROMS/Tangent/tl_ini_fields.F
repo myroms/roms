@@ -22,6 +22,7 @@
       PRIVATE
       PUBLIC :: tl_ini_fields
       PUBLIC :: tl_ini_zeta
+      PUBLIC :: tl_set_zeta_timeavg
 !
       CONTAINS
 !
@@ -1283,5 +1284,111 @@
 !
       RETURN
       END SUBROUTINE tl_ini_zeta_tile
+
+# ifdef SOLVE3D
+!
+      END SUBROUTINE ini_zeta_tile
+!
+!***********************************************************************
+      SUBROUTINE tl_set_zeta_timeavg (ng, tile, model)
+!***********************************************************************
+!
+      USE mod_param
+      USE mod_coupling
+      USE mod_ocean
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: ng, tile, model
+!
+!  Local variable declarations.
+!
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__//", tl_set_zeta_timeavg"
+!
+#  include "tile.h"
+!
+#  ifdef PROFILE
+      CALL wclock_on (ng, model, 2, __LINE__, MyFile)
+#  endif
+      CALL tl_set_zeta_timeavg_tile (ng, tile, model,                   &
+     &                               LBi, UBi, LBj, UBj,                &
+     &                               kstp(ng),                          &
+     &                               COUPLING(ng) % Zt_avg1,            &
+     &                               OCEAN(ng) % zeta)
+#  ifdef PROFILE
+      CALL wclock_off (ng, model, 2, __LINE__, MyFile)
+#  endif
+!
+      RETURN
+      END SUBROUTINE tl_set_zeta_timeavg
+!
+!***********************************************************************
+      SUBROUTINE tl_set_zeta_timeavg_tile (ng, tile, model,             &
+     &                                     LBi, UBi, LBj, UBj,          &
+     &                                     kstp,                        &
+     &                                     tl_Zt_avg1,                  &
+     &                                     tl_zeta)
+!***********************************************************************
+!
+      USE mod_param
+      USE mod_scalars
+!
+      USE exchange_2d_mod, ONLY : exchange_r2d_tile
+#  ifdef DISTRIBUTE
+      USE mp_exchange_mod, ONLY : mp_exchange2d
+#  endif
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: ng, tile, model
+      integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: kstp
+!
+#  ifdef ASSUMED_SHAPE
+      real(r8), intent(inout) :: tl_Zt_avg1(LBi:,LBj:)
+      real(r8), intent(inout) :: tl_zeta(LBi:,LBj:,:)
+#  else
+      real(r8), intent(inout) :: tl_Zt_avg1(LBi:UBi,LBj:UBj)
+      real(r8), intent(inout) :: tl_zeta(LBi:UBi,LBj:UBj,:)
+#  endif
+!
+!  Local variable declarations.
+!
+      integer :: i, j
+!
+#  include "set_bounds.h"
+!
+!-----------------------------------------------------------------------
+!  Initialize fast-time averaged free-surface (Zt_avg1) with the inital
+!  free-surface
+!-----------------------------------------------------------------------
+!
+      DO j=JstrT,JendT
+        DO i=IstrT,IendT
+!>        Zt_avg1(i,j)=zeta(i,j,kstp)
+!>
+          tl_Zt_avg1(i,j)=tl_zeta(i,j,kstp)
+        END DO
+      END DO
+!
+      IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
+        CALL exchange_r2d_tile (ng, tile,                               &
+     &                          LBi, UBi, LBj, UBj,                     &
+     &                          tl_Zt_avg1)
+      END IF
+
+#  ifdef DISTRIBUTE
+      CALL mp_exchange2d (ng, tile, model, 1,                           &
+     &                    LBi, UBi, LBj, UBj,                           &
+     &                    NghostPoints,                                 &
+     &                    EWperiodic(ng), NSperiodic(ng),               &
+     &                    tl_Zt_avg1)
+#  endif
+# endif
+!
+      RETURN
+      END SUBROUTINE tl_set_zeta_timeavg_tile
+
 #endif
       END MODULE tl_ini_fields_mod

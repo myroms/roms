@@ -551,7 +551,7 @@
     (defined LMD_MIXING      || \
      defined GLS_MIXING      || \
      defined MY25_MIXING)
-# define FORWARD_MIXING
+/* # define FORWARD_MIXING */
 #endif
 
 /*

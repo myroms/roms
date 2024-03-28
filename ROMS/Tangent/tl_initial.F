@@ -67,6 +67,7 @@
 # endif
 # ifdef SOLVE3D
       USE set_depth_mod,       ONLY : set_depth
+      USE ini_fields_mod,      ONLY : set_zeta_timeavg (ng, tile, iTLM)
 # endif
 # ifdef MASKING
       USE set_masks_mod,       ONLY : set_masks
@@ -401,18 +402,6 @@
 #  endif
 # endif
 
-# if defined SOLVE3D && !defined INI_FILE
-!
-!-----------------------------------------------------------------------
-!  If analytical initial conditions, compute initial time-evolving
-!  depths with zero free-surface.
-!-----------------------------------------------------------------------
-!
-      DO tile=first_tile(ng),last_tile(ng),+1
-        CALL set_depth (ng, tile, iTLM)
-      END DO
-# endif
-
 # if defined RBL4DVAR          || defined R4DVAR      || \
      defined SENSITIVITY_4DVAR || defined TL_RBL4DVAR || \
      defined TL_R4DVAR
@@ -637,6 +626,18 @@
       CALL mp_bcasti (ng, iTLM, exit_flag)
 # endif
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+
+# if defined SOLVE3D && defined TLM_DRIVER
+!
+!-----------------------------------------------------------------------
+!  Compute nonlinear initial time-evolving depths.
+!-----------------------------------------------------------------------
+!
+      DO tile=first_tile(ng),last_tile(ng),+1
+        CALL set_zeta_timeavg (ng, tile, iTLM)
+        CALL set_depth (ng, tile, iTLM)
+      END DO
+# endif
 
 # ifdef MASKING
 !

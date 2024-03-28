@@ -1,8 +1,6 @@
       MODULE roms_kernel_mod
 !
 !git $Id: jedi_roms.h 1153 2023-02-17 20:27:14Z arango $
-!git $Id: jedi_roms.h 1153 2023-02-17 20:27:14Z arango $
-!git $Id$
 !svn $Id: jedi_roms.h 1153 2023-02-17 20:27:14Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
