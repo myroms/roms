@@ -1,11 +1,11 @@
       MODULE roms_kernel_mod
 !
 !git $Id$
-!svn $Id: split_rbl4dvar_roms.h 1166 2023-05-17 20:11:58Z arango $
+!svn $Id: split_rbl4dvar_roms.h 1212 2024-01-26 20:59:21Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group       Andrew M. Moore   !
+!  Copyright (c) 2002-2024 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                                              !
+!    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
 !  ROMS Strong/Weak Constraint Split 4-Dimensional Variational Data    !
@@ -301,6 +301,18 @@
 !-----------------------------------------------------------------------
 !
       DO ng=1,Ngrids
+#ifdef STD_MODEL
+        LwrtSTD(ng)=.TRUE.
+        IF (INDEX(TRIM(uppercase(Phase4DVAR)),'BACKG').ne.0) THEN
+          LdefSTD(ng)=.TRUE.
+          LreadSTD(ng)=.FALSE.
+        ELSE
+          LdefSTD(ng)=.FALSE.
+          LreadSTD(ng)=.TRUE.
+        END IF
+#else
+        LreadSTD(ng)=.TRUE.
+#endif
         CALL prior_error (ng)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         SetGridConfig(ng)=.FALSE.

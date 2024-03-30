@@ -4,11 +4,11 @@
 #if defined WEAK_CONSTRAINT && defined RPCG
 !
 !git $Id$
-!svn $Id: rpcg_lanczos.F 1151 2023-02-09 03:08:53Z arango $
+!svn $Id: rpcg_lanczos.F 1210 2024-01-03 22:03:03Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group       Selime Gurol      !
+!  Copyright (c) 2002-2024 The ROMS/TOMS Group       Selime Gurol      !
 !    Licensed under a MIT/X style license            Andrew M. Moore   !
-!    See License_ROMS.txt                                              !
+!    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
 !  Weak Constraint 4-Dimensional Variational (4D-Var) Restricted       !
@@ -46,6 +46,7 @@
 # ifdef DISTRIBUTE
       USE distribute_mod, ONLY : mp_bcastf, mp_bcasti, mp_bcastl
 # endif
+      USE lapack_mod,     ONLY : DSTEQR
       USE strings_mod,    ONLY : FoundError
 !
       implicit none

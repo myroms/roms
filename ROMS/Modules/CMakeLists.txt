@@ -1,9 +1,9 @@
 # git $Id$
-# svn $Id: CMakeLists.txt 1151 2023-02-09 03:08:53Z arango $
+# svn $Id: CMakeLists.txt 1215 2024-02-09 23:11:09Z arango $
 #:::::::::::::::::::::::::::::::::::::::::::::::::::::: David Robertson :::
-# Copyright (c) 2002-2023 The ROMS/TOMS Group                           :::
+# Copyright (c) 2002-2024 The ROMS/TOMS Group                           :::
 #   Licensed under a MIT/X style license                                :::
-#   See License_ROMS.txt                                                :::
+#   See License_ROMS.md                                                 :::
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 #
 # Source code list for sub-directory "ROMS/Modules"
@@ -25,6 +25,7 @@ list ( APPEND _files
        ROMS/Modules/mod_forces.F
        ROMS/Modules/mod_fourdvar.F
        ROMS/Modules/mod_grid.F
+       ROMS/Modules/mod_ice.F
        ROMS/Modules/mod_iounits.F
        ROMS/Modules/mod_kinds.F
        ROMS/Modules/mod_mixing.F

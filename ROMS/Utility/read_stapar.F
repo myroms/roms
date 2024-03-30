@@ -3,11 +3,11 @@
       SUBROUTINE read_StaPar (model, inp, out, Lwrite)
 !
 !git $Id$
-!svn $Id: read_stapar.F 1178 2023-07-11 17:50:57Z arango $
+!svn $Id: read_stapar.F 1215 2024-02-09 23:11:09Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2024 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                                              !
+!    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
 !  This routine reads and reports stations input parameters.           !
@@ -16,6 +16,9 @@
 !
       USE mod_param
       USE mod_parallel
+# ifdef ICE_MODEL
+      USE mod_ice
+# endif
       USE mod_iounits
       USE mod_ncparam
 # if defined SEDIMENT || defined BBL_MODEL
@@ -149,6 +152,83 @@
             CASE ('Sout(idVbvr)')
               Npts=load_l(Nval, Cval, Ngrids, Lswitch)
               Sout(idVbvr,1:Ngrids)=Lswitch(1:Ngrids)
+# endif
+# ifdef ICE_MODEL
+           CASE ('Sout(idUice)')
+              Npts=load_l(Nval, Cval, Ngrids, Lswitch)
+              Sout(idUice,1:Ngrids)=Lswitch(1:Ngrids)
+            CASE ('Sout(idVice)')
+              Npts=load_l(Nval, Cval, Ngrids, Lswitch)
+              Sout(idVice,1:Ngrids)=Lswitch(1:Ngrids)
+            CASE ('Sout(idUiER)')
+              Npts=load_l(Nval, Cval, Ngrids, Lswitch)
+              Sout(idUiER,1:Ngrids)=Lswitch(1:Ngrids)
+            CASE ('Sout(idViNR)')
+              Npts=load_l(Nval, Cval, Ngrids, Lswitch)
+              Sout(idViNR,1:Ngrids)=Lswitch(1:Ngrids)
+            CASE ('Sout(idAice)')
+              Npts=load_l(Nval, Cval, Ngrids, Lswitch)
+              Sout(idAice,1:Ngrids)=Lswitch(1:Ngrids)
+            CASE ('Sout(idIage)')
+              Npts=load_l(Nval, Cval, Ngrids, Lswitch)
+              Sout(idIage,1:Ngrids)=Lswitch(1:Ngrids)
+            CASE ('Sout(idHice)')
+              Npts=load_l(Nval, Cval, Ngrids, Lswitch)
+              Sout(idHice,1:Ngrids)=Lswitch(1:Ngrids)
+            CASE ('Sout(idHmel)')
+              Npts=load_l(Nval, Cval, Ngrids, Lswitch)
+              Sout(idHmel,1:Ngrids)=Lswitch(1:Ngrids)
+            CASE ('Sout(idHsno)')
+              Npts=load_l(Nval, Cval, Ngrids, Lswitch)
+              Sout(idHsno,1:Ngrids)=Lswitch(1:Ngrids)
+            CASE ('Sout(idTice)')
+              Npts=load_l(Nval, Cval, Ngrids, Lswitch)
+              Sout(idTice,1:Ngrids)=Lswitch(1:Ngrids)
+            CASE ('Sout(idISxx)')
+              Npts=load_l(Nval, Cval, Ngrids, Lswitch)
+              Sout(idISxx,1:Ngrids)=Lswitch(1:Ngrids)
+            CASE ('Sout(idISxy)')
+              Npts=load_l(Nval, Cval, Ngrids, Lswitch)
+              Sout(idISxy,1:Ngrids)=Lswitch(1:Ngrids)
+            CASE ('Sout(idISyy)')
+              Npts=load_l(Nval, Cval, Ngrids, Lswitch)
+              Sout(idISyy,1:Ngrids)=Lswitch(1:Ngrids)
+            CASE ('Sout(idIsst)')
+              Npts=load_l(Nval, Cval, Ngrids, Lswitch)
+              Sout(idIsst,1:Ngrids)=Lswitch(1:Ngrids)
+            CASE ('Sout(idIOmf)')
+              Npts=load_l(Nval, Cval, Ngrids, Lswitch)
+              Sout(idIOmf,1:Ngrids)=Lswitch(1:Ngrids)
+            CASE ('Sout(idIOfv)')
+              Npts=load_l(Nval, Cval, Ngrids, Lswitch)
+              Sout(idIOfv,1:Ngrids)=Lswitch(1:Ngrids)
+            CASE ('Sout(idIOmt)')
+              Npts=load_l(Nval, Cval, Ngrids, Lswitch)
+              Sout(idIOmt,1:Ngrids)=Lswitch(1:Ngrids)
+            CASE ('Sout(idS0mk)')
+              Npts=load_l(Nval, Cval, Ngrids, Lswitch)
+              Sout(idS0mk,1:Ngrids)=Lswitch(1:Ngrids)
+            CASE ('Sout(idT0mk)')
+              Npts=load_l(Nval, Cval, Ngrids, Lswitch)
+              Sout(idT0mk,1:Ngrids)=Lswitch(1:Ngrids)
+            CASE ('Sout(idWdiv)')
+              Npts=load_l(Nval, Cval, Ngrids, Lswitch)
+              Sout(idWdiv,1:Ngrids)=Lswitch(1:Ngrids)
+            CASE ('Sout(idW_fr)')
+              Npts=load_l(Nval, Cval, Ngrids, Lswitch)
+              Sout(idW_fr,1:Ngrids)=Lswitch(1:Ngrids)
+            CASE ('Sout(idW_ai)')
+              Npts=load_l(Nval, Cval, Ngrids, Lswitch)
+              Sout(idW_ai,1:Ngrids)=Lswitch(1:Ngrids)
+            CASE ('Sout(idW_ao)')
+              Npts=load_l(Nval, Cval, Ngrids, Lswitch)
+              Sout(idW_ao,1:Ngrids)=Lswitch(1:Ngrids)
+            CASE ('Sout(idW_io)')
+              Npts=load_l(Nval, Cval, Ngrids, Lswitch)
+              Sout(idW_io,1:Ngrids)=Lswitch(1:Ngrids)
+            CASE ('Sout(idW_ro)')
+              Npts=load_l(Nval, Cval, Ngrids, Lswitch)
+              Sout(idW_ro,1:Ngrids)=Lswitch(1:Ngrids)
 # endif
 # ifdef WEC_VF
             CASE ('Sout(idWztw)')
@@ -620,6 +700,83 @@
             IF (Sout(idVbvr,ng)) WRITE (out,90) Sout(idVbvr,ng),        &
      &          'Sout(idVbvr)',                                         &
      &          'Write out bottom V-velocity above bed.'
+# endif
+# ifdef ICE_MODEL
+            IF (Sout(idUice,ng)) WRITE (out,90) Sout(idUice,ng),        &
+     &          'Sout(idUice)',                                         &
+     &          'Write out ice U-velocity component.'
+            IF (Sout(idVice,ng)) WRITE (out,90) Sout(idVice,ng),        &
+     &          'Sout(idVice)',                                         &
+     &          'Write out ice V-velocity component.'
+            IF (Sout(idUiER,ng)) WRITE (out,90) Sout(idUiER,ng),        &
+     &          'Sout(idUiER)',                                         &
+     &       'Write out ice Eastward velocity component at RHO-points.'
+            IF (Sout(idViNR,ng)) WRITE (out,90) Sout(idViNR,ng),        &
+     &          'Sout(idViNR)',                                         &
+     &       'Write out ice Northward velocity component at RHO-points.'
+            IF (Sout(idAice,ng)) WRITE (out,90) Sout(idAice,ng),        &
+     &          'Sout(idAice)',                                         &
+     &         'Write out ice concentration (fractional area coverage).'
+            IF (Sout(idIage,ng)) WRITE (out,90) Sout(idIage,ng),        &
+     &          'Sout(idIage)',                                         &
+     &          'Write out age of ice.'
+            IF (Sout(idHice,ng)) WRITE (out,90) Sout(idHice,ng),        &
+     &          'Sout(idHice)',                                         &
+     &          'Write out average ice thickness (ice mass per area).'
+            IF (Sout(idHmel,ng)) WRITE (out,90) Sout(idHmel,ng),        &
+     &          'Sout(idHmel)',                                         &
+     &          'Write out surface melt water thickness on ice.'
+            IF (Sout(idHsno,ng)) WRITE (out,90) Sout(idHsno,ng),        &
+     &          'Sout(idHsno)',                                         &
+     &          'Write out average snow coverage thickness.'
+            IF (Sout(idTice,ng)) WRITE (out,90) Sout(idTice,ng),        &
+     &          'Sout(idTice)',                                         &
+     &          'Write out interior ice temperature.'
+            IF (Sout(idISxx,ng)) WRITE (out,90) Sout(idISxx,ng),        &
+     &          'Sout(idISxx)',                                         &
+     &          'Write out internal ice stress tensor, xx-component.'
+            IF (Sout(idISxy,ng)) WRITE (out,90) Sout(idISxy,ng),        &
+     &          'Sout(idISxy)',                                         &
+     &          'Write out internal ice stress tensor, xy-component.'
+            IF (Sout(idISyy,ng)) WRITE (out,90) Sout(idISyy,ng),        &
+     &          'Sout(idISyy)',                                         &
+     &          'Write out internal ice stress tensor, yy-component.'
+            IF (Sout(idIsst,ng)) WRITE (out,90) Sout(idIsst,ng),        &
+     &          'Sout(idIsst)',                                         &
+     &          'Write out ice/snow surface temperature.'
+            IF (Sout(idIOmf,ng)) WRITE (out,90) Sout(idIOmf,ng),        &
+     &          'Sout(idIOmf)',                                         &
+     &          'Write out ice-ocean mass flux.'
+            IF (Sout(idIOfv,ng)) WRITE (out,90) Sout(idIOfv,ng),        &
+     &          'Sout(idIOfv)',                                         &
+     &          'Write out ice-ocean friction velocity.'
+            IF (Sout(idIOmt,ng)) WRITE (out,90) Sout(idIOmt,ng),        &
+     &          'Sout(idIOmt)',                                         &
+     &          'Write out ice-ocean momentum transfer coefficient.'
+            IF (Sout(idS0mk,ng)) WRITE (out,90) Sout(idS0mk,ng),        &
+     &          'Sout(idS0mk)',                                         &
+     &          'Write out salinity of molecular sublayer under ice.'
+            IF (Sout(idT0mk,ng)) WRITE (out,90) Sout(idT0mk,ng),        &
+     &          'Sout(idT0mk)',                                         &
+     &          'Write out temperature of molecular sublayer under ice.'
+            IF (Sout(idWdiv,ng)) WRITE (out,90) Sout(idWdiv,ng),        &
+     &          'Sout(idWdiv)',                                         &
+     &          'Write out rate of ice divergence.'
+            IF (Sout(idW_fr,ng)) WRITE (out,90) Sout(idW_fr,ng),        &
+     &          'Sout(idW_fr)',                                         &
+     &          'Write out rate of ice accretion by frazil ice growth.'
+            IF (Sout(idW_ai,ng)) WRITE (out,90) Sout(idW_ai,ng),        &
+     &          'Sout(idW_ai)',                                         &
+     &          'Write out rate of melt/freeze at air/ice interface.'
+            IF (Sout(idW_ao,ng)) WRITE (out,90) Sout(idW_ao,ng),        &
+     &          'Sout(idW_ao)',                                         &
+     &          'Write out rate of melt/freeze at air/ocean interface.'
+            IF (Sout(idW_io,ng)) WRITE (out,90) Sout(idW_io,ng),        &
+     &          'Sout(idW_io)',                                         &
+     &          'Write out rate of melt/freeze at ice/ocean interface.'
+            IF (Sout(idW_ro,ng)) WRITE (out,90) Sout(idW_ro,ng),        &
+     &          'Sout(idW_ro)',                                         &
+     &          'Write out rate of melt/freeze runoff into ocean.'
 # endif
 # ifdef WEC
             IF (Sout(idU2rs,ng)) WRITE (out,90) Sout(idU2rs,ng),        &

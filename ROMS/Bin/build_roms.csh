@@ -1,11 +1,11 @@
 #!/bin/csh -f
 #
 # git $Id$
-# svn $Id: build_roms.csh 1184 2023-07-27 20:28:19Z arango $
+# svn $Id: build_roms.csh 1210 2024-01-03 22:03:03Z arango $
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Copyright (c) 2002-2023 The ROMS/TOMS Group                           :::
+# Copyright (c) 2002-2024 The ROMS/TOMS Group                           :::
 #   Licensed under a MIT/X style license                                :::
-#   See License_ROMS.txt                                                :::
+#   See License_ROMS.md                                                 :::
 #::::::::::::::::::::::::::::::::::::::::::::::::::::: Hernan G. Arango :::
 #                                                                       :::
 # ROMS Compiling CSH Script                                             :::
@@ -147,7 +147,7 @@ else
   setenv MY_ROOT_DIR         ${HOME}/ocean/repository/git
 endif
 
-setenv   MY_PROJECT_DIR      ${PWD}n
+setenv   MY_PROJECT_DIR      ${PWD}
 
 # The path to the user's local current ROMS source code.
 #
@@ -246,31 +246,10 @@ setenv   MY_PROJECT_DIR      ${PWD}n
 
 #--------------------------------------------------------------------------
 # If coupling Earth Systems Models (ESM), set the location of the ESM
-# component libraries and modules. The strategy is to compile and link
-# each ESM component separately first, and then ROMS since it is driving
-# the coupled system. Only the ESM components activated are considered
-# and the rest are ignored.  Some components like WRF cannot be built
-# in a directory specified by the user but in its own root directory,
-# and cannot be moved when debugging with tools like TotalView.
+# component libraries and modules.
 #--------------------------------------------------------------------------
 
-setenv WRF_SRC_DIR         ${HOME}/ocean/repository/WRF
-
-if ($?USE_DEBUG) then
-  setenv CICE_LIB_DIR      ${MY_PROJECT_DIR}/Build_ciceG
-  setenv COAMPS_LIB_DIR    ${MY_PROJECT_DIR}/Build_coampsG
-  setenv REGCM_LIB_DIR     ${MY_PROJECT_DIR}/Build_regcmG
-  setenv WAM_LIB_DIR       ${MY_PROJECT_DIR}/Build_wamG
-# setenv WRF_LIB_DIR       ${MY_PROJECT_DIR}/Build_wrfG
-  setenv WRF_LIB_DIR       ${WRF_SRC_DIR}
-else
-  setenv CICE_LIB_DIR      ${MY_PROJECT_DIR}/Build_cice
-  setenv COAMPS_LIB_DIR    ${MY_PROJECT_DIR}/Build_coamps
-  setenv REGCM_LIB_DIR     ${MY_PROJECT_DIR}/Build_regcm
-  setenv WAM_LIB_DIR       ${MY_PROJECT_DIR}/Build_wam
-  setenv WRF_LIB_DIR       ${MY_PROJECT_DIR}/Build_wrf
-# setenv WRF_LIB_DIR       ${WRF_SRC_DIR}
-endif
+source ${MY_ROMS_SRC}/ESM/esm_libs.csh ${MY_ROMS_SRC}/ESM/esm_libs.csh
 
 #--------------------------------------------------------------------------
 # If applicable, use my specified library paths.
@@ -327,6 +306,11 @@ else
     setenv BUILD_DIR        ${MY_PROJECT_DIR}/Build_roms
   endif
 endif
+
+# For backward compatibility, set deprecated SCRATCH_DIR to compile
+# older released versions of ROMS.
+
+setenv SCRATCH_DIR ${BUILD_DIR}
 
 # If necessary, create ROMS build directory.
 
@@ -398,10 +382,13 @@ else
     make
   endif
 
+  set HEADER = `echo ${ROMS_APPLICATION} | tr '[:upper:]' '[:lower:]'`.h
+
   echo ""
   echo "${separator}"
   echo "GNU Build script command:      ${command}"
   echo "ROMS source directory:         ${MY_ROMS_SRC}"
+  echo "ROMS header file:              ${MY_HEADER_DIR}/${HEADER}"
   echo "ROMS build  directory:         ${BUILD_DIR}"
   if ( $branch == 1 ) then
     echo "ROMS downloaded from:          https://github.com/myroms/roms.git"

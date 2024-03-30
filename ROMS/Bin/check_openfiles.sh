@@ -1,11 +1,11 @@
 #!/bin/bash
 #
 # git $Id$
-# svn $Id: check_openfiles.sh 1151 2023-02-09 03:08:53Z arango $
+# svn $Id: check_openfiles.sh 1210 2024-01-03 22:03:03Z arango $
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Copyright (c) 2002-2023 The ROMS/TOMS Group                           :::
+# Copyright (c) 2002-2024 The ROMS/TOMS Group                           :::
 #   Licensed under a MIT/X style license                                :::
-#   See License_ROMS.txt                                                :::
+#   See License_ROMS.md                                                 :::
 #::::::::::::::::::::::::::::::::::::::::::::::::::::: Hernan G. Arango :::
 #                                                                       :::
 # ROMS BASH Script to check open files                                  :::

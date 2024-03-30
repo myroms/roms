@@ -3,11 +3,11 @@
 #if defined WAM_COUPLING && defined ESMF_LIB
 !
 !git $Id$
-!svn $Id: esmf_wav_wam.h 1151 2023-02-09 03:08:53Z arango $
+!svn $Id: esmf_wav_wam.h 1218 2024-02-24 02:32:17Z arango $
 !=======================================================================
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2024 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license         Hernan G. Arango     !
-!    See License_ROMS.txt                         Ufuk Utku Turuncoglu !
+!    See License_ROMS.md                          Ufuk Utku Turuncoglu !
 !=======================================================================
 !                                                                      !
 !  This module sets WAM as the wave model gridded component using      !
@@ -2221,7 +2221,7 @@
 !  Debugging: write field into a NetCDF file.
 !
         IF ((DebugLevel.ge.3).and.                                      &
-     &      MODELS(Iwave)%ImportField(ifld)%debug_write) THEN
+     &      MODELS(Iwave)%ImportField(id)%debug_write) THEN
           WRITE (ofile,20) 'wam_import', TRIM(ImportNameList(ifld)),    &
      &                     iyear, imonth, iday, ihour
           CALL ESMF_FieldWrite (field,                                  &

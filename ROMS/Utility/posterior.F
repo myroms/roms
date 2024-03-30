@@ -6,11 +6,11 @@
     defined POSTERIOR_ERROR_F)
 !
 !git $Id$
-!svn $Id: posterior.F 1180 2023-07-13 02:42:10Z arango $
+!svn $Id: posterior.F 1210 2024-01-03 22:03:03Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group       Andrew M. Moore   !
+!  Copyright (c) 2002-2024 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                                              !
+!    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
 !  This module computes the Lanczos vectors and eigenvectors of the    !
@@ -44,6 +44,7 @@
 # ifdef DISTRIBUTE
       USE distribute_mod,       ONLY : mp_bcastf, mp_bcasti
 # endif
+      USE lapack_mod,           ONLY : DSTEQR
       USE state_addition_mod,   ONLY : state_addition
       USE state_copy_mod,       ONLY : state_copy
       USE state_dotprod_mod,    ONLY : state_dotprod

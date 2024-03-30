@@ -2,11 +2,11 @@
       MODULE inp_par_mod
 !
 !git $Id$
-!svn $Id: inp_par.F 1178 2023-07-11 17:50:57Z arango $
+!svn $Id: inp_par.F 1215 2024-02-09 23:11:09Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2024 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                                              !
+!    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
 !  This routine reads in input model parameters from standard input.   !
@@ -228,7 +228,7 @@
 !  Read in sea-ice model input parameters.
 !-----------------------------------------------------------------------
 !
-      OPEN (15, FILE=TRIM(bparnam), FORM='formatted', STATUS='old')
+      OPEN (15, FILE=TRIM(iparnam), FORM='formatted', STATUS='old')
 
       CALL read_IcePar (model, 15, out, Lwrite)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
@@ -971,14 +971,18 @@
      &          t44,'South Edge', t57,'East Edge',t70,'North Edge',     &
      &          /,1x,'---------',t25,'----',t31,4('----------',3x))
         DO ifield=1,nLBCvar
-          CALL lbc_report (out, ifield, LBC)
+          IF (idBvar(ifield).gt.0) THEN
+            CALL lbc_report (out, ifield, LBC)
+          END IF
         END DO
 
 #if defined ADJOINT || defined TANGENT || defined TL_IOMS
 !
         WRITE (out,130) 'TLM, RPM, and ADM'
         DO ifield=1,nLBCvar
-          CALL lbc_report (out, ifield, ad_LBC)
+          IF (idBvar(ifield).gt.0) THEN
+            CALL lbc_report (out, ifield, ad_LBC)
+          END IF
         END DO
 #endif
       END IF

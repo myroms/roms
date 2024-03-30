@@ -2,11 +2,11 @@
 !  ROMS/TOMS Standard Input parameters.
 !
 ! git $Id$
-! svn $Id: roms_bio_toy.in 1184 2023-07-27 20:28:19Z arango $
+! svn $Id: roms_bio_toy.in 1210 2024-01-03 22:03:03Z arango $
 !========================================================= Hernan G. Arango ===
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group                                !
+!  Copyright (c) 2002-2024 The ROMS/TOMS Group                                !
 !    Licensed under a MIT/X style license                                     !
-!    See License_ROMS.txt                                                     !
+!    See License_ROMS.md                                                      !
 !==============================================================================
 !                                                                             !
 ! Input parameters can be entered in ANY order, provided that the parameter   !
@@ -1052,11 +1052,11 @@ PIO_I2C_Preq = 65                 ! Maximum pending I2C requests
 
 ! Input NetCDF file names, [1:Ngrids].
 
-     GRDNAME == ../../../roms_test/bio_toy/Data/ROMS/Grid/bio_toy_grd.nc
-     ININAME == ../../../roms_test/bio_toy/Data/ROMS/Initial/bio_toy_ini_fennel.nc
-!    ININAME == ../../../roms_test/bio_toy/Data/ROMS/Initial/bio_toy_ini_ecosim.nc
-!    ININAME == ../../../roms_test/bio_toy/Data/ROMS/Initial/bio_toy_ini_nemuro.nc
-!    ININAME == ../../../roms_test/bio_toy/Data/ROMS/Initial/bio_toy_ini_npzd.nc
+     GRDNAME == ../../../../git/roms_test/bio_toy/Data/ROMS/Grid/bio_toy_grd.nc
+     ININAME == ../../../../git/roms_test/bio_toy/Data/ROMS/Initial/bio_toy_ini_fennel.nc
+!    ININAME == ../../../../git/roms_test/bio_toy/Data/ROMS/Initial/bio_toy_ini_ecosim.nc
+!    ININAME == ../../../../git/roms_test/bio_toy/Data/ROMS/Initial/bio_toy_ini_nemuro.nc
+!    ININAME == ../../../../git/roms_test/bio_toy/Data/ROMS/Initial/bio_toy_ini_npzd.nc
      ITLNAME == /dev/null
      IRPNAME == /dev/null
      IADNAME == /dev/null
@@ -1144,7 +1144,7 @@ PIO_I2C_Preq = 65                 ! Maximum pending I2C requests
 
      NFFILES == 1                          ! number of unique forcing files
 
-     FRCNAME == ../../../roms_test/bio_toy/Data/bio_toy_frc.nc
+     FRCNAME == ../../../../git/roms_test/bio_toy/Data/bio_toy_frc.nc
 
 ! Output NetCDF file names, [1:Ngrids].
 

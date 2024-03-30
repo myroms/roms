@@ -2,11 +2,11 @@
       MODULE lbc_mod
 !
 !git $Id$
-!svn $Id: lbc.F 1176 2023-07-01 19:23:18Z arango $
+!svn $Id: lbc.F 1210 2024-01-03 22:03:03Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2024 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                                              !
+!    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
 !  These routines are used to process lateral boundary condition       !
@@ -724,7 +724,7 @@
       character (len=   1) :: newline
       character (len=   7) :: string(4)
       character (len=  21) :: frmt
-      character (len=  70) :: line
+      character (len= 100) :: line
       character (len=2816) :: lbc_att
 
       character (len=*), parameter :: MyFile =                          &
@@ -738,10 +738,12 @@
 !
       lvar=0
       DO ifield=1,nLBCvar
-        lvar=MAX(lvar, LEN_TRIM(Vname(1,idBvar(ifield))))
+        IF (idBvar(ifield).gt.0) THEN
+          lvar=MAX(lvar, LEN_TRIM(Vname(1,idBvar(ifield))))
+        END IF
       END DO
-      WRITE (frmt,10) lvar+4
-  10  FORMAT ("(a,':',t",i2.2,',a,a,a,a,a)')
+      WRITE (frmt,10) "(a,':',t", lvar+4, ",5a)"
+  10  FORMAT (a,i0,a)
 !
 !  Initialize attribute.
 !
@@ -780,46 +782,48 @@
 !  Build attribute string.
 !
       DO ifield=1,nLBCvar
-        DO ibry=1,4
-          IF (S(ibry,ifield,ng)%Chapman_explicit) THEN
-            string(ibry)='Che    '
-          ELSE IF (S(ibry,ifield,ng)%Chapman_implicit) THEN
-            string(ibry)='Cha    '
-          ELSE IF (S(ibry,ifield,ng)%clamped) THEN
-            string(ibry)='Cla    '
-          ELSE IF (S(ibry,ifield,ng)%closed) THEN
-            string(ibry)='Clo    '
-          ELSE IF (S(ibry,ifield,ng)%Flather) THEN
-            string(ibry)='Fla    '
-          ELSE IF (S(ibry,ifield,ng)%gradient) THEN
-            string(ibry)='Gra    '
-          ELSE IF (S(ibry,ifield,ng)%nested) THEN
-            string(ibry)='Nes    '
-          ELSE IF (S(ibry,ifield,ng)%periodic) THEN
-            string(ibry)='Per    '
-          ELSE IF (S(ibry,ifield,ng)%radiation) THEN
-            IF (S(ibry,ifield,ng)%nudging) THEN
-              string(ibry)='RadNud '
-            ELSE
-              string(ibry)='Rad    '
+        IF (idBvar(ifield).gt.0) THEN
+          DO ibry=1,4
+            IF (S(ibry,ifield,ng)%Chapman_explicit) THEN
+              string(ibry)='Che    '
+            ELSE IF (S(ibry,ifield,ng)%Chapman_implicit) THEN
+              string(ibry)='Cha    '
+            ELSE IF (S(ibry,ifield,ng)%clamped) THEN
+              string(ibry)='Cla    '
+            ELSE IF (S(ibry,ifield,ng)%closed) THEN
+              string(ibry)='Clo    '
+            ELSE IF (S(ibry,ifield,ng)%Flather) THEN
+              string(ibry)='Fla    '
+            ELSE IF (S(ibry,ifield,ng)%gradient) THEN
+              string(ibry)='Gra    '
+            ELSE IF (S(ibry,ifield,ng)%nested) THEN
+              string(ibry)='Nes    '
+            ELSE IF (S(ibry,ifield,ng)%periodic) THEN
+              string(ibry)='Per    '
+            ELSE IF (S(ibry,ifield,ng)%radiation) THEN
+              IF (S(ibry,ifield,ng)%nudging) THEN
+                string(ibry)='RadNud '
+              ELSE
+                string(ibry)='Rad    '
+              END IF
+            ELSE IF (S(ibry,ifield,ng)%reduced) THEN
+              string(ibry)='Red    '
+            ELSE IF (S(ibry,ifield,ng)%Shchepetkin) THEN
+              string(ibry)='Shc    '
             END IF
-          ELSE IF (S(ibry,ifield,ng)%reduced) THEN
-            string(ibry)='Red    '
-          ELSE IF (S(ibry,ifield,ng)%Shchepetkin) THEN
-            string(ibry)='Shc    '
-          END IF
-        END DO
-        IF (ifield.eq.nLBCvar) newline=' '
-        WRITE (line,frmt) TRIM(Vname(1,idBvar(ifield))),                &
-     &                    string(iwest),                                &
-     &                    string(isouth),                               &
-     &                    string(ieast),                                &
-     &                    string(inorth),                               &
-     &                    newline
-        lstr=LEN_TRIM(line)
-        ie=is+lstr
-        lbc_att(is:ie)=line(1:lstr)
-        is=ie
+          END DO
+          IF (ifield.eq.nLBCvar) newline=' '
+          WRITE (line,frmt) TRIM(Vname(1,idBvar(ifield))),              &
+     &                      string(iwest),                              &
+     &                      string(isouth),                             &
+     &                      string(ieast),                              &
+     &                      string(inorth),                             &
+     &                      newline
+          lstr=LEN_TRIM(line)
+          ie=is+lstr
+          lbc_att(is:ie)=line(1:lstr)
+          is=ie
+        END IF
       END DO
 !
 !  Write attribute to NetCDF file.
@@ -892,7 +896,7 @@
       character (len=   1) :: newline
       character (len=   7) :: string(4)
       character (len=  21) :: frmt
-      character (len=  70) :: line
+      character (len= 100) :: line
       character (len=2816) :: lbc_att
 
       character (len=*), parameter :: MyFile =                          &
@@ -906,10 +910,12 @@
 !
       lvar=0
       DO ifield=1,nLBCvar
-        lvar=MAX(lvar, LEN_TRIM(Vname(1,idBvar(ifield))))
+        IF (idBvar(ifield).gt.0) THEN
+          lvar=MAX(lvar, LEN_TRIM(Vname(1,idBvar(ifield))))
+        END IF
       END DO
-      WRITE (frmt,10) lvar+4
-  10  FORMAT ("(a,':',t",i2.2,',a,a,a,a,a)')
+      WRITE (frmt,10) "(a,':',t", lvar+4, ",5a)"
+  10  FORMAT (a,i0,a)
 !
 !  Initialize attribute.
 !
@@ -948,46 +954,48 @@
 !  Build attribute string.
 !
       DO ifield=1,nLBCvar
-        DO ibry=1,4
-          IF (S(ibry,ifield,ng)%Chapman_explicit) THEN
-            string(ibry)='Che    '
-          ELSE IF (S(ibry,ifield,ng)%Chapman_implicit) THEN
-            string(ibry)='Cha    '
-          ELSE IF (S(ibry,ifield,ng)%clamped) THEN
-            string(ibry)='Cla    '
-          ELSE IF (S(ibry,ifield,ng)%closed) THEN
-            string(ibry)='Clo    '
-          ELSE IF (S(ibry,ifield,ng)%Flather) THEN
-            string(ibry)='Fla    '
-          ELSE IF (S(ibry,ifield,ng)%gradient) THEN
-            string(ibry)='Gra    '
-          ELSE IF (S(ibry,ifield,ng)%nested) THEN
-            string(ibry)='Nes    '
-          ELSE IF (S(ibry,ifield,ng)%periodic) THEN
-            string(ibry)='Per    '
-          ELSE IF (S(ibry,ifield,ng)%radiation) THEN
-            IF (S(ibry,ifield,ng)%nudging) THEN
-              string(ibry)='RadNud '
-            ELSE
-              string(ibry)='Rad    '
+        IF (idBvar(ifield).gt.0) THEN
+          DO ibry=1,4
+            IF (S(ibry,ifield,ng)%Chapman_explicit) THEN
+              string(ibry)='Che    '
+            ELSE IF (S(ibry,ifield,ng)%Chapman_implicit) THEN
+              string(ibry)='Cha    '
+            ELSE IF (S(ibry,ifield,ng)%clamped) THEN
+              string(ibry)='Cla    '
+            ELSE IF (S(ibry,ifield,ng)%closed) THEN
+              string(ibry)='Clo    '
+            ELSE IF (S(ibry,ifield,ng)%Flather) THEN
+              string(ibry)='Fla    '
+            ELSE IF (S(ibry,ifield,ng)%gradient) THEN
+              string(ibry)='Gra    '
+            ELSE IF (S(ibry,ifield,ng)%nested) THEN
+              string(ibry)='Nes    '
+            ELSE IF (S(ibry,ifield,ng)%periodic) THEN
+              string(ibry)='Per    '
+            ELSE IF (S(ibry,ifield,ng)%radiation) THEN
+              IF (S(ibry,ifield,ng)%nudging) THEN
+                string(ibry)='RadNud '
+              ELSE
+                string(ibry)='Rad    '
+              END IF
+            ELSE IF (S(ibry,ifield,ng)%reduced) THEN
+              string(ibry)='Red    '
+            ELSE IF (S(ibry,ifield,ng)%Shchepetkin) THEN
+              string(ibry)='Shc    '
             END IF
-          ELSE IF (S(ibry,ifield,ng)%reduced) THEN
-            string(ibry)='Red    '
-          ELSE IF (S(ibry,ifield,ng)%Shchepetkin) THEN
-            string(ibry)='Shc    '
-          END IF
-        END DO
-        IF (ifield.eq.nLBCvar) newline=' '
-        WRITE (line,frmt) TRIM(Vname(1,idBvar(ifield))),                &
-     &                    string(iwest),                                &
-     &                    string(isouth),                               &
-     &                    string(ieast),                                &
-     &                    string(inorth),                               &
-     &                    newline
-        lstr=LEN_TRIM(line)
-        ie=is+lstr
-        lbc_att(is:ie)=line(1:lstr)
-        is=ie
+          END DO
+          IF (ifield.eq.nLBCvar) newline=' '
+          WRITE (line,frmt) TRIM(Vname(1,idBvar(ifield))),              &
+     &                      string(iwest),                              &
+     &                      string(isouth),                             &
+     &                      string(ieast),                              &
+     &                      string(inorth),                             &
+     &                      newline
+          lstr=LEN_TRIM(line)
+          ie=is+lstr
+          lbc_att(is:ie)=line(1:lstr)
+          is=ie
+        END IF
       END DO
 !
 !  Write attribute to NetCDF file.

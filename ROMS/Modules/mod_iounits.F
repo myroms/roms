@@ -2,11 +2,11 @@
       MODULE mod_iounits
 !
 !git $Id$
-!svn $Id: mod_iounits.F 1151 2023-02-09 03:08:53Z arango $
+!svn $Id: mod_iounits.F 1215 2024-02-09 23:11:09Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2024 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                                              !
+!    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
 !  The input and output files information is stored in compact derived !
@@ -73,11 +73,12 @@
 #endif
 !    SSF       Input Sources/Sinks forcing (river runoff)              !
 !    STA       Output station data                                     !
-!    STD       Input error covariance standard deviations              !
+!    STD       Error covariance standard deviations                    !
 !                STD(1,ng)  initial conditions                         !
 !                STD(2,ng)  model error                                !
 !                STD(3,ng)  lateral open boundary conditions           !
 !                STD(4,ng)  surface forcing                            !
+!                STD(5,ng)  computed from background (output)          !
 !                                                                      !
 !  Input/output information files:                                     !
 !                                                                      !
@@ -89,6 +90,7 @@
 !  bparnam     Input biology parameters filename.                      !
 !  fbionam     Input floats biological behavior parameters filename.   !
 !  fposnam     Input initial floats positions filename.                !
+!  iparnam     Input ice parameters file name.                         !
 !  sparnam     Input sediment transport parameters filename.           !
 !  sposnam     Input station positions file name.                      !
 !  varname     Input IO variables information file name.               !
@@ -298,6 +300,7 @@
       character (len=256) :: bparnam        ! biology model parameters
       character (len=256) :: fbionam        ! floats behavior parameters
       character (len=256) :: fposnam        ! floats positions
+      character (len=256) :: iparnam        ! ice model parameters
       character (len=256) :: sparnam        ! sediment model parameters
       character (len=256) :: sposnam        ! station positions
       character (len=256) :: varname        ! I/O metadata
@@ -469,7 +472,7 @@
         allocate ( NRM(4,Ngrids) )
       END IF
       IF (.not.allocated(STD)) THEN
-        allocate ( STD(4,Ngrids) )
+        allocate ( STD(5,Ngrids) )
       END IF
 !
 !-----------------------------------------------------------------------
@@ -532,12 +535,9 @@
         STA(ng)%ncid=-1
         TLF(ng)%ncid=-1
         TLM(ng)%ncid=-1
-
         TIDE(ng)%ncid=-1
-
         NRM(1:4,ng)%ncid=-1
-        STD(1:4,ng)%ncid=-1
-
+        STD(1:5,ng)%ncid=-1
         nBCfiles(ng)=-1
         nCLMfiles(ng)=-1
         nFfiles(ng)=-1
@@ -704,9 +704,9 @@
           NRM(1:4,ng)%base(i:i)=blank
           NRM(1:4,ng)%name(i:i)=blank
 
-          STD(1:4,ng)%head(i:i)=blank
-          STD(1:4,ng)%base(i:i)=blank
-          STD(1:4,ng)%name(i:i)=blank
+          STD(1:5,ng)%head(i:i)=blank
+          STD(1:5,ng)%base(i:i)=blank
+          STD(1:5,ng)%name(i:i)=blank
         END DO
       END DO
 !

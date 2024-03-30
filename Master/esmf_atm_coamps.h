@@ -3,11 +3,11 @@
 #if defined COAMPS_COUPLING && defined ESMF_LIB
 !
 !git $Id$
-!svn $Id: esmf_atm_coamps.h 1151 2023-02-09 03:08:53Z arango $
+!svn $Id: esmf_atm_coamps.h 1218 2024-02-24 02:32:17Z arango $
 !=======================================================================
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2024 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license         Hernan G. Arango     !
-!    See License_ROMS.txt                                              !
+!    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
 !  This module sets COAMPS as the atmospheric model gridded component  !
@@ -2891,7 +2891,7 @@
                 dat_sst=MISSING_dp
               END IF
               got_sst(1)=.TRUE.
-              ifield(1)=ifld
+              ifield(1)=id
               fld_name(1)=TRIM(FieldName)
               DO j=JminP,JmaxP
                 DO i=IminP,ImaxP
@@ -2921,7 +2921,7 @@
                 dat_sst=MISSING_dp
               END IF
               got_sst(2)=.TRUE.
-              ifield(2)=ifld
+              ifield(2)=id
               fld_name(2)=TRIM(FieldName)
               DO j=JminP,JmaxP
                 DO i=IminP,ImaxP
@@ -3078,7 +3078,7 @@
 !  Debugging: write out import field into a NetCDF file.
 !
         IF ((DebugLevel.ge.3).and.                                      &
-     &      MODELS(Iatmos)%ImportField(ifld)%debug_write) THEN
+     &      MODELS(Iatmos)%ImportField(id)%debug_write) THEN
           WRITE (ofile,40) ng, TRIM(ImportNameList(ifld)),              &
      &                     year, month, day, hour, minutes, seconds
           CALL ESMF_FieldWrite (field,                                  &

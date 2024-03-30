@@ -1,11 +1,11 @@
       MODULE roms_kernel_mod
 !
 !git $Id$
-!svn $Id: i4dvar_roms.h 1166 2023-05-17 20:11:58Z arango $
+!svn $Id: i4dvar_roms.h 1212 2024-01-26 20:59:21Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group       Andrew M. Moore   !
+!  Copyright (c) 2002-2024 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                                              !
+!    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
 !  ROMS Strong Constraint 4-Dimensional Variational Data Assimilation  !
@@ -215,6 +215,12 @@
       LgetNRM=.TRUE.
 
       DO ng=1,Ngrids
+#ifdef STD_MODEL
+        LdefSTD(ng)=.TRUE.
+        LwrtSTD(ng)=.TRUE.
+#else
+        LreadSTD(ng)=.TRUE.
+#endif
         CALL prior_error (ng)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         SetGridConfig(ng)=.FALSE.

@@ -4,11 +4,11 @@
 #ifdef RBL4DVAR
 !
 !git $Id$
-!svn $Id: rbl4dvar.F 1151 2023-02-09 03:08:53Z arango $
+!svn $Id: rbl4dvar.F 1213 2024-01-29 22:21:01Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group       Andrew M. Moore   !
+!  Copyright (c) 2002-2024 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                                              !
+!    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
 !  This module splits the RBL4D-Var data assimilation algorithm into   !
@@ -91,78 +91,87 @@
       USE mod_stepping
 !
 # ifdef ADJUST_BOUNDARY
-      USE mod_boundary,      ONLY : initialize_boundary
+      USE mod_boundary,       ONLY : initialize_boundary
 # endif
-      USE mod_forces,        ONLY : initialize_forces
-      USE mod_mixing,        ONLY : initialize_mixing
-      USE mod_ocean,         ONLY : initialize_ocean
+      USE mod_forces,         ONLY : initialize_forces
+      USE mod_mixing,         ONLY : initialize_mixing
+      USE mod_ocean,          ONLY : initialize_ocean
 !
 # ifdef SPLIT_4DVAR
-      USE ad_def_his_mod,    ONLY : ad_def_his
+      USE ad_def_his_mod,     ONLY : ad_def_his
 # endif
-      USE ad_wrt_his_mod,    ONLY : ad_wrt_his
+      USE ad_wrt_his_mod,     ONLY : ad_wrt_his
+# ifdef STD_MODEL
+      USE background_std_mod, ONLY : background_std
+# endif
 # ifndef RPCG
-      USE congrad_mod,       ONLY : congrad
+      USE congrad_mod,        ONLY : congrad
 #  ifdef SPLIT_4DVAR
-      USE congrad_mod,       ONLY : cg_read_congrad
+      USE congrad_mod,        ONLY : cg_read_congrad
 #  endif
 # endif
 # if defined POSTERIOR_ERROR_I || defined POSTERIOR_ERROR_F || \
      defined POSTERIOR_EOFS
-      USE convolve_mod,      ONLY : convolve
+      USE convolve_mod,       ONLY : convolve
 # endif
-      USE convolve_mod,      ONLY : error_covariance
+      USE convolve_mod,       ONLY : error_covariance
 # if defined POSTERIOR_ERROR_I || defined POSTERIOR_ERROR_F
-      USE def_error_mod,     ONLY : def_error
+      USE def_error_mod,      ONLY : def_error
 # endif
 # if defined POSTERIOR_EOFS    || defined POSTERIOR_ERROR_I || \
      defined POSTERIOR_ERROR_F
-      USE def_hessian_mod,   ONLY : def_hessian
+      USE def_hessian_mod,    ONLY : def_hessian
 # endif
 # ifdef SPLIT_4DVAR
-      USE def_ini_mod,       ONLY : def_ini
+      USE def_ini_mod,        ONLY : def_ini
 # endif
-      USE def_impulse_mod,   ONLY : def_impulse
-      USE def_mod_mod,       ONLY : def_mod
-      USE def_norm_mod,      ONLY : def_norm
-      USE get_state_mod,     ONLY : get_state
+      USE def_impulse_mod,    ONLY : def_impulse
+      USE def_mod_mod,        ONLY : def_mod
+      USE def_norm_mod,       ONLY : def_norm
+# ifdef STD_MODEL
+      USE def_std_mod,        ONLY : def_std
+# endif
+      USE get_state_mod,      ONLY : get_state
 # ifdef POSTERIOR_ERROR_F
-      USE ini_adjust_mod,    ONLY : load_TLtoAD
+      USE ini_adjust_mod,     ONLY : load_TLtoAD
 # endif
-      USE normalization_mod, ONLY : normalization
+      USE normalization_mod,  ONLY : normalization
 # if defined POSTERIOR_ERROR_I || defined POSTERIOR_ERROR_F || \
      defined POSTERIOR_EOFS
-      USE posterior_mod,     ONLY : posterior
+      USE posterior_mod,      ONLY : posterior
 # endif
 #  if defined POSTERIOR_ERROR_I || defined POSTERIOR_ERROR_F
-      USE posterior_var_mod, ONLY : posterior_var
+      USE posterior_var_mod,  ONLY : posterior_var
 #  endif
 # ifdef RPCG
-      USE rpcg_lanczos_mod,  ONLY : rpcg_lanczos
+      USE rpcg_lanczos_mod,   ONLY : rpcg_lanczos
 #  ifdef SPLIT_4DVAR
-      USE rpcg_lanczos_mod,  ONLY : cg_read_rpcg
+      USE rpcg_lanczos_mod,   ONLY : cg_read_rpcg
 #  endif
 # endif
-      USE strings_mod,       ONLY : FoundError
-      USE tl_def_ini_mod,    ONLY : tl_def_ini
-      USE tl_wrt_ini_mod,    ONLY : tl_wrt_ini
+      USE strings_mod,        ONLY : FoundError
+      USE tl_def_ini_mod,     ONLY : tl_def_ini
+      USE tl_wrt_ini_mod,     ONLY : tl_wrt_ini
 # ifdef RPCG
-      USE wrt_aug_imp_mod,   ONLY : wrt_aug_imp
+      USE wrt_aug_imp_mod,    ONLY : wrt_aug_imp
 # endif
 # if defined POSTERIOR_ERROR_I || defined POSTERIOR_ERROR_F
-      USE wrt_error_mod,     ONLY : wrt_error
+      USE wrt_error_mod,      ONLY : wrt_error
 # endif
 # ifdef POSTERIOR_ERROR_F
-      USE wrt_hessian_mod,   ONLY : wrt_hessian
+      USE wrt_hessian_mod,    ONLY : wrt_hessian
 # endif
-      USE wrt_impulse_mod,   ONLY : wrt_impulse
-      USE wrt_ini_mod,       ONLY : wrt_ini
+      USE wrt_impulse_mod,    ONLY : wrt_impulse
+      USE wrt_ini_mod,        ONLY : wrt_ini
 # if defined ADJUST_STFLUX || defined ADJUST_WSTRESS || \
      defined ADJUST_BOUNDARY
-      USE wrt_ini_mod,       ONLY : wrt_frc_AD
+      USE wrt_ini_mod,        ONLY : wrt_frc_AD
+# endif
+# ifdef STD_MODEL
+      USE wrt_std_mod,        ONLY : wrt_std
 # endif
 # if defined BALANCE_OPERATOR && defined ZETA_ELLIPTIC
-      USE zeta_balance_mod,  ONLY : balance_ref, biconj
+      USE zeta_balance_mod,   ONLY : balance_ref, biconj
 # endif
 !
       implicit none
@@ -219,6 +228,10 @@
 !  Local variable declarations.
 !
       integer :: lstr, ng, tile
+# ifdef STD_MODEL
+      integer :: Lstd
+# endif
+
       integer :: Fcount, Tindex
 # ifdef PROFILE
       integer :: thread
@@ -295,6 +308,41 @@
 # endif
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
       END DO
+
+# ifdef STD_MODEL
+!
+!  Estimate initial conditions standard deviation fields for the
+!  background error covariance using the method of Mogensen et al.
+!  (2012), which assumes that the background errors are proportional
+!  to the vertical derivatives of the state. The error have simmilar
+!  shape as the prior profile but iwth a displacement over the water
+!  column.
+!
+      IF (my_outer.eq.0) THEN
+        Lstd=1                          ! time index in error arrays
+        DO ng=1,Ngrids
+          DO tile=first_tile(ng),last_tile(ng),+1
+            CALL background_std (ng, tile, Tindex, Lstd)
+          END DO
+        END DO
+!
+!  Write out estimated background standard deviation fields.
+!
+        DO ng=1,Ngrids
+          IF (LwrtSTD(ng)) THEN
+            STD(5,ng)%Rindex=0
+            Fcount=STD(5,ng)%load
+            STD(5,ng)%Nrec(Fcount)=1
+#  ifdef DISTRIBUTE
+            CALL wrt_std (ng, MyRank, Lstd)
+#  else
+            CALL wrt_std (ng, -1, Lstd)
+#  endif
+            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+          END IF
+        END DO
+      END IF
+# endif
 !
 !  Set nonlinear output history file as the initial basic state
 !  trajectory.
@@ -341,7 +389,7 @@
       END DO
 # endif
 !
- 10   FORMAT (a,'_outer',i0,'.nc')
+  10  FORMAT (a,'_outer',i0,'.nc')
 !
       RETURN
       END SUBROUTINE background_initialize
@@ -2597,10 +2645,16 @@
 !  Initial conditions standard deviation. They are loaded in Tindex=1
 !  of the e_var(...,Tindex) state variables.
 !
-      STDrec=1
-      Tindex=1
-      CALL get_state (ng, 10, 10, STD(1,ng), STDrec, Tindex)
-      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+      IF (LreadSTD(ng)) THEN
+        STDrec=1
+        Tindex=1
+# ifdef STD_MODEL
+        CALL get_state (ng, 10, 10, STD(5,ng), STDrec, Tindex)
+# else
+        CALL get_state (ng, 10, 10, STD(1,ng), STDrec, Tindex)
+# endif
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+      END IF
 !
 !  Model error standard deviation. They are loaded in Tindex=2
 !  of the e_var(...,Tindex) state variables.
@@ -2630,6 +2684,19 @@
       Tindex=1
       CALL get_state (ng, 13, 13, STD(4,ng), STDrec, Tindex)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+# endif
+
+# ifdef STD_MODEL
+!
+!  If computing the standard deviation (STD) directly from the
+!  background (prior) field as an alternative to climatological
+!  read from the input NetCDF file, define the output STD NetCDF
+!  file.
+!
+      IF (LdefSTD(ng)) THEN
+        CALL def_std (ng)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+      END IF
 # endif
 !
 !-----------------------------------------------------------------------

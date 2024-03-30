@@ -2,11 +2,11 @@
       MODULE nf_fread4d_mod
 !
 !git $Id$
-!svn $Id: nf_fread4d.F 1159 2023-03-24 23:49:03Z arango $
+!svn $Id: nf_fread4d.F 1210 2024-01-03 22:03:03Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2024 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                                              !
+!    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
 !  This function reads in a generic floating point 4D array from an    !

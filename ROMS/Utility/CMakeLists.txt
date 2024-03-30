@@ -1,17 +1,17 @@
 # git $Id$
-# svn $Id: CMakeLists.txt 1163 2023-04-02 15:36:10Z arango $
+# svn $Id: CMakeLists.txt 1214 2024-01-30 17:35:25Z arango $
 #:::::::::::::::::::::::::::::::::::::::::::::::::::::: David Robertson :::
-# Copyright (c) 2002-2023 The ROMS/TOMS Group                           :::
+# Copyright (c) 2002-2024 The ROMS/TOMS Group                           :::
 #   Licensed under a MIT/X style license                                :::
-#   See License_ROMS.txt                                                :::
+#   See License_ROMS.md                                                 :::
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 #
 # Source code list for sub-directory "ROMS/Utility"
 
 list( APPEND _files
-      ROMS/Utility/abort.F
       ROMS/Utility/ADfromTL.F
       ROMS/Utility/array_modes.F
+      ROMS/Utility/background_std.F
       ROMS/Utility/back_cost.F
       ROMS/Utility/cgradient.F
       ROMS/Utility/checkadj.F
@@ -44,6 +44,7 @@ list( APPEND _files
       ROMS/Utility/def_rst.F
       ROMS/Utility/def_state.F
       ROMS/Utility/def_station.F
+      ROMS/Utility/def_std.F
       ROMS/Utility/def_tides.F
       ROMS/Utility/def_var.F
       ROMS/Utility/destroy.F
@@ -83,6 +84,7 @@ list( APPEND _files
       ROMS/Utility/inquiry.F
       ROMS/Utility/interpolate.F
       ROMS/Utility/lanc_resid.F
+      ROMS/Utility/lapack_mod.F
       ROMS/Utility/lbc.F
       ROMS/Utility/lubksb.F
       ROMS/Utility/ludcmp.F
@@ -182,6 +184,7 @@ list( APPEND _files
       ROMS/Utility/wrt_rst.F
       ROMS/Utility/wrt_state.F
       ROMS/Utility/wrt_station.F
+      ROMS/Utility/wrt_std.F
       ROMS/Utility/wrt_tides.F
       ROMS/Utility/yaml_parser.F
       ROMS/Utility/zeta_balance.F

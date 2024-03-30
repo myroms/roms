@@ -1,17 +1,17 @@
-# **Regional Ocean Modeling System (ROMS)**
+# Regional Ocean Modeling System (ROMS)
 
 ![ROMS_Picture](https://github.com/myroms/roms/assets/23062912/d72765ed-9d55-4109-84fc-c51b05832adb)
 
-# **License**
+# License
 
-**Copyright (c) 2002-2023 The ROMS/TOMS Group**
+**Copyright (c) 2002-2024 The ROMS/TOMS Group**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 # Overview
 
 **ROMS** solves the free-surface, hydrostatic, flux form of the primitive
-equations over variable bathymetry using stretched terrain-following in the
+equations over variable bathymetry using stretched terrain following in the
 vertical and orthogonal curvilinear coordinates in the horizontal. The finite
 volume grid is discretized on a staggered Arakawa C-grid. Detailed information
 about its governing equations, numerical discretization, algorithms, usage, and
@@ -33,9 +33,10 @@ The State University of New Jersey, New Brunswick, New Jersey, USA. Currently, t
 **git** repository contains the following branches:
 
 - **main**: Tagged versions and the latest stable release version of **ROMS**
-- **develop**: Main developing branch of **ROMS**. Not recommended for public
- consumption but passes the internal tests. It is intended for **ROMS** superusers
- and beta testers.
+- **develop**: Main developing branch of **ROMS**. It contains the model's
+  latest corrections, updates, and minor evolutions. It is a stable branch
+  that passes selected internal tests. It is the parent to other feature
+  branches describing new options and algorithms.
 - **feature branches**: Research and new development branches recommended to
 superusers and beta testers.
 
@@ -57,7 +58,7 @@ access the **ROMS** forum, email notifications for bugs/updates, technical
 support from the community, **trac** code maintenance history, tutorials, workshops,
 and publications. The user's **ROMS** forum has over 24,000 posts with helpful
 information. Technical support is limited to registered users. We **do not**
-provide user technical support, usage, or answers in **GitHub**.  
+provide user technical support, usage, or answers in **GitHub**.
 
 This **GitHub** version becomes the official **git** repository for downloading,
 updating, improving, and correcting defects/bugs to the **ROMS** source code.

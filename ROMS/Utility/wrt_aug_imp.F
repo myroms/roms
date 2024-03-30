@@ -3,11 +3,11 @@
 #if defined WEAK_CONSTRAINT && defined RPCG
 !
 !git $Id$
-!svn $Id: wrt_aug_imp.F 1151 2023-02-09 03:08:53Z arango $
+!svn $Id: wrt_aug_imp.F 1210 2024-01-03 22:03:03Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2024 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                                              !
+!    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
 !  This routine writes augmented impulse state variables using the     !
@@ -116,6 +116,10 @@
 !
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
+!  Report.
+!
+      IF (Master)  WRITE (stdout,10) Iout, TRIM(TLF(ng)%name)
+!
 !  Set grid type factor to write full (gfactor=1) fields or water
 !  points (gfactor=-1) fields only.
 !
@@ -129,7 +133,7 @@
 !
       scale=1.0_dp
       gtype=gfactor*r2dvar
-      status=nf_fwrite2d(ng, model, TLF(ng)%ncid,                       &
+      status=nf_fwrite2d(ng, model, TLF(ng)%ncid, idZtlf,               &
      &                   TLF(ng)%Vid(idZtlf),                           &
      &                   Iout, gtype,                                   &
      &                   LBi, UBi, LBj, UBj, scale,                     &
@@ -139,7 +143,7 @@
      &                   OCEAN(ng) % tl_zeta(:,:,Iinp))
       IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
         IF (Master) THEN
-          WRITE (stdout,10) TRIM(Vname(1,idZtlf)), Iout,                &
+          WRITE (stdout,20) TRIM(Vname(1,idZtlf)), Iout,                &
      &                      TRIM(TLF(ng)%name)
         END IF
         exit_flag=3
@@ -153,7 +157,7 @@
 !
       scale=1.0_dp
       gtype=gfactor*u2dvar
-      status=nf_fwrite2d(ng, model, TLF(ng)%ncid,                       &
+      status=nf_fwrite2d(ng, model, TLF(ng)%ncid, idUbtf,               &
      &                   TLF(ng)%Vid(idUbtf),                           &
      &                   Iout, gype,                                    &
      &                   LBi, UBi, LBj, UBj, scale,                     &
@@ -163,7 +167,7 @@
      &                   OCEAN(ng) % tl_ubar(:,:,Iinp))
       IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
         IF (Master) THEN
-          WRITE (stdout,10) TRIM(Vname(1,idUbtf)), Iout,                &
+          WRITE (stdout,20) TRIM(Vname(1,idUbtf)), Iout,                &
      &                      TRIM(TLF(ng)%name)
         END IF
         exit_flag=3
@@ -175,7 +179,7 @@
 !
       scale=1.0_dp
       gtype=gfactor*v2dvar
-      status=nf_fwrite2d(ng, model, TLF(ng)%ncid,                       &
+      status=nf_fwrite2d(ng, model, TLF(ng)%ncid, idVbtf,               &
      &                   TLF(ng)%Vid(idVbtf),                           &
      &                   Iout, gtype,                                   &
      &                   LBi, UBi, LBj, UBj, scale,                     &
@@ -185,7 +189,7 @@
      &                   OCEAN(ng) % tl_vbar(:,:,Iinp))
       IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
         IF (Master) THEN
-          WRITE (stdout,10) TRIM(Vname(1,idVbtf)), Iout,                &
+          WRITE (stdout,20) TRIM(Vname(1,idVbtf)), Iout,                &
      &                      TRIM(TLF(ng)%name)
         END IF
         exit_flag=3
@@ -199,7 +203,7 @@
 !
       scale=1.0_dp
       gtype=gfactor*u3dvar
-      status=nf_fwrite3d(ng, model, TLF(ng)%ncid,                       &
+      status=nf_fwrite3d(ng, model, TLF(ng)%ncid, idUtlf,               &
      &                   TLF(ng)%Vid(idUtlf),                           &
      &                   Iout, gtype,                                   &
      &                   LBi, UBi, LBj, UBj, 1, N(ng), scale,           &
@@ -209,7 +213,7 @@
      &                   OCEAN(ng) % tl_u(:,:,:,Iinp))
       IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
         IF (Master) THEN
-          WRITE (stdout,10) TRIM(Vname(1,idUtlf)), Iout,                &
+          WRITE (stdout,20) TRIM(Vname(1,idUtlf)), Iout,                &
      &                      TRIM(TLF(ng)%name)
         END IF
         exit_flag=3
@@ -221,7 +225,7 @@
 !
       scale=1.0_dp
       gtype=gfactor*v3dvar
-      status=nf_fwrite3d(ng, model, TLF(ng)%ncid,                       &
+      status=nf_fwrite3d(ng, model, TLF(ng)%ncid, idVtlf,               &
      &                   TLF(ng)%Vid(idVtlf),                           &
      &                   Iout, gtype,                                   &
      &                   LBi, UBi, LBj, UBj, 1, N(ng), scale,           &
@@ -231,7 +235,7 @@
      &                   OCEAN(ng) % tl_v(:,:,:,Iinp))
       IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
         IF (Master) THEN
-          WRITE (stdout,10) TRIM(Vname(1,idVtlf)), Iout,                &
+          WRITE (stdout,20) TRIM(Vname(1,idVtlf)), Iout,                &
      &                      TRIM(TLF(ng)%name)
         END IF
         exit_flag=3
@@ -244,7 +248,7 @@
       scale=1.0_dp
       gtype=gfactor*r3dvar
       DO itrc=1,NT(ng)
-        status=nf_fwrite3d(ng, model, TLF(ng)%ncid,                     &
+        status=nf_fwrite3d(ng, model, TLF(ng)%ncid, idTtlf(itrc),       &
      &                     TLF(ng)%Tid(itrc),                           &
      &                     Iout, gtype,                                 &
      &                     LBi, UBi, LBj, UBj, 1, N(ng), scale,         &
@@ -254,7 +258,7 @@
      &                     OCEAN(ng) % tl_t(:,:,:,Iinp,itrc))
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idTtlf(itrc))), Iout,        &
+            WRITE (stdout,20) TRIM(Vname(1,idTtlf(itrc))), Iout,        &
      &                        TRIM(TLF(ng)%name)
           END IF
           exit_flag=3
@@ -271,14 +275,12 @@
 !
       CALL netcdf_sync (ng, model, TLF(ng)%name, TLF(ng)%ncid)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-
-      IF (Master)  WRITE (stdout,20) Iout, TRIM(TLF(ng)%name)
 !
-  10  FORMAT (/,' WRT_AUG_IMP_NF90 - error while writing variable: ',a, &
+  10  FORMAT (2x,'WRT_AUG_IMP_NF90 - writing augmented adjoint',        &
+     &        ' impulses, record: ',i0,/,22x,'file: ',a)
+  20  FORMAT (/,' WRT_AUG_IMP_NF90 - error while writing variable: ',a, &
      &        2x,'at time record = ',i0,                                &
      &        /,20x,'into NetCDF file: ',a)
-  20  FORMAT (2x,'WRT_AUG_IMP_NF90 - wrote augmented adjoint',          &
-     &        ' impulses, record: ',i0,/,22x,'file: ',a)
 !
       RETURN
       END SUBROUTINE wrt_aug_imp_nf90
@@ -318,6 +320,10 @@
 !
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
+!  Report.
+!
+      IF (Master)  WRITE (stdout,20) Iout, TRIM(TLF(ng)%name)
+!
 !  Process free-surface weak-constraint impulse forcing.
 !
       scale=1.0_dp
@@ -327,7 +333,7 @@
         ioDesc => ioDesc_sp_r2dvar(ng)
       END IF
 !
-      status=nf_fwrite2d(ng, model, TLF(ng)%pioFile,                    &
+      status=nf_fwrite2d(ng, model, TLF(ng)%pioFile, idZtlf,            &
      &                   TLF(ng)%pioVar(idZtlf), Iout,                  &
      &                   ioDesc,                                        &
      &                   LBi, UBi, LBj, UBj, scale,                     &
@@ -337,7 +343,7 @@
      &                   OCEAN(ng) % tl_zeta(:,:,Iinp))
       IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
         IF (Master) THEN
-          WRITE (stdout,10) TRIM(Vname(1,idZtlf)), Iout,                &
+          WRITE (stdout,20) TRIM(Vname(1,idZtlf)), Iout,                &
      &                      TRIM(TLF(ng)%name)
         END IF
         exit_flag=3
@@ -356,7 +362,7 @@
         ioDesc => ioDesc_sp_u2dvar(ng)
       END IF
 !
-      status=nf_fwrite2d(ng, model, TLF(ng)%pioFile,                    &
+      status=nf_fwrite2d(ng, model, TLF(ng)%pioFile, idUbtf,            &
      &                   TLF(ng)%pioVar(idUbtf), Iout,                  &
      &                   ioDesc,                                        &
      &                   LBi, UBi, LBj, UBj, scale,                     &
@@ -366,7 +372,7 @@
      &                   OCEAN(ng) % tl_ubar(:,:,Iinp))
       IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
         IF (Master) THEN
-          WRITE (stdout,10) TRIM(Vname(1,idUbtf)), Iout,                &
+          WRITE (stdout,20) TRIM(Vname(1,idUbtf)), Iout,                &
      &                      TRIM(TLF(ng)%name)
         END IF
         exit_flag=3
@@ -383,7 +389,7 @@
         ioDesc => ioDesc_sp_v2dvar(ng)
       END IF
 !
-      status=nf_fwrite2d(ng, model, TLF(ng)%pioFile,                    &
+      status=nf_fwrite2d(ng, model, TLF(ng)%pioFile, idVbtf,            &
      &                   TLF(ng)%pioVar(idVbtf), Iout,                  &
      &                   ioDesc,                                        &
      &                   LBi, UBi, LBj, UBj, scale,                     &
@@ -393,7 +399,7 @@
      &                   OCEAN(ng) % tl_vbar(:,:,Iinp))
       IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
         IF (Master) THEN
-          WRITE (stdout,10) TRIM(Vname(1,idVbtf)), Iout,                &
+          WRITE (stdout,20) TRIM(Vname(1,idVbtf)), Iout,                &
      &                      TRIM(TLF(ng)%name)
         END IF
         exit_flag=3
@@ -412,7 +418,7 @@
         ioDesc => ioDesc_sp_u3dvar(ng)
       END IF
 !
-      status=nf_fwrite3d(ng, model, TLF(ng)%pioFile,                    &
+      status=nf_fwrite3d(ng, model, TLF(ng)%pioFile, idUtlf,            &
      &                   TLF(ng)%pioVar(idUtlf), Iout,                  &
      &                   ioDesc,                                        &
      &                   LBi, UBi, LBj, UBj, 1, N(ng), scale,           &
@@ -422,7 +428,7 @@
      &                   OCEAN(ng) % tl_u(:,:,:,Iinp))
       IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
         IF (Master) THEN
-          WRITE (stdout,10) TRIM(Vname(1,idUtlf)), Iout,                &
+          WRITE (stdout,20) TRIM(Vname(1,idUtlf)), Iout,                &
      &                      TRIM(TLF(ng)%name)
         END IF
         exit_flag=3
@@ -439,7 +445,7 @@
         ioDesc => ioDesc_sp_v3dvar(ng)
       END IF
 !
-      status=nf_fwrite3d(ng, model, TLF(ng)%pioFile,                    &
+      status=nf_fwrite3d(ng, model, TLF(ng)%pioFile, idVtlf,            &
      &                   TLF(ng)%pioVar(idVtlf), Iout,                  &
      &                   ioDesc,                                        &
      &                   LBi, UBi, LBj, UBj, 1, N(ng), scale,           &
@@ -449,7 +455,7 @@
      &                   OCEAN(ng) % tl_v(:,:,:,Iinp))
       IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
         IF (Master) THEN
-          WRITE (stdout,10) TRIM(Vname(1,idVtlf)), Iout,                &
+          WRITE (stdout,20) TRIM(Vname(1,idVtlf)), Iout,                &
      &                      TRIM(TLF(ng)%name)
         END IF
         exit_flag=3
@@ -467,7 +473,7 @@
           ioDesc => ioDesc_sp_r3dvar(ng)
         END IF
 !
-        status=nf_fwrite3d(ng, model, TLF(ng)%pioFile,                  &
+        status=nf_fwrite3d(ng, model, TLF(ng)%pioFile, idTtlf(itrc),    &
      &                     TLF(ng)%pioTrc(itrc), Iout,                  &
      &                     ioDesc,                                      &
      &                     LBi, UBi, LBj, UBj, 1, N(ng), scale,         &
@@ -477,7 +483,7 @@
      &                     OCEAN(ng) % tl_t(:,:,:,Iinp,itrc))
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idTtlf(itrc))), Iout,        &
+            WRITE (stdout,20) TRIM(Vname(1,idTtlf(itrc))), Iout,        &
      &                        TRIM(TLF(ng)%name)
           END IF
           exit_flag=3
@@ -494,14 +500,12 @@
 !
       CALL pio_netcdf_sync (ng, model, TLF(ng)%name, TLF(ng)%pioFile)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-
-      IF (Master)  WRITE (stdout,20) Iout, TRIM(TLF(ng)%name)
 !
-  10  FORMAT (/,' WRT_AUG_IMP_PIO - error while writing variable: ',a,  &
+  10  FORMAT (2x,'WRT_AUG_IMP_PIO  - writing augmented adjoint',        &
+     &        ' impulses, record: ',i0,/,22x,'file: ',a)
+  20  FORMAT (/,' WRT_AUG_IMP_PIO - error while writing variable: ',a,  &
      &        2x,'at time record = ',i0,                                &
      &        /,20x,'into NetCDF file: ',a)
-  20  FORMAT (2x,'WRT_AUG_IMP_PIO  - wrote augmented adjoint',          &
-     &        ' impulses, record: ',i0,/,22x,'file: ',a)
 !
       RETURN
       END SUBROUTINE wrt_aug_imp_pio

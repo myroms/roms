@@ -1,9 +1,9 @@
 # git $Id$
-# svn $Id: roms_functions.cmake 1167 2023-06-03 00:34:07Z arango $
+# svn $Id: roms_functions.cmake 1210 2024-01-03 22:03:03Z arango $
 #:::::::::::::::::::::::::::::::::::::::::::::::::::::: David Robertson :::
-# Copyright (c) 2002-2023 The ROMS/TOMS Group                           :::
+# Copyright (c) 2002-2024 The ROMS/TOMS Group                           :::
 #   Licensed under a MIT/X style license                                :::
-#   See License_ROMS.txt                                                :::
+#   See License_ROMS.md                                                 :::
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 #
 # Functions used in CMake to overcome its rudimentary capabilities.
@@ -37,9 +37,9 @@ find_program(
   REQUIRED
 )
 
-message( STATUS "CMAKE_SOURCE_DIR=${CMAKE_SOURCE_DIR}" )
-message( STATUS "CMAKE_CURRENT_SOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR}" )
-message( STATUS "CPP_CLEAN=${CPP_CLEAN}" )
+message( STATUS "CMAKE_SOURCE_DIR = ${CMAKE_SOURCE_DIR}" )
+message( STATUS "CMAKE_CURRENT_SOURCE_DIR = ${CMAKE_CURRENT_SOURCE_DIR}" )
+message( STATUS "CPP_CLEAN = ${CPP_CLEAN}" )
 
 ###########################################################################
 # The "preprocess_fortran" function teaches CMake how to use CPP to

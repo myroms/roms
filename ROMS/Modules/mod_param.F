@@ -2,11 +2,11 @@
       MODULE mod_param
 !
 !git $Id$
-!svn $Id: mod_param.F 1178 2023-07-11 17:50:57Z arango $
+!svn $Id: mod_param.F 1215 2024-02-09 23:11:09Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2024 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                                              !
+!    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
 !  Grid parameters:                                                    !
@@ -410,7 +410,9 @@
 !-----------------------------------------------------------------------
 !
       TYPE T_STATS
-        real(r8) :: count         ! processed values count
+        integer(i8b) :: checksum  ! bit sum hash
+        integer      :: count     ! processed values count
+
         real(r8) :: min           ! minimum value
         real(r8) :: max           ! maximum value
         real(r8) :: avg           ! arithmetic mean
@@ -1469,6 +1471,9 @@
         Jm(ng)=Mm(ng)+J_padd
         NT(ng)=NAT+NBT+NST+NPT
 #ifdef FLOATS
+!
+!  Number of floats variables.
+!
 # ifdef FLOAT_OYSTER
 #  ifdef FLOAT_VWALK
         NFV(ng)=NT(ng)+18
@@ -1483,17 +1488,38 @@
 #  endif
 # endif
 #endif
-        NSV(ng)=NT(ng)+5
-#ifdef ADJUST_WSTRESS
-        NSV(ng)=NSV(ng)+2
+!
+!  Number of state variables. The order is irrelevant for determining
+!  the "NSV" dimension.
+!
+#ifdef SOLVE3D
+        NSV(ng)=5+NT(ng)         ! zeta, ubar, vbar, u, v, Tvar(1:MT)
+# ifdef ADJUST_STFLUX
+        NSV(ng)=NSV(ng)+NT(ng)   ! Tsur(1:MT)
+# endif
+#else
+        NSV(ng)=3                ! zeta, ubar, vbar
 #endif
-#ifdef ADJUST_STFLUX
-        NSV(ng)=NSV(ng)+NT(ng)
+#ifdef ADJUST_WSTRESS
+        NSV(ng)=NSV(ng)+2        ! Ustr, Vstr
+#endif
+#ifdef WEC
+        NSV(ng)=NSV(ng)+2        ! ubar_stokes, vbar_stokes
+# if defined SOLVE3D
+        NSV(ng)=NSV(ng)+2        ! u_stokes, v_stokes
+# endif
+#endif
+#ifdef SOLVE3D
+# if defined GLS_MIXING || defined MY25_MIXING
+        NSV(ng)=NSV(ng)+1        ! TKE
+# endif
+        NSV(ng)=NSV(ng)+1        ! W
 #endif
       END DO
 !
-!  Set the maximum number of tracer between all nested grids. It cannot
-!  be zero.
+!  Set the maximum number of tracers between all nested grids. It cannot
+!  be zero. Usually, NAT=2 (temperature and salinity), but some Test
+!  Cases do not include salinity.
 !
       MT=MAX(1,MAX(NAT,MAXVAL(NT)))
 !
@@ -1501,16 +1527,35 @@
 !  Allocate Lateral Boundary Conditions switches structure.
 !-----------------------------------------------------------------------
 !
+!  Here, "nLBCvar" is larger than needed because it includes unused
+!  state variables that need to be included because of their indices
+!  are in a particular order due to data assimilation variables
+!  associated with the state vector.
+!
 #ifdef SOLVE3D
       nLBCvar=5+MT                 ! zeta, ubar, vbar, u, v, Tvar(1:MT)
-# if defined GLS_MIXING || defined MY25_MIXING
-      nLBCvar=nLBCvar+1            ! TKE
-# endif
-# ifdef WEC
-      nLBCvar=nLBCvar+4            ! (ubar, vbar, u, v)_stokes
+# ifdef ADJUST_STFLUX
+      nLBCvar=nLBCvar+MT           ! Tsur(1:MT); unused
 # endif
 #else
       nLBCvar=3                    ! zeta, ubar, vbar
+#endif
+#ifdef ADJUST_WSTRESS
+      nLBCvar=nLBCvar+2            ! Ustr, Vstr; unused
+#endif
+#ifdef WEC
+      nLBCvar=nLBCvar+2            ! ubar_stokes, vbar_stokes
+# ifdef SOLVE3D
+      nLBCvar=nLBCvar+2            ! u_stokes, v_stokes
+# endif
+#endif
+#ifdef SOLVE3D
+# if defined GLS_MIXING || defined MY25_MIXING
+      nLBCvar=nLBCvar+1            ! TKE
+# endif
+#endif
+#ifdef ICE_MODEL
+      nLBCvar=nLBCvar+11           ! ICE varibles up to isVice=11
 #endif
 !
       IF (.not.allocated(LBC)) THEN

@@ -4,11 +4,11 @@
 #if defined CICE_COUPLING && defined ESMF_LIB
 !
 !git $Id$
-!svn $Id: esmf_ice_cice.h 1151 2023-02-09 03:08:53Z arango $
+!svn $Id: esmf_ice_cice.h 1218 2024-02-24 02:32:17Z arango $
 !=======================================================================
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2024 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license         Hernan G. Arango     !
-!    See License_ROMS.txt                         Ufuk Utku Turuncoglu !
+!    See License_ROMS.md                          Ufuk Utku Turuncoglu !
 !=======================================================================
 !                                                                      !
 !  This module sets CICE as the sea-ice model gridded component        !
@@ -2712,7 +2712,7 @@
 !  Debugging: write out import field into NetCDF file.
 !
         IF ((DebugLevel.ge.3).and.                                      &
-     &      MODELS(Iseaice)%ImportField(ifld)%debug_write) THEN
+     &      MODELS(Iseaice)%ImportField(id)%debug_write) THEN
           WRITE (ofile,50) ng, TRIM(ImportNameList(ifld)),              &
      &                     year, month, day, hour, minutes, seconds
           CALL ESMF_FieldWrite (field,                                  &

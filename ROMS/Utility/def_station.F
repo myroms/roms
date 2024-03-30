@@ -3,11 +3,11 @@
 #ifdef STATIONS
 !
 !git $Id$
-!svn $Id: def_station.F 1185 2023-08-01 21:42:38Z arango $
+!svn $Id: def_station.F 1215 2024-02-09 23:11:09Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2024 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                                              !
+!    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
 !  This module creates output STATION data using either the standard   !
@@ -40,6 +40,12 @@
       USE def_dim_mod,         ONLY : def_dim
       USE def_info_mod,        ONLY : def_info
       USE def_var_mod,         ONLY : def_var
+# ifdef ICE_MODEL
+      USE ice_output_mod,      ONLY : ice_def_station_nf90
+#  if defined PIO_LIB && defined DISTRIBUTE
+      USE ice_output_mod,      ONLY : ice_def_station_pio
+#  endif
+# endif
 # ifdef SEDIMENT
       USE sediment_output_mod, ONLY : sediment_def_station_nf90
 #  if defined PIO_LIB && defined DISTRIBUTE
@@ -987,6 +993,17 @@
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 # endif
 
+# ifdef ICE_MODEL
+!
+!-----------------------------------------------------------------------
+!  Define the ice model variables.
+!-----------------------------------------------------------------------
+!
+        CALL ice_def_station_nf90 (ng, model, ldef, Sout, STA,          &
+     &                             pgrd)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+# endif
+
 # ifdef SEDIMENT
 !
 !-----------------------------------------------------------------------
@@ -1508,6 +1525,15 @@
         CALL bbl_def_station_nf90 (ng, model, ldef, Sout, STA)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
+# endif
+
+# ifdef ICE_MODEL
+!
+!  Scan ice model variables from input NetCDF and activate switches for
+!  station variables. Get variable IDs.
+!
+        CALL ice_def_station_nf90 (ng, model, ldef, Sout, STA)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 # endif
 
 # ifdef SEDIMENT
@@ -2569,6 +2595,17 @@
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #  endif
 
+#  ifdef ICE_MODEL
+!
+!-----------------------------------------------------------------------
+!  Define the ice model variables.
+!-----------------------------------------------------------------------
+!
+        CALL ice_def_station_pio (ng, model, ldef, Sout, STA,           &
+     &                            pgrd)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+#  endif
+
 #  ifdef SEDIMENT
 !
 !-----------------------------------------------------------------------
@@ -3151,6 +3188,15 @@
 !  NetCDF and activate switches for station variables. Get variable IDs.
 !
         CALL bbl_def_station_pio (ng, model, ldef, Sout, STA)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+#  endif
+
+#  ifdef ICE_MODEL
+!
+!  Scan ice model variables from input NetCDF and activate switches for
+!  station variables. Get variable IDs.
+!
+        CALL ice_def_station_pio (ng, model, ldef, Sout, STA)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #  endif
 

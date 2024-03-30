@@ -1,18 +1,49 @@
 # git $Id$
-# svn $Id: CMakeLists.txt 1186 2023-08-02 01:08:21Z arango $
+# svn $Id: CMakeLists.txt 1211 2024-01-03 22:22:25Z arango $
 #:::::::::::::::::::::::::::::::::::::::::::::::::::::: David Robertson :::
-# Copyright (c) 2002-2023 The ROMS/TOMS Group                           :::
+# Copyright (c) 2002-2024 The ROMS/TOMS Group                           :::
 #   Licensed under a MIT/X style license                                :::
-#   See License_ROMS.txt                                                :::
+#   See License_ROMS.md                                                 :::
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 #
 # Top-Level CMake File Definitions.
 
-cmake_minimum_required( VERSION 3.12.0 FATAL_ERROR )
+cmake_minimum_required( VERSION 3.13.0 FATAL_ERROR )
 
 list( APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/Compilers)
 Message( STATUS "module path = ${CMAKE_MODULE_PATH}" )
 set( CMAKE_DIRECTORY_LABELS ${PROJECT_NAME} )
+
+find_package( Git )
+if( GIT_FOUND )
+  if( EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/.git )
+    message( STATUS "Getting and setting GIT_URL and GIT_REV" )
+    execute_process(
+      COMMAND ${GIT_EXECUTABLE} config --get remote.origin.url
+      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+      OUTPUT_VARIABLE GITURL
+      OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+
+    execute_process(
+      COMMAND ${GIT_EXECUTABLE} rev-parse --verify HEAD
+      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+      OUTPUT_VARIABLE GITREV
+      OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+
+    add_compile_definitions( GIT_URL="${GITURL}" GIT_REV="${GITREV}" SVN_URL="https://www.myroms.org/svn/src" )
+  endif()
+endif()
+
+find_package( Subversion )
+if( SUBVERSION_FOUND )
+  if( EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/.svn )
+    message( STATUS "Getting and setting SVN_URL and SVN_REV" )
+    Subversion_WC_INFO(${CMAKE_CURRENT_SOURCE_DIR} roms IGNORE_SVN_FAILURE)
+    add_compile_definitions( SVN_URL="${roms_WC_URL}" SVN_REV="${roms_WC_REVISION}" )
+  endif()
+endif()
 
 # Figure out if we are using ecbuild.
 
@@ -40,6 +71,27 @@ endif()
 include( roms_functions )
 include( roms_compiler_flags )
 include( roms_config )
+
+# Set MYDEFS to list of Compiling definition to check for options that require
+# cmake configuration adjustments
+
+get_directory_property( MYDEFS COMPILE_DEFINITIONS )
+
+# Check if we need to include ESMF
+
+if( MYDEFS MATCHES "ESMF_LIB" )
+  if( NOT ESMF_FOUND )
+    find_package( ESMF REQUIRED )
+    if( ESMF_FOUND )
+      message( STATUS "ESMF_INCLUDE_DIRECTORIES = ${ESMF_INCLUDE_DIRECTORIES}" )
+      message( STATUS "ESMF_LIBRARY_LOCATION = ${ESMF_LIBRARY_LOCATION}" )
+      message( STATUS "ESMF_INTERFACE_LINK_LIBRARIES = ${ESMF_INTERFACE_LINK_LIBRARIES}" )
+      include_directories( ${ESMF_INCLUDE_DIRECTORIES} )
+    else()
+      message( FATAL "ESMF NOT FOUND" )
+    endif()
+  endif()
+endif()
 
 ###########################################################################
 # Project
@@ -385,6 +437,12 @@ else()
 
     if( ARPACK )
       target_link_libraries( "${BIN}" parpack arpack )
+    endif()
+
+    # if ESMF is requested, add to linking library list
+
+    if( MYDEFS MATCHES "ESMF_LIB" )
+      target_link_libraries( "${BIN}" ESMF )
     endif()
 
     # If parallel I/O with SCORPIO is requested, add to linking library list.

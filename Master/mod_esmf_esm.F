@@ -1,12 +1,13 @@
 #include "cppdefs.h"
       MODULE mod_esmf_esm
-#if defined MODEL_COUPLING && defined ESMF_LIB
+#if defined MODEL_COUPLING && defined ESMF_LIB && !defined CMEPS
 !
-!svn $Id: mod_esmf_esm.F 1942 2023-06-17 16:35:13Z arango $
+!git $Id$
+!svn $Id: mod_esmf_esm.F 1218 2024-02-24 02:32:17Z arango $
 !=======================================================================
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2024 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license         Hernan G. Arango     !
-!    See License_ROMS.txt                         Ufuk Utku Turuncoglu !
+!    See License_ROMS.md                          Ufuk Utku Turuncoglu !
 !=======================================================================
 !                                                                      !
 !  This module defines the structures and variables for Earth System   !
@@ -676,9 +677,9 @@
       real (r4), parameter :: MISSING_r4 = 1.0E20_r4
       real (r8), parameter :: MISSING_r8 = 1.0E20_r8
 
-      real (dp), parameter :: TOL_dp = 0.5E20_dp
-      real (r4), parameter :: TOL_r4 = 0.5E20_r4
-      real (r8), parameter :: TOL_r8 = 0.5E20_r8
+      real (dp), parameter :: TOL_dp = 0.001E20_dp
+      real (r4), parameter :: TOL_r4 = 0.001E20_r4
+      real (r8), parameter :: TOL_r8 = 0.001E20_r8
 !
       CONTAINS
 !
@@ -3816,7 +3817,7 @@
  170  FORMAT (7x,a,2x,a,t42,a)
  180  FORMAT (18x,i1,2x,a,t42,a,i2.2,'.')
  190  FORMAT (18x,i1,2x,a,t42,a,i2.2)
- 195  FORMAT (17x,i2.0,2x,a,t42,a,i2.2)
+ 195  FORMAT (17x,i2,2x,a,t42,a,i2.2)
  200  FORMAT (t42,2x,i2.2,':',1x,a)
  210  FORMAT (/,' read_ESMconfig - Invalid input parameter, ',a,        &
      &          ': ',i1)

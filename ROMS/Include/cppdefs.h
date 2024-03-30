@@ -2,11 +2,11 @@
 ** Include file "cppdefs.h"
 **
 ** git $Id$
-** svn $Id: cppdefs.h 1184 2023-07-27 20:28:19Z arango $
+** svn $Id: cppdefs.h 1212 2024-01-26 20:59:21Z arango $
 ********************************************************** Hernan G. Arango ***
-** Copyright (c) 2002-2023 The ROMS/TOMS Group                               **
+** Copyright (c) 2002-2024 The ROMS/TOMS Group                               **
 **   Licensed under a MIT/X style license                                    **
-**   See License_ROMS.txt                                                    **
+**   See License_ROMS.md                                                     **
 *******************************************************************************
 **                                                                           **
 ** The following is short description of all available CPP options.          **
@@ -44,7 +44,7 @@
 ** UV_LOGDRAG              to turn ON or OFF logarithmic bottom friction     **
 ** UV_LDRAG                to turn ON or OFF linear bottom friction          **
 ** UV_QDRAG                to turn ON or OFF quadratic bottom friction       **
-** OMEGA_IMPLICT           to add adaptive implicit vertical advection       **
+** OMEGA_IMPLICIT          to add adaptive implicit vertical advection       **
 ** SPLINES_VVISC           if splines reconstruction of vertical viscosity   **
 **                                                                           **
 ** OPTION for barotropic kernel time-stepping algorithm. Currently, the      **
@@ -406,6 +406,7 @@
 ** BNORM                   if Background norm Hessian singular vectors       **
 ** CELERITY_WRITE          if writing radiation celerity in forward file     **
 ** CLIPPING_SPLIT          to separate analysis due to IC, forcing, and OBC  **
+** COMPUTE_MLD             to compute Mixed Layer Depth for background error **
 ** DATALESS_LOOPS          if testing convergence of Picard iterations       **
 ** ENKF_RESTART            if writting restart fields for EnKF               **
 ** FORWARD_FLUXES          if using NLM trajectory surface fluxes            **
@@ -427,10 +428,12 @@
 ** POSTERIOR_ERROR_I       if initial posterior analysis error covariance    **
 ** PRIOR_BULK_FLUXES       if imposing prior NLM surface fluxes              **
 ** RECOMPUTE_4DVAR         if recomputing 4DVar in analysis algorithms       **
+** REMOVE_LAPACK_GOTOS     to replace GOTOs in customized LAPACK routines    **
 ** RPCG                    if Restricted B-preconditioned Lanczos solver     **
 ** RPM_RELAXATION          if Picard iterations, Diffusive Relaxation of RPM **
 ** SKIP_NLM                to skip running NLM, reading NLM trajectory       **
 ** SO_SEMI_WHITE           to activate SO semi norm white/red noise processes**
+** STD_MODEL               if Background error standard deviation modeling   **
 ** STOCH_OPT_WHITE         to activate SO white/red noise processes          **
 ** SPLINES_VCONV           to activate implicit splines vertical convolution **
 ** TIME_CONV               if weak-constraint 4D-Var time convolutions       **
@@ -604,6 +607,7 @@
 ** NO_READ_GHOST           to not include ghost points during read/scatter   **
 ** NO_WRITE_GRID           if not writing grid arrays                        **
 ** OUT_DOUBLE              if writing double precision output fields         **
+** OUTPUT_STATS            to report NetCDF output fields statistics         **
 ** PARALLEL_IO             if parallel I/O via HDF5 or pnetcdf libraries     **
 ** PERFECT_RESTART         to include perfect restart variables              **
 ** PIO_LIB                 to include Parallel-IO from the PIO library       **

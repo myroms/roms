@@ -1,15 +1,15 @@
 # git $Id$
-# svn $Id: roms_config.cmake 1166 2023-05-17 20:11:58Z arango $
+# svn $Id: roms_config.cmake 1210 2024-01-03 22:03:03Z arango $
 #:::::::::::::::::::::::::::::::::::::::::::::::::::::: David Robertson :::
-# Copyright (c) 2002-2023 The ROMS/TOMS Group                           :::
+# Copyright (c) 2002-2024 The ROMS/TOMS Group                           :::
 #   Licensed under a MIT/X style license                                :::
-#   See License_ROMS.txt                                                :::
+#   See License_ROMS.md                                                 :::
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 #
 # CMake configuration for any ROMS application.
 
 string( TOLOWER "${ROMS_APP}.h" ROMS_APP_HEADER )
-add_definitions( -DROOT_DIR="${CMAKE_CURRENT_SOURCE_DIR}" -D${ROMS_APP} -DHEADER="${ROMS_APP_HEADER}" )
+add_compile_definitions( ROOT_DIR="${CMAKE_CURRENT_SOURCE_DIR}" ${ROMS_APP} HEADER="${ROMS_APP_HEADER}" )
 
 # Do you want a shared or static library?
 
@@ -57,13 +57,12 @@ set( HEADER_DIR  ${MY_HEADER_DIR} )
 
 # Any custom analytical files?
 
-if( NOT DEFINED MY_ANALYTICAL_DIR )
+if( NOT DEFINED ENV{MY_ANALYTICAL_DIR} )
   set( ANALYTICAL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/ROMS/Functionals" )
-  add_definitions( -DANALYTICAL_DIR="${ANALYTICAL_DIR}" )
+  add_compile_definitions( ANALYTICAL_DIR="${ANALYTICAL_DIR}" )
   # no need for "include_directories" since it is already included
 else()
-  add_definitions( -DANALYTICAL_DIR="${MY_ANALYTICAL_DIR}" )
-  include_directories( ${MY_ANALYTICAL_DIR} )
+  include_directories( $ENV{MY_ANALYTICAL_DIR} )
 endif()
 
 # Location(s) of ARPACK/PARPACK libraries. If both libarpack.a and libparpack.a
@@ -111,38 +110,27 @@ else()
   set( PIO_INCDIR "" )
 endif()
 
-
-
-# Set ROMS SVN repository information.
-
-set( SVN_URL "${MY_SVN_URL}" )
-set( SVN_REV "${MY_SVN_REV}" )
-
 set( ROMS_HEADER ${HEADER_DIR}/${ROMS_APP_HEADER} )
 
-add_definitions(
-  -DROMS_HEADER="${ROMS_HEADER}"
-  -DSVN_URL="${SVN_URL}"
-  -DSVN_REV="${SVN_REV}"
-)
+add_compile_definitions( ROMS_HEADER="${ROMS_HEADER}" )
 
 # Set ROMS Executable Name.
 
 if( ${CMAKE_BUILD_TYPE} MATCHES "Debug" )
   set( BIN "romsG" )
   if( MPI )
-    add_definitions( -DMPI )
+    add_compile_definitions( MPI )
   endif()
 elseif( MPI )
   set( BIN "romsM" )
-  add_definitions( -DMPI )
+  add_compile_definitions( MPI )
 else()
   set( BIN "romsS" )
 endif()
 
 if( MY_CPP_FLAGS )
   foreach( flag ${MY_CPP_FLAGS} )
-    add_definitions( -D${flag} )
+    add_compile_definitions( ${flag} )
   endforeach()
   get_options( ${ROMS_HEADER} ${MY_CPP_FLAGS} )
 else()

@@ -4,11 +4,11 @@
 #ifdef I4DVAR
 !
 !git $Id$
-!svn $Id: i4dvar.F 1151 2023-02-09 03:08:53Z arango $
+!svn $Id: i4dvar.F 1213 2024-01-29 22:21:01Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group       Andrew M. Moore   !
+!  Copyright (c) 2002-2024 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                                              !
+!    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
 !  This module splits the I4D-Var data assimilation algorithm into     !
@@ -100,6 +100,9 @@
       USE ad_convolution_mod, ONLY : ad_convolution
       USE ad_variability_mod, ONLY : ad_variability
       USE ad_wrt_his_mod,     ONLY : ad_wrt_his
+# ifdef STD_MODEL
+      USE background_std_mod, ONLY : background_std
+# endif
       USE back_cost_mod,      ONLY : back_cost
       USE cgradient_mod,      ONLY : cgradient
 # ifdef SPLIT_4DVAR
@@ -113,6 +116,9 @@
 # endif
       USE def_mod_mod,        ONLY : def_mod
       USE def_norm_mod,       ONLY : def_norm
+# ifdef STD_MODEL
+      USE def_std_mod,        ONLY : def_std
+# endif
       USE get_state_mod,      ONLY : get_state
       USE ini_adjust_mod,     ONLY : ini_adjust
       USE normalization_mod,  ONLY : normalization
@@ -139,6 +145,9 @@
       USE wrt_ini_mod,        ONLY : wrt_frc
 # endif
       USE wrt_ini_mod,        ONLY : wrt_ini
+# ifdef STD_MODEL
+      USE wrt_std_mod,        ONLY : wrt_std
+# endif
 # if defined BALANCE_OPERATOR && defined ZETA_ELLIPTIC
       USE zeta_balance_mod,   ONLY : balance_ref, biconj
 # endif
@@ -200,7 +209,10 @@
 !  Local variable declarations.
 !
       integer :: lstr, ng, tile
-      integer :: Fcount, InpRec
+# ifdef STD_MODEL
+      integer :: Lstd
+# endif
+      integer :: Fcount, InpRec, Tindex
 # ifdef PROFILE
       integer :: thread
 # endif
@@ -452,18 +464,54 @@
 !  records are used in the algorithm below.
 !
       IF (my_outer.eq.1) THEN
+        Tindex=1
         DO ng=1,Ngrids
           INI(ng)%Rindex=1
           Fcount=INI(ng)%load
           INI(ng)%Nrec(Fcount)=1
 # ifdef DISTRIBUTE
-          CALL wrt_ini (ng, MyRank, 1)
+          CALL wrt_ini (ng, MyRank, Tindex)
 # else
-          CALL wrt_ini (ng, -1, 1)
+          CALL wrt_ini (ng, -1, Tindex)
 # endif
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END DO
       END IF
+
+# ifdef STD_MODEL
+!
+!  Estimate initial conditions standard deviation fields for the
+!  background error covariance using the method of Mogensen et al.
+!  (2012), which assumes that the background errors are proportional
+!  to the vertical derivatives of the state. The error have simmilar
+!  shape as the prior profile but iwth a displacement over the water
+!  column.
+!
+      IF (my_outer.eq.1) THEN
+        Lstd=1                          ! time index in error arrays
+        DO ng=1,Ngrids
+          DO tile=first_tile(ng),last_tile(ng),+1
+            CALL background_std (ng, tile, Tindex, Lstd)
+          END DO
+        END DO
+!
+!  Write out estimated background standard deviation fields.
+!
+        DO ng=1,Ngrids
+          IF (LwrtSTD(ng)) THEN
+            STD(5,ng)%Rindex=0
+            Fcount=STD(5,ng)%load
+            STD(5,ng)%Nrec(Fcount)=1
+#  ifdef DISTRIBUTE
+            CALL wrt_std (ng, MyRank, Lstd)
+#  else
+            CALL wrt_std (ng, -1, Lstd)
+#  endif
+            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+          END IF
+        END DO
+      END IF
+# endif
 
 # if defined BALANCE_OPERATOR && defined ZETA_ELLIPTIC
 !
@@ -2470,10 +2518,16 @@
 !  Initial conditions standard deviation. They are loaded in Tindex=1
 !  of the e_var(...,Tindex) state variables.
 !
-        STDrec=1
-        Tindex=1
-        CALL get_state (ng, 10, 10, STD(1,ng), STDrec, Tindex)
-        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        IF (LreadSTD(ng)) THEN
+          STDrec=1
+          Tindex=1
+# ifdef STD_MODEL
+          CALL get_state (ng, 10, 10, STD(5,ng), STDrec, Tindex)
+# else
+          CALL get_state (ng, 10, 10, STD(1,ng), STDrec, Tindex)
+# endif
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        END IF
 
 # ifdef ADJUST_BOUNDARY
 !
@@ -2493,6 +2547,19 @@
         Tindex=1
         CALL get_state (ng, 13, 13, STD(4,ng), STDrec, Tindex)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+# endif
+
+# ifdef STD_MODEL
+!
+!  If computing the standard deviation (STD) directly from the
+!  background (prior) field as an alternative to climatological
+!  read from the input NetCDF file, define the output STD NetCDF
+!  file.
+!
+        IF (LdefSTD(ng)) THEN
+          CALL def_std (ng)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        END IF
 # endif
       END IF
 !

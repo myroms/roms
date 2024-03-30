@@ -2,9 +2,9 @@
       MODULE state_join_mod
 !
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2024 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                                              !
+!    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
 !  This routine reads and writes ROMS NLM background state solution    !
@@ -251,7 +251,7 @@
               RETURN
             END IF
 !
-            status=nf_fwrite2d(ng, model, OutId,                        &
+            status=nf_fwrite2d(ng, model, OutId, idFsur,                &
      &                         var_id(i), OutRec, gtype,                &
      &                         LBi, UBi, LBj, UBj, Fscl,                &
 #ifdef MASKING
@@ -298,7 +298,7 @@
               RETURN
             END IF
 !
-            status=nf_fwrite2d(ng, model, OutId,                        &
+            status=nf_fwrite2d(ng, model, OutId, idRzet,                &
      &                         var_id(i), OutRec, gtype,                &
      &                         LBi, UBi, LBj, UBj, Fscl,                &
 # ifdef MASKING
@@ -343,7 +343,7 @@
               RETURN
             END IF
 !
-            status=nf_fwrite2d(ng, model, OutId,                        &
+            status=nf_fwrite2d(ng, model, OutId, idUbar,                &
      &                         var_id(i), OutRec, gtype,                &
      &                         LBi, UBi, LBj, UBj, Fscl,                &
 #ifdef MASKING
@@ -389,7 +389,7 @@
               RETURN
             END IF
 !
-            status=nf_fwrite2d(ng, model, OutId,                        &
+            status=nf_fwrite2d(ng, model, OutId, idRu2d,                &
      &                         var_id(i), OutRec, gtype,                &
      &                         LBi, UBi, LBj, UBj, Fscl,                &
 # ifdef MASKING
@@ -434,7 +434,7 @@
               RETURN
             END IF
 !
-            status=nf_fwrite2d(ng, model, OutId,                        &
+            status=nf_fwrite2d(ng, model, OutId, idVbar,                &
      &                         var_id(i), OutRec, gtype,                &
      &                         LBi, UBi, LBj, UBj, Fscl,                &
 #ifdef MASKING
@@ -480,7 +480,7 @@
               RETURN
             END IF
 !
-            status=nf_fwrite2d(ng, model, OutId,                        &
+            status=nf_fwrite2d(ng, model, OutId, idRv2d,                &
      &                         var_id(i), OutRec, gtype,                &
      &                         LBi, UBi, LBj, UBj, Fscl,                &
 # ifdef MASKING
@@ -527,7 +527,7 @@
               RETURN
             END IF
 !
-            status=nf_fwrite2d(ng, model, OutId,                        &
+            status=nf_fwrite2d(ng, model, OutId, idRuct,                &
      &                         var_id(i), OutRec, gtype,                &
      &                         LBi, UBi, LBj, UBj, Fscl,                &
 #  ifdef MASKING
@@ -572,7 +572,7 @@
               RETURN
             END IF
 !
-            status=nf_fwrite2d(ng, model, OutId,                        &
+            status=nf_fwrite2d(ng, model, OutId, idUfx1,                &
      &                         var_id(i), OutRec, gtype,                &
      &                         LBi, UBi, LBj, UBj, Fscl,                &
 # ifdef MASKING
@@ -616,7 +616,7 @@
               RETURN
             END IF
 !
-            status=nf_fwrite2d(ng, model, OutId,                        &
+            status=nf_fwrite2d(ng, model, OutId, idUfx2,                &
      &                         var_id(i), OutRec, gtype,                &
      &                         LBi, UBi, LBj, UBj, Fscl,                &
 # ifdef MASKING
@@ -662,7 +662,7 @@
               RETURN
             END IF
 !
-            status=nf_fwrite2d(ng, model, OutId,                        &
+            status=nf_fwrite2d(ng, model, OutId, idRvct,                &
      &                         var_id(i), OutRec, gtype,                &
      &                         LBi, UBi, LBj, UBj, Fscl,                &
 #  ifdef MASKING
@@ -707,7 +707,7 @@
               RETURN
             END IF
 !
-            status=nf_fwrite2d(ng, model, OutId,                        &
+            status=nf_fwrite2d(ng, model, OutId, idVfx1,                &
      &                         var_id(i), OutRec, gtype,                &
      &                         LBi, UBi, LBj, UBj, Fscl,                &
 # ifdef MASKING
@@ -751,7 +751,7 @@
               RETURN
             END IF
 !
-            status=nf_fwrite2d(ng, model, OutId,                        &
+            status=nf_fwrite2d(ng, model, OutId, idVfx2,                &
      &                         var_id(i), OutRec, gtype,                &
      &                         LBi, UBi, LBj, UBj, Fscl,                &
 # ifdef MASKING
@@ -795,7 +795,7 @@
               RETURN
             END IF
 !
-            status=nf_fwrite3d(ng, model, OutId,                        &
+            status=nf_fwrite3d(ng, model, OutId, idUvel,                &
      &                         var_id(i), OutRec, gtype,                &
      &                         LBi, UBi, LBj, UBj, 1, N(ng), Fscl,      &
 # ifdef MASKING
@@ -841,7 +841,7 @@
               RETURN
             END IF
 !
-            status=nf_fwrite3d(ng, model, OutId,                        &
+            status=nf_fwrite3d(ng, model, OutId, idRu3d,                &
      &                         var_id(i), OutRec, gtype,                &
      &                         LBi, UBi, LBj, UBj, 1, N(ng), Fscl,      &
 #  ifdef MASKING
@@ -886,7 +886,7 @@
               RETURN
             END IF
 !
-            status=nf_fwrite3d(ng, model, OutId,                        &
+            status=nf_fwrite3d(ng, model, OutId, idVvel,                &
      &                         var_id(i), OutRec, gtype,                &
      &                         LBi, UBi, LBj, UBj, 1, N(ng), Fscl,      &
 # ifdef MASKING
@@ -932,7 +932,7 @@
               RETURN
             END IF
 !
-            status=nf_fwrite3d(ng, model, OutId,                        &
+            status=nf_fwrite3d(ng, model, OutId, idRv3d,                &
      &                         var_id(i), OutRec, gtype,                &
      &                         LBi, UBi, LBj, UBj, 1, N(ng), Fscl,      &
 #  ifdef MASKING
@@ -978,7 +978,7 @@
               RETURN
             END IF
 !
-            status=nf_fwrite3d(ng, model, OutId,                        &
+            status=nf_fwrite3d(ng, model, OutId, idVvis,                &
      &                         var_id(i), OutRec, gtype,                &
      &                         LBi, UBi, LBj, UBj, 0, N(ng), Fscl,      &
 #  ifdef MASKING
@@ -1028,7 +1028,7 @@
                 RETURN
               END IF
 !
-              status=nf_fwrite3d(ng, model, OutId,                      &
+              status=nf_fwrite3d(ng, model, OutId, idTvar(itrc),        &
      &                           var_id(i), OutRec, gtype,              &
      &                           LBi, UBi, LBj, UBj, 1, N(ng), Fscl,    &
 # ifdef MASKING
@@ -1076,7 +1076,7 @@
                 RETURN
               END IF
 !
-              status=nf_fwrite3d(ng, model, OutId,                      &
+              status=nf_fwrite3d(ng, model, OutId, idDiff(itrc),        &
      &                           var_id(i), OutRec, gtype,              &
      &                           LBi, UBi, LBj, UBj, 0, N(ng), Fscl,    &
 # ifdef MASKING
@@ -1305,7 +1305,7 @@
               ioDesc => ioDesc_sp_r2dvar(ng)
             END IF
 !
-            status=nf_fwrite2d(ng, model, pioFileOut,                   &
+            status=nf_fwrite2d(ng, model, pioFileOut, idFsur,           &
      &                         pioVar, OutRec, ioDesc,                  &
      &                         LBi, UBi, LBj, UBj, Fscl,                &
 # ifdef MASKING
@@ -1370,7 +1370,7 @@
               ioDesc => ioDesc_sp_r2dvar(ng)
             END IF
 !
-            status=nf_fwrite2d(ng, model, pioFileOut,                   &
+            status=nf_fwrite2d(ng, model, pioFileOut, idRzet,           &
      &                         pioVar, OutRec, ioDesc,                  &
      &                         LBi, UBi, LBj, UBj, Fscl,                &
 #  ifdef MASKING
@@ -1433,7 +1433,7 @@
               ioDesc => ioDesc_sp_u2dvar(ng)
             END IF
 !
-            status=nf_fwrite2d(ng, model, pioFileOut,                   &
+            status=nf_fwrite2d(ng, model, pioFileOut, idUbar,           &
      &                         pioVar, OutRec, ioDesc,                  &
      &                         LBi, UBi, LBj, UBj, Fscl,                &
 # ifdef MASKING
@@ -1497,7 +1497,7 @@
               ioDesc => ioDesc_sp_u2dvar(ng)
             END IF
 !
-            status=nf_fwrite2d(ng, model, pioFileOut,                   &
+            status=nf_fwrite2d(ng, model, pioFileOut, idRu2d,           &
      &                         pioVar, OutRec, ioDesc,                  &
      &                         LBi, UBi, LBj, UBj, Fscl,                &
 #  ifdef MASKING
@@ -1560,7 +1560,7 @@
               ioDesc => ioDesc_sp_v2dvar(ng)
             END IF
 !
-            status=nf_fwrite2d(ng, model, pioFileOut,                   &
+            status=nf_fwrite2d(ng, model, pioFileOut, idVbar,           &
      &                         pioVar, OutRec, ioDesc,                  &
      &                         LBi, UBi, LBj, UBj, Fscl,                &
 # ifdef MASKING
@@ -1624,7 +1624,7 @@
               ioDesc => ioDesc_sp_v2dvar(ng)
             END IF
 !
-            status=nf_fwrite2d(ng, model, pioFileOut,                   &
+            status=nf_fwrite2d(ng, model, pioFileOut, idRv2d            &
      &                         pioVar, OutRec, ioDesc,                  &
      &                         LBi, UBi, LBj, UBj, Fscl,                &
 #  ifdef MASKING
@@ -1689,7 +1689,7 @@
               ioDesc => ioDesc_sp_u2dvar(ng)
             END IF
 !
-            status=nf_fwrite2d(ng, model, pioFileOut,                   &
+            status=nf_fwrite2d(ng, model, pioFileOut, idRuct,           &
      &                         pioVar, OutRec, ioDesc,                  &
      &                         LBi, UBi, LBj, UBj, Fscl,                &
 #   ifdef MASKING
@@ -1752,7 +1752,7 @@
               ioDesc => ioDesc_sp_u2dvar(ng)
             END IF
 !
-            status=nf_fwrite2d(ng, model, pioFileOut,                   &
+            status=nf_fwrite2d(ng, model, pioFileOut, idUfx1,           &
      &                         pioVar, OutRec, ioDesc,                  &
      &                         LBi, UBi, LBj, UBj, Fscl,                &
 #  ifdef MASKING
@@ -1814,7 +1814,7 @@
               ioDesc => ioDesc_sp_u2dvar(ng)
             END IF
 !
-            status=nf_fwrite2d(ng, model, pioFileOut,                   &
+            status=nf_fwrite2d(ng, model, pioFileOut, idUfx2,           &
      &                         pioVar, OutRec, ioDesc,                  &
      &                         LBi, UBi, LBj, UBj, Fscl,                &
 #  ifdef MASKING
@@ -1878,7 +1878,7 @@
               ioDesc => ioDesc_sp_v2dvar(ng)
             END IF
 !
-            status=nf_fwrite2d(ng, model, pioFileOut,                   &
+            status=nf_fwrite2d(ng, model, pioFileOut, idRvct,           &
      &                         pioVar, OutRec, ioDesc,                  &
      &                         LBi, UBi, LBj, UBj, Fscl,                &
 #   ifdef MASKING
@@ -1941,7 +1941,7 @@
               ioDesc => ioDesc_sp_v2dvar(ng)
             END IF
 !
-            status=nf_fwrite2d(ng, model, pioFileOut,                   &
+            status=nf_fwrite2d(ng, model, pioFileOut, idVfx1,           &
      &                         pioVar, OutRec, ioDesc,                  &
      &                         LBi, UBi, LBj, UBj, Fscl,                &
 #  ifdef MASKING
@@ -2003,7 +2003,7 @@
               ioDesc => ioDesc_sp_v2dvar(ng)
             END IF
 !
-            status=nf_fwrite2d(ng, model, pioFileOut,                   &
+            status=nf_fwrite2d(ng, model, pioFileOut, idVfx2,           &
      &                         pioVar, OutRec, ioDesc,                  &
      &                         LBi, UBi, LBj, UBj, Fscl,                &
 #  ifdef MASKING
@@ -2065,7 +2065,7 @@
               ioDesc => ioDesc_sp_u3dvar(ng)
             END IF
 !
-            status=nf_fwrite3d(ng, model, pioFileOut,                   &
+            status=nf_fwrite3d(ng, model, pioFileOut, idUvel,           &
      &                         pioVar, OutRec, ioDesc,                  &
      &                         LBi, UBi, LBj, UBj, 1, N(ng), Fscl,      &
 #  ifdef MASKING
@@ -2129,7 +2129,7 @@
               ioDesc => ioDesc_sp_u3dvar(ng)
             END IF
 !
-            status=nf_fwrite3d(ng, model, pioFileOut,                   &
+            status=nf_fwrite3d(ng, model, pioFileOut, idRu3d,           &
      &                         pioVar, OutRec, ioDesc,                  &
      &                         LBi, UBi, LBj, UBj, 1, N(ng), Fscl,      &
 #   ifdef MASKING
@@ -2192,7 +2192,7 @@
               ioDesc => ioDesc_sp_v3dvar(ng)
             END IF
 !
-            status=nf_fwrite3d(ng, model, pioFileOut,                   &
+            status=nf_fwrite3d(ng, model, pioFileOut, idVvel,           &
      &                         pioVar, OutRec, ioDesc,                  &
      &                         LBi, UBi, LBj, UBj, 1, N(ng), Fscl,      &
 #  ifdef MASKING
@@ -2256,7 +2256,7 @@
               ioDesc => ioDesc_sp_v3dvar(ng)
             END IF
 !
-            status=nf_fwrite3d(ng, model, pioFileOut,                   &
+            status=nf_fwrite3d(ng, model, pioFileOut, idRv3d,           &
      &                         pioVar, OutRec, ioDesc,                  &
      &                         LBi, UBi, LBj, UBj, 1, N(ng), Fscl,      &
 #   ifdef MASKING
@@ -2320,7 +2320,7 @@
               ioDesc => ioDesc_sp_w3dvar(ng)
             END IF
 !
-            status=nf_fwrite3d(ng, model, pioFileOut,                   &
+            status=nf_fwrite3d(ng, model, pioFileOut, idVvis,           &
      &                         pioVar, OutRec, ioDesc,                  &
      &                         LBi, UBi, LBj, UBj, 0, N(ng), Fscl,      &
 #   ifdef MASKING
@@ -2389,7 +2389,7 @@
                 ioDesc => ioDesc_sp_r3dvar(ng)
               END IF
 !
-              status=nf_fwrite3d(ng, model, pioFileOut,                 &
+              status=nf_fwrite3d(ng, model, pioFileOut, idTvar(itrc),   &
      &                           pioVar, OutRec, ioDesc,                &
      &                           LBi, UBi, LBj, UBj, 1, N(ng), Fscl,    &
 #  ifdef MASKING
@@ -2459,7 +2459,7 @@
                 ioDesc => ioDesc_sp_w3dvar(ng)
               END IF
 !
-              status=nf_fwrite3d(ng, model, pioFileOut,                 &
+              status=nf_fwrite3d(ng, model, pioFileOut, idDiff(itrc),   &
      &                           pioVar, OutRec, ioDesc,                &
      &                           LBi, UBi, LBj, UBj, 0, N(ng), Fscl,    &
 #  ifdef MASKING
