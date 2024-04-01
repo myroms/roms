@@ -367,6 +367,56 @@
       END DO
 #  endif
 # endif
+# ifdef SOLVE3D
+!
+!  Write time-varying depths of RHO-points.
+!
+      IF (Hout(idpthR,ng)) THEN
+        scale=1.0_dp
+        gtype=gfactor*r3dvar
+        status=nf_fwrite3d(ng, iTLM, TLM(ng)%ncid, idpthR,              &
+     &                     TLM(ng)%Vid(idpthR),                         &
+     &                     TLM(ng)%Rindex, gtype,                       &
+     &                     LBi, UBi, LBj, UBj, 1, N(ng), scale,         &
+#  ifdef MASKING
+     &                     GRID(ng) % rmask,                            &
+#  endif
+     &                     GRID(ng) % tl_z_r,                           &
+     &                     SetFillVal = .FALSE.)
+        IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+          IF (Master) THEN
+            WRITE (stdout,20) TRIM(Vname(1,idpthR)), TLM(ng)%Rindex
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END IF
+!
+!  Write time-varying depths of W-points.
+!
+      IF (Hout(idpthW,ng)) THEN
+        scale=1.0_dp
+        gtype=gfactor*w3dvar
+        status=nf_fwrite3d(ng, iTLM, TLM(ng)%ncid, idpthW,              &
+     &                     TLM(ng)%Vid(idpthW),                         &
+     &                     TLM(ng)%Rindex, gtype,                       &
+     &                     LBi, UBi, LBj, UBj, 0, N(ng), scale,         &
+#  ifdef MASKING
+     &                     GRID(ng) % rmask,                            &
+#  endif
+     &                     GRID(ng) % tl_z_w,                           &
+     &                     SetFillVal = .FALSE.)
+        IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+          IF (Master) THEN
+            WRITE (stdout,20) TRIM(Vname(1,idpthW)), TLM(ng)%Rindex
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END IF
+# endif
 !
 !  Write out free-surface (m)
 !
@@ -1427,6 +1477,66 @@
         END IF
       END DO
 #  endif
+# endif
+# ifdef SOLVE3D
+!
+!  Write time-varying depths of RHO-points.
+!
+      IF (Hout(idpthR,ng)) THEN
+        scale=1.0_dp
+        IF (HIS(ng)%pioVar(idpthR)%dkind.eq.PIO_double) THEN
+          ioDesc => ioDesc_dp_r3dvar(ng)
+        ELSE
+          ioDesc => ioDesc_sp_r3dvar(ng)
+        END IF
+        status=nf_fwrite3d(ng, iTLM, TLM(ng)%pioFile, idpthR,           &
+     &                     TLM(ng)%pioVar(idpthR),                      &
+     &                     TLM(ng)%Rindex,                              &
+     &                     ioDesc,                                      &
+     &                     LBi, UBi, LBj, UBj, 1, N(ng), scale,         &
+#  ifdef MASKING
+     &                     GRID(ng) % rmask,                            &
+#  endif
+     &                     GRID(ng) % tl_z_r,                           &
+     &                     SetFillVal = .FALSE.)
+        IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
+          IF (Master) THEN
+            WRITE (stdout,20) TRIM(Vname(1,idpthR)), TLM(ng)%Rindex
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END IF
+!
+!  Write time-varying depths of W-points.
+!
+      IF (Hout(idpthW,ng)) THEN
+        scale=1.0_dp
+        IF (HIS(ng)%pioVar(idpthW)%dkind.eq.PIO_double) THEN
+          ioDesc => ioDesc_dp_w3dvar(ng)
+        ELSE
+          ioDesc => ioDesc_sp_w3dvar(ng)
+        END IF
+        status=nf_fwrite3d(ng, iTLM, TLM(ng)%pioFile, idpthW,           &
+     &                     TLM(ng)%pioVar(idpthW),                      &
+     &                     TLM(ng)%Rindex,                              &
+     &                     ioDesc,                                      &
+     &                     LBi, UBi, LBj, UBj, 0, N(ng), scale,         &
+#  ifdef MASKING
+     &                     GRID(ng) % rmask,                            &
+#  endif
+     &                     GRID(ng) % tl_z_w,                           &
+     &                     SetFillVal = .FALSE.)
+        IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
+          IF (Master) THEN
+            WRITE (stdout,20) TRIM(Vname(1,idpthW)), TLM(ng)%Rindex
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END IF
 # endif
 !
 !  Write out free-surface (m)

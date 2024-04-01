@@ -652,6 +652,49 @@
      &                   SetFillVal = .FALSE.)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
+
+# ifdef SOLVE3D
+!
+!  Define time-varying depth of RHO-points.
+!
+        IF (Hout(idpthR,ng)) THEN
+          Vinfo( 1)=Vname(1,idpthR)
+          WRITE (Vinfo( 2),40) TRIM(Vname(2,idpthR))
+          Vinfo( 3)=Vname(3,idpthR)
+          Vinfo(14)=Vname(4,idpthR)
+          Vinfo(16)=Vname(1,idtime)
+#  if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_rho'
+#  endif
+          Vinfo(21)=Vname(6,idpthR)
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idpthR,ng),r8)
+          status=def_var(ng, iADM, ADM(ng)%ncid, ADM(ng)%Vid(idpthR),   &
+     &                   NF_FOUT, nvd4, t3dgrd, Aval, Vinfo, ncname,    &
+     &                   SetFillVal = .FALSE.)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        END IF
+!
+!  Define time-varying depth of W-points.
+!
+        IF (Hout(idpthW,ng)) THEN
+          Vinfo( 1)=Vname(1,idpthW)
+          WRITE (Vinfo( 2),40) TRIM(Vname(2,idpthW))
+          Vinfo( 3)=Vname(3,idpthW)
+          Vinfo(14)=Vname(4,idpthW)
+          Vinfo(16)=Vname(1,idtime)
+#  if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_rho'
+#  endif
+          Vinfo(21)=Vname(6,idpthW)
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idpthW,ng),r8)
+          status=def_var(ng, iADM, ADM(ng)%ncid, ADM(ng)%Vid(idpthW),   &
+     &                   NF_FOUT, nvd4, w3dgrd, Aval, Vinfo, ncname,    &
+     &                   SetFillVal = .FALSE.)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        END IF
+# endif
 !
 !  Define free-surface.
 !
@@ -1166,6 +1209,14 @@
           IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idtime))) THEN
             got_var(idtime)=.TRUE.
             ADM(ng)%Vid(idtime)=var_id(i)
+# ifdef SOLVE3D
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idpthR))) THEN
+            got_var(idpthR)=.TRUE.
+            ADM(ng)%Vid(idpthR)=var_id(i)
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idpthW))) THEN
+            got_var(idpthW)=.TRUE.
+            ADM(ng)%Vid(idpthW)=var_id(i)
+# endif
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idFsur))) THEN
             got_var(idFsur)=.TRUE.
             ADM(ng)%Vid(idFsur)=var_id(i)
@@ -1252,7 +1303,7 @@
 #  endif
             END IF
           END DO
-#endif
+# endif
         END DO
 !
 !  Check if adjoint variables are available in input NetCDF file.
@@ -1263,6 +1314,20 @@
           exit_flag=3
           RETURN
         END IF
+# ifdef SOLVE3D
+        IF (.not.got_var(idpthR).and.Hout(idpthR,ng)) THEN
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idpthR)),          &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idpthW).and.Hout(idpthW,ng)) THEN
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idpthW)),          &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+# endif
         IF (.not.got_var(idFsur).and.Hout(idFsur,ng)) THEN
           IF (Master) WRITE (stdout,70) TRIM(Vname(1,idFsur)),          &
      &                                  TRIM(ncname)
@@ -2009,6 +2074,57 @@
      &                   SetFillVal = .FALSE.)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
+
+#  ifdef SOLVE3D
+!
+!  Define time-varying depth of RHO-points.
+!
+        IF (Hout(idpthR,ng)) THEN
+          Vinfo( 1)=Vname(1,idpthR)
+          WRITE (Vinfo( 2),40) TRIM(Vname(2,idpthR))
+          Vinfo( 3)=Vname(3,idpthR)
+          Vinfo(14)=Vname(4,idpthR)
+          Vinfo(16)=Vname(1,idtime)
+#   if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_rho'
+#   endif
+          Vinfo(21)=Vname(6,idpthR)
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idpthR,ng),r8)
+          ADM(ng)%pioVar(idpthR)%dkind=PIO_FOUT
+          ADM(ng)%pioVar(idpthR)%gtype=r3dvar
+!
+          status=def_var(ng, iADM, ADM(ng)%pioFile,                     &
+     &                   ADM(ng)%pioVar(idpthR)%vd,                     &
+     &                   PIO_FOUT, nvd4, t3dgrd, Aval, Vinfo, ncname,   &
+     &                   SetFillVal = .FALSE.)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        END IF
+!
+!  Define time-varying depth of W-points.
+!
+        IF (Hout(idpthW,ng)) THEN
+          Vinfo( 1)=Vname(1,idpthW)
+          WRITE (Vinfo( 2),40) TRIM(Vname(2,idpthW))
+          Vinfo( 3)=Vname(3,idpthW)
+          Vinfo(14)=Vname(4,idpthW)
+          Vinfo(16)=Vname(1,idtime)
+#   if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_rho'
+#   endif
+          Vinfo(21)=Vname(6,idpthW)
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idpthW,ng),r8)
+          ADM(ng)%pioVar(idpthW)%dkind=PIO_FOUT
+          ADM(ng)%pioVar(idpthW)%gtype=w3dvar
+!
+          status=def_var(ng, iADM, ADM(ng)%pioFile,                     &
+     &                   ADM(ng)%pioVar(idpthW)%vd,                     &
+     &                   PIO_FOUT, nvd4, w3dgrd, Aval, Vinfo, ncname,   &
+     &                   SetFillVal = .FALSE.)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        END IF
+#  endif
 !
 !  Define free-surface.
 !
@@ -2613,6 +2729,18 @@
             ADM(ng)%pioVar(idtime)%vd=var_desc(i)
             ADM(ng)%pioVar(idtime)%dkind=PIO_TOUT
             ADM(ng)%pioVar(idtime)%gtype=0
+#  ifdef SOLVE3D
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idpthR))) THEN
+            got_var(idpthR)=.TRUE.
+            ADM(ng)%pioVar(idpthR)%vd=var_desc(i)
+            ADM(ng)%pioVar(idpthR)%dkind=PIO_FOUT
+            ADM(ng)%pioVar(idpthR)%gtype=r3dvar
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idpthW))) THEN
+            got_var(idpthW)=.TRUE.
+            ADM(ng)%pioVar(idpthW)%vd=var_desc(i)
+            ADM(ng)%pioVar(idpthW)%dkind=PIO_FOUT
+            ADM(ng)%pioVar(idpthW)%gtype=w3dvar
+#  endif
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idFsur))) THEN
             got_var(idFsur)=.TRUE.
             ADM(ng)%pioVar(idFsur)%vd=var_desc(i)
@@ -2739,7 +2867,7 @@
 #   endif
             END IF
           END DO
-# endif
+#  endif
         END DO
 !
 !  Check if adjoint variables are available in input NetCDF file.
@@ -2750,6 +2878,20 @@
           exit_flag=3
           RETURN
         END IF
+#  ifdef SOLVE3D
+        IF (.not.got_var(idpthR).and.Hout(idpthR,ng)) THEN
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idpthR)),          &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idpthW).and.Hout(idpthW,ng)) THEN
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idpthW)),          &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+#  endif
         IF (.not.got_var(idFsur).and.Hout(idFsur,ng)) THEN
           IF (Master) WRITE (stdout,70) TRIM(Vname(1,idFsur)),          &
      &                                  TRIM(ncname)
