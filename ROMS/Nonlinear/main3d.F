@@ -80,7 +80,6 @@
 # if defined ICE_MODEL && defined ALBEDO && defined SHORTWAVE
       USE ice_albedo_mod,       ONLY : ice_albedo
 # endif
-      USE ini_fields_mod,       ONLY : ini_fields, ini_zeta
 # ifdef LMD_MIXING
       USE lmd_vmix_mod,         ONLY : lmd_vmix
 # endif
@@ -104,6 +103,7 @@
       USE obc_adjust_mod,       ONLY : obc_adjust, load_obc
 # endif
       USE omega_mod,            ONLY : omega
+      USE post_initial_mod,     ONLY : post_initial
 # ifndef TS_FIXED
       USE rho_eos_mod,          ONLY : rho_eos
 # endif
@@ -291,40 +291,18 @@
 # endif
 !
 !-----------------------------------------------------------------------
-!  Initialize all time levels and compute other initial fields.
+!  On the first timestep, it computes the initial depths and level
+!  thicknesses from the initial free-surface field. Additionally, it
+!  initializes the nonlinear state variables for all time levels and
+!  applies lateral boundary conditions.
 !-----------------------------------------------------------------------
 !
             DO ig=1,GridsInLayer(nl)
               ng=GridNumber(ig,nl)
               IF (iic(ng).eq.ntstart(ng)) THEN
-!
-!  Initialize free-surface and compute initial level thicknesses and
-!  depths.
-!
-                DO tile=first_tile(ng),last_tile(ng),+1
-                  CALL ini_zeta (ng, tile, iNLM)
-                  CALL set_depth (ng, tile, iNLM)
-                END DO
-!$OMP BARRIER
-!
-!  Initialize other state variables.
-!
-                DO tile=last_tile(ng),first_tile(ng),-1
-                  CALL ini_fields (ng, tile, iNLM)
-                END DO
-!$OMP BARRIER
-
-# ifdef NESTING
-!
-!  Extract donor grid initial data at contact points and store it in
-!  REFINED structure so it can be used for the space-time interpolation.
-!
-                IF (RefinedGrid(ng)) THEN
-                  CALL nesting (ng, iNLM, ngetD)
-                END IF
-# endif
+                CALL post_initial (ng, iNLM)
               END IF
-            END DO
+            END DO              
 !
 !-----------------------------------------------------------------------
 !  Compute horizontal mass fluxes (Hz*u/n and Hz*v/m), density related
