@@ -94,7 +94,7 @@
       USE tl_set_depth_mod,     ONLY : tl_set_depth_bry
 # endif
       USE tl_omega_mod,         ONLY : tl_omega
-# ifndef FORCING_SV
+# if !(defined FORCING_SV || defined JEDI)
       USE tl_post_initial_mod,  ONLY : tl_post_initial
 # endif
 # ifdef NEARSHORE_MELLOR_NOT_YET
@@ -289,7 +289,8 @@
 #  endif
             END DO
 # endif
-# ifndef FORCING_SV
+
+# if !(defined FORCING_SV || defined JEDI)
 !
 !-----------------------------------------------------------------------
 !  On the first timestep, it computes the initial depths and level

@@ -289,6 +289,8 @@
 #  endif
             END DO
 # endif
+
+# ifndef JEDI
 !
 !-----------------------------------------------------------------------
 !  On the first timestep, it computes the initial depths and level
@@ -303,6 +305,7 @@
                 CALL post_initial (ng, iNLM)
               END IF
             END DO              
+# endif
 !
 !-----------------------------------------------------------------------
 !  Compute horizontal mass fluxes (Hz*u/n and Hz*v/m), density related
