@@ -19,8 +19,8 @@
 !  Numerical 2D time-stepping kernel: FB AB3-AM4                       !
 # elif defined STEP2D_FB_LF_AM3
 !  Numerical 2D time-stepping kernel: FB LF-AM3                        !
-# else!
-  Numerical 2D time-stepping kernel: LF-AM3 (Legacy scheme)           !
+# else
+!  Numerical 2D time-stepping kernel: LF-AM3 (Legacy scheme)           !
 # endif
 !                                                                      !
 !=======================================================================
