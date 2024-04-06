@@ -19,8 +19,8 @@
 !  Numerical 2D time-stepping kernel: FB AB3-AM4                       !
 # elif defined STEP2D_FB_LF_AM3
 !  Numerical 2D time-stepping kernel: FB LF-AM3                        !
-# else
-!  Numerical 2D time-stepping kernel: LF-AM3 (Legacy scheme)           !
+# else!
+  Numerical 2D time-stepping kernel: LF-AM3 (Legacy scheme)           !
 # endif
 !                                                                      !
 !=======================================================================
@@ -289,8 +289,6 @@
 #  endif
             END DO
 # endif
-
-# ifndef JEDI
 !
 !-----------------------------------------------------------------------
 !  On the first timestep, it computes the initial depths and level
@@ -305,7 +303,6 @@
                 CALL post_initial (ng, iNLM)
               END IF
             END DO              
-# endif
 !
 !-----------------------------------------------------------------------
 !  Compute horizontal mass fluxes (Hz*u/n and Hz*v/m), density related
