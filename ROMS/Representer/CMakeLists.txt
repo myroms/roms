@@ -24,6 +24,7 @@ list( APPEND _files
       ROMS/Representer/rp_obc_volcons.F
       ROMS/Representer/rp_omega.F
       ROMS/Representer/rp_output.F
+      ROMS/Representer/rp_post_initial.F
       ROMS/Representer/rp_pre_step3d.F
       ROMS/Representer/rp_prsgrd.F
       ROMS/Representer/rp_rho_eos.F
