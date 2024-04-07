@@ -297,12 +297,14 @@
 !  applies lateral boundary conditions.
 !-----------------------------------------------------------------------
 !
-            DO ig=1,GridsInLayer(nl)
-              ng=GridNumber(ig,nl)
-              IF (iic(ng).eq.ntstart(ng)) THEN
-                CALL post_initial (ng, iNLM)
-              END IF
-            END DO              
+            IF (INT(user(2)).gt.0) THEN
+              DO ig=1,GridsInLayer(nl)
+                ng=GridNumber(ig,nl)
+                IF (iic(ng).eq.ntstart(ng)) THEN
+                  CALL post_initial (ng, iNLM)
+                END IF
+              END DO
+            END IF
 !
 !-----------------------------------------------------------------------
 !  Compute horizontal mass fluxes (Hz*u/n and Hz*v/m), density related
