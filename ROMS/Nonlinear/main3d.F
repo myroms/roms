@@ -234,7 +234,9 @@
             DO ig=1,GridsInLayer(nl)
               ng=GridNumber(ig,nl)
 !$OMP MASTER
-              CALL get_data (ng)
+              IF (LprocessInputData(ng)) THEN
+                CALL get_data (ng)
+              END IF
 !$OMP END MASTER
 !$OMP BARRIER
               IF (FoundError(exit_flag, NoError,                        &
@@ -248,9 +250,11 @@
 !
             DO ig=1,GridsInLayer(nl)
               ng=GridNumber(ig,nl)
-              DO tile=first_tile(ng),last_tile(ng),+1
-                CALL set_data (ng, tile)
-              END DO
+              IF (LprocessInputData(ng)) THEN
+                DO tile=first_tile(ng),last_tile(ng),+1
+                  CALL set_data (ng, tile)
+                END DO
+              END IF
 !$OMP BARRIER
             END DO
             IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN

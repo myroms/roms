@@ -14,8 +14,9 @@
 !  stepping, and finalization of ROMSJEDI interface following          !
 !  ESMF/NUOPC conventions:                                             !
 !                                                                      !
-!     ROMS_initialize           Phase 1 ROMSJEDI Initialization        !
+!     ROMS_initializeP1         Phase 1 ROMSJEDI Initialization        !
 !     ROMS_initializeP2         Phase 2 ROMSJEDI Initialization        !
+!     ROMS_initializeP3         Phase 3 ROMSJEDI Initialization        !
 !     ROMS_run                                                         !
 !     ROMS_finalize                                                    !
 !                                                                      !
@@ -36,42 +37,48 @@
 !
       USE analytical_mod
 !
-      USE close_io_mod,      ONLY : close_inp, close_out
-      USE dateclock_mod,     ONLY : time_string
+#ifdef TANGENT
+      USE ad_post_initial_mod, ONLY : ad_post_initial
+#endif
+      USE close_io_mod,        ONLY : close_inp, close_out
+      USE dateclock_mod,       ONLY : time_string
 #ifdef DISTRIBUTE
-      USE distribute_mod,    ONLY : mp_bcasti
+      USE distribute_mod,      ONLY : mp_bcasti
 #endif
 #ifdef WET_DRY
-      USE get_wetdry_mod,    ONLY : get_wetdry
+      USE get_wetdry_mod,      ONLY : get_wetdry
 #endif
-      USE ini_hmixcoef_mod,  ONLY : ini_hmixcoef
-      USE inp_par_mod,       ONLY : inp_par
+      USE ini_hmixcoef_mod,    ONLY : ini_hmixcoef
+      USE inp_par_mod,         ONLY : inp_par
 #ifdef NESTING
-      USE nesting_mod,       ONLY : nesting
+      USE nesting_mod,         ONLY : nesting
 #endif
 #ifdef SOLVE3D
-      USE set_depth_mod,     ONLY : set_depth0, set_depth
-      USE omega_mod,         ONLY : omega
-      USE rho_eos_mod,       ONLY : rho_eos
-      USE set_massflux_mod,  ONLY : set_massflux
+      USE set_depth_mod,       ONLY : set_depth0, set_depth
+      USE omega_mod,           ONLY : omega
+      USE rho_eos_mod,         ONLY : rho_eos
+      USE set_massflux_mod,    ONLY : set_massflux
 #endif
+      USE post_initial_mod,    ONLY : post_initial
 #ifdef MASKING
-      USE set_masks_mod,     ONLY : set_masks
+      USE set_masks_mod,       ONLY : set_masks
 #endif
-      USE stiffness_mod,     ONLY : stiffness
-      USE strings_mod,       ONLY : FoundError
+      USE stiffness_mod,       ONLY : stiffness
+      USE strings_mod,         ONLY : FoundError
 #ifdef TANGENT
-      USE tl_set_depth_mod,  ONLY : tl_bath
+      USE tl_post_initial_mod, ONLY : tl_post_initial
+      USE tl_set_depth_mod,    ONLY : tl_bath
 #endif
 #ifdef WET_DRY
-      USE wetdry_mod,        ONLY : wetdry
+      USE wetdry_mod,          ONLY : wetdry
 #endif
-      USE wrt_rst_mod,       ONLY : wrt_rst
+      USE wrt_rst_mod,         ONLY : wrt_rst
 !
       implicit none
 !
-      PUBLIC  :: ROMS_initialize
+      PUBLIC  :: ROMS_initializeP1
       PUBLIC  :: ROMS_initializeP2
+      PUBLIC  :: ROMS_initializeP3
       PUBLIC  :: ROMS_run
       PUBLIC  :: ROMS_finalize
 !
@@ -85,12 +92,13 @@
 !
       CONTAINS
 !
-      SUBROUTINE ROMS_initialize (first, mpiCOMM, kernel)
+      SUBROUTINE ROMS_initializeP1 (first, mpiCOMM, kernel)
 !
 !=======================================================================
 !                                                                      !
-!  This routine allocates and initializes ROMS state variables and     !
-!  internal parameters. It reads standard input parameters.            !
+!  ROMSJEDI phase 2 initialization. It allocates and initializes ROMS  !
+!  state variables and internal parameters. It reads standard input    !
+!  parameters.                                                         !
 !                                                                      !
 !=======================================================================
 !
@@ -223,7 +231,7 @@
       END DO
 !
       RETURN
-      END SUBROUTINE ROMS_initialize
+      END SUBROUTINE ROMS_initializeP1
 !
       SUBROUTINE ROMS_initializeP2 (kernel)
 !
@@ -264,6 +272,53 @@
 !
       RETURN
       END SUBROUTINE ROMS_initializeP2
+!
+      SUBROUTINE ROMS_initializeP3 (kernel)
+!
+!=======================================================================
+!                                                                      !
+!  ROMSJEDI phase 3 initialization. It computes the initial depths     !
+!  and level thicknesses from the time-averaged free-surface, Zt_avg1, !
+!  which are needed to calculate initial vertically integrated         !
+!  momentum.                                                           !
+!                                                                      !
+!  Also, it initializes the state variables for all time levels and    !
+!  applies lateral boundary conditions.                                !
+!                                                                      !
+!  Notice that the second data snapshot needs to be processed because  !
+!  it is necessary for the initial lateral boundary conditions.        !
+!                                                                      !
+!=======================================================================
+!
+!  Imported variable declarations
+!
+      integer, intent(in) :: kernel
+!
+!  Local variable declarations.
+!
+      integer :: Phase
+!
+!-----------------------------------------------------------------------
+!  Initialize ROMSJEDI, Phase 3.
+!-----------------------------------------------------------------------
+!
+      Phase=3
+!
+      SELECT CASE (kernel)
+        CASE (iNLM)
+          CALL nlm_initial (Phase)
+#ifdef TANGENT
+        CASE (iTLM)
+          CALL tlm_initial (Phase)
+#endif
+#ifdef ADJOINT
+        CASE (iADM)
+          CALL adm_initial (Phase)
+#endif
+      END SELECT
+!
+      RETURN
+      END SUBROUTINE ROMS_initializeP3
 !
       SUBROUTINE ROMS_run (RunInterval, kernel)
 !
@@ -467,6 +522,11 @@
 !     Phase 2: Computes initial depths, density, horizontal mass       !
 !              fluxes, and other configuration arrays. It reads        !
 !              forcing snapshots.                                      !
+!                                                                      !
+!     Phase 3: Computes the initial depths and level thicknesses from  !
+!              the initial time-averaged free-surface field, Zt_avg1.  !
+!              Additionally, it initializes the state variables for    !
+!              all time levels and applies lateral boundary conditions.!
 !                                                                      !
 !=======================================================================
 !
@@ -832,6 +892,18 @@
           CALL grid_coords (ng, iNLM)
         END DO
 #endif
+      END IF PHASE2
+!
+!=======================================================================
+!  ROMSJEDI NLM kernel, Phase 3 Initialization.
+!=======================================================================
+!
+      PHASE3: IF (Phase.eq.3) THEN
+!
+        IF (Master) THEN
+          WRITE (stdout,10) 'NLM_INITIAL: Phase 3 Initialization: ',    &
+     &                      'State Lateral Boundary Conditions ...'
+        END IF
 !
 !-----------------------------------------------------------------------
 !  Initialize time-stepping counter and time/date string. Save NLM
@@ -852,8 +924,42 @@
 #endif
           CALL time_string (time(ng), time_code(ng))
         END DO
+!
+!-----------------------------------------------------------------------
+!  Read in required data, if any, from input NetCDF files.
+!-----------------------------------------------------------------------
+!
+        DO ng=1,Ngrids
+          CALL get_data (ng)
+          IF (FoundError(exit_flag, NoError,                            &
+     &                   __LINE__, MyFile)) RETURN
+        END DO
+!
+!-----------------------------------------------------------------------
+!  If applicable, process input data: time interpolate between data
+!  snapshots.
+!-----------------------------------------------------------------------
+!
+        DO ng=1,Ngrids
+          DO tile=first_tile(ng),last_tile(ng),+1
+            CALL set_data (ng, tile)
+          END DO
+        END DO
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+!
+!-----------------------------------------------------------------------
+!  Computes the initial depths and level thicknesses from the initial
+!  time=averaged free-surface field, Zt_avg1 . Additionally, it
+!  initializes the nonlinear state variables for all time levels and
+!  applies lateral boundary conditions.
+!-----------------------------------------------------------------------
+!
+        DO ng=1,Ngrids
+          CALL post_initial (ng, iNLM)
+        END DO
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
-      END IF PHASE2
+      END IF PHASE3
 
 #ifdef PROFILE
 !
@@ -1202,6 +1308,18 @@
           CALL grid_coords (ng, iTLM)
         END DO
 # endif
+      END IF PHASE2
+!
+!=======================================================================
+!  ROMSJEDI TLM kernel, Phase 3 Initialization.
+!=======================================================================
+!
+      PHASE3: IF (Phase.eq.3) THEN
+!
+        IF (Master) THEN
+          WRITE (stdout,10) 'TLM_INITIAL: Phase 3 Initialization: ',    &
+     &                      'State Lateral Boundary Conditions ...'
+        END IF
 !
 !-----------------------------------------------------------------------
 !  Initialize time-stepping counter and time/date string.
@@ -1226,7 +1344,58 @@
           LwrtTLM(ng)=.TRUE.
         END DO
 
-      END IF PHASE2
+!
+!-----------------------------------------------------------------------
+!  Read in required data, if any, from input NetCDF files.
+!-----------------------------------------------------------------------
+!
+        DO ng=1,Ngrids
+          CALL tl_get_data (ng)
+          IF (FoundError(exit_flag, NoError,                            &
+     &                   __LINE__, MyFile)) RETURN
+        END DO
+!
+!-----------------------------------------------------------------------
+!  If applicable, process input data: time interpolate between data
+!  snapshots.
+!-----------------------------------------------------------------------
+!
+        DO ng=1,Ngrids
+          DO tile=first_tile(ng),last_tile(ng),+1
+            CALL tl_set_data (ng, tile)
+# ifdef FORWARD_READ
+            CALL set_depth (ng, tile, iTLM)
+# endif
+          END DO
+        END DO
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+
+# ifdef FORWARD_READ
+!
+!-----------------------------------------------------------------------
+!  Compute BASIC STATE horizontal mass fluxes (Hz*u/n and Hz*v/m).
+!-----------------------------------------------------------------------
+!
+        DO ng=1,Ngrids
+          DO tile=last_tile(ng),first_tile(ng),-1
+            CALL set_massflux (ng, tile, iTLM)
+          END DO
+        END DO
+# endif
+!
+!-----------------------------------------------------------------------
+!  Computes the initial depths and level thicknesses from the initial
+!  time-averaged free-surface field, Zt_avg1. Additionally, it
+!  initializes the nonlinear state variables for all time levels and
+!  applies lateral boundary conditions.
+!-----------------------------------------------------------------------
+!
+        DO ng=1,Ngrids
+          CALL tl_post_initial (ng, iTLM)
+        END DO
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+
+      END IF PHASE3
 
 # ifdef PROFILE
 !
