@@ -1976,7 +1976,7 @@
 #ifdef JEDI
       IF (.not.allocated(jic)) THEN
         allocate ( jic(Ngrids) )
-        jic(ng)=0
+        jic=0
         Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
 #endif
