@@ -375,6 +375,11 @@
             step_counter(ng)=0
             NstrStep=iic(ng)-1
             NendStep=NstrStep+INT((MyRunInterval)/dt(ng))-extra
+            IF (iic(ng).eq.ntstart(ng)) THEN
+              PocessInputData(ng)=.FALSE.          ! because Phase 3
+            ELSE
+              PocessInputData(ng)=.TRUE.
+            END IF
             IF (Master) WRITE (stdout,10) MID(kernel), ng,              &
      &                                    NstrStep, MAX(0,NendStep)
           END DO
@@ -391,6 +396,11 @@
             step_counter(ng)=0
             NstrStep=iic(ng)-1
             NendStep=NstrStep+INT((MyRunInterval)/dt(ng))-extra
+            IF (iic(ng).eq.ntstart(ng)) THEN
+              PocessInputData(ng)=.FALSE.          ! because Phase 3
+            ELSE
+              PocessInputData(ng)=.TRUE.
+            END IF
             IF (Master) WRITE (stdout,10) MID(kernel), ng,              &
      &                                    NstrStep, MAX(0,NendStep)
           END DO
