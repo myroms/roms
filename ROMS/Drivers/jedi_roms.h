@@ -388,11 +388,7 @@
           DO ng=1,Ngrids
             NEXTtime=time(ng)+RunInterval
             ENDtime=INItime(ng)+ntimes(ng)*dt(ng)
-            IF (NEXTtime.eq.ENDtime) THEN
-              extra=0                              ! last time interval
-            ELSE
-              extra=1
-            END IF
+            extra=1
             step_counter(ng)=0
             NstrStep=iic(ng)-1
             NendStep=NstrStep+INT((MyRunInterval)/dt(ng))-extra
@@ -409,11 +405,7 @@
           DO ng=1,Ngrids
             NEXTtime=time(ng)-RunInterval
             ENDtime=INItime(ng)+ntimes(ng)*dt(ng)
-            IF (time(ng).eq.ENDtime) THEN
-              extra=0                              ! first time interval
-            ELSE
-              extra=1
-            END IF
+            extra=1
             step_counter(ng)=0
             NstrStep=iic(ng)-1
             NendStep=NstrStep-INT((MyRunInterval)/dt(ng))+extra

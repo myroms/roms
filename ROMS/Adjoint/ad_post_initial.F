@@ -23,6 +23,7 @@
       USE mod_scalars
 # endif
 !
+      USE ini_fields_mod,    ONLY : ini_zeta
       USE ad_ini_fields_mod, ONLY : ad_ini_fields, ad_ini_zeta
       USE ad_set_depth_mod,  ONLY : ad_set_depth
 !
@@ -72,6 +73,7 @@
 !-----------------------------------------------------------------------
 !
       DO tile=first_tile(ng),last_tile(ng),+1
+        CALL ini_zeta (ng, tile, iNLM)
         CALL ad_set_depth (ng, tile, model)
         CALL ad_ini_zeta (ng, tile, model)
       END DO
