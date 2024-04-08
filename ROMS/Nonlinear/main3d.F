@@ -234,7 +234,7 @@
             DO ig=1,GridsInLayer(nl)
               ng=GridNumber(ig,nl)
 !$OMP MASTER
-              IF (LprocessInputData(ng)) THEN
+              IF (ProcessInputData(ng)) THEN
                 CALL get_data (ng)
               END IF
 !$OMP END MASTER
@@ -250,7 +250,7 @@
 !
             DO ig=1,GridsInLayer(nl)
               ng=GridNumber(ig,nl)
-              IF (LprocessInputData(ng)) THEN
+              IF (ProcessInputData(ng)) THEN
                 DO tile=first_tile(ng),last_tile(ng),+1
                   CALL set_data (ng, tile)
                 END DO

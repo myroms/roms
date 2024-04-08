@@ -210,7 +210,9 @@
             DO ig=1,GridsInLayer(nl)
               ng=GridNumber(ig,nl)
 !$OMP MASTER
-              CALL tl_get_data (ng)
+              IF (ProcessInputData(ng)) THEN
+                CALL tl_get_data (ng)
+              END IF
 !$OMP END MASTER
 !$OMP BARRIER
               IF (FoundError(exit_flag, NoError,                        &
@@ -225,7 +227,9 @@
             DO ig=1,GridsInLayer(nl)
               ng=GridNumber(ig,nl)
               DO tile=first_tile(ng),last_tile(ng),+1
-                CALL tl_set_data (ng, tile)
+                IF (ProcessInputData(ng)) THEN
+                  CALL tl_set_data (ng, tile)
+                END IF
 # ifdef FORWARD_READ
                 CALL set_depth (ng, tile, iTLM)
 # endif
