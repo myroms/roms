@@ -212,6 +212,7 @@
       integer  :: idJWTy        ! Jerlov water type
       integer  :: idHbbl        ! depth of bottom boundary layer
       integer  :: idHsbl        ! depth of surface boundary layer
+      integer  :: idHzdz        ! level thickness
       integer  :: idIncr        ! 4D-Var analysis increment
       integer  :: idInno        ! 4D-Var innovation vector
       integer  :: idKhor        ! convolution horizontal diffusion
@@ -1866,6 +1867,8 @@
             idHsbl=varid
           CASE ('idHbbl')
             idHbbl=varid
+          CASE ('idHzdz')
+            idHzdz=varid
 #ifdef UV_DRAG_GRID
           CASE ('idragL')
             idragL=varid
