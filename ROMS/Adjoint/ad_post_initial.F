@@ -23,7 +23,8 @@
       USE mod_scalars
 # endif
 !
-      USE ini_fields_mod,    ONLY : ini_zeta
+      USE ini_fields_mod,    ONLY : set_zeta_timeavg
+      USE set_depth_mod,     ONLY : set_depth
       USE ad_ini_fields_mod, ONLY : ad_ini_fields, ad_ini_zeta
       USE ad_set_depth_mod,  ONLY : ad_set_depth
 !
@@ -69,11 +70,13 @@
 !
 !-----------------------------------------------------------------------
 !  Initialize free-surface and compute initial level thicknesses and
-!  depths.
+!  depths. Here we need nonlinear 'Zt_avg1' and 'Hz' to compute initial
+!  'ad_ubar' and 'ad_vbar'.
 !-----------------------------------------------------------------------
 !
       DO tile=first_tile(ng),last_tile(ng),+1
-        CALL ini_zeta (ng, tile, iNLM)
+        CALL set_zeta_timeavg (ng, tile, iNLM)
+        CALL set_depth (ng, tile, iNLM)
         CALL ad_set_depth (ng, tile, model)
         CALL ad_ini_zeta (ng, tile, model)
       END DO

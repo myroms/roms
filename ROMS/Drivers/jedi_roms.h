@@ -1338,14 +1338,13 @@
           iic(ng)=ntstart(ng)
           ntend(ng)=ntstart(ng)+ntimes(ng)-1
 #ifdef JEDI
-          jic(ng)=ntstart(ng)-1
-          time4jedi(ng)=time(ng)-dt(ng)
+          jic(ng)=ntstart(ng)
+          time4jedi(ng)=time(ng)
 #endif
           CALL time_string (time(ng), time_code(ng))
           LdefTLM(ng)=.TRUE.
           LwrtTLM(ng)=.TRUE.
         END DO
-
 !
 !-----------------------------------------------------------------------
 !  Read in required data, if any, from input NetCDF files.
