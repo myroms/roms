@@ -111,8 +111,8 @@
        CALL mp_bcasti (1, 1, io_err)
 # endif
        IF (io_err.ne.0) THEN
-         IF (MyMaster.eq.0) WRITE (StdOutUnit,10) TRIM(stdout_file),    &
-     &                                            TRIM(io_errmsg)
+         IF (MyMaster) WRITE (StdOutUnit,10) TRIM(stdout_file),         &
+     &                                       TRIM(io_errmsg)
          exit_flag=5
  10      FORMAT (/,' STDOUT_UNIT - Cannot open standard output file: ', &
      &           a,/,11x,'ERROR: ',a)
