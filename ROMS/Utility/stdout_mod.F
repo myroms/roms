@@ -21,7 +21,7 @@
 !=======================================================================
 !
       USE mod_iounits,  ONLY : SourceFile
-      USE mod_scalars,  ONLY : exit_flag
+      USE mod_scalars,  ONLY : NoError, exit_flag
 !
 #ifdef DISTRIBUTE
       USE distribute_mod, ONLY : mp_bcasti
