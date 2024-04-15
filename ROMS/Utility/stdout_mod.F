@@ -20,8 +20,9 @@
 !                                                                      !
 !=======================================================================
 !
-      USE mod_iounits,  ONLY : SourceFile
-      USE mod_scalars,  ONLY : NoError, exit_flag
+      USE mod_parallel
+      USE mod_iounits
+      USE mod_scalars
 !
 #ifdef DISTRIBUTE
       USE distribute_mod, ONLY : mp_bcasti
