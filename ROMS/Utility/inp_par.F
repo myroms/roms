@@ -40,6 +40,7 @@
 #ifdef NESTING
       USE set_contact_mod, ONLY : set_contact
 #endif
+      USE stdinp_mod,      ONLY : stdinp_unit
       USE strings_mod,     ONLY : FoundError
 #ifdef SOLVE3D
       USE tadv_mod,        ONLY : tadv_report
@@ -53,7 +54,7 @@
 !
 !  Local variable declarations.
 !
-      logical :: Lwrite
+      logical :: GotFile, Lwrite
 !
       integer :: Itile, Jtile, Nghost, Ntiles, tile
       integer :: Imin, Imax, Jmin, Jmax
@@ -62,15 +63,12 @@
       integer :: MaxHaloLenI, MaxHaloLenJ
 #endif
       integer :: ibry, inp, out, i, ic, ifield, itrc, j, ng, npts
-      integer :: io_err, sequence, varid
+      integer :: sequence, varid
 !
       real(r8) :: cff
       real(r8), parameter :: epsilon = 1.0E-8_r8
       real(r8), parameter :: spv = 0.0_r8
 !
-      character (len=10 ) :: stdout_file
-      character (len=256) :: io_errmsg
-
       character (len=*), parameter :: MyFile =                          &
      &  __FILE__
 !
@@ -79,57 +77,30 @@
 !-----------------------------------------------------------------------
 !  Read in and report input model parameters.
 !-----------------------------------------------------------------------
-
-#ifdef ROMS_STDOUT
 !
-!  Change default Fortran standard out unit, so ROMS run information is
-!  directed to a file. This is advantageous in coupling applications to
-!  ROMS information separated from other models. It overwite Fortran
-!  default unit 6.
+#ifdef DISTRIBUTE
 !
-# if defined DISTRIBUTE && defined DISJOINTED
-       stdout=60+ForkColor
-       WRITE (stdout_file,'(a,i2.2,a)') 'log', ForkColor+1, '.roms'
-# else
-       stdout=60
-       stdout_file='log.roms'
-# endif
+!  Get in ROMS standard input script filename (Iname) and and open it
+!  as a regular formatted file in distributed-memory configurations.
 !
-!  Open ROMS standard output file.
-!
-       IF (Master) THEN
-         IF (Lappend) THEN
-           OPEN (stdout, FILE=TRIM(stdout_file), FORM='formatted',      &
-     &           STATUS='old', POSITION='append', ACTION='write',       &
-     &           IOSTAT=io_err, IOMSG=io_errmsg)
-         ELSE
-           OPEN (stdout, FILE=TRIM(stdout_file), FORM='formatted',      &
-     &           STATUS='replace', IOSTAT=io_err, IOMSG=io_errmsg)
-         END IF
-       END IF
-# ifdef DISTRIBUTE
-       CALL mp_bcasti (1, model, io_err)
-# endif
-       IF (io_err.ne.0) THEN
-         IF (Master) WRITE (stdout,10) TRIM(stdout_file),               &
-     &                                 TRIM(io_errmsg)
-         exit_flag=5
- 10      FORMAT (/,' INP_PAR - Cannot open standard output file: ',a,   &
-     &           /,11x,'ERROR: ',a)
-         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-       END IF
-#endif
-!
-!  Set input units.
-!
-#if defined DISTRIBUTE || defined MODEL_COUPLING
-      Lwrite=Master
-      inp=1
+      inp=stdinp_unit(Master, GotFile)
       out=stdout
-#else
       Lwrite=Master
+!
+      IF (.not.GotFile) THEN
+        IF (Master) WRITE (out,10)
+ 10     FORMAT (/,' INP_PAR - Unable to ROMS standard input file, ',   &
+                'Iname')
+        exit_flag=2
+      END IF
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+#else
+!
+!  Set standard inpur and output units.
+!
       inp=stdinp
       out=stdout
+      Lwrite=Master
 #endif
 #if defined SPLIT_4DVAR && SUPPRESS_REPORT
 !
@@ -158,51 +129,8 @@
  20   FORMAT (80('-'),/,                                                &
               ' Model Input Parameters:  ROMS/TOMS version ',a,/,       &
      &        26x,a,/,80('-'))
-
-#if defined MODEL_COUPLING || defined JEDI
 !
-!  In multiple model coupling, the ocean input physical parameter
-!  script needs to be opened and processed as a regular file.
-!  Its file name is specified in the coupling standard input script.
-!
-      OPEN (inp, FILE=TRIM(Iname), FORM='formatted', STATUS='old',      &
-     &      IOSTAT=io_err, IOMSG=io_errmsg)
-      IF (io_err.ne.0) THEN
-        IF (Master) WRITE (stdout,30) TRIM(io_errmsg)
-        exit_flag=5
-        RETURN
- 30     FORMAT (/,' INP_PAR - Unable to open ROMS/TOMS input script ',  &
-     &              'file.',/,11x,'ERROR: ',a)
-      END IF
-#else
-# ifdef DISTRIBUTE
-!
-!  In distributed-memory configurations, the input physical parameters
-!  script is opened as a regular file.  It is read and processed by all
-!  parallel nodes.  This is to avoid a very complex broadcasting of the
-!  input parameters to all nodes.
-!
-!!    CALL my_getarg (1, Iname)
-      IF (Master) CALL my_getarg (1, Iname)
-      CALL mp_bcasts (1, model, Iname)
-      OPEN (inp, FILE=TRIM(Iname), FORM='formatted', STATUS='old',      &
-     &      IOSTAT=io_err, IOMSG=io_errmsg)
-      IF (io_err.ne.0) THEN
-        IF (Master) WRITE (stdout,30) TRIM(io_errmsg)
-        exit_flag=5
-        RETURN
- 30     FORMAT (/,' INP_PAR - Unable to open ROMS/TOMS input script ',  &
-     &              'file.',/,11x,'ERROR: ',a,/,                        &
-     &          /,11x,'In distributed-memory applications, the input',  &
-     &          /,11x,'script file is processed in parallel. The Unix', &
-     &          /,11x,'routine GETARG is used to get script file name.',&
-     &          /,11x,'For example, in MPI applications make sure that',&
-     &          /,11x,'command line is something like:',/,              &
-     &          /,11x,'mpirun -np 4 romsM roms.in',/,/,11x,'and not',/, &
-     &          /,11x,'mpirun -np 4 romsM < roms.in',/)
-      END IF
-# endif
-#endif
+!  Process ROMS standard input Iname script.
 !
       CALL read_PhyPar (model, inp, out, Lwrite)
 #ifdef DISTRIBUTE
@@ -213,8 +141,7 @@
 #if defined SPLIT_4DVAR && SUPPRESS_REPORT
 !
 !  If appending into standard output file, supress the reporting of
-!  information.  Turn of "LwrtInfo" switch.
-!  appending into standard output.
+!  information. Turn of "LwrtInfo" switch.
 !
       IF (Lappend) THEN
         DO ng=1,Ngrids

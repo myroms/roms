@@ -91,6 +91,7 @@
 #endif
       USE stats_modobs_mod,  ONLY : stats_modobs
       USE stdinp_mod,        ONLY : getpar_s
+      USE stdout_mod,        ONLY : stdout_unit
       USE strings_mod,       ONLY : FoundError, uppercase
       USE wrt_dai_mod,       ONLY : wrt_dai
       USE wrt_rst_mod,       ONLY : wrt_rst
@@ -162,6 +163,16 @@
 !  independent from standard input parameters.
 !
         CALL initialize_parallel
+!
+!  Set the ROMS standard output unit to write verbose execution info.
+!  Notice that the default standard out unit in Fortran is 6.
+!
+!  In some applications like coupling or disjointed mpi-communications,
+!  it is advantageous to write standard output to a specific filename
+!  instead of the default Fortran standard output unit 6. If that is
+!  the case, it opens such formatted file for writing.
+!
+        stdout=stdout_unit(Master)
 !
 !  Get 4D-Var phase from APARNAM input script file.
 !

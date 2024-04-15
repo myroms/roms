@@ -193,6 +193,14 @@ ifdef USE_SCORPIO
 endif
 
 ifdef USE_NETCDF4
+
+ # If nc-config and nf-config is split into different directories, add
+ # appropriate directory for nc-config needed for linking ROMS.
+
+ ifneq ($(netcdf_c_ROOT),)
+        NC_CONFIG ?= nc-config
+             LIBS += $(shell $(NC_CONFIG) --libs)
+ endif
         NF_CONFIG ?= nf-config
     NETCDF_INCDIR ?= $(shell $(NF_CONFIG) --prefix)/include
              LIBS += $(shell $(NF_CONFIG) --flibs)

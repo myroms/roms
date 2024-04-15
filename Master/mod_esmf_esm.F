@@ -1391,7 +1391,7 @@
 !
       USE mod_parallel,   ONLY : OCN_COMM_WORLD, MyRank
       USE mod_parallel,   ONLY : allocate_parallel, initialize_parallel
-      USE mod_iounits,    ONLY : Iname, SourceFile
+      USE mod_iounits,    ONLY : Iname, SourceFile, stdout
       USE mod_scalars,    ONLY : NoError, Rclock, exit_flag
       USE mod_strings,    ONLY : my_cpu, my_fc, my_fflags, my_fort,     &
      &                           my_os, Rdir
@@ -1404,6 +1404,7 @@
 # ifdef DISTRIBUTE
       USE distribute_mod, ONLY : mp_bcasts
 # endif
+      USE stdout_mod,     ONLY : stdout_unit  
       USE strings_mod,    ONLY : lowercase
 !
       implicit none
@@ -1499,6 +1500,7 @@
      &                       file=MyFile)) THEN
         RETURN
       END IF
+      MyMaster=localPET.eq.0
 !
 !  Assign driver communicatior handle to ROMS temporarily. It is needed
 !  since here are using ROMS generic NetCDF and distributed-memory
@@ -1511,11 +1513,21 @@
 !
       PETrank=localPET
 !
+!  Set the ROMS standard output unit to write verbose execution info.
+!  Notice that the default standard out unit in Fortran is 6.
+!
+!  In some applications like coupling or disjointed mpi-communications,
+!  it is advantageous to write standard output to a specific filename
+!  instead of the default Fortran standard output unit 6. If that is
+!  the case, it opens such formatted file for writing.
+!
+      stdout=stdout_unit(MyMaster)
+!
 !  Open standard output unit for ESM coupler information and messages.
 !  It is advisable to have such infomation separated from other standard
 !  output from the coupled models.
 !
-      IF (localPET.eq.0) THEN
+      IF (MyMaster) THEN
         OPEN (cplout, FILE=TRIM(CouplerLog), FORM='formatted',          &
      &        STATUS='replace')
       END IF

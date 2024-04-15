@@ -146,6 +146,7 @@
       USE mod_stepping,     ONLY : nstp, knew
       USE mp_exchange_mod,  ONLY : mp_exchange2d
       USE stdinp_mod,       ONLY : getpar_i
+      USE stdout_mod,       ONLY : stdout_unit
       USE strings_mod,      ONLY : FoundError, assign_string, lowercase
       USE yaml_parser_mod,  ONLY : yaml_AssignString,                   &
      &                             yaml_Error,                          &
@@ -694,7 +695,7 @@
 # else
       logical :: Lreport = .FALSE.
 # endif
-      logical :: Lexist
+      logical :: Lexist, MyMaster
 !
       integer :: Findex, i, layout, ng
 !
@@ -753,7 +754,8 @@
 !  Get size of number of nested grids, 'Ngrids' parameter from ROMS
 !  standard input file.
 !
-      CALL getpar_i (localPET, Ngrids, 'Ngrids', TRIM(Iname))
+      MyMaster=localPET.eq.0
+      CALL getpar_i (MyMaster, Ngrids, 'Ngrids', TRIM(Iname))
 !
 !-----------------------------------------------------------------------
 !  Get ROMS linked/coupled nested grid number for current application.
@@ -1583,8 +1585,7 @@
 !
 !  Local variable declarations.
 !
-!
-      logical :: isPresent, isSet
+      logical :: MyMaster, isPresent, isSet
 !
       integer :: i
       integer :: ng = 1
@@ -1641,12 +1642,27 @@
      &                       file=MyFile)) THEN
         RETURN
       END IF
+      MyMaster=localPET.eq.0
+!
+!-----------------------------------------------------------------------
+!  Set ROMS standard ouput unit and file
+!-----------------------------------------------------------------------
+!
+!  Sets the ROMS standard output unit to write verbose execution info.
+!  Notice that the default standard out unit in Fortran is 6.
+!
+!  In some applications like coupling or disjointed mpi-communications,
+!  it is advantageous to write standard output to a specific filename
+!  instead of the default Fortran standard output unit 6. If that is
+!  the case, it opens such formatted file for writing.
+!
+      stdout=stdout_unit(MyMaster)
 !
 !-----------------------------------------------------------------------
 !  Open standard output unit for ROMS cap information and messages.
 !-----------------------------------------------------------------------
 !
-      IF (localPET.eq.0) THEN
+      IF (MyMaster) THEN
         OPEN (cplout, FILE=TRIM(CouplerLog), FORM='formatted',          &
      &        STATUS='replace')
       END IF
