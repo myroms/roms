@@ -63,7 +63,7 @@
 # endif
 #endif
       USE stats_modobs_mod,  ONLY : stats_modobs
-      USE stdout_mod,        ONLY : stdout_unit
+      USE stdout_mod,        ONLY : Set_StdOutUnit, stdout_unit
       USE strings_mod,       ONLY : FoundError
       USE wrt_dai_mod,       ONLY : wrt_dai
       USE wrt_rst_mod,       ONLY : wrt_rst
@@ -144,7 +144,10 @@
 !  instead of the default Fortran standard output unit 6. If that is
 !  the case, it opens such formatted file for writing.
 !
-        stdout=stdout_unit(Master)
+        IF (Set_StdOutUnit) THEN
+          stdout=stdout_unit(Master)
+          Set_StdOutUnit=.FALSE.
+        END IF
 !
 !  Read in model tunable parameters from standard input. Allocate and
 !  initialize variables in several modules after the number of nested

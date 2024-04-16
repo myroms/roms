@@ -70,7 +70,7 @@
       USE ini_adjust_mod,     ONLY : load_TLtoAD
       USE inp_par_mod,        ONLY : inp_par
       USE normalization_mod,  ONLY : normalization
-      USE stdout_mod,         ONLY : stdout_unit
+      USE stdout_mod,         ONLY : Set_StdOutUnit, stdout_unit
       USE strings_mod,        ONLY : FoundError
 #ifdef BALANCE_OPERATOR
       USE tl_balance_mod,     ONLY : tl_balance
@@ -160,7 +160,10 @@
 !  instead of the default Fortran standard output unit 6. If that is
 !  the case, it opens such formatted file for writing.
 !
-        stdout=stdout_unit(Master)
+        IF (Set_StdOutUnit) THEN
+          stdout=stdout_unit(Master)
+          Set_StdOutUnit=.FALSE.
+        END IF
 !
 !  Read in model tunable parameters from standard input. Allocate and
 !  initialize variables in several modules after the number of nested

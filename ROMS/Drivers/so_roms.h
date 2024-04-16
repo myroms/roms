@@ -55,7 +55,7 @@
 # endif
 #endif
       USE packing_mod,       ONLY : r_norm2
-      USE stdout_mod,        ONLY : stdout_unit
+      USE stdout_mod,        ONLY : Set_StdOutUnit, stdout_unit
       USE strings_mod,       ONLY : FoundError
 #ifdef CHECKPOINTING
       USE wrt_gst_mod,       ONLY : wrt_gst
@@ -139,7 +139,10 @@
 !  instead of the default Fortran standard output unit 6. If that is
 !  the case, it opens such formatted file for writing.
 !
-        stdout=stdout_unit(Master)
+        IF (Set_StdOutUnit) THEN
+          stdout=stdout_unit(Master)
+          Set_StdOutUnit=.FALSE.
+        END IF
 !
 !  Read in model tunable parameters from standard input. Allocate and
 !  initialize variables in several modules after the number of nested

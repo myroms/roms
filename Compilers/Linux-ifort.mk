@@ -184,7 +184,8 @@ endif
 ifdef USE_NETCDF4
 
  # If nc-config and nf-config is split into different directories, add
- # appropriate directory for nc-config needed for linking ROMS.
+ # appropriate directory for nc-config needed for linking ROMS. Here,
+ # 'netcdf_c_ROOT' is an environmental variable used in Spack-Stack.
 
  ifneq ($(netcdf_c_ROOT),)
         NC_CONFIG ?= nc-config

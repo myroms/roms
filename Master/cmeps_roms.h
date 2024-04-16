@@ -146,7 +146,7 @@
       USE mod_stepping,     ONLY : nstp, knew
       USE mp_exchange_mod,  ONLY : mp_exchange2d
       USE stdinp_mod,       ONLY : getpar_i
-      USE stdout_mod,       ONLY : stdout_unit
+      USE stdout_mod,       ONLY : Set_StdOutUnit, stdout_unit
       USE strings_mod,      ONLY : FoundError, assign_string, lowercase
       USE yaml_parser_mod,  ONLY : yaml_AssignString,                   &
      &                             yaml_Error,                          &
@@ -1656,7 +1656,10 @@
 !  instead of the default Fortran standard output unit 6. If that is
 !  the case, it opens such formatted file for writing.
 !
-      stdout=stdout_unit(MyMaster)
+      IF (Set_StdOutUnit) THEN
+        stdout=stdout_unit(MyMaster)
+        Set_StdOutUnit=.FALSE.
+      END IF
 !
 !-----------------------------------------------------------------------
 !  Open standard output unit for ROMS cap information and messages.

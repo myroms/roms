@@ -1404,7 +1404,7 @@
 # ifdef DISTRIBUTE
       USE distribute_mod, ONLY : mp_bcasts
 # endif
-      USE stdout_mod,     ONLY : stdout_unit  
+      USE stdout_mod,     ONLY : Set_StdOutUnit, stdout_unit  
       USE strings_mod,    ONLY : lowercase
 !
       implicit none
@@ -1521,7 +1521,10 @@
 !  instead of the default Fortran standard output unit 6. If that is
 !  the case, it opens such formatted file for writing.
 !
-      stdout=stdout_unit(MyMaster)
+      IF (Set_StdOutUnit) THEN
+        stdout=stdout_unit(MyMaster)
+        Set_StdOutUnit=.FALSE.
+      END IF
 !
 !  Open standard output unit for ESM coupler information and messages.
 !  It is advisable to have such infomation separated from other standard
