@@ -94,7 +94,8 @@ ifdef USE_ROMS
            FFLAGS += -fbacktrace
            FFLAGS += -fcheck=all
 #          FFLAGS += -fsanitize=address -fsanitize=undefined
-           FFLAGS += -finit-real=nan -ffpe-trap=invalid,zero,overflow
+           FFLAGS += -finit-real=nan
+#          FFLAGS += -ffpe-trap=invalid,zero,overflow
  else
            FFLAGS += -O3
            FFLAGS += -ffast-math
@@ -203,7 +204,6 @@ ifdef USE_NETCDF4
     NETCDF_INCDIR ?= $(shell $(NF_CONFIG) --prefix)/include
              LIBS += $(shell $(NF_CONFIG) --flibs)
            INCDIR += $(NETCDF_INCDIR) $(INCDIR)
-
 else
     NETCDF_INCDIR ?= /opt/gfortransoft/serial/netcdf3/include
     NETCDF_LIBDIR ?= /opt/gfortransoft/serial/netcdf3/lib
