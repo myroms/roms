@@ -239,7 +239,7 @@
      &            'S%rms    = ', S%rms
   10    FORMAT (10x,5(5x,a,i0),/,                                       &
      &          6(15x,a,1p,e15.8,0p,5x,a,1p,e15.8,0p,/))
-        CALL my_flush (stdout)
+        FLUSH (stdout)
       END IF
       tile_count=tile_count+1
       IF (tile_count.eq.NSUB) THEN
@@ -489,7 +489,7 @@
      &            'S%rms    = ', S%rms
   10    FORMAT (10x,5(5x,a,i0),/,                                       &
      &          6(15x,a,1p,e15.8,0p,5x,a,1p,e15.8,0p,/))
-        CALL my_flush (stdout)
+        FLUSH (stdout)
       END IF
       thread_count=thread_count+1
       IF (thread_count.eq.NSUB) THEN
@@ -745,7 +745,7 @@
      &            'S%rms    = ', S%rms
   10    FORMAT (10x,5(5x,a,i0),/,                                       &
      &          6(15x,a,1p,e15.8,0p,5x,a,1p,e15.8,0p,/))
-        CALL my_flush (stdout)
+        FLUSH (stdout)
       END IF
       thread_count=thread_count+1
       IF (thread_count.eq.NSUB) THEN

@@ -8284,7 +8284,7 @@
             IF (Master) WRITE (DBout,'(a,1x," <= ",i8,2(2x,a))')        &
      &                        KernelString(model)//' PIO: CLOSE',       &
      &                        FileH, TRIM(my_ncname), TRIM(SourceFile)
-            CALL my_flush (DBout)
+            FLUSH (DBout)
           END IF
           CALL pio_closefile (pioFile)
 !
@@ -8388,7 +8388,7 @@
         IF (Master) WRITE (DBout,'(a," ** ",i8,2(2x,a))')               &
      &                    KernelString(model)//' PIO: CREATE',          &
      &                    pioFile%fh, TRIM(ncname), TRIM(SourceFile)
-        CALL my_flush (DBout)
+        FLUSH (DBout)
       END IF
 !
   10  FORMAT (/,' PIO_NETCDF_CREATE - unable to create output NetCDF ', &
@@ -8517,7 +8517,7 @@
         IF (Master) WRITE (DBout,'(a,2x," => ",i8,2(2x,a))')            &
      &                    KernelString(model)//' PIO: OPEN',            &
      &                    pioFile%fh, TRIM(ncname), TRIM(SourceFile)
-        CALL my_flush (DBout)
+        FLUSH (DBout)
       END IF
 !
   10  FORMAT (/,' PIO_NETCDF_OPEN - unable to open existing NetCDF ',   &

@@ -113,16 +113,14 @@
 !  Open ROMS standard output file.
 !-----------------------------------------------------------------------
 !
-      IF (MyMaster) THEN
-        IF (Lappend) THEN
-          OPEN (StdOutUnit, FILE=TRIM(stdout_file),                     &
-     &          FORM='formatted', STATUS='old', POSITION='append',      &
-     &          ACTION='write', IOSTAT=io_err, IOMSG=io_errmsg)
-        ELSE
-          OPEN (StdOutUnit, FILE=TRIM(stdout_file),                     &
-     &          FORM='formatted', STATUS='replace',                     &
-     &          IOSTAT=io_err, IOMSG=io_errmsg)
-        END IF
+      IF (Lappend) THEN
+        OPEN (StdOutUnit, FILE=TRIM(stdout_file),                       &
+     &        FORM='formatted', STATUS='old', POSITION='append',        &
+     &        ACTION='write', IOSTAT=io_err, IOMSG=io_errmsg)
+      ELSE
+        OPEN (StdOutUnit, FILE=TRIM(stdout_file),                       &
+     &        FORM='formatted', STATUS='replace',                       &
+     &        IOSTAT=io_err, IOMSG=io_errmsg)
       END IF
 # ifdef DISTRIBUTE
       CALL mp_bcasti (1, 1, io_err)

@@ -2732,9 +2732,6 @@
 !-----------------------------------------------------------------------
 !
       CALL ROMS_finalize
-      FLUSH (stdout)                      ! flush standard output buffer
-      FLUSH (cplout)                      ! flush coupling output buffer
-      CLOSE (cplout)                      ! close coupling log file
 !
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '<== Exiting  ROMS_SetFinalize',        &

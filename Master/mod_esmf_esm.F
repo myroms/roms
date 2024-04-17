@@ -527,7 +527,7 @@
 !
       integer :: DebugLevel = 0
 !
-!  Execution tracing flag:
+!  Execution tracng flag:
 !
 !    [0] no tracing
 !    [1] reports sequence of coupling subroutine calls
@@ -1067,7 +1067,7 @@
           END IF
         END IF
       END DO
-      IF (DebugLevel.gt.0) CALL my_flush (cplout)
+      IF (DebugLevel.gt.0) FLUSH (cplout)
 !
 !  Store the clock advance counter.
 !
@@ -1418,7 +1418,7 @@
 !  Local variable declarations.
 !
       logical :: doit, first
-      logical :: Lwrite
+      logical :: Lwrite, MasterPET
       logical :: Lvalue(1)
       logical, allocatable :: LvalueA(:), LvalueI(:)
       logical, allocatable :: LvalueR(:), LvalueW(:)
@@ -1500,7 +1500,7 @@
      &                       file=MyFile)) THEN
         RETURN
       END IF
-      MyMaster=localPET.eq.0
+      MasterPET=localPET.eq.0
 !
 !  Assign driver communicatior handle to ROMS temporarily. It is needed
 !  since here are using ROMS generic NetCDF and distributed-memory
@@ -1522,7 +1522,7 @@
 !  the case, it opens such formatted file for writing.
 !
       IF (Set_StdOutUnit) THEN
-        stdout=stdout_unit(MyMaster)
+        stdout=stdout_unit(MasterPET)
         Set_StdOutUnit=.FALSE.
       END IF
 !
@@ -1530,10 +1530,10 @@
 !  It is advisable to have such infomation separated from other standard
 !  output from the coupled models.
 !
-      IF (MyMaster) THEN
+!     IF (MasterPET) THEN
         OPEN (cplout, FILE=TRIM(CouplerLog), FORM='formatted',          &
      &        STATUS='replace')
-      END IF
+!     END IF
 !
 !-----------------------------------------------------------------------
 !  Determine coupling standard input filename.  In distributed-memory,
@@ -1542,7 +1542,7 @@
 !  is specified in this coupling script.
 !-----------------------------------------------------------------------
 !
-      Lwrite=localPET .eq. 0
+      Lwrite=MasterPET
       inp=100
       out=cplout
 !
@@ -3805,7 +3805,7 @@
 !
 !  Flush standard output buffer.
 !
-      CALL my_flush (out)
+      FLUSH (out)
 !
   70  FORMAT (80('-'),/,                                                &
      &        ' Earth System Models Coupling: ESMF/NUOPC Library,',     &

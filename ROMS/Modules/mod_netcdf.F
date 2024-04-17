@@ -8600,7 +8600,7 @@
             WRITE (DBout,'(a,1x," <= ",i8,2(2x,a))')                    &
      &            KernelString(model)//' F90: CLOSE', ncid,             &
      &            TRIM(my_ncname), TRIM(SourceFile)
-            CALL my_flush (DBout)
+            FLUSH (DBout)
           END IF
           ncid=-1
         END IF
@@ -8727,7 +8727,7 @@
             WRITE (DBout,'(a," ** ",i8,2(2x,a))')                       &
      &            KernelString(model)//' F90: CREATE', ncid,            &
      &            TRIM(ncname), TRIM(SourceFile)
-          CALL my_flush (DBout)
+          FLUSH (DBout)
         END IF
 !
 !  Set NOFILL mode to enhance performance.
@@ -8968,7 +8968,7 @@
            WRITE (DBout,'(a,2x," => ",i8,2(2x,a))')                     &
      &           KernelString(model)//' F90: OPEN', ncid,               &
      &           TRIM(ncname), TRIM(SourceFile)
-          CALL my_flush (DBout)
+          FLUSH (DBout)
         END IF
 # ifdef DISTRIBUTE
         ibuffer(1)=exit_flag

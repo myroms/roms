@@ -69,7 +69,7 @@
 !
       IF (Master) THEN
         WRITE (stdout,'(a,a)') '==> Entering ', TRIM(routine)
-        CALL my_flush (stdout)
+        FLUSH (stdout)
       END IF
 #endif
 !
@@ -131,7 +131,7 @@
           WRITE (stdout,10) ' Node #', PETrank,                         &
      &                      ' (pid=',proc(0,MyModel,ng),') is active.'
 # endif
-          CALL my_flush (stdout)
+          FLUSH (stdout)
 #else
           WRITE (stdout,10) ' Thread #', MyThread,                      &
      &                      ' (pid=',proc(0,MyModel,ng),') is active.'
@@ -217,7 +217,7 @@
 !
       IF (Master) THEN
         WRITE (stdout,'(a,a)') '<== Exiting  ', TRIM(routine)
-        CALL my_flush (stdout)
+        FLUSH (stdout)
       END IF
 #endif
 !
@@ -297,7 +297,7 @@
           WRITE (stdout,10) ' Node   #', PETrank,                       &
      &                      ' CPU:', Tend(PETrank+1)
 # endif
-          CALL my_flush (stdout)
+          FLUSH (stdout)
 #else
           WRITE (stdout,10) ' Thread #', MyThread, ' CPU:',             &
      &                      Cend(region,MyModel,ng)

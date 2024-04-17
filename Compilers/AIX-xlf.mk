@@ -168,6 +168,11 @@ ifdef USE_SCORPIO
 endif
 
 ifdef USE_NETCDF4
+        NC_CONFIG ?= nc-config
+   TEST_NC_CONFIG := $(shell which $(NC_CONFIG))
+  ifneq ($(TEST_NC_CONFIG),)
+             LIBS += $(shell $(NC_CONFIG) --libs)
+  endif
         NF_CONFIG ?= nf-config
     NETCDF_INCDIR ?= $(shell $(NF_CONFIG) --prefix)/include
              LIBS += $(shell $(NF_CONFIG) --flibs)

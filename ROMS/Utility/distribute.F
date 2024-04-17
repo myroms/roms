@@ -7357,7 +7357,7 @@
       nc=nc+1
       IF (Master) THEN
         WRITE (10,'(a,i3.3,a,a)') 'file ', nc, ': ', TRIM(name)
-        CALL my_flush (10)
+        FLUSH (10)
       END IF
 !
 !  Write out field including ghost-points.
@@ -7391,7 +7391,7 @@
       WRITE (unit,*) ILB, IUB, JLB, JUB, KLB, KUB,                      &
      &               Ioff, Joff, Imin, Imax, Jmin, Jmax,                &
      &               A(ILB:IUB,JLB:JUB,KLB:KUB)
-      CALL my_flush (unit)
+      FLUSH (unit)
 !
 !  Write out non-overlapping field.
 !
@@ -7426,7 +7426,7 @@
       WRITE (unit,*) Imin, Imax, Jmin, Jmax, KLB, KUB,                  &
      &               Ioff, Joff, Imin, Imax, Jmin, Jmax,                &
      &               A(Imin:Imax,Jmin:Jmax,KLB:KUB)
-      CALL my_flush (unit)
+      FLUSH (unit)
 
       RETURN
       END SUBROUTINE mp_dump

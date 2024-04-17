@@ -358,8 +358,8 @@
 !
 !  Standard output units.
 !
-      integer :: cplout  = 77         ! coupling driver
-      integer :: trac = 6             ! trace/track CALL sequence unit
+      integer :: cplout = 77          ! coupling driver
+      integer :: trac   = 6           ! trace/track CALL sequence unit
 !
       character (len=11), parameter :: CouplerLog = 'log.coupler'
 !
@@ -695,7 +695,7 @@
 # else
       logical :: Lreport = .FALSE.
 # endif
-      logical :: Lexist, MyMaster
+      logical :: Lexist, MasterPET
 !
       integer :: Findex, i, layout, ng
 !
@@ -754,8 +754,8 @@
 !  Get size of number of nested grids, 'Ngrids' parameter from ROMS
 !  standard input file.
 !
-      MyMaster=localPET.eq.0
-      CALL getpar_i (MyMaster, Ngrids, 'Ngrids', TRIM(Iname))
+      MasterPET=localPET.eq.0
+      CALL getpar_i (MasterPET, Ngrids, 'Ngrids', TRIM(Iname))
 !
 !-----------------------------------------------------------------------
 !  Get ROMS linked/coupled nested grid number for current application.
@@ -1513,6 +1513,12 @@
         WRITE (cplout,100)
       END IF
 !
+      IF (ESM_track) THEN
+        WRITE (trac,'(a,a,i0)') '<== Exiting  ROMS_Create',             &
+     &                          ', PET', PETrank
+        FLUSH (trac)
+      END IF
+!
   10  FORMAT (/,' ROMS_CREATE - Unable to create YAML object for',      &
      &        ' ROMS/CMEPS configuration metadata file: ',/,15x,a,/,    &
      &        15x,'Default file is located in source directory.')
@@ -1585,7 +1591,7 @@
 !
 !  Local variable declarations.
 !
-      logical :: MyMaster, isPresent, isSet
+      logical :: MasterPET, isPresent, isSet
 !
       integer :: i
       integer :: ng = 1
@@ -1642,7 +1648,8 @@
      &                       file=MyFile)) THEN
         RETURN
       END IF
-      MyMaster=localPET.eq.0
+      MasterPET=localPET.eq.0
+      PETrank=localPET
 !
 !-----------------------------------------------------------------------
 !  Set ROMS standard ouput unit and file
@@ -1657,7 +1664,7 @@
 !  the case, it opens such formatted file for writing.
 !
       IF (Set_StdOutUnit) THEN
-        stdout=stdout_unit(MyMaster)
+        stdout=stdout_unit(MasterPET)
         Set_StdOutUnit=.FALSE.
       END IF
 !
@@ -1665,10 +1672,8 @@
 !  Open standard output unit for ROMS cap information and messages.
 !-----------------------------------------------------------------------
 !
-      IF (MyMaster) THEN
-        OPEN (cplout, FILE=TRIM(CouplerLog), FORM='formatted',          &
-     &        STATUS='replace')
-      END IF
+      OPEN (cplout, FILE=TRIM(CouplerLog), FORM='formatted',            &
+     &      STATUS='replace')
 !
 !-----------------------------------------------------------------------
 !  Query driver for attributes
@@ -2016,6 +2021,12 @@
         END DO
       END IF EXPORTING
 # endif
+!
+      IF (ESM_track) THEN
+        WRITE (trac,'(a,a,i0)') '<== Exiting  ROMS_SetInitializeP1',    &
+     &                          ', PET', PETrank
+        FLUSH (trac)
+      END IF
 !
 # ifdef ADD_NESTED_STATE
   10  FORMAT (/,a,a,', ng = ',i0,/,31('='),/)
@@ -4311,7 +4322,6 @@
 !-----------------------------------------------------------------------
 !
       CALL ROMS_finalize
-      FLUSH (stdout)                      ! flush standard output buffer
       FLUSH (cplout)                      ! flush coupling output buffer
       CLOSE (cplout)                      ! close coupling log file
 !

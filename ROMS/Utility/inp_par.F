@@ -1202,7 +1202,7 @@
 !
       IF (Master.and.Lwrite) THEN
         CALL checkdefs
-        CALL my_flush (out)
+        FLUSH (out)
       END IF
 #ifdef DISTRIBUTE
       CALL mp_bcasti (1, model, exit_flag)
