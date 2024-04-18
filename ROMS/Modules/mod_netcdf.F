@@ -5515,7 +5515,7 @@
       integer, dimension(2) :: ibuffer
 #endif
       real(dp) :: Afactor, Aoffset, my_Rdate(2), seconds
-      real(dp) :: dnum_old, dnum_new
+      real(dp) :: dnum_old, dnum_new, scale
 
       real(dp), dimension(1) :: my_A
       real(r8), dimension(2) :: AttValue
@@ -5664,6 +5664,27 @@
                     dnum_new=Rdate(2)+A
                     CALL datestr (dnum_new, .FALSE., dstr_new)
                   END IF
+                CASE ('hour', 'hours')        ! convert to seconds
+                  IF (Ldebug) THEN
+                    scale=3600.0_dp           ! hours to seconds
+                    IF (JulianOffset) THEN
+                      dnum_old=A*scale
+                    ELSE
+                      dnum_old=my_Rdate(2)+A*scale
+                    END IF
+                    CALL datestr (dnum_old, .FALSE., dstr_old)
+                  END IF
+                  scale=24.0_dp               ! time reference to hours
+                  IF (JulianOffset) THEN
+                    A=A-Rdate(1)*scale        ! 'add_offset' added above
+                  ELSE
+                    A=(my_Rdate(1)*scale+A)-Rdate(1)*scale
+                  END IF
+                  IF (Ldebug) THEN
+                    scale=3600.0_dp           ! convert to seconds
+                    dnum_new=Rdate(2)+A*scale
+                    CALL datestr (dnum_new, .FALSE., dstr_new)
+                  END IF
                 CASE ('day', 'days')
                   IF (Ldebug) THEN
                     IF (JulianOffset) THEN
@@ -5799,7 +5820,7 @@
 #endif
 !
       real(dp) :: Afactor, Aoffset, my_Rdate(2), seconds
-      real(dp) :: dnum_old, dnum_new
+      real(dp) :: dnum_old, dnum_new, scale
 
       real(r8), dimension(2) :: AttValue
 !
@@ -5960,6 +5981,31 @@
                   END IF
                   IF (Ldebug) THEN
                     dnum_new=Rdate(2)+A(1)
+                    CALL datestr (dnum_new, .FALSE., dstr_new)
+                  END IF
+                CASE ('hour', 'hours')
+                  scale=3600.0_dp             ! convert to seconds
+                  IF (Ldebug) THEN
+                    IF (JulianOffset) THEN
+                      dnum_old=A(1)*scale
+                    ELSE
+                      dnum_old=my_Rdate(2)+A(1)*scale
+                    END IF
+                    CALL datestr (dnum_old, .FALSE., dstr_old)
+                  END IF
+                  scale=24.0_dp               ! time reference to hours
+                  IF (JulianOffset) THEN
+                    DO i=1,Asize(1)
+                      A(i)=A(i)-Rdate(1)*scale ! add_offset added above
+                    END DO
+                  ELSE
+                    DO i=1,Asize(1)
+                      A(i)=(my_Rdate(1)*scale+A(i))-Rdate(1)*scale
+                    END DO
+                  END IF
+                  IF (Ldebug) THEN
+                    scale=3600.0_dp           ! convert to seconds
+                    dnum_new=Rdate(2)+A(1)*scale
                     CALL datestr (dnum_new, .FALSE., dstr_new)
                   END IF
                 CASE ('day', 'days')

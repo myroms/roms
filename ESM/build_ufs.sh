@@ -356,13 +356,11 @@ fi
 ANALYTICAL_DIR="ANALYTICAL_DIR='${MY_ANALYTICAL_DIR}'"
 HEADER=`echo ${ROMS_APPLICATION} | tr '[:upper:]' '[:lower:]'`.h
 HEADER_DIR="HEADER_DIR='${MY_HEADER_DIR}'"
-ROOT_DIR="ROOT_DIR='${MY_ROMS_SRC}'"
 
 mycppflags="${MY_CPP_FLAGS}"
 
 export       MY_CPP_FLAGS="${MY_CPP_FLAGS} -D${ANALYTICAL_DIR}"
 export       MY_CPP_FLAGS="${MY_CPP_FLAGS} -D${HEADER_DIR}"
-export       MY_CPP_FLAGS="${MY_CPP_FLAGS} -D${ROOT_DIR}"
 
 cd ${BUILD_DIR}
 

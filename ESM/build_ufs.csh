@@ -360,13 +360,11 @@ endif
 set ANALYTICAL_DIR = "ANALYTICAL_DIR='${MY_ANALYTICAL_DIR}'"
 set HEADER = `echo ${ROMS_APPLICATION} | tr '[:upper:]' '[:lower:]'`.h
 set HEADER_DIR = "HEADER_DIR='${MY_HEADER_DIR}'"
-set ROOT_DIR = "ROOT_DIR='${MY_ROMS_SRC}'"
 
 set mycppflags = "${MY_CPP_FLAGS}"
 
 setenv MY_CPP_FLAGS "${MY_CPP_FLAGS} -D${ANALYTICAL_DIR}"
 setenv MY_CPP_FLAGS "${MY_CPP_FLAGS} -D${HEADER_DIR}"
-setenv MY_CPP_FLAGS "${MY_CPP_FLAGS} -D${ROOT_DIR}"
 
 cd ${BUILD_DIR}
 

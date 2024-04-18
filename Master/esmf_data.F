@@ -3116,7 +3116,7 @@
                   Tindex=3-Tindex
                   DataSet(Icomp)%Export(ifld)%Tindex=Tindex
 !
-!  Read in time coordinate and scale it to day units.
+!  Read in time coordinate and scale it to DAY UNITS.
 !
                   CALL netcdf_get_time (ng, imodel, ncname,             &
      &                                  TRIM(T_name),                   &
@@ -3417,7 +3417,8 @@
       CALL time_string (TimeStrSec, I_code)
       CALL time_string (TimeEndSec, F_code)
 !
-!  Set available minimum and maximum time coordinates.
+!  Set available minimum and maximum time coordinates. The input time
+!  is scaled to DAY units.
 !
       DO i=1,Nfiles
         Mfiles=IFS(i)%Nfiles  ! number of multi-files within source file
@@ -3450,7 +3451,8 @@
         END IF
 !
 !  Initialize other structure parameters or issue an error if data does
-!  not include initalization time.
+!  not include initalization time. Notice that the time argument to
+!  routine 'time_string' is in seconds.
 !
         IF (Fcount.gt.0) THEN
           IFS(i)%Fcount=Fcount
@@ -3599,7 +3601,7 @@
       Lcheck=.TRUE.
       Lcycle=.FALSE.
       Lperpetual=.FALSE.
-      Tscale=1.0_dp                        ! days
+      Tscale=1.0_dp                        ! time in days by default
       Tmin= MISSING_dp
       Tmax=-MISSING_dp
       DO i=1,LEN(blank)
@@ -3665,6 +3667,7 @@
             END DO
             IF ((INDEX(TRIM(lowercase(long_name)),'time').ne.0).and.    &
      &          ((INDEX(TRIM(lowercase(units)),'day').ne.0).or.         &
+     &           (INDEX(TRIM(lowercase(units)),'hour').ne.0).or.        &
      &           (INDEX(TRIM(lowercase(units)),'second').ne.0))) THEN
               TvarName=TRIM(var_name(i))
               foundit=.TRUE.
@@ -3704,6 +3707,8 @@
 !  for perpetual time axis: the 'calendar' attribute is 'none' or
 !  the number of records in the time dimension is one (Nrec=1).
 !
+!  Compute time scale (Tscale) to convert DAY units.
+!
       Nrec=var_Dsize(1)              ! time is a 1D array
       DO i=1,nvatt
         IF (TRIM(var_Aname(i)).eq.'units') THEN
@@ -3711,9 +3716,9 @@
           IF (INDEX(TRIM(var_Achar(i)),'day').ne.0) THEN
             Tscale=1.0_dp
           ELSE IF (INDEX(TRIM(var_Achar(i)),'hour').ne.0) THEN
-            Tscale=24.0_dp
+            Tscale=1.0_dp/24.0_dp
           ELSE IF (INDEX(TRIM(var_Achar(i)),'second').ne.0) THEN
-            Tscale=86400.0_dp
+            Tscale=1.0_dp/86400.0_dp
           END IF
         ELSE IF (TRIM(var_Aname(i)).eq.'calendar') THEN
           IF ((Nrec.eq.1).or.                                           &
@@ -4238,8 +4243,10 @@
                   Tunits=TRIM(var_Achar(i))
                   IF (Tunits(1:6).eq.'second') THEN
                     Tscale=1.0_dp/86400.0_dp         ! seconds to days
+                  ELSE IF (Tunits(1:4).eq.'hour') THEN
+                    Tscale=1.0_dp/24.0_dp            ! hours to days
                   ELSE
-                    Tscale=1.0_dp                    ! day units
+                    Tscale=1.0_dp                    ! default day units
                   END IF
                   Export(ifield)%Tunits=TRIM(Tunits)
                   Export(ifield)%Tscale=Tscale
