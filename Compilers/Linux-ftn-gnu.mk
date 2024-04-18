@@ -138,6 +138,9 @@ ifdef USE_WRF
              LIBS += $(WRF_LIB_DIR)/librsl_lite.a
              LIBS += $(WRF_LIB_DIR)/module_internal_header_util.o
              LIBS += $(WRF_LIB_DIR)/pack_utils.o
+ifneq ($(NETCDFPAR),)
+             LIBS += $(WRF_LIB_DIR)/libwrfio_nfpar.a
+endif
              LIBS += $(WRF_LIB_DIR)/libwrfio_nf.a
 endif
 

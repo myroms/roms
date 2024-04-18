@@ -37,7 +37,7 @@
 #
 # First the defaults
 #
-               FC := ifort
+               FC := ifx
            FFLAGS := -fp-model precise
            FFLAGS += -heap-arrays
        FIXEDFLAGS := -nofree
@@ -70,16 +70,20 @@
 ifdef USE_ROMS
  ifdef USE_DEBUG
            FFLAGS += -g
-           FFLAGS += -check all
-           FFLAGS += -check bounds
-           FFLAGS += -traceback
-           FFLAGS += -check uninit
-           FFLAGS += -warn interfaces,nouncalled
-           FFLAGS += -gen-interfaces
+#           FFLAGS += -check all
+#           FFLAGS += -check bounds
+#           FFLAGS += -traceback
+#          Disabled for now because it requires libm.a
+#          https://community.intel.com/t5/Intel-Fortran-Compiler/ifx-IFX-2023-2-0-20230721-linker-problems-with-check-uninit/m-p/1527816
+#          FFLAGS += -check uninit
+#           FFLAGS += -warn interfaces,nouncalled
+#           FFLAGS += -gen-interfaces
  else
-           FFLAGS += -ip -O3
+           FFLAGS += -O3
            FFLAGS += -traceback
-           FFLAGS += -check uninit
+#          Disabled for now because it requires libm.a
+#          https://community.intel.com/t5/Intel-Fortran-Compiler/ifx-IFX-2023-2-0-20230721-linker-problems-with-check-uninit/m-p/1527816
+#          FFLAGS += -check uninit
  endif
  ifdef SHARED
           LDFLAGS += -Wl,-rpath,$(BUILD_DIR)
@@ -185,11 +189,6 @@ ifdef USE_SCORPIO
 endif
 
 ifdef USE_NETCDF4
-        NC_CONFIG ?= nc-config
-   TEST_NC_CONFIG := $(shell which $(NC_CONFIG))
-  ifneq ($(TEST_NC_CONFIG),)
-             LIBS += $(shell $(NC_CONFIG) --libs)
-  endif
         NF_CONFIG ?= nf-config
     NETCDF_INCDIR ?= $(shell $(NF_CONFIG) --prefix)/include
              LIBS += $(shell $(NF_CONFIG) --flibs)
