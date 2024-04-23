@@ -18,9 +18,11 @@ list ( APPEND _files
        ROMS/Modules/mod_clima.F
        ROMS/Modules/mod_coupler.F
        ROMS/Modules/mod_coupling.F
+       ROMS/Modules/mod_decimate.F
        ROMS/Modules/mod_diags.F
        ROMS/Modules/mod_eclight.F
        ROMS/Modules/mod_eoscoef.F
+       ROMS/Modules/mod_extract.F
        ROMS/Modules/mod_floats.F
        ROMS/Modules/mod_forces.F
        ROMS/Modules/mod_fourdvar.F

@@ -46,6 +46,10 @@
 !     Adat         Field to write out (real)                           !
 !     SetFillVal   Logical switch to set fill value in land areas      !
 !                    (OPTIONAL)                                        !
+!     ExtractFlag  Field extraction flag (integer, OPTIONAL)           !
+!                    ExtractFlag = 0    no extraction                  !
+!                    ExtractFlag = 1    extraction by intrpolation     !
+!                    ExtractFlag > 1    extraction by decimation       !
 !                                                                      !
 !  On Output:                                                          !
 !                                                                      !
@@ -67,6 +71,11 @@
       USE mod_parallel
       USE mod_ncparam
       USE mod_scalars
+
+#ifdef GRID_EXTRACT
+!
+      USE pack_field_mod,  ONLY : pack_field3d
+#endif
 !
       implicit none
 !
@@ -88,7 +97,9 @@
 # ifdef MASKING
      &                        Amask,                                    &
 # endif
-     &                        Adat,  SetFillVal,                        &
+     &                        Adat,                                     &
+     &                        SetFillVal,                               &
+     &                        ExtractFlag,                              &
      &                        MinValue, MaxValue) RESULT (status)
 !***********************************************************************
 !
@@ -98,6 +109,7 @@
 !
       USE distribute_mod, ONLY : mp_collect
 # endif
+      USE get_bounds_mod, ONLY : tile_bounds_1d
 !
 !  Imported variable declarations.
 !
@@ -106,6 +118,8 @@
       integer, intent(in) :: ng, model, ncid, ncvarid, tindex, gtype
       integer, intent(in) :: ifield
       integer, intent(in) :: LBi, UBi, LBj, UBj, LBk, UBk
+!
+      integer, intent(in), optional :: ExtractFlag
 !
       real(dp), intent(in) :: Ascl
 !
@@ -129,6 +143,7 @@
       logical :: LandFill
 !
 # endif
+      integer :: Extract_Flag
       integer :: i, ic, j, jc, k, kc, Npts
       integer :: Imin, Imax, Jmin, Jmax
       integer :: Ioff, Joff, Koff
@@ -206,6 +221,15 @@
         LandFill=tindex.gt.0
       END IF
 # endif
+!
+!  If appropriate, set the field extraction flag to the provided grid
+!  geometry through interpolation or decimation.
+!
+      IF (PRESENT(ExtractFlag)) THEN
+        Extract_Flag=ExtractFlag
+      ELSE
+        Extract_Flag=0
+      END IF
 !
 !-----------------------------------------------------------------------
 !  Parallel I/O: Pack tile data into 1D array in column-major order.
@@ -406,7 +430,9 @@
 # ifdef MASKING
      &                        Amask,                                    &
 # endif
-     &                        Adat, SetFillVal,                         &
+     &                        Adat,                                     &
+     &                        SetFillVal,                               &
+     &                        ExtractFlag,                              &
      &                        MinValue, MaxValue) RESULT (status)
 !***********************************************************************
 !
@@ -433,6 +459,8 @@
       integer, intent(in) :: ifield
       integer, intent(in) :: LBi, UBi, LBj, UBj, LBk, UBk
 !
+      integer, intent(in), optional :: ExtractFlag
+!
       real(dp), intent(in) :: Ascl
 !
 # ifdef ASSUMED_SHAPE
@@ -454,18 +482,15 @@
 # ifdef MASKING
       logical :: LandFill
 # endif
-      integer :: i, j, k, ic, Npts, tile
+      integer :: Extract_Flag
+      integer :: i, Npts, tile
       integer :: Imin, Imax, Jmin, Jmax, Koff
       integer :: Ilen, Jlen, Klen, IJlen, MyType
       integer :: status
 
       integer, dimension(4) :: start, total
 !
-# if defined INLINE_2DIO && defined DISTRIBUTE
-      real(r8), dimension((Lm(ng)+2)*(Mm(ng)+2)) :: Awrk
-# else
       real(r8), dimension((Lm(ng)+2)*(Mm(ng)+2)*(UBk-LBk+1)) :: Awrk
-# endif
 
 # ifdef OUTPUT_STATS
 !
@@ -473,55 +498,18 @@
 # endif
 !
 !-----------------------------------------------------------------------
-!  Set starting and ending indices to process.
+!  Initialize local variables.
 !-----------------------------------------------------------------------
 !
       status=nf90_noerr
 !
-!  Set first and last grid point according to staggered C-grid
-!  classification. Set loops offsets.
+!  Set parallel tile.
 !
-      MyType=gtype
-!
-      SELECT CASE (ABS(MyType))
-        CASE (p3dvar)
-          Imin=IOBOUNDS(ng)%ILB_psi
-          Imax=IOBOUNDS(ng)%IUB_psi
-          Jmin=IOBOUNDS(ng)%JLB_psi
-          Jmax=IOBOUNDS(ng)%JUB_psi
-        CASE (r3dvar)
-          Imin=IOBOUNDS(ng)%ILB_rho
-          Imax=IOBOUNDS(ng)%IUB_rho
-          Jmin=IOBOUNDS(ng)%JLB_rho
-          Jmax=IOBOUNDS(ng)%JUB_rho
-        CASE (u3dvar)
-          Imin=IOBOUNDS(ng)%ILB_u
-          Imax=IOBOUNDS(ng)%IUB_u
-          Jmin=IOBOUNDS(ng)%JLB_u
-          Jmax=IOBOUNDS(ng)%JUB_u
-        CASE (v3dvar)
-          Imin=IOBOUNDS(ng)%ILB_v
-          Imax=IOBOUNDS(ng)%IUB_v
-          Jmin=IOBOUNDS(ng)%JLB_v
-          Jmax=IOBOUNDS(ng)%JUB_v
-        CASE DEFAULT
-          Imin=IOBOUNDS(ng)%ILB_rho
-          Imax=IOBOUNDS(ng)%IUB_rho
-          Jmin=IOBOUNDS(ng)%JLB_rho
-          Jmax=IOBOUNDS(ng)%JUB_rho
-      END SELECT
-!
-      Ilen=Imax-Imin+1
-      Jlen=Jmax-Jmin+1
-      Klen=UBk-LBk+1
-      IJlen=Ilen*Jlen
-!
-      IF (LBk.eq.0) THEN
-        Koff=0
-      ELSE
-        Koff=1
-      END IF
-
+# ifdef DISTRIBUTE
+      tile=MyRank
+# else
+      tile=-1
+# endif
 # ifdef MASKING
 !
 !  Set switch to replace land areas with fill value, spval.
@@ -533,17 +521,14 @@
       END IF
 # endif
 !
-!  If appropriate, initialize minimum and maximum processed values.
+!  If appropriate, set the field extraction flag to the provided grid
+!  geometry through interpolation or decimation.
 !
-      IF (PRESENT(MinValue)) THEN
-        MinValue=spval
-        MaxValue=-spval
+      IF (PRESENT(ExtractFlag)) THEN
+        Extract_Flag=ExtractFlag
+      ELSE
+        Extract_Flag=0
       END IF
-!
-!  Initialize local array to avoid denormalized numbers. This
-!  facilitates processing and debugging.
-!
-      Awrk=0.0_r8
 
 # ifdef OUTPUT_STATS
 !
@@ -556,142 +541,25 @@
       Stats % avg=0.0_r8
       Stats % rms=0.0_r8
 # endif
-# ifdef DISTRIBUTE
+!
+!  Initialize local array to avoid denormalized numbers. This
+!  facilitates processing and debugging.
+!
+      Awrk=0.0_r8
 !
 !-----------------------------------------------------------------------
-!  If distributed-memory set-up, collect tile data from all spawned
-!  nodes and store it into a global scratch 1D array, packed in column-
-!  major order.
-#  ifdef MASKING
-#   ifdef WRITE_WATER
-!  Remove land points and pack water points into 1D-array.
-#   else
-!  Overwrite masked points with special value.
-#   endif
-#  endif
+!  Pack 3D field data into 1D array.
 !-----------------------------------------------------------------------
 !
-#  ifdef INLINE_2DIO
-
-!  If appropriate, process 3D data level by level to reduce memory
-!  requirements.
-!
-      DO k=LBk,UBk
-        CALL mp_gather2d (ng, model, LBi, UBi, LBj, UBj,                &
-     &                    tindex, gtype, Ascl,                          &
-#   ifdef MASKING
-     &                    Amask,                                        &
-#   endif
-     &                    Adat(:,:,k), Npts, Awrk, SetFillVal)
-#  else
-        CALL mp_gather3d (ng, model, LBi, UBi, LBj, UBj, LBk, UBk,      &
-     &                    tindex, gtype, Ascl,                          &
-#   ifdef MASKING
-     &                    Amask,                                        &
-#   endif
-     &                    Adat, Npts, Awrk, SetFillVal)
-#  endif
-!
-!-----------------------------------------------------------------------
-!  If applicable, compute output field minimum and maximum values.
-!-----------------------------------------------------------------------
-!
-        IF (PRESENT(MinValue)) THEN
-          IF (OutThread) THEN
-            DO i=1,Npts
-              IF (ABS(Awrk(i)).lt.spval) THEN
-                MinValue=MIN(MinValue,Awrk(i))
-                MaxValue=MAX(MaxValue,Awrk(i))
-              END IF
-            END DO
-          END IF
-        END IF
-!
-!-----------------------------------------------------------------------
-!  Write output buffer into NetCDF file.
-!-----------------------------------------------------------------------
-!
-        IF (OutThread) THEN
-          IF (gtype.gt.0) THEN
-            start(1)=1
-            total(1)=Ilen
-            start(2)=1
-            total(2)=Jlen
-#  ifdef INLINE_2DIO
-            start(3)=k-Koff+1
-            total(3)=1
-#  else
-            start(3)=1
-            total(3)=Klen
-#  endif
-            start(4)=tindex
-            total(4)=1
-#  ifdef MASKING
-          ELSE
-            start(1)=1
-            total(1)=Npts
-            start(2)=tindex
-            total(2)=1
-#  endif
-          END IF
-#  ifdef POSITIVE_ZERO
-          DO ic=1,Npts
-            IF (ABS(Awrk(ic)).eq.0.0_r8) THEN
-              Awrk(ic)=0.0_r8                     ! impose positive zero
-            END IF
-          END DO
-#  endif
-          status=nf90_put_var(ncid, ncvarid, Awrk, start, total)
-        END IF
-#  ifdef INLINE_2DIO
-      END DO
-#  endif
-
-# else
-!
-!-----------------------------------------------------------------------
-!  If serial or shared-memory applications and serial output, pack data
-!  into a global 1D array in column-major order.
-#  ifdef MASKING
-#   ifdef WRITE_WATER
-!  Remove land points and pack water points into 1D-array.
-#   else
-!  Overwrite masked points with special value.
-#   endif
-#  endif
-!-----------------------------------------------------------------------
-!
-      IF (gtype.gt.0) THEN
-        ic=0
-        Npts=IJlen*Klen
-        DO k=LBk,UBk
-          DO j=Jmin,Jmax
-            DO i=Imin,Imax
-              ic=ic+1
-              Awrk(ic)=Adat(i,j,k)*Ascl
-#  ifdef MASKING
-              IF ((Amask(i,j).eq.0.0_r8).and.LandFill) THEN
-                Awrk(ic)=spval
-              END IF
-#  endif
-            END DO
-          END DO
-        END DO
-#  ifdef MASKING
-      ELSE
-        Npts=0
-        DO k=LBk,UBk
-          DO j=Jmin,Jmax
-            DO i=Imin,Imax
-              IF (Amask(i,j).gt.0.0_r8) THEN
-                Npts=Npts+1
-                Awrk(Npts)=Adat(i,j,k)*Ascl
-              END IF
-            END DO
-          END DO
-        END DO
-#  endif
-      END IF
+      CALL pack_field3d (ng, model, tile,                               &
+     &                   gtype, ifield, tindex,                         &
+     &                   LandFill, Extract_Flag,                        &
+     &                   LBi, UBi, LBj, UBj, LBk, UBk,                  &
+# ifdef MASKING
+     &                   Amask,                                         &
+# endif
+     &                   Ascl, Adat,                                    &
+     &                   start, total, Npts, Awrk)
 !
 !-----------------------------------------------------------------------
 !  If applicable, compute output field minimum and maximum values.
@@ -699,6 +567,8 @@
 !
       IF (PRESENT(MinValue)) THEN
         IF (OutThread) THEN
+          MinValue=spval
+          MaxValue=-spval
           DO i=1,Npts
             IF (ABS(Awrk(i)).lt.spval) THEN
               MinValue=MIN(MinValue,Awrk(i))
@@ -713,45 +583,17 @@
 !-----------------------------------------------------------------------
 !
       IF (OutThread) THEN
-        IF (gtype.gt.0) THEN
-          start(1)=1
-          total(1)=Ilen
-          start(2)=1
-          total(2)=Jlen
-          start(3)=1
-          total(3)=Klen
-          start(4)=tindex
-          total(4)=1
-#  ifdef MASKING
-        ELSE
-          start(1)=1
-          total(1)=Npts
-          start(2)=tindex
-          total(2)=1
-#  endif
-        END IF
-#  ifdef POSITIVE_ZERO
-        DO ic=1,Npts
-          IF (ABS(Awrk(ic)).eq.0.0_r8) THEN
-            Awrk(ic)=0.0_r8                       ! impose positive zero
-          END IF
-        END DO
-#  endif
         status=nf90_put_var(ncid, ncvarid, Awrk, start, total)
       END IF
-# endif
+
 # ifdef OUTPUT_STATS
 !
 !-----------------------------------------------------------------------
 !  Compute and report output field statistics.
 !-----------------------------------------------------------------------
 !
-#  ifdef DISTRIBUTE
-      tile=MyRank
-#  else
-      tile=-1
-#  endif
       CALL stats_3dfld (ng, tile, model, gtype, Stats,                  &
+     &                  Extract_Flag,                                   &
      &                  LBi, UBi, LBj, UBj, LBk, UBk,                   &
      &                  Adat,                                           &
 #  ifdef MASKING
@@ -765,6 +607,7 @@
      &          1p,e15.8,',  CheckSum = ',i0)
       END IF
 # endif
+
 # ifdef DISTRIBUTE
 !
 !-----------------------------------------------------------------------
@@ -787,7 +630,9 @@
 # ifdef MASKING
      &                       Amask,                                     &
 # endif
-     &                       Adat, SetFillVal,                          &
+     &                       Adat,                                      &
+     &                       SetFillVal,                                &
+     &                       ExtractFlag,                               &
      &                       MinValue, MaxValue) RESULT (status)
 !***********************************************************************
 !
@@ -805,6 +650,8 @@
       integer, intent(in) :: ng, model, tindex
       integer, intent(in) :: ifield
       integer, intent(in) :: LBi, UBi, LBj, UBj, LBk, UBk
+!
+      integer, intent(in), optional :: ExtractFlag
 !
       real(dp), intent(in) :: Ascl
 !
@@ -832,6 +679,7 @@
 
       logical, pointer :: Lwater(:,:,:)
 !
+      integer :: Extract_Flag
       integer :: i, j, k, tile
       integer :: Imin, Imax, Jmin, Jmax
       integer :: Cgrid, dkind, ghost, gtype
@@ -904,6 +752,16 @@
         LandFill=tindex.gt.0
       END IF
 # endif
+!
+!  If appropriate, set the field extraction flag to the provided grid
+!  geometry through interpolation or decimation.
+!
+      IF (PRESENT(ExtractFlag)) THEN
+        Extract_Flag=ExtractFlag
+      ELSE
+        Extract_Flag=0
+      END IF
+
 # ifdef OUTPUT_STATS
 !
 !  Initialize output variable statistics structure.
@@ -1006,11 +864,13 @@
       tile=-1
 #  endif
       CALL stats_3dfld (ng, tile, model, gtype, Stats,                  &
+     &                  Extract_Flag,                                   &
      &                  LBi, UBi, LBj, UBj, LBk, UBk,                   &
      &                  Adat,                                           &
 #  ifdef MASKING
      &                  Fmask = Amask,                                  &
 #  endif
+     &                  ExtractFlag = Extract_Flag,                     &
      &                  debug = .FALSE.)
       IF (OutThread) THEN
         WRITE (stdout,10) TRIM(Vname(1,ifield)), Stats%min, Stats%max,  &
