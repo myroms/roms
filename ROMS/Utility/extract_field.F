@@ -1,5 +1,7 @@
 #include "cppdefs.h"
       MODULE extract_field_mod
+
+#ifdef GRID_EXTRACT
 !
 !svn $Id$
 !=======================================================================
@@ -39,9 +41,9 @@
       USE mod_ncparam
       USE mod_scalars
 !
-#ifdef DISTRIBUTE
+# ifdef DISTRIBUTE
       USE distribute_mod,       ONLY : mp_gather2d, mp_gather2d_xtr
-#endif
+# endif
       USE roms_interpolate_mod, ONLY : cinterp2d, linterp2d, hindices
       USE strings_mod,          ONLY : FoundError
 !
@@ -50,10 +52,10 @@
 !  Interfaces for sam name routine overloading.
 !
       INTERFACE extract_field
-#ifdef ADJUST_BOUNDARY
+# ifdef ADJUST_BOUNDARY
         MODULE PROCEDURE extract_boundary2d
         MODULE PROCEDURE extract_boundary3d
-#endif
+# endif
         MODULE PROCEDURE extract_field2d
         MODULE PROCEDURE extract_field3d
         MODULE PROCEDURE extract_field4d
@@ -81,7 +83,7 @@
 !
       CONTAINS
 !
-#ifdef ADJUST_BOUNDARY
+# ifdef ADJUST_BOUNDARY
 !
       SUBROUTINE extract_boundary2d (ng, model, factor, vtype, ifield,  &
      &                               LBij, UBij, ijLB, ijUB,            &
@@ -189,7 +191,7 @@
 !
       RETURN
       END SUBROUTINE extract_boundary3d
-#endif
+# endif
 !
       SUBROUTINE extract_field2d (ng, model, tile,                      &
      &                            gtype, ifield, tindex, Extract_Flag,  &
@@ -815,13 +817,13 @@
         total(2)=Jdim
         start(3)=tindex
         total(3)=1
-#ifdef MASKING
+# ifdef MASKING
       ELSE
         start(1)=1
         total(1)=Mpts
         start(2)=tindex
         total(2)=1
-#endif
+# endif
       END IF
 !
   10  FORMAT (' DECIMATE_FIELD2D - Staggered variable, gtype = ', i0,   &
@@ -1039,13 +1041,13 @@
         total(3)=Ksize
         start(4)=tindex
         total(4)=1
-#ifdef MASKING
+# ifdef MASKING
       ELSE
         start(1)=1
         total(1)=Mpts
         start(2)=tindex
         total(2)=1
-#endif
+# endif
       END IF
 !
   10  FORMAT (' DECIMATE_FIELD3D - Staggered variable, gtype = ', i0,   &
@@ -1269,13 +1271,13 @@
         total(4)=1
         start(5)=tindex
         total(5)=1
-#ifdef MASKING
+# ifdef MASKING
       ELSE
         start(1)=1+(fourth+Loff-1)*Mpts
         total(1)=Mpts
         start(2)=tindex
         total(2)=1
-#endif
+# endif
       END IF
 !
       RETURN
@@ -1283,13 +1285,13 @@
 !
       SUBROUTINE interp_coords (ng, tile, model, gtype,                 &
      &                          Ainp,                                   &
-#ifdef MASKING
+# ifdef MASKING
      &                          Minp,                                   &
-#endif
+# endif
      &                          Xinp, Yinp,                             &
-#ifdef MASKING
+# ifdef MASKING
      &                          Mout,                                   &
-#endif
+# endif
      &                          Xout, Yout,                             &
      &                          Iout, Jout)
 !
@@ -1322,14 +1324,14 @@
 !  On Output:                                                          !
 !                                                                      !
 !     Ainp         Donor grid global curvilinear angle (1D real)       !
-#ifdef MASKING
+# ifdef MASKING
 !     Minp         Donor grid global land/sea mask (1D real)           !
-#endif
+# endif
 !     Xinp         Donor grid global X-coordinate  (1D real)           !
 !     Yinp         Donor grid global Y-coordinate  (1D real)           !
-#ifdef MASKING
+# ifdef MASKING
 !     Mout         Interpolated data global land/sea mask (1D real)    !
-#endif
+# endif
 !     Xout         Interpolated data global X-coordinates (1D real)    !
 !     Yout         Interpolated data global Y-coordinates (1D real)    !
 !     Iout         Global fractional I-coordinate  (1D real)           !
@@ -1342,14 +1344,14 @@
       integer,  intent(in)  :: ng, tile, model, gtype
 !
       real(r8), intent(out) :: Ainp(:)
-#ifdef MASKING
+# ifdef MASKING
       real(r8), intent(out) :: Minp(:)
-#endif
+# endif
       real(r8), intent(out) :: Xinp(:)
       real(r8), intent(out) :: Yinp(:)
-#ifdef MASKING
+# ifdef MASKING
       real(r8), intent(out) :: Mout(:)
-#endif
+# endif
       real(r8), intent(out) :: Xout(:)
       real(r8), intent(out) :: Yout(:)
       real(r8), intent(out) :: Iout(:)
@@ -1365,16 +1367,16 @@
       integer :: Cgrid, Npts, ghost, i, ic, j
 !
       real(r8), allocatable :: angle(:,:)
-#ifdef MASKING
+# ifdef MASKING
       real(r8), pointer :: mask_inp(:,:), mask_out(:,:)
-#endif
+# endif
       real(r8), pointer :: Xi(:,:), Yi(:,:)
       real(r8), pointer :: Xo(:,:), Yo(:,:)
 !
       character (len=*), parameter :: MyFile =                          &
      &  __FILE__//", interp_coord"
 
-#include "set_bounds.h"
+# include "set_bounds.h"
 !
 !-----------------------------------------------------------------------
 !  Compute fractional coordinates (Ipos, Jpos).
@@ -1424,10 +1426,10 @@
             Xo => EXTRACT(ng)%xp
             Yo => EXTRACT(ng)%yp
           END IF
-#ifdef MASKING
+# ifdef MASKING
           mask_inp => GRID(ng)%pmask
           mask_out => EXTRACT(ng)%pmask
-#endif
+# endif
 !
 !       -----------------------------
         CASE (r2dvar, r3dvar, w3dvar)            ! RHO-points
@@ -1456,10 +1458,10 @@
             Xo => EXTRACT(ng)%xr
             Yo => EXTRACT(ng)%yr
           END IF
-#ifdef MASKING
+# ifdef MASKING
           mask_inp => GRID(ng)%rmask
           mask_out => EXTRACT(ng)%rmask
-#endif
+# endif
 !
 !       -----------------------------
         CASE (u2dvar, u3dvar)                    ! U-points
@@ -1488,11 +1490,11 @@
             Xo => EXTRACT(ng)%xu
             Yo => EXTRACT(ng)%yu
           END IF
-#ifdef MASKING
+# ifdef MASKING
           mask_inp => GRID(ng)%umask
           mask_out => EXTRACT(ng)%umask
 
-#endif
+# endif
 !
 !       -----------------------------
         CASE (v2dvar, v3dvar)                    ! V-points
@@ -1521,10 +1523,10 @@
             Xo => EXTRACT(ng)%xv
             Yo => EXTRACT(ng)%yv
           END IF
-#ifdef MASKING
+# ifdef MASKING
           mask_inp => GRID(ng)%vmask
           mask_out => EXTRACT(ng)%vmask
-#endif
+# endif
 !
       END SELECT
 !
@@ -1570,108 +1572,108 @@
         END DO                
       END IF      
 
-#ifdef DISTRIBUTE
+# ifdef DISTRIBUTE
 !
 !  If distributed-memory, collect donor grid location data from all
 !  spawned nodes and store it into a global scratch 1D array, packed
 !  in column-major order to facilitate interpolation.
 
-# ifdef MASKING
+#  ifdef MASKING
 !
       CALL mp_gather2d (ng, model,                                      &
      &                  LBi_inp, UBi_inp, LBj_inp, UBj_inp,             &
      &                  0, gtype, 1.0_r8,                               &
      &                  mask_inp,                                       &
      &                  mask_inp, Npts, Minp, .FALSE.)
-# endif
+#  endif
 !
       CALL mp_gather2d (ng, model,                                      &
      &                  LBi_inp, UBi_inp, LBj_inp, UBj_inp,             &
      &                  0, gtype, 1.0_r8,                               &
-# ifdef MASKING
+#  ifdef MASKING
      &                  mask_inp,                                       &
-# endif
+#  endif
      &                  angle, Npts, Ainp, .FALSE.)
 !
       CALL mp_gather2d (ng, model,                                      &
      &                  LBi_inp, UBi_inp, LBj_inp, UBj_inp,             &
      &                  0, gtype, 1.0_r8,                               &
-# ifdef MASKING
+#  ifdef MASKING
      &                  mask_inp,                                       &
-# endif
+#  endif
      &                  Xi, Npts, Xinp, .FALSE.)
 !
       CALL mp_gather2d (ng, model,                                      &
      &                  LBi_inp, UBi_inp, LBj_inp, UBj_inp,             &
      &                  0, gtype, 1.0_r8,                               &
-# ifdef MASKING
+#  ifdef MASKING
      &                  mask_inp,                                       &
-# endif
+#  endif
      &                  Yi, Npts, Yinp, .FALSE.)
 
 !
       CALL mp_gather2d (ng, model,                                      &
      &                  LBi_inp, UBi_inp, LBj_inp, UBj_inp,             &
      &                  0, gtype, 1.0_r8,                               &
-# ifdef MASKING
+#  ifdef MASKING
      &                  mask_inp,                                       &
-# endif
+#  endif
      &                  Xi, Npts, Xinp, .FALSE.)
 !
       CALL mp_gather2d (ng, model,                                      &
      &                  LBi_inp, UBi_inp, LBj_inp, UBj_inp,             &
      &                  0, gtype, 1.0_r8,                               &
-# ifdef MASKING
+#  ifdef MASKING
      &                  mask_inp,                                       &
-# endif
+#  endif
      &                  Yi, Npts, Yinp, .FALSE.)
 
-# ifdef MASKING
+#  ifdef MASKING
 !
       CALL mp_gather2d_xtr (ng, model,                                  &
      &                      LBi_out, UBi_out, LBj_out, UBj_out,         &
      &                      0, gtype, 1.0_r8,                           &
      &                      mask_out,                                   &
      &                      mask_out, Npts, Mout, .FALSE.)
-# endif
+#  endif
 !
       CALL mp_gather2d_xtr (ng, model,                                  &
      &                      LBi_out, UBi_out, LBj_out, UBj_out,         &
      &                      0, gtype, 1.0_r8,                           &
-# ifdef MASKING
+#  ifdef MASKING
      &                      mask_out,                                   &
-# endif
+#  endif
      &                      Xo, Npts, Xout, .FALSE.)
 !
       CALL mp_gather2d_xtr (ng, model,                                  &
      &                      LBi_out, UBi_out, LBj_out, UBj_out,         &
      &                      0, gtype, 1.0_r8,                           &
-# ifdef MASKING
+#  ifdef MASKING
      &                      mask_out,                                   &
-# endif
+#  endif
      &                      Yo, Npts, Yout, .FALSE.)
 
-#else
+# else
 
 !
 !  If serial or shared-memory applications, pack donor grid data into a
 !  global 1D array in column-major order.
 !
       Ainp=PACK(angle, .TRUE.)
-# ifdef MASKING
+#  ifdef MASKING
       Minp=PACK(mask_inp, .TRUE.)
-# endif
+#  endif
       Xinp=PACK(Xi, .TRUE.)
       Yinp=PACK(Yi, .TRUE.)
 !
-# ifdef MASKING
+#  ifdef MASKING
       Mout=PACK(mask_out, .TRUE.)
-# endif
+#  endif
       Xout=PACK(Xo, .TRUE.)
       Yout=PACK(Yo, .TRUE.)
-#endif
+# endif
 
-#ifdef DISTRIBUTE
+# ifdef DISTRIBUTE
 !
 !  Find the donor grid cell's fractional indices (Iout, Jout) containing
 !  the extracted field points. Thus, computing the interpolation weights
@@ -1688,7 +1690,7 @@
      &               Xout, Yout,                                        &
      &               Iout, Jout,                                        &
      &               0.0_r8, .FALSE.)
-#else
+# else
 !
 !  Find the fractional indices (Iout,Jout) of the donor grid cells
 !  containing extracted field points.
@@ -1702,7 +1704,7 @@
      &               Xout, Yout,                                        &
      &               Iout, Jout,                                        &
      &               0.0_r8, .FALSE.)
-#endif
+# endif
 !
 !  Deallocate.
 !
@@ -1813,9 +1815,9 @@
      &                           1, Isize, 1, Jsize,                    &
      &                           GRID(ng) % Gx_rho,                     &
      &                           GRID(ng) % Gy_rho,                     &
-#ifdef MASKING
+# ifdef MASKING
      &                           GRID(ng) % Gmask_rho,                  &
-#endif
+# endif
      &                           Fwrk,                                  &
      &                           Istr, Iend, Jstr, Jend,                &
      &                           LBi, UBi, LBj, UBj,                    &
@@ -1823,9 +1825,9 @@
      &                           EXTRACT(ng) % Jout_rho,                &
      &                           EXTRACT(ng) % lonr,                    &
      &                           EXTRACT(ng) % latr,                    &
-#ifdef MASKING
+# ifdef MASKING
      &                           EXTRACT(ng) % rmask,                   &
-#endif
+# endif
      &                           Npts, Fdat, Fmin, Fmax)
           ELSE
             CALL regrid_field2d (ng, model, tile, gtype, ifield,        &
@@ -1833,9 +1835,9 @@
      &                           1, Isize, 1, Jsize,                    &
      &                           GRID(ng) % Gx_rho,                     &
      &                           GRID(ng) % Gy_rho,                     &
-#ifdef MASKING
+# ifdef MASKING
      &                           GRID(ng) % Gmask_rho,                  &
-#endif
+# endif
      &                           Fwrk,                                  &
      &                           Istr, Iend, Jstr, Jend,                &
      &                           LBi, UBi, LBj, UBj,                    &
@@ -1843,9 +1845,9 @@
      &                           EXTRACT(ng) % Jout_rho,                &
      &                           EXTRACT(ng) % xr,                      &
      &                           EXTRACT(ng) % Yr,                      &
-#ifdef MASKING
+# ifdef MASKING
      &                           EXTRACT(ng) % rmask,                   &
-#endif
+# endif
      &                           Npts, Fdat, Fmin, Fmax)
           END IF
 !
@@ -1867,9 +1869,9 @@
      &                           1, Isize, 1, Jsize,                    &
      &                           GRID(ng) % Gx_u,                       &
      &                           GRID(ng) % Gy_u,                       &
-#ifdef MASKING
+# ifdef MASKING
      &                           GRID(ng) % Gmask_u,                    &
-#endif
+# endif
      &                           Fwrk,                                  &
      &                           Istr, Iend, Jstr, Jend,                &
      &                           LBi, UBi, LBj, UBj,                    &
@@ -1877,9 +1879,9 @@
      &                           EXTRACT(ng) % Jout_u,                  &
      &                           EXTRACT(ng) % lonu,                    &
      &                           EXTRACT(ng) % latu,                    &
-#ifdef MASKING
+# ifdef MASKING
      &                           EXTRACT(ng) % umask,                   &
-#endif
+# endif
      &                           Npts, Fdat, Fmin, Fmax)
           ELSE
             CALL regrid_field2d (ng, model, tile, gtype, ifield,        &
@@ -1887,9 +1889,9 @@
      &                           1, Isize, 1, Jsize,                    &
      &                           GRID(ng) % Gx_u,                       &
      &                           GRID(ng) % Gy_u,                       &
-#ifdef MASKING
+# ifdef MASKING
      &                           GRID(ng) % Gmask_u,                    &
-#endif
+# endif
      &                           Fwrk,                                  &
      &                           Istr, Iend, Jstr, Jend,                &
      &                           LBi, UBi, LBj, UBj,                    &
@@ -1897,9 +1899,9 @@
      &                           EXTRACT(ng) % Jout_u,                  &
      &                           EXTRACT(ng) % xu,                      &
      &                           EXTRACT(ng) % yu,                      &
-#ifdef MASKING
+# ifdef MASKING
      &                           EXTRACT(ng) % umask,                   &
-#endif
+# endif
      &                           Npts, Fdat, Fmin, Fmax)
           END IF
 !
@@ -1921,9 +1923,9 @@
      &                           1, Isize, 1, Jsize,                    &
      &                           GRID(ng) % Gx_v,                       &
      &                           GRID(ng) % Gy_v,                       &
-#ifdef MASKING
+# ifdef MASKING
      &                           GRID(ng) % Gmask_v,                    &
-#endif
+# endif
      &                           Fwrk,                                  &
      &                           Istr, Iend, Jstr, Jend,                &
      &                           LBi, UBi, LBj, UBj,                    &
@@ -1931,9 +1933,9 @@
      &                           EXTRACT(ng) % Jout_v,                  &
      &                           EXTRACT(ng) % lonv,                    &
      &                           EXTRACT(ng) % latv,                    &
-#ifdef MASKING
+# ifdef MASKING
      &                           EXTRACT(ng) % vmask,                   &
-#endif
+# endif
      &                           Npts, Fdat, Fmin, Fmax)
           ELSE
             CALL regrid_field2d (ng, model, tile, gtype, ifield,        &
@@ -1941,9 +1943,9 @@
      &                           1, Isize, 1, Jsize,                    &
      &                           GRID(ng) % Gx_v,                       &
      &                           GRID(ng) % Gy_v,                       &
-#ifdef MASKING
+# ifdef MASKING
      &                           GRID(ng) % Gmask_v,                    &
-#endif
+# endif
      &                           Fwrk,                                  &
      &                           Istr, Iend, Jstr, Jend,                &
      &                           LBi, UBi, LBj, UBj,                    &
@@ -1951,9 +1953,9 @@
      &                           EXTRACT(ng) % Jout_v,                  &
      &                           EXTRACT(ng) % lonv,                    &
      &                           EXTRACT(ng) % latv,                    &
-#ifdef MASKING
+# ifdef MASKING
      &                           EXTRACT(ng) % vmask,                   &
-#endif
+# endif
      &                           Npts, Fdat, Fmin, Fmax)
           END IF
 !
@@ -1980,13 +1982,13 @@
         total(2)=Jend-Jstr+1
         start(3)=tindex
         total(3)=1
-#ifdef MASKING
+# ifdef MASKING
       ELSE
         start(1)=1
         total(1)=Npts
         start(2)=tindex
         total(2)=1
-#endif
+# endif
       END IF
 !
   10  FORMAT (' INTERP_FIELD2D - Staggered variable, gtype = ', i0,     &
@@ -2100,9 +2102,9 @@
      &                           1, Isize, 1, Jsize, Kmin, Kmax,        &
      &                           GRID(ng) % Gx_rho,                     &
      &                           GRID(ng) % Gy_rho,                     &
-#ifdef MASKING
+# ifdef MASKING
      &                           GRID(ng) % Gmask_rho,                  &
-#endif
+# endif
      &                           Fwrk,                                  &
      &                           Istr, Iend, Jstr, Jend,                &
      &                           LBi, UBi, LBj, UBj,                    &
@@ -2110,9 +2112,9 @@
      &                           EXTRACT(ng) % Jout_rho,                &
      &                           EXTRACT(ng) % lonr,                    &
      &                           EXTRACT(ng) % latr,                    &
-#ifdef MASKING
+# ifdef MASKING
      &                           EXTRACT(ng) % rmask,                   &
-#endif
+# endif
      &                           Npts, Fdat, Fmin, Fmax)
           ELSE
             CALL regrid_field3d (ng, model, tile, gtype, ifield,        &
@@ -2120,9 +2122,9 @@
      &                           1, Isize, 1, Jsize, Kmin, Kmax,        &
      &                           GRID(ng) % Gx_rho,                     &
      &                           GRID(ng) % Gy_rho,                     &
-#ifdef MASKING
+# ifdef MASKING
      &                           GRID(ng) % Gmask_rho,                  &
-#endif
+# endif
      &                           Fwrk,                                  &
      &                           Istr, Iend, Jstr, Jend,                &
      &                           LBi, UBi, LBj, UBj,                    &
@@ -2130,9 +2132,9 @@
      &                           EXTRACT(ng) % Jout_rho,                &
      &                           EXTRACT(ng) % xr,                      &
      &                           EXTRACT(ng) % Yr,                      &
-#ifdef MASKING
+# ifdef MASKING
      &                           EXTRACT(ng) % rmask,                   &
-#endif
+# endif
      &                           Npts, Fdat, Fmin, Fmax)
           END IF
 !
@@ -2154,9 +2156,9 @@
      &                           1, Isize, 1, Jsize, Kmin, Kmax,        &
      &                           GRID(ng) % Gx_u,                       &
      &                           GRID(ng) % Gy_u,                       &
-#ifdef MASKING
+# ifdef MASKING
      &                           GRID(ng) % Gmask_u,                    &
-#endif
+# endif
      &                           Fwrk,                                  &
      &                           Istr, Iend, Jstr, Jend,                &
      &                           LBi, UBi, LBj, UBj,                    &
@@ -2164,9 +2166,9 @@
      &                           EXTRACT(ng) % Jout_u,                  &
      &                           EXTRACT(ng) % lonu,                    &
      &                           EXTRACT(ng) % latu,                    &
-#ifdef MASKING
+# ifdef MASKING
      &                           EXTRACT(ng) % umask,                   &
-#endif
+# endif
      &                           Npts, Fdat, Fmin, Fmax)
           ELSE
             CALL regrid_field3d (ng, model, tile, gtype, ifield,        &
@@ -2174,9 +2176,9 @@
      &                           1, Isize, 1, Jsize, Kmin, Kmax,        &
      &                           GRID(ng) % Gx_u,                       &
      &                           GRID(ng) % Gy_u,                       &
-#ifdef MASKING
+# ifdef MASKING
      &                           GRID(ng) % Gmask_u,                    &
-#endif
+# endif
      &                           Fwrk,                                  &
      &                           Istr, Iend, Jstr, Jend,                &
      &                           LBi, UBi, LBj, UBj,                    &
@@ -2184,9 +2186,9 @@
      &                           EXTRACT(ng) % Jout_u,                  &
      &                           EXTRACT(ng) % xu,                      &
      &                           EXTRACT(ng) % yu,                      &
-#ifdef MASKING
+# ifdef MASKING
      &                           EXTRACT(ng) % umask,                   &
-#endif
+# endif
      &                           Npts, Fdat, Fmin, Fmax)
           END IF
 !
@@ -2208,9 +2210,9 @@
      &                           1, Isize, 1, Jsize, Kmin, Kmax,        &
      &                           GRID(ng) % Gx_v,                       &
      &                           GRID(ng) % Gy_v,                       &
-#ifdef MASKING
+# ifdef MASKING
      &                           GRID(ng) % Gmask_v,                    &
-#endif
+# endif
      &                           Fwrk,                                  &
      &                           Istr, Iend, Jstr, Jend,                &
      &                           LBi, UBi, LBj, UBj,                    &
@@ -2218,9 +2220,9 @@
      &                           EXTRACT(ng) % Jout_v,                  &
      &                           EXTRACT(ng) % lonv,                    &
      &                           EXTRACT(ng) % latv,                    &
-#ifdef MASKING
+# ifdef MASKING
      &                           EXTRACT(ng) % vmask,                   &
-#endif
+# endif
      &                           Npts, Fdat, Fmin, Fmax)
           ELSE
             CALL regrid_field3d (ng, model, tile, gtype, ifield,        &
@@ -2228,9 +2230,9 @@
      &                           1, Isize, 1, Jsize, Kmin, Kmax,        &
      &                           GRID(ng) % Gx_v,                       &
      &                           GRID(ng) % Gy_v,                       &
-#ifdef MASKING
+# ifdef MASKING
      &                           GRID(ng) % Gmask_v,                    &
-#endif
+# endif
      &                           Fwrk,                                  &
      &                           Istr, Iend, Jstr, Jend,                &
      &                           LBi, UBi, LBj, UBj,                    &
@@ -2238,9 +2240,9 @@
      &                           EXTRACT(ng) % Jout_v,                  &
      &                           EXTRACT(ng) % lonv,                    &
      &                           EXTRACT(ng) % latv,                    &
-#ifdef MASKING
+# ifdef MASKING
      &                           EXTRACT(ng) % vmask,                   &
-#endif
+# endif
      &                           Npts, Fdat, Fmin, Fmax)
           END IF
 !
@@ -2269,13 +2271,13 @@
         total(3)=Ksize
         start(4)=tindex
         total(4)=1
-#ifdef MASKING
+# ifdef MASKING
       ELSE
         start(1)=1
         total(1)=Npts
         start(2)=tindex
         total(2)=1
-#endif
+# endif
       END IF
 !
   10  FORMAT (' INTERP_FIELD3D - Staggered variable, gtype = ', i0,     &
@@ -2391,9 +2393,9 @@
      &                           1, Isize, 1, Jsize, Kmin, Kmax,        &
      &                           GRID(ng) % Gx_rho,                     &
      &                           GRID(ng) % Gy_rho,                     &
-#ifdef MASKING
+# ifdef MASKING
      &                           GRID(ng) % Gmask_rho,                  &
-#endif
+# endif
      &                           Fwrk,                                  &
      &                           Istr, Iend, Jstr, Jend,                &
      &                           LBi, UBi, LBj, UBj,                    &
@@ -2401,9 +2403,9 @@
      &                           EXTRACT(ng) % Jout_rho,                &
      &                           EXTRACT(ng) % lonr,                    &
      &                           EXTRACT(ng) % latr,                    &
-#ifdef MASKING
+# ifdef MASKING
      &                           EXTRACT(ng) % rmask,                   &
-#endif
+# endif
      &                           Npts, Fdat, Fmin, Fmax)
           ELSE
             CALL regrid_field3d (ng, model, tile, gtype, ifield,        &
@@ -2411,9 +2413,9 @@
      &                           1, Isize, 1, Jsize, Kmin, Kmax,        &
      &                           GRID(ng) % Gx_rho,                     &
      &                           GRID(ng) % Gy_rho,                     &
-#ifdef MASKING
+# ifdef MASKING
      &                           GRID(ng) % Gmask_rho,                  &
-#endif
+# endif
      &                           Fwrk,                                  &
      &                           Istr, Iend, Jstr, Jend,                &
      &                           LBi, UBi, LBj, UBj,                    &
@@ -2421,9 +2423,9 @@
      &                           EXTRACT(ng) % Jout_rho,                &
      &                           EXTRACT(ng) % xr,                      &
      &                           EXTRACT(ng) % Yr,                      &
-#ifdef MASKING
+# ifdef MASKING
      &                           EXTRACT(ng) % rmask,                   &
-#endif
+# endif
      &                           Npts, Fdat, Fmin, Fmax)
           END IF
 !
@@ -2445,9 +2447,9 @@
      &                           1, Isize, 1, Jsize, Kmin, Kmax,        &
      &                           GRID(ng) % Gx_u,                       &
      &                           GRID(ng) % Gy_u,                       &
-#ifdef MASKING
+# ifdef MASKING
      &                           GRID(ng) % Gmask_u,                    &
-#endif
+# endif
      &                           Fwrk,                                  &
      &                           Istr, Iend, Jstr, Jend,                &
      &                           LBi, UBi, LBj, UBj,                    &
@@ -2455,9 +2457,9 @@
      &                           EXTRACT(ng) % Jout_u,                  &
      &                           EXTRACT(ng) % lonu,                    &
      &                           EXTRACT(ng) % latu,                    &
-#ifdef MASKING
+# ifdef MASKING
      &                           EXTRACT(ng) % umask,                   &
-#endif
+# endif
      &                           Npts, Fdat, Fmin, Fmax)
           ELSE
             CALL regrid_field3d (ng, model, tile, gtype, ifield,        &
@@ -2465,9 +2467,9 @@
      &                           1, Isize, 1, Jsize, Kmin, Kmax,        &
      &                           GRID(ng) % Gx_u,                       &
      &                           GRID(ng) % Gy_u,                       &
-#ifdef MASKING
+# ifdef MASKING
      &                           GRID(ng) % Gmask_u,                    &
-#endif
+# endif
      &                           Fwrk,                                  &
      &                           Istr, Iend, Jstr, Jend,                &
      &                           LBi, UBi, LBj, UBj,                    &
@@ -2475,9 +2477,9 @@
      &                           EXTRACT(ng) % Jout_u,                  &
      &                           EXTRACT(ng) % xu,                      &
      &                           EXTRACT(ng) % yu,                      &
-#ifdef MASKING
+# ifdef MASKING
      &                           EXTRACT(ng) % umask,                   &
-#endif
+# endif
      &                           Npts, Fdat, Fmin, Fmax)
           END IF
 !
@@ -2499,9 +2501,9 @@
      &                           1, Isize, 1, Jsize, Kmin, Kmax,        &
      &                           GRID(ng) % Gx_v,                       &
      &                           GRID(ng) % Gy_v,                       &
-#ifdef MASKING
+# ifdef MASKING
      &                           GRID(ng) % Gmask_v,                    &
-#endif
+# endif
      &                           Fwrk,                                  &
      &                           Istr, Iend, Jstr, Jend,                &
      &                           LBi, UBi, LBj, UBj,                    &
@@ -2509,9 +2511,9 @@
      &                           EXTRACT(ng) % Jout_v,                  &
      &                           EXTRACT(ng) % lonv,                    &
      &                           EXTRACT(ng) % latv,                    &
-#ifdef MASKING
+# ifdef MASKING
      &                           EXTRACT(ng) % vmask,                   &
-#endif
+# endif
      &                           Npts, Fdat, Fmin, Fmax)
           ELSE
             CALL regrid_field3d (ng, model, tile, gtype, ifield,        &
@@ -2519,9 +2521,9 @@
      &                           1, Isize, 1, Jsize, Kmin, Kmax,        &
      &                           GRID(ng) % Gx_v,                       &
      &                           GRID(ng) % Gy_v,                       &
-#ifdef MASKING
+# ifdef MASKING
      &                           GRID(ng) % Gmask_v,                    &
-#endif
+# endif
      &                           Fwrk,                                  &
      &                           Istr, Iend, Jstr, Jend,                &
      &                           LBi, UBi, LBj, UBj,                    &
@@ -2529,9 +2531,9 @@
      &                           EXTRACT(ng) % Jout_v,                  &
      &                           EXTRACT(ng) % lonv,                    &
      &                           EXTRACT(ng) % latv,                    &
-#ifdef MASKING
+# ifdef MASKING
      &                           EXTRACT(ng) % vmask,                   &
-#endif
+# endif
      &                           Npts, Fdat, Fmin, Fmax)
           END IF
 !
@@ -2562,13 +2564,13 @@
         total(4)=1
         start(5)=tindex
         total(5)=1
-#ifdef MASKING
+# ifdef MASKING
       ELSE
         start(1)=1+(fourth+Loff-1)*Npts
         total(1)=Npts
         start(2)=tindex
         total(2)=1
-#endif
+# endif
       END IF
 !
   10  FORMAT (' INTERP_FIELD4D - Staggered variable, gtype = ', i0,     &
@@ -2678,9 +2680,9 @@
      &                         Imin, Imax, Jmin, Jmax,                &
      &                         GRID(ng) % Gx_rho,                     &
      &                         GRID(ng) % Gy_rho,                     &
-#ifdef MASKING
+# ifdef MASKING
      &                         GRID(ng) % Gmask_rho,                  &
-#endif
+# endif
      &                         Fwrk,                                  &
      &                         Istr, Iend, Jstr, Jend,                &
      &                         Istr, Iend, Jstr, Jend,                &
@@ -2688,9 +2690,9 @@
      &                         EXTRACT(ng) % Jout_rho,                &
      &                         EXTRACT(ng) % Gx_rho,                  &
      &                         EXTRACT(ng) % Gy_rho,                  &
-#ifdef MASKING
+# ifdef MASKING
      &                         EXTRACT(ng) % Gmask_rho,               &
-#endif
+# endif
      &                         Npts, Fdat, Fmin, Fmax)
 !
 !       ---------------------
@@ -2710,9 +2712,9 @@
      &                         Imin, Imax, Jmin, Jmax,                &
      &                         GRID(ng) % Gx_u,                       &
      &                         GRID(ng) % Gy_u,                       &
-#ifdef MASKING
+# ifdef MASKING
      &                         GRID(ng) % Gmask_u,                    &
-#endif
+# endif
      &                         Fwrk,                                  &
      &                         Istr, Iend, Jstr, Jend,                &
      &                         Istr, Iend, Jstr, Jend,                &
@@ -2720,9 +2722,9 @@
      &                         EXTRACT(ng) % Jout_u,                  &
      &                         EXTRACT(ng) % Gx_u,                    &
      &                         EXTRACT(ng) % Gx_u,                    &
-#ifdef MASKING
+# ifdef MASKING
      &                         EXTRACT(ng) % Gmask_u,                 &
-#endif
+# endif
      &                         Npts, Fdat, Fmin, Fmax)
 !
 !       ---------------------
@@ -2742,9 +2744,9 @@
      &                         Imin, Imax, Jmin, Jmax,                  &
      &                         GRID(ng) % Gx_v,                         &
      &                         GRID(ng) % Gy_v,                         &
-#ifdef MASKING
+# ifdef MASKING
      &                         GRID(ng) % Gmask_v,                      &
-#endif
+# endif
      &                         Fwrk,                                    &
      &                         Istr, Iend, Jstr, Jend,                  &
      &                         Istr, Iend, jstr, Jend,                  &
@@ -2752,9 +2754,9 @@
      &                         EXTRACT(ng) % Jout_v,                    &
      &                         EXTRACT(ng) % Gx_v,                      &
      &                         EXTRACT(ng) % Gy_v,                      &
-#ifdef MASKING
+# ifdef MASKING
      &                         EXTRACT(ng) % Gmask_v,                   &
-#endif
+# endif
      &                         Npts, Fdat, Fmin, Fmax)
 !
 !       ------------
@@ -2780,13 +2782,13 @@
         total(2)=Jend-Jstr+1
         start(3)=tindex
         total(3)=1
-#ifdef MASKING
+# ifdef MASKING
       ELSE
         start(1)=1
         total(1)=Npts
         start(2)=tindex
         total(2)=1
-#endif
+# endif
       END IF
 !
   10  FORMAT (' INTERP_FIELD2D_GLOBAL - Staggered variable, gtype = ',  &
@@ -2899,9 +2901,9 @@
      &                         Imin, Imax, Jmin, Jmax, Kmin, Kmax,      &
      &                         GRID(ng) % Gx_rho,                       &
      &                         GRID(ng) % Gy_rho,                       &
-#ifdef MASKING
+# ifdef MASKING
      &                         GRID(ng) % Gmask_rho,                    &
-#endif
+# endif
      &                         Fwrk,                                    &
      &                         Istr, Iend, Jstr, Jend,                  &
      &                         Istr, Iend, Jstr, Jend,                  &
@@ -2909,9 +2911,9 @@
      &                         EXTRACT(ng) % Jout_rho,                  &
      &                         EXTRACT(ng) % Gx_rho,                    &
      &                         EXTRACT(ng) % Gy_rho,                    &
-#ifdef MASKING
+# ifdef MASKING
      &                         EXTRACT(ng) % Gmask_rho,                 &
-#endif
+# endif
      &                         Npts, Fdat, Fmin, Fmax)
 !
 !       ---------------------
@@ -2931,9 +2933,9 @@
      &                         Imin, Imax, Jmin, Jmax, Kmin, Kmax,      &
      &                         GRID(ng) % Gx_u,                         &
      &                         GRID(ng) % Gy_u,                         &
-#ifdef MASKING
+# ifdef MASKING
      &                         GRID(ng) % Gmask_u,                      &
-#endif
+# endif
      &                         Fwrk,                                    &
      &                         Istr, Iend, Jstr, Jend,                  &
      &                         Istr, Iend, Jstr, Jend,                  &
@@ -2941,9 +2943,9 @@
      &                         EXTRACT(ng) % Jout_u,                    &
      &                         EXTRACT(ng) % Gx_u,                      &
      &                         EXTRACT(ng) % Gy_u,                      &
-#ifdef MASKING
+# ifdef MASKING
      &                         EXTRACT(ng) % Gmask_u,                   &
-#endif
+# endif
      &                         Npts, Fdat, Fmin, Fmax)
 !
 !       ---------------------
@@ -2963,9 +2965,9 @@
      &                         Imin, Imax, Jmin, Jmax, Kmin, Kmax,      &
      &                         GRID(ng) % Gx_v,                         &
      &                         GRID(ng) % Gy_v,                         &
-#ifdef MASKING
+# ifdef MASKING
      &                         GRID(ng) % Gmask_v,                      &
-#endif
+# endif
      &                         Fwrk,                                    &
      &                         Istr, Iend, Jstr, Jend,                  &
      &                         Istr, Iend, Jstr, Jend,                  &
@@ -2973,9 +2975,9 @@
      &                         EXTRACT(ng) % Jout_v,                    &
      &                         EXTRACT(ng) % Gx_v,                      &
      &                         EXTRACT(ng) % Gy_v,                      &
-#ifdef MASKING
+# ifdef MASKING
      &                         EXTRACT(ng) % Gmask_v,                   &
-#endif
+# endif
      &                         Npts, Fdat, Fmin, Fmax)
 !
 !       ------------
@@ -3003,13 +3005,13 @@
         total(3)=Ksize
         start(4)=tindex
         total(4)=1
-#ifdef MASKING
+# ifdef MASKING
       ELSE
         start(1)=1
         total(1)=Npts
         start(2)=tindex
         total(2)=1
-#endif
+# endif
       END IF
 !
   10  FORMAT (' INTERP_FIELD3D_GLOBAL - Staggered variable, gtype = ',  &
@@ -3124,9 +3126,9 @@
      &                         Imin, Imax, Jmin, Jmax, Kmin, Kmax,      &
      &                         GRID(ng) % Gx_rho,                       &
      &                         GRID(ng) % Gy_rho,                       &
-#ifdef MASKING
+# ifdef MASKING
      &                         GRID(ng) % Gmask_rho,                    &
-#endif
+# endif
      &                         Fwrk,                                    &
      &                         Istr, Iend, Jstr, Jend,                  &
      &                         Istr, Iend, Jstr, Jend,                  &
@@ -3134,9 +3136,9 @@
      &                         EXTRACT(ng) % Jout_rho,                  &
      &                         EXTRACT(ng) % Gx_rho,                    &
      &                         EXTRACT(ng) % Gy_rho,                    &
-#ifdef MASKING
+# ifdef MASKING
      &                         EXTRACT(ng) % Gmask_rho,                 &
-#endif
+# endif
      &                         Npts, Fdat, Fmin, Fmax)
 !
 !       ---------------------
@@ -3156,9 +3158,9 @@
      &                         Imin, Imax, Jmin, Jmax, Kmin, Kmax,      &
      &                         GRID(ng) % Gx_u,                         &
      &                         GRID(ng) % Gy_u,                         &
-#ifdef MASKING
+# ifdef MASKING
      &                         GRID(ng) % Gmask_u,                      &
-#endif
+# endif
      &                         Fwrk,                                    &
      &                         Istr, Iend, Jstr, Jend,                  &
      &                         Istr, Iend, Jstr, Jend,                  &
@@ -3166,9 +3168,9 @@
      &                         EXTRACT(ng) % Jout_u,                    &
      &                         EXTRACT(ng) % Gx_u,                      &
      &                         EXTRACT(ng) % Gy_u,                      &
-#ifdef MASKING
+# ifdef MASKING
      &                         EXTRACT(ng) % Gmask_u,                   &
-#endif
+# endif
      &                         Npts, Fdat, Fmin, Fmax)
 !
 !       ---------------------
@@ -3188,9 +3190,9 @@
      &                         1, Isize, 1, Jsize, Kmin, Kmax,          &
      &                         GRID(ng) % Gx_v,                         &
      &                         GRID(ng) % Gy_v,                         &
-#ifdef MASKING
+# ifdef MASKING
      &                         GRID(ng) % Gmask_v,                      &
-#endif
+# endif
      &                         Fwrk,                                    &
      &                         Istr, Iend, Jstr, Jend,                  &
      &                         Istr, Iend, Jstr, Jend,                  &
@@ -3198,9 +3200,9 @@
      &                         EXTRACT(ng) % Jout_v,                    &
      &                         EXTRACT(ng) % Gx_v,                      &
      &                         EXTRACT(ng) % Gy_v,                      &
-#ifdef MASKING
+# ifdef MASKING
      &                         EXTRACT(ng) % Gmask_v,                   &
-#endif
+# endif
      &                         Npts, Fdat, Fmin, Fmax)
 !
 !       ------------
@@ -3230,13 +3232,13 @@
         total(4)=1
         start(5)=tindex
         total(5)=1
-#ifdef MASKING
+# ifdef MASKING
       ELSE
         start(1)=1+(fourth+Loff-1)*Npts
         total(1)=Npts
         start(2)=tindex
         total(2)=1
-#endif
+# endif
       END IF
 !
   10  FORMAT (' INTERP_FIELD4D_GLOBAL - Staggered variable, gtype = ',  &
@@ -3249,17 +3251,17 @@
      &                           method, LandFill,                      &
      &                           LBx, UBx, LBy, UBy,                    &
      &                           Xinp, Yinp,                            &
-#ifdef MASKING
+# ifdef MASKING
      &                           maskInp,                               &
-#endif
+# endif
      &                           Finp,                                  &
      &                           Istr, Iend, Jstr, Jend,                &
      &                           LBi, UBi, LBj, UBj,                    &
      &                           Iout, Jout,                            &
      &                           Xout, Yout,                            &
-#ifdef MASKING
+# ifdef MASKING
      &                           maskOut,                               &
-#endif
+# endif
      &                           Npts, Fout, Fmin, Fmax)
 !
 !=======================================================================
@@ -3281,9 +3283,9 @@
 !     UBy         Donor data J-dimension upper bound (integer)         !
 !     Xinp        Donor data X-locations (real array)                  !
 !     Yinp        Donor data Y-locations (real array)                  !
-#ifdef MASKING
+# ifdef MASKING
 !     maskInp     Donor data land/sea masking (real array)             !
-#endif
+# endif
 !     Finp        Donor 2D field to interpolate from (real array)      !
 !     Istr        Interpolsted field Starting tile I-index (integer)   !
 !     Iend        Interpolated field ending   tile I-index (integer)   !
@@ -3297,9 +3299,9 @@
 !     Jout        J-fractional Yinp grid cell containing Yout (real)   !
 !     Xout        Interpolated field X-locations (real array)          !
 !     Yout        Interpolated field Y-locations (real array)          !
-#ifdef MASKING
+# ifdef MASKING
 !     maskOut     Interpolated field land/sea masking (real array)     !
-#endif
+# endif
 !                                                                      !
 !  On Output:                                                          !
 !                                                                      !
@@ -3322,17 +3324,17 @@
 !
       real(r8), intent(in)   :: Xinp(LBx:UBx,LBy:UBy)
       real(r8), intent(in)   :: Yinp(LBx:UBx,LBy:UBy)
-#ifdef MASKING
+# ifdef MASKING
       real(r8), intent(in)   :: maskInp(LBx:UBx,LBy:UBy)
-#endif
+# endif
       real(r8), intent(in)   :: Finp(LBx:UBx,LBy:UBy)
       real(r8), intent(in)   :: Iout(LBi:UBi,LBj:UBj)
       real(r8), intent(in)   :: Jout(LBi:UBi,LBj:UBj)
       real(r8), intent(in)   :: Xout(LBi:UBi,LBj:UBj)
       real(r8), intent(in)   :: Yout(LBi:UBi,LBj:UBj)
-#ifdef MASKING
+# ifdef MASKING
       real(r8), intent(in)   :: maskOut(LBi:UBi,LBj:UBj)
-#endif
+# endif
       real(r8), intent(out)  :: Fout(LBi:UBi,LBj:UBj)
       real(r8), intent(out)  :: Fmin, Fmax
 !
@@ -3382,17 +3384,17 @@
       DO j=Jstr,Jend
         DO i=Istr,Iend
           ic=ic+1
-#ifdef MASKING
+# ifdef MASKING
           IF ((maskOut(i,j).lt.1.0_r8).and.LandFill) THEN    
             Fout(i,j)=spval
           ELSE
             Fmin=MIN(Fmin,Fout(i,j))
             Fmax=MAX(Fmax,Fout(i,j))
           END IF
-#else
+# else
           Fmin=MIN(Fmin,Fout(i,j))
           Fmax=MAX(Fmax,Fout(i,j))
-#endif
+# endif
         END DO
       END DO
 !
@@ -3405,17 +3407,17 @@
      &                           method, LandFill,                      &
      &                           LBx, UBx, LBy, UBy, Kmin, Kmax,        &
      &                           Xinp, Yinp,                            &
-#ifdef MASKING
+# ifdef MASKING
      &                           maskInp,                               &
-#endif
+# endif
      &                           Finp,                                  &
      &                           Istr, Iend, Jstr, Jend,                &
      &                           LBi, UBi, LBj, UBj,                    &
      &                           Iout, Jout,                            &
      &                           Xout, Yout,                            &
-#ifdef MASKING
+# ifdef MASKING
      &                           maskOut,                               &
-#endif
+# endif
      &                           Npts, Fout, Fmin, Fmax)
 !
 !=======================================================================
@@ -3440,9 +3442,9 @@
 !     Kmax        Donor data K-dimension upper bound (integer)         !
 !     Xinp        Donor data X-locations (real array)                  !
 !     Yinp        Donor data Y-locations (real array)                  !
-#ifdef MASKING
+# ifdef MASKING
 !     maskInp     Donor data land/sea masking (real array)             !
-#endif
+# endif
 !     Finp        Donor 3D field to interpolate from (real array)      !
 !     Istr        Interpolsted field Starting tile I-index (integer)   !
 !     Iend        Interpolated field ending   tile I-index (integer)   !
@@ -3456,9 +3458,9 @@
 !     Jout        J-fractional Yinp grid cell containing Yout (real)   !
 !     Xout        Interpolated field X-locations (real array)          !
 !     Yout        Interpolated field Y-locations (real array)          !
-#ifdef MASKING
+# ifdef MASKING
 !     maskOut     Interpolated field land/sea masking (real array)     !
-#endif
+# endif
 !                                                                      !
 !  On Output:                                                          !
 !                                                                      !
@@ -3482,17 +3484,17 @@
 !
       real(r8), intent(in)  :: Xinp(LBx:UBx,LBy:UBy)
       real(r8), intent(in)  :: Yinp(LBx:UBx,LBy:UBy)
-#ifdef MASKING
+# ifdef MASKING
       real(r8), intent(in)  :: maskInp(LBx:UBx,LBy:UBy)
-#endif
+# endif
       real(r8), intent(in)  :: Finp(LBx:UBx,LBy:UBy,Kmin:Kmax)
       real(r8), intent(in)  :: Iout(LBi:UBi,LBj:UBj)
       real(r8), intent(in)  :: Jout(LBi:UBi,LBj:UBj)
       real(r8), intent(in)  :: Xout(LBi:UBi,LBj:UBj)
       real(r8), intent(in)  :: Yout(LBi:UBi,LBj:UBj)
-#ifdef MASKING
+# ifdef MASKING
       real(r8), intent(in)  :: maskOut(LBi:UBi,LBj:UBj)
-#endif
+# endif
       real(r8), intent(out) :: Fout(LBi:UBi,LBj:UBj,Kmin:Kmax)
       real(r8), intent(out) :: Fmin, Fmax
 !
@@ -3547,17 +3549,17 @@
         DO j=Jstr,Jend
           DO i=Istr,Iend
             ic=ic+1
-#ifdef MASKING
+# ifdef MASKING
             IF ((maskOut(i,j).lt.1.0_r8).and.LandFill) THEN    
               Fout(i,j,k)=spval
             ELSE
               Fmin=MIN(Fmin,Fout(i,j,k))
               Fmax=MAX(Fmax,Fout(i,j,k))
             END IF
-#else
+# else
             Fmin=MIN(Fmin,Fout(i,j,k))
             Fmax=MAX(Fmax,Fout(i,j,k))
-#endif
+# endif
           END DO
         END DO
       END DO
@@ -3567,4 +3569,5 @@
       RETURN
       END SUBROUTINE regrid_field3d
 !
+#endif
       END MODULE extract_field_mod

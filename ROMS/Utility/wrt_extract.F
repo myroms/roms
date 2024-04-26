@@ -487,7 +487,7 @@
 # endif
      &                     OCEAN(ng) % zeta(:,:,KOUT),                  &
      &                     SetFillVal = .FALSE.,                        &
-     &                     ExtractFlag = ExtractFlag(ng))
+     &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idFsur)), XTR(ng)%Rindex
@@ -508,7 +508,7 @@
 # endif
      &                     OCEAN(ng) % rzeta(:,:,KOUT),                 &
      &                     SetFillVal = .FALSE.,                        &
-     &                     ExtractFlag = ExtractFlag(ng))
+     &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idRzet)), XTR(ng)%Rindex
@@ -559,7 +559,7 @@
 # endif
      &                     OCEAN(ng) % ubar(:,:,KOUT),                  &
      &                     SetFillVal = .FALSE.,                        &
-     &                     ExtractFlag = ExtractFlag(ng))
+     &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idUbar)), XTR(ng)%Rindex
@@ -581,7 +581,7 @@
 #   endif
      &                     OCEAN(ng) % rubar(:,:,KOUT),                 &
      &                     SetFillVal = .FALSE.,                        &
-     &                     ExtractFlag = ExtractFlag(ng))
+     &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idRu2d)), XTR(ng)%Rindex
@@ -603,7 +603,7 @@
 #    endif
      &                     COUPLING(ng) % rufrc,                        &
      &                     SetFillVal = .FALSE.,                        &
-     &                     ExtractFlag = ExtractFlag(ng))
+     &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idRuct)), XTR(ng)%Rindex
@@ -623,7 +623,7 @@
 #   endif
      &                     COUPLING(ng) % DU_avg1,                      &
      &                     SetFillVal = .FALSE.,                        &
-     &                     ExtractFlag = ExtractFlag(ng))
+     &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idUfx1)), XTR(ng)%Rindex
@@ -642,7 +642,7 @@
 #   endif
      &                     COUPLING(ng) % DU_avg2,                      &
      &                     SetFillVal = .FALSE.,                        &
-     &                     ExtractFlag = ExtractFlag(ng))
+     &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idUfx2)), XTR(ng)%Rindex
@@ -694,7 +694,7 @@
 # endif
      &                     OCEAN(ng) % vbar(:,:,KOUT),                  &
      &                     SetFillVal = .FALSE.,                        &
-     &                     ExtractFlag = ExtractFlag(ng))
+     &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idVbar)), XTR(ng)%Rindex
@@ -716,7 +716,7 @@
 #   endif
      &                     OCEAN(ng) % rvbar(:,:,KOUT),                 &
      &                     SetFillVal = .FALSE.,                        &
-     &                     ExtractFlag = ExtractFlag(ng))
+     &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idRv2d)), XTR(ng)%Rindex
@@ -738,7 +738,7 @@
 #    endif
      &                     COUPLING(ng) % rvfrc,                        &
      &                     SetFillVal = .FALSE.,                        &
-     &                     ExtractFlag = ExtractFlag(ng))
+     &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idRvct)), XTR(ng)%Rindex
@@ -758,7 +758,7 @@
 #   endif
      &                     COUPLING(ng) % DV_avg1,                      &
      &                     SetFillVal = .FALSE.,                        &
-     &                     ExtractFlag = ExtractFlag(ng))
+     &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idVfx1)), XTR(ng)%Rindex
@@ -777,7 +777,7 @@
 #   endif
      &                     COUPLING(ng) % DV_avg2,                      &
      &                     SetFillVal = .FALSE.,                        &
-     &                     ExtractFlag = ExtractFlag(ng))
+     &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idVfx2)), XTR(ng)%Rindex
@@ -849,7 +849,7 @@
 # endif
      &                     Ur2d,                                        &
      &                     SetFillVal = .FALSE.,                        &
-     &                     ExtractFlag = ExtractFlag(ng))
+     &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idu2dE)), XTR(ng)%Rindex
@@ -868,7 +868,7 @@
 # endif
      &                     Vr2d,                                        &
      &                     SetFillVal = .FALSE.,                        &
-     &                     ExtractFlag = ExtractFlag(ng))
+     &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idv2dN)), XTR(ng)%Rindex
@@ -897,7 +897,7 @@
 #  endif
      &                     OCEAN(ng) % u(:,:,:,NOUT),                   &
      &                     SetFillVal = .FALSE.,                        &
-     &                     ExtractFlag = ExtractFlag(ng))
+     &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idUvel)), XTR(ng)%Rindex
@@ -918,7 +918,7 @@
 #   endif
      &                     OCEAN(ng) % ru(:,:,:,NOUT),                  &
      &                     SetFillVal = .FALSE.,                        &
-     &                     ExtractFlag = ExtractFlag(ng))
+     &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idRu3d)), XTR(ng)%Rindex
@@ -969,7 +969,7 @@
 #  endif
      &                     OCEAN(ng) % v(:,:,:,NOUT),                   &
      &                     SetFillVal = .FALSE.,                        &
-     &                     ExtractFlag = ExtractFlag(ng))
+     &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idVvel)), XTR(ng)%Rindex
@@ -990,7 +990,7 @@
 #   endif
      &                     OCEAN(ng) % rv(:,:,:,NOUT),                  &
      &                     SetFillVal = .FALSE.,                        &
-     &                     ExtractFlag = ExtractFlag(ng))
+     &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idRv3d)), XTR(ng)%Rindex
@@ -1061,7 +1061,7 @@
 #  endif
      &                     Ur3d,                                        &
      &                     SetFillVal = .FALSE.,                        &
-     &                     ExtractFlag = ExtractFlag(ng))
+     &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idu3dE)), XTR(ng)%Rindex
@@ -1080,7 +1080,7 @@
 #  endif
      &                     Vr3d,                                        &
      &                     SetFillVal = .FALSE.,                        &
-     &                     ExtractFlag = ExtractFlag(ng))
+     &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idv3dN)), XTR(ng)%Rindex
@@ -1116,7 +1116,7 @@
 #  endif
      &                     Wr3d,                                        &
      &                     SetFillVal = .FALSE.,                        &
-     &                     ExtractFlag = ExtractFlag(ng))
+     &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idOvel)), XTR(ng)%Rindex
@@ -1153,7 +1153,7 @@
 #   endif
      &                     Wr3d,                                        &
      &                     SetFillVal = .FALSE.,                        &
-     &                     ExtractFlag = ExtractFlag(ng))
+     &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idOvil)), XTR(ng)%Rindex
@@ -1180,7 +1180,7 @@
 #  endif
      &                     OCEAN(ng) % wvel,                            &
      &                     SetFillVal = .FALSE.,                        &
-     &                     ExtractFlag = ExtractFlag(ng))
+     &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idWvel)), XTR(ng)%Rindex
@@ -1206,7 +1206,7 @@
 #  endif
      &                       OCEAN(ng) % t(:,:,:,NOUT,itrc),            &
      &                       SetFillVal = .FALSE.,                      &
-     &                       ExtractFlag = ExtractFlag(ng))
+     &                       ExtractField = ExtractFlag(ng))
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
             IF (Master) THEN
               WRITE (stdout,20) TRIM(Vname(1,idTvar(itrc))),            &
@@ -1261,7 +1261,7 @@
 #  endif
      &                     OCEAN(ng) % rho,                             &
      &                     SetFillVal = .FALSE.,                        &
-     &                     ExtractFlag = ExtractFlag(ng))
+     &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idDano)), XTR(ng)%Rindex
@@ -1288,7 +1288,7 @@
 #   endif
      &                     MIXING(ng) % hsbl,                           &
      &                     SetFillVal = .FALSE.,                        &
-     &                     ExtractFlag = ExtractFlag(ng))
+     &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idHsbl)), XTR(ng)%Rindex
@@ -1315,7 +1315,7 @@
 #   endif
      &                     MIXING(ng) % hbbl,                           &
      &                     SetFillVal = .FALSE.,                        &
-     &                     ExtractFlag = ExtractFlag(ng))
+     &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idHbbl)), XTR(ng)%Rindex
@@ -1343,7 +1343,7 @@
 #   endif
      &                       MIXING(ng) % ghats(:,:,:,i),               &
      &                       SetFillVal = .FALSE.,                      &
-     &                       ExtractFlag = ExtractFlag(ng))
+     &                       ExtractField = ExtractFlag(ng))
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
             IF (Master) THEN
               WRITE (stdout,20) TRIM(Vname(1,idGhat(i))), XTR(ng)%Rindex
@@ -1370,7 +1370,7 @@
 #  endif
      &                     MIXING(ng) % Akv,                            &
      &                     SetFillVal = .FALSE.,                        &
-     &                     ExtractFlag = ExtractFlag(ng))
+     &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idVvis)), XTR(ng)%Rindex
@@ -1395,7 +1395,7 @@
 #  endif
      &                     MIXING(ng) % Akt(:,:,:,itemp),               &
      &                     SetFillVal = .FALSE.,                        &
-     &                     ExtractFlag = ExtractFlag(ng))
+     &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idTdif)), XTR(ng)%Rindex
@@ -1422,7 +1422,7 @@
 #   endif
      &                     MIXING(ng) % Akt(:,:,:,isalt),               &
      &                     SetFillVal = .FALSE.,                        &
-     &                     ExtractFlag = ExtractFlag(ng))
+     &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idSdif)), XTR(ng)%Rindex
@@ -1449,7 +1449,7 @@
 #   endif
      &                     MIXING(ng) % tke(:,:,:,NOUT),                &
      &                     SetFillVal = .FALSE.,                        &
-     &                     ExtractFlag = ExtractFlag(ng))
+     &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idMtke)), XTR(ng)%Rindex
@@ -1472,7 +1472,7 @@
 #    endif
      &                     MIXING(ng) % Akk,                            &
      &                     SetFillVal = .FALSE.,                        &
-     &                     ExtractFlag = ExtractFlag(ng))
+     &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idVmKK)), XTR(ng)%Rindex
@@ -1498,7 +1498,7 @@
 #   endif
      &                     MIXING(ng) % gls(:,:,:,NOUT),                &
      &                     SetFillVal = .FALSE.,                        &
-     &                     ExtractFlag = ExtractFlag(ng))
+     &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idMtls)), XTR(ng)%Rindex
@@ -1521,7 +1521,7 @@
 #    endif
      &                     MIXING(ng) % Lscale,                         &
      &                     SetFillVal = .FALSE.,                        &
-     &                     ExtractFlag = ExtractFlag(ng))
+     &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idVmLS)), XTR(ng)%Rindex
@@ -1544,7 +1544,7 @@
 #    endif
      &                     MIXING(ng) % Akp,                            &
      &                     SetFillVal = .FALSE.,                        &
-     &                     ExtractFlag = ExtractFlag(ng))
+     &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idVmKP)), XTR(ng)%Rindex
@@ -1572,7 +1572,7 @@
 #   endif
      &                     FORCES(ng) % Pair,                           &
      &                     SetFillVal = .FALSE.,                        &
-     &                     ExtractFlag = ExtractFlag(ng))
+     &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idPair)), XTR(ng)%Rindex
@@ -1599,7 +1599,7 @@
 #   endif
      &                     FORCES(ng) % Tair,                           &
      &                     SetFillVal = .FALSE.,                        &
-     &                     ExtractFlag = ExtractFlag(ng))
+     &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idTair)), XTR(ng)%Rindex
@@ -1626,7 +1626,7 @@
 #   endif
      &                     FORCES(ng) % Uwind,                          &
      &                     SetFillVal = .FALSE.,                        &
-     &                     ExtractFlag = ExtractFlag(ng))
+     &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idUair)), XTR(ng)%Rindex
@@ -1649,7 +1649,7 @@
 #   endif
      &                     FORCES(ng) % Vwind,                          &
      &                     SetFillVal = .FALSE.,                        &
-     &                     ExtractFlag = ExtractFlag(ng))
+     &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idVair)), XTR(ng)%Rindex
@@ -1693,7 +1693,7 @@
 #   endif
      &                     Ur2d,                                        &
      &                     SetFillVal = .FALSE.,                        &
-     &                     ExtractFlag = ExtractFlag(ng))
+     &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idUaiE)), XTR(ng)%Rindex
@@ -1714,7 +1714,7 @@
 #   endif
      &                     Vr2d,                                        &
      &                     SetFillVal = .FALSE.,                        &
-     &                     ExtractFlag = ExtractFlag(ng))
+     &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idVaiN)), XTR(ng)%Rindex
@@ -1751,7 +1751,7 @@
 #  endif
      &                       FORCES(ng) % stflx(:,:,itrc),              &
      &                       SetFillVal = .FALSE.,                      &
-     &                       ExtractFlag = ExtractFlag(ng))
+     &                       ExtractField = ExtractFlag(ng))
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
             IF (Master) THEN
               WRITE (stdout,20) TRIM(Vname(1,idTsur(itrc))),            &
@@ -1780,7 +1780,7 @@
 #   endif
      &                     FORCES(ng) % lhflx,                          &
      &                     SetFillVal = .FALSE.,                        &
-     &                     ExtractFlag = ExtractFlag(ng))
+     &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idLhea)), XTR(ng)%Rindex
@@ -1805,7 +1805,7 @@
 #   endif
      &                     FORCES(ng) % shflx,                          &
      &                     SetFillVal = .FALSE.,                        &
-     &                     ExtractFlag = ExtractFlag(ng))
+     &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idShea)), XTR(ng)%Rindex
@@ -1830,7 +1830,7 @@
 #   endif
      &                     FORCES(ng) % lrflx,                          &
      &                     SetFillVal = .FALSE.,                        &
-     &                     ExtractFlag = ExtractFlag(ng))
+     &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idLrad)), XTR(ng)%Rindex
@@ -1859,7 +1859,7 @@
 #    endif
      &                     FORCES(ng) % evap,                           &
      &                     SetFillVal = .FALSE.,                        &
-     &                     ExtractFlag = ExtractFlag(ng))
+     &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idevap)), XTR(ng)%Rindex
@@ -1884,7 +1884,7 @@
 #    endif
      &                     FORCES(ng) % rain,                           &
      &                     SetFillVal = .FALSE.,                        &
-     &                     ExtractFlag = ExtractFlag(ng))
+     &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idrain)), XTR(ng)%Rindex
@@ -1911,7 +1911,7 @@
 #  endif
      &                     FORCES(ng) % stflux(:,:,isalt),              &
      &                     SetFillVal = .FALSE.,                        &
-     &                     ExtractFlag = ExtractFlag(ng))
+     &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idEmPf)), XTR(ng)%Rindex
@@ -1938,7 +1938,7 @@
 #   endif
      &                     FORCES(ng) % srflx,                          &
      &                     SetFillVal = .FALSE.,                        &
-     &                     ExtractFlag = ExtractFlag(ng))
+     &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idSrad)), XTR(ng)%Rindex
@@ -1969,7 +1969,7 @@
 # endif
      &                     FORCES(ng) % sustr,                          &
      &                     SetFillVal = .FALSE.,                        &
-     &                     ExtractFlag = ExtractFlag(ng))
+     &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idUsms)), XTR(ng)%Rindex
@@ -1998,7 +1998,7 @@
 # endif
      &                     FORCES(ng) % svstr,                          &
      &                     SetFillVal = .FALSE.,                        &
-     &                     ExtractFlag = ExtractFlag(ng))
+     &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idVsms)), XTR(ng)%Rindex
@@ -2023,7 +2023,7 @@
 # endif
      &                     FORCES(ng) % bustr,                          &
      &                     SetFillVal = .FALSE.,                        &
-     &                     ExtractFlag = ExtractFlag(ng))
+     &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idUbms)), XTR(ng)%Rindex
@@ -2048,7 +2048,7 @@
 # endif
      &                     FORCES(ng) % bvstr,                          &
      &                     SetFillVal = .FALSE.,                        &
-     &                     ExtractFlag = ExtractFlag(ng))
+     &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idVbms)), XTR(ng)%Rindex
@@ -2489,7 +2489,7 @@
 #  endif
      &                     OCEAN(ng) % zeta(:,:,KOUT),                  &
      &                     SetFillVal = .FALSE.,                        &
-     &                     ExtractFlag = ExtractFlag(ng))
+     &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idFsur)), XTR(ng)%Rindex
@@ -2516,7 +2516,7 @@
 #   endif
      &                     OCEAN(ng) % rzeta(:,:,KOUT),                 &
      &                     SetFillVal = .FALSE.,                        &
-     &                     ExtractFlag = ExtractFlag(ng))
+     &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idRzet)), XTR(ng)%Rindex
@@ -2579,7 +2579,7 @@
 #  endif
      &                     OCEAN(ng) % ubar(:,:,KOUT),                  &
      &                     SetFillVal = .FALSE.,                        &
-     &                     ExtractFlag = ExtractFlag(ng))
+     &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idUbar)), XTR(ng)%Rindex
@@ -2607,7 +2607,7 @@
 #    endif
      &                     OCEAN(ng) % rubar(:,:,KOUT),                 &
      &                     SetFillVal = .FALSE.,                        &
-     &                     ExtractFlag = ExtractFlag(ng))
+     &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idRu2d)), XTR(ng)%Rindex
@@ -2635,7 +2635,7 @@
 #     endif
      &                     COUPLING(ng) % rufrc,                        &
      &                     SetFillVal = .FALSE.,                        &
-     &                     ExtractFlag = ExtractFlag(ng))
+     &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idRuct)), XTR(ng)%Rindex
@@ -2661,7 +2661,7 @@
 #    endif
      &                     COUPLING(ng) % DU_avg1,                      &
      &                     SetFillVal = .FALSE.,                        &
-     &                     ExtractFlag = ExtractFlag(ng))
+     &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idUfx1)), XTR(ng)%Rindex
@@ -2686,7 +2686,7 @@
 #    endif
      &                     COUPLING(ng) % DU_avg2,                      &
      &                     SetFillVal = .FALSE.,                        &
-     &                     ExtractFlag = ExtractFlag(ng))
+     &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idUfx2)), XTR(ng)%Rindex
@@ -2750,7 +2750,7 @@
 #  endif
      &                     OCEAN(ng) % vbar(:,:,KOUT),                  &
      &                     SetFillVal = .FALSE.,                        &
-     &                     ExtractFlag = ExtractFlag(ng))
+     &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idVbar)), XTR(ng)%Rindex
@@ -2778,7 +2778,7 @@
 #    endif
      &                     OCEAN(ng) % rvbar(:,:,KOUT),                 &
      &                     SetFillVal = .FALSE.,                        &
-     &                     ExtractFlag = ExtractFlag(ng))
+     &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idRv2d)), XTR(ng)%Rindex
@@ -2806,7 +2806,7 @@
 #     endif
      &                     COUPLING(ng) % rvfrc,                        &
      &                     SetFillVal = .FALSE.,                        &
-     &                     ExtractFlag = ExtractFlag(ng))
+     &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idRvct)), XTR(ng)%Rindex
@@ -2832,7 +2832,7 @@
 #    endif
      &                     COUPLING(ng) % DV_avg1,                      &
      &                     SetFillVal = .FALSE.,                        &
-     &                     ExtractFlag = ExtractFlag(ng))
+     &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idVfx1)), XTR(ng)%Rindex
@@ -2857,7 +2857,7 @@
 #    endif
      &                     COUPLING(ng) % DV_avg2,                      &
      &                     SetFillVal = .FALSE.,                        &
-     &                     ExtractFlag = ExtractFlag(ng))
+     &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idVfx2)), XTR(ng)%Rindex
@@ -2941,7 +2941,7 @@
 #  endif
      &                     Ur2d,                                        &
      &                     SetFillVal = .FALSE.,                        &
-     &                     ExtractFlag = ExtractFlag(ng))
+     &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idu2dE)), XTR(ng)%Rindex
@@ -2966,7 +2966,7 @@
 #  endif
      &                     Vr2d,                                        &
      &                     SetFillVal = .FALSE.,                        &
-     &                     ExtractFlag = ExtractFlag(ng))
+     &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idv2dN)), XTR(ng)%Rindex
@@ -3000,7 +3000,7 @@
 #   endif
      &                     OCEAN(ng) % u(:,:,:,NOUT),                   &
      &                     SetFillVal = .FALSE.,                        &
-     &                     ExtractFlag = ExtractFlag(ng))
+     &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idUvel)), XTR(ng)%Rindex
@@ -3027,7 +3027,7 @@
 #    endif
      &                     OCEAN(ng) % ru(:,:,:,NOUT),                  &
      &                     SetFillVal = .FALSE.,                        &
-     &                     ExtractFlag = ExtractFlag(ng))
+     &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idRu3d)), XTR(ng)%Rindex
@@ -3090,7 +3090,7 @@
 #   endif
      &                     OCEAN(ng) % v(:,:,:,NOUT),                   &
      &                     SetFillVal = .FALSE.,                        &
-     &                     ExtractFlag = ExtractFlag(ng))
+     &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idVvel)), XTR(ng)%Rindex
@@ -3117,7 +3117,7 @@
 #    endif
      &                     OCEAN(ng) % rv(:,:,:,NOUT),                  &
      &                     SetFillVal = .FALSE.,                        &
-     &                     ExtractFlag = ExtractFlag(ng))
+     &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idRv3d)), XTR(ng)%Rindex
@@ -3200,7 +3200,7 @@
 #   endif
      &                     Ur3d,                                        &
      &                     SetFillVal = .FALSE.,                        &
-     &                     ExtractFlag = ExtractFlag(ng))
+     &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idu3dE)), XTR(ng)%Rindex
@@ -3225,7 +3225,7 @@
 #   endif
      &                     Vr3d,                                        &
      &                     SetFillVal = .FALSE.,                        &
-     &                     ExtractFlag = ExtractFlag(ng))
+     &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idv3dN)), XTR(ng)%Rindex
@@ -3267,7 +3267,7 @@
 #   endif
      &                     Wr3d,                                        &
      &                     SetFillVal = .FALSE.,                        &
-     &                     ExtractFlag = ExtractFlag(ng))
+     &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idOvel)), XTR(ng)%Rindex
@@ -3310,7 +3310,7 @@
 #    endif
      &                     Wr3d,                                        &
      &                     SetFillVal = .FALSE.,                        &
-     &                     ExtractFlag = ExtractFlag(ng))
+     &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idOvil)), XTR(ng)%Rindex
@@ -3342,7 +3342,7 @@
 #   endif
      &                     OCEAN(ng) % wvel,                            &
      &                     SetFillVal = .FALSE.,                        &
-     &                     ExtractFlag = ExtractFlag(ng))
+     &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idWvel)), XTR(ng)%Rindex
@@ -3373,7 +3373,7 @@
 #   endif
      &                       OCEAN(ng) % t(:,:,:,NOUT,itrc),            &
      &                       SetFillVal = .FALSE.,                      &
-     &                       ExtractFlag = ExtractFlag(ng))
+     &                       ExtractField = ExtractFlag(ng))
           IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
             IF (Master) THEN
               WRITE (stdout,20) TRIM(Vname(1,idTvar(itrc))),            &
@@ -3440,7 +3440,7 @@
 #   endif
      &                     OCEAN(ng) % rho,                             &
      &                     SetFillVal = .FALSE.,                        &
-     &                     ExtractFlag = ExtractFlag(ng))
+     &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idDano)), XTR(ng)%Rindex
@@ -3472,7 +3472,7 @@
 #    endif
      &                     MIXING(ng) % hsbl,                           &
      &                     SetFillVal = .FALSE.,                        &
-     &                     ExtractFlag = ExtractFlag(ng))
+     &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idHsbl)), XTR(ng)%Rindex
@@ -3504,7 +3504,7 @@
 #    endif
      &                     MIXING(ng) % hbbl,                           &
      &                     SetFillVal = .FALSE.,                        &
-     &                     ExtractFlag = ExtractFlag(ng))
+     &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idHbbl)), XTR(ng)%Rindex
@@ -3537,7 +3537,7 @@
 #    endif
      &                       MIXING(ng) % ghats(:,:,:,i),               &
      &                       SetFillVal = .FALSE.,                      &
-     &                       ExtractFlag = ExtractFlag(ng))
+     &                       ExtractField = ExtractFlag(ng))
           IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
             IF (Master) THEN
               WRITE (stdout,20) TRIM(Vname(1,idGhat(i))), XTR(ng)%Rindex
@@ -3569,7 +3569,7 @@
 #   endif
      &                     MIXING(ng) % Akv,                            &
      &                     SetFillVal = .FALSE.,                        &
-     &                     ExtractFlag = ExtractFlag(ng))
+     &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idVvis)), XTR(ng)%Rindex
@@ -3599,7 +3599,7 @@
 #   endif
      &                     MIXING(ng) % Akt(:,:,:,itemp),               &
      &                     SetFillVal = .FALSE.,                        &
-     &                     ExtractFlag = ExtractFlag(ng))
+     &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idTdif)), XTR(ng)%Rindex
@@ -3631,7 +3631,7 @@
 #    endif
      &                     MIXING(ng) % Akt(:,:,:,isalt),               &
      &                     SetFillVal = .FALSE.,                        &
-     &                     ExtractFlag = ExtractFlag(ng))
+     &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idSdif)), XTR(ng)%Rindex
@@ -3663,7 +3663,7 @@
 #    endif
      &                     MIXING(ng) % tke(:,:,:,NOUT),                &
      &                     SetFillVal = .FALSE.,                        &
-     &                     ExtractFlag = ExtractFlag(ng))
+     &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idMtke)), XTR(ng)%Rindex
@@ -3691,7 +3691,7 @@
 #     endif
      &                     MIXING(ng) % Akk,                            &
      &                     SetFillVal = .FALSE.,                        &
-     &                     ExtractFlag = ExtractFlag(ng))
+     &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idVmKK)), XTR(ng)%Rindex
@@ -3722,7 +3722,7 @@
 #    endif
      &                     MIXING(ng) % gls(:,:,:,NOUT),                &
      &                     SetFillVal = .FALSE.,                        &
-     &                     ExtractFlag = ExtractFlag(ng))
+     &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idMtls)), XTR(ng)%Rindex
@@ -3750,7 +3750,7 @@
 #     endif
      &                     MIXING(ng) % Lscale,                         &
      &                     SetFillVal = .FALSE.,                        &
-     &                     ExtractFlag = ExtractFlag(ng))
+     &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idVmLS)), XTR(ng)%Rindex
@@ -3778,7 +3778,7 @@
 #     endif
      &                     MIXING(ng) % Akp,                            &
      &                     SetFillVal = .FALSE.,                        &
-     &                     ExtractFlag = ExtractFlag(ng))
+     &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idVmKP)), XTR(ng)%Rindex
@@ -3811,7 +3811,7 @@
 #    endif
      &                     FORCES(ng) % Pair,                           &
      &                     SetFillVal = .FALSE.,                        &
-     &                     ExtractFlag = ExtractFlag(ng))
+     &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idPair)), XTR(ng)%Rindex
@@ -3843,7 +3843,7 @@
 #    endif
      &                     FORCES(ng) % Tair,                           &
      &                     SetFillVal = .FALSE.,                        &
-     &                     ExtractFlag = ExtractFlag(ng))
+     &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idTair)), XTR(ng)%Rindex
@@ -3875,7 +3875,7 @@
 #    endif
      &                     FORCES(ng) % Uwind,                          &
      &                     SetFillVal = .FALSE.,                        &
-     &                     ExtractFlag = ExtractFlag(ng))
+     &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idUair)), XTR(ng)%Rindex
@@ -3903,7 +3903,7 @@
 #    endif
      &                     FORCES(ng) % Vwind,                          &
      &                     SetFillVal = .FALSE.,                        &
-     &                     ExtractFlag = ExtractFlag(ng))
+     &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idVair)), XTR(ng)%Rindex
@@ -3952,7 +3952,7 @@
 #    endif
      &                     Ur2d,                                        &
      &                     SetFillVal = .FALSE.,                        &
-     &                     ExtractFlag = ExtractFlag(ng))
+     &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idUaiE)), XTR(ng)%Rindex
@@ -3978,7 +3978,7 @@
 #    endif
      &                     Vr2d,                                        &
      &                     SetFillVal = .FALSE.,                        &
-     &                     ExtractFlag = ExtractFlag(ng))
+     &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idVaiN)), XTR(ng)%Rindex
@@ -4020,7 +4020,7 @@
 #   endif
      &                       FORCES(ng) % stflx(:,:,itrc),              &
      &                       SetFillVal = .FALSE.,                      &
-     &                       ExtractFlag = ExtractFlag(ng))
+     &                       ExtractField = ExtractFlag(ng))
           IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
             IF (Master) THEN
               WRITE (stdout,20) TRIM(Vname(1,idTsur(itrc))),            &
@@ -4054,7 +4054,7 @@
 #    endif
      &                     FORCES(ng) % lhflx,                          &
      &                     SetFillVal = .FALSE.,                        &
-     &                     ExtractFlag = ExtractFlag(ng))
+     &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idLhea)), XTR(ng)%Rindex
@@ -4084,7 +4084,7 @@
 #    endif
      &                     FORCES(ng) % shflx,                          &
      &                     SetFillVal = .FALSE.,                        &
-     &                     ExtractFlag = ExtractFlag(ng))
+     &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idShea)), XTR(ng)%Rindex
@@ -4114,7 +4114,7 @@
 #    endif
      &                     FORCES(ng) % lrflx,                          &
      &                     SetFillVal = .FALSE.,                        &
-     &                     ExtractFlag = ExtractFlag(ng))
+     &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idLrad)), XTR(ng)%Rindex
@@ -4148,7 +4148,7 @@
 #    endif
      &                     FORCES(ng) % evap,                           &
      &                     SetFillVal = .FALSE.,                        &
-     &                     ExtractFlag = ExtractFlag(ng))
+     &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idevap)), XTR(ng)%Rindex
@@ -4178,7 +4178,7 @@
 #    endif
      &                     FORCES(ng) % rain,                           &
      &                     SetFillVal = .FALSE.,                        &
-     &                     ExtractFlag = ExtractFlag(ng))
+     &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idrain)), XTR(ng)%Rindex
@@ -4210,7 +4210,7 @@
 #   endif
      &                     FORCES(ng) % stflux(:,:,isalt),              &
      &                     SetFillVal = .FALSE.,                        &
-     &                     ExtractFlag = ExtractFlag(ng))
+     &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idEmPf)), XTR(ng)%Rindex
@@ -4242,7 +4242,7 @@
 #    endif
      &                     FORCES(ng) % srflx,                          &
      &                     SetFillVal = .FALSE.,                        &
-     &                     ExtractFlag = ExtractFlag(ng))
+     &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idSrad)), XTR(ng)%Rindex
@@ -4278,7 +4278,7 @@
 #  endif
      &                     FORCES(ng) % sustr,                          &
      &                     SetFillVal = .FALSE.,                        &
-     &                     ExtractFlag = ExtractFlag(ng))
+     &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idUsms)), XTR(ng)%Rindex
@@ -4312,7 +4312,7 @@
 #  endif
      &                     FORCES(ng) % svstr,                          &
      &                     SetFillVal = .FALSE.,                        &
-     &                     ExtractFlag = ExtractFlag(ng))
+     &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idVsms)), XTR(ng)%Rindex
@@ -4342,7 +4342,7 @@
 #  endif
      &                     FORCES(ng) % bustr,                          &
      &                     SetFillVal = .FALSE.,                        &
-     &                     ExtractFlag = ExtractFlag(ng))
+     &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idUbms)), XTR(ng)%Rindex
@@ -4372,7 +4372,7 @@
 #  endif
      &                     FORCES(ng) % bvstr,                          &
      &                     SetFillVal = .FALSE.,                        &
-     &                     ExtractFlag = ExtractFlag(ng))
+     &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idVbms)), XTR(ng)%Rindex

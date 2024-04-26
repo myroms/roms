@@ -124,6 +124,12 @@
 !-----------------------------------------------------------------------
 !
 !  Determine I- and J-indices according to staggered C-grid type.
+#ifdef GRID_EXTRACT
+!
+!  Here, the ELSE statements (Extract_Flag < 0) indicate the processing
+!  of data already on the extracted grid, like geometry variables
+!  requiring no extraction since they are read during initialization.
+#endif
 !
       SELECT CASE (ABS(gtype))
         CASE (p2dvar)
@@ -133,7 +139,7 @@
             Jmin=BOUNDS(ng)%JstrP(tile)
             Jmax=BOUNDS(ng)%JendP(tile)
 #ifdef GRID_EXTRACT
-          ELSE IF (Extract_Flag.lt.0) THEN
+          ELSE                              ! Already on extract grid
             Imin=xtr_BOUNDS(ng)%IstrP(tile)
             Imax=xtr_BOUNDS(ng)%IendP(tile)
             Jmin=xtr_BOUNDS(ng)%JstrP(tile)
@@ -147,7 +153,7 @@
             Jmin=BOUNDS(ng)%JstrT(tile)
             Jmax=BOUNDS(ng)%JendT(tile)
 #ifdef GRID_EXTRACT
-          ELSE IF (Extract_Flag.lt.0) THEN
+          ELSE                              ! Already on extract grid
             Imin=xtr_BOUNDS(ng)%IstrT(tile)
             Imax=xtr_BOUNDS(ng)%IendT(tile)
             Jmin=xtr_BOUNDS(ng)%JstrT(tile)
@@ -161,7 +167,7 @@
             Jmin=BOUNDS(ng)%JstrT(tile)
             Jmax=BOUNDS(ng)%JendT(tile)
 #ifdef GRID_EXTRACT
-          ELSE IF (Extract_Flag.lt.0) THEN
+          ELSE                              ! Already on extract grid
             Imin=xtr_BOUNDS(ng)%IstrP(tile)
             Imax=xtr_BOUNDS(ng)%IendT(tile)
             Jmin=xtr_BOUNDS(ng)%JstrT(tile)
@@ -175,7 +181,7 @@
             Jmin=BOUNDS(ng)%JstrP(tile)
             Jmax=BOUNDS(ng)%JendT(tile)
 #ifdef GRID_EXTRACT
-          ELSE IF (Extract_Flag.lt.0) THEN
+          ELSE                              ! Already on extract grid
             Imin=xtr_BOUNDS(ng)%IstrT(tile)
             Imax=xtr_BOUNDS(ng)%IendT(tile)
             Jmin=xtr_BOUNDS(ng)%JstrP(tile)
@@ -189,7 +195,7 @@
             Jmin=BOUNDS(ng)%JstrT(tile)
             Jmax=BOUNDS(ng)%JendT(tile)
 #ifdef GRID_EXTRACT
-          ELSE IF (Extract_Flag.lt.0) THEN
+          ELSE                              ! Already on extract grid
             Imin=xtr_BOUNDS(ng)%IstrT(tile)
             Imax=xtr_BOUNDS(ng)%IendT(tile)
             Jmin=xtr_BOUNDS(ng)%JstrT(tile)
@@ -415,6 +421,12 @@
 !-----------------------------------------------------------------------
 !
 !  Determine I- and J-indices according to staggered C-grid type.
+#ifdef GRID_EXTRACT
+!
+!  Here, the ELSE statements (Extract_Flag < 0) indicate the processing
+!  of data already on the extracted grid, like geometry variables
+!  requiring no extraction since they are read during initialization.
+#endif
 !
       SELECT CASE (ABS(gtype))
         CASE (p2dvar)
@@ -424,7 +436,7 @@
             Jmin=BOUNDS(ng)%JstrP(tile)
             Jmax=BOUNDS(ng)%JendP(tile)
 #ifdef GRID_EXTRACT
-          ELSE IF (Extract_Flag.lt.0) THEN
+          ELSE                              ! Already on extract grid
             Imin=xtr_BOUNDS(ng)%IstrP(tile)
             Imax=xtr_BOUNDS(ng)%IendP(tile)
             Jmin=xtr_BOUNDS(ng)%JstrP(tile)
@@ -438,7 +450,7 @@
             Jmin=BOUNDS(ng)%JstrT(tile)
             Jmax=BOUNDS(ng)%JendT(tile)
 #ifdef GRID_EXTRACT
-          ELSE IF (Extract_Flag.lt.0) THEN
+          ELSE                              ! Already on extract grid
             Imin=xtr_BOUNDS(ng)%IstrT(tile)
             Imax=xtr_BOUNDS(ng)%IendT(tile)
             Jmin=xtr_BOUNDS(ng)%JstrT(tile)
@@ -452,7 +464,7 @@
             Jmin=BOUNDS(ng)%JstrT(tile)
             Jmax=BOUNDS(ng)%JendT(tile)
 #ifdef GRID_EXTRACT
-          ELSE IF (Extract_Flag.lt.0) THEN
+          ELSE                              ! Already on extract grid
             Imin=xtr_BOUNDS(ng)%IstrP(tile)
             Imax=xtr_BOUNDS(ng)%IendT(tile)
             Jmin=xtr_BOUNDS(ng)%JstrT(tile)
@@ -466,7 +478,7 @@
             Jmin=BOUNDS(ng)%JstrP(tile)
             Jmax=BOUNDS(ng)%JendT(tile)
 #ifdef GRID_EXTRACT
-          ELSE IF (Extract_Flag.lt.0) THEN
+          ELSE                              ! Already on extract grid
             Imin=xtr_BOUNDS(ng)%IstrT(tile)
             Imax=xtr_BOUNDS(ng)%IendT(tile)
             Jmin=xtr_BOUNDS(ng)%JstrP(tile)
@@ -480,7 +492,7 @@
             Jmin=BOUNDS(ng)%JstrT(tile)
             Jmax=BOUNDS(ng)%JendT(tile)
 #ifdef GRID_EXTRACT
-          ELSE IF (Extract_Flag.lt.0) THEN
+          ELSE                              ! Already on extract grid
             Imin=xtr_BOUNDS(ng)%IstrT(tile)
             Imax=xtr_BOUNDS(ng)%IendT(tile)
             Jmin=xtr_BOUNDS(ng)%JstrT(tile)
@@ -715,6 +727,12 @@
 !-----------------------------------------------------------------------
 !
 !  Determine I- and J-indices according to staggered C-grid type.
+#ifdef GRID_EXTRACT
+!
+!  Here, the ELSE statements (Extract_Flag < 0) indicate the processing
+!  of data already on the extracted grid, like geometry variables
+!  requiring no extraction since they are read during initialization.
+#endif
 !
       SELECT CASE (ABS(gtype))
         CASE (p2dvar)
@@ -724,7 +742,7 @@
             Jmin=BOUNDS(ng)%JstrP(tile)
             Jmax=BOUNDS(ng)%JendP(tile)
 #ifdef GRID_EXTRACT
-          ELSE IF (Extract_Flag.lt.0) THEN
+          ELSE                              ! Already on extract grid
             Imin=xtr_BOUNDS(ng)%IstrP(tile)
             Imax=xtr_BOUNDS(ng)%IendP(tile)
             Jmin=xtr_BOUNDS(ng)%JstrP(tile)
@@ -738,7 +756,7 @@
             Jmin=BOUNDS(ng)%JstrT(tile)
             Jmax=BOUNDS(ng)%JendT(tile)
 #ifdef GRID_EXTRACT
-          ELSE IF (Extract_Flag.lt.0) THEN
+          ELSE                              ! Already on extract grid
             Imin=xtr_BOUNDS(ng)%IstrT(tile)
             Imax=xtr_BOUNDS(ng)%IendT(tile)
             Jmin=xtr_BOUNDS(ng)%JstrT(tile)
@@ -752,7 +770,7 @@
             Jmin=BOUNDS(ng)%JstrT(tile)
             Jmax=BOUNDS(ng)%JendT(tile)
 #ifdef GRID_EXTRACT
-          ELSE IF (Extract_Flag.lt.0) THEN
+          ELSE                              ! Already on extract grid
             Imin=xtr_BOUNDS(ng)%IstrP(tile)
             Imax=xtr_BOUNDS(ng)%IendT(tile)
             Jmin=xtr_BOUNDS(ng)%JstrT(tile)
@@ -766,7 +784,7 @@
             Jmin=BOUNDS(ng)%JstrP(tile)
             Jmax=BOUNDS(ng)%JendT(tile)
 #ifdef GRID_EXTRACT
-          ELSE IF (Extract_Flag.lt.0) THEN
+          ELSE                              ! Already on extract grid
             Imin=xtr_BOUNDS(ng)%IstrT(tile)
             Imax=xtr_BOUNDS(ng)%IendT(tile)
             Jmin=xtr_BOUNDS(ng)%JstrP(tile)
@@ -780,7 +798,7 @@
             Jmin=BOUNDS(ng)%JstrT(tile)
             Jmax=BOUNDS(ng)%JendT(tile)
 #ifdef GRID_EXTRACT
-          ELSE IF (Extract_Flag.lt.0) THEN
+          ELSE                              ! Already on extract grid
             Imin=xtr_BOUNDS(ng)%IstrT(tile)
             Imax=xtr_BOUNDS(ng)%IendT(tile)
             Jmin=xtr_BOUNDS(ng)%JstrT(tile)

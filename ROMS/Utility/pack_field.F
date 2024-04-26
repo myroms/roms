@@ -26,7 +26,9 @@
 # endif
      &                             mp_gather3d
 #endif
+#ifdef GRID_EXTRACT
       USE extract_field_mod, ONLY: extract_field
+#endif
 !
       implicit none
 !
@@ -80,7 +82,7 @@
 !
 !  Imported variable declarations.
 !
-      integer ::
+
 !
 !  Local variable declarations.
 !
@@ -186,6 +188,12 @@
 !
 !  Set first and last grid point according to staggered C-grid
 !  classification. Set loops offsets.
+#ifdef GRID_EXTRACT
+!
+!  Here, the ELSE statements (Extract_Flag < 0) indicate the processing
+!  of data already on the extracted grid, like geometry variables
+!  requiring no extraction since they are read during initialization.
+#endif
 !
       MyType=gtype
 !
@@ -201,7 +209,7 @@
             Jmin=IOBOUNDS(ng)%JLB_psi
             Jmax=IOBOUNDS(ng)%JUB_psi
 #ifdef GRID_EXTRACT
-          ELSE IF (Extract_Flag.lt.0) THEN
+          ELSE                              ! Already on extract grid
             Imin=xtr_IOBOUNDS(ng)%ILB_psi
             Imax=xtr_IOBOUNDS(ng)%IUB_psi
             Jmin=xtr_IOBOUNDS(ng)%JLB_psi
@@ -219,7 +227,7 @@
             Jmin=IOBOUNDS(ng)%JLB_rho
             Jmax=IOBOUNDS(ng)%JUB_rho
 #ifdef GRID_EXTRACT
-          ELSE IF (Extract_Flag.lt.0) THEN
+          ELSE                              ! Already on extract grid
             Imin=xtr_IOBOUNDS(ng)%ILB_rho
             Imax=xtr_IOBOUNDS(ng)%IUB_rho
             Jmin=xtr_IOBOUNDS(ng)%JLB_rho
@@ -237,7 +245,7 @@
             Jmin=IOBOUNDS(ng)%JLB_u
             Jmax=IOBOUNDS(ng)%JUB_u
 #ifdef GRID_EXTRACT
-          ELSE IF (Extract_Flag.lt.0) THEN
+          ELSE                              ! Already on extract grid
             Imin=xtr_IOBOUNDS(ng)%ILB_u
             Imax=xtr_IOBOUNDS(ng)%IUB_u
             Jmin=xtr_IOBOUNDS(ng)%JLB_u
@@ -255,7 +263,7 @@
             Jmin=IOBOUNDS(ng)%JLB_v
             Jmax=IOBOUNDS(ng)%JUB_v
 #ifdef GRID_EXTRACT
-          ELSE IF (Extract_Flag.lt.0) THEN
+          ELSE                              ! Already on extract grid
             Imin=xtr_IOBOUNDS(ng)%ILB_v
             Imax=xtr_IOBOUNDS(ng)%IUB_v
             Jmin=xtr_IOBOUNDS(ng)%JLB_v
@@ -273,7 +281,7 @@
             Jmin=IOBOUNDS(ng)%JLB_rho
             Jmax=IOBOUNDS(ng)%JUB_rho
 #ifdef GRID_EXTRACT
-          ELSE IF (Extract_Flag.lt.0) THEN
+          ELSE                              ! Already on extract grid
             Imin=xtr_IOBOUNDS(ng)%ILB_rho
             Imax=xtr_IOBOUNDS(ng)%IUB_rho
             Jmin=xtr_IOBOUNDS(ng)%JLB_rho
@@ -309,7 +317,7 @@
 # endif
      &                    Adat, Npts, Awrk, LandFill)
 # ifdef GRID_EXTRACT
-      ELSE IF (Extract_Flag.lt.0) THEN
+      ELSE                                  ! Already on extract grid
         CALL mp_gather2d_xtr (ng, model, LBi, UBi, LBj, UBj,            &
      &                        tindex, gtype, Ascl,                      &
 #  ifdef MASKING
@@ -364,22 +372,11 @@
 #endif
 !
 !-----------------------------------------------------------------------
-!  If requested, extract field by decimation or interpolation.
+!  If there is no extracting data, set the start and total vectors
+!  needed by the NetCDF library for writing.
 !-----------------------------------------------------------------------
 !
-      IF (Extract_Flag.ge.1) THEN
-        CALL extract_field (ng, model, tile,                            &
-     &                      gtype, ifield, tindex,                      &
-     &                      Extract_Flag,                               &
-     &                      Imin, Imax, Jmin, Jmax,                     &
-     &                      start, total,                               &
-     &                      Npts, Awrk)
-!
-!-----------------------------------------------------------------------
-!  Otherwise, set start and total vectors needed by NetCDF library.
-!-----------------------------------------------------------------------
-!
-      ELSE IF (Extract_Flag.le.0) THEN
+      IF (Extract_Flag.le.0) THEN
         IF (gtype.gt.0) THEN
           start(1)=1
           total(1)=Isize
@@ -395,6 +392,21 @@
           total(2)=1
 #endif
         END IF
+
+#ifdef GRID_EXTRACT
+!
+!-----------------------------------------------------------------------
+!  Otherwise, extract field by decimation or interpolation.
+!-----------------------------------------------------------------------
+!
+      ELSE IF (Extract_Flag.ge.1) THEN
+        CALL extract_field (ng, model, tile,                            &
+     &                      gtype, ifield, tindex,                      &
+     &                      Extract_Flag,                               &
+     &                      Imin, Imax, Jmin, Jmax,                     &
+     &                      start, total,                               &
+     &                      Npts, Awrk)
+#endif
       END IF
 !
       RETURN
@@ -621,22 +633,11 @@
 #endif
 !
 !-----------------------------------------------------------------------
-!  If requested, extract field by decimation or interpolation.
+!  If there is no extracting data, set the start and total vectors
+!  needed by the NetCDF library for writing.
 !-----------------------------------------------------------------------
 !
-      IF (Extract_Flag.ge.1) THEN
-        CALL extract_field (ng, model, tile,                            &
-     &                      gtype, ifield, tindex,                      &
-     &                      Extract_Flag,                               &
-     &                      Imin, Imax, Jmin, Jmax, LBk, UBk,           &
-     &                      start, total,                               &
-     &                      Npts, Awrk)
-!
-!-----------------------------------------------------------------------
-!  Otherwise, set start and total vectors needed by NetCDF library.
-!-----------------------------------------------------------------------
-!
-      ELSE IF (Extract_Flag.eq.0) THEN
+      IF (Extract_Flag.le.0) THEN
         IF (gtype.gt.0) THEN
           start(1)=1
           total(1)=Isize
@@ -654,6 +655,21 @@
           total(2)=1
 #endif
         END IF
+
+#ifdef GRID_EXTRACT
+!
+!-----------------------------------------------------------------------
+!  Otherwise, extract field by decimation or interpolation.
+!-----------------------------------------------------------------------
+!
+      ELSE IF (Extract_Flag.ge.1) THEN
+        CALL extract_field (ng, model, tile,                            &
+     &                      gtype, ifield, tindex,                      &
+     &                      Extract_Flag,                               &
+     &                      Imin, Imax, Jmin, Jmax, LBk, UBk,           &
+     &                      start, total,                               &
+     &                      Npts, Awrk)
+#endif
       END IF
 
 #ifdef POSITIVE_ZERO
@@ -910,22 +926,11 @@
 #endif
 !
 !-----------------------------------------------------------------------
-!  If requested, extract field by decimation or interpolation.
+!  If there is no extracting data, set the start and total vectors
+!  needed by the NetCDF library for writing.
 !-----------------------------------------------------------------------
 !
-      IF (Extract_Flag.ge.1) THEN
-        CALL extract_field (ng, model, tile,                            &
-     &                      gtype, ifield, tindex,                      &
-     &                      Extract_Flag,                               &
-     &                      Imin, Imax, Jmin, Jmax, LBk, UBk,           &
-     &                      start, total,                               &
-     &                      Npts, Awrk)
-!
-!-----------------------------------------------------------------------
-!  Otherwise, set start and total vectors needed by NetCDF library.
-!-----------------------------------------------------------------------
-!
-      ELSE IF (Extract_Flag.eq.0) THEN
+      IF (Extract_Flag.le.0) THEN
         IF (gtype.gt.0) THEN
           start(1)=1
           total(1)=Isize
@@ -945,6 +950,21 @@
           total(2)=1
 #endif
         END IF
+
+#ifdef GRID_EXTRACT
+!
+!-----------------------------------------------------------------------
+!  Otherwise, extract field by decimation or interpolation.
+!-----------------------------------------------------------------------
+!
+      ELSE IF (Extract_Flag.ge.1) THEN
+        CALL extract_field (ng, model, tile,                            &
+     &                      gtype, ifield, tindex,                      &
+     &                      Extract_Flag,                               &
+     &                      Imin, Imax, Jmin, Jmax, LBk, UBk,           &
+     &                      start, total,                               &
+     &                      Npts, Awrk)
+#endif
       END IF
 
 #ifdef POSITIVE_ZERO

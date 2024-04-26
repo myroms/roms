@@ -1548,7 +1548,7 @@
 #  endif
      &                           EXTRACT(ng) % h,                       &
      &                           SetFillVal = .FALSE.,                  &
-     &                           ExtractFlag = -1)
+     &                           ExtractField = -1)
               IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
                 IF (Master) WRITE (stdout,10) TRIM(Vname(1,idtopo)),    &
      &                                        TRIM(ncname)
@@ -1619,7 +1619,7 @@
 # endif
      &                           EXTRACT(ng) % f,                       &
      &                           SetFillVal = .FALSE.,                  &
-     &                           ExtractFlag = -1)
+     &                           ExtractField = -1)
               IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
                 IF (Master) WRITE (stdout,10) TRIM(Vname(1,idfcor)),    &
      &                                        TRIM(ncname)
@@ -1677,7 +1677,7 @@
 # endif
      &                           EXTRACT(ng) % pm,                      &
      &                           SetFillVal = .FALSE.,                  &
-     &                           ExtractFlag = -1)
+     &                           ExtractField = -1)
               IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
                 IF (Master) WRITE (stdout,10) TRIM(Vname(1,idpmdx)),    &
      &                                        TRIM(ncname)
@@ -1733,7 +1733,7 @@
 # endif
      &                           EXTRACT(ng) % pn,                      &
      &                           SetFillVal = .FALSE.,                  &
-     &                           ExtractFlag = -1)
+     &                           ExtractField = -1)
               IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
                 IF (Master) WRITE (stdout,10) TRIM(Vname(1,idpndy)),    &
      &                                        TRIM(ncname)
@@ -1792,7 +1792,7 @@
 # endif
      &                             EXTRACT(ng) % lonr,                  &
      &                             SetFillVal = .FALSE.,                &
-     &                             ExtractFlag = -1)
+     &                             ExtractField = -1)
                 IF (FoundError(status, nf90_noerr,                      &
      &                         __LINE__, MyFile)) THEN
                   IF (Master) WRITE (stdout,10) TRIM(Vname(1,idLonR)),  &
@@ -1862,7 +1862,7 @@
 # endif
      &                             EXTRACT(ng) % latr,                  &
      &                             SetFillVal = .FALSE.,                &
-     &                             ExtractFlag = -1)
+     &                             ExtractField = -1)
                 IF (FoundError(status, nf90_noerr,                      &
      &                         __LINE__, MyFile)) THEN
                   IF (Master) WRITE (stdout,10) TRIM(Vname(1,idLatR)),  &
@@ -1934,7 +1934,7 @@
 # endif
      &                             EXTRACT(ng) % xr,                    &
      &                             SetFillVal = .FALSE.,                &
-     &                             ExtractFlag = -1)
+     &                             ExtractField = -1)
                 IF (FoundError(status, nf90_noerr,                      &
      &                         __LINE__, MyFile)) THEN
                   IF (Master) WRITE (stdout,10) TRIM(Vname(1,idXgrR)),  &
@@ -2004,7 +2004,7 @@
 # endif
      &                             EXTRACT(ng) % yr,                    &
      &                             SetFillVal = .FALSE.,                &
-     &                             ExtractFlag = -1)
+     &                             ExtractField = -1)
                 IF (FoundError(status, nf90_noerr,                      &
      &                         __LINE__, MyFile)) THEN
                   IF (Master) WRITE (stdout,10) TRIM(Vname(1,idYgrR)),  &
@@ -2079,7 +2079,7 @@
 # endif
      &                             EXTRACT(ng) % lonu,                  &
      &                             SetFillVal = .FALSE.,                &
-     &                             ExtractFlag = -1)
+     &                             ExtractField = -1)
                 IF (FoundError(status, nf90_noerr,                      &
      &                         __LINE__, MyFile)) THEN
                   IF (Master) WRITE (stdout,10) TRIM(Vname(1,idLonU)),  &
@@ -2137,7 +2137,7 @@
 # endif
      &                             EXTRACT(ng) % latu,                  &
      &                             SetFillVal = .FALSE.,                &
-     &                             ExtractFlag = -1)
+     &                             ExtractField = -1)
                 IF (FoundError(status, nf90_noerr,                      &
      &                         __LINE__, MyFile)) THEN
                   IF (Master) WRITE (stdout,10) TRIM(Vname(1,idLatU)),  &
@@ -2197,7 +2197,7 @@
 # endif
      &                             EXTRACT(ng) % xu,                    &
      &                             SetFillVal = .FALSE.,                &
-     &                             ExtractFlag = -1)
+     &                             ExtractField = -1)
                 IF (FoundError(status, nf90_noerr,                      &
      &                         __LINE__, MyFile)) THEN
                   IF (Master) WRITE (stdout,10) TRIM(Vname(1,idXgrU)),  &
@@ -2255,7 +2255,7 @@
 # endif
      &                             EXTRACT(ng) % yu,                    &
      &                             SetFillVal = .FALSE.,                &
-     &                             ExtractFlag = -1)
+     &                             ExtractField = -1)
                 IF (FoundError(status, nf90_noerr,                      &
      &                         __LINE__, MyFile)) THEN
                   IF (Master) WRITE (stdout,10) TRIM(Vname(1,idYgrU)),  &
@@ -2317,7 +2317,7 @@
 # endif
      &                             EXTRACT(ng) % lonv,                  &
      &                             SetFillVal = .FALSE.,                &
-     &                             ExtractFlag = -1)
+     &                             ExtractField = -1)
                 IF (FoundError(status, nf90_noerr,                      &
      &                         __LINE__, MyFile)) THEN
                   IF (Master) WRITE (stdout,10) TRIM(Vname(1,idLonV)),  &
@@ -2375,7 +2375,7 @@
 # endif
      &                             EXTRACT(ng) % latv,                  &
      &                             SetFillVal = .FALSE.,                &
-     &                             ExtractFlag = -1)
+     &                             ExtractField = -1)
                 IF (FoundError(status, nf90_noerr,                      &
      &                         __LINE__, MyFile)) THEN
                   IF (Master) WRITE (stdout,10) TRIM(Vname(1,idLatV)),  &
@@ -2435,7 +2435,7 @@
 # endif
      &                             EXTRACT(ng) % xv,                    &
      &                             SetFillVal = .FALSE.,                &
-     &                             ExtractFlag = -1)
+     &                             ExtractField = -1)
                 IF (FoundError(status, nf90_noerr,                      &
      &                         __LINE__, MyFile)) THEN
                   IF (Master) WRITE (stdout,10) TRIM(Vname(1,idXgrV)),  &
@@ -2493,7 +2493,7 @@
 # endif
      &                             EXTRACT(ng) % yv,                    &
      &                             SetFillVal = .FALSE.,                &
-     &                             ExtractFlag = -1)
+     &                             ExtractField = -1)
                 IF (FoundError(status, nf90_noerr,                      &
      &                         __LINE__, MyFile)) THEN
                   IF (Master) WRITE (stdout,10) TRIM(Vname(1,idYgrV)),  &
@@ -2555,7 +2555,7 @@
 # endif
      &                             EXTRACT(ng) % lonp,                  &
      &                             SetFillVal = .FALSE.,                &
-     &                             ExtractFlag = -1)
+     &                             ExtractField = -1)
                 IF (FoundError(status, nf90_noerr,                      &
      &                         __LINE__, MyFile)) THEN
                   IF (Master) WRITE (stdout,10) TRIM(Vname(1,idLonP)),  &
@@ -2613,7 +2613,7 @@
 # endif
      &                             EXTRACT(ng) % latp,                  &
      &                             SetFillVal = .FALSE.,                &
-     &                             ExtractFlag = -1)
+     &                             ExtractField = -1)
                 IF (FoundError(status, nf90_noerr,                      &
      &                         __LINE__, MyFile)) THEN
                   IF (Master) WRITE (stdout,10) TRIM(Vname(1,idLatP)),  &
@@ -2673,7 +2673,7 @@
 # endif
      &                             EXTRACT(ng) % xp,                    &
      &                             SetFillVal = .FALSE.,                &
-     &                             ExtractFlag = -1)
+     &                             ExtractField = -1)
                 IF (FoundError(status, nf90_noerr,                      &
      &                         __LINE__, MyFile)) THEN
                   IF (Master) WRITE (stdout,10) TRIM(Vname(1,idXgrP)),  &
@@ -2731,7 +2731,7 @@
 # endif
      &                             EXTRACT(ng) % yp,                    &
      &                             SetFillVal = .FALSE.,                &
-     &                             ExtractFlag = -1)
+     &                             ExtractField = -1)
                 IF (FoundError(status, nf90_noerr,                      &
      &                         __LINE__, MyFile)) THEN
                   IF (Master) WRITE (stdout,10) TRIM(Vname(1,idYgrP)),  &
@@ -2792,7 +2792,7 @@
 #  endif
      &                           EXTRACT(ng) % angler,                  &
      &                           SetFillVal = .FALSE.,                  &
-     &                           ExtractFlag = -1)
+     &                           ExtractField = -1)
               IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
                 IF (Master) WRITE (stdout,10) TRIM(Vname(1,idangR)),    &
      &                                        TRIM(ncname)
@@ -2861,7 +2861,7 @@
      &                           EXTRACT(ng) % rmask,                   &
      &                           EXTRACT(ng) % rmask,                   &
      &                           SetFillVal = .FALSE.,                  &
-     &                           ExtractFlag = -1)
+     &                           ExtractField = -1)
               IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
                 IF (Master) WRITE (stdout,10) TRIM(Vname(1,idmskR)),    &
      &                                        TRIM(ncname)
@@ -2913,7 +2913,7 @@
      &                           EXTRACT(ng) % umask,                   &
      &                           EXTRACT(ng) % umask,                   &
      &                           SetFillVal = .FALSE.,                  &
-     &                           ExtractFlag = -1)
+     &                           ExtractField = -1)
               IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
                 IF (Master) WRITE (stdout,10) TRIM(Vname(1,idmskU)),    &
      &                                        TRIM(ncname)
@@ -2965,7 +2965,7 @@
      &                           EXTRACT(ng) % vmask,                   &
      &                           EXTRACT(ng) % vmask,                   &
      &                           SetFillVal = .FALSE.,                  &
-     &                           ExtractFlag = -1)
+     &                           ExtractField = -1)
               IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
                 IF (Master) WRITE (stdout,10) TRIM(Vname(1,idmskV)),    &
      &                                        TRIM(ncname)
@@ -3017,7 +3017,7 @@
      &                           EXTRACT(ng) % pmask,                   &
      &                           EXTRACT(ng) % pmask,                   &
      &                           SetFillVal = .FALSE.,                  &
-     &                           ExtractFlag = -1)
+     &                           ExtractField = -1)
               IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
                 IF (Master) WRITE (stdout,10) TRIM(Vname(1,idmskP)),    &
      &                                        TRIM(ncname)
@@ -3081,7 +3081,7 @@
 #  endif
      &                           EXTRACT(ng) % Rscope,                  &
      &                           SetFillVal = .FALSE.,                  &
-     &                           ExtractFlag = -1)
+     &                           ExtractField = -1)
               IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
                 IF (Master) WRITE (stdout,10) TRIM(Vname(1,idscoR)),    &
      &                                        TRIM(ncname)
@@ -3138,7 +3138,7 @@
 #  endif
      &                           EXTRACT(ng) % Uscope,                  &
      &                           SetFillVal = .FALSE.,                  &
-     &                           ExtractFlag = -1)
+     &                           ExtractField = -1)
               IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
                 IF (Master) WRITE (stdout,10) TRIM(Vname(1,idscoU)),    &
      &                                        TRIM(ncname)
@@ -3195,7 +3195,7 @@
 #  endif
      &                           EXTRACT(ng) % Vscope,                  &
      &                           SetFillVal = .FALSE.,                  &
-     &                           ExtractFlag = -1)
+     &                           ExtractField = -1)
               IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
                 IF (Master) WRITE (stdout,10) TRIM(Vname(1,idscoV)),    &
      &                                        TRIM(ncname)
@@ -3256,7 +3256,7 @@
 #   endif
      &                           EXTRACT(ng) % ZoBot,                   &
      &                           SetFillVal = .FALSE.,                  &
-     &                           ExtractFlag = -1)
+     &                           ExtractField = -1)
               IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
                 IF (Master) WRITE (stdout,10) TRIM(Vname(1,idZoBL)),    &
      &                                        TRIM(ncname)
@@ -3309,7 +3309,7 @@
 #   endif
      &                           EXTRACT(ng) % rdrag,                   &
      &                           SetFillVal = .FALSE.,                  &
-     &                           ExtractFlag = -1)
+     &                           ExtractField = -1)
               IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
                 IF (Master) WRITE (stdout,10) TRIM(Vname(1,idragL)),    &
      &                                        TRIM(ncname)
@@ -3362,7 +3362,7 @@
 #   endif
      &                           EXTRACT(ng) % rdrag2,                  &
      &                           SetFillVal = .FALSE.,                  &
-     &                           ExtractFlag = -1)
+     &                           ExtractField = -1)
               IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
                 IF (Master) WRITE (stdout,10) TRIM(Vname(1,idragQ)),    &
      &                                        TRIM(ncname)

@@ -45,10 +45,10 @@
 !     Adat         Field to write out (real)                           !
 !     SetFillVal   Logical switch to set fill value in land areas      !
 !                    (OPTIONAL)                                        !
-!     ExtractFlag  Field extraction flag (integer, OPTIONAL)           !
-!                    ExtractFlag = 0    no extraction                  !
-!                    ExtractFlag = 1    extraction by interpolation    !
-!                    ExtractFlag > 1    extraction by decimation       !
+!     ExtractField Field extraction flag (integer, OPTIONAL)           !
+!                    ExtractField = 0   no extraction                  !
+!                    ExtractField = 1   extraction by interpolation    !
+!                    ExtractField > 1   extraction by decimation       !
 !                                                                      !
 !  On Output:                                                          !
 !                                                                      !
@@ -70,11 +70,8 @@
       USE mod_parallel
       USE mod_ncparam
       USE mod_scalars
-
-#ifdef GRID_EXTRACT
 !
       USE pack_field_mod,  ONLY : pack_field2d
-#endif
 !
       implicit none
 !
@@ -98,7 +95,7 @@
 # endif
      &                        Adat,                                     &
      &                        SetFillVal,                               &
-     &                        ExtractFlag,                              &
+     &                        ExtractField,                             &
      &                        MinValue, MaxValue) RESULT (status)
 !***********************************************************************
 !
@@ -118,7 +115,7 @@
       integer, intent(in) :: ifield
       integer, intent(in) :: LBi, UBi, LBj, UBj
 !
-      integer, intent(in), optional :: ExtractFlag
+      integer, intent(in), optional :: ExtractField
 !
       real(dp), intent(in) :: Ascl
 !
@@ -224,8 +221,8 @@
 !  If appropriate, set the field extraction flag to the provided grid
 !  geometry through interpolation or decimation.
 !
-      IF (PRESENT(ExtractFlag)) THEN
-        Extract_Flag=ExtractFlag
+      IF (PRESENT(ExtractField)) THEN
+        Extract_Flag=ExtractField
       ELSE
         Extract_Flag=0
       END IF
@@ -408,7 +405,7 @@
 # endif
      &                        Adat,                                     &
      &                        SetFillVal,                               &
-     &                        ExtractFlag,                              &
+     &                        ExtractField,                              &
      &                        MinValue, MaxValue) RESULT (status)
 !***********************************************************************
 !
@@ -430,7 +427,7 @@
       integer, intent(in) :: ifield
       integer, intent(in) :: LBi, UBi, LBj, UBj
 !
-      integer, intent(in), optional :: ExtractFlag
+      integer, intent(in), optional :: ExtractField
 !
       real(dp), intent(in) :: Ascl
 !
@@ -494,8 +491,8 @@
 !  If appropriate, set the field extraction flag to the provided grid
 !  geometry through interpolation or decimation.
 !
-      IF (PRESENT(ExtractFlag)) THEN
-        Extract_Flag=ExtractFlag
+      IF (PRESENT(ExtractField)) THEN
+        Extract_Flag=ExtractField
       ELSE
         Extract_Flag=0
       END IF
@@ -601,7 +598,7 @@
 # endif
      &                       Adat,                                      &
      &                       SetFillVal,                                &
-     &                       ExtractFlag,                               &
+     &                       ExtractField,                              &
      &                       MinValue, MaxValue) RESULT (status)
 !***********************************************************************
 !
@@ -620,7 +617,7 @@
       integer, intent(in) :: ifield
       integer, intent(in) :: LBi, UBi, LBj, UBj
 !
-      integer, intent(in), optional :: ExtractFlag
+      integer, intent(in), optional :: ExtractField
 !
       real(dp), intent(in) :: Ascl
 !
@@ -725,8 +722,8 @@
 !  If appropriate, set the field extraction flag to the provided grid
 !  geometry through interpolation or decimation.
 !
-      IF (PRESENT(ExtractFlag)) THEN
-        Extract_Flag=ExtractFlag
+      IF (PRESENT(ExtractField)) THEN
+        Extract_Flag=ExtractField
       ELSE
         Extract_Flag=0
       END IF

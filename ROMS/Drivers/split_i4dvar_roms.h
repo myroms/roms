@@ -175,14 +175,14 @@
 !
 !  Get 4D-Var phase from APARNAM input script file.
 !
-        CALL getpar_s (MyRank, aparnam, 'APARNAM')
+        CALL getpar_s (Master, aparnam, 'APARNAM')
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
-        CALL getpar_s (MyRank, Phase4DVAR, 'Phase4DVAR',                &
+        CALL getpar_s (Master, Phase4DVAR, 'Phase4DVAR',                &
      &                 InpName = aparnam)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
-        CALL getpar_i (MyRank, my_outer, 'OuterLoop',                   &
+        CALL getpar_i (Master, my_outer, 'OuterLoop',                   &
      &                 InpName = aparnam)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
