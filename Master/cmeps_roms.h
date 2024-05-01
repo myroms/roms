@@ -849,6 +849,8 @@
 !
       MODELS(Iroms)%Ngrids=Ngrids
       MODELS(Iroms)%IsActive=.TRUE.
+      ClockInfo(Idriver)%Restarted=.FALSE.
+      ClockInfo(Iroms  )%Restarted=.FALSE.
 !
       IF (FoundError(assign_string(MODELS(Iroms)%name,                  &
      &                             'ROMS'),                             &
@@ -1423,12 +1425,6 @@
       IF (allocated(Estring)) deallocate (Estring)
       IF (allocated(Istring)) deallocate (Istring)
 !
-      IF (ESM_track) THEN
-        WRITE (trac,'(a,a,i0)') '<== Exiting  ROMS_Create',             &
-     &                          ', PET', PETrank
-        FLUSH (trac)
-      END IF
-!
 !-----------------------------------------------------------------------
 !  Report specified import and export states.
 !-----------------------------------------------------------------------
@@ -1580,6 +1576,8 @@
 !                                                                      !
 !=======================================================================
 !
+      USE mod_parallel, ONLY : Master
+!
 !  Imported variable declarations.
 !
       integer, intent(out) :: rc
@@ -1664,6 +1662,7 @@
 !  the case, it opens such formatted file for writing.
 !
       IF (Set_StdOutUnit) THEN
+        Master=MasterPET
         stdout=stdout_unit(MasterPET)
         Set_StdOutUnit=.FALSE.
       END IF
@@ -2261,13 +2260,20 @@
             IF (romsDuration.ne.driverDuration) THEN
               IF (localPET.eq.0) THEN
                 WRITE (cplout,10) romsDuration, driverDuration,         &
-     &                          TRIM(INPname(Iroms))
+     &                            TRIM(INPname(Iroms))
               END IF
               rc=ESMF_RC_NOT_VALID
               RETURN
             END IF
           END IF
         END DO
+      END IF
+!
+!  Report Clock:
+!
+      IF (localPET.eq.0) THEN
+        WRITE (cplout,20) TimeStartString, TimeStopString,              &
+     &                    INT(driverDuration), INT(romsDuration)
       END IF
 !
 !-----------------------------------------------------------------------
@@ -2313,6 +2319,11 @@
      &        'ROMS Duration     = ',f20.2,' seconds',/,24x,            &
      &        'Coupling Duration = ',f20.2,' seconds',/,24x,            &
      &        'Check paramenter NTIMES in ''',a,'''',a)
+  20  FORMAT (/,'Coupling Clock: ROMS_SetInitializeP2',/,15('='),/,     &
+     &        /,2x,'DRIVER Starting Date = ',a,                         &
+     &        /,2x,'DRIVER Ending   Date = ',a,                         &
+     &        /,2x,'DRIVER Duration (s)  = ',i0,                        &
+     &        /,2x,'ROMS   Duration (s)  = ',i0)
 !
       RETURN
       END SUBROUTINE ROMS_SetInitializeP2
@@ -2667,9 +2678,9 @@
 !-----------------------------------------------------------------------
 !
       IF (ClockInfo(Idriver)%Restarted) THEN
-        StartTimeString=ClockInfo(Idriver)%Time_RestartString
+        StartTimeString=TRIM(ClockInfo(Idriver)%Time_RestartString)
       ELSE
-        StartTimeString=ClockInfo(Idriver)%Time_StartString
+        StartTimeString=TRIM(ClockInfo(Idriver)%Time_StartString)
       END IF
 !
 !  Report start and stop time clocks.

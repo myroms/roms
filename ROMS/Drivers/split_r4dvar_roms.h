@@ -179,10 +179,10 @@
 !
 !  Get 4D-Var phase from APARNAM input script file.
 !
-        CALL getpar_s (MyRank, aparnam, 'APARNAM')
+        CALL getpar_s (Master, aparnam, 'APARNAM')
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
-        CALL getpar_s (MyRank, Phase4DVAR, 'Phase4DVAR', aparnam)
+        CALL getpar_s (Master, Phase4DVAR, 'Phase4DVAR', aparnam)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Determine ROMS standard output append switch. It is only relevant if

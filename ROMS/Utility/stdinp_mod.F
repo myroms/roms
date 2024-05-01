@@ -31,14 +31,11 @@
 !
       USE mod_iounits,    ONLY : Iname, SourceFile, stdinp, stdout
       USE mod_scalars,    ONLY : exit_flag
-      USE strings_mod,    ONLY : FoundError
-
 #ifdef DISTRIBUTE
 !
       USE distribute_mod, ONLY : mp_bcasts
 #endif
-
-
+      USE strings_mod,    ONLY : FoundError
 !
       INTERFACE getpar_i
         MODULE PROCEDURE getpar_0d_i
@@ -58,6 +55,13 @@
       INTERFACE getpar_s
         MODULE PROCEDURE getpar_0d_s
       END INTERFACE getpar_s
+!
+      PUBLIC  :: getpar_i
+      PUBLIC  :: getpar_l
+      PUBLIC  :: getpar_r
+      PUBLIC  :: getpar_s
+      PUBLIC  :: stdinp_unit
+      PRIVATE
 !
       CONTAINS
 !
@@ -157,7 +161,7 @@
 !                                                                      !
 !  On Input:                                                           !
 !                                                                      !
-!     MyMaster    Switch indicating Master process (logical)           !
+!     MyMaster   Switch indicating Master process (logical)            !
 !     KeyWord    Keyword associated with input parameter (string)      !
 !     InpName    Standard input filename (string; OPTIONAL)            !
 !                                                                      !

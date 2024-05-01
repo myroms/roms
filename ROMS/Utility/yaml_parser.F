@@ -842,13 +842,15 @@
 !
           IF (self%list(ipair)%is_sequence) THEN
             Lstr=LEN_TRIM(Vstring)
-            nvalues=COUNT((/(Vstring(j:j), j=1,Lstr)/) == CHAR(44)) + 1
+            nvalues=yaml_CountKeys(Vstring, CHAR(44))
 !
             IF (.not.ALLOCATED(S)) THEN
               ALLOCATE ( S(npairs) )                   ! main structure
             END IF
+            IF (i.eq.1) THEN
+              S(1:npairs)%has_vector=.TRUE.
+            END IF
             ALLOCATE ( S(i)%vector(nvalues) )          ! sub-structure
-            S(i)%has_vector=.TRUE.
 !
             is=1
             DO j=1,nvalues
@@ -881,7 +883,9 @@
             IF (.not.ALLOCATED(S)) THEN
               ALLOCATE ( S(npairs) )
             END IF
-            S(i)%has_vector=.FALSE.
+            IF (i.eq.1) THEN
+              S(1:npairs)%has_vector=.FALSE.
+            END IF
 !
             IF (yaml_Error(yaml_AssignString(S(i)%value,                &
      &                                       Vstring, LenStr),          &
@@ -901,10 +905,14 @@
 !
           IF (self%list(ipair)%is_sequence) THEN
             Lstr=LEN_TRIM(Vstring)
-            nvalues=COUNT((/(Vstring(j:j), j=1,Lstr)/) == CHAR(44)) + 1
+            nvalues=yaml_CountKeys(Vstring, CHAR(44))
 !
-            ALLOCATE ( S(nvalues) )
-            S(i)%has_vector=.FALSE.
+            IF (.not.ALLOCATED(S)) THEN
+              ALLOCATE ( S(nvalues) )
+            END IF
+            IF (i.eq.1) THEN
+              S(1:nvalues)%has_vector=.FALSE.
+            END IF
 !
             is=1
             DO j=1,nvalues
@@ -933,7 +941,9 @@
 !
           ELSE
 !
-            ALLOCATE ( S(1) )
+            IF (.not.ALLOCATED(S)) THEN
+              allocate ( S(1) )
+            END IF
             S(1)%has_vector=.FALSE.
 !
             IF (yaml_Error(yaml_AssignString(S(1)%value,                &
@@ -1636,7 +1646,7 @@
 !                                                                      !
 !  nkeys=COUNT((/ (string(i:i), i=1,Lstr) /) == token) + 1             !
 !                                                                      !
-!  But compilier like 'gfortran' cannot handle such abstraction.       !
+!  But compiliers like 'gfortran' cannot handle such abstraction.      !
 !                                                                      !
 !  On Input:                                                           !
 !                                                                      !
