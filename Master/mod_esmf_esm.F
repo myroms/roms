@@ -761,6 +761,9 @@
       IF (.not.allocated(ClockInfo)) THEN
         allocate ( ClockInfo(0:Nmodels) )
       END IF
+      DO i=0,Nmodels
+        ClockInfo(i)%Restarted=.FALSE.
+      END IF
 !
 !  Allocate MPI communicator handle for each ESM component.
 !

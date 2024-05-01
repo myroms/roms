@@ -18,7 +18,6 @@ list ( APPEND _files
        ROMS/Modules/mod_clima.F
        ROMS/Modules/mod_coupler.F
        ROMS/Modules/mod_coupling.F
-       ROMS/Modules/mod_decimate.F
        ROMS/Modules/mod_diags.F
        ROMS/Modules/mod_eclight.F
        ROMS/Modules/mod_eoscoef.F

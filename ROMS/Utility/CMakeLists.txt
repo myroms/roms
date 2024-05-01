@@ -65,7 +65,6 @@ list( APPEND _files
       ROMS/Utility/get_3dfldr.F
       ROMS/Utility/get_bounds.F
       ROMS/Utility/get_cycle.F
-      ROMS/Utility/get_decimate.F
       ROMS/Utility/get_env.F
       ROMS/Utility/get_extract.F
       ROMS/Utility/get_grid.F

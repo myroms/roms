@@ -376,16 +376,6 @@ else
   ltype=""
 fi
 
-if [ ! -z "${FORT}" ]; then
-  if [ ${FORT} == "ifort" ]; then
-    compiler="-DCMAKE_Fortran_COMPILER=ifort"
-  elif [ ${FORT} == "gfortran" ]; then
-    compiler="-DCMAKE_Fortran_COMPILER=gfortran"
-  else
-    compiler=""
-  fi
-fi
-
 if [ ! -z "${MY_CPP_FLAGS}" ]; then
   tmp=`echo ${MY_CPP_FLAGS} | sed 's/^ *-D//' | sed 's/ *-D/;/g'`
   extra_flags="-DMY_CPP_FLAGS=${tmp}"
@@ -477,7 +467,6 @@ if [[ $dprint -eq 0 && $clean -eq 1 ]]; then
                    -DROMS_APP_DIR=${ROMS_APP_DIR} \
                    ${my_hdir} \
                    ${ltype} \
-                   ${compiler} \
                    ${extra_flags} \
                    ${parpack_ldir} \
                    ${arpack_ldir} \

@@ -85,7 +85,7 @@
 !
 # ifdef ADJUST_BOUNDARY
 !
-      SUBROUTINE extract_boundary2d (ng, model, factor, vtype, ifield,  &
+      SUBROUTINE extract_boundary2d (ng, model, factor, gtype, ifield,  &
      &                               LBij, UBij, ijLB, ijUB,            &
      &                               Nbrec,                             &
      &                               Ainp, Aout)
@@ -105,6 +105,7 @@
 !     UBij         Donor field IJ-dimension Upper bound (integer)      !
 !     ijLB         Extracted field IJ-dimension Lower bound (integer)  !
 !     ijUB         Extracted field IJ-dimension Upper bound (integer)  !
+!     Nbrec        Number of boundary records (integer)                !
 !     Ainp         Donor 2D boundary data (real)                       !
 !                                                                      !
 !  On Output:                                                          !
@@ -115,7 +116,7 @@
 !
 !  Imported variable declarations.
 !
-      integer,  intent(in)  :: ng, model, factor, vtype, ifield
+      integer,  intent(in)  :: ng, model, factor, gtype, ifield
       integer,  intent(in)  :: LBij, UBij, ijLB, ijUB
       integer,  intent(in)  :: Nbrec
 !
@@ -159,6 +160,7 @@
 !     ijLB         Extracted field IJ-dimension Lower bound (integer)  !
 !     ijUB         Extracted field IJ-dimension Upper bound (integer)  !
 !     UBk          Field K-dimension Upper bound (integer)             !
+!     Nbrec        Number of boundary records (integer)                !
 !     Ainp         Donor 3D boundary data (real)                       !
 !                                                                      !
 !  On Output:                                                          !
@@ -169,7 +171,7 @@
 !
 !  Imported variable declarations.
 !
-      integer,  intent(in)  :: ng, model, factor, vtype, ifield
+      integer,  intent(in)  :: ng, model, factor, gtype, ifield
       integer,  intent(in)  :: LBij, UBij, ijLB, ijUB
       integer,  intent(in)  :: UBk, Nbrec
 !
