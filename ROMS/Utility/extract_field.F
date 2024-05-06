@@ -51,11 +51,14 @@
 !
 !  Interfaces for sam name routine overloading.
 !
-      INTERFACE extract_field
 # ifdef ADJUST_BOUNDARY
+      INTERFACE extract_boundary
         MODULE PROCEDURE extract_boundary2d
         MODULE PROCEDURE extract_boundary3d
+      END INTERFACE extract_boundary
+!
 # endif
+      INTERFACE extract_field
         MODULE PROCEDURE extract_field2d
         MODULE PROCEDURE extract_field3d
         MODULE PROCEDURE extract_field4d
@@ -63,8 +66,16 @@
 !
       PUBLIC  :: interp_coords
 !
+# ifdef ADJUST_BOUNDARY
+      PRIVATE :: average_boundary2d
+      PRIVATE :: average_boundary3d
+# endif
       PRIVATE :: average_field2d
       PRIVATE :: average_field3d
+# ifdef ADJUST_BOUNDARY
+      PRIVATE :: decimate_boundary2d
+      PRIVATE :: decimate_boundary3d
+# endif
       PRIVATE :: decimate_field2d
       PRIVATE :: decimate_field3d
       PRIVATE :: decimate_field4d
@@ -85,10 +96,13 @@
 !
 # ifdef ADJUST_BOUNDARY
 !
-      SUBROUTINE extract_boundary2d (ng, model, factor, gtype, ifield,  &
-     &                               LBij, UBij, ijLB, ijUB,            &
-     &                               Nbrec,                             &
-     &                               Ainp, Aout)
+      SUBROUTINE extract_boundary2d (ng, model, tile,                   &
+     &                               gtype, ncvname, tindex,            &
+     &                               Extract_flag,                      &
+     &                               Imin, Imax, Jmin, Jmax,            &
+     &                               Nrec,                              &
+     &                               start, total,                      &
+     &                               Npts, Bdat)
 !
 !=======================================================================
 !                                                                      !
@@ -98,85 +112,117 @@
 !                                                                      !
 !     ng           Nested grid number (integer)                        !
 !     model        Calling model identifier (integer)                  !
-!     factor       extract/decimation flag/factor (integer)            !
 !     gtype        Staggered C-grid type (integer)                     !
-!     ifield       Field metadata index (integer)                      !
-!     LBij         Donor field IJ-dimension Lower bound (integer)      !
-!     UBij         Donor field IJ-dimension Upper bound (integer)      !
-!     ijLB         Extracted field IJ-dimension Lower bound (integer)  !
-!     ijUB         Extracted field IJ-dimension Upper bound (integer)  !
-!     Nbrec        Number of boundary records (integer)                !
-!     Ainp         Donor 2D boundary data (real)                       !
+!     ncvname      NetCDF variable name (string)                       !
+!     tindex       Time record index to process (integer)              !
+!     Extract_Flag Extraction/decimation flag (integer)                !
+!     Imin         Donor boundary starting data I-index (integer)      !
+!     Imax         Donor boundary ending   data I-index (integer)      !
+!     Jmin         Donor boundary starting data J-index (integer)      !
+!     Jmax         Donor boundary ending   data J-index (integer)      !
+!     Nrec         Number of boundary records (integer)                !
+!     Npts         Length of packed boundary data (integer)            !
+!     Bdat         Packed global donor 2D boundary data (real, 1D)     !
 !                                                                      !
 !  On Output:                                                          !
 !                                                                      !
-!     Aout         Extracted 2D boundary data (real)                   !
+!     start        Start index where the first of the data values will !
+!                    be written along each dimension (integer)         !
+!     total        Number of data values to be written along each      !
+!                    dimension (integer)                               !
+!     Bdat         Extracted 2D boundary data (real, 1D)               !
 !                                                                      !
 !=======================================================================
 !
 !  Imported variable declarations.
 !
-      integer,  intent(in)  :: ng, model, factor, gtype, ifield
-      integer,  intent(in)  :: LBij, UBij, ijLB, ijUB
-      integer,  intent(in)  :: Nbrec
+      integer,  intent(in)    :: ng, model, tile
+      integer,  intent(in)    :: gtype, tindex, Extract_flag
+      integer,  intent(in)    :: Imin, Imax, Jmin, Jmax
+      integer,  intent(in)    :: Nrec
+      integer,  intent(in)    :: Npts
+      integer,  intent(out)   :: start(:), total(:)
 !
-      real(r8), intent(in)  :: Ainp(LBij:UBij,4,Nbrec)
-      real(r8), intent(out) :: Aout(ijLB:ijUB,4,Nbrec)
+      real(r8), intent(inout) :: Bdat(:)
+!
+      character (len=*), intent(in) :: ncvname
 !
 !  Local variable declarations.
-!
-      integer :: ij
 !
       character (len=*), parameter :: MyFile =                          &
      &  __FILE__//", extract_boundary2d"
 !
+      SourceFile=MyFile
+!
 !------------------------------------------------------------------------
-!  Fine-to-Coarse 2D boundary Data extraction/decimation.
+!  Decimate or interpolate 2D boundary data.
 !------------------------------------------------------------------------
 !
-
+      IF (Extract_Flag.ge.2) THEN
+        CALL decimate_boundary2d (ng, model, tile,                      &
+     &                            gtype, ncvname, tindex, Extract_Flag, &
+     &                            Imin, Imax, Jmin, Jmax,               &
+     &                            Nrec,                                 &
+     &                            start, total,                         &
+     &                            Npts, Bdat)
+      ELSE IF (Extract_Flag.eq.1) THEN
+      END IF
 !
       RETURN
       END SUBROUTINE extract_boundary2d
 !
-      SUBROUTINE extract_boundary3d (ng, model, factor, gtype, ifield,  &
-     &                               LBij, UBij, ijLB, ijUB,            &
-     &                               UBk, Nbrec,                        &
-     &                               Ainp, Aout)
+      SUBROUTINE extract_boundary3d (ng, model, tile,                   &
+     &                               gtype, ncvname, tindex,            &
+     &                               Extract_flag,                      &
+     &                               Imin, Imax, Jmin, Jmax, LBk, UBk,  &
+     &                               Nrec,                              &
+     &                               start, total,                      &
+     &                               Npts, Bdat)
 !
 !=======================================================================
 !                                                                      !
-!  Extracts/samples boundary data from donor 3D array.                 !
+!  Extracts/samples boundary data from donor 2D array.                 !
 !                                                                      !
 !  On Input:                                                           !
 !                                                                      !
 !     ng           Nested grid number (integer)                        !
 !     model        Calling model identifier (integer)                  !
-!     factor       extract/decimation flag/factor (integer)            !
 !     gtype        Staggered C-grid type (integer)                     !
-!     ifield       Field metadata index (integer)                      !
-!     LBij         Donor field IJ-dimension Lower bound (integer)      !
-!     UBij         Donor field IJ-dimension Upper bound (integer)      !
-!     ijLB         Extracted field IJ-dimension Lower bound (integer)  !
-!     ijUB         Extracted field IJ-dimension Upper bound (integer)  !
-!     UBk          Field K-dimension Upper bound (integer)             !
-!     Nbrec        Number of boundary records (integer)                !
-!     Ainp         Donor 3D boundary data (real)                       !
+!     ncvname      NetCDF variable name (string)                       !
+!     tindex       Time record index to process (integer)              !
+!     Extract_Flag Extraction/decimation flag (integer)                !
+!     Imin         Donor boundary starting data I-index (integer)      !
+!     Imax         Donor boundary ending   data I-index (integer)      !
+!     Jmin         Donor boundary starting data J-index (integer)      !
+!     Jmax         Donor boundary ending   data J-index (integer)      !
+!     LBk          Donor boundary K-dimension lower bound (integer)    !
+!     UBk          Donor boundary K-dimension upper bound (integer)    !
+!     Nrec         Number of boundary records (integer)                !
+!     Npts         Length of packed boundary data (integer)            !
+!     Bdat         Packed global donor 2D boundary data (real, 1D)     !
 !                                                                      !
 !  On Output:                                                          !
 !                                                                      !
-!     Aout         Extracted 3D boundary data (real)                   !
+!     start        Start index where the first of the data values will !
+!                    be written along each dimension (integer)         !
+!     total        Number of data values to be written along each      !
+!                    dimension (integer)                               !
+!     Bdat         Extracted 3D boundary data (real, 1D)               !
 !                                                                      !
 !=======================================================================
 !
 !  Imported variable declarations.
 !
-      integer,  intent(in)  :: ng, model, factor, gtype, ifield
-      integer,  intent(in)  :: LBij, UBij, ijLB, ijUB
-      integer,  intent(in)  :: UBk, Nbrec
+      integer,  intent(in)    :: ng, model, tile
+      integer,  intent(in)    :: gtype, tindex, Extract_flag
+      integer,  intent(in)    :: Imin, Imax, Jmin, Jmax, LBk, UBk
+      integer,  intent(in)    :: Nrec
+      integer,  intent(in)    :: Npts
+      integer,  intent(out)   :: start(:), total(:)
 !
-      real(r8), intent(in)  :: Ainp(LBij:UBij,UBk,4,Nbrec)
-      real(r8), intent(out) :: Aout(ijLB:ijUB,UBk,4,Nbrec)
+      real(r8), intent(inout) :: Bdat(:)
+!
+      character (len=*), intent(in) :: ncvname
 !
 !  Local variable declarations.
 !
@@ -186,10 +232,18 @@
      &  __FILE__//", extract_boundary3d"
 !
 !------------------------------------------------------------------------
-!  Fine-to-Coarse 3D boundary Data extraction/decimation.
+!  Decimate or interpolate 2D boundary data.
 !------------------------------------------------------------------------
 !
-
+      IF (Extract_Flag.ge.2) THEN
+        CALL decimate_boundary3d (ng, model, tile,                      &
+     &                            gtype, ncvname, tindex, Extract_Flag, &
+     &                            Imin, Imax, Jmin, Jmax, LBk, UBk,     &
+     &                            Nrec,                                 &
+     &                            start, total,                         &
+     &                            Npts, Bdat)
+      ELSE IF (Extract_Flag.eq.1) THEN
+      END IF
 !
       RETURN
       END SUBROUTINE extract_boundary3d
@@ -219,6 +273,7 @@
 !     Imax         Donor field ending   data I-index (integer)         !
 !     Jmin         Donor field starting data J-index (integer)         !
 !     Jmax         Donor field ending   data J-index (integer)         !
+!     Npts         Length of packed field data (integer)
 !     Fdat         Packed global donor 2D field data (real 1D array)   !
 !                                                                      !
 !  On Output:                                                          !
@@ -457,6 +512,256 @@
 !
       RETURN
       END SUBROUTINE extract_field4d
+
+# ifdef ADJUST_BOUNDARY
+!
+      SUBROUTINE average_boundary2d (ng, model, tile,                   &
+     &                               gtype, ncvname, Extract_Flag,      &
+     &                               Imin, Imax, Jmin, Jmax, Nrec,      &
+     &                               Npts, Bdat, Bavg)
+!
+!=======================================================================
+!                                                                      !
+!  It decimates data from donor 2D boundary packed as 1D global array. !
+!                                                                      !
+!  On Input:                                                           !
+!                                                                      !
+!     ng           Nested grid number (integer)                        !
+!     model        Calling model identifier (integer)                  !
+!     tile         Domain partition (integer)                          !
+!     gtype        Staggered C-grid type (integer)                     !
+!     ncvname      NetCDF variable name (string)                       !
+!     Extract_Flag Extraction/decimation flag (integer)                !
+!     Imin         Donor boundary starting data I-index (integer)      !
+!     Imax         Donor boundary ending   data I-index (integer)      !
+!     Jmin         Donor boundary starting data J-index (integer)      !
+!     Jmax         Donor boundary ending   data J-index (integer)      !
+!     Nrec         Number of boundary records (integer)                !
+!     Npts         Length of packed boundary data (integer)            !
+!     Bdat         Packed global donor 2D boundary data (real; 1D)     !
+!                                                                      !
+!  On Output:                                                          !
+!                                                                      !
+!     Favg         Averaged 2D boundary data (real 1D array)           !
+!                                                                      !
+!=======================================================================
+!
+!  Imported variable declarations.
+!
+      integer,  intent(in)  :: ng, model, tile 
+      integer,  intent(in)  :: gtype, Extract_Flag
+      integer,  intent(in)  :: Imin, Imax, Jmin, Jmax, Nrec
+      integer,  intent(in)  :: Npts
+!
+      real(r8), intent(in)  :: Bdat(:)
+      real(r8), intent(out) :: Bavg(:)
+!
+      character (len=*), intent(in) :: ncvname
+!
+!  Local variable declarations.
+!
+      logical, dimension(4) :: bounded
+!
+      integer  :: bc, i, ib, ij, ir, j, rc
+      integer  :: IorJ
+!
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__//", average_boundary2d"
+!
+      SourceFile=MyFile
+!
+!------------------------------------------------------------------------
+!  Average 2D U- and V-boundary data at the appropiate location.
+!------------------------------------------------------------------------
+!
+      IorJ=IOBOUNDS(ng)%IorJ
+!
+!  Set switch to process boundary data by their associated tiles.
+!
+      bounded(iwest )=DOMAIN(ng)%Western_Edge (tile)
+      bounded(ieast )=DOMAIN(ng)%Eastern_Edge (tile)
+      bounded(isouth)=DOMAIN(ng)%Southern_Edge(tile)
+      bounded(inorth)=DOMAIN(ng)%Northern_Edge(tile)
+!
+!  The logic below works well for Extract_Flag=2.
+!
+      IF (Extract_Flag.ge.2) THEN
+!
+        SELECT CASE (gtype)
+!
+!         ---------------------
+          CASE (u2dvar, u3dvar)             ! U points field:
+!         ---------------------               Average data at RHO-points
+!                                             for southern and northern
+            Bavg=Bdat                       ! boundaries only
+            DO ir=1,Nrec
+              rc=(ir-1)*IorJ*4
+              DO ib=1,4
+                bc=(ib-1)*IorJ+rc            
+                IF (bounded(ib).and.                                    &
+     &              ((ib.eq.isouth).or.(ib.eq.inorth))) THEN
+                  DO i=Imin,Imax-1
+                    ij=i+bc
+                    Bavg(ij)=0.5_r8*(Bdat(ij)+Bdat(ij+1))
+                  END DO
+                END IF
+              END DO
+            END DO
+!
+!         ---------------------
+          CASE (v2dvar, v3dvar)             ! V points field:
+!         ---------------------               Average data at RHO-points
+!                                             for western and eastern
+            Bavg=Bdat                       ! boundaries only
+            DO ir=1,Nrec
+              rc=(ir-1)*IorJ*4
+              DO ib=1,4
+                bc=(ib-1)*IorJ+rc            
+                IF (bounded(ib).and.                                    &
+     &              ((ib.eq.iwest).or.(ib.eq.ieast))) THEN
+                  DO j=Jmin,Jmax-1
+                    ij=j+bc
+                    Bavg(ij)=0.5_r8*(Bdat(ij)+Bdat(ij+1))
+                  END DO
+                END IF
+              END DO
+            END DO
+!
+        END SELECT
+      END IF
+!
+      RETURN
+      END SUBROUTINE average_boundary2d
+!
+      SUBROUTINE average_boundary3d (ng, model, tile,                   &
+     &                               gtype, ncvname, Extract_Flag,      &
+     &                               Imin, Imax, Jmin, Jmax, LBk, UBk,  &
+     &                               Nrec,                              &
+     &                               Npts, Bdat, Bavg)
+!
+!=======================================================================
+!                                                                      !
+!  It decimates data from donor 3D boundary packed as 1D global array. !
+!                                                                      !
+!  On Input:                                                           !
+!                                                                      !
+!     ng           Nested grid number (integer)                        !
+!     model        Calling model identifier (integer)                  !
+!     tile         Domain partition (integer)                          !
+!     gtype        Staggered C-grid type (integer)                     !
+!     ncvname      NetCDF variable name (string)                       !
+!     Extract_Flag Extraction/decimation flag (integer)                !
+!     Imin         Donor boundary starting data I-index (integer)      !
+!     Imax         Donor boundary ending   data I-index (integer)      !
+!     Jmin         Donor boundary starting data J-index (integer)      !
+!     Jmax         Donor boundary ending   data J-index (integer)      !
+!     LBk          Donor boundary K-dimension lower bound (integer)    !
+!     UBk          Donor boundary K-dimension upper bound (integer)    !
+!     Nrec         Number of boundary records (integer)                !
+!     Npts         Length of packed boundary data (integer)            !
+!     Bdat         Packed global donor 2D boundary data (real; 1D)     !
+!                                                                      !
+!  On Output:                                                          !
+!                                                                      !
+!     Favg         Averaged 3D boundary data (real 1D array)           !
+!                                                                      !
+!=======================================================================
+!
+!  Imported variable declarations.
+!
+      integer,  intent(in)  :: ng, model, tile 
+      integer,  intent(in)  :: gtype, Extract_Flag
+      integer,  intent(in)  :: Imin, Imax, Jmin, Jmax, LBk, UBk, Nrec
+      integer,  intent(in)  :: Npts
+!
+      real(r8), intent(in)  :: Bdat(:)
+      real(r8), intent(out) :: Bavg(:)
+!
+      character (len=*), intent(in) :: ncvname
+!
+!  Local variable declarations.
+!
+      logical, dimension(4) :: bounded
+!
+      integer :: bc, i, ib, ij, ir, j, k, kc, rc
+      integer :: IJKlen, IorJ, Klen
+!
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__//", average_boundary3d"
+!
+      SourceFile=MyFile
+!
+!------------------------------------------------------------------------
+!  Average 3D U- and V-boundary data at the appropiate location.
+!------------------------------------------------------------------------
+!
+      IorJ=IOBOUNDS(ng)%IorJ
+!
+!  Set switch to process boundary data by their associated tiles.
+!
+      bounded(iwest )=DOMAIN(ng)%Western_Edge (tile)
+      bounded(ieast )=DOMAIN(ng)%Eastern_Edge (tile)
+      bounded(isouth)=DOMAIN(ng)%Southern_Edge(tile)
+      bounded(inorth)=DOMAIN(ng)%Northern_Edge(tile)
+!
+!  The logic below works well for Extract_Flag=2.
+!
+      IF (Extract_Flag.ge.2) THEN
+        Klen=UBk-LBk+1
+        IJKlen=IorJ*Klen      
+!
+        SELECT CASE (gtype)
+!
+!         ---------------------
+          CASE (u3dvar)                     ! U points field:
+!         ---------------------               Average data at RHO-points
+!                                             for southern and northern
+            Bavg=Bdat                       ! boundaries only
+            DO ir=1,Nrec
+              rc=(ir-1)*IorJ*4
+              DO ib=1,4
+                bc=(ib-1)*IJKlen+rc
+                IF (bounded(ib).and.                                    &
+     &              ((ib.eq.isouth).or.(ib.eq.inorth))) THEN
+                  DO k=LBk,UBk
+                    kc=(k-LBk)*IorJ+bc
+                    DO i=Imin,Imax-1
+                      ij=i+kc
+                      Bavg(ij)=0.5_r8*(Bdat(ij)+Bdat(ij+1))
+                    END DO
+                  END DO
+                END IF
+              END DO
+            END DO
+!
+!         ---------------------
+          CASE (v2dvar, v3dvar)             ! V points field:
+!         ---------------------               Average data at RHO-points
+!                                             for western and eastern
+            Bavg=Bdat                       ! boundaries only
+            DO ir=1,Nrec
+              rc=(ir-1)*IorJ*4
+              DO ib=1,4
+                bc=(ib-1)*IJKlen+rc
+                IF (bounded(ib).and.                                    &
+     &              ((ib.eq.iwest).or.(ib.eq.ieast))) THEN
+                  DO k=LBk,UBk
+                    kc=(k-LBk)*IorJ+bc
+                    DO j=Jmin,Jmax-1
+                      ij=j+kc
+                      Bavg(ij)=0.5_r8*(Bdat(ij)+Bdat(ij+1))
+                    END DO
+                  END DO
+                END IF
+              END DO
+            END DO
+!
+        END SELECT
+      END IF
+!
+      RETURN
+      END SUBROUTINE average_boundary3d
+#endif
 !
       SUBROUTINE average_field2d (ng, model, tile,                      &
      &                            gtype, ifield, Extract_Flag,          &
@@ -507,7 +812,7 @@
      &  __FILE__//", average_field2d"
 !
 !------------------------------------------------------------------------
-!  Decimate input packed by requested factor
+!  Average 2D U- and V-field data at the appropiate location.
 !------------------------------------------------------------------------
 !
       IF (Extract_Flag.ge.2) THEN
@@ -602,7 +907,7 @@
      &  __FILE__//", average_field3d"
 !
 !------------------------------------------------------------------------
-!  Decimate input packed by requested factor
+!  Average 3D U- and V-field data at the appropiate location.
 !------------------------------------------------------------------------
 !
       IF (Extract_Flag.ge.2) THEN
@@ -654,6 +959,365 @@
 !
       RETURN
       END SUBROUTINE average_field3d
+
+# ifdef ADJUST_BOUNDARY
+!
+      SUBROUTINE decimate_boundary2d (ng, model, tile,                  &
+     &                                gtype, ncvname, tindex,           &
+     &                                Extract_Flag,                     &
+     &                                Imin, Imax, Jmin, Jmax,           &
+     &                                Nrec,                             &
+     &                                start, total,                     &
+     &                                Npts, Bdat)
+!
+!=======================================================================
+!                                                                      !
+!  It decimates data from donor 2D boundary packed as 1D global array. !
+!                                                                      !
+!  On Input:                                                           !
+!                                                                      !
+!     ng           Nested grid number (integer)                        !
+!     model        Calling model identifier (integer)                  !
+!     tile         Domain partition (integer)                          !
+!     gtype        Staggered C-grid type (integer)                     !
+!     ncvname      NetCDF variable name (string)                       !
+!     tindex       Time record index to process (integer)              !
+!     Extract_Flag Extraction/decimation flag (integer)                !
+!     Imin         Donor boundary starting data I-index (integer)      !
+!     Imax         Donor boundary ending   data I-index (integer)      !
+!     Jmin         Donor boundary starting data J-index (integer)      !
+!     Jmax         Donor boundary ending   data J-index (integer)      !
+!     Nrec         Number of boundary records (integer)                !
+!     Npts         Length of packed boundary data (integer)            !
+!     Bdat         Packed global donor 2D boundary data (real; 1D)     !
+!                                                                      !
+!  On Output:                                                          !
+!                                                                      !
+!     start        Start index where the first of the data values will !
+!                    be written along each dimension (integer)         !
+!     total        Number of data values to be written along each      !
+!                    dimension (integer)                               !
+!     Bdat         Decimated 2D boundary data (real; 1D)               !
+!                                                                      !
+!=======================================================================
+!
+!  Imported variable declarations.
+!
+      integer,  intent(in)    :: ng, model, tile 
+      integer,  intent(in)    :: gtype, tindex, Extract_Flag
+      integer,  intent(in)    :: Imin, Imax, Jmin, Jmax
+      integer,  intent(in)    :: Nrec, Npts
+      integer,  intent(out)   :: start(:), total(:)
+!
+      real(r8), intent(inout) :: Bdat(:)
+!
+      character (len=*), intent(in) :: ncvname
+!
+!  Local variable declarations.
+!
+      integer  :: bc, ib, ic, ij, ir, ifactor, rc
+      integer  :: Idim, IJdim, IorJ, Mpts
+!
+      real(r8) :: Bwrk(SIZE(Bdat))
+!
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__//", decimate_boundary2d"
+!
+      SourceFile=MyFile
+!
+!------------------------------------------------------------------------
+!  Decimate input packed 2D boundary by requested factor.
+!------------------------------------------------------------------------
+! 
+      ifactor=ABS(Extract_Flag)
+      IorJ=IOBOUNDS(ng)%IorJ
+!
+      SELECT CASE (gtype)
+!
+!       ---------------------
+        CASE (r2dvar, r3dvar)               ! RHO points field
+!       ---------------------
+!
+          Bwrk=Bdat
+          Bdat=0.0_r8
+          ic=0
+          DO ir=1,Nrec
+            rc=(ir-1)*IorJ*4
+            DO ib=1,4
+              bc=(ib-1)*IorJ+rc            
+              DO ij=1,IorJ,ifactor
+                ic=ic+1
+                Bdat(ic)=Bwrk(ij)
+              END DO
+              IF ((ir.eq.1).and.(ib.eq.1)) IJdim=ic         
+            END DO
+          END DO
+          Mpts=ic
+!
+!       ---------------------
+        CASE (u2dvar, u3dvar)               ! U points field
+!       ---------------------
+!
+          CALL average_boundary2d (ng, model, tile,                     &
+     &                             gtype, ncvname, Extract_Flag,        &
+     &                             Imin, Imax, Jmin, Jmax, Nrec,        &
+     &                             Npts, Bdat, Bwrk)
+!
+          Bdat=0.0_r8
+          ic=0
+          DO ir=1,Nrec
+            rc=(ir-1)*IorJ*4
+            DO ib=1,4
+              bc=(ib-1)*IorJ+rc            
+              DO ij=1,IorJ,ifactor
+                ic=ic+1
+                Bdat(ic)=Bwrk(ij)
+              END DO
+              IF ((ir.eq.1).and.(ib.eq.1)) IJdim=ic         
+            END DO
+          END DO
+          Mpts=ic
+!
+!       ---------------------
+        CASE (v2dvar, v3dvar)               ! V points field
+!       ---------------------
+!
+          CALL average_boundary2d (ng, model, tile,                     &
+     &                             gtype, ncvname, Extract_Flag,        &
+     &                             Imin, Imax, Jmin, Jmax, Nrec,        &
+     &                             Npts, Bdat, Bwrk)
+!
+          Bdat=0.0_r8
+          ic=0
+          DO ir=1,Nrec
+            rc=(ir-1)*IorJ*4
+            DO ib=1,4
+              bc=(ib-1)*IorJ+rc            
+              DO ij=1,IorJ,ifactor
+                ic=ic+1
+                Bdat(ic)=Bwrk(ij)
+              END DO
+              IF ((ir.eq.1).and.(ib.eq.1)) IJdim=ic         
+            END DO
+          END DO
+          Mpts=ic
+!
+!       ------------
+        CASE DEFAULT
+!       ------------
+!
+          IF (Master) THEN
+            WRITE (stdout,10) gtype,                                    &
+     &                        'not supported for decimation:',          &
+     &                        TRIM(ncvname)
+          END IF
+          exit_flag=3
+!
+      END SELECT
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+!
+!  Set start and total vectors needed to write into output NetCDF file.
+!
+      start(1)=1
+      total(1)=IJdim
+      start(2)=1
+      total(2)=4
+      start(3)=1
+      total(3)=Nrec
+      start(4)=tindex
+      total(4)=1
+!
+  10  FORMAT (' DECIMATE_BOUNDARY2D - Staggered variable, gtype = ',    &
+     &        i0,/,20x,a,2x,a)
+!
+      RETURN
+      END SUBROUTINE decimate_boundary2d
+!
+      SUBROUTINE decimate_boundary3d (ng, model, tile,                  &
+     &                                gtype, ncvname, tindex,           &
+     &                                Extract_Flag,                     &
+     &                                Imin, Imax, Jmin, Jmax, LBk, UBk, &
+     &                                Nrec,                             &
+     &                                start, total,                     &
+     &                                Npts, Bdat)
+!
+!=======================================================================
+!                                                                      !
+!  It decimates data from donor 3D boundary packed as 1D global array. !
+!                                                                      !
+!  On Input:                                                           !
+!                                                                      !
+!     ng           Nested grid number (integer)                        !
+!     model        Calling model identifier (integer)                  !
+!     tile         Domain partition (integer)                          !
+!     gtype        Staggered C-grid type (integer)                     !
+!     ncvname      NetCDF variable name (string)                       !
+!     tindex       Time record index to process (integer)              !
+!     Extract_Flag Extraction/decimation flag (integer)                !
+!     Imin         Donor boundary starting data I-index (integer)      !
+!     Imax         Donor boundary ending   data I-index (integer)      !
+!     Jmin         Donor boundary starting data J-index (integer)      !
+!     Jmax         Donor boundary ending   data J-index (integer)      !
+!     LBk          Donor boundary K-dimension lower bound (integer)    !
+!     UBk          Donor boundary K-dimension upper bound (integer)    !
+!     Nrec         Number of boundary records (integer)                !
+!     Npts         Length of packed boundary data (integer)            !
+!     Bdat         Packed global donor 3D boundary data (real; 1D)     !
+!                                                                      !
+!  On Output:                                                          !
+!                                                                      !
+!     start        Start index where the first of the data values will !
+!                    be written along each dimension (integer)         !
+!     total        Number of data values to be written along each      !
+!                    dimension (integer)                               !
+!     Bdat         Decimated 3D boundary data (real; 1D)               !
+!                                                                      !
+!=======================================================================
+!
+!  Imported variable declarations.
+!
+      integer,  intent(in)    :: ng, model, tile 
+      integer,  intent(in)    :: gtype, tindex, Extract_Flag
+      integer,  intent(in)    :: Imin, Imax, Jmin, Jmax, LBk, UBk
+      integer,  intent(in)    :: Nrec, Npts
+      integer,  intent(out)   :: start(:), total(:)
+!
+      real(r8), intent(inout) :: Bdat(:)
+!
+      character (len=*), intent(in) :: ncvname
+!
+!  Local variable declarations.
+!
+      integer  :: bc, ib, ic, ij, ir, ifactor, k, rc
+      integer  :: Idim, IJdim, IJKlen, IorJ, Klen, Mpts
+!
+      real(r8) :: Bwrk(SIZE(Bdat))
+!
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__//", decimate_boundary3d"
+!
+      SourceFile=MyFile
+!
+!------------------------------------------------------------------------
+!  Decimate input packed 3D boundary by requested factor.
+!------------------------------------------------------------------------
+! 
+      ifactor=ABS(Extract_Flag)
+      IorJ=IOBOUNDS(ng)%IorJ
+      Klen=UBk-LBk+1
+      IJKlen=IorJ*Klen      
+!
+      SELECT CASE (gtype)
+!
+!       ---------------------
+        CASE (r2dvar, r3dvar)               ! RHO points field
+!       ---------------------
+!
+          Bwrk=Bdat
+          Bdat=0.0_r8
+          ic=0
+          DO ir=1,Nrec
+            rc=(ir-1)*IJKlen*4
+            DO ib=1,4
+              bc=(ib-1)*IJKlen+rc
+              DO k=LBk,UBk
+                DO ij=1,IorJ,ifactor
+                  ic=ic+1
+                  Bwrk(ic)=Bdat(ij)
+                END DO
+                IF ((ir.eq.1).and.(ib.eq.1).and.(k.eq.LBk)) IJdim=ic         
+              END DO
+            END DO
+          END DO
+          Mpts=ic
+!
+!       ---------------------
+        CASE (u2dvar, u3dvar)               ! U points field
+!       ---------------------
+!
+          CALL average_boundary3d (ng, model, tile,                     &
+     &                             gtype, ncvname, Extract_Flag,        &
+     &                             Imin, Imax, Jmin, Jmax, LBk, UBk,    &
+     &                             Nrec,                                &
+     &                             Npts, Bdat, Bwrk)
+!
+          Bdat=0.0_r8
+          ic=0
+          DO ir=1,Nrec
+            rc=(ir-1)*IJKlen*4
+            DO ib=1,4
+              bc=(ib-1)*IJKlen+rc
+              DO k=LBk,UBk
+                DO ij=1,IorJ,ifactor
+                  ic=ic+1
+                  Bwrk(ic)=Bdat(ij)
+                END DO
+                IF ((ir.eq.1).and.(ib.eq.1).and.(k.eq.LBk)) IJdim=ic         
+              END DO
+            END DO
+          END DO
+          Mpts=ic
+!
+!       ---------------------
+        CASE (v2dvar, v3dvar)               ! V points field
+!       ---------------------
+!
+          CALL average_boundary3d (ng, model, tile,                     &
+     &                             gtype, ncvname, Extract_Flag,        &
+     &                             Imin, Imax, Jmin, Jmax, LBk, UBk,    &
+     &                             Nrec,                                &
+     &                             Npts, Bdat, Bwrk)
+!
+          Bdat=0.0_r8
+          ic=0
+          DO ir=1,Nrec
+            rc=(ir-1)*IJKlen*4
+            DO ib=1,4
+              bc=(ib-1)*IJKlen+rc
+              DO k=LBk,UBk
+                DO ij=1,IorJ,ifactor
+                  ic=ic+1
+                  Bwrk(ic)=Bdat(ij)
+                END DO
+                IF ((ir.eq.1).and.(ib.eq.1).and.(k.eq.LBk)) IJdim=ic         
+              END DO
+            END DO
+          END DO
+          Mpts=ic
+!
+!       ------------
+        CASE DEFAULT
+!       ------------
+!
+          IF (Master) THEN
+            WRITE (stdout,10) gtype,                                    &
+     &                        'not supported for decimation:',          &
+     &                        TRIM(ncvname)
+          END IF
+          exit_flag=3
+!
+      END SELECT
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+!
+!  Set start and total vectors needed to write into output NetCDF file.
+!
+      start(1)=1
+      total(1)=IJdim
+      start(2)=1
+      total(2)=Klen
+      start(3)=1
+      total(3)=4
+      start(4)=1
+      total(4)=Nrec
+      start(5)=tindex
+      total(5)=1
+!
+  10  FORMAT (' DECIMATE_BOUNDARY3D - Staggered variable, gtype = ',    &
+     &        i0,/,20x,a,2x,a)
+!
+      RETURN
+      END SUBROUTINE decimate_boundary3d
+# endif
 !
       SUBROUTINE decimate_field2d (ng, model, tile,                     &
      &                             gtype, ifield, tindex, Extract_Flag, &

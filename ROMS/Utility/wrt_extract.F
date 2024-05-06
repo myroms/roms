@@ -532,7 +532,8 @@
      &                          XTR(ng)%Rindex, r2dvar,                 &
      &                          LBij, UBij, Nbrec(ng), scale,           &
      &                          BOUNDARY(ng) % zeta_obc(LBij:,:,:,      &
-     &                                                  Lbout(ng)))
+     &                                                  Lbout(ng)),     &
+     &                          ExtractField = ExtractFlag(ng))
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idSbry(isFsur))),            &
@@ -667,7 +668,8 @@
      &                          XTR(ng)%Rindex, u2dvar,                 &
      &                          LBij, UBij, Nbrec(ng), scale,           &
      &                          BOUNDARY(ng) % ubar_obc(LBij:,:,:,      &
-     &                                                  Lbout(ng)))
+     &                                                  Lbout(ng)),     &
+     &                          ExtractField = ExtractFlag(ng))
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idSbry(isUbar))),            &
@@ -802,7 +804,8 @@
      &                          XTR(ng)%Rindex, v2dvar,                 &
      &                          LBij, UBij, Nbrec(ng), scale,           &
      &                          BOUNDARY(ng) % vbar_obc(LBij:,:,:,      &
-     &                                                  Lbout(ng)))
+     &                                                  Lbout(ng)),     &
+     &                          ExtractField = ExtractFlag(ng))
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idSbry(isVbar))),            &
@@ -942,7 +945,8 @@
      &                          XTR(ng)%Rindex, u3dvar,                 &
      &                          LBij, UBij, 1, N(ng), Nbrec(ng), scale, &
      &                          BOUNDARY(ng) % u_obc(LBij:,:,:,:,       &
-     &                                               Lbout(ng)))
+     &                                               Lbout(ng)),        &
+     &                          ExtractField = ExtractFlag(ng))
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idSbry(isUvel))),            &
@@ -1014,7 +1018,8 @@
      &                          XTR(ng)%Rindex, v3dvar,                 &
      &                          LBij, UBij, 1, N(ng), Nbrec(ng), scale, &
      &                          BOUNDARY(ng) % v_obc(LBij:,:,:,:,       &
-     &                                               Lbout(ng)))
+     &                                               Lbout(ng)),        &
+     &                          ExtractField = ExtractFlag(ng))
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idSbry(isVvel))),            &
@@ -1234,7 +1239,8 @@
      &                            LBij, UBij, 1, N(ng), Nbrec(ng),      &
      &                            scale,                                &
      &                            BOUNDARY(ng) % t_obc(LBij:,:,:,:,     &
-     &                                                 Lbout(ng),itrc))
+     &                                                 Lbout(ng),itrc), &
+     &                          ExtractField = ExtractFlag(ng))
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
             IF (Master) THEN
               WRITE (stdout,20) TRIM(Vname(1,ifield)), XTR(ng)%Rindex
@@ -2547,7 +2553,8 @@
      &                          ioDesX,                                 &
      &                          LBij, UBij, Nbrec(ng), scale,           &
      &                          BOUNDARY(ng) % zeta_obc(LBij:,:,:,      &
-     &                                                  Lbout(ng)))
+     &                                                  Lbout(ng)),     &
+     &                          ExtractField = ExtractFlag(ng))
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idSbry(isFsur))),            &
@@ -2718,7 +2725,8 @@
      &                          ioDesX,                                 &
      &                          LBij, UBij, Nbrec(ng), scale,           &
      &                          BOUNDARY(ng) % ubar_obc(LBij:,:,:,      &
-     &                                                  Lbout(ng)))
+     &                                                  Lbout(ng)),     &
+     &                          ExtractField = ExtractFlag(ng))
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idSbry(isUbar))),            &
@@ -2889,7 +2897,8 @@
      &                          ioDesX,                                 &
      &                          LBij, UBij, Nbrec(ng), scale,           &
      &                          BOUNDARY(ng) % vbar_obc(LBij:,:,:,      &
-     &                                                  Lbout(ng)))
+     &                                                  Lbout(ng)),     &
+     &                          ExtractField = ExtractFlag(ng))
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idSbry(isVbar))),            &
@@ -3058,7 +3067,8 @@
      &                          ioDesX,                                 &
      &                          LBij, UBij, 1, N(ng), Nbrec(ng), scale, &
      &                          BOUNDARY(ng) % u_obc(LBij:,:,:,:,       &
-     &                                               Lbout(ng)))
+     &                                               Lbout(ng)),        &
+     &                          ExtractField = ExtractFlag(ng))
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idSbry(isUvel))),            &
@@ -3148,7 +3158,8 @@
      &                          ioDesX,                                 &
      &                          LBij, UBij, 1, N(ng), Nbrec(ng), scale, &
      &                          BOUNDARY(ng) % v_obc(LBij:,:,:,:,       &
-     &                                               Lbout(ng)))
+     &                                               Lbout(ng)),        &
+     &                          ExtractField = ExtractFlag(ng))
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idSbry(isVvel))),            &
@@ -3408,7 +3419,8 @@
      &                            LBij, UBij, 1, N(ng), Nbrec(ng),      &
      &                            scale,                                &
      &                            BOUNDARY(ng) % t_obc(LBij:,:,:,:,     &
-     &                                                 Lbout(ng),itrc))
+     &                                                 Lbout(ng),itrc), &
+     &                          ExtractField = ExtractFlag(ng))
           IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
             IF (Master) THEN
               WRITE (stdout,20) TRIM(Vname(1,ifield)), XTR(ng)%Rindex

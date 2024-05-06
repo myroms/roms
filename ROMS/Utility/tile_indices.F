@@ -137,7 +137,7 @@
       Nghost=NghostPoints
       DO ng=1,Ngrids
         my_BOUNDS(ng) % LBij = 0
-        my_BOUNDS(ng) % UBij = MAX(Lm(ng)+1,Mm(ng)+1)
+        my_BOUNDS(ng) % UBij = MAX(my_Lm(ng)+1,my_Mm(ng)+1)
         DO tile=-1,NtileI(ng)*NtileJ(ng)-1
           my_BOUNDS(ng) % tile(tile) = tile
           CALL get_tile (ng, tile,                                      &

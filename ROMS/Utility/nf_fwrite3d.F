@@ -46,7 +46,7 @@
 !     Adat         Field to write out (real)                           !
 !     SetFillVal   Logical switch to set fill value in land areas      !
 !                    (OPTIONAL)                                        !
-!     ExtractField  Field extraction flag (integer, OPTIONAL)          !
+!     ExtractField Field extraction flag (integer, OPTIONAL)           !
 !                    ExtractField = 0   no extraction                  !
 !                    ExtractField = 1   extraction by intrpolation     !
 !                    ExtractFiels > 1   extraction by decimation       !

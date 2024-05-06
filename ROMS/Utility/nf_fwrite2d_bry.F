@@ -42,6 +42,10 @@
 !     Nrec         Number of boundary records (integer)                !
 !     Ascl         Factor to scale field before writing (real)         !
 !     Abry         Boundary field to write out (real)                  !
+!     ExtractField Field extraction flag (integer, OPTIONAL)           !
+!                    ExtractField = 0   no extraction                  !
+!                    ExtractField = 1   extraction by interpolation    !
+!                    ExtractField > 1   extraction by decimation       !
 !                                                                      !
 !  On Output:                                                          !
 !                                                                      !
@@ -63,10 +67,11 @@
       USE mod_parallel
       USE mod_ncparam
       USE mod_scalars
-#ifdef DISTRIBUTE
 !
+#ifdef DISTRIBUTE
       USE distribute_mod, ONLY : mp_bcasti, mp_collect
 #endif
+      USE pack_field_mod, ONLY : pack_boundary2d
 !
       implicit none
 !
@@ -85,6 +90,7 @@
      &                            tindex, gtype,                        &
      &                            LBij, UBij, Nrec,                     &
      &                            Ascl, Abry,                           &
+     &                            ExtractField,                         &
      &                            MinValue, MaxValue)  RESULT(status)
 !***********************************************************************
 !
@@ -94,6 +100,8 @@
 !
       integer, intent(in) :: ng, model, ncid, ncvarid, tindex, gtype
       integer, intent(in) :: LBij, UBij, Nrec
+!
+      integer, intent(in), optional :: ExtractField
 !
       real(dp), intent(in) :: Ascl
 !
@@ -110,132 +118,58 @@
 !
 !  Local variable declarations.
 !
-      logical, dimension(4) :: bounded
-!
-      integer :: bc, i, ib, ic, ir, j, rc, tile
-      integer :: IorJ, Imin, Imax, Jmin, Jmax, Npts
-      integer :: Istr, Iend, Jstr, Jend
-
-      integer, dimension(4) :: start, total
-
+      integer :: IorJ, Npts, i, tile
+      integer :: Extract_Flag
       integer :: status
 !
-      real(r8), parameter :: Aspv = 0.0_r8
-
+      integer, dimension(4) :: start, total
+!
       real(r8), dimension((UBij-LBij+1)*4*Nrec) :: Awrk
 !
 !-----------------------------------------------------------------------
-!  Set starting and ending indices to process.
+!  Initialize local variables.
 !-----------------------------------------------------------------------
 !
-#ifdef DISTRIBUTE
+      status=nf90_noerr
+!
+!  Set parallel tile.
+!
+# ifdef DISTRIBUTE
       tile=MyRank
-
-      SELECT CASE (gtype)
-        CASE (p2dvar, p3dvar)
-          Imin=BOUNDS(ng)%Istr (tile)
-          Imax=BOUNDS(ng)%Iend (tile)
-          Jmin=BOUNDS(ng)%Jstr (tile)
-          Jmax=BOUNDS(ng)%Jend (tile)
-        CASE (r2dvar, r3dvar)
-          Imin=BOUNDS(ng)%IstrR(tile)
-          Imax=BOUNDS(ng)%IendR(tile)
-          Jmin=BOUNDS(ng)%JstrR(tile)
-          Jmax=BOUNDS(ng)%JendR(tile)
-        CASE (u2dvar, u3dvar)
-          Imin=BOUNDS(ng)%Istr (tile)
-          Imax=BOUNDS(ng)%IendR(tile)
-          Jmin=BOUNDS(ng)%JstrR(tile)
-          Jmax=BOUNDS(ng)%JendR(tile)
-        CASE (v2dvar, v3dvar)
-          Imin=BOUNDS(ng)%IstrR(tile)
-          Imax=BOUNDS(ng)%IendR(tile)
-          Jmin=BOUNDS(ng)%Jstr (tile)
-          Jmax=BOUNDS(ng)%JendR(tile)
-        CASE DEFAULT
-          Imin=BOUNDS(ng)%IstrR(tile)
-          Imax=BOUNDS(ng)%IendR(tile)
-          Jmin=BOUNDS(ng)%JstrR(tile)
-          Jmax=BOUNDS(ng)%JendR(tile)
-      END SELECT
-#else
+# else
       tile=-1
-      Imin=LBij
-      Imax=UBij
-      Jmin=LBij
-      Jmax=UBij
-#endif
+# endif
+!
+!  Set length of boundary data as the value of greater of I- or
+!  j-dimension.
+!
       IorJ=IOBOUNDS(ng)%IorJ
       Npts=IorJ*4*Nrec
 !
-!  Get tile bounds.
+!  If appropriate, set the field extraction flag to the provided grid
+!  geometry through interpolation or decimation.
 !
-      Istr=BOUNDS(ng)%Istr(tile)
-      Iend=BOUNDS(ng)%Iend(tile)
-      Jstr=BOUNDS(ng)%Jstr(tile)
-      Jend=BOUNDS(ng)%Jend(tile)
+      IF (PRESENT(ExtractField)) THEN
+        Extract_Flag=ExtractField
+      ELSE
+        Extract_Flag=0
+      END IF
 !
-!  Set switch to process boundary data by their associated tiles.
+!  Initialize local array to avoid denormalized numbers. This
+!  facilitates processing and debugging.
 !
-      bounded(iwest )=DOMAIN(ng)%Western_Edge (tile)
-      bounded(ieast )=DOMAIN(ng)%Eastern_Edge (tile)
-      bounded(isouth)=DOMAIN(ng)%Southern_Edge(tile)
-      bounded(inorth)=DOMAIN(ng)%Northern_Edge(tile)
-!
-!  Set NetCDF dimension counters for processing requested field.
-!
-      start(1)=1
-      total(1)=IorJ
-      start(2)=1
-      total(2)=4
-      start(3)=1
-      total(3)=Nrec
-      start(4)=tindex
-      total(4)=1
+      Awrk=0.0_r8
 !
 !-----------------------------------------------------------------------
-!  Pack and scale output data.
+!  Pack 2D boundary data into 1D array.
 !-----------------------------------------------------------------------
 !
-      Awrk=Aspv
-!
-      DO ir=1,Nrec
-        rc=(ir-1)*IorJ*4
-        DO ib=1,4
-          IF (bounded(ib)) THEN
-            bc=(ib-1)*IorJ+rc
-            IF ((ib.eq.iwest).or.(ib.eq.ieast)) THEN
-              DO j=Jmin,Jmax
-                ic=1+(j-LBij)+bc
-                Awrk(ic)=Abry(j,ib,ir)*Ascl
-#ifdef POSITIVE_ZERO
-                IF (ABS(Awrk(ic)).eq.0.0_r8) THEN
-                  Awrk(ic)=0.0_r8                 ! impose positive zero
-                END IF
-#endif
-              END DO
-            ELSE IF ((ib.eq.isouth).or.(ib.eq.inorth)) THEN
-              DO i=Imin,Imax
-                ic=1+(i-LBij)+bc
-                Awrk(ic)=Abry(i,ib,ir)*Ascl
-#ifdef POSITIVE_ZERO
-                IF (ABS(Awrk(ic)).eq.0.0_r8) THEN
-                  Awrk(ic)=0.0_r8                 ! impose positive zero
-                END IF
-#endif
-              END DO
-            END IF
-          END IF
-        END DO
-      END DO
-
-#ifdef DISTRIBUTE
-!
-!  If distributed-memory set-up, collect data from all spawned
-!  processes.
-!
-      CALL mp_collect (ng, model, Npts, Aspv, Awrk)
-#endif
+      CALL pack_boundary2d (ng, model, tile,                            &
+     &                      gtype, ncvname, tindex,                     &
+     &                      Extract_Flag,                               &
+     &                      LBij, UBij, Nrec,                           &
+     &                      Ascl, Abry,                                 &
+     &                      start, total, Npts, Awrk)
 !
 !-----------------------------------------------------------------------
 !  If applicable, compute output field minimum and maximum values.

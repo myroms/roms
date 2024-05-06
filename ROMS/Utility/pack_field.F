@@ -18,8 +18,12 @@
 !=======================================================================
 !
       USE mod_param
+      USE mod_scalars
 !
 #ifdef DISTRIBUTE
+# ifdef ADJUST_BOUNDARY
+      USE distribute_mod,   ONLY : mp_collect
+# endif
       USE distribute_mod,   ONLY : mp_gather2d,                         &
 # ifdef GRID_EXTRACT
      &                             mp_gather2d_xtr,                     &
@@ -27,38 +31,86 @@
      &                             mp_gather3d
 #endif
 #ifdef GRID_EXTRACT
+      USE extract_field_mod, ONLY: extract_boundary
       USE extract_field_mod, ONLY: extract_field
 #endif
 !
       implicit none
 !
-#ifdef ADJUST_BOUNDARY
       PUBLIC :: pack_boundary2d
       PUBLIC :: pack_boundary3d
-#endif
       PUBLIC :: pack_field2d
       PUBLIC :: pack_field3d
       PUBLIC :: pack_field4d
 !
       CONTAINS
-
-#ifdef ADJUST_BOUNDARY
 !
-      SUBROUTINE pack_boundary2d
+      SUBROUTINE pack_boundary2d (ng, model, tile,                      &
+     &                            gtype, ncvname, tindex,               &
+     &                            Extract_Flag,                         &
+     &                            LBij, UBij, Nrec,                     &
+     &                            Bscl, Bdat,                           &
+     &                            start, total, Npts, Bwrk)
 !
 !=======================================================================
 !                                                                      !
-!  Packs 2D boundary data into 1D array.                               !
+!  Packs 2D boundary data into 1D array to be written into output      !
+!  NetCDF file elsewhere.                                              !
+!                                                                      !
+!  On Input:                                                           !
+!                                                                      !
+!     ng           Nested grid number (integer)                        !
+!     model        Calling model identifier (integer)                  !
+!     tile         Domain partition (integer)                          !
+!     gtype        Staggered C-grid type (integer)                     !
+!     ncvname      NetCDF variable name (string)                       !
+!     tindex       Time record index to process (integer)              !
+!     Extract_Flag Extraction flag interpolation/decimation (integer)  !
+!     LBij         Donor IJ-dimension Lower bound (integer)            !
+!     UBij         Donor IJ-dimension Upper bound (integer)            !
+!     Nrec         Number of boundary records (integer)                !
+!     Bscl         Factor to scale boundary data before writing (real) !
+!     Bdat         2D boundary data to process (real)                  !
+!                                                                      !
+!  On Output:                                                          !
+!                                                                      !
+!     start        Start index where the first of the data values will !
+!                    be written along each dimension (integer)         !
+!     total        Number of data values to be written along each      !
+!                    dimension (integer)                               !
+!     Npts         Number of points processed in Bwrk (integer)        !
+!     Bwrk         Packed 2D boundary data (real)                      !
 !                                                                      !
 !=======================================================================
 !
 !  Imported variable declarations.
 !
-
+      integer, intent(in)   :: ng, model, tile
+      integer, intent(in)   :: gtype, tindex
+      integer, intent(in)   :: Extract_Flag
+      integer, intent(in)   :: LBij, UBij, Nrec
+      integer, intent(in)   :: Npts
+      integer, intent(out)  :: start(:), total(:)
+!
+      real(dp), intent(in)  :: Bscl
+!
+#ifdef ASSUMED_SHAPE
+      real(r8), intent(in)  :: Bdat(LBij:,:,:)
+#else
+      real(r8), intent(in)  :: Bdat(LBij:LBij,4,Nrec)
+#endif
+      real(r8), intent(out) :: Bwrk(:)
+!
+      character (len=*), intent(in) :: ncvname
 !
 !  Local variable declarations.
 !
-      integer :: ij
+      logical, dimension(4) :: bounded
+!
+      integer :: bc, i, ib, ic, ir, j, rc
+      integer :: IorJ, Imin, Imax, Jmin, Jmax
+!
+      real(r8), parameter :: Bspv = 0.0_r8
 !
       character (len=*), parameter :: MyFile =                          &
      &  __FILE__//", pack_boundary2d"
@@ -67,26 +119,220 @@
 !  Pack 2D boundary data.
 !------------------------------------------------------------------------
 !
+!  Set first and last grid point according to staggered C-grid
+!  classification.
+!
+#ifdef DISTRIBUTE
+      SELECT CASE (gtype)
+!
+!       ---------------------
+        CASE (p2dvar, p3dvar)               ! PSI points field
+!       ---------------------
+!
+          Imin=BOUNDS(ng)%Istr (tile)
+          Imax=BOUNDS(ng)%Iend (tile)
+          Jmin=BOUNDS(ng)%Jstr (tile)
+          Jmax=BOUNDS(ng)%Jend (tile)
+!
+!       ---------------------
+        CASE (r2dvar, r3dvar)               ! RHO points field
+!       ---------------------
+!
+          Imin=BOUNDS(ng)%IstrR(tile)
+          Imax=BOUNDS(ng)%IendR(tile)
+          Jmin=BOUNDS(ng)%JstrR(tile)
+          Jmax=BOUNDS(ng)%JendR(tile)
+!
+!       ---------------------
+        CASE (u2dvar, u3dvar)               ! U points field
+!       ---------------------
+!
+          Imin=BOUNDS(ng)%Istr (tile)
+          Imax=BOUNDS(ng)%IendR(tile)
+          Jmin=BOUNDS(ng)%JstrR(tile)
+          Jmax=BOUNDS(ng)%JendR(tile)
+!
+!       ---------------------
+        CASE (v2dvar, v3dvar)               ! V points field
+!       ---------------------
+!
+          Imin=BOUNDS(ng)%IstrR(tile)
+          Imax=BOUNDS(ng)%IendR(tile)
+          Jmin=BOUNDS(ng)%Jstr (tile)
+          Jmax=BOUNDS(ng)%JendR(tile)
+!
+!       ---------------------
+        CASE DEFAULT                        ! RHO points field
+!       ---------------------
+!
+          Imin=BOUNDS(ng)%IstrR(tile)
+          Imax=BOUNDS(ng)%IendR(tile)
+          Jmin=BOUNDS(ng)%JstrR(tile)
+          Jmax=BOUNDS(ng)%JendR(tile)
+      END SELECT
+#else
+      Imin=LBij
+      Imax=UBij
+      Jmin=LBij
+      Jmax=UBij
+#endif
+!
+      IorJ=IOBOUNDS(ng)%IorJ
+!
+!  Set switch to process boundary data by their associated tiles.
+!
+      bounded(iwest )=DOMAIN(ng)%Western_Edge (tile)
+      bounded(ieast )=DOMAIN(ng)%Eastern_Edge (tile)
+      bounded(isouth)=DOMAIN(ng)%Southern_Edge(tile)
+      bounded(inorth)=DOMAIN(ng)%Northern_Edge(tile)
+!
+!-----------------------------------------------------------------------
+!  Pack and scale output data.
+!-----------------------------------------------------------------------
+!
+      Bwrk=Bspv
+!
+      DO ir=1,Nrec
+        rc=(ir-1)*IorJ*4
+        DO ib=1,4
+          IF (bounded(ib)) THEN
+            bc=(ib-1)*IorJ+rc
+            IF ((ib.eq.iwest).or.(ib.eq.ieast)) THEN
+              DO j=Jmin,Jmax
+                ic=1+(j-LBij)+bc
+                Bwrk(ic)=Bdat(j,ib,ir)*Bscl
+#ifdef POSITIVE_ZERO
+                IF (ABS(Bwrk(ic)).eq.0.0_r8) THEN
+                  Bwrk(ic)=0.0_r8                 ! impose positive zero
+                END IF
+#endif
+              END DO
+            ELSE IF ((ib.eq.isouth).or.(ib.eq.inorth)) THEN
+              DO i=Imin,Imax
+                ic=1+(i-LBij)+bc
+                Bwrk(ic)=Bdat(i,ib,ir)*Bscl
+#ifdef POSITIVE_ZERO
+                IF (ABS(Bwrk(ic)).eq.0.0_r8) THEN
+                  Bwrk(ic)=0.0_r8                 ! impose positive zero
+                END IF
+#endif
+              END DO
+            END IF
+          END IF
+        END DO
+      END DO
 
+#ifdef DISTRIBUTE
+!
+!  If distributed-memory set-up, collect data from all spawned
+!  processes.
+!
+      CALL mp_collect (ng, model, Npts, Bspv, Bwrk)
+#endif
+!
+!-----------------------------------------------------------------------
+!  If there is no extracting data, set the start and total vectors
+!  needed by the NetCDF library for writing.
+!-----------------------------------------------------------------------
+!
+      IF (Extract_Flag.le.0) THEN
+        start(1)=1
+        total(1)=IorJ
+        start(2)=1
+        total(2)=4
+        start(3)=1
+        total(3)=Nrec
+        start(4)=tindex
+        total(4)=1
+
+#ifdef GRID_EXTRACT
+!
+!-----------------------------------------------------------------------
+!  Otherwise, extract field by decimation or interpolation.
+!-----------------------------------------------------------------------
+!
+      ELSE IF (Extract_Flag.ge.1) THEN
+        CALL extract_boundary (ng, model, tile,                         &
+     &                         gtype, ncvname, tindex,                  &
+     &                         Extract_flag,                            &
+     &                         Imin, Imax, Jmin, Jmax, Nrec,            &
+     &                         start, total,                            &
+     &                         Npts, Bwrk)
+#endif
+      END IF
 !
       RETURN
       END SUBROUTINE pack_boundary2d
 !
-      SUBROUTINE pack_boundary3d
+      SUBROUTINE pack_boundary3d (ng, model, tile,                      &
+     &                            gtype, ncvname, tindex,               &
+     &                            Extract_Flag,                         &
+     &                            LBij, UBij, LBk, UBk, Nrec,           &
+     &                            Bscl, Bdat,                           &
+     &                            start, total, Npts, Bwrk)
 !
 !=======================================================================
 !                                                                      !
-!  Packs 3D boundary data into 1D array.                               !
+!  Packs 3D boundary data into 1D array to be written into output      !
+!  NetCDF file elsewhere.                                              !
+!                                                                      !
+!  On Input:                                                           !
+!                                                                      !
+!     ng           Nested grid number (integer)                        !
+!     model        Calling model identifier (integer)                  !
+!     tile         Domain partition (integer)                          !
+!     gtype        Staggered C-grid type (integer)                     !
+!     ncvname      NetCDF variable name (string)                       !
+!     tindex       Time record index to process (integer)              !
+!     Extract_Flag Extraction flag interpolation/decimation (integer)  !
+!     LBij         Donor IJ-dimension Lower bound (integer)            !
+!     UBij         Donor IJ-dimension Upper bound (integer)            !
+!     LBk          Donor K-dimension lower bound (integer)             !
+!     UBk          Donor K-dimension upper bound (integer)             !
+!     Nrec         Number of boundary records (integer)                !
+!     Bscl         Factor to scale boundary data before writing (real) !
+!     Bdat         3D boundary data to process (real)                  !
+!                                                                      !
+!  On Output:                                                          !
+!                                                                      !
+!     start        Start index where the first of the data values will !
+!                    be written along each dimension (integer)         !
+!     total        Number of data values to be written along each      !
+!                    dimension (integer)                               !
+!     Npts         Number of points processed in Bwrk (integer)        !
+!     Bwrk         Packed 3D boundary data (real)                      !
 !                                                                      !
 !=======================================================================
 !
 !  Imported variable declarations.
 !
-
+      integer, intent(in)   :: ng, model, tile
+      integer, intent(in)   :: gtype, tindex
+      integer, intent(in)   :: Extract_Flag
+      integer, intent(in)   :: LBij, UBij, LBk, UBk, Nrec
+      integer, intent(in)   :: Npts
+      integer, intent(out)  :: start(:), total(:)
+!
+      real(dp), intent(in)  :: Bscl
+!
+#ifdef ASSUMED_SHAPE
+      real(r8), intent(in)  :: Bdat(LBij:,LBk:,:,:)
+#else
+      real(r8), intent(in)  :: Bdat(LBij:LBij,LBk:UBk,4,Nrec)
+#endif
+      real(r8), intent(out) :: Bwrk(:)
+!
+      character (len=*), intent(in) :: ncvname
 !
 !  Local variable declarations.
 !
-      integer :: ij
+      logical, dimension(4) :: bounded
+!
+      integer :: Imin, Imax, Jmin, Jmax
+      integer :: IorJ, IJKlen, Klen
+      integer :: bc, i, ib, ic, ir, j, k, kc, rc
+!
+      real(r8), parameter :: Bspv = 0.0_r8
 !
       character (len=*), parameter :: MyFile =                          &
      &  __FILE__//", pack_boundary3d"
@@ -95,19 +341,168 @@
 !  Pack 3D boundary data.
 !------------------------------------------------------------------------
 !
+!  Set first and last grid point according to staggered C-grid
+!  classification.
+!
+#ifdef DISTRIBUTE
+      SELECT CASE (gtype)
+!
+!       ---------------------
+        CASE (p2dvar, p3dvar)               ! PSI points field
+!       ---------------------
+!
+          Imin=BOUNDS(ng)%Istr (tile)
+          Imax=BOUNDS(ng)%Iend (tile)
+          Jmin=BOUNDS(ng)%Jstr (tile)
+          Jmax=BOUNDS(ng)%Jend (tile)
+!
+!       ---------------------
+        CASE (r2dvar, r3dvar)               ! RHO points field
+!       ---------------------
+!
+          Imin=BOUNDS(ng)%IstrR(tile)
+          Imax=BOUNDS(ng)%IendR(tile)
+          Jmin=BOUNDS(ng)%JstrR(tile)
+          Jmax=BOUNDS(ng)%JendR(tile)
+!
+!       ---------------------
+        CASE (u2dvar, u3dvar)               ! U points field
+!       ---------------------
+!
+          Imin=BOUNDS(ng)%Istr (tile)
+          Imax=BOUNDS(ng)%IendR(tile)
+          Jmin=BOUNDS(ng)%JstrR(tile)
+          Jmax=BOUNDS(ng)%JendR(tile)
+!
+!       ---------------------
+        CASE (v2dvar, v3dvar)               ! V points field
+!       ---------------------
+!
+          Imin=BOUNDS(ng)%IstrR(tile)
+          Imax=BOUNDS(ng)%IendR(tile)
+          Jmin=BOUNDS(ng)%Jstr (tile)
+          Jmax=BOUNDS(ng)%JendR(tile)
+!
+!       ---------------------
+        CASE DEFAULT                        ! RHO points field
+!       ---------------------
+!
+          Imin=BOUNDS(ng)%IstrR(tile)
+          Imax=BOUNDS(ng)%IendR(tile)
+          Jmin=BOUNDS(ng)%JstrR(tile)
+          Jmax=BOUNDS(ng)%JendR(tile)
+      END SELECT
+#else
+      Imin=LBij
+      Imax=UBij
+      Jmin=LBij
+      Jmax=UBij
+#endif
+!
+      IorJ=IOBOUNDS(ng)%IorJ
+      Klen=UBk-LBk+1
+      IJKlen=IorJ*Klen
+!
+!  Set switch to process boundary data by their associated tiles.
+!
+      bounded(iwest )=DOMAIN(ng)%Western_Edge (tile)
+      bounded(ieast )=DOMAIN(ng)%Eastern_Edge (tile)
+      bounded(isouth)=DOMAIN(ng)%Southern_Edge(tile)
+      bounded(inorth)=DOMAIN(ng)%Northern_Edge(tile)
+!
+!-----------------------------------------------------------------------
+!  Pack and scale output data.
+!-----------------------------------------------------------------------
+!
+      Bwrk=Bspv
+!
+      DO ir=1,Nrec
+        rc=(ir-1)*IJKlen*4
+        DO ib=1,4
+          IF (bounded(ib)) THEN
+            bc=(ib-1)*IJKlen+rc
+            IF ((ib.eq.iwest).or.(ib.eq.ieast)) THEN
+              DO k=LBk,UBk
+                kc=(k-LBk)*IorJ+bc
+                DO j=Jmin,Jmax
+                  ic=1+(j-LBij)+kc
+                  Bwrk(ic)=Bdat(j,k,ib,ir)*Bscl
+#ifdef POSITIVE_ZERO
+                  IF (ABS(Bwrk(ic)).eq.0.0_r8) THEN
+                    Bwrk(ic)=0.0_r8               ! impose positive zero
+                  END IF
+#endif
+                END DO
+              END DO
+            ELSE IF ((ib.eq.isouth).or.(ib.eq.inorth)) THEN
+              DO k=LBk,UBk
+                kc=(k-LBk)*IorJ+bc
+                DO i=Imin,Imax
+                  ic=1+(i-LBij)+kc
+                  Bwrk(ic)=Bdat(i,k,ib,ir)*Bscl
+#ifdef POSITIVE_ZERO
+                  IF (ABS(Bwrk(ic)).eq.0.0_r8) THEN
+                    Bwrk(ic)=0.0_r8               ! impose positive zero
+                  END IF
+#endif
+                END DO
+              END DO
+            END IF
+          END IF
+        END DO
+      END DO
 
+#ifdef DISTRIBUTE
+!
+!  If distributed-memory set-up, collect data from all spawned
+!  processes.
+!
+      CALL mp_collect (ng, model, Npts, Bspv, Bwrk)
+#endif
+!
+!-----------------------------------------------------------------------
+!  If there is no extracting data, set the start and total vectors
+!  needed by the NetCDF library for writing.
+!-----------------------------------------------------------------------
+!
+      IF (Extract_Flag.le.0) THEN
+        start(1)=1
+        total(1)=IorJ
+        start(2)=1
+        total(2)=Klen
+        start(3)=1
+        total(3)=4
+        start(4)=1
+        total(4)=Nrec
+        start(5)=tindex
+        total(5)=1
+
+#ifdef GRID_EXTRACT
+!
+!-----------------------------------------------------------------------
+!  Otherwise, extract field by decimation or interpolation.
+!-----------------------------------------------------------------------
+!
+      ELSE IF (Extract_Flag.ge.1) THEN
+        CALL extract_boundary (ng, model, tile,                         &
+     &                         gtype, ncvname, tindex,                  &
+     &                         Extract_flag,                            &
+     &                         Imin, Imax, Jmin, Jmax, LBk, UBk, Nrec,  &
+     &                         start, total,                            &
+     &                         Npts, Bwrk)
+#endif
+      END IF
 !
       RETURN
       END SUBROUTINE pack_boundary3d
-#endif
 !
       SUBROUTINE pack_field2d (ng, model, tile,                         &
      &                         gtype, ifield, tindex,                   &
      &                         LandFill, Extract_Flag,                  &
      &                         LBi, UBi, LBj, UBj,                      &
-#  ifdef MASKING
+#ifdef MASKING
      &                         Amask,                                   &
-#  endif
+#endif
      &                         Ascl, Adat,                              &
      &                         start, total, Npts, Awrk)
 !
