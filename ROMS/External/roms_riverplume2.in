@@ -269,6 +269,8 @@ ad_VolCons(north) ==  F                            ! northern boundary
      LDEFOUT == T
         NHIS == 180
      NDEFHIS == 0
+        NXTR == 180
+     NDEFXTR == 0
         NQCK == 0
      NDEFQCK == 0
       NTSAVG == 1
@@ -1050,6 +1052,25 @@ PIO_I2C_Preq = 65                 ! Maximum pending I2C requests
   NC_DEFLATE =  1                 ! if non-zero, turn on deflate filter
    NC_DLEVEL =  1                 ! deflate level [0-9]
 
+! Input grid extraction flag and input extraction grid geometry
+! NetCDF filename. They are used to extract a history solution at
+! the desired geometry by decimation or horizontal interpolation:
+!
+!   ExtractFlag = 0                 no extraction
+!   ExtractFlag = 1                 horizontal interpolation
+!   ExtractFlag > 1                 coarsening by decimation
+!
+! If decimation, ExtracTFlag is the sampling factor. For now, use
+! ExtractFlag=2 so data is written at every other point. Notice
+! that it is required to satisfy the following criteria:
+!
+!   MOD(Lm+1, ExtractFlag) = 0
+!   MOD(Mm+1, ExtractFlag) = 0
+
+ ExtractFlag == 0
+
+     GRXNAME == roms_extract_grd.nc
+
 ! Input NetCDF file names, [1:Ngrids].
 
      GRDNAME == roms_grd.nc
@@ -1149,6 +1170,7 @@ PIO_I2C_Preq = 65                 ! Maximum pending I2C requests
      GSTNAME == roms_gst.nc
      RSTNAME == roms_rst.nc
      HISNAME == roms_his.nc
+     XTRNAME == roms_xtr.nc
      QCKNAME == roms_qck.nc
      TLMNAME == roms_tlm.nc
      TLFNAME == roms_tlf.nc
@@ -1649,6 +1671,16 @@ PIO_I2C_Preq = 65                 ! Maximum pending I2C requests
 !                If NDEFHIS=0, the model will only process one HISTORY file.
 !                This feature is useful for extended simulations when HISTORY
 !                file get too large; it creates a new file every NDEFHIS
+!                timesteps.
+!
+! NXTR         Number of timesteps between writing fields into the EXTRACT
+!                 file, if GRID_EXTRACT is activated. Set NXTR=0 to suppress
+!                 writing of EXTRACT file.
+!
+! NDEFXTR      Number of timesteps between the creation of new EXTRACT file.
+!                If NDEFXTR=0, the model will only process one EXTRACT file.
+!                This feature is useful for extended simulations when EXTRACT
+!                file get too large; it creates a new file every EXTRACT
 !                timesteps.
 !
 ! NQCK         Number of timesteps between writing fields into QUICKSAVE file.
@@ -3233,6 +3265,37 @@ PIO_I2C_Preq = 65                 ! Maximum pending I2C requests
 !                between 0 and 9.
 !
 !------------------------------------------------------------------------------
+! If GRID_EXTRACT is activated, set extraction parameters.
+!------------------------------------------------------------------------------
+!
+!  ExtracFlag  Flag to extract and write history solution into the EXTRACT
+!                file at the desired grid geometry by decimation or horizontal
+!                interpolation:
+!
+!                ExtractFlag = 0         No extraction
+!                ExtractFlag = 1         Extract via horizontal interpolation
+!                ExtractFlag > 2         Extract via coarsening by decimation
+!
+!              If decimation, ExtracTFlag is the sampling factor. For now, you
+!              must use ExtractFlag=2 so data is written at every other point.
+!              Notice that it is required to satisfy the following criteria:
+!
+!                MOD(Lm+1, ExtractFlag) = 0
+!                MOD(Mm+1, ExtractFlag) = 0
+!
+!              Grid decimation is intended for the split 4D-Var algorithms to
+!              facilitate running the inner loops at coarser resolution to
+!              accelerate the computations. The advantage of ExtractFlag=2 is
+!              that it is very trivial to decimate the staggered U- and
+!              V-variables with a simple average. Also, we need to consider
+!              special rules in the land/sea masking that limit its use to
+!              other ExtractFlag values.
+!
+!  GRXNAME     Input extract grid geometry NetCDF filename. It must be created
+!                with tools similar to the ROMS application grid and contained
+!                inside the parent grid (GRDNAME).
+!
+!------------------------------------------------------------------------------
 ! Input/output NetCDF filenames (string with a maximum of 256 characters).
 !------------------------------------------------------------------------------
 !
@@ -3252,7 +3315,6 @@ PIO_I2C_Preq = 65                 ! Maximum pending I2C requests
 !  FWDNAME     Input forward solution fields filename.
 !
 !  ADSNAME     Input adjoint sensitivity functional filename.
-!
 !
 ! Input adjoint forcing filenames for computing observations impacts
 ! during the analysis-forecast cycle when RBL4DVAR_FCT_SENSITIVITY is
@@ -3371,10 +3433,6 @@ PIO_I2C_Preq = 65                 ! Maximum pending I2C requests
 !                activated to force tides at the open boundaries. Currently,
 !                in nested applications, the tidal forcing is used in the
 !                coarser/larger grid (ng=1). If AVERAGES_DETIDE is activated,
-!                several least-squares time-accumulated harmonic variables
-!                are written into this NetCDF file to facilitate restart for
-!                during long fitting simulations.
-!
 !
 ! Input forcing file(s) name:
 !
@@ -3416,6 +3474,7 @@ PIO_I2C_Preq = 65                 ! Maximum pending I2C requests
 ! GSTNAME      Output GST analysis re-start filename.
 ! RSTNAME      Output re-start filename.
 ! HISNAME      Output history filename.
+! XTRNAME      Output extrated solution filename.
 ! QCKNAME      Output quicksave filename.
 ! TLFNAME      Output impulse forcing for tangent linear (TLM and RPM) models.
 ! TLMNAME      Output tangent linear filename.
