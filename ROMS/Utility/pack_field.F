@@ -21,10 +21,8 @@
       USE mod_scalars
 !
 #ifdef DISTRIBUTE
-# ifdef ADJUST_BOUNDARY
-      USE distribute_mod,   ONLY : mp_collect
-# endif
-      USE distribute_mod,   ONLY : mp_gather2d,                         &
+      USE distribute_mod,   ONLY : mp_collect,                          &
+     &                             mp_gather2d,                         &
 # ifdef GRID_EXTRACT
      &                             mp_gather2d_xtr,                     &
 # endif
