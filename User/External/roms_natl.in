@@ -3432,6 +3432,10 @@ PIO_I2C_Preq = 65                 ! Maximum pending I2C requests
 !                activated to force tides at the open boundaries. Currently,
 !                in nested applications, the tidal forcing is used in the
 !                coarser/larger grid (ng=1). If AVERAGES_DETIDE is activated,
+!                several least-squares time-accumulated harmonic variables
+!                are written into this NetCDF file to facilitate restart for
+!                during long fitting simulations.
+!
 !
 ! Input forcing file(s) name:
 !
