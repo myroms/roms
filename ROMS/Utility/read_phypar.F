@@ -7273,7 +7273,6 @@
           WRITE (out,120) ExtractFlag(ng), 'ExtractFlag',               &
      &            'Field extraction flag to interpolate or decimate.'
 #endif
-
           WRITE (out,'(1x)')
           IF (inp_lib.eq.io_nf90) THEN
             WRITE (out,120) inp_lib, 'inp_lib',                         &
@@ -7482,15 +7481,6 @@
 # endif
 #endif
         END IF
-#ifndef ANA_GRID
-        fname=GRD(ng)%name
-        IF (.not.find_file(ng, out, fname, 'GRDNAME')) THEN
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        ELSE
-          IF (Master.and.Lwrite) WRITE (out,230)                        &
-     &      '                 Input Grid File:  ', TRIM(fname)
-        END IF
-#endif
 #ifdef GRID_EXTRACT
         fname=GRX(ng)%name
         IF (.not.find_file(ng, out, fname, 'GRXNAME')) THEN
@@ -7498,6 +7488,15 @@
         ELSE
           IF (Master.and.Lwrite) WRITE (out,230)                        &
      &      ' Input History Extract Grid File:  ', TRIM(fname)
+        END IF
+#endif
+#ifndef ANA_GRID
+        fname=GRD(ng)%name
+        IF (.not.find_file(ng, out, fname, 'GRDNAME')) THEN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        ELSE
+          IF (Master.and.Lwrite) WRITE (out,230)                        &
+     &      '                 Input Grid File:  ', TRIM(fname)
         END IF
 #endif
 #if !defined CORRELATION
@@ -7859,6 +7858,33 @@
       END DO
 #endif
 
+#ifdef GRID_EXTRACT
+!
+!-----------------------------------------------------------------------
+!  Check grid extraction by decimation.
+!-----------------------------------------------------------------------
+!
+      DO ng=1,Ngrids
+        IF (ExtractFlag(ng).gt.1) THEN
+          IF ((MOD(Lm(ng)+1, ExtractFlag(ng)).ne.0).or.                 &
+     &        (MOD(Mm(ng)+1, ExtractFlag(ng)).ne.0)) THEN
+            WRITE (out,360) ng, ExtractFlag(ng),                        &
+     &                      MOD(Lm(ng)+1, ExtractFlag(ng)),             &
+     &                      MOD(Mm(ng)+1, ExtractFlag(ng))
+            exit_flag=5
+            RETURN
+          END IF
+# if defined FOUR_DVAR || defined FORWARD_WRITE
+          IF (ExtractFlag(ng).ne.2) THEN
+            WRITE (out,370) ng, ExtractFlag(ng)
+            exit_flag=5
+            RETURN
+          END IF
+# endif
+        END IF
+      END DO
+#endif
+!
   50  FORMAT (/,' READ_PhyPar - Error while processing line: ',/,a)
   60  FORMAT (/,1x,a,/,                                                 &
      &        /,1x,'Operating system  : ',a,                            &
@@ -7961,5 +7987,15 @@
      &              '''roms.in''.'/)
  350  FORMAT (/,' READ_PHYPAR - Invalid input parameter, ',a,i0,        &
      &        ', for grid ',i2.2,/,15x,a,i0,', ',a,i0,/,15x,a,/,15x,a)
+ 360  FORMAT (/,' READ_PHYPAR - Grid = ',i0,1x,'dimensions are',1x,     &
+     &        'inappropriate for the given decimation factor:',/,15x,   &
+     &        'ExtractFlag = ',i0,/,15x,                                &
+     &        'MOD(Lm(ng)+1, ExtractFlag(ng)) = ',i0,/,15x,             &
+     &        'MOD(Mm(ng)+1, ExtractFlag(ng)) = ',i0,/,15x,             &
+     &        'because both division reminders must be zero.')
+ 370  FORMAT (/,' READ_PHYPAR - Unsupported decimation factor for',1x,  &
+     &        'coarsening split 4D-Var',/,15x,                          &
+     &        'Grid = ',i0,', ExtractFlag = ',i0)
+!
       RETURN
       END SUBROUTINE read_PhyPar
