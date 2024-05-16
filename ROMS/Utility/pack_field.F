@@ -29,19 +29,25 @@
      &                             mp_gather3d
 #endif
 #ifdef GRID_EXTRACT
+# ifdef ADJUST_BOUNDARY
       USE extract_field_mod, ONLY: extract_boundary
+# endif
       USE extract_field_mod, ONLY: extract_field
 #endif
 !
       implicit none
 !
+#ifdef ADJUST_BOUNDARY
       PUBLIC :: pack_boundary2d
       PUBLIC :: pack_boundary3d
+#endif
       PUBLIC :: pack_field2d
       PUBLIC :: pack_field3d
       PUBLIC :: pack_field4d
 !
       CONTAINS
+
+#ifdef ADJUST_BOUNDARY
 !
       SUBROUTINE pack_boundary2d (ng, model, tile,                      &
      &                            gtype, ncvname, tindex,               &
@@ -92,11 +98,11 @@
 !
       real(dp), intent(in)  :: Bscl
 !
-#ifdef ASSUMED_SHAPE
+# ifdef ASSUMED_SHAPE
       real(r8), intent(in)  :: Bdat(LBij:,:,:)
-#else
+# else
       real(r8), intent(in)  :: Bdat(LBij:LBij,4,Nrec)
-#endif
+# endif
       real(r8), intent(out) :: Bwrk(:)
 !
       character (len=*), intent(in) :: ncvname
@@ -120,7 +126,7 @@
 !  Set first and last grid point according to staggered C-grid
 !  classification.
 !
-#ifdef DISTRIBUTE
+# ifdef DISTRIBUTE
       SELECT CASE (gtype)
 !
 !       ---------------------
@@ -168,12 +174,12 @@
           Jmin=BOUNDS(ng)%JstrR(tile)
           Jmax=BOUNDS(ng)%JendR(tile)
       END SELECT
-#else
+# else
       Imin=LBij
       Imax=UBij
       Jmin=LBij
       Jmax=UBij
-#endif
+# endif
 !
       IorJ=IOBOUNDS(ng)%IorJ
 !
@@ -199,34 +205,34 @@
               DO j=Jmin,Jmax
                 ic=1+(j-LBij)+bc
                 Bwrk(ic)=Bdat(j,ib,ir)*Bscl
-#ifdef POSITIVE_ZERO
+# ifdef POSITIVE_ZERO
                 IF (ABS(Bwrk(ic)).eq.0.0_r8) THEN
                   Bwrk(ic)=0.0_r8                 ! impose positive zero
                 END IF
-#endif
+# endif
               END DO
             ELSE IF ((ib.eq.isouth).or.(ib.eq.inorth)) THEN
               DO i=Imin,Imax
                 ic=1+(i-LBij)+bc
                 Bwrk(ic)=Bdat(i,ib,ir)*Bscl
-#ifdef POSITIVE_ZERO
+# ifdef POSITIVE_ZERO
                 IF (ABS(Bwrk(ic)).eq.0.0_r8) THEN
                   Bwrk(ic)=0.0_r8                 ! impose positive zero
                 END IF
-#endif
+# endif
               END DO
             END IF
           END IF
         END DO
       END DO
 
-#ifdef DISTRIBUTE
+# ifdef DISTRIBUTE
 !
 !  If distributed-memory set-up, collect data from all spawned
 !  processes.
 !
       CALL mp_collect (ng, model, Npts, Bspv, Bwrk)
-#endif
+# endif
 !
 !-----------------------------------------------------------------------
 !  If there is no extracting data, set the start and total vectors
@@ -243,7 +249,7 @@
         start(4)=tindex
         total(4)=1
 
-#ifdef GRID_EXTRACT
+# ifdef GRID_EXTRACT
 !
 !-----------------------------------------------------------------------
 !  Otherwise, extract field by decimation or interpolation.
@@ -256,7 +262,7 @@
      &                         Imin, Imax, Jmin, Jmax, Nrec,            &
      &                         start, total,                            &
      &                         Npts, Bwrk)
-#endif
+# endif
       END IF
 !
       RETURN
@@ -313,11 +319,11 @@
 !
       real(dp), intent(in)  :: Bscl
 !
-#ifdef ASSUMED_SHAPE
+# ifdef ASSUMED_SHAPE
       real(r8), intent(in)  :: Bdat(LBij:,LBk:,:,:)
-#else
+# else
       real(r8), intent(in)  :: Bdat(LBij:LBij,LBk:UBk,4,Nrec)
-#endif
+# endif
       real(r8), intent(out) :: Bwrk(:)
 !
       character (len=*), intent(in) :: ncvname
@@ -342,7 +348,7 @@
 !  Set first and last grid point according to staggered C-grid
 !  classification.
 !
-#ifdef DISTRIBUTE
+# ifdef DISTRIBUTE
       SELECT CASE (gtype)
 !
 !       ---------------------
@@ -390,12 +396,12 @@
           Jmin=BOUNDS(ng)%JstrR(tile)
           Jmax=BOUNDS(ng)%JendR(tile)
       END SELECT
-#else
+# else
       Imin=LBij
       Imax=UBij
       Jmin=LBij
       Jmax=UBij
-#endif
+# endif
 !
       IorJ=IOBOUNDS(ng)%IorJ
       Klen=UBk-LBk+1
@@ -425,11 +431,11 @@
                 DO j=Jmin,Jmax
                   ic=1+(j-LBij)+kc
                   Bwrk(ic)=Bdat(j,k,ib,ir)*Bscl
-#ifdef POSITIVE_ZERO
+# ifdef POSITIVE_ZERO
                   IF (ABS(Bwrk(ic)).eq.0.0_r8) THEN
                     Bwrk(ic)=0.0_r8               ! impose positive zero
                   END IF
-#endif
+# endif
                 END DO
               END DO
             ELSE IF ((ib.eq.isouth).or.(ib.eq.inorth)) THEN
@@ -438,11 +444,11 @@
                 DO i=Imin,Imax
                   ic=1+(i-LBij)+kc
                   Bwrk(ic)=Bdat(i,k,ib,ir)*Bscl
-#ifdef POSITIVE_ZERO
+# ifdef POSITIVE_ZERO
                   IF (ABS(Bwrk(ic)).eq.0.0_r8) THEN
                     Bwrk(ic)=0.0_r8               ! impose positive zero
                   END IF
-#endif
+# endif
                 END DO
               END DO
             END IF
@@ -450,13 +456,13 @@
         END DO
       END DO
 
-#ifdef DISTRIBUTE
+# ifdef DISTRIBUTE
 !
 !  If distributed-memory set-up, collect data from all spawned
 !  processes.
 !
       CALL mp_collect (ng, model, Npts, Bspv, Bwrk)
-#endif
+# endif
 !
 !-----------------------------------------------------------------------
 !  If there is no extracting data, set the start and total vectors
@@ -475,7 +481,7 @@
         start(5)=tindex
         total(5)=1
 
-#ifdef GRID_EXTRACT
+# ifdef GRID_EXTRACT
 !
 !-----------------------------------------------------------------------
 !  Otherwise, extract field by decimation or interpolation.
@@ -488,11 +494,12 @@
      &                         Imin, Imax, Jmin, Jmax, LBk, UBk, Nrec,  &
      &                         start, total,                            &
      &                         Npts, Bwrk)
-#endif
+# endif
       END IF
 !
       RETURN
       END SUBROUTINE pack_boundary3d
+#endif
 !
       SUBROUTINE pack_field2d (ng, model, tile,                         &
      &                         gtype, ifield, tindex,                   &

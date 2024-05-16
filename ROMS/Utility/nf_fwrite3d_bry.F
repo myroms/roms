@@ -1,5 +1,7 @@
 #include "cppdefs.h"
       MODULE nf_fwrite3d_bry_mod
+
+#ifdef ADJUST_BOUNDARY
 !
 !git $Id$
 !svn $Id: nf_fwrite3d_bry.F 1210 2024-01-03 22:03:03Z arango $
@@ -20,23 +22,23 @@
 !     ncname       NetCDF output file name (string)                    !
 !     ncvname      NetCDF variable name (string)                       !
 !     ncid         NetCDF file ID (integer)                            !
-#if defined PIO_LIB && defined DISTRIBUTE
+# if defined PIO_LIB && defined DISTRIBUTE
 !or   pioFile      PIO file descriptor structure, TYPE(file_desc_t)    !
 !                    pioFile%fh         file handler                   !
 !                    pioFile%iosystem   IO system descriptor (struct)  !
-#endif
+# endif
 !     ncvarid      NetCDF variable ID (integer)                        !
-#if defined PIO_LIB && defined DISTRIBUTE
+# if defined PIO_LIB && defined DISTRIBUTE
 !or   pioVar       PIO variable descriptor structure, TYPE(My_VarDesc) !
 !                    pioVar%vd     variable descriptor TYPE(Var_Desc_t)!
 !                    pioVar%dkind  variable data kind                  !
 !                    pioVar%gtype  variable C-gridtype                 !
-#endif
+# endif
 !     tindex       NetCDF time record index to write (integer)         !
 !     gtype        Grid type (integer)                                 !
-#if defined PIO_LIB && defined DISTRIBUTE
+# if defined PIO_LIB && defined DISTRIBUTE
 !or   pioDesc      IO data decomposition descriptor, TYPE(IO_desc_t)   !
-#endif
+# endif
 !     LBij         IJ-dimension lower bound (integer)                  !
 !     UBij         IJ-dimension upper bound (integer)                  !
 !     LBk          K-dimension lower bound (integer)                   !
@@ -55,14 +57,14 @@
 !     MinValue     Minimum value (real, OPTIONAL)                      !
 !     MaxValue     Maximum value (real, OPTIONAL)                      !
 !                                                                      !
-#ifdef POSITIVE_ZERO
+# ifdef POSITIVE_ZERO
 !  Starting F95 zero values can be signed (-0 or +0) following the     !
 !  IEEE 754 floating point standard.  This may produce different       !
 !  output data in serial and parallel applications. Since comparing    !
 !  serial and parallel output is essential for tracking parallel       !
 !  partition bugs, "positive zero" is enforced.                        !
 !                                                                      !
-#endif
+# endif
 !=======================================================================
 !
       USE mod_param
@@ -70,18 +72,18 @@
       USE mod_ncparam
       USE mod_scalars
 !
-#ifdef DISTRIBUTE
+# ifdef DISTRIBUTE
       USE distribute_mod, ONLY : mp_bcasti, mp_collect
-# endif
+#  endif
       USE pack_field_mod, ONLY : pack_boundary3d
 !
       implicit none
 !
       INTERFACE nf_fwrite3d_bry
         MODULE PROCEDURE nf90_fwrite3d_bry
-#if defined PIO_LIB && defined DISTRIBUTE
+# if defined PIO_LIB && defined DISTRIBUTE
         MODULE PROCEDURE pio_fwrite3d_bry
-#endif
+# endif
       END INTERFACE nf_fwrite3d_bry
 !
       CONTAINS
@@ -110,11 +112,11 @@
       character (len=*), intent(in) :: ncname
       character (len=*), intent(in) :: ncvname
 !
-#ifdef ASSUMED_SHAPE
+# ifdef ASSUMED_SHAPE
       real(r8), intent(in) :: Abry(LBij:,LBk:,:,:)
-#else
+# else
       real(r8), intent(in) :: Abry(LBij:UBij,LBk:UBk,4,Nrec)
-#endif
+# endif
       real(r8), intent(out), optional :: MinValue
       real(r8), intent(out), optional :: MaxValue
 !
@@ -138,11 +140,11 @@
 !
 !  Set parallel tile.
 !
-# ifdef DISTRIBUTE
+#  ifdef DISTRIBUTE
       tile=MyRank
-# else
+#  else
       tile=-1
-# endif
+#  endif
 !
 !  Set length of boundary data as the value of greater of I- or
 !  j-dimension.
@@ -203,19 +205,19 @@
         status=nf90_put_var(ncid, ncvarid, Awrk, start, total)
       END IF
 
-#ifdef DISTRIBUTE
+# ifdef DISTRIBUTE
 !
 !-----------------------------------------------------------------------
 !  Broadcast IO error flag to all nodes.
 !-----------------------------------------------------------------------
 !
       CALL mp_bcasti (ng, model, status)
-#endif
+# endif
 !
       RETURN
       END FUNCTION nf90_fwrite3d_bry
 
-#if defined PIO_LIB && defined DISTRIBUTE
+# if defined PIO_LIB && defined DISTRIBUTE
 !
 !***********************************************************************
       FUNCTION pio_fwrite3d_bry (ng, model, ncname, pioFile,            &
@@ -238,11 +240,11 @@
       character (len=*), intent(in) :: ncname
       character (len=*), intent(in) :: ncvname
 !
-# ifdef ASSUMED_SHAPE
+#  ifdef ASSUMED_SHAPE
       real(r8), intent(in) :: Abry(LBij:,LBk:,:,:)
-# else
+#  else
       real(r8), intent(in) :: Abry(LBij:UBij,LBk:UBk,4,Nrec)
-# endif
+#  endif
       real(r8), intent(out), optional :: MinValue
       real(r8), intent(out), optional :: MaxValue
 !
@@ -356,11 +358,11 @@
                 DO j=Jmin,Jmax
                   ic=1+(j-LBij)+kc
                   Awrk(ic)=Abry(j,k,ib,ir)*Ascl
-# ifdef POSITIVE_ZERO
+#  ifdef POSITIVE_ZERO
                   IF (ABS(Awrk(ic)).eq.0.0_r8) THEN
                     Awrk(ic)=0.0_r8               ! impose positive zero
                   END IF
-# endif
+#  endif
                 END DO
               END DO
             ELSE IF ((ib.eq.isouth).or.(ib.eq.inorth)) THEN
@@ -369,11 +371,11 @@
                 DO i=Imin,Imax
                   ic=1+(i-LBij)+kc
                   Awrk(ic)=Abry(i,k,ib,ir)*Ascl
-# ifdef POSITIVE_ZERO
+#  ifdef POSITIVE_ZERO
                   IF (ABS(Awrk(ic)).eq.0.0_r8) THEN
                     Awrk(ic)=0.0_r8               ! impose positive zero
                   END IF
-# endif
+#  endif
                 END DO
               END DO
             END IF
@@ -408,5 +410,6 @@
 !
       RETURN
       END FUNCTION pio_fwrite3d_bry
+# endif
 #endif
       END MODULE nf_fwrite3d_bry_mod
