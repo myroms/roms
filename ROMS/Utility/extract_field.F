@@ -829,9 +829,9 @@
             Ioff=0
             Joff=1
             DO j=Jmin,Jmax                  ! Average data at RHO points
-              DO i=2,Imax
+              DO i=Imin,Imax-1
                 ij=i+Ioff+(j-1+Joff)*Isize
-                Favg(ij)=0.5_r8*(Fdat(ij-1)+Fdat(ij))
+                Favg(ij)=0.5_r8*(Fdat(ij)+Fdat(ij+1))
               END DO
             END DO
 !
@@ -842,10 +842,10 @@
             Favg=Fdat
             Ioff=1
             Joff=0
-            DO j=2,Jmax                     ! Average data at RHO points
+            DO j=Jmin,Jmax-1                ! Average data at RHO points
               DO i=Imin,Imax
                 ij=i+Ioff+(j-1+Joff)*Isize
-                Favg(ij)=0.5_r8*(Fdat(ij-Isize)+Fdat(ij))
+                Favg(ij)=0.5_r8*(Fdat(ij)+Fdat(ij+Isize))
               END DO
             END DO
 !
@@ -928,10 +928,10 @@
             Koff=0
             DO k=Kmin,Kmax                  ! Average data at RHO points
               DO j=Jmin,Jmax
-                DO i=2,Imax 
+                DO i=Imin,Imax-1 
                   ij=i+Ioff+(j-1+Joff)*Isize          
                   ijk=ij+(k-1+Koff)*IJsize
-                  Favg(ijk)=0.5_r8*(Fdat(ijk-1)+Fdat(ijk))
+                  Favg(ijk)=0.5_r8*(Fdat(ijk)+Fdat(ijk+1))
                 END DO
               END DO
             END DO
@@ -945,11 +945,11 @@
             Joff=0
             Koff=0
             DO k=Kmin,Kmax                  ! Average data at RHO points
-              DO j=2,Jmax
+              DO j=Jmin,Jmax-1
                 DO i=Imin,Imax
                   ij=i+Ioff+(j-1+Joff)*Isize          
                   ijk=ij+(k-1+Koff)*IJsize
-                  Favg(ijk)=0.5_r8*(Fdat(ijk-Isize)+Fdat(ijk))
+                  Favg(ijk)=0.5_r8*(Fdat(ijk)+Fdat(ijk+Isize))
                 END DO
               END DO
             END DO
@@ -1451,7 +1451,7 @@
           DO j=Jmin,Jmax,ifactor            ! decimate
             jc=jc+1
             DO i=Imin,Imax,ifactor
-              ij=i+Ioff+(j-Joff)*Isize
+              ij=i+Ioff+(j-1+Joff)*Isize
               ic=ic+1
               Fdat(ic)=Fwrk(ij)
             END DO
