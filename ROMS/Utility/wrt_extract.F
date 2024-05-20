@@ -615,6 +615,11 @@
         END IF
 #   endif
 !
+        IF (.not.allocated(Ur2d)) THEN
+          allocate (Ur2d(LBi:UBi,LBj:UBj))
+          Ur2d(LBi:UBi,LBj:UBj)=0.0_r8
+        END IF
+        Ur2d=ExtractFlag(ng)*COUPLING(ng)%DU_avg1
         status=nf_fwrite2d(ng, model, XTR(ng)%ncid, idUfx1,             &
      &                     XTR(ng)%Vid(idUfx1),                         &
      &                     XTR(ng)%Rindex, gtype,                       &
@@ -622,7 +627,7 @@
 #   ifdef MASKING
      &                     GRID(ng) % umask_full,                       &
 #   endif
-     &                     COUPLING(ng) % DU_avg1,                      &
+     &                     Ur2d,                                        &
      &                     SetFillVal = .FALSE.,                        &
      &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
@@ -634,6 +639,8 @@
           RETURN
         END IF
 !
+        Ur2d(LBi:UBi,LBj:UBj)=0.0_r8
+        Ur2d=ExtractFlag(ng)*COUPLING(ng)%DU_avg2
         status=nf_fwrite2d(ng, model, XTR(ng)%ncid, idUfx2,             &
      &                     XTR(ng)%Vid(idUfx2),                         &
      &                     XTR(ng)%Rindex, gtype,                       &
@@ -641,7 +648,7 @@
 #   ifdef MASKING
      &                     GRID(ng) % umask_full,                       &
 #   endif
-     &                     COUPLING(ng) % DU_avg2,                      &
+     &                     Ur2d,                                        &
      &                     SetFillVal = .FALSE.,                        &
      &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
@@ -652,6 +659,7 @@
           ioerror=status
           RETURN
         END IF
+        deallocate (Ur2d)
 #  endif
 # endif
       END IF
@@ -751,6 +759,11 @@
         END IF
 #   endif
 !
+        IF (.not.allocated(Vr2d)) THEN
+          allocate (Vr2d(LBi:UBi,LBj:UBj))
+          Vr2d(LBi:UBi,LBj:UBj)=0.0_r8
+        END IF
+        Vr2d=ExtractFlag(ng)*COUPLING(ng)%DV_avg1
         status=nf_fwrite2d(ng, model, XTR(ng)%ncid, idVfx1,             &
      &                     XTR(ng)%Vid(idVfx1),                         &
      &                     XTR(ng)%Rindex, gtype,                       &
@@ -758,7 +771,7 @@
 #   ifdef MASKING
      &                     GRID(ng) % vmask_full,                       &
 #   endif
-     &                     COUPLING(ng) % DV_avg1,                      &
+     &                     Vr2d,                                        &
      &                     SetFillVal = .FALSE.,                        &
      &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
@@ -770,6 +783,8 @@
           RETURN
         END IF
 !
+        Vr2d(LBi:UBi,LBj:UBj)=0.0_r8
+        Vr2d=ExtractFlag(ng)*COUPLING(ng)%DV_avg2
         status=nf_fwrite2d(ng, model, XTR(ng)%ncid, idVfx2,             &
      &                     XTR(ng)%Vid(idVfx2),                         &
      &                     XTR(ng)%Rindex, gtype,                       &
@@ -777,7 +792,7 @@
 #   ifdef MASKING
      &                     GRID(ng) % vmask_full,                       &
 #   endif
-     &                     COUPLING(ng) % DV_avg2,                      &
+     &                     Vr2d,                                        &
      &                     SetFillVal = .FALSE.,                        &
      &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
@@ -788,6 +803,7 @@
           ioerror=status
           RETURN
         END IF
+        deallocate (Vr2d)
 #  endif
 # endif
       END IF
@@ -2658,6 +2674,11 @@
         ELSE
           ioDesX => ioDesX_sp_u2dvar(ng)
         END IF
+        IF (.not.allocated(Ur2d)) THEN
+          allocate (Ur2d(LBi:UBi,LBj:UBj))
+          Ur2d(LBi:UBi,LBj:UBj)=0.0_r8
+        END IF
+        Ur2d=ExtractFlag(ng)*COUPLING(ng)%DU_avg1
         status=nf_fwrite2d(ng, model, XTR(ng)%pioFile, idUfx1,          &
      &                     XTR(ng)%pioVar(idUfx1),                      &
      &                     XTR(ng)%Rindex,                              &
@@ -2666,7 +2687,7 @@
 #    ifdef MASKING
      &                     GRID(ng) % umask_full,                       &
 #    endif
-     &                     COUPLING(ng) % DU_avg1,                      &
+     &                     Ur2d,                                        &
      &                     SetFillVal = .FALSE.,                        &
      &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
@@ -2683,6 +2704,8 @@
         ELSE
           ioDesX => ioDesX_sp_u2dvar(ng)
         END IF
+        Ur2d(LBi:UBi,LBj:UBj)=0.0_r8
+        Ur2d=ExtractFlag(ng)*COUPLING(ng)%DU_avg2
         status=nf_fwrite2d(ng, model, XTR(ng)%pioFile, idUfx2,          &
      &                     XTR(ng)%pioVar(idUfx2),                      &
      &                     XTR(ng)%Rindex,                              &
@@ -2702,6 +2725,7 @@
           ioerror=status
           RETURN
         END IF
+        deallocate (Ur2d)
 #   endif
 #  endif
       END IF
@@ -2830,6 +2854,11 @@
         ELSE
           ioDesX => ioDesX_sp_v2dvar(ng)
         END IF
+        IF (.not.allocated(Vr2d)) THEN
+          allocate (Vr2d(LBi:UBi,LBj:UBj))
+          Vr2d(LBi:UBi,LBj:UBj)=0.0_r8
+        END IF
+        Vr2d=ExtractFlag(ng)*COUPLING(ng)%DV_avg1
         status=nf_fwrite2d(ng, model, XTR(ng)%pioFile, idVfx1,          &
      &                     XTR(ng)%pioVar(idVfx1),                      &
      &                     XTR(ng)%Rindex,                              &
@@ -2838,7 +2867,7 @@
 #    ifdef MASKING
      &                     GRID(ng) % vmask_full,                       &
 #    endif
-     &                     COUPLING(ng) % DV_avg1,                      &
+     &                     Vr2d,                                        &
      &                     SetFillVal = .FALSE.,                        &
      &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
@@ -2852,9 +2881,12 @@
 !
         IF (XTR(ng)%pioVar(idVfx2)%dkind.eq.PIO_double) THEN
           ioDesX => ioDesX_dp_v2dvar(ng)
+
         ELSE
           ioDesX => ioDesX_sp_v2dvar(ng)
         END IF
+        Vr2d(LBi:UBi,LBj:UBj)=0.0_r8
+        Vr2d=ExtractFlag(ng)*COUPLING(ng)%DV_avg2
         status=nf_fwrite2d(ng, model, XTR(ng)%pioFile, idVfx2,          &
      &                     XTR(ng)%pioVar(idVfx2),                      &
      &                     XTR(ng)%Rindex,                              &
@@ -2863,7 +2895,7 @@
 #    ifdef MASKING
      &                     GRID(ng) % vmask_full,                       &
 #    endif
-     &                     COUPLING(ng) % DV_avg2,                      &
+     &                     Vr2d,                                        &
      &                     SetFillVal = .FALSE.,                        &
      &                     ExtractField = ExtractFlag(ng))
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
@@ -2874,6 +2906,7 @@
           ioerror=status
           RETURN
         END IF
+        deallocate (Vr2d)
 #   endif
 #  endif
       END IF
