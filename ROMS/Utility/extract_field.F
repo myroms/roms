@@ -1427,7 +1427,11 @@
             DO i=Imin,Imax,ifactor
               ij=i+Ioff+(j-1+Joff)*Isize
               ic=ic+1
+# ifdef MASKING
+              Fdat(ic)=Fwrk(ij)*EXTRACT(ng)%Gmask_u(ic)
+# else
               Fdat(ic)=Fwrk(ij)
+# endif
             END DO
             IF (j.eq.Jmin) Idim=ic
           END DO
@@ -1453,7 +1457,11 @@
             DO i=Imin,Imax,ifactor
               ij=i+Ioff+(j-1+Joff)*Isize
               ic=ic+1
+# ifdef MASKING
+              Fdat(ic)=Fwrk(ij)*EXTRACT(ng)%Gmask_v(ic)
+# else
               Fdat(ic)=Fwrk(ij)
+# endif
             END DO
             IF (j.eq.Jmin) Idim=ic
           END DO
@@ -1547,7 +1555,7 @@
 !
 !  Local variable declarations.
 !
-      integer  :: i, j, k, ij, ijk, ic, jc, ifactor
+      integer  :: i, j, k, ij, ijk, ic, jc, ifactor, mc
       integer  :: Idim, Jdim, Ioff, Joff, Koff
       integer  :: Isize, IJsize, Jsize, Ksize, Mpts
 !
@@ -1612,12 +1620,20 @@
           ic=0
           jc=0
           DO k=Kmin,Kmax
+# ifdef MASKING
+            mc=0
+# endif
             DO j=Jmin,Jmax,ifactor
               DO i=Imin,Imax,ifactor
                 ij=i+Ioff+(j-1+Joff)*Isize
                 ijk=ij+(k-1+Koff)*IJsize
                 ic=ic+1
+# ifdef MASKING
+                mc=mc+1
+                Fdat(ic)=Fwrk(ijk)*EXTRACT(ng)%Gmask_u(mc)
+# else
                 Fdat(ic)=Fwrk(ijk)
+# endif
               END DO
               IF ((j.eq.Jmin).and.(k.eq.Kmin)) Idim=ic
               IF (k.eq.Kmin) jc=jc+1
@@ -1642,12 +1658,20 @@
           ic=0
           jc=0
           DO k=Kmin,Kmax
+# ifdef MASKING
+            mc=0
+# endif
             DO j=Jmin,Jmax,ifactor
               DO i=Imin,Imax,ifactor
                 ij=i+Ioff+(j-1+Joff)*Isize
                 ijk=ij+(k-1+Koff)*IJsize
                 ic=ic+1
+# ifdef MASKING
+                mc=mc+1
+                Fdat(ic)=Fwrk(ijk)*EXTRACT(ng)%Gmask_v(mc)
+# else
                 Fdat(ic)=Fwrk(ijk)
+# endif
               END DO
               IF ((j.eq.Jmin).and.(k.eq.Kmin)) Idim=ic
               IF (k.eq.Kmin) jc=jc+1
@@ -1777,7 +1801,7 @@
 !
 !  Local variable declarations.
 !
-      integer  :: i, j, k, ij, ijk, ic, jc, ifactor
+      integer  :: i, j, k, ij, ijk, ic, jc, ifactor, mc
       integer  :: Idim, Jdim, Ioff, Joff, Koff
       integer  :: Isize, IJsize, Jsize, Ksize, Mpts
 !
@@ -1842,12 +1866,20 @@
           ic=0
           jc=0
           DO k=Kmin,Kmax
+# ifdef MASKING
+            mc=0
+# endif
             DO j=Jmin,Jmax,ifactor
               DO i=Imin,Imax,ifactor
                 ij=i+Ioff+(j-1+Joff)*Isize
                 ijk=ij+(k-1+Koff)*IJsize
                 ic=ic+1
+# ifdef MASKING
+                mc=mc+1
+                Fdat(ic)=Fwrk(ijk)*EXTRACT(ng)%Gmask_u(mc)
+# else
                 Fdat(ic)=Fwrk(ijk)
+# endif
               END DO
               IF ((j.eq.Jmin).and.(k.eq.Kmin)) Idim=ic
               IF (k.eq.Kmin) jc=jc+1
@@ -1872,12 +1904,20 @@
           ic=0
           jc=0
           DO k=Kmin,Kmax
+# ifdef MASKING
+            mc=0
+# endif
             DO j=Jmin,Jmax,ifactor
               DO i=Imin,Imax,ifactor
                 ij=i+Ioff+(j-1+Joff)*Isize
                 ijk=ij+(k-1+Koff)*IJsize
                 ic=ic+1
+# ifdef MASKING
+                mc=mc+1
+                Fdat(ic)=Fwrk(ijk)*EXTRACT(ng)%Gmask_v(mc)
+# else
                 Fdat(ic)=Fwrk(ijk)
+# endif
               END DO
               IF ((j.eq.Jmin).and.(k.eq.Kmin)) Idim=ic
               IF (k.eq.Kmin) jc=jc+1

@@ -89,10 +89,10 @@
 !
 !-----------------------------------------------------------------------
 !  Set packed, global geometry arrays needed for field extraction by
-!  the interpolation method. 
+!  decimation or interpolation.
 !-----------------------------------------------------------------------
 !
-      IF (ExtractFlag(ng).eq.1) THEN
+      IF (ExtractFlag(ng).ge.1) THEN
         CALL interp_coords (ng, tile, model, p2dvar,                    &
      &                      GRID(ng)%Gangle_psi,                        &
 # ifdef MASKING

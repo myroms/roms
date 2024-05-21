@@ -761,7 +761,7 @@
 !
 !  Allocate global arrays for extraction by interpolation.
 !
-      IF (Extract_Flag.eq.1) THEN
+      IF (Extract_Flag.ge.1) THEN
         my_size=(IOBOUNDS(ng)%IUB_psi-IOBOUNDS(ng)%ILB_psi+1)*          &
      &          (IOBOUNDS(ng)%JUB_psi-IOBOUNDS(ng)%JLB_psi+1)
 
