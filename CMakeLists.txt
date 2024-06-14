@@ -321,6 +321,17 @@ if( IN_ECBUILD )
                        INSTALL_HEADERS LISTED
                        LINKER_LANGUAGE ${ROMS_LINKER_LANGUAGE}
                      )
+
+  # Set location of modules for editing and recompiling. CMake needs the location
+  # of modules in the project subdirectory (-I${CMAKE_BINARY_DIR}/roms/module)
+  # for correct USE association.
+
+  set(MODULE_DIR ${PROJECT_NAME}/module)
+  set_target_properties(${PROJECT_NAME} PROPERTIES Fortran_MODULE_DIRECTORY ${CMAKE_BINARY_DIR}/${MODULE_DIR})
+  install(DIRECTORY ${CMAKE_BINARY_DIR}/${MODULE_DIR}/ DESTINATION ${CMAKE_INSTALL_LIBDIR}/${MODULE_DIR})
+  target_include_directories(${PROJECT_NAME} INTERFACE
+                              $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/${MODULE_DIR}>
+                              $<INSTALL_INTERFACE:${CMAKE_INSTALL_LIBDIR}/${MODULE_DIR}>)
 endif()
 
 # Add dependency on custom target "fix" so "DependInfo.cmake" is cleaned up
