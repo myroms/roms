@@ -84,17 +84,17 @@
 !
       integer :: i, ic, j, iobs, ivec, Lscale, info
 !
-      real(r8) :: zbet, eps, preducv, preducy
-      real(r8) :: Jopt, Jf, Jmod, Jdata, Jb, Jobs, Jact, cff
+      real(dp) :: zbet, eps, preducv, preducy
+      real(dp) :: Jopt, Jf, Jmod, Jdata, Jb, Jobs, Jact, cff
 !
-      real(r8), dimension(NinnLoop) :: zu, zgam, zfact, ztemp3
-      real(r8), dimension(NinnLoop) :: ztemp1, ztemp2, zu1, zu2
-      real(r8), dimension(NinnLoop) :: ztemp4
-      real(r8), dimension(Ndatum(ng)+1) :: px, pgrad, zw, zt
-      real(r8), dimension(Ndatum(ng)+1) :: zhv, zht, zd
-      real(r8), dimension(Ninner,3) :: zwork
-      real(r8), dimension(2*(NinnLoop-1)) :: work
-      real(r8), dimension(Ninner,Ninner) :: zgv
+      real(dp), dimension(NinnLoop) :: zu, zgam, zfact, ztemp3
+      real(dp), dimension(NinnLoop) :: ztemp1, ztemp2, zu1, zu2
+      real(dp), dimension(NinnLoop) :: ztemp4
+      real(dp), dimension(Ndatum(ng)+1) :: px, pgrad, zw, zt
+      real(dp), dimension(Ndatum(ng)+1) :: zhv, zht, zd
+      real(dp), dimension(Ninner,3) :: zwork
+      real(dp), dimension(2*(NinnLoop-1)) :: work
+      real(dp), dimension(Ninner,Ninner) :: zgv
 !
       character (len=13) :: string
 
@@ -1180,8 +1180,8 @@
 !
       integer :: iobs, ivec, jn, jk, ij, jkk, ingood
 !
-      real(r8) :: dla, zfact
-      real(r8), dimension(Ndatum(ng)+1) :: zt
+      real(dp) :: dla, zfact
+      real(dp), dimension(Ndatum(ng)+1) :: zt
 !
 !-----------------------------------------------------------------------
 !  Compute and store converged eigenvectors of (R_n+Cobs).
@@ -1271,7 +1271,7 @@
       logical, intent(in) :: Laug
       integer, intent(in) :: ng, Lscale, outLoop, NinnLoop
 !
-      real(r8), intent(inout) :: py(Ndatum(ng)+1)            ! AUGMENTED
+      real(dp), intent(inout) :: py(Ndatum(ng)+1)            ! AUGMENTED
 !
 !  Local variable declarations.
 !
@@ -1280,9 +1280,9 @@
       integer :: ingood
       integer :: iobs, nvec, ivec
 !
-      real(r8) :: dla, dlar, fac, facritz, zfact
-      real(r8), dimension(NinnLoop) :: zvect
-      real(r8), dimension(Ndatum(ng)+1) :: zt
+      real(dp) :: dla, dlar, fac, facritz, zfact
+      real(dp), dimension(NinnLoop) :: zvect
+      real(dp), dimension(Ndatum(ng)+1) :: zt
 !
 !  Set the do-loop indices for the sequential preconditioner
 !  loop.
@@ -1427,8 +1427,8 @@
 !
       integer, intent(in) :: ng, model, innLoop, outLoop
 
-      real(r8), intent(in) :: Jf, Jdata, Jmod, Jopt, preducv, preducy
-      real(r8), intent(in) :: Jb, Jobs, Jact
+      real(dp), intent(in) :: Jf, Jdata, Jmod, Jopt, preducv, preducy
+      real(dp), intent(in) :: Jb, Jobs, Jact
 !
 !  Local variable declarations.
 !
@@ -1477,8 +1477,8 @@
 !
       integer, intent(in) :: ng, model, innLoop, outLoop
 
-      real(r8), intent(in) :: Jf, Jdata, Jmod, Jopt, preducv, preducy
-      real(r8), intent(in) :: Jb, Jobs, Jact
+      real(dp), intent(in) :: Jf, Jdata, Jmod, Jopt, preducv, preducy
+      real(dp), intent(in) :: Jb, Jobs, Jact
 !
 !  Local variable declarations.
 !
@@ -1760,8 +1760,8 @@
 !
       integer, intent(in) :: ng, model, innLoop, outLoop
 
-      real(r8), intent(in) :: Jf, Jdata, Jmod, Jopt, preducv, preducy
-      real(r8), intent(in) :: Jb, Jobs, Jact
+      real(dp), intent(in) :: Jf, Jdata, Jmod, Jopt, preducv, preducy
+      real(dp), intent(in) :: Jb, Jobs, Jact
 !
 !  Local variable declarations.
 !
