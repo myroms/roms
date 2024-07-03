@@ -129,19 +129,19 @@
 !  Initialize internal parameters.  This is needed here for output
 !  reasons.
 !
-      Jopt=0.0_r8
-      Jf=0.0_r8
-      Jdata=0.0_r8
-      Jmod=0.0_r8
+      Jopt=0.0_dp
+      Jf=0.0_dp
+      Jdata=0.0_dp
+      Jmod=0.0_dp
       Jb=Jb0(outLoop-1)
-      Jobs=0.0_r8
-      Jact=0.0_r8
+      Jobs=0.0_dp
+      Jact=0.0_dp
       RitzMaxErr=HevecErr
-      eps=0.0_r8
-      preducv=0.0_r8
-      preducy=0.0_r8
-      zwork=0.0_r8
-      zgv=0.0_r8
+      eps=0.0_dp
+      preducv=0.0_dp
+      preducy=0.0_dp
+      zwork=0.0_dp
+      zgv=0.0_dp
 
 !
       MASTER_THREAD : IF (Master) THEN
@@ -175,10 +175,10 @@
 !
           IF (outLoop.eq.1) THEN
             DO iobs=1,Ndatum(ng)+1
-              px(iobs)=0.0_r8
+              px(iobs)=0.0_dp
             END DO
             DO iobs=1,Ndatum(ng)
-              Hbk(iobs,outLoop)=0.0_r8
+              Hbk(iobs,outLoop)=0.0_dp
             END DO
           ELSE
 !! NOTE: CODE WILL NOT WORK FOR R4D-Var AT THE MOMENT SINCE THIS IS
@@ -219,7 +219,7 @@
               pgrad(iobs)=ObsScale(iobs)*                               &
      &                    (ObsVal(iobs)-TLmodVal(iobs))
 # endif
-              IF (ObsErr(iobs).NE.0.0_r8) THEN
+              IF (ObsErr(iobs).ne.0.0_r8) THEN
                  pgrad(iobs)=pgrad(iobs)/ObsErr(iobs)
               END IF
               vgrad0(iobs)=pgrad(iobs)
@@ -229,7 +229,7 @@
 !  AUGMENTED
 !  Augment the residual vector.
 !
-            pgrad(Ndatum(ng)+1)=1.0_r8
+            pgrad(Ndatum(ng)+1)=1.0_dp
             vgrad0(Ndatum(ng)+1)=pgrad(Ndatum(ng)+1)
             vgrad0s(Ndatum(ng)+1)=vgrad0(Ndatum(ng)+1)
 !
@@ -258,8 +258,8 @@
               ADmodVal(iobs)=zgrad0(iobs,outLoop)
             END DO
 !
-          preducv=1.0_r8
-          preducy=1.0_r8
+          preducv=1.0_dp
+          preducy=1.0_dp
 !
 !-----------------------------------------------------------------------
 !  Minimization step, innLoop > 0.
@@ -274,7 +274,7 @@
 !  Complete the computation of the Lanczos vector from previous inner-loop
 !
           IF (innLoop.EQ.1) THEN
-            cg_Gnorm_v(outLoop)=0.0_r8
+            cg_Gnorm_v(outLoop)=0.0_dp
             DO iobs=1,Ndatum(ng)
               cg_Gnorm_v(outLoop)=cg_Gnorm_v(outLoop)+                  &
      &                            TLmodVal(iobs)*vgrad0(iobs)
@@ -331,18 +331,18 @@
               TLmodVal(iobs)=TLmodVal(iobs)/cg_Gnorm_v(outLoop)
             END DO
 !
-            preducv=1.0_r8
-            preducy=1.0_r8
+            preducv=1.0_dp
+            preducy=1.0_dp
 !
 !  Compute the actual penalty function terms.
 !
-            Jobs=0.0_r8
+            Jobs=0.0_dp
 !
 !  NO AUGMENTED TERM HERE.
 !
             Jact=Jb
             DO iobs=1,Ndatum(ng)
-              IF (ObsErr(iobs).NE.0.0_r8) THEN
+              IF (ObsErr(iobs).ne.0.0_r8) THEN
                 Jact=Jact+ObsErr(iobs)*vgrad0s(iobs)*vgrad0s(iobs)
               END IF
             END DO
@@ -363,7 +363,7 @@
 !
 !  Selime's code:  beta=pgrad*HBH'*pgrad=cg_beta
 !
-            cg_beta(innLoop,outLoop)=0.0_r8
+            cg_beta(innLoop,outLoop)=0.0_dp
             DO iobs=1,Ndatum(ng)
               cg_beta(innLoop,outLoop)=cg_beta(innLoop,outLoop)+        &
      &                                 pgrad(iobs)*TLmodVal(iobs)
@@ -417,7 +417,7 @@
 !
 !  Selime's code:  cg_QG=zgrad0*HBH'*zcglwk
 !
-            cg_QG(innLoop,outLoop)=0.0_r8
+            cg_QG(innLoop,outLoop)=0.0_dp
             DO iobs=1,Ndatum(ng)
               cg_QG(innLoop,outLoop)=cg_QG(innLoop,outLoop)+            &
      &                               TLmodVal(iobs)*                    &
@@ -442,7 +442,7 @@
      &                                    outLoop)*                     &
      &                             vgrad0(Ndatum(ng)+1)
 !TEST
-!TEST       IF (innLoop.gt.1) cg_QG(innLoop,outLoop)=0.0_r8
+!TEST       IF (innLoop.gt.1) cg_QG(innLoop,outLoop)=0.0_dp
 !TEST
 !
 !  Calculate the new solution based upon the new, orthonormalized
@@ -478,7 +478,7 @@
 !  AUGMENTED.
 !
             DO iobs=1,Ndatum(ng)+1
-              px(iobs)=0.0_r8
+              px(iobs)=0.0_dp
               DO ivec=1,innLoop-1
                 px(iobs)=px(iobs)+                                      &
      &                   zcglwk(iobs,ivec,outLoop)*zwork(ivec,3)
@@ -498,7 +498,7 @@
 !
 !  Compute the reduction in the gradient Ax-b (in y-space).
 !
-!AMM        preducy=0.0_r8
+!AMM        preducy=0.0_dp
 !AMM        DO iobs=1,Ndatum(ng)
 !AMM          preducy=preducy+zw(iobs)*zw(iobs)
 !AMM        END DO
@@ -512,7 +512,7 @@
               CALL rprecond (ng, Lscale, Laug, outLoop, NinnLoop-1, zw)
             END IF
 !
-            preducv=0.0_r8
+            preducv=0.0_dp
 !
 !  AUGMENTED.
 !
@@ -581,9 +581,9 @@
 !
             DO ivec=1,innLoop-1
               IF (ivec.eq.1) THEN
-                zfact(ivec)=1.0_r8/cg_Gnorm_v(outLoop)
+                zfact(ivec)=1.0_dp/cg_Gnorm_v(outLoop)
               ELSE
-                zfact(ivec)=1.0_r8/cg_beta(ivec,outLoop)
+                zfact(ivec)=1.0_dp/cg_beta(ivec,outLoop)
               ENDIF
             END DO
 !
@@ -599,9 +599,9 @@
               zhv(iobs)=zd(iobs)
             END DO
             DO ivec=1,innLoop-1
-              ztemp1(ivec)=0.0_r8
-              ztemp3(ivec)=0.0_r8
-              ztemp4(ivec)=0.0_r8
+              ztemp1(ivec)=0.0_dp
+              ztemp3(ivec)=0.0_dp
+              ztemp4(ivec)=0.0_dp
               DO iobs=1,Ndatum(ng)
                 ztemp1(ivec)=ztemp1(ivec)+                              &
      &                       TLmodVal_S(iobs,ivec,outLoop)*             &
@@ -648,7 +648,7 @@
      &                     Jb0(outLoop-1)*                              &
      &                     vcglwk(Ndatum(ng)+1,ivec,outLoop)
 !TEST
-              ztemp4(ivec)=0.0_r8
+              ztemp4(ivec)=0.0_dp
 !TEST
             END DO
             zbet=cg_delta(1,outLoop)
@@ -674,25 +674,25 @@
             Jb=Jb0(outLoop-1)
             Jact=Jb
             DO iobs=1,Ndatum(ng)
-              IF (ObsErr(iobs).NE.0.0_r8) THEN
+              IF (ObsErr(iobs).ne.0.0_r8) THEN
                 Jact=Jact+ObsErr(iobs)*vgrad0s(iobs)*vgrad0s(iobs)
               END IF
             END DO
             DO ivec=1,innLoop-1
               Jb=Jb+ztemp2(ivec)*ztemp2(ivec)
 !TEST         Jact=Jact-ztemp1(ivec)*ztemp2(ivec)+                      &
-!    &             2.0_r8*ztemp2(ivec)*ztemp3(ivec)
+!    &             2.0_dp*ztemp2(ivec)*ztemp3(ivec)
               Jact=Jact-ztemp1(ivec)*ztemp2(ivec)
             END DO
             DO iobs=1,Ndatum(ng)
-              Jb=Jb-2.0_r8*px(iobs)*Hbk(iobs,outLoop)
+              Jb=Jb-2.0_dp*px(iobs)*Hbk(iobs,outLoop)
 !TEST
-              Jact=Jact+2.0_r8*px(iobs)*Hbk(iobs,outLoop)
+              Jact=Jact+2.0_dp*px(iobs)*Hbk(iobs,outLoop)
 !TEST
             END DO
-            Jb=Jb-2.0_r8*px(Ndatum(ng)+1)*Jb0(outLoop-1)
+            Jb=Jb-2.0_dp*px(Ndatum(ng)+1)*Jb0(outLoop-1)
 !TEST
-            Jact=Jact+2.0_r8*px(Ndatum(ng)+1)*Jb0(outLoop-1)
+            Jact=Jact+2.0_dp*px(Ndatum(ng)+1)*Jb0(outLoop-1)
 !TEST
             Jobs=Jact-Jb
 
@@ -717,14 +717,14 @@
 !
 !  Convert gradient contribution from x-space to v-space.
 !
-            IF (ObsErr(iobs).NE.0.0_r8) THEN
+            IF (ObsErr(iobs).ne.0.0_r8) THEN
 !
 !  Selime code: w=t1/R. No augmented term here since Raug^-1=[R^-1 0].
 !
               pgrad(iobs)=pgrad(iobs)/ObsErr(iobs)
             END IF
           END DO
-          pgrad(Ndatum(ng)+1)=0.0_r8
+          pgrad(Ndatum(ng)+1)=0.0_dp
 !
 !  Selime code: w=t1/R+z1
 !
@@ -747,7 +747,7 @@
             END DO
           END IF
 !
-          cg_delta(innLoop,outLoop)=0.0_r8
+          cg_delta(innLoop,outLoop)=0.0_dp
 !
 !  Selime's code: alpha=w'*t1=cg_delta
 !
@@ -773,7 +773,7 @@
 !
 !  Exit, if not a positive definite algorithm.
 !
-          IF (cg_delta(innLoop,outLoop).le.0.0_r8) THEN
+          IF (cg_delta(innLoop,outLoop).le.0.0_dp) THEN
             WRITE (stdout,20) cg_delta(innLoop,outLoop), outLoop,       &
      &                        innLoop
             exit_flag=8
@@ -795,9 +795,9 @@
 !
           DO ivec=1,innLoop
             IF (ivec.eq.1) THEN
-              zfact(ivec)=1.0_r8/cg_Gnorm_v(outLoop)
+              zfact(ivec)=1.0_dp/cg_Gnorm_v(outLoop)
             ELSE
-              zfact(ivec)=1.0_r8/cg_beta(ivec,outLoop)
+              zfact(ivec)=1.0_dp/cg_beta(ivec,outLoop)
             ENDIF
           END DO
 !
@@ -806,7 +806,7 @@
 !  AUGMENTED
 !
           DO ivec=innLoop,1,-1
-            cg_dla(ivec,outLoop)=0.0_r8
+            cg_dla(ivec,outLoop)=0.0_dp
             DO iobs=1,Ndatum(ng)
               cg_dla(ivec,outLoop)=cg_dla(ivec,outLoop)+                &
      &                             pgrad(iobs)*                         &
@@ -1000,7 +1000,7 @@
 !  Check for exploding or negative Ritz values.
 !
             DO ivec=1,innLoop-1
-              IF (cg_RitzErr(ivec,outLoop).lt.0.0_r8) THEN
+              IF (cg_RitzErr(ivec,outLoop).lt.0.0_dp) THEN
                 WRITE (stdout,*) ' RPCG_LANCZOS - negative Ritz value', &
      &                           ' found.'
                 exit_flag=8
@@ -1202,7 +1202,7 @@
         ij=ij+1
 !                                                             AUGMENTED
         DO iobs=1,Ndatum(ng)
-          vcglev(iobs,ij,outLoop)=0.0_r8
+          vcglev(iobs,ij,outLoop)=0.0_dp
         END DO
         DO jk=1,NinnLoop
           DO iobs=1,Ndatum(ng)
@@ -1218,14 +1218,14 @@
 !
         DO jk=1,ij-1
           DO iobs=1,Ndatum(ng)
-            zt(iobs)=0.0_r8
+            zt(iobs)=0.0_dp
           END DO
           DO iobs=1,Ndatum(ng)
             DO jkk=1,NinnLoop
               IF (jkk.eq.1) THEN
-                zfact=1.0_r8/cg_Gnorm_v(outLoop)
+                zfact=1.0_dp/cg_Gnorm_v(outLoop)
               ELSE
-                zfact=1.0_r8/cg_beta(jkk,outLoop)
+                zfact=1.0_dp/cg_beta(jkk,outLoop)
               ENDIF
               zt(iobs)=zt(iobs)+                                        &
      &                 (TLmodVal_S(iobs,jkk,outLoop)*                   &
@@ -1235,7 +1235,7 @@
      &                 cg_zv(jkk,jk,outLoop)
             END DO
           END DO
-          dla=0.0_r8
+          dla=0.0_dp
           DO iobs=1,Ndatum(ng)
             dla=dla+zt(iobs)*vcglev(iobs,ij,outLoop)
           END DO
@@ -1244,7 +1244,7 @@
      &                              dla*zt(iobs)
           END DO
         END DO
-        dla=0.0_r8
+        dla=0.0_dp
 !                                                            AUGMENTED
         DO iobs=1,Ndatum(ng)
           dla=dla+vcglev(iobs,ij,outLoop)*vcglev(iobs,ij,outLoop)
@@ -1329,14 +1329,14 @@
 !
         DO nvec=is,ie,inc
           DO iobs=1,Ndatum(ng)
-            zt(iobs)=0.0_r8
+            zt(iobs)=0.0_dp
           END DO
           DO iobs=1,Ndatum(ng)
             DO jk=1,NinnLoop
               IF (jk.eq.1) THEN
-                zfact=1.0_r8/cg_Gnorm_v(nol)
+                zfact=1.0_dp/cg_Gnorm_v(nol)
               ELSE
-                zfact=1.0_r8/cg_beta(jk,nol)
+                zfact=1.0_dp/cg_beta(jk,nol)
               ENDIF
               zt(iobs)=zt(iobs)+                                        &
      &                 (TLmodVal_S(iobs,jk,nol)*                        &
@@ -1347,12 +1347,12 @@
             END DO
           END DO
 !
-          dla=0.0_r8
+          dla=0.0_dp
           DO iobs=1,Ndatum(ng)
             dla=dla+zt(iobs)*py(iobs)
           END DO
           IF (Lritz) THEN
-            dlar=0.0_r8
+            dlar=0.0_dp
             DO iobs=1,Ndatum(ng)
               dlar=dlar+                                                &
      &             (TLmodVal_S(iobs,NinnLoop+1,nol)/                    &
@@ -1366,9 +1366,9 @@
 !  NOTE: Lscale=1 and Lscale=-1 cases are not complete yet.
 !
           IF (Lscale.eq.-1) THEN
-            fac=(cg_Ritz(NinnLoop+1-nvec,nol)-1.0_r8)*dla
+            fac=(cg_Ritz(NinnLoop+1-nvec,nol)-1.0_dp)*dla
           ELSE
-            fac=(1.0_r8/cg_Ritz(NinnLoop+1-nvec,nol)-1.0_r8)*dla
+            fac=(1.0_dp/cg_Ritz(NinnLoop+1-nvec,nol)-1.0_dp)*dla
           END IF
 !
           DO iobs=1,Ndatum(ng)
