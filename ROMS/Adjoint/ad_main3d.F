@@ -310,7 +310,7 @@
               ng=GridNumber(ig,nl)
               DO tile=first_tile(ng),last_tile(ng),+1
                 CALL ad_set_data (ng, tile)
-# ifdef FORWARD_READ
+# if defined FORWARD_READ || defined JEDI
                 CALL set_depth (ng, tile, iADM)
 # endif
 # ifdef TIDE_GENERATING_FORCES
@@ -320,7 +320,7 @@
             END DO
             IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
-# ifdef FORWARD_READ
+# if defined FORWARD_READ || defined JEDI
 !
 !-----------------------------------------------------------------------
 !  Compute BASIC STATE horizontal mass fluxes (Hz*u/n and Hz*v/m).
