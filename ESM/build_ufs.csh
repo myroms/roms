@@ -360,13 +360,11 @@ endif
 set ANALYTICAL_DIR = "ANALYTICAL_DIR='${MY_ANALYTICAL_DIR}'"
 set HEADER = `echo ${ROMS_APPLICATION} | tr '[:upper:]' '[:lower:]'`.h
 set HEADER_DIR = "HEADER_DIR='${MY_HEADER_DIR}'"
-set ROOT_DIR = "ROOT_DIR='${MY_ROMS_SRC}'"
 
 set mycppflags = "${MY_CPP_FLAGS}"
 
 setenv MY_CPP_FLAGS "${MY_CPP_FLAGS} -D${ANALYTICAL_DIR}"
 setenv MY_CPP_FLAGS "${MY_CPP_FLAGS} -D${HEADER_DIR}"
-setenv MY_CPP_FLAGS "${MY_CPP_FLAGS} -D${ROOT_DIR}"
 
 cd ${BUILD_DIR}
 
@@ -380,16 +378,6 @@ if ( $?LIBTYPE ) then
   set ltype="-DLIBTYPE=${LIBTYPE}"
 else
   set ltype=""
-endif
-
-if ( $?FORT ) then
-  if ( "${FORT}" == "ifort" ) then
-    set compiler="-DCMAKE_Fortran_COMPILER=ifort"
-  else if ( "${FORT}" == "gfortran" ) then
-    set compiler="-DCMAKE_Fortran_COMPILER=gfortran"
-  else
-    set compiler=""
-  endif
 endif
 
 if ( $?MY_CPP_FLAGS ) then
@@ -497,7 +485,6 @@ if ( $dprint == 0 ) then
                      -DROMS_APP_DIR=${ROMS_APP_DIR} \
                      ${my_hdir} \
                      ${ltype} \
-                     ${compiler} \
                      ${extra_flags} \
                      ${parpack_ldir} \
                      ${arpack_ldir} \

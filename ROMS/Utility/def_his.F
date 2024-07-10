@@ -2696,8 +2696,8 @@
             RETURN
           END IF
 # endif
-#endif
         END DO
+#endif
 
 #if (defined BBL_MODEL || defined WAVES_OUTPUT) && defined SOLVE3D
 !
@@ -5757,8 +5757,8 @@
             RETURN
           END IF
 #  endif
-# endif
         END DO
+# endif
 
 # if (defined BBL_MODEL || defined WAVES_OUTPUT) && defined SOLVE3D
 !

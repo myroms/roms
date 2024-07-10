@@ -627,7 +627,7 @@
             IF (Master) THEN
               WRITE (stdout,20) TRIM(Text),                             &
      &                          '2D normalization factors at RHO-points'
-              CALL my_flush (stdout)
+              FLUSH (stdout)
             END IF
             DO j=JstrT,JendT
               DO i=IstrT,IendT
@@ -783,7 +783,7 @@
             IF (Master) THEN
               WRITE (stdout,20) TRIM(Text),                             &
      &                          '2D normalization factors at   U-points'
-              CALL my_flush (stdout)
+              FLUSH (stdout)
             END IF
             DO j=JstrT,JendT
               DO i=IstrP,IendT
@@ -940,7 +940,7 @@
             IF (Master) THEN
               WRITE (stdout,20) TRIM(Text),                             &
      &                          '2D normalization factors at   V-points'
-              CALL my_flush (stdout)
+              FLUSH (stdout)
             END IF
             DO j=JstrP,JendT
               DO i=IstrT,IendT
@@ -1098,7 +1098,7 @@
             IF (Master) THEN
               WRITE (stdout,20) TRIM(Text),                             &
      &                          '3D normalization factors at   U-points'
-              CALL my_flush (stdout)
+              FLUSH (stdout)
             END IF
             DO j=JstrT,JendT
               DO i=IstrP,IendT
@@ -1278,7 +1278,7 @@
             IF (Master) THEN
               WRITE (stdout,20) TRIM(Text),                             &
      &                          '3D normalization factors at   V-points'
-              CALL my_flush (stdout)
+              FLUSH (stdout)
             END IF
             DO j=JstrP,JendT
               DO i=IstrT,IendT
@@ -1452,7 +1452,7 @@
             IF (Lsame) THEN
               WRITE (stdout,20) TRIM(Text),                             &
      &                          '3D normalization factors at RHO-points'
-              CALL my_flush (stdout)
+              FLUSH (stdout)
             END IF
           END IF
 !
@@ -1717,7 +1717,7 @@
         IF (Master.and.ANY(CnormB(isFsur,:))) THEN
           WRITE (stdout,20) TRIM(Text),                                 &
      &                      '2D normalization factors at RHO-points'
-          CALL my_flush (stdout)
+          FLUSH (stdout)
         END IF
 
         DO ibry=1,4
@@ -1873,7 +1873,7 @@
         IF (Master.and.ANY(CnormB(isUbar,:))) THEN
           WRITE (stdout,20) TRIM(Text),                                 &
      &                      '2D normalization factors at   U-points'
-          CALL my_flush (stdout)
+          FLUSH (stdout)
         END IF
 
         DO ibry=1,4
@@ -2033,7 +2033,7 @@
         IF (Master.and.ANY(CnormB(isVbar,:))) THEN
           WRITE (stdout,20) TRIM(Text),                                 &
      &                      '2D normalization factors at   V-points'
-          CALL my_flush (stdout)
+          FLUSH (stdout)
         END IF
 
         DO ibry=1,4
@@ -2195,7 +2195,7 @@
         IF (Master.and.ANY(CnormB(isUvel,:))) THEN
           WRITE (stdout,20) TRIM(Text),                                 &
      &                      '3D normalization factors at   U-points'
-          CALL my_flush (stdout)
+          FLUSH (stdout)
         END IF
 
         DO ibry=1,4
@@ -2388,7 +2388,7 @@
         IF (Master.and.ANY(CnormB(isVvel,:))) THEN
           WRITE (stdout,20) TRIM(Text),                                 &
      &                      '3D normalization factors at   V-points'
-          CALL my_flush (stdout)
+          FLUSH (stdout)
         END IF
 
         DO ibry=1,4
@@ -2587,7 +2587,7 @@
           IF (Lsame) THEN
             WRITE (stdout,20) TRIM(Text),                               &
      &                        '3D normalization factors at RHO-points'
-            CALL my_flush (stdout)
+            FLUSH (stdout)
           END IF
         END IF
 
@@ -2855,7 +2855,7 @@
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Text),                               &
      &                     '2D normalization factors at U-stress points'
-            CALL my_flush (stdout)
+            FLUSH (stdout)
           END IF
           DO j=JstrT,JendT
             DO i=IstrP,IendT
@@ -3011,7 +3011,7 @@
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Text),                               &
      &                     '2D normalization factors at V-stress points'
-            CALL my_flush (stdout)
+            FLUSH (stdout)
           END IF
           DO j=JstrP,JendT
             DO i=IstrT,IendT
@@ -3165,7 +3165,7 @@
           IF (Lsame) THEN
             WRITE (stdout,20) TRIM(Text),                               &
                               '2D normalization factors at RHO-points'
-            CALL my_flush (stdout)
+            FLUSH (stdout)
           END IF
         END IF
 !
@@ -3714,7 +3714,7 @@
             IF (Master) THEN
               WRITE (stdout,20) TRIM(Text),                             &
      &                          '2D normalization factors at RHO-points'
-              CALL my_flush (stdout)
+              FLUSH (stdout)
             END IF
             DO j=JstrT,JendT
               DO i=IstrT,IendT
@@ -3819,7 +3819,7 @@
             IF (Master) THEN
               WRITE (stdout,20) TRIM(Text),                             &
      &                          '2D normalization factors at   U-points'
-              CALL my_flush (stdout)
+              FLUSH (stdout)
             END IF
             DO j=JstrT,JendT
               DO i=IstrP,IendT
@@ -3924,7 +3924,7 @@
             IF (Master) THEN
               WRITE (stdout,20) TRIM(Text),                             &
      &                          '2D normalization factors at   V-points'
-              CALL my_flush (stdout)
+              FLUSH (stdout)
             END IF
             DO j=JstrP,JendT
               DO i=IstrT,IendT
@@ -4031,7 +4031,7 @@
             IF (Master) THEN
               WRITE (stdout,20) TRIM(Text),                             &
      &                          '3D normalization factors at   U-points'
-              CALL my_flush (stdout)
+              FLUSH (stdout)
             END IF
             DO j=JstrT,JendT
               DO i=IstrP,IendT
@@ -4157,7 +4157,7 @@
             IF (Master) THEN
               WRITE (stdout,20) TRIM(Text),                             &
      &                          '3D normalization factors at   V-points'
-              CALL my_flush (stdout)
+              FLUSH (stdout)
             END IF
             DO j=JstrP,JendT
               DO i=IstrT,IendT
@@ -4288,7 +4288,7 @@
             IF (Lsame) THEN
               WRITE (stdout,20) TRIM(Text),                             &
      &                          '3D normalization factors at RHO-points'
-              CALL my_flush (stdout)
+              FLUSH (stdout)
             END IF
           END IF
 !
@@ -4520,7 +4520,7 @@
         IF (Master.and.ANY(CnormB(isFsur,:))) THEN
           WRITE (stdout,20) TRIM(Text),                                 &
      &                      '2D normalization factors at RHO-points'
-          CALL my_flush (stdout)
+          FLUSH (stdout)
         END IF
 
         DO ibry=1,4
@@ -4667,7 +4667,7 @@
         IF (Master.and.ANY(CnormB(isUbar,:))) THEN
           WRITE (stdout,20) TRIM(Text),                                 &
      &                      '2D normalization factors at   U-points'
-          CALL my_flush (stdout)
+          FLUSH (stdout)
         END IF
 
         DO ibry=1,4
@@ -4813,7 +4813,7 @@
         IF (Master.and.ANY(CnormB(isVbar,:))) THEN
           WRITE (stdout,20) TRIM(Text),                                 &
      &                      '2D normalization factors at   V-points'
-          CALL my_flush (stdout)
+          FLUSH (stdout)
         END IF
 
         DO ibry=1,4
@@ -4961,7 +4961,7 @@
         IF (Master.and.ANY(CnormB(isUvel,:))) THEN
           WRITE (stdout,20) TRIM(Text),                                 &
      &                      '3D normalization factors at   U-points'
-          CALL my_flush (stdout)
+          FLUSH (stdout)
         END IF
 
         DO ibry=1,4
@@ -5138,7 +5138,7 @@
         IF (Master.and.ANY(CnormB(isVvel,:))) THEN
           WRITE (stdout,20) TRIM(Text),                                 &
      &                      '3D normalization factors at   V-points'
-          CALL my_flush (stdout)
+          FLUSH (stdout)
         END IF
 
         DO ibry=1,4
@@ -5321,7 +5321,7 @@
           IF (Lsame) THEN
             WRITE (stdout,20) TRIM(Text),                               &
      &                        '3D normalization factors at RHO-points'
-            CALL my_flush (stdout)
+            FLUSH (stdout)
           END IF
         END IF
 
@@ -5568,7 +5568,7 @@
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Text),                               &
      &                        '2D normalization factors at U-points'
-            CALL my_flush (stdout)
+            FLUSH (stdout)
           END IF
           DO j=JstrT,JendT
             DO i=IstrP,IendT
@@ -5673,7 +5673,7 @@
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Text),                               &
      &                        '2D normalization factors at V-points'
-            CALL my_flush (stdout)
+            FLUSH (stdout)
           END IF
           DO j=JstrP,JendT
             DO i=IstrT,IendT
@@ -5787,7 +5787,7 @@
           IF (Lsame) THEN
             WRITE (stdout,20) TRIM(Text),                               &
      &                        '2D normalization factors at RHO-points'
-            CALL my_flush (stdout)
+            FLUSH (stdout)
           END IF
         END IF
 !
@@ -6039,7 +6039,7 @@
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       IF (Master) WRITE (stdout,20) TRIM(Vname(1,ifield)), tindex
-      CALL my_flush (stdout)
+      FLUSH (stdout)
 !
   10  FORMAT (/,' WRT_NORM2D_NF90 - error while writing variable: ',a,  &
      &        /,19x 'into normalization NetCDF file for time record: ', &
@@ -6132,7 +6132,7 @@
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       IF (Master) WRITE (stdout,20) TRIM(Vname(1,ifield)), tindex
-      CALL my_flush (stdout)
+      FLUSH (stdout)
 !
   10  FORMAT (/,' WRT_NORM2D_PIO - error while writing variable: ',a,   &
      &        /,18x 'into normalization NetCDF file for time record: ', &
@@ -6230,7 +6230,7 @@
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       IF (Master) WRITE (stdout,20) TRIM(Vname(1,ifield)), tindex
-      CALL my_flush (stdout)
+      FLUSH (stdout)
 !
   10  FORMAT (/,' WRT_NORM3D_NF90 - error while writing variable: ',a,  &
      &        /,19x,'into normalization NetCDF file for time record: ', &
@@ -6323,7 +6323,7 @@
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       IF (Master) WRITE (stdout,20) TRIM(Vname(1,ifield)), tindex
-      CALL my_flush (stdout)
+      FLUSH (stdout)
 !
   10  FORMAT (/,' WRT_NORM3D_PIO - error while writing variable: ',a,   &
      &        /,18x,'into normalization NetCDF file for time record: ', &

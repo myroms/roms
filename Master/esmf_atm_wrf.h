@@ -144,7 +144,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering ATM_SetServices',         &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
       rc=ESMF_SUCCESS
 !
@@ -296,7 +296,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '<== Exiting  ATM_SetServices',         &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
 !
       RETURN
@@ -339,7 +339,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering WRF_SetInitializeP1',     &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
       rc=ESMF_SUCCESS
 !
@@ -430,7 +430,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '<== Exiting  WRF_SetInitializeP1',     &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
 !
       RETURN
@@ -477,7 +477,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering WRF_SetInitializeP2',     &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
       rc=ESMF_SUCCESS
 !
@@ -560,7 +560,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '<== Exiting  WRF_SetInitializeP2',     &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
 !
       RETURN
@@ -599,7 +599,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering WRF_DataInit',            &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
       rc=ESMF_SUCCESS
 !
@@ -645,7 +645,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '<== Exiting  WRF_DataInit',            &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
 !
       RETURN
@@ -695,7 +695,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering WRF_SetClock',            &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
       rc=ESMF_SUCCESS
 !
@@ -987,7 +987,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '<== Exiting  WRF_SetClock',            &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
 !
  10   FORMAT (/,1x,a,a,/,1x,a,a,/,1x,a)
@@ -1027,7 +1027,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering WRF_SetRunClock',         &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
       rc=ESMF_SUCCESS
 !
@@ -1085,7 +1085,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '<== Exiting  WRF_SetRunClock',         &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
 !
       RETURN
@@ -1136,7 +1136,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering WRF_CheckImport',         &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
       rc=ESMF_SUCCESS
 !
@@ -1314,7 +1314,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '<== Exiting  WRF_CheckImport',         &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
 !
   10  FORMAT (1x,'WRF_CheckImport - ',a,':',t32,'TimeStamp = ',a,       &
@@ -1387,7 +1387,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering WRF_SetGridArrays',       &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
       rc=ESMF_SUCCESS
 !
@@ -1814,9 +1814,9 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '<== Exiting  WRF_SetGridArrays',       &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
-      IF (DebugLevel.gt.0) CALL my_flush (cplout)
+      IF (DebugLevel.gt.0) FLUSH (cplout)
 !
   10  FORMAT (3x,'WRF_DistGrid - Grid = ',i2.2,',',3x,'Mesh = ',a,',',  &
      &        3x,'Partition = ',i0,' x ',i0)
@@ -1871,7 +1871,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering WRF_SetStates',           &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
       rc=ESMF_SUCCESS
 !
@@ -2197,7 +2197,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '<== Exiting  WRF_SetStates',           &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
 !
 !
@@ -2263,7 +2263,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering WRF_ModelAdvance',        &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
       rc=ESMF_SUCCESS
 !
@@ -2486,13 +2486,13 @@
         IF (ESM_track) THEN
           WRITE (trac,'(a,a,i0)') '==> Entering WRF_Run',               &
      &                            ', PET', PETrank
-          CALL my_flush (trac)
+          FLUSH (trac)
         END IF
         CALL WRF_Run ()
         IF (ESM_track) THEN
           WRITE (trac,'(a,a,i0)') '==> Exiting  WRF_Run',               &
      &                            ', PET', PETrank
-          CALL my_flush (trac)
+          FLUSH (trac)
         END IF
       END IF
 !
@@ -2522,7 +2522,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '<== Exiting  WRF_ModelAdvance',        &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
 !
   10  FORMAT (3x,'ModelAdvance - ESMF, Running WRF:',t42,a,             &
@@ -2564,7 +2564,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering WRF_SetFinalize',         &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
       rc=ESMF_SUCCESS
 !
@@ -2577,12 +2577,12 @@
 !
       no_shutdown=.TRUE.
       CALL WRF_Finalize (no_shutdown)
-      CALL my_flush (6)                   ! flush standard output buffer
+      FLUSH (6)                   ! flush standard output buffer
 !
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '<== Exiting  WRF_SetFinalize',         &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
 !
       RETURN
@@ -2655,7 +2655,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering WRF_Import',              &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
       rc=ESMF_SUCCESS
 !
@@ -3131,9 +3131,9 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '<== Exiting  WRF_Import',              &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
-      IF (DebugLevel.gt.0) CALL my_flush (cplout)
+      IF (DebugLevel.gt.0) FLUSH (cplout)
 !
   10  FORMAT (/,5x,'WRF_Import - unable to find option to import: ',    &
      &        a,/,18x,'check ''Import(atmos)'' in input script: ', a)
@@ -3250,7 +3250,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering WRF_ProcessImport_scalar',&
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
       rc=ESMF_SUCCESS
 !
@@ -3599,9 +3599,9 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '<== Exiting  WRF_ProcessImport_scalar',&
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
-      IF (DebugLevel.gt.0) CALL my_flush (cplout)
+      IF (DebugLevel.gt.0) FLUSH (cplout)
 !
   10  FORMAT (/,5x,'WRF_ProcessImport - ',                              &
      &         'unable to find option to import: ',a,                   &
@@ -3735,7 +3735,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering WRF_ProcessImport_vector',&
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
       rc=ESMF_SUCCESS
 !
@@ -4218,9 +4218,9 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '<== Exiting  WRF_ProcessImport_vector',&
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
-      IF (DebugLevel.gt.0) CALL my_flush (cplout)
+      IF (DebugLevel.gt.0) FLUSH (cplout)
 !
   10  FORMAT (/,5x,'WRF_ProcessImport - ',                              &
      &         'unable to find option to import: ',a,                   &
@@ -4306,7 +4306,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering WRF_Export',              &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
       rc=ESMF_SUCCESS
 !
@@ -5235,9 +5235,9 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '<== Exiting  WRF_Export',              &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
-      IF (DebugLevel.gt.0) CALL my_flush (cplout)
+      IF (DebugLevel.gt.0) FLUSH (cplout)
 !
 # ifdef WRF_TIMEAVG
   10  FORMAT (/,5x,'WRF_Export - illegal configuration: ',a,            &

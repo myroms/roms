@@ -594,13 +594,13 @@
 # endif
 # ifdef AVERAGES_UV_KIRBY
       IF (Master) WRITE (stdout,20) 'AVERAGES_UV_KIRBY',                &
-     &   'Writing out time-averaged uwave and vwave Kirby velocities.'
+     &   'Writing out time-averaged uwave and vwave Kirby velocities'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+17)=' AVERAGES_UV_KIRBY,'
 # endif
 # ifdef AVERAGES_WEC
       IF (Master) WRITE (stdout,20) 'AVERAGES_WEC',                     &
-     &   'Writing out time-averaged nearshore radiation fields.'
+     &   'Writing out time-averaged nearshore radiation fields'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+20)=' AVERAGES_WEC,'
 # endif
@@ -1051,13 +1051,13 @@
 #ifdef DOUBLE_PRECISION
 !
       IF (Master) WRITE (stdout,20) 'DOUBLE_PRECISION',                 &
-     &   'Double precision arithmetic numerical kernel.'
+     &   'Double precision arithmetic numerical kernel'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+18)=' DOUBLE_PRECISION,'
 #endif
 #if defined DRENNAN
       IF (Master) WRITE (stdout,20) 'DRENNAN',                          &
-     &   'Drennan et al (2003) relation for ZoW in bulk fluxes.'
+     &   'Drennan et al (2003) relation for ZoW in bulk fluxes'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+9)=' DRENNAN,'
 #endif
@@ -1264,6 +1264,13 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+12)=' GLS_MIXING,'
       ivmix=ivmix+1
+#endif
+#ifdef GRID_EXTRACT
+!
+      IF (Master) WRITE (stdout,20) 'GRID_EXTRACT',                     &
+     &   'Writing output extraction history file'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+14)=' GRID_EXTRACT,'
 #endif
 #ifdef HDF5
 !
@@ -1761,7 +1768,7 @@
 # ifdef NESTING_DEBUG
 !
       IF (Master) WRITE (stdout,20) 'NESTING_DEBUG',                    &
-     &   'Checking mass fluxes conservation in refinement.'
+     &   'Checking mass fluxes conservation in refinement'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+15)=' NESTING_DEBUG,'
 # endif
@@ -2565,7 +2572,7 @@
 #ifdef SINGLE_PRECISION
 !
       IF (Master) WRITE (stdout,20) 'SINGLE_PRECISION',                 &
-     &   'Single precision arithmetic numerical kernel.'
+     &   'Single precision arithmetic numerical kernel'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+18)=' SINGLE_PRECISION,'
 #endif
@@ -2579,7 +2586,7 @@
 #ifdef SPECTRUM_STOKES
 !
       IF (Master) WRITE (stdout,20) 'SPECTRUM_STOKES',                  &
-     &   'Stokes drift estimated from wave spectrum.'
+     &   'Stokes drift estimated from wave spectrum'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+17)=' SPECTRUM_STOKES,'
 #endif
@@ -2670,7 +2677,7 @@
 #if defined SP4DVAR && !defined SPLIT_4DVAR
 !
       IF (Master) WRITE (stdout,20) 'SP4DVAR',                          &
-     &   'Weak Constraint, Saddle-Point 4D-Var Data Assimilation.'
+     &   'Weak Constraint, Saddle-Point 4D-Var Data Assimilation'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+9)=' SP4DVAR,'
       idriver=idriver+1
@@ -3081,7 +3088,7 @@
 #  endif
 #  ifdef UV_KIRBY
       IF (Master) WRITE (stdout,20) 'UV_KIRBY',                         &
-     &   'Compute uwave and vwave Kirby avg velocities.'
+     &   'Compute uwave and vwave Kirby avg velocities'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+15)=' UV_KIRBY,'
 #  endif

@@ -25,6 +25,9 @@
       USE mod_eclight
 # endif
 #endif
+#ifdef GRID_EXTRACT
+      USE mod_extract
+#endif
       USE mod_grid
 #ifdef FOUR_DVAR
       USE mod_fourdvar
@@ -118,10 +121,19 @@
 !
       SourceFile=MyFile
 !
-      LBi=LBOUND(GRID(ng)%h,DIM=1)
-      UBi=UBOUND(GRID(ng)%h,DIM=1)
-      LBj=LBOUND(GRID(ng)%h,DIM=2)
-      UBj=UBOUND(GRID(ng)%h,DIM=2)
+      IF (ncid.ne.XTR(ng)%ncid) THEN
+        LBi=LBOUND(GRID(ng)%h,DIM=1)
+        UBi=UBOUND(GRID(ng)%h,DIM=1)
+        LBj=LBOUND(GRID(ng)%h,DIM=2)
+        UBj=UBOUND(GRID(ng)%h,DIM=2)
+#ifdef GRID_EXTRACT
+      ELSE
+        LBi=LBOUND(EXTRACT(ng)%h,DIM=1)
+        UBi=UBOUND(EXTRACT(ng)%h,DIM=1)
+        LBj=LBOUND(EXTRACT(ng)%h,DIM=2)
+        UBj=UBOUND(EXTRACT(ng)%h,DIM=2)
+#endif
+      END IF
 !
 !-----------------------------------------------------------------------
 !  Write out running parameters.
@@ -197,6 +209,23 @@
      &                      ndefHIS(ng), (/0/), (/0/),                  &
      &                      ncid = ncid)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+
+#ifdef GRID_EXTRACT
+      CALL netcdf_put_ivar (ng, model, ncname, 'nXTR',                  &
+     &                      nXTR(ng), (/0/), (/0/),                     &
+     &                      ncid = ncid)
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+
+      CALL netcdf_put_ivar (ng, model, ncname, 'ndefXTR',               &
+     &                      ndefXTR(ng), (/0/), (/0/),                  &
+     &                      ncid = ncid)
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+
+      CALL netcdf_put_ivar (ng, model, ncname, 'ExtractFlag',           &
+     &                      ExtractFlag(ng), (/0/), (/0/),              &
+     &                      ncid = ncid)
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+#endif
 
       CALL netcdf_put_ivar (ng, model, ncname, 'nRST',                  &
      &                      nRST(ng), (/0/), (/0/),                     &
@@ -1483,7 +1512,8 @@
 !
         IF (exit_flag.eq.NoError) THEN
           scale=1.0_dp
-          IF (ncid.ne.STA(ng)%ncid) THEN
+          IF ((ncid.ne.STA(ng)%ncid).and.                               &
+     &        (ncid.ne.XTR(ng)%ncid)) THEN
             IF (find_string(var_name, n_var, TRIM(Vname(1,idtopo)),     &
      &                      varid)) THEN
               status=nf_fwrite2d(ng, model, ncid, idtopo,               &
@@ -1506,8 +1536,34 @@
               exit_flag=3
               ioerror=nf90_enotvar
             END IF
+# ifdef GRID_EXTRACT
+          ELSE IF (ncid.eq.XTR(ng)%ncid) THEN
+            IF (find_string(var_name, n_var, TRIM(Vname(1,idtopo)),     &
+     &                      varid)) THEN
+              status=nf_fwrite2d(ng, model, ncid, idtopo,               &
+     &                           varid, 0, r2dvar,                      &
+     &                           LBi, UBi, LBj, UBj, scale,             &
+#  ifdef MASKING
+     &                           EXTRACT(ng) % rmask,                   &
+#  endif
+     &                           EXTRACT(ng) % h,                       &
+     &                           SetFillVal = .FALSE.,                  &
+     &                           ExtractField = -1)
+              IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+                IF (Master) WRITE (stdout,10) TRIM(Vname(1,idtopo)),    &
+     &                                        TRIM(ncname)
+                exit_flag=3
+                ioerror=status
+              END IF
+            ELSE
+              IF (Master) WRITE (stdout,20) TRIM(Vname(1,idtopo)),      &
+     &                                      TRIM(ncname)
+              exit_flag=3
+              ioerror=nf90_enotvar
+            END IF
+# endif
 # ifdef STATIONS
-          ELSE
+          ELSE IF (ncid.eq.STA(ng)%ncid) THEN
             CALL extract_sta2d (ng, model, Cgrid, ifield, r2dvar,       &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          scale, GRID(ng)%h,                      &
@@ -1525,7 +1581,8 @@
 !  Coriolis parameter.
 !
         IF (exit_flag.eq.NoError) THEN
-          IF (ncid.ne.STA(ng)%ncid) THEN
+          IF ((ncid.ne.STA(ng)%ncid).and.                               &
+     &        (ncid.ne.XTR(ng)%ncid)) THEN
             scale=1.0_dp
             IF (find_string(var_name, n_var, TRIM(Vname(1,idfcor)),     &
      &                      varid)) THEN
@@ -1549,13 +1606,41 @@
               exit_flag=3
               ioerror=nf90_enotvar
             END IF
+#ifdef GRID_EXTRACT
+          ELSE IF (ncid.eq.XTR(ng)%ncid) THEN
+            scale=1.0_dp
+            IF (find_string(var_name, n_var, TRIM(Vname(1,idfcor)),     &
+     &                      varid)) THEN
+              status=nf_fwrite2d(ng, model, ncid, idfcor,               &
+     &                           varid, 0, r2dvar,                      &
+     &                           LBi, UBi, LBj, UBj, scale,             &
+# ifdef MASKING
+     &                           EXTRACT(ng) % rmask,                   &
+# endif
+     &                           EXTRACT(ng) % f,                       &
+     &                           SetFillVal = .FALSE.,                  &
+     &                           ExtractField = -1)
+              IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+                IF (Master) WRITE (stdout,10) TRIM(Vname(1,idfcor)),    &
+     &                                        TRIM(ncname)
+                exit_flag=3
+                ioerror=status
+              END IF
+            ELSE
+              IF (Master) WRITE (stdout,20) TRIM(Vname(1,idfcor)),      &
+     &                                      TRIM(ncname)
+              exit_flag=3
+              ioerror=nf90_enotvar
+            END IF
+#endif
           END IF
         END IF
 !
 !  Curvilinear transformation metrics.
 !
         IF (exit_flag.eq.NoError) THEN
-          IF (ncid.ne.STA(ng)%ncid) THEN
+          IF ((ncid.ne.STA(ng)%ncid).and.                               &
+     &        (ncid.ne.XTR(ng)%ncid)) THEN
             scale=1.0_dp
             IF (find_string(var_name, n_var, TRIM(Vname(1,idpmdx)),     &
      &                      varid)) THEN
@@ -1579,11 +1664,39 @@
               exit_flag=3
               ioerror=nf90_enotvar
             END IF
+#ifdef GRID_EXTRACT
+          ELSE IF (ncid.eq.XTR(ng)%ncid) THEN
+            scale=1.0_dp
+            IF (find_string(var_name, n_var, TRIM(Vname(1,idpmdx)),     &
+     &                      varid)) THEN
+              status=nf_fwrite2d(ng, model, ncid, idpmdx,               &
+     &                           varid, 0, r2dvar,                      &
+     &                           LBi, UBi, LBj, UBj, scale,             &
+# ifdef MASKING
+     &                           EXTRACT(ng) % rmask,                   &
+# endif
+     &                           EXTRACT(ng) % pm,                      &
+     &                           SetFillVal = .FALSE.,                  &
+     &                           ExtractField = -1)
+              IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+                IF (Master) WRITE (stdout,10) TRIM(Vname(1,idpmdx)),    &
+     &                                        TRIM(ncname)
+                exit_flag=3
+                ioerror=status
+              END IF
+            ELSE
+              IF (Master) WRITE (stdout,20) TRIM(Vname(1,idpmdx)),      &
+     &                                      TRIM(ncname)
+              exit_flag=3
+              ioerror=nf90_enotvar
+            END IF
+#endif
           END IF
         END IF
 !
         IF (exit_flag.eq.NoError) THEN
-          IF (ncid.ne.STA(ng)%ncid) THEN
+          IF ((ncid.ne.STA(ng)%ncid).and.                               &
+     &        (ncid.ne.XTR(ng)%ncid)) THEN
             scale=1.0_dp
             IF (find_string(var_name, n_var, TRIM(Vname(1,idpndy)),     &
      &                      varid)) THEN
@@ -1607,6 +1720,33 @@
               exit_flag=3
               ioerror=nf90_enotvar
             END IF
+#ifdef GRID_EXTRACT
+          ELSE IF (ncid.eq.XTR(ng)%ncid) THEN
+            scale=1.0_dp
+            IF (find_string(var_name, n_var, TRIM(Vname(1,idpndy)),     &
+     &                      varid)) THEN
+              status=nf_fwrite2d(ng, model, ncid, idpndy,               &
+     &                           varid, 0, r2dvar,                      &
+     &                           LBi, UBi, LBj, UBj, scale,             &
+# ifdef MASKING
+     &                           EXTRACT(ng) % rmask,                   &
+# endif
+     &                           EXTRACT(ng) % pn,                      &
+     &                           SetFillVal = .FALSE.,                  &
+     &                           ExtractField = -1)
+              IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+                IF (Master) WRITE (stdout,10) TRIM(Vname(1,idpndy)),    &
+     &                                        TRIM(ncname)
+                exit_flag=3
+                ioerror=status
+              END IF
+            ELSE
+              IF (Master) WRITE (stdout,20) TRIM(Vname(1,idpndy)),      &
+     &                                      TRIM(ncname)
+              exit_flag=3
+              ioerror=nf90_enotvar
+            END IF
+#endif
           END IF
         END IF
 !
@@ -1615,7 +1755,8 @@
         IF (spherical) THEN
           IF (exit_flag.eq.NoError) THEN
             scale=1.0_dp
-            IF (ncid.ne.STA(ng)%ncid) THEN
+            IF ((ncid.ne.STA(ng)%ncid).and.                             &
+     &          (ncid.ne.XTR(ng)%ncid)) THEN
               IF (find_string(var_name, n_var, TRIM(Vname(1,idLonR)),   &
      &                        varid)) THEN
                 status=nf_fwrite2d(ng, model, ncid, idLonR,             &
@@ -1639,8 +1780,35 @@
                 exit_flag=3
                 ioerror=nf90_enotvar
               END IF
+#ifdef GRID_EXTRACT
+            ELSE IF (ncid.eq.XTR(ng)%ncid) THEN
+              IF (find_string(var_name, n_var, TRIM(Vname(1,idLonR)),   &
+     &                        varid)) THEN
+                status=nf_fwrite2d(ng, model, ncid, idLonR,             &
+     &                             varid, 0, r2dvar,                    &
+     &                             LBi, UBi, LBj, UBj, scale,           &
+# ifdef MASKING
+     &                             EXTRACT(ng) % rmask,                 &
+# endif
+     &                             EXTRACT(ng) % lonr,                  &
+     &                             SetFillVal = .FALSE.,                &
+     &                             ExtractField = -1)
+                IF (FoundError(status, nf90_noerr,                      &
+     &                         __LINE__, MyFile)) THEN
+                  IF (Master) WRITE (stdout,10) TRIM(Vname(1,idLonR)),  &
+     &                                          TRIM(ncname)
+                  exit_flag=3
+                  ioerror=status
+                END IF
+              ELSE
+                IF (Master) WRITE (stdout,20) TRIM(Vname(1,idLonR)),    &
+     &                                        TRIM(ncname)
+                exit_flag=3
+                ioerror=nf90_enotvar
+              END IF
+#endif
 #ifdef STATIONS
-            ELSE
+            ELSE IF (ncid.eq.STA(ng)%ncid) THEN
               CALL extract_sta2d (ng, model, Cgrid, ifield, r2dvar,     &
      &                            LBi, UBi, LBj, UBj,                   &
      &                            scale, GRID(ng)%lonr,                 &
@@ -1657,7 +1825,8 @@
 !
           IF (exit_flag.eq.NoError) THEN
             scale=1.0_dp
-            IF (ncid.ne.STA(ng)%ncid) THEN
+            IF ((ncid.ne.STA(ng)%ncid).and.                             &
+     &          (ncid.ne.XTR(ng)%ncid)) THEN
               IF (find_string(var_name, n_var, TRIM(Vname(1,idLatR)),   &
      &                        varid)) THEN
                 status=nf_fwrite2d(ng, model, ncid, idLatR,             &
@@ -1681,8 +1850,35 @@
                 exit_flag=3
                 ioerror=nf90_enotvar
               END IF
+#ifdef GRID_EXTRACT
+            ELSE IF (ncid.eq.XTR(ng)%ncid) THEN
+              IF (find_string(var_name, n_var, TRIM(Vname(1,idLatR)),   &
+     &                        varid)) THEN
+                status=nf_fwrite2d(ng, model, ncid, idLatR,             &
+     &                             varid, 0, r2dvar,                    &
+     &                             LBi, UBi, LBj, UBj, scale,           &
+# ifdef MASKING
+     &                             EXTRACT(ng) % rmask,                 &
+# endif
+     &                             EXTRACT(ng) % latr,                  &
+     &                             SetFillVal = .FALSE.,                &
+     &                             ExtractField = -1)
+                IF (FoundError(status, nf90_noerr,                      &
+     &                         __LINE__, MyFile)) THEN
+                  IF (Master) WRITE (stdout,10) TRIM(Vname(1,idLatR)),  &
+     &                                          TRIM(ncname)
+                  exit_flag=3
+                  ioerror=status
+                END IF
+              ELSE
+                IF (Master) WRITE (stdout,20) TRIM(Vname(1,idLatR)),    &
+     &                                        TRIM(ncname)
+                exit_flag=3
+                ioerror=nf90_enotvar
+              END IF
+#endif
 #ifdef STATIONS
-            ELSE
+            ELSE IF (ncid.eq.STA(ng)%ncid) THEN
               CALL extract_sta2d (ng, model, Cgrid, ifield, r2dvar,     &
      &                            LBi, UBi, LBj, UBj,                   &
      &                            scale, GRID(ng)%latr,                 &
@@ -1701,7 +1897,8 @@
         IF (.not.spherical) THEN
           IF (exit_flag.eq.NoError) THEN
             scale=1.0_dp
-            IF (ncid.ne.STA(ng)%ncid) THEN
+            IF ((ncid.ne.STA(ng)%ncid).and.                             &
+     &          (ncid.ne.XTR(ng)%ncid)) THEN
               IF (find_string(var_name, n_var, TRIM(Vname(1,idXgrR)),   &
      &                        varid)) THEN
                 status=nf_fwrite2d(ng, model, ncid, idXgrR,             &
@@ -1725,8 +1922,35 @@
                 exit_flag=3
                 ioerror=nf90_enotvar
               END IF
+#ifdef GRID_EXTRACT
+            ELSE IF (ncid.eq.XTR(ng)%ncid) THEN
+              IF (find_string(var_name, n_var, TRIM(Vname(1,idXgrR)),   &
+     &                        varid)) THEN
+                status=nf_fwrite2d(ng, model, ncid, idXgrR,             &
+     &                             varid, 0, r2dvar,                    &
+     &                             LBi, UBi, LBj, UBj, scale,           &
+# ifdef MASKING
+     &                             EXTRACT(ng) % rmask,                 &
+# endif
+     &                             EXTRACT(ng) % xr,                    &
+     &                             SetFillVal = .FALSE.,                &
+     &                             ExtractField = -1)
+                IF (FoundError(status, nf90_noerr,                      &
+     &                         __LINE__, MyFile)) THEN
+                  IF (Master) WRITE (stdout,10) TRIM(Vname(1,idXgrR)),  &
+     &                                          TRIM(ncname)
+                  exit_flag=3
+                  ioerror=status
+                END IF
+              ELSE
+                IF (Master) WRITE (stdout,20) TRIM(Vname(1,idXgrR)),    &
+     &                                        TRIM(ncname)
+                exit_flag=3
+                ioerror=nf90_enotvar
+              END IF
+#endif
 #ifdef STATIONS
-            ELSE
+            ELSE IF (ncid.eq.STA(ng)%ncid) THEN
               CALL extract_sta2d (ng, model, Cgrid, ifield, r2dvar,     &
      &                            LBi, UBi, LBj, UBj,                   &
      &                            scale, GRID(ng)%xr,                   &
@@ -1743,7 +1967,8 @@
 !
           IF (exit_flag.eq.NoError) THEN
             scale=1.0_dp
-            IF (ncid.ne.STA(ng)%ncid) THEN
+            IF ((ncid.ne.STA(ng)%ncid).and.                             &
+     &          (ncid.ne.XTR(ng)%ncid)) THEN
               IF (find_string(var_name, n_var, TRIM(Vname(1,idYgrR)),   &
      &                        varid)) THEN
                 status=nf_fwrite2d(ng, model, ncid, idYgrR,             &
@@ -1767,8 +1992,35 @@
                 exit_flag=3
                 ioerror=nf90_enotvar
               END IF
+#ifdef GRID_EXTRACT
+            ELSE IF (ncid.eq.XTR(ng)%ncid) THEN
+              IF (find_string(var_name, n_var, TRIM(Vname(1,idYgrR)),   &
+     &                        varid)) THEN
+                status=nf_fwrite2d(ng, model, ncid, idYgrR,             &
+     &                             varid, 0, r2dvar,                    &
+     &                             LBi, UBi, LBj, UBj, scale,           &
+# ifdef MASKING
+     &                             EXTRACT(ng) % rmask,                 &
+# endif
+     &                             EXTRACT(ng) % yr,                    &
+     &                             SetFillVal = .FALSE.,                &
+     &                             ExtractField = -1)
+                IF (FoundError(status, nf90_noerr,                      &
+     &                         __LINE__, MyFile)) THEN
+                  IF (Master) WRITE (stdout,10) TRIM(Vname(1,idYgrR)),  &
+     &                                          TRIM(ncname)
+                  exit_flag=3
+                  ioerror=status
+                END IF
+              ELSE
+                IF (Master) WRITE (stdout,20) TRIM(Vname(1,idYgrR)),    &
+     &                                        TRIM(ncname)
+                exit_flag=3
+                ioerror=nf90_enotvar
+              END IF
+#endif
 #ifdef STATIONS
-            ELSE
+            ELSE IF (ncid.eq.STA(ng)%ncid) THEN
               CALL extract_sta2d (ng, model, Cgrid, ifield, r2dvar,     &
      &                            LBi, UBi, LBj, UBj,                   &
      &                            scale, GRID(ng)%yr,                   &
@@ -1788,7 +2040,8 @@
 !
         IF (spherical) THEN
           IF (exit_flag.eq.NoError) THEN
-            IF (ncid.ne.STA(ng)%ncid) THEN
+            IF ((ncid.ne.STA(ng)%ncid).and.                             &
+     &          (ncid.ne.XTR(ng)%ncid)) THEN
               scale=1.0_dp
               IF (find_string(var_name, n_var, TRIM(Vname(1,idLonU)),   &
      &                        varid)) THEN
@@ -1813,11 +2066,40 @@
                 exit_flag=3
                 ioerror=nf90_enotvar
               END IF
+#ifdef GRID_EXTRACT
+            ELSE IF (ncid.eq.XTR(ng)%ncid) THEN
+              scale=1.0_dp
+              IF (find_string(var_name, n_var, TRIM(Vname(1,idLonU)),   &
+     &                        varid)) THEN
+                status=nf_fwrite2d(ng, model, ncid, idLonU,             &
+     &                             varid, 0, u2dvar,                    &
+     &                             LBi, UBi, LBj, UBj, scale,           &
+# ifdef MASKING
+     &                             EXTRACT(ng) % umask,                 &
+# endif
+     &                             EXTRACT(ng) % lonu,                  &
+     &                             SetFillVal = .FALSE.,                &
+     &                             ExtractField = -1)
+                IF (FoundError(status, nf90_noerr,                      &
+     &                         __LINE__, MyFile)) THEN
+                  IF (Master) WRITE (stdout,10) TRIM(Vname(1,idLonU)),  &
+     &                                          TRIM(ncname)
+                  exit_flag=3
+                  ioerror=status
+                END IF
+              ELSE
+                IF (Master) WRITE (stdout,20) TRIM(Vname(1,idLonU)),    &
+     &                                        TRIM(ncname)
+                exit_flag=3
+                ioerror=nf90_enotvar
+              END IF
+#endif
             END IF
           END IF
 !
           IF (exit_flag.eq.NoError) THEN
-            IF (ncid.ne.STA(ng)%ncid) THEN
+            IF ((ncid.ne.STA(ng)%ncid).and.                             &
+     &          (ncid.ne.XTR(ng)%ncid)) THEN
               scale=1.0_dp
               IF (find_string(var_name, n_var, TRIM(Vname(1,idLatU)),   &
      &                        varid)) THEN
@@ -1842,13 +2124,42 @@
                 exit_flag=3
                 ioerror=nf90_enotvar
               END IF
+#ifdef GRID_EXTRACT
+            ELSE IF (ncid.eq.XTR(ng)%ncid) THEN
+              scale=1.0_dp
+              IF (find_string(var_name, n_var, TRIM(Vname(1,idLatU)),   &
+     &                        varid)) THEN
+                status=nf_fwrite2d(ng, model, ncid, idLatU,             &
+     &                             varid, 0, u2dvar,                    &
+     &                             LBi, UBi, LBj, UBj, scale,           &
+# ifdef MASKING
+     &                             EXTRACT(ng) % umask,                 &
+# endif
+     &                             EXTRACT(ng) % latu,                  &
+     &                             SetFillVal = .FALSE.,                &
+     &                             ExtractField = -1)
+                IF (FoundError(status, nf90_noerr,                      &
+     &                         __LINE__, MyFile)) THEN
+                  IF (Master) WRITE (stdout,10) TRIM(Vname(1,idLatU)),  &
+     &                                          TRIM(ncname)
+                  exit_flag=3
+                  ioerror=status
+                END IF
+              ELSE
+                IF (Master) WRITE (stdout,20) TRIM(Vname(1,idLatU)),    &
+     &                                        TRIM(ncname)
+                exit_flag=3
+                ioerror=nf90_enotvar
+              END IF
+#endif
             END IF
           END IF
         END IF
 !
         IF (.not.spherical) THEN
           IF (exit_flag.eq.NoError) THEN
-            IF (ncid.ne.STA(ng)%ncid) THEN
+            IF ((ncid.ne.STA(ng)%ncid).and.                             &
+     &          (ncid.ne.XTR(ng)%ncid)) THEN
               scale=1.0_dp
               IF (find_string(var_name, n_var, TRIM(Vname(1,idXgrU)),   &
      &                        varid)) THEN
@@ -1873,11 +2184,40 @@
                 exit_flag=3
                 ioerror=nf90_enotvar
               END IF
+#ifdef GRID_EXTRACT
+            ELSE IF (ncid.eq.XTR(ng)%ncid) THEN
+              scale=1.0_dp
+              IF (find_string(var_name, n_var, TRIM(Vname(1,idXgrU)),   &
+     &                        varid)) THEN
+                status=nf_fwrite2d(ng, model, ncid, idXgrU,             &
+     &                             varid, 0, u2dvar,                    &
+     &                             LBi, UBi, LBj, UBj, scale,           &
+# ifdef MASKING
+     &                             EXTRACT(ng) % umask,                 &
+# endif
+     &                             EXTRACT(ng) % xu,                    &
+     &                             SetFillVal = .FALSE.,                &
+     &                             ExtractField = -1)
+                IF (FoundError(status, nf90_noerr,                      &
+     &                         __LINE__, MyFile)) THEN
+                  IF (Master) WRITE (stdout,10) TRIM(Vname(1,idXgrU)),  &
+     &                                          TRIM(ncname)
+                  exit_flag=3
+                  ioerror=status
+                END IF
+              ELSE
+                IF (Master) WRITE (stdout,20) TRIM(Vname(1,idXgrU)),    &
+     &                                        TRIM(ncname)
+                exit_flag=3
+                ioerror=nf90_enotvar
+              END IF
+#endif
             END IF
           END IF
 !
           IF (exit_flag.eq.NoError) THEN
-            IF (ncid.ne.STA(ng)%ncid) THEN
+            IF ((ncid.ne.STA(ng)%ncid).and.                             &
+     &          (ncid.ne.XTR(ng)%ncid)) THEN
               scale=1.0_dp
               IF (find_string(var_name, n_var, TRIM(Vname(1,idYgrU)),   &
      &                        varid)) THEN
@@ -1902,6 +2242,34 @@
                 exit_flag=3
                 ioerror=nf90_enotvar
               END IF
+#ifdef GRID_EXTRACT
+            ELSE IF (ncid.eq.XTR(ng)%ncid) THEN
+              scale=1.0_dp
+              IF (find_string(var_name, n_var, TRIM(Vname(1,idYgrU)),   &
+     &                        varid)) THEN
+                status=nf_fwrite2d(ng, model, ncid, idYgrU,             &
+     &                             varid, 0, u2dvar,                    &
+     &                             LBi, UBi, LBj, UBj, scale,           &
+# ifdef MASKING
+     &                             EXTRACT(ng) % umask,                 &
+# endif
+     &                             EXTRACT(ng) % yu,                    &
+     &                             SetFillVal = .FALSE.,                &
+     &                             ExtractField = -1)
+                IF (FoundError(status, nf90_noerr,                      &
+     &                         __LINE__, MyFile)) THEN
+                  IF (Master) WRITE (stdout,10) TRIM(Vname(1,idYgrU)),  &
+     &                                          TRIM(ncname)
+                  exit_flag=3
+                  ioerror=status
+                END IF
+              ELSE
+                IF (Master) WRITE (stdout,20) TRIM(Vname(1,idYgrU)),    &
+     &                                        TRIM(ncname)
+                exit_flag=3
+                ioerror=nf90_enotvar
+              END IF
+#endif
             END IF
           END IF
         END IF
@@ -1910,7 +2278,8 @@
 !
         IF (spherical) THEN
           IF (exit_flag.eq.NoError) THEN
-            IF (ncid.ne.STA(ng)%ncid) THEN
+            IF ((ncid.ne.STA(ng)%ncid).and.                             &
+     &          (ncid.ne.XTR(ng)%ncid)) THEN
               scale=1.0_dp
               IF (find_string(var_name, n_var, TRIM(Vname(1,idLonV)),   &
      &                        varid)) THEN
@@ -1935,11 +2304,40 @@
                 exit_flag=3
                 ioerror=nf90_enotvar
               END IF
+#ifdef GRID_EXTRACT
+            ELSE IF (ncid.eq.XTR(ng)%ncid) THEN
+              scale=1.0_dp
+              IF (find_string(var_name, n_var, TRIM(Vname(1,idLonV)),   &
+     &                        varid)) THEN
+                status=nf_fwrite2d(ng, model, ncid, idLonV,             &
+     &                             varid, 0, v2dvar,                    &
+     &                             LBi, UBi, LBj, UBj, scale,           &
+# ifdef MASKING
+     &                             EXTRACT(ng) % vmask,                 &
+# endif
+     &                             EXTRACT(ng) % lonv,                  &
+     &                             SetFillVal = .FALSE.,                &
+     &                             ExtractField = -1)
+                IF (FoundError(status, nf90_noerr,                      &
+     &                         __LINE__, MyFile)) THEN
+                  IF (Master) WRITE (stdout,10) TRIM(Vname(1,idLonV)),  &
+     &                                          TRIM(ncname)
+                  exit_flag=3
+                  ioerror=status
+                END IF
+              ELSE
+                IF (Master) WRITE (stdout,10) TRIM(Vname(1,idLonV)),    &
+     &                                        TRIM(ncname)
+                exit_flag=3
+                ioerror=nf90_enotvar
+              END IF
+#endif
             END IF
           END IF
 !
           IF (exit_flag.eq.NoError) THEN
-            IF (ncid.ne.STA(ng)%ncid) THEN
+            IF ((ncid.ne.STA(ng)%ncid).and.                             &
+     &          (ncid.ne.XTR(ng)%ncid)) THEN
               scale=1.0_dp
               IF (find_string(var_name, n_var, TRIM(Vname(1,idLatV)),   &
      &                        varid)) THEN
@@ -1964,13 +2362,42 @@
                 exit_flag=3
                 ioerror=nf90_enotvar
               END IF
+#ifdef GRID_EXTRACT
+            ELSE IF (ncid.eq.XTR(ng)%ncid) THEN
+              scale=1.0_dp
+              IF (find_string(var_name, n_var, TRIM(Vname(1,idLatV)),   &
+     &                        varid)) THEN
+                status=nf_fwrite2d(ng, model, ncid, idLatV,             &
+     &                             varid, 0, v2dvar,                    &
+     &                             LBi, UBi, LBj, UBj, scale,           &
+# ifdef MASKING
+     &                             EXTRACT(ng) % vmask,                 &
+# endif
+     &                             EXTRACT(ng) % latv,                  &
+     &                             SetFillVal = .FALSE.,                &
+     &                             ExtractField = -1)
+                IF (FoundError(status, nf90_noerr,                      &
+     &                         __LINE__, MyFile)) THEN
+                  IF (Master) WRITE (stdout,10) TRIM(Vname(1,idLatV)),  &
+     &                                          TRIM(ncname)
+                  exit_flag=3
+                  ioerror=status
+                END IF
+              ELSE
+                IF (Master) WRITE (stdout,20) TRIM(Vname(1,idLatV)),    &
+     &                                        TRIM(ncname)
+                exit_flag=3
+                ioerror=nf90_enotvar
+              END IF
+#endif
             END IF
           END IF
         END IF
 !
         IF (.not.spherical) THEN
           IF (exit_flag.eq.NoError) THEN
-            IF (ncid.ne.STA(ng)%ncid) THEN
+            IF ((ncid.ne.STA(ng)%ncid).and.                             &
+     &          (ncid.ne.XTR(ng)%ncid)) THEN
               scale=1.0_dp
               IF (find_string(var_name, n_var, TRIM(Vname(1,idXgrV)),   &
      &                        varid)) THEN
@@ -1995,11 +2422,40 @@
                 exit_flag=3
                 ioerror=nf90_enotvar
               END IF
+#ifdef GRID_EXTRACT
+            ELSE IF (ncid.eq.XTR(ng)%ncid) THEN
+              scale=1.0_dp
+              IF (find_string(var_name, n_var, TRIM(Vname(1,idXgrV)),   &
+     &                        varid)) THEN
+                status=nf_fwrite2d(ng, model, ncid, idXgrV,             &
+     &                             varid, 0, v2dvar,                    &
+     &                             LBi, UBi, LBj, UBj, scale,           &
+# ifdef MASKING
+     &                             EXTRACT(ng) % vmask,                 &
+# endif
+     &                             EXTRACT(ng) % xv,                    &
+     &                             SetFillVal = .FALSE.,                &
+     &                             ExtractField = -1)
+                IF (FoundError(status, nf90_noerr,                      &
+     &                         __LINE__, MyFile)) THEN
+                  IF (Master) WRITE (stdout,10) TRIM(Vname(1,idXgrV)),  &
+     &                                          TRIM(ncname)
+                  exit_flag=3
+                  ioerror=status
+                END IF
+              ELSE
+                IF (Master) WRITE (stdout,10) TRIM(Vname(1,idXgrV)),    &
+     &                                        TRIM(ncname)
+                exit_flag=3
+                ioerror=nf90_enotvar
+              END IF
+#endif
             END IF
           END IF
 !
           IF (exit_flag.eq.NoError) THEN
-            IF (ncid.ne.STA(ng)%ncid) THEN
+            IF ((ncid.ne.STA(ng)%ncid).and.                             &
+     &          (ncid.ne.XTR(ng)%ncid)) THEN
               scale=1.0_dp
               IF (find_string(var_name, n_var, TRIM(Vname(1,idYgrV)),   &
      &                        varid)) THEN
@@ -2024,6 +2480,34 @@
                 exit_flag=3
                 ioerror=nf90_enotvar
               END IF
+#ifdef GRID_EXTRACT
+            ELSE IF (ncid.eq.XTR(ng)%ncid) THEN
+              scale=1.0_dp
+              IF (find_string(var_name, n_var, TRIM(Vname(1,idYgrV)),   &
+     &                        varid)) THEN
+                status=nf_fwrite2d(ng, model, ncid, idYgrV,             &
+     &                             varid, 0, v2dvar,                    &
+     &                             LBi, UBi, LBj, UBj, scale,           &
+# ifdef MASKING
+     &                             EXTRACT(ng) % vmask,                 &
+# endif
+     &                             EXTRACT(ng) % yv,                    &
+     &                             SetFillVal = .FALSE.,                &
+     &                             ExtractField = -1)
+                IF (FoundError(status, nf90_noerr,                      &
+     &                         __LINE__, MyFile)) THEN
+                  IF (Master) WRITE (stdout,10) TRIM(Vname(1,idYgrV)),  &
+     &                                          TRIM(ncname)
+                  exit_flag=3
+                  ioerror=status
+                END IF
+              ELSE
+                IF (Master) WRITE (stdout,20) TRIM(Vname(1,idYgrV)),    &
+     &                                        TRIM(ncname)
+                exit_flag=3
+                ioerror=nf90_enotvar
+              END IF
+#endif
             END IF
           END IF
         END IF
@@ -2032,7 +2516,8 @@
 !
         IF (spherical) THEN
           IF (exit_flag.eq.NoError) THEN
-            IF (ncid.ne.STA(ng)%ncid) THEN
+            IF ((ncid.ne.STA(ng)%ncid).and.                             &
+     &          (ncid.ne.XTR(ng)%ncid)) THEN
               scale=1.0_dp
               IF (find_string(var_name, n_var, TRIM(Vname(1,idLonP)),   &
      &                        varid)) THEN
@@ -2057,11 +2542,40 @@
                 exit_flag=3
                 ioerror=nf90_enotvar
               END IF
+#ifdef GRID_EXTRACT
+            ELSE IF (ncid.eq.XTR(ng)%ncid) THEN
+              scale=1.0_dp
+              IF (find_string(var_name, n_var, TRIM(Vname(1,idLonP)),   &
+     &                        varid)) THEN
+                status=nf_fwrite2d(ng, model, ncid, idLonP,             &
+     &                             varid, 0, p2dvar,                    &
+     &                             LBi, UBi, LBj, UBj, scale,           &
+# ifdef MASKING
+     &                             EXTRACT(ng) % pmask,                 &
+# endif
+     &                             EXTRACT(ng) % lonp,                  &
+     &                             SetFillVal = .FALSE.,                &
+     &                             ExtractField = -1)
+                IF (FoundError(status, nf90_noerr,                      &
+     &                         __LINE__, MyFile)) THEN
+                  IF (Master) WRITE (stdout,10) TRIM(Vname(1,idLonP)),  &
+     &                                          TRIM(ncname)
+                  exit_flag=3
+                  ioerror=status
+                END IF
+              ELSE
+                IF (Master) WRITE (stdout,20) TRIM(Vname(1,idLonP)),    &
+     &                                        TRIM(ncname)
+                exit_flag=3
+                ioerror=nf90_enotvar
+              END IF
+#endif
             END IF
           END IF
 
           IF (exit_flag.eq.NoError) THEN
-            IF (ncid.ne.STA(ng)%ncid) THEN
+            IF ((ncid.ne.STA(ng)%ncid).and.                             &
+     &          (ncid.ne.XTR(ng)%ncid)) THEN
               scale=1.0_dp
               IF (find_string(var_name, n_var, TRIM(Vname(1,idLatP)),   &
      &                        varid)) THEN
@@ -2086,13 +2600,42 @@
                 exit_flag=3
                 ioerror=nf90_enotvar
               END IF
+#ifdef GRID_EXTRACT
+            ELSE IF (ncid.eq.XTR(ng)%ncid) THEN
+              scale=1.0_dp
+              IF (find_string(var_name, n_var, TRIM(Vname(1,idLatP)),   &
+     &                        varid)) THEN
+                status=nf_fwrite2d(ng, model, ncid, idLatP,             &
+     &                             varid, 0, p2dvar,                    &
+     &                             LBi, UBi, LBj, UBj, scale,           &
+# ifdef MASKING
+     &                             EXTRACT(ng) % pmask,                 &
+# endif
+     &                             EXTRACT(ng) % latp,                  &
+     &                             SetFillVal = .FALSE.,                &
+     &                             ExtractField = -1)
+                IF (FoundError(status, nf90_noerr,                      &
+     &                         __LINE__, MyFile)) THEN
+                  IF (Master) WRITE (stdout,10) TRIM(Vname(1,idLatP)),  &
+     &                                          TRIM(ncname)
+                  exit_flag=3
+                  ioerror=status
+                END IF
+              ELSE
+                IF (Master) WRITE (stdout,20) TRIM(Vname(1,idLatP)),    &
+     &                                        TRIM(ncname)
+                exit_flag=3
+                ioerror=nf90_enotvar
+              END IF
+#endif
             END IF
           END IF
         END IF
 !
         IF (.not.spherical) THEN
           IF (exit_flag.eq.NoError) THEN
-            IF (ncid.ne.STA(ng)%ncid) THEN
+            IF ((ncid.ne.STA(ng)%ncid).and.                             &
+     &          (ncid.ne.XTR(ng)%ncid)) THEN
               scale=1.0_dp
               IF (find_string(var_name, n_var, TRIM(Vname(1,idXgrP)),   &
      &                        varid)) THEN
@@ -2117,11 +2660,40 @@
                 exit_flag=3
                 ioerror=nf90_enotvar
               END IF
+#ifdef GRID_EXTRACT
+            ELSE IF (ncid.eq.XTR(ng)%ncid) THEN
+              scale=1.0_dp
+              IF (find_string(var_name, n_var, TRIM(Vname(1,idXgrP)),   &
+     &                        varid)) THEN
+                status=nf_fwrite2d(ng, model, ncid, idXgrP,             &
+     &                             varid, 0, p2dvar,                    &
+     &                             LBi, UBi, LBj, UBj, scale,           &
+# ifdef MASKING
+     &                             EXTRACT(ng) % pmask,                 &
+# endif
+     &                             EXTRACT(ng) % xp,                    &
+     &                             SetFillVal = .FALSE.,                &
+     &                             ExtractField = -1)
+                IF (FoundError(status, nf90_noerr,                      &
+     &                         __LINE__, MyFile)) THEN
+                  IF (Master) WRITE (stdout,10) TRIM(Vname(1,idXgrP)),  &
+     &                                          TRIM(ncname)
+                  exit_flag=3
+                  ioerror=status
+                END IF
+              ELSE
+                IF (Master) WRITE (stdout,20) TRIM(Vname(1,idXgrP)),    &
+     &                                        TRIM(ncname)
+                exit_flag=3
+                ioerror=nf90_enotvar
+              END IF
+#endif
             END IF
           END IF
 !
           IF (exit_flag.eq.NoError) THEN
-            IF (ncid.ne.STA(ng)%ncid) THEN
+            IF ((ncid.ne.STA(ng)%ncid).and.                             &
+     &          (ncid.ne.XTR(ng)%ncid)) THEN
               scale=1.0_dp
               IF (find_string(var_name, n_var, TRIM(Vname(1,idYgrP)),   &
      &                        varid)) THEN
@@ -2146,6 +2718,34 @@
                 exit_flag=3
                 ioerror=nf90_enotvar
               END IF
+#ifdef GRID_EXTRACT
+            ELSE IF (ncid.eq.XTR(ng)%ncid) THEN
+              scale=1.0_dp
+              IF (find_string(var_name, n_var, TRIM(Vname(1,idYgrP)),   &
+     &                        varid)) THEN
+                status=nf_fwrite2d(ng, model, ncid, idYgrP,             &
+     &                             varid, 0, p2dvar,                    &
+     &                             LBi, UBi, LBj, UBj, scale,           &
+# ifdef MASKING
+     &                             EXTRACT(ng) % pmask,                 &
+# endif
+     &                             EXTRACT(ng) % yp,                    &
+     &                             SetFillVal = .FALSE.,                &
+     &                             ExtractField = -1)
+                IF (FoundError(status, nf90_noerr,                      &
+     &                         __LINE__, MyFile)) THEN
+                  IF (Master) WRITE (stdout,10) TRIM(Vname(1,idYgrP)),  &
+     &                                          TRIM(ncname)
+                  exit_flag=3
+                  ioerror=status
+                END IF
+              ELSE
+                IF (Master) WRITE (stdout,20) TRIM(Vname(1,idYgrP)),    &
+     &                                        TRIM(ncname)
+                exit_flag=3
+                ioerror=nf90_enotvar
+              END IF
+#endif
             END IF
           END IF
         END IF
@@ -2156,7 +2756,8 @@
 !
         IF (exit_flag.eq.NoError) THEN
           scale=1.0_dp
-          IF (ncid.ne.STA(ng)%ncid) THEN
+          IF ((ncid.ne.STA(ng)%ncid).and.                               &
+     &        (ncid.ne.XTR(ng)%ncid)) THEN
             IF (find_string(var_name, n_var, TRIM(Vname(1,idangR)),     &
      &                      varid)) THEN
               status=nf_fwrite2d(ng, model, ncid, idangR,               &
@@ -2179,8 +2780,34 @@
               exit_flag=3
               ioerror=nf90_enotvar
             END IF
+# ifdef GRID_EXTRACT
+          ELSE IF (ncid.eq.XTR(ng)%ncid) THEN
+            IF (find_string(var_name, n_var, TRIM(Vname(1,idangR)),     &
+     &                      varid)) THEN
+              status=nf_fwrite2d(ng, model, ncid, idangR,               &
+     &                           varid, 0, r2dvar,                      &
+     &                           LBi, UBi, LBj, UBj, scale,             &
+#  ifdef MASKING
+     &                           EXTRACT(ng) % rmask,                   &
+#  endif
+     &                           EXTRACT(ng) % angler,                  &
+     &                           SetFillVal = .FALSE.,                  &
+     &                           ExtractField = -1)
+              IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+                IF (Master) WRITE (stdout,10) TRIM(Vname(1,idangR)),    &
+     &                                        TRIM(ncname)
+                exit_flag=3
+                ioerror=status
+              END IF
+            ELSE
+              IF (Master) WRITE (stdout,20) TRIM(Vname(1,idangR)),      &
+     &                                      TRIM(ncname)
+              exit_flag=3
+              ioerror=nf90_enotvar
+            END IF
+# endif
 # ifdef STATIONS
-          ELSE
+          ELSE IF (ncid.eq.STA(ng)%ncid) THEN
             CALL extract_sta2d (ng, model, Cgrid, ifield, r2dvar,       &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          scale, GRID(ng)%angler,                 &
@@ -2200,7 +2827,8 @@
 !  Masking fields at RHO-, U-, V-points, and PSI-points.
 !
         IF (exit_flag.eq.NoError) THEN
-          IF (ncid.ne.STA(ng)%ncid) THEN
+          IF ((ncid.ne.STA(ng)%ncid).and.                               &
+     &        (ncid.ne.XTR(ng)%ncid)) THEN
             scale=1.0_dp
             IF (find_string(var_name, n_var, TRIM(Vname(1,idmskR)),     &
      &                      varid)) THEN
@@ -2222,11 +2850,37 @@
               exit_flag=3
               ioerror=nf90_enotvar
             END IF
+# ifdef GRID_EXTRACT
+          ELSE IF (ncid.eq.XTR(ng)%ncid) THEN
+            scale=1.0_dp
+            IF (find_string(var_name, n_var, TRIM(Vname(1,idmskR)),     &
+     &                      varid)) THEN
+              status=nf_fwrite2d(ng, model, ncid, idmskR,               &
+     &                           varid, 0, r2dvar,                      &
+     &                           LBi, UBi, LBj, UBj, scale,             &
+     &                           EXTRACT(ng) % rmask,                   &
+     &                           EXTRACT(ng) % rmask,                   &
+     &                           SetFillVal = .FALSE.,                  &
+     &                           ExtractField = -1)
+              IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+                IF (Master) WRITE (stdout,10) TRIM(Vname(1,idmskR)),    &
+     &                                        TRIM(ncname)
+                exit_flag=3
+                ioerror=status
+              END IF
+            ELSE
+              IF (Master) WRITE (stdout,20) TRIM(Vname(1,idmskR)),      &
+     &                                      TRIM(ncname)
+              exit_flag=3
+              ioerror=nf90_enotvar
+            END IF
+# endif
           END IF
         END IF
 !
         IF (exit_flag.eq.NoError) THEN
-          IF (ncid.ne.STA(ng)%ncid) THEN
+          IF ((ncid.ne.STA(ng)%ncid).and.                               &
+     &        (ncid.ne.XTR(ng)%ncid)) THEN
             scale=1.0_dp
             IF (find_string(var_name, n_var, TRIM(Vname(1,idmskU)),     &
      &                      varid)) THEN
@@ -2248,11 +2902,37 @@
               exit_flag=3
               ioerror=nf90_enotvar
             END IF
+# ifdef GRID_EXTRACT
+          ELSE IF (ncid.eq.XTR(ng)%ncid) THEN
+            scale=1.0_dp
+            IF (find_string(var_name, n_var, TRIM(Vname(1,idmskU)),     &
+     &                      varid)) THEN
+              status=nf_fwrite2d(ng, model, ncid, idmskU,               &
+     &                           varid, 0, u2dvar,                      &
+     &                           LBi, UBi, LBj, UBj, scale,             &
+     &                           EXTRACT(ng) % umask,                   &
+     &                           EXTRACT(ng) % umask,                   &
+     &                           SetFillVal = .FALSE.,                  &
+     &                           ExtractField = -1)
+              IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+                IF (Master) WRITE (stdout,10) TRIM(Vname(1,idmskU)),    &
+     &                                        TRIM(ncname)
+                exit_flag=3
+                ioerror=status
+              END IF
+            ELSE
+              IF (Master) WRITE (stdout,20) TRIM(Vname(1,idmskU)),      &
+     &                                      TRIM(ncname)
+              exit_flag=3
+              ioerror=nf90_enotvar
+            END IF
+# endif
           END IF
         END IF
 !
         IF (exit_flag.eq.NoError) THEN
-          IF (ncid.ne.STA(ng)%ncid) THEN
+          IF ((ncid.ne.STA(ng)%ncid).and.                               &
+     &        (ncid.ne.XTR(ng)%ncid)) THEN
             scale=1.0_dp
             IF (find_string(var_name, n_var, TRIM(Vname(1,idmskV)),     &
      &                      varid)) THEN
@@ -2274,11 +2954,37 @@
               exit_flag=3
               ioerror=nf90_enotvar
             END IF
+# ifdef GRID_EXTRACT
+          ELSE IF (ncid.eq.XTR(ng)%ncid) THEN
+            scale=1.0_dp
+            IF (find_string(var_name, n_var, TRIM(Vname(1,idmskV)),     &
+     &                      varid)) THEN
+              status=nf_fwrite2d(ng, model, ncid, idmskV,               &
+     &                           varid, 0, v2dvar,                      &
+     &                           LBi, UBi, LBj, UBj, scale,             &
+     &                           EXTRACT(ng) % vmask,                   &
+     &                           EXTRACT(ng) % vmask,                   &
+     &                           SetFillVal = .FALSE.,                  &
+     &                           ExtractField = -1)
+              IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+                IF (Master) WRITE (stdout,10) TRIM(Vname(1,idmskV)),    &
+     &                                        TRIM(ncname)
+                exit_flag=3
+                ioerror=status
+              END IF
+            ELSE
+              IF (Master) WRITE (stdout,20) TRIM(Vname(1,idmskV)),      &
+     &                                      TRIM(ncname)
+              exit_flag=3
+              ioerror=nf90_enotvar
+            END IF
+# endif
           END IF
         END IF
 !
         IF (exit_flag.eq.NoError) THEN
-          IF (ncid.ne.STA(ng)%ncid) THEN
+          IF ((ncid.ne.STA(ng)%ncid).and.                               &
+     &        (ncid.ne.XTR(ng)%ncid)) THEN
             scale=1.0_dp
             IF (find_string(var_name, n_var, TRIM(Vname(1,idmskP)),     &
      &                      varid)) THEN
@@ -2300,6 +3006,31 @@
               exit_flag=3
               ioerror=nf90_enotvar
             END IF
+# ifdef GRID_EXTRACT
+          ELSE IF (ncid.eq.XTR(ng)%ncid) THEN
+            scale=1.0_dp
+            IF (find_string(var_name, n_var, TRIM(Vname(1,idmskP)),     &
+     &                      varid)) THEN
+              status=nf_fwrite2d(ng, model, ncid, idmskP,               &
+     &                           varid, 0, p2dvar,                      &
+     &                           LBi, UBi, LBj, UBj, scale,             &
+     &                           EXTRACT(ng) % pmask,                   &
+     &                           EXTRACT(ng) % pmask,                   &
+     &                           SetFillVal = .FALSE.,                  &
+     &                           ExtractField = -1)
+              IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+                IF (Master) WRITE (stdout,10) TRIM(Vname(1,idmskP)),    &
+     &                                        TRIM(ncname)
+                exit_flag=3
+                ioerror=status
+              END IF
+            ELSE
+              IF (Master) WRITE (stdout,20) TRIM(Vname(1,idmskP)),      &
+     &                                      TRIM(ncname)
+              exit_flag=3
+              ioerror=nf90_enotvar
+            END IF
+# endif
           END IF
         END IF
 #endif
@@ -2311,7 +3042,8 @@
 !  Adjoint sensitivity spatial scope mask at RHO-, U-, and V-points.
 !
         IF (exit_flag.eq.NoError) THEN
-          IF (ncid.ne.STA(ng)%ncid) THEN
+          IF ((ncid.ne.STA(ng)%ncid).and.                               &
+     &        (ncid.ne.XTR(ng)%ncid)) THEN
             scale=1.0_dp
             IF (find_string(var_name, n_var, TRIM(Vname(1,idscoR)),     &
      &                      varid)) THEN
@@ -2336,10 +3068,39 @@
               ioerror=nf90_enotvar
             END IF
           END IF
+# ifdef GRID_EXTRACT
+        ELSE IF (ncid.eq.XTR(ng)%ncid) THEN
+            scale=1.0_dp
+            IF (find_string(var_name, n_var, TRIM(Vname(1,idscoR)),     &
+     &                      varid)) THEN
+              status=nf_fwrite2d(ng, model, ncid, idscoR,               &
+     &                           varid, 0, r2dvar,                      &
+     &                           LBi, UBi, LBj, UBj, scale,             &
+#  ifdef MASKING
+     &                           EXTRACT(ng) % rmask,                   &
+#  endif
+     &                           EXTRACT(ng) % Rscope,                  &
+     &                           SetFillVal = .FALSE.,                  &
+     &                           ExtractField = -1)
+              IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+                IF (Master) WRITE (stdout,10) TRIM(Vname(1,idscoR)),    &
+     &                                        TRIM(ncname)
+                exit_flag=3
+                ioerror=status
+              END IF
+            ELSE
+              IF (Master) WRITE (stdout,20) TRIM(Vname(1,idscoR)),      &
+     &                                      TRIM(ncname)
+              exit_flag=3
+              ioerror=nf90_enotvar
+            END IF
+          END IF
+# endif
         END IF
 !
         IF (exit_flag.eq.NoError) THEN
-          IF (ncid.ne.STA(ng)%ncid) THEN
+          IF ((ncid.ne.STA(ng)%ncid).and.                               &
+     &        (ncid.ne.XTR(ng)%ncid)) THEN
             scale=1.0_dp
             IF (find_string(var_name, n_var, TRIM(Vname(1,idscoU)),     &
      &                      varid)) THEN
@@ -2364,10 +3125,39 @@
               ioerror=nf90_enotvar
             END IF
           END IF
+# ifdef GRID_EXTRACT
+        ELSE IF (ncid.eq.XTR(ng)%ncid) THEN
+            scale=1.0_dp
+            IF (find_string(var_name, n_var, TRIM(Vname(1,idscoU)),     &
+     &                      varid)) THEN
+              status=nf_fwrite2d(ng, model, ncid, idscoU,               &
+     &                           varid, 0, u2dvar,                      &
+     &                           LBi, UBi, LBj, UBj, scale,             &
+#  ifdef MASKING
+     &                           EXTRACT(ng) % umask,                   &
+#  endif
+     &                           EXTRACT(ng) % Uscope,                  &
+     &                           SetFillVal = .FALSE.,                  &
+     &                           ExtractField = -1)
+              IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+                IF (Master) WRITE (stdout,10) TRIM(Vname(1,idscoU)),    &
+     &                                        TRIM(ncname)
+                exit_flag=3
+                ioerror=status
+              END IF
+            ELSE
+              IF (Master) WRITE (stdout,20) TRIM(Vname(1,idscoU)),      &
+     &                                      TRIM(ncname)
+              exit_flag=3
+              ioerror=nf90_enotvar
+            END IF
+          END IF
+# endif
         END IF
 !
         IF (exit_flag.eq.NoError) THEN
-          IF (ncid.ne.STA(ng)%ncid) THEN
+          IF ((ncid.ne.STA(ng)%ncid).and.                               &
+     &        (ncid.ne.XTR(ng)%ncid)) THEN
             scale=1.0_dp
             IF (find_string(var_name, n_var, TRIM(Vname(1,idscoV)),     &
      &                      varid)) THEN
@@ -2392,6 +3182,34 @@
               ioerror=nf90_enotvar
             END IF
           END IF
+# ifdef GRID_EXTRACT
+        ELSE IF (ncid.eq.XTR(ng)%ncid) THEN
+            scale=1.0_dp
+            IF (find_string(var_name, n_var, TRIM(Vname(1,idscoV)),     &
+     &                      varid)) THEN
+              status=nf_fwrite2d(ng, model, ncid, idscoV,               &
+     &                           varid, 0, v2dvar,                      &
+     &                           LBi, UBi, LBj, UBj, scale,             &
+#  ifdef MASKING
+     &                           EXTRACT(ng) % vmask,                   &
+#  endif
+     &                           EXTRACT(ng) % Vscope,                  &
+     &                           SetFillVal = .FALSE.,                  &
+     &                           ExtractField = -1)
+              IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+                IF (Master) WRITE (stdout,10) TRIM(Vname(1,idscoV)),    &
+     &                                        TRIM(ncname)
+                exit_flag=3
+                ioerror=status
+              END IF
+            ELSE
+              IF (Master) WRITE (stdout,20) TRIM(Vname(1,idscoV)),      &
+     &                                      TRIM(ncname)
+              exit_flag=3
+              ioerror=nf90_enotvar
+            END IF
+          END IF
+# endif
         END IF
 #endif
 #ifdef UV_DRAG_GRID
@@ -2399,7 +3217,8 @@
 !  Spatially bottom friction parameter.
 !
         IF (exit_flag.eq.NoError) THEN
-          IF (ncid.ne.STA(ng)%ncid) THEN
+          IF ((ncid.ne.STA(ng)%ncid).and.                               &
+     &        (ncid.ne.XTR(ng)%ncid)) THEN
             scale=1.0_dp
 # if defined UV_LOGDRAG || defined BBL_MODEL
             IF (find_string(var_name, n_var, TRIM(Vname(1,idZoBL)),     &
@@ -2424,8 +3243,38 @@
               exit_flag=3
               ioerror=nf90_enotvar
             END IF
+#  ifdef GRID_EXTRACT
+          ELSE IF (ncid.eq.XTR(ng)%ncid) THEN
+            scale=1.0_dp
+            IF (find_string(var_name, n_var, TRIM(Vname(1,idZoBL)),     &
+     &                      varid)) THEN
+              status=nf_fwrite2d(ng, model, ncid, idZoBL,               &
+     &                           varid, 0, r2dvar,                      &
+     &                           LBi, UBi, LBj, UBj, scale,             &
+#   ifdef MASKING
+     &                           EXTRACT(ng) % rmask,                   &
+#   endif
+     &                           EXTRACT(ng) % ZoBot,                   &
+     &                           SetFillVal = .FALSE.,                  &
+     &                           ExtractField = -1)
+              IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+                IF (Master) WRITE (stdout,10) TRIM(Vname(1,idZoBL)),    &
+     &                                        TRIM(ncname)
+                exit_flag=3
+                ioerror=status
+              END IF
+            ELSE
+              IF (Master) WRITE (stdout,20) TRIM(Vname(1,idZoBL)),      &
+     &                                      TRIM(ncname)
+              exit_flag=3
+              ioerror=nf90_enotvar
+            END IF
+#  endif
+          END IF
 # endif
 # ifdef UV_LDRAG
+          IF ((ncid.ne.STA(ng)%ncid).and.                               &
+     &        (ncid.ne.XTR(ng)%ncid)) THEN
             IF (find_string(var_name, n_var, TRIM(Vname(1,idragL)),     &
      &                      varid)) THEN
               status=nf_fwrite2d(ng, model, ncid, idragL,               &
@@ -2448,8 +3297,37 @@
               exit_flag=3
               ioerror=nf90_enotvar
             END IF
+#  ifdef GRID_EXTRACT
+          ELSE IF (ncid.eq.XTR(ng)%ncid) THEN
+            IF (find_string(var_name, n_var, TRIM(Vname(1,idragL)),     &
+     &                      varid)) THEN
+              status=nf_fwrite2d(ng, model, ncid, idragL,               &
+     &                           varid, 0, r2dvar,                      &
+     &                           LBi, UBi, LBj, UBj, scale,             &
+#   ifdef MASKING
+     &                           EXTRACT(ng) % rmask,                   &
+#   endif
+     &                           EXTRACT(ng) % rdrag,                   &
+     &                           SetFillVal = .FALSE.,                  &
+     &                           ExtractField = -1)
+              IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+                IF (Master) WRITE (stdout,10) TRIM(Vname(1,idragL)),    &
+     &                                        TRIM(ncname)
+                exit_flag=3
+                ioerror=status
+              END IF
+            ELSE
+              IF (Master) WRITE (stdout,20) TRIM(Vname(1,idragL)),      &
+     &                                      TRIM(ncname)
+              exit_flag=3
+              ioerror=nf90_enotvar
+            END IF
+#  endif
+          END IF
 # endif
 # ifdef UV_QDRAG
+          IF ((ncid.ne.STA(ng)%ncid).and.                               &
+     &        (ncid.ne.XTR(ng)%ncid)) THEN
             IF (find_string(var_name, n_var, TRIM(Vname(1,idragQ)),     &
      &                      varid)) THEN
               status=nf_fwrite2d(ng, model, ncid, idragQ,               &
@@ -2472,8 +3350,34 @@
               exit_flag=3
               ioerror=nf90_enotvar
             END IF
-# endif
+#  ifdef GRID_EXTRACT
+          ELSE IF (ncid.eq.XTR(ng)%ncid) THEN
+            IF (find_string(var_name, n_var, TRIM(Vname(1,idragQ)),     &
+     &                      varid)) THEN
+              status=nf_fwrite2d(ng, model, ncid, idragQ,               &
+     &                           varid, 0, r2dvar,                      &
+     &                           LBi, UBi, LBj, UBj, scale,             &
+#   ifdef MASKING
+     &                           EXTRACT(ng) % rmask,                   &
+#   endif
+     &                           EXTRACT(ng) % rdrag2,                  &
+     &                           SetFillVal = .FALSE.,                  &
+     &                           ExtractField = -1)
+              IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+                IF (Master) WRITE (stdout,10) TRIM(Vname(1,idragQ)),    &
+     &                                        TRIM(ncname)
+                exit_flag=3
+                ioerror=status
+              END IF
+            ELSE
+              IF (Master) WRITE (stdout,20) TRIM(Vname(1,idragQ)),      &
+     &                                      TRIM(ncname)
+              exit_flag=3
+              ioerror=nf90_enotvar
+            END IF
+#  endif
           END IF
+# endif
         END IF
 #endif
       END IF GRID_VARS

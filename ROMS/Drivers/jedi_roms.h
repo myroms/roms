@@ -60,6 +60,7 @@
 #endif
       USE stiffness_mod,     ONLY : stiffness
       USE strings_mod,       ONLY : FoundError
+      USE stdout_mod,        ONLY : Set_StdOutUnit, stdout_unit
 #ifdef TANGENT
       USE tl_set_depth_mod,  ONLY : tl_bath
 #endif
@@ -142,6 +143,19 @@
 !  independent from standard input parameters.
 !
         CALL initialize_parallel
+!
+!  Set the ROMS standard output unit to write verbose execution info.
+!  Notice that the default standard out unit in Fortran is 6.
+!
+!  In some applications like coupling or disjointed mpi-communications,
+!  it is advantageous to write standard output to a specific filename
+!  instead of the default Fortran standard output unit 6. If that is
+!  the case, it opens such formatted file for writing.
+!
+        IF (Set_StdOutUnit) THEN
+          stdout=stdout_unit(Master)
+          Set_StdOutUnit=.FALSE.
+        END IF
 !
 !  Read in model tunable parameters from standard input. Allocate and
 !  initialize variables in several modules after the number of nested

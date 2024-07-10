@@ -28,6 +28,9 @@
 #ifdef TIDE_GENERATING_FORCES
       USE equilibrium_tide_mod, ONLY : harmonic_constituents
 #endif
+#ifdef GRID_EXTRACT
+      USE get_extract_mod,      ONLY : get_extract
+#endif
 #ifndef ANA_GRID
       USE get_grid_mod,         ONLY : get_grid
 #endif
@@ -84,6 +87,20 @@
 # endif
 !$OMP BARRIER
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+#endif
+
+#ifdef GRID_EXTRACT
+!
+!-----------------------------------------------------------------------
+!  Get grid geometry for field extraction through interpolation or
+!  decimation.
+!-----------------------------------------------------------------------
+!
+# ifdef DISTRIBUTE
+      CALL get_extract (ng, MyRank, model)
+# else
+      CALL get_extract (ng, -1, model)
+# endif
 #endif
 
 #ifdef SOLVE3D

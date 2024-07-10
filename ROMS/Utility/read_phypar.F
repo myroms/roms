@@ -732,6 +732,10 @@
               Npts=load_i(Nval, Rval, Ngrids, nHIS)
             CASE ('NDEFHIS')
               Npts=load_i(Nval, Rval, Ngrids, ndefHIS)
+            CASE ('NXTR')
+              Npts=load_i(Nval, Rval, Ngrids, nXTR)
+            CASE ('NDEFXTR')
+              Npts=load_i(Nval, Rval, Ngrids, ndefXTR)
             CASE ('NQCK')
               Npts=load_i(Nval, Rval, Ngrids, nQCK)
 #if defined FORWARD_FLUXES && \
@@ -3844,6 +3848,9 @@
 #else
               out_lib=1
 #endif
+            CASE ('ExtractFlag')
+              Npts=load_i(Nval, Rval, Ngrids, ExtractFlag)
+
 #if defined PIO_LIB && defined DISTRIBUTE
             CASE ('PIO_METHOD')
               Npts=load_i(Nval, Rval, 1, Ivalue)
@@ -4025,6 +4032,10 @@
               label='HIS - nonlinear model history fields'
               Npts=load_s1d(Nval, Cval, Cdim, line, label, igrid,       &
      &                      Ngrids, Nfiles, out_lib, HIS)
+            CASE ('XTRNAME')
+              label='XTR - nonlinear model extraction history fields'
+              Npts=load_s1d(Nval, Cval, Cdim, line, label, igrid,       &
+     &                      Ngrids, Nfiles, out_lib, XTR)
             CASE ('QCKNAME')
               label='QCK - nonlinear model quicksave fields'
               Npts=load_s1d(Nval, Cval, Cdim, line, label, igrid,       &
@@ -4064,7 +4075,11 @@
             CASE ('GRDNAME')
               label='GRD - application grid'
               Npts=load_s1d(Nval, Cval, Cdim, line, label, igrid,       &
-     &                      Ngrids, Nfiles, inp_lib, GRD)
+     &                      Ngrids, Nfiles, inp_lib, GRD) 
+            CASE ('GRXNAME')
+              label='GRX - I/O histrory extract grid'
+              Npts=load_s1d(Nval, Cval, Cdim, line, label, igrid,       &
+     &                      Ngrids, Nfiles, inp_lib, GRX)
             CASE ('ININAME')
               label='INI - nonlinear model initial conditions'
               Npts=load_s1d(Nval, Cval, Cdim, line, label, igrid,       &
@@ -4455,6 +4470,15 @@
         IF ((nHIS(ng).gt.0).and.ANY(Hout(:,ng))) THEN
           LdefHIS(ng)=.TRUE.
         END IF
+
+#ifdef GRID_EXTRACT
+!
+!  Set switch to create extract history NetCDF file.
+!
+        IF ((nXTR(ng).gt.0).and.ANY(Hout(:,ng))) THEN
+          LdefXTR(ng)=.TRUE.
+        END IF
+#endif
 !
 !  Set switch to create quicksave NetCDF file.
 !
@@ -4710,6 +4734,16 @@
           END IF
           CALL edit_file_struct (ng, OutFiles, HIS)
         END IF
+#ifdef GRID_EXTRACT
+        IF ((nXTR(ng).gt.0).and.(ndefXTR(ng).gt.0)) THEN
+          OutFiles=ntimes(ng)/ndefXTR(ng)
+          IF ((nXTR(ng).eq.ndefXTR(ng)).or.                             &
+     &        (MOD(ntimes(ng),ndefXTR(ng)).ge.nXTR(ng))) THEN
+            OutFiles=Outfiles+1
+          END IF
+          CALL edit_file_struct (ng, OutFiles, XTR)
+        END IF
+#endif
         IF ((nQCK(ng).gt.0).and.(ndefQCK(ng).gt.0)) THEN
           OutFiles=ntimes(ng)/ndefQCK(ng)
           IF ((nQCK(ng).eq.ndefQCK(ng)).or.                             &
@@ -4829,8 +4863,7 @@
 !
 #endif
       IF (Master.and.Lwrite) THEN
-        lstr=INDEX(my_fflags, 'free')-2
-        IF (lstr.le.0) lstr=LEN_TRIM(my_fflags)
+        lstr=LEN_TRIM(my_fflags)
         WRITE (out,60) TRIM(title), TRIM(my_os), TRIM(my_cpu),          &
      &                 TRIM(my_fort), TRIM(my_fc), my_fflags(1:lstr),   &
 #ifdef DISTRIBUTE
@@ -4999,16 +5032,26 @@
      &          'into history file.'
           IF (ndefHIS(ng).gt.0) THEN
             WRITE (out,130) ndefHIS(ng), 'ndefHIS',                     &
-     &            'Number of timesteps between creation of new',        &
+     &            'Number of timesteps between the creation of new',    &
      &            'history files.'
           END IF
+#ifdef GRID_EXTRACT
+          WRITE (out,130) nXTR(ng), 'nXTR',                             &
+     &          'Number of timesteps between the writing fields',       &
+     &          'into the extract file.'
+          IF (ndefXTR(ng).gt.0) THEN
+            WRITE (out,130) ndefXTR(ng), 'ndefXTR',                     &
+     &            'Number of timesteps between the creation of new',    &
+     &            'extract files.'
+          END IF
+#endif
           WRITE (out,130) nQCK(ng), 'nQCK',                             &
      &          'Number of timesteps between the writing fields',       &
      &          'into quicksave file.'
           IF (ndefQCK(ng).gt.0) THEN
             WRITE (out,130) ndefQCK(ng), 'ndefQCK',                     &
-     &            'Number of timesteps between creation of new',        &
-     &            'brief snpashots files.'
+     &            'Number of timesteps between the creation of new',    &
+     &            'quicksave files.'
           END IF
 #if defined AVERAGES    || \
    (defined AD_AVERAGES && defined ADJOINT) || \
@@ -5022,8 +5065,8 @@
      &          'time-averaged data into averages file.'
           IF (ndefAVG(ng).gt.0) THEN
             WRITE (out,130) ndefAVG(ng), 'ndefAVG',                     &
-     &            'Number of timesteps between creation of new',        &
-     &            'time-averaged file.'
+     &            'Number of timesteps between the creation of new',    &
+     &            'time-averaged files.'
           END IF
 #endif
 #ifdef DIAGNOSTICS
@@ -5035,8 +5078,8 @@
      &          'time-averaged data into diagnostics file.'
           IF (ndefDIA(ng).gt.0) THEN
             WRITE (out,130) ndefDIA(ng), 'ndefDIA',                     &
-     &            'Number of timesteps between creation of new',        &
-     &            'diagnostic file.'
+     &            'Number of timesteps between the creation of new',    &
+     &            'diagnostic files.'
           END IF
 #endif
 #ifdef TANGENT
@@ -5047,8 +5090,8 @@
      &          'data into tangent file.'
           IF (ndefTLM(ng).gt.0) THEN
             WRITE (out,130) ndefTLM(ng), 'ndefTLM',                     &
-     &            'Number of timesteps between creation of new',        &
-     &            'tangent file.'
+     &            'Number of timesteps between the creation of new',    &
+     &            'tangent files.'
           END IF
 #endif
 #ifdef ADJOINT
@@ -5059,8 +5102,8 @@
      &          'data into adjoint file.'
           IF (ndefADJ(ng).gt.0) THEN
             WRITE (out,130) ndefADJ(ng), 'ndefADJ',                     &
-     &            'Number of timesteps between creation of new',        &
-     &            'adjoint file.'
+     &            'Number of timesteps between the creation of new',    &
+     &            'adjoint files.'
           END IF
 #endif
 #ifdef ADJUST_BOUNDARY
@@ -7223,6 +7266,12 @@
 # endif
           END IF
 #endif
+
+#ifdef GRID_EXTRACT
+          WRITE (out,'(1x)')
+          WRITE (out,120) ExtractFlag(ng), 'ExtractFlag',               &
+     &            'Field extraction flag to interpolate or decimate.'
+#endif
           WRITE (out,'(1x)')
           IF (inp_lib.eq.io_nf90) THEN
             WRITE (out,120) inp_lib, 'inp_lib',                         &
@@ -7352,6 +7401,17 @@
      &                        TRIM(HIS(ng)%head)
             END IF
           END IF
+# ifdef GRID_EXTRACT
+          IF (LdefXTR(ng)) THEN
+            IF (ndefXTR(ng).eq.0) THEN
+              WRITE (out,230) '     Output History Extract File:  ',    &
+     &                        TRIM(XTR(ng)%name)
+            ELSE
+              WRITE (out,230) 'Prefix for History Extract Files:  ',    &
+     &                        TRIM(XTR(ng)%head)
+            END IF
+          END IF
+# endif
 # ifdef TANGENT
           IF (ndefTLM(ng).eq.0) THEN
             WRITE (out,230) '             Output Tangent File:  ',      &
@@ -7420,6 +7480,15 @@
 # endif
 #endif
         END IF
+#ifdef GRID_EXTRACT
+        fname=GRX(ng)%name
+        IF (.not.find_file(ng, out, fname, 'GRXNAME')) THEN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        ELSE
+          IF (Master.and.Lwrite) WRITE (out,230)                        &
+     &      ' Input History Extract Grid File:  ', TRIM(fname)
+        END IF
+#endif
 #ifndef ANA_GRID
         fname=GRD(ng)%name
         IF (.not.find_file(ng, out, fname, 'GRDNAME')) THEN
@@ -7788,6 +7857,33 @@
       END DO
 #endif
 
+#ifdef GRID_EXTRACT
+!
+!-----------------------------------------------------------------------
+!  Check grid extraction by decimation.
+!-----------------------------------------------------------------------
+!
+      DO ng=1,Ngrids
+        IF (ExtractFlag(ng).gt.1) THEN
+          IF ((MOD(Lm(ng)+1, ExtractFlag(ng)).ne.0).or.                 &
+     &        (MOD(Mm(ng)+1, ExtractFlag(ng)).ne.0)) THEN
+            WRITE (out,360) ng, ExtractFlag(ng),                        &
+     &                      MOD(Lm(ng)+1, ExtractFlag(ng)),             &
+     &                      MOD(Mm(ng)+1, ExtractFlag(ng))
+            exit_flag=5
+            RETURN
+          END IF
+# if defined FOUR_DVAR || defined FORWARD_WRITE
+          IF (ExtractFlag(ng).ne.2) THEN
+            WRITE (out,370) ng, ExtractFlag(ng)
+            exit_flag=5
+            RETURN
+          END IF
+# endif
+        END IF
+      END DO
+#endif
+!
   50  FORMAT (/,' READ_PhyPar - Error while processing line: ',/,a)
   60  FORMAT (/,1x,a,/,                                                 &
      &        /,1x,'Operating system  : ',a,                            &
@@ -7890,5 +7986,15 @@
      &              '''roms.in''.'/)
  350  FORMAT (/,' READ_PHYPAR - Invalid input parameter, ',a,i0,        &
      &        ', for grid ',i2.2,/,15x,a,i0,', ',a,i0,/,15x,a,/,15x,a)
+ 360  FORMAT (/,' READ_PHYPAR - Grid = ',i0,1x,'dimensions are',1x,     &
+     &        'inappropriate for the given decimation factor:',/,15x,   &
+     &        'ExtractFlag = ',i0,/,15x,                                &
+     &        'MOD(Lm(ng)+1, ExtractFlag(ng)) = ',i0,/,15x,             &
+     &        'MOD(Mm(ng)+1, ExtractFlag(ng)) = ',i0,/,15x,             &
+     &        'because both division reminders must be zero.')
+ 370  FORMAT (/,' READ_PHYPAR - Unsupported decimation factor for',1x,  &
+     &        'coarsening split 4D-Var',/,15x,                          &
+     &        'Grid = ',i0,', ExtractFlag = ',i0)
+!
       RETURN
       END SUBROUTINE read_PhyPar
