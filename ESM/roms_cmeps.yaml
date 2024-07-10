@@ -223,7 +223,7 @@ export:
 
 import:
 
-  - standard_name:       mean_down_lw_flx
+  - standard_name:       inst_down_lw_flx
     long_name:           surface downward longwave radiation flux
     short_name:          dLWrad                                 # Faxa_lwdn
     data_variables:      [lwrad_down, time]
@@ -253,7 +253,7 @@ import:
     map_type:            mapbilnr
     map_norm:            none
 
-  - standard_name:       mean_net_sw_flx
+  - standard_name:       inst_net_sw_flx
     long_name:           surface net shortwave radiation flux
     short_name:          SWrad                                  # Faxa_swnet
     data_variables:      [swrad_daily, time]
@@ -328,7 +328,7 @@ import:
     map_type:            mapbilnr
     map_norm:            none
 
-  - standard_name:       mean_prec_rate
+  - standard_name:       inst_prec_rate
     long_name:           precipitation rate
     short_name:          rain                                   # Faxa_rain
     data_variables:      [rain, time]

@@ -118,6 +118,7 @@
 # endif
 !
       InpUnit=1
+      io_err=0
 # if !(defined MODEL_COUPLING || defined JEDI)
       IF (MyMaster) CALL my_getarg (1, Iname)
       CALL mp_bcasts (1, 1, Iname)
@@ -199,6 +200,7 @@
 !
 !  Get standard input unit.
 !
+      io_err=0
       IF (PRESENT(InpName)) THEN
         InpUnit=1
         OPEN (InpUnit, FILE=TRIM(InpName), FORM='formatted',            &
@@ -299,6 +301,7 @@
 !
 !  Get standard input unit.
 !
+      io_err=0
       IF (PRESENT(InpName)) THEN
         InpUnit=1
         OPEN (InpUnit, FILE=TRIM(InpName), FORM='formatted',            &
@@ -396,6 +399,7 @@
 !
 !  Get standard input unit.
 !
+      io_err=0
       IF (PRESENT(InpName)) THEN
         InpUnit=1
         OPEN (InpUnit, FILE=TRIM(InpName), FORM='formatted',            &
@@ -496,6 +500,7 @@
 !
 !  Get standard input unit.
 !
+      io_err=0
       IF (PRESENT(InpName)) THEN
         InpUnit=1
         OPEN (InpUnit, FILE=TRIM(InpName), FORM='formatted',            &
@@ -596,6 +601,7 @@
 !
 !  Get standard input unit.
 !
+      io_err=0
       IF (PRESENT(InpName)) THEN
         InpUnit=1
         OPEN (InpUnit, FILE=TRIM(InpName), FORM='formatted',            &
@@ -697,6 +703,7 @@
 !
 !  Get standard input unit.
 !
+      io_err=0
       IF (PRESENT(InpName)) THEN
         InpUnit=1
         OPEN (InpUnit, FILE=TRIM(InpName), FORM='formatted',            &
@@ -794,6 +801,7 @@
 !
 !  Get standard input unit.
 !
+      io_err=0
       IF (PRESENT(InpName)) THEN
         InpUnit=1
         OPEN (InpUnit, FILE=TRIM(InpName), FORM='formatted',            &
