@@ -303,7 +303,7 @@
 # else
  20         FORMAT (i10,1x,a,4(1pe14.6))
 # endif
-            CALL my_flush (stdout)
+            FLUSH (stdout)
           END IF
 !
 !  If blowing-up, set exit_flag to stop computations.

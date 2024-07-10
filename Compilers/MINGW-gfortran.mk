@@ -95,7 +95,8 @@ ifdef USE_ROMS
            FFLAGS += -fbacktrace
            FFLAGS += -fcheck=all
 #          FFLAGS += -fsanitize=address -fsanitize=undefined
-           FFLAGS += -finit-real=nan -ffpe-trap=invalid,zero,overflow
+           FFLAGS += -finit-real=nan
+#          FFLAGS += -ffpe-trap=invalid,zero,overflow
  else
            FFLAGS += -O3
            FFLAGS += -ffast-math
@@ -160,6 +161,9 @@ ifdef USE_WRF
              LIBS += $(WRF_LIB_DIR)/librsl_lite.a
              LIBS += $(WRF_LIB_DIR)/module_internal_header_util.o
              LIBS += $(WRF_LIB_DIR)/pack_utils.o
+ifneq ($(NETCDFPAR),)
+             LIBS += $(WRF_LIB_DIR)/libwrfio_nfpar.a
+endif
              LIBS += $(WRF_LIB_DIR)/libwrfio_nf.a
 endif
 
@@ -169,6 +173,11 @@ endif
 
 
 ifdef USE_NETCDF4
+        NC_CONFIG ?= nc-config
+   TEST_NC_CONFIG := $(shell which $(NC_CONFIG))
+  ifneq ($(TEST_NC_CONFIG),)
+             LIBS += $(shell $(NC_CONFIG) --libs)
+  endif
         NF_CONFIG ?= nf-config
     NETCDF_INCDIR ?= $(shell $(NF_CONFIG) --prefix)/include
              LIBS += $(shell $(NF_CONFIG) --flibs)

@@ -768,7 +768,7 @@
             IF (Master) THEN
               WRITE (300,10) 'Western Boundary Mass Fluxes: ',          &
      &                       cr, dg, rg, iif(rg), iic(rg), INT(time(rg))
-              CALL my_flush (300)
+              FLUSH (300)
             END IF
           END IF
 !
@@ -799,7 +799,7 @@
               END IF
               WRITE (300,30) Jbc, REFINED(cr)%U2d_flux(1,m,tnew),        &
      &                       WestSum, MFratio
-              CALL my_flush (300)
+              FLUSH (300)
             END IF
           END DO
 !
@@ -816,7 +816,7 @@
             IF (Master) THEN
               WRITE (300,10) 'Eastern Boundary Mass Fluxes: ',          &
      &                       cr, dg, rg, iif(rg), iic(rg), INT(time(rg))
-              CALL my_flush (300)
+              FLUSH (300)
             END IF
           END IF
 !
@@ -847,7 +847,7 @@
               END IF
               WRITE (300,30) Jbc, REFINED(cr)%U2d_flux(1,m,tnew),        &
      &                       EastSum, MFratio
-              CALL my_flush (300)
+              FLUSH (300)
             END IF
           END DO
 !
@@ -864,7 +864,7 @@
             IF (Master) THEN
               WRITE (300,20) 'Southern Boundary Mass Fluxes: ',         &
      &                       cr, dg, rg, iif(rg), iic(rg), INT(time(rg))
-              CALL my_flush (300)
+              FLUSH (300)
             END IF
           END IF
 !
@@ -896,7 +896,7 @@
               END IF
               WRITE (300,30) Ibc, REFINED(cr)%V2d_flux(1,m,tnew),        &
      &                       SouthSum, MFratio
-              CALL my_flush (300)
+              FLUSH (300)
             END IF
           END DO
 !
@@ -913,7 +913,7 @@
             IF (Master) THEN
               WRITE (300,20) 'Northern Boundary Mass Fluxes: ',         &
      &                       cr, dg, rg, iif(rg), iic(rg), INT(time(rg))
-              CALL my_flush (300)
+              FLUSH (300)
             END IF
           END IF
 !
@@ -964,7 +964,7 @@
         END IF
       END DO
 !
-      CALL my_flush (300)
+      FLUSH (300)
 !
   10  FORMAT (/,1x,a,/,/,4x,'cr = ',i2.2,4x,'dg = ',i2.2,4x,'rg = ',    &
      &        i2.2,4x,'iif(rg) = ',i3.3,4x,'iic(rg) = ',i7.7,4x,        &
@@ -2486,7 +2486,7 @@
      &                3x,'(rg)',18x,'2D',5x,'3D',4x,'told',3x,'tnew',   &
      &                3x,'(ng)',/)
  20           FORMAT (4i4,9i7)
-              CALL my_flush (100)
+              FLUSH (100)
             END IF
           END IF
 # endif
@@ -6289,7 +6289,7 @@
      &            7x,'Wnew',/,17x,'(dg)',1x,'(ng)',13x,'(ng)',3x,       &
      &            'told',3x,'tnew',/)
  30       FORMAT (7i5,3i7,2f11.4)
-          CALL my_flush (200)
+          FLUSH (200)
         END IF
       END IF
 # endif

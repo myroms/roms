@@ -4829,8 +4829,7 @@
 !
 #endif
       IF (Master.and.Lwrite) THEN
-        lstr=INDEX(my_fflags, 'free')-2
-        IF (lstr.le.0) lstr=LEN_TRIM(my_fflags)
+        lstr=LEN_TRIM(my_fflags)
         WRITE (out,60) TRIM(title), TRIM(my_os), TRIM(my_cpu),          &
      &                 TRIM(my_fort), TRIM(my_fc), my_fflags(1:lstr),   &
 #ifdef DISTRIBUTE

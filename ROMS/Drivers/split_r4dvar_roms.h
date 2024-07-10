@@ -91,6 +91,7 @@
 #endif
       USE stats_modobs_mod,  ONLY : stats_modobs
       USE stdinp_mod,        ONLY : getpar_s
+      USE stdout_mod,        ONLY : Set_StdOutUnit, stdout_unit
       USE strings_mod,       ONLY : FoundError, uppercase
       USE wrt_dai_mod,       ONLY : wrt_dai
       USE wrt_rst_mod,       ONLY : wrt_rst
@@ -163,12 +164,25 @@
 !
         CALL initialize_parallel
 !
+!  Set the ROMS standard output unit to write verbose execution info.
+!  Notice that the default standard out unit in Fortran is 6.
+!
+!  In some applications like coupling or disjointed mpi-communications,
+!  it is advantageous to write standard output to a specific filename
+!  instead of the default Fortran standard output unit 6. If that is
+!  the case, it opens such formatted file for writing.
+!
+        IF (Set_StdOutUnit) THEN
+          stdout=stdout_unit(Master)
+          Set_StdOutUnit=.FALSE.
+        END IF
+!
 !  Get 4D-Var phase from APARNAM input script file.
 !
-        CALL getpar_s (MyRank, aparnam, 'APARNAM')
+        CALL getpar_s (Master, aparnam, 'APARNAM')
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
-        CALL getpar_s (MyRank, Phase4DVAR, 'Phase4DVAR', aparnam)
+        CALL getpar_s (Master, Phase4DVAR, 'Phase4DVAR', aparnam)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Determine ROMS standard output append switch. It is only relevant if

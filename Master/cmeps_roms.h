@@ -146,6 +146,7 @@
       USE mod_stepping,     ONLY : nstp, knew
       USE mp_exchange_mod,  ONLY : mp_exchange2d
       USE stdinp_mod,       ONLY : getpar_i
+      USE stdout_mod,       ONLY : Set_StdOutUnit, stdout_unit
       USE strings_mod,      ONLY : FoundError, assign_string, lowercase
       USE yaml_parser_mod,  ONLY : yaml_AssignString,                   &
      &                             yaml_Error,                          &
@@ -357,8 +358,8 @@
 !
 !  Standard output units.
 !
-      integer :: cplout  = 77         ! coupling driver
-      integer :: trac = 6             ! trace/track CALL sequence unit
+      integer :: cplout = 77          ! coupling driver
+      integer :: trac   = 6           ! trace/track CALL sequence unit
 !
       character (len=11), parameter :: CouplerLog = 'log.coupler'
 !
@@ -694,7 +695,7 @@
 # else
       logical :: Lreport = .FALSE.
 # endif
-      logical :: Lexist
+      logical :: Lexist, MasterPET
 !
       integer :: Findex, i, layout, ng
 !
@@ -753,7 +754,8 @@
 !  Get size of number of nested grids, 'Ngrids' parameter from ROMS
 !  standard input file.
 !
-      CALL getpar_i (localPET, Ngrids, 'Ngrids', TRIM(Iname))
+      MasterPET=localPET.eq.0
+      CALL getpar_i (MasterPET, Ngrids, 'Ngrids', TRIM(Iname))
 !
 !-----------------------------------------------------------------------
 !  Get ROMS linked/coupled nested grid number for current application.
@@ -847,6 +849,8 @@
 !
       MODELS(Iroms)%Ngrids=Ngrids
       MODELS(Iroms)%IsActive=.TRUE.
+      ClockInfo(Idriver)%Restarted=.FALSE.
+      ClockInfo(Iroms  )%Restarted=.FALSE.
 !
       IF (FoundError(assign_string(MODELS(Iroms)%name,                  &
      &                             'ROMS'),                             &
@@ -1421,12 +1425,6 @@
       IF (allocated(Estring)) deallocate (Estring)
       IF (allocated(Istring)) deallocate (Istring)
 !
-      IF (ESM_track) THEN
-        WRITE (trac,'(a,a,i0)') '<== Exiting  ROMS_Create',             &
-     &                          ', PET', PETrank
-        FLUSH (trac)
-      END IF
-!
 !-----------------------------------------------------------------------
 !  Report specified import and export states.
 !-----------------------------------------------------------------------
@@ -1511,6 +1509,12 @@
         WRITE (cplout,100)
       END IF
 !
+      IF (ESM_track) THEN
+        WRITE (trac,'(a,a,i0)') '<== Exiting  ROMS_Create',             &
+     &                          ', PET', PETrank
+        FLUSH (trac)
+      END IF
+!
   10  FORMAT (/,' ROMS_CREATE - Unable to create YAML object for',      &
      &        ' ROMS/CMEPS configuration metadata file: ',/,15x,a,/,    &
      &        15x,'Default file is located in source directory.')
@@ -1572,6 +1576,8 @@
 !                                                                      !
 !=======================================================================
 !
+      USE mod_parallel, ONLY : Master
+!
 !  Imported variable declarations.
 !
       integer, intent(out) :: rc
@@ -1583,8 +1589,7 @@
 !
 !  Local variable declarations.
 !
-!
-      logical :: isPresent, isSet
+      logical :: MasterPET, isPresent, isSet
 !
       integer :: i
       integer :: ng = 1
@@ -1641,15 +1646,33 @@
      &                       file=MyFile)) THEN
         RETURN
       END IF
+      MasterPET=localPET.eq.0
+      PETrank=localPET
+!
+!-----------------------------------------------------------------------
+!  Set ROMS standard ouput unit and file
+!-----------------------------------------------------------------------
+!
+!  Sets the ROMS standard output unit to write verbose execution info.
+!  Notice that the default standard out unit in Fortran is 6.
+!
+!  In some applications like coupling or disjointed mpi-communications,
+!  it is advantageous to write standard output to a specific filename
+!  instead of the default Fortran standard output unit 6. If that is
+!  the case, it opens such formatted file for writing.
+!
+      IF (Set_StdOutUnit) THEN
+        Master=MasterPET
+        stdout=stdout_unit(MasterPET)
+        Set_StdOutUnit=.FALSE.
+      END IF
 !
 !-----------------------------------------------------------------------
 !  Open standard output unit for ROMS cap information and messages.
 !-----------------------------------------------------------------------
 !
-      IF (localPET.eq.0) THEN
-        OPEN (cplout, FILE=TRIM(CouplerLog), FORM='formatted',          &
-     &        STATUS='replace')
-      END IF
+      OPEN (cplout, FILE=TRIM(CouplerLog), FORM='formatted',            &
+     &      STATUS='replace')
 !
 !-----------------------------------------------------------------------
 !  Query driver for attributes
@@ -1998,6 +2021,12 @@
       END IF EXPORTING
 # endif
 !
+      IF (ESM_track) THEN
+        WRITE (trac,'(a,a,i0)') '<== Exiting  ROMS_SetInitializeP1',    &
+     &                          ', PET', PETrank
+        FLUSH (trac)
+      END IF
+!
 # ifdef ADD_NESTED_STATE
   10  FORMAT (/,a,a,', ng = ',i0,/,31('='),/)
 # else
@@ -2231,13 +2260,20 @@
             IF (romsDuration.ne.driverDuration) THEN
               IF (localPET.eq.0) THEN
                 WRITE (cplout,10) romsDuration, driverDuration,         &
-     &                          TRIM(INPname(Iroms))
+     &                            TRIM(INPname(Iroms))
               END IF
               rc=ESMF_RC_NOT_VALID
               RETURN
             END IF
           END IF
         END DO
+      END IF
+!
+!  Report Clock:
+!
+      IF (localPET.eq.0) THEN
+        WRITE (cplout,20) TimeStartString, TimeStopString,              &
+     &                    INT(driverDuration), INT(romsDuration)
       END IF
 !
 !-----------------------------------------------------------------------
@@ -2283,6 +2319,11 @@
      &        'ROMS Duration     = ',f20.2,' seconds',/,24x,            &
      &        'Coupling Duration = ',f20.2,' seconds',/,24x,            &
      &        'Check paramenter NTIMES in ''',a,'''',a)
+  20  FORMAT (/,'Coupling Clock: ROMS_SetInitializeP2',/,15('='),/,     &
+     &        /,2x,'DRIVER Starting Date = ',a,                         &
+     &        /,2x,'DRIVER Ending   Date = ',a,                         &
+     &        /,2x,'DRIVER Duration (s)  = ',i0,                        &
+     &        /,2x,'ROMS   Duration (s)  = ',i0)
 !
       RETURN
       END SUBROUTINE ROMS_SetInitializeP2
@@ -2637,9 +2678,9 @@
 !-----------------------------------------------------------------------
 !
       IF (ClockInfo(Idriver)%Restarted) THEN
-        StartTimeString=ClockInfo(Idriver)%Time_RestartString
+        StartTimeString=TRIM(ClockInfo(Idriver)%Time_RestartString)
       ELSE
-        StartTimeString=ClockInfo(Idriver)%Time_StartString
+        StartTimeString=TRIM(ClockInfo(Idriver)%Time_StartString)
       END IF
 !
 !  Report start and stop time clocks.
@@ -4292,7 +4333,6 @@
 !-----------------------------------------------------------------------
 !
       CALL ROMS_finalize
-      FLUSH (stdout)                      ! flush standard output buffer
       FLUSH (cplout)                      ! flush coupling output buffer
       CLOSE (cplout)                      ! close coupling log file
 !

@@ -125,7 +125,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering ICE_SetServices',         &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
       rc=ESMF_SUCCESS
 
@@ -236,7 +236,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '<== Exiting  ICE_SetServices',         &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
 !
       RETURN
@@ -279,7 +279,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering CICE_SetInitializeP1',    &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
       rc=ESMF_SUCCESS
 !
@@ -376,7 +376,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '<== Exiting  CICE_SetInitializeP1',    &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
 !
       RETURN
@@ -420,7 +420,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering CICE_SetInitializeP2',    &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
       rc=ESMF_SUCCESS
 !
@@ -492,7 +492,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '<== Exiting  CICE_SetInitializeP2',    &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
 !
       RETURN
@@ -528,7 +528,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering CICE_DataInit',           &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
       rc=ESMF_SUCCESS
 !
@@ -573,7 +573,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '<== Exiting  CICE_DataInit',           &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
 !
       RETURN
@@ -625,7 +625,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering CICE_SetClock',           &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
       rc=ESMF_SUCCESS
 !
@@ -907,7 +907,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '<== Exiting  CICE_SetClock',           &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
 !
       RETURN
@@ -977,7 +977,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering CICE_SetGridArrays',      &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
       rc=ESMF_SUCCESS
 !
@@ -1299,7 +1299,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '<== Exiting  CICE_SetGridArrays',      &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
 !
       RETURN
@@ -1351,7 +1351,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering CICE_SetStates',          &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
       rc=ESMF_SUCCESS
 !
@@ -1660,7 +1660,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '<== Exiting  CICE_SetStates',          &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
 !
       RETURN
@@ -1713,7 +1713,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering CICE_ModelAdvance',       &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
       rc=ESMF_SUCCESS
 !
@@ -1861,7 +1861,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '<== Exiting  CICE_ModelAdvance',       &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
 !
   10  FORMAT (3x,'ModelAdvance - ESMF, Running CICE:',t42,a,            &
@@ -1901,7 +1901,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering CICE_SetFinalize',        &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
       rc=ESMF_SUCCESS
 !
@@ -1910,12 +1910,12 @@
 !-----------------------------------------------------------------------
 !
       CALL CICE_Finalize
-      CALL my_flush (6)                   ! flush standard output buffer
+      FLUSH (6)                   ! flush standard output buffer
 !
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '<== Exiting  CICE_SetFinalize',        &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
 !
       RETURN
@@ -1983,7 +1983,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering CICE_Import',             &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
       rc=ESMF_SUCCESS
 !
@@ -2832,9 +2832,9 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '<== Exiting  CICE_Import',             &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
-      IF (DebugLevel.gt.0) CALL my_flush (cplout)
+      IF (DebugLevel.gt.0) FLUSH (cplout)
 !
   10  FORMAT (/,3x,' CICE_Import - unable to find option to import: ',  &
      &        a,t68,a,/,18x,'check ''Import(roms)'' in input script: ', &
@@ -2906,7 +2906,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering CICE_Export',             &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
       rc=ESMF_SUCCESS
 !
@@ -3544,9 +3544,9 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '<== Exiting  CICE_Export',             &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
-      CALL my_flush (cplout)
+      FLUSH (cplout)
 !
   10  FORMAT (/,3x,' CICE_Export - unable to find option to export: ',  &
      &        a,/,18x,'check ''Export(cice)'' in input script: ',a)

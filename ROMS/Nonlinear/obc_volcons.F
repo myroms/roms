@@ -220,7 +220,7 @@
           WRITE (150,10) MyRank, iic(ng), iif(ng), bc_area, rbuffer(1), &
                          bc_flux, rbuffer(2), rbuffer(2)/rbuffer(1)
   10      FORMAT (i3,1x,i3.3,1x,i3.3,5(1x,1pe23.15))
-          CALL my_flush (150)
+          FLUSH (150)
 # endif
           bc_area=rbuffer(1)
           bc_flux=rbuffer(2)

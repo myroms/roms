@@ -191,7 +191,7 @@
 !  I/O units.
 !
       integer :: stdinp = 5                 ! standard input
-      integer :: stdout = 6                 ! standard output
+      integer :: stdout                     ! standard output, usually 6
       integer :: usrout = 10                ! generic user unit
 !
 !  I/O files management, derived type structures.

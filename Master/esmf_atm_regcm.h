@@ -140,7 +140,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering ATM_SetServices',         &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
       rc=ESMF_SUCCESS
 !
@@ -292,7 +292,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '<== Exiting  RegCM_SetServices',       &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
 !
       RETURN
@@ -335,7 +335,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering RegCM_SetInitializeP1',   &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
       rc=ESMF_SUCCESS
 !
@@ -426,7 +426,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '<== Exiting  RegCM_SetInitializeP1',   &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
 !
       RETURN
@@ -474,7 +474,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering RegCM_SetInitializeP2',   &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
       rc=ESMF_SUCCESS
 !
@@ -547,7 +547,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '<== Exiting  RegCM_SetInitializeP2',   &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
 !
       RETURN
@@ -592,7 +592,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering RegCM_DataInit',          &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
       rc=ESMF_SUCCESS
 !
@@ -687,9 +687,9 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '<== Exiting  RegCM_DataInit',          &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
-      IF (DebugLevel.gt.0) CALL my_flush (cplout)
+      IF (DebugLevel.gt.0) FLUSH (cplout)
 !
   10  FORMAT (/,' ESMF, Running RegCM: ',a,' --> ',a,' Phase: ',i1)
   20  FORMAT (/,' ESMF, Running RegCM: ',a,' --> ',a,' Phase: ',i1,     &
@@ -744,7 +744,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering RegCM_SetClock',          &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
       rc=ESMF_SUCCESS
 !
@@ -1003,7 +1003,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '<== Exiting  RegCM_SetClock',          &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
 !
       RETURN
@@ -1041,7 +1041,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering RegCM_SetRunClock',      &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
       rc=ESMF_SUCCESS
 !
@@ -1099,7 +1099,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '<== Exiting  RegCM_SetRunClock',       &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
 !
       RETURN
@@ -1150,7 +1150,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering RegCM_CheckImport',       &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
       rc=ESMF_SUCCESS
 !
@@ -1328,7 +1328,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '<== Exiting  RegCM_CheckImport',       &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
 !
   10  FORMAT (1x,'RegCM_CheckImport - ',a,':',t32,'TimeStamp = ',a,     &
@@ -1389,7 +1389,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering RegCM_SetGridArrays',     &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
       rc=ESMF_SUCCESS
 !
@@ -1702,7 +1702,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '<== Exiting  RegCM_SetGridArrays',     &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
 !
       RETURN
@@ -1751,7 +1751,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering RegCM_SetStates',         &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
       rc=ESMF_SUCCESS
 !
@@ -2067,7 +2067,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '<== Exiting  RegCM_SetStates',         &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
 !
 !
@@ -2121,7 +2121,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering RegCM_ModelAdvance',      &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
       rc=ESMF_SUCCESS
 !
@@ -2286,7 +2286,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '<== Exiting  RegCM_ModelAdvance',      &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
 !
   10  FORMAT (' Running RegCM Component: ',a,' --> ',a,' Phase: ',i1)
@@ -2327,7 +2327,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering RegCM_SetFinalize',       &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
       rc=ESMF_SUCCESS
 !
@@ -2336,12 +2336,12 @@
 !-----------------------------------------------------------------------
 !
       CALL RegCM_Finalize ()
-      CALL my_flush (6)                   ! flush standard output buffer
+      FLUSH (6)                   ! flush standard output buffer
 !
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '<== Exiting  RegCM_SetFinalize',       &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
 !
       RETURN
@@ -2404,7 +2404,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering RegCM_Import',            &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
       rc=ESMF_SUCCESS
 !
@@ -2750,9 +2750,9 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '<== Exiting  RegCM_Import',            &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
-      IF (DebugLevel.gt.0) CALL my_flush (cplout)
+      IF (DebugLevel.gt.0) FLUSH (cplout)
 !
   10  FORMAT (/,2x,'RegCM_Import - unable to find option to import: ',  &
      &        a,/,18x,'check ''Import(atmos)'' in input script: ', a)
@@ -2820,7 +2820,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering RegCM_Export',            &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
       rc=ESMF_SUCCESS
 !
@@ -3394,9 +3394,9 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '<== Exiting  RegCM_Export',            &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
-      IF (DebugLevel.gt.0) CALL my_flush (cplout)
+      IF (DebugLevel.gt.0) FLUSH (cplout)
 !
   10  FORMAT (/,2x,'RegCM_Export - unable to find option to export: ',  &
      &        a,/,18x,'check ''Export(atmos)'' in input script: ',a)
@@ -3447,7 +3447,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering RegCM_uvrot',             &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
 !
 !  Rotated Mercator (ROTMER) or Normal Mercator (NORMER) projections.
@@ -3529,7 +3529,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '<== Exiting  RegCM_uvrot',             &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
 !
       RETURN

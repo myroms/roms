@@ -155,6 +155,7 @@ list( APPEND _files
       ROMS/Utility/stats.F
       ROMS/Utility/stats_modobs.F
       ROMS/Utility/stdinp_mod.F
+      ROMS/Utility/stdout_mod.F
       ROMS/Utility/stiffness.F
       ROMS/Utility/strings.F
       ROMS/Utility/sum_grad.F
