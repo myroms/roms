@@ -239,7 +239,7 @@
 !
 !  Flush and lose coupling standard out unit.
 !
-      CALL my_flush (cplout)
+      FLUSH (cplout)
       CLOSE (cplout)
 !
       STOP

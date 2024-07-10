@@ -29,6 +29,14 @@
       USE mod_kinds
       USE inp_decode_mod
 !
+      USE mod_iounits,    ONLY : Iname, SourceFile, stdinp, stdout
+      USE mod_scalars,    ONLY : exit_flag
+#ifdef DISTRIBUTE
+!
+      USE distribute_mod, ONLY : mp_bcasts
+#endif
+      USE strings_mod,    ONLY : FoundError
+!
       INTERFACE getpar_i
         MODULE PROCEDURE getpar_0d_i
         MODULE PROCEDURE getpar_1d_i
@@ -48,9 +56,16 @@
         MODULE PROCEDURE getpar_0d_s
       END INTERFACE getpar_s
 !
+      PUBLIC  :: getpar_i
+      PUBLIC  :: getpar_l
+      PUBLIC  :: getpar_r
+      PUBLIC  :: getpar_s
+      PUBLIC  :: stdinp_unit
+      PRIVATE
+!
       CONTAINS
 !
-      FUNCTION stdinp_unit (localPET, GotFile) RESULT (InpUnit)
+      FUNCTION stdinp_unit (MyMaster, GotFile) RESULT (InpUnit)
 !
 !***********************************************************************
 !                                                                      !
@@ -60,7 +75,7 @@
 !                                                                      !
 !  On Input:                                                           !
 !                                                                      !
-!     localPET   Local Persistent Execution Thread (integer)           !
+!     MyMaster    Switch indicating Master process (logical)           !
 !                                                                      !
 !  On Output:                                                          !
 !                                                                      !
@@ -68,18 +83,10 @@
 !                                                                      !
 !***********************************************************************
 !
-      USE mod_iounits,  ONLY : Iname, SourceFile, stdinp, stdout
-      USE mod_scalars,  ONLY : exit_flag
-
-#ifdef DISTRIBUTE
-!
-      USE distribute_mod, ONLY : mp_bcasts
-#endif
-!
 !  Imported variable declarations.
 !
+      logical, intent(in)  :: MyMaster
       logical, intent(out) :: GotFile
-      integer, intent(in)  :: localPET
 !
 !  Local variable declararions
 !
@@ -95,32 +102,41 @@
 !  Determine ROMS standard input unit.
 !-----------------------------------------------------------------------
 #ifdef DISTRIBUTE
-!
-!  In distributed-memory configurations, the input physical parameters
-!  script is opened as a regular file.  It is read and processed by all
-!  parallel nodes.  This is to avoid very complex broadcasting of the
-!  input parameters to all nodes.
+!  The ROMS standard input 'roms.in' script filename (Iname) is read
+!  from the execution command and opened as a regular formatted file in
+!  distributed-memory configurations using the 'my_getarg' function.
+!  Then, it is read and processed by all parallel nodes to avoid complex
+!  broadcasting of the ROMS input parameters to all nodes.
 # ifdef MODEL_COUPLING
-!  However, in ESM coupling, the submission argument is 'coupling.in'
-!  and the Iname was read and processed in the coupling configuration
-!  elsewhere.
+!  During native ROMS ESM coupling, the execution command uses the
+!  input script 'coupling.in', and the Iname filename is assigned
+!  elsewhere during the coupling configuration.
+# endif
+# ifdef JEDI
+!  In the ROMSJEDI interface, the Iname filename is processed from the
+!  input configuration YAML file.
 # endif
 !
       InpUnit=1
-# ifndef MODEL_COUPLING
-      IF (localPET.eq.0) CALL my_getarg (1, Iname)
+      io_err=0
+# if !(defined MODEL_COUPLING || defined JEDI)
+      IF (MyMaster) CALL my_getarg (1, Iname)
       CALL mp_bcasts (1, 1, Iname)
 # endif
       OPEN (InpUnit, FILE=TRIM(Iname), FORM='formatted', STATUS='old',  &
      &      IOSTAT=io_err, IOMSG=io_errmsg)
       IF (io_err.ne.0) THEN
-        IF (localPET.eq.0) WRITE (stdout,10) TRIM(io_errmsg)
+        IF (MyMaster) WRITE (stdout,10) TRIM(io_errmsg)
         exit_flag=2
         RETURN
       ELSE
         GotFile=.TRUE.
       END IF
 #else
+!
+! The ROMS stardard input file is read from Fortran default standard
+! input unit.
+!
       InpUnit=stdinp
       GotFile=.FALSE.
 #endif
@@ -138,7 +154,7 @@
 !
       END FUNCTION stdinp_unit
 !
-      SUBROUTINE getpar_0d_i (localPET, Value, KeyWord, InpName)
+      SUBROUTINE getpar_0d_i (MyMaster, Value, KeyWord, InpName)
 !
 !***********************************************************************
 !                                                                      !
@@ -146,7 +162,7 @@
 !                                                                      !
 !  On Input:                                                           !
 !                                                                      !
-!     localPET   Local Persistent Execution Thread (integer)           !
+!     MyMaster   Switch indicating Master process (logical)            !
 !     KeyWord    Keyword associated with input parameter (string)      !
 !     InpName    Standard input filename (string; OPTIONAL)            !
 !                                                                      !
@@ -156,14 +172,10 @@
 !                                                                      !
 !***********************************************************************
 !
-      USE mod_iounits, ONLY : stdout
-      USE mod_scalars, ONLY : exit_flag
-!
-      USE strings_mod, ONLY : FoundError
-!
 !  Imported variable declarations.
 !
-      integer, intent(in)  :: localPET
+      logical, intent(in)  :: MyMaster
+!
       integer, intent(out) :: Value
 !
       character (len=*), intent(in) :: KeyWord
@@ -188,13 +200,14 @@
 !
 !  Get standard input unit.
 !
+      io_err=0
       IF (PRESENT(InpName)) THEN
         InpUnit=1
         OPEN (InpUnit, FILE=TRIM(InpName), FORM='formatted',            &
      &        STATUS='old', IOSTAT=io_err, IOMSG=io_errmsg)
         IF (io_err.ne.0) THEN
-          IF (localPET.eq.0) WRITE (stdout,10) TRIM(InpName),           &
-     &                                         TRIM(io_errmsg)
+          IF (MyMaster) WRITE (stdout,10) TRIM(InpName),                &
+     &                                    TRIM(io_errmsg)
   10      FORMAT (/,' GETPAR_0D_I - Unable to open input script: ',a,   &
      &            /,15x,'ERROR: ',a)
           exit_flag=2
@@ -203,7 +216,7 @@
           GotFile=.TRUE.
         END IF
       ELSE
-        InpUnit=stdinp_unit(localPET, GotFile)
+        InpUnit=stdinp_unit(MyMaster, GotFile)
       END IF
 !
 !  Process requested parameter.
@@ -220,14 +233,14 @@
           END IF
         END IF
       END DO
-  20  IF (localPET.eq.0) THEN
+  20  IF (MyMaster) THEN
         WRITE (stdout,30) line
   30    FORMAT (/,' GETPAR_0D_I - Error while processing line: ',/,a)
       END IF
       exit_flag=4
   40  CONTINUE
       IF (.not.foundit) THEN
-        IF (localPET.eq.0) THEN
+        IF (MyMaster) THEN
           WRITE (stdout,50) TRIM(KeyWord)
   50    FORMAT (/,' GETPAR_0D_I - unable to find KeyWord: ',a,          &
      &          /,15x,'in ROMS standard input file.')
@@ -241,7 +254,7 @@
       RETURN
       END SUBROUTINE getpar_0d_i
 !
-      SUBROUTINE getpar_1d_i (localPET, Ndim, Value, KeyWord, InpName)
+      SUBROUTINE getpar_1d_i (MyMaster, Ndim, Value, KeyWord, InpName)
 !
 !***********************************************************************
 !                                                                      !
@@ -249,7 +262,7 @@
 !                                                                      !
 !  On Input:                                                           !
 !                                                                      !
-!     localPET   Local Persistent Execution Thread (integer)           !
+!     MyMaster   Switch indicating Master process (logical)            !
 !     Ndim       Size integer variable dimension                       !
 !     KeyWord    Keyword associated with input parameter (string)      !
 !     InpName    Standard input filename (string; OPTIONAL)            !
@@ -260,14 +273,10 @@
 !                                                                      !
 !***********************************************************************
 !
-      USE mod_iounits, ONLY : stdout
-      USE mod_scalars, ONLY : exit_flag
-!
-      USE strings_mod, ONLY : FoundError
-!
 !  Imported variable declarations.
 !
-      integer, intent(in)  :: localPET
+      logical, intent(in)  :: MyMaster
+!
       integer, intent(in)  :: Ndim
       integer, intent(out) :: Value(:)
 !
@@ -292,13 +301,14 @@
 !
 !  Get standard input unit.
 !
+      io_err=0
       IF (PRESENT(InpName)) THEN
         InpUnit=1
         OPEN (InpUnit, FILE=TRIM(InpName), FORM='formatted',            &
      &        STATUS='old', IOSTAT=io_err, IOMSG=io_errmsg)
         IF (io_err.ne.0) THEN
-          IF (localPET.eq.0) WRITE (stdout,10) TRIM(InpName),           &
-     &                                         TRIM(io_errmsg)
+          IF (MyMaster) WRITE (stdout,10) TRIM(InpName),                &
+     &                                    TRIM(io_errmsg)
   10      FORMAT (/,' GETPAR_1D_I - Unable to open input script: ',a,   &
      &            /,15x,'ERROR: ',a)
           exit_flag=5
@@ -307,7 +317,7 @@
           GotFile=.TRUE.
         END IF
       ELSE
-        InpUnit=stdinp_unit(localPET, GotFile)
+        InpUnit=stdinp_unit(MyMaster, GotFile)
       END IF
 !
 !  Process requested parameter.
@@ -323,14 +333,14 @@
           END IF
         END IF
       END DO
-  20  IF (localPET.eq.0) THEN
+  20  IF (MyMaster) THEN
         WRITE (stdout,30) line
   30    FORMAT (/,' GETPAR_1D_I - Error while processing line: ',/,a)
       END IF
       exit_flag=4
   40  CONTINUE
       IF (.not.foundit) THEN
-        IF (localPET.eq.0) THEN
+        IF (MyMaster) THEN
           WRITE (stdout,50) TRIM(KeyWord)
   50    FORMAT (/,' GETPAR_1D_I - unable to find KeyWord: ',a,          &
      &          /,15x,'in ROMS standard input file.')
@@ -344,7 +354,7 @@
       RETURN
       END SUBROUTINE getpar_1d_i
 !
-      SUBROUTINE getpar_0d_l (localPET, Value, KeyWord, InpName)
+      SUBROUTINE getpar_0d_l (MyMaster, Value, KeyWord, InpName)
 !
 !***********************************************************************
 !                                                                      !
@@ -352,7 +362,7 @@
 !                                                                      !
 !  On Input:                                                           !
 !                                                                      !
-!     localPET   Local Persistent Execution Thread (integer)           !
+!     MyMaster   Switch indicating Master process (logical)            !
 !     KeyWord    Keyword associated with input parameter (string)      !
 !     InpName    Standard input filename (string; OPTIONAL)            !
 !                                                                      !
@@ -362,14 +372,9 @@
 !                                                                      !
 !***********************************************************************
 !
-      USE mod_iounits, ONLY : stdout
-      USE mod_scalars, ONLY : exit_flag
-!
-      USE strings_mod, ONLY : FoundError
-!
 !  Imported variable declarations.
 !
-      integer, intent(in)  :: localPET
+      logical, intent(in)  :: MyMaster
       logical, intent(out) :: Value
 !
       character (len=*), intent(in) :: KeyWord
@@ -394,13 +399,14 @@
 !
 !  Get standard input unit.
 !
+      io_err=0
       IF (PRESENT(InpName)) THEN
         InpUnit=1
         OPEN (InpUnit, FILE=TRIM(InpName), FORM='formatted',            &
      &        STATUS='old', IOSTAT=io_err, IOMSG=io_errmsg)
         IF (io_err.ne.0) THEN
-          IF (localPET.eq.0) WRITE (stdout,10) TRIM(InpName),           &
-     &                                         TRIM(io_errmsg)
+          IF (MyMaster) WRITE (stdout,10) TRIM(InpName),                &
+     &                                    TRIM(io_errmsg)
   10      FORMAT (/,' GETPAR_0D_L - Unable to open input script: ',a,   &
      &            /,15x,'ERROR: ',a)
           exit_flag=5
@@ -409,7 +415,7 @@
           GotFile=.TRUE.
         END IF
       ELSE
-        InpUnit=stdinp_unit(localPET, GotFile)
+        InpUnit=stdinp_unit(MyMaster, GotFile)
       END IF
 !
 !  Process requested parameter.
@@ -426,14 +432,14 @@
           END IF
         END IF
       END DO
-  20  IF (localPET.eq.0) THEN
+  20  IF (MyMaster) THEN
         WRITE (stdout,30) line
   30    FORMAT (/,' GETPAR_0D_L - Error while processing line: ',/,a)
       END IF
       exit_flag=4
   40  CONTINUE
       IF (.not.foundit) THEN
-        IF (localPET.eq.0) THEN
+        IF (MyMaster) THEN
           WRITE (stdout,50) TRIM(KeyWord)
   50    FORMAT (/,' GETPAR_0D_L - unable to find KeyWord: ',a,          &
      &          /,15x,'in ROMS standard input file.')
@@ -447,7 +453,7 @@
       RETURN
       END SUBROUTINE getpar_0d_l
 !
-      SUBROUTINE getpar_1d_l (localPET, Ndim, Value, KeyWord, InpName)
+      SUBROUTINE getpar_1d_l (MyMaster, Ndim, Value, KeyWord, InpName)
 !
 !***********************************************************************
 !                                                                      !
@@ -455,7 +461,7 @@
 !                                                                      !
 !  On Input:                                                           !
 !                                                                      !
-!     localPET   Local Persistent Execution Thread (integer)           !
+!     MyMaster   Switch indicating Master process (logical)            !
 !     Ndim       Size logical variable dimension                       !
 !     KeyWord    Keyword associated with input parameter (string)      !
 !     InpName    Standard input filename (string; OPTIONAL)            !
@@ -466,15 +472,11 @@
 !                                                                      !
 !***********************************************************************
 !
-      USE mod_iounits, ONLY : stdout
-      USE mod_scalars, ONLY : exit_flag
-!
-      USE strings_mod, ONLY : FoundError
-!
 !  Imported variable declarations.
 !
+      logical, intent(in)  :: MyMaster
       logical, intent(out) :: Value(:)
-      integer, intent(in)  :: localPET
+!
       integer, intent(in)  :: Ndim
 !
       character (len=*), intent(in) :: KeyWord
@@ -498,13 +500,14 @@
 !
 !  Get standard input unit.
 !
+      io_err=0
       IF (PRESENT(InpName)) THEN
         InpUnit=1
         OPEN (InpUnit, FILE=TRIM(InpName), FORM='formatted',            &
      &        STATUS='old', IOSTAT=io_err, IOMSG=io_errmsg)
         IF (io_err.ne.0) THEN
-          IF (localPET.eq.0) WRITE (stdout,10) TRIM(InpName),           &
-     &                                         TRIM(io_errmsg)
+          IF (MyMaster) WRITE (stdout,10) TRIM(InpName),                &
+     &                                    TRIM(io_errmsg)
   10      FORMAT (/,' GETPAR_1D_L - Unable to open input script: ',a,   &
      &            /,15x,'ERROR: ',a)
           exit_flag=5
@@ -513,7 +516,7 @@
           GotFile=.TRUE.
         END IF
       ELSE
-        InpUnit=stdinp_unit(localPET, GotFile)
+        InpUnit=stdinp_unit(MyMaster, GotFile)
       END IF
 !
 !  Process requested parameter.
@@ -529,14 +532,14 @@
           END IF
         END IF
       END DO
-  20  IF (localPET.eq.0) THEN
+  20  IF (MyMaster) THEN
         WRITE (stdout,30) line
   30    FORMAT (/,' GETPAR_1D_L - Error while processing line: ',/,a)
       END IF
       exit_flag=4
   40  CONTINUE
       IF (.not.foundit) THEN
-        IF (localPET.eq.0) THEN
+        IF (MyMaster) THEN
           WRITE (stdout,50) TRIM(KeyWord)
   50    FORMAT (/,' GETPAR_1D_L - unable to find KeyWord: ',a,          &
      &          /,15x,'in ROMS standard input file.')
@@ -550,7 +553,7 @@
       RETURN
       END SUBROUTINE getpar_1d_l
 !
-      SUBROUTINE getpar_0d_r (localPET, Value, KeyWord, InpName)
+      SUBROUTINE getpar_0d_r (MyMaster, Value, KeyWord, InpName)
 !
 !***********************************************************************
 !                                                                      !
@@ -559,7 +562,7 @@
 !                                                                      !
 !  On Input:                                                           !
 !                                                                      !
-!     localPET   Local Persistent Execution Thread (integer)           !
+!     MyMaster   Switch indicating Master process (logical)            !
 !     KeyWord    Keyword associated with input parameter (string)      !
 !     InpName    Standard input filename (string; OPTIONAL)            !
 !                                                                      !
@@ -569,14 +572,10 @@
 !                                                                      !
 !***********************************************************************
 !
-      USE mod_iounits, ONLY : stdout
-      USE mod_scalars, ONLY : exit_flag
-!
-      USE strings_mod, ONLY : FoundError
-!
 !  Imported variable declarations.
 !
-      integer, intent(in)  :: localPET
+      logical, intent(in)  :: MyMaster
+!
       real(r8), intent(out) :: Value
 !
       character (len=*), intent(in) :: KeyWord
@@ -602,13 +601,14 @@
 !
 !  Get standard input unit.
 !
+      io_err=0
       IF (PRESENT(InpName)) THEN
         InpUnit=1
         OPEN (InpUnit, FILE=TRIM(InpName), FORM='formatted',            &
      &        STATUS='old', IOSTAT=io_err, IOMSG=io_errmsg)
         IF (io_err.ne.0) THEN
-          IF (localPET.eq.0) WRITE (stdout,10) TRIM(InpName),           &
-     &                                         TRIM(io_errmsg)
+          IF (MyMaster) WRITE (stdout,10) TRIM(InpName),                &
+     &                                    TRIM(io_errmsg)
   10      FORMAT (/,' GETPAR_0D_R - Unable to open input script: ',a,   &
      &            /,15x,'ERROR: ',a)
           exit_flag=5
@@ -617,7 +617,7 @@
           GotFile=.TRUE.
         END IF
       ELSE
-        InpUnit=stdinp_unit(localPET, GotFile)
+        InpUnit=stdinp_unit(MyMaster, GotFile)
       END IF
 !
 !  Process requested parameter.
@@ -634,14 +634,14 @@
           END IF
         END IF
       END DO
-  20  IF (localPET.eq.0) THEN
+  20  IF (MyMaster) THEN
         WRITE (stdout,30) line
   30    FORMAT (/,' GETPAR_0D_R - Error while processing line: ',/,a)
       END IF
       exit_flag=4
   40  CONTINUE
       IF (.not.foundit) THEN
-        IF (localPET.eq.0) THEN
+        IF (MyMaster) THEN
           WRITE (stdout,50) TRIM(KeyWord)
   50    FORMAT (/,' GETPAR_0D_R - unable to find KeyWord: ',a,          &
      &          /,15x,'in ROMS standard input file.')
@@ -655,7 +655,7 @@
       RETURN
       END SUBROUTINE getpar_0d_r
 !
-      SUBROUTINE getpar_1d_r (localPET, Ndim, Value, KeyWord, InpName)
+      SUBROUTINE getpar_1d_r (MyMaster, Ndim, Value, KeyWord, InpName)
 !
 !***********************************************************************
 !                                                                      !
@@ -663,7 +663,7 @@
 !                                                                      !
 !  On Input:                                                           !
 !                                                                      !
-!     localPET   Local Persistent Execution Thread (integer)           !
+!     MyMaster   Switch indicating Master process (logical)            !
 !     Ndim       Size integer variable dimension                       !
 !     KeyWord    Keyword associated with input parameter (string)      !
 !     InpName    Standard input filename (string; OPTIONAL)            !
@@ -674,15 +674,12 @@
 !                                                                      !
 !***********************************************************************
 !
-      USE mod_iounits, ONLY : stdout
-      USE mod_scalars, ONLY : exit_flag
-!
-      USE strings_mod, ONLY : FoundError
-!
 !  Imported variable declarations.
 !
-      integer, intent(in)  :: Ndim
-
+      logical, intent(in) :: MyMaster
+!
+      integer, intent(in) :: Ndim
+!
       real(r8), intent(out) :: Value(:)
 !
       character (len=*), intent(in) :: KeyWord
@@ -706,13 +703,14 @@
 !
 !  Get standard input unit.
 !
+      io_err=0
       IF (PRESENT(InpName)) THEN
         InpUnit=1
         OPEN (InpUnit, FILE=TRIM(InpName), FORM='formatted',            &
      &        STATUS='old', IOSTAT=io_err, IOMSG=io_errmsg)
         IF (io_err.ne.0) THEN
-          IF (localPET.eq.0) WRITE (stdout,10) TRIM(InpName),           &
-     &                                         TRIM(io_errmsg)
+          IF (MyMaster) WRITE (stdout,10) TRIM(InpName),                &
+     &                                    TRIM(io_errmsg)
   10      FORMAT (/,' GETPAR_1D_R - Unable to open input script: ',a,   &
      &            /,15x,'ERROR: ',a)
           exit_flag=5
@@ -721,7 +719,7 @@
           GotFile=.TRUE.
         END IF
       ELSE
-        InpUnit=stdinp_unit(localPET, GotFile)
+        InpUnit=stdinp_unit(MyMaster, GotFile)
       END IF
 !
 !  Process requested parameter.
@@ -737,14 +735,14 @@
           END IF
         END IF
       END DO
-  20  IF (localPET.eq.0) THEN
+  20  IF (MyMaster) THEN
         WRITE (stdout,30) line
   30    FORMAT (/,' GETPAR_1D_R - Error while processing line: ',/,a)
       END IF
       exit_flag=4
   40  CONTINUE
       IF (.not.foundit) THEN
-        IF (localPET.eq.0) THEN
+        IF (MyMaster) THEN
           WRITE (stdout,50) TRIM(KeyWord)
   50    FORMAT (/,' GETPAR_1D_R - unable to find KeyWord: ',a,          &
      &          /,15x,'in ROMS standard input file.')
@@ -758,7 +756,7 @@
       RETURN
       END SUBROUTINE getpar_1d_r
 !
-      SUBROUTINE getpar_0d_s (localPET, Value, KeyWord, InpName)
+      SUBROUTINE getpar_0d_s (MyMaster, Value, KeyWord, InpName)
 !
 !***********************************************************************
 !                                                                      !
@@ -766,7 +764,7 @@
 !                                                                      !
 !  On Input:                                                           !
 !                                                                      !
-!     localPET   Local Persistent Execution Thread (integer)           !
+!     MyMaster   Switch indicating Master process (logical)            !
 !     KeyWord    Keyword associated with input parameter (string)      !
 !     InpName    Standard input filename (string; OPTIONAL)            !
 !                                                                      !
@@ -776,14 +774,9 @@
 !                                                                      !
 !***********************************************************************
 !
-      USE mod_iounits, ONLY : stdout
-      USE mod_scalars, ONLY : exit_flag
-!
-      USE strings_mod, ONLY : FoundError
-!
 !  Imported variable declarations.
 !
-      integer, intent(in)  :: localPET
+      logical, intent(in) :: MyMaster
 !
       character (len=*), intent( in) :: KeyWord
       character (len=*), intent(out) :: Value
@@ -808,13 +801,14 @@
 !
 !  Get standard input unit.
 !
+      io_err=0
       IF (PRESENT(InpName)) THEN
         InpUnit=1
         OPEN (InpUnit, FILE=TRIM(InpName), FORM='formatted',            &
      &        STATUS='old', IOSTAT=io_err, IOMSG=io_errmsg)
         IF (io_err.ne.0) THEN
-          IF (localPET.eq.0) WRITE (stdout,10) TRIM(InpName),           &
-     &                                         TRIM(io_errmsg)
+          IF (MyMaster) WRITE (stdout,10) TRIM(InpName),                &
+     &                                    TRIM(io_errmsg)
   10      FORMAT (/,' GETPAR_0D_S - Unable to open input script: ',a,   &
      &            /,15x,'ERROR: ',a)
           exit_flag=5
@@ -823,7 +817,7 @@
           GotFile=.TRUE.
         END IF
       ELSE
-        InpUnit=stdinp_unit(localPET, GotFile)
+        InpUnit=stdinp_unit(MyMaster, GotFile)
       END IF
 !
 !  Process requested parameter.
@@ -842,14 +836,14 @@
           END IF
         END IF
       END DO
-  20  IF (localPET.eq.0) THEN
+  20  IF (MyMaster) THEN
         WRITE (stdout,30) line
   30    FORMAT (/,' GETPAR_0D_S - Error while processing line: ',/,a)
       END IF
       exit_flag=4
   40  CONTINUE
       IF (.not.foundit) THEN
-        IF (localPET.eq.0) THEN
+        IF (MyMaster) THEN
           WRITE (stdout,50) TRIM(KeyWord)
   50    FORMAT (/,' GETPAR_0D_S - unable to find KeyWord: ',a,          &
      &          /,15x,'in ROMS standard input file.')

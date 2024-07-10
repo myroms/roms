@@ -22,6 +22,7 @@ list( APPEND _files
       ROMS/Nonlinear/conv_bry3d.F
       ROMS/Nonlinear/diag.F
       ROMS/Nonlinear/exchange_2d.F
+      ROMS/Nonlinear/exchange_2d_xtr.F
       ROMS/Nonlinear/exchange_3d.F
       ROMS/Nonlinear/exchange_4d.F
       ROMS/Nonlinear/forcing.F

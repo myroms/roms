@@ -677,9 +677,9 @@
       integer :: Linp, Lout, Lscale, Lwrk, Lwrk1, i, j, ic
       integer :: info, itheta1
 !
-      real(r8) :: norm, zbeta, ztheta1
+      real(dp) :: norm, zbeta, ztheta1
 
-      real(r8), dimension(2*Ninner-2) :: work
+      real(dp), dimension(2*Ninner-2) :: work
 !
       character (len=13) :: string
 

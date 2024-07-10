@@ -87,12 +87,15 @@
 # ifdef MASKING
      &                       Amask,                                     &
 # endif
-     &                       Adat, checksum, Lregrid) RESULT (status)
+     &                       Adat,                                      &
+     &                       checksum,                                  &
+     &                       Lregrid) RESULT (status)
 !***********************************************************************
 !
       USE mod_netcdf
 !
       USE distribute_mod, ONLY : mp_bcasti, mp_collect, mp_reduce
+      USE get_bounds_mod, ONLY : tile_bounds_1d, tile_bounds_2d
       USE regrid_mod,     ONLY : regrid_nf90
 !
 !  Imported variable declarations.
@@ -713,7 +716,9 @@
 # ifdef MASKING
      &                       Amask,                                     &
 # endif
-     &                       Adat, checksum, Lregrid) RESULT (status)
+     &                       Adat,                                      &
+     &                       checksum,                                  &
+     &                       Lregrid) RESULT (status)
 !***********************************************************************
 !
       USE mod_netcdf
@@ -1261,7 +1266,9 @@
 # ifdef MASKING
      &                      Amask,                                      &
 # endif
-     &                      Adat, checksum, Lregrid) RESULT (status)
+     &                      Adat,                                       &
+     &                      checksum,                                   &
+     &                      Lregrid) RESULT (status)
 !***********************************************************************
 !
       USE mod_pio_netcdf

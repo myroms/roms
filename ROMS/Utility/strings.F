@@ -92,10 +92,10 @@
         foundit=.TRUE.
         IF (Master) THEN
           WRITE (stdout,10) flag, line, TRIM(routine)
-  10      FORMAT (' Found Error: ', i2.2, t20, 'Line: ', i0,            &
+  10      FORMAT (' Found Error: ', i0, t20, 'Line: ', i0,              &
      &            t35, 'Source: ', a)
         END IF
-        CALL my_flush (stdout)
+        FLUSH (stdout)
       END IF
 
       RETURN
@@ -190,7 +190,7 @@
   10      FORMAT (' Found Error: ', i2.2, t20, 'Line: ', i0,            &
      &            t35, 'Source: ', a)
         END IF
-        CALL my_flush (stdout)
+        FLUSH (stdout)
       END IF
 
       RETURN
@@ -290,7 +290,7 @@
   10      FORMAT (' Found Error: ', i2.2, t20, 'Line: ', i0,            &
      &            t35, 'Source: ', a)
         END IF
-        CALL my_flush (stdout)
+        FLUSH (stdout)
       END IF
 
       RETURN
