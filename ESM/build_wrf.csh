@@ -206,6 +206,7 @@ if ( $branch == 1 ) then
   echo "Checking out myroms WRF GitHub branch: $branch_name"
   echo ""
   cd wrf
+  git submodule update --init --recursive
   git checkout $branch_name
   setenv WRF_ROOT_DIR ${PWD}
 else

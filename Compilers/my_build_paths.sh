@@ -124,6 +124,11 @@ fi
 # to use the serial version of the NetCDF-4/HDF5 to avoid conflicts
 # with the compiler. We cannot activate MPI constructs in serial
 # or shared-memory ROMS code. Hybrid parallelism is not possible.
+#
+# If NetCDF-C and NetCDF-Fortran libraries are in different
+# directories, you must define NETCDFC correctly to the appropriate
+# split path. Otherwise, set NETCDFC to NETCDF because they are
+# located in the same path.
 
 export               MPI_SOFT=""
 
@@ -161,16 +166,20 @@ case "$FORT" in
         if [ -n "${USE_PARALLEL_IO:+1}" ] && [ -n "${USE_MPI:+1}" ]; then
           export       ESMF_DIR=${MPI_SOFT}/esmf_nc4
           export         NETCDF=${MPI_SOFT}/netcdf4
+          export        NETCDFC=${MPI_SOFT}/netcdf4c
+          export      NC_CONFIG=${NETCDFC}/bin/nc-config
           export      NF_CONFIG=${NETCDF}/bin/nf-config
           export  NETCDF_INCDIR=${NETCDF}/include
           export        NETCDF4=1
         else
           export       ESMF_DIR=${MPI_SOFT}/esmf_nc4
           export         NETCDF=/opt/intelsoft/serial/netcdf4
+          export        NETCDFC=${MPI_SOFT}/netcdf4c
+          export      NC_CONFIG=${NETCDFC}/bin/nc-config
           export      NF_CONFIG=${NETCDF}/bin/nf-config
           export  NETCDF_INCDIR=${NETCDF}/include
           export        NETCDF4=1
-        fi
+	fi
       else
         export         ESMF_DIR=${MPI_SOFT}/esmf_nc3
         export           NETCDF=/opt/intelsoft/serial/netcdf3
@@ -243,12 +252,16 @@ case "$FORT" in
         if [ -n "${USE_PARALLEL_IO:+1}" ] && [ -n "${USE_MPI:+1}" ]; then
           export       ESMF_DIR=${MPI_SOFT}/esmf_nc4
           export         NETCDF=${MPI_SOFT}/netcdf4
+          export        NETCDFC=${MPI_SOFT}/netcdf4c
+          export      NC_CONFIG=${NETCDFC}/bin/nc-config
           export      NF_CONFIG=${NETCDF}/bin/nf-config
           export  NETCDF_INCDIR=${NETCDF}/include
           export        NETCDF4=1
         else
           export       ESMF_DIR=${MPI_SOFT}/esmf_nc4
           export         NETCDF=/opt/pgisoft/serial/netcdf4
+          export        NETCDFC=${MPI_SOFT}/netcdf4c
+          export      NC_CONFIG=${NETCDFC}/bin/nc-config
           export      NF_CONFIG=${NETCDF}/bin/nf-config
           export  NETCDF_INCDIR=${NETCDF}/include
           export        NETCDF4=1
@@ -323,12 +336,16 @@ case "$FORT" in
         if [ -n "${USE_PARALLEL_IO:+1}" ] && [ -n "${USE_MPI:+1}" ]; then
           export       ESMF_DIR=${MPI_SOFT}/esmf_nc4
           export         NETCDF=${MPI_SOFT}/netcdf4
+          export        NETCDFC=${MPI_SOFT}/netcdf4c
+          export      NC_CONFIG=${NETCDFC}/bin/nc-config
           export      NF_CONFIG=${NETCDF}/bin/nf-config
           export  NETCDF_INCDIR=${NETCDF}/include
           export        NETCDF4=1
         else
           export       ESMF_DIR=${MPI_SOFT}/esmf_nc4
           export         NETCDF=/opt/gfortransoft/serial/netcdf4
+          export        NETCDFC=${MPI_SOFT}/netcdf4c
+          export      NC_CONFIG=${NETCDFC}/bin/nc-config
           export      NF_CONFIG=${NETCDF}/bin/nf-config
           export  NETCDF_INCDIR=${NETCDF}/include
           export        NETCDF4=1

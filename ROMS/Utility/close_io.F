@@ -441,7 +441,7 @@
 !  Close ROMS standard outpu file.
 !-----------------------------------------------------------------------
 !
-      CALL my_flush (stdout)
+      FLUSH (stdout)
       CLOSE (stdout)
 #endif
 !

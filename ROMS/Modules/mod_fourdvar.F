@@ -1155,10 +1155,6 @@
 !  with observation dimension parameters Ndatum, Nsurvey, and Mobs.    !
 !                                                                      !
 !=======================================================================
-!
-!  Local variable declarations.
-!
-      integer :: ng
 
 # ifdef OBSERVATIONS
 !
@@ -1166,45 +1162,12 @@
 !  Deallocate structure variables for each nested grids.
 !-----------------------------------------------------------------------
 !
-      DO ng=1,Ngrids
-        IF (allocated(FOURDVAR(ng) % NobsSurvey)) THEN
-          deallocate (FOURDVAR(ng) % NobsSurvey)
-        END IF
-
-        IF (allocated(FOURDVAR(ng) % SurveyTime)) THEN
-          deallocate (FOURDVAR(ng) % SurveyTime)
-        END IF
-
-#  ifdef RPCG
-        IF (allocated(FOURDVAR(ng) % cg_pxsave)) THEN
-          deallocate (FOURDVAR(ng) % cg_pxsave)
-        END IF
-
-        IF (allocated(FOURDVAR(ng) % cg_pxout)) THEN
-          deallocate (FOURDVAR(ng) % cg_pxout)
-        END IF
-
-        IF (allocated(FOURDVAR(ng) % cg_pxsum)) THEN
-          deallocate (FOURDVAR(ng) % cg_pxsum)
-        END IF
-
-        IF (allocated(FOURDVAR(ng) % cg_Dpxsum)) THEN
-          deallocate (FOURDVAR(ng) % cg_Dpxsum)
-        END IF
-
-        IF (allocated(FOURDVAR(ng) % tl_cg_pxsave)) THEN
-          deallocate (FOURDVAR(ng) % tl_cg_pxsave)
-        END IF
-
-        IF (allocated(FOURDVAR(ng) % ad_cg_pxsave)) THEN
-          deallocate (FOURDVAR(ng) % ad_cg_pxsave)
-        END IF
-
-#  endif
-      END DO
+      IF (allocated(FOURDVAR)) THEN
+        deallocate (FOURDVAR)
+      END IF
 !
 !-----------------------------------------------------------------------
-!  deallocate and initialize model and observation variables.
+!  Deallocate model and observation variables.
 !-----------------------------------------------------------------------
 !
 #  ifdef CURVGRID

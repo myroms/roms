@@ -356,13 +356,11 @@ fi
 ANALYTICAL_DIR="ANALYTICAL_DIR='${MY_ANALYTICAL_DIR}'"
 HEADER=`echo ${ROMS_APPLICATION} | tr '[:upper:]' '[:lower:]'`.h
 HEADER_DIR="HEADER_DIR='${MY_HEADER_DIR}'"
-ROOT_DIR="ROOT_DIR='${MY_ROMS_SRC}'"
 
 mycppflags="${MY_CPP_FLAGS}"
 
 export       MY_CPP_FLAGS="${MY_CPP_FLAGS} -D${ANALYTICAL_DIR}"
 export       MY_CPP_FLAGS="${MY_CPP_FLAGS} -D${HEADER_DIR}"
-export       MY_CPP_FLAGS="${MY_CPP_FLAGS} -D${ROOT_DIR}"
 
 cd ${BUILD_DIR}
 
@@ -376,16 +374,6 @@ if [ ! -z "${LIBTYPE}" ]; then
   ltype="-DLIBTYPE=${LIBTYPE}"
 else
   ltype=""
-fi
-
-if [ ! -z "${FORT}" ]; then
-  if [ ${FORT} == "ifort" ]; then
-    compiler="-DCMAKE_Fortran_COMPILER=ifort"
-  elif [ ${FORT} == "gfortran" ]; then
-    compiler="-DCMAKE_Fortran_COMPILER=gfortran"
-  else
-    compiler=""
-  fi
 fi
 
 if [ ! -z "${MY_CPP_FLAGS}" ]; then
@@ -479,7 +467,6 @@ if [[ $dprint -eq 0 && $clean -eq 1 ]]; then
                    -DROMS_APP_DIR=${ROMS_APP_DIR} \
                    ${my_hdir} \
                    ${ltype} \
-                   ${compiler} \
                    ${extra_flags} \
                    ${parpack_ldir} \
                    ${arpack_ldir} \

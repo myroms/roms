@@ -13,9 +13,13 @@
 ###########################################################################
 
 if( MPI )
-  set( CMAKE_Fortran_COMPILER mpif90 )
+  execute_process( COMMAND which mpif90
+                   OUTPUT_VARIABLE CMAKE_Fortran_COMPILER
+                   OUTPUT_STRIP_TRAILING_WHITESPACE ) 
 else()
-  set( CMAKE_Fortran_COMPILER gfortran )
+  execute_process( COMMAND which gfortran
+                   OUTPUT_VARIABLE CMAKE_Fortran_COMPILER
+                   OUTPUT_STRIP_TRAILING_WHITESPACE ) 
 endif()
 
 ###########################################################################
