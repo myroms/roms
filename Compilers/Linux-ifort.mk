@@ -253,7 +253,7 @@ ifdef USE_ESMF
       ESMF_MK_DIR ?= $(ESMF_DIR)/lib/lib$(ESMF_BOPT)/$(ESMF_SUBDIR)
            FFLAGS += $(ESMF_F90COMPILEPATHS)
              LIBS += $(ESMF_F90LINKPATHS) $(ESMF_F90ESMFLINKLIBS)
-             LIBS += -liomp5
+             LIBS += -liomp5 -lstdc++
 endif
 
 # Use full path of compiler.

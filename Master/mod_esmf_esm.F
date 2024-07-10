@@ -763,7 +763,7 @@
       END IF
       DO i=0,Nmodels
         ClockInfo(i)%Restarted=.FALSE.
-      END IF
+      END DO
 !
 !  Allocate MPI communicator handle for each ESM component.
 !

@@ -73,7 +73,7 @@
       integer :: MaxHaloLenI, MaxHaloLenJ
 #endif
       integer :: ibry, inp, out, i, ic, ifield, itrc, j, ng, npts
-      integer :: io_err, sequence, varid
+      integer :: sequence, varid
 !
       real(r8) :: cff
       real(r8), parameter :: spv = 0.0_r8

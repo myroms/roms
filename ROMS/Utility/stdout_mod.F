@@ -24,9 +24,6 @@
       USE mod_iounits
       USE mod_scalars
 !
-#ifdef DISTRIBUTE
-      USE distribute_mod, ONLY : mp_bcasti
-#endif
       USE strings_mod,    ONLY : FoundError
 !
       implicit none
@@ -113,6 +110,7 @@
 !  Open ROMS standard output file.
 !-----------------------------------------------------------------------
 !
+      io_err=0
       IF (Lappend) THEN
         OPEN (StdOutUnit, FILE=TRIM(stdout_file),                       &
      &        FORM='formatted', STATUS='old', POSITION='append',        &
@@ -122,9 +120,6 @@
      &        FORM='formatted', STATUS='replace',                       &
      &        IOSTAT=io_err, IOMSG=io_errmsg)
       END IF
-# ifdef DISTRIBUTE
-      CALL mp_bcasti (1, 1, io_err)
-# endif
       IF (io_err.ne.0) THEN
         IF (MyMaster) WRITE (StdOutUnit,10) TRIM(stdout_file),          &
      &                                      TRIM(io_errmsg)
