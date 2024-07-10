@@ -72,6 +72,8 @@
 # ifdef SINGLE_PRECISION
         MODULE PROCEDURE mp_bcastf_0dp   ! double-precision exchanges
         MODULE PROCEDURE mp_bcastf_1dp   ! double-precision exchanges
+        MODULE PROCEDURE mp_bcastf_2dp   ! double-precision exchanges
+        MODULE PROCEDURE mp_bcastf_3dp   ! double-precision exchanges
 # endif
         MODULE PROCEDURE mp_bcastf_0d
         MODULE PROCEDURE mp_bcastf_1d
@@ -190,9 +192,9 @@
 !
 !***********************************************************************
 !                                                                      !
-!  This routine broadcasts a double-precision floating-point scalar    !
-!  variable to all processors in the communicator. It is called by     !
-!  all the members in the group.                                       !
+!  This routine broadcasts a double-precision scalar variable to all   !
+!  processors in the communicator. It is called by all the members in  !
+!  the group.                                                          !
 !                                                                      !
 !  On Input:                                                           !
 !                                                                      !
@@ -278,9 +280,9 @@
 !
 !***********************************************************************
 !                                                                      !
-!  This routine broadcasts a 1D double precission floating-point,      !
-!  non-tiled, array to all processors in the communicator. It is       !
-!  called by all the members in the group.                             !
+!  This routine broadcasts a 1D double-precission, non-tiled, array    !
+!  to all processors in the communicator. It is called by all the      !
+!  members in the group.                                               !
 !                                                                      !
 !  On Input:                                                           !
 !                                                                      !
@@ -362,6 +364,193 @@
 !
       RETURN
       END SUBROUTINE mp_bcastf_1dp
+!
+      SUBROUTINE mp_bcastf_2dp (ng, model, A, InpComm)
+!
+!***********************************************************************
+!                                                                      !
+!  This routine broadcasts a 2D double-preision, non-tiled, array      !
+!  to all processors in the communicator. It is called by all the      !
+!  members in the group.                                               !
+!                                                                      !
+!  On Input:                                                           !
+!                                                                      !
+!     ng         Nested grid number.                                   !
+!     model      Calling model identifier.                             !
+!     A          2D array to broadcast (real).                         !
+!     InpComm    Communicator handle (integer, OPTIONAL).              !
+!                                                                      !
+!  On Output:                                                          !
+!                                                                      !
+!     A          Broadcasted 2D array.                                 !
+!                                                                      !
+!***********************************************************************
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: ng, model
+
+      integer, intent(in), optional :: InpComm
+!
+      real(dp), intent(inout) :: A(:,:)
+!
+!  Local variable declarations
+!
+      integer :: Lstr, MyCOMM, MyError, Npts, Serror
+
+      integer :: Asize(2)
+!
+      character (len=MPI_MAX_ERROR_STRING) :: string
+
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__//", mp_bcastf_2dp"
+
+#  ifdef PROFILE
+!
+!-----------------------------------------------------------------------
+!  Turn on time clocks.
+!-----------------------------------------------------------------------
+!
+      CALL wclock_on (ng, model, 64, __LINE__, MyFile)
+#  endif
+#  ifdef MPI
+!
+!-----------------------------------------------------------------------
+!  Set distributed-memory communicator handle (context ID).
+!-----------------------------------------------------------------------
+!
+      IF (PRESENT(InpComm)) THEN
+        MyCOMM=InpComm
+      ELSE
+        MyCOMM=OCN_COMM_WORLD
+      END IF
+#  endif
+!
+!-----------------------------------------------------------------------
+!  Broadcast requested variable.
+!-----------------------------------------------------------------------
+!
+      Asize(1)=UBOUND(A, DIM=1)
+      Asize(2)=UBOUND(A, DIM=2)
+      Npts=Asize(1)*Asize(2)
+
+#  ifdef MPI
+      CALL mpi_bcast (A, Npts, MP_FLOAT, MyMaster, MyCOMM, MyError)
+      IF (MyError.ne.MPI_SUCCESS) THEN
+        CALL mpi_error_string (MyError, string, Lstr, Serror)
+        Lstr=LEN_TRIM(string)
+        WRITE (stdout,10) 'MPI_BCAST', MyRank, MyError, string(1:Lstr)
+ 10     FORMAT (/,' MP_BCASTF_2DP - error during ',a,' call, Node = ',  &
+     &          i3.3,' Error = ',i3,/,13x,a)
+        exit_flag=2
+        RETURN
+      END IF
+#  endif
+#  ifdef PROFILE
+!
+!-----------------------------------------------------------------------
+!  Turn off time clocks.
+!-----------------------------------------------------------------------
+!
+      CALL wclock_off (ng, model, 64, __LINE__, MyFile)
+#  endif
+!
+      RETURN
+      END SUBROUTINE mp_bcastf_2dp
+!
+      SUBROUTINE mp_bcastf_3dp (ng, model, A, InpComm)
+!
+!***********************************************************************
+!                                                                      !
+!  This routine broadcasts a 3D double-precision, non-tiled, array     !
+!  to all processors in the communicator. It is called by all the      !
+!  members in the group.                                               !
+!                                                                      !
+!  On Input:                                                           !
+!                                                                      !
+!     ng         Nested grid number.                                   !
+!     model      Calling model identifier.                             !
+!     A          3D array to broadcast (real).                         !
+!     InpComm    Communicator handle (integer, OPTIONAL).              !
+!                                                                      !
+!  On Output:                                                          !
+!                                                                      !
+!     A          Broadcasted 3D array.                                 !
+!                                                                      !
+!***********************************************************************
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: ng, model
+
+      integer, intent(in), optional :: InpComm
+!
+      real(dp), intent(inout) :: A(:,:,:)
+!
+!  Local variable declarations
+!
+      integer :: Lstr, MyCOMM, MyError, Npts, Serror
+
+      integer :: Asize(3)
+!
+      character (len=MPI_MAX_ERROR_STRING) :: string
+
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__//", mp_bcastf_3d"
+
+#  ifdef PROFILE
+!
+!-----------------------------------------------------------------------
+!  Turn on time clocks.
+!-----------------------------------------------------------------------
+!
+      CALL wclock_on (ng, model, 64, __LINE__, MyFile)
+#  endif
+#  ifdef MPI
+!
+!-----------------------------------------------------------------------
+!  Set distributed-memory communicator handle (context ID).
+!-----------------------------------------------------------------------
+!
+      IF (PRESENT(InpComm)) THEN
+        MyCOMM=InpComm
+      ELSE
+        MyCOMM=OCN_COMM_WORLD
+      END IF
+#  endif
+!
+!-----------------------------------------------------------------------
+!  Broadcast requested variable.
+!-----------------------------------------------------------------------
+!
+      Asize(1)=UBOUND(A, DIM=1)
+      Asize(2)=UBOUND(A, DIM=2)
+      Asize(3)=UBOUND(A, DIM=3)
+      Npts=Asize(1)*Asize(2)*Asize(3)
+
+#  ifdef MPI
+      CALL mpi_bcast (A, Npts, MP_FLOAT, MyMaster, MyCOMM, MyError)
+      IF (MyError.ne.MPI_SUCCESS) THEN
+        CALL mpi_error_string (MyError, string, Lstr, Serror)
+        Lstr=LEN_TRIM(string)
+        WRITE (stdout,10) 'MPI_BCAST', MyRank, MyError, string(1:Lstr)
+ 10     FORMAT (/,' MP_BCASTF_3DP - error during ',a,' call, Node = ',  &
+     &          i3.3,' Error = ',i3,/,13x,a)
+        exit_flag=2
+        RETURN
+      END IF
+#  endif
+#  ifdef PROFILE
+!
+!-----------------------------------------------------------------------
+!  Turn off time clocks.
+!-----------------------------------------------------------------------
+!
+      CALL wclock_off (ng, model, 64, __LINE__, MyFile)
+#  endif
+!
+      RETURN
+      END SUBROUTINE mp_bcastf_3dp
 # endif
 !
       SUBROUTINE mp_bcastf_0d (ng, model, A, InpComm)
