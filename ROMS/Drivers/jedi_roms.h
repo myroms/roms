@@ -1364,25 +1364,9 @@
         DO ng=1,Ngrids
           DO tile=first_tile(ng),last_tile(ng),+1
             CALL tl_set_data (ng, tile)
-# ifdef FORWARD_READ
-            CALL set_depth (ng, tile, iTLM)
-# endif
           END DO
         END DO
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-
-# ifdef FORWARD_READ
-!
-!-----------------------------------------------------------------------
-!  Compute BASIC STATE horizontal mass fluxes (Hz*u/n and Hz*v/m).
-!-----------------------------------------------------------------------
-!
-        DO ng=1,Ngrids
-          DO tile=last_tile(ng),first_tile(ng),-1
-            CALL set_massflux (ng, tile, iTLM)
-          END DO
-        END DO
-# endif
 !
 !-----------------------------------------------------------------------
 !  Computes the initial depths and level thicknesses from the initial

@@ -1158,7 +1158,7 @@
 !
 !  Western edge, clamped boundary condition.
 !
-        ELSE IF (ad_LBC(iwest,isFsur,ng)%gradient) THEN
+        ELSE IF (ad_LBC(iwest,isFsur,ng)%clamped) THEN
           DO j=Jstr,Jend
             IF (LBC_apply(ng)%west(j)) THEN
 # ifdef MASKING

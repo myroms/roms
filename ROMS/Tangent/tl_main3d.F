@@ -45,7 +45,7 @@
 # if defined WAV_COUPLING_NOT_YET && defined MCT_LIB
       USE mct_coupler_mod,      ONLY : ocn2wav_coupling
 # endif
-# ifdef FORWARD_READ
+# if defined FORWARD_READ || defined JEDI
       USE omega_mod,            ONLY : omega
       USE set_depth_mod,        ONLY : set_depth
       USE set_massflux_mod,     ONLY : set_massflux
@@ -230,7 +230,7 @@
                 IF (ProcessInputData(ng)) THEN
                   CALL tl_set_data (ng, tile)
                 END IF
-# ifdef FORWARD_READ
+# if defined FORWARD_READ || defined JEDI
                 CALL set_depth (ng, tile, iTLM)
 # endif
               END DO
@@ -238,7 +238,7 @@
             END DO
             IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
-# ifdef FORWARD_READ
+# if defined FORWARD_READ || defined JEDI
 !
 !-----------------------------------------------------------------------
 !  Compute BASIC STATE horizontal mass fluxes (Hz*u/n and Hz*v/m).
@@ -328,7 +328,7 @@
                 CALL equilibrium_tide (ng, tile, iTLM)
 # endif
                 CALL tl_diag (ng, tile)
-# ifdef FORWARD_READ
+# if defined FORWARD_READ || defined JEDI
                 CALL omega (ng, tile, iTLM)
 # endif
 # ifdef TLM_CHECK

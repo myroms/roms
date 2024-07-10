@@ -224,10 +224,8 @@
             tl_cff1=tl_cff1*umask(i,j)
 #  endif
 !^          u(i,j,k,nstp)=cff1
-!^          u(i,j,k,nnew)=cff1
 !^
             tl_u(i,j,k,nstp)=tl_cff1
-            tl_u(i,j,k,nnew)=tl_cff1
           END DO
         END DO
 !
@@ -243,10 +241,8 @@
               tl_cff2=tl_cff2*vmask(i,j)
 #  endif
 !^            v(i,j,k,nstp)=cff2
-!^            v(i,j,k,nnew)=cff2
 !^
               tl_v(i,j,k,nstp)=tl_cff2
-              tl_v(i,j,k,nnew)=tl_cff2
             END DO
           END DO
         END IF
@@ -276,29 +272,6 @@
      &                    IminS, ImaxS, JminS, JmaxS,                   &
      &                    nstp, nstp,                                   &
      &                    tl_v)
-
-!^    CALL u3dbc_tile (ng, tile,                                        &
-!^   &                 LBi, UBi, LBj, UBj, N(ng),                       &
-!^   &                 IminS, ImaxS, JminS, JmaxS,                      &
-!^   &                 nstp, nnew,                                      &
-!^   &                 u)
-!^
-      CALL rp_u3dbc_tile (ng, tile,                                     &
-     &                    LBi, UBi, LBj, UBj, N(ng),                    &
-     &                    IminS, ImaxS, JminS, JmaxS,                   &
-     &                    nstp, nnew,                                   &
-     &                    tl_u)
-!^    CALL v3dbc_tile (ng, tile,                                        &
-!^   &                 LBi, UBi, LBj, UBj, N(ng),                       &
-!^   &                 IminS, ImaxS, JminS, JmaxS,                      &
-!^   &                 nstp, nnew,                                      &
-!^   &                 v)
-!^
-      CALL rp_v3dbc_tile (ng, tile,                                     &
-     &                    LBi, UBi, LBj, UBj, N(ng),                    &
-     &                    IminS, ImaxS, JminS, JmaxS,                   &
-     &                    nstp, nnew,                                   &
-     &                    tl_v)
 !
       IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
 !^      CALL exchange_u3d_tile (ng, tile,                               &
@@ -316,30 +289,15 @@
      &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
      &                          tl_v(:,:,:,nstp))
 
-!^      CALL exchange_u3d_tile (ng, tile,                               &
-!^   &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
-!^   &                          u(:,:,:,nnew))
-!^
-        CALL exchange_u3d_tile (ng, tile,                               &
-     &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
-     &                          tl_u(:,:,:,nnew))
-!^      CALL exchange_v3d_tile (ng, tile,                               &
-!^   &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
-!^   &                          v(:,:,:,nnew))
-!^
-        CALL exchange_v3d_tile (ng, tile,                               &
-     &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
-     &                          tl_v(:,:,:,nnew))
       END IF
 
 #  ifdef DISTRIBUTE
 !
-!^    CALL mp_exchange3d (ng, tile, model, 4,                           &
+!^    CALL mp_exchange3d (ng, tile, model, 2,                           &
 !^   &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
 !^   &                    NghostPoints,                                 &
 !^   &                    EWperiodic(ng), NSperiodic(ng),               &
-!^   &                    u(:,:,:,nstp), v(:,:,:,nstp),                 &
-!^   &                    u(:,:,:,nnew), v(:,:,:,nnew))
+!^   &                    u(:,:,:,nstp), v(:,:,:,nstp))
 !^
       CALL mp_exchange3d (ng, tile, model, 4,                           &
      &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
@@ -398,17 +356,9 @@
 !^
           tl_cff2=tl_cff2*umask(i,j)
 #  endif
-#  if defined STEP2D_FB_AB3_AM4 || defined STEP2D_FB_LF_AM3
 !^        ubar(i,j,kstp)=cff2
 !^
           tl_ubar(i,j,kstp)=tl_cff2
-#  else
-!^        ubar(i,j,kstp)=cff2
-!^        ubar(i,j,knew)=cff2
-!^
-          tl_ubar(i,j,kstp)=tl_cff2
-          tl_ubar(i,j,knew)=tl_cff2
-#  endif
         END DO
 !
         IF (j.ge.JstrM) THEN
@@ -449,17 +399,9 @@
 !^
             tl_cff2=tl_cff2*vmask(i,j)
 #  endif
-#  if defined STEP2D_FB_AB3_AM4 || defined STEP2D_FB_LF_AM3
 !^          vbar(i,j,kstp)=cff2
 !^
             tl_vbar(i,j,kstp)=tl_cff2
-#  else
-!^          vbar(i,j,kstp)=cff2
-!^          vbar(i,j,knew)=cff2
-!^
-            tl_vbar(i,j,kstp)=tl_cff2
-            tl_vbar(i,j,knew)=tl_cff2
-#  endif
           END DO
         END IF
       END DO
@@ -494,33 +436,6 @@
      &                      krhs, kstp, kstp,                           &
      &                      ubar, vbar, zeta,                           &
      &                      tl_ubar, tl_vbar, tl_zeta)
-
-#  if !(defined STEP2D_FB_AB3_AM4 || defined STEP2D_FB_LF_AM3)
-!^      CALL u2dbc_tile (ng, tile,                                      &
-!^   &                   LBi, UBi, LBj, UBj,                            &
-!^   &                   IminS, ImaxS, JminS, JmaxS,                    &
-!^   &                   krhs, kstp, knew,                              &
-!^   &                   ubar, vbar, zeta)
-!^
-        CALL rp_u2dbc_tile (ng, tile,                                   &
-     &                      LBi, UBi, LBj, UBj,                         &
-     &                      IminS, ImaxS, JminS, JmaxS,                 &
-     &                      krhs, kstp, knew,                           &
-     &                      ubar, vbar, zeta,                           &
-     &                      tl_ubar, tl_vbar, tl_zeta)
-!^      CALL v2dbc_tile (ng, tile,                                      &
-!^   &                   LBi, UBi, LBj, UBj,                            &
-!^   &                   IminS, ImaxS, JminS, JmaxS,                    &
-!^   &                   krhs, kstp, knew,                              &
-!^   &                   ubar, vbar, zeta)
-!^
-        CALL rp_v2dbc_tile (ng, tile,                                   &
-     &                      LBi, UBi, LBj, UBj,                         &
-     &                      IminS, ImaxS, JminS, JmaxS,                 &
-     &                      krhs, kstp, knew,                           &
-     &                      ubar, vbar, zeta,                           &
-     &                      tl_ubar, tl_vbar, tl_zeta)
-#  endif
       END IF
 !
       IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
@@ -538,28 +453,10 @@
         CALL exchange_v2d_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          tl_vbar(:,:,kstp))
-
-#  if !(defined STEP2D_FB_AB3_AM4 || defined STEP2D_FB_LF_AM3)
-!^      CALL exchange_u2d_tile (ng, tile,                               &
-!^   &                          LBi, UBi, LBj, UBj,                     &
-!^   &                          ubar(:,:,knew))
-!^
-        CALL exchange_u2d_tile (ng, tile,                               &
-     &                          LBi, UBi, LBj, UBj,                     &
-     &                          tl_ubar(:,:,knew))
-!^      CALL exchange_v2d_tile (ng, tile,                               &
-!^   &                          LBi, UBi, LBj, UBj,                     &
-!^   &                          vbar(:,:,knew))
-!^
-        CALL exchange_v2d_tile (ng, tile,                               &
-     &                          LBi, UBi, LBj, UBj,                     &
-     &                          tl_vbar(:,:,knew))
-#  endif
       END IF
 
 #  ifdef DISTRIBUTE
 !
-#   if defined STEP2D_FB_AB3_AM4 || defined STEP2D_FB_LF_AM3
 !^    CALL mp_exchange2d (ng, tile, model, 2,                           &
 !^   &                    LBi, UBi, LBj, UBj,                           &
 !^   &                    NghostPoints,                                 &
@@ -571,21 +468,6 @@
      &                    NghostPoints,                                 &
      &                    EWperiodic(ng), NSperiodic(ng),               &
      &                    tl_ubar(:,:,kstp), tl_vbar(:,:,kstp))
-#   else
-!^    CALL mp_exchange2d (ng, tile, model, 4,                           &
-!^   &                    LBi, UBi, LBj, UBj,                           &
-!^   &                    NghostPoints,                                 &
-!^   &                    EWperiodic(ng), NSperiodic(ng),               &
-!^   &                    ubar(:,:,kstp), vbar(:,:,kstp),               &
-!^   &                    ubar(:,:,knew), vbar(:,:,knew))
-!^
-      CALL mp_exchange2d (ng, tile, model, 4,                           &
-     &                    LBi, UBi, LBj, UBj,                           &
-     &                    NghostPoints,                                 &
-     &                    EWperiodic(ng), NSperiodic(ng),               &
-     &                    tl_ubar(:,:,kstp), tl_vbar(:,:,kstp),         &
-     &                    tl_ubar(:,:,knew), tl_vbar(:,:,knew))
-#   endif
 #  endif
 
 # else
@@ -605,10 +487,8 @@
           tl_cff1=tl_cff1*umask(i,j)
 #  endif
 !^        ubar(i,j,kstp)=cff1
-!^        ubar(i,j,krhs)=cff1
 !^
           tl_ubar(i,j,kstp)=tl_cff1
-          tl_ubar(i,j,krhs)=tl_cff1
         END DO
 !
         IF (j.ge.JstrM) THEN
@@ -622,10 +502,8 @@
             tl_cff2=tl_cff2*vmask(i,j)
 #  endif
 !^          vbar(i,j,kstp)=cff2
-!^          vbar(i,j,krhs)=cff2
 !^
             tl_vbar(i,j,kstp)=tl_cff2
-            tl_vbar(i,j,krhs)=tl_cff2
           END DO
         END IF
       END DO
@@ -660,33 +538,6 @@
      &                      krhs, kstp, kstp,                           &
      &                      ubar, vbar, zeta,                           &
      &                      tl_ubar, tl_vbar, tl_zeta)
-
-#  if !(defined STEP2D_FB_AB3_AM4 || defined STEP2D_FB_LF_AM3)
-!^      CALL u2dbc_tile (ng, tile,                                      &
-!^   &                   LBi, UBi, LBj, UBj,                            &
-!^   &                   IminS, ImaxS, JminS, JmaxS,                    &
-!^   &                   krhs, kstp, krhs,                              &
-!^   &                   ubar, vbar, zeta)
-!^
-        CALL rp_u2dbc_tile (ng, tile,                                   &
-     &                      LBi, UBi, LBj, UBj,                         &
-     &                      IminS, ImaxS, JminS, JmaxS,                 &
-     &                      krhs, kstp, krhs,                           &
-     &                      ubar, vbar, zeta,                           &
-     &                      tl_ubar, tl_vbar, tl_zeta)
-!^      CALL v2dbc_tile (ng, tile,                                      &
-!^   &                   LBi, UBi, LBj, UBj,                            &
-!^   &                   IminS, ImaxS, JminS, JmaxS,                    &
-!^   &                   krhs, kstp, krhs,                              &
-!^   &                   ubar, vbar, zeta)
-!^
-        CALL rp_v2dbc_tile (ng, tile,                                   &
-     &                      LBi, UBi, LBj, UBj,                         &
-     &                      IminS, ImaxS, JminS, JmaxS,                 &
-     &                      krhs, kstp, krhs,                           &
-     &                      ubar, vbar, zeta,                           &
-     &                      tl_ubar, tl_vbar, tl_zeta)
-#  endif
       END IF
 !
       IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
@@ -704,28 +555,10 @@
         CALL exchange_v2d_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          tl_vbar(:,:,kstp))
-
-#  if !(defined STEP2D_FB_AB3_AM4 || defined STEP2D_FB_LF_AM3)
-!^      CALL exchange_u2d_tile (ng, tile,                               &
-!^   &                          LBi, UBi, LBj, UBj,                     &
-!^   &                          ubar(:,:,krhs))
-!^
-        CALL exchange_u2d_tile (ng, tile,                               &
-     &                          LBi, UBi, LBj, UBj,                     &
-     &                          tl_ubar(:,:,krhs))
-!^      CALL exchange_v2d_tile (ng, tile,                               &
-!^   &                          LBi, UBi, LBj, UBj,                     &
-!^   &                          vbar(:,:,krhs))
-!^
-        CALL exchange_v2d_tile (ng, tile,                               &
-     &                          LBi, UBi, LBj, UBj,                     &
-     &                          tl_vbar(:,:,krhs))
-#  endif
       END IF
 
 #  ifdef DISTRIBUTE
 !
-#   if defined STEP2D_FB_AB3_AM4 || defined STEP2D_FB_LF_AM3
 !^    CALL mp_exchange2d (ng, tile, model, 2,                           &
 !^   &                    LBi, UBi, LBj, UBj,                           &
 !^   &                    NghostPoints,                                 &
@@ -737,21 +570,6 @@
      &                    NghostPoints,                                 &
      &                    EWperiodic(ng), NSperiodic(ng),               &
      &                    tl_ubar(:,:,kstp), tl_vbar(:,:,kstp))
-#   else
-!^    CALL mp_exchange2d (ng, tile, model, 4,                           &
-!^   &                    LBi, UBi, LBj, UBj,                           &
-!^   &                    NghostPoints,                                 &
-!^   &                    EWperiodic(ng), NSperiodic(ng),               &
-!^   &                    ubar(:,:,kstp), vbar(:,:,kstp),               &
-!^   &                    ubar(:,:,krhs), vbar(:,:,krhs))
-!^
-      CALL mp_exchange2d (ng, tile, model, 4,                           &
-     &                    LBi, UBi, LBj, UBj,                           &
-     &                    NghostPoints,                                 &
-     &                    EWperiodic(ng), NSperiodic(ng),               &
-     &                    tl_ubar(:,:,kstp), tl_vbar(:,:,kstp),         &
-     &                    tl_ubar(:,:,krhs), tl_vbar(:,:,krhs))
-#   endif
 #  endif
 # endif
 
@@ -776,10 +594,8 @@
               tl_cff1=tl_cff1*rmask(i,j)
 #  endif
 !^            t(i,j,k,nstp,itrc)=cff1
-!^            t(i,j,k,nnew,itrc)=cff1
 !^
               tl_t(i,j,k,nstp,itrc)=tl_cff1
-              tl_t(i,j,k,nnew,itrc)=tl_cff1
             END DO
           END DO
         END DO
@@ -797,17 +613,6 @@
      &                      IminS, ImaxS, JminS, JmaxS,                 &
      &                      nstp, nstp,                                 &
      &                      tl_t)
-!^      CALL t3dbc_tile (ng, tile, itrc, ic,                            &
-!^   &                   LBi, UBi, LBj, UBj, N(ng), NT(ng),             &
-!^   &                   IminS, ImaxS, JminS, JmaxS,                    &
-!^   &                   nstp, nnew,                                    &
-!^   &                   t)
-!^
-        CALL rp_t3dbc_tile (ng, tile, itrc, ic,                         &
-     &                      LBi, UBi, LBj, UBj, N(ng), NT(ng),          &
-     &                      IminS, ImaxS, JminS, JmaxS,                 &
-     &                      nstp, nnew,                                 &
-     &                      tl_t)
 !
         IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
 !^        CALL exchange_r3d_tile (ng, tile,                             &
@@ -817,31 +622,23 @@
           CALL exchange_r3d_tile (ng, tile,                             &
      &                            LBi, UBi, LBj, UBj, 1, N(ng),         &
      &                            tl_t(:,:,:,nstp,itrc))
-!^        CALL exchange_r3d_tile (ng, tile,                             &
-!^   &                            LBi, UBi, LBj, UBj, 1, N(ng),         &
-!^   &                            t(:,:,:,nnew,itrc))
-!^
-          CALL exchange_r3d_tile (ng, tile,                             &
-     &                            LBi, UBi, LBj, UBj, 1, N(ng),         &
-     &                            tl_t(:,:,:,nnew,itrc))
         END IF
       END DO
 
 #  ifdef DISTRIBUTE
 !
-!^    CALL mp_exchange4d (ng, tile, model, 2,                           &
+!^    CALL mp_exchange4d (ng, tile, model, 1,                           &
 !^   &                    LBi, UBi, LBj, UBj, 1, N(ng), 1, NT(ng),      &
 !^   &                    NghostPoints,                                 &
 !^   &                    EWperiodic(ng), NSperiodic(ng),               &
 !^   &                    t(:,:,:,nstp,:),                              &
 !^   &                    t(:,:,:,nnew,:))
 !^
-      CALL mp_exchange4d (ng, tile, model, 2,                           &
+      CALL mp_exchange4d (ng, tile, model, 1,                           &
      &                    LBi, UBi, LBj, UBj, 1, N(ng), 1, NT(ng),      &
      &                    NghostPoints,                                 &
      &                    EWperiodic(ng), NSperiodic(ng),               &
-     &                    tl_t(:,:,:,nstp,:),                           &
-     &                    tl_t(:,:,:,nnew,:))
+     &                    tl_t(:,:,:,nstp,:))
 #  endif
 # endif
 !
@@ -1021,24 +818,9 @@
 !^
           tl_cff1=tl_cff1*rmask(i,j)
 # endif
-# if defined STEP2D_FB_AB3_AM4 || defined STEP2D_FB_LF_AM3
 !^        zeta(i,j,kstp)=cff1
 !^
           tl_zeta(i,j,kstp)=tl_cff1
-# else
-!^        zeta(i,j,kstp)=cff1
-!^
-          tl_zeta(i,j,kstp)=tl_cff1
-#  ifdef SOLVE3D
-!^        zeta(i,j,knew)=cff1
-!^
-          tl_zeta(i,j,knew)=tl_cff1
-#  else
-!^        zeta(i,j,krhs)=cff1
-!^
-          tl_zeta(i,j,krhs)=tl_cff1
-#  endif
-# endif
         END DO
       END DO
 !
@@ -1060,35 +842,6 @@
      &                       zeta,                                      &
      &                       tl_zeta)
 
-# if !(defined STEP2D_FB_AB3_AM4 || defined STEP2D_FB_LF_AM3)
-#  ifdef SOLVE3D
-!^      CALL zetabc_tile (ng, tile,                                     &
-!^   &                    LBi, UBi, LBj, UBj,                           &
-!^   &                    IminS, ImaxS, JminS, JmaxS,                   &
-!^   &                    krhs, kstp, knew,                             &
-!^   &                    zeta)
-!^
-        CALL rp_zetabc_tile (ng, tile,                                  &
-     &                       LBi, UBi, LBj, UBj,                        &
-     &                       IminS, ImaxS, JminS, JmaxS,                &
-     &                       krhs, kstp, knew,                          &
-     &                       zeta,                                      &
-     &                       tl_zeta)
-#  else
-!^      CALL zetabc_tile (ng, tile,                                     &
-!^   &                    LBi, UBi, LBj, UBj,                           &
-!^   &                    IminS, ImaxS, JminS, JmaxS,                   &
-!^   &                    krhs, kstp, krhs,                             &
-!^   &                    zeta)
-!^
-        CALL rp_zetabc_tile (ng, tile,                                  &
-     &                       LBi, UBi, LBj, UBj,                        &
-     &                       IminS, ImaxS, JminS, JmaxS,                &
-     &                       krhs, kstp, krhs,                          &
-     &                       zeta,                                      &
-     &                       tl_zeta)
-#  endif
-# endif
       END IF
 !
       IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
@@ -1099,30 +852,10 @@
         CALL exchange_r2d_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          tl_zeta(:,:,kstp))
-
-# if !(defined STEP2D_FB_AB3_AM4 || defined STEP2D_FB_LF_AM3)
-#  ifdef SOLVE3D
-!^      CALL exchange_r2d_tile (ng, tile,                               &
-!^   &                          LBi, UBi, LBj, UBj,                     &
-!^   &                          zeta(:,:,knew))
-!^
-        CALL exchange_r2d_tile (ng, tile,                               &
-     &                          LBi, UBi, LBj, UBj,                     &
-     &                          tl_zeta(:,:,knew))
-#  else
-!^      CALL exchange_r2d_tile (ng, tile,                               &
-!^   &                          LBi, UBi, LBj, UBj,                     &
-!^   &                          zeta(:,:,krhs))
-!^
-        CALL exchange_r2d_tile (ng, tile,                               &
-     &                          LBi, UBi, LBj, UBj,                     &
-     &                          tl_zeta(:,:,krhs))
-#  endif
-# endif
       END IF
 
 # ifdef DISTRIBUTE
-#  if defined STEP2D_FB_AB3_AM4 || defined STEP2D_FB_LF_AM3
+!
 !^    CALL mp_exchange2d (ng, tile, model, 1,                           &
 !^   &                    LBi, UBi, LBj, UBj,                           &
 !^   &                    NghostPoints,                                 &
@@ -1134,37 +867,6 @@
      &                    NghostPoints,                                 &
      &                    EWperiodic(ng), NSperiodic(ng),               &
      &                    tl_zeta(:,:,kstp))
-#  else
-#   ifdef SOLVE3D
-!^    CALL mp_exchange2d (ng, tile, model, 2,                           &
-!^   &                    LBi, UBi, LBj, UBj,                           &
-!^   &                    NghostPoints,                                 &
-!^   &                    EWperiodic(ng), NSperiodic(ng),               &
-!^   &                    zeta(:,:,kstp),                               &
-!^   &                    zeta(:,:,knew))
-!^
-      CALL mp_exchange2d (ng, tile, model, 2,                           &
-     &                    LBi, UBi, LBj, UBj,                           &
-     &                    NghostPoints,                                 &
-     &                    EWperiodic(ng), NSperiodic(ng),               &
-     &                    tl_zeta(:,:,kstp),                            &
-     &                    tl_zeta(:,:,knew))
-#   else
-!^    CALL mp_exchange2d (ng, tile, model, 2,                           &
-!^   &                    LBi, UBi, LBj, UBj,                           &
-!^   &                    NghostPoints,                                 &
-!^   &                    EWperiodic(ng), NSperiodic(ng),               &
-!^   &                    zeta(:,:,kstp),                               &
-!^   &                    zeta(:,:,krhs))
-!^
-      CALL mp_exchange2d (ng, tile, model, 2,                           &
-     &                    LBi, UBi, LBj, UBj,                           &
-     &                    NghostPoints,                                 &
-     &                    EWperiodic(ng), NSperiodic(ng),               &
-     &                    tl_zeta(:,:,kstp),                            &
-     &                    tl_zeta(:,:,krhs))
-#   endif
-#  endif
 # endif
 
 # ifdef SOLVE3D
