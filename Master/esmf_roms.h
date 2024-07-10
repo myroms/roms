@@ -127,7 +127,6 @@
      &                             rho0, sec2day, tdays, time_ref
       USE mod_stepping,     ONLY : nstp, knew
       USE mp_exchange_mod,  ONLY : mp_exchange2d
-      USE stdinp_mod,       ONLY : getpar_i
       USE strings_mod,      ONLY : FoundError, assign_string
 !
 !-----------------------------------------------------------------------
@@ -2732,9 +2731,6 @@
 !-----------------------------------------------------------------------
 !
       CALL ROMS_finalize
-      FLUSH (stdout)                      ! flush standard output buffer
-      FLUSH (cplout)                      ! flush coupling output buffer
-      CLOSE (cplout)                      ! close coupling log file
 !
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '<== Exiting  ROMS_SetFinalize',        &

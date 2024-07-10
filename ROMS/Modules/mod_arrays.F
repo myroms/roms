@@ -42,6 +42,11 @@
      &                         deallocate_diags,                        &
      &                         initialize_diags
 #endif
+#ifdef GRID_EXTRACT
+      USE mod_extract,  ONLY : allocate_extract,                        &
+     &                         deallocate_extract,                      &
+     &                         initialize_extract
+#endif
       USE mod_forces,   ONLY : allocate_forces,                         &
      &                         deallocate_forces,                       &
      &                         initialize_forces
@@ -188,8 +193,16 @@
 #ifdef DIAGNOSTICS
           CALL allocate_diags (ng, LBi, UBi, LBj, UBj)
 #endif
+#ifdef GRID_EXTRACT
+          CALL allocate_extract (ng, ExtractFlag(ng),                   &
+     &                           xtr_BOUNDS(ng)%LBi(tile),              &
+     &                           xtr_BOUNDS(ng)%UBi(tile),              &
+     &                           xtr_BOUNDS(ng)%LBj(tile),              &
+     &                           xtr_BOUNDS(ng)%UBj(tile))
+#endif
           CALL allocate_forces (ng, LBi, UBi, LBj, UBj)
-          CALL allocate_grid (ng, LBi, UBi, LBj, UBj, LBij, UBij)
+          CALL allocate_grid (ng, ExtractFlag(ng),                      &
+     &                        LBi, UBi, LBj, UBj, LBij, UBij)
 #ifdef ICE_MODEL
           CALL allocate_ice (ng, LBi, UBi, LBj, UBj, .TRUE.)
 #endif
@@ -299,6 +312,9 @@
 #endif
 #ifdef DIAGNOSTICS
         CALL deallocate_diags (ng)
+#endif
+#ifdef GRID_EXTRACT
+        CALL deallocate_extract (ng)
 #endif
         CALL deallocate_forces (ng)
         CALL deallocate_grid (ng)
@@ -416,6 +432,9 @@
 #endif
 #ifdef DIAGNOSTICS
           CALL initialize_diags (ng, tile)
+#endif
+#ifdef GRID_EXTRACT
+          CALL initialize_extract (ng, tile, model)
 #endif
           CALL initialize_forces (ng, tile, model)
           CALL initialize_grid (ng, tile, model)

@@ -81,6 +81,10 @@ echo ""
 /bin/mkdir -vp ${WRF_BUILD_DIR}/external/io_netcdf
 /bin/mkdir -vp ${WRF_BUILD_DIR}/frame
 
+if [ -n "${NETCDFPAR:+1}" ]; then
+  /bin/mkdir -vp ${WRF_BUILD_DIR}/external/io_netcdfpar
+fi
+
 # We do not copy files out of the inc directory so we create a symlink
 # do that directory.
 
@@ -108,6 +112,13 @@ echo "cd ${WRF_BUILD_DIR}/external/io_int"
 cd ${WRF_BUILD_DIR}/external/io_int
 ln -sfv ../../libwrfio_int.a                  .
 ln -sfv ../../module_internal_header_util.mod .
+
+# io_nfpar
+if [ -n "${NETCDFPAR:+1}" ]; then
+  echo "cd ${WRF_BUILD_DIR}/external/io_netcdfpar"
+  cd ${WRF_BUILD_DIR}/external/io_netcdfpar
+  ln -sfv ../../libwrfio_nfpar.a .
+fi
 
 # io_netcdf
 

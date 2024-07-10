@@ -159,7 +159,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering DATA_SetServices',        &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
       rc=ESMF_SUCCESS
 !
@@ -266,7 +266,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '<== Exiting  DATA_SetServices',        &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
 !
       RETURN
@@ -311,7 +311,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering DATA_SetInitializeP1',    &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
       rc=ESMF_SUCCESS
 !
@@ -394,7 +394,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '<== Exiting  DATA_SetInitializeP1',    &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
 !
  10   FORMAT (1x,'DATA_SetInitializeP1 - unable to find field ''',a,    &
@@ -453,7 +453,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering DATA_SetInitializeP2',    &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
       rc=ESMF_SUCCESS
 !
@@ -522,14 +522,14 @@
         Lwclock=.TRUE.
         CALL initialize_parallel
 !
-!  The standard output is redirected to an specific file for clarity and
+!  The standard output is redirected to an specific file for clarity.
 !  it unit is redifined.
 !
-        dataout=101                    ! overwite Fortran default unit 6
+!!      dataout=101                    ! overwite Fortran default unit 6
 !
         IF (localPET.eq.0) THEN
-          OPEN (dataout, FILE='log.data', FORM='formatted',             &
-     &          STATUS='replace')
+!!        OPEN (dataout, FILE='log.data', FORM='formatted',             &
+!!   &          STATUS='replace')
           lstr=INDEX(my_fflags, 'free')-2
           IF (lstr.le.0) lstr=LEN_TRIM(my_fflags)
           WRITE (dataout,10) TRIM(ESMF_VERSION_STRING),                 &
@@ -637,7 +637,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '<== Exiting  DATA_SetInitializeP2',    &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
 !
   10  FORMAT (80('-'),/,                                                &
@@ -730,7 +730,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering DATA_Initialize',         &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
       rc=ESMF_SUCCESS
 !
@@ -892,7 +892,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '<== Exiting  DATA_Initialize',         &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
 !
   10  FORMAT (/,' DATA_Initialize - cannot find export field: ',a,      &
@@ -941,7 +941,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering DATA_DataInit',           &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
       rc=ESMF_SUCCESS
 !
@@ -999,7 +999,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '<== Exiting  DATA_DataInit',           &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
 !
       RETURN
@@ -1052,7 +1052,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering DATA_SetClock',           &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
       rc=ESMF_SUCCESS
 !
@@ -1230,7 +1230,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '<== Exiting  DATA_SetClock',           &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
 !
       RETURN
@@ -1281,7 +1281,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering DATA_SetGridArrays',      &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
       rc=ESMF_SUCCESS
 !
@@ -1467,7 +1467,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '<== Exiting  DATA_SetGridArrays',      &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
 !
       RETURN
@@ -1517,7 +1517,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering DATA_SetStates',          &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
       rc=ESMF_SUCCESS
 !
@@ -1764,7 +1764,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '<== Exiting  DATA_SetStates',          &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
 !
  10   FORMAT (1x,'DATA_SetStates - Removing field ''',a,''' from ',a,   &
@@ -1821,7 +1821,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering DATA_ModelAdvance',       &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
       rc=ESMF_SUCCESS
 !
@@ -1981,7 +1981,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '<== Exiting  DATA_ModelAdvance',       &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
 !
   10  FORMAT (3x,'ModelAdvance - ESMF, Running DATA:',t42,a,            &
@@ -2032,7 +2032,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering DATA_SetFinalize',        &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
       rc=ESMF_SUCCESS
 !
@@ -2059,12 +2059,10 @@
         END IF
       END DO
 !
-      CALL my_flush (dataout)             ! flush standard output buffer
-!
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '<== Exiting  DATA_SetFinalize',        &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
 !
       RETURN
@@ -2154,7 +2152,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering DATA_Export',             &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
       rc=ESMF_SUCCESS
 # ifdef TIME_INTERP
@@ -2726,11 +2724,11 @@
 !
 !  Flux DATA component standard out unit.
 !
-      CALL my_flush (dataout)
+      FLUSH (dataout)
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '<== Exiting  DATA_Export',             &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
 !
   10  FORMAT (i4.4,'-',i2.2,'-',i2.2,1x,i2.2,':',i2.2,':',a)
@@ -2804,7 +2802,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering DATA_TimeInterp',         &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
       rc=ESMF_SUCCESS
 !
@@ -2912,7 +2910,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '<== Exiting  DATA_TimeInterp',         &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
 !
   10  FORMAT (/,' DATA_TimeInterp - current coupling time',             &
@@ -3012,7 +3010,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering DATA_ncread',             &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
       rc=ESMF_SUCCESS
       SourceFile=MyFile
@@ -3118,7 +3116,7 @@
                   Tindex=3-Tindex
                   DataSet(Icomp)%Export(ifld)%Tindex=Tindex
 !
-!  Read in time coordinate and scale it to day units.
+!  Read in time coordinate and scale it to DAY UNITS.
 !
                   CALL netcdf_get_time (ng, imodel, ncname,             &
      &                                  TRIM(T_name),                   &
@@ -3306,7 +3304,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '<== Exiting  DATA_ncread',             &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
 !
   10  FORMAT (/,' DATA_ncread - error while reading variable: ',a,2x,   &
@@ -3395,7 +3393,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering DATA_multifile',          &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
       rc=ESMF_SUCCESS
       SourceFile=MyFile
@@ -3419,7 +3417,8 @@
       CALL time_string (TimeStrSec, I_code)
       CALL time_string (TimeEndSec, F_code)
 !
-!  Set available minimum and maximum time coordinates.
+!  Set available minimum and maximum time coordinates. The input time
+!  is scaled to DAY units.
 !
       DO i=1,Nfiles
         Mfiles=IFS(i)%Nfiles  ! number of multi-files within source file
@@ -3452,7 +3451,8 @@
         END IF
 !
 !  Initialize other structure parameters or issue an error if data does
-!  not include initalization time.
+!  not include initalization time. Notice that the time argument to
+!  routine 'time_string' is in seconds.
 !
         IF (Fcount.gt.0) THEN
           IFS(i)%Fcount=Fcount
@@ -3504,7 +3504,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '<== Exiting  DATA_multifile',          &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
 !
  10   FORMAT (/,' DATA_MULTIFILE - Error while processing ', a,         &
@@ -3593,7 +3593,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering DATA_checkfile',          &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
       SourceFile=MyFile
 !
@@ -3601,7 +3601,7 @@
       Lcheck=.TRUE.
       Lcycle=.FALSE.
       Lperpetual=.FALSE.
-      Tscale=1.0_dp                        ! days
+      Tscale=1.0_dp                        ! time in days by default
       Tmin= MISSING_dp
       Tmax=-MISSING_dp
       DO i=1,LEN(blank)
@@ -3667,6 +3667,7 @@
             END DO
             IF ((INDEX(TRIM(lowercase(long_name)),'time').ne.0).and.    &
      &          ((INDEX(TRIM(lowercase(units)),'day').ne.0).or.         &
+     &           (INDEX(TRIM(lowercase(units)),'hour').ne.0).or.        &
      &           (INDEX(TRIM(lowercase(units)),'second').ne.0))) THEN
               TvarName=TRIM(var_name(i))
               foundit=.TRUE.
@@ -3706,6 +3707,8 @@
 !  for perpetual time axis: the 'calendar' attribute is 'none' or
 !  the number of records in the time dimension is one (Nrec=1).
 !
+!  Compute time scale (Tscale) to convert DAY units.
+!
       Nrec=var_Dsize(1)              ! time is a 1D array
       DO i=1,nvatt
         IF (TRIM(var_Aname(i)).eq.'units') THEN
@@ -3713,9 +3716,9 @@
           IF (INDEX(TRIM(var_Achar(i)),'day').ne.0) THEN
             Tscale=1.0_dp
           ELSE IF (INDEX(TRIM(var_Achar(i)),'hour').ne.0) THEN
-            Tscale=24.0_dp
+            Tscale=1.0_dp/24.0_dp
           ELSE IF (INDEX(TRIM(var_Achar(i)),'second').ne.0) THEN
-            Tscale=86400.0_dp
+            Tscale=1.0_dp/86400.0_dp
           END IF
         ELSE IF (TRIM(var_Aname(i)).eq.'calendar') THEN
           IF ((Nrec.eq.1).or.                                           &
@@ -3763,7 +3766,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '<== Exiting  DATA_checkfile',          &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
 !
  10   FORMAT (' DATA_checkfile   - inquiring range of time records in', &
@@ -3870,7 +3873,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering DATA_inquiry',            &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
       rc=ESMF_SUCCESS
       SourceFile=MyFile
@@ -4240,8 +4243,10 @@
                   Tunits=TRIM(var_Achar(i))
                   IF (Tunits(1:6).eq.'second') THEN
                     Tscale=1.0_dp/86400.0_dp         ! seconds to days
+                  ELSE IF (Tunits(1:4).eq.'hour') THEN
+                    Tscale=1.0_dp/24.0_dp            ! hours to days
                   ELSE
-                    Tscale=1.0_dp                    ! day units
+                    Tscale=1.0_dp                    ! default day units
                   END IF
                   Export(ifield)%Tunits=TRIM(Tunits)
                   Export(ifield)%Tscale=Tscale
@@ -4531,7 +4536,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '<== Exiting  DATA_inquiry',            &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
 !
    5  FORMAT (' DATA_inquiry     - inquiring NetCDF variable ''',a,     &
@@ -4668,7 +4673,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering DATA_ncvarcoords',        &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
       rc=ESMF_SUCCESS
       SourceFile=MyFile
@@ -4952,7 +4957,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '<== Exiting  DATA_ncvarcoords',        &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
 !
  10   FORMAT (' DATA_ncvarcoords - setting spatial coordinates for',    &

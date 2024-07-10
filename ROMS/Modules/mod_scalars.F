@@ -977,6 +977,7 @@
         logical, allocatable :: LdefTIDE(:)      ! tide forcing file
         logical, allocatable :: LdefTLM(:)       ! Tangent linear file
         logical, allocatable :: LdefTLF(:)       ! TLM/RPM impulse file
+        logical, allocatable :: LdefXTR(:)       ! TLM/RPM impulse file
 
         logical, allocatable :: LreadADM(:)      ! Read ADM multi-files
         logical, allocatable :: LreadBLK(:)      ! Read NLM bulk fluxes
@@ -996,8 +997,9 @@
 #ifdef STD_MODEL
         logical, allocatable :: LwrtSTD(:)       ! Write STD file
 #endif
-        logical, allocatable :: LwrtTLM(:)       ! Write tangent file
         logical, allocatable :: LwrtTLF(:)       ! Write impulse file
+        logical, allocatable :: LwrtTLM(:)       ! Write tangent file
+        logical, allocatable :: LwrtXTR(:)       ! Write extraction file
 
         logical, allocatable :: LdefNRM(:,:)     ! Norm file
         logical, allocatable :: LwrtNRM(:,:)     ! Write norm file
@@ -1055,6 +1057,7 @@
         integer, allocatable :: ndefHIS(:)       ! History file
         integer, allocatable :: ndefQCK(:)       ! Quicksave file
         integer, allocatable :: ndefTLM(:)       ! Tangent linear file
+        integer, allocatable :: ndefXTR(:)       ! extraction file
 !
 !  Starting timestep for accumulation of output.
 !
@@ -1072,6 +1075,7 @@
         integer, allocatable :: nRST(:)          ! Restart file
         integer, allocatable :: nSTA(:)          ! Stations file
         integer, allocatable :: nTLM(:)          ! Tangent linear file
+        integer, allocatable :: nXTR(:)          ! extraction file
 #ifdef SP4DVAR
         integer, allocatable :: nSCA(:)          ! AD scratch state file
         integer, allocatable :: nSCT(:)          ! TL scratch state file
@@ -1079,6 +1083,16 @@
         integer, allocatable :: nSPT(:)          ! TL Arnoldi state file
         integer, allocatable :: Crec(:)          ! Convolution records
 #endif
+!
+!  Field extraction flag to interpolate or decimate solution to the
+!  provided grid geometry.
+!  (For 4D-Var coarser inner loops use ExtractFlag = 2)
+!
+!    ExtractFlag = 0    no extraction
+!    ExtractFlag = 1    extraction by interpolation
+!    ExtractFlag > 1    extraction by decimation
+!
+        integer, allocatable :: ExtractFlag(:)
 !
 !  Number of timesteps between print of single line information to
 !  standard output.
@@ -2752,6 +2766,10 @@
         allocate ( LdefRST(Ngrids) )
         Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
+      IF (.not.allocated(LdefXTR)) THEN
+        allocate ( LdefXTR(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
+      END IF
 #ifdef SP4DVAR
       IF (.not.allocated(LdefSCA)) THEN
         allocate ( LdefSCA(Ngrids) )
@@ -2844,12 +2862,16 @@
         allocate ( LwrtRST(Ngrids) )
         Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
+      IF (.not.allocated(LwrtTLF)) THEN
+        allocate ( LwrtTLF(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
+      END IF
       IF (.not.allocated(LwrtTLM)) THEN
         allocate ( LwrtTLM(Ngrids) )
         Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
-      IF (.not.allocated(LwrtTLF)) THEN
-        allocate ( LwrtTLF(Ngrids) )
+      IF (.not.allocated(LwrtXTR)) THEN
+        allocate ( LwrtXTR(Ngrids) )
         Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
 
@@ -2947,6 +2969,10 @@
         allocate ( ndefTLM(Ngrids) )
         Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
+      IF (.not.allocated(ndefXTR)) THEN
+        allocate ( ndefXTR(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
+      END IF
 
       IF (.not.allocated(ntsAVG)) THEN
         allocate ( ntsAVG(Ngrids) )
@@ -2993,6 +3019,10 @@
         allocate ( nTLM(Ngrids) )
         Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
+      IF (.not.allocated(nXTR)) THEN
+        allocate ( nXTR(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
+      END IF
 #ifdef SP4DVAR
       IF (.not.allocated(nSCA)) THEN
         allocate ( nSCA(Ngrids) )
@@ -3015,6 +3045,11 @@
         Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
 #endif
+
+      IF (.not.allocated(ExtractFlag)) THEN
+        allocate ( ExtractFlag(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
+      END IF
 
       IF (.not.allocated(ninfo)) THEN
         allocate ( ninfo(Ngrids) )
@@ -3839,9 +3874,11 @@
 
       IF (allocated(LdefTIDE))          deallocate ( LdefTIDE )
 
+      IF (allocated(LdefTLF))           deallocate ( LdefTLF )
+
       IF (allocated(LdefTLM))           deallocate ( LdefTLM )
 
-      IF (allocated(LdefTLF))           deallocate ( LdefTLF )
+      IF (allocated(LdefXTR))           deallocate ( LdefXTR )
 
       IF (allocated(LreadADM))          deallocate ( LreadADM )
 
@@ -3875,9 +3912,12 @@
       IF (allocated(LwrtSTD))           deallocate ( LwrtSTD )
 #endif
 
+      IF (allocated(LwrtTLF))           deallocate ( LwrtTLF )
+
       IF (allocated(LwrtTLM))           deallocate ( LwrtTLM )
 
-      IF (allocated(LwrtTLF))           deallocate ( LwrtTLF )
+      IF (allocated(LwrtXTR))           deallocate ( LwrtXTR )
+
 
       IF (allocated(LdefNRM))           deallocate ( LdefNRM )
 
@@ -3919,6 +3959,8 @@
 
       IF (allocated(ndefTLM))           deallocate ( ndefTLM )
 
+      IF (allocated(ndefTLM))           deallocate ( ndefXTR )
+
       IF (allocated(ntsAVG))            deallocate ( ntsAVG )
 
       IF (allocated(ntsDIA))            deallocate ( ntsDIA )
@@ -3952,6 +3994,8 @@
 
       IF (allocated(Crec))              deallocate ( Crec )
 #endif
+
+      IF (allocated(ExtractFlag))       deallocate ( ExtractFlag )
 
       IF (allocated(ninfo))             deallocate ( ninfo )
 
@@ -4366,6 +4410,7 @@
         NudgingCoeff(ng)=.FALSE.
         ObcData(ng)=.FALSE.
         SetGridConfig(ng)=.TRUE.
+        ExtractFlag(ng)=0
         RefineScale(ng)=0
         gamma2(ng)=-1.0_r8
         Vtransform(ng)=1
@@ -4607,6 +4652,7 @@
         LwrtSTD(ng)=.FALSE.
 #endif
         LwrtTLM(ng)=.FALSE.
+        LwrtXTR(ng)=.FALSE.
         LwrtInfo(ng)=.TRUE.
         LwrtState2d(ng)=.FALSE.
 #ifdef AD_OUTPUT_STATE

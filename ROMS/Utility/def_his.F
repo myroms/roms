@@ -2737,7 +2737,6 @@
             RETURN
           END IF
 # endif
-#endif
         END DO
 # ifdef VEGETATION 
 #  if defined VEG_DRAG || defined VEG_BIOMASS 
@@ -2759,6 +2758,9 @@
             exit_flag=3
             RETURN
           END IF
+        END DO
+# endif
+#endif
 
 #if (defined BBL_MODEL || defined WAVES_OUTPUT) && defined SOLVE3D
 !
@@ -5841,8 +5843,8 @@
             RETURN
           END IF
 #  endif
-# endif
         END DO
+# endif
 
 # if (defined BBL_MODEL || defined WAVES_OUTPUT) && defined SOLVE3D
 !

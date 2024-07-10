@@ -36,6 +36,9 @@
 # ifdef DIAGNOSTICS
       USE def_diags_mod,   ONLY : def_diags
 # endif
+# ifdef GRID_EXTRACT
+      USE def_extract_mod, ONLY : def_extract
+# endif
 # ifdef FLOATS
       USE def_floats_mod,  ONLY : def_floats
 # endif
@@ -58,6 +61,9 @@
 # endif
 # ifdef DIAGNOSTICS
       USE wrt_diags_mod,   ONLY : wrt_diags
+# endif
+# ifdef GRID_EXTRACT
+      USE wrt_extract_mod, ONLY : wrt_extract
 # endif
 # ifdef FLOATS
       USE wrt_floats_mod,  ONLY : wrt_floats
@@ -105,11 +111,11 @@
 !
 !  Set tile for local array manipulations in output routines.
 !
-#ifdef DISTRIBUTE
+# ifdef DISTRIBUTE
       tile=MyRank
-#else
+# else
       tile=-1
-#endif
+# endif
 !
 !  Turn off checking for analytical header files.
 !
@@ -120,11 +126,11 @@
 !  If appropriate, set switch for updating biology header file global
 !  attribute in output NetCDF files.
 !
-#ifdef BIOLOGY
+# ifdef BIOLOGY
       Lupdate=.TRUE.
-#else
+# else
       Lupdate=.FALSE.
-#endif
+# endif
 !
 !  Create output history NetCDF file or prepare existing file to
 !  append new data to it.  Also,  notice that it is possible to
@@ -220,6 +226,108 @@
           END IF
         END IF
       END IF
+
+# ifdef GRID_EXTRACT
+!
+!-----------------------------------------------------------------------
+!  If appropriate, process nonlinear history extraction NetCDF file.
+!-----------------------------------------------------------------------
+!
+!  Create output history extraction NetCDF file or prepare existing
+!  file to append new data to it.  Also,  notice that it is possible
+!  to create several files during a single model run.
+!
+      IF (LdefXTR(ng)) THEN
+        IF (ndefXTR(ng).gt.0) THEN
+          IF (idefXTR(ng).lt.0) THEN
+            idefXTR(ng)=((ntstart(ng)-1)/ndefXTR(ng))*ndefXTR(ng)
+            IF (idefXTR(ng).lt.iic(ng)-1) THEN
+              idefXTR(ng)=idefXTR(ng)+ndefXTR(ng)
+            END IF
+          END IF
+          IF ((nrrec(ng).ne.0).and.(iic(ng).eq.ntstart(ng))) THEN
+            IF ((iic(ng)-1).eq.idefXTR(ng)) THEN
+              XTR(ng)%load=0                  ! restart, reset counter
+              Ldefine=.FALSE.                 ! finished file, delay
+            ELSE                              ! creation of next file
+              Ldefine=.TRUE.
+              NewFile=.FALSE.                 ! unfinished file, inquire
+            END IF                            ! content for appending
+            idefXTR(ng)=idefXTR(ng)+nXTR(ng)  ! restart offset
+          ELSE IF ((iic(ng)-1).eq.idefXTR(ng)) THEN
+            idefXTR(ng)=idefXTR(ng)+ndefXTR(ng)
+            IF (nXTR(ng).ne.ndefXTR(ng).and.iic(ng).eq.ntstart(ng)) THEN
+              idefXTR(ng)=idefXTR(ng)+nXTR(ng)  ! multiple record offset
+            END IF
+            Ldefine=.TRUE.
+            NewFile=.TRUE.
+          ELSE
+            Ldefine=.FALSE.
+          END IF
+          IF (Ldefine) THEN                     ! create new file or
+            IF (iic(ng).eq.ntstart(ng)) THEN    ! inquire existing file
+              XTR(ng)%load=0                    ! reset filename counter
+            END IF
+            ifile=(iic(ng)-1)/ndefXTR(ng)+1     ! next filename suffix
+            XTR(ng)%load=XTR(ng)%load+1
+            IF (XTR(ng)%load.gt.XTR(ng)%Nfiles) THEN
+              IF (Master) THEN
+                WRITE (stdout,10) 'XTR(ng)%load = ', XTR(ng)%load,      &
+     &                             XTR(ng)%Nfiles, TRIM(XTR(ng)%base),  &
+     &                             ifile
+              END IF
+              exit_flag=4
+              IF (FoundError(exit_flag, NoError,                        &
+     &                       __LINE__, MyFile)) RETURN
+            END IF
+            Fcount=XTR(ng)%load
+            XTR(ng)%Nrec(Fcount)=0
+            IF (Master) THEN
+              WRITE (XTR(ng)%name,20) TRIM(XTR(ng)%base), ifile
+            END IF
+#  ifdef DISTRIBUTE
+            CALL mp_bcasts (ng, iNLM, XTR(ng)%name)
+#  endif
+            XTR(ng)%files(Fcount)=TRIM(XTR(ng)%name)
+            CALL close_file (ng, iNLM, XTR(ng), XTR(ng)%name, Lupdate)
+            CALL def_extract (ng, NewFile)
+            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+          END IF
+          IF ((iic(ng).eq.ntstart(ng)).and.(nrrec(ng).ne.0)) THEN
+            LwrtXTR(ng)=.FALSE.                 ! avoid writing initial
+          ELSE                                  ! fields during restart
+            LwrtXTR(ng)=.TRUE.
+          END IF
+        ELSE
+          IF (iic(ng).eq.ntstart(ng)) THEN
+            CALL def_extract (ng, ldefout(ng))
+            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+            LwrtXTR(ng)=.TRUE.
+            LdefXTR(ng)=.FALSE.
+          END IF
+        END IF
+      END IF
+!
+!  Write out data into history NetCDF file.  Avoid writing initial
+!  conditions in perturbation mode computations.
+!
+      IF (LwrtXTR(ng)) THEN
+        IF (LwrtPER(ng)) THEN
+          IF ((iic(ng).gt.ntstart(ng)).and.                             &
+     &        (MOD(iic(ng)-1,nXTR(ng)).eq.0)) THEN
+            IF (nrrec(ng).eq.0.or.iic(ng).ne.ntstart(ng)) THEN
+              CALL wrt_extract (ng, tile)
+            END IF
+            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+          END IF
+        ELSE
+          IF (MOD(iic(ng)-1,nXTR(ng)).eq.0) THEN
+            CALL wrt_extract (ng, tile)
+            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+          END IF
+        END IF
+      END IF
+# endif
 !
 !-----------------------------------------------------------------------
 !  If appropriate, process nonlinear quicksave NetCDF file.

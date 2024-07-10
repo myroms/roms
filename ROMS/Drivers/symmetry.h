@@ -45,6 +45,7 @@
       USE get_state_mod,     ONLY : get_state
       USE inp_par_mod,       ONLY : inp_par
       USE normalization_mod, ONLY : normalization
+      USE stdout_mod,        ONLY : Set_StdOutUnit, stdout_unit
       USE strings_mod,       ONLY : FoundError
       USE tl_def_ini_mod,    ONLY : tl_def_ini
       USE wrt_impulse_mod,   ONLY : wrt_impulse
@@ -118,6 +119,19 @@
 !  independent from standard input parameters.
 !
         CALL initialize_parallel
+!
+!  Set the ROMS standard output unit to write verbose execution info.
+!  Notice that the default standard out unit in Fortran is 6.
+!
+!  In some applications like coupling or disjointed mpi-communications,
+!  it is advantageous to write standard output to a specific filename
+!  instead of the default Fortran standard output unit 6. If that is
+!  the case, it opens such formatted file for writing.
+!
+        IF (Set_StdOutUnit) THEN
+          stdout=stdout_unit(Master)
+          Set_StdOutUnit=.FALSE.
+        END IF
 !
 !  Read in model tunable parameters from standard input. Allocate and
 !  initialize variables in several modules after the number of nested

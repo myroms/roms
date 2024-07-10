@@ -569,6 +569,7 @@
       integer, allocatable :: idefHIS(:)    ! history file
       integer, allocatable :: idefQCK(:)    ! quicksave file
       integer, allocatable :: idefTLM(:)    ! tangent file
+      integer, allocatable :: idefXTR(:)    ! extraction file
 !
 !  Output NetCDF variables IDs.
 !
@@ -956,6 +957,10 @@
         allocate ( idefTLM(Ngrids) )
         Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
+      IF (.not.allocated(idefXTR)) THEN
+        allocate ( idefXTR(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
+      END IF
 
       IF (.not.allocated(idTvar)) THEN
         allocate ( idTvar(MT) )
@@ -1123,6 +1128,7 @@
       IF (allocated(idefHIS))     deallocate ( idefHIS )
       IF (allocated(idefQCK))     deallocate ( idefQCK )
       IF (allocated(idefTLM))     deallocate ( idefTLM )
+      IF (allocated(idefXTR))     deallocate ( idefXTR )
 !
       IF (allocated(idTvar))      deallocate ( idTvar )
       IF (allocated(idTrcD))      deallocate ( idTrcD )
@@ -1243,6 +1249,7 @@
         idefHIS(ng)=-1
         idefQCK(ng)=-1
         idefTLM(ng)=-1
+        idefXTR(ng)=-1
       END DO
 !
 !  Analytical files switch and names.
