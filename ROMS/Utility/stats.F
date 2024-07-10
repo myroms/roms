@@ -31,6 +31,8 @@
 !                                                                      !
 !=======================================================================
 !
+      USE mod_param
+!
       implicit none
 !
       PUBLIC :: stats_2dfld
@@ -40,6 +42,7 @@
       CONTAINS
 !
       SUBROUTINE stats_2dfld (ng, tile, model, gtype, S,                &
+     &                        Extract_Flag,                             &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        F, Fmask, debug)
 !
@@ -53,6 +56,7 @@
 !     tile         Domain partition (integer)                          !
 !     model        Calling model identifier (integer)                  !
 !     gtype        Grid type (integer)                                 !
+!     Extract_Flag Extraction flag interpolation/decimation (integer)  !
 !     LBi          I-dimension Lower bound (integer)                   !
 !     UBi          I-dimension Upper bound (integer)                   !
 !     LBj          J-dimension Lower bound (integer)                   !
@@ -81,10 +85,11 @@
 !  Imported variable declarations.
 !
       logical, intent(in), optional :: debug
-
+!
       integer, intent(in) :: ng, tile, model, gtype
+      integer, intent(in) :: Extract_Flag
       integer, intent(in) :: LBi, UBi, LBj, UBj
-
+!
 #ifdef ASSUMED_SHAPE
       real(r8), intent(in) :: F(LBi:,LBj:)
       real(r8), intent(in), optional :: Fmask(LBi:,LBj:)
@@ -97,12 +102,12 @@
 !  Local variable declarations.
 !
       logical :: Lprint
-
+!
       integer :: Imin, Imax, Jmin, Jmax, Npts, NSUB
       integer :: i, j, my_count
 
       integer :: my_threadnum
-
+!
       real(r8) :: fac
       real(r8) :: my_max, my_min
       real(r8) :: my_avg, my_rms
@@ -119,33 +124,84 @@
 !-----------------------------------------------------------------------
 !
 !  Determine I- and J-indices according to staggered C-grid type.
+#ifdef GRID_EXTRACT
+!
+!  Here, the ELSE statements (Extract_Flag < 0) indicate the processing
+!  of data already on the extracted grid, like geometry variables
+!  requiring no extraction since they are read during initialization.
+#endif
 !
       SELECT CASE (ABS(gtype))
         CASE (p2dvar)
-          Imin=BOUNDS(ng)%IstrP(tile)
-          Imax=BOUNDS(ng)%IendP(tile)
-          Jmin=BOUNDS(ng)%JstrP(tile)
-          Jmax=BOUNDS(ng)%JendP(tile)
+          IF (Extract_Flag.ge.0) THEN
+            Imin=BOUNDS(ng)%IstrP(tile)
+            Imax=BOUNDS(ng)%IendP(tile)
+            Jmin=BOUNDS(ng)%JstrP(tile)
+            Jmax=BOUNDS(ng)%JendP(tile)
+#ifdef GRID_EXTRACT
+          ELSE                              ! Already on extract grid
+            Imin=xtr_BOUNDS(ng)%IstrP(tile)
+            Imax=xtr_BOUNDS(ng)%IendP(tile)
+            Jmin=xtr_BOUNDS(ng)%JstrP(tile)
+            Jmax=xtr_BOUNDS(ng)%JendP(tile)
+#endif
+          END IF
         CASE (r2dvar)
-          Imin=BOUNDS(ng)%IstrT(tile)
-          Imax=BOUNDS(ng)%IendT(tile)
-          Jmin=BOUNDS(ng)%JstrT(tile)
-          Jmax=BOUNDS(ng)%JendT(tile)
+          IF (Extract_Flag.ge.0) THEN
+            Imin=BOUNDS(ng)%IstrT(tile)
+            Imax=BOUNDS(ng)%IendT(tile)
+            Jmin=BOUNDS(ng)%JstrT(tile)
+            Jmax=BOUNDS(ng)%JendT(tile)
+#ifdef GRID_EXTRACT
+          ELSE                              ! Already on extract grid
+            Imin=xtr_BOUNDS(ng)%IstrT(tile)
+            Imax=xtr_BOUNDS(ng)%IendT(tile)
+            Jmin=xtr_BOUNDS(ng)%JstrT(tile)
+            Jmax=xtr_BOUNDS(ng)%JendT(tile)
+#endif
+          END IF
         CASE (u2dvar)
-          Imin=BOUNDS(ng)%IstrP(tile)
-          Imax=BOUNDS(ng)%IendT(tile)
-          Jmin=BOUNDS(ng)%JstrT(tile)
-          Jmax=BOUNDS(ng)%JendT(tile)
+          IF (Extract_Flag.ge.0) THEN
+            Imin=BOUNDS(ng)%IstrP(tile)
+            Imax=BOUNDS(ng)%IendT(tile)
+            Jmin=BOUNDS(ng)%JstrT(tile)
+            Jmax=BOUNDS(ng)%JendT(tile)
+#ifdef GRID_EXTRACT
+          ELSE                              ! Already on extract grid
+            Imin=xtr_BOUNDS(ng)%IstrP(tile)
+            Imax=xtr_BOUNDS(ng)%IendT(tile)
+            Jmin=xtr_BOUNDS(ng)%JstrT(tile)
+            Jmax=xtr_BOUNDS(ng)%JendT(tile)
+#endif
+          END IF
         CASE (v2dvar)
-          Imin=BOUNDS(ng)%IstrT(tile)
-          Imax=BOUNDS(ng)%IendT(tile)
-          Jmin=BOUNDS(ng)%JstrP(tile)
-          Jmax=BOUNDS(ng)%JendT(tile)
+          IF (Extract_Flag.ge.0) THEN
+            Imin=BOUNDS(ng)%IstrT(tile)
+            Imax=BOUNDS(ng)%IendT(tile)
+            Jmin=BOUNDS(ng)%JstrP(tile)
+            Jmax=BOUNDS(ng)%JendT(tile)
+#ifdef GRID_EXTRACT
+          ELSE                              ! Already on extract grid
+            Imin=xtr_BOUNDS(ng)%IstrT(tile)
+            Imax=xtr_BOUNDS(ng)%IendT(tile)
+            Jmin=xtr_BOUNDS(ng)%JstrP(tile)
+            Jmax=xtr_BOUNDS(ng)%JendT(tile)
+#endif
+          END IF
         CASE DEFAULT
-          Imin=BOUNDS(ng)%IstrT(tile)
-          Imax=BOUNDS(ng)%IendT(tile)
-          Jmin=BOUNDS(ng)%JstrT(tile)
-          Jmax=BOUNDS(ng)%JendT(tile)
+          IF (Extract_Flag.ge.0) THEN
+            Imin=BOUNDS(ng)%IstrT(tile)
+            Imax=BOUNDS(ng)%IendT(tile)
+            Jmin=BOUNDS(ng)%JstrT(tile)
+            Jmax=BOUNDS(ng)%JendT(tile)
+#ifdef GRID_EXTRACT
+          ELSE                              ! Already on extract grid
+            Imin=xtr_BOUNDS(ng)%IstrT(tile)
+            Imax=xtr_BOUNDS(ng)%IendT(tile)
+            Jmin=xtr_BOUNDS(ng)%JstrT(tile)
+            Jmax=xtr_BOUNDS(ng)%JendT(tile)
+#endif
+          END IF
       END SELECT
 !
 !-----------------------------------------------------------------------
@@ -281,6 +337,7 @@
       END SUBROUTINE stats_2dfld
 !
       SUBROUTINE stats_3dfld (ng, tile, model, gtype, S,                &
+     &                        Extract_Flag,                             &
      &                        LBi, UBi, LBj, UBj, LBk, UBk,             &
      &                        F, Fmask, debug)
 !
@@ -294,6 +351,7 @@
 !     tile         Domain partition (integer)                          !
 !     model        Calling model identifier (integer)                  !
 !     gtype        Grid type (integer)                                 !
+!     Extract_Flag Extraction flag interpolation/decimation (integer)  !
 !     LBi          I-dimension Lower bound (integer)                   !
 !     UBi          I-dimension Upper bound (integer)                   !
 !     LBj          J-dimension Lower bound (integer)                   !
@@ -324,10 +382,11 @@
 !  Imported variable declarations.
 !
       logical, intent(in), optional :: debug
-
+!
       integer, intent(in) :: ng, tile, model, gtype
+      integer, intent(in) :: Extract_Flag
       integer, intent(in) :: LBi, UBi, LBj, UBj, LBk, UBk
-
+!
 #ifdef ASSUMED_SHAPE
       real(r8), intent(in) :: F(LBi:,LBj:,LBk:)
       real(r8), intent(in), optional :: Fmask(LBi:,LBj:)
@@ -340,12 +399,12 @@
 !  Local variable declarations.
 !
       logical :: Lprint
-
+!
       integer :: Imin, Imax, Jmin, Jmax, Npts, NSUB
       integer :: i, j, k, my_count
 
       integer :: my_threadnum
-
+!
       real(r8) :: fac
       real(r8) :: my_max, my_min
       real(r8) :: my_avg, my_rms
@@ -362,33 +421,84 @@
 !-----------------------------------------------------------------------
 !
 !  Determine I- and J-indices according to staggered C-grid type.
+#ifdef GRID_EXTRACT
+!
+!  Here, the ELSE statements (Extract_Flag < 0) indicate the processing
+!  of data already on the extracted grid, like geometry variables
+!  requiring no extraction since they are read during initialization.
+#endif
 !
       SELECT CASE (ABS(gtype))
-        CASE (p3dvar)
-          Imin=BOUNDS(ng)%IstrP(tile)
-          Imax=BOUNDS(ng)%IendP(tile)
-          Jmin=BOUNDS(ng)%JstrP(tile)
-          Jmax=BOUNDS(ng)%JendP(tile)
-        CASE (r3dvar)
-          Imin=BOUNDS(ng)%IstrT(tile)
-          Imax=BOUNDS(ng)%IendT(tile)
-          Jmin=BOUNDS(ng)%JstrT(tile)
-          Jmax=BOUNDS(ng)%JendT(tile)
-        CASE (u3dvar)
-          Imin=BOUNDS(ng)%IstrP(tile)
-          Imax=BOUNDS(ng)%IendT(tile)
-          Jmin=BOUNDS(ng)%JstrT(tile)
-          Jmax=BOUNDS(ng)%JendT(tile)
-        CASE (v3dvar)
-          Imin=BOUNDS(ng)%IstrT(tile)
-          Imax=BOUNDS(ng)%IendT(tile)
-          Jmin=BOUNDS(ng)%JstrP(tile)
-          Jmax=BOUNDS(ng)%JendT(tile)
+        CASE (p2dvar)
+          IF (Extract_Flag.ge.0) THEN
+            Imin=BOUNDS(ng)%IstrP(tile)
+            Imax=BOUNDS(ng)%IendP(tile)
+            Jmin=BOUNDS(ng)%JstrP(tile)
+            Jmax=BOUNDS(ng)%JendP(tile)
+#ifdef GRID_EXTRACT
+          ELSE                              ! Already on extract grid
+            Imin=xtr_BOUNDS(ng)%IstrP(tile)
+            Imax=xtr_BOUNDS(ng)%IendP(tile)
+            Jmin=xtr_BOUNDS(ng)%JstrP(tile)
+            Jmax=xtr_BOUNDS(ng)%JendP(tile)
+#endif
+          END IF
+        CASE (r2dvar)
+          IF (Extract_Flag.ge.0) THEN
+            Imin=BOUNDS(ng)%IstrT(tile)
+            Imax=BOUNDS(ng)%IendT(tile)
+            Jmin=BOUNDS(ng)%JstrT(tile)
+            Jmax=BOUNDS(ng)%JendT(tile)
+#ifdef GRID_EXTRACT
+          ELSE                              ! Already on extract grid
+            Imin=xtr_BOUNDS(ng)%IstrT(tile)
+            Imax=xtr_BOUNDS(ng)%IendT(tile)
+            Jmin=xtr_BOUNDS(ng)%JstrT(tile)
+            Jmax=xtr_BOUNDS(ng)%JendT(tile)
+#endif
+          END IF
+        CASE (u2dvar)
+          IF (Extract_Flag.ge.0) THEN
+            Imin=BOUNDS(ng)%IstrP(tile)
+            Imax=BOUNDS(ng)%IendT(tile)
+            Jmin=BOUNDS(ng)%JstrT(tile)
+            Jmax=BOUNDS(ng)%JendT(tile)
+#ifdef GRID_EXTRACT
+          ELSE                              ! Already on extract grid
+            Imin=xtr_BOUNDS(ng)%IstrP(tile)
+            Imax=xtr_BOUNDS(ng)%IendT(tile)
+            Jmin=xtr_BOUNDS(ng)%JstrT(tile)
+            Jmax=xtr_BOUNDS(ng)%JendT(tile)
+#endif
+          END IF
+        CASE (v2dvar)
+          IF (Extract_Flag.ge.0) THEN
+            Imin=BOUNDS(ng)%IstrT(tile)
+            Imax=BOUNDS(ng)%IendT(tile)
+            Jmin=BOUNDS(ng)%JstrP(tile)
+            Jmax=BOUNDS(ng)%JendT(tile)
+#ifdef GRID_EXTRACT
+          ELSE                              ! Already on extract grid
+            Imin=xtr_BOUNDS(ng)%IstrT(tile)
+            Imax=xtr_BOUNDS(ng)%IendT(tile)
+            Jmin=xtr_BOUNDS(ng)%JstrP(tile)
+            Jmax=xtr_BOUNDS(ng)%JendT(tile)
+#endif
+          END IF
         CASE DEFAULT
-          Imin=BOUNDS(ng)%IstrT(tile)
-          Imax=BOUNDS(ng)%IendT(tile)
-          Jmin=BOUNDS(ng)%JstrT(tile)
-          Jmax=BOUNDS(ng)%JendT(tile)
+          IF (Extract_Flag.ge.0) THEN
+            Imin=BOUNDS(ng)%IstrT(tile)
+            Imax=BOUNDS(ng)%IendT(tile)
+            Jmin=BOUNDS(ng)%JstrT(tile)
+            Jmax=BOUNDS(ng)%JendT(tile)
+#ifdef GRID_EXTRACT
+          ELSE                              ! Already on extract grid
+            Imin=xtr_BOUNDS(ng)%IstrT(tile)
+            Imax=xtr_BOUNDS(ng)%IendT(tile)
+            Jmin=xtr_BOUNDS(ng)%JstrT(tile)
+            Jmax=xtr_BOUNDS(ng)%JendT(tile)
+#endif
+          END IF
       END SELECT
 !
 !-----------------------------------------------------------------------
@@ -531,6 +641,7 @@
       END SUBROUTINE stats_3dfld
 !
       SUBROUTINE stats_4dfld (ng, tile, model, gtype, S,                &
+     &                        Extract_Flag,                             &
      &                        LBi, UBi, LBj, UBj, LBk, UBk, LBt, UBt,   &
      &                        F, Fmask, debug)
 !
@@ -544,6 +655,7 @@
 !     tile         Domain partition (integer)                          !
 !     model        Calling model identifier (integer)                  !
 !     gtype        Grid type (integer)                                 !
+!     Extract_Flag Extraction flag interpolation/decimation (integer)  !
 !     LBi          I-dimension Lower bound (integer)                   !
 !     UBi          I-dimension Upper bound (integer)                   !
 !     LBj          J-dimension Lower bound (integer)                   !
@@ -576,10 +688,11 @@
 !  Imported variable declarations.
 !
       logical, intent(in), optional :: debug
-
+!
       integer, intent(in) :: ng, tile, model, gtype
+      integer, intent(in) :: Extract_Flag
       integer, intent(in) :: LBi, UBi, LBj, UBj, LBk, UBk, LBt, UBt
-
+!
 #ifdef ASSUMED_SHAPE
       real(r8), intent(in) :: F(LBi:,LBj:,LBk:,LBt:)
       real(r8), intent(in), optional :: Fmask(LBi:,LBj:)
@@ -592,12 +705,12 @@
 !  Local variable declarations.
 !
       logical :: Lprint
-
+!
       integer :: Imin, Imax, Jmin, Jmax, Npts, NSUB
       integer :: i, j, k, l, my_count
 
       integer :: my_threadnum
-
+!
       real(r8) :: fac
       real(r8) :: my_max, my_min
       real(r8) :: my_avg, my_rms
@@ -614,33 +727,84 @@
 !-----------------------------------------------------------------------
 !
 !  Determine I- and J-indices according to staggered C-grid type.
+#ifdef GRID_EXTRACT
+!
+!  Here, the ELSE statements (Extract_Flag < 0) indicate the processing
+!  of data already on the extracted grid, like geometry variables
+!  requiring no extraction since they are read during initialization.
+#endif
 !
       SELECT CASE (ABS(gtype))
-        CASE (p3dvar)
-          Imin=BOUNDS(ng)%IstrP(tile)
-          Imax=BOUNDS(ng)%IendP(tile)
-          Jmin=BOUNDS(ng)%JstrP(tile)
-          Jmax=BOUNDS(ng)%JendP(tile)
-        CASE (r3dvar)
-          Imin=BOUNDS(ng)%IstrT(tile)
-          Imax=BOUNDS(ng)%IendT(tile)
-          Jmin=BOUNDS(ng)%JstrT(tile)
-          Jmax=BOUNDS(ng)%JendT(tile)
-        CASE (u3dvar)
-          Imin=BOUNDS(ng)%IstrP(tile)
-          Imax=BOUNDS(ng)%IendT(tile)
-          Jmin=BOUNDS(ng)%JstrT(tile)
-          Jmax=BOUNDS(ng)%JendT(tile)
-        CASE (v3dvar)
-          Imin=BOUNDS(ng)%IstrT(tile)
-          Imax=BOUNDS(ng)%IendT(tile)
-          Jmin=BOUNDS(ng)%JstrP(tile)
-          Jmax=BOUNDS(ng)%JendT(tile)
+        CASE (p2dvar)
+          IF (Extract_Flag.ge.0) THEN
+            Imin=BOUNDS(ng)%IstrP(tile)
+            Imax=BOUNDS(ng)%IendP(tile)
+            Jmin=BOUNDS(ng)%JstrP(tile)
+            Jmax=BOUNDS(ng)%JendP(tile)
+#ifdef GRID_EXTRACT
+          ELSE                              ! Already on extract grid
+            Imin=xtr_BOUNDS(ng)%IstrP(tile)
+            Imax=xtr_BOUNDS(ng)%IendP(tile)
+            Jmin=xtr_BOUNDS(ng)%JstrP(tile)
+            Jmax=xtr_BOUNDS(ng)%JendP(tile)
+#endif
+          END IF
+        CASE (r2dvar)
+          IF (Extract_Flag.ge.0) THEN
+            Imin=BOUNDS(ng)%IstrT(tile)
+            Imax=BOUNDS(ng)%IendT(tile)
+            Jmin=BOUNDS(ng)%JstrT(tile)
+            Jmax=BOUNDS(ng)%JendT(tile)
+#ifdef GRID_EXTRACT
+          ELSE                              ! Already on extract grid
+            Imin=xtr_BOUNDS(ng)%IstrT(tile)
+            Imax=xtr_BOUNDS(ng)%IendT(tile)
+            Jmin=xtr_BOUNDS(ng)%JstrT(tile)
+            Jmax=xtr_BOUNDS(ng)%JendT(tile)
+#endif
+          END IF
+        CASE (u2dvar)
+          IF (Extract_Flag.ge.0) THEN
+            Imin=BOUNDS(ng)%IstrP(tile)
+            Imax=BOUNDS(ng)%IendT(tile)
+            Jmin=BOUNDS(ng)%JstrT(tile)
+            Jmax=BOUNDS(ng)%JendT(tile)
+#ifdef GRID_EXTRACT
+          ELSE                              ! Already on extract grid
+            Imin=xtr_BOUNDS(ng)%IstrP(tile)
+            Imax=xtr_BOUNDS(ng)%IendT(tile)
+            Jmin=xtr_BOUNDS(ng)%JstrT(tile)
+            Jmax=xtr_BOUNDS(ng)%JendT(tile)
+#endif
+          END IF
+        CASE (v2dvar)
+          IF (Extract_Flag.ge.0) THEN
+            Imin=BOUNDS(ng)%IstrT(tile)
+            Imax=BOUNDS(ng)%IendT(tile)
+            Jmin=BOUNDS(ng)%JstrP(tile)
+            Jmax=BOUNDS(ng)%JendT(tile)
+#ifdef GRID_EXTRACT
+          ELSE                              ! Already on extract grid
+            Imin=xtr_BOUNDS(ng)%IstrT(tile)
+            Imax=xtr_BOUNDS(ng)%IendT(tile)
+            Jmin=xtr_BOUNDS(ng)%JstrP(tile)
+            Jmax=xtr_BOUNDS(ng)%JendT(tile)
+#endif
+          END IF
         CASE DEFAULT
-          Imin=BOUNDS(ng)%IstrT(tile)
-          Imax=BOUNDS(ng)%IendT(tile)
-          Jmin=BOUNDS(ng)%JstrT(tile)
-          Jmax=BOUNDS(ng)%JendT(tile)
+          IF (Extract_Flag.ge.0) THEN
+            Imin=BOUNDS(ng)%IstrT(tile)
+            Imax=BOUNDS(ng)%IendT(tile)
+            Jmin=BOUNDS(ng)%JstrT(tile)
+            Jmax=BOUNDS(ng)%JendT(tile)
+#ifdef GRID_EXTRACT
+          ELSE                              ! Already on extract grid
+            Imin=xtr_BOUNDS(ng)%IstrT(tile)
+            Imax=xtr_BOUNDS(ng)%IendT(tile)
+            Jmin=xtr_BOUNDS(ng)%JstrT(tile)
+            Jmax=xtr_BOUNDS(ng)%JendT(tile)
+#endif
+          END IF
       END SELECT
 !
 !-----------------------------------------------------------------------

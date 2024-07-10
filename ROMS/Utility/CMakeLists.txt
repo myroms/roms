@@ -30,6 +30,7 @@ list( APPEND _files
       ROMS/Utility/def_diags.F
       ROMS/Utility/def_dim.F
       ROMS/Utility/def_error.F
+      ROMS/Utility/def_extract.F
       ROMS/Utility/def_floats.F
       ROMS/Utility/def_gst.F
       ROMS/Utility/def_hessian.F
@@ -53,6 +54,7 @@ list( APPEND _files
       ROMS/Utility/edit_multifile.F
       ROMS/Utility/equilibrium_tide.F
       ROMS/Utility/erf.F
+      ROMS/Utility/extract_field.F
       ROMS/Utility/extract_obs.F
       ROMS/Utility/extract_sta.F
       ROMS/Utility/frc_weak.F
@@ -64,6 +66,7 @@ list( APPEND _files
       ROMS/Utility/get_bounds.F
       ROMS/Utility/get_cycle.F
       ROMS/Utility/get_env.F
+      ROMS/Utility/get_extract.F
       ROMS/Utility/get_grid.F
       ROMS/Utility/get_gst.F
       ROMS/Utility/get_hash.F
@@ -93,6 +96,7 @@ list( APPEND _files
       ROMS/Utility/mp_exchange.F
       ROMS/Utility/mp_routines.F
       ROMS/Utility/nf_fread2d_bry.F
+      ROMS/Utility/nf_fread2d_xtr.F
       ROMS/Utility/nf_fread2d.F
       ROMS/Utility/nf_fread3d_bry.F
       ROMS/Utility/nf_fread3d.F
@@ -112,6 +116,7 @@ list( APPEND _files
       ROMS/Utility/obs_read.F
       ROMS/Utility/obs_write.F
       ROMS/Utility/packing.F
+      ROMS/Utility/pack_field.F
       ROMS/Utility/posterior.F
       ROMS/Utility/posterior_var.F
       ROMS/Utility/ran1.F
@@ -162,6 +167,7 @@ list( APPEND _files
       ROMS/Utility/sum_imp.F
       ROMS/Utility/tadv.F
       ROMS/Utility/tides_date.F
+      ROMS/Utility/tile_indices.F
       ROMS/Utility/time_corr.F
       ROMS/Utility/timers.F
       ROMS/Utility/uv_rotate.F
@@ -174,6 +180,7 @@ list( APPEND _files
       ROMS/Utility/wrt_diags.F
       ROMS/Utility/wrt_error.F
       ROMS/Utility/wrt_evolved.F
+      ROMS/Utility/wrt_extract.F
       ROMS/Utility/wrt_floats.F
       ROMS/Utility/wrt_gst.F
       ROMS/Utility/wrt_hessian.F

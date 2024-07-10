@@ -1,8 +1,9 @@
 #include "cppdefs.h"
-      MODULE nf_fread2d_mod
+      MODULE nf_fread2d_xtr_mod
+
+#ifdef GRID_EXTRACT
 !
-!git $Id$
-!svn $Id: nf_fread2d.F 1210 2024-01-03 22:03:03Z arango $
+!svn $Id$
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2024 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
@@ -10,7 +11,7 @@
 !=======================================================================
 !                                                                      !
 !  This function reads in a generic floating point 2D array from an    !
-!  input NetCDF file.                                                  !
+!  input NetCDF file for field extraction.                             !
 !                                                                      !
 !  On Input:                                                           !
 !                                                                      !
@@ -18,24 +19,24 @@
 !     model      Calling model identifier (integer)                    !
 !     ncname     NetCDF file name (string)                             !
 !     ncid       NetCDF file ID (integer)                              !
-#if defined PIO_LIB && defined DISTRIBUTE
+# if defined PIO_LIB && defined DISTRIBUTE
 !or   pioFile    PIO file descriptor structure, TYPE(file_desc_t)      !
 !                  pioFile%fh         file handler                     !
 !                  pioFile%iosystem   IO system descriptor (struct)    !
-#endif
+# endif
 !     ncvname    NetCDF variable name (string)                         !
 !     ncvarid    NetCDF variable ID (integer)                          !
-#if defined PIO_LIB && defined DISTRIBUTE
+# if defined PIO_LIB && defined DISTRIBUTE
 !or   pioVar     PIO variable descriptor structure, TYPE(My_VarDesc)   !
 !                  pioVar%vd     variable descriptor TYPE(Var_Desc_t)  !
 !                  pioVar%dkind  variable data kind                    !
 !                  pioVar%gtype  variable C-gridtype                   !
-#endif
+# endif
 !     tindex     NetCDF time record index to read (integer)            !
 !     gtype      C-grid type (integer)                                 !
-#if defined PIO_LIB && defined DISTRIBUTE
+# if defined PIO_LIB && defined DISTRIBUTE
 !or   pioDesc    IO data decomposition descriptor, TYPE(IO_desc_t)     !
-#endif
+# endif
 !     Vsize      Variable dimensions in NetCDF file (integer 1D array) !
 !     LBi        I-dimension Lower bound (integer)                     !
 !     UBi        I-dimension Upper bound (integer)                     !
@@ -67,29 +68,29 @@
 !
       implicit none
 !
-      INTERFACE nf_fread2d
-        MODULE PROCEDURE nf90_fread2d
-#if defined PIO_LIB && defined DISTRIBUTE
-        MODULE PROCEDURE pio_fread2d
-#endif
-      END INTERFACE nf_fread2d
+      INTERFACE nf_fread2d_xtr
+        MODULE PROCEDURE nf90_fread2d_xtr
+# if defined PIO_LIB && defined DISTRIBUTE
+        MODULE PROCEDURE pio_fread2d_xtr
+# endif
+      END INTERFACE nf_fread2d_xtr
 !
       CONTAINS
 
-#if defined PARALLEL_IO && defined DISTRIBUTE
+# if defined PARALLEL_IO && defined DISTRIBUTE
 !
 !***********************************************************************
-      FUNCTION nf90_fread2d (ng, model, ncname, ncid,                   &
-     &                       ncvname, ncvarid,                          &
-     &                       tindex, gtype, Vsize,                      &
-     &                       LBi, UBi, LBj, UBj,                        &
-     &                       Ascl, Amin, Amax,                          &
-# ifdef MASKING
-     &                       Amask,                                     &
-# endif
-     &                       Adat,                                      &
-     &                       checksum,                                  &
-     &                       Lregrid) RESULT (status)
+      FUNCTION nf90_fread2d_xtr (ng, model, ncname, ncid,               &
+     &                           ncvname, ncvarid,                      &
+     &                           tindex, gtype, Vsize,                  &
+     &                           LBi, UBi, LBj, UBj,                    &
+     &                           Ascl, Amin, Amax,                      &
+#  ifdef MASKING
+     &                           Amask,                                 &
+#  endif
+     &                           Adat,                                  &
+     &                           checksum,                              &
+     &                           Lregrid) RESULT (status)
 !***********************************************************************
 !
       USE mod_netcdf
@@ -115,17 +116,17 @@
       character (len=*), intent(in) :: ncname
       character (len=*), intent(in) :: ncvname
 !
-# ifdef ASSUMED_SHAPE
-#  ifdef MASKING
+#  ifdef ASSUMED_SHAPE
+#   ifdef MASKING
       real(r8), intent(in) :: Amask(LBi:,LBj:)
-#  endif
+#   endif
       real(r8), intent(out) :: Adat(LBi:,LBj:)
-# else
-#  ifdef MASKING
+#  else
+#   ifdef MASKING
       real(r8), intent(in) :: Amask(LBi:UBi,LBj:UBj)
-#  endif
+#   endif
       real(r8), intent(out) :: Adat(LBi:UBi,LBj:UBj)
-# endif
+#  endif
 !
 !  Local variable declarations.
 !
@@ -150,9 +151,9 @@
       real(r8), dimension(3) :: AttValue
 
       real(r8), allocatable :: Awrk(:,:)
-# if defined MASKING && defined READ_WATER
+#  if defined MASKING && defined READ_WATER
       real(r8), allocatable :: A2d(:)
-# endif
+#  endif
       real(r8), allocatable :: wrk(:)
 !
       character (len= 3), dimension(2) :: op_handle
@@ -177,45 +178,45 @@
 !  of the routines in "mp_exchange.F".  If ghost=1, the ghost points
 !  are read.
 !
-# ifdef NO_READ_GHOST
+#  ifdef NO_READ_GHOST
       ghost=0                        ! non-overlapping, no ghost points
-# else
+#  else
       IF (model.eq.iADM) THEN
         ghost=0                      ! non-overlapping, no ghost points
       ELSE
         ghost=1                      ! overlapping, read ghost points
       END IF
-# endif
+#  endif
 
       MyType=gtype
 
       SELECT CASE (ABS(MyType))
         CASE (p2dvar, p3dvar)
           Cgrid=1
-          Isize=IOBOUNDS(ng)%xi_psi
-          Jsize=IOBOUNDS(ng)%eta_psi
+          Isize=xtr_IOBOUNDS(ng)%xi_psi
+          Jsize=xtr_IOBOUNDS(ng)%eta_psi
         CASE (r2dvar, r3dvar)
           Cgrid=2
-          Isize=IOBOUNDS(ng)%xi_rho
-          Jsize=IOBOUNDS(ng)%eta_rho
+          Isize=xtr_IOBOUNDS(ng)%xi_rho
+          Jsize=xtr_IOBOUNDS(ng)%eta_rho
         CASE (u2dvar, u3dvar)
           Cgrid=3
-          Isize=IOBOUNDS(ng)%xi_u
-          Jsize=IOBOUNDS(ng)%eta_u
+          Isize=xtr_IOBOUNDS(ng)%xi_u
+          Jsize=xtr_IOBOUNDS(ng)%eta_u
         CASE (v2dvar, v3dvar)
           Cgrid=4
-          Isize=IOBOUNDS(ng)%xi_v
-          Jsize=IOBOUNDS(ng)%eta_v
+          Isize=xtr_IOBOUNDS(ng)%xi_v
+          Jsize=xtr_IOBOUNDS(ng)%eta_v
         CASE DEFAULT
           Cgrid=2
-          Isize=IOBOUNDS(ng)%xi_rho
-          Jsize=IOBOUNDS(ng)%eta_rho
+          Isize=xtr_IOBOUNDS(ng)%xi_rho
+          Jsize=xtr_IOBOUNDS(ng)%eta_rho
       END SELECT
 
-      Imin=BOUNDS(ng)%Imin(Cgrid,ghost,MyRank)
-      Imax=BOUNDS(ng)%Imax(Cgrid,ghost,MyRank)
-      Jmin=BOUNDS(ng)%Jmin(Cgrid,ghost,MyRank)
-      Jmax=BOUNDS(ng)%Jmax(Cgrid,ghost,MyRank)
+      Imin=xtr_BOUNDS(ng)%Imin(Cgrid,ghost,MyRank)
+      Imax=xtr_BOUNDS(ng)%Imax(Cgrid,ghost,MyRank)
+      Jmin=xtr_BOUNDS(ng)%Jmin(Cgrid,ghost,MyRank)
+      Jmax=xtr_BOUNDS(ng)%Jmax(Cgrid,ghost,MyRank)
 
       Ilen=Imax-Imin+1
       Jlen=Jmax-Jmin+1
@@ -416,7 +417,7 @@
         END IF
       END IF
 
-# if defined MASKING && defined READ_WATER
+#  if defined MASKING && defined READ_WATER
 !
 !-----------------------------------------------------------------------
 !  Parallel I/O: Read in tile data from requested field and scale it.
@@ -431,27 +432,27 @@
 !
         SELECT CASE (ABS(MyType))
           CASE (p2dvar)
-            Npts=IOBOUNDS(ng)%xy_psi
+            Npts=xtr_IOBOUNDS(ng)%xy_psi
             wtype=p2dvar
             Ioff=0
             Joff=1
           CASE (r2dvar)
-            Npts=IOBOUNDS(ng)%xy_rho
+            Npts=xtr_IOBOUNDS(ng)%xy_rho
             wtype=r2dvar
             Ioff=1
             Joff=0
           CASE (u2dvar)
-            Npts=IOBOUNDS(ng)%xy_u
+            Npts=xtr_IOBOUNDS(ng)%xy_u
             wtype=u2dvar
             Ioff=0
             Joff=0
           CASE (v2dvar)
-            Npts=IOBOUNDS(ng)%xy_v
+            Npts=xtr_IOBOUNDS(ng)%xy_v
             wtype=v2dvar
             Ioff=1
             Joff=1
           CASE DEFAULT
-            Npts=IOBOUNDS(ng)%xy_rho
+            Npts=xtr_IOBOUNDS(ng)%xy_rho
             wtype=r2dvar
             Ioff=1
             Joff=0
@@ -529,7 +530,7 @@
           ioerror=status
         END IF
       END IF
-# endif
+#  endif
 !
 !-----------------------------------------------------------------------
 !  Parallel I/O: If interpolating from gridded data, read its associated
@@ -545,9 +546,9 @@
      &                          Ilen, Jlen, Awrk, Amin, Amax,           &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          Imin, Imax, Jmin, Jmax,                 &
-# ifdef MASKING
+#  ifdef MASKING
      &                          GRID(ng) % pmask,                       &
-# endif
+#  endif
      &                          GRID(ng) % MyLon,                       &
      &                          GRID(ng) % lonp,                        &
      &                          GRID(ng) % latp,                        &
@@ -558,9 +559,9 @@
      &                          Ilen, Jlen, Awrk, Amin, Amax,           &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          Imin, Imax, Jmin, Jmax,                 &
-# ifdef MASKING
+#  ifdef MASKING
      &                          GRID(ng) % pmask,                       &
-# endif
+#  endif
      &                          GRID(ng) % MyLon,                       &
      &                          GRID(ng) % xp,                          &
      &                          GRID(ng) % yp,                          &
@@ -573,9 +574,9 @@
      &                          Ilen, Jlen, Awrk, Amin, Amax,           &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          Imin, Imax, Jmin, Jmax,                 &
-# ifdef MASKING
+#  ifdef MASKING
      &                          GRID(ng) % rmask,                       &
-# endif
+#  endif
      &                          GRID(ng) % MyLon,                       &
      &                          GRID(ng) % lonr,                        &
      &                          GRID(ng) % latr,                        &
@@ -586,9 +587,9 @@
      &                          Ilen, Jlen, Awrk, Amin, Amax,           &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          Imin, Imax, Jmin, Jmax,                 &
-# ifdef MASKING
+#  ifdef MASKING
      &                          GRID(ng) % rmask,                       &
-# endif
+#  endif
     &                           GRID(ng) % MyLon,                       &
      &                          GRID(ng) % xr,                          &
      &                          GRID(ng) % yr,                          &
@@ -601,9 +602,9 @@
      &                          Ilen, Jlen, Awrk, Amin, Amax,           &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          Imin, Imax, Jmin, Jmax,                 &
-# ifdef MASKING
+#  ifdef MASKING
      &                          GRID(ng) % umask,                       &
-# endif
+#  endif
      &                          GRID(ng) % MyLon,                       &
      &                          GRID(ng) % lonu,                        &
      &                          GRID(ng) % latu,                        &
@@ -614,9 +615,9 @@
      &                          Ilen, Jlen, Awrk, Amin, Amax,           &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          Imin, Imax, Jmin, Jmax,                 &
-# ifdef MASKING
+#  ifdef MASKING
      &                          GRID(ng) % umask,                       &
-# endif
+#  endif
      &                          GRID(ng) % MyLon,                       &
      &                          GRID(ng) % xu,                          &
      &                          GRID(ng) % yu,                          &
@@ -629,9 +630,9 @@
      &                          Ilen, Jlen, Awrk, Amin, Amax,           &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          Imin, Imax, Jmin, Jmax,                 &
-# ifdef MASKING
+#  ifdef MASKING
      &                          GRID(ng) % vmask,                       &
-# endif
+#  endif
      &                          GRID(ng) % MyLon,                       &
      &                          GRID(ng) % lonv,                        &
      &                          GRID(ng) % latv,                        &
@@ -642,9 +643,9 @@
      &                          Ilen, Jlen, Awrk, Amin, Amax,           &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          Imin, Imax, Jmin, Jmax,                 &
-# ifdef MASKING
+#  ifdef MASKING
      &                          GRID(ng) % vmask,                       &
-# endif
+#  endif
      &                          GRID(ng) % MyLon,                       &
      &                          GRID(ng) % xv,                          &
      &                          GRID(ng) % yv,                          &
@@ -657,9 +658,9 @@
      &                          Ilen, Jlen, Awrk, Amin, Amax,             &
      &                          LBi, UBi, LBj, UBj,                       &
      &                          Imin, Imax, Jmin, Jmax,                   &
-# ifdef MASKING
+#  ifdef MASKING
      &                          GRID(ng) % rmask,                         &
-# endif
+#  endif
      &                          GRID(ng) % MyLon,                         &
      &                          GRID(ng) % lonr,                          &
      &                          GRID(ng) % latr,                          &
@@ -670,9 +671,9 @@
      &                          Ilen, Jlen, Awrk, Amin, Amax,             &
      &                          LBi, UBi, LBj, UBj,                       &
      &                          Imin, Imax, Jmin, Jmax,                   &
-# ifdef MASKING
+#  ifdef MASKING
      &                          GRID(ng) % rmask,                         &
-# endif
+#  endif
      &                          GRID(ng) % MyLon,                         &
      &                          GRID(ng) % xr,                            &
      &                          GRID(ng) % yr,                            &
@@ -691,42 +692,42 @@
         END IF
       END IF
 
-# if defined MASKING && defined READ_WATER
+#  if defined MASKING && defined READ_WATER
       IF (allocated(A2d)) THEN
         deallocate (A2d)
       END IF
-# endif
+#  endif
 
       IF (allocated(wrk)) THEN
         deallocate (wrk)
       END IF
 !
       RETURN
-      END FUNCTION nf90_fread2d
+      END FUNCTION nf90_fread2d_xtr
 
-#else
+# else
 
 !
 !***********************************************************************
-      FUNCTION nf90_fread2d (ng, model, ncname, ncid,                   &
-     &                       ncvname, ncvarid,                          &
-     &                       tindex, gtype, Vsize,                      &
-     &                       LBi, UBi, LBj, UBj,                        &
-     &                       Ascl, Amin, Amax,                          &
-# ifdef MASKING
-     &                       Amask,                                     &
-# endif
-     &                       Adat,                                      &
-     &                       checksum,                                  &
-     &                       Lregrid) RESULT (status)
+      FUNCTION nf90_fread2d_xtr (ng, model, ncname, ncid,               &
+     &                           ncvname, ncvarid,                      &
+     &                           tindex, gtype, Vsize,                  &
+     &                           LBi, UBi, LBj, UBj,                    &
+     &                           Ascl, Amin, Amax,                      &
+#  ifdef MASKING
+     &                           Amask,                                 &
+#  endif
+     &                           Adat,                                  &
+     &                           checksum,                              &
+     &                           Lregrid) RESULT (status)
 !***********************************************************************
 !
       USE mod_netcdf
 
-# ifdef DISTRIBUTE
+#  ifdef DISTRIBUTE
 !
-      USE distribute_mod, ONLY : mp_bcastf, mp_bcasti, mp_scatter2d
-# endif
+      USE distribute_mod, ONLY : mp_bcastf, mp_bcasti, mp_scatter2d_xtr
+#  endif
       USE regrid_mod,     ONLY : regrid_nf90
 !
 !  Imported variable declarations.
@@ -746,17 +747,17 @@
       character (len=*), intent(in) :: ncname
       character (len=*), intent(in) :: ncvname
 !
-# ifdef ASSUMED_SHAPE
-#  ifdef MASKING
+#  ifdef ASSUMED_SHAPE
+#   ifdef MASKING
       real(r8), intent(in) :: Amask(LBi:,LBj:)
-#  endif
+#   endif
       real(r8), intent(out) :: Adat(LBi:,LBj:)
-# else
-#  ifdef MASKING
+#  else
+#   ifdef MASKING
       real(r8), intent(in) :: Amask(LBi:UBi,LBj:UBj)
-#  endif
+#   endif
       real(r8), intent(out) :: Adat(LBi:UBi,LBj:UBj)
-# endif
+#  endif
 !
 !  Local variable declarations.
 !
@@ -769,9 +770,9 @@
       integer :: Imin, Imax, Jmin, Jmax
       integer :: Ilen, Jlen, IJlen
       integer :: Cgrid, MyType, ghost
-# ifdef DISTRIBUTE
+#  ifdef DISTRIBUTE
       integer :: Nghost
-# endif
+#  endif
       integer, dimension(3) :: start, total
 !
       real(r8) :: Afactor, Aoffset, Aspval
@@ -801,34 +802,34 @@
       SELECT CASE (ABS(MyType))
         CASE (p2dvar)
           Cgrid=1                                         ! PSI-points
-          Is=IOBOUNDS(ng)%ILB_psi
-          Ie=IOBOUNDS(ng)%IUB_psi
-          Js=IOBOUNDS(ng)%JLB_psi
-          Je=IOBOUNDS(ng)%JUB_psi
+          Is=xtr_IOBOUNDS(ng)%ILB_psi
+          Ie=xtr_IOBOUNDS(ng)%IUB_psi
+          Js=xtr_IOBOUNDS(ng)%JLB_psi
+          Je=xtr_IOBOUNDS(ng)%JUB_psi
         CASE (r2dvar)
           Cgrid=2                                         ! RHO-points
-          Is=IOBOUNDS(ng)%ILB_rho
-          Ie=IOBOUNDS(ng)%IUB_rho
-          Js=IOBOUNDS(ng)%JLB_rho
-          Je=IOBOUNDS(ng)%JUB_rho
+          Is=xtr_IOBOUNDS(ng)%ILB_rho
+          Ie=xtr_IOBOUNDS(ng)%IUB_rho
+          Js=xtr_IOBOUNDS(ng)%JLB_rho
+          Je=xtr_IOBOUNDS(ng)%JUB_rho
         CASE (u2dvar)
           Cgrid=3                                         ! U-points
-          Is=IOBOUNDS(ng)%ILB_u
-          Ie=IOBOUNDS(ng)%IUB_u
-          Js=IOBOUNDS(ng)%JLB_u
-          Je=IOBOUNDS(ng)%JUB_u
+          Is=xtr_IOBOUNDS(ng)%ILB_u
+          Ie=xtr_IOBOUNDS(ng)%IUB_u
+          Js=xtr_IOBOUNDS(ng)%JLB_u
+          Je=xtr_IOBOUNDS(ng)%JUB_u
         CASE (v2dvar)
           Cgrid=4                                         ! V-points
-          Is=IOBOUNDS(ng)%ILB_v
-          Ie=IOBOUNDS(ng)%IUB_v
-          Js=IOBOUNDS(ng)%JLB_v
-          Je=IOBOUNDS(ng)%JUB_v
+          Is=xtr_IOBOUNDS(ng)%ILB_v
+          Ie=xtr_IOBOUNDS(ng)%IUB_v
+          Js=xtr_IOBOUNDS(ng)%JLB_v
+          Je=xtr_IOBOUNDS(ng)%JUB_v
         CASE DEFAULT
           Cgrid=2                                         ! RHO-points
-          Is=IOBOUNDS(ng)%ILB_rho
-          Ie=IOBOUNDS(ng)%IUB_rho
-          Js=IOBOUNDS(ng)%JLB_rho
-          Je=IOBOUNDS(ng)%JUB_rho
+          Is=xtr_IOBOUNDS(ng)%ILB_rho
+          Ie=xtr_IOBOUNDS(ng)%IUB_rho
+          Js=xtr_IOBOUNDS(ng)%JLB_rho
+          Je=xtr_IOBOUNDS(ng)%JUB_rho
       END SELECT
 
       Ilen=Ie-Is+1
@@ -837,28 +838,28 @@
 !  Set the tile computational I- and J-bounds (no ghost points).
 !
       ghost=0
-      Imin=BOUNDS(ng)%Imin(Cgrid,ghost,MyRank)
-      Imax=BOUNDS(ng)%Imax(Cgrid,ghost,MyRank)
-      Jmin=BOUNDS(ng)%Jmin(Cgrid,ghost,MyRank)
-      Jmax=BOUNDS(ng)%Jmax(Cgrid,ghost,MyRank)
+      Imin=xtr_BOUNDS(ng)%Imin(Cgrid,ghost,MyRank)
+      Imax=xtr_BOUNDS(ng)%Imax(Cgrid,ghost,MyRank)
+      Jmin=xtr_BOUNDS(ng)%Jmin(Cgrid,ghost,MyRank)
+      Jmax=xtr_BOUNDS(ng)%Jmax(Cgrid,ghost,MyRank)
 
-# ifdef DISTRIBUTE
+#  ifdef DISTRIBUTE
 !
 !  Set the number of tile ghost points, Nghost, to scatter in
 !  distributed-memory applications. If Nghost=0, the ghost points
 !  are not processed.  They will be processed elsewhere by the
 !  appropriate call to any of the routines in "mp_exchange.F".
 !
-#  ifdef NO_READ_GHOST
+#   ifdef NO_READ_GHOST
       Nghost=0                       ! no ghost points exchange
-#  else
+#   else
       IF (model.eq.iADM) THEN
         Nghost=0                     ! no ghost points exchange
       ELSE
         Nghost=NghostPoints          ! do ghost points exchange
       END IF
+#   endif
 #  endif
-# endif
 !
 !  Determine if interpolating from coarse gridded data to model grid
 !  is required.  This is only allowed for gridded 2D fields.  This is
@@ -921,30 +922,30 @@
         Aspval=AttValue(3)
       END IF
 
-# if defined READ_WATER && defined MASKING
+#  if defined READ_WATER && defined MASKING
 !
 !  If processing water points only, set number of points and type
 !  switch.
 !
       SELECT CASE (ABS(MyType))
         CASE (p2dvar)
-          Npts=IOBOUNDS(ng)%xy_psi
+          Npts=xtr_IOBOUNDS(ng)%xy_psi
           wtype=p2dvar
         CASE (r2dvar)
-          Npts=IOBOUNDS(ng)%xy_rho
+          Npts=xtr_IOBOUNDS(ng)%xy_rho
           wtype=r2dvar
         CASE (u2dvar)
-          Npts=IOBOUNDS(ng)%xy_u
+          Npts=xtr_IOBOUNDS(ng)%xy_u
           wtype=u2dvar
         CASE (v2dvar)
-          Npts=IOBOUNDS(ng)%xy_v
+          Npts=xtr_IOBOUNDS(ng)%xy_v
           wtype=v2dvar
         CASE DEFAULT
-          Npts=IOBOUNDS(ng)%xy_rho
+          Npts=xtr_IOBOUNDS(ng)%xy_rho
           wtype=r2dvar
       END SELECT
       NWpts=(Lm(ng)+2)*(Mm(ng)+2)
-# endif
+#  endif
 !
 !  Set NetCDF dimension counters for processing requested field.
 !
@@ -956,13 +957,13 @@
         total(2)=Jlen
         start(3)=tindex
         total(3)=1
-# if defined READ_WATER && defined MASKING
+#  if defined READ_WATER && defined MASKING
       ELSE
         start(1)=1
         total(1)=Npts
         start(2)=1
         total(2)=tindex
-# endif
+#  endif
       END IF
 !
 !  Allocate scratch work vector. The dimension of this vector is
@@ -1015,9 +1016,9 @@
           END IF
         END IF
       END IF
-# ifdef DISTRIBUTE
+#  ifdef DISTRIBUTE
       CALL mp_bcasti (ng, model, status)
-# endif
+#  endif
       IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
         exit_flag=2
         ioerror=status
@@ -1029,17 +1030,17 @@
 !-----------------------------------------------------------------------
 !
       IF (.not.interpolate) THEN
-# ifdef DISTRIBUTE
+#  ifdef DISTRIBUTE
 !
 !  Scatter read data over the distributed memory tiles.
 !
-        CALL mp_scatter2d (ng, model, LBi, UBi, LBj, UBj,               &
-     &                     Nghost, MyType, Amin, Amax,                  &
-#  if defined READ_WATER && defined MASKING
-     &                     NWpts, SCALARS(ng)%IJwater(:,wtype),         &
-#  endif
-     &                     Npts, wrk, Adat)
-# else
+        CALL mp_scatter2d_xtr (ng, model, LBi, UBi, LBj, UBj,           &
+     &                         Nghost, MyType, Amin, Amax,              &
+#   if defined READ_WATER && defined MASKING
+     &                         NWpts, SCALARS(ng)%IJwater(:,wtype),     &
+#   endif
+     &                         Npts, wrk, Adat)
+#  else
 !
 !  Unpack data into the global array: serial, serial with partitions,
 !  and shared-memory applications.
@@ -1052,7 +1053,7 @@
               Adat(i,j)=wrk(ic)
             END DO
           END DO
-#  if defined MASKING || defined READ_WATER
+#   if defined MASKING || defined READ_WATER
         ELSE
           ic=0
           DO j=Js,Je
@@ -1065,13 +1066,13 @@
               END IF
             END DO
           END DO
-#  endif
+#   endif
         END IF
-# endif
-# ifdef DISTRIBUTE
+#  endif
+#  ifdef DISTRIBUTE
       ELSE
         CALL mp_bcastf (ng, model, wrk)
-# endif
+#  endif
       END IF
 !
 !-----------------------------------------------------------------------
@@ -1088,9 +1089,9 @@
      &                          Ilen, Jlen, wrk, Amin, Amax,            &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          Is, Ie, Js, Je,                         &
-# ifdef MASKING
+#  ifdef MASKING
      &                          Amask,                                  &
-# endif
+#  endif
      &                          GRID(ng) % MyLon,                       &
      &                          GRID(ng) % lonp,                        &
      &                          GRID(ng) % latp,                        &
@@ -1101,9 +1102,9 @@
      &                          Ilen, Jlen, wrk, Amin, Amax,            &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          Is, Ie, Js, Je,                         &
-# ifdef MASKING
+#  ifdef MASKING
      &                          Amask,                                  &
-# endif
+#  endif
      &                          GRID(ng) % MyLon,                       &
      &                          GRID(ng) % xp,                          &
      &                          GRID(ng) % yp,                          &
@@ -1116,9 +1117,9 @@
      &                          Ilen, Jlen, wrk, Amin, Amax,            &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          Is, Ie, Js, Je,                         &
-# ifdef MASKING
+#  ifdef MASKING
      &                          GRID(ng) % rmask,                       &
-# endif
+#  endif
      &                          GRID(ng) % MyLon,                       &
      &                          GRID(ng) % lonr,                        &
      &                          GRID(ng) % latr,                        &
@@ -1129,9 +1130,9 @@
      &                          Ilen, Jlen, wrk, Amin, Amax,            &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          Is, Ie, Js, Je,                         &
-# ifdef MASKING
+#  ifdef MASKING
      &                          GRID(ng) % rmask,                       &
-# endif
+#  endif
      &                          GRID(ng) % MyLon,                       &
      &                          GRID(ng) % xr,                          &
      &                          GRID(ng) % yr,                          &
@@ -1144,9 +1145,9 @@
      &                          Ilen, Jlen, wrk, Amin, Amax,            &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          Is, Ie, Js, Je,                         &
-# ifdef MASKING
+#  ifdef MASKING
      &                          GRID(ng) % umask,                       &
-# endif
+#  endif
      &                          GRID(ng) % MyLon,                       &
      &                          GRID(ng) % lonu,                        &
      &                          GRID(ng) % latu,                        &
@@ -1157,9 +1158,9 @@
      &                          Ilen, Jlen, wrk, Amin, Amax,            &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          Is, Ie, Js, Je,                         &
-# ifdef MASKING
+#  ifdef MASKING
      &                          GRID(ng) % umask,                       &
-# endif
+#  endif
      &                          GRID(ng) % MyLon,                       &
      &                          GRID(ng) % xu,                          &
      &                          GRID(ng) % yu,                          &
@@ -1172,9 +1173,9 @@
      &                          Ilen, Jlen, wrk, Amin, Amax,            &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          Is, Ie, Js, Je,                         &
-# ifdef MASKING
+#  ifdef MASKING
      &                          GRID(ng) % vmask,                       &
-# endif
+#  endif
      &                          GRID(ng) % MyLon,                       &
      &                          GRID(ng) % lonv,                        &
      &                          GRID(ng) % latv,                        &
@@ -1185,9 +1186,9 @@
      &                          Ilen, Jlen, wrk, Amin, Amax,            &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          Is, Ie, Js, Je,                         &
-# ifdef MASKING
+#  ifdef MASKING
      &                          GRID(ng) % vmask,                       &
-# endif
+#  endif
      &                          GRID(ng) % MyLon,                       &
      &                          GRID(ng) % xv,                          &
      &                          GRID(ng) % yv,                          &
@@ -1200,9 +1201,9 @@
      &                          Ilen, Jlen, wrk, Amin, Amax,            &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          Is, Ie, Js, Je,                         &
-# ifdef MASKING
+#  ifdef MASKING
      &                          GRID(ng) % rmask,                       &
-# endif
+#  endif
      &                          GRID(ng) % MyLon,                       &
      &                          GRID(ng) % lonr,                        &
      &                          GRID(ng) % latr,                        &
@@ -1213,9 +1214,9 @@
      &                          Ilen, Jlen, wrk, Amin, Amax,            &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          Is, Ie, Js, Je,                         &
-# ifdef MASKING
+#  ifdef MASKING
      &                          GRID(ng) % rmask,                       &
-# endif
+#  endif
      &                          GRID(ng) % MyLon,                       &
      &                          GRID(ng) % xr,                          &
      &                          GRID(ng) % yr,                          &
@@ -1229,17 +1230,17 @@
 !-----------------------------------------------------------------------
 !
       IF (Lchecksum) THEN
-# ifdef DISTRIBUTE
+#  ifdef DISTRIBUTE
         Npts=(Imax-Imin+1)*(Jmax-Jmin+1)
         IF (.not.allocated(Cwrk)) allocate ( Cwrk(Npts) )
         Cwrk = PACK(Adat(Imin:Imax, Jmin:Jmax), .TRUE.)
         CALL get_hash (Cwrk, Npts, checksum, .TRUE.)
-# else
+#  else
         Npts=(Ie-Is+1)*(Je-Js+1)
         IF (.not.allocated(Cwrk)) allocate ( Cwrk(Npts) )
         Cwrk = PACK(Adat(Is:Ie, Js:Je), .TRUE.)
         CALL get_hash (Cwrk, Npts, checksum)
-# endif
+#  endif
         IF (allocated(Cwrk)) deallocate (Cwrk)
       END IF
 !
@@ -1252,23 +1253,23 @@
       END IF
 !
       RETURN
-      END FUNCTION nf90_fread2d
-#endif
+      END FUNCTION nf90_fread2d_xtr
+# endif
 
-#if defined PIO_LIB && defined DISTRIBUTE
+# if defined PIO_LIB && defined DISTRIBUTE
 !
 !***********************************************************************
-      FUNCTION pio_fread2d (ng, model, ncname, pioFile,                 &
-     &                      ncvname, pioVar,                            &
-     &                      tindex, pioDesc, Vsize,                     &
-     &                      LBi, UBi, LBj, UBj,                         &
-     &                      Ascl, Amin, Amax,                           &
-# ifdef MASKING
-     &                      Amask,                                      &
-# endif
-     &                      Adat,                                       &
-     &                      checksum,                                   &
-     &                      Lregrid) RESULT (status)
+      FUNCTION pio_fread2d_xtr (ng, model, ncname, pioFile,             &
+     &                          ncvname, pioVar,                        &
+     &                          tindex, pioDesc, Vsize,                 &
+     &                          LBi, UBi, LBj, UBj,                     &
+     &                          Ascl, Amin, Amax,                       &
+#  ifdef MASKING
+     &                          Amask,                                  &
+#  endif
+     &                          Adat,                                   &
+     &                          checksum,                               &
+     &                          Lregrid) RESULT (status)
 !***********************************************************************
 !
       USE mod_pio_netcdf
@@ -1293,17 +1294,17 @@
       character (len=*), intent(in) :: ncname
       character (len=*), intent(in) :: ncvname
 !
-# ifdef ASSUMED_SHAPE
-#  ifdef MASKING
+#  ifdef ASSUMED_SHAPE
+#   ifdef MASKING
       real(r8), intent(in) :: Amask(LBi:,LBj:)
-#  endif
+#   endif
       real(r8), intent(out) :: Adat(LBi:,LBj:)
-# else
-#  ifdef MASKING
+#  else
+#   ifdef MASKING
       real(r8), intent(in) :: Amask(LBi:UBi,LBj:UBj)
-#  endif
+#   endif
       real(r8), intent(out) :: Adat(LBi:UBi,LBj:UBj)
-# endif
+#  endif
 !
       TYPE (File_desc_t), intent(inout) :: pioFile
       TYPE (IO_Desc_t),   intent(inout) :: pioDesc
@@ -1360,34 +1361,34 @@
       SELECT CASE (ABS(gtype))
         CASE (p2dvar, p3dvar)
           Cgrid=1                                         ! PSI-points
-          Is=IOBOUNDS(ng)%ILB_psi
-          Ie=IOBOUNDS(ng)%IUB_psi
-          Js=IOBOUNDS(ng)%JLB_psi
-          Je=IOBOUNDS(ng)%JUB_psi
+          Is=xtr_IOBOUNDS(ng)%ILB_psi
+          Ie=xtr_IOBOUNDS(ng)%IUB_psi
+          Js=xtr_IOBOUNDS(ng)%JLB_psi
+          Je=xtr_IOBOUNDS(ng)%JUB_psi
         CASE (r2dvar, r3dvar)
           Cgrid=2                                         ! RHO-points
-          Is=IOBOUNDS(ng)%ILB_rho
-          Ie=IOBOUNDS(ng)%IUB_rho
-          Js=IOBOUNDS(ng)%JLB_rho
-          Je=IOBOUNDS(ng)%JUB_rho
+          Is=xtr_IOBOUNDS(ng)%ILB_rho
+          Ie=xtr_IOBOUNDS(ng)%IUB_rho
+          Js=xtr_IOBOUNDS(ng)%JLB_rho
+          Je=xtr_IOBOUNDS(ng)%JUB_rho
         CASE (u2dvar, u3dvar)
           Cgrid=3                                         ! U-points
-          Is=IOBOUNDS(ng)%ILB_u
-          Ie=IOBOUNDS(ng)%IUB_u
-          Js=IOBOUNDS(ng)%JLB_u
-          Je=IOBOUNDS(ng)%JUB_u
+          Is=xtr_IOBOUNDS(ng)%ILB_u
+          Ie=xtr_IOBOUNDS(ng)%IUB_u
+          Js=xtr_IOBOUNDS(ng)%JLB_u
+          Je=xtr_IOBOUNDS(ng)%JUB_u
         CASE (v2dvar, v3dvar)
           Cgrid=4                                         ! V-points
-          Is=IOBOUNDS(ng)%ILB_v
-          Ie=IOBOUNDS(ng)%IUB_v
-          Js=IOBOUNDS(ng)%JLB_v
-          Je=IOBOUNDS(ng)%JUB_v
+          Is=xtr_IOBOUNDS(ng)%ILB_v
+          Ie=xtr_IOBOUNDS(ng)%IUB_v
+          Js=xtr_IOBOUNDS(ng)%JLB_v
+          Je=xtr_IOBOUNDS(ng)%JUB_v
         CASE DEFAULT
           Cgrid=2                                         ! RHO-points
-          Is=IOBOUNDS(ng)%ILB_rho
-          Ie=IOBOUNDS(ng)%IUB_rho
-          Js=IOBOUNDS(ng)%JLB_rho
-          Je=IOBOUNDS(ng)%JUB_rho
+          Is=xtr_IOBOUNDS(ng)%ILB_rho
+          Ie=xtr_IOBOUNDS(ng)%IUB_rho
+          Js=xtr_IOBOUNDS(ng)%JLB_rho
+          Je=xtr_IOBOUNDS(ng)%JUB_rho
       END SELECT
 !
 !  Compute the global lengths of the I- and J-directions. They are
@@ -1399,10 +1400,10 @@
 !  Set the tile computational I- and J-bounds (no ghost points).
 !
       ghost=0
-      Imin=BOUNDS(ng)%Imin(Cgrid,ghost,MyRank)
-      Imax=BOUNDS(ng)%Imax(Cgrid,ghost,MyRank)
-      Jmin=BOUNDS(ng)%Jmin(Cgrid,ghost,MyRank)
-      Jmax=BOUNDS(ng)%Jmax(Cgrid,ghost,MyRank)
+      Imin=xtr_BOUNDS(ng)%Imin(Cgrid,ghost,MyRank)
+      Imax=xtr_BOUNDS(ng)%Imax(Cgrid,ghost,MyRank)
+      Jmin=xtr_BOUNDS(ng)%Jmin(Cgrid,ghost,MyRank)
+      Jmax=xtr_BOUNDS(ng)%Jmax(Cgrid,ghost,MyRank)
 !
 !  Determine if interpolating from coarse gridded data to model grid
 !  is required.  This is only allowed for gridded 2D fields.  This is
@@ -1621,9 +1622,9 @@
      &                         Ilen, Jlen, wrk, Amin, Amax,             &
      &                         LBi, UBi, LBj, UBj,                      &
      &                         Imin, Imax, Jmin, Jmax,                  &
-# ifdef MASKING
+#  ifdef MASKING
      &                         Amask,                                   &
-# endif
+#  endif
      &                         GRID(ng) % MyLon,                        &
      &                         GRID(ng) % lonp,                         &
      &                         GRID(ng) % latp,                         &
@@ -1634,9 +1635,9 @@
      &                         Ilen, Jlen, wrk, Amin, Amax,             &
      &                         LBi, UBi, LBj, UBj,                      &
      &                         Imin, Imax, Jmin, Jmax,                  &
-# ifdef MASKING
+#  ifdef MASKING
      &                         Amask,                                   &
-# endif
+#  endif
      &                         GRID(ng) % MyLon,                        &
      &                         GRID(ng) % xp,                           &
      &                         GRID(ng) % yp,                           &
@@ -1649,9 +1650,9 @@
      &                         Ilen, Jlen, wrk, Amin, Amax,             &
      &                         LBi, UBi, LBj, UBj,                      &
      &                         Imin, Imax, Jmin, Jmax,                  &
-# ifdef MASKING
+#  ifdef MASKING
      &                         GRID(ng) % rmask,                        &
-# endif
+#  endif
      &                         GRID(ng) % MyLon,                        &
      &                         GRID(ng) % lonr,                         &
      &                         GRID(ng) % latr,                         &
@@ -1662,9 +1663,9 @@
      &                         Ilen, Jlen, wrk, Amin, Amax,             &
      &                         LBi, UBi, LBj, UBj,                      &
      &                         Imin, Imax, Jmin, Jmax,                  &
-# ifdef MASKING
+#  ifdef MASKING
      &                         GRID(ng) % rmask,                        &
-# endif
+#  endif
      &                         GRID(ng) % MyLon,                        &
      &                         GRID(ng) % xr,                           &
      &                         GRID(ng) % yr,                           &
@@ -1677,9 +1678,9 @@
      &                         Ilen, Jlen, wrk, Amin, Amax,             &
      &                         LBi, UBi, LBj, UBj,                      &
      &                         Imin, Imax, Jmin, Jmax,                  &
-# ifdef MASKING
+#  ifdef MASKING
      &                         GRID(ng) % umask,                        &
-# endif
+#  endif
      &                         GRID(ng) % MyLon,                        &
      &                         GRID(ng) % lonu,                         &
      &                         GRID(ng) % latu,                         &
@@ -1690,9 +1691,9 @@
      &                         Ilen, Jlen, wrk, Amin, Amax,             &
      &                         LBi, UBi, LBj, UBj,                      &
      &                         Imin, Imax, Jmin, Jmax,                  &
-# ifdef MASKING
+#  ifdef MASKING
      &                         GRID(ng) % umask,                        &
-# endif
+#  endif
      &                         GRID(ng) % MyLon,                        &
      &                         GRID(ng) % xu,                           &
      &                         GRID(ng) % yu,                           &
@@ -1705,9 +1706,9 @@
      &                         Ilen, Jlen, wrk, Amin, Amax,             &
      &                         LBi, UBi, LBj, UBj,                      &
      &                         Imin, Imax, Jmin, Jmax,                  &
-# ifdef MASKING
+#  ifdef MASKING
      &                         GRID(ng) % vmask,                        &
-# endif
+#  endif
      &                         GRID(ng) % MyLon,                        &
      &                         GRID(ng) % lonv,                         &
      &                         GRID(ng) % latv,                         &
@@ -1718,9 +1719,9 @@
      &                         Ilen, Jlen, wrk, Amin, Amax,             &
      &                         LBi, UBi, LBj, UBj,                      &
      &                         Imin, Imax, Jmin, Jmax,                  &
-# ifdef MASKING
+#  ifdef MASKING
      &                         GRID(ng) % vmask,                        &
-# endif
+#  endif
      &                         GRID(ng) % MyLon,                        &
      &                         GRID(ng) % xv,                           &
      &                         GRID(ng) % yv,                           &
@@ -1733,9 +1734,9 @@
      &                         Ilen, Jlen, wrk, Amin, Amax,             &
      &                         LBi, UBi, LBj, UBj,                      &
      &                         Imin, Imax, Jmin, Jmax,                  &
-# ifdef MASKING
+#  ifdef MASKING
      &                         GRID(ng) % rmask,                        &
-# endif
+#  endif
      &                         GRID(ng) % MyLon,                        &
      &                         GRID(ng) % lonr,                         &
      &                         GRID(ng) % latr,                         &
@@ -1746,9 +1747,9 @@
      &                         Ilen, Jlen, wrk, Amin, Amax,             &
      &                         LBi, UBi, LBj, UBj,                      &
      &                         Imin, Imax, Jmin, Jmax,                  &
-# ifdef MASKING
+#  ifdef MASKING
      &                         GRID(ng) % rmask,                        &
-# endif
+#  endif
      &                         GRID(ng) % MyLon,                        &
      &                         GRID(ng) % xr,                           &
      &                         GRID(ng) % yr,                           &
@@ -1774,6 +1775,7 @@
       END IF
 !
       RETURN
-      END FUNCTION pio_fread2d
+      END FUNCTION pio_fread2d_xtr
+# endif
 #endif
-      END MODULE nf_fread2d_mod
+      END MODULE nf_fread2d_xtr_mod

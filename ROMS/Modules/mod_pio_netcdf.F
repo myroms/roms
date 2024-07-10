@@ -265,6 +265,92 @@
       TYPE (IO_desc_t), pointer :: ioDesc_dp_u2dfrc(:) ! (i,j,Nfrec)
       TYPE (IO_desc_t), pointer :: ioDesc_dp_v2dfrc(:) ! (i,j,Nfrec)
 # endif
+
+# ifdef GRID_EXTRACT
+!
+!  IO extraction descriptor structures for tile decomposition of single
+!  and double precision data. They are used for the mapping between
+!  computational and I/O processes. It describes how the data is
+!  distributed on the computer.
+!
+      TYPE (IO_desc_t), pointer :: ioDesX_sp_p2dvar(:) ! (i,j)
+      TYPE (IO_desc_t), pointer :: ioDesX_sp_r2dvar(:) ! (i,j)
+      TYPE (IO_desc_t), pointer :: ioDesX_sp_u2dvar(:) ! (i,j)
+      TYPE (IO_desc_t), pointer :: ioDesX_sp_v2dvar(:) ! (i,j)
+#  if defined SSH_TIDES || defined UV_TIDES
+      TYPE (IO_desc_t), pointer :: ioDesX_sp_rtides(:) ! (i,j,NTC)
+#  endif
+#  ifdef SOLVE3D
+#   ifdef SEDIMENT
+      TYPE (IO_desc_t), pointer :: ioDesX_sp_b3dvar(:) ! (i,j,Nbed)
+#   endif
+#   if defined DIAGNOSTICS_BIO && defined ECOSIM
+      TYPE (IO_desc_t), pointer :: ioDesX_sp_l3dvar(:) ! (i,j,Nbands)
+      TYPE (IO_desc_t), pointer :: ioDesX_sp_l4dvar(:) ! (i,j,N,Nbands)
+#   endif
+      TYPE (IO_desc_t), pointer :: ioDesX_sp_p3dvar(:) ! (i,j,N)
+      TYPE (IO_desc_t), pointer :: ioDesX_sp_r3dvar(:) ! (i,j,N)
+      TYPE (IO_desc_t), pointer :: ioDesX_sp_u3dvar(:) ! (i,j,N)
+      TYPE (IO_desc_t), pointer :: ioDesX_sp_v3dvar(:) ! (i,j,N)
+      TYPE (IO_desc_t), pointer :: ioDesX_sp_w3dvar(:) ! (i,j,0:N)
+#  endif
+#  ifdef ADJUST_BOUNDARY
+      TYPE (IO_desc_t), pointer :: ioDesX_sp_r2dobc(:) ! (ij,4,Nbrec)
+      TYPE (IO_desc_t), pointer :: ioDesX_sp_u2dobc(:) ! (ij,4,Nbrec)
+      TYPE (IO_desc_t), pointer :: ioDesX_sp_v2dobc(:) ! (ij,4,Nbrec)
+#   ifdef SOLVE3D
+      TYPE (IO_desc_t), pointer :: ioDesX_sp_r3dobc(:) ! (ij,N,4,Nbrec)
+      TYPE (IO_desc_t), pointer :: ioDesX_sp_u3dobc(:) ! (ij,N,4,Nbrec)
+      TYPE (IO_desc_t), pointer :: ioDesX_sp_v3dobc(:) ! (ij,N,4,Nbrec)
+#   endif
+#  endif
+#  ifdef ADJUST_STFLUX
+      TYPE (IO_desc_t), pointer :: ioDesX_sp_r2dfrc(:) ! (i,j,Nfrec)
+#  endif
+#  ifdef ADJUST_WSTRESS
+      TYPE (IO_desc_t), pointer :: ioDesX_sp_u2dfrc(:) ! (i,j,Nfrec)
+      TYPE (IO_desc_t), pointer :: ioDesX_sp_v2dfrc(:) ! (i,j,Nfrec)
+#  endif
+!
+      TYPE (IO_desc_t), pointer :: ioDesX_dp_p2dvar(:) ! (i,j)
+      TYPE (IO_desc_t), pointer :: ioDesX_dp_r2dvar(:) ! (i,j)
+      TYPE (IO_desc_t), pointer :: ioDesX_dp_u2dvar(:) ! (i,j)
+      TYPE (IO_desc_t), pointer :: ioDesX_dp_v2dvar(:) ! (i,j)
+#  if defined SSH_TIDES || defined UV_TIDES
+      TYPE (IO_desc_t), pointer :: ioDesX_dp_rtides(:) ! (i,j,NTC)
+#  endif
+#  ifdef SOLVE3D
+#   ifdef SEDIMENT
+      TYPE (IO_desc_t), pointer :: ioDesX_dp_b3dvar(:) ! (i,j,Nbed)
+#   endif
+#   if defined DIAGNOSTICS_BIO && defined ECOSIM
+      TYPE (IO_desc_t), pointer :: ioDesX_dp_l3dvar(:) ! (i,j,Nbands)
+      TYPE (IO_desc_t), pointer :: ioDesX_dp_l4dvar(:) ! (i,j,N,Nbands)
+#   endif
+      TYPE (IO_desc_t), pointer :: ioDesX_dp_p3dvar(:) ! (i,j,N)
+      TYPE (IO_desc_t), pointer :: ioDesX_dp_r3dvar(:) ! (i,j,N)
+      TYPE (IO_desc_t), pointer :: ioDesX_dp_u3dvar(:) ! (i,j,N)
+      TYPE (IO_desc_t), pointer :: ioDesX_dp_v3dvar(:) ! (i,j,N)
+      TYPE (IO_desc_t), pointer :: ioDesX_dp_w3dvar(:) ! (i,j,0:N)
+#  endif
+#  ifdef ADJUST_BOUNDARY
+      TYPE (IO_desc_t), pointer :: ioDesX_dp_r2dobc(:) ! (ij,4,Nbrec)
+      TYPE (IO_desc_t), pointer :: ioDesX_dp_u2dobc(:) ! (ij,4,Nbrec)
+      TYPE (IO_desc_t), pointer :: ioDesX_dp_v2dobc(:) ! (ij,4,Nbrec)
+#   ifdef SOLVE3D
+      TYPE (IO_desc_t), pointer :: ioDesX_dp_r3dobc(:) ! (ij,N,4,Nbrec)
+      TYPE (IO_desc_t), pointer :: ioDesX_dp_u3dobc(:) ! (ij,N,4,Nbrec)
+      TYPE (IO_desc_t), pointer :: ioDesX_dp_v3dobc(:) ! (ij,N,4,Nbrec)
+#   endif
+#  endif
+#  ifdef ADJUST_STFLUX
+      TYPE (IO_desc_t), pointer :: ioDesX_dp_r2dfrc(:) ! (i,j,Nfrec)
+#  endif
+#  ifdef ADJUST_WSTRESS
+      TYPE (IO_desc_t), pointer :: ioDesX_dp_u2dfrc(:) ! (i,j,Nfrec)
+      TYPE (IO_desc_t), pointer :: ioDesX_dp_v2dfrc(:) ! (i,j,Nfrec)
+#  endif
+# endif
 !
 !  IO descriptor structures for tile decomposition of single and double
 !  precision special perfect restart data. They are used for the mapping
