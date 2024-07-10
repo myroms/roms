@@ -13,8 +13,6 @@
 !  This routine computes the bulk parameterization of surface wind     !
 !  stress and surface net heat fluxes.                                 !
 !                                                                      !
-!  References:                                                         !
-!                                                                      !
 !    Fairall, C.W., E.F. Bradley, D.P. Rogers, J.B. Edson and G.S.     !
 !      Young, 1996:  Bulk parameterization of air-sea fluxes for       !
 !      tropical ocean-global atmosphere Coupled-Ocean Atmosphere       !
@@ -25,15 +23,36 @@
 !      effects on sea surface temperature, JGR, 101, 1295-1308.        !
 !                                                                      !
 !    Liu, W.T., K.B. Katsaros, and J.A. Businger, 1979:  Bulk          !
-!        parameterization of the air-sea exchange of heat and          !
-!        water vapor including the molecular constraints at            !
-!        the interface, J. Atmos. Sci, 36, 1722-1735.                  !
+!      parameterization of the air-sea exchange of heat and            !
+!      water vapor including the molecular constraints at              !
+!      the interface, J. Atmos. Sci, 36, 1722-1735.                    !
+!                                                                      !
+!    Taylor, P. K., and M. A. Yelland, 2001: The dependence of sea     !
+!      surface roughness on the height and steepness of the waves.     !
+!      J. Phys. Oceanogr., 31, 572-590.                                !
+!                                                                      !
+!    Oost, W. A., G. J. Komen, C. M. J. Jacobs, and C. van Oort, 2002: !
+!      New evidence for a relation between wind stress and wave age    !
+!      from measurements during ASGAMAGE. Bound.-Layer Meteor., 103,   !
+!      409-438.                                                        !
+!                                                                      !
+!    Fairall, C.W., Bradley, E.F., Hare, J.E., Grachev, A.A. and       !
+!      Edson, J.B., 2003. Bulk parameterization of air–sea fluxes:     !
+!      Updates and verification for the COARE algorithm. Journal of    !
+!      Climate, 16, 571-591.                                           !
+!                                                                      !
+!    Drennan, W. M., Graber, H. C., Hauser, D., & Quentin, C., 2003:   !
+!      On the wave age dependence of wind stress over pure wind seas.  !
+!      J. Geophys. Res: Oceans, 108(C3).                               !
+!                                                                      !                
+!    Edson, J.B., Jampana, V., Weller, R.A., Bigorre, S.P.,            !
+!      Plueddemann, A.J., Fairall, C.W., Miller, S.D., Mahrt, L.,      !
+!      Vickers, D. and Hersbach, H., 2013. On the exchange of          !
+!      momentum over the open ocean. Journal Physical Oceanography,    !
+!      43, 1589-1610.                                                  !
 !                                                                      !
 !  Adapted from COARE code written originally by David Rutgers and     !
 !  Frank Bradley.                                                      !
-!                                                                      !
-!  EMINUSP option for equivalent salt fluxes added by Paul Goodman     !
-!  (10/2004).                                                          !
 !                                                                      !
 # if defined ICE_MODEL && defined ICE_BULK_FLUXES
 !  In this modified algorithm, the 'rain' variable is associated with  !
@@ -51,21 +70,14 @@
 !  to the ice surface when the precipitation falls as a liquid (SMD).  !
 !                                                                      !
 # endif
+!                                                                      !
+!  Modified by Paul Goodman add EMINUSP equivalent salt flux (10/2004) !
 !  Modified by Kate Hedstrom for COARE version 3.0 (03/2005).          !
 !  Modified by Jim Edson to correct specific humidities.               !
-!                                                                      !
-!  References:                                                         !
-!                                                                      !
-!     Fairall et al., 2003: J. Climate, 16, 571-591.                   !
-!                                                                      !
-!     Taylor, P. K., and M. A. Yelland, 2001: The dependence of sea    !
-!     surface roughness on the height and steepness of the waves.      !
-!     J. Phys. Oceanogr., 31, 572-590.                                 !
-!                                                                      !
-!     Oost, W. A., G. J. Komen, C. M. J. Jacobs, and C. van Oort, 2002:!
-!     New evidence for a relation between wind stress and wave age     !
-!     from measurements during ASGAMAGE. Bound.-Layer Meteor., 103,    !
-!     409-438.                                                         !
+!  Modified by John Wilkin to introduce WIND_MINUS_CURRENT (02/2018)   !
+!  Modified by Fernando Pareja-Roman and John Wilkin to introduce      !
+!      COARE 3.5 and correct the partition of vector stress (02/2024)  !     
+!      To recover older COAREv3.0 #define COARE_30                     !
 !                                                                      !
 !=======================================================================
 !
@@ -561,7 +573,7 @@
 !  (At input the flux data is converted to Celsius m/s. Here, we need to
 !   convert back to W/m2 using 'Hscale').
 !
-          Wmag(i)=SQRT(Uair(i,j)*Uair(i,j)+Vair(i,j)*Vair(i,j))+eps
+          Wmag(i)=SQRT(Uair(i,j)*Uair(i,j)+Vair(i,j)*Vair(i,j))
           PairM=Pair(i,j)
           TairC(i)=Tair(i,j)                                 ! Celsius
           TairK(i)=TairC(i)+273.16_r8                        ! Kelvin
@@ -763,10 +775,11 @@
           Qstar(i)=-(delQ(i)-delQc(i))*vonKar/                          &
      &             (LOG(blk_ZQ(ng)/ZoT10(i))-                           &
      &              bulk_psit(blk_ZQ(ng)/L10(i),pi))
+
+# if defined COARE_30
 !
-!  Modify Charnock for high wind speeds. The 0.125 factor below is for
-!  1.0/(18.0-10.0).
-!
+!  Momentum roughness length based on COARE 3.0 (Fairall et al 2003, JPO)
+!  
           IF (delW(i).gt.18.0_r8) THEN
             charn(i)=0.018_r8
           ELSE IF ((10.0_r8.lt.delW(i)).and.(delW(i).le.18.0_r8)) THEN
@@ -775,6 +788,15 @@
           ELSE
             charn(i)=0.011_r8
           END IF
+
+# else  
+!
+! Momentum roughness length based on COARE 3.5 (Edson et al 2013, JPO)
+!
+          charn(i)=MIN(0.028_r8,-0.005_r8+0.0017_r8*delW(i))
+
+# endif
+
 # if defined COARE_OOST || defined COARE_TAYLOR_YELLAND ||   \
      defined DRENNAN
 #  if defined DEEPWATER_WAVES
@@ -816,10 +838,22 @@
 # endif
             Rr(i)=ZoW(i)*Wstar(i)/VisAir(i)
 !
+#if defined COARE_30
+!
+! Moisture and thermal roughness lengths, COARE 3.0      
+!           
+            ZoQ(i)=MIN(1.15e-4_r8,5.5e-5_r8/Rr(i)**0.6_r8)
+#else 
+!
+! In COARE 3.5, moisture and thermal roughness lengths are adjusted 
+! to reflect COARE 3.0 fluxes (J. Edson, pers. comm, 11/2023)
+!
+            ZoQ(i)=MIN(1.6e-4_r8,5.8e-5_r8/(Rr(i)**0.72_r8))
+# endif            
+            ZoT(i)=ZoQ(i)
+!
 !  Compute Monin-Obukhov stability parameter, Z/L.
 !
-            ZoQ(i)=MIN(1.15e-4_r8,5.5e-5_r8/Rr(i)**0.6_r8)
-            ZoT(i)=ZoQ(i)
             ZoL(i)=vonKar*g*blk_ZW(ng)*                                 &
      &             (Tstar(i)*(1.0_r8+0.61_r8*Q(i))+                     &
      &                        0.61_r8*TairK(i)*Qstar(i))/               &
@@ -916,7 +950,7 @@
 !  sensible heat (Ch), and latent heat (Ce).
 !
           Wspeed=SQRT(Wmag(i)*Wmag(i)+Wgus(i)*Wgus(i))
-          Cd=Wstar(i)*Wstar(i)/(Wspeed*Wspeed+eps)
+!         Cd=Wstar(i)*Wstar(i)/(Wspeed*Wspeed+eps) ! used prior to 02/2024   
 # if defined ICE_MODEL && defined ICE_BULK_FLUXES && defined ICE_THERMO
           Ch=Wstar(i)*Tstar(i)/(-Wspeed*delT(i)+0.0098_r8*blk_ZT(ng))
           Ce=Wstar(i)*Qstar(i)/(-Wspeed*delQ(i)+eps)
@@ -976,21 +1010,30 @@
           LHeat(i,j)=LHeat(i,j)*rmask_wet(i,j)
 # endif
 !
-!  Compute momentum flux (N/m2) due to rainfall (kg/m2/s).
+!  Horizontal momentum flux (N/m2) due to rain (kg/m2/s) impact 
+!  traveling at 85% of air velocity
 !
           Taur=0.85_r8*ABS(rain(i,j))*Wmag(i)
 !
-!  Compute wind stress components (N/m2), Tau.
+!  Sum of stresses (N/m2) expressed as friction velocities.  
+!  Normalization by Wmag (m/s) so that stress components (Taux,
+!  Tauy in N/m2) are cff times the respective wind components
+!  (Uair,Vair in m/s). 
+!    
+          cff=rhoAir(i)*(Wstar(i)*Wstar(i)+Taur/rhoAir(i))/(Wmag(i)+eps)
 !
-          cff=rhoAir(i)*Cd*Wspeed
-          Taux(i,j)=(cff*Uair(i,j)+Taur*SIGN(1.0_r8,Uair(i,j)))
+!  In prior versions incorrect normalization included gustiness in
+!  Wspeed causing the vector stress magnitude to be too be low by ~3%
+!  (Corrected J. Wilkin and F. Parela-Roman 02/2024)
+!
+          Taux(i,j)=cff*Uair(i,j)
 # ifdef MASKING
           Taux(i,j)=Taux(i,j)*rmask(i,j)
 # endif
 # ifdef WET_DRY
           Taux(i,j)=Taux(i,j)*rmask_wet(i,j)
 # endif
-          Tauy(i,j)=(cff*Vair(i,j)+Taur*SIGN(1.0_r8,Vair(i,j)))
+          Tauy(i,j)=cff*Vair(i,j)
 # ifdef MASKING
           Tauy(i,j)=Tauy(i,j)*rmask(i,j)
 # endif
