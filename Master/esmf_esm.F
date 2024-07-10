@@ -115,7 +115,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering ESM_SetServices',         &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
       rc=ESMF_SUCCESS
 !
@@ -205,7 +205,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '<== Exiting  ESM_SetServices',         &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
 !
       END SUBROUTINE ESM_SetServices
@@ -244,7 +244,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering ESM_SetModelServices',    &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
       rc=ESMF_SUCCESS
 !
@@ -432,7 +432,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '<== Exiting  ESM_SetModelServices',    &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
 !
       RETURN
@@ -477,7 +477,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering ESM_SetRunSequence',      &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
       rc=ESMF_SUCCESS
 !
@@ -596,7 +596,7 @@
      &                         file=MyFile)) THEN
           RETURN
         END IF
-        CALL my_flush (6)                   ! flush standard output unit
+        FLUSH (6)                   ! flush standard output unit
       END IF
 !
 !  Destroy free format object. All internal memory is deallocated.
@@ -613,7 +613,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '<== Exiting  ESM_SetRunSequence',      &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
 !
  10   FORMAT (/,' ESM_SetRunSequence - Error while ingesting',          &

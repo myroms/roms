@@ -494,7 +494,7 @@
      &                          max_Cu, max_Cv, max_C,                  &
      &                          maxspeed(ng)
 #endif
-            CALL my_flush (stdout)
+            FLUSH (stdout)
 #ifdef NESTING
  30         FORMAT (i10,1x,a,4(1pe14.6),2x,i2.2)
 #else

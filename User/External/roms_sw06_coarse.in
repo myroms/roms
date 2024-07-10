@@ -269,6 +269,8 @@ ad_VolCons(north) ==  F                            ! northern boundary
      LDEFOUT == T
         NHIS == 30
      NDEFHIS == 0
+        NXTR == 30
+     NDEFXTR == 0
         NQCK == 0
      NDEFQCK == 0
       NTSAVG == 1
@@ -1049,6 +1051,25 @@ PIO_I2C_Preq = 65                 ! Maximum pending I2C requests
   NC_DEFLATE =  1                 ! if non-zero, turn on deflate filter
    NC_DLEVEL =  1                 ! deflate level [0-9]
 
+! Input grid extraction flag and input extraction grid geometry
+! NetCDF filename. They are used to extract a history solution at
+! the desired geometry by decimation or horizontal interpolation:
+!
+!   ExtractFlag = 0                 no extraction
+!   ExtractFlag = 1                 horizontal interpolation
+!   ExtractFlag > 1                 coarsening by decimation
+!
+! If decimation, ExtracTFlag is the sampling factor. For now, use
+! ExtractFlag=2 so data is written at every other point. Notice
+! that it is required to satisfy the following criteria:
+!
+!   MOD(Lm+1, ExtractFlag) = 0
+!   MOD(Mm+1, ExtractFlag) = 0
+
+ ExtractFlag == 0
+
+     GRXNAME == sw06c_extract_grd.nc
+
 ! Input NetCDF file names, [1:Ngrids].
 
      GRDNAME == sw06c_grd.nc
@@ -1148,6 +1169,7 @@ PIO_I2C_Preq = 65                 ! Maximum pending I2C requests
      GSTNAME == sw06c_gst.nc
      RSTNAME == sw06c_rst.nc
      HISNAME == sw06c_his.nc
+     XTRNAME == sw06c_xtr.nc
      QCKNAME == sw06c_qck.nc
      TLMNAME == sw06c_tlm.nc
      TLFNAME == sw06c_tlf.nc
@@ -1650,6 +1672,16 @@ PIO_I2C_Preq = 65                 ! Maximum pending I2C requests
 !                file get too large; it creates a new file every NDEFHIS
 !                timesteps.
 !
+! NXTR         Number of timesteps between writing fields into the EXTRACT
+!                 file, if GRID_EXTRACT is activated. Set NXTR=0 to suppress
+!                 writing of EXTRACT file.
+!
+! NDEFXTR      Number of timesteps between the creation of new EXTRACT file.
+!                If NDEFXTR=0, the model will only process one EXTRACT file.
+!                This feature is useful for extended simulations when EXTRACT
+!                file get too large; it creates a new file every EXTRACT
+!                timesteps.
+!
 ! NQCK         Number of timesteps between writing fields into QUICKSAVE file.
 !                Set NQCK=0 to suppress writing of QUICKSAVE file.
 !
@@ -1976,7 +2008,7 @@ PIO_I2C_Preq = 65                 ! Maximum pending I2C requests
 ! energy flux in the GLS.
 !------------------------------------------------------------------------------
 !
-! CHARNOK_ALPHA    Charnok surface roughness,
+! CHARNOK_ALPHA    Charnock surface roughness,
 !                    Zos:   (charnok_alpha * u_star**2) / g
 !
 ! ZOS_HSIG_ALPHA   Roughness from wave amplitude,
@@ -2624,6 +2656,7 @@ PIO_I2C_Preq = 65                 ! Maximum pending I2C requests
 ! Hout(idv3dN)   Write out 3D Northward velocity component at RHO-points.
 ! Hout(idWvel)   Write out 3D W-velocity component.
 ! Hout(idOvel)   Write out 3D omega vertical velocity.
+! Hout(idOvil)   Write out 3D omega implicit vertical velocity.
 ! Hout(idUbar)   Write out 2D U-velocity component.
 ! Hout(idVbar)   Write out 2D V-velocity component.
 ! Hout(idu2dE)   Write out 2D Eastward  velocity component at RHO-points.
@@ -3231,6 +3264,37 @@ PIO_I2C_Preq = 65                 ! Maximum pending I2C requests
 !                between 0 and 9.
 !
 !------------------------------------------------------------------------------
+! If GRID_EXTRACT is activated, set extraction parameters.
+!------------------------------------------------------------------------------
+!
+!  ExtracFlag  Flag to extract and write history solution into the EXTRACT
+!                file at the desired grid geometry by decimation or horizontal
+!                interpolation:
+!
+!                ExtractFlag = 0         No extraction
+!                ExtractFlag = 1         Extract via horizontal interpolation
+!                ExtractFlag > 2         Extract via coarsening by decimation
+!
+!              If decimation, ExtracTFlag is the sampling factor. For now, you
+!              must use ExtractFlag=2 so data is written at every other point.
+!              Notice that it is required to satisfy the following criteria:
+!
+!                MOD(Lm+1, ExtractFlag) = 0
+!                MOD(Mm+1, ExtractFlag) = 0
+!
+!              Grid decimation is intended for the split 4D-Var algorithms to
+!              facilitate running the inner loops at coarser resolution to
+!              accelerate the computations. The advantage of ExtractFlag=2 is
+!              that it is very trivial to decimate the staggered U- and
+!              V-variables with a simple average. Also, we need to consider
+!              special rules in the land/sea masking that limit its use to
+!              other ExtractFlag values.
+!
+!  GRXNAME     Input extract grid geometry NetCDF filename. It must be created
+!                with tools similar to the ROMS application grid and contained
+!                inside the parent grid (GRDNAME).
+!
+!------------------------------------------------------------------------------
 ! Input/output NetCDF filenames (string with a maximum of 256 characters).
 !------------------------------------------------------------------------------
 !
@@ -3250,7 +3314,6 @@ PIO_I2C_Preq = 65                 ! Maximum pending I2C requests
 !  FWDNAME     Input forward solution fields filename.
 !
 !  ADSNAME     Input adjoint sensitivity functional filename.
-!
 !
 ! Input adjoint forcing filenames for computing observations impacts
 ! during the analysis-forecast cycle when RBL4DVAR_FCT_SENSITIVITY is
@@ -3414,6 +3477,7 @@ PIO_I2C_Preq = 65                 ! Maximum pending I2C requests
 ! GSTNAME      Output GST analysis re-start filename.
 ! RSTNAME      Output re-start filename.
 ! HISNAME      Output history filename.
+! XTRNAME      Output extrated solution filename.
 ! QCKNAME      Output quicksave filename.
 ! TLFNAME      Output impulse forcing for tangent linear (TLM and RPM) models.
 ! TLMNAME      Output tangent linear filename.

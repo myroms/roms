@@ -1599,7 +1599,7 @@
       END IF
 # endif
 !
-!  Write out surface active traces fluxes.
+!  Write out surface active tracers fluxes.
 !
       DO itrc=1,NAT
         IF (Hout(idTsur(itrc),ng)) THEN
@@ -3094,7 +3094,7 @@
         CALL scale_omega (ng, tile, LBi, UBi, LBj, UBj, 0, N(ng),       &
      &                    GRID(ng) % pm,                                &
      &                    GRID(ng) % pn,                                &
-     &                    OCEAN(ng) % Wi,                                &
+     &                    OCEAN(ng) % Wi,                               &
      &                    Wr3d)
 !
         IF (HIS(ng)%pioVar(idOvil)%dkind.eq.PIO_double) THEN
@@ -3757,7 +3757,7 @@
       END IF
 #  endif
 !
-!  Write out surface active traces fluxes.
+!  Write out surface active tracers fluxes.
 !
       DO itrc=1,NAT
         IF (Hout(idTsur(itrc),ng)) THEN
