@@ -1438,6 +1438,7 @@
 !
       integer :: Fcount
       integer :: ng, thread, tile
+      integer :: lstr, ifile
 
       integer, dimension(Ngrids) :: IniRec, Tindex
 
