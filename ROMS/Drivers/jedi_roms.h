@@ -1604,22 +1604,50 @@
         END DO
 # endif
 
-# ifdef ANA_PSOURCE
+# ifdef FORWARD_FLUXES
 !
 !-----------------------------------------------------------------------
-!  Set point Sources/Sinks position, direction, special flag, and mass
-!  transport nondimensional shape profile with analytcal expressions.
-!  Point sources are at U- and V-points. We need to get their positions
-!  to process internal Land/Sea masking arrays during initialization.
+!  Set the BLK structure to contain the nonlinear model surface fluxes
+!  needed by the tangent linear and adjoint models. Also, set switches
+!  to process that structure in routine "check_multifile". Notice that
+!  it is possible to split the solution into multiple NetCDF files to
+!  reduce their size.
 !-----------------------------------------------------------------------
 !
-        DO ng=1,Ngrids
-          IF (LuvSrc(ng).or.LwSrc(ng).or.ANY(LtracerSrc(:,ng))) THEN
-            DO tile=first_tile(ng),last_tile(ng),+1
-              CALL ana_psource (ng, tile, iADM)
-            END DO
-          END IF
-        END DO
+!  Set the nonlinear model quicksave-history file as the basic state for
+!  the surface fluxes computed in "bulk_flux", which may be available at
+!  more frequent intervals while avoiding large files. Since the 4D-Var
+!  increment phase is calculated by a different executable and needs to
+!  know some of the QCK structure information.
+!
+      DO ng=1,Ngrids
+        WRITE (QCK(ng)%name,"(a,'.nc')") TRIM(QCK(ng)%head)
+        lstr=LEN_TRIM(QCK(ng)%name)
+        QCK(ng)%base=QCK(ng)%name(1:lstr-3)
+        IF (QCK(ng)%Nfiles.gt.1) THEN
+          DO ifile=1,QCK(ng)%Nfiles
+            WRITE (suffix,"('_',i4.4,'.nc')") ifile
+            QCK(ng)%files(ifile)=TRIM(QCK(ng)%base)//TRIM(suffix)
+          END DO
+          QCK(ng)%name=TRIM(QCK(ng)%files(1))
+        ELSE
+          QCK(ng)%files(1)=TRIM(QCK(ng)%name)
+        END IF
+      END DO
+!
+!  The switch LreadFRC is deactivated because all the atmospheric
+!  forcing, including shortwave radiation, is read from the NLM
+!  surface fluxes or is assigned during ESM coupling.  Such fluxes
+!  are available from the QCK structure. There is no need for reading
+!  and processing from the FRC structure input forcing-files.
+!
+      CALL edit_multifile ('QCK2BLK')
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+      DO ng=1,Ngrids
+        LreadBLK(ng)=.TRUE.
+        LreadFRC(ng)=.FALSE.
+        LreadQCK(ng)=.FALSE.
+      END DO
 # endif
 !
 !-----------------------------------------------------------------------
@@ -1715,10 +1743,10 @@
         DO ng=1,Ngrids
 !!        ntstart(ng)=ntstart(ng)-1
           iic(ng)=ntstart(ng)
-#ifdef JEDI
+# ifdef JEDI
           jic(ng)=ntstart(ng)+1
           time4jedi(ng)=time(ng)+dt(ng)
-#endif
+# endif
           CALL time_string (time(ng), time_code(ng))
           LdefADJ(ng)=.TRUE.
           LwrtADJ(ng)=.TRUE.
