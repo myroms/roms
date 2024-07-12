@@ -1447,6 +1447,8 @@
       real(dp) :: my_dstart
 # endif
 !
+      character (len=10) :: suffix
+
       character (len=*), parameter :: MyFile =                          &
      &  __FILE__//", adm_initial"
 
