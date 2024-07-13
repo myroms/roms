@@ -216,7 +216,7 @@
 !  Report statistics.
 !
 #if defined UV_LOGDRAG
-      CALL stats_2dfld (ng, tile, iNLM, r2dvar, Stats,                  &
+      CALL stats_2dfld (ng, tile, iNLM, r2dvar, Stats, 0,               &
      &                  LBi, UBi, LBj, UBj, ZoBot)
       IF (DOMAIN(ng)%NorthEast_Corner(tile)) THEN
         WRITE (stdout,10) 'time invariant, bottom roughness '//         &
@@ -224,14 +224,14 @@
      &                    ng, Stats%min, Stats%max
       END IF
 #elif defined UV_LDRAG
-      CALL stats_2dfld (ng, tile, iNLM, r2dvar, Stats,                  &
+      CALL stats_2dfld (ng, tile, iNLM, r2dvar, Stats, 0,               &
      &                  LBi, UBi, LBj, UBj, rdrag)
       IF (DOMAIN(ng)%NorthEast_Corner(tile)) THEN
         WRITE (stdout,10) 'linear bottom drag coefficient: rdrag',      &
      &                    ng, Stats%min, Stats%max
       END IF
 #elif defined UV_QDRAG
-      CALL stats_2dfld (ng, tile, iNLM, r2dvar, Stats,                  &
+      CALL stats_2dfld (ng, tile, iNLM, r2dvar, Stats, 0,               &
      &                  LBi, UBi, LBj, UBj, rdrag2)
       IF (DOMAIN(ng)%NorthEast_Corner(tile)) THEN
         WRITE (stdout,10) 'quadratic bottom drag coefficient: rdrag2',  &
