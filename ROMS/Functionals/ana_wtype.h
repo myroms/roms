@@ -154,7 +154,7 @@
 !
 !  Report statistics.
 !
-      CALL stats_2dfld (ng, tile, iNLM, r2dvar, Stats,                  &
+      CALL stats_2dfld (ng, tile, iNLM, r2dvar, Stats, 0,               &
      &                  LBi, UBi, LBj, UBj, Jwtype)
       IF (DOMAIN(ng)%NorthEast_Corner(tile)) THEN
         WRITE (stdout,10) 'Jerlov water type: wtype_grid',              &

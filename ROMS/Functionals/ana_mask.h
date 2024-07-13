@@ -248,25 +248,25 @@
 !  Report statitics.
 !-----------------------------------------------------------------------
 !
-      CALL stats_2dfld (ng, tile, iNLM, p2dvar, Stats(1),               &
+      CALL stats_2dfld (ng, tile, iNLM, p2dvar, Stats(1), 0,            &
      &                  LBi, UBi, LBj, UBj, pmask)
       IF (DOMAIN(ng)%NorthEast_Corner(tile)) THEN
         WRITE (stdout,10) 'mask on PSI-points: mask_psi',               &
      &                    ng, Stats(1)%min, Stats(1)%max
       END IF
-      CALL stats_2dfld (ng, tile, iNLM, r2dvar, Stats(2),               &
+      CALL stats_2dfld (ng, tile, iNLM, r2dvar, Stats(2), 0,            &
      &                  LBi, UBi, LBj, UBj, rmask)
       IF (DOMAIN(ng)%NorthEast_Corner(tile)) THEN
         WRITE (stdout,10) 'mask on RHO-points: mask_rho',               &
      &                    ng, Stats(2)%min, Stats(2)%max
       END IF
-      CALL stats_2dfld (ng, tile, iNLM, u2dvar, Stats(3),               &
+      CALL stats_2dfld (ng, tile, iNLM, u2dvar, Stats(3), 0,            &
      &                  LBi, UBi, LBj, UBj, umask)
       IF (DOMAIN(ng)%NorthEast_Corner(tile)) THEN
         WRITE (stdout,10) 'mask on U-points: mask_u',                   &
      &                    ng, Stats(3)%min, Stats(3)%max
       END IF
-      CALL stats_2dfld (ng, tile, iNLM, v2dvar, Stats(4),               &
+      CALL stats_2dfld (ng, tile, iNLM, v2dvar, Stats(4), 0,            &
      &                  LBi, UBi, LBj, UBj, vmask)
       IF (DOMAIN(ng)%NorthEast_Corner(tile)) THEN
         WRITE (stdout,10) 'mask on V-points: mask_v',                   &
