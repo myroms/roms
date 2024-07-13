@@ -102,6 +102,7 @@
       IF (first) THEN
         first=.FALSE.
         DO i=1,SIZE(Stats,1)
+          Stats(i) % checksum=0_i8b
           Stats(i) % count=0.0_r8
           Stats(i) % min=Large
           Stats(i) % max=-Large
@@ -397,7 +398,7 @@
 !
       DO itrc=1,NBT
         i=idbio(itrc)
-        CALL stats_3dfld (ng, tile, iNLM, u3dvar, Stats(itrc),          &
+        CALL stats_3dfld (ng, tile, iNLM, r3dvar, Stats(itrc), 0,       &
      &                    LBi, UBi, LBj, UBj, 1, N(ng), t(:,:,:,1,i))
         IF (DOMAIN(ng)%NorthEast_Corner(tile)) THEN
           WRITE (stdout,10) TRIM(Vname(2,idTvar(i)))//': '//            &
