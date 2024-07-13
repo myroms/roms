@@ -328,14 +328,14 @@
 !
 !  Report statistics.
 !
-      CALL stats_2dfld (ng, tile, iNLM, u2dvar, Stats(1),               &
+      CALL stats_2dfld (ng, tile, iNLM, u2dvar, Stats(1), 0,            &
      &                  LBi, UBi, LBj, UBj, ubar(:,:,1))
       IF (DOMAIN(ng)%NorthEast_Corner(tile)) THEN
         WRITE (stdout,10) TRIM(Vname(2,idUbar))//': '//                 &
      &                    TRIM(Vname(1,idUbar)),                        &
      &                     ng, Stats(1)%min, Stats(1)%max
       END IF
-      CALL stats_2dfld (ng, tile, iNLM, v2dvar, Stats(2),               &
+      CALL stats_2dfld (ng, tile, iNLM, v2dvar, Stats(2), 0,            &
      &                  LBi, UBi, LBj, UBj, vbar(:,:,1))
       IF (DOMAIN(ng)%NorthEast_Corner(tile)) THEN
         WRITE (stdout,10) TRIM(Vname(2,idVbar))//': '//                 &
@@ -428,7 +428,7 @@
 !
 !  Report statistics.
 !
-      CALL stats_2dfld (ng, tile, iNLM, r2dvar, Stats(3),               &
+      CALL stats_2dfld (ng, tile, iNLM, r2dvar, Stats(3), 0,            &
      &                  LBi, UBi, LBj, UBj, zeta(:,:,1))
       IF (DOMAIN(ng)%NorthEast_Corner(tile)) THEN
         WRITE (stdout,10) TRIM(Vname(2,idFsur))//': '//                 &
@@ -521,14 +521,14 @@
 !
 !  Report statistics.
 !
-      CALL stats_3dfld (ng, tile, iNLM, u3dvar, Stats(4),               &
+      CALL stats_3dfld (ng, tile, iNLM, u3dvar, Stats(4), 0,            &
      &                  LBi, UBi, LBj, UBj, 1, N(ng), u(:,:,:,1))
       IF (DOMAIN(ng)%NorthEast_Corner(tile)) THEN
         WRITE (stdout,10) TRIM(Vname(2,idUvel))//': '//                 &
      &                    TRIM(Vname(1,idUvel)),                        &
      &                    ng, Stats(4)%min, Stats(4)%max
       END IF
-      CALL stats_3dfld (ng, tile, iNLM, v3dvar, Stats(5),               &
+      CALL stats_3dfld (ng, tile, iNLM, v3dvar, Stats(5), 0,            &
      &                  LBi, UBi, LBj, UBj, 1, N(ng), v(:,:,:,1))
       IF (DOMAIN(ng)%NorthEast_Corner(tile)) THEN
         WRITE (stdout,10) TRIM(Vname(2,idVvel))//': '//                 &
@@ -874,7 +874,7 @@
 !  Report statistics.
 !
       DO itrc=1,NAT
-        CALL stats_3dfld (ng, tile, iNLM, u3dvar, Stats(itrc+5),        &
+        CALL stats_3dfld (ng, tile, iNLM, r3dvar, Stats(itrc+5), 0,     &
      &                    LBi, UBi, LBj, UBj, 1, N(ng), t(:,:,:,1,itrc))
         IF (DOMAIN(ng)%NorthEast_Corner(tile)) THEN
           WRITE (stdout,10) TRIM(Vname(2,idTvar(itrc)))//': '//         &
