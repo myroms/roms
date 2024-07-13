@@ -138,10 +138,8 @@
 !
 !  Local variable declarations.
 !
-# ifdef MASKING
       logical :: LandFill
 !
-# endif
       integer :: Extract_Flag
       integer :: i, ic, j, jc, k, kc, l, lc, Npts
       integer :: Imin, Imax, Jmin, Jmax, Kmin, Kmax
@@ -210,16 +208,17 @@
       Jlen=Jmax-Jmin+1
       Klen=UBk-LBk+1
       Llen=UBt-LBt+1
-
-# ifdef MASKING
 !
 !  Set switch to replace land areas with fill value, spval.
 !
+# ifdef MASKING
       IF (PRESENT(SetFillVal)) THEN
         LandFill=SetFillVal
       ELSE
         LandFill=tindex.gt.0
       END IF
+# else
+      LandFill=.FALSE.
 # endif
 !
 !  If appropriate, set the field extraction flag to the provided grid
@@ -501,10 +500,8 @@
 !
 !  Local variable declarations.
 !
-# ifdef MASKING
       logical :: LandFill
 !
-# endif
       integer :: Extract_Flag
       integer :: i, fourth, Npts, tile
       integer :: status
@@ -531,15 +528,17 @@
 # else
       tile=-1
 # endif
-# ifdef MASKING
 !
 !  Set switch to replace land areas with fill value, spval.
 !
+# ifdef MASKING
       IF (PRESENT(SetFillVal)) THEN
         LandFill=SetFillVal
       ELSE
         LandFill=tindex.gt.0
       END IF
+# else
+      LandFill=.FALSE.
 # endif
 !
 !  If appropriate, set the field extraction flag to the provided grid
@@ -769,16 +768,17 @@
       ELSE
         Lminmax=.FALSE.
       END IF
-
-# ifdef MASKING
 !
 !  Set switch to replace land areas with fill value, spval.
 !
+# ifdef MASKING
       IF (PRESENT(SetFillVal)) THEN
         LandFill=SetFillVal
       ELSE
         LandFill=tindex.gt.0
       END IF
+# else
+      LandFill=.FALSE.
 # endif
 !
 !  If appropriate, set the field extraction flag to the provided grid
