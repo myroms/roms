@@ -2,7 +2,8 @@
 #if defined ADJOINT && defined BIOLOGY
 
 /*
-** svn $Is$
+** git $Id$
+** svn $Id$
 ************************************************************************
 **                                                                    **
 ** This routine computes the adjoint source and sink terms for the    **

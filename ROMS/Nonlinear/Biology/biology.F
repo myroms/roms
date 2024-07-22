@@ -1,7 +1,9 @@
 #include "cppdefs.h"
 #if defined NONLINEAR && defined BIOLOGY
-/*
-** svn $Is$
+/
+*
+** git $Id$
+** svn $Id$
 ************************************************************************
 **                                                                    **
 ** The current design allows the user to have a lot of latitude for   **

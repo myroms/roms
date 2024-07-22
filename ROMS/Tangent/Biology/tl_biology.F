@@ -2,7 +2,8 @@
 #if defined TANGENT && defined BIOLOGY
 
 /*
-** svn $Is$
+** git $Id$
+** svn $Id$
 ************************************************************************
 **                                                                    **
 ** This routine computes the tangent linear source and sink terms for **
