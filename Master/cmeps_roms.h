@@ -4,7 +4,6 @@
 #if defined MODEL_COUPLING && defined ESMF_LIB && defined CMEPS
 !
 !git $Id$
-!svn $Id: cmeps_roms.h 1218 2024-02-24 02:32:17Z arango $
 !>
 !! \brief   **ROMS** ESMF/NUOPC Cap file for **CMEPS**
 !!

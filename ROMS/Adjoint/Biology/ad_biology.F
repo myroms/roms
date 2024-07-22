@@ -3,7 +3,6 @@
 
 /*
 ** git $Id$
-** svn $Id$
 ************************************************************************
 **                                                                    **
 ** This routine computes the adjoint source and sink terms for the    **

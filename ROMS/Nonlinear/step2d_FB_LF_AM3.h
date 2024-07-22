@@ -3,7 +3,6 @@
       MODULE step2d_mod
 !
 !git $Id$
-!svn $Id: step2d_FB_LF_AM3.h 277 2023-02-23 19:59:35Z arango $
 !=======================================================================
 !                                                                      !
 !  Solves Nonlinear (NLM) shallow-water primitive equations predictor  !

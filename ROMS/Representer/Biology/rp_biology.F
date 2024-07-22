@@ -3,7 +3,6 @@
 
 /*
 ** git $Id$
-** svn $Id$
 ************************************************************************
 **                                                                    **
 ** This routine computes the representers tangent linear source and   **
