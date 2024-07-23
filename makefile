@@ -1,5 +1,4 @@
 # git $Id$
-# svn $Id: makefile 1211 2024-01-03 22:22:25Z arango $
 #::::::::::::::::::::::::::::::::::::::::::::::::::::: Hernan G. Arango :::
 # Copyright (c) 2002-2024 The ROMS/TOMS Group             Kate Hedstrom :::
 #   Licensed under a MIT/X style license                                :::

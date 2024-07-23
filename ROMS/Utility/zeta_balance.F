@@ -3,7 +3,6 @@
 
 #if defined BALANCE_OPERATOR  && defined ZETA_ELLIPTIC
 !git $Id$
-!svn $Id: zeta_balance.F 1210 2024-01-03 22:03:03Z arango $
 !=================================================== Andrew M. Moore ===
 !  Copyright (c) 2002-2024 The ROMS/TOMS Group      Hernan G. Arango   !
 !    Licensed under a MIT/X style license                              !
