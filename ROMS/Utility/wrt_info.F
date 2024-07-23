@@ -3269,8 +3269,8 @@
               ioerror=nf90_enotvar
             END IF
 #  endif
-          END IF
 # endif
+          END IF
 # ifdef UV_LDRAG
           IF ((ncid.ne.STA(ng)%ncid).and.                               &
      &        (ncid.ne.XTR(ng)%ncid)) THEN
