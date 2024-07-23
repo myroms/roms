@@ -2,7 +2,7 @@
 
       MODULE rp_step2d_mod
 !
-!svn $Id: rp_step2d_FB.h 285 2023-05-29 15:50:59Z arango $
+!git $Id$
 !=======================================================================
 !                                                                      !
 !  Solves finite applitude tangent linear model shallow-water          !

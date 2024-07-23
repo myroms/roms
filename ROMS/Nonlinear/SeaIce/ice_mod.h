@@ -1,7 +1,6 @@
       MODULE mod_ice
 !
 !git $Id$
-!svn $Id$
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2024 The ROMS/TOMS Group      Paul Budgell       !
 !    Licensed under a MIT/X style license           Katherine Hedstrom !
