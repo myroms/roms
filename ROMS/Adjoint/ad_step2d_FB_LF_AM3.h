@@ -3,7 +3,7 @@
 
       MODULE ad_step2d_mod
 !
-!svn $Id: ad_step2d_FB_LF_AM3.h 277 2023-02-23 19:59:35Z arango $
+!git $Id$
 !=======================================================================
 !                                                                      !
 !  It solves adjoint shallow-water primitive equations predictor       !

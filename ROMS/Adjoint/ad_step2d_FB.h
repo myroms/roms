@@ -2,7 +2,7 @@
 
       MODULE ad_step2d_mod
 !
-!svn $Id: ad_step2d_FB.h 285 2023-05-29 15:50:59Z arango $
+!git $Id$
 !=======================================================================
 !                                                                      !
 !  Solves adjoint model shallow-water primitive equations (barotropic  !
