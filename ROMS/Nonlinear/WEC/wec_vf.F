@@ -2,7 +2,7 @@
       MODULE wec_vf_mod
 #if defined SOLVE3D && defined WEC_VF
 !
-!svn $Id$
+!git $Id$
 !=======================================================================
 !  Copyright (c) 2002-2024 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license           Hernan G. Arango   !

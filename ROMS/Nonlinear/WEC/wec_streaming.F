@@ -6,7 +6,7 @@
 #if defined SOLVE3D          && \
    (defined BOTTOM_STREAMING || defined SURFACE_STREAMING)
 !
-!svn $Id$
+!git $Id$
 !=======================================================================
 !  Copyright (c) 2002-2024 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license           Hernan G. Arango   !

@@ -2,6 +2,7 @@
 
 # get first argument (full path name)
 $path = shift;
+$ENV{TZ} = 'UTC0';
 
 if (0 < length($path)) {
   # extract file name
@@ -33,17 +34,16 @@ if (0 < length($path)) {
 
   # Grab log info for this file from the remote origin
   # "--" is needed to separate branch specs from paths
-  $pid = open3(0,\*READ,\*ERROR,"git", "log", "-n", "1", "--format=%H%n", "origin/master", "--", "$path");
+  $pid = open3(0,\*READ,\*ERROR,"git", "log", "-n", "1", "--date=format-local:%Y-%m-%d %H:%M:%S UTC", "--format=%h %cd %an%n", "origin/develop", "--", "$path");
   waitpid( $pid, 0 );
 
   # read error pipe
   chomp($error = <ERROR>);
-
   # if there is no error message
   if (0 == length($error)) {
     # read the 2 output lines of svn log
     chomp($revision = <READ>); # 1st line is revision hash
-
+    $revision =~ s/UTC .* (\S+)$/UTC \l$1/;
     # main processing loop
     # read from stdin
     while (<STDIN>) {

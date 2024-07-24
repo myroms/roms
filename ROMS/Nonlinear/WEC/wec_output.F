@@ -3,7 +3,7 @@
 
 #if defined WEC || defined WEC_VF
 !
-!svn $Id$
+!git $Id$
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2024 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
