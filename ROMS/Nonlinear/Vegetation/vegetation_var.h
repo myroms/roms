@@ -1,7 +1,7 @@
 /*
-** svn $Id: vegetation_var.h 439 2015-06-10 12:00:00Z arango $
+** git $Id$
 *************************************************** Hernan G. Arango ***
-** Copyright (c) 2002-2019 The ROMS/TOMS Group                        **
+** Copyright (c) 2002-2024 The ROMS/TOMS Group                        **
 **   Licensed under a MIT/X style license                             **
 **   See License_ROMS.txt                                             **
 *************************************************** John C. Warner    **

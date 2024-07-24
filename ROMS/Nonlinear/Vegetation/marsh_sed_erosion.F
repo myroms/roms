@@ -5,9 +5,9 @@
 #if defined SEDIMENT  && defined MARSH_DYNAMICS \
         && defined MARSH_SED_EROSION  
 !
-!svn $Id: marsh_sed_erosion.F 429 2019-04-20 17:30:26Z arango $
+!git $Id$
 !======================================================================!
-!  Copyright (c) 2002-2019 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2024 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license           Hernan G. Arango   !
 !    See License_ROMS.txt                   Alexander F. Shchepetkin   !
 !==============================================Tarandeep S. Kalra======!

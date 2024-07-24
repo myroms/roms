@@ -4,7 +4,6 @@
 #if (defined BBL_MODEL || defined WAVES_OUTPUT) && defined SOLVE3D
 !
 !git $Id$
-!svn $Id$
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2024 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !

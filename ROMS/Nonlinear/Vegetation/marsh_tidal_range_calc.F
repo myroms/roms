@@ -1,11 +1,12 @@
 #include "cppdefs.h"
  
        MODULE marsh_tidal_range_calc_mod
+
 #if defined MARSH_TIDAL_RANGE_CALC
 !
-!svn $Id: marsh_tidal_range.F 429 2015-04-20 17:30:26Z arango $
+!git $Id$
 !======================================================================!
-!  Copyright (c) 2002-2016 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2024 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license           Hernan G. Arango   !
 !    See License_ROMS.txt                   Alexander F. Shchepetkin   !
 !==============================================Tarandeep S. Kalra======!

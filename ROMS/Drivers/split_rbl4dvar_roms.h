@@ -1,7 +1,6 @@
       MODULE roms_kernel_mod
 !
 !git $Id$
-!svn $Id: split_rbl4dvar_roms.h 1212 2024-01-26 20:59:21Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2024 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !

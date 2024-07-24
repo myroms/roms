@@ -1,7 +1,6 @@
       MODULE step2d_mod
 !
 !git $Id$
-!svn $Id: step2d_LF_AM3.h 1210 2024-01-03 22:03:03Z arango $
 !=======================================================================
 !                                                                      !
 !  Nonlinear shallow-water primitive equations predictor (Leap-frog)   !

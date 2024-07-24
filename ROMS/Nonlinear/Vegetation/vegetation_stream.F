@@ -3,7 +3,7 @@
        MODULE vegetation_stream_mod
 #if defined VEGETATION && defined VEG_STREAMING 
 !
-!svn $Id: vegetation_stream.F 429 2019-04-20 17:30:26Z arango $
+!git $Id$
 !======================================================================!
 !  Copyright (c) 2002-2019 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license           Hernan G. Arango   !

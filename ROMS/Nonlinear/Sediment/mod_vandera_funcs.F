@@ -2,20 +2,17 @@
       Module MOD_VANDERA_FUNCS
 #if defined SEDIMENT && defined BEDLOAD_VANDERA
 !
-!svn $Id: mod_bedload_vandera_funcs.F 429 2018-04-10 17:30:26Z arango $
-!======================================================================!
-!  Copyright (c) 2002-2016 The ROMS/TOMS Group                         !
-!    Licensed under a MIT/X style license                              !
+!git $Id$
+!================================================ Tarandeep S. Kalra ===
+!  Copyright (c) 2002-2024 The ROMS/TOMS Group       Chris Sherwood    !
+!    Licensed under a MIT/X style license            John C. Warner    !
 !    See License_ROMS.txt                                              !
-!----------------------------------------------Tarandeep S. Kalra------!
-!------------------------------------------------Chris Sherwood -------!
-!----------------------------------------------- John C. Warner--------!
-!----------------------------------------------------------------------!
+!=======================================================================
+!                                                                      !
 !  This module contains several functions that are required for the    !
 !  sediment bedload calculations using Van der A's formulations.       !     
 !                                                                      !
-!----------------------------------------------------------------------!
-!======================================================================!
+!=======================================================================
 !
       implicit none
       

@@ -5,39 +5,36 @@
 
 #if defined NONLINEAR && defined SEDIMENT && defined BEDLOAD_VANDERA  
 !
-!svn $Id: sed_bedload_vandera.F 429 2009-12-20 17:30:26Z arango $
-!======================================================================!
-!  Copyright (c) 2002-2016 The ROMS/TOMS Group                         !
-!    Licensed under a MIT/X style license                              !
+!git $Id$
+!================================================ Tarandeep S. Kalra ===
+!  Copyright (c) 2002-2024 The ROMS/TOMS Group        Chris Sherwood   !
+!    Licensed under a MIT/X style license             John C. Warner   !
 !    See License_ROMS.txt                                              !
-!----------------------------------------------Tarandeep S. Kalra-------
-!------------------------------------------------Chris Sherwood --------
-!----------------------------------------------- John C. Warner---------
-!-----------------------------------------------------------------------
+!=======================================================================
+¡                                                                      !
 !  This routine computes sediment bedload transport using              !
 !  Van der A et al.(2013) formulation  for unidirectional flow and     !
 !  accounts for wave asymmetry leading to differential sediment        !
 !  transport for crest and trough cycles.                              ! 
 !                                                                      !
 !  References:                                                         !
-!
+!                                                                      !
 !  van der A, D.A., Ribberink, J.S., van der Werf, J.J.,O'Donoghue, T.,!
 !  Buijsrogge, R.H., Kranenburg, W.M., (2013). Practical sand transport!
 !  formula for non-breaking waves and currents. Coastal Engineering,   !
-!  76, pp.26-42
-!
+!  76, pp.26-42                                                        !
+!                                                                      !
 !  Kalra, T.S., Suttles, S., Sherwood, C.R., Warner, J.C.              !
 !  Aretxabaleta,A.L., and Leavitt, G.R. (2022). Shoaling Wave Shape    !
 !  Estimates from Field Observations and derived Bedload Sediment Rates!
 !  J. Mar.Sci.Eng. 2022, 10, 223. https://doi.org/10.3390/jmse10020223 !
-!
+!                                                                      !
 !  Udated sed bed evolution scheme to the WENO method of:              !
 !  Wen Long, James T. Kirby, Zhiyu Shao,                               !
 !  A numerical scheme for morphological bed level calculations,        !
 !  Coastal Engineering,55, Issue 2, 2008, 167-180.                     !
 !  https://doi.org/10.1016/j.coastaleng.2007.09.009.                   !
 !                                                                      !
-!----------------------------------------------------------------------!
 !======================================================================!
 !
       implicit none

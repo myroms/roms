@@ -6,9 +6,9 @@
 
 #if defined NONLINEAR && defined SEDIMENT && defined SED_BIOMASS
 !
-!svn $Id: sed_biomass.F 429 2009-12-20 17:30:26Z jcwarner $
+!git $Id$
 !==================================================== Neil K. Ganju ====
-!  Copyright (c) 2002-2019 The ROMS/TOMS Group      Hernan G. Arango   !
+!  Copyright (c) 2002-2024 The ROMS/TOMS Group      Hernan G. Arango   !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
 !=======================================================================

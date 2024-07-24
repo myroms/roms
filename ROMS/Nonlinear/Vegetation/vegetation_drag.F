@@ -4,9 +4,9 @@
 
 #if defined VEGETATION && defined VEG_DRAG
 !
-!svn $Id: vegetation_drag.F 429 2015-05-26 10:10:26Z arango $
+!git $Id$
 !======================================================================!
-!  Copyright (c) 2002-2019 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2024 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license           Hernan G. Arango   !
 !    See License_ROMS.txt                   Alexander F. Shchepetkin   !
 !==================================================== John C. Warner ==!

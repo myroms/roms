@@ -3,25 +3,20 @@
        MODULE marsh_dynamics_mod
 #if defined VEGETATION && defined MARSH_DYNAMICS
 !
-!svn $Id: marsh_dynamics.F 429 2015-04-20 17:30:26Z arango $
-!======================================================================!
-!  Copyright (c) 2002-2016 The ROMS/TOMS Group                         !
-!    Licensed under a MIT/X style license           Hernan G. Arango   !
-!    See License_ROMS.txt                   Alexander F. Shchepetkin   !
-!==============================================Tarandeep S. Kalra======!
-!================================================Neil K. Ganju  =======!
-!================================================John C. Warner========!
-!==============================================Julia M. Moriarty=======!
-!===========================================Alfredo Aretxabaleta=======!
+!git $Id$
+!================================================ Tarandeep S. Kalra ===
+!  Copyright (c) 2002-2024 The ROMS/TOMS Group         Neil K. Ganju   !
+!    Licensed under a MIT/X style license            John C. Warner    !
+!    See License_ROMS.txt                         Julia M. Moriarty    !
+!============================================== Alfredo Aretxabaleta ===
 !                                                                      ! 
 !  This routine is the main driver for marsh dynamics and accounts     !
 !  for two processes through various sub-routines:                     !
-!======================================================================!
+!                                                                      !         
 !   1. Calculate lateral wave thrust and sediment release from         !
 !      edge erosion                                                    !
 !   2. Calculate vertical biomass production (autochthonous supply)    !
 !      (organic sediment)                                              !
-!======================================================================!
 !                                                                      !
 !  This is done through the following modules:                         !
 !                                                                      !
@@ -40,8 +35,8 @@
 !  Modeling Marsh Dynamics Using a 3-D Coupled Wave-Flow-Sediment      !
 !  Model (In process).                                                 !
 !                                                                      !
-!======================================================================! 
-!                                                                      !
+!======================================================================= 
+!
       implicit none
 
       PRIVATE

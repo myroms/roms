@@ -3,11 +3,10 @@
       MODULE sed_flocs_mod
 
 #if defined NONLINEAR && defined SEDIMENT && defined SUSPLOAD && defined SED_FLOCS
-
 !
-!svn $Id: sed_flocs.F 429 2009-12-20 17:30:26Z arango $
+!git $Id$
 !=======================================================================
-!  Copyright (c) 2002-2017 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2024 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license           Hernan G. Arango   !
 !    See License_ROMS.txt                   Alexander F. Shchepetkin   !
 !==================================================== John C. Warner ===

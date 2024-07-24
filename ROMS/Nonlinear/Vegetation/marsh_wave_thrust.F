@@ -3,9 +3,9 @@
        MODULE marsh_wave_thrust_mod
 #if defined MARSH_DYNAMICS && defined MARSH_WAVE_THRUST 
 !
-!svn $Id: marsh_wave_thrust.F 429 2019-04-20 17:30:26Z arango $
+!git $Id$
 !======================================================================!
-!  Copyright (c) 2002-2019 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2024 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license           Hernan G. Arango   !
 !    See License_ROMS.txt                   Alexander F. Shchepetkin   !
 !==============================================Tarandeep S. Kalra======!

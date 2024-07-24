@@ -3,7 +3,6 @@
 #ifdef STATIONS
 !
 !git $Id$
-!svn $Id: wrt_station.F 1215 2024-02-09 23:11:09Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2024 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !

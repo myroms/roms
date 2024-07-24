@@ -1,13 +1,10 @@
 !  Vegetation Model Parameters.
 !
-!svn $Id$
-!========================================================= J.C. Warner=========
-!========================================================= T.S. Kalra==========
-!========================================================= N.K. Ganju==========
-!========================================================= A.Beudin============
-!  Copyright (c) 2002-2019 The ROMS/TOMS Group                                !
-!    Licensed under a MIT/X style license                                     !
-!    See License_ROMS.txt                                                     !
+!git $Id$
+!============================================================= J. C. Warner ===
+!  Copyright (c) 2002-2024 The ROMS/TOMS Group                  T. S. Kalra   !
+!    Licensed under a MIT/X style license                       N. K. Ganju   !
+!    See License_ROMS.txt                                         A. Beudin   !
 !==============================================================================
 !                                                                             !
 ! Input parameters can be entered in ANY order, provided that the parameter   !

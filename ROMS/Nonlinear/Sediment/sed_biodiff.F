@@ -4,9 +4,9 @@
 
 #if defined NONLINEAR && defined SEDIMENT && defined SED_BIODIFF
 !
-!svn $Id: sed_bed_mod.F 2011 2009-12-20 17:34:23Z arango $
+!git $Id$
 !==================================================== C. R. Sherwood ===
-!  Copyright (c) 2002-2017 The ROMS/TOMS Group      Hernan G. Arango   !
+!  Copyright (c) 2002-2024 The ROMS/TOMS Group      Hernan G. Arango   !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
 !=======================================================================

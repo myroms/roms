@@ -4,7 +4,6 @@
 #ifdef R4DVAR
 !
 !git $Id$
-!svn $Id: r4dvar.F 1213 2024-01-29 22:21:01Z arango $
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2024 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
