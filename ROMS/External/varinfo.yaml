@@ -624,6 +624,17 @@ metadata:
     add_offset:     0.0d0
     scale:          1.0d0
 
+  - variable:       Hz                                               # Output
+    standard_name:  model_level_thickness_at_cell_center
+    long_name:      level thickness of RHO-points
+    units:          meter                                            # [m]
+    field:          Hz
+    time:           ocean_time
+    index_code:     idHzdz
+    type:           r3dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
   - variable:       z_rho                                            # Output
     standard_name:  model_level_depth_at_cell_center
     long_name:      depth of RHO-points

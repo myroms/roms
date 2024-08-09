@@ -48,6 +48,7 @@ list( APPEND _files
       ROMS/Nonlinear/obc_volcons.F
       ROMS/Nonlinear/omega.F
       ROMS/Nonlinear/output.F
+      ROMS/Nonlinear/post_initial.F
       ROMS/Nonlinear/pre_step3d.F
       ROMS/Nonlinear/prsgrd.F
       ROMS/Nonlinear/rho_eos.F
