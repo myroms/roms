@@ -365,11 +365,6 @@ CPU := $(shell uname -m | sed 's/[\/ ]/-/g')
 GITURL := $(shell git config remote.origin.url)
 GITREV := $(shell git log -n 1 --format=%H)
 
-SVNURL := $(shell grep HeadURL ./ROMS/Version | \
-            sed 's/.* \(https.*\)\/ROMS\/Version.*/\1/')
-SVNREV := $(shell grep Revision ./ROMS/Version | \
-            sed 's/.* \([0-9]*\) .*/\1/')
-
 ROOTDIR := $(shell pwd)
 
 ifndef FORT
@@ -427,8 +422,6 @@ endif
 
 CPPFLAGS += -D'GIT_URL="$(GITURL)"'
 CPPFLAGS += -D'GIT_REV="$(GITREV)"'
-CPPFLAGS += -D'SVN_URL="$(SVNURL)"'
-CPPFLAGS += -D'SVN_REV="$(SVNREV)"'
 
 #--------------------------------------------------------------------------
 #  Build target directories.
@@ -595,17 +588,17 @@ endif
 .PHONY: tarfile
 
 tarfile:
-		tar --exclude=".svn" -cvf roms-3_7.tar *
+		tar --exclude=".git" -cvf roms-4_2.tar *
 
 .PHONY: zipfile
 
 zipfile:
-		zip -r roms-3_7.zip *
+		zip -r roms-4_2.zip *
 
 .PHONY: gzipfile
 
 gzipfile:
-		gzip -v roms-3_7.gzip *
+		gzip -v roms-4_2.gzip *
 
 #--------------------------------------------------------------------------
 #  Cleaning targets.

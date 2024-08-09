@@ -76,7 +76,6 @@
 !!    USE rp_gls_corstep_mod,      ONLY : rp_gls_corstep
 !!    USE rp_gls_prestep_mod,      ONLY : rp_gls_prestep
 # endif
-      USE rp_ini_fields_mod,       ONLY : rp_ini_fields, rp_ini_zeta
 # ifdef LMD_MIXING_NOT_YET
 !!    USE rp_lmd_vmix_mod,         ONLY : rp_lmd_vmix
 # endif
@@ -90,6 +89,7 @@
       USE rp_set_depth_mod,        ONLY : rp_set_depth_bry
 # endif
       USE rp_omega_mod,            ONLY : rp_omega
+      USE rp_post_initial_mod,     ONLY : rp_post_initial
 # ifdef WEC_MELLOR_NOT_YET
 !!    USE rp_radiation_stress_mod, ONLY : rp_radiation_stress
 # endif
@@ -218,7 +218,7 @@
               DO tile=first_tile(ng),last_tile(ng),+1
                 CALL rp_set_data (ng, tile)
 # ifdef FORWARD_READ
-            CALL set_depth (ng, tile, iRPM)
+                CALL set_depth (ng, tile, iRPM)
 # endif
               END DO
             END DO
@@ -259,37 +259,15 @@
 # endif
 !
 !-----------------------------------------------------------------------
-!  If not a restart, initialize all time levels and compute other
-!  initial fields.
+!  On the first timestep, it computes the initial depths and level
+!  thicknesses from the initial free-surface field. Additionally, it
+!  initializes the tangent linear state variables for all time levels
+!  and applies lateral boundary conditions. 
 !-----------------------------------------------------------------------
 !
-            DO ig=1,GridsInLayer(nl)
-              ng=GridNumber(ig,nl)
+            DO ng=1,Ngrids
               IF (iic(ng).eq.ntstart(ng)) THEN
-!
-!  Initialize free-surface and compute initial level thicknesses and
-!  depths.
-!
-                DO tile=first_tile(ng),last_tile(ng),+1
-                  CALL rp_ini_zeta (ng, tile, iRPM)
-                  CALL rp_set_depth (ng, tile, iRPM)
-                END DO
-!
-!  Initialize other state variables.
-!
-                DO tile=last_tile(ng),first_tile(ng),-1
-                  CALL rp_ini_fields (ng, tile, iRPM)
-                END DO
-
-# ifdef NESTING
-!
-!  Extract donor grid initial data at contact points and store it in
-!  REFINED structure so it can be used for the space-time interpolation.
-!
-                IF (RefinedGrid(ng)) THEN
-                  CALL rp_nesting (ng, iRPM, ngetD)
-                END IF
-# endif
+                CALL rp_post_initial (ng, iRPM)
               END IF
             END DO
 !

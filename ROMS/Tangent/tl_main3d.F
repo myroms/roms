@@ -52,7 +52,7 @@
 # if defined WAV_COUPLING_NOT_YET && defined MCT_LIB
       USE mct_coupler_mod,         ONLY : ocn2wav_coupling
 # endif
-# ifdef FORWARD_READ
+# if defined FORWARD_READ || defined JEDI
       USE omega_mod,               ONLY : omega
       USE set_depth_mod,           ONLY : set_depth
       USE set_massflux_mod,        ONLY : set_massflux
@@ -81,9 +81,6 @@
 !!    USE tl_gls_corstep_mod,      ONLY : tl_gls_corstep
 !!    USE tl_gls_prestep_mod,      ONLY : tl_gls_prestep
 # endif
-# ifndef FORCING_SV
-      USE tl_ini_fields_mod,       ONLY : tl_ini_fields, tl_ini_zeta
-# endif
 # ifdef LMD_MIXING_NOT_YET
 !!    USE tl_lmd_vmix_mod,         ONLY : tl_lmd_vmix
 # endif
@@ -104,6 +101,9 @@
       USE tl_set_depth_mod,        ONLY : tl_set_depth_bry
 # endif
       USE tl_omega_mod,            ONLY : tl_omega
+# if !(defined FORCING_SV || defined JEDI)
+      USE tl_post_initial_mod,     ONLY : tl_post_initial
+# endif
 # ifdef WEC_MELLOR_NOT_YET
 !!    USE tl_radiation_stress_mod, ONLY : tl_radiation_stress
 # endif
@@ -216,7 +216,12 @@
 !
             DO ig=1,GridsInLayer(nl)
               ng=GridNumber(ig,nl)
-              CALL tl_get_data (ng)
+!$OMP MASTER
+              IF (ProcessInputData(ng)) THEN
+                CALL tl_get_data (ng)
+              END IF
+!$OMP END MASTER
+!$OMP BARRIER
               IF (FoundError(exit_flag, NoError,                        &
      &                       __LINE__, MyFile)) RETURN
             END DO
@@ -229,15 +234,17 @@
             DO ig=1,GridsInLayer(nl)
               ng=GridNumber(ig,nl)
               DO tile=first_tile(ng),last_tile(ng),+1
-                CALL tl_set_data (ng, tile)
-# ifdef FORWARD_READ
+                IF (ProcessInputData(ng)) THEN
+                  CALL tl_set_data (ng, tile)
+                END IF
+# if defined FORWARD_READ || defined JEDI
                 CALL set_depth (ng, tile, iTLM)
 # endif
               END DO
             END DO
             IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
-# ifdef FORWARD_READ
+# if defined FORWARD_READ || defined JEDI
 !
 !-----------------------------------------------------------------------
 !  Compute BASIC STATE horizontal mass fluxes (Hz*u/n and Hz*v/m).
@@ -289,40 +296,20 @@
 #  endif
             END DO
 # endif
-# ifndef FORCING_SV
+
+# if !(defined FORCING_SV || defined JEDI)
 !
 !-----------------------------------------------------------------------
-!  If not a restart, initialize all time levels and compute other
-!  initial fields.
+!  On the first timestep, it computes the initial depths and level
+!  thicknesses from the initial free-surface field. Additionally, it
+!  initializes the tangent linear state variables for all time levels
+!  and applies lateral boundary conditions. 
 !-----------------------------------------------------------------------
 !
             DO ig=1,GridsInLayer(nl)
               ng=GridNumber(ig,nl)
               IF (iic(ng).eq.ntstart(ng)) THEN
-!
-!  Initialize free-surface and compute initial level thicknesses and
-!  depths.
-!
-                DO tile=first_tile(ng),last_tile(ng),+1
-                  CALL tl_ini_zeta (ng, tile, iTLM)
-                  CALL tl_set_depth (ng, tile, iTLM)
-                END DO
-!
-!  Initialize other state variables.
-!
-                DO tile=last_tile(ng),first_tile(ng),-1
-                  CALL tl_ini_fields (ng, tile, iTLM)
-                END DO
-
-#  ifdef NESTING
-!
-!  Extract donor grid initial data at contact points and store it in
-!  REFINED structure so it can be used for the space-time interpolation.
-!
-                IF (RefinedGrid(ng)) THEN
-                  CALL tl_nesting (ng, iTLM, ngetD)
-                END IF
-#  endif
+                CALL tl_post_initial (ng, iTLM)
               END IF
             END DO
 # endif
@@ -344,7 +331,7 @@
                 CALL equilibrium_tide (ng, tile, iTLM)
 # endif
                 CALL tl_diag (ng, tile)
-# ifdef FORWARD_READ
+# if defined FORWARD_READ || defined JEDI
                 CALL omega (ng, tile, iTLM)
 # endif
 # ifdef TLM_CHECK
