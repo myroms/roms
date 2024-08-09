@@ -16,11 +16,45 @@
 !                                                                      !
 !=======================================================================
 !
+      USE mod_param
+      USE mod_grid
+# ifdef SOLVE3D
+      USE mod_coupling
+# endif
+      USE mod_ncparam
+      USE mod_ocean
+      USE mod_scalars
+# if defined SEDIMENT && defined SED_MORPH && defined SOLVE3D
+      USE mod_sedbed
+      USE mod_sediment
+# endif
+!
+      USE ad_exchange_2d_mod
+# ifdef SOLVE3D
+      USE ad_exchange_3d_mod
+# endif
+# ifdef DISTRIBUTE
+      USE mp_exchange_mod, ONLY : ad_mp_exchange2d
+#  ifdef SOLVE3D
+      USE mp_exchange_mod, ONLY : ad_mp_exchange3d, ad_mp_exchange4d
+#  endif
+# endif
+# ifdef SOLVE3D
+      USE ad_set_depth_mod, ONLY : ad_set_depth_tile
+      USE ad_t3dbc_mod, ONLY : ad_t3dbc_tile
+      USE ad_u3dbc_mod, ONLY : ad_u3dbc_tile
+      USE ad_v3dbc_mod, ONLY : ad_v3dbc_tile
+# endif
+      USE ad_u2dbc_mod, ONLY : ad_u2dbc_tile
+      USE ad_v2dbc_mod, ONLY : ad_v2dbc_tile
+      USE ad_zetabc_mod, ONLY : ad_zetabc_tile
+!
       implicit none
 !
       PRIVATE
       PUBLIC :: ad_ini_fields
       PUBLIC :: ad_ini_zeta
+      PUBLIC :: ad_set_zeta_timeavg
       PUBLIC :: ad_out_fields
       PUBLIC :: ad_out_zeta
 !
@@ -30,15 +64,6 @@
       SUBROUTINE ad_ini_fields (ng, tile, model)
 !***********************************************************************
 !
-      USE mod_param
-      USE mod_grid
-# ifdef SOLVE3D
-      USE mod_coupling
-# endif
-      USE mod_ocean
-# if defined SEDIMENT && defined SED_MORPH && defined SOLVE3D
-      USE mod_sedbed
-# endif
       USE mod_stepping
 !
 !  Imported variable declarations.
@@ -112,29 +137,6 @@
      &                               vbar, ad_vbar_sol, ad_vbar,        &
      &                               zeta, ad_zeta)
 !***********************************************************************
-!
-      USE mod_param
-      USE mod_ncparam
-      USE mod_scalars
-!
-      USE ad_exchange_2d_mod
-# ifdef SOLVE3D
-      USE ad_exchange_3d_mod
-# endif
-# ifdef DISTRIBUTE
-      USE mp_exchange_mod, ONLY : ad_mp_exchange2d
-#  ifdef SOLVE3D
-      USE mp_exchange_mod, ONLY : ad_mp_exchange3d, ad_mp_exchange4d
-#  endif
-# endif
-# ifdef SOLVE3D
-      USE ad_set_depth_mod, ONLY : ad_set_depth_tile
-      USE ad_t3dbc_mod, ONLY : ad_t3dbc_tile
-      USE ad_u3dbc_mod, ONLY : ad_u3dbc_tile
-      USE ad_v3dbc_mod, ONLY : ad_v3dbc_tile
-# endif
-      USE ad_u2dbc_mod, ONLY : ad_u2dbc_tile
-      USE ad_v2dbc_mod, ONLY : ad_v2dbc_tile
 !
 !  Imported variable declarations.
 !
@@ -966,12 +968,6 @@
       SUBROUTINE ad_ini_zeta (ng, tile, model)
 !***********************************************************************
 !
-      USE mod_param
-      USE mod_grid
-# ifdef SOLVE3D
-      USE mod_coupling
-# endif
-      USE mod_ocean
       USE mod_stepping
 !
 !  Imported variable declarations.
@@ -1037,19 +1033,6 @@
 # endif
      &                             zeta, ad_zeta_sol, ad_zeta)
 !***********************************************************************
-!
-      USE mod_param
-      USE mod_ncparam
-      USE mod_scalars
-# if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
-      USE mod_sediment
-# endif
-!
-      USE ad_exchange_2d_mod, ONLY : ad_exchange_r2d_tile
-# ifdef DISTRIBUTE
-      USE mp_exchange_mod, ONLY : ad_mp_exchange2d
-# endif
-      USE ad_zetabc_mod, ONLY : ad_zetabc_tile
 !
 !  Imported variable declarations.
 !
@@ -1188,39 +1171,7 @@
 !  free-surface
 !-----------------------------------------------------------------------
 !
-#  ifdef DISTRIBUTE
-!^    CALL mp_exchange2d (ng, tile, model, 1,                           &
-!^   &                    LBi, UBi, LBj, UBj,                           &
-!^   &                    NghostPoints,                                 &
-!^   &                    EWperiodic(ng), NSperiodic(ng),               &
-!^   &                    tl_Zt_avg1)
-!^
-      CALL ad_mp_exchange2d (ng, tile, model, 1,                        &
-     &                       LBi, UBi, LBj, UBj,                        &
-     &                       NghostPoints,                              &
-     &                       EWperiodic(ng), NSperiodic(ng),            &
-     &                       ad_Zt_avg1)
-!
-#  endif
-
-      IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
-!^      CALL exchange_r2d_tile (ng, tile,                               &
-!^   &                          LBi, UBi, LBj, UBj,                     &
-!^   &                          tl_Zt_avg1)
-!^
-        CALL ad_exchange_r2d_tile (ng, tile,                            &
-     &                             LBi, UBi, LBj, UBj,                  &
-     &                             ad_Zt_avg1)
-      END IF
-!
-      DO j=JstrT,JendT
-        DO i=IstrT,IendT
-!^        tl_Zt_avg1(i,j)=tl_zeta(i,j,kstp)
-!^
-          ad_zeta(i,j,kstp)=ad_zeta(i,j,kstp)+ad_Zt_avg1(i,j)
-          ad_Zt_avg1(i,j)=0.0_r8
-        END DO
-      END DO
+      CALL ad_set_zeta_timeavg (ng, tile, model)
 # endif
 !
 !-----------------------------------------------------------------------
@@ -1421,20 +1372,115 @@
 !
       RETURN
       END SUBROUTINE ad_ini_zeta_tile
+
+# ifdef SOLVE3D
+!
+!***********************************************************************
+      SUBROUTINE ad_set_zeta_timeavg (ng, tile, model)
+!***********************************************************************
+!
+      USE mod_stepping
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: ng, tile, model
+!
+!  Local variable declarations.
+!
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__//", ad_set_zeta_timeavg"
+!
+#  include "tile.h"
+!
+#  ifdef PROFILE
+      CALL wclock_on (ng, model, 2, __LINE__, MyFile)
+#  endif
+      CALL ad_set_zeta_timeavg_tile (ng, tile, model,                   &
+     &                               LBi, UBi, LBj, UBj,                &
+     &                               kstp(ng),                          &
+     &                               COUPLING(ng) % ad_Zt_avg1,         &
+     &                               OCEAN(ng) % ad_zeta)
+#  ifdef PROFILE
+      CALL wclock_off (ng, model, 2, __LINE__, MyFile)
+#  endif
+!
+      RETURN
+      END SUBROUTINE ad_set_zeta_timeavg
+!
+!***********************************************************************
+      SUBROUTINE ad_set_zeta_timeavg_tile (ng, tile, model,             &
+     &                                     LBi, UBi, LBj, UBj,          &
+     &                                     kstp,                        &
+     &                                     ad_Zt_avg1,                  &
+     &                                     ad_zeta)
+!***********************************************************************
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: ng, tile, model
+      integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: kstp
+!
+#  ifdef ASSUMED_SHAPE
+      real(r8), intent(inout) :: ad_Zt_avg1(LBi:,LBj:)
+      real(r8), intent(inout) :: ad_zeta(LBi:,LBj:,:)
+#  else
+      real(r8), intent(inout) :: ad_Zt_avg1(LBi:UBi,LBj:UBj)
+      real(r8), intent(inout) :: ad_zeta(LBi:UBi,LBj:UBj,:)
+#  endif
+!
+!  Local variable declarations.
+!
+      integer :: i, j
+!
+#  include "set_bounds.h"
+!
+!-----------------------------------------------------------------------
+!  Initialize fast-time averaged free-surface (Zt_avg1) with the inital
+!  free-surface.
+!-----------------------------------------------------------------------
+!
+#  ifdef DISTRIBUTE
+!^    CALL mp_exchange2d (ng, tile, model, 1,                           &
+!^   &                    LBi, UBi, LBj, UBj,                           &
+!^   &                    NghostPoints,                                 &
+!^   &                    EWperiodic(ng), NSperiodic(ng),               &
+!^   &                    tl_Zt_avg1)
+!^
+      CALL ad_mp_exchange2d (ng, tile, model, 1,                        &
+     &                       LBi, UBi, LBj, UBj,                        &
+     &                       NghostPoints,                              &
+     &                       EWperiodic(ng), NSperiodic(ng),            &
+     &                       ad_Zt_avg1)
+!
+#  endif
+      IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
+!^      CALL exchange_r2d_tile (ng, tile,                               &
+!^   &                          LBi, UBi, LBj, UBj,                     &
+!^   &                          tl_Zt_avg1)
+!^
+        CALL ad_exchange_r2d_tile (ng, tile,                            &
+     &                             LBi, UBi, LBj, UBj,                  &
+     &                             ad_Zt_avg1)
+      END IF
+!
+      DO j=JstrT,JendT
+        DO i=IstrT,IendT
+!>        tl_Zt_avg1(i,j)=tl_zeta(i,j,kstp)
+!>
+          ad_zeta(i,j,kstp)=ad_zeta(i,j,kstp)+ad_Zt_avg1(i,j)
+          ad_Zt_avg1(i,j)=0.0_r8
+        END DO
+      END DO
+!
+      RETURN
+      END SUBROUTINE ad_set_zeta_timeavg_tile
+# endif
 !
 !***********************************************************************
       SUBROUTINE ad_out_fields (ng, tile, model)
 !***********************************************************************
 !
-      USE mod_param
-      USE mod_grid
-# ifdef SOLVE3D
-      USE mod_coupling
-# endif
-      USE mod_ocean
-# if defined SEDIMENT && defined SED_MORPH && defined SOLVE3D
-      USE mod_sedbed
-# endif
       USE mod_stepping
 !
 !  Imported variable declarations.
@@ -1502,29 +1548,6 @@
      &                               ad_ubar_sol, ad_ubar,              &
      &                               ad_vbar_sol, ad_vbar, ad_zeta)
 !***********************************************************************
-!
-      USE mod_param
-      USE mod_ncparam
-      USE mod_scalars
-!
-      USE ad_exchange_2d_mod
-# ifdef SOLVE3D
-      USE ad_exchange_3d_mod
-# endif
-# ifdef DISTRIBUTE
-      USE mp_exchange_mod, ONLY : ad_mp_exchange2d
-#  ifdef SOLVE3D
-      USE mp_exchange_mod, ONLY : ad_mp_exchange3d, ad_mp_exchange4d
-#  endif
-# endif
-# ifdef SOLVE3D
-      USE ad_set_depth_mod, ONLY : ad_set_depth_tile
-      USE ad_t3dbc_mod, ONLY : ad_t3dbc_tile
-      USE ad_u3dbc_mod, ONLY : ad_u3dbc_tile
-      USE ad_v3dbc_mod, ONLY : ad_v3dbc_tile
-# endif
-      USE ad_u2dbc_mod, ONLY : ad_u2dbc_tile
-      USE ad_v2dbc_mod, ONLY : ad_v2dbc_tile
 !
 !  Imported variable declarations.
 !
@@ -1918,12 +1941,6 @@
       SUBROUTINE ad_out_zeta (ng, tile, model)
 !***********************************************************************
 !
-      USE mod_param
-      USE mod_grid
-# ifdef SOLVE3D
-      USE mod_coupling
-# endif
-      USE mod_ocean
       USE mod_stepping
 !
 !  Imported variable declarations.
@@ -1990,18 +2007,6 @@
      &                             zeta, ad_zeta_sol, ad_zeta)
 !***********************************************************************
 !
-      USE mod_param
-      USE mod_ncparam
-      USE mod_scalars
-# if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
-      USE mod_sediment
-# endif
-!
-      USE ad_exchange_2d_mod, ONLY : ad_exchange_r2d_tile
-# ifdef DISTRIBUTE
-      USE mp_exchange_mod, ONLY : ad_mp_exchange2d
-# endif
-      USE ad_zetabc_mod, ONLY : ad_zetabc_tile
 !
 !  Imported variable declarations.
 !
