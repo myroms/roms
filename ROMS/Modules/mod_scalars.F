@@ -411,6 +411,14 @@
 !
         logical, allocatable :: SetGridConfig(:)
 !
+!  Switch to procces (Get/Set) all input data in an application. It is
+!  set to .TRUE. by default. It is manipulated by the ROMS-JEDI 
+!  interface during ROMS Phase 3 initialization that applies lateral
+!  boundary condition to the initial state vector passed by OOPS. Some
+!  applications requited input data for lateral boundary conditons.
+!
+        logical, allocatable :: ProcessInputData(:)
+!
 !  Switch to proccess nudging coefficients for radiation open boundary
 !  conditions.
 !
@@ -1993,6 +2001,7 @@
 #ifdef JEDI
       IF (.not.allocated(jic)) THEN
         allocate ( jic(Ngrids) )
+        jic=0
         Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
 #endif
@@ -2144,6 +2153,11 @@
 
       IF (.not.allocated(SetGridConfig)) THEN
         allocate ( SetGridConfig(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
+      END IF
+
+      IF (.not.allocated(ProcessInputData)) THEN
+        allocate ( ProcessInputData(Ngrids) )
         Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
 
@@ -3560,6 +3574,8 @@
 
       IF (allocated(SetGridConfig))     deallocate ( SetGridConfig )
 
+      IF (allocated(ProcessInputData))  deallocate ( ProcessInputData )
+
       IF (allocated(NudgingCoeff))      deallocate ( NudgingCoeff )
 
       IF (allocated(ObcData))           deallocate ( ObcData )
@@ -4409,6 +4425,7 @@
         NudgingCoeff(ng)=.FALSE.
         ObcData(ng)=.FALSE.
         SetGridConfig(ng)=.TRUE.
+        ProcessInputData(ng)=.TRUE.
         ExtractFlag(ng)=0
         RefineScale(ng)=0
         gamma2(ng)=-1.0_r8

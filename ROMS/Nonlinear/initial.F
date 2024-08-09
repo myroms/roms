@@ -46,6 +46,9 @@
 #ifdef TLM_CHECK
       USE ini_adjust_mod,    ONLY : ini_perturb
 #endif
+#if defined SOLVE3D && defined NONLINEAR
+      USE ini_fields_mod,    ONLY : set_zeta_timeavg
+#endif
       USE ini_hmixcoef_mod,  ONLY : ini_hmixcoef
 #if defined WAV_COUPLING && defined MCT_LIB
       USE mct_coupler_mod,   ONLY : ocn2wav_coupling
@@ -550,13 +553,15 @@
 #ifdef SOLVE3D
 !
 !-----------------------------------------------------------------------
-!  Compute time independent (Zt_avg1=0) anf initial time dependent
-!  depths and level thicknesses.
+!  Compute time independent (Zt_avg1=0). Set Zt_avg1 to the initial
+!  free-surface value (no lateral boundary conditions applied). Then,
+!  set initial time dependent depths and level thicknesses.
 !-----------------------------------------------------------------------
 !
       DO ng=1,Ngrids
         DO tile=first_tile(ng),last_tile(ng),+1
           CALL set_depth0 (ng, tile, iNLM)
+          CALL set_zeta_timeavg (ng, tile, iNLM)
           CALL set_depth  (ng, tile, iNLM)
         END DO
 !$OMP BARRIER

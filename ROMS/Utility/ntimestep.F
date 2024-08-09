@@ -138,19 +138,11 @@
           ELSE IF (model.eq.iTLM) THEN
             NEXTtime=time(ng)+RunInterval
             ENDtime=INItime(ng)+ntimes(ng)*dt(ng)
-            IF (iic(ng).eq.ntend(ng)) THEN
-              extra=1
-            ELSE
-              extra=0
-            END IF
+            extra=0
           ELSE IF (model.eq.iADM) THEN
             NEXTtime=time(ng)-RunInterval
             ENDtime=INItime(ng)+ntimes(ng)*dt(ng)
-            IF (iic(ng).eq.ntstart(ng)) THEN
-              extra=1
-            ELSE
-              extra=0
-            END IF
+            extra=0
           END IF
 #else
 !
