@@ -265,9 +265,12 @@
 !  and applies lateral boundary conditions. 
 !-----------------------------------------------------------------------
 !
-            DO ng=1,Ngrids
+            DO ig=1,GridsInLayer(nl)
+              ng=GridNumber(ig,nl)
               IF (iic(ng).eq.ntstart(ng)) THEN
-                CALL rp_post_initial (ng, iRPM)
+                DO tile=first_tile(ng),last_tile(ng),+1
+                  CALL rp_post_initial (ng, iRPM)
+                END DO
               END IF
             END DO
 !
