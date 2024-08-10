@@ -200,8 +200,8 @@
                   tl_Tdiff(itrc,ng)=Rtracer(itrc,ng)
                 END DO
               END DO
-            CASE ('time_IAU')
-              Npts=load_r(Nval, Rval, Ngrids, time_IAU)
+            CASE ('timeIAU')
+              Npts=load_r(Nval, Rval, Ngrids, timeIAU)
             CASE ('LdefNRM')
               Npts=load_l(Nval, Cval, 4, Ngrids, LdefNRM)
             CASE ('LwrtNRM')
@@ -857,8 +857,8 @@
 #     endif
 #    endif
 #   endif
-          WRITE (out,100) time_IAU(ng), 'time_IAU',                     &
-     &            'Duration of the incremental analysis update.'
+          WRITE (out,100) timeIAU(ng), 'timeIAU',                       &
+     &            'Duration of the incremental analysis update (days).'
 #   ifndef I4DVAR_ANA_SENSITIVITY
 #    ifdef I4DVAR
           WRITE (out,100) GradErr, 'GradErr',                           &
@@ -1602,19 +1602,21 @@
         END IF
       END DO
 #  endif
-
-#  if defined WEAK_CONSTRAINT && defined TIME_CONV
 !
 !-----------------------------------------------------------------------
-!  Convert time decorrelation scales to seconds.
+!  Convert time scales to seconds.
 !-----------------------------------------------------------------------
 !
       DO ng=1,Ngrids
+#  ifdef FOUR_DVAR
+         timeIAU(ng)=timeIAU(ng)*86400.0_dp
+#  endif
+#  if defined WEAK_CONSTRAINT && defined TIME_CONV
         DO i=1,MstateVar
           Tdecay(i,ng)=Tdecay(i,ng)*86400.0_r8
         END DO
-      END DO
 #  endif
+      END DO
 !
   50  FORMAT (/,' READ_AssPar - Error while processing line: ',/,a)
   55  FORMAT (/,' READ_AssPar - ',a,i4,2x,i4,/,15x,a)

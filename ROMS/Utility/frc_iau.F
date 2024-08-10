@@ -40,7 +40,7 @@
 !                                                                      !
 !  This subroutine computes the incremental analysis update (IAU)      !
 !  that is applied as a forcing term in the non-linear model during    !
-!  the first time_IAU days of the assimilation window.                 !
+!  the first timeIAU seconds of the assimilation window.               !
 !                                                                      !
 !  The adjoint arrays ad_var(irec) are used as temporary storage for   !
 !  the IAU.                                                            !
@@ -171,7 +171,7 @@
 !
 !  Set uniform weights in time.
 !
-      fac1=REAL(time_IAU(ng)*day2sec/dt(ng),r8)
+      fac1=REAL(timeIAU(ng)/dt(ng),r8)
       fac1=1.0_r8/fac1
 !
       DO j=JstrR,JendR

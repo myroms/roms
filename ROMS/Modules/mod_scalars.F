@@ -1269,17 +1269,14 @@
 !
         logical, allocatable :: SporadicImpulse(:)     ! intermittent
         logical, allocatable :: FrequentImpulse(:)     ! continuous
-
-# ifdef RPCG
 !
-!  Logical switch to control incremental analysis update forcing.
+!  Logical switch to control 4D-Var incremental analysis update forcing.
 !
         logical, allocatable :: IAUswitch(:)
 !
-!  Duration of the incremental inalysis update
+!  Duration of the 4D-Var incremental inalysis update (seconds).
 !
-        real(r8), allocatable :: time_IAU(:)
-# endif
+        real(dp), allocatable :: timeIAU(:)
 !
 !  Stability and accuracy factor used to scale the time-step of the
 !  horizontal and vertical convolution operator below its theoretical
@@ -3205,17 +3202,16 @@
         Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
 
-# ifdef RPCG
       IF (.not.allocated(IAUswitch)) THEN
         allocate ( IAUswitch(Ngrids) )
         Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
 
-      IF (.not.allocated(time_IAU)) THEN
-        allocate ( time_IAU(Ngrids) )
+      IF (.not.allocated(timeIAU)) THEN
+        allocate ( timeIAU(Ngrids) )
+        timeIAU=0.0_dp
         Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
-# endif
 
       IF (.not.allocated(dTdz_min)) THEN
         allocate ( dTdz_min(Ngrids) )

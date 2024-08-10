@@ -278,8 +278,8 @@
             DO ig=1,GridsInLayer(nl)
               ng=GridNumber(ig,nl)
 #  ifdef RPCG
-              IF ((iic(ng).gt.INT(time_IAU(ng)*day2sec/dt(ng))).or.     &
-     &            time_IAU(ng).eq.0.0_r8) THEN
+              IF ((iic(ng).gt.INT(timeIAU(ng)/dt(ng))).or.              &
+     &            timeIAU(ng).eq.0.0_dp) THEN
                 IAUswitch(ng)=.FALSE.
               END IF
               IF (FrequentImpulse(ng).or.IAUswitch(ng)) THEN

@@ -1751,12 +1751,12 @@
       LiNL=my_outer+1
       DO ng=1,Ngrids
         CALL get_state (ng, iNLM, 9, INI(ng), LiNL, Lnew(ng))
-        IF (time_IAU(ng).eq.0.0_r8) THEN
+        IF (timeIAU(ng).eq.0.0_dp) THEN
           CALL get_state (ng, iADM, 4, ITL(ng), Rec2, LTLM1)
         END IF
       END DO
       DO ng=1,Ngrids
-        IF (time_IAU(ng).eq.0.0_r8) THEN
+        IF (timeIAU(ng).eq.0.0_dp) THEN
           DO tile=first_tile(ng),last_tile(ng),+1
             CALL ini_adjust (ng, tile, LTLM1, Lnew(ng))
           END DO
@@ -2330,7 +2330,7 @@
 !    Read the accumulated increment from Rec3 of the ITL file.
 !
         DO ng=1,Ngrids
-          IF (time_IAU(ng).gt.0.0_r8) THEN
+          IF (timeIAU(ng).gt.0.0_dp) THEN
             IAUswitch(ng)=.TRUE.
             CALL get_state (ng, iADM, 4, ITL(ng), Rec3, LTLM1)
           END IF
@@ -2340,7 +2340,7 @@
 !    analysis update.
 !
         DO ng=1,Ngrids
-          IF (time_IAU(ng).gt.0.0_r8) THEN
+          IF (timeIAU(ng).gt.0.0_dp) THEN
             DO tile=first_tile(ng),last_tile(ng),+1
               CALL frc_iau_ini (ng, tile, LTLM1)
             END DO
