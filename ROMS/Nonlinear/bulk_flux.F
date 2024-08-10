@@ -43,7 +43,7 @@
 !    Drennan, W. M., Graber, H. C., Hauser, D., & Quentin, C., 2003:   !
 !      On the wave age dependence of wind stress over pure wind seas.  !
 !      J. Geophys. Res: Oceans, 108(C3).                               !
-!                                                                      !                
+!                                                                      !
 !    Edson, J.B., Jampana, V., Weller, R.A., Bigorre, S.P.,            !
 !      Plueddemann, A.J., Fairall, C.W., Miller, S.D., Mahrt, L.,      !
 !      Vickers, D. and Hersbach, H., 2013. On the exchange of          !
@@ -75,7 +75,7 @@
 !  Modified by Jim Edson to correct specific humidities.               !
 !  Modified by John Wilkin to introduce WIND_MINUS_CURRENT (02/2018)   !
 !  Modified by Fernando Pareja-Roman and John Wilkin to introduce      !
-!      COARE 3.5 and correct the partition of vector stress (02/2024)  !     
+!      COARE 3.5 and correct the partition of vector stress (02/2024)  !
 !      To recover older COAREv3.0 #define COARE_30                     !
 !                                                                      !
 !=======================================================================
@@ -778,7 +778,7 @@
 # if defined COARE_30
 !
 !  Momentum roughness length based on COARE 3.0 (Fairall et al 2003, JPO)
-!  
+!
           IF (delW(i).gt.18.0_r8) THEN
             charn(i)=0.018_r8
           ELSE IF ((10.0_r8.lt.delW(i)).and.(delW(i).le.18.0_r8)) THEN
@@ -788,7 +788,7 @@
             charn(i)=0.011_r8
           END IF
 
-# else  
+# else
 !
 ! Momentum roughness length based on COARE 3.5 (Edson et al 2013, JPO)
 !
@@ -839,16 +839,16 @@
 !
 #if defined COARE_30
 !
-! Moisture and thermal roughness lengths, COARE 3.0      
-!           
-            ZoQ(i)=MIN(1.15e-4_r8,5.5e-5_r8/Rr(i)**0.6_r8)
-#else 
+! Moisture and thermal roughness lengths, COARE 3.0
 !
-! In COARE 3.5, moisture and thermal roughness lengths are adjusted 
+            ZoQ(i)=MIN(1.15e-4_r8,5.5e-5_r8/Rr(i)**0.6_r8)
+#else
+!
+! In COARE 3.5, moisture and thermal roughness lengths are adjusted
 ! to reflect COARE 3.0 fluxes (J. Edson, pers. comm, 11/2023)
 !
             ZoQ(i)=MIN(1.6e-4_r8,5.8e-5_r8/(Rr(i)**0.72_r8))
-# endif            
+# endif
             ZoT(i)=ZoQ(i)
 !
 !  Compute Monin-Obukhov stability parameter, Z/L.
@@ -949,7 +949,7 @@
 !  sensible heat (Ch), and latent heat (Ce).
 !
           Wspeed=SQRT(Wmag(i)*Wmag(i)+Wgus(i)*Wgus(i))
-!         Cd=Wstar(i)*Wstar(i)/(Wspeed*Wspeed+eps) ! used prior to 02/2024   
+!         Cd=Wstar(i)*Wstar(i)/(Wspeed*Wspeed+eps) ! used prior to 02/2024
 # if defined ICE_MODEL && defined ICE_BULK_FLUXES && defined ICE_THERMO
           Ch=Wstar(i)*Tstar(i)/(-Wspeed*delT(i)+0.0098_r8*blk_ZT(ng))
           Ce=Wstar(i)*Qstar(i)/(-Wspeed*delQ(i)+eps)
@@ -1009,16 +1009,16 @@
           LHeat(i,j)=LHeat(i,j)*rmask_wet(i,j)
 # endif
 !
-!  Horizontal momentum flux (N/m2) due to rain (kg/m2/s) impact 
+!  Horizontal momentum flux (N/m2) due to rain (kg/m2/s) impact
 !  traveling at 85% of air velocity
 !
           Taur=0.85_r8*ABS(rain(i,j))*Wmag(i)
 !
-!  Sum of stresses (N/m2) expressed as friction velocities.  
+!  Sum of stresses (N/m2) expressed as friction velocities.
 !  Normalization by Wmag (m/s) so that stress components (Taux,
 !  Tauy in N/m2) are cff times the respective wind components
-!  (Uair,Vair in m/s). 
-!    
+!  (Uair,Vair in m/s).
+!
           cff=rhoAir(i)*(Wstar(i)*Wstar(i)+Taur/rhoAir(i))/(Wmag(i)+eps)
 !
 !  In prior versions incorrect normalization included gustiness in

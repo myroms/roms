@@ -20,7 +20,7 @@
 
 ifneq (3.80,$(firstword $(sort $(MAKE_VERSION) 3.80)))
  $(error This makefile requires GNU make version 3.80 or higher. \
-		Your current version is: $(MAKE_VERSION))
+         Your current version is: $(MAKE_VERSION))
 endif
 
 #--------------------------------------------------------------------------

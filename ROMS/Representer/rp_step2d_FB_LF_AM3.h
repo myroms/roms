@@ -660,8 +660,8 @@
       IF (FIRST_2D_STEP) THEN
         kbak=kstp                      ! "kbak" is used as "from"
       ELSE                             ! time index for LF timestep
-        kbak=3-kstp                    
-      END IF                            
+        kbak=3-kstp
+      END IF
 
 #ifdef DEBUG
 !
@@ -766,7 +766,7 @@
      &                    IminS, ImaxS, JminS, JmaxS,                   &
      &                    NghostPoints,                                 &
      &                    EWperiodic(ng), NSperiodic(ng),               &
-     &                    DUon, DVom,                                   & 
+     &                    DUon, DVom,                                   &
      &                    tl_DUon, tl_DVom)
 #endif
 !
@@ -930,7 +930,7 @@
 !  "rufrc, rvfrc" are finalized, a correction term based on the
 !  difference zeta_new(:,:)-zeta(:,:,kstp) to "rubar, rvbar" to make
 !  them consistent with generalized RK2 stepping for pressure gradient
-!  terms. 
+!  terms.
 !
       IF (PREDICTOR_2D_STEP) THEN
         IF (FIRST_2D_STEP) THEN     ! Modified RK2 time step (with
@@ -1169,7 +1169,7 @@
 #ifdef SOLVE3D
 !
 !  Notice that we are suppressing the computation of momentum advection,
-!  Coriolis, and lateral viscosity terms in 3D Applications because 
+!  Coriolis, and lateral viscosity terms in 3D Applications because
 !  these terms are already included in the baroclinic-to-barotropic
 !  forcing arrays "rufrc" and "rvfrc". It does not mean we are entirely
 !  omitting them, but it is a choice between recomputing them at every
@@ -1939,7 +1939,7 @@
       END DO
 #endif
 
-#if (defined UV_COR & !defined SOLVE3D) || defined STEP2D_CORIOLIS 
+#if (defined UV_COR & !defined SOLVE3D) || defined STEP2D_CORIOLIS
 !
 !-----------------------------------------------------------------------
 !  Add in Coriolis term.
@@ -2487,7 +2487,7 @@
 !^          rzeta(i,j)=(1.0_r8+rhoS(i,j))*zwrk(i,j)
 !^
             tl_rzeta(i,j)=(1.0_r8+rhoS(i,j))*tl_zwrk(i,j)+              &
-     &                    tl_rhoS(i,j)+zwrk(i,j)-                       & 
+     &                    tl_rhoS(i,j)+zwrk(i,j)-                       &
 #  ifdef TL_IOMS
      &                    rhoS(i,j)*zwrk(i,j)
 #  endif
@@ -3403,7 +3403,7 @@
 #ifdef SOLVE3D
 !
 !-----------------------------------------------------------------------
-!  Finalize computation of barotropic mode averages. 
+!  Finalize computation of barotropic mode averages.
 !-----------------------------------------------------------------------
 !
 !  This procedure starts with filling in boundary rows of total depths
@@ -3658,7 +3658,7 @@
 !  Exchange boundary information.
 !-----------------------------------------------------------------------
 !
-      IF (EWperiodic(ng).or.NSperiodic(ng)) THEN 
+      IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
 !^      CALL exchange_r2d_tile (ng, tile,                               &
 !^   &                          LBi, UBi, LBj, UBj,                     &
 !^   &                          zeta(:,:,knew))

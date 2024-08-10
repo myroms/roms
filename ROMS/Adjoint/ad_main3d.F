@@ -1189,7 +1189,7 @@
 !  On the last timestep, it computes the adjoint of initial depths and
 !  level thicknesses from the initial free-surface field. Additionally,
 !  it initializes the adjoint state variables for all time levels and
-!  and applies lateral boundary conditions. 
+!  and applies lateral boundary conditions.
 !-----------------------------------------------------------------------
 !
             DO ig=1,GridsInLayer(nl)

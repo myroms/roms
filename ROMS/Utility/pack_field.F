@@ -525,7 +525,7 @@
 !     ifield       Field metadata index (integer)                      !
 !     tindex       Time record index to process (integer)              !
 !     LandFill     Switch to set fill value in land areas (logical)    !                                         !
-!     Extract_Flag Extraction flag interpolation/decimation (integer)  ! 
+!     Extract_Flag Extraction flag interpolation/decimation (integer)  !
 !     LBi          Donor field I-dimension Lower bound (integer)       !
 !     UBi          Donor field I-dimension Upper bound (integer)       !
 !     LBj          Donor field J-dimension Lower bound (integer)       !
@@ -836,7 +836,7 @@
 !     ifield       Field metadata index (integer)                      !
 !     tindex       Time record index to process (integer)              !
 !     LandFill     Switch to set fill value in land areas (logical)    !
-!     Extract_Flag Extraction flag interpolation/decimation (integer)  ! 
+!     Extract_Flag Extraction flag interpolation/decimation (integer)  !
 !     LBi          Field I-dimension Lower bound (integer)             !
 !     UBi          Field I-dimension Upper bound (integer)             !
 !     LBj          Field J-dimension Lower bound (integer)             !
@@ -1116,7 +1116,7 @@
 !     ifield       Field metadata index (integer)                      !
 !     tindex       Time record index to process (integer)              !
 !     LandFill     Switch to set fill value in land areas (logical)    !
-!     Extract_Flag Extraction flag interpolation/decimation (integer)  ! 
+!     Extract_Flag Extraction flag interpolation/decimation (integer)  !
 !     LBi          Field I-dimension Lower bound (integer)             !
 !     UBi          Field I-dimension Upper bound (integer)             !
 !     LBj          Field J-dimension Lower bound (integer)             !

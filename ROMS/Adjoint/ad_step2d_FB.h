@@ -594,7 +594,7 @@
       real(r8) :: adfac, adfac1, adfac2, adfac3, adfac4, adfac5
 !
       real(r8), parameter :: IniVal = 0.0_r8
-! 
+!
 #if defined UV_C4ADVECTION && !defined SOLVE3D
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Dgrad
 #endif
@@ -676,7 +676,7 @@
       real(r8), allocatable :: ad_zeta_new(:,:)
 
 #include "set_bounds.h"
-! 
+!
 !-----------------------------------------------------------------------
 !  Initialize adjoint private variables.
 !-----------------------------------------------------------------------
@@ -929,11 +929,11 @@
       ad_zeta_new = 0.0_r8
 !
 !  Compute "zeta_new" at new time step and interpolate it half-step
-!  backward, "zwrk" for the subsequent computation of the adjoint 
+!  backward, "zwrk" for the subsequent computation of the adjoint
 !  barotropic pressure gradient. Here, we use the BASIC STATE values.
 !  Thus, the nonlinear correction to the pressure-gradient term from
 !  "kstp" to "knew" is not needed for Forward-Euler to Forward-Backward
-!  steps (PGF_FB_CORRECTION method). 
+!  steps (PGF_FB_CORRECTION method).
 !
 !  Get background zeta_new from BASIC state. Notice the I- and J-range
 !  used to avoid calling nonlinear 'zetabc_local' routine.
@@ -1045,7 +1045,7 @@
      &                       ad_vbar(:,:,knew))
 #endif
 
-      IF (EWperiodic(ng).or.NSperiodic(ng)) THEN 
+      IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
 !^      CALL exchange_v2d_tile (ng, tile,                               &
 !^   &                          LBi, UBi, LBj, UBj,                     &
 !^   &                          tl_vbar(:,:,knew))
@@ -1463,7 +1463,7 @@
             adfac1=adfac*ubar(i,Jstr-1,knew)
             ad_ubar(i,Jstr-1,knew)=ad_ubar(i,Jstr-1,knew)+              &
      &                             (Dnew(i  ,Jstr-1)+                   &
-     &                              Dnew(i-1,Jstr-1))*adfac 
+     &                              Dnew(i-1,Jstr-1))*adfac
             ad_Dnew(i-1,Jstr-1)=ad_Dnew(i-1,Jstr-1)+adfac1
             ad_Dnew(i  ,Jstr-1)=ad_Dnew(i  ,Jstr-1)+adfac1
             ad_DU_flux(i,Jstr-1)=0.0_r8
@@ -1652,7 +1652,7 @@
           DO i=Istr-1,IendR
 !^          tl_Dnew(i,Jend+1)=tl_h(i,Jend+1)+tl_zeta_new(i,Jend+1)
 !^
-            ad_h(i,Jend+1)=ad_h(i,Jend+1)+                              & 
+            ad_h(i,Jend+1)=ad_h(i,Jend+1)+                              &
      &                     ad_Dnew(i,Jend+1)
             ad_zeta_new(i,Jend+1)=ad_zeta_new(i,Jend+1)+                &
      &                            ad_Dnew(i,Jend+1)
@@ -2079,8 +2079,8 @@
 !  subtracting the fast-time "rubar" and "rvbar" from them.
 !
 !  In the predictor-coupled mode, the resultant forcing terms "rufrc"
-!  and "rvfrc" are extrapolated forward in time, so they become 
-!  centered effectively at time n+1/2. This is done using optimized 
+!  and "rvfrc" are extrapolated forward in time, so they become
+!  centered effectively at time n+1/2. This is done using optimized
 !  Adams-Bashforth weights. In the code below, rufrc_bak(:,:,nstp) is
 !  at (n-1)time step, while rufrc_bak(:,:,3-nstp) is at (n-2). After
 !  its use as input, the latter is overwritten by the value at time
@@ -2104,9 +2104,9 @@
           cfwd0=1.5_r8
           cfwd1=-0.5_r8
           cfwd2=0.0_r8
-        ELSE                                
-          cfwd2=0.281105_r8                     
-          cfwd1=-0.5_r8-2.0_r8*cfwd2                 
+        ELSE
+          cfwd2=0.281105_r8
+          cfwd1=-0.5_r8-2.0_r8*cfwd2
           cfwd0=1.5_r8+cfwd2
         END IF
 !
@@ -2405,7 +2405,7 @@
 #ifdef SOLVE3D
 !
 !  Notice that we are suppressing the computation of momentum advection,
-!  Coriolis, and lateral viscosity terms in 3D Applications because 
+!  Coriolis, and lateral viscosity terms in 3D Applications because
 !  these terms are already included in the baroclinic-to-barotropic
 !  forcing arrays "rufrc" and "rvfrc". It does not mean we are entirely
 !  omitting them, but it is a choice between recomputing them at every
@@ -2777,7 +2777,7 @@
 !^
             adfac=0.5_r8*ad_fac2
             ad_VFe(i,j-1)=ad_VFe(i,j-1)+adfac
-            ad_VFe(i,j  )=ad_VFe(i,j  )+adfac          
+            ad_VFe(i,j  )=ad_VFe(i,j  )+adfac
             ad_fac2=0.0_r8
           END IF
 !
@@ -2955,7 +2955,7 @@
 #  endif
 !^   &                    tl_urhs(i,j  )))
 !^
-          adfac=0.25_r8*ad_UFe(i,j+1)       
+          adfac=0.25_r8*ad_UFe(i,j+1)
           adfac1=adfac*(urhs(i,j+1)+                                    &
 #  ifdef WEC_MELLOR
      &                  ubar_stokes(i,j+1)+                             &
@@ -3045,7 +3045,7 @@
      &                  vrhs(i  ,j))
           adfac2=adfac*(DUon(i+1,j)+DUon(i+1,j-1))
           ad_DUon(i+1,j-1)=ad_DUon(i+1,j-1)+adfac1
-          ad_DUon(i+1,j  )=ad_DUon(i+1,j  )+adfac1            
+          ad_DUon(i+1,j  )=ad_DUon(i+1,j  )+adfac1
           ad_vrhs(i  ,j)=ad_vrhs(i  ,j)+adfac2
           ad_vrhs(i+1,j)=ad_vrhs(i+1,j)+adfac2
 #  ifdef WEC_MELLOR
@@ -3877,7 +3877,7 @@
 !
       IF (FIRST_2D_STEP) THEN
         DO j=JstrR,JendR
-          DO i=IstrR,IendR 
+          DO i=IstrR,IendR
             IF (j.ge.Jstr) THEN
 !^            tl_DV_avg2(i,j)=cff2*tl_DVom(i,j)
 !^
@@ -4240,7 +4240,7 @@
       END DO
 !
       DO j=JR_RANGE
-        DO i=IR_RANGE 
+        DO i=IR_RANGE
 !^        tl_Drhs(i,j)=tl_h(i,j)+fwd0*tl_zeta(i,j,kstp)+                &
 !^   &                           fwd1*tl_zeta(i,j,kbak)+                &
 !^   &                           fwd2*tl_zeta(i,j,kold)

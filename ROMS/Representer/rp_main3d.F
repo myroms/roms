@@ -262,7 +262,7 @@
 !  On the first timestep, it computes the initial depths and level
 !  thicknesses from the initial free-surface field. Additionally, it
 !  initializes the tangent linear state variables for all time levels
-!  and applies lateral boundary conditions. 
+!  and applies lateral boundary conditions.
 !-----------------------------------------------------------------------
 !
             DO ig=1,GridsInLayer(nl)

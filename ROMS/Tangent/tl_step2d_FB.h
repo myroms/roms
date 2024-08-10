@@ -591,7 +591,7 @@
 #ifdef DEBUG
       real(r8), parameter :: IniVal = 0.0_r8
 #endif
-! 
+!
 #if defined UV_C4ADVECTION && !defined SOLVE3D
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Dgrad
 #endif
@@ -683,7 +683,7 @@
 #include "set_bounds.h"
 
 #ifdef DEBUG
-! 
+!
 !-----------------------------------------------------------------------
 !  Initialize private arrays for debugging.
 !-----------------------------------------------------------------------
@@ -829,7 +829,7 @@
 #endif
 
       DO j=JR_RANGE
-        DO i=IR_RANGE 
+        DO i=IR_RANGE
 !^        Drhs(i,j)=h(i,j)+fwd0*zeta(i,j,kstp)+                         &
 !^   &                     fwd1*zeta(i,j,kbak)+                         &
 !^   &                     fwd2*zeta(i,j,kold)
@@ -849,7 +849,7 @@
 !^        urhs(i,j)=fwd0*ubar(i,j,kstp)+                                &
 !^   &              fwd1*ubar(i,j,kbak)+                                &
 !^   &              fwd2*ubar(i,j,kold)
-!^                                            
+!^
           urhs(i,j)=ubar(i,j,kstp)              ! using background value
           tl_urhs(i,j)=fwd0*tl_ubar(i,j,kstp)+                          &
      &                 fwd1*tl_ubar(i,j,kbak)+                          &
@@ -912,7 +912,7 @@
      &                    IminS, ImaxS, JminS, JmaxS,                   &
      &                    NghostPoints,                                 &
      &                    EWperiodic(ng), NSperiodic(ng),               &
-     &                    DUon, DVom,                                   & 
+     &                    DUon, DVom,                                   &
      &                    tl_DUon, tl_DVom)
 #endif
 !
@@ -975,7 +975,7 @@
 !
 !  Notice that the new local free-surface is allocated so it can be
 !  passed as an argumment to "zetabc_local". An automatic array cannot
-!  be used here because of weird memory problems. 
+!  be used here because of weird memory problems.
 !
       allocate ( tl_zeta_new(IminS:ImaxS,JminS:JmaxS) )
       tl_zeta_new = 0.0_r8
@@ -1003,11 +1003,11 @@
 #undef JR_RANGE
 !
 !  Compute "zeta_new" at new time step and interpolate it half-step
-!  backward, "zwrk" for the subsequent computation of the tangent 
+!  backward, "zwrk" for the subsequent computation of the tangent
 !  linear barotropic pressure gradient. Here, we use the BASIC STATE
 !  values. Thus, the nonlinear correction to the pressure-gradient
 !  term from "kstp" to "knew" is not needed for Forward-Euler to
-!  Forward-Backward steps (PGF_FB_CORRECTION method). 
+!  Forward-Backward steps (PGF_FB_CORRECTION method).
 !
       DO j=JstrV-1,Jend
         DO i=IstrU-1,Iend
@@ -1126,7 +1126,7 @@
 !
       IF (FIRST_2D_STEP) THEN
         DO j=JstrR,JendR
-          DO i=IstrR,IendR 
+          DO i=IstrR,IendR
 !^          Zt_avg1(i,j)=cff1*zeta(i,j,knew)
 !^
             tl_Zt_avg1(i,j)=cff1*tl_zeta(i,j,knew)
@@ -1175,7 +1175,7 @@
 #ifdef SOLVE3D
 !
 !  Notice that we are suppressing the computation of momentum advection,
-!  Coriolis, and lateral viscosity terms in 3D Applications because 
+!  Coriolis, and lateral viscosity terms in 3D Applications because
 !  these terms are already included in the baroclinic-to-barotropic
 !  forcing arrays "rufrc" and "rvfrc". It does not mean we are entirely
 !  omitting them, but it is a choice between recomputing them at every
@@ -2197,8 +2197,8 @@
 !  subtracting the fast-time "rubar" and "rvbar" from them.
 !
 !  In the predictor-coupled mode, the resultant forcing terms "rufrc"
-!  and "rvfrc" are extrapolated forward in time, so they become 
-!  centered effectively at time n+1/2. This is done using optimized 
+!  and "rvfrc" are extrapolated forward in time, so they become
+!  centered effectively at time n+1/2. This is done using optimized
 !  Adams-Bashforth weights. In the code below, rufrc_bak(:,:,nstp) is
 !  at (n-1)time step, while rufrc_bak(:,:,3-nstp) is at (n-2). After
 !  its use as input, the latter is overwritten by the value at time
@@ -2222,9 +2222,9 @@
           cfwd0=1.5_r8
           cfwd1=-0.5_r8
           cfwd2=0.0_r8
-        ELSE                                
-          cfwd2=0.281105_r8                     
-          cfwd1=-0.5_r8-2.0_r8*cfwd2                 
+        ELSE
+          cfwd2=0.281105_r8
+          cfwd1=-0.5_r8-2.0_r8*cfwd2
           cfwd0=1.5_r8+cfwd2
         END IF
 !
@@ -2309,7 +2309,7 @@
 !^          rzeta(i,j)=(1.0_r8+rhoS(i,j))*zwrk(i,j)
 !^
             tl_rzeta(i,j)=(1.0_r8+rhoS(i,j))*tl_zwrk(i,j)+              &
-     &                    tl_rhoS(i,j)*zwrk(i,j) 
+     &                    tl_rhoS(i,j)*zwrk(i,j)
 !^          rzeta2(i,j)=rzeta(i,j)*(zeta_new(i,j)+zeta(i,j,kstp))
 !^
             tl_rzeta2(i,j)=tl_rzeta(i,j)*                               &
@@ -3274,7 +3274,7 @@
 !  Exchange halo tile information.
 !-----------------------------------------------------------------------
 !
-      IF (EWperiodic(ng).or.NSperiodic(ng)) THEN 
+      IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
 !^      CALL exchange_r2d_tile (ng, tile,                               &
 !^   &                          LBi, UBi, LBj, UBj,                     &
 !^   &                          zeta(:,:,knew))
