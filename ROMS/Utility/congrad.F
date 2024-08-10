@@ -136,7 +136,7 @@
       INTERFACE rprecond
 # ifdef SINGLE_PRECISION
         MODULE PROCEDURE rprecond_dp
-# endif 
+# endif
         MODULE PROCEDURE rprecond_r8
       END INTERFACE rprecond
 !

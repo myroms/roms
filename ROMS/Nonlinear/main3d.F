@@ -73,6 +73,10 @@
       USE gls_corstep_mod,      ONLY : gls_corstep
       USE gls_prestep_mod,      ONLY : gls_prestep
 # endif
+# if defined NLM_OUTER             || defined RBL4DVAR                 || \
+  defined RBL4DVAR_ANA_SENSITIVITY || defined RBL4DVAR_FCT_SENSITIVITY
+      USE frc_iau_mod,          ONLY : frc_iau
+# endif
 # if defined DIFF_3DCOEF || defined VISC_3DCOEF
       USE hmixing_mod,          ONLY : hmixing
 # endif
@@ -273,13 +277,32 @@
 !
             DO ig=1,GridsInLayer(nl)
               ng=GridNumber(ig,nl)
-#  if defined WEAK_NOINTERP
-              IF ((iic(ng).gt.1).and.(iic(ng).ne.ntend(ng)+1).and.      &
-     &            (MOD(iic(ng)-1,nadj(ng)).eq.0)) THEN
-                IF (Master) THEN
-                  WRITE (stdout,*) ' FORCING NLM at iic = ',iic(ng)
-                END IF
+#  ifdef RPCG
+              IF ((iic(ng).gt.INT(time_IAU(ng)*day2sec/dt(ng))).or.     &
+     &            time_IAU(ng).eq.0.0_r8) THEN
+                IAUswitch(ng)=.FALSE.
+              END IF
+              IF (FrequentImpulse(ng).or.IAUswitch(ng)) THEN
 #  endif
+#  if defined WEAK_NOINTERP
+                IF ((iic(ng).gt.1).and.(iic(ng).ne.ntend(ng)+1).and.    &
+     &              (MOD(iic(ng)-1,nadj(ng)).eq.0)) THEN
+                  IF (Master) THEN
+                    WRITE (stdout,*) ' FORCING NLM at iic = ',iic(ng)
+                  END IF
+#  endif
+#  ifdef RPCG
+                  IF (FrequentImpulse(ng).and.IAUswitch(ng)) THEN
+                    DO tile=first_tile(ng),last_tile(ng),+1
+                    CALL frc_iau (ng, tile, 1)
+                    END DO
+                  END IF
+                  DO tile=first_tile(ng),last_tile(ng),+1
+                    CALL forcing (ng, tile, kstp(ng), nstp(ng))
+                    CALL set_depth (ng, tile, iNLM)
+                  END DO
+!$OMP BARRIER
+#  else
                 IF (FrequentImpulse(ng)) THEN
                   DO tile=first_tile(ng),last_tile(ng),+1
                     CALL forcing (ng, tile, kstp(ng), nstp(ng))
@@ -287,7 +310,11 @@
                   END DO
 !$OMP BARRIER
                 END IF
+#  endif
 #  if defined WEAK_NOINTERP
+                END IF
+#  endif
+#  ifdef RPCG
               END IF
 #  endif
             END DO

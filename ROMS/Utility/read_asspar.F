@@ -200,6 +200,8 @@
                   tl_Tdiff(itrc,ng)=Rtracer(itrc,ng)
                 END DO
               END DO
+            CASE ('time_IAU')
+              Npts=load_r(Nval, Rval, Ngrids, time_IAU)
             CASE ('LdefNRM')
               Npts=load_l(Nval, Cval, 4, Ngrids, LdefNRM)
             CASE ('LwrtNRM')
@@ -855,6 +857,8 @@
 #     endif
 #    endif
 #   endif
+          WRITE (out,100) time_IAU(ng), 'time_IAU',                     &
+     &            'Duration of the incremental analysis update.'
 #   ifndef I4DVAR_ANA_SENSITIVITY
 #    ifdef I4DVAR
           WRITE (out,100) GradErr, 'GradErr',                           &

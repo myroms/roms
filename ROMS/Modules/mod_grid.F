@@ -339,7 +339,7 @@
 !
 ! Set global geometry 1D arrays, packed in column-major order, needed
 ! for field extraction by interpolation during writing to the proper
-! output NetCDF file. 
+! output NetCDF file.
 !
          real(r8), pointer :: Gangle_psi(:)
          real(r8), pointer :: Gangle_rho(:)

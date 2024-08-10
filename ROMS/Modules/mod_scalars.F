@@ -408,7 +408,7 @@
         logical, allocatable :: SetGridConfig(:)
 !
 !  Switch to procces (Get/Set) all input data in an application. It is
-!  set to .TRUE. by default. It is manipulated by the ROMS-JEDI 
+!  set to .TRUE. by default. It is manipulated by the ROMS-JEDI
 !  interface during ROMS Phase 3 initialization that applies lateral
 !  boundary condition to the initial state vector passed by OOPS. Some
 !  applications requited input data for lateral boundary conditons.
@@ -1269,6 +1269,17 @@
 !
         logical, allocatable :: SporadicImpulse(:)     ! intermittent
         logical, allocatable :: FrequentImpulse(:)     ! continuous
+
+# ifdef RPCG
+!
+!  Logical switch to control incremental analysis update forcing.
+!
+        logical, allocatable :: IAUswitch(:)
+!
+!  Duration of the incremental inalysis update
+!
+        real(r8), allocatable :: time_IAU(:)
+# endif
 !
 !  Stability and accuracy factor used to scale the time-step of the
 !  horizontal and vertical convolution operator below its theoretical
@@ -3193,6 +3204,18 @@
         allocate ( FrequentImpulse(Ngrids) )
         Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
+
+# ifdef RPCG
+      IF (.not.allocated(IAUswitch)) THEN
+        allocate ( IAUswitch(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
+      END IF
+
+      IF (.not.allocated(time_IAU)) THEN
+        allocate ( time_IAU(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
+      END IF
+# endif
 
       IF (.not.allocated(dTdz_min)) THEN
         allocate ( dTdz_min(Ngrids) )
