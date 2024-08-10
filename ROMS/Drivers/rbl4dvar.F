@@ -130,6 +130,9 @@
 # ifdef STD_MODEL
       USE def_std_mod,        ONLY : def_std
 # endif
+# ifdef RPCG
+      USE frc_iau_mod,        ONLY : frc_iau_ini
+# endif
       USE get_state_mod,      ONLY : get_state
 # ifdef POSTERIOR_ERROR_F
       USE ini_adjust_mod,     ONLY : load_TLtoAD
@@ -1748,12 +1751,16 @@
       LiNL=my_outer+1
       DO ng=1,Ngrids
         CALL get_state (ng, iNLM, 9, INI(ng), LiNL, Lnew(ng))
-        CALL get_state (ng, iADM, 4, ITL(ng), Rec2, LTLM1)
+        IF (timeIAU(ng).eq.0.0_dp) THEN
+          CALL get_state (ng, iADM, 4, ITL(ng), Rec2, LTLM1)
+        END IF
       END DO
       DO ng=1,Ngrids
-        DO tile=first_tile(ng),last_tile(ng),+1
-          CALL ini_adjust (ng, tile, LTLM1, Lnew(ng))
-        END DO
+        IF (timeIAU(ng).eq.0.0_dp) THEN
+          DO tile=first_tile(ng),last_tile(ng),+1
+            CALL ini_adjust (ng, tile, LTLM1, Lnew(ng))
+          END DO
+        END IF
       END DO
 !
 !  Write out nonlinear model initial conditions into INIname, record
@@ -2315,6 +2322,31 @@
         Fcount=RST(ng)%load
         RST(ng)%Nrec(Fcount)=0
       END DO
+
+# ifdef RPCG
+!
+! Compute the incremental analysis update forcing for the NLM.
+!
+!    Read the accumulated increment from Rec3 of the ITL file.
+!
+        DO ng=1,Ngrids
+          IF (timeIAU(ng).gt.0.0_dp) THEN
+            IAUswitch(ng)=.TRUE.
+            CALL get_state (ng, iADM, 4, ITL(ng), Rec3, LTLM1)
+          END IF
+        END DO
+!
+!    Set up the NL model forcing contribution for the incremental
+!    analysis update.
+!
+        DO ng=1,Ngrids
+          IF (timeIAU(ng).gt.0.0_dp) THEN
+            DO tile=first_tile(ng),last_tile(ng),+1
+              CALL frc_iau_ini (ng, tile, LTLM1)
+            END DO
+          END IF
+        END DO
+# endif
 !
       CALL initial
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
@@ -2494,6 +2526,15 @@
           wrtNLmod(ng)=.FALSE.
           wrtTLmod(ng)=.FALSE.
         END DO
+
+# ifdef RPCG
+!
+!  Deactivate the NL forcing term for iau.
+!
+        DO ng=1,Ngrids
+          IAUswitch(ng)=.FALSE.
+        END DO
+# endif
 !
 !  Set structure for the nonlinear forward trajectory to be processed
 !  by the tangent linear and adjoint models. Also, set switches to

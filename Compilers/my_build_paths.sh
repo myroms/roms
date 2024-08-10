@@ -178,7 +178,7 @@ case "$FORT" in
           export      NF_CONFIG=${NETCDF}/bin/nf-config
           export  NETCDF_INCDIR=${NETCDF}/include
           export        NETCDF4=1
-	fi
+        fi
       else
         export         ESMF_DIR=${MPI_SOFT}/esmf_nc3
         export           NETCDF=/opt/intelsoft/serial/netcdf3

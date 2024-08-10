@@ -230,11 +230,11 @@ endif
 ifdef SHARED
  ifdef EXEC
   ifndef STATIC
-	CYG_DLL_CP := cyg_dll_cp
+       CYG_DLL_CP := cyg_dll_cp
 
 .PHONY: cyg_dll_cp
 cyg_dll_cp: $(BIN)
-	$(CP) $(BUILD_DIR)/$(SH_LIB_NAME) $(BINDIR)
+            $(CP) $(BUILD_DIR)/$(SH_LIB_NAME) $(BINDIR)
 
   endif
  endif
@@ -323,4 +323,4 @@ endif
 #
 
 %.o: %.f90
-	cd $(BUILD_DIR); $(FC) $(FFLAGS) /compile (notdir $<) /object:$(notdir $@)
+        cd $(BUILD_DIR); $(FC) $(FFLAGS) /compile (notdir $<) /object:$(notdir $@)

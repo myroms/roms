@@ -16,7 +16,7 @@
 !                                                                      !
 !  If ExtractFlag > 1:   Decimation                                    !
 !                                                                      !
-!  It decimates the field solution at the prescribed integer factor,   !    
+!  It decimates the field solution at the prescribed integer factor,   !
 !  ExtractFlag . For example, if ExtractFlag=2 (recommended), the      !
 !  output fieldsare written at every other point, resulting in coarser !
 !  data resolution. This strategy is advantageous in mixed resolution, !

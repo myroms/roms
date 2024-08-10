@@ -15,16 +15,16 @@ if( MPI )
   if( ${COMM} MATCHES "intel")
     execute_process( COMMAND which mpiifort
                      OUTPUT_VARIABLE CMAKE_Fortran_COMPILER
-                     OUTPUT_STRIP_TRAILING_WHITESPACE ) 
+                     OUTPUT_STRIP_TRAILING_WHITESPACE )
   else()
     execute_process( COMMAND which mpif90
                      OUTPUT_VARIABLE CMAKE_Fortran_COMPILER
-                     OUTPUT_STRIP_TRAILING_WHITESPACE ) 
+                     OUTPUT_STRIP_TRAILING_WHITESPACE )
   endif()
 else()
   execute_process( COMMAND which ifort
                    OUTPUT_VARIABLE CMAKE_Fortran_COMPILER
-                   OUTPUT_STRIP_TRAILING_WHITESPACE ) 
+                   OUTPUT_STRIP_TRAILING_WHITESPACE )
 endif()
 
 ###########################################################################

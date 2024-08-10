@@ -1406,7 +1406,7 @@
 # ifdef DISTRIBUTE
       USE distribute_mod, ONLY : mp_bcasts
 # endif
-      USE stdout_mod,     ONLY : Set_StdOutUnit, stdout_unit  
+      USE stdout_mod,     ONLY : Set_StdOutUnit, stdout_unit
       USE strings_mod,    ONLY : lowercase
 !
       implicit none

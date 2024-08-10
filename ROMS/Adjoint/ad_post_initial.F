@@ -45,7 +45,7 @@
 !
 !  Local variable declarations.
 !
-      integer :: tile      
+      integer :: tile
 
 # ifdef NESTING
 !

@@ -45,7 +45,7 @@
 !
 !  Local variable declarations.
 !
-      integer :: tile      
+      integer :: tile
 !
 !-----------------------------------------------------------------------
 !  Initialize free-surface and compute initial level thicknesses and
