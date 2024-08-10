@@ -677,8 +677,8 @@
       IF (FIRST_2D_STEP) THEN
         kbak=kstp                      ! "kbak" is used as "from"
       ELSE                             ! time index for LF timestep
-        kbak=3-kstp                    
-      END IF                            
+        kbak=3-kstp
+      END IF
 
 #ifdef DEBUG
 !
@@ -688,7 +688,7 @@
      &          ' kbak = ',i1,' krhs = ',i1,' kstp = ',i1,' knew = ',i1)
       END IF
 #endif
-! 
+!
 !-----------------------------------------------------------------------
 !  Initialize adjoint private variables.
 !-----------------------------------------------------------------------
@@ -1013,7 +1013,7 @@
      &                       ad_vbar(:,:,knew))
 
 #endif
-      IF (EWperiodic(ng).or.NSperiodic(ng)) THEN 
+      IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
 !^      CALL exchange_v2d_tile (ng, tile,                               &
 !^   &                          LBi, UBi, LBj, UBj,                     &
 !^   &                          tl_vbar(:,:,knew))
@@ -1107,7 +1107,7 @@
 #ifdef SOLVE3D
 !
 !-----------------------------------------------------------------------
-!  Adjoint of finalize computation of barotropic mode averages. 
+!  Adjoint of finalize computation of barotropic mode averages.
 !-----------------------------------------------------------------------
 !
 !  This procedure starts with filling in boundary rows of total depths
@@ -1464,7 +1464,7 @@
             adfac1=adfac*ubar(i,Jstr-1,knew)
             ad_ubar(i,Jstr-1,knew)=ad_ubar(i,Jstr-1,knew)+              &
      &                             (Dnew(i  ,Jstr-1)+                   &
-     &                              Dnew(i-1,Jstr-1))*adfac 
+     &                              Dnew(i-1,Jstr-1))*adfac
             ad_Dnew(i-1,Jstr-1)=ad_Dnew(i-1,Jstr-1)+adfac1
             ad_Dnew(i  ,Jstr-1)=ad_Dnew(i  ,Jstr-1)+adfac1
             ad_DU_flux(i,Jstr-1)=0.0_r8
@@ -2293,7 +2293,7 @@
             tl_zeta(i,j,kstp)=tl_zeta(i,j,kstp)+cff3*adfac
             ad_rzeta2(i,j)=0.0_r8
 !^          tl_rzeta(i,j)=(1.0_r8+rhoS(i,j))*tl_zwrk(i,j)+              &
-!^   &                    tl_rhoS(i,j)*zwrk(i,j) 
+!^   &                    tl_rhoS(i,j)*zwrk(i,j)
 !^
             ad_zwrk(i,j)=ad_zwrk(i,j)+(1.0_r8+rhoS(i,j))*ad_rzeta(i,j)
             ad_rhoS(i,j)=ad_rhoS(i,j)+zwrk(i,j)*ad_rzeta(i,j)
@@ -2383,7 +2383,7 @@
 #ifdef SOLVE3D
 !
 !  Notice that we are suppressing the computation of momentum advection,
-!  Coriolis, and lateral viscosity terms in 3D Applications because 
+!  Coriolis, and lateral viscosity terms in 3D Applications because
 !  these terms are already included in the baroclinic-to-barotropic
 !  forcing arrays "rufrc" and "rvfrc". It does not mean we are entirely
 !  omitting them, but it is a choice between recomputing them at every
@@ -2790,7 +2790,7 @@
       END DO
 #endif
 
-#if (defined UV_COR & !defined SOLVE3D) || defined STEP2D_CORIOLIS 
+#if (defined UV_COR & !defined SOLVE3D) || defined STEP2D_CORIOLIS
 !
 !-----------------------------------------------------------------------
 !  Add in Coriolis term.
@@ -2809,7 +2809,7 @@
 !^
             adfac=0.5_r8*ad_fac2
             ad_VFe(i,j-1)=ad_VFe(i,j-1)+adfac
-            ad_VFe(i,j  )=ad_VFe(i,j  )+adfac          
+            ad_VFe(i,j  )=ad_VFe(i,j  )+adfac
             ad_fac2=0.0_r8
           END IF
 !
@@ -3984,7 +3984,7 @@
 !  "rufrc, rvfrc" are finalized, a correction term based on the
 !  difference zeta_new(:,:)-zeta(:,:,kstp) to "rubar, rvbar" to make
 !  them consistent with generalized RK2 stepping for pressure gradient
-!  terms. 
+!  terms.
 !
       IF (PREDICTOR_2D_STEP) THEN
         IF (FIRST_2D_STEP) THEN     ! Modified RK2 time step (with
@@ -4284,7 +4284,7 @@
 !^   &                    IminS, ImaxS, JminS, JmaxS,                   &
 !^   &                    NghostPoints,                                 &
 !^   &                    EWperiodic(ng), NSperiodic(ng),               &
-!^   &                    DUon, DVom,                                   & 
+!^   &                    DUon, DVom,                                   &
 !^   &                    tl_DUon, tl_DVom)
 !^
       CALL ad_mp_exchange2d (ng, tile, iTLM, 2,                         &

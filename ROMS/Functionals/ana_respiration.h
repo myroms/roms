@@ -101,7 +101,7 @@
       DO k=1,N(ng)
         DO j=JstrT,JendT
           DO i=IstrT,IendT
-	    respiration(i,j,k)=ResRate(ng)
+            respiration(i,j,k)=ResRate(ng)
           END DO
         END DO
       END DO

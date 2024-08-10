@@ -4115,7 +4115,7 @@
             CASE ('GRDNAME')
               label='GRD - application grid'
               Npts=load_s1d(Nval, Cval, Cdim, line, label, igrid,       &
-     &                      Ngrids, Nfiles, inp_lib, GRD) 
+     &                      Ngrids, Nfiles, inp_lib, GRD)
             CASE ('GRXNAME')
               label='GRX - I/O histrory extract grid'
               Npts=load_s1d(Nval, Cval, Cdim, line, label, igrid,       &

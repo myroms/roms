@@ -877,7 +877,7 @@
 ** Define internal option to process wave data.
 */
 
-#if (defined ROLLER_SVENDSEN || defined ROLLER_MONO ||	\
+#if (defined ROLLER_SVENDSEN || defined ROLLER_MONO || \
      defined ROLLER_RENIERS) && defined WEC
 # define WEC_ROLLER
 #endif
