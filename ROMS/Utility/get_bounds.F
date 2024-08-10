@@ -858,7 +858,7 @@
 !  Imported variable declarations.
 !
       integer, intent(in)  :: ng, tile
-      integer, intent(in)  :: my_Lm, my_Mm      
+      integer, intent(in)  :: my_Lm, my_Mm
       integer, intent(out) :: Itile, Jtile
       integer, intent(out) :: Iend, Istr, Jend, Jstr
       integer, intent(out) :: IstrM, IstrR, IstrU, IendR

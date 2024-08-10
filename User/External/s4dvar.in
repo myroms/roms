@@ -165,6 +165,11 @@ balance(isVvel) =  T                      ! 3D momentum (u, v)
 
        tl_Tdiff ==  50.0d0  50.0d0        ! NT tracers
 
+! Duration of the Incremental Analysis Update (days) [1:Ngrids].
+! NOTE: This option is only available for RBL4DVAR and when using RPCG.
+
+        timeIAU == 0.0d0
+
 ! Switches (T/F) to create and write error covariance normalization
 ! factors for model, initial conditions, boundary conditions, and
 ! surface forcing. If TRUE, these factors are computed and written
@@ -709,6 +714,25 @@ Sigma_max(isTvar) == 0.33d0   0.056d0  ! 1:NT tracers maximum STD
 !
 !  tl_Tdiff       Tracers type variables diffusion relaxation coefficients
 !                 (m2/s).  NT values are expected.
+!
+!------------------------------------------------------------------------------
+! Incremental Analysis Update (IAU)
+!------------------------------------------------------------------------------
+!
+!  timeIAU        Duration of the Incremental Analysis Update (days),
+!                 [1:Ngrids]. It controls the time interval over which
+!                 the IAU is applied.
+!
+!                 This option is only available for RBL4DVAR and when using
+!                 RPCG minimizer.
+!
+!                 In SPLIT_RBL4DVAR, you can the analysis phase multiple 
+!                 times experimenting with different values of timeIAU
+!                 to see which works best, without having to rerun the
+!                 inner-loops again (increment phase). You can only do
+!                 this if SPLIT_RBL4DVAR is first run with a non-zero
+!                 value of timeIAU, otherwise the initial condition will
+!                 get overwritten in the initial NetCDF file.
 !
 !------------------------------------------------------------------------------
 ! Background/model correlation parameters.

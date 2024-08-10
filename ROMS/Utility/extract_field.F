@@ -16,7 +16,7 @@
 !                                                                      !
 !  If Extract_Flag > 1:   Decimation                                   !
 !                                                                      !
-!  It decimates the field solution at the prescribed integer factor,   !    
+!  It decimates the field solution at the prescribed integer factor,   !
 !  Extract_Flag . For example, if Extract_Flag=2 (recommended), the    !
 !  output fieldsare written at every other point, resulting in coarser !
 !  data resolution. This strategy is advantageous in mixed resolution, !
@@ -288,7 +288,7 @@
 !
 !  Imported variable declarations.
 !
-      integer,  intent(in)    :: ng, model, tile 
+      integer,  intent(in)    :: ng, model, tile
       integer,  intent(in)    :: gtype, ifield, tindex, Extract_Flag
       integer,  intent(in)    :: Imin, Imax, Jmin, Jmax
       integer,  intent(in)    :: Npts
@@ -306,7 +306,7 @@
 !------------------------------------------------------------------------
 !  Decimate or interpolate 2D field.
 !------------------------------------------------------------------------
-! 
+!
       IF (Extract_Flag.ge.2) THEN
         CALL decimate_field2d (ng, model, tile,                         &
      &                         gtype, ifield, tindex, Extract_Flag,     &
@@ -372,7 +372,7 @@
 !
 !  Imported variable declarations.
 !
-      integer,  intent(in)    :: ng, model, tile 
+      integer,  intent(in)    :: ng, model, tile
       integer,  intent(in)    :: gtype, ifield, tindex, Extract_Flag
       integer,  intent(in)    :: Imin, Imax, Jmin, Jmax, Kmin, Kmax
       integer,  intent(in)    :: Npts
@@ -465,7 +465,7 @@
 !
 !  Imported variable declarations.
 !
-      integer,  intent(in)    :: ng, model, tile 
+      integer,  intent(in)    :: ng, model, tile
       integer,  intent(in)    :: gtype, ifield, tindex, Extract_Flag
       integer,  intent(in)    :: Imin, Imax, Jmin, Jmax, Kmin, Kmax
       integer,  intent(in)    :: fourth, Loff
@@ -548,7 +548,7 @@
 !
 !  Imported variable declarations.
 !
-      integer,  intent(in)  :: ng, model, tile 
+      integer,  intent(in)  :: ng, model, tile
       integer,  intent(in)  :: gtype, Extract_Flag
       integer,  intent(in)  :: Imin, Imax, Jmin, Jmax, Nrec
       integer,  intent(in)  :: Npts
@@ -597,7 +597,7 @@
             DO ir=1,Nrec
               rc=(ir-1)*IorJ*4
               DO ib=1,4
-                bc=(ib-1)*IorJ+rc            
+                bc=(ib-1)*IorJ+rc
                 IF (bounded(ib).and.                                    &
      &              ((ib.eq.isouth).or.(ib.eq.inorth))) THEN
                   DO i=Imin,Imax-1
@@ -616,7 +616,7 @@
             DO ir=1,Nrec
               rc=(ir-1)*IorJ*4
               DO ib=1,4
-                bc=(ib-1)*IorJ+rc            
+                bc=(ib-1)*IorJ+rc
                 IF (bounded(ib).and.                                    &
      &              ((ib.eq.iwest).or.(ib.eq.ieast))) THEN
                   DO j=Jmin,Jmax-1
@@ -669,7 +669,7 @@
 !
 !  Imported variable declarations.
 !
-      integer,  intent(in)  :: ng, model, tile 
+      integer,  intent(in)  :: ng, model, tile
       integer,  intent(in)  :: gtype, Extract_Flag
       integer,  intent(in)  :: Imin, Imax, Jmin, Jmax, LBk, UBk, Nrec
       integer,  intent(in)  :: Npts
@@ -708,7 +708,7 @@
 !
       IF (Extract_Flag.ge.2) THEN
         Klen=UBk-LBk+1
-        IJKlen=IorJ*Klen      
+        IJKlen=IorJ*Klen
 !
         SELECT CASE (gtype)
 !
@@ -795,7 +795,7 @@
 !
 !  Imported variable declarations.
 !
-      integer,  intent(in)  :: ng, model, tile 
+      integer,  intent(in)  :: ng, model, tile
       integer,  intent(in)  :: gtype, ifield, Extract_Flag
       integer,  intent(in)  :: Imin, Imax, Jmin, Jmax
       integer,  intent(in)  :: Npts
@@ -889,7 +889,7 @@
 !
 !  Imported variable declarations.
 !
-      integer,  intent(in)  :: ng, model, tile 
+      integer,  intent(in)  :: ng, model, tile
       integer,  intent(in)  :: gtype, ifield, Extract_Flag
       integer,  intent(in)  :: Imin, Imax, Jmin, Jmax, Kmin, Kmax
       integer,  intent(in)  :: Npts
@@ -928,8 +928,8 @@
             Koff=0
             DO k=Kmin,Kmax                  ! Average data at RHO points
               DO j=Jmin,Jmax
-                DO i=Imin,Imax-1 
-                  ij=i+Ioff+(j-1+Joff)*Isize          
+                DO i=Imin,Imax-1
+                  ij=i+Ioff+(j-1+Joff)*Isize
                   ijk=ij+(k-1+Koff)*IJsize
                   Favg(ijk)=0.5_r8*(Fdat(ijk)+Fdat(ijk+1))
                 END DO
@@ -947,7 +947,7 @@
             DO k=Kmin,Kmax                  ! Average data at RHO points
               DO j=Jmin,Jmax-1
                 DO i=Imin,Imax
-                  ij=i+Ioff+(j-1+Joff)*Isize          
+                  ij=i+Ioff+(j-1+Joff)*Isize
                   ijk=ij+(k-1+Koff)*IJsize
                   Favg(ijk)=0.5_r8*(Fdat(ijk)+Fdat(ijk+Isize))
                 END DO
@@ -1003,7 +1003,7 @@
 !
 !  Imported variable declarations.
 !
-      integer,  intent(in)    :: ng, model, tile 
+      integer,  intent(in)    :: ng, model, tile
       integer,  intent(in)    :: gtype, tindex, Extract_Flag
       integer,  intent(in)    :: Imin, Imax, Jmin, Jmax
       integer,  intent(in)    :: Nrec, Npts
@@ -1028,7 +1028,7 @@
 !------------------------------------------------------------------------
 !  Decimate input packed 2D boundary by requested factor.
 !------------------------------------------------------------------------
-! 
+!
       ifactor=ABS(Extract_Flag)
       IorJ=IOBOUNDS(ng)%IorJ
 !
@@ -1044,12 +1044,12 @@
           DO ir=1,Nrec
             rc=(ir-1)*IorJ*4
             DO ib=1,4
-              bc=(ib-1)*IorJ+rc            
+              bc=(ib-1)*IorJ+rc
               DO ij=1,IorJ,ifactor
                 ic=ic+1
                 Bdat(ic)=Bwrk(ij)
               END DO
-              IF ((ir.eq.1).and.(ib.eq.1)) IJdim=ic         
+              IF ((ir.eq.1).and.(ib.eq.1)) IJdim=ic
             END DO
           END DO
           Mpts=ic
@@ -1068,12 +1068,12 @@
           DO ir=1,Nrec
             rc=(ir-1)*IorJ*4
             DO ib=1,4
-              bc=(ib-1)*IorJ+rc            
+              bc=(ib-1)*IorJ+rc
               DO ij=1,IorJ,ifactor
                 ic=ic+1
                 Bdat(ic)=Bwrk(ij)
               END DO
-              IF ((ir.eq.1).and.(ib.eq.1)) IJdim=ic         
+              IF ((ir.eq.1).and.(ib.eq.1)) IJdim=ic
             END DO
           END DO
           Mpts=ic
@@ -1092,12 +1092,12 @@
           DO ir=1,Nrec
             rc=(ir-1)*IorJ*4
             DO ib=1,4
-              bc=(ib-1)*IorJ+rc            
+              bc=(ib-1)*IorJ+rc
               DO ij=1,IorJ,ifactor
                 ic=ic+1
                 Bdat(ic)=Bwrk(ij)
               END DO
-              IF ((ir.eq.1).and.(ib.eq.1)) IJdim=ic         
+              IF ((ir.eq.1).and.(ib.eq.1)) IJdim=ic
             END DO
           END DO
           Mpts=ic
@@ -1176,7 +1176,7 @@
 !
 !  Imported variable declarations.
 !
-      integer,  intent(in)    :: ng, model, tile 
+      integer,  intent(in)    :: ng, model, tile
       integer,  intent(in)    :: gtype, tindex, Extract_Flag
       integer,  intent(in)    :: Imin, Imax, Jmin, Jmax, LBk, UBk
       integer,  intent(in)    :: Nrec, Npts
@@ -1201,11 +1201,11 @@
 !------------------------------------------------------------------------
 !  Decimate input packed 3D boundary by requested factor.
 !------------------------------------------------------------------------
-! 
+!
       ifactor=ABS(Extract_Flag)
       IorJ=IOBOUNDS(ng)%IorJ
       Klen=UBk-LBk+1
-      IJKlen=IorJ*Klen      
+      IJKlen=IorJ*Klen
 !
       SELECT CASE (gtype)
 !
@@ -1225,7 +1225,7 @@
                   ic=ic+1
                   Bwrk(ic)=Bdat(ij)
                 END DO
-                IF ((ir.eq.1).and.(ib.eq.1).and.(k.eq.LBk)) IJdim=ic         
+                IF ((ir.eq.1).and.(ib.eq.1).and.(k.eq.LBk)) IJdim=ic
               END DO
             END DO
           END DO
@@ -1252,7 +1252,7 @@
                   ic=ic+1
                   Bwrk(ic)=Bdat(ij)
                 END DO
-                IF ((ir.eq.1).and.(ib.eq.1).and.(k.eq.LBk)) IJdim=ic         
+                IF ((ir.eq.1).and.(ib.eq.1).and.(k.eq.LBk)) IJdim=ic
               END DO
             END DO
           END DO
@@ -1279,7 +1279,7 @@
                   ic=ic+1
                   Bwrk(ic)=Bdat(ij)
                 END DO
-                IF ((ir.eq.1).and.(ib.eq.1).and.(k.eq.LBk)) IJdim=ic         
+                IF ((ir.eq.1).and.(ib.eq.1).and.(k.eq.LBk)) IJdim=ic
               END DO
             END DO
           END DO
@@ -1356,7 +1356,7 @@
 !
 !  Imported variable declarations.
 !
-      integer,  intent(in)    :: ng, model, tile 
+      integer,  intent(in)    :: ng, model, tile
       integer,  intent(in)    :: gtype, ifield, tindex, Extract_Flag
       integer,  intent(in)    :: Imin, Imax, Jmin, Jmax
       integer,  intent(in)    :: Npts
@@ -1379,7 +1379,7 @@
 !------------------------------------------------------------------------
 !  Decimate input packed 2D field by requested factor.
 !------------------------------------------------------------------------
-! 
+!
       ifactor=ABS(Extract_Flag)
       Isize=Imax-Imin+1
       Jsize=Jmax-Jmin+1
@@ -1545,7 +1545,7 @@
 !
 !  Imported variable declarations.
 !
-      integer,  intent(in)    :: ng, model, tile 
+      integer,  intent(in)    :: ng, model, tile
       integer,  intent(in)    :: gtype, ifield, tindex, Extract_Flag
       integer,  intent(in)    :: Imin, Imax, Jmin, Jmax, Kmin, Kmax
       integer,  intent(in)    :: Npts
@@ -1790,7 +1790,7 @@
 !
 !  Imported variable declarations.
 !
-      integer,  intent(in)    :: ng, model, tile 
+      integer,  intent(in)    :: ng, model, tile
       integer,  intent(in)    :: gtype, ifield, tindex, Extract_Flag
       integer,  intent(in)    :: Imin, Imax, Jmin, Jmax, Kmin, Kmax
       integer,  intent(in)    :: fourth, Loff
@@ -2255,28 +2255,28 @@
      &                          GRID(ng)%angler(i  ,j-1)+               &
      &                          GRID(ng)%angler(i  ,j  ))
           END DO
-        END DO                
+        END DO
       ELSE IF (Cgrid.eq.2) THEN                           ! RHO-points
         DO j=JstrT,JendT
           DO i=IstrT,IendT
             angle(i,j)=GRID(ng)%angler(i,j)
           END DO
-        END DO                
+        END DO
       ELSE IF (Cgrid.eq.3) THEN                           ! U-points
         DO j=JstrT,JendT
           DO i=IstrP,IendT
             angle(i,j)=0.5_r8*(GRID(ng)%angler(i-1,j)+                  &
      &                         GRID(ng)%angler(i  ,j))
           END DO
-        END DO                
+        END DO
       ELSE IF (Cgrid.eq.4) THEN                           ! V-points
         DO j=JstrP,JendT
           DO i=IstrT,IendT
             angle(i,j)=0.5_r8*(GRID(ng)%angler(i,j-1)+                  &
      &                         GRID(ng)%angler(i,j  ))
           END DO
-        END DO                
-      END IF      
+        END DO
+      END IF
 
 # ifdef DISTRIBUTE
 !
@@ -2456,7 +2456,7 @@
 !
 !  Imported variable declarations.
 !
-      integer,  intent(in)    :: ng, model, tile 
+      integer,  intent(in)    :: ng, model, tile
       integer,  intent(in)    :: gtype, ifield, tindex
       integer,  intent(in)    :: Imin, Imax, Jmin, Jmax
       integer,  intent(in)    :: Npts
@@ -2485,7 +2485,7 @@
 !------------------------------------------------------------------------
 !  Interpolate
 !------------------------------------------------------------------------
-! 
+!
       LandFill=.TRUE.
       ghost=0
       method=Bilinear
@@ -2744,7 +2744,7 @@
 !
 !  Imported variable declarations.
 !
-      integer,  intent(in)  :: ng, model, tile 
+      integer,  intent(in)  :: ng, model, tile
       integer,  intent(in)  :: gtype, ifield, tindex
       integer,  intent(in)  :: Imin, Imax, Jmin, Jmax, Kmin, Kmax
       integer,  intent(in)  :: Npts
@@ -3035,7 +3035,7 @@
 !
 !  Imported variable declarations.
 !
-      integer,  intent(in)    :: ng, model, tile 
+      integer,  intent(in)    :: ng, model, tile
       integer,  intent(in)    :: gtype, ifield, tindex
       integer,  intent(in)    :: Imin, Imax, Jmin, Jmax, Kmin, Kmax
       integer,  intent(in)    :: fourth, Loff
@@ -3322,7 +3322,7 @@
 !
 !  Imported variable declarations.
 !
-      integer,  intent(in)    :: ng, model, tile 
+      integer,  intent(in)    :: ng, model, tile
       integer,  intent(in)    :: gtype, ifield, tindex
       integer,  intent(in)    :: Imin, Imax, Jmin, Jmax
       integer,  intent(in)    :: Npts
@@ -3351,7 +3351,7 @@
 !------------------------------------------------------------------------
 !  Interpolate
 !------------------------------------------------------------------------
-! 
+!
       LandFill=.TRUE.
       ghost=0
       method=Bilinear
@@ -3544,7 +3544,7 @@
 !
 !  Imported variable declarations.
 !
-      integer,  intent(in)  :: ng, model, tile 
+      integer,  intent(in)  :: ng, model, tile
       integer,  intent(in)  :: gtype, ifield, tindex
       integer,  intent(in)  :: Imin, Imax, Jmin, Jmax, Kmin, Kmax
       integer,  intent(in)  :: Npts
@@ -3769,7 +3769,7 @@
 !
 !  Imported variable declarations.
 !
-      integer,  intent(in)    :: ng, model, tile 
+      integer,  intent(in)    :: ng, model, tile
       integer,  intent(in)    :: gtype, ifield, tindex
       integer,  intent(in)    :: Imin, Imax, Jmin, Jmax, Kmin, Kmax
       integer,  intent(in)    :: fourth, Loff
@@ -4091,7 +4091,7 @@
         DO i=Istr,Iend
           ic=ic+1
 # ifdef MASKING
-          IF ((maskOut(i,j).lt.1.0_r8).and.LandFill) THEN    
+          IF ((maskOut(i,j).lt.1.0_r8).and.LandFill) THEN
             Fout(i,j)=spval
           ELSE
             Fmin=MIN(Fmin,Fout(i,j))
@@ -4256,7 +4256,7 @@
           DO i=Istr,Iend
             ic=ic+1
 # ifdef MASKING
-            IF ((maskOut(i,j).lt.1.0_r8).and.LandFill) THEN    
+            IF ((maskOut(i,j).lt.1.0_r8).and.LandFill) THEN
               Fout(i,j,k)=spval
             ELSE
               Fmin=MIN(Fmin,Fout(i,j,k))
