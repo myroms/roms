@@ -56,7 +56,9 @@
       PRIVATE
       PUBLIC :: ini_fields
       PUBLIC :: ini_zeta
+# ifdef SOLVE3D
       PUBLIC :: set_zeta_timeavg
+# endif
 !
       CONTAINS
 !
