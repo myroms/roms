@@ -54,7 +54,9 @@
       PRIVATE
       PUBLIC :: ad_ini_fields
       PUBLIC :: ad_ini_zeta
+# ifdef SOLVE3D
       PUBLIC :: ad_set_zeta_timeavg
+# endif
       PUBLIC :: ad_out_fields
       PUBLIC :: ad_out_zeta
 !
