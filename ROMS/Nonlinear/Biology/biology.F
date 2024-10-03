@@ -1,7 +1,7 @@
 #include "cppdefs.h"
 #if defined NONLINEAR && defined BIOLOGY
-/
-*
+
+/*
 ** git $Id$
 ************************************************************************
 **                                                                    **
