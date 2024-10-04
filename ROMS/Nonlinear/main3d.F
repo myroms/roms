@@ -106,6 +106,11 @@
       USE obc_adjust_mod,       ONLY : obc_adjust, load_obc
 # endif
       USE omega_mod,            ONLY : omega
+# if defined VEGETATION && defined MARSH_DYNAMICS
+      USE mod_vegetation 
+      USE mod_vegarr
+      USE marsh_dynamics_mod, ONLY : marsh_dynamics
+# endif
       USE post_initial_mod,     ONLY : post_initial
 # ifndef TS_FIXED
       USE rho_eos_mod,          ONLY : rho_eos
@@ -1033,6 +1038,19 @@
 !$OMP BARRIER
             END DO
 
+# if defined VEGETATION && defined MARSH_DYNAMICS
+!
+!-----------------------------------------------------------------------
+!  Calculate marsh erosion due to wave thrust. 
+!-----------------------------------------------------------------------
+!
+            DO ig=1,GridsInLayer(nl)
+              ng=GridNumber(ig,nl)
+              DO tile=first_tile(ng),last_tile(ng),+1
+                CALL marsh_dynamics (ng, tile)
+              END DO
+            END DO
+# endif 
 # ifndef TS_FIXED
 !
 !-----------------------------------------------------------------------

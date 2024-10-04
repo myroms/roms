@@ -187,6 +187,10 @@
         integer :: M3wrol          ! 3D momentum, wave roller accel
         integer :: M3wbrk          ! 3D momentum, wave breaking
 #   endif
+#   if defined VEGETATION && defined VEG_DRAG
+        integer :: M3fveg          ! 3D momentum, vegetation drag force
+        integer :: M2fveg          ! 2D momentum, vegetation drag force
+#   endif
         integer :: M3pgrd          ! 3D momentum, pressure gradient
         integer :: M3vvis          ! 3D momentum, vertical viscosity
         integer :: M3hvis          ! 3D momentum, horizontal viscosity

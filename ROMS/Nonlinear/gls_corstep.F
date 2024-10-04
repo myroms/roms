@@ -43,6 +43,11 @@
       USE mod_mixing
       USE mod_ocean
       USE mod_stepping
+# if defined VEGETATION && defined VEG_TURB
+      USE mod_vegarr
+      USE vegetation_turb_mod, ONLY : vegetation_turb_cal
+# endif
+
 !
 !  Imported variable declarations.
 !
@@ -52,9 +57,17 @@
 !
       character (len=*), parameter :: MyFile =                          &
      &  __FILE__
-!
 # include "tile.h"
 !
+# if defined VEGETATION && defined VEG_TURB
+! 
+!-----------------------------------------------------------------------
+!  Add the effect of vegetation on the turbulence model.
+!-----------------------------------------------------------------------
+!
+      CALL vegetation_turb_cal (ng, tile)
+# endif
+
 # ifdef PROFILE
       CALL wclock_on (ng, iNLM, 19, __LINE__, MyFile)
 # endif
@@ -79,6 +92,10 @@
      &                       OCEAN(ng) % W,                             &
 # ifdef WEC_VF
      &                       OCEAN(ng) % W_stokes,                      &
+# endif
+# if defined VEGETATION && defined VEG_TURB 
+     &                       VEG(ng) % tke_veg,                         &
+     &                       VEG(ng) % gls_veg,                         &
 # endif
      &                       FORCES(ng) % bustr,                        &
      &                       FORCES(ng) % bvstr,                        &
@@ -119,6 +136,9 @@
      &                             u, v, W,                             &
 # ifdef WEC_VF
      &                             W_stokes,                            &
+# endif
+# if defined VEGETATION && defined VEG_TURB
+     &                             tke_veg, gls_veg,                    &
 # endif
      &                             bustr, bvstr, sustr, svstr,          &
 # ifdef ZOS_HSIG
@@ -167,6 +187,10 @@
 # ifdef WEC_VF
       real(r8), intent(in) :: W_stokes(LBi:,LBj:,0:)
 # endif
+# if defined VEGETATION && defined VEG_TURB
+      real(r8), intent(in) :: tke_veg(LBi:,LBj:,0:)
+      real(r8), intent(in) :: gls_veg(LBi:,LBj:,0:)
+# endif
       real(r8), intent(in) :: bustr(LBi:,LBj:)
       real(r8), intent(in) :: bvstr(LBi:,LBj:)
       real(r8), intent(in) :: sustr(LBi:,LBj:)
@@ -206,6 +230,10 @@
 # ifdef WEC_VF
       real(r8), intent(in) :: W_stokes(LBi:UBi,LBj:UBj,0:N(ng))
 # endif
+# if defined VEGETATION && defined VEG_TURB
+      real(r8), intent(in) :: tke_veg(LBi:UBi,LBj:UBj,0:N(ng))
+      real(r8), intent(in) :: gls_veg(LBi:UBi,LBj:UBj,0:N(ng))
+# endif
       real(r8), intent(in) :: bustr(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: bvstr(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: sustr(LBi:UBi,LBj:UBj)
@@ -240,6 +268,7 @@
       real(r8) :: Gh, Gm, Kprod, Ls_unlmt, Ls_lmt, Pprod, Sh, Sm
       real(r8) :: cff, cff1, cff2, cff3
       real(r8) :: cmu_fac1, cmu_fac2, cmu_fac3, cmu_fac4
+      real(r8) :: cmu, cmup, alphan, alpham
       real(r8) :: gls_c3, gls_exp1, gls_fac1, gls_fac2, gls_fac3
       real(r8) :: gls_fac4, gls_fac5, gls_fac6, ql, sqrt2, strat2
       real(r8) :: tke_exp1, tke_exp2, tke_exp3, tke_exp4, wall_fac
@@ -777,6 +806,14 @@
             gls(i,j,k,nnew)=gls(i,j,k,nnew)+                            &
      &                      dt(ng)*cff*Pprod*gls(i,j,k,nstp)/           &
      &                      MAX(tke(i,j,k,nstp),gls_Kmin(ng))
+
+# if defined VEGETATION && defined VEG_TURB
+!
+!  Add the effect of vegetation on tke and gls 
+!          
+            tke(i,j,k,nnew)=tke(i,j,k,nnew)+dt(ng)*tke_veg(i,j,k)
+            gls(i,j,k,nnew)=gls(i,j,k,nnew)+dt(ng)*gls_veg(i,j,k)
+# endif 
 !
 !  Compute dissipation of turbulent energy (m3/s3).
 !
@@ -840,7 +877,7 @@
 !-----------------------------------------------------------------------
 !
 !  Set Dirichlet surface and bottom boundary conditions. Compute
-!  surface roughness from wind stress (Charnock) and set Craig and
+!  surface roughness from wind stress (Charnok) and set Craig and
 !  Banner wave breaking surface flux, if appropriate.
 !
         DO i=Istr,Iend

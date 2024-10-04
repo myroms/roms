@@ -19,6 +19,10 @@
 #ifdef BIOLOGY
       USE mod_biology
 #endif
+#ifdef VEGETATION
+      USE mod_vegetation
+      USE mod_vegarr
+#endif
 #ifdef FOUR_DVAR
       USE mod_fourdvar
 #endif
@@ -140,6 +144,11 @@
 # ifdef SEDIMENT
       integer :: b3dgrd(4)
 # endif
+#if defined VEGETATION 
+# if defined VEG_DRAG || defined VEG_BIOMASS
+      integer :: v3pgrd(4)
+# endif
+#endif
       integer :: t3dgrd(4), u3dgrd(4), v3dgrd(4), w3dgrd(4)
 # ifdef ADJUST_BOUNDARY
       integer :: t3dobc(5)
@@ -327,6 +336,14 @@
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #endif
 
+#if defined VEGETATION
+# if defined VEG_DRAG || defined VEG_BIOMASS
+        status=def_dim(ng, iNLM, HIS(ng)%ncid, ncname, 'NVEG',          &
+     &                 NVEG, DimIDs(35))
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+# endif 
+#endif
+
 #ifdef ADJUST_BOUNDARY
         status=def_dim(ng, model, HIS(ng)%ncid, ncname, 'obc_adjust',   &
      &                 Nbrec(ng), DimIDs(31))
@@ -415,6 +432,17 @@
         u3dgrd(4)=DimIDs(12)
 # endif
 #endif
+!
+!  Define dimensions for the plant array variables
+!
+#ifdef VEGETATION 
+# if defined VEG_DRAG || defined VEG_BIOMASS
+        v3pgrd(1)=DimIDs( 1)
+        v3pgrd(2)=DimIDs( 5)
+        v3pgrd(3)=DimIDs(35)
+        v3pgrd(4)=DimIDs(12)
+# endif 
+#endif 
 !
 !  Define dimension vectors for staggered v-momentum type variables.
 !
@@ -1809,6 +1837,9 @@
         END IF
 # endif
 #endif
+#if defined VEGETATION 
+#include "vegetation_def_his.h"
+#endif
 !
 !  Define surface U-momentum stress.
 !
@@ -2218,6 +2249,16 @@
             got_var(idVbms)=.TRUE.
             HIS(ng)%Vid(idVbms)=var_id(i)
           END IF
+#if defined VEGETATION 
+# if defined VEG_DRAG || defined VEG_BIOMASS
+          DO itrc=1,NVEGP
+            IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idvprp(itrc)))) THEN
+              got_var(idvprp(itrc))=.TRUE.
+              HIS(ng)%Vid(idvprp(itrc))=var_id(i)
+            END IF
+          END DO
+# endif 
+#endif
 #ifdef SOLVE3D
           DO itrc=1,NT(ng)
             IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idTvar(itrc)))) THEN
@@ -2696,6 +2737,28 @@
           END IF
 # endif
         END DO
+# ifdef VEGETATION 
+#  if defined VEG_DRAG || defined VEG_BIOMASS 
+        DO i=1,NVEGP 
+          IF (.not.got_var(idvprp(i)).and.Hout(idvprp(i),ng)) THEN
+            IF (Master) WRITE (stdout,70) TRIM(Vname(1,idvprp(i))),     &
+     &                                    TRIM(ncname)
+            exit_flag=3
+            RETURN
+          END IF
+        END DO 
+#  endif
+# endif
+# ifdef SEDIMENT
+        DO i=1,NST
+          IF (.not.got_var(idfrac(i)).and.Hout(idfrac(i),ng)) THEN
+            IF (Master) WRITE (stdout,70) TRIM(Vname(1,idfrac(i))),     &
+     &                                    TRIM(ncname)
+            exit_flag=3
+            RETURN
+          END IF
+        END DO
+# endif
 #endif
 
 #if (defined BBL_MODEL || defined WAVES_OUTPUT) && defined SOLVE3D
@@ -2796,6 +2859,11 @@
 #  ifdef SEDIMENT
       integer :: b3dgrd(4)
 #  endif
+# if defined VEGETATION 
+#  if defined VEG_DRAG || defined VEG_BIOMASS
+      integer :: v3pgrd(4)
+#  endif
+# endif
       integer :: t3dgrd(4), u3dgrd(4), v3dgrd(4), w3dgrd(4)
 #  ifdef ADJUST_BOUNDARY
       integer :: t3dobc(5)
@@ -2974,6 +3042,13 @@
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #  endif
 # endif
+# if defined VEGETATION
+#  if defined VEG_DRAG || defined VEG_BIOMASS
+        status=def_dim(ng, iNLM, HIS(ng)%pioFile, ncname, 'NVEG',       &
+     &                 Nfec, DimIDs(35))
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+#  endif 
+# endif
 
         status=def_dim(ng, model, HIS(ng)%pioFile, ncname, 'boundary',  &
      &                 4, DimIDs(14))
@@ -3073,6 +3148,17 @@
         u3dgrd(4)=DimIDs(12)
 #  endif
 # endif
+# ifdef VEGETATION 
+!
+!  Define dimensions for the plant array variables
+!
+#  if defined VEG_DRAG || defined VEG_BIOMASS
+        v3pgrd(1)=DimIDs( 1)
+        v3pgrd(2)=DimIDs( 5)
+        v3pgrd(3)=DimIDs(35)
+        v3pgrd(4)=DimIDs(12)
+#  endif 
+# endif 
 !
 !  Define dimension vectors for staggered v-momentum type variables.
 !

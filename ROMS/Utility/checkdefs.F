@@ -396,6 +396,12 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+14)=' ANA_SEDIMENT,'
 #endif
+#if defined VEGETATION && defined ANA_VEGETATION 
+      IF (Master) WRITE (stdout,20) 'ANA_VEGETATION',                   &
+     &   'Analytical vegetation initial conditions.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+16)=' ANA_VEGETATION,'
+#endif
 #ifdef ANA_SMFLUX
 !
       IF (Master) WRITE (stdout,20) 'ANA_SMFLUX',                       &
@@ -995,6 +1001,30 @@
      &   'Computing and writing biological diagnostic terms'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+17)=' DIAGNOSTICS_BIO,'
+#endif
+#if defined VEGETATION && defined VEG_DRAG 
+      IF (Master) WRITE (stdout,20) 'VEGETATION',                       &
+     &   'Active submerged/emergent vegetation effects.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+12)=' VEGETATION,'
+#endif
+#if defined VEGETATION && defined MARSH_WAVE_THRUST 
+      IF (Master) WRITE (stdout,20) 'MARSH_WAVE_THRUST',                &
+     &   'Vegetation module containing wave thrust effect on marshes'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+19)=' MARSH_WAVE_THRUST,'
+#endif
+#if defined VEGETATION && defined MARSH_VERT_GROWTH
+      IF (Master) WRITE (stdout,20) 'MARSH_VERT_GROWTH',                &
+     &   'Vegetation module containing marsh vertical growth routines'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+19)=' MARSH_VERT_GROWTH,'
+#endif
+#if defined MARSH_BIOMASS_VEG 
+      IF (Master) WRITE (stdout,20) 'MARSH_BIOMASS_VEG',                &
+     &   'Marsh colonization and veg growth with organic sed. in Class 1'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+17)=' MARSH_BIOMASS_VEG'
 #endif
 #ifdef DIAGNOSTICS_TS
 !
