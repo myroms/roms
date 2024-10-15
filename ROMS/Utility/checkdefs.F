@@ -2498,7 +2498,7 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+15)=' SCATTER_BCAST,'
 # else
-      IF (Master) WRITE (stdout,20) 'SCATTER_BCAST',                    &
+      IF (Master) WRITE (stdout,20) '!SCATTER_BCAST',                    &
      &   'Using mpi_scatterv in mp_scatter2d/mp_scatter3d routines'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+16)=' !SCATTER_BCAST,'
