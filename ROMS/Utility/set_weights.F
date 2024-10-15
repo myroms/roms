@@ -74,7 +74,8 @@
 !  iteratively adjust "scale" to place the  centroid exactly at
 !  "ndtfast".
 !
-      gamma=Fgamma*MAX(0.0_dp, 1.0_dp-10.0_dp/REAL(ndtfast(ng),dp))
+!!    gamma=Fgamma*MAX(0.0_dp, 1.0_dp-10.0_dp/REAL(ndtfast(ng),dp))
+      gamma=0.284_dp*(1.0_dp-2.8_dp/(REAL(ndtfast(ng),dp)))
       DO iter=1,16
         nfast(ng)=0
         DO i=1,2*ndtfast(ng)
