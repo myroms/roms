@@ -7592,7 +7592,7 @@
         END DO
 !
 !  Reorganize the input global vector in such a way that the tiled data
-!  is continous in memory to facilitate "SCATTERV" with different size
+!  is continuous in memory to facilitate "SCATTERV" with different size
 !  sections.
 !
         nc=0
@@ -8318,7 +8318,7 @@
         END DO
 !
 !  Reorganize the input global vector in such a way that the tile data
-!  is continous in memory to facilitate "SCATTERV" with different size
+!  is continuous in memory to facilitate "SCATTERV" with different size
 !  sections.
 !
         nc=0
