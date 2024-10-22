@@ -52,7 +52,7 @@
       logical, save :: first
 
       integer :: MyColor, MyCOMM, MyError, MyKey, Nnodes
-      integer :: ng
+      integer :: ng, provided, required
 
       real(r4) :: CouplingTime             ! single precision
 !
@@ -62,7 +62,20 @@
 !
 !  Initialize MPI execution environment.
 !
+#ifdef MULTI_THREAD
+      required=MPI_THREAD_MULTIPLE
+      CALL mpi_init_thread (required, provided, MyError)
+      IF (MyError.ne.0) THEN
+        PRINT '(/,a)',' ROMS: Unable to initialize multi-threaded MPI'
+        exit_flag=6
+      END IF
+#else
       CALL mpi_init (MyError)
+      IF (MyError.ne.0) THEN
+        PRINT '(/,a)',' ROMS: Unable to initialize MPI'
+        exit_flag=6
+      END IF
+#endif
 !
 !  Get rank of the local process in the group associated with the
 !  comminicator.
