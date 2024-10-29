@@ -1757,7 +1757,7 @@
       Coptions(is:is+17)=' MULTIPLE_THREAD,'
 # else
 !
-      IF (Master) WRITE (stdout,20) 'MULTI_THREAD',                     &
+      IF (Master) WRITE (stdout,20) '!MULTI_THREAD',                    &
      &   'Using mpi_init with single thread level processing'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+18)=' !MULTIPLE_THREAD,'
