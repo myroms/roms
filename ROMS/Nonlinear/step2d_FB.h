@@ -678,12 +678,18 @@
 !  equations.
 !
 #if defined DISTRIBUTE && !defined NESTING
-# define IR_RANGE IstrUm2-1,Iendp2
-# define JR_RANGE JstrVm2-1,Jendp2
-# define IU_RANGE IstrUm1-1,Iendp2
-# define JU_RANGE Jstrm1-1,Jendp2
-# define IV_RANGE Istrm1-1,Iendp2
-# define JV_RANGE JstrVm1-1,Jendp2
+# define IR_RANGE IstrU-2,Iendp2
+# define JR_RANGE JstrV-2,Jendp2
+# define IU_RANGE IstrU-1,Iendp2
+# define JU_RANGE JstrV-2,Jendp2
+# define IV_RANGE IstrU-2,Iendp2
+# define JV_RANGE JstrV-1,Jendp2
+!!# define IR_RANGE IstrUm2-1,Iendp2
+!!# define JR_RANGE JstrVm2-1,Jendp2
+!!# define IU_RANGE IstrUm1-1,Iendp2
+!!# define JU_RANGE Jstrm1-1,Jendp2
+!!# define IV_RANGE Istrm1-1,Iendp2
+!!# define JV_RANGE JstrVm1-1,Jendp2
 #else
 # define IR_RANGE IstrUm2-1,Iendp2
 # define JR_RANGE JstrVm2-1,Jendp2
