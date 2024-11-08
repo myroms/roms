@@ -4539,7 +4539,7 @@
       DO j=Jmin,Jmax
         DO i=Imin,Imax
           nc=nc+1
-          Asend(np)=A(i,j)*Ascl
+          Asend(nc)=A(i,j)*Ascl
         END DO
       END DO
 
@@ -4648,6 +4648,9 @@
 #  else
 !
 !  Gather local tiled data into a global array.
+!
+      allocate ( Arecv(IJsize) )
+      Arecv=0.0_r8
 !
       CALL mpi_gatherv (Asend, Asize, MP_FLOAT,                         &
      &                  Arecv, counts, displs, MP_FLOAT,                &
