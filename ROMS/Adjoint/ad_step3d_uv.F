@@ -21,6 +21,28 @@
 !                                                                      !
 !=======================================================================
 !
+      USE mod_param
+      USE mod_coupling
+# ifdef DIAGNOSTICS_UV
+!!    USE mod_diags
+# endif
+      USE mod_forces
+      USE mod_grid
+      USE mod_mixing
+      USE mod_ocean
+      USE mod_scalars
+      USE mod_sources
+!
+      USE ad_exchange_2d_mod
+      USE ad_exchange_3d_mod
+      USE exchange_3d_mod
+# ifdef DISTRIBUTE
+      USE mp_exchange_mod,   ONLY : ad_mp_exchange2d, ad_mp_exchange3d
+# endif
+      USE ad_u3dbc_mod,      ONLY : ad_u3dbc_tile
+      USE ad_v3dbc_mod,      ONLY : ad_v3dbc_tile
+      USE uv_var_change_mod, ONLY : ad_C2A_grid
+!
       implicit none
 !
       PRIVATE
@@ -32,15 +54,6 @@
       SUBROUTINE ad_step3d_uv (ng, tile)
 !***********************************************************************
 !
-      USE mod_param
-      USE mod_coupling
-# ifdef DIAGNOSTICS_UV
-!!    USE mod_diags
-# endif
-      USE mod_forces
-      USE mod_grid
-      USE mod_mixing
-      USE mod_ocean
       USE mod_stepping
 !
 !  Imported variable declarations.
@@ -177,19 +190,6 @@
      &                              Huon, ad_Huon,                      &
      &                              Hvom, ad_Hvom)
 !***********************************************************************
-!
-      USE mod_param
-      USE mod_scalars
-      USE mod_sources
-!
-      USE ad_exchange_2d_mod
-      USE ad_exchange_3d_mod
-      USE exchange_3d_mod
-# ifdef DISTRIBUTE
-      USE mp_exchange_mod, ONLY : ad_mp_exchange2d, ad_mp_exchange3d
-# endif
-      USE ad_u3dbc_mod,    ONLY : ad_u3dbc_tile
-      USE ad_v3dbc_mod,    ONLY : ad_v3dbc_tile
 !
 !  Imported variable declarations.
 !
@@ -411,6 +411,16 @@
           ad_oHz(i,k)=0.0_r8
         END DO
       END DO
+!
+!-----------------------------------------------------------------------
+!  Compute adjoint 3D momentum (ad_ua, ad_va) at RHO-points (A-Grid)
+!  for output purposes and data assimilation where the observations
+!  and state vector is located at the cell-center.
+!-----------------------------------------------------------------------
+!
+!>    CALL tl_uv_C2A_grid (ng, tile, iTLM, nnew)
+!>
+      CALL ad_uv_C2A_grid (ng, tile, iTLM, nnew)
 !
 !-----------------------------------------------------------------------
 !  Exchange boundary data.

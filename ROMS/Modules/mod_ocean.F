@@ -28,7 +28,9 @@
 !  rv           Right hand side of 3D V-momentum equation (m4/s2).     !
 !  t            Tracer type variables (active and passive).            !
 !  u            3D U-momentum component (m/s).                         !
+!  ua           3D U-momentun component (m/s) at RHO-points, A-grid.   !
 !  v            3D V-momentum component (m/s).                         !
+!  va           3D U-momentun component (m/s) at RHO-points, A-grid.   !
 !  W            S-coordinate (omega*Hz/mn) vertical velocity (m3/s).   !
 #ifdef BIOLOGY
 !                                                                      !
@@ -109,7 +111,9 @@
           real(r8), pointer :: rv(:,:,:,:)
           real(r8), pointer :: t(:,:,:,:,:)
           real(r8), pointer :: u(:,:,:,:)
+          real(r8), pointer :: ua(:,:,:)
           real(r8), pointer :: v(:,:,:,:)
+          real(r8), pointer :: va(:,:,:)
           real(r8), pointer :: W(:,:,:)
 # if defined OMEGA_IMPLICIT
           real(r8), pointer :: Wi(:,:,:)
@@ -171,7 +175,9 @@
           real(r8), pointer :: tl_rv(:,:,:,:)
           real(r8), pointer :: tl_t(:,:,:,:,:)
           real(r8), pointer :: tl_u(:,:,:,:)
+          real(r8), pointer :: tl_ua(:,:,:)
           real(r8), pointer :: tl_v(:,:,:,:)
+          real(r8), pointer :: tl_va(:,:,:)
           real(r8), pointer :: tl_W(:,:,:)
 #  if defined OMEGA_IMPLICIT
           real(r8), pointer :: tl_Wi(:,:,:)
@@ -220,7 +226,9 @@
           real(r8), pointer :: ad_rv(:,:,:,:)
           real(r8), pointer :: ad_t(:,:,:,:,:)
           real(r8), pointer :: ad_u(:,:,:,:)
+          real(r8), pointer :: ad_ua(:,:,:)
           real(r8), pointer :: ad_v(:,:,:,:)
+          real(r8), pointer :: ad_va(:,:,:)
           real(r8), pointer :: ad_W(:,:,:)
           real(r8), pointer :: ad_wvel(:,:,:)
 
@@ -434,8 +442,14 @@
       allocate ( OCEAN(ng) % u(LBi:UBi,LBj:UBj,N(ng),2) )
       Dmem(ng)=Dmem(ng)+2.0_r8*REAL(N(ng),r8)*size2d
 
+      allocate ( OCEAN(ng) % ua(LBi:UBi,LBj:UBj,N(ng)) )
+      Dmem(ng)=Dmem(ng)+REAL(N(ng),r8)*size2d
+
       allocate ( OCEAN(ng) % v(LBi:UBi,LBj:UBj,N(ng),2) )
       Dmem(ng)=Dmem(ng)+2.0_r8*REAL(N(ng),r8)*size2d
+
+      allocate ( OCEAN(ng) % va(LBi:UBi,LBj:UBj,N(ng)) )
+      Dmem(ng)=Dmem(ng)+REAL(N(ng),r8)*size2d
 
       allocate ( OCEAN(ng) % W(LBi:UBi,LBj:UBj,0:N(ng)) )
       Dmem(ng)=Dmem(ng)+REAL(N(ng)+1,r8)*size2d
@@ -565,8 +579,14 @@
       allocate ( OCEAN(ng) % tl_u(LBi:UBi,LBj:UBj,N(ng),2) )
       Dmem(ng)=Dmem(ng)+2.0_r8*REAL(N(ng),r8)*size2d
 
+      allocate ( OCEAN(ng) % tl_ua(LBi:UBi,LBj:UBj,N(ng)) )
+      Dmem(ng)=Dmem(ng)+REAL(N(ng),r8)*size2d
+
       allocate ( OCEAN(ng) % tl_v(LBi:UBi,LBj:UBj,N(ng),2) )
       Dmem(ng)=Dmem(ng)+2.0_r8*REAL(N(ng),r8)*size2d
+
+      allocate ( OCEAN(ng) % tl_va(LBi:UBi,LBj:UBj,N(ng)) )
+      Dmem(ng)=Dmem(ng)+REAL(N(ng),r8)*size2d
 
       allocate ( OCEAN(ng) % tl_W(LBi:UBi,LBj:UBj,0:N(ng)) )
       Dmem(ng)=Dmem(ng)+REAL(N(ng)+1,r8)*size2d
@@ -671,8 +691,14 @@
       allocate ( OCEAN(ng) % ad_u(LBi:UBi,LBj:UBj,N(ng),2) )
       Dmem(ng)=Dmem(ng)+2.0_r8*REAL(N(ng),r8)*size2d
 
+      allocate ( OCEAN(ng) % ad_ua(LBi:UBi,LBj:UBj,N(ng)) )
+      Dmem(ng)=Dmem(ng)+REAL(N(ng),r8)*size2d
+
       allocate ( OCEAN(ng) % ad_v(LBi:UBi,LBj:UBj,N(ng),2) )
       Dmem(ng)=Dmem(ng)+2.0_r8*REAL(N(ng),r8)*size2d
+
+      allocate ( OCEAN(ng) % ad_va(LBi:UBi,LBj:UBj,N(ng)) )
+      Dmem(ng)=Dmem(ng)+REAL(N(ng),r8)*size2d
 
       allocate ( OCEAN(ng) % ad_W(LBi:UBi,LBj:UBj,0:N(ng)) )
       Dmem(ng)=Dmem(ng)+REAL(N(ng)+1,r8)*size2d
@@ -1003,6 +1029,9 @@
 
       IF (.not.destroy(ng, OCEAN(ng)%t, MyFile,                         &
      &                 __LINE__, 'OCEAN(ng)%t')) RETURN
+
+      IF (.not.destroy(ng, OCEAN(ng)%ua, MyFile,                        &
+     &                 __LINE__, 'OCEAN(ng)%u')) RETURN
 
       IF (.not.destroy(ng, OCEAN(ng)%u, MyFile,                         &
      &                 __LINE__, 'OCEAN(ng)%u')) RETURN
@@ -1610,8 +1639,10 @@
 
               OCEAN(ng) % u(i,j,k,1) = IniVal
               OCEAN(ng) % u(i,j,k,2) = IniVal
+              OCEAN(ng) % ua(i,j,k)  = IniVal
               OCEAN(ng) % v(i,j,k,1) = IniVal
               OCEAN(ng) % v(i,j,k,2) = IniVal
+              OCEAN(ng) % va(i,j,k)  = IniVal
 # if defined WEC
               OCEAN(ng) % u_stokes(i,j,k) = IniVal
               OCEAN(ng) % v_stokes(i,j,k) = IniVal
@@ -1715,8 +1746,10 @@
 
               OCEAN(ng) % tl_u(i,j,k,1) = IniVal
               OCEAN(ng) % tl_u(i,j,k,2) = IniVal
+              OCEAN(ng) % tl_ua(i,j,k)  = IniVal
               OCEAN(ng) % tl_v(i,j,k,1) = IniVal
               OCEAN(ng) % tl_v(i,j,k,2) = IniVal
+              OCEAN(ng) % tl_va(i,j,k)  = IniVal
 #  if defined FORCING_SV || defined HESSIAN_FSV
               OCEAN(ng) % f_u(i,j,k) = IniVal
               OCEAN(ng) % f_v(i,j,k) = IniVal
