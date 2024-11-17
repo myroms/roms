@@ -54,7 +54,9 @@
       PRIVATE
       PUBLIC :: tl_ini_fields
       PUBLIC :: tl_ini_zeta
+# ifdef SOLVE3D
       PUBLIC :: tl_set_zeta_timeavg
+# endif
 !
       CONTAINS
 !
