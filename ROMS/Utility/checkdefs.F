@@ -1242,6 +1242,19 @@
       Coptions(is:is+12)=' !FULL_GRID,'
 # endif
 #endif
+#ifdef DISTRIBUTE
+# ifdef GATHER_SENDRECV
+      IF (Master) WRITE (stdout,20) 'GATHER_SENDRECV',                  &
+     &   'Using mpi_isend/mpi_irecv in mp_gather2d/mp_gather3d routines'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+17)=' GATHER_SENDRECV,'
+# else
+      IF (Master) WRITE (stdout,20) '!GATHER_SENDRECV',                 &
+     &   'Using mpi_gatherv in mp_gather2d/mp_gather3d routines'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+18)=' !GATHER_SENDRECV,'
+# endif
+#endif
 #ifdef GENERIC_DSTART
 !
       IF (Master) WRITE (stdout,20) 'GENERIC_DSTART',                   &
@@ -1734,6 +1747,21 @@
      &   'MPI distributed-memory configuration'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+4)=' MPI,'
+#endif
+#if defined DISTRIBUTE
+# if defined MULTI_THREAD
+!
+      IF (Master) WRITE (stdout,20) 'MULTI_THREAD',                     &
+     &   'Using mpi_init_thread with multiple thread level processing'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+17)=' MULTIPLE_THREAD,'
+# else
+!
+      IF (Master) WRITE (stdout,20) '!MULTI_THREAD',                    &
+     &   'Using mpi_init with single thread level processing'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+18)=' !MULTIPLE_THREAD,'
+# endif
 #endif
 #if defined MULTIPLE_TLM && defined TANGENT
 !
@@ -2477,6 +2505,19 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+14)=' SANITY_CHECK,'
       idriver=idriver+1
+#endif
+#ifdef DISTRIBUTE
+# ifdef SCATTER_BCAST
+      IF (Master) WRITE (stdout,20) 'SCATTER_BCAST',                    &
+     &   'Using mpi_bcast in mp_scatter2d/mp_scatter3d routines'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+15)=' SCATTER_BCAST,'
+# else
+      IF (Master) WRITE (stdout,20) '!SCATTER_BCAST',                    &
+     &   'Using mpi_scatterv in mp_scatter2d/mp_scatter3d routines'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+16)=' !SCATTER_BCAST,'
+# endif
 #endif
 #ifdef SCORRECTION
 !

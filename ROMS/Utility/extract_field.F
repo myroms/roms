@@ -2072,6 +2072,8 @@
       integer :: Isize, Jsize, Msize, Nsize
       integer :: Cgrid, Npts, ghost, i, ic, j
 !
+      real(dp) :: scale
+!
       real(r8), allocatable :: angle(:,:)
 # ifdef MASKING
       real(r8), pointer :: mask_inp(:,:), mask_out(:,:)
@@ -2087,6 +2089,8 @@
 !-----------------------------------------------------------------------
 !  Compute fractional coordinates (Ipos, Jpos).
 !-----------------------------------------------------------------------
+!
+      scale=1.0_dp
 !
 !  Get input donor and output extract grids arrays tiled bounds.
 !
@@ -2288,14 +2292,14 @@
 !
       CALL mp_gather2d (ng, model,                                      &
      &                  LBi_inp, UBi_inp, LBj_inp, UBj_inp,             &
-     &                  0, gtype, 1.0_r8,                               &
+     &                  0, gtype, scale,                                &
      &                  mask_inp,                                       &
      &                  mask_inp, Npts, Minp, .FALSE.)
 #  endif
 !
       CALL mp_gather2d (ng, model,                                      &
      &                  LBi_inp, UBi_inp, LBj_inp, UBj_inp,             &
-     &                  0, gtype, 1.0_r8,                               &
+     &                  0, gtype, scale,                                &
 #  ifdef MASKING
      &                  mask_inp,                                       &
 #  endif
@@ -2303,7 +2307,7 @@
 !
       CALL mp_gather2d (ng, model,                                      &
      &                  LBi_inp, UBi_inp, LBj_inp, UBj_inp,             &
-     &                  0, gtype, 1.0_r8,                               &
+     &                  0, gtype, scale,                                &
 #  ifdef MASKING
      &                  mask_inp,                                       &
 #  endif
@@ -2311,7 +2315,7 @@
 !
       CALL mp_gather2d (ng, model,                                      &
      &                  LBi_inp, UBi_inp, LBj_inp, UBj_inp,             &
-     &                  0, gtype, 1.0_r8,                               &
+     &                  0, gtype, scale,                                &
 #  ifdef MASKING
      &                  mask_inp,                                       &
 #  endif
@@ -2320,7 +2324,7 @@
 !
       CALL mp_gather2d (ng, model,                                      &
      &                  LBi_inp, UBi_inp, LBj_inp, UBj_inp,             &
-     &                  0, gtype, 1.0_r8,                               &
+     &                  0, gtype, scale,                                &
 #  ifdef MASKING
      &                  mask_inp,                                       &
 #  endif
@@ -2328,7 +2332,7 @@
 !
       CALL mp_gather2d (ng, model,                                      &
      &                  LBi_inp, UBi_inp, LBj_inp, UBj_inp,             &
-     &                  0, gtype, 1.0_r8,                               &
+     &                  0, gtype, scale,                                &
 #  ifdef MASKING
      &                  mask_inp,                                       &
 #  endif
@@ -2338,14 +2342,14 @@
 !
       CALL mp_gather2d_xtr (ng, model,                                  &
      &                      LBi_out, UBi_out, LBj_out, UBj_out,         &
-     &                      0, gtype, 1.0_r8,                           &
+     &                      0, gtype, scale,                            &
      &                      mask_out,                                   &
      &                      mask_out, Npts, Mout, .FALSE.)
 #  endif
 !
       CALL mp_gather2d_xtr (ng, model,                                  &
      &                      LBi_out, UBi_out, LBj_out, UBj_out,         &
-     &                      0, gtype, 1.0_r8,                           &
+     &                      0, gtype, scale,                            &
 #  ifdef MASKING
      &                      mask_out,                                   &
 #  endif
@@ -2353,7 +2357,7 @@
 !
       CALL mp_gather2d_xtr (ng, model,                                  &
      &                      LBi_out, UBi_out, LBj_out, UBj_out,         &
-     &                      0, gtype, 1.0_r8,                           &
+     &                      0, gtype, scale,                            &
 #  ifdef MASKING
      &                      mask_out,                                   &
 #  endif
