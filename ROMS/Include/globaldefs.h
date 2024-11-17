@@ -841,6 +841,7 @@
 #endif
 
 #if defined ATM_COUPLING  || \
+    defined CMEPS         || \
     defined DATA_COUPLING || \
     defined ICE_COUPLING  || \
     defined WAV_COUPLING
@@ -848,7 +849,8 @@
 #endif
 
 #if defined MODEL_COUPLING && \
-    defined ESMF_LIB
+    defined ESMF_LIB       && \
+   !defined CMEPS
 # define REGRESS_STARTCLOCK
 # define ESM_SETRUNCLOCK
 #endif
