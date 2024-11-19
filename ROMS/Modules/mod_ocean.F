@@ -1854,8 +1854,10 @@
 
               OCEAN(ng) % ad_u(i,j,k,1) = IniVal
               OCEAN(ng) % ad_u(i,j,k,2) = IniVal
+              OCEAN(ng) % ad_ua(i,j,k) = IniVal
               OCEAN(ng) % ad_v(i,j,k,1) = IniVal
               OCEAN(ng) % ad_v(i,j,k,2) = IniVal
+              OCEAN(ng) % ad_va(i,j,k) = IniVal
               OCEAN(ng) % ad_u_sol(i,j,k) = IniVal
               OCEAN(ng) % ad_v_sol(i,j,k) = IniVal
 #  if defined FORCING_SV || defined HESSIAN_FSV

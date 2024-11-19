@@ -134,8 +134,8 @@
       real(r8), intent(in) :: u(LBi:,LBj:,:,:)
       real(r8), intent(in) :: v(LBi:,LBj:,:,:)
 
-      real(r8), intent(out) :: ua(LBi:,LBj:,:)
-      real(r8), intent(out) :: va(LBi:,LBj:,:)
+      real(r8), intent(inout) :: ua(LBi:,LBj:,:)
+      real(r8), intent(inout) :: va(LBi:,LBj:,:)
 # else
       real(r8), intent(in) :: CosAngler(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: SinAngler(LBi:UBi,LBj:UBj)
@@ -145,8 +145,8 @@
       real(r8), intent(in) :: u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(in) :: v(LBi:UBi,LBj:UBj,N(ng),2)
 
-      real(r8), intent(out) :: ua(LBi:UBi,LBj:UBj,N(ng))
-      real(r8), intent(out) :: va(LBi:UBi,LBj:UBj,N(ng))
+      real(r8), intent(inout) :: ua(LBi:UBi,LBj:UBj,N(ng))
+      real(r8), intent(inout) :: va(LBi:UBi,LBj:UBj,N(ng))
 # endif
 !
 !  Local variable declarations.
@@ -399,8 +399,8 @@
       real(r8), intent(in) :: tl_u(LBi:,LBj:,:,:)
       real(r8), intent(in) :: tl_v(LBi:,LBj:,:,:)
 
-      real(r8), intent(out) :: tl_ua(LBi:,LBj:,:)
-      real(r8), intent(out) :: tl_va(LBi:,LBj:,:)
+      real(r8), intent(inout) :: tl_ua(LBi:,LBj:,:)
+      real(r8), intent(inout) :: tl_va(LBi:,LBj:,:)
 #  else
       real(r8), intent(in) :: CosAngler(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: SinAngler(LBi:UBi,LBj:UBj)
@@ -410,8 +410,8 @@
       real(r8), intent(in) :: tl_u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(in) :: tl_v(LBi:UBi,LBj:UBj,N(ng),2)
 
-      real(r8), intent(out) :: tl_ua(LBi:UBi,LBj:UBj,N(ng))
-      real(r8), intent(out) :: tl_va(LBi:UBi,LBj:UBj,N(ng))
+      real(r8), intent(inout) :: tl_ua(LBi:UBi,LBj:UBj,N(ng))
+      real(r8), intent(inout) :: tl_va(LBi:UBi,LBj:UBj,N(ng))
 #  endif
 !
 !  Local variable declarations.
@@ -711,8 +711,8 @@
       real(r8), intent(inout) :: ad_u(LBi:,LBj:,:,:)
       real(r8), intent(inout) :: ad_v(LBi:,LBj:,:,:)
 
-      real(r8), intent(out) :: ad_ua(LBi:,LBj:,:)
-      real(r8), intent(out) :: ad_va(LBi:,LBj:,:)
+      real(r8), intent(inout) :: ad_ua(LBi:,LBj:,:)
+      real(r8), intent(inout) :: ad_va(LBi:,LBj:,:)
 #  else
       real(r8), intent(in) :: CosAngler(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: SinAngler(LBi:UBi,LBj:UBj)
@@ -722,8 +722,8 @@
       real(r8), intent(inout) :: ad_u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(inout) :: ad_v(LBi:UBi,LBj:UBj,N(ng),2)
 
-      real(r8), intent(out) :: ad_ua(LBi:UBi,LBj:UBj,N(ng))
-      real(r8), intent(out) :: tl_va(LBi:UBi,LBj:UBj,N(ng))
+      real(r8), intent(inout) :: ad_ua(LBi:UBi,LBj:UBj,N(ng))
+      real(r8), intent(inout) :: tl_va(LBi:UBi,LBj:UBj,N(ng))
 #  endif
 !
 !  Local variable declarations.
@@ -800,7 +800,7 @@
             adfac2=SinAngler(i,j)*ad_va(i,j,k)
             ad_Vrho=ad_Vrho+adfac1
             ad_Urho=ad_Vrho+adfac2
-            tl_va(i,j,k)=0.0_r8
+            ad_va(i,j,k)=0.0_r8
 !>          tl_ua(i,j,k)=tl_Urho*CosAngler(i,j)-                        &
 !>   &                   tl_Vrho*SinAngler(i,j)
 !>
@@ -913,6 +913,8 @@
 !
       integer :: i, j, k
 !
+      real(r8) :: adfac, adfac1, adfac2
+!
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: ad_Urho, ad_Vrho
 
 #  include "set_bounds.h"
@@ -926,7 +928,7 @@
 !
       adfac=0.0_r8
       adfac1=0.0_r8
-      adfac1=0.0_r8
+      adfac2=0.0_r8
       ad_Urho=0.0_r8
       ad_Vrho=0.0_r8
 
@@ -940,11 +942,11 @@
 !>   &                    EWperiodic(ng), NSperiodic(ng),               &
 !>   &                    tl_u(:,:,:,nout), tl_v(:,:,:,nout))
 !>
-      CALL ad_ mp_exchange3d (ng, tile, model, 2,                       &
-     &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
-     &                        NghostPoints,                             &
-     &                        EWperiodic(ng), NSperiodic(ng),           &
-     &                        ad_u(:,:,:,nout), ad_v(:,:,:,nout))
+      CALL ad_mp_exchange3d (ng, tile, model, 2,                        &
+     &                       LBi, UBi, LBj, UBj, 1, N(ng),              &
+     &                       NghostPoints,                              &
+     &                       EWperiodic(ng), NSperiodic(ng),            &
+     &                       ad_u(:,:,:,nout), ad_v(:,:,:,nout))
 #  endif
 !
 !  Adjoint of variable change from A-grid to C-grid.
@@ -957,11 +959,11 @@
 !>
             ad_v(i,j,k,nout)=ad_v(i,j,k,nout)*vmask(i,j)
 #  endif
-!>          tl_v(i,j,k,nout)=0.5_r8*(tl_Vrho(i,j-1,k)+tl_Vrho(i,j,k))
+!>          tl_v(i,j,k,nout)=0.5_r8*(tl_Vrho(i,j-1)+tl_Vrho(i,j))
 !>
             adfac=0.5_r8*ad_v(i,j,k,nout)
-            ad_Vrho(i,j-1,k)=ad_Vrho(i,j-1,k)+adfac
-            ad_Vrho(i,j  ,k)=ad_Vrho(i,j  ,k)+adfac
+            ad_Vrho(i,j-1)=ad_Vrho(i,j-1)+adfac
+            ad_Vrho(i,j  )=ad_Vrho(i,j  )+adfac
             ad_v(i,j,k,nout)=0.0_r8
           END DO
         END DO
@@ -987,8 +989,8 @@
 !>
             adfac1=CosAngler(i,j)*ad_Vrho(i,j)
             adfac2=SinAngler(i,j)*ad_Vrho(i,j)
-            ad_va(i,j,k)=tl_va(i,j,k)+adfac1
-            ad_ua(i,j,k)=tl_ua(i,j,k)-adfac2
+            ad_va(i,j,k)=ad_va(i,j,k)+adfac1
+            ad_ua(i,j,k)=ad_ua(i,j,k)-adfac2
             ad_Vrho(i,j)=0.0_r8
 !>          tl_Urho(i,j)=tl_ua(i,j,k)*CosAngler(i,j)+                   &
 !>   &                   tl_va(i,j,k)*SinAngler(i,j)

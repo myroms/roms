@@ -41,7 +41,7 @@
 # endif
       USE ad_u3dbc_mod,      ONLY : ad_u3dbc_tile
       USE ad_v3dbc_mod,      ONLY : ad_v3dbc_tile
-      USE uv_var_change_mod, ONLY : ad_C2A_grid
+      USE uv_var_change_mod, ONLY : ad_uv_C2A_grid
 !
       implicit none
 !
