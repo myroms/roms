@@ -47,10 +47,6 @@
       USE mod_ocean
       USE mod_scalars
 !
-# ifdef ADJOINT
-      USE ad_bc_3d_mod,    ONLY : ad_bc_r3d_tile
-# endif
-      USE bc_3d_mod,       ONLY : bc_r3d_tile
 # ifdef DISTRIBUTE
 #  ifdef ADJOINT
       USE mp_exchange_mod, ONLY : ad_mp_exchange3d
@@ -94,6 +90,7 @@
 # endif
       CALL uv_C2A_grid_tile (ng, tile, model, ninp,                     &
      &                       LBi, UBi, LBj, UBj,                        &
+     &                       IminS, ImaxS, JminS, JmaxS,                &
 # ifdef MASKING
      &                       GRID(ng) % rmask_full,                     &
 # endif
@@ -113,6 +110,7 @@
 !***********************************************************************
       SUBROUTINE uv_C2A_grid_tile (ng, tile, model, ninp,               &
      &                             LBi, UBi, LBj, UBj,                  &
+     &                             IminS, ImaxS, JminS, JmaxS,          &
 # ifdef MASKING
      &                             rmask,                               &
 # endif
@@ -124,6 +122,7 @@
 !
       integer, intent(in) :: ng, tile, model, ninp
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
 !
 # ifdef ASSUMED_SHAPE
       real(r8), intent(in) :: CosAngler(LBi:,LBj:)
@@ -153,40 +152,62 @@
 !
       integer :: i, j, k
 
-      real(r8) :: Urho, Vrho
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Urho, Vrho
 
 # include "set_bounds.h"
 !
 !-----------------------------------------------------------------------
-!  Change from C-grid to A-grid. Then, rotate 3D vector components to
-!  geographical Eastward and Northward directions.
+!  Tranform vector components from C-grid to A-grid.
 !-----------------------------------------------------------------------
 !
-      DO k=1,N(ng)
-        DO j=Jstr,Jend
+      K_LOOP : DO k=1,N(ng)
+!
+!  Compute A-grid (cell center) components. Apply gradient condition.
+!
+        DO j=JstrR,JendR
           DO i=Istr,Iend
-            Urho=0.5_r8*(u(i,j,k,ninp)+u(i+1,j,k,ninp))
-            Vrho=0.5_r8*(v(i,j,k,ninp)+v(i,j+1,k,ninp))
-            ua(i,j,k)=Urho*CosAngler(i,j)-                              &
-     &                Vrho*SinAngler(i,j)
-            va(i,j,k)=Vrho*CosAngler(i,j)+                              &
-     &                Urho*SinAngler(i,j)
+            Urho(i,j)=0.5_r8*(u(i,j,k,ninp)+u(i+1,j,k,ninp))
+            IF (.not.EWperiodic(ng)) THEN
+              IF (DOMAIN(ng)%Western_Edge(tile)) THEN
+                Urho(Istr-1,j)=Urho(Istr,j)
+              END IF
+              IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
+                Urho(Iend+1,j)=Urho(Iend,j)
+              END IF
+            END IF
+          END DO
+        END DO
+!
+        DO j=Jstr,Jend
+          DO i=IstrR,IendR
+            Vrho(i,j)=0.5_r8*(v(i,j,k,ninp)+v(i,j+1,k,ninp))
+            IF (.not.NSperiodic(ng)) THEN
+              IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
+                Vrho(i,Jstr-1) = Vrho(i,Jstr)
+              END IF
+              IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
+                Vrho(i,Jend+1) = Vrho(i,Jend)
+              END IF
+            END IF
+          END DO
+        END DO
+!
+!  Rotate from computational to gegraphical Eastward and Northward
+!  directions.
+!
+        DO j=JstrR,JendR
+          DO i=IstrR,IendR
+            ua(i,j,k)=Urho(i,j)*CosAngler(i,j)-                         &
+     &                Vrho(i,j)*SinAngler(i,j)
+            va(i,j,k)=Vrho(i,j)*CosAngler(i,j)+                         &
+     &                Urho(i,j)*SinAngler(i,j)
 # ifdef MASKING
             ua(i,j,k)=ua(i,j,k)*rmask(i,j)
             va(i,j,k)=va(i,j,k)*rmask(i,j)
 # endif
           END DO
         END DO
-      END DO
-!
-!  Exchange boundary data.
-!
-      CALL bc_r3d_tile (ng, tile,                                       &
-     &                  LBi, UBi, LBj, UBj, 1, N(ng),                   &
-     &                  ua)
-      CALL bc_r3d_tile (ng, tile,                                       &
-     &                  LBi, UBi, LBj, UBj, 1, N(ng),                   &
-     &                  va)
+      END DO K_LOOP
 
 # ifdef DISTRIBUTE
 !
@@ -292,19 +313,24 @@
 # include "set_bounds.h"
 !
 !-----------------------------------------------------------------------
-!  Change from A-grid to C-grid. Then, rotate 3D vector components to
-!  computational (XI,ETA) directions.
+!  Transform vector components from A-grid to C-grid.
 !-----------------------------------------------------------------------
 !
-      DO k=1,N(ng)
-        DO j=Jstr-1,Jend+1
-          DO i=Istr-1,Iend+1
+      K_LOOP : DO k=1,N(ng)
+!
+!  Rotate vector components to computational (XI,ETA) directions.
+!
+        DO j=Jstr-1,JendR
+          DO i=Istr-1,IendR
             Urho(i,j)=ua(i,j,k)*CosAngler(i,j)+                         &
      &                va(i,j,k)*SinAngler(i,j)
             Vrho(i,j)=va(i,j,k)*CosAngler(i,j)-                         &
      &                ua(i,j,k)*SinAngler(i,j)
           END DO
         END DO
+!
+!  Compute staggered C-grid components.
+!
         DO j=JstrR,JendR
           DO i=Istr,IstrR
             u(i,j,k,nout)=0.5_r8*(Urho(i-1,j)+Urho(i,j))
@@ -314,14 +340,14 @@
           END DO
         END DO
         DO j=Jstr,JendR
-          DO i=IstrR,IstrR
+          DO i=IstrR,IendR
             v(i,j,k,nout)=0.5_r8*(Vrho(i,j-1)+Vrho(i,j))
 # ifdef MASKING
             v(i,j,k,nout)=v(i,j,k,nout)*vmask(i,j)
 # endif
           END DO
         END DO
-      END DO
+      END DO K_LOOP
 
 # ifdef DISTRIBUTE
 !
@@ -359,6 +385,7 @@
 #  endif
       CALL tl_uv_C2A_grid_tile (ng, tile, model, ninp,                  &
      &                          LBi, UBi, LBj, UBj,                     &
+     &                          IminS, ImaxS, JminS, JmaxS,             &
 #  ifdef MASKING
      &                          GRID(ng) % rmask_full,                  &
 #  endif
@@ -378,6 +405,7 @@
 !***********************************************************************
       SUBROUTINE tl_uv_C2A_grid_tile (ng, tile, model, ninp,            &
      &                                LBi, UBi, LBj, UBj,               &
+     &                                IminS, ImaxS, JminS, JmaxS,       &
 #  ifdef MASKING
      &                                rmask,                            &
 #  endif
@@ -389,6 +417,7 @@
 !
       integer, intent(in) :: ng, tile, model, ninp
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
 !
 #  ifdef ASSUMED_SHAPE
       real(r8), intent(in) :: CosAngler(LBi:,LBj:)
@@ -418,64 +447,88 @@
 !
       integer :: i, j, k
 !
-      real(r8) :: tl_Urho, tl_Vrho
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_Urho, tl_Vrho
 
 #  include "set_bounds.h"
 !
 !-----------------------------------------------------------------------
-!  Change from C-grid to A-grid. Then, rotate 3D vector components to
-!  geographical Eastward and Northward directions.
+!  Transform vector components from C-grid to A-grid.
 !-----------------------------------------------------------------------
 !
-      DO k=1,N(ng)
-        DO j=Jstr,Jend
+      K_LOOP : DO k=1,N(ng)
+!
+!  Compute A-grid (cell center) components. Apply gradient condition.
+!
+        DO j=JstrR,JendR
           DO i=Istr,Iend
-!>          Urho=0.5_r8*(u(i,j,k,ninp)+u(i+1,j,k,ninp))
+!>          Urho(i,j)=0.5_r8*(u(i,j,k,ninp)+u(i+1,j,k,ninp))
 !>
-            tl_Urho=0.5_r8*(tl_u(i,j,k,ninp)+tl_u(i+1,j,k,ninp))
-!>          Vrho=0.5_r8*(v(i,j,k,ninp)+v(i,j+1,k,ninp))
+            tl_Urho(i,j)=0.5_r8*(tl_u(i,j,k,ninp)+tl_u(i+1,j,k,ninp))
+            IF (.not.EWperiodic(ng)) THEN
+              IF (DOMAIN(ng)%Western_Edge(tile)) THEN
+!>              Urho(Istr-1,j)=Urho(Istr,j)
 !>
-            tl_Vrho=0.5_r8*(tl_v(i,j,k,ninp)+tl_v(i,j+1,k,ninp))
-!>          ua(i,j,k)=Urho*CosAngler(i,j)-                              &
-!>   &                Vrho*SinAngler(i,j)
+                tl_Urho(Istr-1,j)=tl_Urho(Istr,j)
+              END IF
+              IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
+!>              Urho(Iend+1,j)=Urho(Iend,j)
 !>
-            tl_ua(i,j,k)=tl_Urho*CosAngler(i,j)-                        &
-     &                   tl_Vrho*SinAngler(i,j)
-!>          va(i,j,k)=Vrho*CosAngler(i,j)+                              &
-!>   &                Urho*SinAngler(i,j)
+                tl_Urho(Iend+1,j)=tl_Urho(Iend,j)
+              END IF
+            END IF
+          END DO
+        END DO
+!
+        DO j=Jstr,Jend
+          DO i=IstrR,IendR
+!>          Vrho(i,j)=0.5_r8*(v(i,j,k,ninp)+v(i,j+1,k,ninp))
 !>
-            tl_va(i,j,k)=tl_Vrho*CosAngler(i,j)+                        &
-     &                   tl_Urho*SinAngler(i,j)
-#  ifdef MASKING
+            tl_Vrho(i,j)=0.5_r8*(tl_v(i,j,k,ninp)+tl_v(i,j+1,k,ninp))
+            IF (.not.NSperiodic(ng)) THEN
+              IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
+!>              Vrho(i,Jstr-1) = Vrho(i,Jstr)
+!>
+                tl_Vrho(i,Jstr-1) = tl_Vrho(i,Jstr)
+              END IF
+              IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
+!>              Vrho(i,Jend+1) = Vrho(i,Jend)
+!>
+                tl_Vrho(i,Jend+1) = tl_Vrho(i,Jend)
+              END IF
+            END IF
+          END DO
+        END DO
+!
+!  Rotate from computational to gegraphical Eastward and Northward
+!  directions.
+!
+        DO j=JstrR,JendR
+          DO i=IstrR,IendR
+!>          ua(i,j,k)=Urho(i,j)*CosAngler(i,j)-                         &
+!>   &                Vrho(i,j)*SinAngler(i,j)
+!>
+            tl_ua(i,j,k)=tl_Urho(i,j)*CosAngler(i,j)-                   &
+     &                   tl_Vrho(i,j)*SinAngler(i,j)
+!>          va(i,j,k)=Vrho(i,j)*CosAngler(i,j)+                         &
+!>   &                Urho(i,j)*SinAngler(i,j)
+!>
+            tl_va(i,j,k)=tl_Vrho(i,j)*CosAngler(i,j)+                   &
+     &                   tl_Urho(i,j)*SinAngler(i,j)
+# ifdef MASKING
 !>          ua(i,j,k)=ua(i,j,k)*rmask(i,j)
 !>
             tl_ua(i,j,k)=tl_ua(i,j,k)*rmask(i,j)
 !>          va(i,j,k)=va(i,j,k)*rmask(i,j)
 !>
             tl_va(i,j,k)=tl_va(i,j,k)*rmask(i,j)
-#  endif
+# endif
           END DO
         END DO
-      END DO
-!
-!  Exchange boundary data.
-!
-!>    CALL bc_r3d_tile (ng, tile,                                       &
-!>   &                  LBi, UBi, LBj, UBj, 1, N(ng),                   &
-!>   &                  ua)
-!>
-      CALL bc_r3d_tile (ng, tile,                                       &
-     &                  LBi, UBi, LBj, UBj, 1, N(ng),                   &
-     &                  tl_ua)
-!>    CALL bc_r3d_tile (ng, tile,                                       &
-!>   &                  LBi, UBi, LBj, UBj, 1, N(ng),                   &
-!>   &                  va)
-!>
-      CALL bc_r3d_tile (ng, tile,                                       &
-     &                  LBi, UBi, LBj, UBj, 1, N(ng),                   &
-     &                  tl_va)
+      END DO K_LOOP
 
 #  ifdef DISTRIBUTE
+!
+!  Exchange boundary data.
 !
 !>    CALL mp_exchange3d (ng, tile, model, 2,                           &
 !>   &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
@@ -583,13 +636,15 @@
 #  include "set_bounds.h"
 !
 !-----------------------------------------------------------------------
-!  Change from A-grid to C-grid. Then, rotate 3D vector components to
-!  computational (XI,ETA) directions.
+!  Transform vector components from A-grid to C-grid.
 !-----------------------------------------------------------------------
 !
-      DO k=1,N(ng)
-        DO j=Jstr-1,Jend+1
-          DO i=Istr-1,Iend+1
+      K_LOOP : DO k=1,N(ng)
+!
+!  Rotate vector components to computational (XI,ETA) directions.
+!
+        DO j=Jstr-1,JendR
+          DO i=Istr-1,IendR
 !>          Urho(i,j)=ua(i,j,k)*CosAngler(i,j)+                         &
 !>   &                va(i,j,k)*SinAngler(i,j)
 !>
@@ -602,6 +657,9 @@
      &                   tl_ua(i,j,k)*SinAngler(i,j)
           END DO
         END DO
+!
+!  Compute staggered C-grid components.
+!
         DO j=JstrR,JendR
           DO i=Istr,IstrR
 !>          u(i,j,k,nout)=0.5_r8*(Urho(i-1,j)+Urho(i,j))
@@ -614,8 +672,9 @@
 #  endif
           END DO
         END DO
+!
         DO j=Jstr,JendR
-          DO i=IstrR,IstrR
+          DO i=IstrR,IendR
 !>          v(i,j,k,nout)=0.5_r8*(Vrho(i,j-1)+Vrho(i,j))
 !>
             tl_v(i,j,k,nout)=0.5_r8*(tl_Vrho(i,j-1)+tl_Vrho(i,j))
@@ -626,7 +685,7 @@
 #  endif
           END DO
         END DO
-      END DO
+      END DO K_LOOP
 
 #  ifdef DISTRIBUTE
 !
@@ -671,6 +730,7 @@
 #  endif
       CALL ad_uv_C2A_grid_tile (ng, tile, model, ninp,                  &
      &                          LBi, UBi, LBj, UBj,                     &
+     &                          IminS, ImaxS, JminS, JmaxS,             &
 #  ifdef MASKING
      &                          GRID(ng) % rmask_full,                  &
 #  endif
@@ -690,6 +750,7 @@
 !***********************************************************************
       SUBROUTINE ad_uv_C2A_grid_tile (ng, tile, model, ninp,            &
      &                                LBi, UBi, LBj, UBj,               &
+     &                                IminS, ImaxS, JminS, JmaxS,       &
 #  ifdef MASKING
      &                                rmask,                            &
 #  endif
@@ -701,6 +762,7 @@
 !
       integer, intent(in) :: ng, tile, model, ninp
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
 !
 #  ifdef ASSUMED_SHAPE
       real(r8), intent(in) :: CosAngler(LBi:,LBj:)
@@ -730,14 +792,13 @@
 !
       integer :: i, j, k
 !
-      real(r8) :: ad_Urho, ad_Vrho
       real(r8) :: adfac, adfac1, adfac2
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: ad_Urho, ad_Vrho
 
 #  include "set_bounds.h"
 !
 !-----------------------------------------------------------------------
-!  Change from C-grid to A-grid. Then, rotate 3D vector components to
-!  geographical Eastward and Northward directions.
+!  Adjoint of transform vector components from C-grid to A-grid.
 !-----------------------------------------------------------------------
 !
 !  Initialize.
@@ -747,10 +808,10 @@
       adfac2=0.0_r8
       ad_Urho=0.0_r8
       ad_Vrho=0.0_r8
-!
-!  Adjoint of exchange boundary data.
 
 #  ifdef DISTRIBUTE
+!
+!  Adjoint of exchange boundary data.
 !
 !>    CALL mp_exchange3d (ng, tile, model, 2,                           &
 !>   &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
@@ -765,65 +826,90 @@
      &                       ad_ua, ad_va)
 #  endif
 !
-!>    CALL bc_r3d_tile (ng, tile,                                       &
-!>   &                  LBi, UBi, LBj, UBj, 1, N(ng),                   &
-!>   &                  tl_va)
-!>
-      CALL ad_bc_r3d_tile (ng, tile,                                    &
-     &                     LBi, UBi, LBj, UBj, 1, N(ng),                &
-     &                     ad_va)
-!>    CALL bc_r3d_tile (ng, tile,                                       &
-!>   &                  LBi, UBi, LBj, UBj, 1, N(ng),                   &
-!>   &                  tl_ua)
-!>
-      CALL ad_bc_r3d_tile (ng, tile,                                    &
-     &                     LBi, UBi, LBj, UBj, 1, N(ng),                   &
-     &                     ad_ua)
-!
 !  Adjoint of variable change from C-grid to A-grid.
 !
-      DO k=1,N(ng)
-        DO j=Jstr,Jend
-          DO i=Istr,Iend
-#  ifdef MASKING
+      K_LOOP : DO k=1,N(ng)
+!
+!  Adjoint of rotate from computational to gegraphical Eastward and
+!  Northward directions.
+!
+        DO j=JstrR,JendR
+          DO i=IstrR,IendR
+# ifdef MASKING
 !>          tl_va(i,j,k)=tl_va(i,j,k)*rmask(i,j)
 !>
             ad_va(i,j,k)=ad_va(i,j,k)*rmask(i,j)
 !>          tl_ua(i,j,k)=tl_ua(i,j,k)*rmask(i,j)
 !>
             ad_ua(i,j,k)=ad_ua(i,j,k)*rmask(i,j)
-#  endif
-!>          tl_va(i,j,k)=tl_Vrho*CosAngler(i,j)+                        &
-!>   &                   tl_Urho*SinAngler(i,j)
+# endif
+!>          tl_va(i,j,k)=tl_Vrho(i,j)*CosAngler(i,j)+                   &
+!>   &                   tl_Urho(i,j)*SinAngler(i,j)
 !>
             adfac1=CosAngler(i,j)*ad_va(i,j,k)
             adfac2=SinAngler(i,j)*ad_va(i,j,k)
-            ad_Vrho=ad_Vrho+adfac1
-            ad_Urho=ad_Vrho+adfac2
+            ad_Vrho(i,j)=ad_Vrho(i,j)+adfac1
+            ad_Urho(i,j)=ad_Urho(i,j)+adfac2
             ad_va(i,j,k)=0.0_r8
-!>          tl_ua(i,j,k)=tl_Urho*CosAngler(i,j)-                        &
-!>   &                   tl_Vrho*SinAngler(i,j)
+!>          tl_ua(i,j,k)=tl_Urho(i,j)*CosAngler(i,j)                    &
+!>   &                   tl_Vrho(i,j)*SinAngler(i,j)
 !>
             adfac1=CosAngler(i,j)*ad_ua(i,j,k)
             adfac2=SinAngler(i,j)*ad_ua(i,j,k)
             ad_Urho=ad_Urho+adfac1
             ad_Vrho=ad_Vrho-adfac2
             ad_ua(i,j,k)=0.0_r8
-!>          tl_Vrho=0.5_r8*(tl_v(i,j,k,ninp)+tl_v(i,j+1,k,ninp))
-!>
-            adfac=0.5_r8*ad_Vrho
-            ad_v(i,j  ,k,ninp)=ad_v(i,j  ,k,ninp)+adfac
-            ad_v(i,j+1,k,ninp)=ad_v(i,j+1,k,ninp)+adfac
-            ad_Vrho=0.0_r8
-!>          tl_Urho=0.5_r8*(tl_u(i,j,k,ninp)+tl_u(i+1,j,k,ninp))
-!>
-            adfac=0.5_r8*ad_Urho
-            ad_u(i  ,j,k,ninp)=ad_u(i  ,j,k,ninp)+adfac
-            ad_u(i+1,j,k,ninp)=ad_u(i+1,j,k,ninp)+adfac
-            ad_Urho=0.0_r8
           END DO
         END DO
-      END DO
+!
+!  Adjoint of compute A-grid (cell center) vector components.
+!
+        DO j=Jstr,Jend
+          DO i=IstrR,IendR
+            IF (.not.NSperiodic(ng)) THEN
+              IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
+!>              tl_Vrho(i,Jend+1)=tl_Vrho(i,Jend)
+!>
+                ad_Vrho(i,Jend)=ad_Vrho(i,Jend)+ad_Vrho(i,Jend+1)
+              END IF
+              IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
+!>              tl_Vrho(i,Jstr-1)=tl_Vrho(i,Jstr)
+!>
+                ad_Vrho(i,Jstr)=ad_Vrho(i,Jstr)+ad_Vrho(i,Jstr-1)
+              END IF
+            END IF
+!>          tl_Vrho(i,j)=0.5_r8*(tl_v(i,j,k,ninp)+tl_v(i,j+1,k,ninp))
+!>
+            adfac=0.5_r8*ad_Vrho(i,j)
+            ad_v(i,j  ,k,ninp)=ad_v(i,j  ,k,ninp)+adfac
+            ad_v(i,j+1,k,ninp)=ad_v(i,j+1,k,ninp)+adfac
+            ad_Vrho(i,j)=0.0_r8
+          END DO
+        END DO
+!
+        DO j=JstrR,JendR
+          DO i=Istr,Iend
+            IF (.not.EWperiodic(ng)) THEN
+              IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
+!>              tl_Urho(Iend+1,j)=tl_Urho(Iend,j)
+!>
+                ad_Urho(Iend,j)=ad_Urho(Iend,j)+ad_Urho(Iend+1,j)
+              END IF
+              IF (DOMAIN(ng)%Western_Edge(tile)) THEN
+!>              tl_Urho(Istr-1,j)=tl_Urho(Istr,j)
+!>
+                ad_Urho(Istr,j)=ad_Urho(Istr,j)+ad_Urho(Istr-1,j)
+              END IF
+            END IF
+!>          tl_Urho(i,j)=0.5_r8*(tl_u(i,j,k,ninp)+tl_u(i+1,j,k,ninp))
+!>
+            adfac=0.5_r8*ad_Urho(i,j)
+            ad_u(i  ,j,k,ninp)=ad_u(i  ,j,k,ninp)+adfac
+            ad_u(i+1,j,k,ninp)=AD_u(i+1,j,k,ninp)+adfac
+            ad_Urho(i,j)=0.0_r8
+          END DO
+        END DO
+      END DO K_LOOP
 !
       RETURN
       END SUBROUTINE ad_uv_C2A_grid_tile    
@@ -920,8 +1006,7 @@
 #  include "set_bounds.h"
 !
 !-----------------------------------------------------------------------
-!  Change from A-grid to C-grid. Then, rotate 3D vector components to
-!  computational (XI,ETA) directions.
+!  Adjoint of transform vector components from A-grid to C-grid.
 !-----------------------------------------------------------------------
 !
 !  Initialize.
@@ -951,9 +1036,12 @@
 !
 !  Adjoint of variable change from A-grid to C-grid.
 !
-      DO k=1,N(ng)
+      K_LOOP :DO k=1,N(ng)
+!
+!  Adjoint of compute staggered C-grid components.
+!
         DO j=Jstr,JendR
-          DO i=IstrR,IstrR
+          DO i=IstrR,IendR
 #  ifdef MASKING
 !>          tl_v(i,j,k,nout)=tl_v(i,j,k,nout)*vmask(i,j)
 !>
@@ -967,8 +1055,9 @@
             ad_v(i,j,k,nout)=0.0_r8
           END DO
         END DO
+!
         DO j=JstrR,JendR
-          DO i=Istr,IstrR
+          DO i=Istr,IendR
 #  ifdef MASKING
 !>          tl_u(i,j,k,nout)=tl_u(i,j,k,nout)*umask(i,j)
 !>
@@ -982,8 +1071,12 @@
             ad_u(i,j,k,nout)=0.0_r8
           END DO
         END DO
-        DO j=Jstr-1,Jend+1
-          DO i=Istr-1,Iend+1
+!
+!  Adjoint of rotate vector components to computations (XI,ETA)
+!  directions.
+!
+        DO j=Jstr-1,JendR
+          DO i=Istr-1,IendR
 !>          tl_Vrho(i,j)=tl_va(i,j,k)*CosAngler(i,j)-                   &
 !>   &                   tl_ua(i,j,k)*SinAngler(i,j)
 !>
@@ -1002,7 +1095,7 @@
             ad_Urho(i,j)=0.0_r8
           END DO
         END DO
-      END DO
+      END DO K_LOOP
 !
       RETURN
       END SUBROUTINE ad_uv_A2C_grid_tile    
