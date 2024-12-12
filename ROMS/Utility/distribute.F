@@ -7921,7 +7921,7 @@
                 END IF
               END DO
             END DO
-            MySize=ic
+            Vsize=ic
 #  endif
           END IF
         END IF
@@ -8056,8 +8056,9 @@
 !
       Astats(1)=Amin
       Astats(2)=Amax
+      MySize=2
 !
-      CALL mpi_bcast (Astats, 2, MP_FLOAT, MyMaster,                    &
+      CALL mpi_bcast (Astats, MySize, MP_FLOAT, MyMaster,               &
      &                OCN_COMM_WORLD,  MyError)
       IF (MyError.ne.MPI_SUCCESS) THEN
         CALL mpi_error_string (MyError, string, Lstr, Serror)
