@@ -4018,8 +4018,7 @@
       integer, dimension(MPI_STATUS_SIZE) :: Rstatus
       integer, dimension(MPI_STATUS_SIZE) :: Sstatus
 !
-      real(r8), dimension(TileSize(ng),                                 &
-     &                    NtileI(ng)*NtileJ(ng)-1) :: Arecv
+      real(r8), allocatable :: Arecv(:,:)
 # else
       real(r8), allocatable :: Arecv(:)
 # endif
@@ -4194,7 +4193,8 @@
 
 # ifdef GATHER_SENDRECV
 !
-      Arecv=0.0_r8      
+      allocate ( Arecv(IJsize, Ntasks-1) )
+      Arecv=0.0_r8
 !
 !  If master processor, unpack the send buffer since there is not
 !  need to distribute.
@@ -4214,19 +4214,19 @@
 !  Send, receive, and unpack data.
 !
       IF (MyRank.eq.MyMaster) THEN
-        DO rank=1,NtileI(ng)*NtileJ(ng)-1
+        DO rank=1,Ntasks-1
           CALL mpi_irecv (Arecv(1,rank), MySize(rank), MP_FLOAT, rank,  &
      &                    rank+5, OCN_COMM_WORLD, Rrequest(rank),       &
      &                    MyError)
         END DO
-        DO rank=1,NtileI(ng)*NtileJ(ng)-1
+        DO rank=1,Ntasks-1
           CALL mpi_wait (Rrequest(rank), Rstatus, MyError)
           IF (MyError.ne.MPI_SUCCESS) THEN
             CALL mpi_error_string (MyError, string, Lstr, Serror)
             Lstr=LEN_TRIM(string)
             WRITE (stdout,10) 'MPI_IRECV', rank, MyError, string(1:Lstr)
- 10         FORMAT (/,' MP_GATHER2D - error during ',a,' call, Task = ',&
-     &              i3.3,' Error = ',i3,/,13x,a)
+ 10         FORMAT (/,' MP_GATHER2D - error during ',a,                 &
+     &              ' call, Task = ',i3.3,' Error = ',i3,/,13x,a)
             exit_flag=2
             RETURN
           END IF
@@ -4296,13 +4296,10 @@
           END DO
         END DO
       END DO
-      deallocate (Arecv)
 # endif
-      deallocate (Asend)
-
 # ifdef MASKING
 !
-! If pocessing only water-points, remove land points and repack.
+!  If pocessing only water-points, remove land points and repack.
 !
       IF ((MyRank.eq.MyMaster).and.(gtype.lt.0)) THEN
         nc=0
@@ -4315,6 +4312,12 @@
         Npts=nc
       END IF
 # endif
+!
+!  Deallocate local arrays.
+!
+      deallocate (Arecv)
+      deallocate (Asend)
+
 # ifdef PROFILE
 !
 !-----------------------------------------------------------------------
@@ -4406,8 +4409,7 @@
       integer, dimension(MPI_STATUS_SIZE) :: Rstatus
       integer, dimension(MPI_STATUS_SIZE) :: Sstatus
 !
-      real(r8), dimension(TileSize(ng),                                 &
-     &                    NtileI(ng)*NtileJ(ng)-1) :: Arecv
+      real(r8), allocatable :: Arecv(:,:)
 #  else
       real(r8), allocatable :: Arecv(:)
 #  endif
@@ -4579,8 +4581,10 @@
 !-----------------------------------------------------------------------
 !  Gather requested global data from tiled arrays.
 !-----------------------------------------------------------------------
-!
+
 #  ifdef GATHER_SENDRECV
+!
+      allocate ( Arecv(IJsize, Ntasks-1) )
       Arecv=0.0_r8      
 !
 !  If master processor, unpack the send buffer since there is not
@@ -4601,12 +4605,12 @@
 !  Send, receive, and unpack data.
 !
       IF (MyRank.eq.MyMaster) THEN
-        DO rank=1,NtileI(ng)*NtileJ(ng)-1
+        DO rank=1,Ntasks-1
           CALL mpi_irecv (Arecv(1,rank), MySize(rank), MP_FLOAT, rank,  &
      &                    rank+5, OCN_COMM_WORLD, Rrequest(rank),       &
      &                    MyError)
         END DO
-        DO rank=1,NtileI(ng)*NtileJ(ng)-1
+        DO rank=1,Ntasks-1
           CALL mpi_wait (Rrequest(rank), Rstatus, MyError)
           IF (MyError.ne.MPI_SUCCESS) THEN
             CALL mpi_error_string (MyError, string, Lstr, Serror)
@@ -4645,6 +4649,7 @@
           RETURN
         END IF
       END IF
+
 #  else
 !
 !  Gather local tiled data into a global array.
@@ -4682,10 +4687,7 @@
           END DO
         END DO
       END DO
-      deallocate (Arecv)
 #  endif
-      deallocate (Asend)
-
 #  ifdef MASKING
 !
 ! If pocessing only water-points, remove land points and repack.
@@ -4701,6 +4703,12 @@
         Npts=nc
       END IF
 #  endif
+!
+! Deallocate local arrays.
+!
+      deallocate (Arecv)
+      deallocate (Asend)
+
 #  ifdef PROFILE
 !
 !-----------------------------------------------------------------------
@@ -4794,8 +4802,7 @@
       integer, dimension(MPI_STATUS_SIZE) :: Rstatus
       integer, dimension(MPI_STATUS_SIZE) :: Sstatus
 !
-      real(r8), dimension(TileSize(ng)*(UBk-LBk+1),                     &
-     &                    NtileI(ng)*NtileJ(ng)-1) :: Arecv
+      real(r8), allocatable :: Arecv(:,:)
 # else
       real(r8), allocatable :: Arecv(:)
 # endif
@@ -4985,6 +4992,7 @@
 
 # ifdef GATHER_SENDRECV
 !
+      allocate ( Arecv(IJsize*Ksize, Ntasks-1) )
       Arecv=0.0_r8      
 !
 !  If master processor, unpack the send buffer since there is not
@@ -5008,12 +5016,12 @@
 !  Send, receive, and unpack data.
 !
       IF (MyRank.eq.MyMaster) THEN
-        DO rank=1,NtileI(ng)*NtileJ(ng)-1
+        DO rank=1,Ntasks-1
           CALL mpi_irecv (Arecv(1,rank), MySize(rank), MP_FLOAT, rank,  &
      &                    rank+5, OCN_COMM_WORLD, Rrequest(rank),       &
      &                    MyError)
         END DO
-        DO rank=1,NtileI(ng)*NtileJ(ng)-1
+        DO rank=1,Ntasks-1
           CALL mpi_wait (Rrequest(rank), Rstatus, MyError)
           IF (MyError.ne.MPI_SUCCESS) THEN
             CALL mpi_error_string (MyError, string, Lstr, Serror)
@@ -5096,12 +5104,10 @@
           END DO
         END DO
       END DO
-      deallocate (Arecv)
 # endif
-      deallocate (Asend)
 # ifdef MASKING
 !
-! If pocessing only water-points, remove land points and repack.
+!  If pocessing only water-points, remove land points and repack.
 !
       IF ((MyRank.eq.MyMaster).and.(gtype.lt.0)) THEN
         nc=0
@@ -5114,6 +5120,12 @@
         Npts=nc
       END IF
 # endif
+!
+!  Deallocate local arrays.
+!
+      deallocate (Arecv)
+      deallocate (Asend)
+
 # ifdef PROFILE
 !
 !-----------------------------------------------------------------------
@@ -7493,33 +7505,38 @@
         counts(rank)=nc-displs(rank)
       END DO
 !
-!  Load global data into send buffer. If water points input data, fill
+!  Load global data into send buffer, Vglobal, which is only known by
+!  the root process at this point. If water points input data, fill
 !  land points.
 !
-      IF (gtype.gt.0) THEN
-        Vsize=Npts
-        Vglobal(1:Vsize)=A(1:Vsize)
+      Vglobal=0.0_r8
+      Vsize=Npts
+!
+      IF (MyRank.eq.MyMaster) Then
+        IF (gtype.gt.0) THEN
+          Vglobal(1:Vsize)=A(1:Vsize)
 # if defined READ_WATER && defined MASKING
-      ELSE
-        ij=0
-        mc=0
-        nc=0
-        DO j=Jo,Je
-          jc=(j-Joff)*Isize
-          DO i=Io,Ie
-            ij=ij+1
-            ic=i+Ioff+jc
-            IF (IJ_water(mc+1).eq.ij) THEN
-              mc=mc+1
-              nc=nc+1
-              Vglobal(ic)=A(nc)
-            ELSE
-              Vglobal(ic)=0.0_r8
-            ENDIF
+        ELSE
+          ij=0
+          mc=0
+          nc=0
+          DO j=Jo,Je
+            jc=(j-Joff)*Isize
+            DO i=Io,Ie
+              ij=ij+1
+              ic=i+Ioff+jc
+              IF (IJ_water(mc+1).eq.ij) THEN
+                mc=mc+1
+                nc=nc+1
+                Vglobal(ic)=A(nc)
+              ELSE
+                Vglobal(ic)=0.0_r8
+              END IF
+            END DO
           END DO
-        END DO
-        Vsize=ic
+          Vsize=ic
 #  endif
+        END IF
       END IF
 !
 !-----------------------------------------------------------------------
@@ -7540,7 +7557,7 @@
       Jmin=BOUNDS(ng) % Jmin(Cgrid,ghost,MyRank)
       Jmax=BOUNDS(ng) % Jmax(Cgrid,ghost,MyRank)
 !
-!  Append Min/Max values since they are only known by root.
+!  Append Min/Max values since they are only known by root process
 !
       IF (MyRank.eq.MyMaster) Then
         Vglobal(Vsize+1)=Amin
@@ -7570,6 +7587,8 @@
           Awrk(i,j)=Vglobal(ic)
         END DO
       END DO
+      Amin=Vglobal(Vsize-1)
+      Amax=Vglobal(Vsize)
 
 # else
 !
@@ -7660,8 +7679,9 @@
 !
       Astats(1)=Amin
       Astats(2)=Amax
+      MySize=2
 !
-      CALL mpi_bcast (Astats, 2, MP_FLOAT, MyMaster,                    &
+      CALL mpi_bcast (Astats, MySize, MP_FLOAT, MyMaster,               &
      &                OCN_COMM_WORLD,  MyError)
       IF (MyError.ne.MPI_SUCCESS) THEN
         CALL mpi_error_string (MyError, string, Lstr, Serror)
@@ -7751,17 +7771,21 @@
 !
       integer :: Io, Ie, Jo, Je, Ioff, Joff
       integer :: Imin, Imax, Jmin, Jmax
-      integer :: Asize, Ilen, Jlen, IJlen
+      integer :: iLB, iUB, jLB, jUB
+      integer :: Isize, Jsize, IJsize, Vsize
       integer :: Lstr, MyError, MySize, MyType, Ntasks, Serror, ghost
       integer :: Cgrid, i, ic, ij, j, jc, mc, nc, rank
 !
       integer, dimension(0:NtileI(ng)*NtileJ(ng)-1) :: counts, displs
 !
 #  ifndef SCATTER_BCAST
+      integer, allocatable :: ij_global(:,:)
+!
       real(r8) :: Astats(2)
+      real(r8), allocatable :: Vrecv(:)
+      real(r8), dimension(Npts) :: Vreset 
 #  endif
-      real(r8), allocatable       :: Arecv(:)
-      real(r8), dimension(Npts+2) :: Asend
+      real(r8), dimension(Npts+2) :: Vglobal
 !
       character (len=MPI_MAX_ERROR_STRING) :: string
 
@@ -7784,7 +7808,7 @@
 !
 !  Maximum automatic buffer memory size in bytes.
 !
-      BmemMax(ng)=MAX(BmemMax(ng), REAL(SIZE(Asend)*KIND(A),r8))
+      BmemMax(ng)=MAX(BmemMax(ng), REAL(SIZE(Vglobal)*KIND(A),r8))
 !
 !  Set full grid first and last point according to staggered C-grid
 !  classification. Notice that the offsets are for the private array
@@ -7830,18 +7854,14 @@
           Joff=0
       END SELECT
 !
-      Ilen=Ie-Io+1
-      Jlen=Je-Jo+1
-      IJlen=Ilen*Jlen
+      Isize=Ie-Io+1
+      Jsize=Je-Jo+1
+      IJsize=Isize*Jsize
 !
 !  Set Scatter counts and displacement vectors. Use non-overlapping
 !  (Nghost=0) or overlapping (Nghost>0) ranges according to tile rank.
 !
-      IF (Nghost.eq.0) THEN
-        ghost=0                                   ! non-overlapping
-      ELSE
-        ghost=1                                   ! overlapping
-      END IF
+      ghost=0                                     ! non-overlapping
 !
       SELECT CASE (MyType)
         CASE (p2dvar, p3dvar)
@@ -7859,73 +7879,82 @@
       Ntasks=NtileI(ng)*NtileJ(ng)
       nc=0
       DO rank=0,Ntasks-1
-        Imin=xtr_BOUNDS(ng) % Imin(Cgrid,ghost,rank)
-        Imax=xtr_BOUNDS(ng) % Imax(Cgrid,ghost,rank)
-        Jmin=xtr_BOUNDS(ng) % Jmin(Cgrid,ghost,rank)
-        Jmax=xtr_BOUNDS(ng) % Jmax(Cgrid,ghost,rank)
+        iLB=xtr_BOUNDS(ng) % Imin(Cgrid,ghost,rank)
+        iUB=xtr_BOUNDS(ng) % Imax(Cgrid,ghost,rank)
+        jLB=xtr_BOUNDS(ng) % Jmin(Cgrid,ghost,rank)
+        jUB=xtr_BOUNDS(ng) % Jmax(Cgrid,ghost,rank)
         displs(rank)=nc
-        DO j=Jmin,Jmax
-          DO i=Imin,Imax
+        DO j=jLB,jUB
+          DO i=iLB,iUB
             nc=nc+1
           END DO
         END DO
         counts(rank)=nc-displs(rank)
       END DO
 !
-!  Load global data into send buffer. If water points input data, fill
+!  Load global data into send buffer, Vglobal, which is only known by
+!  the root process at this point. If water points input data, fill
 !  land points.
 !
-      IF (gtype.gt.0) THEN
-        MySize=IJlen
-        Asend(1:Npts)=A(1:Npts)
+      Vglobal=0.0_r8
+      Vsize=Npts
+!
+      IF (MyRank.eq.MyMaster) Then
+        IF (gtype.gt.0) THEN
+          Vglobal(1:Vsize)=A(1:Vsize)
 #  if defined READ_WATER && defined MASKING
-      ELSE
-        ij=0
-        mc=0
-        nc=0
-        DO j=Jo,Je
-          jc=(j-Joff)*Ilen
-          DO i=Io,Ie
-            ij=ij+1
-            ic=i+Ioff+jc
-            IF (IJ_water(mc+1).eq.ij) THEN
-              mc=mc+1
-              nc=nc+1
-              Asend(ic)=A(nc)
-            ELSE
-              Asend(ic)=0.0_r8
-            ENDIF
-          END DO
-        END DO
-        MySize=ic
+          ELSE
+            ij=0
+            mc=0
+            nc=0
+            DO j=Jo,Je
+              jc=(j-Joff)*Ilen
+              DO i=Io,Ie
+                ij=ij+1
+                ic=i+Ioff+jc
+                IF (IJ_water(mc+1).eq.ij) THEN
+                  mc=mc+1
+                  nc=nc+1
+                  Vglobal(ic)=A(nc)
+                ELSE
+                  Vglobal(ic)=0.0_r8
+                END IF
+              END DO
+            END DO
+            MySize=ic
 #  endif
-      END IF
+          END IF
+        END IF
 !
 !-----------------------------------------------------------------------
 !  Scatter requested global data.
 !-----------------------------------------------------------------------
+
+#  ifdef SCATTER_BCAST
 !
-!  Set tile range.
+!  Set tile range to include overlapping halos, if requested.
 !
+      IF (Nghost.eq.0) THEN
+        ghost=0                                   ! non-overlapping
+      ELSE
+        ghost=1                                   ! overlapping
+      END IF
       Imin=xtr_BOUNDS(ng) % Imin(Cgrid,ghost,MyRank)
       Imax=xtr_BOUNDS(ng) % Imax(Cgrid,ghost,MyRank)
       Jmin=xtr_BOUNDS(ng) % Jmin(Cgrid,ghost,MyRank)
       Jmax=xtr_BOUNDS(ng) % Jmax(Cgrid,ghost,MyRank)
-
-#  ifdef SCATTER_BCAST
 !
-!  If master processor, append minimum and maximum values to the end of
-!  the buffer.
+!  Append Min/Max values since they are only known by root process.
 !
       IF (MyRank.eq.MyMaster) Then
-        A(MySize+1)=Amin
-        A(MySize+2)=Amax
+        Vglobal(Vsize+1)=Amin
+        Vglobal(Vsize+2)=Amax
       END IF
-      MySize=MySize+2
+      Vsize=Vsize+2
 !
 !  Broadcast data to all processes in the group, itself included.
 !
-      CALL mpi_bcast (Asend, MySize, MP_FLOAT, MyMaster,                &
+      CALL mpi_bcast (Vglobal, Vsize, MP_FLOAT, MyMaster,               &
      &                OCN_COMM_WORLD, MyError)
       IF (MyError.ne.MPI_SUCCESS) THEN
         CALL mpi_error_string (MyError, string, Lstr, Serror)
@@ -7935,64 +7964,105 @@
         exit_flag=2
         RETURN
       END IF
+!
+! Unpack data buffer and load into tiled array.
+!
+      DO j=Jmin, Jmax
+        jc=(j-Joff)*Isize
+        DO i=Imin, Imax
+          ic=i+Ioff+jc
+          Awrk(i,j)=Vglobal(ic)
+        END DO
+      END DO
+      Amin=Vglobal(Vsize-1)
+      Amax=Vglobal(Vsize)
+
 #  else
+!
+!  Set tile range for non-overlapping tiles.
+!
+      ghost=0                                     ! non-overlapping
+      Imin=xtr_BOUNDS(ng) % Imin(Cgrid,ghost,MyRank)
+      Imax=xtr_BOUNDS(ng) % Imax(Cgrid,ghost,MyRank)
+      Jmin=xtr_BOUNDS(ng) % Jmin(Cgrid,ghost,MyRank)
+      Jmax=xtr_BOUNDS(ng) % Jmax(Cgrid,ghost,MyRank)
+!
+!  If master node, set (i,j) indices map from global array to vector.
+!
+      IF (MyRank.eq.MyMaster) THEN
+        allocate ( ij_global(Io:Ie,Jo:Je) )
+!
+        DO j=Jo,Je
+          jc=(j-Joff)*Isize
+          DO i=Io,Ie
+            ij=i+Ioff+jc
+            ij_global(i,j)=ij
+          END DO
+        END DO
+!
+!  Reorganize the input global vector in such a way that the tiled data
+!  is continuous in memory to facilitate "SCATTERV" with different size
+!  sections.
+!
+        nc=0
+        DO rank=0,Ntasks-1
+          iLB=xtr_BOUNDS(ng) % Imin(Cgrid,ghost,rank)
+          iUB=xtr_BOUNDS(ng) % Imax(Cgrid,ghost,rank)
+          jLB=xtr_BOUNDS(ng) % Jmin(Cgrid,ghost,rank)
+          jUB=xtr_BOUNDS(ng) % Jmax(Cgrid,ghost,rank)
+          DO j=jLB,jUB
+            DO i=iLB,iUB
+              ij=ij_global(i,j)
+              nc=nc+1
+              Vreset(nc)=Vglobal(ij)
+            END DO
+          END DO
+        END DO
+        deallocate (ij_global)
+      END IF
 !
 !  Scatter global data to local tiled arrays.
 !
-      Asize=(Imax-Imin+1)*(Jmax-Jmin+1)
-      allocate ( Arecv(Asize) )
-      Arecv=0.0_r8
+      MySize=(Imax-Imin+1)*(Jmax-Jmin+1)
+      allocate ( Vrecv(MySize) )
+      Vrecv=0.0_r8
 !
-      CALL mpi_scatterv (Asend, counts, displs, MP_FLOAT, Arecv, Asize, &
-     &                   MP_FLOAT, MyMaster, OCN_COMM_WORLD, MyError)
+      CALL mpi_scatterv (Vreset, counts, displs, MP_FLOAT,              &
+     &                   Vrecv, MySize, MP_FLOAT,                       &
+     &                   MyMaster, OCN_COMM_WORLD, MyError)
       IF (MyError.ne.MPI_SUCCESS) THEN
         CALL mpi_error_string (MyError, string, Lstr, Serror)
-        WRITE (stdout,10) 'MPI_SCATTERV', MyRank, MyError, TRIM(string)
- 10     FORMAT (/,' MP_SCATTER2D_XTR - error during ',a,                &
+        WRITE (stdout,20) 'MPI_SCATTERV', MyRank, MyError,              &
+     &                    TRIM(string)
+ 20     FORMAT (/,' MP_SCATTER2D_XTR - error during ',a,                &
      &          ' call, Task = ', i3.3, ' Error = ',i3,/,15x,a)
         exit_flag=2
         RETURN
       END IF
-#  endif
 !
-!-----------------------------------------------------------------------
-!  Unpack data buffer and load into tiled array.
-!-----------------------------------------------------------------------
+!  Unpack data buffer and load into tiled array
 !
-#  ifdef SCATTER_BCAST
-      DO j=Jmin,Jmax
-        jc=(j-Joff)*Ilen
-        DO i=Imin,Imax
-          ic=i+Ioff+jc
-          Awrk(i,j)=Asend(ic)
-        END DO
-      END DO
-      Amin=Asend(MySize-1)
-      Amax=Asend(MySize)
-#  else
       nc=0
       DO j=Jmin,Jmax
         DO i=Imin,Imax
           nc=nc+1          
-          Awrk(i,j)=Arecv(nc)
+          Awrk(i,j)=Vrecv(nc)
         END DO
       END DO
-      deallocate ( Arecv )
+      deallocate ( Vrecv )
 !
-!  Broadcast global Min/Max values to all tasks in the group since it
-!  is only known by root.
+!  Broadcast global Min/Max values to all tasks in the group since they
+!  are only known by root.
 !
       Astats(1)=Amin
       Astats(2)=Amax
-      MySize=2
 !
-      CALL mpi_bcast (Astats, MySize, MP_FLOAT, MyMaster,               &
+      CALL mpi_bcast (Astats, 2, MP_FLOAT, MyMaster,                    &
      &                OCN_COMM_WORLD,  MyError)
       IF (MyError.ne.MPI_SUCCESS) THEN
         CALL mpi_error_string (MyError, string, Lstr, Serror)
-         Lstr=LEN_TRIM(string)
-        WRITE (stdout,20) 'MPI_BCAST', MyRank, MyError, string(1:Lstr)
- 20     FORMAT (/,' MP_SCATTER2D_XTR - error during ',a,                &
+        WRITE (stdout,30) 'MPI_BCAST', MyRank, MyError, TRIM(string)
+ 30     FORMAT (/,' MP_SCATTER2D_XTR - error during ',a,                &
      &          ' call, Task = ', i3.3, ' Error = ',i3,/,15x,a)
         exit_flag=2
         RETURN
@@ -8210,36 +8280,41 @@
         counts(rank)=nc-displs(rank)
       END DO
 !
-!  Load global data into send buffer. If water points only input data,
-!  fill land points.
+!  Load global data into send buffer, Vglobal, which is only known by
+!  the root process at this point. If water points input data, fill
+!  land points.
 !
-      IF (gtype.gt.0) THEN
-        Vsize=Npts
-        Vglobal(1:Vsize)=A(1:Vsize)
+      Vglobal=0.0_r8
+      Vsize=Npts
+!
+      IF (MyRank.eq.MyMaster) Then
+        IF (gtype.gt.0) THEN
+          Vglobal(1:Vsize)=A(1:Vsize)
 # if defined READ_WATER && defined MASKING
-      ELSE
-        nc=0
-        DO k=LBk,UBk
-          kc=(k-Koff)*IJsize
-          ij=0
-          mc=0
-          DO j=Jo,Je
-            jc=(j-Joff)*Isize
-            DO i=Io,Ie 
-              ij=ij+1
-              ic=i+Ioff+jc+kc
-              IF (IJ_water(mc+1).eq.ij) THEN
-                mc=mc+1
-                nc=nc+1
-                Vglobal(ic)=A(nc)
-              ELSE
-                Vglobal(ic)=0.0_r8
-              END IF
+        ELSE
+          nc=0
+          DO k=LBk,UBk
+            kc=(k-Koff)*IJsize
+            ij=0
+            mc=0
+            DO j=Jo,Je
+              jc=(j-Joff)*Isize
+              DO i=Io,Ie 
+                ij=ij+1
+                ic=i+Ioff+jc+kc
+                IF (IJ_water(mc+1).eq.ij) THEN
+                  mc=mc+1
+                  nc=nc+1
+                  Vglobal(ic)=A(nc)
+                ELSE
+                  Vglobal(ic)=0.0_r8
+                END IF
+              END DO
             END DO
           END DO
-        END DO
-        Vsize=ic
+          Vsize=ic
 # endif
+        END IF
       END IF
 !
 !-----------------------------------------------------------------------
@@ -8293,6 +8368,8 @@
           END DO
         END DO
       END DO
+      Amin=Vglobal(Vsize-1)
+      Amax=Vglobal(Vsize)
 
 # else
 !
