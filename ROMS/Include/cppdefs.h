@@ -468,6 +468,11 @@
 ** HYPOXIA_SRM             if Hypoxia Simple Respiration Model               **
 ** OCMIP_OXYGEN_SC         if O2 Schmidt number from Keeling et al. (1998)   **
 **                                                                           **
+** IOP-based, ecosystem model OPTIONS:                                       **
+**                                                                           **
+** IOP_CDOM                if IOP-based CDOM ecosystem model                 **
+** NPZD_IOP                if IOP-based NPZD ecosystem model                 **
+**                                                                           **
 ** NPZD biology model OPTIONS:                                               **
 **                                                                           **
 ** NPZD_FRANKS             if NPZD Biology model, Franks et al. (1986)       **

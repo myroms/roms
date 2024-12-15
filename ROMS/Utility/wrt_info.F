@@ -1354,10 +1354,14 @@
 #  include <ecosim_wrt.h>
 # elif defined HYPOXIA_SRM
 #  include <hypoxia_srm_wrt.h>
+# elif defined IOP_CDOM
+#  include <iop_cdom_wrt.h>
 # elif defined NEMURO
 #  include <nemuro_wrt.h>
 # elif defined NPZD_FRANKS
 #  include <npzd_Franks_wrt.h>
+# elif defined NPZD_IOP
+#  include <npzd_iop_wrt.h>
 # elif defined NPZD_IRON
 #  include <npzd_iron_wrt.h>
 # elif defined NPZD_POWELL
@@ -4692,10 +4696,14 @@
 #   include <ecosim_wrt_pio.h>
 #  elif defined HYPOXIA_SRM
 #   include <hypoxia_srm_wrt_pio.h>
+#  elif defined IOP_CDOM
+#   include <iop_cdom_wrt.h>
 #  elif defined NEMURO
 #   include <nemuro_wrt_pio.h>
 #  elif defined NPZD_FRANKS
 #   include <npzd_Franks_wrt_pio.h>
+#  elif defined NPZD_IOP
+#   include <npzd_iop_wrt.h>
 #  elif defined NPZD_IRON
 #   include <npzd_iron_wrt_pio.h>
 #  elif defined NPZD_POWELL

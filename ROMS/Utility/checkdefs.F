@@ -1500,6 +1500,14 @@
       Coptions(is:is+15)=' INNER_PRODUCT,'
       idriver=idriver+1
 #endif
+#ifdef IOP_CDOM
+!
+      IF (Master) WRITE (stdout,20) 'IOP_CDOM',                         &
+     &   'IOP-based CDOM ecosystem model'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+10)=' IOP_CDOM,'
+      ibiology=ibiology+1
+#endif
 #if defined I4DVAR && !defined SPLIT_4DVAR
 !
       IF (Master) WRITE (stdout,20) 'I4DVAR',                           &
@@ -1870,6 +1878,14 @@
      &   'NPZD Biological Model, Franks et al. fomulation'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+13)=' NPZD_FRANKS,'
+      ibiology=ibiology+1
+#endif
+#ifdef NPZD_IOP
+!
+      IF (Master) WRITE (stdout,20) 'NPZD_IOP',                         &
+         'IOP-based NPZD ecosystem model'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+10)=' NPZD_IOP,'
       ibiology=ibiology+1
 #endif
 #ifdef NPZD_IRON

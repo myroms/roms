@@ -2363,8 +2363,12 @@
 #  include <ecosim_var.h>
 # elif defined HYPOXIA_SRM
 #  include <hypoxia_srm_var.h>
+# elif defined IOP_CDOM
+#  include <iop_cdom_var.h>
 # elif defined NEMURO
 #  include <nemuro_var.h>
+# elif defined NPZD_IOP
+#  include <npzd_iop_var.h>
 # elif defined NPZD_FRANKS
 #  include <npzd_Franks_var.h>
 # elif defined NPZD_POWELL
