@@ -29,7 +29,7 @@
 !  PRIVATE: uv_C2A_grid_tile, ad_uv_C2A_grid_tile, tl_uv_C2A_grid_tile !
 !                                                                      !
 !  * If transforming vector components from A-grid to C-grid, rotate   !
-!    to computational XI and ETA directions.                           !          
+!    to computational XI and ETA directions.                           !
 !                                                                      !
 !  Ur(i,j,k) = ua(i,j,k) * CosAngler(i,j) + va(i,j,k) * SinAngler(i,j) !
 !  Vr(i,j,k) = va(i,j,k) * CosAngler(i,j) - ua(i,j,k) * SinAngler(i,j) !
@@ -870,12 +870,14 @@
               IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
 !>              tl_Vrho(i,Jend+1)=tl_Vrho(i,Jend)
 !>
-                ad_Vrho(i,Jend)=ad_Vrho(i,Jend)+ad_Vrho(i,Jend+1)
+                ad_Vrho(i,Jend  )=ad_Vrho(i,Jend)+ad_Vrho(i,Jend+1)
+                ad_Vrho(i,Jend+1)=0.0_r8
               END IF
               IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
 !>              tl_Vrho(i,Jstr-1)=tl_Vrho(i,Jstr)
 !>
-                ad_Vrho(i,Jstr)=ad_Vrho(i,Jstr)+ad_Vrho(i,Jstr-1)
+                ad_Vrho(i,Jstr  )=ad_Vrho(i,Jstr)+ad_Vrho(i,Jstr-1)
+                ad_Vrho(i,Jstr-1)=0.0_r8
               END IF
             END IF
 !>          tl_Vrho(i,j)=0.5_r8*(tl_v(i,j,k,ninp)+tl_v(i,j+1,k,ninp))
@@ -893,12 +895,14 @@
               IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
 !>              tl_Urho(Iend+1,j)=tl_Urho(Iend,j)
 !>
-                ad_Urho(Iend,j)=ad_Urho(Iend,j)+ad_Urho(Iend+1,j)
+                ad_Urho(Iend  ,j)=ad_Urho(Iend,j)+ad_Urho(Iend+1,j)
+                ad_Urho(Iend+1,j)=0.0_r8
               END IF
               IF (DOMAIN(ng)%Western_Edge(tile)) THEN
 !>              tl_Urho(Istr-1,j)=tl_Urho(Istr,j)
 !>
-                ad_Urho(Istr,j)=ad_Urho(Istr,j)+ad_Urho(Istr-1,j)
+                ad_Urho(Istr  ,j)=ad_Urho(Istr,j)+ad_Urho(Istr-1,j)
+                ad_Urho(Istr-1,j)=0.0_r8
               END IF
             END IF
 !>          tl_Urho(i,j)=0.5_r8*(tl_u(i,j,k,ninp)+tl_u(i+1,j,k,ninp))
