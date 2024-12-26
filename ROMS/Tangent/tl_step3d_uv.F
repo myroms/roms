@@ -40,7 +40,9 @@
 # endif
       USE tl_u3dbc_mod,      ONLY : tl_u3dbc_tile
       USE tl_v3dbc_mod,      ONLY : tl_v3dbc_tile
+# ifdef UV_DESTAGGERED
       USE uv_var_change_mod, ONLY : tl_uv_C2A_grid
+# endif
 !
       implicit none
 !
@@ -2145,6 +2147,7 @@
      &                    tl_ubar(:,:,1), tl_vbar(:,:,1),               &
      &                    tl_ubar(:,:,2), tl_vbar(:,:,2))
 # endif
+# ifdef UV_DESTAGGERED
 !
 !-----------------------------------------------------------------------
 !  Compute tangent linear 3D momentum (tl_ua, tl_va) at RHO-points
@@ -2155,6 +2158,7 @@
 !>    CALL uv_C2A_grid (ng, tile, iNLM, nnew)
 !>
       CALL tl_uv_C2A_grid (ng, tile, iTLM, nnew)
+# endif
 !
       RETURN
       END SUBROUTINE tl_step3d_uv_tile

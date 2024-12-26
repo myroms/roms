@@ -40,7 +40,9 @@
 # endif
       USE rp_u3dbc_mod,      ONLY : rp_u3dbc_tile
       USE rp_v3dbc_mod,      ONLY : rp_v3dbc_tile
+# ifdef UV_DESTAGGERED
       USE uv_var_change_mod, ONLY : tl_uv_C2A_grid
+# endif
 !
       implicit none
 !
@@ -2369,7 +2371,7 @@
      &                    tl_ubar(:,:,1), tl_vbar(:,:,1),               &
      &                    tl_ubar(:,:,2), tl_vbar(:,:,2))
 # endif
-!
+# ifdef UV_DESTAGGERED
 !
 !-----------------------------------------------------------------------
 !  Compute representer 3D momentum (tl_ua, tl_va) at RHO-points (A-Grid)
@@ -2380,6 +2382,7 @@
 !>    CALL uv_C2A_grid (ng, tile, iNLM, nnew)
 !>
       CALL tl_uv_C2A_grid (ng, tile, iRPM, nnew)
+# endif
 !
       RETURN
       END SUBROUTINE rp_step3d_uv_tile

@@ -41,7 +41,9 @@
 # endif
       USE ad_u3dbc_mod,      ONLY : ad_u3dbc_tile
       USE ad_v3dbc_mod,      ONLY : ad_v3dbc_tile
+# ifdef UV_DESTAGGERED
       USE uv_var_change_mod, ONLY : ad_uv_C2A_grid
+# endif
 !
       implicit none
 !
@@ -411,6 +413,8 @@
           ad_oHz(i,k)=0.0_r8
         END DO
       END DO
+
+# ifdef UV_DESTAGGERED
 !
 !-----------------------------------------------------------------------
 !  Compute adjoint 3D momentum (ad_ua, ad_va) at RHO-points (A-Grid)
@@ -421,6 +425,7 @@
 !>    CALL tl_uv_C2A_grid (ng, tile, iTLM, nnew)
 !>
       CALL ad_uv_C2A_grid (ng, tile, iTLM, nnew)
+# endif
 !
 !-----------------------------------------------------------------------
 !  Exchange boundary data.
