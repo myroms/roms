@@ -20,6 +20,30 @@
 !                                                                      !
 !=======================================================================
 !
+      USE mod_param
+      USE mod_coupling
+# ifdef DIAGNOSTICS_UV
+!!    USE mod_diags
+# endif
+      USE mod_forces
+      USE mod_grid
+      USE mod_mixing
+      USE mod_ncparam
+      USE mod_ocean
+      USE mod_scalars
+      USE mod_sources
+!
+      USE exchange_2d_mod
+      USE exchange_3d_mod
+# ifdef DISTRIBUTE
+      USE mp_exchange_mod,   ONLY : mp_exchange2d, mp_exchange3d
+# endif
+      USE rp_u3dbc_mod,      ONLY : rp_u3dbc_tile
+      USE rp_v3dbc_mod,      ONLY : rp_v3dbc_tile
+# ifdef UV_DESTAGGERED
+      USE uv_var_change_mod, ONLY : tl_uv_C2A_grid
+# endif
+!
       implicit none
 !
       PRIVATE
@@ -31,15 +55,6 @@
       SUBROUTINE rp_step3d_uv (ng, tile)
 !***********************************************************************
 !
-      USE mod_param
-      USE mod_coupling
-# ifdef DIAGNOSTICS_UV
-!!    USE mod_diags
-# endif
-      USE mod_forces
-      USE mod_grid
-      USE mod_mixing
-      USE mod_ocean
       USE mod_stepping
 !
 !  Imported variable declarations.
@@ -187,19 +202,6 @@
      &                              Huon, tl_Huon,                      &
      &                              Hvom, tl_Hvom)
 !***********************************************************************
-!
-      USE mod_param
-      USE mod_ncparam
-      USE mod_scalars
-      USE mod_sources
-!
-      USE exchange_2d_mod
-      USE exchange_3d_mod
-# ifdef DISTRIBUTE
-      USE mp_exchange_mod, ONLY : mp_exchange2d, mp_exchange3d
-# endif
-      USE rp_u3dbc_mod,    ONLY : rp_u3dbc_tile
-      USE rp_v3dbc_mod,    ONLY : rp_v3dbc_tile
 !
 !  Imported variable declarations.
 !
@@ -2725,6 +2727,18 @@
      &                    EWperiodic(ng), NSperiodic(ng),               &
      &                    tl_ubar(:,:,1), tl_vbar(:,:,1),               &
      &                    tl_ubar(:,:,2), tl_vbar(:,:,2))
+# endif
+# ifdef UV_DESTAGGERED
+!
+!-----------------------------------------------------------------------
+!  Compute representer 3D momentum (tl_ua, tl_va) at RHO-points (A-Grid)
+!  for output purposes and data assimilation where the observations and
+!  state vector is located at the cell-center.
+!-----------------------------------------------------------------------
+!
+!>    CALL uv_C2A_grid (ng, tile, iNLM, nnew)
+!>
+      CALL tl_uv_C2A_grid (ng, tile, iRPM, nnew)
 # endif
 !
       RETURN
