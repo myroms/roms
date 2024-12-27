@@ -2,7 +2,7 @@
 #
 # git $Id$
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Copyright (c) 2002-2024 The ROMS/TOMS Group                           :::
+# Copyright (c) 2002-2025 The ROMS Group                                :::
 #   Licensed under a MIT/X style license                                :::
 #   See License_ROMS.md                                                 :::
 #:::::::::::::::::::::::::::::::::::::::::::::::::::::: David Robertson :::
@@ -27,8 +27,8 @@
 #                                                                       :::
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
-set search = "2002-2023 The ROMS/TOMS"
-set replace = "2002-2024 The ROMS/TOMS"
+set search = "2002-2024 The ROMS"
+set replace = "2002-2025 The ROMS"
 
 # Directories to search for replacements.
 
@@ -100,13 +100,13 @@ echo "Done."
 echo ""
 
 if ( $setsvn == 1 ) then
-  svn propset -R copyright '(c) 2002-2024 The ROMS/TOMS Group' Compilers
-  svn propset -R copyright '(c) 2002-2024 The ROMS/TOMS Group' Data
-  svn propset -R copyright '(c) 2002-2024 The ROMS/TOMS Group' ESM
-  svn propset -R copyright '(c) 2002-2024 The ROMS/TOMS Group' Master
-  svn propset -R copyright '(c) 2002-2024 The ROMS/TOMS Group' ROMS
-  svn propset -R copyright '(c) 2002-2024 The ROMS/TOMS Group' User
-  svn propset copyright '(c) 2002-2024 The ROMS/TOMS Group' . makefile CMakeLists.txt
+  svn propset -R copyright '(c) 2002-2025 The ROMS Group' Compilers
+  svn propset -R copyright '(c) 2002-2025 The ROMS Group' Data
+  svn propset -R copyright '(c) 2002-2025 The ROMS Group' ESM
+  svn propset -R copyright '(c) 2002-2025 The ROMS Group' Master
+  svn propset -R copyright '(c) 2002-2025 The ROMS Group' ROMS
+  svn propset -R copyright '(c) 2002-2025 The ROMS Group' User
+  svn propset copyright '(c) 2002-2025 The ROMS Group' . makefile CMakeLists.txt
 else
   echo ""
   echo "Not updating svn properties."

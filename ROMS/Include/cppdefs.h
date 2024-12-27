@@ -3,7 +3,7 @@
 **
 ** git $Id$
 ********************************************************** Hernan G. Arango ***
-** Copyright (c) 2002-2024 The ROMS/TOMS Group                               **
+** Copyright (c) 2002-2025 The ROMS Group                                    **
 **   Licensed under a MIT/X style license                                    **
 **   See License_ROMS.md                                                     **
 *******************************************************************************
@@ -347,7 +347,7 @@
 ** ADD_FSOBC               to add tidal elevation to processed OBC data      **
 ** ADD_M2OBC               to add tidal currents  to processed OBC data      **
 **                                                                           **
-** ROMS/TOMS driver OPTIONS:                                                 **
+** ROMS driver OPTIONS:                                                      **
 **                                                                           **
 ** ADM_DRIVER                 if generic adjoint model                       **
 ** AD_SENSITIVITY             if adjoint sensitivity                         **

@@ -2,12 +2,12 @@
 !
 !git $Id$
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2024 The ROMS/TOMS Group       Andrew M. Moore   !
+!  Copyright (c) 2002-2025 The ROMS Group            Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
-!  ROMS/TOMS Tangent Linear and Adjoint Models Sanity Test:            !
+!  ROMS Tangent Linear and Adjoint Models Sanity Test:                 !
 !                                                                      !
 !  This driver is used to test the tangent linear model and adjoint    !
 !  models for ROMS.  It is used to check whether or not both models    !
@@ -44,7 +44,7 @@
 !     INT(user(8)) => J-index of adjoint variable to perturb           !
 !                                                                      !
 !  The subroutines in this driver control the initialization, time-    !
-!  stepping,  and  finalization of  ROMS/TOMS  model following ESMF    !
+!  stepping,  and  finalization of  ROMS  model following ESMF         !
 !  conventions:                                                        !
 !                                                                      !
 !     ROMS_initialize                                                  !
@@ -91,7 +91,7 @@
 !
 !=======================================================================
 !                                                                      !
-!  This routine allocates and initializes ROMS/TOMS state variables    !
+!  This routine allocates and initializes ROMS state variables         !
 !  and internal and external parameters.                               !
 !                                                                      !
 !=======================================================================
@@ -230,7 +230,7 @@
 !
 !=======================================================================
 !                                                                      !
-!  This routine time-steps ROMS/TOMS tangent linear and adjoint        !
+!  This routine time-steps ROMS tangent linear and adjoint             !
 !  models.                                                             !
 !                                                                      !
 !=======================================================================
@@ -656,7 +656,7 @@
 
       END DO PERT_LOOP
 !
- 10   FORMAT (/,1x,a,1x,'ROMS/TOMS: started time-stepping:',            &
+ 10   FORMAT (/,1x,a,1x,'ROMS: started time-stepping:',                 &
      &        ' (Grid: ',i2.2,' TimeSteps: ',i8.8,' - ',i8.8,')',/)
 #ifdef SANITY_CHECK
  20   FORMAT (/,' Sanity Check - ',a,' variable: ',a,t60)
@@ -680,7 +680,7 @@
 !
 !=======================================================================
 !                                                                      !
-!  This routine terminates ROMS/TOMS tangent linear and adjoint        !
+!  This routine terminates ROMS tangent linear and adjoint             !
 !  models execution.                                                   !
 !                                                                      !
 !=======================================================================

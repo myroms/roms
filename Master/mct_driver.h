@@ -2,15 +2,15 @@
 !
 !git $Id$
 !=======================================================================
-!  Copyright (c) 2002-2024 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2025 The ROMS Group                              !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.md                            Hernan G. Arango   !
 !==================================================== John C. Warner ===
 !                                                                      !
-!  Master program to couple ROMS/TOMS to other models using the Model  !
+!  Master program to couple ROMS to other models using the Model       !
 !  Coupling Toolkit (MCT) library.                                     !
 !                                                                      !
-!  The following models are coupled to ROMS/TOMS:                      !
+!  The following models are coupled to ROMS:                           !
 !                                                                      !
 #ifdef WRF_COUPLING
 !  WRF, Weather Research and Forecasting model:                        !

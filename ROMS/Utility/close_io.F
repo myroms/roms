@@ -3,7 +3,7 @@
 !
 !git $Id$
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2024 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2025 The ROMS Group                              !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.md                                               !
 !=======================================================================
@@ -444,7 +444,7 @@
       CLOSE (stdout)
 #endif
 !
- 10   FORMAT (/,' ROMS/TOMS - Output NetCDF summary for Grid ',         &
+ 10   FORMAT (/,' ROMS - Output NetCDF summary for Grid ',              &
      &        i2.2,':')
  20   FORMAT (13x,'number of time records written in ',                 &
      &        a,' file = ',i0)
@@ -452,7 +452,7 @@
  40   FORMAT (/,a,i0,/)
  50   FORMAT (/,' MAIN: Abnormal termination: BLOWUP.',/,               &
      &          ' REASON: ',a)
- 60   FORMAT (/,' ROMS/TOMS: DONE... ',a)
+ 60   FORMAT (/,' ROMS: DONE... ',a)
  70   FORMAT (/,' ERROR: Abnormal termination: NetCDF INPUT.',/,        &
      &          ' REASON: ',a)
  80   FORMAT (/,' ERROR: Abnormal termination: NetCDF OUTPUT.',/,       &

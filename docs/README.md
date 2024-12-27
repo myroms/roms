@@ -4,7 +4,7 @@
 
 # License
 
-**Copyright (c) 2002-2024 The ROMS/TOMS Group**
+**Copyright (c) 2002-2025 The ROMS Group**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 

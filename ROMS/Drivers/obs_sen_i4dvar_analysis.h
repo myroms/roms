@@ -2,12 +2,12 @@
 !
 !git $Id$
 !=================================================== Andrew M. Moore ===
-!  Copyright (c) 2002-2024 The ROMS/TOMS Group      Hernan G. Arango   !
+!  Copyright (c) 2002-2025 The ROMS Group           Hernan G. Arango   !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
-!  ROMS/TOMS I4D-VAR Observation Sensitivity Analysis Driver:          !
+!  ROMS I4D-VAR Observation Sensitivity Analysis Driver:               !
 !                                                                      !
 !  This driver evaluates the impact of each observation in the         !
 !  4D-Var analysis increment by measuring their sensitivity over       !
@@ -94,7 +94,7 @@
 !      observation during the I4D-Var in step (1).                     !
 !                                                                      !
 !  These routines control the initialization,  time-stepping,  and     !
-!  finalization of  ROMS/TOMS  model following ESMF conventions:       !
+!  finalization of  ROMS  model following ESMF conventions:            !
 !                                                                      !
 !     ROMS_initialize                                                  !
 !     ROMS_run                                                         !
@@ -188,7 +188,7 @@
 !
 !=======================================================================
 !                                                                      !
-!  This routine allocates and initializes ROMS/TOMS state variables    !
+!  This routine allocates and initializes ROMS state variables         !
 !  and internal and external parameters.                               !
 !                                                                      !
 !=======================================================================
@@ -1216,9 +1216,9 @@
 
 #endif
 !
- 10   FORMAT (/,1x,a,1x,'ROMS/TOMS: started time-stepping:',            &
+ 10   FORMAT (/,1x,a,1x,'ROMS: started time-stepping:',                 &
      &        ' (Grid: ',i2.2,' TimeSteps: ',i8.8,' - ',i8.8,')',/)
- 20   FORMAT (/,1x,a,1x,'ROMS/TOMS: started time-stepping:',            &
+ 20   FORMAT (/,1x,a,1x,'ROMS: started time-stepping:',                 &
      &        '( TimeSteps: ',i8.8,' - ',i8.8,')',/,15x,                &
      &        'adjoint forcing time range: ',f12.4,' - ',f12.4 ,/)
  30   FORMAT (/,' Out of range adjoint forcing time, ',a,f12.4,/,       &
@@ -1231,7 +1231,7 @@
 !
 !=======================================================================
 !                                                                      !
-!  This routine terminates ROMS/TOMS nonlinear and adjoint models      !
+!  This routine terminates ROMS nonlinear and adjoint models           !
 !  execution.                                                          !
 !                                                                      !
 !=======================================================================
