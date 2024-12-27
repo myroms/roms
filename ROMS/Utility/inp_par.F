@@ -3,7 +3,7 @@
 !
 !git $Id$
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2024 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2025 The ROMS Group                              !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.md                                               !
 !=======================================================================
@@ -135,7 +135,7 @@
 !
       IF (Master.and.Lwrite) WRITE (out,20) version, TRIM(date_str)
  20   FORMAT (80('-'),/,                                                &
-              ' Model Input Parameters:  ROMS/TOMS version ',a,/,       &
+              ' Model Input Parameters:  ROMS version ',a,/,            &
      &        26x,a,/,80('-'))
 !
 !  Process ROMS standard input Iname script.

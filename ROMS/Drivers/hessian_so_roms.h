@@ -2,15 +2,15 @@
 !
 !git $Id$
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2024 The ROMS/TOMS Group       Andrew M. Moore   !
+!  Copyright (c) 2002-2025 The ROMS Group            Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
-!  ROMS/TOMS Stochastic Optimal Driver:                                !
+!  ROMS Stochastic Optimal Driver:                                     !
 !                                                                      !
 !  These  routines  control the  initialization,  time-stepping,  and  !
-!  finalization of  ROMS/TOMS  model following ESMF conventions:       !
+!  finalization of  ROMS  model following ESMF conventions:            !
 !                                                                      !
 !     ROMS_initialize                                                  !
 !     ROMS_run                                                         !
@@ -79,7 +79,7 @@
 !
 !=======================================================================
 !                                                                      !
-!  This routine allocates and initializes ROMS/TOMS state variables    !
+!  This routine allocates and initializes ROMS state variables         !
 !  and internal and external parameters.                               !
 !                                                                      !
 !=======================================================================
@@ -759,7 +759,7 @@
 !
 !=======================================================================
 !                                                                      !
-!  This routine terminates ROMS/TOMS nonlinear and adjoint models      !
+!  This routine terminates ROMS nonlinear and adjoint models           !
 !  execution.                                                          !
 !                                                                      !
 !=======================================================================

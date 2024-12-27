@@ -4,7 +4,7 @@
 !
 !git $Id$
 !=======================================================================
-!  Copyright (c) 2002-2024 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2025 The ROMS Group                              !
 !    Licensed under a MIT/X style license         Hernan G. Arango     !
 !    See License_ROMS.md                          Ufuk Utku Turuncoglu !
 !=======================================================================
@@ -1192,7 +1192,7 @@
       RETURN
   20  CLOSE (inp)
 !
-  30  FORMAT (/,' get_atm_Ngrids - Unable to open ROMS/TOMS input ',    &
+  30  FORMAT (/,' get_atm_Ngrids - Unable to open ROMS input ',         &
      &            'script file.',/,18x,a,/,18x,'ERROR: ',a)
   40  FORMAT (/,' get_atm_Ngrids - Invalid input parameter, ',a,i4,/,   &
      &        18x,a)
@@ -1294,7 +1294,7 @@
       RETURN
   20  CLOSE (inp)
 !
-  30  FORMAT (/,' get_roms_Ngrids - Unable to open ROMS/TOMS input ',   &
+  30  FORMAT (/,' get_roms_Ngrids - Unable to open ROMS input ',        &
      &          'script file.',/,19x,a,/,19x,a)
   40  FORMAT (/,' get_roms_Ngrids - Invalid input parameter, ',a,i4,/,  &
      &        14x,a)

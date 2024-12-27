@@ -3,7 +3,7 @@
 **
 ** git $Id$
 ********************************************************** Hernan G. Arango ***
-** Copyright (c) 2002-2024 The ROMS/TOMS Group     Alexander F. Shchepetkin  **
+** Copyright (c) 2002-2025 The ROMS Group          Alexander F. Shchepetkin  **
 **   Licensed under a MIT/X style license                                    **
 **   See License_ROMS.md                                                     **
 *******************************************************************************

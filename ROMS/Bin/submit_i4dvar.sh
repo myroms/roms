@@ -2,7 +2,7 @@
 #
 # git $Id$
 #######################################################################
-# Copyright (c) 2002-2024 The ROMS/TOMS Group                         #
+# Copyright (c) 2002-2025 The ROMS Group                              #
 #   Licensed under a MIT/X style license                              #
 #   See License_ROMS.md                                               #
 ################################################## Hernan G. Arango ###
@@ -36,7 +36,7 @@
 
 echo "  "
 echo "**************************************************************"
-echo "***     ROMS/TOMS Incremental, Strong Constraint 4D-Var    ***"
+echo "***     ROMS Incremental, Strong Constraint 4D-Var         ***"
 echo "***  Master Execution Script: Sequential State Estimation  ***"
 echo "**************************************************************"
 echo "***"
@@ -49,7 +49,7 @@ echo "***"
 
 MYROOT="/home/arango/ocean/toms/adjoint/Test/SW06c"
 
-#  Set ROMS/TOMS ROOT directory.
+#  Set ROMS ROOT directory.
 
 ROMS_ROOT="/home/arango/ocean/toms/adjoint/src/ROMS"
 
@@ -61,7 +61,7 @@ STORAGE="/home/arango/ocean/toms/adjoint/Test/SW06c/Storage"
 #  Application title and IO file prefix.
 #---------------------------------------------------------------------
 
-TITLE="ROMS/TOMS 3.0 - Shallow Water Acoustics 2006, Coarse Grid"
+TITLE="ROMS 3.0 - Shallow Water Acoustics 2006, Coarse Grid"
 
 PREFIX="sw06c"
 

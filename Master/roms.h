@@ -2,15 +2,14 @@
 !
 !git $Id$
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2024 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2025 The ROMS Group                              !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
 !  Regional Ocean Model System (ROMS)                                  !
-!  Terrain-following Ocean Model System (TOMS)                         !
 !                                                                      !
-!  Master program to execute  ROMS/TOMS  drivers in ocean mode only    !
+!  Master program to execute  ROMS  drivers in ocean mode only         !
 !  without coupling (sequential or concurrent) to  any  atmospheric    !
 !  model.                                                              !
 !                                                                      !

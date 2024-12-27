@@ -3,7 +3,7 @@
 !
 !git $Id$
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2024 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2025 The ROMS Group                              !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.md                                               !
 !=======================================================================
@@ -284,15 +284,15 @@
 !  Error messages.
 !
       character (len=50), dimension(9) :: Rerror =                      &
-     &       (/ ' ROMS/TOMS - Blows up ................ exit_flag: ',   &
-     &          ' ROMS/TOMS - Input error ............. exit_flag: ',   &
-     &          ' ROMS/TOMS - Output error ............ exit_flag: ',   &
-     &          ' ROMS/TOMS - I/O error ............... exit_flag: ',   &
-     &          ' ROMS/TOMS - Configuration error ..... exit_flag: ',   &
-     &          ' ROMS/TOMS - Partition error ......... exit_flag: ',   &
-     &          ' ROMS/TOMS - Illegal input parameter . exit_flag: ',   &
-     &          ' ROMS/TOMS - Fatal algorithm result .. exit_flag: ',   &
-     &          ' ROMS/TOMS - Coupling error .......... exit_flag: ' /)
+     &       (/ ' ROMS - Blows up ................ exit_flag: ',        &
+     &          ' ROMS - Input error ............. exit_flag: ',        &
+     &          ' ROMS - Output error ............ exit_flag: ',        &
+     &          ' ROMS - I/O error ............... exit_flag: ',        &
+     &          ' ROMS - Configuration error ..... exit_flag: ',        &
+     &          ' ROMS - Partition error ......... exit_flag: ',        &
+     &          ' ROMS - Illegal input parameter . exit_flag: ',        &
+     &          ' ROMS - Fatal algorithm result .. exit_flag: ',        &
+     &          ' ROMS - Coupling error .......... exit_flag: ' /)
 !
 !  Standard input scripts file names.
 !

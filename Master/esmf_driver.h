@@ -2,12 +2,12 @@
 !
 !git $Id$
 !=======================================================================
-!  Copyright (c) 2002-2024 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2025 The ROMS Group                              !
 !    Licensed under a MIT/X style license         Hernan G. Arango     !
 !    See License_ROMS.md                          Ufuk Utku Turuncoglu !
 !=======================================================================
 !                                                                      !
-!  Master program to couple ROMS/TOMS to other Earth System Models     !
+!  Master program to couple ROMS to other Earth System Models          !
 !  (ESM) using the ESMF library with the NUOPC layer.                  !
 !                                                                      !
 !  ESMF:   Earth System Modeling Framework (Version 7 or higher)       !

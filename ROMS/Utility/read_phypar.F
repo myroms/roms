@@ -3,7 +3,7 @@
 !
 !git $Id$
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2024 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2025 The ROMS Group                              !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.md                                               !
 !=======================================================================
@@ -7986,7 +7986,7 @@
   70  FORMAT (/,' Resolution, Grid ',i2.2,': ',i0,'x',i0,'x',i0,        &
      &        ',',2x,'Parallel Nodes: ',i0,',',2x,'Tiling: ',i0,        &
      &        'x',i0)
-  80  FORMAT (/,' ROMS/TOMS: Wrong choice of grid ',i2.2,1x,            &
+  80  FORMAT (/,' ROMS: Wrong choice of grid ',i2.2,1x,                 &
      &        'partition or number of parallel nodes.',                 &
      &        /,12x,a,1x,i0,/,12x,                                      &
      &        'must be equal to the number of parallel processes = ',   &
@@ -7995,7 +7995,7 @@
   90  FORMAT (/,' Resolution, Grid ',i2.2,': ',i0,'x',i0,'x',i0,        &
      &        ',',2x,'Parallel Threads: ',i0,',',2x,'Tiling: ',i0,      &
      &        'x',i0)
- 100  FORMAT (/,' ROMS/TOMS: Wrong choice of grid ',i2.2,1x,            &
+ 100  FORMAT (/,' ROMS: Wrong choice of grid ',i2.2,1x,                 &
      &        'partition or number of parallel threads.',               &
      &        /,12x,'NtileI*NtileJ must be a positive multiple of the', &
      &        ' number of threads.',                                    &
