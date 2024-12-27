@@ -182,8 +182,6 @@
       real(r8), allocatable :: Ur2d(:,:)
       real(r8), allocatable :: Vr2d(:,:)
 #ifdef SOLVE3D
-      real(r8), allocatable :: Ur3d(:,:,:)
-      real(r8), allocatable :: Vr3d(:,:,:)
       real(r8), allocatable :: Wr3d(:,:,:)
 #endif
 !
@@ -947,29 +945,9 @@
       END IF
 # endif
 !
-!  Write out 3D Eastward and Northward momentum components (m/s) at
-!  RHO-points.
+!  Write out 3D Eastward momentum (m/s) at RHO-points, A-grid.
 !
-      IF (Hout(idu3dE,ng).and.Hout(idv3dN,ng)) THEN
-        IF (.not.allocated(Ur3d)) THEN
-          allocate (Ur3d(LBi:UBi,LBj:UBj,N(ng)))
-          Ur3d(LBi:UBi,LBj:UBj,1:N(ng))=0.0_r8
-        END IF
-        IF (.not.allocated(Vr3d)) THEN
-          allocate (Vr3d(LBi:UBi,LBj:UBj,N(ng)))
-          Vr3d(LBi:UBi,LBj:UBj,1:N(ng))=0.0_r8
-        END IF
-        CALL uv_rotate3d (ng, tile, .FALSE., .TRUE.,                    &
-     &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
-     &                    GRID(ng) % CosAngler,                         &
-     &                    GRID(ng) % SinAngler,                         &
-# ifdef MASKING
-     &                    GRID(ng) % rmask_full,                        &
-# endif
-     &                    OCEAN(ng) % u(:,:,:,NOUT),                    &
-     &                    OCEAN(ng) % v(:,:,:,NOUT),                    &
-     &                    Ur3d, Vr3d)
-!
+      IF (Hout(idu3dE,ng)) THEN
         scale=1.0_dp
         gtype=gfactor*r3dvar
         status=nf_fwrite3d(ng, model, HIS(ng)%ncid, idu3dE,             &
@@ -979,7 +957,7 @@
 # ifdef MASKING
      &                     GRID(ng) % rmask_full,                       &
 # endif
-     &                     Ur3d)
+     &                     OCEAN(ng) % ua)
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idu3dE)), HIS(ng)%Rindex
@@ -988,7 +966,11 @@
           ioerror=status
           RETURN
         END IF
-
+      END IF
+!
+!  Write out 3D Northward momentum (m/s) at RHO-points, A-grid.
+!
+      IF (Hout(idv3dN,ng)) THEN
         status=nf_fwrite3d(ng, model, HIS(ng)%ncid, idv3dN,             &
      &                     HIS(ng)%Vid(idv3dN),                         &
      &                     HIS(ng)%Rindex, gtype,                       &
@@ -996,7 +978,7 @@
 # ifdef MASKING
      &                     GRID(ng) % rmask_full,                       &
 # endif
-     &                     Vr3d)
+     &                     OCEAN(ng) % va)
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idv3dN)), HIS(ng)%Rindex
@@ -1005,8 +987,6 @@
           ioerror=status
           RETURN
         END IF
-        deallocate (Ur3d)
-        deallocate (Vr3d)
       END IF
 !
 !  Write out S-coordinate omega vertical velocity (m/s).
@@ -2012,8 +1992,6 @@
       real(r8), allocatable :: Ur2d(:,:)
       real(r8), allocatable :: Vr2d(:,:)
 # ifdef SOLVE3D
-      real(r8), allocatable :: Ur3d(:,:,:)
-      real(r8), allocatable :: Vr3d(:,:,:)
       real(r8), allocatable :: Wr3d(:,:,:)
 # endif
 !
@@ -2968,29 +2946,9 @@
       END IF
 #  endif
 !
-!  Write out 3D Eastward and Northward momentum components (m/s) at
-!  RHO-points.
+!  Write out 3D Eastward momentum (m/s) at RHO-points, A-grid
 !
-      IF (Hout(idu3dE,ng).and.Hout(idv3dN,ng)) THEN
-        IF (.not.allocated(Ur3d)) THEN
-          allocate (Ur3d(LBi:UBi,LBj:UBj,N(ng)))
-          Ur3d(LBi:UBi,LBj:UBj,1:N(ng))=0.0_r8
-        END IF
-        IF (.not.allocated(Vr3d)) THEN
-          allocate (Vr3d(LBi:UBi,LBj:UBj,N(ng)))
-          Vr3d(LBi:UBi,LBj:UBj,1:N(ng))=0.0_r8
-        END IF
-        CALL uv_rotate3d (ng, tile, .FALSE., .TRUE.,                    &
-     &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
-     &                    GRID(ng) % CosAngler,                         &
-     &                    GRID(ng) % SinAngler,                         &
-#  ifdef MASKING
-     &                    GRID(ng) % rmask_full,                        &
-#  endif
-     &                    OCEAN(ng) % u(:,:,:,NOUT),                    &
-     &                    OCEAN(ng) % v(:,:,:,NOUT),                    &
-     &                    Ur3d, Vr3d)
-!
+      IF (Hout(idu3dE,ng)) THEN
         scale=1.0_dp
         IF (HIS(ng)%pioVar(idu3dE)%dkind.eq.PIO_double) THEN
           ioDesc => ioDesc_dp_r3dvar(ng)
@@ -3005,7 +2963,7 @@
 #  ifdef MASKING
      &                     GRID(ng) % rmask_full,                       &
 #  endif
-     &                     Ur3d)
+     &                     OCEAN(ng) % ua)
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idu3dE)), HIS(ng)%Rindex
@@ -3014,7 +2972,11 @@
           ioerror=status
           RETURN
         END IF
+      END IF
 !
+!  Write out 3D Eastward momentum (m/s) at RHO-points, A-grid
+!
+      IF (Hout(idv3dN,ng)) THEN
         IF (HIS(ng)%pioVar(idV3dN)%dkind.eq.PIO_double) THEN
           ioDesc => ioDesc_dp_r3dvar(ng)
         ELSE
@@ -3028,7 +2990,7 @@
 #  ifdef MASKING
      &                     GRID(ng) % rmask_full,                       &
 #  endif
-     &                     Vr3d)
+     &                     OCEAN(ng) % va)
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idv3dN)), HIS(ng)%Rindex
@@ -3037,8 +2999,6 @@
           ioerror=status
           RETURN
         END IF
-        deallocate (Ur3d)
-        deallocate (Vr3d)
       END IF
 !
 !  Write out S-coordinate omega vertical velocity (m/s).

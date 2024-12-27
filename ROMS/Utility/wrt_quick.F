@@ -155,8 +155,6 @@
       real(r8), allocatable :: Ur2d(:,:)
       real(r8), allocatable :: Vr2d(:,:)
 #ifdef SOLVE3D
-      real(r8), allocatable :: Ur3d(:,:,:)
-      real(r8), allocatable :: Vr3d(:,:,:)
       real(r8), allocatable :: Wr3d(:,:,:)
 #endif
 !
@@ -648,112 +646,92 @@
         END IF
       END IF
 !
-!  Write out 3D Eastward and Northward momentum components (m/s) at
-!  RHO-points.
+!  Write out 3D Eastward momentum (m/s) at RHO-points, A-grid.
 !
-      IF ((Qout(idu3dE,ng).and.Qout(idv3dN,ng)).or.                     &
-     &    (Qout(idUsuE,ng).and.Qout(idVsuN,ng))) THEN
-        IF (.not.allocated(Ur3d)) THEN
-          allocate (Ur3d(LBi:UBi,LBj:UBj,N(ng)))
-          Ur3d(LBi:UBi,LBj:UBj,1:N(ng))=0.0_r8
-        END IF
-        IF (.not.allocated(Vr3d)) THEN
-          allocate (Vr3d(LBi:UBi,LBj:UBj,N(ng)))
-          Vr3d(LBi:UBi,LBj:UBj,1:N(ng))=0.0_r8
-        END IF
-        CALL uv_rotate3d (ng, tile, .FALSE., .TRUE.,                    &
-     &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
-     &                    GRID(ng) % CosAngler,                         &
-     &                    GRID(ng) % SinAngler,                         &
+      IF (Qout(idu3dE,ng)) THEN
+        scale=1.0_dp
+        gtype=gfactor*r3dvar
+        status=nf_fwrite3d(ng, model, QCK(ng)%ncid, idu3dE,             &
+     &                     QCK(ng)%Vid(idu3dE),                         &
+     &                     QCK(ng)%Rindex, gtype,                       &
+     &                     LBi, UBi, LBj, UBj, 1, N(ng), scale,         &
 # ifdef MASKING
-     &                    GRID(ng) % rmask_full,                        &
+     &                     GRID(ng) % rmask_full,                       &
 # endif
-     &                    OCEAN(ng) % u(:,:,:,NOUT),                    &
-     &                    OCEAN(ng) % v(:,:,:,NOUT),                    &
-     &                    Ur3d, Vr3d)
-!
-        IF ((Qout(idu3dE,ng).and.Qout(idv3dN,ng))) THEN
-          scale=1.0_dp
-          gtype=gfactor*r3dvar
-          status=nf_fwrite3d(ng, model, QCK(ng)%ncid, idu3dE,           &
-     &                       QCK(ng)%Vid(idu3dE),                       &
-     &                       QCK(ng)%Rindex, gtype,                     &
-     &                       LBi, UBi, LBj, UBj, 1, N(ng), scale,       &
-# ifdef MASKING
-     &                       GRID(ng) % rmask_full,                     &
-# endif
-     &                       Ur3d)
-          IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-            IF (Master) THEN
-              WRITE (stdout,20) TRIM(Vname(1,idu3dE)), QCK(ng)%Rindex
-            END IF
-            exit_flag=3
-            ioerror=status
-            RETURN
+     &                     OCEAN(ng) % ua)
+        IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+          IF (Master) THEN
+            WRITE (stdout,20) TRIM(Vname(1,idu3dE)), QCK(ng)%Rindex
           END IF
-!
-          status=nf_fwrite3d(ng, model, QCK(ng)%ncid, idv3dN,           &
-     &                       QCK(ng)%Vid(idv3dN),                       &
-     &                       QCK(ng)%Rindex, gtype,                     &
-     &                       LBi, UBi, LBj, UBj, 1, N(ng), scale,       &
-# ifdef MASKING
-     &                       GRID(ng) % rmask_full,                     &
-# endif
-     &                       Vr3d)
-          IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-            IF (Master) THEN
-              WRITE (stdout,20) TRIM(Vname(1,idv3dN)), QCK(ng)%Rindex
-            END IF
-            exit_flag=3
-            ioerror=status
-            RETURN
-          END IF
-          deallocate (Ur3d)
-          deallocate (Vr3d)
+          exit_flag=3
+          ioerror=status
+          RETURN
         END IF
+      END IF
 !
-!  Write out surface Eastward and Northward momentum components (m/s) at
-!  RHO-points.
+!  Write out 3D Northward momentum (m/s) at RHO-points, A-grid.
 !
-        IF ((Qout(idUsuE,ng).and.Qout(idVsuN,ng))) THEN
-          scale=1.0_dp
-          gtype=gfactor*r2dvar
-          status=nf_fwrite2d(ng, model, QCK(ng)%ncid, idUsuE,           &
-     &                       QCK(ng)%Vid(idUsuE),                       &
-     &                       QCK(ng)%Rindex, gtype,                     &
-     &                       LBi, UBi, LBj, UBj, scale,                 &
+      IF (Qout(idv3dN,ng)) THEN
+        status=nf_fwrite3d(ng, model, QCK(ng)%ncid, idv3dN,             &
+     &                     QCK(ng)%Vid(idv3dN),                         &
+     &                     QCK(ng)%Rindex, gtype,                       &
+     &                     LBi, UBi, LBj, UBj, 1, N(ng), scale,         &
 # ifdef MASKING
-     &                       GRID(ng) % rmask_full,                     &
+     &                     GRID(ng) % rmask_full,                       &
 # endif
-     &                       Ur3d(:,:,N(ng)))
-          IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-            IF (Master) THEN
-              WRITE (stdout,20) TRIM(Vname(1,idUsuE)), QCK(ng)%Rindex
-            END IF
-            exit_flag=3
-            ioerror=status
-            RETURN
+     &                     OCEAN(ng) % va)
+        IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+          IF (Master) THEN
+            WRITE (stdout,20) TRIM(Vname(1,idv3dN)), QCK(ng)%Rindex
           END IF
-
-          status=nf_fwrite2d(ng, model, QCK(ng)%ncid, idVsuN,           &
-     &                       QCK(ng)%Vid(idVsuN),                       &
-     &                       QCK(ng)%Rindex, gtype,                     &
-     &                       LBi, UBi, LBj, UBj, scale,                 &
-# ifdef MASKING
-     &                       GRID(ng) % rmask_full,                     &
-# endif
-     &                       Vr3d(:,:,N(ng)))
-          IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-            IF (Master) THEN
-              WRITE (stdout,20) TRIM(Vname(1,idVsuN)), QCK(ng)%Rindex
-            END IF
-            exit_flag=3
-            ioerror=status
-            RETURN
-          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
         END IF
-        deallocate (Ur3d)
-        deallocate (Vr3d)
+      END IF
+!
+!  Write out surface Eastward momentum (m/s) at RHO-points, A-grid.
+!
+      IF (Qout(idUsuE,ng)) THEN
+        scale=1.0_dp
+        gtype=gfactor*r2dvar
+        status=nf_fwrite2d(ng, model, QCK(ng)%ncid, idUsuE,             &
+     &                     QCK(ng)%Vid(idUsuE),                         &
+     &                     QCK(ng)%Rindex, gtype,                       &
+     &                     LBi, UBi, LBj, UBj, scale,                   &
+# ifdef MASKING
+     &                     GRID(ng) % rmask_full,                       &
+# endif
+     &                     OCEAN(ng) % ua(:,:,N(ng)))
+        IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+          IF (Master) THEN
+            WRITE (stdout,20) TRIM(Vname(1,idUsuE)), QCK(ng)%Rindex
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END IF
+!
+!  Write out surface Northward momentum (m/s) at RHO-points, A-grid.
+!
+      IF (Qout(idVsuN,ng)) THEN
+        status=nf_fwrite2d(ng, model, QCK(ng)%ncid, idVsuN,           &
+     &                     QCK(ng)%Vid(idVsuN),                       &
+     &                     QCK(ng)%Rindex, gtype,                     &
+     &                     LBi, UBi, LBj, UBj, scale,                 &
+# ifdef MASKING
+     &                     GRID(ng) % rmask_full,                     &
+# endif
+     &                     OCEAN(ng) % va(:,:,N(ng)))
+        IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+          IF (Master) THEN
+            WRITE (stdout,20) TRIM(Vname(1,idVsuN)), QCK(ng)%Rindex
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
       END IF
 !
 !  Write out S-coordinate omega vertical velocity (m/s).
@@ -1621,8 +1599,6 @@
       real(r8), allocatable :: Ur2d(:,:)
       real(r8), allocatable :: Vr2d(:,:)
 # ifdef SOLVE3D
-      real(r8), allocatable :: Ur3d(:,:,:)
-      real(r8), allocatable :: Vr3d(:,:,:)
       real(r8), allocatable :: Wr3d(:,:,:)
 # endif
 !
@@ -2193,134 +2169,116 @@
         END IF
       END IF
 !
-!  Write out 3D Eastward and Northward momentum components (m/s) at
-!  RHO-points.
+!  Write out 3D Eastward momentum (m/s) at RHO-points, A-grid.
 !
-      IF ((Qout(idu3dE,ng).and.Qout(idv3dN,ng)).or.                     &
-     &    (Qout(idUsuE,ng).and.Qout(idVsuN,ng))) THEN
-        IF (.not.allocated(Ur3d)) THEN
-          allocate (Ur3d(LBi:UBi,LBj:UBj,N(ng)))
-          Ur3d(LBi:UBi,LBj:UBj,1:N(ng))=0.0_r8
+      IF (Qout(idu3dE,ng)) THEN
+        scale=1.0_dp
+        IF (QCK(ng)%pioVar(idu3dE)%dkind.eq.PIO_double) THEN
+          ioDesc => ioDesc_dp_r3dvar(ng)
+        ELSE
+          ioDesc => ioDesc_sp_r3dvar(ng)
         END IF
-        IF (.not.allocated(Vr3d)) THEN
-          allocate (Vr3d(LBi:UBi,LBj:UBj,N(ng)))
-          Vr3d(LBi:UBi,LBj:UBj,1:N(ng))=0.0_r8
+        status=nf_fwrite3d(ng, model, QCK(ng)%pioFile, idu3dE,          &
+     &                     QCK(ng)%pioVar(idu3dE),                      &
+     &                     QCK(ng)%Rindex,                              &
+     &                     ioDesc,                                      &
+     &                     LBi, UBi, LBj, UBj, 1, N(ng), scale,         &
+#  ifdef MASKING
+     &                     GRID(ng) % rmask_full,                       &
+#  endif
+     &                     OCEAN(ng) % ua)
+        IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+          IF (Master) THEN
+            WRITE (stdout,20) TRIM(Vname(1,idu3dE)), QCK(ng)%Rindex
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
         END IF
-        CALL uv_rotate3d (ng, tile, .FALSE., .TRUE.,                    &
-     &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
-     &                    GRID(ng) % CosAngler,                         &
-     &                    GRID(ng) % SinAngler,                         &
-#  ifdef MASKING
-     &                    GRID(ng) % rmask_full,                        &
-#  endif
-     &                    OCEAN(ng) % u(:,:,:,NOUT),                    &
-     &                    OCEAN(ng) % v(:,:,:,NOUT),                    &
-     &                    Ur3d, Vr3d)
+      END IF
 !
-        IF ((Qout(idu3dE,ng).and.Qout(idv3dN,ng))) THEN
-          scale=1.0_dp
-          IF (QCK(ng)%pioVar(idu3dE)%dkind.eq.PIO_double) THEN
-            ioDesc => ioDesc_dp_r3dvar(ng)
-          ELSE
-            ioDesc => ioDesc_sp_r3dvar(ng)
-          END IF
-          status=nf_fwrite3d(ng, model, QCK(ng)%pioFile, idu3dE,        &
-     &                       QCK(ng)%pioVar(idu3dE),                    &
-     &                       QCK(ng)%Rindex,                            &
-     &                       ioDesc,                                    &
-     &                       LBi, UBi, LBj, UBj, 1, N(ng), scale,       &
-#  ifdef MASKING
-     &                       GRID(ng) % rmask_full,                     &
-#  endif
-     &                       Ur3d)
-          IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-            IF (Master) THEN
-              WRITE (stdout,20) TRIM(Vname(1,idu3dE)), QCK(ng)%Rindex
-            END IF
-            exit_flag=3
-            ioerror=status
-            RETURN
-          END IF
+!  Write out 3D Northward momentum (m/s) at RHO-points, A-grid.
 !
-          IF (QCK(ng)%pioVar(idv3dN)%dkind.eq.PIO_double) THEN
-            ioDesc => ioDesc_dp_r3dvar(ng)
-          ELSE
-            ioDesc => ioDesc_sp_r3dvar(ng)
-          END IF
-          status=nf_fwrite3d(ng, model, QCK(ng)%pioFile, idv3dN,        &
-     &                       QCK(ng)%pioVar(idv3dN),                    &
-     &                       QCK(ng)%Rindex,                            &
-     &                       ioDesc,                                    &
-     &                       LBi, UBi, LBj, UBj, 1, N(ng), scale,       &
-#  ifdef MASKING
-     &                       GRID(ng) % rmask_full,                     &
-#  endif
-     &                       Vr3d)
-          IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-            IF (Master) THEN
-              WRITE (stdout,20) TRIM(Vname(1,idv3dN)), QCK(ng)%Rindex
-            END IF
-            exit_flag=3
-            ioerror=status
-            RETURN
-          END IF
-          deallocate (Ur3d)
-          deallocate (Vr3d)
+      IF (Qout(idv3dN,ng)) THEN
+        scale=1.0_dp
+        IF (QCK(ng)%pioVar(idv3dN)%dkind.eq.PIO_double) THEN
+          ioDesc => ioDesc_dp_r3dvar(ng)
+        ELSE
+          ioDesc => ioDesc_sp_r3dvar(ng)
         END IF
-!
-!  Write out surface Eastward and Northward momentum components (m/s) at
-!  RHO-points.
-!
-        IF ((Qout(idUsuE,ng).and.Qout(idVsuN,ng))) THEN
-          scale=1.0_dp
-          IF (QCK(ng)%pioVar(idUsuE)%dkind.eq.PIO_double) THEN
-            ioDesc => ioDesc_dp_r2dvar(ng)
-          ELSE
-            ioDesc => ioDesc_sp_r2dvar(ng)
-          END IF
-          status=nf_fwrite2d(ng, model, QCK(ng)%pioFile, idUsuE,        &
-     &                       QCK(ng)%pioVar(idUsuE),                    &
-     &                       QCK(ng)%Rindex,                            &
-     &                       ioDesc,                                    &
-     &                       LBi, UBi, LBj, UBj, scale,                 &
+        status=nf_fwrite3d(ng, model, QCK(ng)%pioFile, idv3dN,          &
+     &                     QCK(ng)%pioVar(idv3dN),                      &
+     &                     QCK(ng)%Rindex,                              &
+     &                     ioDesc,                                      &
+     &                     LBi, UBi, LBj, UBj, 1, N(ng), scale,         &
 #  ifdef MASKING
-     &                       GRID(ng) % rmask_full,                     &
+     &                     GRID(ng) % rmask_full,                       &
 #  endif
-     &                       Ur3d(:,:,N(ng)))
-          IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-            IF (Master) THEN
-              WRITE (stdout,20) TRIM(Vname(1,idUsuE)), QCK(ng)%Rindex
-            END IF
-            exit_flag=3
-            ioerror=status
-            RETURN
+     &                     OCEAN(ng) % va)
+        IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+          IF (Master) THEN
+            WRITE (stdout,20) TRIM(Vname(1,idv3dN)), QCK(ng)%Rindex
           END IF
-!
-          IF (QCK(ng)%pioVar(idVsuN)%dkind.eq.PIO_double) THEN
-            ioDesc => ioDesc_dp_r2dvar(ng)
-          ELSE
-            ioDesc => ioDesc_sp_r2dvar(ng)
-          END IF
-          status=nf_fwrite2d(ng, model, QCK(ng)%pioFile, idVsuN,        &
-     &                       QCK(ng)%pioVar(idVsuN),                    &
-     &                       QCK(ng)%Rindex,                            &
-     &                       ioDesc,                                    &
-     &                       LBi, UBi, LBj, UBj, scale,                 &
-#  ifdef MASKING
-     &                       GRID(ng) % rmask_full,                     &
-#  endif
-     &                       Vr3d(:,:,N(ng)))
-          IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-            IF (Master) THEN
-              WRITE (stdout,20) TRIM(Vname(1,idVsuN)), QCK(ng)%Rindex
-            END IF
-            exit_flag=3
-            ioerror=status
-            RETURN
-          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
         END IF
-        deallocate (Ur3d)
-        deallocate (Vr3d)
+      END IF
+!
+!  Write out surface Eastward momentum (m/s) at RHO-points, A-grid.
+!
+      IF (Qout(idUsuE,ng)) THEN
+        scale=1.0_dp
+        IF (QCK(ng)%pioVar(idUsuE)%dkind.eq.PIO_double) THEN
+          ioDesc => ioDesc_dp_r2dvar(ng)
+        ELSE
+          ioDesc => ioDesc_sp_r2dvar(ng)
+        END IF
+        status=nf_fwrite2d(ng, model, QCK(ng)%pioFile, idUsuE,          &
+     &                     QCK(ng)%pioVar(idUsuE),                      &
+     &                     QCK(ng)%Rindex,                              &
+     &                     ioDesc,                                      &
+     &                     LBi, UBi, LBj, UBj, scale,                   &
+#  ifdef MASKING
+     &                     GRID(ng) % rmask_full,                       &
+#  endif
+     &                     OCEAN(ng) % ua(:,:,N(ng)))
+        IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+          IF (Master) THEN
+            WRITE (stdout,20) TRIM(Vname(1,idUsuE)), QCK(ng)%Rindex
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END IF
+!
+!  Write out surface Northward momentum (m/s) at RHO-points, A-grid.
+!
+      IF (Qout(idVsuN,ng)) THEN
+        scale=1.0_dp
+        IF (QCK(ng)%pioVar(idVsuN)%dkind.eq.PIO_double) THEN
+          ioDesc => ioDesc_dp_r2dvar(ng)
+        ELSE
+          ioDesc => ioDesc_sp_r2dvar(ng)
+        END IF
+        status=nf_fwrite2d(ng, model, QCK(ng)%pioFile, idVsuN,          &
+     &                     QCK(ng)%pioVar(idVsuN),                      &
+     &                     QCK(ng)%Rindex,                              &
+     &                     ioDesc,                                      &
+     &                     LBi, UBi, LBj, UBj, scale,                   &
+#  ifdef MASKING
+     &                     GRID(ng) % rmask_full,                       &
+#  endif
+     &                     OCEAN(ng) % va(:,:,N(ng)))
+        IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+          IF (Master) THEN
+            WRITE (stdout,20) TRIM(Vname(1,idVsuN)), QCK(ng)%Rindex
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
       END IF
 !
 !  Write out S-coordinate omega vertical velocity (m/s).
