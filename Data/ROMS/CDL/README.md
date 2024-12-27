@@ -1,23 +1,31 @@
-ROMS Metadata
-==================
+# ROMS Metadata
 
-This directory contains several CDL files showing ROMS input NetCDF
-files structure. There is a lot of software out there to generate
-such input files. It is very difficult to write generic programs
-because it depends on the application. However, there is a very easy
-way to generate these files using the CDL and the NetCDF "ncgen"
+# License
+
+**Copyright (c) 2002-2025 The ROMS Group**
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+# Overview
+
+This directory contains several **CDL** files showing **ROMS** input **NetCDF**
+file structure. There is a lot of software out there to generate
+such input files. It is challenging to write generic programs
+because it depends on the application. However, there is a straightforward
+way to generate these files using the **CDL** and the **NetCDF** **`ncgen`**
 program.
 
-The ROMS metadata design is very rich and extensive. See "varinfo.yaml"
-for a list of all the variables names, units, attributes, associated time
-variables, and scale factors. This is an user friendly file and variable
-parameters can be changed very easily. As a matter of fact, some users like
+The **ROMS** metadata design is very rich and extensive. See "varinfo.yaml"
+for a list of all the variables' names, units, attributes, associated time
+variables, and scale factors. This is a user-friendly file, and variable
+parameters can be quickly changed. Some users like
 to change the long-name attribute to a language other than English to
 facilitate automatic labeling during plotting. However, for portability
-I recommend to use the provided field variable name.
+I think you should use the provided field variable name.
 
-Currently, you can find the following CDL scripts:
+Currently, you can find the following **CDL** scripts:
 
+``` 
     grd_spherical.cdl        Spherical grid NetCDF file
 
     ini_hydro.cdl            Initial conditions NetCDF file (hydrodynamics)
@@ -45,14 +53,15 @@ Currently, you can find the following CDL scripts:
     s4dvar_std_i.cdl         4D-Var initial conditions error covariance standard deviation
     s4dvar_std_b.cdl         4D-Var open boundaries error covariance standard deviation
     s4dvar_std_f.cdl         4D-Var surface forcing error covariance standard deviation
-
+```
 
 Currently, there are two vertical, terrain-following coordinates
-transformation in ROMS.  You need to choose the appropriate
-"standard_name" attribute:
+transformations in **ROMS**.  You need to choose the appropriate
+**`standard_name`** attribute:
 
-(1) Original transformation: "ocean_s_coordinate_g1"
+- Original transformation: **`ocean_s_coordinate_g1`**
 
+``` nc
         double s_rho(s_rho) ;
                 s_rho:long_name = "S-coordinate at RHO-points" ;
                 s_rho:valid_min = -1. ;
@@ -68,9 +77,11 @@ transformation in ROMS.  You need to choose the appropriate
                 s_w:positive = "up" ;
                 s_w:standard_name = "ocean_s_coordinate_g1" ;
                 s_w:formula_terms = "s: s_w C: Cs_w eta: zeta depth: h depth_c: hc" ;
+```
 
-(2) New transformation: "ocean_s_coordinate_g2"
+- New transformation: **`ocean_s_coordinate_g2`**
 
+``` nc
         double s_rho(s_rho) ;
                 s_rho:long_name = "S-coordinate at RHO-points" ;
                 s_rho:valid_min = -1. ;
@@ -86,21 +97,21 @@ transformation in ROMS.  You need to choose the appropriate
                 s_w:positive = "up" ;
                 s_w:standard_name = "ocean_s_coordinate_g2" ;
                 s_w:formula_terms = "s: s_w C: Cs_w eta: zeta depth: h depth_c: hc" ;
+```
+Notice that the nondimensional, fractional, stretched vertical coordinate
+except for the attribute's value **`standard_name`** is the same.
 
-Notice that the nondimentional, fractional, stretched vertical coordinate
-is the same excet to the value of the attribute "standard_name".
+You can easily edit any of these files to change the **NetCDF** file name, change
+dimensions, add and remove variables, and add and modify global attributes.
+A **NetCDF** file can be created by typing:
 
-You can easily edit any of these files to change NetCDF file name, change
-dimensions, add and remove variables, and add and modify global attibutes.
-A NetCDF file can be created by typing:
-
+``` d
     ncgen -b my_file.cdl
+```
 
-Then, you can use any program to write your data into the created NetCDF
-file. I usually use the MeXCDF interface of Matlab to write the processed
-data with just a single command line.
+Then, you can use any program to write your data into the created **NetCDF**
+file. 
 
-Notice that ROMS now allows for multiple forcing NetCDF files. See
-input script.
+Notice that **ROMS** allows multiple forcing **NetCDF** files. See input script.
 
 
