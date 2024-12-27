@@ -2,12 +2,12 @@
 !
 !git $Id$
 !=================================================== Andrew M. Moore ===
-!  Copyright (c) 2002-2024 The ROMS/TOMS Group      Hernan G. Arango   !
+!  Copyright (c) 2002-2025 The ROMS Group           Hernan G. Arango   !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
-!  ROMS/TOMS Strong/Weak Constraint 4-Dimensional Variational Data     !
+!  ROMS Strong/Weak Constraint 4-Dimensional Variational Data          !
 !         Assimilation and Observation Sensitivity Driver: Indirect    !
 !         Representer Approach (R4D-Var).                              !
 !         Dual formulation in observarion space.                       !
@@ -21,7 +21,7 @@
 !  array modes.                                                        !
 !                                                                      !
 !  The routines in this driver control the initialization,  time-      !
-!  stepping, and finalization of  ROMS/TOMS  model following ESMF      !
+!  stepping, and finalization of  ROMS  model following ESMF           !
 !  conventions:                                                        !
 !                                                                      !
 !     ROMS_initialize                                                  !
@@ -117,7 +117,7 @@
 !
 !=======================================================================
 !                                                                      !
-!  This routine allocates and initializes ROMS/TOMS state variables    !
+!  This routine allocates and initializes ROMS state variables         !
 !  and internal and external parameters.                               !
 !                                                                      !
 !=======================================================================
@@ -459,7 +459,7 @@
 !
 !=======================================================================
 !                                                                      !
-!  This routine time-steps ROMS/TOMS nonlinear, tangent linear and     !
+!  This routine time-steps ROMS nonlinear, tangent linear and          !
 !  adjoint models.                                                     !
 !                                                                      !
 !=======================================================================
@@ -1989,7 +1989,7 @@
 !
  10   FORMAT (a,'_outer',i0,'.nc')
  20   FORMAT (a,'_outer',i0,'_',a,'.nc')
- 30   FORMAT (/,1x,a,1x,'ROMS/TOMS: started time-stepping:',            &
+ 30   FORMAT (/,1x,a,1x,'ROMS: started time-stepping:',                 &
      &        ' (Grid: ',i2.2,' TimeSteps: ',i8.8,' - ',i8.8,')',/)
  40   FORMAT (' (',i3.3,',',i3.3,'): ',a,' data penalty, Jdata = ',     &
      &        1p,e17.10,0p,t68,a)
@@ -1997,11 +1997,11 @@
      &          ' Inner = ',i3.3)
  60   FORMAT (/,' Converting Convolved Adjoint Trajectory to',          &
      &          ' Impulses: Outer = ',i3.3,' Inner = ',i3.3,/)
- 70   FORMAT (/,'ROMS/TOMS: Started adjoint Sensitivity calculation',   &
+ 70   FORMAT (/,'ROMS: Started adjoint Sensitivity calculation',        &
      &          ' ...',/)
- 80   FORMAT (/,'ROMS/TOMS: ',a,1x,a,', Outer = ',i3.3,                 &
+ 80   FORMAT (/,'ROMS: ',a,1x,a,', Outer = ',i3.3,                      &
      &          ' Inner = ',i3.3,/)
- 90   FORMAT (/,1x,a,1x,'ROMS/TOMS: started time-stepping:',            &
+ 90   FORMAT (/,1x,a,1x,'ROMS: started time-stepping:',                 &
      &        '( TimeSteps: ',i8.8,' - ',i8.8,')',/,15x,                &
      &        'adjoint forcing time range: ',f12.4,' - ',f12.4 ,/)
 !
@@ -2012,7 +2012,7 @@
 !
 !=======================================================================
 !                                                                      !
-!  This routine terminates ROMS/TOMS nonlinear, tangent linear, and    !
+!  This routine terminates ROMS nonlinear, tangent linear, and         !
 !  adjoint models execution.                                           !
 !                                                                      !
 !=======================================================================

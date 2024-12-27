@@ -4,12 +4,12 @@
 !
 !git $Id$
 !=======================================================================
-!  Copyright (c) 2002-2024 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2025 The ROMS Group                              !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.md                            Hernan G. Arango   !
 !========================================== Alexander F. Shchepetkin ===
 !                                                                      !
-!  This routine is the main driver for ROMS/TOMS nonlinear model (NLM) !
+!  This routine is the main driver for ROMS nonlinear model (NLM)      !
 !  when configured as a 2D barotropic shallow water ocean model. It    !
 !  advances forward the NLM for all nested grids, if any, by the       !
 !  specified time interval (seconds), RunInterval.                     !

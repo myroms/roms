@@ -2,14 +2,14 @@
 !
 !git $Id$
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2024 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2025 The ROMS Group                              !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
-!  ROMS/TOMS Representer Driver:                                       !
+!  ROMS Representer Driver:                                            !
 !                                                                      !
-!  This driver executes ROMS/TOMS weak constraint 4DVAR inner loop and !
+!  This driver executes ROMS weak constraint 4DVAR inner loop and      !
 !  checks the symmetry of the H R R' H' operator,  where R' and H' are !
 !  transpose of R and H, respectively. The  R' H'  term is computed by !
 !  integrating the adjoint model backwards while the  H R  is computed !
@@ -62,7 +62,7 @@
 !
 !=======================================================================
 !                                                                      !
-!  This routine allocates and initializes ROMS/TOMS state variables    !
+!  This routine allocates and initializes ROMS state variables         !
 !  and internal and external parameters.                               !
 !                                                                      !
 !=======================================================================
@@ -235,7 +235,7 @@
 !
 !=======================================================================
 !                                                                      !
-!  This routine time-steps ROMS/TOMS weak constraint 4DVAR inner loop. !
+!  This routine time-steps ROMS weak constraint 4DVAR inner loop.      !
 !                                                                      !
 !=======================================================================
 !
@@ -615,7 +615,7 @@
         END IF
       END DO
 !
- 10   FORMAT (/,1x,a,1x,'ROMS/TOMS: started time-stepping:',            &
+ 10   FORMAT (/,1x,a,1x,'ROMS: started time-stepping:',                 &
      &        ' (Grid: ',i2.2,' TimeSteps: ',i8.8,' - ',i8.8,')',/)
  20   FORMAT (/,1x,a,/,/,3x,a,' i = ',i4.4,' j = ',i4.4,' k = ',i4.4,   &
      &                 /,3x,a,' i = ',i4.4,' j = ',i4.4,' k = ',i4.4)
@@ -628,7 +628,7 @@
 !
 !=======================================================================
 !                                                                      !
-!  This routine terminates ROMS/TOMS nonlinear model execution.        !
+!  This routine terminates ROMS nonlinear model execution.             !
 !                                                                      !
 !=======================================================================
 !

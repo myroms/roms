@@ -5,12 +5,12 @@
 !
 !git $Id$
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2024 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2025 The ROMS Group                              !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
-!  ROMS/TOMS Generalized Stability Theory (GST) Analysis: ARPACK       !
+!  ROMS Generalized Stability Theory (GST) Analysis: ARPACK            !
 !                                                                      !
 !  LworkL       Size of Arnoldi iterations work array SworkL.          !
 !  Lrvec        ARPACK logical to compute converged Ritz values.       !

@@ -2,12 +2,12 @@
 !
 !git $Id$
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2024 The ROMS/TOMS Group       Andrew M. Moore   !
+!  Copyright (c) 2002-2025 The ROMS Group            Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
-!  ROMS/TOMS Picard Iterations Driver:                                 !
+!  ROMS Picard Iterations Driver:                                      !
 !                                                                      !
 !  This driver is used to perform the Picard iterations test for the   !
 !  representers tangent linear model used in IOMs weak constraint 4D   !
@@ -64,7 +64,7 @@
 !
 !=======================================================================
 !                                                                      !
-!  This routine allocates and initializes ROMS/TOMS state variables    !
+!  This routine allocates and initializes ROMS state variables         !
 !  and internal and external parameters.                               !
 !                                                                      !
 !=======================================================================
@@ -209,7 +209,7 @@
 !
 !=======================================================================
 !                                                                      !
-!  This routine time-steps ROMS/TOMS representer tangent linear model  !
+!  This routine time-steps ROMS representer tangent linear model       !
 !  for the specified time interval (seconds), RunInterval.             !
 !                                                                      !
 !=======================================================================
@@ -241,7 +241,7 @@
           WRITE (FWD(ng)%name,10) TRIM(TLM(ng)%head), Nrun-1
 
           IF (Master) THEN
-            WRITE (stdout,20) 'ROMS/TOMS Picard Iteration: ', Nrun, ng, &
+            WRITE (stdout,20) 'ROMS Picard Iteration: ', Nrun, ng,      &
      &                        TRIM(TLM(ng)%name),                       &
      &                        TRIM(FWD(ng)%name)
           END IF
@@ -299,7 +299,7 @@
  20   FORMAT (/,a,i3,2x,'(Grid: ',i0,')',/,                             &
      &        /,5x,'  History file: ',a,                                &
      &        /,5x,'  Forward file: ',a,/)
- 30   FORMAT (/,1x,a,1x,'ROMS/TOMS: started time-stepping:',            &
+ 30   FORMAT (/,1x,a,1x,'ROMS: started time-stepping:',                 &
      &        ' (Grid: ',i0,' TimeSteps: ',i0,' - ',i0,')',/)
 !
       RETURN
@@ -309,7 +309,7 @@
 !
 !=======================================================================
 !                                                                      !
-!  This routine terminates ROMS/TOMS nonlinear model execution.        !
+!  This routine terminates ROMS nonlinear model execution.             !
 !                                                                      !
 !=======================================================================
 !

@@ -4,15 +4,23 @@
 !
 !git $Id$
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2024 The ROMS/TOMS Group       Andrew M. Moore   !
+!  Copyright (c) 2002-2025 The ROMS Group            Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
-!  This subroutine is the main driver for adjoint  ROMS/TOMS when      !
+!  This subroutine is the main driver for adjoint  ROMS when           !
 !  configurated as a full 3D baroclinic  ocean model. It advances      !
 !  backwards the adjoint model equations for all nested grids, if      !
 !  any, by the specified time interval (seconds), RunInterval.         !
+!                                                                      !
+# if defined STEP2D_FB_LF_AM3
+!  Numerical 2D time-stepping kernel: FB AB3-AM4                       !
+# elif defined STEP2D_FB_LF_AM3
+!  Numerical 2D time-stepping kernel: FB LF-AM3                        !
+# else
+!  Numerical 2D time-stepping kernel: LF-AM3 (Legacy scheme)           !
+# endif
 !                                                                      !
 !=======================================================================
 !
