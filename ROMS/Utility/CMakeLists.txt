@@ -170,6 +170,7 @@ list( APPEND _files
       ROMS/Utility/time_corr.F
       ROMS/Utility/timers.F
       ROMS/Utility/uv_rotate.F
+      ROMS/Utility/uv_var_change.F
       ROMS/Utility/vorticity.F
       ROMS/Utility/white_noise.F
       ROMS/Utility/wpoints.F

@@ -24,7 +24,9 @@
 # endif
 !
       USE rp_ini_fields_mod, ONLY : rp_ini_fields, rp_ini_zeta
+# ifdef SOLVE3D
       USE rp_set_depth_mod,  ONLY : rp_set_depth
+# endif
 !
       implicit none
 !

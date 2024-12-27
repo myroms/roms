@@ -369,18 +369,31 @@
           END DO
         END IF
 
-        IF (Aout(idu3dE,ng).and.Aout(idv3dN,ng)) THEN
-          CALL uv_rotate3d (ng, tile, .FALSE., .FALSE.,                 &
-     &                      LBi, UBi, LBj, UBj, 1, N(ng),               &
-     &                      GRID(ng) % CosAngler,                       &
-     &                      GRID(ng) % SinAngler,                       &
-#  ifdef MASKING
-     &                      GRID(ng)%rmask_full,                        &
+        IF (Aout(idu3dE,ng)) THEN
+          DO k=1,N(ng)
+            DO j=JstrR,JendR
+              DO i=IstrR,IendR
+                AVERAGE(ng)%avgu3dE(i,j,k)=OCEAN(ng)%ua(i,j,k)
+#  ifdef WET_DRY
+                AVERAGE(ng)%avgu3dE(i,j,k)=AVERAGE(ng)%avgu3dE(i,j,k)*  &
+     &                                     GRID(ng)%vmask_full(i,j)
 #  endif
-     &                      OCEAN(ng) % u(:,:,:,Nout),                  &
-     &                      OCEAN(ng) % v(:,:,:,Nout),                  &
-     &                      AVERAGE(ng)%avgu3dE,                        &
-     &                      AVERAGE(ng)%avgv3dN)
+              END DO
+            END DO
+          END DO
+        END IF
+        IF (Aout(idv3dN,ng)) THEN
+          DO k=1,N(ng)
+            DO j=JstrR,JendR
+              DO i=IstrR,IendR
+                AVERAGE(ng)%avgv3dN(i,j,k)=OCEAN(ng)%va(i,j,k)
+#  ifdef WET_DRY
+                AVERAGE(ng)%avgv3dN(i,j,k)=AVERAGE(ng)%avgv3dN(i,j,k)*  &
+     &                                     GRID(ng)%vmask_full(i,j)
+#  endif
+              END DO
+            END DO
+          END DO
         END IF
 
         IF (Aout(idOvel,ng)) THEN
@@ -1711,18 +1724,31 @@
           END DO
         END IF
 
-        IF (Aout(idu3dE,ng).and.Aout(idv3dN,ng)) THEN
-          CALL uv_rotate3d (ng, tile, .TRUE., .FALSE.,                  &
-     &                      LBi, UBi, LBj, UBj, 1, N(ng),               &
-     &                      GRID(ng) % CosAngler,                       &
-     &                      GRID(ng) % SinAngler,                       &
-#  ifdef MASKING
-     &                      GRID(ng)%rmask_full,                        &
+        IF (Aout(idu3dE,ng)) THEN
+          DO k=1,N(ng)
+            DO j=JstrR,JendR
+              DO i=IstrR,IendR
+                AVERAGE(ng)%avgu3dE(i,j,k)=AVERAGE(ng)%avgu3dE(i,j,k)+  &
+#  ifdef WET_DRY
+     &                                     GRID(ng)%umask_full(i,j)*    &
 #  endif
-     &                      OCEAN(ng) % u(:,:,:,Nout),                  &
-     &                      OCEAN(ng) % v(:,:,:,Nout),                  &
-     &                      AVERAGE(ng)%avgu3dE,                        &
-     &                      AVERAGE(ng)%avgv3dN)
+     &                                     OCEAN(ng)%ua(i,j,k)
+              END DO
+            END DO
+          END DO
+        END IF
+        IF (Aout(idv3dN,ng)) THEN
+          DO k=1,N(ng)
+            DO j=JstrR,JendR
+              DO i=IstrR,IendR
+                AVERAGE(ng)%avgv3dN(i,j,k)=AVERAGE(ng)%avgv3dN(i,j,k)+  &
+#  ifdef WET_DRY
+     &                                    GRID(ng)%vmask_full(i,j)*     &
+#  endif
+     &                                    OCEAN(ng)%va(i,j,k)
+              END DO
+            END DO
+          END DO
         END IF
 
         IF (Aout(idOvel,ng)) THEN
@@ -3112,12 +3138,33 @@
           END IF
         END IF
 
-        IF (Aout(idu3dE,ng).and.Aout(idv3dN,ng)) THEN
+        IF (Aout(idu3dE,ng)) THEN
           DO k=1,N(ng)
-            DO j=Jstr,Jend
-              DO i=Istr,Iend
+            DO j=JstrR,JendR
+              DO i=IstrR,IendR
                 AVERAGE(ng)%avgu3dE(i,j,k)=rfac(i,j)*                   &
      &                                     AVERAGE(ng)%avgu3dE(i,j,k)
+              END DO
+            END DO
+          END DO
+          IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
+            CALL exchange_r3d_tile (ng, tile,                           &
+     &                              LBi, UBi, LBj, UBj, 1, N(ng),       &
+     &                              AVERAGE(ng)%avgu3dE)
+#  ifdef DISTRIBUTE
+            CALL mp_exchange3d (ng, tile, iNLM, 1,                      &
+     &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
+     &                          NghostPoints,                           &
+     &                          EWperiodic(ng), NSperiodic(ng),         &
+     &                          AVERAGE(ng)%avgu3dE)
+#  endif
+          END IF
+        END IF
+
+        IF (Aout(idv3dN,ng)) THEN
+          DO k=1,N(ng)
+            DO j=JstrR,JendR
+              DO i=IstrR,IendR
                 AVERAGE(ng)%avgv3dN(i,j,k)=rfac(i,j)*                   &
      &                                     AVERAGE(ng)%avgv3dN(i,j,k)
               END DO
@@ -3126,16 +3173,12 @@
           IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
             CALL exchange_r3d_tile (ng, tile,                           &
      &                              LBi, UBi, LBj, UBj, 1, N(ng),       &
-     &                              AVERAGE(ng)%avgu3dE)
-            CALL exchange_r3d_tile (ng, tile,                           &
-     &                              LBi, UBi, LBj, UBj, 1, N(ng),       &
      &                              AVERAGE(ng)%avgv3dN)
 #  ifdef DISTRIBUTE
-            CALL mp_exchange3d (ng, tile, iNLM, 2,                      &
+            CALL mp_exchange3d (ng, tile, iNLM, 1,                      &
      &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
      &                          NghostPoints,                           &
      &                          EWperiodic(ng), NSperiodic(ng),         &
-     &                          AVERAGE(ng)%avgu3dE,                    &
      &                          AVERAGE(ng)%avgv3dN)
 #  endif
           END IF

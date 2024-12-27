@@ -1108,7 +1108,7 @@
         END IF
 # endif
 !
-!  Define 3D Eastward momentum component at RHO-points.
+!  Define 3D Eastward momentum at RHO-points, A-grid.
 !
         IF (Hout(idu3dE,ng)) THEN
           Vinfo( 1)=Vname(1,idu3dE)
@@ -1127,7 +1127,7 @@
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 !
-!  Define 3D Northward momentum component at RHO-points.
+!  Define 3D Northward momentum at RHO-points, A-grid.
 !
         IF (Hout(idv3dN,ng)) THEN
           Vinfo( 1)=Vname(1,idv3dN)
@@ -3893,7 +3893,7 @@
         END IF
 #  endif
 !
-!  Define 3D Eastward momentum component at RHO-points.
+!  Define 3D Eastward momentum at RHO-points, A-grid.
 !
         IF (Hout(idu3dE,ng)) THEN
           Vinfo( 1)=Vname(1,idu3dE)
@@ -3916,7 +3916,7 @@
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 !
-!  Define 3D Northward momentum component at RHO-points.
+!  Define 3D Northward momentum at RHO-points, A-grid.
 !
         IF (Hout(idv3dN,ng)) THEN
           Vinfo( 1)=Vname(1,idv3dN)
