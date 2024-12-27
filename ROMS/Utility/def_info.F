@@ -3,7 +3,7 @@
 !
 !git $Id$
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2024 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2025 The ROMS Group                              !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.md                                               !
 !=======================================================================
@@ -218,11 +218,11 @@
 !  Define history global attribute.
 !
         IF (LEN_TRIM(date_str).gt.0) THEN
-          WRITE (history,'(a,1x,a,", ",a)') 'ROMS/TOMS, Version',       &
+          WRITE (history,'(a,1x,a,", ",a)') 'ROMS, Version',            &
      &                                      TRIM( version),             &
      &                                      TRIM(date_str)
         ELSE
-          WRITE (history,'(a,1x,a)') 'ROMS/TOMS, Version',              &
+          WRITE (history,'(a,1x,a)') 'ROMS, Version',                   &
      &                               TRIM(version)
         END IF
 !
@@ -280,65 +280,65 @@
 !  Define file type global attribute.
 !
         IF (ncid.eq.ADM(ng)%ncid) THEN
-          type='ROMS/TOMS adjoint history file'
+          type='ROMS adjoint history file'
         ELSE IF (ncid.eq.AVG(ng)%ncid) THEN
 #if defined AD_AVERAGES && defined ADJOINT
-          type='ROMS/TOMS adjoint model averages file'
+          type='ROMS adjoint model averages file'
 #elif defined RP_AVERAGES && defined TL_IOMS
-          type='ROMS/TOMS representer model averages file'
+          type='ROMS representer model averages file'
 #elif defined TL_AVERAGES && defined TANGENT
-          type='ROMS/TOMS tangent linear model averages file'
+          type='ROMS tangent linear model averages file'
 #else
-          type='ROMS/TOMS nonlinear model averages file'
+          type='ROMS nonlinear model averages file'
 #endif
         ELSE IF (ncid.eq.DIA(ng)%ncid) THEN
-          type='ROMS/TOMS diagnostics file'
+          type='ROMS diagnostics file'
         ELSE IF (ncid.eq.FLT(ng)%ncid) THEN
-          type='ROMS/TOMS floats file'
+          type='ROMS floats file'
         ELSE IF (ncid.eq.ERR(ng)%ncid) THEN
-          type='ROMS/TOMS posterior analysis error covariance matrix'
+          type='ROMS posterior analysis error covariance matrix'
         ELSE IF (ncid.eq.GST(ng)%ncid) THEN
-          type='ROMS/TOMS GST check pointing restart file'
+          type='ROMS GST check pointing restart file'
         ELSE IF (ncid.eq.HAR(ng)%ncid) THEN
-          type='ROMS/TOMS Least-squared Detiding Harmonics file'
+          type='ROMS Least-squared Detiding Harmonics file'
         ELSE IF (ncid.eq.HSS(ng)%ncid) THEN
-          type='ROMS/TOMS 4D-Var Hessian eigenvectors file'
+          type='ROMS 4D-Var Hessian eigenvectors file'
         ELSE IF (ncid.eq.HIS(ng)%ncid) THEN
-          type='ROMS/TOMS history file'
+          type='ROMS history file'
         ELSE IF (ncid.eq.ITL(ng)%ncid) THEN
-          type='ROMS/TOMS tangent linear model initial file'
+          type='ROMS tangent linear model initial file'
         ELSE IF (ncid.eq.LCZ(ng)%ncid) THEN
-          type='ROMS/TOMS 4D-Var Lanczos vectors file'
+          type='ROMS 4D-Var Lanczos vectors file'
         ELSE IF (ncid.eq.LZE(ng)%ncid) THEN
-          type='ROMS/TOMS 4D-Var Evolved Lanczos vectors file'
+          type='ROMS 4D-Var Evolved Lanczos vectors file'
         ELSE IF (ncid.eq.NRM(1,ng)%ncid) THEN
-          type='ROMS/TOMS initial conditions error covariance norm file'
+          type='ROMS initial conditions error covariance norm file'
         ELSE IF (ncid.eq.NRM(2,ng)%ncid) THEN
-          type='ROMS/TOMS model error covariance norm file'
+          type='ROMS model error covariance norm file'
         ELSE IF (ncid.eq.NRM(3,ng)%ncid) THEN
-         type='ROMS/TOMS boundary conditions error covariance norm file'
+         type='ROMS boundary conditions error covariance norm file'
         ELSE IF (ncid.eq.NRM(4,ng)%ncid) THEN
-          type='ROMS/TOMS surface forcing error covariance norm file'
+          type='ROMS surface forcing error covariance norm file'
         ELSE IF (ncid.eq.QCK(ng)%ncid) THEN
-          type='ROMS/TOMS quicksave file'
+          type='ROMS quicksave file'
         ELSE IF (ncid.eq.RST(ng)%ncid) THEN
-          type='ROMS/TOMS restart file'
+          type='ROMS restart file'
 # ifdef SP4DVAR
         ELSE IF (ncid.eq.SCA(ng)%ncid) THEN
-          type='ROMS/TOMS AD scratch file'
+          type='ROMS AD scratch file'
         ELSE IF (ncid.eq.SCT(ng)%ncid) THEN
-          type='ROMS/TOMS TL scratch file'
+          type='ROMS TL scratch file'
         ELSE IF (ncid.eq.SPA(ng)%ncid) THEN
-          type='ROMS/TOMS AD Arnoldi file'
+          type='ROMS AD Arnoldi file'
         ELSE IF (ncid.eq.SPT(ng)%ncid) THEN
-          type='ROMS/TOMS TL Arnoldi file'
+          type='ROMS TL Arnoldi file'
 # endif
         ELSE IF (ncid.eq.STA(ng)%ncid) THEN
-          type='ROMS/TOMS station file'
+          type='ROMS station file'
         ELSE IF (ncid.eq.TLF(ng)%ncid) THEN
-          type='ROMS/TOMS tangent linear impulse forcing file'
+          type='ROMS tangent linear impulse forcing file'
         ELSE IF (ncid.eq.TLM(ng)%ncid) THEN
-          type='ROMS/TOMS tangent linear history file'
+          type='ROMS tangent linear history file'
         END IF
         IF (exit_flag.eq.NoError) THEN
           status=nf90_put_att(ncid, nf90_global, 'type',                &
@@ -3760,11 +3760,11 @@
 !  Define history global attribute.
 !
       IF (LEN_TRIM(date_str).gt.0) THEN
-        WRITE (history,'(a,1x,a,", ",a)') 'ROMS/TOMS, Version',         &
+        WRITE (history,'(a,1x,a,", ",a)') 'ROMS, Version',              &
      &                                    TRIM( version),               &
      &                                    TRIM(date_str)
       ELSE
-        WRITE (history,'(a,1x,a)') 'ROMS/TOMS, Version',                &
+        WRITE (history,'(a,1x,a)') 'ROMS, Version',                     &
      &                             TRIM(version)
       END IF
 !
@@ -3822,65 +3822,65 @@
 !  Define file type global attribute.
 !
       IF (FileH.eq.ABS(ADM(ng)%pioFile%fh)) THEN
-        type='ROMS/TOMS adjoint history file'
+        type='ROMS adjoint history file'
       ELSE IF (FileH.eq.ABS(AVG(ng)%pioFile%fh)) THEN
 # if defined AD_AVERAGES && defined ADJOINT
-        type='ROMS/TOMS adjoint model averages file'
+        type='ROMS adjoint model averages file'
 # elif defined RP_AVERAGES && defined TL_IOMS
-        type='ROMS/TOMS representer model averages file'
+        type='ROMS representer model averages file'
 # elif defined TL_AVERAGES && defined TANGENT
-        type='ROMS/TOMS tangent linear model averages file'
+        type='ROMS tangent linear model averages file'
 # else
-        type='ROMS/TOMS nonlinear model averages file'
+        type='ROMS nonlinear model averages file'
 # endif
       ELSE IF (FileH.eq.ABS(DIA(ng)%pioFile%fh)) THEN
-        type='ROMS/TOMS diagnostics file'
+        type='ROMS diagnostics file'
       ELSE IF (FileH.eq.ABS(FLT(ng)%pioFile%fh)) THEN
-        type='ROMS/TOMS floats file'
+        type='ROMS floats file'
       ELSE IF (FileH.eq.ABS(ERR(ng)%pioFile%fh)) THEN
-        type='ROMS/TOMS posterior analysis error covariance matrix'
+        type='ROMS posterior analysis error covariance matrix'
       ELSE IF (FileH.eq.ABS(GST(ng)%pioFile%fh)) THEN
-        type='ROMS/TOMS GST check pointing restart file'
+        type='ROMS GST check pointing restart file'
       ELSE IF (FileH.eq.ABS(HAR(ng)%pioFile%fh)) THEN
-        type='ROMS/TOMS Least-squared Detiding Harmonics file'
+        type='ROMS Least-squared Detiding Harmonics file'
       ELSE IF (FileH.eq.ABS(HSS(ng)%pioFile%fh)) THEN
-        type='ROMS/TOMS 4D-Var Hessian eigenvectors file'
+        type='ROMS 4D-Var Hessian eigenvectors file'
       ELSE IF (FileH.eq.ABS(HIS(ng)%pioFile%fh)) THEN
-        type='ROMS/TOMS history file'
+        type='ROMS history file'
       ELSE IF (FileH.eq.ABS(ITL(ng)%pioFile%fh)) THEN
-        type='ROMS/TOMS tangent linear model initial file'
+        type='ROMS tangent linear model initial file'
       ELSE IF (FileH.eq.ABS(LCZ(ng)%pioFile%fh)) THEN
-        type='ROMS/TOMS 4D-Var Lanczos vectors file'
+        type='ROMS 4D-Var Lanczos vectors file'
       ELSE IF (FileH.eq.ABS(LZE(ng)%pioFile%fh)) THEN
-        type='ROMS/TOMS 4D-Var Evolved Lanczos vectors file'
+        type='ROMS 4D-Var Evolved Lanczos vectors file'
       ELSE IF (FileH.eq.ABS(NRM(1,ng)%pioFile%fh)) THEN
-        type='ROMS/TOMS initial conditions error covariance norm file'
+        type='ROMS initial conditions error covariance norm file'
       ELSE IF (FileH.eq.ABS(NRM(2,ng)%pioFile%fh)) THEN
-        type='ROMS/TOMS model error covariance norm file'
+        type='ROMS model error covariance norm file'
       ELSE IF (FileH.eq.ABS(NRM(3,ng)%pioFile%fh)) THEN
-        type='ROMS/TOMS boundary conditions error covariance norm file'
+        type='ROMS boundary conditions error covariance norm file'
       ELSE IF (FileH.eq.ABS(NRM(4,ng)%pioFile%fh)) THEN
-        type='ROMS/TOMS surface forcing error covariance norm file'
+        type='ROMS surface forcing error covariance norm file'
       ELSE IF (FileH.eq.ABS(QCK(ng)%pioFile%fh)) THEN
-        type='ROMS/TOMS quicksave file'
+        type='ROMS quicksave file'
       ELSE IF (FileH.eq.ABS(RST(ng)%pioFile%fh)) THEN
-        type='ROMS/TOMS restart file'
+        type='ROMS restart file'
 #  ifdef SP4DVAR
       ELSE IF (FileH.eq.ABS(SCA(ng)%pioFile%fh)) THEN
-        type='ROMS/TOMS AD scratch file'
+        type='ROMS AD scratch file'
       ELSE IF (FileH.eq.ABS(SCT(ng)%pioFile%fh)) THEN
-        type='ROMS/TOMS TL scratch file'
+        type='ROMS TL scratch file'
       ELSE IF (FileH.eq.ABS(SPA(ng)%pioFile%fh)) THEN
-        type='ROMS/TOMS AD Arnoldi file'
+        type='ROMS AD Arnoldi file'
       ELSE IF (FileH.eq.ABS(SPT(ng)%pioFile%fh)) THEN
-        type='ROMS/TOMS TL Arnoldi file'
+        type='ROMS TL Arnoldi file'
 #  endif
       ELSE IF (FileH.eq.ABS(STA(ng)%pioFile%fh)) THEN
-        type='ROMS/TOMS station file'
+        type='ROMS station file'
       ELSE IF (FileH.eq.ABS(TLF(ng)%pioFile%fh)) THEN
-        type='ROMS/TOMS tangent linear impulse forcing file'
+        type='ROMS tangent linear impulse forcing file'
       ELSE IF (FileH.eq.ABS(TLM(ng)%pioFile%fh)) THEN
-        type='ROMS/TOMS tangent linear history file'
+        type='ROMS tangent linear history file'
       END IF
       IF (exit_flag.eq.NoError) THEN
         status=PIO_put_att(pioFile, PIO_global, 'type',                 &

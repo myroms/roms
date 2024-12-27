@@ -2,14 +2,14 @@
 !
 !git $Id$
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2024 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2025 The ROMS Group                              !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
-!  ROMS/TOMS Tangent Linear Model Driver:                              !
+!  ROMS Tangent Linear Model Driver:                                   !
 !                                                                      !
-!  This driver executes ROMS/TOMS tangent linear model.  It  controls  !
+!  This driver executes ROMS tangent linear model.  It  controls       !
 !  the initialization, time-stepping, and finalization of the tangent  !
 !  model execution following ESMF conventions:                         !
 !                                                                      !
@@ -52,7 +52,7 @@
 !
 !=======================================================================
 !                                                                      !
-!  This routine allocates and initializes ROMS/TOMS state variables    !
+!  This routine allocates and initializes ROMS state variables         !
 !  and internal and external parameters.                               !
 !                                                                      !
 !=======================================================================
@@ -247,7 +247,7 @@
 !
 !=======================================================================
 !                                                                      !
-!  This routine runs ROMS/TOMS tangent linear model for the specified  !
+!  This routine runs ROMS tangent linear model for the specified       !
 !  time interval (seconds), RunInterval.                               !
 !                                                                      !
 !=======================================================================
@@ -283,7 +283,7 @@
 
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
- 10   FORMAT (/,1x,a,1x,'ROMS/TOMS: started time-stepping:',            &
+ 10   FORMAT (/,1x,a,1x,'ROMS: started time-stepping:',                 &
      &        ' (Grid: ',i2.2,' TimeSteps: ',i8.8,' - ',i8.8,')',/)
 !
       RETURN
@@ -293,7 +293,7 @@
 !
 !=======================================================================
 !                                                                      !
-!  This routine terminates ROMS/TOMS tangent linear model execution.   !
+!  This routine terminates ROMS tangent linear model execution.        !
 !                                                                      !
 !=======================================================================
 !

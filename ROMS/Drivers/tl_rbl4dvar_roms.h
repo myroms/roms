@@ -2,12 +2,12 @@
 !
 !git $Id$
 !=================================================== Andrew M. Moore ===
-!  Copyright (c) 2002-2024 The ROMS/TOMS Group      Hernan G. Arango   !
+!  Copyright (c) 2002-2025 The ROMS Group           Hernan G. Arango   !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
-!  ROMS/TOMS Strong/Weak Constraint 4-Dimensional Variational Data     !
+!  ROMS Strong/Weak Constraint 4-Dimensional Variational Data          !
 !        Assimilation and its Tangent Linear Driver: Restricted        !
 !    B-preconditioned Lanczos (RBL4D-Var).                             !
 !                                                                      !
@@ -19,7 +19,7 @@
 !  may be considered in both model and observations.                   !
 !                                                                      !
 !  The routines in this driver control the initialization,  time-      !
-!  stepping, and finalization of  ROMS/TOMS  model following ESMF      !
+!  stepping, and finalization of  ROMS  model following ESMF           !
 !  conventions:                                                        !
 !                                                                      !
 !     ROMS_initialize                                                  !
@@ -110,7 +110,7 @@
 !
 !=======================================================================
 !                                                                      !
-!  This routine allocates and initializes ROMS/TOMS state variables    !
+!  This routine allocates and initializes ROMS state variables         !
 !  and internal and external parameters.                               !
 !                                                                      !
 !=======================================================================
@@ -299,7 +299,7 @@
 !
 !=======================================================================
 !                                                                      !
-!  This routine time-steps ROMS/TOMS nonlinear, tangent linear and     !
+!  This routine time-steps ROMS nonlinear, tangent linear and          !
 !  adjoint models.                                                     !
 !                                                                      !
 !=======================================================================
@@ -1656,7 +1656,7 @@
 !
 !=======================================================================
 !                                                                      !
-!  This routine terminates ROMS/TOMS nonlinear, tangent linear, and    !
+!  This routine terminates ROMS nonlinear, tangent linear, and         !
 !  adjoint models execution.                                           !
 !                                                                      !
 !=======================================================================
