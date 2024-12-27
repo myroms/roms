@@ -24,9 +24,13 @@
 # endif
 !
       USE ini_fields_mod,    ONLY : set_zeta_timeavg
+# ifdef SOLVE3D
       USE set_depth_mod,     ONLY : set_depth
+# endif
       USE tl_ini_fields_mod, ONLY : tl_ini_fields, tl_ini_zeta
+# ifdef SOLVE3D
       USE tl_set_depth_mod,  ONLY : tl_set_depth
+# endif
 !
       implicit none
 !

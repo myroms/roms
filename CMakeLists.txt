@@ -103,7 +103,7 @@ if( NOT IN_ECBUILD )
   # Set Fortran modules directory when not using ecbuild. It is set
   # automatically when using ecbuild.
 
-  set( CMAKE_Fortran_MODULE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/modules" )
+  set( CMAKE_Fortran_MODULE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/module" )
   set( CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE )
   set( CMAKE_SKIP_BUILD_RPATH FALSE )
 
