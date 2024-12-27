@@ -3,7 +3,7 @@
 !
 !git $Id$
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2024 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2025 The ROMS Group                              !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.md                                               !
 !=======================================================================
@@ -140,7 +140,7 @@
       GotFile=.FALSE.
 #endif
 !
- 10   FORMAT (/,' STDINP_UNIT - Unable to open ROMS/TOMS input script', &
+ 10   FORMAT (/,' STDINP_UNIT - Unable to open ROMS input script',      &
      &                        ' file.',/,                               &
      &        /,11x,'ERROR: ',a,/,                                      &
      &        /,11x,'In distributed-memory applications, the input',    &

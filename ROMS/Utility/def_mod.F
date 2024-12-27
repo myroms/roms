@@ -4,7 +4,7 @@
 !
 !git $Id$
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2024 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2025 The ROMS Group                              !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.md                                               !
 !=======================================================================
@@ -287,7 +287,7 @@
 !  File type.
 !
           IF (exit_flag.eq.NoError) THEN
-            string='ROMS/TOMS 4D-Var output observation processing file'
+            string='ROMS 4D-Var output observation processing file'
             status=nf90_put_att(DAV(ng)%ncid, nf90_global,              &
      &                          'type', TRIM(string))
             IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
@@ -558,11 +558,11 @@
 !
           IF (exit_flag.eq.NoError) THEN
             IF (LEN_TRIM(date_str).gt.0) THEN
-              WRITE (history,'(a,1x,a,", ",a)') 'ROMS/TOMS, Version',   &
+              WRITE (history,'(a,1x,a,", ",a)') 'ROMS, Version',        &
      &                                          TRIM(version),          &
      &                                          TRIM(date_str)
             ELSE
-              WRITE (history,'(a,1x,a)') 'ROMS/TOMS, Version',          &
+              WRITE (history,'(a,1x,a)') 'ROMS, Version',               &
      &                                   TRIM(version)
             END IF
 
@@ -2618,7 +2618,7 @@
 !  File type.
 !
         IF (exit_flag.eq.NoError) THEN
-          string='ROMS/TOMS 4D-Var output observation processing file'
+          string='ROMS 4D-Var output observation processing file'
           status=pio_put_att(DAV(ng)%pioFile, PIO_global,               &
      &                       'type', TRIM(string))
           IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
@@ -2901,11 +2901,11 @@
 !
         IF (exit_flag.eq.NoError) THEN
           IF (LEN_TRIM(date_str).gt.0) THEN
-            WRITE (history,'(a,1x,a,", ",a)') 'ROMS/TOMS, Version',     &
+            WRITE (history,'(a,1x,a,", ",a)') 'ROMS, Version',          &
      &                                        TRIM(version),            &
      &                                        TRIM(date_str)
           ELSE
-            WRITE (history,'(a,1x,a)') 'ROMS/TOMS, Version',            &
+            WRITE (history,'(a,1x,a)') 'ROMS, Version',                 &
      &                                 TRIM(version)
           END IF
           status=PIO_put_att(DAV(ng)%pioFile, PIO_global,               &

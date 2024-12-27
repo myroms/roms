@@ -135,7 +135,7 @@ variables:
                 salt:coordinates = "lon_rho lat_rho s_rho ocean_time" ;
 
 // global attributes:
-		:type = "ROMS/TOMS adjoint sensitivity functional file" ;
+		:type = "ROMS adjoint sensitivity functional file" ;
 		:Conventions = "CF-1.4" ;
 		:title = "California Current System, 1/3 degree resolution (WC13)" ;
 		:grd_file = "wc13_grd.nc" ;

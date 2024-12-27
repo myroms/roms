@@ -4,12 +4,12 @@
 !
 !git $Id$
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2024 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2025 The ROMS Group                              !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
-!  This routine is the main driver for tangent linear ROMS/TOMS when   !
+!  This routine is the main driver for tangent linear ROMS when        !
 !  configurated as a full  3D baroclinic  ocean model.  It  advances   !
 !  forward the tangent linear model equations  for all nested grids,   !
 !  if any, by the specified time interval (seconds), RunInterval.      !

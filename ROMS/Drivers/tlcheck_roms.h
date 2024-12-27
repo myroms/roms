@@ -2,18 +2,18 @@
 !
 !git $Id$
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2024 The ROMS/TOMS Group       Andrew M. Moore   !
+!  Copyright (c) 2002-2025 The ROMS Group            Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
-!  ROMS/TOMS Tangent Linear Model Linearization Test:                  !
+!  ROMS Tangent Linear Model Linearization Test:                       !
 !                                                                      !
 !  This driver is used to check the "linearization" of the tangent     !
 !  linear model using a structure similar to the gradient test.        !
 !                                                                      !
 !  The subroutines in this driver control the initialization, time-    !
-!  stepping,  and  finalization of ROMS/TOMS  model following ESMF     !
+!  stepping,  and  finalization of ROMS  model following ESMF          !
 !  conventions:                                                        !
 !                                                                      !
 !     ROMS_initialize                                                  !
@@ -60,7 +60,7 @@
 !
 !=======================================================================
 !                                                                      !
-!  This routine allocates and initializes ROMS/TOMS state variables    !
+!  This routine allocates and initializes ROMS state variables         !
 !  and internal and external parameters.                               !
 !                                                                      !
 !=======================================================================
@@ -196,7 +196,7 @@
 !
 !=======================================================================
 !                                                                      !
-!  This routine time-steps ROMS/TOMS nonlinear, tangent linear and     !
+!  This routine time-steps ROMS nonlinear, tangent linear and          !
 !  adjoint models.                                                     !
 !                                                                      !
 !=======================================================================
@@ -531,7 +531,7 @@
       END DO
 !
  10   FORMAT (/,a,i3,/)
- 20   FORMAT (/,1x,a,1x,'ROMS/TOMS : started time-stepping:',           &
+ 20   FORMAT (/,1x,a,1x,'ROMS : started time-stepping:',                &
      &        ' (Grid: ',i2.2,' TimeSteps: ',i8.8,' - ',i8.8,')',/)
  40   FORMAT (/,' Nonlinear Model Cost Function = ',1p,e21.14)
  50   FORMAT (' --------------- ','cost function = ',1p,e21.14,2x,a)
@@ -549,7 +549,7 @@
 !
 !=======================================================================
 !                                                                      !
-!  This routine terminates ROMS/TOMS nonlinear, tangent linear, and    !
+!  This routine terminates ROMS nonlinear, tangent linear, and         !
 !  adjoint models execution.                                           !
 !                                                                      !
 !=======================================================================

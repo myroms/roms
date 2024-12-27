@@ -2,12 +2,12 @@
 !
 !git $Id$
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2024 The ROMS/TOMS Group       Andrew M. Moore   !
+!  Copyright (c) 2002-2025 The ROMS Group            Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
-!  ROMS/TOMS Adjoint Sensitivity Analysis Driver:                      !
+!  ROMS Adjoint Sensitivity Analysis Driver:                           !
 !                                                                      !
 !  This driver computes the  adjoint sensitivity  of a function or     !
 !  index, J,  in terms of space and/or time integrals of the model     !
@@ -26,7 +26,7 @@
 !  model.                                                              !
 !                                                                      !
 !  These routines control the initialization,  time-stepping,  and     !
-!  finalization of  ROMS/TOMS  model following ESMF conventions:       !
+!  finalization of  ROMS  model following ESMF conventions:            !
 !                                                                      !
 !     ROMS_initialize                                                  !
 !     ROMS_run                                                         !
@@ -74,7 +74,7 @@
 !
 !=======================================================================
 !                                                                      !
-!  This routine allocates and initializes ROMS/TOMS state variables    !
+!  This routine allocates and initializes ROMS state variables         !
 !  and internal and external parameters.                               !
 !                                                                      !
 !=======================================================================
@@ -330,7 +330,7 @@
 
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
- 10   FORMAT (/,1x,a,1x,'ROMS/TOMS: started time-stepping:',            &
+ 10   FORMAT (/,1x,a,1x,'ROMS: started time-stepping:',                 &
      &        ' (Grid: ',i2.2,' TimeSteps: ',i8.8,' - ',i8.8,')',/)
 !
       RETURN
@@ -340,7 +340,7 @@
 !
 !=======================================================================
 !                                                                      !
-!  This routine terminates ROMS/TOMS adjoint model execution.          !
+!  This routine terminates ROMS adjoint model execution.               !
 !                                                                      !
 !=======================================================================
 !
