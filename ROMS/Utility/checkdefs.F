@@ -3119,6 +3119,13 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+8)=' UV_COR,'
 #endif
+#ifdef UV_DESTAGGERED
+!
+      IF (Master) WRITE (stdout,20) 'UV_DESTAGGERED',                   &
+     &   'Currents destaggering to cell-center for data assimilation'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+16)=' UV_DESTAGGERED,'
+#endif
 #ifdef UV_ADV
 # ifdef UV_C2ADVECTION
 !
