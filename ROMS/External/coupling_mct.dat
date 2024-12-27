@@ -3,12 +3,12 @@
 !
 !git $Id$
 !========================================================= Hernan G. Arango ===
-!  Copyright (c) 2002-2024 The ROMS/TOMS Group                                !
+!  Copyright (c) 2002-2025 The ROMS Group                                     !
 !    Licensed under a MIT/X style license                                     !
 !    See License_ROMS.md                                                      !
 !==============================================================================
 !                                                                             !
-!  This file contains all ROMS/TOMS Input/Output variables information.  It   !
+!  This file contains all ROMS Input/Output variables information.  It        !
 !  is used to manage NetCDF files.  The following information is needed for   !
 !  any IO variable:                                                           !
 !                                                                             !
@@ -44,7 +44,7 @@
 !==============================================================================
 !
 !------------------------------------------------------------------------------
-!  ROMS/TOMS Import fields from atmospheric model.
+!  ROMS Import fields from atmospheric model.
 !------------------------------------------------------------------------------
 !
 !  Fields needed for the COARE atmospheric boundary layer parameterization
@@ -153,7 +153,7 @@
 
 !
 !------------------------------------------------------------------------------
-!  ROMS/TOMS export fields from atmospheric model.
+!  ROMS export fields from atmospheric model.
 !------------------------------------------------------------------------------
 !
 
@@ -167,7 +167,7 @@
 
 !
 !------------------------------------------------------------------------------
-!  ROMS/TOMS Import fields from wave model.
+!  ROMS Import fields from wave model.
 !------------------------------------------------------------------------------
 !
 
@@ -237,7 +237,7 @@
 
 !
 !------------------------------------------------------------------------------
-!  ROMS/TOMS Export fields to wave model.
+!  ROMS Export fields to wave model.
 !------------------------------------------------------------------------------
 !
 

@@ -4,13 +4,13 @@
 !
 !git $Id$
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2024 The ROMS/TOMS Group       Andrew M. Moore   !
+!  Copyright (c) 2002-2025 The ROMS Group            Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
 !  This routine is the main driver for representers tangent linear     !
-!  ROMS/TOMS when  configure as a  full 3D baroclinic ocean model.     !
+!  ROMS when  configure as a  full 3D baroclinic ocean model.          !
 !  It advances forward the  representer model equations  for  all      !
 !  nested grids, if any, for the specified time interval (seconds),    !
 !  RunInterval.                                                        !

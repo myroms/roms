@@ -2,14 +2,14 @@
 !
 !git $Id$
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2024 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2025 The ROMS Group                              !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
-!  ROMS/TOMS Nonlinear Model Driver:                                   !
+!  ROMS Nonlinear Model Driver:                                        !
 !                                                                      !
-!  This driver executes ROMS/TOMS standard nonlinear model.  It        !
+!  This driver executes ROMS standard nonlinear model.  It             !
 !  controls the initialization, time-stepping, and finalization        !
 !  of the nonlinear model execution following ESMF conventions:        !
 !                                                                      !
@@ -62,7 +62,7 @@
 !
 !=======================================================================
 !                                                                      !
-!  This routine allocates and initializes ROMS/TOMS state variables    !
+!  This routine allocates and initializes ROMS state variables         !
 !  and internal and external parameters.                               !
 !                                                                      !
 !=======================================================================
@@ -248,7 +248,7 @@
 !
 !=======================================================================
 !                                                                      !
-!  This routine runs ROMS/TOMS nonlinear model for the specified time  !
+!  This routine runs ROMS nonlinear model for the specified time       !
 !  interval (seconds), RunInterval.  It RunInterval=0, ROMS advances   !
 !  one single time-step.                                               !
 !                                                                      !
@@ -311,7 +311,7 @@
 
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
- 10   FORMAT (1x,a,1x,'ROMS/TOMS: started time-stepping:',              &
+ 10   FORMAT (1x,a,1x,'ROMS: started time-stepping:',                   &
      &        ' (Grid: ',i2.2,' TimeSteps: ',i12.12,' - ',i12.12,')')
 !
       RETURN
@@ -321,7 +321,7 @@
 !
 !=======================================================================
 !                                                                      !
-!  This routine terminates ROMS/TOMS nonlinear model execution.        !
+!  This routine terminates ROMS nonlinear model execution.             !
 !                                                                      !
 !=======================================================================
 !

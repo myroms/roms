@@ -2,12 +2,12 @@
 #
 # git $Id$
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Copyright (c) 2002-2024 The ROMS/TOMS Group                           :::
+# Copyright (c) 2002-2025 The ROMS Group                                :::
 #   Licensed under a MIT/X style license                                :::
 #   See License_ROMS.md                                                 :::
 #:::::::::::::::::::::::::::::::::::::::::::::::::::::: David Robertson :::
 #                                                                       :::
-# ROMS/TOMS applications parallel partitions checker:                   :::
+# ROMS applications parallel partitions checker:                        :::
 #                                                                       :::
 # Script to compile an user application with different tile partitions  :::
 # (1x1, 2x2, 3x3) in serial, shared-memory, and distributed-memory to   :::

@@ -2,7 +2,7 @@
 !
 !git $Id$
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2024 The ROMS/TOMS Group       Andrew M. Moore   !
+!  Copyright (c) 2002-2025 The ROMS Group            Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.md                                               !
 !=======================================================================
@@ -510,7 +510,7 @@
  10   FORMAT (/,a,i2.2,a,i3.3,a,i3.3/)
  20   FORMAT (/,a,i2.2)
  30   FORMAT (/,a,i2.2,a,1p,e15.6,/)
- 40   FORMAT (/,1x,a,1x,'ROMS/TOMS: started time-stepping:',            &
+ 40   FORMAT (/,1x,a,1x,'ROMS: started time-stepping:',                 &
      &        ' (Grid: ',i2.2,' TimeSteps: ',i8.8,' - ',i8.8,')')
 !
       RETURN

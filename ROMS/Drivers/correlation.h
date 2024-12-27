@@ -2,12 +2,12 @@
 !
 !git $Id$
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2024 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2025 The ROMS Group                              !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
-!  ROMS/TOMS 4DVAR Background-error Correlation Model                  !
+!  ROMS 4DVAR Background-error Correlation Model                       !
 !                                                                      !
 !  This driver is used to build and test the 4DVAR background-error    !
 !  correlation model using a generalized difussion operator:           !
@@ -30,7 +30,7 @@
 !         W : Grid cell area or volume diagonal matrix                 !
 !                                                                      !
 !  The routines in this driver control the initialization,  time-      !
-!  stepping, and finalization of  ROMS/TOMS  model following ESMF      !
+!  stepping, and finalization of  ROMS  model following ESMF           !
 !  conventions:                                                        !
 !                                                                      !
 !     ROMS_initialize                                                  !
@@ -94,7 +94,7 @@
 !
 !=======================================================================
 !                                                                      !
-!  This routine allocates and initializes ROMS/TOMS state variables    !
+!  This routine allocates and initializes ROMS state variables         !
 !  and internal and external parameters.                               !
 !                                                                      !
 !=======================================================================
@@ -449,7 +449,7 @@
 !
 !=======================================================================
 !                                                                      !
-!  This routine terminates ROMS/TOMS driver execution.                 !
+!  This routine terminates ROMS driver execution.                      !
 !                                                                      !
 !=======================================================================
 !
