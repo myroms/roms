@@ -3606,7 +3606,7 @@
 #endif
       END IF
 !
-  10  FORMAT (i3.3,'x',i3.3)
+  10  FORMAT (i0,'x',i0)
   20  FORMAT (/,' DEF_INFO_NF90 - error while creating global',         &
      &        ' attribute: ',a,/,17x,a)
   30  FORMAT (a,i2.2)
@@ -7082,7 +7082,7 @@
 # endif
       END IF
 !
-  10  FORMAT (i3.3,'x',i3.3)
+  10  FORMAT (i0,'x',i0)
   20  FORMAT (/,' DEF_INFO_PIO - error while creating global',          &
      &        ' attribute: ',a,/,16x,a)
   30  FORMAT (a,i2.2)
