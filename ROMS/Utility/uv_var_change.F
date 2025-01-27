@@ -332,7 +332,7 @@
 !  Compute staggered C-grid components.
 !
         DO j=JstrR,JendR
-          DO i=Istr,IstrR
+          DO i=Istr,IendR
             u(i,j,k,nout)=0.5_r8*(Urho(i-1,j)+Urho(i,j))
 # ifdef MASKING
             u(i,j,k,nout)=u(i,j,k,nout)*umask(i,j)
@@ -661,7 +661,7 @@
 !  Compute staggered C-grid components.
 !
         DO j=JstrR,JendR
-          DO i=Istr,IstrR
+          DO i=Istr,IendR
 !>          u(i,j,k,nout)=0.5_r8*(Urho(i-1,j)+Urho(i,j))
 !>
             tl_u(i,j,k,nout)=0.5_r8*(tl_Urho(i-1,j)+tl_Urho(i,j))

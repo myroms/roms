@@ -896,7 +896,6 @@
         END IF
       END IF
 #  endif
-#  ifdef UV_DESTAGGERED
 !
 !  Write out 3D Eastward momentum (m/s) at RHO-points, A-grid.
 !
@@ -907,9 +906,9 @@
      &                     TLM(ng)%Vid(idu3dE),                         &
      &                     TLM(ng)%Rindex, gtype,                       &
      &                     LBi, UBi, LBj, UBj, 1, N(ng), scale,         &
-#   ifdef MASKING
+#  ifdef MASKING
      &                     GRID(ng) % rmask_full,                       &
-#   endif
+#  endif
      &                     OCEAN(ng) % tl_ua)
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
@@ -928,9 +927,9 @@
      &                     TLM(ng)%Vid(idv3dN),                         &
      &                     TLM(ng)%Rindex, gtype,                       &
      &                     LBi, UBi, LBj, UBj, 1, N(ng), scale,         &
-#   ifdef MASKING
+#  ifdef MASKING
      &                     GRID(ng) % rmask_full,                       &
-#   endif
+#  endif
      &                     OCEAN(ng) % tl_va)
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
@@ -941,7 +940,6 @@
           RETURN
         END IF
       END IF
-#  endif
 !
 !  Write out tracer type variables.
 !
@@ -2189,7 +2187,6 @@
         END IF
       END IF
 #  endif
-#  ifdef UV_DESTAGGERED
 !
 !  Write out 3D Eastward momentum (m/s) at RHO-points, A-grid
 !
@@ -2205,9 +2202,9 @@
      &                     TLM(ng)%Rindex,                              &
      &                     ioDesc,                                      &
      &                     LBi, UBi, LBj, UBj, 1, N(ng), scale,         &
-#   ifdef MASKING
+#  ifdef MASKING
      &                     GRID(ng) % rmask_full,                       &
-#   endif
+#  endif
      &                     OCEAN(ng) % tl_ua)
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
@@ -2232,9 +2229,9 @@
      &                     TLM(ng)%Rindex,                              &
      &                     ioDesc,                                      &
      &                     LBi, UBi, LBj, UBj, 1, N(ng), scale,         &
-#   ifdef MASKING
+#  ifdef MASKING
      &                     GRID(ng) % rmask_full,                       &
-#   endif
+#  endif
      &                     OCEAN(ng) % tl_va)
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
@@ -2245,7 +2242,6 @@
           RETURN
         END IF
       END IF
-#  endif
 !
 !  Write out tracer type variables.
 !
