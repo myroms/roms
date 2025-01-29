@@ -867,7 +867,6 @@
 #  ifdef MASKING
      &                  Fmask = Amask,                                  &
 #  endif
-     &                  Extract_Flag = Extract_Flag,                    &
      &                  debug = .FALSE.)
       IF (OutThread) THEN
         WRITE (stdout,10) TRIM(Vname(1,ifield)), Stats%min, Stats%max,  &
