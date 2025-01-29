@@ -842,6 +842,7 @@
         END IF
       END IF
 #  endif
+#  if defined JEDI || defined UV_DESTAGGERED
 !
 !  Write out 3D Eastward momentum (m/s) at RHO-points, A-grid.
 !
@@ -852,9 +853,9 @@
      &                     ADM(ng)%Vid(idu3dE),                         &
      &                     ADM(ng)%Rindex, gtype,                       &
      &                     LBi, UBi, LBj, UBj, 1, N(ng), scale,         &
-#  ifdef MASKING
+#   ifdef MASKING
      &                     GRID(ng) % rmask_full,                       &
-#  endif
+#   endif
      &                     OCEAN(ng) % ad_ua)
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
@@ -873,9 +874,9 @@
      &                     ADM(ng)%Vid(idv3dN),                         &
      &                     ADM(ng)%Rindex, gtype,                       &
      &                     LBi, UBi, LBj, UBj, 1, N(ng), scale,         &
-#  ifdef MASKING
+#   ifdef MASKING
      &                     GRID(ng) % rmask_full,                       &
-#  endif
+#   endif
      &                     OCEAN(ng) % ad_va)
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
@@ -886,6 +887,7 @@
           RETURN
         END IF
       END IF
+#  endif
 !
 !  Write out S-coordinate omega vertical velocity (m/s).
 !
@@ -1290,7 +1292,7 @@
 # if defined PIO_LIB && defined DISTRIBUTE
 !
 !***********************************************************************
-      SUBROUTINE ad_wrt_his_pio (ng, tile,                              &
+      SUBROUTINE ad_wrt_his_pio (ng, model, tile,                       &
 #  ifdef ADJUST_BOUNDARY
      &                           LBij, UBij,                            &
 #  endif
@@ -1301,7 +1303,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, tile
+      integer, intent(in) :: ng, model, tile
 #  ifdef ADJUST_BOUNDARY
       integer, intent(in) :: LBij, UBij
 #  endif
@@ -2085,6 +2087,7 @@
         END IF
       END IF
 #   endif
+#   if defined JEDI || defined UV_DESTAGGERED
 !
 !  Write out 3D Eastward momentum (m/s) at RHO-points, A-grid
 !
@@ -2100,9 +2103,9 @@
      &                     ADM(ng)%Rindex,                              &
      &                     ioDesc,                                      &
      &                     LBi, UBi, LBj, UBj, 1, N(ng), scale,         &
-#   ifdef MASKING
+#    ifdef MASKING
      &                     GRID(ng) % rmask_full,                       &
-#   endif
+#    endif
      &                     OCEAN(ng) % ad_ua)
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
@@ -2127,9 +2130,9 @@
      &                     ADM(ng)%Rindex,                              &
      &                     ioDesc,                                      &
      &                     LBi, UBi, LBj, UBj, 1, N(ng), scale,         &
-#   ifdef MASKING
+#    ifdef MASKING
      &                     GRID(ng) % rmask_full,                       &
-#   endif
+#    endif
      &                     OCEAN(ng) % ad_va)
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
@@ -2140,6 +2143,7 @@
           RETURN
         END IF
       END IF
+#   endif
 !
 !  Write out S-coordinate omega vertical velocity (m/s).
 !

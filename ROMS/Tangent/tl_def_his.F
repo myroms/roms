@@ -1077,6 +1077,7 @@
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 #  endif
+#  if defined JEDI || defined UV_DESTAGGERED
 !
 !  Define 3D Eastward momentum at RHO-points, A-grid.
 !
@@ -1086,9 +1087,9 @@
           Vinfo( 3)=Vname(3,idu3dE)
           Vinfo(14)=Vname(4,idu3dE)
           Vinfo(16)=Vname(1,idtime)
-#  if defined WRITE_WATER && defined MASKING
+#   if defined WRITE_WATER && defined MASKING
           Vinfo(20)='mask_rho'
-#  endif
+#   endif
           Vinfo(21)=Vname(6,idu3dE)
           Vinfo(22)='coordinates'
           Aval(5)=REAL(Iinfo(1,idu3dE,ng),r8)
@@ -1105,9 +1106,9 @@
           Vinfo( 3)=Vname(3,idv3dN)
           Vinfo(14)=Vname(4,idv3dN)
           Vinfo(16)=Vname(1,idtime)
-#  if defined WRITE_WATER && defined MASKING
+#   if defined WRITE_WATER && defined MASKING
           Vinfo(20)='mask_rho'
-#  endif
+#   endif
           Vinfo(21)=Vname(6,idv3dN)
           Vinfo(22)='coordinates'
           Aval(5)=REAL(Iinfo(1,idv3dN,ng),r8)
@@ -1115,6 +1116,7 @@
      &                   NF_FOUT, nvd4, t3dgrd, Aval, Vinfo, ncname)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
+#  endif
 !
 !  Define tracer type variables.
 !
@@ -1480,12 +1482,14 @@
             got_var(idSbry(isVvel))=.TRUE.
             TLM(ng)%Vid(idSbry(isVvel))=var_id(i)
 #  endif
+#  if defined JEDI || defined UV_DESTAGGERED
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idu3dE))) THEN
             got_var(idu3dE)=.TRUE.
             TLM(ng)%Vid(idu3dE)=var_id(i)
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idv3dN))) THEN
             got_var(idv3dN)=.TRUE.
             TLM(ng)%Vid(idv3dN)=var_id(i)
+#  endif
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idDano))) THEN
             got_var(idDano)=.TRUE.
             TLM(ng)%Vid(idDano)=var_id(i)
@@ -1718,6 +1722,7 @@
           RETURN
         END IF
 #  endif
+#  if defined JEDI || defined UV_DESTAGGERED
         IF (.not.got_var(idu3dE).and.Hout(idu3dE,ng)) THEN
           IF (Master) WRITE (stdout,70) TRIM(Vname(1,idu3dE)),          &
      &                                  TRIM(ncname)
@@ -1730,6 +1735,7 @@
           exit_flag=3
           RETURN
         END IF
+#  endif
         IF (.not.got_var(idDano).and.Hout(idDano,ng)) THEN
           IF (Master) WRITE (stdout,70) TRIM(Vname(1,idDano)),          &
      &                                  TRIM(ncname)
@@ -1869,14 +1875,14 @@
 # if defined PIO_LIB && defined DISTRIBUTE
 !
 !***********************************************************************
-      SUBROUTINE tl_def_his_pio (ng, ldef)
+      SUBROUTINE tl_def_his_pio (ng, model, ldef)
 !***********************************************************************
 !
       USE mod_pio_netcdf
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng
+      integer, intent(in) :: ng, model
 
       logical, intent(in) :: ldef
 !
@@ -2992,6 +2998,7 @@
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 #   endif
+#   if defined JEDI || defined UV_DESTAGGERED
 !
 !  Define 3D Eastward momentum at RHO-points, A-grid.
 !
@@ -3001,9 +3008,9 @@
           Vinfo( 3)=Vname(3,idu3dE)
           Vinfo(14)=Vname(4,idu3dE)
           Vinfo(16)=Vname(1,idtime)
-#   if defined WRITE_WATER && defined MASKING
+#    if defined WRITE_WATER && defined MASKING
           Vinfo(20)='mask_rho'
-#   endif
+#    endif
           Vinfo(21)=Vname(6,idu3dE)
           Vinfo(22)='coordinates'
           Aval(5)=REAL(Iinfo(1,idu3dE,ng),r8)
@@ -3024,9 +3031,9 @@
           Vinfo( 3)=Vname(3,idv3dN)
           Vinfo(14)=Vname(4,idv3dN)
           Vinfo(16)=Vname(1,idtime)
-#   if defined WRITE_WATER && defined MASKING
+#    if defined WRITE_WATER && defined MASKING
           Vinfo(20)='mask_rho'
-#   endif
+#    endif
           Vinfo(21)=Vname(6,idv3dN)
           Vinfo(22)='coordinates'
           Aval(5)=REAL(Iinfo(1,idv3dN,ng),r8)
@@ -3038,6 +3045,7 @@
      &                   PIO_FOUT, nvd4, t3dgrd, Aval, Vinfo, ncname)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
+#   endif
 !
 !  Define tracer type variables.
 !
@@ -3498,6 +3506,7 @@
             TLM(ng)%pioVar(idSbry(isVvel))%dkind=PIO_FOUT
             TLM(ng)%pioVar(idSbry(isVvel))%gtype=v3dobc
 #   endif
+#   if defined JEDI || defined UV_DESTAGGERED
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idu3dE))) THEN
             got_var(idu3dE)=.TRUE.
             TLM(ng)%pioVar(idu3dE)%vd=var_desc(i)
@@ -3508,6 +3517,7 @@
             TLM(ng)%pioVar(idv3dN)%vd=var_desc(i)
             TLM(ng)%pioVar(idv3dN)%dkind=PIO_FOUT
             TLM(ng)%pioVar(idv3dN)%gtype=r3dvar
+#   endif
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idDano))) THEN
             got_var(idDano)=.TRUE.
             TLM(ng)%pioVar(idDano)%vd=var_desc(i)
@@ -3768,6 +3778,7 @@
           RETURN
         END IF
 #   endif
+#   if defined JEDI || defined UV_DESTAGGERED
         IF (.not.got_var(idu3dE).and.Hout(idu3dE,ng)) THEN
           IF (Master) WRITE (stdout,70) TRIM(Vname(1,idu3dE)),          &
      &                                  TRIM(ncname)
@@ -3780,6 +3791,7 @@
           exit_flag=3
           RETURN
         END IF
+#   endif
         IF (.not.got_var(idDano).and.Hout(idDano,ng)) THEN
           IF (Master) WRITE (stdout,70) TRIM(Vname(1,idDano)),          &
      &                                  TRIM(ncname)

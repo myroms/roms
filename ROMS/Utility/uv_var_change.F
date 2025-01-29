@@ -909,7 +909,7 @@
 !>
             adfac=0.5_r8*ad_Urho(i,j)
             ad_u(i  ,j,k,ninp)=ad_u(i  ,j,k,ninp)+adfac
-            ad_u(i+1,j,k,ninp)=AD_u(i+1,j,k,ninp)+adfac
+            ad_u(i+1,j,k,ninp)=ad_u(i+1,j,k,ninp)+adfac
             ad_Urho(i,j)=0.0_r8
           END DO
         END DO
