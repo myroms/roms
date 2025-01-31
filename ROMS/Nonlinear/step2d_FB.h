@@ -134,6 +134,12 @@
      &                  MIXING(ng) % visc4_p,   MIXING(ng) % visc4_r,   &
 # endif
 #endif
+#ifdef WEC_MELLOR
+     &                  MIXING(ng) % rustr2d,   MIXING(ng) % rvstr2d,   &
+     &                  OCEAN(ng) % rulag2d,    OCEAN(ng) % rvlag2d,    &
+     &                  OCEAN(ng) % ubar_stokes,                        &
+     &                  OCEAN(ng) % vbar_stokes,                        &
+#endif
 #if defined TIDE_GENERATING_FORCES && !defined SOLVE3D
      &                  OCEAN(ng) % eq_tide,                            &
 #endif
@@ -210,6 +216,11 @@
 #endif
 #if defined SEDIMENT && defined SED_MORPH
      &                        bed_thick,                                &
+#endif
+#ifdef WEC_MELLOR
+     &                        rustr2d, rvstr2d,                         &
+     &                        rulag2d, rvlag2d,                         &
+     &                        ubar_stokes, vbar_stokes,                 &
 #endif
 #if defined TIDE_GENERATING_FORCES && !defined SOLVE3D
      &                        eq_tide,                                  &
@@ -302,6 +313,14 @@
 # endif
 # if defined SEDIMENT && defined SED_MORPH
       real(r8), intent(in   ) :: bed_thick(LBi:,LBj:,:)
+# endif
+# ifdef WEC_MELLOR
+      real(r8), intent(in   ) :: rustr2d(LBi:,LBj:)
+      real(r8), intent(in   ) :: rvstr2d(LBi:,LBj:)
+      real(r8), intent(in   ) :: rulag2d(LBi:,LBj:)
+      real(r8), intent(in   ) :: rvlag2d(LBi:,LBj:)
+      real(r8), intent(in   ) :: ubar_stokes(LBi:,LBj:)
+      real(r8), intent(in   ) :: vbar_stokes(LBi:,LBj:)
 # endif
 # if defined TIDE_GENERATING_FORCES && !defined SOLVE3D
       real(r8), intent(in   ) :: eq_tide(LBi:,LBj:)
@@ -400,6 +419,14 @@
 # if defined SEDIMENT && defined SED_MORPH
       real(r8), intent(in   ) :: bed_thick(LBi:UBi,LBj:UBj,1:3)
 # endif
+# ifdef WEC_MELLOR
+      real(r8), intent(in   ) :: rustr2d(LBi:UBi,LBj:UBj)
+      real(r8), intent(in   ) :: rvstr2d(LBi:UBi,LBj:UBj)
+      real(r8), intent(in   ) :: rulag2d(LBi:UBi,LBj:UBj)
+      real(r8), intent(in   ) :: rvlag2d(LBi:UBi,LBj:UBj)
+      real(r8), intent(in   ) :: ubar_stokes(LBi:UBi,LBj:UBj)
+      real(r8), intent(in   ) :: vbar_stokes(LBi:UBi,LBj:UBj)
+# endif
 # if defined TIDE_GENERATING_FORCES && !defined SOLVE3D
       real(r8), intent(in   ) :: eq_tide(LBi:UBi,LBj:UBj)
 # endif
@@ -468,7 +495,7 @@
 #ifdef DEBUG
       real(r8), parameter :: IniVal = 0.0_r8
 #endif
-!
+! 
 #if defined UV_C4ADVECTION && !defined SOLVE3D
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Dgrad
 #endif
@@ -481,6 +508,10 @@
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Dstp
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: DUon
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: DVom
+#ifdef WEC_MELLOR
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: DUSon
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: DVSom
+#endif
 #if defined STEP2D_CORIOLIS || !defined SOLVE3D
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: UFx
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: VFe
@@ -517,7 +548,7 @@
 #include "set_bounds.h"
 
 #ifdef DEBUG
-!
+! 
 !-----------------------------------------------------------------------
 !  Initialize private arrays for debugging.
 !-----------------------------------------------------------------------
@@ -647,12 +678,18 @@
 !  equations.
 !
 #if defined DISTRIBUTE && !defined NESTING
-# define IR_RANGE IstrUm2-1,Iendp2
-# define JR_RANGE JstrVm2-1,Jendp2
-# define IU_RANGE IstrUm1-1,Iendp2
-# define JU_RANGE Jstrm1-1,Jendp2
-# define IV_RANGE Istrm1-1,Iendp2
-# define JV_RANGE JstrVm1-1,Jendp2
+# define IR_RANGE IstrU-2,Iendp2
+# define JR_RANGE JstrV-2,Jendp2
+# define IU_RANGE IstrU-1,Iendp2
+# define JU_RANGE JstrV-2,Jendp2
+# define IV_RANGE IstrU-2,Iendp2
+# define JV_RANGE JstrV-1,Jendp2
+!!# define IR_RANGE IstrUm2-1,Iendp2
+!!# define JR_RANGE JstrVm2-1,Jendp2
+!!# define IU_RANGE IstrUm1-1,Iendp2
+!!# define JU_RANGE Jstrm1-1,Jendp2
+!!# define IV_RANGE Istrm1-1,Iendp2
+!!# define JV_RANGE JstrVm1-1,Jendp2
 #else
 # define IR_RANGE IstrUm2-1,Iendp2
 # define JR_RANGE JstrVm2-1,Jendp2
@@ -663,7 +700,7 @@
 #endif
 
       DO j=JR_RANGE
-        DO i=IR_RANGE
+        DO i=IR_RANGE 
           Drhs(i,j)=h(i,j)+fwd0*zeta(i,j,kstp)+                         &
      &                     fwd1*zeta(i,j,kbak)+                         &
      &                     fwd2*zeta(i,j,kold)
@@ -747,17 +784,17 @@
 !
 !  Notice that the new local free-surface is allocated so it can be
 !  passed as an argumment to "zetabc_local". An automatic array cannot
-!  be used here because of weird memory problems.
+!  be used here because of weird memory problems. 
 !
       allocate ( zeta_new(IminS:ImaxS,JminS:JmaxS) )
       zeta_new = 0.0_r8
 !
 !  Compute "zeta_new" at new time step and interpolate it half-step
-!  backward, "zwrk" for the subsequent computation of the tangent
+!  backward, "zwrk" for the subsequent computation of the tangent 
 !  linear barotropic pressure gradient. Here, we use the BASIC STATE
 !  values. Thus, the nonlinear correction to the pressure-gradient
 !  term from "kstp" to "knew" is not needed for Forward-Euler to
-!  Forward-Backward steps (PGF_FB_CORRECTION method).
+!  Forward-Backward steps (PGF_FB_CORRECTION method). 
 !
       DO j=JstrV-1,Jend
         DO i=IstrU-1,Iend
@@ -880,7 +917,7 @@
 #ifdef SOLVE3D
 !
 !  Notice that we are suppressing the computation of momentum advection,
-!  Coriolis, and lateral viscosity terms in 3D Applications because
+!  Coriolis, and lateral viscosity terms in 3D Applications because 
 !  these terms are already included in the baroclinic-to-barotropic
 !  forcing arrays "rufrc" and "rvfrc". It does not mean we are entirely
 !  omitting them, but it is a choice between recomputing them at every
@@ -999,6 +1036,10 @@
             UFx(i,j)=0.25_r8*                                           &
      &               (DUon(i,j)+DUon(i+1,j))*                           &
      &               (urhs(i  ,j)+                                      &
+#  ifdef WEC_MELLOR
+     &                ubar_stokes(i  ,j)+                               &
+     &                ubar_stokes(i+1,j)+                               &
+#  endif
      &                urhs(i+1,j))
           END IF
 !
@@ -1008,6 +1049,10 @@
 #  endif
      &               (DUon(i+1,j)+DUon(i+1,j-1))*                       &
      &               (vrhs(i+1,j)+                                      &
+#  ifdef WEC_MELLOR
+     &                vbar_stokes(i  ,j)+                               &
+     &                vbar_stokes(i-1,j)+                               &
+#  endif
      &                vrhs(i  ,j))
         END DO
       END DO
@@ -1018,6 +1063,10 @@
             VFe(i,j)=0.25_r8*                                           &
      &               (DVom(i,j)+DVom(i,j+1))*                           &
      &               (vrhs(i,j  )+                                      &
+#  ifdef WEC_MELLOR
+     &                vbar_stokes(i,j  )+                               &
+     &                vbar_stokes(i,j+1)+                               &
+#  endif
      &                vrhs(i,j+1))
           END IF
 !
@@ -1027,6 +1076,10 @@
 #  endif
      &               (DVom(i,j+1)+DVom(i-1,j+1))*                       &
      &               (urhs(i,j+1)+                                      &
+#  ifdef WEC_MELLOR
+     &                ubar_stokes(i,j+1)+                               &
+     &                ubar_stokes(i,j  )+                               &
+#  endif
      &                urhs(i,j  ))
         END DO
       END DO
@@ -1038,6 +1091,10 @@
       DO j=Jstr,Jend
         DO i=IstrUm1,Iendp1
           grad (i,j)=urhs(i-1,j)-2.0_r8*urhs(i,j)+                      &
+#  ifdef WEC_MELLOR
+     &               ubar_stokes(i-1,j)-2.0_r8*ubar_stokes(i,j)+        &
+     &               ubar_stokes(i+1,j)+                                &
+#  endif
      &               urhs(i+1,j)
           Dgrad(i,j)=DUon(i-1,j)-2.0_r8*DUon(i,j)+DUon(i+1,j)
         END DO
@@ -1063,6 +1120,10 @@
       DO j=Jstr,Jend
         DO i=IstrU-1,Iend
           UFx(i,j)=0.25_r8*(urhs(i  ,j)+                                &
+#  ifdef WEC_MELLOR
+     &                      ubar_stokes(i  ,j)+                         &
+     &                      ubar_stokes(i+1,j)+                         &
+#  endif
      &                      urhs(i+1,j)-                                &
      &                      cff*(grad (i,j)+grad (i+1,j)))*             &
      &                     (DUon(i,j)+DUon(i+1,j)-                      &
@@ -1073,6 +1134,10 @@
       DO j=Jstrm1,Jendp1
         DO i=IstrU,Iend
           grad(i,j)=urhs(i,j-1)-2.0_r8*urhs(i,j)+                       &
+#  ifdef WEC_MELLOR
+     &              ubar_stokes(i,j-1)-2.0_r8*ubar_stokes(i,j)+         &
+     &              ubar_stokes(i,j+1)+                                 &
+#  endif
      &              urhs(i,j+1)
         END DO
       END DO
@@ -1100,6 +1165,10 @@
       DO j=Jstr,Jend+1
         DO i=IstrU,Iend
           UFe(i,j)=0.25_r8*(urhs(i,j  )+                                &
+#  ifdef WEC_MELLOR
+     &                      ubar_stokes(i,j  )+                         &
+     &                      ubar_stokes(i,j-1)+                         &
+#  endif
      &                      urhs(i,j-1)-                                &
      &                      cff*(grad (i,j)+grad (i,j-1)))*             &
      &                     (DVom(i,j)+DVom(i-1,j)-                      &
@@ -1112,6 +1181,10 @@
       DO j=JstrV,Jend
         DO i=Istrm1,Iendp1
           grad(i,j)=vrhs(i-1,j)-2.0_r8*vrhs(i,j)+                       &
+#  ifdef WEC_MELLOR
+     &              vbar_stokes(i-1,j)-2.0_r8*vbar_stokes(i,j)+         &
+     &              vbar_stokes(i+1,j)+                                 &
+#  endif
      &              vrhs(i+1,j)
         END DO
       END DO
@@ -1139,6 +1212,10 @@
       DO j=JstrV,Jend
         DO i=Istr,Iend+1
           VFx(i,j)=0.25_r8*(vrhs(i  ,j)+                                &
+#  ifdef WEC_MELLOR
+     &                      vbar_stokes(i  ,j)+                         &
+     &                      vbar_stokes(i-1,j)+                         &
+#  endif
      &                      vrhs(i-1,j)-                                &
      &                      cff*(grad (i,j)+grad (i-1,j)))*             &
      &                     (DUon(i,j)+DUon(i,j-1)-                      &
@@ -1149,6 +1226,10 @@
       DO j=JstrVm1,Jendp1
         DO i=Istr,Iend
           grad(i,j)=vrhs(i,j-1)-2.0_r8*vrhs(i,j)+                       &
+#  ifdef WEC_MELLOR
+     &              vbar_stokes(i,j-1)-2.0_r8*vbar_stokes(i,j)+         &
+     &              vbar_stokes(i,j+1)+                                 &
+#  endif
      &              vrhs(i,j+1)
           Dgrad(i,j)=DVom(i,j-1)-2.0_r8*DVom(i,j)+DVom(i,j+1)
         END DO
@@ -1174,6 +1255,10 @@
       DO j=JstrV-1,Jend
         DO i=Istr,Iend
           VFe(i,j)=0.25_r8*(vrhs(i,j  )+                                &
+#  ifdef WEC_MELLOR
+     &                      vbar_stokes(i,j  )+                         &
+     &                      vbar_stokes(i,j+1)+                         &
+#  endif
      &                      vrhs(i,j+1)-                                &
      &                      cff*(grad (i,j)+grad (i,j+1)))*             &
      &                     (DVom(i,j)+DVom(i,j+1)-                      &
@@ -1223,8 +1308,16 @@
         DO i=IstrU-1,Iend
           cff=0.5_r8*Drhs(i,j)*fomn(i,j)
           UFx(i,j)=cff*(vrhs(i,j  )+                                    &
+# ifdef WEC_MELLOR
+     &                  vbar_stokes(i,j  )+                             &
+     &                  vbar_stokes(i,j+1)+                             &
+# endif
      &                  vrhs(i,j+1))
           VFe(i,j)=cff*(urhs(i  ,j)+                                    &
+# ifdef WEC_MELLOR
+     &                  ubar_stokes(i  ,j)+                             &
+     &                  ubar_stokes(i+1,j)+                             &
+# endif
      &                  urhs(i+1,j))
         END DO
       END DO
@@ -1260,8 +1353,16 @@
       DO j=JstrV-1,Jend
         DO i=IstrU-1,Iend
           cff1=0.5_r8*(vrhs(i,j  )+                                     &
+# ifdef WEC_MELLOR
+     &                 vbar_stokes(i,j  )+                              &
+     &                 vbar_stokes(i,j+1)+                              &
+# endif
      &                 vrhs(i,j+1))
           cff2=0.5_r8*(urhs(i  ,j)+
+# ifdef WEC_MELLOR
+     &                 ubar_stokes(i  ,j)+                              &
+     &                 ubar_stokes(i+1,j)+                              &
+# endif
      &                 urhs(i+1,j))
           cff3=cff1*dndx(i,j)
           cff4=cff2*dmde(i,j)
@@ -1399,8 +1500,8 @@
 !  subtracting the fast-time "rubar" and "rvbar" from them.
 !
 !  In the predictor-coupled mode, the resultant forcing terms "rufrc"
-!  and "rvfrc" are extrapolated forward in time, so they become
-!  centered effectively at time n+1/2. This is done using optimized
+!  and "rvfrc" are extrapolated forward in time, so they become 
+!  centered effectively at time n+1/2. This is done using optimized 
 !  Adams-Bashforth weights. In the code below, rufrc_bak(:,:,nstp) is
 !  at (n-1)time step, while rufrc_bak(:,:,3-nstp) is at (n-2). After
 !  its use as input, the latter is overwritten by the value at time
@@ -1424,9 +1525,9 @@
           cfwd0=1.5_r8
           cfwd1=-0.5_r8
           cfwd2=0.0_r8
-        ELSE
-          cfwd2=0.281105_r8
-          cfwd1=-0.5_r8-2.0_r8*cfwd2
+        ELSE                                
+          cfwd2=0.281105_r8                     
+          cfwd1=-0.5_r8-2.0_r8*cfwd2                 
           cfwd0=1.5_r8+cfwd2
         END IF
 !
@@ -2026,7 +2127,7 @@
 !  Exchange halo tile information.
 !-----------------------------------------------------------------------
 !
-      IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
+      IF (EWperiodic(ng).or.NSperiodic(ng)) THEN 
         CALL exchange_r2d_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          zeta(:,:,knew))

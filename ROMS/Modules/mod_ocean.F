@@ -10,9 +10,11 @@
 !                                                                      !
 !  2D Primitive Variables.                                             !
 !                                                                      !
+#if !(defined STEP2D_FB_AB3_AM4 || defined STEP2D_FB_LF_AM3)
 !  rubar        Right-hand-side of 2D U-momentum equation (m4/s2).     !
 !  rvbar        Right-hand-side of 2D V-momentum equation (m4/s2).     !
 !  rzeta        Right-hand-side of free surface equation (m3/s).       !
+#endif
 !  ubar         Vertically integrated U-momentum component (m/s).      !
 !  vbar         Vertically integrated V-momentum component (m/s).      !
 !  zeta         Free surface (m).                                      !
@@ -32,6 +34,10 @@
 !  v            3D V-momentum component (m/s).                         !
 !  va           3D U-momentun component (m/s) at RHO-points, A-grid.   !
 !  W            S-coordinate (omega*Hz/mn) vertical velocity (m3/s).   !
+# if defined OMEGA_IMPLICIT
+!  Wi           Implicit, S-coordinate vertical velocity (m3/s).       !
+# endif
+!  wvel         Z-coordinate vertical velocity (m/s).                  !
 #ifdef BIOLOGY
 !                                                                      !
 !  Biology Variables.                                                  !
@@ -85,9 +91,11 @@
 !
 !  Nonlinear model state.
 !
+#if !(defined STEP2D_FB_AB3_AM4 || defined STEP2D_FB_LF_AM3)
           real(r8), pointer :: rubar(:,:,:)
           real(r8), pointer :: rvbar(:,:,:)
           real(r8), pointer :: rzeta(:,:,:)
+#endif
           real(r8), pointer :: ubar(:,:,:)
           real(r8), pointer :: vbar(:,:,:)
           real(r8), pointer :: zeta(:,:,:)
@@ -149,9 +157,11 @@
 !
 !  Tangent linear model state.
 !
+# if !(defined STEP2D_FB_AB3_AM4 || defined STEP2D_FB_LF_AM3)
           real(r8), pointer :: tl_rubar(:,:,:)
           real(r8), pointer :: tl_rvbar(:,:,:)
           real(r8), pointer :: tl_rzeta(:,:,:)
+# endif
           real(r8), pointer :: tl_ubar(:,:,:)
           real(r8), pointer :: tl_vbar(:,:,:)
           real(r8), pointer :: tl_zeta(:,:,:)
@@ -197,9 +207,11 @@
 !
 !  Adjoint model state.
 !
+# if !(defined STEP2D_FB_AB3_AM4 || defined STEP2D_FB_LF_AM3)
           real(r8), pointer :: ad_rubar(:,:,:)
           real(r8), pointer :: ad_rvbar(:,:,:)
           real(r8), pointer :: ad_rzeta(:,:,:)
+# endif
           real(r8), pointer :: ad_ubar(:,:,:)
           real(r8), pointer :: ad_vbar(:,:,:)
           real(r8), pointer :: ad_zeta(:,:,:)
@@ -230,6 +242,9 @@
           real(r8), pointer :: ad_v(:,:,:,:)
           real(r8), pointer :: ad_va(:,:,:)
           real(r8), pointer :: ad_W(:,:,:)
+#  ifdef OMEGA_IMPLICIT
+          real(r8), pointer :: ad_Wi(:,:,:)
+#  endif
           real(r8), pointer :: ad_wvel(:,:,:)
 
           real(r8), pointer :: ad_t_sol(:,:,:,:)
@@ -317,7 +332,8 @@
 !  Latest two records of the nonlinear trajectory used to interpolate
 !  the background state in the tangent linear and adjoint models.
 !
-# ifdef FORWARD_RHS
+# if defined FORWARD_RHS       && \
+   !(defined STEP2D_FB_AB3_AM4 || defined STEP2D_FB_LF_AM3)
           real(r8), pointer :: rubarG(:,:,:)
           real(r8), pointer :: rvbarG(:,:,:)
           real(r8), pointer :: rzetaG(:,:,:)
@@ -383,6 +399,7 @@
 !
 !  Nonlinear model state.
 !
+#if !(defined STEP2D_FB_AB3_AM4 || defined STEP2D_FB_LF_AM3)
       allocate ( OCEAN(ng) % rubar(LBi:UBi,LBj:UBj,2) )
       Dmem(ng)=Dmem(ng)+2.0_r8*size2d
 
@@ -391,7 +408,18 @@
 
       allocate ( OCEAN(ng) % rzeta(LBi:UBi,LBj:UBj,2) )
       Dmem(ng)=Dmem(ng)+2.0_r8*size2d
+#endif
 
+#ifdef STEP2D_FB_AB3_AM4
+      allocate ( OCEAN(ng) % ubar(LBi:UBi,LBj:UBj,4) )
+      Dmem(ng)=Dmem(ng)+4.0_r8*size2d
+
+      allocate ( OCEAN(ng) % vbar(LBi:UBi,LBj:UBj,4) )
+      Dmem(ng)=Dmem(ng)+4.0_r8*size2d
+
+      allocate ( OCEAN(ng) % zeta(LBi:UBi,LBj:UBj,4) )
+      Dmem(ng)=Dmem(ng)+4.0_r8*size2d
+#else
       allocate ( OCEAN(ng) % ubar(LBi:UBi,LBj:UBj,3) )
       Dmem(ng)=Dmem(ng)+3.0_r8*size2d
 
@@ -400,6 +428,7 @@
 
       allocate ( OCEAN(ng) % zeta(LBi:UBi,LBj:UBj,3) )
       Dmem(ng)=Dmem(ng)+3.0_r8*size2d
+#endif
 
 #if defined TIDE_GENERATING_FORCES
       allocate ( OCEAN(ng) % eq_tide(LBi:UBi,LBj:UBj) )
@@ -515,6 +544,7 @@
 !
 !  Tangent linear model state.
 !
+# if !(defined STEP2D_FB_AB3_AM4 || defined STEP2D_FB_LF_AM3)
       allocate ( OCEAN(ng) % tl_rubar(LBi:UBi,LBj:UBj,2) )
       Dmem(ng)=Dmem(ng)+2.0_r8*size2d
 
@@ -523,7 +553,18 @@
 
       allocate ( OCEAN(ng) % tl_rzeta(LBi:UBi,LBj:UBj,2) )
       Dmem(ng)=Dmem(ng)+2.0_r8*size2d
+# endif
 
+# ifdef STEP2D_FB_AB3_AM4
+      allocate ( OCEAN(ng) % tl_ubar(LBi:UBi,LBj:UBj,4) )
+      Dmem(ng)=Dmem(ng)+4.0_r8*size2d
+
+      allocate ( OCEAN(ng) % tl_vbar(LBi:UBi,LBj:UBj,4) )
+      Dmem(ng)=Dmem(ng)+4.0_r8*size2d
+
+      allocate ( OCEAN(ng) % tl_zeta(LBi:UBi,LBj:UBj,4) )
+      Dmem(ng)=Dmem(ng)+4.0_r8*size2d
+# else
       allocate ( OCEAN(ng) % tl_ubar(LBi:UBi,LBj:UBj,3) )
       Dmem(ng)=Dmem(ng)+3.0_r8*size2d
 
@@ -532,6 +573,7 @@
 
       allocate ( OCEAN(ng) % tl_zeta(LBi:UBi,LBj:UBj,3) )
       Dmem(ng)=Dmem(ng)+3.0_r8*size2d
+# endif
 
 # if defined TIDE_GENERATING_FORCES
       allocate ( OCEAN(ng) % tl_eq_tide(LBi:UBi,LBj:UBj) )
@@ -618,6 +660,7 @@
 !
 !  Adjoint model state.
 !
+# if !(defined STEP2D_FB_AB3_AM4 || defined STEP2D_FB_LF_AM3)
       allocate ( OCEAN(ng) % ad_rubar(LBi:UBi,LBj:UBj,2) )
       Dmem(ng)=Dmem(ng)+2.0_r8*size2d
 
@@ -626,7 +669,18 @@
 
       allocate ( OCEAN(ng) % ad_rzeta(LBi:UBi,LBj:UBj,2) )
       Dmem(ng)=Dmem(ng)+2.0_r8*size2d
+# endif
 
+# ifdef STEP2D_FB_AB3_AM4
+      allocate ( OCEAN(ng) % ad_ubar(LBi:UBi,LBj:UBj,4) )
+      Dmem(ng)=Dmem(ng)+4.0_r8*size2d
+
+      allocate ( OCEAN(ng) % ad_vbar(LBi:UBi,LBj:UBj,4) )
+      Dmem(ng)=Dmem(ng)+4.0_r8*size2d
+
+      allocate ( OCEAN(ng) % ad_zeta(LBi:UBi,LBj:UBj,4) )
+      Dmem(ng)=Dmem(ng)+4.0_r8*size2d
+# else
       allocate ( OCEAN(ng) % ad_ubar(LBi:UBi,LBj:UBj,3) )
       Dmem(ng)=Dmem(ng)+3.0_r8*size2d
 
@@ -635,6 +689,7 @@
 
       allocate ( OCEAN(ng) % ad_zeta(LBi:UBi,LBj:UBj,3) )
       Dmem(ng)=Dmem(ng)+3.0_r8*size2d
+# endif
 
       allocate ( OCEAN(ng) % ad_ubar_sol(LBi:UBi,LBj:UBj) )
       Dmem(ng)=Dmem(ng)+size2d
@@ -875,7 +930,8 @@
 !  Latest two records of the nonlinear trajectory used to interpolate
 !  the background state in the tangent linear and adjoint models.
 !
-# ifdef FORWARD_RHS
+# if defined FORWARD_RHS         && \
+     !(defined STEP2D_FB_AB3_AM4 || defined STEP2D_FB_LF_AM3)
       allocate ( OCEAN(ng) % rubarG(LBi:UBi,LBj:UBj,2) )
       Dmem(ng)=Dmem(ng)+2.0_r8*size2d
 
@@ -885,6 +941,7 @@
       allocate ( OCEAN(ng) % rzetaG(LBi:UBi,LBj:UBj,2) )
       Dmem(ng)=Dmem(ng)+2.0_r8*size2d
 # endif
+
       allocate ( OCEAN(ng) % ubarG(LBi:UBi,LBj:UBj,2) )
       Dmem(ng)=Dmem(ng)+2.0_r8*size2d
 
@@ -969,6 +1026,7 @@
 !
 !  Nonlinear model state.
 !
+# if !(defined STEP2D_FB_AB3_AM4 || defined STEP2D_FB_LF_AM3)
       IF (.not.destroy(ng, OCEAN(ng)%rubar, MyFile,                     &
      &                 __LINE__, 'OCEAN(ng)%rubar')) RETURN
 
@@ -977,6 +1035,7 @@
 
       IF (.not.destroy(ng, OCEAN(ng)%rzeta, MyFile,                     &
      &                 __LINE__, 'OCEAN(ng)%rzeta')) RETURN
+# endif
 
       IF (.not.destroy(ng, OCEAN(ng)%ubar, MyFile,                      &
      &                 __LINE__, 'OCEAN(ng)%ubar')) RETURN
@@ -1096,6 +1155,7 @@
 !
 !  Tangent linear model state.
 !
+#  if !(defined STEP2D_FB_AB3_AM4 || defined STEP2D_FB_LF_AM3)
       IF (.not.destroy(ng, OCEAN(ng)%tl_rubar, MyFile,                  &
      &                 __LINE__, 'OCEAN(ng)%tl_rubar')) RETURN
 
@@ -1104,6 +1164,7 @@
 
       IF (.not.destroy(ng, OCEAN(ng)%tl_rzeta, MyFile,                  &
      &                 __LINE__, 'OCEAN(ng)%tl_rzeta')) RETURN
+#  endif
 
       IF (.not.destroy(ng, OCEAN(ng)%tl_ubar, MyFile,                   &
      &                 __LINE__, 'OCEAN(ng)%tl_ubar')) RETURN
@@ -1194,6 +1255,7 @@
 !
 !  Adjoint model state.
 !
+#  if !(defined STEP2D_FB_AB3_AM4 || defined STEP2D_FB_LF_AM3)
       IF (.not.destroy(ng, OCEAN(ng)%ad_rubar, MyFile,                  &
      &                 __LINE__, 'OCEAN(ng)%ad_rubar')) RETURN
 
@@ -1202,6 +1264,7 @@
 
       IF (.not.destroy(ng, OCEAN(ng)%ad_rzeta, MyFile,                  &
      &                 __LINE__, 'OCEAN(ng)%ad_rzeta')) RETURN
+#  endif
 
       IF (.not.destroy(ng, OCEAN(ng)%ad_ubar, MyFile,                   &
      &                 __LINE__, 'OCEAN(ng)%ad_ubar')) RETURN
@@ -1448,7 +1511,8 @@
 !  Latest two records of the nonlinear trajectory used to interpolate
 !  the background state in the tangent linear and adjoint models.
 !
-#  ifdef FORWARD_RHS
+#  if defined FORWARD_RHS       && \
+    !(defined STEP2D_FB_AB3_AM4 || defined STEP2D_FB_LF_AM3)
       IF (.not.destroy(ng, OCEAN(ng)%rubarG, MyFile,                    &
      &                 __LINE__, 'OCEAN(ng)%rubarG')) RETURN
 
@@ -1591,22 +1655,32 @@
       IF ((model.eq.0).or.(model.eq.iNLM)) THEN
         DO j=Jmin,Jmax
           DO i=Imin,Imax
+#if !(defined STEP2D_FB_AB3_AM4 || defined STEP2D_FB_LF_AM3)
             OCEAN(ng) % rubar(i,j,1) = IniVal
             OCEAN(ng) % rubar(i,j,2) = IniVal
             OCEAN(ng) % rvbar(i,j,1) = IniVal
             OCEAN(ng) % rvbar(i,j,2) = IniVal
             OCEAN(ng) % rzeta(i,j,1) = IniVal
             OCEAN(ng) % rzeta(i,j,2) = IniVal
-
+#endif
             OCEAN(ng) % ubar(i,j,1) = IniVal
             OCEAN(ng) % ubar(i,j,2) = IniVal
             OCEAN(ng) % ubar(i,j,3) = IniVal
+#ifdef STEP2D_FB_AB3_AM4
+            OCEAN(ng) % ubar(i,j,4) = IniVal
+#endif
             OCEAN(ng) % vbar(i,j,1) = IniVal
             OCEAN(ng) % vbar(i,j,2) = IniVal
             OCEAN(ng) % vbar(i,j,3) = IniVal
+#ifdef STEP2D_FB_AB3_AM4
+            OCEAN(ng) % vbar(i,j,4) = IniVal
+#endif
             OCEAN(ng) % zeta(i,j,1) = IniVal
             OCEAN(ng) % zeta(i,j,2) = IniVal
             OCEAN(ng) % zeta(i,j,3) = IniVal
+#ifdef STEP2D_FB_AB3_AM4
+            OCEAN(ng) % zeta(i,j,4) = IniVal
+#endif
 #if defined TIDE_GENERATING_FORCES
             OCEAN(ng) % eq_tide(i,j) = IniVal
 #endif
@@ -1699,22 +1773,32 @@
       IF ((model.eq.0).or.(model.eq.iTLM).or.(model.eq.iRPM)) THEN
         DO j=Jmin,Jmax
           DO i=Imin,Imax
+# if !(defined STEP2D_FB_AB3_AM4 || defined STEP2D_FB_LF_AM3)
             OCEAN(ng) % tl_rubar(i,j,1) = IniVal
             OCEAN(ng) % tl_rubar(i,j,2) = IniVal
             OCEAN(ng) % tl_rvbar(i,j,1) = IniVal
             OCEAN(ng) % tl_rvbar(i,j,2) = IniVal
             OCEAN(ng) % tl_rzeta(i,j,1) = IniVal
             OCEAN(ng) % tl_rzeta(i,j,2) = IniVal
-
+# endif
             OCEAN(ng) % tl_ubar(i,j,1) = IniVal
             OCEAN(ng) % tl_ubar(i,j,2) = IniVal
             OCEAN(ng) % tl_ubar(i,j,3) = IniVal
+# ifdef STEP2D_FB_AB3_AM4
+            OCEAN(ng) % tl_ubar(i,j,4) = IniVal
+# endif
             OCEAN(ng) % tl_vbar(i,j,1) = IniVal
             OCEAN(ng) % tl_vbar(i,j,2) = IniVal
             OCEAN(ng) % tl_vbar(i,j,3) = IniVal
+# ifdef STEP2D_FB_AB3_AM4
+            OCEAN(ng) % tl_vbar(i,j,4) = IniVal
+# endif
             OCEAN(ng) % tl_zeta(i,j,1) = IniVal
             OCEAN(ng) % tl_zeta(i,j,2) = IniVal
             OCEAN(ng) % tl_zeta(i,j,3) = IniVal
+# ifdef STEP2D_FB_AB3_AM4
+            OCEAN(ng) % tl_zeta(i,j,4) = IniVal
+# endif
 
 # if defined TIDE_GENERATING_FORCES
             OCEAN(ng) % tl_eq_tide(i,j) = IniVal
@@ -1803,22 +1887,32 @@
       IF ((model.eq.0).or.(model.eq.iADM)) THEN
         DO j=Jmin,Jmax
           DO i=Imin,Imax
+# if !(defined STEP2D_FB_AB3_AM4 || defined STEP2D_FB_LF_AM3)
             OCEAN(ng) % ad_rubar(i,j,1) = IniVal
             OCEAN(ng) % ad_rubar(i,j,2) = IniVal
             OCEAN(ng) % ad_rvbar(i,j,1) = IniVal
             OCEAN(ng) % ad_rvbar(i,j,2) = IniVal
             OCEAN(ng) % ad_rzeta(i,j,1) = IniVal
             OCEAN(ng) % ad_rzeta(i,j,2) = IniVal
-
+# endif
             OCEAN(ng) % ad_ubar(i,j,1) = IniVal
             OCEAN(ng) % ad_ubar(i,j,2) = IniVal
             OCEAN(ng) % ad_ubar(i,j,3) = IniVal
+# ifdef STEP2D_FB_AB3_AM4
+            OCEAN(ng) % ad_ubar(i,j,4) = IniVal
+# endif
             OCEAN(ng) % ad_vbar(i,j,1) = IniVal
             OCEAN(ng) % ad_vbar(i,j,2) = IniVal
             OCEAN(ng) % ad_vbar(i,j,3) = IniVal
+# ifdef STEP2D_FB_AB3_AM4
+            OCEAN(ng) % ad_vbar(i,j,4) = IniVal
+# endif
             OCEAN(ng) % ad_zeta(i,j,1) = IniVal
             OCEAN(ng) % ad_zeta(i,j,2) = IniVal
             OCEAN(ng) % ad_zeta(i,j,3) = IniVal
+# ifdef STEP2D_FB_AB3_AM4
+            OCEAN(ng) % ad_zeta(i,j,4) = IniVal
+# endif
 
 # if defined TIDE_GENERATING_FORCES
             OCEAN(ng) % ad_eq_tide(i,j) = IniVal
@@ -2031,7 +2125,8 @@
       IF (model.eq.0) THEN
         DO j=Jmin,Jmax
           DO i=Imin,Imax
-# ifdef FORWARD_RHS
+# if defined FORWARD_RHS       && \
+   !(defined STEP2D_FB_AB3_AM4 || defined STEP2D_FB_LF_AM3)
             OCEAN(ng) % rubarG(i,j,1) = IniVal
             OCEAN(ng) % rubarG(i,j,2) = IniVal
             OCEAN(ng) % rvbarG(i,j,1) = IniVal

@@ -14,6 +14,14 @@
 !  backwards the adjoint model equations for all nested grids, if      !
 !  any, by the specified time interval (seconds), RunInterval.         !
 !                                                                      !
+# if defined STEP2D_FB_LF_AM3
+!  Numerical 2D time-stepping kernel: FB AB3-AM4                       !
+# elif defined STEP2D_FB_LF_AM3
+!  Numerical 2D time-stepping kernel: FB LF-AM3                        !
+# else
+!  Numerical 2D time-stepping kernel: LF-AM3 (Legacy scheme)           !
+# endif
+!                                                                      !
 !=======================================================================
 !
       USE mod_param
@@ -56,7 +64,7 @@
 # ifdef BVF_MIXING_NOT_YET
 !!    USE ad_bvf_mix_mod,          ONLY : ad_bvf_mix
 # endif
-      USE ad_diag_mod, ONLY : ad_diag
+      USE ad_diag_mod,             ONLY : ad_diag
 # if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
       USE ad_frc_adjust_mod,       ONLY : ad_frc_adjust
 # endif
@@ -103,7 +111,7 @@
 # ifndef FORCING_SV
       USE ad_post_initial_mod,     ONLY : ad_post_initial
 # endif
-# ifdef NEARSHORE_MELLOR_NOT_YET
+# ifdef WEC_MELLOR_NOT_YET
 !!    USE ad_radiation_stress_mod, ONLY : ad_radiation_stress
 # endif
 # ifndef TS_FIXED
@@ -122,7 +130,9 @@
 !!    USE ad_set_tides_mod,        ONLY : ad_set_tides
 # endif
       USE ad_set_vbc_mod,          ONLY : ad_set_vbc
+# if !(defined STEP2D_FB_AB3_AM4 || defined STEP2D_FB_LF_AM3)
       USE ad_set_zeta_mod,         ONLY : ad_set_zeta
+# endif
       USE ad_step2d_mod,           ONLY : ad_step2d
 # ifndef TS_FIXED
       USE ad_step3d_t_mod,         ONLY : ad_step3d_t
@@ -138,14 +148,14 @@
 # ifdef TIDE_GENERATING_FORCES
       USE equilibrium_tide_mod,    ONLY : equilibrium_tide
 # endif
-# ifdef WEAK_CONSTRAINT
-      USE frc_weak_mod,            ONLY : frc_ADgather, frc_clear
-# endif
 # if defined ATM_COUPLING_NOT_YET && defined MCT_LIB
       USE mct_coupler_mod,         ONLY : ocn2atm_coupling
 # endif
 # if defined WAV_COUPLING_NOT_YET && defined MCT_LIB
       USE mct_coupler_mod,         ONLY : ocn2wav_coupling
+# endif
+# ifdef WEAK_CONSTRAINT
+      USE frc_weak_mod,            ONLY : frc_ADgather, frc_clear
 # endif
 # if (defined FOUR_DVAR    && !defined I4DVAR_ANA_SENSITIVITY) && \
       defined OBSERVATIONS
@@ -510,12 +520,7 @@
                   CALL ad_step3d_uv (ng, tile)
                 END DO
               END DO
-!
-!-----------------------------------------------------------------------
-!  Adjoint of recompute depths and thicknesses using the new time
-!  filtered free-surface. This call was moved from "ad_step2d" to here.
-!-----------------------------------------------------------------------
-!
+
 # ifdef NESTING
 !
 !  If nesting, determine vertical indices and vertical interpolation
@@ -526,12 +531,21 @@
                 CALL ad_nesting (ng, iADM, nzwgt)
               END DO
 # endif
+
+# if !(defined STEP2D_FB_AB3_AM4 || defined STEP2D_FB_LF_AM3)
+!
+!-----------------------------------------------------------------------
+!  Adjoint of recompute depths and thicknesses using the new time
+!  filtered free-surface. This call was moved from "ad_step2d" to here.
+!-----------------------------------------------------------------------
+!
               DO ig=1,GridsInLayer(nl)
                 ng=GridNumber(ig,nl)
                 DO tile=last_tile(ng),first_tile(ng),-1
                   CALL ad_set_depth (ng, tile, iADM)
                 END DO
               END DO
+# endif
 
 # ifdef NESTING
 !
@@ -559,6 +573,127 @@
               END DO
 #  endif
 # endif
+
+# ifdef STEP2D_FB_AB3_AM4
+!
+!-----------------------------------------------------------------------
+!  Solve the vertically integrated primitive equations for the
+!  free-surface and barotropic momentum components using a generalized
+!  Forward-Backward, 3rd-order Adams-Bashforth / 4th-order Adams-Moulton
+!  (FB AB3-AM4) time stepping scheme (Shchepetkin and McWilliams, 2009).
+!-----------------------------------------------------------------------
+!
+              LOOP_2D : DO my_iif=MAXVAL(nfast),1,-1
+
+#  ifdef NESTING
+!
+!  If composite or mosaic grids, process additional points in the
+!  contact zone between connected grids for the state variables
+!  associated with the 2D engine Corrector step section.
+!  If refinement, check mass flux conservation between coarse and
+!  fine grids during debugging.
+!
+                DO ig=1,GridsInLayer(nl)
+                  ng=GridNumber(ig,nl)
+                  IF (ANY(CompositeGrid(:,ng))) THEN
+                    CALL ad_nesting (ng, iADM, n2dCS)
+                  END IF
+                END DO
+#  endif
+
+                DO ig=1,GridsInLayer(nl)
+                  ng=GridNumber(ig,nl)
+                  IF (my_iif.le.nfast(ng)) THEN
+                    iif(ng)=my_iif
+!^                  kstp(ng)=knew(ng)
+!^                  knew(ng)=kstp(ng)+1
+!^                  IF (knew(ng).gt.4) knew(ng)=1
+!^
+                    knew(ng)=kstp(ng)
+                    kstp(ng)=knew(ng)-1
+                    IF (kstp(ng).lt.1) kstp(ng)=4
+
+                    IF (MOD(knew(ng),2).eq.0) THEN            ! zig-zag
+                      DO tile=first_tile(ng),last_tile(ng),+1 ! processing
+                        CALL ad_step2d (ng, tile)             ! sequence
+                      END DO
+                    ELSE
+                      DO tile=last_tile(ng),first_tile(ng),-1
+                        CALL ad_step2d (ng, tile)
+                      END DO
+                    END IF
+                  END IF
+                END DO
+
+              END DO LOOP_2D
+# else
+
+#  ifdef STEP2D_FB_LF_AM3
+!
+!-----------------------------------------------------------------------
+!  Solve the vertically integrated primitive equations for the
+!  free-surface and barotropic momentum components using a predictor-
+!  corrector LeapFrog / 3rd-order Adams-Moulton with a Forward-Backward
+!  feeback (FB LF-AM3) stepping scheme (Shchepetkin and McWilliams,
+!  2009).
+!-----------------------------------------------------------------------
+!
+              LOOP_2D : DO my_iif=MAXVAL(nfast),1,-1
+
+#   ifdef NESTING
+!
+!  If composite or mosaic grids, process additional points in the
+!  contact zone between connected grids for the state variables
+!  associated with the 2D engine Corrector step section.
+!  If refinement, check mass flux conservation between coarse and
+!  fine grids during debugging.
+!
+                DO ig=1,GridsInLayer(nl)
+                  ng=GridNumber(ig,nl)
+                  IF (ANY(CompositeGrid(:,ng))) THEN
+                    CALL ad_nesting (ng, iADM, n2dCS)
+                  END IF
+                END DO
+#   endif
+!
+!  Corrector AM3 substep with FB-feedback.
+!
+                DO ig=1,GridsInLayer(nl)
+                  ng=GridNumber(ig,nl)
+                  IF (my_iif.le.nfast(ng)) THEN
+                    DO tile=first_tile(ng),last_tile(ng),+1
+                      CALL ad_step2d (ng, tile)
+                    END DO
+
+!^                  knew(ng)=3-kstp(ng)
+!^                  next_kstp(ng)=knew(ng)
+!^
+                    knew(ng)=next_kstp(ng)
+                    kstp(ng)=3-knew(ng)
+                  END IF
+                END DO
+!
+!  Predictor LF substep with FB-feedback.
+!
+                DO ig=1,GridsInLayer(nl)
+                  ng=GridNumber(ig,nl)
+                  IF (my_iif.le.nfast(ng)) THEN
+                    iif(ng)=my_iif
+                    DO tile=last_tile(ng),first_tile(ng),-1
+                      CALL ad_step2d (ng, tile)
+                    END DO
+
+!^                  kstp(ng)=next_kstp(ng)
+!^                  knew(ng)=3
+!^
+!^ HGA: Need to compute the adjoint of the indices
+
+                  END IF
+                END DO
+
+              END DO LOOP_2D
+
+#  else
 !
 !-----------------------------------------------------------------------
 !  Solve adjoint vertically integrated primitive equations for the
@@ -567,7 +702,7 @@
 !
               LOOP_2D : DO my_iif=MAXVAL(nfast)+1,1,-1
 
-# ifdef NESTING
+#   ifdef NESTING
 !
 !  If composite or mosaic grids, process additional points in the
 !  contact zone between connected grids for the state variables
@@ -584,7 +719,7 @@
                     CALL ad_nesting (ng, iADM, nmflx)
                   END IF
                 END DO
-# endif
+#   endif
 !
 !  Corrector step - Apply 2D adjoint time-step corrector scheme.  Notice
 !  ==============    that there is not need for a corrector step during
@@ -617,7 +752,7 @@
                   END IF
                 END DO
 
-# ifdef NESTING
+#   ifdef NESTING
 
 !
 !  If composite or mosaic grids, process additional points in the
@@ -635,7 +770,7 @@
                     CALL ad_nesting (ng, iADM, nmflx)
                   END IF
                 END DO
-# endif
+#   endif
 !
 !  Predictor step - Advance adjoint barotropic equations using 2D
 !  ==============   time-step predictor scheme.  No actual time-
@@ -673,7 +808,8 @@
                 END DO
 
               END DO LOOP_2D
-
+#  endif
+# endif
             END IF ADVANCE
 
 # if (defined FOUR_DVAR    && !defined I4DVAR_ANA_SENSITIVITY) && \
@@ -808,6 +944,9 @@
               END IF
             END DO
 # endif
+
+# if !(defined STEP2D_FB_AB3_AM4 || defined STEP2D_FB_LF_AM3) || \
+       defined DIAGNOSTICS
 !
 !-----------------------------------------------------------------------
 !  Set adjoint free-surface to it time-averaged value.
@@ -816,12 +955,15 @@
             DO ig=1,GridsInLayer(nl)
               ng=GridNumber(ig,nl)
               DO tile=first_tile(ng),last_tile(ng),+1
-# ifdef DIAGNOSTICS
+#  ifdef DIAGNOSTICS
 !!              CALL set_diags (ng, tile)
-# endif
+#  endif
+#  if !(defined STEP2D_FB_AB3_AM4 || defined STEP2D_FB_LF_AM3)
                 CALL ad_set_zeta (ng, tile)
+#  endif
               END DO
             END DO
+# endif
 !
 !-----------------------------------------------------------------------
 !  Compute adjoint vertical mixing coefficients for momentum and
@@ -902,7 +1044,7 @@
               END DO
             END DO
 
-# ifdef NEARSHORE_MELLOR_NOT_YET
+# ifdef WEC_MELLOR_NOT_YET
 !
 !-----------------------------------------------------------------------
 !  Compute radiation stress terms.

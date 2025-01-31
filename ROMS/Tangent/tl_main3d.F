@@ -4,15 +4,23 @@
 !
 !git $Id$
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2025 The ROMS Group                              !
+!  Copyright (c) 2002-2025 The ROMS Group            Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
-!  This routine is the main driver for tangent linear ROMS when        !
-!  configurated as a full  3D baroclinic  ocean model.  It  advances   !
-!  forward the tangent linear model equations  for all nested grids,   !
-!  if any, by the specified time interval (seconds), RunInterval.      !
+!  This routine is the main driver for ROMS perturbation tangent       !
+!  linear model (TLM) when configurated as a full 3D baroclinic ocean  !
+!  model. It advances forward the TLM for all nested grids, if any,    !
+!  for specified time interval (seconds), RunInterval.                 !
+!                                                                      !
+# if defined STEP2D_FB_LF_AM3
+!  Numerical 2D time-stepping kernel: FB AB3-AM4                       !
+# elif defined STEP2D_FB_LF_AM3
+!  Numerical 2D time-stepping kernel: FB LF-AM3                        !
+# else
+!  Numerical 2D time-stepping kernel: LF-AM3 (Legacy scheme)           !
+# endif
 !                                                                      !
 !=======================================================================
 !
@@ -29,102 +37,104 @@
       USE mod_stepping
 !
 # ifdef ANA_VMIX
-      USE analytical_mod,       ONLY : ana_vmix
+      USE analytical_mod,          ONLY : ana_vmix
 # endif
-      USE dateclock_mod,        ONLY : time_string
+      USE dateclock_mod,           ONLY : time_string
 # ifdef TLM_CHECK
-      USE dotproduct_mod,       ONLY : tl_dotproduct
+      USE dotproduct_mod,          ONLY : tl_dotproduct
 # endif
 # ifdef TIDE_GENERATING_FORCES
-      USE equilibrium_tide_mod, ONLY : equilibrium_tide
+      USE equilibrium_tide_mod,    ONLY : equilibrium_tide
 # endif
 # if defined ATM_COUPLING_NOT_YET && defined MCT_LIB
-      USE mct_coupler_mod,      ONLY : ocn2atm_coupling
+      USE mct_coupler_mod,         ONLY : ocn2atm_coupling
 # endif
 # if defined WAV_COUPLING_NOT_YET && defined MCT_LIB
-      USE mct_coupler_mod,      ONLY : ocn2wav_coupling
+      USE mct_coupler_mod,         ONLY : ocn2wav_coupling
 # endif
 # if defined FORWARD_READ || defined JEDI
-      USE omega_mod,            ONLY : omega
-      USE set_depth_mod,        ONLY : set_depth
-      USE set_massflux_mod,     ONLY : set_massflux
+      USE omega_mod,               ONLY : omega
+      USE set_depth_mod,           ONLY : set_depth
+      USE set_massflux_mod,        ONLY : set_massflux
 # endif
-      USE strings_mod,          ONLY : FoundError
+      USE strings_mod,             ONLY : FoundError
 # ifdef BIOLOGY
-      USE tl_biology_mod,       ONLY : tl_biology
+      USE tl_biology_mod,          ONLY : tl_biology
 # endif
 # ifdef BBL_MODEL_NOT_YET
-!!    USE tl_bbl_mod,           ONLY : tl_bblm
+!!    USE tl_bbl_mod,              ONLY : tl_bblm
 # endif
 # if defined BULK_FLUXES_NOT_YET && !defined PRIOR_BULK_FLUXES
-!!    USE tl_bulk_flux_mod,     ONLY : tl_bulk_flux
+!!    USE tl_bulk_flux_mod,        ONLY : tl_bulk_flux
 # endif
 # ifdef BVF_MIXING_NOT_YET
-!!    USE tl_bvf_mix_mod,       ONLY : tl_bvf_mix
+!!    USE tl_bvf_mix_mod,          ONLY : tl_bvf_mix
 # endif
-      USE tl_diag_mod,          ONLY : tl_diag
+      USE tl_diag_mod,             ONLY : tl_diag
 # if defined WEAK_CONSTRAINT || defined FORCING_SV
-      USE tl_forcing_mod,       ONLY : tl_forcing
+      USE tl_forcing_mod,          ONLY : tl_forcing
 # endif
 # if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
-      USE tl_frc_adjust_mod,    ONLY : tl_frc_adjust
+      USE tl_frc_adjust_mod,       ONLY : tl_frc_adjust
 # endif
 # ifdef GLS_MIXING_NOT_YET
-!!    USE tl_gls_corstep_mod,   ONLY : tl_gls_corstep
-!!    USE tl_gls_prestep_mod,   ONLY : tl_gls_prestep
+!!    USE tl_gls_corstep_mod,      ONLY : tl_gls_corstep
+!!    USE tl_gls_prestep_mod,      ONLY : tl_gls_prestep
 # endif
 # ifdef LMD_MIXING_NOT_YET
-!!    USE tl_lmd_vmix_mod,      ONLY : tl_lmd_vmix
+!!    USE tl_lmd_vmix_mod,         ONLY : tl_lmd_vmix
 # endif
 # ifdef MY25_MIXING_NOT_YET
-!!    USE tl_my25_corstep_mod,  ONLY : tl_my25_corstep
-!!    USE tl_my25_prestep_mod,  ONLY : tl_my25_prestep
+!!    USE tl_my25_corstep_mod,     ONLY : tl_my25_corstep
+!!    USE tl_my25_prestep_mod,     ONLY : tl_my25_prestep
 # endif
 # ifdef NESTING
-      USE nesting_mod,          ONLY : nesting
-      USE tl_nesting_mod,       ONLY : tl_nesting
+      USE nesting_mod,             ONLY : nesting
+      USE tl_nesting_mod,          ONLY : tl_nesting
 #  ifndef ONE_WAY
-      USE nesting_mod,          ONLY : do_twoway
+      USE nesting_mod,             ONLY : do_twoway
 #  endif
 # endif
 # ifdef ADJUST_BOUNDARY
-      USE tl_obc_adjust_mod,    ONLY : tl_obc_adjust
-      USE tl_obc_adjust_mod,    ONLY : tl_obc2d_adjust
-      USE tl_set_depth_mod,     ONLY : tl_set_depth_bry
+      USE tl_obc_adjust_mod,       ONLY : tl_obc_adjust
+      USE tl_obc_adjust_mod,       ONLY : tl_obc2d_adjust
+      USE tl_set_depth_mod,        ONLY : tl_set_depth_bry
 # endif
-      USE tl_omega_mod,         ONLY : tl_omega
+      USE tl_omega_mod,            ONLY : tl_omega
 # if !(defined FORCING_SV || defined JEDI)
-      USE tl_post_initial_mod,  ONLY : tl_post_initial
+      USE tl_post_initial_mod,     ONLY : tl_post_initial
 # endif
-# ifdef NEARSHORE_MELLOR_NOT_YET
+# ifdef WEC_MELLOR_NOT_YET
 !!    USE tl_radiation_stress_mod, ONLY : tl_radiation_stress
 # endif
 # ifndef TS_FIXED
-      USE tl_rho_eos_mod,       ONLY : tl_rho_eos
+      USE tl_rho_eos_mod,          ONLY : tl_rho_eos
 # endif
-      USE tl_rhs3d_mod,         ONLY : tl_rhs3d
+      USE tl_rhs3d_mod,            ONLY : tl_rhs3d
 # ifdef SEDIMENT_NOT_YET
-!!    USE tl_sediment_mod,      ONLY : tl_sediment
+!!    USE tl_sediment_mod,         ONLY : tl_sediment
 # endif
 # ifdef TL_AVERAGES
-      USE tl_set_avg_mod,       ONLY : tl_set_avg
+      USE tl_set_avg_mod,          ONLY : tl_set_avg
 # endif
-      USE tl_set_depth_mod,     ONLY : tl_set_depth
-      USE tl_set_massflux_mod,  ONLY : tl_set_massflux
+      USE tl_set_depth_mod,        ONLY : tl_set_depth
+      USE tl_set_massflux_mod,     ONLY : tl_set_massflux
 # if defined SSH_TIDES_NOT_YET || defined UV_TIDES_NOT_YET
-!!    USE tl_set_tides_mod,     ONLY : tl_set_tides
+!!    USE tl_set_tides_mod,        ONLY : tl_set_tides
 # endif
-      USE tl_set_vbc_mod,       ONLY : tl_set_vbc
-      USE tl_set_zeta_mod,      ONLY : tl_set_zeta
-      USE tl_step2d_mod,        ONLY : tl_step2d
+      USE tl_set_vbc_mod,          ONLY : tl_set_vbc
+# if !(defined STEP2D_FB_AB3_AM4 || defined STEP2D_FB_LF_AM3)
+      USE tl_set_zeta_mod,         ONLY : tl_set_zeta
+# endif
+      USE tl_step2d_mod,           ONLY : tl_step2d
 # ifndef TS_FIXED
-      USE tl_step3d_t_mod,      ONLY : tl_step3d_t
+      USE tl_step3d_t_mod,         ONLY : tl_step3d_t
 # endif
-      USE tl_step3d_uv_mod,     ONLY : tl_step3d_uv
+      USE tl_step3d_uv_mod,        ONLY : tl_step3d_uv
 # ifdef FLOATS_NOT_YET
-!!    USE tl_step_floats_mod,   ONLY : tl_step_floats
+!!    USE tl_step_floats_mod,      ONLY : tl_step_floats
 # endif
-!!    USE wvelocity_mod,        ONLY : wvelocity
+!!    USE wvelocity_mod,           ONLY : wvelocity
 !
       implicit none
 !
@@ -135,15 +145,13 @@
 !  Local variable declarations.
 !
       logical :: DoNestLayer, Time_Step
-
+!
       integer :: Nsteps, Rsteps
       integer :: ig, il, istep, ng, nl, tile
       integer :: my_iif, next_indx1
 # ifdef FLOATS_NOT_YET
       integer :: Lend, Lstr, chunk_size
 # endif
-!
-      real(r8) :: MaxDT, my_StepTime
 !
       character (len=*), parameter :: MyFile =                          &
      &  __FILE__
@@ -233,7 +241,6 @@
                 CALL set_depth (ng, tile, iTLM)
 # endif
               END DO
-!$OMP BARRIER
             END DO
             IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
@@ -248,7 +255,6 @@
               DO tile=last_tile(ng),first_tile(ng),-1
                 CALL set_massflux (ng, tile, iTLM)
               END DO
-!$OMP BARRIER
             END DO
 # endif
 
@@ -278,7 +284,6 @@
                     CALL tl_forcing (ng, tile, kstp(ng), nstp(ng))
                     CALL tl_set_depth (ng, tile, iTLM)
                   END DO
-!$OMP BARRIER
                 END IF
 #   ifdef WEAK_NOINTERP
               END IF
@@ -288,7 +293,6 @@
                 CALL tl_forcing (ng, tile, kstp(ng), nstp(ng))
                 CALL tl_set_depth (ng, tile, iTLM)
               END DO
-!$OMP BARRIER
 #  endif
             END DO
 # endif
@@ -334,15 +338,14 @@
                 CALL tl_dotproduct (ng, tile, Lnew(ng))
 # endif
               END DO
-!$OMP BARRIER
             END DO
             IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
 # if defined ATM_COUPLING_NOT_YET && defined MCT_LIB
 !
 !-----------------------------------------------------------------------
-!  Couple to atmospheric model every CoupleSteps(Iatmos) timesteps: get
-!  air/sea fluxes.
+!  Couple ocean to atmosphere model every "CoupleSteps(Iatmos)"
+!  timesteps: get air/sea fluxes.
 !-----------------------------------------------------------------------
 !
             DO ig=1,GridsInLayer(nl)
@@ -352,7 +355,6 @@
                 DO tile=last_tile(ng),first_tile(ng),-1
                   CALL ocn2atm_coupling (ng, tile)
                 END DO
-!$OMP BARRIER
               END IF
             END DO
 # endif
@@ -360,8 +362,8 @@
 # if defined WAV_COUPLING_NOT_YET && defined MCT_LIB
 !
 !-----------------------------------------------------------------------
-!  Couple to waves model every CoupleSteps(Iwaves) timesteps: get
-!  waves/sea fluxes.
+!  Couple to ocean to waves model every "CoupleSteps(Iwaves)"
+!  timesteps: get waves/ocean fluxes.
 !-----------------------------------------------------------------------
 !
             DO ig=1,GridsInLayer(nl)
@@ -371,12 +373,11 @@
                 DO tile=first_tile(ng),last_tile(ng),+1
                   CALL ocn2wav_coupling (ng, tile)
                 END DO
-!$OMP BARRIER
               END IF
             END DO
 # endif
 
-# ifdef NEARSHORE_MELLOR_NOT_YET
+# ifdef WEC_MELLOR_NOT_YET
 !
 !-----------------------------------------------------------------------
 !  Compute radiation stress terms.
@@ -387,7 +388,6 @@
               DO tile=last_tile(ng),first_tile(ng),-1
                 CALL tl_radiation_stress (ng, tile)
               END DO
-!$OMP BARRIER
             END DO
 # endif
 !
@@ -410,7 +410,6 @@
                 CALL tl_set_tides (ng, tile)
 # endif
               END DO
-!$OMP BARRIER
             END DO
 
 # ifdef NESTING
@@ -441,7 +440,6 @@
                   CALL tl_set_depth_bry (ng, tile, iTLM)
                   CALL tl_obc2d_adjust (ng, tile, Lbinp(ng))
                 END DO
-!$OMP BARRIER
               END IF
             END DO
 # endif
@@ -459,7 +457,6 @@
                 DO tile=first_tile(ng),last_tile(ng),+1
                   CALL tl_frc_adjust (ng, tile, Lfinp(ng))
                 END DO
-!$OMP BARRIER
               END IF
             END DO
 # endif
@@ -483,8 +480,10 @@
                 CALL tl_omega (ng, tile, iTLM)
 !!              CALL wvelocity (ng, tile, nstp(ng))
               END DO
-!$OMP BARRIER
             END DO
+
+# if !(defined STEP2D_FB_AB3_AM4 || defined STEP2D_FB_LF_AM3) || \
+       defined DIAGNOSTICS       || defined AVERAGES
 !
 !-----------------------------------------------------------------------
 !  Set free-surface to it time-averaged value.  If applicable,
@@ -495,7 +494,9 @@
             DO ig=1,GridsInLayer(nl)
               ng=GridNumber(ig,nl)
               DO tile=first_tile(ng),last_tile(ng),+1     ! irreversible
+#  if !(defined STEP2D_FB_AB3_AM4 || defined STEP2D_FB_LF_AM3)
                 CALL tl_set_zeta (ng, tile)
+#  endif
 #  ifdef DIAGNOSTICS
 !!              CALL set_diags (ng, tile)
 #  endif
@@ -503,8 +504,8 @@
                 CALL tl_set_avg (ng, tile)
 #  endif
               END DO
-!$OMP BARRIER
             END DO
+# endif
 
 # ifdef NESTING
 !
@@ -527,10 +528,7 @@
 !
             DO ig=1,GridsInLayer(nl)
               ng=GridNumber(ig,nl)
-!$OMP MASTER
               CALL tl_output (ng)
-!$OMP END MASTER
-!$OMP BARRIER
               IF ((FoundError(exit_flag, NoError, __LINE__, MyFile)).or.&
      &            ((iic(ng).eq.(ntend(ng)+1)).and.(ng.eq.Ngrids))) THEN
                 RETURN
@@ -576,7 +574,6 @@
                 CALL tl_gls_prestep (ng, tile)
 #  endif
               END DO
-!$OMP BARRIER
             END DO
 
 # ifdef NESTING
@@ -592,10 +589,133 @@
               END IF
             END DO
 # endif
+
+# ifdef STEP2D_FB_AB3_AM4
+!
+!-----------------------------------------------------------------------
+!  Solve tangent linear vertically integrated primitive equations for
+!  free-surface and barotropic momentum components using a generalized
+!  Forward-Backward, 3rd-order Adams-Bashforth / 4th-order Adams-Moulton
+!  (FB AB3-AM4) time stepping scheme (Shchepetkin and McWilliams,
+!  2009).
+!-----------------------------------------------------------------------
+!
+            LOOP_2D : DO my_iif=1,MAXVAL(nfast)
+
+              DO ig=1,GridsInLayer(nl)
+                ng=GridNumber(ig,nl)
+                IF (my_iif.le.nfast(ng)) THEN
+                  iif(ng)=my_iif
+                  kstp(ng)=knew(ng)
+                  knew(ng)=kstp(ng)+1
+                  IF (knew(ng).gt.4) knew(ng)=1
+
+                  IF (MOD(knew(ng),2).eq.0) THEN            ! zig-zag
+                    DO tile=first_tile(ng),last_tile(ng),+1 ! processing
+                      CALL tl_step2d (ng, tile)             ! sequence
+                    END DO
+                  ELSE
+                    DO tile=last_tile(ng),first_tile(ng),-1
+                      CALL tl_step2d (ng, tile)
+                    END DO
+                  END IF
+                END IF
+              END DO
+
+#  ifdef NESTING
+!
+!  If composite or mosaic grids, process additional points in the
+!  contact zone between connected grids for the state variables
+!  associated with the 2D engine CORRECTOR STEP section (KNEW INDEX).
+!
+              DO ig=1,GridsInLayer(nl)
+                ng=GridNumber(ig,nl)
+                IF (ANY(CompositeGrid(:,ng))) THEN
+                  CALL tl_nesting (ng, iTLM, n2dCS)
+                END IF
+              END DO
+#  endif
+            END DO LOOP_2D
+
+# else
+
+#  ifdef STEP2D_FB_LF_AM3
 !
 !-----------------------------------------------------------------------
 !  Solve the vertically integrated primitive equations for the
-!  free-surface and barotropic momentum components.
+!  free-surface and barotropic momentum components using a predictor-
+!  corrector LeapFrog / 3rd-order Adams-Moulton with a Forward-Backward
+!  feeback (FB LF-AM3) stepping scheme (Shchepetkin and McWilliams,
+!  2009).
+!-----------------------------------------------------------------------
+!
+            LOOP_2D : DO my_iif=1,MAXVAL(nfast)
+!
+!  Predictor LF substep with FB-feedback.
+!
+              DO ig=1,GridsInLayer(nl)
+                ng=GridNumber(ig,nl)
+                IF (my_iif.le.nfast(ng)) THEN
+                  iif(ng)=my_iif
+                  kstp(ng)=next_kstp(ng)
+                  knew(ng)=3
+
+                  DO tile=last_tile(ng),first_tile(ng),-1
+                    CALL tl_step2d (ng, tile)
+                  END DO
+                END IF
+              END DO
+
+#   ifdef NESTING
+!
+!  If composite or mosaic grids, process additional points in the
+!  contact zone between connected grids for the state variables
+!  associated with the 2D engine PREDICTOR STEP section.
+!
+              DO ig=1,GridsInLayer(nl)
+                ng=GridNumber(ig,nl)
+                IF (ANY(CompositeGrid(:,ng))) THEN
+                  CALL tl_nesting (ng, iTLM, n2dPS)
+                END IF
+              END DO
+#   endif
+!
+!  Corrector AM3 substep with FB-feedback.
+!
+              DO ig=1,GridsInLayer(nl)
+                ng=GridNumber(ig,nl)
+                IF (my_iif.le.nfast(ng)) THEN
+                  knew(ng)=3-kstp(ng)
+                  next_kstp(ng)=knew(ng)
+
+                  DO tile=first_tile(ng),last_tile(ng),+1
+                    CALL tl_step2d (ng, tile)
+                  END DO
+                END IF
+              END DO
+
+#   ifdef NESTING
+!
+!  If composite or mosaic grids, process additional points in the
+!  contact zone between connected grids for the state variables
+!  associated with the 2D engine CORRECTOR STEP section (KNEW INDEX).
+!
+              DO ig=1,GridsInLayer(nl)
+                ng=GridNumber(ig,nl)
+                IF (ANY(CompositeGrid(:,ng))) THEN
+                  CALL tl_nesting (ng, iTLM, n2dCS)
+                END IF
+              END DO
+#   endif
+            END DO LOOP_2D
+
+#  else
+!
+!-----------------------------------------------------------------------
+!  Solve the vertically integrated primitive equations for the
+!  free-surface and barotropic momentum components using a predictor-
+!  corrector LeapFrog with 3rd-order Adams-Moulton (LF-AM3) time
+!  stepping scheme.
 !-----------------------------------------------------------------------
 !
             LOOP_2D : DO my_iif=1,MAXVAL(nfast)+1
@@ -629,32 +749,22 @@
                   DO tile=last_tile(ng),first_tile(ng),-1
                     CALL tl_step2d (ng, tile)
                   END DO
-!$OMP BARRIER
                 END IF
               END DO
 
-# ifdef NESTING
+#   ifdef NESTING
 !
 !  If composite or mosaic grids, process additional points in the
 !  contact zone between connected grids for the state variables
-!  associated with the 2D engine Predictor Step section.
-!  If refinement, check mass flux conservation between coarse and
-!  fine grids during debugging.
-#  ifdef NESTING_DEBUG
-!  Warning: very verbose output to fort.300 ascii file to check
-!           mass flux conservation.
-#  endif
+!  associated with the 2D engine PREDICTOR STEP section.
 !
               DO ig=1,GridsInLayer(nl)
                 ng=GridNumber(ig,nl)
                 IF (ANY(CompositeGrid(:,ng))) THEN
                   CALL tl_nesting (ng, iTLM, n2dPS)
                 END IF
-                IF (RefinedGrid(ng).and.(RefineScale(ng).gt.0)) THEN
-                  CALL tl_nesting (ng, iTLM, nmflx)
-                END IF
               END DO
-# endif
+#   endif
 !
 !  Set time indices for corrector step.
 !
@@ -676,41 +786,36 @@
                   DO tile=first_tile(ng),last_tile(ng),+1
                     CALL tl_step2d (ng, tile)
                   END DO
-!$OMP BARRIER
                 END IF
               END DO
 
-# ifdef NESTING
+#   ifdef NESTING
 !
 !  If composite or mosaic grids, process additional points in the
 !  contact zone between connected grids for the state variables
-!  associated with the 2D engine Corrector step section.
-!  If refinement, check mass flux conservation between coarse and
-!  fine grids during debugging.
-#  ifdef NESTING_DEBUG
-!  Warning: very verbose output to fort.300 ascii file to check
-!           mass flux conservation.
-#  endif
+!  associated with the 2D engine CORRECTOR STEP section (KNEW INDEX).
 !
               DO ig=1,GridsInLayer(nl)
                 ng=GridNumber(ig,nl)
                 IF (ANY(CompositeGrid(:,ng))) THEN
                   CALL tl_nesting (ng, iTLM, n2dCS)
                 END IF
-                IF (RefinedGrid(ng).and.(RefineScale(ng).gt.0)) THEN
-                  CALL tl_nesting (ng, iTLM, nmflx)
-                END IF
               END DO
-# endif
+#   endif
             END DO LOOP_2D
+#  endif
+
+# endif
 
 # ifdef NESTING
 #  if defined MASKING && defined WET_DRY
 !
+!-----------------------------------------------------------------------
 !  If nesting and wetting and drying, scale horizontal interpolation
 !  weights to account for land/sea masking in contact areas. This needs
 !  to be done at very time-step since the Land/Sea masking is time
 !  dependent.
+!-----------------------------------------------------------------------
 !
             DO ig=1,GridsInLayer(nl)
               ng=GridNumber(ig,nl)
@@ -718,9 +823,11 @@
             END DO
 #  endif
 !
+!-----------------------------------------------------------------------
 !  If composite or mosaic grids, process additional points in the
 !  contact zone between connected grids for the time-averaged
 !  momentum fluxes (DU_avg1, DV_avg1) and free-surface (Zt_avg).
+!-----------------------------------------------------------------------
 !
             DO ig=1,GridsInLayer(nl)
               ng=GridNumber(ig,nl)
@@ -729,6 +836,8 @@
               END IF
             END DO
 # endif
+
+# if !(defined STEP2D_FB_AB3_AM4 || defined STEP2D_FB_LF_AM3)
 !
 !-----------------------------------------------------------------------
 !  Recompute depths and thicknesses using the new time filtered
@@ -740,8 +849,8 @@
               DO tile=last_tile(ng),first_tile(ng),-1
                 CALL tl_set_depth (ng, tile, iTLM)
               END DO
-!$OMP BARRIER
             END DO
+# endif
 
 # ifdef NESTING
 !
@@ -766,7 +875,6 @@
               DO tile=last_tile(ng),first_tile(ng),-1
                 CALL tl_step3d_uv (ng, tile)
               END DO
-!$OMP BARRIER
             END DO
 
 # ifdef NESTING
@@ -804,7 +912,6 @@
                 CALL tl_sediment (ng, tile)
 # endif
               END DO
-!$OMP BARRIER
             END DO
 
 # ifndef TS_FIXED
@@ -818,7 +925,6 @@
               DO tile=last_tile(ng),first_tile(ng),-1
                 CALL tl_step3d_t (ng, tile)
               END DO
-!$OMP BARRIER
             END DO
 
 #  ifdef NESTING
@@ -897,7 +1003,6 @@
                 Lend=Nfloats(ng)
 #  endif
                 CALL tl_step_floats (ng, Lstr, Lend)
-!$OMP BARRIER
 !
 !  Shift floats time indices.
 !
@@ -927,7 +1032,7 @@
         END DO NEST_LAYER
 
       END DO KERNEL_LOOP
-
+!
       RETURN
       END SUBROUTINE tl_main3d
 #else

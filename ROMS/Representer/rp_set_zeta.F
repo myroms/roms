@@ -1,7 +1,8 @@
 #include "cppdefs.h"
       MODULE rp_set_zeta_mod
 
-#if defined TL_IOMS && defined SOLVE3D
+#if defined TL_IOMS           && defined SOLVE3D           && \
+  !(defined STEP2D_FB_AB3_AM4 || defined STEP2D_FB_LF_AM3)
 !
 !git $Id$
 !================================================== Hernan G. Arango ===
@@ -84,7 +85,7 @@
 # else
       real(r8), intent(in) :: tl_Zt_avg1(LBi:UBi,LBj:UBj)
 
-      real(r8), intent(out) :: tl_zeta(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(out) :: tl_zeta(LBi:UBi,LBj:UBj,:)
 # endif
 !
 !  Local variable declarations.
