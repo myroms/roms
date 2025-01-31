@@ -658,7 +658,9 @@
 # ifdef MASKING
      &                       Amask,                                     &
 # endif
-     &                       Adat, SetFillVal,                          &
+     &                       Adat,                                      &
+     &                       SetFillVal,                                &
+     &                       ExtractField,                              &
      &                       MinValue, MaxValue) RESULT (status)
 !***********************************************************************
 !

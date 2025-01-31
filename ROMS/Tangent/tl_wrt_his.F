@@ -896,7 +896,7 @@
         END IF
       END IF
 #  endif
-#  ifdef UV_DESTAGGERED
+#  if defined JEDI || defined UV_DESTAGGERED
 !
 !  Write out 3D Eastward momentum (m/s) at RHO-points, A-grid.
 !
@@ -2189,7 +2189,7 @@
         END IF
       END IF
 #  endif
-#  ifdef UV_DESTAGGERED
+#  if defined JEDI || defined UV_DESTAGGERED
 !
 !  Write out 3D Eastward momentum (m/s) at RHO-points, A-grid
 !
