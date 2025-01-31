@@ -1054,7 +1054,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, tile
+      integer, intent(in) :: ng, model, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
 !
 !  Local variable declarations.
