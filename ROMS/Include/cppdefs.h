@@ -629,6 +629,7 @@
 ** ICE_MODEL               to activate sea-ice model                         **
 ** ICE_THERMO              if thermodynamic component                        **
 ** ICE_MK                  if Mellor-Kantha thermodynamics (only choice)     **
+** ICE_ALBEDO              if computing surface albedo over water/snow/ice   **
 ** ICE_ALB_EC92            if albedo computation from Ebert and Curry        **
 ** ICE_MOMENTUM            if momentum component                             **
 ** ICE_MOM_BULK            if alternate ice-water stress computation         **
