@@ -20,8 +20,10 @@
 **         ecosim.h           ECOSIM                                  **
 **         fennel.h           BIO_FENNEL                              **
 **         hypoxia_srm.h      HYPOXIA_SRM                             **
+**         iop_cdom_mod.h     IOP_CDOM                                **
 **         nemuro.h           NEMURO                                  **
 **         npzd_Franks.h      NPZD_FRANKS                             **
+**         npzd_iop.h         NPZD_IOP                                **
 **         npzd_iron.h        NPZD_IRON                               **
 **         npzd_Powell.h      NPZD_POWELL                             **
 **         red_tide.h         RED_TIDE                                **
@@ -31,8 +33,10 @@
 **         ecosim_mod.h                                               **
 **         fennel_mod.h                                               **
 **         hypoxia_srm_mod.h                                          **
+**         iop_cdom_mod.h                                             **
 **         nemuro_mod.h                                               **
 **         npzd_Franks_mod.h                                          **
+**         npzd_iop_mod.h                                             **
 **         npzd_iron_mod.h                                            **
 **         npzd_Powell_mod.h                                          **
 **         red_tide_mod.h                                             **
@@ -42,8 +46,10 @@
 **         ecosim.in                                                  **
 **         bio_Fennel.in                                              **
 **         hypoxia_srm.in                                             **
+**         iop_cdom.in                                                **
 **         nemuro.in                                                  **
 **         npzd_Franks.in                                             **
+**         npzd_iop.in                                                **
 **         npzd_iron.in                                               **
 **         npzd_Powell.in                                             **
 **         red_tide.in                                                **
@@ -53,8 +59,10 @@
 **         ecosim_inp.h                                               **
 **         fennel_inp.h                                               **
 **         hypoxia_srm_inp.h                                          **
+**         iop_cdom_inp.h                                             **
 **         nemuro_inp.h                                               **
 **         npzd_Franks_inp.h                                          **
+**         npzd_iop_inp.h                                             **
 **         npzd_iron_inp.h                                            **
 **         npzd_Powell_inp.h                                          **
 **         red_tide_inp.h                                             **
@@ -65,8 +73,10 @@
 **         ecosim_var.h                                               **
 **         fennel_var.h                                               **
 **         hypoxia_srm_var.h                                          **
+**         iop_cdom_var.h                                             **
 **         nemuro_var.h                                               **
 **         npzd_Franks_var.h                                          **
+**         npzd_iop_var.h                                             **
 **         npzd_iron_var.h                                            **
 **         npzd_Powell_var.h                                          **
 **         red_tide_var.h                                             **
@@ -77,8 +87,10 @@
 **         ecosim_def.h                                               **
 **         fennel_def.h                                               **
 **         hypoxia_srm_def.h                                          **
+**         iop_cdom_def.h                                             **
 **         nemuro_def.h                                               **
 **         npzd_Franks_def.h                                          **
+**         npzd_iop_def.h                                             **
 **         npzd_iron_def.h                                            **
 **         npzd_Powell_def.h                                          **
 **         red_tide_def.h                                             **
@@ -89,8 +101,10 @@
 **         ecosim_wrt.h                                               **
 **         fennel_wrt.h                                               **
 **         hypoxia_srm_wrt.h                                          **
+**         iop_cdom_wrt.h                                             **
 **         nemuro_wrt.h                                               **
 **         npzd_Franks_wrt.h                                          **
+**         npzd_iop_wrt.h                                             **
 **         npzd_iron_wrt.h                                            **
 **         npzd_Powell_wrt.h                                          **
 **         red_tide_wrt.h                                             **
@@ -111,10 +125,14 @@
 #  include <ecosim_mod.h>
 # elif defined HYPOXIA_SRM
 #  include <hypoxia_srm_mod.h>
+# elif defined IOP_CDOM
+#  include <iop_cdom_mod.h>
 # elif defined NEMURO
 #  include <nemuro_mod.h>
 # elif defined NPZD_FRANKS
 #  include <npzd_Franks_mod.h>
+# elif defined NPZD_IOP
+#  include <npzd_iop_mod.h>
 # elif defined NPZD_IRON
 #  include <npzd_iron_mod.h>
 # elif defined NPZD_POWELL

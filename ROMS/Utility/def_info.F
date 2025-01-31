@@ -2948,10 +2948,14 @@
 #  include <ecosim_def.h>
 # elif defined HYPOXIA_SRM
 #  include <hypoxia_srm_def.h>
+# elif defined IOP_CDOM
+#  include <iop_cdom_def.h>
 # elif defined NEMURO
 #  include <nemuro_def.h>
 # elif defined NPZD_FRANKS
 #  include <npzd_Franks_def.h>
+# elif defined NPZD_IOP
+#  include <npzd_iop_def.h>
 # elif defined NPZD_IRON
 #  include <npzd_iron_def.h>
 # elif defined NPZD_POWELL
@@ -6422,10 +6426,14 @@
 #   include <ecosim_def_pio.h>
 #  elif defined HYPOXIA_SRM
 #   include <hypoxia_srm_def_pio.h>
+#  elif defined IOP_CDOM
+#   include <iop_cdom_def.h>
 #  elif defined NEMURO
 #   include <nemuro_def_pio.h>
 #  elif defined NPZD_FRANKS
 #   include <npzd_Franks_def_pio.h>
+# elif defined NPZD_IOP
+#  include <npzd_iop_def.h>
 #  elif defined NPZD_IRON
 #   include <npzd_iron_def_pio.h>
 #  elif defined NPZD_POWELL

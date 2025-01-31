@@ -19,10 +19,14 @@
 #  include <ecosim_inp.h>
 # elif defined HYPOXIA_SRM
 #  include <hypoxia_srm_inp.h>
+# elif defined IOP_CDOM
+#  include <iop_cdom_inp.h>
 # elif defined NEMURO
 #  include <nemuro_inp.h>
 # elif defined NPZD_FRANKS
 #  include <npzd_Franks_inp.h>
+# elif defined NPZD_IOP
+#  include <npzd_iop_inp.h>
 # elif defined NPZD_IRON
 #  include <npzd_iron_inp.h>
 # elif defined NPZD_POWELL

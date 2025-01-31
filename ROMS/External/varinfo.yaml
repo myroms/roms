@@ -2564,6 +2564,105 @@ metadata:
     add_offset:     0.0d0
     scale:          1.0d0
 
+  - variable:       river_DIN                                        # Input
+    standard_name:  mole_concentration_of_dissolved_inorganic_carbon_into_sea_water_from_rivers
+    long_name:      river runoff dissolved inorganic nitrogen
+    units:          millimole_nitrogen meter-3                       # [millimole/m3]
+    field:          river DIN
+    time:           river_time
+    index_code:     idRtrc(iDIN_)
+    type:           nulvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       river_aPhytoplankton440                          # Input
+    standard_name:  sea_water_light_optical_absorption_at_440nm_due_to_phytoplankton_from_rivers
+    long_name:      river runoff phytoplankton light absorption at 440nm
+    units:          meter-1                                          # [1/m]
+    field:          river phytoplankton 440nm light absorption
+    time:           river_time
+    index_code:     idRtrc(iAphy(i440n))
+    type:           nulvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       river_aPhytoplankton510                          # Input
+    standard_name:  sea_water_light_optical_absorption_at_510nm_due_to_phytoplankton_from_rivers
+    long_name:      river runoff phytoplankton light absorption at 510nm
+    units:          meter-1                                          # [1/m]
+    field:          river phytoplankton 510nm light absorption
+    time:           river_time
+    index_code:     idRtrc(iAphy(i510n))
+    type:           nulvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       river_bPhytoplankton440                          # Input
+    standard_name:  sea_water_light_optical_backscattering_at_440nm_due_to_phytoplankton_from_rivers
+    long_name:      river runoff phytoplankton light backscattering at 440nm
+    units:          meter-1                                          # [1/m]
+    field:          river phytoplankton 440nm light backscattering
+    time:           river_time
+    index_code:     idRtrc(iBphy(i440n))
+    type:           nulvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       river_bPhytoplankton510                          # Input
+    standard_name:  sea_water_light_optical_absorption_at_510nm_due_to_phytoplankton_from_rivers
+    long_name:      river runoff phytoplankton light backscattering at 510nm
+    units:          meter-1                                          # [1/m]
+    field:          river phytoplankton 510nm light backscattering
+    time:           river_time
+    index_code:     idRtrc(iBphy(i510n))
+    type:           nulvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       river_aCDOM440                                   # Input
+    standard_name:  sea_water_light_optical_absorption_at_440nm_due_to_colored_dissolved_organic_matter_from_rivers
+    long_name:      river runoff CDOM light absorption at 440nm
+    units:          meter-1                                          # [1/m]
+    field:          river CDOM 440nm light absorption
+    time:           river_time
+    index_code:     idRtrc(aCDOM(i440n))
+    type:           nulvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       river_aCDOM510                                   # Input
+    standard_name:  sea_water_light_optical_absorption_at_510nm_due_to_colored_dissolved_organic_matter_from_rivers
+    long_name:      river runoff CDOM light absorption at 510nm
+    units:          meter-1                                          # [1/m]
+    field:          river CDOM 510nm light absorption
+    time:           river_time
+    index_code:     idRtrc(aCDOM(i510n))
+    type:           nulvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       river_bDetritus440                               # Input
+    standard_name:  sea_water_light_optical_backscattering_at_440nm_due_to_detritus_from_rivers
+    long_name:      river runoff detritus light backscattering at 440nm
+    units:          meter-1                                          # [1/m]
+    field:          river detritus 440nm light backscattering
+    time:           river_time
+    index_code:     idRtrc(iBdet(i440n))
+    type:           nulvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       river_bDetritus510                               # Input
+    standard_name:  sea_water_light_optical_backscattering_at_510nm_due_to_detritus_from_rivers
+    long_name:      river runoff detritus light backscattering at 510nm
+    units:          meter-1                                          # [1/m]
+    field:          river detritus 510nm light backscattering
+    time:           river_time
+    index_code:     idRtrc(iBdet(i510n))
+    type:           nulvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
   #################################################
   ###  Surface/Bottom Boundary Layer Variables  ###
   #################################################
@@ -5473,6 +5572,606 @@ metadata:
     field:          dinoflagellate northern-boundary
     time:           dinoflagellate_time
     index_code:     idTbry(inorth,iDino)
+    type:           nulvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  ###################################################
+  ### IOP-based NPZD and CDOM Ecosystem Variables ###
+  ###################################################
+
+  - variable:       DIN                                              # Input/Output
+    standard_name:  mole_concentration_of_dissolved_inorganic_nitrogen_in_sea_water
+    long_name:      dissolved inorganic nitrogen
+    units:          millimole_nitrogen meter-3                       # [millimole/m3]
+    field:          DIN
+    time:           ocean_time
+    index_code:     idTvar(iDIN_)
+    type:           r3dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       DIN                                              # Input/Output
+    standard_name:  mole_concentration_of_dissolved_inorganic_nitrogen_in_sea_water
+    long_name:      dissolved inorganic nitrogen functional
+    units:          millimole_nitrogen meter-3                       # [millimole/m3]
+    field:          DIN
+    time:           ocean_time
+    index_code:     idTads(iDIN_)
+    type:           r3dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       aPhytoplankton440                                # Input/Output
+    standard_name:  sea_water_light_optical_absorption_at_440nm_due_to_phytoplankton
+    long_name:      phytoplankton light absorption at 440nm
+    units:          meter-1                                          # [1/m]
+    field:          phytoplankton 440nm light absorption
+    time:           ocean_time
+    index_code:     idTvar(iAphy(i440n))
+    type:           r3dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       aPhytoplankton440                                # Input/Output
+    standard_name:  sea_water_light_optical_absorption_at_440nm_due_to_phytoplankton
+    long_name:      phytoplankton light absorption at 440nm functional
+    units:          meter-1                                          # [1/m]
+    field:          phytoplankton 440nm light absorption
+    time:           ocean_time
+    index_code:     idTads(iAphy(i440n))
+    type:           r3dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       aPhytoplankton510                                # Input/Output
+    standard_name:  sea_water_light_optical_absorption_at_510nm_due_to_phytoplankton
+    long_name:      phytoplankton light absorption at 510nm
+    units:          meter-1                                          # [1/m]
+    field:          phytoplankton 510nm light absorption
+    time:           ocean_time
+    index_code:     idTvar(iAphy(i510n))
+    type:           r3dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       aPhytoplankton510                                # Input/Output
+    standard_name:  sea_water_light_optical_absorption_at_510nm_due_to_phytoplankton
+    long_name:      phytoplankton light absorption at 510nm functional
+    units:          meter-1                                          # [1/m]
+    field:          phytoplankton 510nm light absorption
+    time:           ocean_time
+    index_code:     idTads(iAphy(i510n))
+    type:           r3dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       bPhytoplankton440                                # Input/Output
+    standard_name:  sea_water_light_optical_backscattering_at_440nm_due_to_phytoplankton
+    long_name:      phytoplankton light backscattering at 440nm
+    units:          meter-1                                          # [1/m]
+    field:          phytoplankton 440nm light backscattering
+    time:           ocean_time
+    index_code:     idTvar(iBphy(i440n))
+    type:           r3dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       bPhytoplankton440                                # Input/Output
+    standard_name:  sea_water_light_optical_backscattering_at_440nm_due_to_phytoplankton
+    long_name:      phytoplankton light backscattering at 440nm functional
+    units:          meter-1                                          # [1/m]
+    field:          phytoplankton 440nm light absorption
+    time:           ocean_time
+    index_code:     idTads(iBphy(i440n))
+    type:           r3dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       bPhytoplankton510                                # Input/Output
+    standard_name:  sea_water_light_optical_backscattering_at_510nm_due_to_phytoplankton
+    long_name:      phytoplankton light backscattering at 510nm
+    units:          meter-1                                          # [1/m]
+    field:          phytoplankton 510nm light backscattering
+    time:           ocean_time
+    index_code:     idTvar(iBphy(i510n))
+    type:           r3dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       bPhytoplankton510                                # Input/Output
+    standard_name:  sea_water_light_optical_backscattering_at_510nm_due_to_phytoplankton
+    long_name:      phytoplankton light backscattering at 510nm functional
+    units:          meter-1                                          # [1/m]
+    field:          phytoplankton 510nm light backscattering
+    time:           ocean_time
+    index_code:     idTads(iBphy(i510n))
+    type:           r3dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       aCDOM440                                         # Input/Output
+    standard_name:  sea_water_light_optical_absorption_at_440nm_due_to_colored_dissolved_organic_matter
+    long_name:      CDOM light absorption at 440nm
+    units:          meter-1                                          # [1/m]
+    field:          CDOM 440nm light absorption
+    time:           ocean_time
+    index_code:     idTvar(aCDOM(i440n))
+    type:           r3dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       aCDOM440                                         # Input/Output
+    standard_name:  sea_water_light_optical_absorption_at_440nm_due_to_colored_dissolved_organic_matter
+    long_name:      CDOM light absorption at 440nm functional
+    units:          meter-1                                          # [1/m]
+    field:          CDOM 440nm light absorption
+    time:           ocean_time
+    index_code:     idTads(aCDOM(i440n))
+    type:           r3dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       aCDOM510                                         # Input/Output
+    standard_name:  sea_water_light_optical_absorption_at_510nm_due_to_colored_dissolved_organic_matter
+    long_name:      CDOM light absorption at 510nm
+    units:          meter-1                                          # [1/m]
+    field:          CDOM 510nm light absorption
+    time:           ocean_time
+    index_code:     idTvar(aCDOM(i510n))
+    type:           r3dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       aCDOM510                                         # Input/Output
+    standard_name:  sea_water_light_optical_absorption_at_510nm_due_to_colored_dissolved_organic_matter
+    long_name:      CDOM light absorption at 510nm functional
+    units:          meter-1                                          # [1/m]
+    field:          CDOM 510nm light absorption
+    time:           ocean_time
+    index_code:     idTads(aCDOM(i510n))
+    type:           r3dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       bDetritus440                                     # Input/Output
+    standard_name:  sea_water_light_optical_backscattering_at_440nm_due_to_detritus
+    long_name:      detritus light backscattering at 440nm
+    units:          meter-1                                          # [1/m]
+    field:          detritus 440nm light backscattering
+    time:           ocean_time
+    index_code:     idTvar(iBdet(i440n))
+    type:           r3dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       bDetritus440                                     # Input/Output
+    standard_name:  sea_water_light_optical_backscattering_at_440nm_due_to_detritus
+    long_name:      detritus light backscattering at 440nm functional
+    units:          meter-1                                          # [1/m]
+    field:          detritus 440nm light backscattering
+    time:           ocean_time
+    index_code:     idTads(iBdet(i440n))
+    type:           r3dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       bDetritus510                                     # Input/Output
+    standard_name:  sea_water_light_optical_backscattering_at_510nm_due_to_detritus
+    long_name:      detritus light backscattering at 510nm
+    units:          meter-1                                          # [1/m]
+    field:          detritus 510nm light backscattering
+    time:           ocean_time
+    index_code:     idTvar(iBdet(i510n))
+    type:           r3dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       bDetritus510                                     # Input/Output
+    standard_name:  sea_water_light_optical_backscattering_at_510nm_due_to_detritus
+    long_name:      detritus light backscattering at 510nm functional
+    units:          meter-1                                          # [1/m]
+    field:          detritus 510nm light backscattering
+    time:           ocean_time
+    index_code:     idTads(iBdet(i510n))
+    type:           r3dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  # Lateral Boundary Condition Variables
+
+  - variable:       DIN_east                                         # Input
+    standard_name:  mole_concentration_of_dissolved_inorganic_carbon_into_sea_water
+    long_name:      DIN eastern boundary condition
+    units:          millimole_nitrogen meter-3                       # [millimole/m3]
+    field:          DIN eastern-boundary
+    time:           DIN_time
+    index_code:     idTbry(ieast,iDIN_)
+    type:           nulvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       DIN_west                                         # Input
+    standard_name:  mole_concentration_of_dissolved_inorganic_carbon_into_sea_water
+    long_name:      DIN western boundary condition
+    units:          millimole_nitrogen meter-3                       # [millimole/m3]
+    field:          DIN western-boundary
+    time:           DIN_time
+    index_code:     idTbry(iwest,iDIN_)
+    type:           nulvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       DIN_south                                        # Input
+    standard_name:  mole_concentration_of_dissolved_inorganic_carbon_into_sea_water
+    long_name:      DIN southern boundary condition
+    units:          millimole_nitrogen meter-3                       # [millimole/m3]
+    field:          DIN southern-boundary
+    time:           DIN_time
+    index_code:     idTbry(isouth,iDIN_)
+    type:           nulvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       DIN_north                                        # Input
+    standard_name:  mole_concentration_of_dissolved_inorganic_carbon_into_sea_water
+    long_name:      DIN northern boundary condition
+    units:          millimole_nitrogen meter-3                       # [millimole/m3]
+    field:          DIN northern-boundary
+    time:           DIN_time
+    index_code:     idTbry(inorth,iDIN_)
+    type:           nulvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       aPhytoplankton440_east                           # Input
+    standard_name:  sea_water_light_optical_absorption_at_440nm_due_to_phytoplankton
+    long_name:      phytoplankton light absorption at 440nm eastern boundary condition
+    units:          meter-1                                          # [1/m]
+    field:          phytoplankton 440nm light absorption eastern-boundary
+    time:           aPhytoplankton440_time
+    index_code:     idTbry(ieast,iAphy(i440n))
+    type:           nulvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       aPhytoplankton440_west                           # Input
+    standard_name:  sea_water_light_optical_absorption_at_440nm_due_to_phytoplankton
+    long_name:      phytoplankton light absorption at 440nm western boundary condition
+    units:          meter-1                                          # [1/m]
+    field:          phytoplankton 440nm light absorption western-boundary
+    time:           aPhytoplankton440_time
+    index_code:     idTbry(iwest,iAphy(i440n))
+    type:           nulvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       aPhytoplankton440_south                          # Input
+    standard_name:  sea_water_light_optical_absorption_at_440nm_due_to_phytoplankton
+    long_name:      phytoplankton light absorption at 440nm southern boundary condition
+    units:          meter-1                                          # [1/m]
+    field:          phytoplankton 440nm light absorption southern-boundary
+    time:           aPhytoplankton440_time
+    index_code:     idTbry(isouth,iAphy(i440n))
+    type:           nulvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       aPhytoplankton440_north                          # Input
+    standard_name:  sea_water_light_optical_absorption_at_440nm_due_to_phytoplankton
+    long_name:      phytoplankton light absorption at 440nm northern boundary condition
+    units:          meter-1                                          # [1/m]
+    field:          phytoplankton 440nm light absorption northern-boundary
+    time:           aPhytoplankton440_time
+    index_code:     idTbry(inorth,iAphy(i440n))
+    type:           nulvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       aPhytoplankton510_east                           # Input
+    standard_name:  sea_water_light_optical_absorption_at_510nm_due_to_phytoplankton
+    long_name:      phytoplankton light absorption at 510nm eastern boundary condition
+    units:          meter-1                                          # [1/m]
+    field:          phytoplankton 510nm light absorption eastern-boundary
+    time:           aPhytoplankton510_time
+    index_code:     idTbry(ieast,iAphy(i510n))
+    type:           nulvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       aPhytoplankton510_west                           # Input
+    standard_name:  sea_water_light_optical_absorption_at_510nm_due_to_phytoplankton
+    long_name:      phytoplankton light absorption at 510nm western boundary condition
+    units:          meter-1                                          # [1/m]
+    field:          phytoplankton 510nm light absorption western-boundary
+    time:           aPhytoplankton510_time
+    index_code:     idTbry(iwest,iAphy(i510n))
+    type:           nulvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       aPhytoplankton510_south                          # Input
+    standard_name:  sea_water_light_optical_absorption_at_510nm_due_to_phytoplankton
+    long_name:      phytoplankton light absorption at 510nm southern boundary condition
+    units:          meter-1                                          # [1/m]
+    field:          phytoplankton 510nm light absorption southern-boundary
+    time:           aPhytoplankton510_time
+    index_code:     idTbry(isouth,iAphy(i510n))
+    type:           nulvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       aPhytoplankton510_north                          # Input
+    standard_name:  sea_water_light_optical_absorption_at_510nm_due_to_phytoplankton
+    long_name:      phytoplankton light absorption at 510nm northern boundary condition
+    units:          meter-1                                          # [1/m]
+    field:          phytoplankton 510nm light absorption northern-boundary
+    time:           aPhytoplankton510_time
+    index_code:     idTbry(inorth,iAphy(i510n))
+    type:           nulvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       bPhytoplankton440_east                           # Input
+    standard_name:  sea_water_light_optical_backscattering_at_440nm_due_to_phytoplankton
+    long_name:      phytoplankton light backscattering at 440nm eastern boundary condition
+    units:          meter-1                                          # [1/m]
+    field:          phytoplankton 440nm light backscattering eastern-boundary
+    time:           bPhytoplankton440_time
+    index_code:     idTbry(ieast,iBphy(i440n))
+    type:           nulvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       bPhytoplankton440_west                           # Input
+    standard_name:  sea_water_light_optical_backscattering_at_440nm_due_to_phytoplankton
+    long_name:      phytoplankton light backscattering at 440nm western boundary condition
+    units:          meter-1                                          # [1/m]
+    field:          phytoplankton 440nm light backscattering western-boundary
+    time:           bPhytoplankton440_time
+    index_code:     idTbry(iwest,iBphy(i440n))
+    type:           nulvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       bPhytoplankton440_south                          # Input
+    standard_name:  sea_water_light_optical_backscattering_at_440nm_due_to_phytoplankton
+    long_name:      phytoplankton light backscattering at 440nm southern boundary condition
+    units:          meter-1                                          # [1/m]
+    field:          phytoplankton 440nm light backscattering southern-boundary
+    time:           bPhytoplankton440_time
+    index_code:     idTbry(isouth,iBphy(i440n))
+    type:           nulvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       bPhytoplankton440_north                          # Input
+    standard_name:  sea_water_light_optical_backscattering_at_440nm_due_to_phytoplankton
+    long_name:      phytoplankton light backscattering at 440nm northern boundary condition
+    units:          meter-1                                          # [1/m]
+    field:          phytoplankton 440nm light backscattering northern-boundary
+    time:           bPhytoplankton440_time
+    index_code:     idTbry(inorth,iBphy(i440n))
+    type:           nulvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       bPhytoplankton510_east                           # Input
+    standard_name:  sea_water_light_optical_backscattering_at_510nm_due_to_phytoplankton
+    long_name:      phytoplankton light backscattering at 510nm eastern boundary condition
+    units:          meter-1                                          # [1/m]
+    field:          phytoplankton 510nm light backscattering eastern-boundary
+    time:           bPhytoplankton510_time
+    index_code:     idTbry(ieast,iBphy(i510n))
+    type:           nulvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       bPhytoplankton510_west                           # Input
+    standard_name:  sea_water_light_optical_backscattering_at_510nm_due_to_phytoplankton
+    long_name:      phytoplankton light backscattering at 510nm western boundary condition
+    units:          meter-1                                          # [1/m]
+    field:          phytoplankton 510nm light backscattering western-boundary
+    time:           bPhytoplankton510_time
+    index_code:     idTbry(iwest,iBphy(i510n))
+    type:           nulvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       bPhytoplankton510_south                          # Input
+    standard_name:  sea_water_light_optical_backscattering_at_510nm_due_to_phytoplankton
+    long_name:      phytoplankton light backscattering at 510nm southern boundary condition
+    units:          meter-1                                          # [1/m]
+    field:          phytoplankton 510nm light backscattering southern-boundary
+    time:           bPhytoplankton510_time
+    index_code:     idTbry(isouth,iBphy(i510n))
+    type:           nulvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       bPhytoplankton510_north                          # Input
+    standard_name:  sea_water_light_optical_backscattering_at_510nm_due_to_phytoplankton
+    long_name:      phytoplankton light backscattering at 510nm northern boundary condition
+    units:          meter-1                                          # [1/m]
+    field:          phytoplankton 510nm light backscattering northern-boundary
+    time:           bPhytoplankton510_time
+    index_code:     idTbry(inorth,iBphy(i510n))
+    type:           nulvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       aCDOM440_east                                    # Input
+    standard_name:  sea_water_light_optical_absorption_at_440nm_due_to_colored_dissolved_organic_matter
+    long_name:      CDOM light absorption at 440nm eastern boundary condition
+    units:          meter-1                                          # [1/m]
+    field:          CDOM 440nm light absorption eastern-boundary
+    time:           aCDOM440_time
+    index_code:     idTbry(ieast,aCDOM(i440n))
+    type:           nulvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       aCDOM440_west                                    # Input
+    standard_name:  sea_water_light_optical_absorption_at_440nm_due_to_colored_dissolved_organic_matter
+    long_name:      CDOM light absorption at 440nm western boundary condition
+    units:          meter-1                                          # [1/m]
+    field:          CDOM 440nm light absorption western-boundary
+    time:           aCDOM440_time
+    index_code:     idTbry(iwest,aCDOM(i440n))
+    type:           nulvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       aCDOM440_south                                   # Input
+    standard_name:  sea_water_light_optical_absorption_at_440nm_due_to_colored_dissolved_organic_matter
+    long_name:      CDOM light absorption at 440nm southern boundary condition
+    units:          meter-1                                          # [1/m]
+    field:          CDOM 440nm light absorption southern-boundary
+    time:           aCDOM440_time
+    index_code:     idTbry(isouth,aCDOM(i440n))
+    type:           nulvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       aCDOM440_north                                   # Input
+    standard_name:  sea_water_light_optical_absorption_at_440nm_due_to_colored_dissolved_organic_matter
+    long_name:      CDOM light absorption at 440nm northern boundary condition
+    units:          meter-1                                          # [1/m]
+    field:          CDOM 440nm light absorption northern-boundary
+    time:           aCDOM440_time
+    index_code:     idTbry(inorth,aCDOM(i440n))
+    type:           nulvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       aCDOM510_east                                    # Input
+    standard_name:  sea_water_light_optical_absorption_at_510nm_due_to_colored_dissolved_organic_matter
+    long_name:      CDOM light absorption at 510nm eastern boundary condition
+    units:          meter-1                                          # [1/m]
+    field:          CDOM 510nm light absorption eastern-boundary
+    time:           aCDOM510_time
+    index_code:     idTbry(ieast,aCDOM(i510n))
+    type:           nulvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       aCDOM510_west                                    # Input
+    standard_name:  sea_water_light_optical_absorption_at_510nm_due_to_colored_dissolved_organic_matter
+    long_name:      CDOM light absorption at 510nm western boundary condition
+    units:          meter-1                                          # [1/m]
+    field:          CDOM 510nm light absorption western-boundary
+    time:           aCDOM510_time
+    index_code:     idTbry(iwest,aCDOM(i510n))
+    type:           nulvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       aCDOM510_south                                   # Input
+    standard_name:  sea_water_light_optical_absorption_at_510nm_due_to_colored_dissolved_organic_matter
+    long_name:      CDOM light absorption at 510nm southern boundary condition
+    units:          meter-1                                          # [1/m]
+    field:          CDOM 510nm light absorption southern-boundary
+    time:           aCDOM510_time
+    index_code:     idTbry(isouth,aCDOM(i510n))
+    type:           nulvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       aCDOM510_north                                   # Input
+    standard_name:  sea_water_light_optical_absorption_at_510nm_due_to_colored_dissolved_organic_matter
+    long_name:      CDOM light absorption at 510nm northern boundary condition
+    units:          meter-1                                          # [1/m]
+    field:          CDOM 510nm light absorption northern-boundary
+    time:           aCDOM510_time
+    index_code:     idTbry(inorth,aCDOM(i510n))
+    type:           nulvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       bDetritus440_east                                # Input
+    standard_name:  sea_water_light_optical_backscattering_at_440nm_due_to_detritus
+    long_name:      detritus light backscattering at 440nm eastern boundary condition
+    units:          meter-1                                          # [1/m]
+    field:          detritus 440nm light backscattering eastern-boundary
+    time:           bDetritus440_time
+    index_code:     idTbry(ieast,iBdet(i440n))
+    type:           nulvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       bDetritus440_west                                # Input
+    standard_name:  sea_water_light_optical_backscattering_at_440nm_due_to_detritus
+    long_name:      detritus light backscattering at 440nm western boundary condition
+    units:          meter-1                                          # [1/m]
+    field:          detritus 440nm light backscattering western-boundary
+    time:           bDetritus440_time
+    index_code:     idTbry(iwest,iBdet(i440n))
+    type:           nulvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       bDetritus440_south                               # Input
+    standard_name:  sea_water_light_optical_backscattering_at_440nm_due_to_detritus
+    long_name:      detritus light backscattering at 440nm southern boundary condition
+    units:          meter-1                                          # [1/m]
+    field:          detritus 440nm light backscattering southern-boundary
+    time:           bDetritus440_time
+    index_code:     idTbry(isouth,iBdet(i440n))
+    type:           nulvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       bDetritus440_north                               # Input
+    standard_name:  sea_water_light_optical_backscattering_at_440nm_due_to_detritus
+    long_name:      detritus light backscattering at 440nm northern boundary condition
+    units:          meter-1                                          # [1/m]
+    field:          detritus 440nm light backscattering northern-boundary
+    time:           bDetritus440_time
+    index_code:     idTbry(inorth,iBdet(i440n))
+    type:           nulvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       bDetritus510_east                                # Input
+    standard_name:  sea_water_light_optical_backscattering_at_510nm_due_to_detritus
+    long_name:      detritus light backscattering at 510nm eastern boundary condition
+    units:          meter-1                                          # [1/m]
+    field:          detritus 510nm light backscattering eastern-boundary
+    time:           bDetritus510_time
+    index_code:     idTbry(ieast,iBdet(i510n))
+    type:           nulvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       bDetritus510_west                                # Input
+    standard_name:  sea_water_light_optical_backscattering_at_510nm_due_to_detritus
+    long_name:      detritus light backscattering at 510nm western boundary condition
+    units:          meter-1                                          # [1/m]
+    field:          detritus 510nm light backscattering western-boundary
+    time:           bDetritus510_time
+    index_code:     idTbry(iwest,iBdet(i510n))
+    type:           nulvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       bDetritus510_south                               # Input
+    standard_name:  sea_water_light_optical_backscattering_at_510nm_due_to_detritus
+    long_name:      detritus light backscattering at 510nm southern boundary condition
+    units:          meter-1                                          # [1/m]
+    field:          detritus 510nm light backscattering southern-boundary
+    time:           bDetritus510_time
+    index_code:     idTbry(isouth,iBdet(i510n))
+    type:           nulvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       bDetritus510_north                               # Input
+    standard_name:  sea_water_light_optical_backscattering_at_510nm_due_to_detritus
+    long_name:      detritus light backscattering at 510nm northern boundary condition
+    units:          meter-1                                          # [1/m]
+    field:          detritus 510nm light backscattering northern-boundary
+    time:           bDetritus510_time
+    index_code:     idTbry(inorth,iBdet(i510n))
     type:           nulvar
     add_offset:     0.0d0
     scale:          1.0d0
