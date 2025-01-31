@@ -1,17 +1,16 @@
       MODULE roms_kernel_mod
 !
 !git $Id$
-!svn $Id: hessian_so_roms.h 1166 2023-05-17 20:11:58Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group       Andrew M. Moore   !
+!  Copyright (c) 2002-2025 The ROMS Group            Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                                              !
+!    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
-!  ROMS/TOMS Stochastic Optimal Driver:                                !
+!  ROMS Stochastic Optimal Driver:                                     !
 !                                                                      !
 !  These  routines  control the  initialization,  time-stepping,  and  !
-!  finalization of  ROMS/TOMS  model following ESMF conventions:       !
+!  finalization of  ROMS  model following ESMF conventions:            !
 !                                                                      !
 !     ROMS_initialize                                                  !
 !     ROMS_run                                                         !
@@ -60,6 +59,7 @@
 # endif
 #endif
       USE packing_mod,       ONLY : r_norm2
+      USE stdout_mod,        ONLY : Set_StdOutUnit, stdout_unit
       USE strings_mod,       ONLY : FoundError
 #ifdef CHECKPOINTING
       USE wrt_gst_mod,       ONLY : wrt_gst
@@ -79,7 +79,7 @@
 !
 !=======================================================================
 !                                                                      !
-!  This routine allocates and initializes ROMS/TOMS state variables    !
+!  This routine allocates and initializes ROMS state variables         !
 !  and internal and external parameters.                               !
 !                                                                      !
 !=======================================================================
@@ -134,6 +134,19 @@
 !  independent from standard input parameters.
 !
         CALL initialize_parallel
+!
+!  Set the ROMS standard output unit to write verbose execution info.
+!  Notice that the default standard out unit in Fortran is 6.
+!
+!  In some applications like coupling or disjointed mpi-communications,
+!  it is advantageous to write standard output to a specific filename
+!  instead of the default Fortran standard output unit 6. If that is
+!  the case, it opens such formatted file for writing.
+!
+        IF (Set_StdOutUnit) THEN
+          stdout=stdout_unit(Master)
+          Set_StdOutUnit=.FALSE.
+        END IF
 !
 !  Read in model tunable parameters from standard input. Allocate and
 !  initialize variables in several modules after the number of nested
@@ -746,7 +759,7 @@
 !
 !=======================================================================
 !                                                                      !
-!  This routine terminates ROMS/TOMS nonlinear and adjoint models      !
+!  This routine terminates ROMS nonlinear and adjoint models           !
 !  execution.                                                          !
 !                                                                      !
 !=======================================================================

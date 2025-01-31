@@ -3,11 +3,10 @@
 #if defined COAMPS_COUPLING && defined ESMF_LIB
 !
 !git $Id$
-!svn $Id: esmf_atm_coamps.h 1151 2023-02-09 03:08:53Z arango $
 !=======================================================================
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2025 The ROMS Group                              !
 !    Licensed under a MIT/X style license         Hernan G. Arango     !
-!    See License_ROMS.txt                                              !
+!    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
 !  This module sets COAMPS as the atmospheric model gridded component  !
@@ -140,7 +139,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering ATM_SetServices',         &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
       rc=ESMF_SUCCESS
 !
@@ -292,7 +291,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '<== Exiting  ATM_SetServices',         &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
 !
       RETURN
@@ -335,7 +334,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering COAMPS_SetInitializeP1',  &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
       rc=ESMF_SUCCESS
 !
@@ -426,7 +425,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '<== Exiting  COAMPS_SetInitializeP1',  &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
 !
       RETURN
@@ -502,7 +501,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering COAMPS_SetInitializeP2',  &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
       rc=ESMF_SUCCESS
 !
@@ -701,7 +700,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '<== Exiting  COAMPS_SetInitializeP2',  &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
 !
   10  FORMAT (/,' COAMPS_SetInitializeP2 - unable to find time-',       &
@@ -743,7 +742,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering COAMPS_DataInit',         &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
       rc=ESMF_SUCCESS
 !
@@ -795,7 +794,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '<== Exiting  COAMPS_DataInit',         &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
 !
       RETURN
@@ -850,7 +849,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering COAMPS_SetClock',         &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
       rc=ESMF_SUCCESS
 !
@@ -1125,7 +1124,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '<== Exiting  COAMPS_SetClock',         &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
 !
  10   FORMAT (2x,a,2x,a/,2x,a,2x,a,/,2x,a,2x,a,/)
@@ -1166,7 +1165,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering COAMPS_SetRunClock',      &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
       rc=ESMF_SUCCESS
 !
@@ -1224,7 +1223,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '<== Exiting  COAMPS_SetRunClock',      &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
 !
       RETURN
@@ -1275,7 +1274,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering COAMPS_CheckImport',      &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
       rc=ESMF_SUCCESS
 !
@@ -1453,7 +1452,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '<== Exiting  COAMPS_CheckImport',      &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
 !
   10  FORMAT (1x,'COAMPS_CheckImport - ',a,':',t32,'TimeStamp = ',a,    &
@@ -1598,7 +1597,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering COAMPS_SetGridArrays',    &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
       rc=ESMF_SUCCESS
 !
@@ -1915,9 +1914,9 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '<== Exiting  COAMPS_SetGridArrays',    &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
-      IF (DebugLevel.gt.0) CALL my_flush (cplout)
+      IF (DebugLevel.gt.0) FLUSH (cplout)
 !
   10  FORMAT ('COAMPS_DistGrid - Grid = ',i2.2,',',3x,'Mesh = ',a,',',  &
      &        3x,'Partition = ',i0,' x ',i0)
@@ -1975,7 +1974,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering COAMPS_SetStates',        &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
       rc=ESMF_SUCCESS
 !
@@ -2319,7 +2318,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '<== Exiting  COAMPS_SetStates',        &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
 !
 !
@@ -2378,7 +2377,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering COAMPS_ModelAdvance',     &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
       rc=ESMF_SUCCESS
 !
@@ -2538,13 +2537,13 @@
         IF (ESM_track) THEN
           WRITE (trac,'(a,a,i0)') '==> Entering COAMPS_Run',            &
      &                            ', PET', PETrank
-          CALL my_flush (trac)
+          FLUSH (trac)
         END IF
         CALL COAMPS_Run (ltau_0, StepCount)
         IF (ESM_track) THEN
           WRITE (trac,'(a,a,i0)') '==> Exiting  COAMPS_Run',            &
      &                            ', PET', PETrank
-          CALL my_flush (trac)
+          FLUSH (trac)
         END IF
       END IF
 !
@@ -2569,7 +2568,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '<== Exiting  COAMPS_ModelAdvance',     &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
 !
   10  FORMAT (3x,'ModelAdvance - ESMF, Running COAMPS:',t42,a,          &
@@ -2609,7 +2608,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering COAMPS_SetFinalize',      &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
       rc=ESMF_SUCCESS
 !
@@ -2618,12 +2617,12 @@
 !-----------------------------------------------------------------------
 !
       CALL COAMPS_Finalize ()
-      CALL my_flush (6)                   ! flush standard output buffer
+      FLUSH (6)                   ! flush standard output buffer
 !
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '<== Exiting  COAMPS_SetFinalize',      &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
 !
       RETURN
@@ -2693,7 +2692,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering COAMPS_Import',           &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
       rc=ESMF_SUCCESS
 !
@@ -2891,7 +2890,7 @@
                 dat_sst=MISSING_dp
               END IF
               got_sst(1)=.TRUE.
-              ifield(1)=ifld
+              ifield(1)=id
               fld_name(1)=TRIM(FieldName)
               DO j=JminP,JmaxP
                 DO i=IminP,ImaxP
@@ -2921,7 +2920,7 @@
                 dat_sst=MISSING_dp
               END IF
               got_sst(2)=.TRUE.
-              ifield(2)=ifld
+              ifield(2)=id
               fld_name(2)=TRIM(FieldName)
               DO j=JminP,JmaxP
                 DO i=IminP,ImaxP
@@ -3078,7 +3077,7 @@
 !  Debugging: write out import field into a NetCDF file.
 !
         IF ((DebugLevel.ge.3).and.                                      &
-     &      MODELS(Iatmos)%ImportField(ifld)%debug_write) THEN
+     &      MODELS(Iatmos)%ImportField(id)%debug_write) THEN
           WRITE (ofile,40) ng, TRIM(ImportNameList(ifld)),              &
      &                     year, month, day, hour, minutes, seconds
           CALL ESMF_FieldWrite (field,                                  &
@@ -3126,9 +3125,9 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '<== Exiting  COAMPS_Import',           &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
-      IF (DebugLevel.gt.0) CALL my_flush (cplout)
+      IF (DebugLevel.gt.0) FLUSH (cplout)
 !
   10  FORMAT (/,2x,'COAMPS_Import - unable to find option to import: ', &
      &        a,/,18x,'check ''Import(atmos)'' in input script: ', a)
@@ -3242,7 +3241,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering COAMPS_ProcessImport',    &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
       rc=ESMF_SUCCESS
 !
@@ -3584,9 +3583,9 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '<== Exiting  COAMPS_ProcessImport',    &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
-      IF (DebugLevel.gt.0) CALL my_flush (cplout)
+      IF (DebugLevel.gt.0) FLUSH (cplout)
 !
   10  FORMAT (/,5x,'COAMPS_ProcessImport - ',                           &
      &         'unable to find option to import: ',a,                   &
@@ -3687,7 +3686,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering COAMPS_Export',           &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
       rc=ESMF_SUCCESS
 !
@@ -4203,9 +4202,9 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '<== Exiting  COAMPS_Export',           &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
-      IF (DebugLevel.gt.0) CALL my_flush (cplout)
+      IF (DebugLevel.gt.0) FLUSH (cplout)
 !
   10  FORMAT (/,2x,'COAMPS_Export - unable to find option to export: ', &
      &        a,/,18x,'check ''Export(atmos)'' in input script: ',a)

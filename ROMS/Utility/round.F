@@ -1,11 +1,10 @@
       MODULE round_mod
 !
 !git $Id$
-!svn $Id: round.F 1151 2023-02-09 03:08:53Z arango $
 !====================================================== H. D. Knoble ===
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group      Hernan G. Arango   !
+!  Copyright (c) 2002-2025 The ROMS Group           Hernan G. Arango   !
 !    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                                              !
+!    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
 !  Floating point rounding function with a Fuzzy or Tolerant Floor     !

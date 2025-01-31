@@ -1,11 +1,10 @@
 #!/bin/bash
 #
 # git $Id$
-# svn $Id: dates_test.sh 1151 2023-02-09 03:08:53Z arango $
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Copyright (c) 2002-2023 The ROMS/TOMS Group                           :::
+# Copyright (c) 2002-2025 The ROMS Group                                :::
 #   Licensed under a MIT/X style license                                :::
-#   See License_ROMS.txt                                                :::
+#   See License_ROMS.md                                                 :::
 #::::::::::::::::::::::::::::::::::::::::::::::::::::: Hernan G. Arango :::
 #                                                                       :::
 # Script to test and show usage of the "dates" perl script.             :::
@@ -48,5 +47,5 @@ echo
 echo "Truncated Date:             $ds3"
 echo "Truncated Date Number:      $dn3"
 echo "Truncated Day-of-the-year:  $yd3"
-echo "Days since TRuncated date:  $d31"
+echo "Days since Truncated date:  $d31"
 echo

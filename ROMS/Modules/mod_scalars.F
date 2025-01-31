@@ -2,11 +2,10 @@
       MODULE mod_scalars
 !
 !git $Id$
-!svn $Id: mod_scalars.F 1151 2023-02-09 03:08:53Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2025 The ROMS Group                              !
 !    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                                              !
+!    See License_ROMS.md                                               !
 !=======================================================================
 !
         USE mod_kinds
@@ -152,8 +151,18 @@
         integer :: M2hadv          ! 2D momentum, horizontal advection
         integer :: M2xadv          ! 2D momentum, horizontal X-advection
         integer :: M2yadv          ! 2D momentum, horizontal Y-advection
-#  ifdef NEARSHORE_MELLOR
-        integer :: M2hrad          ! 2D momentum, horizontal stresses
+#  ifdef WEC_VF
+        integer :: M2hjvf          ! 2D momentum, horizontal J vortex force
+        integer :: M2kvrf          ! 2D momentum, K vortex force
+        integer :: M2fsco          ! 2D momentum, coriolis-stokes
+        integer :: M2bstm          ! 2D momentum, bottom streaming
+        integer :: M2sstm          ! 2D momentum, surface streaming
+        integer :: M2wrol          ! 2D momentum, wave roller accel
+        integer :: M2wbrk          ! 2D momentum, wave breaking
+        integer :: M2zeta          ! 2D momentum, Eulerian sea level adjustment
+        integer :: M2zetw          ! 2D momentum, quasi-static sea level adjustment
+        integer :: M2zqsp          ! 2D momentum, quasi-static pressure
+        integer :: M2zbeh          ! 2D momentum, Bernoulli head
 #  endif
         integer :: M2pgrd          ! 2D momentum, pressure gradient
         integer :: M2hvis          ! 2D momentum, horizontal viscosity
@@ -168,9 +177,15 @@
         integer :: M3hadv          ! 3D momentum, horizontal advection
         integer :: M3xadv          ! 3D momentum, horizontal X-advection
         integer :: M3yadv          ! 3D momentum, horizontal Y-advection
-#   ifdef NEARSHORE_MELLOR
-        integer :: M3hrad          ! 3D momentum, horizontal stresses
-        integer :: M3vrad          ! 3D momentum, vertical stresses
+#   ifdef WEC_VF
+        integer :: M3vjvf          ! 3D momentum, vertical J vortex force
+        integer :: M3hjvf          ! 3D momentum, horizontal J vortex force
+        integer :: M3kvrf          ! 3D momentum, K vortex force
+        integer :: M3fsco          ! 3D momentum, coriolis-stokes
+        integer :: M3bstm          ! 3D momentum, bottom streaming
+        integer :: M3sstm          ! 3D momentum, surface streaming
+        integer :: M3wrol          ! 3D momentum, wave roller accel
+        integer :: M3wbrk          ! 3D momentum, wave breaking
 #   endif
         integer :: M3pgrd          ! 3D momentum, pressure gradient
         integer :: M3vvis          ! 3D momentum, vertical viscosity
@@ -233,7 +248,8 @@
         integer, allocatable :: indx1(:)
         integer, allocatable :: iic(:)
         integer, allocatable :: iif(:)
-!$OMP THREADPRIVATE (indx1, iic, iif)
+        integer, allocatable :: next_kstp(:)
+!$OMP THREADPRIVATE (indx1, iic, iif, next_kstp)
 
 #ifdef JEDI
         integer, allocatable :: jic(:)
@@ -390,6 +406,14 @@
 !  and parameters.
 !
         logical, allocatable :: SetGridConfig(:)
+!
+!  Switch to procces (Get/Set) all input data in an application. It is
+!  set to .TRUE. by default. It is manipulated by the ROMS-JEDI
+!  interface during ROMS Phase 3 initialization that applies lateral
+!  boundary condition to the initial state vector passed by OOPS. Some
+!  applications requited input data for lateral boundary conditons.
+!
+        logical, allocatable :: ProcessInputData(:)
 !
 !  Switch to proccess nudging coefficients for radiation open boundary
 !  conditions.
@@ -950,15 +974,20 @@
         logical, allocatable :: LdefSPT(:)       ! TL Arnoldi state file
 #endif
         logical, allocatable :: LdefSTA(:)       ! Stations file
+#ifdef STD_MODEL
+        logical, allocatable :: LdefSTD(:)       ! STD file
+#endif
         logical, allocatable :: LdefTIDE(:)      ! tide forcing file
         logical, allocatable :: LdefTLM(:)       ! Tangent linear file
         logical, allocatable :: LdefTLF(:)       ! TLM/RPM impulse file
+        logical, allocatable :: LdefXTR(:)       ! TLM/RPM impulse file
 
         logical, allocatable :: LreadADM(:)      ! Read ADM multi-files
         logical, allocatable :: LreadBLK(:)      ! Read NLM bulk fluxes
         logical, allocatable :: LreadFRC(:)      ! Read FRC files
         logical, allocatable :: LreadFWD(:)      ! Read FWD trajectory
         logical, allocatable :: LreadQCK(:)      ! Read QCK trajectory
+        logical, allocatable :: LreadSTD(:)      ! Read STD file
         logical, allocatable :: LreadTLM(:)      ! Read TLM multi-files
 
         logical, allocatable :: LwrtADJ(:)       ! Write adjoint file
@@ -968,8 +997,12 @@
         logical, allocatable :: LwrtPER(:)       ! Write during ensemble
         logical, allocatable :: LwrtQCK(:)       ! write quicksave file
         logical, allocatable :: LwrtRST(:)       ! Write restart file
-        logical, allocatable :: LwrtTLM(:)       ! Write tangent file
+#ifdef STD_MODEL
+        logical, allocatable :: LwrtSTD(:)       ! Write STD file
+#endif
         logical, allocatable :: LwrtTLF(:)       ! Write impulse file
+        logical, allocatable :: LwrtTLM(:)       ! Write tangent file
+        logical, allocatable :: LwrtXTR(:)       ! Write extraction file
 
         logical, allocatable :: LdefNRM(:,:)     ! Norm file
         logical, allocatable :: LwrtNRM(:,:)     ! Write norm file
@@ -1027,6 +1060,7 @@
         integer, allocatable :: ndefHIS(:)       ! History file
         integer, allocatable :: ndefQCK(:)       ! Quicksave file
         integer, allocatable :: ndefTLM(:)       ! Tangent linear file
+        integer, allocatable :: ndefXTR(:)       ! extraction file
 !
 !  Starting timestep for accumulation of output.
 !
@@ -1044,6 +1078,7 @@
         integer, allocatable :: nRST(:)          ! Restart file
         integer, allocatable :: nSTA(:)          ! Stations file
         integer, allocatable :: nTLM(:)          ! Tangent linear file
+        integer, allocatable :: nXTR(:)          ! extraction file
 #ifdef SP4DVAR
         integer, allocatable :: nSCA(:)          ! AD scratch state file
         integer, allocatable :: nSCT(:)          ! TL scratch state file
@@ -1051,6 +1086,16 @@
         integer, allocatable :: nSPT(:)          ! TL Arnoldi state file
         integer, allocatable :: Crec(:)          ! Convolution records
 #endif
+!
+!  Field extraction flag to interpolate or decimate solution to the
+!  provided grid geometry.
+!  (For 4D-Var coarser inner loops use ExtractFlag = 2)
+!
+!    ExtractFlag = 0    no extraction
+!    ExtractFlag = 1    extraction by interpolation
+!    ExtractFlag > 1    extraction by decimation
+!
+        integer, allocatable :: ExtractFlag(:)
 !
 !  Number of timesteps between print of single line information to
 !  standard output.
@@ -1225,6 +1270,14 @@
         logical, allocatable :: SporadicImpulse(:)     ! intermittent
         logical, allocatable :: FrequentImpulse(:)     ! continuous
 !
+!  Logical switch to control 4D-Var incremental analysis update forcing.
+!
+        logical, allocatable :: IAUswitch(:)
+!
+!  Duration of the 4D-Var incremental inalysis update (seconds).
+!
+        real(dp), allocatable :: timeIAU(:)
+!
 !  Stability and accuracy factor used to scale the time-step of the
 !  horizontal and vertical convolution operator below its theoretical
 !  (CFL) limit. Notice that four values are needed for these factors to
@@ -1316,6 +1369,33 @@
 !  of state variable indices, [MstateVar,Ngrids]
 !
         real(r8), allocatable :: S_bgqc(:,:)
+
+# ifdef STD_MODEL
+!
+!  Background error covariance, standard deviation modeling parameters.
+!
+!  This approach computes the standard deviation (STD) directly from
+!  the background (prior) field as an alternative to climatological
+!  values read from the input NetCDF files. It follows the work of
+!  Mogensen et al. (2012) by assuming the background errors are
+!  proportional to the vertical derivatives of the background field.
+!  The field error has a similar profile shape, but the difference
+!  with the actual error value is due to due to a vertical displacemnt.
+!  Thus, the parameters below, per state variable, are used to process
+!  the STD profile in terms od the location of the mixed layer where
+!  the error is larger.
+!
+        real(r8), allocatable :: Sigma_max(:,:) ! Maximum value
+        real(r8), allocatable :: Sigma_ml(:,:)  ! Minimum at mixed layer
+        real(r8), allocatable :: Sigma_do(:,:)  ! Minimum in deep ocean
+        real(r8), allocatable :: Sigma_dz(:,:)  ! vetical displacement
+!
+!  The computation of the mixed-layer depth is computed using the
+!  approach of Kara et al. (2000), if activated. Otherwiae, a constant
+!  value is used.
+!
+        real(r8), allocatable :: mld_uniform(:) ! mixed layer depth
+# endif
 #endif
 !
 !-----------------------------------------------------------------------
@@ -1449,6 +1529,7 @@
 !    sg_zrmin      Minimum allowed height (m) of current above bed.
 !                    Otherwise, logarithmic interpolation is used.
 !    sg_znotcdef   Default apparent hydraulic roughness (m).
+!    sg_znotdef    Default hydraulic roughness (m).
 !
         integer, parameter :: sg_n = 20
 
@@ -1465,6 +1546,7 @@
         real(dp) :: sg_z1min = 0.20_dp         ! (m)
         real(dp) :: sg_z1p                     ! non-dimensional
         real(dp) :: sg_znotcdef = 0.01_dp      ! (m)
+        real(dp) :: sg_znotdef                 ! (m)
 
         complex(c8) :: sg_mp
 # endif
@@ -1715,7 +1797,7 @@
 !
 ! Constants used in the various formulation of surface flux boundary
 ! conditions for the GLS vertical turbulence closure in terms of
-! Charnok surface roughness (CHARNOK_ALPHA), roughness from wave
+! Charnock surface roughness (CHARNOK_ALPHA), roughness from wave
 ! amplitude (zos_hsig_alpha), wave dissipation (SZ_ALPHA), and
 ! Craig and Banner wave breaking (CRGBAN_CW).
 !
@@ -1723,6 +1805,13 @@
         real(r8), allocatable :: zos_hsig_alpha(:)
         real(r8), allocatable :: sz_alpha(:)
         real(r8), allocatable :: crgban_cw(:)
+!
+! Waves Effect on Currents dissipation energy partion scale:
+!
+!   [0.0] All wave dissipation goes to breaking and none to roller
+!   [1.0] All wave dissipation goes to roller and none to breaking
+!
+        real(r8), allocatable :: wec_alpha(:)
 
 #if defined MY25_MIXING || defined GLS_MIXING
 !
@@ -1898,6 +1987,10 @@
         allocate ( iif(Ngrids) )
         Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
+      IF (.not.allocated(next_kstp)) THEN
+        allocate ( next_kstp(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
+      END IF
 
       IF (.not.allocated(FrcRec)) THEN
         allocate ( FrcRec(Ngrids) )
@@ -1912,6 +2005,7 @@
 #ifdef JEDI
       IF (.not.allocated(jic)) THEN
         allocate ( jic(Ngrids) )
+        jic=0
         Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
 #endif
@@ -1921,7 +2015,16 @@
 !-----------------------------------------------------------------------
 !
 #if defined FOUR_DVAR || defined VERIFICATION
-      MstateVar=5+MT
+      MstateVar=6+MT
+# if defined GLS_MIXING || defined MY25_MIXING
+      MstateVar=MstateVar+1
+# endif
+# ifdef WEC
+      MstateVar=MstateVar+2
+#  if defined SOLVE3D
+      MstateVar=MstateVar+2
+#  endif
+# endif
 # ifdef ADJUST_WSTRESS
       MstateVar=MstateVar+2
 # endif
@@ -2054,6 +2157,11 @@
 
       IF (.not.allocated(SetGridConfig)) THEN
         allocate ( SetGridConfig(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
+      END IF
+
+      IF (.not.allocated(ProcessInputData)) THEN
+        allocate ( ProcessInputData(Ngrids) )
         Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
 
@@ -2675,6 +2783,10 @@
         allocate ( LdefRST(Ngrids) )
         Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
+      IF (.not.allocated(LdefXTR)) THEN
+        allocate ( LdefXTR(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
+      END IF
 #ifdef SP4DVAR
       IF (.not.allocated(LdefSCA)) THEN
         allocate ( LdefSCA(Ngrids) )
@@ -2730,6 +2842,10 @@
         allocate ( LreadQCK(Ngrids) )
         Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
+      IF (.not.allocated(LreadSTD)) THEN
+        allocate ( LreadSTD(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
+      END IF
       IF (.not.allocated(LreadTLM)) THEN
         allocate ( LreadTLM(Ngrids) )
         Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
@@ -2763,12 +2879,16 @@
         allocate ( LwrtRST(Ngrids) )
         Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
+      IF (.not.allocated(LwrtTLF)) THEN
+        allocate ( LwrtTLF(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
+      END IF
       IF (.not.allocated(LwrtTLM)) THEN
         allocate ( LwrtTLM(Ngrids) )
         Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
-      IF (.not.allocated(LwrtTLF)) THEN
-        allocate ( LwrtTLF(Ngrids) )
+      IF (.not.allocated(LwrtXTR)) THEN
+        allocate ( LwrtXTR(Ngrids) )
         Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
 
@@ -2780,6 +2900,17 @@
         allocate ( LwrtNRM(4,Ngrids) )
         Dmem(1)=Dmem(1)+4.0_r8*REAL(Ngrids,r8)
       END IF
+
+#ifdef STD_MODEL
+      IF (.not.allocated(LdefSTD)) THEN
+        allocate ( LdefSTD(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
+      END IF
+      IF (.not.allocated(LwrtSTD)) THEN
+        allocate ( LwrtSTD(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
+      END IF
+#endif
 
 #ifdef AD_OUTPUT_STATE
       IF (.not.allocated(LwrtState3d)) THEN
@@ -2855,6 +2986,10 @@
         allocate ( ndefTLM(Ngrids) )
         Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
+      IF (.not.allocated(ndefXTR)) THEN
+        allocate ( ndefXTR(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
+      END IF
 
       IF (.not.allocated(ntsAVG)) THEN
         allocate ( ntsAVG(Ngrids) )
@@ -2901,6 +3036,10 @@
         allocate ( nTLM(Ngrids) )
         Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
+      IF (.not.allocated(nXTR)) THEN
+        allocate ( nXTR(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
+      END IF
 #ifdef SP4DVAR
       IF (.not.allocated(nSCA)) THEN
         allocate ( nSCA(Ngrids) )
@@ -2923,6 +3062,11 @@
         Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
 #endif
+
+      IF (.not.allocated(ExtractFlag)) THEN
+        allocate ( ExtractFlag(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
+      END IF
 
       IF (.not.allocated(ninfo)) THEN
         allocate ( ninfo(Ngrids) )
@@ -3058,6 +3202,17 @@
         Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
 
+      IF (.not.allocated(IAUswitch)) THEN
+        allocate ( IAUswitch(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
+      END IF
+
+      IF (.not.allocated(timeIAU)) THEN
+        allocate ( timeIAU(Ngrids) )
+        timeIAU=0.0_dp
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
+      END IF
+
       IF (.not.allocated(dTdz_min)) THEN
         allocate ( dTdz_min(Ngrids) )
         Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
@@ -3112,6 +3267,30 @@
         allocate ( S_bgqc(MstateVar,Ngrids) )
         Dmem(1)=Dmem(1)+REAL(MstateVar*Ngrids,r8)
       END IF
+
+# ifdef STD_MODEL
+      IF (.not.allocated(Sigma_max)) THEN
+        allocate ( Sigma_max(MstateVar,Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(MstateVar*Ngrids,r8)
+      END IF
+      IF (.not.allocated(Sigma_ml)) THEN
+        allocate ( Sigma_ml(MstateVar,Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(MstateVar*Ngrids,r8)
+      END IF
+      IF (.not.allocated(Sigma_do)) THEN
+        allocate ( Sigma_do(MstateVar,Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(MstateVar*Ngrids,r8)
+      END IF
+      IF (.not.allocated(Sigma_dz)) THEN
+        allocate ( Sigma_dz(MstateVar,Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(MstateVar*Ngrids,r8)
+      END IF
+
+      IF (.not.allocated(mld_uniform)) THEN
+        allocate ( mld_uniform(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
+      END IF
+# endif
 #endif
 
       IF (.not.allocated(obcfac)) THEN
@@ -3255,6 +3434,10 @@
         allocate ( crgban_cw(Ngrids) )
         Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
+      IF (.not.allocated(wec_alpha)) THEN
+        allocate ( wec_alpha(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
+      END IF
 !
       RETURN
       END SUBROUTINE allocate_scalars
@@ -3344,6 +3527,8 @@
 
       IF (allocated(iif))               deallocate ( iif )
 
+      IF (allocated(next_kstp))         deallocate ( next_kstp )
+
       IF (allocated(FrcRec))            deallocate ( FrcRec )
 
       IF (allocated(SOrec))             deallocate ( SOrec )
@@ -3403,6 +3588,8 @@
       IF (allocated(NrecFrc))           deallocate ( NrecFrc )
 
       IF (allocated(SetGridConfig))     deallocate ( SetGridConfig )
+
+      IF (allocated(ProcessInputData))  deallocate ( ProcessInputData )
 
       IF (allocated(NudgingCoeff))      deallocate ( NudgingCoeff )
 
@@ -3699,6 +3886,10 @@
 
       IF (allocated(LdefRST))           deallocate ( LdefRST )
 
+#ifdef STD_MODEL
+      IF (allocated(LdefSTD))           deallocate ( LdefSTD )
+#endif
+
 #ifdef SP4DVAR
       IF (allocated(LdefSCA))           deallocate ( LdefSCA )
 
@@ -3713,9 +3904,11 @@
 
       IF (allocated(LdefTIDE))          deallocate ( LdefTIDE )
 
+      IF (allocated(LdefTLF))           deallocate ( LdefTLF )
+
       IF (allocated(LdefTLM))           deallocate ( LdefTLM )
 
-      IF (allocated(LdefTLF))           deallocate ( LdefTLF )
+      IF (allocated(LdefXTR))           deallocate ( LdefXTR )
 
       IF (allocated(LreadADM))          deallocate ( LreadADM )
 
@@ -3726,6 +3919,8 @@
       IF (allocated(LreadFWD))          deallocate ( LreadFWD )
 
       IF (allocated(LreadQCK))          deallocate ( LreadQCK )
+
+      IF (allocated(LreadSTD))          deallocate ( LreadSTD )
 
       IF (allocated(LreadTLM))          deallocate ( LreadTLM )
 
@@ -3743,9 +3938,16 @@
 
       IF (allocated(LwrtRST))           deallocate ( LwrtRST )
 
-      IF (allocated(LwrtTLM))           deallocate ( LwrtTLM )
+#ifdef STD_MODEL
+      IF (allocated(LwrtSTD))           deallocate ( LwrtSTD )
+#endif
 
       IF (allocated(LwrtTLF))           deallocate ( LwrtTLF )
+
+      IF (allocated(LwrtTLM))           deallocate ( LwrtTLM )
+
+      IF (allocated(LwrtXTR))           deallocate ( LwrtXTR )
+
 
       IF (allocated(LdefNRM))           deallocate ( LdefNRM )
 
@@ -3787,6 +3989,8 @@
 
       IF (allocated(ndefTLM))           deallocate ( ndefTLM )
 
+      IF (allocated(ndefTLM))           deallocate ( ndefXTR )
+
       IF (allocated(ntsAVG))            deallocate ( ntsAVG )
 
       IF (allocated(ntsDIA))            deallocate ( ntsDIA )
@@ -3820,6 +4024,8 @@
 
       IF (allocated(Crec))              deallocate ( Crec )
 #endif
+
+      IF (allocated(ExtractFlag))       deallocate ( ExtractFlag )
 
       IF (allocated(ninfo))             deallocate ( ninfo )
 
@@ -3904,6 +4110,18 @@
       IF (allocated(Nprovenance))       deallocate ( Nprovenance )
 
       IF (allocated(S_bgqc))            deallocate ( S_bgqc )
+
+# ifdef STD_MODEL
+      IF (allocated(Sigma_max))         deallocate ( Sigma_max )
+
+      IF (allocated(Sigma_ml))          deallocate ( Sigma_ml )
+
+      IF (allocated(Sigma_do))          deallocate ( Sigma_do )
+
+      IF (allocated(Sigma_dz))          deallocate ( Sigma_dz )
+
+      IF (allocated(mld_uniform))       deallocate ( mld_uniform )
+# endif
 #endif
 
       IF (allocated(obcfac))            deallocate ( obcfac )
@@ -4062,8 +4280,27 @@
       M2yadv=ic+3
       ic=ic+3
 #  endif
-#  if defined NEARSHORE_MELLOR
-      M2hrad=ic+1
+#  if defined WEC_VF
+#   if defined UV_COR
+      M2fsco=ic+1
+      ic=ic+1
+#   endif
+#   ifdef BOTTOM_STREAMING
+      M2bstm=ic+1
+      ic=ic+1
+#   endif
+#   ifdef SURFACE_STREAMING
+      M2sstm=ic+1
+      ic=ic+1
+#   endif
+      M2hjvf=ic+1
+      M2kvrf=ic+2
+      M2wrol=ic+3
+      M2wbrk=ic+4
+      ic=ic+4
+#  endif
+#  if defined VEGETATION && defined VEG_DRAG
+      M2fveg=ic+1
       ic=ic+1
 #  endif
 #  if defined UV_VIS2 || defined UV_VIS4
@@ -4075,6 +4312,12 @@
       M2pgrd=ic+1
       M2sstr=ic+2             ! These indices need to be
       M2bstr=ic+3             ! specified last to allow a
+#  if defined WEC_VF
+      M2zeta=ic+4
+      M2zetw=ic+5
+      M2zqsp=ic+6
+      M2zbeh=ic+7
+#  endif
       M2rate=NDM2d            ! compact DO-loop structure
 #  ifdef SOLVE3D
 !
@@ -4096,10 +4339,29 @@
       M3yadv=ic+4
       ic=ic+4
 #   endif
-#   if defined NEARSHORE_MELLOR
-      M3hrad=ic+1
-      M3vrad=ic+2
-      ic=ic+2
+#   if defined WEC_VF
+#    if defined UV_COR
+      M3fsco=ic+1
+      ic=ic+1
+#    endif
+#    ifdef BOTTOM_STREAMING
+      M3bstm=ic+1
+      ic=ic+1
+#    endif
+#    ifdef SURFACE_STREAMING
+      M3sstm=ic+1
+      ic=ic+1
+#    endif
+      M3vjvf=ic+1
+      M3hjvf=ic+2
+      M3kvrf=ic+3
+      M3wrol=ic+4
+      M3wbrk=ic+5
+      ic=ic+5
+#   endif
+#   if defined VEGETATION && defined VEG_DRAG
+      M3fveg=ic+1
+      ic=ic+1
 #   endif
       M3pgrd=ic+1             ! needs to be here, indices below
       M3vvis=ic+2             ! require special treatment
@@ -4170,9 +4432,6 @@
 !
       one=1.0_r8
       zero=0.0_r8
-#ifdef SWAN_COUPLING
-      Infinity=one/zero
-#endif
       Co=1.0_r8/(2.0_r8+SQRT(2.0_r8))
       gorho0=g/rho0
       DO ng=1,Ngrids
@@ -4181,6 +4440,8 @@
         NudgingCoeff(ng)=.FALSE.
         ObcData(ng)=.FALSE.
         SetGridConfig(ng)=.TRUE.
+        ProcessInputData(ng)=.TRUE.
+        ExtractFlag(ng)=0
         RefineScale(ng)=0
         gamma2(ng)=-1.0_r8
         Vtransform(ng)=1
@@ -4346,6 +4607,14 @@
       CnormB=.FALSE.
       HdecayB=IniVal
       VdecayB=IniVal
+
+# ifdef STD_MODEL
+      Sigma_max=IniVal
+      Sigma_ml=IniVal
+      Sigma_do=IniVal
+      Sigma_dz=IniVal
+      mld_uniform=IniVal
+# endif
 #endif
 !
 !  Initialize several IO flags.
@@ -4382,6 +4651,9 @@
         LdefQCK(ng)=.FALSE.
         LdefRST(ng)=.TRUE.
         LdefSTA(ng)=.TRUE.
+#ifdef STD_MODEL
+        LdefSTD(ng)=.FALSE.
+#endif
         LdefTLM(ng)=.FALSE.
 #if defined AVERAGES  && defined AVERAGES_DETIDE && \
    (defined SSH_TIDES || defined UV_TIDES)
@@ -4398,6 +4670,7 @@
 #endif
         LreadFWD(ng)=.FALSE.
         LreadQCK(ng)=.FALSE.
+        LreadSTD(ng)=.FALSE.
         LreadTLM(ng)=.FALSE.
         LwrtADJ(ng)=.FALSE.
         LwrtAVG(ng)=.FALSE.
@@ -4406,7 +4679,11 @@
         LwrtPER(ng)=.FALSE.
         LwrtQCK(ng)=.FALSE.
         LwrtRST(ng)=.FALSE.
+#ifdef STD_MODEL
+        LwrtSTD(ng)=.FALSE.
+#endif
         LwrtTLM(ng)=.FALSE.
+        LwrtXTR(ng)=.FALSE.
         LwrtInfo(ng)=.TRUE.
         LwrtState2d(ng)=.FALSE.
 #ifdef AD_OUTPUT_STATE

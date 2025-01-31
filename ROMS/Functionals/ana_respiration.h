@@ -2,11 +2,10 @@
       SUBROUTINE ana_respiration (ng, tile, model)
 !
 !! git $Id$
-!! svn $Id: ana_respiration.h 1151 2023-02-09 03:08:53Z arango $
 !!======================================================================
-!! Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
+!! Copyright (c) 2002-2025 The ROMS Group                              !
 !!   Licensed under a MIT/X style license                              !
-!!   See License_ROMS.txt                                              !
+!!   See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
 !  This subroutine sets respiration rate for hypoxia using analytical  !
@@ -102,7 +101,7 @@
       DO k=1,N(ng)
         DO j=JstrT,JendT
           DO i=IstrT,IendT
-	    respiration(i,j,k)=ResRate(ng)
+            respiration(i,j,k)=ResRate(ng)
           END DO
         END DO
       END DO

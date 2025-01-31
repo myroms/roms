@@ -4,11 +4,10 @@
 #if defined NESTING && defined TANGENT
 !
 !git $Id$
-!svn $Id: tl_nesting.F 1151 2023-02-09 03:08:53Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group       Andrew M. Moore   !
+!  Copyright (c) 2002-2025 The ROMS Group            Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                                              !
+!    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
 !  This module contains several tangent linear routines to process the !
@@ -186,7 +185,6 @@
 !^
           CALL tl_z_weights (ng, model, tile)
         END DO
-!$OMP BARRIER
         RETURN
       END IF
 # endif
@@ -203,7 +201,6 @@
         DO tile=last_tile(ng),first_tile(ng),-1
           CALL mask_hweights (ng, model, tile)
         END DO
-!$OMP BARRIER
         RETURN
       END IF
 # endif
@@ -223,7 +220,6 @@
           DO tile=first_tile(ng),last_tile(ng),+1
             CALL get_metrics (ng, model, tile)
           END DO
-!$OMP BARRIER
 !
 !  Extract and store donor grid data at contact points.
 !
@@ -233,7 +229,6 @@
 !^
             CALL tl_get_refine (ng, model, tile)
           END DO
-!$OMP BARRIER
 !
 !  Fill refinement grid contact points variables by interpolating
 !  (space, time) from extracted donor grid data.  The free-surface
@@ -247,7 +242,6 @@
 !^
             CALL tl_put_refine (ng, model, tile, LputFsur)
           END DO
-!$OMP BARRIER
 !
           LputFsur=.FALSE.
           DO tile=first_tile(ng),last_tile(ng),+1
@@ -255,7 +249,7 @@
 !^
             CALL tl_put_refine (ng, model, tile, LputFsur)
           END DO
-!$OMP BARRIER
+
 
 # ifdef NESTING_DEBUG
 !
@@ -288,7 +282,6 @@
 !^
             CALL tl_correct_tracer (ngc, ng, model, tile)
           END DO
-!$OMP BARRIER
 #  endif
 !
 !  Replace coarse grid 2D state variables with the averaged fine grid
@@ -299,7 +292,6 @@
 !^
             CALL tl_fine2coarse (ng, model, r2dvar, tile)
           END DO
-!$OMP BARRIER
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
 #  ifdef SOLVE3D
@@ -312,7 +304,6 @@
 !^
             CALL tl_set_depth (ngc, tile, model)
           END DO
-!$OMP BARRIER
 !
 !  Replace coarse grid 3D state variables with the averaged fine grid
 !  values (two-way coupling).
@@ -322,7 +313,6 @@
 !^
             CALL tl_fine2coarse (ng, model, r3dvar, tile)
           END DO
-!$OMP BARRIER
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #  endif
 # else
@@ -348,7 +338,6 @@
 !^
           CALL tl_get_composite (ng, model, isection, tile)
         END DO
-!$OMP BARRIER
 !
 !  Fill composite grid contact points variables by interpolating from
 !  extracted donor grid data.
@@ -358,7 +347,6 @@
 !^
           CALL tl_put_composite (ng, model, isection, tile)
         END DO
-!$OMP BARRIER
 
       END IF
 
@@ -868,7 +856,7 @@
      &                20x,'(dg)',4x,'(rg)',18x,'2D',6x,'3D',9x,'(rg)',  &
      &                8x,'told',8x,'(ng)',8x,'tnew',/)
  20           FORMAT (4(1x,i3),2(1x,i7),2(2x,i4),2(4x,i4),1x,4(2x,i10))
-              CALL my_flush (101)
+              FLUSH (101)
             END IF
           END IF
 # endif
@@ -3338,7 +3326,7 @@
      &            7x,'Wold',7x,'Wnew',/,18x,'(dg)',3x,'(ng)',           &
      &            19x,'(dg)',7x,'told',7x,'(ng)',7x,'tnew',/)
  30       FORMAT (3i5,2i7,2i6,4(2x,i9),2f11.4)
-          CALL my_flush (201)
+          FLUSH (201)
         END IF
       END IF
 # endif
@@ -4670,7 +4658,7 @@
             IF (Master) THEN
               WRITE (301,10) 'Western Boundary Mass Fluxes: ',          &
      &                       cr, dg, rg, iif(rg), iic(rg), INT(time(rg))
-              CALL my_flush (301)
+              FLUSH (301)
             END IF
           END IF
 !
@@ -4708,7 +4696,7 @@
               END IF
               WRITE (301,30) Jbc, REFINED(cr)%DU_avg2(1,m,tnew),        &
      &                       WestSum, MFratio
-              CALL my_flush (301)
+              FLUSH (301)
 # endif
             END IF
           END DO
@@ -4727,7 +4715,7 @@
             IF (Master) THEN
               WRITE (301,10) 'Eastern Boundary Mass Fluxes: ',          &
      &                       cr, dg, rg, iif(rg), iic(rg), INT(time(rg))
-              CALL my_flush (301)
+              FLUSH (301)
             END IF
           END IF
 !
@@ -4765,7 +4753,7 @@
               END IF
               WRITE (301,30) Jbc, REFINED(cr)%DU_avg2(1,m,tnew),        &
      &                       EastSum, MFratio
-              CALL my_flush (301)
+              FLUSH (301)
 # endif
             END IF
           END DO
@@ -4784,7 +4772,7 @@
             IF (Master) THEN
               WRITE (301,20) 'Southern Boundary Mass Fluxes: ',         &
      &                       cr, dg, rg, iif(rg), iic(rg), INT(time(rg))
-              CALL my_flush (301)
+              FLUSH (301)
             END IF
           END IF
 !
@@ -4823,7 +4811,7 @@
               END IF
               WRITE (301,30) Ibc, REFINED(cr)%DV_avg2(1,m,tnew),        &
      &                       SouthSum, MFratio
-              CALL my_flush (301)
+              FLUSH (301)
 # endif
             END IF
           END DO
@@ -4842,7 +4830,7 @@
             IF (Master) THEN
               WRITE (301,20) 'Northern Boundary Mass Fluxes: ',         &
      &                       cr, dg, rg, iif(rg), iic(rg), INT(time(rg))
-              CALL my_flush (301)
+              FLUSH (301)
             END IF
           END IF
 !
@@ -4911,7 +4899,7 @@
 
 # ifdef NESTING_DEBUG
 !
-      CALL my_flush (301)
+      FLUSH (301)
 !
   10  FORMAT (/,1x,a,/,/,4x,'cr = ',i2.2,4x,'dg = ',i2.2,4x,'rg = ',    &
      &        i2.2,4x,'iif(rg) = ',i3.3,4x,'iic(rg) = ',i10.10,4x,      &

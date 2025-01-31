@@ -3,11 +3,10 @@
 #ifdef ADJOINT
 !
 !git $Id$
-!svn $Id: ad_diag.F 1151 2023-02-09 03:08:53Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2025 The ROMS Group                              !
 !    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                                              !
+!    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
 !  This routine computes various adjoint diagnostic fields.            !
@@ -125,9 +124,9 @@
       real(r8), intent(in) :: ad_u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(in) :: ad_v(LBi:UBi,LBj:UBj,N(ng),2)
 #  endif
-      real(r8), intent(in) :: ad_ubar(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(in) :: ad_vbar(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(in) :: ad_zeta(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(in) :: ad_ubar(LBi:UBi,LBj:UBj,:)
+      real(r8), intent(in) :: ad_vbar(LBi:UBi,LBj:UBj,:)
+      real(r8), intent(in) :: ad_zeta(LBi:UBi,LBj:UBj,:)
 # endif
 !
 !  Local variable declarations.
@@ -319,7 +318,7 @@
 # else
  20         FORMAT (i10,1x,a,4(1pe14.6))
 # endif
-            CALL my_flush (stdout)
+            FLUSH (stdout)
           END IF
 !
 !  If blowing-up, set exit_flag to stop computations.

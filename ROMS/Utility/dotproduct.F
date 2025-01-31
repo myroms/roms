@@ -4,11 +4,10 @@
 #if defined TLM_CHECK || defined PROPAGATOR
 !
 !git $Id$
-!svn $Id: dotproduct.F 1151 2023-02-09 03:08:53Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group       Andrew M. Moore   !
+!  Copyright (c) 2002-2025 The ROMS Group            Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                                              !
+!    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
 !  These routines compute various dot products between nonlinear,      !
@@ -198,16 +197,16 @@
       real(r8), intent(in) :: v (LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(in) :: vG(LBi:UBi,LBj:UBj,N(ng),2)
 #   endif
-      real(r8), intent(in) :: ad_ubar(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(in) :: ubar (LBi:UBi,LBj:UBj,3)
+      real(r8), intent(in) :: ad_ubar(LBi:UBi,LBj:UBj,:)
+      real(r8), intent(in) :: ubar (LBi:UBi,LBj:UBj,:)
       real(r8), intent(in) :: ubarG(LBi:UBi,LBj:UBj,2)
 
-      real(r8), intent(in) :: ad_vbar(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(in) :: vbar (LBi:UBi,LBj:UBj,3)
+      real(r8), intent(in) :: ad_vbar(LBi:UBi,LBj:UBj,:)
+      real(r8), intent(in) :: vbar (LBi:UBi,LBj:UBj,:)
       real(r8), intent(in) :: vbarG(LBi:UBi,LBj:UBj,2)
 
-      real(r8), intent(in) :: ad_zeta(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(in) :: zeta (LBi:UBi,LBj:UBj,3)
+      real(r8), intent(in) :: ad_zeta(LBi:UBi,LBj:UBj,:)
+      real(r8), intent(in) :: zeta (LBi:UBi,LBj:UBj,:)
       real(r8), intent(in) :: zetaG(LBi:UBi,LBj:UBj,2)
 #  endif
 !
@@ -516,10 +515,10 @@
       real(r8), intent(in) :: ad_u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(in) :: ad_v(LBi:UBi,LBj:UBj,N(ng),2)
 #   else
-      real(r8), intent(in) :: ad_ubar(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(in) :: ad_vbar(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(in) :: ad_ubar(LBi:UBi,LBj:UBj,:)
+      real(r8), intent(in) :: ad_vbar(LBi:UBi,LBj:UBj,:)
 #   endif
-      real(r8), intent(in) :: ad_zeta(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(in) :: ad_zeta(LBi:UBi,LBj:UBj,:)
 #  endif
 !
 !  Local variable declarations.
@@ -863,10 +862,10 @@
       real(r8), intent(in) :: tl_u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(in) :: tl_v(LBi:UBi,LBj:UBj,N(ng),2)
 #   else
-      real(r8), intent(in) :: tl_ubar(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(in) :: tl_vbar(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(in) :: tl_ubar(LBi:UBi,LBj:UBj,:)
+      real(r8), intent(in) :: tl_vbar(LBi:UBi,LBj:UBj,:)
 #   endif
-      real(r8), intent(in) :: tl_zeta(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(in) :: tl_zeta(LBi:UBi,LBj:UBj,:)
 #   ifdef BNORM
       real(r8), intent(in) :: e_zeta(LBi:UBi,LBj:UBj,NSA)
 #    ifdef SOLVE3D
@@ -1253,14 +1252,14 @@
       real(r8), intent(in) :: ad_v(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(in) :: tl_v(LBi:UBi,LBj:UBj,N(ng),2)
 #   endif
-      real(r8), intent(in) :: ad_ubar(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(in) :: tl_ubar(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(in) :: ad_ubar(LBi:UBi,LBj:UBj,:)
+      real(r8), intent(in) :: tl_ubar(LBi:UBi,LBj:UBj,:)
 
-      real(r8), intent(in) :: ad_vbar(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(in) :: tl_vbar(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(in) :: ad_vbar(LBi:UBi,LBj:UBj,:)
+      real(r8), intent(in) :: tl_vbar(LBi:UBi,LBj:UBj,:)
 
-      real(r8), intent(in) :: ad_zeta(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(in) :: tl_zeta(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(in) :: ad_zeta(LBi:UBi,LBj:UBj,:)
+      real(r8), intent(in) :: tl_zeta(LBi:UBi,LBj:UBj,:)
 #  endif
 !
 !  Local variable declarations.
@@ -1530,9 +1529,9 @@
       real(r8), intent(in) :: ad_u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(in) :: ad_v(LBi:UBi,LBj:UBj,N(ng),2)
 #   endif
-      real(r8), intent(in) :: ad_ubar(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(in) :: ad_vbar(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(in) :: ad_zeta(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(in) :: ad_ubar(LBi:UBi,LBj:UBj,:)
+      real(r8), intent(in) :: ad_vbar(LBi:UBi,LBj:UBj,:)
+      real(r8), intent(in) :: ad_zeta(LBi:UBi,LBj:UBj,:)
 #  endif
 !
 !  Local variable declarations.

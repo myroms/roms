@@ -1,10 +1,10 @@
 # ROMS Coupling ESMF/NUOPC System: Import/Export Metadata Dictionary
 #
-#svn $Id: coupling_esmf_coamps.yaml 1171 2023-06-17 16:36:36Z arango $
+#git $Id$
 #========================================================== Hernan G. Arango ==#
-#  Copyright (c) 2002-2023 The ROMS/TOMS Group                                 #
+#  Copyright (c) 2002-2025 The ROMS Group                                      #
 #    Licensed under a MIT/X style license                                      #
-#    See License_ROMS.txt                                                      #
+#    See License_ROMS.md                                                       #
 #==============================================================================#
 #
 #   Coupler:    ROMS ESMF/NUOPC system

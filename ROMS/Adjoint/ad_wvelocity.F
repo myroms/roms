@@ -3,11 +3,10 @@
 #if defined ADJOINT && defined SOLVE3D
 !
 !git $Id$
-!svn $Id: ad_wvelocity.F 1151 2023-02-09 03:08:53Z arango $
 !=======================================================================
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2025 The ROMS Group                              !
 !    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                            Hernan G. Arango  !
+!    See License_ROMS.md                             Hernan G. Arango  !
 !=================================================== Andrew M. Moore ===
 !                                                                      !
 !  This subroutines computes vertical velocity (m/s) at W-points       !

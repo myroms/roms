@@ -3,11 +3,10 @@
       SUBROUTINE rp_initial (ng)
 !
 !git $Id$
-!svn $Id: rp_initial.F 1166 2023-05-17 20:11:58Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2025 The ROMS Group                              !
 !    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                                              !
+!    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
 !  This routine initializes representers tangent linear model.         !
@@ -130,6 +129,7 @@
 !
       iif(ng)=1
       indx1(ng)=1
+      next_kstp(ng)=1
       kstp(ng)=1
       krhs(ng)=1
       knew(ng)=1

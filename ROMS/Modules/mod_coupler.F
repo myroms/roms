@@ -4,11 +4,10 @@
 #if defined MODEL_COUPLING && defined MCT_LIB
 !
 !git $Id$
-!svn $Id: mod_coupler.F 1151 2023-02-09 03:08:53Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2025 The ROMS Group                              !
 !    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                                              !
+!    See License_ROMS.md                                               !
 !=======================================================================
 !
       USE mod_param
@@ -76,7 +75,7 @@
       END TYPE T_CLOCK
 !
 !-----------------------------------------------------------------------
-!  Set various variables used to couple ROMS/TOMS to other modeling
+!  Set various variables used to couple ROMS to other modeling
 !  systems.
 !-----------------------------------------------------------------------
 !

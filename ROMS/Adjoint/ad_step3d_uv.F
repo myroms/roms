@@ -4,11 +4,10 @@
 #if defined ADJOINT && defined SOLVE3D
 !
 !git $Id$
-!svn $Id: ad_step3d_uv.F 1151 2023-02-09 03:08:53Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group       Andrew M. Moore   !
+!  Copyright (c) 2002-2025 The ROMS Group            Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                                              !
+!    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
 !  This subroutine time-steps  the  adjoint  horizontal  momentum      !
@@ -22,6 +21,30 @@
 !                                                                      !
 !=======================================================================
 !
+      USE mod_param
+      USE mod_coupling
+# ifdef DIAGNOSTICS_UV
+!!    USE mod_diags
+# endif
+      USE mod_forces
+      USE mod_grid
+      USE mod_mixing
+      USE mod_ocean
+      USE mod_scalars
+      USE mod_sources
+!
+      USE ad_exchange_2d_mod
+      USE ad_exchange_3d_mod
+      USE exchange_3d_mod
+# ifdef DISTRIBUTE
+      USE mp_exchange_mod,   ONLY : ad_mp_exchange2d, ad_mp_exchange3d
+# endif
+      USE ad_u3dbc_mod,      ONLY : ad_u3dbc_tile
+      USE ad_v3dbc_mod,      ONLY : ad_v3dbc_tile
+# ifdef UV_DESTAGGERED
+      USE uv_var_change_mod, ONLY : ad_uv_C2A_grid
+# endif
+!
       implicit none
 !
       PRIVATE
@@ -33,15 +56,6 @@
       SUBROUTINE ad_step3d_uv (ng, tile)
 !***********************************************************************
 !
-      USE mod_param
-      USE mod_coupling
-# ifdef DIAGNOSTICS_UV
-!!    USE mod_diags
-# endif
-      USE mod_forces
-      USE mod_grid
-      USE mod_mixing
-      USE mod_ocean
       USE mod_stepping
 !
 !  Imported variable declarations.
@@ -178,19 +192,6 @@
      &                              Huon, ad_Huon,                      &
      &                              Hvom, ad_Hvom)
 !***********************************************************************
-!
-      USE mod_param
-      USE mod_scalars
-      USE mod_sources
-!
-      USE ad_exchange_2d_mod
-      USE ad_exchange_3d_mod
-      USE exchange_3d_mod
-# ifdef DISTRIBUTE
-      USE mp_exchange_mod, ONLY : ad_mp_exchange2d, ad_mp_exchange3d
-# endif
-      USE ad_u3dbc_mod,    ONLY : ad_u3dbc_tile
-      USE ad_v3dbc_mod,    ONLY : ad_v3dbc_tile
 !
 !  Imported variable declarations.
 !
@@ -412,6 +413,19 @@
           ad_oHz(i,k)=0.0_r8
         END DO
       END DO
+
+# ifdef UV_DESTAGGERED
+!
+!-----------------------------------------------------------------------
+!  Compute adjoint 3D momentum (ad_ua, ad_va) at RHO-points (A-Grid)
+!  for output purposes and data assimilation where the observations
+!  and state vector is located at the cell-center.
+!-----------------------------------------------------------------------
+!
+!>    CALL tl_uv_C2A_grid (ng, tile, iTLM, nnew)
+!>
+      CALL ad_uv_C2A_grid (ng, tile, iTLM, nnew)
+# endif
 !
 !-----------------------------------------------------------------------
 !  Exchange boundary data.
@@ -1420,7 +1434,7 @@
                 ad_z_w(i  ,j,k  )=ad_z_w(i  ,j,k  )+adfac
                 ad_cff1=0.0_r8
               END DO
-            ELSE
+            ELSE IF (INT(SOURCES(ng)%Dsrc(is)).eq.1) THEN
               DO k=1,N(ng)
                 cff1=1.0_r8/(om_v(i,j)*                                 &
      &                       0.5_r8*(z_w(i,j-1,k)-z_w(i,j-1,k-1)+       &

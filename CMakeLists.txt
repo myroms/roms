@@ -1,18 +1,48 @@
 # git $Id$
-# svn $Id: CMakeLists.txt 1166 2023-05-17 20:11:58Z arango $
 #:::::::::::::::::::::::::::::::::::::::::::::::::::::: David Robertson :::
-# Copyright (c) 2002-2023 The ROMS/TOMS Group                           :::
+# Copyright (c) 2002-2025 The ROMS Group                                :::
 #   Licensed under a MIT/X style license                                :::
-#   See License_ROMS.txt                                                :::
+#   See License_ROMS.md                                                 :::
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 #
 # Top-Level CMake File Definitions.
 
-cmake_minimum_required( VERSION 3.12.0 FATAL_ERROR )
+cmake_minimum_required( VERSION 3.13.0 FATAL_ERROR )
 
 list( APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/Compilers)
 Message( STATUS "module path = ${CMAKE_MODULE_PATH}" )
 set( CMAKE_DIRECTORY_LABELS ${PROJECT_NAME} )
+
+find_package( Git )
+if( GIT_FOUND )
+  if( EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/.git )
+    message( STATUS "Getting and setting GIT_URL and GIT_REV" )
+    execute_process(
+      COMMAND ${GIT_EXECUTABLE} config --get remote.origin.url
+      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+      OUTPUT_VARIABLE GITURL
+      OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+
+    execute_process(
+      COMMAND ${GIT_EXECUTABLE} rev-parse --verify HEAD
+      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+      OUTPUT_VARIABLE GITREV
+      OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+
+    add_compile_definitions( GIT_URL="${GITURL}" GIT_REV="${GITREV}" SVN_URL="https://www.myroms.org/svn/src" )
+  endif()
+endif()
+
+find_package( Subversion )
+if( SUBVERSION_FOUND )
+  if( EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/.svn )
+    message( STATUS "Getting and setting SVN_URL and SVN_REV" )
+    Subversion_WC_INFO(${CMAKE_CURRENT_SOURCE_DIR} roms IGNORE_SVN_FAILURE)
+    add_compile_definitions( SVN_URL="${roms_WC_URL}" SVN_REV="${roms_WC_REVISION}" )
+  endif()
+endif()
 
 # Figure out if we are using ecbuild.
 
@@ -41,6 +71,27 @@ include( roms_functions )
 include( roms_compiler_flags )
 include( roms_config )
 
+# Set MYDEFS to list of Compiling definition to check for options that require
+# cmake configuration adjustments
+
+get_directory_property( MYDEFS COMPILE_DEFINITIONS )
+
+# Check if we need to include ESMF
+
+if( MYDEFS MATCHES "ESMF_LIB" )
+  if( NOT ESMF_FOUND )
+    find_package( ESMF REQUIRED )
+    if( ESMF_FOUND )
+      message( STATUS "ESMF_INCLUDE_DIRECTORIES = ${ESMF_INCLUDE_DIRECTORIES}" )
+      message( STATUS "ESMF_LIBRARY_LOCATION = ${ESMF_LIBRARY_LOCATION}" )
+      message( STATUS "ESMF_INTERFACE_LINK_LIBRARIES = ${ESMF_INTERFACE_LINK_LIBRARIES}" )
+      include_directories( ${ESMF_INCLUDE_DIRECTORIES} )
+    else()
+      message( FATAL "ESMF NOT FOUND" )
+    endif()
+  endif()
+endif()
+
 ###########################################################################
 # Project
 ###########################################################################
@@ -52,7 +103,7 @@ if( NOT IN_ECBUILD )
   # Set Fortran modules directory when not using ecbuild. It is set
   # automatically when using ecbuild.
 
-  set( CMAKE_Fortran_MODULE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/modules" )
+  set( CMAKE_Fortran_MODULE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/module" )
   set( CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE )
   set( CMAKE_SKIP_BUILD_RPATH FALSE )
 
@@ -106,6 +157,7 @@ add_subdirectory( "ROMS/Drivers" )
 add_subdirectory( "ROMS/Functionals" )
 add_subdirectory( "ROMS/Modules" )
 add_subdirectory( "ROMS/Nonlinear" )
+add_subdirectory( "ROMS/Nonlinear/BBL" )
 add_subdirectory( "ROMS/Nonlinear/Biology" )
 add_subdirectory( "ROMS/Nonlinear/Sediment" )
 add_subdirectory( "ROMS/Utility" )
@@ -120,6 +172,7 @@ include_directories(
   "ROMS/Include"
   "ROMS/Modules"
   "ROMS/Nonlinear"
+  "ROMS/Nonlinear/BBL"
   "ROMS/Nonlinear/Biology"
   "ROMS/Nonlinear/Sediment"
   "ROMS/Utility"
@@ -137,6 +190,7 @@ list(APPEND srcs
      ${ROMS_Functionals_files}
      ${ROMS_Modules_files}
      ${ROMS_Nonlinear_files}
+     ${ROMS_Nonlinear_BBL_files}
      ${ROMS_Nonlinear_Biology_files}
      ${ROMS_Nonlinear_Sediment_files}
      ${ROMS_Utility_files}
@@ -266,6 +320,17 @@ if( IN_ECBUILD )
                        INSTALL_HEADERS LISTED
                        LINKER_LANGUAGE ${ROMS_LINKER_LANGUAGE}
                      )
+
+  # Set location of modules for editing and recompiling. CMake needs the location
+  # of modules in the project subdirectory (-I${CMAKE_BINARY_DIR}/roms/module)
+  # for correct USE association.
+
+  set(MODULE_DIR ${PROJECT_NAME}/module)
+  set_target_properties(${PROJECT_NAME} PROPERTIES Fortran_MODULE_DIRECTORY ${CMAKE_BINARY_DIR}/${MODULE_DIR})
+  install(DIRECTORY ${CMAKE_BINARY_DIR}/${MODULE_DIR}/ DESTINATION ${CMAKE_INSTALL_LIBDIR}/${MODULE_DIR})
+  target_include_directories(${PROJECT_NAME} INTERFACE
+                              $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/${MODULE_DIR}>
+                              $<INSTALL_INTERFACE:${CMAKE_INSTALL_LIBDIR}/${MODULE_DIR}>)
 endif()
 
 # Add dependency on custom target "fix" so "DependInfo.cmake" is cleaned up
@@ -384,6 +449,12 @@ else()
       target_link_libraries( "${BIN}" parpack arpack )
     endif()
 
+    # if ESMF is requested, add to linking library list
+
+    if( MYDEFS MATCHES "ESMF_LIB" )
+      target_link_libraries( "${BIN}" ESMF )
+    endif()
+
     # If parallel I/O with SCORPIO is requested, add to linking library list.
     # The path to the libraries are set above.
 
@@ -406,3 +477,5 @@ if( IN_ECBUILD )
   ecbuild_install_project( NAME ${PROJECT_NAME} )
   ecbuild_print_summary()
 endif()
+
+file( WRITE ${CMAKE_CURRENT_BINARY_DIR}/fortran_flags ${my_fflags} )

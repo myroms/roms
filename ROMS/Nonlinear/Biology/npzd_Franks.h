@@ -1,11 +1,10 @@
       MODULE biology_mod
 !
 !git $Id$
-!svn $Id: npzd_Franks.h 1151 2023-02-09 03:08:53Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group        Craig V. Lewis   !
+!  Copyright (c) 2002-2025 The ROMS Group             Craig V. Lewis   !
 !    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                                              !
+!    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
 !  Nutrient-Phytoplankton-Zooplankton-Detritus Model.                  !

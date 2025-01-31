@@ -1,14 +1,13 @@
 #include "cppdefs.h"
       MODULE esmf_coupler_mod
 
-#if defined MODEL_COUPLING && defined ESMF_LIB
+#if defined MODEL_COUPLING && defined ESMF_LIB && !defined CMEPS
 !
 !git $Id$
-!svn $Id: esmf_coupler.h 1166 2023-05-17 20:11:58Z arango $
 !=======================================================================
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2025 The ROMS Group                              !
 !    Licensed under a MIT/X style license         Hernan G. Arango     !
-!    See License_ROMS.txt                         Ufuk Utku Turuncoglu !
+!    See License_ROMS.md                          Ufuk Utku Turuncoglu !
 !=======================================================================
 !                                                                      !
 !  This module includes the coupler routines for the computation,      !
@@ -127,7 +126,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering Coupler_SetServices for ' &
      &                          // TRIM(Cname), ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
 !
 !-----------------------------------------------------------------------
@@ -192,7 +191,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '<== Exiting  Coupler_SetServices for ' &
      &                          // TRIM(Cname), ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
 !
       RETURN
@@ -274,7 +273,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering Coupler_ComputeRH for '   &
      &                          // TRIM(Cname), ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
 !
 !  Get current parallel node rank and number of nodes.
@@ -681,7 +680,7 @@
      &          TRIM(GridType (MODELS(iDst)%ImportField(idDst)%gtype)), &
      &          TRIM(IntrpType(MODELS(iSrc)%ExportField(idSrc)%itype)), &
      &          rh1Exist, rh2Exist
-                CALL my_flush (cplout)
+                FLUSH (cplout)
               END IF
 !
 !  Create 1st RouteHandle.
@@ -737,7 +736,7 @@
 !
                 IF ((DebugLevel.gt.0).and.(localPET.eq.0)) THEN
                   WRITE (cplout,40) TRIM(Rname)
-                  CALL my_flush (cplout)
+                  FLUSH (cplout)
                 END IF
               END IF
 !
@@ -863,7 +862,7 @@
 !
                 IF ((DebugLevel.gt.0).and.(localPET.eq.0)) THEN
                   WRITE (cplout,40) TRIM(Rname)
-                  CALL my_flush (cplout)
+                  FLUSH (cplout)
                 END IF
               END IF
 !
@@ -920,7 +919,7 @@
      &          TRIM(GridType (MODELS(iDst)%ImportField(idDst)%gtype)), &
      &          TRIM(IntrpType(MODELS(iSrc)%ExportField(idSrc)%itype)), &
      &          rh1Exist, rh2Exist
-                CALL my_flush (cplout)
+                FLUSH (cplout)
               END IF
 !
 !  Regrid method from source to destination.
@@ -1063,9 +1062,9 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '<== Exiting  Coupler_ComputeRH for '   &
      &                          // TRIM(Cname), ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
-      IF (DebugLevel.gt.0) CALL my_flush (cplout)
+      IF (DebugLevel.gt.0) FLUSH (cplout)
 !
  10   FORMAT (4x,'RouteHandle - PET = ',i0,' iSrc = ',i0,' iDst = ',i0, &
      &        ' srcMask = ',i0,' dstMask = ',i0,', cplSet = ',a,', ',a)
@@ -1153,7 +1152,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering Coupler_ExecuteRH for '   &
      &                          // TRIM(Cname), ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
 !
 !  Get current parallel node rank and number of nodes.
@@ -1764,9 +1763,9 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '<== Exiting  Coupler_ExecuteRH for '   &
      &                          // TRIM(Cname), ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
-      IF (DebugLevel.gt.0) CALL my_flush (cplout)
+      IF (DebugLevel.gt.0) FLUSH (cplout)
 !
  10   FORMAT (3x,'ESMF Coupler - PET(',i3.3,') - ',a,' = ',e14.5,       &
      &        ' (',a,')')
@@ -1824,7 +1823,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering Coupler_ReleaseRH',       &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
       rc=ESMF_SUCCESS
 !
@@ -2189,7 +2188,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '<== Exiting  Coupler_ReleaseRH',       &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
 !
       RETURN
@@ -2253,7 +2252,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering Coupler_AdjustField',     &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
       rc=ESMF_SUCCESS
 !
@@ -2472,7 +2471,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '<== Exiting  Coupler_AdjustField',     &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
 !
       RETURN
@@ -2527,7 +2526,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering Coupler_AreaIntegral',    &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
       rc=ESMF_SUCCESS
 !
@@ -2711,9 +2710,9 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '<== Exiting  Coupler_AreaIntegral',    &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
-      IF (DebugLevel.gt.0) CALL my_flush (cplout)
+      IF (DebugLevel.gt.0) FLUSH (cplout)
 !
       RETURN
       END FUNCTION Coupler_AreaIntegral
@@ -2766,7 +2765,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering Coupler_FieldCreate',     &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
 !
 !-----------------------------------------------------------------------
@@ -2931,7 +2930,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '<== Exiting  Coupler_FieldCreate',     &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
 !
       RETURN
@@ -2990,7 +2989,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering Coupler_FindUnmapped',    &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
       rc=ESMF_SUCCESS
 !
@@ -3252,7 +3251,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '<== Exiting  Coupler_FindUnmapped',    &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
 !
       RETURN

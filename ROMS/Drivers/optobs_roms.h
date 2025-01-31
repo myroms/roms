@@ -1,14 +1,13 @@
       MODULE roms_kernel_mod
 !
 !git $Id$
-!svn $Id: optobs_roms.h 1166 2023-05-17 20:11:58Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group           W. G. Zhang   !
+!  Copyright (c) 2002-2025 The ROMS Group                W. G. Zhang   !
 !    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                                              !
+!    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
-!  ROMS/TOMS Optimal Observation Driver:                               !
+!  ROMS Optimal Observation Driver:                                    !
 !                                                                      !
 !  This driver computes the  adjoint sensitivity  of a function or     !
 !  index, J,  in terms of space and/or time integrals of the model     !
@@ -27,7 +26,7 @@
 !  model.                                                              !
 !                                                                      !
 !  These routines control the initialization,  time-stepping,  and     !
-!  finalization of  ROMS/TOMS  model following ESMF conventions:       !
+!  finalization of  ROMS  model following ESMF conventions:            !
 !                                                                      !
 !     ROMS_initialize                                                  !
 !     ROMS_run                                                         !
@@ -62,6 +61,7 @@
 # endif
 #endif
       USE normalization_mod, ONLY : normalization
+      USE stdout_mod,        ONLY : Set_StdOutUnit, stdout_unit
       USE strings_mod,       ONLY : FoundError
       USE tl_def_ini_mod,    ONLY : tl_def_ini
       USE wrt_rst_mod,       ONLY : wrt_rst
@@ -81,7 +81,7 @@
 !
 !=======================================================================
 !                                                                      !
-!  This routine allocates and initializes ROMS/TOMS state variables    !
+!  This routine allocates and initializes ROMS state variables         !
 !  and internal and external parameters.                               !
 !                                                                      !
 !=======================================================================
@@ -137,6 +137,19 @@
 !  independent from standard input parameters.
 !
         CALL initialize_parallel
+!
+!  Set the ROMS standard output unit to write verbose execution info.
+!  Notice that the default standard out unit in Fortran is 6.
+!
+!  In some applications like coupling or disjointed mpi-communications,
+!  it is advantageous to write standard output to a specific filename
+!  instead of the default Fortran standard output unit 6. If that is
+!  the case, it opens such formatted file for writing.
+!
+        IF (Set_StdOutUnit) THEN
+          stdout=stdout_unit(Master)
+          Set_StdOutUnit=.FALSE.
+        END IF
 !
 !  Read in model tunable parameters from standard input. Allocate and
 !  initialize variables in several modules after the number of nested
@@ -519,11 +532,11 @@
 #endif
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
- 10   FORMAT (/,'AD ROMS/TOMS: adjoint forcing time range: ',           &
+ 10   FORMAT (/,'AD ROMS: adjoint forcing time range: ',                &
      &        f12.4,' - ',f12.4 ,/)
  20   FORMAT (/,' Out of range adjoint forcing time, ',a,f12.4,/,       &
      &        ' It must be between ',f12.4,' and ',f12.4)
- 30   FORMAT (/,1x,a,1x,'ROMS/TOMS: started time-stepping:',            &
+ 30   FORMAT (/,1x,a,1x,'ROMS: started time-stepping:',                 &
      &        ' (Grid: ',i2.2,' TimeSteps: ',i0,' - ',i0,')',/)
 !
       RETURN
@@ -533,7 +546,7 @@
 !
 !=======================================================================
 !                                                                      !
-!  This routine terminates ROMS/TOMS nonlinear and adjoint models      !
+!  This routine terminates ROMS nonlinear and adjoint models           !
 !  execution.                                                          !
 !                                                                      !
 !=======================================================================

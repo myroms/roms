@@ -4,11 +4,10 @@
    (defined UV_VIS2 || defined UV_VIS4)
 !!
 !!git $Id$
-!!svn $Id: ad_uv3dmix.F 1151 2023-02-09 03:08:53Z arango $
 !!================================================= Hernan G. Arango ===
-!! Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
+!! Copyright (c) 2002-2025 The ROMS Group                              !
 !!   Licensed under a MIT/X style license                              !
-!!   See License_ROMS.txt                                              !
+!!   See License_ROMS.md                                               !
 !!======================================================================
 !!                                                                     !
 !! This routine computes adjoint horizontal viscosity of momentum.     !

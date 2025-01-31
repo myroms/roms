@@ -2,11 +2,10 @@
       MODULE u2dbc_mod
 !
 !git $Id$
-!svn $Id: u2dbc_im.F 1151 2023-02-09 03:08:53Z arango $
 !=======================================================================
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2025 The ROMS Group                              !
 !    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                           Hernan G. Arango   !
+!    See License_ROMS.md                            Hernan G. Arango   !
 !========================================== Alexander F. Shchepetkin ===
 !                                                                      !
 !  This subroutine sets lateral boundary conditions for vertically     !
@@ -65,6 +64,9 @@
 #ifdef NESTING
       USE mod_nesting
 #endif
+#ifdef WEC
+      USE mod_ocean
+#endif
       USE mod_scalars
 !
 !  Imported variable declarations.
@@ -80,10 +82,10 @@
 
       real(r8), intent(inout) :: ubar(LBi:,LBj:,:)
 #else
-      real(r8), intent(in) :: vbar(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(in) :: zeta(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(in) :: vbar(LBi:UBi,LBj:UBj,:)
+      real(r8), intent(in) :: zeta(LBi:UBi,LBj:UBj,:)
 
-      real(r8), intent(inout) :: ubar(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(inout) :: ubar(LBi:UBi,LBj:UBj,:)
 #endif
 !
 !  Local variable declarations.
@@ -112,6 +114,10 @@
 !  Set time-indices
 !-----------------------------------------------------------------------
 !
+#if defined STEP2D_FB_AB3_AM4 || defined STEP2D_FB_LF_AM3
+        know=kstp
+        dt2d=dtfast(ng)
+#else
       IF (FIRST_2D_STEP) THEN
         know=krhs
         dt2d=dtfast(ng)
@@ -122,6 +128,7 @@
         know=kstp
         dt2d=dtfast(ng)
       END IF
+#endif
 #if defined ATM_PRESS && defined PRESS_COMPENSATE
       OneAtm=1013.25_r8                  ! 1 atm = 1013.25 mb
       fac=100.0_r8/(g*rho0)
@@ -460,7 +467,10 @@
      &              (GRID(ng)%h(Istr-1,j)+zeta(Istr-1,j,kout)+          &
      &               GRID(ng)%h(Istr  ,j)+zeta(Istr  ,j,kout))
                 cff1=GRID(ng)%on_u(Istr,j)/REFINED(cr)%on_u(m)
-                bry_val=cff1*REFINED(cr)%DU_avg2(1,m,tnew)/cff
+                bry_val=cff1*REFINED(cr)%U2d_flux(1,m,tnew)/cff
+# ifdef WEC
+                bry_val=bry_val-OCEAN(ng)%ubar_stokes(Istr,j)
+# endif
 # ifdef MASKING
                 bry_val=bry_val*GRID(ng)%umask(Istr,j)
 # endif
@@ -808,7 +818,10 @@
      &              (GRID(ng)%h(Iend+1,j)+zeta(Iend+1,j,kout)+          &
      &               GRID(ng)%h(Iend  ,j)+zeta(Iend  ,j,kout))
                 cff1=GRID(ng)%on_u(Iend+1,j)/REFINED(cr)%on_u(m)
-                bry_val=cff1*REFINED(cr)%DU_avg2(1,m,tnew)/cff
+                bry_val=cff1*REFINED(cr)%U2d_flux(1,m,tnew)/cff
+# ifdef WEC
+                bry_val=bry_val-OCEAN(ng)%ubar_stokes(Iend+1,j)
+# endif
 # ifdef MASKING
                 bry_val=bry_val*GRID(ng)%umask(Iend+1,j)
 # endif

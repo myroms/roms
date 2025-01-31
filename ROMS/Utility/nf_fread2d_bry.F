@@ -2,11 +2,10 @@
       MODULE nf_fread2d_bry_mod
 !
 !git $Id$
-!svn $Id: nf_fread2d_bry.F 1159 2023-03-24 23:49:03Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2025 The ROMS Group                              !
 !    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                                              !
+!    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
 !  This module reads in a generic floating point 2D boundary array     !
@@ -572,10 +571,10 @@
 !
         IF (Lchecksum) THEN
           Npts=(UBij-LBij+1)*Nrec*4
-          IF (.not.allocatable(Cwrk)) allocate ( Cwrk(Npts) )
+          IF (.not.allocated(Cwrk)) allocate ( Cwrk(Npts) )
           Cwrk=PACK(wrk(LBij:UBij, 1:4, 1:Nrec), .TRUE.)
           CALL get_hash (Cwrk, Npts, checksum)
-          IF (allocatable(Cwrk)) deallocate (Cwrk)
+          IF (allocated(Cwrk)) deallocate (Cwrk)
         END IF
       END IF
 !

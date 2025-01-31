@@ -1,17 +1,15 @@
       PROGRAM MyROMS
 !
 !git $Id$
-!svn $Id: roms.h 1151 2023-02-09 03:08:53Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2025 The ROMS Group                              !
 !    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                                              !
+!    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
 !  Regional Ocean Model System (ROMS)                                  !
-!  Terrain-following Ocean Model System (TOMS)                         !
 !                                                                      !
-!  Master program to execute  ROMS/TOMS  drivers in ocean mode only    !
+!  Master program to execute  ROMS  drivers in ocean mode only         !
 !  without coupling (sequential or concurrent) to  any  atmospheric    !
 !  model.                                                              !
 !                                                                      !
@@ -68,7 +66,7 @@
 !
       logical, save :: first
 
-      integer :: ng, MyError
+      integer :: ng, MyError, provided, required
 
 #ifdef DISTRIBUTE
 # ifdef MPI
@@ -77,21 +75,27 @@
 !  Initialize distributed-memory MPI configuration.
 !-----------------------------------------------------------------------
 !
-      CALL mpi_init (MyError)
+#  ifdef MULTI_THREAD
+      required=MPI_THREAD_MULTIPLE
+      CALL mpi_init_thread (required, provided, MyError)
       IF (MyError.ne.0) THEN
-        WRITE (stdout,10)
-  10    FORMAT (/,' ROMS/TOMS - Unable to initialize MPI.')
+        PRINT '(/,a)',' ROMS: Unable to initialize multi-threaded MPI'
         exit_flag=6
       END IF
+#  else
+      CALL mpi_init (MyError)
+      IF (MyError.ne.0) THEN
+        PRINT '(/,a)',' ROMS: Unable to initialize MPI'
+        exit_flag=6
+      END IF
+#  endif
 !
 !  Get rank of the local process in the group associated with the
 !  comunicator.
 !
       CALL mpi_comm_rank (MPI_COMM_WORLD, MyRank, MyError)
       IF (MyError.ne.0) THEN
-        WRITE (stdout,20)
-  20    FORMAT (/,' ROMS/TOMS - Unable to inquire rank of local',       &
-     &              ' processor.')
+        PRINT '(/,a)',' ROMS: Unable to inquire rank of local processor'
         exit_flag=6
       END IF
 # endif

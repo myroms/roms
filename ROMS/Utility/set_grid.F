@@ -2,11 +2,10 @@
       SUBROUTINE set_grid (ng, model)
 !
 !git $Id$
-!svn $Id: set_grid.F 1151 2023-02-09 03:08:53Z arango $
 !=======================================================================
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2025 The ROMS Group                              !
 !    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                                              !
+!    See License_ROMS.md                                               !
 !================================================== Hernan G. Arango ===
 !                                                                      !
 !  This routine sets application grid and associated variables and     !
@@ -27,6 +26,9 @@
 #endif
 #ifdef TIDE_GENERATING_FORCES
       USE equilibrium_tide_mod, ONLY : harmonic_constituents
+#endif
+#ifdef GRID_EXTRACT
+      USE get_extract_mod,      ONLY : get_extract
 #endif
 #ifndef ANA_GRID
       USE get_grid_mod,         ONLY : get_grid
@@ -84,6 +86,20 @@
 # endif
 !$OMP BARRIER
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+#endif
+
+#ifdef GRID_EXTRACT
+!
+!-----------------------------------------------------------------------
+!  Get grid geometry for field extraction through interpolation or
+!  decimation.
+!-----------------------------------------------------------------------
+!
+# ifdef DISTRIBUTE
+      CALL get_extract (ng, MyRank, model)
+# else
+      CALL get_extract (ng, -1, model)
+# endif
 #endif
 
 #ifdef SOLVE3D

@@ -1,9 +1,8 @@
-# git $Id: compiler_flags_GNU_Fortran.cmake 1171 2023-06-17 16:36:36Z arango $
-# svn $Id: compiler_flags_GNU_Fortran.cmake 1171 2023-06-17 16:36:36Z arango $
+# git $Id$
 #:::::::::::::::::::::::::::::::::::::::::::::::::::::: David Robertson :::
-# Copyright (c) 2002-2023 The ROMS/TOMS Group                           :::
+# Copyright (c) 2002-2025 The ROMS Group                                :::
 #   Licensed under a MIT/X style license                                :::
-#   See License_ROMS.txt                                                :::
+#   See License_ROMS.md                                                 :::
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 #
 # CMake Flags for the GNU Fortran Compiler.
@@ -13,9 +12,13 @@
 ###########################################################################
 
 if( MPI )
-  set( CMAKE_Fortran_COMPILER mpif90 )
+  execute_process( COMMAND which mpif90
+                   OUTPUT_VARIABLE CMAKE_Fortran_COMPILER
+                   OUTPUT_STRIP_TRAILING_WHITESPACE )
 else()
-  set( CMAKE_Fortran_COMPILER gfortran )
+  execute_process( COMMAND which gfortran
+                   OUTPUT_VARIABLE CMAKE_Fortran_COMPILER
+                   OUTPUT_STRIP_TRAILING_WHITESPACE )
 endif()
 
 ###########################################################################

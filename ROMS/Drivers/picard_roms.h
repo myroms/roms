@@ -1,14 +1,13 @@
       MODULE roms_kernel_mod
 !
 !git $Id$
-!svn $Id: picard_roms.h 1166 2023-05-17 20:11:58Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group       Andrew M. Moore   !
+!  Copyright (c) 2002-2025 The ROMS Group            Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                                              !
+!    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
-!  ROMS/TOMS Picard Iterations Driver:                                 !
+!  ROMS Picard Iterations Driver:                                      !
 !                                                                      !
 !  This driver is used to perform the Picard iterations test for the   !
 !  representers tangent linear model used in IOMs weak constraint 4D   !
@@ -49,6 +48,7 @@
       USE mct_coupler_mod,   ONLY : initialize_ocn2wav_coupling
 # endif
 #endif
+      USE stdout_mod,        ONLY : Set_StdOutUnit, stdout_unit
       USE strings_mod,       ONLY : FoundError
       USE wrt_rst_mod,       ONLY : wrt_rst
 !
@@ -64,7 +64,7 @@
 !
 !=======================================================================
 !                                                                      !
-!  This routine allocates and initializes ROMS/TOMS state variables    !
+!  This routine allocates and initializes ROMS state variables         !
 !  and internal and external parameters.                               !
 !                                                                      !
 !=======================================================================
@@ -119,6 +119,19 @@
 !  independent from standard input parameters.
 !
         CALL initialize_parallel
+!
+!  Set the ROMS standard output unit to write verbose execution info.
+!  Notice that the default standard out unit in Fortran is 6.
+!
+!  In some applications like coupling or disjointed mpi-communications,
+!  it is advantageous to write standard output to a specific filename
+!  instead of the default Fortran standard output unit 6. If that is
+!  the case, it opens such formatted file for writing.
+!
+        IF (Set_StdOutUnit) THEN
+          stdout=stdout_unit(Master)
+          Set_StdOutUnit=.FALSE.
+        END IF
 !
 !  Read in model tunable parameters from standard input. Allocate and
 !  initialize variables in several modules after the number of nested
@@ -196,7 +209,7 @@
 !
 !=======================================================================
 !                                                                      !
-!  This routine time-steps ROMS/TOMS representer tangent linear model  !
+!  This routine time-steps ROMS representer tangent linear model       !
 !  for the specified time interval (seconds), RunInterval.             !
 !                                                                      !
 !=======================================================================
@@ -228,7 +241,7 @@
           WRITE (FWD(ng)%name,10) TRIM(TLM(ng)%head), Nrun-1
 
           IF (Master) THEN
-            WRITE (stdout,20) 'ROMS/TOMS Picard Iteration: ', Nrun, ng, &
+            WRITE (stdout,20) 'ROMS Picard Iteration: ', Nrun, ng,      &
      &                        TRIM(TLM(ng)%name),                       &
      &                        TRIM(FWD(ng)%name)
           END IF
@@ -286,7 +299,7 @@
  20   FORMAT (/,a,i3,2x,'(Grid: ',i0,')',/,                             &
      &        /,5x,'  History file: ',a,                                &
      &        /,5x,'  Forward file: ',a,/)
- 30   FORMAT (/,1x,a,1x,'ROMS/TOMS: started time-stepping:',            &
+ 30   FORMAT (/,1x,a,1x,'ROMS: started time-stepping:',                 &
      &        ' (Grid: ',i0,' TimeSteps: ',i0,' - ',i0,')',/)
 !
       RETURN
@@ -296,7 +309,7 @@
 !
 !=======================================================================
 !                                                                      !
-!  This routine terminates ROMS/TOMS nonlinear model execution.        !
+!  This routine terminates ROMS nonlinear model execution.             !
 !                                                                      !
 !=======================================================================
 !

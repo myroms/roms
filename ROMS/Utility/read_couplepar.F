@@ -3,11 +3,10 @@
       SUBROUTINE read_CouplePar (model)
 !
 !git $Id$
-!svn $Id: read_couplepar.F 1151 2023-02-09 03:08:53Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2025 The ROMS Group                              !
 !    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                                              !
+!    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
 !  This routine reads and reports multiple model coupling input        !
@@ -53,7 +52,7 @@
 !-----------------------------------------------------------------------
 !  Determine coupling standard input file name.  In distributed-memory,
 !  this name is assigned at the executtion command line and processed
-!  with the Unix routine GETARG.  The ROMS/TOMS input parameter script
+!  with the Unix routine GETARG.  The ROMS input parameter script
 !  name is specified in this coupling script.
 !-----------------------------------------------------------------------
 !

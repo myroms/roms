@@ -3,11 +3,10 @@
 #if !defined TS_FIXED && (defined NONLINEAR && defined SOLVE3D)
 !
 !git $Id$
-!svn $Id: step3d_t.F 1151 2023-02-09 03:08:53Z arango $
 !=======================================================================
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2025 The ROMS Group                              !
 !    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                           Hernan G. Arango   !
+!    See License_ROMS.md                            Hernan G. Arango   !
 !========================================== Alexander F. Shchepetkin ===
 !                                                                      !
 !  This routine time-steps tracer equations.  Notice that advective    !
@@ -48,6 +47,9 @@
       USE mod_grid
       USE mod_mixing
       USE mod_ocean
+# if defined SEDIMENT && defined SED_MORPH
+      USE mod_sedbed
+# endif
       USE mod_stepping
 !
 !  Imported variable declarations.
@@ -91,6 +93,15 @@
      &                    GRID(ng) % z_r,                               &
      &                    MIXING(ng) % Akt,                             &
      &                    OCEAN(ng) % W,                                &
+# ifdef OMEGA_IMPLICIT
+     &                    OCEAN(ng) % Wi,                               &
+# endif
+# ifdef WEC_VF
+     &                    OCEAN(ng) % W_stokes,                         &
+# endif
+# if defined SEDIMENT && defined SED_MORPH
+     &                    SEDBED(ng) % bed_thick,                       &
+# endif
 # if defined FLOATS && defined FLOAT_VWALK
      &                    MIXING(ng) % dAktdz,                          &
 # endif
@@ -122,6 +133,15 @@
      &                          z_r,                                    &
      &                          Akt,                                    &
      &                          W,                                      &
+# ifdef OMEGA_IMPLICIT
+     &                          Wi,                                     &
+# endif
+# ifdef WEC_VF
+     &                          W_stokes,                               &
+# endif
+# if defined SEDIMENT && defined SED_MORPH
+     &                          bed_thick,                              &
+# endif
 # if defined FLOATS && defined FLOAT_VWALK
      &                          dAktdz,                                 &
 # endif
@@ -186,6 +206,15 @@
       real(r8), intent(in) :: Akt(LBi:,LBj:,0:,:)
 #  endif
       real(r8), intent(in) :: W(LBi:,LBj:,0:)
+#  ifdef OMEGA_IMPLICIT
+      real(r8), intent(in) :: Wi(LBi:,LBj:,0:)
+#  endif
+#  ifdef WEC_VF
+      real(r8), intent(in) :: W_stokes(LBi:,LBj:,0:)
+#  endif
+#  if defined SEDIMENT && defined SED_MORPH
+      real(r8), intent(in) :: bed_thick(LBi:,LBj:,:)
+#  endif
 #  ifdef DIAGNOSTICS_TS
       real(r8), intent(inout) :: DiaTwrk(LBi:,LBj:,:,:,:)
 #  endif
@@ -223,7 +252,15 @@
       real(r8), intent(in) :: z_r(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(in) :: Akt(LBi:UBi,LBj:UBj,0:N(ng),NAT)
       real(r8), intent(in) :: W(LBi:UBi,LBj:UBj,0:N(ng))
-
+#  ifdef OMEGA_IMPLICIT
+      real(r8), intent(in) :: Wi(LBi:UBi,LBj:UBj,0:N(ng))
+#  endif
+#  ifdef WEC_VF
+      real(r8), intent(in) :: W_stokes(LBi:UBi,LBj:UBj,0:N(ng))
+#  endif
+#  if defined SEDIMENT && defined SED_MORPH
+      real(r8), intent(in) :: bed_thick(LBi:UBi,LBj:UBj,3)
+#  endif
 #  ifdef DIAGNOSTICS_TS
       real(r8), intent(inout) :: DiaTwrk(LBi:UBi,LBj:UBj,N(ng),NT(ng),  &
      &                                   NDT)
@@ -268,6 +305,10 @@
       real(r8), dimension(IminS:ImaxS,0:N(ng)) :: BC
       real(r8), dimension(IminS:ImaxS,0:N(ng)) :: DC
       real(r8), dimension(IminS:ImaxS,0:N(ng)) :: FC
+# ifdef OMEGA_IMPLICIT
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: FCmin
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: FCmax
+# endif
 
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: FE
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: FX
@@ -929,7 +970,11 @@
             DO k=N(ng)-1,0,-1
               DO i=Istr,Iend
                 FC(i,k)=FC(i,k)-CF(i,k+1)*FC(i,k+1)
+#  ifdef WEC_VF
+                FC(i,k+1)=(W(i,j,k+1)+W_stokes(i,j,k+1))*FC(i,k+1)
+#  else
                 FC(i,k+1)=W(i,j,k+1)*FC(i,k+1)
+#  endif
               END DO
             END DO
             DO i=Istr,Iend
@@ -964,18 +1009,18 @@
             cff1=1.0_r8/3.0_r8
             DO k=1,N(ng)-1
               DO i=Istr,Iend
+# ifdef WEC_VF
+                FC(i,k)=(W(i,j,k)+W_stokes(i,j,k))*                     &
+# else
                 FC(i,k)=W(i,j,k)*                                       &
+# endif
      &                  0.5_r8*(t(i,j,k  ,3,itrc)+                      &
      &                          t(i,j,k+1,3,itrc)-                      &
      &                          cff1*(CF(i,k+1)-CF(i,k)))
               END DO
             END DO
             DO i=Istr,Iend
-# ifdef SED_MORPH
-              FC(i,0)=W(i,j,0)*t(i,j,1,3,itrc)
-# else
               FC(i,0)=0.0_r8
-# endif
               FC(i,N(ng))=0.0_r8
             END DO
 !
@@ -986,17 +1031,17 @@
 !
             DO k=1,N(ng)-1
               DO i=Istr,Iend
+# ifdef WEC_VF
+                FC(i,k)=(W(i,j,k)+W_stokes(i,j,k))*                     &
+# else
                 FC(i,k)=W(i,j,k)*                                       &
+# endif
      &                  0.5_r8*(t(i,j,k  ,3,itrc)+                      &
      &                          t(i,j,k+1,3,itrc))
               END DO
             END DO
             DO i=Istr,Iend
-# ifdef SED_MORPH
-              FC(i,0)=W(i,j,0)*t(i,j,1,3,itrc)
-# else
               FC(i,0)=0.0_r8
-# endif
               FC(i,N(ng))=0.0_r8
             END DO
 !
@@ -1007,16 +1052,17 @@
 !
             DO i=IstrUm2,Iendp2i
               DO k=1,N(ng)-1
+# ifdef WEC_VF
+                cff1=MAX(W(i,j,k)+W_stokes(i,j,k),0.0_r8)
+                cff2=MIN(W(i,j,k)+W_stokes(i,j,k),0.0_r8)
+# else
                 cff1=MAX(W(i,j,k),0.0_r8)
                 cff2=MIN(W(i,j,k),0.0_r8)
+# endif
                 FC(i,k)=cff1*t(i,j,k  ,3,itrc)+                         &
      &                  cff2*t(i,j,k+1,3,itrc)
               END DO
-# ifdef SED_MORPH
-              FC(i,0)=W(i,j,0)*t(i,j,1,3,itrc)
-# else
               FC(i,0)=0.0_r8
-# endif
               FC(i,N(ng))=0.0_r8
             END DO
 !
@@ -1032,8 +1078,13 @@
               gradZ(0)=0.0_r8
               DO k=1,N(ng)-1
                 cff=pm(i,j)*pn(i,j)*dt(ng)
+# ifdef WEC_VF
+                KaZ(k)=1.0_r8-ABS(cff*(W(i,j,k)+W_stokes(i,j,k))/       &
+     &                            (z_r(i,j,k+1)-z_r(i,j,k)))
+# else
                 KaZ(k)=1.0_r8-ABS(cff*W(i,j,k)/                         &
      &                            (z_r(i,j,k+1)-z_r(i,j,k)))
+# endif
                 oKaZ(k)=1.0_r8/KaZ(k)
                 gradZ(k)=t(i,j,k+1,3,itrc)-t(i,j,k,3,itrc)
               END DO
@@ -1042,12 +1093,17 @@
               gradZ(N(ng))=0.0_r8
 !
               DO k=1,N(ng)-1
-                IF ((k.eq.1).and.(W(i,j,k).ge.0.0_r8)) THEN
-                  FC(i,k)=W(i,j,k)*t(i,j,k,3,itrc)
-                ELSE IF ((k.eq.N(ng)-1).and.(W(i,j,k).lt.0.0_r8)) THEN
-                  FC(i,k)=W(i,j,k)*t(i,j,k+1,3,itrc)
+# ifdef WEC_VF
+                cff1=W(i,j,k)+W_stokes(i,j,k)
+# else
+                cff1=W(i,j,k)
+# endif
+                IF ((k.eq.1).and.(cff1.ge.0.0_r8)) THEN
+                  FC(i,k)=cff1*t(i,j,k,3,itrc)
+                ELSE IF ((k.eq.N(ng)-1).and.(cff1.lt.0.0_r8)) THEN
+                  FC(i,k)=cff1*t(i,j,k+1,3,itrc)
                 ELSE
-                  IF (W(i,j,k).ge.0) THEN
+                  IF (cff1.ge.0) THEN
                     IF (ABS(gradZ(k)).le.eps1) THEN
                       rD=0.0_r8
                       rkaD=0.0_r8
@@ -1078,14 +1134,10 @@
      &                  gradZ(k)*KaZ(k)
                     sw=t(i,j,k+1,3,itrc)-cff
                   END IF
-                  FC(i,k)=W(i,j,k)*sw
+                  FC(i,k)=cff1*sw
                 END IF
               END DO
-# ifdef SED_MORPH
-              FC(i,0)=W(i,j,0)*t(i,j,1,3,itrc)
-# else
               FC(i,0)=0.0_r8
-# endif
               FC(i,N(ng))=0.0_r8
             END DO
 !
@@ -1100,7 +1152,11 @@
             cff3=1.0_r8/12.0_r8
             DO k=2,N(ng)-2
               DO i=Istr,Iend
+# ifdef WEC_VF
+                FC(i,k)=(W(i,j,k)+W_stokes(i,j,k))*                     &
+# else
                 FC(i,k)=W(i,j,k)*                                       &
+# endif
      &                  (cff2*(t(i,j,k  ,3,itrc)+                       &
      &                         t(i,j,k+1,3,itrc))-                      &
      &                   cff3*(t(i,j,k-1,3,itrc)+                       &
@@ -1108,18 +1164,20 @@
               END DO
             END DO
             DO i=Istr,Iend
-# ifdef SED_MORPH
-              FC(i,0)=W(i,j,0)*2.0_r8*                                  &
-     &                (cff2*t(i,j,1,3,itrc)-                            &
-     &                 cff3*t(i,j,2,3,itrc))
-# else
               FC(i,0)=0.0_r8
-# endif
+# ifdef WEC_VF
+              FC(i,1)=(W(i,j,1)+W_stokes(i,j,1))*                       &
+# else
               FC(i,1)=W(i,j,1)*                                         &
+# endif
      &                (cff1*t(i,j,1,3,itrc)+                            &
      &                 cff2*t(i,j,2,3,itrc)-                            &
      &                 cff3*t(i,j,3,3,itrc))
+# ifdef WEC_VF
+              FC(i,N(ng)-1)=(W(i,j,N(ng)-1)+W_stokes(i,j,N(ng)-1))*     &
+# else
               FC(i,N(ng)-1)=W(i,j,N(ng)-1)*                             &
+# endif
      &                    (cff1*t(i,j,N(ng)  ,3,itrc)+                  &
      &                     cff2*t(i,j,N(ng)-1,3,itrc)-                  &
      &                     cff3*t(i,j,N(ng)-2,3,itrc))
@@ -1135,7 +1193,7 @@
 !    Dsrc(is) = 2,  flow across grid cell w-face (positive or negative)
 !
           IF (LwSrc(ng)) THEN
-            IF (Hadvection(itrc,ng)%MPDATA) THEN
+            IF (Vadvection(itrc,ng)%MPDATA) THEN
               DO is=1,Nsrc(ng)
                 IF (INT(SOURCES(ng)%Dsrc(is)).eq.2) THEN
                   Isrc=SOURCES(ng)%Isrc(is)
@@ -1159,6 +1217,25 @@
               END DO
             END IF
           END IF
+
+# ifdef SED_MORPH
+!
+!  If MPDATA, augment the intermediate tracer, Ta, with the tracer
+!  divergence. For other advection schemes the bed change is applied
+!  after the vertical advection is completed (similar to Lwsrc).
+!  Use 1/N to distribute the bed change in each water column layer.
+!
+          IF (Vadvection(itrc,ng)%MPDATA) THEN
+            cff1=1.0_r8/N(ng)
+            DO k=1,N(ng)
+              DO i=IstrUm2,Iendp2i
+                cff=cff1*(bed_thick(i,j,nstp)-bed_thick(i,j,3))
+                cff3=t(i,j,k,3,itrc)
+                Ta(i,j,k,itrc)=Ta(i,j,k,itrc)-cff*cff3
+              END DO
+            END DO
+          END IF
+# endif
 !
 !  If MPDATA, time-step vertical advection for intermediate diffusive
 !  tracer, Ta (Tunits).
@@ -1179,6 +1256,86 @@
 # endif
               END DO
             END DO
+
+# ifdef OMEGA_IMPLICIT
+!
+!  If MPDATA, compute off-diagonal coefficients FC [dt*Wi*pm*pn] for the
+!  implicit vertical advection term located at horizontal RHO-points and
+!  vertical W-points. Also, set FC at the top and bottom levels.
+!
+!  It needs to be done after the Wexplicit and before the anti-diffusion
+!  steps.
+!
+            cff=dt(ng)
+            DO k=1,N(ng)-1
+              DO i=Istr,Iend
+                cff1=cff*pm(i,j)*pn(i,j)
+                FCmax(i,k)=MAX(Wi(i,j,k),0.0_r8)*cff1
+                FCmin(i,k)=MIN(Wi(i,j,k),0.0_r8)*cff1
+              END DO
+            END DO
+            DO i=Istr,Iend
+              FCmax(i,0)=0.0_r8
+              FCmin(i,0)=0.0_r8
+              FCmax(i,N(ng))=0.0_r8
+              FCmin(i,N(ng))=0.0_r8
+            END DO
+!
+!  Compute diagonal matrix coefficients BC and load right-hand-side
+!  terms for the tracer equation into DC.
+!
+            DO k=1,N(ng)
+              DO i=Istr,Iend
+                BC(i,k)=Hz(i,j,k)+FCmax(i,k)-FCmin(i,k-1)
+                DC(i,k)=Ta(i,j,k,itrc)*Hz(i,j,k)
+              END DO
+            END DO
+!
+!  Solve the tridiagonal system.
+!
+            DO i=Istr,Iend
+              cff=1.0_r8/BC(i,1)
+              CF(i,1)=cff*FCmin(i,1)
+              DC(i,1)=cff*DC(i,1)
+            END DO
+            DO k=2,N(ng)-1
+              DO i=Istr,Iend
+                cff=1.0_r8/(BC(i,k)+FCmax(i,k-1)*CF(i,k-1))
+                CF(i,k)=cff*FCmin(i,k)
+                DC(i,k)=cff*(DC(i,k)+FCmax(i,k-1)*DC(i,k-1))
+              END DO
+            END DO
+!
+!  Compute new solution by back substitution.
+!
+            DO i=Istr,Iend
+#  ifdef DIAGNOSTICS_TS
+              cff1=Ta(i,j,N(ng),itrc)*oHz(i,j,N(ng))
+#  endif
+              cff=1.0_r8/(BC(i,N(ng))+FCmax(i,N(ng)-1)*CF(i,N(ng)-1))
+              DC(i,N(ng))=cff*(DC(i,N(ng))+                            &
+     &                         FCmax(i,N(ng)-1)*DC(i,N(ng)-1))
+              Ta(i,j,N(ng),itrc)=DC(i,N(ng))
+#  ifdef DIAGNOSTICS_TS
+              DiaTwrk(i,j,N(ng),itrc,iTvadv)=                          &
+     &                             DiaTwrk(i,j,N(ng),itrc,iTvadv)+     &
+     &                             Ta(i,j,N(ng),itrc)-cff1
+#  endif
+            END DO
+            DO k=N(ng)-1,1,-1
+              DO i=Istr,Iend
+#  ifdef DIAGNOSTICS_TS
+                cff1=Ta(i,j,k,itrc)*oHz(i,j,k)
+#  endif
+                DC(i,k)=DC(i,k)-CF(i,k)*DC(i,k+1)
+                Ta(i,j,k,itrc)=DC(i,k)
+#  ifdef DIAGNOSTICS_TS
+                DiaTwrk(i,j,k,itrc,iTvadv)=DiaTwrk(i,j,k,itrc,iTvadv)+&
+     &                                     Ta(i,j,k,itrc)-cff1
+#  endif
+              END DO
+            END DO
+# endif
 !
 !  OTHERWISE, time-step vertical advection term (m Tunits, or Tunits if
 !  conservative, parabolic splines diffusion).
@@ -1230,6 +1387,12 @@
      &                            pm, pn, omn, om_u, on_v,              &
      &                            z_r, oHz,                             &
      &                            Huon, Hvom, W,                        &
+#  ifdef WEC_VF
+     &                            W_stokes,                             &
+#  endif
+#  ifdef OMEGA_IMPLICIT
+     &                            Wi,                                   &
+#  endif
      &                            t(:,:,:,3,itrc),                      &
      &                            Ta(:,:,:,itrc),  Ua, Va, Wa)
 !
@@ -1359,6 +1522,136 @@
           END IF
         END DO
       END IF
+
+# if defined SEDIMENT && defined SED_MORPH
+!
+!  If not MPDATA, add tracer mass to compensate for the added volume to
+!  keep the receiving cell concentration unchanged.
+!  Use 1/N to distribute the bed change in each water column layer.
+!
+      cff1=1.0_r8/N(ng)
+      DO itrc=1,NT(ng)
+        IF (.not.((Hadvection(itrc,ng)%MPDATA).and.                     &
+     &            (Vadvection(itrc,ng)%MPDATA))) THEN
+          DO j=Jstr,Jend
+            DO k=1,N(ng)
+              DO i=Istr,Iend
+                cff3=t(i,j,k,3,itrc)
+#  ifdef SPLINES_VDIFF
+                cff3=cff3*oHz(i,j,k)
+#  endif
+                cff=cff1*(bed_thick(i,j,nstp)-bed_thick(i,j,3))
+                t(i,j,k,nnew,itrc)=t(i,j,k,nnew,itrc)-                  &
+     &                             cff*cff3
+              END DO
+            END DO
+          END DO
+        END IF
+      END DO
+# endif
+
+# ifdef OMEGA_IMPLICIT
+!
+!-----------------------------------------------------------------------
+!  Add adaptive, Courant-number based implicit vertical advection term.
+!-----------------------------------------------------------------------
+!
+!  Compute off-diagonal coefficients FC [dt*Wi*pm*pn] for the implicit
+!  vertical advection term located at horizontal RHO-points and vertical
+!  W-points. Also, set FC at the top and bottom levels.
+!
+!  It needs to be before the Diffusion.
+!
+      DO j=Jstr,Jend
+        DO itrc=1,NT(ng)
+          IF (.not.Vadvection(itrc,ng)%MPDATA) THEN
+            cff=dt(ng)
+            DO k=1,N(ng)-1
+              DO i=Istr,Iend
+                cff1=cff*pm(i,j)*pn(i,j)
+                FCmax(i,k)=MAX(Wi(i,j,k),0.0_r8)*cff1
+                FCmin(i,k)=MIN(Wi(i,j,k),0.0_r8)*cff1
+              END DO
+            END DO
+            DO i=Istr,Iend
+              FCmax(i,0)=0.0_r8
+              FCmin(i,0)=0.0_r8
+              FCmax(i,N(ng))=0.0_r8
+              FCmin(i,N(ng))=0.0_r8
+            END DO
+!
+!  Compute diagonal matrix coefficients BC and load right-hand-side
+!  terms for the tracer equation into DC.
+!
+            DO k=1,N(ng)
+              DO i=Istr,Iend
+                BC(i,k)=Hz(i,j,k)+FCmax(i,k)-FCmin(i,k-1)
+#  ifdef SPLINES_VDIFF
+                DC(i,k)=t(i,j,k,nnew,itrc)*Hz(i,j,k)
+#  else
+                DC(i,k)=t(i,j,k,nnew,itrc)
+#  endif
+              END DO
+            END DO
+!
+!  Solve the tridiagonal system.
+!
+            DO i=Istr,Iend
+              cff=1.0_r8/BC(i,1)
+              CF(i,1)=cff*FCmin(i,1)
+              DC(i,1)=cff*DC(i,1)
+            END DO
+            DO k=2,N(ng)-1
+              DO i=Istr,Iend
+                cff=1.0_r8/(BC(i,k)+FCmax(i,k-1)*CF(i,k-1))
+                CF(i,k)=cff*FCmin(i,k)
+                DC(i,k)=cff*(DC(i,k)+FCmax(i,k-1)*DC(i,k-1))
+              END DO
+            END DO
+!
+!  Compute new solution by back substitution.
+!
+            DO i=Istr,Iend
+#  ifdef DIAGNOSTICS_TS
+              cff1=t(i,j,N(ng),nnew,itrc)*oHz(i,j,N(ng))
+#  endif
+              cff=1.0_r8/(BC(i,N(ng))+                                  &
+     &                    FCmax(i,N(ng)-1)*CF(i,N(ng)-1))
+              DC(i,N(ng))=cff*(DC(i,N(ng))+                             &
+     &                         FCmax(i,N(ng)-1)*DC(i,N(ng)-1))
+#  ifdef SPLINES_VDIFF
+              t(i,j,N(ng),nnew,itrc)=DC(i,N(ng))
+#  else
+              t(i,j,N(ng),nnew,itrc)=DC(i,N(ng))*Hz(i,j,N(ng))
+#  endif
+#  ifdef DIAGNOSTICS_TS
+              DiaTwrk(i,j,N(ng),itrc,iTvadv)=DiaTwrk(i,j,N(ng),itrc,    &
+     &                                               iTvadv)+           &
+     &                                       DC(i,N(ng))-cff1
+#  endif
+            END DO
+!
+            DO k=N(ng)-1,1,-1
+              DO i=Istr,Iend
+#  ifdef DIAGNOSTICS_TS
+                cff1=t(i,j,k,nnew,itrc)*oHz(i,j,k)
+#  endif
+                DC(i,k)=DC(i,k)-CF(i,k)*DC(i,k+1)
+#  ifdef SPLINES_VDIFF
+                t(i,j,k,nnew,itrc)=DC(i,k)
+#  else
+                t(i,j,k,nnew,itrc)=DC(i,k)*Hz(i,j,k)
+#  endif
+#  ifdef DIAGNOSTICS_TS
+                DiaTwrk(i,j,k,itrc,iTvadv)=DiaTwrk(i,j,k,itrc,iTvadv)+  &
+     &                                     DC(i,k)-cff1
+#  endif
+              END DO
+            END DO
+          END IF
+        END DO
+      END DO
+# endif
 !
 !-----------------------------------------------------------------------
 !  Time-step vertical diffusion term.

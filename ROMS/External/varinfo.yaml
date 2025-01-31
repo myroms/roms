@@ -1,11 +1,10 @@
 # ROMS I/O NetCDF Metadata Dictionary
 #
 #git $Id$
-#svn $Id: varinfo.yaml 1166 2023-05-17 20:11:58Z arango $
 #========================================================= Hernan G. Arango ==#
-#  Copyright (c) 2002-2023 The ROMS/TOMS Group                                #
+#  Copyright (c) 2002-2025 The ROMS Group                                     #
 #    Licensed under a MIT/X style license                                     #
-#    See License_ROMS.txt                                                     #
+#    See License_ROMS.md                                                      #
 #=============================================================================#
 #
 #  Field Metadata Keywords:
@@ -41,7 +40,7 @@
 #     field = field (source_units) * scale + add_offset
 #
 
-svn_repository: $URL: https://www.myroms.org/svn/src/trunk/ROMS/External/varinfo.yaml $
+svn_repository: $URL: https://github.com/myroms/roms/External/varinfo.yaml $
 
 convention:     CF 1.10
 
@@ -68,17 +67,6 @@ metadata:
     time:           ocean_time
     index_code:     idtime
     type:           nulvar
-    add_offset:     0.0d0
-    scale:          1.0d0
-
-  - variable:       bath                                             # Input/Output
-    standard_name:  sea_floor_depth
-    long_name:      bathymetry
-    units:          meter                                            # [m]
-    field:          bathymetry
-    time:           ocean_time
-    index_code:     idbath
-    type:           r2dvar
     add_offset:     0.0d0
     scale:          1.0d0
 
@@ -247,6 +235,17 @@ metadata:
     add_offset:     0.0d0
     scale:          1.0d0
 
+  - variable:       omega_implicit                                   # Output
+    standard_name:  upward_sea_water_omega_implicit_velocity
+    long_name:      S-coordinate vertical implicit momentum component
+    units:          meter3 second-1                                  # [m3/s]
+    field:          omega
+    time:           ocean_time
+    index_code:     idOvil
+    type:           w3dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
   - variable:       rho                                              # Output
     standard_name:  sea_water_density_anomaly
     long_name:      density anomaly
@@ -302,10 +301,344 @@ metadata:
     add_offset:     0.0d0
     scale:          1.0d0
 
+  #######################
+  ###  Grid Geometry  ###
+  #######################
+
+  - variable:       angle                                            # Input
+    standard_name:  grid_angle_of_rotation_from_east_to_y
+    long_name:      angle between XI-axis and EAST
+    units:          radians                                          # [rafians]
+    field:          angle
+    time:           nulvar
+    index_code:     idangR
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       bath                                             # Input/Output
+    standard_name:  sea_floor_depth
+    long_name:      time-dependent bathymetry
+    units:          meter                                            # [m; positive]
+    field:          bathymetry
+    time:           ocean_time
+    index_code:     idbath
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       f                                                # Input
+    standard_name:  coriolis_parameter
+    long_name:      Coriolis parameter
+    units:          second-1                                         # [1/s]
+    field:          coriolis
+    time:           nulvar
+    index_code:     idfcor
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       h                                                # Input
+    standard_name:  sea_floor_depth
+    long_name:      time-independent bathymetry
+    units:          meter                                            # [m; positive]
+    field:          bathymetry
+    time:           nulvar
+    index_code:     idtopo
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       lat_psi                                          # Input
+    standard_name:  grid_latitude_at_cell_corners
+    long_name:      latitude of PSI-points
+    units:          degree_north                                     # [degree_north]
+    field:          lat_psi
+    time:           nulvar
+    index_code:     idLatP
+    type:           p2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       lat_rho                                          # Input
+    standard_name:  grid_latitude_at_cell_center
+    long_name:      latitude of RHO-points
+    units:          degree_north                                     # [degree_north]
+    field:          lat_rho
+    time:           nulvar
+    index_code:     idLatR
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       lat_u                                            # Input
+    standard_name:  grid_latitude_at_cell_y_edges
+    long_name:      latitude of U-points
+    units:          degree_north                                     # [degree_north]
+    field:          lat_u
+    time:           nulvar
+    index_code:     idLatU
+    type:           u2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       lat_v                                            # Input
+    standard_name:  grid_latitude_at_cell_x_edges
+    long_name:      latitude of V-points
+    units:          degree_north                                     # [degree_north]
+    field:          lat_v
+    time:           nulvar
+    index_code:     idLatV
+    type:           v2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       lon_psi                                          # Input
+    standard_name:  grid_longitude_at_cell_corners
+    long_name:      longitude of PSI-points
+    units:          degree_east                                      # [degree_east]
+    field:          lon_psi
+    time:           nulvar
+    index_code:     idLonP
+    type:           p2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       lon_rho                                          # Input
+    standard_name:  grid_longitude_at_cell_center
+    long_name:      longitude of RHO-points
+    units:          degree_east                                      # [degree_east]
+    field:          lon_rho
+    time:           nulvar
+    index_code:     idLonR
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       lon_u                                            # Input
+    standard_name:  grid_longitude_at_cell_y_edges
+    long_name:      longitude of U-points
+    units:          degree_east                                      # [degree_east]
+    field:          lon_u
+    time:           nulvar
+    index_code:     idLonU
+    type:           u2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       lon_v                                            # Input
+    standard_name:  grid_longitude_at_cell_x_edges
+    long_name:      longitude of V-points
+    units:          degree_east                                      # [degree_east]
+    field:          lon_v
+    time:           nulvar
+    index_code:     idLonV
+    type:           v2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       mask_psi                                         # Input
+    standard_name:  land_sea_mask_at_cell_corners
+    long_name:      mask on PSI-points
+    units:          nondimensional
+    field:          mask_psi
+    time:           nulvar
+    index_code:     idmskP
+    type:           p2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       mask_rho                                         # Input
+    standard_name:  land_sea_mask_at_cell_center
+    long_name:      mask on RHO-points
+    units:          nondimensional
+    field:          mask_rho
+    time:           nulvar
+    index_code:     idmskR
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       mask_u                                           # Input
+    standard_name:  land_sea_mask_at_cell_y_edges
+    long_name:      mask on U-points
+    units:          nondimensional
+    field:          mask_u
+    time:           nulvar
+    index_code:     idmskU
+    type:           u2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       mask_v                                           # Input
+    standard_name:  land_sea_mask_at_cell_x_edges
+    long_name:      mask on V-points
+    units:          nondimensional
+    field:          mask_v
+    time:           nulvar
+    index_code:     idmskV
+    type:           v2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       pm                                               # Input
+    standard_name:  inverse_grid_x_spacing
+    long_name:      curvilinear coordinate metric in XI
+    units:          meter-1                                          # [1/m]
+    field:          pm
+    time:           nulvar
+    index_code:     idpmdx
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       pn                                               # Input
+    standard_name:  inverse_grid_y_spacing
+    long_name:      curvilinear coordinate metric in ETA
+    units:          meter-1                                          # [1/m]
+    field:          pn
+    time:           nulvar
+    index_code:     idpndy
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       scope_rho                                        # Input
+    standard_name:  adjoint_sensitivity_scope_mask_at_cell_center
+    long_name:      adjoint sensitivity spatial scope on RHO-points
+    units:          nondimensional
+    field:          scope_rho
+    time:           nulvar
+    index_code:     idscoR
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       scope_u                                          # Input
+    standard_name:  adjoint_sensitivity_scope_mask_at_cell_y_edges
+    long_name:      adjoint sensitivity spatial scope on U-points
+    units:          nondimensional
+    field:          scope_u
+    time:           nulvar
+    index_code:     idscoU
+    type:           u2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       scope_v                                          # Input
+    standard_name:  adjoint_sensitivity_scope_mask_at_cell_x_edges
+    long_name:      adjoint sensitivity spatial scope on V-points
+    units:          nondimensional
+    field:          scope_v
+    time:           nulvar
+    index_code:     idscoV
+    type:           v2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       x_psi                                            # Input
+    standard_name:  grid_x_location_at_cell_corners
+    long_name:      x-locations of PSI-points
+    units:          meter                                            # [m]
+    field:          Xp
+    time:           nulvar
+    index_code:     idXgrP
+    type:           p2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       x_rho                                            # Input
+    standard_name:  grid_x_location_at_cell_center
+    long_name:      x-locations of RHO-points
+    units:          meter                                            # [m]
+    field:          Xr
+    time:           nulvar
+    index_code:     idXgrR
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       x_u                                              # Input
+    standard_name:  grid_x_location_at_cell_y_edges
+    long_name:      x-locations of U-points
+    units:          meter                                            # [m]
+    field:          Xu
+    time:           nulvar
+    index_code:     idXgrU
+    type:           u2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       x_v                                              # Input
+    standard_name:  grid_x_location_at_cell_x_edges
+    long_name:      x-locations of V-points
+    units:          meter                                            # [m]
+    field:          Xv
+    time:           nulvar
+    index_code:     idXgrV
+    type:           v2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       y_psi                                            # Input
+    standard_name:  grid_y_location_at_cell_corners
+    long_name:      y-locations of PSI-points
+    units:          meter                                            # [m]
+    field:          Yp
+    time:           nulvar
+    index_code:     idYgrP
+    type:           p2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       y_rho                                            # Input
+    standard_name:  grid_y_location_at_cell_center
+    long_name:      y-locations of RHO-points
+    units:          meter                                            # [m]
+    field:          Yr
+    time:           nulvar
+    index_code:     idYgrR
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       y_u                                              # Input
+    standard_name:  grid_y_location_at_cell_y_edges
+    long_name:      y-locations of U-points
+    units:          meter                                            # [m]
+    field:          Yu
+    time:           nulvar
+    index_code:     idYgrU
+    type:           u2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       y_v                                              # Input
+    standard_name:  grid_y_location_at_cell_x_edges
+    long_name:      y-locations of V-points
+    units:          meter                                            # [m]
+    field:          Yv
+    time:           nulvar
+    index_code:     idYgrV
+    type:           v2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       Hz                                               # Output
+    standard_name:  model_level_thickness_at_cell_center
+    long_name:      level thickness of RHO-points
+    units:          meter                                            # [m]
+    field:          Hz
+    time:           ocean_time
+    index_code:     idHzdz
+    type:           r3dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
   - variable:       z_rho                                            # Output
     standard_name:  model_level_depth_at_cell_center
     long_name:      depth of RHO-points
-    units:          meter                                            # [m]
+    units:          meter                                            # [m; negative]
     field:          Zr
     time:           ocean_time
     index_code:     idpthR
@@ -316,7 +649,7 @@ metadata:
   - variable:       z_u                                              # Output
     standard_name:  model_level_depth_at_cell_y_edges
     long_name:      depth of U-points
-    units:          meter                                            # [m]
+    units:          meter                                            # [m; negative]
     field:          Zu
     time:           ocean_time
     index_code:     idpthU
@@ -327,7 +660,7 @@ metadata:
   - variable:       z_v                                              # Output
     standard_name:  model_level_depth_at_cell_x_edges
     long_name:      depth of V-points
-    units:          meter                                            # [m]
+    units:          meter                                            # [m; negative]
     field:          Zv
     time:           ocean_time
     index_code:     idpthV
@@ -337,7 +670,7 @@ metadata:
 
   - variable:       z_w                                              # Output
     standard_name:  model_level_depth_at_cell_top_face
-    long_name:      depth of W-points                                # [m]
+    long_name:      depth of W-points                                # [m; negative]
     units:          meter
     field:          Zw
     time:           ocean_time
@@ -787,7 +1120,7 @@ metadata:
   - variable:       dQdSST                                           # Input
     standard_name:  derivative_of_surface_downward_heat_flux_wrt_sea_surface_temperature
     long_name:      surface net heat flux sensitivity to SST
-    units:          watt meter-2 Celsius-1                           # Input:  [Watt/m2]
+    units:          watt meter-2 Celsius-1                           # Input:  [Watt/m2/Celsius]
     field:          d(Q)/d(SST)                                      # [Celsius m/s]
     time:           sst_time
     index_code:     iddQdT
@@ -1402,7 +1735,7 @@ metadata:
     scale:          1.0d0                                            # 1/rhow (0.001 m3/kg) if m/s
 
   - variable:       Uwind                                            # Input
-    standard_name:  surface_eastward_wind
+    standard_name:  surface_x_wind
     long_name:      surface u-wind component
     units:          meter second-1                                   # [m/s]
     field:          u-wind
@@ -1413,7 +1746,7 @@ metadata:
     scale:          1.0d0
 
   - variable:       Vwind                                            # Input
-    standard_name:  surface_northward_wind
+    standard_name:  surface_y_wind
     long_name:      surface v-wind component
     units:          meter second-1                                   # [m/s]
     field:          v-wind
@@ -1423,17 +1756,50 @@ metadata:
     add_offset:     0.0d0
     scale:          1.0d0
 
+  - variable:       Uwind_eastward                                   # Input
+    standard_name:  surface_eastward_wind
+    long_name:      surface eastward wind
+    units:          meter second-1                                   # [m/s]
+    field:          surface eastward wind
+    time:           wind_time
+    index_code:     idUaiE
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       Vwind_northward                                  # Input
+    standard_name:  surface_northward_wind
+    long_name:      surface northward wind
+    units:          meter second-1                                   # [m/s]
+    field:          surface northward wind
+    time:           wind_time
+    index_code:     idVaiN
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
   ################################
   ###  Wave Forcing Variables  ###
   ################################
 
   - variable:       Dwave                                            # Input
-    standard_name:  sea_surface_wind_wave_to_direction
-    long_name:      wind-induced wave direction
+    standard_name:  sea_surface_wind_wave_mean_to_direction
+    long_name:      wind-induced mean wave direction
     units:          degrees                                          # [radians]
     field:          Dwave
     time:           wave_time
     index_code:     idWdir
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          0.017453292519943295                             # pi/180
+
+  - variable:       Dwavep                                           # Input
+    standard_name:  sea_surface_wind_wave_peak_to_direction
+    long_name:      wind-induced peak wave direction
+    units:          degrees                                          # [radians]
+    field:          Dwavep
+    time:           wave_time
+    index_code:     idWdip
     type:           r2dvar
     add_offset:     0.0d0
     scale:          0.017453292519943295                             # pi/180
@@ -1449,13 +1815,35 @@ metadata:
     add_offset:     0.0d0
     scale:          1.0d0
 
+  - variable:       Hwave2                                           # Input
+    standard_name:  sea_surface_wind_wave_significant_height_squared
+    long_name:      wind-induced significant wave height squared
+    units:          meter                                            # [m]
+    field:          wave height squared
+    time:           wave_time
+    index_code:     idWam2
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
   - variable:       Lwave                                            # Input
     standard_name:  sea_surface_wind_wave_mean_wavelength
-    long_name:      wind-induced mean wavelength
+    long_name:      wind-induced wave mean wavelength
     units:          meter                                            # [m]
     field:          mean wavelength
     time:           wave_time
     index_code:     idWlen
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0
+
+  - variable:       Lwavep                                           # Input
+    standard_name:  sea_surface_wind_wave_peak_wavelength
+    long_name:      wind-induced wave peak wavelength
+    units:          meter                                            # [m]
+    field:          peak wavelength
+    time:           wave_time
+    index_code:     idWlep
     type:           r2dvar
     add_offset:     0.0d0
     scale:          1.0
@@ -1473,7 +1861,7 @@ metadata:
 
   - variable:       Pwave_bot                                        # Input
     standard_name:  sea_bottom_wind_wave_period
-    long_name:      wind-induced bottom wave Period
+    long_name:      wind-induced bottom wave period
     units:          second                                           # [s]
     field:          bottom wave period
     time:           wave_time
@@ -1482,7 +1870,7 @@ metadata:
     add_offset:     0.0d0
     scale:          1.0d0
 
-  - variable:       Ub_swan                                          # Input
+  - variable:       Uwave_rms                                        # Input
     standard_name:  modeled_sea_bottom_wind_wave_orbital_velocity
     long_name:      wind-induced bottom orbital velocity
     units:          meter second-1                                   # [m/s]
@@ -1493,21 +1881,65 @@ metadata:
     add_offset:     0.0d0
     scale:          1.0d0
 
-  - variable:       Wave_dissip                                      # Input
+  - variable:       Dissip_fric                                      # Input
     standard_name:  sea_bottom_wave_dissipation_due_to_friction
     long_name:      wave dissipation
-    units:          Watts meter-2                                    # [W/m2]
+    units:          watts meter-2                                    # [W/m2]
     field:          wave dissipation
+    time:           wave_time
+    index_code:     idWdif
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          0.00097561                                       # 1/rho0
+
+  - variable:       Dissip_break                                     # Input
+    standard_name:  sea_surface_wave_dissipation_due_to_breaking
+    long_name:      wave dissipation due to breaking
+    units:          watts meter-2                                    # [W/2]
+    field:          wave breaking percent
+    time:           wave_time
+    index_code:     idWdib
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          0.00097561                                       # 1/rho0
+
+  - variable:       Dissip_wcap                                      # Input
+    standard_name:  sea_surface_wave_dissipation_due_to_whitecapping
+    long_name:      wave dissipation due to whitecapping
+    units:          watts meter-2                                    # [W/m2]
+    field:          wave whitecapping
+    time:           wave_time
+    index_code:     idWdiw
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          0.00097561                                       # 1/rho0
+
+  - variable:       Dissip_roller                                    # Input
+    standard_name:  sea_surface_wave_roller_dissipation
+    long_name:      wave roller dissipation
+    units:          watts meter-2                                    # [W/m2]
+    field:          wave roller dissipation
     time:           wave_time
     index_code:     idWdis
     type:           r2dvar
     add_offset:     0.0d0
     scale:          0.00097561                                       # 1/rho0
 
+  - variable:       roller_action                                    # Input
+    standard_name:  sea_surface_wave_roller_action_density
+    long_name:      wave roller action density
+    units:          meter3 second-1                                  # [m3/s]
+    field:          wave roller action density
+    time:           wave_time
+    index_code:     idWrol
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
   - variable:       Wave_break                                       # Input
     standard_name:  sea_surface_wave_breaking_percent_fraction
     long_name:      percent wave breaking
-    units:          nondimensionsal
+    units:          nondimensionsal                                  # []
     field:          wave breaking percent
     time:           wave_time
     index_code:     idWbrk
@@ -1515,182 +1947,193 @@ metadata:
     add_offset:     0.0d0
     scale:          1.0d0
 
-  ####################################
-  ###  Radiation Stress Variables  ###
-  ####################################
-
-  - variable:       Sxx_bar                                          # Output
-    standard_name:  sea_water_barotropic_horizontal_xx_wave_radiation_stress
-    long_name:      vertically-integrated radiation stress, Sxx-component
-    units:          meter2 second2                                   # [s]
-    field:          barotropic wave radiation xx-stress
-    time:           ocean_time
-    index_code:     idW2xx
+  - variable:       Wave_spread                                      # Input
+    standard_name:  sea_surface_wave_directional_spread
+    long_name:      wave directional spread
+    units:          degrees                                          # [degrees]
+    field:          wave directional spread
+    time:           wave_time
+    index_code:     idWvds
     type:           r2dvar
     add_offset:     0.0d0
     scale:          1.0d0
 
-  - variable:       Sxy_bar                                          # Output
-    standard_name:  sea_water_barotropic_horizontal_xy_wave_radiation_stress
-    long_name:      vertically-integrated radiation stress, Sxy-component
-    units:          meter2 second2                                   # [s]
-    field:          barotropic wave radiation xy-stress
-    time:           ocean_time
-    index_code:     idW2xy
+  - variable:       Wave_spectrum                                    # Input
+    standard_name:  sea_surface_wave_spectrum_peakedness
+    long_name:      wave spectrum peakedness
+    units:          nondimensional                                   # []
+    field:          wave spectrum peakedness
+    time:           wave_time
+    index_code:     idWvqp
     type:           r2dvar
     add_offset:     0.0d0
     scale:          1.0d0
 
-  - variable:       Syy_bar                                          # Output
-    standard_name:  sea_water_barotropic_horizontal_yy_wave_radiation_stress
-    long_name:      vertically-integrated radiation stress, Syy-component
-    units:          meter2 second2                                   # [s]
-    field:          barotropic wave radiation yy-stress
+  - variable:       uWave                                            # Input/Output
+    standard_name:  barotropic_sea_water_wave_x_velocity_from_coupling
+    long_name:      coupling vertically integrated u-wave component
+    units:          meter second-1                                   # [m/s]
+    field:          barotropic u-wave
     time:           ocean_time
-    index_code:     idW2yy
+    index_code:     idUwav
     type:           r2dvar
     add_offset:     0.0d0
     scale:          1.0d0
 
-  - variable:       Sxx                                              # Output
-    standard_name:  sea_water_horizontal_xx_wave_radiation_stress
-    long_name:      3D horizontal radiation stress, Sxx-component
-    units:          meter2 second2                                   # [s]
-    field:          wave radiation xx-stress
+  - variable:       uWave                                            # Input/Output
+    standard_name:  barotropic_sea_water_wave_x_velocity_from_coupling
+    long_name:      coupling vertically integrated u-wave component
+    units:          meter second-1                                   # [m/s]
+    field:          barotropic u-wave
     time:           ocean_time
-    index_code:     idW3xx
-    type:           r3dvar
+    index_code:     idUwav
+    type:           r2dvar
     add_offset:     0.0d0
     scale:          1.0d0
 
-  - variable:       Sxy                                              # Output
-    standard_name:  sea_water_horizontal_xy_wave_radiation_stress
-    long_name:      3D horizontal radiation stress, Sxy-component
-    units:          meter2 second2                                   # [s]
-    field:          wave radiation xy-stress
-    time:           ocean_time
-    index_code:     idW3xy
-    type:           r3dvar
+  ###################################################
+  ###  Waves Effects on Currents (WEC) Variables  ###
+  ###################################################
+
+  - variable:       zetaw                                            # Input
+    standard_name:  sea_water_waves_effect_on_currents_quasi_static_sea_level_adjustment
+    long_name:      waves effects on currents quasi-static sea level adjustment
+    units:          meter                                            # [m]
+    field:          WEC quasi-static sea level adjustment
+    time:           wave_time
+    index_code:     idWztw
+    type:           r2dvar
     add_offset:     0.0d0
     scale:          1.0d0
 
-  - variable:       Syy                                              # Output
-    standard_name:  sea_water_horizontal_yy_wave_radiation_stress
-    long_name:      3D radiation stress, Syy-component
-    units:          meter2 second2                                   # [s]
-    field:          wave radiation yy-stress
-    time:           ocean_time
-    index_code:     idW3yy
-    type:           r3dvar
+  - variable:       qsp                                              # Input
+    standard_name:  sea_water_waves_effect_on_currents_quasi_static_sea_pressure
+    long_name:      waves effect on currents quasi-static sea pressure
+    units:          meter                                            # [m]
+    field:          WEC quasi-static sea pressure
+    time:           wave_time
+    index_code:     idWqsp
+    type:           r2dvar
     add_offset:     0.0d0
     scale:          1.0d0
 
-  - variable:       Szx                                              # Output
-    standard_name:  sea_water_vertical_zx_wave_radiation_stress
-    long_name:      3D vertical radiation stress, Szx-component
-    units:          meter2 second2                                   # [s]
-    field:          wave radiation zx-stress
-    time:           ocean_time
-    index_code:     idW3zx
-    type:           r3dvar
-    add_offset:     0.0d0
-    scale:          1.0d0
-
-  - variable:       Szy                                              # Output
-    standard_name:  sea_water_vertical_zy_wave_radiation_stress
-    long_name:      3D vertical radiation stress, Szy-component
-    units:          meter2 second2                                   # [s]
-    field:          wave radiation zy-stress
-    time:           ocean_time
-    index_code:     idW3zy
-    type:           r3dvar
-    add_offset:     0.0d0
-    scale:          1.0d0
-
-  - variable:       ubar_Rstress                                     # Output
-    standard_name:  sea_surface_barotropic_x_wave_radiation_stress
-    long_name:      vertically-integrated u-radiation stress
-    units:          newton meter-2                                   # [N/m2]
-    field:          barotropic wave radiation x-stress
-    time:           ocean_time
-    index_code:     idU2rs
-    type:           u2dvar
+  - variable:       bernoulli_head                                   # Input
+    standard_name:  sea_water_waves_effect_on_currents_bernoulli_head_adjustment
+    long_name:      waves effect on currents Bernoulli head adjustment
+    units:          meter                                            # [m]
+    field:          WEC Bernoulli head
+    time:           wave_time
+    index_code:     idWbeh
+    type:           r2dvar
     add_offset:     0.0d0
     scale:          1.0d0
 
   - variable:       ubar_stokes                                      # Output
-    standard_name:  sea_surface_barotropic_wave_stokes_drift_x_velocity
-    long_name:      vertically-integrated u-Stokes drift velocity
+    standard_name:  sea_water_barotropic_stokes_x_velocity
+    long_name:      vertically-integrated Stokes u-velocity
     units:          meter second-1                                   # [m/s]
-    field:          barotropic Stokes u-drift
+    field:          barotropic Stokes u-velocity
     time:           ocean_time
     index_code:     idU2Sd
     type:           u2dvar
     add_offset:     0.0d0
     scale:          1.0d0
 
-  - variable:       vbar_Rstress                                      # Output
-    standard_name:  sea_surface_barotropic_y_wave_radiation_stress
-    long_name:      vertically-integrated v-radiation stress
-    units:          newton meter-2                                    # [N/m2]
-    field:          barotropic wave radiation y-stress
-    time:           ocean_time
-    index_code:     idV2rs
-    type:           v2dvar
-    add_offset:     0.0d0
-    scale:          1.0d0
-
   - variable:       vbar_stokes                                      # Output
-    standard_name:  sea_surface_barotropic_wave_stokes_drift_y_velocity
-    long_name:      vertically-integrated v-Stokes drift velocity
+    standard_name:  sea_water_barotropic_stokes_y_velocity
+    long_name:      vertically-integrated Stokes v-velocity
     units:          meter second-1                                   # [m/s]
-    field:          barotropic Stokes v-drift
+    field:          barotropic Stokes v-velocity
     time:           ocean_time
     index_code:     idV2Sd
     type:           v2dvar
     add_offset:     0.0d0
     scale:          1.0d0
 
-  - variable:       u_Rstress                                         # Output
-    standard_name:  sea_water_x_wave_radiation_stress
-    long_name:      u-radiation stress
-    units:          newton meter-2                                    # [N/m2]
-    field:          wave radiation x-stress
+  - variable:       ubar_wec_stress                                  # Output
+    standard_name:  sea_water_barotropic_waves_effect_on_currents_x_stress
+    long_name:      vertically-integrated waves effect on currents u-stress
+    units:          newton meter-2                                   # [m2/s2]
+    field:          WEC barotropic u-stress
+    time:           ocean_time
+    index_code:     idU2rs
+    type:           u2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       vbar_wec_stress                                  # Output
+    standard_name:  sea_water_barotropic_waves_effect_on_currents_y_stress
+    long_name:      vertically-integrated waves effect on currents v-stress
+    units:          newton meter-2                                   # [m2/s2]
+    field:          WEC barotropic v-stress
+    time:           ocean_time
+    index_code:     idV2rs
+    type:           v2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       u_stokes                                         # Output
+    standard_name:  sea_water_stokes_x_velocity
+    long_name:      Stokes u-velocity
+    units:          meter second-1                                   # [m/s]
+    field:          Stokes u-velocity
+    time:           ocean_time
+    index_code:     idU3Sd
+    type:           u3dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       v_stokes                                         # Output
+    standard_name:  sea_water_stokes_y_velocity
+    long_name:      Stokes v-velocity
+    units:          meter second-1                                   # [m/s]
+    field:          Stokes v-velocity
+    time:           ocean_time
+    index_code:     idV3Sd
+    type:           u3dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       w_stokes                                         # Output
+    standard_name:  upward_sea_water_stokes_velocity
+    long_name:      Stokes vertical velocity
+    units:          meter second-1                                   # [m/s]
+    field:          Stokes vertical velocity
+    time:           ocean_time
+    index_code:     idW3St
+    type:           w3dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       omega_stokes                                     # Output
+    standard_name:  upward_sea_water_stokes_omega_velocity
+    long_name:      Stokes omega velocity
+    units:          meter3 second-1                                  # [m3/s]
+    field:          Stokes omega velocity
+    time:           ocean_time
+    index_code:     idW3Sd
+    type:           w3dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       u_wec_stress                                     # Output
+    standard_name:  sea_water_waves_effect_on_currents_x_stress
+    long_name:      waves effect on currents u-stress
+    units:          newton meter-2                                   # [m2/s2]
+    field:          WEC u-stress
     time:           ocean_time
     index_code:     idU3rs
     type:           u3dvar
     add_offset:     0.0d0
     scale:          1.0d0
 
-  - variable:       u_stokes                                         # Output
-    standard_name:  sea_water_wave_stokes_drift_x_velocity
-    long_name:      u-Stokes drift velocity
-    units:          meter second-1                                   # [m/s]
-    field:          Stokes u-drift
-    time:           wave_time
-    index_code:     idU3Sd
-    type:           u3dvar
-    add_offset:     0.0d0
-    scale:          1.0d0
-
-  - variable:       v_Rstress                                         # Output
-    standard_name:  sea_water_y_wave_radiation_stress
-    long_name:      v-radiation stress
-    units:          newton meter-2                                    # [N/m2]
-    field:          wave radiation y-stress
+  - variable:       v_wec_stress                                     # Output
+    standard_name:  sea_water_waves_effect_on_currents_y_stress
+    long_name:      waves effect on currents v-stress
+    units:          newton meter-2                                   # [m2/s2]
+    field:          WEC v-stress
     time:           ocean_time
     index_code:     idV3rs
-    type:           v3dvar
-    add_offset:     0.0d0
-    scale:          1.0d0
-
-  - variable:       v_stokes                                         # Output
-    standard_name:  sea_water_wave_stokes_drift_y_velocity
-    long_name:      v-Stokes drift velocity
-    units:          meter second-1                                   # [m/s]
-    field:          Stokes v-drift
-    time:           ocean_time
-    index_code:     idV3Sd
     type:           v3dvar
     add_offset:     0.0d0
     scale:          1.0d0
@@ -5419,62 +5862,7 @@ metadata:
   ###  Sea-ice State Variables  ###
   #################################
 
-  - variable:       prate
-    standard_name:  precipitation_flux
-    long_name:      precipitation rate
-    units:          kilogram meter-2 second-1
-    field:          precipitation rate
-    time:           prate_time
-    index_code:     idPrate
-    type:           r2dvar
-    add_offset:     0.0d0
-    scale:          1.0d0
-
-  - variable:       icec
-    standard_name:  sea_ice_concentration
-    long_name:      observed ice concentration
-    units:          nondimensional
-    field:          ice concentration
-    time:           icec_time
-    index_code:     idIcec
-    type:           r2dvar
-    add_offset:     0.0d0
-    scale:          1.0d0
-
-  - variable:       skt
-    standard_name:  sea_surface_skin_temperature
-    long_name:      skin temperature
-    units:          Kelvin
-    field:          skin temperature
-    time:           skt_time
-    index_code:     idSkt
-    type:           r2dvar
-    add_offset:     0.0d0
-    scale:          1.0d0
-
-  - variable:       uice
-    standard_name:  sea_ice_x_velocity
-    long_name:      u-component of ice velocity
-    units:          meter second-1
-    field:          sea ice x-velocity
-    time:           ocean_time
-    index_code:     idUice
-    type:           u2dvar
-    add_offset:     0.0d0
-    scale:          1.0d0
-
-  - variable:       vice
-    standard_name:  sea_ice_y_velocity
-    long_name:      v-component of ice velocity
-    units:          meter second-1
-    field:          sea ice y-velocity
-    time:           ocean_time
-    index_code:     idVice
-    type:           v2dvar
-    add_offset:     0.0d0
-    scale:          1.0d0
-
-  - variable:       aice
+  - variable:       Aice                                             # Input/Output
     standard_name:  sea_ice_area_fraction
     long_name:      fraction of cell covered by ice
     units:          nondimensional
@@ -5485,10 +5873,10 @@ metadata:
     add_offset:     0.0d0
     scale:          1.0d0
 
-  - variable:       hice
+  - variable:       ice_thickness                                    # Input/Output
     standard_name:  sea_ice_thickness
     long_name:      average ice thickness in cell
-    units:          meter
+    units:          meter                                            # [m]
     field:          ice thickness
     time:           ocean_time
     index_code:     idHice
@@ -5496,10 +5884,32 @@ metadata:
     add_offset:     0.0d0
     scale:          1.0d0
 
-  - variable:       snow_thick
+  - variable:       meltpond_thickness                               # Input/Output
+    standard_name:  melt_pond_water_thickness_on_sea_ice
+    long_name:      surface melt water thickness on ice
+    units:          meter                                            # [m]
+    field:          sea ice melt water thickness
+    time:           ocean_time
+    index_code:     idHmel
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       ice_age                                          # Input/Output
+    standard_name:  age_of_sea_ice
+    long_name:      age of sea ice
+    units:          second                                           # [s]
+    field:          ice age
+    time:           ocean_time
+    index_code:     idIage
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       snow_thickness                                   # Input/Output
     standard_name:  snowfall_thickness_above_sea_ice
     long_name:      thickness of snow cover
-    units:          meter
+    units:          meter                                            # [m]
     field:          snow thickness
     time:           ocean_time
     index_code:     idHsno
@@ -5507,65 +5917,21 @@ metadata:
     add_offset:     0.0d0
     scale:          1.0d0
 
-  - variable:       tisrf
-    standard_name:  sea_ice_surface_temperature
-    long_name:      temperature of ice surface
-    units:          Celcius
-    field:          sea ice surface temperature
+  - variable:       Tice                                             # Input/Output
+    standard_name:  sea_ice_temperature
+    long_name:      interior ice temperature
+    units:          Celcius                                          # [C]
+    field:          sea ice interior temperature
     time:           ocean_time
     index_code:     idTice
     type:           r2dvar
     add_offset:     0.0d0
     scale:          1.0d0
 
-  - variable:       ti
-    standard_name:  sea_ice_temperature
-    long_name:      interior ice temperature
-    units:          Celcius
-    field:          sea ice interior temperature
-    time:           ocean_time
-    index_code:     idTimid
-    type:           r2dvar
-    add_offset:     0.0d0
-    scale:          1.0d0
-
-  - variable:       tau_iw
-    standard_name:  sea_ice_and_sea_water_friction_velocity
-    long_name:      ice-water friction velocity
-    units:          meter second-1
-    field:          sea ice friction velocity
-    time:           ocean_time
-    index_code:     idTauiw
-    type:           r2dvar
-    add_offset:     0.0d0
-    scale:          1.0d0
-
-  - variable:       chu_iw
-    standard_name:  sea_ice_and_sea_water_transfer_coefficient
-    long_name:      ice-water momentum transfer coefficient
-    units:          meter second-1
-    field:          sea ice transfer coefficient
-    time:           ocean_time
-    index_code:     idChuiw
-    type:           r2dvar
-    add_offset:     0.0d0
-    scale:          1.0d0
-
-  - variable:       s0mk
-    standard_name:  salinity_of_molecular_sub_layer_under_sea_ice
-    long_name:      salinity of molecular sub-layer under ice
-    units:          nondimensional
-    field:          under sea ice salinity
-    time:           ocean_time
-    index_code:     idS0mk
-    type:           r2dvar
-    add_offset:     0.0d0
-    scale:          1.0d0
-
-  - variable:       t0mk
+  - variable:       under_ice_temp                                   # Input/Output
     standard_name:  temperature_of_molecular_sub_layer_under_sea_ice
     long_name:      temperature of molecular sub-layer under ice
-    units:          degrees Celsius
+    units:          Celsius                                          # [C]
     field:          under sea ice temperature
     time:           ocean_time
     index_code:     idT0mk
@@ -5573,156 +5939,200 @@ metadata:
     add_offset:     0.0d0
     scale:          1.0d0
 
-  - variable:       sfwat
-    standard_name:  melt_sea_water_tickness_on_sea_ice
-    long_name:      surface melt water thickness on ice
-    units:          meter
-    field:          sea ice melt water thickness
+  - variable:       under_ice_salt                                   # Input/Output
+    standard_name:  salinity_of_molecular_sub_layer_under_sea_ice
+    long_name:      salinity of molecular sub-layer under ice
+    units:          nondimensional                                   # [PSS]
+    field:          under sea ice salinity
     time:           ocean_time
-    index_code:     idSfwat
+    index_code:     idS0mk
     type:           r2dvar
     add_offset:     0.0d0
     scale:          1.0d0
 
-  - variable:       iomflx
-    standard_name:  water_flux_out_of_sea_ice_and_sea_water
-    long_name:      ice-ocean mass flux
-    units:          meter second-1
-    field:          ice-ocean mass flux
+  - variable:       ice_sst                                          # Input/Output
+    standard_name:  sea_ice_surface_temperature
+    long_name:      temperature of ice/snow surface
+    units:          Celcius                                          # [C]
+    field:          sea ice surface temperature
     time:           ocean_time
-    index_code:     idIomflx
+    index_code:     idIsst
     type:           r2dvar
     add_offset:     0.0d0
     scale:          1.0d0
 
-  - variable:       sig11
+  - variable:       Uice                                             # Input/Output
+    standard_name:  sea_ice_x_velocity
+    long_name:      u-component of ice velocity
+    units:          meter second-1                                   # [m/s]
+    field:          sea ice x-velocity
+    time:           ocean_time
+    index_code:     idUice
+    type:           u2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       Vice                                             # Input/Output
+    standard_name:  sea_ice_y_velocity
+    long_name:      v-component of ice velocity
+    units:          meter second-1                                   # [m/s]
+    field:          sea ice y-velocity
+    time:           ocean_time
+    index_code:     idVice
+    type:           v2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       Uice_eastward                                    # Input/Output
+    standard_name:  eastward_sea_ice_velocity
+    long_name:      eastward sea ice velocity at RHO-points
+    units:          meter second-1                                   # [m/s]
+    field:          sea ice x-velocity
+    time:           ocean_time
+    index_code:     idUiER
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       Vice_northward                                   # Input/Output
+    standard_name:  northward_sea_ice_velocity
+    long_name:      northward sea ice velocity at RHO-points
+    units:          meter second-1                                   # [m/s]
+    field:          sea ice y-velocity
+    time:           ocean_time
+    index_code:     idViNR
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       ice_Sxx                                          # Input/Output
     standard_name:  sea_ice_internal_xx_stress
-    long_name:      internal ice stress 11 component
-    units:          Newton meter-1
+    long_name:      internal ice stress xx-component
+    units:          Newton meter-1                                   # [N/m]
     field:          sea ice xx-stress
     time:           ocean_time
-    index_code:     idSig11
+    index_code:     idISxx
     type:           r2dvar
     add_offset:     0.0d0
     scale:          1.0d0
 
-  - variable:       sig22
-    standard_name:  sea_ice_internal_yy_stress
-    long_name:      internal ice stress 22 component
-    units:          Newton meter-1
-    field:          sea ice yy-stress
-    time:           ocean_time
-    index_code:     idSig22
-    type:           r2dvar
-    add_offset:     0.0d0
-    scale:          1.0d0
-
-  - variable:       sig12
+  - variable:       ice_Sxy                                          # Input/Output
     standard_name:  sea_ice_internal_xy_stress
-    long_name:      internal ice stress 12 component
-    units:          Newton meter-1
+    long_name:      internal ice stress xy-component
+    units:          Newton meter-1                                   # [N/m]
     field:          sea ice xy-stress
     time:           ocean_time
-    index_code:     idSig12
+    index_code:     idISxy
     type:           r2dvar
     add_offset:     0.0d0
     scale:          1.0d0
 
-  - variable:       wg2d
-    standard_name:  square_of_surface_wind_gustiness_from_file
-    long_name:      surface wind gustiness squared from NCEP fluxes
-    units:          meter2 second-2
-    field:          wind gustiness square
+  - variable:       ice_Syy                                          # Input/Output
+    standard_name:  sea_ice_internal_yy_stress
+    long_name:      internal ice stress yy-component
+    units:          Newton meter-1                                   # [N/m]
+    field:          sea ice yy-stress
     time:           ocean_time
-    index_code:     idWg2d
+    index_code:     idISyy
     type:           r2dvar
     add_offset:     0.0d0
     scale:          1.0d0
 
-  - variable:       cdd
-    standard_name:  momentum_shear_stress_transfer_coefficient_from_file
-    long_name:      momentum transfer coefficient from NCEP fluxes
-    units:          nondimensional
-    field:          momentum transfer coefficient
+  - variable:       io_massflux                                      # Output
+    standard_name:  water_flux_out_of_sea_ice_and_sea_water
+    long_name:      ice-ocean mass flux
+    units:          meter second-1                                   # [m/s]
+    field:          ice-ocean mass flux
     time:           ocean_time
-    index_code:     idCdd
+    index_code:     idIOmf
     type:           r2dvar
     add_offset:     0.0d0
     scale:          1.0d0
 
-  - variable:       chd
-    standard_name:  sensible_heat_transfer_coefficient_from_file
-    long_name:      sensible heat transfer coefficient from NCEP
-    units:          nondimensional
-    field:          heat transfer coefficient
+  - variable:       io_friction_vel                                  # Output
+    standard_name:  sea_ice_and_sea_water_friction_velocity
+    long_name:      ice-ocean friction velocity                      # [m/s]
+    units:          meter second-1
+    field:          sea ice friction velocity
     time:           ocean_time
-    index_code:     idChd
+    index_code:     idIOfv
     type:           r2dvar
     add_offset:     0.0d0
     scale:          1.0d0
 
-  - variable:       ced
-    standard_name:  latent_heat_transfer_coefficient_from_file
-    long_name:      latent heat transfer coefficient from NCEP
-    units:          nondimensional
-    field:          latent transfer coefficient
+  - variable:       io_transfer_coef                                 # Output
+    standard_name:  sea_ice_and_sea_water_transfer_coefficient
+    long_name:      ice-ocean momentum transfer coefficient
+    units:          meter second-1                                   # [m/s]
+    field:          sea ice transfer coefficient
     time:           ocean_time
-    index_code:     idCed
+    index_code:     idIOmt
     type:           r2dvar
     add_offset:     0.0d0
     scale:          1.0d0
 
-  - variable:       wg2m
-    standard_name:  squared_surface_wind_gustiness_from_model
-    long_name:      surface wind gustiness squared from model
-    units:          meter2 second-2
-    field:          wind gustiness square
+  - variable:       ice_divergence                                   # Output
+    standard_name:  sea_ice_divergence_rate
+    long_name:      sea ice divergence rate
+    units:          meter3 second-1                                  # [m3/s]
+    field:          sea ice divergence rate
     time:           ocean_time
-    index_code:     idWg2m
+    index_code:     idWdiv
     type:           r2dvar
     add_offset:     0.0d0
     scale:          1.0d0
 
-  - variable:       cdm
-    standard_name:  momentum_shear_stress_transfer_coefficient_from_model
-    long_name:      momentum transfer coefficient from model
-    units:          nondimensional
-    field:          momentum transfer coefficient
+  - variable:       ai_melt_freeze                                   # Output
+    standard_name:  rate_of_melting_or_freezing_at_atmosphere_sea_ice_interface
+    long_name:      rate of melt/freeze at the atmosphere-ice interface
+    units:          meter second-1                                   # [m/s]
+    field:          air-ice melt/freeze rate
     time:           ocean_time
-    index_code:     idCdm
+    index_code:     idW_ai
     type:           r2dvar
     add_offset:     0.0d0
     scale:          1.0d0
 
-  - variable:       chm
-    standard_name:  sensible_heat_transfer_coefficient_from_model
-    long_name:      sensible heat transfer coefficient from model
-    units:          nondimensional
-    field:          sensible transfer coefficient
+  - variable:       ao_melt_freeze                                   # Output
+    standard_name:  rate_of_melting_or_freezing_at_atmosphere_ocean_interface
+    long_name:      rate of melt/freeze at the atmosphere-ocean interface
+    units:          meter second-1                                   # [m/s]
+    field:          air-ocean melt/freeze rate
     time:           ocean_time
-    index_code:     idChm
+    index_code:     idW_ao
     type:           r2dvar
     add_offset:     0.0d0
     scale:          1.0d0
 
-  - variable:       cem
-    standard_name:  latent_heat_transfer_coefficient_from_file
-    long_name:      latent heat transfer coefficient from model
-    units:          nondimensional
-    field:          latent transfer coefficient
+  - variable:       frazil_freeze                                    # Output
+    standard_name:  rate_of_frazil_ice_growth
+    long_name:      rate of frazil ice growth in full water column
+    units:          meter second-1                                   # [m/s]
+    field:          frazil ice growth rate
     time:           ocean_time
-    index_code:     idCem
+    index_code:     idW_fr
     type:           r2dvar
     add_offset:     0.0d0
     scale:          1.0d0
 
-  - variable:       rhoa
-    standard_name:  surface_air_density
-    long_name:      near-surface air density from NCEP fluxes
-    units:          kg meter-3
-    field:          air density
+  - variable:       io_melt_freeze                                   # Output
+    standard_name:  rate_of_melting_or_freezing_at_sea_ice_ocean_interface
+    long_name:      rate of melt/freeze at the ice-ocean interface
+    units:          meter second-1                                   # [m/s]
+    field:          ice-ocean melt/freeze rate
     time:           ocean_time
-    index_code:     idRhoa
+    index_code:     idW_io
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       melt_freeze_runoff                               # Output
+    standard_name:  rate_of_melting_or_freezing_runoff_into_ocean
+    long_name:      rate of melt/freeze runoff into ocean
+    units:          meter second-1                                   # [m/s]
+    field:          melt/freeze runoff rate
+    time:           ocean_time
+    index_code:     idW_ro
     type:           r2dvar
     add_offset:     0.0d0
     scale:          1.0d0
@@ -6366,28 +6776,6 @@ metadata:
     add_offset:     0.0d0
     scale:          1.0d0
 
-  - variable:       u_vrad                                           # Input/Output
-    standard_name:  sea_water_x_velocity_tendency_due_to_vertical_radiation_stress
-    long_name:      3D u-momentum, vertical radiation stress term
-    units:          meter second-2                                   # [m/s2]
-    field:          u-velocity vertical radiation stress
-    time:           ocean_time
-    index_code:     idDu3d(M3vrad)
-    type:           u3dvar
-    add_offset:     0.0d0
-    scale:          1.0d0
-
-  - variable:       v_vrad                                           # Input/Output
-    standard_name:  sea_water_y_velocity_tendency_due_to_vertical_radiation_stress
-    long_name:      3D v-momentum, vertical radiation stress term
-    units:          meter second-2                                   # [m/2]
-    field:          v-velocity vertical radiation stress
-    time:           ocean_time
-    index_code:     idDv3d(M3vrad)
-    type:           v3dvar
-    add_offset:     0.0d0
-    scale:          1.0d0
-
   - variable:       u_hvisc                                          # Input/Output
     standard_name:  sea_water_x_velocity_tendency_due_to_horizontal_viscosity
     long_name:      3D u-momentum, horizontal viscosity term
@@ -6472,6 +6860,472 @@ metadata:
     field:          v-velocity vertical viscosity
     time:           ocean_time
     index_code:     idDv3d(M3vvis)
+    type:           v3dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  # Waves Effect on Currents (WEC) 2D Diagnostic Terms.
+
+  - variable:       ubar_hjvf                                        # Input/Output
+    standard_name:  barotropic_sea_water_x_velocity_tendency_due_to_horizontal_vortex_force
+    long_name:      2D u-momentum, horizontal J-vortex force term
+    units:          meter second-2                                   # [m/s2]
+    field:          u-barotropic horizontal J-vortex force
+    time:           ocean_time
+    index_code:     idDu2d(M2hjvf)
+    type:           u2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       vbar_hjvf                                        # Input/Output
+    standard_name:  barotropic_sea_water_y_velocity_tendency_due_to_horizontal_vortex_force
+    long_name:      2D v-momentum, horizontal J-vortex force term
+    units:          meter second-2                                   # [m/s2]
+    field:          v-barotropic J-vortex force
+    time:           ocean_time
+    index_code:     idDv2d(M2hjvf)
+    type:           v2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       ubar_kvrf                                        # Input/Output
+    standard_name:  barotropic_sea_water_x_velocity_tendency_due_to_K_vortex_force
+    long_name:      2D u-momentum, K-vortex force term
+    units:          meter second-2                                   # [m/s2]
+    field:          u-barotropic K-vortex force
+    time:           ocean_time
+    index_code:     idDu2d(M2kvrf)
+    type:           u2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       vbar_kvrf                                        # Input/Output
+    standard_name:  barotropic_sea_water_y_velocity_tendency_due_to_K_vortex_force
+    long_name:      2D v-momentum, K-vortex force term
+    units:          meter second-2                                   # [m/s2]
+    field:          v-barotropic K-vortex force
+    time:           ocean_time
+    index_code:     idDv2d(M2kvrf)
+    type:           v2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       ubar_fsco                                        # Input/Output
+    standard_name:  barotropic_sea_water_x_velocity_tendency_due_to_stokes_coriolis
+    long_name:      2D u-momentum, Stokes Coriolis term
+    units:          meter second-2                                   # [m/s2]
+    field:          u-barotropic Stokes Coriolis
+    time:           ocean_time
+    index_code:     idDu2d(M2fsco)
+    type:           u2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       vbar_fsco                                        # Input/Output
+    standard_name:  barotropic_sea_water_y_velocity_tendency_due_to_stokes_coriolis
+    long_name:      2D v-momentum, Stokes Coriolis term
+    units:          meter second-2                                   # [m/s2]
+    field:          v-barotropic Stokes Coriolis
+    time:           ocean_time
+    index_code:     idDv2d(M2fsco)
+    type:           v2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       ubar_sstm                                        # Input/Output
+    standard_name:  barotropic_sea_water_x_velocity_tendency_due_to_surface_streaming
+    long_name:      2D u-momentum, surface streaming
+    units:          meter second-2                                   # [m/s2]
+    field:          u-barotropic surface streaming
+    time:           ocean_time
+    index_code:     idDu2d(M2sstm)
+    type:           u2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       vbar_sstm                                        # Input/Output
+    standard_name:  barotropic_sea_water_y_velocity_tendency_due_to_surface_streaming
+    long_name:      2D v-momentum, surface streaming
+    units:          meter second-2                                   # [m/s2]
+    field:          v-barotropic surface streaming
+    time:           ocean_time
+    index_code:     idDv2d(M2sstm)
+    type:           v2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       ubar_bstm                                        # Input/Output
+    standard_name:  barotropic_sea_water_x_velocity_tendency_due_to_bottom_streaming
+    long_name:      2D u-momentum, bottom streaming term
+    units:          meter second-2                                   # [m/s2]
+    field:          u-barotropic bottom streaming
+    time:           ocean_time
+    index_code:     idDu2d(M2bstm)
+    type:           u2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       vbar_bstm                                        # Input/Output
+    standard_name:  barotropic_sea_water_y_velocity_tendency_due_to_bottom_streaming
+    long_name:      2D v-momentum, bottom streaming term
+    units:          meter second-2                                   # [m/s2]
+    field:          v-barotropic bottom streaming
+    time:           ocean_time
+    index_code:     idDv2d(M2bstm)
+    type:           v2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       ubar_wrol                                        # Input/Output
+    standard_name:  barotropic_sea_water_x_velocity_tendency_due_to_wave_roller_acceleration
+    long_name:      2D u-momentum, wave roller acceleration term
+    units:          meter second-2                                   # [m/s2]
+    field:          u-barotropic wave roller acceleration
+    time:           ocean_time
+    index_code:     idDu2d(M2wrol)
+    type:           u2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       vbar_wrol                                        # Input/Output
+    standard_name:  barotropic_sea_water_y_velocity_tendency_due_to_wave_roller_acceleration
+    long_name:      2D v-momentum, wave roller acceleration
+    units:          meter second-2                                   # [m/s2]
+    field:          v-barotropic wave roller acceleration
+    time:           ocean_time
+    index_code:     idDv2d(M2wrol)
+    type:           v2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       ubar_wbrk                                        # Input/Output
+    standard_name:  barotropic_sea_water_x_velocity_tendency_due_to_wave_breaking
+    long_name:      2D u-momentum, wave breaking term
+    units:          meter second-2                                   # [m/s2]
+    field:          u-barotropic wave breaking
+    time:           ocean_time
+    index_code:     idDu2d(M2wbrk)
+    type:           u2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       vbar_wbrk                                        # Input/Output
+    standard_name:  barotropic_sea_water_y_velocity_tendency_due_to_wave_breaking
+    long_name:      2D v-momentum, wave breaking term
+    units:          meter second-2                                   # [m/s2]
+    field:          v-barotropic wave breaking
+    time:           ocean_time
+    index_code:     idDv2d(M2wbrk)
+    type:           v2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       ubar_zeta                                        # Input/Output
+    standard_name:  barotropic_sea_water_x_velocity_tendency_due_to_eulerian_sea_level_adjustment
+    long_name:      2D u-momentum, Eulerian sea level adjustment term
+    units:          meter second-2                                   # [m/s2]
+    field:          u-barotropic Eulerian sea level adjustment
+    time:           ocean_time
+    index_code:     idDu2d(M2zeta)
+    type:           u2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       vbar_zeta                                        # Input/Output
+    standard_name:  barotropic_sea_water_y_velocity_tendency_due_to_eulerian_sea_level_adjustment
+    long_name:      2D v-momentum, Eulerian sea level adjustment term
+    units:          meter second-2                                   # [m/s2]
+    field:          v-barotropic Eulerian sea level adjustment
+    time:           ocean_time
+    index_code:     idDv2d(M2zeta)
+    type:           v2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       ubar_zetaw                                        # Input/Output
+    standard_name:  barotropic_sea_water_x_velocity_tendency_due_to_quasi_static_sea_level_adjustment
+    long_name:      2D u-momentum, quasi-static sea level adjustment term
+    units:          meter second-2                                   # [m/s2]
+    field:          u-barotropic quasi-static sea level adjustment
+    time:           ocean_time
+    index_code:     idDu2d(M2zetw)
+    type:           u2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       vbar_zetaw                                        # Input/Output
+    standard_name:  barotropic_sea_water_y_velocity_tendency_due_to_quasi_static_ sea_level_adjustment
+    long_name:      2D v-momentum, quasi-static sea level adjustment term
+    units:          meter second-2                                   # [m/s2]
+    field:          v-barotropic quasi-static sea level adjustment
+    time:           ocean_time
+    index_code:     idDv2d(M2zetw)
+    type:           v2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       ubar_zqsp                                        # Input/Output
+    standard_name:  barotropic_sea_water_x_velocity_tendency_due_to_quasi_static_pressure_adjustment
+    long_name:      2D u-momentum, quasi-static pressure adjustment term
+    units:          meter second-2                                   # [m/s2]
+    field:          u-barotropic quasi-static pressure adjustment
+    time:           ocean_time
+    index_code:     idDu2d(M2zqsp)
+    type:           u2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       vbar_zqsp                                        # Input/Output
+    standard_name:  barotropic_sea_water_y_velocity_tendency_due_to_quasi_static_pressure_adjustment
+    long_name:      2D v-momentum, quasi-static sea pressure adjustment
+    units:          meter second-2                                   # [m/s2]
+    field:          v-barotropic quasi-static pressure adjustment
+    time:           ocean_time
+    index_code:     idDv2d(M2zqsp)
+    type:           v2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       ubar_zbeh                                        # Input/Output
+    standard_name:  barotropic_sea_water_x_velocity_tendency_due_to_bernoulli_head_adjustment
+    long_name:      2D u-momentum, Bernoulli head adjustment term
+    units:          meter second-2                                   # [m/s2]
+    field:          u-barotropic Bernoulli head adjustment
+    time:           ocean_time
+    index_code:     idDu2d(M2zbeh)
+    type:           u2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       vbar_zbeh                                        # Input/Output
+    standard_name:  barotropic_sea_water_y_velocity_tendency_due_to_bernoulli_head_adjustment
+    long_name:      2D v-momentum, Bernoulli head adjustment term
+    units:          meter second-2                                   # [m/s2]
+    field:          v-barotropic Bernoulli head adjustment
+    time:           ocean_time
+    index_code:     idDv2d(M2zbeh)
+    type:           v2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       ubar_fsgr                                        # Input/Output
+    standard_name:  barotropic_sea_water_x_velocity_tendency_due_to_seagrass_drag_force
+    long_name:      2D u-momentum, seagrass drag force term
+    units:          meter second-2                                   # [m/s2]
+    field:          u-barotropic seagrass drag force
+    time:           ocean_time
+    index_code:     idDu2d(M2fsgr)
+    type:           u2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       vbar_fsgr                                        # Input/Output
+    standard_name:  barotropic_sea_water_y_velocity_tendency_due_to_seagrass_drag_force
+    long_name:      2D v-momentum, seagrass drag force term
+    units:          meter second-2                                   # [m/s2]
+    field:          v-barotropic seagrass drag force
+    time:           ocean_time
+    index_code:     idDv2d(M2fsgr)
+    type:           v2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  # Waves Effect on Currents (WEC) 3D Diagnostic Terms.
+
+  - variable:       u_hjvf                                           # Input/Output
+    standard_name:  sea_water_x_velocity_tendency_due_to_horizontal_vortex_force
+    long_name:      3D u-momentum, horizontal J-vortex force term
+    units:          meter second-2                                   # [m/s2]
+    field:          u-velocity horizontal J-vortex force
+    time:           ocean_time
+    index_code:     idDu3d(M3hjvf)
+    type:           u3dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       v_hjvf                                           # Input/Output
+    standard_name:  sea_water_y_velocity_tendency_due_to_horizontal_vortex_force
+    long_name:      3D v-momentum, horizontal J-vortex force term
+    units:          meter second-2                                   # [m/s2]
+    field:          v-velocity horizontal J-vortex force
+    time:           ocean_time
+    index_code:     idDv3d(M3hjvf)
+    type:           v3dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       u_vjvf                                           # Input/Output
+    standard_name:  sea_water_x_velocity_tendency_due_to_vertical_vortex_force
+    long_name:      3D u-momentum, vertical J-vortex force term
+    units:          meter second-2                                   # [m/s2]
+    field:          u-velocity vertical J-vortex force
+    time:           ocean_time
+    index_code:     idDu3d(M3vjvf)
+    type:           u3dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       v_vjvf                                           # Input/Output
+    standard_name:  sea_water_y_velocity_tendency_due_to_vertical_vortex_force
+    long_name:      3D v-momentum, vertical J-vortex force term
+    units:          meter second-2                                   # [m/s2]
+    field:          v-velocity vertical J-vortex force
+    time:           ocean_time
+    index_code:     idDv3d(M3vjvf)
+    type:           v3dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       u_kvrf                                           # Input/Output
+    standard_name:  sea_water_x_velocity_tendency_due_to_K_vortex_force
+    long_name:      3D u-momentum, K-vortex force term
+    units:          meter second-2                                   # [m/s2]
+    field:          u-velocity K-vortex force
+    time:           ocean_time
+    index_code:     idDu3d(M3kvrf)
+    type:           u3dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       v_kvrf                                           # Input/Output
+    standard_name:  sea_water_y_velocity_tendency_due_to_K_vortex_force
+    long_name:      3D v-momentum, K-vortex force term
+    units:          meter second-2                                   # [m/s2]
+    field:          v-velocity K-vortex force
+    time:           ocean_time
+    index_code:     idDv3d(M3kvrf)
+    type:           v3dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       u_fsco                                           # Input/Output
+    standard_name:  sea_water_x_velocity_tendency_due_to_stokes_coriolis
+    long_name:      3D u-momentum, Stokes Coriolis term
+    units:          meter second-2                                   # [m/s2]
+    field:          u-velocity Stokes Coriolis
+    time:           ocean_time
+    index_code:     idDu3d(M3fsco)
+    type:           u3dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       v_fsco                                           # Input/Output
+    standard_name:  sea_water_y_velocity_tendency_due_to_stokes_coriolis
+    long_name:      3D v-momentum, Stokes Coriolis term
+    units:          meter second-2                                   # [m/s2]
+    field:          v-velocity Stokes Coriolis
+    time:           ocean_time
+    index_code:     idDv3d(M3fsco)
+    type:           v3dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       u_sstm                                           # Input/Output
+    standard_name:  sea_water_x_velocity_tendency_due_to_surface_streaming
+    long_name:      3D u-momentum, surface streaming
+    units:          meter second-2                                   # [m/s2]
+    field:          u-velocity surface streaming
+    time:           ocean_time
+    index_code:     idDu3d(M3sstm)
+    type:           u3dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       v_sstm                                           # Input/Output
+    standard_name:  sea_water_y_velocity_tendency_due_to_surface_streaming
+    long_name:      3D v-momentum, surface streaming
+    units:          meter second-2                                   # [m/s2]
+    field:          v-velocity surface streaming
+    time:           ocean_time
+    index_code:     idDv3d(M3sstm)
+    type:           v3dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       u_bstm                                           # Input/Output
+    standard_name:  sea_water_x_velocity_tendency_due_to_bottom_streaming
+    long_name:      3D u-momentum, bottom streaming term
+    units:          meter second-2                                   # [m/s2]
+    field:          u-velocity bottom streaming
+    time:           ocean_time
+    index_code:     idDu3d(M3bstm)
+    type:           u3dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       v_bstm                                           # Input/Output
+    standard_name:  sea_water_y_velocity_tendency_due_to_bottom_streaming
+    long_name:      3D v-momentum, bottom streaming term
+    units:          meter second-2                                   # [m/s2]
+    field:          v-velocity bottom streaming
+    time:           ocean_time
+    index_code:     idDv3d(M3bstm)
+    type:           v3dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       u_wrol                                           # Input/Output
+    standard_name:  sea_water_x_velocity_tendency_due_to_wave_roller_acceleration
+    long_name:      3D u-momentum, wave roller acceleration term
+    units:          meter second-2                                   # [m/s2]
+    field:          u-velocity wave roller acceleration
+    time:           ocean_time
+    index_code:     idDu3d(M3wrol)
+    type:           u3dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       v_wrol                                           # Input/Output
+    standard_name:  sea_water_y_velocity_tendency_due_to_wave_roller_acceleration
+    long_name:      3D v-momentum, wave roller acceleration
+    units:          meter second-2                                   # [m/s2]
+    field:          v-velocity wave roller acceleration
+    time:           ocean_time
+    index_code:     idDv3d(M3wrol)
+    type:           v3dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       u_wbrk                                           # Input/Output
+    standard_name:  sea_water_x_velocity_tendency_due_to_wave_breaking
+    long_name:      3D u-momentum, wave breaking term
+    units:          meter second-2                                   # [m/s2]
+    field:          u-velocity wave breaking
+    time:           ocean_time
+    index_code:     idDu3d(M3wbrk)
+    type:           u3dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       v_wbrk                                           # Input/Output
+    standard_name:  sea_water_y_velocity_tendency_due_to_wave_breaking
+    long_name:      3D v-momentum, wave breaking term
+    units:          meter second-2                                   # [m/s2]
+    field:          v-velocity wave breaking
+    time:           ocean_time
+    index_code:     idDv3d(M3wbrk)
+    type:           v3dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       u_fsgr                                           # Input/Output
+    standard_name:  sea_water_x_velocity_tendency_due_to_seagrass_drag_force
+    long_name:      3D u-momentum, seagrass drag force term
+    units:          meter second-2                                   # [m/s2]
+    field:          u-velocity seagrass drag force
+    time:           ocean_time
+    index_code:     idDu3d(M3fsgr)
+    type:           u3dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       v_fsgr                                           # Input/Output
+    standard_name:  sea_water_y_velocity_tendency_due_to_seagrass_drag_force
+    long_name:      3D v-momentum, seagrass drag force term
+    units:          meter second-2                                   # [m/s2]
+    field:          v-velocity seagrass drag force
+    time:           ocean_time
+    index_code:     idDv3d(M3fsgr)
     type:           v3dvar
     add_offset:     0.0d0
     scale:          1.0d0

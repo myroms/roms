@@ -2,31 +2,42 @@
       MODULE zetabc_mod
 !
 !git $Id$
-!svn $Id: zetabc.F 1151 2023-02-09 03:08:53Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2025 The ROMS Group                              !
 !    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                                              !
+!    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
 !  This routine sets lateral boundary conditions for free-surface.     !
+#if defined STEP2D_FB_AB3_AM4 || defined STEP2D_FB_LF_AM3
+!  Notice that "zetabc_local" is used for either the Forward-Backward  !
+!  AB3-AM4 or Forward-Backward LF-AM3 barotropic kernels where the     !
+!  boundary conditions are loaded into private array "zeta_new".       !
+#endif
 !                                                                      !
 !=======================================================================
+!
+      USE mod_param
+      USE mod_boundary
+      USE mod_grid
+      USE mod_ncparam
+      USE mod_ocean
+      USE mod_scalars
+      USE mod_stepping
 !
       implicit none
 !
       PRIVATE
       PUBLIC  :: zetabc_tile
+#if defined STEP2D_FB_AB3_AM4 || defined STEP2D_FB_LF_AM3
+      PUBLIC  :: zetabc_local
+#endif
 !
       CONTAINS
 !
 !***********************************************************************
       SUBROUTINE zetabc (ng, tile, kout)
 !***********************************************************************
-!
-      USE mod_param
-      USE mod_ocean
-      USE mod_stepping
 !
 !  Imported variable declarations.
 !
@@ -53,12 +64,6 @@
      &                        zeta)
 !***********************************************************************
 !
-      USE mod_param
-      USE mod_boundary
-      USE mod_grid
-      USE mod_ncparam
-      USE mod_scalars
-!
 !  Imported variable declarations.
 !
       integer, intent(in) :: ng, tile
@@ -69,7 +74,7 @@
 #ifdef ASSUMED_SHAPE
       real(r8), intent(inout) :: zeta(LBi:,LBj:,:)
 #else
-      real(r8), intent(inout) :: zeta(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(inout) :: zeta(LBi:UBi,LBj:UBj,:)
 #endif
 !
 !  Local variable declarations.
@@ -89,6 +94,10 @@
 !  Set time-indices
 !-----------------------------------------------------------------------
 !
+#if defined STEP2D_FB_AB3_AM4 || defined STEP2D_FB_LF_AM3
+        know=kstp
+        dt2d=dtfast(ng)
+#else
       IF (FIRST_2D_STEP) THEN
         know=krhs
         dt2d=dtfast(ng)
@@ -99,6 +108,7 @@
         know=kstp
         dt2d=dtfast(ng)
       END IF
+#endif
 !
 !-----------------------------------------------------------------------
 !  Lateral boundary conditions at the western edge.
@@ -177,8 +187,13 @@
           DO j=Jstr,Jend
             IF (LBC_apply(ng)%west(j)) THEN
               cff=dt2d*GRID(ng)%pm(Istr,j)
+#ifdef WET_DRY
+              cff1=SQRT(g*(MAX(GRID(ng)%h(Istr,j)+                      &
+     &                         zeta(Istr,j,know),Dcrit(ng))))
+#else
               cff1=SQRT(g*(GRID(ng)%h(Istr,j)+                          &
      &                     zeta(Istr,j,know)))
+#endif
               Cx=cff*cff1
               zeta(Istr-1,j,kout)=(1.0_r8-Cx)*zeta(Istr-1,j,know)+      &
      &                            Cx*zeta(Istr,j,know)
@@ -195,8 +210,13 @@
           DO j=Jstr,Jend
             IF (LBC_apply(ng)%west(j)) THEN
               cff=dt2d*GRID(ng)%pm(Istr,j)
+#ifdef WET_DRY
+              cff1=SQRT(g*(MAX(GRID(ng)%h(Istr,j)+                      &
+     &                         zeta(Istr,j,know),Dcrit(ng))))
+#else
               cff1=SQRT(g*(GRID(ng)%h(Istr,j)+                          &
      &                     zeta(Istr,j,know)))
+#endif
               Cx=cff*cff1
               cff2=1.0_r8/(1.0_r8+Cx)
               zeta(Istr-1,j,kout)=cff2*(zeta(Istr-1,j,know)+            &
@@ -326,8 +346,13 @@
           DO j=Jstr,Jend
             IF (LBC_apply(ng)%east(j)) THEN
               cff=dt2d*GRID(ng)%pm(Iend,j)
+#ifdef WET_DRY
+              cff1=SQRT(g*(MAX(GRID(ng)%h(Iend,j)+                      &
+     &                         zeta(Iend,j,know),Dcrit(ng))))
+#else
               cff1=SQRT(g*(GRID(ng)%h(Iend,j)+                          &
      &                     zeta(Iend,j,know)))
+#endif
               Cx=cff*cff1
               zeta(Iend+1,j,kout)=(1.0_r8-Cx)*zeta(Iend+1,j,know)+      &
      &                            Cx*zeta(Iend,j,know)
@@ -344,8 +369,13 @@
           DO j=Jstr,Jend
             IF (LBC_apply(ng)%east(j)) THEN
               cff=dt2d*GRID(ng)%pm(Iend,j)
+#ifdef WET_DRY
+              cff1=SQRT(g*(MAX(GRID(ng)%h(Iend,j)+                      &
+     &                         zeta(Iend,j,know),Dcrit(ng))))
+#else
               cff1=SQRT(g*(GRID(ng)%h(Iend,j)+                          &
      &                     zeta(Iend,j,know)))
+#endif
               Cx=cff*cff1
               cff2=1.0_r8/(1.0_r8+Cx)
               zeta(Iend+1,j,kout)=cff2*(zeta(Iend+1,j,know)+            &
@@ -475,8 +505,13 @@
           DO i=Istr,Iend
             IF (LBC_apply(ng)%south(i)) THEN
               cff=dt2d*GRID(ng)%pn(i,Jstr)
+#ifdef WET_DRY
+              cff1=SQRT(g*(MAX(GRID(ng)%h(i,Jstr)+                      &
+     &                         zeta(i,Jstr,know),Dcrit(ng))))
+#else
               cff1=SQRT(g*(GRID(ng)%h(i,Jstr)+                          &
      &                     zeta(i,Jstr,know)))
+#endif
               Ce=cff*cff1
               zeta(i,Jstr-1,kout)=(1.0_r8-Ce)*zeta(i,Jstr-1,know)+      &
      &                            Ce*zeta(i,Jstr,know)
@@ -493,8 +528,13 @@
           DO i=Istr,Iend
             IF (LBC_apply(ng)%south(i)) THEN
               cff=dt2d*GRID(ng)%pn(i,Jstr)
+#ifdef WET_DRY
+              cff1=SQRT(g*(MAX(GRID(ng)%h(i,Jstr)+                      &
+     &                         zeta(i,Jstr,know),Dcrit(ng))))
+#else
               cff1=SQRT(g*(GRID(ng)%h(i,Jstr)+                          &
      &                     zeta(i,Jstr,know)))
+#endif
               Ce=cff*cff1
               cff2=1.0_r8/(1.0_r8+Ce)
               zeta(i,Jstr-1,kout)=cff2*(zeta(i,Jstr-1,know)+            &
@@ -624,8 +664,13 @@
           DO i=Istr,Iend
             IF (LBC_apply(ng)%north(i)) THEN
               cff=dt2d*GRID(ng)%pn(i,Jend)
+#ifdef WET_DRY
+              cff1=SQRT(g*(MAX(GRID(ng)%h(i,Jend)+                      &
+     &                         zeta(i,Jend,know),Dcrit(ng))))
+#else
               cff1=SQRT(g*(GRID(ng)%h(i,Jend)+                          &
      &                     zeta(i,Jend,know)))
+#endif
               Ce=cff*cff1
               zeta(i,Jend+1,kout)=(1.0_r8-Ce)*zeta(i,Jend+1,know)+      &
      &                            Ce*zeta(i,Jend,know)
@@ -642,8 +687,13 @@
           DO i=Istr,Iend
             IF (LBC_apply(ng)%north(i)) THEN
               cff=dt2d*GRID(ng)%pn(i,Jend)
+#ifdef WET_DRY
+              cff1=SQRT(g*(MAX(GRID(ng)%h(i,Jend)+                      &
+     &                         zeta(i,Jend,know),Dcrit(ng))))
+#else
               cff1=SQRT(g*(GRID(ng)%h(i,Jend)+                          &
      &                     zeta(i,Jend,know)))
+#endif
               Ce=cff*cff1
               cff2=1.0_r8/(1.0_r8+Ce)
               zeta(i,Jend+1,kout)=cff2*(zeta(i,Jend+1,know)+            &
@@ -760,7 +810,7 @@
           END DO
         END IF
       END IF
-
+!
       IF (.not.NSperiodic(ng)) THEN
         IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
           DO i=Istr,Iend
@@ -783,7 +833,7 @@
           END DO
         END IF
       END IF
-
+!
       IF (.not.(EWperiodic(ng).or.NSperiodic(ng))) THEN
         IF (DOMAIN(ng)%SouthWest_Corner(tile)) THEN
           IF (LBC_apply(ng)%south(Istr-1).and.                          &
@@ -823,8 +873,811 @@
         END IF
       END IF
 #endif
-
+!
       RETURN
-
       END SUBROUTINE zetabc_tile
+
+#if defined STEP2D_FB_AB3_AM4 || defined STEP2D_FB_LF_AM3
+!
+!***********************************************************************
+      SUBROUTINE zetabc_local (ng, tile,                                &
+     &                         LBi, UBi, LBj, UBj,                      &
+     &                         IminS, ImaxS, JminS, JmaxS,              &
+     &                         kstp,                                    &
+     &                         zeta,                                    &
+     &                         zeta_new)
+!***********************************************************************
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: ng, tile
+      integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
+      integer, intent(in) :: kstp
+!
+# ifdef ASSUMED_SHAPE
+      real(r8), intent(in   ) :: zeta(LBi:,LBj:,:)
+      real(r8), intent(inout) :: zeta_new(IminS:,JminS:)
+# else
+      real(r8), intent(in   ) :: zeta(LBi:UBi,LBj:UBj,:)
+      real(r8), intent(inout) :: zeta_new(IminS:ImaxS,JminS:JmaxS)
+# endif
+!
+!  Local variable declarations.
+!
+      integer :: i, j
+!
+      real(r8), parameter :: eps =1.0E-20_r8
+
+      real(r8) :: Ce, Cx
+      real(r8) :: cff, cff1, cff2, dZde, dZdt, dZdx, tau
+
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: grad
+
+# include "set_bounds.h"
+!
+!-----------------------------------------------------------------------
+!  Lateral boundary conditions at the western edge.
+!-----------------------------------------------------------------------
+!
+      IF (DOMAIN(ng)%Western_Edge(tile)) THEN
+!
+!  Western edge, implicit upstream radiation condition.
+!
+        IF (LBC(iwest,isFsur,ng)%radiation) THEN
+          DO j=JstrV-1,Jend+1
+            grad(Istr-1,j)=zeta(Istr-1,j  ,kstp)-                       &
+     &                     zeta(Istr-1,j-1,kstp)
+# ifdef MASKING
+            grad(Istr-1,j)=grad(Istr-1,j)*GRID(ng)%vmask(Istr-1,j)
+# endif
+            grad(Istr,j)=zeta(Istr,j  ,kstp)-                           &
+     &                   zeta(Istr,j-1,kstp)
+# ifdef MASKING
+            grad(Istr,j)=grad(Istr,j)*GRID(ng)%vmask(Istr,j)
+# endif
+          END DO
+          DO j=JstrV-1,Jend
+            IF (LBC_apply(ng)%west(j)) THEN
+              dZdt=zeta(Istr,j,kstp)-zeta_new(Istr  ,j)
+              dZdx=zeta_new(Istr,j) -zeta_new(Istr+1,j)
+
+              IF (LBC(iwest,isFsur,ng)%nudging) THEN
+                IF ((dZdt*dZdx).lt.0.0_r8) THEN
+                  tau=FSobc_in(ng,iwest)
+                ELSE
+                  tau=FSobc_out(ng,iwest)
+                END IF
+                tau=tau*dtfast(ng)
+              END IF
+
+              IF ((dZdt*dZdx).lt.0.0_r8) dZdt=0.0_r8
+              IF ((dZdt*(grad(Istr,j)+grad(Istr,j+1))).gt.0.0_r8) THEN
+                dZde=grad(Istr,j  )
+              ELSE
+                dZde=grad(Istr,j+1)
+              END IF
+              cff=MAX(dZdx*dZdx+dZde*dZde,eps)
+              Cx=dZdt*dZdx
+# ifdef RADIATION_2D
+              Ce=MIN(cff,MAX(dZdt*dZde,-cff))
+# else
+              Ce=0.0_r8
+# endif
+# if defined CELERITY_WRITE && defined FORWARD_WRITE
+              BOUNDARY(ng)%zeta_west_Cx(j)=Cx
+              BOUNDARY(ng)%zeta_west_Ce(j)=Ce
+              BOUNDARY(ng)%zeta_west_C2(j)=cff
+# endif
+              zeta_new(Istr-1,j)=(cff*zeta(Istr-1,j,kstp)+              &
+     &                            Cx *zeta_new(Istr,j)-                 &
+     &                            MAX(Ce,0.0_r8)*grad(Istr-1,j  )-      &
+     &                            MIN(Ce,0.0_r8)*grad(Istr-1,j+1))/     &
+     &                           (cff+Cx)
+
+              IF (LBC(iwest,isFsur,ng)%nudging) THEN
+                zeta_new(Istr-1,j)=zeta_new(Istr-1,j)+                  &
+     &                             tau*(BOUNDARY(ng)%zeta_west(j)-      &
+     &                                  zeta(Istr-1,j,kstp))
+              END IF
+# ifdef MASKING
+              zeta_new(Istr-1,j)=zeta_new(Istr-1,j)*                    &
+     &                           GRID(ng)%rmask(Istr-1,j)
+# endif
+            END IF
+          END DO
+!
+!  Western edge, explicit Chapman boundary condition.
+!
+        ELSE IF (LBC(iwest,isFsur,ng)%Chapman_explicit) THEN
+          DO j=JstrV-1,Jend
+            IF (LBC_apply(ng)%west(j)) THEN
+              cff=dtfast(ng)*GRID(ng)%pm(Istr,j)
+# ifdef WET_DRY
+              cff1=SQRT(g*(MAX(GRID(ng)%h(Istr,j)+                      &
+     &                         zeta(Istr,j,kstp),Dcrit(ng))))
+# else
+              cff1=SQRT(g*(GRID(ng)%h(Istr,j)+                          &
+     &                     zeta(Istr,j,kstp)))
+# endif
+              Cx=cff*cff1
+              zeta_new(Istr-1,j)=(1.0_r8-Cx)*zeta(Istr-1,j,kstp)+       &
+     &                           Cx*zeta(Istr,j,kstp)
+# ifdef MASKING
+              zeta_new(Istr-1,j)=zeta_new(Istr-1,j)*                    &
+     &                           GRID(ng)%rmask(Istr-1,j)
+# endif
+            END IF
+          END DO
+!
+!  Western edge, implicit Chapman boundary condition.
+!
+        ELSE IF (LBC(iwest,isFsur,ng)%Chapman_implicit) THEN
+          DO j=JstrV-1,Jend
+            IF (LBC_apply(ng)%west(j)) THEN
+              cff=dtfast(ng)*GRID(ng)%pm(Istr,j)
+# ifdef WET_DRY
+              cff1=SQRT(g*(MAX(GRID(ng)%h(Istr,j)+                      &
+     &                         zeta(Istr,j,kstp),Dcrit(ng))))
+# else
+              cff1=SQRT(g*(GRID(ng)%h(Istr,j)+                          &
+     &                     zeta(Istr,j,kstp)))
+# endif
+              Cx=cff*cff1
+              cff2=1.0_r8/(1.0_r8+Cx)
+              zeta_new(Istr-1,j)=cff2*(zeta(Istr-1,j,kstp)+             &
+     &                                 Cx*zeta_new(Istr,j))
+# ifdef MASKING
+              zeta_new(Istr-1,j)=zeta_new(Istr-1,j)*                    &
+     &                           GRID(ng)%rmask(Istr-1,j)
+# endif
+            END IF
+          END DO
+!
+!  Western edge, clamped boundary condition.
+!
+        ELSE IF (LBC(iwest,isFsur,ng)%clamped) THEN
+          DO j=JstrV-1,Jend
+            IF (LBC_apply(ng)%west(j)) THEN
+              zeta_new(Istr-1,j)=BOUNDARY(ng)%zeta_west(j)
+# ifdef MASKING
+              zeta_new(Istr-1,j)=zeta_new(Istr-1,j)*                    &
+     &                           GRID(ng)%rmask(Istr-1,j)
+# endif
+            END IF
+          END DO
+!
+!  Western edge, gradient boundary condition.
+!
+        ELSE IF (LBC(iwest,isFsur,ng)%gradient) THEN
+          DO j=JstrV-1,Jend
+            IF (LBC_apply(ng)%west(j)) THEN
+              zeta_new(Istr-1,j)=zeta_new(Istr,j)
+# ifdef MASKING
+              zeta_new(Istr-1,j)=zeta_new(Istr-1,j)*                    &
+     &                           GRID(ng)%rmask(Istr-1,j)
+# endif
+            END IF
+          END DO
+!
+!  Western edge, closed boundary condition.
+!
+        ELSE IF (LBC(iwest,isFsur,ng)%closed) THEN
+          DO j=JstrV-1,Jend
+            IF (LBC_apply(ng)%west(j)) THEN
+              zeta_new(Istr-1,j)=zeta_new(Istr,j)
+# ifdef MASKING
+              zeta_new(Istr-1,j)=zeta_new(Istr-1,j)*                    &
+     &                           GRID(ng)%rmask(Istr-1,j)
+# endif
+            END IF
+          END DO
+        END IF
+      END IF
+!
+!-----------------------------------------------------------------------
+!  Lateral boundary conditions at the eastern edge.
+!-----------------------------------------------------------------------
+!
+      IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
+!
+!  Eastern edge, implicit upstream radiation condition.
+!
+        IF (LBC(ieast,isFsur,ng)%radiation) THEN
+          DO j=JstrV-1,Jend+1
+            grad(Iend  ,j)=zeta(Iend  ,j  ,kstp)-                       &
+     &                     zeta(Iend  ,j-1,kstp)
+# ifdef MASKING
+            grad(Iend  ,j)=grad(Iend  ,j)*GRID(ng)%vmask(Iend  ,j)
+# endif
+            grad(Iend+1,j)=zeta(Iend+1,j  ,kstp)-                       &
+     &                     zeta(Iend+1,j-1,kstp)
+# ifdef MASKING
+            grad(Iend+1,j)=grad(Iend+1,j)*GRID(ng)%vmask(Iend+1,j)
+# endif
+          END DO
+          DO j=JstrV-1,Jend
+            IF (LBC_apply(ng)%east(j)) THEN
+              dZdt=zeta(Iend,j,kstp)-zeta_new(Iend  ,j)
+              dZdx=zeta_new(Iend,j) -zeta_new(Iend-1,j)
+
+              IF (LBC(ieast,isFsur,ng)%nudging) THEN
+                IF ((dZdt*dZdx).lt.0.0_r8) THEN
+                  tau=FSobc_in(ng,ieast)
+                ELSE
+                  tau=FSobc_out(ng,ieast)
+                END IF
+                tau=tau*dtfast(ng)
+              END IF
+
+              IF ((dZdt*dZdx).lt.0.0_r8) dZdt=0.0_r8
+              IF ((dZdt*(grad(Iend,j)+grad(Iend,j+1))).gt.0.0_r8) THEN
+                dZde=grad(Iend,j  )
+              ELSE
+                dZde=grad(Iend,j+1)
+              END IF
+              cff=MAX(dZdx*dZdx+dZde*dZde,eps)
+              Cx=dZdt*dZdx
+# ifdef RADIATION_2D
+              Ce=MIN(cff,MAX(dZdt*dZde,-cff))
+# else
+              Ce=0.0_r8
+# endif
+# if defined CELERITY_WRITE && defined FORWARD_WRITE
+              BOUNDARY(ng)%zeta_east_Cx(j)=Cx
+              BOUNDARY(ng)%zeta_east_Ce(j)=Ce
+              BOUNDARY(ng)%zeta_east_C2(j)=cff
+# endif
+              zeta_new(Iend+1,j)=(cff*zeta(Iend+1,j,kstp)+              &
+     &                            Cx *zeta_new(Iend,j)-                 &
+     &                            MAX(Ce,0.0_r8)*grad(Iend+1,j  )-      &
+     &                            MIN(Ce,0.0_r8)*grad(Iend+1,j+1))/     &
+     &                           (cff+Cx)
+
+              IF (LBC(ieast,isFsur,ng)%nudging) THEN
+                zeta_new(Iend+1,j)=zeta_new(Iend+1,j)+                  &
+     &                             tau*(BOUNDARY(ng)%zeta_east(j)-      &
+     &                                  zeta(Iend+1,j,kstp))
+              END IF
+# ifdef MASKING
+              zeta_new(Iend+1,j)=zeta_new(Iend+1,j)*                    &
+     &                           GRID(ng)%rmask(Iend+1,j)
+# endif
+            END IF
+          END DO
+!
+!  Eastern edge, explicit Chapman boundary condition.
+!
+        ELSE IF (LBC(ieast,isFsur,ng)%Chapman_explicit) THEN
+          DO j=JstrV-1,Jend
+            IF (LBC_apply(ng)%east(j)) THEN
+              cff=dtfast(ng)*GRID(ng)%pm(Iend,j)
+# ifdef WET_DRY
+              cff1=SQRT(g*(MAX(GRID(ng)%h(Iend,j)+                      &
+     &                         zeta(Iend,j,kstp),Dcrit(ng))))
+# else
+              cff1=SQRT(g*(GRID(ng)%h(Iend,j)+                          &
+     &                     zeta(Iend,j,kstp)))
+# endif
+              Cx=cff*cff1
+              zeta_new(Iend+1,j)=(1.0_r8-Cx)*zeta(Iend+1,j,kstp)+       &
+     &                           Cx*zeta(Iend,j,kstp)
+# ifdef MASKING
+              zeta_new(Iend+1,j)=zeta_new(Iend+1,j)*                    &
+     &                           GRID(ng)%rmask(Iend+1,j)
+# endif
+            END IF
+          END DO
+!
+!  Eastern edge, implicit Chapman boundary condition.
+!
+        ELSE IF (LBC(ieast,isFsur,ng)%Chapman_implicit) THEN
+          DO j=JstrV-1,Jend
+            IF (LBC_apply(ng)%east(j)) THEN
+              cff=dtfast(ng)*GRID(ng)%pm(Iend,j)
+# ifdef WET_DRY
+              cff1=SQRT(g*(MAX(GRID(ng)%h(Iend,j)+                      &
+     &                         zeta(Iend,j,kstp),Dcrit(ng))))
+# else
+              cff1=SQRT(g*(GRID(ng)%h(Iend,j)+                          &
+     &                     zeta(Iend,j,kstp)))
+# endif
+              Cx=cff*cff1
+              cff2=1.0_r8/(1.0_r8+Cx)
+              zeta_new(Iend+1,j)=cff2*(zeta(Iend+1,j,kstp)+             &
+     &                                 Cx*zeta_new(Iend,j))
+# ifdef MASKING
+              zeta_new(Iend+1,j)=zeta_new(Iend+1,j)*                    &
+     &                           GRID(ng)%rmask(Iend+1,j)
+# endif
+            END IF
+          END DO
+!
+!  Eastern edge, clamped boundary condition.
+!
+        ELSE IF (LBC(ieast,isFsur,ng)%clamped) THEN
+          DO j=JstrV-1,Jend
+            IF (LBC_apply(ng)%east(j)) THEN
+              zeta_new(Iend+1,j)=BOUNDARY(ng)%zeta_east(j)
+# ifdef MASKING
+              zeta_new(Iend+1,j)=zeta_new(Iend+1,j)*                    &
+     &                           GRID(ng)%rmask(Iend+1,j)
+# endif
+            END IF
+          END DO
+!
+!  Eastern edge, gradient boundary condition.
+!
+        ELSE IF (LBC(ieast,isFsur,ng)%gradient) THEN
+          DO j=JstrV-1,Jend
+            IF (LBC_apply(ng)%east(j)) THEN
+              zeta_new(Iend+1,j)=zeta_new(Iend,j)
+# ifdef MASKING
+              zeta_new(Iend+1,j)=zeta_new(Iend+1,j)*                    &
+     &                           GRID(ng)%rmask(Iend+1,j)
+# endif
+            END IF
+          END DO
+!
+!  Eastern edge, closed boundary condition.
+!
+        ELSE IF (LBC(ieast,isFsur,ng)%closed) THEN
+          DO j=JstrV-1,Jend
+            IF (LBC_apply(ng)%east(j)) THEN
+              zeta_new(Iend+1,j)=zeta_new(Iend,j)
+# ifdef MASKING
+              zeta_new(Iend+1,j)=zeta_new(Iend+1,j)*                    &
+     &                           GRID(ng)%rmask(Iend+1,j)
+# endif
+            END IF
+          END DO
+        END IF
+      END IF
+!
+!-----------------------------------------------------------------------
+!  Lateral boundary conditions at the southern edge.
+!-----------------------------------------------------------------------
+!
+      IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
+!
+!  Southern edge, implicit upstream radiation condition.
+!
+        IF (LBC(isouth,isFsur,ng)%radiation) THEN
+          DO i=IstrU-1,Iend+1
+            grad(i,Jstr  )=zeta(i  ,Jstr,kstp)-                         &
+     &                     zeta(i-1,Jstr,kstp)
+# ifdef MASKING
+            grad(i,Jstr  )=grad(i,Jstr  )*GRID(ng)%umask(i,Jstr  )
+# endif
+            grad(i,Jstr-1)=zeta(i  ,Jstr-1,kstp)-                       &
+     &                     zeta(i-1,Jstr-1,kstp)
+# ifdef MASKING
+            grad(i,Jstr-1)=grad(i,Jstr-1)*GRID(ng)%umask(i,Jstr-1)
+# endif
+          END DO
+          DO i=IstrU-1,Iend
+            IF (LBC_apply(ng)%south(i)) THEN
+              dZdt=zeta(i,Jstr,kstp)-zeta_new(i,Jstr  )
+              dZde=zeta_new(i,Jstr) -zeta_new(i,Jstr-1)
+
+              IF (LBC(isouth,isFsur,ng)%nudging) THEN
+                IF ((dZdt*dZde).lt.0.0_r8) THEN
+                  tau=FSobc_in(ng,isouth)
+                ELSE
+                  tau=FSobc_out(ng,isouth)
+                END IF
+                tau=tau*dtfast(ng)
+              END IF
+
+              IF ((dZdt*dZde).lt.0.0_r8) dZdt=0.0_r8
+              IF ((dZdt*(grad(i,Jstr)+grad(i+1,Jstr))).gt.0.0_r8) THEN
+                dZdx=grad(i  ,Jstr)
+              ELSE
+                dZdx=grad(i+1,Jstr)
+              END IF
+              cff=MAX(dZdx*dZdx+dZde*dZde,eps)
+# ifdef RADIATION_2D
+              Cx=MIN(cff,MAX(dZdt*dZdx,-cff))
+# else
+              Cx=0.0_r8
+# endif
+              Ce=dZdt*dZde
+# if defined CELERITY_WRITE && defined FORWARD_WRITE
+              BOUNDARY(ng)%zeta_south_Cx(i)=Cx
+              BOUNDARY(ng)%zeta_south_Ce(i)=Ce
+              BOUNDARY(ng)%zeta_south_C2(i)=cff
+# endif
+              zeta_new(i,Jstr-1)=(cff*zeta(i,Jstr-1,kstp)+              &
+     &                            Ce *zeta_new(i,Jstr)-                 &
+     &                            MAX(Cx,0.0_r8)*grad(i  ,Jstr)-        &
+     &                            MIN(Cx,0.0_r8)*grad(i+1,Jstr))/       &
+     &                           (cff+Ce)
+
+              IF (LBC(isouth,isFsur,ng)%nudging) THEN
+                zeta_new(i,Jstr-1)=zeta_new(i,Jstr-1)+                  &
+     &                             tau*(BOUNDARY(ng)%zeta_south(i)-     &
+     &                                  zeta(i,Jstr-1,kstp))
+              END IF
+# ifdef MASKING
+              zeta_new(i,Jstr-1)=zeta_new(i,Jstr-1)*                    &
+     &                           GRID(ng)%rmask(i,Jstr-1)
+# endif
+            END IF
+          END DO
+!
+!  Southern edge, explicit Chapman boundary condition.
+!
+        ELSE IF (LBC(isouth,isFsur,ng)%Chapman_explicit) THEN
+          DO i=IstrU-1,Iend
+            IF (LBC_apply(ng)%south(i)) THEN
+              cff=dtfast(ng)*GRID(ng)%pn(i,Jstr)
+# ifdef WET_DRY
+              cff1=SQRT(g*(MAX(GRID(ng)%h(i,Jstr)+                      &
+     &                         zeta(i,Jstr,kstp),Dcrit(ng))))
+# else
+              cff1=SQRT(g*(GRID(ng)%h(i,Jstr)+                          &
+     &                     zeta(i,Jstr,kstp)))
+# endif
+              Ce=cff*cff1
+              zeta_new(i,Jstr-1)=(1.0_r8-Ce)*zeta(i,Jstr-1,kstp)+       &
+     &                           Ce*zeta(i,Jstr,kstp)
+# ifdef MASKING
+              zeta_new(i,Jstr-1)=zeta_new(i,Jstr-1)*                    &
+     &                           GRID(ng)%rmask(i,Jstr-1)
+# endif
+            END IF
+          END DO
+!
+!  Southern edge, implicit Chapman boundary condition.
+!
+        ELSE IF (LBC(isouth,isFsur,ng)%Chapman_implicit) THEN
+          DO i=IstrU-1,Iend
+            IF (LBC_apply(ng)%south(i)) THEN
+              cff=dtfast(ng)*GRID(ng)%pn(i,Jstr)
+# ifdef WET_DRY
+              cff1=SQRT(g*(MAX(GRID(ng)%h(i,Jstr)+                      &
+     &                         zeta(i,Jstr,kstp),Dcrit(ng))))
+# else
+              cff1=SQRT(g*(GRID(ng)%h(i,Jstr)+                          &
+     &                     zeta(i,Jstr,kstp)))
+# endif
+              Ce=cff*cff1
+              cff2=1.0_r8/(1.0_r8+Ce)
+              zeta_new(i,Jstr-1)=cff2*(zeta(i,Jstr-1,kstp)+             &
+     &                                 Ce*zeta_new(i,Jstr))
+# ifdef MASKING
+              zeta_new(i,Jstr-1)=zeta_new(i,Jstr-1)*                    &
+     &                           GRID(ng)%rmask(i,Jstr-1)
+# endif
+            END IF
+          END DO
+!
+!  Southern edge, clamped boundary condition.
+!
+        ELSE IF (LBC(isouth,isFsur,ng)%clamped) THEN
+          DO i=IstrU-1,Iend
+            IF (LBC_apply(ng)%south(i)) THEN
+              zeta_new(i,Jstr-1)=BOUNDARY(ng)%zeta_south(i)
+# ifdef MASKING
+              zeta_new(i,Jstr-1)=zeta_new(i,Jstr-1)*                    &
+     &                           GRID(ng)%rmask(i,Jstr-1)
+# endif
+            END IF
+          END DO
+!
+!  Southern edge, gradient boundary condition.
+!
+        ELSE IF (LBC(isouth,isFsur,ng)%gradient) THEN
+          DO i=IstrU-1,Iend
+            IF (LBC_apply(ng)%south(i)) THEN
+              zeta_new(i,Jstr-1)=zeta_new(i,Jstr)
+# ifdef MASKING
+              zeta_new(i,Jstr-1)=zeta_new(i,Jstr-1)*                    &
+     &                           GRID(ng)%rmask(i,Jstr-1)
+# endif
+            END IF
+          END DO
+!
+!  Southern edge, closed boundary condition.
+!
+        ELSE IF (LBC(isouth,isFsur,ng)%closed) THEN
+          DO i=IstrU-1,Iend
+            IF (LBC_apply(ng)%south(i)) THEN
+              zeta_new(i,Jstr-1)=zeta_new(i,Jstr)
+# ifdef MASKING
+              zeta_new(i,Jstr-1)=zeta_new(i,Jstr-1)*                    &
+     &                           GRID(ng)%rmask(i,Jstr-1)
+# endif
+            END IF
+          END DO
+        END IF
+      END IF
+!
+!-----------------------------------------------------------------------
+!  Lateral boundary conditions at the northern edge.
+!-----------------------------------------------------------------------
+!
+      IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
+!
+!  Northern edge, implicit upstream radiation condition.
+!
+        IF (LBC(inorth,isFsur,ng)%radiation) THEN
+          DO i=IstrU-1,Iend+1
+            grad(i,Jend  )=zeta(i  ,Jend  ,kstp)-                       &
+     &                     zeta(i-1,Jend  ,kstp)
+# ifdef MASKING
+            grad(i,Jend  )=grad(i,Jend  )*GRID(ng)%umask(i,Jend  )
+# endif
+            grad(i,Jend+1)=zeta(i  ,Jend+1,kstp)-                       &
+     &                     zeta(i-1,Jend+1,kstp)
+# ifdef MASKING
+            grad(i,Jend+1)=grad(i,Jend+1)*GRID(ng)%umask(i,Jend+1)
+# endif
+          END DO
+          DO i=IstrU-1,Iend
+            IF (LBC_apply(ng)%north(i)) THEN
+              dZdt=zeta(i,Jend,kstp)-zeta_new(i,Jend  )
+              dZde=zeta_new(i,Jend) -zeta_new(i,Jend-1)
+
+              IF (LBC(inorth,isFsur,ng)%nudging) THEN
+                IF ((dZdt*dZde).lt.0.0_r8) THEN
+                  tau=FSobc_in(ng,inorth)
+                ELSE
+                  tau=FSobc_out(ng,inorth)
+                END IF
+                tau=tau*dtfast(ng)
+              END IF
+
+              IF ((dZdt*dZde).lt.0.0_r8) dZdt=0.0_r8
+              IF ((dZdt*(grad(i,Jend)+grad(i+1,Jend))).gt.0.0_r8) THEN
+                dZdx=grad(i  ,Jend)
+              ELSE
+                dZdx=grad(i+1,Jend)
+              END IF
+              cff=MAX(dZdx*dZdx+dZde*dZde,eps)
+# ifdef RADIATION_2D
+              Cx=MIN(cff,MAX(dZdt*dZdx,-cff))
+# else
+              Cx=0.0_r8
+# endif
+              Ce=dZdt*dZde
+# if defined CELERITY_WRITE && defined FORWARD_WRITE
+              BOUNDARY(ng)%zeta_north_Cx(i)=Cx
+              BOUNDARY(ng)%zeta_north_Ce(i)=Ce
+              BOUNDARY(ng)%zeta_north_C2(i)=cff
+# endif
+              zeta_new(i,Jend+1)=(cff*zeta(i,Jend+1,kstp)+              &
+     &                            Ce *zeta_new(i,Jend)-                 &
+     &                            MAX(Cx,0.0_r8)*grad(i  ,Jend+1)-      &
+     &                            MIN(Cx,0.0_r8)*grad(i+1,Jend+1))/     &
+     &                           (cff+Ce)
+
+              IF (LBC(inorth,isFsur,ng)%nudging) THEN
+                zeta_new(i,Jend+1)=zeta_new(i,Jend+1)+                  &
+     &                             tau*(BOUNDARY(ng)%zeta_north(i)-     &
+     &                                  zeta(i,Jend+1,kstp))
+              END IF
+# ifdef MASKING
+              zeta_new(i,Jend+1)=zeta_new(i,Jend+1)*                    &
+     &                           GRID(ng)%rmask(i,Jend+1)
+# endif
+            END IF
+          END DO
+!
+!  Northern edge, explicit Chapman boundary condition.
+!
+        ELSE IF (LBC(inorth,isFsur,ng)%Chapman_explicit) THEN
+          DO i=IstrU-1,Iend
+            IF (LBC_apply(ng)%north(i)) THEN
+              cff=dtfast(ng)*GRID(ng)%pn(i,Jend)
+              cff1=SQRT(g*(GRID(ng)%h(i,Jend)+                          &
+     &                     zeta(i,Jend,kstp)))
+              Ce=cff*cff1
+              zeta_new(i,Jend+1)=(1.0_r8-Ce)*zeta(i,Jend+1,kstp)+       &
+     &                           Ce*zeta(i,Jend,kstp)
+# ifdef MASKING
+              zeta_new(i,Jend+1)=zeta_new(i,Jend+1)*                    &
+     &                           GRID(ng)%rmask(i,Jend+1)
+# endif
+            END IF
+          END DO
+!
+!  Northern edge, implicit Chapman boundary condition.
+!
+        ELSE IF (LBC(inorth,isFsur,ng)%Chapman_implicit) THEN
+          DO i=IstrU-1,Iend
+            IF (LBC_apply(ng)%north(i)) THEN
+              cff=dtfast(ng)*GRID(ng)%pn(i,Jend)
+# ifdef WET_DRY
+              cff1=SQRT(g*(MAX(GRID(ng)%h(i,Jend)+                      &
+     &                         zeta(i,Jend,kstp),Dcrit(ng))))
+# else
+              cff1=SQRT(g*(GRID(ng)%h(i,Jend)+                          &
+     &                     zeta(i,Jend,kstp)))
+# endif
+              Ce=cff*cff1
+              cff2=1.0_r8/(1.0_r8+Ce)
+              zeta_new(i,Jend+1)=cff2*(zeta(i,Jend+1,kstp)+             &
+     &                                 Ce*zeta_new(i,Jend))
+# ifdef MASKING
+              zeta_new(i,Jend+1)=zeta_new(i,Jend+1)*                    &
+     &                           GRID(ng)%rmask(i,Jend+1)
+# endif
+            END IF
+          END DO
+!
+!  Northern edge, clamped boundary condition.
+!
+        ELSE IF (LBC(inorth,isFsur,ng)%clamped) THEN
+          DO i=IstrU-1,Iend
+            IF (LBC_apply(ng)%north(i)) THEN
+              zeta_new(i,Jend+1)=BOUNDARY(ng)%zeta_north(i)
+# ifdef MASKING
+              zeta_new(i,Jend+1)=zeta_new(i,Jend+1)*                    &
+     &                           GRID(ng)%rmask(i,Jend+1)
+# endif
+            END IF
+          END DO
+!
+!  Northern edge, gradient boundary condition.
+!
+        ELSE IF (LBC(inorth,isFsur,ng)%gradient) THEN
+          DO i=IstrU-1,Iend
+            IF (LBC_apply(ng)%north(i)) THEN
+              zeta_new(i,Jend+1)=zeta_new(i,Jend)
+# ifdef MASKING
+              zeta_new(i,Jend+1)=zeta_new(i,Jend+1)*                    &
+     &                           GRID(ng)%rmask(i,Jend+1)
+# endif
+            END IF
+          END DO
+!
+!  Northern edge, closed boundary condition.
+!
+        ELSE IF (LBC(inorth,isFsur,ng)%closed) THEN
+          DO i=IstrU-1,Iend
+            IF (LBC_apply(ng)%north(i)) THEN
+              zeta_new(i,Jend+1)=zeta_new(i,Jend)
+# ifdef MASKING
+              zeta_new(i,Jend+1)=zeta_new(i,Jend+1)*                    &
+     &                           GRID(ng)%rmask(i,Jend+1)
+# endif
+            END IF
+          END DO
+        END IF
+      END IF
+!
+!-----------------------------------------------------------------------
+!  Boundary corners.
+!-----------------------------------------------------------------------
+!
+      IF (.not.(EWperiodic(ng).or.NSperiodic(ng))) THEN
+        IF (DOMAIN(ng)%SouthWest_Corner(tile)) THEN
+          IF (LBC_apply(ng)%south(Istr-1).and.                          &
+     &        LBC_apply(ng)%west (Jstr-1)) THEN
+            zeta_new(Istr-1,Jstr-1)=0.5_r8*(zeta_new(Istr  ,Jstr-1)+    &
+     &                                      zeta_new(Istr-1,Jstr  ))
+          END IF
+        END IF
+        IF (DOMAIN(ng)%SouthEast_Corner(tile)) THEN
+          IF (LBC_apply(ng)%south(Iend+1).and.                          &
+     &        LBC_apply(ng)%east (Jstr-1)) THEN
+            zeta_new(Iend+1,Jstr-1)=0.5_r8*(zeta_new(Iend  ,Jstr-1)+    &
+     &                                      zeta_new(Iend+1,Jstr  ))
+          END IF
+        END IF
+        IF (DOMAIN(ng)%NorthWest_Corner(tile)) THEN
+          IF (LBC_apply(ng)%north(Istr-1).and.                          &
+     &        LBC_apply(ng)%west (Jend+1)) THEN
+            zeta_new(Istr-1,Jend+1)=0.5_r8*(zeta_new(Istr-1,Jend  )+    &
+     &                                      zeta_new(Istr  ,Jend+1))
+          END IF
+        END IF
+        IF (DOMAIN(ng)%NorthEast_Corner(tile)) THEN
+          IF (LBC_apply(ng)%north(Iend+1).and.                          &
+     &        LBC_apply(ng)%east (Jend+1)) THEN
+            zeta_new(Iend+1,Jend+1)=0.5_r8*(zeta_new(Iend+1,Jend  )+    &
+     &                                      zeta_new(Iend  ,Jend+1))
+          END IF
+        END IF
+      END IF
+
+# if defined WET_DRY
+!
+!-----------------------------------------------------------------------
+! Ensure that water level on boundary cells is above bed elevation.
+!-----------------------------------------------------------------------
+!
+      cff=Dcrit(ng)-eps
+      IF (.not.EWperiodic(ng)) THEN
+        IF (DOMAIN(ng)%Western_Edge(tile)) THEN
+          DO j=JstrV-1,Jend
+            IF (LBC_apply(ng)%west(j)) THEN
+              IF (zeta_new(Istr-1,j).le.                                &
+     &            (Dcrit(ng)-GRID(ng)%h(Istr-1,j))) THEN
+                zeta_new(Istr-1,j)=cff-GRID(ng)%h(Istr-1,j)
+              END IF
+            END IF
+          END DO
+        END IF
+        IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
+          DO j=JstrV-1,Jend
+            IF (LBC_apply(ng)%east(j)) THEN
+              IF (zeta_new(Iend+1,j).le.                                &
+     &            (Dcrit(ng)-GRID(ng)%h(Iend+1,j))) THEN
+                zeta_new(Iend+1,j)=cff-GRID(ng)%h(Iend+1,j)
+              END IF
+            END IF
+          END DO
+        END IF
+      END IF
+!
+      IF (.not.NSperiodic(ng)) THEN
+        IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
+          DO i=IstrU-1,Iend
+            IF (LBC_apply(ng)%south(i)) THEN
+              IF (zeta_new(i,Jstr-1).le.                                &
+     &            (Dcrit(ng)-GRID(ng)%h(i,Jstr-1))) THEN
+                zeta_new(i,Jstr-1)=cff-GRID(ng)%h(i,Jstr-1)
+              END IF
+            END IF
+          END DO
+        END IF
+        IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
+          DO i=IstrU-1,Iend
+            IF (LBC_apply(ng)%north(i)) THEN
+              IF (zeta_new(i,Jend+1).le.                                &
+     &            (Dcrit(ng)-GRID(ng)%h(i,Jend+1))) THEN
+                zeta_new(i,Jend+1)=cff-GRID(ng)%h(i,Jend+1)
+              END IF
+            END IF
+          END DO
+        END IF
+      END IF
+!
+      IF (.not.(EWperiodic(ng).or.NSperiodic(ng))) THEN
+        IF (DOMAIN(ng)%SouthWest_Corner(tile)) THEN
+          IF (LBC_apply(ng)%south(Istr-1).and.                          &
+     &        LBC_apply(ng)%west (Jstr-1)) THEN
+            IF (zeta_new(Istr-1,Jstr-1).le.                             &
+     &          (Dcrit(ng)-GRID(ng)%h(Istr-1,Jstr-1))) THEN
+              zeta_new(Istr-1,Jstr-1)=cff-GRID(ng)%h(Istr-1,Jstr-1)
+            END IF
+          END IF
+        END IF
+        IF (DOMAIN(ng)%SouthEast_Corner(tile)) THEN
+          IF (LBC_apply(ng)%south(Iend+1).and.                          &
+     &        LBC_apply(ng)%east (Jstr-1)) THEN
+            IF (zeta_new(Iend+1,Jstr-1).le.                             &
+     &          (Dcrit(ng)-GRID(ng)%h(Iend+1,Jstr-1))) THEN
+              zeta_new(Iend+1,Jstr-1)=cff-GRID(ng)%h(Iend+1,Jstr-1)
+            END IF
+          END IF
+        END IF
+        IF (DOMAIN(ng)%NorthWest_Corner(tile)) THEN
+          IF (LBC_apply(ng)%north(Istr-1).and.                          &
+     &        LBC_apply(ng)%west (Jend+1)) THEN
+            IF (zeta_new(Istr-1,Jend+1).le.                             &
+     &          (Dcrit(ng)-GRID(ng)%h(Istr-1,Jend+1))) THEN
+              zeta_new(Istr-1,Jend+1)=cff-GRID(ng)%h(Istr-1,Jend+1)
+            END IF
+          END IF
+        END IF
+        IF (DOMAIN(ng)%NorthEast_Corner(tile)) THEN
+          IF (LBC_apply(ng)%north(Iend+1).and.                          &
+     &        LBC_apply(ng)%east (Jend+1)) THEN
+            IF (zeta_new(Iend+1,Jend+1).le.                             &
+     &          (Dcrit(ng)-GRID(ng)%h(Iend+1,Jend+1))) THEN
+              zeta_new(Iend+1,Jend+1)=cff-GRID(ng)%h(Iend+1,Jend+1)
+            END IF
+          END IF
+        END IF
+      END IF
+# endif
+!
+      RETURN
+!
+      END SUBROUTINE zetabc_local
+#endif
+!
       END MODULE zetabc_mod

@@ -3,11 +3,10 @@
 #ifdef FLOATS
 !
 !git $Id$
-!svn $Id: wrt_floats.F 1151 2023-02-09 03:08:53Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2025 The ROMS Group                              !
 !    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                                              !
+!    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
 !  This module writes simulated drifter trajectories into output       !
@@ -578,7 +577,7 @@
      &                          (/1,FLT(ng)%Rindex/),                   &
      &                          (/Nfloats(ng),1/),                      &
      &                          pioFile = FLT(ng)%pioFile,              &
-     &                          pioVar = FLT(ng)%pioVar(idwbio))
+     &                          pioVar = FLT(ng)%pioVar(idwbio)%vd)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Write out biological float size (length).

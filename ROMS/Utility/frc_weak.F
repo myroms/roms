@@ -4,11 +4,10 @@
 #ifdef WEAK_CONSTRAINT
 !
 !git $Id$
-!svn $Id: frc_weak.F 1151 2023-02-09 03:08:53Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group       Andrew M. Moore   !
+!  Copyright (c) 2002-2025 The ROMS Group            Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                                              !
+!    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
 !  These routines are used during the computation of the weak          !
@@ -138,7 +137,7 @@
       real(r8), intent(inout) :: f_vbarG(LBi:,LBj:,:)
 #  endif
 # else
-      real(r8), intent(in) :: ad_zeta(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(in) :: ad_zeta(LBi:UBi,LBj:UBj,:)
       real(r8), intent(in) :: ad_zeta_sol(LBi:UBi,LBj:UBj)
       real(r8), intent(inout) :: f_zetaG(LBi:UBi,LBj:UBj,2)
 #  ifdef SOLVE3D
@@ -149,8 +148,8 @@
       real(r8), intent(inout) :: f_vG(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(inout) :: f_tG(LBi:UBi,LBj:UBj,N(ng),2,NT(ng))
 #  else
-      real(r8), intent(in) :: ad_ubar(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(in) :: ad_vbar(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(in) :: ad_ubar(LBi:UBi,LBj:UBj,:)
+      real(r8), intent(in) :: ad_vbar(LBi:UBi,LBj:UBj,:)
       real(r8), intent(in) :: ad_ubar_sol(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: ad_vbar_sol(LBi:UBi,LBj:UBj)
       real(r8), intent(inout) :: f_ubarG(LBi:UBi,LBj:UBj,2)

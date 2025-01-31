@@ -3,11 +3,10 @@
 #if defined ADJOINT && defined FOUR_DVAR && defined OBSERVATIONS
 !
 !git $Id$
-!svn $Id: ad_extract_obs.F 1151 2023-02-09 03:08:53Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2025 The ROMS Group                              !
 !    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                                              !
+!    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
 !  This subroutine computes the adjoint misfit forcing terms at the    !

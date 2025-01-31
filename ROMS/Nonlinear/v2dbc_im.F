@@ -3,11 +3,10 @@
       MODULE v2dbc_mod
 !
 !git $Id$
-!svn $Id: v2dbc_im.F 1151 2023-02-09 03:08:53Z arango $
 !=======================================================================
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2025 The ROMS Group                              !
 !    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                           Hernan G. Arango   !
+!    See License_ROMS.md                            Hernan G. Arango   !
 !========================================== Alexander F. Shchepetkin ===
 !                                                                      !
 !  This subroutine sets lateral boundary conditions for vertically     !
@@ -66,6 +65,9 @@
 #ifdef NESTING
       USE mod_nesting
 #endif
+#ifdef WEC
+      USE mod_ocean
+#endif
       USE mod_scalars
 !
 !  Imported variable declarations.
@@ -81,10 +83,10 @@
 
       real(r8), intent(inout) :: vbar(LBi:,LBj:,:)
 #else
-      real(r8), intent(in) :: ubar(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(in) :: zeta(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(in) :: ubar(LBi:UBi,LBj:UBj,:)
+      real(r8), intent(in) :: zeta(LBi:UBi,LBj:UBj,:)
 
-      real(r8), intent(inout) :: vbar(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(inout) :: vbar(LBi:UBi,LBj:UBj,:)
 #endif
 !
 !  Local variable declarations.
@@ -98,9 +100,13 @@
       real(r8), parameter :: eps = 1.0E-20_r8
 
       real(r8) :: Ce, Cx, Ze
-      real(r8) :: bry_pgr, bry_cor, bry_str, bry_val
+      real(r8) :: bry_pgr, bry_cor, bry_str, bry_wec, bry_val
       real(r8) :: cff, cff1, cff2, cff3, dt2d, dVde, dVdt, dVdx
       real(r8) :: obc_in, obc_out, phi, tau
+#ifdef WEC_VF
+      real(r8), parameter :: Lwave_min = 1.0_r8
+      real(r8) :: sigma, osigma, waven, waveny
+#endif
 #if defined ATM_PRESS && defined PRESS_COMPENSATE
       real(r8) :: OneAtm, fac
 #endif
@@ -113,6 +119,10 @@
 !  Set time-indices
 !-----------------------------------------------------------------------
 !
+#if defined STEP2D_FB_AB3_AM4 || defined STEP2D_FB_LF_AM3
+        know=kstp
+        dt2d=dtfast(ng)
+#else
       IF (FIRST_2D_STEP) THEN
         know=krhs
         dt2d=dtfast(ng)
@@ -123,6 +133,7 @@
         know=kstp
         dt2d=dtfast(ng)
       END IF
+#endif
 #if defined ATM_PRESS && defined PRESS_COMPENSATE
       OneAtm=1013.25_r8                  ! 1 atm = 1013.25 mb
       fac=100.0_r8/(g*rho0)
@@ -250,11 +261,37 @@
      &                                 zeta(i,Jstr-1,know)+             &
      &                                 GRID(ng)%h(i,Jstr  )+            &
      &                                 zeta(i,Jstr  ,know)))
+# ifdef WEC_VF
+!             here we reduce pgr from depth 2m to pgr is 0 at 0 depth.
+              bry_pgr=MIN(0.5_r8*(GRID(ng)%h(i,Jstr)+                   &
+     &                             zeta(i,Jstr,know)), 1.0_r8)*bry_pgr
+              cff=1.0_r8/(0.5_r8*(GRID(ng)%h(i,Jstr-1)+                 &
+     &                            zeta(i,Jstr-1,know)+                  &
+     &                            GRID(ng)%h(i,Jstr  )+                 &
+     &                            zeta(i,Jstr  ,know)))
+              cff1=1.5_r8*pi-FORCES(ng)%Dwave(i,Jstr)-                  &
+     &             GRID(ng)%angler(i,Jstr)
+              waven=2.0_r8*pi/MAX(FORCES(ng)%Lwave(i,Jstr),Lwave_min)
+              waveny=waven*SIN(cff1)
+              sigma=SQRT(MAX(g*waven*TANH(waven/cff),eps))
+              osigma=1.0_r8/sigma
+              cff1=(1.0_r8-wec_alpha(ng))*osigma*                       &
+     &             FORCES(ng)%Dissip_break(i,Jstr)*waveny
+              bry_wec=cff1
+#  ifdef WEC_ROLLER
+              bry_wec=bry_wec+osigma*FORCES(ng)%Dissip_roller(i,Jstr)*  &
+     &                        waveny
+#  endif
+!             bry_wec=0.0_r8   !for now
+# else
+              bry_wec=0.0_r8
+# endif
               cff2=GRID(ng)%on_v(i,Jstr)*Ce
 !!            cff2=dt2d
               bry_val=vbar(i,Jstr+1,know)+                              &
      &                cff2*(bry_pgr+                                    &
      &                      bry_cor+                                    &
+     &                      bry_wec+                                    &
      &                      bry_str)
 #else
               bry_val=BOUNDARY(ng)%vbar_south(i)
@@ -335,7 +372,7 @@
               cff=0.5_r8*(GRID(ng)%h(i,Jstr-1)+                         &
      &                    zeta(i,Jstr-1,know)+                          &
      &                    GRID(ng)%h(i,Jstr  )+                         &
-     &                    zeta(i,Jstr  ,Know))
+     &                    zeta(i,Jstr  ,know))
 #else
               cff=0.5_r8*(GRID(ng)%h(i,Jstr-1)+                         &
      &                    GRID(ng)%h(i,Jstr  ))
@@ -462,7 +499,10 @@
      &              (GRID(ng)%h(i,Jstr-1)+zeta(i,Jstr-1,kout)+          &
      &               GRID(ng)%h(i,Jstr  )+zeta(i,Jstr  ,kout))
                 cff1=GRID(ng)%om_v(i,Jstr)/REFINED(cr)%om_v(m)
-                bry_val=cff1*REFINED(cr)%DV_avg2(1,m,tnew)/cff
+                bry_val=cff1*REFINED(cr)%V2d_flux(1,m,tnew)/cff
+# ifdef WEC
+                bry_val=bry_val-OCEAN(ng)%vbar_stokes(i,Jstr)
+# endif
 # ifdef MASKING
                 bry_val=bry_val*GRID(ng)%vmask(i,Jstr)
 # endif
@@ -599,11 +639,37 @@
      &                                 zeta(i,Jend+1,know)+             &
      &                                 GRID(ng)%h(i,Jend  )+            &
      &                                 zeta(i,Jend  ,know)))
+# ifdef WEC_VF
+!             here we reduce pgr from depth 2m to pgr is 0 at 0 depth.
+              bry_pgr=MIN(0.5_r8*(GRID(ng)%h(i,Jend)+                   &
+     &                             zeta(i,Jend,know)), 1.0_r8)*bry_pgr
+              cff=1.0_r8/(0.5_r8*(GRID(ng)%h(i,Jend  )+                 &
+     &                            zeta(i,Jend  ,know)+                  &
+     &                            GRID(ng)%h(i,Jend+1)+                 &
+     &                            zeta(i,Jend+1,know)))
+              cff1=1.5_r8*pi-FORCES(ng)%Dwave(i,Jend)-                  &
+     &             GRID(ng)%angler(i,Jend)
+              waven=2.0_r8*pi/MAX(FORCES(ng)%Lwave(i,Jend),Lwave_min)
+              waveny=waven*SIN(cff1)
+              sigma=SQRT(MAX(g*waven*TANH(waven/cff),eps))
+              osigma=1.0_r8/sigma
+              cff1=(1.0_r8-wec_alpha(ng))*osigma*                       &
+     &             FORCES(ng)%Dissip_break(i,Jend)*waveny
+              bry_wec=cff1
+#  ifdef WEC_ROLLER
+              bry_wec=bry_wec+osigma*FORCES(ng)%Dissip_roller(i,Jend)*  &
+     &                        waveny
+#  endif
+!             bry_wec=0.0_r8   ! for now
+# else
+              bry_wec=0.0_r8
+# endif
               cff2=GRID(ng)%on_v(i,Jend+1)*Ce
 !!            cff2=dt2d
               bry_val=vbar(i,Jend,know)+                                &
      &                cff2*(bry_pgr+                                    &
      &                      bry_cor+                                    &
+     &                      bry_wec+                                    &
      &                      bry_str)
 #else
               bry_val=BOUNDARY(ng)%vbar_north(i)
@@ -811,7 +877,10 @@
      &              (GRID(ng)%h(i,Jend+1)+zeta(i,Jend+1,kout)+          &
      &               GRID(ng)%h(i,Jend  )+zeta(i,Jend  ,kout))
                 cff1=GRID(ng)%om_v(i,Jend+1)/REFINED(cr)%om_v(m)
-                bry_val=cff1*REFINED(cr)%DV_avg2(1,m,tnew)/cff
+                bry_val=cff1*REFINED(cr)%V2d_flux(1,m,tnew)/cff
+# ifdef WEC
+                bry_val=bry_val-OCEAN(ng)%vbar_stokes(i,Jend+1)
+# endif
 # ifdef MASKING
                 bry_val=bry_val*GRID(ng)%vmask(i,Jend+1)
 # endif

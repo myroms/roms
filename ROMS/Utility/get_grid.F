@@ -4,11 +4,10 @@
 #ifndef ANA_GRID
 !
 !git $Id$
-!svn $Id: get_grid.F 1151 2023-02-09 03:08:53Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2025 The ROMS Group                              !
 !    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                                              !
+!    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
 !  This module reads grid information from input file using either     !
@@ -3153,7 +3152,7 @@
           CASE ('wtype_grid')
             pioVar%vd=var_desc(i)
             pioVar%gtype=r2dvar
-            IF (KIND(GRID(ng)%Jwtype).eq.8) THEN
+            IF (KIND(MIXING(ng)%Jwtype).eq.8) THEN
               pioVar%dkind=PIO_double
               ioDesc => ioDesc_dp_r2dvar(ng)
             ELSE

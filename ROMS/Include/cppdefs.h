@@ -2,11 +2,10 @@
 ** Include file "cppdefs.h"
 **
 ** git $Id$
-** svn $Id: cppdefs.h 1151 2023-02-09 03:08:53Z arango $
 ********************************************************** Hernan G. Arango ***
-** Copyright (c) 2002-2023 The ROMS/TOMS Group                               **
+** Copyright (c) 2002-2025 The ROMS Group                                    **
 **   Licensed under a MIT/X style license                                    **
-**   See License_ROMS.txt                                                    **
+**   See License_ROMS.md                                                     **
 *******************************************************************************
 **                                                                           **
 ** The following is short description of all available CPP options.          **
@@ -44,7 +43,17 @@
 ** UV_LOGDRAG              to turn ON or OFF logarithmic bottom friction     **
 ** UV_LDRAG                to turn ON or OFF linear bottom friction          **
 ** UV_QDRAG                to turn ON or OFF quadratic bottom friction       **
+** OMEGA_IMPLICIT          to add adaptive implicit vertical advection       **
 ** SPLINES_VVISC           if splines reconstruction of vertical viscosity   **
+**                                                                           **
+** OPTION for barotropic kernel time-stepping algorithm. Currently, the      **
+** default is the legacy predictor/corrector LF-AM3 scheme. See Shchepetkin  **
+** and McWilliams (2005, 2009) for details. The efficient and accurate       **
+** Forward-Backward AB3-AM4 kernel will become the default soon.             **
+**                                                                           **
+** STEP2D_CORILIS          to add Coriolis to barotropic kernel in 3D set-up **
+** STEP2D_FB_LF_AM3        LF-AM3 scheme but with Forward-Backward feedback  **
+** STEP2D_FB_AB3_AM4       Forward-Backward AB3-AM4 scheme                   **
 **                                                                           **
 ** OPTION to not allow the bottom stress components to change the direction  **
 ** of bottom momentum (change sign of velocity components.                   **
@@ -116,6 +125,7 @@
 **                                                                           **
 ** COARE_TAYLOR_YELLAND    if Taylor and Yelland (2001) relation             **
 ** COARE_OOST              if Oost et al. (2002) relation                    **
+** DRENNAN                 if Drennan (2003) relation                        **
 ** DEEPWATER_WAVES         if Deep water waves approximation                 **
 **                                                                           **
 ** OPTIONS for shortwave radiation:                                          **
@@ -238,7 +248,7 @@
 **                                                                           **
 ** CANUTO_A                if Canuto A-stability function formulation        **
 ** CANUTO_B                if Canuto B-stability function formulation        **
-** CHARNOK                 if Charnok surface roughness from wind stress     **
+** CHARNOK                 if Charnock surface roughness from wind stress    **
 ** CRAIG_BANNER            if Craig and Banner wave breaking surface flux    **
 ** KANTHA_CLAYSON          if Kantha and Clayson stability function          **
 ** K_C2ADVECTION           if 2nd-order centered advection                   **
@@ -300,6 +310,8 @@
 ** SSW_BBL                 if Sherwood et al. BBL closure                    **
 ** SSW_CALC_ZNOT           if computing bottom roughness internally          **
 ** SSW_LOGINT              if logarithmic interpolation of (Ur,Vr)           **
+** SSW_LOGINT_WBL          if wave boundary layer height for Ur,Vr elevation **
+** SSW_LOGINT_DIRECT       if user height for Ur,Vr elevation                **
 ** SSW_CALC_UB             if computing bottom orbital velocity internally   **
 ** SSW_FORM_DRAG_COR       to activate form drag coefficient                 **
 ** SSW_ZOBIO               if biogenic bedform roughness from ripples        **
@@ -335,7 +347,7 @@
 ** ADD_FSOBC               to add tidal elevation to processed OBC data      **
 ** ADD_M2OBC               to add tidal currents  to processed OBC data      **
 **                                                                           **
-** ROMS/TOMS driver OPTIONS:                                                 **
+** ROMS driver OPTIONS:                                                      **
 **                                                                           **
 ** ADM_DRIVER                 if generic adjoint model                       **
 ** AD_SENSITIVITY             if adjoint sensitivity                         **
@@ -393,6 +405,7 @@
 ** BNORM                   if Background norm Hessian singular vectors       **
 ** CELERITY_WRITE          if writing radiation celerity in forward file     **
 ** CLIPPING_SPLIT          to separate analysis due to IC, forcing, and OBC  **
+** COMPUTE_MLD             to compute Mixed Layer Depth for background error **
 ** DATALESS_LOOPS          if testing convergence of Picard iterations       **
 ** ENKF_RESTART            if writting restart fields for EnKF               **
 ** FORWARD_FLUXES          if using NLM trajectory surface fluxes            **
@@ -414,10 +427,12 @@
 ** POSTERIOR_ERROR_I       if initial posterior analysis error covariance    **
 ** PRIOR_BULK_FLUXES       if imposing prior NLM surface fluxes              **
 ** RECOMPUTE_4DVAR         if recomputing 4DVar in analysis algorithms       **
+** REMOVE_LAPACK_GOTOS     to replace GOTOs in customized LAPACK routines    **
 ** RPCG                    if Restricted B-preconditioned Lanczos solver     **
 ** RPM_RELAXATION          if Picard iterations, Diffusive Relaxation of RPM **
 ** SKIP_NLM                to skip running NLM, reading NLM trajectory       **
 ** SO_SEMI_WHITE           to activate SO semi norm white/red noise processes**
+** STD_MODEL               if Background error standard deviation modeling   **
 ** STOCH_OPT_WHITE         to activate SO white/red noise processes          **
 ** SPLINES_VCONV           to activate implicit splines vertical convolution **
 ** TIME_CONV               if weak-constraint 4D-Var time convolutions       **
@@ -486,9 +501,36 @@
 ** SEDIMENT                to activate sediment transport model              **
 ** BEDLOAD_MPM             to activate Meyer-Peter-Mueller bed load          **
 ** BEDLOAD_SOULSBY         to activate Soulsby wave/current bed load         **
+** COHESIVE_BED            to activate cohesive bed model                    **
+** FLOC_TURB_DISS          dissipation for flocculation based on turbulence  **
+** FLOC_BBL_DISS           dissipation for flocs from bottom boundary layer  **
+** MIXED_BED               to activate mixed bed behavior                    **
+** NONCOHESIVE_BED1        original bed model of Warner et al 2008, default  **
+** NONCOHESIVE_BED2        modified bed model of Sherwood et al              **
+** SED_BIODIFF             to activate sediment biodiffusivity               **
+** SED_DEFLOC              flocculation decomposition in sediment bed        **
 ** SED_DENS                to activate sediment to affect equation of state  **
+** SED_FLOCS               flocculation model of Verney et al., 2011         **
 ** SED_MORPH               to allow bottom model elevation to evolve         **
+** SED_TAU_CD_CONST        constant critical stress for deposition           **
+** SED_TAU_CD_LIN          linear critical stress for deposition             **
 ** SUSPLOAD                to activate suspended load transport              **
+**                                                                           **
+** Wave effoct on currents (WEC) and shallow water OPTIONS:                  **
+**                                                                           **
+** BOTTOM_STREAMING    activate wave enhanced bottom streaming               **
+** ROLLER_SVENDSEN     activate wave roller based on Svendsen                **
+** ROLLER_MONO         activate wave roller for monchromatic waves           **
+** ROLLER_RENIERS      activate wave roller based on Reniers                 **
+** SURFACE_STREAMING   activate wave enhanced surface streaming              **
+** WAVE_MIXING         activate enhanced vertical viscosity mixing from waves**
+** WDISS_CHURTHOR      activate wave dissipation from Church/Thorton.        **
+** WDISS_GAMMA         activate wave dissipation when using InWave           **
+** WDISS_ROELVINK      activate wave dissipation Roelvink when using InWave  **
+** WDISS_THORGUZA      activate wave dissipation from Thorton/Guza.          **
+** WDISS_WAVEMOD       activate wave dissipation from a wave model           **
+** WEC_VF              activate wave-current stresses from Uchiyama et al.   **
+** WET_DRY             activate wetting and drying                           **
 **                                                                           **
 ** OPTIONS for grid nesting:                                                 **
 **                                                                           **
@@ -496,6 +538,7 @@
 ** NESTING_DEBUG           to check mass fluxes conservation in refinement   **
 ** NO_CORRECT_TRACER       to avoid two-way correction of boundary tracer    **
 ** ONE_WAY                 if one-way nesting in refinement grids            **
+** REFINE_BOUNDARY         fine-to-coarse averaging at coarse grid boundary  **
 ** TIME_INTERP_FLUX        time interpolate coarse mass flux instead persist **
 **                                                                           **
 ** OPTIONS for coupling to other Earth System Models (ESM) via the Earth     **
@@ -523,8 +566,6 @@
 ** Nearshore and shallow water model OPTIONS:                                **
 **                                                                           **
 ** WET_DRY                 to activate wetting and drying                    **
-** NEARSHORE_MELLOR05      to activate radiation stress terms (Mellor 2005). **
-** NEARSHORE_MELLOR08      to activate radiation stress terms (Mellor 2008). **
 **                                                                           **
 ** MPI communication OPTIONS:  The routines "mp_assemble" (used in nesting), **
 **                             "mp_collect" (used in NetCDF I/O and 4D-Var), **
@@ -564,6 +605,8 @@
 ** NO_LBC_ATT              to not check NLM_LBC global attribute on restart  **
 ** NO_READ_GHOST           to not include ghost points during read/scatter   **
 ** NO_WRITE_GRID           if not writing grid arrays                        **
+** OUT_DOUBLE              if writing double precision output fields         **
+** OUTPUT_STATS            to report NetCDF output fields statistics         **
 ** PARALLEL_IO             if parallel I/O via HDF5 or pnetcdf libraries     **
 ** PERFECT_RESTART         to include perfect restart variables              **
 ** PIO_LIB                 to include Parallel-IO from the PIO library       **
@@ -572,15 +615,33 @@
 ** READ_WATER              if only reading water points data                 **
 ** REGRID_SHAPIRO          to apply Shapiro Filter to regridded data         **
 ** ROMS_STDOUT             to write standard output into the 'log.roms' file **
-** WRITE_WATER             if only writing water points data                 **
 ** RST_SINGLE              if writing single precision restart fields        **
-** OUT_DOUBLE              if writing double precision output fields         **
+** WRITE_WATER             if only writing water points data                 **
 **                                                                           **
 ** OPTION to process 3D data by levels (2D slabs) to reduce memory needs in  **
 ** distributed-memory configurations. This option is convenient for large    **
 ** problems on nodes with limited memory.                                    **
 **                                                                           **
 ** INLINE_2DIO             if processing 3D IO level by level                **
+**                                                                           **
+** Sea-ice modeling OPTIONS:                                                 **
+**                                                                           **
+** ICE_MODEL               to activate sea-ice model                         **
+** ICE_THERMO              if thermodynamic component                        **
+** ICE_MK                  if Mellor-Kantha thermodynamics (only choice)     **
+** ICE_ALBEDO              if computing surface albedo over water/snow/ice   **
+** ICE_ALB_EC92            if albedo computation from Ebert and Curry        **
+** ICE_MOMENTUM            if momentum component                             **
+** ICE_MOM_BULK            if alternate ice-water stress computation         **
+** ICE_EVP                 if elastic-viscous-plastic rheology               **
+** ICE_ADVECT              if advection of ice tracers                       **
+** ICE_SMOLAR              if MPDATA advection scheme                        **
+** ICE_UPWIND              if upwind advection scheme                        **
+** ICE_BULK_FLUXES         if ice part of bulk flux computation              **
+** ICE_CONVSNOW            if conversion of flooded snow to ice              **
+** ICE_STRENGTH_QUAD       if quadratic ice strength, a function of thickness**
+** NO_SCORRECTION_ICE      if no salinity correction under the ice           **
+** OUTFLOW_MASK            if Hibler style outflow cells                     **
 **                                                                           **
 ** OPTION to avoid writing current date and CPP options to NetCDF file       **
 ** headers. This is used to compare serial and parallel solutions where      **

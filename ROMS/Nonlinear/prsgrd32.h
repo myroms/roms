@@ -1,11 +1,10 @@
       MODULE prsgrd_mod
 !
 !git $Id$
-!svn $Id: prsgrd32.h 1151 2023-02-09 03:08:53Z arango $
 !=======================================================================
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2025 The ROMS Group                              !
 !    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                           Hernan G. Arango   !
+!    See License_ROMS.md                            Hernan G. Arango   !
 !========================================== Alexander F. Shchepetkin ===
 !                                                                      !
 !  This subroutine evaluates the nonlinear  baroclinic,  hydrostatic   !
@@ -87,6 +86,9 @@
 #ifdef TIDE_GENERATING_FORCES
      &                    OCEAN(ng) % eq_tide,                          &
 #endif
+#ifdef WEC_VF
+     &                    OCEAN(ng) % zetat,                            &
+#endif
 #ifdef ATM_PRESS
      &                    FORCES(ng) % Pair,                            &
 #endif
@@ -119,6 +121,9 @@
      &                          rho,                                    &
 #ifdef TIDE_GENERATING_FORCES
      &                          eq_tide,                                &
+#endif
+#ifdef WEC_VF
+     &                          zetat,                                  &
 #endif
 #ifdef ATM_PRESS
      &                          Pair,                                   &
@@ -157,6 +162,9 @@
 # ifdef TIDE_GENERATING_FORCES
       real(r8), intent(in) :: eq_tide(LBi:,LBj:)
 # endif
+# ifdef WEC_VF
+      real(r8), intent(in) :: zetat(LBi:,LBj:)
+# endif
 # ifdef ATM_PRESS
       real(r8), intent(in) :: Pair(LBi:,LBj:)
 # endif
@@ -183,6 +191,9 @@
       real(r8), intent(in) :: rho(LBi:UBi,LBj:UBj,N(ng))
 # ifdef TIDE_GENERATING_FORCES
       real(r8), intent(in) :: eq_tide(LBi:UBi,LBj:UBj)
+# endif
+# ifdef WEC_VF
+      real(r8), intent(in) :: zetat(LBi:UBi,LBj:UBj)
 # endif
 # ifdef ATM_PRESS
       real(r8), intent(in) :: Pair(LBi:UBi,LBj:UBj)
@@ -263,6 +274,9 @@
           cff2=0.5_r8*(rho(i,j,N(ng))-rho(i,j,N(ng)-1))*                &
      &         (z_w(i,j,N(ng))-z_r(i,j,N(ng)))*cff1
           P(i,j,N(ng))=g*z_w(i,j,N(ng))+                                &
+#ifdef WEC_VF
+     &                 zetat(i,j)+                                      &
+#endif
 #ifdef ATM_PRESS
      &                 fac*(Pair(i,j)-OneAtm)+                          &
 #endif

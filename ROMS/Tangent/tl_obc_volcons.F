@@ -3,11 +3,10 @@
 #ifdef TANGENT
 !
 !git $Id$
-!svn $Id: tl_obc_volcons.F 1151 2023-02-09 03:08:53Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group       Andrew M. Moore   !
+!  Copyright (c) 2002-2025 The ROMS Group            Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                                              !
+!    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
 !  This routine computes tangent linear integral mass flux "obc_flux"  !
@@ -19,7 +18,8 @@
       implicit none
 !
       PRIVATE
-      PUBLIC  :: tl_obc_flux_tile, tl_set_DUV_bc_tile
+      PUBLIC  :: tl_obc_flux_tile
+      PUBLIC  :: tl_set_DUV_bc_tile
 !
       CONTAINS
 !
@@ -117,12 +117,12 @@
       real(r8), intent(in) :: om_v(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: on_u(LBi:UBi,LBj:UBj)
 
-      real(r8), intent(in) :: ubar(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(in) :: vbar(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(in) :: zeta(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(in) :: tl_ubar(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(in) :: tl_vbar(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(in) :: tl_zeta(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(in) :: ubar(LBi:UBi,LBj:UBj,:)
+      real(r8), intent(in) :: vbar(LBi:UBi,LBj:UBj,:)
+      real(r8), intent(in) :: zeta(LBi:UBi,LBj:UBj,:)
+      real(r8), intent(in) :: tl_ubar(LBi:UBi,LBj:UBj,:)
+      real(r8), intent(in) :: tl_vbar(LBi:UBi,LBj:UBj,:)
+      real(r8), intent(in) :: tl_zeta(LBi:UBi,LBj:UBj,:)
 # endif
 !
 !  Local variable declarations.
@@ -360,13 +360,13 @@
 #  endif
       real(r8), intent(in) :: om_v(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: on_u(LBi:UBi,LBj:UBj)
-      real(r8), intent(in) :: ubar(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(in) :: vbar(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(in) :: ubar(LBi:UBi,LBj:UBj,:)
+      real(r8), intent(in) :: vbar(LBi:UBi,LBj:UBj,:)
       real(r8), intent(in) :: Drhs(IminS:ImaxS,JminS:JmaxS)
       real(r8), intent(in) :: Duon(IminS:ImaxS,JminS:JmaxS)
       real(r8), intent(in) :: Dvom(IminS:ImaxS,JminS:JmaxS)
-      real(r8), intent(in) :: tl_ubar(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(in) :: tl_vbar(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(in) :: tl_ubar(LBi:UBi,LBj:UBj,:)
+      real(r8), intent(in) :: tl_vbar(LBi:UBi,LBj:UBj,:)
       real(r8), intent(in) :: tl_Drhs(IminS:,JminS:)
 
       real(r8), intent(inout) :: tl_Duon(IminS:ImaxS,JminS:JmaxS)
@@ -555,8 +555,8 @@
       real(r8), intent(in) :: umask(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: vmask(LBi:UBi,LBj:UBj)
 #  endif
-      real(r8), intent(inout) :: tl_ubar(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(inout) :: tl_vbar(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(inout) :: tl_ubar(LBi:UBi,LBj:UBj,:)
+      real(r8), intent(inout) :: tl_vbar(LBi:UBi,LBj:UBj,:)
 # endif
 !
 !  Local variable declarations.

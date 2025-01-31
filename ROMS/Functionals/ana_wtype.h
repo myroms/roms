@@ -2,11 +2,10 @@
       SUBROUTINE ana_wtype (ng, tile, model)
 !
 !! git $Id$
-!! svn $Id: ana_wtype.h 1151 2023-02-09 03:08:53Z arango $
 !!======================================================================
-!! Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
+!! Copyright (c) 2002-2025 The ROMS Group                              !
 !!   Licensed under a MIT/X style license                              !
-!!   See License_ROMS.txt                                              !
+!!   See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
 !  This subroutine sets spatially varying Jerlov water type index.     !
@@ -124,7 +123,8 @@
 !
       IF (first) THEN
         first=.FALSE.
-        Stats % count=0.0_r8
+        Stats % checksum=0_i8b
+        Stats % count=0
         Stats % min=Large
         Stats % max=-Large
         Stats % avg=0.0_r8
@@ -153,7 +153,7 @@
 !
 !  Report statistics.
 !
-      CALL stats_2dfld (ng, tile, iNLM, r2dvar, Stats,                  &
+      CALL stats_2dfld (ng, tile, iNLM, r2dvar, Stats, 0,               &
      &                  LBi, UBi, LBj, UBj, Jwtype)
       IF (DOMAIN(ng)%NorthEast_Corner(tile)) THEN
         WRITE (stdout,10) 'Jerlov water type: wtype_grid',              &

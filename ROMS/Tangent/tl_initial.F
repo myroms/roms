@@ -3,11 +3,10 @@
       SUBROUTINE tl_initial (ng)
 !
 !git $Id$
-!svn $Id: tl_initial.F 1166 2023-05-17 20:11:58Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2025 The ROMS Group                              !
 !    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                                              !
+!    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
 !  This routine initializes all tangent linear model variables.        !
@@ -54,6 +53,9 @@
 # endif
 # ifdef TLM_CHECK
       USE ini_adjust_mod,      ONLY : tl_ini_perturb
+# endif
+# if defined SOLVE3D && defined NONLINEAR
+      USE ini_fields_mod,      ONLY : set_zeta_timeavg
 # endif
       USE ini_hmixcoef_mod,    ONLY : ini_hmixcoef
 # ifdef I4DVAR_ANA_SENSITIVITY
@@ -142,6 +144,7 @@
 !
       iif(ng)=1
       indx1(ng)=1
+      next_kstp(ng)=1
       kstp(ng)=1
       krhs(ng)=1
       knew(ng)=1
@@ -400,18 +403,6 @@
 #  endif
 # endif
 
-# if defined SOLVE3D && !defined INI_FILE
-!
-!-----------------------------------------------------------------------
-!  If analytical initial conditions, compute initial time-evolving
-!  depths with zero free-surface.
-!-----------------------------------------------------------------------
-!
-      DO tile=first_tile(ng),last_tile(ng),+1
-        CALL set_depth (ng, tile, iTLM)
-      END DO
-# endif
-
 # if defined RBL4DVAR          || defined R4DVAR      || \
      defined SENSITIVITY_4DVAR || defined TL_RBL4DVAR || \
      defined TL_R4DVAR
@@ -636,6 +627,20 @@
       CALL mp_bcasti (ng, iTLM, exit_flag)
 # endif
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+
+# if defined SOLVE3D && defined TLM_DRIVER
+!
+!-----------------------------------------------------------------------
+!  Compute nonlinear initial time-evolving depths.
+!-----------------------------------------------------------------------
+!
+      DO tile=first_tile(ng),last_tile(ng),+1
+#  ifdef NONLINEAR
+        CALL set_zeta_timeavg (ng, tile, iTLM)
+#  endif
+        CALL set_depth (ng, tile, iTLM)
+      END DO
+# endif
 
 # ifdef MASKING
 !

@@ -4,11 +4,10 @@
 #if defined NESTING && defined ADJOINT
 !
 !git $Id$
-!svn $Id: ad_nesting.F 1151 2023-02-09 03:08:53Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group       Andrew M. Moore   !
+!  Copyright (c) 2002-2025 The ROMS Group            Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                                              !
+!    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
 !  This module contains several routines  to process the connectivity  !
@@ -898,7 +897,7 @@
      &                20x,'(dg)',4x,'(rg)',18x,'2D',6x,'3D',9x,'(rg)',  &
      &                8x,'told',8x,'(ng)',8x,'tnew',/)
  20           FORMAT (4(1x,i3),2(1x,i7),2(2x,i4),2(4x,i4),1x,4(2x,i10))
-              CALL my_flush (102)
+              FLUSH (102)
             END IF
           END IF
 # endif
@@ -4160,7 +4159,7 @@
      &            7x,'Wold',7x,'Wnew',/,18x,'(dg)',3x,'(ng)',           &
      &            19x,'(dg)',7x,'told',7x,'(ng)',7x,'tnew',/)
  30       FORMAT (3i5,2i7,2i6,4(2x,i9),2f11.4)
-          CALL my_flush (202)
+          FLUSH (202)
         END IF
       END IF
 # endif
@@ -7696,7 +7695,7 @@
             IF (Master) THEN
               WRITE (302,10) 'Western Boundary Mass Fluxes: ',          &
      &                       cr, dg, rg, iif(rg), iic(rg), INT(time(rg))
-              CALL my_flush (302)
+              FLUSH (302)
             END IF
           END IF
 !
@@ -7740,7 +7739,7 @@
               END IF
               WRITE (302,30) Jbc, REFINED(cr)%DU_avg2(1,m,tnew),        &
      &                       WestSum, MFratio
-              CALL my_flush (302)
+              FLUSH (302)
 # endif
             END IF
           END DO
@@ -7759,7 +7758,7 @@
             IF (Master) THEN
               WRITE (302,10) 'Eastern Boundary Mass Fluxes: ',          &
      &                       cr, dg, rg, iif(rg), iic(rg), INT(time(rg))
-              CALL my_flush (302)
+              FLUSH (302)
             END IF
           END IF
 !
@@ -7803,7 +7802,7 @@
               END IF
               WRITE (302,30) Jbc, REFINED(cr)%DU_avg2(1,m,tnew),        &
      &                       EastSum, MFratio
-              CALL my_flush (302)
+              FLUSH (302)
 # endif
             END IF
           END DO
@@ -7822,7 +7821,7 @@
             IF (Master) THEN
               WRITE (302,20) 'Southern Boundary Mass Fluxes: ',         &
      &                       cr, dg, rg, iif(rg), iic(rg), INT(time(rg))
-              CALL my_flush (302)
+              FLUSH (302)
             END IF
           END IF
 !
@@ -7867,7 +7866,7 @@
               END IF
               WRITE (302,30) Ibc, REFINED(cr)%DV_avg2(1,m,tnew),        &
      &                       SouthSum, MFratio
-              CALL my_flush (302)
+              FLUSH (302)
 # endif
             END IF
           END DO
@@ -7886,7 +7885,7 @@
             IF (Master) THEN
               WRITE (302,20) 'Northern Boundary Mass Fluxes: ',         &
      &                       cr, dg, rg, iif(rg), iic(rg), INT(time(rg))
-              CALL my_flush (302)
+              FLUSH (302)
             END IF
           END IF
 !
@@ -7979,7 +7978,7 @@
 
 # ifdef NESTING_DEBUG_NOT
 !
-      CALL my_flush (302)
+      FLUSH (302)
 !
   10  FORMAT (/,1x,a,/,/,4x,'cr = ',i2.2,4x,'dg = ',i2.2,4x,'rg = ',    &
      &        i2.2,4x,'iif(rg) = ',i3.3,4x,'iic(rg) = ',i10.10,4x,      &

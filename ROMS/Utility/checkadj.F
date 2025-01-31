@@ -2,11 +2,10 @@
       SUBROUTINE checkadj
 !
 !git $Id$
-!svn $Id: checkadj.F 1151 2023-02-09 03:08:53Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2025 The ROMS Group                              !
 !    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                                              !
+!    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
 !  This subroutine checks activated C-preprocessing options for        !
@@ -406,7 +405,7 @@
       END IF
 # endif
 !
-      string=uppercase('nearshore_mellor')
+      string=uppercase('wec')
       ifound=INDEX(TRIM(Coptions), TRIM(string))
       IF (ifound.ne.0) THEN
         ic=ic+1

@@ -2,11 +2,10 @@
       SUBROUTINE get_data (ng)
 !
 !git $Id$
-!svn $Id: get_data.F 1151 2023-02-09 03:08:53Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2025 The ROMS Group                              !
 !    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                                              !
+!    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
 !  This routine reads in forcing, climatology and other data from      !
@@ -252,6 +251,21 @@
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 # endif
 
+# ifdef WAVES_DIRP
+!
+      CALL get_2dfld (ng, iNLM, idWdip, FRCncid(idWdip,ng),             &
+#  if defined PIO_LIB && defined DISTRIBUTE
+     &                FRCpioFile(idWdip,ng),                            &
+#  endif
+     &                nFfiles(ng), FRC(1,ng), update(1),                &
+     &                LBi, UBi, LBj, UBj, 2, 1,                         &
+#  ifdef MASKING
+     &                GRID(ng) % rmask,                                 &
+#  endif
+     &                FORCES(ng) % DwavepG)
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+# endif
+
 # ifdef WAVES_HEIGHT
 !
       CALL get_2dfld (ng, iNLM, idWamp, FRCncid(idWamp,ng),             &
@@ -279,6 +293,21 @@
      &                GRID(ng) % rmask,                                 &
 #  endif
      &                FORCES(ng) % LwaveG)
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+# endif
+
+# ifdef WAVES_LENGTHP
+!
+      CALL get_2dfld (ng, iNLM, idWlep, FRCncid(idWlep,ng),             &
+#  if defined PIO_LIB && defined DISTRIBUTE
+     &                FRCpioFile(idWlep,ng),                            &
+#  endif
+     &                nFfiles(ng), FRC(1,ng), update(1),                &
+     &                LBi, UBi, LBj, UBj, 2, 1,                         &
+#  ifdef MASKING
+     &                GRID(ng) % rmask,                                 &
+#  endif
+     &                FORCES(ng) % LwavepG)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 # endif
 
@@ -312,7 +341,7 @@
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 # endif
 
-# if defined WAVES_UB
+# ifdef WAVES_UB
 !
       CALL get_2dfld (ng, iNLM, idWorb, FRCncid(idWorb,ng),             &
 #  if defined PIO_LIB && defined DISTRIBUTE
@@ -323,26 +352,38 @@
 #  ifdef MASKING
      &                GRID(ng) % rmask,                                 &
 #  endif
-     &                FORCES(ng) % Ub_swanG)
+     &                FORCES(ng) % Uwave_rmsG)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 # endif
 
-# if defined TKE_WAVEDISS
+# ifdef WAVES_DISS
 !
-      CALL get_2dfld (ng, iNLM, idWdis, FRCncid(idWdis,ng),             &
+      CALL get_2dfld (ng, iNLM, idWdib, FRCncid(idWdib,ng),             &
 #  if defined PIO_LIB && defined DISTRIBUTE
-     &                FRCpioFile(idWdis,ng),                            &
+     &                FRCpioFile(idWdib,ng),                            &
 #  endif
      &                nFfiles(ng), FRC(1,ng), update(1),                &
      &                LBi, UBi, LBj, UBj, 2, 1,                         &
 #  ifdef MASKING
      &                GRID(ng) % rmask,                                 &
 #  endif
-     &                FORCES(ng) % Wave_dissipG(:,:,1))
+     &                FORCES(ng) % Dissip_breakG)
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+!
+      CALL get_2dfld (ng, iNLM, idWdiw, FRCncid(idWdiw,ng),             &
+#  if defined PIO_LIB && defined DISTRIBUTE
+     &                FRCpioFile(idWdiw,ng),                            &
+#  endif
+     &                nFfiles(ng), FRC(1,ng), update(1),                &
+     &                LBi, UBi, LBj, UBj, 2, 1,                         &
+#  ifdef MASKING
+     &                GRID(ng) % rmask,                                 &
+#  endif
+     &                FORCES(ng) % Dissip_wcapG)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 # endif
 
-# if defined SVENDSEN_ROLLER
+# ifdef ROLLER_SVENDSEN
 !
       CALL get_2dfld (ng, iNLM, idWbrk, FRCncid(idWbrk,ng),             &
 #  if defined PIO_LIB && defined DISTRIBUTE

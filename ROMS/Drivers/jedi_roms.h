@@ -1,13 +1,10 @@
       MODULE roms_kernel_mod
 !
-!git $Id: jedi_roms.h 1153 2023-02-17 20:27:14Z arango $
-!git $Id: jedi_roms.h 1153 2023-02-17 20:27:14Z arango $
 !git $Id$
-!svn $Id: jedi_roms.h 1153 2023-02-17 20:27:14Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2025 The ROMS Group                              !
 !    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                                              !
+!    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
 !  ROMSJEDI Interface: Joint Effort for Data-assimilation Integration  !
@@ -16,8 +13,9 @@
 !  stepping, and finalization of ROMSJEDI interface following          !
 !  ESMF/NUOPC conventions:                                             !
 !                                                                      !
-!     ROMS_initialize           Phase 1 ROMSJEDI Initialization        !
+!     ROMS_initializeP1         Phase 1 ROMSJEDI Initialization        !
 !     ROMS_initializeP2         Phase 2 ROMSJEDI Initialization        !
+!     ROMS_initializeP3         Phase 3 ROMSJEDI Initialization        !
 !     ROMS_run                                                         !
 !     ROMS_finalize                                                    !
 !                                                                      !
@@ -38,42 +36,49 @@
 !
       USE analytical_mod
 !
-      USE close_io_mod,      ONLY : close_inp, close_out
-      USE dateclock_mod,     ONLY : time_string
+#ifdef TANGENT
+      USE ad_post_initial_mod, ONLY : ad_post_initial
+#endif
+      USE close_io_mod,        ONLY : close_inp, close_out
+      USE dateclock_mod,       ONLY : time_string
 #ifdef DISTRIBUTE
-      USE distribute_mod,    ONLY : mp_bcasti
+      USE distribute_mod,      ONLY : mp_bcasti
 #endif
 #ifdef WET_DRY
-      USE get_wetdry_mod,    ONLY : get_wetdry
+      USE get_wetdry_mod,      ONLY : get_wetdry
 #endif
-      USE ini_hmixcoef_mod,  ONLY : ini_hmixcoef
-      USE inp_par_mod,       ONLY : inp_par
+      USE ini_hmixcoef_mod,    ONLY : ini_hmixcoef
+      USE inp_par_mod,         ONLY : inp_par
 #ifdef NESTING
-      USE nesting_mod,       ONLY : nesting
+      USE nesting_mod,         ONLY : nesting
 #endif
 #ifdef SOLVE3D
-      USE set_depth_mod,     ONLY : set_depth0, set_depth
-      USE omega_mod,         ONLY : omega
-      USE rho_eos_mod,       ONLY : rho_eos
-      USE set_massflux_mod,  ONLY : set_massflux
+      USE set_depth_mod,       ONLY : set_depth0, set_depth
+      USE omega_mod,           ONLY : omega
+      USE rho_eos_mod,         ONLY : rho_eos
+      USE set_massflux_mod,    ONLY : set_massflux
 #endif
+      USE post_initial_mod,    ONLY : post_initial
 #ifdef MASKING
-      USE set_masks_mod,     ONLY : set_masks
+      USE set_masks_mod,       ONLY : set_masks
 #endif
-      USE stiffness_mod,     ONLY : stiffness
-      USE strings_mod,       ONLY : FoundError
+      USE stiffness_mod,       ONLY : stiffness
+      USE strings_mod,         ONLY : FoundError
+      USE stdout_mod,          ONLY : Set_StdOutUnit, stdout_unit
 #ifdef TANGENT
-      USE tl_set_depth_mod,  ONLY : tl_bath
+      USE tl_post_initial_mod, ONLY : tl_post_initial
+      USE tl_set_depth_mod,    ONLY : tl_bath
 #endif
 #ifdef WET_DRY
-      USE wetdry_mod,        ONLY : wetdry
+      USE wetdry_mod,          ONLY : wetdry
 #endif
-      USE wrt_rst_mod,       ONLY : wrt_rst
+      USE wrt_rst_mod,         ONLY : wrt_rst
 !
       implicit none
 !
-      PUBLIC  :: ROMS_initialize
+      PUBLIC  :: ROMS_initializeP1
       PUBLIC  :: ROMS_initializeP2
+      PUBLIC  :: ROMS_initializeP3
       PUBLIC  :: ROMS_run
       PUBLIC  :: ROMS_finalize
 !
@@ -87,12 +92,13 @@
 !
       CONTAINS
 !
-      SUBROUTINE ROMS_initialize (first, mpiCOMM, kernel)
+      SUBROUTINE ROMS_initializeP1 (first, mpiCOMM, kernel)
 !
 !=======================================================================
 !                                                                      !
-!  This routine allocates and initializes ROMS state variables and     !
-!  internal parameters. It reads standard input parameters.            !
+!  ROMSJEDI phase 2 initialization. It allocates and initializes ROMS  !
+!  state variables and internal parameters. It reads standard input    !
+!  parameters.                                                         !
 !                                                                      !
 !=======================================================================
 !
@@ -144,6 +150,19 @@
 !  independent from standard input parameters.
 !
         CALL initialize_parallel
+!
+!  Set the ROMS standard output unit to write verbose execution info.
+!  Notice that the default standard out unit in Fortran is 6.
+!
+!  In some applications like coupling or disjointed mpi-communications,
+!  it is advantageous to write standard output to a specific filename
+!  instead of the default Fortran standard output unit 6. If that is
+!  the case, it opens such formatted file for writing.
+!
+        IF (Set_StdOutUnit) THEN
+          stdout=stdout_unit(Master)
+          Set_StdOutUnit=.FALSE.
+        END IF
 !
 !  Read in model tunable parameters from standard input. Allocate and
 !  initialize variables in several modules after the number of nested
@@ -225,7 +244,7 @@
       END DO
 !
       RETURN
-      END SUBROUTINE ROMS_initialize
+      END SUBROUTINE ROMS_initializeP1
 !
       SUBROUTINE ROMS_initializeP2 (kernel)
 !
@@ -266,6 +285,53 @@
 !
       RETURN
       END SUBROUTINE ROMS_initializeP2
+!
+      SUBROUTINE ROMS_initializeP3 (kernel)
+!
+!=======================================================================
+!                                                                      !
+!  ROMSJEDI phase 3 initialization. It computes the initial depths     !
+!  and level thicknesses from the time-averaged free-surface, Zt_avg1, !
+!  which are needed to calculate initial vertically integrated         !
+!  momentum.                                                           !
+!                                                                      !
+!  Also, it initializes the state variables for all time levels and    !
+!  applies lateral boundary conditions.                                !
+!                                                                      !
+!  Notice that the second data snapshot needs to be processed because  !
+!  it is necessary for the initial lateral boundary conditions.        !
+!                                                                      !
+!=======================================================================
+!
+!  Imported variable declarations
+!
+      integer, intent(in) :: kernel
+!
+!  Local variable declarations.
+!
+      integer :: Phase
+!
+!-----------------------------------------------------------------------
+!  Initialize ROMSJEDI, Phase 3.
+!-----------------------------------------------------------------------
+!
+      Phase=3
+!
+      SELECT CASE (kernel)
+        CASE (iNLM)
+          CALL nlm_initial (Phase)
+#ifdef TANGENT
+        CASE (iTLM)
+          CALL tlm_initial (Phase)
+#endif
+#ifdef ADJOINT
+        CASE (iADM)
+          CALL adm_initial (Phase)
+#endif
+      END SELECT
+!
+      RETURN
+      END SUBROUTINE ROMS_initializeP3
 !
       SUBROUTINE ROMS_run (RunInterval, kernel)
 !
@@ -322,6 +388,11 @@
             step_counter(ng)=0
             NstrStep=iic(ng)-1
             NendStep=NstrStep+INT((MyRunInterval)/dt(ng))-extra
+            IF (iic(ng).eq.ntstart(ng)) THEN
+              ProcessInputData(ng)=.FALSE.         ! because Phase 3
+            ELSE
+              ProcessInputData(ng)=.TRUE.
+            END IF
             IF (Master) WRITE (stdout,10) MID(kernel), ng,              &
      &                                    NstrStep, MAX(0,NendStep)
           END DO
@@ -330,14 +401,15 @@
           DO ng=1,Ngrids
             NEXTtime=time(ng)+RunInterval
             ENDtime=INItime(ng)+ntimes(ng)*dt(ng)
-            IF (NEXTtime.eq.ENDtime) THEN
-              extra=0                              ! last time interval
-            ELSE
-              extra=1
-            END IF
+            extra=1
             step_counter(ng)=0
             NstrStep=iic(ng)-1
             NendStep=NstrStep+INT((MyRunInterval)/dt(ng))-extra
+            IF (iic(ng).eq.ntstart(ng)) THEN
+              ProcessInputData(ng)=.FALSE.         ! because Phase 3
+            ELSE
+              ProcessInputData(ng)=.TRUE.
+            END IF
             IF (Master) WRITE (stdout,10) MID(kernel), ng,              &
      &                                    NstrStep, MAX(0,NendStep)
           END DO
@@ -346,11 +418,7 @@
           DO ng=1,Ngrids
             NEXTtime=time(ng)-RunInterval
             ENDtime=INItime(ng)+ntimes(ng)*dt(ng)
-            IF (time(ng).eq.ENDtime) THEN
-              extra=0                              ! first time interval
-            ELSE
-              extra=1
-            END IF
+            extra=1
             step_counter(ng)=0
             NstrStep=iic(ng)-1
             NendStep=NstrStep-INT((MyRunInterval)/dt(ng))+extra
@@ -469,6 +537,11 @@
 !     Phase 2: Computes initial depths, density, horizontal mass       !
 !              fluxes, and other configuration arrays. It reads        !
 !              forcing snapshots.                                      !
+!                                                                      !
+!     Phase 3: Computes the initial depths and level thicknesses from  !
+!              the initial time-averaged free-surface field, Zt_avg1.  !
+!              Additionally, it initializes the state variables for    !
+!              all time levels and applies lateral boundary conditions.!
 !                                                                      !
 !=======================================================================
 !
@@ -834,6 +907,18 @@
           CALL grid_coords (ng, iNLM)
         END DO
 #endif
+      END IF PHASE2
+!
+!=======================================================================
+!  ROMSJEDI NLM kernel, Phase 3 Initialization.
+!=======================================================================
+!
+      PHASE3: IF (Phase.eq.3) THEN
+!
+        IF (Master) THEN
+          WRITE (stdout,10) 'NLM_INITIAL: Phase 3 Initialization: ',    &
+     &                      'State Lateral Boundary Conditions ...'
+        END IF
 !
 !-----------------------------------------------------------------------
 !  Initialize time-stepping counter and time/date string. Save NLM
@@ -849,13 +934,47 @@
           iic(ng)=ntstart(ng)
           ntend(ng)=ntstart(ng)+ntimes(ng)-1
 #ifdef JEDI
-          jic(ng)=ntstart(ng)-1
-          time4jedi(ng)=time(ng)-dt(ng)
+          jic(ng)=ntstart(ng)
+          time4jedi(ng)=time(ng)
 #endif
           CALL time_string (time(ng), time_code(ng))
         END DO
+!
+!-----------------------------------------------------------------------
+!  Read in required data, if any, from input NetCDF files.
+!-----------------------------------------------------------------------
+!
+        DO ng=1,Ngrids
+          CALL get_data (ng)
+          IF (FoundError(exit_flag, NoError,                            &
+     &                   __LINE__, MyFile)) RETURN
+        END DO
+!
+!-----------------------------------------------------------------------
+!  If applicable, process input data: time interpolate between data
+!  snapshots.
+!-----------------------------------------------------------------------
+!
+        DO ng=1,Ngrids
+          DO tile=first_tile(ng),last_tile(ng),+1
+            CALL set_data (ng, tile)
+          END DO
+        END DO
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+!
+!-----------------------------------------------------------------------
+!  Computes the initial depths and level thicknesses from the initial
+!  time=averaged free-surface field, Zt_avg1 . Additionally, it
+!  initializes the nonlinear state variables for all time levels and
+!  applies lateral boundary conditions.
+!-----------------------------------------------------------------------
+!
+        DO ng=1,Ngrids
+          CALL post_initial (ng, iNLM)
+        END DO
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
-      END IF PHASE2
+      END IF PHASE3
 
 #ifdef PROFILE
 !
@@ -1204,6 +1323,18 @@
           CALL grid_coords (ng, iTLM)
         END DO
 # endif
+      END IF PHASE2
+!
+!=======================================================================
+!  ROMSJEDI TLM kernel, Phase 3 Initialization.
+!=======================================================================
+!
+      PHASE3: IF (Phase.eq.3) THEN
+!
+        IF (Master) THEN
+          WRITE (stdout,10) 'TLM_INITIAL: Phase 3 Initialization: ',    &
+     &                      'State Lateral Boundary Conditions ...'
+        END IF
 !
 !-----------------------------------------------------------------------
 !  Initialize time-stepping counter and time/date string.
@@ -1220,15 +1351,49 @@
           iic(ng)=ntstart(ng)
           ntend(ng)=ntstart(ng)+ntimes(ng)-1
 #ifdef JEDI
-          jic(ng)=ntstart(ng)-1
-          time4jedi(ng)=time(ng)-dt(ng)
+          jic(ng)=ntstart(ng)
+          time4jedi(ng)=time(ng)
 #endif
           CALL time_string (time(ng), time_code(ng))
           LdefTLM(ng)=.TRUE.
           LwrtTLM(ng)=.TRUE.
         END DO
+!
+!-----------------------------------------------------------------------
+!  Read in required data, if any, from input NetCDF files.
+!-----------------------------------------------------------------------
+!
+        DO ng=1,Ngrids
+          CALL tl_get_data (ng)
+          IF (FoundError(exit_flag, NoError,                            &
+     &                   __LINE__, MyFile)) RETURN
+        END DO
+!
+!-----------------------------------------------------------------------
+!  If applicable, process input data: time interpolate between data
+!  snapshots.
+!-----------------------------------------------------------------------
+!
+        DO ng=1,Ngrids
+          DO tile=first_tile(ng),last_tile(ng),+1
+            CALL tl_set_data (ng, tile)
+          END DO
+        END DO
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+!
+!-----------------------------------------------------------------------
+!  Computes the initial depths and level thicknesses from the initial
+!  time-averaged free-surface field, Zt_avg1. Additionally, it
+!  initializes the nonlinear state variables for all time levels and
+!  applies lateral boundary conditions.
+!-----------------------------------------------------------------------
+!
+        DO ng=1,Ngrids
+          CALL tl_post_initial (ng, iTLM)
+        END DO
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
-      END IF PHASE2
+      END IF PHASE3
 
 # ifdef PROFILE
 !
@@ -1272,6 +1437,7 @@
 !
       integer :: Fcount
       integer :: ng, thread, tile
+      integer :: lstr, ifile
 
       integer, dimension(Ngrids) :: IniRec, Tindex
 
@@ -1280,6 +1446,8 @@
       real(dp) :: my_dstart
 # endif
 !
+      character (len=10) :: suffix
+
       character (len=*), parameter :: MyFile =                          &
      &  __FILE__//", adm_initial"
 
@@ -1438,22 +1606,50 @@
         END DO
 # endif
 
-# ifdef ANA_PSOURCE
+# ifdef FORWARD_FLUXES
 !
 !-----------------------------------------------------------------------
-!  Set point Sources/Sinks position, direction, special flag, and mass
-!  transport nondimensional shape profile with analytcal expressions.
-!  Point sources are at U- and V-points. We need to get their positions
-!  to process internal Land/Sea masking arrays during initialization.
+!  Set the BLK structure to contain the nonlinear model surface fluxes
+!  needed by the tangent linear and adjoint models. Also, set switches
+!  to process that structure in routine "check_multifile". Notice that
+!  it is possible to split the solution into multiple NetCDF files to
+!  reduce their size.
 !-----------------------------------------------------------------------
 !
-        DO ng=1,Ngrids
-          IF (LuvSrc(ng).or.LwSrc(ng).or.ANY(LtracerSrc(:,ng))) THEN
-            DO tile=first_tile(ng),last_tile(ng),+1
-              CALL ana_psource (ng, tile, iADM)
-            END DO
-          END IF
-        END DO
+!  Set the nonlinear model quicksave-history file as the basic state for
+!  the surface fluxes computed in "bulk_flux", which may be available at
+!  more frequent intervals while avoiding large files. Since the 4D-Var
+!  increment phase is calculated by a different executable and needs to
+!  know some of the QCK structure information.
+!
+      DO ng=1,Ngrids
+        WRITE (QCK(ng)%name,"(a,'.nc')") TRIM(QCK(ng)%head)
+        lstr=LEN_TRIM(QCK(ng)%name)
+        QCK(ng)%base=QCK(ng)%name(1:lstr-3)
+        IF (QCK(ng)%Nfiles.gt.1) THEN
+          DO ifile=1,QCK(ng)%Nfiles
+            WRITE (suffix,"('_',i4.4,'.nc')") ifile
+            QCK(ng)%files(ifile)=TRIM(QCK(ng)%base)//TRIM(suffix)
+          END DO
+          QCK(ng)%name=TRIM(QCK(ng)%files(1))
+        ELSE
+          QCK(ng)%files(1)=TRIM(QCK(ng)%name)
+        END IF
+      END DO
+!
+!  The switch LreadFRC is deactivated because all the atmospheric
+!  forcing, including shortwave radiation, is read from the NLM
+!  surface fluxes or is assigned during ESM coupling.  Such fluxes
+!  are available from the QCK structure. There is no need for reading
+!  and processing from the FRC structure input forcing-files.
+!
+      CALL edit_multifile ('QCK2BLK')
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+      DO ng=1,Ngrids
+        LreadBLK(ng)=.TRUE.
+        LreadFRC(ng)=.FALSE.
+        LreadQCK(ng)=.FALSE.
+      END DO
 # endif
 !
 !-----------------------------------------------------------------------
@@ -1549,10 +1745,10 @@
         DO ng=1,Ngrids
 !!        ntstart(ng)=ntstart(ng)-1
           iic(ng)=ntstart(ng)
-#ifdef JEDI
+# ifdef JEDI
           jic(ng)=ntstart(ng)+1
           time4jedi(ng)=time(ng)+dt(ng)
-#endif
+# endif
           CALL time_string (time(ng), time_code(ng))
           LdefADJ(ng)=.TRUE.
           LwrtADJ(ng)=.TRUE.

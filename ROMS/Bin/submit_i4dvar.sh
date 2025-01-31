@@ -1,11 +1,10 @@
 #!/bin/bash
 #
 # git $Id$
-# svn $Id: submit_i4dvar.sh 1151 2023-02-09 03:08:53Z arango $
 #######################################################################
-# Copyright (c) 2002-2023 The ROMS/TOMS Group                         #
+# Copyright (c) 2002-2025 The ROMS Group                              #
 #   Licensed under a MIT/X style license                              #
-#   See License_ROMS.txt                                              #
+#   See License_ROMS.md                                               #
 ################################################## Hernan G. Arango ###
 #                                                                     #
 #  Shallow Water Acustics 2006 Experiment:                            #
@@ -37,7 +36,7 @@
 
 echo "  "
 echo "**************************************************************"
-echo "***     ROMS/TOMS Incremental, Strong Constraint 4D-Var    ***"
+echo "***     ROMS Incremental, Strong Constraint 4D-Var         ***"
 echo "***  Master Execution Script: Sequential State Estimation  ***"
 echo "**************************************************************"
 echo "***"
@@ -50,7 +49,7 @@ echo "***"
 
 MYROOT="/home/arango/ocean/toms/adjoint/Test/SW06c"
 
-#  Set ROMS/TOMS ROOT directory.
+#  Set ROMS ROOT directory.
 
 ROMS_ROOT="/home/arango/ocean/toms/adjoint/src/ROMS"
 
@@ -62,7 +61,7 @@ STORAGE="/home/arango/ocean/toms/adjoint/Test/SW06c/Storage"
 #  Application title and IO file prefix.
 #---------------------------------------------------------------------
 
-TITLE="ROMS/TOMS 3.0 - Shallow Water Acoustics 2006, Coarse Grid"
+TITLE="ROMS 3.0 - Shallow Water Acoustics 2006, Coarse Grid"
 
 PREFIX="sw06c"
 

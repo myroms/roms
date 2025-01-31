@@ -1,14 +1,13 @@
       MODULE roms_kernel_mod
 !
 !git $Id$
-!svn $Id: correlation.h 1151 2023-02-09 03:08:53Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2025 The ROMS Group                              !
 !    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                                              !
+!    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
-!  ROMS/TOMS 4DVAR Background-error Correlation Model                  !
+!  ROMS 4DVAR Background-error Correlation Model                       !
 !                                                                      !
 !  This driver is used to build and test the 4DVAR background-error    !
 !  correlation model using a generalized difussion operator:           !
@@ -31,7 +30,7 @@
 !         W : Grid cell area or volume diagonal matrix                 !
 !                                                                      !
 !  The routines in this driver control the initialization,  time-      !
-!  stepping, and finalization of  ROMS/TOMS  model following ESMF      !
+!  stepping, and finalization of  ROMS  model following ESMF           !
 !  conventions:                                                        !
 !                                                                      !
 !     ROMS_initialize                                                  !
@@ -70,6 +69,7 @@
       USE ini_adjust_mod,     ONLY : load_TLtoAD
       USE inp_par_mod,        ONLY : inp_par
       USE normalization_mod,  ONLY : normalization
+      USE stdout_mod,         ONLY : Set_StdOutUnit, stdout_unit
       USE strings_mod,        ONLY : FoundError
 #ifdef BALANCE_OPERATOR
       USE tl_balance_mod,     ONLY : tl_balance
@@ -94,7 +94,7 @@
 !
 !=======================================================================
 !                                                                      !
-!  This routine allocates and initializes ROMS/TOMS state variables    !
+!  This routine allocates and initializes ROMS state variables         !
 !  and internal and external parameters.                               !
 !                                                                      !
 !=======================================================================
@@ -150,6 +150,19 @@
 !  independent from standard input parameters.
 !
         CALL initialize_parallel
+!
+!  Set the ROMS standard output unit to write verbose execution info.
+!  Notice that the default standard out unit in Fortran is 6.
+!
+!  In some applications like coupling or disjointed mpi-communications,
+!  it is advantageous to write standard output to a specific filename
+!  instead of the default Fortran standard output unit 6. If that is
+!  the case, it opens such formatted file for writing.
+!
+        IF (Set_StdOutUnit) THEN
+          stdout=stdout_unit(Master)
+          Set_StdOutUnit=.FALSE.
+        END IF
 !
 !  Read in model tunable parameters from standard input. Allocate and
 !  initialize variables in several modules after the number of nested
@@ -436,7 +449,7 @@
 !
 !=======================================================================
 !                                                                      !
-!  This routine terminates ROMS/TOMS driver execution.                 !
+!  This routine terminates ROMS driver execution.                      !
 !                                                                      !
 !=======================================================================
 !

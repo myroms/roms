@@ -2,295 +2,314 @@
       MODULE mod_boundary
 !
 !git $Id$
-!svn $Id: mod_boundary.F 1151 2023-02-09 03:08:53Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2025 The ROMS Group                              !
 !    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                                              !
+!    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
 !  Open boundary conditions arrays:                                    !
 !                                                                      !
-!  zeta_west      Free-surface (m) western boundary conditions.        !
+!  zeta_west        Free-surface (m) western boundary conditions.      !
 #if defined CELERITY_READ || defined CELERITY_WRITE
-!  zeta_west_C2   Free-surface western boundary, quadratic radition    !
-!                   term dZdx*dZdx+dZde*dZde (m2).                     !
-!  zeta_west_Cx   Free-surface western boundary, celerity in the       !
-!                   XI-direction (m).                                  !
-!  zeta_west_Ce   Free-surface western boundary, celerity in the       !
-!                   ETA-direction (m).                                 !
+!  zeta_west_C2     Free-surface western boundary, quadratic           !
+!                     radiation term dZdx*dZdx+dZde*dZde (m2).         !
+!  zeta_west_Cx     Free-surface western boundary, celerity in the     !
+!                     XI-direction (m).                                !
+!  zeta_west_Ce     Free-surface western boundary, celerity in the     !
+!                     ETA-direction (m).                               !
 #endif
 #ifndef ANA_FSOBC
-!  zetaG_west     Latest two-time snapshots of input free-surface (m)  !
-!                   western boundary data.                             !
+!  zetaG_west       Latest two-time snapshots of input free-surface    !
+!                     (m) western boundary data.                       !
 #endif
-!  zeta_east      Free-surface (m) eastern boundary conditions.        !
+!  zeta_east        Free-surface (m) eastern boundary conditions.      !
 #if defined CELERITY_READ || defined CELERITY_WRITE
-!  zeta_east_C2   Free-surface eastern boundary, quadratic radition    !
-!                   term dZdx*dZdx+dZde*dZde (m2).                     !
-!  zeta_east_Cx   Free-surface eastern boundary, celerity in the       !
-!                   XI-direction (m).                                  !
-!  zeta_east_Ce   Free-surface eastern boundary, celerity in the       !
-!                   ETA-direction (m).                                 !
+!  zeta_east_C2     Free-surface eastern boundary, quadratic           !
+!                     radiation term dZdx*dZdx+dZde*dZde (m2).         !
+!  zeta_east_Cx     Free-surface eastern boundary, celerity in the     !
+!                     XI-direction (m).                                !
+!  zeta_east_Ce     Free-surface eastern boundary, celerity in the     !
+!                     ETA-direction (m).                               !
 #endif
 #ifndef ANA_FSOBC
-!  zetaG_east     Latest two-time snapshots of input free-surface (m)  !
-!                   eastern boundary data.                             !
+!  zetaG_east       Latest two-time snapshots of input free-surface    !
+!                     (m) eastern boundary data.                       !
 #endif
-!  zeta_south     Free-surface (m) southern boundary conditions.       !
+!  zeta_south       Free-surface (m) southern boundary conditions.     !
 #if defined CELERITY_READ || defined CELERITY_WRITE
-!  zeta_south_C2  Free-surface southern boundary, quadratic radition   !
-!                   term dZdx*dZdx+dZde*dZde (m2).                     !
-!  zeta_south_Cx  Free-surface southern boundary, celerity in the      !
-!                   XI-direction (m).                                  !
-!  zeta_south_Ce  Free-surface northern boundary, celerity in the      !
-!                   ETA-direction (m).                                 !
+!  zeta_south_C2    Free-surface southern boundary, quadratic          !
+!                     radiation term dZdx*dZdx+dZde*dZde (m2).         !
+!  zeta_south_Cx    Free-surface southern boundary, celerity in the    !
+!                     XI-direction (m).                                !
+!  zeta_south_Ce    Free-surface northern boundary, celerity in the    !
+!                     ETA-direction (m).                               !
 #endif
 #ifndef ANA_FSOBC
-!  zetaG_south    Latest two-time snapshots of input free-surface (m)  !
-!                   southern boundary data.                            !
+!  zetaG_south      Latest two-time snapshots of input free-surface    !
+!                     (m)southern boundary data.                       !
 #endif
-!  zeta_north     Free-surface (m) northern boundary conditions.       !
+!  zeta_north       Free-surface (m) northern boundary conditions.     !
 #if defined CELERITY_READ || defined CELERITY_WRITE
-!  zeta_north_C2  Free-surface northern boundary, quadratic radition   !
-!                   term dZdx*dZdx+dZde*dZde (m2).                     !
-!  zeta_north_Cx  Free-surface northern boundary, celerity in the      !
-!                   XI-direction (m).                                  !
-!  zeta_north_Ce  Free-surface northern boundary, celerity in the      !
-!                   ETA-direction (m).                                 !
+!  zeta_north_C2    Free-surface northern boundary, quadratic          !
+!                     radiation term dZdx*dZdx+dZde*dZde (m2).         !
+!  zeta_north_Cx    Free-surface northern boundary, celerity in the    !
+!                     XI-direction (m).                                !
+!  zeta_north_Ce    Free-surface northern boundary, celerity in the    !
+!                     ETA-direction (m).                               !
 #endif
 #ifndef ANA_FSOBC
-!  zetaG_north    Latest two-time snapshots of input free-surface (m)  !
-!                   northern boundary data.                            !
+!  zetaG_north      Latest two-time snapshots of input free-surface    !
+!                     (m) northern boundary data.                      !
 #endif
-!  ubar_west      2D u-momentum (m/s) western boundary conditions.     !
-!  vbar_west      2D v-momentum (m/s) western boundary conditions.     !
+!  ubar_west        2D u-momentum (m/s) western boundary conditions.   !
+!  vbar_west        2D v-momentum (m/s) western boundary conditions.   !
 #if defined CELERITY_READ || defined CELERITY_WRITE
-!  ubar_west_C2   2D U-momentum western boundary, quadratic radition   !
-!                   term dUdx*dUdx+dUde*dUde (m2/s2).                  !
-!  vbar_west_C2   2D V-momentum western boundary, quadratic radition   !
-!                   term dUdx*dUdx+dUde*dUde (m2/s2).                  !
-!  ubar_west_Ce   2D U-momentum western boundary, celerity in the      !
-!                   ETA-direction (m/s).                               !
-!  vbar_west_Ce   2D V-momentum western boundary, celerity in the      !
-!                   ETA-direction (m/s).                               !
-!  ubar_west_Cx   2D U-momentum western boundary, celerity in the      !
-!                   XI-direction (m/s).                                !
-!  vbar_west_Cx   2D V-momentum western boundary, celerity in the      !
-!                   XI-direction (m/s).                                !
+!  ubar_west_C2     2D U-momentum western boundary, quadratic          !
+!                     radiation term dUdx*dUdx+dUde*dUde (m2/s2).      !
+!  vbar_west_C2     2D V-momentum western boundary, quadratic          !
+!                     radiation term dUdx*dUdx+dUde*dUde (m2/s2).      !
+!  ubar_west_Ce     2D U-momentum western boundary, celerity in the    !
+!                     ETA-direction (m/s).                             !
+!  vbar_west_Ce     2D V-momentum western boundary, celerity in the    !
+!                     ETA-direction (m/s).                             !
+!  ubar_west_Cx     2D U-momentum western boundary, celerity in the    !
+!                     XI-direction (m/s).                              !
+!  vbar_west_Cx     2D V-momentum western boundary, celerity in the    !
+!                     XI-direction (m/s).                              !
 #endif
 #ifndef ANA_M2OBC
-!  ubarG_west     Latest two-time snapshots of input 2D u-momentum     !
-!                   (m/s) western boundary data.                       !
-!  vbarG_west     Latest two-time snapshots of input 2D v-momentum     !
-!                   (m/s) western boundary data.                       !
+!  ubarG_west       Latest two-time snapshots of input 2D u-momentum   !
+!                     (m/s) western boundary data.                     !
+!  vbarG_west       Latest two-time snapshots of input 2D v-momentum   !
+!                     (m/s) western boundary data.                     !
 #endif
-!  ubar_east      2D u-momentum (m/s) eastern boundary conditions.     !
-!  vbar_east      2D v-momentum (m/s) eastern boundary conditions.     !
+!  ubar_east        2D u-momentum (m/s) eastern boundary conditions.   !
+!  vbar_east        2D v-momentum (m/s) eastern boundary conditions.   !
 #if defined CELERITY_READ || defined CELERITY_WRITE
-!  ubar_east_C2   2D U-momentum eastern boundary, quadratic radition   !
-!                   term dUdx*dUdx+dUde*dUde (m2/s2).                  !
-!  vbar_east_C2   2D V-momentum eastern boundary, quadratic radition   !
-!                   term dUdx*dUdx+dUde*dUde (m2/s2).                  !
-!  ubar_east_Ce   2D U-momentum eastern boundary, celerity in the      !
-!                   ETA-direction (m/s).                               !
-!  vbar_east_Ce   2D V-momentum eastern boundary, celerity in the      !
-!                   ETA-direction (m/s).                               !
-!  ubar_east_Cx   2D U-momentum eastern boundary, celerity in the      !
-!                   XI-direction (m/s).                                !
-!  vbar_east_Cx   2D V-momentum eastern boundary, celerity in the      !
-!                   XI-direction (m/s).                                !
+!  ubar_east_C2     2D U-momentum eastern boundary, quadratic          !
+!                     radiation term dUdx*dUdx+dUde*dUde (m2/s2).      !
+!  vbar_east_C2     2D V-momentum eastern boundary, quadratic          !
+!                     radiation term dUdx*dUdx+dUde*dUde (m2/s2).      !
+!  ubar_east_Ce     2D U-momentum eastern boundary, celerity in the    !
+!                     ETA-direction (m/s).                             !
+!  vbar_east_Ce     2D V-momentum eastern boundary, celerity in the    !
+!                     ETA-direction (m/s).                             !
+!  ubar_east_Cx     2D U-momentum eastern boundary, celerity in the    !
+!                     XI-direction (m/s).                              !
+!  vbar_east_Cx     2D V-momentum eastern boundary, celerity in the    !
+!                     XI-direction (m/s).                              !
 #endif
 #ifndef ANA_M2OBC
-!  ubarG_east     Latest two-time snapshots of input 2D u-momentum     !
-!                   (m/s) eastern boundary data.                       !
-!  vbarG_east     Latest two-time snapshots of input 2D v-momentum     !
-!                   (m/s) eastern boundary data.                       !
+!  ubarG_east       Latest two-time snapshots of input 2D u-momentum   !
+!                     (m/s) eastern boundary data.                     !
+!  vbarG_east       Latest two-time snapshots of input 2D v-momentum   !
+!                     (m/s) eastern boundary data.                     !
 #endif
-!  ubar_south     2D u-momentum (m/s) southern boundary conditions.    !
-!  vbar_south     2D v-momentum (m/s) southern boundary conditions.    !
+!  ubar_south       2D u-momentum (m/s) southern boundary conditions.  !
+!  vbar_south       2D v-momentum (m/s) southern boundary conditions.  !
 #if defined CELERITY_READ || defined CELERITY_WRITE
-!  ubar_south_C2  2D U-momentum southern boundary, quadratic radition  !
-!                   term dUdx*dUdx+dUde*dUde (m2/s2).                  !
-!  vbar_south_C2  2D V-momentum southern boundary, quadratic radition  !
-!                   term dUdx*dUdx+dUde*dUde (m2/s2).                  !
-!  ubar_south_Ce  2D U-momentum northern boundary, celerity in the     !
-!                   ETA-direction (m/s).                               !
-!  vbar_south_Ce  2D V-momentum northern boundary, celerity in the     !
-!                   ETA-direction (m/s).                               !
-!  ubar_south_Cx  2D U-momentum southern boundary, celerity in the     !
-!                   XI-direction (m/s).                                !
-!  vbar_south_Cx  2D V-momentum southern boundary, celerity in the     !
-!                   XI-direction (m/s).                                !
+!  ubar_south_C2    2D U-momentum southern boundary, quadratic         !
+!                     radiation term dUdx*dUdx+dUde*dUde (m2/s2).      !
+!  vbar_south_C2    2D V-momentum southern boundary, quadratic         !
+!                     radiation term dUdx*dUdx+dUde*dUde (m2/s2).      !
+!  ubar_south_Ce    2D U-momentum northern boundary, celerity in the   !
+!                     ETA-direction (m/s).                             !
+!  vbar_south_Ce    2D V-momentum northern boundary, celerity in the   !
+!                     ETA-direction (m/s).                             !
+!  ubar_south_Cx    2D U-momentum southern boundary, celerity in the   !
+!                     XI-direction (m/s).                              !
+!  vbar_south_Cx    2D V-momentum southern boundary, celerity in the   !
+!                     XI-direction (m/s).                              !
 #endif
 #ifndef ANA_M2OBC
-!  ubarG_south    Latest two-time snapshots of input 2D u-momentum     !
-!                   (m/s) southern boundary data.                      !
-!  vbarG_south    Latest two-time snapshots of input 2D v-momentum     !
-!                   (m/s) southern boundary data.                      !
+!  ubarG_south      Latest two-time snapshots of input 2D u-momentum   !
+!                     (m/s) southern boundary data.                    !
+!  vbarG_south      Latest two-time snapshots of input 2D v-momentum   !
+!                     (m/s) southern boundary data.                    !
 #endif
-!  ubar_north     2D u-momentum (m/s) northern boundary conditions.    !
-!  vbar_north     2D v-momentum (m/s) northern boundary conditions.    !
+!  ubar_north       2D u-momentum (m/s) northern boundary conditions.  !
+!  vbar_north       2D v-momentum (m/s) northern boundary conditions.  !
 #if defined CELERITY_READ || defined CELERITY_WRITE
-!  ubar_north_C2  2D U-momentum northern boundary, quadratic radition  !
-!                   term dUdx*dUdx+dUde*dUde (m2/s2).                  !
-!  vbar_north_C2  2D V-momentum northern boundary, quadratic radition  !
-!                   term dUdx*dUdx+dUde*dUde (m2/s2).                  !
-!  ubar_north_Ce  2D U-momentum northern boundary, celerity in the     !
-!                   ETA-direction (m/s).                               !
-!  vbar_north_Ce  2D V-momentum northern boundary, celerity in the     !
-!                   ETA-direction (m/s).                               !
-!  ubar_north_Cx  2D U-momentum northern boundary, celerity in the     !
-!                   XI-direction (m/s).                                !
-!  vbar_north_Cx  2D V-momentum northern boundary, celerity in the     !
-!                   XI-direction (m/s).                                !
+!  ubar_north_C2    2D U-momentum northern boundary, quadratic         !
+!                     radiation term dUdx*dUdx+dUde*dUde (m2/s2).      !
+!  vbar_north_C2    2D V-momentum northern boundary, quadratic         !
+!                     radiation term dUdx*dUdx+dUde*dUde (m2/s2).      !
+!  ubar_north_Ce    2D U-momentum northern boundary, celerity in the   !
+!                     ETA-direction (m/s).                             !
+!  vbar_north_Ce    2D V-momentum northern boundary, celerity in the   !
+!                     ETA-direction (m/s).                             !
+!  ubar_north_Cx    2D U-momentum northern boundary, celerity in the   !
+!                     XI-direction (m/s).                              !
+!  vbar_north_Cx    2D V-momentum northern boundary, celerity in the   !
+!                     XI-direction (m/s).                              !
 #endif
 #ifndef ANA_M2OBC
-!  ubarG_north    Latest two-time snapshots of input 2D u-momentum     !
-!                   (m/s) northern boundary data.                      !
-!  vbarG_north    Latest two-time snapshots of input 2D v-momentum     !
-!                   (m/s) northern boundary data.                      !
+!  ubarG_north      Latest two-time snapshots of input 2D u-momentum   !
+!                     (m/s) northern boundary data.                    !
+!  vbarG_north      Latest two-time snapshots of input 2D v-momentum   !
+!                     (m/s) northern boundary data.                    !
+#endif
+#ifdef WEC
+!  ubarstokes_east  2D U-Stokes (m/s) eastern boundary conditions.     !
+!  vbarstokes_east  2D V-Stokes (m/s) eastern boundary conditions.     !
+!  ubarstokes_west  2D U-Stokes (m/s) western boundary conditions.     !
+!  vbarstokes_west  2D V-Stokes (m/s) western boundary conditions.     !
+!  ubarstokes_north 2D U-Stokes (m/s) northern boundary conditions.    !
+!  vbarstokes_north 2D V-Stokes (m/s) northern boundary conditions.    !
+!  ubarstokes_south 2D U-Stokes (m/s) southern boundary conditions.    !
+!  vbarstokes_south 2D V-Stokes (m/s) southern boundary conditions.    !
 #endif
 #ifdef SOLVE3D
-!  u_west         3D u-momentum (m/s) western boundary conditions.     !
-!  v_west         3D v-momentum (m/s) western boundary conditions.     !
+!  u_west           3D u-momentum (m/s) western boundary conditions.   !
+!  v_west           3D v-momentum (m/s) western boundary conditions.   !
 # if defined CELERITY_READ || defined CELERITY_WRITE
-!  u_west_C2      3D U-momentum western boundary, quadratic radition   !
-!                   term dUdx*dUdx+dUde*dUde (m2/s2).                  !
-!  v_west_C2      3D V-momentum western boundary, quadratic radition   !
-!                   term dUdx*dUdx+dUde*dUde (m2/s2).                  !
-!  u_west_Ce      3D U-momentum western boundary, celerity in the      !
-!                   ETA-direction (m/s).                               !
-!  v_west_Ce      3D V-momentum western boundary, celerity in the      !
-!                   ETA-direction (m/s).                               !
-!  u_west_Cx      3D U-momentum western boundary, celerity in the      !
-!                   XI-direction (m/s).                                !
-!  v_west_Cx      3D V-momentum western boundary, celerity in the      !
-!                   XI-direction (m/s).                                !
+!  u_west_C2        3D U-momentum western boundary, quadratic          !
+!                     radiation term dUdx*dUdx+dUde*dUde (m2/s2).      !
+!  v_west_C2        3D V-momentum western boundary, quadratic          !
+!                     radiation term dUdx*dUdx+dUde*dUde (m2/s2).      !
+!  u_west_Ce        3D U-momentum western boundary, celerity in the    !
+!                     ETA-direction (m/s).                             !
+!  v_west_Ce        3D V-momentum western boundary, celerity in the    !
+!                     ETA-direction (m/s).                             !
+!  u_west_Cx        3D U-momentum western boundary, celerity in the    !
+!                     XI-direction (m/s).                              !
+!  v_west_Cx        3D V-momentum western boundary, celerity in the    !
+!                     XI-direction (m/s).                              !
 # endif
 # ifndef ANA_M3OBC
-!  uG_west        Latest two-time snapshots of input 3D u-momentum     !
-!                   (m/s) western boundary data.                       !
-!  vG_west        Latest two-time snapshots of input 3D v-momentum     !
-!                   (m/s) western boundary data.                       !
+!  uG_west          Latest two-time snapshots of input 3D u-momentum   !
+!                     (m/s) western boundary data.                     !
+!  vG_west          Latest two-time snapshots of input 3D v-momentum   !
+!                     (m/s) western boundary data.                     !
 # endif
-!  u_east         3D u-momentum (m/s) eastern boundary conditions.     !
-!  v_east         3D v-momentum (m/s) eastern boundary conditions.     !
+!  u_east           3D u-momentum (m/s) eastern boundary conditions.   !
+!  v_east           3D v-momentum (m/s) eastern boundary conditions.   !
 # if defined CELERITY_READ || defined CELERITY_WRITE
-!  u_east_C2      3D U-momentum eastern boundary, quadratic radition   !
-!                   term dUdx*dUdx+dUde*dUde (m2/s2).                  !
-!  v_east_C2      3D V-momentum eastern boundary, quadratic radition   !
-!                   term dUdx*dUdx+dUde*dUde (m2/s2).                  !
-!  u_east_Ce      3D U-momentum eastern boundary, celerity in the      !
-!                   ETA-direction (m/s).                               !
-!  v_east_Ce      3D V-momentum eastern boundary, celerity in the      !
-!                   ETA-direction (m/s).                               !
-!  u_east_Cx      3D U-momentum eastern boundary, celerity in the      !
-!                   XI-direction (m/s).                                !
-!  v_east_Cx      3D V-momentum eastern boundary, celerity in the      !
-!                   XI-direction (m/s).                                !
+!  u_east_C2        3D U-momentum eastern boundary, quadratic          !
+!                     radiation term dUdx*dUdx+dUde*dUde (m2/s2).      !
+!  v_east_C2        3D V-momentum eastern boundary, quadratic          !
+!                     radiation term dUdx*dUdx+dUde*dUde (m2/s2).      !
+!  u_east_Ce        3D U-momentum eastern boundary, celerity in the    !
+!                     ETA-direction (m/s).                             !
+!  v_east_Ce        3D V-momentum eastern boundary, celerity in the    !
+!                     ETA-direction (m/s).                             !
+!  u_east_Cx        3D U-momentum eastern boundary, celerity in the    !
+!                     XI-direction (m/s).                              !
+!  v_east_Cx        3D V-momentum eastern boundary, celerity in the    !
+!                     XI-direction (m/s).                              !
 # endif
 # ifndef ANA_M3OBC
-!  uG_east        Latest two-time snapshots of input 3D u-momentum     !
-!                   (m/s) eastern boundary data.                       !
-!  vG_east        Latest two-time snapshots of input 3D v-momentum     !
-!                   (m/s) eastern boundary data.                       !
+!  uG_east          Latest two-time snapshots of input 3D u-momentum   !
+!                     (m/s) eastern boundary data.                     !
+!  vG_east          Latest two-time snapshots of input 3D v-momentum   !
+!                     (m/s) eastern boundary data.                     !
 # endif
-!  u_south        3D u-momentum (m/s) southern boundary conditions.    !
-!  v_south        3D v-momentum (m/s) southern boundary conditions.    !
+!  u_south          3D u-momentum (m/s) southern boundary conditions.  !
+!  v_south          3D v-momentum (m/s) southern boundary conditions.  !
 # if defined CELERITY_READ || defined CELERITY_WRITE
-!  u_south_C2     3D U-momentum southern boundary, quadratic radition  !
-!                   term dUdx*dUdx+dUde*dUde (m2/s2).                  !
-!  v_south_C2     3D V-momentum southern boundary, quadratic radition  !
-!                   term dUdx*dUdx+dUde*dUde (m2/s2).                  !
-!  u_south_Ce     3D U-momentum northern boundary, celerity in the     !
-!                   ETA-direction (m/s).                               !
-!  v_south_Ce     3D V-momentum northern boundary, celerity in the     !
-!                   ETA-direction (m/s).                               !
-!  u_south_Cx     3D U-momentum southern boundary, celerity in the     !
-!                   XI-direction (m/s).                                !
-!  v_south_Cx     3D V-momentum southern boundary, celerity in the     !
-!                   XI-direction (m/s).                                !
+!  u_south_C2       3D U-momentum southern boundary, quadratic         !
+!                     radiation term dUdx*dUdx+dUde*dUde (m2/s2).      !
+!  v_south_C2       3D V-momentum southern boundary, quadratic         !
+!                     radiation term dUdx*dUdx+dUde*dUde (m2/s2).      !
+!  u_south_Ce       3D U-momentum northern boundary, celerity in the   !
+!                     ETA-direction (m/s).                             !
+!  v_south_Ce       3D V-momentum northern boundary, celerity in the   !
+!                     ETA-direction (m/s).                             !
+!  u_south_Cx       3D U-momentum southern boundary, celerity in the   !
+!                     XI-direction (m/s).                              !
+!  v_south_Cx       3D V-momentum southern boundary, celerity in the   !
+!                     XI-direction (m/s).                              !
 # endif
 # ifndef ANA_M3OBC
-!  uG_south       Latest two-time snapshots of input 3D u-momentum     !
-!                   (m/s) southern boundary data.                      !
-!  vG_south       Latest two-time snapshots of input 3D v-momentum     !
-!                   (m/s) southern boundary data.                      !
+!  uG_south         Latest two-time snapshots of input 3D u-momentum   !
+!                     (m/s) southern boundary data.                    !
+!  vG_south         Latest two-time snapshots of input 3D v-momentum   !
+!                     (m/s) southern boundary data.                    !
 # endif
-!  u_north        3D u-momentum (m/s) northern boundary conditions.    !
-!  v_north        3D v-momentum (m/s) northern boundary conditions.    !
+!  u_north          3D u-momentum (m/s) northern boundary conditions.  !
+!  v_north          3D v-momentum (m/s) northern boundary conditions.  !
 # if defined CELERITY_READ || defined CELERITY_WRITE
-!  u_north_C2     3D U-momentum northern boundary, quadratic radition  !
-!                   term dUdx*dUdx+dUde*dUde (m2/s2).                  !
-!  v_north_C2     3D V-momentum northern boundary, quadratic radition  !
-!                   term dUdx*dUdx+dUde*dUde (m2/s2).                  !
-!  u_north_Ce     3D U-momentum northern boundary, celerity in the     !
-!                   ETA-direction (m/s).                               !
-!  v_north_Ce     3D V-momentum northern boundary, celerity in the     !
-!                   ETA-direction (m/s).                               !
-!  u_north_Cx     3D U-momentum northern boundary, celerity in the     !
-!                   XI-direction (m/s).                                !
-!  v_north_Cx     3D V-momentum northern boundary, celerity in the     !
-!                   XI-direction (m/s).                                !
+!  u_north_C2       3D U-momentum northern boundary, quadratic         !
+!                     radiation term dUdx*dUdx+dUde*dUde (m2/s2).      !
+!  v_north_C2       3D V-momentum northern boundary, quadratic         !
+!                     radiation term dUdx*dUdx+dUde*dUde (m2/s2).      !
+!  u_north_Ce       3D U-momentum northern boundary, celerity in the   !
+!                     ETA-direction (m/s).                             !
+!  v_north_Ce       3D V-momentum northern boundary, celerity in the   !
+!                     ETA-direction (m/s).                             !
+!  u_north_Cx       3D U-momentum northern boundary, celerity in the   !
+!                     XI-direction (m/s).                              !
+!  v_north_Cx       3D V-momentum northern boundary, celerity in the   !
+!                     XI-direction (m/s).                              !
 # endif
 # ifndef ANA_M3OBC
-!  uG_north       Latest two-time snapshots of input 3D u-momentum     !
-!                   (m/s) northern boundary data.                      !
-!  vG_north       Latest two-time snapshots of input 3D v-momentum     !
-!                   (m/s) northern boundary data.                      !
+!  uG_north         Latest two-time snapshots of input 3D u-momentum   !
+!                     (m/s) northern boundary data.                    !
+!  vG_north         Latest two-time snapshots of input 3D v-momentum   !
+!                     (m/s) northern boundary data.                    !
 # endif
-!  t_west         Tracer (T units) western boundary conditions.        !
+# ifdef WEC
+!  ustokes_east     3D U-Stokes (m/s) eastern boundary conditions.     !
+!  vstokes_east     3D V-Stokes (m/s) eastern boundary conditions.     !
+!  ustokes_west     3D U-Stokes (m/s) western boundary conditions.     !
+!  vstokes_west     3D V-Stokes (m/s) western boundary conditions.     !
+!  ustokes_north    3D U-Stokes (m/s) northern boundary conditions.    !
+!  vstokes_north    3D V-Stokes (m/s) northern boundary conditions.    !
+!  ustokes_south    3D U-Stokes (m/s) southern boundary conditions.    !
+!  vstokes_south    3D V-Stokes (m/s) southern boundary conditions.    !
+# endif
+!  t_west           Tracer (T units) western boundary conditions.      !
 # if defined CELERITY_READ || defined CELERITY_WRITE
-!  t_west_C2      Tracers western boundary, quadratic radition term    !
-!                   dTdx*dTdx+dTde*dTde (Tunits squared).              !
-!  t_west_Cx      Tracers western boundary, celerity in the            !
-!                   XI-direction (Tunits).                             !
-!  t_west_Ce      Tracers western boundary, celerity in the            !
-!                   ETA-direction (Tunits).                            !
+!  t_west_C2        Tracers western boundary, quadratic radiation      !
+!                     term dTdx*dTdx+dTde*dTde (Tunits squared).       !
+!  t_west_Cx        Tracers western boundary, celerity in the          !
+!                     XI-direction (Tunits).                           !
+!  t_west_Ce        Tracers western boundary, celerity in the          !
+!                     ETA-direction (Tunits).                          !
 # endif
 # ifndef ANA_TOBC
-!  tG_west        Latest two-time snapshots of input tracer (Tunits)   !
-!                   western boundary data.                             !
+!  tG_west          Latest two-time snapshots of input tracer (Tunits) !
+!                     western boundary data.                           !
 # endif
-!  t_east         Tracer (T units) eastern boundary conditions.        !
+!  t_east           Tracer (T units) eastern boundary conditions.      !
 # if defined CELERITY_READ || defined CELERITY_WRITE
-!  t_east_C2      Tracers eastern boundary, quadratic radition term    !
-!                   term dTdx*dTdx+dTde*dTde (Tunits squared).         !
-!  t_east_Cx      Tracers eastern boundary, celerity in the            !
-!                   XI-direction (Tunits).                             !
-!  t_east_Ce      Tracers eastern boundary, celerity in the            !
-!                   ETA-direction (Tunits).                            !
+!  t_east_C2        Tracers eastern boundary, quadratic radiation      !
+!                     term dTdx*dTdx+dTde*dTde (Tunits squared).       !
+!  t_east_Cx        Tracers eastern boundary, celerity in the          !
+!                     XI-direction (Tunits).                           !
+!  t_east_Ce        Tracers eastern boundary, celerity in the          !
+!                     ETA-direction (Tunits).                          !
 # endif
 # ifndef ANA_TOBC
-!  tG_east        Latest two-time snapshots of input tracer (Tunits)   !
-!                   eastern boundary data.                             !
+!  tG_east          Latest two-time snapshots of input tracer (Tunits) !
+!                     eastern boundary data.                           !
 # endif
-!  t_south        Tracer (T units) southern boundary conditions.       !
+!  t_south          Tracer (T units) southern boundary conditions.     !
 # if defined CELERITY_READ || defined CELERITY_WRITE
-!  t_south_C2     Tracers southern boundary, quadratic radition term   !
-!                   term dTdx*dTdx+dTde*dTde (Tunits squared).         !
-!  t_south_Cx     Tracers southern boundary, celerity in the           !
-!                   XI-direction (Tunits).                             !
-!  t_south_Ce     Tracers northern boundary, celerity in the           !
-!                   ETA-direction (Tunits).                            !
+!  t_south_C2       Tracers southern boundary, quadratic radiation     !
+!                     term dTdx*dTdx+dTde*dTde (Tunits squared).       !
+!  t_south_Cx       Tracers southern boundary, celerity in the         !
+!                     XI-direction (Tunits).                           !
+!  t_south_Ce       Tracers northern boundary, celerity in the         !
+!                     ETA-direction (Tunits).                          !
 # endif
 # ifndef ANA_TOBC
-!  tG_south       Latest two-time snapshots of input tracer (Tunits)   !
-!                   southern boundary data.                            !
+!  tG_south         Latest two-time snapshots of input tracer (Tunits) !
+!                     southern boundary data.                          !
 # endif
-!  t_north        Tracer (T units) northern boundary conditions.       !
+!  t_north          Tracer (T units) northern boundary conditions.     !
 # if defined CELERITY_READ || defined CELERITY_WRITE
-!  t_north_C2     Tracers northern boundary, quadratic radition term   !
-!                   dTdx*dTdx+dTde*dTde (Tunits squared).              !
-!  t_north_Cx     Tracers northern boundary, celerity in the           !
-!                   XI-direction (Tunits).                             !
-!  t_north_Ce     Tracers northern boundary, celerity in the           !
-!                   ETA-direction (Tunits).                            !
+!  t_north_C2       Tracers northern boundary, quadratic radiation     !
+!                     term dTdx*dTdx+dTde*dTde (Tunits squared).       !
+!  t_north_Cx       Tracers northern boundary, celerity in the         !
+!                     XI-direction (Tunits).                           !
+!  t_north_Ce       Tracers northern boundary, celerity in the         !
+!                     ETA-direction (Tunits).                          !
 # endif
 # ifndef ANA_TOBC
-!  tG_north       Latest two-time snapshots of input tracer (Tunits)   !
-!                   northern boundary data.                            !
+!  tG_north         Latest two-time snapshots of input tracer (Tunits) !
+!                     northern boundary data.                          !
 # endif
 #endif
 #ifdef ADJUST_BOUNDARY
@@ -298,51 +317,51 @@
 !  Boundary arrays for 4DVar data assimilation adjustments:            !
 !                                                                      !
 # ifdef SOLVE3D
-!  t_obc          Tracers open boundaries values used during 4DVar     !
-!                   adjustments, nonlinear model.                      !
-!  u_obc          3D U-momentum open boundaries values used during     !
-!                   4DVar adjustments, nonlinear model.                !
-!  v_obc          3D V-momentum open boundaries values used during     !
-!                   4DVar adjustments, nonlinear model.                !
+!  t_obc            Tracers open boundaries values used during 4DVar   !
+!                     adjustments, nonlinear model.                    !
+!  u_obc            3D U-momentum open boundaries values used during   !
+!                     4DVar adjustments, nonlinear model.              !
+!  v_obc            3D V-momentum open boundaries values used during   !
+!                     4DVar adjustments, nonlinear model.              !
 # endif
-!  ubar_obc       2D U-momentum open boundaries values used during     !
-!                   4DVar adjustments, nonlinear model.                !
-!  vbar_obc       2D V-momentum open boundaries values used during     !
-!                   4DVar adjustments, nonlinear model.                !
-!  zeta_obc       Free-surface open boundaries values used during      !
-!                   4DVar adjustments, nonlinear model.                !
+!  ubar_obc         2D U-momentum open boundaries values used during   !
+!                     4DVar adjustments, nonlinear model.              !
+!  vbar_obc         2D V-momentum open boundaries values used during   !
+!                     4DVar adjustments, nonlinear model.              !
+!  zeta_obc         Free-surface open boundaries values used during    !
+!                     4DVar adjustments, nonlinear model.              !
 !                                                                      !
 # ifdef SOLVE3D
-!  ad_t_obc      Tracers open boundaries values used during 4DVar      !
-!                   adjustments, adjoint model.                        !
-!  ad_u_obc      3D U-momentum open boundaries values used during      !
-!                   4DVar adjustments, adjoint model.                  !
-!  ad_v_obc      3D V-momentum open boundaries values used during      !
-!                   4DVar adjustments, adjoint model.                  !
+!  ad_t_obc        Tracers open boundaries values used during 4DVar    !
+!                     adjustments, adjoint model.                      !
+!  ad_u_obc        3D U-momentum open boundaries values used during    !
+!                     4DVar adjustments, adjoint model.                !
+!  ad_v_obc        3D V-momentum open boundaries values used during    !
+!                     4DVar adjustments, adjoint model.                !
 # else
-!  ad_ubar_obc   2D U-momentum open boundaries values used during      !
-!                   4DVar adjustments, adjoint model.                  !
-!  ad_vbar_obc   2D V-momentum open boundaries values used during      !
-!                   4DVar adjustments, adjoint model.                  !
+!  ad_ubar_obc     2D U-momentum open boundaries values used during    !
+!                     4DVar adjustments, adjoint model.                !
+!  ad_vbar_obc     2D V-momentum open boundaries values used during    !
+!                     4DVar adjustments, adjoint model.                !
 # endif
-!  ad_zeta_obc   Free-surface open boundaries values used during       !
-!                   4DVar adjustments, adjoint model.                  !
+!  ad_zeta_obc     Free-surface open boundaries values used during     !
+!                     4DVar adjustments, adjoint model.                !
 !                                                                      !
 # ifdef SOLVE3D
-!  tl_t_obc      Tracers open boundaries values used during 4DVar      !
-!                   adjustments, tangent linear model.                 !
-!  tl_u_obc      3D U-momentum open boundaries values used during      !
-!                   4DVar adjustments, tangent linear model.           !
-!  tl_v_obc      3D V-momentum open boundaries values used during      !
-!                   4DVar adjustments, tangent linear model.           !
+!  tl_t_obc        Tracers open boundaries values used during 4DVar    !
+!                     adjustments, tangent linear model.               !
+!  tl_u_obc        3D U-momentum open boundaries values used during    !
+!                     4DVar adjustments, tangent linear model.         !
+!  tl_v_obc        3D V-momentum open boundaries values used during    !
+!                     4DVar adjustments, tangent linear model.         !
 # else
-!  tl_ubar_obc   2D U-momentum open boundaries values used during      !
-!                   4DVar adjustments, tangent linear model.           !
-!  tl_vbar_obc   2D V-momentum open boundaries values used during      !
-!                   4DVar adjustments, tangent linear model.           !
+!  tl_ubar_obc     2D U-momentum open boundaries values used during    !
+!                     4DVar adjustments, tangent linear model.         !
+!  tl_vbar_obc     2D V-momentum open boundaries values used during    !
+!                     4DVar adjustments, tangent linear model.         !
 # endif
-!  tl_zeta_obc   Free-surface open boundaries values used during       !
-!                   4DVar adjustments, tangent linear model.           !
+!  tl_zeta_obc     Free-surface open boundaries values used during     !
+!                     4DVar adjustments, tangent linear model.         !
 #endif
 !                                                                      !
 !=======================================================================
@@ -481,6 +500,16 @@
           real(r8), pointer :: ubarG_north(:,:)
           real(r8), pointer :: vbarG_north(:,:)
 #endif
+#ifdef WEC
+          real(r8), pointer :: ubarstokes_east(:)
+          real(r8), pointer :: vbarstokes_east(:)
+          real(r8), pointer :: ubarstokes_west(:)
+          real(r8), pointer :: vbarstokes_west(:)
+          real(r8), pointer :: ubarstokes_north(:)
+          real(r8), pointer :: vbarstokes_north(:)
+          real(r8), pointer :: ubarstokes_south(:)
+          real(r8), pointer :: vbarstokes_south(:)
+#endif
 
 #ifdef SOLVE3D
           real(r8), pointer :: u_west(:,:)
@@ -541,6 +570,16 @@
 # ifndef ANA_M3OBC
           real(r8), pointer :: uG_north(:,:,:)
           real(r8), pointer :: vG_north(:,:,:)
+# endif
+# ifdef WEC
+          real(r8), pointer :: ustokes_east(:,:)
+          real(r8), pointer :: vstokes_east(:,:)
+          real(r8), pointer :: ustokes_west(:,:)
+          real(r8), pointer :: vstokes_west(:,:)
+          real(r8), pointer :: ustokes_north(:,:)
+          real(r8), pointer :: vstokes_north(:,:)
+          real(r8), pointer :: ustokes_south(:,:)
+          real(r8), pointer :: vstokes_south(:,:)
 # endif
 
           real(r8), pointer :: t_west(:,:,:)
@@ -742,7 +781,7 @@
 !  Initialize module variables.
 !-----------------------------------------------------------------------
 !
-!  Se dimension ranges. Notice that the boundary arrays are dimensioned
+!  See dimension ranges. Notice that boundary arrays are dimensioned
 !  with the global dimensions of grid. That is, no tiling ranges in
 !  distributed-memory. This is done to facilitate processing.
 !
@@ -793,7 +832,9 @@
       LBC_apply(ng) % north = .TRUE.
       Dmem(ng)=Dmem(ng)+Xsize
 !
+!-----------------------------------------------------------------------
 !  Nonlinear model state.
+!-----------------------------------------------------------------------
 !
 #if defined ADJOINT || defined TANGENT || defined TL_IOMS
       IF (   LBC(iwest,isFsur,ng)%acquire.or.                           &
@@ -919,6 +960,12 @@
         Dmem(ng)=Dmem(ng)+2.0_r8*Ysize
 #endif
       END IF
+#ifdef WEC
+      IF (LBC(iwest,isU2Sd,ng)%acquire) THEN
+        allocate ( BOUNDARY(ng) % ubarstokes_west(LBj:UBj) )
+        Dmem(ng)=Dmem(ng)+Ysize
+      END IF
+#endif
 !
 #if defined ADJOINT || defined TANGENT || defined TL_IOMS
       IF (   LBC(ieast,isUbar,ng)%acquire.or.                           &
@@ -944,6 +991,12 @@
         Dmem(ng)=Dmem(ng)+2.0_r8*Ysize
 #endif
       END IF
+#ifdef WEC
+      IF (LBC(ieast,isU2Sd,ng)%acquire) THEN
+        allocate ( BOUNDARY(ng) % ubarstokes_east(LBj:UBj) )
+        Dmem(ng)=Dmem(ng)+Ysize
+      END IF
+#endif
 !
 #if defined ADJOINT || defined TANGENT || defined TL_IOMS
       IF (   LBC(isouth,isUbar,ng)%acquire.or.                          &
@@ -968,6 +1021,12 @@
         Dmem(ng)=Dmem(ng)+2.0_r8*Xsize
 #endif
       END IF
+#ifdef WEC
+      IF (LBC(isouth,isU2Sd,ng)%acquire) THEN
+        allocate ( BOUNDARY(ng) % ubarstokes_south(LBi:UBi) )
+        Dmem(ng)=Dmem(ng)+Xsize
+      END IF
+#endif
 !
 #if defined ADJOINT || defined TANGENT || defined TL_IOMS
       IF (   LBC(inorth,isUbar,ng)%acquire.or.                          &
@@ -993,6 +1052,12 @@
         Dmem(ng)=Dmem(ng)+2.0_r8*Xsize
 #endif
       END IF
+#ifdef WEC
+      IF (LBC(inorth,isU2Sd,ng)%acquire) THEN
+        allocate ( BOUNDARY(ng) % ubarstokes_north(LBi:UBi) )
+        Dmem(ng)=Dmem(ng)+Xsize
+      END IF
+#endif
 !
 #if defined ADJOINT || defined TANGENT || defined TL_IOMS
       IF (   LBC(iwest,isVbar,ng)%acquire.or.                           &
@@ -1018,6 +1083,12 @@
         Dmem(ng)=Dmem(ng)+2.0_r8*Ysize
 #endif
       END IF
+#ifdef WEC
+      IF (LBC(iwest,isV2Sd,ng)%acquire) THEN
+        allocate ( BOUNDARY(ng) % vbarstokes_west(LBj:UBj) )
+        Dmem(ng)=Dmem(ng)+Ysize
+      END IF
+#endif
 !
 #if defined ADJOINT || defined TANGENT || defined TL_IOMS
       IF (   LBC(ieast,isVbar,ng)%acquire.or.                           &
@@ -1043,6 +1114,12 @@
         Dmem(ng)=Dmem(ng)+2.0_r8*Ysize
 #endif
       END IF
+#ifdef WEC
+      IF (LBC(ieast,isV2Sd,ng)%acquire) THEN
+        allocate ( BOUNDARY(ng) % vbarstokes_east(LBj:UBj) )
+        Dmem(ng)=Dmem(ng)+Ysize
+      END IF
+#endif
 !
 #if defined ADJOINT || defined TANGENT || defined TL_IOMS
       IF (   LBC(isouth,isVbar,ng)%acquire.or.                          &
@@ -1068,6 +1145,12 @@
         Dmem(ng)=Dmem(ng)+2.0_r8*Xsize
 #endif
       END IF
+#ifdef WEC
+      IF (LBC(isouth,isV2Sd,ng)%acquire) THEN
+        allocate ( BOUNDARY(ng) % vbarstokes_south(LBj:UBj) )
+        Dmem(ng)=Dmem(ng)+Xsize
+      END IF
+#endif
 !
 #if defined ADJOINT || defined TANGENT || defined TL_IOMS
       IF (   LBC(inorth,isVbar,ng)%acquire.or.                          &
@@ -1093,6 +1176,12 @@
         Dmem(ng)=Dmem(ng)+2.0_r8*Xsize
 #endif
       END IF
+#ifdef WEC
+      IF (LBC(inorth,isV2Sd,ng)%acquire) THEN
+        allocate ( BOUNDARY(ng) % vbarstokes_north(LBj:UBj) )
+        Dmem(ng)=Dmem(ng)+Xsize
+      END IF
+#endif
 
 #ifdef SOLVE3D
 !
@@ -1120,6 +1209,12 @@
         Dmem(ng)=Dmem(ng)+2.0_r8*REAL(N(ng),r8)*Ysize
 # endif
       END IF
+# ifdef WEC
+      IF (LBC(iwest,isU3Sd,ng)%acquire) THEN
+        allocate ( BOUNDARY(ng) % ustokes_west(LBj:UBj,N(ng)) )
+        Dmem(ng)=Dmem(ng)+REAL(N(ng),r8)*Ysize
+      END IF
+# endif
 !
 # if defined ADJOINT || defined TANGENT || defined TL_IOMS
       IF (   LBC(ieast,isUvel,ng)%acquire.or.                           &
@@ -1145,6 +1240,12 @@
         Dmem(ng)=Dmem(ng)+2.0_r8*REAL(N(ng),r8)*Ysize
 # endif
       END IF
+# ifdef WEC
+      IF (LBC(ieast,isU3Sd,ng)%acquire) THEN
+        allocate ( BOUNDARY(ng) % ustokes_east(LBj:UBj,N(ng)) )
+        Dmem(ng)=Dmem(ng)+REAL(N(ng),r8)*Ysize
+      END IF
+# endif
 !
 # if defined ADJOINT || defined TANGENT || defined TL_IOMS
       IF (   LBC(isouth,isUvel,ng)%acquire.or.                          &
@@ -1170,6 +1271,12 @@
         Dmem(ng)=Dmem(ng)+2.0_r8*REAL(N(ng),r8)*Xsize
 # endif
       END IF
+# ifdef WEC
+      IF (LBC(isouth,isU3Sd,ng)%acquire) THEN
+        allocate ( BOUNDARY(ng) % ustokes_south(LBi:UBi,N(ng)) )
+        Dmem(ng)=Dmem(ng)+REAL(N(ng),r8)*Xsize
+      END IF
+# endif
 !
 # if defined ADJOINT || defined TANGENT || defined TL_IOMS
       IF (   LBC(inorth,isUvel,ng)%acquire.or.                          &
@@ -1195,6 +1302,12 @@
         Dmem(ng)=Dmem(ng)+2.0_r8*REAL(N(ng),r8)*Xsize
 # endif
       END IF
+# ifdef WEC
+      IF (LBC(inorth,isU3Sd,ng)%acquire) THEN
+        allocate ( BOUNDARY(ng) % ustokes_north(LBi:UBi,N(ng)) )
+        Dmem(ng)=Dmem(ng)+REAL(N(ng),r8)*Xsize
+      END IF
+# endif
 !
 # if defined ADJOINT || defined TANGENT || defined TL_IOMS
       IF (   LBC(iwest,isVvel,ng)%acquire.or.                           &
@@ -1220,6 +1333,12 @@
         Dmem(ng)=Dmem(ng)+2.0_r8*REAL(N(ng),r8)*Ysize
 # endif
       END IF
+# ifdef WEC
+      IF (LBC(iwest,isV3Sd,ng)%acquire) THEN
+        allocate ( BOUNDARY(ng) % vstokes_west(LBj:UBj,N(ng)) )
+        Dmem(ng)=Dmem(ng)+REAL(N(ng),r8)*Ysize
+      END IF
+# endif
 !
 # if defined ADJOINT || defined TANGENT || defined TL_IOMS
       IF (   LBC(ieast,isVvel,ng)%acquire.or.                           &
@@ -1245,6 +1364,12 @@
         Dmem(ng)=Dmem(ng)+2.0_r8*REAL(N(ng),r8)*Ysize
 # endif
       END IF
+# ifdef WEC
+      IF (LBC(ieast,isV3Sd,ng)%acquire) THEN
+        allocate ( BOUNDARY(ng) % vstokes_east(LBj:UBj,N(ng)) )
+        Dmem(ng)=Dmem(ng)+REAL(N(ng),r8)*Ysize
+      END IF
+# endif
 !
 # if defined ADJOINT || defined TANGENT || defined TL_IOMS
       IF (   LBC(isouth,isVvel,ng)%acquire.or.                          &
@@ -1270,6 +1395,12 @@
         Dmem(ng)=Dmem(ng)+2.0_r8*REAL(N(ng),r8)*Xsize
 # endif
       END IF
+# ifdef WEC
+      IF (LBC(isouth,isV3Sd,ng)%acquire) THEN
+        allocate ( BOUNDARY(ng) % vstokes_south(LBi:UBi,N(ng)) )
+        Dmem(ng)=Dmem(ng)+REAL(N(ng),r8)*Xsize
+      END IF
+# endif
 !
 # if defined ADJOINT || defined TANGENT || defined TL_IOMS
       IF (   LBC(inorth,isVvel,ng)%acquire.or.                          &
@@ -1295,6 +1426,12 @@
         Dmem(ng)=Dmem(ng)+2.0_r8*REAL(N(ng),r8)*Xsize
 # endif
       END IF
+# ifdef WEC
+      IF (LBC(inorth,isV3Sd,ng)%acquire) THEN
+        allocate ( BOUNDARY(ng) % vstokes_north(LBi:UBi,N(ng)) )
+        Dmem(ng)=Dmem(ng)+REAL(N(ng),r8)*Xsize
+      END IF
+# endif
 !
 # if defined ADJOINT || defined TANGENT || defined TL_IOMS
       IF (ANY(   LBC(iwest,isTvar(:),ng)%acquire).or.                   &
@@ -1399,7 +1536,9 @@
 
 #if defined TANGENT || defined TL_IOMS
 !
+!-----------------------------------------------------------------------
 !  Tangent linear model state.
+!-----------------------------------------------------------------------
 !
       IF (tl_LBC(iwest,isFsur,ng)%acquire) THEN
         allocate ( BOUNDARY(ng) % tl_zeta_west(LBj:UBj) )
@@ -1527,7 +1666,9 @@
 
 #ifdef ADJOINT
 !
+!-----------------------------------------------------------------------
 !  Adjoint model state.
+!-----------------------------------------------------------------------
 !
       IF (ad_LBC(iwest,isFsur,ng)%acquire) THEN
         allocate ( BOUNDARY(ng) % ad_zeta_west(LBj:UBj) )
@@ -1655,7 +1796,9 @@
 
 #ifdef ADJUST_BOUNDARY
 !
+!-----------------------------------------------------------------------
 !  Open boundaries arrays used in 4DVar adjustments.
+!-----------------------------------------------------------------------
 !
 # ifdef SOLVE3D
       allocate ( BOUNDARY(ng) % t_obc(LBij:UBij,N(ng),4,                &
@@ -1961,6 +2104,12 @@
      &                   __LINE__, 'BOUNDARY(ng)%ubarG_west')) RETURN
 # endif
       END IF
+# ifdef WEC
+      IF (LBC(iwest,isU2Sd,ng)%acquire) THEN
+        IF (.not.destroy(ng, BOUNDARY(ng)%ubarstokes_west, MyFile,      &
+     &              __LINE__, 'BOUNDARY(ng)%ubarstokes_west')) RETURN
+      END IF
+# endif
 !
 # if defined ADJOINT || defined TANGENT || defined TL_IOMS
       IF (   LBC(ieast,isUbar,ng)%acquire.or.                           &
@@ -1987,6 +2136,12 @@
      &                   __LINE__, 'BOUNDARY(ng)%ubarG_east')) RETURN
 # endif
       END IF
+# ifdef WEC
+      IF (LBC(ieast,isU2Sd,ng)%acquire) THEN
+        IF (.not.destroy(ng, BOUNDARY(ng)%ubarstokes_east, MyFile,      &
+     &             __LINE__, 'BOUNDARY(ng)%ubarstokes_east')) RETURN
+      END IF
+# endif
 !
 # if defined ADJOINT || defined TANGENT || defined TL_IOMS
       IF (   LBC(isouth,isUbar,ng)%acquire.or.                          &
@@ -2013,6 +2168,12 @@
      &                   __LINE__, 'BOUNDARY(ng)%ubarG_south')) RETURN
 # endif
       END IF
+# ifdef WEC
+      IF (LBC(isouth,isU2Sd,ng)%acquire) THEN
+        IF (.not.destroy(ng, BOUNDARY(ng)%ubarstokes_south, MyFile,     &
+     &             __LINE__, 'BOUNDARY(ng)%ubarstokes_south')) RETURN
+      END IF
+# endif
 !
 # if defined ADJOINT || defined TANGENT || defined TL_IOMS
       IF (   LBC(inorth,isUbar,ng)%acquire.or.                          &
@@ -2039,6 +2200,12 @@
      &                   __LINE__, 'BOUNDARY(ng)%ubarG_north')) RETURN
 # endif
       END IF
+# ifdef WEC
+      IF (LBC(inorth,isU2Sd,ng)%acquire) THEN
+        IF (.not.destroy(ng, BOUNDARY(ng)%ubarstokes_north, MyFile,     &
+     &             __LINE__, 'BOUNDARY(ng)%ubarstokes_north')) RETURN
+      END IF
+# endif
 !
 # if defined ADJOINT || defined TANGENT || defined TL_IOMS
       IF (   LBC(iwest,isVbar,ng)%acquire.or.                           &
@@ -2065,6 +2232,12 @@
      &                   __LINE__, 'BOUNDARY(ng)%vbarG_west')) RETURN
 # endif
       END IF
+# ifdef WEC
+      IF (LBC(iwest,isV2Sd,ng)%acquire) THEN
+        IF (.not.destroy(ng, BOUNDARY(ng)%vbarstokes_west, MyFile,      &
+     &             __LINE__, 'BOUNDARY(ng)%vbarstokes_west')) RETURN
+      END IF
+# endif
 !
 # if defined ADJOINT || defined TANGENT || defined TL_IOMS
       IF (   LBC(ieast,isVbar,ng)%acquire.or.                           &
@@ -2091,6 +2264,12 @@
      &                   __LINE__, 'BOUNDARY(ng)%vbarG_east')) RETURN
 # endif
       END IF
+# ifdef WEC
+      IF (LBC(ieast,isV2Sd,ng)%acquire) THEN
+        IF (.not.destroy(ng, BOUNDARY(ng)%vbarstokes_east, MyFile,      &
+     &             __LINE__, 'BOUNDARY(ng)%vbarstokes_east')) RETURN
+      END IF
+# endif
 !
 # if defined ADJOINT || defined TANGENT || defined TL_IOMS
       IF (   LBC(isouth,isVbar,ng)%acquire.or.                          &
@@ -2117,6 +2296,12 @@
      &                   __LINE__, 'BOUNDARY(ng)%vbarG_south')) RETURN
 # endif
       END IF
+# ifdef WEC
+      IF (LBC(isouth,isV2Sd,ng)%acquire) THEN
+        IF (.not.destroy(ng, BOUNDARY(ng)%vbarstokes_south, MyFile,     &
+     &             __LINE__, 'BOUNDARY(ng)%vbarstokes_south')) RETURN
+      END IF
+# endif
 !
 # if defined ADJOINT || defined TANGENT || defined TL_IOMS
       IF (   LBC(inorth,isVbar,ng)%acquire.or.                          &
@@ -2143,6 +2328,12 @@
      &                   __LINE__, 'BOUNDARY(ng)%vbarG_north')) RETURN
 # endif
       END IF
+# ifdef WEC
+      IF (LBC(inorth,isV2Sd,ng)%acquire) THEN
+        IF (.not.destroy(ng, BOUNDARY(ng)%vbarstokes_north, MyFile,     &
+     &             __LINE__, 'BOUNDARY(ng)%vbarstokes_north')) RETURN
+      END IF
+# endif
 
 # ifdef SOLVE3D
 !
@@ -2171,6 +2362,12 @@
      &                   __LINE__, 'BOUNDARY(ng)%uG_west')) RETURN
 #  endif
       END IF
+#  ifdef WEC
+      IF (LBC(iwest,isU3Sd,ng)%acquire) THEN
+        IF (.not.destroy(ng, BOUNDARY(ng)%ustokes_west, MyFile,         &
+     &             __LINE__, 'BOUNDARY(ng)%ustokes_west')) RETURN
+      END IF
+#  endif
 !
 #  if defined ADJOINT || defined TANGENT || defined TL_IOMS
       IF (   LBC(ieast,isUvel,ng)%acquire.or.                           &
@@ -2197,6 +2394,12 @@
      &                   __LINE__, 'BOUNDARY(ng)%uG_east')) RETURN
 #  endif
       END IF
+#  ifdef WEC
+      IF (LBC(ieast,isU3Sd,ng)%acquire) THEN
+        IF (.not.destroy(ng, BOUNDARY(ng)%ustokes_east, MyFile,         &
+     &             __LINE__, 'BOUNDARY(ng)%ustokes_east')) RETURN
+      END IF
+#  endif
 !
 #  if defined ADJOINT || defined TANGENT || defined TL_IOMS
       IF (   LBC(isouth,isUvel,ng)%acquire.or.                          &
@@ -2223,6 +2426,12 @@
      &                   __LINE__, 'BOUNDARY(ng)%uG_south')) RETURN
 #  endif
       END IF
+#  ifdef WEC
+      IF (LBC(isouth,isU3Sd,ng)%acquire) THEN
+        IF (.not.destroy(ng, BOUNDARY(ng)%ustokes_south, MyFile,        &
+     &             __LINE__, 'BOUNDARY(ng)%ustokes_south')) RETURN
+      END IF
+#  endif
 !
 #  if defined ADJOINT || defined TANGENT || defined TL_IOMS
       IF (   LBC(inorth,isUvel,ng)%acquire.or.                          &
@@ -2249,6 +2458,12 @@
      &                   __LINE__, 'BOUNDARY(ng)%uG_north')) RETURN
 #  endif
       END IF
+#  ifdef WEC
+      IF (LBC(inorth,isU3Sd,ng)%acquire) THEN
+        IF (.not.destroy(ng, BOUNDARY(ng)%ustokes_north, MyFile,        &
+     &             __LINE__, 'BOUNDARY(ng)%ustokes_north')) RETURN
+      END IF
+#  endif
 !
 #  if defined ADJOINT || defined TANGENT || defined TL_IOMS
       IF (   LBC(iwest,isVvel,ng)%acquire.or.                           &
@@ -2275,6 +2490,12 @@
      &                   __LINE__, 'BOUNDARY(ng)%vG_west')) RETURN
 #  endif
       END IF
+#  ifdef WEC
+      IF (LBC(iwest,isV3Sd,ng)%acquire) THEN
+        IF (.not.destroy(ng, BOUNDARY(ng)%vstokes_west, MyFile,         &
+     &             __LINE__, 'BOUNDARY(ng)%vstokes_west')) RETURN
+      END IF
+#  endif
 !
 #  if defined ADJOINT || defined TANGENT || defined TL_IOMS
       IF (   LBC(ieast,isVvel,ng)%acquire.or.                           &
@@ -2301,6 +2522,12 @@
      &                   __LINE__, 'BOUNDARY(ng)%vG_east')) RETURN
 #  endif
       END IF
+#  ifdef WEC
+      IF (LBC(ieast,isV3Sd,ng)%acquire) THEN
+        IF (.not.destroy(ng, BOUNDARY(ng)%vstokes_east, MyFile,         &
+     &             __LINE__, 'BOUNDARY(ng)%vstokes_east')) RETURN
+      END IF
+#  endif
 !
 #  if defined ADJOINT || defined TANGENT || defined TL_IOMS
       IF (   LBC(isouth,isVvel,ng)%acquire.or.                          &
@@ -2323,10 +2550,16 @@
 #  endif
 
 #  ifndef ANA_M3OBC
-      IF (.not.destroy(ng, BOUNDARY(ng)%vG_south, MyFile,                     &
+      IF (.not.destroy(ng, BOUNDARY(ng)%vG_south, MyFile,               &
      &                 __LINE__, 'BOUNDARY(ng)%vG_south')) RETURN
 #  endif
       END IF
+#  ifdef WEC
+      IF (LBC(isouth,isV3Sd,ng)%acquire) THEN
+        IF (.not.destroy(ng, BOUNDARY(ng)%vstokes_south, MyFile,        &
+     &             __LINE__, 'BOUNDARY(ng)%vstokes_south')) RETURN
+      END IF
+#  endif
 !
 #  if defined ADJOINT || defined TANGENT || defined TL_IOMS
       IF (   LBC(inorth,isVvel,ng)%acquire.or.                          &
@@ -2353,6 +2586,12 @@
      &                   __LINE__, 'BOUNDARY(ng)%vG_north')) RETURN
 #  endif
       END IF
+#  ifdef WEC
+      IF (LBC(inorth,isV3Sd,ng)%acquire) THEN
+        IF (.not.destroy(ng, BOUNDARY(ng)%vstokes_north, MyFile,        &
+     &             __LINE__, 'BOUNDARY(ng)%vstokes_north')) RETURN
+      END IF
+#  endif
 !
 #  if defined ADJOINT || defined TANGENT || defined TL_IOMS
       IF (ANY(   LBC(iwest,isTvar(:),ng)%acquire).or.                   &
@@ -2871,10 +3110,8 @@
 #endif
 !
 !-----------------------------------------------------------------------
-!  Initialize module variables.
+!  Initialize nonlinear model state.
 !-----------------------------------------------------------------------
-!
-!  Nonlinear model state.
 !
       IF ((model.eq.0).or.(model.eq.iNLM)) THEN
 
@@ -2942,6 +3179,12 @@
           BOUNDARY(ng) % ubarG_west = IniVal
 #endif
         END IF
+#ifdef WEC
+        IF (DOMAIN(ng)%NorthWest_Test(tile).and.                        &
+     &      LBC(iwest,isU2Sd,ng)%acquire) THEN
+          BOUNDARY(ng) % ubarstokes_west = IniVal
+        END IF
+#endif
 
         IF (DOMAIN(ng)%SouthEast_Test(tile).and.                        &
      &      LBC(ieast,isUbar,ng)%acquire) THEN
@@ -2955,6 +3198,12 @@
           BOUNDARY(ng) % ubarG_east = IniVal
 #endif
         END IF
+#ifdef WEC
+        IF (DOMAIN(ng)%SouthEast_Test(tile).and.                        &
+     &      LBC(ieast,isU2Sd,ng)%acquire) THEN
+          BOUNDARY(ng) % ubarstokes_east = IniVal
+        END IF
+#endif
 
         IF (DOMAIN(ng)%SouthWest_Test(tile).and.                        &
      &      LBC(isouth,isUbar,ng)%acquire) THEN
@@ -2968,6 +3217,12 @@
           BOUNDARY(ng) % ubarG_south = IniVal
 #endif
         END IF
+#ifdef WEC
+        IF (DOMAIN(ng)%SouthWest_Test(tile).and.                        &
+     &      LBC(isouth,isU2Sd,ng)%acquire) THEN
+          BOUNDARY(ng) % ubarstokes_south = IniVal
+        END IF
+#endif
 
         IF (DOMAIN(ng)%NorthEast_Test(tile).and.                        &
      &      LBC(inorth,isUbar,ng)%acquire) THEN
@@ -2982,6 +3237,12 @@
           BOUNDARY(ng) % vbarG_north = IniVal
 #endif
         END IF
+#ifdef WEC
+        IF (DOMAIN(ng)%NorthEast_Test(tile).and.                        &
+     &      LBC(inorth,isU2Sd,ng)%acquire) THEN
+          BOUNDARY(ng) % ubarstokes_north = IniVal
+        END IF
+#endif
 !
         IF (DOMAIN(ng)%NorthWest_Test(tile).and.                        &
      &      LBC(iwest,isVbar,ng)%acquire) THEN
@@ -2995,6 +3256,12 @@
           BOUNDARY(ng) % vbarG_west = IniVal
 #endif
         END IF
+#ifdef WEC
+        IF (DOMAIN(ng)%NorthWest_Test(tile).and.                        &
+     &      LBC(iwest,isV2Sd,ng)%acquire) THEN
+          BOUNDARY(ng) % vbarstokes_west = IniVal
+        END IF
+#endif
 
         IF (DOMAIN(ng)%SouthEast_Test(tile).and.                        &
      &      LBC(ieast,isVbar,ng)%acquire) THEN
@@ -3008,6 +3275,12 @@
           BOUNDARY(ng) % vbarG_east = IniVal
 #endif
         END IF
+#ifdef WEC
+        IF (DOMAIN(ng)%SouthEast_Test(tile).and.                        &
+     &      LBC(ieast,isV2Sd,ng)%acquire) THEN
+          BOUNDARY(ng) % vbarstokes_east = IniVal
+        END IF
+#endif
 
         IF (DOMAIN(ng)%SouthWest_Test(tile).and.                        &
      &      LBC(isouth,isVbar,ng)%acquire) THEN
@@ -3021,6 +3294,12 @@
           BOUNDARY(ng) % vbarG_south = IniVal
 #endif
         END IF
+#ifdef WEC
+        IF (DOMAIN(ng)%SouthWest_Test(tile).and.                        &
+     &      LBC(isouth,isV2Sd,ng)%acquire) THEN
+          BOUNDARY(ng) % vbarstokes_south = IniVal
+        END IF
+#endif
 
         IF (DOMAIN(ng)%NorthEast_Test(tile).and.                        &
      &      LBC(inorth,isVbar,ng)%acquire) THEN
@@ -3034,6 +3313,12 @@
           BOUNDARY(ng) % vbarG_north = IniVal
 #endif
         END IF
+#ifdef WEC
+        IF (DOMAIN(ng)%NorthEast_Test(tile).and.                        &
+     &      LBC(inorth,isV2Sd,ng)%acquire) THEN
+          BOUNDARY(ng) % vbarstokes_north = IniVal
+        END IF
+#endif
 
 #ifdef SOLVE3D
 !
@@ -3049,6 +3334,12 @@
           BOUNDARY(ng) % uG_west = IniVal
 # endif
         END IF
+# ifdef WEC
+        IF (DOMAIN(ng)%NorthWest_Test(tile).and.                        &
+     &      LBC(iwest,isU3Sd,ng)%acquire) THEN
+          BOUNDARY(ng) % ustokes_west = IniVal
+        END IF
+# endif
 
         IF (DOMAIN(ng)%SouthEast_Test(tile).and.                        &
      &      LBC(ieast,isUvel,ng)%acquire) THEN
@@ -3062,6 +3353,12 @@
           BOUNDARY(ng) % uG_east = IniVal
 # endif
         END IF
+# ifdef WEC
+        IF (DOMAIN(ng)%SouthEast_Test(tile).and.                        &
+     &      LBC(ieast,isU3Sd,ng)%acquire) THEN
+          BOUNDARY(ng) % ustokes_east = IniVal
+        END IF
+# endif
 
         IF (DOMAIN(ng)%SouthWest_Test(tile).and.                        &
      &      LBC(isouth,isUvel,ng)%acquire) THEN
@@ -3075,6 +3372,12 @@
           BOUNDARY(ng) % uG_south = IniVal
 # endif
         END IF
+# ifdef WEC
+        IF (DOMAIN(ng)%SouthWest_Test(tile).and.                        &
+     &      LBC(isouth,isU3Sd,ng)%acquire) THEN
+          BOUNDARY(ng) % ustokes_south = IniVal
+        END IF
+# endif
 
         IF (DOMAIN(ng)%NorthEast_Test(tile).and.                        &
      &      LBC(inorth,isUvel,ng)%acquire) THEN
@@ -3088,6 +3391,12 @@
           BOUNDARY(ng) % uG_north = IniVal
 # endif
         END IF
+# ifdef WEC
+        IF (DOMAIN(ng)%NorthEast_Test(tile).and.                        &
+     &      LBC(inorth,isU3Sd,ng)%acquire) THEN
+          BOUNDARY(ng) % ustokes_north = IniVal
+        END IF
+# endif
 !
         IF (DOMAIN(ng)%NorthWest_Test(tile).and.                        &
      &      LBC(iwest,isVvel,ng)%acquire) THEN
@@ -3101,6 +3410,12 @@
           BOUNDARY(ng) % vG_west = IniVal
 # endif
         END IF
+# ifdef WEC
+        IF (DOMAIN(ng)%NorthWest_Test(tile).and.                        &
+     &      LBC(iwest,isV3Sd,ng)%acquire) THEN
+          BOUNDARY(ng) % vstokes_west = IniVal
+        END IF
+# endif
 
         IF (DOMAIN(ng)%SouthEast_Test(tile).and.                        &
      &      LBC(ieast,isVvel,ng)%acquire) THEN
@@ -3114,6 +3429,12 @@
           BOUNDARY(ng) % vG_east = IniVal
 # endif
         END IF
+# ifdef WEC
+        IF (DOMAIN(ng)%SouthEast_Test(tile).and.                        &
+     &      LBC(ieast,isV3Sd,ng)%acquire) THEN
+          BOUNDARY(ng) % vstokes_east = IniVal
+        END IF
+# endif
 
         IF (DOMAIN(ng)%SouthWest_Test(tile).and.                        &
      &      LBC(isouth,isVvel,ng)%acquire) THEN
@@ -3127,6 +3448,12 @@
           BOUNDARY(ng) % vG_south = IniVal
 # endif
         END IF
+# ifdef WEC
+        IF (DOMAIN(ng)%SouthWest_Test(tile).and.                        &
+     &      LBC(isouth,isV3Sd,ng)%acquire) THEN
+          BOUNDARY(ng) % vstokes_south = IniVal
+        END IF
+# endif
 
         IF (DOMAIN(ng)%NorthEast_Test(tile).and.                        &
      &      LBC(inorth,isVvel,ng)%acquire) THEN
@@ -3140,6 +3467,12 @@
           BOUNDARY(ng) % vG_north = IniVal
 # endif
         END IF
+# ifdef WEC
+        IF (DOMAIN(ng)%NorthEast_Test(tile).and.                        &
+     &      LBC(inorth,isV3Sd,ng)%acquire) THEN
+          BOUNDARY(ng) % vstokes_north = IniVal
+        END IF
+# endif
 !
         IF (DOMAIN(ng)%NorthWest_Test(tile).and.                        &
      &      ANY(LBC(iwest,isTvar(:),ng)%acquire)) THEN
@@ -3193,12 +3526,13 @@
 # endif
         END IF
 #endif
-
       END IF
 
 #if defined TANGENT || defined TL_IOMS
 !
-!  Tangent linear model state.
+!-----------------------------------------------------------------------
+!  Initialize tangent linear model state.
+!-----------------------------------------------------------------------
 !
       IF ((model.eq.0).or.(model.eq.iTLM).or.(model.eq.iRPM)) THEN
         IF (DOMAIN(ng)%NorthWest_Test(tile).and.                        &
@@ -3328,7 +3662,9 @@
 
 #ifdef ADJOINT
 !
-!  Adjoint model state.
+!-----------------------------------------------------------------------
+!  Initialize adjoint model state.
+!-----------------------------------------------------------------------
 !
       IF ((model.eq.0).or.(model.eq.iADM)) THEN
         IF (DOMAIN(ng)%NorthWest_Test(tile).and.                        &
@@ -3458,7 +3794,9 @@
 
 #ifdef ADJUST_BOUNDARY
 !
+!-----------------------------------------------------------------------
 !  Open boundaries arrays used in 4DVar adjustments.
+!-----------------------------------------------------------------------
 !
       IF ((model.eq.0).or.(model.eq.iNLM)) THEN
         IF (DOMAIN(ng)%NorthEast_Test(tile)) THEN
@@ -3523,7 +3861,7 @@
         END IF
       END IF
 #endif
-
+!
       RETURN
       END SUBROUTINE initialize_boundary
 

@@ -4,11 +4,10 @@
 #ifdef SOLVE3D
 !
 !git $Id$
-!svn $Id: set_massflux.F 1151 2023-02-09 03:08:53Z arango $
 !=======================================================================
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2025 The ROMS Group                              !
 !    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                           Hernan G. Arango   !
+!    See License_ROMS.md                            Hernan G. Arango   !
 !========================================== Alexander F. Shchepetkin ===
 !                                                                      !
 !  This routine computes horizontal mass fluxes, Hz*u/n and Hz*v/m.    !
@@ -54,7 +53,7 @@
      &                        nrhs(ng),                                 &
      &                        OCEAN(ng) % u,                            &
      &                        OCEAN(ng) % v,                            &
-# ifdef NEARSHORE_MELLOR
+# ifdef WEC
      &                        OCEAN(ng) % u_stokes,                     &
      &                        OCEAN(ng) % v_stokes,                     &
 # endif
@@ -76,7 +75,7 @@
      &                              IminS, ImaxS, JminS, JmaxS,         &
      &                              nrhs,                               &
      &                              u, v,                               &
-# ifdef NEARSHORE_MELLOR
+# ifdef WEC
      &                              u_stokes, v_stokes,                 &
 # endif
      &                              Hz, om_v, on_u,                     &
@@ -101,7 +100,7 @@
 # ifdef ASSUMED_SHAPE
       real(r8), intent(in) :: u(LBi:,LBj:,:,:)
       real(r8), intent(in) :: v(LBi:,LBj:,:,:)
-#  ifdef NEARSHORE_MELLOR
+#  ifdef WEC
       real(r8), intent(in) :: u_stokes(LBi:,LBj:,:)
       real(r8), intent(in) :: v_stokes(LBi:,LBj:,:)
 #  endif
@@ -114,7 +113,7 @@
 # else
       real(r8), intent(in) :: u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(in) :: v(LBi:UBi,LBj:UBj,N(ng),2)
-#  ifdef NEARSHORE_MELLOR
+#  ifdef WEC
       real(r8), intent(in) :: u_stokes(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(in) :: v_stokes(LBi:UBi,LBj:UBj,N(ng))
 #  endif
@@ -143,7 +142,7 @@
           DO i=IstrP,IendT
             Huon(i,j,k)=0.5_r8*(Hz(i,j,k)+Hz(i-1,j,k))*u(i,j,k,nrhs)*   &
      &                  on_u(i,j)
-# ifdef NEARSHORE_MELLOR
+# ifdef WEC
             Huon(i,j,k)=Huon(i,j,k)+                                    &
      &                  0.5_r8*(Hz(i,j,k)+Hz(i-1,j,k))*                 &
      &                  u_stokes(i,j,k)*on_u(i,j)
@@ -154,7 +153,7 @@
           DO i=IstrT,IendT
             Hvom(i,j,k)=0.5_r8*(Hz(i,j,k)+Hz(i,j-1,k))*v(i,j,k,nrhs)*   &
      &                  om_v(i,j)
-# ifdef NEARSHORE_MELLOR
+# ifdef WEC
             Hvom(i,j,k)=Hvom(i,j,k)+                                    &
      &                  0.5_r8*(Hz(i,j,k)+Hz(i,j-1,k))*                 &
      &                  v_stokes(i,j,k)*om_v(i,j)
@@ -219,7 +218,7 @@
      &                          COUPLING(ng) % DV_avg2,                 &
      &                          OCEAN(ng) % u,                          &
      &                          OCEAN(ng) % v,                          &
-#  ifdef NEARSHORE_MELLOR
+#  ifdef WEC
      &                          OCEAN(ng) % u_stokes,                   &
      &                          OCEAN(ng) % v_stokes,                   &
 #  endif
@@ -242,7 +241,7 @@
      &                                nnew,                             &
      &                                DU_avg2, DV_avg2,                 &
      &                                u, v,                             &
-#  ifdef NEARSHORE_MELLOR
+#  ifdef WEC
      &                                u_stokes, v_stokes,               &
 #  endif
      &                                Hz, om_v, on_u,                   &
@@ -270,7 +269,7 @@
       real(r8), intent(in) :: DV_avg2(LBi:,LBj:)
       real(r8), intent(in) :: u(LBi:,LBj:,:,:)
       real(r8), intent(in) :: v(LBi:,LBj:,:,:)
-#  ifdef NEARSHORE_MELLOR
+#  ifdef WEC
       real(r8), intent(in) :: u_stokes(LBi:,LBj:,:)
       real(r8), intent(in) :: v_stokes(LBi:,LBj:,:)
 #  endif
@@ -285,7 +284,7 @@
       real(r8), intent(in) :: DV_avg2(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(in) :: v(LBi:UBi,LBj:UBj,N(ng),2)
-#  ifdef NEARSHORE_MELLOR
+#  ifdef WEC
       real(r8), intent(in) :: u_stokes(LBi:UBi,LBj:UBj,N(Ng))
       real(r8), intent(in) :: v_stokes(LBi:UBi,LBj:UBj,N(ng))
 #  endif
@@ -328,7 +327,7 @@
         DO k=N(ng),1,-1
           DO i=IstrP,IendT
             Huon(i,j,k)=0.5_r8*(Huon(i,j,k)+u(i,j,k,nnew)*DC(i,k))
-#  ifdef NEARSHORE_MELLOR
+#  ifdef WEC
             Huon(i,j,k)=Huon(i,j,k)+0.5_r8*u_stokes(i,j,k)*DC(i,k)
 #  endif
             FC(i,0)=FC(i,0)+Huon(i,j,k)
@@ -363,7 +362,7 @@
           DO k=N(ng),1,-1
             DO i=IstrT,IendT
               Hvom(i,j,k)=0.5_r8*(Hvom(i,j,k)+v(i,j,k,nnew)*DC(i,k))
-#  ifdef NEARSHORE_MELLOR
+#  ifdef WEC
               Hvom(i,j,k)=Hvom(i,j,k)+0.5_r8*v_stokes(i,j,k)*DC(i,k)
 #  endif
               FC(i,0)=FC(i,0)+Hvom(i,j,k)

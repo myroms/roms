@@ -1,14 +1,13 @@
       PROGRAM esmf_driver
 !
 !git $Id$
-!svn $Id: esmf_driver.h 1151 2023-02-09 03:08:53Z arango $
 !=======================================================================
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2025 The ROMS Group                              !
 !    Licensed under a MIT/X style license         Hernan G. Arango     !
-!    See License_ROMS.txt                         Ufuk Utku Turuncoglu !
+!    See License_ROMS.md                          Ufuk Utku Turuncoglu !
 !=======================================================================
 !                                                                      !
-!  Master program to couple ROMS/TOMS to other Earth System Models     !
+!  Master program to couple ROMS to other Earth System Models          !
 !  (ESM) using the ESMF library with the NUOPC layer.                  !
 !                                                                      !
 !  ESMF:   Earth System Modeling Framework (Version 7 or higher)       !
@@ -239,7 +238,7 @@
 !
 !  Flush and lose coupling standard out unit.
 !
-      CALL my_flush (cplout)
+      FLUSH (cplout)
       CLOSE (cplout)
 !
       STOP

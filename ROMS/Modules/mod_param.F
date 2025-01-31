@@ -2,11 +2,10 @@
       MODULE mod_param
 !
 !git $Id$
-!svn $Id: mod_param.F 1165 2023-04-10 01:59:07Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2025 The ROMS Group                              !
 !    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                                              !
+!    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
 !  Grid parameters:                                                    !
@@ -231,6 +230,9 @@
       END TYPE T_BOUNDS
 
       TYPE (T_BOUNDS), allocatable :: BOUNDS(:)
+#ifdef GRID_EXTRACT
+      TYPE (T_BOUNDS), allocatable :: xtr_BOUNDS(:)
+#endif
 !
 !-----------------------------------------------------------------------
 !  Lower and upper bounds in NetCDF files.
@@ -278,6 +280,9 @@
       END TYPE T_IOBOUNDS
 
       TYPE (T_IOBOUNDS), allocatable :: IOBOUNDS(:)
+#ifdef GRID_EXTRACT
+      TYPE (T_IOBOUNDS), allocatable :: xtr_IOBOUNDS(:)
+#endif
 !
 !-----------------------------------------------------------------------
 !  Domain boundary edges switches and tiles minimum and maximum
@@ -322,6 +327,9 @@
       END TYPE T_DOMAIN
 
       TYPE (T_DOMAIN), allocatable :: DOMAIN(:)
+#ifdef GRID_EXTRACT
+      TYPE (T_DOMAIN), allocatable :: xtr_DOMAIN(:)
+#endif
 !
 !-----------------------------------------------------------------------
 !  Lateral Boundary Conditions (LBC) switches structure.
@@ -355,6 +363,7 @@
         logical :: closed
         logical :: Flather
         logical :: gradient
+        logical :: mixed
         logical :: nested
         logical :: nudging
         logical :: periodic
@@ -409,7 +418,9 @@
 !-----------------------------------------------------------------------
 !
       TYPE T_STATS
-        real(r8) :: count         ! processed values count
+        integer(i8b) :: checksum  ! bit sum hash
+        integer      :: count     ! processed values count
+
         real(r8) :: min           ! minimum value
         real(r8) :: max           ! maximum value
         real(r8) :: avg           ! arithmetic mean
@@ -443,12 +454,20 @@
 !                                                 -----v(i,j)-----
       integer, allocatable :: Lm(:)
       integer, allocatable :: Mm(:)
+#ifdef GRID_EXTRACT
+      integer, allocatable :: xtr_Lm(:)
+      integer, allocatable :: xtr_Mm(:)
+#endif
 !
 !  Global horizontal size of model arrays including padding.  All the
 !  model state arrays are of same size to facilitate parallelization.
 !
       integer, allocatable :: Im(:)
       integer, allocatable :: Jm(:)
+#ifdef GRID_EXTRACT
+      integer, allocatable :: xtr_Im(:)
+      integer, allocatable :: xtr_Jm(:)
+#endif
 !
 !  Number of vertical levels. The vertical ranges of model state
 !  variables are:
@@ -512,7 +531,7 @@
 #ifdef FLOATS
 !
 !-----------------------------------------------------------------------
-!  Floats tracjectories parameters.
+!  Floats trajectories parameters.
 !-----------------------------------------------------------------------
 !
 !  Number of trajectory time-stepping levels, [0:NFT].
@@ -741,6 +760,22 @@
       IF (.not.allocated(Jm)) THEN
         allocate ( Jm(Ngrids) )
       END IF
+
+#ifdef GRID_EXTRACT
+      IF (.not.allocated(xtr_Lm)) THEN
+        allocate ( xtr_Lm(Ngrids) )
+      END IF
+      IF (.not.allocated(xtr_Mm)) THEN
+        allocate ( xtr_Mm(Ngrids) )
+      END IF
+
+      IF (.not.allocated(xtr_Im)) THEN
+        allocate ( xtr_Im(Ngrids) )
+      END IF
+      IF (.not.allocated(xtr_Jm)) THEN
+        allocate ( xtr_Jm(Ngrids) )
+      END IF
+#endif
 
       IF (.not.allocated(N)) THEN
         allocate ( N(Ngrids) )
@@ -1150,6 +1185,11 @@
       IF (allocated(BOUNDS))        deallocate ( BOUNDS )
       IF (allocated(IOBOUNDS))      deallocate ( IOBOUNDS )
       IF (allocated(DOMAIN))        deallocate ( DOMAIN )
+#ifdef GRID_EXTRACT
+      IF (allocated(xtr_BOUNDS))    deallocate ( xtr_BOUNDS )
+      IF (allocated(xtr_IOBOUNDS))  deallocate ( xtr_IOBOUNDS )
+      IF (allocated(xtr_DOMAIN))    deallocate ( xtr_DOMAIN )
+#endif
 #ifdef SOLVE3D
       IF (allocated(Hadvection))    deallocate ( Hadvection )
       IF (allocated(Vadvection))    deallocate ( Vadvection )
@@ -1162,10 +1202,6 @@
       IF (allocated(tl_Vadvection)) deallocate ( tl_Vadvection )
 # endif
 #endif
-
-
-
-
 !
 !-----------------------------------------------------------------------
 !  Deallocate dimension parameters.
@@ -1175,6 +1211,12 @@
       IF (allocated(Mm))           deallocate ( Mm )
       IF (allocated(Im))           deallocate ( Im )
       IF (allocated(Jm))           deallocate ( Jm )
+#ifdef GRID_EXTRACT
+      IF (allocated(xtr_Lm))       deallocate ( xtr_Lm )
+      IF (allocated(xtr_Mm))       deallocate ( xtr_Mm )
+      IF (allocated(xtr_Im))       deallocate ( xtr_Im )
+      IF (allocated(xtr_Jm))       deallocate ( xtr_Jm )
+#endif
       IF (allocated(N))            deallocate ( N )
       IF (allocated(NT))           deallocate ( NT )
 
@@ -1316,6 +1358,76 @@
           allocate ( BOUNDS(ng) % Jmax(4,0:1,0:Ntiles) )
         END DO
       END IF
+
+#ifdef GRID_EXTRACT
+!
+      IF (.not.allocated(xtr_BOUNDS)) THEN
+        allocate ( xtr_BOUNDS(Ngrids) )
+        DO ng=1,Ngrids
+
+          Ntiles=NtileI(ng)*NtileJ(ng)-1
+          allocate ( xtr_BOUNDS(ng) % tile(-1:Ntiles) )
+
+          allocate ( xtr_BOUNDS(ng) % LBi(-1:Ntiles) )
+          allocate ( xtr_BOUNDS(ng) % UBi(-1:Ntiles) )
+          allocate ( xtr_BOUNDS(ng) % LBj(-1:Ntiles) )
+          allocate ( xtr_BOUNDS(ng) % UBj(-1:Ntiles) )
+
+          allocate ( xtr_BOUNDS(ng) % Istr(-1:Ntiles) )
+          allocate ( xtr_BOUNDS(ng) % Iend(-1:Ntiles) )
+          allocate ( xtr_BOUNDS(ng) % Jstr(-1:Ntiles) )
+          allocate ( xtr_BOUNDS(ng) % Jend(-1:Ntiles) )
+
+          allocate ( xtr_BOUNDS(ng) % IstrR(-1:Ntiles) )
+          allocate ( xtr_BOUNDS(ng) % IendR(-1:Ntiles) )
+          allocate ( xtr_BOUNDS(ng) % IstrU(-1:Ntiles) )
+          allocate ( xtr_BOUNDS(ng) % JstrR(-1:Ntiles) )
+          allocate ( xtr_BOUNDS(ng) % JendR(-1:Ntiles) )
+          allocate ( xtr_BOUNDS(ng) % JstrV(-1:Ntiles) )
+
+          allocate ( xtr_BOUNDS(ng) % IstrB(-1:Ntiles) )
+          allocate ( xtr_BOUNDS(ng) % IendB(-1:Ntiles) )
+          allocate ( xtr_BOUNDS(ng) % IstrM(-1:Ntiles) )
+          allocate ( xtr_BOUNDS(ng) % JstrB(-1:Ntiles) )
+          allocate ( xtr_BOUNDS(ng) % JendB(-1:Ntiles) )
+          allocate ( xtr_BOUNDS(ng) % JstrM(-1:Ntiles) )
+
+          allocate ( xtr_BOUNDS(ng) % IstrP(-1:Ntiles) )
+          allocate ( xtr_BOUNDS(ng) % IendP(-1:Ntiles) )
+          allocate ( xtr_BOUNDS(ng) % IstrT(-1:Ntiles) )
+          allocate ( xtr_BOUNDS(ng) % IendT(-1:Ntiles) )
+          allocate ( xtr_BOUNDS(ng) % JstrP(-1:Ntiles) )
+          allocate ( xtr_BOUNDS(ng) % JendP(-1:Ntiles) )
+          allocate ( xtr_BOUNDS(ng) % JstrT(-1:Ntiles) )
+          allocate ( xtr_BOUNDS(ng) % JendT(-1:Ntiles) )
+
+          allocate ( xtr_BOUNDS(ng) % Istrm3(-1:Ntiles) )
+          allocate ( xtr_BOUNDS(ng) % Istrm2(-1:Ntiles) )
+          allocate ( xtr_BOUNDS(ng) % Istrm1(-1:Ntiles) )
+          allocate ( xtr_BOUNDS(ng) % IstrUm2(-1:Ntiles) )
+          allocate ( xtr_BOUNDS(ng) % IstrUm1(-1:Ntiles) )
+          allocate ( xtr_BOUNDS(ng) % Iendp1(-1:Ntiles) )
+          allocate ( xtr_BOUNDS(ng) % Iendp2(-1:Ntiles) )
+          allocate ( xtr_BOUNDS(ng) % Iendp2i(-1:Ntiles) )
+          allocate ( xtr_BOUNDS(ng) % Iendp3(-1:Ntiles) )
+
+          allocate ( xtr_BOUNDS(ng) % Jstrm3(-1:Ntiles) )
+          allocate ( xtr_BOUNDS(ng) % Jstrm2(-1:Ntiles) )
+          allocate ( xtr_BOUNDS(ng) % Jstrm1(-1:Ntiles) )
+          allocate ( xtr_BOUNDS(ng) % JstrVm2(-1:Ntiles) )
+          allocate ( xtr_BOUNDS(ng) % JstrVm1(-1:Ntiles) )
+          allocate ( xtr_BOUNDS(ng) % Jendp1(-1:Ntiles) )
+          allocate ( xtr_BOUNDS(ng) % Jendp2(-1:Ntiles) )
+          allocate ( xtr_BOUNDS(ng) % Jendp2i(-1:Ntiles) )
+          allocate ( xtr_BOUNDS(ng) % Jendp3(-1:Ntiles) )
+
+          allocate ( xtr_BOUNDS(ng) % Imin(4,0:1,0:Ntiles) )
+          allocate ( xtr_BOUNDS(ng) % Imax(4,0:1,0:Ntiles) )
+          allocate ( xtr_BOUNDS(ng) % Jmin(4,0:1,0:Ntiles) )
+          allocate ( xtr_BOUNDS(ng) % Jmax(4,0:1,0:Ntiles) )
+        END DO
+      END IF
+#endif
 !
 !  DOMAIN structure containing boundary edges switches and fractional
 !  grid lower/upper bounds for each tile.
@@ -1361,12 +1473,64 @@
           allocate ( DOMAIN(ng) % Ymax_v(0:Ntiles) )
         END DO
       END IF
+
+#ifdef GRID_EXTRACT
+!
+      IF (.not.allocated(xtr_DOMAIN)) THEN
+        allocate ( xtr_DOMAIN(Ngrids) )
+        DO ng=1,Ngrids
+          Ntiles=NtileI(ng)*NtileJ(ng)-1
+
+          allocate ( xtr_DOMAIN(ng) % Eastern_Edge(-1:Ntiles) )
+          allocate ( xtr_DOMAIN(ng) % Western_Edge(-1:Ntiles) )
+          allocate ( xtr_DOMAIN(ng) % Northern_Edge(-1:Ntiles) )
+          allocate ( xtr_DOMAIN(ng) % Southern_Edge(-1:Ntiles) )
+
+          allocate ( xtr_DOMAIN(ng) % NorthEast_Corner(-1:Ntiles) )
+          allocate ( xtr_DOMAIN(ng) % NorthWest_Corner(-1:Ntiles) )
+          allocate ( xtr_DOMAIN(ng) % SouthEast_Corner(-1:Ntiles) )
+          allocate ( xtr_DOMAIN(ng) % SouthWest_Corner(-1:Ntiles) )
+
+          allocate ( xtr_DOMAIN(ng) % NorthEast_Test(-1:Ntiles) )
+          allocate ( xtr_DOMAIN(ng) % NorthWest_Test(-1:Ntiles) )
+          allocate ( xtr_DOMAIN(ng) % SouthEast_Test(-1:Ntiles) )
+          allocate ( xtr_DOMAIN(ng) % SouthWest_Test(-1:Ntiles) )
+
+          allocate ( xtr_DOMAIN(ng) % Xmin_psi(0:Ntiles) )
+          allocate ( xtr_DOMAIN(ng) % Xmax_psi(0:Ntiles) )
+          allocate ( xtr_DOMAIN(ng) % Ymin_psi(0:Ntiles) )
+          allocate ( xtr_DOMAIN(ng) % Ymax_psi(0:Ntiles) )
+
+          allocate ( xtr_DOMAIN(ng) % Xmin_rho(0:Ntiles) )
+          allocate ( xtr_DOMAIN(ng) % Xmax_rho(0:Ntiles) )
+          allocate ( xtr_DOMAIN(ng) % Ymin_rho(0:Ntiles) )
+          allocate ( xtr_DOMAIN(ng) % Ymax_rho(0:Ntiles) )
+
+          allocate ( xtr_DOMAIN(ng) % Xmin_u(0:Ntiles) )
+          allocate ( xtr_DOMAIN(ng) % Xmax_u(0:Ntiles) )
+          allocate ( xtr_DOMAIN(ng) % Ymin_u(0:Ntiles) )
+          allocate ( xtr_DOMAIN(ng) % Ymax_u(0:Ntiles) )
+
+          allocate ( xtr_DOMAIN(ng) % Xmin_v(0:Ntiles) )
+          allocate ( xtr_DOMAIN(ng) % Xmax_v(0:Ntiles) )
+          allocate ( xtr_DOMAIN(ng) % Ymin_v(0:Ntiles) )
+          allocate ( xtr_DOMAIN(ng) % Ymax_v(0:Ntiles) )
+        END DO
+      END IF
+#endif
 !
 !  Allocate lower and upper bounds structure for I/O NetCDF files.
 !
       IF (.not.allocated(IOBOUNDS)) THEN
         allocate ( IOBOUNDS(Ngrids) )
       END IF
+
+#ifdef GRID_EXTRACT
+!
+      IF (.not.allocated(xtr_IOBOUNDS)) THEN
+        allocate ( xtr_IOBOUNDS(Ngrids) )
+      END IF
+#endif
 
 #ifdef DIAGNOSTICS
 !
@@ -1396,8 +1560,21 @@
 #   ifdef UV_ADV
       NDM2d=NDM2d+3  ! Horizontal total-, X-, and Y-advection
 #   endif
-#   ifdef NEARSHORE_MELLOR
-      NDM2d=NDM2d+1  ! Horizontal radiation stresses
+#   ifdef WEC_VF
+#    ifdef UV_COR
+      NDM2d=NDM2d+1  ! Coriolis
+#    endif
+#    ifdef BOTTOM_STREAMING
+      NDM2d=NDM2d+1  ! Bottom streaming
+#    endif
+#    ifdef SURFACE_STREAMING
+      NDM2d=NDM2d+1  ! Surface streaming
+#    endif
+      NDM2d=NDM2d+8  ! zeta, zetaw, zqsp, zbeh (all 4 = prsgrd),
+                     ! K- and Horiz- VF, roller, break
+#   endif
+#   if defined VEGETATION && defined VEG_DRAG
+      NDM2d=NDM2d+1  ! Resistance imposed on the flow by vegetation
 #   endif
 #   ifdef UV_COR
       NDM2d=NDM2d+1  ! Coriolis
@@ -1415,9 +1592,21 @@
       NDM3d=NDM3d+4  ! Horizontal (total, X, Y) and vertical advection
       NDrhs=NDrhs+4
 #   endif
-#   ifdef NEARSHORE_MELLOR
-      NDM3d=NDM3d+2  ! Horizontal and vertical radiation stresses
-      NDrhs=NDrhs+2
+#   ifdef WEC_VF
+#    ifdef UV_COR
+      NDM3d=NDM3d+1  ! Coriolis
+      NDrhs=NDrhs+1
+#    endif
+#    ifdef BOTTOM_STREAMING
+      NDM3d=NDM3d+1  ! Bottom streaming
+      NDrhs=NDrhs+1
+#    endif
+#    ifdef SURFACE_STREAMING
+      NDM3d=NDM3d+1  ! Surface streaming
+      NDrhs=NDrhs+1
+#    endif
+      NDM3d=NDM3d+5  ! wave break, roller, K- Horiz and Jvert- VF
+      NDrhs=NDrhs+5
 #   endif
 #   ifdef UV_COR
       NDM3d=NDM3d+1  ! Coriolis
@@ -1447,6 +1636,9 @@
         Jm(ng)=Mm(ng)+J_padd
         NT(ng)=NAT+NBT+NST+NPT
 #ifdef FLOATS
+!
+!  Number of floats variables.
+!
 # ifdef FLOAT_OYSTER
 #  ifdef FLOAT_VWALK
         NFV(ng)=NT(ng)+18
@@ -1461,17 +1653,38 @@
 #  endif
 # endif
 #endif
-        NSV(ng)=NT(ng)+5
-#ifdef ADJUST_WSTRESS
-        NSV(ng)=NSV(ng)+2
+!
+!  Number of state variables. The order is irrelevant for determining
+!  the "NSV" dimension.
+!
+#ifdef SOLVE3D
+        NSV(ng)=5+NT(ng)         ! zeta, ubar, vbar, u, v, Tvar(1:MT)
+# ifdef ADJUST_STFLUX
+        NSV(ng)=NSV(ng)+NT(ng)   ! Tsur(1:MT)
+# endif
+#else
+        NSV(ng)=3                ! zeta, ubar, vbar
 #endif
-#ifdef ADJUST_STFLUX
-        NSV(ng)=NSV(ng)+NT(ng)
+#ifdef ADJUST_WSTRESS
+        NSV(ng)=NSV(ng)+2        ! Ustr, Vstr
+#endif
+#ifdef WEC
+        NSV(ng)=NSV(ng)+2        ! ubar_stokes, vbar_stokes
+# if defined SOLVE3D
+        NSV(ng)=NSV(ng)+2        ! u_stokes, v_stokes
+# endif
+#endif
+#ifdef SOLVE3D
+# if defined GLS_MIXING || defined MY25_MIXING
+        NSV(ng)=NSV(ng)+1        ! TKE
+# endif
+        NSV(ng)=NSV(ng)+1        ! W
 #endif
       END DO
 !
-!  Set the maximum number of tracer between all nested grids. It cannot
-!  be zero.
+!  Set the maximum number of tracers between all nested grids. It cannot
+!  be zero. Usually, NAT=2 (temperature and salinity), but some Test
+!  Cases do not include salinity.
 !
       MT=MAX(1,MAX(NAT,MAXVAL(NT)))
 !
@@ -1479,13 +1692,35 @@
 !  Allocate Lateral Boundary Conditions switches structure.
 !-----------------------------------------------------------------------
 !
+!  Here, "nLBCvar" is larger than needed because it includes unused
+!  state variables that need to be included because of their indices
+!  are in a particular order due to data assimilation variables
+!  associated with the state vector.
+!
 #ifdef SOLVE3D
       nLBCvar=5+MT                 ! zeta, ubar, vbar, u, v, Tvar(1:MT)
-# if defined GLS_MIXING || defined MY25_MIXING
-      nLBCvar=nLBCvar+1            ! TKE
+# ifdef ADJUST_STFLUX
+      nLBCvar=nLBCvar+MT           ! Tsur(1:MT); unused
 # endif
 #else
       nLBCvar=3                    ! zeta, ubar, vbar
+#endif
+#ifdef ADJUST_WSTRESS
+      nLBCvar=nLBCvar+2            ! Ustr, Vstr; unused
+#endif
+#ifdef WEC
+      nLBCvar=nLBCvar+2            ! ubar_stokes, vbar_stokes
+# ifdef SOLVE3D
+      nLBCvar=nLBCvar+2            ! u_stokes, v_stokes
+# endif
+#endif
+#ifdef SOLVE3D
+# if defined GLS_MIXING || defined MY25_MIXING
+      nLBCvar=nLBCvar+1            ! TKE
+# endif
+#endif
+#ifdef ICE_MODEL
+      nLBCvar=nLBCvar+11           ! ICE varibles up to isVice=11
 #endif
 !
       IF (.not.allocated(LBC)) THEN
@@ -1500,6 +1735,7 @@
               LBC(ibry,ivar,ng)%closed = .FALSE.
               LBC(ibry,ivar,ng)%Flather = .FALSE.
               LBC(ibry,ivar,ng)%gradient = .FALSE.
+              LBC(ibry,ivar,ng)%mixed = .FALSE.
               LBC(ibry,ivar,ng)%nested = .FALSE.
               LBC(ibry,ivar,ng)%nudging = .FALSE.
               LBC(ibry,ivar,ng)%periodic = .FALSE.
@@ -1523,6 +1759,7 @@
               ad_LBC(ibry,ivar,ng)%closed = .FALSE.
               ad_LBC(ibry,ivar,ng)%Flather = .FALSE.
               ad_LBC(ibry,ivar,ng)%gradient = .FALSE.
+              ad_LBC(ibry,ivar,ng)%mixed = .FALSE.
               ad_LBC(ibry,ivar,ng)%nested = .FALSE.
               ad_LBC(ibry,ivar,ng)%nudging = .FALSE.
               ad_LBC(ibry,ivar,ng)%periodic = .FALSE.
@@ -1547,6 +1784,7 @@
               tl_LBC(ibry,ivar,ng)%closed = .FALSE.
               tl_LBC(ibry,ivar,ng)%Flather = .FALSE.
               tl_LBC(ibry,ivar,ng)%gradient = .FALSE.
+              tl_LBC(ibry,ivar,ng)%mixed = .FALSE.
               tl_LBC(ibry,ivar,ng)%nested = .FALSE.
               tl_LBC(ibry,ivar,ng)%nudging = .FALSE.
               tl_LBC(ibry,ivar,ng)%periodic =.FALSE.

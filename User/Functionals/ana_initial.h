@@ -1,11 +1,10 @@
       SUBROUTINE ana_initial (ng, tile, model)
 !
 !! git $Id$
-!! svn $Id: ana_initial.h 1151 2023-02-09 03:08:53Z arango $
 !!======================================================================
-!! Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
+!! Copyright (c) 2002-2025 The ROMS Group                              !
 !!   Licensed under a MIT/X style license                              !
-!!   See License_ROMS.txt                                              !
+!!   See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
 !  This subroutine sets initial conditions for momentum and tracer     !
@@ -128,9 +127,9 @@
       real(r8), intent(out) :: v(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(out) :: t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
 # endif
-      real(r8), intent(out) :: ubar(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(out) :: vbar(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(out) :: zeta(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(out) :: ubar(LBi:UBi,LBj:UBj,:)
+      real(r8), intent(out) :: vbar(LBi:UBi,LBj:UBj,:)
+      real(r8), intent(out) :: zeta(LBi:UBi,LBj:UBj,:)
 #endif
 !
 !  Local variable declarations.

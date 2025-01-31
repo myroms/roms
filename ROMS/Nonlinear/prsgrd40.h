@@ -1,11 +1,10 @@
       MODULE prsgrd_mod
 !
 !git $Id$
-!svn $Id: prsgrd40.h 1151 2023-02-09 03:08:53Z arango $
 !=======================================================================
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2025 The ROMS Group                              !
 !    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                           Hernan G. Arango   !
+!    See License_ROMS.md                            Hernan G. Arango   !
 !========================================== Alexander F. Shchepetkin ===
 !                                                                      !
 !  This subroutine evaluates the  nonlinear baroclinic,  hydrostatic   !
@@ -75,6 +74,9 @@
 #ifdef TIDE_GENERATING_FORCES
      &                    OCEAN(ng) % eq_tide,                          &
 #endif
+#ifdef WEC_VF
+     &                    OCEAN(ng) % zetat,                            &
+#endif
 #ifdef ATM_PRESS
      &                    FORCES(ng) % Pair,                            &
 #endif
@@ -105,6 +107,9 @@
 #ifdef TIDE_GENERATING_FORCES
      &                          eq_tide,                                &
 #endif
+#ifdef WEC_VF
+     &                          zetat,                                  &
+#endif
 #ifdef ATM_PRESS
      &                          Pair,                                   &
 #endif
@@ -133,6 +138,9 @@
 # ifdef TIDE_GENERATING_FORCES
       real(r8), intent(in) :: eq_tide(LBi:,LBj:)
 # endif
+# ifdef WEC_VF
+      real(r8), intent(in) :: zetat(LBi:,LBj:)
+# endif
 # ifdef ATM_PRESS
       real(r8), intent(in) :: Pair(LBi:,LBj:)
 # endif
@@ -150,6 +158,9 @@
       real(r8), intent(in) :: rho(LBi:UBi,LBj:UBj,N(ng))
 # ifdef TIDE_GENERATING_FORCES
       real(r8), intent(in) :: eq_tide(LBi:UBi,LBj:UBj)
+# endif
+# ifdef WEC_VF
+      real(r8), intent(in) :: zetat(LBi:UBi,LBj:UBj)
 # endif
 # ifdef ATM_PRESS
       real(r8), intent(in) :: Pair(LBi:UBi,LBj:UBj)
@@ -170,6 +181,9 @@
 #ifdef ATM_PRESS
       real(r8) :: OneAtm, fac
 #endif
+#ifdef WEC_VF
+      real(r8) :: fac1
+#endif
       real(r8), dimension(IminS:ImaxS,0:N(ng)) :: FC
 
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS,N(ng)) :: FX
@@ -189,9 +203,15 @@
       OneAtm=1013.25_r8                  ! 1 atm = 1013.25 mb
       fac=100.0_r8/g
 #endif
+#ifdef WEC_VF
+      fac1=rho0/g
+#endif
       J_LOOP : DO j=JstrV-1,Jend
         DO i=IstrU-1,Iend
           P(i,j,N(ng))=0.0_r8
+#ifdef WEC_VF
+          P(i,j,N(ng))=P(i,j,N(ng))+fac1*zetat(i,j)
+#endif
 #ifdef ATM_PRESS
           P(i,j,N(ng))=P(i,j,N(ng))+fac*(Pair(i,j)-OneAtm)
 #endif

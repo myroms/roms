@@ -2,11 +2,10 @@
       MODULE mod_ncparam
 !
 !git $Id$
-!svn $Id: mod_ncparam.F 1164 2023-04-03 21:09:46Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2025 The ROMS Group                              !
 !    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                                              !
+!    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
 !  This MODULE contains all the variables associated with input and    !
@@ -191,10 +190,10 @@
 !
 !  Input/output identification indices.
 !
-      integer  :: idAice        ! fraction of cell covered by ice
-      integer  :: idbath        ! bathymetry
-      integer  :: idBgEr        ! Background error at observations
-      integer  :: idBgTh        ! Threshold for BQC check
+      integer  :: idangR        ! angle between XI-axis and EAST
+      integer  :: idbath        ! time-dependent bathymetry
+      integer  :: idBgEr        ! background error at observations
+      integer  :: idBgTh        ! threshold for BQC check
       integer  :: idCfra        ! cloud fraction
       integer  :: idCosW        ! COS(omega(k)*t)
       integer  :: idCos2        ! COS(omega(k)*t)*COS(omega(l)*t)
@@ -203,6 +202,7 @@
       integer  :: iddQdT        ! heat flux sensitivity to SST
       integer  :: idEmPf        ! E-P from bulk_flux.F
       integer  :: idevap        ! evaporation rate
+      integer  :: idfcor        ! Coriolis parameter
       integer  :: idFsur        ! free-surface
       integer  :: idFsuD        ! detided free-surface
       integer  :: idFsuH        ! free-surface tide harmonics
@@ -210,19 +210,30 @@
       integer  :: idgTnc        ! generic tracer nudging coefficients
       integer  :: idJWTy        ! Jerlov water type
       integer  :: idHbbl        ! depth of bottom boundary layer
-      integer  :: idHice        ! depth of ice cover
       integer  :: idHsbl        ! depth of surface boundary layer
-      integer  :: idHsno        ! depth of snow cover
+      integer  :: idHzdz        ! level thickness
       integer  :: idIncr        ! 4D-Var analysis increment
       integer  :: idInno        ! 4D-Var innovation vector
       integer  :: idKhor        ! convolution horizontal diffusion
       integer  :: idKver        ! convolution vertical diffusion
+      integer  :: idLatP        ! latitude of PSI-points
+      integer  :: idLatR        ! latitude of RHO-points
+      integer  :: idLatU        ! latitude of U-points
+      integer  :: idLatV        ! latitude of V-points
       integer  :: idLdwn        ! downwelling longwave radiation flux
+      integer  :: idLonP        ! longitude of PSI-points
+      integer  :: idLonR        ! longitude of RHO-points
+      integer  :: idLonU        ! longitude of U-points
+      integer  :: idLonV        ! longitude of V-points
       integer  :: idLhea        ! net latent heat flux
       integer  :: idLrad        ! net longwave radiation flux
       integer  :: idMadH        ! ADM interpolation weights
       integer  :: idMOMi        ! Initial model-observation misfit
       integer  :: idMOMf        ! final model-observation misfit
+      integer  :: idmskP        ! land/mask on PSI-points
+      integer  :: idmskR        ! land/mask on RHO-points
+      integer  :: idmskU        ! land/mask on U-points
+      integer  :: idmskV        ! land/mask on V-points
       integer  :: idMtke        ! turbulent kinetic energy
       integer  :: idMtls        ! turbulent length scale
       integer  :: idM2nc        ! 2D momentum nudging coefficients
@@ -248,14 +259,17 @@
       integer  :: idOtyp        ! observations type
       integer  :: idOval        ! observations value
       integer  :: idOvel        ! omega vertical velocity
-      integer  :: idQair        ! surface air humidity
+      integer  :: idOvil        ! omega vertical velocity implicit
       integer  :: idPair        ! surface air pressure
       integer  :: idPbar        ! streamfunction
       integer  :: idPwet        ! wet/dry mask on PSI-points
+      integer  :: idpmdx        ! inverse grid x-spacing
+      integer  :: idpndy        ! inverse grid y-spacing
       integer  :: idpthR        ! depths of RHO-points
       integer  :: idpthU        ! depths of U-points
       integer  :: idpthV        ! depths of V-points
       integer  :: idpthW        ! depths of W-points
+      integer  :: idQair        ! surface air humidity
       integer  :: idRdir        ! river runoff direction
       integer  :: idRepo        ! river runoff ETA-positions
       integer  :: idRflg        ! river runoff flag
@@ -284,11 +298,14 @@
       integer  :: idSWCW        ! SIN(omega(k)*t)*COS(omega(l)*t)
       integer  :: idResi        ! 4D-Var residual vector
       integer  :: idsfwf        ! surface freswater flux
+      integer  :: idscoR        ! ADM sensitivity scope RHO-mask
+      integer  :: idscoU        ! ADM sensitivity scope U-mask
+      integer  :: idscoV        ! ADM sensitivity scope V-mask
       integer  :: idTLmo        ! TLM at observation locations
       integer  :: idTair        ! surface air temperature
       integer  :: idTdif        ! vertical T-diffusion coefficient
-      integer  :: idTice        ! temperature of ice surface
       integer  :: idtime        ! ocean time
+      integer  :: idtopo        ! time-independent bathymetry
       integer  :: idTref        ! tidal reference date for zero phase
       integer  :: idTper        ! tidal period
       integer  :: idTvan        ! tidal current angle
@@ -300,10 +317,11 @@
       integer  :: idu2dA        ! accumulated 2D U-velocity
       integer  :: idU2rs        ! 2D total U-radiation stress
       integer  :: idU3rs        ! 3D total U-radiation stress
-      integer  :: idU2Sd        ! 2D U-Stokes drift velocity
-      integer  :: idU3Sd        ! 3D U-Stokes drift velocity
+      integer  :: idU2Sd        ! 2D U-Stokes velocity
+      integer  :: idU3Sd        ! 3D U-Stokes velocity
       integer  :: idUads        ! 3D U-velocity adjoint sensitivity
       integer  :: idUair        ! surface U-wind
+      integer  :: idUaiE        ! Eastward surface U-wind
       integer  :: idUbar        ! 2D U-velocity
       integer  :: idUbas        ! 2D U-velocity adjoint sensitivity
       integer  :: idUbcl        ! 2D U-velocity climatology
@@ -318,12 +336,13 @@
       integer  :: idUclm        ! 3D U-velocity climatology
       integer  :: idUfx1        ! time averaged U-flux for 2D
       integer  :: idUfx2        ! time averaged U-flux for 3D
-      integer  :: idUice        ! ice U-velocity
       integer  :: idUsms        ! surface U-momentum stress
       integer  :: idUsuE        ! model surface eastward velocity
       integer  :: idUsur        ! surface U-velocity
       integer  :: idUtlf        ! 3D U-velocity impulse forcing
       integer  :: idUvel        ! 3D U-velocity
+      integer  :: idUVwc        ! bottom wave-current stress magnitude
+      integer  :: idUwav        ! 2D U-velocity Kirby and Chen
       integer  :: idUwet        ! wet/dry mask on U-points
       integer  :: idu2dD        ! detided 2D U-velocity
       integer  :: idu2dH        ! 2D U-velocity tide harmonics
@@ -333,10 +352,11 @@
       integer  :: idu3dE        ! 3D eastward velocity at RHO-points
       integer  :: idV2rs        ! 2D total V-radiation stress
       integer  :: idV3rs        ! 3D total V-radiation stress
-      integer  :: idV2Sd        ! 2D U-Stokes drift velocity
-      integer  :: idV3Sd        ! 3D U-Stokes drift velocity
+      integer  :: idV2Sd        ! 2D U-Stokes velocity
+      integer  :: idV3Sd        ! 3D U-Stokes velocity
       integer  :: idVads        ! 3D V-velocity adjoint sensitivity
       integer  :: idVair        ! surface V-wind
+      integer  :: idVaiN        ! Northward surface V-wind
       integer  :: idVbar        ! 2D V-velocity
       integer  :: idVbas        ! 2D V-velocity adjoint sensitivity
       integer  :: idVbcl        ! 2D V-velocity climatology
@@ -351,7 +371,6 @@
       integer  :: idVclm        ! 3D V-velocity climatology
       integer  :: idVfx1        ! 2D momentum time-averaged V-flux
       integer  :: idVfx2        ! 3D momentum time-averaged V-flux
-      integer  :: idVice        ! ice V-velocity
       integer  :: idVmLS        ! vertical mixing length scale
       integer  :: idVmKK        ! Kinetic energy vertical mixing
       integer  :: idVmKP        ! Length scale vertical mixing
@@ -361,6 +380,7 @@
       integer  :: idVtlf        ! 3D V-velocity impulse forcing
       integer  :: idVvel        ! 3D V-velocity
       integer  :: idVvis        ! vertical viscosity coefficient
+      integer  :: idVwav        ! 2D V-velocity Kirby and Chen
       integer  :: idVwet        ! wet/dry mask on V-points
       integer  :: idv2dD        ! detided 2D U-velocity
       integer  :: idv2dH        ! 2D U-velocity tide harmonics
@@ -368,6 +388,8 @@
       integer  :: idv3dD        ! detided 3D U-velocity
       integer  :: idv3dH        ! 3D U-velocity tide harmonics
       integer  :: idv3dN        ! 3D northward velocity at RHO-points
+      integer  :: idW3Sd        ! 3D W-Stokes omega drift velocity
+      integer  :: idW3St        ! 3D W-Stokes vertical drift velocity
       integer  :: idW2xx        ! 2D radiation stress, Sxx-component
       integer  :: idW2xy        ! 2D radiation stress, Sxy-component
       integer  :: idW2yy        ! 2D radiation stress, Syy-component
@@ -378,14 +400,35 @@
       integer  :: idW3zy        ! 3D radiation stress, Szy-component
       integer  :: idWads        ! 3D W-velocity adjoint sensitivity
       integer  :: idWamp        ! wind-induced wave amplitude
+      integer  :: idWam2        ! wind-induced wave amplitude squared
+      integer  :: idWbeh        ! wec Bernoulli head
       integer  :: idWbrk        ! wind-induced wave breaking
-      integer  :: idWdis        ! wind-induced wave dissipation
-      integer  :: idWdir        ! wind-induced wave direction
-      integer  :: idWlen        ! wind-induced wave length
+      integer  :: idWdib        ! wave dissipation from surface breaking
+      integer  :: idWdif        ! wave dissipation from bottom friction
+      integer  :: idWdip        ! wind-induced peak wave direction
+      integer  :: idWdir        ! wind-induced mean wave direction
+      integer  :: idWdis        ! wind-induced wave roller dissipation
+      integer  :: idWdiw        ! wave dissipation from whitecapping
+      integer  :: idWlen        ! wind-induced mean wave length
+      integer  :: idWlep        ! wind-induced peak wave length
+      integer  :: idWmsk        ! wet-dry mask
+      integer  :: idWorb        ! wind-induced wave orbital velocity
       integer  :: idWptp        ! wind-induced surface wave period
       integer  :: idWpbt        ! wind-induced bottom wave period
-      integer  :: idWorb        ! wind-induced wave orbital velocity
+      integer  :: idWqsp        ! wec quasi-static pressure
+      integer  :: idWrol        ! wave roller action density
+      integer  :: idWvds        ! wave directional spread
       integer  :: idWvel        ! true vertical velocity
+      integer  :: idWvqp        ! wave spectrum peakedness
+      integer  :: idWztw        ! wec quasi-static sea level adjustment
+      integer  :: idXgrP        ! x-locations of PSI-points
+      integer  :: idXgrR        ! x-locations of RHO-points
+      integer  :: idXgrU        ! x-locations of U-points
+      integer  :: idXgrV        ! x-locations of V-points
+      integer  :: idYgrP        ! y-locations of PSI-points
+      integer  :: idYgrR        ! y-locations of RHO-points
+      integer  :: idYgrU        ! y-locations of U-points
+      integer  :: idYgrV        ! y-locations of V-points
       integer  :: idZoBL        ! bottom roughness length
       integer  :: idZads        ! Free-surface adjoint sensitivity
       integer  :: idZtlf        ! Free-surface impulse forcing
@@ -450,7 +493,7 @@
 !  State variables indices (order is important). Notice that current
 !  extra-observations index (isRadial) needs to be initialized to zero
 !  here and reset elsewhere to the value provided by the user.
-!  Currently, the maximum number of state variables in 3D applications 
+!  Currently, the maximum number of state variables in 3D applications
 !  is 9+2*MT. If MT=2 (temperature and salinity), the state variables
 !  have the following order:
 !
@@ -467,6 +510,12 @@
       integer  :: isUstr                    ! surface u-stress
       integer  :: isVstr                    ! surface v-stress
       integer  :: isMtke                    ! turbulent kinetic energy
+#ifdef WEC
+      integer  :: isU2Sd                    ! 2D U-stokes velocity
+      integer  :: isV2Sd                    ! 2D V-stokes velocity
+      integer  :: isU3Sd                    ! 3D U-stokes velocity
+      integer  :: isV3Sd                    ! 3D V-stokes velocity
+#endif
       integer, allocatable :: isTsur(:)     ! surface tracer flux
       integer, allocatable :: isTvar(:)     ! tracers
       integer, allocatable :: idBvar(:)     ! LBC variables indices
@@ -512,6 +561,7 @@
       integer, allocatable :: idefHIS(:)    ! history file
       integer, allocatable :: idefQCK(:)    ! quicksave file
       integer, allocatable :: idefTLM(:)    ! tangent file
+      integer, allocatable :: idefXTR(:)    ! extraction file
 !
 !  Output NetCDF variables IDs.
 !
@@ -533,7 +583,7 @@
       real(dp), allocatable :: Tintrp(:,:,:)
       real(dp), allocatable :: Vtime(:,:,:)
 !
-      character (len=5  )    :: version = '4.2  '
+      character (len=5  )    :: version = '4.3  '
       character (len=40 )    :: varnam(MV)
       character (len=44 )    :: date_str
       character (len=46 )    :: Tname(0:NV)
@@ -828,19 +878,23 @@
       END IF
       IF (.not.allocated(isTvar)) THEN
         allocate ( isTvar(MT) )
+        isTvar=0
         Dmem(1)=Dmem(1)+REAL(MT,r8)
       END IF
       IF (.not.allocated(idBvar)) THEN
         allocate ( idBvar(nLBCvar) )
+        idBvar=0
         Dmem(1)=Dmem(1)+REAL(nLBCvar,r8)
       END IF
       IF (.not.allocated(idSvar)) THEN
-        allocate ( idSvar(MAXVAL(NSV)+1) )
-        Dmem(1)=Dmem(1)+REAL(MAXVAL(NSV)+1,r8)
+        allocate ( idSvar(MAXVAL(NSV)) )
+        idSvar=0
+        Dmem(1)=Dmem(1)+REAL(MAXVAL(NSV),r8)
       END IF
       IF (.not.allocated(idSbry)) THEN
-        allocate ( idSbry(MAXVAL(NSV)+1) )
-        Dmem(1)=Dmem(1)+REAL(MAXVAL(NSV)+1,r8)
+        allocate ( idSbry(MAXVAL(NSV)) )
+        idSbry=0
+        Dmem(1)=Dmem(1)+REAL(MAXVAL(NSV),r8)
       END IF
 
       IF (.not.allocated(BRYncid)) THEN
@@ -893,6 +947,10 @@
       END IF
       IF (.not.allocated(idefTLM)) THEN
         allocate ( idefTLM(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
+      END IF
+      IF (.not.allocated(idefXTR)) THEN
+        allocate ( idefXTR(Ngrids) )
         Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
 
@@ -1062,6 +1120,7 @@
       IF (allocated(idefHIS))     deallocate ( idefHIS )
       IF (allocated(idefQCK))     deallocate ( idefQCK )
       IF (allocated(idefTLM))     deallocate ( idefTLM )
+      IF (allocated(idefXTR))     deallocate ( idefXTR )
 !
       IF (allocated(idTvar))      deallocate ( idTvar )
       IF (allocated(idTrcD))      deallocate ( idTrcD )
@@ -1096,6 +1155,9 @@
 #ifdef BIOLOGY
       USE mod_biology
 #endif
+#ifdef SEAICE
+      USE mod_ice
+#endif
       USE mod_iounits
       USE mod_scalars
 #if defined SEDIMENT || defined BBL_MODEL
@@ -1112,7 +1174,7 @@
 #ifdef DISTRIBUTE
       integer :: Itile, Jtile
 #endif
-      integer :: Lvar, Ntiles, i, ic, j, ng
+      integer :: Lvar, Ntiles, i, ic, ic_brylast, j, ng
       integer :: gtype, tile, varid
 !
       real(dp), parameter :: spv = 0.0_dp
@@ -1176,6 +1238,7 @@
         idefHIS(ng)=-1
         idefQCK(ng)=-1
         idefTLM(ng)=-1
+        idefXTR(ng)=-1
       END DO
 !
 !  Analytical files switch and names.
@@ -1199,7 +1262,7 @@
       END DO
 #endif
 !
-!  Set IDs for state some state variables.
+!  Set indices for state some state variables.
 !
       ic=5
 #ifdef SOLVE3D
@@ -1207,19 +1270,14 @@
         ic=ic+1
         isTvar(i)=ic
       END DO
-# if defined GLS_MIXING || defined MY25_MIXING
-      ic=ic+1
-      isMtke=ic
-# endif
-      ic=ic+1
-      isWvel=ic
 #endif
 #if defined ADJUST_WSTRESS || defined FORCING_SV     || \
     defined HESSIAN_FSV    || defined SO_SEMI        || \
     defined STOCHASTIC_OPT
-      isUstr=ic+1
-      isVstr=ic+2
-      ic=ic+2
+      ic=ic+1
+      isUstr=ic
+      ic=ic+1
+      isVstr=ic
 #endif
 #ifdef SOLVE3D
 # if defined ADJUST_STFLUX  || defined FORCING_SV     || \
@@ -1230,6 +1288,29 @@
         isTsur(i)=ic
       END DO
 # endif
+#endif
+#ifdef WEC
+      ic=ic+1
+      isU2Sd=ic
+      ic=ic+1
+      isV2Sd=ic
+# if defined SOLVE3D
+      ic=ic+1
+      isU3Sd=ic
+      ic=ic+1
+      isV3Sd=ic
+# endif
+#endif
+#ifdef SOLVE3D
+# if defined GLS_MIXING || defined MY25_MIXING
+      ic=ic+1
+      isMtke=ic
+# endif
+#endif
+      ic_brylast=ic
+#ifdef SOLVE3D
+      ic=ic+1
+      isWvel=ic                               ! no LBC index
 #endif
 !
 !  Set generic lateral boundary indices for LBC structure.  Use the same
@@ -1314,7 +1395,7 @@
 #ifdef GIT_URL
       git_url=GIT_URL
 #else
-      git_url='https://www.myroms.org/git/src'
+      git_url='https://github.com/myroms/roms'
 #endif
 #ifdef GIT_REV
       git_rev=GIT_REV
@@ -1325,10 +1406,12 @@
 #ifdef SVN_URL
       svn_url=SVN_URL
 #else
-      svn_url='https://myroms.org/svn'
+      svn_url='https://myroms.org/svn/trunk'
 #endif
 #ifdef SVN_REV
       svn_rev=SVN_REV
+#else
+      svn_rev=' '
 #endif
 !
 !-----------------------------------------------------------------------
@@ -1377,6 +1460,10 @@
           CASE ('l4dvar')
             gtype=l4dvar
 #endif
+#ifdef SPECTRAL_LIGHT
+         CASE ('s3dvar')
+           gtype=s3dvar
+#endif
           CASE DEFAULT
             gtype=0
         END SELECT
@@ -1386,10 +1473,64 @@
         load=.TRUE.
         varid=varid+1
         SELECT CASE (TRIM(ADJUSTL(Vinfo(8))))
-          CASE ('idtime')
-            idtime=varid
+          CASE ('idangR')
+            idangR=varid
           CASE ('idbath')
             idbath=varid
+          CASE ('idfcor')
+            idfcor=varid
+          CASE ('idtopo')
+            idtopo=varid
+          CASE ('idpmdx')
+            idpmdx=varid
+          CASE ('idpndy')
+            idpndy=varid
+          CASE ('idLonP')
+            idLonP=varid
+          CASE ('idLatP')
+            idLatP=varid
+          CASE ('idLonR')
+            idLonR=varid
+          CASE ('idLatR')
+            idLatR=varid
+          CASE ('idLonU')
+            idLonU=varid
+          CASE ('idLatU')
+            idLatU=varid
+          CASE ('idLonV')
+            idLonV=varid
+          CASE ('idLatV')
+            idLatV=varid
+          CASE ('idmskP')
+            idmskP=varid
+          CASE ('idmskR')
+            idmskR=varid
+          CASE ('idmskU')
+            idmskU=varid
+          CASE ('idmskV')
+            idmskV=varid
+          CASE ('idscoR')
+            idscoR=varid
+          CASE ('idscoU')
+            idscoU=varid
+          CASE ('idscoV')
+            idscoV=varid
+          CASE ('idXgrP')
+            idXgrP=varid
+          CASE ('idYgrP')
+            idYgrP=varid
+          CASE ('idXgrR')
+            idXgrR=varid
+          CASE ('idYgrR')
+            idYgrR=varid
+          CASE ('idXgrU')
+            idXgrU=varid
+          CASE ('idYgrU')
+            idYgrU=varid
+          CASE ('idXgrV')
+            idXgrV=varid
+          CASE ('idYgrV')
+            idYgrV=varid
           CASE ('idpthR')
             idpthR=varid
           CASE ('idpthU')
@@ -1398,6 +1539,8 @@
             idpthV=varid
           CASE ('idpthW')
             idpthW=varid
+          CASE ('idtime')
+            idtime=varid
           CASE ('idFsur')
             idFsur=varid
           CASE ('idRzet')
@@ -1436,6 +1579,8 @@
             idRv3d=varid
           CASE ('idWvel')
             idWvel=varid
+          CASE ('idOvil')
+            idOvil=varid
           CASE ('idOvel')
             idOvel=varid
           CASE ('idDano')
@@ -1468,6 +1613,8 @@
             idVbws=varid
           CASE ('idVbcs')
             idVbcs=varid
+          CASE ('idUVwc')
+            idUVwc=varid
           CASE ('idTsur(itemp)')
             idTsur(itemp)=varid
           CASE ('iddQdT')
@@ -1604,22 +1751,54 @@
             idUair=varid
           CASE ('idVair')
             idVair=varid
+          CASE ('idUaiE')
+            idUaiE=varid
+          CASE ('idVaiN')
+            idVaiN=varid
+          CASE ('idWvds')
+            idWvds=varid
+          CASE ('idWvqp')
+            idWvqp=varid
+          CASE ('idUwav')
+            idUwav=varid
+          CASE ('idVwav')
+            idVwav=varid
           CASE ('idWamp')
             idWamp=varid
+          CASE ('idWam2')
+            idWam2=varid
           CASE ('idWbrk')
             idWbrk=varid
+          CASE ('idWdib')
+            idWdib=varid
+          CASE ('idWdif')
+            idWdif=varid
           CASE ('idWdis')
             idWdis=varid
           CASE ('idWdir')
             idWdir=varid
+          CASE ('idWdip')
+            idWdip=varid
+          CASE ('idWdiw')
+            idWdiw=varid
+          CASE ('idWztw')
+            idWztw=varid
+          CASE ('idWqsp')
+            idWqsp=varid
+          CASE ('idWbeh')
+            idWbeh=varid
           CASE ('idWlen')
             idWlen=varid
+          CASE ('idWlep')
+            idWlep=varid
           CASE ('idWptp')
             idWptp=varid
           CASE ('idWpbt')
             idWpbt=varid
           CASE ('idWorb')
             idWorb=varid
+          CASE ('idWrol')
+            idWrol=varid
           CASE ('idW2xx')
             idW2xx=varid
           CASE ('idW2xy')
@@ -1652,6 +1831,10 @@
             idU3Sd=varid
           CASE ('idV3Sd')
             idV3Sd=varid
+          CASE ('idW3Sd')
+            idW3Sd=varid
+          CASE ('idW3St')
+            idW3St=varid
           CASE ('idTref')
             idTref=varid
           CASE ('idTper')
@@ -1690,6 +1873,8 @@
             idHsbl=varid
           CASE ('idHbbl')
             idHbbl=varid
+          CASE ('idHzdz')
+            idHzdz=varid
 #ifdef UV_DRAG_GRID
           CASE ('idragL')
             idragL=varid
@@ -1899,11 +2084,57 @@
           CASE ('idDv2d(M2hadv)')
             idDv2d(M2hadv)=varid
 # endif
-# ifdef NEARSHORE_MELLOR
-          CASE ('idDu2d(M2hrad)')
-            idDu2d(M2hrad)=varid
-          CASE ('idDv2d(M2hrad)')
-            idDv2d(M2hrad)=varid
+# ifdef WEC_VF
+            CASE ('idDu2d(M2hjvf)')
+              idDu2d(M2hjvf)=varid
+            CASE ('idDv2d(M2hjvf)')
+              idDv2d(M2hjvf)=varid
+            CASE ('idDu2d(M2kvrf)')
+              idDu2d(M2kvrf)=varid
+            CASE ('idDv2d(M2kvrf)')
+              idDv2d(M2kvrf)=varid
+#  ifdef UV_COR
+            CASE ('idDu2d(M2fsco)')
+             idDu2d(M2fsco)=varid
+            CASE ('idDv2d(M2fsco)')
+              idDv2d(M2fsco)=varid
+#  endif
+#  ifdef BOTTOM_STREAMING
+            CASE ('idDu2d(M2bstm)')
+              idDu2d(M2bstm)=varid
+            CASE ('idDv2d(M2bstm)')
+              idDv2d(M2bstm)=varid
+#  endif
+#  ifdef SURFACE_STREAMING
+            CASE ('idDu2d(M2sstm)')
+              idDu2d(M2sstm)=varid
+            CASE ('idDv2d(M2sstm)')
+              idDv2d(M2sstm)=varid
+#  endif
+            CASE ('idDu2d(M2wrol)')
+              idDu2d(M2wrol)=varid
+            CASE ('idDv2d(M2wrol)')
+              idDv2d(M2wrol)=varid
+            CASE ('idDu2d(M2wbrk)')
+              idDu2d(M2wbrk)=varid
+            CASE ('idDv2d(M2wbrk)')
+              idDv2d(M2wbrk)=varid
+            CASE ('idDu2d(M2zeta)')
+              idDu2d(M2zeta)=varid
+            CASE ('idDv2d(M2zeta)')
+              idDv2d(M2zeta)=varid
+            CASE ('idDu2d(M2zetw)')
+              idDu2d(M2zetw)=varid
+            CASE ('idDv2d(M2zetw)')
+              idDv2d(M2zetw)=varid
+            CASE ('idDu2d(M2zqsp)')
+              idDu2d(M2zqsp)=varid
+            CASE ('idDv2d(M2zqsp)')
+              idDv2d(M2zqsp)=varid
+            CASE ('idDu2d(M2zbeh)')
+              idDu2d(M2zbeh)=varid
+            CASE ('idDv2d(M2zbeh)')
+              idDv2d(M2zbeh)=varid
 # endif
 # ifdef UV_COR
           CASE ('idDu2d(M2fcor)')
@@ -1956,15 +2187,45 @@
           CASE ('idDv3d(M3vadv)')
             idDv3d(M3vadv)=varid
 #  endif
-#  ifdef NEARSHORE_MELLOR
-          CASE ('idDu3d(M3hrad)')
-            idDu3d(M3hrad)=varid
-          CASE ('idDv3d(M3hrad)')
-            idDv3d(M3hrad)=varid
-          CASE ('idDu3d(M3vrad)')
-            idDu3d(M3vrad)=varid
-          CASE ('idDv3d(M3vrad)')
-            idDv3d(M3vrad)=varid
+#  ifdef WEC_VF
+            CASE ('idDu3d(M3vjvf)')
+              idDu3d(M3vjvf)=varid
+            CASE ('idDv3d(M3vjvf)')
+              idDv3d(M3vjvf)=varid
+            CASE ('idDu3d(M3hjvf)')
+              idDu3d(M3hjvf)=varid
+            CASE ('idDv3d(M3hjvf)')
+              idDv3d(M3hjvf)=varid
+            CASE ('idDu3d(M3kvrf)')
+              idDu3d(M3kvrf)=varid
+            CASE ('idDv3d(M3kvrf)')
+              idDv3d(M3kvrf)=varid
+#   ifdef UV_COR
+            CASE ('idDu3d(M3fsco)')
+              idDu3d(M3fsco)=varid
+            CASE ('idDv3d(M3fsco)')
+              idDv3d(M3fsco)=varid
+#   endif
+#   ifdef BOTTOM_STREAMING
+            CASE ('idDu3d(M3bstm)')
+              idDu3d(M3bstm)=varid
+            CASE ('idDv3d(M3bstm)')
+              idDv3d(M3bstm)=varid
+#   endif
+#   ifdef SURFACE_STREAMING
+            CASE ('idDu3d(M3sstm)')
+              idDu3d(M3sstm)=varid
+            CASE ('idDv3d(M3sstm)')
+              idDv3d(M3sstm)=varid
+#  endif
+            CASE ('idDu3d(M3wrol)')
+              idDu3d(M3wrol)=varid
+            CASE ('idDv3d(M3wrol)')
+              idDv3d(M3wrol)=varid
+            CASE ('idDu3d(M3wbrk)')
+              idDu3d(M3wbrk)=varid
+            CASE ('idDv3d(M3wbrk)')
+              idDv3d(M3wbrk)=varid
 #  endif
 #  ifdef UV_COR
           CASE ('idDu3d(M3fcor)')
@@ -2089,6 +2350,10 @@
             idMOMi=varid
           CASE ('idMOMf')
             idMOMf=varid
+#endif
+
+#ifdef SEAICE
+# include <ice_var.h>
 #endif
 
 #ifdef BIOLOGY
@@ -2912,51 +3177,86 @@
 #endif
 !
 !-----------------------------------------------------------------------
+!  Set model state variables metadata indices.
+!-----------------------------------------------------------------------
+!
+      idSvar(isFsur)=idFsur
+      idSvar(isUbar)=idUbar
+      idSvar(isVbar)=idVbar
+#ifdef SOLVE3D
+      idSvar(isUvel)=idUvel
+      idSvar(isVvel)=idVvel
+      DO i=1,MT
+        idSvar(isTvar(i))=idTvar(i)
+      END DO
+#endif
+#if defined ADJUST_WSTRESS || defined FORCING_SV     || \
+    defined HESSIAN_FSV    || defined SO_SEMI        || \
+    defined STOCHASTIC_OPT
+      idSvar(isUstr)=idUsms
+      idSvar(isVstr)=idVsms
+#endif
+#ifdef SOLVE3D
+# if defined ADJUST_STFLUX  || defined FORCING_SV     || \
+     defined HESSIAN_FSV    || defined SO_SEMI        || \
+     defined STOCHASTIC_OPT
+      DO i=1,MT
+        idSvar(isTsur(i))=idTsur(i)
+      END DO
+# endif
+#endif
+#ifdef WEC
+      idSvar(isU2Sd)=idU2Sd
+      idSvar(isV2Sd)=idV2Sd
+# if defined SOLVE3D
+      idSvar(isU3Sd)=idU3Sd
+      idSvar(isV3Sd)=idV3Sd
+# endif
+#endif
+#ifdef SOLVE3D
+# if defined GLS_MIXING || defined MY25_MIXING
+      idSvar(isMtke)=idMtke
+# endif
+      idSvar(isWvel)=idWvel
+#endif
+!
+!-----------------------------------------------------------------------
 !  Set model lateral boundary variables index.
 !-----------------------------------------------------------------------
 !
       idBvar(isFsur)=idFsur
       idBvar(isUbar)=idUbar
       idBvar(isVbar)=idVbar
-      ic=3
 #ifdef SOLVE3D
       idBvar(isUvel)=idUvel
       idBvar(isVvel)=idVvel
-      ic=ic+2
       DO i=1,MT
         idBvar(isTvar(i))=idTvar(i)
-        ic=ic+1
       END DO
 # if defined GLS_MIXING || defined MY25_MIXING
-      ic=ic+1
-      idBvar(ic)=idMtke
+      idBvar(isMtke)=idMtke
 # endif
 #endif
+#ifdef WEC
+      idBvar(isU2Sd)=idU2Sd
+      idBvar(isV2Sd)=idV2Sd
+# if defined SOLVE3D
+      idBvar(isU3Sd)=idU3Sd
+      idBvar(isV3Sd)=idV3Sd
+# endif
+#endif
+#ifdef ICE_MODEL
 !
-!-----------------------------------------------------------------------
-!  Set model state variables indices.
-!-----------------------------------------------------------------------
+!  Set ice model state boundary indices.  Currently, the last ice model
+!  LBC state variable is isVice=11.
 !
-      idSvar(isFsur)=idFsur
-      idSvar(isUbar)=idUbar
-      idSvar(isVbar)=idVbar
-      ic=3
-#ifdef SOLVE3D
-      idSvar(isUvel)=idUvel
-      idSvar(isVvel)=idVvel
-      ic=ic+2
-      DO i=1,MT
-        idSvar(isTvar(i))=idTvar(i)
-        ic=ic+1
+      DO i=1,nIceS
+        ibICE(i)=i
       END DO
-#endif
-#ifdef ADJUST_WSTRESS
-      idSvar(isUstr)=idUsms
-      idSvar(isVstr)=idVsms
-#endif
-#ifdef ADJUST_STFLUX
-      DO i=1,MT
-        idSvar(isTsur(i))=idTsur(i)
+      ic=ic_brylast
+      DO i=1,isVice
+        ic=ic+1
+        idBvar(ic)=iSice(i)
       END DO
 #endif
 #ifdef ADJUST_BOUNDARY
@@ -2966,27 +3266,29 @@
 !  name is the same as the state variable but with the _obc suffix.
 !-----------------------------------------------------------------------
 !
-      DO i=1,ic
-        varid=varid+1
-        IF (varid.gt.MV) THEN
-          WRITE (stdout,10) MV, varid
-          STOP
+      DO i=1,nLBCvar
+        IF (idBvar(i).gt.0 ) THEN
+          varid=varid+1
+          IF (varid.gt.MV) THEN
+            WRITE (stdout,10) MV, varid
+            STOP
+          END IF
+          idSbry(i)=varid
+          DO ng=1,Ngrids
+            Fscale(varid,ng)=1.0_r8
+            Iinfo(1,varid,ng)=0
+          END DO
+          WRITE (Vname(1,varid),'(a,a)')                                &
+     &          TRIM(ADJUSTL(Vname(1,idSvar(i)))), '_obc'
+          WRITE (Vname(2,varid),'(a,a)')                                &
+     &          TRIM(ADJUSTL(Vname(2,idSvar(i)))), ', open boundaries'
+          WRITE (Vname(3,varid),'(a)')                                  &
+     &          TRIM(ADJUSTL(Vname(3,idSvar(i))))
+          WRITE (Vname(4,varid),'(a,a)')                                &
+     &          TRIM(Vname(1,varid)), ', scalar, series'
+          WRITE (Vname(5,varid),'(a)')                                  &
+     &          TRIM(ADJUSTL(Vname(5,idSvar(i))))
         END IF
-        idSbry(i)=varid
-        DO ng=1,Ngrids
-          Fscale(varid,ng)=1.0_r8
-          Iinfo(1,varid,ng)=0
-        END DO
-        WRITE (Vname(1,varid),'(a,a)')                                  &
-     &        TRIM(ADJUSTL(Vname(1,idSvar(i)))), '_obc'
-        WRITE (Vname(2,varid),'(a,a)')                                  &
-     &        TRIM(ADJUSTL(Vname(2,idSvar(i)))), ', open boundaries'
-        WRITE (Vname(3,varid),'(a)')                                    &
-     &        TRIM(ADJUSTL(Vname(3,idSvar(i))))
-        WRITE (Vname(4,varid),'(a,a)')                                  &
-     &        TRIM(Vname(1,varid)), ', scalar, series'
-        WRITE (Vname(5,varid),'(a)')                                    &
-     &        TRIM(ADJUSTL(Vname(5,idSvar(i))))
       END DO
 #endif
 !

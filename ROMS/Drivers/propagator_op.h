@@ -1,11 +1,10 @@
       MODULE propagator_mod
 !
 !git $Id$
-!svn $Id: propagator_op.h 1151 2023-02-09 03:08:53Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group       Andrew M. Moore   !
+!  Copyright (c) 2002-2025 The ROMS Group            Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                                              !
+!    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
 !  Optimal Perturbation (singular vectors) Propagator:                 !
@@ -364,7 +363,7 @@
 !
  10   FORMAT (/,a,i2.2,a,i3.3,a,i3.3/)
  20   FORMAT (/,a,i2.2,a,1p,e15.6,/)
- 30   FORMAT (/,1x,a,1x,'ROMS/TOMS: started time-stepping:',            &
+ 30   FORMAT (/,1x,a,1x,'ROMS: started time-stepping:',                 &
      &        ' (Grid: ',i2.2,' TimeSteps: ',i8.8,' - ',i8.8,')')
 !
       RETURN

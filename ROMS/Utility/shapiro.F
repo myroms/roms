@@ -2,11 +2,10 @@
       MODULE shapiro_mod
 !
 !git $Id$
-!svn $Id: shapiro.F 1151 2023-02-09 03:08:53Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group         Kate Hedstrom   !
+!  Copyright (c) 2002-2025 The ROMS Group              Kate Hedstrom   !
 !    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                                              !
+!    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
 !  This package contains shapiro filter routines for order 2 and       !

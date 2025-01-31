@@ -2,11 +2,10 @@
       MODULE close_io_mod
 !
 !git $Id$
-!svn $Id: close_io.F 1151 2023-02-09 03:08:53Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2025 The ROMS Group                              !
 !    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                                              !
+!    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
 !  This module closes input and output files using either the standard !
@@ -441,11 +440,11 @@
 !  Close ROMS standard outpu file.
 !-----------------------------------------------------------------------
 !
-      CALL my_flush (stdout)
+      FLUSH (stdout)
       CLOSE (stdout)
 #endif
 !
- 10   FORMAT (/,' ROMS/TOMS - Output NetCDF summary for Grid ',         &
+ 10   FORMAT (/,' ROMS - Output NetCDF summary for Grid ',              &
      &        i2.2,':')
  20   FORMAT (13x,'number of time records written in ',                 &
      &        a,' file = ',i0)
@@ -453,7 +452,7 @@
  40   FORMAT (/,a,i0,/)
  50   FORMAT (/,' MAIN: Abnormal termination: BLOWUP.',/,               &
      &          ' REASON: ',a)
- 60   FORMAT (/,' ROMS/TOMS: DONE... ',a)
+ 60   FORMAT (/,' ROMS: DONE... ',a)
  70   FORMAT (/,' ERROR: Abnormal termination: NetCDF INPUT.',/,        &
      &          ' REASON: ',a)
  80   FORMAT (/,' ERROR: Abnormal termination: NetCDF OUTPUT.',/,       &

@@ -1,11 +1,10 @@
       MODULE roms_kernel_mod
 !
 !git $Id$
-!svn $Id: r4dvar_roms.h 1166 2023-05-17 20:11:58Z arango $
 !=================================================== Andrew M. Moore ===
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group      Hernan G. Arango   !
+!  Copyright (c) 2002-2025 The ROMS Group           Hernan G. Arango   !
 !    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                                              !
+!    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
 !  ROMS Strong/Weak Constraint 4-Dimensional Variational Data          !
@@ -69,6 +68,7 @@
 # endif
 #endif
       USE stats_modobs_mod,  ONLY : stats_modobs
+      USE stdout_mod,        ONLY : Set_StdOutUnit, stdout_unit
       USE strings_mod,       ONLY : FoundError
       USE wrt_dai_mod,       ONLY : wrt_dai
       USE wrt_rst_mod,       ONLY : wrt_rst
@@ -140,6 +140,19 @@
 !  independent from standard input parameters.
 !
         CALL initialize_parallel
+!
+!  Set the ROMS standard output unit to write verbose execution info.
+!  Notice that the default standard out unit in Fortran is 6.
+!
+!  In some applications like coupling or disjointed mpi-communications,
+!  it is advantageous to write standard output to a specific filename
+!  instead of the default Fortran standard output unit 6. If that is
+!  the case, it opens such formatted file for writing.
+!
+        IF (Set_StdOutUnit) THEN
+          stdout=stdout_unit(Master)
+          Set_StdOutUnit=.FALSE.
+        END IF
 !
 !  Read in model tunable parameters from standard input. Allocate and
 !  initialize variables in several modules after the number of nested
@@ -218,6 +231,12 @@
 !-----------------------------------------------------------------------
 !
       DO ng=1,Ngrids
+#ifdef STD_MODEL
+        LdefSTD(ng)=.TRUE.
+        LwrtSTD(ng)=.TRUE.
+#else
+        LreadSTD(ng)=.TRUE.
+#endif
         CALL prior_error (ng)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         SetGridConfig(ng)=.FALSE.

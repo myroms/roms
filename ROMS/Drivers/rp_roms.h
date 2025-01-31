@@ -1,16 +1,15 @@
       MODULE roms_kernel_mod
 !
 !git $Id$
-!svn $Id: rp_roms.h 1166 2023-05-17 20:11:58Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2025 The ROMS Group                              !
 !    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                                              !
+!    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
-!  ROMS/TOMS Representers Tangent Linear Model Driver:                 !
+!  ROMS Representers Tangent Linear Model Driver:                      !
 !                                                                      !
-!  This driver executes ROMS/TOMS representers tangent linear model.   !
+!  This driver executes ROMS representers tangent linear model.        !
 !  It controls the initialization, time-stepping,  and finalization    !
 !  of the representers model execution following ESMF conventions:     !
 !                                                                      !
@@ -37,6 +36,7 @@
       USE mct_coupler_mod,   ONLY : initialize_ocn2wav_coupling
 # endif
 #endif
+      USE stdout_mod,        ONLY : Set_StdOutUnit, stdout_unit
       USE strings_mod,       ONLY : FoundError
       USE wrt_rst_mod,       ONLY : wrt_rst
 !
@@ -52,7 +52,7 @@
 !
 !=======================================================================
 !                                                                      !
-!  This routine allocates and initializes ROMS/TOMS state variables    !
+!  This routine allocates and initializes ROMS state variables         !
 !  and internal and external parameters.                               !
 !                                                                      !
 !=======================================================================
@@ -107,6 +107,19 @@
 !  independent from standard input parameters.
 !
         CALL initialize_parallel
+!
+!  Set the ROMS standard output unit to write verbose execution info.
+!  Notice that the default standard out unit in Fortran is 6.
+!
+!  In some applications like coupling or disjointed mpi-communications,
+!  it is advantageous to write standard output to a specific filename
+!  instead of the default Fortran standard output unit 6. If that is
+!  the case, it opens such formatted file for writing.
+!
+        IF (Set_StdOutUnit) THEN
+          stdout=stdout_unit(Master)
+          Set_StdOutUnit=.FALSE.
+        END IF
 !
 !  Read in model tunable parameters from standard input. Allocate and
 !  initialize variables in several modules after the number of nested
@@ -234,7 +247,7 @@
 !
 !=======================================================================
 !                                                                      !
-!  This routine runs ROMS/TOMS representers tangent linear model for   !
+!  This routine runs ROMS representers tangent linear model for        !
 !  the specified time interval (seconds), RunInterval.                 !
 !                                                                      !
 !=======================================================================
@@ -270,7 +283,7 @@
 
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
- 10   FORMAT (/,1x,a,1x,'ROMS/TOMS: started time-stepping:',            &
+ 10   FORMAT (/,1x,a,1x,'ROMS: started time-stepping:',                 &
      &        ' (Grid: ',i2.2,' TimeSteps: ',i8.8,' - ',i8.8,')',/)
 !
       RETURN
@@ -280,7 +293,7 @@
 !
 !=======================================================================
 !                                                                      !
-!  This routine terminates ROMS/TOMS representers model execution.     !
+!  This routine terminates ROMS representers model execution.          !
 !                                                                      !
 !=======================================================================
 !

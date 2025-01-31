@@ -2,11 +2,10 @@
       MODULE mod_forces
 !
 !git $Id$
-!svn $Id: mod_forces.F 1151 2023-02-09 03:08:53Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2025 The ROMS Group                              !
 !    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                                              !
+!    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
 !  Surface momentum stresses.                                          !
@@ -32,11 +31,17 @@
 !  Hwave        Surface wind induced wave height (m).                  !
 !  HwaveG       Latest two-time snapshots of input "Hwave" grided      !
 !                 data used for interpolation.                         !
-!  Dwave        Surface wind induced wave direction (radians).         !
+!  Dwave        Surface wind induced mean wave direction (radians).    !
 !  DwaveG       Latest two-time snapshots of input "Dwave" grided      !
+!                 data used for interpolation.                         !
+!  Dwavep       Surface wind induced peak wave direction (radians).    !
+!  DwavepG      Latest two-time snapshots of input "Dwavep" grided     !
 !                 data used for interpolation.                         !
 !  Lwave        Mean surface wavelength read in from swan output       !
 !  LwaveG       Latest two-time snapshots of input "Lwave" grided      !
+!                 data used for interpolation.                         !
+!  Lwavep       Peak surface wavelength read in from swan output       !
+!  LwavepG      Latest two-time snapshots of input "Lwavep" grided     !
 !                 data used for interpolation.                         !
 !  Pwave_top    Wind induced surface wave period (s).                  !
 !  Pwave_topG   Latest two-time snapshots of input "Pwave_top" grided  !
@@ -44,15 +49,14 @@
 !  Pwave_bot    Wind induced bottom wave period (s).                   !
 !  Pwave_botG   Latest two-time snapshots of input "Pwave_bot" grided  !
 !                 data used for interpolation.                         !
-!  Ub_swan      Bottom orbital velocity read in from swan output       !
-!  Ub_swanG     Latest two-time snapshots of input "Ub_swan" grided    !
+!  Uwave_rms    Bottom orbital velocity read in from swan output       !
+!  Uwave_rmsG   Latest two-time snapshots of input "Uwave_rms" grided  !
 !                 data used for interpolation.                         !
-!  wave_dissip  Wave dissipation                                       !
-!  wave_dissipG Latest two-time snapshots of input "wave_dissip"       !
-!                 gridded data used for interpolation.                 !
 !  Wave_break   Percent of wave breaking for use with roller model.    !
 !  Wave_breakG  Latest two-time snapshots of input "wave_break"        !
 !                 gridded data used for interpolation.                 !
+!  Wave_ds      Wave directional spreading.                            !
+!  Wave_qp      Wave spectrum peakedness.                              !
 !                                                                      !
 !  Solar shortwave radiation flux.                                     !
 !                                                                      !
@@ -129,6 +133,19 @@
 !                                                                      !
 !  tflux        Surface tracer flux adjustments (:,:,Nfrec,2,itrc)     !
 #endif
+#if defined ICE_MODEL && defined ICE_BULK_FLUXES && defined BULK_FLUXES
+!                                                                      !
+!  Seaice fluxes.                                                      !
+!                                                                      !
+!  Qnet_ai      Surface net heat flux at the Air/Ice inteface          !
+!  Qnet_ao      Surface net heat flux at the Air/Ocean inteface        !
+!  snow         Snow fall rate on ice                                  !
+!  srflx_ice    Shortwave radiation flux on ice                        !
+!  sustr_ai     Surface U-momentum stress at the Air/Ice interface     !
+!  svstr_ai     Surface V-momentum stress at the Air/Ice interface     !
+!  sustr_ao     Surface U-momentum stress at the Air/Ocean interface   !
+!  svstr_ao     Surface V-momentum stress at the Air/Ocean interface   !
+#endif
 !                                                                      !
 !  Bottom tracer fluxes.                                               !
 !                                                                      !
@@ -200,8 +217,8 @@
 #endif
           real(r8), pointer :: bustr(:,:)
           real(r8), pointer :: bvstr(:,:)
-
-#if defined BULK_FLUXES || defined ECOSIM || defined ATM_PRESS
+#if defined BULK_FLUXES    || defined ECOSIM || defined ATM_PRESS || \
+    defined SPECTRAL_LIGHT
           real(r8), pointer :: Pair(:,:)
 # ifndef ANA_PAIR
           real(r8), pointer :: PairG(:,:,:)
@@ -212,6 +229,13 @@
           real(r8), pointer :: Dwave(:,:)
 # ifndef ANA_WWAVE
           real(r8), pointer :: DwaveG(:,:,:)
+# endif
+#endif
+
+#ifdef WAVES_DIRP
+          real(r8), pointer :: Dwavep(:,:)
+# ifndef ANA_WWAVE
+          real(r8), pointer :: DwavepG(:,:,:)
 # endif
 #endif
 
@@ -229,6 +253,13 @@
 # endif
 #endif
 
+#ifdef WAVES_LENGTHP
+          real(r8), pointer :: Lwavep(:,:)
+# ifndef ANA_WWAVE
+          real(r8), pointer :: LwavepG(:,:,:)
+# endif
+#endif
+
 #ifdef WAVES_TOP_PERIOD
           real(r8), pointer :: Pwave_top(:,:)
 # ifndef ANA_WWAVE
@@ -243,25 +274,62 @@
 # endif
 #endif
 
-#if defined BBL_MODEL || defined WAV_COUPLING
-          real(r8), pointer :: Ub_swan(:,:)
+#if defined BBL_MODEL    || defined SED_BEDLOAD_VANDERA || \
+    defined WAV_COUPLING
+          real(r8), pointer :: Uwave_rms(:,:)
 # ifndef ANA_WWAVE
-          real(r8), pointer :: Ub_swanG(:,:,:)
+          real(r8), pointer :: Uwave_rmsG(:,:,:)
 # endif
 #endif
 
-#if defined TKE_WAVEDISS || defined WAV_COUPLING
-          real(r8), pointer :: wave_dissip(:,:)
+# if defined TKE_WAVEDISS   || defined WAV_COUPLING   || \
+     defined WDISS_THORGUZA || defined WDISS_CHURTHOR || \
+     defined WAVES_DISS     || defined WDISS_INWAVE
+          real(r8), pointer :: Dissip_break(:,:)
+          real(r8), pointer :: Dissip_wcap(:,:)
 # ifndef ANA_WWAVE
-          real(r8), pointer :: wave_dissipG(:,:,:)
+          real(r8), pointer :: Dissip_breakG(:,:,:)
+          real(r8), pointer :: Dissip_wcapG(:,:,:)
+# endif
+#endif
+#if defined WAV_COUPLING || (defined WEC_VF && defined BOTTOM_STREAMING)
+          real(r8), pointer :: Dissip_fric(:,:)
+# ifndef ANA_WWAVE
+          real(r8), pointer :: Dissip_fricG(:,:,:)
 # endif
 #endif
 
-#if defined SVENDSEN_ROLLER
+#if defined WEC_ROLLER
+          real(r8), pointer :: Dissip_roller(:,:)
+# ifndef ANA_WWAVE
+          real(r8), pointer :: Dissip_rollerG(:,:,:)
+# endif
+#endif
+
+#if defined ROLLER_SVENDSEN
           real(r8), pointer :: wave_break(:,:)
 # ifndef ANA_WWAVE
           real(r8), pointer :: wave_breakG(:,:,:)
 # endif
+#endif
+
+#if defined WAVES_DSPR
+          real(r8), pointer :: Wave_ds(:,:)
+          real(r8), pointer :: Wave_qp(:,:)
+# ifndef ANA_WWAVE
+          real(r8), pointer :: Wave_dsG(:,:,:)
+          real(r8), pointer :: Wave_qpG(:,:,:)
+# endif
+#endif
+
+#if defined WEC_ROLLER
+          real(r8), pointer :: rollA(:,:)
+#endif
+
+#ifdef SPECTRUM_STOKES
+          real(r8), pointer :: spec_wn(:,:,:)
+          real(r8), pointer :: spec_us(:,:,:)
+          real(r8), pointer :: spec_vs(:,:,:)
 #endif
 
 #ifdef SOLVE3D
@@ -270,6 +338,12 @@
           real(r8), pointer :: srflx(:,:)
 #  ifndef ANA_SRFLUX
           real(r8), pointer :: srflxG(:,:,:)
+#  endif
+#  ifdef ICE_ALBEDO
+          real(r8), pointer :: albedo(:,:)
+#   ifdef ICE_MODEL
+          real(r8), pointer :: albedo_ice(:,:)
+#   endif
 #  endif
 # endif
 
@@ -294,8 +368,9 @@
           real(r8), pointer :: lrflxG(:,:,:)
 # endif
 
-# if defined BULK_FLUXES || defined ECOSIM || \
-    (defined SHORTWAVE && defined ANA_SRFLUX)
+# if defined BULK_FLUXES    || defined ECOSIM      || \
+    (defined SHORTWAVE      && defined ANA_SRFLUX) || \
+     defined SPECTRAL_LIGHT
           real(r8), pointer :: Hair(:,:)
 #  ifndef ANA_HUMIDITY
           real(r8), pointer :: HairG(:,:,:)
@@ -306,7 +381,8 @@
 #  endif
 # endif
 
-# if defined BULK_FLUXES || defined ECOSIM
+# if defined BULK_FLUXES    || defined ECOSIM || \
+     defined SPECTRAL_LIGHT
           real(r8), pointer :: Uwind(:,:)
           real(r8), pointer :: Vwind(:,:)
 #  ifndef ANA_WINDS
@@ -323,6 +399,18 @@
 #  ifdef EMINUSP
           real(r8), pointer :: evap(:,:)
 #  endif
+# endif
+
+# if defined ICE_MODEL       && \
+     defined ICE_BULK_FLUXES && defined BULK_FLUXES
+          real(r8), pointer :: Qnet_ai(:,:)
+          real(r8), pointer :: Qnet_ao(:,:)
+          real(r8), pointer :: srflx_ice(:,:)
+          real(r8), pointer :: sustr_ao(:,:)
+          real(r8), pointer :: svstr_ao(:,:)
+          real(r8), pointer :: sustr_ai(:,:)
+          real(r8), pointer :: svstr_ai(:,:)
+          real(r8), pointer :: snow(:,:)
 # endif
 
           real(r8), pointer :: stflux(:,:,:)
@@ -358,7 +446,7 @@
 #  endif
 # endif
 
-# ifdef ECOSIM
+# if defined ECOSIM || defined SPECTRAL_LIGHT
           real(r8), pointer :: SpecIr(:,:,:)
           real(r8), pointer :: avcos(:,:,:)
 # endif
@@ -531,7 +619,8 @@
       allocate ( FORCES(ng) % bvstr(LBi:UBi,LBj:UBj) )
       Dmem(ng)=Dmem(ng)+size2d
 
-#if defined BULK_FLUXES || defined ECOSIM || defined ATM_PRESS
+#if defined BULK_FLUXES    || defined ECOSIM || defined ATM_PRESS || \
+    defined SPECTRAL_LIGHT
       allocate ( FORCES(ng) % Pair(LBi:UBi,LBj:UBj) )
       Dmem(ng)=Dmem(ng)+size2d
 # ifndef ANA_PAIR
@@ -545,6 +634,15 @@
       Dmem(ng)=Dmem(ng)+size2d
 # ifndef ANA_WWAVE
       allocate ( FORCES(ng) % DwaveG(LBi:UBi,LBj:UBj,2) )
+      Dmem(ng)=Dmem(ng)+2.0_r8*size2d
+# endif
+#endif
+
+#ifdef WAVES_DIRP
+      allocate ( FORCES(ng) % Dwavep(LBi:UBi,LBj:UBj) )
+      Dmem(ng)=Dmem(ng)+size2d
+# ifndef ANA_WWAVE
+      allocate ( FORCES(ng) % DwavepG(LBi:UBi,LBj:UBj,2) )
       Dmem(ng)=Dmem(ng)+2.0_r8*size2d
 # endif
 #endif
@@ -563,6 +661,15 @@
       Dmem(ng)=Dmem(ng)+size2d
 # ifndef ANA_WWAVE
       allocate ( FORCES(ng) % LwaveG(LBi:UBi,LBj:UBj,2) )
+      Dmem(ng)=Dmem(ng)+2.0_r8*size2d
+# endif
+#endif
+
+#ifdef WAVES_LENGTHP
+      allocate ( FORCES(ng) % Lwavep(LBi:UBi,LBj:UBj) )
+      Dmem(ng)=Dmem(ng)+size2d
+# ifndef ANA_WWAVE
+      allocate ( FORCES(ng) % LwavepG(LBi:UBi,LBj:UBj,2) )
       Dmem(ng)=Dmem(ng)+2.0_r8*size2d
 # endif
 #endif
@@ -586,30 +693,81 @@
 #endif
 
 #if defined BBL_MODEL || defined WAV_COUPLING
-      allocate ( FORCES(ng) % Ub_swan(LBi:UBi,LBj:UBj) )
+      allocate ( FORCES(ng) % Uwave_rms(LBi:UBi,LBj:UBj) )
       Dmem(ng)=Dmem(ng)+size2d
 # ifndef ANA_WWAVE
-      allocate ( FORCES(ng) % Ub_swanG(LBi:UBi,LBj:UBj,2) )
+      allocate ( FORCES(ng) % Uwave_rmsG(LBi:UBi,LBj:UBj,2) )
       Dmem(ng)=Dmem(ng)+2.0_r8*size2d
 # endif
 #endif
 
-#if defined TKE_WAVEDISS || defined WAV_COUPLING
-      allocate ( FORCES(ng) % wave_dissip(LBi:UBi,LBj:UBj) )
+#if defined TKE_WAVEDISS   || defined WAV_COUPLING   || \
+    defined WDISS_THORGUZA || defined WDISS_CHURTHOR || \
+    defined WAVES_DISS     || defined WDISS_INWAVE
+      allocate ( FORCES(ng) % Dissip_break(LBi:UBi,LBj:UBj) )
+      Dmem(ng)=Dmem(ng)+size2d
+      allocate ( FORCES(ng) % Dissip_wcap(LBi:UBi,LBj:UBj) )
       Dmem(ng)=Dmem(ng)+size2d
 # ifndef ANA_WWAVE
-      allocate ( FORCES(ng) % Wave_dissipG(LBi:UBi,LBj:UBj,2) )
+      allocate ( FORCES(ng) % Dissip_breakG(LBi:UBi,LBj:UBj,2) )
+      Dmem(ng)=Dmem(ng)+2.0_r8*size2d
+      allocate ( FORCES(ng) % Dissip_wcapG(LBi:UBi,LBj:UBj,2) )
       Dmem(ng)=Dmem(ng)+2.0_r8*size2d
 # endif
 #endif
 
-#if defined SVENDSEN_ROLLER
+#if defined WAV_COUPLING || (defined WEC_VF && defined BOTTOM_STREAMING)
+      allocate ( FORCES(ng) % Dissip_fric(LBi:UBi,LBj:UBj) )
+      Dmem(ng)=Dmem(ng)+size2d
+# ifndef ANA_WWAVE
+      allocate ( FORCES(ng) % Dissip_fricG(LBi:UBi,LBj:UBj,2) )
+      Dmem(ng)=Dmem(ng)+2.0_r8*size2d
+# endif
+#endif
+
+#if defined WEC_ROLLER
+      allocate ( FORCES(ng) % Dissip_roller(LBi:UBi,LBj:UBj) )
+      Dmem(ng)=Dmem(ng)+size2d
+# ifndef ANA_WWAVE
+      allocate ( FORCES(ng) % Dissip_rollerG(LBi:UBi,LBj:UBj,2) )
+      Dmem(ng)=Dmem(ng)+2.0_r8*size2d
+# endif
+#endif
+
+#if defined ROLLER_SVENDSEN
       allocate ( FORCES(ng) % wave_break(LBi:UBi,LBj:UBj) )
       Dmem(ng)=Dmem(ng)+size2d
 # ifndef ANA_WWAVE
       allocate ( FORCES(ng) % Wave_breakG(LBi:UBi,LBj:UBj,2) )
       Dmem(ng)=Dmem(ng)+2.0_r8*size2d
 # endif
+#endif
+
+#if defined WAVES_DSPR
+      allocate ( FORCES(ng) % Wave_ds(LBi:UBi,LBj:UBj) )
+      Dmem(ng)=Dmem(ng)+size2d
+      allocate ( FORCES(ng) % Wave_qp(LBi:UBi,LBj:UBj) )
+      Dmem(ng)=Dmem(ng)+size2d
+# ifndef ANA_WWAVE
+      allocate ( FORCES(ng) % Wave_dsG(LBi:UBi,LBj:UBj,2) )
+      Dmem(ng)=Dmem(ng)+2.0_r8*size2d
+      allocate ( FORCES(ng) % Wave_qpG(LBi:UBi,LBj:UBj,2) )
+      Dmem(ng)=Dmem(ng)+2.0_r8*size2d
+# endif
+#endif
+
+#if defined WEC_ROLLER
+      allocate ( FORCES(ng) % rollA(LBi:UBi,LBj:UBj) )
+      Dmem(ng)=Dmem(ng)+size2d
+#endif
+
+#ifdef SPECTRUM_STOKES
+      allocate ( FORCES(ng) % spec_wn(LBi:UBi,LBj:UBj,MSCs) )
+      Dmem(ng)=Dmem(ng)+size2d*REAL(MSCs,r8)
+      allocate ( FORCES(ng) % spec_us(LBi:UBi,LBj:UBj,MSCs) )
+      Dmem(ng)=Dmem(ng)+size2d*REAL(MSCs,r8)
+      allocate ( FORCES(ng) % spec_vs(LBi:UBi,LBj:UBj,MSCs) )
+      Dmem(ng)=Dmem(ng)+size2d*REAL(MSCs,r8)
 #endif
 
 #ifdef SOLVE3D
@@ -621,6 +779,14 @@
 #  ifndef ANA_SRFLUX
       allocate ( FORCES(ng) % srflxG(LBi:UBi,LBj:UBj,2) )
       Dmem(ng)=Dmem(ng)+size2d
+#  endif
+#  ifdef ICE_ALBEDO
+      allocate ( FORCES(ng) % albedo(LBi:UBi,LBj:UBj) )
+      Dmem(ng)=Dmem(ng)+size2d
+#   ifdef ICE_MODEL
+      allocate ( FORCES(ng) % albedo_ice(LBi:UBi,LBj:UBj) )
+      Dmem(ng)=Dmem(ng)+size2d
+#   endif
 #  endif
 # endif
 
@@ -658,8 +824,9 @@
       Dmem(ng)=Dmem(ng)+2.0_r8*size2d
 # endif
 
-# if defined BULK_FLUXES || defined ECOSIM || \
-    (defined SHORTWAVE && defined ANA_SRFLUX)
+# if defined BULK_FLUXES    || defined ECOSIM      || \
+    (defined SHORTWAVE      && defined ANA_SRFLUX) || \
+     defined SPECTRAL_LIGHT
       allocate ( FORCES(ng) % Hair(LBi:UBi,LBj:UBj) )
       Dmem(ng)=Dmem(ng)+size2d
 
@@ -677,7 +844,8 @@
 #  endif
 # endif
 
-# if defined BULK_FLUXES || defined ECOSIM
+# if defined BULK_FLUXES    || defined ECOSIM || \
+     defined SPECTRAL_LIGHT
       allocate ( FORCES(ng) % Uwind(LBi:UBi,LBj:UBj) )
       Dmem(ng)=Dmem(ng)+size2d
 
@@ -706,6 +874,32 @@
       allocate ( FORCES(ng) % evap(LBi:UBi,LBj:UBj) )
       Dmem(ng)=Dmem(ng)+size2d
 #  endif
+# endif
+
+# if defined ICE_MODEL && defined ICE_BULK_FLUXES && defined BULK_FLUXES
+      allocate ( FORCES(ng) % Qnet_ai(LBi:UBi,LBj:UBj) )
+      Dmem(ng)=Dmem(ng)+size2d
+
+      allocate ( FORCES(ng) % Qnet_ao(LBi:UBi,LBj:UBj) )
+      Dmem(ng)=Dmem(ng)+size2d
+
+      allocate ( FORCES(ng) % snow(LBi:UBi,LBj:UBj) )
+      Dmem(ng)=Dmem(ng)+size2d
+
+      allocate ( FORCES(ng) % srflx_ice(LBi:UBi,LBj:UBj) )
+      Dmem(ng)=Dmem(ng)+size2d
+
+      allocate ( FORCES(ng) % sustr_ao(LBi:UBi,LBj:UBj) )
+      Dmem(ng)=Dmem(ng)+size2d
+
+      allocate ( FORCES(ng) % svstr_ao(LBi:UBi,LBj:UBj) )
+      Dmem(ng)=Dmem(ng)+size2d
+
+      allocate ( FORCES(ng) % sustr_ai(LBi:UBi,LBj:UBj) )
+      Dmem(ng)=Dmem(ng)+size2d
+
+      allocate ( FORCES(ng) % svstr_ai(LBi:UBi,LBj:UBj) )
+      Dmem(ng)=Dmem(ng)+size2d
 # endif
 
       allocate ( FORCES(ng) % stflux(LBi:UBi,LBj:UBj,NT(ng)) )
@@ -766,7 +960,7 @@
 #  endif
 # endif
 
-# ifdef ECOSIM
+# if defined ECOSIM || defined SPECTRAL_LIGHT
       allocate ( FORCES(ng) % SpecIr(LBi:UBi,LBj:UBj,NBands) )
       Dmem(ng)=Dmem(ng)+REAL(NBands,r8)*size2d
 
@@ -1003,7 +1197,8 @@
       IF (.not.destroy(ng, FORCES(ng)%bvstr, MyFile,                    &
      &                 __LINE__, 'FORCES(ng)%bvstr')) RETURN
 
-# if defined BULK_FLUXES || defined ECOSIM || defined ATM_PRESS
+# if defined BULK_FLUXES    || defined ECOSIM || defined ATM_PRESS || \
+     defined SPECTRAL_LIGHT
       IF (.not.destroy(ng, FORCES(ng)%Pair, MyFile,                     &
      &                 __LINE__, 'FORCES(ng)%Pair')) RETURN
 #  ifndef ANA_PAIR
@@ -1018,6 +1213,15 @@
 #  ifndef ANA_WWAVE
       IF (.not.destroy(ng, FORCES(ng)%DwaveG, MyFile,                   &
      &                 __LINE__, 'FORCES(ng)%DwaveG')) RETURN
+#  endif
+# endif
+
+# ifdef WAVES_DIRP
+      IF (.not.destroy(ng, FORCES(ng)%Dwavep, MyFile,                   &
+     &                 __LINE__, 'FORCES(ng)%Dwavep')) RETURN
+#  ifndef ANA_WWAVE
+      IF (.not.destroy(ng, FORCES(ng)%DwavepG, MyFile,                  &
+     &                 __LINE__, 'FORCES(ng)%DwavepG')) RETURN
 #  endif
 # endif
 
@@ -1039,6 +1243,15 @@
 #  endif
 # endif
 
+# ifdef WAVES_LENGTHP
+      IF (.not.destroy(ng, FORCES(ng)%Lwavep, MyFile,                   &
+     &                 __LINE__, 'FORCES(ng)%Lwavep')) RETURN
+#  ifndef ANA_WWAVE
+      IF (.not.destroy(ng, FORCES(ng)%LwavepG, MyFile,                  &
+     &                 __LINE__, 'FORCES(ng)%LwavepG')) RETURN
+#  endif
+# endif
+
 # ifdef WAVES_TOP_PERIOD
       IF (.not.destroy(ng, FORCES(ng)%Pwave_top, MyFile,                &
      &                 __LINE__, 'FORCES(ng)%Pwave_top')) RETURN
@@ -1057,31 +1270,81 @@
 #  endif
 # endif
 
-# if defined BBL_MODEL || defined WAV_COUPLING
-      IF (.not.destroy(ng, FORCES(ng)%Ub_swan, MyFile,                  &
-     &                 __LINE__, 'FORCES(ng)%Ub_swan')) RETURN
+# if defined BBL_MODEL    || defined SED_BEDLOAD_VANDERA || \
+     defined WAV_COUPLING
+      IF (.not.destroy(ng, FORCES(ng)%Uwave_rms, MyFile,                &
+     &                 __LINE__, 'FORCES(ng)%Uwave_rms')) RETURN
 #  ifndef ANA_WWAVE
-      IF (.not.destroy(ng, FORCES(ng)%Ub_swanG, MyFile,                 &
-     &                 __LINE__, 'FORCES(ng)%Ub_swanG')) RETURN
+      IF (.not.destroy(ng, FORCES(ng)%Uwave_rmsG, MyFile,               &
+     &                 __LINE__, 'FORCES(ng)%Uwave_rmsG')) RETURN
 #  endif
 # endif
 
-# if defined TKE_WAVEDISS || defined WAV_COUPLING
-      IF (.not.destroy(ng, FORCES(ng)%wave_dissip, MyFile,              &
-     &                 __LINE__, 'FORCES(ng)%wave_dissip')) RETURN
+# if defined TKE_WAVEDISS   || defined WAV_COUPLING   || \
+     defined WDISS_THORGUZA || defined WDISS_CHURTHOR || \
+     defined WAVES_DISS     || defined WDISS_INWAVE
+      IF (.not.destroy(ng, FORCES(ng)%Dissip_break, MyFile,             &
+     &                 __LINE__, 'FORCES(ng)%Dissip_break')) RETURN
+      IF (.not.destroy(ng, FORCES(ng)%Dissip_wcap, MyFile,              &
+     &                 __LINE__, 'FORCES(ng)%Dissip_wcap')) RETURN
 #  ifndef ANA_WWAVE
-      IF (.not.destroy(ng, FORCES(ng)%Wave_dissipG, MyFile,             &
-     &                 __LINE__, 'FORCES(ng)%Wave_dissipG')) RETURN
+      IF (.not.destroy(ng, FORCES(ng)%Dissip_breakG, MyFile,            &
+     &                 __LINE__, 'FORCES(ng)%Dissip_breakG')) RETURN
+      IF (.not.destroy(ng, FORCES(ng)%Dissip_wcapG, MyFile,             &
+     &                 __LINE__, 'FORCES(ng)%Dissip_wcapG')) RETURN
+#  endif
+# endif
+# if defined WAV_COUPLING || (defined WEC_VF && defined BOTTOM_STREAMING)
+      IF (.not.destroy(ng, FORCES(ng)%Dissip_fric, MyFile,              &
+     &                 __LINE__, 'FORCES(ng)%Dissip_fric')) RETURN
+#  ifndef ANA_WWAVE
+      IF (.not.destroy(ng, FORCES(ng)%Dissip_fricG, MyFile,             &
+     &                 __LINE__, 'FORCES(ng)%Dissip_fricG')) RETURN
 #  endif
 # endif
 
-# if defined SVENDSEN_ROLLER
+# if defined WEC_ROLLER
+      IF (.not.destroy(ng, FORCES(ng)%Dissip_roller, MyFile,            &
+     &                 __LINE__, 'FORCES(ng)%Dissip_roller')) RETURN
+      IF (.not.destroy(ng, FORCES(ng)%rollA, MyFile,                    &
+     &                 __LINE__, 'FORCES(ng)%rollA')) RETURN
+#  ifndef ANA_WWAVE
+      IF (.not.destroy(ng, FORCES(ng)%Dissip_rollerG, MyFile,           &
+     &                 __LINE__, 'FORCES(ng)%Dissip_rollerG')) RETURN
+      IF (.not.destroy(ng, FORCES(ng)%rollAG, MyFile,                   &
+     &                 __LINE__, 'FORCES(ng)%rollAG')) RETURN
+#  endif
+# endif
+
+# if defined ROLLER_SVENDSEN
       IF (.not.destroy(ng, FORCES(ng)%wave_break, MyFile,               &
      &                 __LINE__, 'FORCES(ng)%wave_break')) RETURN
 #  ifndef ANA_WWAVE
       IF (.not.destroy(ng, FORCES(ng)%Wave_breakG, MyFile,              &
      &                 __LINE__, 'FORCES(ng)%Wave_breakG')) RETURN
 #  endif
+# endif
+
+# if defined WAVES_DSPR
+      IF (.not.destroy(ng, FORCES(ng)%Wave_ds, MyFile,                  &
+     &                 __LINE__, 'FORCES(ng)%Wave_ds')) RETURN
+      IF (.not.destroy(ng, FORCES(ng)%Wave_qp, MyFile,                  &
+     &                 __LINE__, 'FORCES(ng)%Wave_qp')) RETURN
+#  ifndef ANA_WWAVE
+      IF (.not.destroy(ng, FORCES(ng)%Wave_dsG, MyFile,                 &
+     &                 __LINE__, 'FORCES(ng)%Wwave_dsG')) RETURN
+      IF (.not.destroy(ng, FORCES(ng)%Wave_qpG, MyFile,                 &
+     &                 __LINE__, 'FORCES(ng)%Wave_qpG')) RETURN
+#  endif
+# endif
+
+# ifdef SPECTRUM_STOKES
+      IF (.not.destroy(ng, FORCES(ng)%spec_wn, MyFile,                  &
+     &                 __LINE__, 'FORCES(ng)%spec_wn')) RETURN
+      IF (.not.destroy(ng, FORCES(ng)%spec_us, MyFile,                  &
+     &                 __LINE__, 'FORCES(ng)%spec_us')) RETURN
+      IF (.not.destroy(ng, FORCES(ng)%spec_vs, MyFile,                  &
+     &                 __LINE__, 'FORCES(ng)%spec_vs')) RETURN
 # endif
 
 # ifdef SOLVE3D
@@ -1092,6 +1355,15 @@
 #   ifndef ANA_SRFLUX
       IF (.not.destroy(ng, FORCES(ng)%srflxG, MyFile,                   &
      &                 __LINE__, 'FORCES(ng)%srflxG')) RETURN
+#   endif
+
+#   ifdef ICE_ALBEDO
+      IF (.not.destroy(ng, FORCES(ng)%albedo, MyFile,                   &
+     &                 __LINE__, 'FORCES(ng)%albedo')) RETURN
+#    ifdef ICE_MODEL
+      IF (.not.destroy(ng, FORCES(ng)%albedo_ice, MyFile,               &
+     &                 __LINE__, 'FORCES(ng)%albedo_ice')) RETURN
+#    endif
 #   endif
 #  endif
 
@@ -1128,8 +1400,9 @@
      &                 __LINE__, 'FORCES(ng)%lrflxG')) RETURN
 #  endif
 
-#  if defined BULK_FLUXES || defined ECOSIM || \
-     (defined SHORTWAVE && defined ANA_SRFLUX)
+# if defined BULK_FLUXES    || defined ECOSIM      || \
+    (defined SHORTWAVE      && defined ANA_SRFLUX) || \
+     defined SPECTRAL_LIGHT
       IF (.not.destroy(ng, FORCES(ng)%Hair, MyFile,                     &
      &                 __LINE__, 'FORCES(ng)%Hair')) RETURN
 
@@ -1147,7 +1420,8 @@
 #   endif
 #  endif
 
-#  if defined BULK_FLUXES || defined ECOSIM
+#  if defined BULK_FLUXES    || defined ECOSIM || \
+      defined SPECTRAL_LIGHT
       IF (.not.destroy(ng, FORCES(ng)%Uwind, MyFile,                    &
      &                 __LINE__, 'FORCES(ng)%Uwind')) RETURN
 
@@ -1176,6 +1450,33 @@
       IF (.not.destroy(ng, FORCES(ng)%evap, MyFile,                     &
      &                 __LINE__, 'FORCES(ng)%evap')) RETURN
 #   endif
+#  endif
+
+#  if defined ICE_MODEL       && \
+      defined ICE_BULK_FLUXES && defined BULK_FLUXES
+      IF (.not.destroy(ng, FORCES(ng)%Qnet_ai, MyFile,                  &
+     &                 __LINE__, 'FORCES(ng)%Qnet_ai')) RETURN
+
+      IF (.not.destroy(ng, FORCES(ng)%Qnet_ao, MyFile,                  &
+     &                 __LINE__, 'FORCES(ng)%Qnet_ao')) RETURN
+
+      IF (.not.destroy(ng, FORCES(ng)%snow, MyFile,                     &
+     &                 __LINE__, 'FORCES(ng)%snow')) RETURN
+
+      IF (.not.destroy(ng, FORCES(ng)%srflx_ice, MyFile,                &
+     &                 __LINE__, 'FORCES(ng)%srflx_ice')) RETURN
+
+      IF (.not.destroy(ng, FORCES(ng)%sustr_ai, MyFile,                 &
+     &                 __LINE__, 'FORCES(ng)%sustr_ai')) RETURN
+
+      IF (.not.destroy(ng, FORCES(ng)%svstr_ai, MyFile,                 &
+     &                 __LINE__, 'FORCES(ng)%svstr_ai')) RETURN
+
+      IF (.not.destroy(ng, FORCES(ng)%sustr_ao, MyFile,                 &
+     &                 __LINE__, 'FORCES(ng)%sustr_ao')) RETURN
+
+      IF (.not.destroy(ng, FORCES(ng)%svstr_ao, MyFile,                 &
+     &                 __LINE__, 'FORCES(ng)%svstr_ao')) RETURN
 #  endif
 
       IF (.not.destroy(ng, FORCES(ng)%stflux, MyFile,                   &
@@ -1233,7 +1534,7 @@
 #   endif
 #  endif
 
-#  ifdef ECOSIM
+#  if defined ECOSIM || defined SPECTRAL_LIGHT
       IF (.not.destroy(ng, FORCES(ng)%SpecIr, MyFile,                   &
      &                 __LINE__, 'FORCES(ng)%SpecIr')) RETURN
 
@@ -1525,7 +1826,8 @@
 #endif
             FORCES(ng) % bustr(i,j) = IniVal
             FORCES(ng) % bvstr(i,j) = IniVal
-#if defined BULK_FLUXES || defined ECOSIM || defined ATM_PRESS
+#if defined BULK_FLUXES    || defined ECOSIM || defined ATM_PRESS || \
+    defined SPECTRAL_LIGHT
             FORCES(ng) % Pair(i,j) = IniVal
 # ifndef ANA_PAIR
             FORCES(ng) % PairG(i,j,1) = IniVal
@@ -1537,6 +1839,13 @@
 # ifndef ANA_WWAVE
             FORCES(ng) % DwaveG(i,j,1) = IniVal
             FORCES(ng) % DwaveG(i,j,2) = IniVal
+# endif
+#endif
+#ifdef WAVES_DIRP
+            FORCES(ng) % Dwavep(i,j) = IniVal
+# ifndef ANA_WWAVE
+            FORCES(ng) % DwavepG(i,j,1) = IniVal
+            FORCES(ng) % DwavepG(i,j,2) = IniVal
 # endif
 #endif
 #ifdef WAVES_HEIGHT
@@ -1551,6 +1860,13 @@
 # ifndef ANA_WWAVE
             FORCES(ng) % LwaveG(i,j,1) = IniVal
             FORCES(ng) % LwaveG(i,j,2) = IniVal
+# endif
+#endif
+#ifdef WAVES_LENGTHP
+            FORCES(ng) % Lwavep(i,j) = IniVal
+# ifndef ANA_WWAVE
+            FORCES(ng) % LwavepG(i,j,1) = IniVal
+            FORCES(ng) % LwavepG(i,j,2) = IniVal
 # endif
 #endif
 #ifdef WAVES_TOP_PERIOD
@@ -1568,25 +1884,70 @@
 # endif
 #endif
 #if defined BBL_MODEL || defined WAV_COUPLING
-            FORCES(ng) % Ub_swan(i,j) = IniVal
+            FORCES(ng) % Uwave_rms(i,j) = IniVal
 # ifndef ANA_WWAVE
-            FORCES(ng) % Ub_swanG(i,j,1) = IniVal
-            FORCES(ng) % Ub_swanG(i,j,2) = IniVal
+            FORCES(ng) % Uwave_rmsG(i,j,1) = IniVal
+            FORCES(ng) % Uwave_rmsG(i,j,2) = IniVal
 # endif
 #endif
-#if defined TKE_WAVEDISS || defined WAV_COUPLING
-            FORCES(ng) % Wave_dissip(i,j) = IniVal
+
+#if defined TKE_WAVEDISS   || defined WAV_COUPLING   || \
+    defined WDISS_THORGUZA || defined WDISS_CHURTHOR || \
+    defined WAVES_DISS     || defined WDISS_INWAVE
+            FORCES(ng) % Dissip_break(i,j) = IniVal
+            FORCES(ng) % Dissip_wcap(i,j) = IniVal
 # ifndef ANA_WWAVE
-            FORCES(ng) % Wave_dissipG(i,j,1) = IniVal
-            FORCES(ng) % Wave_dissipG(i,j,2) = IniVal
+            FORCES(ng) % Dissip_breakG(i,j,1) = IniVal
+            FORCES(ng) % Dissip_breakG(i,j,2) = IniVal
+            FORCES(ng) % Dissip_wcapG(i,j,1) = IniVal
+            FORCES(ng) % Dissip_wcapG(i,j,2) = IniVal
 # endif
 #endif
-#if defined SVENDSEN_ROLLER
+#if defined WAV_COUPLING || (defined WEC_VF && defined BOTTOM_STREAMING)
+            FORCES(ng) % Dissip_fric(i,j) = IniVal
+# ifndef ANA_WWAVE
+            FORCES(ng) % Dissip_fricG(i,j,1) = IniVal
+            FORCES(ng) % Dissip_fricG(i,j,2) = IniVal
+# endif
+#endif
+
+#if defined WEC_ROLLER
+            FORCES(ng) % Dissip_roller(i,j) = IniVal
+# ifndef ANA_WWAVE
+            FORCES(ng) % Dissip_rollerG(i,j,1) = IniVal
+            FORCES(ng) % Dissip_rollerG(i,j,2) = IniVal
+# endif
+#endif
+
+#if defined ROLLER_SVENDSEN
             FORCES(ng) % Wave_break(i,j) = IniVal
 # ifndef ANA_WWAVE
             FORCES(ng) % Wave_breakG(i,j,1) = IniVal
             FORCES(ng) % Wave_breakG(i,j,2) = IniVal
 # endif
+#endif
+
+#if defined WAVES_DSPR
+            FORCES(ng) % Wave_ds(i,j) = IniVal
+            FORCES(ng) % Wave_qp(i,j) = IniVal
+# ifndef ANA_WWAVE
+            FORCES(ng) % Wave_dsG(i,j,1) = IniVal
+            FORCES(ng) % Wave_dsG(i,j,2) = IniVal
+            FORCES(ng) % Wave_qpG(i,j,1) = IniVal
+            FORCES(ng) % Wave_qpG(i,j,2) = IniVal
+# endif
+#endif
+
+#if defined WEC_ROLLER
+            FORCES(ng) % rollA(i,j) = IniVal
+#endif
+
+#ifdef SPECTRUM_STOKES
+            DO k=1,MSCs
+              FORCES(ng) % spec_wn(i,j,k) = IniVal
+              FORCES(ng) % spec_us(i,j,k) = IniVal
+              FORCES(ng) % spec_vs(i,j,k) = IniVal
+            END DO
 #endif
 
 #ifdef SOLVE3D
@@ -1595,6 +1956,12 @@
 #  ifndef ANA_SRFLUX
             FORCES(ng) % srflxG(i,j,1) = IniVal
             FORCES(ng) % srflxG(i,j,2) = IniVal
+#  endif
+#  ifdef ICE_ALBEDO
+            FORCES(ng) % albedo(i,j) = IniVal
+#   ifdef ICE_MODEL
+            FORCES(ng) % albedo_ice(i,j) = IniVal
+#   endif
 #  endif
 # endif
 # if defined RED_TIDE && defined DAILY_SHORTWAVE
@@ -1614,12 +1981,14 @@
             FORCES(ng) % lrflx(i,j) = IniVal
             FORCES(ng) % shflx(i,j) = IniVal
 # endif
-# if defined BULK_FLUXES || defined ECOSIM || \
-    (defined SHORTWAVE && defined ANA_SRFLUX)
+# if defined BULK_FLUXES    || defined ECOSIM      || \
+    (defined SHORTWAVE      && defined ANA_SRFLUX) || \
+     defined SPECTRAL_LIGHT
             FORCES(ng) % Hair(i,j) = IniVal
             FORCES(ng) % Tair(i,j) = IniVal
 # endif
-# if defined BULK_FLUXES || defined ECOSIM
+# if defined BULK_FLUXES    || defined ECOSIM || \
+     defined SPECTRAL_LIGHT
             FORCES(ng) % Uwind(i,j) = IniVal
             FORCES(ng) % Vwind(i,j) = IniVal
 # endif
@@ -1629,11 +1998,24 @@
             FORCES(ng) % evap(i,j) = IniVal
 #  endif
 # endif
+# if defined ICE_MODEL       && \
+     defined ICE_BULK_FLUXES && defined BULK_FLUXES
+            FORCES(ng) % Qnet_ai(i,j) = IniVal
+            FORCES(ng) % Qnet_ao(i,j) = IniVal
+            FORCES(ng) % snow(i,j) = IniVal
+            FORCES(ng) % srflx_ice(i,j) = IniVal
+            FORCES(ng) % sustr_ai(i,j) = IniVal
+            FORCES(ng) % svstr_ai(i,j) = IniVal
+            FORCES(ng) % sustr_ao(i,j) = IniVal
+            FORCES(ng) % svstr_ao(i,j) = IniVal
+# endif
 # if !defined LONGWAVE && defined BULK_FLUXES
             FORCES(ng) % lrflxG(i,j,1) = IniVal
             FORCES(ng) % lrflxG(i,j,2) = IniVal
 # endif
-# if defined BULK_FLUXES || defined ECOSIM
+# if defined BULK_FLUXES    || defined ECOSIM      || \
+    (defined SHORTWAVE      && defined ANA_SRFLUX) || \
+     defined SPECTRAL_LIGHT
 #  ifndef ANA_HUMIDITY
             FORCES(ng) % HairG(i,j,1) = IniVal
             FORCES(ng) % HairG(i,j,2) = IniVal
@@ -1695,7 +2077,7 @@
 # endif
               FORCES(ng) % btflx(i,j,itrc) = IniVal
             END DO
-# ifdef ECOSIM
+# if defined ECOSIM || defined SPECTRAL_LIGHT
             DO itrc=1,NBands
               FORCES(ng) % SpecIr(i,j,itrc) = IniVal
               FORCES(ng) % avcos(i,j,itrc) = IniVal

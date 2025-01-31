@@ -2,11 +2,10 @@
       MODULE inp_decode_mod
 !
 !git $Id$
-!svn $Id: inp_decode.F 1151 2023-02-09 03:08:53Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2025 The ROMS Group                              !
 !    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                                              !
+!    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
 !  This module contains several routines to process and decode ROMS    !
@@ -1630,6 +1629,9 @@
               S(ib,isFsur,igrid)%acquire = .TRUE.
             CASE ('GRA')
               S(ib,ifield,igrid)%gradient = .TRUE.
+            CASE ('MIX')
+              S(ib,ifield,igrid)%mixed   = .TRUE.
+              S(ib,ifield,igrid)%acquire = .TRUE.
             CASE ('NES')
               S(ib,ifield,igrid)%nested = .TRUE.
             CASE ('PER')

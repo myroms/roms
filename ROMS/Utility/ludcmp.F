@@ -2,11 +2,10 @@
       SUBROUTINE ludcmp (a, n, np, indx, d)
 !
 !git $Id$
-!svn $Id: ludcmp.F 1151 2023-02-09 03:08:53Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2025 The ROMS Group                              !
 !    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                                              !
+!    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
 !  Given an N x N matrix A, with physical dimension NP, this routine   !

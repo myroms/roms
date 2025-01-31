@@ -4,11 +4,10 @@
 #undef ENDPOINT_TRAPEZOIDAL
 !
 !git $Id$
-!svn $Id: time_corr.F 1151 2023-02-09 03:08:53Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group       Andrew M. Moore   !
+!  Copyright (c) 2002-2025 The ROMS Group            Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                                              !
+!    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
 !  This module performs the time correlation. It operates on the       !
@@ -448,7 +447,7 @@
 !  Write out convolved solution.
 !
           MyType=gtype
-          status=nf_fwrite2d(ng, model, TLF(ng)%ncid,                   &
+          status=nf_fwrite2d(ng, model, TLF(ng)%ncid, idZtlf,           &
      &                       TLF(ng)%Vid(idZtlf),                       &
      &                       Iout, MyType,                              &
      &                       LBi, UBi, LBj, UBj, scale,                 &
@@ -515,7 +514,7 @@
 !  Write out convolved solution.
 !
           MyType=gtype
-          status=nf_fwrite2d(ng, model, TLF(ng)%ncid,                   &
+          status=nf_fwrite2d(ng, model, TLF(ng)%ncid, idUbtf,           &
      &                       TLF(ng)%Vid(idUbtf),                       &
      &                       Iout, MyType,                              &
      &                       LBi, UBi, LBj, UBj, scale,                 &
@@ -581,7 +580,7 @@
 !
 !  Write out convolved solution.
 !
-          status=nf_fwrite2d(ng, model, TLF(ng)%ncid,                   &
+          status=nf_fwrite2d(ng, model, TLF(ng)%ncid, idVbtf,           &
      &                       TLF(ng)%Vid(idVbtf),                       &
      &                       Iout, MyType,                              &
      &                       LBi, UBi, LBj, UBj, scale,                 &
@@ -653,7 +652,7 @@
 !
 !  Write out convolved solution.
 !
-          status=nf_fwrite3d(ng, model, TLF(ng)%ncid,                   &
+          status=nf_fwrite3d(ng, model, TLF(ng)%ncid, idUtlf,           &
      &                       TLF(ng)%Vid(idUtlf),                       &
      &                       Iout, MyType,                              &
      &                       LBi, UBi, LBj, UBj, 1, N(ng), scale,       &
@@ -723,7 +722,7 @@
 !
 !  Write out convolved solution.
 !
-          status=nf_fwrite3d(ng, model, TLF(ng)%ncid,                   &
+          status=nf_fwrite3d(ng, model, TLF(ng)%ncid, idVtlf,           &
      &                       TLF(ng)%Vid(idVtlf),                       &
      &                       Iout, MyType,                              &
      &                       LBi, UBi, LBj, UBj, 1, N(ng), scale,       &
@@ -797,7 +796,7 @@
 !
 !  Write out convolved solution.
 !
-            status=nf_fwrite3d(ng, model, TLF(ng)%ncid,                 &
+            status=nf_fwrite3d(ng, model, TLF(ng)%ncid, idTtlf(itrc),   &
      &                         TLF(ng)%Tid(itrc),                       &
      &                         Iout, MyType,                            &
      &                         LBi, UBi, LBj, UBj, 1, N(ng), scale,     &
@@ -1258,7 +1257,7 @@
 !
 !  Write out convolved solution.
 !
-          status=nf_fwrite2d(ng, model, TLF(ng)%pioFile,                &
+          status=nf_fwrite2d(ng, model, TLF(ng)%pioFile, idZtlf,        &
      &                       TLF(ng)%pioVar(idZtlf),                    &
      &                       Iout, ioDesc,                              &
      &                       LBi, UBi, LBj, UBj, scale,                 &
@@ -1329,7 +1328,7 @@
 !
 !  Write out convolved solution.
 !
-          status=nf_fwrite2d(ng, model, TLF(ng)%pioFile,                &
+          status=nf_fwrite2d(ng, model, TLF(ng)%pioFile, idUbtf,        &
      &                       TLF(ng)%pioVar(idUbtf),                    &
      &                       Iout, ioDesc,                              &
      &                       LBi, UBi, LBj, UBj, scale,                 &
@@ -1400,7 +1399,7 @@
 !
 !  Write out convolved solution.
 !
-          status=nf_fwrite2d(ng, model, TLF(ng)%pioFile,                &
+          status=nf_fwrite2d(ng, model, TLF(ng)%pioFile, idVbtf,        &
      &                       TLF(ng)%pioVar(idVbtf),                    &
      &                       Iout, ioDesc,                              &
      &                       LBi, UBi, LBj, UBj, scale,                 &
@@ -1477,7 +1476,7 @@
 !
 !  Write out convolved solution.
 !
-          status=nf_fwrite3d(ng, model, TLF(ng)%pioFile,                &
+          status=nf_fwrite3d(ng, model, TLF(ng)%pioFile, idUtlf,        &
      &                       TLF(ng)%pioVar(idUtlf),                    &
      &                       Iout, ioDesc,                              &
      &                       LBi, UBi, LBj, UBj, 1, N(ng), scale,       &
@@ -1552,7 +1551,7 @@
 !
 !  Write out convolved solution.
 !
-          status=nf_fwrite3d(ng, model, TLF(ng)%pioFile,                &
+          status=nf_fwrite3d(ng, model, TLF(ng)%pioFile, idVtlf,        &
      &                       TLF(ng)%pioVar(idVtlf),                    &
      &                       Iout, ioDesc,                              &
      &                       LBi, UBi, LBj, UBj, 1, N(ng), scale,       &
@@ -1632,7 +1631,7 @@
 !  Write out convolved solution.
 !
             status=nf_fwrite3d(ng, model, TLF(ng)%pioFile,              &
-     &                         TLF(ng)%pioTrc(itrc),                    &
+     &                         idTtlf(itrc), TLF(ng)%pioTrc(itrc),      &
      &                         Iout, ioDesc,                            &
      &                         LBi, UBi, LBj, UBj, 1, N(ng), scale,     &
 #  ifdef MASKING

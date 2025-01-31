@@ -3,11 +3,10 @@
 #if defined TL_IOMS && defined SOLVE3D
 !
 !git $Id$
-!svn $Id: rp_omega.F 1151 2023-02-09 03:08:53Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group       Andrew M. Moore   !
+!  Copyright (c) 2002-2025 The ROMS Group            Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                                              !
+!    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
 !  This routine computes S-coordinate vertical velocity (m^3/s),       !
@@ -133,8 +132,8 @@
 
 #  if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
       real(r8), intent(in) :: omn(LBi:UBi,LBj:UBj)
-      real(r8), intent(in):: bed_thick(LBi:UBi,LBj:UBj,2)
-      real(r8), intent(in):: tl_bed_thick(LBi:UBi,LBj:UBj,2)
+      real(r8), intent(in):: bed_thick(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(in):: tl_bed_thick(LBi:UBi,LBj:UBj,3)
 #  endif
       real(r8), intent(in) :: Huon(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(in) :: Hvom(LBi:UBi,LBj:UBj,N(ng))

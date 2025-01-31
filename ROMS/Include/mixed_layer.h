@@ -1,10 +1,9 @@
 /*
 ** git $Id$
-** svn $Id: mixed_layer.h 1151 2023-02-09 03:08:53Z arango $
 *******************************************************************************
-** Copyright (c) 2002-2023 The ROMS/TOMS Group                               **
+** Copyright (c) 2002-2025 The ROMS Group                                    **
 **   Licensed under a MIT/X style license                                    **
-**   See License_ROMS.txt                                                    **
+**   See License_ROMS.md                                                     **
 *******************************************************************************
 **
 ** Options for Mixed Layer Deepening on a rectangular periodic grid with

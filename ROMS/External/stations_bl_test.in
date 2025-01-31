@@ -1,11 +1,10 @@
 !  Station Extraction Parameters.
 !
 !git $Id$
-!svn $Id: stations_bl_test.in 1151 2023-02-09 03:08:53Z arango $
 !========================================================= Hernan G. Arango ===
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group                                !
+!  Copyright (c) 2002-2025 The ROMS Group                                     !
 !    Licensed under a MIT/X style license                                     !
-!    See License_ROMS.txt                                                     !
+!    See License_ROMS.md                                                      !
 !==============================================================================
 !                                                                             !
 ! Input parameters can be entered in ANY order, provided that the parameter   !
@@ -76,31 +75,38 @@ Sout(idVbot) == F       ! Vbot               bed wave orbital V-velocity
 Sout(idUbur) == F       ! Ur                 bottom U-velocity above bed
 Sout(idVbvr) == F       ! Vr                 bottom V-velocity above bed
 
-Sout(idW2xx) == F       ! Sxx_bar            2D radiation stress, Sxx component
-Sout(idW2xy) == F       ! Sxy_bar            2D radiation stress, Sxy component
-Sout(idW2yy) == F       ! Syy_bar            2D radiation stress, Syy component
-Sout(idU2rs) == F       ! Ubar_Rstress       2D radiation U-stress
-Sout(idV2rs) == F       ! Vbar_Rstress       2D radiation V-stress
-Sout(idU2Sd) == F       ! ubar_stokes        2D U-Stokes velocity
-Sout(idV2Sd) == F       ! vbar_stokes        2D V-Stokes velocity
+Sout(idWztw) == F       ! zetaw              WEC_VF quasi-static sea level adjustment
+Sout(idWqsp) == F       ! qsp                WEC_VF quasi-static sea pressure
+Sout(idWbeh) == F       ! bernoulli_head     WEC_VF Bernoulli head
 
-Sout(idW3xx) == F       ! Sxx                3D radiation stress, Sxx component
-Sout(idW3xy) == F       ! Sxy                3D radiation stress, Sxy component
-Sout(idW3yy) == F       ! Syy                3D radiation stress, Syy component
-Sout(idW3zx) == F       ! Szx                3D radiation stress, Szx component
-Sout(idW3zy) == F       ! Szy                3D radiation stress, Szy component
-Sout(idU3rs) == F       ! u_Rstress          3D U-radiation stress
-Sout(idV3rs) == F       ! v_Rstress          3D V-radiation stress
-Sout(idU3Sd) == F       ! u_stokes           3D U-Stokes velocity
-Sout(idV3Sd) == F       ! v_stokes           3D V-Stokes velocity
+Sout(idU2rs) == F       ! ubar_wec_stress    WEC 2D U-stress
+Sout(idV2rs) == F       ! vbar_wec_stress    WEC 2D V-stress
+Sout(idU3rs) == F       ! u_wec_stress       WEC 3D U-stress
+Sout(idV3rs) == F       ! v_wec_stress        WEC 3D V-stress
 
-Sout(idWamp) == F       ! Hwave              wave height
-Sout(idWlen) == F       ! Lwave              wave length
-Sout(idWdir) == F       ! Dwave              wave direction
+Sout(idU2Sd) == F       ! ubar_stokes        2D Stokes U-velocity
+Sout(idV2Sd) == F       ! vbar_stokes        2D Stokes V-velocity
+Sout(idU3Sd) == F       ! u_stokes           3D Stokes U-velocity
+Sout(idV3Sd) == F       ! v_stokes           3D Stokes V-velocity
+Sout(idW3St) == F       ! w_stokes           3D Stokes W-velocity
+Sout(idW3Sd) == F       ! omega_stokes       3D Stokes omega-velocity
+
+Sout(idWamp) == F       ! Hwave              wave significant height
+Sout(idWlen) == F       ! Lwave              wave mean wavelength
+Sout(idWlep) == F       ! Lwavep             wave peak wavelength
+Sout(idWdir) == F       ! Dwave              wave mean direction
+Sout(idWdip) == F       ! Dwavep             wave peak direction
 Sout(idWptp) == F       ! Pwave_top          wave surface period
 Sout(idWpbt) == F       ! Pwave_bot          wave bottom period
-Sout(idWorb) == F       ! Ub_swan            wave bottom orbital velocity
-Sout(idWdis) == F       ! Wave_dissip        wave dissipation
+Sout(idWorb) == F       ! Uwave_rms          wave bottom orbital velocity
+Sout(idWbrk) == F       ! Wave_break         wave breaking (percent)
+Sout(idUwav) == F       ! uWave              wave depth-averaged U-velocity
+Sout(idVwav) == F       ! vWave              wave depth-averaged V-velocity
+Sout(idWdif) == F       ! Dissip_fric        wave dissipation from bottom friction
+Sout(idWdib) == F       ! Dissip_break       wave dissipation from breaking
+Sout(idWdiw) == F       ! Dissip_wcap        wave dissipation from whitecapping
+Sout(idWdis) == F       ! Dissip_roller      wave roller dissipation
+Sout(idWrol) == F       ! roller_action      wave roller action density
 
 Sout(idPair) == F       ! Pair               surface air pressure
 Sout(idUair) == F       ! Uair               surface U-wind component
@@ -125,24 +131,30 @@ Sout(idMtke) == F       ! tke                turbulent kinetic energy
 Sout(idMtls) == F       ! gls                turbulent length scale
 
 ! Logical switches (TRUE/FALSE) to activate writing of exposed sediment
-! layer properties into STATIONS output file.
+! layer properties into STATIONS output file.  Currently, MBOTP properties
+! are expected for the bottom boundary layer and/or sediment models:
+!
+! idBott( 1=isd50)   grain_diameter          mean grain diameter
+! idBott( 2=idens)   grain_density           mean grain density
+! idBott( 3=iwsed)   settling_vel            mean settling velocity
+! idBott( 4=itauc)   erosion_stress          critical erosion stress
+! idBott( 5=irlen)   ripple_length           ripple length
+! idBott( 6=irhgt)   ripple_height           ripple height
+! idBott( 7=ibwav)   bed_wave_amp            wave excursion amplitude
+! idBott( 8=izdef)   Zo_def                  default bottom roughness
+! idBott( 9=izapp)   Zo_app                  apparent bottom roughness
+! idBott(10=izNik)   Zo_Nik                  Nikuradse bottom roughness
+! idBott(11=izbio)   Zo_bio                  biological bottom roughness
+! idBott(12=izbfm)   Zo_bedform              bed form bottom roughness
+! idBott(13=izbld)   Zo_bedload              bed load bottom roughness
+! idBott(14=izwbl)   Zo_wbl                  wave bottom roughness
+! idBott(15=iactv)   active_layer_thickness  active layer thickness
+! idBott(16=ishgt)   saltation               saltation height
+!
+!                                 1 1 1 1 1 1 1
+!               1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6
 
-Sout(isd50)  == F       ! grain_diameter     mean grain diameter
-Sout(idens)  == F       ! grain_density      mean grain density
-Sout(iwsed)  == F       ! settling_vel       mean settling velocity
-Sout(itauc)  == F       ! erosion_stress     critical erosion stress
-Sout(irlen)  == F       ! ripple_length      ripple length
-Sout(irhgt)  == F       ! ripple_height      ripple height
-Sout(ibwav)  == F       ! bed_wave_amp       wave excursion amplitude
-Sout(izdef)  == F       ! Zo_def             default bottom roughness
-Sout(izapp)  == F       ! Zo_app             apparent bottom roughness
-Sout(izNik)  == F       ! Zo_Nik             Nikuradse bottom roughness
-Sout(izbio)  == F       ! Zo_bio             biological bottom roughness
-Sout(izbfm)  == F       ! Zo_bedform         bed form bottom roughness
-Sout(izbld)  == F       ! Zo_bedload         bed load bottom roughness
-Sout(izwbl)  == F       ! Zo_wbl             wave bottom roughness
-Sout(iactv)  == F       ! active_layer_t...  active layer thickness
-Sout(ishgt)  == F       ! saltation          saltation height
+Sout(idBott) == F F F F F F F F F F F F F F F F
 
 ! Number of stations to process in each nested grid.  These values are
 ! essential because the station arrays are dynamically allocated using
@@ -222,32 +234,38 @@ POS =  GRID  FLAG      X-POS       Y-POS     COMMENT
 !  Sout(idUbur)  Write out bottom U-velocity above bed.
 !  Sout(idVbvr)  Write out bottom V-velocity above bed.
 !
-!  Sout(idW2xx)  Write out 2D radiation stress, Sxx component.
-!  Sout(idW2xy)  Write out 2D radiation stress, Sxy component.
-!  Sout(idW2yy)  Write out 2D radiation stress, Syy component.
-!  Sout(idU2rs)  Write out 2D U-radiation stress.
-!  Sout(idV2rs)  Write out 2D V-radiation stress.
-!  Sout(idU2Sd)  Write out 2D U-Stokes velocity.
-!  Sout(idV2Sd)  Write out 2D V-Stokes velocity.
+!  Sout(idWztw)  Write out WEC_VF quasi-static sea level adjustment.
+!  Sout(idWqsp)  Write out WEC_VF quasi-static pressure.
+!  Sout(idWbeh)  Write out WEC_VF Bernoulli head.
 !
-!  Sout(idW3xx)  Write out 3D radiation stress, Sxx component.
-!  Sout(idW3xy)  Write out 3D radiation stress, Sxy component.
-!  Sout(idW3yy)  Write out 3D radiation stress, Syy component.
-!  Sout(idW3zx)  Write out 3D radiation stress, Szx component.
-!  Sout(idW3zy)  Write out 3D radiation stress, Szy component.
-!  Sout(idU3rs)  Write out 3D U-radiation stress.
-!  Sout(idV3rs)  Write out 3D V-radiation stress.
-!  Sout(idU3Sd)  Write out 3D U-Stokes velocity.
-!  Sout(idV3Sd)  Write out 3D V-Stokes velocity.
+!  Sout(idU2rs)  Write out WEC 2D U-stress.
+!  Sout(idV2rs)  Write out WEC 2D V-stress.
+!  Sout(idU3rs)  Write out WEC 3D U-stress.
+!  Sout(idV3rs)  Write out WEC 3D V-stress.
 !
-!  Sout(idWamp)  Write out wave height.
-!  Sout(idWlen)  Write out wave length.
-!  Sout(idWdir)  Write out wave direction.
+!  Sout(idU2Sd)  Write out 2D Stokes U-velocity.
+!  Sout(idV2Sd)  Write out 2D Stokes V-velocity.
+!  Sout(idU3Sd)  Write out 3D Stokes U-velocity.
+!  Sout(idV3Sd)  Write out 3D Stokes V-velocity.
+!  Sout(idW3St)  Write out 3D Stokes W-velocity.
+!  Sout(idW3Sd)  Write out 3D Stokes omega-velocity.
+!
+!  Sout(idWamp)  Write out wave significat height.
+!  Sout(idWlen)  Write out wave mean wavelength.
+!  Sout(idWlep)  Write out wave peak wavelength.
+!  Sout(idWdir)  Write out wave mean direction.
+!  Sout(idWdip)  Write out wave peak direction.
 !  Sout(idWptp)  Write out wave surface period.
 !  Sout(idWpbt)  Write out wave bottom period.
 !  Sout(idWorb)  Write out wave bottom orbital velocity.
-!  Sout(idWdis)  Write out wave dissipation.
-!
+!  Sout(idWbrk)  Write out wave breaking (percent).
+!  Sout(idUwav)  Write out wave depth-averaged U-velocity.
+!  Sout(idVwav)  Write out wave depth-averaged V-velocity.
+!  Sout(idWdif)  Write out wave dissipation from bottom friction.
+!  Sout(idWdib)  Write out wave dissipation from breaking.
+!  Sout(idWdiw)  Write out wave dissipation from whitecapping.
+!  Sout(idWdis)  Write out wave roller dissipation.
+!  Sout(idWrol)  Write out wave roller action density.
 !  Sout(idPair)  Write out surface air pressure.
 !  Sout(idUair)  Write out surface U-wind component.
 !  Sout(idVair)  Write out surface V-wind component.
@@ -270,22 +288,7 @@ POS =  GRID  FLAG      X-POS       Y-POS     COMMENT
 !  Sout(idMtke)  Write out turbulent kinetic energy.
 !  Sout(idMtls)  Write out turbulent kinetic energy times length scale.
 !
-!  Sout(isd50)   Write out mean grain diameter.
-!  Sout(idens)   Write out mean grain density.
-!  Sout(iwsed)   Write out mean settling velocity.
-!  Sout(itauc)   Write out critical erosion stress.
-!  Sout(irlen)   Write out ripple length.
-!  Sout(irhgt)   Write out ripple height.
-!  Sout(ibwav)   Write out wave excursion amplitude.
-!  Sout(izdef)   Write out default bottom roughness.
-!  Sout(izapp)   Write out apparent bottom roughness.
-!  Sout(izNik)   Write out Nikuradse bottom roughness.
-!  Sout(izbio)   Write out biological bottom roughness.
-!  Sout(izbfm)   Write out bed form bottom roughness.
-!  Sout(izbld)   Write out bed load bottom roughness.
-!  Sout(izwbl)   Write out wave bottom roughness.
-!  Sout(iactv)   Write out active layer thickness.
-!  Sout(ishgt)   Write out saltation height.
+!  Sout(idBott)  Write out exposed sediment layer properties, 1:MBOTP.
 !
 !------------------------------------------------------------------------------
 ! Station positions KEYWORDS.

@@ -2,11 +2,10 @@
       MODULE mod_ocean
 !
 !git $Id$
-!svn $Id: mod_ocean.F 1151 2023-02-09 03:08:53Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2025 The ROMS Group                              !
 !    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                                              !
+!    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
 !  2D Primitive Variables.                                             !
@@ -29,7 +28,9 @@
 !  rv           Right hand side of 3D V-momentum equation (m4/s2).     !
 !  t            Tracer type variables (active and passive).            !
 !  u            3D U-momentum component (m/s).                         !
+!  ua           3D U-momentun component (m/s) at RHO-points, A-grid.   !
 !  v            3D V-momentum component (m/s).                         !
+!  va           3D U-momentun component (m/s) at RHO-points, A-grid.   !
 !  W            S-coordinate (omega*Hz/mn) vertical velocity (m3/s).   !
 #ifdef BIOLOGY
 !                                                                      !
@@ -48,17 +49,22 @@
 !  repiration   Total biological respiration rate (1/day).             !
 # endif
 !                                                                      !
-#ifdef NEARSHORE_MELLOR
-!  Nearshore radiation stresses:                                       !
+#ifdef WEC
+!  Waves Effect on Currents variables,                                 !
 !                                                                      !
-!  rulag2d      2D U-Stokes tendency term (m4/s2).                     !
-!  rvlag2d      2D V-Stokes tendency term (m4/s2).                     !
-!  ubar_stokes  2D U-Stokes drift velocity (m/s).                      !
-!  vbar_stokes  2D V-Stokes drift velocity (m/s).                      !
-!  rulag3d      3D U-Stokes tendency term (m4/s2).                     !
-!  rvlag3d      3D V-Stokes tendency term (m4/s2).                     !
-!  u_stokes     3D U-Stokes drift velocity (m/s).                      !
-!  v_stokes     3D V-Stokes drift velocity (m/s).                      !
+!  zetat        zeta total = zetaw + qsp + bh                          !
+!  zetaw        Quasi-static sea level adjustment                      !
+!  qsp          Quasi-static pressure                                  !
+!  bh           Bernoulli head                                         !
+!                                                                      !
+!  Stokes velocities:                                                  !
+!                                                                      !
+!  ubar_stokes  2D U-Stokes velocity (m/s).                            !
+!  vbar_stokes  2D V-Stokes velocity (m/s).                            !
+!  u_stokes     3D U-Stokes velocity (m/s).                            !
+!  v_stokes     3D V-Stokes velocity (m/s).                            !
+!  W_stokes     3D W-Stokes S-coordindate drift velocity (m3/s).       !
+!  wstvel       3D W-Stokes Z-coordinate  drift velocity (m/s).        !
 !                                                                      !
 #endif
 !=======================================================================
@@ -88,9 +94,13 @@
 #if defined TIDE_GENERATING_FORCES
           real(r8), pointer :: eq_tide(:,:)
 #endif
-#if defined NEARSHORE_MELLOR
-          real(r8), pointer :: rulag2d(:,:)
-          real(r8), pointer :: rvlag2d(:,:)
+#if defined WEC_VF
+          real(r8), pointer :: zetat(:,:)
+          real(r8), pointer :: zetaw(:,:)
+          real(r8), pointer :: qsp(:,:)
+          real(r8), pointer :: bh(:,:)
+#endif
+#if defined WEC
           real(r8), pointer :: ubar_stokes(:,:)
           real(r8), pointer :: vbar_stokes(:,:)
 #endif
@@ -101,14 +111,23 @@
           real(r8), pointer :: rv(:,:,:,:)
           real(r8), pointer :: t(:,:,:,:,:)
           real(r8), pointer :: u(:,:,:,:)
+          real(r8), pointer :: ua(:,:,:)
           real(r8), pointer :: v(:,:,:,:)
+          real(r8), pointer :: va(:,:,:)
           real(r8), pointer :: W(:,:,:)
+# if defined OMEGA_IMPLICIT
+          real(r8), pointer :: Wi(:,:,:)
+# endif
           real(r8), pointer :: wvel(:,:,:)
-# if defined NEARSHORE_MELLOR
-          real(r8), pointer :: rulag3d(:,:,:)
-          real(r8), pointer :: rvlag3d(:,:,:)
+# if defined WEC
           real(r8), pointer :: u_stokes(:,:,:)
           real(r8), pointer :: v_stokes(:,:,:)
+          real(r8), pointer :: W_stokes(:,:,:)
+          real(r8), pointer :: wstvel(:,:,:)
+# endif
+# ifdef UV_KIRBY
+          real(r8), pointer :: uwave(:,:)
+          real(r8), pointer :: vwave(:,:)
 # endif
 # if defined BIO_FENNEL && defined CARBON
           real(r8), pointer :: pH(:,:)
@@ -139,9 +158,13 @@
 # if defined TIDE_GENERATING_FORCES
           real(r8), pointer :: tl_eq_tide(:,:)
 # endif
-# if defined NEARSHORE_MELLOR
-          real(r8), pointer :: tl_rulag2d(:,:)
-          real(r8), pointer :: tl_rvlag2d(:,:)
+# if defined WEC_VF
+          real(r8), pointer :: tl_zetat(:,:)
+          real(r8), pointer :: tl_zetaw(:,:)
+          real(r8), pointer :: tl_qsp(:,:)
+          real(r8), pointer :: tl_bh(:,:)
+# endif
+# if defined WEC
           real(r8), pointer :: tl_ubar_stokes(:,:)
           real(r8), pointer :: tl_vbar_stokes(:,:)
 # endif
@@ -152,16 +175,20 @@
           real(r8), pointer :: tl_rv(:,:,:,:)
           real(r8), pointer :: tl_t(:,:,:,:,:)
           real(r8), pointer :: tl_u(:,:,:,:)
+          real(r8), pointer :: tl_ua(:,:,:)
           real(r8), pointer :: tl_v(:,:,:,:)
+          real(r8), pointer :: tl_va(:,:,:)
           real(r8), pointer :: tl_W(:,:,:)
+#  if defined OMEGA_IMPLICIT
+          real(r8), pointer :: tl_Wi(:,:,:)
+#  endif
 #  ifdef NOT_YET
           real(r8), pointer :: tl_wvel(:,:,:)
 #  endif
-#  if defined NEARSHORE_MELLOR
-          real(r8), pointer :: tl_rulag3d(:,:,:)
-          real(r8), pointer :: tl_rvlag3d(:,:,:)
+#  if defined WEC
           real(r8), pointer :: tl_u_stokes(:,:,:)
           real(r8), pointer :: tl_v_stokes(:,:,:)
+          real(r8), pointer :: tl_W_stokes(:,:,:)
 #  endif
 # endif
 #endif
@@ -182,9 +209,13 @@
 # if defined TIDE_GENERATING_FORCES
           real(r8), pointer :: ad_eq_tide(:,:)
 # endif
-# if defined NEARSHORE_MELLOR
-          real(r8), pointer :: ad_rulag2d(:,:)
-          real(r8), pointer :: ad_rvlag2d(:,:)
+# if defined WEC_VF
+          real(r8), pointer :: ad_zetat(:,:)
+          real(r8), pointer :: ad_zetaw(:,:)
+          real(r8), pointer :: ad_qsp(:,:)
+          real(r8), pointer :: ad_bh(:,:)
+# endif
+# if defined WEC
           real(r8), pointer :: ad_ubar_stokes(:,:)
           real(r8), pointer :: ad_vbar_stokes(:,:)
 # endif
@@ -195,7 +226,9 @@
           real(r8), pointer :: ad_rv(:,:,:,:)
           real(r8), pointer :: ad_t(:,:,:,:,:)
           real(r8), pointer :: ad_u(:,:,:,:)
+          real(r8), pointer :: ad_ua(:,:,:)
           real(r8), pointer :: ad_v(:,:,:,:)
+          real(r8), pointer :: ad_va(:,:,:)
           real(r8), pointer :: ad_W(:,:,:)
           real(r8), pointer :: ad_wvel(:,:,:)
 
@@ -203,11 +236,13 @@
           real(r8), pointer :: ad_u_sol(:,:,:)
           real(r8), pointer :: ad_v_sol(:,:,:)
           real(r8), pointer :: ad_W_sol(:,:,:)
-#  if defined NEARSHORE_MELLOR
-          real(r8), pointer :: ad_rulag3d(:,:,:)
-          real(r8), pointer :: ad_rvlag3d(:,:,:)
+#  if defined OMEGA_IMPLICIT
+          real(r8), pointer :: ad_Wi(:,:,:)
+#  endif
+#  if defined WEC
           real(r8), pointer :: ad_u_stokes(:,:,:)
           real(r8), pointer :: ad_v_stokes(:,:,:)
+          real(r8), pointer :: ad_W_stokes(:,:,:)
 #  endif
 # endif
 #endif
@@ -370,14 +405,17 @@
       allocate ( OCEAN(ng) % eq_tide(LBi:UBi,LBj:UBj) )
       Dmem(ng)=Dmem(ng)+size2d
 #endif
-
-#if defined NEARSHORE_MELLOR
-      allocate ( OCEAN(ng) % rulag2d(LBi:UBi,LBj:UBj) )
+#if defined WEC_VF
+      allocate ( OCEAN(ng) % zetat(LBi:UBi,LBj:UBj) )
       Dmem(ng)=Dmem(ng)+size2d
-
-      allocate ( OCEAN(ng) % rvlag2d(LBi:UBi,LBj:UBj) )
+      allocate ( OCEAN(ng) % zetaw(LBi:UBi,LBj:UBj) )
       Dmem(ng)=Dmem(ng)+size2d
-
+      allocate ( OCEAN(ng) % qsp(LBi:UBi,LBj:UBj) )
+      Dmem(ng)=Dmem(ng)+size2d
+      allocate ( OCEAN(ng) % bh(LBi:UBi,LBj:UBj) )
+      Dmem(ng)=Dmem(ng)+size2d
+#endif
+#if defined WEC
       allocate ( OCEAN(ng) % ubar_stokes(LBi:UBi,LBj:UBj) )
       Dmem(ng)=Dmem(ng)+size2d
 
@@ -404,27 +442,46 @@
       allocate ( OCEAN(ng) % u(LBi:UBi,LBj:UBj,N(ng),2) )
       Dmem(ng)=Dmem(ng)+2.0_r8*REAL(N(ng),r8)*size2d
 
+      allocate ( OCEAN(ng) % ua(LBi:UBi,LBj:UBj,N(ng)) )
+      Dmem(ng)=Dmem(ng)+REAL(N(ng),r8)*size2d
+
       allocate ( OCEAN(ng) % v(LBi:UBi,LBj:UBj,N(ng),2) )
       Dmem(ng)=Dmem(ng)+2.0_r8*REAL(N(ng),r8)*size2d
+
+      allocate ( OCEAN(ng) % va(LBi:UBi,LBj:UBj,N(ng)) )
+      Dmem(ng)=Dmem(ng)+REAL(N(ng),r8)*size2d
 
       allocate ( OCEAN(ng) % W(LBi:UBi,LBj:UBj,0:N(ng)) )
       Dmem(ng)=Dmem(ng)+REAL(N(ng)+1,r8)*size2d
 
+# if defined OMEGA_IMPLICIT
+      allocate ( OCEAN(ng) % Wi(LBi:UBi,LBj:UBj,0:N(ng)) )
+      Dmem(ng)=Dmem(ng)+REAL(N(ng)+1,r8)*size2d
+# endif
+
       allocate ( OCEAN(ng) % wvel(LBi:UBi,LBj:UBj,0:N(ng)) )
       Dmem(ng)=Dmem(ng)+REAL(N(ng)+1,r8)*size2d
 
-# if defined NEARSHORE_MELLOR
-      allocate ( OCEAN(ng) % rulag3d(LBi:UBi,LBj:UBj,N(ng)) )
-      Dmem(ng)=Dmem(ng)+REAL(N(ng),r8)*size2d
-
-      allocate ( OCEAN(ng) % rvlag3d(LBi:UBi,LBj:UBj,N(ng)) )
-      Dmem(ng)=Dmem(ng)+REAL(N(ng),r8)*size2d
-
+# if defined WEC
       allocate ( OCEAN(ng) % u_stokes(LBi:UBi,LBj:UBj,N(ng)) )
       Dmem(ng)=Dmem(ng)+REAL(N(ng),r8)*size2d
 
       allocate ( OCEAN(ng) % v_stokes(LBi:UBi,LBj:UBj,N(ng)) )
       Dmem(ng)=Dmem(ng)+REAL(N(ng),r8)*size2d
+
+      allocate ( OCEAN(ng) % W_stokes(LBi:UBi,LBj:UBj,0:N(ng)) )
+      Dmem(ng)=Dmem(ng)+REAL(N(ng)+1,r8)*size2d
+
+      allocate ( OCEAN(ng) % wstvel(LBi:UBi,LBj:UBj,0:N(ng)) )
+      Dmem(ng)=Dmem(ng)+REAL(N(ng)+1,r8)*size2d
+# endif
+
+# ifdef UV_KIRBY
+      allocate ( OCEAN(ng) % uwave(LBi:UBi,LBj:UBj) )
+      Dmem(ng)=Dmem(ng)+size2d
+
+      allocate ( OCEAN(ng) % vwave(LBi:UBi,LBj:UBj) )
+      Dmem(ng)=Dmem(ng)+size2d
 # endif
 
 # if defined BIO_FENNEL && defined CARBON
@@ -481,13 +538,21 @@
       Dmem(ng)=Dmem(ng)+3.0_r8*size2d
 # endif
 
-# if defined NEARSHORE_MELLOR
-      allocate ( OCEAN(ng) % tl_rulag2d(LBi:UBi,LBj:UBj) )
-      Dmem(ng)=Dmem(ng)+size2d
+# if defined WEC_VF
+      allocate ( OCEAN(ng) % tl_zetat(LBi:UBi,LBj:UBj,3) )
+      Dmem(ng)=Dmem(ng)+3.0_r8*size2d
 
-      allocate ( OCEAN(ng) % tl_rvlag2d(LBi:UBi,LBj:UBj) )
-      Dmem(ng)=Dmem(ng)+size2d
+      allocate ( OCEAN(ng) % tl_zetaw(LBi:UBi,LBj:UBj,3) )
+      Dmem(ng)=Dmem(ng)+3.0_r8*size2d
 
+      allocate ( OCEAN(ng) % tl_qsp(LBi:UBi,LBj:UBj,3) )
+      Dmem(ng)=Dmem(ng)+3.0_r8*size2d
+
+      allocate ( OCEAN(ng) % tl_bh(LBi:UBi,LBj:UBj,3) )
+      Dmem(ng)=Dmem(ng)+3.0_r8*size2d
+# endif
+
+# if defined WEC
       allocate ( OCEAN(ng) % tl_ubar_stokes(LBi:UBi,LBj:UBj) )
       Dmem(ng)=Dmem(ng)+size2d
 
@@ -514,29 +579,37 @@
       allocate ( OCEAN(ng) % tl_u(LBi:UBi,LBj:UBj,N(ng),2) )
       Dmem(ng)=Dmem(ng)+2.0_r8*REAL(N(ng),r8)*size2d
 
+      allocate ( OCEAN(ng) % tl_ua(LBi:UBi,LBj:UBj,N(ng)) )
+      Dmem(ng)=Dmem(ng)+REAL(N(ng),r8)*size2d
+
       allocate ( OCEAN(ng) % tl_v(LBi:UBi,LBj:UBj,N(ng),2) )
       Dmem(ng)=Dmem(ng)+2.0_r8*REAL(N(ng),r8)*size2d
 
+      allocate ( OCEAN(ng) % tl_va(LBi:UBi,LBj:UBj,N(ng)) )
+      Dmem(ng)=Dmem(ng)+REAL(N(ng),r8)*size2d
+
       allocate ( OCEAN(ng) % tl_W(LBi:UBi,LBj:UBj,0:N(ng)) )
       Dmem(ng)=Dmem(ng)+REAL(N(ng)+1,r8)*size2d
+
+#  if defined OMEGA_IMPLICIT
+      allocate ( OCEAN(ng) % tl_Wi(LBi:UBi,LBj:UBj,0:N(ng)) )
+      Dmem(ng)=Dmem(ng)+REAL(N(ng)+1,r8)*size2d
+#  endif
 
 #  ifdef NOT_YET
       allocate ( OCEAN(ng) % tl_wvel(LBi:UBi,LBj:UBj,0:N(ng)) )
       Dmem(ng)=Dmem(ng)+REAL(N(ng)+1,r8)*size2d
 #  endif
 
-#  if defined NEARSHORE_MELLOR
-      allocate ( OCEAN(ng) % tl_rulag3d(LBi:UBi,LBj:UBj,N(ng)) )
-      Dmem(ng)=Dmem(ng)+REAL(N(ng),r8)*size2d
-
-      allocate ( OCEAN(ng) % tl_rvlag3d(LBi:UBi,LBj:UBj,N(ng)) )
-      Dmem(ng)=Dmem(ng)+REAL(N(ng),r8)*size2d
-
+#  if defined WEC
       allocate ( OCEAN(ng) % tl_u_stokes(LBi:UBi,LBj:UBj,N(ng)) )
       Dmem(ng)=Dmem(ng)+REAL(N(ng),r8)*size2d
 
       allocate ( OCEAN(ng) % tl_v_stokes(LBi:UBi,LBj:UBj,N(ng)) )
       Dmem(ng)=Dmem(ng)+REAL(N(ng),r8)*size2d
+
+      allocate ( OCEAN(ng) % tl_W_stokes(LBi:UBi,LBj:UBj,0:N(ng)) )
+      Dmem(ng)=Dmem(ng)+REAL(N(ng)+1,r8)*size2d
 #  endif
 # endif
 #endif
@@ -577,13 +650,21 @@
       Dmem(ng)=Dmem(ng)+3.0_r8*size2d
 # endif
 
-# if defined NEARSHORE_MELLOR
-      allocate ( OCEAN(ng) % ad_rulag2d(LBi:UBi,LBj:UBj) )
-      Dmem(ng)=Dmem(ng)+size2d
+# if defined WEC_VF
+      allocate ( OCEAN(ng) % ad_zetat(LBi:UBi,LBj:UBj,3) )
+      Dmem(ng)=Dmem(ng)+3.0_r8*size2d
 
-      allocate ( OCEAN(ng) % ad_rvlag2d(LBi:UBi,LBj:UBj) )
-      Dmem(ng)=Dmem(ng)+size2d
+      allocate ( OCEAN(ng) % ad_zetaw(LBi:UBi,LBj:UBj,3) )
+      Dmem(ng)=Dmem(ng)+3.0_r8*size2d
 
+      allocate ( OCEAN(ng) % ad_qsp(LBi:UBi,LBj:UBj,3) )
+      Dmem(ng)=Dmem(ng)+3.0_r8*size2d
+
+      allocate ( OCEAN(ng) % ad_bh(LBi:UBi,LBj:UBj,3) )
+      Dmem(ng)=Dmem(ng)+3.0_r8*size2d
+# endif
+
+# if defined WEC
       allocate ( OCEAN(ng) % ad_ubar_stokes(LBi:UBi,LBj:UBj) )
       Dmem(ng)=Dmem(ng)+size2d
 
@@ -610,11 +691,22 @@
       allocate ( OCEAN(ng) % ad_u(LBi:UBi,LBj:UBj,N(ng),2) )
       Dmem(ng)=Dmem(ng)+2.0_r8*REAL(N(ng),r8)*size2d
 
+      allocate ( OCEAN(ng) % ad_ua(LBi:UBi,LBj:UBj,N(ng)) )
+      Dmem(ng)=Dmem(ng)+REAL(N(ng),r8)*size2d
+
       allocate ( OCEAN(ng) % ad_v(LBi:UBi,LBj:UBj,N(ng),2) )
       Dmem(ng)=Dmem(ng)+2.0_r8*REAL(N(ng),r8)*size2d
 
+      allocate ( OCEAN(ng) % ad_va(LBi:UBi,LBj:UBj,N(ng)) )
+      Dmem(ng)=Dmem(ng)+REAL(N(ng),r8)*size2d
+
       allocate ( OCEAN(ng) % ad_W(LBi:UBi,LBj:UBj,0:N(ng)) )
       Dmem(ng)=Dmem(ng)+REAL(N(ng)+1,r8)*size2d
+
+#  if defined OMEGA_IMPLICIT
+      allocate ( OCEAN(ng) % ad_Wi(LBi:UBi,LBj:UBj,0:N(ng)) )
+      Dmem(ng)=Dmem(ng)+REAL(N(ng)+1,r8)*size2d
+#  endif
 
       allocate ( OCEAN(ng) % ad_wvel(LBi:UBi,LBj:UBj,0:N(ng)) )
       Dmem(ng)=Dmem(ng)+REAL(N(ng)+1,r8)*size2d
@@ -631,18 +723,15 @@
       allocate ( OCEAN(ng) % ad_W_sol(LBi:UBi,LBj:UBj,0:N(ng)) )
       Dmem(ng)=Dmem(ng)+REAL(N(ng)+1,r8)*size2d
 
-#  if defined NEARSHORE_MELLOR
-      allocate ( OCEAN(ng) % ad_rulag3d(LBi:UBi,LBj:UBj,N(ng)) )
-      Dmem(ng)=Dmem(ng)+REAL(N(ng),r8)*size2d
-
-      allocate ( OCEAN(ng) % ad_rvlag3d(LBi:UBi,LBj:UBj,N(ng)) )
-      Dmem(ng)=Dmem(ng)+REAL(N(ng),r8)*size2d
-
+#  if defined WEC
       allocate ( OCEAN(ng) % ad_u_stokes(LBi:UBi,LBj:UBj,N(ng)) )
       Dmem(ng)=Dmem(ng)+REAL(N(ng),r8)*size2d
 
       allocate ( OCEAN(ng) % ad_v_stokes(LBi:UBi,LBj:UBj,N(ng)) )
       Dmem(ng)=Dmem(ng)+REAL(N(ng),r8)*size2d
+
+      allocate ( OCEAN(ng) % ad_W_stokes(LBi:UBi,LBj:UBj,0:N(ng)) )
+      Dmem(ng)=Dmem(ng)+REAL(N(ng)+1,r8)*size2d
 #  endif
 # endif
 #endif
@@ -903,13 +992,21 @@
      &                 __LINE__, 'OCEAN(ng)%eq_tide')) RETURN
 # endif
 
-# if defined NEARSHORE_MELLOR
-      IF (.not.destroy(ng, OCEAN(ng)%rulag2d, MyFile,                   &
-     &                 __LINE__, 'OCEAN(ng)%rulag2d')) RETURN
+# if defined WEC_VF
+      IF (.not.destroy(ng, OCEAN(ng)%zetat, MyFile,                     &
+     &                 __LINE__, 'OCEAN(ng)%zetat')) RETURN
 
-      IF (.not.destroy(ng, OCEAN(ng)%rvlag2d, MyFile,                   &
-     &                 __LINE__, 'OCEAN(ng)%rvlag2d')) RETURN
+      IF (.not.destroy(ng, OCEAN(ng)%zetaw, MyFile,                     &
+     &                 __LINE__, 'OCEAN(ng)%zetaw')) RETURN
 
+      IF (.not.destroy(ng, OCEAN(ng)%qsp, MyFile,                       &
+     &                 __LINE__, 'OCEAN(ng)%qsp')) RETURN
+
+      IF (.not.destroy(ng, OCEAN(ng)%bh, MyFile,                        &
+     &                 __LINE__, 'OCEAN(ng)%bh')) RETURN
+# endif
+
+# if defined WEC
       IF (.not.destroy(ng, OCEAN(ng)%ubar_stokes, MyFile,               &
      &                 __LINE__, 'OCEAN(ng)%ubar_stokes')) RETURN
 
@@ -933,6 +1030,9 @@
       IF (.not.destroy(ng, OCEAN(ng)%t, MyFile,                         &
      &                 __LINE__, 'OCEAN(ng)%t')) RETURN
 
+      IF (.not.destroy(ng, OCEAN(ng)%ua, MyFile,                        &
+     &                 __LINE__, 'OCEAN(ng)%u')) RETURN
+
       IF (.not.destroy(ng, OCEAN(ng)%u, MyFile,                         &
      &                 __LINE__, 'OCEAN(ng)%u')) RETURN
 
@@ -942,21 +1042,27 @@
       IF (.not.destroy(ng, OCEAN(ng)%W, MyFile,                         &
      &                 __LINE__, 'OCEAN(ng)%W')) RETURN
 
+#  if defined OMEGA_IMPLICIT
+      IF (.not.destroy(ng, OCEAN(ng)%Wi, MyFile,                        &
+     &                 __LINE__, 'OCEAN(ng)%Wi')) RETURN
+#  endif
+
       IF (.not.destroy(ng, OCEAN(ng)%wvel, MyFile,                      &
      &                 __LINE__, 'OCEAN(ng)%wvel')) RETURN
 
-#  if defined NEARSHORE_MELLOR
-      IF (.not.destroy(ng, OCEAN(ng)%rulag3d, MyFile,                   &
-     &                 __LINE__, 'OCEAN(ng)%rulag3d')) RETURN
-
-      IF (.not.destroy(ng, OCEAN(ng)%rvlag3d, MyFile,                   &
-     &                 __LINE__, 'OCEAN(ng)%rvlag3d')) RETURN
-
+#  if defined WEC
       IF (.not.destroy(ng, OCEAN(ng)%u_stokes, MyFile,                  &
      &                 __LINE__, 'OCEAN(ng)%u_stokes')) RETURN
 
       IF (.not.destroy(ng, OCEAN(ng)%v_stokes, MyFile,                  &
      &                 __LINE__, 'OCEAN(ng)%v_stokes')) RETURN
+
+
+      IF (.not.destroy(ng, OCEAN(ng)%W_stokes, MyFile,                  &
+     &                 __LINE__, 'OCEAN(ng)%W_stokes')) RETURN
+
+      IF (.not.destroy(ng, OCEAN(ng)%wstvel, MyFile,                    &
+     &                 __LINE__, 'OCEAN(ng)%wstvel')) RETURN
 #  endif
 
 #  if defined BIO_FENNEL && defined CARBON
@@ -1013,13 +1119,21 @@
      &                 __LINE__, 'OCEAN(ng)%tl_eq_tide')) RETURN
 #  endif
 
-#  if defined NEARSHORE_MELLOR
-      IF (.not.destroy(ng, OCEAN(ng)%tl_rulag2d, MyFile,                &
-     &                 __LINE__, 'OCEAN(ng)%tl_rulag2d')) RETURN
+#  if defined WEC_VF
+      IF (.not.destroy(ng, OCEAN(ng)%tl_zetat, MyFile,                  &
+     &                 __LINE__, 'OCEAN(ng)%tl_zetat')) RETURN
 
-      IF (.not.destroy(ng, OCEAN(ng)%tl_rvlag2d, MyFile,                &
-     &                 __LINE__, 'OCEAN(ng)%tl_rvlag2d')) RETURN
+      IF (.not.destroy(ng, OCEAN(ng)%tl_zetaw, MyFile,                  &
+     &                 __LINE__, 'OCEAN(ng)%tl_zetaw')) RETURN
 
+      IF (.not.destroy(ng, OCEAN(ng)%tl_qsp, MyFile,                    &
+     &                 __LINE__, 'OCEAN(ng)%tl_qsp')) RETURN
+
+      IF (.not.destroy(ng, OCEAN(ng)%tl_bh, MyFile,                     &
+     &                 __LINE__, 'OCEAN(ng)%tl_bh')) RETURN
+#  endif
+
+#  if defined WEC
       IF (.not.destroy(ng, OCEAN(ng)%tl_ubar_stokes, MyFile,            &
      &                 __LINE__, 'OCEAN(ng)%tl_ubar_stokes')) RETURN
 
@@ -1052,24 +1166,27 @@
       IF (.not.destroy(ng, OCEAN(ng)%tl_W, MyFile,                      &
      &                 __LINE__, 'OCEAN(ng)%tl_W')) RETURN
 
+#   if defined OMEGA_IMPLICIT
+      IF (.not.destroy(ng, OCEAN(ng)%tl_Wi, MyFile,                     &
+     &                 __LINE__, 'OCEAN(ng)%tl_Wi')) RETURN
+#   endif
+
 #   ifdef NOT_YET
       IF (.not.destroy(ng, OCEAN(ng)%tl_wvel, MyFile,                   &
      &                 __LINE__, 'OCEAN(ng)%tl_wvel')) RETURN
 #   endif
 
-#   if defined NEARSHORE_MELLOR
-      IF (.not.destroy(ng, OCEAN(ng)%tl_rulag3d, MyFile,                &
-     &                 __LINE__, 'OCEAN(ng)%tl_rulag3d')) RETURN
-
-      IF (.not.destroy(ng, OCEAN(ng)%tl_rvlag3d, MyFile,                &
-     &                 __LINE__, 'OCEAN(ng)%tl_rvlag3d')) RETURN
-
+#   if defined WEC
       IF (.not.destroy(ng, OCEAN(ng)%tl_u_stokes, MyFile,               &
      &                 __LINE__, 'OCEAN(ng)%tl_u_stokes')) RETURN
 
       IF (.not.destroy(ng, OCEAN(ng)%tl_v_stokes, MyFile,               &
      &                 __LINE__, 'OCEAN(ng)%tl_v_stokes')) RETURN
+
+      IF (.not.destroy(ng, OCEAN(ng)%tl_W_stokes, MyFile,               &
+     &                 __LINE__, 'OCEAN(ng)%tl_W_stokes')) RETURN
 #   endif
+
 #  endif
 # endif
 
@@ -1109,13 +1226,21 @@
      &                 __LINE__, 'OCEAN(ng)%ad_eq_tide')) RETURN
 #  endif
 
-#  if defined NEARSHORE_MELLOR
-      IF (.not.destroy(ng, OCEAN(ng)%ad_rulag2d, MyFile,                &
-     &                 __LINE__, 'OCEAN(ng)%ad_rulag2d')) RETURN
+#  if defined WEC_VF
+      IF (.not.destroy(ng, OCEAN(ng)%ad_zetat, MyFile,                  &
+     &                 __LINE__, 'OCEAN(ng)%ad_zetat')) RETURN
 
-      IF (.not.destroy(ng, OCEAN(ng)%ad_rvlag2d, MyFile,                &
-     &                 __LINE__, 'OCEAN(ng)%ad_rvlag2d')) RETURN
+      IF (.not.destroy(ng, OCEAN(ng)%ad_zetaw, MyFile,                  &
+     &                 __LINE__, 'OCEAN(ng)%ad_zetaw')) RETURN
 
+      IF (.not.destroy(ng, OCEAN(ng)%ad_qsp, MyFile,                    &
+     &                 __LINE__, 'OCEAN(ng)%ad_qsp')) RETURN
+
+      IF (.not.destroy(ng, OCEAN(ng)%ad_bh, MyFile,                     &
+     &                 __LINE__, 'OCEAN(ng)%ad_bh')) RETURN
+#  endif
+
+#  if defined WEC
       IF (.not.destroy(ng, OCEAN(ng)%ad_ubar_stokes, MyFile,            &
      &                 __LINE__, 'OCEAN(ng)%ad_ubar_stokes')) RETURN
 
@@ -1148,8 +1273,24 @@
       IF (.not.destroy(ng, OCEAN(ng)%ad_W, MyFile,                      &
      &                 __LINE__, 'OCEAN(ng)%ad_W')) RETURN
 
+#   if defined OMEGA_IMPLICIT
+      IF (.not.destroy(ng, OCEAN(ng)%ad_Wi, MyFile,                     &
+     &                 __LINE__, 'OCEAN(ng)%ad_Wi')) RETURN
+#   endif
+
       IF (.not.destroy(ng, OCEAN(ng)%ad_wvel, MyFile,                   &
      &                 __LINE__, 'OCEAN(ng)%ad_wvel')) RETURN
+
+#   if defined WEC
+      IF (.not.destroy(ng, OCEAN(ng)%ad_u_stokes, MyFile,               &
+     &                 __LINE__, 'OCEAN(ng)%ad_u_stokes')) RETURN
+
+      IF (.not.destroy(ng, OCEAN(ng)%tl_v_stokes, MyFile,               &
+     &                 __LINE__, 'OCEAN(ng)%ad_v_stokes')) RETURN
+
+      IF (.not.destroy(ng, OCEAN(ng)%tl_W_stokes, MyFile,               &
+     &                 __LINE__, 'OCEAN(ng)%ad_W_stokes')) RETURN
+#   endif
 
       IF (.not.destroy(ng, OCEAN(ng)%ad_t_sol, MyFile,                  &
      &                 __LINE__, 'OCEAN(ng)%ad_t_sol')) RETURN
@@ -1163,19 +1304,6 @@
       IF (.not.destroy(ng, OCEAN(ng)%ad_W_sol, MyFile,                  &
      &                 __LINE__, 'OCEAN(ng)%ad_W_sol')) RETURN
 
-#   if defined NEARSHORE_MELLOR
-      IF (.not.destroy(ng, OCEAN(ng)%ad_rulag3d, MyFile,                &
-     &                 __LINE__, 'OCEAN(ng)%ad_rulag3d')) RETURN
-
-      IF (.not.destroy(ng, OCEAN(ng)%ad_rvlag3d, MyFile,                &
-     &                 __LINE__, 'OCEAN(ng)%ad_rvlag3d')) RETURN
-
-      IF (.not.destroy(ng, OCEAN(ng)%ad_u_stokes, MyFile,               &
-     &                 __LINE__, 'OCEAN(ng)%ad_u_stokes')) RETURN
-
-      IF (.not.destroy(ng, OCEAN(ng)%ad_v_stokes, MyFile,               &
-     &                 __LINE__, 'OCEAN(ng)%ad_v_stokes')) RETURN
-#   endif
 #  endif
 # endif
 
@@ -1482,11 +1610,19 @@
 #if defined TIDE_GENERATING_FORCES
             OCEAN(ng) % eq_tide(i,j) = IniVal
 #endif
-#if defined NEARSHORE_MELLOR
-            OCEAN(ng) % rulag2d(i,j) = IniVal
-            OCEAN(ng) % rvlag2d(i,j) = IniVal
+#if defined WEC_VF
+            OCEAN(ng) % zetat(i,j) = IniVal
+            OCEAN(ng) % zetaw(i,j) = IniVal
+            OCEAN(ng) % qsp(i,j) = IniVal
+            OCEAN(ng) % bh(i,j) = IniVal
+#endif
+#if defined WEC
             OCEAN(ng) % ubar_stokes(i,j) = IniVal
             OCEAN(ng) % vbar_stokes(i,j) = IniVal
+#endif
+#ifdef UV_KIRBY
+            OCEAN(ng) % uwave(i,j) = IniVal
+            OCEAN(ng) % vwave(i,j) = IniVal
 #endif
 #if defined BIO_FENNEL && defined CARBON && defined SOLVE3D
             OCEAN(ng) % pH(i,j) = 8.0_r8
@@ -1503,11 +1639,11 @@
 
               OCEAN(ng) % u(i,j,k,1) = IniVal
               OCEAN(ng) % u(i,j,k,2) = IniVal
+              OCEAN(ng) % ua(i,j,k)  = IniVal
               OCEAN(ng) % v(i,j,k,1) = IniVal
               OCEAN(ng) % v(i,j,k,2) = IniVal
-# if defined NEARSHORE_MELLOR
-              OCEAN(ng) % rulag3d(i,j,k) = IniVal
-              OCEAN(ng) % rvlag3d(i,j,k) = IniVal
+              OCEAN(ng) % va(i,j,k)  = IniVal
+# if defined WEC
               OCEAN(ng) % u_stokes(i,j,k) = IniVal
               OCEAN(ng) % v_stokes(i,j,k) = IniVal
 # endif
@@ -1533,7 +1669,14 @@
               OCEAN(ng) % rv(i,j,k,2) = IniVal
 
               OCEAN(ng) % W(i,j,k) = IniVal
+# if defined OMEGA_IMPLICIT
+              OCEAN(ng) % Wi(i,j,k) = IniVal
+# endif
               OCEAN(ng) % wvel(i,j,k) = IniVal
+# if defined WEC
+              OCEAN(ng) % W_stokes(i,j,k) = IniVal
+              OCEAN(ng) % wstvel(i,j,k) = IniVal
+# endif
             END DO
           END DO
           DO itrc=1,NT(ng)
@@ -1583,9 +1726,14 @@
             OCEAN(ng) % f_zeta(i,j) = IniVal
 # endif
 
-# if defined NEARSHORE_MELLOR
-            OCEAN(ng) % tl_rulag2d(i,j) = IniVal
-            OCEAN(ng) % tl_rvlag2d(i,j) = IniVal
+# if defined WEC_VF
+            OCEAN(ng) % tl_zetat(i,j) = IniVal
+            OCEAN(ng) % tl_zetaw(i,j) = IniVal
+            OCEAN(ng) % tl_qsp(i,j) = IniVal
+            OCEAN(ng) % tl_bh(i,j) = IniVal
+# endif
+
+# if defined WEC
             OCEAN(ng) % tl_ubar_stokes(i,j) = IniVal
             OCEAN(ng) % tl_vbar_stokes(i,j) = IniVal
 # endif
@@ -1598,15 +1746,15 @@
 
               OCEAN(ng) % tl_u(i,j,k,1) = IniVal
               OCEAN(ng) % tl_u(i,j,k,2) = IniVal
+              OCEAN(ng) % tl_ua(i,j,k)  = IniVal
               OCEAN(ng) % tl_v(i,j,k,1) = IniVal
               OCEAN(ng) % tl_v(i,j,k,2) = IniVal
+              OCEAN(ng) % tl_va(i,j,k)  = IniVal
 #  if defined FORCING_SV || defined HESSIAN_FSV
               OCEAN(ng) % f_u(i,j,k) = IniVal
               OCEAN(ng) % f_v(i,j,k) = IniVal
 #  endif
-#  if defined NEARSHORE_MELLOR
-              OCEAN(ng) % tl_rulag3d(i,j,k) = IniVal
-              OCEAN(ng) % tl_rvlag3d(i,j,k) = IniVal
+#  if defined WEC
               OCEAN(ng) % tl_u_stokes(i,j,k) = IniVal
               OCEAN(ng) % tl_v_stokes(i,j,k) = IniVal
 #  endif
@@ -1620,8 +1768,14 @@
               OCEAN(ng) % tl_rv(i,j,k,2) = IniVal
 
               OCEAN(ng) % tl_W(i,j,k) = IniVal
+#  if defined OMEGA_IMPLICIT
+              OCEAN(ng) % tl_Wi(i,j,k) = IniVal
+#  endif
 #  ifdef NOT_YET
               OCEAN(ng) % tl_wvel(i,j,k) = IniVal
+#  endif
+#  if defined WEC
+              OCEAN(ng) % tl_W_stokes(i,j,k) = IniVal
 #  endif
             END DO
           END DO
@@ -1679,9 +1833,15 @@
             OCEAN(ng) % ad_ubar_sol(i,j) = IniVal
             OCEAN(ng) % ad_vbar_sol(i,j) = IniVal
             OCEAN(ng) % ad_zeta_sol(i,j) = IniVal
-# if defined NEARSHORE_MELLOR
-            OCEAN(ng) % ad_rulag2d(i,j) = IniVal
-            OCEAN(ng) % ad_rvlag2d(i,j) = IniVal
+
+# if defined WEC_VF
+            OCEAN(ng) % ad_zetat(i,j) = IniVal
+            OCEAN(ng) % ad_zetaw(i,j) = IniVal
+            OCEAN(ng) % ad_qsp(i,j) = IniVal
+            OCEAN(ng) % ad_bh(i,j) = IniVal
+# endif
+
+# if defined WEC
             OCEAN(ng) % ad_ubar_stokes(i,j) = IniVal
             OCEAN(ng) % ad_vbar_stokes(i,j) = IniVal
 # endif
@@ -1694,17 +1854,17 @@
 
               OCEAN(ng) % ad_u(i,j,k,1) = IniVal
               OCEAN(ng) % ad_u(i,j,k,2) = IniVal
+              OCEAN(ng) % ad_ua(i,j,k) = IniVal
               OCEAN(ng) % ad_v(i,j,k,1) = IniVal
               OCEAN(ng) % ad_v(i,j,k,2) = IniVal
+              OCEAN(ng) % ad_va(i,j,k) = IniVal
               OCEAN(ng) % ad_u_sol(i,j,k) = IniVal
               OCEAN(ng) % ad_v_sol(i,j,k) = IniVal
 #  if defined FORCING_SV || defined HESSIAN_FSV
               OCEAN(ng) % f_u(i,j,k) = IniVal
               OCEAN(ng) % f_v(i,j,k) = IniVal
 #  endif
-#  if defined NEARSHORE_MELLOR
-              OCEAN(ng) % ad_rulag3d(i,j,k) = IniVal
-              OCEAN(ng) % ad_rvlag3d(i,j,k) = IniVal
+#  if defined WEC
               OCEAN(ng) % ad_u_stokes(i,j,k) = IniVal
               OCEAN(ng) % ad_v_stokes(i,j,k) = IniVal
 #  endif
@@ -1719,7 +1879,13 @@
 
               OCEAN(ng) % ad_W(i,j,k) = IniVal
               OCEAN(ng) % ad_W_sol(i,j,k) = IniVal
+#  if defined OMEGA_IMPLICIT
+              OCEAN(ng) % ad_Wi(i,j,k) = IniVal
+#  endif
               OCEAN(ng) % ad_wvel(i,j,k) = IniVal
+#  if defined WEC
+              OCEAN(ng) % ad_W_stokes(i,j,k) = IniVal
+#  endif
             END DO
           END DO
           DO itrc=1,NT(ng)

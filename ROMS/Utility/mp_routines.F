@@ -1,17 +1,15 @@
 #include "cppdefs.h"
 !
 !git $Id$
-!svn $Id: mp_routines.F 1151 2023-02-09 03:08:53Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2025 The ROMS Group                              !
 !    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                                              !
+!    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
 !  This package contains multi-processing routines used during         !
 !  parallel applications:                                              !
 !                                                                      !
-!     my_flush         Flushes the contents of a unit buffer.          !
 !     my_getarg        Returns the argument from command-line.         !
 !     my_getpid        Returns process ID of the calling process.      !
 !     my_numthreads    Returns number of threads that would            !
@@ -22,31 +20,6 @@
 !                        an arbitrary time in the past.                !
 !                                                                      !
 !=======================================================================
-!
-!-----------------------------------------------------------------------
-      SUBROUTINE my_flush (unit)
-!-----------------------------------------------------------------------
-!
-      USE mod_kinds
-!
-      implicit none
-!
-!  Imported variable declarations.
-!
-      integer, intent(in) :: unit
-!
-!  Flush the buffere of requested standard output or Fortran file unit.
-!
-#if defined CYGWIN
-#elif defined AIX
-!!    CALL flush_ (unit)               ! AIX Operating system routine
-#else
-!!    CALL flush (unit)                ! Operating system routine
-#endif
-      FLUSH (unit)                     ! Fortran 2003 standard
-!
-      RETURN
-      END SUBROUTINE my_flush
 
 #ifdef DISTRIBUTE
 !

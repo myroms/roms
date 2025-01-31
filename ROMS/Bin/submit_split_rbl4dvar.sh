@@ -1,11 +1,10 @@
 #!/bin/bash
 #
 # git $Id$
-# svn $Id: submit_split_rbl4dvar.sh 1151 2023-02-09 03:08:53Z arango $
 #######################################################################
-## Copyright (c) 2002-2023 The ROMS/TOMS Group                        #
+## Copyright (c) 2002-2025 The ROMS Group                             #
 ##   Licensed under a MIT/X style license                             #
-##   See License_ROMS.txt                                             #
+##   See License_ROMS.md                                              #
 ################################################## Hernan G. Arango ###
 ##                                                                    #
 ## ROMS Split RBL4D-Var Data Assimilation running BASH script:        #
@@ -533,7 +532,7 @@ while [ $SDAY -le $L_DN ]; do
         echo
         echo "Error while running 4D-Var System:  Cycle = ${Cycle}" \
                                                "  Outer = ${OuterLoop}" \
-			                       "  Phase = ${Phase4DVAR}"
+                                               "  Phase = ${Phase4DVAR}"
         echo "Check ${RunDir}/log.roms for details ..."
         exit 1
       fi
@@ -546,7 +545,7 @@ while [ $SDAY -le $L_DN ]; do
     echo
     echo "Running 4D-Var System:  Cycle = ${Cycle}" \
                                "  Outer = ${OuterLoop}" \
-			       "  Phase = ${Phase4DVAR}"
+                               "  Phase = ${Phase4DVAR}"
 
     My4DVarScript ${DataDir} ${SUBSTITUTE} ${OuterLoop} ${Phase4DVAR} \
                   ${OBSname} ${Fprefix} ${Fsuffix} ${Inp4DVAR}
@@ -565,7 +564,7 @@ while [ $SDAY -le $L_DN ]; do
         echo
         echo "Error while running 4D-Var System:  Cycle = ${Cycle}" \
                                                "  Outer = ${OuterLoop}" \
-			                       "  Phase = ${Phase4DVAR}"
+                                               "  Phase = ${Phase4DVAR}"
         echo "Check ${RunDir}/log.roms for details ..."
         exit 1
       fi
@@ -607,7 +606,7 @@ while [ $SDAY -le $L_DN ]; do
       if [ $? -ne 0 ] ; then
         echo
         echo "Error while running 4D-Var System:  Cycle = ${Cycle}" \
-			                       "  Phase = ${Phase4DVAR}"
+                                               "  Phase = ${Phase4DVAR}"
         echo "Check ${RunDir}/log.roms for details ..."
         exit 1
       fi

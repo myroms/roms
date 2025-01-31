@@ -6,11 +6,10 @@
       defined POSTERIOR_ERROR_F)) || defined LCZ_FINAL
 !
 !git $Id$
-!svn $Id: wrt_hessian.F 1151 2023-02-09 03:08:53Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2025 The ROMS Group                              !
 !    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                                              !
+!    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
 !  This module writes Hessian eigenvectors into output file using the  !
@@ -170,6 +169,22 @@
       Fcount=HSS(ng)%Fcount
       HSS(ng)%Nrec(Fcount)=HSS(ng)%Nrec(Fcount)+1
 !
+!  Report.
+!
+# ifdef SOLVE3D
+#  ifdef NESTING
+      IF (Master) WRITE (stdout,10) kout, nout, HSS(ng)%Rindex, ng
+#  else
+      IF (Master) WRITE (stdout,10) kout, nout, HSS(ng)%Rindex
+#  endif
+# else
+#  ifdef NESTING
+      IF (Master) WRITE (stdout,10) kout, HSS(ng)%Rindex, ng
+#  else
+      IF (Master) WRITE (stdout,10) kout, HSS(ng)%Rindex
+#  endif
+# endif
+!
 !  Write out model time (s).
 !
       CALL netcdf_put_fvar (ng, iADM, HSS(ng)%name,                     &
@@ -183,7 +198,8 @@
 !
       scale=1.0_dp
       gtype=gfactor*r2dvar
-      status=nf_fwrite2d(ng, iADM, HSS(ng)%ncid, HSS(ng)%Vid(idFsur),   &
+      status=nf_fwrite2d(ng, iADM, HSS(ng)%ncid, idFsur,                &
+     &                   HSS(ng)%Vid(idFsur),                           &
      &                   HSS(ng)%Rindex, gtype,                         &
      &                   LBi, UBi, LBj, UBj, scale,                     &
 # ifdef MASKING
@@ -192,7 +208,7 @@
      &                   OCEAN(ng)% ad_zeta(:,:,kout))
       IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
         IF (Master) THEN
-          WRITE (stdout,10) TRIM(Vname(1,idFsur)), HSS(ng)%Rindex
+          WRITE (stdout,20) TRIM(Vname(1,idFsur)), HSS(ng)%Rindex
         END IF
         exit_flag=3
         ioerror=status
@@ -214,7 +230,7 @@
      &                                                     kout))
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idSbry(isFsur))),            &
+            WRITE (stdout,20) TRIM(Vname(1,idSbry(isFsur))),            &
      &                        HSS(ng)%Rindex
           END IF
           exit_flag=3
@@ -228,7 +244,8 @@
 !
       scale=1.0_dp
       gtype=gfactor*u2dvar
-      status=nf_fwrite2d(ng, iADM, HSS(ng)%ncid, HSS(ng)%Vid(idUbar),   &
+      status=nf_fwrite2d(ng, iADM, HSS(ng)%ncid, idUbar,                &
+     &                   HSS(ng)%Vid(idUbar),                           &
      &                   HSS(ng)%Rindex, gtype,                         &
      &                   LBi, UBi, LBj, UBj, scale,                     &
 # ifdef MASKING
@@ -237,7 +254,7 @@
      &                   OCEAN(ng) % ad_ubar(:,:,kout))
       IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
         IF (Master) THEN
-          WRITE (stdout,10) TRIM(Vname(1,idUbar)), HSS(ng)%Rindex
+          WRITE (stdout,20) TRIM(Vname(1,idUbar)), HSS(ng)%Rindex
         END IF
         exit_flag=3
         ioerror=status
@@ -259,7 +276,7 @@
      &                                                     kout))
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idSbry(isUbar))),            &
+            WRITE (stdout,20) TRIM(Vname(1,idSbry(isUbar))),            &
      &                        HSS(ng)%Rindex
           END IF
           exit_flag=3
@@ -273,7 +290,8 @@
 !
       scale=1.0_dp
       gtype=gfactor*v2dvar
-      status=nf_fwrite2d(ng, iADM, HSS(ng)%ncid, HSS(ng)%Vid(idVbar),   &
+      status=nf_fwrite2d(ng, iADM, HSS(ng)%ncid, idVbar,                &
+     &                   HSS(ng)%Vid(idVbar),                           &
      &                   HSS(ng)%Rindex, gtype,                         &
      &                   LBi, UBi, LBj, UBj, scale,                     &
 # ifdef MASKING
@@ -282,7 +300,7 @@
      &                   OCEAN(ng) % ad_vbar(:,:,kout))
       IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
         IF (Master) THEN
-          WRITE (stdout,10) TRIM(Vname(1,idVbar)), HSS(ng)%Rindex
+          WRITE (stdout,20) TRIM(Vname(1,idVbar)), HSS(ng)%Rindex
         END IF
         exit_flag=3
         ioerror=status
@@ -304,7 +322,7 @@
      &                                                     kout))
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idSbry(isVbar))),            &
+            WRITE (stdout,20) TRIM(Vname(1,idSbry(isVbar))),            &
      &                        HSS(ng)%Rindex
           END IF
           exit_flag=3
@@ -320,7 +338,8 @@
 !
       scale=1.0_dp
       gtype=gfactor*u3dvar
-      status=nf_fwrite3d(ng, iADM, HSS(ng)%ncid, HSS(ng)%Vid(idUvel),   &
+      status=nf_fwrite3d(ng, iADM, HSS(ng)%ncid, idUvel,                &
+     &                   HSS(ng)%Vid(idUvel),                           &
      &                   HSS(ng)%Rindex, gtype,                         &
      &                   LBi, UBi, LBj, UBj, 1, N(ng), scale,           &
 #  ifdef MASKING
@@ -329,7 +348,7 @@
      &                   OCEAN(ng) % ad_u(:,:,:,nout))
       IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
         IF (Master) THEN
-          WRITE (stdout,10) TRIM(Vname(1,idUvel)), HSS(ng)%Rindex
+          WRITE (stdout,20) TRIM(Vname(1,idUvel)), HSS(ng)%Rindex
         END IF
         exit_flag=3
         ioerror=status
@@ -351,7 +370,7 @@
      &                                                  nout))
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idSbry(isUvel))),            &
+            WRITE (stdout,20) TRIM(Vname(1,idSbry(isUvel))),            &
      &                        HSS(ng)%Rindex
           END IF
           exit_flag=3
@@ -365,7 +384,8 @@
 !
       scale=1.0_dp
       gtype=gfactor*v3dvar
-      status=nf_fwrite3d(ng, iADM, HSS(ng)%ncid, HSS(ng)%Vid(idVvel),   &
+      status=nf_fwrite3d(ng, iADM, HSS(ng)%ncid, idVvel,                &
+     &                   HSS(ng)%Vid(idVvel),                           &
      &                   HSS(ng)%Rindex, gtype,                         &
      &                   LBi, UBi, LBj, UBj, 1, N(ng), scale,           &
 #  ifdef MASKING
@@ -374,7 +394,7 @@
      &                   OCEAN(ng) % ad_v(:,:,:,nout))
       IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
         IF (Master) THEN
-          WRITE (stdout,10) TRIM(Vname(1,idVvel)), HSS(ng)%Rindex
+          WRITE (stdout,20) TRIM(Vname(1,idVvel)), HSS(ng)%Rindex
         END IF
         exit_flag=3
         ioerror=status
@@ -396,7 +416,7 @@
      &                                                  nout))
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idSbry(isVvel))),            &
+            WRITE (stdout,20) TRIM(Vname(1,idSbry(isVvel))),            &
      &                        HSS(ng)%Rindex
           END IF
           exit_flag=3
@@ -411,7 +431,8 @@
       DO itrc=1,NT(ng)
         scale=1.0_dp
         gtype=gfactor*r3dvar
-        status=nf_fwrite3d(ng, iADM, HSS(ng)%ncid, HSS(ng)%Tid(itrc),   &
+        status=nf_fwrite3d(ng, iADM, HSS(ng)%ncid, idTvar(itrc),        &
+     &                     HSS(ng)%Tid(itrc),                           &
      &                     HSS(ng)%Rindex, gtype,                       &
      &                     LBi, UBi, LBj, UBj, 1, N(ng), scale,         &
 #  ifdef MASKING
@@ -420,7 +441,7 @@
      &                     OCEAN(ng) % ad_t(:,:,:,nout,itrc))
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idTvar(itrc))),              &
+            WRITE (stdout,20) TRIM(Vname(1,idTvar(itrc))),              &
      &                        HSS(ng)%Rindex
           END IF
           exit_flag=3
@@ -446,7 +467,7 @@
      &                                                    nout,itrc))
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
             IF (Master) THEN
-              WRITE (stdout,10) TRIM(Vname(1,idSbry(isTvar(itrc)))),    &
+              WRITE (stdout,20) TRIM(Vname(1,idSbry(isTvar(itrc)))),    &
      &                          HSS(ng)%Rindex
             END IF
             exit_flag=3
@@ -467,7 +488,7 @@
         IF (Lstflux(itrc,ng)) THEN
           scale=1.0_dp
           gtype=gfactor*r3dvar
-          status=nf_fwrite3d(ng, iADM, HSS(ng)%ncid,                    &
+          status=nf_fwrite3d(ng, iADM, HSS(ng)%ncid, idTsur(itrc),      &
      &                       HSS(ng)%Vid(idTsur(itrc)),                 &
      &                       HSS(ng)%Rindex, gtype,                     &
      &                       LBi, UBi, LBj, UBj, 1, Nfrec(ng), scale,   &
@@ -477,7 +498,7 @@
      &                       FORCES(ng) % ad_tflux(:,:,:,kout,itrc))
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
             IF (Master) THEN
-              WRITE (stdout,10) TRIM(Vname(1,idTsur(itrc))),            &
+              WRITE (stdout,20) TRIM(Vname(1,idTsur(itrc))),            &
      &                          HSS(ng)%Rindex
             END IF
             exit_flag=3
@@ -496,7 +517,8 @@
 !
       scale=1.0_dp
       gtype=gfactor*u3dvar
-      status=nf_fwrite3d(ng, iADM, HSS(ng)%ncid, HSS(ng)%Vid(idUsms),   &
+      status=nf_fwrite3d(ng, iADM, HSS(ng)%ncid, idUsms,                &
+     &                   HSS(ng)%Vid(idUsms),                           &
      &                   HSS(ng)%Rindex, gtype,                         &
      &                   LBi, UBi, LBj, UBj, 1, Nfrec(ng), scale,       &
 #  ifdef MASKING
@@ -505,7 +527,7 @@
      &                   FORCES(ng) % ad_ustr(:,:,:,kout))
       IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
         IF (Master) THEN
-          WRITE (stdout,10) TRIM(Vname(1,idUsms)), HSS(ng)%Rindex
+          WRITE (stdout,20) TRIM(Vname(1,idUsms)), HSS(ng)%Rindex
         END IF
         exit_flag=3
         ioerror=status
@@ -516,7 +538,8 @@
 !
       scale=1.0_dp
       gtype=gfactor*v3dvar
-      status=nf_fwrite3d(ng, iADM, HSS(ng)%ncid, HSS(ng)%Vid(idVsms),   &
+      status=nf_fwrite3d(ng, iADM, HSS(ng)%ncid, idVsms,                &
+     &                   HSS(ng)%Vid(idVsms),                           &
      &                   HSS(ng)%Rindex, gtype,                         &
      &                   LBi, UBi, LBj, UBj, 1, Nfrec(ng), scale,       &
 #  ifdef MASKING
@@ -525,7 +548,7 @@
      &                   FORCES(ng) % ad_vstr(:,:,:,kout))
       IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
         IF (Master) THEN
-          WRITE (stdout,10) TRIM(Vname(1,idVsms)), HSS(ng)%Rindex
+          WRITE (stdout,20) TRIM(Vname(1,idVsms)), HSS(ng)%Rindex
         END IF
         exit_flag=3
         ioerror=status
@@ -540,38 +563,23 @@
 !
       CALL netcdf_sync (ng, iADM, HSS(ng)%name, HSS(ng)%ncid)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-
-# ifdef SOLVE3D
-#  ifdef NESTING
-      IF (Master) WRITE (stdout,20) kout, nout, HSS(ng)%Rindex, ng
-#  else
-      IF (Master) WRITE (stdout,20) kout, nout, HSS(ng)%Rindex
-#  endif
-# else
-#  ifdef NESTING
-      IF (Master) WRITE (stdout,20) kout, HSS(ng)%Rindex, ng
-#  else
-      IF (Master) WRITE (stdout,20) kout, HSS(ng)%Rindex
-#  endif
-# endif
 !
-  10  FORMAT (/,' WRT_HESSIAN_NF90 - error while writing variable: ',a, &
-     &        /,20x,'into Hessian NetCDF file for time record: ',i0)
+  10  FORMAT (2x,'WRT_HESSIAN_NF90 - writing Hessian', t42,             &
 # ifdef SOLVE3D
-  20  FORMAT (2x,'WRT_HESSIAN_NF90 - wrote Hessian', t40,               &
 #  ifdef NESTING
      &        'fields (Index=',i1,',',i1,') in record = ',i0,t92,i2.2)
 #  else
      &        'fields (Index=',i1,',',i1,') in record = ',i0)
 #  endif
 # else
-  20  FORMAT (2x,'WRT_HESSIAN_NF90 - wrote Hessian', t40,               &
 #  ifdef NESTING
      &        'fields (Index=',i1,')   in record = ',i0,t92,i2.2)
 #  else
      &        'fields (Index=',i1,')   in record = ',i0)
 #  endif
 # endif
+  20  FORMAT (/,' WRT_HESSIAN_NF90 - error while writing variable: ',a, &
+     &        /,20x,'into Hessian NetCDF file for time record: ',i0)
 !
       RETURN
       END SUBROUTINE wrt_hessian_nf90
@@ -624,6 +632,22 @@
       Fcount=HSS(ng)%Fcount
       HSS(ng)%Nrec(Fcount)=HSS(ng)%Nrec(Fcount)+1
 !
+!  Report.
+!
+#  ifdef SOLVE3D
+#   ifdef NESTING
+      IF (Master) WRITE (stdout,10) kout, nout, HSS(ng)%Rindex, ng
+#   else
+      IF (Master) WRITE (stdout,10) kout, nout, HSS(ng)%Rindex
+#   endif
+#  else
+#   ifdef NESTING
+      IF (Master) WRITE (stdout,10) kout, HSS(ng)%Rindex, ng
+#   else
+      IF (Master) WRITE (stdout,10) kout, HSS(ng)%Rindex
+#   endif
+#  endif
+!
 !  Write out model time (s).
 !
       CALL pio_netcdf_put_fvar (ng, iADM, HSS(ng)%name,                 &
@@ -642,7 +666,7 @@
         ioDesc => ioDesc_sp_r2dvar(ng)
       END IF
 !
-      status=nf_fwrite2d(ng, iADM, HSS(ng)%pioFile,                     &
+      status=nf_fwrite2d(ng, iADM, HSS(ng)%pioFile, idFsur,             &
      &                   HSS(ng)%pioVar(idFsur),                        &
      &                   HSS(ng)%Rindex,                                &
      &                   ioDesc,                                        &
@@ -653,7 +677,7 @@
      &                   OCEAN(ng)% ad_zeta(:,:,kout))
       IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
         IF (Master) THEN
-          WRITE (stdout,10) TRIM(Vname(1,idFsur)), HSS(ng)%Rindex
+          WRITE (stdout,20) TRIM(Vname(1,idFsur)), HSS(ng)%Rindex
         END IF
         exit_flag=3
         ioerror=status
@@ -683,7 +707,7 @@
      &                                                     kout))
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idSbry(isFsur))),            &
+            WRITE (stdout,20) TRIM(Vname(1,idSbry(isFsur))),            &
      &                        HSS(ng)%Rindex
           END IF
           exit_flag=3
@@ -702,7 +726,7 @@
         ioDesc => ioDesc_sp_u2dvar(ng)
       END IF
 !
-      status=nf_fwrite2d(ng, iADM, HSS(ng)%pioFile,                     &
+      status=nf_fwrite2d(ng, iADM, HSS(ng)%pioFile, idUbar,             &
      &                   HSS(ng)%pioVar(idUbar),                        &
      &                   HSS(ng)%Rindex,                                &
      &                   ioDesc,                                        &
@@ -713,7 +737,7 @@
      &                   OCEAN(ng) % ad_ubar(:,:,kout))
       IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
         IF (Master) THEN
-          WRITE (stdout,10) TRIM(Vname(1,idUbar)), HSS(ng)%Rindex
+          WRITE (stdout,20) TRIM(Vname(1,idUbar)), HSS(ng)%Rindex
         END IF
         exit_flag=3
         ioerror=status
@@ -743,7 +767,7 @@
      &                                                     kout))
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idSbry(isUbar))),            &
+            WRITE (stdout,20) TRIM(Vname(1,idSbry(isUbar))),            &
      &                        HSS(ng)%Rindex
           END IF
           exit_flag=3
@@ -762,7 +786,7 @@
         ioDesc => ioDesc_sp_v2dvar(ng)
       END IF
 !
-      status=nf_fwrite2d(ng, iADM, HSS(ng)%pioFile,                     &
+      status=nf_fwrite2d(ng, iADM, HSS(ng)%pioFile, idVbar,             &
      &                   HSS(ng)%pioVar(idVbar),                        &
      &                   HSS(ng)%Rindex,                                &
      &                   ioDesc,                                        &
@@ -773,7 +797,7 @@
      &                   OCEAN(ng) % ad_vbar(:,:,kout))
       IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
         IF (Master) THEN
-          WRITE (stdout,10) TRIM(Vname(1,idVbar)), HSS(ng)%Rindex
+          WRITE (stdout,20) TRIM(Vname(1,idVbar)), HSS(ng)%Rindex
         END IF
         exit_flag=3
         ioerror=status
@@ -803,7 +827,7 @@
      &                                                     kout))
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idSbry(isVbar))),            &
+            WRITE (stdout,20) TRIM(Vname(1,idSbry(isVbar))),            &
      &                        HSS(ng)%Rindex
           END IF
           exit_flag=3
@@ -824,7 +848,7 @@
         ioDesc => ioDesc_sp_u3dvar(ng)
       END IF
 !
-      status=nf_fwrite3d(ng, iADM, HSS(ng)%pioFile,                     &
+      status=nf_fwrite3d(ng, iADM, HSS(ng)%pioFile, idUvel,             &
      &                   HSS(ng)%pioVar(idUvel),                        &
      &                   HSS(ng)%Rindex,                                &
      &                   ioDesc,                                        &
@@ -835,7 +859,7 @@
      &                   OCEAN(ng) % ad_u(:,:,:,nout))
       IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
         IF (Master) THEN
-          WRITE (stdout,10) TRIM(Vname(1,idUvel)), HSS(ng)%Rindex
+          WRITE (stdout,20) TRIM(Vname(1,idUvel)), HSS(ng)%Rindex
         END IF
         exit_flag=3
         ioerror=status
@@ -865,7 +889,7 @@
      &                                                  nout))
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idSbry(isUvel))),            &
+            WRITE (stdout,20) TRIM(Vname(1,idSbry(isUvel))),            &
      &                        HSS(ng)%Rindex
           END IF
           exit_flag=3
@@ -884,7 +908,7 @@
         ioDesc => ioDesc_sp_v3dvar(ng)
       END IF
 !
-      status=nf_fwrite3d(ng, iADM, HSS(ng)%pioFile,                     &
+      status=nf_fwrite3d(ng, iADM, HSS(ng)%pioFile, idVvel,             &
      &                   HSS(ng)%pioVar(idVvel),                        &
      &                   HSS(ng)%Rindex,                                &
      &                   ioDesc,                                        &
@@ -895,7 +919,7 @@
      &                   OCEAN(ng) % ad_v(:,:,:,nout))
       IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
         IF (Master) THEN
-          WRITE (stdout,10) TRIM(Vname(1,idVvel)), HSS(ng)%Rindex
+          WRITE (stdout,20) TRIM(Vname(1,idVvel)), HSS(ng)%Rindex
         END IF
         exit_flag=3
         ioerror=status
@@ -925,7 +949,7 @@
      &                                                  nout))
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idSbry(isVvel))),            &
+            WRITE (stdout,20) TRIM(Vname(1,idSbry(isVvel))),            &
      &                        HSS(ng)%Rindex
           END IF
           exit_flag=3
@@ -945,7 +969,7 @@
           ioDesc => ioDesc_sp_r3dvar(ng)
         END IF
 !
-        status=nf_fwrite3d(ng, iADM, HSS(ng)%pioFile,                   &
+        status=nf_fwrite3d(ng, iADM, HSS(ng)%pioFile, idTvar(itrc),     &
      &                     HSS(ng)%pioTrc(itrc),                        &
      &                     HSS(ng)%Rindex,                              &
      &                     ioDesc,                                      &
@@ -956,7 +980,7 @@
      &                     OCEAN(ng) % ad_t(:,:,:,nout,itrc))
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idTvar(itrc))),              &
+            WRITE (stdout,20) TRIM(Vname(1,idTvar(itrc))),              &
      &                        HSS(ng)%Rindex
           END IF
           exit_flag=3
@@ -991,7 +1015,7 @@
      &                                                    nout,itrc))
           IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
             IF (Master) THEN
-              WRITE (stdout,10) TRIM(Vname(1,ifield)), HSS(ng)%Rindex
+              WRITE (stdout,20) TRIM(Vname(1,ifield)), HSS(ng)%Rindex
             END IF
             exit_flag=3
             ioerror=status
@@ -1016,7 +1040,7 @@
             ioDesc => ioDesc_sp_r2dfrc(ng)
           END IF
 !
-          status=nf_fwrite3d(ng, iADM, HSS(ng)%pioFile,                 &
+          status=nf_fwrite3d(ng, iADM, HSS(ng)%pioFile, idTsur(itrc),   &
      &                       HSS(ng)%pioVar(idTsur(itrc)),              &
      &                       HSS(ng)%Rindex,                            &
      &                       ioDesc,                                    &
@@ -1027,7 +1051,7 @@
      &                       FORCES(ng) % ad_tflux(:,:,:,kout,itrc))
           IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
             IF (Master) THEN
-              WRITE (stdout,10) TRIM(Vname(1,idTsur(itrc))),            &
+              WRITE (stdout,20) TRIM(Vname(1,idTsur(itrc))),            &
      &                          HSS(ng)%Rindex
             END IF
             exit_flag=3
@@ -1051,7 +1075,7 @@
         ioDesc => ioDesc_sp_u2dfrc(ng)
       END IF
 !
-      status=nf_fwrite3d(ng, iADM, HSS(ng)%pioFile,                     &
+      status=nf_fwrite3d(ng, iADM, HSS(ng)%pioFile, idUsms,             &
      &                   HSS(ng)%pioVar(idUsms),                        &
      &                   HSS(ng)%Rindex,                                &
      &                   ioDesc,                                        &
@@ -1062,7 +1086,7 @@
      &                   FORCES(ng) % ad_ustr(:,:,:,kout))
       IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
         IF (Master) THEN
-          WRITE (stdout,10) TRIM(Vname(1,idUsms)), HSS(ng)%Rindex
+          WRITE (stdout,20) TRIM(Vname(1,idUsms)), HSS(ng)%Rindex
         END IF
         exit_flag=3
         ioerror=status
@@ -1078,7 +1102,7 @@
         ioDesc => ioDesc_sp_v2dfrc(ng)
       END IF
 !
-      status=nf_fwrite3d(ng, iADM, HSS(ng)%pioFile,                     &
+      status=nf_fwrite3d(ng, iADM, HSS(ng)%pioFile, idVsms,             &
      &                   HSS(ng)%pioVar(idVsms),                        &
      &                   HSS(ng)%Rindex,                                &
      &                   ioDesc,                                        &
@@ -1089,7 +1113,7 @@
      &                   FORCES(ng) % ad_vstr(:,:,:,kout))
       IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
         IF (Master) THEN
-          WRITE (stdout,10) TRIM(Vname(1,idVsms)), HSS(ng)%Rindex
+          WRITE (stdout,20) TRIM(Vname(1,idVsms)), HSS(ng)%Rindex
         END IF
         exit_flag=3
         ioerror=status
@@ -1104,38 +1128,23 @@
 !
       CALL pio_netcdf_sync (ng, iADM, HSS(ng)%name, HSS(ng)%pioFile)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-
-#  ifdef SOLVE3D
-#   ifdef NESTING
-      IF (Master) WRITE (stdout,20) kout, nout, HSS(ng)%Rindex, ng
-#   else
-      IF (Master) WRITE (stdout,20) kout, nout, HSS(ng)%Rindex
-#   endif
-#  else
-#   ifdef NESTING
-      IF (Master) WRITE (stdout,20) kout, HSS(ng)%Rindex, ng
-#   else
-      IF (Master) WRITE (stdout,20) kout, HSS(ng)%Rindex
-#   endif
-#  endif
 !
-  10  FORMAT (/,' WRT_HESSIAN_PIO - error while writing variable: ',a,  &
-     &        /,19x,'into Hessian NetCDF file for time record: ',i0)
+  10  FORMAT (2x,'WRT_HESSIAN_PIO  - writing Hessian', t42,            &
 #  ifdef SOLVE3D
-  20  FORMAT (2x,'WRT_HESSIAN_PIO  - wrote Hessian', t40,               &
 #   ifdef NESTING
      &        'fields (Index=',i1,',',i1,') in record = ',i0,t92,i2.2)
 #   else
      &        'fields (Index=',i1,',',i1,') in record = ',i0)
 #   endif
 #  else
-  20  FORMAT (2x,'WRT_HESSIAN_PIO - wrote Hessian', t40,                &
 #   ifdef NESTING
      &        'fields (Index=',i1,')   in record = ',i0,t92,i2.2)
 #   else
      &        'fields (Index=',i1,')   in record = ',i0)
 #   endif
 #  endif
+  20  FORMAT (/,' WRT_HESSIAN_PIO - error while writing variable: ',a,  &
+     &        /,19x,'into Hessian NetCDF file for time record: ',i0)
 !
       RETURN
       END SUBROUTINE wrt_hessian_pio

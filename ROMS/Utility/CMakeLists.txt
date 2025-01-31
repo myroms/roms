@@ -1,17 +1,16 @@
 # git $Id$
-# svn $Id: CMakeLists.txt 1163 2023-04-02 15:36:10Z arango $
 #:::::::::::::::::::::::::::::::::::::::::::::::::::::: David Robertson :::
-# Copyright (c) 2002-2023 The ROMS/TOMS Group                           :::
+# Copyright (c) 2002-2025 The ROMS Group                                :::
 #   Licensed under a MIT/X style license                                :::
-#   See License_ROMS.txt                                                :::
+#   See License_ROMS.md                                                 :::
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 #
 # Source code list for sub-directory "ROMS/Utility"
 
 list( APPEND _files
-      ROMS/Utility/abort.F
       ROMS/Utility/ADfromTL.F
       ROMS/Utility/array_modes.F
+      ROMS/Utility/background_std.F
       ROMS/Utility/back_cost.F
       ROMS/Utility/cgradient.F
       ROMS/Utility/checkadj.F
@@ -30,6 +29,7 @@ list( APPEND _files
       ROMS/Utility/def_diags.F
       ROMS/Utility/def_dim.F
       ROMS/Utility/def_error.F
+      ROMS/Utility/def_extract.F
       ROMS/Utility/def_floats.F
       ROMS/Utility/def_gst.F
       ROMS/Utility/def_hessian.F
@@ -44,6 +44,7 @@ list( APPEND _files
       ROMS/Utility/def_rst.F
       ROMS/Utility/def_state.F
       ROMS/Utility/def_station.F
+      ROMS/Utility/def_std.F
       ROMS/Utility/def_tides.F
       ROMS/Utility/def_var.F
       ROMS/Utility/destroy.F
@@ -52,6 +53,7 @@ list( APPEND _files
       ROMS/Utility/edit_multifile.F
       ROMS/Utility/equilibrium_tide.F
       ROMS/Utility/erf.F
+      ROMS/Utility/extract_field.F
       ROMS/Utility/extract_obs.F
       ROMS/Utility/extract_sta.F
       ROMS/Utility/frc_weak.F
@@ -63,6 +65,7 @@ list( APPEND _files
       ROMS/Utility/get_bounds.F
       ROMS/Utility/get_cycle.F
       ROMS/Utility/get_env.F
+      ROMS/Utility/get_extract.F
       ROMS/Utility/get_grid.F
       ROMS/Utility/get_gst.F
       ROMS/Utility/get_hash.F
@@ -83,6 +86,7 @@ list( APPEND _files
       ROMS/Utility/inquiry.F
       ROMS/Utility/interpolate.F
       ROMS/Utility/lanc_resid.F
+      ROMS/Utility/lapack_mod.F
       ROMS/Utility/lbc.F
       ROMS/Utility/lubksb.F
       ROMS/Utility/ludcmp.F
@@ -91,6 +95,7 @@ list( APPEND _files
       ROMS/Utility/mp_exchange.F
       ROMS/Utility/mp_routines.F
       ROMS/Utility/nf_fread2d_bry.F
+      ROMS/Utility/nf_fread2d_xtr.F
       ROMS/Utility/nf_fread2d.F
       ROMS/Utility/nf_fread3d_bry.F
       ROMS/Utility/nf_fread3d.F
@@ -110,6 +115,7 @@ list( APPEND _files
       ROMS/Utility/obs_read.F
       ROMS/Utility/obs_write.F
       ROMS/Utility/packing.F
+      ROMS/Utility/pack_field.F
       ROMS/Utility/posterior.F
       ROMS/Utility/posterior_var.F
       ROMS/Utility/ran1.F
@@ -153,15 +159,18 @@ list( APPEND _files
       ROMS/Utility/stats.F
       ROMS/Utility/stats_modobs.F
       ROMS/Utility/stdinp_mod.F
+      ROMS/Utility/stdout_mod.F
       ROMS/Utility/stiffness.F
       ROMS/Utility/strings.F
       ROMS/Utility/sum_grad.F
       ROMS/Utility/sum_imp.F
       ROMS/Utility/tadv.F
       ROMS/Utility/tides_date.F
+      ROMS/Utility/tile_indices.F
       ROMS/Utility/time_corr.F
       ROMS/Utility/timers.F
       ROMS/Utility/uv_rotate.F
+      ROMS/Utility/uv_var_change.F
       ROMS/Utility/vorticity.F
       ROMS/Utility/white_noise.F
       ROMS/Utility/wpoints.F
@@ -171,6 +180,7 @@ list( APPEND _files
       ROMS/Utility/wrt_diags.F
       ROMS/Utility/wrt_error.F
       ROMS/Utility/wrt_evolved.F
+      ROMS/Utility/wrt_extract.F
       ROMS/Utility/wrt_floats.F
       ROMS/Utility/wrt_gst.F
       ROMS/Utility/wrt_hessian.F
@@ -182,6 +192,7 @@ list( APPEND _files
       ROMS/Utility/wrt_rst.F
       ROMS/Utility/wrt_state.F
       ROMS/Utility/wrt_station.F
+      ROMS/Utility/wrt_std.F
       ROMS/Utility/wrt_tides.F
       ROMS/Utility/yaml_parser.F
       ROMS/Utility/zeta_balance.F

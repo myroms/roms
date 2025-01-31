@@ -3,14 +3,13 @@
       SUBROUTINE tl_main2d (RunInterval)
 !
 !git $Id$
-!svn $Id: tl_main2d.F 1166 2023-05-17 20:11:58Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2025 The ROMS Group                              !
 !    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                                              !
+!    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
-!  This routine is the main driver for tangent linear  ROMS/TOMS when  !
+!  This routine is the main driver for tangent linear  ROMS when       !
 !  configurated as shallow water  (barotropic ) ocean model only.  It  !
 !  advances forward  the  tangent linear model  for all nested grids,  !
 !  if any, by the specified time interval (seconds), RunInterval.      !

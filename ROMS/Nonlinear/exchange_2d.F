@@ -2,11 +2,10 @@
       MODULE exchange_2d_mod
 !
 !git $Id$
-!svn $Id: exchange_2d.F 1151 2023-02-09 03:08:53Z arango $
 !=======================================================================
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2025 The ROMS Group                              !
 !    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                           Hernan G. Arango   !
+!    See License_ROMS.md                            Hernan G. Arango   !
 !========================================== Alexander F. Shchepetkin ===
 !                                                                      !
 !  These routines apply periodic boundary conditions to generic        !
@@ -32,6 +31,27 @@
 !     exchange_r2d_tile       periodic conditions at RHO-points        !
 !     exchange_u2d_tile       periodic conditions at U-points          !
 !     exchange_v2d_tile       periodic conditions at V-points          !
+!                                                                      !
+!  NOTE:                                                               !
+!                                                                      !
+!  Periodic conditions are tricky in tiled domain applications. Recall !
+!  that in ROMS, we can have tiled partitions in serial and parallel   !
+!  (shared- and distributed-memory) configurations. However, in serial !
+!  or shared-memory applications with domain decomposition, the field  !
+!  "A" to process must be a GLOBAL state array and NOT a local tiled   !
+!  scratch array because it does not contain the periodic points when  !
+!  NtileI>1 or NtileJ>1.                                               !
+!                                                                      !
+!  Contrarily, in distributed memory applications, periodicity is      !
+!  possible in both state and local arrays when NtileI=1 or NtileJ=1   !
+!  below. Recall that the state arrays are dimensioned to the tile     !
+!  size plus halo points. Therefore, if the periodic axis is tiled     !
+!  (NtileI>1 or NtileJ>1), the periodicity is applied during the halo  !
+!  exchange in module "mp_exchange2d". Notice that the halo exchange   !
+!  is suppressed in the I-direction in "mp_exchange2d" when NtileI=1.  !
+!  Similarly, it is avoided in the J-direction if NtileJ=1. Hence, the !
+!  periodic exchange is called before the halo exchange in ROMS        !
+!  numerical kernel.                                                   !
 !                                                                      !
 !=======================================================================
 !

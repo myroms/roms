@@ -1,12 +1,11 @@
 #!/bin/bash
 #
 # git $Id$
-# svn $Id: build_wrf.sh 1151 2023-02-09 03:08:53Z arango $
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Copyright (c) 2002-2023 The ROMS/TOMS Group                           :::
+# Copyright (c) 2002-2025 The ROMS Group                                :::
 #::::::::::::::::::::::::::::::::::::::::::::::::::::: Hernan G. Arango :::
 #                                                                       :::
-# WRF Compiling BASH Script: WRF Versions 4.1 and up                    :::
+# WRF Compiling BASH Script: WRF Versions 4.5.2 and higher              :::
 #                                                                       :::
 # Script to compile WRF where source code files are kept separate       :::
 # from the application configuration and build objects.                 :::
@@ -21,28 +20,34 @@
 #                                                                       :::
 # Options:                                                              :::
 #                                                                       :::
-#    -j [N]      Compile in parallel using N CPUs                       :::
-#                  omit argument for all available CPUs                 :::
+#    -j [N]         Compile in parallel using N CPUs                    :::
+#                     omit argument for all available CPUs              :::
 #                                                                       :::
-#    -move       Move compiled objects to build directory               :::
+#    -b [branch]    Compile myroms forked WRF GitHub branch             :::
 #                                                                       :::
-#    -noclean    Do not run clean -a script                             :::
+#                     build_wrf.sh -j 5 -b                              :::
+#                     build_wrf.sh -j 5 -b feature/coupling             :::
 #                                                                       :::
-#    -noconfig   Do not run configure compilation script                :::
+#    -noclean       Do not run clean -a script                          :::
 #                                                                       :::
+#    -noconfig      Do not run configure compilation script             :::
+#                                                                       :::
+# The branch option -b will download the WRF code from the myroms fork  :::
+# of WRF (https://github.com/myroms/WRF) and checkout the given branch  :::
+# or the 'Coupling' branch if none is provided.                         :::
 #                                                                       :::
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
 export which_MPI=openmpi                      # default, overwritten below
 
-#Initialize.
+# Initialize.
 
 separator=`perl -e "print ':' x 100;"`
 
 parallel=0
 clean=1
 config=1
-move=0
+branch=0
 
 export CPLFLAG=''
 export MY_CPP_FLAGS=''
@@ -62,9 +67,16 @@ do
       fi
       ;;
 
-    -move )
+    -b )
       shift
-      move=1
+      branch=1
+      branch_name=`echo $1 | grep -v '^-'`
+      if [ "$branch_name" == "" ]; then
+        branch_name='Coupling'
+      else
+        shift
+      fi
+      echo "Using myroms WRF $branch_name branch"
       ;;
 
     -noclean )
@@ -83,13 +95,14 @@ do
       echo ""
       echo "Available Options:"
       echo ""
-      echo "-j [N]        Compile in parallel using N CPUs"
+      echo "-j [N]            Compile in parallel using N CPUs"
       echo ""
-      echo "-move         Move compiled objects to build directory"
+      echo "-b [branch_name]  Compile specific myroms forked WRF GitHub branch"
+      echo "                    For example:  build_wrf.sh -b Coupling"
       echo ""
-      echo "-noclean      Do not run clean script"
+      echo "-noclean          Do not run clean script"
       echo ""
-      echo "-nocconfig    Do not run configure compilation script"
+      echo "-nocconfig        Do not run configure compilation script"
       echo ""
       exit 1
       ;;
@@ -103,21 +116,9 @@ done
 # ESMF/NUOPC Coupling (see below).
 #--------------------------------------------------------------------------
 
- export ROMS_SRC_DIR=${HOME}/ocean/repository/trunk
+ export ROMS_SRC_DIR=${HOME}/ocean/repository/git/roms
 
-#export WRF_ROOT_DIR=${HOME}/ocean/repository/WRF.4.1.2
-#export WRF_ROOT_DIR=${HOME}/ocean/repository/WRF.4.1.3
-#export WRF_ROOT_DIR=${HOME}/ocean/repository/WRF.4.2.2
-#export WRF_ROOT_DIR=${HOME}/ocean/repository/WRF.4.3
- export WRF_ROOT_DIR=${HOME}/ocean/repository/WRF
-
- export WRF_SRC_DIR=${WRF_ROOT_DIR}
-
-# Decode WRF version from its README file to decide the appropriate data
-# file links needed.
-
- wrf_ver=`grep 'WRF Model Version ' $WRF_ROOT_DIR/README | sed -e 's/[^0-9]*\([0-9]\.[0-9]\).*/\1/'`
- export WRF_VERSION=${wrf_ver}
+ export WRF_ROOT_DIR=${HOME}/ocean/repository/git/WRF
 
 #--------------------------------------------------------------------------
 # Set a local environmental variable to define the path of the working
@@ -126,23 +127,6 @@ done
 
  export MY_PROJECT_DIR=${PWD}
  export MY_PROJECT_DATA=`dirname ${PWD}`/Data
-
-#--------------------------------------------------------------------------
-# COAMPS configuration CPP options.
-#--------------------------------------------------------------------------
-
-# Sometimes it is desirable to activate one or more CPP options to
-# configure a particular application. If it is the case, specify each
-# option here using the -D syntax. Notice also that you need to use
-# shell's quoting syntax to enclose the definition. Both single or
-# double quotes work. For example,
-#
-# export MY_CPP_FLAGS="${MY_CPP_FLAGS} -DHDF5"
-#
-# Notice that you can have as many definitions as you want by appending
-# values.
-
-# export MY_CPP_FLAGS="${MY_CPP_FLAGS} -D"
 
 #--------------------------------------------------------------------------
 # Set Fortran compiler and MPI library to use.
@@ -205,6 +189,35 @@ fi
 # Put WRF executables in the following directory.
 
 export  WRF_BIN_DIR=${WRF_BUILD_DIR}/Bin
+
+#--------------------------------------------------------------------------
+# Download WRF code if requested
+#--------------------------------------------------------------------------
+
+if [ $branch -eq 1 ]; then
+  if [ ! -d ${MY_PROJECT_DIR}/wrf ]; then
+    echo ""
+    echo "Downloading WRF source code from myroms GitHub: https://www.github.com/myroms/WRF"
+    echo ""
+    git clone https://www.github.com/myroms/WRF.git wrf
+  fi
+  echo ""
+  echo "Checking out myroms WRF GitHub branch: $branch_name"
+  echo ""
+  cd wrf
+  git submodule update --init --recursive
+  git checkout $branch_name
+  export WRF_ROOT_DIR=${PWD}
+else
+  echo ""
+  echo "Using WRF source code from: ${WRF_ROOT_DIR}"
+  echo ""
+fi
+
+# Decode WRF version from its README file
+
+ wrf_ver=`grep 'WRF Model Version ' ${WRF_ROOT_DIR}/README | sed -e 's/[^0-9]*\([0-9]\.[0-9]\).*/\1/'`
+ export WRF_VERSION=${wrf_ver}
 
 # Go to the users source directory to compile. The options set above will
 # pick up the application-specific code from the appropriate place.
@@ -269,10 +282,6 @@ if [ "$config" -eq "1" ]; then
     export CONFIG_FLAGS="-r8"
   fi
 
-# Check if WRF needs to be patched and do so if necessary.
-
-  ${ROMS_SRC_DIR}/ESM/wrf_patch.sh
-
   echo ""
   echo "${separator}"
   echo "Configuring WRF code:  ${WRF_ROOT_DIR}/configure ${CONFIG_FLAGS}"
@@ -284,8 +293,8 @@ if [ "$config" -eq "1" ]; then
 # If which_MPI is "intel" then we need to replace DM_FC and DM_CC in configure.wrf
 
   if [ "${which_MPI}" == "intel" ]; then
-    perl -i -pe 's/^DM_FC(\s*)=(\s*)mpif90/DM_FC$1=$2mpiifort/' ${WRF_SRC_DIR}/configure.wrf
-    perl -i -pe 's/^DM_CC(\s*)=(\s*)mpicc/DM_CC$1=$2mpiicc/' ${WRF_SRC_DIR}/configure.wrf
+    perl -i -pe 's/^DM_FC(\s*)=(\s*)mpif90/DM_FC$1=$2mpiifort/' ${WRF_ROOT_DIR}/configure.wrf
+    perl -i -pe 's/^DM_CC(\s*)=(\s*)mpicc/DM_CC$1=$2mpiicc/' ${WRF_ROOT_DIR}/configure.wrf
   fi
 fi
 
@@ -329,7 +338,7 @@ export WRF_NMM_CORE=0            # Nonhydrostatic Mesoscale Model core
 
 # Remove existing build directory.
 
-if [[ "$move" -eq "1" && "$clean" -eq "1" ]]; then
+if [[ "$clean" -eq "1" ]]; then
   echo ""
   echo "${separator}"
   echo "Removing WRF build directory:  ${WRF_BUILD_DIR}"
@@ -356,7 +365,7 @@ echo ""
 echo "   ${WRF_ROOT_DIR}/compile ${WRF_CASE}"
 echo "        WRF_DA_CORE = ${WRF_DA_CORE},    Data Assimilation core"
 echo "        WRF_EM_CORE = ${WRF_EM_CORE},    Eurelian Mass-coordinate core"
-echo "        WRF_NMM_CORE = ${WRF_NMM_CORE}, Nonhydrostatic Mesoscale Model core"
+echo "        WRF_NMM_CORE = ${WRF_NMM_CORE},   Nonhydrostatic Mesoscale Model core"
 echo "        J = ${J},          number of compiling CPUs"
 echo "${separator}"
 echo ""
@@ -367,14 +376,12 @@ ${WRF_ROOT_DIR}/compile ${WRF_CASE}
 # Move WRF objects and executables to working project directory.
 #--------------------------------------------------------------------------
 
-if [ "$move" -eq "1" ]; then
-  ${ROMS_SRC_DIR}/ESM/wrf_move.sh
-fi
+${ROMS_SRC_DIR}/ESM/wrf_move.sh
 
 #--------------------------------------------------------------------------
 # Create WRF data links in the working project directory.
 #--------------------------------------------------------------------------
 
-if [[ "$move" -eq "1" && "$WRF_CASE" == "em_real" ]]; then
+if [[ "$WRF_CASE" == "em_real" ]]; then
   ${ROMS_SRC_DIR}/ESM/wrf_links.sh
 fi

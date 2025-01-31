@@ -1,14 +1,13 @@
       MODULE roms_kernel_mod
 !
 !git $Id$
-!svn $Id: obs_sen_rbl4dvar_analysis.h 1166 2023-05-17 20:11:58Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group       Andrew M. Moore   !
+!  Copyright (c) 2002-2025 The ROMS Group            Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                                              !
+!    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
-!  ROMS/TOMS Strong/Weak Constraint 4-Dimensional Variational Data     !
+!  ROMS Strong/Weak Constraint 4-Dimensional Variational Data          !
 !    Assimilation and Observation Sensitivity Driver: Restricted       !
 !    B-preconditioned Lanczos (RBL4D-Var).                             !
 !                                                                      !
@@ -23,7 +22,7 @@
 !  where to observe, and when.                                         !
 !                                                                      !
 !  The routines in this driver control the initialization,  time-      !
-!  stepping, and finalization of  ROMS/TOMS  model following ESMF      !
+!  stepping, and finalization of  ROMS  model following ESMF           !
 !  conventions:                                                        !
 !                                                                      !
 !     ROMS_initialize                                                  !
@@ -98,6 +97,7 @@
       USE rpcg_lanczos_mod,  ONLY : rpcg_lanczos
 #endif
       USE stats_modobs_mod,  ONLY : stats_modobs
+      USE stdout_mod,        ONLY : Set_StdOutUnit, stdout_unit
       USE strings_mod,       ONLY : FoundError, uppercase
       USE tl_def_ini_mod,    ONLY : tl_def_ini
       USE wrt_ini_mod,       ONLY : wrt_ini
@@ -118,7 +118,7 @@
 !
 !=======================================================================
 !                                                                      !
-!  This routine allocates and initializes ROMS/TOMS state variables    !
+!  This routine allocates and initializes ROMS state variables         !
 !  and internal and external parameters.                               !
 !                                                                      !
 !=======================================================================
@@ -174,6 +174,19 @@
 !  independent from standard input parameters.
 !
         CALL initialize_parallel
+!
+!  Set the ROMS standard output unit to write verbose execution info.
+!  Notice that the default standard out unit in Fortran is 6.
+!
+!  In some applications like coupling or disjointed mpi-communications,
+!  it is advantageous to write standard output to a specific filename
+!  instead of the default Fortran standard output unit 6. If that is
+!  the case, it opens such formatted file for writing.
+!
+        IF (Set_StdOutUnit) THEN
+          stdout=stdout_unit(Master)
+          Set_StdOutUnit=.FALSE.
+        END IF
 !
 !  Read in model tunable parameters from standard input. Allocate and
 !  initialize variables in several modules after the number of nested
@@ -430,7 +443,7 @@
 !
 !=======================================================================
 !                                                                      !
-!  This routine time-steps ROMS/TOMS nonlinear, tangent linear and     !
+!  This routine time-steps ROMS nonlinear, tangent linear and          !
 !  adjoint models.                                                     !
 !                                                                      !
 !=======================================================================
@@ -2335,17 +2348,17 @@
       END DO AD_OUTER_LOOP
 !
  10   FORMAT (a,'_outer',i0,'.nc')
- 20   FORMAT (/,1x,a,1x,'ROMS/TOMS: started time-stepping:',            &
+ 20   FORMAT (/,1x,a,1x,'ROMS: started time-stepping:',                 &
      &        ' (Grid: ',i2.2,' TimeSteps: ',i8.8,' - ',i8.8,')',/)
  30   FORMAT (' (',i3.3,',',i3.3,'): ',a,' data penalty, Jdata = ',     &
      &        1p,e17.10,0p,t68,a)
  40   FORMAT (/,' Converting Convolved Adjoint Trajectory to',          &
      &          ' Impulses: Outer = ',i3.3,' Inner = ',i3.3,/)
- 50   FORMAT (/,'ROMS/TOMS: Started adjoint Sensitivity calculation',   &
+ 50   FORMAT (/,'ROMS: Started adjoint Sensitivity calculation',        &
      &          ' ...',/)
- 60   FORMAT (/,'ROMS/TOMS: ',a,1x,a,', Outer = ',i3.3,                 &
+ 60   FORMAT (/,'ROMS: ',a,1x,a,', Outer = ',i3.3,                      &
      &          ' Inner = ',i3.3,/)
- 70   FORMAT (/,1x,a,1x,'ROMS/TOMS: adjoint forcing time range: ',      &
+ 70   FORMAT (/,1x,a,1x,'ROMS: adjoint forcing time range: ',           &
      &        f12.4,' - ',f12.4 ,/)
 !
       RETURN
@@ -2355,7 +2368,7 @@
 !
 !=======================================================================
 !                                                                      !
-!  This routine terminates ROMS/TOMS nonlinear, tangent linear, and    !
+!  This routine terminates ROMS nonlinear, tangent linear, and         !
 !  adjoint models execution.                                           !
 !                                                                      !
 !=======================================================================

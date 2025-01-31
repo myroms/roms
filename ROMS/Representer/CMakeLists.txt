@@ -1,9 +1,8 @@
 # git $Id$
-# svn $Id: CMakeLists.txt 1151 2023-02-09 03:08:53Z arango $
 #:::::::::::::::::::::::::::::::::::::::::::::::::::::: David Robertson :::
-# Copyright (c) 2002-2023 The ROMS/TOMS Group                           :::
+# Copyright (c) 2002-2025 The ROMS Group                                :::
 #   Licensed under a MIT/X style license                                :::
-#   See License_ROMS.txt                                                :::
+#   See License_ROMS.md                                                 :::
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 #
 # Source code list for sub-directory "ROMS/Representer"
@@ -24,6 +23,7 @@ list( APPEND _files
       ROMS/Representer/rp_obc_volcons.F
       ROMS/Representer/rp_omega.F
       ROMS/Representer/rp_output.F
+      ROMS/Representer/rp_post_initial.F
       ROMS/Representer/rp_pre_step3d.F
       ROMS/Representer/rp_prsgrd.F
       ROMS/Representer/rp_rho_eos.F

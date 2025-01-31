@@ -3,15 +3,14 @@
       SUBROUTINE rp_main3d (RunInterval)
 !
 !git $Id$
-!svn $Id: rp_main3d.F 1166 2023-05-17 20:11:58Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group       Andrew M. Moore   !
+!  Copyright (c) 2002-2025 The ROMS Group            Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                                              !
+!    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
 !  This routine is the main driver for representers tangent linear     !
-!  ROMS/TOMS when  configure as a  full 3D baroclinic ocean model.     !
+!  ROMS when  configure as a  full 3D baroclinic ocean model.          !
 !  It advances forward the  representer model equations  for  all      !
 !  nested grids, if any, for the specified time interval (seconds),    !
 !  RunInterval.                                                        !
@@ -66,7 +65,6 @@
 !!    USE rp_gls_corstep_mod,      ONLY : rp_gls_corstep
 !!    USE rp_gls_prestep_mod,      ONLY : rp_gls_prestep
 # endif
-      USE rp_ini_fields_mod,       ONLY : rp_ini_fields, rp_ini_zeta
 # ifdef LMD_MIXING_NOT_YET
 !!    USE rp_lmd_vmix_mod,         ONLY : rp_lmd_vmix
 # endif
@@ -80,6 +78,7 @@
       USE rp_set_depth_mod,        ONLY : rp_set_depth_bry
 # endif
       USE rp_omega_mod,            ONLY : rp_omega
+      USE rp_post_initial_mod,     ONLY : rp_post_initial
 # ifdef NEARSHORE_MELLOR_NOT_YET
 !!    USE rp_radiation_stress_mod, ONLY : rp_radiation_stress
 # endif
@@ -209,39 +208,26 @@
 !  snapshots (FrequentImpulse=TRUE).
 !-----------------------------------------------------------------------
 !
-      DO ng=1,Ngrids
-        IF (FrequentImpulse(ng)) THEN
-          DO tile=first_tile(ng),last_tile(ng),+1
-            CALL tl_forcing (ng, tile, kstp(ng), nstp(ng))
-          END DO
+        DO ng=1,Ngrids
+          IF (FrequentImpulse(ng)) THEN
+            DO tile=first_tile(ng),last_tile(ng),+1
+              CALL tl_forcing (ng, tile, kstp(ng), nstp(ng))
+            END DO
 !$OMP BARRIER
-        END IF
-      END DO
+          END IF
+        END DO
 # endif
 !
 !-----------------------------------------------------------------------
-!  If not a restart, initialize all time levels and compute other
-!  initial fields.
+!  On the first timestep, it computes the initial depths and level
+!  thicknesses from the initial free-surface field. Additionally, it
+!  initializes the tangent linear state variables for all time levels
+!  and applies lateral boundary conditions.
 !-----------------------------------------------------------------------
 !
         DO ng=1,Ngrids
           IF (iic(ng).eq.ntstart(ng)) THEN
-!
-!  Initialize free-surface and compute initial level thicknesses and
-!  depths.
-!
-            DO tile=first_tile(ng),last_tile(ng),+1
-              CALL rp_ini_zeta (ng, tile, iRPM)
-              CALL rp_set_depth (ng, tile, iRPM)
-            END DO
-!$OMP BARRIER
-!
-!  Initialize other state variables.
-!
-            DO tile=last_tile(ng),first_tile(ng),-1
-              CALL rp_ini_fields (ng, tile, iRPM)
-            END DO
-!$OMP BARRIER
+            CALL rp_post_initial (ng, iRPM)
           END IF
         END DO
 !

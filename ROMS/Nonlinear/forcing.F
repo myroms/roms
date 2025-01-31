@@ -7,11 +7,10 @@
 
 !
 !git $Id$
-!svn $Id: forcing.F 1151 2023-02-09 03:08:53Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2025 The ROMS Group                              !
 !    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                                              !
+!    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
 !  This routine is used to force the nonlinear state equations in      !
@@ -138,12 +137,12 @@
       real(r8), intent(inout) :: u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(inout) :: v(LBi:UBi,LBj:UBj,N(ng),2)
 #  endif
-      real(r8), intent(inout) :: ubar(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(inout) :: vbar(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(inout) :: ubar(LBi:UBi,LBj:UBj,:)
+      real(r8), intent(inout) :: vbar(LBi:UBi,LBj:UBj,:)
 #  ifdef SOLVE3D
       real(r8), intent(inout) :: Zt_avg1(LBi:UBi,LBj:UBj)
 #  endif
-      real(r8), intent(inout) :: zeta(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(inout) :: zeta(LBi:UBi,LBj:UBj,:)
 # endif
 !
 !  Local variable declarations.
@@ -160,7 +159,14 @@
 !-----------------------------------------------------------------------
 !
       IF (DOMAIN(ng)%SouthWest_Corner(tile)) THEN
-        IF (Master) WRITE (stdout,10) time_code(ng)
+        IF (FrequentImpulse(ng)) THEN
+          IF (Master) WRITE (stdout,10) time_code(ng)
+        END IF
+# ifdef RPCG
+        IF (IAUswitch(ng)) THEN
+          IF (Master) WRITE (stdout,20) time_code(ng)
+        END IF
+# endif
       END IF
 !
 !  Free-surface.
@@ -236,6 +242,10 @@
 !
  10   FORMAT (2x,'NL_FORCING       - added convolved adjoint impulse,', &
      &        t71,'t = ', a)
+# ifdef RPCG
+ 20   FORMAT (2x,'NL_FORCING       - incremental analysis update,    ', &
+     &        t71,'t = ', a)
+# endif
 !
       RETURN
       END SUBROUTINE forcing_tile

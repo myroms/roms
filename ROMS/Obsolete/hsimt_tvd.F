@@ -3,10 +3,11 @@
       MODULE hsimt_tvd_mod
 #if defined NONLINEAR && defined SOLVE3D
 !
+!git $Id$
 !=======================================================================
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2025 The ROMS Group                              !
 !    Licensed under a MIT/X style license                     Hui Wu   !
-!    See License_ROMS.txt                            Tarandeep Kalra   !
+!    See License_ROMS.md                             Tarandeep Kalra   !
 !==================================================== John C. Warner ===
 !                                                                      !
 !  This routine computes horizontal tracer advection fluxes FX and FE  !

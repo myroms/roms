@@ -1,11 +1,10 @@
 #!/bin/csh -f
 #
 # git $Id$
-# svn $Id: my_build_paths.csh 1151 2023-02-09 03:08:53Z arango $
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Copyright (c) 2002-2023 The ROMS/TOMS Group                           :::
+# Copyright (c) 2002-2025 The ROMS Group                                :::
 #   Licensed under a MIT/X style license                                :::
-#   See License_ROMS.txt                                                :::
+#   See License_ROMS.md                                                 :::
 #::::::::::::::::::::::::::::::::::::::::::::::::::::: Hernan G. Arango :::
 #                                                                       :::
 # ROMS Customized Compiling Libraries CSH Script                        :::
@@ -128,6 +127,11 @@ endif
 # to use the serial version of the NetCDF-4/HDF5 to avoid conflicts
 # with the compiler. We cannot activate MPI constructs in serial
 # or shared-memory ROMS code. Hybrid parallelism is not possible.
+#
+# If NetCDF-C and NetCDF-Fortran libraries are in different
+# directories, you must define NETCDFC correctly to the appropriate
+# split path. Otherwise, set NETCDFC to NETCDF because they are
+# located in the same path.
 
 setenv MPI_SOFT ""
 
@@ -164,27 +168,30 @@ switch ($FORT)
     endif
 
     if (! $?SINGULARITY_COMMAND) then
-        if ($?USE_NETCDF4) then
-          if ($?USE_PARALLEL_IO && $?USE_MPI) then
-              setenv ESMF_DIR       ${MPI_SOFT}/esmf_nc4
-              setenv NETCDF         ${MPI_SOFT}/netcdf4
-              setenv NF_CONFIG      ${NETCDF}/bin/nf-config
-              setenv NETCDF_INCDIR  ${NETCDF}/include
-              setenv NETCDF4        1
-          else
-            setenv ESMF_DIR         ${MPI_SOFT}/esmf_nc4
-            setenv NETCDF           /opt/intelsoft/serial/netcdf4
-            setenv NF_CONFIG        ${NETCDF}/bin/nf-config
-            setenv NETCDF_INCDIR    ${NETCDF}/include
-            setenv NETCDF4          1
-          endif
+      if ($?USE_NETCDF4) then
+        if ($?USE_PARALLEL_IO && $?USE_MPI) then
+          setenv ESMF_DIR       ${MPI_SOFT}/esmf_nc4
+          setenv NETCDF         ${MPI_SOFT}/netcdf4
+          setenv NETCDFC        ${MPI_SOFT}/netcdf4c
+          setenv NC_CONFIG      ${NETCDFC}/bin/nc-config
+          setenv NF_CONFIG      ${NETCDF}/bin/nf-config
+          setenv NETCDF_INCDIR  ${NETCDF}/include
+          setenv NETCDF4        1
         else
-          setenv ESMF_DIR           ${MPI_SOFT}/esmf_nc3
-          setenv NETCDF             /opt/intelsoft/serial/netcdf3
-          setenv NETCDF_INCDIR      ${NETCDF}/include
-          setenv NETCDF_LIBDIR      ${NETCDF}/lib
-          setenv NETCDF_classic     1
+          setenv ESMF_DIR       ${MPI_SOFT}/esmf_nc4
+          setenv NETCDF         /opt/intelsoft/serial/netcdf4
+          setenv NETCDFC        ${MPI_SOFT}/netcdf4c
+          setenv NC_CONFIG      ${NETCDFC}/bin/nc-config
+          setenv NF_CONFIG      ${NETCDF}/bin/nf-config
+          setenv NETCDF_INCDIR  ${NETCDF}/include
+          setenv NETCDF4        1
         endif
+      else
+        setenv ESMF_DIR           ${MPI_SOFT}/esmf_nc3
+        setenv NETCDF             /opt/intelsoft/serial/netcdf3
+        setenv NETCDF_INCDIR      ${NETCDF}/include
+        setenv NETCDF_LIBDIR      ${NETCDF}/lib
+        setenv NETCDF_classic     1
       endif
     endif
 
@@ -252,17 +259,21 @@ switch ($FORT)
     if (! $?SINGULARITY_COMMAND) then
       if ($?USE_NETCDF4) then
         if ($?USE_PARALLEL_IO && $?USE_MPI) then
-            setenv ESMF_DIR       ${MPI_SOFT}/esmf_nc4
-            setenv NETCDF         ${MPI_SOFT}/netcdf4
-            setenv NF_CONFIG      ${NETCDF}/bin/nf-config
-            setenv NETCDF_INCDIR  ${NETCDF}/include
-            setenv NETCDF4        1
+          setenv ESMF_DIR       ${MPI_SOFT}/esmf_nc4
+          setenv NETCDF         ${MPI_SOFT}/netcdf4
+          setenv NETCDFC        ${MPI_SOFT}/netcdf4c
+          setenv NC_CONFIG      ${NETCDFC}/bin/nc-config
+          setenv NF_CONFIG      ${NETCDF}/bin/nf-config
+          setenv NETCDF_INCDIR  ${NETCDF}/include
+          setenv NETCDF4        1
         else
-          setenv ESMF_DIR         ${MPI_SOFT}/esmf_nc4
-          setenv NETCDF           /opt/pgisoft/serial/netcdf4
-          setenv NF_CONFIG        ${NETCDF}/bin/nf-config
-          setenv NETCDF_INCDIR    ${NETCDF}/include
-          setenv NETCDF4          1
+          setenv ESMF_DIR       ${MPI_SOFT}/esmf_nc4
+          setenv NETCDF         /opt/pgisoft/serial/netcdf4
+          setenv NETCDFC        ${MPI_SOFT}/netcdf4c
+          setenv NC_CONFIG      ${NETCDFC}/bin/nc-config
+          setenv NF_CONFIG      ${NETCDF}/bin/nf-config
+          setenv NETCDF_INCDIR  ${NETCDF}/include
+          setenv NETCDF4        1
         endif
       else
         setenv ESMF_DIR           ${MPI_SOFT}/esmf_nc3
@@ -335,17 +346,21 @@ switch ($FORT)
     if (! $?SINGULARITY_COMMAND) then
       if ($?USE_NETCDF4) then
         if ($?USE_PARALLEL_IO && $?USE_MPI) then
-            setenv ESMF_DIR       ${MPI_SOFT}/esmf_nc4
-            setenv NETCDF         ${MPI_SOFT}/netcdf4
-            setenv NF_CONFIG      ${NETCDF}/bin/nf-config
-            setenv NETCDF_INCDIR  ${NETCDF}/include
-            setenv NETCDF4        1
+          setenv ESMF_DIR       ${MPI_SOFT}/esmf_nc4
+          setenv NETCDF         ${MPI_SOFT}/netcdf4
+          setenv NETCDFC        ${MPI_SOFT}/netcdf4c
+          setenv NC_CONFIG      ${NETCDFC}/bin/nc-config
+          setenv NF_CONFIG      ${NETCDF}/bin/nf-config
+          setenv NETCDF_INCDIR  ${NETCDF}/include
+          setenv NETCDF4        1
         else
-          setenv ESMF_DIR         ${MPI_SOFT}/esmf_nc4
-          setenv NETCDF           /opt/gfortransoft/serial/netcdf4
-          setenv NF_CONFIG        ${NETCDF}/bin/nf-config
-          setenv NETCDF_INCDIR    ${NETCDF}/include
-          setenv NETCDF4          1
+          setenv ESMF_DIR       ${MPI_SOFT}/esmf_nc4
+          setenv NETCDF         /opt/gfortransoft/serial/netcdf4
+          setenv NETCDFC        ${MPI_SOFT}/netcdf4c
+          setenv NC_CONFIG      ${NETCDFC}/bin/nc-config
+          setenv NF_CONFIG      ${NETCDF}/bin/nf-config
+          setenv NETCDF_INCDIR  ${NETCDF}/include
+          setenv NETCDF4        1
         endif
       else
         setenv ESMF_DIR           ${MPI_SOFT}/esmf_nc3

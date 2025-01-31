@@ -1,11 +1,10 @@
       MODULE roms_kernel_mod
 !
 !git $Id$
-!svn $Id: split_rbl4dvar_roms.h 1166 2023-05-17 20:11:58Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group       Andrew M. Moore   !
+!  Copyright (c) 2002-2025 The ROMS Group            Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                                              !
+!    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
 !  ROMS Strong/Weak Constraint Split 4-Dimensional Variational Data    !
@@ -91,6 +90,7 @@
 #endif
       USE stats_modobs_mod,  ONLY : stats_modobs
       USE stdinp_mod,        ONLY : getpar_i, getpar_s
+      USE stdout_mod,        ONLY : Set_StdOutUnit, stdout_unit
       USE strings_mod,       ONLY : FoundError, uppercase
       USE wrt_dai_mod,       ONLY : wrt_dai
       USE wrt_rst_mod,       ONLY : wrt_rst
@@ -166,15 +166,28 @@
 !
         CALL initialize_parallel
 !
+!  Set the ROMS standard output unit to write verbose execution info.
+!  Notice that the default standard out unit in Fortran is 6.
+!
+!  In some applications like coupling or disjointed mpi-communications,
+!  it is advantageous to write standard output to a specific filename
+!  instead of the default Fortran standard output unit 6. If that is
+!  the case, it opens such formatted file for writing.
+!
+        IF (Set_StdOutUnit) THEN
+          stdout=stdout_unit(Master)
+          Set_StdOutUnit=.FALSE.
+        END IF
+!
 !  Get 4D-Var phase from APARNAM input script file.
 !
-        CALL getpar_s (MyRank, aparnam, 'APARNAM')
+        CALL getpar_s (Master, aparnam, 'APARNAM')
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
-        CALL getpar_i (MyRank, OuterLoop, 'OuterLoop', aparnam)
+        CALL getpar_i (Master, OuterLoop, 'OuterLoop', aparnam)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
-        CALL getpar_s (MyRank, Phase4DVAR, 'Phase4DVAR', aparnam)
+        CALL getpar_s (Master, Phase4DVAR, 'Phase4DVAR', aparnam)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Determine ROMS standard output append switch. It is only relevant if
@@ -301,6 +314,18 @@
 !-----------------------------------------------------------------------
 !
       DO ng=1,Ngrids
+#ifdef STD_MODEL
+        LwrtSTD(ng)=.TRUE.
+        IF (INDEX(TRIM(uppercase(Phase4DVAR)),'BACKG').ne.0) THEN
+          LdefSTD(ng)=.TRUE.
+          LreadSTD(ng)=.FALSE.
+        ELSE
+          LdefSTD(ng)=.FALSE.
+          LreadSTD(ng)=.TRUE.
+        END IF
+#else
+        LreadSTD(ng)=.TRUE.
+#endif
         CALL prior_error (ng)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         SetGridConfig(ng)=.FALSE.

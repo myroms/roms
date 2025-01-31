@@ -2,11 +2,10 @@
       SUBROUTINE ntimesteps (model, RunInterval, nl, Nsteps, Rsteps)
 !
 !git $Id$
-!svn $Id: ntimestep.F 1151 2023-02-09 03:08:53Z arango $
 !=======================================================================
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2025 The ROMS Group                              !
 !    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                                              !
+!    See License_ROMS.md                                               !
 !================================================== Hernan G. Arango ===
 !                                                                      !
 !  This routine set the number of time-steps to compute. In nesting    !
@@ -139,19 +138,11 @@
           ELSE IF (model.eq.iTLM) THEN
             NEXTtime=time(ng)+RunInterval
             ENDtime=INItime(ng)+ntimes(ng)*dt(ng)
-            IF (iic(ng).eq.ntend(ng)) THEN
-              extra=1
-            ELSE
-              extra=0
-            END IF
+            extra=0
           ELSE IF (model.eq.iADM) THEN
             NEXTtime=time(ng)-RunInterval
             ENDtime=INItime(ng)+ntimes(ng)*dt(ng)
-            IF (iic(ng).eq.ntstart(ng)) THEN
-              extra=1
-            ELSE
-              extra=0
-            END IF
+            extra=0
           END IF
 #else
 !
@@ -263,11 +254,10 @@
       SUBROUTINE nlm_step_sequence (RunInterval, icount)
 !
 !git $Id$
-!svn $Id: ntimestep.F 1151 2023-02-09 03:08:53Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group       Andrew M. Moore   !
+!  Copyright (c) 2002-2025 The ROMS Group            Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                                              !
+!    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
 !  Given a time interval window (seconds), this routine stores all the !

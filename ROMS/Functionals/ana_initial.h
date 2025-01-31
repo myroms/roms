@@ -2,11 +2,10 @@
       SUBROUTINE ana_initial (ng, tile, model)
 !
 !! git $Id$
-!! svn $Id: ana_initial.h 1151 2023-02-09 03:08:53Z arango $
 !!======================================================================
-!! Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
+!! Copyright (c) 2002-2025 The ROMS Group                              !
 !!   Licensed under a MIT/X style license                              !
-!!   See License_ROMS.txt                                              !
+!!   See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
 !  This subroutine sets initial conditions for momentum and tracer     !
@@ -175,9 +174,9 @@
       real(r8), intent(out) :: v(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(out) :: t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
 # endif
-      real(r8), intent(out) :: ubar(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(out) :: vbar(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(out) :: zeta(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(out) :: ubar(LBi:UBi,LBj:UBj,:)
+      real(r8), intent(out) :: vbar(LBi:UBi,LBj:UBj,:)
+      real(r8), intent(out) :: zeta(LBi:UBi,LBj:UBj,:)
 #endif
 !
 !  Local variable declarations.
@@ -203,7 +202,8 @@
       IF (first) THEN
         first=.FALSE.
         DO i=1,SIZE(Stats,1)
-          Stats(i) % count=0.0_r8
+          Stats(i) % checksum=0_i8b
+          Stats(i) % count=0
           Stats(i) % min=Large
           Stats(i) % max=-Large
           Stats(i) % avg=0.0_r8
@@ -233,26 +233,39 @@
       y0=0.5_r8*el(ng)
       val1=0.395_r8
       val2=0.771_r8*(val1*val1)
-      DO j=JstrT,JendT
-        DO i=IstrP,IendT
-          x=0.5_r8*(xr(i-1,j)+xr(i,j))-x0
-          y=0.5_r8*(yr(i-1,j)+yr(i,j))-y0
-          val3=EXP(-val1*x)
-          val4=val2*((2.0_r8*val3/(1.0_r8+(val3*val3)))**2)
-          ubar(i,j,1)=0.25_r8*val4*(6.0_r8*y*y-9.0_r8)*                 &
-     &                EXP(-0.5_r8*y*y)
+      IF (ng.eq.1) THEN
+        DO j=JstrT,JendT
+          DO i=IstrP,IendT
+            x=0.5_r8*(xr(i-1,j)+xr(i,j))-x0
+            y=0.5_r8*(yr(i-1,j)+yr(i,j))-y0
+            val3=EXP(-val1*x)
+            val4=val2*((2.0_r8*val3/(1.0_r8+(val3*val3)))**2)
+            ubar(i,j,1)=0.25_r8*val4*(6.0_r8*y*y-9.0_r8)*               &
+     &                  EXP(-0.5_r8*y*y)
+          END DO
         END DO
-      END DO
-      DO j=JstrP,JendT
-        DO i=IstrT,IendT
-          x=0.5_r8*(xr(i,j-1)+xr(i,j))-x0
-          y=0.5_r8*(yr(i,j-1)+yr(i,j))-y0
-          val3=EXP(-val1*x)
-          val4=val2*((2.0_r8*val3/(1.0_r8+(val3*val3)))**2)
-          vbar(i,j,1)=2.0_r8*val4*y*(-2.0_r8*val1*TANH(val1*x))*        &
-     &                EXP(-0.5_r8*y*y)
+        DO j=JstrP,JendT
+          DO i=IstrT,IendT
+            x=0.5_r8*(xr(i,j-1)+xr(i,j))-x0
+            y=0.5_r8*(yr(i,j-1)+yr(i,j))-y0
+            val3=EXP(-val1*x)
+            val4=val2*((2.0_r8*val3/(1.0_r8+(val3*val3)))**2)
+            vbar(i,j,1)=2.0_r8*val4*y*(-2.0_r8*val1*TANH(val1*x))*      &
+     &                  EXP(-0.5_r8*y*y)
+          END DO
         END DO
-      END DO
+      ELSE
+        DO j=JstrT,JendT
+          DO i=IstrP,IendT
+            ubar(i,j,1)=0.0_r8
+          END DO
+        END DO
+        DO j=JstrP,JendT
+          DO i=IstrT,IendT
+            vbar(i,j,1)=0.0_r8
+          END DO
+        END DO
+      END IF
 #elif defined RIVERPLUME2
       DO j=JstrT,JendT
         DO i=IstrP,IendT
@@ -314,14 +327,14 @@
 !
 !  Report statistics.
 !
-      CALL stats_2dfld (ng, tile, iNLM, u2dvar, Stats(1),               &
+      CALL stats_2dfld (ng, tile, iNLM, u2dvar, Stats(1), 0,            &
      &                  LBi, UBi, LBj, UBj, ubar(:,:,1))
       IF (DOMAIN(ng)%NorthEast_Corner(tile)) THEN
         WRITE (stdout,10) TRIM(Vname(2,idUbar))//': '//                 &
      &                    TRIM(Vname(1,idUbar)),                        &
      &                     ng, Stats(1)%min, Stats(1)%max
       END IF
-      CALL stats_2dfld (ng, tile, iNLM, v2dvar, Stats(2),               &
+      CALL stats_2dfld (ng, tile, iNLM, v2dvar, Stats(2), 0,            &
      &                  LBi, UBi, LBj, UBj, vbar(:,:,1))
       IF (DOMAIN(ng)%NorthEast_Corner(tile)) THEN
         WRITE (stdout,10) TRIM(Vname(2,idVbar))//': '//                 &
@@ -369,20 +382,28 @@
         END DO
       END DO
 #elif defined SOLITON
-      x0=2.0_r8*xl(ng)/3.0_r8
-      y0=0.5_r8*el(ng)
-      val1=0.395_r8
-      val2=0.771_r8*(val1*val1)
-      DO j=JstrT,JendT
-        DO i=IstrT,IendT
-          x=xr(i,j)-x0
-          y=yr(i,j)-y0
-          val3=EXP(-val1*x)
-          val4=val2*((2.0_r8*val3/(1.0_r8+(val3*val3)))**2)
-          zeta(i,j,1)=0.25_r8*val4*(6.0_r8*y*y+3.0_r8)*                 &
-     &                EXP(-0.5_r8*y*y)
+      IF (ng.eq.1) THEN
+        x0=2.0_r8*xl(ng)/3.0_r8
+        y0=0.5_r8*el(ng)
+        val1=0.395_r8
+        val2=0.771_r8*(val1*val1)
+        DO j=JstrT,JendT
+          DO i=IstrT,IendT
+            x=xr(i,j)-x0
+            y=yr(i,j)-y0
+            val3=EXP(-val1*x)
+            val4=val2*((2.0_r8*val3/(1.0_r8+(val3*val3)))**2)
+            zeta(i,j,1)=0.25_r8*val4*(6.0_r8*y*y+3.0_r8)*               &
+     &                  EXP(-0.5_r8*y*y)
+          END DO
         END DO
-      END DO
+      ELSE
+        DO j=JstrT,JendT
+          DO i=IstrT,IendT
+            zeta(i,j,1)=0.0_r8
+          END DO
+        END DO
+      END IF
 #elif defined SED_TEST1
       val1=100.0_r8
       DO j=JstrT,JendT
@@ -406,7 +427,7 @@
 !
 !  Report statistics.
 !
-      CALL stats_2dfld (ng, tile, iNLM, r2dvar, Stats(3),               &
+      CALL stats_2dfld (ng, tile, iNLM, r2dvar, Stats(3), 0,            &
      &                  LBi, UBi, LBj, UBj, zeta(:,:,1))
       IF (DOMAIN(ng)%NorthEast_Corner(tile)) THEN
         WRITE (stdout,10) TRIM(Vname(2,idFsur))//': '//                 &
@@ -499,14 +520,14 @@
 !
 !  Report statistics.
 !
-      CALL stats_3dfld (ng, tile, iNLM, u3dvar, Stats(4),               &
+      CALL stats_3dfld (ng, tile, iNLM, u3dvar, Stats(4), 0,            &
      &                  LBi, UBi, LBj, UBj, 1, N(ng), u(:,:,:,1))
       IF (DOMAIN(ng)%NorthEast_Corner(tile)) THEN
         WRITE (stdout,10) TRIM(Vname(2,idUvel))//': '//                 &
      &                    TRIM(Vname(1,idUvel)),                        &
      &                    ng, Stats(4)%min, Stats(4)%max
       END IF
-      CALL stats_3dfld (ng, tile, iNLM, v3dvar, Stats(5),               &
+      CALL stats_3dfld (ng, tile, iNLM, v3dvar, Stats(5), 0,            &
      &                  LBi, UBi, LBj, UBj, 1, N(ng), v(:,:,:,1))
       IF (DOMAIN(ng)%NorthEast_Corner(tile)) THEN
         WRITE (stdout,10) TRIM(Vname(2,idVvel))//': '//                 &
@@ -852,7 +873,7 @@
 !  Report statistics.
 !
       DO itrc=1,NAT
-        CALL stats_3dfld (ng, tile, iNLM, u3dvar, Stats(itrc+5),        &
+        CALL stats_3dfld (ng, tile, iNLM, r3dvar, Stats(itrc+5), 0,     &
      &                    LBi, UBi, LBj, UBj, 1, N(ng), t(:,:,:,1,itrc))
         IF (DOMAIN(ng)%NorthEast_Corner(tile)) THEN
           WRITE (stdout,10) TRIM(Vname(2,idTvar(itrc)))//': '//         &
@@ -911,9 +932,9 @@
       real(r8), intent(out) :: tl_v(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(out) :: tl_t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
 #  endif
-      real(r8), intent(out) :: tl_ubar(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(out) :: tl_vbar(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(out) :: tl_zeta(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(out) :: tl_ubar(LBi:UBi,LBj:UBj,:)
+      real(r8), intent(out) :: tl_vbar(LBi:UBi,LBj:UBj,:)
+      real(r8), intent(out) :: tl_zeta(LBi:UBi,LBj:UBj,:)
 # endif
 !
 !  Local variable declarations.
@@ -1026,9 +1047,9 @@
       real(r8), intent(out) :: ad_v(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(out) :: ad_t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
 #  endif
-      real(r8), intent(out) :: ad_ubar(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(out) :: ad_vbar(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(out) :: ad_zeta(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(out) :: ad_ubar(LBi:UBi,LBj:UBj,:)
+      real(r8), intent(out) :: ad_vbar(LBi:UBi,LBj:UBj,:)
+      real(r8), intent(out) :: ad_zeta(LBi:UBi,LBj:UBj,:)
 # endif
 !
 !  Local variable declarations.

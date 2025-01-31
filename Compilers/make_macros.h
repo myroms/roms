@@ -1,10 +1,9 @@
 /*
 ** git $Id$
-** svn $Id: make_macros.h 1151 2023-02-09 03:08:53Z arango $
 ********************************************************** Hernan G. Arango ***
-** Copyright (c) 2002-2023 The ROMS/TOMS Group                               **
+** Copyright (c) 2002-2025 The ROMS Group                                    **
 **   Licensed under a MIT/X style license                                    **
-**   See License_ROMS.txt                                                    **
+**   See License_ROMS.md                                                     **
 *******************************************************************************
 **                                                                           **
 ** This configuration file defines several macros used by the makefile to    **
@@ -136,17 +135,7 @@
 ** Determine if the ARPACK library is needed.
 */
 
-#if defined ARRAY_MODES              || \
-    defined CLIPPING                 || \
-    defined I4DVAR                   || \
-    defined PROPAGATOR               || \
-    defined RBL4DVAR                 || \
-    defined RBL4DVAR_ANA_SENSITIVITY || \
-    defined R4DVAR                   || \
-    defined R4DVAR_ANA_SENSITIVITY   || \
-    defined SP4DVAR                  || \
-    defined TL_RBL4DVAR              || \
-    defined TL_R4DVAR
+#if defined PROPAGATOR
   USE_ARPACK := on
 #else
   USE_ARPACK :=

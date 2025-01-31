@@ -7,11 +7,10 @@
     defined SP4DVAR)
 !
 !git $Id$
-!svn $Id: congrad.F 1151 2023-02-09 03:08:53Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group       Andrew M. Moore   !
+!  Copyright (c) 2002-2025 The ROMS Group            Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                                              !
+!    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
 !  Weak Constraint 4-Dimensional Variational (4D-Var) Pre-conditioned  !
@@ -127,9 +126,19 @@
 # ifdef DISTRIBUTE
       USE distribute_mod, ONLY : mp_bcastf, mp_bcasti, mp_bcastl
 # endif
+      USE lapack_mod,     ONLY : DSTEQR
       USE strings_mod,    ONLY : FoundError
 !
       implicit none
+!
+! Interface for mixed precision minimization.
+!
+      INTERFACE rprecond
+# ifdef SINGLE_PRECISION
+        MODULE PROCEDURE rprecond_dp
+# endif
+        MODULE PROCEDURE rprecond_r8
+      END INTERFACE rprecond
 !
       PUBLIC  :: congrad
       PUBLIC  :: cg_read_congrad
@@ -143,8 +152,8 @@
 # if defined PIO_LIBRARY && defined DISTRIBUTE
       PRIVATE :: cg_write_congrad_pio
 # endif
-      PRIVATE :: RPevecs
-      PRIVATE :: rprecond
+!
+      PRIVATE
 !
       CONTAINS
 !
@@ -165,22 +174,22 @@
 !
       integer :: i, ic, j, iobs, ivec, Lscale, info
 !
-      real(r8) :: zbet, eps, preducv, preducy
+      real(dp) :: zbet, eps, preducv, preducy
 # ifdef MINRES
-      real(r8) :: zsum, zck, zgk
+      real(dp) :: zsum, zck, zgk
 # endif
-      real(r8) :: Jopt, Jf, Jmod, Jdata, Jb, Jobs, Jact, cff
+      real(dp) :: Jopt, Jf, Jmod, Jdata, Jb, Jobs, Jact, cff
 
-      real(r8), dimension(NinnLoop) :: zu, zgam
-      real(r8), dimension(NinnLoop) :: ztemp1, ztemp2, zu1, zu2
-      real(r8), dimension(Ndatum(ng)) :: px, pgrad, zw, zt
-      real(r8), dimension(Ndatum(ng)) :: zhv, zht, zd
-      real(r8), dimension(Ninner,3) :: zwork
-      real(r8), dimension(2*(NinnLoop-1)) :: work
-      real(r8), dimension(Ninner,Ninner) :: zgv
+      real(dp), dimension(NinnLoop) :: zu, zgam
+      real(dp), dimension(NinnLoop) :: ztemp1, ztemp2, zu1, zu2
+      real(dp), dimension(Ndatum(ng)) :: px, pgrad, zw, zt
+      real(dp), dimension(Ndatum(ng)) :: zhv, zht, zd
+      real(dp), dimension(Ninner,3) :: zwork
+      real(dp), dimension(2*(NinnLoop-1)) :: work
+      real(dp), dimension(Ninner,Ninner) :: zgv
 # ifdef MINRES
-      real(r8), dimension(innLoop,innLoop) :: ztriT, zLT, zLTt
-      real(r8), dimension(innLoop) :: tau, zwork1, ze, zeref
+      real(dp), dimension(innLoop,innLoop) :: ztriT, zLT, zLTt
+      real(dp), dimension(innLoop) :: tau, zwork1, ze, zeref
 # endif
 !
       character (len=13) :: string
@@ -221,16 +230,16 @@
 !  Initialize internal parameters.  This is needed here for output
 !  reasons.
 !
-        Jopt=0.0_r8
-        Jf=0.0_r8
-        Jdata=0.0_r8
-        Jmod=0.0_r8
-        Jb=0.0_r8
-        Jobs=0.0_r8
-        Jact=0.0_r8
-        eps=0.0_r8
-        preducv=0.0_r8
-        preducy=0.0_r8
+        Jopt=0.0_dp
+        Jf=0.0_dp
+        Jdata=0.0_dp
+        Jmod=0.0_dp
+        Jb=0.0_dp
+        Jobs=0.0_dp
+        Jact=0.0_dp
+        eps=0.0_dp
+        preducv=0.0_dp
+        preducy=0.0_dp
 !
 !-----------------------------------------------------------------------
 !  Initialization step, innloop = 0.
@@ -256,8 +265,8 @@
 !  For the first outer-loop, x0=0.
 !
             DO iobs=1,Ndatum(ng)
-              px(iobs)=0.0_r8
-              cg_pxsave(iobs)=0.0_r8
+              px(iobs)=0.0_dp
+              cg_pxsave(iobs)=0.0_dp
             END DO
 !
 !  If this is the first pass of the inner loop, set up the vectors and
@@ -279,7 +288,7 @@
 !
 ! Convert pgrad from x-space to v-space.
 !
-              IF (ObsErr(iobs).NE.0.0_r8) THEN
+              IF (ObsErr(iobs).ne.0.0_r8) THEN
                 pgrad(iobs)=pgrad(iobs)/SQRT(ObsErr(iobs))
               END IF
               vgrad0(iobs)=pgrad(iobs)
@@ -295,8 +304,8 @@
      &                       pgrad)
             END IF
 !
-            cg_Gnorm_y(outLoop)=0.0_r8
-            cg_Gnorm_v(outLoop)=0.0_r8
+            cg_Gnorm_y(outLoop)=0.0_dp
+            cg_Gnorm_v(outLoop)=0.0_dp
             DO iobs=1,Ndatum(ng)
               zgrad0(iobs,outLoop)=pgrad(iobs)
               cg_Gnorm_y(outLoop)=cg_Gnorm_y(outLoop)+                  &
@@ -324,25 +333,25 @@
 ! Convert ADmodVal from v-space to x-space.
 !
             DO iobs=1,Ndatum(ng)
-              IF (ObsErr(iobs).NE.0.0_r8) THEN
+              IF (ObsErr(iobs).ne.0.0_r8) THEN
                 ADmodVal(iobs)=ADmodVal(iobs)/SQRT(ObsErr(iobs))
               END IF
             END DO
 
-            cg_QG(1,outLoop)=0.0_r8
+            cg_QG(1,outLoop)=0.0_dp
             DO iobs=1,Ndatum(ng)
                cg_QG(1,outLoop)=cg_QG(1,outLoop)+                       &
      &                          zcglwk(iobs,1,outLoop)*                 &
      &                          zgrad0(iobs,outLoop)
             END DO
 
-            preducv=1.0_r8
-            preducy=1.0_r8
+            preducv=1.0_dp
+            preducy=1.0_dp
 !
 ! Compute the actual penalty function terms.
 !
-            Jb=0.0_r8
-            Jobs=0.0_r8
+            Jb=0.0_dp
+            Jobs=0.0_dp
             DO iobs=1,Ndatum(ng)
               Jobs=Jobs+vgrad0s(iobs)*vgrad0s(iobs)
             END DO
@@ -372,7 +381,7 @@
 !  contribution to the starting gradient) from x-space to v-space.
 !
               DO iobs=1,Ndatum(ng)
-                IF (ObsErr(iobs).NE.0.0_r8) THEN
+                IF (ObsErr(iobs).ne.0.0_r8) THEN
                   ADmodVal(iobs)=ADmodVal(iobs)/SQRT(ObsErr(iobs))
                   cg_innov(iobs)=cg_innov(iobs)/SQRT(ObsErr(iobs))
                 END IF
@@ -386,7 +395,7 @@
 !
                 pgrad(iobs)=ObsScale(iobs)*TLmodVal(iobs)
                 gdgw(iobs)=pgrad(iobs)
-                IF (ObsErr(iobs).NE.0.0_r8) THEN
+                IF (ObsErr(iobs).ne.0.0_r8) THEN
                   pgrad(iobs)=pgrad(iobs)/SQRT(ObsErr(iobs))
                   vgrad0s(iobs)=pgrad(iobs)+cg_innov(iobs)+             &
      &                                      cg_pxsave(iobs)
@@ -409,8 +418,8 @@
      &                         pgrad)
               END IF
 
-              cg_Gnorm_y(outLoop)=0.0_r8
-              cg_Gnorm_v(outLoop)=0.0_r8
+              cg_Gnorm_y(outLoop)=0.0_dp
+              cg_Gnorm_v(outLoop)=0.0_dp
               DO iobs=1,Ndatum(ng)
                 zgrad0(iobs,outLoop)=pgrad(iobs)
                 cg_Gnorm_y(outLoop)=cg_Gnorm_y(outLoop)+                &
@@ -437,11 +446,11 @@
               END IF
 !
               DO iobs=1,Ndatum(ng)
-                IF (ObsErr(iobs).NE.0.0_r8) THEN
+                IF (ObsErr(iobs).ne.0.0_r8) THEN
                   ADmodVal(iobs)=ADmodVal(iobs)/SQRT(ObsErr(iobs))
                 END IF
               END DO
-              cg_QG(1,outLoop)=0.0_r8
+              cg_QG(1,outLoop)=0.0_dp
               DO iobs=1,Ndatum(ng)
                 cg_QG(1,outLoop)=cg_QG(1,outLoop)+                      &
      &                           zcglwk(iobs,1,outLoop)*                &
@@ -452,8 +461,8 @@
 
           END IF
 
-          preducv=1.0_r8
-          preducy=1.0_r8
+          preducv=1.0_dp
+          preducy=1.0_dp
 !
 !-----------------------------------------------------------------------
 !  Minimization step, innLoop > 0.
@@ -474,7 +483,7 @@
 !
 !  Convert gradient contribution from x-space to v-space.
 !
-            IF (ObsErr(iobs).NE.0.0_r8) THEN
+            IF (ObsErr(iobs).ne.0.0_r8) THEN
               pgrad(iobs)=pgrad(iobs)/SQRT(ObsErr(iobs))
             END IF
           END DO
@@ -503,7 +512,7 @@
             CALL rprecond (ng, Lscale, Ltrans, outLoop, NinnLoop, pgrad)
           END IF
 !
-          cg_delta(innLoop,outLoop)=0.0_r8
+          cg_delta(innLoop,outLoop)=0.0_dp
           DO iobs=1,Ndatum(ng)
             cg_delta(innLoop,outLoop)=cg_delta(innLoop,outLoop)+        &
      &                                zcglwk(iobs,innLoop,outLoop)*     &
@@ -512,7 +521,7 @@
 !
 !  Exit, if not a positive definite algorithm.
 !
-          IF (cg_delta(innLoop,outLoop).le.0.0_r8) THEN
+          IF (cg_delta(innLoop,outLoop).le.0.0_dp) THEN
             WRITE (stdout,20) cg_delta(innLoop,outLoop), outLoop,       &
      &                        innLoop
             exit_flag=8
@@ -535,7 +544,7 @@
 !  Orthonormalize against previous Lanczos vectors.
 !
           DO ivec=innLoop,1,-1
-            cg_dla(ivec,outLoop)=0.0_r8
+            cg_dla(ivec,outLoop)=0.0_dp
             DO iobs=1,Ndatum(ng)
               cg_dla(ivec,outLoop)=cg_dla(ivec,outLoop)+pgrad(iobs)*    &
      &                             zcglwk(iobs,ivec,outLoop)
@@ -547,7 +556,7 @@
             END DO
           END DO
 !
-          cg_beta(innLoop+1,outLoop)=0.0_r8
+          cg_beta(innLoop+1,outLoop)=0.0_dp
           DO iobs=1,Ndatum(ng)
             cg_beta(innLoop+1,outLoop)=cg_beta(innLoop+1,outLoop)+      &
      &                                 pgrad(iobs)*pgrad(iobs)
@@ -559,7 +568,7 @@
      &                                     cg_beta(innLoop+1,outLoop)
           END DO
 !
-          cg_QG(innLoop+1,outLoop)=0.0_r8
+          cg_QG(innLoop+1,outLoop)=0.0_dp
           DO iobs=1,Ndatum(ng)
             cg_QG(innLoop+1,outLoop)=cg_QG(innLoop+1,outLoop)+          &
      &                               zcglwk(iobs,innLoop+1,outLoop)*    &
@@ -575,7 +584,7 @@
 !
 !  Perform a LQ factorization of the tridiagonal matrix.
 !
-          ztriT=0.0_r8
+          ztriT=0.0_dp
           DO i=1,innLoop
             ztriT(i,i)=cg_delta(i,outLoop)
           END DO
@@ -589,8 +598,8 @@
 !
 !   Isolate L=zLT and its transpose.
 !
-          zLT=0.0_r8
-          zLTt=0.0_r8
+          zLT=0.0_dp
+          zLTt=0.0_dp
           DO i=1,innLoop
             DO j=1,i
               zLT(i,j)=ztriT(i,j)
@@ -604,19 +613,19 @@
 !
 !   Now form ze=beta1*Q*e1.
 !
-          ze=0.0_r8
+          ze=0.0_dp
           DO i=1,innLoop
             ze(i)=-cg_QG(i,outLoop)
           END DO
           DO i=1,innLoop
             DO j=1,innLoop
-              zeref(j)=0.0_r8
+              zeref(j)=0.0_dp
             END DO
-            zeref(i)=1.0_r8
+            zeref(i)=1.0_dp
             DO j=i+1,innLoop
               zeref(j)=ztriT(i,j)
             END DO
-            zsum=0.0_r8
+            zsum=0.0_dp
             DO j=1,innLoop
               zsum=zsum+ze(j)*zeref(j)
             END DO
@@ -675,7 +684,7 @@
           END DO
 
           DO iobs=1,Ndatum(ng)
-            px(iobs)=0.0_r8
+            px(iobs)=0.0_dp
             DO ivec=1,innLoop
               px(iobs)=px(iobs)+zcglwk(iobs,ivec,outLoop)*zwork(ivec,3)
               zw(iobs)=zw(iobs)-zcglwk(iobs,ivec,outLoop)*              &
@@ -694,7 +703,7 @@
 !
 !  Compute the reduction in the gradient Ax-b (in y-space).
 !
-          preducy=0.0_r8
+          preducy=0.0_dp
           DO iobs=1,Ndatum(ng)
             preducy=preducy+zw(iobs)*zw(iobs)
           END DO
@@ -708,7 +717,7 @@
             CALL rprecond (ng, Lscale, Ltrans, outLoop, NinnLoop, zw)
           END IF
 !
-          preducv=0.0_r8
+          preducv=0.0_dp
           DO iobs=1,Ndatum(ng)
             preducv=preducv+zw(iobs)*zw(iobs)
           END DO
@@ -777,7 +786,7 @@
             END IF
           END DO
           DO ivec=1,innLoop
-            ztemp1(ivec)=0.0_r8
+            ztemp1(ivec)=0.0_dp
             DO iobs=1,Ndatum(ng)
               ztemp1(ivec)=ztemp1(ivec)+                                &
      &                     zcglwk(iobs,ivec,outLoop)*zhv(iobs)
@@ -787,19 +796,19 @@
 !
 !   Now form ze=Q*ztemp1.
 !
-          ze=0.0_r8
+          ze=0.0_dp
           DO i=1,innLoop
             ze(i)=ztemp1(i)
           END DO
           DO i=1,innLoop
             DO j=1,innLoop
-              zeref(j)=0.0_r8
+              zeref(j)=0.0_dp
             END DO
-            zeref(i)=1.0_r8
+            zeref(i)=1.0_dp
             DO j=i+1,innLoop
               zeref(j)=ztriT(i,j)
             END DO
-            zsum=0.0_r8
+            zsum=0.0_dp
             DO j=1,innLoop
               zsum=zsum+ze(j)*zeref(j)
             END DO
@@ -848,7 +857,7 @@
           END DO
 # endif
           DO iobs=1,Ndatum(ng)
-            zhv(iobs)=0.0_r8
+            zhv(iobs)=0.0_dp
           END DO
           DO iobs=1,Ndatum(ng)
             DO ivec=1,innLoop
@@ -860,9 +869,9 @@
 !  Compute Jb.
 !
           DO ivec=1,innLoop
-            ztemp1(ivec)=0.0_r8
+            ztemp1(ivec)=0.0_dp
             DO iobs=1,Ndatum(ng)
-              IF (ObsErr(iobs).NE.0.0_r8) THEN
+              IF (ObsErr(iobs).ne.0.0_r8) THEN
                 ztemp1(ivec)=ztemp1(ivec)+                              &
      &                       zcglwk(iobs,ivec,outLoop)*zhv(iobs)/       &
      &                       SQRT(ObsErr(iobs))
@@ -873,19 +882,19 @@
 !
 !   Now form ze=Q*ztemp1.
 !
-          ze=0.0_r8
+          ze=0.0_dp
           DO i=1,innLoop
             ze(i)=ztemp1(i)
           END DO
           DO i=1,innLoop
             DO j=1,innLoop
-              zeref(j)=0.0_r8
+              zeref(j)=0.0_dp
             END DO
-            zeref(i)=1.0_r8
+            zeref(i)=1.0_dp
             DO j=i+1,innLoop
               zeref(j)=ztriT(i,j)
             END DO
-            zsum=0.0_r8
+            zsum=0.0_dp
             DO j=1,innLoop
               zsum=zsum+ze(j)*zeref(j)
             END DO
@@ -933,39 +942,39 @@
           END DO
 # endif
           DO iobs=1,Ndatum(ng)
-            zht(iobs)=0.0_r8
+            zht(iobs)=0.0_dp
           END DO
           DO iobs=1,Ndatum(ng)
             DO ivec=1,innLoop
-              IF (ObsErr(iobs).NE.0.0_r8) THEN
+              IF (ObsErr(iobs).ne.0.0_r8) THEN
                 zht(iobs)=zht(iobs)+                                    &
      &                    ztemp2(ivec)*zcglwk(iobs,ivec,outLoop)/       &
      &                    SQRT(ObsErr(iobs))
               END IF
             END DO
           END DO
-          Jb=0.0_r8
+          Jb=0.0_dp
           DO iobs=1,Ndatum(ng)
             IF (ObsErr(iobs).ne.0.0_r8) THEN
               cff=cg_pxsave(iobs)/SQRT(ObsErr(iobs))
-              Jb=Jb+zd(iobs)*zht(iobs)-2.0_r8*cff*zhv(iobs)+            &
+              Jb=Jb+zd(iobs)*zht(iobs)-2.0_dp*cff*zhv(iobs)+            &
      &           cff*gdgw(iobs)
             END IF
           END DO
 !
 !  Compute Jobs.
 !
-          Jobs=0.0_r8
+          Jobs=0.0_dp
           IF (outLoop.eq.1.or.(.not.LhotStart)) THEN
             DO iobs=1,Ndatum(ng)
-              IF (ObsErr(iobs).NE.0.0_r8) THEN
+              IF (ObsErr(iobs).ne.0.0_r8) THEN
                 cff=zhv(iobs)-zd(iobs)
                 Jobs=Jobs+cff*cff/ObsErr(iobs)
               END IF
             END DO
           ELSE
             DO iobs=1,Ndatum(ng)
-              IF (ObsErr(iobs).NE.0.0_r8) THEN
+              IF (ObsErr(iobs).ne.0.0_r8) THEN
                 cff=gdgw(iobs)-zhv(iobs)+cg_innov(iobs)*SQRT(ObsErr(iobs))
                 Jobs=Jobs+cff*cff/ObsErr(iobs)
               END IF
@@ -1126,7 +1135,7 @@
 !  Check for exploding or negative Ritz values.
 !
             DO ivec=1,innLoop
-              IF (cg_RitzErr(ivec,outLoop).lt.0.0_r8) THEN
+              IF (cg_RitzErr(ivec,outLoop).lt.0.0_dp) THEN
                 WRITE (stdout,*) ' CONGRAD - negative Ritz value found.'
                 exit_flag=8
                 GO TO 10
@@ -1284,7 +1293,7 @@
 !
       integer :: iobs, ivec, jn, jk, ij, ingood
 !
-      real(r8) :: dla
+      real(dp) :: dla
 !
 !-----------------------------------------------------------------------
 !  Compute and store converged eigenvectors of (R_n+Cobs).
@@ -1304,7 +1313,7 @@
       DO jn=NinnLoop,1,-1
         ij=ij+1
         DO iobs=1,Ndatum(ng)
-          vcglev(iobs,ij,outLoop)=0.0_r8
+          vcglev(iobs,ij,outLoop)=0.0_dp
         END DO
         DO jk=1,NinnLoop
           DO iobs=1,Ndatum(ng)
@@ -1314,7 +1323,7 @@
           END DO
         END DO
         DO jk=1,ij-1
-          dla=0.0_r8
+          dla=0.0_dp
           DO iobs=1,Ndatum(ng)
             dla=dla+vcglev(iobs,jk,outLoop)*vcglev(iobs,ij,outLoop)
           END DO
@@ -1323,7 +1332,7 @@
      &                              dla*vcglev(iobs,jk,outLoop)
           END DO
         END DO
-        dla=0.0_r8
+        dla=0.0_dp
         DO iobs=1,Ndatum(ng)
           dla=dla+vcglev(iobs,ij,outLoop)*vcglev(iobs,ij,outLoop)
         END DO
@@ -1334,9 +1343,177 @@
 !
       RETURN
       END SUBROUTINE RPevecs
+
+# ifdef SINGLE_PRECISION
 !
 !***********************************************************************
-      SUBROUTINE rprecond (ng, Lscale, Ltrans, outLoop, NinnLoop, py)
+      SUBROUTINE rprecond_dp (ng, Lscale, Ltrans, outLoop, NinnLoop, py)
+!***********************************************************************
+!                                                                      !
+!  This routine is the preconditioner in observation space.            !
+!                                                                      !
+!***********************************************************************
+!
+!  Imported variable declarations
+!
+      logical, intent(in) :: Ltrans
+!
+      integer, intent(in) :: ng, Lscale, outLoop, NinnLoop
+!
+      real(dp), intent(inout) :: py(Ndatum(ng))
+!
+!  Local variable declarations.
+!
+      integer :: is, ie, inc, iss, i
+      integer :: nol, nols, nole, ninc
+      integer :: ingood
+      integer :: iobs, nvec
+!
+      real(dp) :: dla, fac, facritz
+!
+!  Set the do-loop indices for the sequential preconditioner
+!  loop.
+!
+      IF (Ltrans) THEN
+        nols=outLoop-1
+        nole=1
+        ninc=-1
+      ELSE
+        nols=1
+        nole=outLoop-1
+        ninc=1
+      END IF
+!
+!  Apply the preconditioners derived from all previous outer-loops
+!  sequentially.
+!
+      DO nol=nols,nole,ninc
+!
+!  Determine the number of Ritz vectors to use.
+!  For Lritz=.TRUE., choose HvecErr to be larger.
+!
+        ingood=0
+        DO i=1,NinnLoop
+          IF (cg_RitzErr(i,nol).le.RitzMaxErr) THEN
+            ingood=ingood+1
+          END IF
+        END DO
+        IF (NritzEV.gt.0) THEN
+          nConvRitz=NritzEV
+          ingood=nConvRitz
+        ELSE
+          nConvRitz=ingood
+        END IF
+!
+        IF (Lscale.gt.0) THEN
+          is=1
+          ie=ingood
+          inc=1
+        ELSE
+          is=ingood
+          ie=1
+          inc=-1
+        END IF
+!
+        IF (Ltrans) THEN
+          iss=is
+          is=ie
+          ie=iss
+          inc=-inc
+        END IF
+!
+!  Lscale determines the form of the preconditioner:
+!
+!     1= LMP (NOT CODED YET)
+!    -1= Inverse LMP (NOT CODED YET)
+!     2= Square root LMP
+!    -2= Inverse square root LMP
+!
+        DO nvec=is,ie,inc
+!
+          fac=0.0_dp
+!
+          IF (Lritz) THEN
+!
+!  Note that the primitive Ritz vectors cg_zv are stored in order of
+!  ascending Ritz values.
+!
+            facritz=cg_beta(NinnLoop+1,nol)*                            &
+     &              cg_zv(NinnLoop,NinnLoop+1-nvec,nol)
+!
+!  Compute dot-product of py with q_k+1 from previous outer-loop.
+!
+            IF (.not.Ltrans) THEN
+              dla=0.0_dp
+              DO iobs=1,Ndatum(ng)
+                dla=dla+zcglwk(iobs,NinnLoop+1,nol)*py(iobs)
+              END DO
+              facritz=facritz*dla
+            END IF
+
+          END IF
+!
+!  Compute the dot-product of py with the Ritz vectors from previous
+!  outer-loop.
+!
+!  Note that vcglev are arranged in order of descending Ritz values,
+!  while the Ritz values themselves that are stored in cg_Ritz are in
+!  ascending order.
+!
+          dla=0.0_dp
+          DO iobs=1,Ndatum(ng)
+            dla=dla+vcglev(iobs,nvec,nol)*py(iobs)
+          END DO
+!
+!  NOTE: Lscale=1 and Lscale=-1 cases are not complete yet.
+!
+          IF (Lscale.eq.-1) THEN
+            fac=(cg_Ritz(NinnLoop+1-nvec,nol)-1.0_dp)*dla
+          ELSE IF (Lscale.eq.1) THEN
+            fac=(1.0_dp/cg_Ritz(NinnLoop+1-nvec,nol)-1.0_dp)*dla
+          ELSE IF (Lscale.eq.-2) THEN
+            fac=(SQRT(cg_Ritz(NinnLoop+1-nvec,nol))-1.0_dp)*dla
+          ELSE IF (Lscale.eq.2) THEN
+            fac=(1.0_dp/SQRT(cg_Ritz(NinnLoop+1-nvec,nol))-1.0_dp)*dla
+          END IF
+!
+          IF (.not.Ltrans) THEN
+            IF (Lritz.and.(Lscale.eq.-2)) THEN
+              fac=fac+facritz/SQRT(cg_Ritz(NinnLoop+1-nvec,nol))
+            END IF
+            IF (Lritz.and.(Lscale.eq.2)) THEN
+              fac=fac-facritz/cg_Ritz(NinnLoop+1-nvec,nol)
+            END IF
+          END IF
+!
+          DO iobs=1,Ndatum(ng)
+             py(iobs)=py(iobs)+fac*vcglev(iobs,nvec,nol)
+          END DO
+!
+          IF (Lritz.and.Ltrans) THEN
+
+            IF (Lscale.eq.2) THEN
+              fac=-facritz*dla/cg_Ritz(NinnLoop+1-nvec,nol)
+            END IF
+            IF (Lscale.eq.-2) THEN
+              fac=facritz*dla/SQRT(cg_Ritz(NinnLoop+1-nvec,nol))
+            END IF
+
+            DO iobs=1,Ndatum(ng)
+               py(iobs)=py(iobs)+fac*zcglwk(iobs,NinnLoop+1,nol)
+            END DO
+
+          END IF
+
+        END DO
+      END DO
+!
+      RETURN
+      END SUBROUTINE rprecond_dp
+# endif
+!
+!***********************************************************************
+      SUBROUTINE rprecond_r8 (ng, Lscale, Ltrans, outLoop, NinnLoop, py)
 !***********************************************************************
 !                                                                      !
 !  This routine is the preconditioner in observation space.            !
@@ -1420,7 +1597,7 @@
 !
         DO nvec=is,ie,inc
 !
-          fac=0.0_r8
+          fac=0.0_dp
 !
           IF (Lritz) THEN
 !
@@ -1433,7 +1610,7 @@
 !  Compute dot-product of py with q_k+1 from previous outer-loop.
 !
             IF (.not.Ltrans) THEN
-              dla=0.0_r8
+              dla=0.0_dp
               DO iobs=1,Ndatum(ng)
                 dla=dla+zcglwk(iobs,NinnLoop+1,nol)*py(iobs)
               END DO
@@ -1449,7 +1626,7 @@
 !  while the Ritz values themselves that are stored in cg_Ritz are in
 !  ascending order.
 !
-          dla=0.0_r8
+          dla=0.0_dp
           DO iobs=1,Ndatum(ng)
             dla=dla+vcglev(iobs,nvec,nol)*py(iobs)
           END DO
@@ -1457,13 +1634,13 @@
 !  NOTE: Lscale=1 and Lscale=-1 cases are not complete yet.
 !
           IF (Lscale.eq.-1) THEN
-            fac=(cg_Ritz(NinnLoop+1-nvec,nol)-1.0_r8)*dla
+            fac=(cg_Ritz(NinnLoop+1-nvec,nol)-1.0_dp)*dla
           ELSE IF (Lscale.eq.1) THEN
-            fac=(1.0_r8/cg_Ritz(NinnLoop+1-nvec,nol)-1.0_r8)*dla
+            fac=(1.0_dp/cg_Ritz(NinnLoop+1-nvec,nol)-1.0_dp)*dla
           ELSE IF (Lscale.eq.-2) THEN
-            fac=(SQRT(cg_Ritz(NinnLoop+1-nvec,nol))-1.0_r8)*dla
+            fac=(SQRT(cg_Ritz(NinnLoop+1-nvec,nol))-1.0_dp)*dla
           ELSE IF (Lscale.eq.2) THEN
-            fac=(1.0_r8/SQRT(cg_Ritz(NinnLoop+1-nvec,nol))-1.0_r8)*dla
+            fac=(1.0_dp/SQRT(cg_Ritz(NinnLoop+1-nvec,nol))-1.0_dp)*dla
           END IF
 !
           IF (.not.Ltrans) THEN
@@ -1498,7 +1675,7 @@
       END DO
 !
       RETURN
-      END SUBROUTINE rprecond
+      END SUBROUTINE rprecond_r8
 !
 !***********************************************************************
       SUBROUTINE cg_write_congrad (ng, model, innLoop, outLoop,         &
@@ -1518,8 +1695,8 @@
 !
       integer, intent(in) :: ng, model, innLoop, outLoop, NinnLoop
 !
-      real(r8), intent(in) :: Jf, Jdata, Jmod, Jopt, preducv, preducy
-      real(r8), intent(in) :: Jb, Jobs, Jact
+      real(dp), intent(in) :: Jf, Jdata, Jmod, Jopt, preducv, preducy
+      real(dp), intent(in) :: Jb, Jobs, Jact
 !
 !  Local variable declarations.
 !
@@ -1572,8 +1749,8 @@
 !
       integer, intent(in) :: ng, model, innLoop, outLoop, NinnLoop
 !
-      real(r8), intent(in) :: Jf, Jdata, Jmod, Jopt, preducv, preducy
-      real(r8), intent(in) :: Jb, Jobs, Jact
+      real(dp), intent(in) :: Jf, Jdata, Jmod, Jopt, preducv, preducy
+      real(dp), intent(in) :: Jb, Jobs, Jact
 !
 !  Local variable declarations.
 !
@@ -1846,8 +2023,8 @@
 !
       integer, intent(in) :: ng, model, innLoop, outLoop, NinnLoop
 !
-      real(r8), intent(in) :: Jf, Jdata, Jmod, Jopt, preducv, preducy
-      real(r8), intent(in) :: Jb, Jobs, Jact
+      real(dp), intent(in) :: Jf, Jdata, Jmod, Jopt, preducv, preducy
+      real(dp), intent(in) :: Jb, Jobs, Jact
 !
 !  Local variable declarations.
 !

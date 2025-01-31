@@ -3,11 +3,10 @@
 #if defined TIDE_GENERATING_FORCES
 !
 !git $Id$
-!svn $Id: equilibrium_tide.F 1151 2023-02-09 03:08:53Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group           John Wilkin   !
+!  Copyright (c) 2002-2025 The ROMS Group                John Wilkin   !
 !    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                                              !
+!    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
 !  This module computes the equilibrium tide defined as the shape      !

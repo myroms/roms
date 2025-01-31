@@ -2,11 +2,10 @@
       SUBROUTINE ana_ssh (ng, tile, model)
 !
 !! git $Id$
-!! svn $Id: ana_ssh.h 1151 2023-02-09 03:08:53Z arango $
 !!======================================================================
-!! Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
+!! Copyright (c) 2002-2025 The ROMS Group                              !
 !!   Licensed under a MIT/X style license                              !
-!!   See License_ROMS.txt                                              !
+!!   See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
 !  This routine sets analytical sea surface height climatology.        !

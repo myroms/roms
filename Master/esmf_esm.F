@@ -1,14 +1,13 @@
 #include "cppdefs.h"
       MODULE esmf_esm_mod
 
-#if defined MODEL_COUPLING && defined ESMF_LIB
+#if defined MODEL_COUPLING && defined ESMF_LIB && !defined CMEPS
 !
 !git $Id$
-!svn $Id: esmf_esm.F 1151 2023-02-09 03:08:53Z arango $
 !=======================================================================
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2025 The ROMS Group                              !
 !    Licensed under a MIT/X style license         Hernan G. Arango     !
-!    See License_ROMS.txt                         Ufuk Utku Turuncoglu !
+!    See License_ROMS.md                          Ufuk Utku Turuncoglu !
 !=======================================================================
 !                                                                      !
 !  This module sets the Earth System Model (ESM) coupled gridded       !
@@ -65,7 +64,11 @@
       USE esmf_ice_mod,     ONLY: ICE_SetServices
 #  endif
 # endif
+# ifdef CMEPS
+      USE cmeps_roms_mod,   ONLY: ROMS_SetServices
+# else
       USE esmf_roms_mod,    ONLY: ROMS_SetServices
+# endif
 # ifdef WAV_COUPLING
 #  if defined WAM_COUPLING
       USE esmf_wam_mod,     ONLY: WAV_SetServices
@@ -111,7 +114,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering ESM_SetServices',         &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
       rc=ESMF_SUCCESS
 !
@@ -201,7 +204,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '<== Exiting  ESM_SetServices',         &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
 !
       END SUBROUTINE ESM_SetServices
@@ -240,7 +243,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering ESM_SetModelServices',    &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
       rc=ESMF_SUCCESS
 !
@@ -428,7 +431,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '<== Exiting  ESM_SetModelServices',    &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
 !
       RETURN
@@ -473,7 +476,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering ESM_SetRunSequence',      &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
       rc=ESMF_SUCCESS
 !
@@ -483,9 +486,10 @@
 !
 !  Query driver for information.
 !
-      CALL ESMF_GridCompGet(driver,                                     &
-     &                      name=name,                                  &
-     &                      rc=rc)
+      CALL ESMF_GridCompGet (driver,                                    &
+     &                       name=name,                                 &
+     &                       localPet=localPET,                         &
+     &                       rc=rc)
       IF (ESMF_LogFoundError(rcToCheck=rc,                              &
      &                       msg=ESMF_LOGERR_PASSTHRU,                  &
      &                       line=__LINE__,                             &
@@ -495,9 +499,9 @@
 !
 !  Read in free-format run sequence from configuration object.
 !
-      CALL ESMF_GridCompGet(driver,                                     &
-     &                      config=Config,                              &
-     &                      rc=rc)
+      CALL ESMF_GridCompGet (driver,                                    &
+     &                       config=Config,                             &
+     &                       rc=rc)
       IF (ESMF_LogFoundError(rcToCheck=rc,                              &
      &                       msg=ESMF_LOGERR_PASSTHRU,                  &
      &                       line=__LINE__,                             &
@@ -534,7 +538,6 @@
 !
       CALL ESMF_GridCompGet (driver,                                    &
      &                       clock=Clock,                               &
-     &                       localPet=localPET,                         &
      &                       rc=rc)
       IF (ESMF_LogFoundError(rcToCheck=rc,                              &
      &                       msg=ESMF_LOGERR_PASSTHRU,                  &
@@ -592,13 +595,13 @@
      &                         file=MyFile)) THEN
           RETURN
         END IF
-        CALL my_flush (6)                   ! flush standard output unit
+        FLUSH (6)                   ! flush standard output unit
       END IF
 !
 !  Destroy free format object. All internal memory is deallocated.
 !
-      CALL NUOPC_FreeFormatDestroy(runSeqFF,                            &
-     &                             rc=rc)
+      CALL NUOPC_FreeFormatDestroy (runSeqFF,                           &
+     &                              rc=rc)
       IF (ESMF_LogFoundError(rcToCheck=rc,                              &
      &                       msg=ESMF_LOGERR_PASSTHRU,                  &
      &                       line=__LINE__,                             &
@@ -609,7 +612,7 @@
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '<== Exiting  ESM_SetRunSequence',      &
      &                          ', PET', PETrank
-        CALL my_flush (trac)
+        FLUSH (trac)
       END IF
 !
  10   FORMAT (/,' ESM_SetRunSequence - Error while ingesting',          &

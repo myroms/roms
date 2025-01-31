@@ -1,11 +1,10 @@
 #!/bin/bash
 #
 # git $Id$
-# svn $Id: copyright.sh 1152 2023-02-09 03:12:48Z arango $
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Copyright (c) 2002-2023 The ROMS/TOMS Group                           :::
+# Copyright (c) 2002-2025 The ROMS Group                                :::
 #   Licensed under a MIT/X style license                                :::
-#   See License_ROMS.txt                                                :::
+#   See License_ROMS.md                                                 :::
 #:::::::::::::::::::::::::::::::::::::::::::::::::::::: David Robertson :::
 #                                                                       :::
 # ROMS Copyright Update BASH Script                                     :::
@@ -28,8 +27,8 @@
 #                                                                       :::
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
-search="2002-2022 The ROMS/TOMS"
-replace="2002-2023 The ROMS/TOMS"
+search="2002-2024 The ROMS"
+replace="2002-2025 The ROMS"
 
 # Directories to search for replacements.
 
@@ -93,13 +92,13 @@ done
 echo -e "\nDone.\n"
 
 if [ $setsvn -eq 1 ]; then
-  svn propset -R copyright '(c) 2002-2023 The ROMS/TOMS Group' Compilers
-  svn propset -R copyright '(c) 2002-2023 The ROMS/TOMS Group' Data
-  svn propset -R copyright '(c) 2002-2023 The ROMS/TOMS Group' ESM
-  svn propset -R copyright '(c) 2002-2023 The ROMS/TOMS Group' Master
-  svn propset -R copyright '(c) 2002-2023 The ROMS/TOMS Group' ROMS
-  svn propset -R copyright '(c) 2002-2023 The ROMS/TOMS Group' User
-  svn propset copyright '(c) 2002-2023 The ROMS/TOMS Group' . makefile CMakeLists.txt
+  svn propset -R copyright '(c) 2002-2025 The ROMS Group' Compilers
+  svn propset -R copyright '(c) 2002-2025 The ROMS Group' Data
+  svn propset -R copyright '(c) 2002-2025 The ROMS Group' ESM
+  svn propset -R copyright '(c) 2002-2025 The ROMS Group' Master
+  svn propset -R copyright '(c) 2002-2025 The ROMS Group' ROMS
+  svn propset -R copyright '(c) 2002-2025 The ROMS Group' User
+  svn propset copyright '(c) 2002-2025 The ROMS Group' . makefile CMakeLists.txt
 else
   echo -e "Not updating svn properties.\n"
 fi

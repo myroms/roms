@@ -2,11 +2,10 @@
       SUBROUTINE initial
 !
 !git $Id$
-!svn $Id: initial.F 1166 2023-05-17 20:11:58Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2025 The ROMS Group                              !
 !    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                                              !
+!    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
 !  This routine initializes all model variables.                       !
@@ -46,6 +45,9 @@
 #endif
 #ifdef TLM_CHECK
       USE ini_adjust_mod,    ONLY : ini_perturb
+#endif
+#if defined SOLVE3D && defined NONLINEAR
+      USE ini_fields_mod,    ONLY : set_zeta_timeavg
 #endif
       USE ini_hmixcoef_mod,  ONLY : ini_hmixcoef
 #if defined WAV_COUPLING && defined MCT_LIB
@@ -133,6 +135,7 @@
       DO ng=1,Ngrids
         iif(ng)=1
         indx1(ng)=1
+        next_kstp(ng)=1
         kstp(ng)=1
         krhs(ng)=1
         knew(ng)=1
@@ -536,13 +539,15 @@
 #ifdef SOLVE3D
 !
 !-----------------------------------------------------------------------
-!  Compute time independent (Zt_avg1=0) anf initial time dependent
-!  depths and level thicknesses.
+!  Compute time independent (Zt_avg1=0). Set Zt_avg1 to the initial
+!  free-surface value (no lateral boundary conditions applied). Then,
+!  set initial time dependent depths and level thicknesses.
 !-----------------------------------------------------------------------
 !
       DO ng=1,Ngrids
         DO tile=first_tile(ng),last_tile(ng),+1
           CALL set_depth0 (ng, tile, iNLM)
+          CALL set_zeta_timeavg (ng, tile, iNLM)
           CALL set_depth  (ng, tile, iNLM)
         END DO
 !$OMP BARRIER

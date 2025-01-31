@@ -3,11 +3,10 @@
 #if defined FOUR_DVAR || defined ENKF_RESTART
 !
 !git $Id$
-!svn $Id: def_dai.F 1151 2023-02-09 03:08:53Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2025 The ROMS Group                              !
 !    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                                              !
+!    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
 !  This module creates Data Assimilation initial conditions (4D-Var    !

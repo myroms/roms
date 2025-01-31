@@ -2,11 +2,10 @@
       MODULE checkvars_mod
 !
 !git $Id$
-!svn $Id: checkvars.F 1151 2023-02-09 03:08:53Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2025 The ROMS Group                              !
 !    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                                              !
+!    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
 !  This routine checks if needed state variables are available in      !
@@ -44,6 +43,9 @@
       USE mod_parallel
 #ifdef BIOLOGY
       USE mod_biology
+#endif
+#if defined ICE_MODEL && defined SOLVE3D
+      USE mod_ice
 #endif
       USE mod_iounits
       USE mod_ncparam
@@ -234,6 +236,13 @@
           get_var(idBott(itrc))=.TRUE.
         END DO
 #  endif
+# endif
+# ifdef ICE_MODEL
+        DO i=1,nIceS
+          IF (iSice(i).gt.0) THEN
+            get_var(iSice(i))=.TRUE.
+          END IF
+        END DO
 # endif
 #endif
 #ifdef PERFECT_RESTART

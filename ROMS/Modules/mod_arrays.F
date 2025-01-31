@@ -2,11 +2,10 @@
       MODULE mod_arrays
 !
 !git $Id$
-!svn $Id: mod_arrays.F 1151 2023-02-09 03:08:53Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2025 The ROMS Group                              !
 !    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                                              !
+!    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
 !  This module is used to allocate, initialize, and deallocate ROMS    !
@@ -42,6 +41,11 @@
      &                         deallocate_diags,                        &
      &                         initialize_diags
 #endif
+#ifdef GRID_EXTRACT
+      USE mod_extract,  ONLY : allocate_extract,                        &
+     &                         deallocate_extract,                      &
+     &                         initialize_extract
+#endif
       USE mod_forces,   ONLY : allocate_forces,                         &
      &                         deallocate_forces,                       &
      &                         initialize_forces
@@ -52,6 +56,11 @@
       USE mod_grid,     ONLY : allocate_grid,                           &
      &                         deallocate_grid,                         &
      &                         initialize_grid
+#ifdef ICE_MODEL
+      USE mod_ice,      ONLY : allocate_ice,                            &
+     &                         deallocate_ice,                          &
+     &                         initialize_ice
+#endif
       USE mod_iounits,  ONLY : deallocate_iounits
       USE mod_mixing,   ONLY : allocate_mixing,                         &
      &                         deallocate_mixing,                       &
@@ -173,8 +182,19 @@
 #ifdef DIAGNOSTICS
           CALL allocate_diags (ng, LBi, UBi, LBj, UBj)
 #endif
+#ifdef GRID_EXTRACT
+          CALL allocate_extract (ng, ExtractFlag(ng),                   &
+     &                           xtr_BOUNDS(ng)%LBi(tile),              &
+     &                           xtr_BOUNDS(ng)%UBi(tile),              &
+     &                           xtr_BOUNDS(ng)%LBj(tile),              &
+     &                           xtr_BOUNDS(ng)%UBj(tile))
+#endif
           CALL allocate_forces (ng, LBi, UBi, LBj, UBj)
-          CALL allocate_grid (ng, LBi, UBi, LBj, UBj, LBij, UBij)
+          CALL allocate_grid (ng, ExtractFlag(ng),                      &
+     &                        LBi, UBi, LBj, UBj, LBij, UBij)
+#ifdef ICE_MODEL
+          CALL allocate_ice (ng, LBi, UBi, LBj, UBj, .TRUE.)
+#endif
           CALL allocate_mixing (ng, LBi, UBi, LBj, UBj)
           CALL allocate_ocean (ng, LBi, UBi, LBj, UBj)
 #if defined SEDIMENT || defined BBL_MODEL
@@ -276,8 +296,14 @@
 #ifdef DIAGNOSTICS
         CALL deallocate_diags (ng)
 #endif
+#ifdef GRID_EXTRACT
+        CALL deallocate_extract (ng)
+#endif
         CALL deallocate_forces (ng)
         CALL deallocate_grid (ng)
+#ifdef ICE_MODEL
+        CALL deallocate_ice (ng)
+#endif
         CALL deallocate_mixing (ng)
         CALL deallocate_ocean (ng)
 #if defined SEDIMENT || defined BBL_MODEL
@@ -384,8 +410,14 @@
 #ifdef DIAGNOSTICS
           CALL initialize_diags (ng, tile)
 #endif
+#ifdef GRID_EXTRACT
+          CALL initialize_extract (ng, tile, model)
+#endif
           CALL initialize_forces (ng, tile, model)
           CALL initialize_grid (ng, tile, model)
+#ifdef ICE_MODEL
+          CALL initialize_ice (ng, tile, model)
+#endif
           CALL initialize_mixing (ng, tile, model)
           CALL initialize_ocean (ng, tile, model)
 #if defined SEDIMENT || defined BBL_MODEL

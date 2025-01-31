@@ -1,15 +1,13 @@
 # git $Id$
-# svn $Id: CMakeLists.txt 1151 2023-02-09 03:08:53Z arango $
 #:::::::::::::::::::::::::::::::::::::::::::::::::::::: David Robertson :::
-# Copyright (c) 2002-2023 The ROMS/TOMS Group                           :::
+# Copyright (c) 2002-2025 The ROMS Group                                :::
 #   Licensed under a MIT/X style license                                :::
-#   See License_ROMS.txt                                                :::
+#   See License_ROMS.md                                                 :::
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 #
 # Source code list for sub-directory "ROMS/Nonlinear"
 
 list( APPEND _files
-      ROMS/Nonlinear/bbl.F
       ROMS/Nonlinear/bc_2d.F
       ROMS/Nonlinear/bc_3d.F
       ROMS/Nonlinear/bc_4d.F
@@ -23,6 +21,7 @@ list( APPEND _files
       ROMS/Nonlinear/conv_bry3d.F
       ROMS/Nonlinear/diag.F
       ROMS/Nonlinear/exchange_2d.F
+      ROMS/Nonlinear/exchange_2d_xtr.F
       ROMS/Nonlinear/exchange_3d.F
       ROMS/Nonlinear/exchange_4d.F
       ROMS/Nonlinear/forcing.F
@@ -49,9 +48,9 @@ list( APPEND _files
       ROMS/Nonlinear/obc_volcons.F
       ROMS/Nonlinear/omega.F
       ROMS/Nonlinear/output.F
+      ROMS/Nonlinear/post_initial.F
       ROMS/Nonlinear/pre_step3d.F
       ROMS/Nonlinear/prsgrd.F
-      ROMS/Nonlinear/radiation_stress.F
       ROMS/Nonlinear/rho_eos.F
       ROMS/Nonlinear/rhs3d.F
       ROMS/Nonlinear/set_avg.F

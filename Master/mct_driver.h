@@ -1,17 +1,16 @@
       PROGRAM mct_driver
 !
 !git $Id$
-!svn $Id: mct_driver.h 1166 2023-05-17 20:11:58Z arango $
 !=======================================================================
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2025 The ROMS Group                              !
 !    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                           Hernan G. Arango   !
+!    See License_ROMS.md                            Hernan G. Arango   !
 !==================================================== John C. Warner ===
 !                                                                      !
-!  Master program to couple ROMS/TOMS to other models using the Model  !
+!  Master program to couple ROMS to other models using the Model       !
 !  Coupling Toolkit (MCT) library.                                     !
 !                                                                      !
-!  The following models are coupled to ROMS/TOMS:                      !
+!  The following models are coupled to ROMS:                           !
 !                                                                      !
 #ifdef WRF_COUPLING
 !  WRF, Weather Research and Forecasting model:                        !
@@ -53,7 +52,7 @@
       logical, save :: first
 
       integer :: MyColor, MyCOMM, MyError, MyKey, Nnodes
-      integer :: ng
+      integer :: ng, provided, required
 
       real(r4) :: CouplingTime             ! single precision
 !
@@ -63,7 +62,20 @@
 !
 !  Initialize MPI execution environment.
 !
+#ifdef MULTI_THREAD
+      required=MPI_THREAD_MULTIPLE
+      CALL mpi_init_thread (required, provided, MyError)
+      IF (MyError.ne.0) THEN
+        PRINT '(/,a)',' ROMS: Unable to initialize multi-threaded MPI'
+        exit_flag=6
+      END IF
+#else
       CALL mpi_init (MyError)
+      IF (MyError.ne.0) THEN
+        PRINT '(/,a)',' ROMS: Unable to initialize MPI'
+        exit_flag=6
+      END IF
+#endif
 !
 !  Get rank of the local process in the group associated with the
 !  comminicator.

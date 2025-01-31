@@ -1,0 +1,345 @@
+!
+!  Sea-Ice Model Input Parameters
+!
+!git $Id$
+!========================================================= Hernan G. Arango ===
+!  Copyright (c) 2002-2025 The ROMS Group                                     !
+!    Licensed under a MIT/X style license                                     !
+!    See License_ROMS.md                                                      !
+!==============================================================================
+!                                                                             !
+! Input parameters can be entered in ANY order, provided that the parameter   !
+! KEYWORD (usually, upper case) is typed correctly followed by "="  or "=="   !
+! symbols. Any comment lines are allowed and must begin with an exclamation   !
+! mark (!) in column one.  Comments may appear to the right of a parameter    !
+! specification to improve documentation.  Comments are ignored during        !
+! reading.  Blank lines are also allowed and ignored. Continuation lines in   !
+! a parameter specification are allowed if preceded by a backslash (\).  In   !
+! some instances, more than one value is required for a parameter.  If fewer  !
+! values are provided, the last value is assigned for the entire parameter    !
+! array.  The multiplication symbol (*),  without blank spaces in between,    !
+! is allowed for a parameter specification. For example, in two grids nested  !
+! application:                                                                !
+!                                                                             !
+!    AKT_BAK == 2*1.0d-6  2*5.0d-6              ! m2/s                        !
+!                                                                             !
+! indicates that the first two entries of array AKT_BAK,  in fortran column-  !
+! major order, will have the same value of "1.0d-6" for grid 1,  whereas the  !
+! next two entries will have the same value of "5.0d-6" for grid 2.           !
+!                                                                             !
+! In multiple levels of nesting or multiple connected domains step-ups,       !
+! "Ngrids" entries are expected for some of these parameters. In such case,   !
+! the order of the entries for a parameter is critical. It must follow the    !
+! same order (1:Ngrids) as in the state variable declaration. The USER may    !
+! follow the above guidelines for specifying his/her values. These parameters !
+! are marked by "==" plural symbol after the KEYWORD.                         !
+!                                                                             !
+!==============================================================================
+!
+! Number of elastic time steps per viscous step in Elastic-Viscous-Plastic
+! (EVP) rheology equations.
+
+         nEVP == 60
+
+! Density parameters [kg/m3].
+
+       AirRho == 1.267d0                 ! air density
+       IceRho == 900.d0                  ! sea ice density
+   SnowDryRho == 330.d0                  ! dry snow density
+   SnowWetRho == 450.d0                  ! wet snow density
+
+! Bulk drag coefficients [nondimensional].
+
+        Cd_ai == 3.0d-3                  ! Air-Ice   drag
+        Cd_io == 7.5d-3                  ! Ice-Ocean drag
+
+! Ice strength exponential weighting coefficient on concentration
+! (nondimensional)
+
+    Astrength == 20.d0
+
+! Minimum and Maximum shear strength [N/m2].
+
+      zetaMin == 0.d0
+      zetaMax == 1.0d+14
+
+! Ellipticity squared of yield curve [nondimensional].
+
+     ellip_sq == 4.d0
+
+! Minimum and Maximum ice concentration: fractional area covered by ice
+! [nondimensional].
+
+       min_ai == 0.0d0
+       max_ai == 1.0d0
+
+! Minimum average ice thickness [m].
+
+       min_hi == 0.0d0
+
+! Maximum melt pond water thickness [m].
+
+    max_hmelt == 0.10d0
+
+! Turning angle for ice-water drag [degrees].
+
+    stressAng == 0.d0
+
+! Emissivity of ice surface [nondimensional].
+
+    ice_emiss =  0.97d0
+
+! Specific heat of air [J/(kg K)].
+
+spec_heat_air =  1004.d0
+
+! Heat transfer coefficient (nondimensional).
+
+  trans_coeff =  1.75d-3
+
+! Latent heat of sublimation [J/kg].
+
+  sublimation =  2.834d+6
+
+! Logical switches (TRUE/FALSE) to activate writing of ice prognostic
+! variables into HISTORY output file.
+
+Hout(idUice) == T     ! Si(...,isUice)     ice U-velocity
+Hout(idVice) == T     ! Si(...,isVice)     ice V-velocity
+Hout(idUiER) == F     ! Si(...,isUice)     ice U-eastward  at RHO-points
+Hout(idViNR) == F     ! Si(...,isVice)     ice V-northward at RHO-points
+Hout(idAice) == T     ! Si(...,isAice)     ice concentration
+Hout(idIage) == T     ! Si(...,isIage)     age of ice
+Hout(idHice) == T     ! Si(...,isHice)     ice thickness
+Hout(idHmel) == T     ! Si(...,isHmel)     melt pond water thickness
+Hout(idHsno) == T     ! Si(...,isHsno)     snow cover thickness
+Hout(idTice) == T     ! Si(...,isTice)     ice interior temperature
+Hout(idISxx) == T     ! Si(...,isISxx)     internal ice stress xx-component
+Hout(idISxy) == T     ! Si(...,isISxy)     internal ice stress xy-component
+Hout(idISyy) == T     ! Si(...,isISyy)     internal ice stress yy-component
+
+Hout(idIsst) == T     ! Fi(...,icIsst)     ice surface temperature
+Hout(idIOmf) == T     ! Fi(...,icIOmf)     ice-ocean mass flux
+Hout(idIOfv) == T     ! Fi(...,icIOfv)     ice-ocean friction velocity
+Hout(idIOmt) == T     ! Fi(...,icIOmt)     ice-ocean momentum transfer coefficient
+Hout(idS0mk) == T     ! Fi(...,icS0mk)     under ice molecular sublayer salinity
+Hout(idT0mk) == T     ! Fi(...,icT0mk)     under ice molecular sublayer temperature
+Hout(idWdiv) == T     ! Fi(...,icWdiv)     ice divergence rate
+Hout(idW_fr) == T     ! Fi(...,icW_fr)     ice accretion rate by frazil ice growth
+Hout(idW_ai) == T     ! Fi(...,icW_ai)     melt/freeze rate at Air/Ice
+Hout(idW_ao) == T     ! Fi(...,icW_ao)     melt/freeze rate at Air/Ocean
+Hout(idW_io) == T     ! Fi(...,icW_io)     melt/freeze rate at Ice/Ocean
+Hout(idW_ro) == T     ! Fi(...,icW_ro)     melt/freeze rate runoff into ocean
+
+! Logical switches (TRUE/FALSE) to activate writing of ice prognostic
+! variables into QUICKSAVE output file.
+
+Qout(idUice) == T     ! Si(...,isUice)     ice U-velocity
+Qout(idVice) == T     ! Si(...,isVice)     ice V-velocity
+Qout(idUiER) == F     ! Si(...,isUice)     ice U-eastward  at RHO-points
+Qout(idViNR) == F     ! Si(...,isVice)     ice V-northward at RHO-points
+Qout(idAice) == T     ! Si(...,isAice)     ice concentration
+Qout(idIage) == T     ! Si(...,isIage)     age of ice
+Qout(idHice) == T     ! Si(...,isHice)     ice thickness
+Qout(idHmel) == T     ! Si(...,isHmel)     melt pond water thickness
+Qout(idHsno) == T     ! Si(...,isHsno)     snow cover thickness
+Qout(idTice) == T     ! Si(...,isTice)     ice interior temperature
+Qout(idISxx) == T     ! Si(...,isISxx)     internal ice stress xx-component
+Qout(idISxy) == T     ! Si(...,isISxy)     internal ice stress xy-component
+Qout(idISyy) == T     ! Si(...,isISyy)     internal ice stress yy-component
+
+Qout(idIsst) == T     ! Fi(...,icIsst)     ice surface temperature
+Qout(idIOmf) == T     ! Fi(...,icIOmf)     ice-ocean mass flux
+Qout(idIOfv) == T     ! Fi(...,icIOfv)     ice-ocean friction velocity
+Qout(idIOmt) == T     ! Fi(...,icIOmt)     ice-ocean momentum transfer coefficient
+Qout(idS0mk) == T     ! Fi(...,icS0mk)     under ice molecular sublayer salinity
+Qout(idT0mk) == T     ! Fi(...,icT0mk)     under ice molecular sublayer temperature
+Qout(idWdiv) == T     ! Fi(...,icWdiv)     ice divergence rate
+Qout(idW_fr) == T     ! Fi(...,icW_fr)     ice accretion rate by frazil ice growth
+Qout(idW_ai) == T     ! Fi(...,icW_ai)     melt/freeze rate at Air/Ice
+Qout(idW_ao) == T     ! Fi(...,icW_ao)     melt/freeze rate at Air/Ocean
+Qout(idW_io) == T     ! Fi(...,icW_io)     melt/freeze rate at Ice/Ocean
+Qout(idW_ro) == T     ! Fi(...,icW_ro)     melt/freeze rate runoff into ocean
+
+! Logical switches (TRUE/FALSE) to activate writing of ice prognostic
+! variables into AVERAGES output file.
+
+Aout(idUice) == T     ! Si_avg(...,isUice) ice U-velocity
+Aout(idVice) == T     ! Si_avg(...,isVice) ice V-velocity
+Aout(idUiER) == F     ! Si_avg(...,isUice) ice U-eastward  at RHO-points
+Aout(idViNR) == F     ! Si_avg(...,isVice) ice V-northward at RHO-points
+Aout(idAice) == T     ! Si_avg(...,isAice) ice concentration
+Aout(idIage) == T     ! Si_avg(...,isIage) age of ice
+Aout(idHice) == T     ! Si_avg(...,isHice) ice thickness
+Aout(idHmel) == T     ! Si_avg(...,isHmel) melt pond water thickness
+Aout(idHsno) == T     ! Si_avg(...,isHsno) snow cover thickness
+Aout(idTice) == T     ! Si_avg(...,isTice) ice interior temperature
+Aout(idISxx) == T     ! Si_avg(...,isISxx) internal ice stress xx-component
+Aout(idISxy) == T     ! Si_avg(...,isISxy) internal ice stress xy-component
+Aout(idISyy) == T     ! Si_avg(...,isISyy) internal ice stress yy-component
+
+Aout(idIsst) == T     ! Fi_avg(...,icIsst) ice surface temperature
+Aout(idIOmf) == T     ! Fi_avg(...,icIOmf) ice-ocean mass flux
+Aout(idIOfv) == T     ! Fi_avg(...,icIOfv) ice-ocean friction velocity
+Aout(idIOmt) == T     ! Fi_avg(...,icIOmt) ice-ocean momentum transfer coefficient
+Aout(idS0mk) == T     ! Fi_avg(...,icS0mk) under ice molecular sublayer salinity
+Aout(idT0mk) == T     ! Fi_avg(...,icT0mk) under ice molecular sublayer temperature
+Aout(idWdiv) == T     ! Fi_avg(...,icWdiv) ice divergence rate
+Aout(idW_fr) == T     ! Fi_avg(...,icW_fr) ice accretion rate by frazil ice growth
+Aout(idW_ai) == T     ! Fi_avg(...,icW_ai) melt/freeze rate at Air/Ice
+Aout(idW_ao) == T     ! Fi_avg(...,icW_ao) melt/freeze rate at Air/Ocean
+Aout(idW_io) == T     ! Fi_avg(...,icW_io) melt/freeze rate at Ice/Ocean
+Aout(idW_ro) == T     ! Fi_avg(...,icW_ro) melt/freeze rate runoff into ocean
+
+
+!
+!  GLOSSARY:
+!  =========
+!
+!------------------------------------------------------------------------------
+!  Sea ice model parameters.
+!------------------------------------------------------------------------------
+!
+!  nEVP           Number of elastic time steps per viscous step in
+!                   Elastic-Viscous-Plastic (EVP) rheology equations.
+!
+!  AirRho         Air density (kg/m3) constant.
+!
+!  IceRho         Sea ice density (kg/m3) constant.
+!
+!  SnowDryRho     Dry (fresh) snow density (kg/m3) constant.
+!
+!  SnowWetRho     Wet (heavy) snow density (kg/m3) constant.
+!
+!  Cd_ai          Atmosphere-Ice boundary bulk drag coefficient (unitless).
+!
+!  Cd_io          Ice-Ocean boundary bulk drag coefficient (unitless).
+!
+!  Astrength      Exponential weighting coefficient for ice strengh (pressure)
+!                   parameterization as function of ice concentration.
+!
+!  zetaMin        Minimum shear stregth threshold (N/m2) in the computation of
+!                   bulk viscosity in the EVP formulation.
+!
+!  zetaMax        Maximum shear stregth threshold (N/m2) in the computation of
+!                   bulk viscosity in the EVP formulation.
+!
+!  ellip_sq       Squared ellipticity (nondimensional) of the yield curve used
+!                   in the ice stress tensor formulation.
+!
+!  min_ai         Minimum threshold for ice concentration (nondimensional)
+!                   defined as the fractional grid area covered by ice.
+!
+!  max_ai         Maxmum threshold for ice concentration (nondimensional)
+!                   defined as the fractional grid area covered by ice.
+!
+!  min_hi         Minimum average ice thickness (m) threshold.
+!
+!  max_hmelt      Maximum melt pond water thickness (m) threshold.
+!
+!  stressAng      Turning angle (degrees) for ice-water drag.
+!
+!  ice_emiss      Emissivity of ice surface (nondimensional).
+!
+!  spec_heat_air  Specific heat of air (J/kg/K).
+!
+!  trans_coeff    Heat transfer coefficient (nondimensional).
+!
+!  sublimation    Latent heat of sublimation (J/kg).
+!
+!------------------------------------------------------------------------------
+! Logical switches (T/F) to activate writing of instantaneous ice fields into
+! HISTORY file.
+!------------------------------------------------------------------------------
+!
+! Hout(idUice)    Write out ice U-velocity component.
+! Hout(idVice)    Write out ice V-velocity component.
+! Hout(idUiER)    Write out ice Eastward  velocity component at RHO-points.
+! Hout(idViNR)    Write out ice Northward velocity component at RHO-points.
+! Hout(idAice)    Write out ice concentration (fractional area coverage).
+! Hout(idIage)    Write out age of ice.
+! Hout(idHice)    Write out average ice thickness (ice mass per area).
+! Hout(idHmel)    Write out surface melt water thickness on ice.
+! Hout(idHsno)    Write out average snow coverage thickness.
+! Hout(idTice)    Write out surface temperature at snow/atmosphere interface.
+! Hout(idISxx)    Write out internal ice stress tensor, xx-component.
+! Hout(idISxy)    Write out internal ice stress tensor, xy-component.
+! Hout(idISyy)    Write out internal ice stress tensor, yy-component.
+!
+! Hout(idIsst)    Write out ice interior temperature (at ice mid-layer).
+! Hout(idIOmf)    Write out ice-ocean mass flux.
+! Hout(idIOfv)    Write out ice-ocean friction velocity.
+! Hout(idIOmt)    Write out ice-ocean momentum transfer coefficient.
+! Hout(idS0mk)    Write out salinity of molecular sublayer under ice.
+! Hout(idT0mk)    Write out temperature of molecular sublayer under ice.
+! Hout(idWdiv)    Write out rate of ice divergence.
+! Hout(idW_fr)    Write out rate of ice accretion by frazil ice growth.
+! Hout(idW_ai)    Write out rate of melt/freeze at air/ice interface.
+! Hout(idW_ao)    Write out rate of melt/freeze at air/ocean interface.
+! Hout(idW_io)    Write out rate of melt/freeze at ice/ocean interface.
+! Hout(idW_ro)    Write out rate of melt/freeze runoff into ocean.
+!
+!------------------------------------------------------------------------------
+! Logical switches (T/F) to activate writing of instantaneous ice fields into
+! QUICKSAVE file.
+!------------------------------------------------------------------------------
+!
+! Qout(idUice)    Write out ice U-velocity component.
+! Qout(idVice)    Write out ice V-velocity component.
+! Qout(idUiER)    Write out ice Eastward  velocity component at RHO-points.
+! Qout(idViNR)    Write out ice Northward velocity component at RHO-points.
+! Qout(idAice)    Write out ice concentration (fractional area coverage).
+! Qout(idIage)    Write out age of ice.
+! Qout(idHice)    Write out average ice thickness (ice mass per area).
+! Qout(idHmel)    Write out surface melt water thickness on ice.
+! Qout(idHsno)    Write out average snow coverage thickness.
+! Qout(idTice)    Write out surface temperature at snow/atmosphere interface.
+! Qout(idISxx)    Write out internal ice stress tensor, xx-component.
+! Qout(idISxy)    Write out internal ice stress tensor, xy-component.
+! Qout(idISyy)    Write out internal ice stress tensor, yy-component.
+!
+! Qout(idIsst)    Write out ice interior temperature (at ice mid-layer).
+! Qout(idIOmf)    Write out ice-ocean mass flux.
+! Qout(idIOfv)    Write out ice-ocean friction velocity.
+! Qout(idIOmt)    Write out ice-ocean momentum transfer coefficient.
+! Qout(idS0mk)    Write out salinity of molecular sublayer under ice.
+! Qout(idT0mk)    Write out temperature of molecular sublayer under ice.
+! Qout(idWdiv)    Write out rate of ice divergence.
+! Qout(idW_fr)    Write out rate of ice accretion by frazil ice growth.
+! Qout(idW_ai)    Write out rate of melt/freeze at air/ice interface.
+! Qout(idW_ao)    Write out rate of melt/freeze at air/ocean interface.
+! Qout(idW_io)    Write out rate of melt/freeze at ice/ocean interface.
+! Qout(idW_ro)    Write out rate of melt/freeze runoff into ocean.
+!
+!------------------------------------------------------------------------------
+! Logical switches (T/F) to activate writing of time-averaged ice fields into
+! AVERAGE file.
+!------------------------------------------------------------------------------
+!
+! Aout(idUice)    Write out ice U-velocity component.
+! Aout(idVice)    Write out ice V-velocity component.
+! Aout(idUiER)    Write out ice Eastward  velocity component at RHO-points.
+! Aout(idViNR)    Write out ice Northward velocity component at RHO-points.
+! Aout(idAice)    Write out ice concentration (fractional area coverage).
+! Aout(idIage)    Write out age of ice.
+! Aout(idHice)    Write out average ice thickness (ice mass per area).
+! Aout(idHmel)    Write out surface melt water thickness on ice.
+! Aout(idHsno)    Write out average snow coverage thickness.
+! Aout(idTice)    Write out surface temperature at snow/atmosphere interface.
+! Aout(idISxx)    Write out internal ice stress tensor, xx-component.
+! Aout(idISxy)    Write out internal ice stress tensor, xy-component.
+! Aout(idISyy)    Write out internal ice stress tensor, yy-component.
+!
+! Aout(idIsst)    Write out ice interior temperature (at ice mid-layer).
+! Aout(idIOmf)    Write out ice-ocean mass flux.
+! Aout(idIOfv)    Write out ice-ocean friction velocity.
+! Aout(idIOmt)    Write out ice-ocean momentum transfer coefficient.
+! Aout(idS0mk)    Write out salinity of molecular sublayer under ice.
+! Aout(idT0mk)    Write out temperature of molecular sublayer under ice.
+! Aout(idW_fr)    Write out rate of ice accretion by frazil ice growth.
+! Aout(idW_ai)    Write out rate of melt/freeze at air/ice interface.
+! Aout(idW_ao)    Write out rate of melt/freeze at air/ocean interface.
+! Aout(idW_io)    Write out rate of melt/freeze at ice/ocean interface.
+! Aout(idW_ro)    Write out rate of melt/freeze runoff into ocean.
+! Aout(idWdiv)    Write out rate of ice divergence.
+!

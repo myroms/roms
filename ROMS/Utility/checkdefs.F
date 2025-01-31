@@ -2,11 +2,10 @@
       SUBROUTINE checkdefs
 !
 !git $Id$
-!svn $Id: checkdefs.F 1151 2023-02-09 03:08:53Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2025 The ROMS Group                              !
 !    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                                              !
+!    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
 !  This subroutine checks activated C-preprocessing options for        !
@@ -28,6 +27,9 @@
 !
       integer :: iatms, ibbl, ibiology, idriver
       integer :: ivelHadv, ivelVadv, ivmix, nearshore
+#ifdef SEDIMENT
+      integer :: sbed_load, sbed_type
+#endif
       integer :: is, lstr, ng
 !
 !-----------------------------------------------------------------------
@@ -42,6 +44,10 @@
       ivelVadv = 0
       ivmix = 0
       nearshore = 0
+#ifdef SEDIMENT
+      sbed_load = 0
+      sbed_type = 0
+#endif
 !
 !-----------------------------------------------------------------------
 !  Report activated C-preprocessing options.
@@ -233,7 +239,7 @@
 #if defined ANA_DRAG && defined UV_DRAG_GRID
 !
       IF (Master) WRITE (stdout,20) 'ANA_DRAG_GRID',                    &
-# if defined UV_LOGDRAG
+# if defined UV_LOGDRAG || defined BBL_MODEL
      &   'Analytical spatially varying bottom roughness length'
 # elif defined UV_LDRAG
      &   'Analytical spatially varying linear drag coefficient'
@@ -585,6 +591,18 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+17)=' AVERAGES_DETIDE,'
 # endif
+# ifdef AVERAGES_UV_KIRBY
+      IF (Master) WRITE (stdout,20) 'AVERAGES_UV_KIRBY',                &
+     &   'Writing out time-averaged uwave and vwave Kirby velocities'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+17)=' AVERAGES_UV_KIRBY,'
+# endif
+# ifdef AVERAGES_WEC
+      IF (Master) WRITE (stdout,20) 'AVERAGES_WEC',                     &
+     &   'Writing out time-averaged nearshore radiation fields'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+20)=' AVERAGES_WEC,'
+# endif
 #endif
 #if defined BACKGROUND && defined FOUR_DVAR
 !
@@ -606,6 +624,7 @@
      &   'Activate bed load sediment transport Meyer-Peter-Mueller'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+13)=' BEDLOAD_MPM,'
+      sbed_load=sbed_load+1
 #endif
 #if defined SEDIMENT && defined BEDLOAD_SOULSBY
 !
@@ -613,6 +632,48 @@
      &   'Activate bed load sediment transport Soulsby formula'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+17)=' BEDLOAD_SOULSBY,'
+#endif
+#if defined SEDIMENT && defined BEDLOAD_VANDERA
+!
+      IF (Master) WRITE (stdout,20) 'BEDLOAD_VANDERA',                  &
+     &   'Activate bed load sediment transport vanDerA formula'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+17)=' BEDLOAD_VANDERA,'
+#endif
+#if defined SEDIMENT && defined BEDLOAD_VANDERA_ASYM_LIMITS
+!
+      IF (Master) WRITE (stdout,20) 'BEDLOAD_VANDERA_ASYM_LIMITS',      &
+     &   'Activate bed load vanDerA asymmetry limits'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+29)=' BEDLOAD_VANDERA_ASYM_LIMITS,'
+#endif
+#if defined SEDIMENT && defined BEDLOAD_VANDERA_SURFACE_WAVE
+!
+      IF (Master) WRITE (stdout,20) 'BEDLOAD_VANDERA_SURFACE_WAVE',     &
+     &   'Activate bed load vanDerA surface wave'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+30)=' BEDLOAD_VANDERA_SURFACE_WAVE,'
+#endif
+#if defined SEDIMENT && defined BEDLOAD_VANDERA_WAVE_AVGD_STRESS
+!
+      IF (Master) WRITE (stdout,20) 'BEDLOAD_VANDERA_WAVE_AVGD_STRESS', &
+     &   'Activate bed load vanDerA wave avg stress'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+34)=' BEDLOAD_VANDERA_WAVE_AVGD_STRESS,'
+#endif
+#if defined SEDIMENT && defined BEDLOAD_VANDERA_MADSEN_UDELTA
+!
+      IF (Master) WRITE (stdout,20) 'BEDLOAD_VANDERA_MADSEN_UDELTA',    &
+     &   'Activate bed load madsen current calculation'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+31)=' BEDLOAD_VANDERA_MADSEN_UDELTA,'
+#endif
+#if defined SEDIMENT && defined BEDLOAD_VANDERA_DIRECT_UDELTA
+!
+      IF (Master) WRITE (stdout,20) 'BEDLOAD_VANDERA_DIRECT_UDELTA',    &
+     &   'Activate bed load direct elevation current calculation'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+30)=' BEDLOAD_VANDERA_DIRECT_UDELTA,'
 #endif
 #if defined BGQC && defined FOUR_DVAR
 !
@@ -665,13 +726,6 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+11)=' BODYFORCE,'
 #endif
-#ifdef CHECKSUM
-!
-      IF (Master) WRITE (stdout,20) 'CHECKSUM',                         &
-     &   'Report order-invariant checksum (hash) when processing I/O'
-      is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+10)=' CHECKSUM,'
-#endif
 #ifdef DISTRIBUTE
 # if defined BOUNDARY_ALLGATHER
 !
@@ -685,6 +739,12 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+20)=' BOUNDARY_ALLREDUCE,'
 # endif
+#endif
+#if defined BOTTOM_STREAMING && defined WEC_VF
+      IF (Master) WRITE (stdout,20) 'BOTTOM_STREAMING',                 &
+     &   'Wave current streaming term'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+18)=' BOTTOM_STREAMING,'
 #endif
 #ifdef BULK_FLUXES
 !
@@ -736,6 +796,13 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+16)=' CELERITY_WRITE,'
 #endif
+#ifdef CHECKSUM
+!
+      IF (Master) WRITE (stdout,20) 'CHECKSUM',                         &
+     &   'Report order-invariant checksum (hash) when processing I/O'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+10)=' CHECKSUM,'
+#endif
 #ifdef CHECK_OPEN_FILES
 !
       IF (Master) WRITE (stdout,20) 'CHECK_OPEN_FILES',                 &
@@ -757,6 +824,13 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+16)=' CLIPPING_SPLIT,'
 # endif
+#endif
+#if defined CMEPS && defined ESMF_LIB
+!
+      IF (Master) WRITE (stdout,20) 'CMEPS',                            &
+     &   'Using Community Mediator for Earth Prediction Systems'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+7)=' CMEPS,'
 #endif
 #ifdef COAMPS_COUPLING
 !
@@ -786,6 +860,13 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+18)=' COLLECT_SENDRECV,'
 # endif
+#endif
+#if defined COMPUTE_MLD && defined STD_MODEL && defined FOUR_DVAR
+!
+      IF (Master) WRITE (stdout,20) 'COMPUTE_MLD',                      &
+     &   'Compute Mixed Layer Depth for background error modeling'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+13)=' COMPUTE_MLD,'
 #endif
 #if defined CONCURRENT_KERNEL && defined DISJOINTED && \
     defined DISTRIBUTE        && defined SP4DVAR
@@ -820,7 +901,7 @@
 #if defined GLS_MIXING && defined CHARNOK
 !
       IF (Master) WRITE (stdout,20) 'CHARNOK',                          &
-     &   'Charnok surface roughness from wind stress'
+     &   'Charnock surface roughness from wind stress'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+9)=' CHARNOK,'
 #endif
@@ -969,9 +1050,15 @@
 #ifdef DOUBLE_PRECISION
 !
       IF (Master) WRITE (stdout,20) 'DOUBLE_PRECISION',                 &
-     &   'Double precision arithmetic numerical kernel.'
+     &   'Double precision arithmetic numerical kernel'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+18)=' DOUBLE_PRECISION,'
+#endif
+#if defined DRENNAN
+      IF (Master) WRITE (stdout,20) 'DRENNAN',                          &
+     &   'Drennan et al (2003) relation for ZoW in bulk fluxes'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+9)=' DRENNAN,'
 #endif
 #ifdef ECOSIM
 !
@@ -1155,6 +1242,19 @@
       Coptions(is:is+12)=' !FULL_GRID,'
 # endif
 #endif
+#ifdef DISTRIBUTE
+# ifdef GATHER_SENDRECV
+      IF (Master) WRITE (stdout,20) 'GATHER_SENDRECV',                  &
+     &   'Using mpi_isend/mpi_irecv in mp_gather2d/mp_gather3d routines'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+17)=' GATHER_SENDRECV,'
+# else
+      IF (Master) WRITE (stdout,20) '!GATHER_SENDRECV',                 &
+     &   'Using mpi_gatherv in mp_gather2d/mp_gather3d routines'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+18)=' !GATHER_SENDRECV,'
+# endif
+#endif
 #ifdef GENERIC_DSTART
 !
       IF (Master) WRITE (stdout,20) 'GENERIC_DSTART',                   &
@@ -1176,6 +1276,13 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+12)=' GLS_MIXING,'
       ivmix=ivmix+1
+#endif
+#ifdef GRID_EXTRACT
+!
+      IF (Master) WRITE (stdout,20) 'GRID_EXTRACT',                     &
+     &   'Writing output extraction history file'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+14)=' GRID_EXTRACT,'
 #endif
 #ifdef HDF5
 !
@@ -1219,6 +1326,97 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+13)=' HYPOXIA_SRM,'
       ibiology=ibiology+1
+#endif
+#if defined ICE_MODEL && defined SOLVE3D
+!
+      IF (Master) WRITE (stdout,20) 'ICE_MODEL',                        &
+     &   'Native Sea-Ice Model (Budgell; Durski and Kurapov)'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+11)=' ICE_MODEL,'
+# ifdef ICE_ADVECT
+!
+      IF (Master) WRITE (stdout,20) 'ICE_ADVECT',                       &
+     &   'Including advection of ice tracers'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+12)=' ICE_ADVECT,'
+# endif
+# ifdef ICE_ALBEDO
+!
+      IF (Master) WRITE (stdout,20) 'ICE_ALB_EC92',                     &
+     &   'Surface albedo computation over seawater, snow, or ice'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+12)=' ICE_ALBEDO,'
+# endif
+# ifdef ICE_ALB_EC92
+!
+      IF (Master) WRITE (stdout,20) 'ICE_ALB_EC92',                     &
+     &   'Albedo computation from Ebert and Curry'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+14)=' ICE_ALB_EC92,'
+# endif
+# ifdef ICE_BULK_FLUXES
+!
+      IF (Master) WRITE (stdout,20) 'ICE_BULK_FLUXES',                  &
+     &   'Including ice terms in the bulk flux computation'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+17)=' ICE_BULK_FLUXES,'
+# endif
+# ifdef ICE_CONVSNOW
+!
+      IF (Master) WRITE (stdout,20) 'ICE_CONVSNOW',                     &
+     &   'Conversion of flooded snow to ice'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+14)=' ICE_CONVSNOW,'
+# endif
+# if defined ICE_EVP && defined ICE_MOMENTUM
+!
+      IF (Master) WRITE (stdout,20) 'ICE_EVP',                          &
+     &   'Elastic-viscous-plastic rheology'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+9)=' ICE_EVP,'
+# endif
+# ifdef ICE_MK
+!
+      IF (Master) WRITE (stdout,20) 'ICE_MK',                           &
+     &   'Mellor-Kantha thermodynamics'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+8)=' ICE_MK,'
+# endif
+# ifdef ICE_MOMENTUM
+!
+      IF (Master) WRITE (stdout,20) 'ICE_MOMENTUM',                     &
+     &   'Including momentum term'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+14)=' ICE_MOMENTUM,'
+# endif
+# ifdef ICE_MOM_BULK
+!
+      IF (Master) WRITE (stdout,20) 'ICE_MOM_BULK',                     &
+     &   'Alternated ice-water stress computation'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+14)=' ICE_MOM_BULK,'
+# endif
+# ifdef ICE_STRENGTH_QUAD
+!
+      IF (Master) WRITE (stdout,20) 'ICE_STRENGTH_QUAD',                &
+     &   'Quadratic ice strength, a function of thickness'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+19)=' ICE_STRENGTH_QUAD,'
+# endif
+# if defined ICE_SMOLAR && defined ICE_ADVECT
+!
+      IF (Master) WRITE (stdout,20) 'ICE_SMOLAR',                       &
+     &   'MPDATA advection scheme'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+12)=' ICE_SMOLAR,'
+# endif
+# if defined ICE_UPWIND && defined ICE_ADVECT
+!
+      IF (Master) WRITE (stdout,20) 'ICE_UPWIND',                       &
+     &   'Upwind advection scheme'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+12)=' ICE_UPWIND,'
+# endif
 #endif
 #ifdef ICESHELF
 !
@@ -1557,6 +1755,21 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+4)=' MPI,'
 #endif
+#if defined DISTRIBUTE
+# if defined MULTI_THREAD
+!
+      IF (Master) WRITE (stdout,20) 'MULTI_THREAD',                     &
+     &   'Using mpi_init_thread with multiple thread level processing'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+17)=' MULTIPLE_THREAD,'
+# else
+!
+      IF (Master) WRITE (stdout,20) '!MULTI_THREAD',                    &
+     &   'Using mpi_init with single thread level processing'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+18)=' !MULTIPLE_THREAD,'
+# endif
+#endif
 #if defined MULTIPLE_TLM && defined TANGENT
 !
       IF (Master) WRITE (stdout,20) 'MULTIPLE_TLM',                     &
@@ -1571,22 +1784,6 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+13)=' MY25_MIXING,'
       ivmix=ivmix+1
-#endif
-#ifdef NEARSHORE_MELLOR05
-!
-      IF (Master) WRITE (stdout,20) 'NEARSHORE_MELLOR05',               &
-     &   'Nearshore Radiation Stress Terms (Mellor 2005)'
-      is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+20)=' NEARSHORE_MELLOR05,'
-      nearshore=nearshore+1
-#endif
-#ifdef NEARSHORE_MELLOR08
-!
-      IF (Master) WRITE (stdout,20) 'NEARSHORE_MELLOR08',               &
-     &   'Nearshore Radiation Stress Terms (Mellor 2008)'
-      is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+20)=' NEARSHORE_MELLOR08,'
-      nearshore=nearshore+1
 #endif
 #ifdef NEMURO
 !
@@ -1605,7 +1802,7 @@
 # ifdef NESTING_DEBUG
 !
       IF (Master) WRITE (stdout,20) 'NESTING_DEBUG',                    &
-     &   'Checking mass fluxes conservation in refinement.'
+     &   'Checking mass fluxes conservation in refinement'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+15)=' NESTING_DEBUG,'
 # endif
@@ -1623,6 +1820,13 @@
      &   'Nonlinear Model'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+10)=' NONLINEAR,'
+#endif
+#if defined NO_SCORRECTION_ICE && defined ICE_MODEL && defined SOLVE3D
+!
+      IF (Master) WRITE (stdout,20) 'NO_SCORRECTION_ICE',               &
+     &   'No salinity correction under the ice'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+20)=' NO_SCORRECTION_ICE,'
 #endif
 #ifdef SOLVE3D
 # if defined NONLIN_EOS
@@ -1726,6 +1930,13 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+11)=' OBS_SPACE,'
 #endif
+#if defined OMEGA_IMPLICIT && defined SOLVE3D
+!
+      IF (Master) WRITE (stdout,20) 'OMEGA_IMPLICIT',                   &
+     &   'Adaptive, Courant-number based implicit vertical advection'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+16)=' OMEGA_IMPLICIT,'
+#endif
 #ifdef NESTING
 # ifdef ONE_WAY
 !
@@ -1747,6 +1958,13 @@
      &   'Double precision output fields in NetCDF files'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+12)=' OUT_DOUBLE,'
+#endif
+#ifdef OUTPUT_STATS
+!
+      IF (Master) WRITE (stdout,20) 'OUTPUT_STATS',                     &
+     &   'Reporting NetCDF output fields statistics'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+14)=' OUTPUT_STATS,'
 #endif
 #ifdef _OPENMP
 !
@@ -1971,6 +2189,20 @@
       Coptions(is:is+24)=' !RADIAL_ANGLE_CCW_EAST,'
 # endif
 #endif
+#if defined NESTING && defined REFINE_BOUNDARY
+!
+      IF (Master) WRITE (stdout,20) 'REFINE_BOUNDARY',                  &
+     &   'Fine-to-Coarse momentum averaging at coarse grid boundary'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+17)=' REFINE_BOUNDARY,'
+#endif
+#if defined REMOVE_LAPACK_GOTOS && defined FOUR_DVAR
+!
+      IF (Master) WRITE (stdout,20) 'REMOVE_LAPACK_GOTOS',              &
+     &   'Modernizing adapted LAPACK routines by replacing GOTOs'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+21)=' REMOVE_LAPACK_GOTOS,'
+#endif
 #if defined OXYGEN && defined BIO_FENNEL
 # if defined OCMIP_OXYGEN_SC
 !
@@ -2187,7 +2419,27 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+10)=' RHO_SURF,'
 #endif
-
+#if defined ROLLER_MONO && defined WEC_ROLLER && defined WEC_VF
+!
+      IF (Master) WRITE (stdout,20) 'ROLLER_MONO',                      &
+     &   'Wave energy roller from monochromatic waves'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+13)=' ROLLER_MONO,'
+#endif
+#ifdef ROLLER_RENIERS && defined WEC_ROLLER && defined WEC_VF
+!
+      IF (Master) WRITE (stdout,20) 'ROLLER_RENIERS',                   &
+     &   'Wave energy roller based on Reniers 2004'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+16)=' ROLLER_RENIERS,'
+#endif
+#ifdef ROLLER_SVENDSEN && defined WEC_ROLLER && defined WEC_VF
+!
+      IF (Master) WRITE (stdout,20) 'ROLLER_SVENDSEN',                  &
+     &   'Wave energy roller based on Svendsen 1984'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+17)=' ROLLER_SVENDSEN,'
+#endif
 #if defined RPCG && defined WEAK_CONSTRAINT
 !
       IF (Master) WRITE (stdout,20) 'RPCG',                             &
@@ -2261,6 +2513,19 @@
       Coptions(is:is+14)=' SANITY_CHECK,'
       idriver=idriver+1
 #endif
+#ifdef DISTRIBUTE
+# ifdef SCATTER_BCAST
+      IF (Master) WRITE (stdout,20) 'SCATTER_BCAST',                    &
+     &   'Using mpi_bcast in mp_scatter2d/mp_scatter3d routines'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+15)=' SCATTER_BCAST,'
+# else
+      IF (Master) WRITE (stdout,20) '!SCATTER_BCAST',                    &
+     &   'Using mpi_scatterv in mp_scatter2d/mp_scatter3d routines'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+16)=' !SCATTER_BCAST,'
+# endif
+#endif
 #ifdef SCORRECTION
 !
       IF (Master) WRITE (stdout,20) 'SCORRECTION',                      &
@@ -2296,6 +2561,32 @@
       Coptions(is:is+10)=' SUSPLOAD,'
 # endif
 #endif
+#if defined STD_MODEL && defined FOUR_DVAR
+!
+      IF (Master) WRITE (stdout,20) 'STD_MODEL',                        &
+     &   'Background error covariance Standard Deviation model'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+11)=' STD_MODEL,'
+#endif
+#if defined STEP2D_FB_AB3_AM4
+!
+      IF (Master) WRITE (stdout,20) 'STEP2D_FB_AB3_AM4',                &
+     &   'Generalized Forward-Backward AB3-AM4 stepping scheme'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+19)=' STEP2D_FB_AB3_AM4,'
+#elif defined STEP2D_FB_LF_AM3
+!
+      IF (Master) WRITE (stdout,20) 'STEP2D_FB_LF_AM3',                 &
+     &   'Predictor/Corrector Forward-Backward LF-AM3 stepping scheme'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+18)=' STEP2D_FB_LF_AM3,'
+#else
+!
+      IF (Master) WRITE (stdout,20) 'STEP2D_LF_AM3',                    &
+     &   'Predictor/Corrector LF-AM3 stepping scheme'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+15)=' STEP2D_LF_AM3,'
+#endif
 #ifdef SG_BBL
 !
       IF (Master) WRITE (stdout,20) 'SG_BBL',                           &
@@ -2328,7 +2619,7 @@
 #ifdef SINGLE_PRECISION
 !
       IF (Master) WRITE (stdout,20) 'SINGLE_PRECISION',                 &
-     &   'Single precision arithmetic numerical kernel.'
+     &   'Single precision arithmetic numerical kernel'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+18)=' SINGLE_PRECISION,'
 #endif
@@ -2338,6 +2629,13 @@
      &   'Skipping running NLM, reading NLM state trajectory'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+10)=' SKIP_NLM,'
+#endif
+#ifdef SPECTRUM_STOKES
+!
+      IF (Master) WRITE (stdout,20) 'SPECTRUM_STOKES',                  &
+     &   'Stokes drift estimated from wave spectrum'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+17)=' SPECTRUM_STOKES,'
 #endif
 #ifdef SRELAXATION
 !
@@ -2426,7 +2724,7 @@
 #if defined SP4DVAR && !defined SPLIT_4DVAR
 !
       IF (Master) WRITE (stdout,20) 'SP4DVAR',                          &
-     &   'Weak Constraint, Saddle-Point 4D-Var Data Assimilation.'
+     &   'Weak Constraint, Saddle-Point 4D-Var Data Assimilation'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+9)=' SP4DVAR,'
       idriver=idriver+1
@@ -2465,6 +2763,14 @@
      &   'Adding tidal elevation to SSH climatology'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+11)=' SSH_TIDES,'
+#endif
+#if defined STEP2D_CORILIS    && defined SOLVE3D && \
+   (defined STEP2D_FB_AB3_AM4 || defined STEP2D_FB_LF_AM3)
+!
+      IF (Master) WRITE (stdout,20) 'STEP2D_CORILIS',                   &
+     &   'Adding Coriolis force to barotropic kernel in 3D set-up'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+16)=' STEP2D_CORILIS,'
 #endif
 #ifdef SSW_BBL
 !
@@ -2520,7 +2826,21 @@
        IF (Master) WRITE (stdout,20) 'SSW_LOGINT',                      &
      &   'Bottom currents logarithmic interpolation'
        is=LEN_TRIM(Coptions)+1
-       Coptions(is:is+11)=' SSW_LOGINT,'
+       Coptions(is:is+12)=' SSW_LOGINT,'
+# endif
+# ifdef SSW_LOGINT_WBL
+!
+       IF (Master) WRITE (stdout,20) 'SSW_LOGINT_WBL',                  &
+     &   'Bottom currents logarithmic interpolation at wbl'
+       is=LEN_TRIM(Coptions)+1
+       Coptions(is:is+16)=' SSW_LOGINT_WBL,'
+# endif
+# ifdef SSW_LOGINT_DIRECT
+!
+       IF (Master) WRITE (stdout,20) 'SSW_LOGINT_DIRECT',               &
+     &   'Bottom currents logarithmic interpolation at user elev'
+       is=LEN_TRIM(Coptions)+1
+       Coptions(is:is+19)=' SSW_LOGINT_DIRECT,'
 # endif
 #endif
 #ifdef STATIONS
@@ -2578,6 +2898,13 @@
      &   'Suppress report of repetitive configuration information'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+17)=' SUPPRESS_REPORT,'
+#endif
+#if defined SURFACE_STREAMING && defined WEC_VF
+!
+      IF (Master) WRITE (stdout,20) 'SURFACE_STREAMING',                 &
+     &   'Wave current streaming term'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+18)=' SURFACE_STREAMING,'
 #endif
 #ifdef SWAN_COUPLING
 !
@@ -2769,6 +3096,13 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+8)=' UV_COR,'
 #endif
+#ifdef UV_DESTAGGERED
+!
+      IF (Master) WRITE (stdout,20) 'UV_DESTAGGERED',                   &
+     &   'Currents destaggering to cell-center for data assimilation'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+16)=' UV_DESTAGGERED,'
+#endif
 #ifdef UV_ADV
 # ifdef UV_C2ADVECTION
 !
@@ -2806,6 +3140,12 @@
       Coptions(is:is+16)=' UV_C4VADVECTION,'
       ivelVadv=ivelVadv+1
 #  endif
+#  ifdef UV_KIRBY
+      IF (Master) WRITE (stdout,20) 'UV_KIRBY',                         &
+     &   'Compute uwave and vwave Kirby avg velocities'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+15)=' UV_KIRBY,'
+#  endif
 #  ifdef UV_SADVECTION
 !
       IF (Master) WRITE (stdout,20) 'UV_SADVECTION',                    &
@@ -2826,7 +3166,7 @@
 #ifdef UV_DRAG_GRID
 !
       IF (Master) WRITE (stdout,20) 'UV_DRAG_GRID',                     &
-# if defined UV_LOGDRAG
+# if defined UV_LOGDRAG || defined BBL_MODEL
      &   'Spatially varying bottom roughness length'
 # elif defined UV_LDRAG
      &   'Spatially varying linear drag coefficient'
@@ -2940,6 +3280,34 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+13)=' VISC_3DCOEF,'
 #endif
+#ifdef WAVE_MIXING
+!
+      IF (Master) WRITE (stdout,20) 'WAVE_MIXING',                      &
+     &   'Enhanced veritcal mixing from waves term'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+13)=' WAVE_MIXING,'
+#endif
+#if defined WDISS_THORGUZA && defined WEC_VF
+!
+      IF (Master) WRITE (stdout,20) 'WDISS_THORGUZA',                   &
+     &   'Wave energy dissipation computed from Thorton/Guza 1986'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+16)=' WDISS_THORGUZA,'
+#endif
+#if defined WDISS_CHURTHOR && defined WEC_VF
+!
+      IF (Master) WRITE (stdout,20) 'WDISS_CHURTHOR',                   &
+     &   'Wave energy dissipation computed from Church/Thorton 1986'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+16)=' WDISS_CHURTHOR,'
+#endif
+#ifdef WDISS_WAVEMOD
+!
+      IF (Master) WRITE (stdout,20) 'WDISS_WAVEMOD',                    &
+     &   'Wave energy dissipation acquired from coupled wave model'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+15)=' WDISS_WAVEMOD,'
+#endif
 #ifdef WAV_COUPLING
 !
       IF (Master) WRITE (stdout,20) 'WAV_COUPLING',                     &
@@ -2960,6 +3328,14 @@
      &   'Avoid time interpolation in weak constraint forcing'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+15)=' WEAK_NOINTERP,'
+#endif
+#ifdef WEC_VF
+!
+      IF (Master) WRITE (stdout,20) 'WEC_VF',                           &
+     &   'Vortex Force wave current interaction'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+8)=' WEC_VF,'
+      nearshore=nearshore+1
 #endif
 #if defined WRITE_WATER && defined MASKING
 !
@@ -3034,7 +3410,7 @@
       IF (Master) WRITE (stdout,20) 'ZOS_HSIG',                         &
      &   'Wave amplitude used for Zos calculation'
       is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+14)=' ZOS_HSIG,'
+      Coptions(is:is+10)=' ZOS_HSIG,'
 #endif
 !
 !-----------------------------------------------------------------------
@@ -3184,32 +3560,46 @@
       END IF
 # endif
 #endif
-#ifdef NEARSHORE
+#ifdef WEC
 !
 !  Stop if more that one radiation stress formulation is activated.
 !
       IF (Master.and.(nearshore.gt.1)) THEN
         WRITE (stdout,160)
- 160    FORMAT (/,' CHECKDEFS - only one radiation stress formulation'  &
+ 160    FORMAT (/,' CHECKDEFS - only one wave current formulation'  &
      &            ' is allowed.')
+        exit_flag=5
+      END IF
+#endif
+#ifdef SEDIMENT
+      IF (Master.and.(sbed_type.gt.1)) THEN
+        WRITE (stdout,170)
+ 170    FORMAT (/,' CHECKDEFS - More than one sediment bed type   ',    &
+     &            ' selected.')
+        exit_flag=5
+      END IF
+      IF (Master.and.(sbed_load.gt.1)) THEN
+        WRITE (stdout,180)
+ 180    FORMAT (/,' CHECKDEFS - More than one sediment bed load   ',    &
+     &            ' selected.')
         exit_flag=5
       END IF
 #endif
 #ifdef PARALLEL_IO
 # if !(defined HDF5 || defined PNETCDF)
       IF (Master) THEN
-        WRITE (stdout,170) uppercase('hdf5'),                           &
+        WRITE (stdout,190) uppercase('hdf5'),                           &
      &                     uppercase('pnetcdf')
- 170    FORMAT (/,' CHECKDEFS - Need to activate either ',a,' or ',a,   &
+ 190    FORMAT (/,' CHECKDEFS - Need to activate either ',a,' or ',a,   &
      &            ' options',/,13x,'for parallel I/O processing.')
         exit_flag=5
       END IF
 # endif
 # if defined HDF5 && defined PNETCDF
       IF (Master) THEN
-        WRITE (stdout,180) uppercase('hdf5'),                           &
+        WRITE (stdout,200) uppercase('hdf5'),                           &
      &                     uppercase('pnetcdf')
- 180    FORMAT (/,' CHECKDEFS - Both ',a,' and ',a,' options',          &
+ 200    FORMAT (/,' CHECKDEFS - Both ',a,' and ',a,' options',          &
      &            ' selected',/,13x,'for parallel I/O processing.',     &
      &          /,13x,'Choose only one.')
         exit_flag=5
@@ -3223,9 +3613,9 @@
 !  time dependent.
 !
       IF (Master) THEN
-        WRITE (stdout,190) uppercase('write_water'),                    &
+        WRITE (stdout,210) uppercase('write_water'),                    &
      &                     uppercase('wet_dry')
- 190    FORMAT (/,' CHECKDEFS - cannot activate ',a,' and ',a,          &
+ 210    FORMAT (/,' CHECKDEFS - cannot activate ',a,' and ',a,          &
      &            ' together',/,13x,'because of time dependent ',       &
      &            ' Land/Sea masking.')
         exit_flag=5
@@ -3243,11 +3633,11 @@
 !  are used to store the cummulative sums.
 !
       IF (Master) THEN
-        WRITE (stdout,200) uppercase('averages'),                       &
+        WRITE (stdout,220) uppercase('averages'),                       &
      &                     uppercase('ad_averages'),                    &
      &                     uppercase('rp_averages'),                    &
      &                     uppercase('tl_averages')
- 200    FORMAT (/,' CHECKDEFS - cannot activate ',a,' ',a,' ',a,        &
+ 220    FORMAT (/,' CHECKDEFS - cannot activate ',a,' ',a,' ',a,        &
      &            ' or',a,/,13x,'at the same time. Choose one!')
         exit_flag=5
       END IF
@@ -3260,12 +3650,12 @@
       IF (Master) THEN
         DO ng=1,Ngrids
           IF (NtileX(ng)*NtileE(ng).gt.1) THEN
-            WRITE (stdout,210) uppercase('ts_mpdata')
+            WRITE (stdout,230) uppercase('ts_mpdata')
             exit_flag=5
             EXIT
           END IF
         END DO
- 210    FORMAT (/,' CHECKDEFS - cannot activate option: ',a,            &
+ 230    FORMAT (/,' CHECKDEFS - cannot activate option: ',a,            &
      &          /,13x,'in serial with partitions or shared-memory...',  &
      &          /,13x,'Use distributed-memory (MPI) in parallel runs.')
       END IF
@@ -3276,8 +3666,8 @@
 !  capability is now activated with standard input switch "LwSrc".
 !
       IF (Master) THEN
-        WRITE (stdout,220) uppercase('q_psource'), 'LwSrc'
- 220    FORMAT (/,' CHECKDEFS - cannot use obsolete option: ',a,        &
+        WRITE (stdout,240) uppercase('q_psource'), 'LwSrc'
+ 240    FORMAT (/,' CHECKDEFS - cannot use obsolete option: ',a,        &
      &          /,13x,'Use instead standard input switch: ',a,          &
      &          /,13x,'Edit header file or build script!')
         exit_flag=5
@@ -3289,8 +3679,8 @@
 !  capability is now activated with standard input switch "LtracerSrc".
 !
       IF (Master) THEN
-        WRITE (stdout,230) uppercase('ts_psource'), 'LtracerSrc'
- 230    FORMAT (/,' CHECKDEFS - cannot use obsolete option: ',a,        &
+        WRITE (stdout,250) uppercase('ts_psource'), 'LtracerSrc'
+ 250    FORMAT (/,' CHECKDEFS - cannot use obsolete option: ',a,        &
      &          /,13x,'Use instead standard input switch: ',a,          &
      &          /,13x,'Edit header file or build script!')
         exit_flag=5
@@ -3302,8 +3692,8 @@
 !  capability is now activated with standard input switch "LwSrc".
 !
       IF (Master) THEN
-        WRITE (stdout,240) uppercase('uv_psource'), 'LuvSrc'
- 240    FORMAT (/,' CHECKDEFS - cannot use obsolete option: ',a,        &
+        WRITE (stdout,260) uppercase('uv_psource'), 'LuvSrc'
+ 260    FORMAT (/,' CHECKDEFS - cannot use obsolete option: ',a,        &
      &          /,13x,'Use instead standard input switch: ',a,          &
      &          /,13x,'Edit header file or build script!')
         exit_flag=5
@@ -3316,9 +3706,9 @@
 !  details.
 !
       IF (Master) THEN
-        WRITE (stdout,250) uppercase('splines'),                        &
+        WRITE (stdout,270) uppercase('splines'),                        &
      &        'https://www.myroms.org/projects/src/ticket/681'
- 250    FORMAT (/,' CHECKDEFS - cannot use obsolete option: ',a,        &
+ 270    FORMAT (/,' CHECKDEFS - cannot use obsolete option: ',a,        &
      &          /,13x,'See following trac ticket for details: ',        &
      &          /,13x,a,/,13x,'please change header file accordingly.')
         exit_flag=5
@@ -3332,14 +3722,14 @@
       IF (Master) THEN
         DO ng=1,Ngrids
           IF (NtileX(ng)*NtileE(ng).gt.1) THEN
-            WRITE (stdout,260) uppercase('nesting')
+            WRITE (stdout,280) uppercase('nesting')
             exit_flag=5
             EXIT
           END IF
         END DO
- 260    FORMAT (/,' CHECKDEFS - cannot activate option: ',a,            &
+ 280    FORMAT (/,' CHECKDEFS - cannot activate option: ',a,            &
      &          /,13x,'in serial with partitions or shared-memory...',  &
-     &          /,13x,'There bugs in shared-memory that need fixing.',  &
+     &          /,13x,'We have bugs in shared-memory that need fixing.',&
      &          /,13x,'Use distributed-memory (MPI) in parallel runs.')
       END IF
 #endif
@@ -3348,8 +3738,8 @@
 !  Stop if more than one atmosphere model is selected for coupling.
 !
       IF (Master.and.(iatms.gt.1)) THEN
-        WRITE (stdout,270)
- 270    FORMAT (/,' CHECKDEFS - only one atmosphere model coupling',    &
+        WRITE (stdout,290)
+ 290    FORMAT (/,' CHECKDEFS - only one atmosphere model coupling',    &
      &            ' is allowed.')
         exit_flag=5
       END IF
@@ -3363,12 +3753,12 @@
 !  on the geographical location with respect to the Moon and Sun.
 !
       IF (Master) THEN
-        WRITE (stdout,280) uppercase('tide_generating_forces')
+        WRITE (stdout,300) uppercase('tide_generating_forces')
             exit_flag=5
             EXIT
           END IF
         END DO
- 280    FORMAT (/,' CHECKDEFS - cannot activate option: ',a,            &
+ 300    FORMAT (/,' CHECKDEFS - cannot activate option: ',a,            &
      &          /,13x,'in analytical Cartesian grids applications...',  &
      &          /,13x,'The grid (lon,lat) is needed to compute the',    &
      &          /,13x,'equilibrium tide harmonics.')

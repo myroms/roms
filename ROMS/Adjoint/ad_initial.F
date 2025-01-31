@@ -3,11 +3,10 @@
       SUBROUTINE ad_initial (ng)
 !
 !git $Id$
-!svn $Id: ad_initial.F 1166 2023-05-17 20:11:58Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2025 The ROMS Group                              !
 !    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                                              !
+!    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
 !  This routine initializes all adjoint model variables.               !
@@ -45,6 +44,9 @@
      defined SO_SEMI
       USE adsen_initial_mod, ONLY : adsen_initial
 # endif
+# if defined STEP2D_FB_AB3_AM4 || defined STEP2D_FB_LF_AM3
+!!    USE ad_load_sol_mod,   ONLY : ad_load_sol
+# endif
       USE close_io_mod,      ONLY : close_inp
       USE dateclock_mod,     ONLY : time_string
 # ifdef DISTRIBUTE
@@ -54,6 +56,9 @@
       USE get_wetdry_mod,    ONLY : get_wetdry
 # endif
       USE get_state_mod,     ONLY : get_state
+# if defined SOLVE3D && defined NONLINEAR
+      USE ini_fields_mod,    ONLY : set_zeta_timeavg
+# endif
       USE ini_hmixcoef_mod,  ONLY : ini_hmixcoef
 # if defined WAV_COUPLING_NOT_YET && defined MCT_LIB
       USE mct_coupler_mod,   ONLY : ocn2wav_coupling
@@ -123,9 +128,15 @@
 !
       iif(ng)=1
       indx1(ng)=1
+      next_kstp(ng)=1
+# if defined STEP2D_FB_AB3_AM4 || defined STEP2D_FB_LF_AM3
+      kstp(ng)=1
+      knew(ng)=1
+# else
       kstp(ng)=1
       krhs(ng)=3
       knew(ng)=2
+# endif
       PREDICTOR_2D_STEP(ng)=.FALSE.
 !
       iic(ng)=0
@@ -397,6 +408,17 @@
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
       END IF
 #  endif
+
+#  ifdef INI_FILE
+#   if defined STEP2D_FB_AB3_AM4 || defined STEP2D_FB_LF_AM3
+!!
+!!  Load initial fields to adjoint solution arrays for I/O purposes.
+!!
+!!      DO tile=first_tile(ng),last_tile(ng),+1
+!!        CALL ad_load_sol (ng, tile, iADM, Tindex)
+!!      END DO
+#   endif
+#  endif
 # endif
 
 # ifdef WET_DRY
@@ -534,6 +556,20 @@
       CALL mp_bcasti (ng, iADM, exit_flag)
 # endif
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+
+# if defined SOLVE3D && defined ADM_DRIVER
+!
+!-----------------------------------------------------------------------
+!  Compute nonlinear initial time-evolving depths.
+!-----------------------------------------------------------------------
+!
+      DO tile=first_tile(ng),last_tile(ng),+1
+#  ifdef NONLINEAR
+        CALL set_zeta_timeavg (ng, tile, iTLM)
+#  endif
+        CALL set_depth (ng, tile, iTLM)
+      END DO
+# endif
 
 # ifdef MASKING
 !

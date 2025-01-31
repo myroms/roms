@@ -2,11 +2,10 @@
       MODULE mod_parallel
 !
 !git $Id$
-!svn $Id: mod_parallel.F 1151 2023-02-09 03:08:53Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2025 The ROMS Group                              !
 !    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                                              !
+!    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
 !  This module contains all variables used for parallelization         !
@@ -358,7 +357,7 @@
       CALL mpi_comm_size (OCN_COMM_WORLD, numthreads, MyError)
       IF (MyError.ne.0) THEN
         WRITE (stdout,10)
-  10    FORMAT (/,' ROMS/TOMS - Unable to inquire number of',           &
+  10    FORMAT (/,' ROMS - Unable to inquire number of',                &
      &            ' processors in the group.')
         exit_flag=6
         RETURN

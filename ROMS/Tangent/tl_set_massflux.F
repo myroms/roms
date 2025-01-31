@@ -4,11 +4,10 @@
 #if defined TANGENT && defined SOLVE3D
 !
 !git $Id$
-!svn $Id: tl_set_massflux.F 1151 2023-02-09 03:08:53Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group       Andrew M. Moore   !
+!  Copyright (c) 2002-2025 The ROMS Group            Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                                              !
+!    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
 !  This routine computes tangent linear horizontal mass fluxes,        !
@@ -58,7 +57,7 @@
      &                           OCEAN(ng) % v,                         &
      &                           OCEAN(ng) % tl_u,                      &
      &                           OCEAN(ng) % tl_v,                      &
-# ifdef NEARSHORE_MELLOR
+# ifdef WEC_MELLOR
      &                           OCEAN(ng) % u_stokes,                  &
      &                           OCEAN(ng) % v_stokes,                  &
      &                           OCEAN(ng) % tl_u_stokes,               &
@@ -84,7 +83,7 @@
      &                                 nrhs,                            &
      &                                 u, v,                            &
      &                                 tl_u, tl_v,                      &
-# ifdef NEARSHORE_MELLOR
+# ifdef WEC_MELLOR
      &                                 u_stokes, v_stokes,              &
      &                                 tl_u_stokes, tl_v_stokes,        &
 # endif
@@ -113,7 +112,7 @@
       real(r8), intent(in) :: v(LBi:,LBj:,:,:)
       real(r8), intent(in) :: tl_u(LBi:,LBj:,:,:)
       real(r8), intent(in) :: tl_v(LBi:,LBj:,:,:)
-#  ifdef NEARSHORE_MELLOR
+#  ifdef WEC_MELLOR
       real(r8), intent(in) :: u_stokes(LBi:,LBj:,:)
       real(r8), intent(in) :: v_stokes(LBi:,LBj:,:)
       real(r8), intent(in) :: tl_u_stokes(LBi:,LBj:,:)
@@ -131,7 +130,7 @@
       real(r8), intent(in) :: v(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(in) :: tl_u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(in) :: tl_v(LBi:UBi,LBj:UBj,N(ng),2)
-#  ifdef NEARSHORE_MELLOR
+#  ifdef WEC_MELLOR
       real(r8), intent(in) :: u_stokes(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(in) :: v_stokes(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(in) :: tl_u_stokes(LBi:UBi,LBj:UBj,N(ng))
@@ -169,7 +168,7 @@
      &                      tl_u(i,j,k,nrhs)+                           &
      &                      (tl_Hz(i,j,k)+tl_Hz(i-1,j,k))*              &
      &                      u(i,j,k,nrhs))
-# ifdef NEARSHORE_MELLOR
+# ifdef WEC_MELLOR
 !^          Huon(i,j,k)=Huon(i,j,k)+                                    &
 !^   &                  0.5_r8*(Hz(i,j,k)+Hz(i-1,j,k))*                 &
 !^   &                  u_stokes(i,j,k)*on_u(i,j)
@@ -193,7 +192,7 @@
      &                      tl_v(i,j,k,nrhs)+                           &
      &                      (tl_Hz(i,j,k)+tl_Hz(i,j-1,k))*              &
      &                      v(i,j,k,nrhs))
-# ifdef NEARSHORE_MELLOR
+# ifdef WEC_MELLOR
 !^          Hvom(i,j,k)=Hvom(i,j,k)+                                    &
 !^   &                  0.5_r8*(Hz(i,j,k)+Hz(i,j-1,k))*                 &
 !^   &                  v_stokes(i,j,k)*om_v(i,j)

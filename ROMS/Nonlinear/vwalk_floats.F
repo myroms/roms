@@ -5,11 +5,10 @@
     defined SOLVE3D
 !
 !git $Id$
-!svn $Id: vwalk_floats.F 1151 2023-02-09 03:08:53Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group         Mark Hadfield   !
+!  Copyright (c) 2002-2025 The ROMS Group              Mark Hadfield   !
 !    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                                              !
+!    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
 !  These routines compute nudging velocities for vertical random walk. !

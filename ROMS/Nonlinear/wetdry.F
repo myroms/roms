@@ -3,11 +3,10 @@
 #ifdef WET_DRY
 !
 !git $Id$
-!svn $Id: wetdry.F 1151 2023-02-09 03:08:53Z arango $
 !=======================================================================
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2025 The ROMS Group                              !
 !    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                           Hernan G. Arango   !
+!    See License_ROMS.md                            Hernan G. Arango   !
 !==================================================== John C. Warner ===
 !                                                                      !
 !  This routine computes the wet/dry masking arrays.                   !
@@ -313,7 +312,7 @@
      &          ((JstrR.le.j).and.(j.le.JendR))) THEN
               IF (INT(SOURCES(ng)%Dsrc(is)).eq.0) THEN
                 umask_full(i,j)=1.0_r8
-              ELSE
+              ELSE IF (INT(SOURCES(ng)%Dsrc(is)).eq.1) THEN
                 vmask_full(i,j)=1.0_r8
               END IF
             END IF
@@ -517,7 +516,7 @@
      &        ((JstrR.le.j).and.(j.le.JendR))) THEN
             IF (INT(SOURCES(ng)%Dsrc(is)).eq.0) THEN
               umask_full(i,j)=1.0_r8
-            ELSE
+            ELSE IF (INT(SOURCES(ng)%Dsrc(is)).eq.1) THEN
               vmask_full(i,j)=1.0_r8
             END IF
           END IF

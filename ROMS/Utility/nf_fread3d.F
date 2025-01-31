@@ -2,11 +2,10 @@
       MODULE nf_fread3d_mod
 !
 !git $Id$
-!svn $Id: nf_fread3d.F 1159 2023-03-24 23:49:03Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2025 The ROMS Group                              !
 !    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                                              !
+!    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
 !  This function reads in a generic floating point 3D array from an    !
@@ -87,7 +86,8 @@
 # ifdef MASKING
      &                       Amask,                                     &
 # endif
-     &                       Adat, checksum) RESULT (status)
+     &                       Adat,                                      &
+     &                       checksum) RESULT (status)
 !***********************************************************************
 !
       USE mod_netcdf
@@ -96,6 +96,7 @@
 # if defined MASKING && defined READ_WATER
       USE distribute_mod, ONLY : mp_collect
 # endif
+      USE get_bounds_mod, ONLY : tile_bounds_1d
 !
 !  Imported variable declarations.
 !
@@ -525,7 +526,8 @@
 # ifdef MASKING
      &                       Amask,                                     &
 # endif
-     &                       Adat, checksum) RESULT (status)
+     &                       Adat,                                      &
+     &                       checksum) RESULT (status)
 !***********************************************************************
 !
       USE mod_netcdf
@@ -923,7 +925,8 @@
 # ifdef MASKING
      &                      Amask,                                      &
 # endif
-     &                      Adat, checksum) RESULT (status)
+     &                      Adat,                                       &
+     &                      checksum) RESULT (status)
 !***********************************************************************
 !
       USE mod_pio_netcdf

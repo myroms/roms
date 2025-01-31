@@ -1,16 +1,15 @@
 #!/bin/bash
 #
 # git $Id$
-# svn $Id: check_nc.sh 1151 2023-02-09 03:08:53Z arango $
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Copyright (c) 2002-2023 The ROMS/TOMS Group                           :::
+# Copyright (c) 2002-2025 The ROMS Group                                :::
 #   Licensed under a MIT/X style license                                :::
-#   See License_ROMS.txt                                                :::
+#   See License_ROMS.md                                                 :::
 #:::::::::::::::::::::::::::::::::::::::::::::::::::::: David Robertson :::
 #                                                                       :::
 # ROMS NetCDF file checker between simulations:                         :::
 #                                                                       :::
-# This script compares the binary differences of all ROMS/TOMS output   :::
+# This script compares the binary differences of all ROMS output        :::
 # NetCDF files between two simulations of the same application.  The    :::
 # DEBUGGING and POSITIVE_ZERO options need to be activated to avoid     :::
 # time marks in output NetCDF files and other header information.       :::

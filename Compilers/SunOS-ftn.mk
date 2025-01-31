@@ -1,9 +1,8 @@
 # git $Id$
-# svn $Id: SunOS-ftn.mk 1151 2023-02-09 03:08:53Z arango $
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Copyright (c) 2002-2023 The ROMS/TOMS Group                           :::
+# Copyright (c) 2002-2025 The ROMS Group                                :::
 #   Licensed under a MIT/X style license                                :::
-#   See License_ROMS.txt                                                :::
+#   See License_ROMS.md                                                 :::
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 #
 # Include file for CRAY FTN cross-compiler with SUN
@@ -48,7 +47,7 @@
             SLIBS := -L/usr/local/lib -L/usr/lib
             ULIBS :=
              LIBS :=
-         ROMS_LIB := -L$(SCRATCH_DIR) -lROMS
+         ROMS_LIB := -L$(BUILD_DIR) -lROMS
        MOD_SUFFIX := mod
                LD := $(FC)
           LDFLAGS :=
@@ -74,13 +73,13 @@ ifdef USE_ROMS
            FFLAGS += -O 3,aggress
  endif
  ifdef SHARED
-          LDFLAGS += -Wl,-rpath,$(SCRATCH_DIR)
+          LDFLAGS += -Wl,-rpath,$(BUILD_DIR)
 
            FFLAGS += -fPIC
        SH_LDFLAGS += -shared
  endif
 
-        MDEPFLAGS := --cpp --fext=f90 --file=- --objdir=$(SCRATCH_DIR)
+        MDEPFLAGS := --cpp --fext=f90 --file=- --objdir=$(BUILD_DIR)
 endif
 
 #--------------------------------------------------------------------------
@@ -122,20 +121,6 @@ ifdef CICE_APPLICATION
 endif
 
 ifdef USE_WRF
- ifeq "$(strip $(WRF_LIB_DIR))" "$(WRF_SRC_DIR)"
-             LIBS += $(WRF_LIB_DIR)/main/module_wrf_top.o
-             LIBS += $(WRF_LIB_DIR)/main/libwrflib.a
-             LIBS += $(WRF_LIB_DIR)/external/fftpack/fftpack5/libfftpack.a
-             LIBS += $(WRF_LIB_DIR)/external/io_grib1/libio_grib1.a
-             LIBS += $(WRF_LIB_DIR)/external/io_grib_share/libio_grib_share.a
-             LIBS += $(WRF_LIB_DIR)/external/io_int/libwrfio_int.a
-             LIBS += $(WRF_LIB_DIR)/external/esmf_time_f90/libesmf_time.a
-             LIBS += $(WRF_LIB_DIR)/external/RSL_LITE/librsl_lite.a
-             LIBS += $(WRF_LIB_DIR)/frame/module_internal_header_util.o
-             LIBS += $(WRF_LIB_DIR)/frame/pack_utils.o
-             LIBS += $(WRF_LIB_DIR)/external/io_netcdf/libwrfio_nf.a
-     WRF_MOD_DIRS  = main frame phys share external/esmf_time_f90
- else
              LIBS += $(WRF_LIB_DIR)/module_wrf_top.o
              LIBS += $(WRF_LIB_DIR)/libwrflib.a
              LIBS += $(WRF_LIB_DIR)/libfftpack.a
@@ -146,8 +131,10 @@ ifdef USE_WRF
              LIBS += $(WRF_LIB_DIR)/librsl_lite.a
              LIBS += $(WRF_LIB_DIR)/module_internal_header_util.o
              LIBS += $(WRF_LIB_DIR)/pack_utils.o
+ifneq ($(NETCDFPAR),)
+             LIBS += $(WRF_LIB_DIR)/libwrfio_nfpar.a
+endif
              LIBS += $(WRF_LIB_DIR)/libwrfio_nf.a
- endif
 endif
 
 #--------------------------------------------------------------------------
@@ -180,6 +167,11 @@ ifdef USE_SCORPIO
 endif
 
 ifdef USE_NETCDF4
+        NC_CONFIG ?= nc-config
+   TEST_NC_CONFIG := $(shell which $(NC_CONFIG))
+  ifneq ($(TEST_NC_CONFIG),)
+             LIBS += $(shell $(NC_CONFIG) --libs)
+  endif
         NF_CONFIG ?= nf-config
     NETCDF_INCDIR ?= $(shell $(NF_CONFIG) --prefix)/include
              LIBS += $(shell $(NF_CONFIG) --flibs)
@@ -232,10 +224,10 @@ ifdef USE_MCT
 endif
 
 ifdef USE_ESMF
+                     include $(ESMFMKFILE)
           ESMF_OS ?= $(OS)
       ESMF_SUBDIR := $(ESMF_OS).$(ESMF_COMPILER).$(ESMF_ABI).$(ESMF_COMM).$(ESMF_SITE)
       ESMF_MK_DIR ?= $(ESMF_DIR)/lib/lib$(ESMF_BOPT)/$(ESMF_SUBDIR)
-                     include $(ESMF_MK_DIR)/esmf.mk
            FFLAGS += $(ESMF_F90COMPILEPATHS)
              LIBS += $(ESMF_F90LINKPATHS) $(ESMF_F90ESMFLINKLIBS)
 endif
@@ -247,8 +239,8 @@ endif
 
 # Cray specials
 
-$(SCRATCH_DIR)/lmd_skpp.o: FFLAGS += -O inlinefrom=lmd_wscale.f90
-$(SCRATCH_DIR)/lmd_bkpp.o: FFLAGS += -O inlinefrom=lmd_wscale.f90
+$(BUILD_DIR)/lmd_skpp.o: FFLAGS += -O inlinefrom=lmd_wscale.f90
+$(BUILD_DIR)/lmd_bkpp.o: FFLAGS += -O inlinefrom=lmd_wscale.f90
 
 #
 # Set free form format in source files to allow long string for
@@ -256,19 +248,19 @@ $(SCRATCH_DIR)/lmd_bkpp.o: FFLAGS += -O inlinefrom=lmd_wscale.f90
 #
 
 ifdef USE_ROMS
- $(SCRATCH_DIR)/mod_ncparam.o: FFLAGS += $(FREEFLAGS)
- $(SCRATCH_DIR)/mod_strings.o: FFLAGS += $(FREEFLAGS)
- $(SCRATCH_DIR)/analytical.o: FFLAGS += $(FREEFLAGS)
- $(SCRATCH_DIR)/biology.o: FFLAGS += $(FREEFLAGS)
+ $(BUILD_DIR)/mod_ncparam.o: FFLAGS += $(FREEFLAGS)
+ $(BUILD_DIR)/mod_strings.o: FFLAGS += $(FREEFLAGS)
+ $(BUILD_DIR)/analytical.o: FFLAGS += $(FREEFLAGS)
+ $(BUILD_DIR)/biology.o: FFLAGS += $(FREEFLAGS)
 
  ifdef USE_ADJOINT
-  $(SCRATCH_DIR)/ad_biology.o: FFLAGS += $(FREEFLAGS)
+  $(BUILD_DIR)/ad_biology.o: FFLAGS += $(FREEFLAGS)
  endif
  ifdef USE_REPRESENTER
-  $(SCRATCH_DIR)/rp_biology.o: FFLAGS += $(FREEFLAGS)
+  $(BUILD_DIR)/rp_biology.o: FFLAGS += $(FREEFLAGS)
  endif
  ifdef USE_TANGENT
-  $(SCRATCH_DIR)/tl_biology.o: FFLAGS += $(FREEFLAGS)
+  $(BUILD_DIR)/tl_biology.o: FFLAGS += $(FREEFLAGS)
  endif
 endif
 
@@ -279,43 +271,39 @@ endif
 # Add COAMPS library directory to include path of ESMF coupling files.
 
 ifdef USE_COAMPS
- $(SCRATCH_DIR)/esmf_atm.o: FFLAGS += -I$(COAMPS_LIB_DIR)
- $(SCRATCH_DIR)/esmf_esm.o: FFLAGS += -I$(COAMPS_LIB_DIR)
+ $(BUILD_DIR)/esmf_atm.o: FFLAGS += -I$(COAMPS_LIB_DIR)
+ $(BUILD_DIR)/esmf_esm.o: FFLAGS += -I$(COAMPS_LIB_DIR)
 endif
 
 # Add WRF library directory to include path of ESMF coupling files.
 
 ifdef USE_WRF
- ifeq "$(strip $(WRF_LIB_DIR))" "$(WRF_SRC_DIR)"
-  $(SCRATCH_DIR)/esmf_atm.o: FFLAGS += $(addprefix -I$(WRF_LIB_DIR)/,$(WRF_MOD_DIRS))
- else
-  $(SCRATCH_DIR)/esmf_atm.o: FFLAGS += -I$(WRF_LIB_DIR)
- endif
+ $(BUILD_DIR)/esmf_atm.o: FFLAGS += -I$(WRF_LIB_DIR)
 endif
 
 # Supress free format in SWAN source files since there are comments
 # beyond column 72.
 
 ifdef USE_SWAN
- $(SCRATCH_DIR)/ocpcre.o: FFLAGS += $(FIXEDFLAGS)
- $(SCRATCH_DIR)/ocpids.o: FFLAGS += $(FIXEDFLAGS)
- $(SCRATCH_DIR)/ocpmix.o: FFLAGS += $(FIXEDFLAGS)
- $(SCRATCH_DIR)/swancom1.o: FFLAGS += $(FIXEDFLAGS)
- $(SCRATCH_DIR)/swancom2.o: FFLAGS += $(FIXEDFLAGS)
- $(SCRATCH_DIR)/swancom3.o: FFLAGS += $(FIXEDFLAGS)
- $(SCRATCH_DIR)/swancom4.o: FFLAGS += $(FIXEDFLAGS)
- $(SCRATCH_DIR)/swancom5.o: FFLAGS += $(FIXEDFLAGS)
- $(SCRATCH_DIR)/swanmain.o: FFLAGS += $(FIXEDFLAGS)
- $(SCRATCH_DIR)/swanout1.o: FFLAGS += $(FIXEDFLAGS)
- $(SCRATCH_DIR)/swanout2.o: FFLAGS += $(FIXEDFLAGS)
- $(SCRATCH_DIR)/swanparll.o: FFLAGS += $(FIXEDFLAGS)
- $(SCRATCH_DIR)/swanpre1.o: FFLAGS += $(FIXEDFLAGS)
- $(SCRATCH_DIR)/swanpre2.o: FFLAGS += $(FIXEDFLAGS)
- $(SCRATCH_DIR)/swanser.o: FFLAGS += $(FIXEDFLAGS)
- $(SCRATCH_DIR)/swmod1.o: FFLAGS += $(FIXEDFLAGS)
- $(SCRATCH_DIR)/swmod2.o: FFLAGS += $(FIXEDFLAGS)
- $(SCRATCH_DIR)/m_constants.o: FFLAGS += $(FREEFLAGS)
- $(SCRATCH_DIR)/m_fileio.o: FFLAGS += $(FREEFLAGS)
- $(SCRATCH_DIR)/mod_xnl4v5.o: FFLAGS += $(FREEFLAGS)
- $(SCRATCH_DIR)/serv_xnl4v5.o: FFLAGS += $(FREEFLAGS)
+ $(BUILD_DIR)/ocpcre.o: FFLAGS += $(FIXEDFLAGS)
+ $(BUILD_DIR)/ocpids.o: FFLAGS += $(FIXEDFLAGS)
+ $(BUILD_DIR)/ocpmix.o: FFLAGS += $(FIXEDFLAGS)
+ $(BUILD_DIR)/swancom1.o: FFLAGS += $(FIXEDFLAGS)
+ $(BUILD_DIR)/swancom2.o: FFLAGS += $(FIXEDFLAGS)
+ $(BUILD_DIR)/swancom3.o: FFLAGS += $(FIXEDFLAGS)
+ $(BUILD_DIR)/swancom4.o: FFLAGS += $(FIXEDFLAGS)
+ $(BUILD_DIR)/swancom5.o: FFLAGS += $(FIXEDFLAGS)
+ $(BUILD_DIR)/swanmain.o: FFLAGS += $(FIXEDFLAGS)
+ $(BUILD_DIR)/swanout1.o: FFLAGS += $(FIXEDFLAGS)
+ $(BUILD_DIR)/swanout2.o: FFLAGS += $(FIXEDFLAGS)
+ $(BUILD_DIR)/swanparll.o: FFLAGS += $(FIXEDFLAGS)
+ $(BUILD_DIR)/swanpre1.o: FFLAGS += $(FIXEDFLAGS)
+ $(BUILD_DIR)/swanpre2.o: FFLAGS += $(FIXEDFLAGS)
+ $(BUILD_DIR)/swanser.o: FFLAGS += $(FIXEDFLAGS)
+ $(BUILD_DIR)/swmod1.o: FFLAGS += $(FIXEDFLAGS)
+ $(BUILD_DIR)/swmod2.o: FFLAGS += $(FIXEDFLAGS)
+ $(BUILD_DIR)/m_constants.o: FFLAGS += $(FREEFLAGS)
+ $(BUILD_DIR)/m_fileio.o: FFLAGS += $(FREEFLAGS)
+ $(BUILD_DIR)/mod_xnl4v5.o: FFLAGS += $(FREEFLAGS)
+ $(BUILD_DIR)/serv_xnl4v5.o: FFLAGS += $(FREEFLAGS)
 endif

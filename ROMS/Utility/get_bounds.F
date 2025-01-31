@@ -1,13 +1,40 @@
 #include "cppdefs.h"
-      SUBROUTINE get_bounds (ng, tile, gtype, Nghost, Itile, Jtile,     &
-     &                       LBi, UBi, LBj, UBj)
+      MODULE get_bounds_mod
 !
 !git $Id$
-!svn $Id: get_bounds.F 1151 2023-02-09 03:08:53Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2025 The ROMS Group                              !
 !    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                                              !
+!    See License_ROMS.md                                               !
+!=======================================================================
+!                                                                      !
+      USE mod_param
+      USE mod_parallel
+      USE mod_ncparam
+#ifdef NESTING
+      USE mod_nesting
+#endif
+      USE mod_scalars
+!
+      implicit none
+!
+      PUBLIC  :: get_bounds
+      PUBLIC  :: get_domain
+      PUBLIC  :: get_domain_edges
+      PUBLIC  :: get_iobounds
+      PUBLIC  :: get_tile
+      PUBLIC  :: tile_bounds_1d
+      PUBLIC  :: tile_bounds_2d
+      PRIVATE :: var_bounds
+!
+      CONTAINS
+!
+      SUBROUTINE get_bounds (ng, tile, gtype, Nghost,                   &
+     &                       my_Im, my_Jm,                              &
+     &                       my_Lm, my_Mm,                              &
+     &                       Itile, Jtile,                              &
+     &                       LBi, UBi, LBj, UBj)
+!
 !=======================================================================
 !                                                                      !
 !  This routine compute grid bounds in the I- and J-directions.        !
@@ -21,6 +48,14 @@
 !     Nghost     Number of ghost-points in the halo region:            !
 !                  Nghost = 0,  compute non-overlapping bounds.        !
 !                  Nghost > 0,  compute overlapping bounds.            !
+!     my_Im      Number of global grid points in the I-direction       !
+!                  for each nested grid, [1:Ngrids].                   !
+!     my_Jm      Number of global grid points in the J-direction       !
+!                  for each nested grid, [1:Ngrids].                   !
+!     my_Lm      Number of computational points in the I-direction     !
+!                  for each nested grid, [1:Ngrids].                   !
+!     my_Mm      Number of computational points in the J-direction.    !
+!                  for each nested grid, [1:Ngrids].                   !
 !                                                                      !
 !  On Output:                                                          !
 !                                                                      !
@@ -33,19 +68,11 @@
 !                                                                      !
 !=======================================================================
 !
-      USE mod_param
-      USE mod_parallel
-      USE mod_ncparam
-#ifdef NESTING
-      USE mod_nesting
-#endif
-      USE mod_scalars
-!
-      implicit none
-!
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, tile, gtype, Nghost
+      integer, intent(in)  :: ng, tile, gtype, Nghost
+      integer, intent(in)  :: my_Im, my_Jm
+      integer, intent(in)  :: my_Lm, my_Mm
       integer, intent(out) :: Itile, Jtile, LBi, UBi, LBj, UBj
 !
 !  Local variable declarations.
@@ -78,9 +105,9 @@
 # ifdef NESTING
         IF (RefinedGrid(ng).and.(RefineScale(ng).gt.0) ) THEN
           Imin=-NghostPoints
-          Imax=Lm(ng)+NghostPoints
+          Imax=my_Lm+NghostPoints
           Jmin=-NghostPoints
-          Jmax=Mm(ng)+NghostPoints
+          Jmax=my_Mm+NghostPoints
         ELSE
           IF (CompositeGrid(iwest,ng).or.EWperiodic(ng)) THEN
             Imin=-NghostPoints
@@ -88,9 +115,9 @@
             Imin=0
           END IF
           IF (CompositeGrid(ieast,ng).or.EWperiodic(ng)) THEN
-            Imax=Lm(ng)+NghostPoints
+            Imax=my_Lm+NghostPoints
           ELSE
-            Imax=Im(ng)+1
+            Imax=my_Im+1
           END IF
           IF (CompositeGrid(isouth,ng).or.NSperiodic(ng)) THEN
             Jmin=-NghostPoints
@@ -98,35 +125,35 @@
             Jmin=0
           END IF
           IF (CompositeGrid(inorth,ng).or.NSperiodic(ng)) THEN
-            Jmax=Mm(ng)+NghostPoints
+            Jmax=my_Mm+NghostPoints
           ELSE
-            Jmax=Jm(ng)+1
+            Jmax=my_Jm+1
           END IF
         END IF
 # else
         IF (EWperiodic(ng)) THEN
           IF (NSperiodic(ng)) THEN
             Imin=-NghostPoints
-            Imax=Im(ng)+NghostPoints
+            Imax=my_Im+NghostPoints
             Jmin=-NghostPoints
-            Jmax=Jm(ng)+NghostPoints
+            Jmax=my_Jm+NghostPoints
           ELSE
             Imin=-NghostPoints
-            Imax=Im(ng)+NghostPoints
+            Imax=my_Im+NghostPoints
             Jmin=0
-            Jmax=Jm(ng)+1
+            Jmax=my_Jm+1
           END IF
         ELSE
           IF (NSperiodic(ng)) THEN
             Imin=0
-            Imax=Im(ng)+1
+            Imax=my_Im+1
             Jmin=-NghostPoints
-            Jmax=Jm(ng)+NghostPoints
+            Jmax=my_Jm+NghostPoints
           ELSE
             Imin=0
-            Imax=Im(ng)+1
+            Imax=my_Im+1
             Jmin=0
-            Jmax=Jm(ng)+1
+            Jmax=my_Jm+1
           END IF
         END IF
 # endif
@@ -137,20 +164,21 @@
         ELSE
           Imin=0
         END IF
-        Imax=Lm(ng)+1
+        Imax=my_Lm+1
         IF ((MyType.eq.p2dvar).or.(MyType.eq.v2dvar).or.                &
      &      (MyType.eq.p3dvar).or.(MyType.eq.v3dvar)) THEN
           Jmin=1
         ELSE
           Jmin=0
         END IF
-        Jmax=Mm(ng)+1
+        Jmax=my_Mm+1
       END IF
 !
 !  Set physical, overlapping (Nghost>0) or non-overlapping (Nghost=0)
 !  grid bounds according to tile rank.
 !
       CALL get_tile (ng, tile,                                          &
+     &               my_Lm, my_Mm,                                      &
      &               Itile, Jtile,                                      &
      &               Istr, Iend, Jstr, Jend,                            &
      &               IstrM, IstrR, IstrU, IendR,                        &
@@ -200,9 +228,9 @@
 # ifdef NESTING
       IF (RefinedGrid(ng).and.(RefineScale(ng).gt.0) ) THEN
         LBi=-NghostPoints
-        UBi=Lm(ng)+NghostPoints
+        UBi=my_Lm+NghostPoints
         LBj=-NghostPoints
-        UBj=Mm(ng)+NghostPoints
+        UBj=my_Mm+NghostPoints
       ELSE
         IF (CompositeGrid(iwest,ng).or.EWperiodic(ng)) THEN
           LBi=-NghostPoints
@@ -210,9 +238,9 @@
           LBi=0
         END IF
         IF (CompositeGrid(ieast,ng).or.EWperiodic(ng)) THEN
-          UBi=Lm(ng)+NghostPoints
+          UBi=my_Lm+NghostPoints
         ELSE
-          UBi=Im(ng)+1
+          UBi=my_Im+1
         END IF
         IF (CompositeGrid(isouth,ng).or.NSperiodic(ng)) THEN
           LBj=-NghostPoints
@@ -220,9 +248,9 @@
           LBj=0
         END IF
         IF (CompositeGrid(inorth,ng).or.NSperiodic(ng)) THEN
-          UBj=Mm(ng)+NghostPoints
+          UBj=my_Mm+NghostPoints
         ELSE
-          UBj=Jm(ng)+1
+          UBj=my_Jm+1
         END IF
       END IF
 # else
@@ -230,35 +258,37 @@
       IF (EWperiodic(ng)) THEN
         IF (NSperiodic(ng)) THEN
           LBi=-NghostPoints
-          UBi=Im(ng)+NghostPoints
+          UBi=my_Im+NghostPoints
           LBj=-NghostPoints
-          UBj=Jm(ng)+NghostPoints
+          UBj=my_Jm+NghostPoints
         ELSE
           LBi=-NghostPoints
-          UBi=Im(ng)+NghostPoints
+          UBi=my_Im+NghostPoints
           LBj=0
-          UBj=Jm(ng)+1
+          UBj=my_Jm+1
         END IF
       ELSE
         IF (NSperiodic(ng)) THEN
           LBi=0
-          UBi=Im(ng)+1
+          UBi=my_Im+1
           LBj=-NghostPoints
-          UBj=Jm(ng)+NghostPoints
+          UBj=my_Jm+NghostPoints
         ELSE
           LBi=0
-          UBi=Im(ng)+1
+          UBi=my_Im+1
           LBj=0
-          UBj=Jm(ng)+1
+          UBj=my_Jm+1
         END IF
       END IF
 # endif
 #endif
-
+!
       RETURN
       END SUBROUTINE get_bounds
-
+!
       SUBROUTINE get_domain (ng, tile, gtype, Nghost,                   &
+     &                       my_Im, my_Jm,                              &
+     &                       my_Lm, my_Mm,                              &
      &                       epsilon, Lfullgrid,                        &
      &                       Xmin, Xmax, Ymin, Ymax)
 !
@@ -275,6 +305,10 @@
 !                  Nghost = 0,  compute non-overlapping coordinates.   !
 !                  Nghost > 0,  compute overlapping bounds.            !
 !     gtype      C-grid type                                           !
+!     my_Im      Number of global grid points in the I-direction.      !
+!     my_Jm      Number of global grid points in the J-direction.      !
+!     my_Lm      Number of computational points in the I-direction.    !
+!     my_Mm      Number of computational points in the J-direction.    !
 !     epsilon    Small value to add to Xmax and Ymax when the tile     !
 !                  is lying on the eastern and northern boundaries     !
 !                  of the grid. This is usefull when processing        !
@@ -291,18 +325,13 @@
 !                                                                      !
 !=======================================================================
 !
-      USE mod_param
-      USE mod_parallel
-      USE mod_ncparam
-!
-      implicit none
-!
 !  Imported variable declarations.
 !
       logical, intent(in) :: Lfullgrid
-
+!
       integer, intent(in) :: ng, tile, gtype, Nghost
-
+      integer, intent(in) :: my_Im, my_Jm, my_Lm, my_Mm
+!
       real(r8), intent(in) :: epsilon
       real(r8), intent(out) :: Xmin, Xmax, Ymin, Ymax
 !
@@ -315,7 +344,10 @@
 !  Computes tile minimum and maximum fractional-grid coordinates.
 !-----------------------------------------------------------------------
 !
-      CALL get_bounds (ng, tile, gtype, Nghost, Itile, Jtile,           &
+      CALL get_bounds (ng, tile, gtype, Nghost,                         &
+     &                 my_Im, my_Jm,                                    &
+     &                 my_Lm, my_Mm,                                    &
+     &                 Itile, Jtile,                                    &
      &                 Imin, Imax, Jmin, Jmax)
 !
 !  Include interior and boundary points.
@@ -404,12 +436,12 @@
       IF (Jtile.eq.(NtileJ(ng)-1)) THEN
         Ymax=Ymax+epsilon
       END IF
-
+!
       RETURN
-
       END SUBROUTINE get_domain
-
+!
       SUBROUTINE get_domain_edges (ng, tile,                            &
+     &                             my_Lm, my_Mm,                        &
      &                             Eastern_Edge,                        &
      &                             Western_Edge,                        &
      &                             Northern_Edge,                       &
@@ -433,6 +465,8 @@
 !                                                                      !
 !     ng         Nested grid number.                                   !
 !     tile       Domain partition.                                     !
+!     my_Lm      Number of computational points in the I-direction.    !
+!     my_Mm      Number of computational points in the J-direction.    !
 !                                                                      !
 !  On Output:                                                          !
 !                                                                      !
@@ -453,14 +487,11 @@
 !                                                                      !
 !=======================================================================
 !
-      USE mod_param
-!
-      implicit none
-!
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, tile
-
+      integer, intent(in)  :: ng, tile
+      integer, intent(in)  :: my_Lm, My_Mm
+!
       logical, intent(out) :: Eastern_Edge
       logical, intent(out) :: Western_Edge
       logical, intent(out) :: Northern_Edge
@@ -487,11 +518,13 @@
         Itile=-1
         Jtile=-1
         Istr=1
-        Iend=Lm(ng)
+        Iend=my_Lm
         Jstr=1
-        Jend=Mm(ng)
+        Jend=my_Mm
       ELSE
-        CALL tile_bounds_2d (ng, tile, Lm(ng), Mm(ng), Itile, Jtile,    &
+        CALL tile_bounds_2d (ng, tile,                                  &
+     &                       my_Lm, my_Mm,                              &
+     &                       Itile, Jtile,                              &
      &                       Istr, Iend, Jstr, Jend)
       END IF
 !
@@ -512,17 +545,16 @@
         Eastern_Edge=.TRUE.
         Southern_Edge=.TRUE.
         Northern_Edge=.TRUE.
-
+!
         SouthWest_Test=.TRUE.
         SouthEast_Test=.TRUE.
         NorthWest_Test=.TRUE.
         NorthEast_Test=.TRUE.
-
+!
         SouthWest_Corner=.TRUE.
         SouthEast_Corner=.TRUE.
         NorthWest_Corner=.TRUE.
         NorthEast_Corner=.TRUE.
-
       ELSE
 !
 !  Is the tile adjacent to the western or eastern domain
@@ -533,9 +565,9 @@
         ELSE
           Western_Edge=.FALSE.                  ! elsewhere
         END IF
-
+!
         IF (Itile.eq.(NtileI(ng)-1)) THEN
-          Eastern_Edge=.TRUE.                   ! (Iend.eq.Lm(ng))
+          Eastern_Edge=.TRUE.                   ! (Iend.eq.my_Lm))
         ELSE
           Eastern_Edge=.FALSE.                  ! elsewhere
         END IF
@@ -548,9 +580,9 @@
         ELSE
           Southern_Edge=.FALSE.                 ! elsewhere
         END IF
-
+!
         IF (Jtile.eq.(NtileJ(ng)-1)) THEN
-          Northern_Edge=.TRUE.                  ! (Jend.eq.Mm(ng))
+          Northern_Edge=.TRUE.                  ! (Jend.eq.my_Mm)
         ELSE
           Northern_Edge=.FALSE.                 ! elsewhere
         END IF
@@ -574,7 +606,7 @@
 !
         IF ((Itile.eq.(NtileI(ng)-1)).and.                              &
      &      (Jtile.eq.0)) THEN
-          SouthEast_Corner=.TRUE.               ! (Iend.eq.Lm(ng)).and.
+          SouthEast_Corner=.TRUE.               ! (Iend.eq.my_Lm).and.
           SouthEast_Test  =.TRUE.               ! (Jstr.eq.1)
         ELSE
           SouthEast_Corner=.FALSE.              ! elsewhere
@@ -590,7 +622,7 @@
         IF ((Itile.eq.0).and.                                           &
      &      (Jtile.eq.(NtileJ(ng)-1))) THEN
           NorthWest_Corner=.TRUE.               ! (Istr.eq.1).and.
-          NorthWest_Test  =.TRUE.               ! (Jend.eq.Mm(ng))
+          NorthWest_Test  =.TRUE.               ! (Jend.eq.my_Mm)
         ELSE
           NorthWest_Corner=.FALSE.              ! elsewhere
 #ifdef DISTRIBUTE
@@ -604,8 +636,8 @@
 !
         IF ((Itile.eq.(NtileI(ng)-1)).and.                              &
      &      (Jtile.eq.(NtileJ(ng)-1))) THEN
-          NorthEast_Corner=.TRUE.               ! (Iend.eq.Lm(ng)).and.
-          NorthEast_Test  =.TRUE.               ! (Jend.eq.Mm(ng))
+          NorthEast_Corner=.TRUE.               ! (Iend.eq.my_Lm).and.
+          NorthEast_Test  =.TRUE.               ! (Jend.eq.my_Mm)
         ELSE
           NorthEast_Corner=.FALSE.              ! elsewhere
 #ifdef DISTRIBUTE
@@ -615,11 +647,12 @@
 #endif
         END IF
       END IF
-
+!
       RETURN
       END SUBROUTINE get_domain_edges
-
-      SUBROUTINE get_iobounds (ng)
+!
+      SUBROUTINE get_iobounds (ng, my_Lm, my_Mm,                        &
+     &                         my_BOUNDS, my_IOBOUNDS)
 !
 !=======================================================================
 !                                                                      !
@@ -629,51 +662,56 @@
 !                                                                      !
 !  On Input:                                                           !
 !                                                                      !
-!     ng         Nested grid number.                                   !
+!     ng           Nested grid number.                                 !
+!     my_Lm        Number of computational points in the I-direction.  !
+!     my_Mm        Number of computational points in the J-direction.  !
+!     my_BOUNDS    Lower and upper bounds indices structure per domain !
+!                    partition for all grids.                          !
 !                                                                      !
-!  On Output, the horizontal lower/upper bounds and grid size for      !
-!  each variable type and nested grid number  are loaded into the      !
-!  IOBOUNDS structure which is declared in module MOD_PARAM:           !
+!  On Output:                                                          !
 !                                                                      !
-!   IOBOUNDS(ng) % ILB_psi     I-direction lower bound (PSI)           !
-!   IOBOUNDS(ng) % IUB_psi     I-direction upper bound (PSI)           !
-!   IOBOUNDS(ng) % JLB_psi     J-direction lower bound (PSI)           !
-!   IOBOUNDS(ng) % JUB_psi     J-direction upper bound (PSI)           !
+!     my_IOBOUNDS  I/O lower and upper bounds indices structure per    !
+!                    domain partition for all grids.                   !
 !                                                                      !
-!   IOBOUNDS(ng) % ILB_rho     I-direction lower bound (RHO)           !
-!   IOBOUNDS(ng) % IUB_rho     I-direction upper bound (RHO)           !
-!   IOBOUNDS(ng) % JLB_rho     J-direction lower bound (RHO)           !
-!   IOBOUNDS(ng) % JUB_rho     J-direction upper bound (RHO)           !
+!                    ILB_psi     I-direction lower bound (PSI)         !
+!                    IUB_psi     I-direction upper bound (PSI)         !
+!                    JLB_psi     J-direction lower bound (PSI)         !
+!                    JUB_psi     J-direction upper bound (PSI)         !
 !                                                                      !
-!   IOBOUNDS(ng) % ILB_u       I-direction lower bound (U)             !
-!   IOBOUNDS(ng) % IUB_u       I-direction upper bound (U)             !
-!   IOBOUNDS(ng) % JLB_u       J-direction lower bound (U)             !
-!   IOBOUNDS(ng) % JUB_u       J-direction upper bound (U)             !
+!                    ILB_rho     I-direction lower bound (RHO)         !
+!                    IUB_rho     I-direction upper bound (RHO)         !
+!                    JLB_rho     J-direction lower bound (RHO)         !
+!                    JUB_rho     J-direction upper bound (RHO)         !
 !                                                                      !
-!   IOBOUNDS(ng) % ILB_v       I-direction lower bound (V)             !
-!   IOBOUNDS(ng) % IUB_v       I-direction upper bound (V)             !
-!   IOBOUNDS(ng) % JLB_v       J-direction lower bound (V)             !
-!   IOBOUNDS(ng) % JUB_v       J-direction upper bound (V)             !
+!                    ILB_u       I-direction lower bound (U)           !
+!                    IUB_u       I-direction upper bound (U)           !
+!                    JLB_u       J-direction lower bound (U)           !
+!                    JUB_u       J-direction upper bound (U)           !
 !                                                                      !
-!   IOBOUNDS(ng) % xi_psi      Number of I-direction points (PSI)      !
-!   IOBOUNDS(ng) % xi_rho      Number of I-direction points (RHO)      !
-!   IOBOUNDS(ng) % xi_u        Number of I-direction points (U)        !
-!   IOBOUNDS(ng) % xi_v        Number of I-direction points (V)        !
+!                    ILB_v       I-direction lower bound (V)           !
+!                    IUB_v       I-direction upper bound (V)           !
+!                    JLB_v       J-direction lower bound (V)           !
+!                    JUB_v       J-direction upper bound (V)           !
 !                                                                      !
-!   IOBOUNDS(ng) % eta_psi     Number of J-direction points (PSI)      !
-!   IOBOUNDS(ng) % eta_rho     Number of J-direction points (RHO)      !
-!   IOBOUNDS(ng) % eta_u       Number of I-direction points (U)        !
-!   IOBOUNDS(ng) % eta_v       Number of I-direction points (V)        !
+!                    xi_psi      Number of I-direction points (PSI)    !
+!                    xi_rho      Number of I-direction points (RHO)    !
+!                    xi_u        Number of I-direction points (U)      !
+!                    xi_v        Number of I-direction points (V)      !
+!                                                                      !
+!                    eta_psi     Number of J-direction points (PSI)    !
+!                    eta_rho     Number of J-direction points (RHO)    !
+!                    eta_u       Number of I-direction points (U)      !
+!                    eta_v       Number of I-direction points (V)      !
 !                                                                      !
 !=======================================================================
-!
-      USE mod_param
-!
-      implicit none
 !
 !  Imported variable declarations.
 !
       integer, intent(in) :: ng
+      integer, intent(in) :: my_Lm, my_Mm
+!
+      TYPE (T_BOUNDS),   intent(in)  :: my_BOUNDS(1:Ngrids)
+      TYPE (T_IOBOUNDS), intent(out) :: my_IOBOUNDS(1:Ngrids)
 !
 !-----------------------------------------------------------------------
 !  Set IO lower/upper bounds and grid size for each C-grid type
@@ -684,59 +722,60 @@
 !  including interior and boundary points, for all variable types
 !  are:
 !
-!    PSI-type      [xi_psi, eta_psi] = [1:Lm(ng)+1, 1:Mm(ng)+1]
-!    RHO-type      [xi_rho, eta_rho] = [0:Lm(ng)+1, 0:Mm(ng)+1]
-!    U-type        [xi_u,   eta_u  ] = [1:Lm(ng)+1, 0:Mm(ng)+1]
-!    V-type        [xi_v,   eta_v  ] = [0:Lm(ng)+1, 1:Mm(ng)+1]
+!    PSI-type      [xi_psi, eta_psi] = [1:my_Lm+1, 1:my_Mm+1]
+!    RHO-type      [xi_rho, eta_rho] = [0:my_Lm+1, 0:my_Mm+1]
+!    U-type        [xi_u,   eta_u  ] = [1:my_Lm+1, 0:my_Mm+1]
+!    V-type        [xi_v,   eta_v  ] = [0:my_Lm+1, 1:my_Mm+1]
 !
-      IOBOUNDS(ng) % ILB_psi = 1
-      IOBOUNDS(ng) % IUB_psi = Lm(ng)+1
-      IOBOUNDS(ng) % JLB_psi = 1
-      IOBOUNDS(ng) % JUB_psi = Mm(ng)+1
+      my_IOBOUNDS(ng) % ILB_psi = 1
+      my_IOBOUNDS(ng) % IUB_psi = my_Lm+1
+      my_IOBOUNDS(ng) % JLB_psi = 1
+      my_IOBOUNDS(ng) % JUB_psi = my_Mm+1
 !
-      IOBOUNDS(ng) % ILB_rho = 0
-      IOBOUNDS(ng) % IUB_rho = Lm(ng)+1
-      IOBOUNDS(ng) % JLB_rho = 0
-      IOBOUNDS(ng) % JUB_rho = Mm(ng)+1
+      my_IOBOUNDS(ng) % ILB_rho = 0
+      my_IOBOUNDS(ng) % IUB_rho = my_Lm+1
+      my_IOBOUNDS(ng) % JLB_rho = 0
+      my_IOBOUNDS(ng) % JUB_rho = my_Mm+1
 !
-      IOBOUNDS(ng) % ILB_u = 1
-      IOBOUNDS(ng) % IUB_u = Lm(ng)+1
-      IOBOUNDS(ng) % JLB_u = 0
-      IOBOUNDS(ng) % JUB_u = Mm(ng)+1
+      my_IOBOUNDS(ng) % ILB_u = 1
+      my_IOBOUNDS(ng) % IUB_u = my_Lm+1
+      my_IOBOUNDS(ng) % JLB_u = 0
+      my_IOBOUNDS(ng) % JUB_u = my_Mm+1
 !
-      IOBOUNDS(ng) % ILB_v = 0
-      IOBOUNDS(ng) % IUB_v = Lm(ng)+1
-      IOBOUNDS(ng) % JLB_v = 1
-      IOBOUNDS(ng) % JUB_v = Mm(ng)+1
+      my_IOBOUNDS(ng) % ILB_v = 0
+      my_IOBOUNDS(ng) % IUB_v = my_Lm+1
+      my_IOBOUNDS(ng) % JLB_v = 1
+      my_IOBOUNDS(ng) % JUB_v = my_Mm+1
 !
 !  Set IO NetCDF files horizontal dimension size. Recall that NetCDF
 !  does not support arrays with zero index as an array element.
 !
-      IOBOUNDS(ng) % IorJ    = BOUNDS(ng) % UBij -                      &
-     &                         BOUNDS(ng) % LBij + 1
+      my_IOBOUNDS(ng) % IorJ    = my_BOUNDS(ng) % UBij -                &
+     &                            my_BOUNDS(ng) % LBij + 1
 !
-      IOBOUNDS(ng) % xi_psi  = IOBOUNDS(ng) % IUB_psi -                 &
-     &                         IOBOUNDS(ng) % ILB_psi + 1
-      IOBOUNDS(ng) % xi_rho  = IOBOUNDS(ng) % IUB_rho -                 &
-     &                         IOBOUNDS(ng) % ILB_rho + 1
-      IOBOUNDS(ng) % xi_u    = IOBOUNDS(ng) % IUB_u   -                 &
-     &                         IOBOUNDS(ng) % ILB_u   + 1
-      IOBOUNDS(ng) % xi_v    = IOBOUNDS(ng) % IUB_v   -                 &
-     &                         IOBOUNDS(ng) % ILB_v   + 1
+      my_IOBOUNDS(ng) % xi_psi  = my_IOBOUNDS(ng) % IUB_psi -           &
+     &                            my_IOBOUNDS(ng) % ILB_psi + 1
+      my_IOBOUNDS(ng) % xi_rho  = my_IOBOUNDS(ng) % IUB_rho -           &
+     &                            my_IOBOUNDS(ng) % ILB_rho + 1
+      my_IOBOUNDS(ng) % xi_u    = my_IOBOUNDS(ng) % IUB_u   -           &
+     &                            my_IOBOUNDS(ng) % ILB_u   + 1
+      my_IOBOUNDS(ng) % xi_v    = my_IOBOUNDS(ng) % IUB_v   -           &
+     &                            my_IOBOUNDS(ng) % ILB_v   + 1
 !
-      IOBOUNDS(ng) % eta_psi = IOBOUNDS(ng) % JUB_psi -                 &
-     &                         IOBOUNDS(ng) % JLB_psi + 1
-      IOBOUNDS(ng) % eta_rho = IOBOUNDS(ng) % JUB_rho -                 &
-     &                         IOBOUNDS(ng) % JLB_rho + 1
-      IOBOUNDS(ng) % eta_u   = IOBOUNDS(ng) % JUB_u   -                 &
-     &                         IOBOUNDS(ng) % JLB_u   + 1
-      IOBOUNDS(ng) % eta_v   = IOBOUNDS(ng) % JUB_v   -                 &
-     &                         IOBOUNDS(ng) % JLB_v   + 1
-
+      my_IOBOUNDS(ng) % eta_psi = my_IOBOUNDS(ng) % JUB_psi -           &
+     &                            my_IOBOUNDS(ng) % JLB_psi + 1
+      my_IOBOUNDS(ng) % eta_rho = my_IOBOUNDS(ng) % JUB_rho -           &
+     &                            my_IOBOUNDS(ng) % JLB_rho + 1
+      my_IOBOUNDS(ng) % eta_u   = my_IOBOUNDS(ng) % JUB_u   -           &
+     &                            my_IOBOUNDS(ng) % JLB_u   + 1
+      my_IOBOUNDS(ng) % eta_v   = my_IOBOUNDS(ng) % JUB_v   -           &
+     &                            my_IOBOUNDS(ng) % JLB_v   + 1
+!
       RETURN
       END SUBROUTINE get_iobounds
-
+!
       SUBROUTINE get_tile (ng, tile,                                    &
+     &                     my_Lm, my_Mm,                                &
      &                     Itile, Jtile,                                &
      &                     Istr, Iend, Jstr, Jend,                      &
      &                     IstrM, IstrR, IstrU, IendR,                  &
@@ -757,6 +796,8 @@
 !                                                                      !
 !     ng         Nested grid number (integer).                         !
 !     tile       Sub-domain partition.                                 !
+!     my_Lm      Number of computational points in the I-direction.    !
+!     my_Mm      Number of computational points in the J-direction.    !
 !                                                                      !
 !  On Output:                                                          !
 !                                                                      !
@@ -814,13 +855,10 @@
 !                                                                      !
 !======================================================================!
 !
-      USE mod_param
-!
-      implicit none
-!
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, tile
+      integer, intent(in)  :: ng, tile
+      integer, intent(in)  :: my_Lm, my_Mm
       integer, intent(out) :: Itile, Jtile
       integer, intent(out) :: Iend, Istr, Jend, Jstr
       integer, intent(out) :: IstrM, IstrR, IstrU, IendR
@@ -848,20 +886,24 @@
         Itile=-1
         Jtile=-1
         my_Istr=1
-        my_Iend=Lm(ng)
+        my_Iend=my_Lm
         my_Jstr=1
-        my_Jend=Mm(ng)
+        my_Jend=my_Mm
 !
 ! Tiled grids bounds.
 !
       ELSE
-        CALL tile_bounds_2d (ng, tile, Lm(ng), Mm(ng), Itile, Jtile,    &
+        CALL tile_bounds_2d (ng, tile,                                  &
+     &                       my_Lm, my_Mm,                              &
+     &                       Itile, Jtile,                              &
      &                       my_Istr, my_Iend, my_Jstr, my_Jend)
       END IF
 !
 !  Compute C-staggered variables bounds from tile bounds.
 !
-      CALL var_bounds (ng, tile, my_Istr, my_Iend, my_Jstr, my_Jend,    &
+      CALL var_bounds (ng, tile,                                        &
+     &                 my_Lm, my_Mm,                                    &
+     &                 my_Istr, my_Iend, my_Jstr, my_Jend,              &
      &                 Istr, Iend, Jstr, Jend,                          &
      &                 IstrM, IstrR, IstrU, IendR,                      &
      &                 JstrM, JstrR, JstrV, JendR,                      &
@@ -871,10 +913,10 @@
      &                 Iendp1, Iendp2, Iendp2i, Iendp3,                 &
      &                 Jstrm3, Jstrm2, Jstrm1, JstrVm2, JstrVm1,        &
      &                 Jendp1, Jendp2, Jendp2i, Jendp3)
-
+!
       RETURN
       END SUBROUTINE get_tile
-
+!
       SUBROUTINE tile_bounds_1d (ng, tile, Imax, Istr, Iend)
 !
 !=======================================================================
@@ -897,10 +939,6 @@
 !                                                                      !
 !======================================================================!
 !
-      USE mod_param
-!
-      implicit none
-!
 !  Imported variable declarations.
 !
       integer, intent(in) :: ng, tile, Imax
@@ -917,7 +955,7 @@
       Nnodes=NtileI(ng)*NtileJ(ng)
       ChunkSize=(Imax+Nnodes-1)/Nnodes
       Margin=(Nnodes*ChunkSize-Imax)/2
-
+!
       IF (Imax.ge.Nnodes) THEN
         Istr=1+tile*ChunkSize-Margin
         Iend=Istr+ChunkSize-1
@@ -927,10 +965,10 @@
         Istr=1
         Iend=Imax
       END IF
-
+!
       RETURN
       END SUBROUTINE tile_bounds_1d
-
+!
       SUBROUTINE tile_bounds_2d (ng, tile, Imax, Jmax, Itile, Jtile,    &
      &                           Istr, Iend, Jstr, Jend)
 !
@@ -963,10 +1001,6 @@
 !     Jend       Ending   tile index in the J-direction                !
 !                                                                      !
 !======================================================================!
-!
-      USE mod_param
-!
-      implicit none
 !
 !  Imported variable declarations.
 !
@@ -1003,11 +1037,12 @@
       Jend=Jstr+ChunkSizeJ-1
       Jstr=MAX(Jstr,1)
       Jend=MIN(Jend,Jmax)
-
+!
       RETURN
       END SUBROUTINE tile_bounds_2d
-
+!
       SUBROUTINE var_bounds (ng, tile,                                  &
+     &                       my_Lm, my_Mm,                              &
      &                       my_Istr, my_Iend, my_Jstr, my_Jend,        &
      &                       Istr,  Iend,  Jstr,  Jend,                 &
      &                       IstrM, IstrR, IstrU, IendR,                &
@@ -1029,6 +1064,8 @@
 !                                                                      !
 !     ng         Nested grid number                                    !
 !     tile       Domain partition                                      !
+!     my_Lm      Number of computational points in the I-direction.    !
+!     my_Mm      Number of computational points in the J-direction.    !
 !     my_Istr    Physical grid starting tile index in the I-direction  !
 !     my_Iend    Physical grid ending   tile index in the I-direction  !
 !     my_Jstr    Physical grid starting tile index in the J-direction  !
@@ -1087,17 +1124,10 @@
 !                                                                      !
 !======================================================================!
 !
-      USE mod_param
-#ifdef NESTING
-      USE mod_nesting
-#endif
-      USE mod_scalars
-!
-      implicit none
-!
 !  Imported variable declarations.
 !
       integer, intent(in) :: ng, tile
+      integer, intent(in) :: my_Lm, my_Mm
       integer, intent(in) :: my_Istr, my_Iend, my_Jstr, my_Jend
 !
       integer, intent(out) :: Iend,  Istr,  Jend,  Jstr
@@ -1525,7 +1555,7 @@
         IendB=my_Iend
       END IF
 !
-!  Special case, Iendp1: used when MIN(Iend+1,Lm(ng)) is needed.
+!  Special case, Iendp1: used when MIN(Iend+1,my_Lm) is needed.
 !
       IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
         IF (EWperiodic(ng)) THEN
@@ -1537,13 +1567,13 @@
           Iendp1=my_Iend+1
 #endif
         ELSE
-          Iendp1=MIN(my_Iend+1,Lm(ng))
+          Iendp1=MIN(my_Iend+1,my_Lm)
         END IF
       ELSE
         Iendp1=my_Iend+1
       END IF
 !
-!  Special case, Iendp2i: used when MIN(Iend+2,Lm(ng)) is needed.
+!  Special case, Iendp2i: used when MIN(Iend+2,my_Lm) is needed.
 !
       IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
         IF (EWperiodic(ng)) THEN
@@ -1555,13 +1585,13 @@
           Iendp2i=my_Iend+2
 #endif
         ELSE
-          Iendp2i=MIN(my_Iend+2,Lm(ng))
+          Iendp2i=MIN(my_Iend+2,my_Lm)
         END IF
       ELSE
         Iendp2i=my_Iend+2
       END IF
 !
-!  Special case, Iendp2: used when MIN(Iend+2,Lm(ng)+1) is needed.
+!  Special case, Iendp2: used when MIN(Iend+2,my_Lm+1) is needed.
 !
       IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
         IF (EWperiodic(ng)) THEN
@@ -1573,13 +1603,13 @@
           Iendp2=my_Iend+2
 #endif
         ELSE
-          Iendp2=MIN(my_Iend+2,Lm(ng)+1)
+          Iendp2=MIN(my_Iend+2,my_Lm+1)
         END IF
       ELSE
         Iendp2=my_Iend+2
       END IF
 !
-!  Special case, Iendp3: used when MIN(Iend+3,Lm(ng)+1) is needed.
+!  Special case, Iendp3: used when MIN(Iend+3,my_Lm+1) is needed.
 !
       IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
         IF (EWperiodic(ng)) THEN
@@ -1591,7 +1621,7 @@
           Iendp3=my_Iend+3
 #endif
         ELSE
-          Iendp3=MIN(my_Iend+3,Lm(ng)+1)
+          Iendp3=MIN(my_Iend+3,my_Lm+1)
         END IF
       ELSE
         Iendp3=my_Iend+3
@@ -1778,7 +1808,7 @@
         JendB=my_Jend
       END IF
 !
-!  Special case, Jendp1: used when MIN(Jend+1,Mm(ng)) is needed.
+!  Special case, Jendp1: used when MIN(Jend+1,my_Mm) is needed.
 !
       IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
         IF (NSperiodic(ng)) THEN
@@ -1790,13 +1820,13 @@
           Jendp1=my_Jend+1
 #endif
         ELSE
-          Jendp1=MIN(my_Jend+1,Mm(ng))
+          Jendp1=MIN(my_Jend+1,my_Mm)
         END IF
       ELSE
         Jendp1=my_Jend+1
       END IF
 !
-!  Special case, Jendp2i: used when MIN(Jend+2,Mm(ng)) is needed.
+!  Special case, Jendp2i: used when MIN(Jend+2,my_Mm) is needed.
 !
       IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
         IF (NSperiodic(ng)) THEN
@@ -1808,13 +1838,13 @@
           Jendp2i=my_Jend+2
 #endif
         ELSE
-          Jendp2i=MIN(my_Jend+2,Mm(ng))
+          Jendp2i=MIN(my_Jend+2,my_Mm)
         END IF
       ELSE
         Jendp2i=my_Jend+2
       END IF
 !
-!  Special case, Jendp2: used when MIN(Jend+2,Mm(ng)+1) is needed.
+!  Special case, Jendp2: used when MIN(Jend+2,my_Mm+1) is needed.
 !
       IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
         IF (NSperiodic(ng)) THEN
@@ -1826,13 +1856,13 @@
           Jendp2=my_Jend+2
 #endif
         ELSE
-          Jendp2=MIN(my_Jend+2,Mm(ng)+1)
+          Jendp2=MIN(my_Jend+2,my_Mm+1)
         END IF
       ELSE
         Jendp2=my_Jend+2
       END IF
 !
-!  Special case, Jendp3: used when MIN(Jend+3,Mm(ng)+1) is needed.
+!  Special case, Jendp3: used when MIN(Jend+3,my_Mm+1) is needed.
 !
       IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
         IF (NSperiodic(ng)) THEN
@@ -1844,11 +1874,13 @@
           Jendp3=my_Jend+3
 #endif
         ELSE
-          Jendp3=MIN(my_Jend+3,Mm(ng)+1)
+          Jendp3=MIN(my_Jend+3,my_Mm+1)
         END IF
       ELSE
         Jendp3=my_Jend+3
       END IF
-
+!
       RETURN
       END SUBROUTINE var_bounds
+!
+      END MODULE get_bounds_mod

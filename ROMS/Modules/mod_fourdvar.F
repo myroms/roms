@@ -4,11 +4,10 @@
 #if defined FOUR_DVAR || defined VERIFICATION
 !
 !git $Id$
-!svn $Id: mod_fourdvar.F 1165 2023-04-10 01:59:07Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2025 The ROMS Group                              !
 !    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                                              !
+!    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
 !  Variational data assimilation variables:                            !
@@ -155,19 +154,19 @@
           integer , allocatable :: ObsCount(:)
           integer , allocatable :: ObsReject(:)
 #  ifdef FOUR_DVAR
-          real(r8), allocatable :: BackCost(:)
-          real(r8), allocatable :: Cost0(:)
-          real(r8), allocatable :: CostFun(:)
-          real(r8), allocatable :: CostFunOld(:)
-          real(r8), allocatable :: CostNorm(:)
-          real(r8), allocatable :: ObsCost(:)
-          real(r8), allocatable :: DataPenalty(:)
+          real(dp), allocatable :: BackCost(:)
+          real(dp), allocatable :: Cost0(:)
+          real(dp), allocatable :: CostFun(:)
+          real(dp), allocatable :: CostFunOld(:)
+          real(dp), allocatable :: CostNorm(:)
+          real(dp), allocatable :: ObsCost(:)
+          real(dp), allocatable :: DataPenalty(:)
 #   if defined DATALESS_LOOPS    || defined RBL4DVAR  || \
        defined SENSITIVITY_4DVAR || defined SP4DVAR   || \
        defined TL_RBL4DVAR
-          real(r8), allocatable :: NLPenalty(:)
+          real(dp), allocatable :: NLPenalty(:)
 #   endif
-          real(r8), allocatable :: NLobsCost(:)
+          real(dp), allocatable :: NLobsCost(:)
 
 #   if defined BALANCE_OPERATOR && defined ZETA_ELLIPTIC
           real(r8), allocatable :: bc_ak(:)
@@ -199,12 +198,12 @@
           real(r8), allocatable :: SurveyTime(:)
 
 #  ifdef RPCG
-          real(r8), allocatable :: cg_pxout(:)
-          real(r8), allocatable :: cg_pxsave(:)
-          real(r8), allocatable :: cg_pxsum(:)
-          real(r8), allocatable :: cg_Dpxsum(:)
-          real(r8), allocatable :: tl_cg_pxsave(:)
-          real(r8), allocatable :: ad_cg_pxsave(:)
+          real(dp), allocatable :: cg_pxout(:)
+          real(dp), allocatable :: cg_pxsave(:)
+          real(dp), allocatable :: cg_pxsum(:)
+          real(dp), allocatable :: cg_Dpxsum(:)
+          real(dp), allocatable :: tl_cg_pxsave(:)
+          real(dp), allocatable :: ad_cg_pxsave(:)
 #  endif
 
         END TYPE T_FOURDVAR
@@ -647,75 +646,75 @@
 !
 #  if defined SENSITIVITY_4DVAR || defined TL_RBL4DVAR  || \
       defined TL_R4DVAR
-        real(r8), allocatable :: ad_cg_beta(:)
+        real(dp), allocatable :: ad_cg_beta(:)
 
-        real(r8), allocatable :: tl_cg_beta(:)
+        real(dp), allocatable :: tl_cg_beta(:)
 #  endif
-        real(r8), allocatable :: cg_alpha(:,:)
-        real(r8), allocatable :: cg_beta(:,:)
-        real(r8), allocatable :: cg_tau(:,:)
+        real(dp), allocatable :: cg_alpha(:,:)
+        real(dp), allocatable :: cg_beta(:,:)
+        real(dp), allocatable :: cg_tau(:,:)
 !
 !  Ritz values maximum error limit.
 !
-        real(r8) :: RitzMaxErr
+        real(dp) :: RitzMaxErr
 !
 !  Converged Ritz eigenvalues used to approximate Hessian matrix during
 !  preconditioning.
 !
-        real(r8), allocatable :: Ritz(:)
+        real(dp), allocatable :: Ritz(:)
 !
 !  Orthogonal eigenvectors of Lanczos recurrence term Q(k)T(k).
 !
 #  ifdef WEAK_CONSTRAINT
-        real(r8), allocatable :: cg_zv(:,:,:)
+        real(dp), allocatable :: cg_zv(:,:,:)
 #  else
-        real(r8), allocatable :: cg_zv(:,:)
+        real(dp), allocatable :: cg_zv(:,:)
 #  endif
 !
 !  Lanczos algorithm coefficients.
 !
 #  if defined SENSITIVITY_4DVAR || defined TL_RBL4DVAR  || \
       defined TL_R4DVAR
-        real(r8), allocatable :: ad_cg_delta(:)
-        real(r8), allocatable :: ad_cg_QG(:)
-        real(r8), allocatable :: ad_cg_Gnorm(:)
+        real(dp), allocatable :: ad_cg_delta(:)
+        real(dp), allocatable :: ad_cg_QG(:)
+        real(dp), allocatable :: ad_cg_Gnorm(:)
 
-        real(r8), allocatable :: tl_cg_delta(:)
-        real(r8), allocatable :: tl_cg_QG(:)
+        real(dp), allocatable :: tl_cg_delta(:)
+        real(dp), allocatable :: tl_cg_QG(:)
 #   ifdef RPCG
-        real(r8), allocatable :: tl_cg_Gnorm_v(:)
-        real(r8), allocatable :: ad_cg_Gnorm_v(:)
+        real(dp), allocatable :: tl_cg_Gnorm_v(:)
+        real(dp), allocatable :: ad_cg_Gnorm_v(:)
 #   else
-        real(r8), allocatable :: tl_cg_Gnorm(:)
+        real(dp), allocatable :: tl_cg_Gnorm(:)
 #   endif
 #  endif
-        real(r8), allocatable :: cg_delta(:,:)
-        real(r8), allocatable :: cg_gamma(:,:)
+        real(dp), allocatable :: cg_delta(:,:)
+        real(dp), allocatable :: cg_gamma(:,:)
 !
 !  Initial gradient vector normalization factor.
 !
-        real(r8), allocatable :: cg_Gnorm(:)
-        real(r8), allocatable :: cg_Gnorm_v(:)
-        real(r8), allocatable :: cg_Gnorm_y(:)
+        real(dp), allocatable :: cg_Gnorm(:)
+        real(dp), allocatable :: cg_Gnorm_v(:)
+        real(dp), allocatable :: cg_Gnorm_y(:)
 !
 !  Reduction in the gradient norm; excess cost function.
 !
-        real(r8), allocatable :: cg_Greduc(:,:)
+        real(dp), allocatable :: cg_Greduc(:,:)
 !
 !  Lanczos vector normalization factor.
 !
-        real(r8), allocatable :: cg_QG(:,:)
+        real(dp), allocatable :: cg_QG(:,:)
 !
 !  Lanczos recurrence symmetric, tridiagonal matrix, T(k).
 !
-        real(r8), allocatable :: cg_Tmatrix(:,:)
-        real(r8), allocatable :: cg_zu(:,:)
+        real(dp), allocatable :: cg_Tmatrix(:,:)
+        real(dp), allocatable :: cg_zu(:,:)
 !
 !  Eigenvalues of the Lanczos recurrence term Q(k)T(k)
 !  algorithm and their relative error (accuaracy).
 !
-        real(r8), allocatable :: cg_Ritz(:,:)
-        real(r8), allocatable :: cg_RitzErr(:,:)
+        real(dp), allocatable :: cg_Ritz(:,:)
+        real(dp), allocatable :: cg_RitzErr(:,:)
 # endif
 # if defined BALANCE_OPERATOR
 !
@@ -1155,10 +1154,6 @@
 !  with observation dimension parameters Ndatum, Nsurvey, and Mobs.    !
 !                                                                      !
 !=======================================================================
-!
-!  Local variable declarations.
-!
-      integer :: ng
 
 # ifdef OBSERVATIONS
 !
@@ -1166,45 +1161,12 @@
 !  Deallocate structure variables for each nested grids.
 !-----------------------------------------------------------------------
 !
-      DO ng=1,Ngrids
-        IF (allocated(FOURDVAR(ng) % NobsSurvey)) THEN
-          deallocate (FOURDVAR(ng) % NobsSurvey)
-        END IF
-
-        IF (allocated(FOURDVAR(ng) % SurveyTime)) THEN
-          deallocate (FOURDVAR(ng) % SurveyTime)
-        END IF
-
-#  ifdef RPCG
-        IF (allocated(FOURDVAR(ng) % cg_pxsave)) THEN
-          deallocate (FOURDVAR(ng) % cg_pxsave)
-        END IF
-
-        IF (allocated(FOURDVAR(ng) % cg_pxout)) THEN
-          deallocate (FOURDVAR(ng) % cg_pxout)
-        END IF
-
-        IF (allocated(FOURDVAR(ng) % cg_pxsum)) THEN
-          deallocate (FOURDVAR(ng) % cg_pxsum)
-        END IF
-
-        IF (allocated(FOURDVAR(ng) % cg_Dpxsum)) THEN
-          deallocate (FOURDVAR(ng) % cg_Dpxsum)
-        END IF
-
-        IF (allocated(FOURDVAR(ng) % tl_cg_pxsave)) THEN
-          deallocate (FOURDVAR(ng) % tl_cg_pxsave)
-        END IF
-
-        IF (allocated(FOURDVAR(ng) % ad_cg_pxsave)) THEN
-          deallocate (FOURDVAR(ng) % ad_cg_pxsave)
-        END IF
-
-#  endif
-      END DO
+      IF (allocated(FOURDVAR)) THEN
+        deallocate (FOURDVAR)
+      END IF
 !
 !-----------------------------------------------------------------------
-!  deallocate and initialize model and observation variables.
+!  Deallocate model and observation variables.
 !-----------------------------------------------------------------------
 !
 #  ifdef CURVGRID
@@ -1694,6 +1656,14 @@
 
         size2d=REAL((UBi-LBi+1)*(UBj-LBj+1),r8)
 #  endif
+!
+!  Number of state variables associated with data assimilation.
+!
+!    zeta, ubar, vbar, Uvel, Vvel, Tvar(1:MT)
+!    Ustr, Vstr, Tsur(1:MT)
+!
+!  The rest are ignored.
+!
 #  ifdef SOLVE3D
         NstateVar(ng)=5+NT(ng)
 #   ifdef ADJUST_STFLUX
@@ -1705,6 +1675,7 @@
 #  ifdef ADJUST_WSTRESS
         NstateVar(ng)=NstateVar(ng)+2
 #  endif
+
         NobsVar(ng)=NstateVar(ng)+NextraObs
 
         IF (.not.allocated(FOURDVAR(ng) % NobsSurvey)) THEN

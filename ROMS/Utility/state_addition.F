@@ -2,11 +2,10 @@
       MODULE state_addition_mod
 !
 !git $Id$
-!svn $Id: state_addition.F 1151 2023-02-09 03:08:53Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2025 The ROMS Group                              !
 !    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                                              !
+!    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
 !  This routine computes the following model state addition:           !
@@ -178,14 +177,14 @@
       real(r8), intent(in) :: s2_u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(in) :: s2_v(LBi:UBi,LBj:UBj,N(ng),2)
 #  if defined WEAK_CONSTRAINT && defined TIME_CONV
-      real(r8), intent(in) :: s2_ubar(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(in) :: s2_vbar(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(in) :: s2_ubar(LBi:UBi,LBj:UBj,:)
+      real(r8), intent(in) :: s2_vbar(LBi:UBi,LBj:UBj,:)
 #  endif
 # else
-      real(r8), intent(in) :: s2_ubar(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(in) :: s2_vbar(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(in) :: s2_ubar(LBi:UBi,LBj:UBj,:)
+      real(r8), intent(in) :: s2_vbar(LBi:UBi,LBj:UBj,:)
 # endif
-      real(r8), intent(in) :: s2_zeta(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(in) :: s2_zeta(LBi:UBi,LBj:UBj,:)
 
 # ifdef ADJUST_BOUNDARY
 #  ifdef SOLVE3D
@@ -211,14 +210,14 @@
       real(r8), intent(inout) :: s1_u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(inout) :: s1_v(LBi:UBi,LBj:UBj,N(ng),2)
 #  if defined WEAK_CONSTRAINT && defined TIME_CONV
-      real(r8), intent(inout) :: s1_ubar(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(inout) :: s1_vbar(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(inout) :: s1_ubar(LBi:UBi,LBj:UBj,:)
+      real(r8), intent(inout) :: s1_vbar(LBi:UBi,LBj:UBj,:)
 #  endif
 # else
-      real(r8), intent(inout) :: s1_ubar(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(inout) :: s1_vbar(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(inout) :: s1_ubar(LBi:UBi,LBj:UBj,:)
+      real(r8), intent(inout) :: s1_vbar(LBi:UBi,LBj:UBj,:)
 # endif
-      real(r8), intent(inout) :: s1_zeta(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(inout) :: s1_zeta(LBi:UBi,LBj:UBj,:)
 #endif
 !
 !  Local variable declarations.

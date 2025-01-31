@@ -2,7 +2,6 @@
       MODULE ad_step2d_mod
 !
 !git $Id$
-!svn $Id: ad_step2d_LF_AM3.h 1158 2023-02-23 19:58:43Z arango $
 !=======================================================================
 !                                                                      !
 !  Adjoint shallow-water primitive equations predictor (Leap-frog)     !
@@ -16,9 +15,11 @@
       PUBLIC  :: ad_step2d
 !
       CONTAINS
-
+!
+!***********************************************************************
       SUBROUTINE ad_step2d (ng, tile)
-
+!***********************************************************************
+!
       USE mod_param
       USE mod_ncparam
 #ifdef SOLVE3D
@@ -29,11 +30,12 @@
 #endif
       USE mod_forces
       USE mod_grid
-#if defined UV_VIS2 || defined UV_VIS4 || defined NEARSHORE_MELLOR
+#if defined UV_VIS2 || defined UV_VIS4 || defined WEC_MELLOR
       USE mod_mixing
 #endif
       USE mod_ocean
-#if defined SEDIMENT && defined SED_MORPH && defined SOLVE3D
+#if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET && \
+    defined SOLVE3D
       USE mod_sedbed
 #endif
       USE mod_stepping
@@ -93,7 +95,10 @@
      &                     MIXING(ng) % visc4_p,   MIXING(ng) % visc4_r,&
 # endif
 #endif
-#ifdef NEARSHORE_MELLOR
+#if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
+     &                     SEDBED(ng) % ad_bed_thick,                   &
+#endif
+#ifdef WEC_MELLOR
      &                     MIXING(ng) % ad_rustr2d,                     &
      &                     MIXING(ng) % ad_rvstr2d,                     &
      &                     OCEAN(ng) % ad_rulag2d,                      &
@@ -116,7 +121,7 @@
      &                     FORCES(ng) % Pair,                           &
 # endif
 #else
-# ifdef VAR_RHO_2D
+# ifdef VAR_RHO_2D_NOT_YET
      &                     COUPLING(ng) % rhoA,                         &
      &                     COUPLING(ng) % ad_rhoA,                      &
      &                     COUPLING(ng) % rhoS,                         &
@@ -195,7 +200,10 @@
      &                           visc4_p, visc4_r,                      &
 # endif
 #endif
-#ifdef NEARSHORE_MELLOR
+#if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
+     &                           ad_bed_thick,                          &
+#endif
+#ifdef WEC_MELLOR
      &                           ad_rustr2d, ad_rvstr2d,                &
      &                           ad_rulag2d, ad_rvlag2d,                &
      &                           ubar_stokes, ad_ubar_stokes,           &
@@ -211,7 +219,7 @@
      &                           Pair,                                  &
 # endif
 #else
-# ifdef VAR_RHO_2D
+# ifdef VAR_RHO_2D_NOT_YET
      &                           rhoA, ad_rhoA, rhoS, ad_rhoS,          &
 # endif
      &                           ad_DU_avg1, ad_DU_avg2,                &
@@ -245,7 +253,7 @@
       USE mod_ncparam
       USE mod_scalars
 #if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
-      USE mod_sediment
+      USE mod_sedbed
 #endif
       USE mod_sources
 !
@@ -312,7 +320,7 @@
       real(r8), intent(in) :: visc4_r(LBi:,LBj:)
 #  endif
 # endif
-# ifdef NEARSHORE_MELLOR
+# ifdef WEC_MELLOR
       real(r8), intent(in) :: ubar_stokes(LBi:,LBj:)
       real(r8), intent(in) :: vbar_stokes(LBi:,LBj:)
 # endif
@@ -329,7 +337,7 @@
       real(r8), intent(in) :: Pair(LBi:,LBj:)
 # endif
 # ifdef SOLVE3D
-#  if defined VAR_RHO_2D
+#  if defined VAR_RHO_2D_NOT_YET
       real(r8), intent(in) :: rhoA(LBi:,LBj:)
       real(r8), intent(in) :: rhoS(LBi:,LBj:)
 #  endif
@@ -340,7 +348,7 @@
       real(r8), intent(inout) :: ad_DV_avg1(LBi:,LBj:)
       real(r8), intent(inout) :: ad_DV_avg2(LBi:,LBj:)
       real(r8), intent(inout) :: ad_Zt_avg1(LBi:,LBj:)
-#  if defined VAR_RHO_2D
+#  if defined VAR_RHO_2D_NOT_YET
       real(r8), intent(inout) :: ad_rhoA(LBi:,LBj:)
       real(r8), intent(inout) :: ad_rhoS(LBi:,LBj:)
 #  endif
@@ -354,10 +362,13 @@
       real(r8), intent(inout) :: ad_bustr(LBi:,LBj:)
       real(r8), intent(inout) :: ad_bvstr(LBi:,LBj:)
 # endif
+# if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
+      real(r8), intent(inout) :: ad_bed_thick(LBi:,LBj:,:)
+# endif
 # if defined TIDE_GENERATING_FORCES && !defined SOLVE3D
       real(r8), intent(inout) :: ad_eq_tide(LBi:,LBj:)
 # endif
-# ifdef NEARSHORE_MELLOR
+# ifdef WEC_MELLOR
       real(r8), intent(inout) :: ad_rustr2d(LBi:,LBj:)
       real(r8), intent(inout) :: ad_rvstr2d(LBi:,LBj:)
       real(r8), intent(inout) :: ad_rulag2d(LBi:,LBj:)
@@ -443,24 +454,27 @@
       real(r8), intent(in) :: visc4_r(LBi:UBi,LBj:UBj)
 #  endif
 # endif
-# ifdef NEARSHORE_MELLOR
-      real(r8), intent(in) :: ubar_stokes(LBi:UBi,LBj:UBj)
-      real(r8), intent(in) :: vbar_stokes(LBi:UBi,LBj:UBj)
+# if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
+      real(r8), intent(inout) :: ad_bed_thick(LBi:UBi,LBj:UBj,3)
 # endif
 # if defined TIDE_GENERATING_FORCES && !defined SOLVE3D
       real(r8), intent(in) :: eq_tide(LBi:UBi,LBj:UBj)
 # endif
+# ifdef WEC_MELLOR
+      real(r8), intent(in) :: ubar_stokes(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: vbar_stokes(LBi:UBi,LBj:UBj)
+# endif
       real(r8), intent(in) :: rubar(LBi:UBi,LBj:UBj,2)
       real(r8), intent(in) :: rvbar(LBi:UBi,LBj:UBj,2)
       real(r8), intent(in) :: rzeta(LBi:UBi,LBj:UBj,2)
-      real(r8), intent(in) :: ubar(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(in) :: vbar(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(in) :: zeta(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(in) :: ubar(LBi:UBi,LBj:UBj,:)
+      real(r8), intent(in) :: vbar(LBi:UBi,LBj:UBj,:)
+      real(r8), intent(in) :: zeta(LBi:UBi,LBj:UBj,:)
 # if !defined SOLVE3D && defined ATM_PRESS
       real(r8), intent(in) :: Pair(LBi:UBi,LBj:UBj)
 # endif
 # ifdef SOLVE3D
-#  ifdef VAR_RHO_2D
+#  ifdef VAR_RHO_2D_NOT_YET
       real(r8), intent(in) :: rhoA(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: rhoS(LBi:UBi,LBj:UBj)
 #  endif
@@ -471,7 +485,7 @@
       real(r8), intent(inout) :: ad_DV_avg1(LBi:UBi,LBj:UBj)
       real(r8), intent(inout) :: ad_DV_avg2(LBi:UBi,LBj:UBj)
       real(r8), intent(inout) :: ad_Zt_avg1(LBi:UBi,LBj:UBj)
-#  if defined VAR_RHO_2D
+#  if defined VAR_RHO_2D_NOT_YET
       real(r8), intent(inout) :: ad_rhoA(LBi:UBi,LBj:UBj)
       real(r8), intent(inout) :: ad_rhoS(LBi:UBi,LBj:UBj)
 #  endif
@@ -485,7 +499,7 @@
       real(r8), intent(inout) :: ad_bustr(LBi:UBi,LBj:UBj)
       real(r8), intent(inout) :: ad_bvstr(LBi:UBi,LBj:UBj)
 # endif
-# ifdef NEARSHORE_MELLOR
+# ifdef WEC_MELLOR
       real(r8), intent(inout) :: ad_rustr2d(LBi:UBi,LBj:UBj)
       real(r8), intent(inout) :: ad_rvstr2d(LBi:UBi,LBj:UBj)
       real(r8), intent(inout) :: ad_rulag2d(LBi:UBi,LBj:UBj)
@@ -526,9 +540,9 @@
       real(r8), intent(inout) :: ad_rubar(LBi:UBi,LBj:UBj,2)
       real(r8), intent(inout) :: ad_rvbar(LBi:UBi,LBj:UBj,2)
       real(r8), intent(inout) :: ad_rzeta(LBi:UBi,LBj:UBj,2)
-      real(r8), intent(inout) :: ad_ubar(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(inout) :: ad_vbar(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(inout) :: ad_zeta(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(inout) :: ad_ubar(LBi:UBi,LBj:UBj,:)
+      real(r8), intent(inout) :: ad_vbar(LBi:UBi,LBj:UBj,:)
+      real(r8), intent(inout) :: ad_zeta(LBi:UBi,LBj:UBj,:)
 # ifndef SOLVE3D
       real(r8), intent(out) :: ad_ubar_sol(LBi:UBi,LBj:UBj)
       real(r8), intent(out) :: ad_vbar_sol(LBi:UBi,LBj:UBj)
@@ -560,7 +574,7 @@
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Dstp
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: DUon
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: DVom
-#ifdef NEARSHORE_MELLOR
+#ifdef WEC_MELLOR
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: DUSon
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: DVSom
 #endif
@@ -575,7 +589,7 @@
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: grad
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: gzeta
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: gzeta2
-#if defined VAR_RHO_2D && defined SOLVE3D
+#if defined VAR_RHO_2D_NOT_YET && defined SOLVE3D
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: gzetaSA
 #endif
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: rhs_ubar
@@ -602,7 +616,7 @@
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: ad_Dstp
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: ad_DUon
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: ad_DVom
-#ifdef NEARSHORE_MELLOR
+#ifdef WEC_MELLOR
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: ad_DUSon
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: ad_DVSom
 #endif
@@ -617,7 +631,7 @@
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: ad_grad
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: ad_gzeta
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: ad_gzeta2
-#if defined VAR_RHO_2D && defined SOLVE3D
+#if defined VAR_RHO_2D_NOT_YET && defined SOLVE3D
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: ad_gzetaSA
 #endif
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: ad_rhs_ubar
@@ -660,7 +674,7 @@
           ad_Dstp(i,j)=IniVal
           ad_DUon(i,j)=IniVal
           ad_DVom(i,j)=IniVal
-#ifdef NEARSHORE_MELLOR
+#ifdef WEC_MELLOR
           ad_DUSon(i,j)=IniVal
           ad_DVSom(i,j)=IniVal
 #endif
@@ -675,7 +689,7 @@
           ad_grad(i,j)=IniVal
           ad_gzeta(i,j)=IniVal
           ad_gzeta2(i,j)=IniVal
-#if defined VAR_RHO_2D && defined SOLVE3D
+#if defined VAR_RHO_2D_NOT_YET && defined SOLVE3D
           ad_gzetaSA(i,j)=IniVal
 #endif
           ad_rhs_ubar(i,j)=IniVal
@@ -694,7 +708,7 @@
           Dstp(i,j)=IniVal
           DUon(i,j)=IniVal
           DVom(i,j)=IniVal
-# ifdef NEARSHORE_MELLOR
+# ifdef WEC_MELLOR
           DUSon(i,j)=IniVal
           DVSom(i,j)=IniVal
 # endif
@@ -709,7 +723,7 @@
           grad(i,j)=IniVal
           gzeta(i,j)=IniVal
           gzeta2(i,j)=IniVal
-# if defined VAR_RHO_2D && defined SOLVE3D
+# if defined VAR_RHO_2D_NOT_YET && defined SOLVE3D
           gzetaSA(i,j)=IniVal
 # endif
           rhs_ubar(i,j)=IniVal
@@ -747,7 +761,7 @@
           cff=0.5_r8*on_u(i,j)
           cff1=cff*(Drhs(i,j)+Drhs(i-1,j))
           DUon(i,j)=ubar(i,j,krhs)*cff1
-# ifdef NEARSHORE_MELLOR
+# ifdef WEC_MELLOR
           DUSon(i,j)=ubar_stokes(i,j)*cff1
           DUon(i,j)=DUon(i,j)+DUSon(i,j)
 # endif
@@ -758,7 +772,7 @@
           cff=0.5_r8*om_v(i,j)
           cff1=cff*(Drhs(i,j)+Drhs(i,j-1))
           DVom(i,j)=vbar(i,j,krhs)*cff1
-# ifdef NEARSHORE_MELLOR
+# ifdef WEC_MELLOR
           DVSom(i,j)=vbar_stokes(i,j)*cff1
           DVom(i,j)=DVom(i,j)+DVSom(i,j)
 # endif
@@ -792,7 +806,7 @@
           cff=0.5_r8*on_u(i,j)
           cff1=cff*(Drhs(i,j)+Drhs(i-1,j))
           DUon(i,j)=ubar(i,j,krhs)*cff1
-# ifdef NEARSHORE_MELLOR
+# ifdef WEC_MELLOR
           DUSon(i,j)=ubar_stokes(i,j)*cff1
           DUon(i,j)=DUon(i,j)+DUSon(i,j)
 # endif
@@ -803,7 +817,7 @@
           cff=0.5_r8*om_v(i,j)
           cff1=cff*(Drhs(i,j)+Drhs(i,j-1))
           DVom(i,j)=vbar(i,j,krhs)*cff1
-# ifdef NEARSHORE_MELLOR
+# ifdef WEC_MELLOR
           DVSom(i,j)=vbar_stokes(i,j)*cff1
           DVom(i,j)=DVom(i,j)+DVSom(i,j)
 # endif
@@ -2124,7 +2138,7 @@
 !!      END DO
 # endif
 #endif
-#if defined NEARSHORE_MELLOR && \
+#if defined WEC_MELLOR && \
     (!defined SOLVE3D         || defined DIAGNOSTICS_UV)
 !
 !-----------------------------------------------------------------------
@@ -3155,13 +3169,13 @@
       DO j=JstrV-1,Jend
         DO i=IstrU-1,Iend
           cff1=0.5_r8*(vbar(i,j  ,krhs)+                                &
-# ifdef NEARSHORE_MELLOR
+# ifdef WEC_MELLOR
      &                 vbar_stokes(i,j  )+                              &
      &                 vbar_stokes(i,j+1)+                              &
 # endif
      &                 vbar(i,j+1,krhs))
           cff2=0.5_r8*(ubar(i  ,j,krhs)+                                &
-# ifdef NEARSHORE_MELLOR
+# ifdef WEC_MELLOR
      &                 ubar_stokes(i  ,j)+                              &
      &                 ubar_stokes(i+1,j)+                              &
 # endif
@@ -3201,7 +3215,7 @@
           ad_cff1=ad_cff1+dndx(i,j)*ad_cff3
           ad_cff3=0.0_r8
 !^        tl_cff2=0.5_r8*(tl_ubar(i  ,j,krhs)+                          &
-# ifdef NEARSHORE_MELLOR
+# ifdef WEC_MELLOR
 !^   &                    tl_ubar_stokes(i  ,j)+                        &
 !^   &                    tl_ubar_stokes(i+1,j)+                        &
 # endif
@@ -3210,13 +3224,13 @@
           adfac=0.5_r8*ad_cff2
           ad_ubar(i  ,j,krhs)=ad_ubar(i  ,j,krhs)+adfac
           ad_ubar(i+1,j,krhs)=ad_ubar(i+1,j,krhs)+adfac
-# ifdef NEARSHORE_MELLOR
+# ifdef WEC_MELLOR
           ad_ubar_stokes(i  ,j)=ad_ubar_stokes(i  ,j)+adfac
           ad_ubar_stokes(i+1,j)=ad_ubar_stokes(i+1,j)+adfac
 # endif
           ad_cff2=0.0_r8
 !^        tl_cff1=0.5_r8*(tl_vbar(i,j  ,krhs)+                          &
-# ifdef NEARSHORE_MELLOR
+# ifdef WEC_MELLOR
 !^   &                    tl_vbar_stokes(i,j  )+                        &
 !^   &                    tl_vbar_stokes(i,j+1)+                        &
 # endif
@@ -3225,7 +3239,7 @@
           adfac=0.5_r8*ad_cff1
           ad_vbar(i,j  ,krhs)=ad_vbar(i,j  ,krhs)+adfac
           ad_vbar(i,j+1,krhs)=ad_vbar(i,j+1,krhs)+adfac
-# ifdef NEARSHORE_MELLOR
+# ifdef WEC_MELLOR
           ad_vbar_stokes(i,j  )=ad_vbar_stokes(i,j  )+adfac
           ad_vbar_stokes(i,j+1)=ad_vbar_stokes(i,j+1)+adfac
 # endif
@@ -3275,13 +3289,13 @@
         DO i=IstrU-1,Iend
           cff=0.5_r8*Drhs(i,j)*fomn(i,j)
 !^        tl_VFe(i,j)=tl_cff*(ubar(i  ,j,krhs)+                         &
-# ifdef NEARSHORE_MELLOR
+# ifdef WEC_MELLOR
 !^   &                        ubar_stokes(i  ,j)+                       &
 !^   &                        ubar_stokes(i+1,j)+                       &
 # endif
 !^   &                        ubar(i+1,j,krhs))+                        &
 !^   &                cff*(tl_ubar(i  ,j,krhs)+                         &
-# ifdef NEARSHORE_MELLOR
+# ifdef WEC_MELLOR
 !^   &                     tl_ubar_stokes(i  ,j)+                       &
 !^   &                     tl_ubar_stokes(i+1,j)+                       &
 # endif
@@ -3290,25 +3304,25 @@
           adfac=cff*ad_VFe(i,j)
           ad_ubar(i  ,j,krhs)=ad_ubar(i  ,j,krhs)+adfac
           ad_ubar(i+1,j,krhs)=ad_ubar(i+1,j,krhs)+adfac
-# ifdef NEARSHORE_MELLOR
+# ifdef WEC_MELLOR
           ad_ubar_stokes(i  ,j)=ad_ubar_stokes(i  ,j)+adfac
           ad_ubar_stokes(i+1,j)=ad_ubar_stokes(i+1,j)+adfac
 # endif
           ad_cff=ad_cff+(ubar(i  ,j,krhs)+                              &
-# ifdef NEARSHORE_MELLOR
+# ifdef WEC_MELLOR
      &                   ubar_stokes(i  ,j)+                            &
      &                   ubar_stokes(i+1,j)+                            &
 # endif
      &                   ubar(i+1,j,krhs))*ad_VFe(i,j)
           ad_VFe(i,j)=0.0_r8
 !^        tl_UFx(i,j)=tl_cff*(vbar(i,j  ,krhs)+                         &
-# ifdef NEARSHORE_MELLOR
+# ifdef WEC_MELLOR
 !^   &                        vbar_stokes(i,j  )+                       &
 !^   &                        vbar_stokes(i,j+1)+                       &
 # endif
 !^   &                        vbar(i,j+1,krhs))+                        &
 !^   &                cff*(tl_vbar(i,j  ,krhs)+                         &
-# ifdef NEARSHORE_MELLOR
+# ifdef WEC_MELLOR
 !^   &                     tl_vbar_stokes(i,j  )+                       &
 !^   &                     tl_vbar_stokes(i,j+1)+                       &
 # endif
@@ -3317,12 +3331,12 @@
           adfac=cff*ad_UFx(i,j)
           ad_vbar(i,j  ,krhs)=ad_vbar(i,j  ,krhs)+adfac
           ad_vbar(i,j+1,krhs)=ad_vbar(i,j+1,krhs)+adfac
-# ifdef NEARSHORE_MELLOR
+# ifdef WEC_MELLOR
           ad_vbar_stokes(i,j  )=ad_vbar_stokes(i,j  )+adfac
           ad_vbar_stokes(i,j+1)=ad_vbar_stokes(i,j+1)+adfac
 # endif
           ad_cff=ad_cff+(vbar(i,j  ,krhs)+                              &
-# ifdef NEARSHORE_MELLOR
+# ifdef WEC_MELLOR
      &                   vbar_stokes(i,j  )+                            &
      &                   vbar_stokes(i,j+1)+                            &
 # endif
@@ -3404,14 +3418,14 @@
 !^          tl_VFe(i,j)=0.25_r8*                                        &
 !^   &                  ((tl_DVom(i,j)+tl_DVom(i,j+1))*                 &
 !^   &                   (vbar(i,j  ,krhs)+                             &
-#  ifdef NEARSHORE_MELLOR
+#  ifdef WEC_MELLOR
 !^   &                    vbar_stokes(i,j  )+                           &
 !^   &                    vbar_stokes(i,j+1)+                           &
 #  endif
 !^   &                    vbar(i,j+1,krhs))+                            &
 !^   &                   (DVom(i,j)+DVom(i,j+1))*                       &
 !^   &                   (tl_vbar(i,j  ,krhs)+                          &
-#  ifdef NEARSHORE_MELLOR
+#  ifdef WEC_MELLOR
 !^   &                    tl_vbar_stokes(i,j  )+                        &
 !^   &                    tl_vbar_stokes(i,j+1)+                        &
 #  endif
@@ -3419,7 +3433,7 @@
 !^
             adfac=0.25_r8*ad_VFe(i,j)
             adfac1=adfac*(vbar(i,j  ,krhs)+                             &
-#  ifdef NEARSHORE_MELLOR
+#  ifdef WEC_MELLOR
      &                    vbar_stokes(i,j  )+                           &
      &                    vbar_stokes(i,j+1)+                           &
 #  endif
@@ -3429,7 +3443,7 @@
             ad_DVom(i,j+1)=ad_DVom(i,j+1)+adfac1
             ad_vbar(i,j  ,krhs)=ad_vbar(i,j  ,krhs)+adfac2
             ad_vbar(i,j+1,krhs)=ad_vbar(i,j+1,krhs)+adfac2
-#  ifdef NEARSHORE_MELLOR
+#  ifdef WEC_MELLOR
             ad_vbar_stokes(i,j  )=ad_vbar_stokes(i,j  )+adfac2
             ad_vbar_stokes(i,j+1)=ad_vbar_stokes(i,j+1)+adfac2
 #  endif
@@ -3442,14 +3456,14 @@
 !^          tl_VFx(i,j)=0.25_r8*                                        &
 !^   &                  ((tl_DUon(i,j)+tl_DUon(i,j-1))*                 &
 !^   &                   (vbar(i  ,j,krhs)+                             &
-#  ifdef NEARSHORE_MELLOR
+#  ifdef WEC_MELLOR
 !^   &                    vbar_stokes(i  ,j)+                           &
 !^   &                    vbar_stokes(i-1,j)+                           &
 #  endif
 !^   &                    vbar(i-1,j,krhs))+                            &
 !^   &                   (DUon(i,j)+DUon(i,j-1))*                       &
 !^   &                   (tl_vbar(i  ,j,krhs)+                          &
-#  ifdef NEARSHORE_MELLOR
+#  ifdef WEC_MELLOR
 !^   &                    tl_vbar_stokes(i  ,j)+                        &
 !^   &                    tl_vbar_stokes(i-1,j)+                        &
 #  endif
@@ -3457,7 +3471,7 @@
 !^
             adfac=0.25_r8*ad_VFx(i,j)
             adfac1=adfac*(vbar(i  ,j,krhs)+                             &
-#  ifdef NEARSHORE_MELLOR
+#  ifdef WEC_MELLOR
      &                    vbar_stokes(i  ,j)+                           &
      &                    vbar_stokes(i-1,j)+                           &
 #  endif
@@ -3467,7 +3481,7 @@
             ad_DUon(i,j-1)=ad_DUon(i,j-1)+adfac1
             ad_vbar(i  ,j,krhs)=ad_vbar(i  ,j,krhs)+adfac2
             ad_vbar(i-1,j,krhs)=ad_vbar(i-1,j,krhs)+adfac2
-#  ifdef NEARSHORE_MELLOR
+#  ifdef WEC_MELLOR
             ad_vbar_stokes(i-1,j)=ad_vbar_stokes(i-1,j)+adfac2
             ad_vbar_stokes(i  ,j)=ad_vbar_stokes(i  ,j)+adfac2
 #  endif
@@ -3480,14 +3494,14 @@
 !^          tl_UFe(i,j)=0.25_r8*                                        &
 !^   &                  ((tl_DVom(i,j)+tl_DVom(i-1,j))*                 &
 !^   &                   (ubar(i,j  ,krhs)+                             &
-#  ifdef NEARSHORE_MELLOR
+#  ifdef WEC_MELLOR
 !^   &                    ubar_stokes(i,j  )+                           &
 !^   &                    ubar_stokes(i,j-1)+                           &
 #  endif
 !^   &                    ubar(i,j-1,krhs))+                            &
 !^   &                   (DVom(i,j)+DVom(i-1,j))*                       &
 !^   &                   (tl_ubar(i,j  ,krhs)+
-#  ifdef NEARSHORE_MELLOR
+#  ifdef WEC_MELLOR
 !^   &                    tl_ubar_stokes(i,j  )+                        &
 !^   &                    tl_ubar_stokes(i,j-1)+                        &
 #  endif
@@ -3495,7 +3509,7 @@
 !^
             adfac=0.25_r8*ad_UFe(i,j)
             adfac1=adfac*(ubar(i,j  ,krhs)+                             &
-#  ifdef NEARSHORE_MELLOR
+#  ifdef WEC_MELLOR
      &                    ubar_stokes(i,j  )+                           &
      &                    ubar_stokes(i,j-1)+                           &
 #  endif
@@ -3505,7 +3519,7 @@
             ad_DVom(i-1,j)=ad_DVom(i-1,j)+adfac1
             ad_ubar(i,j  ,krhs)=ad_ubar(i,j  ,krhs)+adfac2
             ad_ubar(i,j-1,krhs)=ad_ubar(i,j-1,krhs)+adfac2
-#  ifdef NEARSHORE_MELLOR
+#  ifdef WEC_MELLOR
             ad_ubar_stokes(i,j-1)=ad_ubar_stokes(i,j-1)+adfac2
             ad_ubar_stokes(i,j  )=ad_ubar_stokes(i,j  )+adfac2
 #  endif
@@ -3518,14 +3532,14 @@
 !^          tl_UFx(i,j)=0.25_r8*                                        &
 !^   &                  ((tl_DUon(i,j)+tl_DUon(i+1,j))*                 &
 !^   &                   (ubar(i  ,j,krhs)+                             &
-#  ifdef NEARSHORE_MELLOR
+#  ifdef WEC_MELLOR
 !^   &                    ubar_stokes(i  ,j)+                           &
 !^   &                    ubar_stokes(i+1,j)+                           &
 #  endif
 !^   &                    ubar(i+1,j,krhs))+                            &
 !^   &                   (DUon(i,j)+DUon(i+1,j))*                       &
 !^   &                   (tl_ubar(i  ,j,krhs)+                          &
-#  ifdef NEARSHORE_MELLOR
+#  ifdef WEC_MELLOR
 !^   &                    tl_ubar_stokes(i  ,j)+                        &
 !^   &                    tl_ubar_stokes(i+1,j)+                        &
 #  endif
@@ -3533,7 +3547,7 @@
 !^
             adfac=0.25_r8*ad_UFx(i,j)
             adfac1=adfac*(ubar(i  ,j,krhs)+                             &
-#  ifdef NEARSHORE_MELLOR
+#  ifdef WEC_MELLOR
      &                    ubar_stokes(i  ,j)+                           &
      &                    ubar_stokes(i+1,j)+                           &
 #  endif
@@ -3543,7 +3557,7 @@
             ad_DUon(i+1,j)=ad_DUon(i+1,j)+adfac1
             ad_ubar(i  ,j,krhs)=ad_ubar(i  ,j,krhs)+adfac2
             ad_ubar(i+1,j,krhs)=ad_ubar(i+1,j,krhs)+adfac2
-#  ifdef NEARSHORE_MELLOR
+#  ifdef WEC_MELLOR
             ad_ubar_stokes(i  ,j)=ad_ubar_stokes(i  ,j)+adfac2
             ad_ubar_stokes(i+1,j)=ad_ubar_stokes(i+1,j)+adfac2
 #  endif
@@ -3557,7 +3571,7 @@
         DO j=JstrVm1,Jendp1
           DO i=Istr,Iend
             grad (i,j)=vbar(i,j-1,krhs)-2.0_r8*vbar(i,j,krhs)+          &
-#  ifdef NEARSHORE_MELLOR
+#  ifdef WEC_MELLOR
      &                 vbar_stokes(i,j-1)-2.0_r8*vbar_stokes(i,j)+      &
      &                 vbar_stokes(i,j+1)+                              &
 #  endif
@@ -3588,7 +3602,7 @@
           DO i=Istr,Iend
 !^          tl_VFe(i,j)=0.25_r8*                                        &
 !^   &                  ((tl_vbar(i,j  ,krhs)+                          &
-#  ifdef NEARSHORE_MELLOR
+#  ifdef WEC_MELLOR
 !^   &                    tl_vbar_stokes(i,j  )+                        &
 !^   &                    tl_vbar_stokes(i,j+1)+                        &
 #  endif
@@ -3597,7 +3611,7 @@
 !^   &                   (DVom(i,j)+DVom(i,j+1)-                        &
 !^   &                    cff*(Dgrad(i,j)+Dgrad(i,j+1)))+               &
 !^   &                   (vbar(i,j  ,krhs)+                             &
-#  ifdef NEARSHORE_MELLOR
+#  ifdef WEC_MELLOR
 !^   &                    vbar_stokes(i,j  )+                           &
 !^   &                    vbar_stokes(i,j+1)+                           &
 #  endif
@@ -3611,7 +3625,7 @@
      &                    cff*(Dgrad(i,j)+Dgrad(i,j+1)))
             adfac2=adfac1*cff
             adfac3=adfac*(vbar(i,j  ,krhs)+                             &
-#  ifdef NEARSHORE_MELLOR
+#  ifdef WEC_MELLOR
      &                    vbar_stokes(i,j  )+                           &
      &                    vbar_stokes(i,j+1)+                           &
 #  endif
@@ -3620,7 +3634,7 @@
             adfac4=adfac3*cff
             ad_vbar(i,j  ,krhs)=ad_vbar(i,j  ,krhs)+adfac1
             ad_vbar(i,j+1,krhs)=ad_vbar(i,j+1,krhs)+adfac1
-#  ifdef NEARSHORE_MELLOR
+#  ifdef WEC_MELLOR
             ad_vbar_stokes(i,j  )=ad_vbar_stokes(i,j  )+adfac1
             ad_vbar_stokes(i,j+1)=ad_vbar_stokes(i,j+1)+adfac1
 #  endif
@@ -3672,7 +3686,7 @@
             ad_DVom(i,j+1)=ad_DVom(i,j+1)+ad_Dgrad(i,j)
             ad_Dgrad(i,j)=0.0_r8
 !^          tl_grad (i,j)=tl_vbar(i,j-1,krhs)-2.0_r8*tl_vbar(i,j,krhs)+ &
-#  ifdef NEARSHORE_MELLOR
+#  ifdef WEC_MELLOR
 !^   &                    tl_vbar_stokes(i,j-1)-                        &
 !^   &                    2.0_r8*tl_vbar_stokes(i,j)+                   &
 !^   &                    tl_vbar_stokes(i,j+1)+                        &
@@ -3683,7 +3697,7 @@
             ad_vbar(i,j  ,krhs)=ad_vbar(i,j  ,krhs)-                    &
      &                          2.0_r8*ad_grad(i,j)
             ad_vbar(i,j+1,krhs)=ad_vbar(i,j+1,krhs)+ad_grad(i,j)
-#  ifdef NEARSHORE_MELLOR
+#  ifdef WEC_MELLOR
             ad_vbar_stokes(i,j-1)=ad_vbar_stokes(i,j-1)+ad_grad(i,j)
             ad_vbar_stokes(i,j  )=ad_vbar_stokes(i,j  )-                &
      &                            2.0_r8*ad_grad(i,j)
@@ -3695,7 +3709,7 @@
         DO j=JstrV,Jend
           DO i=Istrm1,Iendp1
             grad(i,j)=vbar(i-1,j,krhs)-2.0_r8*vbar(i,j,krhs)+           &
-#  ifdef NEARSHORE_MELLOR
+#  ifdef WEC_MELLOR
      &                vbar_stokes(i-1,j)-2.0_r8*vbar_stokes(i,j)+       &
      &                vbar_stokes(i+1,j)+                               &
 #  endif
@@ -3727,7 +3741,7 @@
           DO i=Istr,Iend+1
 !^          tl_VFx(i,j)=0.25_r8*                                        &
 !^   &                  ((tl_vbar(i  ,j,krhs)+                          &
-#  ifdef NEARSHORE_MELLOR
+#  ifdef WEC_MELLOR
 !^   &                    tl_vbar_stokes(i  ,j)+                        &
 !^   &                    tl_vbar_stokes(i-1,j)+                        &
 #  endif
@@ -3736,7 +3750,7 @@
 !^   &                   (DUon(i,j)+DUon(i,j-1)-                        &
 !^   &                    cff*(Dgrad(i,j)+Dgrad(i,j-1)))+               &
 !^   &                   (vbar(i  ,j,krhs)+                             &
-#  ifdef NEARSHORE_MELLOR
+#  ifdef WEC_MELLOR
 !^   &                    vbar_stokes(i  ,j)+                           &
 !^   &                    vbar_stokes(i-1,j)+                           &
 #  endif
@@ -3750,7 +3764,7 @@
      &                    cff*(Dgrad(i,j)+Dgrad(i,j-1)))
             adfac2=adfac1*cff
             adfac3=adfac*(vbar(i  ,j,krhs)+                             &
-#  ifdef NEARSHORE_MELLOR
+#  ifdef WEC_MELLOR
      &                    vbar_stokes(i  ,j)+                           &
      &                    vbar_stokes(i-1,j)+                           &
 #  endif
@@ -3759,7 +3773,7 @@
             adfac4=adfac3*cff
             ad_vbar(i-1,j,krhs)=ad_vbar(i-1,j,krhs)+adfac1
             ad_vbar(i  ,j,krhs)=ad_vbar(i  ,j,krhs)+adfac1
-#  ifdef NEARSHORE_MELLOR
+#  ifdef WEC_MELLOR
             ad_vbar_stokes(i-1,j)=ad_vbar_stokes(i-1,j)+adfac1
             ad_vbar_stokes(i  ,j)=ad_vbar_stokes(i  ,j)+adfac1
 #  endif
@@ -3788,7 +3802,7 @@
             DO j=JstrV,Jend
 !^            tl_grad(Iend+1,j)=tl_grad(Iend,j)
 !^
-               ad_grad(Iend,j)=ad_grad(Iend,j)+ad_grad(Iend+1,j)
+              ad_grad(Iend,j)=ad_grad(Iend,j)+ad_grad(Iend+1,j)
               ad_grad(Iend+1,j)=0.0_r8
             END DO
           END IF
@@ -3806,7 +3820,7 @@
         DO j=JstrV,Jend
           DO i=Istrm1,Iendp1
 !^          tl_grad(i,j)=tl_vbar(i-1,j,krhs)-2.0_r8*tl_vbar(i,j,krhs)+  &
-#  ifdef NEARSHORE_MELLOR
+#  ifdef WEC_MELLOR
 !^   &                   tl_vbar_stokes(i-1,j)-                         &
 !^   &                   2.0_r8*tl_vbar_stokes(i,j)+                    &
 !^   &                   tl_vbar_stokes(i+1,j)+                         &
@@ -3817,7 +3831,7 @@
             ad_vbar(i  ,j,krhs)=ad_vbar(i  ,j,krhs)-                    &
      &                          2.0_r8*ad_grad(i,j)
             ad_vbar(i+1,j,krhs)=ad_vbar(i+1,j,krhs)+ad_grad(i,j)
-#  ifdef NEARSHORE_MELLOR
+#  ifdef WEC_MELLOR
             ad_vbar_stokes(i-1,j)=ad_vbar_stokes(i-1,j)+ad_grad(i,j)
             ad_vbar_stokes(i  ,j)=ad_vbar_stokes(i  ,j)-                &
      &                            2.0_r8*ad_grad(i,j)
@@ -3829,7 +3843,7 @@
         DO j=Jstrm1,Jendp1
           DO i=IstrU,Iend
             grad(i,j)=ubar(i,j-1,krhs)-2.0_r8*ubar(i,j,krhs)+           &
-#  ifdef NEARSHORE_MELLOR
+#  ifdef WEC_MELLOR
      &                ubar_stokes(i,j-1)-2.0_r8*ubar_stokes(i,j)+       &
      &                ubar_stokes(i,j+1)+                               &
 #  endif
@@ -3861,7 +3875,7 @@
           DO i=IstrU,Iend
 !^          tl_UFe(i,j)=0.25_r8*                                        &
 !^   &                  ((tl_ubar(i,j  ,krhs)+                          &
-#  ifdef NEARSHORE_MELLOR
+#  ifdef WEC_MELLOR
 !^   &                    tl_ubar_stokes(i,j  )+                        &
 !^   &                    tl_ubar_stokes(i,j-1)+                        &
 #  endif
@@ -3870,7 +3884,7 @@
 !^   &                   (DVom(i,j)+DVom(i-1,j)-                        &
 !^   &                    cff*(Dgrad(i,j)+Dgrad(i-1,j)))+               &
 !^   &                   (ubar(i,j  ,krhs)+                             &
-#  ifdef NEARSHORE_MELLOR
+#  ifdef WEC_MELLOR
 !^   &                    ubar_stokes(i,j  )+                           &
 !^   &                    ubar_stokes(i,j-1)+                           &
 #  endif
@@ -3884,7 +3898,7 @@
      &                    cff*(Dgrad(i,j)+Dgrad(i-1,j)))
             adfac2=adfac1*cff
             adfac3=adfac*(ubar(i,j  ,krhs)+                             &
-#  ifdef NEARSHORE_MELLOR
+#  ifdef WEC_MELLOR
      &                    ubar_stokes(i,j  )+                           &
      &                    ubar_stokes(i,j-1)+                           &
 #  endif
@@ -3893,7 +3907,7 @@
             adfac4=adfac3*cff
             ad_ubar(i,j-1,krhs)=ad_ubar(i,j-1,krhs)+adfac1
             ad_ubar(i,j  ,krhs)=ad_ubar(i,j  ,krhs)+adfac1
-#  ifdef NEARSHORE_MELLOR
+#  ifdef WEC_MELLOR
             ad_ubar_stokes(i,j-1)=ad_ubar_stokes(i,j-1)+adfac1
             ad_ubar_stokes(i,j  )=ad_ubar_stokes(i,j  )+adfac1
 #  endif
@@ -3933,14 +3947,14 @@
 !^            tl_grad(i,Jstr-1)=tl_grad(i,Jstr)
 !^
               ad_grad(i,Jstr)=ad_grad(i,Jstr)+ad_grad(i,Jstr-1)
-               ad_grad(i,Jstr-1)=0.0_r8
+              ad_grad(i,Jstr-1)=0.0_r8
             END DO
           END IF
         END IF
         DO j=Jstrm1,Jendp1
           DO i=IstrU,Iend
 !^          tl_grad(i,j)=tl_ubar(i,j-1,krhs)-2.0_r8*tl_ubar(i,j,krhs)+  &
-#  ifdef NEARSHORE_MELLOR
+#  ifdef WEC_MELLOR
 !^   &                   tl_ubar_stokes(i,j-1)-                         &
 !^   &                   2.0_r8*tl_ubar_stokes(i,j)+                    &
 !^   &                   tl_ubar_stokes(i,j+1)+                         &
@@ -3951,7 +3965,7 @@
             ad_ubar(i,j  ,krhs)=ad_ubar(i,j  ,krhs)-                    &
      &                          2.0_r8*ad_grad(i,j)
             ad_ubar(i,j+1,krhs)=ad_ubar(i,j+1,krhs)+ad_grad(i,j)
-#  ifdef NEARSHORE_MELLOR
+#  ifdef WEC_MELLOR
             ad_ubar_stokes(i,j-1)=ad_ubar_stokes(i,j-1)+ad_grad(i,j)
             ad_ubar_stokes(i,j  )=ad_ubar_stokes(i,j)-                  &
      &                            2.0_r8*ad_grad(i,j)
@@ -3963,7 +3977,7 @@
         DO j=Jstr,Jend
           DO i=IstrUm1,Iendp1
             grad (i,j)=ubar(i-1,j,krhs)-2.0_r8*ubar(i,j,krhs)+          &
-#   ifdef NEARSHORE_MELLOR
+#   ifdef WEC_MELLOR
      &                 ubar_stokes(i-1,j)-2.0_r8*ubar_stokes(i,j)+      &
      &                 ubar_stokes(i+1,j)+                              &
 #   endif
@@ -3993,7 +4007,7 @@
           DO i=IstrU-1,Iend
 !^          tl_UFx(i,j)=0.25_r8*                                        &
 !^   &                  ((ubar(i  ,j,krhs)+                             &
-#  ifdef NEARSHORE_MELLOR
+#  ifdef WEC_MELLOR
 !^   &                    ubar_stokes(i  ,j)+                           &
 !^   &                    ubar_stokes(i+1,j)+                           &
 #  endif
@@ -4002,7 +4016,7 @@
 !^   &                   (tl_DUon(i,j)+tl_DUon(i+1,j)-                  &
 !^   &                    cff*(tl_Dgrad(i,j)+tl_Dgrad(i+1,j)))+         &
 !^   &                   (tl_ubar(i  ,j,krhs)+                          &
-#  ifdef NEARSHORE_MELLOR
+#  ifdef WEC_MELLOR
 !^   &                    tl_ubar_stokes(i  ,j)+                        &
 !^   &                    tl_ubar_stokes(i+1,j)+                        &
 #  endif
@@ -4016,7 +4030,7 @@
      &                    cff*(Dgrad(i,j)+Dgrad(i+1,j)))
             adfac2=adfac1*cff
             adfac3=adfac*(ubar(i  ,j,krhs)+                             &
-#  ifdef NEARSHORE_MELLOR
+#  ifdef WEC_MELLOR
      &                    ubar_stokes(i  ,j)+                           &
      &                    ubar_stokes(i+1,j)+                           &
 #  endif
@@ -4025,7 +4039,7 @@
             adfac4=adfac3*cff
             ad_ubar(i  ,j,krhs)=ad_ubar(i  ,j,krhs)+adfac1
             ad_ubar(i+1,j,krhs)=ad_ubar(i+1,j,krhs)+adfac1
-#  ifdef NEARSHORE_MELLOR
+#  ifdef WEC_MELLOR
             ad_ubar_stokes(i  ,j)=ad_ubar_stokes(i  ,j)+adfac1
             ad_ubar_stokes(i+1,j)=ad_ubar_stokes(i+1,j)+adfac1
 #  endif
@@ -4122,7 +4136,7 @@
               zeta_new(i,j)=zeta_new(i,j)*rmask(i,j)
 #endif
               zwrk(i,j)=0.5_r8*(zeta(i,j,kstp)+zeta_new(i,j))
-#if defined VAR_RHO_2D && defined SOLVE3D
+#if defined VAR_RHO_2D_NOT_YET && defined SOLVE3D
               gzeta(i,j)=(fac+rhoS(i,j))*zwrk(i,j)
               gzeta2(i,j)=gzeta(i,j)*zwrk(i,j)
               gzetaSA(i,j)=zwrk(i,j)*(rhoS(i,j)-rhoA(i,j))
@@ -4150,7 +4164,7 @@
 #endif
               zwrk(i,j)=cff5*zeta(i,j,krhs)+                            &
      &                  cff4*(zeta(i,j,kstp)+zeta_new(i,j))
-#if defined VAR_RHO_2D && defined SOLVE3D
+#if defined VAR_RHO_2D_NOT_YET && defined SOLVE3D
               gzeta(i,j)=(fac+rhoS(i,j))*zwrk(i,j)
               gzeta2(i,j)=gzeta(i,j)*zwrk(i,j)
               gzetaSA(i,j)=zwrk(i,j)*(rhoS(i,j)-rhoA(i,j))
@@ -4181,7 +4195,7 @@
               zeta_new(i,j)=zeta_new(i,j)*rmask(i,j)
 #endif
               zwrk(i,j)=cff5*zeta_new(i,j)+cff4*zeta(i,j,krhs)
-#if defined VAR_RHO_2D && defined SOLVE3D
+#if defined VAR_RHO_2D_NOT_YET && defined SOLVE3D
               gzeta(i,j)=(fac+rhoS(i,j))*zwrk(i,j)
               gzeta2(i,j)=gzeta(i,j)*zwrk(i,j)
               gzetaSA(i,j)=zwrk(i,j)*(rhoS(i,j)-rhoA(i,j))
@@ -4250,7 +4264,7 @@
 !^   &                           h(i,j  ))*                             &
 !^   &                          (tl_gzeta(i,j-1)-                       &
 !^   &                           tl_gzeta(i,j  ))+                      &
-#if defined VAR_RHO_2D && defined SOLVE3D
+#if defined VAR_RHO_2D_NOT_YET && defined SOLVE3D
 !^   &                          (tl_h(i,j-1)-                           &
 !^   &                           tl_h(i,j  ))*                          &
 !^   &                          (gzetaSA(i,j-1)+                        &
@@ -4284,7 +4298,7 @@
               ad_gzeta(i,j  )=ad_gzeta(i,j  )-adfac2
               ad_gzeta2(i,j-1)=ad_gzeta2(i,j-1)+adfac
               ad_gzeta2(i,j  )=ad_gzeta2(i,j  )-adfac
-#if defined VAR_RHO_2D && defined SOLVE3D
+#if defined VAR_RHO_2D_NOT_YET && defined SOLVE3D
               adfac1=adfac*(gzetaSA(i,j-1)+                             &
      &                      gzetaSA(i,j  )+                             &
      &                      cff2*(rhoA(i,j-1)-                          &
@@ -4354,7 +4368,7 @@
 !^   &                         h(i  ,j))*                               &
 !^   &                        (tl_gzeta(i-1,j)-                         &
 !^   &                         tl_gzeta(i  ,j))+                        &
-#if defined VAR_RHO_2D && defined SOLVE3D
+#if defined VAR_RHO_2D_NOT_YET && defined SOLVE3D
 !^   &                        (tl_h(i-1,j)-                             &
 !^   &                         tl_h(i  ,j))*                            &
 !^   &                        (gzetaSA(i-1,j)+                          &
@@ -4388,7 +4402,7 @@
             ad_gzeta(i  ,j)=ad_gzeta(i  ,j)-adfac2
             ad_gzeta2(i-1,j)=ad_gzeta2(i-1,j)+adfac
             ad_gzeta2(i  ,j)=ad_gzeta2(i  ,j)-adfac
-#if defined VAR_RHO_2D && defined SOLVE3D
+#if defined VAR_RHO_2D_NOT_YET && defined SOLVE3D
             adfac1=adfac*(gzetaSA(i-1,j)+                               &
      &                    gzetaSA(i  ,j)+                               &
      &                    cff2*(rhoA(i-1,j)-                            &
@@ -4446,8 +4460,32 @@
      &                       IminS, ImaxS, JminS, JmaxS,                &
      &                       krhs, kstp, knew,                          &
      &                       zeta, ad_zeta)
+
+#if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
+!
+!  Scale the bed change with the fast time stepping. The half is
+!  becasue we do predictor and corrector. The "ndtfast/nfast" is
+!  becasue we do "nfast" steps to here.
+!
+      fac=0.5_r8*dtfast(ng)*ndtfast(ng)/(nfast(ng)*dt(ng))
+      DO j=Jstr,Jend
+        DO i=Istr,Iend
+!^        tl_h(i,j)=tl_h(i,j)-tl_cff
+!^
+          ad_cff=ad_cff-ad_h(i,j)
+!^        tl_cff=fac*(tl_bed_thick(i,j,nstp)-tl_bed_thick(i,j,nnew))
+!^
+          adfac=fac*ad_cff
+          ad_bed_thick(i,j,nnew)=ad_bed_thick(i,j,nnew)-adfac
+          ad_bed_thick(i,j,nstp)=ad_bed_thick(i,j,nstp)+adfac
+          ad_cff=0.0_r8
+        END DO
+      END DO
+#endif
 !
 !  Apply adjoint mass point sources (volume vertical influx), if any.
+!
+!    Dsrc(is) = 2,  flow across grid cell w-face (positive or negative)
 !
         IF (LwSrc(ng)) THEN
           DO is=1,Nsrc(ng)
@@ -4539,14 +4577,14 @@
 !  and the corrector step is Backward-Euler. Otherwise, the predictor
 !  step is Leap-frog and the corrector step is Adams-Moulton.
 !
-#if defined VAR_RHO_2D && defined SOLVE3D
+#if defined VAR_RHO_2D_NOT_YET && defined SOLVE3D
         fac=1000.0_r8/rho0
 #endif
         IF (FIRST_2D_STEP) THEN
           cff1=dtfast(ng)
           DO j=JstrV-1,Jend
             DO i=IstrU-1,Iend
-#if defined VAR_RHO_2D && defined SOLVE3D
+#if defined VAR_RHO_2D_NOT_YET && defined SOLVE3D
 !^            tl_gzetaSA(i,j)=tl_zwrk(i,j)*(rhoS(i,j)-rhoA(i,j))+       &
 !^   &                        zwrk(i,j)*(tl_rhoS(i,j)-tl_rhoA(i,j))
 !^
@@ -4617,7 +4655,7 @@
           cff5=1.0_r8-2.0_r8*cff4
           DO j=JstrV-1,Jend
             DO i=IstrU-1,Iend
-#if defined VAR_RHO_2D && defined SOLVE3D
+#if defined VAR_RHO_2D_NOT_YET && defined SOLVE3D
 !^            tl_gzetaSA(i,j)=tl_zwrk(i,j)*(rhoS(i,j)-rhoA(i,j))+       &
 !^   &                        zwrk(i,j)*(tl_rhoS(i,j)-tl_rhoA(i,j))
 !^
@@ -4692,7 +4730,7 @@
           cff5=1.0_r8-cff4
           DO j=JstrV-1,Jend
             DO i=IstrU-1,Iend
-#if defined VAR_RHO_2D && defined SOLVE3D
+#if defined VAR_RHO_2D_NOT_YET && defined SOLVE3D
 !^            tl_gzetaSA(i,j)=tl_zwrk(i,j)*(rhoS(i,j)-rhoA(i,j))+       &
 !^   &                        zwrk(i,j)*(tl_rhoS(i,j)-tl_rhoA(i,j))
 !^
@@ -4929,7 +4967,7 @@
 !^
               ad_DUon(i,j)=ad_DUon(i,j)+                                &
      &                     cff2*ad_DU_avg2(i,j)
-# ifdef NEARSHORE_MELLOR
+# ifdef WEC_MELLOR
 !^            tl_DU_avg1(i,j)=tl_DU_avg1(i,j)-cff1*tl_DUSon(i,j)
 !^
               ad_DUSon(i,j)=ad_DUSon(i,j)-                              &
@@ -4947,7 +4985,7 @@
 !^
               ad_DVom(i,j)=ad_DVom(i,j)+                                &
      &                     cff2*ad_DV_avg2(i,j)
-# ifdef NEARSHORE_MELLOR
+# ifdef WEC_MELLOR
 !^            tl_DV_avg1(i,j)=tl_DV_avg1(i,j)-cff1*tl_DVSom(i,j)
 !^
               ad_DVSom(i,j)=ad_DVSom(i,j)-                              &
@@ -5061,7 +5099,7 @@
         DO i=IstrU-2,Iendp2
           cff=0.5_r8*om_v(i,j)
           cff1=cff*(Drhs(i,j)+Drhs(i,j-1))
-# ifdef NEARSHORE_MELLOR
+# ifdef WEC_MELLOR
 !^        tl_DVom(i,j)=tl_DVom(i,j)+tl_DVSom(i,j)
 !^
           ad_DVSom(i,j)=ad_DVSom(i,j)+ad_DVom(i,j)
@@ -5090,7 +5128,7 @@
         DO i=IstrU-1,Iendp2
           cff=0.5_r8*on_u(i,j)
           cff1=cff*(Drhs(i,j)+Drhs(i-1,j))
-# ifdef NEARSHORE_MELLOR
+# ifdef WEC_MELLOR
 !^        tl_DUon(i,j)=tl_DUon(i,j)+tl_DUSon(i,j)
 !^
           ad_DUSon(i,j)=ad_DUSon(i,j)+ad_DUon(i,j)
@@ -5134,7 +5172,7 @@
         DO i=IstrUm2-1,Iendp2
           cff=0.5_r8*om_v(i,j)
           cff1=cff*(Drhs(i,j)+Drhs(i,j-1))
-# ifdef NEARSHORE_MELLOR
+# ifdef WEC_MELLOR
 !^        tl_DVom(i,j)=tl_DVom(i,j)+tl_DVSom(i,j)
 !^
           ad_DVSom(i,j)=ad_DVSom(i,j)+ad_DVom(i,j)
@@ -5163,7 +5201,7 @@
         DO i=IstrUm2,Iendp2
           cff=0.5_r8*on_u(i,j)
           cff1=cff*(Drhs(i,j)+Drhs(i-1,j))
-# ifdef NEARSHORE_MELLOR
+# ifdef WEC_MELLOR
 !^        tl_DUon(i,j)=tl_DUon(i,j)+tl_DUSon(i,j)
 !^
           ad_DUSon(i,j)=ad_DUSon(i,j)+ad_DUon(i,j)

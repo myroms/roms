@@ -1,11 +1,10 @@
 #!/bin/csh -f
 #
 # git $Id$
-# svn $Id: build_cice.csh 1151 2023-02-09 03:08:53Z arango $
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Copyright (c) 2002-2023 The ROMS/TOMS Group                           :::
+# Copyright (c) 2002-2025 The ROMS Group                                :::
 #   Licensed under a MIT/X style license                                :::
-#   See License_ROMS.txt                                                :::
+#   See License_ROMS.md                                                 :::
 #::::::::::::::::::::::::::::::::::::::::::::::::::::: Hernan G. Arango :::
 #                                                                       :::
 # CICE Compiling CSH Script                                             :::
@@ -259,7 +258,7 @@ end
  setenv VPATH  "${VPATH} ${MY_CICE_SRC}/$IODIR"
  setenv VPATH  "${VPATH} ${MY_CICE_SRC}/$SHRDIR"
 
- setenv SCRATCH_DIR $OBJDIR           # ROMS make macros compatibility
+ setenv BUILD_DIR $OBJDIR           # ROMS make macros compatibility
 
 #--------------------------------------------------------------------------
 # Set CPP options passed to Makefile.

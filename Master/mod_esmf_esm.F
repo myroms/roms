@@ -1,12 +1,12 @@
 #include "cppdefs.h"
       MODULE mod_esmf_esm
-#if defined MODEL_COUPLING && defined ESMF_LIB
+#if defined MODEL_COUPLING && defined ESMF_LIB && !defined CMEPS
 !
-!svn $Id: mod_esmf_esm.F 1942 2023-06-17 16:35:13Z arango $
+!git $Id$
 !=======================================================================
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2025 The ROMS Group                              !
 !    Licensed under a MIT/X style license         Hernan G. Arango     !
-!    See License_ROMS.txt                         Ufuk Utku Turuncoglu !
+!    See License_ROMS.md                          Ufuk Utku Turuncoglu !
 !=======================================================================
 !                                                                      !
 !  This module defines the structures and variables for Earth System   !
@@ -526,7 +526,7 @@
 !
       integer :: DebugLevel = 0
 !
-!  Execution tracing flag:
+!  Execution tracng flag:
 !
 !    [0] no tracing
 !    [1] reports sequence of coupling subroutine calls
@@ -676,9 +676,9 @@
       real (r4), parameter :: MISSING_r4 = 1.0E20_r4
       real (r8), parameter :: MISSING_r8 = 1.0E20_r8
 
-      real (dp), parameter :: TOL_dp = 0.5E20_dp
-      real (r4), parameter :: TOL_r4 = 0.5E20_r4
-      real (r8), parameter :: TOL_r8 = 0.5E20_r8
+      real (dp), parameter :: TOL_dp = 0.001E20_dp
+      real (r4), parameter :: TOL_r4 = 0.001E20_r4
+      real (r8), parameter :: TOL_r8 = 0.001E20_r8
 !
       CONTAINS
 !
@@ -760,6 +760,9 @@
       IF (.not.allocated(ClockInfo)) THEN
         allocate ( ClockInfo(0:Nmodels) )
       END IF
+      DO i=0,Nmodels
+        ClockInfo(i)%Restarted=.FALSE.
+      END DO
 !
 !  Allocate MPI communicator handle for each ESM component.
 !
@@ -1066,7 +1069,7 @@
           END IF
         END IF
       END DO
-      IF (DebugLevel.gt.0) CALL my_flush (cplout)
+      IF (DebugLevel.gt.0) FLUSH (cplout)
 !
 !  Store the clock advance counter.
 !
@@ -1189,7 +1192,7 @@
       RETURN
   20  CLOSE (inp)
 !
-  30  FORMAT (/,' get_atm_Ngrids - Unable to open ROMS/TOMS input ',    &
+  30  FORMAT (/,' get_atm_Ngrids - Unable to open ROMS input ',         &
      &            'script file.',/,18x,a,/,18x,'ERROR: ',a)
   40  FORMAT (/,' get_atm_Ngrids - Invalid input parameter, ',a,i4,/,   &
      &        18x,a)
@@ -1291,7 +1294,7 @@
       RETURN
   20  CLOSE (inp)
 !
-  30  FORMAT (/,' get_roms_Ngrids - Unable to open ROMS/TOMS input ',   &
+  30  FORMAT (/,' get_roms_Ngrids - Unable to open ROMS input ',        &
      &          'script file.',/,19x,a,/,19x,a)
   40  FORMAT (/,' get_roms_Ngrids - Invalid input parameter, ',a,i4,/,  &
      &        14x,a)
@@ -1390,7 +1393,7 @@
 !
       USE mod_parallel,   ONLY : OCN_COMM_WORLD, MyRank
       USE mod_parallel,   ONLY : allocate_parallel, initialize_parallel
-      USE mod_iounits,    ONLY : Iname, SourceFile
+      USE mod_iounits,    ONLY : Iname, SourceFile, stdout
       USE mod_scalars,    ONLY : NoError, Rclock, exit_flag
       USE mod_strings,    ONLY : my_cpu, my_fc, my_fflags, my_fort,     &
      &                           my_os, Rdir
@@ -1403,6 +1406,7 @@
 # ifdef DISTRIBUTE
       USE distribute_mod, ONLY : mp_bcasts
 # endif
+      USE stdout_mod,     ONLY : Set_StdOutUnit, stdout_unit
       USE strings_mod,    ONLY : lowercase
 !
       implicit none
@@ -1416,7 +1420,7 @@
 !  Local variable declarations.
 !
       logical :: doit, first
-      logical :: Lwrite
+      logical :: Lwrite, MasterPET
       logical :: Lvalue(1)
       logical, allocatable :: LvalueA(:), LvalueI(:)
       logical, allocatable :: LvalueR(:), LvalueW(:)
@@ -1498,6 +1502,7 @@
      &                       file=MyFile)) THEN
         RETURN
       END IF
+      MasterPET=localPET.eq.0
 !
 !  Assign driver communicatior handle to ROMS temporarily. It is needed
 !  since here are using ROMS generic NetCDF and distributed-memory
@@ -1510,14 +1515,27 @@
 !
       PETrank=localPET
 !
+!  Set the ROMS standard output unit to write verbose execution info.
+!  Notice that the default standard out unit in Fortran is 6.
+!
+!  In some applications like coupling or disjointed mpi-communications,
+!  it is advantageous to write standard output to a specific filename
+!  instead of the default Fortran standard output unit 6. If that is
+!  the case, it opens such formatted file for writing.
+!
+      IF (Set_StdOutUnit) THEN
+        stdout=stdout_unit(MasterPET)
+        Set_StdOutUnit=.FALSE.
+      END IF
+!
 !  Open standard output unit for ESM coupler information and messages.
 !  It is advisable to have such infomation separated from other standard
 !  output from the coupled models.
 !
-      IF (localPET.eq.0) THEN
+!     IF (MasterPET) THEN
         OPEN (cplout, FILE=TRIM(CouplerLog), FORM='formatted',          &
      &        STATUS='replace')
-      END IF
+!     END IF
 !
 !-----------------------------------------------------------------------
 !  Determine coupling standard input filename.  In distributed-memory,
@@ -1526,7 +1544,7 @@
 !  is specified in this coupling script.
 !-----------------------------------------------------------------------
 !
-      Lwrite=localPET .eq. 0
+      Lwrite=MasterPET
       inp=100
       out=cplout
 !
@@ -3789,7 +3807,7 @@
 !
 !  Flush standard output buffer.
 !
-      CALL my_flush (out)
+      FLUSH (out)
 !
   70  FORMAT (80('-'),/,                                                &
      &        ' Earth System Models Coupling: ESMF/NUOPC Library,',     &
@@ -3816,7 +3834,7 @@
  170  FORMAT (7x,a,2x,a,t42,a)
  180  FORMAT (18x,i1,2x,a,t42,a,i2.2,'.')
  190  FORMAT (18x,i1,2x,a,t42,a,i2.2)
- 195  FORMAT (17x,i2.0,2x,a,t42,a,i2.2)
+ 195  FORMAT (17x,i2,2x,a,t42,a,i2.2)
  200  FORMAT (t42,2x,i2.2,':',1x,a)
  210  FORMAT (/,' read_ESMconfig - Invalid input parameter, ',a,        &
      &          ': ',i1)

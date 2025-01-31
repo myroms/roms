@@ -1,14 +1,13 @@
       MODULE roms_kernel_mod
 !
 !git $Id$
-!svn $Id: pert_roms.h 1166 2023-05-17 20:11:58Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group       Andrew M. Moore   !
+!  Copyright (c) 2002-2025 The ROMS Group            Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                                              !
+!    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
-!  ROMS/TOMS Tangent Linear and Adjoint Models Sanity Test:            !
+!  ROMS Tangent Linear and Adjoint Models Sanity Test:                 !
 !                                                                      !
 !  This driver is used to test the tangent linear model and adjoint    !
 !  models for ROMS.  It is used to check whether or not both models    !
@@ -45,7 +44,7 @@
 !     INT(user(8)) => J-index of adjoint variable to perturb           !
 !                                                                      !
 !  The subroutines in this driver control the initialization, time-    !
-!  stepping,  and  finalization of  ROMS/TOMS  model following ESMF    !
+!  stepping,  and  finalization of  ROMS  model following ESMF         !
 !  conventions:                                                        !
 !                                                                      !
 !     ROMS_initialize                                                  !
@@ -76,6 +75,7 @@
       USE mct_coupler_mod,   ONLY : initialize_ocn2wav_coupling
 # endif
 #endif
+      USE stdout_mod,        ONLY : Set_StdOutUnit, stdout_unit
       USE strings_mod,       ONLY : FoundError
       USE wrt_rst_mod,       ONLY : wrt_rst
 !
@@ -91,7 +91,7 @@
 !
 !=======================================================================
 !                                                                      !
-!  This routine allocates and initializes ROMS/TOMS state variables    !
+!  This routine allocates and initializes ROMS state variables         !
 !  and internal and external parameters.                               !
 !                                                                      !
 !=======================================================================
@@ -146,6 +146,19 @@
 !  independent from standard input parameters.
 !
         CALL initialize_parallel
+!
+!  Set the ROMS standard output unit to write verbose execution info.
+!  Notice that the default standard out unit in Fortran is 6.
+!
+!  In some applications like coupling or disjointed mpi-communications,
+!  it is advantageous to write standard output to a specific filename
+!  instead of the default Fortran standard output unit 6. If that is
+!  the case, it opens such formatted file for writing.
+!
+        IF (Set_StdOutUnit) THEN
+          stdout=stdout_unit(Master)
+          Set_StdOutUnit=.FALSE.
+        END IF
 !
 !  Read in model tunable parameters from standard input. Allocate and
 !  initialize variables in several modules after the number of nested
@@ -217,7 +230,7 @@
 !
 !=======================================================================
 !                                                                      !
-!  This routine time-steps ROMS/TOMS tangent linear and adjoint        !
+!  This routine time-steps ROMS tangent linear and adjoint             !
 !  models.                                                             !
 !                                                                      !
 !=======================================================================
@@ -643,7 +656,7 @@
 
       END DO PERT_LOOP
 !
- 10   FORMAT (/,1x,a,1x,'ROMS/TOMS: started time-stepping:',            &
+ 10   FORMAT (/,1x,a,1x,'ROMS: started time-stepping:',                 &
      &        ' (Grid: ',i2.2,' TimeSteps: ',i8.8,' - ',i8.8,')',/)
 #ifdef SANITY_CHECK
  20   FORMAT (/,' Sanity Check - ',a,' variable: ',a,t60)
@@ -667,7 +680,7 @@
 !
 !=======================================================================
 !                                                                      !
-!  This routine terminates ROMS/TOMS tangent linear and adjoint        !
+!  This routine terminates ROMS tangent linear and adjoint             !
 !  models execution.                                                   !
 !                                                                      !
 !=======================================================================

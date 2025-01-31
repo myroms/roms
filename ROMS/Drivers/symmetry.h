@@ -1,16 +1,15 @@
       MODULE roms_kernel_mod
 !
 !git $Id$
-!svn $Id: symmetry.h 1151 2023-02-09 03:08:53Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2025 The ROMS Group                              !
 !    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                                              !
+!    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
-!  ROMS/TOMS Representer Driver:                                       !
+!  ROMS Representer Driver:                                            !
 !                                                                      !
-!  This driver executes ROMS/TOMS weak constraint 4DVAR inner loop and !
+!  This driver executes ROMS weak constraint 4DVAR inner loop and      !
 !  checks the symmetry of the H R R' H' operator,  where R' and H' are !
 !  transpose of R and H, respectively. The  R' H'  term is computed by !
 !  integrating the adjoint model backwards while the  H R  is computed !
@@ -45,6 +44,7 @@
       USE get_state_mod,     ONLY : get_state
       USE inp_par_mod,       ONLY : inp_par
       USE normalization_mod, ONLY : normalization
+      USE stdout_mod,        ONLY : Set_StdOutUnit, stdout_unit
       USE strings_mod,       ONLY : FoundError
       USE tl_def_ini_mod,    ONLY : tl_def_ini
       USE wrt_impulse_mod,   ONLY : wrt_impulse
@@ -62,7 +62,7 @@
 !
 !=======================================================================
 !                                                                      !
-!  This routine allocates and initializes ROMS/TOMS state variables    !
+!  This routine allocates and initializes ROMS state variables         !
 !  and internal and external parameters.                               !
 !                                                                      !
 !=======================================================================
@@ -118,6 +118,19 @@
 !  independent from standard input parameters.
 !
         CALL initialize_parallel
+!
+!  Set the ROMS standard output unit to write verbose execution info.
+!  Notice that the default standard out unit in Fortran is 6.
+!
+!  In some applications like coupling or disjointed mpi-communications,
+!  it is advantageous to write standard output to a specific filename
+!  instead of the default Fortran standard output unit 6. If that is
+!  the case, it opens such formatted file for writing.
+!
+        IF (Set_StdOutUnit) THEN
+          stdout=stdout_unit(Master)
+          Set_StdOutUnit=.FALSE.
+        END IF
 !
 !  Read in model tunable parameters from standard input. Allocate and
 !  initialize variables in several modules after the number of nested
@@ -222,7 +235,7 @@
 !
 !=======================================================================
 !                                                                      !
-!  This routine time-steps ROMS/TOMS weak constraint 4DVAR inner loop. !
+!  This routine time-steps ROMS weak constraint 4DVAR inner loop.      !
 !                                                                      !
 !=======================================================================
 !
@@ -602,7 +615,7 @@
         END IF
       END DO
 !
- 10   FORMAT (/,1x,a,1x,'ROMS/TOMS: started time-stepping:',            &
+ 10   FORMAT (/,1x,a,1x,'ROMS: started time-stepping:',                 &
      &        ' (Grid: ',i2.2,' TimeSteps: ',i8.8,' - ',i8.8,')',/)
  20   FORMAT (/,1x,a,/,/,3x,a,' i = ',i4.4,' j = ',i4.4,' k = ',i4.4,   &
      &                 /,3x,a,' i = ',i4.4,' j = ',i4.4,' k = ',i4.4)
@@ -615,7 +628,7 @@
 !
 !=======================================================================
 !                                                                      !
-!  This routine terminates ROMS/TOMS nonlinear model execution.        !
+!  This routine terminates ROMS nonlinear model execution.             !
 !                                                                      !
 !=======================================================================
 !

@@ -3,11 +3,10 @@
 #if defined NONLINEAR && defined GLS_MIXING && defined SOLVE3D
 !
 !git $Id$
-!svn $Id: gls_prestep.F 1151 2023-02-09 03:08:53Z arango $
 !=======================================================================
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2025 The ROMS Group                              !
 !    Licensed under a MIT/X style license           Hernan G. Arango   !
-!    See License_ROMS.txt                   Alexander F. Shchepetkin   !
+!    See License_ROMS.md                    Alexander F. Shchepetkin   !
 !==================================================== John C. Warner ===
 !                                                                      !
 !  This routine perfoms the predictor step for turbulent kinetic       !
@@ -64,6 +63,9 @@
      &                       GRID(ng) % pm,                             &
      &                       GRID(ng) % pn,                             &
      &                       OCEAN(ng) % W,                             &
+# ifdef WEC_VF
+     &                       OCEAN(ng) % W_stokes,                      &
+# endif
      &                       MIXING(ng) % gls,                          &
      &                       MIXING(ng) % tke)
 # ifdef PROFILE
@@ -82,11 +84,13 @@
      &                             umask, vmask,                        &
 # endif
      &                             Huon, Hvom, Hz, pm, pn, W,           &
+# ifdef WEC_VF
+     &                             W_stokes,                            &
+# endif
      &                             gls, tke)
 !***********************************************************************
 !
       USE mod_param
-      USE mod_ncparam
       USE mod_scalars
 !
       USE exchange_3d_mod, ONLY : exchange_w3d_tile
@@ -113,7 +117,9 @@
       real(r8), intent(in) :: pm(LBi:,LBj:)
       real(r8), intent(in) :: pn(LBi:,LBj:)
       real(r8), intent(in) :: W(LBi:,LBj:,0:)
-
+# ifdef WEC_VF
+      real(r8), intent(in) :: W_stokes(LBi:,LBj:,0:)
+# endif
       real(r8), intent(inout) :: gls(LBi:,LBj:,0:,:)
       real(r8), intent(inout) :: tke(LBi:,LBj:,0:,:)
 # else
@@ -127,7 +133,9 @@
       real(r8), intent(in) :: pm(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: pn(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: W(LBi:UBi,LBj:UBj,0:N(ng))
-
+# ifdef WEC_VF
+      real(r8), intent(in) :: W_stokes(LBi:UBi,LBj:UBj,0:N(ng))
+# endif
       real(r8), intent(inout) :: gls(LBi:UBi,LBj:UBj,0:N(ng),3)
       real(r8), intent(inout) :: tke(LBi:UBi,LBj:UBj,0:N(ng),3)
 # endif
@@ -330,6 +338,9 @@
         DO k=1,N(ng)
           DO i=Istr,Iend
             CF(i,k)=0.5_r8*(W(i,j,k)+W(i,j,k-1))
+#  ifdef WEC_VF
+            CF(i,k)=CF(i,k)+0.5_r8*(W_stokes(i,j,k)+W_stokes(i,j,k-1))
+#  endif
             FC (i,k)=CF(i,k)*                                           &
      &               0.5_r8*(tke(i,j,k-1,nstp)+tke(i,j,k,nstp))
             FCL(i,k)=CF(i,k)*                                           &
@@ -342,6 +353,9 @@
         DO k=2,N(ng)-1
           DO i=Istr,Iend
             CF(i,k)=0.5_r8*(W(i,j,k)+W(i,j,k-1))
+#  ifdef WEC_VF
+            CF(i,k)=CF(i,k)+0.5_r8*(W_stokes(i,j,k)+W_stokes(i,j,k-1))
+#  endif
             FC (i,k)=CF(i,k)*(cff1*(tke(i,j,k-1,nstp)+                  &
      &                              tke(i,j,k  ,nstp))-                 &
      &                        cff2*(tke(i,j,k-2,nstp)+                  &
@@ -357,6 +371,9 @@
         cff3=1.0_r8/6.0_r8
         DO i=Istr,Iend
           CF(i,1)=0.5*(W(i,j,0)+W(i,j,1))
+#  ifdef WEC_VF
+          CF(i,1)=CF(i,1)+0.5_r8*(W_stokes(i,j,0)+W_stokes(i,j,1))
+#  endif
           FC (i,1)=CF(i,1)*(cff1*tke(i,j,0,nstp)+                       &
      &                      cff2*tke(i,j,1,nstp)-                       &
      &                      cff3*tke(i,j,2,nstp))
@@ -364,6 +381,10 @@
      &                      cff2*gls(i,j,1,nstp)-                       &
      &                      cff3*gls(i,j,2,nstp))
           CF(i,N(ng))=0.5*(W(i,j,N(ng))+W(i,j,N(ng)-1))
+#  ifdef WEC_VF
+          CF(i,N(ng))=CF(i,N(ng))+0.5_r8*                               &
+     &                (W_stokes(i,j,N(ng))+W_stokes(i,j,N(ng)-1))
+#  endif
           FC (i,N(ng))=CF(i,N(ng))*(cff1*tke(i,j,N(ng)  ,nstp)+         &
      &                              cff2*tke(i,j,N(ng)-1,nstp)-         &
      &                              cff3*tke(i,j,N(ng)-2,nstp))

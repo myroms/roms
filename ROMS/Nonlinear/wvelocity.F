@@ -3,11 +3,10 @@
 #ifdef SOLVE3D
 !
 !git $Id$
-!svn $Id: wvelocity.F 1151 2023-02-09 03:08:53Z arango $
 !=======================================================================
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2025 The ROMS Group                              !
 !    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                           Hernan G. Arango   !
+!    See License_ROMS.md                            Hernan G. Arango   !
 !========================================== Alexander F. Shchepetkin ===
 !                                                                      !
 !  This subroutines computes vertical velocity (m/s) at W-points       !
@@ -54,6 +53,9 @@
      &                     OCEAN(ng) % u,                               &
      &                     OCEAN(ng) % v,                               &
      &                     OCEAN(ng) % W,                               &
+# ifdef OMEGA_IMPLICIT
+     &                     OCEAN(ng) % Wi,                              &
+# endif
      &                     OCEAN(ng) % wvel)
       RETURN
       END SUBROUTINE wvelocity
@@ -66,6 +68,9 @@
      &                           pm, pn, z_r, z_w,                      &
      &                           DU_avg1, DV_avg1,                      &
      &                           u, v, W,                               &
+# ifdef OMEGA_IMPLICIT
+     &                           Wi,                                    &
+# endif
      &                           wvel)
 !***********************************************************************
 !
@@ -96,6 +101,9 @@
       real(r8), intent(in) :: u(LBi:,LBj:,:,:)
       real(r8), intent(in) :: v(LBi:,LBj:,:,:)
       real(r8), intent(in) :: W(LBi:,LBj:,0:)
+#  ifdef OMEGA_IMPLICIT
+      real(r8), intent(in) :: Wi(LBi:,LBj:,0:)
+#  endif
       real(r8), intent(out) :: wvel(LBi:,LBj:,0:)
 # else
       real(r8), intent(in) :: pm(LBi:UBi,LBj:UBj)
@@ -107,6 +115,9 @@
       real(r8), intent(in) :: u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(in) :: v(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(in) :: W(LBi:UBi,LBj:UBj,0:N(ng))
+#  ifdef OMEGA_IMPLICIT
+      real(r8), intent(in) :: Wi(LBi:UBi,LBj:UBj,0:N(ng))
+#  endif
       real(r8), intent(out) :: wvel(LBi:UBi,LBj:UBj,0:N(ng))
 # endif
 !
@@ -217,6 +228,9 @@
      &                cff3*vert(i,j,2)
           wvel(i,j,1)=pm(i,j)*pn(i,j)*                                  &
      &                (W(i,j,1)+                                        &
+# ifdef OMEGA_IMPLICIT
+     &                 Wi(i,j,1)+                                       &
+# endif
      &                 wrk(i,j)*(z_w(i,j,1)-z_w(i,j,0)))+               &
      &                cff1*vert(i,j,1)+                                 &
      &                cff2*vert(i,j,2)-                                 &
@@ -226,6 +240,9 @@
           DO i=Istr,Iend
             wvel(i,j,k)=pm(i,j)*pn(i,j)*                                &
      &                  (W(i,j,k)+                                      &
+# ifdef OMEGA_IMPLICIT
+     &                   Wi(i,j,k)+                                     &
+# endif
      &                   wrk(i,j)*(z_w(i,j,k)-z_w(i,j,0)))+             &
      &                  cff4*(vert(i,j,k  )+vert(i,j,k+1))-             &
      &                  cff5*(vert(i,j,k-1)+vert(i,j,k+2))
@@ -243,6 +260,9 @@
      &                    cff3*vert(i,j,N(ng)-1)
           wvel(i,j,N(ng)-1)=pm(i,j)*pn(i,j)*                            &
      &                      (W(i,j,N(ng)-1)+                            &
+# ifdef OMEGA_IMPLICIT
+     &                       Wi(i,j,N(ng)-1)+                           &
+# endif
      &                       wrk(i,j)*(z_w(i,j,N(ng)-1)-z_w(i,j,0)))+   &
      &                      cff1*vert(i,j,N(ng)  )+                     &
      &                      cff2*vert(i,j,N(ng)-1)-                     &

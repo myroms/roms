@@ -1,9 +1,8 @@
-# git $Id: roms_compiler_flags.cmake 1171 2023-06-17 16:36:36Z arango $
-# svn $Id: roms_compiler_flags.cmake 1171 2023-06-17 16:36:36Z arango $
+# git $Id$
 #:::::::::::::::::::::::::::::::::::::::::::::::::::::: David Robertson :::
-# Copyright (c) 2002-2023 The ROMS/TOMS Group                           :::
+# Copyright (c) 2002-2025 The ROMS Group                                :::
 #   Licensed under a MIT/X style license                                :::
-#   See License_ROMS.txt                                                :::
+#   See License_ROMS.md                                                 :::
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 #
 # CMake Fortran Compiler Flags.
@@ -44,5 +43,5 @@ endif()
 string( TOUPPER ${my_os} OS )
 string( TOUPPER ${my_cpu} CPU )
 string( TOUPPER ${my_fort} FORT )
-add_definitions ( -D${OS} -D${CPU} -D${FORT} )
+add_compile_definitions ( ${OS} ${CPU} ${FORT} )
 

@@ -2,11 +2,10 @@
       MODULE nf_fread2d_mod
 !
 !git $Id$
-!svn $Id: nf_fread2d.F 1159 2023-03-24 23:49:03Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2025 The ROMS Group                              !
 !    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                                              !
+!    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
 !  This function reads in a generic floating point 2D array from an    !
@@ -87,12 +86,15 @@
 # ifdef MASKING
      &                       Amask,                                     &
 # endif
-     &                       Adat, checksum, Lregrid) RESULT (status)
+     &                       Adat,                                      &
+     &                       checksum,                                  &
+     &                       Lregrid) RESULT (status)
 !***********************************************************************
 !
       USE mod_netcdf
 !
       USE distribute_mod, ONLY : mp_bcasti, mp_collect, mp_reduce
+      USE get_bounds_mod, ONLY : tile_bounds_1d, tile_bounds_2d
       USE regrid_mod,     ONLY : regrid_nf90
 !
 !  Imported variable declarations.
@@ -713,7 +715,9 @@
 # ifdef MASKING
      &                       Amask,                                     &
 # endif
-     &                       Adat, checksum, Lregrid) RESULT (status)
+     &                       Adat,                                      &
+     &                       checksum,                                  &
+     &                       Lregrid) RESULT (status)
 !***********************************************************************
 !
       USE mod_netcdf
@@ -1261,7 +1265,9 @@
 # ifdef MASKING
      &                      Amask,                                      &
 # endif
-     &                      Adat, checksum, Lregrid) RESULT (status)
+     &                      Adat,                                       &
+     &                      checksum,                                   &
+     &                      Lregrid) RESULT (status)
 !***********************************************************************
 !
       USE mod_pio_netcdf

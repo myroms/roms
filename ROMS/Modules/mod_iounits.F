@@ -2,11 +2,10 @@
       MODULE mod_iounits
 !
 !git $Id$
-!svn $Id: mod_iounits.F 1151 2023-02-09 03:08:53Z arango $
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2025 The ROMS Group                              !
 !    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                                              !
+!    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
 !  The input and output files information is stored in compact derived !
@@ -37,6 +36,7 @@
 !    FRC       Input forcing data                                      !
 !    FWD       Input basic state forward solution                      !
 !    GRD       Input grid data                                         !
+!    GRX       Input grid for extracted history data                   !
 !    GST       Input/output GST analysis check pointing data           !
 !    HAR       Output detiding least-squares harmonics coefficients    !
 !    HIS       Output nonlinear model history data                     !
@@ -73,11 +73,13 @@
 #endif
 !    SSF       Input Sources/Sinks forcing (river runoff)              !
 !    STA       Output station data                                     !
-!    STD       Input error covariance standard deviations              !
+!    STD       Error covariance standard deviations                    !
 !                STD(1,ng)  initial conditions                         !
 !                STD(2,ng)  model error                                !
 !                STD(3,ng)  lateral open boundary conditions           !
 !                STD(4,ng)  surface forcing                            !
+!                STD(5,ng)  computed from background (output)          !
+!    XTR       Output extracted history fields                         !
 !                                                                      !
 !  Input/output information files:                                     !
 !                                                                      !
@@ -89,6 +91,7 @@
 !  bparnam     Input biology parameters filename.                      !
 !  fbionam     Input floats biological behavior parameters filename.   !
 !  fposnam     Input initial floats positions filename.                !
+!  iparnam     Input ice parameters file name.                         !
 !  sparnam     Input sediment transport parameters filename.           !
 !  sposnam     Input station positions file name.                      !
 !  varname     Input IO variables information file name.               !
@@ -189,7 +192,7 @@
 !  I/O units.
 !
       integer :: stdinp = 5                 ! standard input
-      integer :: stdout = 6                 ! standard output
+      integer :: stdout                     ! standard output, usually 6
       integer :: usrout = 10                ! generic user unit
 !
 !  I/O files management, derived type structures.
@@ -212,7 +215,8 @@
       TYPE(T_IO), allocatable :: FOIB(:)    ! observation impacts, B
 #endif
       TYPE(T_IO), allocatable :: FWD(:)     ! forward solution
-      TYPE(T_IO), allocatable :: GRD(:)     ! grid data
+      TYPE(T_IO), allocatable :: GRD(:)     ! grid geometry data
+      TYPE(T_IO), allocatable :: GRX(:)     ! grid for extrated fields
       TYPE(T_IO), allocatable :: GST(:)     ! generalized stability
       TYPE(T_IO), allocatable :: HAR(:)     ! detiding harmonics
       TYPE(T_IO), allocatable :: HIS(:)     ! NLM history fields
@@ -244,6 +248,7 @@
       TYPE(T_IO), allocatable :: TIDE(:)    ! tidal forcing
       TYPE(T_IO), allocatable :: TLF(:)     ! TLM impulse fields
       TYPE(T_IO), allocatable :: TLM(:)     ! TLM history fields
+      TYPE(T_IO), allocatable :: XTR(:)     ! extracted history fields
 !
 !  Input boundary condition data.
 !
@@ -278,15 +283,15 @@
 !  Error messages.
 !
       character (len=50), dimension(9) :: Rerror =                      &
-     &       (/ ' ROMS/TOMS - Blows up ................ exit_flag: ',   &
-     &          ' ROMS/TOMS - Input error ............. exit_flag: ',   &
-     &          ' ROMS/TOMS - Output error ............ exit_flag: ',   &
-     &          ' ROMS/TOMS - I/O error ............... exit_flag: ',   &
-     &          ' ROMS/TOMS - Configuration error ..... exit_flag: ',   &
-     &          ' ROMS/TOMS - Partition error ......... exit_flag: ',   &
-     &          ' ROMS/TOMS - Illegal input parameter . exit_flag: ',   &
-     &          ' ROMS/TOMS - Fatal algorithm result .. exit_flag: ',   &
-     &          ' ROMS/TOMS - Coupling error .......... exit_flag: ' /)
+     &       (/ ' ROMS - Blows up ................ exit_flag: ',        &
+     &          ' ROMS - Input error ............. exit_flag: ',        &
+     &          ' ROMS - Output error ............ exit_flag: ',        &
+     &          ' ROMS - I/O error ............... exit_flag: ',        &
+     &          ' ROMS - Configuration error ..... exit_flag: ',        &
+     &          ' ROMS - Partition error ......... exit_flag: ',        &
+     &          ' ROMS - Illegal input parameter . exit_flag: ',        &
+     &          ' ROMS - Fatal algorithm result .. exit_flag: ',        &
+     &          ' ROMS - Coupling error .......... exit_flag: ' /)
 !
 !  Standard input scripts file names.
 !
@@ -298,6 +303,7 @@
       character (len=256) :: bparnam        ! biology model parameters
       character (len=256) :: fbionam        ! floats behavior parameters
       character (len=256) :: fposnam        ! floats positions
+      character (len=256) :: iparnam        ! ice model parameters
       character (len=256) :: sparnam        ! sediment model parameters
       character (len=256) :: sposnam        ! station positions
       character (len=256) :: varname        ! I/O metadata
@@ -385,6 +391,9 @@
       IF (.not.allocated(GRD)) THEN
         allocate ( GRD(Ngrids) )
       END IF
+      IF (.not.allocated(GRX)) THEN
+        allocate ( GRX(Ngrids) )
+      END IF
       IF (.not.allocated(GST)) THEN
         allocate ( GST(Ngrids) )
       END IF
@@ -464,12 +473,15 @@
       IF (.not.allocated(TLM)) THEN
         allocate ( TLM(Ngrids) )
       END IF
+      IF (.not.allocated(XTR)) THEN
+        allocate ( XTR(Ngrids) )
+      END IF
 
       IF (.not.allocated(NRM)) THEN
         allocate ( NRM(4,Ngrids) )
       END IF
       IF (.not.allocated(STD)) THEN
-        allocate ( STD(4,Ngrids) )
+        allocate ( STD(5,Ngrids) )
       END IF
 !
 !-----------------------------------------------------------------------
@@ -510,6 +522,7 @@
 #endif
         FWD(ng)%ncid=-1
         GRD(ng)%ncid=-1
+        GRX(ng)%ncid=-1
         GST(ng)%ncid=-1
         HAR(ng)%ncid=-1
         HIS(ng)%ncid=-1
@@ -532,12 +545,10 @@
         STA(ng)%ncid=-1
         TLF(ng)%ncid=-1
         TLM(ng)%ncid=-1
-
         TIDE(ng)%ncid=-1
-
+        XTR(ng)%ncid=-1
         NRM(1:4,ng)%ncid=-1
-        STD(1:4,ng)%ncid=-1
-
+        STD(1:5,ng)%ncid=-1
         nBCfiles(ng)=-1
         nCLMfiles(ng)=-1
         nFfiles(ng)=-1
@@ -613,6 +624,10 @@
           GRD(ng)%head(i:i)=blank
           GRD(ng)%base(i:i)=blank
           GRD(ng)%name(i:i)=blank
+
+          GRX(ng)%head(i:i)=blank
+          GRX(ng)%base(i:i)=blank
+          GRX(ng)%name(i:i)=blank
 
           GST(ng)%head(i:i)=blank
           GST(ng)%base(i:i)=blank
@@ -700,13 +715,17 @@
           TIDE(ng)%base(i:i)=blank
           TIDE(ng)%name(i:i)=blank
 
+          XTR(ng)%head(i:i)=blank
+          XTR(ng)%base(i:i)=blank
+          XTR(ng)%name(i:i)=blank
+
           NRM(1:4,ng)%head(i:i)=blank
           NRM(1:4,ng)%base(i:i)=blank
           NRM(1:4,ng)%name(i:i)=blank
 
-          STD(1:4,ng)%head(i:i)=blank
-          STD(1:4,ng)%base(i:i)=blank
-          STD(1:4,ng)%name(i:i)=blank
+          STD(1:5,ng)%head(i:i)=blank
+          STD(1:5,ng)%base(i:i)=blank
+          STD(1:5,ng)%name(i:i)=blank
         END DO
       END DO
 !
@@ -762,6 +781,7 @@
 
       IF (allocated(FWD))       deallocate ( FWD )
       IF (allocated(GRD))       deallocate ( GRD )
+      IF (allocated(GRX))       deallocate ( GRX )
       IF (allocated(GST))       deallocate ( GST )
       IF (allocated(HAR))       deallocate ( HAR )
       IF (allocated(HIS))       deallocate ( HIS )
@@ -795,6 +815,7 @@
       IF (allocated(TIDE))      deallocate ( TIDE )
       IF (allocated(TLF))       deallocate ( TLF )
       IF (allocated(TLM))       deallocate ( TLM )
+      IF (allocated(XTR))       deallocate ( XTR )
 
       IF (allocated(NRM))       deallocate ( NRM )
       IF (allocated(STD))       deallocate ( STD )

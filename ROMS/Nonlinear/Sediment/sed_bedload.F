@@ -8,11 +8,10 @@
 #if defined NONLINEAR && defined SEDIMENT && defined BEDLOAD
 !
 !git $Id$
-!svn $Id: sed_bedload.F 1151 2023-02-09 03:08:53Z arango $
 !==================================================== John C. Warner ===
-!  Copyright (c) 2002-2023 The ROMS/TOMS Group      Hernan G. Arango   !
+!  Copyright (c) 2002-2025 The ROMS Group           Hernan G. Arango   !
 !    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                                              !
+!    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
 !  This routine computes sediment bedload transport using the Meyer-   !
@@ -259,7 +258,7 @@
       real(r8), intent(in) :: angler(LBi:UBi,LBj:UBj)
 #  endif
 #  if defined SED_MORPH
-      real(r8), intent(inout):: bed_thick(LBi:UBi,LBj:UBj,2)
+      real(r8), intent(inout):: bed_thick(LBi:UBi,LBj:UBj,3)
 #  endif
 #  if defined BEDLOAD_MPM || defined BEDLOAD_SOULSBY
       real(r8), intent(in) :: h(LBi:UBi,LBj:UBj)
