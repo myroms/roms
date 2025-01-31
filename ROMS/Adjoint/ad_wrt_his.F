@@ -842,7 +842,7 @@
         END IF
       END IF
 #  endif
-#  ifdef UV_DESTAGGERED
+#  if defined JEDI || defined UV_DESTAGGERED
 !
 !  Write out 3D Eastward momentum (m/s) at RHO-points, A-grid.
 !
@@ -1292,7 +1292,7 @@
 # if defined PIO_LIB && defined DISTRIBUTE
 !
 !***********************************************************************
-      SUBROUTINE ad_wrt_his_pio (ng, tile,                              &
+      SUBROUTINE ad_wrt_his_pio (ng, model, tile,                       &
 #  ifdef ADJUST_BOUNDARY
      &                           LBij, UBij,                            &
 #  endif
@@ -1303,7 +1303,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, tile
+      integer, intent(in) :: ng, model, tile
 #  ifdef ADJUST_BOUNDARY
       integer, intent(in) :: LBij, UBij
 #  endif
@@ -2087,7 +2087,7 @@
         END IF
       END IF
 #   endif
-#   ifdef UV_DESTAGGERED
+#   if defined JEDI || defined UV_DESTAGGERED
 !
 !  Write out 3D Eastward momentum (m/s) at RHO-points, A-grid
 !
