@@ -1370,6 +1370,13 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+12)=' ICE_ADVECT,'
 # endif
+# ifdef ICE_ALBEDO
+!
+      IF (Master) WRITE (stdout,20) 'ICE_ALB_EC92',                     &
+     &   'Surface albedo computation over seawater, snow, or ice'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+12)=' ICE_ALBEDO,'
+# endif
 # ifdef ICE_ALB_EC92
 !
       IF (Master) WRITE (stdout,20) 'ICE_ALB_EC92',                     &
