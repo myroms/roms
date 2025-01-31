@@ -37,6 +37,9 @@
 # endif
       USE mod_ocean
       USE mod_stepping
+# ifdef VEGETATION
+      USE mod_vegarr
+# endif
 !
       USE pre_step3d_mod, ONLY : pre_step3d
       USE prsgrd_mod, ONLY : prsgrd
@@ -59,6 +62,9 @@
 #  if defined BOTTOM_STREAMING || defined SURFACE_STREAMING
       USE wec_streaming_mod, ONLY : wec_streaming
 #  endif
+# endif
+# if defined VEGETATION && defined VEG_DRAG
+     USE vegetation_drag_mod, ONLY : vegetation_drag_cal
 # endif
 !
 !  Imported variable declarations.
@@ -115,6 +121,16 @@
       CALL t3dmix4 (ng, tile)
 #  endif
 # endif
+
+# if defined VEGETATION && defined VEG_DRAG
+
+!-----------------------------------------------------------------------
+!  Add the effect of vegetation on the momentum terms.
+!-----------------------------------------------------------------------
+!
+      CALL vegetation_drag_cal (ng, tile)
+# endif
+
 !
 !-----------------------------------------------------------------------
 !  Compute right-hand-side terms for the 3D momentum equations.
@@ -152,6 +168,10 @@
      &                 OCEAN(ng) % u,                                   &
      &                 OCEAN(ng) % v,                                   &
      &                 OCEAN(ng) % W,                                   &
+# if defined VEGETATION && defined VEG_DRAG
+     &                 VEG(ng) % ru_veg,                                &
+     &                 VEG(ng) % rv_veg,                                &
+# endif	 
 # ifdef WEC
      &                 OCEAN(ng) % u_stokes,                            &
      &                 OCEAN(ng) % v_stokes,                            &
@@ -209,6 +229,9 @@
      &                       bustr, bvstr,                              &
      &                       sustr, svstr,                              &
      &                       u, v, W,                                   &
+# if defined VEGETATION && defined VEG_DRAG
+     &                       ru_veg, rv_veg,                            &
+# endif	 
 # ifdef WEC
      &                       u_stokes, v_stokes, W_stokes,              &
      &                       rustr3d, rvstr3d,                          &
@@ -258,6 +281,10 @@
       real(r8), intent(in) :: u(LBi:,LBj:,:,:)
       real(r8), intent(in) :: v(LBi:,LBj:,:,:)
       real(r8), intent(in) :: W(LBi:,LBj:,0:)
+#  if defined VEGETATION && defined VEG_DRAG
+      real(r8), intent(in) :: ru_veg(LBi:,LBj:,:)
+      real(r8), intent(in) :: rv_veg(LBi:,LBj:,:)
+#  endif	 
 #  ifdef WEC
       real(r8), intent(in) :: u_stokes(LBi:,LBj:,:)
       real(r8), intent(in) :: v_stokes(LBi:,LBj:,:)
@@ -302,6 +329,10 @@
       real(r8), intent(in) :: u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(in) :: v(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(in) :: W(LBi:UBi,LBj:UBj,0:N(ng))
+# if defined VEGETATION && defined VEG_DRAG
+      real(r8), intent(in) :: ru_veg(LBi:UBi,LBj:UBj,N(ng))
+      real(r8), intent(in) :: rv_veg(LBi:UBi,LBj:UBj,N(ng))
+# endif	 
 #  ifdef WEC
       real(r8), intent(in) :: u_stokes(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(in) :: v_stokes(LBi:UBi,LBj:UBj,N(ng))
@@ -329,6 +360,7 @@
       real(r8), parameter :: Gadv = -0.25_r8
 
       real(r8) :: cff, cff1, cff2, cff3, cff4
+      real(r8) :: cff5, cff6, cff7, cff8
       real(r8) :: fac, fac1, fac2
 
       real(r8), dimension(IminS:ImaxS,0:N(ng)) :: CF
@@ -494,6 +526,36 @@
         END DO
       END DO
 # endif
+!
+#  if defined VEGETATION && defined VEG_DRAG
+!
+!-----------------------------------------------------------------------
+!  Resistance imposed on the flow by the submerged (seagrass) 
+!  or emergent (marsh) vegetation.
+!-----------------------------------------------------------------------
+!
+      DO k=1,N(ng)
+! Interpolate at cell face	
+        DO j=Jstr,Jend
+          DO i=IstrU,Iend
+            cff=ru_veg(i,j,k)*om_u(i,j)*on_u(i,j)
+            ru(i,j,k,nrhs)=ru(i,j,k,nrhs)-cff
+#  ifdef DIAGNOSTICS_UV
+            DiaRU(i,j,k,nrhs,M3fveg)=-cff
+#  endif
+          END DO
+        END DO
+        DO j=JstrV,Jend
+          DO i=Istr,Iend
+            cff=rv_veg(i,j,k)*om_v(i,j)*on_v(i,j)
+            rv(i,j,k,nrhs)=rv(i,j,k,nrhs)-cff
+#  ifdef DIAGNOSTICS_UV
+            DiaRV(i,j,k,nrhs,M3fveg)=-cff
+#  endif
+          END DO
+        END DO
+      END DO  
+#  endif
 !
       K_LOOP : DO k=1,N(ng)
 
@@ -1739,6 +1801,9 @@
           DiaRUfrc(i,j,3,M2yvis)=0.0_r8
           DiaRUfrc(i,j,3,M2hvis)=0.0_r8
 #  endif
+#  if defined VEGETATION && defined VEG_DRAG
+          DiaRUfrc(i,j,3,M2fveg)=DiaRU(i,j,1,nrhs,M3fveg)
+#  endif
 #  ifdef BODYFORCE
 !!        DiaRUfrc(i,j,3,M2strs)=DiaRU(i,j,1,nrhs,M3vvis)
 #  endif
@@ -1786,6 +1851,10 @@
      &                             DiaRU(i,j,k,nrhs,M3wrol)
             DiaRUfrc(i,j,3,M2wbrk)=DiaRUfrc(i,j,3,M2wbrk)+              &
      &                             DiaRU(i,j,k,nrhs,M3wbrk)
+#  endif
+#  if defined VEGETATION && defined VEG_DRAG
+            DiaRUfrc(i,j,3,M2fveg)=DiaRUfrc(i,j,3,M2fveg)+              &
+     &                             DiaRU(i,j,k,nrhs,M3fveg)
 #  endif
 #  ifdef BODYFORCE
 !!          DiaRUfrc(i,j,3,M2strs)=DiaRUfrc(i,j,3,M2strs)+              &
@@ -1845,6 +1914,9 @@
             DiaRVfrc(i,j,3,M2xvis)=0.0_r8
             DiaRVfrc(i,j,3,M2yvis)=0.0_r8
 #  endif
+#  if defined VEGETATION && defined VEG_DRAG
+            DiaRVfrc(i,j,3,M2fveg)=DiaRV(i,j,1,nrhs,M3fveg)
+#  endif
 #  ifdef BODYFORCE
 !           DiaRVfrc(i,j,3,M2strs)=DiaRV(i,j,1,nrhs,M3vvis)
 #  endif
@@ -1892,6 +1964,10 @@
      &                               DiaRV(i,j,k,nrhs,M3wrol)
               DiaRVfrc(i,j,3,M2wbrk)=DiaRVfrc(i,j,3,M2wbrk)+            &
      &                               DiaRV(i,j,k,nrhs,M3wbrk)
+#  endif
+#  if defined VEGETATION && defined VEG_DRAG
+              DiaRVfrc(i,j,3,M2fveg)=DiaRVfrc(i,j,3,M2fveg)+            &
+     &                               DiaRV(i,j,k,nrhs,M3fveg)
 #  endif
 #  ifdef BODYFORCE
 !!            DiaRVfrc(i,j,3,M2strs)=DiaRVfrc(i,j,3,M2strs)+            &

@@ -405,6 +405,20 @@
       END DO
 #endif
 
+#if defined ANA_VEGETATION && defined SOLVE3D
+!
+!  Analytical initial conditions for vegetation types.
+!
+      DO ng=1,Ngrids
+        IF (nrrec(ng).eq.0) THEN
+          DO tile=first_tile(ng),last_tile(ng),+1
+            CALL ana_vegetation (ng, tile, iNLM)
+          END DO
+!$OMP BARRIER
+        END IF
+      END DO
+#endif
+
 #if defined INI_FILE && !defined RBL4DVAR_FCT_SENSITIVITY
 !
 !  Read in initial conditions from initial NetCDF file.
