@@ -628,15 +628,29 @@
 !
         DO j=Jstr,Jend
           DO i=Istr,Iend
+!RRHvvv
+!see "At entry,..." comment below and execution of it in gls_prestep.F
+!If minimum needs to be applied it needs a factor of Hz, which could be O(100)m
+            cff1=0.5_r8*(Hz(i,j,k)+Hz(i,j,k+1))
+!RRH^^^
+
             cff=dt(ng)*pm(i,j)*pn(i,j)
             tke(i,j,k,nnew)=tke(i,j,k,nnew)-                            &
      &                      cff*(FXK(i+1,j)-FXK(i,j)+                   &
      &                           FEK(i,j+1)-FEK(i,j))
-            tke(i,j,k,nnew)=MAX(tke(i,j,k,nnew),gls_Kmin(ng))
+!RRHvvv
+!           tke(i,j,k,nnew)=MAX(tke(i,j,k,nnew),gls_Kmin(ng))
+            tke(i,j,k,nnew)=MAX(tke(i,j,k,nnew),cff1*gls_Kmin(ng))
+!RRH^^^
+
             gls(i,j,k,nnew)=gls(i,j,k,nnew)-                            &
      &                      cff*(FXP(i+1,j)-FXP(i,j)+                   &
      &                           FEP(i,j+1)-FEP(i,j))
-            gls(i,j,k,nnew)=MAX(gls(i,j,k,nnew),gls_Pmin(ng))
+!RRHvvv
+!           gls(i,j,k,nnew)=MAX(gls(i,j,k,nnew),gls_Pmin(ng))
+            gls(i,j,k,nnew)=MAX(gls(i,j,k,nnew),cff1*gls_Pmin(ng))
+!RRH^^^
+
           END DO
         END DO
       END DO
@@ -705,13 +719,25 @@
 !
         DO k=1,N(ng)-1
           DO i=Istr,Iend
+!RRHvvv
+!see "At entry,..." comment below and execution of it in gls_prestep.F
+!If minimum needs to be applied it needs a factor of Hz, which could be O(100)m
+            cff1=0.5_r8*(Hz(i,j,k)+Hz(i,j,k+1))
+!RRH^^^
             cff=dt(ng)*pm(i,j)*pn(i,j)
             tke(i,j,k,nnew)=tke(i,j,k,nnew)-                            &
      &                      cff*(FCK(i,k+1)-FCK(i,k))
-            tke(i,j,k,nnew)=MAX(tke(i,j,k,nnew),gls_Kmin(ng))
+!RRHvvv
+!           tke(i,j,k,nnew)=MAX(tke(i,j,k,nnew),gls_Kmin(ng))
+            tke(i,j,k,nnew)=MAX(tke(i,j,k,nnew),cff1*gls_Kmin(ng))
+!RRH^^^
             gls(i,j,k,nnew)=gls(i,j,k,nnew)-                            &
      &                      cff*(FCP(i,k+1)-FCP(i,k))
-            gls(i,j,k,nnew)=MAX(gls(i,j,k,nnew),gls_Pmin(ng))
+!RRHvvv
+!           gls(i,j,k,nnew)=MAX(gls(i,j,k,nnew),gls_Pmin(ng))
+            gls(i,j,k,nnew)=MAX(gls(i,j,k,nnew),cff1*gls_Pmin(ng))
+!RRH^^^
+
           END DO
         END DO
 !
@@ -1008,6 +1034,16 @@
             ELSE
               Ls_lmt=Ls_unlmt
             END IF
+!RRHvvv
+! New constraint controls instabilities in gls by limiting L<=\kappa*Depth .
+! After harmonizing default advective schemes, this limit is primarily
+! active for inflows at the boundary or rivers where upstream tke & gls
+! are not well defined.
+            cff1=0.4_r8 * (z_w(i,j,N(ng))-z_w(i,j,0))
+            Ls_lmt=MIN(Ls_lmt,cff1)                                    !&
+!RRH^^^
+!
+
 !
 ! Recompute gls based on limited length scale
 !
@@ -1020,8 +1056,15 @@
 !
             Gh=MIN(gls_Gh0,-buoy2(i,j,k)*Ls_lmt*Ls_lmt/                 &
      &                    (2.0_r8*tke(i,j,k,nnew)))
-            Gh=MIN(Gh,Gh-(Gh-gls_Ghcri)**2/                             &
+!RRHvvv
+!RRH changing this to remove sharp discontinuity per Harcourt post 
+! "Equation error in GLS model coded into gls_corstep.F" to myroms.org 
+! board 13 Dec 2018. Not yet subsequently incorporated into ROMS revisions.
+            Gh=MIN(Gh,Gh-MAX(0.0_r8,Gh-gls_Ghcri)**2/                   &
      &                    (Gh+gls_Gh0-2.0_r8*gls_Ghcri))
+!           Gh=MIN(Gh,Gh-(Gh-gls_Ghcri)**2/                             &
+!    &                    (Gh+gls_Gh0-2.0_r8*gls_Ghcri))
+!RRH^^^
             Gh=MAX(Gh,gls_Ghmin)
 # if defined CANUTO_A || defined CANUTO_B
 !
