@@ -160,6 +160,7 @@ add_subdirectory( "ROMS/Nonlinear" )
 add_subdirectory( "ROMS/Nonlinear/BBL" )
 add_subdirectory( "ROMS/Nonlinear/Biology" )
 add_subdirectory( "ROMS/Nonlinear/Sediment" )
+add_subdirectory( "ROMS/Nonlinear/WEC" )
 add_subdirectory( "ROMS/Utility" )
 
 include_directories(
@@ -175,6 +176,7 @@ include_directories(
   "ROMS/Nonlinear/BBL"
   "ROMS/Nonlinear/Biology"
   "ROMS/Nonlinear/Sediment"
+  "ROMS/Nonlinear/WEC"
   "ROMS/Utility"
 )
 
@@ -193,6 +195,7 @@ list(APPEND srcs
      ${ROMS_Nonlinear_BBL_files}
      ${ROMS_Nonlinear_Biology_files}
      ${ROMS_Nonlinear_Sediment_files}
+     ${ROMS_Nonlinear_WEC_files}
      ${ROMS_Utility_files}
 )
 
