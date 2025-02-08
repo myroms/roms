@@ -1624,6 +1624,17 @@ metadata:
     add_offset:     0.0d0
     scale:          1.0d0
 
+  - variable:       PBLh                                             # Input
+    standard_name:  atmosphere_boundary_layer_thickness
+    long_name:      atmosphere boundary layer thickness
+    units:          m                                                # [m]
+    field:          planetary boundary layer height
+    time:           pblh_time
+    index_code:     idPBLh
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
   - variable:       Tair                                             # Input
     standard_name:  surface_air_temperature
     long_name:      surface air temperature

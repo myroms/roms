@@ -4580,6 +4580,27 @@
                   ptr2d(i,j)=Fval
                 END DO
               END DO
+# if defined BULK_FLUXES & defined PBLH
+!
+!  Atmosphere boundary layer thickness (m).
+!
+            CASE ('pblh', 'PBLh')
+              MyFmin(1)= MISSING_dp
+              MyFmax(1)=-MISSING_dp
+              DO j=Jstr,Jend
+                DO i=Istr,Iend
+#  ifdef WRF_TIMEAVG
+!                 Fval=REAL(grid%pblhavg(i,j),dp)
+                  Fval=REAL(grid%pblh(i,j),dp)
+#  else
+                  Fval=REAL(grid%pblh(i,j),dp)
+#  endif
+                  MyFmin(1)=MIN(MyFmin(1),Fval)
+                  MyFmax(1)=MAX(MyFmax(1),Fval)
+                  ptr2d(i,j)=Fval
+                END DO
+              END DO
+# endif
 !
 !  Surface (2m) air temperature (K).
 !

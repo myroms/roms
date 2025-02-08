@@ -431,3 +431,18 @@ import:
     connected_to:        *ATM
     map_type:            mapbilnr
     map_norm:            none
+
+  - standard_name:       atmosphere_boundary_layer_thickness
+    long_name:           atmosphere boundary layer thickness
+    short_name:          pblh
+    data_variables:      [pblh, time]
+    source_units:        m
+    destination_units:   m
+    source_grid:         cell_center
+    destination_grid:    cell_center
+    add_offset:          0.0d0
+    scale:               1.0d0
+    debug_write:         false
+    connected_to:        *ATM
+    map_type:            mapbilnr
+    map_norm:            none
