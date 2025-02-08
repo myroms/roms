@@ -126,9 +126,9 @@
       USE mod_iounits,      ONLY : Iname, SourceFile, stdout
       USE mod_mixing,       ONLY : MIXING
       USE mod_ncparam,      ONLY : Iinfo,  idLdwn, idLrad, idPair,      &
-     &                             idQair, idrain, idSrad, idTair,      &
-     &                             idTsur, idUair, idUsms, idVair,      &
-     &                             idVsms
+     &                             idPBLh, idQair, idrain, idSrad,      &
+     &                             idTair, idTsur, idUair, idUsms,      &
+     &                             idVair, idVsms
 # ifdef TIME_INTERP
       USE mod_netcdf,       ONLY : netcdf_get_ivar,                     &
      &                             netcdf_get_svar,                     &
@@ -5536,6 +5536,42 @@
      &                              NghostPoints,                       &
      &                              EWperiodic(ng), NSperiodic(ng),     &
      &                              Vstress)
+              END IF
+# endif
+# if defined BULK_FLUXES & defined PBLH
+!
+!  Atmosphere boundary layer thickness (m).
+!
+            CASE ('pblh', 'PBLh')
+              romsScale=scale
+              ifield=idPBLh
+              gtype=r2dvar
+              Tindex=3-Iinfo(8,ifield,ng)
+              DO j=JstrR,JendR
+                DO i=IstrR,IendR
+                  IF (ABS(ptr2d(i,j)).lt.TOL_dp) THEN
+                    Fval=scale*ptr2d(i,j)+add_offset
+                  ELSE
+                    Fval=0.0_dp
+                  END IF
+                  MyFmin(1)=MIN(MyFmin(1),ptr2d(i,j))
+                  MyFmax(1)=MAX(MyFmax(1),ptr2d(i,j))
+                  MyFmin(2)=MIN(MyFmin(2),Fval)
+                  MyFmax(2)=MAX(MyFmax(2),Fval)
+                  FORCES(ng)%PBLh(i,j)=Fval
+                END DO
+              END DO
+              IF (localDE.eq.localDEcount-1) THEN
+                IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
+                  CALL exchange_r2d_tile (ng, tile,                     &
+     &                                    LBi, UBi, LBj, UBj,           &
+     &                                    FORCES(ng)%PBLh)
+                END IF
+                CALL mp_exchange2d (ng, tile, iNLM, 1,                  &
+     &                              LBi, UBi, LBj, UBj,                 &
+     &                              NghostPoints,                       &
+     &                              EWperiodic(ng), NSperiodic(ng),     &
+     &                              FORCES(ng)%PBLh)
               END IF
 # endif
 # if defined WIND_MINUS_CURRENT && !defined BULK_FLUXES

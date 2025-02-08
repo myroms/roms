@@ -1064,6 +1064,31 @@
         END IF
       END IF
 # endif
+# if defined BULK_FLUXES && defined FRC_COUPLING && defined PBLH
+!
+!  Write atmosphere boundary layer thickness.
+!
+      IF (Qout(idPBLh,ng)) THEN
+        scale=1.0_dp
+        gtype=gfactor*r2dvar
+        status=nf_fwrite2d(ng, model, QCK(ng)%ncid, idPBLh,             &
+     &                     QCK(ng)%Vid(idPBLh),                         &
+     &                     QCK(ng)%Rindex, gtype,                       &
+     &                     LBi, UBi, LBj, UBj, scale,                   &
+#  ifdef MASKING
+     &                     GRID(ng) % rmask,                            &
+#  endif
+     &                     FORCES(ng) % PBLh)
+        IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+          IF (Master) THEN
+            WRITE (stdout,20) TRIM(Vname(1,idPBLh)), QCK(ng)%Rindex
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END IF
+# endif
 # if defined BULK_FLUXES
 !
 !  Write out surface air temperature.
@@ -2678,6 +2703,37 @@
           RETURN
         END IF
       END IF
+#  endif
+#  if defined BULK_FLUXES && defined FRC_COUPLING && defined PBLH
+!
+!  Write atmosphere boundary layer thickness.
+!
+      IF (Qout(idPBLh,ng)) THEN
+        scale=1.0_dp
+        IF (QCK(ng)%pioVar(idPBLh)%dkind.eq.PIO_double) THEN
+          ioDesc => ioDesc_dp_r2dvar(ng)
+        ELSE
+          ioDesc => ioDesc_sp_r2dvar(ng)
+        END IF
+        status=nf_fwrite2d(ng, model, QCK(ng)%pioFile, idPBLh,          &
+     &                     QCK(ng)%pioVar(idPBLh),                      &
+     &                     QCK(ng)%Rindex,                              &
+     &                     ioDesc,                                      &
+     &                     LBi, UBi, LBj, UBj, scale,                   &
+#   ifdef MASKING
+     &                     GRID(ng) % rmask,                            &
+#   endif
+     &                     FORCES(ng) % PBLh)
+        IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+          IF (Master) THEN
+            WRITE (stdout,20) TRIM(Vname(1,idPBLh)), QCK(ng)%Rindex
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END IF
+
 #  endif
 #  if defined BULK_FLUXES
 !

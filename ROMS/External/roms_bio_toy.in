@@ -746,6 +746,7 @@ Qout(idWdis) == F       ! Dissip_roller      wave roller dissipation
 Qout(idWrol) == F       ! roller_action      wave roller action density
 
 Qout(idPair) == F       ! Pair               surface air pressure
+Qout(idPBLh) == F       ! PBLh               atmosphere boundary layer thickness
 Qout(idTair) == F       ! Tair               surface air temperature
 Qout(idUair) == F       ! Uair               surface U-wind
 Qout(idVair) == F       ! Vair               surface V-wind
@@ -2839,6 +2840,7 @@ PIO_I2C_Preq = 65                 ! Maximum pending I2C requests
 ! Qout(idWrol)   Write out wave roller action density.
 !
 ! Qout(idPair)   Write out surface air pressure.
+! Qout(idPBLh)   Write out atmosphere boundary layer height.
 ! Qout(idTair)   Write out surface air temperature.
 ! Qout(idUair)   Write out surface U-wind component.
 ! Qout(idVair)   Write out surface V-wind component.

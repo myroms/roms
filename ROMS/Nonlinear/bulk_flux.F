@@ -155,6 +155,9 @@
 # ifdef CLOUDS
      &                     FORCES(ng) % cloud,                          &
 # endif
+# if defined FRC_COUPLING && defined PBLH
+     &                     FORCES(ng) % PBLh,                           &
+# endif
 # if defined COARE_TAYLOR_YELLAND || defined DRENNAN
      &                     FORCES(ng) % Hwave,                          &
 # endif
@@ -226,6 +229,9 @@
 # ifdef CLOUDS
      &                           cloud,                                 &
 # endif
+# if defined FRC_COUPLING && defined PBLH
+     &                           PBLh,                                  &
+# endif
 # if defined COARE_TAYLOR_YELLAND || defined DRENNAN
      &                           Hwave,                                 &
 # endif
@@ -296,18 +302,21 @@
 #  ifdef CLOUDS
       real(r8), intent(in   ) :: cloud(LBi:,LBj:)
 #  endif
-# if defined COARE_TAYLOR_YELLAND || defined DRENNAN
+#  if defined FRC_COUPLING && defined PBLH
+      real(r8), intent(in   ) :: PBLh(LBi:,LBj:)
+#  endif
+#  if defined COARE_TAYLOR_YELLAND || defined DRENNAN
       real(r8), intent(in   ) :: Hwave(LBi:,LBj:)
-# endif
-# if defined COARE_TAYLOR_YELLAND || defined COARE_OOST || \
+#  endif
+#  if defined COARE_TAYLOR_YELLAND || defined COARE_OOST || \
       defined DRENNAN
       real(r8), intent(in   ) :: Pwave_top(LBi:,LBj:)
-# endif
-# if !defined DEEPWATER_WAVES      && \
+#  endif
+#  if !defined DEEPWATER_WAVES      && \
      (defined COARE_TAYLOR_YELLAND || defined COARE_OOST || \
       defined DRENNAN)
       real(r8), intent(in   ) :: Lwavep(LBi:,LBj:)
-# endif
+#  endif
 #  if defined ICE_MODEL  && defined ICE_BULK_FLUXES && \
       defined ICE_ALBEDO && defined SHORTWAVE
       real(r8), intent(in   ) :: albedo_ice(LBi:,LBj:)
@@ -364,19 +373,22 @@
 #  ifdef CLOUDS
       real(r8), intent(in   ) :: cloud(LBi:UBi,LBj:UBj)
 #  endif
-# if defined COARE_TAYLOR_YELLAND || \
+#  if defined FRC_COUPLING && defined PBLH
+      real(r8), intent(in   ) :: PBLh(LBi:UBi,LBj:UBj)
+#  endif
+#  if defined COARE_TAYLOR_YELLAND || \
       defined DRENNAN
       real(r8), intent(in   ) :: Hwave(LBi:UBi,LBj:UBj)
-# endif
-# if defined COARE_TAYLOR_YELLAND || defined COARE_OOST || \
+#  endif
+#  if defined COARE_TAYLOR_YELLAND || defined COARE_OOST || \
       defined DRENNAN
       real(r8), intent(in   ) :: Pwave_top(LBi:UBi,LBj:UBj)
-# endif
-# if !defined DEEPWATER_WAVES      && \
+#  endif
+#  if !defined DEEPWATER_WAVES      && \
      (defined COARE_TAYLOR_YELLAND || defined COARE_OOST || \
       defined DRENNAN)
       real(r8), intent(in   ) :: Lwavep(LBi:UBi,LBj:UBj)
-# endif
+#  endif
 #  if defined ICE_MODEL  && defined ICE_BULK_FLUXES && \
       defined ICE_ALBEDO && defined SHORTWAVE
       real(r8), intent(in   ) :: albedo_ice(LBi:UBi,LBj:UBj)
@@ -881,11 +893,18 @@
      &               (LOG(blk_ZQ(ng)/ZoQ(i))-Qpsi(i))
 !
 !  Compute gustiness in wind speed.
+# if defined FRC_COUPLING && defined PBLH
+!  Use atmosphere boundary layer thickness from coupled model.
+# endif
 !
             Bf=-g/TairK(i)*                                             &
      &         Wstar(i)*(Tstar(i)+0.61_r8*TairK(i)*Qstar(i))
             IF (Bf.gt.0.0_r8) THEN
+# if defined FRC_COUPLING && defined PBLH
+              Wgus(i)=blk_beta*(Bf*PBLh(i,j))**r3
+# else
               Wgus(i)=blk_beta*(Bf*blk_Zabl)**r3
+# endif
             ELSE
               Wgus(i)=0.2_r8
             END IF

@@ -1170,6 +1170,27 @@
      &                   NF_FOUT, nvd3, t2dgrd, Aval, Vinfo, ncname)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
+# endif 
+# if defined BULK_FLUXES && defined FRC_COUPLING && defined PBLH
+!
+!  Define atmosphere boundary layer thickness.
+!
+        IF (Qout(idPBLh,ng)) THEN
+          Vinfo( 1)=Vname(1,idPBLh)
+          Vinfo( 2)=Vname(2,idPBLh)
+          Vinfo( 3)=Vname(3,idPBLh)
+          Vinfo(14)=Vname(4,idPBLh)
+          Vinfo(16)=Vname(1,idtime)
+#  if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_rho'
+#  endif
+          Vinfo(21)=Vname(6,idPBLh)
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idPBLh,ng),r8)
+          status=def_var(ng, model, QCK(ng)%ncid, QCK(ng)%Vid(idPBLh),  &
+     &                   NF_FOUT, nvd3, t2dgrd, Aval, Vinfo, ncname)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        END IF
 # endif
 # if defined BULK_FLUXES || defined ECOSIM
 !
@@ -1741,6 +1762,11 @@
             got_var(idPair)=.TRUE.
             QCK(ng)%Vid(idPair)=var_id(i)
 # endif
+# if defined BULK_FLUXES && defined FRC_COUPLING && defined PBLH
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idPBLh))) THEN
+            got_var(idPBLh)=.TRUE.
+            QCK(ng)%Vid(idPBLh)=var_id(i)
+# endif
 # if defined BULK_FLUXES || defined ECOSIM
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idUair))) THEN
             got_var(idUair)=.TRUE.
@@ -2032,6 +2058,14 @@
 # if defined BULK_FLUXES || defined ECOSIM || defined ATM_PRESS
         IF (.not.got_var(idPair).and.Qout(idPair,ng)) THEN
           IF (Master) WRITE (stdout,70) TRIM(Vname(1,idPair)),          &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+# endif
+# if defined BULK_FLUXES && defined FRC_COUPLING && defined PBLH
+        IF (.not.got_var(idPBLh).and.Qout(idPBLh,ng)) THEN
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idPBLh)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
@@ -3436,6 +3470,31 @@
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 #  endif
+#  if defined BULK_FLUXES && defined FRC_COUPLING && defined PBLH
+!
+!  Define atmosphere boundary layer thickness.
+!
+        IF (Qout(idPBLh,ng)) THEN
+          Vinfo( 1)=Vname(1,idPBLh)
+          Vinfo( 2)=Vname(2,idPBLh)
+          Vinfo( 3)=Vname(3,idPBLh)
+          Vinfo(14)=Vname(4,idPBLh)
+          Vinfo(16)=Vname(1,idtime)
+#   if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_rho'
+#   endif
+          Vinfo(21)=Vname(6,idPBLh)
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idPBLh,ng),r8)
+          QCK(ng)%pioVar(idPBLh)%dkind=PIO_FOUT
+          QCK(ng)%pioVar(idPBLh)%gtype=r2dvar
+!
+          status=def_var(ng, model, QCK(ng)%pioFile,                    &
+     &                   QCK(ng)%pioVar(idPBLh)%vd,                     &
+     &                   PIO_FOUT, nvd3, t2dgrd, Aval, Vinfo, ncname)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        END IF
+#  endif
 #  if defined BULK_FLUXES || defined ECOSIM
 !
 !  Define surface winds.
@@ -4138,6 +4197,12 @@
             QCK(ng)%pioVar(idPair)%dkind=PIO_FOUT
             QCK(ng)%pioVar(idPair)%gtype=r2dvar
 #  endif
+#  if defined BULK_FLUXES && defined FRC_COUPLING && defined PBLH
+            got_var(idPBLh)=.TRUE.
+            QCK(ng)%pioVar(idPBLh)%vd=var_desc(i)
+            QCK(ng)%pioVar(idPBLh)%dkind=PIO_FOUT
+            QCK(ng)%pioVar(idPBLh)%gtype=r2dvar
+#  endif
 #  if defined BULK_FLUXES || defined ECOSIM
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idUair))) THEN
             got_var(idUair)=.TRUE.
@@ -4467,6 +4532,14 @@
 #  if defined BULK_FLUXES || defined ECOSIM || defined ATM_PRESS
         IF (.not.got_var(idPair).and.Qout(idPair,ng)) THEN
           IF (Master) WRITE (stdout,70) TRIM(Vname(1,idPair)),          &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+#  endif
+#  if defined BULK_FLUXES && defined FRC_COUPLING && defined PBLH
+        IF (.not.got_var(idPBLh).and.Qout(idPBLh,ng)) THEN
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idPBLh)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
