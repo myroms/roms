@@ -11,17 +11,11 @@
 !                                                                      !
 !  This MODULE contains all Parallel-IO (PIO) variables definitions.   !
 !  It also contains several variables and routines to facilitate the   !
-!  manipulations of NetCDF data in parallel.  The PIO library was      !
-!  developed at NCAR and it is the basis for the SCORPIO library.      !
+!  manipulations of NetCDF data in parallel.                           !
 !                                                                      !
-!  For more information check:                                         !
-!                                                                      !
-!    https://e3sm.org/scorpio-parallel-io-library                      !
-!                                                                      !
-!  The libraries are available at GitHub:                              !
+!  The library are available at GitHub:                                !
 !                                                                      !
 !    https://github.com/NCAR/ParallelIO                                !
-!    https://github.com/E3SM-Project/scorpio                           !
 !                                                                      !
 !=======================================================================
 !
@@ -492,8 +486,7 @@
 !  a disjointed set of dedicated I/O processes and do not  perform
 !  computations. It is possible to have several groups of computational
 !  units running separate models (coupling) where all the I/O data are
-!  sent to dedicated processes. This interface is still experimental in
-!  the SCORPIO library and not recommended for use at this time.
+!  sent to dedicated processes.
 !
 !  PIO number of mpi-aggregators to use in intra-communication mode
 !  to improve mpi-collective I/O performance.
@@ -9307,7 +9300,7 @@
 !  Synchronize requested NetCDF file.
 !-----------------------------------------------------------------------
 !
-# if defined ASYNCHRONOUS_PIO || defined ASYNCHRONOUS_SCORPIO
+# if defined ASYNCHRONOUS_PIO
       exit_flag=NoError
 # else
       CALL PIO_syncfile (pioFile)

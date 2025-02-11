@@ -93,7 +93,7 @@
 !  Set type of IO NetCDF files interface library
 !
       integer, parameter :: io_nf90 = 1   ! standard NetCDF-3, NetCDF-4
-      integer, parameter :: io_pio  = 2   ! Parallel-IO, SCORPIO
+      integer, parameter :: io_pio  = 2   ! Parallel-IO
 !
       integer :: inp_lib                  ! input  NetCDF library
       integer :: out_lib                  ! output NetCDF library
