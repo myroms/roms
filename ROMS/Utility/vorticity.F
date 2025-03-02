@@ -1,10 +1,5 @@
 #include "cppdefs.h"
       MODULE vorticity_mod
-
-#if defined AVERAGES    || \
-   (defined AD_AVERAGES && defined ADJOINT) || \
-   (defined RP_AVERAGES && defined TL_IOMS) || \
-   (defined TL_AVERAGES && defined TANGENT)
 !
 !git $Id$
 !=======================================================================
@@ -48,11 +43,237 @@
 !
       implicit none
 !
-      PRIVATE
+      PUBLIC  :: rvorticity2d
+#ifdef SOLVE3D
+      PUBLIC  :: rvorticity3d
+#endif
+#if defined AVERAGES    || \
+   (defined AD_AVERAGES && defined ADJOINT) || \
+   (defined RP_AVERAGES && defined TL_IOMS) || \
+   (defined TL_AVERAGES && defined TANGENT)
       PUBLIC  :: vorticity
       PUBLIC  :: vorticity_tile
+#endif
+      PRIVATE
 !
       CONTAINS
+!
+!***********************************************************************
+      SUBROUTINE rvorticity2d (ng, model, tile,                         &
+     &                         LBi, UBi, LBj, UBj,                      &
+     &                         kout,                                    &
+#ifdef MASKING
+     &                         pmask,                                   &
+#endif
+     &                         om_u, on_v, pm, pn,                      &
+     &                         ubar, vbar,                              &
+     &                         rvor2d)
+!***********************************************************************
+!
+      USE mod_param
+      USE mod_scalars
+!
+      USE exchange_2d_mod, ONLY : exchange_p2d_tile
+#ifdef DISTRIBUTE
+      USE mp_exchange_mod, ONLY : mp_exchange2d
+#endif
+!
+!  Imported variable declarations.
+!
+      integer, intent(in)   :: ng, model, tile
+      integer, intent(in)   :: LBi, UBi, LBj, UBj
+      integer, intent(in)   :: kout
+
+#ifdef ASSUMED_SHAPE
+# ifdef MASKING
+      real(r8), intent(in)  :: pmask(LBi:,LBj:)
+# endif
+      real(r8), intent(in)  :: om_u(LBi:,LBj:)
+      real(r8), intent(in)  :: on_v(LBi:,LBj:)
+      real(r8), intent(in)  :: pm(LBi:,LBj:)
+      real(r8), intent(in)  :: pn(LBi:,LBj:)
+      real(r8), intent(in)  :: ubar(LBi:,LBj:,:)
+      real(r8), intent(in)  :: vbar(LBi:,LBj:,:)
+      real(r8), intent(out) :: rvor2d(LBi:,LBj:)
+
+#else
+
+# ifdef MASKING
+      real(r8), intent(in)  :: pmask(LBi:UBi,LBj:UBj)
+# endif
+      real(r8), intent(in)  :: om_u(LBi:UBi,LBj:UBj)
+      real(r8), intent(in)  :: on_v(LBi:UBi,LBj:UBj)
+      real(r8), intent(in)  :: pm(LBi:UBi,LBj:UBj)
+      real(r8), intent(in)  :: pn(LBi:UBi,LBj:UBj)
+      real(r8), intent(in)  :: ubar(LBi:UBi,LBj:UBj,:)
+      real(r8), intent(in)  :: vbar(LBi:UBi,LBj:UBj,:)
+      real(r8), intent(out) :: rvor2d(LBi:UBi,LBj:UBj)
+#endif
+!
+!  Local variable declarations.
+!
+      integer  :: i, j
+      real(r8) :: cff, dUde_p, dVdx_p
+
+#include "set_bounds.h"
+!
+!-----------------------------------------------------------------------
+!  Compute 2D relative vorticity.
+!-----------------------------------------------------------------------
+!
+!  Compute barotropic relative vorticity (second-1) at horizontal
+!  PSI-points.
+!
+      DO j=Jstr,JendR
+        DO i=Istr,IendR
+          cff=0.0625_r8*                                                &
+     &        (pm(i-1,j-1)+pm(i-1,j)+pm(i,j-1)+pm(i,j))*                &
+     &        (pn(i-1,j-1)+pn(i-1,j)+pn(i,j-1)+pn(i,j))
+          dVdx_p=on_v(i  ,j)*vbar(i  ,j,kout)-                          &
+     &           on_v(i-1,j)*vbar(i-1,j,kout)
+#ifdef MASKING
+          dVdx_p=dVdx_p*pmask(i,j)
+#endif
+          dUde_p=om_u(i,j  )*ubar(i,j  ,kout)-                          &
+     &           om_u(i,j-1)*ubar(i,j-1,kout)
+#ifdef MASKING
+          dUde_p=dUde_p*pmask(i,j)
+#endif
+          rvor2d(i,j)=cff*(dVdx_p-dUde_p)
+        END DO
+      END DO
+!
+!  Exchange boundary information.
+!
+      IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
+        CALL exchange_p2d_tile (ng, tile,                               &
+     &                          LBi, UBi, LBj, UBj,                     &
+     &                          rvor2d)
+      END IF
+
+#ifdef DISTRIBUTE
+      CALL mp_exchange2d (ng, tile, model, 1,                           &
+     &                    LBi, UBi, LBj, UBj,                           &
+     &                    NghostPoints, EWperiodic(ng), NSperiodic(ng), &
+     &                    rvor2d)
+# endif
+!
+      RETURN
+      END SUBROUTINE rvorticity2d
+
+#ifdef SOLVE3D
+!
+!***********************************************************************
+      SUBROUTINE rvorticity3d (ng, model, tile,                         &
+     &                         LBi, UBi, LBj, UBj,                      &
+     &                         nout,                                    &
+# ifdef MASKING
+     &                         pmask,                                   &
+# endif
+     &                         om_u, on_v, pm, pn,                      &
+     &                         u, v,                                    &
+     &                         rvor3d)
+!***********************************************************************
+!
+      USE mod_param
+      USE mod_scalars
+!
+      USE exchange_3d_mod, ONLY : exchange_p3d_tile
+# ifdef DISTRIBUTE
+      USE mp_exchange_mod, ONLY : mp_exchange3d
+# endif
+!
+!  Imported variable declarations.
+!
+      integer, intent(in)   :: ng, model, tile
+      integer, intent(in)   :: LBi, UBi, LBj, UBj
+      integer, intent(in)   :: nout
+
+# ifdef ASSUMED_SHAPE
+#  ifdef MASKING
+      real(r8), intent(in)  :: pmask(LBi:,LBj:)
+#  endif
+      real(r8), intent(in)  :: om_u(LBi:,LBj:)
+      real(r8), intent(in)  :: on_v(LBi:,LBj:)
+      real(r8), intent(in)  :: pm(LBi:,LBj:)
+      real(r8), intent(in)  :: pn(LBi:,LBj:)
+      real(r8), intent(in)  :: u(LBi:,LBj:,:,:)
+      real(r8), intent(in)  :: v(LBi:,LBj:,:,:)
+      real(r8), intent(out) :: rvor3d(LBi:,LBj:,:)
+
+# else
+
+#  ifdef MASKING
+      real(r8), intent(in)  :: pmask(LBi:UBi,LBj:UBj)
+#  endif
+      real(r8), intent(in)  :: om_u(LBi:UBi,LBj:UBj)
+      real(r8), intent(in)  :: on_v(LBi:UBi,LBj:UBj)
+      real(r8), intent(in)  :: pm(LBi:UBi,LBj:UBj)
+      real(r8), intent(in)  :: pn(LBi:UBi,LBj:UBj)
+      real(r8), intent(in)  :: u(LBi:UBi,LBj:UBj,N(ng),2)
+      real(r8), intent(in)  :: v(LBi:UBi,LBj:UBj,N(ng),2)
+      real(r8), intent(out) :: rvor3d(LBi:UBi,LBj:UBj,N(ng))
+# endif
+!
+!  Local variable declarations.
+!
+      integer  :: i, j, k
+      real(r8) :: cff, dUde_p, dVdx_p
+
+# include "set_bounds.h"
+!
+!-----------------------------------------------------------------------
+!  Compute 3D relative vorticity.
+!-----------------------------------------------------------------------
+!
+!  Compute relative vorticity (second-1) at horizontal PSI-points and
+!  vertical RHO-points.
+!
+      DO k=1,N(ng)
+        DO j=Jstr,JendR
+          DO i=Istr,IendR
+            cff=0.0625_r8*                                              &
+     &          (pm(i-1,j-1)+pm(i-1,j)+pm(i,j-1)+pm(i,j))*              &
+     &          (pn(i-1,j-1)+pn(i-1,j)+pn(i,j-1)+pn(i,j))
+            dUde_p=om_u(i,j  )*u(i,j  ,k,nout)-                         &
+     &             om_u(i,j-1)*u(i,j-1,k,nout)
+# ifdef MASKING
+            dUde_p=dUde_p*pmask(i,j)
+# endif
+            dVdx_p=on_v(i  ,j)*v(i  ,j,k,nout)-                         &
+     &             on_v(i-1,j)*v(i-1,j,k,nout)
+# ifdef MASKING
+            dVdx_p=dVdx_p*pmask(i,j)
+# endif
+            rvor3d(i,j,k)=cff*(dVdx_p-dUde_p)
+          END DO
+        END DO
+      END DO
+!
+!  Exchange boundary data.
+!
+      IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
+        CALL exchange_p3d_tile (ng, tile,                               &
+     &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
+     &                          rvor3d)
+      END IF
+
+# ifdef DISTRIBUTE
+!
+      CALL mp_exchange3d (ng, tile, iNLM, 1,                            &
+     &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
+     &                    NghostPoints, EWperiodic(ng), NSperiodic(ng), &
+     &                    rvor3d)
+# endif
+!
+      RETURN
+      END SUBROUTINE rvorticity3d
+#endif
+
+#if defined AVERAGES    || \
+   (defined AD_AVERAGES && defined ADJOINT) || \
+   (defined RP_AVERAGES && defined TL_IOMS) || \
+   (defined TL_AVERAGES && defined TANGENT)
 !
 !***********************************************************************
       SUBROUTINE vorticity (ng, tile)

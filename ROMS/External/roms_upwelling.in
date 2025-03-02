@@ -686,8 +686,16 @@ Qout(idUsur) == T       ! u_sur              surface U-velocity
 Qout(idVsur) == T       ! v_sur              surface V-velocity
 Qout(idUsuE) == T       ! u_sur_eastward     surface U-eastward  velocity
 Qout(idVsuN) == T       ! v_sur_northward    surface V-northward velocity
+Qout(idRVsu) == T       ! rvorticity_sur     surface relative vorticity
 
 Qout(idsurT) == T T     ! temp_sur, salt_sur surface temperature and salinity
+
+Qout(idUzsl) == F       ! u_slice            U-velocity depth slices
+Qout(idVzsl) == F       ! v_slice            V-velocity depth slices
+Qout(idUzsE) == F       ! u_eastward_slice   U-eastward  velocity depth slices
+Qout(idVzsN) == F       ! v_northward_slice  V-northward velocity depth slices
+
+Qout(idzslT) == F F     ! temp_slice, ...    temperature and salinity depth slices
 
 Qout(idpthR) == F       ! z_rho              time-varying depths of RHO-points
 Qout(idpthU) == F       ! z_u                time-varying depths of U-points
@@ -870,10 +878,10 @@ Aout(idSdif) == F       ! AKs                vertical Salinity diffusion
 Aout(idHsbl) == F       ! Hsbl               depth of surface boundary layer
 Aout(idHbbl) == F       ! Hbbl               depth of bottom boundary layer
 
-Aout(id2dRV) == F       ! pvorticity_bar     2D relative vorticity
-Aout(id3dRV) == F       ! pvorticity         3D relative vorticity
-Aout(id2dPV) == F       ! rvorticity_bar     2D potential vorticity
-Aout(id3dPV) == F       ! rvorticity         3D potential vorticity
+Aout(id2dRV) == F       ! rvorticity_bar     2D relative vorticity
+Aout(id3dRV) == F       ! rvorticity         3D relative vorticity
+Aout(id2dPV) == F       ! pvorticity_bar     2D potential vorticity
+Aout(id3dPV) == F       ! pvorticity         3D potential vorticity
 
 Aout(idu3dD) == F       ! u_detided          detided 3D U-velocity
 Aout(idv3dD) == F       ! v_detided          detided 3D V-velocity
@@ -976,6 +984,16 @@ Dout(iTxdif) == T T     ! temp_xdiff, ...    horizontal XI-diffusion
 Dout(iTydif) == T T     ! temp_ydiff, ...    horizontal ETA-diffusion
 Dout(iTsdif) == T T     ! temp_sdiff, ...    horizontal S-diffusion
 Dout(iTvdif) == T T     ! temp_vdiff, ...    vertical diffusion
+
+! Number of output field horizontal slices and their depths (negative, m).
+! It is possible to extract selected state fields like temperature, salinity,
+! and velocity components at a constant depth in the QUICKSAVE NetCDF file.
+! Use wise depth values based on dynamics and model bathymetry and make sure
+! that "NSLICE" is small (between 1 and 4) to keep the QUICKSAVE file size
+! manageable. Order "Z_SLICE" in descending values (surface to bottom).
+
+      NSLICE =  1
+     Z_SLICE =  -100.0_r8
 
 ! Generic User parameters, [1:NUSER].
 
@@ -2773,8 +2791,16 @@ PIO_I2C_Preq = 65                 ! Maximum pending I2C requests
 ! Qout(idVsur)   Write out surface V-velocity component.
 ! Qout(idUsuE)   Write out surface Eastward  velocity component at RHO-points.
 ! Qout(idVsuN)   Write out surface Northward velocity component at RHO-points.
+! Qout(idRVsu)   Write out surface relative vorticity.
 !
-! Qout(idsurT)   Write out surface temperature and salinity
+! Qout(idsurT)   Write out surface temperature and salinity.
+!
+! Qout(idUzsl)   Write out U-velocity depth slices, Z_slice(1:Nslice).
+! Qout(idVzsl)   Write out V-velocity depth slices, Z_slice(1:Nslice).
+! Qout(idUzsE)   Write out U-eastward  velocity depth slices, Z_slice(1:Nslice).
+! Qout(idVzsN)   Write out V-northward velocity depth slices, Z_slice(1:Nslice).
+!
+! Qout(idzslT)   Write out temperature/salinity depth slices, Z_slice(1:Nslice).
 !
 ! Qout(idpthR)   Write out time-varying depths of RHO-points.
 ! Qout(idpthU)   Write out time-varying depths of U-points.
@@ -3058,6 +3084,23 @@ PIO_I2C_Preq = 65                 ! Maximum pending I2C requests
 ! Dout(iTsdif)   Write out horizontal   S-diffusion, if TS_DIF2 or TS_DIF4 and
 !                  rotated tensor (MIX_GEO_TS or MIX_ISO_TS).
 ! Dout(iTvdif)   Write out vertical diffusion.
+!
+!------------------------------------------------------------------------------
+! Generic User parameters.
+!------------------------------------------------------------------------------
+!
+! Selected state variables, such as temperature, salinity, U-velocity,
+! V-velocity, U-eastward, and V-northward, can be extracted and saved at
+! specified constant depths (Z_SLICE) in the output QUICKSAVE NetCDF file.
+! It is advisable to limit the number of slices (NSLICE) to a small value,
+! ideally between 1 and 4, to keep the QUICKSAVE file size manageable.
+! Choose depths wisely based on the dynamics and model bathymetry.
+! Please avoid using Z_SLICE = 0.0, as extraction is performed through
+! linear interpolation, and extrapolations are not permitted.
+!
+! NSLICE       Number of horizontal contant depth slices.
+! Z_SLICE      Depths (negative, m) of desired horizontal slices ordered
+!                in decreasing values from surface to bottom.
 !
 !------------------------------------------------------------------------------
 ! Generic User parameters.

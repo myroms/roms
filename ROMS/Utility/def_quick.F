@@ -131,16 +131,14 @@
       integer :: IorJdim
 #endif
       integer :: DimIDs(nDimID)
-      integer :: t2dgrd(3), u2dgrd(3), v2dgrd(3)
+      integer :: t2dgrd(3), sp2dgrd(3), u2dgrd(3), v2dgrd(3)
 
 #ifdef SOLVE3D
 # ifdef SEDIMENT
       integer :: b3dgrd(4)
 # endif
-      integer :: t3dgrd(4), u3dgrd(4), v3dgrd(4), w3dgrd(4)
-#endif
-#ifdef WET_DRY
-      integer :: sp2dgrd(3)
+      integer :: t3dgrd(4),  u3dgrd(4),  v3dgrd(4), w3dgrd(4)
+      integer :: t3dzgrd(4), u3dzgrd(4), v3dzgrd(4)
 #endif
 !
       real(r8) :: Aval(6)
@@ -268,6 +266,12 @@
      &                 N(ng)+1, DimIDs(10))
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
+        IF (Nslice.gt.0) THEN
+          status=def_dim(ng, model, QCK(ng)%ncid, ncname, 'z_slice',    &
+     &                   Nslice, DimIDs(34))
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        END IF
+
         status=def_dim(ng, model, QCK(ng)%ncid, ncname, 'tracer',       &
      &                 NT(ng), DimIDs(11))
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
@@ -362,16 +366,19 @@
         t3dgrd(2)=DimIDs( 5)
         t3dgrd(3)=DimIDs( 9)
         t3dgrd(4)=DimIDs(12)
+!
+        t3dzgrd(1)=DimIDs( 1)
+        t3dzgrd(2)=DimIDs( 5)
+        t3dzgrd(3)=DimIDs(34)          ! selected constant depth slices
+        t3dzgrd(4)=DimIDs(12)
 # endif
 #endif
-#ifdef WET_DRY
 !
 !  Define dimension vectors for staggered type variables at PSI-points.
 !
         sp2dgrd(1)=DimIDs( 4)
         sp2dgrd(2)=DimIDs( 8)
         sp2dgrd(3)=DimIDs(12)
-#endif
 !
 !  Define dimension vectors for staggered u-momentum type variables.
 !
@@ -391,6 +398,11 @@
         u3dgrd(2)=DimIDs( 6)
         u3dgrd(3)=DimIDs( 9)
         u3dgrd(4)=DimIDs(12)
+!
+        u3dzgrd(1)=DimIDs( 2)
+        u3dzgrd(2)=DimIDs( 6)
+        u3dzgrd(3)=DimIDs(34)          ! selected constant depth slices
+        u3dzgrd(4)=DimIDs(12)
 # endif
 #endif
 !
@@ -412,6 +424,11 @@
         v3dgrd(2)=DimIDs( 7)
         v3dgrd(3)=DimIDs( 9)
         v3dgrd(4)=DimIDs(12)
+!
+        v3dzgrd(1)=DimIDs( 3)
+        v3dzgrd(2)=DimIDs( 7)
+        v3dzgrd(3)=DimIDs(34)          ! selected constant depth slices
+        v3dzgrd(4)=DimIDs(12)
 # endif
 #endif
 #ifdef SOLVE3D
@@ -813,6 +830,44 @@
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 !
+!  Define 3D U-momentum component at specified constant depth slices.
+!
+        IF (Qout(idUzsl,ng).and.(Nslice.gt.0)) THEN
+          Vinfo( 1)=Vname(1,idUzsl)
+          Vinfo( 2)=Vname(2,idUzsl)
+          Vinfo( 3)=Vname(3,idUzsl)
+          Vinfo(14)=Vname(4,idUzsl)
+          Vinfo(16)=Vname(1,idtime)
+# if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_u'
+# endif
+          Vinfo(21)=Vname(6,idUzsl)
+          Vinfo(22)='coordinates, z_slice'
+          Aval(5)=REAL(Iinfo(1,idUzsl,ng),r8)
+          status=def_var(ng, model, QCK(ng)%ncid, QCK(ng)%Vid(idUzsl),  &
+     &                   NF_FOUT, nvd4, u3dzgrd, Aval, Vinfo, ncname)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        END IF
+!
+!  Define 3D V-momentum component at specified constant depth slices.
+!
+        IF (Qout(idVzsl,ng).and.(Nslice.gt.0)) THEN
+          Vinfo( 1)=Vname(1,idVzsl)
+          Vinfo( 2)=Vname(2,idVzsl)
+          Vinfo( 3)=Vname(3,idVzsl)
+          Vinfo(14)=Vname(4,idVzsl)
+          Vinfo(16)=Vname(1,idtime)
+# if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_v'
+# endif
+          Vinfo(21)=Vname(6,idVzsl)
+          Vinfo(22)='coordinates, z_slice'
+          Aval(5)=REAL(Iinfo(1,idVzsl,ng),r8)
+          status=def_var(ng, model, QCK(ng)%ncid, QCK(ng)%Vid(idVzsl),  &
+     &                   NF_FOUT, nvd4, v3dzgrd, Aval, Vinfo, ncname)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        END IF
+!
 !  Define 3D Eastward momentum component at RHO-points.
 !
         IF (Qout(idu3dE,ng)) THEN
@@ -886,6 +941,65 @@
           Aval(5)=REAL(Iinfo(1,idVsuN,ng),r8)
           status=def_var(ng, model, QCK(ng)%ncid, QCK(ng)%Vid(idVsuN),  &
      &                   NF_FOUT, nvd3, t2dgrd, Aval, Vinfo, ncname)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        END IF
+!
+!  Define 3D Eastward momentum component at RHO-point for specified
+!  constant depth slices.
+!
+        IF (Qout(iduzsE,ng).and.(Nslice.gt.0)) THEN
+          Vinfo( 1)=Vname(1,iduzsE)
+          Vinfo( 2)=Vname(2,iduzsE)
+          Vinfo( 3)=Vname(3,iduzsE)
+          Vinfo(14)=Vname(4,iduzsE)
+          Vinfo(16)=Vname(1,idtime)
+# if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_rho'
+# endif
+          Vinfo(21)=Vname(6,iduzsE)
+          Vinfo(22)='coordinates, z_slice'
+          Aval(5)=REAL(Iinfo(1,iduzsE,ng),r8)
+          status=def_var(ng, model, QCK(ng)%ncid, QCK(ng)%Vid(iduzsE),  &
+     &                   NF_FOUT, nvd4, t3dzgrd, Aval, Vinfo, ncname)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        END IF
+!
+!  Define 3D Northward momentum component at RHO-points for specified
+!  constant depth slices.
+!
+        IF (Qout(idvzsN,ng).and.(Nslice.gt.0)) THEN
+          Vinfo( 1)=Vname(1,idvzsN)
+          Vinfo( 2)=Vname(2,idvzsN)
+          Vinfo( 3)=Vname(3,idvzsN)
+          Vinfo(14)=Vname(4,idvzsN)
+          Vinfo(16)=Vname(1,idtime)
+# if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_rho'
+# endif
+          Vinfo(21)=Vname(6,idvzsN)
+          Vinfo(22)='coordinates, zslice'
+          Aval(5)=REAL(Iinfo(1,idvzsN,ng),r8)
+          status=def_var(ng, model, QCK(ng)%ncid, QCK(ng)%Vid(idvzsN),  &
+     &                   NF_FOUT, nvd4, t3dzgrd, Aval, Vinfo, ncname)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        END IF
+!
+!  Define model surface relative vorticity at PSI-points.
+!
+        IF (Qout(idRVsu,ng)) THEN
+          Vinfo( 1)=Vname(1,idRVsu)
+          Vinfo( 2)=Vname(2,idRVsu)
+          Vinfo( 3)=Vname(3,idRVsu)
+          Vinfo(14)=Vname(4,idRVsu)
+          Vinfo(16)=Vname(1,idtime)
+# if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_psi'
+# endif
+          Vinfo(21)=Vname(6,idRVsu)
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idRVsu,ng),r8)
+          status=def_var(ng, model, QCK(ng)%ncid, QCK(ng)%Vid(idRVsu),  &
+     &                   NF_FOUT, nvd3, sp2dgrd, Aval, Vinfo, ncname)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 !
@@ -980,6 +1094,35 @@
             status=def_var(ng, model, QCK(ng)%ncid,                     &
      &                     QCK(ng)%Vid(idsurT(itrc)),                   &
      &                     NF_FOUT, nvd3, t2dgrd, Aval, Vinfo, ncname)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+          END IF
+        END DO
+!
+!  Define tracer type variables at specified depth slices.
+!
+        DO itrc=1,NT(ng)
+          IF (Qout(idzslT(itrc),ng).and.(Nslice.gt.0)) THEN
+            Vinfo( 1)=Vname(1,idzslT(itrc))
+            Vinfo( 2)=Vname(2,idzslT(itrc))
+            Vinfo( 3)=Vname(3,idzslT(itrc))
+            Vinfo(14)=Vname(4,idzslT(itrc))
+            Vinfo(16)=Vname(1,idtime)
+# ifdef SEDIMENT
+            DO i=1,NST
+              IF (itrc.eq.idsed(i)) THEN
+                WRITE (Vinfo(19),50) 1000.0_r8*Sd50(i,ng)
+              END IF
+            END DO
+# endif
+# if defined WRITE_WATER && defined MASKING
+            Vinfo(20)='mask_rho'
+# endif
+            Vinfo(21)=Vname(6,idzslT(itrc))
+            Vinfo(22)='coordinates, z_slice'
+            Aval(5)=REAL(r3dvar,r8)
+            status=def_var(ng, model, QCK(ng)%ncid,                     &
+     &                     QCK(ng)%Vid(idzslT(itrc)),                   &
+     &                     NF_FOUT, nvd4, t3dzgrd, Aval, Vinfo, ncname)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
           END IF
         END DO
@@ -1688,6 +1831,12 @@
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idVsur))) THEN
             got_var(idVsur)=.TRUE.
             QCK(ng)%Vid(idVsur)=var_id(i)
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idUzsl))) THEN
+            got_var(idUzsl)=.TRUE.
+            QCK(ng)%Vid(idUzsl)=var_id(i)
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idVzsl))) THEN
+            got_var(idVzsl)=.TRUE.
+            QCK(ng)%Vid(idVzsl)=var_id(i)
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idu3dE))) THEN
             got_var(idu3dE)=.TRUE.
             QCK(ng)%Vid(idu3dE)=var_id(i)
@@ -1700,6 +1849,15 @@
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idVsuN))) THEN
             got_var(idVsuN)=.TRUE.
             QCK(ng)%Vid(idVsuN)=var_id(i)
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idUzsE))) THEN
+            got_var(idUzsE)=.TRUE.
+            QCK(ng)%Vid(idUzsE)=var_id(i)
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idVzsN))) THEN
+            got_var(idVzsN)=.TRUE.
+            QCK(ng)%Vid(idVzsN)=var_id(i)
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idRVsu))) THEN
+            got_var(idRVsu)=.TRUE.
+            QCK(ng)%Vid(idRVsu)=var_id(i)
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idWvel))) THEN
             got_var(idWvel)=.TRUE.
             QCK(ng)%Vid(idWvel)=var_id(i)
@@ -1816,6 +1974,12 @@
             IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idTsur(itrc)))) THEN
               got_var(idTsur(itrc))=.TRUE.
               QCK(ng)%Vid(idTsur(itrc))=var_id(i)
+            END IF
+          END DO
+          DO itrc=1,NAT
+            IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idzslT(itrc)))) THEN
+              got_var(idzslT(itrc))=.TRUE.
+              QCK(ng)%Vid(idzslT(itrc))=var_id(i)
             END IF
           END DO
 #endif
@@ -1937,6 +2101,18 @@
           exit_flag=3
           RETURN
         END IF
+        IF (.not.got_var(idUzsl).and.Qout(idUzsl,ng)) THEN
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idUzsl)),          &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idVzsl).and.Qout(idVzsl,ng)) THEN
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idVzsl)),          &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
         IF (.not.got_var(idu3dE).and.Qout(idu3dE,ng)) THEN
           IF (Master) WRITE (stdout,70) TRIM(Vname(1,idu3dE)),          &
      &                                  TRIM(ncname)
@@ -1957,6 +2133,24 @@
         END IF
         IF (.not.got_var(idVsuN).and.Qout(idVsuN,ng)) THEN
           IF (Master) WRITE (stdout,70) TRIM(Vname(1,idVsuN)),          &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idUzsE).and.Qout(idUzsE,ng)) THEN
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idUzsE)),          &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idVzsN).and.Qout(idVzsN,ng)) THEN
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idVzsN)),          &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idRVsu).and.Qout(idRVsu,ng)) THEN
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idRVsu)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
@@ -2167,6 +2361,14 @@
             RETURN
           END IF
         END DO
+        DO itrc=1,NAT
+          IF (.not.got_var(idzslT(itrc)).and.Qout(idzslT(itrc),ng)) THEN
+            IF (Master) WRITE (stdout,70) TRIM(Vname(1,idzslT(itrc))),  &
+     &                                    TRIM(ncname)
+            exit_flag=3
+            RETURN
+          END IF
+        END DO
 #endif
 
 #if (defined BBL_MODEL || defined WAVES_OUTPUT) && defined SOLVE3D
@@ -2257,16 +2459,14 @@
       integer :: IorJdim
 # endif
       integer :: DimIDs(nDimID)
-      integer :: t2dgrd(3), u2dgrd(3), v2dgrd(3)
+      integer :: t2dgrd(3), sp2dgrd(3), u2dgrd(3), v2dgrd(3)
 
 # ifdef SOLVE3D
 #  ifdef SEDIMENT
       integer :: b3dgrd(4)
 #  endif
-      integer :: t3dgrd(4), u3dgrd(4), v3dgrd(4), w3dgrd(4)
-# endif
-# ifdef WET_DRY
-      integer :: sp2dgrd(3)
+      integer :: t3dgrd(4),  u3dgrd(4),  v3dgrd(4), w3dgrd(4)
+      integer :: t3dzgrd(4), u3dzgrd(4), v3dzgrd(4)
 # endif
 !
       real(r8) :: Aval(6)
@@ -2394,6 +2594,12 @@
      &                 N(ng)+1, DimIDs(10))
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
+        IF (Nslice.gt.0) THEN
+          status=def_dim(ng, model, QCK(ng)%pioFile, ncname, 'z_slice', &
+     &                   Nslice, DimIDs(34))
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        END IF
+
         status=def_dim(ng, model, QCK(ng)%pioFile, ncname, 'tracer',    &
      &                 NT(ng), DimIDs(11))
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
@@ -2488,16 +2694,19 @@
         t3dgrd(2)=DimIDs( 5)
         t3dgrd(3)=DimIDs( 9)
         t3dgrd(4)=DimIDs(12)
+!
+        t3dzgrd(1)=DimIDs( 1)
+        t3dzgrd(2)=DimIDs( 5)
+        t3dzgrd(3)=DimIDs(34)          ! selected constant depth slices
+        t3dzgrd(4)=DimIDs(12)
 #  endif
 # endif
-# ifdef WET_DRY
 !
 !  Define dimension vectors for staggered type variables at PSI-points.
 !
         sp2dgrd(1)=DimIDs( 4)
         sp2dgrd(2)=DimIDs( 8)
         sp2dgrd(3)=DimIDs(12)
-# endif
 !
 !  Define dimension vectors for staggered u-momentum type variables.
 !
@@ -2517,6 +2726,11 @@
         u3dgrd(2)=DimIDs( 6)
         u3dgrd(3)=DimIDs( 9)
         u3dgrd(4)=DimIDs(12)
+!
+        u3dzgrd(1)=DimIDs( 1)
+        u3dzgrd(2)=DimIDs( 5)
+        u3dzgrd(3)=DimIDs(34)          ! selected constant depth slices
+        u3dzgrd(4)=DimIDs(12)
 #  endif
 # endif
 !
@@ -2538,6 +2752,11 @@
         v3dgrd(2)=DimIDs( 7)
         v3dgrd(3)=DimIDs( 9)
         v3dgrd(4)=DimIDs(12)
+!
+        v3dzgrd(1)=DimIDs( 1)
+        v3dzgrd(2)=DimIDs( 5)
+        v3dzgrd(3)=DimIDs(34)          ! selected constant depth slices
+        v3dzgrd(4)=DimIDs(12)
 #  endif
 # endif
 # ifdef SOLVE3D
@@ -3011,6 +3230,52 @@
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 !
+!  Define 3D U-momentum component at specified constant depth slices.
+!
+        IF (Qout(idUzsl,ng).and.(Nslice.gt.0)) THEN
+          Vinfo( 1)=Vname(1,idUzsl)
+          Vinfo( 2)=Vname(2,idUzsl)
+          Vinfo( 3)=Vname(3,idUzsl)
+          Vinfo(14)=Vname(4,idUzsl)
+          Vinfo(16)=Vname(1,idtime)
+#  if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_u'
+#  endif
+          Vinfo(21)=Vname(6,idUzsl)
+          Vinfo(22)='coordinates, z_slice'
+          Aval(5)=REAL(Iinfo(1,idUzsl,ng),r8)
+          QCK(ng)%pioVar(idUzsl)%dkind=PIO_FOUT
+          QCK(ng)%pioVar(idUzsl)%gtype=u3dvar
+!
+          status=def_var(ng, model, QCK(ng)%pioFile,                    &
+     &                   QCK(ng)%pioVar(idUzsl)%vd,                     &
+     &                   PIO_FOUT, nvd4, u3dzgrd, Aval, Vinfo, ncname)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        END IF
+!
+!  Define 3D V-momentum component at specified constant depth slices.
+!
+        IF (Qout(idVzsl,ng).and.(Nslice.gt.0)) THEN
+          Vinfo( 1)=Vname(1,idVzsl)
+          Vinfo( 2)=Vname(2,idVzsl)
+          Vinfo( 3)=Vname(3,idVzsl)
+          Vinfo(14)=Vname(4,idVzsl)
+          Vinfo(16)=Vname(1,idtime)
+#  if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_v'
+#  endif
+          Vinfo(21)=Vname(6,idVzsl)
+          Vinfo(22)='coordinates, z_slice'
+          Aval(5)=REAL(Iinfo(1,idVzsl,ng),r8)
+          QCK(ng)%pioVar(idVzsl)%dkind=PIO_FOUT
+          QCK(ng)%pioVar(idVzsl)%gtype=v3dvar
+!
+          status=def_var(ng, model, QCK(ng)%pioFile,                    &
+     &                   QCK(ng)%pioVar(idVzsl)%vd,                     &
+     &                   PIO_FOUT, nvd4, v3dzgrd, Aval, Vinfo, ncname)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        END IF
+!
 !  Define 3D Eastward momentum component at RHO-points.
 !
         IF (Qout(idu3dE,ng)) THEN
@@ -3100,6 +3365,77 @@
           status=def_var(ng, model, QCK(ng)%pioFile,                    &
      &                   QCK(ng)%pioVar(idVsuN)%vd,                     &
      &                   PIO_FOUT, nvd3, t2dgrd, Aval, Vinfo, ncname)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        END IF
+!
+!  Define 3D Eastward momentum component at RHO-points for selected
+!  constant depth slices.
+!
+        IF (Qout(iduzsE,ng).and.(Nslice.gt.0)) THEN
+          Vinfo( 1)=Vname(1,iduzsE)
+          Vinfo( 2)=Vname(2,iduzsE)
+          Vinfo( 3)=Vname(3,iduzsE)
+          Vinfo(14)=Vname(4,iduzsE)
+          Vinfo(16)=Vname(1,idtime)
+#  if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_rho'
+#  endif
+          Vinfo(21)=Vname(6,iduzsE)
+          Vinfo(22)='coordinates, z_slice'
+          Aval(5)=REAL(Iinfo(1,iduzsE,ng),r8)
+          QCK(ng)%pioVar(iduzsE)%dkind=PIO_FOUT
+          QCK(ng)%pioVar(iduzsE)%gtype=r3dvar
+!
+          status=def_var(ng, model, QCK(ng)%pioFile,                    &
+     &                   QCK(ng)%pioVar(iduzsE)%vd,                     &
+     &                   PIO_FOUT, nvd4, t3dzgrd, Aval, Vinfo, ncname)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        END IF
+!
+!  Define 3D Northward momentum component at RHO-points  for selected
+!  constant depth slices.
+!
+        IF (Qout(idvzsN,ng).and.(Nslice.gt.0)) THEN
+          Vinfo( 1)=Vname(1,idvzsN)
+          Vinfo( 2)=Vname(2,idvzsN)
+          Vinfo( 3)=Vname(3,idvzsN)
+          Vinfo(14)=Vname(4,idvzsN)
+          Vinfo(16)=Vname(1,idtime)
+#  if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_rho'
+#  endif
+          Vinfo(21)=Vname(6,idvzsN)
+          Vinfo(22)='coordinates, z_slice'
+          Aval(5)=REAL(Iinfo(1,idvzsN,ng),r8)
+          QCK(ng)%pioVar(idvzsN)%dkind=PIO_FOUT
+          QCK(ng)%pioVar(idvzsN)%gtype=r3dvar
+!
+          status=def_var(ng, model, QCK(ng)%pioFile,                    &
+     &                   QCK(ng)%pioVar(idvzsN)%vd,                     &
+     &                   PIO_FOUT, nvd4, t3dzgrd, Aval, Vinfo, ncname)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        END IF
+!
+!  Define surface relative vorticity at PSI-points.
+!
+        IF (Qout(idRVsu,ng)) THEN
+          Vinfo( 1)=Vname(1,idRVsu)
+          Vinfo( 2)=Vname(2,idRVsu)
+          Vinfo( 3)=Vname(3,idRVsu)
+          Vinfo(14)=Vname(4,idRVsu)
+          Vinfo(16)=Vname(1,idtime)
+#  if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_rho'
+#  endif
+          Vinfo(21)=Vname(6,idRVsu)
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idRVsu,ng),r8)
+          QCK(ng)%pioVar(idRVsu)%dkind=PIO_FOUT
+          QCK(ng)%pioVar(idRVsu)%gtype=p2dvar
+!
+          status=def_var(ng, model, QCK(ng)%pioFile,                    &
+     &                   QCK(ng)%pioVar(idRVsu)%vd,                     &
+     &                   PIO_FOUT, nvd3, sp2dgrd, Aval, Vinfo, ncname)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 !
@@ -3209,6 +3545,38 @@
             status=def_var(ng, model, QCK(ng)%pioFile,                  &
      &                     QCK(ng)%pioVar(idsurT(itrc))%vd,             &
      &                     PIO_FOUT, nvd3, t2dgrd, Aval, Vinfo, ncname)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+          END IF
+        END DO
+!
+!  Define surface tracer type variables at specified depth slices.
+!
+        DO itrc=1,NT(ng)
+          IF (Qout(idzslT(itrc),ng).and.(Nslice.gt.0)) THEN
+            Vinfo( 1)=Vname(1,idzslT(itrc))
+            Vinfo( 2)=Vname(2,idzslT(itrc))
+            Vinfo( 3)=Vname(3,idzslT(itrc))
+            Vinfo(14)=Vname(4,idzslT(itrc))
+            Vinfo(16)=Vname(1,idtime)
+#  ifdef SEDIMENT
+            DO i=1,NST
+              IF (itrc.eq.idsed(i)) THEN
+                WRITE (Vinfo(19),50) 1000.0_r8*Sd50(i,ng)
+              END IF
+            END DO
+#  endif
+#  if defined WRITE_WATER && defined MASKING
+            Vinfo(20)='mask_rho'
+#  endif
+            Vinfo(21)=Vname(6,idzslT(itrc))
+            Vinfo(22)='coordinates, z_slice'
+            Aval(5)=REAL(r3dvar,r8)
+            QCK(ng)%pioVar(idzslT(itrc))%dkind=PIO_FOUT
+            QCK(ng)%pioVar(idzslT(itrc))%gtype=r2dvar
+!
+            status=def_var(ng, model, QCK(ng)%pioFile,                  &
+     &                     QCK(ng)%pioVar(idzslT(itrc))%vd,             &
+     &                     PIO_FOUT, nvd4, t3dzgrd, Aval, Vinfo, ncname)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
           END IF
         END DO
@@ -4055,6 +4423,16 @@
             QCK(ng)%pioVar(idVsur)%vd=var_desc(i)
             QCK(ng)%pioVar(idVsur)%dkind=PIO_FOUT
             QCK(ng)%pioVar(idVsur)%gtype=v2dvar
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idUzsl))) THEN
+            got_var(idUzsl)=.TRUE.
+            QCK(ng)%pioVar(idUzsl)%vd=var_desc(i)
+            QCK(ng)%pioVar(idUzsl)%dkind=PIO_FOUT
+            QCK(ng)%pioVar(idUzsl)%gtype=u3dvar
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idVzsl))) THEN
+            got_var(idVzsl)=.TRUE.
+            QCK(ng)%pioVar(idVzsl)%vd=var_desc(i)
+            QCK(ng)%pioVar(idVzsl)%dkind=PIO_FOUT
+            QCK(ng)%pioVar(idVzsl)%gtype=v3dvar
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idu3dE))) THEN
             got_var(idu3dE)=.TRUE.
             QCK(ng)%pioVar(idu3dE)%vd=var_desc(i)
@@ -4075,6 +4453,21 @@
             QCK(ng)%pioVar(idVsuN)%vd=var_desc(i)
             QCK(ng)%pioVar(idVsuN)%dkind=PIO_FOUT
             QCK(ng)%pioVar(idVsuN)%gtype=r2dvar
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,iduzsE))) THEN
+            got_var(iduzsE)=.TRUE.
+            QCK(ng)%pioVar(iduzsE)%vd=var_desc(i)
+            QCK(ng)%pioVar(iduzsE)%dkind=PIO_FOUT
+            QCK(ng)%pioVar(iduzsE)%gtype=r3dvar
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idvzsN))) THEN
+            got_var(idvzsN)=.TRUE.
+            QCK(ng)%pioVar(idvzsN)%vd=var_desc(i)
+            QCK(ng)%pioVar(idvzsN)%dkind=PIO_FOUT
+            QCK(ng)%pioVar(idvzsN)%gtype=r3dvar
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idRVsu))) THEN
+            got_var(idRVsu)=.TRUE.
+            QCK(ng)%pioVar(idRVsu)%vd=var_desc(i)
+            QCK(ng)%pioVar(idRVsu)%dkind=PIO_FOUT
+            QCK(ng)%pioVar(idRVsu)%gtype=p3dvar
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idWvel))) THEN
             got_var(idWvel)=.TRUE.
             QCK(ng)%pioVar(idWvel)%vd=var_desc(i)
@@ -4253,6 +4646,14 @@
               QCK(ng)%pioVar(idTsur(itrc))%gtype=r2dvar
             END IF
           END DO
+          DO itrc=1,NAT
+            IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idzslT(itrc)))) THEN
+              got_var(idzslT(itrc))=.TRUE.
+              QCK(ng)%pioVar(idzslT(itrc))%vd=var_desc(i)
+              QCK(ng)%pioVar(idzslT(itrc))%dkind=PIO_FOUT
+              QCK(ng)%pioVar(idzslT(itrc))%gtype=r3dvar
+            END IF
+          END DO
 # endif
         END DO
 !
@@ -4372,6 +4773,18 @@
           exit_flag=3
           RETURN
         END IF
+        IF (.not.got_var(idUzsl).and.Qout(idUzsl,ng)) THEN
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idUzsl)),          &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idVzsl).and.Qout(idVzsl,ng)) THEN
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idVzsl)),          &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
         IF (.not.got_var(idu3dE).and.Qout(idu3dE,ng)) THEN
           IF (Master) WRITE (stdout,70) TRIM(Vname(1,idu3dE)),          &
      &                                  TRIM(ncname)
@@ -4396,6 +4809,25 @@
           exit_flag=3
           RETURN
         END IF
+        IF (.not.got_var(iduzsE).and.Qout(iduzsE,ng)) THEN
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,iduzsE)),          &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idvzsN).and.Qout(idvzsN,ng)) THEN
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idvzsN)),          &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idRVsu).and.Qout(idRVsu,ng)) THEN
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idRVsu)),          &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+
         IF (.not.got_var(idWvel).and.Qout(idWvel,ng)) THEN
           IF (Master) WRITE (stdout,70) TRIM(Vname(1,idWvel)),          &
      &                                  TRIM(ncname)
@@ -4597,6 +5029,14 @@
         DO itrc=1,NAT
           IF (.not.got_var(idTsur(itrc)).and.Qout(idTsur(itrc),ng)) THEN
             IF (Master) WRITE (stdout,70) TRIM(Vname(1,idTsur(itrc))),  &
+     &                                    TRIM(ncname)
+            exit_flag=3
+            RETURN
+          END IF
+        END DO
+        DO itrc=1,NAT
+          IF (.not.got_var(idzslT(itrc)).and.Qout(idzslT(itrc),ng)) THEN
+            IF (Master) WRITE (stdout,70) TRIM(Vname(1,idzslT(itrc))),  &
      &                                    TRIM(ncname)
             exit_flag=3
             RETURN
