@@ -36,7 +36,7 @@
 !      409-438.                                                        !
 !                                                                      !
 !    Fairall, C.W., Bradley, E.F., Hare, J.E., Grachev, A.A. and       !
-!      Edson, J.B., 2003. Bulk parameterization of air–sea fluxes:     !
+!      Edson, J.B., 2003. Bulk parameterization of air-sea fluxes:     !
 !      Updates and verification for the COARE algorithm. Journal of    !
 !      Climate, 16, 571-591.                                           !
 !                                                                      !
@@ -758,6 +758,9 @@
           Cd=(vonKar/LOG(blk_ZW(ng)/Zo10(i)))**2
 !
 !  Compute Richardson number.
+# if defined FRC_COUPLING && defined PBLH
+!  Use atmosphere boundary layer thickness from coupled model.
+# endif
 !
           Ct(i)=vonKar/LOG(blk_ZT(ng)/ZoT10(i))  ! T transfer coefficient
           CC(i)=vonKar*Ct(i)/Cd
@@ -765,7 +768,11 @@
 # ifdef COOL_SKIN
           delTc(i)=blk_dter
 # endif
+# if defined FRC_COUPLING && defined PBLH
+          Ribcu(i)=-blk_ZW(ng)/(PBLh(i,j)*0.004_r8*blk_beta**3)
+# else
           Ribcu(i)=-blk_ZW(ng)/(blk_Zabl*0.004_r8*blk_beta**3)
+# endif
           Ri(i)=-g*blk_ZW(ng)*((delT(i)-delTc(i))+                      &
      &                          0.61_r8*TairK(i)*delQ(i))/              &
      &          (TairK(i)*delW(i)*delW(i)+eps)
