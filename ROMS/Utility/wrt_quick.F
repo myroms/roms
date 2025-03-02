@@ -607,7 +607,7 @@
 !
       IF (Qout(idUzsl,ng).and.(Nslice.gt.0)) THEN
         IF (.not.allocated(Wr3d)) THEN
-          allocate (Wr3d(LBi:UBi,LBj:UBj,Nslice))
+          allocate ( Wr3d(LBi:UBi,LBj:UBj,Nslice) )
           Wr3d(LBi:UBi,LBj:UBj,1:Nslice)=0.0_r8
         END IF
         scale=1.0_dp
@@ -654,7 +654,7 @@
 !
       IF (Qout(idVzsl,ng).and.(Nslice.gt.0)) THEN
         IF (.not.allocated(Wr3d)) THEN
-          allocate (Wr3d(LBi:UBi,LBj:UBj,Nslice))
+          allocate ( Wr3d(LBi:UBi,LBj:UBj,Nslice) )
           Wr3d(LBi:UBi,LBj:UBj,1:Nslice)=0.0_r8
         END IF
         scale=1.0_dp
@@ -793,7 +793,7 @@
 !
       IF (Qout(idUzsE,ng).and.(Nslice.gt.0)) THEN
         IF (.not.allocated(Wr3d)) THEN
-          allocate (Wr3d(LBi:UBi,LBj:UBj,Nslice))
+          allocate ( Wr3d(LBi:UBi,LBj:UBj,Nslice) )
           Wr3d(LBi:UBi,LBj:UBj,1:Nslice)=0.0_r8
         END IF
         scale=1.0_dp
@@ -803,7 +803,7 @@
      &                      OCEAN(ng) % ua,                             &
      &                      GRID(ng) % z_r,                             &
 # ifdef MASKING
-     &                      GRID(ng) % rmask,                           &
+     &                      GRID(ng) % rmask_full,                      &
 # endif
      &                      Zslice, Wr3d)
 !
@@ -830,7 +830,7 @@
 !
       IF (Qout(idVzsN,ng).and.(Nslice.gt.0)) THEN
         IF (.not.allocated(Wr3d)) THEN
-          allocate (Wr3d(LBi:UBi,LBj:UBj,Nslice))
+          allocate ( Wr3d(LBi:UBi,LBj:UBj,Nslice) )
           Wr3d(LBi:UBi,LBj:UBj,1:Nslice)=0.0_r8
         END IF
         scale=1.0_dp
@@ -840,7 +840,7 @@
      &                      OCEAN(ng) % va,                             &
      &                      GRID(ng) % z_r,                             &
 # ifdef MASKING
-     &                      GRID(ng) % rmask,                           &
+     &                      GRID(ng) % rmask_full,                      &
 # endif
      &                      Zslice, Wr3d)
 !
@@ -867,7 +867,7 @@
 !
       IF (Qout(idRVsu,ng)) THEN
         IF (.not.allocated(Wr3d)) THEN
-          allocate (Wr3d(LBi:UBi,LBj:UBj,N(ng)))
+          allocate ( Wr3d(LBi:UBi,LBj:UBj,N(ng)) )
           Wr3d(LBi:UBi,LBj:UBj,1:N(ng))=0.0_r8
         END IF
         scale=1.0_dp
@@ -904,7 +904,7 @@
 !
       IF (Qout(idOvel,ng)) THEN
         IF (.not.allocated(Wr3d)) THEN
-          allocate (Wr3d(LBi:UBi,LBj:UBj,0:N(ng)))
+          allocate ( Wr3d(LBi:UBi,LBj:UBj,0:N(ng)) )
           Wr3d(LBi:UBi,LBj:UBj,0:N(ng))=0.0_r8
         END IF
         scale=1.0_dp
@@ -1013,7 +1013,7 @@
       DO itrc=1,NT(ng)
         IF (Qout(idzslT(itrc),ng).and.(Nslice.gt.0)) THEN
           IF (.not.allocated(Wr3d)) THEN
-            allocate (Wr3d(LBi:UBi,LBj:UBj,Nslice))
+            allocate ( Wr3d(LBi:UBi,LBj:UBj,Nslice) )
             Wr3d(LBi:UBi,LBj:UBj,1:Nslice)=0.0_r8
           END IF
           scale=1.0_dp
@@ -1357,7 +1357,7 @@
      &                    GRID(ng) % CosAngler,                         &
      &                    GRID(ng) % SinAngler,                         &
 #  ifdef MASKING
-     &                    GRID(ng) % rmask_full,                        &
+     &                    GRID(ng) % rmask,                             &
 #  endif
      &                    FORCES(ng) % Uwind,                           &
      &                    FORCES(ng) % Vwind,                           &
@@ -2375,6 +2375,110 @@
         END IF
       END IF
 !
+!  Write out 3D U-momentum component (m/s) at specified constant depth
+!  slices.
+!
+      IF (Qout(idUzsl,ng).and.(Nslice.gt.0)) THEN
+        IF (.not.allocated(Wr3d)) THEN
+          allocate ( Wr3d(LBi:UBi,LBj:UBj,Nslice) )
+          Wr3d(LBi:UBi,LBj:UBj,1:Nslice)=0.0_r8
+        END IF
+!
+        DO k=1,N(ng)
+          DO j=Jstr-1,Jend+1
+            DO i=IstrU-1,Iend+1
+              GRID(ng)%z_v(i,j,k)=0.5_r8*(GRID(ng)%z_r(i-1,j,k)+        &
+     &                                    GRID(ng)%z_r(i  ,j,k))
+            END DO
+          END DO
+        END DO
+        CALL extract_slice (ng, model, tile, u3dvar,                    &
+     &                      LBi, UBi, LBj, UBj, 1, N(ng),               &
+     &                      OCEAN(ng) % u(:,:,:,NOUT),                  &
+     &                      GRID(ng) % z_v,                             &
+# ifdef MASKING
+     &                      GRID(ng) % umask_full,                      &
+# endif
+     &                      Zslice, Wr3d)
+!
+        scale=1.0_dp
+        IF (QCK(ng)%pioVar(idUzsl)%dkind.eq.PIO_double) THEN
+          ioDesc => ioDesZ_dp_u3dvar(ng)
+        ELSE
+          ioDesc => ioDesZ_sp_u3dvar(ng)
+        END IF
+        status=nf_fwrite3d(ng, model, QCK(ng)%pioFile, idUvel,          &
+     &                     QCK(ng)%pioVar(idUzsl),                      &
+     &                     QCK(ng)%Rindex,                              &
+     &                     ioDesc,                                      &
+     &                     LBi, UBi, LBj, UBj, 1, Nslice, scale,        &
+#  ifdef MASKING
+     &                     GRID(ng) % umask_full,                       &
+#  endif
+     &                     Wr3d)
+        IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+          IF (Master) THEN
+            WRITE (stdout,20) TRIM(Vname(1,idUzsl)), QCK(ng)%Rindex
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+        deallocate (Wr3d)
+      END IF
+!
+!  Write out 3D V-momentum component (m/s) at specified constant depth
+!  slices.
+!
+      IF (Qout(idVzsl,ng).and.(Nslice.gt.0)) THEN
+        IF (.not.allocated(Wr3d)) THEN
+          allocate ( Wr3d(LBi:UBi,LBj:UBj,Nslice) )
+          Wr3d(LBi:UBi,LBj:UBj,1:Nslice)=0.0_r8
+        END IF
+!
+        DO k=1,N(ng)
+          DO j=JstrV-1,Jend+1
+            DO i=Istr-1,Iend+1
+              GRID(ng)%z_v(i,j,k)=0.5_r8*(GRID(ng)%z_r(i,j-1,k)+        &
+     &                                    GRID(ng)%z_r(i,j  ,k))
+            END DO
+          END DO
+        END DO
+        CALL extract_slice (ng, model, tile, v3dvar,                    &
+     &                      LBi, UBi, LBj, UBj, 1, N(ng),               &
+     &                      OCEAN(ng) % v(:,:,:,NOUT),                  &
+     &                      GRID(ng) % z_v,                             &
+# ifdef MASKING
+     &                      GRID(ng) % vmask_full,                      &
+# endif
+     &                      Zslice, Wr3d)
+!
+        scale=1.0_dp
+        IF (QCK(ng)%pioVar(idVzsl)%dkind.eq.PIO_double) THEN
+          ioDesc => ioDesZ_dp_v3dvar(ng)
+        ELSE
+          ioDesc => ioDesZ_sp_v3dvar(ng)
+        END IF
+        status=nf_fwrite3d(ng, model, QCK(ng)%pioFile, idVzsl,          &
+     &                     QCK(ng)%pioVar(idVzsl),                      &
+     &                     QCK(ng)%Rindex,                              &
+     &                     ioDesc,                                      &
+     &                     LBi, UBi, LBj, UBj, 1, Nslice, scale,        &
+#  ifdef MASKING
+     &                     GRID(ng) % vmask_full,                       &
+#  endif
+     &                     Wr3d)
+        IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+          IF (Master) THEN
+            WRITE (stdout,20) TRIM(Vname(1,idVzsl)), QCK(ng)%Rindex
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+        deallocate (Wr3d)
+      END IF
+!
 !  Write out 3D Eastward momentum (m/s) at RHO-points, A-grid.
 !
       IF (Qout(idu3dE,ng)) THEN
@@ -2487,11 +2591,97 @@
         END IF
       END IF
 !
+!  Write out 3D Eastward momentum (m/s) at RHO-points, A-grid, at
+!  specified constant depth slices.
+!
+      IF (Qout(idUzsE,ng).and.(Nslice.gt.0)) THEN
+        IF (.not.allocated(Wr3d)) THEN
+          allocate ( Wr3d(LBi:UBi,LBj:UBj,Nslice) )
+          Wr3d(LBi:UBi,LBj:UBj,1:Nslice)=0.0_r8
+        END IF
+        CALL extract_slice (ng, model, tile, r3dvar,                    &
+     &                      LBi, UBi, LBj, UBj, 1, N(ng),               &
+     &                      OCEAN(ng) % ua,                             &
+     &                      GRID(ng) % z_r,                             &
+# ifdef MASKING
+     &                      GRID(ng) % rmask_full,                      &
+# endif
+     &                      Zslice, Wr3d)
+!
+        scale=1.0_dp
+        IF (QCK(ng)%pioVar(idUzsE)%dkind.eq.PIO_double) THEN
+          ioDesc => ioDesZ_dp_r3dvar(ng)
+        ELSE
+          ioDesc => ioDesZ_sp_r3dvar(ng)
+        END IF
+        status=nf_fwrite3d(ng, model, QCK(ng)%pioFile, idUzsE,          &
+     &                     QCK(ng)%pioVar(idUzsE),                      &
+     &                     QCK(ng)%Rindex,                              &
+     &                     ioDesc,                                      &
+     &                     LBi, UBi, LBj, UBj, 1, Nslice, scale,        &
+#  ifdef MASKING
+     &                     GRID(ng) % rmask_full,                       &
+#  endif
+     &                     Wr3d)
+        IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+          IF (Master) THEN
+            WRITE (stdout,20) TRIM(Vname(1,idUzsE)), QCK(ng)%Rindex
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+        deallocate (Wr3d)
+      END IF
+!
+!  Write out 3D Northward momentum (m/s) at RHO-points, A-grid, at
+!  specified constant depth slices.
+!
+      IF (Qout(idVzsN,ng).and.(Nslice.gt.0)) THEN
+        IF (.not.allocated(Wr3d)) THEN
+          allocate ( Wr3d(LBi:UBi,LBj:UBj,Nslice) )
+          Wr3d(LBi:UBi,LBj:UBj,1:Nslice)=0.0_r8
+        END IF
+        CALL extract_slice (ng, model, tile, r3dvar,                    &
+     &                      LBi, UBi, LBj, UBj, 1, N(ng),               &
+     &                      OCEAN(ng) % va,                             &
+     &                      GRID(ng) % z_r,                             &
+# ifdef MASKING
+     &                      GRID(ng) % rmask_full,                      &
+# endif
+     &                      Zslice, Wr3d)
+!
+        scale=1.0_dp
+        IF (QCK(ng)%pioVar(idv3dN)%dkind.eq.PIO_double) THEN
+          ioDesc => ioDesZ_dp_r3dvar(ng)
+        ELSE
+          ioDesc => ioDesZ_sp_r3dvar(ng)
+        END IF
+        status=nf_fwrite3d(ng, model, QCK(ng)%pioFile, idVzsN,          &
+     &                     QCK(ng)%pioVar(idVzsN),                      &
+     &                     QCK(ng)%Rindex,                              &
+     &                     ioDesc,                                      &
+     &                     LBi, UBi, LBj, UBj, 1, Nslice, scale,        &
+#  ifdef MASKING
+     &                     GRID(ng) % rmask_full,                       &
+#  endif
+     &                     Wr3d)
+        IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+          IF (Master) THEN
+            WRITE (stdout,20) TRIM(Vname(1,idVzsN)), QCK(ng)%Rindex
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+        deallocate (Wr3d)
+      END IF
+!
 !  Write out surface relative vorticity (1/s) at PSI-points.
 !
       IF (Qout(idRVsu,ng)) THEN
         IF (.not.allocated(Wr3d)) THEN
-          allocate (Wr3d(LBi:UBi,LBj:UBj,N(ng)))
+          allocate ( Wr3d(LBi:UBi,LBj:UBj,N(ng)) )
           Wr3d(LBi:UBi,LBj:UBj,1:N(ng))=0.0_r8
         END IF
         scale=1.0_dp
@@ -2534,7 +2724,7 @@
 !
       IF (Qout(idOvel,ng)) THEN
         IF (.not.allocated(Wr3d)) THEN
-          allocate (Wr3d(LBi:UBi,LBj:UBj,0:N(ng)))
+          allocate ( Wr3d(LBi:UBi,LBj:UBj,0:N(ng)) )
           Wr3d(LBi:UBi,LBj:UBj,0:N(ng))=0.0_r8
         END IF
         scale=1.0_dp
@@ -2656,6 +2846,51 @@
             ioerror=status
             RETURN
           END IF
+        END IF
+      END DO
+!
+!  Write out tracer type variables at specified constant depth slices.
+!
+      DO itrc=1,NT(ng)
+        IF (Qout(idzslT(itrc),ng).and.(Nslice.gt.0)) THEN
+          IF (.not.allocated(Wr3d)) THEN
+            allocate ( Wr3d(LBi:UBi,LBj:UBj,Nslice) )
+            Wr3d(LBi:UBi,LBj:UBj,1:Nslice)=0.0_r8
+          END IF
+          CALL extract_slice (ng, model, tile, r3dvar,                  &
+     &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
+     &                        OCEAN(ng) % t(:,:,:,NOUT,itrc),           &
+     &                        GRID(ng) % z_r,                           &
+# ifdef MASKING
+     &                        GRID(ng) % rmask,                         &
+# endif
+     &                        Zslice, Wr3d)
+!
+          scale=1.0_dp
+          IF (QCK(ng)%pioVar(idzslT(itrc))%dkind.eq.PIO_double) THEN
+            ioDesc => ioDesZ_dp_r3dvar(ng)
+          ELSE
+            ioDesc => ioDesZ_sp_r3dvar(ng)
+          END IF
+          status=nf_fwrite3d(ng, model, QCK(ng)%pioFile, idzslT(itrc),  &
+     &                       QCK(ng)%pioVar(idzslT(itrc)),              &
+     &                       QCK(ng)%Rindex,                            &
+     &                       ioDesc,                                    &
+     &                       LBi, UBi, LBj, UBj, 1, Nslice, scale,      &
+#  ifdef MASKING
+     &                       GRID(ng) % rmask,                          &
+#  endif
+     &                       Wr3d)
+          IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+            IF (Master) THEN
+              WRITE (stdout,20) TRIM(Vname(1,idzslT(itrc))),            &
+     &                          QCK(ng)%Rindex
+            END IF
+            exit_flag=3
+            ioerror=status
+            RETURN
+          END IF
+          IF (itrc.eq.NT(ng)) deallocate (Wr3d)
         END IF
       END DO
 !
@@ -3030,7 +3265,7 @@
      &                    GRID(ng) % CosAngler,                         &
      &                    GRID(ng) % SinAngler,                         &
 #   ifdef MASKING
-     &                    GRID(ng) % rmask_full,                        &
+     &                    GRID(ng) % rmask,                             &
 #   endif
      &                    FORCES(ng) % Uwind,                           &
      &                    FORCES(ng) % Vwind,                           &

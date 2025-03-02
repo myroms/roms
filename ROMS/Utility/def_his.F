@@ -140,7 +140,8 @@
 # ifdef SEDIMENT
       integer :: b3dgrd(4)
 # endif
-      integer :: t3dgrd(4), u3dgrd(4), v3dgrd(4), w3dgrd(4)
+      integer :: t3dgrd(4),  u3dgrd(4),  v3dgrd(4), w3dgrd(4)
+      integer :: t3dzgrd(4), u3dzgrd(4), v3dzgrd(4)
 # ifdef ADJUST_BOUNDARY
       integer :: t3dobc(5)
 # endif
@@ -274,6 +275,12 @@
      &                 N(ng)+1, DimIDs(10))
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
+        IF (Nslice.gt.0) THEN
+          status=def_dim(ng, model, HIS(ng)%ncid, ncname, 'z_slice',    &
+     &                   Nslice, DimIDs(34))
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        END IF
+
         status=def_dim(ng, model, HIS(ng)%ncid, ncname, 'tracer',       &
      &                 NT(ng), DimIDs(11))
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
@@ -371,6 +378,11 @@
         t3dgrd(2)=DimIDs( 5)
         t3dgrd(3)=DimIDs( 9)
         t3dgrd(4)=DimIDs(12)
+!
+        t3dzgrd(1)=DimIDs( 1)
+        t3dzgrd(2)=DimIDs( 5)
+        t3dzgrd(3)=DimIDs(34)          ! selected constant depth slices
+        t3dzgrd(4)=DimIDs(12)
 # endif
 #endif
 #ifdef ADJUST_BOUNDARY
@@ -413,6 +425,11 @@
         u3dgrd(2)=DimIDs( 6)
         u3dgrd(3)=DimIDs( 9)
         u3dgrd(4)=DimIDs(12)
+!
+        u3dzgrd(1)=DimIDs( 2)
+        u3dzgrd(2)=DimIDs( 6)
+        u3dzgrd(3)=DimIDs(34)          ! selected constant depth slices
+        u3dzgrd(4)=DimIDs(12)
 # endif
 #endif
 !
@@ -434,6 +451,11 @@
         v3dgrd(2)=DimIDs( 7)
         v3dgrd(3)=DimIDs( 9)
         v3dgrd(4)=DimIDs(12)
+!
+        v3dzgrd(1)=DimIDs( 3)
+        v3dzgrd(2)=DimIDs( 7)
+        v3dzgrd(3)=DimIDs(34)          ! selected constant depth slices
+        v3dzgrd(4)=DimIDs(12)
 # endif
 #endif
 #ifdef SOLVE3D
@@ -1030,6 +1052,25 @@
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 # endif
         END IF
+!
+!  Define 3D U-momentum component at specified constant depth slices.
+!
+        IF (Hout(idUzsl,ng).and.(Nslice.gt.0)) THEN
+          Vinfo( 1)=Vname(1,idUzsl)
+          Vinfo( 2)=Vname(2,idUzsl)
+          Vinfo( 3)=Vname(3,idUzsl)
+          Vinfo(14)=Vname(4,idUzsl)
+          Vinfo(16)=Vname(1,idtime)
+# if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_u'
+# endif
+          Vinfo(21)=Vname(6,idUzsl)
+          Vinfo(22)='coordinates, z_slice'
+          Aval(5)=REAL(Iinfo(1,idUzsl,ng),r8)
+          status=def_var(ng, model, HIS(ng)%ncid, HIS(ng)%Vid(idUzsl),  &
+     &                   NF_FOUT, nvd4, u3dzgrd, Aval, Vinfo, ncname)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        END IF
 
 # ifdef ADJUST_BOUNDARY
 !
@@ -1087,6 +1128,25 @@
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 # endif
         END IF
+!
+!  Define 3D V-momentum component at specified constant depth slices.
+!
+        IF (Hout(idVzsl,ng).and.(Nslice.gt.0)) THEN
+          Vinfo( 1)=Vname(1,idVzsl)
+          Vinfo( 2)=Vname(2,idVzsl)
+          Vinfo( 3)=Vname(3,idVzsl)
+          Vinfo(14)=Vname(4,idVzsl)
+          Vinfo(16)=Vname(1,idtime)
+# if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_v'
+# endif
+          Vinfo(21)=Vname(6,idVzsl)
+          Vinfo(22)='coordinates, z_slice'
+          Aval(5)=REAL(Iinfo(1,idVzsl,ng),r8)
+          status=def_var(ng, model, HIS(ng)%ncid, HIS(ng)%Vid(idVzsl),  &
+     &                   NF_FOUT, nvd4, v3dzgrd, Aval, Vinfo, ncname)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        END IF
 
 # ifdef ADJUST_BOUNDARY
 !
@@ -1127,6 +1187,26 @@
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 !
+!  Define 3D Eastward momentum component at RHO-point for specified
+!  constant depth slices.
+!
+        IF (Hout(idUzsE,ng).and.(Nslice.gt.0)) THEN
+          Vinfo( 1)=Vname(1,idUzsE)
+          Vinfo( 2)=Vname(2,idUzsE)
+          Vinfo( 3)=Vname(3,idUzsE)
+          Vinfo(14)=Vname(4,idUzsE)
+          Vinfo(16)=Vname(1,idtime)
+# if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_rho'
+# endif
+          Vinfo(21)=Vname(6,idUzsE)
+          Vinfo(22)='coordinates, z_slice'
+          Aval(5)=REAL(Iinfo(1,idUzsE,ng),r8)
+          status=def_var(ng, model, HIS(ng)%ncid, HIS(ng)%Vid(idUzsE),  &
+     &                   NF_FOUT, nvd4, t3dzgrd, Aval, Vinfo, ncname)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        END IF
+!
 !  Define 3D Northward momentum at RHO-points, A-grid.
 !
         IF (Hout(idv3dN,ng)) THEN
@@ -1143,6 +1223,26 @@
           Aval(5)=REAL(Iinfo(1,idv3dN,ng),r8)
           status=def_var(ng, model, HIS(ng)%ncid, HIS(ng)%Vid(idv3dN),  &
      &                   NF_FOUT, nvd4, t3dgrd, Aval, Vinfo, ncname)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        END IF
+!
+!  Define 3D Northward momentum component at RHO-points for specified
+!  constant depth slices.
+!
+        IF (Hout(idVzsN,ng).and.(Nslice.gt.0)) THEN
+          Vinfo( 1)=Vname(1,idVzsN)
+          Vinfo( 2)=Vname(2,idVzsN)
+          Vinfo( 3)=Vname(3,idVzsN)
+          Vinfo(14)=Vname(4,idVzsN)
+          Vinfo(16)=Vname(1,idtime)
+# if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_rho'
+# endif
+          Vinfo(21)=Vname(6,idVzsN)
+          Vinfo(22)='coordinates, zslice'
+          Aval(5)=REAL(Iinfo(1,idVzsN,ng),r8)
+          status=def_var(ng, model, HIS(ng)%ncid, HIS(ng)%Vid(idVzsN),  &
+     &                   NF_FOUT, nvd4, t3dzgrd, Aval, Vinfo, ncname)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 !
@@ -1230,6 +1330,35 @@
             Aval(5)=REAL(Iinfo(1,idTvar(itrc),ng),r8)
             status=def_var(ng, model, HIS(ng)%ncid, HIS(ng)%Tid(itrc),  &
      &                     NF_FOUT, nvd4, t3dgrd, Aval, Vinfo, ncname)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+          END IF
+        END DO
+!
+!  Define tracer type variables at specified depth slices.
+!
+        DO itrc=1,NT(ng)
+          IF (Hout(idzslT(itrc),ng).and.(Nslice.gt.0)) THEN
+            Vinfo( 1)=Vname(1,idzslT(itrc))
+            Vinfo( 2)=Vname(2,idzslT(itrc))
+            Vinfo( 3)=Vname(3,idzslT(itrc))
+            Vinfo(14)=Vname(4,idzslT(itrc))
+            Vinfo(16)=Vname(1,idtime)
+# ifdef SEDIMENT
+            DO i=1,NST
+              IF (itrc.eq.idsed(i)) THEN
+                WRITE (Vinfo(19),50) 1000.0_r8*Sd50(i,ng)
+              END IF
+            END DO
+# endif
+# if defined WRITE_WATER && defined MASKING
+            Vinfo(20)='mask_rho'
+# endif
+            Vinfo(21)=Vname(6,idzslT(itrc))
+            Vinfo(22)='coordinates, z_slice'
+            Aval(5)=REAL(r3dvar,r8)
+            status=def_var(ng, model, HIS(ng)%ncid,                     &
+     &                     HIS(ng)%Vid(idzslT(itrc)),                   &
+     &                     NF_FOUT, nvd4, t3dzgrd, Aval, Vinfo, ncname)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
           END IF
         END DO
@@ -2096,6 +2225,12 @@
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idVvel))) THEN
             got_var(idVvel)=.TRUE.
             HIS(ng)%Vid(idVvel)=var_id(i)
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idUzsl))) THEN
+            got_var(idUzsl)=.TRUE.
+            HIS(ng)%Vid(idUzsl)=var_id(i)
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idVzsl))) THEN
+            got_var(idVzsl)=.TRUE.
+            HIS(ng)%Vid(idVzsl)=var_id(i)
 # ifdef ADJUST_BOUNDARY
           ELSE IF (TRIM(var_name(i)).eq.                                &
      &             TRIM(Vname(1,idSbry(isUvel)))) THEN
@@ -2112,6 +2247,12 @@
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idv3dN))) THEN
             got_var(idv3dN)=.TRUE.
             HIS(ng)%Vid(idv3dN)=var_id(i)
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idUzsE))) THEN
+            got_var(idUzsE)=.TRUE.
+            HIS(ng)%Vid(idUzsE)=var_id(i)
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idVzsN))) THEN
+            got_var(idVzsN)=.TRUE.
+            HIS(ng)%Vid(idVzsN)=var_id(i)
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idWvel))) THEN
             got_var(idWvel)=.TRUE.
             HIS(ng)%Vid(idWvel)=var_id(i)
@@ -2229,6 +2370,12 @@
               got_var(idSbry(isTvar(itrc)))=.TRUE.
               HIS(ng)%Vid(idSbry(isTvar(itrc)))=var_id(i)
 # endif
+            END IF
+          END DO
+          DO itrc=1,NAT
+            IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idzslT(itrc)))) THEN
+              got_var(idzslT(itrc))=.TRUE.
+              HIS(ng)%Vid(idzslT(itrc))=var_id(i)
             END IF
           END DO
           DO itrc=1,NAT
@@ -2445,6 +2592,18 @@
           exit_flag=3
           RETURN
         END IF
+        IF (.not.got_var(idUzsl).and.Hout(idUzsl,ng)) THEN
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idUzsl)),          &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idVzsl).and.Hout(idVzsl,ng)) THEN
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idVzsl)),          &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
 # ifdef ADJUST_BOUNDARY
         IF (.not.got_var(idSbry(isUvel))) THEN
           IF (Master) WRITE (stdout,70) TRIM(Vname(1,idSbry(isUvel))),  &
@@ -2467,6 +2626,18 @@
         END IF
         IF (.not.got_var(idv3dN).and.Hout(idv3dN,ng)) THEN
           IF (Master) WRITE (stdout,70) TRIM(Vname(1,idv3dN)),          &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idUzsE).and.Hout(idUzsE,ng)) THEN
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idUzsE)),          &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idVzsN).and.Hout(idVzsN,ng)) THEN
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idVzsN)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
@@ -2681,6 +2852,14 @@
 # endif
         END DO
         DO itrc=1,NAT
+          IF (.not.got_var(idzslT(itrc)).and.Hout(idzslT(itrc),ng)) THEN
+            IF (Master) WRITE (stdout,70) TRIM(Vname(1,idzslT(itrc))),  &
+     &                                    TRIM(ncname)
+            exit_flag=3
+            RETURN
+          END IF
+        END DO
+        DO itrc=1,NAT
           IF (.not.got_var(idTsur(itrc)).and.Hout(idTsur(itrc),ng)) THEN
             IF (Master) WRITE (stdout,70) TRIM(Vname(1,idTsur(itrc))),  &
      &                                    TRIM(ncname)
@@ -2796,7 +2975,8 @@
 #  ifdef SEDIMENT
       integer :: b3dgrd(4)
 #  endif
-      integer :: t3dgrd(4), u3dgrd(4), v3dgrd(4), w3dgrd(4)
+      integer :: t3dgrd(4),  u3dgrd(4),  v3dgrd(4), w3dgrd(4)
+      integer :: t3dzgrd(4), u3dzgrd(4), v3dzgrd(4)
 #  ifdef ADJUST_BOUNDARY
       integer :: t3dobc(5)
 #  endif
@@ -2932,6 +3112,12 @@
      &                 N(ng)+1, DimIDs(10))
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
+        IF (Nslice.gt.0) THEN
+          status=def_dim(ng, model, HIS(ng)%pioFile, ncname, 'z_slice', &
+     &                   Nslice, DimIDs(34))
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        END IF
+
         status=def_dim(ng, model, HIS(ng)%pioFile, ncname, 'tracer',    &
      &                 NT(ng), DimIDs(11))
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
@@ -3029,6 +3215,11 @@
         t3dgrd(2)=DimIDs( 5)
         t3dgrd(3)=DimIDs( 9)
         t3dgrd(4)=DimIDs(12)
+!
+        t3dzgrd(1)=DimIDs( 1)
+        t3dzgrd(2)=DimIDs( 5)
+        t3dzgrd(3)=DimIDs(34)          ! selected constant depth slices
+        t3dzgrd(4)=DimIDs(12)
 #  endif
 # endif
 # ifdef ADJUST_BOUNDARY
@@ -3071,6 +3262,11 @@
         u3dgrd(2)=DimIDs( 6)
         u3dgrd(3)=DimIDs( 9)
         u3dgrd(4)=DimIDs(12)
+!
+        u3dzgrd(1)=DimIDs( 1)
+        u3dzgrd(2)=DimIDs( 5)
+        u3dzgrd(3)=DimIDs(34)          ! selected constant depth slices
+        u3dzgrd(4)=DimIDs(12)
 #  endif
 # endif
 !
@@ -3092,6 +3288,11 @@
         v3dgrd(2)=DimIDs( 7)
         v3dgrd(3)=DimIDs( 9)
         v3dgrd(4)=DimIDs(12)
+!
+        v3dzgrd(1)=DimIDs( 1)
+        v3dzgrd(2)=DimIDs( 5)
+        v3dzgrd(3)=DimIDs(34)          ! selected constant depth slices
+        v3dzgrd(4)=DimIDs(12)
 #  endif
 # endif
 # ifdef SOLVE3D
@@ -3799,6 +4000,29 @@
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #  endif
         END IF
+!
+!  Define 3D U-momentum component at specified constant depth slices.
+!
+        IF (Hout(idUzsl,ng).and.(Nslice.gt.0)) THEN
+          Vinfo( 1)=Vname(1,idUzsl)
+          Vinfo( 2)=Vname(2,idUzsl)
+          Vinfo( 3)=Vname(3,idUzsl)
+          Vinfo(14)=Vname(4,idUzsl)
+          Vinfo(16)=Vname(1,idtime)
+#  if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_u'
+#  endif
+          Vinfo(21)=Vname(6,idUzsl)
+          Vinfo(22)='coordinates, z_slice'
+          Aval(5)=REAL(Iinfo(1,idUzsl,ng),r8)
+          HIS(ng)%pioVar(idUzsl)%dkind=PIO_FOUT
+          HIS(ng)%pioVar(idUzsl)%gtype=u3dvar
+!
+          status=def_var(ng, model, HIS(ng)%pioFile,                    &
+     &                   HIS(ng)%pioVar(idUzsl)%vd,                     &
+     &                   PIO_FOUT, nvd4, u3dzgrd, Aval, Vinfo, ncname)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        END IF
 
 #  ifdef ADJUST_BOUNDARY
 !
@@ -3868,6 +4092,29 @@
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #  endif
         END IF
+!
+!  Define 3D V-momentum component at specified constant depth slices.
+!
+        IF (Hout(idVzsl,ng).and.(Nslice.gt.0)) THEN
+          Vinfo( 1)=Vname(1,idVzsl)
+          Vinfo( 2)=Vname(2,idVzsl)
+          Vinfo( 3)=Vname(3,idVzsl)
+          Vinfo(14)=Vname(4,idVzsl)
+          Vinfo(16)=Vname(1,idtime)
+#  if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_v'
+#  endif
+          Vinfo(21)=Vname(6,idVzsl)
+          Vinfo(22)='coordinates, z_slice'
+          Aval(5)=REAL(Iinfo(1,idVzsl,ng),r8)
+          HIS(ng)%pioVar(idVzsl)%dkind=PIO_FOUT
+          HIS(ng)%pioVar(idVzsl)%gtype=v3dvar
+!
+          status=def_var(ng, model, HIS(ng)%pioFile,                    &
+     &                   HIS(ng)%pioVar(idVzsl)%vd,                     &
+     &                   PIO_FOUT, nvd4, v3dzgrd, Aval, Vinfo, ncname)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        END IF
 
 #  ifdef ADJUST_BOUNDARY
 !
@@ -3916,6 +4163,30 @@
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 !
+!  Define 3D Eastward momentum component at RHO-points for selected
+!  constant depth slices.
+!
+        IF (Hout(idUzsE,ng).and.(Nslice.gt.0)) THEN
+          Vinfo( 1)=Vname(1,idUzsE)
+          Vinfo( 2)=Vname(2,idUzsE)
+          Vinfo( 3)=Vname(3,idUzsE)
+          Vinfo(14)=Vname(4,idUzsE)
+          Vinfo(16)=Vname(1,idtime)
+#  if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_rho'
+#  endif
+          Vinfo(21)=Vname(6,idUzsE)
+          Vinfo(22)='coordinates, z_slice'
+          Aval(5)=REAL(Iinfo(1,idUzsE,ng),r8)
+          HIS(ng)%pioVar(idUzsE)%dkind=PIO_FOUT
+          HIS(ng)%pioVar(idUzsE)%gtype=r3dvar
+!
+          status=def_var(ng, model, HIS(ng)%pioFile,                    &
+     &                   HIS(ng)%pioVar(idUzsE)%vd,                     &
+     &                   PIO_FOUT, nvd4, t3dzgrd, Aval, Vinfo, ncname)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        END IF
+!
 !  Define 3D Northward momentum at RHO-points, A-grid.
 !
         IF (Hout(idv3dN,ng)) THEN
@@ -3936,6 +4207,30 @@
           status=def_var(ng, model, HIS(ng)%pioFile,                    &
      &                   HIS(ng)%pioVar(idv3dN)%vd,                     &
      &                   PIO_FOUT, nvd4, t3dgrd, Aval, Vinfo, ncname)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        END IF
+!
+!  Define 3D Northward momentum component at RHO-points  for selected
+!  constant depth slices.
+!
+        IF (Hout(idVzsN,ng).and.(Nslice.gt.0)) THEN
+          Vinfo( 1)=Vname(1,idVzsN)
+          Vinfo( 2)=Vname(2,idVzsN)
+          Vinfo( 3)=Vname(3,idVzsN)
+          Vinfo(14)=Vname(4,idVzsN)
+          Vinfo(16)=Vname(1,idtime)
+#  if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_rho'
+#  endif
+          Vinfo(21)=Vname(6,idVzsN)
+          Vinfo(22)='coordinates, z_slice'
+          Aval(5)=REAL(Iinfo(1,idVzsN,ng),r8)
+          HIS(ng)%pioVar(idVzsN)%dkind=PIO_FOUT
+          HIS(ng)%pioVar(idVzsN)%gtype=r3dvar
+!
+          status=def_var(ng, model, HIS(ng)%pioFile,                    &
+     &                   HIS(ng)%pioVar(idVzsN)%vd,                     &
+     &                   PIO_FOUT, nvd4, t3dzgrd, Aval, Vinfo, ncname)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 !
@@ -4039,6 +4334,38 @@
             status=def_var(ng, model, HIS(ng)%pioFile,                  &
      &                     HIS(ng)%pioTrc(itrc)%vd,                     &
      &                     PIO_FOUT, nvd4, t3dgrd, Aval, Vinfo, ncname)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+          END IF
+        END DO
+!
+!  Define surface tracer type variables at specified depth slices.
+!
+        DO itrc=1,NT(ng)
+          IF (Hout(idzslT(itrc),ng).and.(Nslice.gt.0)) THEN
+            Vinfo( 1)=Vname(1,idzslT(itrc))
+            Vinfo( 2)=Vname(2,idzslT(itrc))
+            Vinfo( 3)=Vname(3,idzslT(itrc))
+            Vinfo(14)=Vname(4,idzslT(itrc))
+            Vinfo(16)=Vname(1,idtime)
+#  ifdef SEDIMENT
+            DO i=1,NST
+              IF (itrc.eq.idsed(i)) THEN
+                WRITE (Vinfo(19),50) 1000.0_r8*Sd50(i,ng)
+              END IF
+            END DO
+#  endif
+#  if defined WRITE_WATER && defined MASKING
+            Vinfo(20)='mask_rho'
+#  endif
+            Vinfo(21)=Vname(6,idzslT(itrc))
+            Vinfo(22)='coordinates, z_slice'
+            Aval(5)=REAL(r3dvar,r8)
+            HIS(ng)%pioVar(idzslT(itrc))%dkind=PIO_FOUT
+            HIS(ng)%pioVar(idzslT(itrc))%gtype=r2dvar
+!
+            status=def_var(ng, model, HIS(ng)%pioFile,                  &
+     &                     HIS(ng)%pioVar(idzslT(itrc))%vd,             &
+     &                     PIO_FOUT, nvd4, t3dzgrd, Aval, Vinfo, ncname)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
           END IF
         END DO
@@ -5085,6 +5412,16 @@
             HIS(ng)%pioVar(idVvel)%vd=var_desc(i)
             HIS(ng)%pioVar(idVvel)%dkind=PIO_FOUT
             HIS(ng)%pioVar(idVvel)%gtype=v3dvar
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idUzsl))) THEN
+            got_var(idUzsl)=.TRUE.
+            HIS(ng)%pioVar(idUzsl)%vd=var_desc(i)
+            HIS(ng)%pioVar(idUzsl)%dkind=PIO_FOUT
+            HIS(ng)%pioVar(idUzsl)%gtype=u3dvar
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idVzsl))) THEN
+            got_var(idVzsl)=.TRUE.
+            HIS(ng)%pioVar(idVzsl)%vd=var_desc(i)
+            HIS(ng)%pioVar(idVzsl)%dkind=PIO_FOUT
+            HIS(ng)%pioVar(idVzsl)%gtype=v3dvar
 #  ifdef ADJUST_BOUNDARY
           ELSE IF (TRIM(var_name(i)).eq.                                &
      &             TRIM(Vname(1,idSbry(isUvel)))) THEN
@@ -5109,6 +5446,16 @@
             HIS(ng)%pioVar(idv3dN)%vd=var_desc(i)
             HIS(ng)%pioVar(idv3dN)%dkind=PIO_FOUT
             HIS(ng)%pioVar(idv3dN)%gtype=r3dvar
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idUzsE))) THEN
+            got_var(idUzsE)=.TRUE.
+            HIS(ng)%pioVar(idUzsE)%vd=var_desc(i)
+            HIS(ng)%pioVar(idUzsE)%dkind=PIO_FOUT
+            HIS(ng)%pioVar(idUzsE)%gtype=r3dvar
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idVzsN))) THEN
+            got_var(idVzsN)=.TRUE.
+            HIS(ng)%pioVar(idVzsN)%vd=var_desc(i)
+            HIS(ng)%pioVar(idVzsN)%dkind=PIO_FOUT
+            HIS(ng)%pioVar(idVzsN)%gtype=r3dvar
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idWvel))) THEN
             got_var(idWvel)=.TRUE.
             HIS(ng)%pioVar(idWvel)%vd=var_desc(i)
@@ -5286,6 +5633,14 @@
               HIS(ng)%pioVar(idSbry(isTvar(itrc)))%dkind=PIO_FOUT
               HIS(ng)%pioVar(idSbry(isTvar(itrc)))%gtype=r3dobc
 #  endif
+            END IF
+          END DO
+          DO itrc=1,NAT
+            IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idzslT(itrc)))) THEN
+              got_var(idzslT(itrc))=.TRUE.
+              HIS(ng)%pioVar(idzslT(itrc))%vd=var_desc(i)
+              HIS(ng)%pioVar(idzslT(itrc))%dkind=PIO_FOUT
+              HIS(ng)%pioVar(idzslT(itrc))%gtype=r3dvar
             END IF
           END DO
           DO itrc=1,NAT
@@ -5506,6 +5861,18 @@
           exit_flag=3
           RETURN
         END IF
+        IF (.not.got_var(idUzsl).and.Hout(idUzsl,ng)) THEN
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idUzsl)),          &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idVzsl).and.Hout(idVzsl,ng)) THEN
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idVzsl)),          &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
 #  ifdef ADJUST_BOUNDARY
         IF (.not.got_var(idSbry(isUvel))) THEN
           IF (Master) WRITE (stdout,70) TRIM(Vname(1,idSbry(isUvel))),  &
@@ -5528,6 +5895,18 @@
         END IF
         IF (.not.got_var(idv3dN).and.Hout(idv3dN,ng)) THEN
           IF (Master) WRITE (stdout,70) TRIM(Vname(1,idv3dN)),          &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idUzsE).and.Hout(idUzsE,ng)) THEN
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idUzsE)),          &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idVzsN).and.Hout(idVzsN,ng)) THEN
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idVzsN)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
@@ -5740,6 +6119,14 @@
             RETURN
           END IF
 #  endif
+        END DO
+        DO itrc=1,NAT
+          IF (.not.got_var(idzslT(itrc)).and.Hout(idzslT(itrc),ng)) THEN
+            IF (Master) WRITE (stdout,70) TRIM(Vname(1,idzslT(itrc))),  &
+     &                                    TRIM(ncname)
+            exit_flag=3
+            RETURN
+          END IF
         END DO
         DO itrc=1,NAT
           IF (.not.got_var(idTsur(itrc)).and.Hout(idTsur(itrc),ng)) THEN

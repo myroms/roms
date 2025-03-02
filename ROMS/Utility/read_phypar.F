@@ -1544,6 +1544,53 @@
                 END DO
               END DO
 #endif
+            CASE ('Hout(idUzsl)')
+              IF (idUzsl.eq.0) THEN
+                IF (Master) WRITE (out,280) 'idUzsl'
+                exit_flag=5
+                RETURN
+              END IF
+              Npts=load_l(Nval, Cval, Ngrids, Lswitch)
+              Hout(idUzsl,1:Ngrids)=Lswitch(1:Ngrids)
+            CASE ('Hout(idVzsl)')
+              IF (idVzsl.eq.0) THEN
+                IF (Master) WRITE (out,280) 'idVzsl'
+                exit_flag=5
+                RETURN
+              END IF
+              Npts=load_l(Nval, Cval, Ngrids, Lswitch)
+              Hout(idVzsl,1:Ngrids)=Lswitch(1:Ngrids)
+            CASE ('Hout(idUzsE)')
+              IF (idUzsE.eq.0) THEN
+                IF (Master) WRITE (out,280) 'idUzsE'
+                exit_flag=5
+                RETURN
+              END IF
+              Npts=load_l(Nval, Cval, Ngrids, Lswitch)
+              Hout(idUzsE,1:Ngrids)=Lswitch(1:Ngrids)
+            CASE ('Hout(idVzsN)')
+              IF (idVzsN.eq.0) THEN
+                IF (Master) WRITE (out,280) 'idVzsN'
+                exit_flag=5
+                RETURN
+              END IF
+              Npts=load_l(Nval, Cval, Ngrids, Lswitch)
+              Qout(idVzsN,1:Ngrids)=Lswitch(1:Ngrids)
+#ifdef SOLVE3D
+            CASE ('Hout(idzslT)')
+              IF (MAXVAL(idzslT).eq.0) THEN
+                IF (Master) WRITE (out,280) 'idzslT'
+                exit_flag=5
+                RETURN
+              END IF
+              Npts=load_l(Nval, Cval, NAT+NPT, Ngrids, Ltracer)
+              DO ng=1,Ngrids
+                DO itrc=1,NAT
+                  i=idzslT(itrc)
+                  Hout(i,ng)=Ltracer(itrc,ng)
+                END DO
+              END DO
+#endif
             CASE ('Hout(idpthR)')
               IF (idpthR.eq.0) THEN
                 IF (Master) WRITE (out,280) 'idpthR'
@@ -2363,7 +2410,8 @@
 #ifdef SOLVE3D
             CASE ('Qout(idzslT)')
               IF (MAXVAL(idzslT).eq.0) THEN
-                IF (Master) WRITE (out,280) 'idzslT'
+
+                 IF (Master) WRITE (out,280) 'idzslT'
                 exit_flag=5
                 RETURN
               END IF
@@ -3874,6 +3922,11 @@
               IF (Nslice.gt.0) THEN
                 Npts=load_r(Nval, Rval, Nslice, Zslice)
                 Zslice=-ABS(Zslice)
+                DO i=1,Nslice
+                  IF (Zslice(i).gt.0.0_r8) THEN
+                    Zslice(i)=-Zslice(i)
+                  END IF
+                END DO
               END IF
             CASE ('NUSER')
               Npts=load_i(Nval, Rval, 1, Ivalue)
@@ -6002,6 +6055,30 @@
      &            Hout(idTvar(itrc),ng), 'Hout(idTvar)',                &
      &            'Write out tracer ', itrc, TRIM(Vname(1,idTvar(itrc)))
             END DO
+            IF (Hout(idUzsl,ng)) WRITE (out,170) Hout(idUzsl,ng),       &
+     &         'Hout(idUzsl)',                                          &
+     &         'Write out 3D U-momentum component depth slices.'
+            IF (Hout(idVzsl,ng)) WRITE (out,170) Hout(idVzsl,ng),       &
+     &         'Hout(idVzsl)',                                          &
+     &         'Write out 3D V-momentum component depth slices.'
+            IF (Hout(idUzsE,ng)) WRITE (out,170) Hout(idUzsE,ng),       &
+     &         'Hout(idUzlE)',                                          &
+     &         'Write out 3D U-eastward  component depth slices.'
+            IF (Hout(idVzsN,ng)) WRITE (out,170) Hout(idVzsN,ng),       &
+     &         'Hout(idVzsN)',                                          &
+     &         'Write out 3D V-northward component depth slices.'
+            DO itrc=1,NAT
+              IF (Qout(idzslT(itrc),ng)) WRITE (out,180)                &
+     &            Qout(idzslT(itrc),ng), 'Qout(idzslT)',                &
+     &            'Write out tracer depth slices ', itrc,               &
+     &            TRIM(Vname(1,idzslT(itrc)))
+            END DO
+            DO itrc=1,NAT
+              IF (Hout(idzslT(itrc),ng)) WRITE (out,180)                &
+     &            Hout(idzslT(itrc),ng), 'Hout(idzslT)',                &
+     &            'Write out tracer depth slices ', itrc,               &
+     &            TRIM(Vname(1,idzslT(itrc)))
+            END DO
             IF (Hout(idpthR,ng)) WRITE (out,170) Hout(idpthR,ng),       &
      &         'Hout(idpthR)',                                          &
      &         'Write out time-varying dephts of RHO-points.'
@@ -6353,6 +6430,7 @@
             IF (Qout(idVsur,ng)) WRITE (out,170) Qout(idVsur,ng),       &
      &         'Qout(idVsur)',                                          &
      &         'Write out surface V-momentum component.'
+
             IF (Qout(idUzsl,ng)) WRITE (out,170) Qout(idUzsl,ng),       &
      &         'Qout(idUzsl)',                                          &
      &         'Write out 3D U-momentum component depth slices.'
@@ -8062,7 +8140,7 @@
  220  FORMAT (/,' Output/Input Files:',/)
  230  FORMAT (2x,a,a)
  240  FORMAT (1p,e11.4,2x,'Zslice(',i2.2,')',t32,                       &
-     &        'Depth parameter ',i2.2,'.')
+     &        'Slice depth ',i2.2,'.')
  250  FORMAT (1p,e11.4,2x,'user(',i2.2,')',t32,                         &
      &        'User parameter ',i2.2,'.')
  260  FORMAT (/,' READ_PHYPAR - Invalid input parameter, ',a,           &

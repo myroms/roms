@@ -574,6 +574,13 @@ Hout(idBath) == F       ! bath               time-dependent bathymetry
 
 Hout(idTvar) == T T     ! temp, salt         temperature and salinity
 
+Hout(idUzsl) == F       ! u_slice            U-velocity depth slices
+Hout(idVzsl) == F       ! v_slice            V-velocity depth slices
+Hout(idUzsE) == F       ! u_eastward_slice   U-eastward  velocity depth slices
+Hout(idVzsN) == F       ! v_northward_slice  V-northward velocity depth slices
+
+Hout(idzslT) == F F     ! temp_slice, ...    temperature and salinity depth slices
+
 Hout(idpthR) == F       ! z_rho              time-varying depths of RHO-points
 Hout(idpthU) == F       ! z_u                time-varying depths of U-points
 Hout(idpthV) == F       ! z_v                time-varying depths of V-points
@@ -987,10 +994,11 @@ Dout(iTvdif) == T T     ! temp_vdiff, ...    vertical diffusion
 
 ! Number of output field horizontal slices and their depths (negative, m).
 ! It is possible to extract selected state fields like temperature, salinity,
-! and velocity components at a constant depth in the QUICKSAVE NetCDF file.
-! Use wise depth values based on dynamics and model bathymetry and make sure
-! that "NSLICE" is small (between 1 and 4) to keep the QUICKSAVE file size
-! manageable. Order "Z_SLICE" in descending values (surface to bottom).
+! and velocity components at a constant depth in the QUICKSAVE and HISTORY
+! NetCDF files. Use wise depth values based on dynamics and model bathymetry
+! and make sure that "NSLICE" is small (between 1 and 4) to keep the QUICKSAVE
+! file size manageable. Order "Z_SLICE" in descending values (surface to
+! bottom).
 
       NSLICE =  1
      Z_SLICE =  -100.0_r8
@@ -2684,6 +2692,13 @@ PIO_I2C_Preq = 65                 ! Maximum pending I2C requests
 !
 ! Hout(idTvar)   Write out active (NAT) tracers: temperature and salinity.
 !
+! Hout(idUzsl)   Write out U-velocity depth slices, Z_SLICE(1:NSLICE).
+! Hout(idVzsl)   Write out V-velocity depth slices, Z_SLICE(1:NSLICE).
+! Hout(idUzsE)   Write out U-eastward  velocity depth slices, Z_SLICE(1:NSLICE).
+! Hout(idVzsN)   Write out V-northward velocity depth slices, Z_SLICE(1:NSLICE).
+!
+! Hout(idzslT)   Write out temperature/salinity depth slices, Z_SLICE(1:NSLICE).
+!
 ! Hout(idpthR)   Write out time-varying depths of RHO-points.
 ! Hout(idpthU)   Write out time-varying depths of U-points.
 ! Hout(idpthV)   Write out time-varying depths of V-points.
@@ -2795,12 +2810,12 @@ PIO_I2C_Preq = 65                 ! Maximum pending I2C requests
 !
 ! Qout(idsurT)   Write out surface temperature and salinity.
 !
-! Qout(idUzsl)   Write out U-velocity depth slices, Z_slice(1:Nslice).
-! Qout(idVzsl)   Write out V-velocity depth slices, Z_slice(1:Nslice).
-! Qout(idUzsE)   Write out U-eastward  velocity depth slices, Z_slice(1:Nslice).
-! Qout(idVzsN)   Write out V-northward velocity depth slices, Z_slice(1:Nslice).
+! Qout(idUzsl)   Write out U-velocity depth slices, Z_SLICE(1:NSLICE).
+! Qout(idVzsl)   Write out V-velocity depth slices, Z_SLICE(1:NSLICE).
+! Qout(idUzsE)   Write out U-eastward  velocity depth slices, Z_SLICE(1:NSLICE).
+! Qout(idVzsN)   Write out V-northward velocity depth slices, Z_SLICE(1:NSLICE).
 !
-! Qout(idzslT)   Write out temperature/salinity depth slices, Z_slice(1:Nslice).
+! Qout(idzslT)   Write out temperature/salinity depth slices, Z_SLICE(1:NSLICE).
 !
 ! Qout(idpthR)   Write out time-varying depths of RHO-points.
 ! Qout(idpthU)   Write out time-varying depths of U-points.
@@ -3091,12 +3106,10 @@ PIO_I2C_Preq = 65                 ! Maximum pending I2C requests
 !
 ! Selected state variables, such as temperature, salinity, U-velocity,
 ! V-velocity, U-eastward, and V-northward, can be extracted and saved at
-! specified constant depths (Z_SLICE) in the output QUICKSAVE NetCDF file.
-! It is advisable to limit the number of slices (NSLICE) to a small value,
-! ideally between 1 and 4, to keep the QUICKSAVE file size manageable.
-! Choose depths wisely based on the dynamics and model bathymetry.
-! Please avoid using Z_SLICE = 0.0, as extraction is performed through
-! linear interpolation, and extrapolations are not permitted.
+! specified constant depths (Z_SLICE) in the output QUICKSAVE and HISTORY
+! NetCDF files. It is advisable to limit the number of slices (NSLICE) to
+! a small value, ideally between 1 and 4, to keep the QUICKSAVE file size
+! manageable. Choose depths wisely based on the dynamics and model bathymetry.
 !
 ! NSLICE       Number of horizontal contant depth slices.
 ! Z_SLICE      Depths (negative, m) of desired horizontal slices ordered
