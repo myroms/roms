@@ -6358,7 +6358,7 @@ metadata:
   # 2D Momentum Terms
 
   - variable:       pvorticity_bar                                   # Input/Output
-    standard_name:  ocean_barotropic_potential_vorticity
+    standard_name:  sea_water_barotropic_potential_vorticity
     long_name:      2D potential vorticity
     units:          meter-1 second-1                                 # [1/m/s]
     field:          barotropic potential vorticity
@@ -6369,7 +6369,7 @@ metadata:
     scale:          1.0d0
 
   - variable:       rvorticity_bar                                   # Input/Output
-    standard_name:  ocean_barotropic_relative_vorticity
+    standard_name:  sea_water_barotropic_relative_vorticity
     long_name:      2D relative vorticity
     units:          second-1                                         # [1/s]
     field:          barotropic relative vorticity
@@ -6646,7 +6646,7 @@ metadata:
   # 3D Momentum Terms
 
   - variable:       pvorticity                                       # Output
-    standard_name:  ocean_potential_vorticity
+    standard_name:  sea_water_potential_vorticity
     long_name:      potential vorticity
     units:          meter-1 second-1                                 # [1/m/s]
     field:          potential vorticity
@@ -6656,8 +6656,19 @@ metadata:
     add_offset:     0.0d0
     scale:          1.0d0
 
+  - variable:       pvorticity_slice                                 # Output
+    standard_name:  sea_water_potential_vorticity
+    long_name:      potential vorticity
+    units:          meter-1 second-1                                 # [1/m/s]
+    field:          potential vorticity constant depth slice
+    time:           ocean_time
+    index_code:     idPVzs
+    type:           p3dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
   - variable:       rvorticity                                       # Output
-    standard_name:  ocean_relative_vorticity
+    standard_name:  sea_water_relative_vorticity
     long_name:      relative vorticity, vertical component
     units:          second-1                                         # [1/s]
     field:          relative vorticity
@@ -6667,14 +6678,14 @@ metadata:
     add_offset:     0.0d0
     scale:          1.0d0
 
-  - variable:       rvorticity_sur                                   # Output
-    standard_name:  sea_surface_relative_vorticity
+  - variable:       rvorticity_slice                                 # Output
+    standard_name:  sea_water_relative_vorticity
     long_name:      surface relative vorticity
     units:          second-1                                         # [1/s]
-    field:          relative vorticity
+    field:          relative vorticity constant depth slice
     time:           ocean_time
-    index_code:     idRVsu
-    type:           p2dvar
+    index_code:     idRVzs
+    type:           p3dvar
     add_offset:     0.0d0
     scale:          1.0d0
 

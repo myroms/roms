@@ -262,6 +262,7 @@
       integer  :: idOvil        ! omega vertical velocity implicit
       integer  :: idPair        ! surface air pressure
       integer  :: idPbar        ! streamfunction
+      integer  :: idPVzs        ! potential vorticity depth slices
       integer  :: idPwet        ! wet/dry mask on PSI-points
       integer  :: idpmdx        ! inverse grid x-spacing
       integer  :: idpndy        ! inverse grid y-spacing
@@ -282,7 +283,7 @@
       integer  :: idRv3d        ! RHS of total V-momentum
       integer  :: idRxpo        ! river runoff XI-positions
       integer  :: idRvsh        ! river runoff transport profile
-      integer  :: idRVsu        ! surface relative vorticity
+      integer  :: idRVzs        ! relative vorticity depth slices
       integer  :: idRwet        ! wet/dry mask on RHO-points
       integer  :: idRzet        ! RHS of free-surface
       integer  :: idrain        ! rainfall rate
@@ -1596,6 +1597,10 @@
             idv3dN=varid
           CASE ('idRv3d')
             idRv3d=varid
+          CASE ('idPVzs')
+            idPVzs=varid
+          CASE ('idRVzs')
+            idRVzs=varid
           CASE ('idWvel')
             idWvel=varid
           CASE ('idOvil')
@@ -2076,8 +2081,6 @@
             id3dPV=varid
           CASE ('id3dRV')
             id3dRV=varid
-          CASE ('idRVsu')
-            idRVsu=varid
 #ifdef DIAGNOSTICS_UV
           CASE ('idDu2d(M2pgrd)')
             idDu2d(M2pgrd)=varid

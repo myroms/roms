@@ -1529,6 +1529,38 @@
               END IF
               Npts=load_l(Nval, Cval, Ngrids, Lswitch)
               Hout(idv3dN,1:Ngrids)=Lswitch(1:Ngrids)
+            CASE ('Hout(id3dPV)')
+              IF (id3dPV.eq.0) THEN
+                IF (Master) WRITE (out,280) 'id3dPV'
+                exit_flag=5
+                RETURN
+              END IF
+              Npts=load_l(Nval, Cval, Ngrids, Lswitch)
+              Hout(id3dPV,1:Ngrids)=Lswitch(1:Ngrids)
+            CASE ('Hout(idPVzs)')
+              IF (idPVzs.eq.0) THEN
+                IF (Master) WRITE (out,280) 'idPVzs'
+                exit_flag=5
+                RETURN
+              END IF
+              Npts=load_l(Nval, Cval, Ngrids, Lswitch)
+              Hout(idPVzs,1:Ngrids)=Lswitch(1:Ngrids)
+            CASE ('Hout(id3dRV)')
+              IF (id3dRV.eq.0) THEN
+                IF (Master) WRITE (out,280) 'id3dRV'
+                exit_flag=5
+                RETURN
+              END IF
+              Npts=load_l(Nval, Cval, Ngrids, Lswitch)
+              Hout(id3dRV,1:Ngrids)=Lswitch(1:Ngrids)
+            CASE ('Hout(idRVzs)')
+              IF (idRVzs.eq.0) THEN
+                IF (Master) WRITE (out,280) 'idRVzs'
+                exit_flag=5
+                RETURN
+              END IF
+              Npts=load_l(Nval, Cval, Ngrids, Lswitch)
+              Hout(idRVzs,1:Ngrids)=Lswitch(1:Ngrids)
 #ifdef SOLVE3D
             CASE ('Hout(idTvar)')
               IF (MAXVAL(idTvar).eq.0) THEN
@@ -2352,14 +2384,22 @@
               END IF
               Npts=load_l(Nval, Cval, Ngrids, Lswitch)
               Qout(idVsuN,1:Ngrids)=Lswitch(1:Ngrids)
-            CASE ('Qout(idRVsu)')
-              IF (idRVsu.eq.0) THEN
-                IF (Master) WRITE (out,280) 'idRVsu'
+            CASE ('Qout(idPVzs)')
+              IF (idPVzs.eq.0) THEN
+                IF (Master) WRITE (out,280) 'idPVzs'
                 exit_flag=5
                 RETURN
               END IF
               Npts=load_l(Nval, Cval, Ngrids, Lswitch)
-              Qout(idRVsu,1:Ngrids)=Lswitch(1:Ngrids)
+              Qout(idPVzs,1:Ngrids)=Lswitch(1:Ngrids)
+            CASE ('Qout(idRVzs)')
+              IF (idRVzs.eq.0) THEN
+                IF (Master) WRITE (out,280) 'idRVzs'
+                exit_flag=5
+                RETURN
+              END IF
+              Npts=load_l(Nval, Cval, Ngrids, Lswitch)
+              Qout(idRVzs,1:Ngrids)=Lswitch(1:Ngrids)
 #ifdef SOLVE3D
             CASE ('Qout(idsurT)')
               IF (MAXVAL(idsurT).eq.0) THEN
@@ -6039,6 +6079,18 @@
             IF (Hout(idv3dN,ng)) WRITE (out,170) Hout(idv3dN,ng),       &
      &         'Hout(idv3dN)',                                          &
      &         'Write out 3D V-northward component at RHO-points.'
+            IF (Hout(id3dPV,ng)) WRITE (out,170) Hout(id3dPV,ng),       &
+     &         'Hout(id3dPV)',                                          &
+     &         'Write out 3D potential vorticity.'
+            IF (Hout(idPVzs,ng)) WRITE (out,170) Hout(idPVzs,ng),       &
+     &         'Hout(idPVzs)',                                          &
+     &         'Write out potential vorticity depth slices.'
+            IF (Hout(id3dRV,ng)) WRITE (out,170) Hout(id3dRV,ng),       &
+     &         'Hout(id3dRV)',                                          &
+     &         'Write out 3D relative vorticity.'
+            IF (Hout(idRVzs,ng)) WRITE (out,170) Hout(idRVzs,ng),       &
+     &         'Hout(idRVzs)',                                          &
+     &         'Write out relative vorticity depth slices.'
             IF (Hout(idWvel,ng)) WRITE (out,170) Hout(idWvel,ng),       &
      &         'Hout(idWvel)',                                          &
      &         'Write out W-momentum component.'
@@ -6455,6 +6507,12 @@
             IF (Qout(idVzsN,ng)) WRITE (out,170) Qout(idVzsN,ng),       &
      &         'Qout(idVzsN)',                                          &
      &         'Write out 3D V-northward component depth slices.'
+            IF (Qout(idPVzs,ng)) WRITE (out,170) Qout(idPVzs,ng),       &
+     &         'Qout(idPVzs)',                                          &
+     &         'Write out potential vorticity depth slices.'
+            IF (Qout(idRVzs,ng)) WRITE (out,170) Qout(idRVzs,ng),       &
+     &         'Qout(idRVzs)',                                          &
+     &         'Write out relative vorticity depth slices.'
             IF (Qout(idWvel,ng)) WRITE (out,170) Qout(idWvel,ng),       &
      &         'Qout(idWvel)',                                          &
      &         'Write out W-momentum component.'

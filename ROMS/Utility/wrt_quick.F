@@ -67,7 +67,9 @@
 #ifdef SOLVE3D
       USE uv_rotate_mod,       ONLY : uv_rotate3d
 #endif
-      USE vorticity_mod,       ONLY : rvorticity3d
+#ifdef SOLVE3D
+      USE vorticity_mod,       ONLY : pvorticity3d, rvorticity3d
+#endif
 #if defined WEC_VF && defined SOLVE3D
       USE wec_output_mod,      ONLY : wec_wrt_nf90
 # if defined PIO_LIB && defined DISTRIBUTE
@@ -96,6 +98,7 @@
 !  Local variable declarations.
 !
       integer :: LBi, UBi, LBj, UBj
+      integer :: IminS, ImaxS, JminS, JmaxS
 !
       character (len=*), parameter :: MyFile =                          &
      &  __FILE__
@@ -109,15 +112,22 @@
       LBj=BOUNDS(ng)%LBj(tile)
       UBj=BOUNDS(ng)%UBj(tile)
 !
+      IminS=BOUNDS(ng)%Istr(tile)-3
+      ImaxS=BOUNDS(ng)%Iend(tile)+3
+      JminS=BOUNDS(ng)%Jstr(tile)-3
+      JmaxS=BOUNDS(ng)%Jend(tile)+3
+!
       SELECT CASE (QCK(ng)%IOtype)
         CASE (io_nf90)
           CALL wrt_quick_nf90 (ng, iNLM, tile,                          &
-     &                         LBi, UBi, LBj, UBj)
+     &                         LBi, UBi, LBj, UBj,                      &
+     &                         IminS, ImaxS, JminS, JmaxS)
 
 #if defined PIO_LIB && defined DISTRIBUTE
         CASE (io_pio)
           CALL wrt_quick_pio (ng, iNLM, tile,                           &
-     &                        LBi, UBi, LBj, UBj)
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        IminS, ImaxS, JminS, JmaxS)
 #endif
         CASE DEFAULT
           IF (Master) THEN
@@ -135,7 +145,8 @@
 !
 !***********************************************************************
       SUBROUTINE wrt_quick_nf90 (ng, model, tile,                       &
-     &                           LBi, UBi, LBj, UBj)
+     &                           LBi, UBi, LBj, UBj,                    &
+     &                           IminS, ImaxS, JminS, JmaxS)
 !***********************************************************************
 !
       USE mod_netcdf
@@ -144,6 +155,7 @@
 !
       integer, intent(in) :: ng, model, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
 !
 !  Local variable declarations.
 !
@@ -157,6 +169,7 @@
       real(r8), allocatable :: Ur2d(:,:)
       real(r8), allocatable :: Vr2d(:,:)
 #ifdef SOLVE3D
+      real(r8), allocatable :: Fr3d(:,:,:)
       real(r8), allocatable :: Wr3d(:,:,:)
 #endif
 !
@@ -863,15 +876,99 @@
         deallocate (Wr3d)
       END IF
 !
-!  Write out surface relative vorticity (1/s) at PSI-points.
+!  Write out potential vorticity (m-1 s-1) at PSI-points at specified
+!  constant depth slices.
 !
-      IF (Qout(idRVsu,ng)) THEN
+      IF (Qout(idPVzs,ng).and.(Nslice.gt.0)) THEN
+        IF (.not.allocated(Fr3d)) THEN
+          allocate ( Fr3d(LBi:UBi,LBj:UBj,N(ng)) )
+          Fr3d(LBi:UBi,LBj:UBj,1:N(ng))=0.0_r8
+        END IF
         IF (.not.allocated(Wr3d)) THEN
           allocate ( Wr3d(LBi:UBi,LBj:UBj,N(ng)) )
           Wr3d(LBi:UBi,LBj:UBj,1:N(ng))=0.0_r8
         END IF
+!
+        DO k=1,N(ng)
+          DO j=Jstr-1,Jend+1
+            DO i=Istr-1,Iend+1
+              GRID(ng)%z_v(i,j,k)=0.25_r8*(GRID(ng)%z_r(i-1,j-1,k)+     &
+     &                                     GRID(ng)%z_r(i-1,j  ,k)+     &
+     &                                     GRID(ng)%z_r(i  ,j-1,k)+     &
+     &                                     GRID(ng)%z_r(i ,j  ,k))
+            END DO
+          END DO
+        END DO
+!
+        CALL pvorticity3d (ng, model, tile,                             &
+                           LBi, UBi, LBj, UBj,                          &
+     &                     IminS, ImaxS, JminS, JmaxS, NOUT,            &
+# ifdef MASKING
+     &                     GRID(ng) % pmask,                            &
+     &                     GRID(ng) % umask,   GRID(ng) % vmask,        &
+# endif
+                           GRID(ng) % f,                                &
+                           GRID(ng) % om_u,    GRID(ng) % on_v,         &
+                           GRID(ng) % pm,      GRID(ng) % pn,           &
+                           GRID(ng) % z_r,     OCEAN(ng) % pden,        &
+                           OCEAN(ng) % u,      OCEAN(ng) % v,           &
+                           Fr3d)
+!
+        CALL extract_slice (ng, model, tile, p3dvar,                    &
+     &                      LBi, UBi, LBj, UBj, 1, N(ng),               &
+     &                      Fr3d,                                       &
+     &                      GRID(ng) % z_v,                             &
+# ifdef MASKING
+     &                      GRID(ng) % pmask,                           &
+# endif
+     &                      Zslice, Wr3d)
+!
         scale=1.0_dp
-        gtype=gfactor*p2dvar
+        gtype=gfactor*p3dvar
+        status=nf_fwrite3d(ng, model, QCK(ng)%ncid, idPVzs,             &
+     &                     QCK(ng)%Vid(idPVzs),                         &
+     &                     QCK(ng)%Rindex, gtype,                       &
+     &                     LBi, UBi, LBj, UBj, 1, Nslice, scale,        &
+# ifdef MASKING
+     &                     GRID(ng) % pmask,                            &
+# endif
+     &                     Wr3d)
+        IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+          IF (Master) THEN
+            WRITE (stdout,20) TRIM(Vname(1,idPVzs)), QCK(ng)%Rindex
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+        deallocate (Fr3d)
+        deallocate (Wr3d)
+      END IF
+!
+!  Write out relative vorticity (s-1) at PSI-points at specified
+!  constant depth slices.
+!
+      IF (Qout(idRVzs,ng).and.(Nslice.gt.0)) THEN
+        IF (.not.allocated(Fr3d)) THEN
+          allocate ( Fr3d(LBi:UBi,LBj:UBj,N(ng)) )
+          Fr3d(LBi:UBi,LBj:UBj,1:N(ng))=0.0_r8
+        END IF
+        IF (.not.allocated(Wr3d)) THEN
+          allocate ( Wr3d(LBi:UBi,LBj:UBj,N(ng)) )
+          Wr3d(LBi:UBi,LBj:UBj,1:N(ng))=0.0_r8
+        END IF
+!
+        DO k=1,N(ng)
+          DO j=Jstr-1,Jend+1
+            DO i=Istr-1,Iend+1
+              GRID(ng)%z_v(i,j,k)=0.25_r8*(GRID(ng)%z_r(i-1,j-1,k)+     &
+     &                                     GRID(ng)%z_r(i-1,j  ,k)+     &
+     &                                     GRID(ng)%z_r(i  ,j-1,k)+     &
+     &                                     GRID(ng)%z_r(i ,j  ,k))
+            END DO
+          END DO
+        END DO
+!
         CALL rvorticity3d (ng, model, tile,                             &
                            LBi, UBi, LBj, UBj, NOUT,                    &
 # ifdef MASKING
@@ -880,23 +977,36 @@
                            GRID(ng) % om_u, GRID(ng) % on_v,            &
                            GRID(ng) % pm,   GRID(ng) % pn,              &
                            OCEAN(ng) % u,   OCEAN(ng) % v,              &
-                           Wr3d)
-        status=nf_fwrite2d(ng, model, QCK(ng)%ncid, idRVsu,             &
-     &                     QCK(ng)%Vid(idRVsu),                         &
+                           Fr3d)
+!
+        CALL extract_slice (ng, model, tile, p3dvar,                    &
+     &                      LBi, UBi, LBj, UBj, 1, N(ng),               &
+     &                      Fr3d,                                       &
+     &                      GRID(ng) % z_v,                             &
+# ifdef MASKING
+     &                      GRID(ng) % pmask,                           &
+# endif
+     &                      Zslice, Wr3d)
+!
+        scale=1.0_dp
+        gtype=gfactor*p3dvar
+        status=nf_fwrite3d(ng, model, QCK(ng)%ncid, idRVzs,             &
+     &                     QCK(ng)%Vid(idRVzs),                         &
      &                     QCK(ng)%Rindex, gtype,                       &
-     &                     LBi, UBi, LBj, UBj, scale,                   &
+     &                     LBi, UBi, LBj, UBj, 1, Nslice, scale,        &
 # ifdef MASKING
      &                     GRID(ng) % pmask,                            &
 # endif
-     &                     Wr3d(:,:,N(ng)))
+     &                     Wr3d)
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
-            WRITE (stdout,20) TRIM(Vname(1,idRVsu)), QCK(ng)%Rindex
+            WRITE (stdout,20) TRIM(Vname(1,idRVzs)), QCK(ng)%Rindex
           END IF
           exit_flag=3
           ioerror=status
           RETURN
         END IF
+        deallocate (Fr3d)
         deallocate (Wr3d)
       END IF
 !
@@ -1783,7 +1893,8 @@
 !
 !***********************************************************************
       SUBROUTINE wrt_quick_pio (ng, model, tile,                        &
-     &                          LBi, UBi, LBj, UBj)
+     &                          LBi, UBi, LBj, UBj,                     &
+     &                          IminS, ImaxS, JminS, JmaxS)
 !***********************************************************************
 !
       USE mod_pio_netcdf
@@ -1792,6 +1903,7 @@
 !
       integer, intent(in) :: ng, model, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
 !
 !  Local variable declarations.
 !
@@ -1805,6 +1917,7 @@
       real(r8), allocatable :: Ur2d(:,:)
       real(r8), allocatable :: Vr2d(:,:)
 # ifdef SOLVE3D
+      real(r8), allocatable :: Fr3d(:,:,:)
       real(r8), allocatable :: Wr3d(:,:,:)
 # endif
 !
@@ -2677,14 +2790,104 @@
         deallocate (Wr3d)
       END IF
 !
-!  Write out surface relative vorticity (1/s) at PSI-points.
+!  Write out potential vorticity (1/s) at PSI-points at specified
+!  constant depth slices.
 !
-      IF (Qout(idRVsu,ng)) THEN
+      IF (Qout(idPVzs,ng)) THEN
+        IF (.not.allocated(Fr3d)) THEN
+          allocate ( Fr3d(LBi:UBi,LBj:UBj,N(ng)) )
+          Fr3d(LBi:UBi,LBj:UBj,1:N(ng))=0.0_r8
+        END IF
         IF (.not.allocated(Wr3d)) THEN
           allocate ( Wr3d(LBi:UBi,LBj:UBj,N(ng)) )
           Wr3d(LBi:UBi,LBj:UBj,1:N(ng))=0.0_r8
         END IF
+!
+        DO k=1,N(ng)
+          DO j=Jstr-1,Jend+1
+            DO i=Istr-1,Iend+1
+              GRID(ng)%z_v(i,j,k)=0.25_r8*(GRID(ng)%z_r(i-1,j-1,k)+     &
+     &                                     GRID(ng)%z_r(i-1,j  ,k)+     &
+     &                                     GRID(ng)%z_r(i  ,j-1,k)+     &
+     &                                     GRID(ng)%z_r(i ,j  ,k))
+            END DO
+          END DO
+        END DO
+!
+        CALL pvorticity3d (ng, model, tile,                             &
+                           LBi, UBi, LBj, UBj,                          &
+     &                     IminS, ImaxS, JminS, JmaxS, NOUT,            &
+# ifdef MASKING
+     &                     GRID(ng) % pmask,                            &
+     &                     GRID(ng) % umask,   GRID(ng) % vmask,        &
+# endif
+                           GRID(ng) % f,                                &
+                           GRID(ng) % om_u,    GRID(ng) % on_v,         &
+                           GRID(ng) % pm,      GRID(ng) % pn,           &
+                           GRID(ng) % z_r,     OCEAN(ng) % pden,        &
+                           OCEAN(ng) % u,      OCEAN(ng) % v,           &
+                           Fr3d)
+!
+        CALL extract_slice (ng, model, tile, p3dvar,                    &
+     &                      LBi, UBi, LBj, UBj, 1, N(ng),               &
+     &                      Fr3d,                                       &
+     &                      GRID(ng) % z_v,                             &
+# ifdef MASKING
+     &                      GRID(ng) % pmask,                           &
+# endif
+     &                      Zslice, Wr3d)
+!
         scale=1.0_dp
+        IF (QCK(ng)%pioVar(idPVzs)%dkind.eq.PIO_double) THEN
+          ioDesc => ioDesZ_dp_p3dvar(ng)
+        ELSE
+          ioDesc => ioDesZ_sp_p3dvar(ng)
+        END IF
+        status=nf_fwrite3d(ng, model, QCK(ng)%pioFile, idPVzs,          &
+     &                     QCK(ng)%pioVar(idPVzs),                      &
+     &                     QCK(ng)%Rindex,                              &
+     &                     ioDesc,                                      &
+     &                     LBi, UBi, LBj, UBj, 1, Nslice, scale,        &
+#  ifdef MASKING
+     &                     GRID(ng) % pmask,                            &
+#  endif
+     &                     Wr3d)
+        IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+          IF (Master) THEN
+            WRITE (stdout,20) TRIM(Vname(1,idPVzs)), QCK(ng)%Rindex
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+        deallocate (Fr3d)
+        deallocate (Wr3d)
+      END IF
+!
+!  Write out relative vorticity (s-1) at PSI-points at specified
+!  constant depth slices.
+!
+      IF (Qout(idRVzs,ng)) THEN
+        IF (.not.allocated(Fr3d)) THEN
+          allocate ( Fr3d(LBi:UBi,LBj:UBj,N(ng)) )
+          Fr3d(LBi:UBi,LBj:UBj,1:N(ng))=0.0_r8
+        END IF
+        IF (.not.allocated(Wr3d)) THEN
+          allocate ( Wr3d(LBi:UBi,LBj:UBj,N(ng)) )
+          Wr3d(LBi:UBi,LBj:UBj,1:N(ng))=0.0_r8
+        END IF
+!
+        DO k=1,N(ng)
+          DO j=Jstr-1,Jend+1
+            DO i=Istr-1,Iend+1
+              GRID(ng)%z_v(i,j,k)=0.25_r8*(GRID(ng)%z_r(i-1,j-1,k)+     &
+     &                                     GRID(ng)%z_r(i-1,j  ,k)+     &
+     &                                     GRID(ng)%z_r(i  ,j-1,k)+     &
+     &                                     GRID(ng)%z_r(i ,j  ,k))
+            END DO
+          END DO
+        END DO
+!
         CALL rvorticity3d (ng, model, tile,                             &
      &                     LBi, UBi, LBj, UBj, NOUT,                    &
 #  ifdef MASKING
@@ -2693,30 +2896,41 @@
                            GRID(ng) % om_u, GRID(ng) % on_v,            &
                            GRID(ng) % pm,   GRID(ng) % pn,              &
                            OCEAN(ng) % u,   OCEAN(ng) % v,              &
-                           Wr3d)
+                           Fr3d)
 !
-        IF (QCK(ng)%pioVar(idRVsu)%dkind.eq.PIO_double) THEN
-          ioDesc => ioDesc_dp_p2dvar(ng)
+        CALL extract_slice (ng, model, tile, p3dvar,                    &
+     &                      LBi, UBi, LBj, UBj, 1, N(ng),               &
+     &                      Fr3d,                                       &
+     &                      GRID(ng) % z_v,                             &
+# ifdef MASKING
+     &                      GRID(ng) % pmask,                           &
+# endif
+     &                      Zslice, Wr3d)
+!
+        scale=1.0_dp
+        IF (QCK(ng)%pioVar(idRVzs)%dkind.eq.PIO_double) THEN
+          ioDesc => ioDesZ_dp_p3dvar(ng)
         ELSE
-          ioDesc => ioDesc_sp_p2dvar(ng)
+          ioDesc => ioDesZ_sp_p3dvar(ng)
         END IF
-        status=nf_fwrite2d(ng, model, QCK(ng)%pioFile, idRVsu,          &
-     &                     QCK(ng)%pioVar(idRVsu),                      &
+        status=nf_fwrite3d(ng, model, QCK(ng)%pioFile, idRVzs,          &
+     &                     QCK(ng)%pioVar(idRVzs),                      &
      &                     QCK(ng)%Rindex,                              &
      &                     ioDesc,                                      &
-     &                     LBi, UBi, LBj, UBj, scale,                   &
+     &                     LBi, UBi, LBj, UBj, 1, Nslice, scale,        &
 #  ifdef MASKING
      &                     GRID(ng) % pmask,                            &
 #  endif
-     &                     Wr3d(:,:,N(ng)))
+     &                     Wr3d)
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
-            WRITE (stdout,20) TRIM(Vname(1,idRVsu)), QCK(ng)%Rindex
+            WRITE (stdout,20) TRIM(Vname(1,idRVzs)), QCK(ng)%Rindex
           END IF
           exit_flag=3
           ioerror=status
           RETURN
         END IF
+        deallocate (Fr3d)
         deallocate (Wr3d)
       END IF
 !
