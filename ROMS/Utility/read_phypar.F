@@ -1607,7 +1607,7 @@
                 RETURN
               END IF
               Npts=load_l(Nval, Cval, Ngrids, Lswitch)
-              Qout(idVzsN,1:Ngrids)=Lswitch(1:Ngrids)
+              Hout(idVzsN,1:Ngrids)=Lswitch(1:Ngrids)
 #ifdef SOLVE3D
             CASE ('Hout(idzslT)')
               IF (MAXVAL(idzslT).eq.0) THEN

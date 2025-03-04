@@ -215,7 +215,7 @@ metadata:
 
   - variable:       u_slice                                          # Output
     standard_name:  sea_water_surface_x_velocity
-    long_name:      surface u-momentum component
+    long_name:      u-momentum component
     units:          meter second-1                                   # [m/s]
     field:          u-velocity constant depth slice
     time:           ocean_time
@@ -226,7 +226,7 @@ metadata:
 
   - variable:       v_slice                                          # Output
     standard_name:  sea_water_surface_y_velocity
-    long_name:      surface v-momentum component
+    long_name:      v-momentum component
     units:          meter second-1                                   # [m/s]
     field:          v-velocity constant depth slice
     time:           ocean_time
@@ -236,8 +236,8 @@ metadata:
     scale:          1.0d0
 
   - variable:       u_eastward_slice                                 # Output
-    standard_name:  surface_eastward_sea_water_velocity
-    long_name:      surface eastward momentum component at RHO-points
+    standard_name:  eastward_sea_water_velocity
+    long_name:      eastward momentum component at RHO-points
     units:          meter second-1                                   # [m/s]
     field:          u-eastward constant depth slice
     time:           ocean_time
@@ -247,8 +247,8 @@ metadata:
     scale:          1.0d0
 
   - variable:       v_northward_slice                                # Output
-    standard_name:  surface_northward_sea_water_velocity
-    long_name:      surface northward momentum component at RHO-points
+    standard_name:  northward_sea_water_velocity
+    long_name:      northward momentum component at RHO-points
     units:          meter second-1                                   # [m/s]
     field:          v-northward constant depth slice
     time:           ocean_time
