@@ -323,6 +323,9 @@
           END IF
         END IF
 #  ifdef K_C4ADVECTION
+!
+!  Fourth-order, centered differences advection.
+!
         cff=1.0_r8/6.0_r8
         DO j=Jstr,Jend+1
           DO i=Istr,Iend
@@ -336,6 +339,10 @@
           END DO
         END DO
 #  else
+!
+!  Third-order, upstream bias advection with velocity dependent
+!  hyperdiffusion.
+!
         DO j=Jstr-1,Jend+1
           DO i=Istr,Iend
             curv(i,j)=grad(i,j+1)-grad(i,j)
