@@ -33,23 +33,24 @@
       USE exchange_3d_mod
 # endif
 # ifdef DISTRIBUTE
-      USE mp_exchange_mod, ONLY : mp_exchange2d
+      USE mp_exchange_mod,   ONLY : mp_exchange2d
 #  ifdef SOLVE3D
-      USE mp_exchange_mod, ONLY : mp_exchange3d, mp_exchange4d
+      USE mp_exchange_mod,   ONLY : mp_exchange3d, mp_exchange4d
 #  else
 #   ifdef PERFECT_RESTART
-      USE mp_exchange_mod, ONLY : mp_exchange3d
+      USE mp_exchange_mod,   ONLY : mp_exchange3d
 #   endif
 #  endif
 # endif
 # ifdef SOLVE3D
-      USE t3dbc_mod,       ONLY : t3dbc_tile
-      USE u3dbc_mod,       ONLY : u3dbc_tile
-      USE v3dbc_mod,       ONLY : v3dbc_tile
+      USE t3dbc_mod,         ONLY : t3dbc_tile
+      USE uv_var_change_mod, ONLY : uv_C2A_grid
+      USE u3dbc_mod,         ONLY : u3dbc_tile
+      USE v3dbc_mod,         ONLY : v3dbc_tile
 # endif
-      USE u2dbc_mod,       ONLY : u2dbc_tile
-      USE v2dbc_mod,       ONLY : v2dbc_tile
-      USE zetabc_mod,      ONLY : zetabc_tile
+      USE u2dbc_mod,         ONLY : u2dbc_tile
+      USE v2dbc_mod,         ONLY : v2dbc_tile
+      USE zetabc_mod,        ONLY : zetabc_tile
 !
       implicit none
 !
@@ -345,6 +346,12 @@
      &                    u(:,:,:,nstp), v(:,:,:,nstp))
 #  endif
 # endif
+!
+!  Compute 3D momentum (ua, va) at RHO-points (A-Grid) for output
+!  purposes and data assimilation where the observations and state
+!  vector is located at the cell-center.
+!
+      CALL uv_C2A_grid (ng, tile, iNLM, nstp)
 
 # ifdef SOLVE3D
 !

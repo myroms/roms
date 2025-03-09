@@ -107,7 +107,7 @@
 !  Maximum number of dimension IDs stored in local array DimIDs used to
 !  defined variable dimensions in output NetCDF files.
 !
-      integer, parameter :: nDimID = 33
+      integer, parameter :: nDimID = 34
 !
 !  Number of horizontal interior and boundary water points.
 !
@@ -262,6 +262,7 @@
       integer  :: idOvil        ! omega vertical velocity implicit
       integer  :: idPair        ! surface air pressure
       integer  :: idPbar        ! streamfunction
+      integer  :: idPVzs        ! potential vorticity depth slices
       integer  :: idPwet        ! wet/dry mask on PSI-points
       integer  :: idpmdx        ! inverse grid x-spacing
       integer  :: idpndy        ! inverse grid y-spacing
@@ -282,6 +283,7 @@
       integer  :: idRv3d        ! RHS of total V-momentum
       integer  :: idRxpo        ! river runoff XI-positions
       integer  :: idRvsh        ! river runoff transport profile
+      integer  :: idRVzs        ! relative vorticity depth slices
       integer  :: idRwet        ! wet/dry mask on RHO-points
       integer  :: idRzet        ! RHS of free-surface
       integer  :: idrain        ! rainfall rate
@@ -344,6 +346,8 @@
       integer  :: idUVwc        ! bottom wave-current stress magnitude
       integer  :: idUwav        ! 2D U-velocity Kirby and Chen
       integer  :: idUwet        ! wet/dry mask on U-points
+      integer  :: idUzsE        ! 3D U-eastward constant depth slices
+      integer  :: idUzsl        ! 3D U-velocity constant depth slices
       integer  :: idu2dD        ! detided 2D U-velocity
       integer  :: idu2dH        ! 2D U-velocity tide harmonics
       integer  :: idu2dE        ! 2D eastward velocity at RHO-points
@@ -382,6 +386,8 @@
       integer  :: idVvis        ! vertical viscosity coefficient
       integer  :: idVwav        ! 2D V-velocity Kirby and Chen
       integer  :: idVwet        ! wet/dry mask on V-points
+      integer  :: idVzsN        ! 3D V-northward constant depth slices
+      integer  :: idVzsl        ! 3D V-velocity constant depth slices
       integer  :: idv2dD        ! detided 2D U-velocity
       integer  :: idv2dH        ! 2D U-velocity tide harmonics
       integer  :: idv2dN        ! 2D northward velocity at RHO-points
@@ -452,7 +458,8 @@
 !  Input/output identification tracer indices.
 !
       integer, allocatable :: idRtrc(:)    ! river runoff for tracers
-      integer, allocatable :: idsurT(:)    ! model surface tracers
+      integer, allocatable :: idsurT(:)    ! surface tracers
+      integer, allocatable :: idzslT(:)    ! tracers depth slices
       integer, allocatable :: idTads(:)    ! tracers adjoint sentivity
       integer, allocatable :: idTbot(:)    ! bottom flux for tracers
       integer, allocatable :: idTbry(:,:)  ! tracers boundary
@@ -807,6 +814,10 @@
         allocate ( idsurT(MT) )
         Dmem(1)=Dmem(1)+REAL(MT,r8)
       END IF
+      IF (.not.allocated(idzslT)) THEN
+        allocate ( idzslT(MT) )
+        Dmem(1)=Dmem(1)+REAL(MT,r8)
+      END IF
       IF (.not.allocated(idTads)) THEN
         allocate ( idTads(MT) )
         Dmem(1)=Dmem(1)+REAL(MT,r8)
@@ -1082,6 +1093,7 @@
 !
       IF (allocated(idRtrc))      deallocate ( idRtrc )
       IF (allocated(idsurT))      deallocate ( idsurT )
+      IF (allocated(idsurT))      deallocate ( idzslT )
       IF (allocated(idTads))      deallocate ( idTads )
       IF (allocated(idTbot))      deallocate ( idTbot )
       IF (allocated(idTbry))      deallocate ( idTbry )
@@ -1574,6 +1586,10 @@
             idUsuE=varid
           CASE ('idUvel')
             idUvel=varid
+          CASE ('idUzsl')
+            idUzsl=varid
+          CASE ('idUzsE')
+            idUzsE=varid
           CASE ('idu3dE')
             idu3dE=varid
           CASE ('idRu3d')
@@ -1584,10 +1600,18 @@
             idVsuN=varid
           CASE ('idVvel')
             idVvel=varid
+          CASE ('idVzsl')
+            idVzsl=varid
+          CASE ('idVzsN')
+            idVzsN=varid
           CASE ('idv3dN')
             idv3dN=varid
           CASE ('idRv3d')
             idRv3d=varid
+          CASE ('idPVzs')
+            idPVzs=varid
+          CASE ('idRVzs')
+            idRVzs=varid
           CASE ('idWvel')
             idWvel=varid
           CASE ('idOvil')
@@ -1598,9 +1622,13 @@
             idDano=varid
           CASE ('idsurT(itemp)')
             idsurT(itemp)=varid
+          CASE ('idzslT(itemp)')
+            idzslT(itemp)=varid
 #ifdef SALINITY
           CASE ('idsurT(isalt)')
             idsurT(isalt)=varid
+          CASE ('idzslT(isalt)')
+            idzslT(isalt)=varid
 #endif
           CASE ('idTvar(itemp)')
             idTvar(itemp)=varid
