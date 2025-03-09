@@ -73,8 +73,7 @@
       USE gls_corstep_mod,      ONLY : gls_corstep
       USE gls_prestep_mod,      ONLY : gls_prestep
 # endif
-# if defined NLM_OUTER             || defined RBL4DVAR                 || \
-  defined RBL4DVAR_ANA_SENSITIVITY || defined RBL4DVAR_FCT_SENSITIVITY
+# if defined RBL4DVAR && defined RPCG
       USE frc_iau_mod,          ONLY : frc_iau
 # endif
 # if defined DIFF_3DCOEF || defined VISC_3DCOEF

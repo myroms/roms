@@ -55,6 +55,7 @@ list( APPEND _files
       ROMS/Utility/erf.F
       ROMS/Utility/extract_field.F
       ROMS/Utility/extract_obs.F
+      ROMS/Utility/extract_slice.F
       ROMS/Utility/extract_sta.F
       ROMS/Utility/frc_weak.F
       ROMS/Utility/gasdev.F

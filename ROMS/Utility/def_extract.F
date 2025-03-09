@@ -159,13 +159,10 @@
 #  ifdef SEDIMENT
       integer :: b3dgrd(4)
 #  endif
-      integer :: t3dgrd(4), u3dgrd(4), v3dgrd(4), w3dgrd(4)
+      integer :: p2grd(3), t3dgrd(4), u3dgrd(4), v3dgrd(4), w3dgrd(4)
 #  ifdef ADJUST_BOUNDARY
       integer :: t3dobc(5)
 #  endif
-# endif
-# ifdef WET_DRY
-      integer :: sp2dgrd(3)
 # endif
 !
       real(r8) :: Aval(6)
@@ -405,14 +402,12 @@
         t3dobc(5)=DimIDs(12)
 #  endif
 # endif
-# ifdef WET_DRY
 !
 !  Define dimension vectors for staggered type variables at PSI-points.
 !
-        sp2dgrd(1)=DimIDs( 4)
-        sp2dgrd(2)=DimIDs( 8)
-        sp2dgrd(3)=DimIDs(12)
-# endif
+        p2grd(1)=DimIDs( 4)
+        p2grd(2)=DimIDs( 8)
+        p2grd(3)=DimIDs(12)
 !
 !  Define dimension vectors for staggered u-momentum type variables.
 !
@@ -557,7 +552,7 @@
         Vinfo(22)='coordinates'
         Aval(5)=REAL(Iinfo(1,idPwet,ng),r8)
         status=def_var(ng, model, XTR(ng)%ncid, XTR(ng)%Vid(idPwet),    &
-     &                 NF_FOUT, nvd3, sp2dgrd, Aval, Vinfo, ncname,     &
+     &                 NF_FOUT, nvd3, p2grd, Aval, Vinfo, ncname,       &
      &                 SetFillVal = .FALSE.)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
@@ -2816,13 +2811,10 @@
 #   ifdef SEDIMENT
       integer :: b3dgrd(4)
 #   endif
-      integer :: t3dgrd(4), u3dgrd(4), v3dgrd(4), w3dgrd(4)
+      integer :: p2grd(3), t3dgrd(4), u3dgrd(4), v3dgrd(4), w3dgrd(4)
 #   ifdef ADJUST_BOUNDARY
       integer :: t3dobc(5)
 #   endif
-#  endif
-#  ifdef WET_DRY
-      integer :: sp2dgrd(3)
 #  endif
 !
       real(r8) :: Aval(6)
@@ -3064,14 +3056,12 @@
         t3dobc(5)=DimIDs(12)
 #   endif
 #  endif
-#  ifdef WET_DRY
 !
 !  Define dimension vectors for staggered type variables at PSI-points.
 !
-        sp2dgrd(1)=DimIDs( 4)
-        sp2dgrd(2)=DimIDs( 8)
-        sp2dgrd(3)=DimIDs(12)
-#  endif
+        p2grd(1)=DimIDs( 4)
+        p2grd(2)=DimIDs( 8)
+        p2grd(3)=DimIDs(12)
 !
 !  Define dimension vectors for staggered u-momentum type variables.
 !
@@ -3223,7 +3213,7 @@
 !
         status=def_var(ng, model, XTR(ng)%pioFile,                      &
      &                 XTR(ng)%pioVar(idPwet)%vd,                       &
-     &                 PIO_FOUT, nvd3, sp2dgrd, Aval, Vinfo, ncname,    &
+     &                 PIO_FOUT, nvd3, p2grd, Aval, Vinfo, ncname,      &
      &                 SetFillVal = .FALSE.)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
