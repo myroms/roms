@@ -644,11 +644,11 @@ Hout(idWdis) == F       ! Dissip_roller      wave roller dissipation
 Hout(idWrol) == F       ! roller_action      wave roller action density
 
 Hout(idPair) == F       ! Pair               surface air pressure
-Hout(idTair) == F       ! Tair               near surface air temperature
-Hout(idUair) == F       ! Uwind              near surface U-wind
-Hout(idVair) == F       ! Vwind              near surface V-wind
-Hout(idUaiE) == F       ! Uwind_eastward     near surface Eastward  U-wind
-Hout(idVaiN) == F       ! Vwind_northward    near surface Northward V-wind
+Hout(idTair) == F       ! Tair               near near surface air temperature
+Hout(idUair) == F       ! Uwind              near near surface U-wind
+Hout(idVair) == F       ! Vwind              near near surface V-wind
+Hout(idUaiE) == F       ! Uwind_eastward     near near surface Eastward  U-wind
+Hout(idVaiN) == F       ! Vwind_northward    near near surface Northward V-wind
 
 Hout(idTsur) == F F     ! shflux, ssflux     surface net heat and salt flux
 Hout(idLhea) == F       ! latent             latent heat flux
@@ -695,12 +695,12 @@ Qout(idBath) == T       ! bath               time-dependent bathymetry
 
 Qout(idTvar) == F F     ! temp, salt         temperature and salinity
 
-Qout(idUsur) == T       ! u_sur              surface U-velocity
-Qout(idVsur) == T       ! v_sur              surface V-velocity
-Qout(idUsuE) == T       ! u_sur_eastward     surface U-eastward  velocity
-Qout(idVsuN) == T       ! v_sur_northward    surface V-northward velocity
+Qout(idUsur) == T       ! u_sur              surface level U-velocity
+Qout(idVsur) == T       ! v_sur              surface level V-velocity
+Qout(idUsuE) == T       ! u_sur_eastward     surface level U-eastward  velocity
+Qout(idVsuN) == T       ! v_sur_northward    surface level V-northward velocity
 
-Qout(idsurT) == T T     ! temp_sur, salt_sur surface temperature and salinity
+Qout(idsurT) == T T     ! temp_sur, salt_sur surface level temperature and salinity
 
 Qout(idUzsl) == F       ! u_slice            U-velocity depth slices
 Qout(idVzsl) == F       ! v_slice            V-velocity depth slices
@@ -769,11 +769,11 @@ Qout(idWdis) == F       ! Dissip_roller      wave roller dissipation
 Qout(idWrol) == F       ! roller_action      wave roller action density
 
 Qout(idPair) == F       ! Pair               surface air pressure
-Qout(idTair) == F       ! Tair               near surface air temperature
-Qout(idUair) == F       ! Uair               near surface U-wind
-Qout(idVair) == F       ! Vair               near surface V-wind
-Qout(idUaiE) == F       ! Uwind_eastward     near surface Eastward  U-wind
-Qout(idVaiN) == F       ! Vwind_northward    near surface Northward V-wind
+Qout(idTair) == F       ! Tair               near near surface air temperature
+Qout(idUair) == F       ! Uair               near near surface U-wind
+Qout(idVair) == F       ! Vair               near near surface V-wind
+Qout(idUaiE) == F       ! Uwind_eastward     near near surface Eastward  U-wind
+Qout(idVaiN) == F       ! Vwind_northward    near near surface Northward V-wind
 
 Qout(idTsur) == F F     ! shflux, ssflux     surface net heat and salt flux
 Qout(idLhea) == F       ! latent             latent heat flux
@@ -872,11 +872,11 @@ Aout(idWdis) == F       ! Dissip_roller      wave roller dissipation
 Aout(idWrol) == F       ! roller_action      wave roller action density
 
 Aout(idPair) == F       ! Pair               surface air pressure
-Aout(idTair) == F       ! Tair               near surface air temperature
-Aout(idUair) == F       ! Uwind              near surface U-wind
-Aout(idVair) == F       ! Vwind              near surface V-wind
-Aout(idUaiE) == F       ! Uwind_eastward     near surface Eastward  U-wind
-Aout(idVaiN) == F       ! Vwind_northward    near surface Northward V-wind
+Aout(idTair) == F       ! Tair               near near surface air temperature
+Aout(idUair) == F       ! Uwind              near near surface U-wind
+Aout(idVair) == F       ! Vwind              near near surface V-wind
+Aout(idUaiE) == F       ! Uwind_eastward     near near surface Eastward  U-wind
+Aout(idVaiN) == F       ! Vwind_northward    near near surface Northward V-wind
 
 Aout(idTsur) == F F     ! shflux, ssflux     surface net heat and salt flux
 Aout(idLhea) == F       ! latent             latent heat flux
@@ -2822,12 +2822,12 @@ PIO_I2C_Preq = 65                 ! Maximum pending I2C requests
 !
 ! Qout(idTvar)   Write out active (NAT) tracers: temperature and salinity.
 !
-! Qout(idUsur)   Write out surface level U-velocity component.
-! Qout(idVsur)   Write out surface level V-velocity component.
-! Qout(idUsuE)   Write out surface level Eastward  velocity at RHO-points.
-! Qout(idVsuN)   Write out surface level Northward velocity at RHO-points.
+! Qout(idUsur)   Write out surface level (k=N) U-velocity component.
+! Qout(idVsur)   Write out surface level (k=N) V-velocity component.
+! Qout(idUsuE)   Write out surface level (k=N) Eastward  velocity at RHO-points.
+! Qout(idVsuN)   Write out surface level (k=N) Northward velocity at RHO-points.
 !
-! Qout(idsurT)   Write out surface level temperature and salinity.
+! Qout(idsurT)   Write out surface level (k=N) temperature and salinity.
 !
 ! Qout(idUzsl)   Write out U-velocity depth slices, Z_SLICE(1:NSLICE).
 ! Qout(idVzsl)   Write out V-velocity depth slices, Z_SLICE(1:NSLICE).

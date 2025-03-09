@@ -671,11 +671,11 @@ Hout(idWdis) == 2*F     ! Dissip_roller      wave roller dissipation
 Hout(idWrol) == 2*F     ! roller_action      wave roller action density
 
 Hout(idPair) == 2*F     ! Pair               surface air pressure
-Hout(idTair) == 2*F     ! Tair               surface air temperature
-Hout(idUair) == 2*F     ! Uwind              surface U-wind
-Hout(idVair) == 2*F     ! Vwind              surface V-wind
-Hout(idUaiE) == 2*F     ! Uwind_eastward     surface Eastward  U-wind
-Hout(idVaiN) == 2*F     ! Vwind_northward    surface Northward V-wind
+Hout(idTair) == 2*F     ! Tair               near surface air temperature
+Hout(idUair) == 2*F     ! Uwind              near surface U-wind
+Hout(idVair) == 2*F     ! Vwind              near surface V-wind
+Hout(idUaiE) == 2*F     ! Uwind_eastward     near surface Eastward  U-wind
+Hout(idVaiN) == 2*F     ! Vwind_northward    near surface Northward V-wind
 
 Hout(idTsur) == 2*F 2*F ! shflux, ssflux     surface net heat and salt flux
 Hout(idLhea) == 2*F     ! latent             latent heat flux
@@ -722,12 +722,12 @@ Qout(idBath) == 2*T     ! bath               time-dependent bathymetry
 
 Qout(idTvar) == 2*F 2*F ! temp, salt         temperature and salinity
 
-Qout(idUsur) == 2*T     ! u_sur              surface U-velocity
-Qout(idVsur) == 2*T     ! v_sur              surface V-velocity
-Qout(idUsuE) == 2*T     ! u_sur_eastward     surface U-eastward  velocity
-Qout(idVsuN) == 2*T     ! v_sur_northward    surface V-northward velocity
+Qout(idUsur) == 2*T     ! u_sur              surface level U-velocity
+Qout(idVsur) == 2*T     ! v_sur              surface level V-velocity
+Qout(idUsuE) == 2*T     ! u_sur_eastward     surface level U-eastward  velocity
+Qout(idVsuN) == 2*T     ! v_sur_northward    surface level V-northward velocity
 
-Qout(idsurT) == 2*T 2*T ! temp_sur, salt_sur surface temperature and salinity
+Qout(idsurT) == 2*T 2*T ! temp_sur, salt_sur surface level temperature and salinity
 
 Qout(idUzsl) == 2*F     ! u_slice            U-velocity depth slices
 Qout(idVzsl) == 2*F     ! v_slice            V-velocity depth slices
@@ -796,11 +796,11 @@ Qout(idWdis) == 2*F     ! Dissip_roller      wave roller dissipation
 Qout(idWrol) == 2*F     ! roller_action      wave roller action density
 
 Qout(idPair) == 2*F     ! Pair               surface air pressure
-Qout(idTair) == 2*F     ! Tair               surface air temperature
-Qout(idUair) == 2*F     ! Uair               surface U-wind
-Qout(idVair) == 2*F     ! Vair               surface V-wind
-Qout(idUaiE) == 2*F     ! Uwind_eastward     surface Eastward  U-wind
-Qout(idVaiN) == 2*F     ! Vwind_northward    surface Northward V-wind
+Qout(idTair) == 2*F     ! Tair               near surface air temperature
+Qout(idUair) == 2*F     ! Uair               near surface U-wind
+Qout(idVair) == 2*F     ! Vair               near surface V-wind
+Qout(idUaiE) == 2*F     ! Uwind_eastward     near surface Eastward  U-wind
+Qout(idVaiN) == 2*F     ! Vwind_northward    near surface Northward V-wind
 
 Qout(idTsur) == 2*F 2*F ! shflux, ssflux     surface net heat and salt flux
 Qout(idLhea) == 2*F     ! latent             latent heat flux
@@ -899,11 +899,11 @@ Aout(idWdis) == 2*F     ! Dissip_roller      wave roller dissipation
 Aout(idWrol) == 2*F     ! roller_action      wave roller action density
 
 Aout(idPair) == 2*F     ! Pair               surface air pressure
-Aout(idTair) == 2*F     ! Tair               surface air temperature
-Aout(idUair) == 2*F     ! Uwind              surface U-wind
-Aout(idVair) == 2*F     ! Vwind              surface V-wind
-Aout(idUaiE) == 2*F     ! Uwind_eastward     surface Eastward  U-wind
-Aout(idVaiN) == 2*F     ! Vwind_northward    surface Northward V-wind
+Aout(idTair) == 2*F     ! Tair               near surface air temperature
+Aout(idUair) == 2*F     ! Uwind              near surface U-wind
+Aout(idVair) == 2*F     ! Vwind              near surface V-wind
+Aout(idUaiE) == 2*F     ! Uwind_eastward     near surface Eastward  U-wind
+Aout(idVaiN) == 2*F     ! Vwind_northward    near surface Northward V-wind
 
 Aout(idTsur) == 2*F 2*F ! shflux, ssflux     surface net heat and salt flux
 Aout(idLhea) == 2*F     ! latent             latent heat flux
@@ -2722,15 +2722,15 @@ PIO_I2C_Preq = 65                 ! Maximum pending I2C requests
 !
 ! Hout(idUvel)   Write out 3D U-velocity component.
 ! Hout(idVvel)   Write out 3D V-velocity component.
-! Hout(idu3dE)   Write out 3D Eastward  velocity component at RHO-points.
-! Hout(idv3dN)   Write out 3D Northward velocity component at RHO-points.
+! Hout(idu3dE)   Write out 3D Eastward  velocity at RHO-points.
+! Hout(idv3dN)   Write out 3D Northward velocity at RHO-points.
 ! Hout(idWvel)   Write out 3D W-velocity component.
 ! Hout(idOvel)   Write out 3D omega vertical velocity.
 ! Hout(idOvil)   Write out 3D omega implicit vertical velocity.
 ! Hout(idUbar)   Write out 2D U-velocity component.
 ! Hout(idVbar)   Write out 2D V-velocity component.
-! Hout(idu2dE)   Write out 2D Eastward  velocity component at RHO-points.
-! Hout(idv2dN)   Write out 2D Northward velocity component at RHO-points.
+! Hout(idu2dE)   Write out 2D Eastward  velocity at RHO-points.
+! Hout(idv2dN)   Write out 2D Northward velocity at RHO-points.
 ! Hout(idFsur)   Write out free-surface.
 ! Hout(idBath)   Write out time-dependent bathymetry.
 !
@@ -2805,11 +2805,11 @@ PIO_I2C_Preq = 65                 ! Maximum pending I2C requests
 ! Hout(idWrol)   Write out wave roller action density.
 !
 ! Hout(idPair)   Write out surface air pressure.
-! Hout(idTair)   Write out surface air temperature.
-! Hout(idUair)   Write out surface U-wind component.
-! Hout(idVair)   Write out surface V-wind component.
-! Hout(idUaiE)   Write out surface Eastward  U-wind component.
-! Hout(idVaiN)   Write out surface Northward V-wind component.
+! Hout(idTair)   Write out near surface air temperature.
+! Hout(idUair)   Write out near surface U-wind component.
+! Hout(idVair)   Write out near surface V-wind component.
+! Hout(idUaiE)   Write out near surface Eastward  U-wind.
+! Hout(idVaiN)   Write out near surface Northward V-wind.
 !
 ! Hout(idTsur)   Write out surface net heat and salt flux
 ! Hout(idLhea)   Write out latent heat flux.
@@ -2838,25 +2838,25 @@ PIO_I2C_Preq = 65                 ! Maximum pending I2C requests
 !
 ! Qout(idUvel)   Write out 3D U-velocity component.
 ! Qout(idVvel)   Write out 3D V-velocity component.
-! Qout(idu3dE)   Write out 3D Eastward  velocity component at RHO-points.
-! Qout(idv3dN)   Write out 3D Northward velocity component at RHO-points.
+! Qout(idu3dE)   Write out 3D Eastward  velocity at RHO-points.
+! Qout(idv3dN)   Write out 3D Northward velocity at RHO-points.
 ! Qout(idWvel)   Write out 3D W-velocity component.
 ! Qout(idOvel)   Write out 3D omega vertical velocity.
 ! Qout(idUbar)   Write out 2D U-velocity component.
 ! Qout(idVbar)   Write out 2D V-velocity component.
-! Qout(idu2dE)   Write out 2D Eastward  velocity component at RHO-points.
-! Qout(idv2dN)   Write out 2D Northward velocity component at RHO-points.
+! Qout(idu2dE)   Write out 2D Eastward  velocity at RHO-points.
+! Qout(idv2dN)   Write out 2D Northward velocity at RHO-points.
 ! Qout(idFsur)   Write out free-surface.
 ! Qout(idBath)   Write out time-dependent bathymetry.
 !
 ! Qout(idTvar)   Write out active (NAT) tracers: temperature and salinity.
 !
-! Qout(idUsur)   Write out surface U-velocity component.
-! Qout(idVsur)   Write out surface V-velocity component.
-! Qout(idUsuE)   Write out surface Eastward  velocity component at RHO-points.
-! Qout(idVsuN)   Write out surface Northward velocity component at RHO-points.
+! Qout(idUsur)   Write out surface level (k=N) U-velocity component.
+! Qout(idVsur)   Write out surface level (k=N) V-velocity component.
+! Qout(idUsuE)   Write out surface level (k=N) Eastward  velocity at RHO-points.
+! Qout(idVsuN)   Write out surface level (k=N) Northward velocity at RHO-points.
 !
-! Qout(idsurT)   Write out surface temperature and salinity.
+! Qout(idsurT)   Write out surface level (k=N) temperature and salinity.
 !
 ! Qout(idUzsl)   Write out U-velocity depth slices, Z_SLICE(1:NSLICE).
 ! Qout(idVzsl)   Write out V-velocity depth slices, Z_SLICE(1:NSLICE).
@@ -2924,11 +2924,11 @@ PIO_I2C_Preq = 65                 ! Maximum pending I2C requests
 ! Qout(idWrol)   Write out wave roller action density.
 !
 ! Qout(idPair)   Write out surface air pressure.
-! Qout(idTair)   Write out surface air temperature.
-! Qout(idUair)   Write out surface U-wind component.
-! Qout(idVair)   Write out surface V-wind component.
-! Qout(idUaiE)   Write out surface Eastward  U-wind component.
-! Qout(idVaiN)   Write out surface Northward V-wind component.
+! Qout(idTair)   Write out near surface air temperature.
+! Qout(idUair)   Write out near surface U-wind component.
+! Qout(idVair)   Write out near surface V-wind component.
+! Qout(idUaiE)   Write out near surface Eastward  U-wind.
+! Qout(idVaiN)   Write out near surface Northward V-wind.
 !
 ! Qout(idTsur)   Write out surface net heat and salt flux
 ! Qout(idLhea)   Write out latent heat flux.
@@ -2958,14 +2958,14 @@ PIO_I2C_Preq = 65                 ! Maximum pending I2C requests
 !
 ! Aout(idUvel)   Write out 3D U-velocity component.
 ! Aout(idVvel)   Write out 3D V-velocity component.
-! Aout(idu3dE)   Write out 3D Eastward  velocity component at RHO-points.
-! Aout(idv3dN)   Write out 3D Northward velocity component at RHO-points.
+! Aout(idu3dE)   Write out 3D Eastward  velocity at RHO-points.
+! Aout(idv3dN)   Write out 3D Northward velocity at RHO-points.
 ! Aout(idWvel)   Write out 3D W-velocity component.
 ! Aout(idOvel)   Write out 3D omega vertical velocity.
 ! Aout(idUbar)   Write out 2D U-velocity component.
 ! Aout(idVbar)   Write out 2D V-velocity component.
-! Aout(idu2dE)   Write out 2D Eastward  velocity component at RHO-points.
-! Aout(idv2dN)   Write out 2D Northward velocity component at RHO-points.
+! Aout(idu2dE)   Write out 2D Eastward  velocity at RHO-points.
+! Aout(idv2dN)   Write out 2D Northward velocity at RHO-points.
 ! Aout(idFsur)   Write out free-surface.
 ! Aout(idBath)   Write out time-dependent bathymetry.
 !
@@ -3023,11 +3023,11 @@ PIO_I2C_Preq = 65                 ! Maximum pending I2C requests
 ! Aout(idWrol)   Write out wave roller action density.
 !
 ! Aout(idPair)   Write out surface air pressure.
-! Aout(idTair)   Write out surface air temperature.
-! Aout(idUair)   Write out surface U-wind component.
-! Aout(idVair)   Write out surface V-wind component.
-! Aout(idUaiE)   Write out surface Eastward  U-wind component.
-! Aout(idVaiN)   Write out surface Northward V-wind component.
+! Aout(idTair)   Write out near surface air temperature.
+! Aout(idUair)   Write out near surface U-wind component.
+! Aout(idVair)   Write out near surface V-wind component.
+! Aout(idUaiE)   Write out near surface Eastward  U-wind.
+! Aout(idVaiN)   Write out near surface Northward V-wind.
 !
 ! Aout(idTsur)   Write out surface net heat and salt flux
 ! Aout(idLhea)   Write out latent heat flux.
