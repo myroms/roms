@@ -337,6 +337,11 @@
             CALL PIO_freedecomp (pioSystem(i,ng), ioDesc_sp_u3dvar(ng))
             CALL PIO_freedecomp (pioSystem(i,ng), ioDesc_sp_v3dvar(ng))
             CALL PIO_freedecomp (pioSystem(i,ng), ioDesc_sp_w3dvar(ng))
+
+            CALL PIO_freedecomp (pioSystem(i,ng), ioDesZ_sp_p3dvar(ng))
+            CALL PIO_freedecomp (pioSystem(i,ng), ioDesZ_sp_r3dvar(ng))
+            CALL PIO_freedecomp (pioSystem(i,ng), ioDesZ_sp_u3dvar(ng))
+            CALL PIO_freedecomp (pioSystem(i,ng), ioDesZ_sp_v3dvar(ng))
 # endif
           END DO
         END DO
@@ -375,6 +380,11 @@
             CALL PIO_freedecomp (pioSystem(i,ng), ioDesc_dp_u3dvar(ng))
             CALL PIO_freedecomp (pioSystem(i,ng), ioDesc_dp_v3dvar(ng))
             CALL PIO_freedecomp (pioSystem(i,ng), ioDesc_dp_w3dvar(ng))
+
+            CALL PIO_freedecomp (pioSystem(i,ng), ioDesZ_dp_p3dvar(ng))
+            CALL PIO_freedecomp (pioSystem(i,ng), ioDesZ_dp_r3dvar(ng))
+            CALL PIO_freedecomp (pioSystem(i,ng), ioDesZ_dp_u3dvar(ng))
+            CALL PIO_freedecomp (pioSystem(i,ng), ioDesZ_dp_v3dvar(ng))
 # endif
           END DO
         END DO
@@ -780,6 +790,13 @@
       allocate ( ioDesc_sp_u3dvar(Ngrids) )
       allocate ( ioDesc_sp_v3dvar(Ngrids) )
       allocate ( ioDesc_sp_w3dvar(Ngrids) )
+
+      IF (Nslice.gt.0) THEN                   ! output at depth slices
+        allocate ( ioDesZ_sp_p3dvar(Ngrids) )
+        allocate ( ioDesZ_sp_r3dvar(Ngrids) )
+        allocate ( ioDesZ_sp_u3dvar(Ngrids) )
+        allocate ( ioDesZ_sp_v3dvar(Ngrids) )
+      END IF
 # endif
 !
 ! I/O decomposition descriptors for double precision data.
@@ -821,6 +838,13 @@
       allocate ( ioDesc_dp_u3dvar(Ngrids) )
       allocate ( ioDesc_dp_v3dvar(Ngrids) )
       allocate ( ioDesc_dp_w3dvar(Ngrids) )
+
+      IF (Nslice.gt.0) THEN                   ! output at depth slices
+        allocate ( ioDesZ_dp_p3dvar(Ngrids) )
+        allocate ( ioDesZ_dp_r3dvar(Ngrids) )
+        allocate ( ioDesZ_dp_u3dvar(Ngrids) )
+        allocate ( ioDesZ_dp_v3dvar(Ngrids) )
+      END IF
 # endif
 !
 !  I/O decomposition descriptors for special single precision
@@ -955,6 +979,21 @@
         CALL field_iodecomp (ng, pioSystem(IpioROMS,ng), PIO_real,      &
      &                       ioDesc_sp_w3dvar(ng),                      &
      &                       w3dvar, 3, 0, N(ng))
+!
+        IF (Nslice.gt.0) THEN
+          CALL field_iodecomp (ng, pioSystem(IpioROMS,ng), PIO_real,    &
+     &                         ioDesZ_sp_p3dvar(ng),                    &
+     &                         p3dvar, 3, 1, Nslice)
+          CALL field_iodecomp (ng, pioSystem(IpioROMS,ng), PIO_real,    &
+     &                         ioDesZ_sp_r3dvar(ng),                    &
+     &                         r3dvar, 3, 1, Nslice)
+          CALL field_iodecomp (ng, pioSystem(IpioROMS,ng), PIO_real,    &
+     &                         ioDesZ_sp_u3dvar(ng),                    &
+     &                         u3dvar, 3, 1, Nslice)
+          CALL field_iodecomp (ng, pioSystem(IpioROMS,ng), PIO_real,    &
+     &                         ioDesZ_sp_v3dvar(ng),                    &
+     &                         v3dvar, 3, 1, Nslice)
+        END IF
 # endif
 # if defined ADJUST_STFLUX && defined DISTRIBUTE
         CALL field_iodecomp (ng, pioSystem(IpioROMS,ng), PIO_real,      &
@@ -1042,6 +1081,21 @@
         CALL field_iodecomp (ng, pioSystem(IpioROMS,ng), PIO_double,    &
      &                       ioDesc_dp_w3dvar(ng),                      &
      &                       w3dvar, 3, 0, N(ng))
+!
+        IF (Nslice.gt.0) THEN
+          CALL field_iodecomp (ng, pioSystem(IpioROMS,ng), PIO_double,  &
+     &                         ioDesZ_dp_p3dvar(ng),                    &
+     &                         p3dvar, 3, 1, Nslice)
+          CALL field_iodecomp (ng, pioSystem(IpioROMS,ng), PIO_double,  &
+     &                         ioDesZ_dp_r3dvar(ng),                    &
+     &                         r3dvar, 3, 1, Nslice)
+          CALL field_iodecomp (ng, pioSystem(IpioROMS,ng), PIO_double,  &
+     &                         ioDesZ_dp_u3dvar(ng),                    &
+     &                         u3dvar, 3, 1, Nslice)
+          CALL field_iodecomp (ng, pioSystem(IpioROMS,ng), PIO_double,  &
+     &                         ioDesZ_dp_v3dvar(ng),                    &
+     &                         v3dvar, 3, 1, Nslice)
+        END IF
 # endif
 # if defined ADJUST_STFLUX && defined DISTRIBUTE
         CALL field_iodecomp (ng, pioSystem(IpioROMS,ng), PIO_double,    &

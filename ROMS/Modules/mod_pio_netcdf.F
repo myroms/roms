@@ -181,8 +181,8 @@
 !
 !  IO descriptor structures for tile decomposition of single and double
 !  precision data. They are used for the mapping between computational
-!  and I/O processes. It describes how the data is distributed on the
-!  computer.
+!  and I/O processes. It describes how the data is distributed on a
+!  tiled parallel application.
 !
       TYPE (IO_desc_t), pointer :: ioDesc_sp_p2dvar(:) ! (i,j)
       TYPE (IO_desc_t), pointer :: ioDesc_sp_r2dvar(:) ! (i,j)
@@ -204,6 +204,11 @@
       TYPE (IO_desc_t), pointer :: ioDesc_sp_u3dvar(:) ! (i,j,N)
       TYPE (IO_desc_t), pointer :: ioDesc_sp_v3dvar(:) ! (i,j,N)
       TYPE (IO_desc_t), pointer :: ioDesc_sp_w3dvar(:) ! (i,j,0:N)
+
+      TYPE (IO_desc_t), pointer :: ioDesZ_sp_p3dvar(:) ! (i,j,Nslice)
+      TYPE (IO_desc_t), pointer :: ioDesZ_sp_r3dvar(:) ! (i,j,Nslice)
+      TYPE (IO_desc_t), pointer :: ioDesZ_sp_u3dvar(:) ! (i,j,Nslice)
+      TYPE (IO_desc_t), pointer :: ioDesZ_sp_v3dvar(:) ! (i,j,Nslice)
 # endif
 # ifdef ADJUST_BOUNDARY
       TYPE (IO_desc_t), pointer :: ioDesc_sp_r2dobc(:) ! (ij,4,Nbrec)
@@ -243,6 +248,11 @@
       TYPE (IO_desc_t), pointer :: ioDesc_dp_u3dvar(:) ! (i,j,N)
       TYPE (IO_desc_t), pointer :: ioDesc_dp_v3dvar(:) ! (i,j,N)
       TYPE (IO_desc_t), pointer :: ioDesc_dp_w3dvar(:) ! (i,j,0:N)
+
+      TYPE (IO_desc_t), pointer :: ioDesZ_dp_p3dvar(:) ! (i,j,Nslice)
+      TYPE (IO_desc_t), pointer :: ioDesZ_dp_r3dvar(:) ! (i,j,Nslice)
+      TYPE (IO_desc_t), pointer :: ioDesZ_dp_u3dvar(:) ! (i,j,Nslice)
+      TYPE (IO_desc_t), pointer :: ioDesZ_dp_v3dvar(:) ! (i,j,Nslice)
 # endif
 # ifdef ADJUST_BOUNDARY
       TYPE (IO_desc_t), pointer :: ioDesc_dp_r2dobc(:) ! (ij,4,Nbrec)
