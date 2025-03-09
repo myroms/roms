@@ -1474,6 +1474,15 @@
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #endif
 !
+!  Depths of horizontal slices.
+!
+      IF (Nslice.gt.0) THEN
+        CALL netcdf_put_fvar (ng, model, ncname, 'z_slice',             &
+     &                        Zslice, (/1/), (/Nslice/),                &
+     &                        ncid = ncid)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+      END IF
+!
 !  User generic parameters.
 !
       IF (Nuser.gt.0) THEN
@@ -4818,6 +4827,15 @@
      &                          pioFile = pioFile)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 # endif
+!
+!  Depths of horizontal slices.
+!
+      IF (Nslice.gt.0) THEN
+        CALL pio_netcdf_put_fvar (ng, model, ncname, 'z_slice',         &
+     &                            Zslice, (/1/), (/Nslice/),            &
+     &                            pioFile = pioFile)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+      END IF
 !
 !  User generic parameters.
 !

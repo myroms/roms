@@ -45,6 +45,7 @@
 !    DimIDs(31) => Number of 2D variables time levels (3)              !
 !    DimIDs(32) => Number of sediment tracers                          !
 !    DimIDs(33) => Number of light spectral bands.                     !
+!    DimIDs(34) => Number constant depth slices in 'extract_slice'.    !
 !                                                                      !
 !=======================================================================
 !
@@ -118,7 +119,7 @@
       integer, parameter :: Natt = 25
 
       integer :: brydim, i, ie, is, j, lstr, varid
-      integer :: srdim, stadim, status, swdim, trcdim, usrdim
+      integer :: slicedim, srdim, stadim, status, swdim, trcdim, usrdim
 #ifdef SEDIMENT
       integer :: seddim
 #endif
@@ -170,6 +171,7 @@
       srdim=DimIDs(9)
       swdim=DimIDs(10)
       trcdim=DimIDs(11)
+      slicedim=DimIDs(34)
 #ifdef SEDIMENT
       seddim=DimIDs(32)
 #endif
@@ -3141,6 +3143,19 @@
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #endif
 !
+!  Depth of horizontal slices.
+!
+      IF (Nslice.gt.0) THEN
+        Vinfo( 1)='z_slice'
+        Vinfo( 2)='constant depth of output fields horizontal slices'
+        Vinfo(24)='_FillValue'
+        Aval(6)=spval
+        status=def_var(ng, model, ncid, varid, NF_TYPE,                 &
+     &                 1, (/slicedim/), Aval, Vinfo, ncname,            &
+     &               SetParAccess = .FALSE.)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+      END IF
+!
 !  User generic parameters.
 !
       IF (Nuser.gt.0) THEN
@@ -3656,7 +3671,7 @@
       integer, parameter :: Natt = 25
 
       integer :: brydim, FileH, i, ie, is, j, lstr
-      integer :: srdim, stadim, status, swdim, trcdim, usrdim
+      integer :: slicedim, srdim, stadim, status, swdim, trcdim, usrdim
 # ifdef SEDIMENT
       integer :: seddim
 # endif
@@ -3710,6 +3725,7 @@
       srdim=DimIDs(9)
       swdim=DimIDs(10)
       trcdim=DimIDs(11)
+      slicedim=DimIDs(34)
 # ifdef SEDIMENT
       seddim=DimIDs(32)
 # endif
@@ -6619,6 +6635,19 @@
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 # endif
 !
+!  Depth of horizontal slices.
+!
+      IF (Nslice.gt.0) THEN
+        Vinfo( 1)='z_slice'
+        Vinfo( 2)='constant depth of output fields horizontal slices'
+        Vinfo(24)='_FillValue'
+        Aval(6)=spval
+        status=def_var(ng, model, pioFile, pioVar, PIO_TYPE,            &
+     &                 1, (/slicedim/), Aval, Vinfo, ncname,            &
+     &                 SetParAccess = .FALSE.)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+      END IF
+!
 !  User generic parameters.
 !
       IF (Nuser.gt.0) THEN
@@ -6628,7 +6657,7 @@
         Aval(6)=spval
         status=def_var(ng, model, pioFile, pioVar, PIO_TYPE,            &
      &                 1, (/usrdim/), Aval, Vinfo, ncname,              &
-     &               SetParAccess = .FALSE.)
+     &                 SetParAccess = .FALSE.)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
       END IF
 # ifdef STATIONS
