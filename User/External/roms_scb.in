@@ -767,20 +767,12 @@ Qout(idWdis) == F       ! Dissip_roller      wave roller dissipation
 Qout(idWrol) == F       ! roller_action      wave roller action density
 
 Qout(idPair) == F       ! Pair               surface air pressure
-<<<<<<< HEAD
 Qout(idPBLh) == F       ! PBLh               atmosphere boundary layer thickness
-Qout(idTair) == F       ! Tair               surface air temperature
-Qout(idUair) == F       ! Uair               surface U-wind
-Qout(idVair) == F       ! Vair               surface V-wind
-Qout(idUaiE) == F       ! Uwind_eastward     surface Eastward  U-wind
-Qout(idVaiN) == F       ! Vwind_northward    surface Northward V-wind
-=======
 Qout(idTair) == F       ! Tair               near surface air temperature
 Qout(idUair) == F       ! Uair               near surface U-wind
 Qout(idVair) == F       ! Vair               near surface V-wind
 Qout(idUaiE) == F       ! Uwind_eastward     near surface Eastward  U-wind
 Qout(idVaiN) == F       ! Vwind_northward    near surface Northward V-wind
->>>>>>> develop
 
 Qout(idTsur) == F F     ! shflux, ssflux     surface net heat and salt flux
 Qout(idLhea) == F       ! latent             latent heat flux
@@ -2895,20 +2887,12 @@ PIO_I2C_Preq = 65                 ! Maximum pending I2C requests
 ! Qout(idWrol)   Write out wave roller action density.
 !
 ! Qout(idPair)   Write out surface air pressure.
-<<<<<<< HEAD
 ! Qout(idPBLh)   Write out atmosphere boundary layer height.
-! Qout(idTair)   Write out surface air temperature.
-! Qout(idUair)   Write out surface U-wind component.
-! Qout(idVair)   Write out surface V-wind component.
-! Qout(idUaiE)   Write out surface Eastward  U-wind component.
-! Qout(idVaiN)   Write out surface Northward V-wind component.
-=======
 ! Qout(idTair)   Write out near surface air temperature.
 ! Qout(idUair)   Write out near surface U-wind component.
 ! Qout(idVair)   Write out near surface V-wind component.
 ! Qout(idUaiE)   Write out near surface Eastward  U-wind.
 ! Qout(idVaiN)   Write out near surface Northward V-wind.
->>>>>>> develop
 !
 ! Qout(idTsur)   Write out surface net heat and salt flux
 ! Qout(idLhea)   Write out latent heat flux.
