@@ -386,9 +386,6 @@
       USE mod_scalars
 !
       USE exchange_3d_mod, ONLY : exchange_w3d_tile
-# ifdef DISTRIBUTE
-      USE mp_exchange_mod, ONLY : mp_exchange3d
-# endif
 !
 !  Imported variable declarations.
 !
@@ -432,14 +429,6 @@
      &                          LBi, UBi, LBj, UBj, LBk, UBk,           &
      &                          Wscl)
       END IF
-
-# ifdef DISTRIBUTE
-      CALL mp_exchange3d (ng, tile, iNLM, 1,                            &
-     &                    LBi, UBi, LBj, UBj, 0, N(ng),                 &
-     &                    NghostPoints,                                 &
-     &                    EWperiodic(ng), NSperiodic(ng),               &
-     &                    Wscl)
-# endif
 !
       RETURN
       END SUBROUTINE scale_omega
