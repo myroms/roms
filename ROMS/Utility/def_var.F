@@ -126,6 +126,7 @@
 !
 !  Local variable declarations.
 !
+      logical :: has_z_slice
 #ifdef MASKING
       logical :: LandFill
 #endif
@@ -806,12 +807,21 @@
         IF (exit_flag.eq.NoError) THEN
           latt=LEN_TRIM(Vinfo(22))
           IF (latt.gt.0) THEN
+            IF (latt.gt.11) THEN
+              has_z_slice=.TRUE.
+            ELSE
+              has_z_slice=.FALSE.
+            END IF
             IF (spherical) THEN
               IF (INT(Aval(5)).eq.r2dvar) THEN
                 text='lon_rho lat_rho'
                 location='face'
               ELSE IF (INT(Aval(5)).eq.r3dvar) THEN
-                text='lon_rho lat_rho s_rho'
+                IF (has_z_slice) THEN
+                  text='lon_rho lat_rho z_slice'
+                ELSE
+                  text='lon_rho lat_rho s_rho'
+                END IF
                 location='face'
               ELSE IF (INT(Aval(5)).eq.w3dvar) THEN
                 text='lon_rho lat_rho s_w'
@@ -823,7 +833,11 @@
                 text='lon_u lat_u'
                 location='edge1'
               ELSE IF (INT(Aval(5)).eq.u3dvar) THEN
-                text='lon_u lat_u s_rho'
+                IF (has_z_slice) THEN
+                  text='lon_u lat_u z_slice'
+                ELSE
+                  text='lon_u lat_u s_rho'
+                END IF
                 location='edge1'
               ELSE IF (INT(Aval(5)).eq.-u3dvar) THEN
                 text='lon_u lat_u s_w'
@@ -832,7 +846,11 @@
                 text='lon_v lat_v'
                 location='edge2'
               ELSE IF (INT(Aval(5)).eq.v3dvar) THEN
-                text='lon_v lat_v s_rho'
+                IF (has_z_slice) THEN
+                  text='lon_v lat_v z_slice'
+                ELSE
+                  text='lon_v lat_v s_rho'
+                END IF
                 location='edge2'
               ELSE IF (INT(Aval(5)).eq.-v3dvar) THEN
                 text='lon_v lat_v s_w'
@@ -841,7 +859,11 @@
                 text='lon_psi lat_psi'
                 location='node'
               ELSE IF (INT(Aval(5)).eq.p3dvar) THEN
-                text='lon_psi lat_psi s_rho'
+                IF (has_z_slice) THEN
+                  text='lon_psi lat_psi z_slice'
+                ELSE
+                  text='lon_psi lat_psi s_rho'
+                END IF
                 location='node'
               ELSE IF (INT(Aval(5)).eq.l3dvar) THEN
                 text='lon_rho lat_rho light'
@@ -855,7 +877,11 @@
                 text='x_rho y_rho'
                 location='face'
               ELSE IF (INT(Aval(5)).eq.r3dvar) THEN
-                text='x_rho y_rho s_rho'
+                IF (has_z_slice) THEN
+                  text='x_rho y_rho z_slice'
+                ELSE
+                  text='x_rho y_rho s_rho'
+                END IF
                 location='face'
               ELSE IF (INT(Aval(5)).eq.w3dvar) THEN
                 text='x_rho y_rho s_w'
@@ -867,7 +893,11 @@
                 text='x_u y_u'
                 location='edge1'
               ELSE IF (INT(Aval(5)).eq.u3dvar) THEN
-                text='x_u y_u s_rho'
+                IF (has_z_slice) THEN
+                  text='x_u y_u z_slice'
+                ELSE
+                  text='x_u y_u s_rho'
+                END IF
                 location='edge1'
               ELSE IF (INT(Aval(5)).eq.-u3dvar) THEN
                 text='x_u y_u s_w'
@@ -876,7 +906,11 @@
                 text='x_v y_v'
                 location='edge2'
               ELSE IF (INT(Aval(5)).eq.v3dvar) THEN
-                text='x_v y_v s_rho'
+                IF (has_z_slice) THEN
+                  text='x_v y_v z_slice'
+                ELSE
+                  text='x_v y_v s_rho'
+                END IF
                 location='edge2'
               ELSE IF (INT(Aval(5)).eq.-v3dvar) THEN
                 text='x_v y_v s_w'
@@ -885,7 +919,11 @@
                 text='x_psi y_psi'
                 location='node'
               ELSE IF (INT(Aval(5)).eq.p3dvar) THEN
-                text='x_psi y_psi s_rho'
+                IF (has_z_slice) THEN
+                  text='x_psi y_psi z_slice'
+                ELSE
+                  text='x_psi y_psi s_rho'
+                END IF
                 location='node'
               ELSE IF (INT(Aval(5)).eq.l3dvar) THEN
                 text='x_rho y_rho Nbands'
@@ -922,7 +960,7 @@
               text=text(1:latt)//' ocean_time'
               latt=LEN_TRIM(text)
             END IF
-            status=nf90_put_att(ncid, Vid, TRIM(Vinfo(22)),             &
+            status=nf90_put_att(ncid, Vid, 'coordinates',               &
      &                          text(1:latt))
             IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
               IF (Master) WRITE (stdout,30) 'coordinates',              &
@@ -1093,6 +1131,7 @@
 !
 !  Local variable declarations.
 !
+      logical :: has_z_slice
 #ifdef MASKING
       logical :: LandFill
 #endif
@@ -1753,12 +1792,21 @@
       IF (exit_flag.eq.NoError) THEN
         latt=LEN_TRIM(Vinfo(22))
         IF (latt.gt.0) THEN
+          IF (latt.gt.11) THEN
+            has_z_slice=.TRUE.
+          ELSE
+            has_z_slice=.FALSE.
+          END IF
           IF (spherical) THEN
             IF (INT(Aval(5)).eq.r2dvar) THEN
               text='lon_rho lat_rho'
               location='face'
             ELSE IF (INT(Aval(5)).eq.r3dvar) THEN
-              text='lon_rho lat_rho s_rho'
+              IF (has_z_slice) THEN
+                text='lon_rho lat_rho z_slice'
+              ELSE
+                text='lon_rho lat_rho s_rho'
+              END IF
               location='face'
             ELSE IF (INT(Aval(5)).eq.w3dvar) THEN
               text='lon_rho lat_rho s_w'
@@ -1770,7 +1818,11 @@
               text='lon_u lat_u'
               location='edge1'
             ELSE IF (INT(Aval(5)).eq.u3dvar) THEN
-              text='lon_u lat_u s_rho'
+              IF (has_z_slice) THEN
+                text='lon_u lat_u z_slice'
+              ELSE
+                text='lon_u lat_u s_rho'
+              END IF
               location='edge1'
             ELSE IF (INT(Aval(5)).eq.-u3dvar) THEN
               text='lon_u lat_u s_w'
@@ -1779,7 +1831,11 @@
               text='lon_v lat_v'
               location='edge2'
             ELSE IF (INT(Aval(5)).eq.v3dvar) THEN
-              text='lon_v lat_v s_rho'
+              IF (has_z_slice) THEN
+                text='lon_v lat_v z_slice'
+              ELSE
+                text='lon_v lat_v s_rho'
+              END IF
               location='edge2'
             ELSE IF (INT(Aval(5)).eq.-v3dvar) THEN
               text='lon_v lat_v s_w'
@@ -1788,7 +1844,11 @@
               text='lon_psi lat_psi'
               location='node'
             ELSE IF (INT(Aval(5)).eq.p3dvar) THEN
-              text='lon_psi lat_psi s_rho'
+              IF (has_z_slice) THEN
+                text='lon_psi lat_psi z_slice'
+              ELSE
+                text='lon_psi lat_psi s_rho'
+              END IF
               location='node'
             ELSE IF (INT(Aval(5)).eq.l3dvar) THEN
               text='lon_rho lat_rho light'
@@ -1802,7 +1862,11 @@
               text='x_rho y_rho'
               location='face'
             ELSE IF (INT(Aval(5)).eq.r3dvar) THEN
-              text='x_rho y_rho s_rho'
+              IF (has_z_slice) THEN
+                text='x_rho y_rho z_slice'
+              ELSE
+                text='x_rho y_rho s_rho'
+              END IF
               location='face'
             ELSE IF (INT(Aval(5)).eq.w3dvar) THEN
               text='x_rho y_rho s_w'
@@ -1814,7 +1878,11 @@
               text='x_u y_u'
               location='edge1'
             ELSE IF (INT(Aval(5)).eq.u3dvar) THEN
-              text='x_u y_u s_rho'
+              IF (has_z_slice) THEN
+                text='x_u y_u z_slice'
+              ELSE
+                text='x_u y_u s_rho'
+              END IF
               location='edge1'
             ELSE IF (INT(Aval(5)).eq.-u3dvar) THEN
               text='x_u y_u s_w'
@@ -1823,7 +1891,11 @@
               text='x_v y_v'
               location='edge2'
             ELSE IF (INT(Aval(5)).eq.v3dvar) THEN
-              text='x_v y_v s_rho'
+              IF (has_z_slice) THEN
+                text='x_v y_v z_slice'
+              ELSE
+                text='x_v y_v s_rho'
+              END IF
               location='edge2'
             ELSE IF (INT(Aval(5)).eq.-v3dvar) THEN
               text='x_v y_v s_w'
@@ -1832,7 +1904,11 @@
               text='x_psi y_psi'
               location='node'
             ELSE IF (INT(Aval(5)).eq.p3dvar) THEN
-              text='x_psi y_psi s_rho'
+              IF (has_z_slice) THEN
+                text='x_psi y_psi z_slice'
+              ELSE
+                text='x_psi y_psi s_rho'
+              END IF
               location='node'
             ELSE IF (INT(Aval(5)).eq.l3dvar) THEN
               text='x_rho y_rho Nbands'
@@ -1869,7 +1945,7 @@
             text=text(1:latt)//' ocean_time'
             latt=LEN_TRIM(text)
           END IF
-          status=PIO_put_att(pioFile, pioVar, TRIM(Vinfo(22)),          &
+          status=PIO_put_att(pioFile, pioVar, 'coordinates',            &
      &                       text(1:latt))
           IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
             IF (Master) WRITE (stdout,30) 'coordinates',                &

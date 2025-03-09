@@ -799,9 +799,19 @@
         real(dp) :: Ritz_tol = 1.0E-15_dp
 #endif
 !
+!  Number of output field horizontal slices and their depths (negative)
+!  in meters. It is possible to extract selected state fields like
+!  temperature, salinity, and velocity components at a constant depth
+!  in the QUICKSAVE NetCDF file. Use wise depth values based on dynamics
+!  and model bathymetry and make sure that "Nslice" is small (between 1
+!  and 4) to keep the QUICKSAVE file sizemanageable.
+!
+        integer :: Nslice = 0
+        real(r8), allocatable :: Zslice(:)
+!
 !  Vector containing USER generic parameters.
 !
-        integer :: Nuser
+        integer :: Nuser = 0
         real(r8), allocatable :: user(:)
 !
 !  Weights for the time average of 2D fields.
