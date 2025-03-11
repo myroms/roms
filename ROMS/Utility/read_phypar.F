@@ -4195,7 +4195,7 @@
             CASE ('XTRNAME')
               label='XTR - nonlinear model extraction history fields'
               Npts=load_s1d(Nval, Cval, Cdim, line, label, igrid,       &
-     &                      Ngrids, Nfiles, out_lib, XTR)
+     &                      Ngrids, Nfiles, io_nf90, XTR)
             CASE ('QCKNAME')
               label='QCK - nonlinear model quicksave fields'
               Npts=load_s1d(Nval, Cval, Cdim, line, label, igrid,       &
