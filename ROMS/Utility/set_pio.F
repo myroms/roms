@@ -373,10 +373,12 @@
             CALL PIO_freedecomp (pioSystem(i,ng), ioDesc_sp_v3dvar(ng))
             CALL PIO_freedecomp (pioSystem(i,ng), ioDesc_sp_w3dvar(ng))
 
-            CALL PIO_freedecomp (pioSystem(i,ng), ioDesZ_sp_p3dvar(ng))
-            CALL PIO_freedecomp (pioSystem(i,ng), ioDesZ_sp_r3dvar(ng))
-            CALL PIO_freedecomp (pioSystem(i,ng), ioDesZ_sp_u3dvar(ng))
-            CALL PIO_freedecomp (pioSystem(i,ng), ioDesZ_sp_v3dvar(ng))
+            IF (Nslice.gt.0) THEN
+             CALL PIO_freedecomp (pioSystem(i,ng), ioDesZ_sp_p3dvar(ng))
+             CALL PIO_freedecomp (pioSystem(i,ng), ioDesZ_sp_r3dvar(ng))
+             CALL PIO_freedecomp (pioSystem(i,ng), ioDesZ_sp_u3dvar(ng))
+             CALL PIO_freedecomp (pioSystem(i,ng), ioDesZ_sp_v3dvar(ng))
+            END IF
 # endif
           END DO
         END DO
@@ -416,10 +418,12 @@
             CALL PIO_freedecomp (pioSystem(i,ng), ioDesc_dp_v3dvar(ng))
             CALL PIO_freedecomp (pioSystem(i,ng), ioDesc_dp_w3dvar(ng))
 
-            CALL PIO_freedecomp (pioSystem(i,ng), ioDesZ_dp_p3dvar(ng))
-            CALL PIO_freedecomp (pioSystem(i,ng), ioDesZ_dp_r3dvar(ng))
-            CALL PIO_freedecomp (pioSystem(i,ng), ioDesZ_dp_u3dvar(ng))
-            CALL PIO_freedecomp (pioSystem(i,ng), ioDesZ_dp_v3dvar(ng))
+            IF (Nslice.gt.0) THEN
+             CALL PIO_freedecomp (pioSystem(i,ng), ioDesZ_dp_p3dvar(ng))
+             CALL PIO_freedecomp (pioSystem(i,ng), ioDesZ_dp_r3dvar(ng))
+             CALL PIO_freedecomp (pioSystem(i,ng), ioDesZ_dp_u3dvar(ng))
+             CALL PIO_freedecomp (pioSystem(i,ng), ioDesZ_dp_v3dvar(ng))
+            END IF
 # endif
           END DO
         END DO

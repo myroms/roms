@@ -1924,7 +1924,7 @@
               EXIT
             ELSE
               IF (Master) THEN
-                WRITE (stdout,30) 'Coriolis parameter at RHO-points: f' &
+                WRITE (stdout,30) 'Coriolis parameter at RHO-points: f',&
      &                            ng, TRIM(ncname), Fmin, Fmax
 #  ifdef CHECKSUM
                 WRITE (stdout,60) Fhash

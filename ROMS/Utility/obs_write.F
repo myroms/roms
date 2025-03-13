@@ -1408,7 +1408,6 @@
       END IF
 #  endif
 # endif
-
 # if defined FOUR_DVAR && !defined I4DVAR_ANA_SENSITIVITY
 !
 !-----------------------------------------------------------------------
@@ -1480,7 +1479,7 @@
 # endif
 !
 !-----------------------------------------------------------------------
-!  Write out other variable into output DAC NetCDF file.
+!  Write out other variable into output DAV NetCDF file.
 !-----------------------------------------------------------------------
 
 # if defined I4DVAR                  || defined WEAK_CONSTRAINT && \
@@ -1515,7 +1514,7 @@
 
 # ifndef I4DVAR_ANA_SENSITIVITY
 !
-!  Nonlinear model or first guess (background) state at observation
+!  Nonlinear model or first guess (NLmodel_value) at the observation
 !  locations. If 4D-Var, the values are written for every outer loop.
 !  Also, the final value is written as individual variable to
 !  facilitate ERDDAP processing. Notice that it is always overwritten
@@ -1527,12 +1526,31 @@
         CALL netcdf_put_fvar (ng, model, DAV(ng)%name,                  &
      &                        Vname(1,idNLmo),                          &
      &                        NLmodVal(Mstr:),                          &
+#   ifdef SPLIT_EXECUTABLE
+     &                        (/NstrObs(ng), MAX(1,outer)/),            &
+     &                        (/Nobs(ng),1/),                           &
+#   else
      &                        (/NstrObs(ng)/), (/Nobs(ng)/),            &
+#   endif
      &                        ncid = DAV(ng)%ncid,                      &
      &                        varid = DAV(ng)%Vid(idNLmo))
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         haveNLmod(ng)=.TRUE.
+!
+!  Write out intial nonlinear model (NLmodel_initial) at the observation
+!  locations, same as 'NLmodel_value'. It used in SPLIT 4D-Var when the
+!  'background phase' uses separated executable without any 4D-Var
+!  drivers to reduce memory.
+!
+        CALL netcdf_put_fvar (ng, model, DAV(ng)%name,                  &
+     &                        Vname(1,idNLmi),                          &
+     &                        NLmodVal(Mstr:),                          &
+     &                        (/NstrObs(ng)/), (/Nobs(ng)/),            &
+     &                        ncid = DAV(ng)%ncid,                      &
+     &                        varid = DAV(ng)%Vid(idNLmi))
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
       END IF
+
 #  elif defined I4DVAR || defined WEAK_CONSTRAINT
       IF (wrtNLmod(ng).and.outer.gt.0) THEN
         CALL netcdf_put_fvar (ng, model, DAV(ng)%name,                  &
@@ -1856,7 +1874,6 @@
       END IF
 #   endif
 #  endif
-
 #  if defined FOUR_DVAR && !defined I4DVAR_ANA_SENSITIVITY
 !
 !-----------------------------------------------------------------------
@@ -1963,7 +1980,7 @@
 
 #  ifndef I4DVAR_ANA_SENSITIVITY
 !
-!  Nonlinear model or first guess (background) state at observation
+!  Nonlinear model or first guess (NLmodel_value) at the observation
 !  locations. If 4D-Var, the values are written for every outer loop.
 !  Also, the final value is written as individual variable to
 !  facilitate ERDDAP processing. Notice that it is always overwritten
@@ -1974,13 +1991,32 @@
       IF (wrtNLmod(ng)) THEN
         CALL pio_netcdf_put_fvar (ng, model, DAV(ng)%name,              &
      &                            Vname(1,idNLmo),                      &
-     &                            NLmodVal(Mstr:Mend),                  &
+     &                            NLmodVal(Mstr:Mend),                  & 
+#   ifdef SPLIT_EXECUTABLE
+     &                            (/NstrObs(ng), MAX(1,outer)/),        &
+     &                            (/Nobs(ng),1/),                       &
+#   else
      &                            (/NstrObs(ng)/), (/Nobs(ng)/),        &
+#   endif
      &                            pioFile = DAV(ng)%pioFile,            &
      &                            pioVar = DAV(ng)%pioVar(idNLmo)%vd)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         haveNLmod(ng)=.TRUE.
+!
+!  Write out intial nonlinear model (NLmodel_initial) at the observation
+!  locations, same as 'NLmodel_value'. It used in SPLIT 4D-Var when the
+!  'background phase' uses separated executable without any 4D-Var
+!  drivers to reduce memory.
+!
+        CALL pio_netcdf_put_fvar (ng, model, DAV(ng)%name,              &
+     &                            Vname(1,idNLmi),                      &
+     &                            NLmodVal(Mstr:Mend),                  &
+     &                            (/NstrObs(ng)/), (/Nobs(ng)/),        &
+     &                            pioFile = DAV(ng)%pioFile,            &
+     &                            pioVar = DAV(ng)%pioVar(idNLmi)%vd)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
       END IF
+
 #   elif defined I4DVAR || defined WEAK_CONSTRAINT
       IF (wrtNLmod(ng).and.outer.gt.0) THEN
         CALL pio_netcdf_put_fvar (ng, model, DAV(ng)%name,              &

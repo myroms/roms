@@ -2561,6 +2561,15 @@
       Coptions(is:is+10)=' SUSPLOAD,'
 # endif
 #endif
+#if defined SPLIT_EXECUTBLE && \
+   (defined SPLIT_I4DVAR    || defined SPLIT_RBL4DVAR || \
+    defined SPLIT_R4DVAR    || defined SPLIT_SP4DVAR)
+!
+      IF (Master) WRITE (stdout,20) 'SPLIT_EXECUTABLE',                 &
+     &   'Split 4D-Var executable for background/analysis phases'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+18)=' SPLIT_EXECUTABLE,'
+#endif
 #if defined STD_MODEL && defined FOUR_DVAR
 !
       IF (Master) WRITE (stdout,20) 'STD_MODEL',                        &

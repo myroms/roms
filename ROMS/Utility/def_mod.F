@@ -1,6 +1,17 @@
 #include "cppdefs.h"
       MODULE def_mod_mod
-#if defined FOUR_DVAR || defined VERIFICATION
+#if defined FOUR_DVAR    || defined VERIFICATION
+# if defined VERIFICATION && defined SPLIT_EXECUTABLE
+/*
+** Activate 4D-Var options locally to allow split 4D-Var with separate
+** executables in background phase, which do not need TLM/ADM kernels.
+*/
+#  define BGQC
+#  define FOUR_DVAR
+#  define RBL4DVAR
+#  define RPCG
+#  define WEAK_CONSTRAINT
+# endif
 !
 !git $Id$
 !================================================== Hernan G. Arango ===
@@ -1531,6 +1542,19 @@
      &                 NF_FRST, 1, (/datumDim/), Aval, Vinfo, ncname)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
+# if (defined FOUR_DVAR    && !defined I4DVAR_ANA_SENSITIVITY) || \
+      defined VERIFICATION
+!
+!  Initial nonlinear model at observation locations.
+!
+        Vinfo( 1)=Vname(1,idNLmi)
+        Vinfo( 2)=Vname(2,idNLmi)
+        Vinfo( 3)=Vname(3,idNLmi)
+
+        status=def_var(ng, iNLM, DAV(ng)%ncid, DAV(ng)%Vid(idNLmi),     &
+     &                 NF_FRST, 1, (/datumDim/), Aval, Vinfo, ncname)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+# endif
 # if defined FOUR_DVAR && !defined I4DVAR_ANA_SENSITIVITY
 !
 !  Unvetted prior nonlinear model at observation locations.
@@ -1540,16 +1564,6 @@
         Vinfo( 3)=Vname(3,idNLmp)
 
         status=def_var(ng, iNLM, DAV(ng)%ncid, DAV(ng)%Vid(idNLmp),     &
-     &                 NF_FRST, 1, (/datumDim/), Aval, Vinfo, ncname)
-        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-!
-!  Initial nonlinear model at observation locations.
-!
-        Vinfo( 1)=Vname(1,idNLmi)
-        Vinfo( 2)=Vname(2,idNLmi)
-        Vinfo( 3)=Vname(3,idNLmi)
-
-        status=def_var(ng, iNLM, DAV(ng)%ncid, DAV(ng)%Vid(idNLmi),     &
      &                 NF_FRST, 1, (/datumDim/), Aval, Vinfo, ncname)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
@@ -1642,7 +1656,8 @@
         Vinfo( 1)=Vname(1,idNLmo)
         Vinfo( 2)=Vname(2,idNLmo)
         Vinfo( 3)=Vname(3,idNLmo)
-#   if defined VERIFICATION || defined TLM_CHECK
+#   if (defined VERIFICATION && !defined SPLIT_EXECUTABLE) || \
+        defined TLM_CHECK
         status=def_var(ng, iNLM, DAV(ng)%ncid, DAV(ng)%Vid(idNLmo),     &
      &                 NF_FRST, 1, (/datumDim/), Aval, Vinfo, ncname)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
@@ -2185,7 +2200,7 @@
             DAV(ng)%Vid(idOval)=var_id(i)
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idObsS))) THEN
             got_var(idObsS)=.TRUE.
-            DAV(ng)%Vid(idObsS)=var_id(i)
+            DAV(ng)%Vid(idObsS)=var_id(i) 
 # ifdef FOUR_DVAR
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idNLmp))) THEN
             got_var(idNLmp)=.TRUE.
@@ -2193,12 +2208,14 @@
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idNLmu))) THEN
             got_var(idNLmu)=.TRUE.
             DAV(ng)%Vid(idNLmu)=var_id(i)
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idNLmi))) THEN
-            got_var(idNLmi)=.TRUE.
-            DAV(ng)%Vid(idNLmi)=var_id(i)
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idNLmf))) THEN
             got_var(idNLmf)=.TRUE.
             DAV(ng)%Vid(idNLmf)=var_id(i)
+# endif
+# if defined FOUR_DVAR || defined VERIFICATION
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idNLmi))) THEN
+            got_var(idNLmi)=.TRUE.
+            DAV(ng)%Vid(idNLmi)=var_id(i)
 # endif
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idNLmo))) THEN
             got_var(idNLmo)=.TRUE.
@@ -2317,15 +2334,16 @@
           RETURN
         END IF
 
-        IF (.not.got_var(idNLmi)) THEN
-          IF (Master) WRITE (stdout,90) TRIM(Vname(1,idNLmi)),          &
+        IF (.not.got_var(idNLmf)) THEN
+          IF (Master) WRITE (stdout,90) TRIM(Vname(1,idNLmf)),          &
      &                                  TRIM(DAV(ng)%name)
           exit_flag=2
           RETURN
         END IF
-
-        IF (.not.got_var(idNLmf)) THEN
-          IF (Master) WRITE (stdout,90) TRIM(Vname(1,idNLmf)),          &
+# endif
+# if defined FOUR_DVAR || defined VERIFICATION
+        IF (.not.got_var(idNLmi)) THEN
+          IF (Master) WRITE (stdout,90) TRIM(Vname(1,idNLmi)),          &
      &                                  TRIM(DAV(ng)%name)
           exit_flag=2
           RETURN
@@ -3869,6 +3887,22 @@
      &                 PIO_FRST, 1, (/datumDim/), Aval, Vinfo, ncname)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
+# if (defined FOUR_DVAR    && !defined I4DVAR_ANA_SENSITIVITY) || \
+      defined VERIFICATION
+!
+!  Initial nonlinear model at observation locations.
+!
+        Vinfo( 1)=Vname(1,idNLmi)
+        Vinfo( 2)=Vname(2,idNLmi)
+        Vinfo( 3)=Vname(3,idNLmi)
+        DAV(ng)%pioVar(idNLmi)%dkind=PIO_FRST
+        DAV(ng)%pioVar(idNLmi)%gtype=0
+!
+        status=def_var(ng, iNLM, DAV(ng)%pioFile,                       &
+     &                 DAV(ng)%pioVar(idNLmi)%vd,                       &
+     &                 PIO_FRST, 1, (/datumDim/), Aval, Vinfo, ncname)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+#  endif
 #  if defined FOUR_DVAR && !defined I4DVAR_ANA_SENSITIVITY
 !
 !  Unvetted prior nonlinear model at observation locations.
@@ -3881,19 +3915,6 @@
 !
         status=def_var(ng, iNLM, DAV(ng)%pioFile,                       &
      &                 DAV(ng)%pioVar(idNLmp)%vd,                       &
-     &                 PIO_FRST, 1, (/datumDim/), Aval, Vinfo, ncname)
-        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-!
-!  Initial nonlinear model at observation locations.
-!
-        Vinfo( 1)=Vname(1,idNLmi)
-        Vinfo( 2)=Vname(2,idNLmi)
-        Vinfo( 3)=Vname(3,idNLmi)
-        DAV(ng)%pioVar(idNLmi)%dkind=PIO_FRST
-        DAV(ng)%pioVar(idNLmi)%gtype=0
-!
-        status=def_var(ng, iNLM, DAV(ng)%pioFile,                       &
-     &                 DAV(ng)%pioVar(idNLmi)%vd,                       &
      &                 PIO_FRST, 1, (/datumDim/), Aval, Vinfo, ncname)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
@@ -4010,7 +4031,8 @@
         DAV(ng)%pioVar(idNLmo)%dkind=PIO_FRST
         DAV(ng)%pioVar(idNLmo)%gtype=0
 !
-#    if defined VERIFICATION || defined TLM_CHECK
+#    if (defined VERIFICATION && !defined SPLIT_EXECUTABLE) || \
+        defined TLM_CHECK
         status=def_var(ng, iNLM, DAV(ng)%pioFile,                       &
      &                 DAV(ng)%pioVar(idNLmo)%vd,                       &
      &                 PIO_FRST, 1, (/datumDim/), Aval, Vinfo, ncname)
@@ -4622,6 +4644,13 @@
             DAV(ng)%pioVar(idNLmf)%dkind=PIO_FRST
             DAV(ng)%pioVar(idNLmf)%gtype=0
 #  endif
+#  if defined FOUR_DVAR || defined VERIFICATION
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idNLmi))) THEN
+            got_var(idNLmi)=.TRUE.
+            DAV(ng)%pioVar(idNLmi)%vd=var_desc(i)
+            DAV(ng)%pioVar(idNLmi)%dkind=PIO_FRST
+            DAV(ng)%pioVar(idNLmi)%gtype=0
+#  endif
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idNLmo))) THEN
             got_var(idNLmo)=.TRUE.
             haveNLmod(ng)=.TRUE.
@@ -4755,15 +4784,16 @@
           RETURN
         END IF
 
-        IF (.not.got_var(idNLmi)) THEN
-          IF (Master) WRITE (stdout,90) TRIM(Vname(1,idNLmi)),          &
+        IF (.not.got_var(idNLmf)) THEN
+          IF (Master) WRITE (stdout,90) TRIM(Vname(1,idNLmf)),          &
      &                                  TRIM(DAV(ng)%name)
           exit_flag=2
           RETURN
         END IF
-
-        IF (.not.got_var(idNLmf)) THEN
-          IF (Master) WRITE (stdout,90) TRIM(Vname(1,idNLmf)),          &
+#  endif
+#  if defined FOUR_DVAR || defined VERIFICATION
+        IF (.not.got_var(idNLmi)) THEN
+          IF (Master) WRITE (stdout,90) TRIM(Vname(1,idNLmi)),          &
      &                                  TRIM(DAV(ng)%name)
           exit_flag=2
           RETURN

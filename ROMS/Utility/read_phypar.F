@@ -4239,7 +4239,7 @@
             CASE ('GRXNAME')
               label='GRX - I/O histrory extract grid'
               Npts=load_s1d(Nval, Cval, Cdim, line, label, igrid,       &
-     &                      Ngrids, Nfiles, inp_lib, GRX)
+     &                      Ngrids, Nfiles, io_nf90, GRX)
             CASE ('ININAME')
               label='INI - nonlinear model initial conditions'
               Npts=load_s1d(Nval, Cval, Cdim, line, label, igrid,       &
