@@ -99,6 +99,7 @@ list( APPEND _files
       ROMS/Utility/nf_fread2d_xtr.F
       ROMS/Utility/nf_fread2d.F
       ROMS/Utility/nf_fread3d_bry.F
+      ROMS/Utility/nf_fread3d_xtr.F
       ROMS/Utility/nf_fread3d.F
       ROMS/Utility/nf_fread4d.F
       ROMS/Utility/nf_fwrite2d_bry.F
@@ -132,6 +133,7 @@ list( APPEND _files
       ROMS/Utility/read_stapar.F
       ROMS/Utility/regrid.F
       ROMS/Utility/rep_matrix.F
+      ROMS/Utility/roms_interp_mod.F
       ROMS/Utility/round.F
       ROMS/Utility/rpcg_lanczos.F
       ROMS/Utility/set_2dfld.F
