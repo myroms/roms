@@ -43,6 +43,10 @@
       USE mod_mixing
       USE mod_ocean
       USE mod_stepping
+# if defined VEGETATION && defined VEG_TURB
+      USE mod_vegarr
+      USE vegetation_turb_mod, ONLY : vegetation_turb_cal
+# endif
 !
 !  Imported variable declarations.
 !
@@ -54,6 +58,15 @@
      &  __FILE__
 !
 # include "tile.h"
+!
+# if defined VEGETATION && defined VEG_TURB
+! 
+!  Add the effect of vegetation on the turbulence model.
+!
+      CALL vegetation_turb_cal (ng, tile)
+# endif
+!
+!  GLS corrector step.
 !
 # ifdef PROFILE
       CALL wclock_on (ng, iNLM, 19, __LINE__, MyFile)
@@ -79,6 +92,10 @@
      &                       OCEAN(ng) % W,                             &
 # ifdef WEC_VF
      &                       OCEAN(ng) % W_stokes,                      &
+# endif
+# if defined VEGETATION && defined VEG_TURB 
+     &                       VEG(ng) % tke_veg,                         &
+     &                       VEG(ng) % gls_veg,                         &
 # endif
      &                       FORCES(ng) % bustr,                        &
      &                       FORCES(ng) % bvstr,                        &
@@ -119,6 +136,9 @@
      &                             u, v, W,                             &
 # ifdef WEC_VF
      &                             W_stokes,                            &
+# endif
+# if defined VEGETATION && defined VEG_TURB
+     &                             tke_veg, gls_veg,                    &
 # endif
      &                             bustr, bvstr, sustr, svstr,          &
 # ifdef ZOS_HSIG
@@ -167,6 +187,10 @@
 # ifdef WEC_VF
       real(r8), intent(in) :: W_stokes(LBi:,LBj:,0:)
 # endif
+# if defined VEGETATION && defined VEG_TURB
+      real(r8), intent(in) :: tke_veg(LBi:,LBj:,0:)
+      real(r8), intent(in) :: gls_veg(LBi:,LBj:,0:)
+# endif
       real(r8), intent(in) :: bustr(LBi:,LBj:)
       real(r8), intent(in) :: bvstr(LBi:,LBj:)
       real(r8), intent(in) :: sustr(LBi:,LBj:)
@@ -206,6 +230,10 @@
 # ifdef WEC_VF
       real(r8), intent(in) :: W_stokes(LBi:UBi,LBj:UBj,0:N(ng))
 # endif
+# if defined VEGETATION && defined VEG_TURB
+      real(r8), intent(in) :: tke_veg(LBi:UBi,LBj:UBj,0:N(ng))
+      real(r8), intent(in) :: gls_veg(LBi:UBi,LBj:UBj,0:N(ng))
+# endif
       real(r8), intent(in) :: bustr(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: bvstr(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: sustr(LBi:UBi,LBj:UBj)
@@ -240,6 +268,9 @@
       real(r8) :: Gh, Gm, Kprod, Ls_unlmt, Ls_lmt, Pprod, Sh, Sm
       real(r8) :: cff, cff1, cff2, cff3
       real(r8) :: cmu_fac1, cmu_fac2, cmu_fac3, cmu_fac4
+# if defined KANTHA_CLAYSON_KCQE
+      real(r8) :: cmu, cmup, alphan, alpham
+# endif
       real(r8) :: gls_c3, gls_exp1, gls_fac1, gls_fac2, gls_fac3
       real(r8) :: gls_fac4, gls_fac5, gls_fac6, ql, sqrt2, strat2
       real(r8) :: tke_exp1, tke_exp2, tke_exp3, tke_exp4, wall_fac
@@ -628,15 +659,16 @@
 !
         DO j=Jstr,Jend
           DO i=Istr,Iend
+            cff1=0.5_r8*(Hz(i,j,k)+Hz(i,j,k+1))         ! RRH, Jan 2025
             cff=dt(ng)*pm(i,j)*pn(i,j)
             tke(i,j,k,nnew)=tke(i,j,k,nnew)-                            &
      &                      cff*(FXK(i+1,j)-FXK(i,j)+                   &
      &                           FEK(i,j+1)-FEK(i,j))
-            tke(i,j,k,nnew)=MAX(tke(i,j,k,nnew),gls_Kmin(ng))
+            tke(i,j,k,nnew)=MAX(tke(i,j,k,nnew),cff1*gls_Kmin(ng))
             gls(i,j,k,nnew)=gls(i,j,k,nnew)-                            &
      &                      cff*(FXP(i+1,j)-FXP(i,j)+                   &
      &                           FEP(i,j+1)-FEP(i,j))
-            gls(i,j,k,nnew)=MAX(gls(i,j,k,nnew),gls_Pmin(ng))
+            gls(i,j,k,nnew)=MAX(gls(i,j,k,nnew),cff1*gls_Pmin(ng))
           END DO
         END DO
       END DO
@@ -705,13 +737,14 @@
 !
         DO k=1,N(ng)-1
           DO i=Istr,Iend
+            cff1=0.5_r8*(Hz(i,j,k)+Hz(i,j,k+1))         ! RRH, Jan 2025
             cff=dt(ng)*pm(i,j)*pn(i,j)
             tke(i,j,k,nnew)=tke(i,j,k,nnew)-                            &
      &                      cff*(FCK(i,k+1)-FCK(i,k))
-            tke(i,j,k,nnew)=MAX(tke(i,j,k,nnew),gls_Kmin(ng))
+            tke(i,j,k,nnew)=MAX(tke(i,j,k,nnew),cff1*gls_Kmin(ng))
             gls(i,j,k,nnew)=gls(i,j,k,nnew)-                            &
      &                      cff*(FCP(i,k+1)-FCP(i,k))
-            gls(i,j,k,nnew)=MAX(gls(i,j,k,nnew),gls_Pmin(ng))
+            gls(i,j,k,nnew)=MAX(gls(i,j,k,nnew),cff1*gls_Pmin(ng))
           END DO
         END DO
 !
@@ -777,6 +810,14 @@
             gls(i,j,k,nnew)=gls(i,j,k,nnew)+                            &
      &                      dt(ng)*cff*Pprod*gls(i,j,k,nstp)/           &
      &                      MAX(tke(i,j,k,nstp),gls_Kmin(ng))
+
+# if defined VEGETATION && defined VEG_TURB
+!
+!  Add the effect of vegetation on tke and gls 
+!          
+            tke(i,j,k,nnew)=tke(i,j,k,nnew)+dt(ng)*tke_veg(i,j,k)
+            gls(i,j,k,nnew)=gls(i,j,k,nnew)+dt(ng)*gls_veg(i,j,k)
+# endif 
 !
 !  Compute dissipation of turbulent energy (m3/s3).
 !
@@ -912,10 +953,12 @@
      &                           FCK(i,k+1)*tke(i,j,k+1,nnew))
           END DO
           tke(i,j,1,nnew)=tke(i,j,1,nnew)-cff*tke_fluxb(i)
+          tke(i,j,1,nnew)=MAX(tke(i,j,1,nnew),gls_Kmin(ng))
         END DO
         DO k=2,N(ng)-1
           DO i=Istr,Iend
             tke(i,j,k,nnew)=tke(i,j,k,nnew)-CF(i,k)*tke(i,j,k-1,nnew)
+            tke(i,j,k,nnew)=MAX(tke(i,j,k,nnew),gls_Kmin(ng))
           END DO
         END DO
 !
@@ -965,12 +1008,12 @@
      &                           FCP(i,k+1)*gls(i,j,k+1,nnew))
           END DO
           gls(i,j,1,nnew)=gls(i,j,1,nnew)-cff*gls_fluxb(i)
-!!        gls(i,j,1,nnew)=MAX(gls(i,j,1,nnew), gls_Pmin(ng))
+          gls(i,j,1,nnew)=MAX(gls(i,j,1,nnew),gls_Pmin(ng))
         END DO
         DO k=2,N(ng)-1
           DO i=Istr,Iend
             gls(i,j,k,nnew)=gls(i,j,k,nnew)-CF(i,k)*gls(i,j,k-1,nnew)
-!!          gls(i,j,k,nnew)=MAX(gls(i,j,k,nnew), gls_Pmin(ng))
+            gls(i,j,k,nnew)=MAX(gls(i,j,k,nnew),gls_Pmin(ng))
           END DO
         END DO
 !
@@ -983,8 +1026,8 @@
 !
 !  Compute turbulent length scale (m).
 !
-            tke(i,j,k,nnew)=MAX(tke(i,j,k,nnew),gls_Kmin(ng))
-            gls(i,j,k,nnew)=MAX(gls(i,j,k,nnew),gls_Pmin(ng))
+!           tke(i,j,k,nnew)=MAX(tke(i,j,k,nnew),gls_Kmin(ng))
+!           gls(i,j,k,nnew)=MAX(gls(i,j,k,nnew),gls_Pmin(ng))
             IF (gls_n(ng).ge.0.0_r8) THEN
               gls(i,j,k,nnew)=MIN(gls(i,j,k,nnew),gls_fac5*             &
      &                            tke(i,j,k,nnew)**(tke_exp4)*          &
@@ -1009,6 +1052,14 @@
               Ls_lmt=Ls_unlmt
             END IF
 !
+! New constraint controls instabilities in gls by limiting length scale,
+! L <= kappa*Depth. After harmonizing default advective schemes, this
+! limit is primarily active for inflows at the boundary or rivers where
+! upstream tke and gls are not well defined. (RRH, Jan 2025)
+!
+            cff1=0.4_r8*(z_w(i,j,N(ng))-z_w(i,j,0))
+            Ls_lmt=MIN(Ls_lmt,cff1)
+!
 ! Recompute gls based on limited length scale
 !
             gls(i,j,k,nnew)=MAX(gls_cmu0(ng)**gls_p(ng)*                &
@@ -1020,7 +1071,12 @@
 !
             Gh=MIN(gls_Gh0,-buoy2(i,j,k)*Ls_lmt*Ls_lmt/                 &
      &                    (2.0_r8*tke(i,j,k,nnew)))
-            Gh=MIN(Gh,Gh-(Gh-gls_Ghcri)**2/                             &
+
+!  Update to remove sharp discontinuity per Harcourt post 
+!  "Equation error in GLS model coded into gls_corstep.F" to myroms.org 
+!  board 13 Dec 2018. (RRH, Jan 2025)
+!
+            Gh=MIN(Gh,Gh-MAX(0.0_r8,Gh-gls_Ghcri)**2/                   &
      &                    (Gh+gls_Gh0-2.0_r8*gls_Ghcri))
             Gh=MAX(Gh,gls_Ghmin)
 # if defined CANUTO_A || defined CANUTO_B
@@ -1047,6 +1103,16 @@
 !
             Sm=Sm*sqrt2/gls_cmu0(ng)**3
             Sh=Sh*sqrt2/gls_cmu0(ng)**3
+# elif defined KANTHA_CLAYSON_KCQE
+            cff=MAX((0.5477_r8**6)*tke(i,j,k,nnew),1.0E-4_r8)
+            alpham=Ls_lmt*Ls_lmt*shear2(i,j,k)/cff
+            alphan=-2.0_r8*Gh/(gls_cmu0(ng)**6)
+            cff2=(1.0_r8+0.4679_r8*alphan+0.07372_r8*alpham+             &
+     &           0.01761_r8*alphan*alpham+0.03371_r8*alphan*alphan)
+            cmu=(0.1682_r8+0.03269_r8*alphan)/cff2
+            cmup=(0.1783_r8+0.01586_r8*alphan+0.003173_r8*alpham)/cff2
+            Sm=cmu/(sqrt(2.0_r8)*gls_cmu0(ng)**3)
+            Sh=cmup/(sqrt(2.0_r8)*gls_cmu0(ng)**3)
 # elif defined KANTHA_CLAYSON
             cff=1.0_r8-my_Sh2*Gh
             Sh=my_Sh1/cff
