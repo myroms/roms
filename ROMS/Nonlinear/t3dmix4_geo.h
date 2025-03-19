@@ -58,6 +58,7 @@
      &                       GRID(ng) % vmask,                          &
 #endif
 #ifdef WET_DRY
+     &                       GRID(ng) % rmask_wet,                      &
      &                       GRID(ng) % umask_wet,                      &
      &                       GRID(ng) % vmask_wet,                      &
 #endif
@@ -100,7 +101,7 @@
      &                             umask, vmask,                        &
 #endif
 #ifdef WET_DRY
-     &                             umask_wet, vmask_wet,                &
+     &                             rmask_wet, umask_wet, vmask_wet,     &
 #endif
      &                             om_v, on_u, pm, pn,                  &
      &                             Hz, z_r,                             &
@@ -139,6 +140,7 @@
       real(r8), intent(in) :: vmask(LBi:,LBj:)
 # endif
 # ifdef WET_DRY
+      real(r8), intent(in) :: rmask_wet(LBi:,LBj:)
       real(r8), intent(in) :: umask_wet(LBi:,LBj:)
       real(r8), intent(in) :: vmask_wet(LBi:,LBj:)
 # endif
@@ -171,6 +173,7 @@
       real(r8), intent(in) :: vmask(LBi:UBi,LBj:UBj)
 # endif
 # ifdef WET_DRY
+      real(r8), intent(in) :: rmask_wet(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: umask_wet(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: vmask_wet(LBi:UBi,LBj:UBj)
 # endif
@@ -342,6 +345,9 @@
               DO i=Imin-1,Imax+1
                 cff=1.0_r8/(z_r(i,j,k+1)-                               &
      &                      z_r(i,j,k  ))
+#ifdef WET_DRY
+                cff=cff*rmask_wet(i,j)
+#endif
 #if defined TS_MIX_STABILITY
                 dTdz(i,j,k2)=cff*(0.75_r8*(t(i,j,k+1,nrhs,itrc)-        &
      &                                     t(i,j,k  ,nrhs,itrc))+       &
