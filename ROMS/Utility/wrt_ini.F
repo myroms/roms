@@ -602,7 +602,6 @@
 !  the management of the "time" variable due to nesting.
 !
       my_time=tdays(ng)*day2sec
-
       CALL pio_netcdf_put_fvar (ng, iNLM, INI(ng)%name,                 &
      &                          TRIM(Vname(1,idtime)), my_time,         &
      &                          (/INI(ng)%Rindex/), (/1/),              &
@@ -772,7 +771,7 @@
 !  Write out 3D momentum component (m/s) in the ETA-direction.
 !
       scale=1.0_dp
-      IF (INI(ng)%pioVar(idFsur)%dkind.eq.PIO_double) THEN
+      IF (INI(ng)%pioVar(idVvel)%dkind.eq.PIO_double) THEN
         ioDesc => ioDesc_dp_v3dvar(ng)
       ELSE
         ioDesc => ioDesc_sp_v3dvar(ng)

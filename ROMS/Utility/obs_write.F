@@ -302,11 +302,9 @@
       IF (wrtNLmod(ng)) THEN
         DO iobs=Mstr,Mend
           NLmodVal(iobs)=IniVal
-#  ifndef VERIFICATION
           BgErr(iobs)=IniVal
           uBgErr(iobs)=IniVal
           vBgErr(iobs)=IniVal
-#  endif
         END DO
 
 #  ifdef BGQC
@@ -370,7 +368,6 @@
      &                      GRID(ng)%rmask,                             &
 #  endif
      &                      NLmodVal)
-#  ifndef VERIFICATION
 !
 !  Free-surface backgound error standard deviation at observation
 !  locations.
@@ -385,13 +382,12 @@
      &                      ObsType, ObsVetting,                        &
      &                      Tobs, Xobs, Yobs,                           &
      &                      OCEAN(ng)%e_zeta(:,:,1),                    &
-#   ifdef MASKING
+#  ifdef MASKING
      &                      GRID(ng)%rmask,                             &
-#   endif
-     &                      BgErr)
 #  endif
-      END IF
+     &                      BgErr)
 # endif
+      END IF
 
 # ifdef TLM_OBS
 !
@@ -439,8 +435,6 @@
      &                      GRID(ng)%umask,                             &
 #  endif
      &                      NLmodVal)
-
-#  ifndef VERIFICATION
 !
 !  2D u-velocity backgound error standard deviation at observation
 !  locations.
@@ -455,11 +449,10 @@
      &                      ObsType, ObsVetting,                        &
      &                      Tobs, Xobs, Yobs,                           &
      &                      OCEAN(ng)%e_ubar(:,:,1),                    &
-#   ifdef MASKING
+#  ifdef MASKING
      &                      GRID(ng)%umask,                             &
-#   endif
-     &                      BgErr)
 #  endif
+     &                      BgErr)
       END IF
 # endif
 
@@ -509,8 +502,6 @@
      &                      GRID(ng)%vmask,                             &
 #  endif
      &                      NLmodVal)
-
-#  ifndef VERIFICATION
 !
 !  2D v-velocity backgound error standard deviation at observation
 !  locations.
@@ -525,11 +516,10 @@
      &                      ObsType, ObsVetting,                        &
      &                      Tobs, Xobs, Yobs,                           &
      &                      OCEAN(ng)%e_vbar(:,:,1),                    &
-#   ifdef MASKING
+#  ifdef MASKING
      &                      GRID(ng)%vmask,                             &
-#   endif
-     &                      BgErr)
 #  endif
+     &                      BgErr)
       END IF
 # endif
 
@@ -590,8 +580,6 @@
      &                      GRID(ng)%umask,                             &
 #   endif
      &                      NLmodVal)
-
-#   ifndef VERIFICATION
 !
 !  3D u-velocity backgound error standard deviation at observation
 !  locations.
@@ -607,11 +595,10 @@
      &                      Tobs, Xobs, Yobs, Zobs,                     &
      &                      OCEAN(ng)%e_u(:,:,:,1),                     &
      &                      GRID(ng)%z_v,                               &
-#    ifdef MASKING
+#   ifdef MASKING
      &                      GRID(ng)%umask,                             &
-#    endif
-     &                      BgErr)
 #   endif
+     &                      BgErr)
       END IF
 #  endif
 
@@ -679,8 +666,6 @@
      &                      GRID(ng)%vmask,                             &
 #   endif
      &                      NLmodVal)
-
-#   ifndef VERIFICATION
 !
 !  3D v-velocity backgound error standard deviation at observation
 !  locations.
@@ -696,11 +681,10 @@
      &                      Tobs, Xobs, Yobs, Zobs,                     &
      &                      OCEAN(ng)%e_v(:,:,:,1),                     &
      &                      GRID(ng)%z_v,                               &
-#    ifdef MASKING
+#   ifdef MASKING
      &                      GRID(ng)%vmask,                             &
-#    endif
-     &                      BgErr)
 #   endif
+     &                      BgErr)
       END IF
 #  endif
 
@@ -813,8 +797,6 @@
      &                      GRID(ng)%umask,                             &
 #   endif
      &                      uradial)
-
-#   ifndef VERIFICATION
 !
 !  Radial u-component backgound error standard deviation at observation
 !  locations.
@@ -830,11 +812,10 @@
      &                      Tobs, Xobs, Yobs, Zobs,                     &
      &                      OCEAN(ng)%e_u(:,:,:,1),                     &
      &                      GRID(ng)%z_v,                               &
-#    ifdef MASKING
+#   ifdef MASKING
      &                      GRID(ng)%umask,                             &
-#    endif
-     &                      uBgErr)
 #   endif
+     &                      uBgErr)
 !
 !  Radial nonlinear v-component at observation locations.
 !
@@ -861,8 +842,6 @@
      &                      GRID(ng)%vmask,                             &
 #   endif
      &                      vradial)
-
-#   ifndef VERIFICATION
 !
 !  Radial v-component backgound error standard deviation at observation
 !  locations.
@@ -878,11 +857,10 @@
      &                      Tobs, Xobs, Yobs, Zobs,                     &
      &                      OCEAN(ng)%e_v(:,:,:,1),                     &
      &                      GRID(ng)%z_v,                               &
-#    ifdef MASKING
+#   ifdef MASKING
      &                      GRID(ng)%vmask,                             &
-#    endif
-     &                      vBgErr)
 #   endif
+     &                      vBgErr)
 !
 !  Compute nonlinear radial velocity.
 !
@@ -907,9 +885,7 @@
      &                     vradial(iobs)*COS(ObsMeta(iobs))
 #    endif
 #   endif
-#   ifndef VERIFICATION
             BgErr(iobs)=MAX(uBgErr(iobs), vBgErr(iobs))
-#   endif
           END IF
         END DO
       END IF
@@ -1054,8 +1030,6 @@
      &                        GRID(ng)%rmask,                           &
 #   endif
      &                        NLmodVal)
-
-#   ifndef VERIFICATION
 !
 !  Tracer backgound error standard deviation at observation locations.
 !
@@ -1070,11 +1044,10 @@
      &                        Tobs, Xobs, Yobs, Zobs,                   &
      &                        OCEAN(ng)%e_t(:,:,:,1,itrc),              &
      &                        GRID(ng)%z_r,                             &
-#    ifdef MASKING
+#   ifdef MASKING
      &                        GRID(ng)%rmask,                           &
-#    endif
-     &                        BgErr)
 #   endif
+     &                        BgErr)
         END IF
 #  endif
 
@@ -1132,7 +1105,7 @@
 #  if defined I4DVAR
             df1=(ObsVal(iobs)-NLmodVal(iobs))/BgErr(iobs)
             df2=(1.0_r8/ObsErr(iobs))/(BgErr(iobs)*BgErr(iobs))
-#  elif defined WEAK_CONSTRAINT
+#  elif defined WEAK_CONSTRAINT || defined VERIFICATION
 #    ifdef R4DVAR
             df1=(ObsVal(iobs)-TLmodVal(iobs))/BgErr(iobs)
             df2=ObsErr(iobs)/(BgErr(iobs)*BgErr(iobs))

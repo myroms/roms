@@ -4752,7 +4752,8 @@
 !
         nADJ(ng)=ntimes(ng)/Nintervals
 #endif
-#if defined FOUR_DVAR || defined IMPULSE
+#if defined FOUR_DVAR    || defined IMPULSE || \
+   (defined VERIFICATION || defined BGQC)
 !
 !  Set size of additonal dimension for error covariance normalization
 !  and standard deviation factors.

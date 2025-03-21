@@ -243,10 +243,10 @@
         real(r8), allocatable :: unvetted(:)
         real(r8), allocatable :: uradial(:)
         real(r8), allocatable :: vradial(:)
-#  ifndef VERIFICATION
+        real(r8), allocatable :: BgErr(:)
         real(r8), allocatable :: uBgErr(:)
         real(r8), allocatable :: vBgErr(:)
-#  endif
+
 #  ifdef SP4DVAR
         real(r8), allocatable :: ADmodVal_S(:,:)
         real(r8), allocatable :: harnoldi(:,:,:)
@@ -566,10 +566,6 @@
 !  statistics at observation locations:
 !-----------------------------------------------------------------------
 !
-!  4D-Var background error standard deviation [Mobs].
-!
-        real(r8), allocatable :: BgErr(:)
-!
 !  4D-Var NLM increment vector, analysis minus background {Mobs].
 !
         real(r8), allocatable :: NLincrement(:)
@@ -598,6 +594,8 @@
         real(r8), allocatable :: Jact_S(:)
 # endif
 !
+
+
 !-----------------------------------------------------------------------
 !  Spatial convolutions parameters
 !-----------------------------------------------------------------------
@@ -1251,7 +1249,10 @@
         deallocate (vradial)
       END IF
 
-#  ifndef VERIFICATION
+      IF (allocated(BgErr)) THEN
+        deallocate (BgErr)
+      END IF
+
       IF (allocated(uBgErr)) THEN
         deallocate (uBgErr)
       END IF
@@ -1259,13 +1260,8 @@
       IF (allocated(vBgErr)) THEN
         deallocate (vBgErr)
       END IF
-#  endif
 
 #  ifdef FOUR_DVAR
-      IF (allocated(BgErr)) THEN
-        deallocate (BgErr)
-      END IF
-
       IF (allocated(NLincrement)) THEN
         deallocate (NLincrement)
       END IF
@@ -2104,7 +2100,12 @@
       END IF
       vradial = IniVal
 
-#  ifndef VERIFICATION
+      IF (.not.allocated(BgErr)) THEN
+        allocate ( BgErr(Mobs) )
+        Dmem(1)=Dmem(1)+REAL(Mobs,r8)
+      END IF
+      BgErr = IniVal
+
       IF (.not.allocated(uBgErr)) THEN
         allocate ( uBgErr(Mobs) )
         Dmem(1)=Dmem(1)+REAL(Mobs,r8)
@@ -2116,7 +2117,6 @@
         Dmem(1)=Dmem(1)+REAL(Mobs,r8)
       END IF
       vBgErr = IniVal
-#  endif
 
 #  ifdef SP4DVAR
       IF (.not.allocated(ADmodVal_S)) THEN
@@ -2151,12 +2151,6 @@
 #  endif
 
 #  ifdef FOUR_DVAR
-      IF (.not.allocated(BgErr)) THEN
-        allocate ( BgErr(Mobs) )
-        Dmem(1)=Dmem(1)+REAL(Mobs,r8)
-      END IF
-      BgErr = IniVal
-
       IF (.not.allocated(NLincrement)) THEN
         allocate ( NLincrement(Mobs) )
         Dmem(1)=Dmem(1)+REAL(Mobs,r8)
