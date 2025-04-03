@@ -272,6 +272,10 @@
 !  after finishing all the inner loops. The forcing is continuous.
 !  That is, it is time interpolated at every time-step from available
 !  snapshots (FrequentImpulse=TRUE).
+!
+!  If applicable, add Incremental Analysis Update (IAU) where a fraction
+!  of the increment from 4D-Var is added as force term to the state
+!  vector over the specified "timeIAU" interval.
 !-----------------------------------------------------------------------
 !
             DO ig=1,GridsInLayer(nl)
@@ -293,7 +297,7 @@
 #  ifdef RPCG
                   IF (FrequentImpulse(ng).and.IAUswitch(ng)) THEN
                     DO tile=first_tile(ng),last_tile(ng),+1
-                    CALL frc_iau (ng, tile, 1)
+                      CALL frc_iau (ng, tile, iTLM, 1)
                     END DO
                   END IF
                   DO tile=first_tile(ng),last_tile(ng),+1

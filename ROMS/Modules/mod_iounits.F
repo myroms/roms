@@ -42,6 +42,8 @@
 !    HIS       Output nonlinear model history data                     !
 !    HSS       Input/output Hessian eigenvectors                       !
 !    IAD       Input adjoint model initial conditions                  !
+!    IMP       Input coarser grid impulses  in mixed-resolution 4D-Var !
+!    INC       Input coarser grid increment in mixed-resolution 4D-Var !
 !    INI       Input nonlinear model initial conditions                !
 !    IPR       Input representer model initial conditions              !
 !    ITL       Input tangent linear model initial conditions           !
@@ -222,6 +224,8 @@
       TYPE(T_IO), allocatable :: HIS(:)     ! NLM history fields
       TYPE(T_IO), allocatable :: HSS(:)     ! Hessian eigenvectors
       TYPE(T_IO), allocatable :: IAD(:)     ! ADM initial conditions
+      TYPE(T_IO), allocatable :: IMP(:)     ! 4D-Var coarser impulses
+      TYPE(T_IO), allocatable :: INC(:)     ! 4D-Var coarser increments
       TYPE(T_IO), allocatable :: INI(:)     ! NLM initial conditions
       TYPE(T_IO), allocatable :: IRP(:)     ! RPM initial conditions
       TYPE(T_IO), allocatable :: ITL(:)     ! TLM initial conditions
@@ -409,6 +413,12 @@
       IF (.not.allocated(IAD)) THEN
         allocate ( IAD(Ngrids) )
       END IF
+      IF (.not.allocated(IMP)) THEN
+        allocate ( IMP(Ngrids) )
+      END IF
+      IF (.not.allocated(INC)) THEN
+        allocate ( INC(Ngrids) )
+      END IF
       IF (.not.allocated(INI)) THEN
         allocate ( INI(Ngrids) )
       END IF
@@ -528,6 +538,8 @@
         HIS(ng)%ncid=-1
         HSS(ng)%ncid=-1
         IAD(ng)%ncid=-1
+        IMP(ng)%ncid=-1
+        INC(ng)%ncid=-1
         INI(ng)%ncid=-1
         IRP(ng)%ncid=-1
         ITL(ng)%ncid=-1
@@ -648,6 +660,14 @@
           IAD(ng)%head(i:i)=blank
           IAD(ng)%base(i:i)=blank
           IAD(ng)%name(i:i)=blank
+
+          IMP(ng)%head(i:i)=blank
+          IMP(ng)%base(i:i)=blank
+          IMP(ng)%name(i:i)=blank
+
+          INC(ng)%head(i:i)=blank
+          INC(ng)%base(i:i)=blank
+          INC(ng)%name(i:i)=blank
 
           INI(ng)%head(i:i)=blank
           INI(ng)%base(i:i)=blank
@@ -787,6 +807,8 @@
       IF (allocated(HIS))       deallocate ( HIS )
       IF (allocated(HSS))       deallocate ( HSS )
       IF (allocated(IAD))       deallocate ( IAD )
+      IF (allocated(IMP))       deallocate ( IMP )
+      IF (allocated(INC))       deallocate ( INC )
       IF (allocated(INI))       deallocate ( INI )
       IF (allocated(IRP))       deallocate ( IRP )
       IF (allocated(ITL))       deallocate ( ITL )

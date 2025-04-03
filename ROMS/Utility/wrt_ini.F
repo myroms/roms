@@ -109,7 +109,7 @@
       LBj=BOUNDS(ng)%LBj(tile)
       UBj=BOUNDS(ng)%UBj(tile)
 !
-      SELECT CASE (DIA(ng)%IOtype)
+      SELECT CASE (INI(ng)%IOtype)
         CASE (io_nf90)
           CALL wrt_ini_nf90 (ng, tile, Tindex,                          &
      &                       LBi, UBi, LBj, UBj,                        &
@@ -122,7 +122,7 @@
      &                      OutRec)
 # endif
         CASE DEFAULT
-          IF (Master) WRITE (stdout,10) DAI(ng)%IOtype
+          IF (Master) WRITE (stdout,10) INI(ng)%IOtype
           exit_flag=3
       END SELECT
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
@@ -266,7 +266,7 @@
      &                   INI(ng)%Rindex, gtype,                         &
      &                   LBi, UBi, LBj, UBj, scale,                     &
 # ifdef MASKING
-     &                   GRID(ng) % umask_full,                         &
+     &                   GRID(ng) % umask,                              &
 # endif
      &                   OCEAN(ng) % ubar(:,:,Tindex),                  &
      &                   SetFillVal = SetFillVal,                       &
@@ -295,7 +295,7 @@
      &                   INI(ng)%Rindex, gtype,                         &
      &                   LBi, UBi, LBj, UBj, scale,                     &
 # ifdef MASKING
-     &                   GRID(ng) % vmask_full,                         &
+     &                   GRID(ng) % vmask,                              &
 # endif
      &                   OCEAN(ng) % vbar(:,:,Tindex),                  &
      &                   SetFillVal = SetFillVal,                       &
@@ -326,7 +326,7 @@
      &                   INI(ng)%Rindex, gtype,                         &
      &                   LBi, UBi, LBj, UBj, 1, N(ng), scale,           &
 #  ifdef MASKING
-     &                   GRID(ng) % umask_full,                         &
+     &                   GRID(ng) % umask,                              &
 #  endif
      &                   OCEAN(ng) % u(:,:,:,Tindex),                   &
      &                   SetFillVal = SetFillVal,                       &
@@ -355,7 +355,7 @@
      &                   INI(ng)%Rindex, gtype,                         &
      &                   LBi, UBi, LBj, UBj, 1, N(ng), scale,           &
 #  ifdef MASKING
-     &                   GRID(ng) % vmask_full,                         &
+     &                   GRID(ng) % vmask,                              &
 #  endif
      &                   OCEAN(ng) % v(:,:,:,Tindex),                   &
      &                   SetFillVal = SetFillVal,                       &
@@ -676,7 +676,7 @@
      &                   ioDesc,                                        &
      &                   LBi, UBi, LBj, UBj, scale,                     &
 #  ifdef MASKING
-     &                   GRID(ng) % umask_full,                         &
+     &                   GRID(ng) % umask,                              &
 #  endif
      &                   OCEAN(ng) % ubar(:,:,Tindex),                  &
      &                   SetFillVal = SetFillVal,                       &
@@ -711,7 +711,7 @@
      &                   ioDesc,                                        &
      &                   LBi, UBi, LBj, UBj, scale,                     &
 #  ifdef MASKING
-     &                   GRID(ng) % vmask_full,                         &
+     &                   GRID(ng) % vmask,                              &
 #  endif
      &                   OCEAN(ng) % vbar(:,:,Tindex),                  &
      &                   SetFillVal = SetFillVal,                       &
@@ -748,7 +748,7 @@
      &                   ioDesc,                                        &
      &                   LBi, UBi, LBj, UBj, 1, N(ng), scale,           &
 #   ifdef MASKING
-     &                   GRID(ng) % umask_full,                         &
+     &                   GRID(ng) % umask,                              &
 #   endif
      &                   OCEAN(ng) % u(:,:,:,Tindex),                   &
      &                   SetFillVal = SetFillVal,                       &
@@ -783,7 +783,7 @@
      &                   ioDesc,                                        &
      &                   LBi, UBi, LBj, UBj, 1, N(ng), scale,           &
 #   ifdef MASKING
-     &                   GRID(ng) % vmask_full,                         &
+     &                   GRID(ng) % vmask,                              &
 #   endif
      &                   OCEAN(ng) % v(:,:,:,Tindex),                   &
      &                   SetFillVal = SetFillVal,                       &

@@ -293,7 +293,7 @@
      &                   OutRec, gtype,                                 &
      &                   LBi, UBi, LBj, UBj, scale,                     &
 # ifdef MASKING
-     &                   GRID(ng) % umask_full,                         &
+     &                   GRID(ng) % umask,                              &
 # endif
      &                   OCEAN(ng) % tl_ubar(:,:,Tindex))
       IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
@@ -338,7 +338,7 @@
      &                   OutRec, gtype,                                 &
      &                   LBi, UBi, LBj, UBj, scale,                     &
 # ifdef MASKING
-     &                   GRID(ng) % vmask_full,                         &
+     &                   GRID(ng) % vmask,                              &
 # endif
      &                   OCEAN(ng) % tl_vbar(:,:,Tindex))
       IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
@@ -430,7 +430,7 @@
      &                   OutRec, gtype,                                 &
      &                   LBi, UBi, LBj, UBj, 1, N(ng), scale,           &
 #  ifdef MASKING
-     &                   GRID(ng) % umask_full,                         &
+     &                   GRID(ng) % umask,                              &
 #  endif
      &                   OCEAN(ng) % tl_u(:,:,:,Tindex))
       IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
@@ -475,7 +475,7 @@
      &                   OutRec, gtype,                                 &
      &                   LBi, UBi, LBj, UBj, 1, N(ng), scale,           &
 #  ifdef MASKING
-     &                   GRID(ng) % vmask_full,                         &
+     &                   GRID(ng) % vmask,                              &
 #  endif
      &                   OCEAN(ng) % tl_v(:,:,:,Tindex))
       IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
@@ -849,7 +849,7 @@
      &                   OutRec, ioDesc,                                &
      &                   LBi, UBi, LBj, UBj, scale,                     &
 #  ifdef MASKING
-     &                   GRID(ng) % umask_full,                         &
+     &                   GRID(ng) % umask,                              &
 #  endif
      &                   OCEAN(ng) % tl_ubar(:,:,Tindex))
       IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
@@ -906,7 +906,7 @@
      &                   OutRec, ioDesc,                                &
      &                   LBi, UBi, LBj, UBj, scale,                     &
 #  ifdef MASKING
-     &                   GRID(ng) % vmask_full,                         &
+     &                   GRID(ng) % vmask,                              &
 #  endif
      &                   OCEAN(ng) % tl_vbar(:,:,Tindex))
       IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
@@ -1020,7 +1020,7 @@
      &                   OutRec, ioDesc,                                &
      &                   LBi, UBi, LBj, UBj, 1, N(ng), scale,           &
 #   ifdef MASKING
-     &                   GRID(ng) % umask_full,                         &
+     &                   GRID(ng) % umask,                              &
 #   endif
      &                   OCEAN(ng) % tl_u(:,:,:,Tindex))
       IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
@@ -1077,7 +1077,7 @@
      &                   OutRec, ioDesc,                                &
      &                   LBi, UBi, LBj, UBj, 1, N(ng), scale,           &
 #   ifdef MASKING
-     &                   GRID(ng) % vmask_full,                         &
+     &                   GRID(ng) % vmask,                              &
 #   endif
      &                   OCEAN(ng) % tl_v(:,:,:,Tindex))
       IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN

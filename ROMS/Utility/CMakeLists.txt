@@ -152,6 +152,7 @@ list( APPEND _files
       ROMS/Utility/shapiro.F
       ROMS/Utility/sqlq.F
       ROMS/Utility/state_addition.F
+      ROMS/Utility/state_assign.F
       ROMS/Utility/state_copy.F
       ROMS/Utility/state_dotprod.F
       ROMS/Utility/state_initialize.F

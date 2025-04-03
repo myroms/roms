@@ -597,8 +597,7 @@
 # endif
 #endif
 
-#if defined FOUR_DVAR    || defined IMPULSE || \
-   (defined VERIFICATION && BGQC)
+#if defined FOUR_DVAR || defined IMPULSE
 !
 !-----------------------------------------------------------------------
 !  4DVAR parameters.

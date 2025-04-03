@@ -302,9 +302,11 @@
       IF (wrtNLmod(ng)) THEN
         DO iobs=Mstr,Mend
           NLmodVal(iobs)=IniVal
+#  ifndef VERIFICATION
           BgErr(iobs)=IniVal
           uBgErr(iobs)=IniVal
           vBgErr(iobs)=IniVal
+#  endif
         END DO
 
 #  ifdef BGQC
@@ -368,6 +370,7 @@
      &                      GRID(ng)%rmask,                             &
 #  endif
      &                      NLmodVal)
+#  ifndef VERIFICATION
 !
 !  Free-surface backgound error standard deviation at observation
 !  locations.
@@ -382,12 +385,13 @@
      &                      ObsType, ObsVetting,                        &
      &                      Tobs, Xobs, Yobs,                           &
      &                      OCEAN(ng)%e_zeta(:,:,1),                    &
-#  ifdef MASKING
+#   ifdef MASKING
      &                      GRID(ng)%rmask,                             &
-#  endif
+#   endif
      &                      BgErr)
-# endif
+#  endif
       END IF
+# endif
 
 # ifdef TLM_OBS
 !
@@ -435,6 +439,8 @@
      &                      GRID(ng)%umask,                             &
 #  endif
      &                      NLmodVal)
+
+#  ifndef VERIFICATION
 !
 !  2D u-velocity backgound error standard deviation at observation
 !  locations.
@@ -449,10 +455,11 @@
      &                      ObsType, ObsVetting,                        &
      &                      Tobs, Xobs, Yobs,                           &
      &                      OCEAN(ng)%e_ubar(:,:,1),                    &
-#  ifdef MASKING
+#   ifdef MASKING
      &                      GRID(ng)%umask,                             &
-#  endif
+#   endif
      &                      BgErr)
+#  endif
       END IF
 # endif
 
@@ -502,6 +509,8 @@
      &                      GRID(ng)%vmask,                             &
 #  endif
      &                      NLmodVal)
+
+#  ifndef VERIFICATION
 !
 !  2D v-velocity backgound error standard deviation at observation
 !  locations.
@@ -516,10 +525,11 @@
      &                      ObsType, ObsVetting,                        &
      &                      Tobs, Xobs, Yobs,                           &
      &                      OCEAN(ng)%e_vbar(:,:,1),                    &
-#  ifdef MASKING
+#   ifdef MASKING
      &                      GRID(ng)%vmask,                             &
-#  endif
+#   endif
      &                      BgErr)
+#  endif
       END IF
 # endif
 
@@ -580,6 +590,8 @@
      &                      GRID(ng)%umask,                             &
 #   endif
      &                      NLmodVal)
+
+#   ifndef VERIFICATION
 !
 !  3D u-velocity backgound error standard deviation at observation
 !  locations.
@@ -595,10 +607,11 @@
      &                      Tobs, Xobs, Yobs, Zobs,                     &
      &                      OCEAN(ng)%e_u(:,:,:,1),                     &
      &                      GRID(ng)%z_v,                               &
-#   ifdef MASKING
+#    ifdef MASKING
      &                      GRID(ng)%umask,                             &
-#   endif
+#    endif
      &                      BgErr)
+#   endif
       END IF
 #  endif
 
@@ -666,6 +679,8 @@
      &                      GRID(ng)%vmask,                             &
 #   endif
      &                      NLmodVal)
+
+#   ifndef VERIFICATION
 !
 !  3D v-velocity backgound error standard deviation at observation
 !  locations.
@@ -681,10 +696,11 @@
      &                      Tobs, Xobs, Yobs, Zobs,                     &
      &                      OCEAN(ng)%e_v(:,:,:,1),                     &
      &                      GRID(ng)%z_v,                               &
-#   ifdef MASKING
+#    ifdef MASKING
      &                      GRID(ng)%vmask,                             &
-#   endif
+#    endif
      &                      BgErr)
+#   endif
       END IF
 #  endif
 
@@ -797,6 +813,8 @@
      &                      GRID(ng)%umask,                             &
 #   endif
      &                      uradial)
+
+#   ifndef VERIFICATION
 !
 !  Radial u-component backgound error standard deviation at observation
 !  locations.
@@ -812,10 +830,11 @@
      &                      Tobs, Xobs, Yobs, Zobs,                     &
      &                      OCEAN(ng)%e_u(:,:,:,1),                     &
      &                      GRID(ng)%z_v,                               &
-#   ifdef MASKING
+#    ifdef MASKING
      &                      GRID(ng)%umask,                             &
-#   endif
+#    endif
      &                      uBgErr)
+#   endif
 !
 !  Radial nonlinear v-component at observation locations.
 !
@@ -842,6 +861,8 @@
      &                      GRID(ng)%vmask,                             &
 #   endif
      &                      vradial)
+
+#   ifndef VERIFICATION
 !
 !  Radial v-component backgound error standard deviation at observation
 !  locations.
@@ -857,10 +878,11 @@
      &                      Tobs, Xobs, Yobs, Zobs,                     &
      &                      OCEAN(ng)%e_v(:,:,:,1),                     &
      &                      GRID(ng)%z_v,                               &
-#   ifdef MASKING
+#    ifdef MASKING
      &                      GRID(ng)%vmask,                             &
-#   endif
+#    endif
      &                      vBgErr)
+#   endif
 !
 !  Compute nonlinear radial velocity.
 !
@@ -885,7 +907,9 @@
      &                     vradial(iobs)*COS(ObsMeta(iobs))
 #    endif
 #   endif
+#   ifndef VERIFICATION
             BgErr(iobs)=MAX(uBgErr(iobs), vBgErr(iobs))
+#   endif
           END IF
         END DO
       END IF
@@ -1030,6 +1054,8 @@
      &                        GRID(ng)%rmask,                           &
 #   endif
      &                        NLmodVal)
+
+#   ifndef VERIFICATION
 !
 !  Tracer backgound error standard deviation at observation locations.
 !
@@ -1044,10 +1070,11 @@
      &                        Tobs, Xobs, Yobs, Zobs,                   &
      &                        OCEAN(ng)%e_t(:,:,:,1,itrc),              &
      &                        GRID(ng)%z_r,                             &
-#   ifdef MASKING
+#    ifdef MASKING
      &                        GRID(ng)%rmask,                           &
-#   endif
+#    endif
      &                        BgErr)
+#   endif
         END IF
 #  endif
 
@@ -1105,7 +1132,7 @@
 #  if defined I4DVAR
             df1=(ObsVal(iobs)-NLmodVal(iobs))/BgErr(iobs)
             df2=(1.0_r8/ObsErr(iobs))/(BgErr(iobs)*BgErr(iobs))
-#  elif defined WEAK_CONSTRAINT || defined VERIFICATION
+#  elif defined WEAK_CONSTRAINT
 #    ifdef R4DVAR
             df1=(ObsVal(iobs)-TLmodVal(iobs))/BgErr(iobs)
             df2=ObsErr(iobs)/(BgErr(iobs)*BgErr(iobs))
@@ -1381,6 +1408,7 @@
       END IF
 #  endif
 # endif
+
 # if defined FOUR_DVAR && !defined I4DVAR_ANA_SENSITIVITY
 !
 !-----------------------------------------------------------------------
@@ -1499,31 +1527,12 @@
         CALL netcdf_put_fvar (ng, model, DAV(ng)%name,                  &
      &                        Vname(1,idNLmo),                          &
      &                        NLmodVal(Mstr:),                          &
-#   ifdef SPLIT_EXECUTABLE
-     &                        (/NstrObs(ng), MAX(1,outer)/),            &
-     &                        (/Nobs(ng),1/),                           &
-#   else
      &                        (/NstrObs(ng)/), (/Nobs(ng)/),            &
-#   endif
      &                        ncid = DAV(ng)%ncid,                      &
      &                        varid = DAV(ng)%Vid(idNLmo))
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         haveNLmod(ng)=.TRUE.
-!
-!  Write out intial nonlinear model (NLmodel_initial) at the observation
-!  locations, same as 'NLmodel_value'. It used in SPLIT 4D-Var when the
-!  'background phase' uses separated executable without any 4D-Var
-!  drivers to reduce memory.
-!
-        CALL netcdf_put_fvar (ng, model, DAV(ng)%name,                  &
-     &                        Vname(1,idNLmi),                          &
-     &                        NLmodVal(Mstr:),                          &
-     &                        (/NstrObs(ng)/), (/Nobs(ng)/),            &
-     &                        ncid = DAV(ng)%ncid,                      &
-     &                        varid = DAV(ng)%Vid(idNLmi))
-        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
       END IF
-
 #  elif defined I4DVAR || defined WEAK_CONSTRAINT
       IF (wrtNLmod(ng).and.outer.gt.0) THEN
         CALL netcdf_put_fvar (ng, model, DAV(ng)%name,                  &
@@ -1847,6 +1856,7 @@
       END IF
 #   endif
 #  endif
+
 #  if defined FOUR_DVAR && !defined I4DVAR_ANA_SENSITIVITY
 !
 !-----------------------------------------------------------------------
@@ -1964,32 +1974,13 @@
       IF (wrtNLmod(ng)) THEN
         CALL pio_netcdf_put_fvar (ng, model, DAV(ng)%name,              &
      &                            Vname(1,idNLmo),                      &
-     &                            NLmodVal(Mstr:Mend),                  & 
-#   ifdef SPLIT_EXECUTABLE
-     &                            (/NstrObs(ng), MAX(1,outer)/),        &
-     &                            (/Nobs(ng),1/),                       &
-#   else
+     &                            NLmodVal(Mstr:Mend),                  &
      &                            (/NstrObs(ng)/), (/Nobs(ng)/),        &
-#   endif
      &                            pioFile = DAV(ng)%pioFile,            &
      &                            pioVar = DAV(ng)%pioVar(idNLmo)%vd)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         haveNLmod(ng)=.TRUE.
-!
-!  Write out intial nonlinear model (NLmodel_initial) at the observation
-!  locations, same as 'NLmodel_value'. It used in SPLIT 4D-Var when the
-!  'background phase' uses separated executable without any 4D-Var
-!  drivers to reduce memory.
-!
-        CALL pio_netcdf_put_fvar (ng, model, DAV(ng)%name,              &
-     &                            Vname(1,idNLmi),                      &
-     &                            NLmodVal(Mstr:Mend),                  &
-     &                            (/NstrObs(ng)/), (/Nobs(ng)/),        &
-     &                            pioFile = DAV(ng)%pioFile,            &
-     &                            pioVar = DAV(ng)%pioVar(idNLmi)%vd)
-        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
       END IF
-
 #   elif defined I4DVAR || defined WEAK_CONSTRAINT
       IF (wrtNLmod(ng).and.outer.gt.0) THEN
         CALL pio_netcdf_put_fvar (ng, model, DAV(ng)%name,              &

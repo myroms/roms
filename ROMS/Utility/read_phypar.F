@@ -4243,7 +4243,7 @@
             CASE ('ININAME')
               label='INI - nonlinear model initial conditions'
               Npts=load_s1d(Nval, Cval, Cdim, line, label, igrid,       &
-     &                      Ngrids, Nfiles, inp_lib, INI)
+     &                      Ngrids, Nfiles, io_nf90, INI)
             CASE ('IRPNAME')
               label='IRP - representer model initial conditions'
               Npts=load_s1d(Nval, Cval, Cdim, line, label, igrid,       &
@@ -4752,9 +4752,8 @@
 !
         nADJ(ng)=ntimes(ng)/Nintervals
 #endif
-#if defined FOUR_DVAR    || defined IMPULSE || \
-   (defined VERIFICATION || defined BGQC)
-!
+#if defined FOUR_DVAR || defined IMPULSE
+
 !  Set size of additonal dimension for error covariance normalization
 !  and standard deviation factors.
 !
