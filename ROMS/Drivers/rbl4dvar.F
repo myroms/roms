@@ -2315,8 +2315,8 @@
 !  INI(ng)%Rindex+1 of the NetCDF file. 
 !-----------------------------------------------------------------------
 !
-!  If outer=1, define finer grid tangent linear initial conditions file
-!  to store regridded fields.
+!  If outer=1, define finer grid tangent linear ITL file to store
+!  regridded increments.
 !
       IF (my_outer.eq.1) THEN
         DO ng=1,Ngrids
@@ -2344,6 +2344,16 @@
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
           CALL tl_wrt_ini (ng, MyTile, Rec1, Rec5)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        END DO
+      ELSE
+!
+!  Otherwise, open tangent linear fine resolution ITL file and inquire
+!  about its variables.
+!
+        DO ng=1,Ngrids
+          LdefITL(ng)=.FALSE.
+          CALL tl_def_ini (ng)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END DO
       END IF

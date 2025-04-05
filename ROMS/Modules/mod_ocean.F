@@ -647,7 +647,7 @@
 # endif
 #endif
 
-#if defined ADJOINT
+#if defined ADJOINT && !defined SPLIT_EXECUTABLE
 !
 !  Adjoint model state.
 !
@@ -1234,7 +1234,7 @@
 #  endif
 # endif
 
-# if defined ADJOINT
+# if defined ADJOINT && !defined SPLIT_EXECUTABLE
 !
 !  Adjoint model state.
 !
@@ -1820,7 +1820,7 @@
       END IF
 #endif
 
-#if defined ADJOINT
+#if defined ADJOINT && !defined SPLIT_EXECUTABLE
 !
 !  Adjoint model state.
 !

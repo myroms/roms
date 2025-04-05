@@ -451,7 +451,7 @@
 !
         integer :: NpostI
 !
-!  Outer loop to consider in the computatio of the observations
+!  Outer loop to consider in the computation of the observations
 !  impact or observations sensitivity, Nimpact =< Nouter.  This
 !  facilitates the computations with multiple outer loop 4D-Var
 !  applications.  The observation analysis needs to be computed
@@ -2199,16 +2199,23 @@
 !  The following arrays are only needed and used by the master node.
 !  In order to avoid hogging memory penalties in the other nodes, they
 !  are only allocated by the master node.
+#    ifdef SPLIT_EXECUTABLE
+!  NOTICE: In split 4D-Var with split executables and mixed resolution,
+!  ======  these arrays are unnecessary in the "background" and
+!  "analysis" phases, so they remain unallocated. They are only needed
+!  during the minimization in the "increment" phase.
+#    endif
 !
+#    ifndef SPLIT_EXECUTABLE 
       IF (.not.allocated(TLmodVal_S)) THEN
         allocate ( TLmodVal_S(Mobs,Ninner,Nouter) )
         Dmem(1)=Dmem(1)+REAL(Mobs*Ninner*Nouter,r8)
       END IF
       TLmodVal_S = IniVal
 
-#    if defined RPCG              && \
-       (defined SENSITIVITY_4DVAR || defined TL_RBL4DVAR || \
-        defined TL_R4DVAR)
+#     if defined RPCG              && \
+        (defined SENSITIVITY_4DVAR || defined TL_RBL4DVAR || \
+         defined TL_R4DVAR)
       IF (Master) THEN
         IF (.not.allocated(tl_TLmodVal_S)) THEN
           allocate ( tl_TLmodVal_S(Mobs,Ninner,Nouter) )
@@ -2222,25 +2229,30 @@
         END IF
         ad_TLmodVal_S = IniVal
       END IF
+#     endif
 #    endif
 #   endif
 
 #   if defined ARRAY_MODES       || defined RBL4DVAR    || \
        defined SENSITIVITY_4DVAR || defined TL_RBL4DVAR
 
+#    ifndef SPLIT_EXECUTABLE
       IF (.not.allocated(BCKmodVal)) THEN
         allocate ( BCKmodVal(Mobs) )
         Dmem(1)=Dmem(1)+REAL(Mobs,r8)
       END IF
       BCKmodVal = IniVal
+#    endif
 
 #    ifdef RPCG
 
+#     ifndef SPLIT_EXECUTABLE
       IF (.not.allocated(Hbk)) THEN
         allocate ( Hbk(Mobs,Nouter) )
         Dmem(1)=Dmem(1)+REAL(Mobs*Nouter,r8)
       END IF
       Hbk = IniVal
+#     endif
 
 #     if defined SENSITIVITY_4DVAR || defined TL_RBL4DVAR || \
          defined TL_R4DVAR
@@ -2416,7 +2428,7 @@
       END IF
       cg_dla = IniVal
 
-#   ifndef RPCG
+#   if !defined RPCG && !defined SPLIT_EXCUTABLE
 
       IF (.not.allocated(cg_pxsave)) THEN
         allocate ( cg_pxsave(Mobs) )
