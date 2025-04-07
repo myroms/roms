@@ -1,4 +1,4 @@
-dz#include "cppdefs.h"
+#include "cppdefs.h"
       MODULE mod_ncparam
 !
 !git $Id$
@@ -1085,7 +1085,7 @@ dz#include "cppdefs.h"
 !
       IF (allocated(idRtrc))      deallocate ( idRtrc )
       IF (allocated(idsurT))      deallocate ( idsurT )
-      IF (allocated(idzslT))      deallocate ( idzslT )
+      IF (allocated(idsurT))      deallocate ( idzslT )
       IF (allocated(idTads))      deallocate ( idTads )
       IF (allocated(idTbot))      deallocate ( idTbot )
       IF (allocated(idTbry))      deallocate ( idTbry )
