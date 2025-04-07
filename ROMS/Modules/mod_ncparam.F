@@ -1093,7 +1093,7 @@
 !
       IF (allocated(idRtrc))      deallocate ( idRtrc )
       IF (allocated(idsurT))      deallocate ( idsurT )
-      IF (allocated(idsurT))      deallocate ( idzslT )
+      IF (allocated(idzslT))      deallocate ( idzslT )
       IF (allocated(idTads))      deallocate ( idTads )
       IF (allocated(idTbot))      deallocate ( idTbot )
       IF (allocated(idTbry))      deallocate ( idTbry )
