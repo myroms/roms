@@ -904,7 +904,7 @@
 !  Use atmosphere boundary layer thickness from coupled model.
 # endif
 !
-            Bf=-g/TairK(i)*                                             &
+            Bf=-g/(TairK(i)+0.61_r8*Qstar(i))*                          &
      &         Wstar(i)*(Tstar(i)+0.61_r8*TairK(i)*Qstar(i))
             IF (Bf.gt.0.0_r8) THEN
 # if defined FRC_COUPLING && defined PBLH
