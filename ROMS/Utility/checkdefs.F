@@ -2031,6 +2031,13 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+13)=' PARALLEL_IO,'
 #endif
+#if defined PBLH && defined BULK_FLUXES && defined FRC_COUPLING
+!
+      IF (Master) WRITE (stdout,20) 'PBLH',                             &
+     &   'Use atmosphere boundary layer thickness for wind gustiness'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+10)=' PBLH,'
+#endif
 #if defined CARBON && defined BIO_FENNEL
 # if defined PCO2AIR_DATA
 !
