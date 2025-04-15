@@ -261,6 +261,7 @@
       integer  :: idOvel        ! omega vertical velocity
       integer  :: idOvil        ! omega vertical velocity implicit
       integer  :: idPair        ! surface air pressure
+      integer  :: idPBLh        ! planetary boundary layer height
       integer  :: idPbar        ! streamfunction
       integer  :: idPVzs        ! potential vorticity depth slices
       integer  :: idPwet        ! wet/dry mask on PSI-points
@@ -1764,6 +1765,8 @@
             idVwet=varid
           CASE ('idPair')
             idPair=varid
+          CASE ('idPBLh')
+            idPBLh=varid
           CASE ('idTair')
             idTair=varid
           CASE ('idQair')
