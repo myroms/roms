@@ -2653,6 +2653,16 @@
               Npts=load_l(Nval, Cval, Ngrids, Lswitch)
               Qout(idPair,1:Ngrids)=Lswitch(1:Ngrids)
 # endif
+# if defined BULK_FLUXES && defined FRC_COUPLING && defined PBLH
+            CASE ('Qout(idPBLh)')
+              IF (idPBLh.eq.0) THEN
+                IF (Master) WRITE (out,280) 'idPBLh'
+                exit_flag=5
+                RETURN
+              END IF
+              Npts=load_l(Nval, Cval, Ngrids, Lswitch)
+              Qout(idPBLh,1:Ngrids)=Lswitch(1:Ngrids)
+# endif
 # if defined BULK_FLUXES
             CASE ('Qout(idTair)')
               Npts=load_l(Nval, Cval, Ngrids, Lswitch)
@@ -6746,6 +6756,11 @@
             IF (Qout(idPair,ng)) WRITE (out,170) Qout(idPair,ng),       &
      &         'Qout(idPair)',                                          &
      &         'Write out surface air pressure.'
+# endif
+# if defined BULK_FLUXES && defined FRC_COUPLING && defined PBLH
+            IF (Qout(idPBLh,ng)) WRITE (out,170) Qout(idPBLh,ng),       &
+     &         'Qout(idPBLh)',                                          &
+     &         'Write out atmosphere boundary layer thickness.'
 # endif
 # if defined BULK_FLUXES
             IF (Qout(idTair,ng)) WRITE (out,170) Qout(idTair,ng),       &
