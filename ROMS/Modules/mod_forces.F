@@ -70,6 +70,13 @@
 !  cloud        Cloud fraction (percentage/100).                       !
 !  cloudG       Latest two-time snapshots of input "cloud" grided      !
 !                 data used for interpolation.                         !
+
+#if defined BULK_FLUXES && defined FRC_COUPLING && defined PBLH
+!                                                                      !
+!  Atmosphere boundary layer.                                          !
+!                                                                      !
+!  PBLh         Planetary boundary layer height (m).                   !
+#endif
 !                                                                      !
 !  Surface heat fluxes, Atmosphere-Ocean bulk parameterization.        !
 !                                                                      !
@@ -224,7 +231,9 @@
           real(r8), pointer :: PairG(:,:,:)
 # endif
 #endif
-
+#if defined BULK_FLUXES && defined FRC_COUPLING && defined PBLH
+          real(r8), pointer :: PBLh(:,:)
+#endif
 #ifdef WAVES_DIR
           real(r8), pointer :: Dwave(:,:)
 # ifndef ANA_WWAVE
@@ -627,6 +636,11 @@
       allocate ( FORCES(ng) % PairG(LBi:UBi,LBj:UBj,2) )
       Dmem(ng)=Dmem(ng)+2.0_r8*size2d
 # endif
+#endif
+
+#if defined BULK_FLUXES && defined FRC_COUPLING && defined PBLH 
+      allocate ( FORCES(ng) % PBLh(LBi:UBi,LBj:UBj) )
+      Dmem(ng)=Dmem(ng)+size2d
 #endif
 
 #ifdef WAVES_DIR
@@ -1205,6 +1219,11 @@
       IF (.not.destroy(ng, FORCES(ng)%PairG, MyFile,                    &
      &                 __LINE__, 'FORCES(ng)%PairG')) RETURN
 #  endif
+# endif
+
+#if defined BULK_FLUXES && defined FRC_COUPLING && defined PBLH
+    IF (.not.destroy(ng, FORCES(ng)%PBLh, MyFile,                       &
+     &                 __LINE__, 'FORCES(ng)%PBLh')) RETURN
 # endif
 
 # ifdef WAVES_DIR
@@ -1833,6 +1852,9 @@
             FORCES(ng) % PairG(i,j,1) = IniVal
             FORCES(ng) % PairG(i,j,2) = IniVal
 # endif
+#endif
+#if defined BULK_FLUXES && defined FRC_COUPLING && defined PBLH
+            FORCES(ng) % PBLh(i,j) = IniVal
 #endif
 #ifdef WAVES_DIR
             FORCES(ng) % Dwave(i,j) = IniVal
