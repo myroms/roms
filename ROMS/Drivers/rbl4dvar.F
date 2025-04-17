@@ -1752,7 +1752,9 @@
         END DO
       END DO
 !
-!  Write the final TL increment to Rec2 of the ITL file.
+!  Write the final TL increment for current outer loop into Rec2 of the
+!  ITL file. Notice that the cumulative increment for current and
+!  previous outer loops can be found in Rec3 of the ITL file.
 !
       DO ng=1,Ngrids
         CALL tl_wrt_ini (ng, MyTile, LTLM2, Rec2)
@@ -2070,12 +2072,13 @@
 !
 !  Local variable declarations.
 !
-      integer :: ifile, lstr, ng, tile
+      integer :: i, ifile, jrec, lstr, ng, tile
       integer :: Fcount, LiNL
 # ifdef PROFILE
       integer :: thread
 # endif
 !
+      integer, dimension(Ngrids) :: nADrec
       integer, dimension(Ngrids) :: indxSave
 !
       character (len=10) :: suffix
@@ -2300,6 +2303,7 @@
 # endif
         IF (FrcRec(ng).gt.3) THEN
           FrequentImpulse(ng)=.TRUE.
+          nADrec(ng)=2*(1+ntimes(ng)/nADJ(ng))
         END IF
       END DO
 
@@ -2312,7 +2316,7 @@
 !  the interpolated increment to the fine-resolution-prior initial
 !  conditions. Then, we either write the updated NLM initial conditions
 !  or write interpolated increment into the INI file at record
-!  INI(ng)%Rindex+1 of the NetCDF file. 
+!  INI(ng)%Rindex+1 of the NetCDF file.
 !-----------------------------------------------------------------------
 !
 !  If outer=1, define finer grid tangent linear ITL file to store
@@ -2357,7 +2361,7 @@
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END DO
       END IF
-
+!
 !  Read in background initial conditions from INI(ng)%name file, record
 !  "LiNL", and load it into time index NLM state at time index "Lnew".
 !
@@ -2367,21 +2371,49 @@
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
       END DO
 !
-!  Regrid 4D-Var increment: coarse-to-fine interpolation and load it
-!  into the tangent linear state vector at time index "Lini". Then,
-!  write it into fine grid ITL file Rec2. Notice that the coarser grid
-!  increments are in file INC(ng)%name.
+!  Regrid 4D-Var outer loop increment contribution: coarse-to-fine
+!  interpolation and load it into the tangent linear state vector at
+!  time index "LTLM1". Then, write it into fine grid ITL file Rec2.
+!  Notice that the coarser grid increments are in file INC(ng)%name.
 !
       DO ng=1,Ngrids
-        CALL state_regrid (ng, MyTile, iTLM, Rec2, Lini, INC(ng)%name)
+        CALL state_regrid (ng, MyTile, iTLM, Rec2, LTLM1,               &
+     &                     INC(ng)%name)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
-        CALL tl_wrt_ini (ng, MyTile, Lini, Rec2)
+        CALL tl_wrt_ini (ng, MyTile, LTLM1, Rec2)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+!
+        IF (my_outer.eq.1) THEN
+          CALL tl_wrt_ini (ng, MyTile, LTLM1, Rec3)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        END IF
       END DO
+!
+!  Regrid 4D-Var outer loop cumulative increment: coarse-to-fine
+!  interpolation and load it into the tangent linear state vector at
+!  time index "LTLM1". Then, write it into fine grid ITL file Rec3.
+!  Notice that the coarser grid cumulative increments are in file
+!  INC(ng)%name Rec3. If outer=1, the contribution and cumulative
+!  increments are the same.
+!
+      IF (my_outer.gt.1) THEN
+        DO ng=1,Ngrids
+          CALL state_regrid (ng, MyTile, iTLM, Rec3, LTLM1,             &
+     &                       INC(ng)%name)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        END DO
+!
+        DO ng=1,Ngrids
+          CALL tl_wrt_ini (ng, MyTile, LTLM1, Rec3)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        END DO
+      END IF
 !
 !  If not activated IAU, compute non-linear model initial conditions by
 !  adding the interpolated increment to the background initial state.
+!  Regardless of the outer loop, we add the cumulative increment to the
+!  background initial state.
 !
       DO ng=1,Ngrids
         IF (timeIAU(ng).eq.0.0_dp) THEN
@@ -2393,28 +2425,14 @@
 
 #  ifdef RPCG
 !
-!  If activated IAU, interpolate coarse-to-fine accumulated increments
-!  from Rec3 of the coarser grid ITL file. Then, write it into fine grid
-!  ITL file Rec2. Notice that the coarser grid accumulated increments
-!  are in file INC(ng)%name.
+!  If activated IAU, compute the NLM model forcing contribution
+!  (f_state arrays) for the incremental analysis update. The tangent
+!  linear state is needed during the "timeIAU" interval if weak
+!  constraint is also activated (FrequentImpulse=TRUE).
 !
       DO ng=1,Ngrids
         IF (timeIAU(ng).gt.0.0_dp) THEN
-          CALL state_regrid (ng, MyTile, iTLM, Rec3, Lini, INC(ng)%name)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-!
-          CALL tl_wrt_ini (ng, MyTile, Lini, Rec3)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-      END DO
-!
-!  Then, compute the NLM model forcing contribution (f_state arrays) for
-!  the incremental analysis update. The tangent linear state is needed
-!  during the "timeIAU" interval if weak constraint is also activated
-!  (FrequentImpulse=TRUE).
-! 
-      DO ng=1,Ngrids
-        IF (timeIAU(ng).gt.0.0_dp) THEN
+          IAUswitch(ng)=.TRUE.
           DO tile=first_tile(ng),last_tile(ng),+1
             CALL frc_iau_ini (ng, tile, iTLM, LTLM1)
           END DO
@@ -2425,20 +2443,36 @@
 !  Write out nonlinear model initial conditions into INIname, record
 !  outer+2. Notice that if IAU is activated, we are writing the
 !  same state as the background state since the increment is added
-!  as forcing term (dt/timeIAU fraction). 
+!  as forcing term (dt/timeIAU fraction).
 !
       LiNL=my_outer+2              ! analysis initial conditions
       DO ng=1,Ngrids
         CALL wrt_ini (ng, MyTile, Lnew(ng), LiNL)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
       END DO
+
+#  ifdef RPCG
 !
-!  If weak constaint, interpolate impulses.
+!  If weak constaint, regrid 4D-Var impulse forcing: coarse-to-fine
+!  interpolation and load it into the tangent linear state vector at
+!  time index "LTLM2". Then, write it into fine grid ITL file Rec5+i.
+!  Notice that the coarser grid impulses are in file INC(ng)%name.
 !
       DO ng=1,Ngrids
         IF (FrequentImpulse(ng)) THEN
+          DO i=1,nADrec(ng)/2
+            jrec=Rec5+i
+            CALL state_regrid (ng, MyTile, iTLM, jrec, LTLM2,           &
+     &                         INC(ng)%name)
+            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+!
+            CALL tl_wrt_ini (ng, MyTile, LTLM2, Rec2)
+            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+          END DO
         END IF
       END DO
+#  endif
+
 # else
 
 #  ifdef RPCG

@@ -175,11 +175,11 @@
       IF (Master) THEN
 # if defined RPCG
         IF (OutRec.eq.1) THEN
-          string='inner-loop initial fields          '
+          string='inner loop initial fields          '
         ELSE IF (OutRec.eq.2) THEN
-          string='final outer-loop increments        '
+          string='current outer loop increments      '
         ELSE IF (OutRec.eq.3) THEN
-          string='sum of final outer-loop increments '
+          string='cumulative outer loops increments  '
         ELSE IF (OutRec.eq.4) THEN
           string='sum of adjoint solutions           '
         ELSE IF (OutRec.eq.5) THEN
@@ -723,11 +723,11 @@
       IF (Master) THEN
 #  if defined RPCG
         IF (OutRec.eq.1) THEN
-          string='inner-loop initial fields          '
+          string='inner loop initial fields          '
         ELSE IF (OutRec.eq.2) THEN
-          string='final outer-loop increments        '
+          string='current outer loop increments      '
         ELSE IF (OutRec.eq.3) THEN
-          string='sum of final outer-loop increments '
+          string='cumulative outer loops increments  '
         ELSE IF (OutRec.eq.4) THEN
           string='sum of adjoint solutions           '
         ELSE IF (OutRec.eq.5) THEN
