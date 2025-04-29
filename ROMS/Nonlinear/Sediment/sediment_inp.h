@@ -360,6 +360,14 @@
                   Hout(i,ng)=Lmud(itrc,ng)
                 END DO
               END DO
+            CASE ('Hout(idMzsl)')
+              Npts=load_l(Nval, Cval, NCS, Ngrids, Lmud)
+              DO ng=1,Ngrids
+                DO itrc=1,NCS
+                  i=idzslt(idsed(itrc))
+                  Hout(i,ng)=Lmud(itrc,ng)
+                END DO
+              END DO
             CASE ('Hout(iMfrac)')
               Npts=load_l(Nval, Cval, NCS, Ngrids, Lmud)
               DO ng=1,Ngrids
@@ -798,6 +806,14 @@
               DO ng=1,Ngrids
                 DO itrc=1,NNS
                   i=idTvar(idsed(NCS+itrc))
+                  Hout(i,ng)=Lsand(itrc,ng)
+                END DO
+              END DO
+            CASE ('Hout(idSzsl)')
+              Npts=load_l(Nval, Cval, NNS, Ngrids, Lsand)
+              DO ng=1,Ngrids
+                DO itrc=1,NNS
+                  i=idzslT(idsed(NCS+itrc))
                   Hout(i,ng)=Lsand(itrc,ng)
                 END DO
               END DO

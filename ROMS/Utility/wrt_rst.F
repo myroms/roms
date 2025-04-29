@@ -1387,7 +1387,7 @@
       status=nf_fwrite2d(ng, model, RST(ng)%pioFile, idPwet,            &
      &                   RST(ng)%pioVar(idPwet),                        &
      &                   RST(ng)%Rindex,                                &
-     &                   ioDesc(ng),                                    &
+     &                   ioDesc,                                        &
      &                   LBi, UBi, LBj, UBj, scale,                     &
 #  ifdef MASKING
      &                   GRID(ng) % pmask,                              &

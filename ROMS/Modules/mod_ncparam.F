@@ -3170,12 +3170,42 @@
         CALL StandardName (Vname(6,varid), Vname(2,idTvar(i)),          &
      &                     prefix='sea_surface_')
       END DO
+!
+!-----------------------------------------------------------------------
+!  Set passive tracers depth slices metadata. The variable name is the
+!  same as the basic tracer but with the _slice suffix.
+!-----------------------------------------------------------------------
+!
+      DO i=NAT+1,MT
+        varid=varid+1
+        IF (varid.gt.MV) THEN
+          WRITE (stdout,10) MV, varid
+          STOP
+        END IF
+        idzslT(i)=varid
+        DO ng=1,Ngrids
+          Fscale(varid,ng)=1.0_r8
+          Iinfo(1,varid,ng)=r3dvar
+        END DO
+        WRITE (Vname(1,varid),'(a,a)')                                  &
+     &        TRIM(ADJUSTL(Vname(1,idTvar(i)))), '_slice'
+        WRITE (Vname(2,varid),'(2a)')                                   &
+     &        TRIM(ADJUSTL(Vname(2,idTvar(i))))
+        WRITE (Vname(3,varid),'(a)')                                    &
+     &        TRIM(ADJUSTL(Vname(3,idTvar(i))))
+        WRITE (Vname(4,varid),'(a)')                                    &
+     &        TRIM(Vname(2,varid))
+        WRITE (Vname(5,varid),'(a)')                                    &
+     &        TRIM(ADJUSTL(Vname(5,idTvar(i))))
+        WRITE (Vname(6,varid),'(a)')                                    &
+     &        TRIM(ADJUSTL(Vname(6,idTvar(i))))
+      END DO
 #endif
 #ifdef WEAK_CONSTRAINT
 !
 !-----------------------------------------------------------------------
 !  Set passive tracers impulse forcing. The metadata values are the
-!  same as the basic tracer but with different indices sinc they are
+!  same as the basic tracer but with different indices since they are
 !  used at the same time. This allows flexibility in the time
 !  interpolation.
 !-----------------------------------------------------------------------
