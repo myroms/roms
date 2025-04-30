@@ -233,7 +233,9 @@
       SELECT CASE (TRIM(Ctype))
         CASE ('r', 'R')
           self%Adst =  GRID(ng)%angler
+#ifdef MASKING
           self%Mdst => GRID(ng)%rmask
+#endif
           IF (spherical) THEN
             self%Xdst => GRID(ng)%lonr
             self%Ydst => GRID(ng)%latr
@@ -248,7 +250,9 @@
      &                                 GRID(ng)%angler(i  ,j))
             END DO
           END DO
+#ifdef MASKING
           self%Mdst => GRID(ng)%umask
+#endif
           IF (spherical) THEN
             self%Xdst => GRID(ng)%lonu
             self%Ydst => GRID(ng)%latu
@@ -263,7 +267,9 @@
      &                                 GRID(ng)%angler(i,j  ))
             END DO
           END DO
+#ifdef MASKING
           self%Mdst => GRID(ng)%vmask
+#endif
           IF (spherical) THEN
             self%Xdst => GRID(ng)%lonv
             self%Ydst => GRID(ng)%latv
@@ -544,8 +550,10 @@
 !
             IF (FoundError(assign_string(self%Avname, 'angle'),         &
      &                     NoError, __LINE__, MyFile)) RETURN
+#ifdef MASKING
             IF (FoundError(assign_string(self%Mvname, 'mask_rho'),      &
      &                     NoError, __LINE__, MyFile)) RETURN
+#endif
             IF (spherical) THEN
               IF (FoundError(assign_string(self%Xvname, 'lon_rho'),     &
      &                       NoError, __LINE__, MyFile)) RETURN
@@ -587,8 +595,10 @@
 !
             IF (FoundError(assign_string(self%Avname, 'angle'),         &
      &                     NoError, __LINE__, MyFile)) RETURN
-            IF (FoundError(assign_string(self%Mvname, 'Mask_u'),        &
+#ifdef MASKING
+            IF (FoundError(assign_string(self%Mvname, 'mask_u'),        &
      &                     NoError, __LINE__, MyFile)) RETURN
+#endif
             IF (spherical) THEN
               IF (FoundError(assign_string(self%Xvname, 'lon_u'),       &
      &                       NoError, __LINE__, MyFile)) RETURN
@@ -630,8 +640,10 @@
 !
             IF (FoundError(assign_string(self%Avname, 'angle'),         &
      &                     NoError, __LINE__, MyFile)) RETURN
+#ifdef MASKING
             IF (FoundError(assign_string(self%Mvname, 'mask_v'),        &
      &                     NoError, __LINE__, MyFile)) RETURN
+#endif
             IF (spherical) THEN
               IF (FoundError(assign_string(self%Xvname, 'lon_v'),       &
      &                       NoError, __LINE__, MyFile)) RETURN
@@ -658,7 +670,7 @@
 
         IF (.not.allocated(self%Msrc))                                  &
           allocate ( self%Msrc(LBi:UBi, LBj:UBj) )
-        self%Msrc = 0.0_r8
+        self%Msrc = 1.0_r8                           ! no land mask
 
         IF (.not.allocated(self%Xsrc))                                  &
           allocate ( self%Xsrc(LBi:UBi, LBj:UBj) )
@@ -709,6 +721,8 @@
           END IF
           IF (allocated(wrk)) deallocate (wrk)
         END IF
+
+#ifdef MASKING
 !
         IF (find_string(var_name, n_var, self%Mvname, ivar)) THEN
           CALL netcdf_get_fvar (ng, kernel, self%ncname,                &
@@ -718,6 +732,7 @@
      &                          total = total)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
+#endif
 !
         IF (find_string(var_name, n_var, self%Xvname, ivar)) THEN
           CALL netcdf_get_fvar (ng, kernel, self%ncname,                &
@@ -872,8 +887,10 @@
 !
             IF (FoundError(assign_string(self%Avname, 'angle'),         &
      &                     NoError, __LINE__, MyFile)) RETURN
+# ifdef MASKING
             IF (FoundError(assign_string(self%Mvname, 'mask_rho'),      &
      &                     NoError, __LINE__, MyFile)) RETURN
+# endif
             IF (spherical) THEN
               IF (FoundError(assign_string(self%Xvname, 'lon_rho'),     &
      &                       NoError, __LINE__, MyFile)) RETURN
@@ -915,8 +932,10 @@
 !
             IF (FoundError(assign_string(self%Avname, 'angle'),         &
      &                     NoError, __LINE__, MyFile)) RETURN
+# ifdef MASKING
             IF (FoundError(assign_string(self%Mvname, 'mask_u'),        &
      &                     NoError, __LINE__, MyFile)) RETURN
+# endif
             IF (spherical) THEN
               IF (FoundError(assign_string(self%Xvname, 'lon_u'),       &
      &                       NoError, __LINE__, MyFile)) RETURN
@@ -958,8 +977,10 @@
 !
             IF (FoundError(assign_string(self%Avname, 'angle'),         &
      &                     NoError, __LINE__, MyFile)) RETURN
+#ifdef MASKING
             IF (FoundError(assign_string(self%Mvname, 'mask_v'),        &
      &                     NoError, __LINE__, MyFile)) RETURN
+#endif
             IF (spherical) THEN
               IF (FoundError(assign_string(self%Xvname, 'lon_v'),       &
      &                       NoError, __LINE__, MyFile)) RETURN
@@ -986,7 +1007,7 @@
 
         IF (.not.allocated(self%Msrc))                                  &
           allocate ( self%Msrc(LBi:UBi, LBj:UBj) )
-        self%Msrc = 0.0_r8
+        self%Msrc = 1.0_r8                           ! no land mask
 
         IF (.not.allocated(self%Xsrc))                                  &
           allocate ( self%Xsrc(LBi:UBi, LBj:UBj) )
@@ -1034,6 +1055,8 @@
             END DO
           END IF
         END IF
+
+# ifdef MASKING
 !
         IF (find_string(var_name, n_var, self%Mvname, ivar)) THEN
           CALL pio_netcdf_get_fvar (ng, kernel, self%ncname,            &
@@ -1043,6 +1066,7 @@
      &                              total = total)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
+# endif
 !
         IF (find_string(var_name, n_var, self%Xvname, ivar)) THEN
           CALL pio_netcdf_get_fvar (ng, kernel, self%ncname,            &
