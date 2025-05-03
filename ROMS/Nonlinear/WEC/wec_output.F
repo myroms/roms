@@ -3640,7 +3640,7 @@
 #   ifdef MASKING
      &                       GRID(ng) % umask,                          &
 #   endif
-     &                       MIXING(ng) % rustr2d
+     &                       MIXING(ng) % rustr2d)
 #   ifdef AVERAGES
         ELSE
           status=nf_fwrite2d(ng, model, S(ng)%pioFile, idU2rs,          &
@@ -3928,7 +3928,7 @@
           ioDesc => ioDesc_sp_v3dvar(ng)
         END IF
         IF (Linstataneous) THEN
-          status=nf_fwrite2d(ng, model, S(ng)%pioFile, idV3Sd,          &
+          status=nf_fwrite3d(ng, model, S(ng)%pioFile, idV3Sd,          &
      &                       S(ng)%pioVar(idV3Sd),                      &
      &                       S(ng)%Rindex,                              &
      &                       ioDesc,                                    &
@@ -3939,7 +3939,7 @@
      &                       OCEAN(ng) % v_stokes)
 #    ifdef AVERAGES
         ELSE
-          status=nf_fwrite2d(ng, model, S(ng)%pioFile, idV3Sd,          &
+          status=nf_fwrite3d(ng, model, S(ng)%pioFile, idV3Sd,          &
      &                       S(ng)%pioVar(idV3Sd),                      &
      &                       S(ng)%Rindex,                              &
      &                       ioDesc,                                    &
@@ -4464,7 +4464,7 @@
      &                                pgrd, rgrd)
 !***********************************************************************
 !
-      USE mod_netcdf
+      USE mod_pio_netcdf
 !
 !  Imported variable declarations.
 !
@@ -5028,6 +5028,8 @@
             S(ng)%pioVar(idWrol)%dkind=PIO_FOUT
             S(ng)%pioVar(idWrol)%gtype=0
 #   endif
+          END IF
+        END DO
 !
 !  Check if station variables are available in input NetCDF file.
 !
@@ -5164,6 +5166,7 @@
           RETURN
         END IF
 #   endif
+      END IF QUERY
 !
   10  FORMAT (/,' WEC_DEF_STATION_PIO - unable to find variable: ',     &
      &        a,2x,' in stations NetCDF file: ',a)
