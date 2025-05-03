@@ -2303,6 +2303,14 @@
                   Hout(itrc,ng)=Linert(i,ng)
                 END DO
               END DO
+            CASE ('Hout(Znert)')
+              Npts=load_l(Nval, Cval, NPT, Ngrids, Linert)
+              DO ng=1,Ngrids
+                DO i=1,NPT
+                  itrc=idzslT(inert(i))
+                  Hout(itrc,ng)=Linert(i,ng)
+                END DO
+              END DO
 #endif
             CASE ('Qout(idUvel)')
               Npts=load_l(Nval, Cval, Ngrids, Lswitch)
@@ -2744,6 +2752,14 @@
               DO ng=1,Ngrids
                 DO i=1,NPT
                   itrc=idTvar(inert(i))
+                  Qout(itrc,ng)=Linert(i,ng)
+                END DO
+              END DO
+            CASE ('Qout(Znert)')
+              Npts=load_l(Nval, Cval, NPT, Ngrids, Linert)
+              DO ng=1,Ngrids
+                DO i=1,NPT
+                  itrc=idzslT(inert(i))
                   Qout(itrc,ng)=Linert(i,ng)
                 END DO
               END DO
@@ -6355,6 +6371,12 @@
      &            'Write out inert passive tracer ', itrc,              &
      &            TRIM(Vname(1,idTvar(inert(itrc))))
             END DO
+            DO itrc=1,NPT
+              IF (Hout(idzslT(inert(itrc)),ng)) WRITE (out,180)         &
+     &            Hout(idzslT(inert(itrc)),ng), 'Hout(ZnerT)',          &
+     &            'Write out depth slices inert passive tracer ', itrc, &
+     &            TRIM(Vname(1,idTvar(inert(itrc))))
+            END DO
 #endif
 #ifdef SOLVE3D
 # if defined BULK_FLUXES || defined ECOSIM || defined ATM_PRESS
@@ -6738,6 +6760,12 @@
               IF (Qout(idTvar(inert(itrc)),ng)) WRITE (out,180)         &
      &            Qout(idTvar(inert(itrc)),ng), 'Qout(inert)',          &
      &            'Write out inert passive tracer ', itrc,              &
+     &            TRIM(Vname(1,idTvar(inert(itrc))))
+            END DO
+            DO itrc=1,NPT
+              IF (Qout(idzslT(inert(itrc)),ng)) WRITE (out,180)         &
+     &            Qout(idzslT(inert(itrc)),ng), 'Qout(Znert)',          &
+     &            'Write out depth slices inert passive tracer ', itrc, &
      &            TRIM(Vname(1,idTvar(inert(itrc))))
             END DO
             DO itrc=1,NPT

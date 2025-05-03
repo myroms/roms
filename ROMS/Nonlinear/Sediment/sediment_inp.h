@@ -1448,7 +1448,7 @@
                 i=idzslT(idsed(itrc))
                 IF (Hout(i,ng)) WRITE (out,160) Hout(i,ng),             &
      &              'Hout(idzslT)',                                     &
-     &              'Write out sediment depth slice', itrc,             &
+     &              'Write out depth slices sediment ', itrc,           &
      &              TRIM(Vname(1,i))
               END DO
               DO itrc=1,NST
@@ -1510,7 +1510,7 @@
                 i=idzslT(idsed(itrc))
                 IF (Qout(i,ng)) WRITE (out,160) Qout(i,ng),             &
      &              'Qout(idzslT)',                                     &
-     &              'Write out sediment depth slice', itrc,             &
+     &              'Write out depth slices sediment ', itrc,           &
      &              TRIM(Vname(1,i))
               END DO
               DO itrc=1,NST
@@ -1751,4 +1751,3 @@
 
       RETURN
       END SUBROUTINE read_SedPar
-

@@ -179,7 +179,16 @@ ad_LBC(isTvar) ==   Gra     Gra     Gra     Clo     ! idbio(1), dissolved oxygen
 ! into HISTORY output files: [1:NBT,Ngrids].
 
 Hout(idTvar) == T       ! ..., oxygen               biological tracer
+Hout(idzslT) == F       ! ..., oxygen_slice         constant depth slices
 Hout(idTsur) == F       ! ..., oxygen_sflux         surface tracer flux
+
+! Logical switches (TRUE/FALSE) to activate writing of biological fields
+! into QUICKSAVE output file: [1:NBT,Ngrids].
+
+Qout(idTvar) == F       ! ..., oxygen               biological tracer
+Qout(idzslT) == F       ! ..., oxygen_slice         constant depth slices
+Qout(idsurT) == F       ! ..., oxygen_sur           surface biological tracer
+Qout(idTsur) == F       ! ..., oxygen_sflux         surface tracer flux
 
 ! Logical switches (TRUE/FALSE) to activate writing of time-averaged fields
 ! into AVERAGE output file: [1:NBT,Ngrids].
@@ -537,7 +546,23 @@ Dout(iTvdif) == T       ! ..., oxygen_vdiff         vertical diffusion
 !                   are expected:
 !
 !                   Hout(idTvar)              biological tracers
+!                   Hout(idzslT)              constant depth slices
 !                   Hout(idTsur)              biological tracers surface flux
+!
+!                   idTvar(idbio(1))=iDino    Dinoflagellate concentration
+!
+!------------------------------------------------------------------------------
+! Logical switches (T/F) to activate writing of fields into QUICKSAVE file.
+!------------------------------------------------------------------------------
+!
+!  Qout           Logical switches to write out biological fields into
+!                   output QUICKSAVE NetCDF file, [1:NBT,1:Ngrids] values
+!                   are expected:
+!
+!                   Qout(idTvar)              biological tracers
+!                   Qout(idzslT)              constant depth slices
+!                   Qout(idsurT)              surface biological tracers
+!                   Qout(idTsur)              biological tracers surface flux
 !
 !                   idTvar(idbio(1))=iDino    Dinoflagellate concentration
 !

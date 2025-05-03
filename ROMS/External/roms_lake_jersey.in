@@ -675,6 +675,7 @@ Hout(idMtls) == F       ! gls                turbulent length scale
 ! switches can be activated using compact parameter specification.
 
  Hout(inert) == T       ! dye_01, ...        inert passive tracers
+ Hout(Znert) == F       ! dye_01_slice, ...  inert tracer constant depth slices
 
 ! Logical switches (TRUE/FALSE) to activate writing of fields into
 ! QUICKSAVE output file.
@@ -801,6 +802,7 @@ Qout(idMtls) == F       ! gls                turbulent length scale
 ! switches can be activated using compact parameter specification.
 
  Qout(inert) == F       ! dye_01, ...        inert passive tracers
+ Qout(Znert) == F       ! dye_01_slice, ...  inert tracer constant depth slices
  Qout(Snert) == F       ! dye_01_sur, ...    surface inert passive tracers
 
 ! Logical switches (TRUE/FALSE) to activate writing of time-averaged
@@ -2793,7 +2795,8 @@ PIO_I2C_Preq = 65                 ! Maximum pending I2C requests
 ! Hout(idMtke)   Write out turbulent kinetic energy.
 ! Hout(idMtls)   Write out turbulent kinetic energy times length scale.
 !
-! Hout(inert)    Write out extra inert passive tracers.
+! Hout(inert)    Write out inert passive tracers.
+! Hout(Znert)    Write out inert passive tracers constant depth slices.
 !
 !------------------------------------------------------------------------------
 ! Logical switches (T/F) to activate writing of instantaneous fields into
@@ -2914,6 +2917,7 @@ PIO_I2C_Preq = 65                 ! Maximum pending I2C requests
 ! Qout(idMtls)   Write out turbulent kinetic energy times length scale.
 !
 ! Qout(inert)    Write out inert passive tracers.
+! Qout(Znert)    Write out inert passive tracers constant depth slices.
 ! Qout(Snert)    Write out surface inert passive tracers.
 !
 !------------------------------------------------------------------------------

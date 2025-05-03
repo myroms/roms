@@ -655,12 +655,14 @@ ad_LBC(isTvar) ==   Per     Per     Per     Per      ! idbio(:), compact
 ! file, [NBT,Ngrids] values are expected.
 
   Hout(idTvar) == 61*T   ! ..., DIC, ...           biological tracer
+  Hout(idzslT) == 61*F   ! ..., DIC_slice, ...     constant depth slices
   Hout(idTsur) == 61*F   ! ..., DIC_sflux, ...     surface tracer flux
 
 ! Logical switches (TRUE/FALSE) to write biological fields into QUICKSAVE
 ! output file, [NBT,Ngrids] values are expected.
 
   Qout(idTvar) == 61*F   ! ..., DIC, ...           biological tracer
+  Qout(idzslT) == 61*F   ! ..., DIC_slice, ...     constant depth slices
   Qout(idsurT) == 61*F   ! ..., DIC_sur, ...       surface bological tracer
   Qout(idTsur) == 61*F   ! ..., DIC_sflux, ...     surface tracer flux
 
@@ -1445,10 +1447,11 @@ ad_LBC(isTvar) ==   Per     Per     Per     Per      ! idbio(:), compact
 !                     are expected:
 !
 !                     Hout(idTvar)      biological tracers
+!                     Hout(idzslT)      constant depth slices
 !                     Hout(idTsur)      biological tracers surface flux
 !
-!                     The idTvar(idbio(:)) and idTsur(idbio(:)) indices are
-!                     provided above.
+!                     The idTvar(idbio(:)), idzslT(idbio(:)), and
+!                     idTsur(idbio(:)) indices are provided above.
 !
 !------------------------------------------------------------------------------
 ! Logical switches (T/F) to activate writing of fields into QUICKSAVE file.
@@ -1459,10 +1462,11 @@ ad_LBC(isTvar) ==   Per     Per     Per     Per      ! idbio(:), compact
 !                     are expected:
 !
 !                     Qout(idTvar)      biological tracers
+!                     Hout(idzslT)      constant depth slices
 !                     Qout(idsurT)      surface biological tracers
 !                     Qout(idTsur)      biological tracers surface flux
 !
-!                     The idTvar(idbio(:)), idsurR(idbio(:)), and
+!                     The idTvar(idbio(:)), idzslT(idbio(:)), and
 !                     idTsur(idbio(:)) indices are provided above.
 !
 !------------------------------------------------------------------------------
