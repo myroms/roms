@@ -2524,7 +2524,7 @@
      &                     RST(ng)%pioVar(idV3Sd),                      &
      &                     RST(ng)%Rindex,                              &
      &                     ioDesc,                                      &
-&     &                    LBi, UBi, LBj, UBj, 1, N(ng), scale,         &
+     &                     LBi, UBi, LBj, UBj, 1, N(ng), scale,         &
 #   ifdef MASKING
      &                     GRID(ng) % vmask,                            &
 #   endif
