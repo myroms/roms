@@ -5076,8 +5076,9 @@
 #endif
 #ifdef GIT_URL
      &                 TRIM(git_url), TRIM(git_rev),                    &
-#endif
+#else
      &                 TRIM(svn_url), TRIM(svn_rev),                    &
+#endif
      &                 TRIM(Rdir), TRIM(Hdir), TRIM(Hfile), TRIM(Adir)
 !
         DO ng=1,Ngrids
@@ -8190,9 +8191,10 @@
 #ifdef GIT_URL
      &        /,1x,'GIT Root URL      : ',a,                            &
      &        /,1x,'GIT Revision      : ',a,                            &
-#endif
+#else
      &        /,1x,'SVN Root URL      : ',a,                            &
      &        /,1x,'SVN Revision      : ',a,/,                          &
+#endif
      &        /,1x,'Local Root        : ',a,                            &
      &        /,1x,'Header Dir        : ',a,                            &
      &        /,1x,'Header file       : ',a,                            &
