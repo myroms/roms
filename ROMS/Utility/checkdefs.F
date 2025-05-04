@@ -564,13 +564,6 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+18)=' ASYNCHRONOUS_PIO,'
 #endif
-#if defined ASYNCHRONOUS_SCORPIO && defined PIO_LIB && defined DISTRIBUTE
-!
-      IF (Master) WRITE (stdout,20) 'ASYNCHRONOUS_SCORPIO',             &
-     &   'SCORPIO library with disjointed dedicated I/O processes'
-      is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+22)=' ASYNCHRONOUS_SCORPIO,'
-#endif
 #ifdef ATM_PRESS
 !
       IF (Master) WRITE (stdout,20) 'ATM_PRESS',                        &

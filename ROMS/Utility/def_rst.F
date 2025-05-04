@@ -3654,7 +3654,7 @@
         Vinfo(14)=Vname(4,idV2Sd)
         Vinfo(16)=Vname(1,idtime)
 #  if defined WRITE_WATER && defined MASKING
-        Vinfo(20)='mask_u'
+        Vinfo(20)='mask_v'
 #  endif
         Vinfo(21)=Vname(6,idV2Sd)
         Vinfo(22)='coordinates'
@@ -3664,7 +3664,7 @@
 !
         status=def_var(ng, model, RST(ng)%pioFile,                      &
      &                 RST(ng)%pioVar(idV2Sd)%vd,                       &
-     &                 PIO_FRST, nvd3, u2dgrd, Aval, Vinfo, ncname)
+     &                 PIO_FRST, nvd3, v2dgrd, Aval, Vinfo, ncname)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
 #  ifdef SOLVE3D
@@ -3710,7 +3710,6 @@
      &                 RST(ng)%pioVar(idV3Sd)%vd,                       &
      &                 PIO_FRST, nvd4, v3dgrd, Aval, Vinfo, ncname)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
 #  endif
 # endif
 # ifdef ICE_MODEL
