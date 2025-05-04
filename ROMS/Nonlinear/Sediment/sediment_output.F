@@ -1613,7 +1613,7 @@
 !***********************************************************************
       SUBROUTINE sediment_def_pio (ng, model, ldef, VarOut, S,          &
      &                             t2dgrd, u2dgrd, v2dgrd,              &
-     &                             t3dgrd, u3dgrd, v3dgrd, w3dgrd)
+     &                             b3dgrd)
 !***********************************************************************
 !
       USE mod_pio_netcdf
@@ -1624,8 +1624,7 @@
 !
       integer, intent(in) :: ng, model
       integer, intent(in), optional :: t2dgrd(:), u2dgrd(:), v2dgrd(:)
-      integer, intent(in), optional :: t3dgrd(:), u3dgrd(:), v3dgrd(:)
-      integer, intent(in), optional :: w3dgrd(:)
+      integer, intent(in), optional :: b3dgrd(:)
 !
       TYPE(T_IO), intent(inout) :: S(Ngrids)
 !
@@ -2169,6 +2168,7 @@
             S(ng)%pioVar(idsttr)%dkind=PIO_FOUT
             S(ng)%pioVar(idsttr)%gtype=r2dvar
 #  endif
+          END IF
 #  ifdef SEDIMENT
           DO itrc=1,NST
             IF (TRIM(var_name(i)).eq.                                   &
@@ -2359,7 +2359,7 @@
 !
       logical :: Linstataneous
 !
-      integer :: status
+      integer :: i, status
 !
       real(dp) :: scale
 !
@@ -2839,7 +2839,7 @@
      &        a,"', time record = ",i0,/,11x,'into file: ',a)
 !
       RETURN
-      END SUBROUTINE sediement_wrt_pio
+      END SUBROUTINE sediment_wrt_pio
 
 #  ifdef STATIONS
 !
@@ -2848,7 +2848,7 @@
      &                                     bgrd, pgrd, rgrd)
 !***********************************************************************
 !
-      USE mod_netcdf
+      USE mod_pio_netcdf
 !
 !  Imported variable declarations.
 !
@@ -3127,6 +3127,8 @@
           END IF
         END DO
 #   endif
+
+      END IF QUERY
 !
   10  FORMAT (1pe11.4,1x,'millimeter')
   20  FORMAT (/,' SEDIMENT_DEF_STATION_PIO - unable to find variable:', &

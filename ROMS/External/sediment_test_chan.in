@@ -286,6 +286,7 @@ SAND_MORPH_FAC == 1.0d0                         ! nondimensional
 ! sediment fields into HISTORY output file.
 
 Hout(idsand) == T       ! sand_01, ...            suspended concentration
+Hout(idSzsl) == F       ! sand_01_slice, ...      suspended depth slices
 Hout(iSfrac) == T       ! sandfrac_01, ...        bed layer fraction
 Hout(iSmass) == T       ! sandmass_01, ...        bed layer mass
 Hout(iSUbld) == T       ! bedload_Usand_01, ...   bed load at U-points
@@ -295,6 +296,7 @@ Hout(iSVbld) == T       ! bedload_Vsand_01, ...   bed load at V-points
 ! sediment fields into QUICKSAVE output file.
 
 Qout(idsand) == F       ! sand_01, ...            suspended concentration
+Qout(idSzsl) == F       ! sand_01_slice, ...      suspended depth slices
 Qout(iSsand) == F       ! sand_01_sur, ...        surface concentration
 Qout(iSfrac) == F       ! sandfrac_01, ...        bed layer fraction
 Qout(iSmass) == F       ! sandmass_01, ...        bed layer mass
@@ -417,6 +419,7 @@ MUD_MORPH_FAC == 1.0d0 1.0d0                    ! nondimensional
 ! fields into HISTORY output file.
 
 Hout(idmud)  == T       ! mud_01, ...             suspended concentration
+Hout(idMzsl) == F       ! mud_01_slice, ...       suspended depth slices
 Hout(iMfrac) == T       ! mudfrac_01, ...         bed layer fraction
 Hout(iMmass) == T       ! mudmass_01, ...         bed layer mass
 Hout(iMUbld) == T       ! bedload_Umud_01, ...    bed load at U-points
@@ -426,6 +429,7 @@ Hout(iMVbld) == T       ! bedload_Vmud_01, ...    bed load at V-points
 ! fields into QUICKSAVE output file.
 
 Qout(idmud)  == F       ! mud_01, ...             suspended concentration
+Qout(idMzsl) == F       ! mud_01_slice, ...       suspended depth slices
 Qout(iSmud)  == F       ! mud_01_sur, ...         surface concentration
 Qout(iMfrac) == F       ! mudfrac_01, ...         bed layer fraction
 Qout(iMmass) == F       ! mudmass_01, ...         bed layer mass
@@ -479,7 +483,7 @@ Dout(MTvdif) == T       ! mud_01_vdiff, ...       vertical diffusion
 !                    such grids.
 !
 !------------------------------------------------------------------------------
-! Tracer advection scheme
+! Tracer advection scheme.
 !------------------------------------------------------------------------------
 !
 ! It is more advantageous to set the horizontal and vertical advection schemes
@@ -880,6 +884,10 @@ Dout(MTvdif) == T       ! mud_01_vdiff, ...       vertical diffusion
 !                    sediment concentration into HISTORY NetCDF file,
 !                    Hout(idTvar(idsed(i))) with i=1:NCS+1,NST.
 !
+!  Hout(idSzsl)    Logical switches to activate writing of non-cohesive
+!                    sediment concentration depth slices into HISTORY NetCDF
+!                    file, Hout(idzslT(idsed(i))) with i=1:NCS+1,NST.
+!
 !  Hout(iSfrac)    Logical switches to activate writing of non-cohesive
 !                    sediment class fraction composition of each bed layer
 !                    into HISTORY NetCDF file, Hout(idfrac(i)) with
@@ -900,6 +908,10 @@ Dout(MTvdif) == T       ! mud_01_vdiff, ...       vertical diffusion
 !  Qout(idsand)    Logical switches to activate writing of non-cohesive
 !                    sediment concentration into QUICKSAVE NetCDF file,
 !                    Qout(idTvar(idsed(i))) with i=1:NCS+1,NST.
+!
+!  Qout(idSzsl)    Logical switches to activate writing of non-cohesive
+!                    sediment concentration depth slices into QUICKSAVE
+!                    NetCDF file, Qout(idzslT(idsed(i))) with i=1:NCS+1,NST.
 !
 !  Qout(iSfrac)    Logical switches to activate writing of non-cohesive
 !                    sediment class fraction composition of each bed layer
@@ -1099,6 +1111,10 @@ Dout(MTvdif) == T       ! mud_01_vdiff, ...       vertical diffusion
 !                    concentration into HISTORY NetCDF file,
 !                    Hout(idTvar(idsed(i))) with i=1:NCS.
 !
+!  Hout(idMzsl)    Logical switches to activate writing of cohesive sediment
+!                    concentration depth slices into HISTORY NetCDF file,
+!                    Hout(idzslT(idsed(i))) with i=1:NCS.
+!
 !  Hout(iMfrac)    Logical switches to activate writing of cohesive sediment
 !                    class fraction composition of each bed layer into HISTORY
 !                    NetCDF file, Hout(idfrac(i)) with i=1,NCS.
@@ -1118,6 +1134,10 @@ Dout(MTvdif) == T       ! mud_01_vdiff, ...       vertical diffusion
 !  Qout(idmud)     Logical switches to activate writing of cohesive sediment
 !                    concentration into QUICKSAVE NetCDF file,
 !                    Qout(idTvar(idsed(i))) with i=1:NCS.
+!
+!  Qout(idMzsl)    Logical switches to activate writing of cohesive sediment
+!                    concentration depth slices into QUICKSAVE NetCDF file,
+!                    Qout(idzslT(idsed(i))) with i=1:NCS.
 !
 !  Qout(iMfrac)    Logical switches to activate writing of cohesive sediment
 !                    class fraction composition of each bed layer into

@@ -3963,6 +3963,7 @@
             S(ng)%pioVar(idWvqp)%dkind=PIO_FOUT
             S(ng)%pioVar(idWvqp)%gtype=r2dvar
 #  endif
+          END IF
         END DO
 !
 !  Check if output variables are available in input NetCDF file.
@@ -5194,7 +5195,7 @@
      &        a,"', time record = ",i0,/,11x,'into file: ',a)
 !
       RETURN
-      END SUBROUTINE sediement_wrt_pio
+      END SUBROUTINE bbl_wrt_pio
 
 #  ifdef STATIONS
 !
@@ -5203,7 +5204,7 @@
      &                                pgrd, rgrd)
 !***********************************************************************
 !
-      USE mod_netcdf
+      USE mod_pio_netcdf
 !
 !  Imported variable declarations.
 !
@@ -5939,6 +5940,7 @@
           RETURN
         END IF
 #   endif
+      END IF QUERY
 !
   10  FORMAT (/,' BBL_DEF_STATION_PIO - unable to find variable: ',     &
      &        a,2x,' in stations NetCDF file: ',a)
