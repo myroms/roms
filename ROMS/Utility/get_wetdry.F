@@ -389,8 +389,8 @@
 !
 !  Inquire about the variables.
 !
-      CALL netcdf_inq_var (ng, model, ncname,                           &
-     &                     pioFile = INI(ng)%pioFile)
+      CALL pio_netcdf_inq_var (ng, model, ncname,                       &
+     &                         pioFile = INI(ng)%pioFile)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !-----------------------------------------------------------------------
@@ -442,7 +442,7 @@
 !
 !  Read in wet/dry mask at PSI-points.
 !
-      pioVar%vd => var_desc(index_pmask)
+      pioVar%vd=var_desc(index_pmask)
       IF (KIND(GRID(ng)%pmask_wet).eq.8) THEN
         pioVar%dkind=PIO_double
         ioDesc => ioDesc_dp_p2dvar(ng)
@@ -474,7 +474,7 @@
 !
 !  Read in wet/dry mask at RHO-points.
 !
-      pioVar%vd => var_desc(index_rmask)
+      pioVar%vd=var_desc(index_rmask)
       IF (KIND(GRID(ng)%rmask_wet).eq.8) THEN
         pioVar%dkind=PIO_double
         ioDesc => ioDesc_dp_r2dvar(ng)
@@ -506,7 +506,7 @@
 !
 !  Read in wet/dry mask at U-points.
 !
-      pioVar%vd => var_desc(index_umask)
+      pioVar%vd=var_desc(index_umask)
       IF (KIND(GRID(ng)%umask_wet).eq.8) THEN
         pioVar%dkind=PIO_double
         ioDesc => ioDesc_dp_u2dvar(ng)
@@ -538,7 +538,7 @@
 !
 !  Read in wet/dry mask at V-points.
 !
-      pioVar%vd => var_desc(index_vmask)
+      pioVar%vd=var_desc(index_vmask)
       IF (KIND(GRID(ng)%vmask_wet).eq.8) THEN
         pioVar%dkind=PIO_double
         ioDesc => ioDesc_dp_v2dvar(ng)
@@ -609,4 +609,3 @@
 # endif
 #endif
       END MODULE get_wetdry_mod
-

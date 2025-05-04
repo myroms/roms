@@ -5481,7 +5481,8 @@
 !-----------------------------------------------------------------------
 !
         CALL sediment_def_pio (ng, model, ldef, Hout, HIS,              &
-     &                         t2dgrd, u2dgrd, v2dgrd)
+     &                         t2dgrd, u2dgrd, v2dgrd,                  &
+     &                         b3dgrd)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 # endif
 

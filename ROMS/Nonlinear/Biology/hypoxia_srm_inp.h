@@ -246,6 +246,20 @@
                   Hout(i,ng)=Ltrc(itrc,ng)
                 END DO
               END DO
+            CASE ('Hout(idzslT)')
+              Npts=load_l(Nval, Cval, NBT, Ngrids, Ltrc)
+              DO ng=1,Ngrids
+                DO itrc=1,NBT
+                  i=idzslT(idbio(itrc))
+                  IF (i.eq.0) THEN
+                    IF (Master) WRITE (out,30)                          &
+     &                                'idzslT(idbio(', itrc, '))'
+                    exit_flag=5
+                    RETURN
+                  END IF
+                  Hout(i,ng)=Ltrc(itrc,ng)
+                END DO
+              END DO
             CASE ('Hout(idTsur)')
               Npts=load_l(Nval, Cval, NBT, Ngrids, Ltrc)
               DO ng=1,Ngrids
@@ -265,6 +279,14 @@
               DO ng=1,Ngrids
                 DO itrc=1,NBT
                   i=idTvar(idbio(itrc))
+                  Qout(i,ng)=Ltrc(itrc,ng)
+                END DO
+              END DO
+            CASE ('Qout(idzslT)')
+              Npts=load_l(Nval, Cval, NBT, Ngrids, Ltrc)
+              DO ng=1,Ngrids
+                DO itrc=1,NBT
+                  i=idzslT(idbio(itrc))
                   Qout(i,ng)=Ltrc(itrc,ng)
                 END DO
               END DO
@@ -570,6 +592,13 @@
               END DO
               DO itrc=1,NBT
                 i=idbio(itrc)
+                IF (Hout(idzslT(i),ng)) WRITE (out,110)                 &
+     &              Hout(idzslT(i),ng), 'Hout(idzslT)',                 &
+     &              'Write out depth slices tracer ', i,                &
+     &              TRIM(Vname(1,idTvar(i)))
+              END DO
+              DO itrc=1,NBT
+                i=idbio(itrc)
                 IF (Hout(idTsur(i),ng)) WRITE (out,110)                 &
      &              Hout(idTsur(i),ng), 'Hout(idTsur)',                 &
      &              'Write out tracer flux ', i,                        &
@@ -583,6 +612,13 @@
                 IF (Qout(idTvar(i),ng)) WRITE (out,110)                 &
      &              Qout(idTvar(i),ng), 'Qout(idTvar)',                 &
      &              'Write out tracer ', i, TRIM(Vname(1,idTvar(i)))
+              END DO
+              DO itrc=1,NBT
+                i=idbio(itrc)
+                IF (Qout(idzslT(i),ng)) WRITE (out,110)                 &
+     &              Qout(idzslT(i),ng), 'Qout(idzslT)',                 &
+     &              'Write out depth slices tracer ', i,                &
+     &              TRIM(Vname(1,idTvar(i)))
               END DO
               DO itrc=1,NBT
                 i=idbio(itrc)

@@ -3204,7 +3204,7 @@
 !  Scan sediment model variables from input NetCDF and activate
 !  switches for station variables. Get variable IDs.
 !
-        CALL sediment_def_pio (ng, model, ldef, Sout, STA)
+        CALL sediment_def_station_pio (ng, model, ldef, Sout, STA)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #  endif
 

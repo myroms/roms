@@ -1,4 +1,4 @@
-      SUBROUTINE read_SedPar (model, inp, out, Lwrite)
+     SUBROUTINE read_SedPar (model, inp, out, Lwrite)
 !
 !git $Id$
 !=======================================================================
@@ -177,40 +177,88 @@
 #endif
             CASE ('SG_ZWBL')
               Npts=load_r(Nval, Rval, Ngrids, Rbed)
-                DO ng=1,Ngrids
-                  sg_zwbl(ng)=Rbed(ng)
+              DO ng=1,Ngrids
+                sg_zwbl(ng)=Rbed(ng)
+              END DO
+            CASE ('MUD_Ltclm')
+              Npts=load_l(Nval, Cval, NCS, Ngrids, Lmud)
+              DO ng=1,Ngrids
+                DO itrc=1,NCS
+                  i=idsed(itrc)
+                  LtracerCLM(i,ng)=Lmud(itrc,ng)
                 END DO
+              END DO
+            CASE ('MUD_Tnudge')
+              Npts=load_l(Nval, Cval, NCS, Ngrids, Lmud)
+              DO ng=1,Ngrids
+                DO itrc=1,NCS
+                  i=idsed(itrc)
+                  LnudgeTCLM(i,ng)=Lmud(itrc,ng)
+                END DO
+              END DO
+            CASE ('Hout(idmud)')
+              Npts=load_l(Nval, Cval, NCS, Ngrids, Lmud)
+              DO ng=1,Ngrids
+                DO itrc=1,NCS
+                  i=idTvar(idsed(itrc))
+                  Hout(i,ng)=Lmud(itrc,ng)
+                END DO
+              END DO
+            CASE ('Hout(idMzsl)')
+              Npts=load_l(Nval, Cval, NCS, Ngrids, Lmud)
+              DO ng=1,Ngrids
+                DO itrc=1,NCS
+                  i=idzslT(idsed(itrc))
+                  Hout(i,ng)=Lmud(itrc,ng)
+                END DO
+              END DO
+            CASE ('Hout(iMfrac)')
+              Npts=load_l(Nval, Cval, NCS, Ngrids, Lmud)
+              DO ng=1,Ngrids
+                DO itrc=1,NCS
+                  i=idfrac(itrc)
+                  Hout(i,ng)=Lmud(itrc,ng)
+                END DO
+              END DO
+            CASE ('Hout(iMmass)')
+              Npts=load_l(Nval, Cval, NCS, Ngrids, Lmud)
+              DO ng=1,Ngrids
+                DO itrc=1,NCS
+                  i=idBmas(itrc)
+                  Hout(i,ng)=Lmud(itrc,ng)
+                END DO
+              END DO
 #ifdef BEDLOAD
             CASE ('SEDSLOPE_CRIT_WET')
               Npts=load_r(Nval, Rval, Ngrids, Rbed)
-                DO ng=1,Ngrids
-                  sedslope_crit_wet(ng)=Rbed(ng)
-                END DO
+              DO ng=1,Ngrids
+                sedslope_crit_wet(ng)=Rbed(ng)
+              END DO
             CASE ('SEDSLOPE_CRIT_DRY')
               Npts=load_r(Nval, Rval, Ngrids, Rbed)
-                DO ng=1,Ngrids
-                  sedslope_crit_dry(ng)=Rbed(ng)
-                END DO
+              DO ng=1,Ngrids
+                sedslope_crit_dry(ng)=Rbed(ng)
+              END DO
             CASE ('SLOPEFAC_WET')
               Npts=load_r(Nval, Rval, Ngrids, Rbed)
-                DO ng=1,Ngrids
-                  slopefac_wet(ng)=Rbed(ng)
-                END DO
+              DO ng=1,Ngrids
+                slopefac_wet(ng)=Rbed(ng)
+              END DO
             CASE ('SLOPEFAC_DRY')
               Npts=load_r(Nval, Rval, Ngrids, Rbed)
-                DO ng=1,Ngrids
-                  slopefac_dry(ng)=Rbed(ng)
-                END DO
+              DO ng=1,Ngrids
+                slopefac_dry(ng)=Rbed(ng)
+              END DO
             CASE ('BEDLOAD_VANDERA_ALPHAW')
               Npts=load_r(Nval, Rval, Ngrids, Rbed)
-                DO ng=1,Ngrids
-                  bedload_vandera_alphaw(ng)=Rbed(ng)
-                END DO
+              DO ng=1,Ngrids
+                bedload_vandera_alphaw(ng)=Rbed(ng)
+              END DO
             CASE ('BEDLOAD_VANDERA_ALPHAC')
               Npts=load_r(Nval, Rval, Ngrids, Rbed)
-                DO ng=1,Ngrids
-                  bedload_vandera_alphac(ng)=Rbed(ng)
-                END DO
+              DO ng=1,Ngrids
+                bedload_vandera_alphac(ng)=Rbed(ng)
+              END DO
 #endif
             CASE ('Hout(ithck)')
               Npts=load_l(Nval, Cval, Ngrids, Lbed)
@@ -699,6 +747,14 @@
                   Hout(i,ng)=Lsand(itrc,ng)
                 END DO
               END DO
+            CASE ('Hout(idSzsl)')
+              Npts=load_l(Nval, Cval, NNS, Ngrids, Lsand)
+              DO ng=1,Ngrids
+                DO itrc=1,NNS
+                  i=idzslT(idsed(NCS+itrc))
+                  Hout(i,ng)=Lsand(itrc,ng)
+                END DO
+              END DO
             CASE ('Hout(iSfrac)')
               Npts=load_l(Nval, Cval, NNS, Ngrids, Lsand)
               DO ng=1,Ngrids
@@ -756,6 +812,14 @@
               DO ng=1,Ngrids
                 DO itrc=1,NNS
                   i=idTvar(idsed(NCS+itrc))
+                  Qout(i,ng)=Lsand(itrc,ng)
+                END DO
+              END DO
+            CASE ('Qout(idSzsl)')
+              Npts=load_l(Nval, Cval, NNS, Ngrids, Lsand)
+              DO ng=1,Ngrids
+                DO itrc=1,NNS
+                  i=idzslT(idsed(NCS+itrc))
                   Qout(i,ng)=Lsand(itrc,ng)
                 END DO
               END DO
@@ -1196,6 +1260,14 @@
               DO ng=1,Ngrids
                 DO itrc=1,NCS
                   i=idTvar(idsed(itrc))
+                  Qout(i,ng)=Lmud(itrc,ng)
+                END DO
+              END DO
+            CASE ('Qout(idMzsl)')
+              Npts=load_l(Nval, Cval, NCS, Ngrids, Lmud)
+              DO ng=1,Ngrids
+                DO itrc=1,NCS
+                  i=idzslT(idsed(itrc))
                   Qout(i,ng)=Lmud(itrc,ng)
                 END DO
               END DO
@@ -1781,6 +1853,13 @@
      &              'Write out sediment', itrc, TRIM(Vname(1,i))
               END DO
               DO itrc=1,NST
+                i=idzslT(idsed(itrc))
+                IF (Hout(i,ng)) WRITE (out,160) Hout(i,ng),             &
+     &              'Hout(idzslT)',                                     &
+     &              'Write out depth slices sediment ', itrc,           &
+     &              TRIM(Vname(1,i))
+              END DO
+              DO itrc=1,NST
                 i=idfrac(itrc)
                 IF (Hout(i,ng)) WRITE (out,160) Hout(i,ng),             &
      &              'Hout(idfrac)',                                     &
@@ -1790,7 +1869,7 @@
               DO itrc=1,NST
                 i=idBmas(itrc)
                 IF (Hout(i,ng)) WRITE (out,160) Hout(i,ng),             &
-     &              'Hout(idmass)',                                     &
+     &              'Hout(idBmas)',                                     &
      &              'Write out mass, sediment ', itrc,                  &
      &              TRIM(Vname(1,i))
               END DO
@@ -1834,6 +1913,13 @@
                 IF (Qout(i,ng)) WRITE (out,160) Qout(i,ng),             &
      &              'Qout(idTvar)',                                     &
      &              'Write out surface sediment', itrc, TRIM(Vname(1,i))
+              END DO
+              DO itrc=1,NST
+                i=idzslT(idsed(itrc))
+                IF (Qout(i,ng)) WRITE (out,160) Qout(i,ng),             &
+     &              'Qout(idzslT)',                                     &
+     &              'Write out depth slices sediment ', itrc,           &
+     &              TRIM(Vname(1,i))
               END DO
               DO itrc=1,NST
                 i=idfrac(itrc)
@@ -2068,10 +2154,9 @@
  120  FORMAT (' Rate coefficient for bed load transport = ',e12.5,/)
  130  FORMAT (' Transition for mixed sediment =',e12.5,/)
  140  FORMAT (' Transition for cohesive sediment =',e12.5,/)
- 150  FORMAT (10x,l1,2x,a,'(',i2.2,')',t30,a,i2.2,':',1x,a)
- 160  FORMAT (10x,l1,2x,a,t29,a,i2.2,':',1x,a)
+ 150  FORMAT (10x,l1,2x,a,'(',i2.2,')',t32,a,i2.2,':',1x,a)
+ 160  FORMAT (10x,l1,2x,a,t32,a,i2.2,':',1x,a)
  170  FORMAT (/,9x,'sed_rxn',/,9x,'(1/d)',/)
 
       RETURN
       END SUBROUTINE read_SedPar
-
