@@ -886,11 +886,12 @@
 !
 !  Local variable declarations.
 !
+      logical :: got_var(NV)
       logical :: LdefVar
 !
       integer, parameter :: Natt = 25
 
-      integer :: i, ifield, j, nf, nvd3, status, vtype
+      integer :: FileH, i, ifield, j, nf, nvd3, status, vtype
 
       integer :: icegrd(3)
 !
@@ -910,7 +911,8 @@
 !
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
       ncname=S(ng)%name
-!!
+      FileH=ABS(S(ng)%pioFile%fh)
+!
       DEFINE : IF (ldef) THEN
 !
 !  Set number of dimensions for output variables.
@@ -937,7 +939,7 @@
         DO nf=1,nIceS
           IF (iSice(nf).gt.0) THEN
             ifield=iSice(nf)
-            IF (S(ng)%ncid.eq.RST(ng)%ncid) THEN
+            IF (FileH.eq.ABS(RST(ng)%pioFile%fh)) THEN
               LdefVar=.TRUE.
               vtype=PIO_FRST
             ELSE
@@ -978,7 +980,7 @@
               END SELECT
 !
               status=def_var(ng, model, S(ng)%pioFile,                  &
-     &                       S(ng)%pioVar(idUice)%vd,                   &
+     &                       S(ng)%pioVar(ifield)%vd,                   &
      &                       vtype, nvd3, icegrd,                       &
      &                       Aval, Vinfo, ncname)
               IF (FoundError(exit_flag, NoError,                        &
@@ -1068,7 +1070,7 @@
               END SELECT
 !
               status=def_var(ng, model, S(ng)%pioFile,                  &
-     &                       S(ng)%pioVar(idAice)%vd,                   &
+     &                       S(ng)%pioVar(ifield)%vd,                   &
      &                       vtype, nvd3, t2dgrd,                       &
      &                       Aval, Vinfo, ncname)
               IF (FoundError(exit_flag, NoError,                        &
@@ -1094,7 +1096,7 @@
 !  Scan variable list from input NetCDF and activate switches for
 !  sea-ice variables. Get variable IDs.
 !
-        IF (S(ng)%ncid.eq.RST(ng)%ncid) THEN
+        IF (FileH.eq.ABS(RST(ng)%pioFile%fh)) THEN
           vtype=PIO_FRST
         ELSE
           vtype=PIO_FOUT
@@ -1216,7 +1218,7 @@
 !
       logical :: LwrtVar
 !
-      integer :: ifield, ifld
+      integer :: FileH, ifield, ifld
       integer :: gfactor, gtype, status
 !
       real(dp) :: scale
@@ -1253,10 +1255,11 @@
 !  write out oce ice model state prognostic variables.
 !-----------------------------------------------------------------------
 !
+      FileH=ABS(S(ng)%pioFile%fh)
       DO ifld=1,nIceS
         IF (iSice(ifld).gt.0) THEN
           ifield=iSice(ifld)
-          IF (S(ng)%ncid.eq.RST(ng)%ncid) THEN
+          IF (FileH.eq.ABS(RST(ng)%pioFile%fh)) THEN
             LwrtVar=.TRUE.
           ELSE
             LwrtVar=VarOut(ifield,ng)
@@ -1264,12 +1267,12 @@
 !
           IF (LwrtVar) THEN
             IF ((model.eq.iNLM).and.                                    &
-                ((S(ng)%ncid.eq.HIS(ng)%ncid).or.                       &
-     &           (S(ng)%ncid.eq.QCK(ng)%ncid).or.                       &
-     &           (S(ng)%ncid.eq.RST(ng)%ncid))) THEN
+                ((FileH.eq.ABS(HIS(ng)%pioFile%fh)).or.                 &
+     &           (FileH.eq.ABS(QCK(ng)%pioFile%fh)).or.                 &
+     &           (FileH.eq.ABS(RST(ng)%pioFile%fh)))) THEN
               iceField => ICE(ng) % Si(LBi:UBi,LBj:UBj,IUOUT,ifld)
 # ifdef AVERAGES
-            ELSE IF (S(ng)%ncid.eq.AVG(ng)%ncid) THEN
+            ELSE IF (FileH.eq.ABS(AVG(ng)%pioFile%fh)) THEN
               iceField => ICE_SAVG(ifld,ng) % var(LBi:UBi,LBj:UBj)
 # endif
             END IF
@@ -1401,7 +1404,7 @@
       DO ifld=1,nIceF
         IF (iFice(ifld).gt.0) THEN
           ifield=iFice(ifld)
-          IF (S(ng)%ncid.eq.RST(ng)%ncid) THEN
+          IF (FileH.eq.ABS(RST(ng)%pioFile%fh)) THEN
             LwrtVar=.FALSE.
           ELSE
             LwrtVar=VarOut(ifield,ng)
@@ -1409,12 +1412,12 @@
 !
           IF (LwrtVar) THEN
             IF ((model.eq.iNLM).and.                                    &
-                ((S(ng)%ncid.eq.HIS(ng)%ncid).or.                       &
-     &           (S(ng)%ncid.eq.QCK(ng)%ncid).or.                       &
-     &           (S(ng)%ncid.eq.RST(ng)%ncid))) THEN
+                ((FileH.eq.ABS(HIS(ng)%pioFile%fh)).or.                 &
+     &           (FileH.eq.ABS(QCK(ng)%pioFile%fh)).or.                 &
+     &           (FileH.eq.ABS(RST(ng)%pioFile%fh)))) THEN
               iceField => ICE(ng) % Fi(LBi:UBi,LBj:UBj,ifld)
 # ifdef AVERAGES
-            ELSE IF (S(ng)%ncid.eq.AVG(ng)%ncid) THEN
+            ELSE IF (FileH.eq.ABS(AVG(ng)%pioFile%fh)) THEN
               iceField => ICE_FAVG(ifld,ng) % var(LBi:UBi,LBj:UBj)
 # endif
             END IF
