@@ -1,6 +1,6 @@
 !  Nutrient-Phytoplankton-Zooplankton-Detritus Biological Model Parameters.
 !
-!git $Id$
+! git $Id$
 !========================================================= Hernan G. Arango ===
 !  Copyright (c) 2002-2025 The ROMS Group                                     !
 !    Licensed under a MIT/X style license                                     !
@@ -244,12 +244,14 @@ ad_LBC(isTvar) ==   Per     Clo     Per     Clo \    ! idbio(1), NO3
 ! into HISTORY output file: [1:NBT,Ngrids].
 
 Hout(idTvar) == 4*T     ! ..., NO3, ...           biological tracer
+Hout(idzslT) == 4*F     ! ..., NO3_slice, ...     constant depth slices
 Hout(idTsur) == 4*F     ! ..., NO3_sflux, ...     surface tracer flux
 
 ! Logical switches (TRUE/FALSE) to activate writing of biological fields
 ! into QUICKSAVE output file: [1:NBT,Ngrids].
 
 Qout(idTvar) == 4*F     ! ..., NO3, ...           biological tracer
+Qout(idzslT) == 4*F     ! ..., NO3_slice, ...     constant depth slices
 Qout(idsurT) == 4*F     ! ..., NO3_sur, ...       surface biological tracer
 Qout(idTsur) == 4*F     ! ..., NO3_sflux, ...     surface tracer flux
 
@@ -652,6 +654,7 @@ Dout(iTvdif) == 4*T     ! ..., NO3_vdiff, ...     vertical diffusion
 !                   are expected:
 !
 !                   Hout(idTvar)              biological tracers
+!                   Hout(idzslT)              constant depth slices
 !                   Hout(idTsur)              biological tracers surface flux
 !
 !                   idTvar(idbio(1))=iNO3_    Nitrate concentration
@@ -668,11 +671,13 @@ Dout(iTvdif) == 4*T     ! ..., NO3_vdiff, ...     vertical diffusion
 !                     are expected:
 !
 !                     Qout(idTvar)      biological tracers
+!                     Qout(idzslT)      constant depth slices
 !                     Qout(idsurT)      surface biological tracers
 !                     Qout(idTsur)      biological tracers surface flux
 !
-!                     The idTvar(idbio(:)), idsurR(idbio(:)), and
-!                     idTsur(idbio(:)) indices are provided above.
+!                     The idTvar(idbio(:)), idzslT(idbio(:)),
+!                     idsurT(idbio(:)), and idTsur(idbio(:)) indices
+!                     are provided above.
 !
 !------------------------------------------------------------------------------
 ! Logical switches (T/F) to activate writing of fields into AVERAGE file.
