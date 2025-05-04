@@ -935,6 +935,13 @@
         END DO
 #   endif
 #  endif
+#  ifdef ICE_MODEL
+        DO i=1,nIceS
+          IF (iSice(i).gt.0) THEN
+            get_var(iSice(i))=.TRUE.
+          END IF
+        END DO
+#  endif
 # endif
 # ifdef PERFECT_RESTART
 !

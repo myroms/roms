@@ -1,6 +1,6 @@
 !  Fennel et al (2006) Nitrogen-based Biological Model Parameters.
 !
-!git $Id$
+! git $Id$
 !========================================================= Hernan G. Arango ===
 !  Copyright (c) 2002-2025 The ROMS Group                                     !
 !    Licensed under a MIT/X style license                                     !
@@ -389,12 +389,14 @@ ad_LBC(isTvar) ==   Per     Clo     Per     Clo \    ! idbio( 1), NO3
 ! into HISTORY output file: [1:NBT,Ngrids].
 
 Hout(idTvar) == 15*T    ! ..., NO3, ...           biological tracer
+Hout(idzslT) == 15*F    ! ..., NO3_slice, ...     constant depth slices
 Hout(idTsur) == 15*F    ! ..., NO3_sflux, ...     surface tracer flux
 
 ! Logical switches (TRUE/FALSE) to activate writing of biological fields
 ! into QUICKSAVE output file: [1:NBT,Ngrids].
 
 Qout(idTvar) == 15*F    ! ..., NO3, ...           biological tracer
+Qout(idzslT) == 15*F    ! ..., NO3_slice, ...     constant depth slices
 Qout(idsurT) == 15*F    ! ..., NO3_sur, ...       surface biological tracer
 Qout(idTsur) == 15*F    ! ..., NO3_sflux, ...     surface tracer flux
 
@@ -907,6 +909,7 @@ Dout(iNifx) == T        ! Nitrification      Nitrification flux
 !                   are expected:
 !
 !                   Hout(idTvar)               biological tracers
+!                   Hout(idzslT)               constant depth slices
 !                   Hout(idTsur)               biological tracers surface flux
 !
 !                   idTvar(idbio( 1))=iNO3_    Nitrate concentration
@@ -929,16 +932,18 @@ Dout(iNifx) == T        ! Nitrification      Nitrification flux
 ! Logical switches (T/F) to activate writing of fields into QUICKSAVE file.
 !------------------------------------------------------------------------------
 !
-!  Qout             Logical switches to write out biological fields into
-!                     output QUICKSAVE NetCDF file, [1:NBT,1:Ngrids] values
-!                     are expected:
+!  Qout           Logical switches to write out biological fields into
+!                   output QUICKSAVE NetCDF file, [1:NBT,1:Ngrids] values
+!                   are expected:
 !
-!                     Qout(idTvar)      biological tracers
-!                     Qout(idsurT)      surface biological tracers
-!                     Qout(idTsur)      biological tracers surface flux
+!                   Qout(idTvar)               biological tracers
+!                   Qout(idzslT)               constant depth slices
+!                   Qout(idsurT)               surface biological tracers
+!                   Qout(idTsur)               biological tracers surface flux
 !
-!                     The idTvar(idbio(:)), idsurR(idbio(:)), and
-!                     idTsur(idbio(:)) indices are provided above.
+!                   The idTvar(idbio(:)), idzslT(idbio(:)),
+!                   idsurT(idbio(:)), and idTsur(idbio(:)) indices
+!                   are provided above.
 !
 !------------------------------------------------------------------------------
 ! Logical switches (T/F) to activate writing of fields into AVERAGE file.

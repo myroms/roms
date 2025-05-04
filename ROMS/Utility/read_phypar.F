@@ -2303,6 +2303,14 @@
                   Hout(itrc,ng)=Linert(i,ng)
                 END DO
               END DO
+            CASE ('Hout(Znert)')
+              Npts=load_l(Nval, Cval, NPT, Ngrids, Linert)
+              DO ng=1,Ngrids
+                DO i=1,NPT
+                  itrc=idzslT(inert(i))
+                  Hout(itrc,ng)=Linert(i,ng)
+                END DO
+              END DO
 #endif
             CASE ('Qout(idUvel)')
               Npts=load_l(Nval, Cval, Ngrids, Lswitch)
@@ -2744,6 +2752,14 @@
               DO ng=1,Ngrids
                 DO i=1,NPT
                   itrc=idTvar(inert(i))
+                  Qout(itrc,ng)=Linert(i,ng)
+                END DO
+              END DO
+            CASE ('Qout(Znert)')
+              Npts=load_l(Nval, Cval, NPT, Ngrids, Linert)
+              DO ng=1,Ngrids
+                DO i=1,NPT
+                  itrc=idzslT(inert(i))
                   Qout(itrc,ng)=Linert(i,ng)
                 END DO
               END DO
@@ -5002,22 +5018,23 @@
         END DO
       END DO
 #endif
+
+#if defined PIO_LIB && defined DISTRIBUTE
+!
+!  Ensure that input or output files are processed with the standard
+!  NetCDF-3 or NetCDF-4 library to avoid parallel I/O issues.
+!
+      DO ng=1,Ngrids
+        BRY(:,ng)%IOtype=io_nf90            ! lateral boundary file(s)
+        SSF(ng)%IOtype=io_nf90              ! Sources/Sink forcing file
+      END DO
+#endif
 !
 !-----------------------------------------------------------------------
 !  Report input parameters.
 !-----------------------------------------------------------------------
 !
 #if defined PIO_LIB && defined DISTRIBUTE
-# ifdef ASYNCHRONOUS_SCORPIO
-!
-!  If SCORPIO library and asynchronous I/O, split the distributed-
-!  memory communicator into disjointed computational and dedicated
-!  I/O processes. (HGA: It doesn't work. There are bugs in the
-!  SCORPIO library).
-!
-      CALL set_pio_async
-      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-# endif
 !
 !  Initialize PIO system for either synchronous or asynchronous I/O.
 !
@@ -5037,14 +5054,10 @@
         WRITE (out,60) TRIM(title), TRIM(my_os), TRIM(my_cpu),          &
      &                 TRIM(my_fort), TRIM(my_fc), my_fflags(1:lstr),   &
 #ifdef DISTRIBUTE
-# if defined PIO_LIB          && \
-    (defined ASYNCHRONOUS_PIO || defined ASYNCHRONOUS_SCORPIO)
+# if defined PIO_LIB && defined ASYNCHRONOUS_PIO
      &                 PEER_COMM_WORLD, PeerSize,                       &
      &                 OCN_COMM_WORLD, numthreads,                      &
      &                 IO_COMM_WORLD, pio_NumIOtasks, TRIM(CioRanks),   &
-#  ifdef ASYNCHRONOUS_SCORPIO
-     &                 INTER_COMM_WORLD,                                &
-#  endif
 # endif
 # ifdef DISJOINTED
      &                 FULL_COMM_WORLD, FullSize, NsubGroups,           &
@@ -5055,8 +5068,7 @@
      &                 0, (FullSize/TaskSize)-1,                        &
 #  endif
 # endif
-# if !(defined PIO_LIB           && \
-       (defined ASYNCHRONOUS_PIO || defined ASYNCHRONOUS_SCORPIO)) && \
+# if !(defined PIO_LIB   && defined ASYNCHRONOUS_PIO) && \
      !defined DISJOINTED
      &                 OCN_COMM_WORLD, numthreads,                      &
 # endif
@@ -5064,8 +5076,9 @@
 #endif
 #ifdef GIT_URL
      &                 TRIM(git_url), TRIM(git_rev),                    &
-#endif
+#else
      &                 TRIM(svn_url), TRIM(svn_rev),                    &
+#endif
      &                 TRIM(Rdir), TRIM(Hdir), TRIM(Hfile), TRIM(Adir)
 !
         DO ng=1,Ngrids
@@ -5098,7 +5111,7 @@
 #  endif
 # endif
 # if defined PIO_LIB          && defined DISTRIBUTE            && \
-    (defined ASYNCHRONOUS_PIO || defined ASYNCHRONOUS_SCORPIO)
+     defined ASYNCHRONOUS_PIO
           maxPETs=PeerSize
           IF ((inp_lib.eq.io_pio).or.(out_lib.eq.io_pio)) THEN
             nPETs=(NtileI(ng)*NtileJ(ng))+pio_NumIOtasks
@@ -6359,6 +6372,12 @@
      &            'Write out inert passive tracer ', itrc,              &
      &            TRIM(Vname(1,idTvar(inert(itrc))))
             END DO
+            DO itrc=1,NPT
+              IF (Hout(idzslT(inert(itrc)),ng)) WRITE (out,180)         &
+     &            Hout(idzslT(inert(itrc)),ng), 'Hout(ZnerT)',          &
+     &            'Write out depth slices inert passive tracer ', itrc, &
+     &            TRIM(Vname(1,idTvar(inert(itrc))))
+            END DO
 #endif
 #ifdef SOLVE3D
 # if defined BULK_FLUXES || defined ECOSIM || defined ATM_PRESS
@@ -6742,6 +6761,12 @@
               IF (Qout(idTvar(inert(itrc)),ng)) WRITE (out,180)         &
      &            Qout(idTvar(inert(itrc)),ng), 'Qout(inert)',          &
      &            'Write out inert passive tracer ', itrc,              &
+     &            TRIM(Vname(1,idTvar(inert(itrc))))
+            END DO
+            DO itrc=1,NPT
+              IF (Qout(idzslT(inert(itrc)),ng)) WRITE (out,180)         &
+     &            Qout(idzslT(inert(itrc)),ng), 'Qout(Znert)',          &
+     &            'Write out depth slices inert passive tracer ', itrc, &
      &            TRIM(Vname(1,idTvar(inert(itrc))))
             END DO
             DO itrc=1,NPT
@@ -8141,15 +8166,11 @@
      &        /,1x,'Compiler command  : ',a,                            &
      &        /,1x,'Compiler flags    : ',a,                            &
 #ifdef DISTRIBUTE
-# if defined PIO_LIB          && \
-    (defined ASYNCHRONOUS_PIO || defined ASYNCHRONOUS_SCORPIO)
+# if defined PIO_LIB && defined ASYNCHRONOUS_PIO 
      &        /,1x,'Peer Communicator : ',i0,',  PET size = ',i0,       &
      &        /,1x,'OCN  Communicator : ',i0,',  PET size = ',i0,       &
      &        /,1x,'I/O  Communicator : ',i0,',  PET size = ',i0,       &
      &        2x,'(Peer Ranks: ',a,')',                                 &
-#  ifdef ASYNCHRONOUS_SCORPIO
-     &        /,1x,'InterCommunicator : ',i0,                           &
-#  endif
 # endif
 # ifdef DISJOINTED
      &        /,1x,'Full Communicator : ',i0,',  PET size = ',i0,       &
@@ -8161,8 +8182,7 @@
      &         ',  Color Range = ',i0,' to ',i0,                        &
 #  endif
 # endif
-# if !(defined PIO_LIB           && \
-       (defined ASYNCHRONOUS_PIO || defined ASYNCHRONOUS_SCORPIO)) && \
+# if !(defined PIO_LIB   && defined ASYNCHRONOUS_PIO ) && \
      !defined DISJOINTED
      &        /,1x,'OCN Communicator  : ',i0,',  PET size = ',i0,/,     &
 # endif
@@ -8171,9 +8191,10 @@
 #ifdef GIT_URL
      &        /,1x,'GIT Root URL      : ',a,                            &
      &        /,1x,'GIT Revision      : ',a,                            &
-#endif
+#else
      &        /,1x,'SVN Root URL      : ',a,                            &
      &        /,1x,'SVN Revision      : ',a,/,                          &
+#endif
      &        /,1x,'Local Root        : ',a,                            &
      &        /,1x,'Header Dir        : ',a,                            &
      &        /,1x,'Header file       : ',a,                            &

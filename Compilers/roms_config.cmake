@@ -84,10 +84,10 @@ endif()
 Message( STATUS "PARPACK_LIBDIR = ${PARPACK_LIBDIR}" )
 Message( STATUS "ARPACK_LIBDIR  = ${ARPACK_LIBDIR}" )
 
-# Locations of SCORPIO and PNetCDF libraries.
+# Locations of PIO and PNetCDF libraries.
 #
 # The decision about whether to use them in linking is computed below.
-# This CMake setup will NOT build SCORPIO or PNetCDF for you.
+# This CMake setup will NOT build PIO or PNetCDF for you.
 
 if( DEFINED PIO_LIBDIR AND DEFINED PIO_INCDIR )
   set( PIO_LIBDIR "${PIO_LIBDIR}" )
@@ -163,10 +163,3 @@ if( "${defs}" MATCHES "ARPACK" )
   option( ARPACK "ARPACK/PARPACK Library" ON )
   message( STATUS "ROMS Link With ARPACK/PARPACK ENABLED" )
 endif()
-
-if( "${defs}" MATCHES "SCORPIO" )
-  option( SCORPIO "SCORPIO Library" ON )
-  message( STATUS "ROMS Link With Parallel I/O Using SCORPIO ENABLED" )
-endif()
-
-
