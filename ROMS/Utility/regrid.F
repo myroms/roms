@@ -15,7 +15,7 @@
 !                                                                      !
 !  The Imin, Imax, Jmin, and Jmax indices are the global values of     !
 !  application domain in serial I/O. However, in parallel I/O they     !
-!  are the tiled values.                                               !
+!  are the tile local values.                                          !
 !                                                                      !
 !  On Input:                                                           !
 !                                                                      !
@@ -40,27 +40,29 @@
 !     iflag      Interpolation flag (integer, 0: linear, 1: cubic)     !
 !     Nx         X-dimension size for gridded data, Finp (integer)     !
 !     Ny         Y-dimension size for gridded data, Finp (integer)     !
-!     Finp       Gridded data to interpolate from (real)               !
-!     Amin       Gridded data minimum value (integer)                  !
-!     Amax       Gridded data maximum value (integer)                  !
-!     LBi        Fout I-dimension Lower bound (integer)                !
-!     UBi        Fout I-dimension Upper bound (integer)                !
-!     LBj        Fout J-dimension Lower bound (integer)                !
-!     UBj        Fout J-dimension Upper bound (integer)                !
-!     Imin       Fout starting data I-index (integer)                  !
-!     Imax       Fout ending   data I-index (integer)                  !
-!     Jmin       Fout starting data J-index (integer)                  !
-!     Jmax       Fout ending   data J-index (integer)                  !
+!     Finp       Gridded data to interpolate from (real; global)       !
+!                  In serial, all tiles have a copy of Finp
+!     Amin       Gridded data minimum value (integer; global)          !
+!     Amax       Gridded data maximum value (integer; global)          !
+!     LBi        Fout tile I-dimension Lower bound (integer)           !
+!     UBi        Fout tile I-dimension Upper bound (integer)           !
+!     LBj        Fout tile J-dimension Lower bound (integer)           !
+!     UBj        Fout tile J-dimension Upper bound (integer)           !
+!     Imin       Fout starting data I-index (integer; global or local) !
+!     Imax       Fout ending   data I-index (integer; global or local) !
+!     Jmin       Fout starting data J-index (integer; global or local) !
+!     Jmax       Fout ending   data J-index (integer; global or local) !
 # ifdef MASKING
-!     MyMask     Fout Land/Sea mask (real)                             !
+!     MyMask     Fout Land/Sea mask (real; tiled)                      !
 # endif
-!     MyXout     Work X-locations (longitude) for regridding (real)    !
-!     Xout       X-locations (longitude) to interpolate (real)         !
-!     Yout       Y-locations (latitude)  to interpolate (real)         !
+!     MyXout     X-locations (longitude) range change (real; tiled)    !
+!                  wrapTo360 -> [0 360] or wrapTo180 -> [-180 180]     !
+!     Xout       X-locations (longitude) to interpolate (real; tiled)  !
+!     Yout       Y-locations (latitude)  to interpolate (real; tiled)  !
 !                                                                      !
 !  On Output:                                                          !
 !                                                                      !
-!     Fout       Interpolated field (real)                             !
+!     Fout       Interpolated field (real; tiled)                      !
 !                                                                      !
 !=======================================================================
 !

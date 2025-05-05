@@ -5819,17 +5819,17 @@
         XTR(ng)%Rindex=MIN(XTR(ng)%Rindex,rec_size)
       END IF QUERY
 !
-  10  FORMAT (2x,'DEF_EXTRACT_PIO  - creating decimate file,',t56,          &
+  10  FORMAT (2x,'DEF_EXTRACT_PIO  - creating decimate file,',t56,      &
      &        'Grid ',i2.2,': ',a)
-  20  FORMAT (2x,'DEF_EXTRACT_PIO  - inquiring decimate file,',t56,         &
+  20  FORMAT (2x,'DEF_EXTRACT_PIO  - inquiring decimate file,',t56,     &
      &        'Grid ',i2.2,': ',a)
-  30  FORMAT (/,' DEF_EXTRACT_PIO - unable to create decimate NetCDF',      &
+  30  FORMAT (/,' DEF_EXTRACT_PIO - unable to create decimate NetCDF',  &
      &        ' file: ',a)
   40  FORMAT ('time dependent',1x,a)
   50  FORMAT (1pe11.4,1x,'millimeter')
-  60  FORMAT (/,' DEF_EXTRACT_PIO - unable to open decimate NetCDF file: ', &
-     &        a)
-  70  FORMAT (/,' DEF_EXTRACT_PIO - unable to find variable: ',a,2x,        &
+  60  FORMAT (/,' DEF_EXTRACT_PIO - unable to open decimate NetCDF',    &
+     &        ' file: ', a)
+  70  FORMAT (/,' DEF_EXTRACT_PIO - unable to find variable: ',a,2x,    &
      &        ' in decimate NetCDF file: ',a)
 !
       RETURN

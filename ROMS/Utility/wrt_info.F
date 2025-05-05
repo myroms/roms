@@ -3564,6 +3564,23 @@
      &                          pioFile = pioFile)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
+# ifdef GRID_EXTRACT
+      CALL pio_netcdf_put_ivar (ng, model, ncname, 'nXTR',              &
+     &                          nXTR(ng), (/0/), (/0/),                 &
+     &                          pioFile = pioFile)
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+
+      CALL pio_netcdf_put_ivar (ng, model, ncname, 'ndefXTR',           &
+     &                          ndefXTR(ng), (/0/), (/0/),              &
+     &                          pioFile = pioFile)
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+
+      CALL pio_netcdf_put_ivar (ng, model, ncname, 'ExtractFlag',       &
+     &                          ExtractFlag(ng), (/0/), (/0/),          &
+     &                          pioFile = pioFile)
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+# endif
+
       CALL pio_netcdf_put_ivar (ng, model, ncname, 'nRST',              &
      &                          nRST(ng), (/0/), (/0/),                 &
      &                          pioFile = pioFile)
