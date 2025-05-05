@@ -382,6 +382,7 @@
 ** SANITY_CHECK               if tangent/adjoint codes sanity check          **
 ** SO_SEMI                    if stochastic optimals driver, semi-norm       **
 ** SO_TRACE                   if stochastic optimals, randomized trace       **
+** SPLIT_EXECUTABLE           if split executable for backround/analysis     **
 ** SPLIT_I4DVAR               if split I4D-Var data assimilation             **
 ** SPLIT_RBL4DVAR             if split RBL4D-Var data assimilation           **
 ** SPLIT_R4DVAR               if split R4D-Var data assimilation             **

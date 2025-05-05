@@ -487,6 +487,12 @@ Sigma_max(isTvar) == 0.33d0   0.056d0  ! 1:NT tracers maximum STD
        OIFnameA == roms_oif_a.nc
        OIFnameB == roms_oif_b.nc
 
+! Input coarser grid increment file name, [1:Ngrids]. It is used in
+! mixed-resolution split 4D-Var for regridding (coarse-to-fine), where
+! the inner loops are run at lower resolution to accelerate the computations.
+
+        INCname == roms_inc.nc
+
 !
 !  GLOSSARY:
 !  =========
@@ -1061,13 +1067,19 @@ Sigma_max(isTvar) == 0.33d0   0.056d0  ! 1:NT tracers maximum STD
 !
 !  ERRname        Output posterior error covariance matrix file name.
 !
+! Input coarser grid increment file name, [1:Ngrids]. It is used in
+! mixed-resolution split 4D-Var for regridding (coarse-to-fine), where
+! the inner loops are run at lower resolution to accelerate the computations.
+!
+!  INCname        Coarse grid increment file name.
+!
 ! Input forcing filenames at observation locations for computing observations
 ! impacts during the analysis-forecast cycle when RBL4DVAR_FCT_SENSITIVITY and
 ! OBS_SPACE are activated:
 !
 ! (See www.myroms.org/wiki/Analysis-Forecast_Cycle_Observation_Impacts)
 !
-!  OIFnameA    Forecast initialized with 4D-Var analysis (red curve)
+!  OIFnameA       Forecast initialized with 4D-Var analysis (red curve).
 !
-!  OIFnameB    Forecast initialized with 4D_Var background (blue curve)
+!  OIFnameB       Forecast initialized with 4D_Var background (blue curve).
 !

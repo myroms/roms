@@ -1366,6 +1366,8 @@
      &                          ncid = DAV(ng)%ncid,                    &
      &                          varid = DAV(ng)%Vid(idNLmp))
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+          IF (Master.and.(Mstr.eq.1))                                   &
+     &      WRITE (stdout,10) outer, TRIM(Vname(1,idNLmp))
 !
           CALL netcdf_put_fvar (ng, model, DAV(ng)%name,                &
      &                          Vname(1,idNLmi),                        &
@@ -1374,6 +1376,8 @@
      &                          ncid = DAV(ng)%ncid,                    &
      &                          varid = DAV(ng)%Vid(idNLmi))
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+          IF (Master.and.(Mstr.eq.1))                                   &
+     &      WRITE (stdout,10) outer, TRIM(Vname(1,idNLmi))
 !
           CALL netcdf_put_fvar (ng, model, DAV(ng)%name,                &
      &                          Vname(1,idMOMi),                        &
@@ -1382,6 +1386,8 @@
      &                          ncid = DAV(ng)%ncid,                    &
      &                          varid = DAV(ng)%Vid(idMOMi))
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+          IF (Master.and.(Mstr.eq.1))                                   &
+     &      WRITE (stdout,10) outer, TRIM(Vname(1,idMOMi))
         ELSE
           CALL netcdf_put_fvar (ng, model, DAV(ng)%name,                &
      &                          Vname(1,idMOMf),                        &
@@ -1390,6 +1396,8 @@
      &                          ncid = DAV(ng)%ncid,                    &
      &                          varid = DAV(ng)%Vid(idMOMf))
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+          IF (Master.and.(Mstr.eq.1))                                   &
+     &      WRITE (stdout,10) outer, TRIM(Vname(1,idMOMf))
         END IF
       END IF
 
@@ -1405,6 +1413,8 @@
      &                        ncid = DAV(ng)%ncid,                      &
      &                        varid = DAV(ng)%Vid(idBgTh))
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        IF (Master.and.(Mstr.eq.1))                                     &
+     &    WRITE (stdout,10) outer, TRIM(Vname(1,idBgTh))
       END IF
 #  endif
 # endif
@@ -1428,6 +1438,8 @@
      &                          ncid = DAV(ng)%ncid,                    &
      &                          varid = DAV(ng)%Vid(idBgEr))
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+          IF (Master.and.(Mstr.eq.1))                                   &
+     &       WRITE (stdout,10) outer, TRIM(Vname(1,idBgEr))
         END IF
 !
 !  4D-Var innovation vector: observation minus background. Save initial
@@ -1447,6 +1459,8 @@
      &                          ncid = DAV(ng)%ncid,                    &
      &                          varid = DAV(ng)%Vid(idInno))
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+          IF (Master.and.(Mstr.eq.1))                                   &
+     &      WRITE (stdout,10) outer, TRIM(Vname(1,idInno))
         END IF
 !
 !  4D-Var increment (analysis minus background) and residual
@@ -1467,6 +1481,8 @@
      &                          ncid = DAV(ng)%ncid,                    &
      &                          varid = DAV(ng)%Vid(idIncr))
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+          IF (Master.and.(Mstr.eq.1))                                   &
+     &      WRITE (stdout,10) outer, TRIM(Vname(1,idIncr))
 !
           CALL netcdf_put_fvar (ng, model, DAV(ng)%name,                &
      &                          Vname(1,idResi),                        &
@@ -1475,12 +1491,14 @@
      &                          ncid = DAV(ng)%ncid,                    &
      &                          varid = DAV(ng)%Vid(idResi))
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+          IF (Master.and.(Mstr.eq.1))                                   &
+     &      WRITE (stdout,10) outer, TRIM(Vname(1,idResi))
         END IF
       END IF
 # endif
 !
 !-----------------------------------------------------------------------
-!  Write out other variable into output DAC NetCDF file.
+!  Write out other variable into output DAV NetCDF file.
 !-----------------------------------------------------------------------
 
 # if defined I4DVAR                  || defined WEAK_CONSTRAINT && \
@@ -1511,11 +1529,13 @@
      &                        ncid = DAV(ng)%ncid,                      &
      &                        varid = DAV(ng)%Vid(idObsS))
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+          IF (Master.and.(Mstr.eq.1))                                   &
+     &      WRITE (stdout,10) outer, TRIM(Vname(1,idObsS))
       END IF
 
 # ifndef I4DVAR_ANA_SENSITIVITY
 !
-!  Nonlinear model or first guess (background) state at observation
+!  Nonlinear model or first guess (NLmodel_value) at the observation
 !  locations. If 4D-Var, the values are written for every outer loop.
 !  Also, the final value is written as individual variable to
 !  facilitate ERDDAP processing. Notice that it is always overwritten
@@ -1532,6 +1552,8 @@
      &                        varid = DAV(ng)%Vid(idNLmo))
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         haveNLmod(ng)=.TRUE.
+        IF (Master.and.(Mstr.eq.1))                                     &
+     &    WRITE (stdout,10) outer, TRIM(Vname(1,idNLmo))
       END IF
 #  elif defined I4DVAR || defined WEAK_CONSTRAINT
       IF (wrtNLmod(ng).and.outer.gt.0) THEN
@@ -1542,6 +1564,8 @@
      &                        ncid = DAV(ng)%ncid,                      &
      &                        varid = DAV(ng)%Vid(idNLmo))
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        IF (Master.and.(Mstr.eq.1))                                     &
+     &    WRITE (stdout,10) outer, TRIM(Vname(1,idNLmo))
       END IF
 #  endif
 #  ifdef FOUR_DVAR
@@ -1555,6 +1579,8 @@
      &                        varid = DAV(ng)%Vid(idNLmf))
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         haveNLmod(ng)=.TRUE.
+        IF (Master.and.(Mstr.eq.1))                                     &
+     &    WRITE (stdout,10) outer, TRIM(Vname(1,idNLmf))
       END IF
 #  endif
 # endif
@@ -1572,6 +1598,8 @@
      &                        ncid = DAV(ng)%ncid,                      &
      &                        varid = DAV(ng)%Vid(idNLmu))
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        IF (Master.and.(Mstr.eq.1))                                     &
+     &    WRITE (stdout,10) outer, TRIM(Vname(1,idNLmu))
       END IF
 # endif
 # if defined I4DVAR          || defined I4DVAR_ANA_SENSITIVITY || \
@@ -1588,6 +1616,8 @@
      &                        varid = DAV(ng)%Vid(idTLmo))
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         haveTLmod(ng)=.TRUE.
+        IF (Master.and.(Mstr.eq.1))                                     &
+     &    WRITE (stdout,10) outer, TRIM(Vname(1,idTLmo))
       END IF
 # endif
 # ifdef TLM_OBS
@@ -1603,6 +1633,8 @@
      &                        (/NstrObs(ng)/), (/Nobs(ng)/),            &
      &                        ncid = DAV(ng)%ncid)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        IF (Master.and.(Mstr.eq.1))                                     &
+     &    WRITE (stdout,10) outer, 'ObsImpact_total'
       END IF
 #   endif
 
@@ -1617,6 +1649,8 @@
      &                        (/NstrObs(ng)/), (/Nobs(ng)/),            &
      &                        ncid = DAV(ng)%ncid)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        IF (Master.and.(Mstr.eq.1))                                     &
+     &    WRITE (stdout,10) outer, 'ObsImpact_IC'
       END IF
 
 #    if defined ADJUST_WSTRESS || defined ADJUST_STFLUX
@@ -1630,6 +1664,8 @@
      &                        (/NstrObs(ng)/), (/Nobs(ng)/),            &
      &                        ncid = DAV(ng)%ncid)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        IF (Master.and.(Mstr.eq.1))                                     &
+     &    WRITE (stdout,10) outer, 'ObsImpact_FC'
       END IF
 #    endif
 
@@ -1644,6 +1680,8 @@
      &                        (/NstrObs(ng)/), (/Nobs(ng)/),            &
      &                        ncid = DAV(ng)%ncid)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        IF (Master.and.(Mstr.eq.1))                                     &
+     &    WRITE (stdout,10) outer, 'ObsImpact_BC'
       END IF
 #    endif
 #   endif
@@ -1662,6 +1700,8 @@
      &                        (/NstrObs(ng)/), (/Nobs(ng)/) ,           &
      &                        ncid = DAV(ng)%ncid)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        IF (Master.and.(Mstr.eq.1))                                     &
+     &    WRITE (stdout,10) outer, 'RPmodel_initial'
       END IF
 # endif
 
@@ -1679,6 +1719,8 @@
      &                        ncid = DAV(ng)%ncid,                      &
      &                        varid = DAV(ng)%Vid(idObsZ))
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        IF (Master.and.(Mstr.eq.1))                                     &
+     &    WRITE (stdout,10) outer, TRIM(Vname(1,idObsZ))
       END IF
 !
 !  Write Z-location of observation in grid coordinates, if applicable.
@@ -1742,6 +1784,10 @@
         END IF
 # endif
       END IF
+      IF (Master.and.(Mstr.eq.1)) WRITE (stdout,'(1x)')
+!
+ 10   FORMAT (2x,'OBS_WRITE_NF90   - procesing and writing, outer = ',  &
+     &        i0, ', state vector: ',a)
 !
       RETURN
       END SUBROUTINE obs_write_nf90
@@ -1810,10 +1856,12 @@
           CALL pio_netcdf_put_fvar (ng, model, DAV(ng)%name,            &
      &                              Vname(1,idNLmp),                    &
      &                              unvetted(Mstr:Mend),                &
-     &                              (/NstrObs(ng)/), (/Nobs(ng)/),   &
+     &                              (/NstrObs(ng)/), (/Nobs(ng)/),      &
      &                              pioFile = DAV(ng)%pioFile,          &
      &                              pioVar = DAV(ng)%pioVar(idNLmp)%vd)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+          IF (Master.and.(Mstr.eq.1))                                   &
+     &      WRITE (stdout,10) outer, TRIM(Vname(1,idNLmp))
 !
           CALL pio_netcdf_put_fvar (ng, model, DAV(ng)%name,            &
      &                              Vname(1,idNLmi),                    &
@@ -1822,6 +1870,8 @@
      &                              pioFile = DAV(ng)%pioFile,          &
      &                              pioVar = DAV(ng)%pioVar(idNLmi)%vd)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+          IF (Master.and.(Mstr.eq.1))                                   &
+     &      WRITE (stdout,10) outer, TRIM(Vname(1,idNLmi))
 !
           CALL pio_netcdf_put_fvar (ng, model, DAV(ng)%name,            &
      &                              Vname(1,idMOMi),                    &
@@ -1830,6 +1880,8 @@
      &                              pioFile = DAV(ng)%pioFile,          &
      &                              pioVar = DAV(ng)%pioVar(idMOMi)%vd)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+          IF (Master.and.(Mstr.eq.1))                                   &
+     &      WRITE (stdout,10) outer, TRIM(Vname(1,idMOMi))
         ELSE
           CALL pio_netcdf_put_fvar (ng, model, DAV(ng)%name,            &
      &                              Vname(1,idMOMf),                    &
@@ -1838,6 +1890,8 @@
      &                              pioFile = DAV(ng)%pioFile,          &
      &                              pioVar = DAV(ng)%pioVar(idMOMf)%vd)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+          IF (Master.and.(Mstr.eq.1))                                   &
+     &      WRITE (stdout,10) outer, TRIM(Vname(1,idMOMf))
         END IF
       END IF
 
@@ -1853,6 +1907,8 @@
      &                            pioFile = DAV(ng)%pioFile,            &
      &                            pioVar = DAV(ng)%pioVar(idBgTh)%vd)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        IF (Master.and.(Mstr.eq.1))                                     &
+     &    WRITE (stdout,10) outer, TRIM(Vname(1,idBgTh))
       END IF
 #   endif
 #  endif
@@ -1876,6 +1932,8 @@
      &                              pioFile = DAV(ng)%pioFile,          &
      &                              pioVar = DAV(ng)%pioVar(idBgEr)%vd)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+          IF (Master.and.(Mstr.eq.1))                                   &
+     &       WRITE (stdout,10) outer, TRIM(Vname(1,idBgEr))
         END IF
 !
 !  4D-Var innovation vector: observation minus background. Save initial
@@ -1895,6 +1953,8 @@
      &                              pioFile = DAV(ng)%pioFile,          &
      &                              pioVar = DAV(ng)%pioVar(idInno)%vd)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+          IF (Master.and.(Mstr.eq.1))                                   &
+     &      WRITE (stdout,10) outer, TRIM(Vname(1,idInno))
         END IF
 !
 !  4D-Var increment (analysis minus background) and residual
@@ -1915,6 +1975,8 @@
      &                              pioFile = DAV(ng)%pioFile,          &
      &                              pioVar = DAV(ng)%pioVar(idIncr)%vd)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+          IF (Master.and.(Mstr.eq.1))                                   &
+     &      WRITE (stdout,10) outer, TRIM(Vname(1,idIncr))
 !
           CALL pio_netcdf_put_fvar (ng, model, DAV(ng)%name,            &
      &                              Vname(1,idResi),                    &
@@ -1923,6 +1985,8 @@
      &                              pioFile = DAV(ng)%pioFile,          &
      &                              pioVar = DAV(ng)%pioVar(idResi)%vd)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+          IF (Master.and.(Mstr.eq.1))                                   &
+     &      WRITE (stdout,10) outer, TRIM(Vname(1,idResi))
         END IF
       END IF
 #  endif
@@ -1959,11 +2023,13 @@
      &                            pioFile = DAV(ng)%pioFile,            &
      &                            pioVar = DAV(ng)%pioVar(idObsS)%vd)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        IF (Master.and.(Mstr.eq.1))                                     &
+     &    WRITE (stdout,10) outer, TRIM(Vname(1,idObsS))
       END IF
 
 #  ifndef I4DVAR_ANA_SENSITIVITY
 !
-!  Nonlinear model or first guess (background) state at observation
+!  Nonlinear model or first guess (NLmodel_value) at the observation
 !  locations. If 4D-Var, the values are written for every outer loop.
 !  Also, the final value is written as individual variable to
 !  facilitate ERDDAP processing. Notice that it is always overwritten
@@ -1980,6 +2046,8 @@
      &                            pioVar = DAV(ng)%pioVar(idNLmo)%vd)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         haveNLmod(ng)=.TRUE.
+        IF (Master.and.(Mstr.eq.1))                                     &
+     &    WRITE (stdout,10) outer, TRIM(Vname(1,idNLmo))
       END IF
 #   elif defined I4DVAR || defined WEAK_CONSTRAINT
       IF (wrtNLmod(ng).and.outer.gt.0) THEN
@@ -1990,6 +2058,8 @@
      &                            pioFile = DAV(ng)%pioFile,            &
      &                            pioVar = DAV(ng)%pioVar(idNLmo)%vd)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        IF (Master.and.(Mstr.eq.1))                                     &
+     &    WRITE (stdout,10) outer, TRIM(Vname(1,idNLmo))
       END IF
 #   endif
 #   ifdef FOUR_DVAR
@@ -2003,6 +2073,8 @@
      &                            pioVar = DAV(ng)%pioVar(idNLmf)%vd)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         haveNLmod(ng)=.TRUE.
+        IF (Master.and.(Mstr.eq.1))                                     &
+     &    WRITE (stdout,10) outer, TRIM(Vname(1,idNLmf))
       END IF
 #   endif
 #  endif
@@ -2020,6 +2092,8 @@
      &                            pioFile = DAV(ng)%pioFile,            &
      &                            pioVar = DAV(ng)%pioVar(idNLmu)%vd)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        IF (Master.and.(Mstr.eq.1))                                     &
+     &    WRITE (stdout,10) outer, TRIM(Vname(1,idNLmu))
       END IF
 #  endif
 #  if defined I4DVAR          || defined I4DVAR_ANA_SENSITIVITY || \
@@ -2036,6 +2110,8 @@
      &                            pioVar = DAV(ng)%pioVar(idTLmo)%vd)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         haveTLmod(ng)=.TRUE.
+        IF (Master.and.(Mstr.eq.1))                                     &
+     &    WRITE (stdout,10) outer, TRIM(Vname(1,idTLmo))
       END IF
 #  endif
 #  ifdef TLM_OBS
@@ -2051,6 +2127,8 @@
      &                            (/NstrObs(ng)/), (/Nobs(ng)/),        &
      &                            pioFile = DAV(ng)%pioFile)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        IF (Master.and.(Mstr.eq.1))                                     &
+     &    WRITE (stdout,10) outer, 'ObsImpact_total'
       END IF
 #    endif
 
@@ -2065,6 +2143,8 @@
      &                            (/NstrObs(ng)/), (/Nobs(ng)/),        &
      &                            pioFile = DAV(ng)%pioFile)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        IF (Master.and.(Mstr.eq.1))                                     &
+     &    WRITE (stdout,10) outer, 'ObsImpact_IC'
       END IF
 
 #     if defined ADJUST_WSTRESS || defined ADJUST_STFLUX
@@ -2078,6 +2158,8 @@
      &                            (/NstrObs(ng)/), (/Nobs(ng)/),        &
      &                            pioFile = DAV(ng)%pioFile)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        IF (Master.and.(Mstr.eq.1))                                     &
+     &    WRITE (stdout,10) outer, 'ObsImpact_FC'
       END IF
 #     endif
 
@@ -2092,6 +2174,8 @@
      &                            (/NstrObs(ng)/), (/Nobs(ng)/),        &
      &                            pioFile = DAV(ng)%pioFile)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        IF (Master.and.(Mstr.eq.1))                                     &
+     &    WRITE (stdout,10) outer, 'ObsImpact_BC'
       END IF
 #     endif
 #    endif
@@ -2110,6 +2194,8 @@
      &                            (/NstrObs(ng)/), (/Nobs(ng)/) ,       &
      &                            pioFile = DAV(ng)%pioFile)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        IF (Master.and.(Mstr.eq.1))                                     &
+     &    WRITE (stdout,10) outer, 'RPmodel_initial'
       END IF
 #  endif
 
@@ -2127,6 +2213,8 @@
      &                            pioFile = DAV(ng)%pioFile,            &
      &                            pioVar = DAV(ng)%pioVar(idObsZ)%vd)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        IF (Master.and.(Mstr.eq.1))                                     &
+     &    WRITE (stdout,10) outer, TRIM(Vname(1,idObsZ))
       END IF
 !
 !  Write Z-location of observation in grid coordinates, if applicable.
@@ -2145,7 +2233,6 @@
      &                            pioFile = OBS(ng)%pioFile,            &
      &                            pioVar = OBS(ng)%pioVar(idObsZ)%vd)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-
         IF (model.eq.iADM) THEN
           Lwrote=ObsSurvey(ng).eq.1
         ELSE
@@ -2198,6 +2285,10 @@
         END IF
 #  endif
       END IF
+      IF (Master.and.(Mstr.eq.1)) WRITE (stdout,'(1x)')
+!
+ 10   FORMAT (2x,'OBS_WRITE_PIO    - procesing and writing, outer = ',  &
+     &        i0, ', state vector: ',a)
 !
       RETURN
       END SUBROUTINE obs_write_pio

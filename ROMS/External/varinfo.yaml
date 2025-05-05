@@ -358,7 +358,6 @@ metadata:
 
   - variable:       salt_slice                                       # Output
     standard_name:  sea_water_practical_salinity
-    standard_name:  sea_surface_salinity
     long_name:      salinity
     units:          nondimensional                                   # [PSS]
     field:          salinity constant depth slices
@@ -3150,7 +3149,7 @@ metadata:
     field:          sediment mud_
     time:           mud_time
     index_code:     idTbry(iwest,idmud(i))
-    type:           r3dvar
+    type:           nulvar
     add_offset:     0.0d0
     scale:          1.0d0
 

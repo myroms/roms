@@ -736,6 +736,14 @@
               Npts=load_s1d(Nval, Cval, Cdim, line, label, igrid,       &
      &                      Ngrids, Nfiles, inp_lib, OIFB)
 #  endif
+            CASE ('IMPname')
+              label='IMP - Coarser inners loop impulse forcing'
+              Npts=load_s1d(Nval, Cval, Cdim, line, label, igrid,       &
+     &                      Ngrids, Nfiles, out_lib, IMP)
+            CASE ('INCname')
+              label='INC - Coarser inners loops increments'
+              Npts=load_s1d(Nval, Cval, Cdim, line, label, igrid,       &
+     &                      Ngrids, Nfiles, out_lib, INC)
           END SELECT
         END IF
       END DO
@@ -1581,7 +1589,17 @@
         fname=OIFB(ng)%name
         IF (Master.and.Lwrite) WRITE (out,160)                          &
      &    'Input Obs Impacts Background File:  ', TRIM(fname)
-#   endif
+#  endif
+#  if defined SPLIT_RBL4DVAR
+        fname=IMP(ng)%name
+        IF (Master.and.Lwrite) WRITE (out,160)                          &
+     &    ' Input Coarser Grid Impulses File:  ', TRIM(fname)
+!
+        fname=INC(ng)%name
+        IF (Master.and.Lwrite) WRITE (out,160)                          &
+     &    'Input Coarser Grid Icrements File:  ', TRIM(fname)
+
+#  endif
       END DO
 
 #  if defined WEAK_CONSTRAINT && defined RPCG

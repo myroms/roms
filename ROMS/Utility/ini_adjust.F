@@ -63,9 +63,12 @@
 !
       CONTAINS
 !
-# if defined ADJOINT && defined TANGENT
-#  if defined I4DVAR || defined SP4DVAR
-      SUBROUTINE ini_adjust (ng, tile, Linp, Lout)
+# if defined ADJOINT   && defined TANGENT
+#  if defined I4DVAR   || defined TL_RBL4DVAR || \
+      defined RBL4DVAR || defined RBL4DVAR_ANA_SENSITIVITY || \
+      defined SP4DVAR
+
+      SUBROUTINE ini_adjust (ng, tile, Istate, Linp, Lout)
 !
 !=======================================================================
 !                                                                      !
@@ -77,19 +80,21 @@
 !  On Input:                                                           !
 !                                                                      !
 !     ng        Nested grid number.                                    !
+!     tile      Domain partition.                                      !
+!     Istate    Kernel state vector identifier.                        !
 !     Linp      Tangent linear state time index to add.                !
 !     Lout      Nonlinear state time index to update.                  !
-!     tile      Domain partition.                                      !
 !                                                                      !
 !=======================================================================
 !
       USE mod_param
       USE mod_grid
       USE mod_ocean
+      USE state_assign_mod
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, tile, Linp, Lout
+      integer, intent(in) :: ng, tile, Istate, Linp, Lout
 !
 !  Local variable declarations.
 !
@@ -101,23 +106,30 @@
 #   ifdef PROFILE
       CALL wclock_on (ng, iNLM, 7, __LINE__, MyFile)
 #   endif
+!
+!  Associate temporarily work state variables, my_var.
+!
+      CALL state_assign (ng, Istate, Linp)
+!
+!  Compute new nonlinear model initial conditions.
+!      
       CALL ini_adjust_tile (ng, tile,                                   &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      IminS, ImaxS, JminS, JmaxS,                 &
-     &                      Linp, Lout,                                 &
+     &                      Lout,                                       &
 #   ifdef MASKING
      &                      GRID(ng) % rmask,                           &
      &                      GRID(ng) % umask,                           &
      &                      GRID(ng) % vmask,                           &
 #   endif
 #   ifdef SOLVE3D
-     &                      OCEAN(ng) % tl_t,                           &
-     &                      OCEAN(ng) % tl_u,                           &
-     &                      OCEAN(ng) % tl_v,                           &
+     &                      my_t,                                       &
+     &                      my_u,                                       &
+     &                      my_v,                                       &
 #   endif
-     &                      OCEAN(ng) % tl_ubar,                        &
-     &                      OCEAN(ng) % tl_vbar,                        &
-     &                      OCEAN(ng) % tl_zeta,                        &
+     &                      my_ubar,                                    &
+     &                      my_vbar,                                    &
+     &                      my_zeta,                                    &
 #   ifdef SOLVE3D
      &                      OCEAN(ng) % t,                              &
      &                      OCEAN(ng) % u,                              &
@@ -126,6 +138,10 @@
      &                      OCEAN(ng) % ubar,                           &
      &                      OCEAN(ng) % vbar,                           &
      &                      OCEAN(ng) % zeta)
+!
+!  Diassociate temporary work state variables, my_var.
+!
+      CALL state_unassign
 #   ifdef PROFILE
       CALL wclock_off (ng, iNLM, 7, __LINE__, MyFile)
 #   endif
@@ -137,14 +153,14 @@
       SUBROUTINE ini_adjust_tile (ng, tile,                             &
      &                            LBi, UBi, LBj, UBj,                   &
      &                            IminS, ImaxS, JminS, JmaxS,           &
-     &                            Linp, Lout,                           &
+     &                            Lout,                                 &
 #   ifdef MASKING
      &                            rmask, umask, vmask,                  &
 #   endif
 #   ifdef SOLVE3D
-     &                            tl_t, tl_u, tl_v,                     &
+     &                            t_inc, u_inc, v_inc,                  &
 #   endif
-     &                            tl_ubar, tl_vbar, tl_zeta,            &
+     &                            ubar_inc, vbar_inc, zeta_inc,         &
 #   ifdef SOLVE3D
      &                            t, u, v,                              &
 #   endif
@@ -158,7 +174,7 @@
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
-      integer, intent(in) :: Linp, Lout
+      integer, intent(in) :: Lout
 !
 #   ifdef ASSUMED_SHAPE
 #    ifdef MASKING
@@ -167,13 +183,13 @@
       real(r8), intent(in) :: vmask(LBi:,LBj:)
 #    endif
 #    ifdef SOLVE3D
-      real(r8), intent(in) :: tl_t(LBi:,LBj:,:,:,:)
-      real(r8), intent(in) :: tl_u(LBi:,LBj:,:,:)
-      real(r8), intent(in) :: tl_v(LBi:,LBj:,:,:)
+      real(r8), intent(in) :: t_inc(LBi:,LBj:,:,:)
+      real(r8), intent(in) :: u_inc(LBi:,LBj:,:)
+      real(r8), intent(in) :: v_inc(LBi:,LBj:,:)
 #    endif
-      real(r8), intent(in) :: tl_ubar(LBi:,LBj:,:)
-      real(r8), intent(in) :: tl_vbar(LBi:,LBj:,:)
-      real(r8), intent(in) :: tl_zeta(LBi:,LBj:,:)
+      real(r8), intent(in) :: ubar_inc(LBi:,LBj:)
+      real(r8), intent(in) :: vbar_inc(LBi:,LBj:)
+      real(r8), intent(in) :: zeta_inc(LBi:,LBj:)
 #    ifdef SOLVE3D
       real(r8), intent(inout) :: t(LBi:,LBj:,:,:,:)
       real(r8), intent(inout) :: u(LBi:,LBj:,:,:)
@@ -189,13 +205,13 @@
       real(r8), intent(in) :: vmask(LBi:UBi,LBj:UBj)
 #    endif
 #    ifdef SOLVE3D
-      real(r8), intent(in) :: tl_t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
-      real(r8), intent(in) :: tl_u(LBi:UBi,LBj:UBj,N(ng),2)
-      real(r8), intent(in) :: tl_v(LBi:UBi,LBj:UBj,N(ng),2)
+      real(r8), intent(in) :: t_inc(LBi:UBi,LBj:UBj,N(ng),NT(ng))
+      real(r8), intent(in) :: u_inc(LBi:UBi,LBj:UBj,N(ng))
+      real(r8), intent(in) :: v_inc(LBi:UBi,LBj:UBj,N(ng))
 #    endif
-      real(r8), intent(in) :: tl_ubar(LBi:UBi,LBj:UBj,:)
-      real(r8), intent(in) :: tl_vbar(LBi:UBi,LBj:UBj,:)
-      real(r8), intent(in) :: tl_zeta(LBi:UBi,LBj:UBj,:)
+      real(r8), intent(in) :: ubar_inc(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: vbar_inc(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: zeta_inc(LBi:UBi,LBj:UBj)
 #    ifdef SOLVE3D
       real(r8), intent(inout) :: t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
       real(r8), intent(inout) :: u(LBi:UBi,LBj:UBj,N(ng),2)
@@ -216,14 +232,14 @@
 #   include "set_bounds.h"
 !
 !-----------------------------------------------------------------------
-!  Adjust initial conditions for 2D state variables by adding tangent
-!  linear increments from data assimilation.
+!  Adjust initial conditions for 2D state variables by adding
+!  increments from data assimilation.
 !-----------------------------------------------------------------------
 !
 #   ifndef SOLVE3D
       DO j=JstrT,JendT
         DO i=IstrP,IendT
-          ubar(i,j,Lout)=ubar(i,j,Lout)+tl_ubar(i,j,Linp)
+          ubar(i,j,Lout)=ubar(i,j,Lout)+ubar_inc(i,j)
 #    ifdef MASKING
           ubar(i,j,Lout)=ubar(i,j,Lout)*umask(i,j)
 #    endif
@@ -232,7 +248,7 @@
 
       DO j=JstrP,JendT
         DO i=IstrT,IendT
-          vbar(i,j,Lout)=vbar(i,j,Lout)+tl_vbar(i,j,Linp)
+          vbar(i,j,Lout)=vbar(i,j,Lout)+vbar_inc(i,j)
 #    ifdef MASKING
           vbar(i,j,Lout)=vbar(i,j,Lout)*vmask(i,j)
 #    endif
@@ -242,7 +258,7 @@
 
       DO j=JstrT,JendT
         DO i=IstrT,IendT
-          zeta(i,j,Lout)=zeta(i,j,Lout)+tl_zeta(i,j,Linp)
+          zeta(i,j,Lout)=zeta(i,j,Lout)+zeta_inc(i,j)
 #   ifdef MASKING
           zeta(i,j,Lout)=zeta(i,j,Lout)*rmask(i,j)
 #   endif
@@ -252,14 +268,14 @@
 #   ifdef SOLVE3D
 !
 !-----------------------------------------------------------------------
-!  Adjust initial conditions for 3D state variables by adding tangent
-!  linear increments from data assimilation.
+!  Adjust initial conditions for 3D state variables by adding
+!  increments from data assimilation.
 !-----------------------------------------------------------------------
 !
       DO k=1,N(ng)
         DO j=JstrT,JendT
           DO i=IstrP,IendT
-            u(i,j,k,Lout)=u(i,j,k,Lout)+tl_u(i,j,k,Linp)
+            u(i,j,k,Lout)=u(i,j,k,Lout)+u_inc(i,j,k)
 #    ifdef MASKING
             u(i,j,k,Lout)=u(i,j,k,Lout)*umask(i,j)
 #    endif
@@ -268,7 +284,7 @@
 
         DO j=JstrP,JendT
           DO i=IstrT,IendT
-            v(i,j,k,Lout)=v(i,j,k,Lout)+tl_v(i,j,k,Linp)
+            v(i,j,k,Lout)=v(i,j,k,Lout)+v_inc(i,j,k)
 #    ifdef MASKING
             v(i,j,k,Lout)=v(i,j,k,Lout)*vmask(i,j)
 #    endif
@@ -281,240 +297,7 @@
           DO j=JstrT,JendT
             DO i=IstrT,IendT
               t(i,j,k,Lout,itrc)=t(i,j,k,Lout,itrc)+                    &
-     &                           tl_t(i,j,k,Linp,itrc)
-#    ifdef MASKING
-              t(i,j,k,Lout,itrc)=t(i,j,k,Lout,itrc)*rmask(i,j)
-#    endif
-            END DO
-          END DO
-        END DO
-      END DO
-#   endif
-!
-      RETURN
-      END SUBROUTINE ini_adjust_tile
-#  endif
-
-#  if defined RBL4DVAR    || defined RBL4DVAR_ANA_SENSITIVITY || \
-      defined TL_RBL4DVAR
-!
-      SUBROUTINE ini_adjust (ng, tile, Linp, Lout)
-!
-!=======================================================================
-!                                                                      !
-!  This routine adds convolved to adjoint solutions to nonlinear       !
-!  conditions.  The boundary condition and barotropic/baroclinic       !
-!  coupling, if any, are processed latter in routine "ini_fields"      !
-!  before time-stepping.                                               !
-!                                                                      !
-!  On Input:                                                           !
-!                                                                      !
-!     ng        Nested grid number.                                    !
-!     Linp      Tangent linear state time index to add.                !
-!     Lout      Nonlinear state time index to update.                  !
-!     tile      Domain partition.                                      !
-!                                                                      !
-!=======================================================================
-!
-      USE mod_param
-      USE mod_grid
-      USE mod_ocean
-!
-!  Imported variable declarations.
-!
-      integer, intent(in) :: ng, tile, Linp, Lout
-!
-!  Local variable declarations.
-!
-      character (len=*), parameter :: MyFile =                          &
-     &  __FILE__
-!
-#   include "tile.h"
-!
-#   ifdef PROFILE
-      CALL wclock_on (ng, iNLM, 7, __LINE__, MyFile)
-#   endif
-      CALL ini_adjust_tile (ng, tile,                                   &
-     &                      LBi, UBi, LBj, UBj,                         &
-     &                      IminS, ImaxS, JminS, JmaxS,                 &
-     &                      Linp, Lout,                                 &
-#   ifdef MASKING
-     &                      GRID(ng) % rmask,                           &
-     &                      GRID(ng) % umask,                           &
-     &                      GRID(ng) % vmask,                           &
-#   endif
-#   ifdef SOLVE3D
-     &                      OCEAN(ng) % ad_t,                           &
-     &                      OCEAN(ng) % ad_u,                           &
-     &                      OCEAN(ng) % ad_v,                           &
-#   endif
-     &                      OCEAN(ng) % ad_ubar,                        &
-     &                      OCEAN(ng) % ad_vbar,                        &
-     &                      OCEAN(ng) % ad_zeta,                        &
-#   ifdef SOLVE3D
-     &                      OCEAN(ng) % t,                              &
-     &                      OCEAN(ng) % u,                              &
-     &                      OCEAN(ng) % v,                              &
-#   endif
-     &                      OCEAN(ng) % ubar,                           &
-     &                      OCEAN(ng) % vbar,                           &
-     &                      OCEAN(ng) % zeta)
-#   ifdef PROFILE
-      CALL wclock_off (ng, iNLM, 7, __LINE__, MyFile)
-#   endif
-!
-      RETURN
-      END SUBROUTINE ini_adjust
-!
-!***********************************************************************
-      SUBROUTINE ini_adjust_tile (ng, tile,                             &
-     &                            LBi, UBi, LBj, UBj,                   &
-     &                            IminS, ImaxS, JminS, JmaxS,           &
-     &                            Linp, Lout,                           &
-#   ifdef MASKING
-     &                            rmask, umask, vmask,                  &
-#   endif
-#   ifdef SOLVE3D
-     &                            ad_t, ad_u, ad_v,                     &
-#   endif
-     &                            ad_ubar, ad_vbar, ad_zeta,            &
-#   ifdef SOLVE3D
-     &                            t, u, v,                              &
-#   endif
-     &                            ubar, vbar, zeta)
-!***********************************************************************
-!
-      USE mod_param
-!
-!  Imported variable declarations.
-!
-      integer, intent(in) :: ng, tile
-      integer, intent(in) :: LBi, UBi, LBj, UBj
-      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
-      integer, intent(in) :: Linp, Lout
-!
-#   ifdef ASSUMED_SHAPE
-#    ifdef MASKING
-      real(r8), intent(in) :: rmask(LBi:,LBj:)
-      real(r8), intent(in) :: umask(LBi:,LBj:)
-      real(r8), intent(in) :: vmask(LBi:,LBj:)
-#    endif
-#    ifdef SOLVE3D
-      real(r8), intent(in) :: ad_t(LBi:,LBj:,:,:,:)
-      real(r8), intent(in) :: ad_u(LBi:,LBj:,:,:)
-      real(r8), intent(in) :: ad_v(LBi:,LBj:,:,:)
-#    endif
-      real(r8), intent(in) :: ad_ubar(LBi:,LBj:,:)
-      real(r8), intent(in) :: ad_vbar(LBi:,LBj:,:)
-      real(r8), intent(in) :: ad_zeta(LBi:,LBj:,:)
-#    ifdef SOLVE3D
-      real(r8), intent(inout) :: t(LBi:,LBj:,:,:,:)
-      real(r8), intent(inout) :: u(LBi:,LBj:,:,:)
-      real(r8), intent(inout) :: v(LBi:,LBj:,:,:)
-#    endif
-      real(r8), intent(inout) :: ubar(LBi:,LBj:,:)
-      real(r8), intent(inout) :: vbar(LBi:,LBj:,:)
-      real(r8), intent(inout) :: zeta(LBi:,LBj:,:)
-#   else
-#    ifdef MASKING
-      real(r8), intent(in) :: rmask(LBi:UBi,LBj:UBj)
-      real(r8), intent(in) :: umask(LBi:UBi,LBj:UBj)
-      real(r8), intent(in) :: vmask(LBi:UBi,LBj:UBj)
-#    endif
-#    ifdef SOLVE3D
-      real(r8), intent(in) :: ad_t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
-      real(r8), intent(in) :: ad_u(LBi:UBi,LBj:UBj,N(ng),2)
-      real(r8), intent(in) :: ad_v(LBi:UBi,LBj:UBj,N(ng),2)
-#    endif
-      real(r8), intent(in) :: ad_ubar(LBi:UBi,LBj:UBj,:)
-      real(r8), intent(in) :: ad_vbar(LBi:UBi,LBj:UBj,:)
-      real(r8), intent(in) :: ad_zeta(LBi:UBi,LBj:UBj,:)
-#    ifdef SOLVE3D
-      real(r8), intent(inout) :: t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
-      real(r8), intent(inout) :: u(LBi:UBi,LBj:UBj,N(ng),2)
-      real(r8), intent(inout) :: v(LBi:UBi,LBj:UBj,N(ng),2)
-#    endif
-      real(r8), intent(inout) :: ubar(LBi:UBi,LBj:UBj,:)
-      real(r8), intent(inout) :: vbar(LBi:UBi,LBj:UBj,:)
-      real(r8), intent(inout) :: zeta(LBi:UBi,LBj:UBj,:)
-#   endif
-!
-!  Local variable declarations.
-!
-      integer :: i, j
-#   ifdef SOLVE3D
-      integer :: itrc, k
-#   endif
-
-#   include "set_bounds.h"
-!
-!-----------------------------------------------------------------------
-!  Adjust initial conditions for 2D state variables by adding tangent
-!  linear increments from data assimilation.
-!-----------------------------------------------------------------------
-!
-#   ifndef SOLVE3D
-      DO j=JstrT,JendT
-        DO i=IstrP,IendT
-          ubar(i,j,Lout)=ubar(i,j,Lout)+ad_ubar(i,j,Linp)
-#    ifdef MASKING
-          ubar(i,j,Lout)=ubar(i,j,Lout)*umask(i,j)
-#    endif
-        END DO
-      END DO
-
-      DO j=JstrP,JendT
-        DO i=IstrT,IendT
-          vbar(i,j,Lout)=vbar(i,j,Lout)+ad_vbar(i,j,Linp)
-#    ifdef MASKING
-          vbar(i,j,Lout)=vbar(i,j,Lout)*vmask(i,j)
-#    endif
-        END DO
-      END DO
-#   endif
-
-      DO j=JstrT,JendT
-        DO i=IstrT,IendT
-          zeta(i,j,Lout)=zeta(i,j,Lout)+ad_zeta(i,j,Linp)
-#   ifdef MASKING
-          zeta(i,j,Lout)=zeta(i,j,Lout)*rmask(i,j)
-#   endif
-        END DO
-      END DO
-
-#   ifdef SOLVE3D
-!
-!-----------------------------------------------------------------------
-!  Adjust initial conditions for 3D state variables by adding tangent
-!  linear increments from data assimilation.
-!-----------------------------------------------------------------------
-!
-      DO k=1,N(ng)
-        DO j=JstrT,JendT
-          DO i=IstrP,IendT
-            u(i,j,k,Lout)=u(i,j,k,Lout)+ad_u(i,j,k,Linp)
-#    ifdef MASKING
-            u(i,j,k,Lout)=u(i,j,k,Lout)*umask(i,j)
-#    endif
-          END DO
-        END DO
-
-        DO j=JstrP,JendT
-          DO i=IstrT,IendT
-            v(i,j,k,Lout)=v(i,j,k,Lout)+ad_v(i,j,k,Linp)
-#    ifdef MASKING
-            v(i,j,k,Lout)=v(i,j,k,Lout)*vmask(i,j)
-#    endif
-          END DO
-        END DO
-      END DO
-
-      DO itrc=1,NT(ng)
-        DO k=1,N(ng)
-          DO j=JstrT,JendT
-            DO i=IstrT,IendT
-              t(i,j,k,Lout,itrc)=t(i,j,k,Lout,itrc)+                    &
-     &                           ad_t(i,j,k,Linp,itrc)
+     &                           t_inc(i,j,k,itrc)
 #    ifdef MASKING
               t(i,j,k,Lout,itrc)=t(i,j,k,Lout,itrc)*rmask(i,j)
 #    endif
