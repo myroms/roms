@@ -202,11 +202,10 @@ ARPACK
 #endif
 
 /*
-** Determine if using the NCAR parallel-IO (SCORPIO) library is needed.
+** Determine if using the NCAR parallel-IO (PIO) library is needed.
 */
 
 #ifdef PIO_LIB
-SCORPIO
 #define FOUND
 #endif
 
