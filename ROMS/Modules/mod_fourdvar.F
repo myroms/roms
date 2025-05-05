@@ -243,10 +243,10 @@
         real(r8), allocatable :: unvetted(:)
         real(r8), allocatable :: uradial(:)
         real(r8), allocatable :: vradial(:)
-#  ifndef VERIFICATION
+        real(r8), allocatable :: BgErr(:)
         real(r8), allocatable :: uBgErr(:)
         real(r8), allocatable :: vBgErr(:)
-#  endif
+
 #  ifdef SP4DVAR
         real(r8), allocatable :: ADmodVal_S(:,:)
         real(r8), allocatable :: harnoldi(:,:,:)
@@ -451,7 +451,7 @@
 !
         integer :: NpostI
 !
-!  Outer loop to consider in the computatio of the observations
+!  Outer loop to consider in the computation of the observations
 !  impact or observations sensitivity, Nimpact =< Nouter.  This
 !  facilitates the computations with multiple outer loop 4D-Var
 !  applications.  The observation analysis needs to be computed
@@ -566,10 +566,6 @@
 !  statistics at observation locations:
 !-----------------------------------------------------------------------
 !
-!  4D-Var background error standard deviation [Mobs].
-!
-        real(r8), allocatable :: BgErr(:)
-!
 !  4D-Var NLM increment vector, analysis minus background {Mobs].
 !
         real(r8), allocatable :: NLincrement(:)
@@ -598,6 +594,8 @@
         real(r8), allocatable :: Jact_S(:)
 # endif
 !
+
+
 !-----------------------------------------------------------------------
 !  Spatial convolutions parameters
 !-----------------------------------------------------------------------
@@ -1251,7 +1249,10 @@
         deallocate (vradial)
       END IF
 
-#  ifndef VERIFICATION
+      IF (allocated(BgErr)) THEN
+        deallocate (BgErr)
+      END IF
+
       IF (allocated(uBgErr)) THEN
         deallocate (uBgErr)
       END IF
@@ -1259,13 +1260,8 @@
       IF (allocated(vBgErr)) THEN
         deallocate (vBgErr)
       END IF
-#  endif
 
 #  ifdef FOUR_DVAR
-      IF (allocated(BgErr)) THEN
-        deallocate (BgErr)
-      END IF
-
       IF (allocated(NLincrement)) THEN
         deallocate (NLincrement)
       END IF
@@ -2104,7 +2100,12 @@
       END IF
       vradial = IniVal
 
-#  ifndef VERIFICATION
+      IF (.not.allocated(BgErr)) THEN
+        allocate ( BgErr(Mobs) )
+        Dmem(1)=Dmem(1)+REAL(Mobs,r8)
+      END IF
+      BgErr = IniVal
+
       IF (.not.allocated(uBgErr)) THEN
         allocate ( uBgErr(Mobs) )
         Dmem(1)=Dmem(1)+REAL(Mobs,r8)
@@ -2116,7 +2117,6 @@
         Dmem(1)=Dmem(1)+REAL(Mobs,r8)
       END IF
       vBgErr = IniVal
-#  endif
 
 #  ifdef SP4DVAR
       IF (.not.allocated(ADmodVal_S)) THEN
@@ -2151,12 +2151,6 @@
 #  endif
 
 #  ifdef FOUR_DVAR
-      IF (.not.allocated(BgErr)) THEN
-        allocate ( BgErr(Mobs) )
-        Dmem(1)=Dmem(1)+REAL(Mobs,r8)
-      END IF
-      BgErr = IniVal
-
       IF (.not.allocated(NLincrement)) THEN
         allocate ( NLincrement(Mobs) )
         Dmem(1)=Dmem(1)+REAL(Mobs,r8)
@@ -2205,16 +2199,23 @@
 !  The following arrays are only needed and used by the master node.
 !  In order to avoid hogging memory penalties in the other nodes, they
 !  are only allocated by the master node.
+#    ifdef SPLIT_EXECUTABLE
+!  NOTICE: In split 4D-Var with split executables and mixed resolution,
+!  ======  these arrays are unnecessary in the "background" and
+!  "analysis" phases, so they remain unallocated. They are only needed
+!  during the minimization in the "increment" phase.
+#    endif
 !
+#    ifndef SPLIT_EXECUTABLE 
       IF (.not.allocated(TLmodVal_S)) THEN
         allocate ( TLmodVal_S(Mobs,Ninner,Nouter) )
         Dmem(1)=Dmem(1)+REAL(Mobs*Ninner*Nouter,r8)
       END IF
       TLmodVal_S = IniVal
 
-#    if defined RPCG              && \
-       (defined SENSITIVITY_4DVAR || defined TL_RBL4DVAR || \
-        defined TL_R4DVAR)
+#     if defined RPCG              && \
+        (defined SENSITIVITY_4DVAR || defined TL_RBL4DVAR || \
+         defined TL_R4DVAR)
       IF (Master) THEN
         IF (.not.allocated(tl_TLmodVal_S)) THEN
           allocate ( tl_TLmodVal_S(Mobs,Ninner,Nouter) )
@@ -2228,25 +2229,30 @@
         END IF
         ad_TLmodVal_S = IniVal
       END IF
+#     endif
 #    endif
 #   endif
 
 #   if defined ARRAY_MODES       || defined RBL4DVAR    || \
        defined SENSITIVITY_4DVAR || defined TL_RBL4DVAR
 
+#    ifndef SPLIT_EXECUTABLE
       IF (.not.allocated(BCKmodVal)) THEN
         allocate ( BCKmodVal(Mobs) )
         Dmem(1)=Dmem(1)+REAL(Mobs,r8)
       END IF
       BCKmodVal = IniVal
+#    endif
 
 #    ifdef RPCG
 
+#     ifndef SPLIT_EXECUTABLE
       IF (.not.allocated(Hbk)) THEN
         allocate ( Hbk(Mobs,Nouter) )
         Dmem(1)=Dmem(1)+REAL(Mobs*Nouter,r8)
       END IF
       Hbk = IniVal
+#     endif
 
 #     if defined SENSITIVITY_4DVAR || defined TL_RBL4DVAR || \
          defined TL_R4DVAR
@@ -2422,7 +2428,7 @@
       END IF
       cg_dla = IniVal
 
-#   ifndef RPCG
+#   if !defined RPCG && !defined SPLIT_EXCUTABLE
 
       IF (.not.allocated(cg_pxsave)) THEN
         allocate ( cg_pxsave(Mobs) )

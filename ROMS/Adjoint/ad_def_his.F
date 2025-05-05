@@ -587,7 +587,9 @@
      &                 NF_FOUT, nvd4, u3dfrc, Aval, Vinfo, ncname)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
-!  Define surface V-momentum stress.
+!  Define surface V-momentum stress.  Notice that the stress has its
+!  own fixed time-dimension (of size Nfrec) to allow 4DVAR adjustments
+!  at other times in addition to initialization time.
 !
         Vinfo( 1)=Vname(1,idVsms)
         WRITE (Vinfo( 2),40) TRIM(Vname(2,idVsms))
@@ -2060,7 +2062,9 @@
      &                 PIO_FOUT, nvd4, u3dfrc, Aval, Vinfo, ncname)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
-!  Define surface V-momentum stress.
+!  Define surface V-momentum stress.  Notice that the stress has its
+!  own fixed time-dimension (of size Nfrec) to allow 4DVAR adjustments
+!  at other times in addition to initialization time.
 !
         Vinfo( 1)=Vname(1,idVsms)
         WRITE (Vinfo( 2),40) TRIM(Vname(2,idVsms))

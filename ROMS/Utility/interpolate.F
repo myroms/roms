@@ -737,18 +737,18 @@
 !  On Input:                                                           !
 !                                                                      !
 !     ng          Nested grid number.                                  !
-!     LBi         I-dimension Lower bound of gridded data.             !
-!     UBi         I-dimension Upper bound of gridded data.             !
-!     LBj         J-dimension Lower bound of gridded data.             !
-!     UBj         J-dimension Upper bound of gridded data.             !
-!     Is          Starting gridded data I-index to search.             !
-!     Ie          Ending   gridded data I-index to search.             !
-!     Js          Starting gridded data J-index to search.             !
-!     Je          Ending   gridded data J-index to search.             !
+!     LBi         I-dimension Lower bound of gridded data (global).    !
+!     UBi         I-dimension Upper bound of gridded data (global).    !
+!     LBj         J-dimension Lower bound of gridded data (global).    !
+!     UBj         J-dimension Upper bound of gridded data (global).    !
+!     Is          Starting gridded data I-index to search (global).    !
+!     Ie          Ending   gridded data I-index to search (global).    !
+!     Js          Starting gridded data J-index to search (global).    !
+!     Je          Ending   gridded data J-index to search (global).    !
 !     angler      Gridded data angle between X-axis and true EAST      !
-!                   (radians).                                         !
-!     Xgrd        Gridded data X-locations (usually, longitude).       !
-!     Ygrd        Gridded data Y-locations (usually, latitude).        !
+!                   (radians, global array).                           !
+!     Xgrd        Gridded data X-locations (longitude, global).        !
+!     Ygrd        Gridded data Y-locations (latitude,  global).        !
 !     LBm         I-dimension Lower bound of requested locations.      !
 !     UBm         I-dimension Upper bound of requested locations.      !
 !     LBn         J-dimension Lower bound of requested locations.      !

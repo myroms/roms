@@ -154,6 +154,7 @@
       integer :: TaskRank = 0
       integer :: MyRank = 0
       integer :: MyThread = 0
+      integer :: MyTile = -1
 
 !$OMP THREADPRIVATE (MyThread)
 
@@ -349,7 +350,7 @@
 !
 !  Get the number of processes in the group associated with the world
 !  communicator.  Here FullRank and MyRank are the same. It is computed
-!  for consistency wity concurrent applications.
+!  for consistency with concurrent applications.
 !
       CALL mpi_comm_size (OCN_COMM_WORLD, numthreads, MyError)
       IF (MyError.ne.0) THEN
@@ -361,6 +362,7 @@
       END IF
       CALL mpi_comm_rank (OCN_COMM_WORLD, FullRank, MyError)
       ForkSize=numthreads
+      MyTile=MyRank
 !
 !  Identify master, input and output threads.
 !
