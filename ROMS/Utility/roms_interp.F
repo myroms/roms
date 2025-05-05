@@ -22,14 +22,14 @@
       USE mod_scalars
 !
 #ifdef DISTRIBUTE
-      USE distribute_mod,  ONLY : mp_reduce
+      USE distribute_mod,       ONLY : mp_reduce
 #endif
-      USE interpolate_mod, ONLY : hindices
-      USE stats_mod,       ONLY : stats_2dfld,                          &
-     &                            stats_3dfld
-      USE strings_mod,     ONLY : assign_string,                        &
-     &                            find_string,                          &
-     &                            FoundError
+      USE roms_interpolate_mod, ONLY : hindices
+      USE stats_mod,            ONLY : stats_2dfld,                     &
+     &                                 stats_3dfld
+      USE strings_mod,          ONLY : assign_string,                   &
+     &                                 find_string,                     &
+     &                                 FoundError
 !
       implicit none
 !
