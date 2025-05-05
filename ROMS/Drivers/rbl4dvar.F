@@ -93,6 +93,7 @@
       USE mod_boundary,       ONLY : initialize_boundary
 # endif
       USE mod_forces,         ONLY : initialize_forces
+
       USE mod_mixing,         ONLY : initialize_mixing
       USE mod_ocean,          ONLY : initialize_ocean
 !
@@ -137,6 +138,7 @@
 # ifdef POSTERIOR_ERROR_F
       USE ini_adjust_mod,     ONLY : load_TLtoAD
 # endif
+      USE inp_decode_mod,     ONLY : find_file
       USE normalization_mod,  ONLY : normalization
 # if defined POSTERIOR_ERROR_I || defined POSTERIOR_ERROR_F || \
      defined POSTERIOR_EOFS
@@ -150,6 +152,9 @@
 #  ifdef SPLIT_4DVAR
       USE rpcg_lanczos_mod,   ONLY : cg_read_rpcg
 #  endif
+# endif
+# if defined GRID_EXTRACT && defined SPLIT_EXECUTABLE
+      USE state_regrid_mod,   ONLY : state_regrid
 # endif
       USE strings_mod,        ONLY : FoundError
       USE tl_def_ini_mod,     ONLY : tl_def_ini
@@ -303,11 +308,7 @@
         INI(ng)%Rindex=1
         Fcount=INI(ng)%load
         INI(ng)%Nrec(Fcount)=1
-# ifdef DISTRIBUTE
-        CALL wrt_ini (ng, MyRank, Tindex, Lbck)
-# else
-        CALL wrt_ini (ng, -1, Tindex, Lbck)
-# endif
+        CALL wrt_ini (ng, MyTile, Tindex, Lbck)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
       END DO
 
@@ -335,11 +336,7 @@
             STD(5,ng)%Rindex=0
             Fcount=STD(5,ng)%load
             STD(5,ng)%Nrec(Fcount)=1
-#  ifdef DISTRIBUTE
-            CALL wrt_std (ng, MyRank, Lstd)
-#  else
-            CALL wrt_std (ng, -1, Lstd)
-#  endif
+            CALL wrt_std (ng, MyTile, Lstd)
             IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
           END IF
         END DO
@@ -661,6 +658,7 @@
 !  Local variable declarations.
 !
       logical :: Lcgini, Linner, Lposterior
+      logical :: mixed_resolution
 !
       integer :: i, ifile, lstr, my_inner, ng, tile
       integer :: Fcount, InpRec
@@ -876,6 +874,11 @@
         ELSE
           HIS(ng)%files(1)=TRIM(HIS(ng)%name)
         END IF
+        IF (.not.find_file(ng, stdout, HIS(ng)%name, MyFile)) THEN
+          RETURN
+        ELSE
+          IF (Master) WRITE (stdout,20) 'HIS file = ',TRIM(HIS(ng)%name)
+        END IF
       END DO
 !
 !  Set the nonlinear model quicksave-history file as the basic state for
@@ -896,6 +899,11 @@
           QCK(ng)%name=TRIM(QCK(ng)%files(1))
         ELSE
           QCK(ng)%files(1)=TRIM(QCK(ng)%name)
+        END IF
+        IF (.not.find_file(ng, stdout, QCK(ng)%name, MyFile)) THEN
+          RETURN
+        ELSE
+          IF (Master) WRITE (stdout,20) 'QCK file = ',TRIM(QCK(ng)%name)
         END IF
       END DO
 !
@@ -944,6 +952,66 @@
         END DO
 #  endif
       END DO
+!
+!-----------------------------------------------------------------------
+!  If outer=1 and mixed-resolution RBL4D-Var, write out decimated
+!  nonlinear prior initial conditions into INI file Rec1, and repeat
+!  in Rec2 for the background. Notice that those variable are
+!  available in the FWD trajectory.  They are needed when computing
+!  the increment for the coarse inner loop grid.
+!-----------------------------------------------------------------------
+!
+      IF (my_outer.eq.1) THEN
+        DO ng=1,Ngrids
+!
+!     Check for mixed-resolution.
+!
+          mixed_resolution=.FALSE.
+
+          SELECT CASE (HIS(ng)%IOtype)
+            CASE (io_nf90)
+              CALL netcdf_check_var (ng, iNLM, HIS(ng)%name)
+              IF (FoundError(exit_flag, NoError,                        &
+     &                       __LINE__, MyFile)) RETURN
+              IF (find_string(var_name, n_var, 'ExtractFlag',i)) THEN
+                CALL netcdf_get_ivar (ng, iTLM, HIS(ng)%name,           &
+     &                                'ExtractFlag',                    &
+     &                                ExtractFlag(ng))
+                IF (ExtractFlag(ng).gt.1) mixed_resolution=.TRUE.
+                IF (FoundError(exit_flag, NoError,                      &
+     &                         __LINE__, MyFile)) RETURN
+              END IF
+
+#  if defined PIO_LIB && defined DISTRIBUTE
+            CASE (io_pio)
+              CALL pio_netcdf_check_var (ng, iNLM, HIS(ng)%name)
+              IF (FoundError(exit_flag, NoError,                        &
+     &                       __LINE__, MyFile)) RETURN
+              IF (find_string(var_name, n_var, 'ExtractFlag',i)) THEN
+                CALL pio_netcdf_get_ivar (ng, iTLM, HIS(ng)%name,       &
+     &                                    'ExtractFlag',                &
+     &                                    ExtractFlag(ng))
+                IF (ExtractFlag(ng).gt.1) mixed_resolution=.TRUE.
+                IF (FoundError(exit_flag, NoError,                      &
+     &                         __LINE__, MyFile)) RETURN
+              END IF
+#  endif
+          END SELECT
+!
+!     Write out "prior" and "background" initial conditions to INI file.
+!
+          IF (mixed_resolution) THEN
+            CALL get_state (ng, iNLM, 1, HIS(ng), Lini, Lini)
+            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+!
+            CALL wrt_ini (ng, MyTile, Lini, Lini)  ! "prior"
+            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+!
+            CALL wrt_ini (ng, MyTile, Lini, Lbck)  ! "background"
+            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+          END IF
+        END DO
+      END IF
 # endif
 !
 !-----------------------------------------------------------------------
@@ -1022,47 +1090,27 @@
 !
         DO ng=1,Ngrids
           tdays(ng)=INItime(ng)*sec2day
-#  ifdef DISTRIBUTE
-          CALL tl_wrt_ini (ng, MyRank, Rec1, Rec1)
-#  else
-          CALL tl_wrt_ini (ng, -1, Rec1, Rec1)
-#  endif
+          CALL tl_wrt_ini (ng, MyTile, Rec1, Rec1)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-#  ifdef DISTRIBUTE
-          CALL tl_wrt_ini (ng, MyRank, Rec1, Rec2)
-#  else
-          CALL tl_wrt_ini (ng, -1, Rec1, Rec2)
-#  endif
+!
+          CALL tl_wrt_ini (ng, MyTile, Rec1, Rec2)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-#  ifdef DISTRIBUTE
-          CALL tl_wrt_ini (ng, MyRank, Rec1, Rec3)
-#  else
-          CALL tl_wrt_ini (ng, -1, Rec1, Rec3)
-#  endif
+!
+          CALL tl_wrt_ini (ng, MyTile, Rec1, Rec3)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-#  ifdef DISTRIBUTE
-          CALL tl_wrt_ini (ng, MyRank, Rec1, Rec4)
-#  else
-          CALL tl_wrt_ini (ng, -1, Rec1, Rec4)
-#  endif
+!
+          CALL tl_wrt_ini (ng, MyTile, Rec1, Rec4)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-#  ifdef DISTRIBUTE
-          CALL tl_wrt_ini (ng, MyRank, Rec1, Rec5)
-#  else
-          CALL tl_wrt_ini (ng, -1, Rec1, Rec5)
-#  endif
+!
+          CALL tl_wrt_ini (ng, MyTile, Rec1, Rec5)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
           IF (nADJ(ng).lt.ntimes(ng)) THEN
             nLAST=Rec5
             DO irec=1,nADrec(ng)
-#  ifdef DISTRIBUTE
-              CALL tl_wrt_ini (ng, MyRank, Rec1, nLAST+irec)
-#  else
-              CALL tl_wrt_ini (ng, -1, Rec1, nLAST+irec)
-#  endif
+              CALL tl_wrt_ini (ng, MyTile, Rec1, nLAST+irec)
               IF (FoundError(exit_flag, NoError,                        &
-     &                       __LINE__, MyFile)) RETURN
+     &                        __LINE__, MyFile)) RETURN
             END DO
           END IF
         END DO
@@ -1166,7 +1214,7 @@
 !
         DO ng=1,Ngrids
           IF (Master) THEN
-            WRITE (stdout,20) 'TL', ng, my_outer, 0,                    &
+            WRITE (stdout,30) 'TL', ng, my_outer, 0,                    &
      &                        ntstart(ng), ntend(ng)
           END IF
         END DO
@@ -1337,7 +1385,7 @@
 !
           DO ng=1,Ngrids
             IF (Master) THEN
-              WRITE (stdout,20) 'AD', ng, my_outer, my_inner,           &
+              WRITE (stdout,30) 'AD', ng, my_outer, my_inner,           &
      &                          ntstart(ng), ntend(ng)
             END IF
           END DO
@@ -1369,11 +1417,7 @@
 !  forcing is delayed by nADJ time-steps.
 !
           DO ng=1,Ngrids
-#  ifdef DISTRIBUTE
-            CALL ad_wrt_his (ng, MyRank)
-#  else
-            CALL ad_wrt_his (ng, -1)
-#  endif
+            CALL ad_wrt_his (ng, MyTile)
             IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
           END DO
 # endif
@@ -1383,11 +1427,7 @@
 !
           DO ng=1,Ngrids
             WRTforce(ng)=.FALSE.
-# ifdef DISTRIBUTE
-            CALL ad_wrt_his (ng, MyRank)
-# else
-            CALL ad_wrt_his (ng, -1)
-# endif
+            CALL ad_wrt_his (ng, MyTile)
             IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
           END DO
 !
@@ -1418,15 +1458,11 @@
 !  the adjoint solution in ADM(ng)%name is backwards in time).
 !
           IF (Master) THEN
-            WRITE (stdout,30) my_outer, inner
+            WRITE (stdout,40) my_outer, inner
           END IF
           DO ng=1,Ngrids
             TLF(ng)%Rindex=0
-# ifdef DISTRIBUTE
-            CALL wrt_impulse (ng, MyRank, iADM, ADM(ng)%name)
-# else
-            CALL wrt_impulse (ng, -1, iADM, ADM(ng)%name)
-# endif
+            CALL wrt_impulse (ng, MyTile, iADM, ADM(ng)%name)
             IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
           END DO
 !
@@ -1476,7 +1512,7 @@
 !
           DO ng=1,Ngrids
             IF (Master) THEN
-              WRITE (stdout,20) 'TL', ng, my_outer, my_inner,           &
+              WRITE (stdout,30) 'TL', ng, my_outer, my_inner,           &
      &                          ntstart(ng), ntend(ng)
             END IF
           END DO
@@ -1575,7 +1611,7 @@
 !
       DO ng=1,Ngrids
         IF (Master) THEN
-          WRITE (stdout,20) 'AD', ng, my_outer, Ninner,                 &
+          WRITE (stdout,30) 'AD', ng, my_outer, Ninner,                 &
      &                      ntstart(ng), ntend(ng)
         END IF
       END DO
@@ -1594,11 +1630,7 @@
 !  forcing is delayed by nADJ time-steps.
 !
       DO ng=1,Ngrids
-#  ifdef DISTRIBUTE
-        CALL ad_wrt_his (ng, MyRank)
-#  else
-        CALL ad_wrt_his (ng, -1)
-#  endif
+        CALL ad_wrt_his (ng, MyTile)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
       END DO
 # endif
@@ -1608,11 +1640,7 @@
 !
       DO ng=1,Ngrids
         WRTforce(ng)=.FALSE.
-# ifdef DISTRIBUTE
-        CALL ad_wrt_his (ng, MyRank)
-# else
-        CALL ad_wrt_his (ng, -1)
-# endif
+        CALL ad_wrt_his (ng, MyTile)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
       END DO
 
@@ -1673,20 +1701,13 @@
 !  INI(ng)%Rindex.
 !
       DO ng=1,Ngrids
-#  ifdef DISTRIBUTE
-        CALL wrt_ini (ng, MyRank, Lnew(ng))
-#  else
-        CALL wrt_ini (ng, -1, Lnew(ng))
-#  endif
+        CALL wrt_ini (ng, MyTile, Lnew(ng))
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
 #  if defined ADJUST_STFLUX   || defined ADJUST_WSTRESS || \
       defined ADJUST_BOUNDARY
-#   ifdef DISTRIBUTE
-        CALL wrt_frc_AD (ng, MyRank, Lold(ng), INI(ng)%Rindex)
-#   else
-        CALL wrt_frc_AD (ng, -1, Lold(ng), INI(ng)%Rindex)
-#   endif
+!
+        CALL wrt_frc_AD (ng, MyTile, Lold(ng), INI(ng)%Rindex)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #  endif
       END DO
@@ -1694,9 +1715,9 @@
 
 # ifdef RPCG
 !
-! Compute the augmented correction to the adjoint propagator.
-! We need to use sum (x(k)-x(k-1)) before it is updated. This is
-! in record 3 of the ITL file.
+!  Compute the augmented correction to the adjoint propagator.
+!  We need to use sum (x(k)-x(k-1)) before it is updated. This is
+!  in record 3 of the ITL file.
 !
       DO ng=1,Ngrids
         CALL get_state (ng, iTLM, 4, ITL(ng), Rec3, LTLM1)
@@ -1708,19 +1729,15 @@
         END DO
       END DO
 !
-! Save this augmented piece in record 5 of the ITL file.
+!  Save this augmented piece in record 5 of the ITL file.
 !
       DO ng=1,Ngrids
-#  ifdef DISTRIBUTE
-        CALL tl_wrt_ini (ng, MyRank, LTLM2, Rec5)
-#  else
-        CALL tl_wrt_ini (ng, -1, LTLM2, Rec5)
-#  endif
+        CALL tl_wrt_ini (ng, MyTile, LTLM2, Rec5)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
       END DO
 !
-! Complete the computation of the TL initial condition by adding the
-! contribution from the augmented adjoint propagator.
+!  Complete the computation of the TL initial condition by adding the
+!  contribution from the augmented adjoint propagator.
 !
       DO ng=1,Ngrids
         CALL get_state (ng, iTLM, 4, ITL(ng), Rec2, LTLM1)
@@ -1735,18 +1752,17 @@
         END DO
       END DO
 !
-! Write the final TL increment to Rec2 of the ITL file.
+!  Write the final TL increment for current outer loop into Rec2 of the
+!  ITL file. Notice that the cumulative increment for current and
+!  previous outer loops can be found in Rec3 of the ITL file.
 !
       DO ng=1,Ngrids
-#  ifdef DISTRIBUTE
-        CALL tl_wrt_ini (ng, MyRank, LTLM2, Rec2)
-#  else
-        CALL tl_wrt_ini (ng, -1, LTLM2, Rec2)
-#  endif
+        CALL tl_wrt_ini (ng, MyTile, LTLM2, Rec2)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
       END DO
 !
-! Now update the non-linear model initial conditions.
+!  Now update the non-linear model initial conditions. The DA increment
+!  is read below into adjoint state variables, time index LTLM1.
 !
       LiNL=my_outer+1
       DO ng=1,Ngrids
@@ -1758,7 +1774,7 @@
       DO ng=1,Ngrids
         IF (timeIAU(ng).eq.0.0_dp) THEN
           DO tile=first_tile(ng),last_tile(ng),+1
-            CALL ini_adjust (ng, tile, LTLM1, Lnew(ng))
+            CALL ini_adjust (ng, tile, iADM, LTLM1, Lnew(ng))
           END DO
         END IF
       END DO
@@ -1767,20 +1783,13 @@
 !  INI(ng)%Rindex.
 !
       DO ng=1,Ngrids
-#  ifdef DISTRIBUTE
-        CALL wrt_ini (ng, MyRank, Lnew(ng))
-#  else
-        CALL wrt_ini (ng, -1, Lnew(ng))
-#  endif
+        CALL wrt_ini (ng, MyTile, Lnew(ng))
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
 #  if defined ADJUST_STFLUX   || defined ADJUST_WSTRESS || \
       defined ADJUST_BOUNDARY
-#   ifdef DISTRIBUTE
-        CALL wrt_frc_AD (ng, MyRank, LTLM1, INI(ng)%Rindex)
-#   else
-        CALL wrt_frc_AD (ng, -1, LTLM1, INI(ng)%Rindex)
-#   endif
+!
+        CALL wrt_frc_AD (ng, MyTile, LTLM1, INI(ng)%Rindex)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #  endif
       END DO
@@ -1826,11 +1835,7 @@
 !  file.
 !
       DO ng=1,Ngrids
-#  ifdef DISTRIBUTE
-        CALL tl_wrt_ini (ng, MyRank, LTLM2, Rec4)
-#  else
-        CALL tl_wrt_ini (ng, -1, LTLM2, Rec4)
-#  endif
+        CALL tl_wrt_ini (ng, MyTile, LTLM2, Rec4)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
       END DO
 # endif
@@ -1842,15 +1847,11 @@
 !  the adjoint solution in ADM(ng)%name is backwards in time).
 !
       IF (Master) THEN
-        WRITE (stdout,30) my_outer, inner
+        WRITE (stdout,40) my_outer, inner
       END IF
       DO ng=1,Ngrids
         TLF(ng)%Rindex=0
-# ifdef DISTRIBUTE
-        CALL wrt_impulse (ng, MyRank, iADM, ADM(ng)%name)
-# else
-        CALL wrt_impulse (ng, -1, iADM, ADM(ng)%name)
-# endif
+        CALL wrt_impulse (ng, MyTile, iADM, ADM(ng)%name)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
       END DO
 
@@ -1889,12 +1890,8 @@
 !  Note the original TLF file is overwritten at this point.
 !
           TLF(ng)%Rindex=0
-# ifdef DISTRIBUTE
-          CALL wrt_aug_imp (ng, MyRank, iTLM, LTLM2, i)
-# else
-          CALL wrt_aug_imp (ng, -1, iTLM, LTLM2, i)
-# endif
-
+          CALL wrt_aug_imp (ng, MyTile, iTLM, LTLM2, i)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END DO
       END DO
 !
@@ -1918,11 +1915,7 @@
 !  Write the current sum into record 3 of the ITL file.
 !
       DO ng=1,Ngrids
-# ifdef DISTRIBUTE
-        CALL tl_wrt_ini (ng, MyRank, LTLM2, Rec3)
-# else
-        CALL tl_wrt_ini (ng, -1, LTLM2, Rec3)
-# endif
+        CALL tl_wrt_ini (ng, MyTile, LTLM2, Rec3)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
       END DO
 
@@ -1939,11 +1932,7 @@
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
       END DO
       DO ng=1,Ngrids
-#  ifdef DISTRIBUTE
-        CALL wrt_frc_AD (ng, MyRank, LTLM1, INI(ng)%Rindex)
-#  else
-        CALL wrt_frc_AD (ng, -1, LTLM1, INI(ng)%Rindex)
-#  endif
+        CALL wrt_frc_AD (ng, MyTile, LTLM1, INI(ng)%Rindex)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
       END DO
 # endif
@@ -1968,13 +1957,8 @@
 !
 !  Write the current sum into record jrec of the ITL file.
 !
-# ifdef DISTRIBUTE
-!!        CALL tl_wrt_ini (ng, MyRank, LTLM2, jrec)               ! TEST
-          CALL tl_wrt_ini (ng, MyRank, LTLM1, jrec)
-# else
-!!        CALL tl_wrt_ini (ng, -1, LTLM2, jrec)                   ! TEST
-          CALL tl_wrt_ini (ng, -1, LTLM1, jrec)
-# endif
+!!        CALL tl_wrt_ini (ng, MyTile, LTLM2, jrec)               ! TEST
+          CALL tl_wrt_ini (ng, MyTile, LTLM1, jrec)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END DO
       END DO
@@ -2031,13 +2015,11 @@
         DO irec=1,nADrec(ng)/2
           jrec=Rec5+irec
           CALL get_state (ng, iTLM, 8, ITL(ng), jrec, LTLM1)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
           TLF(ng)%Rindex=0
-# ifdef DISTRIBUTE
-          CALL wrt_aug_imp (ng, MyRank, iTLM, LTLM1, irec)
-# else
-          CALL wrt_aug_imp (ng, -1, iTLM, LTLM1, irec)
-# endif
+          CALL wrt_aug_imp (ng, MyTile, iTLM, LTLM1, irec)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END DO
       END DO
 # endif
@@ -2054,10 +2036,11 @@
 # endif
 !
  10   FORMAT (a,'_outer',i0,'.nc')
- 20   FORMAT (/,1x,a,1x,'ROMS: started time-stepping:',                 &
+ 20   FORMAT (2x,'ROMS_RBL4DVAR    - increment: ',a,a)
+ 30   FORMAT (/,1x,a,1x,'ROMS: started time-stepping:',                 &
      &        ' (Grid: ',i0,', Outer: ',i2.2,', Inner: ',i3.3,          &
               ', TimeSteps: ',i0,' - ',i0,')',/)
- 30   FORMAT (/,' Converting Convolved Adjoint Trajectory to',          &
+ 40   FORMAT (/,' Converting Convolved Adjoint Trajectory to',          &
      &          ' Impulses: Outer = ',i3.3,' Inner = ',i3.3,/)
 !
       RETURN
@@ -2077,6 +2060,11 @@
 !     my_outer        Outer-loop counter (integer)                     !
 !                                                                      !
 !=======================================================================
+
+# ifdef RPCG
+!
+      USE ini_adjust_mod, ONLY : ini_adjust
+# endif
 !
 !  Imported variable declarations
 !
@@ -2084,12 +2072,13 @@
 !
 !  Local variable declarations.
 !
-      integer :: ifile, lstr, ng, tile
-      integer :: Fcount
+      integer :: i, ifile, jrec, lstr, ng, tile
+      integer :: Fcount, LiNL
 # ifdef PROFILE
       integer :: thread
 # endif
 !
+      integer, dimension(Ngrids) :: nADrec
       integer, dimension(Ngrids) :: indxSave
 !
       character (len=10) :: suffix
@@ -2257,6 +2246,9 @@
         ELSE
           HIS(ng)%files(1)=TRIM(HIS(ng)%name)
         END IF
+        IF (Master) THEN
+          WRITE (stdout,20) 'HIS next file = ',TRIM(HIS(ng)%name)
+        END IF
       END DO
 !
 !  Set nonlinear output quicksave history file for the next outer loop.
@@ -2283,6 +2275,9 @@
         ELSE
           QCK(ng)%files(1)=TRIM(QCK(ng)%name)
         END IF
+        IF (Master) THEN
+          WRITE (stdout,20) 'QCK next file = ',TRIM(QCK(ng)%name)
+        END IF
       END DO
 !
 !  If weak constraint, the impulses are time-interpolated at each
@@ -2308,26 +2303,182 @@
 # endif
         IF (FrcRec(ng).gt.3) THEN
           FrequentImpulse(ng)=.TRUE.
+          nADrec(ng)=2*(1+ntimes(ng)/nADJ(ng))
+        END IF
+      END DO
+
+# if defined GRID_EXTRACT && defined SPLIT_EXECUTABLE
+!
+!-----------------------------------------------------------------------
+!  If mixed-resolution RBL4D-Var, interpolate coarser inner loop
+!  increments to a finer grid. If the Incremental Analysis Update
+!  (IAU) is not activated (timeIAU = 0.0), call "ini_adjust" to add
+!  the interpolated increment to the fine-resolution-prior initial
+!  conditions. Then, we either write the updated NLM initial conditions
+!  or write interpolated increment into the INI file at record
+!  INI(ng)%Rindex+1 of the NetCDF file.
+!-----------------------------------------------------------------------
+!
+!  If outer=1, define finer grid tangent linear ITL file to store
+!  regridded increments.
+!
+      IF (my_outer.eq.1) THEN
+        DO ng=1,Ngrids
+          LdefITL(ng)=.TRUE.
+          CALL tl_def_ini (ng)
+          LdefITL(ng)=.FALSE.
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        END DO
+!
+!  If outer=1, initialize finer grid records of the ITL file to zero.
+!  The TLM state variables are zero when outer=1.
+!
+        DO ng=1,Ngrids
+          tdays(ng)=INItime(ng)*sec2day
+          CALL tl_wrt_ini (ng, MyTile, Rec1, Rec1)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+!
+          CALL tl_wrt_ini (ng, MyTile, Rec1, Rec2)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+!
+          CALL tl_wrt_ini (ng, MyTile, Rec1, Rec3)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+!
+          CALL tl_wrt_ini (ng, MyTile, Rec1, Rec4)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+!
+          CALL tl_wrt_ini (ng, MyTile, Rec1, Rec5)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        END DO
+      ELSE
+!
+!  Otherwise, open tangent linear fine resolution ITL file and inquire
+!  about its variables.
+!
+        DO ng=1,Ngrids
+          LdefITL(ng)=.FALSE.
+          CALL tl_def_ini (ng)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        END DO
+      END IF
+!
+!  Read in background initial conditions from INI(ng)%name file, record
+!  "LiNL", and load it into time index NLM state at time index "Lnew".
+!
+      LiNL=my_outer+1              ! background initial state
+      DO ng=1,Ngrids
+        CALL get_state (ng, iNLM, 1, INI(ng), LiNL, Lnew(ng))
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+      END DO
+!
+!  Regrid 4D-Var outer loop increment contribution: coarse-to-fine
+!  interpolation and load it into the tangent linear state vector at
+!  time index "LTLM1". Then, write it into fine grid ITL file Rec2.
+!  Notice that the coarser grid increments are in file INC(ng)%name.
+!
+      DO ng=1,Ngrids
+        CALL state_regrid (ng, MyTile, iTLM, Rec2, LTLM1,               &
+     &                     INC(ng)%name)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+!
+        CALL tl_wrt_ini (ng, MyTile, LTLM1, Rec2)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+!
+        IF (my_outer.eq.1) THEN
+          CALL tl_wrt_ini (ng, MyTile, LTLM1, Rec3)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
       END DO
 !
-!  Initialize nonlinear model INI(ng)%name file, record outer+2.
-!  Notice that NetCDF record index counter is saved because this
-!  counter is used to write initial conditions.
+!  Regrid 4D-Var outer loop cumulative increment: coarse-to-fine
+!  interpolation and load it into the tangent linear state vector at
+!  time index "LTLM1". Then, write it into fine grid ITL file Rec3.
+!  Notice that the coarser grid cumulative increments are in file
+!  INC(ng)%name Rec3. If outer=1, the contribution and cumulative
+!  increments are the same.
+!
+      IF (my_outer.gt.1) THEN
+        DO ng=1,Ngrids
+          CALL state_regrid (ng, MyTile, iTLM, Rec3, LTLM1,             &
+     &                       INC(ng)%name)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        END DO
+!
+        DO ng=1,Ngrids
+          CALL tl_wrt_ini (ng, MyTile, LTLM1, Rec3)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        END DO
+      END IF
+!
+!  If not activated IAU, compute non-linear model initial conditions by
+!  adding the interpolated increment to the background initial state.
+!  Regardless of the outer loop, we add the cumulative increment to the
+!  background initial state.
 !
       DO ng=1,Ngrids
-        indxSave(ng)=INI(ng)%Rindex
-        INI(ng)%Rindex=my_outer+2
-        RST(ng)%Rindex=0
-        Fcount=RST(ng)%load
-        RST(ng)%Nrec(Fcount)=0
+        IF (timeIAU(ng).eq.0.0_dp) THEN
+          DO tile=first_tile(ng),last_tile(ng),+1
+            CALL ini_adjust (ng, tile, iTLM, LTLM1, Lnew(ng))
+          END DO
+        END IF
       END DO
 
-# ifdef RPCG
+#  ifdef RPCG
 !
-! Compute the incremental analysis update forcing for the NLM.
+!  If activated IAU, compute the NLM model forcing contribution
+!  (f_state arrays) for the incremental analysis update. The tangent
+!  linear state is needed during the "timeIAU" interval if weak
+!  constraint is also activated (FrequentImpulse=TRUE).
 !
-!    Read the accumulated increment from Rec3 of the ITL file.
+      DO ng=1,Ngrids
+        IF (timeIAU(ng).gt.0.0_dp) THEN
+          IAUswitch(ng)=.TRUE.
+          DO tile=first_tile(ng),last_tile(ng),+1
+            CALL frc_iau_ini (ng, tile, iTLM, LTLM1)
+          END DO
+        END IF
+      END DO
+#  endif
+!
+!  Write out nonlinear model initial conditions into INIname, record
+!  outer+2. Notice that if IAU is activated, we are writing the
+!  same state as the background state since the increment is added
+!  as forcing term (dt/timeIAU fraction).
+!
+      LiNL=my_outer+2              ! analysis initial conditions
+      DO ng=1,Ngrids
+        CALL wrt_ini (ng, MyTile, Lnew(ng), LiNL)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+      END DO
+
+#  ifdef RPCG
+!
+!  If weak constaint, regrid 4D-Var impulse forcing: coarse-to-fine
+!  interpolation and load it into the tangent linear state vector at
+!  time index "LTLM2". Then, write it into fine grid ITL file Rec5+i.
+!  Notice that the coarser grid impulses are in file INC(ng)%name.
+!
+      DO ng=1,Ngrids
+        IF (FrequentImpulse(ng)) THEN
+          DO i=1,nADrec(ng)/2
+            jrec=Rec5+i
+            CALL state_regrid (ng, MyTile, iTLM, jrec, LTLM2,           &
+     &                         INC(ng)%name)
+            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+!
+            CALL tl_wrt_ini (ng, MyTile, LTLM2, Rec2)
+            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+          END DO
+        END IF
+      END DO
+#  endif
+
+# else
+
+#  ifdef RPCG
+!
+!  Compute the incremental analysis update forcing for the NLM.
+!  Read the accumulated increment from Rec3 of the ITL file.
 !
         DO ng=1,Ngrids
           IF (timeIAU(ng).gt.0.0_dp) THEN
@@ -2342,11 +2493,24 @@
         DO ng=1,Ngrids
           IF (timeIAU(ng).gt.0.0_dp) THEN
             DO tile=first_tile(ng),last_tile(ng),+1
-              CALL frc_iau_ini (ng, tile, LTLM1)
+              CALL frc_iau_ini (ng, tile, iTLM, LTLM1)
             END DO
           END IF
         END DO
+#  endif
 # endif
+!
+!  Initialize nonlinear model INI(ng)%name file, record outer+2.
+!  Notice that NetCDF record index counter is saved because this
+!  counter is used to write initial conditions.
+!
+      DO ng=1,Ngrids
+        indxSave(ng)=INI(ng)%Rindex
+        INI(ng)%Rindex=my_outer+2
+        RST(ng)%Rindex=0
+        Fcount=RST(ng)%load
+        RST(ng)%Nrec(Fcount)=0
+      END DO
 !
       CALL initial
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
@@ -2365,6 +2529,7 @@
       END IF
 !
  10   FORMAT (a,'_outer',i0,'.nc')
+ 20   FORMAT (2x,'ROMS_RBL4DVAR    - analysis: ',a,a)
 !
       RETURN
       END SUBROUTINE analysis_initialize
@@ -2879,11 +3044,7 @@
 !  which is in tl_var(Rec1) to 4DVar error NetCDF file.
 !
       DO ng=1,Ngrids
-#   ifdef DISTRIBUTE
-        CALL wrt_error (ng, MyRank, Rec1, Rec1)
-#   else
-        CALL wrt_error (ng, -1, Rec1, Rec1)
-#   endif
+        CALL wrt_error (ng, MyTile, Rec1, Rec1)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
       END DO
 !
@@ -3033,11 +3194,7 @@
             nstp(ng)=Lnew(ng)
 #   endif
             LwrtState2d(ng)=.TRUE.
-#   ifdef DISTRIBUTE
-            CALL ad_wrt_his (ng, MyRank)
-#   else
-            CALL ad_wrt_his (ng, -1)
-#   endif
+            CALL ad_wrt_his (ng, MyTile)
             IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
             LwrtState2d(ng)=.FALSE.
           END DO
@@ -3047,11 +3204,7 @@
 !  loop into ITL(ng)%name (record Rec1).
 !
           DO ng=1,Ngrids
-#   ifdef DISTRIBUTE
-            CALL tl_wrt_ini (ng, MyRank, Lnew(ng), Rec1)
-#   else
-            CALL tl_wrt_ini (ng, -1, Lnew(ng), Rec1)
-#   endif
+            CALL tl_wrt_ini (ng, MyTile, Lnew(ng), Rec1)
             IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
           END DO
 

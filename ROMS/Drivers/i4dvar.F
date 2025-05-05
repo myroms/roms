@@ -1840,8 +1840,7 @@
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
         DO tile=first_tile(ng),last_tile(ng),+1
-          CALL ini_adjust (ng, tile, LTLM1, Lini)
-!!        CALL ini_fields (ng, tile, iNLM)
+          CALL ini_adjust (ng, tile, iTLM, LTLM1, Lini)
         END DO
       END DO
 !

@@ -29,12 +29,21 @@
 #                                                                       :::
 # Options:                                                              :::
 #                                                                       :::
+#    -b          Compile a specific ROMS GitHub branch                  :::
+#                                                                       :::
+#                  build_roms.csh -j 10 -b feature/kernel               :::
+#                                                                       :::
+#    -g          Compile with debug flag (slower code)                  :::
+#                                                                       :::
+#                  build_split.csh -g -j 10                             :::
+#                                                                       :::
 #    -j [N]      Compile in parallel using N CPUs                       :::
 #                  omit argument for all available CPUs                 :::
 #                                                                       :::
-#    -b          Compile a specific ROMS GitHub branch                  :::
+#    -pio        Compile with PIO (Parallel I/O) NetCDF library         :::
+#                  Otherwise, it used standard NetCDF library (slower)  :::
 #                                                                       :::
-#                  build_roms.csh -j 5 -b feature/kernel                :::
+#                  build_roms.csh -pio -j 10                            :::
 #                                                                       :::
 #    -p macro    Prints any Makefile macro value. For example,          :::
 #                                                                       :::
@@ -54,7 +63,9 @@
 
 setenv which_MPI openmpi                      #  default, overwritten below
 
+set g_flags = 0
 set parallel = 0
+set pio_lib = 0
 set clean = 1
 set dprint = 0
 set branch = 0
@@ -70,6 +81,16 @@ while ( ($#argv) > 0 )
     case "-noclean"
       shift
       set clean = 0
+    breaksw
+
+    case "-g"
+      shift
+      set g_flags = 1
+    breaksw
+
+    case "-pio"
+      shift
+      set pio_lib = 1
     breaksw
 
     case "-p"
@@ -109,18 +130,22 @@ while ( ($#argv) > 0 )
       echo ""
       echo "Available Options:"
       echo ""
+      echo "-b branch_name  Compile specific ROMS GitHub branch name"
+      echo "                  For example:  build_roms.csh -b feature/kernel"
+      echo ""
+      echo "-g              Compile with debugging flags, slower code"
+      echo ""
       echo "-j [N]          Compile in parallel using N CPUs"
       echo "                  omit argument for all avaliable CPUs"
       echo ""
-      echo "-b branch_name  Compile specific ROMS GitHub branch name"
-      echo "                  For example:  build_roms.csh -b feature/kernel"
+      echo "-pio            Compile with the PIO NetCDF Library"
       echo ""
       echo "-p macro        Prints any Makefile macro value"
       echo "                  For example:  build_roms.csh -p FFLAGS"
       echo ""
       echo "-noclean        Do not clean already compiled objects"
-      echo "${separator}"
       echo ""
+      echo "${separator}"
       exit 1
     breaksw
 
@@ -185,7 +210,9 @@ setenv   MY_PROJECT_DIR      ${PWD}
 # can be used to write time-averaged fields. Notice that you can have as
 # many definitions as you want by appending values.
 
-#setenv MY_CPP_FLAGS "${MY_CPP_FLAGS} -D"
+if ( $pio_lib == 1 ) then
+  setenv MY_CPP_FLAGS "${MY_CPP_FLAGS} -DPIO_LIB"
+endif
 
 #--------------------------------------------------------------------------
 # Compiler options.
@@ -207,11 +234,14 @@ setenv   MY_PROJECT_DIR      ${PWD}
 
 #setenv USE_OpenMP          on          # shared-memory parallelism
 
+#setenv FORT                ifx
  setenv FORT                ifort
 #setenv FORT                gfortran
 #setenv FORT                pgi
 
-#setenv USE_DEBUG           on          # use Fortran debugging flags
+if ( $g_flags == 1 ) then
+ setenv USE_DEBUG           on          # use Fortran debugging flags
+endif
  setenv USE_LARGE           on          # activate 64-bit compilation
 
 #--------------------------------------------------------------------------
@@ -235,8 +265,10 @@ setenv   MY_PROJECT_DIR      ${PWD}
 
  setenv USE_NETCDF4         on          # compile with NetCDF-4 library
 #setenv USE_PARALLEL_IO     on          # Parallel I/O with NetCDF-4/HDF5
-#setenv USE_PIO             on          # Parallel I/O with PIO library
-#setenv USE_SCORPIO         on          # Parallel I/O with SCORPIO library
+
+if ( $pio_lib == 1 ) then
+  setenv USE_PIO            on          # Parallel I/O with PIO library
+endif
 
 # If any of the coupling component use the HDF5 Fortran API for primary
 # I/O, we need to compile the main driver with the HDF5 library.
@@ -296,13 +328,17 @@ endif
 
 if ($?USE_DEBUG) then
   setenv BUILD_DIR          ${MY_PROJECT_DIR}/Build_romsG
+  setenv myBIN              ${BINDIR}/romsG
 else
   if ($?USE_OpenMP) then
     setenv BUILD_DIR        ${MY_PROJECT_DIR}/Build_romsO
+    setenv myBIN            ${BINDIR}/romsO
   else if ($?USE_MPI) then
     setenv BUILD_DIR        ${MY_PROJECT_DIR}/Build_romsM
+    setenv myBIN            ${BINDIR}/romsM
   else
     setenv BUILD_DIR        ${MY_PROJECT_DIR}/Build_roms
+    setenv myBIN            ${BINDIR}/romsS
   endif
 endif
 
@@ -329,9 +365,9 @@ if ( $branch == 1 ) then
 
   if ( ! -d ${MY_PROJECT_DIR}/src ) then
     echo ""
-    echo "Downloading ROMS source code from GitHub: https://www.github.com/myroms"
+    echo "Downloading ROMS source code from GitHub: https://github.com/myroms"
     echo ""
-    git clone https://www.github.com/myroms/roms.git src
+    git clone https://github.com/myroms/roms.git src
   endif
   echo ""
   echo "Checking out ROMS GitHub branch: $branch_name"
@@ -389,6 +425,7 @@ else
   echo "ROMS source directory:         ${MY_ROMS_SRC}"
   echo "ROMS header file:              ${MY_HEADER_DIR}/${HEADER}"
   echo "ROMS build  directory:         ${BUILD_DIR}"
+  echo "ROMS executable:               ${myBIN}"
   if ( $branch == 1 ) then
     echo "ROMS downloaded from:          https://github.com/myroms/roms.git"
     echo "ROMS compiled branch:          $branch_name"
