@@ -4221,7 +4221,7 @@
             CASE ('XTRNAME')
               label='XTR - nonlinear model extraction history fields'
               Npts=load_s1d(Nval, Cval, Cdim, line, label, igrid,       &
-     &                      Ngrids, Nfiles, out_lib, XTR)
+     &                      Ngrids, Nfiles, io_nf90, XTR)
             CASE ('QCKNAME')
               label='QCK - nonlinear model quicksave fields'
               Npts=load_s1d(Nval, Cval, Cdim, line, label, igrid,       &
@@ -4265,11 +4265,11 @@
             CASE ('GRXNAME')
               label='GRX - I/O histrory extract grid'
               Npts=load_s1d(Nval, Cval, Cdim, line, label, igrid,       &
-     &                      Ngrids, Nfiles, inp_lib, GRX)
+     &                      Ngrids, Nfiles, io_nf90, GRX)
             CASE ('ININAME')
               label='INI - nonlinear model initial conditions'
               Npts=load_s1d(Nval, Cval, Cdim, line, label, igrid,       &
-     &                      Ngrids, Nfiles, inp_lib, INI)
+     &                      Ngrids, Nfiles, io_nf90, INI)
             CASE ('IRPNAME')
               label='IRP - representer model initial conditions'
               Npts=load_s1d(Nval, Cval, Cdim, line, label, igrid,       &
@@ -4779,7 +4779,7 @@
         nADJ(ng)=ntimes(ng)/Nintervals
 #endif
 #if defined FOUR_DVAR || defined IMPULSE
-!
+
 !  Set size of additonal dimension for error covariance normalization
 !  and standard deviation factors.
 !

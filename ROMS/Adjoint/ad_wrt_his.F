@@ -277,7 +277,9 @@
         RETURN
       END IF
 !
-!  Write out surface V-momentum stress.
+!  Write out surface V-momentum stress.   Notice that the stress has its
+!  own fixed time-dimension (of size Nfrec) to allow 4DVAR adjustments
+!  at other times in addition to initialization time.
 !
       scale=1.0_dp                          ! m2/s2
       gtype=gfactor*v3dvar

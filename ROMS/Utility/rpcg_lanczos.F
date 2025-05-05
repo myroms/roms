@@ -1062,7 +1062,7 @@
 #  if defined RBL4DVAR          || defined R4DVAR      || \
       defined SENSITIVITY_4DVAR || defined TL_RBL4DVAR || \
       defined TL_R4DVAR
-!!    CALL mp_bcastf (ng, model, TLmodVal_S(:,:,outLoop))   ! not needed
+!     CALL mp_bcastf (ng, model, TLmodVal_S(:,:,outLoop))   ! not needed
       CALL mp_bcastf (ng, model, Hbk(:,outLoop))
       CALL mp_bcastf (ng, model, Jb0(outLoop-1))
 #  endif
@@ -1074,16 +1074,16 @@
       CALL mp_bcastf (ng, model, cg_Gnorm_y(:))
       CALL mp_bcastf (ng, model, cg_Gnorm_v(:))
       CALL mp_bcastf (ng, model, FOURDVAR(ng)%cg_pxsave(:))
-!AMM  CALL mp_bcastf (ng, model, cg_pxsave(:))
+!     CALL mp_bcastf (ng, model, cg_pxsave(:))              ! not needed
       CALL mp_bcastf (ng, model, cg_innov(:))
       CALL mp_bcastf (ng, model, zgrad0(:,outLoop))
-      CALL mp_bcastf (ng, model, zcglwk(:,:,outLoop))
-      CALL mp_bcastf (ng, model, vcglwk(:,:,outLoop))
+!     CALL mp_bcastf (ng, model, zcglwk(:,:,outLoop))       ! not needed
+!     CALL mp_bcastf (ng, model, vcglwk(:,:,outLoop))       ! not needed
       IF ((LhessianEV.or.Lprecond).and.(innLoop.eq.NinnLoop)) THEN
         CALL mp_bcastf (ng, model, cg_Ritz(:,outLoop))
         CALL mp_bcastf (ng, model, cg_RitzErr(:,outLoop))
         CALL mp_bcastf (ng, model, cg_zv(:,:,outLoop))
-        CALL mp_bcastf (ng, model, vcglev(:,:,outLoop))
+!       CALL mp_bcastf (ng, model, vcglev(:,:,outLoop))     ! not needed
       END IF
       CALL mp_bcastf (ng, model, Jf)
       CALL mp_bcastf (ng, model, Jdata)

@@ -29,18 +29,27 @@
 #                                                                       :::
 # Options:                                                              :::
 #                                                                       :::
-#    -j [N]         Compile in parallel using N CPUs                    :::
-#                     omit argument for all available CPUs              :::
+#    -b          Compile a specific ROMS GitHub branch                  :::
 #                                                                       :::
-#    -b             Compile a specific ROMS GitHub branch               :::
+#                  cbuild_roms.csh -j 5 -b feature/kernel               :::
 #                                                                       :::
-#                     cbuild_roms.csh -j 5 -b feature/kernel            :::
+#    -g          Compile with debug flag (slower code)                  :::
 #                                                                       :::
-#    -p macro       Prints any Makefile macro value. For example,       :::
+#                  cbuild_roms.csh -g -j 10                             :::
 #                                                                       :::
-#                     cbuild_roms.csh -p MY_CPP_FLAGS                   :::
+#    -j [N]      Compile in parallel using N CPUs                       :::
+#                  omit argument for all available CPUs                 :::
 #                                                                       :::
-#    -noclean       Do not clean already compiled objects               :::
+#    -pio        Compile with PIO (Parallel I/O) NetCDF library         :::
+#                  Otherwise, it used standard NetCDF library (slower)  :::
+#                                                                       :::
+#                  cbuild_roms.csh -pio -j 10                           :::
+#                                                                       :::
+#    -p macro    Prints any Makefile macro value. For example,          :::
+#                                                                       :::
+#                  cbuild_roms.csh -p MY_CPP_FLAGS                      :::
+#                                                                       :::
+#    -noclean    Do not clean already compiled objects                  :::
 #                                                                       :::
 #    -v             Compile in verbose mode (VERBOSE=1)                 :::
 #                                                                       :::
@@ -53,7 +62,9 @@
 
 setenv which_MPI openmpi                      #  default, overwritten below
 
+set g_flags = 0
 set parallel = 0
+set pio_lib = 0
 set clean = 1
 set dprint = 0
 set Verbose = 0
@@ -76,6 +87,16 @@ while ( ($#argv) > 0 )
       else
         set NCPUS = "-j"
       endif
+    breaksw
+
+    case "-g"
+      shift
+      set g_flags = 1
+    breaksw
+
+    case "-pio"
+      shift
+      set pio_lib = 1
     breaksw
 
     case "-p"
@@ -114,11 +135,15 @@ while ( ($#argv) > 0 )
       echo ""
       echo "Available Options:"
       echo ""
+      echo "-b branch_name  Compile specific ROMS GitHub branch name"
+      echo "                  For example:  cbuild_roms.csh -b feature/kernel"
+      echo ""
+      echo "-g              Compile with debugging flags, slower code"
+      echo ""
       echo "-j [N]          Compile in parallel using N CPUs"
       echo "                  omit argument for all avaliable CPUs"
       echo ""
-      echo "-b branch_name  Compile specific ROMS GitHub branch name"
-      echo "                  For example:  cbuild_roms.csh -b feature/kernel"
+      echo "-pio            Compile with the PIO NetCDF Library"
       echo ""
       echo "-p macro        Prints any Makefile macro value"
       echo "                  For example:  cbuild_roms.csh -p FFLAGS"
@@ -214,6 +239,10 @@ setenv MY_PROJECT_DIR        ${PWD}
 # can be used to write time-averaged fields. Notice that you can have as
 # many definitions as you want by appending values.
 
+if ( $pio_lib == 1 ) then
+  setenv MY_CPP_FLAGS "${MY_CPP_FLAGS} -DPIO_LIB"
+endif
+
 #--------------------------------------------------------------------------
 # Compilation options.
 #--------------------------------------------------------------------------
@@ -226,11 +255,14 @@ setenv MY_PROJECT_DIR        ${PWD}
 #setenv which_MPI            mvapich2        # compile with MVAPICH2 library
  setenv which_MPI            openmpi         # compile with OpenMPI library
 
+#setenv FORT                 ifx
  setenv FORT                 ifort
 #setenv FORT                 gfortran
 #setenv FORT                 pgi
 
-#setenv USE_DEBUG            on              # use Fortran debugging flags
+if ( $g_flags == 1 ) then
+ setenv USE_DEBUG           on               # use Fortran debugging flags
+endif
 
 # ROMS I/O choices and combinations. A more complete description of the
 # available options can be found in the wiki (https://myroms.org/wiki/IO).
@@ -240,8 +272,10 @@ setenv MY_PROJECT_DIR        ${PWD}
 
  setenv USE_NETCDF4          on              # compile with NetCDF4 library
 #setenv USE_PARALLEL_IO      on              # Parallel I/O with NetCDF-4/HDF5
-#setenv USE_PIO              on              # Parallel I/O with PIO library
-#setenv USE_SCORPIO          on              # Parallel I/O with SCORPIO library
+
+if ( $pio_lib == 1 ) then
+  setenv USE_PIO             on              # Parallel I/O with PIO library
+endif
 
 # If any of the coupling component use the HDF5 Fortran API for primary
 # I/O, we need to compile the main driver with the HDF5 library.
@@ -343,9 +377,9 @@ if ( $dprint == 0 ) then
   if ( $branch == 1 ) then
     if ( ! -d ${MY_PROJECT_DIR}/src ) then
       echo ""
-      echo "Downloading ROMS source code from GitHub: https://www.github.com/myroms"
+      echo "Downloading ROMS source code from GitHub: https://github.com/myroms"
       echo ""
-      git clone https://www.github.com/myroms/roms.git src
+      git clone https://github.com/myroms/roms.git src
     endif
     echo ""
     echo "Checking out ROMS GitHub branch: $branch_name"
@@ -546,10 +580,13 @@ else
   endif
   make install
 
+  set HEADER = `echo ${ROMS_APPLICATION} | tr '[:upper:]' '[:lower:]'`.h
+
   echo ""
   echo "${separator}"
   echo "CMake Build script command:    ${command}"
   echo "ROMS source directory:         ${MY_ROMS_SRC}"
+  echo "ROMS header file:              ${MY_HEADER_DIR}/${HEADER}"
   echo "ROMS build  directory:         ${BUILD_DIR}"
   if ( $branch == 1 ) then
     echo "ROMS downloaded from:          https://github.com/myroms/roms.git"

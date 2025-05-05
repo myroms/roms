@@ -24,6 +24,10 @@
 # endif
 !
       USE ini_fields_mod, ONLY : ini_fields, ini_zeta
+# ifdef NESTING
+      USE mod_nesting,    ONLY : ngetD
+      USE nesting_mod,    ONLY : nesting
+# endif
 # ifdef SOLVE3D
       USE set_depth_mod,  ONLY : set_depth
 # endif
