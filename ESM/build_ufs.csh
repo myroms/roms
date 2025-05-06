@@ -328,9 +328,9 @@ if ( $dprint == 0 ) then
   if ( $branch == 1 ) then
     if ( ! -d ${MY_PROJECT_DIR}/src ) then
       echo ""
-      echo "Downloading ROMS source code from GitHub: https://www.github.com/myroms"
+      echo "Downloading ROMS source code from GitHub: https://github.com/myroms"
       echo ""
-      git clone https://www.github.com/myroms/roms.git src
+      git clone https://github.com/myroms/roms.git src
     endif
     echo ""
     echo "Checking out ROMS GitHub branch: $branch_name"
@@ -573,6 +573,7 @@ else
   echo "ROMS source directory:         ${MY_ROMS_SRC}"
   echo "ROMS header file:              ${MY_HEADER_DIR}/${HEADER}"
   echo "ROMS build  directory:         ${BUILD_DIR}"
+  echo "UFS source directory:          ${MY_UFS_SRC}"
   if ( $branch == 1 ) then
     echo "ROMS downloaded from:          https://github.com/myroms/roms.git"
     echo "ROMS compiled branch:          $branch_name"
