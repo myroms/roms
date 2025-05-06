@@ -130,8 +130,8 @@ endfunction()
 ###########################################################################
 # The "get_options" function is used by roms_config.cmake to determine if
 # the adjoint, tangent linear, and/or representer model(s) are needed
-# and whether to add ARPACK/PARPACK and/or parallel I/O using SCORPIO
-# to link into the executable.
+# and whether to add ARPACK/PARPACK and/or parallel I/O (PIO) to link
+# into the executable.
 ###########################################################################
 
 function(get_options roms_header)

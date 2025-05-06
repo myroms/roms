@@ -133,7 +133,7 @@ list( APPEND _files
       ROMS/Utility/read_stapar.F
       ROMS/Utility/regrid.F
       ROMS/Utility/rep_matrix.F
-      ROMS/Utility/roms_interp_mod.F
+      ROMS/Utility/roms_interp.F
       ROMS/Utility/round.F
       ROMS/Utility/rpcg_lanczos.F
       ROMS/Utility/set_2dfld.F
@@ -159,6 +159,7 @@ list( APPEND _files
       ROMS/Utility/state_join.F
       ROMS/Utility/state_product.F
       ROMS/Utility/state_read.F
+      ROMS/Utility/state_regrid.F
       ROMS/Utility/state_scale.F
       ROMS/Utility/stats.F
       ROMS/Utility/stats_modobs.F

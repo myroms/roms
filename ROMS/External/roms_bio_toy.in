@@ -3182,19 +3182,15 @@ PIO_I2C_Preq = 65                 ! Maximum pending I2C requests
 !
 ! The ROMS input and output NetCDF files can be processed using the standard
 ! NetCDF library developed by UNIDATA, the Parallel-IO (PIO) library developed
-! at NCAR, or the SCORPIO library available in E3SM (Sreepathi et al., 2013;
-! doi:10.1109/HiPC.2013.6799128). The SCORPIO library was forked from the PIO
-! library several years ago, and they have evolved separately. In addition to
-! the standard NetCDF library, ROMS can be compiled with either the PIO or
-! SCORPIO libraries. Check  www.myroms.org/wiki/External_Libraries  for more
-! information on how to obtain and install these libraries. The user has the
-! choice to select which library is used to process input and output NetCDF
-! files. For parallel I/O, we recommend using the PIO library because it is
-! more efficient than the SCORPIO library in our benchmark tests.
+! at NCAR. In addition to the standard NetCDF library, ROMS can be compiled
+! with either the PIO library. Check  www.myroms.org/wiki/External_Libraries
+! for more information on how to obtain and install these libraries. The user
+! has the choice to select which library is used to process input and output
+! NetCDF files. For parallel I/O, we recommend using the PIO library because
+! it is more efficient than other options in ROMS.
 !
-! The Parallel I/O using the PIO or SCORPIO libraries is restricted to
-! distributed-memory applications because it uses MPI-IO implementations
-! like ROMIO.
+! The Parallel I/O using the PIO library is restricted to distributed-memory
+! applications because it uses MPI-IO implementations like ROMIO.
 !
 ! * ROMS Input and Output NetCDF library to use flag: [1 or 2]
 !

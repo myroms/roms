@@ -92,6 +92,27 @@ if( MYDEFS MATCHES "ESMF_LIB" )
   endif()
 endif()
 
+# Check if we need to include PIO Library.
+
+if( PIO )
+  if ( NOT "${PIO_LIBDIR}" STREQUAL "" )
+    link_directories( ${PIO_LIBDIR} )
+  endif()
+  if ( NOT "${PIO_INCDIR}" STREQUAL "" )
+    include_directories( ${PIO_INCDIR})
+  endif()
+  list( APPEND pio_libs "piof" "pioc" )
+  if( PNETCDF_LIBDIR AND PNETCDF_INCDIR )
+    if ( NOT "${PNETCDF_LIBDIR}" STREQUAL "" )
+      link_directories( ${PNETCDF_LIBDIR} )
+    endif()
+    if ( NOT "${PNETCDF_INCDIR}" STREQUAL "" )
+      include_directories( ${PNETCDF_INCDIR} )
+    endif()
+    list( APPEND pio_libs "pnetcdf" )
+  endif()
+endif()
+
 ###########################################################################
 # Project
 ###########################################################################
@@ -139,13 +160,6 @@ else()
   link_netcdf()
   include_directories( ${netcdf_idir} )
   link_directories( ${netcdf_ldirs} )
-endif()
-
-# SCORPIO Include directories
-
-if( SCORPIO )
-  include_directories( ${PIO_INCDIR} )
-  message( STATUS "SCORPIO included: ${PIO_INCDIR}" )
 endif()
 
 ###########################################################################
@@ -415,15 +429,6 @@ else()
       link_directories( ${PARPACK_LIBDIR} ${ARPACK_LIBDIR} )
     endif()
 
-    # If parallel I/O using SCORPIO is requested, add directory for the
-    # linker. The "link_directories" and "target_link_libraries" for
-    # are separated because "link_libraries" has to be set before
-    # "add_executable" and "target_link_libraries" has to be set after.
-
-    if( SCORPIO )
-      link_directories( ${PNETCDF_LIBDIR} ${PIO_LIBDIR} )
-    endif()
-
     preprocess_fortran( Master/master.F )
     set( master_f90 "${f90srcs}" )
     add_executable( "${BIN}" ${master_f90} )
@@ -455,11 +460,8 @@ else()
       target_link_libraries( "${BIN}" ESMF )
     endif()
 
-    # If parallel I/O with SCORPIO is requested, add to linking library list.
-    # The path to the libraries are set above.
-
-    if( SCORPIO )
-      target_link_libraries( "${BIN}" pnetcdf piof pioc )
+    if( MYDEFS MATCHES "PIO_LIB" )
+      target_link_libraries( "${BIN}" ${pio_libs} )
     endif()
 
     install( TARGETS "${BIN}" RUNTIME )

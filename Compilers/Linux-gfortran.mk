@@ -8,7 +8,7 @@
 # Include file for GNU Fortran compiler on Linux
 # -------------------------------------------------------------------------
 #
-# ARPACK_LIBDIR  ARPACK libary directory
+# ARPACK_LIBDIR  ARPACK library directory
 # FC             Name of the fortran compiler to use
 # FFLAGS         Flags to the fortran compiler
 # CPP            Name of the C-preprocessor
@@ -22,11 +22,11 @@
 # NETCDF_INCDIR  NetCDF include directory
 # NETCDF_LIBDIR  NetCDF library directory
 # NETCDF_LIBS    NetCDF library switches
-# PIO_INCDIR     Parallel-IO (PIO) from SCORPIO library include directory
-# PIO_LIBDIR     Parallel-IO (PIO) from SCORPIO libary directory
-# PIO_LIBS       Parallel-IO (PIO) from SCORPIO library switches
+# PIO_INCDIR     Parallel-IO (PIO) library include directory
+# PIO_LIBDIR     Parallel-IO (PIO) library directory
+# PIO_LIBS       Parallel-IO (PIO) library switches
 # PNETCDF_INCDIR PNetCDF include directory
-# PNETCDF_LIBDIR PNetCDF libary directory
+# PNETCDF_LIBDIR PNetCDF library directory
 # PNETCDF_LIBS   PNetCDF library switches
 
 # LD             Program to load the objects into an executable or shared library
@@ -175,18 +175,6 @@ endif
 ifdef USE_PIO
        PIO_INCDIR ?= /opt/gfortransoft/openmpi/pio/include
        PIO_LIBDIR ?= /opt/gfortransoft/openmpi/pio/lib
-           FFLAGS += -I$(PIO_INCDIR)
-             LIBS += -L$(PIO_LIBDIR) -lpiof -lpioc
-
-   PNETCDF_INCDIR ?= /opt/gfortransoft/openmpi/pnetcdf/include
-   PNETCDF_LIBDIR ?= /opt/gfortransoft/openmpi/pnetcdf/lib
-           FFLAGS += -I$(PNETCDF_INCDIR)
-             LIBS += -L$(PNETCDF_LIBDIR) -lpnetcdf
-endif
-
-ifdef USE_SCORPIO
-       PIO_INCDIR ?= /opt/gfortransoft/openmpi/scorpio/include
-       PIO_LIBDIR ?= /opt/gfortransoft/openmpi/scorpio/lib
            FFLAGS += -I$(PIO_INCDIR)
              LIBS += -L$(PIO_LIBDIR) -lpiof -lpioc
 
