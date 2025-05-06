@@ -428,6 +428,25 @@ else
   arpack_ldir=""
 fi
 
+if [ ! -z "${USE_PIO}" ]; then
+  if [[ ! -z "${PIO_LIBDIR}" && ! -z "${PIO_INCDIR}" ]]; then
+    pio_ldir="-DPIO_LIBDIR=${PIO_LIBDIR}"
+    pio_idir="-DPIO_INCDIR=${PIO_INCDIR}"
+    if [[ ! -z "${PNETCDF_LIBDIR}" && ! -z "${PNETCDF_INCDIR}" ]]; then
+      pnetcdf_ldir="-DPNETCDF_LIBDIR=${PNETCDF_LIBDIR}"
+      pnetcdf_idir="-DPNETCDF_INCDIR=${PNETCDF_INCDIR}"
+    else
+      pnetcdf_ldir=""
+      pnetcdf_idir=""
+    fi
+  else
+    pio_ldir=""
+    pio_idir=""
+    pnetcdf_ldir=""
+    pnetcdf_idir=""
+  fi
+fi
+
 if [[ ! -z "${USE_MPI}" && "${USE_MPI}" == "on" ]]; then
   mpi="-DMPI=ON"
 else

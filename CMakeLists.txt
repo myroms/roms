@@ -92,6 +92,19 @@ if( MYDEFS MATCHES "ESMF_LIB" )
   endif()
 endif()
 
+# Check if we need to include PIO Library.
+
+if( MYDEFS MATCHES "PIO_LIB" )
+  link_directories( ${PIO_LIBDIR} )
+  include_directories( ${PIO_INCDIR})
+  list( APPEND pio_libs "piof" "pioc" )
+  if( PNETCDF_LIBDIR AND PNETCDF_INCDIR )
+    link_directories( ${PNETCDF_LIBDIR} )
+    include_directories( ${PNETCDF_INCDIR} )
+    list( APPEND pio_libs "pnetcdf" )
+  endif()
+endif()
+
 ###########################################################################
 # Project
 ###########################################################################
@@ -437,6 +450,10 @@ else()
 
     if( MYDEFS MATCHES "ESMF_LIB" )
       target_link_libraries( "${BIN}" ESMF )
+    endif()
+
+    if( MYDEFS MATCHES "PIO_LIB" )
+      target_link_libraries( "${BIN}" ${pio_libs} )
     endif()
 
     install( TARGETS "${BIN}" RUNTIME )

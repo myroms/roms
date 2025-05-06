@@ -200,12 +200,12 @@ REPRESENTER
 ARPACK
 #define FOUND
 #endif
-
-/*
+      /*
 ** Determine if using the NCAR parallel-IO (PIO) library is needed.
 */
 
 #ifdef PIO_LIB
+PIO
 #define FOUND
 #endif
 
