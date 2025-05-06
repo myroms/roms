@@ -84,31 +84,6 @@ endif()
 Message( STATUS "PARPACK_LIBDIR = ${PARPACK_LIBDIR}" )
 Message( STATUS "ARPACK_LIBDIR  = ${ARPACK_LIBDIR}" )
 
-# Locations of PIO and PNetCDF libraries.
-#
-# The decision about whether to use them in linking is computed below.
-# This CMake setup will NOT build PIO or PNetCDF for you.
-
-if( DEFINED PIO_LIBDIR AND DEFINED PIO_INCDIR )
-  set( PIO_LIBDIR "${PIO_LIBDIR}" )
-  set( PIO_INCDIR "${PIO_INCDIR}" )
-  Message( STATUS "    PIO_LIBDIR = ${PIO_LIBDIR}" )
-  Message( STATUS "    PIO_INCDIR = ${PIO_INCDIR}" )
-
-  if( DEFINED PNETCDF_LIBDIR AND DEFINED PNETCDF_INCDIR )
-    set( PNETCDF_LIBDIR "${PNETCDF_LIBDIR}" )
-    set( PNETCDF_INCDIR "${PNETCDF_INCDIR}" )
-    Message( STATUS "PNETCDF_LIBDIR = ${PNETCDF_LIBDIR}" )
-    Message( STATUS "PNETCDF_INCDIR = ${PNETCDF_INCDIR}" )
-  else()
-    set( PNETCDF_LIBDIR "" )
-    set( PNETCDF_INCDIR "" )
-  endif()
-else()
-  set( PIO_LIBDIR "" )
-  set( PIO_INCDIR "" )
-endif()
-
 set( ROMS_HEADER ${HEADER_DIR}/${ROMS_APP_HEADER} )
 
 add_compile_definitions( ROMS_HEADER="${ROMS_HEADER}" )
@@ -131,6 +106,8 @@ if( MY_CPP_FLAGS )
   foreach( flag ${MY_CPP_FLAGS} )
     add_compile_definitions( ${flag} )
   endforeach()
+  # get_options is found in roms_functions.cmake and populates the $defs
+  # variable used below. 
   get_options( ${ROMS_HEADER} ${MY_CPP_FLAGS} )
 else()
   get_options( ${ROMS_HEADER} )
@@ -163,3 +140,35 @@ if( "${defs}" MATCHES "ARPACK" )
   option( ARPACK "ARPACK/PARPACK Library" ON )
   message( STATUS "ROMS Link With ARPACK/PARPACK ENABLED" )
 endif()
+
+# Locations of PIO and PNetCDF libraries.
+#
+# The decision about whether to use them in linking is computed below.
+# This CMake setup will NOT build PIO or PNetCDF for you.
+
+if( "${defs}" MATCHES "PIO" )
+  option( PIO "Link with PIO Libraries" ON )
+  Message( STATUS "ROMS link With PIO ENABLED" )
+  if ( DEFINED PIO_LIBDIR AND DEFINED PIO_INCDIR )
+    set( PIO_LIBDIR "${PIO_LIBDIR}" )
+    set( PIO_INCDIR "${PIO_INCDIR}" )
+    Message( STATUS "    PIO_LIBDIR = ${PIO_LIBDIR}" )
+    Message( STATUS "    PIO_INCDIR = ${PIO_INCDIR}" )
+
+    if( DEFINED PNETCDF_LIBDIR AND DEFINED PNETCDF_INCDIR )
+      set( PNETCDF_LIBDIR "${PNETCDF_LIBDIR}" )
+      set( PNETCDF_INCDIR "${PNETCDF_INCDIR}" )
+      Message( STATUS "PNETCDF_LIBDIR = ${PNETCDF_LIBDIR}" )
+      Message( STATUS "PNETCDF_INCDIR = ${PNETCDF_INCDIR}" )
+    else()
+      set( PNETCDF_LIBDIR "" )
+      set( PNETCDF_INCDIR "" )
+      Message( STATUS "Using System Library and Include Locations for PNetCDF" )
+    endif()
+  else()
+    set( PIO_LIBDIR "" )
+    set( PIO_INCDIR "" )
+    Message( STATUS "Using System Library and Include Locations for PIO" )
+  endif()
+endif()
+
