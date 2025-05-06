@@ -35,7 +35,7 @@
 #                                                                       :::
 #    -g          Compile with debug flag (slower code)                  :::
 #                                                                       :::
-#                  build_split.csh -g -j 10                             :::
+#                  build_roms.csh -g -j 10                              :::
 #                                                                       :::
 #    -j [N]      Compile in parallel using N CPUs                       :::
 #                  omit argument for all available CPUs                 :::
