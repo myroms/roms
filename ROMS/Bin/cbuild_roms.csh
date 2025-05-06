@@ -261,7 +261,7 @@ endif
 #setenv FORT                 pgi
 
 if ( $g_flags == 1 ) then
- setenv USE_DEBUG           on               # use Fortran debugging flags
+ setenv USE_DEBUG            on              # use Fortran debugging flags
 endif
 
 # ROMS I/O choices and combinations. A more complete description of the
