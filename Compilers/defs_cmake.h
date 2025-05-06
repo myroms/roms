@@ -8,9 +8,11 @@
 **   See License_ROMS.md                                                     **
 *******************************************************************************
 **                                                                           **
-** This file is used by CMake to determine whether additional models         **
+** This file is processed by the get_options function defined in             **
+** Compilers/roms_functions.cmake. Compilers/roms_config.cmake calls the     **
+** get_options function in order to determine whether additional models      **
 ** (adjoint, tangent, an representer) should be enabled. It also checks      **
-** if the ARPACK library is needed.                                          **
+** whether the ARPACK or PIO libraries are needed.                           **
 **                                                                           **
 *******************************************************************************
 */
@@ -209,6 +211,11 @@ ARPACK
 PIO
 #define FOUND
 #endif
+
+/*
+** An error will occur if the processing results in an empty file,
+** so we insert NONE if no extra models or libraries are needed.
+*/
 
 #ifndef FOUND
 NONE
