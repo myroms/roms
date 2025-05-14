@@ -530,8 +530,9 @@
 #  endif
           END DO
         END DO
-!
+
 #  ifdef WEC
+!
         DO j=JstrV-1,Jend
           DO i=IstrU-1,Iend
             cff=0.5_r8*Hz(i,j,k)*fomn(i,j)
@@ -545,22 +546,23 @@
           DO i=IstrU,Iend
             cff1=0.5_r8*(UFx(i,j)+UFx(i-1,j))
             ru(i,j,k,nrhs)=ru(i,j,k,nrhs)+cff1
-#  ifdef DIAGNOSTICS_UV
+#   ifdef DIAGNOSTICS_UV
             DiaRU(i,j,k,nrhs,M3fsco)=cff1
-#  endif
+#   endif
           END DO
         END DO
         DO j=JstrV,Jend
           DO i=Istr,Iend
             cff1=0.5_r8*(VFe(i,j)+VFe(i,j-1))
             rv(i,j,k,nrhs)=rv(i,j,k,nrhs)-cff1
-#  ifdef DIAGNOSTICS_UV
+#   ifdef DIAGNOSTICS_UV
             DiaRV(i,j,k,nrhs,M3fsco)=-cff1
-#  endif
+#   endif
           END DO
         END DO
 #  endif
 # endif
+
 # if defined CURVGRID && defined UV_ADV
 !
 !-----------------------------------------------------------------------
