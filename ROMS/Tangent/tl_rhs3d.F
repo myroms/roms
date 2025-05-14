@@ -1479,22 +1479,12 @@
           DO i=IstrU,Iend
             cff=1.0_r8/(2.0_r8*DC(i,k+1)+DC(i,k)*(2.0_r8-FC(i,k-1)))
             FC(i,k)=cff*DC(i,k+1)
-#   ifdef TL_IOMS
-            tl_CF(i,k)=cff*(6.0_r8*(tl_u(i,j,k+1,nrhs)-                 &
-     &                              tl_u(i,j,k  ,nrhs))-                &
-     &                      ((tl_DC(i,k)-DC(i,k))*CF(i,k-1)+            &
-     &                       2.0_r8*(tl_DC(i,k  )-DC(i,k  )+            &
-     &                               tl_DC(i,k+1)-DC(i,k+1))*CF(i,k)+   &
-     &                       (tl_DC(i,k+1)-DC(i,k+1))*CF(i,k+1))-       &
-     &                       DC(i,k)*tl_CF(i,k-1))
-#   else
             tl_CF(i,k)=cff*(6.0_r8*(tl_u(i,j,k+1,nrhs)-                 &
      &                              tl_u(i,j,k  ,nrhs))-                &
      &                      (tl_DC(i,k)*CF(i,k-1)+                      &
      &                       2.0_r8*(tl_DC(i,k)+tl_DC(i,k+1))*CF(i,k)+  &
      &                       tl_DC(i,k+1)*CF(i,k+1))-                   &
      &                      DC(i,k)*tl_CF(i,k-1))
-#   endif
           END DO
         END DO
         DO i=IstrU,Iend
