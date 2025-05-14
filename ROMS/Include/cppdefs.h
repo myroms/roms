@@ -530,10 +530,10 @@
 ** ROLLER_RENIERS      activate wave roller based on Reniers                 **
 ** SURFACE_STREAMING   activate wave enhanced surface streaming              **
 ** WAVE_MIXING         activate enhanced vertical viscosity mixing from waves**
-** WDISS_CHURTHOR      activate wave dissipation from Church/Thorton.        **
+** WDISS_CHURTHOR      activate wave dissipation from Church/Thornton.       **
 ** WDISS_GAMMA         activate wave dissipation when using InWave           **
 ** WDISS_ROELVINK      activate wave dissipation Roelvink when using InWave  **
-** WDISS_THORGUZA      activate wave dissipation from Thorton/Guza.          **
+** WDISS_THORGUZA      activate wave dissipation from Thornton/Guza.         **
 ** WDISS_WAVEMOD       activate wave dissipation from a wave model           **
 ** WEC_VF              activate wave-current stresses from Uchiyama et al.   **
 ** WET_DRY             activate wetting and drying                           **
