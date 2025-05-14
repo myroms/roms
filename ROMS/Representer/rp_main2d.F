@@ -45,9 +45,6 @@
 # ifdef ADJUST_BOUNDARY
       USE rp_obc_adjust_mod,       ONLY : rp_obc_adjust
 # endif
-# ifdef NEARSHORE_MELLOR_NOT_YET
-!!    USE rp_radiation_stress_mod, ONLY : rp_radiation_stress
-# endif
 # if defined SSH_TIDES_NOT_YET || defined UV_TIDES_NOT_YET
 !!    USE rp_set_tides_mod,        ONLY : rp_set_tides
 # endif
@@ -233,20 +230,6 @@
             END DO
 !$OMP BARRIER
           END IF
-        END DO
-# endif
-
-# ifdef NEARSHORE_MELLOR_NOT_YET
-!
-!-----------------------------------------------------------------------
-!  Compute radiation stress terms.
-!-----------------------------------------------------------------------
-!
-        DO ng=1,Ngrids
-          DO tile=last_tile(ng),first_tile(ng),-1
-            CALL rp_radiation_stress (ng, tile)
-          END DO
-!$OMP BARRIER
         END DO
 # endif
 !

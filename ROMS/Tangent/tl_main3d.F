@@ -96,9 +96,6 @@
 # if !(defined FORCING_SV || defined JEDI)
       USE tl_post_initial_mod,  ONLY : tl_post_initial
 # endif
-# ifdef NEARSHORE_MELLOR_NOT_YET
-!!    USE tl_radiation_stress_mod, ONLY : tl_radiation_stress
-# endif
 # ifndef TS_FIXED
       USE tl_rho_eos_mod,       ONLY : tl_rho_eos
 # endif
@@ -373,21 +370,6 @@
                 END DO
 !$OMP BARRIER
               END IF
-            END DO
-# endif
-
-# ifdef NEARSHORE_MELLOR_NOT_YET
-!
-!-----------------------------------------------------------------------
-!  Compute radiation stress terms.
-!-----------------------------------------------------------------------
-!
-            DO ig=1,GridsInLayer(nl)
-              ng=GridNumber(ig,nl)
-              DO tile=last_tile(ng),first_tile(ng),-1
-                CALL tl_radiation_stress (ng, tile)
-              END DO
-!$OMP BARRIER
             END DO
 # endif
 !

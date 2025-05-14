@@ -35,9 +35,6 @@
 # endif
       USE mod_forces
       USE mod_grid
-# ifdef WEC_MELLOR
-      USE mod_mixing
-# endif
       USE mod_ocean
       USE mod_stepping
 # ifdef RPM_RELAXATION
@@ -151,13 +148,11 @@
      &                    OCEAN(ng) % ad_v,                             &
      &                    OCEAN(ng) % W,                                &
      &                    OCEAN(ng) % ad_W,                             &
-# ifdef WEC_MELLOR
+# ifdef WEC_NOT_YET
      &                    OCEAN(ng) % u_stokes,                         &
      &                    OCEAN(ng) % ad_u_stokes,                      &
      &                    OCEAN(ng) % v_stokes,                         &
      &                    OCEAN(ng) % ad_v_stokes,                      &
-     &                    OCEAN(ng) % ad_rulag3d,                       &
-     &                    OCEAN(ng) % ad_rvlag3d,                       &
      &                    MIXING(ng) % ad_rustr3d,                      &
      &                    MIXING(ng) % ad_rvstr3d,                      &
 # endif
@@ -244,11 +239,9 @@
      &                          u, ad_u,                                &
      &                          v, ad_v,                                &
      &                          W, ad_W,                                &
-# ifdef WEC_MELLOR
+# ifdef WEC_NOT_YET
      &                          u_stokes, ad_u_stokes,                  &
      &                          v_stokes, ad_v_stokes,                  &
-     &                          ad_rulag3d, ad_rvlag3d,                 &
-     &                          ad_rustr3d, ad_rvstr3d,                 &
 # endif
      &                          ad_rufrc,                               &
      &                          ad_rvfrc,                               &
@@ -296,7 +289,7 @@
       real(r8), intent(in) :: u(LBi:,LBj:,:,:)
       real(r8), intent(in) :: v(LBi:,LBj:,:,:)
       real(r8), intent(in) :: W(LBi:,LBj:,0:)
-#  ifdef WEC_MELLOR
+#  ifdef WEC_NOT_YET
       real(r8), intent(in) :: u_stokes(LBi:,LBj:,:)
       real(r8), intent(in) :: v_stokes(LBi:,LBj:,:)
 #  endif
@@ -316,11 +309,9 @@
       real(r8), intent(inout) :: ad_u(LBi:,LBj:,:,:)
       real(r8), intent(inout) :: ad_v(LBi:,LBj:,:,:)
       real(r8), intent(inout) :: ad_W(LBi:,LBj:,0:)
-#  ifdef WEC_MELLOR
+#  ifdef WEC_NOT_YET
       real(r8), intent(inout) :: ad_u_stokes(LBi:,LBj:,:)
       real(r8), intent(inout) :: ad_v_stokes(LBi:,LBj:,:)
-      real(r8), intent(inout) :: ad_rulag3d(LBi:,LBj:,:)
-      real(r8), intent(inout) :: ad_rvlag3d(LBi:,LBj:,:)
       real(r8), intent(inout) :: ad_rustr3d(LBi:,LBj:,:)
       real(r8), intent(inout) :: ad_rvstr3d(LBi:,LBj:,:)
 #  endif
@@ -355,7 +346,7 @@
       real(r8), intent(in) :: u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(in) :: v(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(in) :: W(LBi:UBi,LBj:UBj,0:N(ng))
-#  ifdef WEC_MELLOR
+#  ifdef WEC_NOT_YET
       real(r8), intent(in) :: u_stokes(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(in) :: v_stokes(LBi:UBi,LBj:UBj,N(ng))
 #  endif
@@ -375,11 +366,9 @@
       real(r8), intent(inout) :: ad_u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(inout) :: ad_v(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(inout) :: ad_W(LBi:UBi,LBj:UBj,0:N(ng))
-#  ifdef WEC_MELLOR
+#  ifdef WEC_NOT_YET
       real(r8), intent(inout) :: ad_u_stokes(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(inout) :: ad_v_stokes(LBi:UBi,LBj:UBj,N(ng))
-      real(r8), intent(inout) :: ad_rulag3d(LBi:UBi,LBj:UBj,N(ng))
-      real(r8), intent(inout) :: ad_rvlag3d(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(inout) :: ad_rustr3d(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(inout) :: ad_rvstr3d(LBi:UBi,LBj:UBj,N(ng))
 #  endif
@@ -522,10 +511,6 @@
 !!            DiaRVfrc(i,j,3,M2strs)=DiaRVfrc(i,j,3,M2strs)+            &
 !!   &                               DiaRV(i,j,k,nrhs,M3vvis)
 #  endif
-#  ifdef WEC_MELLOR
-!!            DiaRVfrc(i,j,3,M2hrad)=DiaRVfrc(i,j,3,M2hrad)+            &
-!!   &                               DiaRV(i,j,k,nrhs,M3hrad)
-#  endif
 #  ifdef UV_ADV
 !!            DiaRVfrc(i,j,3,M2hadv)=DiaRVfrc(i,j,3,M2hadv)+            &
 !!   &                               DiaRV(i,j,k,nrhs,M3hadv)
@@ -560,9 +545,6 @@
 !!          DiaRVfrc(i,j,3,M2yvis)=0.0_r8
 !!          DiaRVfrc(i,j,3,M2xvis)=0.0_r8
 !!          DiaRVfrc(i,j,3,M2hvis)=0.0_r8
-#  endif
-#  ifdef WEC_MELLOR
-!!          DiaRVfrc(i,j,3,M2hrad)=DiaRV(i,j,1,nrhs,M3hrad)
 #  endif
 #  ifdef UV_ADV
 !!          DiaRVfrc(i,j,3,M2hadv)=DiaRV(i,j,1,nrhs,M3hadv)
@@ -618,10 +600,6 @@
 !!          DiaRUfrc(i,j,3,M2strs)=DiaRUfrc(i,j,3,M2strs)+              &
 !!   &                             DiaRU(i,j,k,nrhs,M3vvis)
 #  endif
-#  ifdef WEC_MELLOR
-!!          DiaRUfrc(i,j,3,M2hrad)=DiaRUfrc(i,j,3,M2hrad)+              &
-!!   &                             DiaRU(i,j,k,nrhs,M3hrad)
-#  endif
 #  ifdef UV_ADV
 !!          DiaRUfrc(i,j,3,M2hadv)=DiaRUfrc(i,j,3,M2hadv)+              &
 !!   &                             DiaRU(i,j,k,nrhs,M3hadv)
@@ -657,9 +635,6 @@
 !!        DiaRUfrc(i,j,3,M2yvis)=0.0_r8
 !!        DiaRUfrc(i,j,3,M2xvis)=0.0_r8
 #  endif
-#  ifdef WEC_MELLOR
-!!        DiaRUfrc(i,j,3,M2hrad)=DiaRU(i,j,1,nrhs,M3hrad)
-#  endif
 #  ifdef UV_ADV
 !!        DiaRUfrc(i,j,3,M2hadv)=DiaRU(i,j,1,nrhs,M3hadv)
 !!        DiaRUfrc(i,j,3,M2yadv)=DiaRU(i,j,1,nrhs,M3yadv)
@@ -680,6 +655,7 @@
           ad_ru(i,j,1,nrhs)=ad_ru(i,j,1,nrhs)*umask_wet(i,j)
 # endif
         END DO
+
 # ifdef UV_ADV
 !
 !-----------------------------------------------------------------------
@@ -726,10 +702,6 @@
               cff=1.0_r8/(2.0_r8*DC(i,k+1)+DC(i,k)*(2.0_r8-FC(i,k-1)))
               FC(i,k)=cff*DC(i,k+1)
               CF(i,k)=cff*(6.0_r8*(v(i,j,k+1,nrhs)-                     &
-#   ifdef WEC_MELLOR
-     &                             v_stokes(i,j,k  )+                   &
-     &                             v_stokes(i,j,k+1)-                   &
-#   endif
      &                             v(i,j,k  ,nrhs))-                    &
      &                     DC(i,k)*CF(i,k-1))
             END DO
@@ -762,9 +734,6 @@
 !^   &                    cff2*(tl_W(i,j+1,k)+                          &
 !^   &                          tl_W(i,j-2,k)))*                        &
 !^   &                   (v(i,j,k,nrhs)+                                &
-#   ifdef WEC_MELLOR
-!^   &                    v_stokes(i,j,k)+                              &
-#   endif
 !^   &                    DC(i,k)*(cff3*CF(i,k  )+                      &
 !^   &                             cff4*CF(i,k-1)))+                    &
 !^   &                   (cff1*(W(i,j  ,k)+                             &
@@ -772,9 +741,6 @@
 !^   &                    cff2*(W(i,j+1,k)+                             &
 !^   &                          W(i,j-2,k)))*                           &
 !^   &                   (tl_v(i,j,k,nrhs)+                             &
-#   ifdef WEC_MELLOR
-!^   &                    tl_v_stokes(i,j,k)+                           &
-#   endif
 !^   &                    DC(i,k)*(cff3*tl_CF(i,k  )+                   &
 !^   &                             cff4*tl_CF(i,k-1))+                  &
 !^   &                    tl_DC(i,k)*(cff3*CF(i,k  )+                   &
@@ -786,9 +752,6 @@
      &                      W(i,j-2,k)))*ad_FC(i,k)
               adfac2=adfac1*DC(i,k)
               adfac3=(v(i,j,k,nrhs)+                                    &
-#   ifdef WEC_MELLOR
-     &                v_stokes(i,j,k)+                                  &
-#   endif
      &                DC(i,k)*(cff3*CF(i,k  )+                          &
      &                         cff4*CF(i,k-1)))*ad_FC(i,k)
               adfac4=adfac3*cff1
@@ -798,9 +761,6 @@
               ad_CF(i,k-1)=ad_CF(i,k-1)+cff4*adfac2
               ad_CF(i,k  )=ad_CF(i,k  )+cff3*adfac2
               ad_v(i,j,k,nrhs)=ad_v(i,j,k,nrhs)+adfac1
-#   ifdef WEC_MELLOR
-              ad_v_stokes(i,j,k)=ad_v_stokes(i,j,k)+adfac1
-#   endif
               ad_W(i,j-2,k)=ad_W(i,j-2,k)-adfac5
               ad_W(i,j-1,k)=ad_W(i,j-1,k)+adfac4
               ad_W(i,j  ,k)=ad_W(i,j  ,k)+adfac4
@@ -828,10 +788,6 @@
             DO i=Istr,Iend
               cff=1.0_r8/(2.0_r8*DC(i,k+1)+DC(i,k)*(2.0_r8-FC(i,k-1)))
 !^            tl_CF(i,k)=cff*(6.0_r8*(tl_v(i,j,k+1,nrhs)-               &
-#   ifdef WEC_MELLOR
-!^   &                                tl_v_stokes(i,j,k  )+             &
-!^   &                                tl_v_stokes(i,j,k+1)-             &
-#   endif
 !^   &                                tl_v(i,j,k  ,nrhs))-              &
 !^   &                        (tl_DC(i,k)*CF(i,k-1)+                    &
 !^   &                         2.0_r8*(tl_DC(i,k  )+                    &
@@ -848,10 +804,6 @@
      &                     (CF(i,k+1)+2.0_r8*CF(i,k))*adfac
               ad_v(i,j,k  ,nrhs)=ad_v(i,j,k  ,nrhs)-adfac1
               ad_v(i,j,k+1,nrhs)=ad_v(i,j,k+1,nrhs)+adfac1
-#   ifdef WEC_MELLOR
-              ad_v_stokes(i,j,k  )=ad_v_stokes(i,j,k  )-adfac1
-              ad_v_stokes(i,j,k+1)=ad_v_stokes(i,j,k+1)+adfac1
-#   endif
               ad_CF(i,k)=0.0_r8
             END DO
           END DO
@@ -893,28 +845,16 @@
           DO k=1,N(ng)-1
             DO i=Istr,Iend
 !^            tl_FC(i,k)=0.25_r8*((tl_v(i,j,k  ,nrhs)+                  &
-#   ifdef WEC_MELLOR
-!^   &                             tl_v_stokes(i,j,k  )+                &
-!^   &                             tl_v_stokes(i,j,k+1)+                &
-#   endif
 !^   &                             tl_v(i,j,k+1,nrhs))*                 &
 !^   &                            (W(i,j  ,k)+                          &
 !^   &                             W(i,j-1,k))+                         &
 !^   &                            (v(i,j,k  ,nrhs)+                     &
-#   ifdef WEC_MELLOR
-!^   &                             v_stokes(i,j,k  )+                   &
-!^   &                             v_stokes(i,j,k+1)+                   &
-#   endif
 !^   &                             v(i,j,k+1,nrhs))*                    &
 !^   &                            (tl_W(i,j  ,k)+                       &
 !^   &                             tl_W(i,j-1,k)))
 !^
               adfac=0.25_r8*ad_FC(i,k)
               adfac1=adfac*(v(i,j,k  ,nrhs)+                            &
-#   ifdef WEC_MELLOR
-     &                      v_stokes(i,j,k  )+                          &
-     &                      v_stokes(i,j,k+1)+                          &
-#   endif
      &                      v(i,j,k+1,nrhs))
               adfac2=adfac*(W(i,j  ,k)+                                 &
      &                      W(i,j-1,k))
@@ -922,10 +862,6 @@
               ad_W(i,j  ,k)=ad_W(i,j  ,k)+adfac1
               ad_v(i,j,k  ,nrhs)=ad_v(i,j,k  ,nrhs)+adfac2
               ad_v(i,j,k+1,nrhs)=ad_v(i,j,k+1,nrhs)+adfac2
-#   ifdef WEC_MELLOR
-              ad_v_stokes(i,j,k  )=ad_v_stokes(i,j,k  )+adfac2
-              ad_v_stokes(i,j,k+1)=ad_v_stokes(i,j,k+1)+adfac2
-#   endif
               ad_FC(i,k)=0.0_r8
             END DO
           END DO
@@ -940,30 +876,14 @@
 !^
             ad_FC(i,0)=0.0_r8
 !^          tl_FC(i,1)=(cff1*(tl_v(i,j,1,nrhs)+                         &
-#   ifdef WEC_MELLOR
-!^   &                        tl_v_stokes(i,j,1)+                       &
-!^   &                        tl_v_stokes(i,j,2)+                       &
-#   endif
 !^   &                        tl_v(i,j,2,nrhs))-                        &
 !^   &                  cff2*(tl_v(i,j,1,nrhs)+                         &
-#   ifdef WEC_MELLOR
-!^   &                        tl_v_stokes(i,j,1)+                       &
-!^   &                        tl_v_stokes(i,j,3)+                       &
-#   endif
 !^   &                        tl_v(i,j,3,nrhs)))*                       &
 !^   &                 (W(i,j  ,1)+                                     &
 !^   &                  W(i,j-1,1))+                                    &
 !^   &                 (cff1*(v(i,j,1,nrhs)+                            &
-#   ifdef WEC_MELLOR
-!^   &                        v_stokes(i,j,1)+                          &
-!^   &                        v_stokes(i,j,2)+                          &
-#   endif
 !^   &                        v(i,j,2,nrhs))-                           &
 !^   &                  cff2*(v(i,j,1,nrhs)+                            &
-#   ifdef WEC_MELLOR
-!^   &                        v_stokes(i,j,1)+                          &
-!^   &                        v_stokes(i,j,3)+                          &
-#   endif
 !^   &                        v(i,j,3,nrhs)))*                          &
 !^   &                 (tl_W(i,j  ,1)+                                  &
 !^   &                  tl_W(i,j-1,1))
@@ -973,53 +893,24 @@
             adfac1=adfac*cff1
             adfac2=adfac*cff2
             adfac3=(cff1*(v(i,j,1,nrhs)+                                &
-#   ifdef WEC_MELLOR
-     &                    v_stokes(i,j,1)+                              &
-     &                    v_stokes(i,j,2)+                              &
-#   endif
      &                    v(i,j,2,nrhs))-                               &
      &              cff2*(v(i,j,1,nrhs)+                                &
-#   ifdef WEC_MELLOR
-     &                    v_stokes(i,j,1)+                              &
-     &                    v_stokes(i,j,3)+                              &
-#   endif
      &                    v(i,j,3,nrhs)))*ad_FC(i,1)
             ad_W(i,j-1,1)=ad_W(i,j-1,1)+adfac3
             ad_W(i,j  ,1)=ad_W(i,j  ,1)+adfac3
             ad_v(i,j,1,nrhs)=ad_v(i,j,1,nrhs)+adfac1-adfac2
             ad_v(i,j,2,nrhs)=ad_v(i,j,2,nrhs)+adfac1
             ad_v(i,j,3,nrhs)=ad_v(i,j,3,nrhs)-adfac2
-#   ifdef WEC_MELLOR
-            ad_v_stokes(i,j,1)=ad_v_stokes(i,j,1)+adfac1-adfac2
-            ad_v_stokes(i,j,2)=ad_v_stokes(i,j,2)+adfac1
-            ad_v_stokes(i,j,3)=ad_v_stokes(i,j,3)-adfac2
-#   endif
             ad_FC(i,1)=0.0_r8
 !^          tl_FC(i,N(ng)-1)=(cff1*(tl_v(i,j,N(ng)-1,nrhs)+             &
-#   ifdef WEC_MELLOR
-!^   &                              tl_v_stokes(i,j,N(ng)-1)+           &
-!^   &                              tl_v_stokes(i,j,N(ng)  )+           &
-#   endif
 !^   &                              tl_v(i,j,N(ng)  ,nrhs))-            &
 !^   &                        cff2*(tl_v(i,j,N(ng)-2,nrhs)+             &
-#   ifdef WEC_MELLOR
-!^   &                              tl_v_stokes(i,j,N(ng)-2)+           &
-!^   &                              tl_v_stokes(i,j,N(ng)  )+           &
-#   endif
 !^   &                              tl_v(i,j,N(ng)  ,nrhs)))*           &
 !^   &                       (W(i,j  ,N(ng)-1)+                         &
 !^   &                        W(i,j-1,N(ng)-1))+                        &
 !^   &                       (cff1*(v(i,j,N(ng)-1,nrhs)+                &
-#   ifdef WEC_MELLOR
-!^   &                              v_stokes(i,j,N(ng)-1)+              &
-!^   &                              v_stokes(i,j,N(ng)  )+              &
-#   endif
 !^   &                              v(i,j,N(ng)  ,nrhs))-               &
 !^   &                        cff2*(v(i,j,N(ng)-2,nrhs)+                &
-#   ifdef WEC_MELLOR
-!^   &                              v_stokes(i,j,N(ng)-2)+              &
-!^   &                              v_stokes(i,j,N(ng)  )+              &
-#   endif
 !^   &                              v(i,j,N(ng)  ,nrhs)))*              &
 !^   &                       (tl_W(i,j  ,N(ng)-1)+                      &
 !^   &                        tl_W(i,j-1,N(ng)-1))
@@ -1029,28 +920,14 @@
             adfac1=adfac*cff1
             adfac2=adfac*cff2
             adfac3=(cff1*(v(i,j,N(ng)-1,nrhs)+                          &
-#   ifdef WEC_MELLOR
-     &                    v_stokes(i,j,N(ng)-1)+                        &
-     &                    v_stokes(i,j,N(ng)  )+                        &
-#   endif
      &                    v(i,j,N(ng)  ,nrhs))-                         &
      &              cff2*(v(i,j,N(ng)-2,nrhs)+                          &
-#   ifdef WEC_MELLOR
-     &                    v_stokes(i,j,N(ng)-2)+                        &
-     &                    v_stokes(i,j,N(ng)  )+                        &
-#   endif
      &                    v(i,j,N(ng)  ,nrhs)))*ad_FC(i,N(ng)-1)
             ad_W(i,j-1,N(ng)-1)=ad_W(i,j-1,N(ng)-1)+adfac3
             ad_W(i,j  ,N(ng)-1)=ad_W(i,j  ,N(ng)-1)+adfac3
             ad_v(i,j,N(ng)-2,nrhs)=ad_v(i,j,N(ng)-2,nrhs)-adfac2
             ad_v(i,j,N(ng)-1,nrhs)=ad_v(i,j,N(ng)-1,nrhs)+adfac1
             ad_v(i,j,N(ng)  ,nrhs)=ad_v(i,j,N(ng)  ,nrhs)+adfac1-adfac2
-#   ifdef WEC_MELLOR
-            ad_v_stokes(i,j,N(ng)-2)=ad_v_stokes(i,j,N(ng)-2)-adfac2
-            ad_v_stokes(i,j,N(ng)-1)=ad_v_stokes(i,j,N(ng)-1)+adfac1
-            ad_v_stokes(i,j,N(ng)  )=ad_v_stokes(i,j,N(ng)  )+adfac1-   &
-     &                                                        adfac2
-#   endif
             ad_FC(i,N(ng)-1)=0.0_r8
 !^          tl_FC(i,N(ng))=0.0_r8
 !^
@@ -1059,30 +936,14 @@
           DO k=2,N(ng)-2
             DO i=Istr,Iend
 !^            tl_FC(i,k)=(cff1*(tl_v(i,j,k  ,nrhs)+                     &
-#   ifdef WEC_MELLOR
-!^   &                          tl_v_stokes(i,j,k  )+                   &
-!^   &                          tl_v_stokes(i,j,k+1)+                   &
-#   endif
 !^   &                          tl_v(i,j,k+1,nrhs))-                    &
 !^   &                    cff2*(tl_v(i,j,k-1,nrhs)+                     &
-#   ifdef WEC_MELLOR
-!^   &                          tl_v_stokes(i,j,k-1)+                   &
-!^   &                          tl_v_stokes(i,j,k+2)+                   &
-#   endif
 !^   &                          tl_v(i,j,k+2,nrhs)))*                   &
 !^   &                   (W(i,j  ,k)+                                   &
 !^   &                    W(i,j-1,k))+                                  &
 !^   &                   (cff1*(v(i,j,k  ,nrhs)+                        &
-#   ifdef WEC_MELLOR
-!^   &                          v_stokes(i,j,k  )+                      &
-!^   &                          v_stokes(i,j,k+1)+                      &
-#   endif
 !^   &                          v(i,j,k+1,nrhs))-                       &
 !^   &                    cff2*(v(i,j,k-1,nrhs)+                        &
-#   ifdef WEC_MELLOR
-!^   &                          v_stokes(i,j,k-1)+                      &
-!^   &                          v_stokes(i,j,k+2)+                      &
-#   endif
 !^   &                          v(i,j,k+2,nrhs)))*                      &
 !^   &                   (tl_W(i,j  ,k)+                                &
 !^   &                    tl_W(i,j-1,k))
@@ -1092,16 +953,8 @@
               adfac1=adfac*cff1
               adfac2=adfac*cff2
               adfac3=(cff1*(v(i,j,k  ,nrhs)+                            &
-#   ifdef WEC_MELLOR
-     &                      v_stokes(i,j,k  )+                          &
-     &                      v_stokes(i,j,k+1)+                          &
-#   endif
      &                      v(i,j,k+1,nrhs))-                           &
      &                cff2*(v(i,j,k-1,nrhs)+                            &
-#   ifdef WEC_MELLOR
-     &                      v_stokes(i,j,k-1)+                          &
-     &                      v_stokes(i,j,k+2)+                          &
-#   endif
      &                      v(i,j,k+2,nrhs)))*ad_FC(i,k)
               ad_W(i,j-1,k)=ad_W(i,j-1,k)+adfac3
               ad_W(i,j  ,k)=ad_W(i,j  ,k)+adfac3
@@ -1109,12 +962,6 @@
               ad_v(i,j,k  ,nrhs)=ad_v(i,j,k  ,nrhs)+adfac1
               ad_v(i,j,k+1,nrhs)=ad_v(i,j,k+1,nrhs)+adfac1
               ad_v(i,j,k+2,nrhs)=ad_v(i,j,k+2,nrhs)-adfac2
-#   ifdef WEC_MELLOR
-              ad_v_stokes(i,j,k-1)=ad_v_stokes(i,j,k-1)-adfac2
-              ad_v_stokes(i,j,k  )=ad_v_stokes(i,j,k  )+adfac1
-              ad_v_stokes(i,j,k+1)=ad_v_stokes(i,j,k+1)+adfac1
-              ad_v_stokes(i,j,k+2)=ad_v_stokes(i,j,k+2)-adfac2
-#   endif
               ad_FC(i,k)=0.0_r8
             END DO
           END DO
@@ -1129,32 +976,16 @@
 !^
             ad_FC(i,0)=0.0_r8
 !^          tl_FC(i,1)=(cff1*(tl_v(i,j,1,nrhs)+                         &
-#   ifdef WEC_MELLOR
-!^   &                        tl_v_stokes(i,j,1)+                       &
-!^   &                        tl_v_stokes(i,j,2)+                       &
-#   endif
 !^   &                        tl_v(i,j,2,nrhs))-                        &
 !^   &                  cff2*(tl_v(i,j,1,nrhs)+                         &
-#   ifdef WEC_MELLOR
-!^   &                        tl_v_stokes(i,j,1)+                       &
-!^   &                        tl_v_stokes(i,j,3)+                       &
-#   endif
 !^   &                        tl_v(i,j,3,nrhs)))*                       &
 !^   &                 (cff1*(W(i,j  ,1)+                               &
 !^   &                        W(i,j-1,1))-                              &
 !^   &                  cff2*(W(i,j+1,1)+                               &
 !^   &                        W(i,j-2,1)))+                             &
 !^   &                 (cff1*(v(i,j,1,nrhs)+                            &
-#   ifdef WEC_MELLOR
-!^   &                        v_stokes(i,j,1)+                          &
-!^   &                        v_stokes(i,j,2)+                          &
-#   endif
 !^   &                        v(i,j,2,nrhs))-                           &
 !^   &                  cff2*(v(i,j,1,nrhs)+                            &
-#   ifdef WEC_MELLOR
-!^   &                        v_stokes(i,j,1)+                          &
-!^   &                        v_stokes(i,j,3)+                          &
-#   endif
 !^   &                        v(i,j,3,nrhs)))*                          &
 !^   &                 (cff1*(tl_W(i,j  ,1)+                            &
 !^   &                        tl_W(i,j-1,1))-                           &
@@ -1168,16 +999,8 @@
             adfac1=adfac*cff1
             adfac2=adfac*cff2
             adfac=(cff1*(v(i,j,1,nrhs)+                                 &
-#   ifdef WEC_MELLOR
-     &                   v_stokes(i,j,1)+                               &
-     &                   v_stokes(i,j,2)+                               &
-#   endif
      &                   v(i,j,2,nrhs))-                                &
      &             cff2*(v(i,j,1,nrhs)+                                 &
-#   ifdef WEC_MELLOR
-     &                   v_stokes(i,j,1)+                               &
-     &                   v_stokes(i,j,3)+                               &
-#   endif
      &                   v(i,j,3,nrhs)))*ad_FC(i,1)
             adfac3=adfac*cff1
             adfac4=adfac*cff2
@@ -1188,39 +1011,18 @@
             ad_v(i,j,1,nrhs)=ad_v(i,j,1,nrhs)+adfac1-adfac2
             ad_v(i,j,2,nrhs)=ad_v(i,j,2,nrhs)+adfac1
             ad_v(i,j,3,nrhs)=ad_v(i,j,3,nrhs)-adfac2
-#   ifdef WEC_MELLOR
-            ad_v_stokes(i,j,1)=ad_v_stokes(i,j,1)+adfac1-adfac2
-            ad_v_stokes(i,j,2)=ad_v_stokes(i,j,2)+adfac1
-            ad_v_stokes(i,j,3)=ad_v_stokes(i,j,3)-adfac2
-#   endif
             ad_FC(i,1)=0.0_r8
 !^          tl_FC(i,N(ng)-1)=(cff1*(tl_v(i,j,N(ng)-1,nrhs)+             &
-#   ifdef WEC_MELLOR
-!^   &                              tl_v_stokes(i,j,N(ng)-1)+           &
-!^   &                              tl_v_stokes(i,j,N(ng)  )+           &
-#   endif
 !^   &                              tl_v(i,j,N(ng)  ,nrhs))-            &
 !^   &                        cff2*(tl_v(i,j,N(ng)-2,nrhs)+             &
-#   ifdef WEC_MELLOR
-!^   &                              tl_v_stokes(i,j,N(ng)-2)+           &
-!^   &                              tl_v_stokes(i,j,N(ng)  )+           &
-#   endif
 !^   &                              tl_v(i,j,N(ng)  ,nrhs)))*           &
 !^   &                       (cff1*(W(i,j  ,N(ng)-1)+                   &
 !^   &                              W(i,j-1,N(ng)-1))-                  &
 !^   &                        cff2*(W(i,j+1,N(ng)-1)+                   &
 !^   &                              W(i,j-2,N(ng)-1)))+                 &
 !^   &                       (cff1*(v(i,j,N(ng)-1,nrhs)+                &
-#   ifdef WEC_MELLOR
-!^   &                              v_stokes(i,j,N(ng)-1)+              &
-!^   &                              v_stokes(i,j,N(ng)  )+              &
-#   endif
 !^   &                              v(i,j,N(ng)  ,nrhs))-               &
 !^   &                        cff2*(v(i,j,N(ng)-2,nrhs)+                &
-#   ifdef WEC_MELLOR
-!^   &                              v_stokes(i,j,N(ng)-2)+              &
-!^   &                              v_stokes(i,j,N(ng)  )+              &
-#   endif
 !^   &                              v(i,j,N(ng)  ,nrhs)))*              &
 !^   &                       (cff1*(tl_W(i,j  ,N(ng)-1)+                &
 !^   &                              tl_W(i,j-1,N(ng)-1))-               &
@@ -1234,16 +1036,8 @@
             adfac1=adfac*cff1
             adfac2=adfac*cff2
             adfac=(cff1*(v(i,j,N(ng)-1,nrhs)+                           &
-#   ifdef WEC_MELLOR
-     &                   v_stokes(i,j,N(ng)-1)+                         &
-     &                   v_stokes(i,j,N(ng)  )+                         &
-#   endif
      &                   v(i,j,N(ng)  ,nrhs))-                          &
      &             cff2*(v(i,j,N(ng)-2,nrhs)+                           &
-#   ifdef WEC_MELLOR
-     &                   v_stokes(i,j,N(ng)-2)+                         &
-     &                   v_stokes(i,j,N(ng)  )+                         &
-#   endif
      &                   v(i,j,N(ng)  ,nrhs)))*ad_FC(i,N(ng)-1)
             adfac3=adfac*cff1
             adfac4=adfac*cff2
@@ -1254,12 +1048,6 @@
             ad_v(i,j,N(ng)-2,nrhs)=ad_v(i,j,N(ng)-2,nrhs)-adfac2
             ad_v(i,j,N(ng)-1,nrhs)=ad_v(i,j,N(ng)-1,nrhs)+adfac1
             ad_v(i,j,N(ng)  ,nrhs)=ad_v(i,j,N(ng)  ,nrhs)+adfac1-adfac2
-#   ifdef WEC_MELLOR
-            ad_v_stokes(i,j,N(ng)-2)=ad_v_stokes(i,j,N(ng)-2)-adfac2
-            ad_v_stokes(i,j,N(ng)-1)=ad_v_stokes(i,j,N(ng)-1)+adfac1
-            ad_v_stokes(i,j,N(ng)  )=ad_v_stokes(i,j,N(ng)  )+adfac1-   &
-     &                                                        adfac2
-#   endif
             ad_FC(i,N(ng)-1)=0.0_r8
 !^          tl_FC(i,N(ng))=0.0_r8
 !^
@@ -1268,32 +1056,16 @@
           DO k=2,N(ng)-2
             DO i=Istr,Iend
 !^            tl_FC(i,k)=(cff1*(tl_v(i,j,k  ,nrhs)+                     &
-#   ifdef WEC_MELLOR
-!^   &                          tl_v_stokes(i,j,k  )+                   &
-!^   &                          tl_v_stokes(i,j,k+1)+                   &
-#   endif
 !^   &                          tl_v(i,j,k+1,nrhs))-                    &
 !^   &                    cff2*(tl_v(i,j,k-1,nrhs)+                     &
-#   ifdef WEC_MELLOR
-!^   &                          tl_v_stokes(i,j,k-1)+                   &
-!^   &                          tl_v_stokes(i,j,k+2)+                   &
-#   endif
 !^   &                          tl_v(i,j,k+2,nrhs)))*                   &
 !^   &                   (cff1*(W(i,j  ,k)+                             &
 !^   &                          W(i,j-1,k))-                            &
 !^   &                    cff2*(W(i,j+1,k)+                             &
 !^   &                          W(i,j-2,k)))+                           &
 !^   &                   (cff1*(v(i,j,k  ,nrhs)+                        &
-#   ifdef WEC_MELLOR
-!^   &                          v_stokes(i,j,k  )+                      &
-!^   &                          v_stokes(i,j,k+1)+                      &
-#   endif
 !^   &                          v(i,j,k+1,nrhs))-                       &
 !^   &                    cff2*(v(i,j,k-1,nrhs)+                        &
-#   ifdef WEC_MELLOR
-!^   &                          v_stokes(i,j,k-1)+                      &
-!^   &                          v_stokes(i,j,k+2)+                      &
-#   endif
 !^   &                          v(i,j,k+2,nrhs)))*                      &
 !^   &                   (cff1*(tl_W(i,j  ,k)+                          &
 !^   &                          tl_W(i,j-1,k))-                         &
@@ -1307,16 +1079,8 @@
               adfac1=adfac*cff1
               adfac2=adfac*cff2
               adfac=(cff1*(v(i,j,k  ,nrhs)+                             &
-#   ifdef WEC_MELLOR
-     &                     v_stokes(i,j,k  )+                           &
-     &                     v_stokes(i,j,k+1)+                           &
-#   endif
      &                     v(i,j,k+1,nrhs))-                            &
      &               cff2*(v(i,j,k-1,nrhs)+                             &
-#   ifdef WEC_MELLOR
-     &                     v_stokes(i,j,k-1)+                           &
-     &                     v_stokes(i,j,k+2)+                           &
-#   endif
      &                     v(i,j,k+2,nrhs)))*ad_FC(i,k)
               adfac3=adfac*cff1
               adfac4=adfac*cff2
@@ -1328,12 +1092,6 @@
               ad_v(i,j,k  ,nrhs)=ad_v(i,j,k  ,nrhs)+adfac1
               ad_v(i,j,k+1,nrhs)=ad_v(i,j,k+1,nrhs)+adfac1
               ad_v(i,j,k+2,nrhs)=ad_v(i,j,k+2,nrhs)-adfac2
-#   ifdef WEC_MELLOR
-              ad_v_stokes(i,j,k-1)=ad_v_stokes(i,j,k-1)-adfac2
-              ad_v_stokes(i,j,k  )=ad_v_stokes(i,j,k  )+adfac1
-              ad_v_stokes(i,j,k+1)=ad_v_stokes(i,j,k+1)+adfac1
-              ad_v_stokes(i,j,k+2)=ad_v_stokes(i,j,k+2)-adfac2
-#   endif
               ad_FC(i,k)=0.0_r8
             END DO
           END DO
@@ -1383,10 +1141,6 @@
             cff=1.0_r8/(2.0_r8*DC(i,k+1)+DC(i,k)*(2.0_r8-FC(i,k-1)))
             FC(i,k)=cff*DC(i,k+1)
             CF(i,k)=cff*(6.0_r8*(u(i,j,k+1,nrhs)-                       &
-#   ifdef WEC_MELLOR
-     &                           u_stokes(i,j,k  )+                     &
-     &                           u_stokes(i,j,k+1)-                     &
-#   endif
      &                           u(i,j,k  ,nrhs))-                      &
      &                   DC(i,k)*CF(i,k-1))
           END DO
@@ -1419,9 +1173,6 @@
 !^   &                  cff2*(tl_W(i+1,j,k)+                            &
 !^   &                        tl_W(i-2,j,k)))*                          &
 !^   &                 (u(i,j,k,nrhs)+                                  &
-#   ifdef WEC_MELLOR
-!^   &                  u_stokes(i,j,k)+                                &
-#   endif
 !^   &                  DC(i,k)*(cff3*CF(i,k  )+                        &
 !^   &                           cff4*CF(i,k-1)))+                      &
 !^   &                 (cff1*(W(i  ,j,k)+                               &
@@ -1429,9 +1180,6 @@
 !^   &                  cff2*(W(i+1,j,k)+                               &
 !^   &                        W(i-2,j,k)))*                             &
 !^   &                 (tl_u(i,j,k,nrhs)+                               &
-#   ifdef WEC_MELLOR
-!^   &                  tl_u_stokes(i,j,k)+                             &
-#   endif
 !^   &                  DC(i,k)*(cff3*tl_CF(i,k  )+                     &
 !^   &                           cff4*tl_CF(i,k-1))+                    &
 !^   &                  tl_DC(i,k)*(cff3*CF(i,k  )+                     &
@@ -1443,9 +1191,6 @@
      &                     W(i-2,j,k)))*ad_FC(i,k)
              adfac2=adfac1*DC(i,k)
              adfac3=(u(i,j,k,nrhs)+                                     &
-#   ifdef WEC_MELLOR
-     &               u_stokes(i,j,k)+                                   &
-#   endif
      &               DC(i,k)*(cff3*CF(i,k  )+                           &
      &                        cff4*CF(i,k-1)))*ad_FC(i,k)
              adfac4=adfac3*cff1
@@ -1455,9 +1200,6 @@
              ad_CF(i,k-1)=ad_CF(i,k-1)+cff4*adfac2
              ad_CF(i,k  )=ad_CF(i,k  )+cff3*adfac2
              ad_u(i,j,k,nrhs)=ad_u(i,j,k,nrhs)+adfac1
-#   ifdef WEC_MELLOR
-             ad_u_stokes(i,j,k)=ad_u_stokes(i,j,k)+adfac1
-#   endif
              ad_W(i-2,j,k)=ad_W(i-2,j,k)-adfac5
              ad_W(i-1,j,k)=ad_W(i-1,j,k)+adfac4
              ad_W(i  ,j,k)=ad_W(i  ,j,k)+adfac4
@@ -1485,10 +1227,6 @@
           DO i=IstrU,Iend
             cff=1.0_r8/(2.0_r8*DC(i,k+1)+DC(i,k)*(2.0_r8-FC(i,k-1)))
 !^          tl_CF(i,k)=cff*(6.0_r8*(tl_u(i,j,k+1,nrhs)-                 &
-#   ifdef WEC_MELLOR
-!^   &                              tl_u_stokes(i,j,k  )+               &
-!^   &                              tl_u_stokes(i,j,k+1)-               &
-#   endif
 !^   &                              tl_u(i,j,k  ,nrhs))-                &
 !^   &                      (tl_DC(i,k)*CF(i,k-1)+                      &
 !^   &                       2.0_r8*(tl_DC(i,k)+tl_DC(i,k+1))*CF(i,k)+  &
@@ -1504,10 +1242,6 @@
      &                   (CF(i,k+1)+2.0_r8*CF(i,k))*adfac
             ad_u(i,j,k  ,nrhs)=ad_u(i,j,k  ,nrhs)-adfac1
             ad_u(i,j,k+1,nrhs)=ad_u(i,j,k+1,nrhs)+adfac1
-#   ifdef WEC_MELLOR
-            ad_u_stokes(i,j,k  )=ad_u_stokes(i,j,k  )-adfac1
-            ad_u_stokes(i,j,k+1)=ad_u_stokes(i,j,k+1)+adfac1
-#   endif
             ad_CF(i,k)=0.0_r8
           END DO
         END DO
@@ -1549,28 +1283,16 @@
         DO k=1,N(ng)-1
           DO i=IstrU,Iend
 !^          tl_FC(i,k)=0.25_r8*((tl_u(i,j,k  ,nrhs)+                    &
-#   ifdef WEC_MELLOR
-!^   &                           tl_u_stokes(i,j,k  )+                  &
-!^   &                           tl_u_stokes(i,j,k+1)+                  &
-#   endif
 !^   &                           tl_u(i,j,k+1,nrhs))*                   &
 !^   &                          (W(i  ,j,k)+                            &
 !^   &                           W(i-1,j,k))+                           &
 !^   &                          (u(i,j,k  ,nrhs)+                       &
-#   ifdef WEC_MELLOR
-!^   &                           u_stokes(i,j,k  )+                     &
-!^   &                           u_stokes(i,j,k+1)+                     &
-#   endif
 !^   &                           u(i,j,k+1,nrhs))*                      &
 !^   &                          (tl_W(i  ,j,k)+                         &
 !^   &                           tl_W(i-1,j,k)))
 !^
             adfac=0.25_r8*ad_FC(i,k)
             adfac1=adfac*(u(i,j,k  ,nrhs)+                              &
-#   ifdef WEC_MELLOR
-     &                    u_stokes(i,j,k  )+                            &
-     &                    u_stokes(i,j,k+1)+                            &
-#   endif
      &                    u(i,j,k+1,nrhs))
             adfac2=adfac*(W(i  ,j,k)+                                   &
      &                    W(i-1,j,k))
@@ -1578,10 +1300,6 @@
             ad_W(i  ,j,k)=ad_W(i  ,j,k)+adfac1
             ad_u(i,j,k  ,nrhs)=ad_u(i,j,k  ,nrhs)+adfac2
             ad_u(i,j,k+1,nrhs)=ad_u(i,j,k+1,nrhs)+adfac2
-#   ifdef WEC_MELLOR
-            ad_u_stokes(i,j,k  )=ad_u_stokes(i,j,k  )+adfac2
-            ad_u_stokes(i,j,k+1)=ad_u_stokes(i,j,k+1)+adfac2
-#   endif
             ad_FC(i,k)=0.0_r8
           END DO
         END DO
@@ -1596,30 +1314,14 @@
 !^
           ad_FC(i,0)=0.0_r8
 !^        tl_FC(i,1)=(cff1*(tl_u(i,j,1,nrhs)+                           &
-#   ifdef WEC_MELLOR
-!^   &                      tl_u_stokes(i,j,1)+                         &
-!^   &                      tl_u_stokes(i,j,2)+                         &
-#   endif
 !^   &                      tl_u(i,j,2,nrhs))-                          &
 !^   &                cff2*(tl_u(i,j,1,nrhs)+                           &
-#   ifdef WEC_MELLOR
-!^   &                      tl_u_stokes(i,j,1)+                         &
-!^   &                      tl_u_stokes(i,j,3)+                         &
-#   endif
 !^   &                      tl_u(i,j,3,nrhs)))*                         &
 !^   &               (W(i  ,j,1)+                                       &
 !^   &                W(i-1,j,1))+                                      &
 !^   &               (cff1*(u(i,j,1,nrhs)+                              &
-#   ifdef WEC_MELLOR
-!^   &                      u_stokes(i,j,1)+                            &
-!^   &                      u_stokes(i,j,2)+                            &
-#   endif
 !^   &                      u(i,j,2,nrhs))-                             &
 !^   &                cff2*(u(i,j,1,nrhs)+                              &
-#   ifdef WEC_MELLOR
-!^   &                      u_stokes(i,j,1)+                            &
-!^   &                      u_stokes(i,j,3)+                            &
-#   endif
 !^   &                      u(i,j,3,nrhs)))*                            &
 !^   &               (tl_W(i  ,j,1)+                                    &
 !^   &                tl_W(i-1,j,1))
@@ -1629,53 +1331,24 @@
           adfac1=adfac*cff1
           adfac2=adfac*cff2
           adfac3=(cff1*(u(i,j,1,nrhs)+                                  &
-#   ifdef WEC_MELLOR
-     &                  u_stokes(i,j,1)+                                &
-     &                  u_stokes(i,j,2)+                                &
-#   endif
      &                  u(i,j,2,nrhs))-                                 &
      &            cff2*(u(i,j,1,nrhs)+                                  &
-#   ifdef WEC_MELLOR
-     &                  u_stokes(i,j,1)+                                &
-     &                  u_stokes(i,j,3)+                                &
-#   endif
      &                  u(i,j,3,nrhs)))*ad_FC(i,1)
           ad_W(i-1,j,1)=ad_W(i-1,j,1)+adfac3
           ad_W(i  ,j,1)=ad_W(i  ,j,1)+adfac3
           ad_u(i,j,1,nrhs)=ad_u(i,j,1,nrhs)+adfac1-adfac2
           ad_u(i,j,2,nrhs)=ad_u(i,j,2,nrhs)+adfac1
           ad_u(i,j,3,nrhs)=ad_u(i,j,3,nrhs)-adfac2
-#   ifdef WEC_MELLOR
-          ad_u_stokes(i,j,1)=ad_u_stokes(i,j,1)+adfac1-adfac2
-          ad_u_stokes(i,j,2)=ad_u_stokes(i,j,2)+adfac1
-          ad_u_stokes(i,j,3)=ad_u_stokes(i,j,3)-adfac2
-#   endif
           ad_FC(i,1)=0.0_r8
 !^        tl_FC(i,N(ng)-1)=(cff1*(tl_u(i,j,N(ng)-1,nrhs)+               &
-#   ifdef WEC_MELLOR
-!^   &                            tl_u_stokes(i,j,N(ng)-1)+             &
-!^   &                            tl_u_stokes(i,j,N(ng)  )+             &
-#   endif
 !^   &                            tl_u(i,j,N(ng)  ,nrhs))-              &
 !^   &                      cff2*(tl_u(i,j,N(ng)-2,nrhs)+               &
-#   ifdef WEC_MELLOR
-!^   &                            tl_u_stokes(i,j,N(ng)-2)+             &
-!^   &                            tl_u_stokes(i,j,N(ng)  )+             &
-#   endif
 !^   &                            tl_u(i,j,N(ng)  ,nrhs)))*             &
 !^   &                     (W(i  ,j,N(ng)-1)+                           &
 !^   &                      W(i-1,j,N(ng)-1))+                          &
 !^   &                     (cff1*(u(i,j,N(ng)-1,nrhs)+                  &
-#   ifdef WEC_MELLOR
-!^   &                            u_stokes(i,j,N(ng)-1)+                &
-!^   &                            u_stokes(i,j,N(ng)  )+                &
-#   endif
 !^   &                            u(i,j,N(ng)  ,nrhs))-                 &
 !^   &                      cff2*(u(i,j,N(ng)-2,nrhs)+                  &
-#   ifdef WEC_MELLOR
-!^   &                            u_stokes(i,j,N(ng)-2)+                &
-!^   &                            u_stokes(i,j,N(ng)  )+                &
-#   endif
 !^   &                            u(i,j,N(ng)  ,nrhs)))*                &
 !^   &                     (tl_W(i  ,j,N(ng)-1)+                        &
 !^   &                      tl_W(i-1,j,N(ng)-1))
@@ -1685,28 +1358,14 @@
           adfac1=adfac*cff1
           adfac2=adfac*cff2
           adfac3=(cff1*(u(i,j,N(ng)-1,nrhs)+                            &
-#   ifdef WEC_MELLOR
-     &                  u_stokes(i,j,N(ng)-1)+                          &
-     &                  u_stokes(i,j,N(ng)  )+                          &
-#   endif
      &                  u(i,j,N(ng)  ,nrhs))-                           &
      &            cff2*(u(i,j,N(ng)-2,nrhs)+                            &
-#   ifdef WEC_MELLOR
-     &                  u_stokes(i,j,N(ng)-2)+                          &
-     &                  u_stokes(i,j,N(ng)  )+                          &
-#   endif
      &                  u(i,j,N(ng)  ,nrhs)))*ad_FC(i,N(ng)-1)
           ad_W(i  ,j,N(ng)-1)=ad_W(i  ,j,N(ng)-1)+adfac3
           ad_W(i-1,j,N(ng)-1)=ad_W(i-1,j,N(ng)-1)+adfac3
           ad_u(i,j,N(ng)-2,nrhs)=ad_u(i,j,N(ng)-2,nrhs)-adfac2
           ad_u(i,j,N(ng)-1,nrhs)=ad_u(i,j,N(ng)-1,nrhs)+adfac1
           ad_u(i,j,N(ng)  ,nrhs)=ad_u(i,j,N(ng)  ,nrhs)+adfac1-adfac2
-#   ifdef WEC_MELLOR
-          ad_u_stokes(i,j,N(ng)-2)=ad_u_stokes(i,j,N(ng)-2)-adfac2
-          ad_u_stokes(i,j,N(ng)-1)=ad_u_stokes(i,j,N(ng)-1)+adfac1
-          ad_u_stokes(i,j,N(ng)  )=ad_u_stokes(i,j,N(ng)  )+adfac1-     &
-     &                                                      adfac2
-#   endif
           ad_FC(i,N(ng)-1)=0.0_r8
 !^        tl_FC(i,N(ng))=0.0_r8
 !^
@@ -1715,30 +1374,14 @@
         DO k=2,N(ng)-2
           DO i=IstrU,Iend
 !^          tl_FC(i,k)=(cff1*(tl_u(i,j,k  ,nrhs)+                       &
-#   ifdef WEC_MELLOR
-!^   &                        tl_u_stokes(i,j,k  )+                     &
-!^   &                        tl_u_stokes(i,j,k+1)+                     &
-#   endif
 !^   &                        tl_u(i,j,k+1,nrhs))-                      &
 !^   &                  cff2*(tl_u(i,j,k-1,nrhs)+                       &
-#   ifdef WEC_MELLOR
-!^   &                        tl_u_stokes(i,j,k-1)+                     &
-!^   &                        tl_u_stokes(i,j,k+2)+                     &
-#   endif
 !^   &                        tl_u(i,j,k+2,nrhs)))*                     &
 !^   &                 (W(i  ,j,k)+                                     &
 !^   &                  W(i-1,j,k))+                                    &
 !^   &                 (cff1*(u(i,j,k  ,nrhs)+                          &
-#   ifdef WEC_MELLOR
-!^   &                        u_stokes(i,j,k  )+                        &
-!^   &                        u_stokes(i,j,k+1)+                        &
-#   endif
 !^   &                        u(i,j,k+1,nrhs))-                         &
 !^   &                  cff2*(u(i,j,k-1,nrhs)+                          &
-#   ifdef WEC_MELLOR
-!^   &                        u_stokes(i,j,k-1)+                        &
-!^   &                        u_stokes(i,j,k+2)+                        &
-#   endif
 !^   &                        u(i,j,k+2,nrhs)))*                        &
 !^   &                 (tl_W(i  ,j,k)+                                  &
 !^   &                  tl_W(i-1,j,k))
@@ -1748,16 +1391,8 @@
             adfac1=adfac*cff1
             adfac2=adfac*cff2
             adfac3=(cff1*(u(i,j,k  ,nrhs)+                              &
-#   ifdef WEC_MELLOR
-     &                    u_stokes(i,j,k  )+                            &
-     &                    u_stokes(i,j,k+1)+                            &
-#   endif
      &                    u(i,j,k+1,nrhs))-                             &
      &              cff2*(u(i,j,k-1,nrhs)+                              &
-#   ifdef WEC_MELLOR
-     &                    u_stokes(i,j,k-1)+                            &
-     &                    u_stokes(i,j,k+2)+                            &
-#   endif
      &                    u(i,j,k+2,nrhs)))*ad_FC(i,k)
             ad_W(i-1,j,k)=ad_W(i-1,j,k)+adfac3
             ad_W(i  ,j,k)=ad_W(i  ,j,k)+adfac3
@@ -1765,12 +1400,6 @@
             ad_u(i,j,k  ,nrhs)=ad_u(i,j,k  ,nrhs)+adfac1
             ad_u(i,j,k+1,nrhs)=ad_u(i,j,k+1,nrhs)+adfac1
             ad_u(i,j,k+2,nrhs)=ad_u(i,j,k+2,nrhs)-adfac2
-#   ifdef WEC_MELLOR
-            ad_u_stokes(i,j,k-1)=ad_u_stokes(i,j,k-1)-adfac2
-            ad_u_stokes(i,j,k  )=ad_u_stokes(i,j,k  )+adfac1
-            ad_u_stokes(i,j,k+1)=ad_u_stokes(i,j,k+1)+adfac1
-            ad_u_stokes(i,j,k+2)=ad_u_stokes(i,j,k+2)-adfac2
-#   endif
             ad_FC(i,k)=0.0_r8
           END DO
         END DO
@@ -1785,32 +1414,16 @@
 !^
           ad_FC(i,0)=0.0_r8
 !^        tl_FC(i,1)=(cff1*(tl_u(i,j,1,nrhs)+                           &
-#   ifdef WEC_MELLOR
-!^   &                      tl_u_stokes(i,j,1)+                         &
-!^   &                      tl_u_stokes(i,j,2)+                         &
-#   endif
 !^   &                      tl_u(i,j,2,nrhs))-                          &
 !^   &                cff2*(tl_u(i,j,1,nrhs)+                           &
-#   ifdef WEC_MELLOR
-!^   &                      tl_u_stokes(i,j,1)+                         &
-!^   &                      tl_u_stokes(i,j,3)+                         &
-#   endif
 !^   &                      tl_u(i,j,3,nrhs)))*                         &
 !^   &               (cff1*(W(i  ,j,1)+                                 &
 !^   &                      W(i-1,j,1))-                                &
 !^   &                cff2*(W(i+1,j,1)+                                 &
 !^   &                      W(i-2,j,1)))+                               &
 !^   &               (cff1*(u(i,j,1,nrhs)+                              &
-#   ifdef WEC_MELLOR
-!^   &                      u_stokes(i,j,1)+                            &
-!^   &                      u_stokes(i,j,2)+                            &
-#   endif
 !^   &                      u(i,j,2,nrhs))-                             &
 !^   &                cff2*(u(i,j,1,nrhs)+                              &
-#   ifdef WEC_MELLOR
-!^   &                      u_stokes(i,j,1)+                            &
-!^   &                      u_stokes(i,j,3)+                            &
-#   endif
 !^   &                      u(i,j,3,nrhs)))*                            &
 !^   &               (cff1*(tl_W(i  ,j,1)+                              &
 !^   &                      tl_W(i-1,j,1))-                             &
@@ -1824,16 +1437,8 @@
           adfac1=adfac*cff1
           adfac2=adfac*cff2
           adfac=(cff1*(u(i,j,1,nrhs)+                                   &
-#   ifdef WEC_MELLOR
-     &                 u_stokes(i,j,1)+                                 &
-     &                 u_stokes(i,j,2)+                                 &
-#   endif
      &                 u(i,j,2,nrhs))-                                  &
      &           cff2*(u(i,j,1,nrhs)+                                   &
-#   ifdef WEC_MELLOR
-     &                 u_stokes(i,j,1)+                                 &
-     &                 u_stokes(i,j,3)+                                 &
-#   endif
      &                 u(i,j,3,nrhs)))*ad_FC(i,1)
           adfac3=adfac*cff1
           adfac4=adfac*cff2
@@ -1844,39 +1449,18 @@
           ad_u(i,j,1,nrhs)=ad_u(i,j,1,nrhs)+adfac1-adfac2
           ad_u(i,j,2,nrhs)=ad_u(i,j,2,nrhs)+adfac1
           ad_u(i,j,3,nrhs)=ad_u(i,j,3,nrhs)-adfac2
-#   ifdef WEC_MELLOR
-          ad_u_stokes(i,j,1)=ad_u_stokes(i,j,1)+adfac1-adfac2
-          ad_u_stokes(i,j,2)=ad_u_stokes(i,j,2)+adfac1
-          ad_u_stokes(i,j,3)=ad_u_stokes(i,j,3)-adfac2
-#   endif
           ad_FC(i,1)=0.0_r8
 !^        tl_FC(i,N(ng)-1)=(cff1*(tl_u(i,j,N(ng)-1,nrhs)+               &
-#   ifdef WEC_MELLOR
-!^   &                            tl_u_stokes(i,j,N(ng)-1)+             &
-!^   &                            tl_u_stokes(i,j,N(ng)  )+             &
-#   endif
 !^   &                            tl_u(i,j,N(ng)  ,nrhs))-              &
 !^   &                      cff2*(tl_u(i,j,N(ng)-2,nrhs)+               &
-#   ifdef WEC_MELLOR
-!^   &                            tl_u_stokes(i,j,N(ng)-2)+             &
-!^   &                            tl_u_stokes(i,j,N(ng)  )+             &
-#   endif
 !^   &                            tl_u(i,j,N(ng)  ,nrhs)))*             &
 !^   &                     (cff1*(W(i  ,j,N(ng)-1)+                     &
 !^   &                            W(i-1,j,N(ng)-1))-                    &
 !^   &                      cff2*(W(i+1,j,N(ng)-1)+                     &
 !^   &                            W(i-2,j,N(ng)-1)))+                   &
 !^   &                     (cff1*(u(i,j,N(ng)-1,nrhs)+                  &
-#   ifdef WEC_MELLOR
-!^   &                            u_stokes(i,j,N(ng)-1)+                &
-!^   &                            u_stokes(i,j,N(ng)  )+                &
-#   endif
 !^   &                            u(i,j,N(ng)  ,nrhs))-                 &
 !^   &                      cff2*(u(i,j,N(ng)-2,nrhs)+                  &
-#   ifdef WEC_MELLOR
-!^   &                            u_stokes(i,j,N(ng)-2)+                &
-!^   &                            u_stokes(i,j,N(ng)  )+                &
-#   endif
 !^   &                            u(i,j,N(ng)  ,nrhs)))*                &
 !^   &                     (cff1*(tl_W(i  ,j,N(ng)-1)+                  &
 !^   &                            tl_W(i-1,j,N(ng)-1))-                 &
@@ -1890,16 +1474,8 @@
           adfac1=adfac*cff1
           adfac2=adfac*cff2
           adfac=(cff1*(u(i,j,N(ng)-1,nrhs)+                             &
-#   ifdef WEC_MELLOR
-     &                 u_stokes(i,j,N(ng)-1)+                           &
-     &                 u_stokes(i,j,N(ng)  )+                           &
-#   endif
      &                 u(i,j,N(ng)  ,nrhs))-                            &
      &           cff2*(u(i,j,N(ng)-2,nrhs)+                             &
-#   ifdef WEC_MELLOR
-     &                 u_stokes(i,j,N(ng)-2)+                           &
-     &                 u_stokes(i,j,N(ng)  )+                           &
-#   endif
      &                 u(i,j,N(ng)  ,nrhs)))*ad_FC(i,N(ng)-1)
           adfac3=adfac*cff1
           adfac4=adfac*cff2
@@ -1910,12 +1486,6 @@
           ad_u(i,j,N(ng)-2,nrhs)=ad_u(i,j,N(ng)-2,nrhs)-adfac2
           ad_u(i,j,N(ng)-1,nrhs)=ad_u(i,j,N(ng)-1,nrhs)+adfac1
           ad_u(i,j,N(ng)  ,nrhs)=ad_u(i,j,N(ng)  ,nrhs)+adfac1-adfac2
-#   ifdef WEC_MELLOR
-          ad_u_stokes(i,j,N(ng)-2)=ad_u_stokes(i,j,N(ng)-2)-adfac2
-          ad_u_stokes(i,j,N(ng)-1)=ad_u_stokes(i,j,N(ng)-1)+adfac1
-          ad_u_stokes(i,j,N(ng)  )=ad_u_stokes(i,j,N(ng)  )+adfac1-     &
-     &                                                      adfac2
-#   endif
           ad_FC(i,N(ng)-1)=0.0_r8
 !^        tl_FC(i,N)=0.0_r8
 !^
@@ -1924,32 +1494,16 @@
         DO k=2,N(ng)-2
           DO i=IstrU,Iend
 !^          tl_FC(i,k)=(cff1*(tl_u(i,j,k  ,nrhs)+                       &
-#   ifdef WEC_MELLOR
-!^   &                        tl_u_stokes(i,j,k  )+                     &
-!^   &                        tl_u_stokes(i,j,k+1)+                     &
-#   endif
 !^   &                        tl_u(i,j,k+1,nrhs))-                      &
 !^   &                  cff2*(tl_u(i,j,k-1,nrhs)+                       &
-#   ifdef WEC_MELLOR
-!^   &                        tl_u_stokes(i,j,k-1)+                     &
-!^   &                        tl_u_stokes(i,j,k+2)+                     &
-#   endif
 !^   &                        tl_u(i,j,k+2,nrhs)))*                     &
 !^   &                 (cff1*(W(i  ,j,k)+                               &
 !^   &                        W(i-1,j,k))-                              &
 !^   &                  cff2*(W(i+1,j,k)+                               &
 !^   &                        W(i-2,j,k)))+                             &
 !^   &                 (cff1*(u(i,j,k  ,nrhs)+                          &
-#   ifdef WEC_MELLOR
-!^   &                        u_stokes(i,j,k  )+                        &
-!^   &                        u_stokes(i,j,k+1)+                        &
-#   endif
 !^   &                        u(i,j,k+1,nrhs))-                         &
 !^   &                  cff2*(u(i,j,k-1,nrhs)+                          &
-#   ifdef WEC_MELLOR
-!^   &                        u_stokes(i,j,k-1)+                        &
-!^   &                        u_stokes(i,j,k+2)+                        &
-#   endif
 !^   &                        u(i,j,k+2,nrhs)))*                        &
 !^   &                 (cff1*(tl_W(i  ,j,k)+                            &
 !^   &                        tl_W(i-1,j,k))-                           &
@@ -1963,16 +1517,8 @@
             adfac1=adfac*cff1
             adfac2=adfac*cff2
             adfac=(cff1*(u(i,j,k  ,nrhs)+                               &
-#   ifdef WEC_MELLOR
-     &                   u_stokes(i,j,k  )+                             &
-     &                   u_stokes(i,j,k+1)+                             &
-#   endif
      &                   u(i,j,k+1,nrhs))-                              &
      &             cff2*(u(i,j,k-1,nrhs)+                               &
-#   ifdef WEC_MELLOR
-     &                   u_stokes(i,j,k-1)+                             &
-     &                   u_stokes(i,j,k+2)+                             &
-#   endif
      &                   u(i,j,k+2,nrhs)))*ad_FC(i,k)
             adfac3=adfac*cff1
             adfac4=adfac*cff2
@@ -1984,12 +1530,6 @@
             ad_u(i,j,k  ,nrhs)=ad_u(i,j,k  ,nrhs)+adfac1
             ad_u(i,j,k+1,nrhs)=ad_u(i,j,k+1,nrhs)+adfac1
             ad_u(i,j,k+2,nrhs)=ad_u(i,j,k+2,nrhs)-adfac2
-#   ifdef WEC_MELLOR
-            ad_u_stokes(i,j,k-1)=ad_u_stokes(i,j,k-1)-adfac2
-            ad_u_stokes(i,j,k  )=ad_u_stokes(i,j,k  )+adfac1
-            ad_u_stokes(i,j,k+1)=ad_u_stokes(i,j,k+1)+adfac1
-            ad_u_stokes(i,j,k+2)=ad_u_stokes(i,j,k+2)-adfac2
-#   endif
             ad_FC(i,k)=0.0_r8
           END DO
         END DO
@@ -1999,32 +1539,29 @@
 
       K_LOOP : DO k=1,N(ng)
 
-# ifdef WEC_MELLOR
+# ifdef WEC_NOT_YET
 !
 !-----------------------------------------------------------------------
-!  Add in adjoint radiation stress terms.
+!  Add in radiation stress or Vortex Force terms.
+!  Convert stresses to m4/s2.
 !-----------------------------------------------------------------------
 !
         DO j=JstrV,Jend
           DO i=Istr,Iend
 !^          tl_rv(i,j,k,nrhs)=tl_rv(i,j,k,nrhs)-                        &
-!^   &                        tl_rvstr3d(i,j,k)*om_v(i,j)*on_v(i,j)-    &
-!^   &                        tl_rvlag3d(i,j,k)
+!^   &                        tl_rvstr3d(i,j,k)*om_v(i,j)*on_v(i,j)
 !^
             ad_rvstr3d(i,j,k)=ad_rvstr3d(i,j,k)-                        &
      &                        om_v(i,j)*on_v(i,j)*ad_rv(i,j,k,nrhs)
-            ad_rvlag3d(i,j,k)=ad_rvlag3d(i,j,k)-ad_rv(i,j,k,nrhs)
           END DO
         END DO
         DO j=Jstr,Jend
           DO i=IstrU,Iend
 !^          tl_ru(i,j,k,nrhs)=tl_ru(i,j,k,nrhs)-                        &
-!^   &                        tl_rustr3d(i,j,k)*om_u(i,j)*on_u(i,j)-    &
-!^   &                        tl_rulag3d(i,j,k)
+!^   &                        tl_rustr3d(i,j,k)*om_u(i,j)*on_u(i,j)
 !^
             ad_rustr3d(i,j,k)=ad_rustr3d(i,j,k)-                        &
      &                        om_u(i,j)*on_u(i,j)*ad_ru(i,j,k,nrhs)
-            ad_rulag3d(i,j,k)=ad_rulag3d(i,j,k)-ad_ru(i,j,k,nrhs)
           END DO
         END DO
 # endif
@@ -2105,34 +1642,22 @@
         END DO
 #  ifdef UV_C2ADVECTION
 !
-!  Second-order, centered differences advection.
+!  Second-order, centered differences advection fluxes.
 !
         DO j=JstrV-1,Jend
           DO i=Istr,Iend
 !^          tl_VFe(i,j)=0.25_r8*                                        &
 !^   &                  ((tl_v(i,j  ,k,nrhs)+                           &
-#   ifdef WEC_MELLOR
-!^   &                    tl_v_stokes(i,j  ,k)+                         &
-!^   &                    tl_v_stokes(i,j+1,k)+                         &
-#   endif
 !^   &                    tl_v(i,j+1,k,nrhs))*                          &
 !^   &                   (Hvom(i,j  ,k)+                                &
 !^   &                    Hvom(i,j+1,k))+                               &
 !^   &                   (v(i,j  ,k,nrhs)+                              &
-#   ifdef WEC_MELLOR
-!^   &                    v_stokes(i,j  ,k)+                            &
-!^   &                    v_stokes(i,j+1,k)+                            &
-#   endif
 !^   &                    v(i,j+1,k,nrhs))*                             &
 !^   &                   (tl_Hvom(i,j  ,k)+                             &
 !^   &                    tl_Hvom(i,j+1,k)))
 !^
             adfac=0.25_r8*ad_VFe(i,j)
             adfac1=adfac*(v(i,j  ,k,nrhs)+                              &
-#   ifdef WEC_MELLOR
-     &                    v_stokes(i,j  ,k)+                            &
-     &                    v_stokes(i,j+1,k)+                            &
-#   endif
      &                    v(i,j+1,k,nrhs))
             adfac2=adfac*(Hvom(i,j  ,k)+                                &
      &                    Hvom(i,j+1,k))
@@ -2140,10 +1665,6 @@
             ad_Hvom(i,j+1,k)=ad_Hvom(i,j+1,k)+adfac1
             ad_v(i,j  ,k,nrhs)=ad_v(i,j  ,k,nrhs)+adfac2
             ad_v(i,j+1,k,nrhs)=ad_v(i,j+1,k,nrhs)+adfac2
-#   ifdef WEC_MELLOR
-            ad_v_stokes(i,j  ,k)=ad_v_stokes(i,j  ,k)+adfac2
-            ad_v_stokes(i,j+1,k)=ad_v_stokes(i,j+1,k)+adfac2
-#   endif
             ad_VFe(i,j)=0.0_r8
           END DO
         END DO
@@ -2151,28 +1672,16 @@
           DO i=Istr,Iend+1
 !^          tl_VFx(i,j)=0.25_r8*                                        &
 !^   &                  ((tl_v(i-1,j,k,nrhs)+                           &
-#   ifdef WEC_MELLOR
-!^   &                    tl_v_stokes(i-1,j,k)+                         &
-!^   &                    tl_v_stokes(i  ,j,k)+                         &
-#   endif
 !^   &                    tl_v(i  ,j,k,nrhs))*                          &
 !^   &                   (Huon(i,j-1,k)+                                &
 !^   &                    Huon(i,j  ,k))+                               &
 !^   &                   (v(i-1,j,k,nrhs)+                              &
-#   ifdef WEC_MELLOR
-!^   &                    v_stokes(i-1,j,k)+                            &
-!^   &                    v_stokes(i  ,j,k)+                            &
-#   endif
 !^   &                    v(i  ,j,k,nrhs))*                             &
 !^   &                   (tl_Huon(i,j-1,k)+                             &
 !^   &                    tl_Huon(i,j  ,k)))
 !^
             adfac=0.25_r8*ad_VFx(i,j)
             adfac1=adfac*(v(i-1,j,k,nrhs)+                              &
-#   ifdef WEC_MELLOR
-     &                    v_stokes(i-1,j,k)+                            &
-     &                    v_stokes(i  ,j,k)+                            &
-#   endif
      &                    v(i  ,j,k,nrhs))
             adfac2=adfac*(Huon(i,j-1,k)+                                &
      &                    Huon(i,j  ,k))
@@ -2180,10 +1689,6 @@
             ad_Huon(i,j  ,k)=ad_Huon(i,j  ,k)+adfac1
             ad_v(i-1,j,k,nrhs)=ad_v(i-1,j,k,nrhs)+adfac2
             ad_v(i  ,j,k,nrhs)=ad_v(i  ,j,k,nrhs)+adfac2
-#   ifdef WEC_MELLOR
-            ad_v_stokes(i-1,j,k)=ad_v_stokes(i-1,j,k)+adfac2
-            ad_v_stokes(i  ,j,k)=ad_v_stokes(i  ,j,k)+adfac2
-#   endif
             ad_VFx(i,j)=0.0_r8
           END DO
         END DO
@@ -2191,28 +1696,16 @@
           DO i=IstrU,Iend
 !^          tl_UFe(i,j)=0.25_r8*                                        &
 !^   &                  ((tl_u(i,j-1,k,nrhs)+                           &
-#   ifdef WEC_MELLOR
-!^   &                    tl_u_stokes(i,j-1,k)+                         &
-!^   &                    tl_u_stokes(i,j  ,k)+                         &
-#   endif
 !^   &                    tl_u(i,j  ,k,nrhs))*                          &
 !^   &                   (Hvom(i-1,j,k)+                                &
 !^   &                    Hvom(i  ,j,k))+                               &
 !^   &                   (u(i,j-1,k,nrhs)+                              &
-#   ifdef WEC_MELLOR
-!^   &                    u_stokes(i,j-1,k)+                            &
-!^   &                    u_stokes(i,j  ,k)+                            &
-#   endif
 !^   &                    u(i,j  ,k,nrhs))*                             &
 !^   &                   (tl_Hvom(i-1,j,k)+                             &
 !^   &                    tl_Hvom(i  ,j,k)))
 !^
             adfac=0.25_r8*ad_UFe(i,j)
             adfac1=adfac*(u(i,j-1,k,nrhs)+                              &
-#   ifdef WEC_MELLOR
-     &                    u_stokes(i,j-1,k)+                            &
-     &                    u_stokes(i,j  ,k)+                            &
-#   endif
      &                    u(i,j  ,k,nrhs))
             adfac2=adfac*(Hvom(i-1,j,k)+                                &
      &                    Hvom(i  ,j,k))
@@ -2220,10 +1713,6 @@
             ad_Hvom(i  ,j,k)=ad_Hvom(i  ,j,k)+adfac1
             ad_u(i,j-1,k,nrhs)=ad_u(i,j-1,k,nrhs)+adfac2
             ad_u(i,j  ,k,nrhs)=ad_u(i,j  ,k,nrhs)+adfac2
-#   ifdef WEC_MELLOR
-            ad_u_stokes(i,j-1,k)=ad_u_stokes(i,j-1,k)+adfac2
-            ad_u_stokes(i,j  ,k)=ad_u_stokes(i,j  ,k)+adfac2
-#   endif
             ad_UFe(i,j)=0.0_r8
           END DO
         END DO
@@ -2231,28 +1720,16 @@
           DO i=IstrU-1,Iend
 !^          tl_UFx(i,j)=0.25_r8*                                        &
 !^   &                  ((tl_u(i  ,j,k,nrhs)+                           &
-#   ifdef WEC_MELLOR
-!^   &                    tl_u_stokes(i  ,j,k)+                         &
-!^   &                    tl_u_stokes(i+1,j,k)+                         &
-#   endif
 !^   &                    tl_u(i+1,j,k,nrhs))*                          &
 !^   &                   (Huon(i  ,j,k)+                                &
 !^   &                    Huon(i+1,j,k))+                               &
 !^   &                   (u(i  ,j,k,nrhs)+                              &
-#   ifdef WEC_MELLOR
-!^   &                    u_stokes(i  ,j,k)+                            &
-!^   &                    u_stokes(i+1,j,k)+                            &
-#   endif
 !^   &                    u(i+1,j,k,nrhs))*                             &
 !^   &                   (tl_Huon(i  ,j,k)+                             &
 !^   &                    tl_Huon(i+1,j,k)))
 !^
             adfac=0.25_r8*ad_UFx(i,j)
             adfac1=adfac*(u(i  ,j,k,nrhs)+                              &
-#   ifdef WEC_MELLOR
-     &                    u_stokes(i  ,j,k)+                            &
-     &                    u_stokes(i+1,j,k)+                            &
-#   endif
      &                    u(i+1,j,k,nrhs))
             adfac2=adfac*(Huon(i  ,j,k)+                                &
      &                    Huon(i+1,j,k))
@@ -2260,10 +1737,6 @@
             ad_Huon(i+1,j,k)=ad_Huon(i+1,j,k)+adfac1
             ad_u(i  ,j,k,nrhs)=ad_u(i  ,j,k,nrhs)+adfac2
             ad_u(i+1,j,k,nrhs)=ad_u(i+1,j,k,nrhs)+adfac2
-#   ifdef WEC_MELLOR
-            ad_u_stokes(i  ,j,k)=ad_u_stokes(i  ,j,k)+adfac2
-            ad_u_stokes(i+1,j,k)=ad_u_stokes(i+1,j,k)+adfac2
-#   endif
             ad_UFx(i,j)=0.0_r8
           END DO
         END DO
@@ -2279,10 +1752,6 @@
         DO j=JstrVm1,Jendp1
           DO i=Istr,Iend
             vee(i,j)=v(i,j-1,k,nrhs)-2.0_r8*v(i,j,k,nrhs)+              &
-#   ifdef WEC_MELLOR
-     &               v_stokes(i,j-1,k)-2.0_r8*v_stokes(i,j,k)+          &
-     &               v_stokes(i,j+1,k)+                                 &
-#   endif
      &               v(i,j+1,k,nrhs)
             Hvee(i,j)=Hvom(i,j-1,k)-2.0_r8*Hvom(i,j,k)+Hvom(i,j+1,k)
           END DO
@@ -2308,10 +1777,6 @@
         DO j=JstrV-1,Jend
           DO i=Istr,Iend
 !^          tl_VFe(i,j)=0.25_r8*((tl_v(i,j  ,k,nrhs)+                   &
-#    ifdef WEC_MELLOR
-!^   &                            tl_v_stokes(i,j  ,k)+                 &
-!^   &                            tl_v_stokes(i,j+1,k)+                 &
-#    endif
 !^   &                            tl_v(i,j+1,k,nrhs)-                   &
 !^   &                            cff*(tl_vee (i,j  )+                  &
 !^   &                                 tl_vee (i,j+1)))*                &
@@ -2320,10 +1785,6 @@
 !^   &                            cff*(Hvee(i,j  )+                     &
 !^   &                                 Hvee(i,j+1)))+                   &
 !^   &                           (v(i,j  ,k,nrhs)+                      &
-#    ifdef WEC_MELLOR
-!^   &                            v_stokes(i,j  ,k)+                    &
-!^   &                            v_stokes(i,j+1,k)+                    &
-#    endif
 !^   &                            v(i,j+1,k,nrhs)-                      &
 !^   &                            cff*(vee (i,j  )+                     &
 !^   &                                 vee (i,j+1)))*                   &
@@ -2334,10 +1795,6 @@
 !^
             adfac=0.25_r8*ad_VFe(i,j)
             adfac1=adfac*(v(i,j  ,k,nrhs)+                              &
-#    ifdef WEC_MELLOR
-     &                    v_stokes(i,j  ,k)+                            &
-     &                    v_stokes(i,j+1,k)+                            &
-#    endif
      &                    v(i,j+1,k,nrhs)-                              &
      &                    cff*(vee (i,j  )+                             &
      &                         vee (i,j+1)))
@@ -2353,10 +1810,6 @@
             ad_Hvee(i,j+1)=ad_Hvee(i,j+1)-adfac2
             ad_v(i,j  ,k,nrhs)=ad_v(i,j  ,k,nrhs)+adfac3
             ad_v(i,j+1,k,nrhs)=ad_v(i,j+1,k,nrhs)+adfac3
-#    ifdef WEC_MELLOR
-            ad_v_stokes(i,j  ,k)=ad_v_stokes(i,j  ,k)+adfac3
-            ad_v_stokes(i,j+1,k)=ad_v_stokes(i,j+1,k)+adfac3
-#    endif
             ad_vee (i,j  )=ad_vee (i,j  )-adfac4
             ad_vee (i,j+1)=ad_vee (i,j+1)-adfac4
             ad_VFe(i,j)=0.0_r8
@@ -2366,10 +1819,6 @@
         DO j=JstrV-1,Jend
           DO i=Istr,Iend
             cff1=v(i,j  ,k,nrhs)+                                       &
-#    ifdef WEC_MELLOR
-     &           v_stokes(i,j  ,k)+                                     &
-     &           v_stokes(i,j+1,k)+                                     &
-#    endif
      &           v(i,j+1,k,nrhs)
             IF (cff1.gt.0.0_r8) THEN
               cff=vee(i,j)
@@ -2414,18 +1863,10 @@
               ad_cff=0.0_r8
             END IF
 !^          tl_cff1=tl_v(i,j  ,k,nrhs)+                                 &
-#    ifdef WEC_MELLOR
-!^   &              tl_v_stokes(i,j  ,k)+                               &
-!^   &              tl_v_stokes(i,j+1,k)+                               &
-#    endif
 !^   &              tl_v(i,j+1,k,nrhs)
 !^
             ad_v(i,j  ,k,nrhs)=ad_v(i,j  ,k,nrhs)+ad_cff1
             ad_v(i,j+1,k,nrhs)=ad_v(i,j+1,k,nrhs)+ad_cff1
-#    ifdef WEC_MELLOR
-            ad_v_stokes(i,j  ,k)=ad_v_stokes(i,j  ,k)+ad_cff1
-            ad_v_stokes(i,j+1,k)=ad_v_stokes(i,j+1,k)+ad_cff1
-#    endif
             ad_cff1=0.0_r8
           END DO
         END DO
@@ -2468,30 +1909,17 @@
             ad_Hvom(i,j+1,k)=ad_Hvom(i,j+1,k)+ad_Hvee(i,j)
             ad_Hvee(i,j)=0.0_r8
 !^          tl_vee(i,j)=tl_v(i,j-1,k,nrhs)-2.0_r8*tl_v(i,j,k,nrhs)+     &
-#   ifdef WEC_MELLOR
-!^                      tl_v_stokes(i,j-1,k)-2.0_r8*tl_v_stokes(i,j,k)+ &
-!^   &                  tl_v_stokes(i,j+1,k)
-#   endif
 !^   &                  tl_v(i,j+1,k,nrhs)
 !^
             ad_v(i,j-1,k,nrhs)=ad_v(i,j-1,k,nrhs)+ad_vee(i,j)
             ad_v(i,j  ,k,nrhs)=ad_v(i,j  ,k,nrhs)-2.0_r8*ad_vee(i,j)
             ad_v(i,j+1,k,nrhs)=ad_v(i,j+1,k,nrhs)+ad_vee(i,j)
-#   ifdef WEC_MELLOR
-            ad_v_stokes(i,j-1,k)=ad_v_stokes(i,j-1,k)+ad_vee(i,j)
-            ad_v_stokes(i,j  ,k)=ad_v_stokes(i,j  ,k)-2.0_r8*ad_vee(i,j)
-            ad_v_stokes(i,j+1,k)=ad_v_stokes(i,j+1,k)+ad_vee(i,j)
-#   endif
             ad_vee(i,j)=0.0_r8
           END DO
         END DO
         DO j=JstrV,Jend
           DO i=Istrm1,Iendp1
             vxx(i,j)=v(i-1,j,k,nrhs)-2.0_r8*v(i,j,k,nrhs)+              &
-#   ifdef WEC_MELLOR
-     &               v_stokes(i-1,j,k)-2.0_r8*v_stokes(i,j,k)+          &
-     &               v_stokes(i+1,j,k)+                                 &
-#   endif
      &               v(i+1,j,k,nrhs)
           END DO
         END DO
@@ -2519,10 +1947,6 @@
         DO j=JstrV,Jend
           DO i=Istr,Iend+1
 !^          tl_VFx(i,j)=0.25_r8*((tl_v(i  ,j,k,nrhs)+                   &
-#    ifdef WEC_MELLOR
-!^   &                            tl_v_stokes(i  ,j,k)+                 &
-!^   &                            tl_v_stokes(i-1,j,k)+                 &
-#    endif
 !^   &                            tl_v(i-1,j,k,nrhs)-                   &
 !^   &                            cff*(tl_vxx (i  ,j)+                  &
 !^   &                                 tl_vxx (i-1,j)))*                &
@@ -2531,10 +1955,6 @@
 !^   &                            cff*(Huee(i,j  )+                     &
 !^   &                                 Huee(i,j-1)))+                   &
 !^   &                           (v(i  ,j,k,nrhs)+                      &
-#    ifdef WEC_MELLOR
-!^   &                            v_stokes(i  ,j,k)+                    &
-!^   &                            v_stokes(i-1,j,k)+                    &
-#    endif
 !^   &                            v(i-1,j,k,nrhs)-                      &
 !^   &                            cff*(vxx (i  ,j)+                     &
 !^   &                                 vxx (i-1,j)))*                   &
@@ -2545,10 +1965,6 @@
 !^
             adfac=0.25_r8*ad_VFx(i,j)
             adfac1=adfac*(v(i  ,j,k,nrhs)+                              &
-#    ifdef WEC_MELLOR
-     &                    v_stokes(i  ,j,k)+                            &
-     &                    v_stokes(i-1,j,k)+                            &
-#    endif
      &                    v(i-1,j,k,nrhs)-                              &
      &                    cff*(vxx (i  ,j)+                             &
      &                         vxx (i-1,j)))
@@ -2564,10 +1980,6 @@
             ad_Huee(i,j-1)=ad_Huee(i,j-1)-adfac2
             ad_v(i-1,j,k,nrhs)=ad_v(i-1,j,k,nrhs)+adfac3
             ad_v(i  ,j,k,nrhs)=ad_v(i  ,j,k,nrhs)+adfac3
-#    ifdef WEC_MELLOR
-            ad_v_stokes(i-1,j,k)=ad_v_stokes(i-1,j,k)+adfac3
-            ad_v_stokes(i  ,j,k)=ad_v_stokes(i  ,j,k)+adfac3
-#    endif
             ad_vxx (i-1,j)=ad_vxx (i-1,j)-adfac4
             ad_vxx (i  ,j)=ad_vxx (i  ,j)-adfac4
             ad_VFx(i,j)=0.0_r8
@@ -2577,10 +1989,6 @@
         DO j=JstrV,Jend
           DO i=Istr,Iend+1
             cff1=v(i  ,j,k,nrhs)+                                       &
-#    ifdef WEC_MELLOR
-     &           v_stokes(i  ,j,k)+                                     &
-     &           v_stokes(i-1,j,k)+                                     &
-#    endif
      &           v(i-1,j,k,nrhs)
             cff2=Huon(i,j,k)+Huon(i,j-1,k)
             IF (cff2.gt.0.0_r8) THEN
@@ -2624,18 +2032,10 @@
             ad_Huon(i,j  ,k)=ad_Huon(i,j  ,k)+ad_cff2
             ad_cff2=0.0_r8
 !^          tl_cff1=tl_v(i  ,j,k,nrhs)+                                 &
-#    ifdef WEC_MELLOR
-!^   &              tl_v_stokes(i  ,j,k)+                               &
-!^   &              tl_v_stokes(i-1,j,k)+                               &
-#    endif
 !^   &              tl_v(i-1,j,k,nrhs)
 !^
             ad_v(i-1,j,k,nrhs)=ad_v(i-1,j,k,nrhs)+ad_cff1
             ad_v(i  ,j,k,nrhs)=ad_v(i  ,j,k,nrhs)+ad_cff1
-#    ifdef WEC_MELLOR
-            ad_v_stokes(i-1,j,k)=ad_v_stokes(i-1,j,k)+ad_cff1
-            ad_v_stokes(i  ,j,k)=ad_v_stokes(i  ,j,k)+ad_cff1
-#    endif
             ad_cff1=0.0_r8
           END DO
         END DO
@@ -2674,30 +2074,17 @@
         DO j=JstrV,Jend
           DO i=Istrm1,Iendp1
 !^          tl_vxx(i,j)=tl_v(i-1,j,k,nrhs)-2.0_r8*tl_v(i,j,k,nrhs)+     &
-#   ifdef WEC_MELLOR
-!^   &                  tl_v_stokes(i-1,j,k)-2.0_r8*tl_v_stokes(i,j,k)+ &
-!^   &                  tl_v_stokes(i+1,j,k)+                           &
-#   endif
 !^   &                  tl_v(i+1,j,k,nrhs)
 !^
             ad_v(i-1,j,k,nrhs)=ad_v(i-1,j,k,nrhs)+ad_vxx(i,j)
             ad_v(i  ,j,k,nrhs)=ad_v(i  ,j,k,nrhs)-2.0_r8*ad_vxx(i,j)
             ad_v(i+1,j,k,nrhs)=ad_v(i+1,j,k,nrhs)+ad_vxx(i,j)
-#   ifdef WEC_MELLOR
-            ad_v_stokes(i-1,j,k)=ad_v_stokes(i-1,j,k)+ad_vxx(i,j)
-            ad_v_stokes(i  ,j,k)=ad_v_stokes(i  ,j,k)-2.0_r8*ad_vxx(i,j)
-            ad_v_stokes(i+1,j,k)=ad_v_stokes(i+1,j,k)+ad_vxx(i,j)
-#   endif
             ad_vxx(i,j)=0.0_r8
           END DO
         END DO
         DO j=Jstrm1,Jendp1
           DO i=IstrU,Iend
             uee(i,j)=u(i,j-1,k,nrhs)-2.0_r8*u(i,j,k,nrhs)+              &
-#   ifdef WEC_MELLOR
-     &               u_stokes(i,j-1,k)-2.0_r8*u_stokes(i,j,k)+          &
-     &               u_stokes(i,j+1,k)+                                 &
-#   endif
      &               u(i,j+1,k,nrhs)
           END DO
         END DO
@@ -2728,10 +2115,6 @@
         DO j=Jstr,Jend+1
           DO i=IstrU,Iend
 !^          tl_UFe(i,j)=0.25_r8*((tl_u(i,j  ,k,nrhs)+                   &
-#    ifdef WEC_MELLOR
-!^   &                            tl_u_stokes(i,j  ,k)+                 &
-!^   &                            tl_u_stokes(i,j-1,k)+                 &
-#    endif
 !^   &                            tl_u(i,j-1,k,nrhs)-                   &
 !^   &                            cff*(tl_uee (i,j  )+                  &
 !^   &                                 tl_uee (i,j-1)))*                &
@@ -2740,10 +2123,6 @@
 !^   &                            cff*(Hvxx(i  ,j)+                     &
 !^   &                                 Hvxx(i-1,j)))+                   &
 !^   &                           (u(i,j  ,k,nrhs)+                      &
-#    ifdef WEC_MELLOR
-!^   &                            u_stokes(i,j  ,k)+                    &
-!^   &                            u_stokes(i,j-1,k)+                    &
-#    endif
 !^   &                            u(i,j-1,k,nrhs)-                      &
 !^   &                            cff*(uee (i,j  )+                     &
 !^   &                                 uee (i,j-1)))*                   &
@@ -2754,10 +2133,6 @@
 !^
             adfac=0.25_r8*ad_UFe(i,j)
             adfac1=adfac*(u(i,j  ,k,nrhs)+                              &
-#    ifdef WEC_MELLOR
-     &                    u_stokes(i,j  ,k)+                            &
-     &                    u_stokes(i,j-1,k)+                            &
-#    endif
      &                    u(i,j-1,k,nrhs)-                              &
      &                    cff*(uee (i,j  )+                             &
      &                         uee (i,j-1)))
@@ -2773,10 +2148,6 @@
             ad_Hvxx(i  ,j)=ad_Hvxx(i  ,j)-adfac2
             ad_u(i,j-1,k,nrhs)=ad_u(i,j-1,k,nrhs)+adfac3
             ad_u(i,j  ,k,nrhs)=ad_u(i,j  ,k,nrhs)+adfac3
-#    ifdef WEC_MELLOR
-            ad_u_stokes(i,j-1,k)=ad_u_stokes(i,j-1,k)+adfac3
-            ad_u_stokes(i,j  ,k)=ad_u_stokes(i,j  ,k)+adfac3
-#    endif
             ad_uee (i,j-1)=ad_uee (i,j-1)-adfac4
             ad_uee (i,j  )=ad_uee (i,j  )-adfac4
             ad_UFe(i,j)=0.0_r8
@@ -2790,10 +2161,6 @@
         DO j=Jstr,Jend+1
           DO i=IstrU,Iend
             cff1=u(i,j  ,k,nrhs)+                                       &
-#    ifdef WEC_MELLOR
-     &           u_stokes(i,j  ,k)+                                     &
-     &           u_stokes(i,j-1,k)+                                     &
-#    endif
      &           u(i,j-1,k,nrhs)
             cff2=Hvom(i,j,k)+Hvom(i-1,j,k)
             IF (cff2.gt.0.0_r8) THEN
@@ -2837,18 +2204,10 @@
             ad_Hvom(i  ,j,k)=ad_Hvom(i  ,j,k)+ad_cff2
             ad_cff2=0.0_r8
 !^          tl_cff1=tl_u(i,j,k,nrhs)+                                   &
-#    ifdef WEC_MELLOR
-!^   &              tl_u_stokes(i,j  ,k)+                               &
-!^   &              tl_u_stokes(i,j-1,k)+                               &
-#    endif
 !^   &              tl_u(i,j-1,k,nrhs)
 !^
             ad_u(i,j-1,k,nrhs)=ad_u(i,j-1,k,nrhs)+ad_cff1
             ad_u(i,j  ,k,nrhs)=ad_u(i,j  ,k,nrhs)+ad_cff1
-#    ifdef WEC_MELLOR
-            ad_u_stokes(i,j-1,k)=ad_u_stokes(i,j-1,k)+ad_cff1
-            ad_u_stokes(i,j  ,k)=ad_u_stokes(i,j  ,k)+ad_cff1
-#    endif
             ad_cff1=0.0_r8
           END DO
         END DO
@@ -2887,30 +2246,17 @@
         DO j=Jstrm1,Jendp1
           DO i=IstrU,Iend
 !^          tl_uee(i,j)=tl_u(i,j-1,k,nrhs)-2.0_r8*tl_u(i,j,k,nrhs)+     &
-#   ifdef WEC_MELLOR
-!^   &                  tl_u_stokes(i,j-1,k)-2.0_r8*tl_u_stokes(i,j,k)+ &
-!^   &                  tl_u_stokes(i,j+1,k)+                           &
-#   endif
 !^   &                  tl_u(i,j+1,k,nrhs)
 !^
             ad_u(i,j-1,k,nrhs)=ad_u(i,j-1,k,nrhs)+ad_uee(i,j)
             ad_u(i,j  ,k,nrhs)=ad_u(i,j  ,k,nrhs)-2.0_r8*ad_uee(i,j)
             ad_u(i,j+1,k,nrhs)=ad_u(i,j+1,k,nrhs)+ad_uee(i,j)
-#   ifdef WEC_MELLOR
-            ad_u_stokes(i,j-1,k)=ad_u_stokes(i,j-1,k)+ad_uee(i,j)
-            ad_u_stokes(i,j  ,k)=ad_u_stokes(i,j  ,k)-2.0_r8*ad_uee(i,j)
-            ad_u_stokes(i,j+1,k)=ad_u_stokes(i,j+1,k)+ad_uee(i,j)
-#   endif
             ad_uee(i,j)=0.0_r8
           END DO
         END DO
         DO j=Jstr,Jend
           DO i=IstrUm1,Iendp1
             uxx (i,j)=u(i-1,j,k,nrhs)-2.0_r8*u(i,j,k,nrhs)+             &
-#   ifdef WEC_MELLOR
-     &                u_stokes(i-1,j,k)-2.0_r8*u_stokes(i,j,k)+         &
-     &                u_stokes(i+1,j,k)+                                &
-#   endif
      &                u(i+1,j,k,nrhs)
             Huxx(i,j)=Huon(i-1,j,k)-2.0_r8*Huon(i,j,k)+Huon(i+1,j,k)
           END DO
@@ -2936,10 +2282,6 @@
         DO j=Jstr,Jend
           DO i=IstrU-1,Iend
 !^          tl_UFx(i,j)=0.25_r8*((tl_u(i  ,j,k,nrhs)+                   &
-#    ifdef WEC_MELLOR
-!^   &                            tl_u_stokes(i  ,j,k)+                 &
-!^   &                            tl_u_stokes(i+1,j,k)+                 &
-#    endif
 !^   &                            tl_u(i+1,j,k,nrhs)-                   &
 !^   &                            cff*(tl_uxx (i  ,j)+                  &
 !^   &                                 tl_uxx (i+1,j)))*                &
@@ -2948,10 +2290,6 @@
 !^   &                            cff*(Huxx(i  ,j)+                     &
 !^   &                                 Huxx(i+1,j)))+                   &
 !^   &                           (u(i  ,j,k,nrhs)+                      &
-#    ifdef WEC_MELLOR
-!^   &                            u_stokes(i  ,j,k)+                    &
-!^   &                            u_stokes(i+1,j,k)+                    &
-#    endif
 !^   &                            u(i+1,j,k,nrhs)-                      &
 !^   &                            cff*(uxx (i  ,j)+                     &
 !^   &                                 uxx (i+1,j)))*                   &
@@ -2962,10 +2300,6 @@
 !^
             adfac=0.25_r8*ad_UFx(i,j)
             adfac1=adfac*(u(i  ,j,k,nrhs)+                              &
-#    ifdef WEC_MELLOR
-     &                    u_stokes(i  ,j,k)+                            &
-     &                    u_stokes(i+1,j,k)+                            &
-#    endif
      &                    u(i+1,j,k,nrhs)-                              &
      &                    cff*(uxx (i  ,j)+                             &
      &                         uxx (i+1,j)))
@@ -2981,10 +2315,6 @@
             ad_Huxx(i+1,j)=ad_Huxx(i+1,j)-adfac2
             ad_u(i  ,j,k,nrhs)=ad_u(i  ,j,k,nrhs)+adfac3
             ad_u(i+1,j,k,nrhs)=ad_u(i+1,j,k,nrhs)+adfac3
-#    ifdef WEC_MELLOR
-            ad_u_stokes(i  ,j,k)=ad_u_stokes(i  ,j,k)+adfac3
-            ad_u_stokes(i+1,j,k)=ad_u_stokes(i+1,j,k)+adfac3
-#    endif
             ad_uxx (i  ,j)=ad_uxx (i  ,j)-adfac4
             ad_uxx (i+1,j)=ad_uxx (i+1,j)-adfac4
             ad_UFx(i,j)=0.0_r8
@@ -2994,10 +2324,6 @@
         DO j=Jstr,Jend
           DO i=IstrU-1,Iend
             cff1=u(i  ,j,k,nrhs)+                                       &
-#    ifdef WEC_MELLOR
-     &           u_stokes(i  ,j,k)+                                     &
-     &           u_stokes(i+1,j,k)+                                     &
-#    endif
      &           u(i+1,j,k,nrhs)
             IF (cff1.gt.0.0_r8) THEN
               cff=uxx(i,j)
@@ -3042,18 +2368,10 @@
               ad_cff=0.0_r8
             END IF
 !^          tl_cff1=tl_u(i  ,j,k,nrhs)+                                 &
-#    ifdef WEC_MELLOR
-!^   &              tl_u_stokes(i  ,j,k)+                               &
-!^   &              tl_u_stokes(i+1,j,k)+                               &
-#    endif
 !^   &              tl_u(i+1,j,k,nrhs)
 !^
             ad_u(i  ,j,k,nrhs)=ad_u(i  ,j,k,nrhs)+ad_cff1
             ad_u(i+1,j,k,nrhs)=ad_u(i+1,j,k,nrhs)+ad_cff1
-#    ifdef WEC_MELLOR
-            ad_u_stokes(i  ,j,k)=ad_u_stokes(i  ,j,k)+ad_cff1
-            ad_u_stokes(i+1,j,k)=ad_u_stokes(i+1,j,k)+ad_cff1
-#    endif
             ad_cff1=0.0_r8
           END DO
         END DO
@@ -3096,20 +2414,11 @@
             ad_Huon(i+1,j,k)=ad_Huon(i+1,j,k)+ad_Huxx(i,j)
             ad_Huxx(i,j)=0.0_r8
 !^          tl_uxx(i,j)=tl_u(i-1,j,k,nrhs)-2.0_r8*tl_u(i,j,k,nrhs)+     &
-#   ifdef WEC_MELLOR
-!^   &                  tl_u_stokes(i-1,j,k)-2.0_r8*tl_u_stokes(i,j,k)+ &
-!^   &                  tl_u_stokes(i+1,j,k)
-#   endif
 !^   &                  tl_u(i+1,j,k,nrhs)
 !^
             ad_u(i-1,j,k,nrhs)=ad_u(i-1,j,k,nrhs)+ad_uxx (i,j)
             ad_u(i  ,j,k,nrhs)=ad_u(i  ,j,k,nrhs)-2.0_r8*ad_uxx (i,j)
             ad_u(i+1,j,k,nrhs)=ad_u(i+1,j,k,nrhs)+ad_uxx (i,j)
-#   ifdef WEC_MELLOR
-            ad_u_stokes(i-1,j,k)=ad_u_stokes(i-1,j,k)+ad_uxx (i,j)
-            ad_u_stokes(i  ,j,k)=ad_u_stokes(i  ,j,k)-2.0_r8*ad_uxx(i,j)
-            ad_u_stokes(i+1,j,k)=ad_u_stokes(i+1,j,k)+ad_uxx (i,j)
-#   endif
             ad_uxx (i,j)=0.0_r8
           END DO
         END DO
@@ -3210,13 +2519,13 @@
         DO j=JstrV-1,Jend
           DO i=IstrU-1,Iend
             cff1=0.5_r8*(v(i,j  ,k,nrhs)+                               &
-#  ifdef WEC_MELLOR
+#  ifdef WEC_NOT_YET
      &                   v_stokes(i,j  ,k)+                             &
      &                   v_stokes(i,j+1,k)+                             &
 #  endif
      &                   v(i,j+1,k,nrhs))
             cff2=0.5_r8*(u(i  ,j,k,nrhs)+                               &
-#  ifdef WEC_MELLOR
+#  ifdef WEC_NOT_YET
      &                   u_stokes(i  ,j,k)+                             &
      &                   u_stokes(i+1,j,k)+                             &
 #  endif
@@ -3256,7 +2565,7 @@
             ad_cff1=ad_cff1+dndx(i,j)*ad_cff3
             ad_cff3=0.0_r8
 !^          tl_cff2=0.5_r8*(tl_u(i  ,j,k,nrhs)+                         &
-#  ifdef WEC_MELLOR
+#  ifdef WEC_NOT_YET
 !^   &                      tl_u_stokes(i  ,j,k)+                       &
 !^   &                      tl_u_stokes(i+1,j,k)+                       &
 #  endif
@@ -3265,13 +2574,13 @@
             adfac=0.5_r8*ad_cff2
             ad_u(i  ,j,k,nrhs)=ad_u(i  ,j,k,nrhs)+adfac
             ad_u(i+1,j,k,nrhs)=ad_u(i+1,j,k,nrhs)+adfac
-#  ifdef WEC_MELLOR
+#  ifdef WEC_NOT_YET
             ad_u_stokes(i  ,j,k)=ad_u_stokes(i  ,j,k)+adfac
             ad_u_stokes(i+1,j,k)=ad_u_stokes(i+1,j,k)+adfac
 #  endif
             ad_cff2=0.0_r8
 !^          tl_cff1=0.5_r8*(tl_v(i,j  ,k,nrhs)+                         &
-#  ifdef WEC_MELLOR
+#  ifdef WEC_NOT_YET
 !^   &                      tl_v_stokes(i,j  ,k)+                       &
 !^   &                      tl_v_stokes(i,j+1,k)+                       &
 #  endif
@@ -3280,7 +2589,7 @@
             adfac=0.5_r8*ad_cff1
             ad_v(i,j  ,k,nrhs)=ad_v(i,j  ,k,nrhs)+adfac
             ad_v(i,j+1,k,nrhs)=ad_v(i,j+1,k,nrhs)+adfac
-#  ifdef WEC_MELLOR
+#  ifdef WEC_NOT_YET
             ad_v_stokes(i,j  ,k)=ad_v_stokes(i,j  ,k)+adfac
             ad_v_stokes(i,j+1,k)=ad_v_stokes(i,j+1,k)+adfac
 #  endif
@@ -3294,6 +2603,74 @@
 !  Add in Coriolis terms.
 !-----------------------------------------------------------------------
 !
+#  ifdef WEC_NOT_YET
+        DO j=JstrV,Jend
+          DO i=Istr,Iend
+#   ifdef DIAGNOSTICS_UV
+!!          DiaRV(i,j,k,nrhs,M3fsco)=-cff1
+#   endif
+!^          tl_rv(i,j,k,nrhs)=tl_rv(i,j,k,nrhs)-tl_cff1
+!^
+            ad_cff1=ad_cff1-ad_rv(i,j,k,nrhs)
+!^          tl_cff1=0.5_r8*(tl_VFe(i,j)+tl_VFe(i,j-1))
+!^
+            adfac=0.5_r8*ad_cff1
+            ad_VFe(i,j-1)=ad_VFe(i,j-1)+adfac
+            ad_VFe(i,j  )=ad_VFe(i,j  )+adfac
+            ad_cff1=0.0_r8
+          END DO
+        END DO
+        DO j=Jstr,Jend
+          DO i=IstrU,Iend
+#   ifdef DIAGNOSTICS_UV
+!!          DiaRU(i,j,k,nrhs,M3fsco)=cff1
+#   endif
+!^          tl_ru(i,j,k,nrhs)=tl_ru(i,j,k,nrhs)+tl_cff1
+!^
+            ad_cff1=ad_cff1+ad_ru(i,j,k,nrhs)
+!^          tl_cff1=0.5_r8*(tl_UFx(i,j)+tl_UFx(i-1,j))
+!^
+            adfac=0.5_r8*ad_cff1
+            ad_UFx(i-1,j)=ad_UFx(i-1,j)+adfac
+            ad_UFx(i  ,j)=ad_UFx(i  ,j)+adfac
+            ad_cff1=0.0_r8
+          END DO
+        END DO
+        DO j=JstrV-1,Jend
+          DO i=IstrU-1,Iend
+            cff=0.5_r8*Hz(i,j,k)*fomn(i,j)
+!^          tl_VFe(i,j)=tl_cff*(u_stokes(i  ,j,k)+                      &
+!^   &                          u_stokes(i+1,j,k))+                     &
+!^   &                  cff*(tl_u_stokes(i  ,j,k)+                      &
+!^   &                       tl_u_stokes(i+1,j,k))
+!^
+            adfac=cff*ad_VFe(i,j)
+            ad_u_stokes(i  ,j,k)=ad_u_stokes(i  ,j,k)+adfac
+            ad_u_stokes(i+1,j,k)=ad_u_stokes(i+1,j,k)+adfac
+            ad_cff=ad_cff+(u_stokes(i  ,j,k)+                           &
+     &                     u_stokes(i+1,j,k))*ad_VFe(i,j)
+            ad_VFe(i,j)=0.0_r8
+!^          tl_UFx(i,j)=tl_cff*(v_stokes(i,j  ,k)+                      &
+!^   &                          v_stokes(i,j+1,k))+                     &
+!^   &                  cff*(tl_v_stokes(i,j  ,k)+                      &
+!^   &                       tl_v_stokes(i,j+1,k))
+!^
+            adfac=cff*ad_UFx(i,j)
+            ad_v_stokes(i,j  ,k)=ad_v_stokes(i,j  ,k)+adfac
+            ad_v_stokes(i,j+1,k)=ad_v_stokes(i,j+1,k)+adfac
+            ad_cff=ad_cff+(v_stokes(i,j  ,k)+                           &
+     &                     v_stokes(i,j+1,k))*ad_UFx(i,j)
+            ad_UFx(i,j)=0.0_r8
+!^          tl_cff=0.5_r8*tl_Hz(i,j,k)*fomn(i,j)
+!^
+            ad_Hz(i,j,k)=ad_Hz(i,j,k)+                                  &
+     &                   0.5_r8*fomn(i,j)*ad_cff
+            ad_cff=0.0_r8
+          END DO
+        END DO
+!
+#  endif
+
         DO j=JstrV,Jend
           DO i=Istr,Iend
 #  ifdef DIAGNOSTICS_UV
@@ -3330,57 +2707,25 @@
           DO i=IstrU-1,Iend
             cff=0.5_r8*Hz(i,j,k)*fomn(i,j)
 !^          tl_VFe(i,j)=tl_cff*(u(i  ,j,k,nrhs)+                        &
-#  ifdef WEC_MELLOR
-!^   &                          u_stokes(i  ,j,k)+                      &
-!^   &                          u_stokes(i+1,j,k)+                      &
-#  endif
 !^   &                          u(i+1,j,k,nrhs))+                       &
 !^   &                  cff*(tl_u(i  ,j,k,nrhs)+                        &
-#  ifdef WEC_MELLOR
-!^   &                       tl_u_stokes(i  ,j,k)+                      &
-!^   &                       tl_u_stokes(i+1,j,k)+                      &
-#  endif
 !^   &                       tl_u(i+1,j,k,nrhs))
 !^
             adfac=cff*ad_VFe(i,j)
             ad_u(i  ,j,k,nrhs)=ad_u(i  ,j,k,nrhs)+adfac
             ad_u(i+1,j,k,nrhs)=ad_u(i+1,j,k,nrhs)+adfac
-#  ifdef WEC_MELLOR
-            ad_u_stokes(i  ,j,k)=ad_u_stokes(i  ,j,k)+adfac
-            ad_u_stokes(i+1,j,k)=ad_u_stokes(i+1,j,k)+adfac
-#  endif
             ad_cff=ad_cff+(u(i  ,j,k,nrhs)+                             &
-#  ifdef WEC_MELLOR
-     &                     u_stokes(i  ,j,k)+                           &
-     &                     u_stokes(i+1,j,k)+                           &
-#  endif
      &                     u(i+1,j,k,nrhs))*ad_VFe(i,j)
             ad_VFe(i,j)=0.0_r8
 !^          tl_UFx(i,j)=tl_cff*(v(i,j  ,k,nrhs)+                        &
-#  ifdef WEC_MELLOR
-!^   &                          v_stokes(i,j  ,k)+                      &
-!^   &                          v_stokes(i,j+1,k)+                      &
-#  endif
 !^   &                          v(i,j+1,k,nrhs))+                       &
 !^   &                  cff*(tl_v(i,j  ,k,nrhs)+                        &
-#  ifdef WEC_MELLOR
-!^   &                       tl_v_stokes(i,j  ,k)+                      &
-!^   &                       tl_v_stokes(i,j+1,k)+                      &
-#  endif
 !^   &                       tl_v(i,j+1,k,nrhs))
 !^
             adfac=cff*ad_UFx(i,j)
             ad_v(i,j  ,k,nrhs)=ad_v(i,j  ,k,nrhs)+adfac
             ad_v(i,j+1,k,nrhs)=ad_v(i,j+1,k,nrhs)+adfac
-#  ifdef WEC_MELLOR
-            ad_v_stokes(i,j  ,k)=ad_v_stokes(i,j  ,k)+adfac
-            ad_v_stokes(i,j+1,k)=ad_v_stokes(i,j+1,k)+adfac
-#  endif
             ad_cff=ad_cff+(v(i,j  ,k,nrhs)+                             &
-#  ifdef WEC_MELLOR
-     &                     v_stokes(i,j  ,k)+                           &
-     &                     v_stokes(i,j+1,k)+                           &
-#  endif
      &                     v(i,j+1,k,nrhs))*ad_UFx(i,j)
             ad_UFx(i,j)=0.0_r8
 !^          tl_cff=0.5_r8*tl_Hz(i,j,k)*fomn(i,j)
@@ -3392,6 +2737,7 @@
         END DO
 # endif
       END DO K_LOOP
+
 # ifdef BODYFORCE
 !
 !-----------------------------------------------------------------------
