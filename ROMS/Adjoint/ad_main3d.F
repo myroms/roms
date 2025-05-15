@@ -103,9 +103,6 @@
 # ifndef FORCING_SV
       USE ad_post_initial_mod,     ONLY : ad_post_initial
 # endif
-# ifdef NEARSHORE_MELLOR_NOT_YET
-!!    USE ad_radiation_stress_mod, ONLY : ad_radiation_stress
-# endif
 # ifndef TS_FIXED
       USE ad_rho_eos_mod,          ONLY : ad_rho_eos
 # endif
@@ -901,20 +898,6 @@
 # endif
               END DO
             END DO
-
-# ifdef NEARSHORE_MELLOR_NOT_YET
-!
-!-----------------------------------------------------------------------
-!  Compute radiation stress terms.
-!-----------------------------------------------------------------------
-!
-            DO ig=1,GridsInLayer(nl)
-              ng=GridNumber(ig,nl)
-              DO tile=last_tile(ng),first_tile(ng),-1
-                CALL ad_radiation_stress (ng, tile)
-              END DO
-            END DO
-# endif
 
 # if defined WAV_COUPLING_NOT_YET && defined MCT_LIB
 !

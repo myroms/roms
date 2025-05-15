@@ -57,7 +57,7 @@
      &                           OCEAN(ng) % v,                         &
      &                           OCEAN(ng) % tl_u,                      &
      &                           OCEAN(ng) % tl_v,                      &
-# ifdef WEC_MELLOR
+# ifdef WEC_NOT_YET
      &                           OCEAN(ng) % u_stokes,                  &
      &                           OCEAN(ng) % v_stokes,                  &
      &                           OCEAN(ng) % tl_u_stokes,               &
@@ -83,7 +83,7 @@
      &                                 nrhs,                            &
      &                                 u, v,                            &
      &                                 tl_u, tl_v,                      &
-# ifdef WEC_MELLOR
+# ifdef WEC_NOT_YET
      &                                 u_stokes, v_stokes,              &
      &                                 tl_u_stokes, tl_v_stokes,        &
 # endif
@@ -112,7 +112,7 @@
       real(r8), intent(in) :: v(LBi:,LBj:,:,:)
       real(r8), intent(in) :: tl_u(LBi:,LBj:,:,:)
       real(r8), intent(in) :: tl_v(LBi:,LBj:,:,:)
-#  ifdef WEC_MELLOR
+#  ifdef WEC_NOT_YET
       real(r8), intent(in) :: u_stokes(LBi:,LBj:,:)
       real(r8), intent(in) :: v_stokes(LBi:,LBj:,:)
       real(r8), intent(in) :: tl_u_stokes(LBi:,LBj:,:)
@@ -130,7 +130,7 @@
       real(r8), intent(in) :: v(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(in) :: tl_u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(in) :: tl_v(LBi:UBi,LBj:UBj,N(ng),2)
-#  ifdef WEC_MELLOR
+#  ifdef WEC_NOT_YET
       real(r8), intent(in) :: u_stokes(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(in) :: v_stokes(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(in) :: tl_u_stokes(LBi:UBi,LBj:UBj,N(ng))
@@ -172,7 +172,7 @@
      &                     0.5_r8*on_u(i,j)*                            &
      &                     (Hz(i,j,k)+Hz(i-1,j,k))*u(i,j,k,nrhs)
 # endif
-# ifdef WEC_MELLOR
+# ifdef WEC_NOT_YET
 !^          Huon(i,j,k)=Huon(i,j,k)+                                    &
 !^   &                  0.5_r8*(Hz(i,j,k)+Hz(i-1,j,k))*                 &
 !^   &                  u_stokes(i,j,k)*on_u(i,j)
@@ -204,7 +204,7 @@
      &                     0.5_r8*om_v(i,j)*                            &
      &                     (Hz(i,j,k)+Hz(i,j-1,k))*v(i,j,k,nrhs)
 # endif
-# ifdef WEC_MELLOR
+# ifdef WEC_NOT_YET
 !^          Hvom(i,j,k)=Hvom(i,j,k)+                                    &
 !^   &                  0.5_r8*(Hz(i,j,k)+Hz(i,j-1,k))*                 &
 !^   &                  v_stokes(i,j,k)*om_v(i,j)

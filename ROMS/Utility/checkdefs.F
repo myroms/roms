@@ -741,7 +741,7 @@
 #endif
 #if defined BOTTOM_STREAMING && defined WEC_VF
       IF (Master) WRITE (stdout,20) 'BOTTOM_STREAMING',                 &
-     &   'Wave current streaming term'
+     &   'Wave current bottom streaming term'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+18)=' BOTTOM_STREAMING,'
 #endif
@@ -3329,14 +3329,14 @@
 #if defined WDISS_THORGUZA && defined WEC_VF
 !
       IF (Master) WRITE (stdout,20) 'WDISS_THORGUZA',                   &
-     &   'Wave energy dissipation computed from Thorton/Guza 1986'
+     &   'Wave energy dissipation from Thornton and Guza 1986'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+16)=' WDISS_THORGUZA,'
 #endif
 #if defined WDISS_CHURTHOR && defined WEC_VF
 !
       IF (Master) WRITE (stdout,20) 'WDISS_CHURTHOR',                   &
-     &   'Wave energy dissipation computed from Church/Thorton 1986'
+     &   'Wave energy dissipation from Church and Thornton 1993'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+16)=' WDISS_CHURTHOR,'
 #endif
