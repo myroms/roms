@@ -130,7 +130,7 @@
      &                        OCEAN(ng) % ad_ubar_sol,                  &
      &                        OCEAN(ng) % ad_vbar_sol,                  &
 # endif
-# ifdef WEC_MELLOR
+# ifdef WEC_NOT_YET
      &                       OCEAN(ng) % ubar_stokes,                   &
      &                       OCEAN(ng) % tl_ubar_stokes,                &
      &                       OCEAN(ng) % vbar_stokes,                   &
@@ -187,7 +187,7 @@
 # if !(defined STEP2D_FB_AB3_AM4 || defined STEP2D_FB_LF_AM3)
      &                              ad_ubar_sol, ad_vbar_sol,           &
 # endif
-# ifdef WEC_MELLOR
+# ifdef WEC_NOT_YET
      &                              ubar_stokes, ad_ubar_stokes,        &
      &                              vbar_stokes, ad_vbar_stokes,        &
      &                              u_stokes, ad_u_stokes,              &
@@ -227,7 +227,7 @@
       real(r8), intent(in) :: DV_avg2(LBi:,LBj:)
       real(r8), intent(in) :: u(LBi:,LBj:,:,:)
       real(r8), intent(in) :: v(LBi:,LBj:,:,:)
-#  ifdef WEC_MELLOR
+#  ifdef WEC_NOT_YET
       real(r8), intent(in) :: ubar_stokes(LBi:,LBj:)
       real(r8), intent(in) :: vbar_stokes(LBi:,LBj:)
       real(r8), intent(in) :: u_stokes(LBi:,LBj:,:)
@@ -261,7 +261,7 @@
       real(r8), intent(inout) :: ad_u_sol(LBi:,LBj:,:)
       real(r8), intent(inout) :: ad_v_sol(LBi:,LBj:,:)
 #  endif
-#  ifdef WEC_MELLOR
+#  ifdef WEC_NOT_YET
       real(r8), intent(inout) :: ad_ubar_stokes(LBi:,LBj:)
       real(r8), intent(inout) :: ad_vbar_stokes(LBi:,LBj:)
       real(r8), intent(inout) :: ad_u_stokes(LBi:,LBj:,:)
@@ -300,7 +300,7 @@
       real(r8), intent(in) :: DV_avg2(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(in) :: v(LBi:UBi,LBj:UBj,N(ng),2)
-#  ifdef WEC_MELLOR
+#  ifdef WEC_NOT_YET
       real(r8), intent(in) :: ubar_stokes(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: vbar_stokes(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: u_stokes(LBi:UBi,LBj:UBj,N(ng))
@@ -334,9 +334,9 @@
       real(r8), intent(inout) :: ad_u_sol(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(inout) :: ad_v_sol(LBi:UBi,LBj:UBj,N(ng))
 #  endif
-#  ifdef WEC_MELLOR
-      real(r8), intent(in) :: ad_ubar_stokes(LBi:UBi,LBj:UBj)
-      real(r8), intent(in) :: ad_vbar_stokes(LBi:UBi,LBj:UBj)
+#  ifdef WEC_NOT_YET
+      real(r8), intent(inout) :: ad_ubar_stokes(LBi:UBi,LBj:UBj)
+      real(r8), intent(inout) :: ad_vbar_stokes(LBi:UBi,LBj:UBj)
       real(r8), intent(inout) :: ad_u_stokes(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(inout) :: ad_v_stokes(LBi:UBi,LBj:UBj,N(ng))
 #  endif
@@ -360,7 +360,7 @@
 !
       real(r8), dimension(IminS:ImaxS) :: CF1
       real(r8), dimension(IminS:ImaxS) :: FC1
-# ifdef WEC_MELLOR
+# ifdef WEC_NOT_YET
       real(r8), dimension(IminS:ImaxS) :: CFs1
       real(r8), dimension(IminS:ImaxS) :: DCs1
 # endif
@@ -370,7 +370,7 @@
       real(r8), dimension(IminS:ImaxS,0:N(ng)) :: DC
       real(r8), dimension(IminS:ImaxS,0:N(ng)) :: DC1
       real(r8), dimension(IminS:ImaxS,0:N(ng)) :: FC
-# ifdef WEC_MELLOR
+# ifdef WEC_NOT_YET
       real(r8), dimension(IminS:ImaxS,0:N(ng)) :: CFs
       real(r8), dimension(IminS:ImaxS,0:N(ng)) :: DCs
 # endif
@@ -385,7 +385,7 @@
       real(r8), dimension(IminS:ImaxS,0:N(ng)) :: ad_CF
       real(r8), dimension(IminS:ImaxS,0:N(ng)) :: ad_DC
       real(r8), dimension(IminS:ImaxS,0:N(ng)) :: ad_FC
-# ifdef WEC_MELLOR
+# ifdef WEC_NOT_YET
       real(r8), dimension(IminS:ImaxS,0:N(ng)) :: ad_CFs
       real(r8), dimension(IminS:ImaxS,0:N(ng)) :: ad_DCs
 # endif
@@ -406,7 +406,7 @@
           ad_BC(i,k)=0.0_r8
           ad_CF(i,k)=0.0_r8
           ad_DC(i,k)=0.0_r8
-# ifdef WEC_MELLOR
+# ifdef WEC_NOT_YET
           ad_CFs(i,k)=0.0_r8
           ad_DCs(i,k)=0.0_r8
 # endif
@@ -570,7 +570,7 @@
           DO i=IstrT,IendT
             DC(i,0)=0.0_r8
             CF(i,0)=0.0_r8
-# ifdef WEC_MELLOR
+# ifdef WEC_NOT_YET
             CFs(i,0)=0.0_r8
 # endif
             FC(i,0)=0.0_r8
@@ -582,7 +582,7 @@
               DC(i,0)=DC(i,0)+DC(i,k)
               CF(i,0)=CF(i,0)+                                          &
      &                DC(i,k)*v(i,j,k,nnew)
-# ifdef WEC_MELLOR
+# ifdef WEC_NOT_YET
               CFs(i,0)=CFs(i,0)+                                        &
      &                 DC(i,k)*v_stokes(i,j,k)
 # endif
@@ -590,13 +590,13 @@
           END DO
           DO i=IstrT,IendT
             DC1(i,0)=DC(i,0)                            ! intermediate
-# ifdef WEC_MELLOR
+# ifdef WEC_NOT_YET
             cff2=DC(i,0)*vbar_stokes(i,j)
 # endif
             DC(i,0)=1.0_r8/DC(i,0)                      ! recursive
             CF1(i)=CF(i,0)                              ! intermediate
             CF(i,0)=DC(i,0)*(CF(i,0)-DV_avg1(i,j))      ! recursive
-# ifdef WEC_MELLOR
+# ifdef WEC_NOT_YET
             CFs1(i)=CFs(i,0)
             CFs(i,0)=DC(i,0)*(CFs(i,0)-cff2)            ! recursive
 # endif
@@ -604,14 +604,14 @@
           DO k=N(ng),1,-1
             DO i=IstrT,IendT
 !^            Hvom(i,j,k)=0.5_r8*(Hvom(i,j,k)+v(i,j,k,nnew)*DC(i,k))
-# ifdef WEC_MELLOR
+# ifdef WEC_NOT_YET
 !^            Hvom(i,j,k)=Hvom(i,j,k)+0.5_r8*v_stokes(i,j,k)*DC(i,k)
 # endif
 !^            FC(i,0)=FC(i,0)+Hvom(i,j,k)
 !^
               FC(i,0)=FC(i,0)+                                          &
      &                0.5_r8*(Hvom(i,j,k)+v(i,j,k,nnew)*DC(i,k))
-# ifdef WEC_MELLOR
+# ifdef WEC_NOT_YET
               FC(i,0)=FC(i,0)+                                          &
      &                0.5_r8*v_stokes(i,j,k)*DC(i,k)
 # endif
@@ -654,7 +654,7 @@
 !^            tl_FC(i,0)=tl_FC(i,0)+tl_Hvom(i,j,k)
 !^
               ad_Hvom(i,j,k)=ad_Hvom(i,j,k)+ad_FC(i,0)
-# ifdef WEC_MELLOR
+# ifdef WEC_NOT_YET
 !^            tl_Hvom(i,j,k)=tl_Hvom(i,j,k)+                            &
 !^   &                       0.5_r8*(tl_v_stokes(i,j,k)*DC(i,k)+        &
 !^   &                               v_stokes(i,j,k)*tl_DC(i,k))
@@ -684,7 +684,7 @@
             IF (j.eq.Mm(ng)+1) THEN                  ! northern boundary
               DO k=1,N(ng)                           ! J-loop pipelined
                 DO i=Istr,Iend
-# ifdef WEC_MELLOR
+# ifdef WEC_NOT_YET
 #  ifdef WET_DRY_NOT_YET
 !^                tl_v_stokes(i,j,k)=tl_v_stokes(i,j,k)*                &
 !^   &                               vmask_wet(i,j)
@@ -731,7 +731,7 @@
             IF (j.eq.1) THEN                         ! southern boundary
               DO k=1,N(ng)                           ! J-loop pipelined
                 DO i=Istr,Iend
-# ifdef WEC_MELLOR
+# ifdef WEC_NOT_YET
 #  ifdef WET_DRY_NOT_YET
 !^                tl_v_stokes(i,j,k)=tl_v_stokes(i,j,k)*                &
 !^   &                               vmask_wet(i,j)
@@ -777,7 +777,7 @@
           IF (.not.(CompositeGrid(ieast,ng).or.EWperiodic(ng))) THEN
             IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
               DO k=1,N(ng)
-# ifdef WEC_MELLOR
+# ifdef WEC_NOT_YET
 #  ifdef WET_DRY_NOT_YET
 !^              tl_v_stokes(Iend+1,j,k)=tl_v_stokes(Iend+1,j,k)*        &
 !^   &                                  vmask_wet(Iend+1,j)
@@ -824,7 +824,7 @@
           IF (.not.(CompositeGrid(iwest,ng).or.EWperiodic(ng))) THEN
             IF (DOMAIN(ng)%Western_Edge(tile)) THEN
               DO k=1,N(ng)
-# ifdef WEC_MELLOR
+# ifdef WEC_NOT_YET
 #  ifdef WET_DRY_NOT_YET
 !^              tl_v_stokes(Istr-1,j,k)=tl_v_stokes(Istr-1,j,k)*        &
 !^   &                                  vmask_wet(Istr-1,j)
@@ -934,7 +934,7 @@
             ad_DV_avg1(i,j)=ad_DV_avg1(i,j)+ad_vbar(i,j,1)*DC(i,0)
             ad_vbar(i,j,1)=0.0_r8
 # endif
-# ifdef WEC_MELLOR
+# ifdef WEC_NOT_YET
 !^          tl_CFs(i,0)=tl_DC(i,0)*(CFs1(i)-cff2)+                      &
 !^   &                  DC(i,0)*(tl_CFs(i,0)-tl_cff2)
 !^
@@ -954,7 +954,7 @@
 !^          tl_DC(i,0)=-tl_DC(i,0/(DC1(i,0)*DC1(i,0))
 !^
             ad_DC(i,0)=-ad_DC(i,0)/(DC1(i,0)*DC1(i,0))
-# ifdef WEC_MELLOR
+# ifdef WEC_NOT_YET
 !^          tl_cff2=tl_DC(i,0)*vbar_stokes(i,j)+                        &
 !^   &              DC(i,0)*tl_vbar_stokes(i,j))
 !^
@@ -966,7 +966,7 @@
           DO i=IstrT,IendT
             DC(i,0)=0.0_r8
             CF(i,0)=0.0_r8
-# ifdef WEC_MELLOR
+# ifdef WEC_NOT_YET
             CFs(i,0)=0.0_r8
 # endif
             FC(i,0)=0.0_r8
@@ -978,7 +978,7 @@
               DC(i,0)=DC(i,0)+DC(i,k)
               CF(i,0)=CF(i,0)+                                          &
      &                DC(i,k)*v(i,j,k,nnew)
-# ifdef WEC_MELLOR
+# ifdef WEC_NOT_YET
               CFs(i,0)=CFs(i,0)+DC(i,k)*v_stokes(i,j,k)
 !^            tl_CFs(i,0)=tl_CFs(i,0)+                                  &
 !^   &                    tl_DC(i,k)*v_stokes(i,j,k)+                   &
@@ -1008,7 +1008,7 @@
 !^          tl_FC(i,0)=0.0_r8
 !^
             ad_FC(i,0)=0.0_r8
-# ifdef WEC_MELLOR
+# ifdef WEC_NOT_YET
 !^          tl_CFs(i,0)=0.0_r8
 !^
             ad_CFs(i,0)=0.0_r8
@@ -1030,7 +1030,7 @@
         DO i=IstrP,IendT
           DC(i,0)=0.0_r8
           CF(i,0)=0.0_r8
-# ifdef WEC_MELLOR
+# ifdef WEC_NOT_YET
           CFs(i,0)=0.0_r8
 # endif
           FC(i,0)=0.0_r8
@@ -1042,7 +1042,7 @@
             DC(i,0)=DC(i,0)+DC(i,k)
             CF(i,0)=CF(i,0)+                                            &
      &              DC(i,k)*u(i,j,k,nnew)
-# ifdef WEC_MELLOR
+# ifdef WEC_NOT_YET
             CFs(i,0)=CFs(i,0)+                                          &
      &               DC(i,k)*u_stokes(i,j,k)
 # endif
@@ -1050,13 +1050,13 @@
         END DO
         DO i=IstrP,IendT
           DC1(i,0)=DC(i,0)                              ! intermediate
-# ifdef WEC_MELLOR
+# ifdef WEC_NOT_YET
           cff2=DC(i,0)*ubar_stokes(i,j)
 # endif
           DC(i,0)=1.0_r8/DC(i,0)                        ! recursive
           CF1(i)=CF(i,0)                                ! intermediate
           CF(i,0)=DC(i,0)*(CF(i,0)-DU_avg1(i,j))        ! recursive
-# ifdef WEC_MELLOR
+# ifdef WEC_NOT_YET
           CFs1(i)=CFs(i,0)                              ! intermediate
           CFs(i,0)=DC(i,0)*(CFs(i,0)-cff2)              ! recursive
 # endif
@@ -1064,14 +1064,14 @@
         DO k=N(ng),1,-1
           DO i=IstrP,IendT
 !^          Huon(i,j,k)=0.5_r8*(Huon(i,j,k)+u(i,j,k,nnew)*DC(i,k))
-# ifdef WEC_MELLOR
+# ifdef WEC_NOT_YET
 !^          Huon(i,j,k)=Huon(i,j,k)+0.5_r8*u_stokes(i,j,k)*DC(i,k)
 # endif
 !^          FC(i,0)=FC(i,0)+Huon(i,j,k)
 !^
             FC(i,0)=FC(i,0)+                                            &
      &              0.5_r8*(Huon(i,j,k)+u(i,j,k,nnew)*DC(i,k))
-# ifdef WEC_MELLOR
+# ifdef WEC_NOT_YET
             FC(i,0)=FC(i,0)+                                            &
      &              0.5_r8*u_stokes(i,j,k)*DC(i,k)
 # endif
@@ -1113,7 +1113,7 @@
 !^          tl_FC(i,0)=tl_FC(i,0)+tl_Huon(i,j,k)
 !^
             ad_Huon(i,j,k)=ad_Huon(i,j,k)+ad_FC(i,0)
-# ifdef WEC_MELLOR
+# ifdef WEC_NOT_YET
 !^          tl_Huon(i,j,k)=tl_Huon(i,j,k)+                              &
 !^   &                     0.5_r8*(tl_u_stokes(i,j,k)*DC(i,k)+          &
 !^   &                             u_stokes(i,j,k)*tl_DC(i,k))
@@ -1143,7 +1143,7 @@
           IF (j.eq.Mm(ng)+1) THEN                    ! northern boundary
             DO k=1,N(ng)                             ! J-loop piplined
               DO i=IstrU,Iend
-# ifdef WEC_MELLOR
+# ifdef WEC_NOT_YET
 #  ifdef WET_DRY_NOT_YET
 !^              tl_u_stokes(i,j,k)=tl_u_stokes(i,j,k)*                  &
 !^   &                             umask_wet(i,j)
@@ -1189,7 +1189,7 @@
           IF (j.eq.0) THEN                           ! southern boundary
             DO k=1,N(ng)                             ! J-loop pipelined
               DO i=IstrU,Iend
-# ifdef WEC_MELLOR
+# ifdef WEC_NOT_YET
 #  ifdef WET_DRY_NOT_YET
 !^              tl_u_stokes(i,j,k)=tl_u_stokes(i,j,k)*                  &
 !^   &                             umask_wet(i,j)
@@ -1234,7 +1234,7 @@
         IF (.not.(CompositeGrid(ieast,ng).or.EWperiodic(ng))) THEN
           IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
             DO k=1,N(ng)
-# ifdef WEC_MELLOR
+# ifdef WEC_NOT_YET
 #  ifdef WET_DRY_NOT_YET
 !^            tl_u_stokes(Iend+1,j,k)=tl_u_stokes(Iend+1,j,k)*          &
 !^   &                                umask_wet(Iend+1,j)
@@ -1281,7 +1281,7 @@
         IF (.not.(CompositeGrid(iwest,ng).or.EWperiodic(ng))) THEN
           IF (DOMAIN(ng)%Western_Edge(tile)) THEN
             DO k=1,N(ng)
-# ifdef WEC_MELLOR
+# ifdef WEC_NOT_YET
 #  ifdef WET_DRY_NOT_YET
 !^            tl_u_stokes(Istr,j,k)=tl_u_stokes(Istr,j,k)*              &
 !^   &                              umask_wet(Istr,j)
@@ -1389,7 +1389,7 @@
           ad_DU_avg1(i,j)=ad_DU_avg1(i,j)+ad_ubar(i,j,1)*DC(i,0)
           ad_ubar(i,j,1)=0.0_r8
 # endif
-# ifdef WEC_MELLOR
+# ifdef WEC_NOT_YET
 !^        tl_CFs(i,0)=tl_DC(i,0)*(CFs1(i)-cff2)+                        &
 !^   &                DC(i,0)*(tl_CFs(i,0)-tl_cff2)
 !^
@@ -1409,7 +1409,7 @@
 !^        tl_DC(i,0)=-tl_DC(i,0)/(DC1(i,0)*DC1(i,0))
 !^
           ad_DC(i,0)=-ad_DC(i,0)/(DC1(i,0)*DC1(i,0))
-# ifdef WEC_MELLOR
+# ifdef WEC_NOT_YET
 !^        tl_cff2=tl_DC(i,0)*ubar_stokes(i,j)+                          &
 !^   &            DC(i,0)*tl_ubar_stokes(i,j)
 !^
@@ -1421,7 +1421,7 @@
         DO i=IstrP,IendT
           DC(i,0)=0.0_r8
           CF(i,0)=0.0_r8
-# ifdef WEC_MELLOR
+# ifdef WEC_NOT_YET
           CFs(i,0)=0.0_r8
 # endif
           FC(i,0)=0.0_r8
@@ -1433,7 +1433,7 @@
             DC(i,0)=DC(i,0)+DC(i,k)
             CF(i,0)=CF(i,0)+                                            &
      &              DC(i,k)*u(i,j,k,nnew)
-# ifdef WEC_MELLOR
+# ifdef WEC_NOT_YET
             CFs(i,0)=CFs(i,0)+                                          &
      &               DC(i,k)*u_stokes(i,j,k)
 !^          tl_CFs(i,0)=tl_CFs(i,0)+                                    &
@@ -1464,7 +1464,7 @@
 !^        tl_FC(i,0)=0.0_r8
 !^
           ad_FC(i,0)=0.0_r8
-# ifdef WEC_MELLOR
+# ifdef WEC_NOT_YET
 !^        tl_CFs(i,0)=0.0_r8
 !^
           ad_CFs(i,0)=0.0_r8
@@ -1607,10 +1607,6 @@
           DO k=1,N(ng)
             DO i=Istr,Iend
 # ifdef DIAGNOSTICS_UV
-#  ifdef WEC_MELLOR
-!!            DiaV3wrk(i,j,k,M3hrad)=DiaV3wrk(i,j,k,M3hrad)-            &
-!!   &                               Dwrk(i,M2hrad)
-#  endif
 #  ifdef UV_ADV
 !!            DiaV3wrk(i,j,k,M3hadv)=DiaV3wrk(i,j,k,M3hadv)-            &
 !!   &                               Dwrk(i,M2hadv)
@@ -1636,7 +1632,7 @@
 !!            DiaV3wrk(i,j,k,M3pgrd)=DiaV3wrk(i,j,k,M3pgrd)-            &
 !!   &                               Dwrk(i,M2pgrd)
 # endif
-# ifdef WEC_MELLOR
+# ifdef WEC_NOT_YET
 #  ifdef WET_DRY_NOT_YET
 !^            tl_v_stokes(i,j,k)=tl_v_stokes(i,j,k)*vmask_wet(i,j)
 !^
@@ -1684,7 +1680,7 @@
             DC1(i,0)=DC(i,0)                              ! intermediate
             cff1=1.0_r8/(CF(i,0)*om_v(i,j))
             DC(i,0)=(DC(i,0)*om_v(i,j)-DV_avg1(i,j))*cff1    ! recursive
-# ifdef WEC_MELLOR
+# ifdef WEC_NOT_YET
             DCs1(i)=DCs(i,0)                              ! intermediate
             cff2=1.0_r8/CF(i,0)
             DCs(i,0)=DCs(i,0)*cff2-vbar_stokes(i,j)          ! recursive
@@ -1698,7 +1694,7 @@
 !!   &                       DiaV2wrk(i,j,idiag))*cff1
 !!          END DO
 # endif
-# ifdef WEC_MELLOR
+# ifdef WEC_NOT_YET
 !^          tl_DCs(i,0)=tl_DCs(i,0)*cff2+                               &
 !^   &                  DCs1(i,0)*tl_cff2-tl_vbar_stokes(i,j)
 !^
@@ -1732,10 +1728,6 @@
               CF(i,0)=CF(i,0)+Hzk(i,k)
               DC(i,0)=DC(i,0)+v(i,j,k,nnew)*Hzk(i,k)
 # ifdef DIAGNOSTICS_UV
-#  ifdef WEC_MELLOR
-!!            Dwrk(i,M2hrad)=Dwrk(i,M2hrad)+                            &
-!!   &                       DiaV3wrk(i,j,k,M3hrad)*Hzk(i,k)
-#  endif
 #  ifdef UV_ADV
 !!            Dwrk(i,M2hadv)=Dwrk(i,M2hadv)+                            &
 !!   &                       DiaV3wrk(i,j,k,M3hadv)*Hzk(i,k)
@@ -1761,7 +1753,7 @@
 !!            Dwrk(i,M2pgrd)=Dwrk(i,M2pgrd)+                            &
 !!   &                       DiaV3wrk(i,j,k,M3pgrd)*Hzk(i,k)
 # endif
-# ifdef WEC_MELLOR
+# ifdef WEC_NOT_YET
 !^            tl_DCs(i,0)=tl_DCs(i,0)+                                  &
 !^   &                    tl_v_stokes(i,j,k)*Hzk(i,k)+                  &
 !^   &                    v_stokes(i,j,k)*tl_Hzk(i,k)
@@ -1784,9 +1776,6 @@
             CF(i,0)=Hzk(i,1)
             DC(i,0)=v(i,j,1,nnew)*Hzk(i,1)
 # ifdef DIAGNOSTICS_UV
-#  ifdef WEC_MELLOR
-!!          Dwrk(i,M2hrad)=DiaV3wrk(i,j,1,M3hrad)*Hzk(i,1)
-#  endif
 #  ifdef UV_ADV
 !!          Dwrk(i,M2hadv)=DiaV3wrk(i,j,1,M3hadv)*Hzk(i,1)
 !!          Dwrk(i,M2yadv)=DiaV3wrk(i,j,1,M3yadv)*Hzk(i,1)
@@ -1803,7 +1792,7 @@
 !!          Dwrk(i,M2bstr)=DiaV3wrk(i,j,1,M3vvis)*Hzk(i,1)
 !!          Dwrk(i,M2pgrd)=DiaV3wrk(i,j,1,M3pgrd)*Hzk(i,1)
 # endif
-# ifdef WEC_MELLOR
+# ifdef WEC_NOT_YET
 !^          tl_DCs(i,0)=tl_v_stokes(i,j,1)*Hzk(i,1)+                    &
 !^   &                  v_stokes(i,j,1)*tl_Hzk(i,1)
 !^
@@ -2293,10 +2282,6 @@
         DO k=1,N(ng)
           DO i=IstrU,Iend
 # ifdef DIAGNOSTICS_UV
-#  ifdef WEC_MELLOR
-!!          DiaU3wrk(i,j,k,M3hrad)=DiaU3wrk(i,j,k,M3hrad)-              &
-!!   &                             Dwrk(i,M2hrad)
-#  endif
 #  ifdef UV_ADV
 !!          DiaU3wrk(i,j,k,M3hadv)=DiaU3wrk(i,j,k,M3hadv)-              &
 !!   &                             Dwrk(i,M2hadv)
@@ -2322,7 +2307,7 @@
 !!          DiaU3wrk(i,j,k,M3pgrd)=DiaU3wrk(i,j,k,M3pgrd)-              &
 !!   &                             Dwrk(i,M2pgrd)
 # endif
-# ifdef WEC_MELLOR
+# ifdef WEC_NOT_YET
 #  ifdef WET_DRY_NOT_YET
 !^          tl_u_stokes(i,j,k)=tl_u_stokes(i,j,k)*umask_wet(i,j)
 !^
@@ -2370,7 +2355,7 @@
           DC1(i,0)=DC(i,0)                                ! intermediate
           cff1=1.0/(CF(i,0)*on_u(i,j))
           DC(i,0)=(DC(i,0)*on_u(i,j)-DU_avg1(i,j))*cff1      ! recursive
-# ifdef WEC_MELLOR
+# ifdef WEC_NOT_YET
           DCs1(i)=DCs(i,0)                                ! intermediate
           cff2=1.0_r8/CF(i,0)
           DCs(i,0)=DCs(i,0)*cff2-ubar_stokes(i,j)            ! recursive
@@ -2384,7 +2369,7 @@
 !!   &                     DiaU2wrk(i,j,idiag))*cff1
 !!        END DO
 # endif
-# ifdef WEC_MELLOR
+# ifdef WEC_NOT_YET
 !^        tl_DCs(i,0)=tl_DCs(i,0)*cff2+                                 &
 !^   &                DCs1(i)*tl_cff2-tl_ubar_stokes(i,j)
 !^
@@ -2417,14 +2402,10 @@
           DO i=IstrU,Iend
             CF(i,0)=CF(i,0)+Hzk(i,k)
             DC(i,0)=DC(i,0)+u(i,j,k,nnew)*Hzk(i,k)
-# ifdef WEC_MELLOR
+# ifdef WEC_NOT_YET
             DCs(i,0)=DCs(i,0)+u_stokes(i,j,k)*Hzk(i,k)
 # endif
 # ifdef DIAGNOSTICS_UV
-#  ifdef WEC_MELLOR
-!!          Dwrk(i,M2hrad)=Dwrk(i,M2hrad)+                              &
-!!   &                     DiaU3wrk(i,j,k,M3hrad)*Hzk(i,k)
-#  endif
 #  ifdef UV_ADV
 !!          Dwrk(i,M2hadv)=Dwrk(i,M2hadv)+                              &
 !!   &                     DiaU3wrk(i,j,k,M3hadv)*Hzk(i,k)
@@ -2450,7 +2431,7 @@
 !!          Dwrk(i,M2pgrd)=Dwrk(i,M2pgrd)+                              &
 !!   &                     DiaU3wrk(i,j,k,M3pgrd)*Hzk(i,k)
 # endif
-# ifdef WEC_MELLOR
+# ifdef WEC_NOT_YET
 !^          tl_DCs(i,0)=tl_DCs(i,0)+                                    &
 !^   &                  tl_u_stokes(i,j,k)*Hzk(i,k)+                    &
 !^   &                  u_stokes(i,j,k)*tl_Hzk(i,k)
@@ -2472,13 +2453,10 @@
         DO i=IstrU,Iend
           CF(i,0)=Hzk(i,1)
           DC(i,0)=u(i,j,1,nnew)*Hzk(i,1)
-# ifdef WEC_MELLOR
+# ifdef WEC_NOT_YET
           DCs(i,0)=u_stokes(i,j,1)*Hzk(i,1)
 # endif
 # ifdef DIAGNOSTICS_UV
-#  ifdef WEC_MELLOR
-!!        Dwrk(i,M2hrad)=DiaU3wrk(i,j,1,M3hrad)*Hzk(i,1)
-#  endif
 #  ifdef UV_ADV
 !!        Dwrk(i,M2hadv)=DiaU3wrk(i,j,1,M3hadv)*Hzk(i,1)
 !!        Dwrk(i,M2yadv)=DiaU3wrk(i,j,1,M3yadv)*Hzk(i,1)
@@ -2495,7 +2473,7 @@
 !!        Dwrk(i,M2bstr)=DiaU3wrk(i,j,1,M3vvis)*Hzk(i,1)
 !!        Dwrk(i,M2pgrd)=DiaU3wrk(i,j,1,M3pgrd)*Hzk(i,1)
 # endif
-# ifdef WEC_MELLOR
+# ifdef WEC_NOT_YET
 !^        tl_DCs(i,0)=tl_u_stokes(i,j,1)*Hzk(i,1)+                      &
 !^   &                u_stokes(i,j,1)*tl_Hzk(i,1)
 !^

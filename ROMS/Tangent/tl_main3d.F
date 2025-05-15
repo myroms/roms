@@ -104,9 +104,6 @@
 # if !(defined FORCING_SV || defined JEDI)
       USE tl_post_initial_mod,     ONLY : tl_post_initial
 # endif
-# ifdef WEC_MELLOR_NOT_YET
-!!    USE tl_radiation_stress_mod, ONLY : tl_radiation_stress
-# endif
 # ifndef TS_FIXED
       USE tl_rho_eos_mod,          ONLY : tl_rho_eos
 # endif
@@ -374,20 +371,6 @@
                   CALL ocn2wav_coupling (ng, tile)
                 END DO
               END IF
-            END DO
-# endif
-
-# ifdef WEC_MELLOR_NOT_YET
-!
-!-----------------------------------------------------------------------
-!  Compute radiation stress terms.
-!-----------------------------------------------------------------------
-!
-            DO ig=1,GridsInLayer(nl)
-              ng=GridNumber(ig,nl)
-              DO tile=last_tile(ng),first_tile(ng),-1
-                CALL tl_radiation_stress (ng, tile)
-              END DO
             END DO
 # endif
 !

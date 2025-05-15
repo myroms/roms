@@ -19,7 +19,7 @@
 #endif
       USE mod_forces
       USE mod_grid
-#if defined UV_VIS2 || defined UV_VIS4 || defined WEC_MELLOR
+#if defined UV_VIS2 || defined UV_VIS4
       USE mod_mixing
 #endif
       USE mod_ncparam
@@ -117,11 +117,9 @@
 #if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
      &                     SEDBED(ng) % tl_bed_thick,                   &
 #endif
-#ifdef WEC_MELLOR
+#ifdef WEC_NOT_YET
      &                     MIXING(ng) % tl_rustr2d,                     &
      &                     MIXING(ng) % tl_rvstr2d,                     &
-     &                     OCEAN(ng) % tl_rulag2d,                      &
-     &                     OCEAN(ng) % tl_rvlag2d,                      &
      &                     OCEAN(ng) % ubar_stokes,                     &
      &                     OCEAN(ng) % tl_ubar_stokes,                  &
      &                     OCEAN(ng) % vbar_stokes,                     &
@@ -219,9 +217,8 @@
 #if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
      &                           tl_bed_thick,                          &
 #endif
-#ifdef WEC_MELLOR
+#ifdef WEC_NOT_YET
      &                           tl_rustr2d, tl_rvstr2d,                &
-     &                           tl_rulag2d, tl_rvlag2d,                &
      &                           ubar_stokes, tl_ubar_stokes,           &
      &                           vbar_stokes, tl_vbar_stokes,           &
 #endif
@@ -314,7 +311,7 @@
 # if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
       real(r8), intent(in   ) :: tl_bed_thick(LBi:,LBj:,:)
 # endif
-# ifdef WEC_MELLOR
+# ifdef WEC_NOT_YET
       real(r8), intent(in   ) :: ubar_stokes(LBi:,LBj:)
       real(r8), intent(in   ) :: vbar_stokes(LBi:,LBj:)
 # endif
@@ -362,11 +359,9 @@
       real(r8), intent(inout) :: tl_ru(LBi:,LBj:,0:,:)
       real(r8), intent(inout) :: tl_rv(LBi:,LBj:,0:,:)
 # endif
-# ifdef WEC_MELLOR
+# ifdef WEC_NOT_YET
       real(r8), intent(inout) :: tl_rustr2d(LBi:,LBj:)
       real(r8), intent(inout) :: tl_rvstr2d(LBi:,LBj:)
-      real(r8), intent(inout) :: tl_rulag2d(LBi:,LBj:)
-      real(r8), intent(inout) :: tl_rvlag2d(LBi:,LBj:)
       real(r8), intent(inout) :: tl_ubar_stokes(LBi:,LBj:)
       real(r8), intent(inout) :: tl_vbar_stokes(LBi:,LBj:)
 # endif
@@ -449,7 +444,7 @@
 # if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
       real(r8), intent(in   ) :: tl_bed_thick(LBi:UBi,LBj:UBj,3)
 # endif
-# ifdef WEC_MELLOR
+# ifdef WEC_NOT_YET
       real(r8), intent(in   ) :: ubar_stokes(LBi:UBi,LBj:UBj)
       real(r8), intent(in   ) :: vbar_stokes(LBi:UBi,LBj:UBj)
 # endif
@@ -497,7 +492,7 @@
       real(r8), intent(inout) :: tl_ru(LBi:UBi,LBj:UBj,0:UBk,2)
       real(r8), intent(inout) :: tl_rv(LBi:UBi,LBj:UBj,0:UBk,2)
 # endif
-# ifdef WEC_MELLOR
+# ifdef WEC_NOT_YET
       real(r8), intent(inout) :: tl_rustr2d(LBi:UBi,LBj:UBj)
       real(r8), intent(inout) :: tl_rvstr2d(LBi:UBi,LBj:UBj)
       real(r8), intent(inout) :: tl_rulag2d(LBi:UBi,LBj:UBj)
@@ -562,7 +557,7 @@
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Dstp
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: DUon
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: DVom
-#ifdef WEC_MELLOR
+#ifdef WEC_NOT_YET
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: DUSon
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: DVSom
 #endif
@@ -602,7 +597,7 @@
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_Dstp
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_DUon
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_DVom
-#ifdef WEC_MELLOR
+#ifdef WEC_NOT_YET
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_DUSon
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_DVSom
 #endif
@@ -657,7 +652,7 @@
           Dstp(i,j)=IniVal
           DUon(i,j)=IniVal
           DVom(i,j)=IniVal
-# ifdef WEC_MELLOR
+# ifdef WEC_NOT_YET
           DUSon(i,j)=IniVal
           DVSom(i,j)=IniVal
 # endif
@@ -688,7 +683,7 @@
           tl_Dstp(i,j)=IniVal
           tl_DUon(i,j)=IniVal
           tl_DVom(i,j)=IniVal
-# ifdef WEC_MELLOR
+# ifdef WEC_NOT_YET
           tl_DUSon(i,j)=IniVal
           tl_DVSom(i,j)=IniVal
 # endif
@@ -746,7 +741,7 @@
 # ifdef TL_IOMS
      &                 DUon(i,j)
 # endif
-# ifdef WEC_MELLOR
+# ifdef WEC_NOT_YET
           DUSon(i,j)=ubar_stokes(i,j)*cff1
           tl_DUSon(i,j)=tl_ubar_stokes(i,j)*cff1+                       &
      &                  ubar_stokes(i,j)*tl_cff1-                       &
@@ -769,7 +764,7 @@
 # ifdef TL_IOMS
      &                 DVom(i,j)
 # endif
-# ifdef WEC_MELLOR
+# ifdef WEC_NOT_YET
           DVSom(i,j)=vbar_stokes(i,j)*cff1
           tl_DVSom(i,j)=tl_vbar_stokes(i,j)*cff1+                       &
      &                  vbar_stokes(i,j)*tl_cff1-                       &
@@ -802,7 +797,7 @@
 # ifdef TL_IOMS
      &                 DUon(i,j)
 # endif
-# ifdef WEC_MELLOR
+# ifdef WEC_NOT_YET
           DUSon(i,j)=ubar_stokes(i,j)*cff1
           tl_DUSon(i,j)=tl_ubar_stokes(i,j)*cff1+                       &
      &                  ubar_stokes(i,j)*tl_cff1-                       &
@@ -825,7 +820,7 @@
 # ifdef TL_IOMS
      &                 DVom(i,j)
 # endif
-# ifdef WEC_MELLOR
+# ifdef WEC_NOT_YET
           DVSom(i,j)=vbar_stokes(i,j)*cff1
           tl_DVSom(i,j)=tl_vbar_stokes(i,j)*cff1+                       &
      &                  vbar_stokes(i,j)*tl_cff1-                       &
@@ -978,7 +973,7 @@
 !^            DU_avg1(i,j)=DU_avg1(i,j)+cff1*DUon(i,j)
 !^
               tl_DU_avg1(i,j)=tl_DU_avg1(i,j)+cff1*tl_DUon(i,j)
-# ifdef WEC_MELLOR
+# ifdef WEC_NOT_YET
 !^            DU_avg1(i,j)=DU_avg1(i,j)-cff1*DUSon(i,j)
 !^
               tl_DU_avg1(i,j)=tl_DU_avg1(i,j)-cff1*tl_DUSon(i,j)
@@ -993,7 +988,7 @@
 !^            DV_avg1(i,j)=DV_avg1(i,j)+cff1*DVom(i,j)
 !^
               tl_DV_avg1(i,j)=tl_DV_avg1(i,j)+cff1*tl_DVom(i,j)
-# ifdef WEC_MELLOR
+# ifdef WEC_NOT_YET
 !^            DV_avg1(i,j)=DV_avg1(i,j)-cff1*DVSom(i,j)
 !^
               tl_DV_avg1(i,j)=tl_DV_avg1(i,j)-cff1*tl_DVSom(i,j)
@@ -1142,9 +1137,11 @@
 !  During the first time-step, the predictor step is Forward-Euler
 !  and the corrector step is Backward-Euler. Otherwise, the predictor
 !  step is Leap-frog and the corrector step is Adams-Moulton.
-!
 #if defined VAR_RHO_2D_NOT_YET && defined SOLVE3D
-      fac=1000.0_r8/rho0
+!  Recall that the vertical averaged density (rhoA) and density
+!  pertubation (rhoS) are nondimensional quantities.
+!
+      fac=1000.0_r8/rho0                                ! nondimensional
 #endif
       IF (FIRST_2D_STEP) THEN
         cff1=dtfast(ng)
@@ -1733,31 +1730,19 @@
 
 # ifdef UV_C2ADVECTION
 !
-!  Second-order, centered differences advection.
+!  Second-order, centered differences advection fluxes.
 !
       DO j=Jstr,Jend
         DO i=IstrU-1,Iend
           UFx(i,j)=0.25_r8*(DUon(i,j)+DUon(i+1,j))*                     &
      &                     (ubar(i  ,j,krhs)+                           &
-#  ifdef WEC_MELLOR
-     &                      ubar_stokes(i  ,j)+                         &
-     &                      ubar_stokes(i+1,j)+                         &
-#  endif
      &                      ubar(i+1,j,krhs))
           tl_UFx(i,j)=0.25_r8*                                          &
      &                ((tl_DUon(i,j)+tl_DUon(i+1,j))*                   &
      &                 (ubar(i  ,j,krhs)+                               &
-#  ifdef WEC_MELLOR
-     &                  ubar_stokes(i  ,j)+                             &
-     &                  ubar_stokes(i+1,j)+                             &
-#  endif
      &                  ubar(i+1,j,krhs))+                              &
      &                 (DUon(i,j)+DUon(i+1,j))*                         &
      &                 (tl_ubar(i  ,j,krhs)+                            &
-#  ifdef WEC_MELLOR
-     &                  tl_ubar_stokes(i  ,j)+                          &
-     &                  tl_ubar_stokes(i+1,j)+                          &
-#  endif
      &                  tl_ubar(i+1,j,krhs)))-                          &
 #  ifdef TL_IOMS
      &                UFx(i,j)
@@ -1769,25 +1754,13 @@
         DO i=IstrU,Iend
           UFe(i,j)=0.25_r8*(DVom(i,j)+DVom(i-1,j))*                     &
      &                     (ubar(i,j  ,krhs)+                           &
-#  ifdef WEC_MELLOR
-     &                      ubar_stokes(i,j  )+                         &
-     &                      ubar_stokes(i,j-1)+                         &
-#  endif
      &                      ubar(i,j-1,krhs))
           tl_UFe(i,j)=0.25_r8*                                          &
      &                ((tl_DVom(i,j)+tl_DVom(i-1,j))*                   &
      &                 (ubar(i,j  ,krhs)+                               &
-#  ifdef WEC_MELLOR
-     &                  ubar_stokes(i,j  )+                             &
-     &                  ubar_stokes(i,j-1)+                             &
-#  endif
      &                  ubar(i,j-1,krhs))+                              &
      &                 (DVom(i,j)+DVom(i-1,j))*                         &
      &                 (tl_ubar(i,j  ,krhs)+                            &
-#  ifdef WEC_MELLOR
-     &                  tl_ubar_stokes(i,j  )+                          &
-     &                  tl_ubar_stokes(i,j-1)+                          &
-#  endif
      &                  tl_ubar(i,j-1,krhs)))-                          &
 #  ifdef TL_IOMS
      &                UFe(i,j)
@@ -1799,25 +1772,13 @@
         DO i=Istr,Iend+1
           VFx(i,j)=0.25_r8*(DUon(i,j)+DUon(i,j-1))*                     &
      &                     (vbar(i  ,j,krhs)+                           &
-#  ifdef WEC_MELLOR
-     &                      vbar_stokes(i  ,j)+                         &
-     &                      vbar_stokes(i-1,j)+                         &
-#  endif
      &                      vbar(i-1,j,krhs))
           tl_VFx(i,j)=0.25_r8*                                          &
      &                ((tl_DUon(i,j)+tl_DUon(i,j-1))*                   &
      &                 (vbar(i  ,j,krhs)+                               &
-#  ifdef WEC_MELLOR
-     &                  vbar_stokes(i  ,j)+                             &
-     &                  vbar_stokes(i-1,j)+                             &
-#  endif
      &                  vbar(i-1,j,krhs))+                              &
      &                 (DUon(i,j)+DUon(i,j-1))*                         &
      &                 (tl_vbar(i  ,j,krhs)+                            &
-#  ifdef WEC_MELLOR
-     &                  tl_vbar_stokes(i  ,j)+                          &
-     &                  tl_vbar_stokes(i-1,j)+                          &
-#  endif
      &                  tl_vbar(i-1,j,krhs)))-                          &
 #  ifdef TL_IOMS
      &                VFx(i,j)
@@ -1829,25 +1790,13 @@
         DO i=Istr,Iend
           VFe(i,j)=0.25_r8*(DVom(i,j)+DVom(i,j+1))*                     &
      &                     (vbar(i,j  ,krhs)+                           &
-#  ifdef WEC_MELLOR
-     &                      vbar_stokes(i,j  )+                         &
-     &                      vbar_stokes(i,j+1)+                         &
-#  endif
      &                      vbar(i,j+1,krhs))
           tl_VFe(i,j)=0.25_r8*                                          &
      &                ((tl_DVom(i,j)+tl_DVom(i,j+1))*                   &
      &                 (vbar(i,j  ,krhs)+                               &
-#  ifdef WEC_MELLOR
-     &                  vbar_stokes(i,j  )+                             &
-     &                  vbar_stokes(i,j+1)+                             &
-#  endif
      &                  vbar(i,j+1,krhs))+                              &
      &                 (DVom(i,j)+DVom(i,j+1))*                         &
      &                 (tl_vbar(i,j  ,krhs)+                            &
-#  ifdef WEC_MELLOR
-     &                  tl_vbar_stokes(i,j  )+                          &
-     &                  tl_vbar_stokes(i,j+1)+                          &
-#  endif
      &                  tl_vbar(i,j+1,krhs)))-                          &
 #  ifdef TL_IOMS
      &                VFe(i,j)
@@ -1856,21 +1805,13 @@
       END DO
 # else
 !
-!  Fourth-order, centered differences advection.
+!  Fourth-order, centered differences advection fluxes.
 !
       DO j=Jstr,Jend
         DO i=IstrUm1,Iendp1
           grad (i,j)=ubar(i-1,j,krhs)-2.0_r8*ubar(i,j,krhs)+            &
-#  ifdef WEC_MELLOR
-     &               ubar_stokes(i-1,j)-2.0_r8*ubar_stokes(i,j)+        &
-     &               ubar_stokes(i+1,j)+                                &
-#  endif
      &               ubar(i+1,j,krhs)
           tl_grad(i,j)=tl_ubar(i-1,j,krhs)-2.0_r8*tl_ubar(i,j,krhs)+    &
-#  ifdef WEC_MELLOR
-     &                 tl_ubar_stokes(i-1,j)-2.0_r8*tl_ubar_stokes(i,j)+&
-     &                 tl_ubar_stokes(i+1,j)+                           &
-#  endif
      &                 tl_ubar(i+1,j,krhs)
           Dgrad(i,j)=DUon(i-1,j)-2.0_r8*DUon(i,j)+DUon(i+1,j)
           tl_Dgrad(i,j)=tl_DUon(i-1,j)-2.0_r8*tl_DUon(i,j)+             &
@@ -1902,29 +1843,17 @@
       DO j=Jstr,Jend
         DO i=IstrU-1,Iend
           UFx(i,j)=0.25_r8*(ubar(i  ,j,krhs)+                           &
-#  ifdef WEC_MELLOR
-     &                      ubar_stokes(i  ,j)+                         &
-     &                      ubar_stokes(i+1,j)+                         &
-#  endif
      &                      ubar(i+1,j,krhs)-                           &
      &                      cff*(grad (i,j)+grad (i+1,j)))*             &
      &                     (DUon(i,j)+DUon(i+1,j)-                      &
      &                      cff*(Dgrad(i,j)+Dgrad(i+1,j)))
           tl_UFx(i,j)=0.25_r8*                                          &
      &                ((ubar(i  ,j,krhs)+                               &
-#  ifdef WEC_MELLOR
-     &                  ubar_stokes(i  ,j)+                             &
-     &                  ubar_stokes(i+1,j)+                             &
-#  endif
      &                  ubar(i+1,j,krhs)-                               &
      &                  cff*(grad (i,j)+grad (i+1,j)))*                 &
      &                 (tl_DUon(i,j)+tl_DUon(i+1,j)-                    &
      &                  cff*(tl_Dgrad(i,j)+tl_Dgrad(i+1,j)))+           &
      &                 (tl_ubar(i  ,j,krhs)+                            &
-#  ifdef WEC_MELLOR
-     &                  tl_ubar_stokes(i  ,j)+                          &
-     &                  tl_ubar_stokes(i+1,j)+                          &
-#  endif
      &                  tl_ubar(i+1,j,krhs)-                            &
      &                  cff*(tl_grad (i,j)+tl_grad (i+1,j)))*           &
      &                 (DUon(i,j)+DUon(i+1,j)-                          &
@@ -1938,16 +1867,8 @@
       DO j=Jstrm1,Jendp1
         DO i=IstrU,Iend
           grad(i,j)=ubar(i,j-1,krhs)-2.0_r8*ubar(i,j,krhs)+             &
-#  ifdef WEC_MELLOR
-     &              ubar_stokes(i,j-1)-2.0_r8*ubar_stokes(i,j)+         &
-     &              ubar_stokes(i,j+1)+                                 &
-#  endif
      &              ubar(i,j+1,krhs)
           tl_grad(i,j)=tl_ubar(i,j-1,krhs)-2.0_r8*tl_ubar(i,j,krhs)+    &
-#  ifdef WEC_MELLOR
-     &                 tl_ubar_stokes(i,j-1)-2.0_r8*tl_ubar_stokes(i,j)+&
-     &                 tl_ubar_stokes(i,j+1)+                           &
-#  endif
      &                 tl_ubar(i,j+1,krhs)
         END DO
       END DO
@@ -1979,29 +1900,17 @@
       DO j=Jstr,Jend+1
         DO i=IstrU,Iend
           UFe(i,j)=0.25_r8*(ubar(i,j  ,krhs)+                           &
-#  ifdef WEC_MELLOR
-     &                      ubar_stokes(i,j  )+                         &
-     &                      ubar_stokes(i,j-1)+                         &
-#  endif
      &                      ubar(i,j-1,krhs)-                           &
      &                      cff*(grad (i,j)+grad (i,j-1)))*             &
      &                     (DVom(i,j)+DVom(i-1,j)-                      &
      &                      cff*(Dgrad(i,j)+Dgrad(i-1,j)))
           tl_UFe(i,j)=0.25_r8*                                          &
      &                ((tl_ubar(i,j  ,krhs)+                            &
-#  ifdef WEC_MELLOR
-     &                  tl_ubar_stokes(i,j  )+                          &
-     &                  tl_ubar_stokes(i,j-1)+                          &
-#  endif
      &                  tl_ubar(i,j-1,krhs)-                            &
      &                  cff*(tl_grad (i,j)+tl_grad (i,j-1)))*           &
      &                 (DVom(i,j)+DVom(i-1,j)-                          &
      &                  cff*(Dgrad(i,j)+Dgrad(i-1,j)))+                 &
      &                 (ubar(i,j  ,krhs)+                               &
-#  ifdef WEC_MELLOR
-     &                  ubar_stokes(i,j  )+                             &
-     &                  ubar_stokes(i,j-1)+                             &
-#  endif
      &                  ubar(i,j-1,krhs)-                               &
      &                  cff*(grad (i,j)+grad (i,j-1)))*                 &
      &                 (tl_DVom(i,j)+tl_DVom(i-1,j)-                    &
@@ -2015,16 +1924,8 @@
       DO j=JstrV,Jend
         DO i=Istrm1,Iendp1
           grad(i,j)=vbar(i-1,j,krhs)-2.0_r8*vbar(i,j,krhs)+             &
-#  ifdef WEC_MELLOR
-     &              vbar_stokes(i-1,j)-2.0_r8*vbar_stokes(i,j)+         &
-     &              vbar_stokes(i+1,j)+                                 &
-#  endif
      &              vbar(i+1,j,krhs)
           tl_grad(i,j)=tl_vbar(i-1,j,krhs)-2.0_r8*tl_vbar(i,j,krhs)+    &
-#  ifdef WEC_MELLOR
-     &                 tl_vbar_stokes(i-1,j)-2.0_r8*tl_vbar_stokes(i,j)+&
-     &                 tl_vbar_stokes(i+1,j)+                           &
-#  endif
      &                 tl_vbar(i+1,j,krhs)
         END DO
       END DO
@@ -2056,29 +1957,17 @@
       DO j=JstrV,Jend
         DO i=Istr,Iend+1
           VFx(i,j)=0.25_r8*(vbar(i  ,j,krhs)+                           &
-#  ifdef WEC_MELLOR
-     &                      vbar_stokes(i  ,j)+                         &
-     &                      vbar_stokes(i-1,j)+                         &
-#  endif
      &                      vbar(i-1,j,krhs)-                           &
      &                      cff*(grad (i,j)+grad (i-1,j)))*             &
      &                     (DUon(i,j)+DUon(i,j-1)-                      &
      &                      cff*(Dgrad(i,j)+Dgrad(i,j-1)))
           tl_VFx(i,j)=0.25_r8*                                          &
      &                ((tl_vbar(i  ,j,krhs)+                            &
-#  ifdef WEC_MELLOR
-     &                  tl_vbar_stokes(i  ,j)+                          &
-     &                  tl_vbar_stokes(i-1,j)+                          &
-#  endif
      &                  tl_vbar(i-1,j,krhs)-                            &
      &                  cff*(tl_grad (i,j)+tl_grad (i-1,j)))*           &
      &                 (DUon(i,j)+DUon(i,j-1)-                          &
      &                  cff*(Dgrad(i,j)+Dgrad(i,j-1)))+                 &
      &                 (vbar(i  ,j,krhs)+                               &
-#  ifdef WEC_MELLOR
-     &                  vbar_stokes(i  ,j)+                             &
-     &                  vbar_stokes(i-1,j)+                             &
-#  endif
      &                  vbar(i-1,j,krhs)-                               &
      &                  cff*(grad (i,j)+grad (i-1,j)))*                 &
      &                 (tl_DUon(i,j)+tl_DUon(i,j-1)-                    &
@@ -2092,16 +1981,8 @@
       DO j=JstrVm1,Jendp1
         DO i=Istr,Iend
           grad(i,j)=vbar(i,j-1,krhs)-2.0_r8*vbar(i,j,krhs)+             &
-#  ifdef WEC_MELLOR
-     &              vbar_stokes(i,j-1)-2.0_r8*vbar_stokes(i,j)+         &
-     &              vbar_stokes(i,j+1)+                                 &
-#  endif
      &              vbar(i,j+1,krhs)
           tl_grad(i,j)=tl_vbar(i,j-1,krhs)-2.0_r8*tl_vbar(i,j,krhs)+    &
-#  ifdef WEC_MELLOR
-     &                 tl_vbar_stokes(i,j-1)-2.0_r8*tl_vbar_stokes(i,j)+&
-     &                 tl_vbar_stokes(i,j+1)+                           &
-#  endif
      &                 tl_vbar(i,j+1,krhs)
           Dgrad(i,j)=DVom(i,j-1)-2.0_r8*DVom(i,j)+DVom(i,j+1)
           tl_Dgrad(i,j)=tl_DVom(i,j-1)-2.0_r8*tl_DVom(i,j)+             &
@@ -2133,29 +2014,17 @@
       DO j=JstrV-1,Jend
         DO i=Istr,Iend
           VFe(i,j)=0.25_r8*(vbar(i,j  ,krhs)+                           &
-#  ifdef WEC_MELLOR
-     &                      vbar_stokes(i,j  )+                         &
-     &                      vbar_stokes(i,j+1)+                         &
-#  endif
      &                      vbar(i,j+1,krhs)-                           &
      &                      cff*(grad (i,j)+grad (i,j+1)))*             &
      &                     (DVom(i,j)+DVom(i,j+1)-                      &
      &                      cff*(Dgrad(i,j)+Dgrad(i,j+1)))
           tl_VFe(i,j)=0.25_r8*                                          &
      &                ((tl_vbar(i,j  ,krhs)+                            &
-#  ifdef WEC_MELLOR
-     &                  tl_vbar_stokes(i,j  )+                          &
-     &                  tl_vbar_stokes(i,j+1)+                          &
-#  endif
      &                  tl_vbar(i,j+1,krhs)-                            &
      &                  cff*(tl_grad (i,j)+tl_grad (i,j+1)))*           &
      &                 (DVom(i,j)+DVom(i,j+1)-                          &
      &                  cff*(Dgrad(i,j)+Dgrad(i,j+1)))+                 &
      &                 (vbar(i,j  ,krhs)+                               &
-#  ifdef WEC_MELLOR
-     &                  vbar_stokes(i,j  )+                             &
-     &                  vbar_stokes(i,j+1)+                             &
-#  endif
      &                  vbar(i,j+1,krhs)-                               &
      &                  cff*(grad (i,j)+grad (i,j+1)))*                 &
      &                 (tl_DVom(i,j)+tl_DVom(i,j+1)-                    &
@@ -2166,6 +2035,8 @@
         END DO
       END DO
 # endif
+!
+!  Add advection to RHS terms.
 !
       DO j=Jstr,Jend
         DO i=IstrU,Iend
@@ -2221,43 +2092,19 @@
           cff=0.5_r8*Drhs(i,j)*fomn(i,j)
           tl_cff=0.5_r8*tl_Drhs(i,j)*fomn(i,j)
           UFx(i,j)=cff*(vbar(i,j  ,krhs)+                               &
-# ifdef WEC_MELLOR
-     &                  vbar_stokes(i,j  )+                             &
-     &                  vbar_stokes(i,j+1)+                             &
-# endif
      &                  vbar(i,j+1,krhs))
           tl_UFx(i,j)=tl_cff*(vbar(i,j  ,krhs)+                         &
-# ifdef WEC_MELLOR
-     &                        vbar_stokes(i,j  )+                       &
-     &                        vbar_stokes(i,j+1)+                       &
-# endif
      &                        vbar(i,j+1,krhs))+                        &
      &                cff*(tl_vbar(i,j  ,krhs)+                         &
-# ifdef WEC_MELLOR
-     &                     tl_vbar_stokes(i,j  )+                       &
-     &                     tl_vbar_stokes(i,j+1)+                       &
-# endif
      &                     tl_vbar(i,j+1,krhs))-                        &
 # ifdef TL_IOMS
      &                UFx(i,j)
 # endif
           VFe(i,j)=cff*(ubar(i  ,j,krhs)+                               &
-# ifdef WEC_MELLOR
-     &                  ubar_stokes(i  ,j)+                             &
-     &                  ubar_stokes(i+1,j)+                             &
-# endif
      &                  ubar(i+1,j,krhs))
           tl_VFe(i,j)=tl_cff*(ubar(i  ,j,krhs)+                         &
-# ifdef WEC_MELLOR
-     &                        ubar_stokes(i  ,j)+                       &
-     &                        ubar_stokes(i+1,j)+                       &
-# endif
      &                        ubar(i+1,j,krhs))+                        &
      &                cff*(tl_ubar(i  ,j,krhs)+                         &
-# ifdef WEC_MELLOR
-     &                     tl_ubar_stokes(i  ,j)+                       &
-     &                     tl_ubar_stokes(i+1,j)+                       &
-# endif
      &                     tl_ubar(i+1,j,krhs))-                        &
 # ifdef TL_IOMS
      &                VFe(i,j)
@@ -2290,7 +2137,59 @@
 # endif
         END DO
       END DO
+!
+# ifdef WEC_NOT_YET
+      DO j=JstrV-1,Jend
+        DO i=IstrU-1,Iend
+          cff=0.5_r8*Drhs(i,j)*fomn(i,j)
+          tl_cff=0.5_r8*tl_Drhs(i,j)*fomn(i,j)
+          UFx(i,j)=cff*(vbar_stokes(i,j  )+                             &
+     &                  vbar_stokes(i,j+1))
+          tl_UFx(i,j)=tl_cff*(vbar_stokes(i,j  )+                       &
+     &                        vbar_stokes(i,j+1))+                      &
+     &                cff*(tl_vbar_stokes(i,j  )+                       &
+     &                     tl_vbar_stokes(i,j+1))-                      &
+#  ifdef TL_IOMS
+     &                UFx(i,j)
+#  endif
+          VFe(i,j)=cff*(ubar_stokes(i  ,j)+                             &
+     &                  ubar_stokes(i+1,j))
+          tl_VFe(i,j)=tl_cff*(ubar_stokes(i  ,j)+                       &
+     &                        ubar_stokes(i+1,j))+                      &
+     &                cff*(tl_ubar_stokes(i  ,j)+                       &
+     &                     tl_ubar_stokes(i+1,j))-                      &
+#  ifdef TL_IOMS
+     &                VFe(i,j)
+#  endif
+        END DO
+      END DO
+      DO j=Jstr,Jend
+        DO i=IstrU,Iend
+          fac1=0.5_r8*(UFx(i,j)+UFx(i-1,j))
+          tl_fac1=0.5_r8*(tl_UFx(i,j)+tl_UFx(i-1,j))
+!^        rhs_ubar(i,j)=rhs_ubar(i,j)+fac1
+!^
+          tl_rhs_ubar(i,j)=tl_rhs_ubar(i,j)+tl_fac1
+#  if defined DIAGNOSTICS_UV
+!!        DiaU2rhs(i,j,M2fsco)=fac1
+#  endif
+        END DO
+      END DO
+      DO j=JstrV,Jend
+        DO i=Istr,Iend
+          fac1=0.5_r8*(VFe(i,j)+VFe(i,j-1))
+          tl_fac1=0.5_r8*(tl_VFe(i,j)+tl_VFe(i,j-1))
+!^        rhs_vbar(i,j)=rhs_vbar(i,j)-fac1
+!^
+          tl_rhs_vbar(i,j)=tl_rhs_vbar(i,j)-tl_fac1
+#  if defined DIAGNOSTICS_UV
+!!        DiaV2rhs(i,j,M2fsco)=-fac1
+#  endif
+        END DO
+      END DO
+# endif
 #endif
+
 #if defined CURVGRID && defined UV_ADV
 !
 !-----------------------------------------------------------------------
@@ -2300,25 +2199,25 @@
       DO j=JstrV-1,Jend
         DO i=IstrU-1,Iend
           cff1=0.5_r8*(vbar(i,j  ,krhs)+                                &
-# ifdef WEC_MELLOR
+# ifdef WEC_NOT_YET
      &                 vbar_stokes(i,j  )+                              &
      &                 vbar_stokes(i,j+1)+                              &
 # endif
      &                 vbar(i,j+1,krhs))
           tl_cff1=0.5_r8*(tl_vbar(i,j  ,krhs)+                          &
-# ifdef WEC_MELLOR
+# ifdef WEC_NOT_YET
      &                    tl_vbar_stokes(i,j  )+                        &
      &                    tl_vbar_stokes(i,j+1)+                        &
 # endif
      &                    tl_vbar(i,j+1,krhs))
           cff2=0.5_r8*(ubar(i  ,j,krhs)+                                &
-# ifdef WEC_MELLOR
+# ifdef WEC_NOT_YET
      &                 ubar_stokes(i  ,j)+                              &
      &                 ubar_stokes(i+1,j)+                              &
 # endif
      &                 ubar(i+1,j,krhs))
           tl_cff2=0.5_r8*(tl_ubar(i  ,j,krhs)+                          &
-# ifdef WEC_MELLOR
+# ifdef WEC_NOT_YET
      &                    tl_ubar_stokes(i  ,j)+                        &
      &                    tl_ubar_stokes(i+1,j)+                        &
 # endif
@@ -2899,13 +2798,13 @@
 !^        fac=cff1+cff2
 !^
           tl_fac=tl_cff1+tl_cff2
-!^        rhs_ubar(i,j)=rhs_ubar(i,j)+fac
+!^        rhs_ubar(i,j)=rhs_ubar(i,j)-fac
 !^
-          tl_rhs_ubar(i,j)=tl_rhs_ubar(i,j)+tl_fac
+          tl_rhs_ubar(i,j)=tl_rhs_ubar(i,j)-tl_fac
 # if defined DIAGNOSTICS_UV
-!!        DiaU2rhs(i,j,M2hvis)=fac
-!!        DiaU2rhs(i,j,M2xvis)=cff1
-!!        DiaU2rhs(i,j,M2yvis)=cff2
+!!        DiaU2rhs(i,j,M2hvis)=-fac
+!!        DiaU2rhs(i,j,M2xvis)=-cff1
+!!        DiaU2rhs(i,j,M2yvis)=-cff2
 # endif
         END DO
       END DO
@@ -2922,13 +2821,13 @@
 !^        fac=cff1-cff2
 !^
           tl_fac=tl_cff1-tl_cff2
-!^        rhs_vbar(i,j)=rhs_vbar(i,j)+fac
+!^        rhs_vbar(i,j)=rhs_vbar(i,j)-fac
 !^
-          tl_rhs_vbar(i,j)=tl_rhs_vbar(i,j)+tl_fac
+          tl_rhs_vbar(i,j)=tl_rhs_vbar(i,j)-tl_fac
 # if defined DIAGNOSTICS_UV
-!!        DiaV2rhs(i,j,M2hvis)=fac
-!!        DiaV2rhs(i,j,M2xvis)= cff1
-!!        DiaV2rhs(i,j,M2yvis)=-cff2
+!!        DiaV2rhs(i,j,M2hvis)=-fac
+!!        DiaV2rhs(i,j,M2xvis)=-cff1
+!!        DiaV2rhs(i,j,M2yvis)= cff2
 # endif
         END DO
       END DO
@@ -2999,50 +2898,6 @@
           END DO
         END DO
       END IF
-#endif
-#if defined WEC_MELLOR && \
-    (!defined SOLVE3D  || defined DIAGNOSTICS_UV)
-!
-!-----------------------------------------------------------------------
-!  Add in radiation stress terms.
-!-----------------------------------------------------------------------
-!
-      DO j=Jstr,Jend
-        DO i=IstrU,Iend
-!^        cff1=rustr2d(i,j)*om_u(i,j)*on_u(i,j)
-!^
-          tl_cff1=tl_rustr2d(i,j)*om_u(i,j)*on_u(i,j)
-!^        cff2=rulag2d(i,j)
-!^
-          tl_cff2=tl_rulag2d(i,j)
-# ifndef SOLVE3D
-!^        rhs_ubar(i,j)=rhs_ubar(i,j)-cff1-cff2
-!^
-          tl_rhs_ubar(i,j)=tl_rhs_ubar(i,j)-tl_cff1-tl_cff2
-# endif
-# ifdef DIAGNOSTICS_UV
-!!        DiaU2rhs(i,j,M2hrad)=-cff1
-# endif
-        END DO
-      END DO
-      DO j=JstrV,Jend
-        DO i=Istr,Iend
-!^        cff1=rvstr2d(i,j)*om_v(i,j)*on_v(i,j)
-!^
-          tl_cff1=tl_rvstr2d(i,j)*om_v(i,j)*on_v(i,j)
-!^        cff2=rvlag2d(i,j)
-!^
-          tl_cff2=tl_rvlag2d(i,j)
-# ifndef SOLVE3D
-!^        rhs_vbar(i,j)=rhs_vbar(i,j)-cff1-cff2
-!^
-          tl_rhs_vbar(i,j)=tl_rhs_vbar(i,j)-tl_cff1-tl_cff2
-# endif
-# ifdef DIAGNOSTICS_UV
-!!        DiaV2rhs(i,j,M2hrad)=-cff1
-# endif
-        END DO
-      END DO
 #endif
 #ifndef SOLVE3D
 !
@@ -4106,6 +3961,9 @@
 !
 !-----------------------------------------------------------------------
 !  Apply momentum transport point sources (like river runoff), if any.
+!
+!    Dsrc(is) = 0,  flow across grid cell u-face (positive or negative)
+!    Dsrc(is) = 1,  flow across grid cell v-face (positive or negative)
 !-----------------------------------------------------------------------
 !
       IF (LuvSrc(ng)) THEN

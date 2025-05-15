@@ -80,9 +80,6 @@
 # ifdef ADJUST_BOUNDARY
       USE ad_obc_adjust_mod,       ONLY : ad_obc_adjust
 # endif
-# ifdef WEC_MELLOR_NOT_YET
-!!    USE ad_radiation_stress_mod, ONLY : ad_radiation_stress
-# endif
 # ifdef AD_AVERAGES
       USE ad_set_avg_mod,          ONLY : ad_set_avg
 # endif
@@ -697,20 +694,6 @@
                 CALL ad_set_vbc (ng, tile)
               END DO
             END DO
-
-# ifdef WEC_MELLOR_NOT_YET
-!
-!-----------------------------------------------------------------------
-!  Compute radiation stress terms.
-!-----------------------------------------------------------------------
-!
-            DO ig=1,GridsInLayer(nl)
-              ng=GridNumber(ig,nl)
-              DO tile=last_tile(ng),first_tile(ng),-1
-                CALL ad_radiation_stress (ng, tile)
-              END DO
-            END DO
-# endif
 
 # if defined WAV_COUPLING_NOT_YET && defined MCT_LIB
 !

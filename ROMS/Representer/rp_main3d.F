@@ -90,9 +90,6 @@
 # endif
       USE rp_omega_mod,            ONLY : rp_omega
       USE rp_post_initial_mod,     ONLY : rp_post_initial
-# ifdef WEC_MELLOR_NOT_YET
-!!    USE rp_radiation_stress_mod, ONLY : rp_radiation_stress
-# endif
 # ifndef TS_FIXED
       USE rp_rho_eos_mod,          ONLY : rp_rho_eos
 # endif
@@ -331,20 +328,6 @@
                   CALL ocn2wav_coupling (ng, tile)
                 END DO
               END IF
-            END DO
-# endif
-
-# ifdef WEC_MELLOR_NOT_YET
-!
-!-----------------------------------------------------------------------
-!  Compute radiation stress terms.
-!-----------------------------------------------------------------------
-!
-            DO ig=1,GridsInLayer(nl)
-              ng=GridNumber(ig,nl)
-              DO tile=last_tile(ng),first_tile(ng),-1
-                CALL rp_radiation_stress (ng, tile)
-              END DO
             END DO
 # endif
 !

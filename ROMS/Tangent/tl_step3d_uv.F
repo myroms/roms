@@ -128,7 +128,7 @@
      &                        OCEAN(ng) % tl_v,                         &
      &                        OCEAN(ng) % tl_ubar,                      &
      &                        OCEAN(ng) % tl_vbar,                      &
-# ifdef WEC_MELLOR
+# ifdef WEC_NOT_YET
      &                        OCEAN(ng) % ubar_stokes,                  &
      &                        OCEAN(ng) % tl_ubar_stokes,               &
      &                        OCEAN(ng) % vbar_stokes,                  &
@@ -190,7 +190,7 @@
      &                              u, tl_u,                            &
      &                              v, tl_v,                            &
      &                              tl_ubar, tl_vbar,                   &
-# ifdef WEC_MELLOR
+# ifdef WEC_NOT_YET
      &                              ubar_stokes, tl_ubar_stokes,        &
      &                              vbar_stokes, tl_vbar_stokes,        &
      &                              u_stokes, tl_u_stokes,              &
@@ -240,7 +240,7 @@
       real(r8), intent(in) :: DV_avg2(LBi:,LBj:)
       real(r8), intent(in) :: u(LBi:,LBj:,:,:)
       real(r8), intent(in) :: v(LBi:,LBj:,:,:)
-#  ifdef WEC_MELLOR
+#  ifdef WEC_NOT_YET
       real(r8), intent(in) :: u_stokes(LBi:,LBj:,:)
       real(r8), intent(in) :: v_stokes(LBi:,LBj:,:)
       real(r8), intent(in) :: ubar_stokes(LBi:,LBj:)
@@ -259,10 +259,6 @@
       real(r8), intent(in) :: tl_DV_avg2(LBi:,LBj:)
       real(r8), intent(in) :: tl_ru(LBi:,LBj:,0:,:)
       real(r8), intent(in) :: tl_rv(LBi:,LBj:,0:,:)
-#  ifdef WEC_MELLOR
-      real(r8), intent(in) :: tl_ubar_stokes(LBi:,LBj:)
-      real(r8), intent(in) :: tl_vbar_stokes(LBi:,LBj:)
-#  endif
 #  ifdef OMEGA_IMPLICIT
       real(r8), intent(in) :: tl_Wi(LBi:,LBj:,0:)
 #  endif
@@ -280,9 +276,11 @@
       real(r8), intent(inout) :: Hvom(LBi:,LBj:,:)
       real(r8), intent(inout) :: tl_u(LBi:,LBj:,:,:)
       real(r8), intent(inout) :: tl_v(LBi:,LBj:,:,:)
-#  ifdef WEC_MELLOR
+#  ifdef WEC_NOT_YET
       real(r8), intent(inout) :: tl_u_stokes(LBi:,LBj:,:)
       real(r8), intent(inout) :: tl_v_stokes(LBi:,LBj:,:)
+      real(r8), intent(inout) :: tl_ubar_stokes(LBi:,LBj:)
+      real(r8), intent(inout) :: tl_vbar_stokes(LBi:,LBj:)
 #  endif
       real(r8), intent(out) :: tl_ubar(LBi:,LBj:,:)
       real(r8), intent(out) :: tl_vbar(LBi:,LBj:,:)
@@ -317,7 +315,7 @@
       real(r8), intent(in) :: DV_avg2(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(in) :: v(LBi:UBi,LBj:UBj,N(ng),2)
-#  ifdef WEC_MELLOR
+#  ifdef WEC_NOT_YET
       real(r8), intent(in) :: u_stokes(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(in) :: v_stokes(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(in) :: ubar_stokes(LBi:UBi,LBj:UBj)
@@ -336,10 +334,6 @@
       real(r8), intent(in) :: tl_DV_avg2(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: tl_ru(LBi:UBi,LBj:UBj,0:N(ng),2)
       real(r8), intent(in) :: tl_rv(LBi:UBi,LBj:UBj,0:N(ng),2)
-#  ifdef WEC_MELLOR
-      real(r8), intent(in) :: tl_ubar_stokes(LBi:UBi,LBj:UBj)
-      real(r8), intent(in) :: tl_vbar_stokes(LBi:UBi,LBj:UBj)
-#  endif
 #  ifdef OMEGA_IMPLICIT
       real(r8), intent(in) :: tl_Wi(LBi:UBi,LBj:UBj,0:N(ng))
 #  endif
@@ -357,7 +351,9 @@
       real(r8), intent(inout) :: Hvom(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(inout) :: tl_u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(inout) :: tl_v(LBi:UBi,LBj:UBj,N(ng),2)
-#  ifdef WEC_MELLOR
+#  ifdef WEC_NOT_YET
+      real(r8), intent(inout) :: tl_u_stokes(LBi:UBi,LBj:UBj,N(ng))
+      real(r8), intent(inout) :: tl_v_stokes(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(inout) :: tl_u_stokes(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(inout) :: tl_v_stokes(LBi:UBi,LBj:UBj,N(ng))
 #  endif
@@ -376,7 +372,7 @@
 !
       real(r8), dimension(IminS:ImaxS) :: CF1
       real(r8), dimension(IminS:ImaxS) :: FC1
-# ifdef WEC_MELLOR
+# ifdef WEC_NOT_YET
       real(r8), dimension(IminS:ImaxS) :: CFs1
       real(r8), dimension(IminS:ImaxS) :: DCs1
 # endif
@@ -391,7 +387,7 @@
       real(r8), dimension(IminS:ImaxS,0:N(ng)) :: FCmax
       real(r8), dimension(IminS:ImaxS,0:N(ng)) :: WK
 # endif
-# ifdef WEC_MELLOR
+# ifdef WEC_NOT_YET
       real(r8), dimension(IminS:ImaxS,0:N(ng)) :: CFs
       real(r8), dimension(IminS:ImaxS,0:N(ng)) :: DCs
 # endif
@@ -411,7 +407,7 @@
       real(r8), dimension(IminS:ImaxS,0:N(ng)) :: tl_FCmax
       real(r8), dimension(IminS:ImaxS,0:N(ng)) :: tl_WK
 # endif
-# ifdef WEC_MELLOR
+# ifdef WEC_NOT_YET
       real(r8), dimension(IminS:ImaxS,0:N(ng)) :: tl_CFs
       real(r8), dimension(IminS:ImaxS,0:N(ng)) :: tl_DCs
 # endif
@@ -867,7 +863,7 @@
           DC(i,0)=u(i,j,1,nnew)*Hzk(i,1)
           tl_DC(i,0)=tl_u(i,j,1,nnew)*Hzk(i,1)+                         &
      &               u(i,j,1,nnew)*tl_Hzk(i,1)
-# ifdef WEC_MELLOR
+# ifdef WEC_NOT_YET
           DCs(i,0)=u_stokes(i,j,1)*Hzk(i,1)
           tl_DCs(i,0)=tl_u_stokes(i,j,1)*Hzk(i,1)+                      &
      &                u_stokes(i,j,1)*tl_Hzk(i,1)
@@ -888,9 +884,6 @@
 !!        Dwrk(i,M2yadv)=DiaU3wrk(i,j,1,M3yadv)*Hzk(i,1)
 !!        Dwrk(i,M2hadv)=DiaU3wrk(i,j,1,M3hadv)*Hzk(i,1)
 #  endif
-#  ifdef WEC_MELLOR
-!!        Dwrk(i,M2hrad)=DiaU3wrk(i,j,1,M3hrad)*Hzk(i,1)
-#  endif
 # endif
         END DO
         DO k=2,N(ng)
@@ -901,7 +894,7 @@
             tl_DC(i,0)=tl_DC(i,0)+                                      &
      &                 tl_u(i,j,k,nnew)*Hzk(i,k)+                       &
      &                 u(i,j,k,nnew)*tl_Hzk(i,k)
-# ifdef WEC_MELLOR
+# ifdef WEC_NOT_YET
             DCs(i,0)=DCs(i,0)+u_stokes(i,j,k)*Hzk(i,k)
             tl_DCs(i,0)=tl_DCs(i,0)+                                    &
      &                  tl_u_stokes(i,j,k)*Hzk(i,k)+                    &
@@ -932,10 +925,6 @@
 !!          Dwrk(i,M2hadv)=Dwrk(i,M2hadv)+                              &
 !!   &                     DiaU3wrk(i,j,k,M3hadv)*Hzk(i,k)
 #  endif
-#  ifdef WEC_MELLOR
-!!          Dwrk(i,M2hrad)=Dwrk(i,M2hrad)+                              &
-!!   &                     DiaU3wrk(i,j,k,M3hrad)*Hzk(i,k)
-#  endif
 # endif
           END DO
         END DO
@@ -946,7 +935,7 @@
           DC(i,0)=(DC(i,0)*on_u(i,j)-DU_avg1(i,j))*cff1      ! recursive
           tl_DC(i,0)=(tl_DC(i,0)*on_u(i,j)-tl_DU_avg1(i,j))*cff1+       &
      &               (DC1(i,0)*on_u(i,j)-DU_avg1(i,j))*tl_cff1
-# ifdef WEC_MELLOR
+# ifdef WEC_NOT_YET
           DCs1(i)=DCs(i,0)                                ! intermediate
           cff2=1.0_r8/CF(i,0)
           tl_cff2=-cff2*cff2*tl_CF(i,0)
@@ -982,7 +971,7 @@
 !^
             tl_u(i,j,k,nnew)=tl_u(i,j,k,nnew)*umask_wet(i,j)
 # endif
-# ifdef WEC_MELLOR
+# ifdef WEC_NOT_YET
 !^          u_stokes(i,j,k)=u_stokes(i,j,k)-DCs(i,0)
 !^
             tl_u_stokes(i,j,k)=tl_u_stokes(i,j,k)-tl_DCs(i,0)
@@ -1021,10 +1010,6 @@
 !!   &                             Dwrk(i,M2yadv)
 !!          DiaU3wrk(i,j,k,M3hadv)=DiaU3wrk(i,j,k,M3hadv)-              &
 !!   &                             Dwrk(i,M2hadv)
-#  endif
-#  ifdef WEC_MELLOR
-!!          DiaU3wrk(i,j,k,M3hrad)=DiaU3wrk(i,j,k,M3hrad)-              &
-!!   &                             Dwrk(i,M2hrad)
 #  endif
 # endif
           END DO
@@ -1486,7 +1471,7 @@
             DC(i,0)=v(i,j,1,nnew)*Hzk(i,1)
             tl_DC(i,0)=tl_v(i,j,1,nnew)*Hzk(i,1)+                       &
      &                 v(i,j,1,nnew)*tl_Hzk(i,1)
-# ifdef WEC_MELLOR
+# ifdef WEC_NOT_YET
             DCs(i,0)=v_stokes(i,j,1)*Hzk(i,1)
             tl_DCs(i,0)=tl_v_stokes(i,j,1)*Hzk(i,1)+                    &
      &                  v_stokes(i,j,1)*tl_Hzk(i,1)
@@ -1507,9 +1492,6 @@
 !!          Dwrk(i,M2yadv)=DiaV3wrk(i,j,1,M3yadv)*Hzk(i,1)
 !!          Dwrk(i,M2hadv)=DiaV3wrk(i,j,1,M3hadv)*Hzk(i,1)
 #  endif
-#  ifdef WEC_MELLOR
-!!          Dwrk(i,M2hrad)=DiaV3wrk(i,j,1,M3hrad)*Hzk(i,1)
-#  endif
 # endif
           END DO
           DO k=2,N(ng)
@@ -1520,7 +1502,7 @@
               tl_DC(i,0)=tl_DC(i,0)+                                    &
      &                   tl_v(i,j,k,nnew)*Hzk(i,k)+                     &
      &                   v(i,j,k,nnew)*tl_Hzk(i,k)
-# ifdef WEC_MELLOR
+# ifdef WEC_NOT_YET
               DCs(i,0)=DCs(i,0)+v_stokes(i,j,k)*Hzk(i,k)
               tl_DCs(i,0)=tl_DCs(i,0)+                                  &
      &                    tl_v_stokes(i,j,k)*Hzk(i,k)+                  &
@@ -1551,10 +1533,6 @@
 !!            Dwrk(i,M2hadv)=Dwrk(i,M2hadv)+                            &
 !!   &                       DiaV3wrk(i,j,k,M3hadv)*Hzk(i,k)
 #  endif
-#  ifdef WEC_MELLOR
-!!            Dwrk(i,M2hrad)=Dwrk(i,M2hrad)+                            &
-!!   &                       DiaV3wrk(i,j,k,M3hrad)*Hzk(i,k)
-#  endif
 # endif
             END DO
           END DO
@@ -1565,7 +1543,7 @@
             DC(i,0)=(DC(i,0)*om_v(i,j)-DV_avg1(i,j))*cff1    ! recursive
             tl_DC(i,0)=(tl_DC(i,0)*om_v(i,j)-tl_DV_avg1(i,j))*cff1+     &
      &                 (DC1(i,0)*om_v(i,j)-DV_avg1(i,j))*tl_cff1
-# ifdef WEC_MELLOR
+# ifdef WEC_NOT_YET
             DCs1(i)=DCs(i,0)                              ! intermediate
             cff2=1.0_r8/CF(i,0)
             tl_cff2=-cff2*cff2*tl_CF(i,0)
@@ -1601,7 +1579,7 @@
 !^
               tl_v(i,j,k,nnew)=tl_v(i,j,k,nnew)*vmask_wet(i,j)
 # endif
-# ifdef WEC_MELLOR
+# ifdef WEC_NOT_YET
 !^            v_stokes(i,j,k)=v_stokes(i,j,k)-DCs(i,0)
 !^
               tl_v_stokes(i,j,k)=tl_v_stokes(i,j,k)-tl_DCs(i,0)
@@ -1640,10 +1618,6 @@
 !!   &                               Dwrk(i,M2yadv)
 !!            DiaV3wrk(i,j,k,M3hadv)=DiaV3wrk(i,j,k,M3hadv)-            &
 !!   &                               Dwrk(i,M2hadv)
-#  endif
-#  ifdef WEC_MELLOR
-!!            DiaV3wrk(i,j,k,M3hrad)=DiaV3wrk(i,j,k,M3hrad)-            &
-!!   &                               Dwrk(i,M2hrad)
 #  endif
 # endif
             END DO
@@ -1741,7 +1715,7 @@
           tl_DC(i,0)=0.0_r8
           CF(i,0)=0.0_r8
           tl_CF(i,0)=0.0_r8
-# ifdef WEC_MELLOR
+# ifdef WEC_NOT_YET
           CFs(i,0)=0.0_r8
           tl_CFs(i,0)=0.0_r8
 # endif
@@ -1766,7 +1740,7 @@
             tl_CF(i,0)=tl_CF(i,0)+                                      &
      &                 tl_DC(i,k)*u(i,j,k,nnew)+                        &
      &                 DC(i,k)*tl_u(i,j,k,nnew)
-# ifdef WEC_MELLOR
+# ifdef WEC_NOT_YET
             CFs(i,0)=CFs(i,0)+                                          &
      &               DC(i,k)*u_stokes(i,j,k)
             tl_CFs(i,0)=tl_CFs(i,0)+                                    &
@@ -1777,7 +1751,7 @@
         END DO
         DO i=IstrP,IendT
           DC1(i,0)=DC(i,0)                              ! intermediate
-# ifdef WEC_MELLOR
+# ifdef WEC_NOT_YET
           cff2=DC(i,0)*ubar_stokes(i,j)
           tl_cff2=tl_DC(i,0)*ubar_stokes(i,j)+                          &
      &            DC(i,0)*tl_ubar_stokes(i,j)
@@ -1788,7 +1762,7 @@
           CF(i,0)=DC(i,0)*(CF(i,0)-DU_avg1(i,j))        ! recursive
           tl_CF(i,0)=tl_DC(i,0)*(CF1(i)-DU_avg1(i,j))+                  &
      &               DC(i,0)*(tl_CF(i,0)-tl_DU_avg1(i,j))
-# ifdef WEC_MELLOR
+# ifdef WEC_NOT_YET
           CFs1(i)=CFs(i,0)                              ! intermediate
           CFs(i,0)=DC(i,0)*(CFs(i,0)-cff2)              ! recursive
           tl_CFs(i,0)=tl_DC(i,0)*(CFs1(i)-cff2)+                        &
@@ -1871,7 +1845,7 @@
               tl_u(Istr,j,k,nnew)=tl_u(Istr,j,k,nnew)*                  &
      &                            umask_wet(Istr,j)
 # endif
-# ifdef WEC_MELLOR
+# ifdef WEC_NOT_YET
 !^            u_stokes(Istr,j,k)=u_stokes(Istr,j,k)-CFs(Istr,0)
 !^
               tl_u_stokes(Istr,j,k)=tl_u_stokes(Istr,j,k)-              &
@@ -1916,7 +1890,7 @@
               tl_u(Iend+1,j,k,nnew)=tl_u(Iend+1,j,k,nnew)*              &
      &                              umask_wet(Iend+1,j)
 # endif
-# ifdef WEC_MELLOR
+# ifdef WEC_NOT_YET
 !^            u_stokes(Iend+1,j,k)=u_stokes(Iend+1,j,k)-CFs(Iend+1,0)
 !^
               tl_u_stokes(Iend+1,j,k)=tl_u_stokes(Iend+1,j,k)-          &
@@ -1961,7 +1935,7 @@
                 tl_u(i,j,k,nnew)=tl_u(i,j,k,nnew)*                      &
      &                           umask_wet(i,j)
 # endif
-# ifdef WEC_MELLOR
+# ifdef WEC_NOT_YET
 !^              u_stokes(i,j,k)=u_stokes(i,j,k)-CFs(i,0)
 !^
                 tl_u_stokes(i,j,k)=tl_u_stokes(i,j,k)-                  &
@@ -2006,7 +1980,7 @@
                 tl_u(i,j,k,nnew)=tl_u(i,j,k,nnew)*                      &
      &                           umask_wet(i,j)
 # endif
-# ifdef WEC_MELLOR
+# ifdef WEC_NOT_YET
 !^              u_stokes(i,j,k)=u_stokes(i,j,k)-CFs(i,0)
 !^
                 tl_u_stokes(i,j,k)=tl_u_stokes(i,j,k)-                  &
@@ -2039,7 +2013,7 @@
             tl_Huon(i,j,k)=0.5_r8*(tl_Huon(i,j,k)+                      &
      &                             tl_u(i,j,k,nnew)*DC(i,k)+            &
      &                             u(i,j,k,nnew)*tl_DC(i,k))
-# ifdef WEC_MELLOR
+# ifdef WEC_NOT_YET
             Huon(i,j,k)=Huon(i,j,k)+0.5_r8*u_stokes(i,j,k)*DC(i,k)
             tl_Huon(i,j,k)=tl_Huon(i,j,k)+                              &
      &                     0.5_r8*(tl_u_stokes(i,j,k)*DC(i,k)+          &
@@ -2075,7 +2049,7 @@
             tl_DC(i,0)=0.0_r8
             CF(i,0)=0.0_r8
             tl_CF(i,0)=0.0_r8
-# ifdef WEC_MELLOR
+# ifdef WEC_NOT_YET
             CFs(i,0)=0.0_r8
             tl_CFs(i,0)=0.0_r8
 # endif
@@ -2100,7 +2074,7 @@
               tl_CF(i,0)=tl_CF(i,0)+                                    &
      &                   tl_DC(i,k)*v(i,j,k,nnew)+                      &
      &                   DC(i,k)*tl_v(i,j,k,nnew)
-# ifdef WEC_MELLOR
+# ifdef WEC_NOT_YET
               CFs(i,0)=CFs(i,0)+                                        &
      &                 DC(i,k)*v_stokes(i,j,k)
               tl_CFs(i,0)=tl_CFs(i,0)+                                  &
@@ -2111,7 +2085,7 @@
           END DO
           DO i=IstrT,IendT
             DC1(i,0)=DC(i,0)                            ! intermediate
-# ifdef WEC_MELLOR
+# ifdef WEC_NOT_YET
             cff2=DC(i,0)*vbar_stokes(i,j)
             tl_cff2=tl_DC(i,0)*vbar_stokes(i,j)+                        &
      &              DC(i,0)*tl_vbar_stokes(i,j)
@@ -2122,7 +2096,7 @@
             CF(i,0)=DC(i,0)*(CF(i,0)-DV_avg1(i,j))      ! recursive
             tl_CF(i,0)=tl_DC(i,0)*(CF1(i)-DV_avg1(i,j))+                &
      &                 DC(i,0)*(tl_CF(i,0)-tl_DV_avg1(i,j))
-# ifdef WEC_MELLOR
+# ifdef WEC_NOT_YET
             CFs1(i)=CFs(i,0)
             CFs(i,0)=DC(i,0)*(CFs(i,0)-cff2)            ! recursive
             tl_CFs(i,0)=tl_DC(i,0)*(CFs1(i)-cff2)+                      &
@@ -2208,7 +2182,7 @@
                 tl_v(Istr-1,j,k,nnew)=tl_v(Istr-1,j,k,nnew)*            &
      &                                vmask_wet(Istr-1,j)
 # endif
-# ifdef WEC_MELLOR
+# ifdef WEC_NOT_YET
 !^              v_stokes(Istr-1,j,k)=v_stokes(Istr-1,j,k)-              &
 !^   &                               CFs(Istr-1,0)
 !^
@@ -2254,7 +2228,7 @@
                 tl_v(Iend+1,j,k,nnew)=tl_v(Iend+1,j,k,nnew)*            &
      &                                vmask_wet(Iend+1,j)
 # endif
-# ifdef WEC_MELLOR
+# ifdef WEC_NOT_YET
 !^              v_stokes(Iend+1,j,k)=v_stokes(Iend+1,j,k)-              &
 !^   &                               CFs(Iend+1,0)
 !^
@@ -2301,7 +2275,7 @@
                   tl_v(i,j,k,nnew)=tl_v(i,j,k,nnew)*                    &
      &                             vmask_wet(i,j)
 # endif
-# ifdef WEC_MELLOR
+# ifdef WEC_NOT_YET
 !^                v_stokes(i,j,k)=v_stokes(i,j,k)-CFs(i,0)
 !^
                   tl_v_stokes(i,j,k)=tl_v_stokes(i,j,k)-                &
@@ -2347,7 +2321,7 @@
                   tl_v(i,j,k,nnew)=tl_v(i,j,k,nnew)*                    &
      &                             vmask_wet(i,j)
 # endif
-# ifdef WEC_MELLOR
+# ifdef WEC_NOT_YET
 !^                v_stokes(i,j,k)=v_stokes(i,j,k)-CFs(i,0)
 !^
                   tl_v_stokes(i,j,k)=tl_v_stokes(i,j,k)-                &
@@ -2380,7 +2354,7 @@
               tl_Hvom(i,j,k)=0.5_r8*(tl_Hvom(i,j,k)+                    &
      &                               tl_v(i,j,k,nnew)*DC(i,k)+          &
      &                               v(i,j,k,nnew)*tl_DC(i,k))
-# ifdef WEC_MELLOR
+# ifdef WEC_NOT_YET
               Hvom(i,j,k)=Hvom(i,j,k)+0.5_r8*v_stokes(i,j,k)*DC(i,k)
               tl_Hvom(i,j,k)=tl_Hvom(i,j,k)+                            &
      &                       0.5_r8*(tl_v_stokes(i,j,k)*DC(i,k)+        &

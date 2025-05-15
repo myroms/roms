@@ -56,9 +56,6 @@
 # ifdef ADJUST_BOUNDARY
       USE rp_obc_adjust_mod,       ONLY : rp_obc_adjust
 # endif
-# ifdef WEC_MELLOR_NOT_YET
-!!    USE rp_radiation_stress_mod, ONLY : rp_radiation_stress
-# endif
 # if defined SSH_TIDES_NOT_YET || defined UV_TIDES_NOT_YET
 !!    USE rp_set_tides_mod,        ONLY : rp_set_tides
 # endif
@@ -257,6 +254,38 @@
               END IF
             END DO
 # endif
+
+# if defined WAV_COUPLING_NOT_YET && defined MCT_LIB
+!
+!-----------------------------------------------------------------------
+!  Couple to waves model every CoupleSteps(Iwaves) timesteps: get
+!  waves/sea fluxes.
+!-----------------------------------------------------------------------
+!
+        DO ng=1,Ngrids
+          IF ((iic(ng).ne.ntstart(ng)).and.                             &
+     &        MOD(iic(ng)-1,CoupleSteps(Iwaves,ng)).eq.0) THEN
+            DO tile=first_tile(ng),last_tile(ng),+1
+              CALL ocn2wav_coupling (ng, tile)
+            END DO
+!$OMP BARRIER
+          END IF
+        END DO
+# endif
+!
+!-----------------------------------------------------------------------
+!  Set vertical boundary conditions. Process tidal forcing.
+!-----------------------------------------------------------------------
+!
+        DO ng=1,Ngrids
+          DO tile=first_tile(ng),last_tile(ng),+1
+            CALL rp_set_vbc (ng, tile)
+# if defined SSH_TIDES_NOT_YET || defined UV_TIDES_NOT_YET
+            CALL rp_set_tides (ng, tile)
+# endif
+          END DO
+!$OMP BARRIER
+        END DO
 
 # ifdef ADJUST_BOUNDARY
 !
