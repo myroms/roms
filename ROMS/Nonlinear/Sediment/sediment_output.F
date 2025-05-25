@@ -1016,6 +1016,8 @@
 !
       real(dp) :: scale
 !
+      character (len=256) :: ncname
+
       character (len=*), parameter :: MyFile =                          &
      &  __FILE__//", sediment_wrt_nf90"
 !
@@ -1027,6 +1029,7 @@
 !-----------------------------------------------------------------------
 !
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+      ncname=S(ng)%name
 !
 !  Set grid type factor to write full (gfactor=1) fields or water
 !  points (gfactor=-1) fields only.
@@ -1065,7 +1068,8 @@
      &                       SetFillVal = .FALSE.)
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
             IF (Master) THEN
-              WRITE (stdout,10) TRIM(Vname(1,idbath)), S(ng)%Rindex
+              WRITE (stdout,10) TRIM(Vname(1,idbath)), S(ng)%Rindex,    &
+     &                          TRIM(ncname)
             END IF
             exit_flag=3
             ioerror=status
@@ -1106,7 +1110,8 @@
           END IF
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
             IF (Master) THEN
-              WRITE (stdout,10) TRIM(Vname(1,idUbld(i))), S(ng)%Rindex
+              WRITE (stdout,10) TRIM(Vname(1,idUbld(i))), S(ng)%Rindex, &
+     &                          TRIM(ncname)
             END IF
             exit_flag=3
             ioerror=status
@@ -1142,7 +1147,8 @@
           END IF
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
             IF (Master) THEN
-              WRITE (stdout,10) TRIM(Vname(1,idVbld(i))), S(ng)%Rindex
+              WRITE (stdout,10) TRIM(Vname(1,idVbld(i))), S(ng)%Rindex, &
+     &                          TRIM(ncname)
             END IF
             exit_flag=3
             ioerror=status
@@ -1170,7 +1176,8 @@
      &                       SEDBED(ng) % bed_frac(:,:,:,i))
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
             IF (Master) THEN
-              WRITE (stdout,10) TRIM(Vname(1,idfrac(i))), S(ng)%Rindex
+              WRITE (stdout,10) TRIM(Vname(1,idfrac(i))), S(ng)%Rindex, &
+     &                          TRIM(ncname)
             END IF
             exit_flag=3
             ioerror=status
@@ -1195,7 +1202,8 @@
      &                       SEDBED(ng) % bed_mass(:,:,:,NOUT,i))
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
             IF (Master) THEN
-              WRITE (stdout,10) TRIM(Vname(1,idBmas(i))), S(ng)%Rindex
+              WRITE (stdout,10) TRIM(Vname(1,idBmas(i))), S(ng)%Rindex, &
+     &                          TRIM(ncname)
             END IF
             exit_flag=3
             ioerror=status
@@ -1220,7 +1228,8 @@
      &                       SEDBED(ng) % bed(:,:,:,i))
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
             IF (Master) THEN
-              WRITE (stdout,10) TRIM(Vname(1,idSbed(i))), S(ng)%Rindex
+              WRITE (stdout,10) TRIM(Vname(1,idSbed(i))), S(ng)%Rindex, &
+     &                          TRIM(ncname)
             END IF
             exit_flag=3
             ioerror=status
@@ -1252,7 +1261,8 @@
      &                       SEDBED(ng) % bottom(:,:,i))
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
             IF (Master) THEN
-              WRITE (stdout,10) TRIM(Vname(1,idBott(i))), S(ng)%Rindex
+              WRITE (stdout,10) TRIM(Vname(1,idBott(i))), S(ng)%Rindex, &
+     &                          TRIM(ncname)
             END IF
             exit_flag=3
             ioerror=status
@@ -1279,7 +1289,8 @@
      &                     SEDBED(ng) % ursell_no)
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idsurs)), S(ng)%Rindex
+            WRITE (stdout,10) TRIM(Vname(1,idsurs)), S(ng)%Rindex,      &
+     &                        TRIM(ncname)
           END IF
           exit_flag=3
           ioerror=status
@@ -1302,7 +1313,8 @@
      &                     SEDBED(ng) % RR_asymwave)
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idsrrw)), S(ng)%Rindex
+            WRITE (stdout,10) TRIM(Vname(1,idsrrw)), S(ng)%Rindex,      &
+     &                        TRIM(ncname)
           END IF
           exit_flag=3
           ioerror=status
@@ -1310,7 +1322,8 @@
         END IF
       END IF
 !
-!  Write out acceleration asymmetry parameter of the asymmetric wave form.
+!  Write out acceleration asymmetry parameter of the asymmetric wave
+!  form.
 !
       IF (VarOut(idsbtw,ng)) THEN
         scale=1.0_dp
@@ -1325,7 +1338,8 @@
      &                     SEDBED(ng) % beta_asymwave)
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idsbtw)), S(ng)%Rindex
+            WRITE (stdout,10) TRIM(Vname(1,idsbtw)), S(ng)%Rindex,      &
+     &                        TRIM(ncname)
           END IF
           exit_flag=3
           ioerror=status
@@ -1348,7 +1362,8 @@
      &                     SEDBED(ng) % ucrest_r)
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idsucr)), S(ng)%Rindex
+            WRITE (stdout,10) TRIM(Vname(1,idsucr)), S(ng)%Rindex,      &
+     &                        TRIM(ncname)
           END IF
           exit_flag=3
           ioerror=status
@@ -1371,7 +1386,8 @@
      &                     SEDBED(ng) % utrough_r)
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idsutr)), S(ng)%Rindex
+            WRITE (stdout,10) TRIM(Vname(1,idsutr)), S(ng)%Rindex,      &
+     &                        TRIM(ncname)
           END IF
           exit_flag=3
           ioerror=status
@@ -1394,7 +1410,8 @@
      &                     SEDBED(ng) % T_crest)
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idstcr)), S(ng)%Rindex
+            WRITE (stdout,10) TRIM(Vname(1,idstcr)), S(ng)%Rindex,      &
+     &                        TRIM(ncname)
           END IF
           exit_flag=3
           ioerror=status
@@ -1417,7 +1434,8 @@
      &                     SEDBED(ng) % T_trough)
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idsttr)), S(ng)%Rindex
+            WRITE (stdout,10) TRIM(Vname(1,idsttr)), S(ng)%Rindex,      &
+     &                        TRIM(ncname)
           END IF
           exit_flag=3
           ioerror=status
@@ -1435,9 +1453,9 @@
 # ifdef STATIONS
 !
 !***********************************************************************
-     SUBROUTINE sediment_wrt_station_nf90 (ng, model, tile,             &
-    &                                      LBi, UBi, LBj, UBj,          &
-    &                                      VarOut, S)
+      SUBROUTINE sediment_wrt_station_nf90 (ng, model, tile,            &
+     &                                      LBi, UBi, LBj, UBj,         &
+     &                                      VarOut, S)
 !***********************************************************************
 !
       USE mod_netcdf
@@ -2363,6 +2381,8 @@
 !
       real(dp) :: scale
 !
+      character (len=256) :: ncname
+
       character (len=*), parameter :: MyFile =                          &
      &  __FILE__//", sediment_wrt_pio"
 !
@@ -2375,6 +2395,7 @@
 !-----------------------------------------------------------------------
 !
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+      ncname=S(ng)%name
 !
 !  Set instantaneous fields.
 !
@@ -2408,7 +2429,8 @@
      &                     SetFillVal = .FALSE.)
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idbath)), S(ng)%Rindex
+            WRITE (stdout,10) TRIM(Vname(1,idbath)), S(ng)%Rindex,      &
+     &                        TRIM(ncname)
           END IF
           exit_flag=3
           ioerror=status
@@ -2454,7 +2476,8 @@
           END IF
           IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
             IF (Master) THEN
-              WRITE (stdout,10) TRIM(Vname(1,idUbld(i))), S(ng)%Rindex
+              WRITE (stdout,10) TRIM(Vname(1,idUbld(i))), S(ng)%Rindex, &
+     &                          TRIM(ncname)
             END IF
             exit_flag=3
             ioerror=status
@@ -2496,7 +2519,8 @@
           END IF
           IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
             IF (Master) THEN
-              WRITE (stdout,10) TRIM(Vname(1,idVbld(i))), S(ng)%Rindex
+              WRITE (stdout,10) TRIM(Vname(1,idVbld(i))), S(ng)%Rindex, &
+     &                          TRIM(ncname)
             END IF
             exit_flag=3
             ioerror=status
@@ -2529,7 +2553,8 @@
      &                       SEDBED(ng) % bed_frac(:,:,:,i))
           IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
             IF (Master) THEN
-              WRITE (stdout,10) TRIM(Vname(1,idfrac(i))), S(ng)%Rindex
+              WRITE (stdout,10) TRIM(Vname(1,idfrac(i))), S(ng)%Rindex, &
+     &                          TRIM(ncname)
             END IF
             exit_flag=3
             ioerror=status
@@ -2559,7 +2584,8 @@
      &                       SEDBED(ng) % bed_mass(:,:,:,NOUT,i))
           IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
             IF (Master) THEN
-              WRITE (stdout,10) TRIM(Vname(1,idBmas(i))), S(ng)%Rindex
+              WRITE (stdout,10) TRIM(Vname(1,idBmas(i))), S(ng)%Rindex, &
+     &                          TRIM(ncname)
             END IF
             exit_flag=3
             ioerror=status
@@ -2589,7 +2615,8 @@
      &                       SEDBED(ng) % bed(:,:,:,i))
           IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
             IF (Master) THEN
-              WRITE (stdout,10) TRIM(Vname(1,idSbed(i))), S(ng)%Rindex
+              WRITE (stdout,10) TRIM(Vname(1,idSbed(i))), S(ng)%Rindex, &
+     &                          TRIM(ncname)
             END IF
             exit_flag=3
             ioerror=status
@@ -2626,7 +2653,8 @@
      &                       SEDBED(ng) % bottom(:,:,i))
           IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
             IF (Master) THEN
-              WRITE (stdout,10) TRIM(Vname(1,idBott(i))), S(ng)%Rindex
+              WRITE (stdout,10) TRIM(Vname(1,idBott(i))), S(ng)%Rindex, &
+     &                          TRIM(ncname)
             END IF
             exit_flag=3
             ioerror=status
@@ -2658,7 +2686,8 @@
      &                     SEDBED(ng) % ursell_no)
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idsurs)), S(ng)%Rindex
+            WRITE (stdout,10) TRIM(Vname(1,idsurs)), S(ng)%Rindex,      &
+     &                        TRIM(ncname)
           END IF
           exit_flag=3
           ioerror=status
@@ -2686,7 +2715,8 @@
      &                     SEDBED(ng) % RR_asymwave)
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idsrrw)), S(ng)%Rindex
+            WRITE (stdout,10) TRIM(Vname(1,idsrrw)), S(ng)%Rindex,      &
+     &                        TRIM(ncname)
           END IF
           exit_flag=3
           ioerror=status
@@ -2714,7 +2744,8 @@
      &                     SEDBED(ng) % beta_asymwave)
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idsbtw)), S(ng)%Rindex
+            WRITE (stdout,10) TRIM(Vname(1,idsbtw)), S(ng)%Rindex,      &
+     &                        TRIM(ncname)
           END IF
           exit_flag=3
           ioerror=status
@@ -2742,7 +2773,8 @@
      &                     SEDBED(ng) % ucrest_r)
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idsucr)), S(ng)%Rindex
+            WRITE (stdout,10) TRIM(Vname(1,idsucr)), S(ng)%Rindex,      &
+     &                        TRIM(ncname)
           END IF
           exit_flag=3
           ioerror=status
@@ -2770,7 +2802,8 @@
      &                     SEDBED(ng) % utrough_r)
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idsutr)), S(ng)%Rindex
+            WRITE (stdout,10) TRIM(Vname(1,idsutr)), S(ng)%Rindex,      &
+     &                        TRIM(ncname)
           END IF
           exit_flag=3
           ioerror=status
@@ -2798,7 +2831,8 @@
      &                     SEDBED(ng) % T_crest)
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idstcr)), S(ng)%Rindex
+            WRITE (stdout,10) TRIM(Vname(1,idstcr)), S(ng)%Rindex,      &
+     &                        TRIM(ncname)
           END IF
           exit_flag=3
           ioerror=status
@@ -2826,7 +2860,8 @@
      &                     SEDBED(ng) % T_trough)
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idsttr)), S(ng)%Rindex
+            WRITE (stdout,10) TRIM(Vname(1,idsttr)), S(ng)%Rindex,      &
+     &                        TRIM(ncname)
           END IF
           exit_flag=3
           ioerror=status
@@ -3313,6 +3348,6 @@
       END SUBROUTINE sediment_wrt_station_pio
 #  endif
 # endif
-#endif
 !
+#endif
       END MODULE sediment_output_mod

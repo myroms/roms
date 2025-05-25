@@ -10,8 +10,8 @@
 !    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
-!  This module defines/writes Waves Effect on Currents variables into  !
-!  output NetCDF files.                                                !
+!  This module defines/writes Bottom Boundary Layer model variables    !
+!  into output NetCDF files.                                           !
 !                                                                      !
 !=======================================================================
 !
@@ -117,7 +117,7 @@
       SourceFile=MyFile
 !
 !-----------------------------------------------------------------------
-!  Define Bottom Boundary Layer (BBFL) and Waves output variables.
+!  Define Bottom Boundary Layer (BBL) and Waves output variables.
 !-----------------------------------------------------------------------
 !
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
@@ -754,7 +754,7 @@
         END DO
 !
 !  Scan variable list from input NetCDF and activate switches for
-!  Waves Effect on Currents variables. Get variable IDs.
+!  Bottom Boundary Layer model variables. Get variable IDs.
 !
         DO i=1,n_var
           IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idtime))) THEN
@@ -1449,7 +1449,7 @@
         END DO
 !
 !  Scan variable list from input NetCDF and activate switches for
-!  Waves Effect on Currents variables. Get variable IDs.
+!  Bottom Boundary Layer model variables. Get variable IDs.
 !
         DO i=1,n_var
           IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idtime))) THEN
@@ -1722,17 +1722,20 @@
 !
       real(r8), allocatable :: wrk2d(:,:,:)
 !
+      character (len=256) :: ncname
+
       character (len=*), parameter :: MyFile =                          &
      &  __FILE__//", bbl_wrt_nf90"
 !
       SourceFile=MyFile
 !
 !-----------------------------------------------------------------------
-!  Write out Waves Effect on Currents output variables into specified
+!  Write out Bottom Boundary Layer model output variables into specified
 !  output NetCDF file.
 !-----------------------------------------------------------------------
 !
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+      ncname=S(ng)%name
 !
 !  Set grid type factor to write full (gfactor=1) fields or water
 !  points (gfactor=-1) fields only.
@@ -1783,7 +1786,8 @@
         END IF
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idWorb)), S(ng)%Rindex
+            WRITE (stdout,10) TRIM(Vname(1,idWorb)), S(ng)%Rindex,      &
+     &                        TRIM(ncname)
           END IF
           exit_flag=3
           ioerror=status
@@ -1822,7 +1826,8 @@
         END IF
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idUbrs)), S(ng)%Rindex
+            WRITE (stdout,10) TRIM(Vname(1,idUbrs)), S(ng)%Rindex,      &
+     &                        TRIM(ncname)
           END IF
           exit_flag=3
           ioerror=status
@@ -1858,7 +1863,8 @@
         END IF
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idVbrs)), S(ng)%Rindex
+            WRITE (stdout,10) TRIM(Vname(1,idVbrs)), S(ng)%Rindex,      &
+     &                        TRIM(ncname)
           END IF
           exit_flag=3
           ioerror=status
@@ -1894,7 +1900,8 @@
         END IF
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idUbws)), S(ng)%Rindex
+            WRITE (stdout,10) TRIM(Vname(1,idUbws)), S(ng)%Rindex,      &
+     &                        TRIM(ncname)
           END IF
           exit_flag=3
           ioerror=status
@@ -1930,7 +1937,8 @@
         END IF
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idVbws)), S(ng)%Rindex
+            WRITE (stdout,10) TRIM(Vname(1,idVbws)), S(ng)%Rindex,      &
+     &                        TRIM(ncname)
           END IF
           exit_flag=3
           ioerror=status
@@ -1966,7 +1974,8 @@
         END IF
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idUbcs)), S(ng)%Rindex
+            WRITE (stdout,10) TRIM(Vname(1,idUbcs)), S(ng)%Rindex,      &
+     &                        TRIM(ncname)
           END IF
           exit_flag=3
           ioerror=status
@@ -2002,7 +2011,8 @@
         END IF
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idVbcs)), S(ng)%Rindex
+            WRITE (stdout,10) TRIM(Vname(1,idVbcs)), S(ng)%Rindex,      &
+     &                        TRIM(ncname)
           END IF
           exit_flag=3
           ioerror=status
@@ -2046,7 +2056,8 @@
         END IF
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idUVwc)), S(ng)%Rindex
+            WRITE (stdout,10) TRIM(Vname(1,idUVwc)), S(ng)%Rindex,      &
+     &                        TRIM(ncname)
           END IF
           exit_flag=3
           ioerror=status
@@ -2082,7 +2093,8 @@
         END IF
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idUbot)), S(ng)%Rindex
+            WRITE (stdout,10) TRIM(Vname(1,idUbot)), S(ng)%Rindex,      &
+     &                        TRIM(ncname)
           END IF
           exit_flag=3
           ioerror=status
@@ -2118,7 +2130,8 @@
         END IF
         IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idVbot)), S(ng)%Rindex
+            WRITE (stdout,10) TRIM(Vname(1,idVbot)), S(ng)%Rindex,      &
+     &                        TRIM(ncname)
           END IF
           exit_flag=3
           ioerror=status
@@ -3081,7 +3094,7 @@
       SourceFile=MyFile
 !
 !-----------------------------------------------------------------------
-!  Define Waves Effect on Currents output variables.
+!  Define Bottom Boundary Layer model output variables.
 !-----------------------------------------------------------------------
 !
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
@@ -3810,7 +3823,7 @@
         END DO
 !
 !  Scan variable list from input NetCDF and activate switches for
-!  Waves Effect on Currents variables. Get variable IDs.
+!  Bottom Boundary Layer model variables. Get variable IDs.
 !
         DO i=1,n_var
           IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idtime))) THEN
@@ -4178,6 +4191,8 @@
 !
       real(r8), allocatable :: wrk2d(:,:)
 !
+      character (len=256) :: ncname
+
       character (len=*), parameter :: MyFile =                          &
      &  __FILE__//", bbl_wrt_pio"
 !
@@ -4190,6 +4205,7 @@
 !-----------------------------------------------------------------------
 !
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+      ncname=S(ng)%name
 !
 !  Set instantaneous fields.
 !
@@ -4237,7 +4253,8 @@
         END IF
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idWorb)), S(ng)%Rindex
+            WRITE (stdout,10) TRIM(Vname(1,idWorb)), S(ng)%Rindex,      &
+     &                        TRIM(ncname)
           END IF
           exit_flag=3
           ioerror=status
@@ -4282,7 +4299,8 @@
         END IF
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idUbrs)), S(ng)%Rindex
+            WRITE (stdout,10) TRIM(Vname(1,idUbrs)), S(ng)%Rindex,      &
+     &                        TRIM(ncname)
           END IF
           exit_flag=3
           ioerror=status
@@ -4324,7 +4342,8 @@
         END IF
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idVbrs)), S(ng)%Rindex
+            WRITE (stdout,10) TRIM(Vname(1,idVbrs)), S(ng)%Rindex,      &
+     &                        TRIM(ncname)
           END IF
           exit_flag=3
           ioerror=status
@@ -4366,7 +4385,8 @@
         END IF
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idUbws)), S(ng)%Rindex
+            WRITE (stdout,10) TRIM(Vname(1,idUbws)), S(ng)%Rindex,      &
+     &                        TRIM(ncname)
           END IF
           exit_flag=3
           ioerror=status
@@ -4408,7 +4428,8 @@
         END IF
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idVbws)), S(ng)%Rindex
+            WRITE (stdout,10) TRIM(Vname(1,idVbws)), S(ng)%Rindex,      &
+     &                        TRIM(ncname)
           END IF
           exit_flag=3
           ioerror=status
@@ -4450,7 +4471,8 @@
         END IF
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idUbcs)), S(ng)%Rindex
+            WRITE (stdout,10) TRIM(Vname(1,idUbcs)), S(ng)%Rindex,      &
+     &                        TRIM(ncname)
           END IF
           exit_flag=3
           ioerror=status
@@ -4492,7 +4514,8 @@
         END IF
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idVbcs)), S(ng)%Rindex
+            WRITE (stdout,10) TRIM(Vname(1,idVbcs)), S(ng)%Rindex,      &
+     &                        TRIM(ncname)
           END IF
           exit_flag=3
           ioerror=status
@@ -4542,7 +4565,8 @@
         END IF
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idUVwc)), S(ng)%Rindex
+            WRITE (stdout,10) TRIM(Vname(1,idUVwc)), S(ng)%Rindex,      &
+     &                        TRIM(ncname)
           END IF
           exit_flag=3
           ioerror=status
@@ -4584,7 +4608,8 @@
         END IF
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idUbot)), S(ng)%Rindex
+            WRITE (stdout,10) TRIM(Vname(1,idUbot)), S(ng)%Rindex,      &
+     &                        TRIM(ncname)
           END IF
           exit_flag=3
           ioerror=status
@@ -4626,7 +4651,8 @@
         END IF
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idVbot)), S(ng)%Rindex
+            WRITE (stdout,10) TRIM(Vname(1,idVbot)), S(ng)%Rindex,      &
+     &                        TRIM(ncname)
           END IF
           exit_flag=3
           ioerror=status
@@ -4668,7 +4694,8 @@
         END IF
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idUbur)), S(ng)%Rindex
+            WRITE (stdout,10) TRIM(Vname(1,idUbur)), S(ng)%Rindex,      &
+     &                        TRIM(ncname)
           END IF
           exit_flag=3
           ioerror=status
@@ -4710,7 +4737,8 @@
         END IF
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idVbvr)), S(ng)%Rindex
+            WRITE (stdout,10) TRIM(Vname(1,idVbvr)), S(ng)%Rindex,      &
+     &                        TRIM(ncname)
           END IF
           exit_flag=3
           ioerror=status
@@ -4742,7 +4770,8 @@
      &                       AVERAGE(ng) % avgUwav)
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
             IF (Master) THEN
-              WRITE (stdout,10) TRIM(Vname(1,idUwav)), S(ng)%Rindex
+              WRITE (stdout,10) TRIM(Vname(1,idUwav)), S(ng)%Rindex,    &
+     &                          TRIM(ncname)
             END IF
             exit_flag=3
             ioerror=status
@@ -4772,7 +4801,8 @@
      &                       AVERAGE(ng) % avgVwav)
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
             IF (Master) THEN
-              WRITE (stdout,10) TRIM(Vname(1,idVwav)), S(ng)%Rindex
+              WRITE (stdout,10) TRIM(Vname(1,idVwav)), S(ng)%Rindex,    &
+     &                          TRIM(ncname)
             END IF
             exit_flag=3
             ioerror=status
@@ -4818,7 +4848,8 @@
         END IF
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idWamp)), S(ng)%Rindex
+            WRITE (stdout,10) TRIM(Vname(1,idWamp)), S(ng)%Rindex,      &
+     &                        TRIM(ncname)
           END IF
           exit_flag=3
           ioerror=status
@@ -4850,7 +4881,8 @@
 #   endif
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
             IF (Master) THEN
-              WRITE (stdout,10) TRIM(Vname(1,idWam2)), AVG(ng)%Rindex
+              WRITE (stdout,10) TRIM(Vname(1,idWam2)), AVG(ng)%Rindex,  &
+     &                          TRIM(ncname)
             END IF
             exit_flag=3
             ioerror=status
@@ -4896,7 +4928,8 @@
         END IF
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idWlen)), S(ng)%Rindex
+            WRITE (stdout,10) TRIM(Vname(1,idWlen)), S(ng)%Rindex,      &
+     &                        TRIM(ncname)
           END IF
           exit_flag=3
           ioerror=status
@@ -4941,7 +4974,8 @@
         END IF
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idWlep)), S(ng)%Rindex
+            WRITE (stdout,10) TRIM(Vname(1,idWlep)), S(ng)%Rindex,      &
+     &                        TRIM(ncname)
           END IF
           exit_flag=3
           ioerror=status
@@ -4986,7 +5020,8 @@
         END IF
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idWdir)), S(ng)%Rindex
+            WRITE (stdout,10) TRIM(Vname(1,idWdir)), S(ng)%Rindex,      &
+     &                        TRIM(ncname)
           END IF
           exit_flag=3
           ioerror=status
@@ -5029,7 +5064,8 @@
         END IF
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idWdip)), S(ng)%Rindex
+            WRITE (stdout,10) TRIM(Vname(1,idWdip)), S(ng)%Rindex,      &
+     &                        TRIM(ncname)
           END IF
           exit_flag=3
           ioerror=status
@@ -5074,7 +5110,8 @@
         END IF
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idWptp)), S(ng)%Rindex
+            WRITE (stdout,10) TRIM(Vname(1,idWptp)), S(ng)%Rindex,      &
+     &                        TRIM(ncname)
           END IF
           exit_flag=3
           ioerror=status
@@ -5119,7 +5156,8 @@
         END IF
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN
-            WRITE (sQtdout,10) TRIM(Vname(1,idWpbt)), S(ng)%Rindex
+            WRITE (stdout,10) TRIM(Vname(1,idWpbt)), S(ng)%Rindex,      &
+     &                        TRIM(ncname)
           END IF
           exit_flag=3
           ioerror=status
@@ -5151,7 +5189,8 @@
      &                       FORCES(ng) % Wave_ds)
           IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
             IF (Master) THEN
-              WRITE (sQtdout,10) TRIM(Vname(1,idWvds)), S(ng)%Rindex
+              WRITE (stdout,10) TRIM(Vname(1,idWvds)), S(ng)%Rindex,    &
+     &                          TRIM(ncname)
             END IF
             exit_flag=3
             ioerror=status
@@ -5181,7 +5220,8 @@
      &                       FORCES(ng) % Wave_qp)
           IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
             IF (Master) THEN
-              WRITE (sQtdout,10) TRIM(Vname(1,idWvqp)), S(ng)%Rindex
+              WRITE (stdout,10) TRIM(Vname(1,idWvqp)), S(ng)%Rindex,    &
+     &                          TRIM(ncname)
             END IF
             exit_flag=3
             ioerror=status

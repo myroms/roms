@@ -4,14 +4,14 @@
 /*
 ** git $Id$
 *************************************************** Hernan G. Arango ***
-** Copyright (c) 2002-2024 The ROMS/TOMS Group                        **
+** Copyright (c) 2002-2025 The ROMS Group                             **
 **   Licensed under a MIT/X style license                             **
-**   See License_ROMS.txt                                             **
+**   See License_ROMS.md                                              **
 ************************************************************************
 **                                                                    **
-** This module declares vegetation model internal parameters.  Some   **
-** of these parameters are usually read from the appropriate input    **
-** script.                                                            **
+** This module declares submerged aquatic vegetation model state      **
+** variables and internal parameters. Some of these parameters are    **
+** usually read from the appropriate input script.                    **
 **                                                                    **
 ** The current design allows the user to have a lot of latitude for   **
 ** customizing or expanding the vegetation model.                     **
@@ -24,7 +24,7 @@
 **                                                                    **
 **   *  Vegetation modifies turbulence terms:                         **
 **                                                                    **
-**        vegetation_turb_cal.F                                       **
+**        vegetation_turb.F                                           **
 **                                                                    **
 **   *  Vegetation modifies streaming terms:                          **
 **                                                                    **
@@ -33,6 +33,10 @@
 **   *  Vegetation biomass calculation:                               **
 **                                                                    **
 **        vegetation_biomass.F                                        **
+**                                                                    **
+**   *  Vegetation output variables into NetCDF files:                **
+**                                                                    **
+**        vegetation_output.F                                         **
 **                                                                    **
 **   *  Marsh dynamics (main calling routine) calculation:            **
 **                                                                    **
@@ -67,19 +71,9 @@
 **        vegetation_inp.h                                            **
 **                                                                    **
 **   *  Code to assign indices to model variables during the          **
-**      reading of metadata information from "varinfo.dat":           **
+**      reading of metadata information from "varinfo.yaml":          **
 **                                                                    **
 **        vegetation_var.h                                            **
-**                                                                    **
-**   *  Code to define input model parameters in all output           **
-**      NetCDF files:                                                 **
-**                                                                    **
-**        vegetation_def_his.h                                        **
-**                                                                    **
-**   *  Code to write out input model parameters in all output        **
-**      NetCDF files:                                                 **
-**                                                                    **
-**        vegetation_wrt_his.h                                        **
 **                                                                    **
 ** Note that all the files are located in ROMS/Nonlinear/Vegetation   **
 ** and the *.h files are included within  <...> to allow the user     **

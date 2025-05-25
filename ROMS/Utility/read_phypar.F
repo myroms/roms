@@ -39,14 +39,14 @@
 #if defined SEDIMENT || defined BBL_MODEL
       USE mod_sediment
 #endif
-#if defined VEGETATION
-      USE mod_vegetation
-#endif
       USE mod_stepping
 #ifdef PROPAGATOR
       USE mod_storage
 #endif
       USE mod_strings
+#if defined VEGETATION
+      USE mod_vegetation
+#endif
 !
       USE inp_decode_mod
 #if defined DISTRIBUTE && defined PIO_LIB
@@ -383,9 +383,6 @@
 #endif
 #if defined SEDIMENT || defined BBL_MODEL
               CALL initialize_sediment
-#endif
-#ifdef VEGETATION
-              CALL initialize_vegetation
 #endif
               CALL initialize_param    ! Continue allocating/initalizing
               CALL allocate_scalars    ! variables since the application
@@ -4513,11 +4510,11 @@
                 sparnam(i:i)=blank
               END DO
               sparnam=TRIM(ADJUSTL(Cval(Nval)))
-            CASE ('VEGNAM')
-              DO i=1,LEN(vegnam)
-                vegnam(i:i)=blank
+            CASE ('VEGNAME', 'VEGNAM')
+              DO i=1,LEN(vegname)
+                vegname(i:i)=blank
               END DO
-              vegnam=TRIM(ADJUSTL(Cval(Nval)))
+              vegname=TRIM(ADJUSTL(Cval(Nval)))
             CASE ('USRNAME')
               DO i=1,LEN(USRname)
                 USRname(i:i)=blank
@@ -8042,8 +8039,8 @@
         END IF
 # endif
 # ifdef VEGETATION
-        fname=vegnam
-        IF (.not.find_file(ng, out, fname, 'VEGNAM')) THEN
+        fname=vegname
+        IF (.not.find_file(ng, out, fname, 'VEGNAME')) THEN
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         ELSE
           IF (Master.and.Lwrite) WRITE (out,230)                        &

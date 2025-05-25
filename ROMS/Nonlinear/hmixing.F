@@ -59,8 +59,9 @@
       USE mod_ocean
       USE mod_stepping
 # if defined VEGETATION && defined VEG_HMIXING
-      USE mod_vegarr
-      USE vegetation_hmixing_mod, ONLY:vegetation_hmixing_cal
+      USE mod_vegetation
+!
+      USE vegetation_hmixing_mod, ONLY : vegetation_hmixing_cal
 # endif
 !
 !  Imported variable declarations.

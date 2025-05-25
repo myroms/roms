@@ -53,6 +53,9 @@
       USE mod_sediment
 #endif
       USE mod_scalars
+#if defined VEGETATION 
+      USE mod_vegetation 
+#endif 
 !
       USE strings_mod, ONLY : FoundError
 !
@@ -91,7 +94,7 @@
 !
 !  Local variable declarations.
 !
-      integer :: IDmod, i, itrc
+      integer :: IDmod, i, itrc, j
 !
       character (len=*), parameter :: MyFile =                          &
      &  __FILE__//", checkvars_nf90"
@@ -192,6 +195,26 @@
         DO itrc=1,NPT
           get_var(idTvar(inert(itrc)))=.TRUE.
         END DO
+#  endif
+# endif
+# ifdef VEGETATION 
+#  ifdef ANA_VEGETATION 
+#   if defined VEG_DRAG || defined VEG_BIOMASS 
+        IF (nrrec(ng).ne.0) THEN
+          DO j=1,NVEGP
+            get_var(idvprp(j))=.TRUE.
+          END DO
+        END IF
+#   endif         
+#  else
+#   if defined VEG_DRAG || defined VEG_BIOMASS 
+        DO j=1,NVEGP
+          get_var(idvprp(j))=.TRUE.
+        END DO
+#   endif         
+#  endif 
+#  ifdef MARSH_DYNAMICS
+        get_var(idTims)=.TRUE.
 #  endif
 # endif
 # ifdef SEDIMENT
@@ -444,6 +467,20 @@
 # endif
           END IF
         END DO
+# ifdef VEGETATION 
+#  if defined VEG_DRAG || defined VEG_BIOMASS 
+        DO j=1,NVEGP 
+          IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idvprp(j)))) THEN
+            have_var(idvprp(j))=.TRUE.
+          END IF 
+        END DO 
+#  endif  
+#  ifdef MARSH_DYNAMICS
+        IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idTims)) THEN
+          have_var(idTims)=.TRUE.
+        END IF
+#  endif
+# endif 
 # ifdef SEDIMENT
         DO itrc=1,NST
           IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idfrac(itrc)))) THEN
@@ -691,6 +728,28 @@
       END IF
 #  endif
 # endif
+# ifdef VEGETATION 
+#  if defined VEG_DRAG || defined VEG_BIOMASS 
+      DO j=1,NVEGP 
+        IF (.not.have_var(idvprp(j)).and.                               &
+     &      get_var(idvprp(j))) THEN
+          IF (Master) WRITE (stdout,10) string,                         &
+     &                                  TRIM(Vname(1,idvprp(j))),       &
+     &                                  TRIM(ncname)
+          exit_flag=2
+          RETURN
+        END IF
+      END DO
+#  endif
+#  ifdef MARSH_DYNAMICS
+      IF (.not.have_var(idTims).and.get_var(idTims)) THEN
+        IF (Master) WRITE (stdout,10) string, TRIM(Vname(1,idTims)),    &
+     &                                TRIM(ncname)
+        exit_flag=2
+        RETURN
+      END IF
+#  endif
+# endif
 # ifdef SEDIMENT
       DO itrc=1,NST
         IF (.not.have_var(idfrac(itrc)).and.                            &
@@ -789,7 +848,7 @@
 !
 !  Local variable declarations.
 !
-      integer :: IDmod, i, itrc
+      integer :: IDmod, i, itrc, j
 !
       character (len=*), parameter :: MyFile =                          &
      &  __FILE__//", checkvars_pio"
@@ -890,6 +949,26 @@
         DO itrc=1,NPT
           get_var(idTvar(inert(itrc)))=.TRUE.
         END DO
+#   endif
+#  endif
+#  ifdef VEGETATION 
+#   ifdef ANA_VEGETATION 
+#    if defined VEG_DRAG || defined VEG_BIOMASS 
+        IF (nrrec(ng).ne.0) THEN
+          DO j=1,NVEGP
+            get_var(idvprp(j))=.TRUE.
+          END DO
+        END IF
+#    endif         
+#   else
+#    if defined VEG_DRAG || defined VEG_BIOMASS 
+        DO j=1,NVEGP
+          get_var(idvprp(j))=.TRUE.
+        END DO
+#    endif         
+#   endif 
+#   ifdef MARSH_DYNAMICS
+        get_var(idTims)=.TRUE.
 #   endif
 #  endif
 #  ifdef SEDIMENT
@@ -1142,6 +1221,20 @@
 #  endif
           END IF
         END DO
+#  ifdef VEGETATION 
+#   if defined VEG_DRAG || defined VEG_BIOMASS 
+        DO j=1,NVEGP 
+          IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idvprp(j)))) THEN
+            have_var(idvprp(j))=.TRUE.
+          END IF 
+        END DO 
+#   endif  
+#   ifdef MARSH_DYNAMICS
+        IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idTims)) THEN
+          have_var(idTims)=.TRUE.
+        END IF
+#   endif
+#  endif 
 #  ifdef SEDIMENT
         DO itrc=1,NST
           IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idfrac(itrc)))) THEN
@@ -1383,6 +1476,28 @@
 #   ifdef GLS_MIXING
       IF (.not.have_var(idVmKP).and.get_var(idVmKP)) THEN
         IF (Master) WRITE (stdout,10) string, TRIM(Vname(1,idVmKP)),    &
+     &                                TRIM(ncname)
+        exit_flag=2
+        RETURN
+      END IF
+#   endif
+#  endif
+#  ifdef VEGETATION 
+#   if defined VEG_DRAG || defined VEG_BIOMASS 
+      DO j=1,NVEGP 
+        IF (.not.have_var(idvprp(j)).and.                               &
+     &      get_var(idvprp(j))) THEN
+          IF (Master) WRITE (stdout,10) string,                         &
+     &                                  TRIM(Vname(1,idvprp(j))),       &
+     &                                  TRIM(ncname)
+          exit_flag=2
+          RETURN
+        END IF
+      END DO
+#   endif
+#   ifdef MARSH_DYNAMICS
+      IF (.not.have_var(idTims).and.get_var(idTims)) THEN
+        IF (Master) WRITE (stdout,10) string, TRIM(Vname(1,idTims)),    &
      &                                TRIM(ncname)
         exit_flag=2
         RETURN

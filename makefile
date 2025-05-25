@@ -155,7 +155,7 @@ MY_CPP_FLAGS ?=
 #  NetCDF and so on.
 #--------------------------------------------------------------------------
 
-        FORT ?= pgi
+        FORT ?= ifort
 
 #--------------------------------------------------------------------------
 #  Set directory for executable.
@@ -451,6 +451,7 @@ endif
 		ROMS/Nonlinear/BBL \
 		ROMS/Nonlinear/Biology \
 		ROMS/Nonlinear/Sediment \
+		ROMS/Nonlinear/Vegetation \
 		ROMS/Nonlinear/WEC \
 		ROMS/Functionals \
 		ROMS/Utility \
@@ -480,6 +481,7 @@ endif
 		ROMS/Nonlinear/BBL \
 		ROMS/Nonlinear/Biology \
 		ROMS/Nonlinear/Sediment \
+		ROMS/Nonlinear/Vegetation \
 		ROMS/Utility \
 		ROMS/Drivers \
                 ROMS/Functionals

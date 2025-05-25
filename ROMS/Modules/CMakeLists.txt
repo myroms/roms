@@ -44,6 +44,7 @@ list ( APPEND _files
        ROMS/Modules/mod_storage.F
        ROMS/Modules/mod_strings.F
        ROMS/Modules/mod_tides.F
+       ROMS/Modules/mod_vegetation.F
 )
 
 set ( ROMS_Modules_files

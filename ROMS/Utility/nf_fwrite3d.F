@@ -711,7 +711,7 @@
       SELECT CASE (ABS(gtype))
         CASE (p2dvar, p3dvar)
           Cgrid=1
-        CASE (b3dvar, l3dvar, r2dvar, r3dvar)
+        CASE (a3dvar, b3dvar, l3dvar, r2dvar, r3dvar)
           Cgrid=2
         CASE (u2dvar, u3dvar)
           Cgrid=3

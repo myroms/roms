@@ -35,7 +35,7 @@
       USE mod_scalars
       USE mod_stepping
 # if defined VEGETATION && defined VEG_STREAMING 
-      USE mod_vegarr
+      USE mod_vegetation
 # endif 
 !
       USE bc_2d_mod,             ONLY : bc_u2d_tile, bc_v2d_tile 

@@ -35,6 +35,9 @@
 # endif
       USE mod_scalars
       USE mod_stepping
+# if defined VEGETATION && defined MARSH_DYNAMICS
+      USE mod_vegetation 
+# endif
 !
 # ifdef ANA_VMIX
       USE analytical_mod,       ONLY : ana_vmix
@@ -106,9 +109,7 @@
 # endif
       USE omega_mod,            ONLY : omega
 # if defined VEGETATION && defined MARSH_DYNAMICS
-      USE mod_vegetation 
-      USE mod_vegarr
-      USE marsh_dynamics_mod, ONLY : marsh_dynamics
+      USE marsh_dynamics_mod,   ONLY : marsh_dynamics
 # endif
       USE post_initial_mod,     ONLY : post_initial
 # ifndef TS_FIXED

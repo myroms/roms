@@ -396,7 +396,7 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+14)=' ANA_SEDIMENT,'
 #endif
-#if defined VEGETATION && defined ANA_VEGETATION 
+#if defined ANA_VEGETATION && defined VEGETATION
       IF (Master) WRITE (stdout,20) 'ANA_VEGETATION',                   &
      &   'Analytical vegetation initial conditions.'
       is=LEN_TRIM(Coptions)+1
@@ -994,30 +994,6 @@
      &   'Computing and writing biological diagnostic terms'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+17)=' DIAGNOSTICS_BIO,'
-#endif
-#if defined VEGETATION && defined VEG_DRAG 
-      IF (Master) WRITE (stdout,20) 'VEGETATION',                       &
-     &   'Active submerged/emergent vegetation effects.'
-      is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+12)=' VEGETATION,'
-#endif
-#if defined VEGETATION && defined MARSH_WAVE_THRUST 
-      IF (Master) WRITE (stdout,20) 'MARSH_WAVE_THRUST',                &
-     &   'Vegetation module containing wave thrust effect on marshes'
-      is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+19)=' MARSH_WAVE_THRUST,'
-#endif
-#if defined VEGETATION && defined MARSH_VERT_GROWTH
-      IF (Master) WRITE (stdout,20) 'MARSH_VERT_GROWTH',                &
-     &   'Vegetation module containing marsh vertical growth routines'
-      is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+19)=' MARSH_VERT_GROWTH,'
-#endif
-#if defined MARSH_BIOMASS_VEG 
-      IF (Master) WRITE (stdout,20) 'MARSH_BIOMASS_VEG',                &
-     &   'Marsh colonization and veg growth with organic sed. in Class 1'
-      is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+17)=' MARSH_BIOMASS_VEG'
 #endif
 #ifdef DIAGNOSTICS_TS
 !
@@ -1667,6 +1643,41 @@
      &   'Land/Sea masking'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+9)=' MASKING,'
+#endif
+#if defined MARSH_DYNAMICS && defined VEGETATION
+!
+      IF (Master) WRITE (stdout,20) 'MARSH_DYNAMICS',                   &
+     &   'Activating marsh dynamics: erosion, accreation, or retreat'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+16)=' MARSH_DYNAMICS,'
+#endif
+#if defined MARSH_SED_EROSION && defined VEGETATION
+!
+      IF (Master) WRITE (stdout,20) 'MARSH_SED_EROSION',                &
+     &   'Computing marsh sediment export via bedload exchange'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+19)=' MARSH_SED_EROSION,'
+#endif
+#if defined MARSH_TIDAL_RANGE && defined VEGETATION
+!
+      IF (Master) WRITE (stdout,20) 'MARSH_TIDAL_RANGE',                &
+     &   'Tally marsh mean tidal range: higher high and lower low water'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+19)=' MARSH_TIDAL_RANGE,'
+#endif
+#if defined MARSH_VERT_GROWTH && defined VEGETATION
+!
+      IF (Master) WRITE (stdout,20) 'MARSH_VERT_GROWTH',                &
+     &   'Computing marsh vertical growth through biomass production'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+19)=' MARSH_VERT_GROWTH,'
+#endif
+#if defined MARSH_WAVE_THRUST && defined VEGETATION
+!
+      IF (Master) WRITE (stdout,20) 'MARSH_WAVE_THRUST',                &
+     &   'Computing lateral wave thrust effects on marsh cells'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+19)=' MARSH_WAVE_THRUST,'
 #endif
 #ifdef MB_BBL
 !
@@ -3289,6 +3300,27 @@
      &   'Include vertical correlations in convolutions'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+14)=' VCONVOLUTION,'
+#endif
+#if defined VEGETATION
+!
+      IF (Master) WRITE (stdout,20) 'VEGETATION',                       &
+     &   'Activating submerged and emergent aquatic vegetation model'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+12)=' VEGETATION,'
+#endif
+#if defined VEG_DRAG && defined VEGETATION
+!
+      IF (Master) WRITE (stdout,20) 'VEG_DRAG',                         &
+     &   'Computing drag effects due to waves and vegetation'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+10)=' VEG_DRAG,'
+#endif
+#if defined VEG_STREAMING && defined VEGETATION
+!
+      IF (Master) WRITE (stdout,20) 'VEG_STREAMING',                    &
+     &   'Computing currents and wave dissipation due to vegetation'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+15)=' VEG_STREAMING,'
 #endif
 #ifdef VERIFICATION
 !

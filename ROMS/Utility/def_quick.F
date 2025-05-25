@@ -28,36 +28,45 @@
 #ifdef SEDIMENT
       USE mod_sediment
 #endif
+#ifdef VEGETATION
+      USE mod_vegetation
+#endif
 !
 #if (defined BBL_MODEL || defined WAVES_OUTPUT) && defined SOLVE3D
-      USE bbl_output_mod,      ONLY : bbl_def_nf90
+      USE bbl_output_mod,        ONLY : bbl_def_nf90
 # if defined PIO_LIB && defined DISTRIBUTE
-      USE bbl_output_mod,      ONLY : bbl_def_pio
+      USE bbl_output_mod,        ONLY : bbl_def_pio
 # endif
 #endif
-      USE def_dim_mod,         ONLY : def_dim
-      USE def_info_mod,        ONLY : def_info
-      USE def_var_mod,         ONLY : def_var
+      USE def_dim_mod,           ONLY : def_dim
+      USE def_info_mod,          ONLY : def_info
+      USE def_var_mod,           ONLY : def_var
 #if defined ICE_MODEL && defined SOLVE3D
-      USE ice_output_mod,      ONLY : ice_def_nf90
+      USE ice_output_mod,        ONLY : ice_def_nf90
 # if defined PIO_LIB && defined DISTRIBUTE
-      USE ice_output_mod,      ONLY : ice_def_pio
+      USE ice_output_mod,        ONLY : ice_def_pio
 # endif
 #endif
 #if defined SEDIMENT && defined SOLVE3D
-      USE sediment_output_mod, ONLY : sediment_def_nf90
+      USE sediment_output_mod,   ONLY : sediment_def_nf90
 # if defined PIO_LIB && defined DISTRIBUTE
-      USE sediment_output_mod, ONLY : sediment_def_pio
+      USE sediment_output_mod,   ONLY : sediment_def_pio
 # endif
 #endif
-      USE strings_mod,         ONLY : FoundError
+      USE strings_mod,           ONLY : FoundError
+#if defined VEGETATION && defined SOLVE3D
+      USE vegetation_output_mod, ONLY : vegetation_def_nf90
+# if defined PIO_LIB && defined DISTRIBUTE
+      USE vegetation_output_mod, ONLY : vegetation_def_pio
+# endif
+#endif
 #if defined WEC_VF && defined SOLVE3D
-      USE wec_output_mod,      ONLY : wec_def_nf90
+      USE wec_output_mod,        ONLY : wec_def_nf90
 # if defined PIO_LIB && defined DISTRIBUTE
-      USE wec_output_mod,      ONLY : wec_def_pio
+      USE wec_output_mod,        ONLY : wec_def_pio
 # endif
 #endif
-      USE wrt_info_mod,        ONLY : wrt_info
+      USE wrt_info_mod,          ONLY : wrt_info
 !
       implicit none
 !
@@ -136,6 +145,9 @@
 #ifdef SOLVE3D
 # ifdef SEDIMENT
       integer :: b3dgrd(4)
+# endif
+# if defined VEGETATION 
+      integer :: sapgrd(4)
 # endif
       integer :: p3dgrd(4),  t3dgrd(4),  u3dgrd(4),  v3dgrd(4)
       integer :: p3dzgrd(4), t3dzgrd(4), u3dzgrd(4), v3dzgrd(4)
@@ -293,6 +305,12 @@
 #  endif
 # endif
 
+# if defined VEGETATION
+        status=def_dim(ng, model, QCK(ng)%ncid, ncname, 'Nveg',         &
+     &                 NVEG, DimIDs(35))
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+# endif
+
 # ifdef ECOSIM
         status=def_dim(ng, model, QCK(ng)%ncid, ncname, 'Nbands',       &
      &                 NBands, DimIDs(33))
@@ -390,7 +408,16 @@
         p3dzgrd(2)=DimIDs( 8)
         p3dzgrd(3)=DimIDs(34)          ! selected constant depth slices
         p3dzgrd(4)=DimIDs(12)
-# endif
+#endif
+#if defined VEGETATION && defined SOLVE3D
+!
+!  Define dimensions for the submerged aquatic plant (SAP) variables.
+!
+        sapgrd(1)=DimIDs( 1)
+        sapgrd(2)=DimIDs( 5)
+        sapgrd(3)=DimIDs(35)
+        sapgrd(4)=DimIDs(12)
+#endif 
 !
 !  Define dimension vectors for staggered u-momentum type variables.
 !
@@ -1761,6 +1788,17 @@
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #endif
 
+#if defined VEGETATION && defined SOLVE3D
+!
+!-----------------------------------------------------------------------
+!  Define the submerged aquatic vegetation model variables.
+!-----------------------------------------------------------------------
+!
+        CALL vegetation_def_nf90 (ng, model, ldef, Qout, QCK,           &
+     &                            sapgrd, t2dgrd)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+#endif
+
 #if defined WEC_VF && defined SOLVE3D
 !
 !-----------------------------------------------------------------------
@@ -2473,6 +2511,15 @@
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #endif
 
+#if defined VEGETATION && defined SOLVE3D
+!
+!  Scan submerged aquatic vegetation model variables from input NetCDF
+!  and activate switches for quicksave variables. Ger variable IDs.
+!
+        CALL vegetation_def_nf90 (ng, model, ldef, Hout, HIS)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+#endif
+
 #if defined WEC_VF && defined SOLVE3D
 !
 !  Scan Waves Effect on Currents variables from input NetCDF and
@@ -2539,6 +2586,9 @@
 # ifdef SOLVE3D
 #  ifdef SEDIMENT
       integer :: b3dgrd(4)
+#  endif
+#  if defined VEGETATION 
+      integer :: sapgrd(4)
 #  endif
       integer :: p3dgrd(4),  t3dgrd(4),  u3dgrd(4),  v3dgrd(4)
       integer :: p3dzgrd(4), t3dzgrd(4), u3dzgrd(4), v3dzgrd(4)
@@ -2696,6 +2746,12 @@
 #   endif
 #  endif
 
+#  if defined VEGETATION
+        status=def_dim(ng, model, QCK(ng)%pioFile, ncname, 'Nveg',      &
+     &                 NVEG, DimIDs(35))
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+#  endif
+
 #  ifdef ECOSIM
         status=def_dim(ng, model, QCK(ng)%pioFile, ncname, 'Nbands',    &
      &                 NBands, DimIDs(33))
@@ -2783,7 +2839,7 @@
         p2dgrd(1)=DimIDs( 4)
         p2dgrd(2)=DimIDs( 8)
         p2dgrd(3)=DimIDs(12)
-#ifdef SOLVE3D
+# ifdef SOLVE3D
         p3dgrd(1)=DimIDs( 4)
         p3dgrd(2)=DimIDs( 8)
         p3dgrd(3)=DimIDs( 9)
@@ -2794,6 +2850,15 @@
         p3dzgrd(3)=DimIDs(34)          ! selected constant depth slices
         p3dzgrd(4)=DimIDs(12)
 # endif
+# if defined VEGETATION && defined SOLVE3D
+!
+!  Define dimensions for the submerged aquatic plant (SAP) variables.
+!
+        sapgrd(1)=DimIDs( 1)
+        sapgrd(2)=DimIDs( 5)
+        sapgrd(3)=DimIDs(35)
+        sapgrd(4)=DimIDs(12)
+# endif 
 !
 !  Define dimension vectors for staggered u-momentum type variables.
 !
@@ -4401,6 +4466,17 @@
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 # endif
 
+# if defined VEGETATION && defined SOLVE3D
+!
+!-----------------------------------------------------------------------
+!  Define the submerged aquatic vegetation model variables.
+!-----------------------------------------------------------------------
+!
+        CALL vegetation_def_pio (ng, model, ldef, Qout, QCK,            &
+     &                           sapgrd, t2dgrd)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+# endif
+
 # if defined WEC_VF && defined SOLVE3D
 !
 !-----------------------------------------------------------------------
@@ -5230,6 +5306,15 @@
 !  switches for quicksave variables. Get variable IDs.
 !
         CALL sediment_def_pio (ng, model, ldef, Qout, QCK)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+# endif
+
+# if defined VEGETATION && defined SOLVE3D
+!
+!  Scan submerged aquatic vegetation model variables from input NetCDF
+!  and activate switches for quicksave variables. Ger variable IDs.
+!
+        CALL vegetation_def_pio (ng, model, ldef, Qout, QCK)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 # endif
 

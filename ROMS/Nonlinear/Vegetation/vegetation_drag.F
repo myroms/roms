@@ -1,115 +1,114 @@
 #include "cppdefs.h"
-
       MODULE vegetation_drag_mod
 
 #if defined VEGETATION && defined VEG_DRAG
 !
 !git $Id$
 !======================================================================!
-!  Copyright (c) 2002-2024 The ROMS/TOMS Group                         !
-!    Licensed under a MIT/X style license           Hernan G. Arango   !
-!    See License_ROMS.txt                   Alexander F. Shchepetkin   !
-!==================================================== John C. Warner ==!
-!==================================================== Neil K. Ganju  ==!
-!==================================================== Alexis Beudin  ==!
-!==================================================Tarandeep S. Kalra==!
+!  Copyright (c) 2002-2025 The ROMS Group             John C. Warner   !
+!    Licensed under a MIT/X style license              Neil K. Ganju   !
+!    See License_ROMS.md                               Alexis Beudin   !
+!================================================ Tarandeep S. Kalra ===
 !                                                                      !
 !  This routine computes the vegetation (posture-dependent) drag       !
 !  for rhs3d.F                                                         !
-!                                                                      !  
+!                                                                      !
 !  References:                                                         !
 !                                                                      !
-!  Luhar M., and H. M. Nepf (2011), Flow-induced reconfiguration of    !
-!  buoyant and flexible aquatic vegetation, Limnology and Oceanography,!
-!   56(6): 2003-2017.                                                  !
+!  Luhar M., and H. M. Nepf, 2011: Flow-induced reconfiguration of     !
+!    buoyant and flexible aquatic vegetation, Limnology and            !
+!    Oceanography, 56(6), 2003-2017, doi:10.4319/lo.2011.56.6.2003.    !
 !                                                                      !
 !======================================================================!
-!                                                                      !
+!
+      USE mod_param
+      USE mod_grid
+      USE mod_ocean
+      USE mod_scalars
+      USE mod_vegetation
+!
+      USE bc_3d_mod,       ONLY : bc_r3d_tile
+      USE exchange_2d_mod, ONLY : exchange_r2d_tile
+      USE exchange_3d_mod, ONLY : exchange_u3d_tile, exchange_v3d_tile
+# ifdef DISTRIBUTE
+      USE mp_exchange_mod, ONLY : mp_exchange2d,                        &
+     &                            mp_exchange3d, mp_exchange4d
+# endif
+!
       implicit none
-
-      PRIVATE
+!
       PUBLIC  :: vegetation_drag_cal
-
+      PRIVATE
+!
       CONTAINS
 !
 !***********************************************************************
       SUBROUTINE vegetation_drag_cal (ng, tile)
 !***********************************************************************
 !
-      USE mod_param
       USE mod_stepping
-      USE mod_grid
-      USE mod_ocean
-      USE mod_vegarr
+!
+!  Imported variable declarations.
 !
       integer, intent(in) :: ng, tile
 !
 !  Local variable declarations.
 !
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__
+!
 # include "tile.h"
 !
 # ifdef PROFILE
-      CALL wclock_on (ng, iNLM, 16)
+      CALL wclock_on (ng, iNLM, 16, __LINE__, MyFile)
 # endif
       CALL vegetation_drag_tile  (ng, tile,                             &
-     &                        LBi, UBi, LBj, UBj,                       &
-     &                        IminS, ImaxS, JminS, JmaxS,               &
-     &                        nrhs(ng),                                 & 
-     &                        GRID(ng) % Hz,                            &
-     &                        OCEAN(ng) % u,                            &
-     &                        OCEAN(ng) % v,                            &
-     &                        VEG(ng) % plant,                          &
+     &                            LBi, UBi, LBj, UBj,                   &
+     &                            IminS, ImaxS, JminS, JmaxS,           &
+     &                            nrhs(ng),                             &
+     &                            GRID(ng) % Hz,                        &
+     &                            OCEAN(ng) % u,                        &
+     &                            OCEAN(ng) % v,                        &
+     &                            VEG(ng) % plant,                      &
 # ifdef VEG_FLEX
-     &                        VEG(ng) % bend,                           &
+     &                            VEG(ng) % bend,                       &
 # endif
 # if defined MARSH_DYNAMICS && defined MARSH_RETREAT
-     &                        VEG(ng) % marsh_mask,                     &
+     &                            VEG(ng) % marsh_mask,                 &
 # endif
-     &                        VEG(ng) % ru_loc_veg,                     &
-     &                        VEG(ng) % rv_loc_veg,                     &
-     &                        VEG(ng) % ru_veg,                         &
-     &                        VEG(ng) % rv_veg,                         & 
-     &                        VEG(ng) % step2d_uveg,                    &
-     &                        VEG(ng) % step2d_vveg,                    & 
-     &                        VEG(ng) % Lveg)
-
+     &                            VEG(ng) % ru_loc_veg,                 &
+     &                            VEG(ng) % rv_loc_veg,                 &
+     &                            VEG(ng) % ru_veg,                     &
+     &                            VEG(ng) % rv_veg,                     &
+     &                            VEG(ng) % step2d_uveg,                &
+     &                            VEG(ng) % step2d_vveg,                &
+     &                            VEG(ng) % Lveg)
 # ifdef PROFILE
-      CALL wclock_off (ng, iNLM, 16)
+      CALL wclock_off (ng, iNLM, 16, __LINE__, MyFile)
 # endif
+!
       RETURN
       END SUBROUTINE vegetation_drag_cal
 !
 !***********************************************************************
       SUBROUTINE vegetation_drag_tile  (ng, tile,                       &
-     &                              LBi, UBi, LBj, UBj,                 &
-     &                              IminS, ImaxS, JminS, JmaxS,         &
-     &                              nrhs,                               & 
-     &                              Hz,                                 &
-     &                              u, v,                               &
-     &                              plant,                              &
+     &                                  LBi, UBi, LBj, UBj,             &
+     &                                  IminS, ImaxS, JminS, JmaxS,     &
+     &                                  nrhs,                           &
+     &                                  Hz,                             &
+     &                                  u, v,                           &
+     &                                  plant,                          &
 # ifdef VEG_FLEX
-     &                              bend,                               &
+     &                                  bend,                           &
 # endif
 # if defined MARSH_DYNAMICS && defined MARSH_RETREAT
-     &                              marsh_mask,                         &
+     &                                  marsh_mask,                     &
 # endif
-     &                              ru_loc_veg, rv_loc_veg,             &
-     &                              ru_veg, rv_veg,                     &
-     &                              step2d_uveg, step2d_vveg,           &
-     &                              Lveg)
+     &                                  ru_loc_veg, rv_loc_veg,         &
+     &                                  ru_veg, rv_veg,                 &
+     &                                  step2d_uveg, step2d_vveg,       &
+     &                                  Lveg)
 !***********************************************************************
-!
-      USE mod_param
-      USE mod_scalars
-      USE mod_vegetation
-      USE mod_vegarr
-      USE bc_3d_mod, ONLY: bc_r3d_tile
-      USE exchange_2d_mod
-      USE exchange_3d_mod
-# ifdef DISTRIBUTE
-      USE mp_exchange_mod, ONLY : mp_exchange2d,                       &
-     &                            mp_exchange3d, mp_exchange4d
-# endif
 !
 !  Imported variable declarations.
 !
@@ -144,7 +143,7 @@
 #  ifdef VEG_FLEX
       real(r8), intent(inout) :: bend(LBi:UBi,LBj:UBj,N(ng),NVEG)
 #  endif
-# if defined MARSH_DYNAMICS && defined MARSH_RETREAT 
+# if defined MARSH_DYNAMICS && defined MARSH_RETREAT
       real(r8), intent(inout) :: marsh_mask(LBi:UBi,LBj:UBj)
 # endif
       real(r8), intent(inout) ::                                        &
@@ -160,10 +159,10 @@
 !  Local variable declarations.
 !
       integer :: i, j, k, ivpr, iveg
-! 
+!
       real(r8), parameter :: one_third  = 1.0_r8/3.0_r8
       real(r8), parameter :: one_twelfth  = 1.0_r8/12.0_r8
-      real(r8), parameter :: Inival  = 0.0_r8 
+      real(r8), parameter :: Inival  = 0.0_r8
       real(r8), parameter :: min_eps = 1.0E-12_r8
       real(r8), parameter :: max_eps = 1.0E12_r8
       real(r8) :: cff, inv_cff1, cff1, cff2, cff3, cff4, Hz_inverse
@@ -194,24 +193,24 @@
       cff=0.75_r8/dt(ng)
 # endif
 !
-# if defined MARSH_DYNAMICS && defined MARSH_RETREAT 
+# if defined MARSH_DYNAMICS && defined MARSH_RETREAT
       DO ivpr=1,NVEGP
         DO iveg=1,NVEG
           DO j=Jstr,Jend
             DO i=Istr,Iend
-              plant(i,j,iveg,pdens)=plant(i,j,iveg,pdens)*             &
-     &                              marsh_mask(i,j)            
-              plant(i,j,iveg,phght)=plant(i,j,iveg,phght)*             &
-     &                              marsh_mask(i,j)            
-              plant(i,j,iveg,pthck)=plant(i,j,iveg,pthck)*             &
-     &                              marsh_mask(i,j)            
-              plant(i,j,iveg,pdiam)=plant(i,j,iveg,pdiam)*             &
-     &                              marsh_mask(i,j)            
+              plant(i,j,iveg,isDens)=plant(i,j,iveg,isDens)*           &
+     &                               marsh_mask(i,j)
+              plant(i,j,iveg,isHght)=plant(i,j,iveg,isHght)*           &
+     &                               marsh_mask(i,j)
+              plant(i,j,iveg,isThck)=plant(i,j,iveg,isThck)*           &
+     &                               marsh_mask(i,j)
+              plant(i,j,iveg,isDiam)=plant(i,j,iveg,isDiam)*           &
+     &                               marsh_mask(i,j)
             END DO
           END DO
         END DO
       END DO
-# endif 
+# endif
 !
       VEG_LOOP: DO iveg=1,NVEG
         K_LOOP: DO k=1,N(ng)
@@ -223,20 +222,21 @@
 ! Flexible vegetation
 !
 ! Second moment of area
-! 
-              sma=(plant(i,j,iveg,pdiam)*                               &
-     &             plant(i,j,iveg,pthck)**3.0_r8)*(one_twelfth)
+!
+              sma=(plant(i,j,iveg,isDiam)*                              &
+     &             plant(i,j,iveg,isThck)**3.0_r8)*(one_twelfth)
 !
 ! Avoid division by zero
 !
               cff1=MAX( (E_veg(iveg,ng)*sma), min_eps)
-              inv_cff1=1.0_r8/cff1 
+              inv_cff1=1.0_r8/cff1
 !
 ! Buoyancy parameter
 !
-              buoy=(rhow-veg_massdens(iveg,ng))*g*plant(i,j,iveg,pdiam)*&
-     &              plant(i,j,iveg,pthck)*                              &
-     &              plant(i,j,iveg,phght)**3.0_r8*inv_cff1 
+              buoy=(rhow-veg_massdens(iveg,ng))*g*                      &
+     &              plant(i,j,iveg,isDiam)*                             &
+     &              plant(i,j,iveg,isThck)*                             &
+     &              plant(i,j,iveg,isHght)**3.0_r8*inv_cff1
 !
 ! Current speed at rho points
 !
@@ -246,30 +246,30 @@
 !
 ! Cauchy number
 !
-              Ca=0.5_r8*rhow*Cd_veg(iveg,ng)*plant(i,j,iveg,pdiam)*     &
-     &           Umag**2.0_r8*plant(i,j,iveg,phght)**3.0_r8*inv_cff1
+              Ca=0.5_r8*rhow*Cd_veg(iveg,ng)*plant(i,j,iveg,isDiam)*    &
+     &           Umag**2.0_r8*plant(i,j,iveg,isHght)**3.0_r8*inv_cff1
 !
-! Avoid infinity in Cauchy's number 
+! Avoid infinity in Cauchy's number
 !
               cff4=MIN(Ca**-1.5_r8, max_eps)
 !
 ! Denominator for cflex calculation
-!             
+!
               cff5=1.0_r8+(cff4*(8.0_r8+buoy**(1.5_r8)))
 !
-! Avoid infinity in Cauchy's number 
+! Avoid infinity in Cauchy's number
 !
-              cff6=MIN(Ca**(-one_third), max_eps) 
+              cff6=MIN(Ca**(-one_third), max_eps)
 !
 ! set a minimum for cflex to be 1 , cflex will exceed 1 if Ca<0.7290
-! but don't allow those values 
+! but don't allow those values
 !
               cflex=1.0_r8-((1.0_r8-0.9_r8*cff6)/(cff5))
               cflex=MIN(cflex, 1.0_r8)
 !
 ! Effective blade length
 !
-              plant_height_eff=cflex*plant(i,j,iveg,phght)
+              plant_height_eff=cflex*plant(i,j,iveg,isHght)
 !
 ! Blade bending angle
 !
@@ -278,7 +278,7 @@
 !
 ! For stiff vegetation
 !
-              plant_height_eff=plant(i,j,iveg,phght)
+              plant_height_eff=plant(i,j,iveg,isHght)
 # endif
 !
 ! Select the grid cell (full or part) within the canopy layer
@@ -289,9 +289,9 @@
               Lveg_loc=MIN(1.0_r8-cff1,1.0_r8)
 !
 ! Prepare drag term (at rho points)
-!       
-              wrk(i,j)=0.5_r8*cd_veg(iveg,ng)*plant(i,j,iveg,pdiam)*    &
-     &                 plant(i,j,iveg,pdens)*Hz(i,j,k)*Lveg_loc
+!
+              wrk(i,j)=0.5_r8*cd_veg(iveg,ng)*plant(i,j,iveg,isDiam)*    &
+     &                 plant(i,j,iveg,isDens)*Hz(i,j,k)*Lveg_loc
 !
 ! Store Lveg_loc for all vegetation types
 !
@@ -299,20 +299,19 @@
             END DO
           END DO
 !
-! Exchange boundary data 
+! Exchange boundary data
 !
       IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
         CALL exchange_r2d_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          wrk)
       ENDIF
-
 !
-        CALL mp_exchange2d (ng, tile, iNLM, 1,                          &
+      CALL mp_exchange2d (ng, tile, iNLM, 1,                            &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    NghostPoints,                                 &
      &                    EWperiodic(ng), NSperiodic(ng),               &
-     &                    wrk(:,:)) 
+     &                    wrk(:,:))
 !
 ! Compute friction force (at cell faces)
 !
@@ -372,7 +371,7 @@
         END DO K_LOOP
       END DO VEG_LOOP
 !
-! Exchange boundary data 
+! Exchange boundary data
 !
       IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
         DO iveg=1,NVEG
@@ -382,7 +381,7 @@
           CALL exchange_v3d_tile (ng, tile,                             &
      &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
      &                          rv_loc_veg(:,:,:,iveg))
-        END DO 
+        END DO
         CALL exchange_u3d_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
      &                          ru_veg(:,:,:))
@@ -391,7 +390,7 @@
      &                          rv_veg(:,:,:))
       END IF
 !
-#  if defined MARSH_DYNAMICS && defined MARSH_RETREAT 
+#  if defined MARSH_DYNAMICS && defined MARSH_RETREAT
       DO ivpr=1,NVEGP
         CALL bc_r3d_tile (ng, tile,                                     &
      &                          LBi, UBi, LBj, UBj, 1, NVEG,            &
@@ -413,8 +412,8 @@
      &                    NghostPoints,                                 &
      &                    EWperiodic(ng), NSperiodic(ng),               &
      &                    ru_veg, rv_veg)
-! 
-#  if defined MARSH_DYNAMICS && defined MARSH_RETREAT 
+!
+#  if defined MARSH_DYNAMICS && defined MARSH_RETREAT
       CALL mp_exchange4d (ng, tile, iNLM, 1,                            &
      &                    LBi, UBi, LBj, UBj, 1, NVEG, 1, NVEGP,        &
      &                    NghostPoints,                                 &

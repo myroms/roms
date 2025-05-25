@@ -8,9 +8,9 @@
 !
 !git $Id$
 !==================================================== Neil K. Ganju ====
-!  Copyright (c) 2002-2024 The ROMS/TOMS Group      Hernan G. Arango   !
+!  Copyright (c) 2002-2025 The ROMS Group                              !
 !    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                                              !
+!    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
 !  This computes sediment biomass due to vegation growth               !
@@ -21,10 +21,10 @@
 !=======================================================================
 !
       implicit none
-
+!
       PRIVATE
       PUBLIC  :: sed_biomass
-
+!
       CONTAINS
 !
 !***********************************************************************
@@ -42,51 +42,55 @@
 !
 !  Local variable declarations.
 !
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__
+!
 # include "tile.h"
 !
 # ifdef PROFILE
-      CALL wclock_on (ng, iNLM, 16)
+      CALL wclock_on (ng, iNLM, 16, __LINE__, MyFile)
 # endif
       CALL sed_biomass_tile (ng, tile,                                  &
-     &                      LBi, UBi, LBj, UBj,                         &
-     &                      IminS, ImaxS, JminS, JmaxS,                 &
-     &                      nstp(ng), nnew(ng),                         &
+     &                       LBi, UBi, LBj, UBj,                        &
+     &                       IminS, ImaxS, JminS, JmaxS,                &
+     &                       nstp(ng), nnew(ng),                        &
 # ifdef MASKING
-     &                      GRID(ng) % rmask,                           &
+     &                       GRID(ng) % rmask,                          &
 #  ifdef WET_DRY
-     &                      GRID(ng) % rmask_wet,                       &
+     &                       GRID(ng) % rmask_wet,                      &
 #  endif
 # endif
 # ifdef SPECTRAL_LIGHT
-     &                      OCEAN(ng) % SgrN,                           &
+     &                       OCEAN(ng) % SgrN,                          &
 # endif
-     &                      GRID(ng) % z_w,                             &
-     &                      SEDBED(ng) % Dstp_max,                      &
-     &                      SEDBED(ng) % bottom,                        &
-     &                      SEDBED(ng) % settling_flux)
+     &                       GRID(ng) % z_w,                            &
+     &                       SEDBED(ng) % Dstp_max,                     &
+     &                       SEDBED(ng) % bottom,                       &
+     &                       SEDBED(ng) % settling_flux)
 # ifdef PROFILE
-      CALL wclock_off (ng, iNLM, 16)
+      CALL wclock_off (ng, iNLM, 16, __LINE__, MyFile)
 # endif
+!
       RETURN
       END SUBROUTINE sed_biomass
 !
 !***********************************************************************
       SUBROUTINE sed_biomass_tile (ng, tile,                            &
-     &                            LBi, UBi, LBj, UBj,                   &
-     &                            IminS, ImaxS, JminS, JmaxS,           &
-     &                            nstp, nnew,                           &
+     &                             LBi, UBi, LBj, UBj,                  &
+     &                             IminS, ImaxS, JminS, JmaxS,          &
+     &                             nstp, nnew,                          &
 # ifdef MASKING
-     &                            rmask,                                &
+     &                             rmask,                               &
 #  ifdef WET_DRY
-     &                            rmask_wet,                            &
+     &                             rmask_wet,                           &
 #  endif
 # endif
 # ifdef SPECTRAL_LIGHT
-     &                            SgrN,                                 &
+     &                             SgrN,                                &
 # endif
-     &                            z_w,                                  &
-     &                            Dstp_max,                             &
-     &                            bottom, settling_flux)
+     &                             z_w,                                 &
+     &                             Dstp_max,                            &
+     &                             bottom, settling_flux)
 !***********************************************************************
 !
       USE mod_param
@@ -143,7 +147,7 @@
 
 !
 !-----------------------------------------------------------------------
-!  Compute 
+!  Compute
 !-----------------------------------------------------------------------
 !
 !  Compute number of model steps for each hour.
@@ -169,7 +173,7 @@
             Dstp=z_w(i,j,N(ng))-z_w(i,j,0)
             Dstp_max(i,j,sstp)=Dstp
             cff=0.0_r8
-            DO k=1,nTbiom                        
+            DO k=1,nTbiom
               cff=MAX(cff,Dstp_max(i,j,k))
             END DO
             bottom(i,j,imaxD)=cff

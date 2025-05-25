@@ -632,6 +632,14 @@
 !
           IF (VpioVar%vd%varID.ge.0) THEN
             SELECT CASE (Vtype)
+#  ifdef VEGETATION
+              CASE (a3dvar)
+                IF (KIND(Fout).eq.8) THEN
+                  ioDesc => ioDesc_dp_a3dvar(ng)
+                ELSE
+                  ioDesc => ioDesc_sp_a3dvar(ng)
+                END IF
+#  endif
 #  ifdef SEDIMENT
               CASE (b3dvar)
                 IF (KIND(Fout).eq.8) THEN

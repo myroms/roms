@@ -38,29 +38,29 @@
       USE mod_ocean
       USE mod_stepping
 # ifdef VEGETATION
-      USE mod_vegarr
+      USE mod_vegetation
 # endif
 !
-      USE pre_step3d_mod, ONLY : pre_step3d
-      USE prsgrd_mod, ONLY : prsgrd
+      USE pre_step3d_mod,     ONLY : pre_step3d
+      USE prsgrd_mod,         ONLY : prsgrd
 # ifndef TS_FIXED
 #  ifdef TS_DIF2
-      USE t3dmix2_mod, ONLY : t3dmix2
+      USE t3dmix2_mod,        ONLY : t3dmix2
 #  endif
 #  ifdef TS_DIF4
-      USE t3dmix4_mod, ONLY : t3dmix4
+      USE t3dmix4_mod,        ONLY : t3dmix4
 #  endif
 # endif
 # ifdef UV_VIS2
-      USE uv3dmix2_mod, ONLY : uv3dmix2
+      USE uv3dmix2_mod,       ONLY : uv3dmix2
 # endif
 # ifdef UV_VIS4
-      USE uv3dmix4_mod, ONLY : uv3dmix4
+      USE uv3dmix4_mod,       ONLY : uv3dmix4
 # endif
 # ifdef WEC_VF
-      USE wec_vf_mod, ONLY : wec_vf
+      USE wec_vf_mod,         ONLY : wec_vf
 #  if defined BOTTOM_STREAMING || defined SURFACE_STREAMING
-      USE wec_streaming_mod, ONLY : wec_streaming
+      USE wec_streaming_mod,  ONLY : wec_streaming
 #  endif
 # endif
 # if defined VEGETATION && defined VEG_DRAG

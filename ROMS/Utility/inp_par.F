@@ -546,7 +546,7 @@
 !  Read in vegetation model input parameters.
 !-----------------------------------------------------------------------
 !
-      OPEN (65, FILE=TRIM(vegnam), FORM='formatted', STATUS='old')
+      OPEN (65, FILE=TRIM(vegname), FORM='formatted', STATUS='old')
 
       CALL read_VegPar (model, 65, out, Lwrite)
 #endif 

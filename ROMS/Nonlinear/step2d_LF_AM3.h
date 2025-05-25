@@ -33,15 +33,19 @@
 #if defined SEDIMENT && defined SED_MORPH && defined SOLVE3D
       USE mod_sedbed
 #endif
-#if defined VEGETATION && defined VEG_DRAG
-      USE mod_vegarr
-      USE vegetation_drag_mod, ONLY : vegetation_drag_cal
-#endif
-#if defined VEGETATION && defined VEG_HMIXING
-      USE mod_vegarr
-      USE vegetation_hmixing_mod, ONLY : vegetation_hmixing_cal
-#endif
       USE mod_stepping
+#if defined VEGETATION
+      USE mod_vegetation
+#endif
+#if defined VEGETATION
+!
+# ifdef VEG_DRAG
+      USE vegetation_drag_mod,    ONLY : vegetation_drag_cal
+# endif
+# ifdef VEG_HMIXING
+      USE vegetation_hmixing_mod, ONLY : vegetation_hmixing_cal
+# endif
+#endif
 !
 !  Imported variable declarations.
 !

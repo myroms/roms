@@ -1,18 +1,14 @@
 #include "cppdefs.h"
-
       MODULE vegetation_turb_mod
 
-#if defined NONLINEAR && defined VEGETATION && defined VEG_TURB
+#if defined VEGETATION && defined VEG_TURB
 !
 !git $Id$
 !======================================================================!
-!  Copyright (c) 2002-2024 The ROMS/TOMS Group                         !
-!    Licensed under a MIT/X style license           Hernan G. Arango   !
-!    See License_ROMS.txt                                              !
-!==================================================== John C. Warner ==!
-!==================================================== Neil K. Ganju  ==!
-!==================================================== Alexis Beudin  ==!
-!==================================================Tarandeep S. Kalra==!
+!  Copyright (c) 2002-2025 The ROMS Group             John C. Warner   !
+!    Licensed under a MIT/X style license              Neil K. Ganju   !
+!    See License_ROMS.md                               Alexis Beudin   !
+!================================================ Tarandeep S. Kalra ===
 !                                                                      !
 !  This routine computes the turbulent kinetic energy and length scale !
 !  modifications due to vegetation for gls_corstep.F                   !
@@ -20,93 +16,93 @@
 !  References:                                                         !
 !                                                                      !
 !   Uittenbogaard R. (2003): Modelling turbulence in vegetated aquatic !
-!   flows. International workshop on RIParian FORest vegetated         !
-!   channels: hydraulic, morphological and ecological aspects,         !
-!   20-22 February 2003, Trento, Italy.                                !
+!     flows. International workshop on RIParian FORest vegetated       !
+!     channels: hydraulic, morphological and ecological aspects,       !
+!     20-22 February 2003, Trento, Italy.                              !
 !                                                                      !
 !   Warner J.C., C.R. Sherwood, H.G. Arango, and R.P. Signell (2005):  !
-!   Performance of four turbulence closure models implemented using a  !
-!   generic length scale method, Ocean Modelling 8: 81-113.            !
+!     Performance of four turbulence closure models implemented using  !
+!     a generic length scale method, Ocean Modelling 8: 81-113.        !
 !                                                                      !
 !======================================================================!
-!                                                                      !
+!
+      USE mod_param
+      USE mod_grid
+      USE mod_mixing
+      USE mod_ocean
+      USE mod_scalars
+      USE mod_vegetation
+!
       implicit none
-
-      PRIVATE
-      PUBLIC  :: vegetation_turb_cal
-
+!
+      PUBLIC  :: vegetation_turb
+!
       CONTAINS
 !
 !***********************************************************************
-      SUBROUTINE vegetation_turb_cal (ng, tile)
+      SUBROUTINE vegetation_turb (ng, tile)
 !***********************************************************************
 !
-      USE mod_stepping 
-      USE mod_grid
-      USE mod_ocean
-      USE mod_param
-      USE mod_mixing 
-      USE mod_vegarr
-      USE vegetation_drag_mod
+      USE mod_stepping
+!
+!  Imported variable declarations.
 !
       integer, intent(in) :: ng, tile
 !
 !  Local variable declarations.
 !
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__
+!
 # include "tile.h"
 !
 # ifdef PROFILE
-      CALL wclock_on (ng, iNLM, 16)
+      CALL wclock_on (ng, iNLM, 16, __LINE__, MyFile)
 # endif
-      CALL vegetation_turb_tile  ( ng, tile,                            &
-     &                        LBi, UBi, LBj, UBj,                       &
-     &                        IminS, ImaxS, JminS, JmaxS,               &
-     &                        nstp(ng), nnew(ng),                       &
-     &                        OCEAN(ng) % u,                            &
-     &                        OCEAN(ng) % v,                            &
-     &                        VEG(ng) % ru_loc_veg,                     &
-     &                        VEG(ng) % rv_loc_veg,                     &
-     &                        VEG(ng) % plant,                          &
-# ifdef VEG_FLEX 
-     &                        VEG(ng) % bend,                           &
-# endif 
-     &                        MIXING(ng) % gls,                         &
-     &                        MIXING(ng) % tke,                         &
-     &                        VEG(ng) % gls_veg,                        &
-     &                        VEG(ng) % tke_veg )
+      CALL vegetation_turb_tile (ng, tile,                              &
+     &                           LBi, UBi, LBj, UBj,                    &
+     &                           IminS, ImaxS, JminS, JmaxS,            &
+     &                           nstp(ng), nnew(ng),                    &
+     &                           OCEAN(ng) % u,                         &
+     &                           OCEAN(ng) % v,                         &
+     &                           VEG(ng) % ru_loc_veg,                  &
+     &                           VEG(ng) % rv_loc_veg,                  &
+     &                           VEG(ng) % plant,                       &
+# ifdef VEG_FLEX
+     &                           VEG(ng) % bend,                        &
+# endif
+     &                           MIXING(ng) % gls,                      &
+     &                           MIXING(ng) % tke,                      &
+     &                           VEG(ng) % gls_veg,                     &
+     &                           VEG(ng) % tke_veg)
 # ifdef PROFILE
-      CALL wclock_off (ng, iNLM, 16)
+      CALL wclock_off (ng, iNLM, 16, __LINE__, MyFile)
 # endif
+!
       RETURN
-      END SUBROUTINE vegetation_turb_cal 
+      END SUBROUTINE vegetation_turb
 !
 !***********************************************************************
-      SUBROUTINE vegetation_turb_tile ( ng, tile,                       &
-     &                              LBi, UBi, LBj, UBj,                 &
-     &                              IminS, ImaxS, JminS, JmaxS,         &
-     &                              nstp, nnew,                         &
-     &                              u, v,                               &
-     &                              ru_loc_veg, rv_loc_veg,             &
-     &                              plant,                              &
-# ifdef VEG_FLEX 
-     &                              bend,                               &
-# endif 
-     &                              gls, tke,                           &
-     &                              gls_veg, tke_veg )
+      SUBROUTINE vegetation_turb_tile (ng, tile,                        &
+     &                                 LBi, UBi, LBj, UBj,              &
+     &                                 IminS, ImaxS, JminS, JmaxS,      &
+     &                                 nstp, nnew,                      &
+     &                                 u, v,                            &
+     &                                 ru_loc_veg, rv_loc_veg,          &
+     &                                 plant,                           &
+# ifdef VEG_FLEX
+     &                                 bend,                            &
+# endif
+     &                                 gls, tke,                        &
+     &                                 gls_veg, tke_veg )
 !***********************************************************************
-!
-      USE mod_param
-      USE mod_scalars
-      USE mod_vegetation 
-      USE mod_vegarr
-      USE vegetation_drag_mod
 !
 !  Imported variable declarations.
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
-      integer, intent(in) :: nstp, nnew 
+      integer, intent(in) :: nstp, nnew
 !
 # ifdef ASSUMED_SHAPE
       real(r8), intent(in) :: u(LBi:,LBj:,:,:)
@@ -114,9 +110,9 @@
       real(r8), intent(in) :: ru_loc_veg(LBi:,LBj:,:,:)
       real(r8), intent(in) :: rv_loc_veg(LBi:,LBj:,:,:)
       real(r8), intent(in) :: plant(LBi:,LBj:,:,:)
-# ifdef VEG_FLEX 
+# ifdef VEG_FLEX
       real(r8), intent(in) :: bend(LBi:,LBj:,:)
-# endif 
+# endif
       real(r8), intent(in) :: gls(LBi:,LBj:,0:,:)
       real(r8), intent(in) :: tke(LBi:,LBj:,0:,:)
       real(r8), intent(inout) :: gls_veg(LBi:,LBj:,0:)
@@ -127,9 +123,9 @@
       real(r8), intent(in) :: ru_loc_veg(LBi:UBi,LBj:UBj,N(ng),NVEG)
       real(r8), intent(in) :: rv_loc_veg(LBi:UBi,LBj:UBj,N(ng),NVEG)
       real(r8), intent(in) :: plant(LBi:UBi,LBj:UBj,NVEG,NVEGP)
-# ifdef VEG_FLEX 
+# ifdef VEG_FLEX
       real(r8), intent(in) :: bend(LBi:UBi,LBj:UBj,NVEG)
-# endif 
+# endif
       real(r8), intent(in) :: gls(LBi:UBi,LBj:UBj,0:N(ng),nnew)
       real(r8), intent(in) :: tke(LBi:UBi,LBj:UBj,0:N(ng),nnew)
       real(r8), intent(inout) :: gls_veg(LBi:UBi,LBj:UBj,0:N(ng))
@@ -140,32 +136,38 @@
 !
       integer :: i, j, k, iveg
 !
-      real(r8), parameter :: one_half=1.0_r8/2.0_r8 
-      real(r8), parameter :: one_third=1.0_r8/3.0_r8 
+      real(r8), parameter :: one_half=1.0_r8/2.0_r8
+      real(r8), parameter :: one_third=1.0_r8/3.0_r8
       real(r8), parameter :: Inival=0.0_r8
       real(r8), parameter :: cl_veg=1.0_r8, ck=0.09_r8
-      real(r8), parameter :: max_L=10.0e10_r8 
-      real(r8), parameter :: min_eps=1.0e-12_r8 
-      real(r8), parameter :: max_eps=1.0e14_r8 
+      real(r8), parameter :: max_L=10.0e10_r8
+      real(r8), parameter :: min_eps=1.0e-12_r8
+      real(r8), parameter :: max_eps=1.0e14_r8
+!
       real(r8) :: wrku1, wrku2, wrku3, wrku4, wrku
       real(r8) :: wrkv1, wrkv2, wrkv3, wrkv4, wrkv
       real(r8) :: wrk, cff1, cff2, cff3, dissip, inverse_dissip
       real(r8) :: solid, L, eqvegT
       real(r8) :: taufree, tauveg, taueff
       real(r8) :: tke_loc_veg, gls_loc_veg
+!
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: vegu
-      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: vegv 
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: vegv
 
 # include "set_bounds.h"
+!
+!=======================================================================
+!  Compute vegetation turbulence ontributions to vertical mixing.
+!=======================================================================
 !
       DO k=1,N(ng)-1
         DO j=Jstr,Jend
           DO i=Istr,Iend
             tke_veg(i,j,k)=Inival
             gls_veg(i,j,k)=Inival
-          END DO 
-        END DO 
-      END DO 
+          END DO
+        END DO
+      END DO
 
       cff1=3.0_r8+gls_p(ng)/gls_n(ng)
       cff2=1.5_r8+gls_m(ng)/gls_n(ng)
@@ -177,7 +179,7 @@
             DO i=Istr,Iend
 !
 !-----------------------------------------------------------------------
-! Additional turbulence generated by the vegetation = 
+! Additional turbulence generated by the vegetation =
 ! work spent by the fluid against the plants (in m3/s3)
 !-----------------------------------------------------------------------
 !
@@ -211,23 +213,23 @@
 !# ifdef VEG_FLEX
 !
 ! Equivalent thickness: horizontal projection of the bending plant
-! 
-!              eqvegT=plant(i,j,iveg,pthck)+sin(bend(i,j,iveg))*         &
-!     &                                       plant(i,j,iveg,phght)
+!
+!              eqvegT=plant(i,j,iveg,isThck)+sin(bend(i,j,iveg))*       &
+!     &               plant(i,j,iveg,isHght)
 !# else
-              eqvegT=plant(i,j,iveg,pthck)
-!# endif                 
+              eqvegT=plant(i,j,iveg,isThck)
+!# endif
 !
 !
 ! Solidity:cross-sectional area of a plant the number of plants per m2
 !
 !
-              solid=plant(i,j,iveg,pdiam)*eqvegT*plant(i,j,iveg,pdens)
+              solid=plant(i,j,iveg,isDiam)*eqvegT*plant(i,j,iveg,isDens)
 !
 ! Eddies typical size constrained by distance in between the plants
 !
               L=cl_veg*((1.0_r8-MIN(solid,1.0_r8))/                     &
-     &                 plant(i,j,iveg,pdens))**one_half
+     &                 plant(i,j,iveg,isDens))**one_half
               L=MIN(L,max_L)
 !
 ! Dissipation time-scale of eddies in between the plants
@@ -237,20 +239,20 @@
 !              tauveg=(L**2.0_r8/(ck**2.0_r8*tke_loc_veg))**one_third
 !
 ! Effective dissipation time-scale
-! 
+!
               taueff=MIN(taufree,tauveg)
               gls_loc_veg=gls_c2(ng)*tke_loc_veg/taueff
 !
 !-----------------------------------------------------------------------
 ! Add the tke and gls changes from all vegetation types
 !-----------------------------------------------------------------------
-! 
+!
               tke_veg(i,j,k)=tke_loc_veg + tke_veg(i,j,k)
               gls_veg(i,j,k)=gls_loc_veg + gls_veg(i,j,k)
-                                            
-            END DO 
+
+            END DO
           END DO
-        END DO 
+        END DO
       END DO VEG_LOOP
 !
       RETURN

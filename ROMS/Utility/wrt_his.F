@@ -40,54 +40,56 @@
       USE mod_sedbed
       USE mod_sediment
 #endif
-#if defined VEGETATION 
-      USE mod_vegetation
-      USE mod_vegarr
-#endif
       USE mod_stepping
 !
 #if (defined BBL_MODEL || defined WAVES_OUTPUT) && defined SOLVE3D
-      USE bbl_output_mod,      ONLY : bbl_wrt_nf90
+      USE bbl_output_mod,        ONLY : bbl_wrt_nf90
 # if defined PIO_LIB && defined DISTRIBUTE
-      USE bbl_output_mod,      ONLY : bbl_wrt_pio
+      USE bbl_output_mod,        ONLY : bbl_wrt_pio
 # endif
 #endif
-      USE extract_slice_mod,   ONLY : extract_slice
+      USE extract_slice_mod,     ONLY : extract_slice
 #if defined ICE_MODEL && defined SOLVE3D
-      USE ice_output_mod,      ONLY : ice_wrt_nf90
+      USE ice_output_mod,        ONLY : ice_wrt_nf90
 # if defined PIO_LIB && defined DISTRIBUTE
-      USE ice_output_mod,      ONLY : ice_wrt_pio
+      USE ice_output_mod,        ONLY : ice_wrt_pio
 # endif
 #endif
-      USE nf_fwrite2d_mod,     ONLY : nf_fwrite2d
+      USE nf_fwrite2d_mod,       ONLY : nf_fwrite2d
 #ifdef ADJUST_BOUNDARY
-      USE nf_fwrite2d_bry_mod, ONLY : nf_fwrite2d_bry
+      USE nf_fwrite2d_bry_mod,   ONLY : nf_fwrite2d_bry
 #endif
 #ifdef SOLVE3D
-      USE nf_fwrite3d_mod,     ONLY : nf_fwrite3d
+      USE nf_fwrite3d_mod,       ONLY : nf_fwrite3d
 # ifdef ADJUST_BOUNDARY
-      USE nf_fwrite3d_bry_mod, ONLY : nf_fwrite3d_bry
+      USE nf_fwrite3d_bry_mod,   ONLY : nf_fwrite3d_bry
 # endif
-      USE omega_mod,           ONLY : scale_omega
+      USE omega_mod,             ONLY : scale_omega
 #endif
 #if defined SEDIMENT && defined SOLVE3D
-      USE sediment_output_mod, ONLY : sediment_wrt_nf90
+      USE sediment_output_mod,   ONLY : sediment_wrt_nf90
 # if defined PIO_LIB && defined DISTRIBUTE
-      USE sediment_output_mod, ONLY : sediment_wrt_pio
+      USE sediment_output_mod,   ONLY : sediment_wrt_pio
 # endif
 #endif
-      USE strings_mod,         ONLY : FoundError
-      USE uv_rotate_mod,       ONLY : uv_rotate2d
+      USE strings_mod,           ONLY : FoundError
+      USE uv_rotate_mod,         ONLY : uv_rotate2d
 #ifdef SOLVE3D
-      USE uv_rotate_mod,       ONLY : uv_rotate3d
+      USE uv_rotate_mod,         ONLY : uv_rotate3d
 #endif
 #ifdef SOLVE3D
-      USE vorticity_mod,       ONLY : pvorticity3d, rvorticity3d
+      USE vorticity_mod,         ONLY : pvorticity3d, rvorticity3d
+#endif
+#if defined VEGETATION && defined SOLVE3D
+      USE vegetation_output_mod, ONLY : vegetation_wrt_nf90
+# if defined PIO_LIB && defined DISTRIBUTE
+      USE vegetation_output_mod, ONLY : vegetation_wrt_pio
+# endif
 #endif
 #if defined WEC_VF && defined SOLVE3D
-      USE wec_output_mod,      ONLY : wec_wrt_nf90
+      USE wec_output_mod,        ONLY : wec_wrt_nf90
 # if defined PIO_LIB && defined DISTRIBUTE
-      USE wec_output_mod,      ONLY : wec_wrt_pio
+      USE wec_output_mod,        ONLY : wec_wrt_pio
 # endif
 #endif
 !
@@ -2304,9 +2306,6 @@
      &                     Hout, HIS)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #endif
-#ifdef VEGETATION
-#include "vegetation_wrt_his.h"
-#endif 
 
 #if defined ICE_MODEL && defined SOLVE3D
 !
@@ -2329,6 +2328,18 @@
         CALL sediment_wrt_nf90 (ng, model, tile,                        &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          Hout, HIS)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+#endif
+
+#if defined VEGETATION && defined SOLVE3D
+!
+!-----------------------------------------------------------------------
+!  Write out the submerged acuatic vegetation model variables.
+!-----------------------------------------------------------------------
+!
+        CALL vegetation_wrt_nf90 (ng, model, tile,                      &
+     &                            LBi, UBi, LBj, UBj,                   &
+     &                            Hout, HIS)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #endif
 
@@ -4966,6 +4977,18 @@
         CALL sediment_wrt_pio (ng, model, tile,                         &
      &                         LBi, UBi, LBj, UBj,                      &
      &                         Hout, HIS)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+# endif
+
+# if defined VEGETATION && defined SOLVE3D
+!
+!-----------------------------------------------------------------------
+!  Write out the submerged acuatic vegetation model variables.
+!-----------------------------------------------------------------------
+!
+        CALL vegetation_wrt_pio (ng, model, tile,                       &
+     &                           LBi, UBi, LBj, UBj,                    &
+     &                           Hout, HIS)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 # endif
 

@@ -58,15 +58,16 @@
 #ifdef VEG_DRAG 
             CASE ('NVEG') 
               Npts=load_i(Nval, Rval, Ngrids, NVEG)
-                IF (NVEG.lt.0) THEN
-                  IF (Master) WRITE (out,30) 'NVEG', ng,                &
-     &              'must be greater than zero.'
-                  exit_flag=5
-                  RETURN
-                END IF
-            IF (.not.allocated(Rveg)) allocate(Rveg(NVEG,Ngrids)) 
+              IF (NVEG.lt.0) THEN
+                IF (Master) WRITE (out,30) 'NVEG', ng,                  &
+     &                      'must be greater than zero.'
+                exit_flag=5
+                RETURN
+              END IF
+              DO ng=1,Ngrids                      ! allocate variables
+                CALL allocate_vegetation (ng, 0)  ! solely depending on
+              END DO                              ! NVEG and Ngrids
             CASE ('CD_VEG')
-              IF (.not.allocated(CD_VEG)) allocate(CD_VEG(NVEG,Ngrids)) 
               Npts=load_r(Nval, Rval, NVEG, Ngrids, Rveg)
               DO ng=1,Ngrids
                 DO iveg=1,NVEG
@@ -74,7 +75,6 @@
                 END DO 
               END DO
             CASE ('E_VEG') 
-              IF (.not.allocated(E_VEG)) allocate(E_VEG(NVEG,Ngrids)) 
               Npts=load_r(Nval, Rval, NVEG, Ngrids, Rveg)
               DO ng=1,Ngrids
                 DO iveg=1,NVEG
@@ -82,8 +82,6 @@
                 END DO 
               END DO
             CASE ('VEG_MASSDENS') 
-              IF (.not.allocated(VEG_MASSDENS))                         &
-     &                 allocate(VEG_MASSDENS(NVEG,Ngrids)) 
               Npts=load_r(Nval, Rval, NVEG, Ngrids, Rveg)
               DO ng=1,Ngrids
                 DO iveg=1,NVEG
@@ -91,8 +89,6 @@
                 END DO 
               END DO
             CASE ('VEGHMIXCOEF') 
-              IF (.not.allocated(VEGHMIXCOEF))                          &
-     &                 allocate(VEGHMIXCOEF(NVEG,Ngrids)) 
               Npts=load_r(Nval, Rval, NVEG, Ngrids, Rveg)
               DO ng=1,Ngrids
                 DO iveg=1,NVEG
@@ -101,134 +97,102 @@
               END DO
 #endif 
 #if defined MARSH_SED_EROSION
-!           IF (.not.allocated(Rmarsh)) allocate(Rmarsh(Ngrids))
-             CASE ('KFAC_MARSH')
-               IF (.not.allocated(KFAC_MARSH))                          &
-     &                allocate(KFAC_MARSH(Ngrids))
-               Npts=load_r(Nval, Rval, Ngrids, Rmarsh)
-               DO ng=1,Ngrids
-                 KFAC_MARSH(ng)=Rmarsh(ng)
-               END DO
+            CASE ('KFAC_MARSH')
+              Npts=load_r(Nval, Rval, Ngrids, Rmarsh)
+              DO ng=1,Ngrids
+                KFAC_MARSH(ng)=Rmarsh(ng)
+              END DO
 # if defined MARSH_RETREAT
-             CASE ('SCARP_HGHT')
-               IF (.not.allocated(SCARP_HGHT))                          &
-     &                allocate(SCARP_HGHT(Ngrids))
-                 Npts=load_r(Nval, Rval, Ngrids, Rmarsh)
-                 DO ng=1,Ngrids
-                   SCARP_HGHT(ng)=Rmarsh(ng)
-                 END DO
+            CASE ('SCARP_HGHT')
+              Npts=load_r(Nval, Rval, Ngrids, Rmarsh)
+              DO ng=1,Ngrids
+                SCARP_HGHT(ng)=Rmarsh(ng)
+              END DO
 # endif 
 #endif
 #if defined MARSH_TIDAL_RANGE_CALC
             CASE ('NTIMES_MARSH') 
               Npts=load_i(Nval, Rval, Ngrids, NTIMES_MARSH)
-                IF (NTIMES_MARSH.lt.0) THEN
-                  IF (Master) WRITE (out,30) 'NTIMES_MARSH', ng,        &
-     &              'must be greater than zero.'
-                  exit_flag=5
-                  RETURN
-                END IF
+              IF (NTIMES_MARSH.lt.0) THEN
+                IF (Master) WRITE (out,30) 'NTIMES_MARSH', ng,          &
+     &                      'must be greater than zero.'
+                exit_flag=5
+                RETURN
+              END IF
 #endif
 #if defined MARSH_VERT_GROWTH 
-            IF (.not.allocated(Rveg)) allocate(Rveg(NVEG,Ngrids)) 
-             CASE ('PAR_FAC1')
-               IF (.not.allocated(PAR_FAC1))                            &
-     &                allocate(PAR_FAC1(Ngrids))
-               Npts=load_r(Nval, Rval, Ngrids, Rmarsh)
-               DO ng=1,Ngrids
-                 PAR_FAC1(ng)=Rmarsh(ng)
-               END DO
-             CASE ('PAR_FAC2')
-               IF (.not.allocated(PAR_FAC2))                            &
-     &                allocate(PAR_FAC2(Ngrids))
-               Npts=load_r(Nval, Rval, Ngrids, Rmarsh)
-               DO ng=1,Ngrids
+            CASE ('PAR_FAC1')
+              Npts=load_r(Nval, Rval, Ngrids, Rmarsh)
+              DO ng=1,Ngrids
+                PAR_FAC1(ng)=Rmarsh(ng)
+              END DO
+            CASE ('PAR_FAC2')
+              Npts=load_r(Nval, Rval, Ngrids, Rmarsh)
+              DO ng=1,Ngrids
                  PAR_FAC2(ng)=Rmarsh(ng)
-               END DO
-             CASE ('TDAYS_MARSH_GROWTH')
-               IF (.not.allocated(TDAYS_MARSH_GROWTH))                  &
-     &                   allocate(TDAYS_MARSH_GROWTH(Ngrids))
-                 Npts=load_r(Nval, Rval, Ngrids, Rmarsh)
-                 DO ng=1,Ngrids
-                   TDAYS_MARSH_GROWTH(ng)=Rmarsh(ng)
-                 END DO
-                 IF (TDAYS_MARSH_GROWTH(ng).lt.0) THEN
-                   IF (Master) WRITE (out,30) 'TDAYS_MARSH_GROWTH', ng,  &
-     &                'must be greater than zero.'
-                      exit_flag=5
-                   RETURN
-                 END IF
-!             CASE ('MARSH_BULK_DENS')
-!               IF (.not.allocated(MARSH_BULK_DENS))                     &
-!     &                allocate(MARSH_BULK_DENS(Ngrids))
-!               Npts=load_r(Nval, Rval, Ngrids, Rmarsh)
-!               DO ng=1,Ngrids
-!                 MARSH_BULK_DENS(ng)=Rmarsh(ng)
-!               END DO
-             CASE ('NUGP')
-               IF (.not.allocated(NUGP))                                &
-     &                allocate(NUGP(Ngrids))
-               Npts=load_r(Nval, Rval, Ngrids, Rmarsh)
-               DO ng=1,Ngrids
-                 NUGP(ng)=Rmarsh(ng)
-               END DO
-             CASE ('BMAX')
-               IF (.not.allocated(BMAX))                                &
-     &                allocate(BMAX(Ngrids))
-                 Npts=load_r(Nval, Rval, Ngrids, Rmarsh)
-                 DO ng=1,Ngrids
-                   BMAX(ng)=Rmarsh(ng)
-                 END DO
-             CASE ('CHIREF')
-               IF (.not.allocated(CHIREF))                              &
-     &                allocate(CHIREF(Ngrids))
-                 Npts=load_r(Nval, Rval, Ngrids, Rmarsh)
-                 DO ng=1,Ngrids
-                   CHIREF(ng)=Rmarsh(ng)
-                 END DO
+              END DO
+            CASE ('TDAYS_MARSH_GROWTH')
+              Npts=load_r(Nval, Rval, Ngrids, Rmarsh)
+              DO ng=1,Ngrids
+                TDAYS_MARSH_GROWTH(ng)=Rmarsh(ng)
+              END DO
+              IF (TDAYS_MARSH_GROWTH(ng).lt.0) THEN
+                IF (Master) WRITE (out,30) 'TDAYS_MARSH_GROWTH', ng,    &
+     &                      'must be greater than zero.'
+                exit_flag=5
+                RETURN
+              END IF
+!!          CASE ('MARSH_BULK_DENS')
+!!            Npts=load_r(Nval, Rval, Ngrids, Rmarsh)
+!!            DO ng=1,Ngrids
+!!              MARSH_BULK_DENS(ng)=Rmarsh(ng)
+!!            END DO
+            CASE ('NUGP')
+              Npts=load_r(Nval, Rval, Ngrids, Rmarsh)
+              DO ng=1,Ngrids
+                NUGP(ng)=Rmarsh(ng)
+              END DO
+            CASE ('BMAX')
+              Npts=load_r(Nval, Rval, Ngrids, Rmarsh)
+              DO ng=1,Ngrids
+                BMAX(ng)=Rmarsh(ng)
+              END DO
+            CASE ('CHIREF')
+              Npts=load_r(Nval, Rval, Ngrids, Rmarsh)
+              DO ng=1,Ngrids
+                CHIREF(ng)=Rmarsh(ng)
+              END DO
 # if defined MARSH_BIOMASS_VEG
-             CASE ('ALPHA_PDENS')
-               IF (.not.allocated(ALPHA_PDENS))                         &
-     &                allocate(ALPHA_PDENS(Ngrids))
-               Npts=load_r(Nval, Rval, Ngrids, Rmarsh)
-               DO ng=1,Ngrids
+            CASE ('ALPHA_PDENS')
+              Npts=load_r(Nval, Rval, Ngrids, Rmarsh)
+              DO ng=1,Ngrids
                  ALPHA_PDENS(ng)=Rmarsh(ng)
-               END DO
-             CASE ('BETA_PDENS')
-               IF (.not.allocated(BETA_PDENS))                          &
-     &                allocate(BETA_PDENS(Ngrids))
-               Npts=load_r(Nval, Rval, Ngrids, Rmarsh)
-               DO ng=1,Ngrids
-                 BETA_PDENS(ng)=Rmarsh(ng)
-               END DO
-             CASE ('ALPHA_PHGHT')
-               IF (.not.allocated(ALPHA_PHGHT))                         &
-     &                allocate(ALPHA_PHGHT(Ngrids))
-               Npts=load_r(Nval, Rval, Ngrids, Rmarsh)
-               DO ng=1,Ngrids
-                 ALPHA_PHGHT(ng)=Rmarsh(ng)
-               END DO
-             CASE ('BETA_PHGHT')
-               IF (.not.allocated(BETA_PHGHT))                          &
-     &                allocate(BETA_PHGHT(Ngrids))
-               Npts=load_r(Nval, Rval, Ngrids, Rmarsh)
-               DO ng=1,Ngrids
-                 BETA_PHGHT(ng)=Rmarsh(ng)
-               END DO
-             CASE ('ALPHA_PDIAM')
-               IF (.not.allocated(ALPHA_PDIAM))                         &
-     &                allocate(ALPHA_PDIAM(Ngrids))
-               Npts=load_r(Nval, Rval, Ngrids, Rmarsh)
-               DO ng=1,Ngrids
-                 ALPHA_PDIAM(ng)=Rmarsh(ng)
-               END DO
-             CASE ('BETA_PDIAM')
-               IF (.not.allocated(BETA_PDIAM))                          &
-     &                allocate(BETA_PDIAM(Ngrids))
-               Npts=load_r(Nval, Rval, Ngrids, Rmarsh)
-               DO ng=1,Ngrids
-                 BETA_PDIAM(ng)=Rmarsh(ng)
-               END DO
+              END DO
+            CASE ('BETA_PDENS')
+              Npts=load_r(Nval, Rval, Ngrids, Rmarsh)
+              DO ng=1,Ngrids
+                BETA_PDENS(ng)=Rmarsh(ng)
+              END DO
+            CASE ('ALPHA_PHGHT')
+              Npts=load_r(Nval, Rval, Ngrids, Rmarsh)
+              DO ng=1,Ngrids
+                ALPHA_PHGHT(ng)=Rmarsh(ng)
+              END DO
+            CASE ('BETA_PHGHT')
+              Npts=load_r(Nval, Rval, Ngrids, Rmarsh)
+              DO ng=1,Ngrids
+                BETA_PHGHT(ng)=Rmarsh(ng)
+              END DO
+            CASE ('ALPHA_PDIAM')
+              Npts=load_r(Nval, Rval, Ngrids, Rmarsh)
+              DO ng=1,Ngrids
+                ALPHA_PDIAM(ng)=Rmarsh(ng)
+              END DO
+            CASE ('BETA_PDIAM')
+              Npts=load_r(Nval, Rval, Ngrids, Rmarsh)
+              DO ng=1,Ngrids
+                BETA_PDIAM(ng)=Rmarsh(ng)
+              END DO
 # endif 
 #endif 
 !
@@ -238,33 +202,33 @@
 !
 #if defined VEG_DRAG || defined VEG_BIOMASS
             CASE ('Hout(ipdens)')
-              IF (idvprp(pdens).eq.0) THEN
-                IF (Master) WRITE (out,30) 'ipdens'
+              IF (idvprp(isDens).eq.0) THEN
+                IF (Master) WRITE (out,30) 'idvprp(isDens)'
                 exit_flag=5
                 RETURN
               END IF
-              Npts=load_l(Nval, Cval, Ngrids, Hout(idvprp(pdens),:))
+              Npts=load_l(Nval, Cval, Ngrids, Hout(idvprp(isDens),:))
             CASE ('Hout(iphght)')
-              IF (idvprp(phght).eq.0) THEN
-                IF (Master) WRITE (out,30) 'iphght'
+              IF (idvprp(isHght).eq.0) THEN
+                IF (Master) WRITE (out,30) 'idvprp(isHght)'
                 exit_flag=5
                 RETURN
               END IF
-              Npts=load_l(Nval, Cval, Ngrids, Hout(idvprp(phght),:))
+              Npts=load_l(Nval, Cval, Ngrids, Hout(idvprp(isHght),:))
             CASE ('Hout(ipdiam)')
-              IF (idvprp(pdiam).eq.0) THEN
-                IF (Master) WRITE (out,30) 'ipdiam'
+              IF (idvprp(isDiam).eq.0) THEN
+                IF (Master) WRITE (out,30) 'idvprp(isDiam)'
                 exit_flag=5
                 RETURN
               END IF
-              Npts=load_l(Nval, Cval, Ngrids, Hout(idvprp(pdiam),:))
+              Npts=load_l(Nval, Cval, Ngrids, Hout(idvprp(isDiam),:))
             CASE ('Hout(ipthck)')
-              IF (idvprp(pthck).eq.0) THEN
-                IF (Master) WRITE (out,30) 'ipthck'
+              IF (idvprp(isThck).eq.0) THEN
+                IF (Master) WRITE (out,30) 'idvprp(isThck)'
                 exit_flag=5
                 RETURN
               END IF
-              Npts=load_l(Nval, Cval, Ngrids, Hout(idvprp(pthck),:))
+              Npts=load_l(Nval, Cval, Ngrids, Hout(idvprp(isThck),:))
 #endif                                         
 #ifdef VEG_STREAMING
             CASE ('Hout(idWdvg)')

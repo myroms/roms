@@ -24,10 +24,6 @@
 #ifdef BIOLOGY
       USE mod_biology
 #endif
-#ifdef VEGETATION
-      USE mod_vegetation
-      USE mod_vegarr
-#endif
 #ifdef FOUR_DVAR
       USE mod_fourdvar
 #endif
@@ -37,18 +33,27 @@
 #if defined SEDIMENT || defined BBL_MODEL
       USE mod_sediment
 #endif
+#ifdef VEGETATION
+      USE mod_vegetation
+#endif
 !
-      USE def_dim_mod,    ONLY : def_dim
-      USE def_info_mod,   ONLY : def_info
-      USE def_var_mod,    ONLY : def_var
+      USE def_dim_mod,           ONLY : def_dim
+      USE def_info_mod,          ONLY : def_info
+      USE def_var_mod,           ONLY : def_var
 #ifdef ICE_MODEL
-      USE ice_output_mod, ONLY : ice_def_nf90
+      USE ice_output_mod,        ONLY : ice_def_nf90
 # if defined PIO_LIB && defined DISTRIBUTE
-      USE ice_output_mod, ONLY : ice_def_pio
+      USE ice_output_mod,        ONLY : ice_def_pio
 # endif
 #endif
-      USE strings_mod,    ONLY : FoundError
-      USE wrt_info_mod,   ONLY : wrt_info
+      USE strings_mod,           ONLY : FoundError
+#if defined VEGETATION && defined SOLVE3D
+      USE vegetation_output_mod, ONLY : vegetation_def_nf90
+# if defined PIO_LIB && defined DISTRIBUTE
+      USE vegetation_output_mod, ONLY : vegetation_def_pio
+# endif
+#endif
+      USE wrt_info_mod,          ONLY : wrt_info
 !
       implicit none
 !
@@ -121,22 +126,12 @@
       integer :: sp2dgrd(3), sr2dgrd(3), su2dgrd(3), sv2dgrd(3)
       integer :: sr3dgrd(4), su3dgrd(4), sv3dgrd(4)
       integer :: t2dgrd(4), u2dgrd(4), v2dgrd(4)
-#if defined VEGETATION 
-# if defined VEG_DRAG || defined VEG_BIOMASS
-      integer :: v3pgrd(4)
-# endif
-#endif
-
-#ifdef INWAVE_MODEL
-      integer :: r3degrd(4)
-      integer :: u3degrd(4)
-      integer :: v3degrd(4)
-      integer :: t3degrd(4)
-#endif
 
 #ifdef SOLVE3D
       integer :: itrc
-
+# if defined VEGETATION 
+      integer :: sapgrd(4)
+# endif
       integer :: k3dgrd(5), t3dgrd(5)
       integer :: r3dgrd(4), ru3dgrd(5), rv3dgrd(5)
       integer :: u3dgrd(5), v3dgrd(5), w3dgrd(4)
@@ -295,12 +290,11 @@
 # endif
 
 # if defined VEGETATION
-#  if defined VEG_DRAG || defined VEG_BIOMASS
-        status=def_dim(ng, iNLM, RST(ng)%ncid, ncname, 'NVEG',          &
+        status=def_dim(ng, model, RST(ng)%ncid, ncname, 'Nveg',         &
      &                 NVEG, DimIDs(35))
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-#  endif 
 # endif
+
 # ifdef ECOSIM
         status=def_dim(ng, model, RST(ng)%ncid, ncname, 'Nbands',       &
      &                 NBands, DimIDs(33))
@@ -406,6 +400,15 @@
         r3dgrd(4)=DimIDs(12)
 # endif
 #endif
+#if defined VEGETATION && defined SOLVE3D
+!
+!  Define dimensions for the submerged aquatic plant (SAP) variables.
+!
+        sapgrd(1)=DimIDs( 1)
+        sapgrd(2)=DimIDs( 5)
+        sapgrd(3)=DimIDs(35)
+        sapgrd(4)=DimIDs(12)
+#endif 
 !
 !  Define dimension vectors for staggered type variables at PSI-points.
 !
@@ -445,15 +448,6 @@
 # endif
 #endif
 !
-!  Define dimensions for the plant array variables
-!
-# if defined VEG_DRAG || defined VEG_BIOMASS
-        v3pgrd(1)=DimIDs( 1)
-        v3pgrd(2)=DimIDs( 5)
-        v3pgrd(3)=DimIDs(35)
-        v3pgrd(4)=DimIDs(12)
-# endif
-
 !  Define dimension vectors for staggered v-momentum type variables.
 !
 #if !defined PERFECT_RESTART && \
@@ -773,11 +767,7 @@
      &                 SetFillVal = .FALSE.)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #endif
-!
-#if defined VEGETATION 
-#include "vegetation_def_rst.h"
-#endif
-!
+
 #if defined SEDIMENT && defined SED_MORPH
 !
 !  Define time-varying bathymetry.
@@ -1619,6 +1609,17 @@
                            t2dgrd, u2dgrd, v2dgrd)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #endif
+
+#if defined VEGETATION && defined SOLVE3D
+!
+!-----------------------------------------------------------------------
+!  Define the submerged aquatic vegetation model variables.
+!-----------------------------------------------------------------------
+!
+        CALL vegetation_def_nf90 (ng, model, Ldefine, Hout, RST,        &
+     &                            sapgrd, t2dgrd)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+#endif
 !
 !-----------------------------------------------------------------------
 !  Leave definition mode.
@@ -1855,17 +1856,6 @@
 # endif
 #endif
         END DO
-#if defined VEGETATION 
-# if defined VEG_DRAG || defined VEG_BIOMASS 
-        DO i=1,NVEGP
-            IF (TRIM(var_name(i)).eq.                                   &
-     &          TRIM(Vname(1,idvprp(i)))) THEN
-              got_var(idvprp(i))=.TRUE.
-              RST(ng)%Vid(idvprp(i))=var_id(i)
-          END IF
-        END DO
-#  endif
-#endif 
 !
 !  Check if initialization variables are available in input NetCDF
 !  file.
@@ -2109,12 +2099,22 @@
         END DO
 # endif
 #endif
+
 #ifdef ICE_MODEL
 !
 !  Scan sea-ice variables from input NetCDF and activate switches for
 !  restart variables. Get variable IDs.
 !
         CALL ice_def_nf90 (ng, model, Ldefine, Hout, RST)
+#endif
+
+#if defined VEGETATION && defined SOLVE3D
+!
+!  Scan submerged aquatic vegetation model variables from input NetCDF
+!  and activate switches for restart variables. Ger variable IDs.
+!
+        CALL vegetation_def_nf90 (ng, model, Ldefine, Hout, RST)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #endif
 !
 !  Set unlimited time record dimension to current value.
@@ -2170,7 +2170,9 @@
 
 # ifdef SOLVE3D
       integer :: itrc
-
+#  if defined VEGETATION 
+      integer :: sapgrd(4)
+#  endif
       integer :: k3dgrd(5), t3dgrd(5)
       integer :: r3dgrd(4), ru3dgrd(5), rv3dgrd(5)
       integer :: u3dgrd(5), v3dgrd(5), w3dgrd(4)
@@ -2330,6 +2332,12 @@
 #   endif
 #  endif
 
+#  if defined VEGETATION
+        status=def_dim(ng, model, RST(ng)%pioFile, ncname, 'Nveg',      &
+     &                 NVEG, DimIDs(35))
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+#  endif
+
 #  ifdef ECOSIM
         status=def_dim(ng, model, RST(ng)%pioFile, ncname, 'Nbands',    &
      &                 NBands, DimIDs(33))
@@ -2435,6 +2443,15 @@
         r3dgrd(4)=DimIDs(12)
 #  endif
 # endif
+# if defined VEGETATION && defined SOLVE3D
+!
+!  Define dimensions for the submerged aquatic plant (SAP) variables.
+!
+        sapgrd(1)=DimIDs( 1)
+        sapgrd(2)=DimIDs( 5)
+        sapgrd(3)=DimIDs(35)
+        sapgrd(4)=DimIDs(12)
+# endif 
 !
 !  Define dimension vectors for staggered type variables at PSI-points.
 !
@@ -3760,6 +3777,7 @@
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #  endif
 # endif
+
 # ifdef ICE_MODEL
 !
 !-----------------------------------------------------------------------
@@ -3768,6 +3786,17 @@
 !
         CALL ice_def_pio (ng, model, Ldefine, Hout, RST,                &
      &                    t2dgrd, u2dgrd, v2dgrd)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+# endif
+
+# if defined VEGETATION && defined SOLVE3D
+!
+!-----------------------------------------------------------------------
+!  Define the submerged aquatic vegetation model variables.
+!-----------------------------------------------------------------------
+!
+        CALL vegetation_def_pio (ng, model, Ldefine, Hout, RST,         &
+     &                           sapgrd, t2dgrd)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 # endif
 !
@@ -4329,12 +4358,22 @@
         END DO
 #  endif
 # endif
+
 # ifdef ICE_MODEL
 !
 !  Scan sea-ice variables from input NetCDF and activate switches for
 !  restart variables. Get variable IDs.
 !
         CALL ice_def_pio (ng, model, Ldefine, Hout, RST)
+# endif
+
+# if defined VEGETATION && defined SOLVE3D
+!
+!  Scan submerged aquatic vegetation model variables from input NetCDF
+!  and activate switches for restart variables. Ger variable IDs.
+!
+        CALL vegetation_def_pio (ng, model, Ldefine, Hout, RST)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 # endif
 !
 !  Set unlimited time record dimension to current value.

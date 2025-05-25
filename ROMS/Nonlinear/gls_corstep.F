@@ -44,8 +44,9 @@
       USE mod_ocean
       USE mod_stepping
 # if defined VEGETATION && defined VEG_TURB
-      USE mod_vegarr
-      USE vegetation_turb_mod, ONLY : vegetation_turb_cal
+      USE mod_vegetation
+!
+      USE vegetation_turb_mod, ONLY : vegetation_turb
 # endif
 !
 !  Imported variable declarations.
@@ -64,7 +65,7 @@
 !  Add the effect of vegetation on the turbulence model.
 !-----------------------------------------------------------------------
 !
-      CALL vegetation_turb_cal (ng, tile)
+      CALL vegetation_turb (ng, tile)
 # endif
 !
 !  GLS corrector step.

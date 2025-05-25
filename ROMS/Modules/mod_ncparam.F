@@ -107,7 +107,7 @@
 !  Maximum number of dimension IDs stored in local array DimIDs used to
 !  defined variable dimensions in output NetCDF files.
 !
-      integer, parameter :: nDimID = 34
+      integer, parameter :: nDimID = 35
 !
 !  Number of horizontal interior and boundary water points.
 !
@@ -1184,12 +1184,12 @@
 #if defined SEDIMENT || defined BBL_MODEL
       USE mod_sediment
 #endif
-!
-      USE get_metadata_mod, ONLY : io_metadata
-      USE strings_mod,      ONLY : FoundError, StandardName
 #if defined VEGETATION
       USE mod_vegetation 
 #endif 
+!
+      USE get_metadata_mod, ONLY : io_metadata
+      USE strings_mod,      ONLY : FoundError, StandardName
 !
 !  Local variable declarations.
 !
@@ -1476,6 +1476,8 @@
             gtype=v3dvar
           CASE ('w3dvar')
             gtype=w3dvar
+          CASE ('a3dvar')
+            gtype=a3dvar
           CASE ('b3dvar')
             gtype=b3dvar
 #if defined ECOSIM && defined DIAGNOSTICS_BIO

@@ -310,7 +310,7 @@
       character (len=256) :: fposnam        ! floats positions
       character (len=256) :: iparnam        ! ice model parameters
       character (len=256) :: sparnam        ! sediment model parameters
-      character (len=256) :: vegnam         ! vegetation model parameters
+      character (len=256) :: vegname         ! vegetation model parameters
       character (len=256) :: sposnam        ! station positions
       character (len=256) :: varname        ! I/O metadata
 !
@@ -760,7 +760,7 @@
         fbionam(i:i)=blank
         fposnam(i:i)=blank
         sparnam(i:i)=blank
-        vegnam(i:i)=blank
+        vegname(i:i)=blank
         sposnam(i:i)=blank
       END DO
 !
