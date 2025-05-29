@@ -404,7 +404,6 @@ CPPFLAGS += -D$(shell echo ${FORT} | tr "-" "_" | tr [a-z] [A-Z])
 CPPFLAGS += -D'ROOT_DIR="$(ROOTDIR)"'
 ifdef ROMS_APPLICATION
   CPPFLAGS  += $(ROMS_CPPFLAGS)
-  CPPFLAGS  += -DNestedGrids=$(NestedGrids)
   MDEPFLAGS += -DROMS_HEADER="$(HEADER)"
 endif
 

@@ -146,7 +146,6 @@
 !  indices.
 !-----------------------------------------------------------------------
 !
-      integer, allocatable :: idvprp(:)  ! aquatic plant properties
       integer, allocatable :: idTmfo(:)  ! sediment flux out marsh cells
 !
       integer :: idWdvg    ! wave dissipation due to vegetation
@@ -168,7 +167,9 @@
       integer, parameter :: isHght = 3   ! mean height
       integer, parameter :: isThck = 4   ! mean thickness
 !
-      integer, parameter :: NVEGP  = 4   ! number of plant properties
+      integer, parameter :: NVEGP  = 4    ! number of plant properties
+!                                           (set larger to sub-index)
+      integer, dimension(NVEGP) :: idvprp ! aquatic plant properties
 !
 !  Number of vegetation types or groups. For example, seagrasses,
 !  salt marshes, mangroves, and other herbaceous plants.
@@ -316,16 +317,11 @@
 !-----------------------------------------------------------------------
 !
       CONF_VARS : IF (model.eq.0) THEN
-!
-!  I/O indices.
-!
-        IF (.not.allocated(idvprp)) THEN
-          allocate ( idvprp(NVEGP) )
-          Dmem(1)=Dmem(1)+REAL(NVEGP,r8)
-        END IF
 
 #ifdef MARSH_DYNAMICS
 # if defined MARSH_SED_EROSION
+!
+!  I/O indices.
 !
         IF (.not.allocated(idTmfo)) THEN
           allocate ( idTmfo(NST) )
@@ -623,7 +619,6 @@
 !  Deallocate configuration variables.
 !
       IF (ng.eq.Ngrids) THEN
-        IF (allocated(idvprp))        deallocate ( idvprp )
 
 #ifdef MARSH_DYNAMICS
 # if defined MARSH_SED_EROSION

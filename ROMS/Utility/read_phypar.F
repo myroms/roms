@@ -3802,30 +3802,6 @@
                 Dout(idDu3d(M3vvis),ng)=Lswitch(ng)
                 Dout(idDv3d(M3vvis),ng)=Lswitch(ng)
               END DO
-#  if defined VEGETATION && defined VEG_DRAG
-            CASE ('Dout(M3fveg)')
-              IF (M3fveg.le.0) THEN
-                IF (Master) WRITE (out,280) 'M3fveg'
-                exit_flag=5
-                RETURN
-              END IF
-              Npts=load_l(Nval, Cval, Ngrids, Lswitch)
-              DO ng=1,Ngrids
-                Dout(idDu3d(M3fveg),ng)=Lswitch(ng)
-                Dout(idDv3d(M3fveg),ng)=Lswitch(ng)
-              END DO
-            CASE ('Dout(M2fveg)')
-              IF (M2fveg.le.0) THEN
-                IF (Master) WRITE (out,280) 'M2fveg'
-                exit_flag=5
-                RETURN
-              END IF
-              Npts=load_l(Nval, Cval, Ngrids, Lswitch)
-              DO ng=1,Ngrids
-                Dout(idDu2d(M2fveg),ng)=Lswitch(ng)
-                Dout(idDv2d(M2fveg),ng)=Lswitch(ng)
-              END DO
-#  endif
 # endif
 #endif
 #if defined DIAGNOSTICS_TS && defined SOLVE3D

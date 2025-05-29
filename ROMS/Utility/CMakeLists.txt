@@ -128,6 +128,7 @@ list( APPEND _files
       ROMS/Utility/read_couplepar.F
       ROMS/Utility/read_fltbiopar.F
       ROMS/Utility/read_fltpar.F
+      ROMS/Utility/read_icepar.F
       ROMS/Utility/read_phypar.F
       ROMS/Utility/read_sedpar.F
       ROMS/Utility/read_stapar.F
