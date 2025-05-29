@@ -80,7 +80,7 @@
           CASE ('idTmmr')
             idTmmr=varid
 # endif
-# if defined MARSH_TIDAL_RANGE_CALC
+# if defined MARSH_TIDAL_RANGE
           CASE('idTmtr')
             idTmtr=varid
 # endif

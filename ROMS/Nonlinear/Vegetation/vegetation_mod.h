@@ -60,7 +60,7 @@
 #  if defined MARSH_RETREAT
 !    marsh_retreat      Amount of marsh retreat                        !
 #  endif
-#  if defined MARSH_TIDAL_RANGE_CALC
+#  if defined MARSH_TIDAL_RANGE
 !    zeta_max_rec       Marsh mean higher high water (MHHW)            !
 !    zeta_min_rec       Marsh mean lower low water (MLLW)              !
 !    marsh_tidal_range  Marsh mean tidal range (MHHW minus MLLW)       !
@@ -180,7 +180,7 @@
 !  Submerged Aquatic Vegetation Model Configuration Variables.
 !-----------------------------------------------------------------------
 !
-# if defined MARSH_TIDAL_RANGE_CALC
+# if defined MARSH_TIDAL_RANGE
       integer ::  NTIMES_MARSH
 !
 # endif
@@ -266,7 +266,7 @@
 # if defined MARSH_STOCH
         real(r8), pointer :: marsh_stoch(:,:)
 # endif
-# if defined MARSH_TIDAL_RANGE_CALC
+# if defined MARSH_TIDAL_RANGE
         real(r8), pointer :: zeta_max1(:,:)
         real(r8), pointer :: zeta_min1(:,:)
         real(r8), pointer :: zeta_max_rec(:,:,:)
@@ -558,7 +558,7 @@
         allocate ( VEG(ng) % marsh_stoch(LBi:UBi,LBj:UBj ) )
         Dmem(ng)=Dmem(ng)+size2d
 # endif
-# if defined MARSH_TIDAL_RANGE_CALC
+# if defined MARSH_TIDAL_RANGE
 !
         allocate ( VEG(ng) % zeta_max1(LBi:UBi,LBj:UBj ) )
         Dmem(ng)=Dmem(ng)+size2d
@@ -819,7 +819,7 @@
 # if defined MARSH_STOCH
             VEG(ng) % marsh_stoch(i,j)        = IniVal
 # endif 
-# if defined MARSH_TIDAL_RANGE_CALC
+# if defined MARSH_TIDAL_RANGE
             DO it=1,NTIMES_MARSH
               VEG(ng) % zeta_max_rec(i,j,it)  = IniVal
               VEG(ng) % zeta_min_rec(i,j,it)  = IniVal
@@ -837,7 +837,7 @@
 # endif
           END DO
         END DO
-# if defined MARSH_TIDAL_RANGE_CALC
+# if defined MARSH_TIDAL_RANGE
         VEG(ng) % counter_loc_rl = 1.0_r8
 # endif
 #endif

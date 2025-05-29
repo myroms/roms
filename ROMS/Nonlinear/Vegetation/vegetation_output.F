@@ -334,7 +334,7 @@
 #   endif
 #  endif
 
-#  ifdef MARSH_TIDAL_RANGE_CALC
+#  ifdef MARSH_TIDAL_RANGE
 !
 !  Define tidal range (m), for a given frequency, leading to marshland
 !  growth.
@@ -538,7 +538,7 @@
             S(ng)%Vid(idTmmr)=var_id(i)
 #   endif
 #  endif
-#  ifdef MARSH_TIDAL_RANGE_CALC
+#  ifdef MARSH_TIDAL_RANGE
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idTmtr))) THEN
             got_var(idTmtr)=.TRUE.
             S(ng)%Vid(idTmtr)=var_id(i)
@@ -631,7 +631,7 @@
         END IF
 #   endif
 #  endif
-#  ifdef MARSH_TIDAL_RANGE_CALC
+#  ifdef MARSH_TIDAL_RANGE
         IF (.not.got_var(idTmtr).or.                                    &
      &      (.not.Lrestart.and.VarOut(idTmtr,ng))) THEN
           IF (Master) WRITE (stdout,10) TRIM(Vname(1,idTmtr)),          &
@@ -963,7 +963,7 @@
 #   endif
 #  endif
 
-#  if defined MARSH_TIDAL_RANGE_CALC
+#  if defined MARSH_TIDAL_RANGE
 !
 !  Write out tidal range (m), for a given frequency, leading to
 !  marshland growth.
@@ -1448,7 +1448,7 @@
 #    endif
 #   endif
 
-#   ifdef MARSH_TIDAL_RANGE_CALC
+#   ifdef MARSH_TIDAL_RANGE
 !
 !  Define tidal range (m), for a given frequency, leading to marshland
 !  growth.
@@ -1688,7 +1688,7 @@
             S(ng)%pioVar(idTmmr)%gtype=r2dvar
 #    endif
 #   endif
-#   ifdef MARSH_TIDAL_RANGE_CALC
+#   ifdef MARSH_TIDAL_RANGE
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idTmtr))) THEN
             got_var(idTmtr)=.TRUE.
             S(ng)%pioVar(idTmtr)%vd=var_desc(i)
@@ -1798,7 +1798,7 @@
         END IF
 #    endif
 #   endif
-#   ifdef MARSH_TIDAL_RANGE_CALC
+#   ifdef MARSH_TIDAL_RANGE
         IF (.not.got_var(idTmtr).or.                                    &
      &      (.not.Lrestart.and.VarOut(idTmtr,ng))) THEN
           IF (Master) WRITE (stdout,10) TRIM(Vname(1,idTmtr)),          &
@@ -2168,7 +2168,7 @@
 #    endif
 #   endif
 
-#   if defined MARSH_TIDAL_RANGE_CALC
+#   if defined MARSH_TIDAL_RANGE
 !
 !  Write out tidal range (m), for a given frequency, leading to
 !  marshland growth.

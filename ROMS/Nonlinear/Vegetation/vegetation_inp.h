@@ -113,7 +113,7 @@
               END DO
 # endif
 #endif
-#if defined MARSH_TIDAL_RANGE_CALC
+#if defined MARSH_TIDAL_RANGE
             CASE ('NTIMES_MARSH')
               Npts=load_i(Nval, Rval, Ngrids, NTIMES_MARSH)
               IF (NTIMES_MARSH.lt.0) THEN
@@ -294,7 +294,7 @@
 #   endif
 #  endif
 # endif
-# ifdef MARSH_TIDAL_RANGE_CALC
+# ifdef MARSH_TIDAL_RANGE
             CASE ('Hout(idTmtr)')
               IF (idTmtr.eq.0) THEN
                 IF (Master) WRITE (out,40) 'idTmtr'
@@ -378,7 +378,7 @@
 #   endif
 #  endif
 # endif
-# ifdef MARSH_TIDAL_RANGE_CALC
+# ifdef MARSH_TIDAL_RANGE
             CASE ('Qout(idTmtr)')
               Npts=load_l(Nval, Cval, Ngrids, Qout(idTmtr,:))
 # endif
@@ -467,8 +467,8 @@
           WRITE (out,80) SCARP_HGHT(ng), 'SCARP_HGHT',                  &
      &          'Scarp elevation (m) criteria for marsh retreat'
 # endif
-# ifdef MARSH_TIDAL_RANGE_CALC
-          WRITE (out,80) NTIMES_MARSH(ng), 'NTIMES_MARSH',              &
+# ifdef MARSH_TIDAL_RANGE
+          WRITE (out,90) NTIMES_MARSH(ng), 'NTIMES_MARSH',              &
      &          'Number of days for mean higher high water (MHHW)'
 # endif
 # ifdef MARSH_VERT_GROWTH
@@ -501,138 +501,138 @@
 # endif
 #endif
 #if defined VEG_DRAG || defined VEG_BIOMASS
-          IF (Hout(idvprp(isDens),ng)) WRITE (out,90)                   &
+          IF (Hout(idvprp(isDens),ng)) WRITE (out,100)                   &
      &        Hout(idvprp(isDens),ng), 'Hout(isDens)',                  &
      &        'Plant density, individuals per area'
-          IF (Hout(idvprp(isHght),ng)) WRITE (out,90)                   &
+          IF (Hout(idvprp(isHght),ng)) WRITE (out,100)                   &
      &        Hout(idvprp(isHght),ng), 'Hout(isHght)',                  &
      &        'Dominant plant mean height'
-          IF (Hout(idvprp(isDiam),ng)) WRITE (out,90)                   &
+          IF (Hout(idvprp(isDiam),ng)) WRITE (out,100)                   &
      &        Hout(idvprp(isDiam),ng), 'Hout(isDiam)',                  &
      &        'Dominant plant mean diameter'
-          IF (Hout(idvprp(isThck),ng)) WRITE (out,90)                   &
+          IF (Hout(idvprp(isThck),ng)) WRITE (out,100)                   &
      &        Hout(idvprp(isThck),ng), 'Hout(isThck)',                  &
      &        'Dominant plant mean thickness'
 #endif
 #ifdef VEG_STREAMING
-          IF (Hout(idWdvg,ng)) WRITE (out,90)                           &
+          IF (Hout(idWdvg,ng)) WRITE (out,100)                           &
      &        Hout(idWdvg,ng), 'Hout(idWdvg)',                          &
      &        'Wave dissipation due to vegetation'
-          IF (Hout(idCdvg,ng)) WRITE (out,90)                           &
+          IF (Hout(idCdvg,ng)) WRITE (out,100)                           &
      &        Hout(idCdvg,ng), 'Hout(idCdvg)',                          &
      &        'Spectral drag coefficient due to waves and vegetation'
 #endif
 #ifdef MARSH_DYNAMICS
-          IF (Hout(idTims,ng)) WRITE (out,90)                           &
+          IF (Hout(idTims,ng)) WRITE (out,100)                           &
      &        Hout(idTims,ng), 'Hout(idTims)',                          &
      &        'Marsh cell mask'
 # ifdef MARSH_WAVE_THRUST
-          IF (Hout(idTtot,ng)) WRITE (out,90)                           &
+          IF (Hout(idTtot,ng)) WRITE (out,100)                           &
      &        Hout(idTtot,ng), 'Hout(idTtot)',                          &
      &        'Total wave thrust on marsh cells'
 #  ifdef MARSH_SED_EROSION
-          IF (Hout(idTmfo,ng)) WRITE (out,90)                           &
+          IF (Hout(idTmfo,ng)) WRITE (out,100)                           &
      &        Hout(idTmfo,ng), 'Hout(idTmfo)',                          &
      &        'Sediment flux out of marsh cells'
 #   ifdef MARSH_RETREAT
-          IF (Hout(idTmmr,ng)) WRITE (out,90)                           &
+          IF (Hout(idTmmr,ng)) WRITE (out,100)                           &
      &        Hout(idTmmr,ng), 'Hout(idTmmr)',                          &
      &        'Amount of marsh retreat'
 #   endif
 #  endif
 # endif
 # ifdef MARSH_TIDAL_RANGE
-          IF (Hout(idTmtr,ng)) WRITE (out,90)                           &
+          IF (Hout(idTmtr,ng)) WRITE (out,100)                           &
      &        Hout(idTmtr,ng), 'Hout(idTmtr)',                          &
      &        'Tidal range for marsh growth'
 # endif
 # ifdef MARSH_VERT_GROWTH
-          IF (Hout(idTmhw,ng)) WRITE (out,90)                           &
+          IF (Hout(idTmhw,ng)) WRITE (out,100)                           &
      &        Hout(idTmhw,ng), 'Hout(idTmhw)',                          &
      &        'Mean high water for marsh cells'
-          IF (Hout(idTmlw,ng)) WRITE (out,90)                           &
+          IF (Hout(idTmlw,ng)) WRITE (out,100)                           &
      &        Hout(idTmlw,ng), 'Hout(idTmlw)',                          &
      &        'Mean low water for marsh cells'
-          IF (Hout(idTmvg,ng)) WRITE (out,90)                           &
+          IF (Hout(idTmvg,ng)) WRITE (out,100)                           &
      &        Hout(idTmvg,ng), 'Hout(idTmvg)',                          &
      &        'Rate of marsh vertical growth'
-          IF (Hout(idTmbp,ng)) WRITE (out,90)                           &
+          IF (Hout(idTmbp,ng)) WRITE (out,100)                           &
      &        Hout(idTmbp,ng), 'Hout(idTmbp)',                          &
      &        'Marsh biomass peak production'
 # endif
 #endif
 #if defined VEG_DRAG || defined VEG_BIOMASS
-          IF (Qout(idvprp(isDens),ng)) WRITE (out,90)                   &
+          IF (Qout(idvprp(isDens),ng)) WRITE (out,100)                   &
      &        Qout(idvprp(isDens),ng), 'Qout(isDens)',                  &
      &        'Plant density, individuals per area'
-          IF (Qout(idvprp(isHght),ng)) WRITE (out,90)                   &
+          IF (Qout(idvprp(isHght),ng)) WRITE (out,100)                   &
      &        Qout(idvprp(isHght),ng), 'Qout(isHght)',                  &
      &        'Dominant plant mean height'
-          IF (Qout(idvprp(isDiam),ng)) WRITE (out,90)                   &
+          IF (Qout(idvprp(isDiam),ng)) WRITE (out,100)                   &
      &        Qout(idvprp(isDiam),ng), 'Qout(isDiam)',                  &
      &        'Dominant plant mean diameter'
-          IF (Qout(idvprp(isThck),ng)) WRITE (out,90)                   &
+          IF (Qout(idvprp(isThck),ng)) WRITE (out,100)                   &
      &        Qout(idvprp(isThck),ng), 'Qout(isThck)',                  &
      &        'Dominant plant mean thickness'
 #endif
 #ifdef VEG_STREAMING
-          IF (Qout(idWdvg,ng)) WRITE (out,90)                           &
+          IF (Qout(idWdvg,ng)) WRITE (out,100)                           &
      &        Qout(idWdvg,ng), 'Qout(idWdvg)',                          &
      &        'Wave dissipation due to vegetation'
-          IF (Qout(idCdvg,ng)) WRITE (out,90)                           &
+          IF (Qout(idCdvg,ng)) WRITE (out,100)                           &
      &        Qout(idCdvg,ng), 'Qout(idCdvg)',                          &
      &        'Spectral drag coefficient due to waves and vegetation'
 #endif
 #ifdef MARSH_DYNAMICS
-          IF (Qout(idTims,ng)) WRITE (out,90)                           &
+          IF (Qout(idTims,ng)) WRITE (out,100)                           &
      &        Qout(idTims,ng), 'Qout(idTims)',                          &
      &        'Marsh cell mask'
 # ifdef MARSH_WAVE_THRUST
-          IF (Qout(idTtot,ng)) WRITE (out,90)                           &
+          IF (Qout(idTtot,ng)) WRITE (out,100)                           &
      &        Qout(idTtot,ng), 'Qout(idTtot)',                          &
      &        'Total wave thrust on marsh cells'
 #  ifdef MARSH_SED_EROSION
-          IF (Qout(idTmfo,ng)) WRITE (out,90)                           &
+          IF (Qout(idTmfo,ng)) WRITE (out,100)                           &
      &        Qout(idTmfo,ng), 'Qout(idTmfo)',                          &
      &        'Sediment flux out of marsh cells'
 #   ifdef MARSH_RETREAT
-          IF (Qout(idTmmr,ng)) WRITE (out,90)                           &
+          IF (Qout(idTmmr,ng)) WRITE (out,100)                           &
      &        Qout(idTmmr,ng), 'Qout(idTmmr)',                          &
      &        'Amount of marsh retreat'
 #   endif
 #  endif
 # endif
 # ifdef MARSH_TIDAL_RANGE
-          IF (Qout(idTmtr,ng)) WRITE (out,90)                           &
+          IF (Qout(idTmtr,ng)) WRITE (out,100)                           &
      &        Qout(idTmtr,ng), 'Qout(idTmtr)',                          &
      &        'Tidal range for marsh growth'
 # endif
 # ifdef MARSH_VERT_GROWTH
-          IF (Qout(idTmhw,ng)) WRITE (out,90)                           &
+          IF (Qout(idTmhw,ng)) WRITE (out,100)                           &
      &        Qout(idTmhw,ng), 'Qout(idTmhw)',                          &
      &        'Mean high water for marsh cells'
-          IF (Qout(idTmlw,ng)) WRITE (out,90)                           &
+          IF (Qout(idTmlw,ng)) WRITE (out,100)                           &
      &        Qout(idTmlw,ng), 'Qout(idTmlw)',                          &
      &        'Mean low water for marsh cells'
-          IF (Qout(idTmvg,ng)) WRITE (out,90)                           &
+          IF (Qout(idTmvg,ng)) WRITE (out,100)                           &
      &        Qout(idTmvg,ng), 'Qout(idTmvg)',                          &
      &        'Rate of marsh vertical growth'
-          IF (Qout(idTmbp,ng)) WRITE (out,90)                           &
+          IF (Qout(idTmbp,ng)) WRITE (out,100)                           &
      &        Qout(idTmbp,ng), 'Qout(idTmbp)',                          &
      &        'Marsh biomass peak production'
 # endif
 #endif
 #if defined DIAGNOSTICS_UV && defined VEG_DRAG
-          IF (Dout(idDu2d(M2fveg),ng)) WRITE (out,90)                   &
+          IF (Dout(idDu2d(M2fveg),ng)) WRITE (out,100)                   &
      &        Dout(idDu2d(M2fveg),ng), 'Dout(M2fveg)',                  &
      &        '2D u-momentum drag force term due to vegetation'
-          IF (Dout(idDv2d(M2fveg),ng)) WRITE (out,90)                   &
+          IF (Dout(idDv2d(M2fveg),ng)) WRITE (out,100)                   &
      &        Dout(idDv2d(M2fveg),ng), 'Dout(M2fveg)',                  &
      &        '2D v-momentum drag force term due to vegetation'
-          IF (Dout(idDu3d(M3fveg),ng)) WRITE (out,90)                   &
+          IF (Dout(idDu3d(M3fveg),ng)) WRITE (out,100)                   &
      &        Dout(idDu3d(M3fveg),ng), 'Dout(M3fveg)',                  &
      &        '3D u-momentum drag force term due to vegetation'
-          IF (Dout(idDv3d(M3fveg),ng)) WRITE (out,90)                   &
+          IF (Dout(idDv3d(M3fveg),ng)) WRITE (out,100)                   &
      &        Dout(idDv3d(M3fveg),ng), 'Dout(M3fveg)',                  &
      &        '3D u-momentum drag force term due to vegetation'
 #endif
@@ -646,8 +646,8 @@
   60  FORMAT ('...........',2x,a,t32,a)
   70  FORMAT (1p,e11.4,t33,'vegetation type ',i0)
   80  FORMAT (1p,e11.4,2x,a,t32,a)
-  90  FORMAT (10x,l1,2x,a,t32,a,1x,a)
+  90  FORMAT (1x,i10,2x,a,t32,a)
+ 100  FORMAT (10x,l1,2x,a,t32,a,1x,a)
 !
       RETURN
       END SUBROUTINE read_VegPar
-

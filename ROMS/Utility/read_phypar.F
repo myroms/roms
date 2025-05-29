@@ -3672,17 +3672,6 @@
                 Dout(idDu3d(M3vjvf),ng)=Lswitch(ng)
                 Dout(idDv3d(M3vjvf),ng)=Lswitch(ng)
               END DO
-            CASE ('Dout(M3hjvf)')
-              IF (M3hjvf.le.0) THEN
-                IF (Master) WRITE (out,280) 'M3hjvf'
-                exit_flag=5
-                RETURN
-              END IF
-              Npts=load_l(Nval, Cval, Ngrids, Lswitch)
-              DO ng=1,Ngrids
-                Dout(idDu3d(M3hjvf),ng)=Lswitch(ng)
-                Dout(idDv3d(M3hjvf),ng)=Lswitch(ng)
-              END DO
             CASE ('Dout(M3kvrf)')
               IF (M3kvrf.le.0) THEN
                 IF (Master) WRITE (out,280) 'M3kvrf'

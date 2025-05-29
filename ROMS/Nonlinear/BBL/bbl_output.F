@@ -1720,7 +1720,7 @@
 !
       real(dp) :: scale
 !
-      real(r8), allocatable :: wrk2d(:,:,:)
+      real(r8), allocatable :: wrk2d(:,:)
 !
       character (len=256) :: ncname
 
@@ -4878,7 +4878,6 @@
      &                       GRID(ng) % rmask,                          &
 #    endif
      &                       AVERAGE(ng) % avgWam2)
-#   endif
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
             IF (Master) THEN
               WRITE (stdout,10) TRIM(Vname(1,idWam2)), AVG(ng)%Rindex,  &
@@ -4890,6 +4889,7 @@
           END IF
         END IF
       END IF
+#   endif
 #  endif
 
 #  ifdef WAVES_LENGTH
@@ -5051,16 +5051,18 @@
      &                       GRID(ng) % rmask,                          &
 #   endif
      &                       FORCES(ng) % Dwavep)
+#   ifdef AVERAGES
         ELSE
           status=nf_fwrite2d(ng, model, S(ng)%pioFile, idWdip,          &
      &                       S(ng)%pioVar(idWdip),                      &
      &                       S(ng)%Rindex,                              &
      &                       ioDesc,                                    &
      &                       LBi, UBi, LBj, UBj, scale,                 &
-#   ifdef MASKING
+#    ifdef MASKING
      &                       GRID(ng) % rmask,                          &
-#   endif
+#    endif
      &                       AVERAGE(ng) % avgWdip)
+#   endif
         END IF
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) THEN

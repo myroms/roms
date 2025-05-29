@@ -1124,6 +1124,17 @@ metadata:
     add_offset:     0.0d0
     scale:          1.0d0
 
+  - variable:       bstrcwmax                                        # Output
+    standard_name:  maximum_sea_bottom_upward_stress_magnitude_due_to_waves_and_current
+    long_name:      maximum wind and current, bottom wave stress magnitude
+    units:          newton meter-2                                   # [m2/s2]
+    field:          max wind-current bottom wave stress magnitude    # Output: [N/m2]
+    time:           ocean_time
+    index_code:     idUVwc
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
   - variable:       Ubot                                             # Output
     standard_name:  sea_bed_orbital_x_velocity_due_to_waves
     long_name:      wind-induced, bed wave orbital u-velocity
@@ -2057,13 +2068,13 @@ metadata:
     add_offset:     0.0d0
     scale:          1.0d0
 
-  - variable:       uWave                                            # Input/Output
-    standard_name:  barotropic_sea_water_wave_x_velocity_from_coupling
-    long_name:      coupling vertically integrated u-wave component
+  - variable:       vWave                                            # Input/Output
+    standard_name:  barotropic_sea_water_wave_y_velocity_from_coupling
+    long_name:      coupling vertically integrated v-wave component
     units:          meter second-1                                   # [m/s]
-    field:          barotropic u-wave
+    field:          barotropic v-wave
     time:           ocean_time
-    index_code:     idUwav
+    index_code:     idVwav
     type:           r2dvar
     add_offset:     0.0d0
     scale:          1.0d0

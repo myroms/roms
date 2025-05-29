@@ -2439,7 +2439,7 @@
       END IF
 #  endif
 
-#  if defined SEDIMENT && bedload BEDLOAD
+#  if defined SEDIMENT && defined BEDLOAD
 !
 !  Write out bed load transport in U-direction.
 !

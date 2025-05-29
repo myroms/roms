@@ -180,54 +180,6 @@
               DO ng=1,Ngrids
                 sg_zwbl(ng)=Rbed(ng)
               END DO
-            CASE ('MUD_Ltclm')
-              Npts=load_l(Nval, Cval, NCS, Ngrids, Lmud)
-              DO ng=1,Ngrids
-                DO itrc=1,NCS
-                  i=idsed(itrc)
-                  LtracerCLM(i,ng)=Lmud(itrc,ng)
-                END DO
-              END DO
-            CASE ('MUD_Tnudge')
-              Npts=load_l(Nval, Cval, NCS, Ngrids, Lmud)
-              DO ng=1,Ngrids
-                DO itrc=1,NCS
-                  i=idsed(itrc)
-                  LnudgeTCLM(i,ng)=Lmud(itrc,ng)
-                END DO
-              END DO
-            CASE ('Hout(idmud)')
-              Npts=load_l(Nval, Cval, NCS, Ngrids, Lmud)
-              DO ng=1,Ngrids
-                DO itrc=1,NCS
-                  i=idTvar(idsed(itrc))
-                  Hout(i,ng)=Lmud(itrc,ng)
-                END DO
-              END DO
-            CASE ('Hout(idMzsl)')
-              Npts=load_l(Nval, Cval, NCS, Ngrids, Lmud)
-              DO ng=1,Ngrids
-                DO itrc=1,NCS
-                  i=idzslT(idsed(itrc))
-                  Hout(i,ng)=Lmud(itrc,ng)
-                END DO
-              END DO
-            CASE ('Hout(iMfrac)')
-              Npts=load_l(Nval, Cval, NCS, Ngrids, Lmud)
-              DO ng=1,Ngrids
-                DO itrc=1,NCS
-                  i=idfrac(itrc)
-                  Hout(i,ng)=Lmud(itrc,ng)
-                END DO
-              END DO
-            CASE ('Hout(iMmass)')
-              Npts=load_l(Nval, Cval, NCS, Ngrids, Lmud)
-              DO ng=1,Ngrids
-                DO itrc=1,NCS
-                  i=idBmas(itrc)
-                  Hout(i,ng)=Lmud(itrc,ng)
-                END DO
-              END DO
 #ifdef BEDLOAD
             CASE ('SEDSLOPE_CRIT_WET')
               Npts=load_r(Nval, Rval, Ngrids, Rbed)
@@ -1200,6 +1152,14 @@
               DO ng=1,Ngrids
                 DO itrc=1,NCS
                   i=idTvar(idsed(itrc))
+                  Hout(i,ng)=Lmud(itrc,ng)
+                END DO
+              END DO
+            CASE ('Hout(idMzsl)')
+              Npts=load_l(Nval, Cval, NCS, Ngrids, Lmud)
+              DO ng=1,Ngrids
+                DO itrc=1,NCS
+                  i=idzslT(idsed(itrc))
                   Hout(i,ng)=Lmud(itrc,ng)
                 END DO
               END DO

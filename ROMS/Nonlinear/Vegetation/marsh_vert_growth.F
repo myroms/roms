@@ -62,7 +62,7 @@
      &                             SEDBED(ng) % bed,                    &
      &                             SEDBED(ng) % bed_mass,               &
      &                             VEG(ng) % marsh_mask,                &
-!!# if defined MARSH_TIDAL_RANGE_CALC
+!!# if defined MARSH_TIDAL_RANGE
      &                             VEG(ng) % marsh_high_water,          &
 !!#  if defined MARSH_MCKEE_FORMULATION
      &                             VEG(ng) % marsh_low_water,           &
@@ -89,7 +89,7 @@
      &                                   bed,                           &
      &                                   bed_mass,                      &
      &                                   marsh_mask,                    &
-!!# if defined MARSH_TIDAL_RANGE_CALC
+!!# if defined MARSH_TIDAL_RANGE
      &                                   marsh_high_water,              &
 !!#  if defined MARSH_MCKEE_FORMULATION
      &                                   marsh_low_water,               &
