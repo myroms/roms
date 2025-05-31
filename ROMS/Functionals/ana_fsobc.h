@@ -1,4 +1,4 @@
-!!
+!
       SUBROUTINE ana_fsobc (ng, tile, model)
 !
 !! git $Id$

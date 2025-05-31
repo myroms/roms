@@ -31,7 +31,7 @@
       USE mod_ocean
       USE mod_scalars
       USE mod_sedbed
-# ifdef SEDIMENT
+# if defined SEDIMENT || defined BBL_MODEL
       USE mod_sediment
 # endif
       USE mod_stepping
@@ -1612,7 +1612,7 @@
      &                        scale, SEDBED(ng)%bottom(:,:,i),          &
      &                        Nstation(ng), Xpos, Ypos, psta)
           CALL netcdf_put_fvar (ng, model, S(ng)%name,                  &
-     &                          TRIM(Vname(1,idBott(i))), bsta,         &
+     &                          TRIM(Vname(1,idBott(i))), psta,         &
      &                          (/1,S(ng)%Rindex/),                     &
      &                          (/Nstation(ng),1/),                     &
      &                          ncid = S(ng)%ncid,                      &
@@ -3334,7 +3334,7 @@
      &                        scale, SEDBED(ng)%bottom(:,:,i),          &
      &                        Nstation(ng), Xpos, Ypos, psta)
           CALL pio_netcdf_put_fvar (ng, model, S(ng)%name,              &
-     &                              TRIM(Vname(1,idBott(i))), bsta,     &
+     &                              TRIM(Vname(1,idBott(i))), psta,     &
      &                              (/1,S(ng)%Rindex/),                 &
      &                              (/Nstation(ng),1/),                 &
      &                            pioFile = S(ng)%pioFile,              &

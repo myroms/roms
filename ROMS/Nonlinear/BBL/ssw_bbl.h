@@ -389,12 +389,12 @@
             Vrz(k)=Vrz(k)+0.5_r8*(v_stokes(i,j,k)+v_stokes(i,j+1,k))
 # endif
           END DO
-          CALL log_interp( N(ng), Dstp, cff1,                           &
-     &                 Urz, Vrz,                                        &
-     &                 z_r(i,j,:),        z_w(i,j,:),                   &
-     &                 bottom(i,j,isd50), bottom(i,j,izapp),            &
-     &                 Zr(i,j),                                         &
-     &                 Ur_sg(i,j),        Vr_sg(i,j) )
+          CALL log_interp (N(ng), Dstp, cff1,                           &
+     &                     Urz, Vrz,                                    &
+     &                     z_r(i,j,:),        z_w(i,j,:),               &
+     &                     bottom(i,j,isd50), bottom(i,j,izapp),        &
+     &                     Zr(i,j),                                     &
+     &                     Ur_sg(i,j),        Vr_sg(i,j) )
 #else
 !
 ! Regular method to get reference velocity for Madsen
@@ -403,8 +403,10 @@
           Ur_sg(i,j)=0.5_r8*(u(i,j,1,nrhs)+u(i+1,j,1,nrhs))
           Vr_sg(i,j)=0.5_r8*(v(i,j,1,nrhs)+v(i,j+1,1,nrhs))
 # ifdef SSW_LOGINT_STOKES
-          Ur_sg(i,j)=Ur_sg(i,j)+0.5_r8*(u_stokes(i,j,1)+u_stokes(i+1,j,1))
-          Vr_sg(i,j)=Vr_sg(i,j)+0.5_r8*(v_stokes(i,j,1)+v_stokes(i,j+1,1))
+          Ur_sg(i,j)=Ur_sg(i,j)+                                        &
+     &               0.5_r8*(u_stokes(i,j,1)+u_stokes(i+1,j,1))
+          Vr_sg(i,j)=Vr_sg(i,j)+                                        &
+     &               0.5_r8*(v_stokes(i,j,1)+v_stokes(i,j+1,1))
 # endif
 #endif
         END DO
@@ -771,12 +773,12 @@
             Vrz(k)=Vrz(k)+0.5_r8*(v_stokes(i,j,k)+v_stokes(i,j+1,k))
 # endif
           END DO
-          CALL log_interp( N(ng), Dstp, cff1,                           &
-     &                 Urz, Vrz,                                        &
-     &                 z_r(i,j,:),        z_w(i,j,:),                   &
-     &                 bottom(i,j,isd50), bottom(i,j,izapp),            &
-     &                 Zr_wbl(i,j),                                     &
-     &                 Ur_sgwbl(i,j),     Vr_sgwbl(i,j) )
+          CALL log_interp (N(ng), Dstp, cff1,                           &
+     &                     Urz, Vrz,                                    &
+     &                     z_r(i,j,:),        z_w(i,j,:),               &
+     &                     bottom(i,j,isd50), bottom(i,j,izapp),        &
+     &                     Zr_wbl(i,j),                                 &
+     &                     Ur_sgwbl(i,j),     Vr_sgwbl(i,j))
 !
 !  Compute bottom current magnitude at RHO-points.
 !
@@ -809,12 +811,12 @@
             Vrz(k)=Vrz(k)+0.5_r8*(v_stokes(i,j,k)+v_stokes(i,j+1,k))
 # endif
           END DO
-          CALL log_interp( N(ng), Dstp, cff,                            &
-     &                 Urz, Vrz,                                        &
-     &                 z_r(i,j,:),        z_w(i,j,:),                   &
-     &                 bottom(i,j,isd50), bottom(i,j,izapp),            &
-     &                 Zr_wbl(i,j),                                     &
-     &                 Ur_sgwbl(i,j),     Vr_sgwbl(i,j) )
+          CALL log_interp (N(ng), Dstp, cff,                            &
+     &                     Urz, Vrz,                                    &
+     &                     z_r(i,j,:),        z_w(i,j,:),               &
+     &                     bottom(i,j,isd50), bottom(i,j,izapp),        &
+     &                     Zr_wbl(i,j),                                 &
+     &                     Ur_sgwbl(i,j),     Vr_sgwbl(i,j))
 !
 !  Compute bottom current magnitude at RHO-points.
 !

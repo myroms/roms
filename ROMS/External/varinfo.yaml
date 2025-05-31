@@ -3552,7 +3552,7 @@ metadata:
   - variable:       cohesive_behavior                                # Output
     standard_name:  sea_bottom_cohesive_sediment_behavior
     long_name:      cohesive behavior
-    units:          nondimensional
+    units:          nondimensional                                   # [nondimensional]
     field:          cohesive behavior
     time:           ocean_time
     index_code:     idBott(idprp)
@@ -3571,11 +3571,121 @@ metadata:
     add_offset:     0.0d0
     scale:          1.0d0
 
+  - variable:       inundation_depth                                 # Output
+    standard_name:  sea_bed_inundation_depth
+    long_name:      maximum inundation depth                         # [m]
+    units:          meter
+    field:          inundation depth
+    time:           ocean_time
+    index_code:     idBott(imaxD)
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       net_deposition                                   # Output
+    standard_name:  sea_bed_elevation_by_erosion_or_deposition
+    long_name:      bed elevation by erosion or deposition
+    units:          meter                                            # [m]
+    field:          erosion or deposition
+    time:           ocean_time
+    index_code:     idBott(idnet)
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       thickness_wbl                                    # Output
+    standard_name:  sea_bed_wave_boundary_layer_thickness
+    long_name:      wave boundary layer thickness
+    units:          meter                                            # [m]
+    field:          WBL thickness
+    time:           ocean_time
+    index_code:     idBott(idtbl)
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       udelt_wbl                                        # Output
+    standard_name:  sea_bed_wave_boundary_layer_velocity_magnitude
+    long_name:      wave boundary layer current magnitude
+    units:          meter                                            # [m/S]
+    field:          WBL current magnitude
+    time:           ocean_time
+    index_code:     idBott(idubl)
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       fd_wbl                                           # Output
+    standard_name:  sea_bed_wave_boundary_friction_factor_due_to_currents
+    long_name:      wave boundary layer friction factor from currents
+    units:          nondimensional                                   # [nondimensional]
+    field:          WBL current friction factor
+    time:           ocean_time
+    index_code:     idBott(idfdw)
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       Zr_wbl                                           # Output
+    standard_name:  sea_bed_wave_boundary_near_bottom_velocity_reference_height
+    long_name:      wave boundary layer reference height for near bottom velocity
+    units:          meter                                            # [m]
+    field:          WBL near bottom current reference height
+    time:           ocean_time
+    index_code:     idBott(idzrw)
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       ksd_wbl                                          # Output
+    standard_name:  sea_bed_wave_boundary_roughness_length_scale
+    long_name:      wave boundary layer bed roughness length scale
+    units:          meter                                            # [m]
+    field:          WBL bed roughness
+    time:           ocean_time
+    index_code:     idBott(idksd)
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       ustrc_wbl                                        # Output
+    standard_name:  sea_bed_wave_boundary_friction_velocity_magnitude
+    long_name:      wave boundary layer friction velocity magnitude
+    units:          meter second-1                                   # [m/s]
+    field:          WBL friction velocity magnitude
+    time:           ocean_time
+    index_code:     idBott(idusc)
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       phic_sgwbl                                       # Output
+    standard_name:  sea_bed_wave_boundary_angle_between_currents_and_x_axis
+    long_name:      wave boundary layer angle between currents and XI-axis
+    units:          radians                                          # [radians]
+    field:          WBL angle between currents and XI-axis
+    time:           ocean_time
+    index_code:     idBott(idpcx)
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       phi_wc                                           # Output
+    standard_name:  sea_bed_wave_boundary_angle_between_waves_and_currents
+    long_name:      wave boundary layer angle between waves and currents
+    units:          radians                                          # [radians]
+    field:          WBL angle between waves and currents
+    time:           ocean_time
+    index_code:     idBott(idpwc)
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
   - variable:       dmix_offset                                      # Input/Output
     standard_name:  sea_bottom_erodibility_profile_offset
-    long_name:      dmix erodibility profile offset
+    long_name:      erodibility profile offset
     units:          meter                                            # [m]
-    field:          bottom erodibility offset
+    field:          erodibility profile offset
     time:           ocean_time
     index_code:     idBott(idoff)
     type:           r2dvar
@@ -3586,7 +3696,7 @@ metadata:
     standard_name:  sea_bottom_erodibility_profile_slope
     long_name:      dmix erodibility profile slope
     units:          nondimensional
-    field:          bottom erodibility slope
+    field:          erodibility profile slope
     time:           ocean_time
     index_code:     idBott(idslp)
     type:           r2dvar
@@ -3597,7 +3707,7 @@ metadata:
     standard_name:  sea_bottom_erodibility_profile_time_scale
     long_name:      dmix erodibility profile time scale
     units:          seconds                                          # [s]
-    field:          bottom erodibility time
+    field:          erodibility profile time scale
     time:           ocean_time
     index_code:     idBott(idtim)
     type:           r2dvar

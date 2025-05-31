@@ -60,46 +60,48 @@
 !                                                                      !
 !   MBOTP           Number of bottom properties (array dimension).     !
 !   idBott(:)       IO indices for bottom properties variables.        !
-!   isd50           Median sediment grain diameter (m).                !
-!   idens           Median sediment grain density (kg/m3).             !
-!   iwsed           Mean settling velocity (m/s).                      !
-!   itauc           Mean critical erosion stress (m2/s2).              !
-!   irlen           Sediment ripple length (m).                        !
-!   irhgt           Sediment ripple height (m).                        !
-!   ibwav           Bed wave excursion amplitude (m).                  !
-!   izdef           Default bottom roughness (m).                      !
-!   izapp           Apparent bottom roughness (m).                     !
-!   izNik           Nikuradse bottom roughness (m).                    !
-!   izbio           Biological bottom roughness (m).                   !
-!   izbfm           Bed form bottom roughness (m).                     !
-!   izbld           Bed load bottom roughness (m).                     !
-!   izwbl           Bottom roughness used wave BBL (m).                !
-!   iactv           Active layer thickness for erosive potential (m).  !
-!   ishgt           Sediment saltation height (m).                     !
-!   imaxD           Maximum inundation depth.                          !
-!   idnet           Erosion/deposition                                 !
-!   idtbl           Thickness at wave boundary layer                   !
+!                                                                      !
+!   isd50           Median sediment grain diameter (m)                 !
+!   idens           Median sediment grain density (kg/m3)              !
+!   iwsed           Mean settling velocity (m/s)                       !
+!   itauc           Mean critical erosion stress (m2/s2)               !
+!   irlen           Sediment ripple length (m)                         !
+!   irhgt           Sediment ripple height (m)                         !
+!   ibwav           Bed wave excursion amplitude (m)                   !
+!   izdef           Default bottom roughness length scale (m)          !
+!   izapp           Apparent bottom roughness length scale (m)         !
+!   izNik           Nikuradse bottom roughness length scale (m)        !
+!   izbio           Biological bottom roughness (m)                    !
+!   izbfm           Bed form bottom roughness (m)                      !
+!   izbld           Bed load bottom roughness (m)                      !
+!   izwbl           Bottom roughness used wave BBL (m)                 !
+!   iactv           Active layer thickness for erosive potential (m)   !
+!   ishgt           Sediment saltation height (m)                      !
+!   imaxD           Maximum inundation depth (m)                       !
+!   idnet           Bed elevation (m) by erosion or deposition         !                        !
+!   idtbl           Bed Wave Boundary Layer (WBL) thickness (m)        !
 !   idubl           Current velocity at wave boundary layer            !
-!   idfdw           Friction factor from the currents                  !
-!   idzrw           Reference height to get near bottom current vel    !
-!   idksd           Bed roughness (Zo) for the wave boundary layer calc!
-!   idusc           Current friction velocity the wave boundary layer  !
-!   idpcx           Anlge between currents and xi axis                 !
-!   idpwc           Angle between waves/currents                       !
-!
-!   idoff           Offset for calc of dmix erodibility profile (m).   !
-!   idslp           Slope  for calc of dmix or erodibility profile.    !
-!   idtim           Time scale for restoring erodibility profile (s).  !
-!   idbmx           Bed biodifusivity maximum.                         !
-!   idbmm           Bed biodifusivity minimum.                         !
-!   idbzs           Bed biodifusivity zs.                              !
-!   idbzm           Bed biodifusivity zm.                              !
-!   idbzp           Bed biodifusivity phi.                             !
-!   idprp           Cohesive behavior.                                 !
+!   idfdw           Bed WBL friction factor from currents              !
+!   idzrw           Bed WBL reference height for near bottom velocity  !
+!   idksd           Bed WBL roughness length scale (m)                 !
+!   idusc           Bed WBL friction velocity magnitude                !
+!   idpcx           Bed WBL Angle between currents and XI-axis         !
+!   idpwc           Bed WBL angle between waves and currents           !
+!                                                                      !
+!   idoff           Erodibility profile (dmix) offset (m)              !
+!   idslp           Erodibility profile (dmix) slope (m)               !
+!   idtim           Erodibility profile (dmix) restoring time scale (s)!
+!   idbmx           Bed biodifusivity maximum                          !
+!   idbmm           Bed biodifusivity minimum                          !
+!   idbzs           Bed biodifusivity zs                               !
+!   idbzm           Bed biodifusivity zm                               !
+!   idbzp           Bed biodifusivity phi                              !
+!   idprp           Cohesive behavior                                  !
 !                                                                      !
 !   isgrH           Seagrass height.                                   !
 !   isgrD           Seagrass shoot density.                            !
 !   nTbiom          Number of hours for depth integration              !
+!                                                                      !
 !=======================================================================
 !
       USE mod_param
@@ -121,52 +123,92 @@
 !  Set bed property variables
 !-----------------------------------------------------------------------
 !
-      integer :: MBEDP                     ! Number of bed properties
-      integer :: ithck, iaged, iporo, idiff
+      integer :: MBEDP                 ! Number of bed properties
+!
+      integer :: ithck
+      integer :: iaged
+      integer :: iporo
+      integer :: idiff
 #if defined COHESIVE_BED || defined SED_BIODIFF || defined MIXED_BED
       integer :: ibtcr
 #endif
 #if defined SEDBIO_COUP
-      integer :: iboxy, ibno3, ibnh4, ibodu
+      integer :: iboxy
+      integer :: ibno3
+      integer :: ibnh4
+      integer :: ibodu
 #endif
 !
 !-----------------------------------------------------------------------
-!  Set bottom property variables
+!  Set bottom properties dimension parameters and its indices.
 !-----------------------------------------------------------------------
 !
-      integer :: MBOTP                     ! Number of bottom properties
-      integer :: isd50, idens, iwsed, itauc
-      integer :: irlen, irhgt, ibwav, izdef
-      integer :: izapp, izNik, izbio, izbfm
-      integer :: izbld, izwbl, iactv, ishgt
-      integer :: imaxD, idnet
-      integer :: idtbl, idubl, idfdw, idzrw
-      integer :: idksd, idusc, idpcx, idpwc
+#if defined MIXED_BED
+      integer, parameter :: MBOTP = 35 ! Number of bottom properties
+#elseif defined COHESIVE_BED || defined SED_BIODIFF
+      integer, parameter :: MBOTP = 34 ! Number of bottom properties
+#else
+      integer, parameter :: MBOTP = 26 ! Number of bottom properties
+#endif
+!
+      integer, parameter :: isd50 = 1  ! Sediment median grain diameter
+      integer, parameter :: idens = 2  ! Sediment median grain density
+      integer, parameter :: iwsed = 3  ! Mean settling velocity
+      integer, parameter :: itauc = 4  ! Mean critical erosion stress
+      integer, parameter :: irlen = 5  ! Sediment ripple length
+      integer, parameter :: irhgt = 6  ! Sediment ripple height
+      integer, parameter :: ibwav = 7  ! Bed wave excursion amplitude
+      integer, parameter :: izdef = 8  ! Default bottom roughness
+      integer, parameter :: izapp = 9  ! Apparent bottom roughness
+      integer, parameter :: izNik = 10 ! Nikuradse bottom roughness
+      integer, parameter :: izbio = 11 ! Biological bottom roughness
+      integer, parameter :: izbfm = 12 ! Bed form bottom roughness
+      integer, parameter :: izbld = 13 ! Bed load bottom roughness
+      integer, parameter :: izwbl = 14 ! BBL bottom wave roughness
+      integer, parameter :: iactv = 15 ! Active layer thickness
+      integer, parameter :: ishgt = 16 ! Sediment saltation height
+      integer, parameter :: imaxD = 17 ! Bed maximum inundation depth
+      integer, parameter :: idnet = 18 ! Bed erosion or deposition
+      integer, parameter :: idtbl = 19 ! Bed wave BL thickness
+      integer, parameter :: idubl = 20 ! Bed wave BL current magnitude
+      integer, parameter :: idfdw = 21 ! Friction factor from currents
+      integer, parameter :: idzrw = 22 ! Reference height bottom velocity
+      integer, parameter :: idksd = 23 ! Bed roughness for wave BL
+      integer, parameter :: idusc = 24 ! Friction velocity for wave BL  
+      integer, parameter :: idpcx = 25 ! Angle between currents and XI
+      integer, parameter :: idpwc = 26 ! Angle between waves/currents
 #if defined COHESIVE_BED || defined SED_BIODIFF || defined MIXED_BED
-      integer :: idoff, idslp, idtim, idbmx
-      integer :: idbmm, idbzs, idbzm, idbzp
+      integer, parameter :: idoff = 27 ! Erodibility profile offset
+      integer, parameter :: idslp = 28 ! Erodibility profile slope
+      integer, parameter :: idtim = 29 ! Erodibility profile time scale
+      integer, parameter :: idbmx = 30 ! Bed biodifusivity maximum
+      integer, parameter :: idbmm = 31 ! Bed biodifusivity minimum
+      integer, parameter :: idbzs = 32 ! Bed biodifusivity zs
+      integer, parameter :: idbzm = 33 ! Bed biodifusivity zm
+      integer, parameter :: idbzp = 34 ! Bed biodifusivity phi
 #endif
 #if defined MIXED_BED
-      integer :: idprp
+      integer, parameter :: idprp = 35 ! Cohesive behavior
 #endif
 !
+!----------------------------------------------------------------------
 !  Sediment metadata indices vectors.
+!----------------------------------------------------------------------
 !
       integer, allocatable :: idBmas(:)    ! class mass indices
       integer, allocatable :: idfrac(:)    ! class fraction indices
       integer, allocatable :: idUbld(:)    ! bed load u-points
       integer, allocatable :: idVbld(:)    ! bed load v-points
-!
+
 #if defined BEDLOAD
-!# if defined BEDLOAD_VANDERA
-      integer :: idsurs                    ! Ursell number of the asymmetric wave
-      integer :: idsrrw                    ! velocity skewness of the asymmetric wave
-      integer :: idsbtw                    ! acceleration asymmetry parameter
-      integer :: idsucr                    ! Crest velocity of the asymmetric wave
-      integer :: idsutr                    ! Trough velocity of the asymmetric wave
-      integer :: idstcr                    ! Crest time period of the asymmetric wave
-      integer :: idsttr                    ! Trough time period of the asymmetric wave
-!# endif
+!
+      integer :: idsurs     ! Ursell number of the asymmetric wave
+      integer :: idsrrw     ! Velocity skewness of the asymmetric wave
+      integer :: idsbtw     ! Acceleration asymmetry parameter
+      integer :: idsucr     ! Crest velocity of the asymmetric wave
+      integer :: idsutr     ! Trough velocity of the asymmetric wave
+      integer :: idstcr     ! Crest time period of the asymmetric wave
+      integer :: idsttr     ! Trough time period of the asymmetric wave
 #endif
 !
 !-----------------------------------------------------------------------
@@ -266,92 +308,14 @@
 #endif
 !
 !-----------------------------------------------------------------------
-!  Set bottom properties indices.
+!  Allocate bed and bottom properties
 !-----------------------------------------------------------------------
-!
-      counter2 = 1           ! Initializing counter
-      isd50    = counter2    ! Median sediment grain diameter (m).
-      counter2 = counter2+1
-      idens    = counter2    ! Median sediment grain density (kg/m3).
-      counter2 = counter2+1
-      iwsed    = counter2    ! Mean settling velocity (m/s).
-      counter2 = counter2+1
-      itauc    = counter2    ! Mean critical erosion stress (m2/s2).
-      counter2 = counter2+1
-      irlen    = counter2    ! Sediment ripple length (m).
-      counter2 = counter2+1
-      irhgt    = counter2    ! Sediment ripple height (m).
-      counter2 = counter2+1
-      ibwav    = counter2    ! Bed wave excursion amplitude (m).
-      counter2 = counter2+1
-      izdef    = counter2    ! Default bottom roughness (m).
-      counter2 = counter2+1
-      izapp    = counter2    ! Apparent bottom roughness (m).
-      counter2 = counter2+1
-      izNik    = counter2    ! Nikuradse bottom roughness (m).
-      counter2 = counter2+1
-      izbio    = counter2    ! Biological bottom roughness (m).
-      counter2 = counter2+1
-      izbfm    = counter2    ! Bed form bottom roughness (m).
-      counter2 = counter2+1
-      izbld    = counter2    ! Bed load bottom roughness (m).
-      counter2 = counter2+1
-      izwbl    = counter2    ! Bottom roughness used wave BBL (m).
-      counter2 = counter2+1
-      iactv    = counter2    ! Active layer thickness for erosive potential (m).
-      counter2 = counter2+1
-      ishgt    = counter2    ! Sediment saltation height (m).
-      counter2 = counter2+1
-      imaxD    = counter2    ! Maximum inundation depth.
-      counter2 = counter2+1
-      idnet    = counter2    ! Erosion/deposition
-      counter2 = counter2+1
-      idtbl    = counter2    ! Thickness at wave boundary layer
-      counter2 = counter2+1
-      idubl    = counter2    ! Current velocity at wave boundary layer
-      counter2 = counter2+1
-      idfdw    = counter2    ! Friction factor from the currents
-      counter2 = counter2+1
-      idzrw    = counter2    ! Reference height to get near bottom current velocity
-      counter2 = counter2+1
-      idksd    = counter2    ! Bed roughness (zo) to calc. wave boundary layer
-      counter2 = counter2+1
-      idusc    = counter2    ! Current friction velocity at wave boundary layer
-      counter2 = counter2+1
-      idpcx    = counter2    ! Anlge between currents and xi axis.
-      counter2 = counter2+1
-      idpwc    = counter2    ! Angle between waves/currents
-#if defined COHESIVE_BED || defined SED_BIODIFF || defined MIXED_BED
-      counter2 = counter2+1
-      idoff    = counter2    ! Offset for calculation of dmix erodibility profile (m).
-      counter2 = counter2+1
-      idslp    = counter2    ! Slope  for calculation of dmix or erodibility profile.
-      counter2 = counter2+1
-      idtim    = counter2    ! Time scale for restoring erodibility profile (s).
-      counter2 = counter2+1
-      idbmx    = counter2    ! Bed biodifusivity maximum.
-      counter2 = counter2+1
-      idbmm    = counter2    ! Bed biodifusivity minimum.
-      counter2 = counter2+1
-      idbzs    = counter2    ! Bed biodifusivity zs.
-      counter2 = counter2+1
-      idbzm    = counter2    ! Bed biodifusivity zm.
-      counter2 = counter2+1
-      idbzp    = counter2    ! Bed biodifusivity phi.
-#endif
-#if defined MIXED_BED
-      counter2 = counter2+1
-      idprp    = counter2    ! Cohesive behavior.
-#endif
-!
-!  Allocate bed & bottom properties
 !
       MBEDP   = counter1
       IF (.not.allocated(idSbed)) THEN
         allocate ( idSbed(MBEDP) )
       END IF
 !
-      MBOTP   = counter2
       IF (.not.allocated(idBott)) THEN
         allocate ( idBott(MBOTP) )
       END IF
