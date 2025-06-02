@@ -1,17 +1,18 @@
 #include "cppdefs.h"
 #define SED_WENO
 #undef  SED_UPWIND
+
       MODULE sed_bedload_vandera_mod
 
 #if defined NONLINEAR && defined SEDIMENT && defined BEDLOAD_VANDERA  
 !
 !git $Id$
 !================================================ Tarandeep S. Kalra ===
-!  Copyright (c) 2002-2024 The ROMS/TOMS Group        Chris Sherwood   !
+!  Copyright (c) 2002-2025 The ROMS Group             Chris Sherwood   !
 !    Licensed under a MIT/X style license             John C. Warner   !
-!    See License_ROMS.txt                                              !
+!    See License_ROMS.md                                                !
 !=======================================================================
-¡                                                                      !
+!                                                                      !
 !  This routine computes sediment bedload transport using              !
 !  Van der A et al.(2013) formulation  for unidirectional flow and     !
 !  accounts for wave asymmetry leading to differential sediment        !
@@ -37,27 +38,39 @@
 !                                                                      !
 !======================================================================!
 !
+      USE mod_param
+# ifdef BBL_MODEL
+      USE mod_bbl
+# endif
+      USE mod_forces
+      USE mod_grid
+      USE mod_ncparam
+      USE mod_ocean
+      USE mod_scalars
+      USE mod_sediment
+      USE mod_sedbed
+      USE mod_vandera_funcs
+!
+      USE bc_2d_mod,       ONLY : bc_r2d_tile
+      USE bc_3d_mod,       ONLY : bc_r3d_tile
+      USE exchange_2d_mod, ONLY : exchange_u2d_tile, exchange_v2d_tile
+# ifdef DISTRIBUTE
+      USE mp_exchange_mod, ONLY : mp_exchange2d, mp_exchange3d,         &
+     &                            mp_exchange4d
+# endif
+!
       implicit none
-
-      PRIVATE
+!
       PUBLIC  :: sed_bedload_vandera
-
+      PRIVATE
+!
       CONTAINS
 !
 !***********************************************************************
       SUBROUTINE sed_bedload_vandera (ng, tile)
 !***********************************************************************
 !
-      USE mod_param
-      USE mod_forces
-      USE mod_grid
-      USE mod_ocean
-      USE mod_sedbed
       USE mod_stepping
-
-# ifdef BBL_MODEL
-      USE mod_bbl
-# endif
 !
 !  Imported variable declarations.
 !
@@ -65,103 +78,94 @@
 !
 !  Local variable declarations.
 !
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__
+!
 # include "tile.h"
 !
 # ifdef PROFILE
-      CALL wclock_on (ng, iNLM, 16)
+      CALL wclock_on (ng, iNLM, 16, __LINE__, MyFile)
 # endif
       CALL sed_bedload_vandera_tile (ng, tile,                          &
-     &                       LBi, UBi, LBj, UBj,                        &
-     &                       IminS, ImaxS, JminS, JmaxS,                &
-     &                       nstp(ng), nnew(ng),                        &
-     &                       BBL(ng)    % bustrc,                       &
-     &                       BBL(ng)    % bvstrc,                       &
-     &                       FORCES(ng) % Hwave,                        &
-     &                       FORCES(ng) % Lwave,                        &
-     &                       FORCES(ng) % Dwave,                        &
-     &                       FORCES(ng) % Pwave_bot,                    &
-     &                       FORCES(ng) % Uwave_rms,                    &
-     &                       GRID(ng) % angler,                         &
-     &                       GRID(ng) % h,                              &
-     &                       GRID(ng) % om_r,                           &
-     &                       GRID(ng) % om_u,                           &
-     &                       GRID(ng) % on_r,                           &
-     &                       GRID(ng) % on_v,                           &
-     &                       GRID(ng) % pm,                             &
-     &                       GRID(ng) % pn,                             &
+     &                               LBi, UBi, LBj, UBj,                &
+     &                               IminS, ImaxS, JminS, JmaxS,        &
+     &                               nstp(ng), nnew(ng),                &
+     &                               BBL(ng) % bustrc,                  &
+     &                               BBL(ng) % bvstrc,                  &
+     &                               FORCES(ng) % Hwave,                &
+     &                               FORCES(ng) % Lwave,                &
+     &                               FORCES(ng) % Dwave,                &
+     &                               FORCES(ng) % Pwave_bot,            &
+     &                               FORCES(ng) % Uwave_rms,            &
+     &                               GRID(ng) % angler,                 &
+     &                               GRID(ng) % h,                      &
+     &                               GRID(ng) % om_r,                   &
+     &                               GRID(ng) % om_u,                   &
+     &                               GRID(ng) % on_r,                   &
+     &                               GRID(ng) % on_v,                   &
+     &                               GRID(ng) % pm,                     &
+     &                               GRID(ng) % pn,                     &
 # ifdef MASKING
-     &                       GRID(ng) % rmask,                          &
-     &                       GRID(ng) % umask,                          &
-     &                       GRID(ng) % vmask,                          &
+     &                               GRID(ng) % rmask,                  &
+     &                               GRID(ng) % umask,                  &
+     &                               GRID(ng) % vmask,                  &
 # endif
 # ifdef WET_DRY
-     &                       GRID(ng) % rmask_wet,                      &
-     &                       GRID(ng) % umask_wet,                      &
-     &                       GRID(ng) % vmask_wet,                      &
+     &                               GRID(ng) % rmask_wet,              &
+     &                               GRID(ng) % umask_wet,              &
+     &                               GRID(ng) % vmask_wet,              &
 # endif
-     &                       GRID(ng) % z_w,                            &
-     &                       OCEAN(ng) % zeta,                          &
-     &                       SEDBED(ng) % ursell_no,                    &
-     &                       SEDBED(ng) % RR_asymwave,                  &
-     &                       SEDBED(ng) % beta_asymwave,                &
-     &                       SEDBED(ng) % ucrest_r,                     &
-     &                       SEDBED(ng) % utrough_r,                    &
-     &                       SEDBED(ng) % T_crest,                      &
-     &                       SEDBED(ng) % T_trough,                     &
-     &                       SEDBED(ng) % bedldu,                       &
-     &                       SEDBED(ng) % bedldv,                       &
-     &                       SEDBED(ng) % bed,                          &
-     &                       SEDBED(ng) % bed_frac,                     &
-     &                       SEDBED(ng) % bed_mass,                     &
-     &                       SEDBED(ng) % bottom)
+     &                               GRID(ng) % z_w,                    &
+     &                               OCEAN(ng) % zeta,                  &
+     &                               SEDBED(ng) % ursell_no,            &
+     &                               SEDBED(ng) % RR_asymwave,          &
+     &                               SEDBED(ng) % beta_asymwave,        &
+     &                               SEDBED(ng) % ucrest_r,             &
+     &                               SEDBED(ng) % utrough_r,            &
+     &                               SEDBED(ng) % T_crest,              &
+     &                               SEDBED(ng) % T_trough,             &
+     &                               SEDBED(ng) % bedldu,               &
+     &                               SEDBED(ng) % bedldv,               &
+     &                               SEDBED(ng) % bed,                  &
+     &                               SEDBED(ng) % bed_frac,             &
+     &                               SEDBED(ng) % bed_mass,             &
+     &                               SEDBED(ng) % bottom)
 # ifdef PROFILE
-      CALL wclock_off (ng, iNLM, 16)
+      CALL wclock_off (ng, iNLM, 16, __LINE__, MyFile)
 # endif
+!
       RETURN
       END SUBROUTINE sed_bedload_vandera
 !
 !***********************************************************************
       SUBROUTINE sed_bedload_vandera_tile (ng, tile,                    &
-     &                             LBi, UBi, LBj, UBj,                  &
-     &                             IminS, ImaxS, JminS, JmaxS,          &
-     &                             nstp, nnew,                          &
-     &                             bustrc, bvstrc,                      &
-     &                             Hwave, Lwave,                        &
-     &                             Dwave, Pwave_bot,                    &
-     &                             Uwave_rms,                           &
-     &                             angler,                              &
-     &                             h, om_r, om_u, on_r, on_v,           &
-     &                             pm, pn,                              &
+     &                                     LBi, UBi, LBj, UBj,          &
+     &                                     IminS, ImaxS, JminS, JmaxS,  &
+     &                                     nstp, nnew,                  &
+     &                                     bustrc, bvstrc,              &
+     &                                     Hwave, Lwave,                &
+     &                                     Dwave, Pwave_bot,            &
+     &                                     Uwave_rms,                   &
+     &                                     angler,                      &
+     &                                     h, om_r, om_u, on_r, on_v,   &
+     &                                     pm, pn,                      &
 # ifdef MASKING
-     &                             rmask, umask, vmask,                 &
+     &                                     rmask, umask, vmask,         &
 # endif
 # ifdef WET_DRY
-     &                             rmask_wet, umask_wet, vmask_wet,     &
+     &                                     rmask_wet,                   &
+     &                                     umask_wet, vmask_wet,        &
 # endif
-     &                             z_w,                                 &
-     &                             zeta,                                &
-     &                             ursell_no,                           &
-     &                             RR_asymwave, beta_asymwave,          &
-     &                             ucrest_r, utrough_r,                 &
-     &                             T_crest, T_trough,                   &
-     &                             bedldu, bedldv,                      &
-     &                             bed, bed_frac, bed_mass,             &
-     &                             bottom)
+     &                                     z_w,                         &
+     &                                     zeta,                        &
+     &                                     ursell_no,                   &
+     &                                     RR_asymwave, beta_asymwave,  &
+     &                                     ucrest_r, utrough_r,         &
+     &                                     T_crest, T_trough,           &
+     &                                     bedldu, bedldv,              &
+     &                                     bed, bed_frac, bed_mass,     &
+     &                                     bottom)
 !***********************************************************************
-!
-      USE mod_param
-      USE mod_ncparam
-      USE mod_scalars
-      USE mod_sediment
-      USE mod_vandera_funcs
-!
-      USE bc_2d_mod, ONLY : bc_r2d_tile
-      USE bc_3d_mod, ONLY : bc_r3d_tile
-      USE exchange_2d_mod, ONLY : exchange_u2d_tile, exchange_v2d_tile
-# ifdef DISTRIBUTE
-      USE mp_exchange_mod, ONLY : mp_exchange2d, mp_exchange3d,         &
-     &                            mp_exchange4d
-# endif
 !
 !  Imported variable declarations.
 !

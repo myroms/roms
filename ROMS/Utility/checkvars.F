@@ -476,7 +476,7 @@
         END DO 
 #  endif  
 #  ifdef MARSH_DYNAMICS
-        IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idTims)) THEN
+        IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idTims))) THEN
           have_var(idTims)=.TRUE.
         END IF
 #  endif
@@ -1230,7 +1230,7 @@
         END DO 
 #   endif  
 #   ifdef MARSH_DYNAMICS
-        IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idTims)) THEN
+        IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idTims))) THEN
           have_var(idTims)=.TRUE.
         END IF
 #   endif

@@ -110,6 +110,7 @@
 !                                                                      !
 !  idvprp(:)            Aquatic vegetation properties, 1:NVEGP         !
 !  idTmfo(:)            Sediment flux out marsh cells, 1:NST classes   !
+!                         (defined and allocated in mod_sediment)      !
 !                                                                      !
 !  idWdvg               Wave dissipation due to vegetation             !
 !  idCdvg               Spectral drag froms waves and vegetation       !
@@ -145,8 +146,6 @@
 !  Submerged aquatic vegetation model parameters and I/O identification
 !  indices.
 !-----------------------------------------------------------------------
-!
-      integer, allocatable :: idTmfo(:)  ! sediment flux out marsh cells
 !
       integer :: idWdvg    ! wave dissipation due to vegetation
       integer :: idCdvg    ! spectral drag due to waves and vegetation
@@ -318,20 +317,6 @@
 !
       CONF_VARS : IF (model.eq.0) THEN
 
-#ifdef MARSH_DYNAMICS
-# if defined MARSH_SED_EROSION
-!
-!  I/O indices.
-!
-        IF (.not.allocated(idTmfo)) THEN
-          allocate ( idTmfo(NST) )
-          Dmem(1)=Dmem(1)+REAL(NST,r8)
-        END IF
-# endif
-#endif
-!
-!  Configuration Variables.
-!
 #if defined VEG_DRAG || defined VEG_BIOMASS
         IF (.not.allocated(E_VEG)) THEN
           allocate ( E_VEG(NVEG,Ngrids) )
@@ -619,12 +604,6 @@
 !  Deallocate configuration variables.
 !
       IF (ng.eq.Ngrids) THEN
-
-#ifdef MARSH_DYNAMICS
-# if defined MARSH_SED_EROSION
-        IF (allocated(idTmfo))        deallocate ( idTmfo )
-# endif
-#endif
 
 #if defined VEG_DRAG || defined VEG_BIOMASS
         IF (allocated(E_VEG))         deallocate ( E_VEG )

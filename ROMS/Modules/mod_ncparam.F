@@ -2228,14 +2228,14 @@
           CASE ('idDv3d(M3vvis)')
             idDv3d(M3vvis)=varid
 #  if defined VEGETATION && defined VEG_DRAG
-            CASE ('idDu3d(M3fveg)')
-              idDu3d(M3fveg)=varid
-            CASE ('idDv3d(M3fveg)')
-              idDv3d(M3fveg)=varid
-            CASE ('idDu2d(M2fveg)')
-              idDu2d(M2fveg)=varid
-            CASE ('idDv2d(M2fveg)')
-              idDv2d(M2fveg)=varid
+          CASE ('idDu3d(M3fveg)')
+            idDu3d(M3fveg)=varid
+          CASE ('idDv3d(M3fveg)')
+            idDv3d(M3fveg)=varid
+          CASE ('idDu2d(M2fveg)')
+            idDu2d(M2fveg)=varid
+          CASE ('idDv2d(M2fveg)')
+            idDv2d(M2fveg)=varid
 #  endif
           CASE ('idDu3d(M3rate)')
             idDu3d(M3rate)=varid

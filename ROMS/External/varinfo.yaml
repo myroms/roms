@@ -3351,6 +3351,17 @@ metadata:
     add_offset:     0.0d0
     scale:          1.0d0
 
+
+
+
+
+
+
+
+
+
+
+
   - variable:       grain_diameter                                   # Input/Output
     standard_name:  sea_water_sediment_grain_diameter_size
     long_name:      sediment median grain diameter size
@@ -3748,10 +3759,10 @@ metadata:
     scale:          1.0d0
 
   - variable:       Db_max                                           # Input/Output
-    standard_name:  nulvar
-    long_name:      Db_max
-    units:          unknown
-    field:          Db_max
+    standard_name:  sea_bottom_sediment_bio_diffusivity_coefficient_maximum
+    long_name:      bed sediment bio-diffusivity coefficient maximum
+    units:          meter2 second-1                                  # [m2/s]
+    field:          maximum bio-diffusivity coefficient
     time:           ocean_time
     index_code:     idBott(idbmx)
     type:           r2dvar
@@ -3759,10 +3770,10 @@ metadata:
     scale:          1.0d0
 
   - variable:       Db_mm                                            # Input/Output
-    standard_name:  nulvar
-    long_name:      Db_mm
-    units:          unknown
-    field:          Db_mm
+    standard_name:  sea_bottom_sediment_bio_diffusivity_coeffcient_minimum
+    long_name:      bed sediment bio-diffusivity coefficient minimum
+    units:          meter2 second-1                                  # [m2/s]
+    field:          minimum bio-diffusivity coefficient
     time:           ocean_time
     index_code:     idBott(idbmm)
     type:           r2dvar
@@ -3770,10 +3781,10 @@ metadata:
     scale:          1.0d0
 
   - variable:       Db_zs                                            # Input/Output
-    standard_name:  nulvar
-    long_name:      Db_zs
-    units:          unknown
-    field:          Db_zs
+    standard_name:  sea_bottom_sediment_bio_diffusivity_profile_maximum_depth
+    long_name:      depth of maximum bio-diffusivity coefficient profile
+    units:          meter                                            # [m]
+    field:          maximum bio-diffusivity profile depth
     time:           ocean_time
     index_code:     idBott(idbzs)
     type:           r2dvar
@@ -3781,10 +3792,10 @@ metadata:
     scale:          1.0d0
 
   - variable:       Db_zm                                            # Input/Output
-    standard_name:  nulvar
-    long_name:      Db_zm
-    units:          unknown
-    field:          Db_zm
+    standard_name:  sea_bottom_sediment_bio_diffusivity_profile_end_exponential_depth
+    long_name:      depth of end of exponential bio-diffusivity coeffcient profile
+    units:          meter                                            # [m]
+    field:          bio-diffusivity profile end exponential depth
     time:           ocean_time
     index_code:     idBott(idbzm)
     type:           r2dvar
@@ -3792,12 +3803,89 @@ metadata:
     scale:          1.0d0
 
   - variable:       Db_zphi                                          # Input/Output
-    standard_name:  nulvar
-    long_name:      Db_zphi
-    units:          unknown
-    field:          Db_zphi
+    standard_name:  sea_bottom_sediment_bio_diffusivity_profile_minimum_depth
+    long_name:      depth of minimum bio-diffusivity coefficient profile
+    units:          meter                                            # [m]
+    field:          bio-diffusivity profile minimum depth
     time:           ocean_time
     index_code:     idBott(idbzp)
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       Ursell_number                                    # Output
+    standard_name:  Ursell_number_from_skewed_waveform_parameters
+    long_name:      Ursell number from skewed waveform parameters
+    units:          nondimentional                                   # [nondimensional]
+    field:          Ursell number (Ur)
+    time:           ocean_time
+    index_code:     idsurs
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       velocity_skewness                                # Output
+    standard_name:  wave_velocity_skewness_coefficient_for_asymmetric_bedload
+    long_name:      wave velocity skewness coefficient of waveform
+    units:          nondimentional                                   # [nondimensional]
+    field:          wave velocity skewness
+    time:           ocean_time
+    index_code:     idsrrw
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       acceleration_skewness                            # Output
+    standard_name:  wave_acceleration_skewness_coefficient_for_asymmetric_bedload
+    long_name:      wave acceleration skewness coefficient of waveform
+    units:          nondimentional                                   # [nondimensional]
+    field:          wave acceleration skewness
+    time:           ocean_time
+    index_code:     idsbtw
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       Ucrest_wave                                      # Output
+    standard_name:  peak_wave_crest_cycle_velocity_for_asymmetric_bedload
+    long_name:      peak wave crest cycle velocity of skewed waveform
+    units:          meter second-1                                   # [m/s]
+    field:          wave crest cycle velocity
+    time:           ocean_time
+    index_code:     idsucr
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       Utrough_wave                                     # Output
+    standard_name:  peak_wave_trough_cycle_velocity_for_asymmetric_bedload
+    long_name:      peak wave trough cycle velocity of skewed waveform
+    units:          meter second-1                                   # [m/s]
+    field:          wave trough cycle velocity
+    time:           ocean_time
+    index_code:     idsutr
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       Tcrest_wave                                      # Output
+    standard_name:  wave_crest_cycle_period_for_asymmetric_bedload
+    long_name:      wave crest cycle period of skewed waveform
+    units:          second                                           # [s]
+    field:          wave crest cycle period
+    time:           ocean_time
+    index_code:     idstcr
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       Ttrough_wave                                     # Output
+    standard_name:  wave_trough_cycle_period_for_asymmetric_bedload
+    long_name:      wave trough cycle period of skewed waveform
+    units:          second                                           # [s]
+    field:          wave trough cycle period
+    time:           ocean_time
+    index_code:     idsttr
     type:           r2dvar
     add_offset:     0.0d0
     scale:          1.0d0

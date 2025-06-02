@@ -56,7 +56,7 @@
       Coptions=' '
       IF (Master) WRITE (stdout,10)
   10  FORMAT (/,' Activated C-preprocessing Options:',/)
-  20  FORMAT (1x,a,t27,a)
+  20  FORMAT (1x,a,t36,a)
 !
       IF (Master) THEN
         WRITE (stdout,20) TRIM(ADJUSTL(MyAppCPP)), TRIM(ADJUSTL(title))

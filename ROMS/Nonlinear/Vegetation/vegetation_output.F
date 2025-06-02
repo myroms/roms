@@ -21,6 +21,9 @@
       USE mod_iounits
       USE mod_ncparam
       USE mod_scalars
+# ifdef SEDIMENT
+      USE mod_sediment
+# endif
       USE mod_vegetation
 !
       USE def_var_mod,     ONLY : def_var
@@ -374,7 +377,7 @@
             WRITE (Vinfo( 2),'(a,1x,a)') Prefix,                        &
      &                                   TRIM(Vname(2,idTmhw))
           ELSE
-            Vinfo( 2)=
+            Vinfo( 2)=Vname(2,idTmhw)
           END IF
           Vinfo( 3)=Vname(3,idTmhw)
           Vinfo(14)=Vname(4,idTmhw)
@@ -573,7 +576,7 @@
 #  if defined MARSH_DYNAMICS && defined MARSH_WAVE_THRUST
 #   ifdef MARSH_SED_EROSION
           DO itrc=1,NST
-            IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idTmfo(itrc))) THEN
+            IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idTmfo(itrc)))) THEN
               got_var(idTmfo(itrc))=.TRUE.
             END IF
           END DO
@@ -693,7 +696,7 @@
 #  ifdef MARSH_SED_EROSION
         DO itrc=1,NST
           IF (.not.got_var(idTmfo(itrc)).and.                           &
-     &      (Lrestart.or.VarOut(idTmfo(itrc),ng))) THEN
+     &        (Lrestart.or.VarOut(idTmfo(itrc),ng))) THEN
             IF (Master) WRITE (stdout,10) TRIM(Vname(1,idTmfo(itrc))),  &
      &                                    TRIM(ncname)
             exit_flag=3
@@ -1492,7 +1495,7 @@
             WRITE (Vinfo( 2),'(a,1x,a)') Prefix,                        &
      &                                   TRIM(Vname(2,idTmhw))
           ELSE
-            Vinfo( 2)=
+            Vinfo( 2)=Vname(2,idTmhw)
           END IF
           Vinfo( 3)=Vname(3,idTmhw)
           Vinfo(14)=Vname(4,idTmhw)
@@ -1737,7 +1740,7 @@
 #  if defined MARSH_DYNAMICS && defined MARSH_WAVE_THRUST
 #   ifdef MARSH_SED_EROSION
           DO itrc=1,NST
-            IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idTmfo(itrc))) THEN
+            IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idTmfo(itrc)))) THEN
               got_var(idTmfo(itrc))=.TRUE.
               S(ng)%pioVar(idTmfo(itrc))%vd=var_desc(i)
               S(ng)%pioVar(idTmfo(itrc))%dkind=vtype
@@ -1860,7 +1863,7 @@
 #   ifdef MARSH_SED_EROSION
         DO itrc=1,NST
           IF (.not.got_var(idTmfo(itrc)).and.                           &
-     &      (Lrestart.or.VarOut(idTmfo(itrc),ng))) THEN
+     &        (Lrestart.or.VarOut(idTmfo(itrc),ng))) THEN
             IF (Master) WRITE (stdout,10) TRIM(Vname(1,idTmfo(itrc))),  &
      &                                    TRIM(ncname)
             exit_flag=3

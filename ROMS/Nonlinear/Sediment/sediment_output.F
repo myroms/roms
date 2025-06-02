@@ -352,7 +352,7 @@
 
 # if defined SEDIMENT && defined BEDLOAD && defined BEDLOAD_VANDERA
 !
-!  Define Ursell number of the asymmetric wave form.
+!  Define Ursell number from skewed waveform parameters.
 !
         IF (VarOut(idsurs,ng)) THEN
           Vinfo( 1)=Vname(1,idsurs)
@@ -375,7 +375,7 @@
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 !
-!  Define velocity skewness parameter of the asymmetric wave form.
+!  Define wave velocity skewness coefficient for asymmetric bedload.
 !
         IF (VarOut(idsrrw,ng)) THEN
           Vinfo( 1)=Vname(1,idsrrw)
@@ -398,7 +398,7 @@
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 !
-!  Define acceleration asymmetry parameter of the asymmetric wave form.
+!  Define wave acceleration skewness coefficient for asymmetric bedload.
 !
         IF (VarOut(idsbtw,ng)) THEN
           Vinfo( 1)=Vname(1,idsbtw)
@@ -421,7 +421,7 @@
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 !
-!  Define crest velocity of the asymmetric wave form.
+!  Define peak wave crest cycle velocity for asymmetric bedload.
 !
         IF (VarOut(idsucr,ng)) THEN
           Vinfo( 1)=Vname(1,idsucr)
@@ -444,7 +444,7 @@
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 !
-!  Define trough velocity of the asymmetric wave form.
+!  Define peak wave trough cycle velocity for asymmetric bedload.
 !
         IF (VarOut(idsutr,ng)) THEN
           Vinfo( 1)=Vname(1,idsutr)
@@ -467,7 +467,7 @@
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 !
-!  Define crest time period of the asymmetric wave form.
+!  Define wave crest cycle period for asymmetric bedload.
 !
         IF (VarOut(idstcr,ng)) THEN
           Vinfo( 1)=Vname(1,idstcr)
@@ -490,7 +490,7 @@
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 !
-!  Trough time period of the asymmetric wave form.
+!  Define wave trough cycle period for asymmetric bedload.
 !
         IF (VarOut(idsttr,ng)) THEN
           Vinfo( 1)=Vname(1,idsttr)
@@ -1274,7 +1274,7 @@
 
 # if defined SEDIMENT && defined BEDLOAD && defined SED_BEDLOAD_VANDERA
 !
-!  Write out Ursell number of the asymmetric wave form.
+!  Write out Ursell number from skewed waveform parameters..
 !
       IF (VarOut(idsurs,ng)) THEN
         scale=1.0_dp
@@ -1298,7 +1298,7 @@
         END IF
       END IF
 !
-!  Write out velocity skewness parameter of the asymmetric wave form.
+!  Write out wave velocity skewness coefficient for asymmetric bedload.
 !
       IF (VarOut(idsrrw,ng)) THEN
         scale=1.0_dp
@@ -1322,8 +1322,8 @@
         END IF
       END IF
 !
-!  Write out acceleration asymmetry parameter of the asymmetric wave
-!  form.
+!  Write out wave acceleration skewness coefficient for asymmetric
+!  bedload.
 !
       IF (VarOut(idsbtw,ng)) THEN
         scale=1.0_dp
@@ -1347,7 +1347,7 @@
         END IF
       END IF
 !
-!  Write out crest velocity of the asymmetric wave form.
+!  Write out peak wave crest cycle velocity for asymmetric bedload.
 !
       IF (VarOut(idsucr,ng)) THEN
         scale=1.0_dp
@@ -1371,7 +1371,7 @@
         END IF
       END IF
 !
-!  Write out trough velocity of the asymmetric wave form.
+!  Write out peak wave trough cycle velocity for asymmetric bedload.
 !
       IF (VarOut(idsutr,ng)) THEN
         scale=1.0_dp
@@ -1395,7 +1395,7 @@
         END IF
       END IF
 !
-!  Write out crest time period of the asymmetric wave form.
+!  Write out wave crest cycle period for asymmetric bedload.
 !
       IF (VarOut(idstcr,ng)) THEN
         scale=1.0_dp
@@ -1419,7 +1419,7 @@
         END IF
       END IF
 !
-!  Write out trough time period of the asymmetric wave form.
+!  Write out wave trough cycle period for asymmetric bedload.
 !
       IF (VarOut(idsttr,ng)) THEN
         scale=1.0_dp
@@ -1928,7 +1928,7 @@
 
 #  if defined SEDIMENT && defined BEDLOAD && defined BEDLOAD_VANDERA
 !
-!  Define Ursell number of the asymmetric wave form.
+!  Define Ursell number from skewed waveform parameters.
 !
         IF (VarOut(idsurs,ng)) THEN
           Vinfo( 1)=Vname(1,idsurs)
@@ -1955,7 +1955,7 @@
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 !
-!  Define velocity skewness parameter of the asymmetric wave form.
+!  Define wave velocity skewness coefficient for asymmetric bedload.
 !
         IF (VarOut(idsrrw,ng)) THEN
           Vinfo( 1)=Vname(1,idsrrw)
@@ -1982,7 +1982,7 @@
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 !
-!  Define acceleration asymmetry parameter of the asymmetric wave form.
+!  Define wave acceleration skewness coefficient for asymmetric bedload.
 !
         IF (VarOut(idsbtw,ng)) THEN
           Vinfo( 1)=Vname(1,idsbtw)
@@ -2009,7 +2009,7 @@
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 !
-!  Define crest velocity of the asymmetric wave form.
+!  Define peak wave crest cycle velocity for asymmetric bedload.
 !
         IF (VarOut(idsucr,ng)) THEN
           Vinfo( 1)=Vname(1,idsucr)
@@ -2036,7 +2036,7 @@
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 !
-!  Define trough velocity of the asymmetric wave form.
+!  Define peak wave trough cycle velocity for asymmetric bedload.
 !
         IF (VarOut(idsutr,ng)) THEN
           Vinfo( 1)=Vname(1,idsutr)
@@ -2063,7 +2063,7 @@
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 !
-!  Define crest time period of the asymmetric wave form.
+!  Define wave crest cycle period for asymmetric bedload.
 !
         IF (VarOut(idstcr,ng)) THEN
           Vinfo( 1)=Vname(1,idstcr)
@@ -2090,7 +2090,7 @@
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 !
-!  Define trough time period of the asymmetric wave form.
+!  Define wave trough cycle period for asymmetric bedload.
 !
         IF (VarOut(idsttr,ng)) THEN
           Vinfo( 1)=Vname(1,idsttr)
@@ -2666,7 +2666,7 @@
 
 #  if defined SEDIMENT && defined BEDLOAD && defined SED_BEDLOAD_VANDERA
 !
-!  Write out Ursell number of the asymmetric wave form.
+!  Write out Ursell number from skewed waveform parameters.
 !
       IF (VarOut(idsurs,ng)) THEN
         scale=1.0_dp
@@ -2695,7 +2695,7 @@
         END IF
       END IF
 !
-!  Write out velocity skewness parameter of the asymmetric wave form.
+!  Write out wave velocity skewness coefficient for asymmetric bedload.
 !
       IF (VarOut(idsrrw,ng)) THEN
         scale=1.0_dp
@@ -2724,7 +2724,8 @@
         END IF
       END IF
 !
-!  Write out acceleration asymmetry parameter of the asymmetric wave form.
+!  Write out wave acceleration skewness coefficient for asymmetric
+!  bedload.
 !
       IF (VarOut(idsbtw,ng)) THEN
         scale=1.0_dp
@@ -2753,7 +2754,7 @@
         END IF
       END IF
 !
-!  Write out crest velocity of the asymmetric wave form.
+!  Write out peak wave crest cycle velocity for asymmetric bedload.
 !
       IF (VarOut(idsucr,ng)) THEN
         scale=1.0_dp
@@ -2782,7 +2783,7 @@
         END IF
       END IF
 !
-!  Write out trough velocity of the asymmetric wave form.
+!  Write out peak wave trough cycle velocity for asymmetric bedload.
 !
       IF (VarOut(idsutr,ng)) THEN
         scale=1.0_dp
@@ -2811,7 +2812,7 @@
         END IF
       END IF
 !
-!  Write out crest time period of the asymmetric wave form.
+!  Write out wave crest cycle period for asymmetric bedload.
 !
       IF (VarOut(idstcr,ng)) THEN
         scale=1.0_dp
@@ -2840,7 +2841,7 @@
         END IF
       END IF
 !
-!  Write out trough time period of the asymmetric wave form.
+!  Write out wave trough cycle period for asymmetric bedload.
 !
       IF (VarOut(idsttr,ng)) THEN
         scale=1.0_dp

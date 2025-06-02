@@ -37,7 +37,7 @@
      &                            bc_u2d_tile,                          &
      &                            bc_v2d_tile
       USE exchange_2d_mod, ONLY : exchange_u2d_tile,                    &
-     &                            exchange_u2d_tile
+     &                            exchange_v2d_tile
 # ifdef DISTRIBUTE
       USE mp_exchange_mod, ONLY : mp_exchange2d
 # endif

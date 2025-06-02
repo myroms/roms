@@ -78,7 +78,7 @@
 !   iactv           Active layer thickness for erosive potential (m)   !
 !   ishgt           Sediment saltation height (m)                      !
 !   imaxD           Maximum inundation depth (m)                       !
-!   idnet           Bed elevation (m) by erosion or deposition         !                        !
+!   idnet           Bed elevation (m) by erosion or deposition         !
 !   idtbl           Bed Wave Boundary Layer (WBL) thickness (m)        !
 !   idubl           Current velocity at wave boundary layer            !
 !   idfdw           Bed WBL friction factor from currents              !
@@ -91,12 +91,16 @@
 !   idoff           Erodibility profile (dmix) offset (m)              !
 !   idslp           Erodibility profile (dmix) slope (m)               !
 !   idtim           Erodibility profile (dmix) restoring time scale (s)!
-!   idbmx           Bed biodifusivity maximum                          !
-!   idbmm           Bed biodifusivity minimum                          !
-!   idbzs           Bed biodifusivity zs                               !
-!   idbzm           Bed biodifusivity zm                               !
-!   idbzp           Bed biodifusivity phi                              !
+!   idbmx           Bed sediment bio-difusivity coefficient maximum    !
+!   idbmm           Bed sediment bio-difusivity coefficient minimum    !
+!   idbzs           Bed sediment bio-difusivity profile maximum depth  !
+!   idbzm           Bed bio-difusivity profile end exponential depth   !
+!   idbzp           Bed sediment bio-difusivity profile minimum depth  !
 !   idprp           Cohesive behavior                                  !
+!                                                                      !
+!  Other indices:                                                      !
+!                                                                      !
+!   idTmfo(:)       Sediment flux out of marsh cells for each classes  !
 !                                                                      !
 !   isgrH           Seagrass height.                                   !
 !   isgrD           Seagrass shoot density.                            !
@@ -107,13 +111,14 @@
       USE mod_param
 !
       implicit none
-
-      integer, allocatable  :: idSbed(:)  ! bed    properties IDs
-      integer, allocatable  :: idBott(:)  ! bottom properties IDs
 !
 !-----------------------------------------------------------------------
 !  Tracer identification indices.
 !-----------------------------------------------------------------------
+!
+      integer, allocatable :: idSbed(:)   ! bed    properties IDs
+      integer, allocatable :: idBott(:)   ! bottom properties IDs
+      integer, allocatable :: idTmfo(:)   ! marhes sediment flux out
 !
       integer, allocatable :: idsed(:)    ! Cohesive and non-cohesive
       integer, allocatable :: idmud(:)    ! Cohesive sediment
@@ -169,8 +174,8 @@
       integer, parameter :: ishgt = 16 ! Sediment saltation height
       integer, parameter :: imaxD = 17 ! Bed maximum inundation depth
       integer, parameter :: idnet = 18 ! Bed erosion or deposition
-      integer, parameter :: idtbl = 19 ! Bed wave BL thickness
-      integer, parameter :: idubl = 20 ! Bed wave BL current magnitude
+      integer, parameter :: idtbl = 19 ! Bed WBL thickness
+      integer, parameter :: idubl = 20 ! Bed WBL current magnitude
       integer, parameter :: idfdw = 21 ! Friction factor from currents
       integer, parameter :: idzrw = 22 ! Reference height bottom velocity
       integer, parameter :: idksd = 23 ! Bed roughness for wave BL
@@ -181,11 +186,11 @@
       integer, parameter :: idoff = 27 ! Erodibility profile offset
       integer, parameter :: idslp = 28 ! Erodibility profile slope
       integer, parameter :: idtim = 29 ! Erodibility profile time scale
-      integer, parameter :: idbmx = 30 ! Bed biodifusivity maximum
-      integer, parameter :: idbmm = 31 ! Bed biodifusivity minimum
-      integer, parameter :: idbzs = 32 ! Bed biodifusivity zs
-      integer, parameter :: idbzm = 33 ! Bed biodifusivity zm
-      integer, parameter :: idbzp = 34 ! Bed biodifusivity phi
+      integer, parameter :: idbmx = 30 ! biodifusivity maximum
+      integer, parameter :: idbmm = 31 ! biodifusivity minimum
+      integer, parameter :: idbzs = 32 ! maximum biodifusivity depth
+      integer, parameter :: idbzm = 33 ! exponential biodifusivity depth
+      integer, parameter :: idbzp = 34 ! minimum biodifusivity depth
 #endif
 #if defined MIXED_BED
       integer, parameter :: idprp = 35 ! Cohesive behavior
@@ -502,6 +507,11 @@
       IF (.not.allocated(isand)) THEN
         allocate ( isand(MAX(1,NNS)) )
         Dmem(1)=Dmem(1)+REAL(MAX(1,NNS),r8)
+      END IF
+
+      IF (.not.allocated(idTmfo)) THEN
+        allocate ( idTmfo(NST) )
+        Dmem(1)=Dmem(1)+REAL(NST,r8)
       END IF
 
       IF (.not.allocated(idBmas)) THEN

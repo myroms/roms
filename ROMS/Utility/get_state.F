@@ -2368,13 +2368,16 @@
             ELSE
               IF (Master) THEN 
 #    ifdef CHECKSUM
-            WRITE (stdout,70) TRIM(Vname(2,idTims)), Fmin, Fmax, Fhash
+                WRITE (stdout,70) TRIM(Vname(2,idTims)),                &
+     &                            Fmin, Fmax, Fhash
 #    else
-            WRITE (stdout,70) TRIM(Vname(2,idTims)), Fmin, Fmax 
+                WRITE (stdout,70) TRIM(Vname(2,idTims)), Fmin, Fmax 
 #    endif
+              END IF
+            END IF
           ELSE
             IF (Master) THEN
-              WRITE (stdout,80) string, TRIM(Vname(1,idTims),           &
+              WRITE (stdout,80) string, TRIM(Vname(1,idTims)),          &
      &                          TRIM(ncname)
             END IF
             exit_flag=4
@@ -10088,7 +10091,7 @@
 !
         IF (get_var(idTims)) THEN
           foundit=find_string(var_name, n_var, TRIM(Vname(1,idTims)),   & 
-     &                        varid)
+     &                        vindex)
           IF (foundit) THEN
             my_pioVar%vd=var_desc(vindex)
             my_pioVar%gtype=r2dvar
@@ -10125,13 +10128,16 @@
             ELSE
               IF (Master) THEN 
 #     ifdef CHECKSUM
-            WRITE (stdout,70) TRIM(Vname(2,idTims)), Fmin, Fmax, Fhash
+                WRITE (stdout,70) TRIM(Vname(2,idTims)),                &
+     &                            Fmin, Fmax, Fhash
 #     else
-            WRITE (stdout,70) TRIM(Vname(2,idTims)), Fmin, Fmax 
+                WRITE (stdout,70) TRIM(Vname(2,idTims)), Fmin, Fmax 
 #     endif
+              END IF
+            END IF
           ELSE
             IF (Master) THEN
-              WRITE (stdout,80) string, TRIM(Vname(1,idTims),           &
+              WRITE (stdout,80) string, TRIM(Vname(1,idTims)),          &
      &                          TRIM(ncname)
             END IF
             exit_flag=4

@@ -75,7 +75,7 @@ VEG_MASSDENS == 700.0d0
 ! Number of days to record mean higher high water (MHHW), which determines
 ! marsh vertical growth. Typically, use 30 days. [Ngrids] values are expected. 
 
-NTIMES_MARSH == 30
+NTIMES_MARSH =  30
 
 ! Marsh parabolic curve biomass growth parameters, [Ngrids] values are expected.
 
