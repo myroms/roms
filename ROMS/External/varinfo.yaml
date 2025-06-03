@@ -3351,17 +3351,6 @@ metadata:
     add_offset:     0.0d0
     scale:          1.0d0
 
-
-
-
-
-
-
-
-
-
-
-
   - variable:       grain_diameter                                   # Input/Output
     standard_name:  sea_water_sediment_grain_diameter_size
     long_name:      sediment median grain diameter size
