@@ -6,9 +6,9 @@
 !
 !git $Id$
 !============================================== Alfredo Aretxabaleta ===
-!  Copyright (c) 2002-2024 The ROMS/TOMS Group      Hernan G. Arango   !
+!  Copyright (c) 2002-2025 The ROMS Group           Hernan G. Arango   !
 !    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                                              !
+!    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
 !  This routine computes sediment bed layer stratigraphy.              !
@@ -20,29 +20,41 @@
 !                                                                      !
 !=======================================================================
 !
+      USE mod_param
+# ifdef BBL_MODEL
+      USE mod_bbl
+# endif
+# ifdef SEDBIO_COUP
+      USE mod_biology
+# endif
+# ifdef SEDBIO_COUP
+      USE mod_diags
+# endif
+      USE mod_forces
+      USE mod_grid
+      USE mod_ocean
+      USE mod_scalars
+      USE mod_sedbed
+      USE mod_sediment
+!
+      USE bc_3d_mod,       ONLY : bc_r3d_tile
+      USE exchange_2d_mod, ONLY : exchange_r2d_tile
+# ifdef DISTRIBUTE
+      USE mp_exchange_mod, ONLY : mp_exchange3d, mp_exchange4d
+# endif
+!
       implicit none
-
-      PRIVATE
+!
       PUBLIC  :: sed_bed2
-
+      PRIVATE
+!
       CONTAINS
 !
 !***********************************************************************
       SUBROUTINE sed_bed2 (ng, tile)
 !***********************************************************************
 !
-      USE mod_param
-      USE mod_forces
-      USE mod_grid
-      USE mod_ocean
-      USE mod_sedbed
       USE mod_stepping
-# ifdef BBL_MODEL
-      USE mod_bbl
-# endif
-# ifdef SEDBIO_COUP
-      USE mod_diags
-# endif
 !
 !  Imported variable declarations.
 !
@@ -50,10 +62,13 @@
 !
 !  Local variable declarations.
 !
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__
+!
 # include "tile.h"
 !
 # ifdef PROFILE
-      CALL wclock_on (ng, iNLM, 16)
+      CALL wclock_on (ng, iNLM, 16, __LINE__, MyFile)
 # endif
       CALL sed_bed_tile (ng, tile,                                      &
      &                   LBi, UBi, LBj, UBj,                            &
@@ -95,8 +110,9 @@
      &                   SEDBED(ng) % bed_mass,                         &
      &                   SEDBED(ng) % bottom)
 # ifdef PROFILE
-      CALL wclock_off (ng, iNLM, 16)
+      CALL wclock_off (ng, iNLM, 16, __LINE__, MyFile)
 # endif
+!
       RETURN
       END SUBROUTINE sed_bed2
 !
@@ -134,19 +150,6 @@
      &                         bed, bed_frac, bed_mass,                 &
      &                         bottom)
 !***********************************************************************
-!
-      USE mod_param
-      USE mod_scalars
-      USE mod_sediment
-# ifdef SEDBIO_COUP
-      USE mod_biology
-# endif
-!
-      USE bc_3d_mod, ONLY : bc_r3d_tile
-      USE exchange_2d_mod, ONLY : exchange_r2d_tile
-# ifdef DISTRIBUTE
-      USE mp_exchange_mod, ONLY : mp_exchange3d, mp_exchange4d
-# endif
 !
 !  Imported variable declarations.
 !
@@ -233,12 +236,12 @@
 !
       integer :: Ksed, i, ised, j, k, ks
       integer :: bnew, nnn
-
+!
       real(r8), parameter :: eps = 1.0E-14_r8
-
+!
       real(r8) :: cff, cff1, cff2, cff3
       real(r8) :: thck_avail, thck_to_add
-
+!
       real(r8), dimension(NST) :: nlysm
       
       real(r8), dimension(IminS:ImaxS,NST) :: dep_mass
@@ -316,17 +319,17 @@ minlayer_thick(ng) = newlayer_thick(ng)
 !-----------------------------------------------------------------------
 !  Update bed properties according to ero_flux and dep_flux.
 !-----------------------------------------------------------------------
-!
+
 # ifdef SUSPLOAD
+!
+!  The deposition and resuspension of sediment on the bottom "bed"
+!  is due to precipitation flux FC(:,0), already computed, and the
+!  resuspension (erosion, hence called ero_flux). The resuspension is
+!  applied to the bottom-most grid box value qc(:,1) so the total mass
+!  is conserved. Restrict "ero_flux" so that "bed" cannot go negative
+!  after both fluxes are applied.
+!
       J_LOOP : DO j=Jstr,Jend
-                                !
-                                !  The deposition and resuspension of sediment on the bottom "bed"
-                                !  is due to precipitation flux FC(:,0), already computed, and the
-                                !  resuspension (erosion, hence called ero_flux). The resuspension is
-                                !  applied to the bottom-most grid box value qc(:,1) so the total mass
-                                !  is conserved. Restrict "ero_flux" so that "bed" cannot go negative
-                                !  after both fluxes are applied.
-                                !
       DO i=Istr,Iend
 #  ifdef SEDBIO_COUP
          ndep_thck_tot(i,j)=0.0_r8
@@ -986,7 +989,7 @@ minlayer_thick(ng) = newlayer_thick(ng)
      &                    EWperiodic(ng), NSperiodic(ng),               &
      &                    bed)
 # endif
-
+!
       RETURN
       END SUBROUTINE sed_bed_tile
 #endif

@@ -6,36 +6,43 @@
 !
 !git $Id$
 !==================================================== C. R. Sherwood ===
-!  Copyright (c) 2002-2024 The ROMS/TOMS Group      Hernan G. Arango   !
+!  Copyright (c) 2002-2025 The ROMS Group           Hernan G. Arango   !
 !    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                                              !
+!    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
 !  This routine computes sediment bed layer mixing (biodiffusion)      !
 !                                                                      !
-!                                                                      !
 !=======================================================================
 !
+      USE mod_param
+# ifdef BBL_MODEL
+      USE mod_bbl
+# endif
+      USE mod_forces
+      USE mod_grid
+      USE mod_ocean
+      USE mod_scalars
+      USE mod_sedbed
+      USE mod_sediment
+!
+      USE bc_3d_mod,       ONLY : bc_r3d_tile
+# ifdef DISTRIBUTE
+      USE mp_exchange_mod, ONLY : mp_exchange3d, mp_exchange4d
+# endif
+!
       implicit none
-
-      PRIVATE
+!
       PUBLIC  :: sed_biodiff
-
+      PRIVATE
+!
       CONTAINS
 !
 !***********************************************************************
       SUBROUTINE sed_biodiff (ng, tile)
 !***********************************************************************
 !
-      USE mod_param
-      USE mod_forces
-      USE mod_grid
-      USE mod_ocean
-      USE mod_sedbed
       USE mod_stepping
-# ifdef BBL_MODEL
-      USE mod_bbl
-# endif
 !
 !  Imported variable declarations.
 !
@@ -43,56 +50,51 @@
 !
 !  Local variable declarations.
 !
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__
+!
 # include "tile.h"
 !
 # ifdef PROFILE
-      CALL wclock_on (ng, iNLM, 16)
+      CALL wclock_on (ng, iNLM, 16, __LINE__, MyFile)
 # endif
       CALL sed_biodiff_tile (ng, tile,                                  &
-     &                   LBi, UBi, LBj, UBj,                            &
-     &                   IminS, ImaxS, JminS, JmaxS,                    &
-     &                   nstp(ng), nnew(ng),                            &
+     &                       LBi, UBi, LBj, UBj,                        &
+     &                       IminS, ImaxS, JminS, JmaxS,                &
+     &                       nstp(ng), nnew(ng),                        &
 # ifdef WET_DRY
-     &                   GRID(ng) % rmask_wet,                          &
+     &                       GRID(ng) % rmask_wet,                      &
 # endif
-     &                   OCEAN(ng) % t,                                 &
+     &                       OCEAN(ng) % t,                             &
 # if defined SED_MORPH
-     &                   SEDBED(ng) % bed_thick,                        &
+     &                       SEDBED(ng) % bed_thick,                    &
 # endif
-     &                   SEDBED(ng) % bed,                              &
-     &                   SEDBED(ng) % bed_frac,                         &
-     &                   SEDBED(ng) % bed_mass,                         &
-     &                   SEDBED(ng) % bottom)
+     &                       SEDBED(ng) % bed,                          &
+     &                       SEDBED(ng) % bed_frac,                     &
+     &                       SEDBED(ng) % bed_mass,                     &
+     &                       SEDBED(ng) % bottom)
 # ifdef PROFILE
-      CALL wclock_off (ng, iNLM, 16)
+      CALL wclock_off (ng, iNLM, 16, __LINE__, MyFile)
 # endif
+!
       RETURN
       END SUBROUTINE sed_biodiff
 !
 !***********************************************************************
       SUBROUTINE sed_biodiff_tile (ng, tile,                            &
-     &                         LBi, UBi, LBj, UBj,                      &
-     &                         IminS, ImaxS, JminS, JmaxS,              &
-     &                         nstp, nnew,                              &
+     &                             LBi, UBi, LBj, UBj,                  &
+     &                             IminS, ImaxS, JminS, JmaxS,          &
+     &                             nstp, nnew,                          &
 # ifdef WET_DRY
-     &                         rmask_wet,                               &
+     &                             rmask_wet,                           &
 # endif
-     &                         t,                                       &
+     &                             t,                                   &
 # if defined SED_MORPH
-     &                         bed_thick,                               &
+     &                             bed_thick,                           &
 # endif
-     &                         bed, bed_frac, bed_mass,                 &
-     &                         bottom)
+     &                             bed, bed_frac, bed_mass,             &
+     &                             bottom)
 !***********************************************************************
-!
-      USE mod_param
-      USE mod_scalars
-      USE mod_sediment
-!
-      USE bc_3d_mod, ONLY : bc_r3d_tile
-# ifdef DISTRIBUTE
-      USE mp_exchange_mod, ONLY : mp_exchange3d, mp_exchange4d
-# endif
 !
 !  Imported variable declarations.
 !
@@ -130,15 +132,16 @@
 !  Local variable declarations.
 !
       integer :: i, j, k, ised
+      integer :: iu,il,lp,ii
+!
       real(r8), parameter :: eps = 1.0E-14_r8
-      real(r8), parameter :: cmy2ms = 3.1688765E-12_r8 ! multiply cm2/yr by this to get m2/s
-
+      real(r8), parameter :: cmy2ms = 3.1688765E-12_r8  ! cm2/yr to m2/s
+!
       real(r8) :: cff, cff1, cff2, cff3
-
+!
       real(r8), dimension(IminS:ImaxS,NST) :: dep_mass
 
-      integer :: iu,il,lp,ii
-!      real(r8) :: rtemp, Dbmx, Dbmm, zs, zm, zp
+!!    real(r8) :: rtemp, Dbmx, Dbmm, zs, zm, zp
       real(r8) :: rtemp
       real(r8), dimension(Nbed) :: zb
       real(r8), dimension(Nbed) :: zc
@@ -153,15 +156,12 @@
       real(r8), dimension(Nbed) :: cc
       real(r8), dimension(Nbed) :: dd
 
-
 # include "set_bounds.h"
-
 !
 !-----------------------------------------------------------------------
 ! Compute sediment bed layer stratigraphy.
 !-----------------------------------------------------------------------
 !
-!      print *, 'Mixing...'
       J_LOOP : DO j=Jstr,Jend
         I_LOOP : DO i=Istr,Iend
 !
@@ -170,7 +170,7 @@
 !
 !          DO k=1,Nbed
 !             Db(k)=1.0E-8_r8
-!          ENDDO
+!          END DO
 
           IF (Nbed.GT.2) THEN
 !  Compute cumulative depth 
@@ -403,7 +403,7 @@
      &                    NghostPoints, EWperiodic(ng), NSperiodic(ng), &
      &                    bed)
 # endif
-
+!
       RETURN
       END SUBROUTINE sed_biodiff_tile
 #endif

@@ -1,15 +1,15 @@
 #include "cppdefs.h"
-
       MODULE sed_bed_cohesive_mod
-!#if defined NONLINEAR && defined SEDIMENT && defined COHESIVE_BED
+
+!!#if defined NONLINEAR && defined SEDIMENT && defined COHESIVE_BED
 #if defined NONLINEAR && defined SEDIMENT 
 #if defined COHESIVE_BED || defined MIXED_BED
 !
 !git $Id$
 !==================================================== John C. Warner ===
-!  Copyright (c) 2002-2024 The ROMS/TOMS Group      Hernan G. Arango   !
+!  Copyright (c) 2002-2025 The ROMS Group           Hernan G. Arango   !
 !    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                                              !
+!    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
 !  This routine computes sediment bed layer stratigraphy.              !
@@ -21,26 +21,35 @@
 !                                                                      !
 !=======================================================================
 !
+      USE mod_param
+# ifdef BBL_MODEL
+      USE mod_bbl
+# endif
+      USE mod_forces
+      USE mod_grid
+      USE mod_ocean
+      USE mod_scalars
+      USE mod_sedbed
+      USE mod_sediment
+!
+      USE bc_3d_mod,       ONLY : bc_r3d_tile
+      USE exchange_2d_mod, ONLY : exchange_r2d_tile
+# ifdef DISTRIBUTE
+      USE mp_exchange_mod, ONLY : mp_exchange3d, mp_exchange4d
+# endif
+!
       implicit none
-
-      PRIVATE
+!
       PUBLIC  :: sed_bed_cohesive
-
+      PRIVATE
+!
       CONTAINS
 !
 !***********************************************************************
       SUBROUTINE sed_bed_cohesive (ng, tile)
 !***********************************************************************
 !
-      USE mod_param
-      USE mod_forces
-      USE mod_grid
-      USE mod_ocean
-      USE mod_sedbed
       USE mod_stepping
-# ifdef BBL_MODEL
-      USE mod_bbl
-# endif
 !
 !  Imported variable declarations.
 !
@@ -48,82 +57,76 @@
 !
 !  Local variable declarations.
 !
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__
+!
 # include "tile.h"
 !
 # ifdef PROFILE
-      CALL wclock_on (ng, iNLM, 16)
+      CALL wclock_on (ng, iNLM, 16, __LINE__, MyFile)
 # endif
       CALL sed_bed_cohesive_tile (ng, tile,                             &
-     &                   LBi, UBi, LBj, UBj,                            &
-     &                   IminS, ImaxS, JminS, JmaxS,                    &
-     &                   nstp(ng), nnew(ng),                            &
+     &                            LBi, UBi, LBj, UBj,                   &
+     &                            IminS, ImaxS, JminS, JmaxS,           &
+     &                            nstp(ng), nnew(ng),                   &
 # ifdef WET_DRY
-     &                   GRID(ng) % rmask_wet,                          &
+     &                            GRID(ng) % rmask_wet,                 &
 # endif
 # ifdef BBL_MODEL
-     &                   BBL(ng) % bustrc,                              &
-     &                   BBL(ng) % bvstrc,                              &
-     &                   BBL(ng) % bustrw,                              &
-     &                   BBL(ng) % bvstrw,                              &
-     &                   BBL(ng) % bustrcwmax,                          &
-     &                   BBL(ng) % bvstrcwmax,                          &
+     &                            BBL(ng) % bustrc,                     &
+     &                            BBL(ng) % bvstrc,                     &
+     &                            BBL(ng) % bustrw,                     &
+     &                            BBL(ng) % bvstrw,                     &
+     &                            BBL(ng) % bustrcwmax,                 &
+     &                            BBL(ng) % bvstrcwmax,                 &
 # else
-     &                   FORCES(ng) % bustr,                            &
-     &                   FORCES(ng) % bvstr,                            &
+     &                            FORCES(ng) % bustr,                   &
+     &                            FORCES(ng) % bvstr,                   &
 # endif
-     &                   OCEAN(ng) % t,                                 &
+     &                            OCEAN(ng) % t,                        &
 # ifdef SUSPLOAD
-     &                   SEDBED(ng) % ero_flux,                         &
-     &                   SEDBED(ng) % settling_flux,                    &
+     &                            SEDBED(ng) % ero_flux,                &
+     &                            SEDBED(ng) % settling_flux,           &
 # endif
 # if defined SED_MORPH
-     &                   SEDBED(ng) % bed_thick,                        &
+     &                            SEDBED(ng) % bed_thick,               &
 # endif
-     &                   SEDBED(ng) % bed,                              &
-     &                   SEDBED(ng) % bed_frac,                         &
-     &                   SEDBED(ng) % bed_mass,                         &
-     &                   SEDBED(ng) % bottom)
+     &                            SEDBED(ng) % bed,                     &
+     &                            SEDBED(ng) % bed_frac,                &
+     &                            SEDBED(ng) % bed_mass,                &
+     &                            SEDBED(ng) % bottom)
 # ifdef PROFILE
       CALL wclock_off (ng, iNLM, 16)
 # endif
+!
       RETURN
       END SUBROUTINE sed_bed_cohesive
 !
 !***********************************************************************
       SUBROUTINE sed_bed_cohesive_tile (ng, tile,                       &
-     &                         LBi, UBi, LBj, UBj,                      &
-     &                         IminS, ImaxS, JminS, JmaxS,              &
-     &                         nstp, nnew,                              &
+     &                                  LBi, UBi, LBj, UBj,             &
+     &                                  IminS, ImaxS, JminS, JmaxS,     &
+     &                                  nstp, nnew,                     &
 # ifdef WET_DRY
-     &                         rmask_wet,                               &
+     &                                  rmask_wet,                      &
 # endif
 # ifdef BBL_MODEL
-     &                         bustrc, bvstrc,                          &
-     &                         bustrw, bvstrw,                          &
-     &                         bustrcwmax, bvstrcwmax,                  &
+     &                                  bustrc, bvstrc,                 &
+     &                                  bustrw, bvstrw,                 &
+     &                                  bustrcwmax, bvstrcwmax,         &
 # else
-     &                         bustr, bvstr,                            &
+     &                                  bustr, bvstr,                   &
 # endif
-     &                         t,                                       &
+     &                                  t,                              &
 # ifdef SUSPLOAD
-     &                         ero_flux, settling_flux,                 &
+     &                                  ero_flux, settling_flux,        &
 # endif
 # if defined SED_MORPH
-     &                         bed_thick,                               &
+     &                                  bed_thick,                      &
 # endif
-     &                         bed, bed_frac, bed_mass,                 &
-     &                         bottom)
+     &                                  bed, bed_frac, bed_mass,        &
+     &                                  bottom)
 !***********************************************************************
-!
-      USE mod_param
-      USE mod_scalars
-      USE mod_sediment
-!
-      USE bc_3d_mod, ONLY : bc_r3d_tile
-      USE exchange_2d_mod, ONLY : exchange_r2d_tile
-# ifdef DISTRIBUTE
-      USE mp_exchange_mod, ONLY : mp_exchange3d, mp_exchange4d
-# endif
 !
 !  Imported variable declarations.
 !
@@ -192,12 +195,12 @@
 !
       integer :: Ksed, i, ised, j, k, ks
       integer :: bnew, nnn
-
+!
       real(r8), parameter :: eps = 1.0E-14_r8
-
+!
       real(r8) :: cff, cff1, cff2, cff3,cff4
       real(r8) :: thck_avail, thck_to_add
-
+!
       real(r8), dimension(NST) :: nlysm
       
       real(r8), dimension(IminS:ImaxS,NST) :: dep_mass
@@ -1032,7 +1035,7 @@ minlayer_thick(ng) = newlayer_thick(ng)
      &                    EWperiodic(ng), NSperiodic(ng),               &
      &                    bed)
 # endif
-
+!
       RETURN
       END SUBROUTINE sed_bed_cohesive_tile
 #endif

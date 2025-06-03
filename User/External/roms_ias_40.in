@@ -951,8 +951,6 @@ Dout(M3hadv) == T       ! u_hadv, ...        horizontal total advection
 Dout(M3xadv) == T       ! u_xadv, ...        horizontal XI-advection
 Dout(M3yadv) == T       ! u_yadv, ...        horizontal ETA-advection
 Dout(M3vadv) == T       ! u_vadv, ...        vertical advection
-Dout(M3hrad) == T       ! u_hrad, ...        horizontal total radiation stress
-Dout(M3vrad) == T       ! u_vrad, ...        vertical radiation stress
 Dout(M3hvis) == T       ! u_hvisc, ...       horizontal total viscosity
 Dout(M3xvis) == T       ! u_xvisc, ...       horizontal XI-viscosity
 Dout(M3yvis) == T       ! u_yvisc, ...       horizontal ETA-viscosity
@@ -973,7 +971,6 @@ Dout(M2zeta) == T       ! ubar_zeta, ...     2D Eulerian SSH adjustment
 Dout(M2zetw) == T       ! ubar_zetaw, ...    2D quasi-static SSH adjustment
 Dout(M2zqsp) == T       ! ubar_zqsp, ...     2D quasi-static pressure
 Dout(M2zbeh) == T       ! ubar_zbeh, ...     2D Bernoulli head adjustment
-Dout(M2fsgr) == T       ! ubar_fsgr, ...     2D seagrass drag force
 
 Dout(M3hjvf) == T       ! u_hjvf, ...        3D horizontal J vortex force
 Dout(M3vjvf) == T       ! u_vjvf, ...        3D vertical J vortex force
@@ -983,7 +980,6 @@ Dout(M3sstm) == T       ! u_sstm, ...        3D surface streaming
 Dout(M3bstm) == T       ! u_bstm, ...        3D bottom streaming
 Dout(M3wrol) == T       ! u_wrol, ...        3D wave roller acceleration
 Dout(M3wbrk) == T       ! u_wbrk, ...        3D wave breaking
-Dout(M3fsgr) == T       ! u_fsgr, ...        3D seagrass drag force
 
 ! Logical switches (TRUE/FALSE) to activate writing of time-averaged,
 ! active (temperature and salinity) and passive (inert) tracer diagnostic
@@ -1221,6 +1217,7 @@ PIO_I2C_Preq = 65                 ! Maximum pending I2C requests
      FPOSNAM =  floats.in
      BPARNAM =  bio_Fennel.in
      SPARNAM =  sediment.in
+     VEGNAME =  vegetation.in
      USRNAME =  MyFile.dat
 
 !
@@ -3090,7 +3087,6 @@ PIO_I2C_Preq = 65                 ! Maximum pending I2C requests
 ! Dout(M2zetw)   Write out 2D quasi-static sea level adjustment.
 ! Dout(M2zqsp)   Write out 2D quasi-static sea level pressure adjustment.
 ! Dout(M2zbeh)   Write out 2D Bernoulli head adjustment.
-! Dout(M2fsgr)   Write out 2D seagrass drag force.
 !
 ! Dout(M3hjvf)   Write out 3D horizontal J vortex force.
 ! Dout(M3vjvf)   Write out 3D vertical J vortex force.
@@ -3100,7 +3096,6 @@ PIO_I2C_Preq = 65                 ! Maximum pending I2C requests
 ! Dout(M3bstm)   Write out 3D bottom streaming.
 ! Dout(M3wrol)   Write out 3D wave roller acceleration.
 ! Dout(M3wbrk)   Write out 3D wave breaking.
-! Dout(M3fsgr)   Write out 3D seagrass drag force.
 !
 ! Time-averaged, active (temperature and salinity) and passive (inert) tracer
 ! diagnostic terms, [1:NAT+NPT,Ngrids] values expected:
@@ -3568,5 +3563,6 @@ PIO_I2C_Preq = 65                 ! Maximum pending I2C requests
 ! FPOSNAM      Input initial drifters positions filename.
 ! BPARNAM      Input biological parameters filename.
 ! SPARNAM      Input sediment transport parameters filename.
+! VEGNAME      Input vegetation filename.
 ! USRNAME      USER's input generic filename.
 !

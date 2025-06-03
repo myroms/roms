@@ -1,9 +1,9 @@
 !
 !git $Id$
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2024 The ROMS/TOMS Group        John C. Warner   !
+!  Copyright (c) 2002-2025 The ROMS Group             John C. Warner   !
 !    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                                              !
+!    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
 !  Sediment Floc Model Kernel Variables:                               !
@@ -22,19 +22,21 @@
 !
       implicit none
 !
-        logical :: l_ASH
-        logical :: l_ADS
-        logical :: l_COLLFRAG
-        logical :: l_testcase
-        integer  :: f_ero_iv
-        real(r8) :: f_dp0,f_alpha,f_beta,f_nb_frag
-        real(r8) :: f_dmax,f_ater,f_clim
-        real(r8) :: f_ero_frac,f_ero_nbfrag
-        real(r8) :: f_nf
-        real(r8) :: f_frag
-        real(r8) :: f_fter
-        real(r8) :: f_collfragparam
-        real(r8), parameter :: rhoref = 1030.0_r8
+      logical :: l_ASH
+      logical :: l_ADS
+      logical :: l_COLLFRAG
+      logical :: l_testcase
+!
+      integer  :: f_ero_iv
+!
+      real(r8) :: f_dp0,f_alpha,f_beta,f_nb_frag
+      real(r8) :: f_dmax,f_ater,f_clim
+      real(r8) :: f_ero_frac,f_ero_nbfrag
+      real(r8) :: f_nf
+      real(r8) :: f_frag
+      real(r8) :: f_fter
+      real(r8) :: f_collfragparam
+      real(r8), parameter :: rhoref = 1030.0_r8
 !
       TYPE T_SEDFLOCS
 !
@@ -57,11 +59,15 @@
 #endif
 
       END TYPE T_SEDFLOCS
-
+!
       TYPE (T_SEDFLOCS), allocatable :: SEDFLOCS(:)
-
+!
+      PUBLIC :: allocate_sedflocs
+      PUBLIC :: initialize_sedflocs
+      PUBLIC :: initialize_sedflocs_param
+!
       CONTAINS
-
+!
       SUBROUTINE allocate_sedflocs (ng, LBi, UBi, LBj, UBj)
 !
 !=======================================================================
@@ -103,11 +109,10 @@
       allocate ( SEDFLOCS(ng) % f_g1_ds(NCS,NCS,NCS) )
       allocate ( SEDFLOCS(ng) % f_g4(NCS,NCS,NCS) )
 #endif
-
-
+!
       RETURN
       END SUBROUTINE allocate_sedflocs
-
+!
       SUBROUTINE initialize_sedflocs (ng, tile, model)
 !
 !=======================================================================
@@ -174,17 +179,16 @@
 !
       IF ((model.eq.0).or.(model.eq.iNLM)) THEN
         CALL initialize_sedflocs_param (ng, tile,                       &
-     &                     SEDFLOCS(ng) % f_mass,                       &
-     &                     SEDFLOCS(ng) % f_diam,                       &
-     &                     SEDFLOCS(ng) % f_g1_sh,                      &
-     &                     SEDFLOCS(ng) % f_g1_ds,                      &
-     &                     SEDFLOCS(ng) % f_g3,                         &
-     &                     SEDFLOCS(ng) % f_l1_sh,                      &
-     &                     SEDFLOCS(ng) % f_l1_ds,                      &
-     &                     SEDFLOCS(ng) % f_coll_prob_sh,               &
-     &                     SEDFLOCS(ng) % f_coll_prob_ds,               &
-     &                     SEDFLOCS(ng) % f_l3)
-!
+     &                                  SEDFLOCS(ng) % f_mass,          &
+     &                                  SEDFLOCS(ng) % f_diam,          &
+     &                                  SEDFLOCS(ng) % f_g1_sh,         &
+     &                                  SEDFLOCS(ng) % f_g1_ds,         &
+     &                                  SEDFLOCS(ng) % f_g3,            &
+     &                                  SEDFLOCS(ng) % f_l1_sh,         &
+     &                                  SEDFLOCS(ng) % f_l1_ds,         &
+     &                                  SEDFLOCS(ng) % f_coll_prob_sh,  &
+     &                                  SEDFLOCS(ng) % f_coll_prob_ds,  &
+     &                                  SEDFLOCS(ng) % f_l3)
       END IF
 !
       RETURN

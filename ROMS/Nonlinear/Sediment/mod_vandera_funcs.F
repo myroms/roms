@@ -1,42 +1,77 @@
 #include "cppdefs.h"
-      Module MOD_VANDERA_FUNCS
+      MODULE MOD_VANDERA_FUNCS
 #if defined SEDIMENT && defined BEDLOAD_VANDERA
 !
 !git $Id$
 !================================================ Tarandeep S. Kalra ===
-!  Copyright (c) 2002-2024 The ROMS/TOMS Group       Chris Sherwood    !
-!    Licensed under a MIT/X style license            John C. Warner    !
-!    See License_ROMS.txt                                              !
+!  Copyright (c) 2002-2025 The ROMS Group             Chris Sherwood   !
+!    Licensed under a MIT/X style license             John C. Warner   !
+!    See License_ROMS.md                                               !
 !=======================================================================
 !                                                                      !
 !  This module contains several functions that are required for the    !
 !  sediment bedload calculations using Van der A's formulations.       !     
 !                                                                      !
+!  References:                                                         !
+!                                                                      !
+!  Soulsby, R.L., 1997: Dynamics of Marine Sands: A Manual for         !
+!    Practical Applications, Thomas Telford, London.                   !
+!                                                                      !
+!  Soulsby, R.L., 2006: Simplified calculation of wave orbital         !
+!    velocities, Technical Report, KR Hallingford.                     !
+!                                                                      !
+!  VA2013 Appendix A.                                                  !
+!                                                                      !
 !=======================================================================
 !
-      implicit none
-      
-      CONTAINS 
-!
-      REAL(r8) FUNCTION kh(Td,depth)
-!
-!  Calculate wave number from Wave period and depth 
-!
-! RL Soulsby (2006) "Simplified calculation of wave orbital velocities"
-! HR Wallingford Report TR 155, February 2006
-!
+      USE mod_kinds
       USE mod_scalars
 !
       implicit none
-! 
-      real(r8) :: Td, depth
+!      
+      PUBLIC  :: kh              ! wave number
+      PUBLIC  :: w_s_calc        ! critical shields parameter
+      PUBLIC  :: w_sc_calc       ! water particle vertical velocity
+      PUBLIC  :: mu_calc         ! bed roughness factor from grain size
+      PUBLIC  :: ksd_calc        ! current-related bed roughness
+      PUBLIC  :: ksw_calc        ! wave-related bed roughness
+      PUBLIC  :: fw_calc         ! full-cycle wave friction factor
+      PUBLIC  :: fd_calc_santoss ! current-related frction factor
+      PUBLIC  :: fd_calc_madsen  ! current-related frction factor
+      PUBLIC  :: fwi_calc        ! wave friction factor
+      PUBLIC  :: dsf_calc        ! sheet flow thickness
+      PUBLIC  :: theta_cr_calc   ! critical shilds parameter, Soulsby
+      PRIVATE
+!
+      CONTAINS 
+!
+      FUNCTION kh (Td, depth) RESULT (wn)
+!
+!=======================================================================
+!                                                                      !
+!  Calculate Wave Number from Wave period and depth (Soulsby, 2006).   !
+!                                                                      !
+!=======================================================================
+!
+!  Imported variable declarations.
+!
+      real(r8), intent(in) :: Td, depth
+!
+!  Local variable declarations.
+!
+      integer  :: iter
+!
       real(r8) :: cff
       real(r8) :: x, y, t, omega
+      real(r8) :: wn
+!
+!-----------------------------------------------------------------------
+!  Compute wave number.
+!-----------------------------------------------------------------------
 !
       omega=2.0_r8*pi/Td
-        
 !
-! depth (i.e.x) cannot go negative to avoid negative wave number
+!  Depth (i.e. x) cannot go negative to avoid negative wave number.
 !
       IF(depth.lt.0.0_r8) THEN 
         x=0.0_r8
@@ -50,308 +85,413 @@
         y=x
       ENDIF
 !
-! Iteratively solving 3 times for eqn.7 of Soulsby 1997 by using 
-! eqns. (12a-14)
+!  Iteratively solving 3 times for equation 7 of Soulsby (1997) by
+!  using equations 12a-14.
 !      
-      t=TANH(y)
-      cff=(y*t-x)/(t+y*(1.0_r8-t*t))
-      y=y-cff
-!
-      t=TANH(y)
-      cff=(y*t-x)/(t+y*(1.0_r8-t*t))
-      y=y-cff
-
-      t=TANH(y)
-      cff=(y*t-x)/(t+y*(1.0_r8-t*t))
-      y=y-cff
-      kh=y
+      DO iter=1,3
+        t=TANH(y)
+        cff=(y*t-x)/(t+y*(1.0_r8-t*t))
+        y=y-cff
+      END DO
+      wn=y
 !
       RETURN
-      END FUNCTION
+      END FUNCTION kh
 ! 
-      REAL(r8) FUNCTION w_s_calc(d50, rhos)
+      FUNCTION w_s_calc (d50, rhos) RESULT (w_s)
 !
-! Critical Shields parameter from Soulsby (1997).
-! Dynamics of Marine Sands 
+!=======================================================================
+!                                                                      !
+!  Computes Critical Shields parameter (Soulsby, 1997).                !
+!                                                                      !
+!=======================================================================
 !
-      USE mod_kinds
-      USE mod_scalars
+!  Imported variable declarations.
 !
-      implicit none
-! 
+      real(r8), intent(in) :: d50, rhos
+!
+!  Local variable declarations.
+!
       real(r8), parameter :: nu=1.36E-6_r8
-      real(r8) :: d50, rhos
+!
+      real(r8) :: cff, cff1, cff2
       real(r8) :: s, dstar
-      real(r8) :: cff, cff1
+      real(r8) :: w_s
+!
+!-----------------------------------------------------------------------
+!  Compute critical shields parameter.
+!-----------------------------------------------------------------------
 !
       s=rhos/rho0
       dstar=(g*(s-1)/(nu*nu))**(1.0_r8/3.0_r8)*d50
       cff=nu/d50
       cff1=10.36_r8
-      w_s_calc=cff*(sqrt(cff1*cff1+1.049_r8*dstar**3.0_r8)-cff1)
+      cff2=dstar*dstar*dstar
+      w_s=cff*(SQRT(cff1*cff1+1.049_r8*cff2)-cff1)
 !
       RETURN
-      END FUNCTION
+      END FUNCTION w_s_calc
 !
-      REAL(r8) FUNCTION w_sc_calc(Hs, Td, depth, RR, w_s, zws) 
+      FUNCTION w_sc_calc (Hs, Td, depth, RR, w_s, zws) RESULT (worb)
 ! 
-! Second order Stokes theory to get vertical velocity of water particle
-! at a given elevation based on santoss_core.m
-! 
-      USE mod_kinds
-      USE mod_scalars
+!=======================================================================
+!                                                                      !
+!  Uses second order Stokes theory to get vertical velocity of water   !
+!  particle at a given elevation based on "santoss_core.m" script.     !
+!                                                                      !
+!=======================================================================
+!   
+!  Imported variable declarations.
 !
-      implicit none 
-!     
-      real(r8), parameter :: eps_inv=1.0E14_r8
-      real(r8) :: Hs, Td, depth, RR, zws, w_s
-      real(r8) :: cff, worb1, worb2, worb 
+      real(r8), intent(in) :: Hs, Td, depth, RR, zws, w_s
+!
+!  Local variable declarations.
+!
       real(r8), parameter :: eps = 1.0E-14_r8
+      real(r8), parameter :: eps_inv = 1.0E14_r8
+!
+      real(r8) :: cff, worb1, worb2, worb 
+!
+!-----------------------------------------------------------------------
+!  Compute water particle vertical velocity at given elevation.
+!-----------------------------------------------------------------------
 !
       worb1=pi*Hs*zws/(Td*depth+eps)
       worb2=worb1*2.0_r8*(RR+RR-1.0_r8)
 !
-!  Using the SANTOSS model formulation 
+!  Using the SANTOSS model formulation.
 ! 
       cff=1.0_r8/8.0_r8
       worb=cff*worb1*SQRT(64.0_r8-(-worb1+                              &
-     &          SQRT(worb1**2+32.0_r8*                                  &
-     &               worb2**2+eps))**2/(worb2**2+eps))+                 &
-     &               worb2*SIN(2.0_r8*ACOS(cff*(-worb1+                 &
-     &          SQRT(worb1**2+32.0_r8*worb2**2))/                       &
-     &              (worb2+eps)))
-
+     &                             SQRT(worb1**2+32.0_r8*               &
+     &                                  worb2**2+eps))**2/              &
+     &                            (worb2**2+eps))+                      &
+     &         worb2*SIN(2.0_r8*ACOS(cff*(-worb1+                       &
+     &                                    SQRT(worb1**2+                &
+     &                                         32.0_r8*worb2**2))/      &
+     &                                   (worb2+eps)))
 !
 ! Prevent worb from going to Infinity when worb2=0.0 
 ! 
       worb=MIN(worb, eps_inv)
-      w_sc_calc=worb
 !
       RETURN  
       END FUNCTION w_sc_calc
 !
-      REAL(r8) FUNCTION mu_calc(d50)
+      FUNCTION mu_calc (d50) RESULT (mu)
+! 
+!=======================================================================
+!                                                                      !
+!  It calculates bed roughness factor based on grain size using        !
+!  VA2013 Appendix A formulation.                                      !
+!                                                                      !
+!=======================================================================
+!   
+!  Imported variable declarations.
 !
-! Calculate bed roughness factor based on grain size
-! VA2013 Appendix A., required for current related bed roughness
-! and wave related bed roughness. 
+      real(r8), intent(in) :: d50
 !
-      USE mod_kinds
-      USE mod_scalars
+!  Local variable declarations.
 !
-      implicit none
+      real(r8) :: d50_mm
+      real(r8) :: mu
 !
-      real(r8) :: d50, d50_mm
+!-----------------------------------------------------------------------
+!  Compute bed roughness factor.
+!-----------------------------------------------------------------------
 !
       d50_mm=d50*1000.0_r8
 !
-      IF(d50_mm.le.0.15_r8) THEN
-        mu_calc=6.0_r8
+      IF (d50_mm.le.0.15_r8) THEN
+        mu=6.0_r8
       ELSEIF(d50_mm.gt.0.15_r8.and.d50_mm.lt.0.20_r8) THEN
-        mu_calc=6.0_r8-5.0_r8*((d50_mm-0.15_r8)/(0.2_r8-0.15_r8))
+        mu=6.0_r8-5.0_r8*((d50_mm-0.15_r8)/(0.2_r8-0.15_r8))
       ELSEIF(d50_mm.ge.0.20_r8) THEN
-        mu_calc=1.0_r8
-      ENDIF
+        mu=1.0_r8
+      END IF
 !
       RETURN
       END FUNCTION mu_calc
 !
-      REAL(r8) FUNCTION ksd_calc(d50, d90, mu, theta_timeavg,           &
-     &                         eta, rlen)
+      FUNCTION ksd_calc (d50, d90, mu, theta_timeavg, eta, rlen)        &
+     &           RESULT (ksd)
+! 
+!=======================================================================
+!                                                                      !
+!  It calculates current-related bed roughness from VA2013             !
+!  Appendix A.1.                                                       !
+!                                                                      !
+!=======================================================================
+!   
+!  Imported variable declarations.
 !
-! Calculate current-related bed roughness from VA2013 Appendix A.1.
+      real(r8), intent(in)    :: d50, d90, mu, theta_timeavg, eta
+      real(r8), intent(inout) :: rlen       ! HGA weird, why overwrite?
+!                                             seems like a bug
+!  Local variable declarations.
 !
-      USE mod_kinds
-      USE mod_scalars
-!
-      implicit none
-!
-      real(r8) :: d50, d90, mu, theta_timeavg, eta, rlen
       real(r8) :: ripple_fac
+      real(r8) :: ksd
 !
-      rlen=MAX(rlen,d50)
+!-----------------------------------------------------------------------
+!  Compute current-related bed roughness.
+!-----------------------------------------------------------------------
+!
+      rlen=MAX(rlen,d50)                   ! notice overwritting
       ripple_fac=0.4_r8*eta**2.0_r8/rlen
-      ksd_calc=MAX( 3.0_r8*d90,                                         &
-     &             d50*(mu+6.0_r8*(theta_timeavg-1.0_r8)) )+            &
-     &             ripple_fac
+      ksd=MAX(3.0_r8*d90,                                              &
+     &        d50*(mu+6.0_r8*(theta_timeavg-1.0_r8)))+                 &
+     &    ripple_fac
 !
       RETURN
       END FUNCTION ksd_calc
 !
-      REAL(r8) FUNCTION ksw_calc(d50, mu, theta_timeavg, eta, rlen)
-!
-! Calculate wave related bed roughness from VA2013 Eqn. A.5.
+      FUNCTION ksw_calc (d50, mu, theta_timeavg, eta, rlen)             &
+     &           RESULT (ksw)
 ! 
-      USE mod_kinds
-      USE mod_scalars
+!=======================================================================
+!                                                                      !
+!  It calculates wave related bed roughness from VA2013 Appendix A,    !
+!  Equation A.5                                                        !
+!                                                                      !
+!=======================================================================
+!   
+!  Imported variable declarations.
 !
-      implicit none
-      real(r8) :: d50, mu, theta_timeavg, eta, rlen
-      real(r8) :: ripple_fac, ksw
+      real(r8), intent(in)    :: d50, mu, theta_timeavg, eta
+      real(r8), intent(inout) :: rlen       ! HGA weird, why overwrite?
+!                                             seems like a bug
+!  Local variable declarations.
 !
-      rlen=MAX(rlen,d50)
+      real(r8) :: ripple_fac
+      real(r8) :: ksw
 !
+!-----------------------------------------------------------------------
+!  Compute wave-related bed roughness.
+!-----------------------------------------------------------------------
+!
+      rlen=MAX(rlen,d50)                   ! notice overwritting
       ripple_fac=0.4_r8*eta**2.0_r8/rlen
-      ksw_calc=MAX( d50,                                                &
-     &                d50*(mu+6.0_r8*(theta_timeavg-1.0_r8)) )          &
-     &               +ripple_fac
+      ksw=MAX(d50,                                                      &
+     &        d50*(mu+6.0_r8*(theta_timeavg-1.0_r8)))+                  &
+     &    ripple_fac
 !
       RETURN
       END FUNCTION ksw_calc
 !
-      REAL(r8) FUNCTION fw_calc(ahat, ksw)
+      FUNCTION fw_calc (ahat, ksw) RESULT (fw)
+! 
+!=======================================================================
+!                                                                      !
+!  It calculates full-cycle wave friction factor from from VA2013      !
+!  Appendix A, Equation A.4.                                           !
+!                                                                      !
+!=======================================================================
+!   
+!  Imported variable declarations.
 !
-! Calculate full-cycle wave friction factor from VA2013 Eqn. A.4. 
+      real(r8), intent(in) :: ahat, ksw
 !
-      USE mod_kinds
-      USE mod_scalars
+!  Local variable declarations.
 !
-      implicit none
-      real(r8) :: ahat, ksw, ratio, fw
+      real(r8) :: ratio
+      real(r8) :: fw
+!
+!-----------------------------------------------------------------------
+!  Compute full-cycle wave friction factor.
+!-----------------------------------------------------------------------
 !
       ratio=ahat/ksw
-      IF(ratio.gt.1.587_r8) THEN
-        fw_calc=0.00251_r8*EXP(5.21_r8*(ratio)**(-0.19_r8))
+      IF (ratio.gt.1.587_r8) THEN
+        fw=0.00251_r8*EXP(5.21_r8*(ratio)**(-0.19_r8))
       ELSE
-        fw_calc=0.3_r8
+        fw=0.3_r8
       ENDIF
 !
       RETURN
       END FUNCTION fw_calc
 !
-! This function is not getting used at the time because
-! we compute current frction factor from bottom current stress 
+      FUNCTION fd_calc_santoss (udelta, delta, ksd) RESULT (fd)
 ! 
-      REAL(r8) FUNCTION fd_calc_santoss(udelta, delta, ksd)
-
-      USE mod_kinds
-      USE mod_scalars
-
-      implicit none
-
-! Calculate current related friction factor VA2013 Eqn. 20
-! Assuming logarithmic velocity profile.
- 
+!=======================================================================
+!                                                                      !
+!  It calculates current-related friction factor by Assuming           !
+!  logarithmic velocity profile (VA2013, Equation 20).                 !
+!                                                                      !
+!  It is not used since it is currently computed from  bottom          !
+!  current stress.                                                     !
+!                                                                      !
+!=======================================================================
+!   
+!  Imported variable declarations.
+! 
       real(r8) :: udelta, delta, ksd
+!
+!  Local variable declarations.
+!
       real(r8), parameter :: min_udelta=1.0E-4_r8
       real(r8), parameter :: von_k=0.41_r8
- 
-      IF(udelta.lt.min_udelta) THEN
-        fd_calc_santoss=0.0_r8
+!
+      real(r8) :: fd
+!
+!-----------------------------------------------------------------------
+!  Compute current-related friction factor.
+!-----------------------------------------------------------------------
+!
+      IF (udelta.lt.min_udelta) THEN
+        fd=0.0_r8
       ELSE
-        fd_calc_santoss=2.0_r8*(von_k/LOG(30.0_r8*delta/ksd))**2.0_r8
+        fd=2.0_r8*(von_k/LOG(30.0_r8*delta/ksd))**2.0_r8
       ENDIF
-     
+!     
       RETURN
       END FUNCTION fd_calc_santoss
 !
-      REAL(r8) FUNCTION fd_calc_madsen(udelta, mag_bstrc)
-!
-      USE mod_kinds
-      USE mod_scalars
-!
-      implicit none
-!
-! Calculate current related friction factor 
-! directly from the current stresses. 
+      FUNCTION fd_calc_madsen (udelta, mag_bstrc) RESULT (fd)
 ! 
+!=======================================================================
+!                                                                      !
+!  It calculates current-related friction factor directly from the     !
+!  current stresses.                                                   !
+!                                                                      !
+!=======================================================================
+!   
+!  Imported variable declarations.
+! 
+      real(r8), intent(in) :: udelta, mag_bstrc
+!
+!  Local variable declarations.
+!
       real(r8), parameter :: eps=1.0E-14_r8
       real(r8), parameter :: min_udelta=1.0E-4_r8
-      real(r8) :: udelta, mag_bstrc
+!
+      real(r8) :: fd
+!
+!-----------------------------------------------------------------------
+!  Compute current related friction factor 
+!-----------------------------------------------------------------------
 ! 
-      IF(udelta.lt.min_udelta) THEN
-        fd_calc_madsen=0.0_r8
+      IF (udelta.lt.min_udelta) THEN
+        fd=0.0_r8
       ELSE
-        !fd_calc_new=MAX((mag_bstrc/(0.5_r8*udelta*udelta*rho0)),eps)
-        fd_calc_madsen=MAX((mag_bstrc/(0.5_r8*udelta*udelta)),eps)
-!        fd_calc_new=MIN(fd_calc_new,2.0_r8) 
-        fd_calc_madsen=fd_calc_madsen
-      ENDIF
+!!      fd=MAX((mag_bstrc/(0.5_r8*udelta*udelta*rho0)),eps)
+!!      fd=MIN(fd, 2.0_r8) 
+        fd=MAX((mag_bstrc/(0.5_r8*udelta*udelta)),eps)
+      END IF
 !     
       RETURN
       END FUNCTION fd_calc_madsen
 !
-      REAL(r8) FUNCTION fwi_calc(T_iu, T_i, ahat, ksw)
+      FUNCTION fwi_calc (T_iu, T_i, ahat, ksw) RESULT (fwi)
+! 
+!=======================================================================
+!                                                                      !
+!  It calculates wave friction factor for wave and crest half cycle,   !
+!  VA2013 Equation 21.                                                 !
+!                                                                      !
+!=======================================================================
+!   
+!  Imported variable declarations.
 !
-! Wave friction factor for wave and crest half cycle VA2013 Eqn. 21.
-!       
-      USE mod_kinds
-      USE mod_scalars
+      real(r8), intent(in) :: T_iu, T_i, ahat, ksw
 !
-      implicit none
+!  Local variable declarations.
 !
       real(r8), parameter :: eps = 1.0E-14_r8
-      real(r8) :: T_iu, T_i, ahat, ksw
-      real(r8) :: c1, ratio, fwi
-      real(r8) :: cff1, cff2, cff3
 !
-      fwi_calc=0.3_r8
+      real(r8) :: c1, ratio
+      real(r8) :: cff1, cff2, cff3
+      real(r8) :: fwi
+!
+!-----------------------------------------------------------------------
+!  Compute wave friction factor.
+!-----------------------------------------------------------------------
+!
+      fwi=0.3_r8
 !      
       c1=2.6_r8
       ratio=ahat/ksw
-      IF(ratio.gt.1.587_r8) THEN
+      IF (ratio.gt.1.587_r8) THEN
         cff1=MAX( (T_iu/(T_i+eps)),0.0_r8 )
         cff2=(2.0_r8*cff1)**c1
         cff3=cff2*ratio
 !
-! These if condition prevents arithematic overflow error
-! when 0.0**-0.19_r8, think about that 
+! Prevents arithematic overflow error when 0.0**(-0.19_r8) 
 !
-        IF(cff3.le.0.0_r8) THEN 
-          fwi_calc=0.0_r8
+        IF (cff3.le.0.0_r8) THEN 
+          fwi=0.0_r8
         ELSE 
-          fwi_calc=0.00251_r8*EXP(5.21_r8*(cff3)**(-0.19_r8))
+          fwi=0.00251_r8*EXP(5.21_r8*(cff3)**(-0.19_r8))
         END IF
       END IF 
 !
       RETURN
       END FUNCTION fwi_calc
 !
-      REAL(r8) FUNCTION dsf_calc(d50, theta_i)
+      FUNCTION dsf_calc (d50, theta_i) RESULT (dsf)
+! 
+!=======================================================================
+!                                                                      !
+!  It calculates sheet flow thickness, VA2013 Appendix C.1.            !
+!                                                                      !
+!=======================================================================
+!   
+!  Imported variable declarations.
 !
-! Sheet flow thickness VA2013 Appendix C.1.
-!       
-      USE mod_kinds
-      USE mod_scalars
+      real(r8), intent(in) :: d50, theta_i
 !
-      implicit none
+!  Local variable declarations.
 !
-      real(r8) :: d50, theta_i
       real(r8) :: d50_mm
       real(r8) :: cff
+      real(r8) :: dsf
+!
+!-----------------------------------------------------------------------
+!  Compute sheet flow thickness.
+!-----------------------------------------------------------------------
 !
       d50_mm=d50*1000.0_r8
-      IF(d50_mm.le.0.15_r8)THEN
+      IF (d50_mm.le.0.15_r8) THEN
         cff=25.0_r8*theta_i
-      ELSEIF(d50_mm.gt.0.15_r8.and.d50_mm.lt.0.20_r8)THEN
+      ELSE IF((d50_mm.gt.0.15_r8).and.(d50_mm.lt.0.20_r8)) THEN
         cff=25.0_r8-(12.0_r8*(d50_mm-0.15_r8)/0.05_r8)
-      ELSEIF(d50_mm.ge.0.20_r8)THEN
+      ELSE IF (d50_mm.ge.0.20_r8) THEN
         cff=13.0_r8*theta_i
       ENDIF
-      dsf_calc=MAX(d50*cff,d50)
+      dsf=MAX(d50*cff,d50)
 !
       RETURN
       END FUNCTION dsf_calc
 !
-      REAL(r8) FUNCTION theta_cr_calc(d50, rhos)
+      FUNCTION theta_cr_calc (d50, rhos) RESULT (theta)
 !
-! Critical Shields parameter from Soulsby (1997).
+!=======================================================================
+!                                                                      !
+!  It calculates critical chields parameter from Soulsby (1997).       !
+!                                                                      !
+!=======================================================================
+!   
+!  Imported variable declarations.
 !
-      USE mod_kinds
-      USE mod_scalars
-
-      implicit none
-! 
+      real(r8), intent(in) :: d50, rhos
+!
+!  Local variable declarations.
+!
       real(r8), parameter :: nu=1.36E-6_r8
-      real(r8) :: d50, rhos
+!
       real(r8) :: s, dstar
       real(r8) :: cff1, cff2
+      real(r8) :: theta
+!
+!-----------------------------------------------------------------------
+!  Compute critical shields parameter.
+!-----------------------------------------------------------------------
 !
       s=rhos/rho0
       dstar=(g*(s-1)/(nu*nu))**(1.0_r8/3.0_r8)*d50
       cff1=0.30_r8/(1.0_r8+1.2_r8*dstar)
       cff2=0.055_r8*(1.0_r8-EXP(-0.020_r8*dstar))
-      theta_cr_calc=cff1+cff2
+      theta=cff1+cff2
 !
       RETURN
       END FUNCTION theta_cr_calc

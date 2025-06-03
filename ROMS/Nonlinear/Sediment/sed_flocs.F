@@ -1,14 +1,14 @@
 #include "cppdefs.h"
-
       MODULE sed_flocs_mod
 
-#if defined NONLINEAR && defined SEDIMENT && defined SUSPLOAD && defined SED_FLOCS
+#if defined NONLINEAR && defined SEDIMENT && \
+    defined SUSPLOAD  && defined SED_FLOCS
 !
 !git $Id$
 !=======================================================================
-!  Copyright (c) 2002-2024 The ROMS/TOMS Group                         !
-!    Licensed under a MIT/X style license           Hernan G. Arango   !
-!    See License_ROMS.txt                   Alexander F. Shchepetkin   !
+!  Copyright (c) 2002-2025 The ROMS Group                              !
+!    Licensed under a MIT/X style license                              !
+!    See License_ROMS.md                                               !
 !==================================================== John C. Warner ===
 !                                                                      !
 !  This routine computes floc transformation.                          !
@@ -19,27 +19,42 @@
 !    Behaviour of a floc population during a tidal cycle: laboratory   !
 !    experiments and numerical modelling. Continental Shelf Research,  !
 !    31(10), S64-S83.                                                  !
+!                                                                      !
+!  HGA Warning: This code requires cleaning. It contains numerous      !
+!  ===========  print statements that are not permissible in parallel  !
+!  applications (whether shared or distributed memory). These          !
+!  statements may lead to segmentation violations. All of these        !
+!  messages need to be managed by the main parallel process.           !
+!                                                                      !
 !=======================================================================
 !
-      implicit none
-
-      PRIVATE
+      USE mod_param
+      USE mod_bbl
+      USE mod_forces
+      USE mod_grid
+      USE mod_mixing
+      USE mod_ocean
+      USE mod_scalars
+      USE mod_sedflocs
+      USE mod_sediment
+!
+      implicit none 
+!
       PUBLIC  :: sed_flocmod
-
+      PRIVATE :: flocmod_collfrag
+      PRIVATE :: flocmod_comp_fsd
+      PRIVATE :: flocmod_comp_g
+      PRIVATE :: flocmod_mass_control
+      PRIVATE :: flocmod_mass_redistribute
+      PRIVATE
+!
       CONTAINS
 !
 !***********************************************************************
       SUBROUTINE sed_flocmod (ng, tile)
 !***********************************************************************
 !
-      USE mod_param
-      USE mod_forces
-      USE mod_grid
-      USE mod_mixing
-      USE mod_ocean
       USE mod_stepping
-      USE mod_bbl
-      USE mod_sedflocs
 !
 !  Imported variable declarations.
 !
@@ -47,10 +62,13 @@
 !
 !  Local variable declarations.
 !
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__
+!
 # include "tile.h"
 !
 # ifdef PROFILE
-      CALL wclock_on (ng, iNLM, 16)
+      CALL wclock_on (ng, iNLM, 16, __LINE__, MyFile)
 # endif
       CALL sed_flocmod_tile (ng, tile,                                 &
      &                       LBi, UBi, LBj, UBj, N(ng), NT(ng),        &
@@ -75,8 +93,9 @@
      &                       SEDFLOCS(ng) % f_mass,                    &
      &                       SEDFLOCS(ng) % f_diam)
 # ifdef PROFILE
-      CALL wclock_off (ng, iNLM, 16)
+      CALL wclock_off (ng, iNLM, 16, __LINE__, MyFile)
 # endif
+!
       RETURN
       END SUBROUTINE sed_flocmod
 !
@@ -96,13 +115,6 @@
      &                             t,                                   &
      &                             f_mass,f_diam)
 !***********************************************************************
-!
-      USE mod_param
-      USE mod_scalars
-      USE mod_sediment
-      USE mod_sedflocs
-!
-      implicit none 
 !
 !  Imported variable declarations.
 !
@@ -168,18 +180,21 @@
       real(r8),dimension(1:NCS)     :: cv_tmp,NNin,NNout
 !  f_mneg_param : negative mass tolerated to avoid small sub time step (g/l)
       real(r8), parameter :: f_mneg_param=0.000_r8
-#include "set_bounds.h"
 
+#include "set_bounds.h"
+!
       epsilon8=epsilon(1.0)
-!     epsilon8=1.e-8
+!!    epsilon8=1.e-8
 !
 !--------------------------------------------------------------------------
-! * Executable part
+!  Executable part
+!--------------------------------------------------------------------------
 !
       J_LOOP : DO j=Jstr,Jend
 !
 !  Extract mud variables from tracer arrays, place them into
 !  scratch arrays, and restrict their values to be positive definite.
+!
       DO k=1,N(ng)
         DO i=Istr,Iend
           Hz_inv(i,k)=1.0_r8/Hz(i,j,k)
@@ -365,57 +380,49 @@
 	 ENDDO
       ENDDO
       
-      
       END DO J_LOOP
-!      WRITE(*,*) 'END flocmod_main'
-      END SUBROUTINE sed_flocmod_tile
-
-
-
-!!===========================================================================
-      SUBROUTINE flocmod_collfrag(Gval,ng,f_g4,f_l4)
-
-  !&E--------------------------------------------------------------------------
-  !&E                 ***  ROUTINE flocmod_collfrag  ***
-  !&E
-  !&E ** Purpose : computation of collision fragmentation term, 
-  !&E              based on McAnally and Mehta, 2001
-  !&E
-  !&E ** Description :
-  !&E
-  !&E ** Called by : flocmod_comp_fsd
-  !&E
-  !&E ** External calls : 
-  !&E
-  !&E ** Reference :
-  !&E
-  !&E ** History :
-  !&E     ! 2013-09 (Romaric Verney)
-  !&E
-  !&E--------------------------------------------------------------------------
-  !! * Modules used
-      USE mod_sedflocs
-      USE mod_param
-      USE mod_scalars
 !
-      implicit none 
+      RETURN
+      END SUBROUTINE sed_flocmod_tile
+!
+      SUBROUTINE flocmod_collfrag (Gval, ng, f_g4, f_l4)
+!
+!=======================================================================
+!                                                                      !
+!  It computes the collision fragmentation term, based on McAnally and !
+!  Mehta, 2001.                                                        !
+!                                                                      !
+!  Adapted from Romaric Verney 2013-09 code.                           !
+!                                                                      !
+!=======================================================================
+!
+!  Imported variable declarations.
+!
       integer, intent(in) :: ng
-      real(r8),intent(in) :: Gval
-
-  !! * Local declarations
-      integer      :: iv1,iv2,iv3
-      real(r8) :: f_fp,f_fy,f_cfcst,gcolfragmin,gcolfragmax
-      real(r8) :: gcolfragiv1,gcolfragiv2,f_weight,mult
+!
+      real(r8), intent(in)    :: Gval
+      real(r8), intent(inout) :: f_g4(NCS,NCS,NCS)
+      real(r8), intent(inout) :: f_l4NCS,NCS)
+!
+!  Local variable declarations.
+!
+      integer  :: iv1, iv2, iv3
+!
+      real(r8) :: f_fp, f_fy, f_cfcst, gcolfragmin, gcolfragmax
+      real(r8) :: gcolfragiv1, gcolfragiv2, f_weight, mult
       real(r8) :: cff1, cff2
-      real(r8),DIMENSION(NCS,NCS,NCS) :: f_g4
-      real(r8),DIMENSION(NCS,NCS) :: f_l4
-      real(r8),DIMENSION(NCS) :: fdiam,fmass
-! shorten names
+!
+      real(r8), dimension(NCS) :: fdiam, fmass
+!
+!-----------------------------------------------------------------------
+!  Executable part
+!-----------------------------------------------------------------------
+!
+!  Shorten names.
+!
       fdiam=SEDFLOCS(ng)%f_diam
       fmass=SEDFLOCS(ng)%f_mass
-!  !!--------------------------------------------------------------------------
-  !! * Executable part
-
+!
       f_fp=0.1_r8
       f_fy=1e-10
       f_cfcst=3.0_r8/16.0_r8
@@ -626,53 +633,42 @@
       f_g4(1:NCS,1:NCS,1:NCS)=                                          &
      &            f_g4(1:NCS,1:NCS,1:NCS)*f_collfragparam
       f_l4(1:NCS,1:NCS)=f_l4(1:NCS,1:NCS)*f_collfragparam
-
+!
       RETURN
       END SUBROUTINE flocmod_collfrag
-
-!!===========================================================================
-      SUBROUTINE flocmod_comp_fsd(NNin,NNout,Gval,f_dt,ng)
-
-  !&E--------------------------------------------------------------------------
-  !&E                 ***  ROUTINE flocmod_comp_fsd  ***
-  !&E
-  !&E ** Purpose : computation of floc size distribution
-  !&E
-  !&E ** Description :
-  !&E
-  !&E ** Called by : flocmod_main
-  !&E
-  !&E ** External calls : 
-  !&E
-  !&E ** Reference :
-  !&E
-  !&E ** History :
-  !&E     ! 2013-09 (Romaric Verney)
-  !&E
-  !&E--------------------------------------------------------------------------
-  !! * Modules used
-      USE mod_param
-      USE mod_scalars
-      USE mod_sedflocs
+!    
+      SUBROUTINE flocmod_comp_fsd (NNin, NNout, Gval, f_dt, ng)
 !
-      implicit none 
-
-  !! * Arguments
+!=======================================================================
+!                                                                      !
+!  It computes the floc size distribution.                             !
+!                                                                      !
+!  Adapted from Romaric Verney 2013-09 code.                           !
+!                                                                      !
+!=======================================================================
+!
+!  Imported variable declarations.
+!
       integer, intent(in) :: ng
-      real(r8),intent(in) :: Gval
-      real(r8),dimension(1:NCS),intent(in)  :: NNin
-      real(r8),dimension(1:NCS),intent(out) :: NNout
-      real(r8),intent(in) :: f_dt
-
-  !! * Local declarations
-      integer      :: iv1,iv2,iv3
-      real(r8) :: tmp_g1,tmp_g3,tmp_l1,tmp_l3,tmp_l4,tmp_g4
-      real(r8),dimension(1:NCS,1:NCS,1:NCS)     :: f_g1_tmp,f_g4
-      real(r8),dimension(1:NCS,1:NCS)           :: f_l1_tmp,f_l4
-      
-  !!--------------------------------------------------------------------------
-  !! * Executable part
-
+!
+      real(r8), intent(in)  :: Gval
+      real(r8), intent(in)  :: NNin(1:NCS)
+      real(r8), intent(out) :: NNout(1:NCS)
+      real(r8), intent(in)  :: f_dt
+!
+!  Local variable declarations.
+!
+      integer  :: iv1, iv2, iv3
+!
+      real(r8) :: tmp_g1, tmp_g3, tmp_l1, tmp_l3, tmp_l4, tmp_g4
+!
+      real(r8), dimension(1:NCS,1:NCS,1:NCS) :: f_g1_tmp, f_g4
+      real(r8), dimension(1:NCS,1:NCS)       :: f_l1_tmp, f_l4
+!
+!-----------------------------------------------------------------------
+!  Executable part.
+!-----------------------------------------------------------------------
+!
       tmp_g1=0.0_r8
       tmp_g3=0.0_r8
       tmp_g4=0.0_r8
@@ -682,7 +678,7 @@
       f_g1_tmp(1:NCS,1:NCS,1:NCS)=0.0_r8
       f_l1_tmp(1:NCS,1:NCS)=0.0_r8
 
-      IF (l_COLLFRAG) CALL flocmod_collfrag(Gval,ng,f_g4,f_l4)
+      IF (l_COLLFRAG) CALL flocmod_collfrag (Gval, ng, f_g4, f_l4)
 
       DO iv1=1,NCS
        DO iv2=1,NCS
@@ -737,244 +733,211 @@
        tmp_l3=0.0_r8
        tmp_l4=0.0_r8    
       ENDDO
-
+!
       RETURN
       END SUBROUTINE flocmod_comp_fsd
-
-
-
-!!===========================================================================
-      SUBROUTINE flocmod_mass_control(NN,mneg,ng)
-
-  !&E--------------------------------------------------------------------------
-  !&E                 ***  ROUTINE flocmod_mass_control  ***
-  !&E
-  !&E ** Purpose : Compute mass in every class after flocculation and 
-  !&E              returns negative mass if any
-  !&E
-  !&E ** Description :
-  !&E
-  !&E ** Called by : flocmod_main
-  !&E
-  !&E ** External calls : 
-  !&E
-  !&E ** Reference :
-  !&E
-  !&E ** History :
-  !&E     ! 2013-09 (Romaric Verney)
-  !&E
-  !&E--------------------------------------------------------------------------
-  !! * Modules used
-      USE mod_sedflocs
-      USE mod_param
-      USE mod_scalars
 !
-      implicit none 
-      integer, intent(in) :: ng
+      SUBROUTINE flocmod_mass_control (NN, mneg ,ng)
+!
+!=======================================================================
+!                                                                      !
+!  It compute mass in every class after flocculation and returns       !
+!  negative mass if any.                                               !
+!                                                                      !
+!  Adapted from Romaric Verney 2013-09 code.                           !
+!                                                                      !
+!=======================================================================
+!
+!  Imported variable declarations.
+!
+      integer,  intent(in)  :: ng
+!
+      real(r8), intent(in)  :: NN(1:NCS)
+      real(r8), intent(out) :: mneg
+!
+!  Local variable declarations.
+!
+      integer :: iv1
 
-  !! * Local declarations
-      integer      :: iv1
-      real(r8),intent(out)     :: mneg
-      real(r8),dimension(1:NCS),intent(in)     :: NN
-      !real(r8),DIMENSION(0:NCS+1)      :: f_mass
-
-  !!--------------------------------------------------------------------------
-  !! * Executable part
-
+!!    real(r8), dimension(0:NCS+1) :: f_mass
+!
+!-----------------------------------------------------------------------
+!  Executable part.
+!-----------------------------------------------------------------------
+!
       mneg=0.0_r8
 
       DO iv1=1,NCS
-       IF (NN(iv1).lt.0.0_r8) THEN
-         mneg=mneg-NN(iv1)*SEDFLOCS(ng)%f_mass(iv1)
-       ENDIF
-      ENDDO
-
+        IF (NN(iv1).lt.0.0_r8) THEN
+          mneg=mneg-NN(iv1)*SEDFLOCS(ng)%f_mass(iv1)
+        END IF
+      END DO
+!
       RETURN
       END SUBROUTINE flocmod_mass_control
-
-!!===========================================================================
-      SUBROUTINE flocmod_mass_redistribute(NN,ng)
-
-  !&E--------------------------------------------------------------------------
-  !&E                 ***  ROUTINE flocmod_mass_redistribute  ***
-  !&E
-  !&E ** Purpose : based on a tolerated negative mass parameter, negative masses  
-  !&E              are redistributed linearly towards remaining postive masses 
-  !&E              and negative masses are set to 0
-  !&E                   
-  !&E ** Description :
-  !&E
-  !&E ** Called by : flocmod_main
-  !&E
-  !&E ** External calls : 
-  !&E
-  !&E ** Reference :
-  !&E
-  !&E ** History :
-  !&E     ! 2013-09 (Romaric Verney)
-  !&E
-  !&E--------------------------------------------------------------------------
-  !! * Modules used
-      USE mod_param
-      USE mod_scalars
-      USE mod_sedflocs
 !
-      implicit none 
-      integer, intent(in) :: ng
-
-
-  !! * Local declarations
-      integer      :: iv
-      real(r8)     :: npos
-      real(r8)     :: mneg
-      real(r8),dimension(1:NCS),intent(inout)     :: NN
-      real(r8),dimension(1:NCS)                   :: NNtmp
-      !real(r8),DIMENSION(0:NCS+1)      :: f_mass
-  !!--------------------------------------------------------------------------
-  !! * Executable part
-
+      SUBROUTINE flocmod_mass_redistribute (NN, ng)
+!
+!=======================================================================
+!                                                                      !
+!  Based on a tolerated negative mass parameter, negative masses are   !
+!  redistributed linearly towards remaining postive masses and         !
+!  negative masses are set to zero.                                    !
+!                                                                      !
+!  Adapted from Romaric Verney 2013-09 code.                           !
+!                                                                      !
+!=======================================================================
+!
+!  Imported variable declarations.
+!
+      integer,  intent(in)    :: ng
+      real(r8), intent(inout) :: NN(1:NCS)
+!
+!  Local variable declarations.
+!
+      integer  :: iv
+!
+      real(r8) :: npos
+      real(r8) :: mneg
+      real(r8), dimension(1:NCS)  :: NNtmp
+!
+!-----------------------------------------------------------------------
+!  Executable part.
+!-----------------------------------------------------------------------
+!
       mneg=0.0_r8
       npos=0.0_r8
       NNtmp(:)=NN(:)
 
       DO iv=1,NCS
-       IF (NN(iv).lt.0.0_r8) THEN
-         mneg=mneg-NN(iv)*SEDFLOCS(ng)%f_mass(iv)
-         NNtmp(iv)=0.0_r8
-       ELSE
-         npos=npos+1.0_r8
-       ENDIF
-      ENDDO
+        IF (NN(iv).lt.0.0_r8) THEN
+          mneg=mneg-NN(iv)*SEDFLOCS(ng)%f_mass(iv)
+          NNtmp(iv)=0.0_r8
+        ELSE
+          npos=npos+1.0_r8
+        END IF
+      END DO
 
       IF (mneg.gt.0.0_r8) THEN 
-       IF (npos.eq.0.0_r8) THEN
-         WRITE(*,*) 'CAUTION : all floc sizes have negative mass!'
-         WRITE(*,*) 'SIMULATION STOPPED'
-         STOP    
-       ELSE
-         DO iv=1,NCS
-           IF (NN(iv).gt.0.0_r8) THEN
-              NN(iv)=NN(iv)-mneg/sum(NNtmp)*NN(iv)/                     &
-     &            SEDFLOCS(ng)%f_mass(iv)
-           ELSE
+        IF (npos.eq.0.0_r8) THEN
+          WRITE(*,*) 'CAUTION : all floc sizes have negative mass!'
+          WRITE(*,*) 'SIMULATION STOPPED'
+          STOP                           ! cannot do this in ROMS (HGA)
+        ELSE
+          DO iv=1,NCS
+            IF (NN(iv).gt.0.0_r8) THEN
+              NN(iv)=NN(iv)-mneg/SUM(NNtmp)*NN(iv)/                     &
+     &               SEDFLOCS(ng)%f_mass(iv)
+            ELSE
               NN(iv)=0.0_r8
-           ENDIF
-
-         ENDDO
-
-       ENDIF
-      ENDIF
-
+            ENDIF
+          END DO
+        END IF
+      END IF
+!
       RETURN
       END SUBROUTINE flocmod_mass_redistribute
-
-!!===========================================================================    
-      SUBROUTINE flocmod_comp_g(k,i,j,Gval,diss,ng)
-
-  !&E--------------------------------------------------------------------------
-  !&E                 ***  ROUTINE flocmod_comp_g  ***
-  !&E
-  !&E ** Purpose : compute shear rate to estimate shear aggregation and erosion  
-  !&E 
-  !&E ** Description :
-  !&E
-  !&E ** Called by : flocmod_main
-  !&E
-  !&E ** External calls : 
-  !&E
-  !&E ** Reference :
-  !&E
-  !&E ** History :
-  !&E     ! 2013-09 (Romaric Verney)
-  !&E
-  !&E--------------------------------------------------------------------------
-  !! * Modules used
-      USE mod_sedflocs
-      USE mod_param
-      USE mod_scalars
 !
-      implicit none 
+      SUBROUTINE flocmod_comp_g (k, i, j, Gval, diss, ng)
+!
+!=======================================================================
+!                                                                      !
+!  It compute shear rate to estimate shear aggregation and erosion.    !
+!  (It reproduce flocculation experiment Verney et al., 2011)          !
+!                                                                      !
+!  Adapted from Romaric Verney 2013-09 code.                           !
+!                                                                      !
+!  HGA: Is this routine needed? It can be added directly to the code.  !
+!                                                                      !
+!=======================================================================
+!
+!  Imported variable declarations.
+!
+      integer,  intent(in)  :: ng
+      integer,  intent(in)  :: k, i, j
+      real(r8), intent(in)  :: diss
+      real(r8), intent(out) :: Gval
+!
+!  Local variable declarations.
+!
+!!    logical, parameter :: l_testcase = .TRUE.
 
-  !! * Local declarations
-      integer,  intent(in)      :: k,i,j
-      integer, intent(in) :: ng
-      real(r8),intent(out)     :: Gval
-      real(r8)     :: htn,ustar,z,diss,nueau
-! l_testcase - if .TRUE. sets G(t) to values from lab experiment
-!      logical, parameter :: l_testcase = .TRUE.
-  !!--------------------------------------------------------------------------
-  !! * Executable part
-  !    nueau=1.06e-6_r8
-  !    ustar=sqrt(tenfon(i,j)/rhoref)
-  !    htn=h0(i,j)+ssh(i,j)
-  !    z=(1.0_r8+sig(k))*htn
-      
+      real(r8) :: htn, ustar, z, diss, nueau
 !
-! ALA from CRS
+!-----------------------------------------------------------------------
+!  Executable part.
+!-----------------------------------------------------------------------
+!! 
+!! l_testcase - if .TRUE. sets G(t) to values from lab experiment
+!!
+!!    nueau=1.06e-6_r8
+!!    ustar=sqrt(tenfon(i,j)/rhoref)
+!!    htn=h0(i,j)+ssh(i,j)
+!!    z=(1.0_r8+sig(k))*htn
 !
-       nueau = 1.5E-6_r8
+! ALA from CRS.
+!
+      nueau = 1.5E-6_r8
       IF (l_testcase) THEN
-        ! reproducing flocculation experiment Verney et al., 2011
-       Gval=0.0_r8
-       IF (time(ng) .lt. 7201.0_r8) THEN
-        Gval=1.0_r8
-       ELSEIF (time(ng) .lt. 8401.0_r8) THEN
-        Gval=2.0_r8
-       ELSEIF (time(ng) .lt. 9601.0_r8) THEN
-        Gval=3.0_r8  
-       ELSEIF (time(ng) .lt. 10801.0_r8) THEN
-        Gval=4.0_r8
-       ELSEIF (time(ng) .lt. 12601.0_r8) THEN
-        Gval=12.0_r8
-       ELSEIF (time(ng) .lt. 13801.0_r8) THEN
-        Gval=4.0_r8
-       ELSEIF (time(ng) .lt. 15001.0_r8) THEN
-        Gval=3.0_r8
-       ELSEIF (time(ng) .lt. 16201.0_r8) THEN
-        Gval=2.0_r8
-       ELSEIF (time(ng) .lt. 21601.0_r8) THEN
-        Gval=1.0_r8
-       ELSEIF (time(ng) .lt. 25201.0_r8) THEN
         Gval=0.0_r8
-       ELSEIF (time(ng) .lt. 30601.0_r8) THEN
-        Gval=1.0_r8
-       ELSEIF (time(ng) .lt. 31801.0_r8) THEN
-        Gval=2.0_r8                     
-       ELSEIF (time(ng) .lt. 33001.0_r8) THEN
-        Gval=3.0_r8       
-       ELSEIF (time(ng) .lt. 34201.0_r8) THEN
-        Gval=4.0_r8
-       ELSEIF (time(ng) .lt. 36001.0_r8) THEN
-        Gval=12.0_r8
-       ELSEIF (time(ng) .lt. 37201.0_r8) THEN
-        Gval=4.0_r8
-       ELSEIF (time(ng) .lt. 38401.0_r8) THEN
-        Gval=3.0_r8
-       ELSEIF (time(ng) .lt. 39601.0_r8) THEN
-        Gval=2.0_r8
-       ELSEIF (time(ng) .lt. 45001.0_r8) THEN
-        Gval=1.0_r8
-       ELSEIF (time(ng) .lt. 48601.0_r8) THEN
-        Gval=0.0_r8
-       ELSEIF (time(ng) .lt. 54001.0_r8) THEN
-        Gval=1.0_r8
-       ELSEIF (time(ng) .lt. 55201.0_r8) THEN
-        Gval=2.0_r8                     
-       ELSEIF (time(ng) .lt. 56401.0_r8) THEN
-        Gval=3.0_r8       
-       ELSEIF (time(ng) .lt. 57601.0_r8) THEN
-        Gval=4.0_r8
-       ELSE 
-        Gval=12.0_r8
-       ENDIF
+        IF (time(ng) .lt. 7201.0_r8) THEN
+          Gval=1.0_r8
+        ELSEIF (time(ng) .lt. 8401.0_r8) THEN
+          Gval=2.0_r8
+        ELSEIF (time(ng) .lt. 9601.0_r8) THEN
+          Gval=3.0_r8  
+        ELSEIF (time(ng) .lt. 10801.0_r8) THEN
+          Gval=4.0_r8
+        ELSEIF (time(ng) .lt. 12601.0_r8) THEN
+          Gval=12.0_r8
+        ELSEIF (time(ng) .lt. 13801.0_r8) THEN
+          Gval=4.0_r8
+        ELSEIF (time(ng) .lt. 15001.0_r8) THEN
+          Gval=3.0_r8
+        ELSEIF (time(ng) .lt. 16201.0_r8) THEN
+          Gval=2.0_r8
+        ELSEIF (time(ng) .lt. 21601.0_r8) THEN
+          Gval=1.0_r8
+        ELSEIF (time(ng) .lt. 25201.0_r8) THEN
+          Gval=0.0_r8
+        ELSEIF (time(ng) .lt. 30601.0_r8) THEN
+          Gval=1.0_r8
+        ELSEIF (time(ng) .lt. 31801.0_r8) THEN
+          Gval=2.0_r8                     
+        ELSEIF (time(ng) .lt. 33001.0_r8) THEN
+          Gval=3.0_r8       
+        ELSEIF (time(ng) .lt. 34201.0_r8) THEN
+          Gval=4.0_r8
+        ELSEIF (time(ng) .lt. 36001.0_r8) THEN
+          Gval=12.0_r8
+        ELSEIF (time(ng) .lt. 37201.0_r8) THEN
+          Gval=4.0_r8
+        ELSEIF (time(ng) .lt. 38401.0_r8) THEN
+          Gval=3.0_r8
+        ELSEIF (time(ng) .lt. 39601.0_r8) THEN
+          Gval=2.0_r8
+        ELSEIF (time(ng) .lt. 45001.0_r8) THEN
+          Gval=1.0_r8
+        ELSEIF (time(ng) .lt. 48601.0_r8) THEN
+          Gval=0.0_r8
+        ELSEIF (time(ng) .lt. 54001.0_r8) THEN
+          Gval=1.0_r8
+        ELSEIF (time(ng) .lt. 55201.0_r8) THEN
+          Gval=2.0_r8                     
+        ELSEIF (time(ng) .lt. 56401.0_r8) THEN
+          Gval=3.0_r8       
+        ELSEIF (time(ng) .lt. 57601.0_r8) THEN
+          Gval=4.0_r8
+        ELSE 
+          Gval=12.0_r8
+        ENDIF
       ELSE
-         Gval=sqrt(diss/nueau)
+        Gval=SQRT(diss/nueau)
       ENDIF
 ! NO KLUDGE
 !      Gval = 12.0_r8
+!
       RETURN
       END SUBROUTINE flocmod_comp_g
-      
-      
 #endif
       END MODULE sed_flocs_mod
