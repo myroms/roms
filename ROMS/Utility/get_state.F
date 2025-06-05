@@ -51,6 +51,9 @@
 #endif
       USE mod_stepping
       USE mod_strings
+#if defined VEGETATION 
+      USE mod_vegetation
+#endif 
 !
       USE dateclock_mod,      ONLY : time_string
       USE checkvars_mod,      ONLY : checkvars
@@ -2272,6 +2275,121 @@
           END IF
         END DO
 #  endif
+
+#  ifdef VEGETATION 
+#   if defined VEG_DRAG || defined VEG_BIOMASS
+!
+!  Read in submerged aquatic plant properties for each vegetation type.
+!
+        DO i=1,NVEGP
+          IF (get_var(idvprp(i))) THEN
+            foundit=find_string(var_name, n_var,                        &
+     &                          TRIM(Vname(1,idvprp(i))), varid)
+            IF (foundit) THEN
+              gtype=var_flag(varid)*a3dvar
+              status=nf_fread3d(ng, IDmod, ncname, ncINPid,             &
+     &                          Vname(1,idvprp(i)), varid,              &
+     &                          InpRec, gtype, Vsize,                   &
+     &                          LBi, UBi, LBj, UBj, 1, NVEG,            &
+     &                          Fscl, Fmin, Fmax,                       &
+#    ifdef MASKING
+     &                          GRID(ng) % rmask,                       &
+#    endif
+#    ifdef CHECKSUM
+     &                          VEG(ng) % plant(:,:,:,i),               &
+     &                          checksum = Fhash)
+#    else
+     &                          VEG(ng) % plant(:,:,:,i))
+#    endif 
+              IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+                IF (Master) THEN
+                  WRITE (stdout,60) string, TRIM(Vname(1,idvprp(i))),   &
+     &                              InpRec, TRIM(ncname)
+                END IF
+                exit_flag=2
+                ioerror=status
+                RETURN
+              ELSE
+                IF (Master) THEN
+#    ifdef CHECKSUM
+                  WRITE (stdout,70) TRIM(Vname(2,idvprp(i))),           &
+     &                              Fmin, Fmax, Fhash
+#    else
+                  WRITE (stdout,70) TRIM(Vname(2,idvprp(i))),           &
+     &                              Fmin, Fmax
+#    endif
+                END IF
+              END IF
+            ELSE
+              IF (Master) THEN
+                WRITE (stdout,80) string, TRIM(Vname(1,idvprp(i))),     &
+     &                            TRIM(ncname)
+              END IF
+              exit_flag=4
+              IF (FoundError(exit_flag, nf90_noerr,                     &
+     &                       __LINE__, MyFile)) THEN
+                RETURN
+              END IF
+            END IF
+          END IF
+        END DO 
+#   endif 
+#   ifdef MARSH_DYNAMICS
+!
+!  Read in masking for determining marsh interface. 
+!
+        IF (get_var(idTims)) THEN
+          foundit=find_string(var_name, n_var, TRIM(Vname(1,idTims)),   & 
+     &                        varid)
+          IF (foundit) THEN
+            gtype=var_flag(varid)*r2dvar
+            status=nf_fread2d(ng, IDmod, ncname, ncINPid,               &
+     &                        Vname(1,idTims), varid,                   &
+     &                        InpRec, gtype,  Vsize,                    &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        Fscl, Fmin, Fmax,                         &
+#    ifdef MASKING
+     &                        GRID(ng) % rmask,                         &
+#    endif
+#    ifdef CHECKSUM
+     &                        VEG(ng) % marsh_mask,                     &
+     &                        checksum = Fhash)
+#    else
+     &                        VEG(ng) % marsh_mask)
+#    endif
+            IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+              IF (Master) THEN 
+                WRITE (stdout,60) string, TRIM(Vname(1,idTims )),       &
+     &                            InpRec, TRIM(ncname)
+              END IF
+              exit_flag=2
+              ioerror=status
+              RETURN
+            ELSE
+              IF (Master) THEN 
+#    ifdef CHECKSUM
+                WRITE (stdout,70) TRIM(Vname(2,idTims)),                &
+     &                            Fmin, Fmax, Fhash
+#    else
+                WRITE (stdout,70) TRIM(Vname(2,idTims)), Fmin, Fmax 
+#    endif
+              END IF
+            END IF
+          ELSE
+            IF (Master) THEN
+              WRITE (stdout,80) string, TRIM(Vname(1,idTims)),          &
+     &                          TRIM(ncname)
+            END IF
+            exit_flag=4
+            IF (FoundError(exit_flag, nf90_noerr,                       &
+     &                     __LINE__, MyFile)) THEN
+              RETURN
+            END IF
+          END IF
+        END IF
+#   endif 
+#  endif 
+
 #  ifdef ICE_MODEL
 !
 !  Read sea ice model state variables.
@@ -9899,6 +10017,139 @@
           END IF
         END DO
 #   endif
+
+#   ifdef VEGETATION 
+#    if defined VEG_DRAG || defined VEG_BIOMASS
+!
+!  Read in submerged aquatic plant properties for each vegetation type.
+!
+        DO i=1,NVEGP
+          IF (get_var(idvprp(i))) THEN
+            foundit=find_string(var_name, n_var,                        &
+     &                          TRIM(Vname(1,idvprp(i))), vindex)
+            IF (foundit) THEN
+              my_pioVar%vd=var_desc(vindex)
+              my_pioVar%gtype=a3dvar
+              IF (KIND(VEG(ng)%plant).eq.8) THEN
+                my_pioVar%dkind=PIO_double
+                ioDesc => ioDesc_dp_a3dvar(ng)
+              ELSE
+                my_pioVar%dkind=PIO_real
+                ioDesc => ioDesc_sp_a3dvar(ng)
+              END IF
+!
+              status=nf_fread3d(ng, IDmod, ncname, pioFile,             &
+     &                          Vname(1,idvprp(i)), my_pioVar,          &
+     &                          InpRec, ioDesc, Vsize,                  &
+     &                          LBi, UBi, LBj, UBj, 1, NVEG,            &
+     &                          Fscl, Fmin, Fmax,                       &
+#     ifdef MASKING
+     &                          GRID(ng) % rmask,                       &
+#    endif
+#     ifdef CHECKSUM
+     &                          VEG(ng) % plant(:,:,:,i),               &
+     &                          checksum = Fhash)
+#     else
+     &                          VEG(ng) % plant(:,:,:,i))
+#     endif 
+              IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+                IF (Master) THEN
+                  WRITE (stdout,60) string, TRIM(Vname(1,idvprp(i))),   &
+     &                              InpRec, TRIM(ncname)
+                END IF
+                exit_flag=2
+                ioerror=status
+                RETURN
+              ELSE
+                IF (Master) THEN
+#     ifdef CHECKSUM
+                  WRITE (stdout,70) TRIM(Vname(2,idvprp(i))),           &
+     &                              Fmin, Fmax, Fhash
+#     else
+                  WRITE (stdout,70) TRIM(Vname(2,idvprp(i))),           &
+     &                              Fmin, Fmax
+#     endif
+                END IF
+              END IF
+            ELSE
+              IF (Master) THEN
+                WRITE (stdout,80) string, TRIM(Vname(1,idvprp(i))),     &
+     &                            TRIM(ncname)
+              END IF
+              exit_flag=4
+              IF (FoundError(exit_flag, nf90_noerr,                     &
+     &                       __LINE__, MyFile)) THEN
+                RETURN
+              END IF
+            END IF
+          END IF
+        END DO 
+#    endif 
+#    ifdef MARSH_DYNAMICS
+!
+!  Read in masking for determining marsh interface. 
+!
+        IF (get_var(idTims)) THEN
+          foundit=find_string(var_name, n_var, TRIM(Vname(1,idTims)),   & 
+     &                        vindex)
+          IF (foundit) THEN
+            my_pioVar%vd=var_desc(vindex)
+            my_pioVar%gtype=r2dvar
+            IF (KIND(VEG(ng)%marsh_mask).eq.8) THEN
+              my_pioVar%dkind=PIO_double
+              ioDesc => ioDesc_dp_r2dvar(ng)
+            ELSE
+              my_pioVar%dkind=PIO_real
+              ioDesc => ioDesc_sp_r2dvar(ng)
+            END IF
+!
+            status=nf_fread2d(ng, IDmod, ncname, pioFile,               &
+     &                        Vname(1,idTims), my_pioVar,               &
+     &                        InpRec, ioDesc,  Vsize,                   &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        Fscl, Fmin, Fmax,                         &
+#     ifdef MASKING
+     &                        GRID(ng) % rmask,                         &
+#     endif
+#     ifdef CHECKSUM
+     &                        VEG(ng) % marsh_mask,                     &
+     &                        checksum = Fhash)
+#     else
+     &                        VEG(ng) % marsh_mask)
+#     endif
+            IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+              IF (Master) THEN 
+                WRITE (stdout,60) string, TRIM(Vname(1,idTims )),       &
+     &                            InpRec, TRIM(ncname)
+              END IF
+              exit_flag=2
+              ioerror=status
+              RETURN
+            ELSE
+              IF (Master) THEN 
+#     ifdef CHECKSUM
+                WRITE (stdout,70) TRIM(Vname(2,idTims)),                &
+     &                            Fmin, Fmax, Fhash
+#     else
+                WRITE (stdout,70) TRIM(Vname(2,idTims)), Fmin, Fmax 
+#     endif
+              END IF
+            END IF
+          ELSE
+            IF (Master) THEN
+              WRITE (stdout,80) string, TRIM(Vname(1,idTims)),          &
+     &                          TRIM(ncname)
+            END IF
+            exit_flag=4
+            IF (FoundError(exit_flag, nf90_noerr,                       &
+     &                     __LINE__, MyFile)) THEN
+              RETURN
+            END IF
+          END IF
+        END IF
+#    endif 
+#   endif 
+
 #   ifdef ICE_MODEL
 !
 !  Read sea ice model state variables.

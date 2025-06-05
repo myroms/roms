@@ -1124,6 +1124,17 @@ metadata:
     add_offset:     0.0d0
     scale:          1.0d0
 
+  - variable:       bstrcwmax                                        # Output
+    standard_name:  maximum_sea_bottom_upward_stress_magnitude_due_to_waves_and_current
+    long_name:      maximum wind and current, bottom wave stress magnitude
+    units:          newton meter-2                                   # [m2/s2]
+    field:          max wind-current bottom wave stress magnitude    # Output: [N/m2]
+    time:           ocean_time
+    index_code:     idUVwc
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
   - variable:       Ubot                                             # Output
     standard_name:  sea_bed_orbital_x_velocity_due_to_waves
     long_name:      wind-induced, bed wave orbital u-velocity
@@ -2057,13 +2068,13 @@ metadata:
     add_offset:     0.0d0
     scale:          1.0d0
 
-  - variable:       uWave                                            # Input/Output
-    standard_name:  barotropic_sea_water_wave_x_velocity_from_coupling
-    long_name:      coupling vertically integrated u-wave component
+  - variable:       vWave                                            # Input/Output
+    standard_name:  barotropic_sea_water_wave_y_velocity_from_coupling
+    long_name:      coupling vertically integrated v-wave component
     units:          meter second-1                                   # [m/s]
-    field:          barotropic u-wave
+    field:          barotropic v-wave
     time:           ocean_time
-    index_code:     idUwav
+    index_code:     idVwav
     type:           r2dvar
     add_offset:     0.0d0
     scale:          1.0d0
@@ -3541,7 +3552,7 @@ metadata:
   - variable:       cohesive_behavior                                # Output
     standard_name:  sea_bottom_cohesive_sediment_behavior
     long_name:      cohesive behavior
-    units:          nondimensional
+    units:          nondimensional                                   # [nondimensional]
     field:          cohesive behavior
     time:           ocean_time
     index_code:     idBott(idprp)
@@ -3560,11 +3571,121 @@ metadata:
     add_offset:     0.0d0
     scale:          1.0d0
 
+  - variable:       inundation_depth                                 # Output
+    standard_name:  sea_bed_inundation_depth
+    long_name:      maximum inundation depth                         # [m]
+    units:          meter
+    field:          inundation depth
+    time:           ocean_time
+    index_code:     idBott(imaxD)
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       net_deposition                                   # Output
+    standard_name:  sea_bed_elevation_by_erosion_or_deposition
+    long_name:      bed elevation by erosion or deposition
+    units:          meter                                            # [m]
+    field:          erosion or deposition
+    time:           ocean_time
+    index_code:     idBott(idnet)
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       thickness_wbl                                    # Output
+    standard_name:  sea_bed_wave_boundary_layer_thickness
+    long_name:      wave boundary layer thickness
+    units:          meter                                            # [m]
+    field:          WBL thickness
+    time:           ocean_time
+    index_code:     idBott(idtbl)
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       udelt_wbl                                        # Output
+    standard_name:  sea_bed_wave_boundary_layer_velocity_magnitude
+    long_name:      wave boundary layer current magnitude
+    units:          meter                                            # [m/S]
+    field:          WBL current magnitude
+    time:           ocean_time
+    index_code:     idBott(idubl)
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       fd_wbl                                           # Output
+    standard_name:  sea_bed_wave_boundary_friction_factor_due_to_currents
+    long_name:      wave boundary layer friction factor from currents
+    units:          nondimensional                                   # [nondimensional]
+    field:          WBL current friction factor
+    time:           ocean_time
+    index_code:     idBott(idfdw)
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       Zr_wbl                                           # Output
+    standard_name:  sea_bed_wave_boundary_near_bottom_velocity_reference_height
+    long_name:      wave boundary layer reference height for near bottom velocity
+    units:          meter                                            # [m]
+    field:          WBL near bottom current reference height
+    time:           ocean_time
+    index_code:     idBott(idzrw)
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       ksd_wbl                                          # Output
+    standard_name:  sea_bed_wave_boundary_roughness_length_scale
+    long_name:      wave boundary layer bed roughness length scale
+    units:          meter                                            # [m]
+    field:          WBL bed roughness
+    time:           ocean_time
+    index_code:     idBott(idksd)
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       ustrc_wbl                                        # Output
+    standard_name:  sea_bed_wave_boundary_friction_velocity_magnitude
+    long_name:      wave boundary layer friction velocity magnitude
+    units:          meter second-1                                   # [m/s]
+    field:          WBL friction velocity magnitude
+    time:           ocean_time
+    index_code:     idBott(idusc)
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       phic_sgwbl                                       # Output
+    standard_name:  sea_bed_wave_boundary_angle_between_currents_and_x_axis
+    long_name:      wave boundary layer angle between currents and XI-axis
+    units:          radians                                          # [radians]
+    field:          WBL angle between currents and XI-axis
+    time:           ocean_time
+    index_code:     idBott(idpcx)
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       phi_wc                                           # Output
+    standard_name:  sea_bed_wave_boundary_angle_between_waves_and_currents
+    long_name:      wave boundary layer angle between waves and currents
+    units:          radians                                          # [radians]
+    field:          WBL angle between waves and currents
+    time:           ocean_time
+    index_code:     idBott(idpwc)
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
   - variable:       dmix_offset                                      # Input/Output
     standard_name:  sea_bottom_erodibility_profile_offset
-    long_name:      dmix erodibility profile offset
+    long_name:      erodibility profile offset
     units:          meter                                            # [m]
-    field:          bottom erodibility offset
+    field:          erodibility profile offset
     time:           ocean_time
     index_code:     idBott(idoff)
     type:           r2dvar
@@ -3575,7 +3696,7 @@ metadata:
     standard_name:  sea_bottom_erodibility_profile_slope
     long_name:      dmix erodibility profile slope
     units:          nondimensional
-    field:          bottom erodibility slope
+    field:          erodibility profile slope
     time:           ocean_time
     index_code:     idBott(idslp)
     type:           r2dvar
@@ -3586,7 +3707,7 @@ metadata:
     standard_name:  sea_bottom_erodibility_profile_time_scale
     long_name:      dmix erodibility profile time scale
     units:          seconds                                          # [s]
-    field:          bottom erodibility time
+    field:          erodibility profile time scale
     time:           ocean_time
     index_code:     idBott(idtim)
     type:           r2dvar
@@ -3627,10 +3748,10 @@ metadata:
     scale:          1.0d0
 
   - variable:       Db_max                                           # Input/Output
-    standard_name:  nulvar
-    long_name:      Db_max
-    units:          unknown
-    field:          Db_max
+    standard_name:  sea_bottom_sediment_bio_diffusivity_coefficient_maximum
+    long_name:      bed sediment bio-diffusivity coefficient maximum
+    units:          meter2 second-1                                  # [m2/s]
+    field:          maximum bio-diffusivity coefficient
     time:           ocean_time
     index_code:     idBott(idbmx)
     type:           r2dvar
@@ -3638,10 +3759,10 @@ metadata:
     scale:          1.0d0
 
   - variable:       Db_mm                                            # Input/Output
-    standard_name:  nulvar
-    long_name:      Db_mm
-    units:          unknown
-    field:          Db_mm
+    standard_name:  sea_bottom_sediment_bio_diffusivity_coeffcient_minimum
+    long_name:      bed sediment bio-diffusivity coefficient minimum
+    units:          meter2 second-1                                  # [m2/s]
+    field:          minimum bio-diffusivity coefficient
     time:           ocean_time
     index_code:     idBott(idbmm)
     type:           r2dvar
@@ -3649,10 +3770,10 @@ metadata:
     scale:          1.0d0
 
   - variable:       Db_zs                                            # Input/Output
-    standard_name:  nulvar
-    long_name:      Db_zs
-    units:          unknown
-    field:          Db_zs
+    standard_name:  sea_bottom_sediment_bio_diffusivity_profile_maximum_depth
+    long_name:      depth of maximum bio-diffusivity coefficient profile
+    units:          meter                                            # [m]
+    field:          maximum bio-diffusivity profile depth
     time:           ocean_time
     index_code:     idBott(idbzs)
     type:           r2dvar
@@ -3660,10 +3781,10 @@ metadata:
     scale:          1.0d0
 
   - variable:       Db_zm                                            # Input/Output
-    standard_name:  nulvar
-    long_name:      Db_zm
-    units:          unknown
-    field:          Db_zm
+    standard_name:  sea_bottom_sediment_bio_diffusivity_profile_end_exponential_depth
+    long_name:      depth of end of exponential bio-diffusivity coeffcient profile
+    units:          meter                                            # [m]
+    field:          bio-diffusivity profile end exponential depth
     time:           ocean_time
     index_code:     idBott(idbzm)
     type:           r2dvar
@@ -3671,12 +3792,89 @@ metadata:
     scale:          1.0d0
 
   - variable:       Db_zphi                                          # Input/Output
-    standard_name:  nulvar
-    long_name:      Db_zphi
-    units:          unknown
-    field:          Db_zphi
+    standard_name:  sea_bottom_sediment_bio_diffusivity_profile_minimum_depth
+    long_name:      depth of minimum bio-diffusivity coefficient profile
+    units:          meter                                            # [m]
+    field:          bio-diffusivity profile minimum depth
     time:           ocean_time
     index_code:     idBott(idbzp)
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       Ursell_number                                    # Output
+    standard_name:  Ursell_number_from_skewed_waveform_parameters
+    long_name:      Ursell number from skewed waveform parameters
+    units:          nondimentional                                   # [nondimensional]
+    field:          Ursell number (Ur)
+    time:           ocean_time
+    index_code:     idsurs
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       velocity_skewness                                # Output
+    standard_name:  wave_velocity_skewness_coefficient_for_asymmetric_bedload
+    long_name:      wave velocity skewness coefficient of waveform
+    units:          nondimentional                                   # [nondimensional]
+    field:          wave velocity skewness
+    time:           ocean_time
+    index_code:     idsrrw
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       acceleration_skewness                            # Output
+    standard_name:  wave_acceleration_skewness_coefficient_for_asymmetric_bedload
+    long_name:      wave acceleration skewness coefficient of waveform
+    units:          nondimentional                                   # [nondimensional]
+    field:          wave acceleration skewness
+    time:           ocean_time
+    index_code:     idsbtw
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       Ucrest_wave                                      # Output
+    standard_name:  peak_wave_crest_cycle_velocity_for_asymmetric_bedload
+    long_name:      peak wave crest cycle velocity of skewed waveform
+    units:          meter second-1                                   # [m/s]
+    field:          wave crest cycle velocity
+    time:           ocean_time
+    index_code:     idsucr
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       Utrough_wave                                     # Output
+    standard_name:  peak_wave_trough_cycle_velocity_for_asymmetric_bedload
+    long_name:      peak wave trough cycle velocity of skewed waveform
+    units:          meter second-1                                   # [m/s]
+    field:          wave trough cycle velocity
+    time:           ocean_time
+    index_code:     idsutr
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       Tcrest_wave                                      # Output
+    standard_name:  wave_crest_cycle_period_for_asymmetric_bedload
+    long_name:      wave crest cycle period of skewed waveform
+    units:          second                                           # [s]
+    field:          wave crest cycle period
+    time:           ocean_time
+    index_code:     idstcr
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       Ttrough_wave                                     # Output
+    standard_name:  wave_trough_cycle_period_for_asymmetric_bedload
+    long_name:      wave trough cycle period of skewed waveform
+    units:          second                                           # [s]
+    field:          wave trough cycle period
+    time:           ocean_time
+    index_code:     idsttr
     type:           r2dvar
     add_offset:     0.0d0
     scale:          1.0d0
@@ -6214,6 +6412,197 @@ metadata:
     add_offset:     0.0d0
     scale:          1.0d0
 
+  ##############################################
+  ###  Vegetation/Marshland State Variables  ###
+  ##############################################
+
+  - variable:       plant_density                                    # Input/Output
+    standard_name:  wetlands_number_of_plants_per_area
+    long_name:      submerged aquatic plant density
+    units:          plant_individuals meter2                         # [plant m2]
+    field:          aquatic plant density
+    time:           ocean_time
+    index_code:     idvprp(isDens)
+    type:           a3dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       plant_diameter                                   # Input/Output
+    standard_name:  wetlands_mean_diameter_of_dominant_plants
+    long_name:      submerged aquatic plant mean diameter
+    units:          meter                                            # [m]
+    field:          aquatic plant diameter
+    time:           ocean_time
+    index_code:     idvprp(isDiam)
+    type:           a3dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       plant_height                                     # Input/Output
+    standard_name:  wetlands_mean_height_of_dominant_plants
+    long_name:      submerged aquatic plant mean height
+    units:          meter                                            # [m]
+    field:          aquatic plant height
+    time:           ocean_time
+    index_code:     idvprp(isHght)
+    type:           a3dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       plant_thickness                                  # Input/Output
+    standard_name:  wetlands_mean_thickness_of_dominant_plants
+    long_name:      submerged aquatic plant mean thickness
+    units:          meter                                            # [m]
+    field:          aquatic plant thickness
+    time:           ocean_time
+    index_code:     idvprp(isThck)
+    type:           a3dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       Dissip_veg                                       # Input/Output
+    standard_name:  sea_surface_waves_dissipation_due_to_vegetation
+    long_name:      waves dissipation due to vegetation
+    units:          watt meter-2                                     # [Watt/m2]
+    field:          vegetation wave dissipation
+    time:           ocean_time
+    index_code:     idWdvg
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       Cdwave_veg                                       # Input/Output
+    standard_name:  spectral_drag_coefficient_due_to_vegetation_and_sea_sea_surface_waves
+    long_name:      spectral darg coefficient due to waves and vegetation
+    units:          nondimensional
+    field:          waves-vegetation dragcoefficient
+    time:           ocean_time
+    index_code:     idCdvg
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       marsh_mask                                       # Input/Output
+    standard_name:  marsh_mask_stored_at_time_intervals
+    long_name:      stored evolving marsh mask
+    units:          nondimensional
+    field:          marsh cells mask
+    time:           ocean_time
+    index_code:     idTims
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       total_wave_thrust                                # Output
+    standard_name:  total_lateral_sea_surface_wave_trust_acting_on_marsh
+    long_name:      total lateral wave thrust on the marsh
+    units:          kilonewton meter-1                               # [kN/m]
+    field:          total lateral wave thrust
+    time:           ocean_time
+    index_code:     idTtot
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       marsh_flux_out_                                  # Output
+    standard_name:  wetlands_sediment_flux_out_of_marsh_cells
+    long_name:      marsh sediment flux out from marsh cells
+    units:          kilogram                                         # [kg]
+    field:          marsh sediment flux
+    time:           ocean_time
+    index_code:     idTmfo
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       marsh_retreat                                    # Output
+    standard_name:  wetlands_amount_of_marsh_retreat
+    long_name:      amount of marsh retreat from every direction
+    units:          meter                                            # [m]
+    field:          marsh retreat
+    time:           ocean_time
+    index_code:     idTmmr
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       marsh_scarp_height                               # Output
+    standard_name:  wetlands_marsh_scarp_elevation
+    long_name:      wetlands marsh scarp elevation
+    units:          meter                                            # [m]
+    field:          marsh scarp elevation
+    time:           ocean_time
+    index_code:     idTmsc
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       marsh_tidal_range                                # Output
+    standard_name:  wetlands_tidal_range_leading_to_marshland_growth
+    long_name:      tidal range for marshland growth
+    units:          meter                                            # [m]
+    field:          marshland growth tidal range
+    time:           ocean_time
+    index_code:     idTmtr
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       marsh_high_water                                 # Output
+    standard_name:  wetlands_mean_heigh_water_of_marsh_cells
+    long_name:      marsh mean high water
+    units:          meter                                            # [m]
+    field:          marsh mean high water
+    time:           ocean_time
+    index_code:     idTmhw
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       marsh_low_water                                  # Output
+    standard_name:  wetlands_mean_low_water_of_marsh_cells
+    long_name:      marsh mean low water
+    units:          meter                                            # [m]
+    field:          marsh mean low water
+    time:           ocean_time
+    index_code:     idTmlw
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       marsh_vert_rate                                  # Output
+    standard_name:  marshland_vertical_biomass_growth_rate
+    long_name:      rate of marsh vertical growth
+    units:          meter year-1                                     # [m/year]
+    field:          marsh vertical growth rate
+    time:           ocean_time
+    index_code:     idTmvg
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       marsh_biomass_peak                               # Output
+    standard_name:  marshlands_biomass_peak_production_per_area
+    long_name:      marsh biomass peak production
+    units:          kilogram meter2                                  # [kg/m2]
+    field:          marsh mean low water
+    time:           ocean_time
+    index_code:     idTmbp
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       marsh_accretion                                  # Output
+    standard_name:  marshland_amount_of_vertical_accretion_due_to_biomass_production
+    long_name:      amount of marsh vertical growth
+    units:          meter                                            # [m]
+    field:          marsh vertical accretion
+    time:           ocean_time
+    index_code:     idTmvt
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
   #######################################
   ###  Time-averaged Quadratic Terms  ###
   #######################################
@@ -6517,28 +6906,6 @@ metadata:
     field:          v-barotropic y-advection
     time:           ocean_time
     index_code:     idDv2d(M2yadv)
-    type:           v2dvar
-    add_offset:     0.0d0
-    scale:          1.0d0
-
-  - variable:       ubar_hrad                                        # Input/Output
-    standard_name:  barotropic_sea_water_x_velocity_tendency_due_to_horizontal_radiation_stress
-    long_name:      2D u-momentum, horizontal radiation stress term
-    units:          meter second-2                                   # [m/s2]
-    field:          u-barotropic horizontal radiation stress
-    time:           ocean_time
-    index_code:     idDu2d(M2hrad)
-    type:           u2dvar
-    add_offset:     0.0d0
-    scale:          1.0d0
-
-  - variable:       vbar_hrad                                        # Input/Output
-    standard_name:  barotropic_sea_water_y_velocity_tendency_due_to_horizontal_radiation_stress
-    long_name:      2D v-momentum, horizontal radiation stress term
-    units:          meter second-2                                   # [m/s2]
-    field:          v-barotropic horizontal radiation stress
-    time:           ocean_time
-    index_code:     idDv2d(M2hrad)
     type:           v2dvar
     add_offset:     0.0d0
     scale:          1.0d0
@@ -6849,28 +7216,6 @@ metadata:
     field:          v-velocity vertical advection
     time:           ocean_time
     index_code:     idDv3d(M3vadv)
-    type:           v3dvar
-    add_offset:     0.0d0
-    scale:          1.0d0
-
-  - variable:       u_hrad                                           # Input/Output
-    standard_name:  sea_water_x_velocity_tendency_due_to_horizontal_radiation_stress
-    long_name:      3D u-momentum, horizontal radiation stress term
-    units:          meter second-2                                   # [m/s2]
-    field:          u-velocity horizontal radiation stress
-    time:           ocean_time
-    index_code:     idDu3d(M3hrad)
-    type:           u3dvar
-    add_offset:     0.0d0
-    scale:          1.0d0
-
-  - variable:       v_hrad                                           # Input/Output
-    standard_name:  sea_water_y_velocity_tendency_due_to_horizontal_radiation_stress
-    long_name:      3D v-momentum, horizontal radiation stress term
-    units:          meter second-2                                   # [m/s2]
-    field:          v-velocity horizontal radiation stress
-    time:           ocean_time
-    index_code:     idDv3d(M3hrad)
     type:           v3dvar
     add_offset:     0.0d0
     scale:          1.0d0
@@ -7207,28 +7552,6 @@ metadata:
     add_offset:     0.0d0
     scale:          1.0d0
 
-  - variable:       ubar_fsgr                                        # Input/Output
-    standard_name:  barotropic_sea_water_x_velocity_tendency_due_to_seagrass_drag_force
-    long_name:      2D u-momentum, seagrass drag force term
-    units:          meter second-2                                   # [m/s2]
-    field:          u-barotropic seagrass drag force
-    time:           ocean_time
-    index_code:     idDu2d(M2fsgr)
-    type:           u2dvar
-    add_offset:     0.0d0
-    scale:          1.0d0
-
-  - variable:       vbar_fsgr                                        # Input/Output
-    standard_name:  barotropic_sea_water_y_velocity_tendency_due_to_seagrass_drag_force
-    long_name:      2D v-momentum, seagrass drag force term
-    units:          meter second-2                                   # [m/s2]
-    field:          v-barotropic seagrass drag force
-    time:           ocean_time
-    index_code:     idDv2d(M2fsgr)
-    type:           v2dvar
-    add_offset:     0.0d0
-    scale:          1.0d0
-
   # Waves Effect on Currents (WEC) 3D Diagnostic Terms.
 
   - variable:       u_hjvf                                           # Input/Output
@@ -7407,24 +7730,48 @@ metadata:
     add_offset:     0.0d0
     scale:          1.0d0
 
-  - variable:       u_fsgr                                           # Input/Output
-    standard_name:  sea_water_x_velocity_tendency_due_to_seagrass_drag_force
-    long_name:      3D u-momentum, seagrass drag force term
+  # Sumerged aquatic vegetation Diagnostic Terms
+
+  - variable:       ubar_fveg                                        # Input/Output
+    standard_name:  barotropic_sea_water_x_velocity_tendency_due_to_aquatic_vegetation_drag_force
+    long_name:      2D u-momentum, submerged aquatic vegetation drag force term
     units:          meter second-2                                   # [m/s2]
-    field:          u-velocity seagrass drag force
+    field:          u-barotropic vegetation drag force
     time:           ocean_time
-    index_code:     idDu3d(M3fsgr)
+    index_code:     idDu2d(M2fveg)
+    type:           u2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       vbar_fveg                                        # Input/Output
+    standard_name:  barotropic_sea_water_y_velocity_tendency_due_to_aquatic_vegetation_drag_force
+    long_name:      2D v-momentum, submerged aquatic vegetation drag force term
+    units:          meter second-2                                   # [m/s2]
+    field:          v-barotropic vegetation drag force
+    time:           ocean_time
+    index_code:     idDv2d(M2fveg)
+    type:           v2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       u_fveg                                           # Input/Output
+    standard_name:  sea_water_x_velocity_tendency_due_to_aquatic_vegetation_drag_force
+    long_name:      3D u-momentum, submerged aquatic vegetation drag force term
+    units:          meter second-2                                   # [m/s2]
+    field:          u-velocity vegetation drag force
+    time:           ocean_time
+    index_code:     idDu3d(M3fveg)
     type:           u3dvar
     add_offset:     0.0d0
     scale:          1.0d0
 
-  - variable:       v_fsgr                                           # Input/Output
-    standard_name:  sea_water_y_velocity_tendency_due_to_seagrass_drag_force
-    long_name:      3D v-momentum, seagrass drag force term
+  - variable:       v_fveg                                           # Input/Output
+    standard_name:  sea_water_y_velocity_tendency_due_to_aquatic_vegetation_drag_force
+    long_name:      3D v-momentum, submeged aquatic vegetation drag force term
     units:          meter second-2                                   # [m/s2]
-    field:          v-velocity seagrass drag force
+    field:          v-velocity vegetation drag force
     time:           ocean_time
-    index_code:     idDv3d(M3fsgr)
+    index_code:     idDv3d(M3fveg)
     type:           v3dvar
     add_offset:     0.0d0
     scale:          1.0d0

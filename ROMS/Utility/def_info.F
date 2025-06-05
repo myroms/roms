@@ -44,8 +44,9 @@
 !    DimIDs(30) => Number of 3D variables time levels (2)              !
 !    DimIDs(31) => Number of 2D variables time levels (3)              !
 !    DimIDs(32) => Number of sediment tracers                          !
-!    DimIDs(33) => Number of light spectral bands.                     !
-!    DimIDs(34) => Number constant depth slices in 'extract_slice'.    !
+!    DimIDs(33) => Number of light spectral bands                      !
+!    DimIDs(34) => Number constant depth slices in 'extract_slice'     !
+!    DimIDs(35) => Number of submerged acuatic vegetation types        !                     
 !                                                                      !
 !=======================================================================
 !

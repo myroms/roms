@@ -1,7 +1,7 @@
-#define M94WC
-#undef SGWC
-#define N92_RIPRUF
 #define CRS_FIX
+#define M94WC
+#define N92_RIPRUF
+#undef SGWC
 
       MODULE bbl_mod
 !
@@ -25,10 +25,39 @@
 !                                                                      !
 !=======================================================================
 !
+      USE mod_param
+      USE mod_parallel
+      USE mod_bbl
+      USE mod_forces
+      USE mod_grid
+      USE mod_iounits
+      USE mod_ocean
+      USE mod_sedbed
+      USE mod_sediment
+      USE mod_scalars
+!
+      USE bc_2d_mod,       ONLY : bc_r2d_tile,                          &
+     &                            bc_u2d_tile, bc_v2d_tile
+#ifdef DISTRIBUTE
+      USE mp_exchange_mod, ONLY : mp_exchange2d
+#endif
+!
       implicit none
 !
-      PRIVATE
       PUBLIC  :: bblm
+#ifdef M94WC
+      PRIVATE :: madsen94
+#endif
+#if defined SSW_LOGINT || defined BEDLOAD_VANDERA_MADSEN_UDELTA
+      PRIVATE :: log_interp
+#endif
+#ifdef SGWC
+      PRIVATE :: sg_bstress
+      PRIVATE :: sg_kelvin8m
+      PRIVATE :: sg_kelvin8p
+      PRIVATE :: sg_purewave
+#endif
+      PRIVATE
 !
       CONTAINS
 !
@@ -36,12 +65,6 @@
       SUBROUTINE bblm (ng, tile)
 !***********************************************************************
 !
-      USE mod_param
-      USE mod_bbl
-      USE mod_forces
-      USE mod_grid
-      USE mod_ocean
-      USE mod_sedbed
       USE mod_stepping
 !
 !  Imported variable declarations.
@@ -140,28 +163,16 @@
      &                         bustr, bvstr)
 !***********************************************************************
 !
-      USE mod_param
-      USE mod_parallel
-      USE mod_iounits
-      USE mod_scalars
-      USE mod_sediment
-!
-      USE bc_2d_mod
-#ifdef DISTRIBUTE
-      USE mp_exchange_mod, ONLY : mp_exchange2d
-#endif
-
-!
 !  Imported variable declarations.
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: nrhs
-
+!
 #ifdef ASSUMED_SHAPE
       integer, intent(inout) :: Iconv(LBi:,LBj:)
-
+!
       real(r8), intent(in) :: h(LBi:,LBj:)
       real(r8), intent(in) :: z_r(LBi:,LBj:,:)
       real(r8), intent(in) :: z_w(LBi:,LBj:,0:)
@@ -247,12 +258,10 @@
 !
 !  Local variable declarations.
 !
-      logical :: ITERATE
-
+      logical :: ITERATE, IsLog
+!
       integer :: Iter, i, j, k
-
-      real(r8), parameter :: eps = 1.0E-10_r8
-
+!
       real(r8) :: Kbh, Kbh2, Kdh
       real(r8) :: taucr, wsedr, tstar, coef_st
       real(r8) :: coef_b1, coef_b2, coef_b3, d0
@@ -273,24 +282,25 @@
       real(r8) :: sg_zr, sg_zrozn, sg_z1, sg_z1ozn, sg_z2, z1, z2
       real(r8) :: zoMIN, zoMAX
       real(r8) :: coef_fd
-
+!
+      real(r8), parameter :: eps = 1.0E-10_r8
       real(r8), parameter :: twopi=2.0_r8*pi
 !
       real(r8), parameter :: absolute_zoMIN = 5.0d-5  ! in Harris-Wiberg
 !!    real(r8), parameter :: absolute_zoMIN = 5.0d-8  ! in Harris-Wiberg
       real(r8), parameter :: Cd_fd = 0.5_r8
-
+!
       real(r8), parameter :: K1 = 0.6666666666_r8     ! Coefficients for
       real(r8), parameter :: K2 = 0.3555555555_r8     ! explicit
       real(r8), parameter :: K3 = 0.1608465608_r8     ! wavenumber
-      real(r8), parameter :: K4 = 0.0632098765_r8     ! calculation
-      real(r8), parameter :: K5 = 0.0217540484_r8     ! (Dean and
-      real(r8), parameter :: K6 = 0.0065407983_r8     !  Dalrymple, 1991)
-
+      real(r8), parameter :: K4 = 0.0632098765_r8     ! calculation,
+      real(r8), parameter :: K5 = 0.0217540484_r8     ! Dean and
+      real(r8), parameter :: K6 = 0.0065407983_r8     ! Dalrymple (1991)
+!
       real(r8), parameter :: coef_a1=0.095_r8         ! Coefficients for
       real(r8), parameter :: coef_a2=0.442_r8         ! ripple predictor
       real(r8), parameter :: coef_a3=2.280_r8         ! (Wiberg-Harris)
-
+!
 #if defined GM82_RIPRUF
       real(r8), parameter :: ar = 27.7_r8/30.0_r8  ! Grant-Madsen (1982)
 #elif defined N92_RIPRUF
@@ -300,7 +310,7 @@
 #else
       No ripple roughness coeff. chosen
 #endif
-
+!
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Ab
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Fwave_bot
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Tauc
@@ -337,6 +347,7 @@
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: phic_sgwbl
 #endif
 !
+      real(r8) :: my_zr(1:N(ng)), my_zw(0:N(ng))
       real(r8), dimension(1:N(ng)) :: Urz, Vrz
 #if defined BEDLOAD_VANDERA_MADSEN_UDELTA || \
     defined BEDLOAD_VANDERA_DIRECT_UDELTA
@@ -344,7 +355,7 @@
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Vr_sgwbl
       real(r8) :: Ucur_sgwbl, Vcur_sgwbl
 #endif
-!
+
 #include "set_bounds.h"
 !
 !-----------------------------------------------------------------------
@@ -381,6 +392,7 @@
 !
 !  If using the logarithmic interpolation
 !
+          my_zw(0)=z_w(i,j,0)
           DO k=1,N(ng)
             Urz(k)=0.5_r8*(u(i,j,k,nrhs)+u(i+1,j,k,nrhs))
             Vrz(k)=0.5_r8*(v(i,j,k,nrhs)+v(i,j+1,k,nrhs))
@@ -388,13 +400,14 @@
             Urz(k)=Urz(k)+0.5_r8*(u_stokes(i,j,k)+u_stokes(i+1,j,k))
             Vrz(k)=Vrz(k)+0.5_r8*(v_stokes(i,j,k)+v_stokes(i,j+1,k))
 # endif
+            my_zr(k)=z_r(i,j,k)
+            my_zw(k)=z_w(i,j,k)
           END DO
-          CALL log_interp( N(ng), Dstp, cff1,                           &
-     &                 Urz, Vrz,                                        &
-     &                 z_r(i,j,:),        z_w(i,j,:),                   &
-     &                 bottom(i,j,isd50), bottom(i,j,izapp),            &
-     &                 Zr(i,j),                                         &
-     &                 Ur_sg(i,j),        Vr_sg(i,j) )
+          IsLog=log_interp(N(ng), Dstp, cff1,                           &
+     &                     Urz, Vrz, my_zr, my_zw,                      &
+     &                     bottom(i,j,isd50), bottom(i,j,izapp),        &
+     &                     Zr(i,j),                                     &
+     &                     Ur_sg(i,j), Vr_sg(i,j))
 #else
 !
 ! Regular method to get reference velocity for Madsen
@@ -403,8 +416,10 @@
           Ur_sg(i,j)=0.5_r8*(u(i,j,1,nrhs)+u(i+1,j,1,nrhs))
           Vr_sg(i,j)=0.5_r8*(v(i,j,1,nrhs)+v(i,j+1,1,nrhs))
 # ifdef SSW_LOGINT_STOKES
-          Ur_sg(i,j)=Ur_sg(i,j)+0.5_r8*(u_stokes(i,j,1)+u_stokes(i+1,j,1))
-          Vr_sg(i,j)=Vr_sg(i,j)+0.5_r8*(v_stokes(i,j,1)+v_stokes(i,j+1,1))
+          Ur_sg(i,j)=Ur_sg(i,j)+                                        &
+     &               0.5_r8*(u_stokes(i,j,1)+u_stokes(i+1,j,1))
+          Vr_sg(i,j)=Vr_sg(i,j)+                                        &
+     &               0.5_r8*(v_stokes(i,j,1)+v_stokes(i,j+1,1))
 # endif
 #endif
         END DO
@@ -763,6 +778,7 @@
           cff2=LOG(cff1/ksd_wbl(i,j))
           udelta_wbl(i,j)=(ustrc_wbl(i,j)/vonKar)*cff2
 !
+          my_zw(0)=z_w(i,j,0)
           DO k=1,N(ng)
             Urz(k)=0.5_r8*(u(i,j,k,nrhs)+u(i+1,j,k,nrhs))
             Vrz(k)=0.5_r8*(v(i,j,k,nrhs)+v(i,j+1,k,nrhs))
@@ -770,13 +786,14 @@
             Urz(k)=Urz(k)+0.5_r8*(u_stokes(i,j,k)+u_stokes(i+1,j,k))
             Vrz(k)=Vrz(k)+0.5_r8*(v_stokes(i,j,k)+v_stokes(i,j+1,k))
 # endif
+            my_zr(k)=z_r(i,j,k)
+            my_zw(k)=z_w(i,j,k)
           END DO
-          CALL log_interp( N(ng), Dstp, cff1,                           &
-     &                 Urz, Vrz,                                        &
-     &                 z_r(i,j,:),        z_w(i,j,:),                   &
-     &                 bottom(i,j,isd50), bottom(i,j,izapp),            &
-     &                 Zr_wbl(i,j),                                     &
-     &                 Ur_sgwbl(i,j),     Vr_sgwbl(i,j) )
+          IsLog=log_interp(N(ng), Dstp, cff1,                           &
+     &                     Urz, Vrz, my_zr, my_zw,                      &
+     &                     bottom(i,j,isd50), bottom(i,j,izapp),        &
+     &                     Zr_wbl(i,j),                                 &
+     &                     Ur_sgwbl(i,j), Vr_sgwbl(i,j))
 !
 !  Compute bottom current magnitude at RHO-points.
 !
@@ -797,10 +814,13 @@
 ! elevation (doesnot require Madsen output)
 ! Find the angle at that near-bottom current velocity.
 !
+
       DO j=Jstr,Jend
         DO i=Istr,Iend
           Dstp=z_r(i,j,N(ng))-z_w(i,j,0)
           cff=MIN( 0.98_r8*Dstp, sg_zwbl(ng) )
+!
+          my_zw(0)=z_w(i,j,0)
           DO k=1,N(ng)
             Urz(k)=0.5_r8*(u(i,j,k,nrhs)+u(i+1,j,k,nrhs))
             Vrz(k)=0.5_r8*(v(i,j,k,nrhs)+v(i,j+1,k,nrhs))
@@ -808,13 +828,14 @@
             Urz(k)=Urz(k)+0.5_r8*(u_stokes(i,j,k)+u_stokes(i+1,j,k))
             Vrz(k)=Vrz(k)+0.5_r8*(v_stokes(i,j,k)+v_stokes(i,j+1,k))
 # endif
+            my_zr(k)=z_r(i,j,k)
+            my_zw(k)=z_w(i,j,k)
           END DO
-          CALL log_interp( N(ng), Dstp, cff,                            &
-     &                 Urz, Vrz,                                        &
-     &                 z_r(i,j,:),        z_w(i,j,:),                   &
-     &                 bottom(i,j,isd50), bottom(i,j,izapp),            &
-     &                 Zr_wbl(i,j),                                     &
-     &                 Ur_sgwbl(i,j),     Vr_sgwbl(i,j) )
+          IsLog=log_interp(N(ng), Dstp, cff,                            &
+     &                     Urz, Vrz, my_zr, my_zw,                      &
+     &                     bottom(i,j,isd50), bottom(i,j,izapp),        &
+     &                     Zr_wbl(i,j),                                 &
+     &                     Ur_sgwbl(i,j), Vr_sgwbl(i,j))
 !
 !  Compute bottom current magnitude at RHO-points.
 !
@@ -830,7 +851,6 @@
           ENDIF
         END DO
       END DO
-!
 #endif
 !
 !-----------------------------------------------------------------------
@@ -1112,9 +1132,6 @@
 !                                                                      !
 !=======================================================================
 !
-      USE mod_param
-      USE mod_scalars
-!
 !  Imported variable declarations.
 !
       real(r8), intent(in) :: sg_row, sg_zrozn, sg_phicw, sg_ubokur
@@ -1252,7 +1269,7 @@
       RETURN
       END SUBROUTINE sg_bstress
 !
-      SUBROUTINE  sg_purewave (sg_row, sg_ubouwm, sg_znotp, sg_ro)
+      SUBROUTINE sg_purewave (sg_row, sg_ubouwm, sg_znotp, sg_ro)
 !
 !=======================================================================
 !                                                                      !
@@ -1276,24 +1293,19 @@
 !                                                                      !
 !=======================================================================
 !
-      USE mod_param
-      USE mod_scalars
-!
 !  Imported variable declarations.
 !
-      real(r8), intent(in) :: sg_row
-
+      real(r8), intent(in)    :: sg_row
       real(r8), intent(inout) :: sg_ubouwm
-
-      real(r8), intent(out) :: sg_znotp, sg_ro
+      real(r8), intent(out)   :: sg_znotp, sg_ro
 !
 !  Local variable declarations.
 !
       integer :: Iter
-
+!
       real(r8) :: cff, sg_bei, sg_beip, sg_ber, sg_berp, sg_kei
       real(r8) :: sg_keip, sg_ker, sg_kerp, sg_phi, sg_ubouwmn, sg_x
-
+!
       complex(c8) :: sg_argi, sg_bnot, sg_bnotp, sg_b1, sg_b1p
       complex(c8) :: sg_gammai, sg_knot, sg_knotp, sg_k1, sg_k1p
       complex(c8) :: sg_ll, sg_nn
@@ -1366,8 +1378,6 @@
 ! than eight (p 384 Abram and Stegun).                                 !
 !                                                                      !
 !=======================================================================
-!
-      USE mod_scalars
 !
 !  Imported variable declarations.
 !
@@ -1737,11 +1747,9 @@
 
 #if defined SSW_LOGINT || defined BEDLOAD_VANDERA_MADSEN_UDELTA
 !
-      SUBROUTINE log_interp (kmax, Dstp, sg_loc, u_1d, v_1d,            &
-     &                       z_r_1d, z_w_1d,                            &
-     &                       d50, zapp_loc,                             &
-     &                       Zr_sg,                                     &
-     &                       Ur_sg, Vr_sg)
+      FUNCTION log_interp (kmax, Dstp, sg_loc, u_1d, v_1d,              &
+     &                     z_r_1d, z_w_1d, d50, zapp_loc, Zr_sg,        &
+     &                     Ur_sg, Vr_sg)  RESULT (IsLogInterp)
 !
 !=======================================================================
 !                                                                      !
@@ -1750,12 +1758,6 @@
 !  current velocity (m)                                                !
 !                                                                      !
 !=======================================================================
-!
-      USE mod_param
-      USE mod_sediment
-      USE mod_scalars
-!
-      implicit none
 !
 !  Imported variable declarations.
 !
@@ -1769,16 +1771,24 @@
 !
 !  Local variables.
 !
+      logical  :: IsLogInterp
+!
       integer  :: k
+!
       real(r8) :: z1, z2, Zr
       real(r8) :: fac, fac1, fac2
 !
+!-----------------------------------------------------------------------
+!  Logarithmic or linear interpolation of near bottom currents.
+!-----------------------------------------------------------------------
+!
+      IsLogInterp=.FALSE.
       Zr=z_r_1d(1)-z_w_1d(0)
 !
-      IF ( sg_loc.ge.Zr ) THEN
+      IF (sg_loc.ge.Zr) THEN
 !
-!  If chosen height to get near bottom-current velocity lies
-!  within any vertical level, perform logarithmic interpolation.
+!  If chosen height to get near bottom-current velocity lies within any
+!  vertical level, perform logarithmic interpolation.
 !
         DO k=2,kmax
           z1=z_r_1d(k-1)-z_w_1d(0)
@@ -1798,14 +1808,18 @@
             Zr_sg=z2
           END IF
         END DO
-      ELSE    !IF ( sg_loc.lt.Zr ) THEN
+        IsLogInterp=.TRUE.
+!
+!  Otherwise, sg_log < Zr.
+!
+      ELSE 
         z1=MAX( 2.5_r8*d50/30.0_r8, zapp_loc, 1.0e-10_r8 )
         z2=Zr
 !
         IF ( sg_loc.lt.z1 ) THEN
 !
-!  If chosen height is less than the bottom roughness
-!  perform linear interpolation.
+!  If chosen height is less than the bottom roughness, perform linear
+!  interpolation.
 !
           z1=sg_loc
           fac=z1/z2
@@ -1814,10 +1828,10 @@
           Vr_sg=fac*v_1d(1)
           Zr_sg=sg_loc
 !
-        ELSE   !IF ( sg_loc.gt.z1 ) THEN
+        ELSE                                          ! sg_log .ge. z1
 !
-! If chosen height is less than the bottom cell thickness
-! perform logarithmic interpolation with bottom roughness.
+!  If chosen height is less than the bottom cell thickness, perform
+!  logarithmic interpolation with bottom roughness.
 !
           fac=1.0_r8/LOG(z2/z1)
           fac2=fac*LOG(sg_loc/z1)
@@ -1825,10 +1839,11 @@
           Ur_sg=fac2*u_1d(1)
           Vr_sg=fac2*v_1d(1)
           Zr_sg=sg_loc
+          IsLogInterp=.TRUE.
         END IF
       END IF
 !
       RETURN
-      END SUBROUTINE log_interp
+      END FUNCTION log_interp
 #endif
       END MODULE bbl_mod

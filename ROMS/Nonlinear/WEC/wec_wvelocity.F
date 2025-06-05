@@ -44,8 +44,14 @@
 !
 !  Local variable declarations.
 !
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__
+!
 # include "tile.h"
 !
+# ifdef PROFILE
+      CALL wclock_on (ng, iNLM, 43, __LINE__, MyFile)
+# endif
       CALL wec_wvelocity_tile (ng, tile,                                &
      &                         LBi, UBi, LBj, UBj,                      &
      &                         IminS, ImaxS, JminS, JmaxS,              &
@@ -65,6 +71,9 @@
      &                         OCEAN(ng) % v_stokes,                    &
      &                         OCEAN(ng) % W_stokes,                    &
      &                         OCEAN(ng) % wstvel)
+# ifdef PROFILE
+      CALL wclock_on (ng, iNLM, 43, __LINE__, MyFile)
+# endif
 !
       RETURN
       END SUBROUTINE wec_wvelocity

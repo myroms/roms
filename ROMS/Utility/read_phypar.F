@@ -44,6 +44,9 @@
       USE mod_storage
 #endif
       USE mod_strings
+#if defined VEGETATION
+      USE mod_vegetation
+#endif
 !
       USE inp_decode_mod
 #if defined DISTRIBUTE && defined PIO_LIB
@@ -4472,6 +4475,11 @@
                 sparnam(i:i)=blank
               END DO
               sparnam=TRIM(ADJUSTL(Cval(Nval)))
+            CASE ('VEGNAME', 'VEGNAM')
+              DO i=1,LEN(vegname)
+                vegname(i:i)=blank
+              END DO
+              vegname=TRIM(ADJUSTL(Cval(Nval)))
             CASE ('USRNAME')
               DO i=1,LEN(USRname)
                 USRname(i:i)=blank
@@ -7993,6 +8001,15 @@
         ELSE
           IF (Master.and.Lwrite) WRITE (out,230)                        &
      &      '         Biology Parameters File:  ', TRIM(fname)
+        END IF
+# endif
+# ifdef VEGETATION
+        fname=vegname
+        IF (.not.find_file(ng, out, fname, 'VEGNAME')) THEN
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        ELSE
+          IF (Master.and.Lwrite) WRITE (out,230)                        &
+     &      '      Vegetation Parameters File:  ', TRIM(fname)
         END IF
 # endif
 #endif

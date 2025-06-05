@@ -826,6 +826,9 @@
               ELSE IF (INT(Aval(5)).eq.w3dvar) THEN
                 text='lon_rho lat_rho s_w'
                 location='face'
+              ELSE IF (INT(Aval(5)).eq.a3dvar) THEN
+                text='lon_rho lat_rho Nveg'
+                location='face'
               ELSE IF (INT(Aval(5)).eq.b3dvar) THEN
                 text='lon_rho lat_rho'
                 location='face'
@@ -885,6 +888,9 @@
                 location='face'
               ELSE IF (INT(Aval(5)).eq.w3dvar) THEN
                 text='x_rho y_rho s_w'
+                location='face'
+              ELSE IF (INT(Aval(5)).eq.a3dvar) THEN
+                text='x_rho y_rho Nveg'
                 location='face'
               ELSE IF (INT(Aval(5)).eq.b3dvar) THEN
                 text='x_rho y_rho'
@@ -1811,6 +1817,9 @@
             ELSE IF (INT(Aval(5)).eq.w3dvar) THEN
               text='lon_rho lat_rho s_w'
               location='face'
+            ELSE IF (INT(Aval(5)).eq.a3dvar) THEN
+              text='lon_rho lat_rho Nveg'
+              location='face'
             ELSE IF (INT(Aval(5)).eq.b3dvar) THEN
               text='lon_rho lat_rho'
               location='face'
@@ -1870,6 +1879,9 @@
               location='face'
             ELSE IF (INT(Aval(5)).eq.w3dvar) THEN
               text='x_rho y_rho s_w'
+              location='face'
+            ELSE IF (INT(Aval(5)).eq.a3dvar) THEN
+              text='x_rho y_rho Nveg'
               location='face'
             ELSE IF (INT(Aval(5)).eq.b3dvar) THEN
               text='x_rho y_rho'

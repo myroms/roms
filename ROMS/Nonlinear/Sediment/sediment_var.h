@@ -28,9 +28,35 @@
             idSbed(iporo)=varid
           CASE ('idSbed(idiff)')
             idSbed(idiff)=varid
+#if defined BEDLOAD_VANDERA
+          CASE ('idsurs')
+            idsurs=varid
+          CASE ('idsrrw')
+            idsrrw=varid
+          CASE ('idsbtw')
+            idsbtw=varid
+          CASE ('idsucr')
+            idsucr=varid
+          CASE ('idsutr')
+            idsutr=varid
+          CASE ('idstcr')
+            idstcr=varid
+          CASE ('idsttr')
+            idsttr=varid
+#endif
 #if defined COHESIVE_BED || defined SED_BIODIFF || defined MIXED_BED
           CASE ('idSbed(ibtcr)')
             idSbed(ibtcr)=varid
+#endif
+#if defined SEDBIO_COUP
+          CASE ('idSbed(iboxy)')
+            idSbed(iboxy)=varid
+          CASE ('idSbed(ibno3)')
+            idSbed(ibno3)=varid
+          CASE ('idSbed(ibnh4)')
+            idSbed(ibnh4)=varid
+          CASE ('idSbed(ibodu)')
+            idSbed(ibodu)=varid
 #endif
           CASE ('idBott(isd50)')
             idBott(isd50)=varid
@@ -64,10 +90,26 @@
             idBott(iactv)=varid
           CASE ('idBott(ishgt)')
             idBott(ishgt)=varid
-          CASE ('idBott(idefx)')
-            idBott(idefx)=varid
+          CASE ('idBott(imaxD)')
+            idBott(imaxD)=varid
           CASE ('idBott(idnet)')
             idBott(idnet)=varid
+          CASE ('idBott(idtbl)')
+            idBott(idtbl)=varid
+          CASE ('idBott(idubl)')
+            idBott(idubl)=varid
+          CASE ('idBott(idfdw)')
+            idBott(idfdw)=varid
+          CASE ('idBott(idzrw)')
+            idBott(idzrw)=varid
+          CASE ('idBott(idksd)')
+            idBott(idksd)=varid
+          CASE ('idBott(idusc)')
+            idBott(idusc)=varid
+          CASE ('idBott(idpcx)')
+            idBott(idpcx)=varid
+          CASE ('idBott(idpwc)')
+            idBott(idpwc)=varid
 #if defined COHESIVE_BED || defined SED_BIODIFF || defined MIXED_BED
           CASE ('idBott(idoff)')
             idBott(idoff)=varid
@@ -107,13 +149,10 @@
      &                TRIM(ADJUSTL(Vinfo(2))), ', size class ', i
                 WRITE (Vname(3,varid),'(a)')                            &
      &                TRIM(ADJUSTL(Vinfo(3)))
-                WRITE (Vname(4,varid),'(a,i2.2)')                       &
-     &                TRIM(ADJUSTL(Vinfo(4))), i
+                WRITE (Vname(4,varid),'(a,a)')                          &
+     &                TRIM(Vname(1,varid)), ', scalar, series'
                 WRITE (Vname(5,varid),'(a)')                            &
      &                TRIM(ADJUSTL(Vinfo(5)))
-                WRITE (string,'(a,i2.2)') TRIM(ADJUSTL(Vinfo(6))), i
-                CALL StandardName (Vname(6,varid), string,              &
-     &                             suffix='_in_sea_water')
               END DO
               varid=varid+1
             END IF
@@ -134,13 +173,10 @@
      &                TRIM(ADJUSTL(Vinfo(2))), ', size class ', i
                 WRITE (Vname(3,varid),'(a)')                            &
      &                TRIM(ADJUSTL(Vinfo(3)))
-                WRITE (Vname(4,varid),'(a,i2.2)')                       &
-     &                TRIM(ADJUSTL(Vinfo(4))), i
+                WRITE (Vname(4,varid),'(a,a)')                          &
+     &                TRIM(Vname(1,varid)), ', scalar, series'
                 WRITE (Vname(5,varid),'(a)')                            &
      &                TRIM(ADJUSTL(Vinfo(5)))
-                WRITE (string,'(a,i2.2)') TRIM(ADJUSTL(Vinfo(6))), i
-                CALL StandardName (Vname(6,varid), string,              &
-     &                             suffix='_in_sea_water')
               END DO
               varid=varid+1
             END IF
@@ -162,13 +198,10 @@
      &                TRIM(ADJUSTL(Vinfo(2))), ', size class ', i
                 WRITE (Vname(3,varid),'(a)')                            &
      &                TRIM(ADJUSTL(Vinfo(3)))
-                WRITE (Vname(4,varid),'(a,i2.2)')                       &
-     &                TRIM(ADJUSTL(Vinfo(4))), i
+                WRITE (Vname(4,varid),'(a,a)')                          &
+     &                TRIM(Vname(1,varid)), ', scalar, series'
                 WRITE (Vname(5,varid),'(a)')                            &
      &                TRIM(ADJUSTL(Vinfo(5)))
-                WRITE (string,'(a,i2.2)') TRIM(ADJUSTL(Vinfo(6))), i
-                CALL StandardName (Vname(6,varid), string,              &
-     &                             suffix='_fraction')
               END DO
               varid=varid+1
             END IF
@@ -188,13 +221,10 @@
      &                TRIM(ADJUSTL(Vinfo(2))), ', size class ', i
                 WRITE (Vname(3,varid),'(a)')                            &
      &                TRIM(ADJUSTL(Vinfo(3)))
-                WRITE (Vname(4,varid),'(a,i2.2)')                       &
-     &                TRIM(ADJUSTL(Vinfo(4))), i
+                WRITE (Vname(4,varid),'(a,a)')                          &
+     &                TRIM(Vname(1,varid)), ', scalar, series'
                 WRITE (Vname(5,varid),'(a)')                            &
      &                TRIM(ADJUSTL(Vinfo(5)))
-                WRITE (string,'(a,i2.2)') TRIM(ADJUSTL(Vinfo(6))), i
-                CALL StandardName (Vname(6,varid), string,              &
-     &                             suffix='_fraction')
               END DO
               varid=varid+1
             END IF
@@ -216,13 +246,10 @@
      &                TRIM(ADJUSTL(Vinfo(2))), ', size class ', i
                 WRITE (Vname(3,varid),'(a)')                            &
      &                TRIM(ADJUSTL(Vinfo(3)))
-                WRITE (Vname(4,varid),'(a,i2.2)')                       &
-     &                TRIM(ADJUSTL(Vinfo(4))), i
+                WRITE (Vname(4,varid),'(a,a)')                          &
+     &                TRIM(Vname(1,varid)), ', scalar, series'
                 WRITE (Vname(5,varid),'(a)')                            &
      &                TRIM(ADJUSTL(Vinfo(5)))
-                WRITE (string,'(a,i2.2)') TRIM(ADJUSTL(Vinfo(6))), i
-                CALL StandardName (Vname(6,varid), string,              &
-     &                             suffix='_mass')
               END DO
               varid=varid+1
             END IF
@@ -242,16 +269,40 @@
      &                TRIM(ADJUSTL(Vinfo(2))), ', size class ', i
                 WRITE (Vname(3,varid),'(a)')                            &
      &                TRIM(ADJUSTL(Vinfo(3)))
-                WRITE (Vname(4,varid),'(a,i2.2)')                       &
-     &                TRIM(ADJUSTL(Vinfo(4))), i
+                WRITE (Vname(4,varid),'(a,a)')                          &
+     &                TRIM(Vname(1,varid)), ', scalar, series'
                 WRITE (Vname(5,varid),'(a)')                            &
      &                TRIM(ADJUSTL(Vinfo(5)))
-                WRITE (string,'(a,i2.2)') TRIM(ADJUSTL(Vinfo(6))), i
-                CALL StandardName (Vname(6,varid), string,              &
-     &                             suffix='_mass')
               END DO
               varid=varid+1
             END IF
+#if defined VEGETATION
+          CASE ('idTmfo')
+            load=.FALSE.
+            IF ((NST.gt.0).and.                                         &
+     &          (Vinfo(1)(1:15).eq.'marsh_flux_out_')) THEN
+              varid=varid-1
+              DO i=1,NST
+                varid=varid+1
+                idTmfo(i)=varid
+                DO ng=1,Ngrids
+                  Fscale(varid,ng)=scale
+                  Iinfo(1,varid,ng)=gtype
+                END DO
+                WRITE (Vname(1,varid),'(a,i2.2)')                       &
+     &                TRIM(ADJUSTL(Vinfo(1))), i
+                WRITE (Vname(2,varid),'(a,a,i2.2)')                     &
+     &                TRIM(ADJUSTL(Vinfo(2))), ', size class ', i
+                WRITE (Vname(3,varid),'(a)')                            &
+     &                TRIM(ADJUSTL(Vinfo(3)))
+                WRITE (Vname(4,varid),'(a,a)')                          &
+     &                TRIM(Vname(1,varid)), ', scalar, series'
+                WRITE (Vname(5,varid),'(a)')                            &
+     &                TRIM(ADJUSTL(Vinfo(5)))
+              END DO
+              varid=varid+1
+            END IF
+#endif
 #ifdef BEDLOAD
           CASE ('idUbld')
             load=.FALSE.
@@ -271,12 +322,10 @@
      &                TRIM(ADJUSTL(Vinfo(2))), ', size class ', i
                 WRITE (Vname(3,varid),'(a)')                            &
      &                TRIM(ADJUSTL(Vinfo(3)))
-                WRITE (Vname(4,varid),'(a,i2.2)')                       &
-     &                TRIM(ADJUSTL(Vinfo(4))), i
+                WRITE (Vname(4,varid),'(a,a)')                          &
+     &                TRIM(Vname(1,varid)), ', scalar, series'
                 WRITE (Vname(5,varid),'(a)')                            &
      &                TRIM(ADJUSTL(Vinfo(5)))
-                WRITE (string,'(a,i2.2)') TRIM(ADJUSTL(Vinfo(6))), i
-                CALL StandardName (Vname(6,varid), string)
               END DO
               varid=varid+1
             END IF
@@ -296,12 +345,10 @@
      &                TRIM(ADJUSTL(Vinfo(2))), ', size class ', i
                 WRITE (Vname(3,varid),'(a)')                            &
      &                TRIM(ADJUSTL(Vinfo(3)))
-                WRITE (Vname(4,varid),'(a,i2.2)')                       &
-     &                TRIM(ADJUSTL(Vinfo(4))), i
+                WRITE (Vname(4,varid),'(a,a)')                          &
+     &                TRIM(Vname(1,varid)), ', scalar, series'
                 WRITE (Vname(5,varid),'(a)')                            &
      &                TRIM(ADJUSTL(Vinfo(5)))
-                WRITE (string,'(a,i2.2)') TRIM(ADJUSTL(Vinfo(6))), i
-                CALL StandardName (Vname(6,varid), string)
               END DO
               varid=varid+1
             END IF
@@ -323,12 +370,10 @@
      &                TRIM(ADJUSTL(Vinfo(2))), ', size class ', i
                 WRITE (Vname(3,varid),'(a)')                            &
      &                TRIM(ADJUSTL(Vinfo(3)))
-                WRITE (Vname(4,varid),'(a,i2.2)')                       &
-     &                TRIM(ADJUSTL(Vinfo(4))), i
+                WRITE (Vname(4,varid),'(a,a)')                          &
+     &                TRIM(Vname(1,varid)), ', scalar, series'
                 WRITE (Vname(5,varid),'(a)')                            &
      &                TRIM(ADJUSTL(Vinfo(5)))
-                WRITE (string,'(a,i2.2)') TRIM(ADJUSTL(Vinfo(6))), i
-                CALL StandardName (Vname(6,varid), string)
               END DO
               varid=varid+1
             END IF
@@ -348,12 +393,10 @@
      &                TRIM(ADJUSTL(Vinfo(2))), ', size class ', i
                 WRITE (Vname(3,varid),'(a)')                            &
      &                TRIM(ADJUSTL(Vinfo(3)))
-                WRITE (Vname(4,varid),'(a,i2.2)')                       &
-     &                TRIM(ADJUSTL(Vinfo(4))), i
+                WRITE (Vname(4,varid),'(a,a)')                          &
+     &                TRIM(Vname(1,varid)), ', scalar, series'
                 WRITE (Vname(5,varid),'(a)')                            &
      &                TRIM(ADJUSTL(Vinfo(5)))
-                WRITE (string,'(a,i2.2)') TRIM(ADJUSTL(Vinfo(6))), i
-                CALL StandardName (Vname(6,varid), string)
               END DO
               varid=varid+1
             END IF
@@ -380,13 +423,10 @@
      &                TRIM(ADJUSTL(Vinfo(2))), ', size class ', i
                 WRITE (Vname(3,varid),'(a)')                            &
      &                TRIM(ADJUSTL(Vinfo(3)))
-                WRITE (Vname(4,varid),'(a,i2.2,a)')                     &
-     &                TRIM(ADJUSTL(Vinfo(4))), i, ' western-boundary'
+                WRITE (Vname(4,varid),'(a,a)')                          &
+     &                TRIM(Vname(1,varid)), ', scalar, series'
                 WRITE (Vname(5,varid),'(a)')                            &
      &                TRIM(ADJUSTL(Vinfo(5)))
-                WRITE (string,'(a,i2.2)') TRIM(ADJUSTL(Vinfo(6))), i
-                CALL StandardName (Vname(6,varid), string,              &
-     &                             suffix='_in_sea_water')
               END DO
               varid=varid+1
             END IF
@@ -407,13 +447,10 @@
      &                TRIM(ADJUSTL(Vinfo(2))), ', size class ', i
                 WRITE (Vname(3,varid),'(a)')                            &
      &                TRIM(ADJUSTL(Vinfo(3)))
-                WRITE (Vname(4,varid),'(a,i2.2,a)')                     &
-     &                TRIM(ADJUSTL(Vinfo(4))), i, ' eastern-boundary'
+                WRITE (Vname(4,varid),'(a,a)')                          &
+     &                TRIM(Vname(1,varid)), ', scalar, series'
                 WRITE (Vname(5,varid),'(a)')                            &
      &                TRIM(ADJUSTL(Vinfo(5)))
-                WRITE (string,'(a,i2.2)') TRIM(ADJUSTL(Vinfo(6))), i
-                CALL StandardName (Vname(6,varid), string,              &
-     &                             suffix='_in_sea_water')
               END DO
               varid=varid+1
             END IF
@@ -434,13 +471,10 @@
      &                TRIM(ADJUSTL(Vinfo(2))), ', size class ', i
                 WRITE (Vname(3,varid),'(a)')                            &
      &                TRIM(ADJUSTL(Vinfo(3)))
-                WRITE (Vname(4,varid),'(a,i2.2,a)')                     &
-     &                TRIM(ADJUSTL(Vinfo(4))), i, ' southern-boundary'
+                WRITE (Vname(4,varid),'(a,a)')                          &
+     &                TRIM(Vname(1,varid)), ', scalar, series'
                 WRITE (Vname(5,varid),'(a)')                            &
      &                TRIM(ADJUSTL(Vinfo(5)))
-                WRITE (string,'(a,i2.2)') TRIM(ADJUSTL(Vinfo(6))), i
-                CALL StandardName (Vname(6,varid), string,              &
-     &                             suffix='_in_sea_water')
               END DO
               varid=varid+1
             END IF
@@ -461,13 +495,10 @@
      &                TRIM(ADJUSTL(Vinfo(2))), ', size class ', i
                 WRITE (Vname(3,varid),'(a)')                            &
      &                TRIM(ADJUSTL(Vinfo(3)))
-                WRITE (Vname(4,varid),'(a,i2.2,a)')                     &
-     &                TRIM(ADJUSTL(Vinfo(4))), i, ' northern-boundary'
+                WRITE (Vname(4,varid),'(a,a)')                          &
+     &                TRIM(Vname(1,varid)), ', scalar, series'
                 WRITE (Vname(5,varid),'(a)')                            &
      &                TRIM(ADJUSTL(Vinfo(5)))
-                WRITE (string,'(a,i2.2)') TRIM(ADJUSTL(Vinfo(6))), i
-                CALL StandardName (Vname(6,varid), string,              &
-     &                             suffix='_in_sea_water')
               END DO
               varid=varid+1
             END IF
@@ -488,13 +519,10 @@
      &                TRIM(ADJUSTL(Vinfo(2))), ', size class ', i
                 WRITE (Vname(3,varid),'(a)')                            &
      &                TRIM(ADJUSTL(Vinfo(3)))
-                WRITE (Vname(4,varid),'(a,i2.2,a)')                     &
-     &                TRIM(ADJUSTL(Vinfo(4))), i, ' western-boundary'
+                WRITE (Vname(4,varid),'(a,a)')                          &
+     &                TRIM(Vname(1,varid)), ', scalar, series'
                 WRITE (Vname(5,varid),'(a)')                            &
      &                TRIM(ADJUSTL(Vinfo(5)))
-                WRITE (string,'(a,i2.2)') TRIM(ADJUSTL(Vinfo(6))), i
-                CALL StandardName (Vname(6,varid), string,              &
-     &                             suffix='_in_sea_water')
               END DO
               varid=varid+1
             END IF
@@ -515,13 +543,10 @@
      &                TRIM(ADJUSTL(Vinfo(2))), ', size class ', i
                 WRITE (Vname(3,varid),'(a)')                            &
      &                TRIM(ADJUSTL(Vinfo(3)))
-                WRITE (Vname(4,varid),'(a,i2.2,a)')                     &
-     &                TRIM(ADJUSTL(Vinfo(4))), i, ' eastern-boundary'
+                WRITE (Vname(4,varid),'(a,a)')                          &
+     &                TRIM(Vname(1,varid)), ', scalar, series'
                 WRITE (Vname(5,varid),'(a)')                            &
      &                TRIM(ADJUSTL(Vinfo(5)))
-                WRITE (string,'(a,i2.2)') TRIM(ADJUSTL(Vinfo(6))), i
-                CALL StandardName (Vname(6,varid), string,              &
-     &                             suffix='_in_sea_water')
               END DO
               varid=varid+1
             END IF
@@ -542,13 +567,10 @@
      &                TRIM(ADJUSTL(Vinfo(2))), ', size class ', i
                 WRITE (Vname(3,varid),'(a)')                            &
      &                TRIM(ADJUSTL(Vinfo(3)))
-                WRITE (Vname(4,varid),'(a,i2.2,a)')                     &
-     &                TRIM(ADJUSTL(Vinfo(4))), i, ' southern-boundary'
+                WRITE (Vname(4,varid),'(a,a)')                          &
+     &                TRIM(Vname(1,varid)), ', scalar, series'
                 WRITE (Vname(5,varid),'(a)')                            &
      &                TRIM(ADJUSTL(Vinfo(5)))
-                WRITE (string,'(a,i2.2)') TRIM(ADJUSTL(Vinfo(6))), i
-                CALL StandardName (Vname(6,varid), string,              &
-     &                             suffix='_in_sea_water')
               END DO
               varid=varid+1
             END IF
@@ -569,16 +591,14 @@
      &                TRIM(ADJUSTL(Vinfo(2))), ', size class ', i
                 WRITE (Vname(3,varid),'(a)')                            &
      &                TRIM(ADJUSTL(Vinfo(3)))
-                WRITE (Vname(4,varid),'(a,i2.2,a)')                     &
-     &                TRIM(ADJUSTL(Vinfo(4))), i, ' northern-boundary'
+                WRITE (Vname(4,varid),'(a,a)')                          &
+     &                TRIM(Vname(1,varid)), ', scalar, series'
                 WRITE (Vname(5,varid),'(a)')                            &
      &                TRIM(ADJUSTL(Vinfo(5)))
-                WRITE (string,'(a,i2.2)') TRIM(ADJUSTL(Vinfo(6))), i
-                CALL StandardName (Vname(6,varid), string,              &
-     &                             suffix='_in_sea_water')
               END DO
               varid=varid+1
             END IF
+
 
 /*
 **  Sediment tracers point Source/Sinks (river runoff).
@@ -601,11 +621,10 @@
      &                TRIM(ADJUSTL(Vinfo(2))), ', size class ', i
                 WRITE (Vname(3,varid),'(a)')                            &
      &                TRIM(ADJUSTL(Vinfo(3)))
-                WRITE (Vname(4,varid),'(a,i2.2)')                       &
-     &                TRIM(ADJUSTL(Vinfo(4))), i
-                WRITE (string,'(a,i2.2)') TRIM(ADJUSTL(Vinfo(6))), i
-                CALL StandardName (Vname(6,varid), string,              &
-     &                  suffix='trasnport_into_sea_water_from_rivers')
+                WRITE (Vname(4,varid),'(a,a)')                          &
+     &                TRIM(Vname(1,varid)), ', scalar, series'
+                WRITE (Vname(5,varid),'(a)')                            &
+     &                TRIM(ADJUSTL(Vinfo(5)))
               END DO
               varid=varid+1
             END IF
@@ -626,11 +645,10 @@
      &                TRIM(ADJUSTL(Vinfo(2))), ', size class ', i
                 WRITE (Vname(3,varid),'(a)')                            &
      &                TRIM(ADJUSTL(Vinfo(3)))
-                WRITE (Vname(4,varid),'(a,i2.2)')                       &
-     &                TRIM(ADJUSTL(Vinfo(4))), i
-                WRITE (string,'(a,i2.2)') TRIM(ADJUSTL(Vinfo(6))), i
-                CALL StandardName (Vname(6,varid), string,              &
-     &                  suffix='trasnport_into_sea_water_from_rivers')
+                WRITE (Vname(4,varid),'(a,a)')                          &
+     &                TRIM(Vname(1,varid)), ', scalar, series'
+                WRITE (Vname(5,varid),'(a)')                            &
+     &                TRIM(ADJUSTL(Vinfo(5)))
               END DO
               varid=varid+1
             END IF

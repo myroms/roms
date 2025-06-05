@@ -44,8 +44,9 @@
       USE mod_ocean
       USE mod_stepping
 # if defined VEGETATION && defined VEG_TURB
-      USE mod_vegarr
-      USE vegetation_turb_mod, ONLY : vegetation_turb_cal
+      USE mod_vegetation
+!
+      USE vegetation_turb_mod, ONLY : vegetation_turb
 # endif
 !
 !  Imported variable declarations.
@@ -56,14 +57,15 @@
 !
       character (len=*), parameter :: MyFile =                          &
      &  __FILE__
-!
 # include "tile.h"
 !
 # if defined VEGETATION && defined VEG_TURB
 ! 
+!-----------------------------------------------------------------------
 !  Add the effect of vegetation on the turbulence model.
+!-----------------------------------------------------------------------
 !
-      CALL vegetation_turb_cal (ng, tile)
+      CALL vegetation_turb (ng, tile)
 # endif
 !
 !  GLS corrector step.
@@ -881,7 +883,7 @@
 !-----------------------------------------------------------------------
 !
 !  Set Dirichlet surface and bottom boundary conditions. Compute
-!  surface roughness from wind stress (Charnock) and set Craig and
+!  surface roughness from wind stress (Charnok) and set Craig and
 !  Banner wave breaking surface flux, if appropriate.
 !
         DO i=Istr,Iend

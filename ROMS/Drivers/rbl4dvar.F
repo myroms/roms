@@ -156,7 +156,7 @@
 # if defined GRID_EXTRACT && defined SPLIT_EXECUTABLE
       USE state_regrid_mod,   ONLY : state_regrid
 # endif
-      USE strings_mod,        ONLY : FoundError
+      USE strings_mod,        ONLY : FoundError, find_string
       USE tl_def_ini_mod,     ONLY : tl_def_ini
       USE tl_wrt_ini_mod,     ONLY : tl_wrt_ini
 # ifdef RPCG
