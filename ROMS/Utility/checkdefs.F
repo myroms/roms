@@ -663,7 +663,7 @@
 #if defined SEDIMENT && defined BEDLOAD_VANDERA_MADSEN_UDELTA
 !
       IF (Master) WRITE (stdout,20) 'BEDLOAD_VANDERA_MADSEN_UDELTA',    &
-     &   'Activate bed load madsen current calculation'
+     &   'Activate bed load Madsen current calculation'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+31)=' BEDLOAD_VANDERA_MADSEN_UDELTA,'
 #endif
@@ -1647,7 +1647,7 @@
 #if defined MARSH_DYNAMICS && defined VEGETATION
 !
       IF (Master) WRITE (stdout,20) 'MARSH_DYNAMICS',                   &
-     &   'Activating marsh dynamics: erosion, accreation, or retreat'
+     &   'Activating marsh dynamics: erosion, accretion, or retreat'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+16)=' MARSH_DYNAMICS,'
 #endif
@@ -2825,7 +2825,7 @@
 #ifdef SSW_BBL
 !
        IF (Master) WRITE (stdout,20) 'SSW_BBL',                         &
-     &   'Styles and Glenn Bottom Boundary Layer - modified'
+     &   'Sherwood/Signell/Warner Bottom Boundary Layer'
        is=LEN_TRIM(Coptions)+1
        Coptions(is:is+8)=' SSW_BBL,'
        ibbl=ibbl+1

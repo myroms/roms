@@ -17,14 +17,14 @@
 !                                                                      !
 !  References:                                                         !
 !                                                                      !
-!======================================================================!
 !  Dean, R.G. and Dalrymple, R.A., 1991: Water Wave Mechanics for      !
-!  Engineers and Scientists, World Scientific Publications.            !
+!    Engineers and Scientists, World Scientific Publications.          !
 !                                                                      !
 !  Tonelli, M., Fagherazzi, Sergio., and Petti., M., 2010:             !
-!  Modeling wave impact on salt marsh boundaries, Journal of           !
-!  Geophysical Research, 115, 0148-0227.                               !
-!======================================================================!
+!    Modeling wave impact on salt marsh boundaries, Journal of         !
+!    Geophysical Research, 115, 0148-0227.                             !
+!                                                                      !
+!=======================================================================
 !
       USE mod_param
       USE mod_forces
@@ -67,7 +67,7 @@
 # include "tile.h"
 !
 # ifdef PROFILE
-      CALL wclock_off (ng, iNLM, 16, __LINE__, MyFile)
+      CALL wclock_off (ng, iNLM, 44, __LINE__, MyFile)
 # endif
       CALL marsh_wave_thrust_tile  (ng, tile,                           &
      &                              LBi, UBi, LBj, UBj,                 &
@@ -100,7 +100,7 @@
      &                              VEG(ng) % Thrust_total,             &
      &                              OCEAN(ng)  % zeta)
 # ifdef PROFILE
-      CALL wclock_off (ng, iNLM, 16, __LINE__, MyFile)
+      CALL wclock_off (ng, iNLM, 44, __LINE__, MyFile)
 # endif
 !
       RETURN

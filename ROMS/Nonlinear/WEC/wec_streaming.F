@@ -70,7 +70,7 @@
 # include "tile.h"
 !
 # ifdef PROFILE
-      CALL wclock_on (ng, iNLM, 42, __LINE__, MyFile)
+      CALL wclock_on (ng, iNLM, 43, __LINE__, MyFile)
 # endif
 # if defined VEGETATION && defined VEG_STREAMING 
       CALL vegetation_stream_cal (ng, tile)
@@ -122,7 +122,7 @@
      &                         MIXING(ng) % rustr3d,                    &
      &                         MIXING(ng) % rvstr3d)
 # ifdef PROFILE
-      CALL wclock_off (ng, iNLM, 42, __LINE__, MyFile)
+      CALL wclock_off (ng, iNLM, 43, __LINE__, MyFile)
 # endif
 !
       RETURN

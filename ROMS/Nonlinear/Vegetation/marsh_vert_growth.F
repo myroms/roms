@@ -29,6 +29,22 @@
 !                                                                      !
 !=======================================================================
 !
+      USE mod_param
+      USE mod_forces
+      USE mod_grid
+      USE mod_ocean
+      USE mod_scalars
+      USE mod_sedbed
+      USE mod_sediment
+      USE mod_vegetation
+!
+      USE bc_2d_mod,       ONLY : bc_r2d_tile
+      USE bc_3d_mod,       ONLY : bc_r3d_tile
+# ifdef DISTRIBUTE
+      USE mp_exchange_mod, ONLY : mp_exchange2d, mp_exchange3d,         &
+     &                            mp_exchange4d
+# endif
+!
       implicit none
 !
       PUBLIC  :: marsh_vert_growth
@@ -40,19 +56,20 @@
       SUBROUTINE marsh_vert_growth (ng,tile)
 !***********************************************************************
 !
-      USE mod_param
-      USE mod_grid
-      USE mod_ocean
-      USE mod_sedbed
       USE mod_stepping
-      USE mod_vegetation
 !
       integer, intent(in) :: ng, tile
 !
 !  Local variable declarations.
 !
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__
+!
 # include "tile.h"
 !
+# ifdef PROFILE
+      CALL wclock_on (ng, iNLM, 44, __LINE__, MyFile)
+# endif
       CALL marsh_vert_growth_tile (ng, tile,                            &
      &                             LBi, UBi, LBj, UBj,                  &
      &                             IminS, ImaxS, JminS, JmaxS,          &
@@ -75,6 +92,9 @@
      &                             VEG(ng) % marsh_biomass_peak,        &
      &                             VEG(ng) % marsh_vert_rate,           &
      &                             VEG(ng) % marsh_accret)
+# ifdef PROFILE
+      CALL wclock_off (ng, iNLM, 44, __LINE__, MyFile)
+# endif
 !
       RETURN
       END SUBROUTINE marsh_vert_growth
@@ -103,20 +123,6 @@
      &                                   marsh_vert_rate,               &
      &                                   marsh_accret)
 !***********************************************************************
-!
-      USE mod_param
-      USE mod_forces
-      USE mod_grid
-      USE mod_scalars
-      USE mod_sediment
-      USE mod_vegetation
-!
-      USE bc_2d_mod,       ONLY : bc_r2d_tile
-      USE bc_3d_mod,       ONLY : bc_r3d_tile
-# ifdef DISTRIBUTE
-      USE mp_exchange_mod, ONLY : mp_exchange2d, mp_exchange3d,         &
-     &                            mp_exchange4d
-# endif
 !
 !  Imported variable declarations.
 !

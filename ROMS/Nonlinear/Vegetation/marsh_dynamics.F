@@ -78,15 +78,6 @@
 !
       integer, intent(in) :: ng, tile
 !
-!  Local variable declarations.
-!
-      character (len=*), parameter :: MyFile =                          &
-     &  __FILE__
-!
-# ifdef PROFILE
-      CALL wclock_off (ng, iNLM, 16, __LINE__, MyFile)
-# endif
-!
 !-----------------------------------------------------------------------
 !  Wave induced thrust calculation on marsh boundary.
 !-----------------------------------------------------------------------
@@ -120,11 +111,6 @@
 !-----------------------------------------------------------------------
 !
       CALL marsh_vert_growth (ng, tile)
-# endif
-
-# ifdef PROFILE
-!
-      CALL wclock_off (ng, iNLM, 16, __LINE__, MyFile)
 # endif
 !
       RETURN

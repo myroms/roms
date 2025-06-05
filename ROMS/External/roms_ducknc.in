@@ -411,8 +411,8 @@ LtracerSponge == F F                            ! temperature, salinity, inert
 ! Set vertical, terrain-following coordinates transformation equation and
 ! stretching function (see below for details), [1:Ngrids].
 
-  Vtransform == 1                          ! transformation equation
- Vstretching == 1                          ! stretching function
+  Vtransform == 2                          ! transformation equation
+ Vstretching == 4                          ! stretching function
 
 ! Vertical S-coordinates parameters (see below for details), [1:Ngrids].
 

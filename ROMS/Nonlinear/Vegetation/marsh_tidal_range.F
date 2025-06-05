@@ -13,7 +13,7 @@
 !  Compute the tidal range and mean high water that are later used     !
 !  for biomass production and vertical growth of marsh.                !
 !                                                                      !
-!======================================================================!
+!=======================================================================
 !
       USE mod_param
       USE mod_forces
@@ -53,7 +53,7 @@
 # include "tile.h"
 !
 # ifdef PROFILE
-      CALL wclock_off (ng, iNLM, 16, __LINE__, MyFile)
+      CALL wclock_off (ng, iNLM, 44, __LINE__, MyFile)
 # endif
       CALL marsh_tidal_range_tile (ng, tile,                            &
      &                             LBi, UBi, LBj, UBj,                  &
@@ -69,7 +69,7 @@
      &                             VEG(ng) % marsh_high_water,          &
      &                             VEG(ng) % marsh_tidal_range)
 # ifdef PROFILE
-      CALL wclock_off (ng, iNLM, 16, __LINE__, MyFile)
+      CALL wclock_off (ng, iNLM, 44, __LINE__, MyFile)
 # endif
 !
       RETURN

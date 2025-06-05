@@ -48,7 +48,7 @@
 # include "tile.h"
 !
 # ifdef PROFILE
-      CALL wclock_on (ng, iNLM, 16, __LINE__, MyFile)
+      CALL wclock_on (ng, iNLM, 44, __LINE__, MyFile)
 # endif
       CALL sed_biomass_tile (ng, tile,                                  &
      &                       LBi, UBi, LBj, UBj,                        &
@@ -68,7 +68,7 @@
      &                       SEDBED(ng) % bottom,                       &
      &                       SEDBED(ng) % settling_flux)
 # ifdef PROFILE
-      CALL wclock_off (ng, iNLM, 16, __LINE__, MyFile)
+      CALL wclock_off (ng, iNLM, 44, __LINE__, MyFile)
 # endif
 !
       RETURN

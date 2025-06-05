@@ -17,7 +17,25 @@
 !  compute the lateral retreat of marsh cells and convert them to open !
 !  water cells.                                                        !
 !                                                                      !
-!======================================================================!
+!=======================================================================
+!
+      USE mod_param
+      USE mod_forces
+      USE mod_grid
+      USE mod_ncparam
+      USE mod_ocean
+      USE mod_scalars
+      USE mod_sedbed
+      USE mod_sediment
+      USE mod_vegetation
+      USE marsh_wave_thrust_mod
+!
+      USE bc_2d_mod,       ONLY : bc_r2d_tile
+      USE bc_3d_mod,       ONLY : bc_r3d_tile
+# ifdef DISTRIBUTE
+      USE mp_exchange_mod, ONLY : mp_exchange2d, mp_exchange3d,         &
+     &                            mp_exchange4d
+# endif
 !
       implicit none
 !
@@ -30,14 +48,7 @@
       SUBROUTINE marsh_sed_erosion (ng, tile)
 !***********************************************************************
 !
-      USE mod_param
-      USE mod_forces
-      USE mod_grid
-      USE mod_ocean
-      USE mod_vegetation
-      USE mod_sedbed
       USE mod_stepping
-      USE marsh_wave_thrust_mod
 !
 !  Imported variable declarations.
 !
@@ -51,7 +62,7 @@
 # include "tile.h"
 !
 # ifdef PROFILE
-      CALL wclock_on (ng, iNLM, 16, __LINE__, MyFile)
+      CALL wclock_on (ng, iNLM, 44, __LINE__, MyFile)
 # endif
       CALL marsh_sed_erosion_tile (ng, tile,                            &
      &                             LBi, UBi, LBj, UBj,                  &
@@ -83,7 +94,7 @@
      &                             SEDBED(ng) % bed,                    &
      &                             SEDBED(ng) % bed_mass)
 # ifdef PROFILE
-      CALL wclock_off (ng, iNLM, 16, __LINE__, MyFile)
+      CALL wclock_off (ng, iNLM, 44, __LINE__, MyFile)
 # endif
 !
       RETURN
@@ -111,20 +122,6 @@
 # endif
      &                                   bed_frac, bed, bed_mass)
 !***********************************************************************
-!
-      USE mod_param
-      USE mod_ncparam
-      USE mod_scalars
-      USE mod_vegetation
-      USE mod_sediment
-      USE marsh_wave_thrust_mod
-!
-      USE bc_2d_mod,       ONLY : bc_r2d_tile
-      USE bc_3d_mod,       ONLY : bc_r3d_tile
-# ifdef DISTRIBUTE
-      USE mp_exchange_mod, ONLY : mp_exchange2d, mp_exchange3d,         &
-     &                            mp_exchange4d
-# endif
 !
 !  Imported variable declarations.
 !
