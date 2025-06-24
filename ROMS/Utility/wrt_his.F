@@ -48,7 +48,9 @@
       USE bbl_output_mod,        ONLY : bbl_wrt_pio
 # endif
 #endif
+#ifdef SOLVE3D
       USE extract_slice_mod,     ONLY : extract_slice
+#endif
 #if defined ICE_MODEL && defined SOLVE3D
       USE ice_output_mod,        ONLY : ice_wrt_nf90
 # if defined PIO_LIB && defined DISTRIBUTE

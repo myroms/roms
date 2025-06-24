@@ -188,7 +188,9 @@
       integer  :: idwsin = -10  ! biological float sinking velocity
 #endif
 !
-!  Input/output identification indices.
+!  Input/output identification indices. They are in strict ALPHABETIC
+!  ORDER to guarantee no repetitive values. If we need a set of indices
+!  together, please choose the proper leading letters.
 !
       integer  :: idangR        ! angle between XI-axis and EAST
       integer  :: idbath        ! time-dependent bathymetry
@@ -199,6 +201,8 @@
       integer  :: idCos2        ! COS(omega(k)*t)*COS(omega(l)*t)
       integer  :: idDano        ! density anomaly
       integer  :: idDiff(2)     ! temperature and salinity diffusion
+      integer  :: idDr01        ! Wave avg dir of partition 01
+      integer  :: idDr02        ! Wave avg dir of partition 02
       integer  :: iddQdT        ! heat flux sensitivity to SST
       integer  :: idEmPf        ! E-P from bulk_flux.F
       integer  :: idevap        ! evaporation rate
@@ -211,6 +215,8 @@
       integer  :: idJWTy        ! Jerlov water type
       integer  :: idHbbl        ! depth of bottom boundary layer
       integer  :: idHsbl        ! depth of surface boundary layer
+      integer  :: idHs01        ! Wave height of partition 01
+      integer  :: idHs02        ! Wave height of partition 02
       integer  :: idHzdz        ! level thickness
       integer  :: idIncr        ! 4D-Var analysis increment
       integer  :: idInno        ! 4D-Var innovation vector
@@ -311,6 +317,8 @@
       integer  :: idtopo        ! time-independent bathymetry
       integer  :: idTref        ! tidal reference date for zero phase
       integer  :: idTper        ! tidal period
+      integer  :: idTp01        ! Wave peak period of partition 01
+      integer  :: idTp02        ! Wave peak period of partition 02
       integer  :: idTvan        ! tidal current angle
       integer  :: idTvma        ! maximum tidal current
       integer  :: idTvmi        ! minimum tidal current
@@ -418,6 +426,8 @@
       integer  :: idWdiw        ! wave dissipation from whitecapping
       integer  :: idWlen        ! wind-induced mean wave length
       integer  :: idWlep        ! wind-induced peak wave length
+      integer  :: idWl01        ! Wave avg length of partition 01
+      integer  :: idWl02        ! Wave avg length of partition 02
       integer  :: idWmsk        ! wet-dry mask
       integer  :: idWorb        ! wind-induced wave orbital velocity
       integer  :: idWptp        ! wind-induced surface wave period
@@ -443,14 +453,6 @@
       integer  :: id2dRV        ! 2D relative vorticity
       integer  :: id3dPV        ! 3D potential vorticity
       integer  :: id3dRV        ! 3D relative vorticity
-      integer  :: idHs01        ! Wave height of partition 01
-      integer  :: idHs02        ! Wave height of partition 02
-      integer  :: idTp01        ! Wave peak period of partition 01
-      integer  :: idTp02        ! Wave peak period of partition 02
-      integer  :: idWl01        ! Wave avg length of partition 01
-      integer  :: idWl02        ! Wave avg length of partition 02
-      integer  :: idDr01        ! Wave avg dir of partition 01
-      integer  :: idDr02        ! Wave avg dir of partition 02
 !
 !  Last used variable ID counter.
 !
@@ -2431,6 +2433,8 @@
 #ifdef BIOLOGY
 # if defined BIO_FENNEL
 #  include <fennel_var.h>
+# elif defined ECB
+#  include <ecb_var.h>
 # elif defined ECOSIM
 #  include <ecosim_var.h>
 # elif defined HYPOXIA_SRM

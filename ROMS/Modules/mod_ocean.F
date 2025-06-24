@@ -36,7 +36,7 @@
 !                                                                      !
 !  Biology Variables.                                                  !
 !                                                                      !
-# if defined BIO_FENNEL && defined CARBON
+# if (defined BIO_FENNEL && defined CARBON) || defined ECB
 !  pH           Surface concentration of hydrogen ions.                !
 # endif
 # ifdef RED_TIDE
@@ -129,7 +129,7 @@
           real(r8), pointer :: uwave(:,:)
           real(r8), pointer :: vwave(:,:)
 # endif
-# if defined BIO_FENNEL && defined CARBON
+# if (defined BIO_FENNEL && defined CARBON) || defined ECB
           real(r8), pointer :: pH(:,:)
 # endif
 # ifdef RED_TIDE
@@ -506,7 +506,7 @@
       Dmem(ng)=Dmem(ng)+size2d
 # endif
 
-# if defined BIO_FENNEL && defined CARBON
+# if (defined BIO_FENNEL && defined CARBON) || defined ECB
 !
       allocate ( OCEAN(ng) % pH(LBi:UBi,LBj:UBj) )
       Dmem(ng)=Dmem(ng)+size2d
@@ -1109,7 +1109,7 @@
      &                 __LINE__, 'OCEAN(ng)%wstvel')) RETURN
 #  endif
 
-#  if defined BIO_FENNEL && defined CARBON
+#  if (defined BIO_FENNEL && defined CARBON) || defined ECB
       IF (.not.destroy(ng, OCEAN(ng)%pH, MyFile,                        &
      &                 __LINE__, 'OCEAN(ng)%pH')) RETURN
 #  endif
@@ -1661,7 +1661,8 @@
             OCEAN(ng) % uwave(i,j) = IniVal
             OCEAN(ng) % vwave(i,j) = IniVal
 #endif
-#if defined BIO_FENNEL && defined CARBON && defined SOLVE3D
+#if (defined BIO_FENNEL && defined CARBON && defined SOLVE3D) ||\
+    (defined ECB && defined SOLVE3D)
             OCEAN(ng) % pH(i,j) = 8.0_r8
 #endif
 #ifdef RED_TIDE
