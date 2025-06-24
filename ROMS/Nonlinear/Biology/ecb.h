@@ -2,7 +2,7 @@
 !
 !git $Id$
 !=======================================================================
-!  Copyright (c) 2002-2025 The ROMS Group          Pierre St-Laurent   !
+!  Copyright (c) 2002-2025 The ROMS Group            VIMS Colleagues   !
 !    Licensed under a MIT/X style license           Hernan G. Arango   !
 !    See License_ROMS.md                                Katja Fennel   !
 !=======================================================================
@@ -15,7 +15,7 @@
 !  but it differs in many respects.  The detailed equations of the     !
 !  nitrogen cycling component  are given in  Fennel et al. (2006),     !
 !  Feng et al. (2015), and multiple follow-ups listed below.           !
-!  Nitrogen is the  fundamental elemental  currency in this model.     !
+!  Nitrogen is the fundamental elemental currency in this model.       !
 !                                                                      !
 !  Available options:                                                  !
 !                                                                      !
@@ -43,7 +43,7 @@
 !                                                                      !
 !  - "RW14_OXYGEN_SC" and/or  "RW14_CO2_SC":                           !
 !                                                                      !
-!    The model usea Wanninkhof (2014) air-sea flux parameterization.   !
+!    The model use a Wanninkhof (2014) air-sea flux parameterization.  !
 !                                                                      !
 !  - "PCO2AIR_DATA":                                                   !
 !                                                                      !
@@ -81,17 +81,17 @@
 !    Fennel, K., Wilkin, J., Levin, J., Moisan, J., O^Reilly, J.,      !
 !      Haidvogel, D., 2006: Nitrogen cycling in the Mid Atlantic       !
 !      Bight and implications for the North Atlantic nitrogen          !
-!      budget: Results from a three-dimensional model.  Global         !
-!      Biogeochemical Cycles 20, GB3007, doi:10.1029/2005GB002456.     !
+!      budget: Results from a three-dimensional model, Global          !
+!      Biogeochemical Cycles, 20, GB3007, doi:10.1029/2005GB002456.    !
 !                                                                      !
 !    Fennel, K., Wilkin, J., Previdi, M., Najjar, R. 2008:             !
 !      Denitrification effects on air-sea CO2 flux in the coastal      !
-!      ocean: Simulations for the Northwest North Atlantic.            !
+!      ocean: Simulations for the Northwest North Atlantic,            !
 !      Geophys. Res. Letters 35, L24608, doi:10.1029/2008GL036147.     !
 !                                                                      !
 !    Fennel, K., Hu, J., Laurent, A., Marta-Almeida, M., Hetland, R.   !
 !      2013: Sensitivity of Hypoxia Predictions for the Northern Gulf  !
-!      of Mexico to Sediment Oxygen Consumption and Model Nesting. J.  !
+!      of Mexico to Sediment Oxygen Consumption and Model Nesting, J.  !
 !      Geophys. Res. Ocean 118 (2), 990-1002, doi:10.1002/jgrc.20077.  !
 !                                                                      !
 !    Keeling, R.F., Stephens, B.B., Najjar, R.G., Doney, S.C.,         !
@@ -101,16 +101,16 @@
 !                                                                      !
 !    Laurent, A., Fennel, K., Hu, J., Hetland, R. 2012: Simulating     !
 !      the Effects of Phosphorus Limitation in the Mississippi and     !
-!      Atchafalaya River Plumes. Biogeosciences, 9 (11), 4707-4723,    !
+!      Atchafalaya River Plumes, Biogeosciences, 9 (11), 4707-4723,    !
 !      doi:10.5194/bg-9-4707-2012.                                     !
 !                                                                      !
 !    Yu, L., Fennel, K., Laurent, A., Murrell, M. C., Lehrter, J. C.   !
 !      2015: Numerical Analysis of the Primary Processes Controlling   !
-!      Oxygen Dynamics on the Louisiana Shelf. Biogeosciences, 12 (7), !
+!      Oxygen Dynamics on the Louisiana Shelf, Biogeosciences, 12 (7), !
 !      2063-2076, doi:10.5194/bg-12-2063-2015.                         !
 !                                                                      !
-!    Wanninkhof, R. 2014: Relationship between Wind Speed and Gas      !
-!      Exchange over the Ocean Revisited. Limnol. Oceanogr. Methods    !
+!    Wanninkhof, R., 2014: Relationship between Wind Speed and Gas     !
+!      Exchange over the Ocean Revisited, Limnol. Oceanogr. Methods    !
 !      12 (6), 351-362, doi:10.4319/lom.2014.12.351.                   !
 !                                                                      !
 !**********************************************************************!
@@ -180,6 +180,7 @@
 #else
       PRIVATE :: pCO2_water
 #endif
+      PRIVATE
 !
       CONTAINS
 !
@@ -2138,43 +2139,42 @@
 !  p.139-142. The coefficients are on the seawater scale (SWS).
 !-----------------------------------------------------------------------
 !
-        a_mi =    13.40380_r8 * sqrtS + 0.032060_r8 * S(i)              &
-     &                                - 5.242e-5_r8 * S(i)**2
-        b_mi = - 530.65900_r8 * sqrtS - 5.821000_r8 * S(i)
-        c_mi = -   2.06640_r8 * sqrtS
-        pkmi = - 126.34048_r8 + 6320.813_r8 * invTk +19.568224_r8 *logTk
-        pkmi = pkmi + a_mi + b_mi * invTk + c_mi * logTk
-        K1   = 10.0_r8**(- pkmi)
+        a_mi=13.40380_r8*sqrtS+                                         &
+     &       S(i)*(0.032060_r8-5.242e-5_r8*S(i))
+        b_mi=-530.65900_r8*sqrtS-5.821000_r8*S(i)
+        c_mi=-2.06640_r8*sqrtS
+        pkmi=-126.34048_r8+6320.813_r8*invTk+19.568224_r8*logTk
+        pkmi=pkmi+a_mi+b_mi*invTk+c_mi*logTk
+        K1=10.0_r8**(-pkmi)
 !
-        a_mi =    21.37280_r8 * sqrtS +  0.121800_r8 * S(i)             &
-     &                                -  3.688e-4_r8 * S(i)**2
-        b_mi = - 788.28900_r8 * sqrtS - 19.189000_r8 * S(i)
-        c_mi = -   3.37400_r8 * sqrtS
-        pkmi = -  90.18333_r8 + 5143.692_r8 * invTk +14.613358_r8 *logTk
-        pkmi = pkmi + a_mi + b_mi * invTk + c_mi * logTk
-        K2   = 10.0_r8**(- pkmi)
+        a_mi=21.37280_r8*sqrtS+                                         &
+     &       S(i)*(0.121800_r8-3.688e-4_r8*S(i))
+        b_mi=-788.28900_r8*sqrtS-19.189000_r8*S(i)
+        c_mi=-3.37400_r8*sqrtS
+        pkmi=-90.18333_r8+5143.692_r8*invTk+14.613358_r8*logTk
+        pkmi=pkmi+a_mi+b_mi*invTk+c_mi*logTk
+        K2=10.0_r8**(-pkmi)
 
 # elif defined pCO2_RZ_CAIWANG_1998
 
 !  Use K1,K2 of Cai and Wang, 1998, Limnology and Oceanography, p. 661.
 !  The coefficients are on NBS scale, need to use "fhcw" to convert to
-!  SWS. "fhcw" calculation is from CO2SYS.m (Takahashi et al., 1982)
+!  SWS. "fhcw" calculation is from CO2SYS.m (Takahashi et al., 1982).
 !-----------------------------------------------------------------------
 !
-        fhcw =  1.2948_r8   - 2.036e-3_r8 * Tk                          &
-     &       + (4.607e-4_r8 - 1.475e-6_r8 * Tk) * S(i)**2
-
-        pkcw = 200.1_r8     * invTk + 0.322_r8
-        pkcw = 3404.71_r8   * invTk + 0.032786_r8 * Tk - 14.8435_r8     &
-             - 7.1692e-2_r8 * pkcw  * sqrtS       + 2.1487e-3_r8 * S(i)
-        K1   = 10.0_r8**(- pkcw) ! This is on NBS scale
-        K1   = K1 / fhcw         ! Convert to SWS scale
-
-        pkcw = - 129.24_r8 * invTk + 1.4381_r8
-        pkcw = 2902.39_r8  * invTk + 0.02379_r8 * Tk - 6.498_r8         &
-     &       - 0.3191_r8   * pkcw  * sqrtS      + 0.0198_r8 * S(i)
-        K2   = 10.0_r8**(- pkcw) ! This is on NBS scale
-        K2   = K2 / fhcw         ! Convert to SWS scale
+        fhcw=1.2948_r8-2.036e-3_r8*Tk+                                  &
+     &       (4.607e-4_r8-1.475e-6_r8*Tk)*S(i)*S(i)
+        pkcw=200.1_r8  *invTk+0.322_r8
+        pkcw=3404.71_r8*invTk+0.032786_r8*Tk-14.8435_r8-                &
+     &       7.1692e-2_r8*pkcw*sqrtS+2.1487e-3_r8*S(i)
+        K1=10.0_r8**(- pkcw)     ! This is on NBS scale
+        K1=K1/fhcw               ! Convert to SWS scale
+!
+        pkcw=-129.24_r8*invTk+1.4381_r8
+        pkcw=2902.39_r8*invTk+0.02379_r8*Tk-6.498_r8-                   &
+     &       0.3191_r8*pkcw*sqrtS+0.0198_r8*S(i)
+        K2=10.0_r8**(-pkcw)      ! This is on NBS scale
+        K2=K2/fhcw               ! Convert to SWS scale
 # else
 
 !  From Millero (1995; page 664) using Mehrbach et al. (1973) data on
