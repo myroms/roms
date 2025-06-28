@@ -44,8 +44,9 @@
 !    DimIDs(30) => Number of 3D variables time levels (2)              !
 !    DimIDs(31) => Number of 2D variables time levels (3)              !
 !    DimIDs(32) => Number of sediment tracers                          !
-!    DimIDs(33) => Number of light spectral bands.                     !
-!    DimIDs(34) => Number constant depth slices in 'extract_slice'.    !
+!    DimIDs(33) => Number of light spectral bands                      !
+!    DimIDs(34) => Number constant depth slices in 'extract_slice'     !
+!    DimIDs(35) => Number of submerged acuatic vegetation types        !                     
 !                                                                      !
 !=======================================================================
 !
@@ -2946,6 +2947,8 @@
 #if defined BIOLOGY && defined SOLVE3D
 # if defined BIO_FENNEL
 #  include <fennel_def.h>
+# elif defined ECB
+#  include <ecb_def.h>
 # elif defined ECOSIM
 #  include <ecosim_def.h>
 # elif defined HYPOXIA_SRM
@@ -6491,6 +6494,8 @@
 # if defined BIOLOGY && defined SOLVE3D
 #  if defined BIO_FENNEL
 #   include <fennel_def_pio.h>
+#  elif defined ECB
+#   include <ecb_def_pio.h>
 #  elif defined ECOSIM
 #   include <ecosim_def_pio.h>
 #  elif defined HYPOXIA_SRM

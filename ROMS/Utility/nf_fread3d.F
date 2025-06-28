@@ -1016,7 +1016,7 @@
           Ie=IOBOUNDS(ng)%IUB_psi
           Js=IOBOUNDS(ng)%JLB_psi
           Je=IOBOUNDS(ng)%JUB_psi
-        CASE (b3dvar, l3dvar, r2dvar, r3dvar, w3dvar)
+        CASE (a3dvar, b3dvar, l3dvar, r2dvar, r3dvar, w3dvar)
           Cgrid=2                                         ! RHO-points
           Is=IOBOUNDS(ng)%ILB_rho
           Ie=IOBOUNDS(ng)%IUB_rho

@@ -34,6 +34,18 @@
       USE mod_sedbed
 #endif
       USE mod_stepping
+#if defined VEGETATION
+      USE mod_vegetation
+#endif
+#if defined VEGETATION
+!
+# ifdef VEG_DRAG
+      USE vegetation_drag_mod,    ONLY : vegetation_drag_cal
+# endif
+# ifdef VEG_HMIXING
+      USE vegetation_hmixing_mod, ONLY : vegetation_hmixing_cal
+# endif
+#endif
 !
 !  Imported variable declarations.
 !
@@ -92,7 +104,13 @@
 #if defined SEDIMENT && defined SED_MORPH
      &                 SEDBED(ng) % bed_thick,                          &
 #endif
-
+#if defined VEGETATION && defined VEG_DRAG
+     &                  VEG(ng) % step2d_uveg,                          &
+     &                  VEG(ng) % step2d_vveg,                          &
+#endif
+#if defined VEGETATION && defined VEG_HMIXING
+     &                  VEG(ng) % visc2d_r_veg,                         &
+#endif
 #ifdef WEC
 # ifdef WEC_VF
 #  ifdef WEC_ROLLER
@@ -196,6 +214,12 @@
 #endif
 #if defined SEDIMENT && defined SED_MORPH
      &                        bed_thick,                                &
+#endif
+#if defined VEGETATION && defined VEG_DRAG
+     &                        step2d_uveg, step2d_vveg,                 &
+#endif
+#if defined VEGETATION && defined VEG_HMIXING
+     &                        visc2d_r_veg,                             &
 #endif
 #ifdef WEC
 # ifdef WEC_VF
@@ -321,6 +345,13 @@
 # endif
 # if defined SEDIMENT && defined SED_MORPH
       real(r8), intent(in   ) :: bed_thick(LBi:,LBj:,:)
+# endif
+# if defined VEGETATION && defined VEG_DRAG
+      real(r8), intent(in) :: step2d_uveg(LBi:,LBj:)
+      real(r8), intent(in) :: step2d_vveg(LBi:,LBj:)
+# endif
+# if defined VEGETATION && defined VEG_HMIXING
+      real(r8), intent(in) :: visc2d_r_veg(LBi:,LBj:)
 # endif
 # ifdef WEC
 #  ifdef WEC_VF
@@ -455,6 +486,13 @@
 # endif
 # if defined SEDIMENT && defined SED_MORPH
       real(r8), intent(in   ) :: bed_thick(LBi:UBi,LBj:UBj,1:3)
+# endif
+# if defined VEGETATION && defined VEG_DRAG
+      real(r8), intent(in) :: step2d_uveg(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: step2d_vveg(LBi:UBi,LBj:UBj)
+# endif
+# if defined VEGETATION && defined VEG_HMIXING
+      real(r8), intent(in) :: visc2d_r_veg(LBi:UBi,LBj:UBj)
 # endif
 # ifdef WEC
 #  ifdef WEC_VF
@@ -2171,6 +2209,33 @@
       END DO
 # endif
 #endif
+#if defined VEGETATION && defined VEG_DRAG && defined SOLVE3D
+!
+!-----------------------------------------------------------------------
+!  Add in resistance imposed on the flow by the seagrass (3D->2D).
+!-----------------------------------------------------------------------
+!
+      DO j=Jstr,Jend
+        DO i=IstrU,Iend
+          cff3=2.0_r8/(Drhs(i-1,j)+Drhs(i,j))
+          fac=step2d_uveg(i,j)*cff3*om_u(i,j)*on_u(i,j)
+          rhs_ubar(i,j)=rhs_ubar(i,j)-fac
+# ifdef DIAGNOSTICS_UV
+          DiaU2rhs(i,j,M2fveg)=-fac
+# endif
+       END DO
+     END DO
+     DO i=Istr,Iend
+       DO j=JstrV,Jend
+         cff3=2.0_r8/(Drhs(i-1,j)+Drhs(i,j))
+         fac=step2d_vveg(i,j)*cff3*om_v(i,j)*on_v(i,j)
+         rhs_vbar(i,j)=rhs_vbar(i,j)-fac
+# ifdef DIAGNOSTICS_UV
+         DiaV2rhs(i,j,M2fveg)=-fac
+# endif
+       END DO
+     END DO
+# endif
 !
 !-----------------------------------------------------------------------
 !  Add in nudging of 2D momentum climatology.

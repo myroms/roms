@@ -253,6 +253,8 @@
               gtype=v3dvar
             CASE ('w3dvar')
               gtype=w3dvar
+            CASE ('a3dvar')
+              gtype=a3dvar
             CASE ('b3dvar')
               gtype=b3dvar
             CASE DEFAULT

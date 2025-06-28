@@ -95,6 +95,7 @@
 !  fposnam     Input initial floats positions filename.                !
 !  iparnam     Input ice parameters file name.                         !
 !  sparnam     Input sediment transport parameters filename.           !
+!  vegnam      Input vegetation input parameters file name.             !
 !  sposnam     Input station positions file name.                      !
 !  varname     Input IO variables information file name.               !
 !                                                                      !
@@ -309,6 +310,7 @@
       character (len=256) :: fposnam        ! floats positions
       character (len=256) :: iparnam        ! ice model parameters
       character (len=256) :: sparnam        ! sediment model parameters
+      character (len=256) :: vegname         ! vegetation model parameters
       character (len=256) :: sposnam        ! station positions
       character (len=256) :: varname        ! I/O metadata
 !
@@ -758,6 +760,7 @@
         fbionam(i:i)=blank
         fposnam(i:i)=blank
         sparnam(i:i)=blank
+        vegname(i:i)=blank
         sposnam(i:i)=blank
       END DO
 !

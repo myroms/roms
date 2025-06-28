@@ -24,6 +24,9 @@
 # if defined PROPAGATOR && defined CHECKPOINTING
       USE mod_storage
 # endif
+# ifdef VEGETATION
+      USE mod_vegetation
+# endif
 !
 # if defined SSH_TIDES || defined UV_TIDES
       USE mod_stepping, ONLY : NTC
@@ -320,6 +323,9 @@
             CALL PIO_freedecomp (pioSystem(i,ng), ioDesc_sp_rtides(ng))
 # endif
 # ifdef SOLVE3D
+#  ifdef VEGETATION
+            CALL PIO_freedecomp (pioSystem(i,ng), ioDesc_sp_a3dvar(ng))
+#  endif
 #  ifdef SEDIMENT
             CALL PIO_freedecomp (pioSystem(i,ng), ioDesc_sp_b3dvar(ng))
 #  endif
@@ -365,6 +371,9 @@
             CALL PIO_freedecomp (pioSystem(i,ng), ioDesc_dp_rtides(ng))
 # endif
 # ifdef SOLVE3D
+#  ifdef VEGETATION
+            CALL PIO_freedecomp (pioSystem(i,ng), ioDesc_dp_a3dvar(ng))
+#  endif
 #  ifdef SEDIMENT
             CALL PIO_freedecomp (pioSystem(i,ng), ioDesc_dp_b3dvar(ng))
 #  endif
@@ -578,7 +587,7 @@
           Je=IOBOUNDS(ng) % JUB_psi
           Ioff=0
           Joff=1
-        CASE (r2dvar, b3dvar, l3dvar, l4dvar, r3dvar)
+        CASE (r2dvar, a3dvar, b3dvar, l3dvar, l4dvar, r3dvar)
           Cgrid=2
           Is=IOBOUNDS(ng) % ILB_rho
           Ie=IOBOUNDS(ng) % IUB_rho
@@ -774,6 +783,9 @@
       allocate ( ioDesc_sp_rtides(Ngrids) )
 # endif
 # ifdef SOLVE3D
+#  ifdef VEGETATION
+      allocate ( ioDesc_sp_a3dvar(Ngrids) )
+#  endif
 #  ifdef SEDIMENT
       allocate ( ioDesc_sp_b3dvar(Ngrids) )
 #  endif
@@ -822,6 +834,9 @@
       allocate ( ioDesc_dp_rtides(Ngrids) )
 # endif
 # ifdef SOLVE3D
+#  ifdef VEGETATION
+      allocate ( ioDesc_dp_a3dvar(Ngrids) )
+#  endif
 #  ifdef SEDIMENT
       allocate ( ioDesc_dp_b3dvar(Ngrids) )
 #  endif
@@ -955,6 +970,11 @@
      &                       r2dvar+4, 3, 1, NTC(ng))
 # endif
 # ifdef SOLVE3D
+#  ifdef VEGETATION
+        CALL field_iodecomp (ng, pioSystem(IpioROMS,ng), PIO_real,      &
+     &                       ioDesc_sp_a3dvar(ng),                      &
+     &                       a3dvar, 3, 1, NVEG)
+#  endif
 #  ifdef SEDIMENT
         CALL field_iodecomp (ng, pioSystem(IpioROMS,ng), PIO_real,      &
      &                       ioDesc_sp_b3dvar(ng),                      &
@@ -1057,6 +1077,11 @@
      &                       r2dvar+4, 3, 1, NTC(ng))
 # endif
 # ifdef SOLVE3D
+#  ifdef VEGETATION
+        CALL field_iodecomp (ng, pioSystem(IpioROMS,ng), PIO_double,    &
+     &                       ioDesc_dp_a3dvar(ng),                      &
+     &                       a3dvar, 3, 1, NVEG)
+#  endif
 #  ifdef SEDIMENT
         CALL field_iodecomp (ng, pioSystem(IpioROMS,ng), PIO_double,    &
      &                       ioDesc_dp_b3dvar(ng),                      &

@@ -346,12 +346,15 @@
      &                    u(:,:,:,nstp), v(:,:,:,nstp))
 #  endif
 # endif
+
+# ifdef SOLVE3D
 !
 !  Compute 3D momentum (ua, va) at RHO-points (A-Grid) for output
 !  purposes and data assimilation where the observations and state
 !  vector is located at the cell-center.
 !
       CALL uv_C2A_grid (ng, tile, iNLM, nstp)
+# endif
 
 # ifdef SOLVE3D
 !
@@ -955,6 +958,7 @@
           END DO
           bed_thick(i,j,1)=bed_thick0(i,j)
           bed_thick(i,j,2)=bed_thick0(i,j)
+          bed_thick(i,j,3)=bed_thick0(i,j)
         END DO
       END DO
 !

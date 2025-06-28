@@ -31,17 +31,68 @@
      &               1, (/0/), Aval, Vinfo, ncname,                     &
      &               SetParAccess = .FALSE.)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-
+!
+      Vinfo( 1)='sg_zwbl'
+      Vinfo( 2)='input elevation to get near-bottom current vel.'
+      status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
+     &               1, (/0/), Aval, Vinfo, ncname,                     &
+     &               SetParAccess = .FALSE.)
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+!
 #ifdef BEDLOAD
       Vinfo( 1)='bedload_coeff'
       Vinfo( 2)='bedload transport rate coefficient'
       status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
      &               1, (/0/), Aval, Vinfo, ncname,                     &
      &               SetParAccess = .FALSE.)
+      IF (FoundError(exit_flag, NoError, __LINE__,                      &
+     &               __FILE__)) RETURN
+!
+      Vinfo( 1)='sedslope_crit_wet'
+      Vinfo( 2)='critical wet bed slope for slumping.'
+      status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
+     &               1, (/0/), Aval, Vinfo, ncname,                     &
+     &               SetParAccess = .FALSE.)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+!
+      Vinfo( 1)='sedslope_crit_dry'
+      Vinfo( 2)='critical dry bed slope for slumping.'
+      status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
+     &               1, (/0/), Aval, Vinfo, ncname,                     &
+     &               SetParAccess = .FALSE.)
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+!
+      Vinfo( 1)='slopefac_wet'
+      Vinfo( 2)='bedload wet bed slumping factor.'
+      status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
+     &               1, (/0/), Aval, Vinfo, ncname,                     &
+     &               SetParAccess = .FALSE.)
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+!
+      Vinfo( 1)='slopefac_dry'
+      Vinfo( 2)='bedload dry bed slumping factor.'
+      status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
+     &               1, (/0/), Aval, Vinfo, ncname,                     &
+     &               SetParAccess = .FALSE.)
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+!
+      Vinfo( 1)='bedload_vandera_alphac'
+      Vinfo( 2)='bedload scale factor for currents contribution.'
+      status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
+     &               1, (/0/), Aval, Vinfo, ncname,                     &
+     &               SetParAccess = .FALSE.)
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+!
+      Vinfo( 1)='bedload_vandera_alphaw'
+      Vinfo( 2)='bedload scale factor for waves contribution.'
+      status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
+     &               1, (/0/), Aval, Vinfo, ncname,                     &
+     &               SetParAccess = .FALSE.)
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+!
 #endif
-
-#ifdef ANA_SEDIMENT
+!
+!#ifdef ANA_SEDIMENT
       Vinfo( 1)='Sd50'
       Vinfo( 2)='median sediment grain diameter used in '//             &
      &          'uniform initial conditions'
@@ -68,7 +119,7 @@
      &               1, (/seddim/), Aval, Vinfo, ncname,                &
      &               SetParAccess = .FALSE.)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-#endif
+!#endif
 
       Vinfo( 1)='Wsed'
       Vinfo( 2)='sediment particle settling velocity'

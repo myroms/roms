@@ -26,6 +26,9 @@
       USE mod_ncparam
       USE mod_netcdf
       USE mod_scalars
+# ifdef VEGETATION
+      USE mod_vegetation
+# endif
       USE pio
 !
       USE dateclock_mod, ONLY : datenum, datestr, time_units
@@ -192,6 +195,9 @@
       TYPE (IO_desc_t), pointer :: ioDesc_sp_rtides(:) ! (i,j,NTC)
 # endif
 # ifdef SOLVE3D
+#  ifdef VEGETATION
+      TYPE (IO_desc_t), pointer :: ioDesc_sp_a3dvar(:) ! (i,j,NVEG)
+#  endif
 #  ifdef SEDIMENT
       TYPE (IO_desc_t), pointer :: ioDesc_sp_b3dvar(:) ! (i,j,Nbed)
 #  endif
@@ -236,6 +242,9 @@
       TYPE (IO_desc_t), pointer :: ioDesc_dp_rtides(:) ! (i,j,NTC)
 # endif
 # ifdef SOLVE3D
+#  ifdef VEGETATION
+      TYPE (IO_desc_t), pointer :: ioDesc_dp_a3dvar(:) ! (i,j,NVEG)
+#  endif
 #  ifdef SEDIMENT
       TYPE (IO_desc_t), pointer :: ioDesc_dp_b3dvar(:) ! (i,j,Nbed)
 #  endif

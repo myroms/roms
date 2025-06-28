@@ -631,7 +631,7 @@
       CALL bc_r2d_tile (ng, tile,                                       &
      &                  LBi, UBi, LBj, UBj,                             &
      &                  bvstrw)
-      CALL bc_u2d_tile (ng, tile,                                       &
+      CALL bc_r2d_tile (ng, tile,                                       &
      &                  LBi, UBi, LBj, UBj,                             &
      &                  bustrcwmax)
       CALL bc_r2d_tile (ng, tile,                                       &

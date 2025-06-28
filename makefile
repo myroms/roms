@@ -155,7 +155,7 @@ MY_CPP_FLAGS ?=
 #  NetCDF and so on.
 #--------------------------------------------------------------------------
 
-        FORT ?= pgi
+        FORT ?= ifort
 
 #--------------------------------------------------------------------------
 #  Set directory for executable.
@@ -404,7 +404,6 @@ CPPFLAGS += -D$(shell echo ${FORT} | tr "-" "_" | tr [a-z] [A-Z])
 CPPFLAGS += -D'ROOT_DIR="$(ROOTDIR)"'
 ifdef ROMS_APPLICATION
   CPPFLAGS  += $(ROMS_CPPFLAGS)
-  CPPFLAGS  += -DNestedGrids=$(NestedGrids)
   MDEPFLAGS += -DROMS_HEADER="$(HEADER)"
 endif
 
@@ -451,6 +450,7 @@ endif
 		ROMS/Nonlinear/BBL \
 		ROMS/Nonlinear/Biology \
 		ROMS/Nonlinear/Sediment \
+		ROMS/Nonlinear/Vegetation \
 		ROMS/Nonlinear/WEC \
 		ROMS/Functionals \
 		ROMS/Utility \
@@ -480,6 +480,7 @@ endif
 		ROMS/Nonlinear/BBL \
 		ROMS/Nonlinear/Biology \
 		ROMS/Nonlinear/Sediment \
+		ROMS/Nonlinear/Vegetation \
 		ROMS/Utility \
 		ROMS/Drivers \
                 ROMS/Functionals
