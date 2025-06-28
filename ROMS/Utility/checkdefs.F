@@ -711,7 +711,8 @@
       Coptions(is:is+11)=' BIO_OPTIC,'
 #endif
 #if defined BIO_SEDIMENT && \
-   (defined BIO_FENNEL   || defined NEMURO || defined ECOSIM)
+   (defined BIO_FENNEL || defined ECOSIM || defined ECB || \
+    defined NEMURO)
 !
       IF (Master) WRITE (stdout,20) 'BIO_SEDIMENT',                     &
      &   'Restore fallen particulate material to the nutrient pool'
@@ -774,7 +775,7 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+8)=' CANUTO_B,'
 #endif
-#if defined CARBON && defined BIO_FENNEL
+#if defined CARBON && (defined BIO_FENNEL || defined ECB)
 !
       IF (Master) WRITE (stdout,20) 'CARBON',                           &
      &   'Add Carbon constituents'
@@ -981,14 +982,15 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+9)=' DEFLATE,'
 #endif
-#if defined DENITRIFICATION && defined BIO_FENNEL
+#if defined DENITRIFICATION && (defined BIO_FENNEL || defined ECB)
 !
       IF (Master) WRITE (stdout,20) 'DENITRIFICATION',                  &
      &   'Add denitrification processes'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+17)=' DENITRIFICATION,'
 #endif
-#if defined DIAGNOSTICS_BIO && defined BIO_FENNEL
+#if defined DIAGNOSTICS_BIO && \
+   (defined BIO_FENNEL      || defined ECB || defined HYPOXIA_SRM)
 !
       IF (Master) WRITE (stdout,20) 'DIAGNOSTICS_BIO',                  &
      &   'Computing and writing biological diagnostic terms'
@@ -1058,6 +1060,14 @@
      &   'Drennan et al (2003) relation for ZoW in bulk fluxes'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+9)=' DRENNAN,'
+#endif
+#ifdef ECB
+!
+      IF (Master) WRITE (stdout,20) 'ECB',                              &
+     &   'Estuarine Carbon Biogeochemistry model, Feng et al. (2015)'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+5)=' ECB,'
+      ibiology=ibiology+1
 #endif
 #ifdef ECOSIM
 !
@@ -1841,6 +1851,13 @@
       Coptions(is:is+15)=' NESTING_DEBUG,'
 # endif
 #endif
+#if defined NET_SULFATE_REDUCTION && defined ECB
+!
+      IF (Master) WRITE (stdout,20) 'NET_SULFATE_REDUCTION',            &
+     &   'Alkality and DIC fluxes from sediment sulfate reduction'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+23)=' NET_SULFATE_REDUCTION,'
+#endif
 #if defined NLM_OUTER && defined WEAK_CONSTRAINT
 !
       IF (Master) WRITE (stdout,20) 'NLM_OUTER',                        &
@@ -2023,7 +2040,7 @@
       Coptions(is:is+18)=' OPT_PERTURBATION,'
       idriver=idriver+1
 #endif
-#if defined OXYGEN && defined BIO_FENNEL
+#if (defined OXYGEN && defined BIO_FENNEL) || defined ECB
 # ifdef OCMIP_OXYGEN_SC
 !
       IF (Master) WRITE (stdout,20) 'OCMIP_OXYGEN_SC',                  &
@@ -2072,7 +2089,7 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+10)=' PBLH,'
 #endif
-#if defined CARBON && defined BIO_FENNEL
+#if (defined CARBON && defined BIO_FENNEL) || defined ECB
 # if defined PCO2AIR_DATA
 !
       IF (Master) WRITE (stdout,20) 'PCO2AIR_DATA',                     &
@@ -2137,7 +2154,7 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+18)=' PRESS_COMPENSATE,'
 #endif
-#if defined PO4 && defined BIO_FENNEL
+#if defined PO4 && (defined BIO_FENNEL || defined ECB)
 !
       IF (Master) WRITE (stdout,20) 'PO4',                              &
      &   'Phytoplanckton growth limited by Phosphorus'
@@ -2244,7 +2261,7 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+21)=' REMOVE_LAPACK_GOTOS,'
 #endif
-#if defined OXYGEN && defined BIO_FENNEL
+#if (defined OXYGEN && defined BIO_FENNEL) || defined ECB
 # if defined OCMIP_OXYGEN_SC
 !
       IF (Master) WRITE (stdout,20) 'OCMIP_OXYGEN_SC',                  &
@@ -2545,6 +2562,13 @@
      &   'Using salinity'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+10)=' SALINITY,'
+#endif
+#if defined SANDS_PROXY_ISS && defined SEDIMENT && defined ECB
+!
+      IF (Master) WRITE (stdout,20) 'SANDS_PROXY_ISS',                  &
+     &   'Suspended sands as proxy to inorganic suspended solids (ISS)'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+17)=' SANDS_PROXY_ISS,'
 #endif
 #ifdef SANITY_CHECK
 !
@@ -2963,7 +2987,7 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+15)=' SWAN_COUPLING,'
 #endif
-#if defined CARBON && defined BIO_FENNEL
+#if (defined CARBON && defined BIO_FENNEL) || defined ECB
 # ifdef TALK_NONCONSERV
 !
       IF (Master) WRITE (stdout,20) 'TALK_NONCONSERV',                  &

@@ -1109,7 +1109,7 @@ metadata:
     field:          max wind-current bottom wave x-stress            # Output: [N/m2]
     time:           ocean_time
     index_code:     idUbcs
-    type:           u2dvar
+    type:           r2dvar
     add_offset:     0.0d0
     scale:          1.0d0
 
@@ -1120,7 +1120,7 @@ metadata:
     field:          max wind-current bottom wave y-stress            # Output: [N/m2]
     time:           ocean_time
     index_code:     idVbcs
-    type:           v2dvar
+    type:           r2dvar
     add_offset:     0.0d0
     scale:          1.0d0
 
@@ -3879,9 +3879,9 @@ metadata:
     add_offset:     0.0d0
     scale:          1.0d0
 
-  ##################################################################
-  ###  Ecosystem Variables: BIO_FENNEL, NEMURO, NPZD or HYPOXIA  ###
-  ##################################################################
+  ######################################################################
+  ###  Ecosystem Variables: BIO_FENNEL, ECB, HYPOXIA, NEMURO or NPZD ###
+  ######################################################################
 
   - variable:       NO3                                              # Input/Output
     standard_name:  mole_concentration_of_nitrate_expressed_as_nitrogen_in_sea_water
@@ -6130,6 +6130,465 @@ metadata:
     time:           ocean_time
     index_code:     iDbio4(idbTOT)
     type:           l4dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  ######################################################
+  ###  Estuarine Carbon Biogeochemistry (ECB) Model  ###
+  ######################################################
+ 
+  - variable:       river_refractoryDON                              # Input
+    standard_name:  mole_concentration_of_refractory_dissolved_organic_nitrogen_in_sea_water
+    long_name:      river runoff refractoryDON
+    units:          millimole_nitrogen meter-3                       # [millimole/m3]
+    field:          river refractoryDON
+    time:           river_time
+    index_code:     idRtrc(irDON)
+    type:           nulvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       river_refractoryDOC                              # Input
+    standard_name:  mole_concentration_of_refractory_dissolved_organic_carbon_in_sea_water
+    long_name:      river runoff refractoryDOC
+    units:          millimole_carbon meter-3                         # [millimole/m3]
+    field:          river refractoryDOC
+    time:           river_time
+    index_code:     idRtrc(irDOC)
+    type:           nulvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       river_semilabileDON                              # Input
+    standard_name:  mole_concentration_of_semilabile_dissolved_organic_nitrogen_in_sea_water
+    long_name:      river runoff semilabileDON
+    units:          millimole_nitrogen meter-3                       # [millimole/m3]
+    field:          river semilabileDON
+    time:           river_time
+    index_code:     idRtrc(iDON_)
+    type:           nulvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       river_semilabileDOC                              # Input
+    standard_name:  mole_concentration_of_semilabile_dissolved_organic_carbon_in_sea_water
+    long_name:      river runoff semilabileDOC
+    units:          millimole_carbon meter-3                         # [millimole/m3]
+    field:          river semilabileDOC
+    time:           river_time
+    index_code:     idRtrc(iDOC_)
+    type:           nulvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       river_calcium                                    # Input
+    standard_name:  mole_concentration_of_calcium_in_sea_water
+    long_name:      river runoff calcium
+    units:          millimole_calcium meter-3                        # [millimole/m3]
+    field:          river calcium
+    time:           river_time
+    index_code:     idRtrc(iCalc)
+    type:           nulvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       refractoryDON                                    # Input/Output
+    standard_name:  mole_concentration_of_refractory_dissolved_organic_nitrogen_in_sea_water
+    long_name:      refractoryDON concentration
+    units:          millimole_nitrogen meter-3                       # [millimole/m3]
+    field:          refractoryDON
+    time:           ocean_time
+    index_code:     idTvar(irDON)
+    type:           r3dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       refractoryDON                                    # Input
+    standard_name:  mole_concentration_of_refractory_dissolved_organic_nitrogen_in_sea_water
+    long_name:      refractoryDON concentration functional
+    units:          millimole_nitrogen meter-3                       # [millimole/m3]
+    field:          refractoryDON functional
+    time:           ocean_time
+    index_code:     idTads(irDON)
+    type:           r3dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       refractoryDOC                                    # Input/Output
+    standard_name:  mole_concentration_of_refractory_dissolved_organic_carbon_in_sea_water
+    long_name:      refractoryDOC concentration
+    units:          millimole_carbon meter-3                         # [millimole/m3]
+    field:          refractoryDOC
+    time:           ocean_time
+    index_code:     idTvar(irDOC)
+    type:           r3dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       refractoryDOC                                    # Input
+    standard_name:  mole_concentration_of_refractory_dissolved_organic_carbon_in_sea_water
+    long_name:      refractoryDOC concentration functional
+    units:          millimole_carbon meter-3                         # [millimole/m3]
+    field:          refractoryDOC functional
+    time:           ocean_time
+    index_code:     idTads(irDOC)
+    type:           r3dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       semilabileDON                                    # Input/Output
+    standard_name:  mole_concentration_of_semilabile_dissolved_organic_nitrogen_in_sea_water
+    long_name:      semilabileDON concentration
+    units:          millimole_nitrogen meter-3                       # [millimole/m3]
+    field:          semilabileDON
+    time:           ocean_time
+    index_code:     idTvar(iDON_)
+    type:           r3dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       semilabileDON                                    # Input
+    standard_name:  mole_concentration_of_semilabile_dissolved_organic_nitrogen_in_sea_water
+    long_name:      semilabileDON concentration functional
+    units:          millimole_nitrogen meter-3                       # [millimole/m3]
+    field:          semilabileDON functional
+    time:           ocean_time
+    index_code:     idTads(iDON_)
+    type:           r3dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       semilabileDOC                                    # Input/Output
+    standard_name:  mole_concentration_of_semilabile_dissolved_organic_carbon_in_sea_water
+    long_name:      semilabileDOC concentration
+    units:          millimole_carbon meter-3                         # [millimole/m3]
+    field:          semilabileDOC
+    time:           ocean_time
+    index_code:     idTvar(iDOC_)
+    type:           r3dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       semilabileDOC                                    # Input
+    standard_name:  mole_concentration_of_semilabile_dissolved_organic_carbon_in_sea_water
+    long_name:      semilabileDOC concentration functional
+    units:          millimole_carbon meter-3                         # [millimole/m3]
+    field:          semilabileDOC functional
+    time:           ocean_time
+    index_code:     idTads(iDOC_)
+    type:           r3dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       calcium                                          # Input
+    standard_name:  mole_concentration_of_calcium_in_sea_water
+    long_name:      calcium concentration
+    units:          millimole_calcium meter-3                        # [millimole/m3]
+    field:          calcium
+    time:           ocean_time
+    index_code:     idTvar(iCalc)
+    type:           r3dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       calcium                                          # Input
+    standard_name:  mole_concentration_of_calcium_in_sea_water
+    long_name:      calcium concentration functional
+    units:          millimole_calcium meter-3                        # [millimole/m3]
+    field:          calcium functional
+    time:           ocean_time
+    index_code:     idTads(iCalc)
+    type:           r3dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  # Lateral Boundary Condition Variables
+ 
+  - variable:       refractoryDON_east                               # Input
+    standard_name:  mole_concentration_of_refractory_dissolved_organic_nitrogen_in_sea_water
+    long_name:      refractoryDON eastern boundary condition
+    units:          millimole_nitrogen meter-3                       # [millimole/m3]
+    field:          refractoryDON eastern-boundary
+    time:           refractoryDON_time
+    index_code:     idTbry(ieast,irDON)
+    type:           nulvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       refractoryDON_west                               # Input
+    standard_name:  mole_concentration_of_refractory_dissolved_organic_nitrogen_in_sea_water
+    long_name:      refractoryDON western boundary condition
+    units:          millimole_nitrogen meter-3                       # [millimole/m3]
+    field:          refractoryDON western-boundary
+    time:           refractoryDON_time
+    index_code:     idTbry(iwest,irDON)
+    type:           nulvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       refractoryDON_south                              # Input
+    standard_name:  mole_concentration_of_refractory_dissolved_organic_nitrogen_in_sea_water
+    long_name:      refractoryDON southern boundary condition
+    units:          millimole_nitrogen meter-3                       # [millimole/m3]
+    field:          refractoryDON southern-boundary
+    time:           refractoryDON_time
+    index_code:     idTbry(isouth,irDON)
+    type:           nulvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       refractoryDON_north                              # Input
+    standard_name:  mole_concentration_of_refractory_dissolved_organic_nitrogen_in_sea_water
+    long_name:      refractoryDON northern boundary condition
+    units:          millimole_nitrogen meter-3                       # [millimole/m3]
+    field:          refractoryDON northern-boundary
+    time:           refractoryDON_time
+    index_code:     idTbry(inorth,irDON)
+    type:           nulvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       refractoryDOC_east                               # Input
+    standard_name:  mole_concentration_of_refractory_dissolved_organic_carbon_in_sea_water
+    long_name:      refractoryDOC eastern boundary condition
+    units:          millimole_carbon meter-3                         # [millimole/m3]
+    field:          refractoryDOC eastern-boundary
+    time:           refractoryDOC_time
+    index_code:     idTbry(ieast,irDOC)
+    type:           nulvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       refractoryDOC_west                               # Input
+    standard_name:  mole_concentration_of_refractory_dissolved_organic_carbon_in_sea_water
+    long_name:      refractoryDOC western boundary condition
+    units:          millimole_carbon meter-3                         # [millimole/m3]
+    field:          refractoryDOC western-boundary
+    time:           refractoryDOC_time
+    index_code:     idTbry(iwest,irDOC)
+    type:           nulvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       refractoryDOC_south                              # Input
+    standard_name:  mole_concentration_of_refractory_dissolved_organic_carbon_in_sea_water
+    long_name:      refractoryDOC southern boundary condition
+    units:          millimole_carbon meter-3                         # [millimole/m3]
+    field:          refractoryDOC southern-boundary
+    time:           refractoryDOC_time
+    index_code:     idTbry(isouth,irDOC)
+    type:           nulvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       refractoryDOC_north                              # Input
+    standard_name:  mole_concentration_of_refractory_dissolved_organic_carbon_in_sea_water
+    long_name:      refractoryDOC northern boundary condition
+    units:          millimole_carbon meter-3                         # [millimole/m3]
+    field:          refractoryDOC northern-boundary
+    time:           refractoryDOC_time
+    index_code:     idTbry(inorth,irDOC)
+    type:           nulvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       semilabileDON_east                               # Input
+    standard_name:  mole_concentration_of_semilabile_dissolved_organic_nitrogen_in_sea_water
+    long_name:      semilabileDON eastern boundary condition
+    units:          millimole_nitrogen meter-3                       # [millimole/m3]
+    field:          semilabileDON eastern-boundary
+    time:           semilabileDON_time
+    index_code:     idTbry(ieast,iDON_)
+    type:           nulvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       semilabileDON_west                               # Input
+    standard_name:  mole_concentration_of_semilabile_dissolved_organic_nitrogen_in_sea_water
+    long_name:      semilabileDON western boundary condition
+    units:          millimole_nitrogen meter-3                       # [millimole/m3]
+    field:          semilabileDON western-boundary
+    time:           semilabileDON_time
+    index_code:     idTbry(iwest,iDON_)
+    type:           nulvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       semilabileDON_south                              # Input
+    standard_name:  mole_concentration_of_semilabile_dissolved_organic_nitrogen_in_sea_water
+    long_name:      semilabileDON southern boundary condition
+    units:          millimole_nitrogen meter-3                       # [millimole/m3]
+    field:          semilabileDON southern-boundary
+    time:           semilabileDON_time
+    index_code:     idTbry(isouth,iDON_)
+    type:           nulvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       semilabileDON_north                              # Input
+    standard_name:  mole_concentration_of_semilabile_dissolved_organic_nitrogen_in_sea_water
+    long_name:      semilabileDON northern boundary condition
+    units:          millimole_nitrogen meter-3                       # [millimole/m3]
+    field:          semilabileDON northern-boundary
+    time:           semilabileDON_time
+    index_code:     idTbry(inorth,iDON_)
+    type:           nulvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       semilabileDOC_east                               # Input
+    standard_name:  mole_concentration_of_semilabile_dissolved_organic_carbon_in_sea_water
+    long_name:      semilabileDOC eastern boundary condition
+    units:          millimole_carbon meter-3                         # [millimole/m3]
+    field:          semilabileDOC eastern-boundary
+    time:           semilabileDOC_time
+    index_code:     idTbry(ieast,iDOC_)
+    type:           nulvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       semilabileDOC_west                               # Input
+    standard_name:  mole_concentration_of_semilabile_dissolved_organic_carbon_in_sea_water
+    long_name:      semilabileDOC western boundary condition
+    units:          millimole_carbon meter-3                         # [millimole/m3]
+    field:          semilabileDOC western-boundary
+    time:           semilabileDOC_time
+    index_code:     idTbry(iwest,iDOC_)
+    type:           nulvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       semilabileDOC_south                              # Input
+    standard_name:  mole_concentration_of_semilabile_dissolved_organic_carbon_in_sea_water
+    long_name:      semilabileDOC southern boundary condition
+    units:          millimole_carbon meter-3                         # [millimole/m3]
+    field:          semilabileDOC southern-boundary
+    time:           semilabileDOC_time
+    index_code:     idTbry(isouth,iDOC_)
+    type:           nulvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       semilabileDOC_north                              # Input
+    standard_name:  mole_concentration_of_semilabile_dissolved_organic_carbon_in_sea_water
+    long_name:      semilabileDOC northern boundary condition
+    units:          millimole_carbon meter-3                         # [millimole/m3]
+    field:          semilabileDOC northern-boundary
+    time:           semilabileDOC_time
+    index_code:     idTbry(inorth,iDOC_)
+    type:           nulvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       calcium_east                                     # Input
+    standard_name:  mole_concentration_of_calcium_in_sea_water
+    long_name:      calcium eastern boundary condition
+    units:          millimole_calcium meter-3                        # [millimole/m3]
+    field:          calcium eastern-boundary
+    time:           calcium_time
+    index_code:     idTbry(ieast,iCalc)
+    type:           nulvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       calcium_west                                     # Input
+    standard_name:  mole_concentration_of_calcium_in_sea_water
+    long_name:      calcium western boundary condition
+    units:          millimole_calcium meter-3                        # [millimole/m3]
+    field:          calcium western-boundary
+    time:           calcium_time
+    index_code:     idTbry(iwest,iCalc)
+    type:           nulvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       calcium_south                                    # Input
+    standard_name:  mole_concentration_of_calcium_in_sea_water
+    long_name:      calcium southern boundary condition
+    units:          millimole_calcium meter-3                        # [millimole/m3]
+    field:          calcium southern-boundary
+    time:           calcium_time
+    index_code:     idTbry(isouth,iCalc)
+    type:           nulvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       calcium_north                                    # Input
+    standard_name:  mole_concentration_of_calcium_in_sea_water
+    long_name:      calcium northern boundary condition
+    units:          millimole_calcium meter-3                        # [millimole/m3]
+    field:          calcium northern-boundary
+    time:           calcium_time
+    index_code:     idTbry(inorth,iCalc)
+    type:           nulvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  # Time-averaged Diagnostic Variables for ECB
+ 
+  - variable:       nitrogen_buried                                  # Output
+    standard_name:  sinking_mole_flux_of_particulate_organic_matter_expressed_as_nitrogen_in_sea_water
+    long_name:      PON buried in sediment without being remineralized
+    units:          millimole_nitrogen meter-2 day-1                 # [millimole/m2/day]
+    field:          nitrogen buried
+    time:           ocean_time
+    index_code:     iDbio2(iNbur)
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       carbon_buried                                    # Output
+    standard_name:  sinking_mole_flux_of_particulate_organic_matter_expressed_as_carbon_in_sea_water
+    long_name:      POC buried in sediment without being remineralized
+    units:          millimole_carbon meter-2 day-1                   # [millimole/m2/day]
+    field:          carbon buried
+    time:           ocean_time
+    index_code:     iDbio2(iCbur)
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       carbon_bottom                                    # Output
+    standard_name:  sinking_mole_flux_of_particulate_organic_matter_expressed_as_carbon_in_sea_water
+    long_name:      POC reaching the sediment (to be buried or instantly remineralized)
+    units:          millimole_carbon meter-2 day-1                   # [millimole/m2/day]
+    field:          carbon bottom
+    time:           ocean_time
+    index_code:     iDbio2(iCbot)
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       O2_bottom                                        # Output
+    standard_name:  bottom_mole_flux_of_molecular_oxygen
+    long_name:      flux of molecular oxygen at water/sediment interface
+    units:          millimole_O2 meter-2 day-1                       # [millimole/m2/day]
+    field:          O2 bottom flux
+    time:           ocean_time
+    index_code:     iDbio2(iSoxy)
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       C_excess_uptake                                  # Output
+    standard_name:  sea_water_carbon_excess_uptake
+    long_name:      carbon excess uptake of Druon et al., 2010
+    units:          millimole_carbon meter-3 day-1                   # [millimole/m3/day]
+    field:          carbon excess uptake
+    time:           ocean_time
+    index_code:     iDbio3(iPPCe)
+    type:           r3dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       NO3_wc_denitrif                                  # Output
+    standard_name:  tendency_of_ocean_mole_content_of_nitrate_due_to_denitrification
+    long_name:      NO3 water column denitrification
+    units:          millimole_nitrogen meter-3 day-1                 # [millimole/m3/day]
+    field:          NO3 water column denitrification
+    time:           ocean_time
+    index_code:     iDbio3(iwdeN)
+    type:           r3dvar
     add_offset:     0.0d0
     scale:          1.0d0
 

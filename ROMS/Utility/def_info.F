@@ -2947,6 +2947,8 @@
 #if defined BIOLOGY && defined SOLVE3D
 # if defined BIO_FENNEL
 #  include <fennel_def.h>
+# elif defined ECB
+#  include <ecb_def.h>
 # elif defined ECOSIM
 #  include <ecosim_def.h>
 # elif defined HYPOXIA_SRM
@@ -6488,6 +6490,8 @@
 # if defined BIOLOGY && defined SOLVE3D
 #  if defined BIO_FENNEL
 #   include <fennel_def_pio.h>
+#  elif defined ECB
+#   include <ecb_def_pio.h>
 #  elif defined ECOSIM
 #   include <ecosim_def_pio.h>
 #  elif defined HYPOXIA_SRM

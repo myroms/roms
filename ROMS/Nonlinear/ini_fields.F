@@ -346,12 +346,15 @@
      &                    u(:,:,:,nstp), v(:,:,:,nstp))
 #  endif
 # endif
+
+# ifdef SOLVE3D
 !
 !  Compute 3D momentum (ua, va) at RHO-points (A-Grid) for output
 !  purposes and data assimilation where the observations and state
 !  vector is located at the cell-center.
 !
       CALL uv_C2A_grid (ng, tile, iNLM, nstp)
+# endif
 
 # ifdef SOLVE3D
 !

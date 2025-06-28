@@ -10,7 +10,8 @@
 **
 ** Application flag:   BIO_TOY
 ** Input script:       roms_bio_toy.in
-**                     bioFennel.in, ecosim.in, npzd_Franks.in, npzd_Powell.in
+**                     bioFennel.in, ecosim.in, npzd_Franks.in, npzd_Powell.in,
+**                     bio_ECB.in
 */
 
 #define UV_ADV
@@ -54,6 +55,7 @@
 */
 
 #define BIO_FENNEL
+#undef  ECB
 #undef  ECOSIM
 #undef  NEMURO
 #undef  NPZD_FRANKS
@@ -67,7 +69,17 @@
 # define DIAGNOSTICS_BIO
 #endif
 
-#if defined ECOSIM || defined BIO_FENNEL
+#ifdef ECB
+# define ANA_INITIAL
+# define ANA_BIOLOGY
+# define CARBON
+# define DENITRIFICATION
+# define BIO_SEDIMENT
+# define DIAGNOSTICS_BIO
+# define OXYGEN
+#endif
+
+#if defined ECOSIM || defined BIO_FENNEL || defined ECB
 # define ANA_SPFLUX
 # define ANA_BPFLUX
 # define ANA_CLOUD

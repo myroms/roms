@@ -458,10 +458,29 @@
 ** OXYGEN                  to add oxygen dynamics                            **
 ** PCO2AIR_DATA            if pCO2 climatology from Laurent et al. (2017)    **
 ** PCO2AIR_SECULAR         if pCO2 time-depedent evolution                   **
+** PO4                     if phytoplanckton growth limitef by Phosphorus    **
 ** RW14_C02_SC             if CO2 Schmidt number from Wanninkhof (2014)      **
 ** RW14_OXYGEN_SC          if O2  Schmidt number from Wanninkhof (2014)      **
-** PO4                     if phytoplanckton growth limitef by Phosphorus    **
 ** RIVER_DON               if DON non-sinking source from rivers             **
+** TALK_NONCONSERV         if nonconservative computation of alkalinity      **
+**                                                                           **
+** Feng et al. (2015) Estuarine Carbon Biogeochemisty (ECB) model OPTIONS:   **
+**                                                                           **
+** ECB                     if Feng et al. (2015) Nitrogen/Carbon model       **
+** BIO_SEDIMENT            to restore fallen material to the nutrient pool   **
+** CARBON                  to add carbon constituents                        **
+** DENITRIFICATION         to add denitrification processes                  **
+** NET_SULFATE_REDUCTION   if sediment sulfate reduction, Da et al. (2024)   **
+** OCMIP_OXYGEN_SC         if O2 Schmidt number from Keeling et al. (1998)   **
+** OXYGEN                  to add oxygen dynamics                            **
+** PCO2AIR_DATA            if pCO2 climatology from St-Laurent et al. (2020) **
+** PCO2AIR_SECULAR         if pCO2 time-depedent evolution                   **
+** PO4                     if phytoplankton growth limited by phosphorus     **
+** pCO2_RZ_CAIWANG_1998    if dissipation constants of Cai and Wang 1998     **
+** pCO2_RZ_MILLERO_2010    if dissipation constants of Millero 2010          **
+** RW14_CO2_SC             if CO2 Schmidt number from Wanninkhof (2014)      **
+** RW14_OXYGEN_SC          if O2  Schmidt number from Wanninkhof (2014)      **
+** SANDS_PROXY_ISS         if sands as a proxy to ISS in light attenuation   **
 ** TALK_NONCONSERV         if nonconservative computation of alkalinity      **
 **                                                                           **
 ** Hypoxia ecosysten model OPTIONS:                                          **
