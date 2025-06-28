@@ -1008,16 +1008,16 @@ Dout(iwdeN) == T        ! NO3_wc_denitrif    denitrification flux  watcol
 !                   idTvar(idbio( 5))=iZoop    Zooplankton biomass
 !                   idTvar(idbio( 6))=iLDeN    Large N-detritus
 !                   idTvar(idbio( 7))=iSDeN    Small N-detritus
-!                   idTvar(idbio( 8))=iRDeN    ECB's semilabileDON
+!                   idTvar(idbio( 8))=iRDeN    semilabileDON
 !                   idTvar(idbio( 9))=iPO4_    Phosphate concentration
 !                   idTvar(idbio(10))=iLDeC    Large C-detritus
 !                   idTvar(idbio(11))=iSDeC    Small C-detritus
 !                   idTvar(idbio(12))=iTIC_    Total inorganic carbon
 !                   idTvar(idbio(13))=iTAlk    Alkalinity
-!                   idTvar(idbio(14))=iRDeC    ECB's semilabileDOC
+!                   idTvar(idbio(14))=iRDeC    semilabileDOC
 !                   idTvar(idbio(15))=iOxyg    Oxygen concentration
-!                   idTvar(idbio(16))=irfDON_  ECB's refractoryDON
-!                   idTvar(idbio(17))=irfDOC_  ECB's refractoryDOC
+!                   idTvar(idbio(16))=irfDON_  refractoryDON
+!                   idTvar(idbio(17))=irfDOC_  refractoryDOC
 !                   idTvar(idbio(18))=iCalc    Ca2+ concentration
 !
 !------------------------------------------------------------------------------

@@ -2565,7 +2565,7 @@
 #endif
 #if defined SANDS_PROXY_ISS && defined SEDIMENT && defined ECB
 !
-      IF (Master) WRITE (stdout,20) 'SANITY_CHECK',                     &
+      IF (Master) WRITE (stdout,20) 'SANDS_PROXY_ISS',                  &
      &   'Suspended sands as proxy to inorganic suspended solids (ISS)'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+17)=' SANDS_PROXY_ISS,'

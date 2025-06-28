@@ -170,6 +170,9 @@
       USE mod_scalars
 !
       USE dateclock_mod, ONLY : caldate
+#if defined SEDIMENT && defined SANDS_PROXY_ISS
+      USE mod_sediment,  ONLY : isand
+#endif
 !
       implicit none
 !
@@ -769,7 +772,7 @@
                   itrc=isand(ised)     ! suspended noncohesive sediment
                   TSS=TSS+Bio(i,k,itrc)*1.e3_r8
                 END DO
-                AttFac=rkdTSS1(ng)*TSS+
+                AttFac=rkdTSS1(ng)*TSS+                                 &
      &                 rkdS1(ng)*Bio(i,k,isalt)
 !
 !  Enforce a lower bound (salinity term could produce Att < 0).
@@ -1810,7 +1813,7 @@
      &                              (1.0_r8-(cff2+cff5)*                &
      &                                      (1.0_r8+3.0_r8*LBO2))*      &
 # ifdef NET_SULFATE_REDUCTION
-     &                              *0.30_r8*                           &
+     &                              0.30_r8*                            &
 # endif
      &                              cff1*Hz(i,j,1)*fiter
 #endif
@@ -1904,8 +1907,8 @@
 !
                 Bio(i,1,iDOC_)=Bio(i,1,iDOC_)+                          &
      &                         fac2*cff1*cff5*0.30_r8
-                Bio(i,1,iTIC_)=Bio(i,1,iTIC_)+
-                               fac2*cff1*(1.0_r8-cff5)*0.30_r8
+                Bio(i,1,iTIC_)=Bio(i,1,iTIC_)+                          &
+     &                         fac2*cff1*(1.0_r8-cff5)*0.30_r8
 !
 !  70% of the organic matter will be remineralized by net sulfate
 !  reduction. Here, we use organic carbon for all calculations. This
@@ -1921,7 +1924,7 @@
                 fac=fac2*cff1*0.70_r8
                 Bio(i,1,iTIC_)=Bio(i,1,iTIC_)+                          &
      &                         fac
-                Bio(i,1,iOxyg)=Bio(i,1,iOxyg)-
+                Bio(i,1,iOxyg)=Bio(i,1,iOxyg)-                          &
      &                         fac*(2.0_r8/3.0_r8*(1.0_r8-LBO2))
 !
 !  Add additional O2 consumption via sulfate reduction.
