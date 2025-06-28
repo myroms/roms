@@ -314,7 +314,7 @@
       END DO
 # endif
 # ifdef DIAGNOSTICS_BIO
-#  if defined BIO_FENNEL || defined HYPOXIA_SRM
+#  if defined BIO_FENNEL || defined ECB || defined HYPOXIA_SRM
 !
 !  Write out 2D biological diagnostic fields.
 !
@@ -349,7 +349,7 @@
         END IF
       END DO
 #  endif
-#  if defined BIO_FENNEL
+#  if defined BIO_FENNEL || defined ECB
 !
 !  Write out 3D biological diagnostic fields.
 !
@@ -704,7 +704,7 @@
       END DO
 #  endif
 #  ifdef DIAGNOSTICS_BIO
-#   if defined BIO_FENNEL || defined HYPOXIA_SRM
+#   if defined BIO_FENNEL || defined ECB || defined HYPOXIA_SRM
 !
 !  Write out 2D biological diagnostic fields.
 !
@@ -744,7 +744,7 @@
         END IF
       END DO
 #   endif
-#   if defined BIO_FENNEL
+#   if defined BIO_FENNEL || defined ECB
 !
 !  Write out 3D biological diagnostic fields.
 !

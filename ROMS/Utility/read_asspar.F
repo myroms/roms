@@ -43,6 +43,7 @@
       integer :: Mval, Npts, Nval
       integer :: i, ib, igrid, itrc, k, ng, status
       integer :: Cdim, Clen, Rdim
+      integer :: obs_lib
       integer :: Ivalue(1)
 
       integer :: Nfiles(Ngrids)
@@ -89,6 +90,17 @@
       Cdim=SIZE(Cval,1)
       Clen=LEN(Cval(1))
       Rdim=SIZE(Rval,1)
+!
+!  Set NetCDF library to process reading and writing the observation
+!  vectors. Since the input OBS(ng)%name file can be rewritten, we
+!  need to ensure that the output DAV(ng)%name is processed with the
+!  same library.
+!
+      IF (inp_lib.ne.out_lib) THEN
+        obs_lib=io_nf90             ! use standard NetCDF library
+      ELSE
+        obs_lib=inp_lib             ! use specified input NetCDF library
+      END IF
 
 # if defined FOUR_DVAR  || defined VERIFICATION || \
     (defined HESSIAN_SV && defined BNORM)
@@ -667,7 +679,6 @@
               Npts=load_s1d(Nval, Cval, Cdim, line, label, igrid,       &
      &                      Ngrids, Nfiles, 5, 5, inp_lib, STD)
 #  endif
-
             CASE ('NRMnameI')
               label='NRM - initial conditions normalization'
               Npts=load_s1d(Nval, Cval, Cdim, line, label, igrid,       &
@@ -687,7 +698,7 @@
             CASE ('OBSname')
               label='OBS - data assimilation observations'
               Npts=load_s1d(Nval, Cval, Cdim, line, label, igrid,       &
-     &                      Ngrids, Nfiles, inp_lib, OBS)
+     &                      Ngrids, Nfiles, obs_lib, OBS)
             CASE ('HSSname')
               label='HSS - Hessian eigenvectors'
               Npts=load_s1d(Nval, Cval, Cdim, line, label, igrid,       &
@@ -703,7 +714,7 @@
             CASE ('MODname')
               label='DAV - 4D-Var data assimilation variables'
               Npts=load_s1d(Nval, Cval, Cdim, line, label, igrid,       &
-     &                      Ngrids, Nfiles, out_lib, DAV)
+     &                      Ngrids, Nfiles, obs_lib, DAV)
             CASE ('ERRname')
               label='ERR - 4D-Var posterior error covariance'
               Npts=load_s1d(Nval, Cval, Cdim, line, label, igrid,       &

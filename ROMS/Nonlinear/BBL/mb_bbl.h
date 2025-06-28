@@ -309,7 +309,7 @@
 !-----------------------------------------------------------------------
 !
           Fwave_bot=twopi/MAX(Pwave_bot(i,j),0.05_r8)
-# ifdef MB_BBL_CALC_UB
+# ifdef MB_CALC_UB
           Kdh=h(i,j)*Fwave_bot*Fwave_bot/g
           Kbh2=Kdh*Kdh+                                                 &
      &         Kdh/(1.0_r8+Kdh*(K1+Kdh*(K2+Kdh*(K3+Kdh*(K4+             &
@@ -659,7 +659,7 @@
       CALL bc_r2d_tile (ng, tile,                                       &
      &                  LBi, UBi, LBj, UBj,                             &
      &                  bvstrw)
-      CALL bc_u2d_tile (ng, tile,                                       &
+      CALL bc_r2d_tile (ng, tile,                                       &
      &                  LBi, UBi, LBj, UBj,                             &
      &                  bustrcwmax)
       CALL bc_r2d_tile (ng, tile,                                       &

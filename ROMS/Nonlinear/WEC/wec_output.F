@@ -4426,7 +4426,7 @@
 #   ifdef MASKING
      &                       GRID(ng) % rmask,                          &
 #   endif
-     &                       AVERAGE(ng) % avgWrol)
+     &                       FORCES(ng) % rollA)
 #   ifdef AVERAGES
         ELSE
           status=nf_fwrite2d(ng, model, S(ng)%pioFile, idWrol,          &

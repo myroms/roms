@@ -1350,6 +1350,8 @@
 #if defined BIOLOGY && defined SOLVE3D
 # if defined BIO_FENNEL
 #  include <fennel_wrt.h>
+# elif defined ECB
+#  include <ecb_wrt.h>
 # elif defined ECOSIM
 #  include <ecosim_wrt.h>
 # elif defined HYPOXIA_SRM
@@ -4714,6 +4716,8 @@
 # if defined BIOLOGY && defined SOLVE3D
 #  if defined BIO_FENNEL
 #   include <fennel_wrt_pio.h>
+#  elif defined ECB
+#   include <ecb_wrt_pio.h>
 #  elif defined ECOSIM
 #   include <ecosim_wrt_pio.h>
 #  elif defined HYPOXIA_SRM

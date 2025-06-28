@@ -21,77 +21,87 @@
    (defined AD_AVERAGES && defined ADJOINT) || \
    (defined RP_AVERAGES && defined TL_IOMS) || \
    (defined TL_AVERAGES && defined TANGENT)
-      USE mod_average,  ONLY : allocate_average,                        &
-     &                         deallocate_average,                      &
-     &                         initialize_average
+      USE mod_average,    ONLY : allocate_average,                      &
+     &                           deallocate_average,                    &
+     &                           initialize_average
 #endif
-      USE mod_boundary, ONLY : allocate_boundary,                       &
-     &                         deallocate_boundary,                     &
-     &                         initialize_boundary
-      USE mod_clima,    ONLY : allocate_clima,                          &
-     &                         deallocate_clima,                        &
-     &                         initialize_clima
+      USE mod_boundary,   ONLY : allocate_boundary,                     &
+     &                           deallocate_boundary,                   &
+     &                           initialize_boundary
+      USE mod_clima,      ONLY : allocate_clima,                        &
+     &                           deallocate_clima,                      &
+     &                           initialize_clima
 #ifdef SOLVE3D
-      USE mod_coupling, ONLY : allocate_coupling,                       &
-     &                         deallocate_coupling,                     &
-     &                         initialize_coupling
+      USE mod_coupling,   ONLY : allocate_coupling,                     &
+     &                           deallocate_coupling,                   &
+     &                           initialize_coupling
 #endif
 #ifdef DIAGNOSTICS
-      USE mod_diags,    ONLY : allocate_diags,                          &
-     &                         deallocate_diags,                        &
-     &                         initialize_diags
+      USE mod_diags,      ONLY : allocate_diags,                        &
+     &                           deallocate_diags,                      &
+     &                           initialize_diags
 #endif
 #ifdef GRID_EXTRACT
-      USE mod_extract,  ONLY : allocate_extract,                        &
-     &                         deallocate_extract,                      &
-     &                         initialize_extract
+      USE mod_extract,    ONLY : allocate_extract,                      &
+     &                           deallocate_extract,                    &
+     &                           initialize_extract
 #endif
-      USE mod_forces,   ONLY : allocate_forces,                         &
-     &                         deallocate_forces,                       &
-     &                         initialize_forces
+      USE mod_forces,     ONLY : allocate_forces,                       &
+     &                           deallocate_forces,                     &
+     &                           initialize_forces
 #if defined FOUR_DVAR || defined VERIFICATION
-      USE mod_fourdvar, ONLY : deallocate_fourdvar,                     &
-     &                         initialize_fourdvar
+      USE mod_fourdvar,   ONLY : deallocate_fourdvar,                   &
+     &                           initialize_fourdvar
 #endif
-      USE mod_grid,     ONLY : allocate_grid,                           &
-     &                         deallocate_grid,                         &
-     &                         initialize_grid
+      USE mod_grid,       ONLY : allocate_grid,                         &
+     &                           deallocate_grid,                       &
+     &                           initialize_grid
 #ifdef ICE_MODEL
-      USE mod_ice,      ONLY : allocate_ice,                            &
-     &                         deallocate_ice,                          &
-     &                         initialize_ice
+      USE mod_ice,        ONLY : allocate_ice,                          &
+     &                           deallocate_ice,                        &
+     &                           initialize_ice
 #endif
-      USE mod_iounits,  ONLY : deallocate_iounits
-      USE mod_mixing,   ONLY : allocate_mixing,                         &
-     &                         deallocate_mixing,                       &
-     &                         initialize_mixing
+      USE mod_iounits,    ONLY : deallocate_iounits
+      USE mod_mixing,     ONLY : allocate_mixing,                       &
+     &                           deallocate_mixing,                     &
+     &                           initialize_mixing
 #ifdef NESTING
-      USE mod_nesting,  ONLY : allocate_nesting,                        &
-     &                         deallocate_nesting,                      &
-     &                         initialize_nesting
+      USE mod_nesting,    ONLY : allocate_nesting,                      &
+     &                           deallocate_nesting,                    &
+     &                           initialize_nesting
 #endif
-      USE mod_ocean,    ONLY : allocate_ocean,                          &
-     &                         deallocate_ocean,                        &
-     &                         initialize_ocean
+      USE mod_ocean,      ONLY : allocate_ocean,                        &
+     &                           deallocate_ocean,                      &
+     &                           initialize_ocean
 #if defined SEDIMENT || defined BBL_MODEL
-      USE mod_sedbed,   ONLY : allocate_sedbed,                         &
-     &                         deallocate_sedbed,                       &
-     &                         initialize_sedbed
+      USE mod_sedbed,     ONLY : allocate_sedbed,                       &
+     &                           deallocate_sedbed,                     &
+     &                           initialize_sedbed
 #endif
-      USE mod_sources,  ONLY : allocate_sources,                        &
-     &                         deallocate_sources
+#if defined SEDIMENT && defined SED_FLOCS
+      USE mod_sedflocs,   ONLY : allocate_sedflocs,                     &
+     &                           initialize_sedflocs
+!    &                           deallocate_sedflocs,                   &
+#endif
+#if defined VEGETATION 
+      USE mod_vegetation, ONLY : allocate_vegetation,                   &
+     &                           deallocate_vegetation,                 &
+     &                           initialize_vegetation
+#endif 
+      USE mod_sources,    ONLY : allocate_sources,                      &
+     &                           deallocate_sources
 #if defined SSH_TIDES || defined UV_TIDES
-      USE mod_tides,    ONLY : allocate_tides,                          &
-     &                         deallocate_tides,                        &
-     &                         initialize_tides
+      USE mod_tides,      ONLY : allocate_tides,                        &
+     &                           deallocate_tides,                      &
+     &                           initialize_tides
 #endif
 #ifdef BBL_MODEL
-      USE mod_bbl,      ONLY : allocate_bbl,                            &
-     &                         deallocate_bbl,                          &
-     &                         initialize_bbl
+      USE mod_bbl,        ONLY : allocate_bbl,                          &
+     &                           deallocate_bbl,                        &
+     &                           initialize_bbl
 #endif
 #if defined PIO_LIB && defined DISTRIBUTE
-      USE set_pio_mod,  ONLY : set_iodecomp
+      USE set_pio_mod,    ONLY : set_iodecomp
 #endif
 !
       implicit none
@@ -199,6 +209,12 @@
           CALL allocate_ocean (ng, LBi, UBi, LBj, UBj)
 #if defined SEDIMENT || defined BBL_MODEL
           CALL allocate_sedbed (ng, LBi, UBi, LBj, UBj)
+#endif
+#if defined SEDIMENT && defined SED_FLOCS
+          CALL allocate_sedflocs (ng, LBi, UBi, LBj, UBj)
+#endif
+#if defined VEGETATION
+          CALL allocate_vegetation (ng, iNLM, LBi, UBi, LBj, UBj)
 #endif
 #if defined SSH_TIDES || defined UV_TIDES
           CALL allocate_tides (ng, LBi, UBi, LBj, UBj)
@@ -308,6 +324,12 @@
         CALL deallocate_ocean (ng)
 #if defined SEDIMENT || defined BBL_MODEL
         CALL deallocate_sedbed (ng)
+#endif
+#if defined SEDIMENT && defined SED_FLOCS
+!       CALL deallocate_sedflocs (ng)
+#endif
+#if defined VEGETATION
+        CALL deallocate_vegetation (ng)
 #endif
 #if defined SSH_TIDES || defined UV_TIDES
         CALL deallocate_tides (ng)
@@ -422,6 +444,12 @@
           CALL initialize_ocean (ng, tile, model)
 #if defined SEDIMENT || defined BBL_MODEL
           CALL initialize_sedbed (ng, tile, model)
+#endif
+#if defined SEDIMENT && defined SED_FLOCS
+            CALL initialize_sedflocs (ng, tile, model)
+#endif
+#if defined VEGETATION 
+            CALL initialize_vegetation (ng, tile, model)
 #endif
 #if defined SSH_TIDES || defined UV_TIDES
           CALL initialize_tides (ng, tile)

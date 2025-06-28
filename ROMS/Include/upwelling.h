@@ -48,8 +48,11 @@
 # define ANA_VMIX
 #endif
 
-#if defined BIO_FENNEL  || defined ECOSIM || \
-    defined NPZD_POWELL || defined NEMURO
+#if defined BIO_FENNEL  || \
+    defined ECB         || \
+    defined ECOSIM      || \
+    defined NEMURO      || \
+    defined NPZD_POWELL
 # define ANA_BIOLOGY
 # define ANA_SPFLUX
 # define ANA_BPFLUX
@@ -66,6 +69,14 @@
 # define DENITRIFICATION
 # define BIO_SEDIMENT
 # define DIAGNOSTICS_BIO
+#endif
+
+#ifdef ECB
+# define CARBON
+# define DENITRIFICATION
+# define BIO_SEDIMENT
+# define DIAGNOSTICS_BIO
+# define OXYGEN
 #endif
 
 #ifdef PERFECT_RESTART

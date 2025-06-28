@@ -65,7 +65,7 @@
 # include "tile.h"
 !
 # ifdef PROFILE
-      CALL wclock_on (ng, iNLM, 42, __LINE__, MyFile)
+      CALL wclock_on (ng, iNLM, 43, __LINE__, MyFile)
 # endif
       CALL wec_dissip_tile (ng, tile, LBi, UBi, LBj, UBj, N(ng),        &
      &                      IminS, ImaxS, JminS, JmaxS,                 &
@@ -76,7 +76,7 @@
      &                      FORCES(ng) % Dissip_break,                  &
      &                      FORCES(ng) % Dissip_wcap)
 # ifdef PROFILE
-      CALL wclock_off (ng, iNLM, 42, __LINE__, MyFile)
+      CALL wclock_off (ng, iNLM, 43, __LINE__, MyFile)
 # endif
 !
       RETURN

@@ -12,6 +12,7 @@
 **                                                                    **
 **   (1) Model source and sink discretized equations:                 **
 **                                                                    **
+**         ecb.h              ECB                                     **
 **         ecosim.h           ECOSIM                                  **
 **         fennel.h           BIO_FENNEL                              **
 **         hypoxia_srm.h      HYPOXIA_SRM                             **
@@ -23,6 +24,7 @@
 **                                                                    **
 **   (2) Internal model parameters declaration:                       **
 **                                                                    **
+**         ecb_mod.h                                                  **
 **         ecosim_mod.h                                               **
 **         fennel_mod.h                                               **
 **         hypoxia_srm_mod.h                                          **
@@ -34,6 +36,7 @@
 **                                                                    **
 **   (3) Model parameters standard input script:                      **
 **                                                                    **
+**         bio_ECB.in                                                 **
 **         ecosim.in                                                  **
 **         bio_Fennel.in                                              **
 **         hypoxia_srm.in                                             **
@@ -45,6 +48,7 @@
 **                                                                    **
 **   (4) Code to read input model parameters:                         **
 **                                                                    **
+**         ecb_inp.h                                                  **
 **         ecosim_inp.h                                               **
 **         fennel_inp.h                                               **
 **         hypoxia_srm_inp.h                                          **
@@ -57,6 +61,7 @@
 **   (5) Code to assign indices to model variables during the         **
 **       reading of metadata information from "varinfo.yaml":         **
 **                                                                    **
+**         ecb_var.h                                                  **
 **         ecosim_var.h                                               **
 **         fennel_var.h                                               **
 **         hypoxia_srm_var.h                                          **
@@ -69,6 +74,7 @@
 **   (6) Code to define input model parameters in all output          **
 **       NetCDF files:                                                **
 **                                                                    **
+**         ecb_def.h                                                  **
 **         ecosim_def.h                                               **
 **         fennel_def.h                                               **
 **         hypoxia_srm_def.h                                          **
@@ -81,6 +87,7 @@
 **   (7) Code to write out input model parameters in all output       **
 **       NetCDF files:                                                **
 **                                                                    **
+**         ecb_wrt.h                                                  **
 **         ecosim_wrt.h                                               **
 **         fennel_wrt.h                                               **
 **         hypoxia_srm_wrt.h                                          **
@@ -101,6 +108,8 @@
 
 # if defined BIO_FENNEL
 #  include <fennel.h>
+# elif defined ECB
+#  include <ecb.h>
 # elif defined ECOSIM
 #  include <ecosim.h>
 # elif defined HYPOXIA_SRM

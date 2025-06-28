@@ -107,7 +107,7 @@
 !  Maximum number of dimension IDs stored in local array DimIDs used to
 !  defined variable dimensions in output NetCDF files.
 !
-      integer, parameter :: nDimID = 34
+      integer, parameter :: nDimID = 35
 !
 !  Number of horizontal interior and boundary water points.
 !
@@ -188,7 +188,9 @@
       integer  :: idwsin = -10  ! biological float sinking velocity
 #endif
 !
-!  Input/output identification indices.
+!  Input/output identification indices. They are in strict ALPHABETIC
+!  ORDER to guarantee no repetitive values. If we need a set of indices
+!  together, please choose the proper leading letters.
 !
       integer  :: idangR        ! angle between XI-axis and EAST
       integer  :: idbath        ! time-dependent bathymetry
@@ -199,6 +201,8 @@
       integer  :: idCos2        ! COS(omega(k)*t)*COS(omega(l)*t)
       integer  :: idDano        ! density anomaly
       integer  :: idDiff(2)     ! temperature and salinity diffusion
+      integer  :: idDr01        ! Wave avg dir of partition 01
+      integer  :: idDr02        ! Wave avg dir of partition 02
       integer  :: iddQdT        ! heat flux sensitivity to SST
       integer  :: idEmPf        ! E-P from bulk_flux.F
       integer  :: idevap        ! evaporation rate
@@ -211,6 +215,8 @@
       integer  :: idJWTy        ! Jerlov water type
       integer  :: idHbbl        ! depth of bottom boundary layer
       integer  :: idHsbl        ! depth of surface boundary layer
+      integer  :: idHs01        ! Wave height of partition 01
+      integer  :: idHs02        ! Wave height of partition 02
       integer  :: idHzdz        ! level thickness
       integer  :: idIncr        ! 4D-Var analysis increment
       integer  :: idInno        ! 4D-Var innovation vector
@@ -311,6 +317,8 @@
       integer  :: idtopo        ! time-independent bathymetry
       integer  :: idTref        ! tidal reference date for zero phase
       integer  :: idTper        ! tidal period
+      integer  :: idTp01        ! Wave peak period of partition 01
+      integer  :: idTp02        ! Wave peak period of partition 02
       integer  :: idTvan        ! tidal current angle
       integer  :: idTvma        ! maximum tidal current
       integer  :: idTvmi        ! minimum tidal current
@@ -418,6 +426,8 @@
       integer  :: idWdiw        ! wave dissipation from whitecapping
       integer  :: idWlen        ! wind-induced mean wave length
       integer  :: idWlep        ! wind-induced peak wave length
+      integer  :: idWl01        ! Wave avg length of partition 01
+      integer  :: idWl02        ! Wave avg length of partition 02
       integer  :: idWmsk        ! wet-dry mask
       integer  :: idWorb        ! wind-induced wave orbital velocity
       integer  :: idWptp        ! wind-induced surface wave period
@@ -1176,6 +1186,9 @@
 #if defined SEDIMENT || defined BBL_MODEL
       USE mod_sediment
 #endif
+#if defined VEGETATION
+      USE mod_vegetation 
+#endif 
 !
       USE get_metadata_mod, ONLY : io_metadata
       USE strings_mod,      ONLY : FoundError, StandardName
@@ -1465,6 +1478,8 @@
             gtype=v3dvar
           CASE ('w3dvar')
             gtype=w3dvar
+          CASE ('a3dvar')
+            gtype=a3dvar
           CASE ('b3dvar')
             gtype=b3dvar
 #if defined ECOSIM && defined DIAGNOSTICS_BIO
@@ -1904,6 +1919,24 @@
             idHsbl=varid
           CASE ('idHbbl')
             idHbbl=varid
+#ifdef WAVE_PARTITION
+          CASE ('idHs01')
+            idHs01=varid
+          CASE ('idHs02')
+            idHs02=varid
+          CASE ('idTp01')
+            idTp01=varid
+          CASE ('idTp02')
+            idTp02=varid
+          CASE ('idWl01')
+            idWl01=varid
+          CASE ('idWl02')
+            idWl02=varid
+          CASE ('idDr01')
+            idDr01=varid
+          CASE ('idDr02')
+            idDr02=varid
+#endif
           CASE ('idHzdz')
             idHzdz=varid
 #ifdef UV_DRAG_GRID
@@ -2196,6 +2229,16 @@
             idDu3d(M3vvis)=varid
           CASE ('idDv3d(M3vvis)')
             idDv3d(M3vvis)=varid
+#  if defined VEGETATION && defined VEG_DRAG
+          CASE ('idDu3d(M3fveg)')
+            idDu3d(M3fveg)=varid
+          CASE ('idDv3d(M3fveg)')
+            idDv3d(M3fveg)=varid
+          CASE ('idDu2d(M2fveg)')
+            idDu2d(M2fveg)=varid
+          CASE ('idDv2d(M2fveg)')
+            idDv2d(M2fveg)=varid
+#  endif
           CASE ('idDu3d(M3rate)')
             idDu3d(M3rate)=varid
           CASE ('idDv3d(M3rate)')
@@ -2390,6 +2433,8 @@
 #ifdef BIOLOGY
 # if defined BIO_FENNEL
 #  include <fennel_var.h>
+# elif defined ECB
+#  include <ecb_var.h>
 # elif defined ECOSIM
 #  include <ecosim_var.h>
 # elif defined HYPOXIA_SRM
@@ -2409,6 +2454,9 @@
 
 #if defined SEDIMENT || defined BBL_MODEL
 #  include <sediment_var.h>
+#endif
+#if defined VEGETATION 
+#  include <vegetation_var.h>
 #endif
 
           CASE DEFAULT

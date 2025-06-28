@@ -1,4 +1,4 @@
-!!
+!
       SUBROUTINE ana_wwave (ng, tile, model)
 !
 !! git $Id$
@@ -32,14 +32,26 @@
       CALL ana_wwave_tile (ng, tile, model,                             &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     IminS, ImaxS, JminS, JmaxS,                  &
-#ifdef WAVES_DIR
+#if defined BBL_MODEL || defined WEC
      &                     FORCES(ng) % Dwave,                          &
+#endif
+#if defined WAVES_OCEAN || (defined WEC_VF && defined BOTTOM_STREAMING)
+     &                     FORCES(ng) % Dissip_fric,                    &
+#endif
+#if defined TKE_WAVEDISS || defined WAVES_OCEAN || \
+    defined WDISS_THORGUZA || defined WDISS_CHURTHOR || \
+    defined WAVES_DISS
+     &                     FORCES(ng) % Dissip_break,                   &
+     &                     FORCES(ng) % Dissip_wcap,                    &
 #endif
 #ifdef WAVES_HEIGHT
      &                     FORCES(ng) % Hwave,                          &
 #endif
 #ifdef WAVES_LENGTH
      &                     FORCES(ng) % Lwave,                          &
+#endif
+#ifdef WAVES_LENGTHP
+     &                     FORCES(ng) % Lwavep,                         &
 #endif
 #ifdef WAVES_TOP_PERIOD
      &                     FORCES(ng) % Pwave_top,                      &
@@ -70,14 +82,25 @@
       SUBROUTINE ana_wwave_tile (ng, tile, model,                       &
      &                           LBi, UBi, LBj, UBj,                    &
      &                           IminS, ImaxS, JminS, JmaxS,            &
-#ifdef WAVES_DIR
+#if defined BBL_MODEL || defined WEC
      &                           Dwave,                                 &
+#endif
+#if defined WAVES_OCEAN || (defined WEC_VF && defined BOTTOM_STREAMING)
+     &                           Dissip_fric,                           &
+#endif
+#if defined TKE_WAVEDISS || defined WAVES_OCEAN || \
+    defined WDISS_THORGUZA || defined WDISS_CHURTHOR || \
+    defined WAVES_DISS
+     &                           Dissip_break, Dissip_wcap,             &
 #endif
 #ifdef WAVES_HEIGHT
      &                           Hwave,                                 &
 #endif
 #ifdef WAVES_LENGTH
      &                           Lwave,                                 &
+#endif
+#ifdef WAVES_LENGTHP
+     &                           Lwavep,                                &
 #endif
 #ifdef WAVES_TOP_PERIOD
      &                           Pwave_top,                             &
@@ -108,14 +131,26 @@
 #ifdef ASSUMED_SHAPE
       real(r8), intent(in) :: angler(LBi:,LBj:)
       real(r8), intent(in) :: h(LBi:,LBj:)
-# ifdef WAVES_DIR
+# if defined BBL_MODEL || defined WEC
       real(r8), intent(inout) :: Dwave(LBi:,LBj:)
+# endif
+# if defined WAVES_OCEAN || (defined WEC_VF && defined BOTTOM_STREAMING)
+      real(r8), intent(inout) :: Dissip_fric(LBi:,LBj:)
+# endif
+# if defined TKE_WAVEDISS || defined WAVES_OCEAN || \
+     defined WDISS_THORGUZA || defined WDISS_CHURTHOR || \
+     defined WAVES_DISS
+      real(r8), intent(inout) :: Dissip_break(LBi:,LBj:)
+      real(r8), intent(inout) :: Dissip_wcap(LBi:,LBj:)
 # endif
 # ifdef WAVES_HEIGHT
       real(r8), intent(inout) :: Hwave(LBi:,LBj:)
 # endif
 # ifdef WAVES_LENGTH
       real(r8), intent(inout) :: Lwave(LBi:,LBj:)
+# endif
+# ifdef WAVES_LENGTHP
+      real(r8), intent(inout) :: Lwavep(LBi:,LBj:)
 # endif
 # ifdef WAVES_TOP_PERIOD
       real(r8), intent(inout) :: Pwave_top(LBi:,LBj:)
@@ -131,14 +166,26 @@
 
       real(r8), intent(in) :: angler(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: h(LBi:UBi,LBj:UBj)
-# ifdef WAVES_DIR
+# if defined BBL_MODEL || defined WEC
       real(r8), intent(inout) :: Dwave(LBi:UBi,LBj:UBj)
+# endif
+# if defined WAVES_OCEAN || (defined WEC_VF && defined BOTTOM_STREAMING)
+      real(r8), intent(inout) :: Dissip_fric(LBi:UBi,LBj:UBj)
+# endif
+# if defined TKE_WAVEDISS || defined WAVES_OCEAN || \
+     defined WDISS_THORGUZA || defined WDISS_CHURTHOR || \
+     defined WAVES_DISS
+      real(r8), intent(inout) :: Dissip_break(LBi:UBi,LBj:UBj)
+      real(r8), intent(inout) :: Dissip_wcap(LBi:UBi,LBj:UBj)
 # endif
 # ifdef WAVES_HEIGHT
       real(r8), intent(inout) :: Hwave(LBi:UBi,LBj:UBj)
 # endif
 # ifdef WAVES_LENGTH
       real(r8), intent(inout) :: Lwave(LBi:UBi,LBj:UBj)
+# endif
+# ifdef WAVES_LENGTHP
+      real(r8), intent(inout) :: Lwavep(LBi:UBi,LBj:UBj)
 # endif
 # ifdef WAVES_TOP_PERIOD
       real(r8), intent(inout) :: Pwave_top(LBi:UBi,LBj:UBj)
@@ -171,15 +218,9 @@
       wdir=210.0_r8*deg2rad
       DO j=JstrT,JendT
         DO i=IstrT,IendT
-# ifdef WAVES_DIR
-          Dwave(i,j)=wdir
-# endif
-# ifdef WAVES_HEIGHT
           Hwave(i,j)=0.5_r8
-# endif
-# ifdef WAVES_BOT_PERIOD
+          Dwave(i,j)=wdir
           Pwave_bot(i,j)=8.0_r8
-# endif
         END DO
       END DO
 #elif defined LAKE_SIGNELL
@@ -189,18 +230,14 @@
       ramp_d=50.0_r8       ! start ramp DOWN at RAMP_DOWN (hours)
       DO j=JstrT,JendT
         DO i=IstrT,IendT
-# ifdef WAVES_DIR
           Dwave(i,j)=270.0_r8*deg2rad
-# endif
-# ifdef WAVES_HEIGHT
-          Hwave(i,j)=MAX((cff1*mxst),0.01_r8)
-# endif
-# ifdef WAVES_BOT_PERIOD
-          Pwave_bot(i,j)=5.0_r8    ! wave period (seconds)
-           cff1=MIN((0.5_r8*(TANH((time(ng)/3600.0_r8-ramp_u)/          &
+          Pwave_bot(i,j)=5.0_r8
+          cff1=MIN((0.5_r8*(TANH((time(ng)/3600.0_r8-ramp_u)/           &
      &                            (ramp_time/5.0_r8))+1.0_r8)),         &
      &              (1.0_r8-(0.5_r8*(TANH((time(ng)/3600.0_r8-ramp_d)/  &
      &                                    (ramp_time/5.0_r8))+1.0_r8))))
+# ifdef WAVES_HEIGHT
+          Hwave(i,j)=MAX((cff1*mxst),0.01_r8)
 # endif
         END DO
       END DO
@@ -215,32 +252,18 @@
       END IF
       DO j=JstrT,JendT
         DO i=IstrT,IendT
-# ifdef WAVES_DIR
-          Dwave(i,j)=wdir-angler(i,j)
-# endif
-# ifdef WAVES_HEIGHT
           Hwave(i,j)=0.12_r8
-# endif
-# ifdef WAVES_BOT_PERIOD
+          Dwave(i,j)=wdir-angler(i,j)
           Pwave_bot(i,j)=10.0_r8
-# endif
         END DO
       END DO
 #elif defined SED_TOY
       DO j=JstrT,JendT
         DO i=IstrT,IendT
-# ifdef WAVES_DIR
-          Dwave(i,j)=90.0_r8*deg2rad
-# endif
-# ifdef WAVES_HEIGHT
           Hwave(i,j)=2.0_r8
-# endif
-# ifdef WAVES_LENGTH
-          Lwave(i,j)=20.0_r8
-# endif
-# ifdef WAVES_BOT_PERIOD
+          Dwave(i,j)=90.0_r8*deg2rad
           Pwave_bot(i,j)=8.0_r8
-# endif
+          Lwave(i,j)=20.0_r8
         END DO
       END DO
 #else
@@ -249,88 +272,118 @@
 !
 !  Exchange boundary data.
 !
-#if defined WAVES_DIR
       IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
-        CALL exchange_r2d_tile (ng, tile,                               &
-     &                          LBi, UBi, LBj, UBj,                     &
-     &                          Dwave)
+# if defined WAVES_DIR
+      CALL exchange_r2d_tile (ng, tile,                                 &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        Dwave)
+# endif
+# if defined WAVES_OCEAN || (defined WEC_VF && defined BOTTOM_STREAMING)
+      CALL exchange_r2d_tile (ng, tile,                                 &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        Dissip_fric)
+# endif
+# if defined TKE_WAVEDISS || defined WAVES_OCEAN || \
+     defined WDISS_THORGUZA || defined WDISS_CHURTHOR || \
+     defined WAVES_DISS
+      CALL exchange_r2d_tile (ng, tile,                                 &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        Dissip_break)
+      CALL exchange_r2d_tile (ng, tile,                                 &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        Dissip_wcap)
+# endif
+# ifdef WAVES_HEIGHT
+      CALL exchange_r2d_tile (ng, tile,                                 &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        Hwave)
+# endif
+# ifdef WAVES_LENGTH
+      CALL exchange_r2d_tile (ng, tile,                                 &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        Lwave)
+# endif
+# ifdef WAVES_LENGTHP
+      CALL exchange_r2d_tile (ng, tile,                                 &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        Lwavep)
+# endif
+# ifdef WAVES_TOP_PERIOD
+      CALL exchange_r2d_tile (ng, tile,                                 &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        Pwave_top)
+# endif
+# ifdef WAVES_BOT_PERIOD
+      CALL exchange_r2d_tile (ng, tile,                                 &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        Pwave_bot)
+# endif
+# ifdef WAVES_UB
+      CALL exchange_r2d_tile (ng, tile,                                 &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        Uwave_rms)
+# endif
       END IF
-# ifdef DISTRIBUTE
+#if defined DISTRIBUTE
+# if defined WAVES_DIR
       CALL mp_exchange2d (ng, tile, model, 1,                           &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    NghostPoints,                                 &
      &                    EWperiodic(ng), NSperiodic(ng),               &
      &                    Dwave)
 # endif
-#endif
-
-#ifdef WAVES_HEIGHT
-      IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
-        CALL exchange_r2d_tile (ng, tile,                               &
-     &                          LBi, UBi, LBj, UBj,                     &
-     &                          Hwave)
-      END IF
-# ifdef DISTRIBUTE
+# if defined WAVES_OCEAN || (defined WEC_VF && defined BOTTOM_STREAMING)
+      CALL mp_exchange2d (ng, tile, model, 1,                           &
+     &                    LBi, UBi, LBj, UBj,                           &
+     &                    NghostPoints,                                 &
+     &                    EWperiodic(ng), NSperiodic(ng),               &
+     &                    Dissip_fric)
+# endif
+# if defined TKE_WAVEDISS || defined WAVES_OCEAN || \
+     defined WDISS_THORGUZA || defined WDISS_CHURTHOR || \
+     defined WAVES_DISS
+      CALL mp_exchange2d (ng, tile, model, 2,                           &
+     &                    LBi, UBi, LBj, UBj,                           &
+     &                    NghostPoints,                                 &
+     &                    EWperiodic(ng), NSperiodic(ng),               &
+     &                    Dissip_break, Dissip_wcap)
+# endif
+# ifdef WAVES_HEIGHT
       CALL mp_exchange2d (ng, tile, model, 1,                           &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    NghostPoints,                                 &
      &                    EWperiodic(ng), NSperiodic(ng),               &
      &                    Hwave)
 # endif
-#endif
-
-#ifdef WAVES_LENGTH
-      IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
-        CALL exchange_r2d_tile (ng, tile,                               &
-     &                          LBi, UBi, LBj, UBj,                     &
-     &                          Lwave)
-      END IF
-# ifdef DISTRIBUTE
+# ifdef WAVES_LENGTH
       CALL mp_exchange2d (ng, tile, model, 1,                           &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    NghostPoints,                                 &
      &                    EWperiodic(ng), NSperiodic(ng),               &
      &                    Lwave)
 # endif
-#endif
-
-#ifdef WAVES_TOP_PERIOD
-      IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
-        CALL exchange_r2d_tile (ng, tile,                               &
-     &                          LBi, UBi, LBj, UBj,                     &
-     &                          Pwave_top)
-      END IF
-# ifdef DISTRIBUTE
+# ifdef WAVES_LENGTHP
+      CALL mp_exchange2d (ng, tile, model, 1,                           &
+     &                    LBi, UBi, LBj, UBj,                           &
+     &                    NghostPoints,                                 &
+     &                    EWperiodic(ng), NSperiodic(ng),               &
+     &                    Lwavep)
+# endif
+# ifdef WAVES_TOP_PERIOD
       CALL mp_exchange2d (ng, tile, model, 1,                           &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    NghostPoints,                                 &
      &                    EWperiodic(ng), NSperiodic(ng),               &
      &                    Pwave_top)
 # endif
-#endif
-
-#ifdef WAVES_BOT_PERIOD
-      IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
-        CALL exchange_r2d_tile (ng, tile,                               &
-     &                          LBi, UBi, LBj, UBj,                     &
-     &                          Pwave_bot)
-      END IF
-# ifdef DISTRIBUTE
+# ifdef WAVES_BOT_PERIOD
       CALL mp_exchange2d (ng, tile, model, 1,                           &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    NghostPoints,                                 &
      &                    EWperiodic(ng), NSperiodic(ng),               &
      &                    Pwave_bot)
 # endif
-#endif
-
-#ifdef WAVES_UB
-      IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
-        CALL exchange_r2d_tile (ng, tile,                               &
-     &                          LBi, UBi, LBj, UBj,                     &
-     &                          Uwave_rms)
-      END IF
-# ifdef DISTRIBUTE
+# ifdef WAVES_UB
       CALL mp_exchange2d (ng, tile, model, 1,                           &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    NghostPoints,                                 &
