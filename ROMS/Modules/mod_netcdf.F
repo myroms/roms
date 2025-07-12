@@ -1367,7 +1367,8 @@
       END SUBROUTINE netcdf_check_var
 !
       SUBROUTINE netcdf_inq_var (ng, model, ncname, ncid, myVarName,    &
-     &                           SearchVar, VarID, nVarDim, nVarAtt)
+     &                           GrpName, SearchVar, VarID, nVarDim,    &
+     &                           nVarAtt)
 !
 !=======================================================================
 !                                                                      !
@@ -1384,6 +1385,7 @@
 !     ncname       NetCDF file name (string)                           !
 !     ncid         NetCDF file ID (integer, OPTIONAL)                  !
 !     myVarName    Requested variable name (string, OPTIONAL)          !
+!     GrpName      Group name (string, OPTIONAL)                       !
 !     SearchVar    Switch used when searching a variable over          !
 !                    multiple NetCDF files (logical, OPTIONAL)         !
 !                                                                      !
@@ -1431,6 +1433,7 @@
 !
       character (len=*), intent(in) :: ncname
       character (len=*), intent(in), optional :: myVarName
+      character (len=*), intent(in), optional :: GrpName
 !
       logical, intent(out), optional :: SearchVar
 !
@@ -1445,7 +1448,8 @@
       logical :: foundit, WriteError
 !
       integer :: i, j, status
-      integer :: att_id, my_Alen, my_Atype, my_id, my_ncid
+      integer :: att_id, my_Alen, my_Atype, my_id
+      integer :: my_ncid, my_grpid, nfid
 
 #if !defined PARALLEL_IO && defined DISTRIBUTE
       integer, dimension(5) :: ibuffer
@@ -1508,7 +1512,13 @@
 !  Inquire NetCDF file.
 !
       IF (InpThread) THEN
-        status=nf90_inquire(my_ncid, n_dim, n_var, n_gatt, rec_id)
+        IF (PRESENT(GrpName)) THEN
+          status=nf90_inq_ncid(my_ncid, TRIM(GrpName), my_grpid)
+          nfid=my_grpid
+        ELSE
+          nfid=my_ncid
+        END IF
+        status=nf90_inquire(nfid, n_dim, n_var, n_gatt, rec_id)
         IF ((status.eq.nf90_noerr).and.(n_var.le.Mvars)) THEN
 #if !defined PARALLEL_IO && defined DISTRIBUTE
           ibuffer(1)=n_dim
@@ -1518,6 +1528,7 @@
 #endif
 !
 !  Inquire about global dimensions: names, ID, and size.
+!  It is skiped when inquiring a Group variables since n_dim=0.
 !
           rec_size=-1
           DO i=1,n_dim
@@ -1540,6 +1551,7 @@
           END DO
 !
 !  Inquire global attribute names and their external data type.
+!  It is skiped when inquiring a group variables since n_gatt=0.
 !
           DO i=1,MIN(Matts,n_gatt)
             att_id=i
@@ -1573,13 +1585,13 @@
             DO i=1,n_var
               var_id(i)=i
               var_flag(i)=1
-              status=nf90_inquire_variable(my_ncid, var_id(i),          &
+              status=nf90_inquire_variable(nfid, var_id(i),             &
      &                                     var_name(i), var_type(i),    &
      &                                     var_ndim(i), var_dim(:,i),   &
      &                                     var_natt(i))
               IF (status.eq.nf90_noerr) THEN
                 DO j=1,MIN(NvarA,var_natt(i))
-                  status=nf90_inq_attname(my_ncid, var_id(i), j,        &
+                  status=nf90_inq_attname(nfid, var_id(i), j,           &
      &                                    var_Aname(j))
                   IF (status.eq.nf90_noerr) THEN
                     IF (TRIM(var_Aname(j)).eq.'water_points'.and.       &
@@ -1697,7 +1709,7 @@
 !
           IF (foundit.and.InpThread) THEN
             DO i=1,n_vdim
-              status=nf90_inquire_dimension(my_ncid, var_Dids(i),       &
+              status=nf90_inquire_dimension(nfid, var_Dids(i),          &
      &                                      var_Dname(i), var_Dsize(i))
               IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
                 WRITE (stdout,50) i, TRIM(myVarName), TRIM(ncname),     &
@@ -1710,16 +1722,16 @@
             END DO
             IF (status.eq.nf90_noerr) THEN
               DO i=1,MIN(NvarA, n_vatt)
-                status=nf90_inq_attname(my_ncid, my_id, i, var_Aname(i))
+                status=nf90_inq_attname(nfid, my_id, i, var_Aname(i))
                 IF (status.eq.nf90_noerr) THEN
-                  status=nf90_inquire_attribute(my_ncid, my_id,         &
+                  status=nf90_inquire_attribute(nfid, my_id,            &
      &                                          TRIM(var_Aname(i)),     &
      &                                          xtype = my_Atype,       &
      &                                          len = my_Alen)
                   IF (status.eq.nf90_noerr) THEN
                     IF ((my_Alen.eq.1).and.                             &
      &                  (my_Atype.eq.NF90_INT)) THEN
-                      status=nf90_get_att(my_ncid, my_id,               &
+                      status=nf90_get_att(nfid, my_id,                  &
      &                                    TRIM(var_Aname(i)),           &
      &                                    var_Aint(i))
                       IF (FoundError(status, nf90_noerr,                &
@@ -1736,7 +1748,7 @@
                       END IF
                     ELSE IF ((my_Alen.eq.1).and.                        &
      &                       (my_Atype.eq.NF90_FLOAT)) THEN
-                      status=nf90_get_att(my_ncid, my_id,               &
+                      status=nf90_get_att(nfid, my_id,               &
      &                                    TRIM(var_Aname(i)),           &
      &                                    my_Afloat)
                       IF (FoundError(status, nf90_noerr,                &
@@ -1758,7 +1770,7 @@
 #endif
                     ELSE IF ((my_Alen.eq.1).and.                        &
      &                       (my_Atype.eq.NF90_DOUBLE)) THEN
-                      status=nf90_get_att(my_ncid, my_id,               &
+                      status=nf90_get_att(nfid, my_id,                  &
      &                                    TRIM(var_Aname(i)),           &
      &                                    my_Adouble)
                       IF (FoundError(status, nf90_noerr,                &
@@ -1779,7 +1791,7 @@
                       var_Afloat(i)=my_Adouble
 #endif
                     ELSE IF (my_Atype.eq.NF90_CHAR) THEN
-                      status=nf90_get_att(my_ncid, my_id,               &
+                      status=nf90_get_att(nfid, my_id,                  &
      &                                    TRIM(var_Aname(i)),           &
      &                                    text(1:my_Alen))
                       IF (FoundError(status, nf90_noerr,                &
@@ -2519,8 +2531,8 @@
 #ifdef SINGLE_PRECISION
 !
       SUBROUTINE netcdf_get_fvar_0dp (ng, model, ncname, myVarName, A,  &
-     &                                ncid, start, total, broadcast,    &
-     &                                min_val, max_val)
+     &                                ncid, start, total, GrpName,      &
+     &                                broadcast, min_val, max_val)
 !
 !=======================================================================
 !                                                                      !
@@ -2533,6 +2545,7 @@
 !     model        Calling model identifier (integer)                  !
 !     ncname       NetCDF file name (string)                           !
 !     myVarName    Variable name (string)                              !
+!     GrpName      Group name (string, OPTIONAL)                       !
 !     ncid         NetCDF file ID (integer, OPTIONAL)                  !
 !     start        Starting index where the first of the data values   !
 !                    will be read along each dimension (integer,       !
@@ -2569,6 +2582,7 @@
 !
       character (len=*), intent(in) :: ncname
       character (len=*), intent(in) :: myVarName
+      character (len=*), intent(in), optional :: GrpName
 !
       real(dp), intent(out), optional :: min_val
       real(dp), intent(out), optional :: max_val
@@ -2582,7 +2596,7 @@
 !
 # endif
 
-      integer :: my_ncid, status, varid
+      integer :: my_ncid, my_grpid, nfid, status, varid
 
 # if !defined PARALLEL_IO && defined DISTRIBUTE
       integer, dimension(2) :: ibuffer
@@ -2621,13 +2635,19 @@
 !  Read in variable.
 !
       IF (InpThread) THEN
-        status=nf90_inq_varid(my_ncid, TRIM(myVarName), varid)
+        IF (PRESENT(GrpName)) THEN
+          status=nf90_inq_ncid(my_ncid, TRIM(GrpName), my_grpid)
+          nfid=my_grpid
+        ELSE
+          nfid=my_ncid 
+        END IF
+        status=nf90_inq_varid(nfid, TRIM(myVarName), varid)
         IF (status.eq.nf90_noerr) THEN
           IF (PRESENT(start).and.PRESENT(total)) THEN
-            status=nf90_get_var(my_ncid, varid, my_A, start, total)
+            status=nf90_get_var(nfid, varid, my_A, start, total)
             A=my_A(1)
           ELSE
-            status=nf90_get_var(my_ncid, varid, A)
+            status=nf90_get_var(nfid, varid, A)
           END IF
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
             WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
@@ -2685,8 +2705,8 @@
       END SUBROUTINE netcdf_get_fvar_0dp
 !
       SUBROUTINE netcdf_get_fvar_1dp (ng, model, ncname, myVarName, A,  &
-     &                               ncid, start, total, broadcast,     &
-     &                               min_val, max_val)
+     &                                ncid, start, total, GrpName,      &
+     &                                broadcast, min_val, max_val)
 !
 !=======================================================================
 !                                                                      !
@@ -2699,6 +2719,7 @@
 !     model        Calling model identifier (integer)                  !
 !     ncname       NetCDF file name (string)                           !
 !     myVarName    Variable name (string)                              !
+!     GrpName      Group name (string, OPTIONAL)                       !
 !     ncid         NetCDF file ID (integer, OPTIONAL)                  !
 !     start        Starting index where the first of the data values   !
 !                    will be read along each dimension (integer,       !
@@ -2736,6 +2757,7 @@
 !
       character (len=*), intent(in) :: ncname
       character (len=*), intent(in) :: myVarName
+      character (len=*), intent(in), optional :: GrpName
 !
       real(dp), intent(out), optional :: min_val
       real(dp), intent(out), optional :: max_val
@@ -2749,7 +2771,7 @@
 # endif
       logical, dimension(3) :: foundit
 !
-      integer :: i, my_ncid, status, varid
+      integer :: i, my_ncid, my_grpid, nfid, status, varid
 
       integer, dimension(1) :: Asize
 # if !defined PARALLEL_IO && defined DISTRIBUTE
@@ -2804,12 +2826,18 @@
 !  Read in variable.
 !
       IF (InpThread) THEN
-        status=nf90_inq_varid(my_ncid, TRIM(myVarName), varid)
+        IF (PRESENT(GrpName)) THEN
+          status=nf90_inq_ncid(my_ncid, TRIM(GrpName), my_grpid)
+          nfid=my_grpid
+        ELSE
+          nfid=my_ncid 
+        END IF
+        status=nf90_inq_varid(nfid, TRIM(myVarName), varid)
         IF (status.eq.nf90_noerr) THEN
           IF (PRESENT(start).and.PRESENT(total)) THEN
-            status=nf90_get_var(my_ncid, varid, A, start, total)
+            status=nf90_get_var(nfid, varid, A, start, total)
           ELSE
-            status=nf90_get_var(my_ncid, varid, A)
+            status=nf90_get_var(nfid, varid, A)
           END IF
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
             WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
@@ -2858,7 +2886,7 @@
 
       CALL netcdf_get_fatt (ng, model, ncname, varid, AttName,          &
      &                      AttValue, foundit,                          &
-     &                      ncid = my_ncid)
+     &                      ncid = nfid)
 
       IF (exit_flag.eq.NoError) THEN
         IF (.not.foundit(1)) THEN
@@ -2925,8 +2953,8 @@
       END SUBROUTINE netcdf_get_fvar_1dp
 !
       SUBROUTINE netcdf_get_fvar_2dp (ng, model, ncname, myVarName, A,  &
-     &                                ncid, start, total, broadcast,    &
-     &                                min_val, max_val)
+     &                                ncid, start, total, GrpName,      &
+     &                                broadcast, min_val, max_val)
 !
 !=======================================================================
 !                                                                      !
@@ -2939,6 +2967,7 @@
 !     model        Calling model identifier (integer)                  !
 !     ncname       NetCDF file name (string)                           !
 !     myVarName    Variable name (string)                              !
+!     GrpName      Group name (string, OPTIONAL)                       !
 !     ncid         NetCDF file ID (integer, OPTIONAL)                  !
 !     start        Starting index where the first of the data values   !
 !                    will be read along each dimension (integer,       !
@@ -2977,6 +3006,7 @@
 !
       character (len=*), intent(in) :: ncname
       character (len=*), intent(in) :: myVarName
+      character (len=*), intent(in), optional :: GrpName
 !
       real(dp), intent(out), optional :: min_val
       real(dp), intent(out), optional :: max_val
@@ -2990,7 +3020,7 @@
 # endif
       logical, dimension(3) :: foundit
 !
-      integer :: i, j, my_ncid, status, varid
+      integer :: i, j, my_ncid, my_grpid, nfid, status, varid
 
       integer, dimension(2) :: Asize
 
@@ -3045,12 +3075,18 @@
 !  Read in variable.
 !
       IF (InpThread) THEN
-        status=nf90_inq_varid(my_ncid, TRIM(myVarName), varid)
+        IF (PRESENT(GrpName)) THEN
+          status=nf90_inq_ncid(my_ncid, TRIM(GrpName), my_grpid)
+          nfid=my_grpid
+        ELSE
+          nfid=my_ncid 
+        END IF
+        status=nf90_inq_varid(nfid, TRIM(myVarName), varid)
         IF (status.eq.nf90_noerr) THEN
           IF (PRESENT(start).and.PRESENT(total)) THEN
-            status=nf90_get_var(my_ncid, varid, A, start, total)
+            status=nf90_get_var(nfid, varid, A, start, total)
           ELSE
-            status=nf90_get_var(my_ncid, varid, A)
+            status=nf90_get_var(nfid, varid, A)
           END IF
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
             WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
@@ -3100,7 +3136,7 @@
 
       CALL netcdf_get_fatt (ng, model, ncname, varid, AttName,          &
      &                      AttValue, foundit,                          &
-     &                      ncid = my_ncid)
+     &                      ncid = nfid)
 
       IF (exit_flag.eq.NoError) THEN
         IF (.not.foundit(1)) THEN
@@ -3173,8 +3209,8 @@
       END SUBROUTINE netcdf_get_fvar_2dp
 !
       SUBROUTINE netcdf_get_fvar_3dp (ng, model, ncname, myVarName, A,  &
-     &                                ncid, start, total, broadcast,    &
-     &                                min_val, max_val)
+     &                                ncid, start, total, GrpName,      &
+     &                                broadcast, min_val, max_val)
 !
 !=======================================================================
 !                                                                      !
@@ -3187,6 +3223,7 @@
 !     model        Calling model identifier (integer)                  !
 !     ncname       NetCDF file name (string)                           !
 !     myVarName    Variable name (string)                              !
+!     GrpName      Group name (string, OPTIONAL)                       !
 !     ncid         NetCDF file ID (integer, OPTIONAL)                  !
 !     start        Starting index where the first of the data values   !
 !                    will be read along each dimension (integer,       !
@@ -3222,6 +3259,7 @@
 !
       character (len=*), intent(in) :: ncname
       character (len=*), intent(in) :: myVarName
+      character (len=*), intent(in), optional :: GrpName
 !
       real(dp), intent(out), optional :: min_val
       real(dp), intent(out), optional :: max_val
@@ -3235,7 +3273,7 @@
 # endif
       logical, dimension(3) :: foundit
 !
-      integer :: i, j, k, my_ncid, status, varid
+      integer :: i, j, k, my_ncid, my_grpid, nfid, status, varid
 
       integer, dimension(3) :: Asize
 
@@ -3292,12 +3330,18 @@
 !  Read in variable.
 !
       IF (InpThread) THEN
-        status=nf90_inq_varid(my_ncid, TRIM(myVarName), varid)
+        IF (PRESENT(GrpName)) THEN
+          status=nf90_inq_ncid(my_ncid, TRIM(GrpName), my_grpid)
+          nfid=my_grpid
+        ELSE
+          nfid=my_ncid 
+        END IF
+        status=nf90_inq_varid(nfid, TRIM(myVarName), varid)
         IF (status.eq.nf90_noerr) THEN
           IF (PRESENT(start).and.PRESENT(total)) THEN
-            status=nf90_get_var(my_ncid, varid, A, start, total)
+            status=nf90_get_var(nfid, varid, A, start, total)
           ELSE
-            status=nf90_get_var(my_ncid, varid, A)
+            status=nf90_get_var(nfid, varid, A)
           END IF
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
             WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
@@ -3346,7 +3390,7 @@
 
       CALL netcdf_get_fatt (ng, model, ncname, varid, AttName,          &
      &                      AttValue, foundit,                          &
-     &                      ncid = my_ncid)
+     &                      ncid = nfid)
 
       IF (exit_flag.eq.NoError) THEN
         IF (.not.foundit(1)) THEN
@@ -3428,8 +3472,8 @@
 #endif
 !
       SUBROUTINE netcdf_get_fvar_0d (ng, model, ncname, myVarName, A,   &
-     &                               ncid, start, total, broadcast,     &
-     &                               min_val, max_val)
+     &                               ncid, start, total, GrpName,       &
+     &                               broadcast, min_val, max_val)
 !
 !=======================================================================
 !                                                                      !
@@ -3442,6 +3486,7 @@
 !     model        Calling model identifier (integer)                  !
 !     ncname       NetCDF file name (string)                           !
 !     myVarName    Variable name (string)                              !
+!     GrpName      Group name (string, OPTIONAL)                       !
 !     ncid         NetCDF file ID (integer, OPTIONAL)                  !
 !     start        Starting index where the first of the data values   !
 !                    will be read along each dimension (integer,       !
@@ -3478,6 +3523,7 @@
 !
       character (len=*), intent(in) :: ncname
       character (len=*), intent(in) :: myVarName
+      character (len=*), intent(in), optional :: GrpName
 !
       real(r8), intent(out), optional :: min_val
       real(r8), intent(out), optional :: max_val
@@ -3490,8 +3536,7 @@
       logical :: DoBroadcast
 !
 #endif
-
-      integer :: my_ncid, status, varid
+      integer :: my_ncid, my_grpid, nfid, status, varid
 
 #if !defined PARALLEL_IO && defined DISTRIBUTE
       integer, dimension(2) :: ibuffer
@@ -3530,13 +3575,19 @@
 !  Read in variable.
 !
       IF (InpThread) THEN
-        status=nf90_inq_varid(my_ncid, TRIM(myVarName), varid)
+        IF (PRESENT(GrpName)) THEN
+          status=nf90_inq_ncid(my_ncid, TRIM(GrpName), my_grpid)
+          nfid=my_grpid
+        ELSE
+          nfid=my_ncid
+        END IF
+        status=nf90_inq_varid(nfid, TRIM(myVarName), varid)
         IF (status.eq.nf90_noerr) THEN
           IF (PRESENT(start).and.PRESENT(total)) THEN
-            status=nf90_get_var(my_ncid, varid, my_A, start, total)
+            status=nf90_get_var(nfid, varid, my_A, start, total)
             A=my_A(1)
           ELSE
-            status=nf90_get_var(my_ncid, varid, A)
+            status=nf90_get_var(nfid, varid, A)
           END IF
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
             WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
@@ -3594,8 +3645,8 @@
       END SUBROUTINE netcdf_get_fvar_0d
 !
       SUBROUTINE netcdf_get_fvar_1d (ng, model, ncname, myVarName, A,   &
-     &                               ncid, start, total, broadcast,     &
-     &                               min_val, max_val)
+     &                               ncid, start, total, GrpName,       &
+     &                               broadcast, min_val, max_val)
 !
 !=======================================================================
 !                                                                      !
@@ -3608,6 +3659,7 @@
 !     model        Calling model identifier (integer)                  !
 !     ncname       NetCDF file name (string)                           !
 !     myVarName    Variable name (string)                              !
+!     GrpName      Group name (string, OPTIONAL)                       !
 !     ncid         NetCDF file ID (integer, OPTIONAL)                  !
 !     start        Starting index where the first of the data values   !
 !                    will be read along each dimension (integer,       !
@@ -3645,6 +3697,7 @@
 !
       character (len=*), intent(in) :: ncname
       character (len=*), intent(in) :: myVarName
+      character (len=*), intent(in), optional :: GrpName
 !
       real(r8), intent(out), optional :: min_val
       real(r8), intent(out), optional :: max_val
@@ -3658,7 +3711,7 @@
 #endif
       logical, dimension(3) :: foundit
 !
-      integer :: i, my_ncid, status, varid
+      integer :: i, my_ncid, my_grpid, nfid, status, varid
 
       integer, dimension(1) :: Asize
 #if !defined PARALLEL_IO && defined DISTRIBUTE
@@ -3713,12 +3766,18 @@
 !  Read in variable.
 !
       IF (InpThread) THEN
-        status=nf90_inq_varid(my_ncid, TRIM(myVarName), varid)
+        IF (PRESENT(GrpName)) THEN
+          status=nf90_inq_ncid(my_ncid, TRIM(GrpName), my_grpid)
+          nfid=my_grpid
+        ELSE
+          nfid=my_ncid
+        END IF
+        status=nf90_inq_varid(nfid, TRIM(myVarName), varid)
         IF (status.eq.nf90_noerr) THEN
           IF (PRESENT(start).and.PRESENT(total)) THEN
-            status=nf90_get_var(my_ncid, varid, A, start, total)
+            status=nf90_get_var(nfid, varid, A, start, total)
           ELSE
-            status=nf90_get_var(my_ncid, varid, A)
+            status=nf90_get_var(nfid, varid, A)
           END IF
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
             WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
@@ -3767,7 +3826,7 @@
 
       CALL netcdf_get_fatt (ng, model, ncname, varid, AttName,          &
      &                      AttValue, foundit,                          &
-     &                      ncid = my_ncid)
+     &                      ncid = nfid)
 
       IF (exit_flag.eq.NoError) THEN
         IF (.not.foundit(1)) THEN
@@ -3834,8 +3893,8 @@
       END SUBROUTINE netcdf_get_fvar_1d
 !
       SUBROUTINE netcdf_get_fvar_2d (ng, model, ncname, myVarName, A,   &
-     &                               ncid, start, total, broadcast,     &
-     &                               min_val, max_val)
+     &                               ncid, start, total, GrpName,       &
+     &                               broadcast, min_val, max_val)
 !
 !=======================================================================
 !                                                                      !
@@ -3848,6 +3907,7 @@
 !     model        Calling model identifier (integer)                  !
 !     ncname       NetCDF file name (string)                           !
 !     myVarName    Variable name (string)                              !
+!     GrpName      Group name (string, OPTIONAL)                       !
 !     ncid         NetCDF file ID (integer, OPTIONAL)                  !
 !     start        Starting index where the first of the data values   !
 !                    will be read along each dimension (integer,       !
@@ -3886,6 +3946,7 @@
 !
       character (len=*), intent(in) :: ncname
       character (len=*), intent(in) :: myVarName
+      character (len=*), intent(in), optional :: GrpName
 !
       real(r8), intent(out), optional :: min_val
       real(r8), intent(out), optional :: max_val
@@ -3899,7 +3960,7 @@
 #endif
       logical, dimension(3) :: foundit
 !
-      integer :: i, j, my_ncid, status, varid
+      integer :: i, j, my_ncid, my_grpid, nfid, status, varid
 
       integer, dimension(2) :: Asize
 
@@ -3954,12 +4015,18 @@
 !  Read in variable.
 !
       IF (InpThread) THEN
-        status=nf90_inq_varid(my_ncid, TRIM(myVarName), varid)
+        IF (PRESENT(GrpName)) THEN
+          status=nf90_inq_ncid(my_ncid, TRIM(GrpName), my_grpid)
+          nfid=my_grpid
+        ELSE
+          nfid=my_ncid
+        END IF
+        status=nf90_inq_varid(nfid, TRIM(myVarName), varid)
         IF (status.eq.nf90_noerr) THEN
           IF (PRESENT(start).and.PRESENT(total)) THEN
-            status=nf90_get_var(my_ncid, varid, A, start, total)
+            status=nf90_get_var(nfid, varid, A, start, total)
           ELSE
-            status=nf90_get_var(my_ncid, varid, A)
+            status=nf90_get_var(nfid, varid, A)
           END IF
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
             WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
@@ -4009,7 +4076,7 @@
 
       CALL netcdf_get_fatt (ng, model, ncname, varid, AttName,          &
      &                      AttValue, foundit,                          &
-     &                      ncid = my_ncid)
+     &                      ncid = nfid)
 
       IF (exit_flag.eq.NoError) THEN
         IF (.not.foundit(1)) THEN
@@ -4082,8 +4149,8 @@
       END SUBROUTINE netcdf_get_fvar_2d
 !
       SUBROUTINE netcdf_get_fvar_3d (ng, model, ncname, myVarName, A,   &
-     &                               ncid, start, total, broadcast,     &
-     &                               min_val, max_val)
+     &                               ncid, start, total, GrpName,       &
+     &                               broadcast, min_val, max_val)
 !
 !=======================================================================
 !                                                                      !
@@ -4096,6 +4163,7 @@
 !     model        Calling model identifier (integer)                  !
 !     ncname       NetCDF file name (string)                           !
 !     myVarName    Variable name (string)                              !
+!     GrpName      Group name (string, OPTIONAL)                       !
 !     ncid         NetCDF file ID (integer, OPTIONAL)                  !
 !     start        Starting index where the first of the data values   !
 !                    will be read along each dimension (integer,       !
@@ -4131,6 +4199,7 @@
 !
       character (len=*), intent(in) :: ncname
       character (len=*), intent(in) :: myVarName
+      character (len=*), intent(in), optional :: GrpName
 !
       real(r8), intent(out), optional :: min_val
       real(r8), intent(out), optional :: max_val
@@ -4144,7 +4213,7 @@
 #endif
       logical, dimension(3) :: foundit
 !
-      integer :: i, j, k, my_ncid, status, varid
+      integer :: i, j, k, my_ncid, my_grpid, nfid, status, varid
 
       integer, dimension(3) :: Asize
 
@@ -4201,12 +4270,18 @@
 !  Read in variable.
 !
       IF (InpThread) THEN
-        status=nf90_inq_varid(my_ncid, TRIM(myVarName), varid)
+        IF (PRESENT(GrpName)) THEN
+          status=nf90_inq_ncid(my_ncid, TRIM(GrpName), my_grpid)
+          nfid=my_grpid
+        ELSE
+          nfid=my_ncid
+        END IF
+        status=nf90_inq_varid(nfid, TRIM(myVarName), varid)
         IF (status.eq.nf90_noerr) THEN
           IF (PRESENT(start).and.PRESENT(total)) THEN
-            status=nf90_get_var(my_ncid, varid, A, start, total)
+            status=nf90_get_var(nfid, varid, A, start, total)
           ELSE
-            status=nf90_get_var(my_ncid, varid, A)
+            status=nf90_get_var(nfid, varid, A)
           END IF
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
             WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
@@ -4255,7 +4330,7 @@
 
       CALL netcdf_get_fatt (ng, model, ncname, varid, AttName,          &
      &                      AttValue, foundit,                          &
-     &                      ncid = my_ncid)
+     &                      ncid = nfid)
 
       IF (exit_flag.eq.NoError) THEN
         IF (.not.foundit(1)) THEN
@@ -4336,8 +4411,8 @@
       END SUBROUTINE netcdf_get_fvar_3d
 !
       SUBROUTINE netcdf_get_fvar_4d (ng, model, ncname, myVarName, A,   &
-     &                               ncid, start, total, broadcast,     &
-     &                               min_val, max_val)
+     &                               ncid, start, total, GrpName,       &
+     &                               broadcast, min_val, max_val)
 !
 !=======================================================================
 !                                                                      !
@@ -4350,6 +4425,7 @@
 !     model        Calling model identifier (integer)                  !
 !     ncname       NetCDF file name (string)                           !
 !     myVarName    Variable name (string)                              !
+!     GrpName      Group name (string, OPTIONAL)                       !
 !     ncid         NetCDF file ID (integer, OPTIONAL)                  !
 !     start        Starting index where the first of the data values   !
 !                    will be read along each dimension (integer,       !
@@ -4385,6 +4461,7 @@
 !
       character (len=*), intent(in) :: ncname
       character (len=*), intent(in) :: myVarName
+      character (len=*), intent(in), optional :: GrpName
 !
       real(r8), intent(out), optional :: min_val
       real(r8), intent(out), optional :: max_val
@@ -4398,7 +4475,7 @@
 #endif
       logical, dimension(3) :: foundit
 !
-      integer :: i, j, k, l, my_ncid, status, varid
+      integer :: i, j, k, l, my_ncid, my_grpid, nfid, status, varid
 
       integer, dimension(4) :: Asize
 
@@ -4457,12 +4534,18 @@
 !  Read in variable.
 !
       IF (InpThread) THEN
-        status=nf90_inq_varid(my_ncid, TRIM(myVarName), varid)
+        IF (PRESENT(GrpName)) THEN
+          status=nf90_inq_ncid(my_ncid, TRIM(GrpName), my_grpid)
+          nfid=my_grpid
+        ELSE
+          nfid=my_ncid 
+        END IF
+        status=nf90_inq_varid(nfid, TRIM(myVarName), varid)
         IF (status.eq.nf90_noerr) THEN
           IF (PRESENT(start).and.PRESENT(total)) THEN
-            status=nf90_get_var(my_ncid, varid, A, start, total)
+            status=nf90_get_var(nfid, varid, A, start, total)
           ELSE
-            status=nf90_get_var(my_ncid, varid, A)
+            status=nf90_get_var(nfid, varid, A)
           END IF
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
             WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
@@ -4511,7 +4594,7 @@
 
       CALL netcdf_get_fatt (ng, model, ncname, varid, AttName,          &
      &                      AttValue, foundit,                          &
-     &                      ncid = my_ncid)
+     &                      ncid = nfid)
 
       IF (exit_flag.eq.NoError) THEN
         IF (.not.foundit(1)) THEN
@@ -4598,7 +4681,7 @@
       END SUBROUTINE netcdf_get_fvar_4d
 !
       SUBROUTINE netcdf_get_lvar_0d (ng, model, ncname, myVarName, A,   &
-     &                               ncid, start, total)
+     &                               ncid, start, total, GrpName)
 !
 !=======================================================================
 !                                                                      !
@@ -4613,6 +4696,7 @@
 !     model        Calling model identifier (integer)                  !
 !     ncname       NetCDF file name (string)                           !
 !     myVarName    Variable name (string)                              !
+!     GrpName      Group name (string, OPTIONAL)                       !
 !     ncid         NetCDF file ID (integer, OPTIONAL)                  !
 !     start        Starting index where the first of the data values   !
 !                    will be read along each dimension (integer,       !
@@ -4641,12 +4725,13 @@
 !
       character (len=*), intent(in) :: ncname
       character (len=*), intent(in) :: myVarName
+      character (len=*), intent(in), optional :: GrpName
 !
       logical, intent(out) :: A
 !
 !  Local variable declarations.
 !
-      integer :: my_ncid, my_type, status, varid
+      integer :: my_ncid, my_type, my_grpid, nfid, status, varid
 
       integer :: AI
       integer, dimension(1) :: my_AI
@@ -4676,17 +4761,23 @@
 !  Read in variable.
 !
       IF (InpThread) THEN
-        status=nf90_inq_varid(my_ncid, TRIM(myVarName), varid)
+        IF (PRESENT(GrpName)) THEN
+          status=nf90_inq_ncid(my_ncid, TRIM(GrpName), my_grpid)
+          nfid=my_grpid
+        ELSE
+          nfid=my_ncid 
+        END IF
+        status=nf90_inq_varid(nfid, TRIM(myVarName), varid)
         IF (status.eq.nf90_noerr) THEN
-          status=nf90_inquire_variable(my_ncid, varid,                  &
+          status=nf90_inquire_variable(nfid, varid,                     &
      &                                 xtype = my_type)
           IF (status.eq.nf90_noerr) THEN
             IF (my_type.eq.nf90_int) THEN
               IF (PRESENT(start).and.PRESENT(total)) THEN
-                status=nf90_get_var(my_ncid, varid, my_AI, start, total)
+                status=nf90_get_var(nfid, varid, my_AI, start, total)
                 AI=my_AI(1)
               ELSE
-                status=nf90_get_var(my_ncid, varid, AI)
+                status=nf90_get_var(nfid, varid, AI)
               END IF
               IF (status.eq.nf90_noerr) THEN
                 IF (AI.eq.0) THEN
@@ -4697,9 +4788,9 @@
               END IF
             ELSE IF (my_type.eq.nf90_char) THEN
               IF (PRESENT(start).and.PRESENT(total)) THEN
-                status=nf90_get_var(my_ncid, varid, Achar, start, total)
+                status=nf90_get_var(nfid, varid, Achar, start, total)
               ELSE
-                status=nf90_get_var(my_ncid, varid, Achar)
+                status=nf90_get_var(nfid, varid, Achar)
               END IF
               IF (status.eq.nf90_noerr) THEN
                 A=.FALSE.
@@ -4762,7 +4853,7 @@
       END SUBROUTINE netcdf_get_lvar_0d
 !
       SUBROUTINE netcdf_get_lvar_1d (ng, model, ncname, myVarName, A,   &
-     &                               ncid, start, total)
+     &                               ncid, start, total, GrpName)
 !
 !=======================================================================
 !                                                                      !
@@ -4777,6 +4868,7 @@
 !     model        Calling model identifier (integer)                  !
 !     ncname       NetCDF file name (string)                           !
 !     myVarName    Variable name (string)                              !
+!     GrpName      Group name (string, OPTIONAL)                       !
 !     ncid         NetCDF file ID (integer, OPTIONAL)                  !
 !     start        Starting index where the first of the data values   !
 !                    will be read along each dimension (integer,       !
@@ -4806,12 +4898,13 @@
 !
       character (len=*), intent(in) :: ncname
       character (len=*), intent(in) :: myVarName
+      character (len=*), intent(in), optional :: GrpName
 !
       logical, intent(out) :: A(:)
 !
 !  Local variable declarations.
 !
-      integer :: i, my_ncid, my_type, status, varid
+      integer :: i, my_ncid, my_type, my_grpid, nfid, status, varid
 
       integer, dimension(SIZE(A,1)) :: AI
 
@@ -4840,16 +4933,22 @@
 !  Read in variable.
 !
       IF (InpThread) THEN
-        status=nf90_inq_varid(my_ncid, TRIM(myVarName), varid)
+        IF (PRESENT(GrpName)) THEN
+          status=nf90_inq_ncid(my_ncid, TRIM(GrpName), my_grpid)
+          nfid=my_grpid
+        ELSE
+          nfid=my_ncid 
+        END IF
+        status=nf90_inq_varid(nfid, TRIM(myVarName), varid)
         IF (status.eq.nf90_noerr) THEN
-          status=nf90_inquire_variable(my_ncid, varid,                  &
+          status=nf90_inquire_variable(nfid, varid,                     &
      &                                 xtype = my_type)
           IF (status.eq.nf90_noerr) THEN
             IF (my_type.eq.nf90_int) THEN
               IF (PRESENT(start).and.PRESENT(total)) THEN
-                status=nf90_get_var(my_ncid, varid, AI, start, total)
+                status=nf90_get_var(nfid, varid, AI, start, total)
               ELSE
-                status=nf90_get_var(my_ncid, varid, AI)
+                status=nf90_get_var(nfid, varid, AI)
               END IF
               IF (status.eq.nf90_noerr) THEN
                 DO i=1,SIZE(A,1)
@@ -4862,9 +4961,9 @@
               END IF
             ELSE IF (my_type.eq.nf90_char) THEN
               IF (PRESENT(start).and.PRESENT(total)) THEN
-                status=nf90_get_var(my_ncid, varid, Achar, start, total)
+                status=nf90_get_var(nfid, varid, Achar, start, total)
               ELSE
-                status=nf90_get_var(my_ncid, varid, Achar)
+                status=nf90_get_var(nfid, varid, Achar)
               END IF
               IF (status.eq.nf90_noerr) THEN
                 DO i=1,SIZE(A,1)
@@ -4929,7 +5028,7 @@
       END SUBROUTINE netcdf_get_lvar_1d
 !
       SUBROUTINE netcdf_get_ivar_0d (ng, model, ncname, myVarName, A,   &
-     &                               ncid, start, total)
+     &                               ncid, start, total, GrpName)
 !
 !=======================================================================
 !                                                                      !
@@ -4942,6 +5041,7 @@
 !     model        Calling model identifier (integer)                  !
 !     ncname       NetCDF file name (string)                           !
 !     myVarName    Variable name (string)                              !
+!     GrpName      Group name (string, OPTIONAL)                       !
 !     ncid         NetCDF file ID (integer, OPTIONAL)                  !
 !     start        Starting index where the first of the data values   !
 !                    will be read along each dimension (integer,       !
@@ -4970,12 +5070,13 @@
 !
       character (len=*), intent(in) :: ncname
       character (len=*), intent(in) :: myVarName
+      character (len=*), intent(in), optional :: GrpName
 !
       integer, intent(out) :: A
 !
 !  Local variable declarations.
 !
-      integer :: my_ncid, status, varid
+      integer :: my_ncid, my_grpid, nfid, status, varid
 
       integer, dimension(1) :: my_A
 
@@ -5002,13 +5103,19 @@
 !  Read in variable.
 !
       IF (InpThread) THEN
-        status=nf90_inq_varid(my_ncid, TRIM(myVarName), varid)
+        IF (PRESENT(GrpName)) THEN
+          status=nf90_inq_ncid(my_ncid, TRIM(GrpName), my_grpid)
+          nfid=my_grpid
+        ELSE
+          nfid=my_ncid 
+        END IF
+        status=nf90_inq_varid(nfid, TRIM(myVarName), varid)
         IF (status.eq.nf90_noerr) THEN
           IF (PRESENT(start).and.PRESENT(total)) THEN
-            status=nf90_get_var(my_ncid, varid, my_A, start, total)
+            status=nf90_get_var(nfid, varid, my_A, start, total)
             A=my_A(1)
           ELSE
-            status=nf90_get_var(my_ncid, varid, A)
+            status=nf90_get_var(nfid, varid, A)
           END IF
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
             WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
@@ -5055,7 +5162,7 @@
       END SUBROUTINE netcdf_get_ivar_0d
 !
       SUBROUTINE netcdf_get_ivar_1d (ng, model, ncname, myVarName, A,   &
-     &                               ncid, start, total)
+     &                               ncid, start, total, GrpName)
 !
 !=======================================================================
 !                                                                      !
@@ -5068,6 +5175,7 @@
 !     model        Calling model identifier (integer)                  !
 !     ncname       NetCDF file name (string)                           !
 !     myVarName    Variable name (string)                              !
+!     GrpName      Group name (string, OPTIONAL)                       !
 !     ncid         NetCDF file ID (integer, OPTIONAL)                  !
 !     start        Starting index where the first of the data values   !
 !                    will be read along each dimension (integer,       !
@@ -5097,12 +5205,13 @@
 !
       character (len=*), intent(in) :: ncname
       character (len=*), intent(in) :: myVarName
+      character (len=*), intent(in), optional :: GrpName
 !
       integer, intent(out) :: A(:)
 !
 !  Local variable declarations.
 !
-      integer :: my_ncid, status, varid
+      integer :: my_ncid, my_grpid, nfid, status, varid
 
 #if !defined PARALLEL_IO && defined DISTRIBUTE
       integer, dimension(2) :: ibuffer
@@ -5127,12 +5236,18 @@
 !  Read in variable.
 !
       IF (InpThread) THEN
-        status=nf90_inq_varid(my_ncid, TRIM(myVarName), varid)
+        IF (PRESENT(GrpName)) THEN
+          status=nf90_inq_ncid(my_ncid, TRIM(GrpName), my_grpid)
+          nfid=my_grpid
+        ELSE
+          nfid=my_ncid 
+        END IF
+        status=nf90_inq_varid(nfid, TRIM(myVarName), varid)
         IF (status.eq.nf90_noerr) THEN
           IF (PRESENT(start).and.PRESENT(total)) THEN
-            status=nf90_get_var(my_ncid, varid, A, start, total)
+            status=nf90_get_var(nfid, varid, A, start, total)
           ELSE
-            status=nf90_get_var(my_ncid, varid, A)
+            status=nf90_get_var(nfid, varid, A)
           END IF
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
             WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
@@ -5179,7 +5294,7 @@
       END SUBROUTINE netcdf_get_ivar_1d
 !
       SUBROUTINE netcdf_get_ivar_2d (ng, model, ncname, myVarName, A,   &
-     &                               ncid, start, total)
+     &                               ncid, start, total, GrpName)
 !
 !=======================================================================
 !                                                                      !
@@ -5192,6 +5307,7 @@
 !     model        Calling model identifier (integer)                  !
 !     ncname       NetCDF file name (string)                           !
 !     myVarName    Variable name (string)                              !
+!     GrpName      Group name (string, OPTIONAL)                       !
 !     ncid         NetCDF file ID (integer, OPTIONAL)                  !
 !     start        Starting index where the first of the data values   !
 !                    will be read along each dimension (integer,       !
@@ -5222,12 +5338,13 @@
 !
       character (len=*), intent(in) :: ncname
       character (len=*), intent(in) :: myVarName
+      character (len=*), intent(in), optional :: GrpName
 !
       integer, intent(out) :: A(:,:)
 !
 !  Local variable declarations.
 !
-      integer :: my_ncid, status, varid
+      integer :: my_ncid, my_grpid, nfid, status, varid
 
 #if !defined PARALLEL_IO && defined DISTRIBUTE
       integer, dimension(2) :: ibuffer
@@ -5252,12 +5369,18 @@
 !  Read in variable.
 !
       IF (InpThread) THEN
-        status=nf90_inq_varid(my_ncid, TRIM(myVarName), varid)
+        IF (PRESENT(GrpName)) THEN
+          status=nf90_inq_ncid(my_ncid, TRIM(GrpName), my_grpid)
+          nfid=my_grpid
+        ELSE
+          nfid=my_ncid 
+        END IF
+        status=nf90_inq_varid(nfid, TRIM(myVarName), varid)
         IF (status.eq.nf90_noerr) THEN
           IF (PRESENT(start).and.PRESENT(total)) THEN
-            status=nf90_get_var(my_ncid, varid, A, start, total)
+            status=nf90_get_var(nfid, varid, A, start, total)
           ELSE
-            status=nf90_get_var(my_ncid, varid, A)
+            status=nf90_get_var(nfid, varid, A)
           END IF
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
             WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
@@ -5304,7 +5427,7 @@
       END SUBROUTINE netcdf_get_ivar_2d
 !
       SUBROUTINE netcdf_get_svar_0d (ng, model, ncname, myVarName, A,   &
-     &                               ncid, start, total)
+     &                               ncid, start, total, GrpName)
 !
 !=======================================================================
 !                                                                      !
@@ -5327,6 +5450,7 @@
 !     model        Calling model identifier (integer)                  !
 !     ncname       NetCDF file name (string)                           !
 !     myVarName    Variable name (string)                              !
+!     GrpName      Group name (string, OPTIONAL)                       !
 !     ncid         NetCDF file ID (integer, OPTIONAL)                  !
 !     start        Starting index where the first of the data values   !
 !                    will be read along each dimension (integer,       !
@@ -5355,12 +5479,13 @@
 !
       character (len=*), intent(in) :: ncname
       character (len=*), intent(in) :: myVarName
+      character (len=*), intent(in), optional :: GrpName
 
       character (len=*), intent(out) :: A
 !
 !  Local variable declarations.
 !
-      integer :: my_ncid, status, varid
+      integer :: my_ncid, my_grpid, nfid, status, varid
 
 #if !defined PARALLEL_IO && defined DISTRIBUTE
       integer, dimension(2) :: ibuffer
@@ -5387,13 +5512,19 @@
 !  Read in variable.
 !
       IF (InpThread) THEN
-        status=nf90_inq_varid(my_ncid, TRIM(myVarName), varid)
+        IF (PRESENT(GrpName)) THEN
+          status=nf90_inq_ncid(my_ncid, TRIM(GrpName), my_grpid)
+          nfid=my_grpid
+        ELSE
+          nfid=my_ncid 
+        END IF
+        status=nf90_inq_varid(nfid, TRIM(myVarName), varid)
         IF (status.eq.nf90_noerr) THEN
           IF (PRESENT(start).and.PRESENT(total)) THEN
-            status=nf90_get_var(my_ncid, varid, my_A, start, total)
+            status=nf90_get_var(nfid, varid, my_A, start, total)
             A=my_A(1)
           ELSE
-            status=nf90_get_var(my_ncid, varid, A)
+            status=nf90_get_var(nfid, varid, A)
           END IF
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
             WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
@@ -5440,7 +5571,7 @@
       END SUBROUTINE netcdf_get_svar_0d
 !
       SUBROUTINE netcdf_get_svar_1d (ng, model, ncname, myVarName, A,   &
-     &                               ncid, start, total)
+     &                               ncid, start, total, GrpName)
 !
 !=======================================================================
 !                                                                      !
@@ -5464,6 +5595,7 @@
 !     model        Calling model identifier (integer)                  !
 !     ncname       NetCDF file name (string)                           !
 !     myVarName    Variable name (string)                              !
+!     GrpName      Group name (string, OPTIONAL)                       !
 !     ncid         NetCDF file ID (integer, OPTIONAL)                  !
 !     start        Starting index where the first of the data values   !
 !                    will be read along each dimension (integer,       !
@@ -5487,12 +5619,13 @@
 !
       character (len=*), intent(in) :: ncname
       character (len=*), intent(in) :: myVarName
+      character (len=*), intent(in), optional :: GrpName
 
       character (len=*), intent(out) :: A(:)
 !
 !  Local variable declarations.
 !
-      integer :: my_ncid, status, varid
+      integer :: my_ncid, my_grpid, nfid, status, varid
 
 #if !defined PARALLEL_IO && defined DISTRIBUTE
       integer, dimension(2) :: ibuffer
@@ -5517,12 +5650,18 @@
 !  Read in variable.
 !
       IF (InpThread) THEN
-        status=nf90_inq_varid(my_ncid, TRIM(myVarName), varid)
+        IF (PRESENT(GrpName)) THEN
+          status=nf90_inq_ncid(my_ncid, TRIM(GrpName), my_grpid)
+          nfid=my_grpid
+        ELSE
+          nfid=my_ncid
+        END IF 
+        status=nf90_inq_varid(nfid, TRIM(myVarName), varid)
         IF (status.eq.nf90_noerr) THEN
           IF (PRESENT(start).and.PRESENT(total)) THEN
-            status=nf90_get_var(my_ncid, varid, A, start, total)
+            status=nf90_get_var(nfid, varid, A, start, total)
           ELSE
-            status=nf90_get_var(my_ncid, varid, A)
+            status=nf90_get_var(nfid, varid, A)
           END IF
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
             WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
@@ -5569,7 +5708,7 @@
       END SUBROUTINE netcdf_get_svar_1d
 !
       SUBROUTINE netcdf_get_svar_2d (ng, model, ncname, myVarName, A,   &
-     &                               ncid, start, total)
+     &                               ncid, start, total, GrpName)
 !
 !=======================================================================
 !                                                                      !
@@ -5593,6 +5732,7 @@
 !     model        Calling model identifier (integer)                  !
 !     ncname       NetCDF file name (string)                           !
 !     myVarName    Variable name (string)                              !
+!     GrpName      Group name (string, OPTIONAL)                       !
 !     ncid         NetCDF file ID (3D vector integer, OPTIONAL)        !
 !     start        Starting index where the first of the data values   !
 !                    will be read along each dimension (integer,       !
@@ -5616,12 +5756,13 @@
 !
       character (len=*), intent(in) :: ncname
       character (len=*), intent(in) :: myVarName
+      character (len=*), intent(in), optional :: GrpName
 
       character (len=*), intent(out) :: A(:,:)
 !
 !  Local variable declarations.
 !
-      integer :: my_ncid, status, varid
+      integer :: my_ncid, my_grpid, nfid, status, varid
 
 #if !defined PARALLEL_IO && defined DISTRIBUTE
       integer, dimension(2) :: ibuffer
@@ -5646,12 +5787,18 @@
 !  Read in variable.
 !
       IF (InpThread) THEN
-        status=nf90_inq_varid(my_ncid, TRIM(myVarName), varid)
+        IF (PRESENT(GrpName)) THEN
+          status=nf90_inq_ncid(my_ncid, TRIM(GrpName), my_grpid)
+          nfid=my_grpid
+        ELSE
+          nfid=my_ncid 
+        END IF
+        status=nf90_inq_varid(nfid, TRIM(myVarName), varid)
         IF (status.eq.nf90_noerr) THEN
           IF (PRESENT(start).and.PRESENT(total)) THEN
-            status=nf90_get_var(my_ncid, varid, A, start, total)
+            status=nf90_get_var(nfid, varid, A, start, total)
           ELSE
-            status=nf90_get_var(my_ncid, varid, A)
+            status=nf90_get_var(nfid, varid, A)
           END IF
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
             WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
@@ -5698,7 +5845,7 @@
       END SUBROUTINE netcdf_get_svar_2d
 !
       SUBROUTINE netcdf_get_svar_3d (ng, model, ncname, myVarName, A,   &
-     &                               ncid, start, total)
+     &                               ncid, start, total, GrpName)
 !
 !=======================================================================
 !                                                                      !
@@ -5722,6 +5869,7 @@
 !     model        Calling model identifier (integer)                  !
 !     ncname       NetCDF file name (string)                           !
 !     myVarName    Variable name (string)                              !
+!     GrpName      Group name (string, OPTIONAL)                       !
 !     ncid         NetCDF file ID (integer, OPTIONAL)                  !
 !     start        Starting index where the first of the data values   !
 !                    will be read along each dimension (4D vector      !
@@ -5745,12 +5893,13 @@
 !
       character (len=*), intent(in) :: ncname
       character (len=*), intent(in) :: myVarName
+      character (len=*), intent(in), optional :: GrpName
 
       character (len=*), intent(out) :: A(:,:,:)
 !
 !  Local variable declarations.
 !
-      integer :: my_ncid, status, varid
+      integer :: my_ncid, my_grpid, nfid, status, varid
 
 #if !defined PARALLEL_IO && defined DISTRIBUTE
       integer, dimension(2) :: ibuffer
@@ -5775,12 +5924,18 @@
 !  Read in variable.
 !
       IF (InpThread) THEN
-        status=nf90_inq_varid(my_ncid, TRIM(myVarName), varid)
+        IF (PRESENT(GrpName)) THEN
+          status=nf90_inq_ncid(my_ncid, TRIM(GrpName), my_grpid)
+          nfid=my_grpid
+        ELSE
+          nfid=my_ncid
+        END IF
+        status=nf90_inq_varid(nfid, TRIM(myVarName), varid)
         IF (status.eq.nf90_noerr) THEN
           IF (PRESENT(start).and.PRESENT(total)) THEN
-            status=nf90_get_var(my_ncid, varid, A, start, total)
+            status=nf90_get_var(nfid, varid, A, start, total)
           ELSE
-            status=nf90_get_var(my_ncid, varid, A)
+            status=nf90_get_var(nfid, varid, A)
           END IF
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
             WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
@@ -5828,7 +5983,7 @@
 !
       SUBROUTINE netcdf_get_time_0d (ng, model, ncname, myVarName,      &
      &                               Rdate, A,                          &
-     &                               ncid, start, total,                &
+     &                               GrpName, ncid, start, total,       &
      &                               min_val, max_val)
 !
 !=======================================================================
@@ -5848,6 +6003,7 @@
 !     ncname       NetCDF file name (string)                           !
 !     myVarName    Variable name (string)                              !
 !     Rdate        Reference date (real; [1] seconds, [2] days)        !
+!     GrpName      Group name (string, OPTIONAL)                       !
 !     ncid         NetCDF file ID (integer, OPTIONAL)                  !
 !     start        Starting index where the first of the data values   !
 !                    will be read along each dimension (integer,       !
@@ -5881,6 +6037,7 @@
 !
       character (len=*), intent(in) :: ncname
       character (len=*), intent(in) :: myVarName
+      character (len=*), intent(in), optional :: GrpName
 !
       real(dp), intent(in) :: Rdate(2)
 
@@ -5897,7 +6054,8 @@
       logical, dimension(1) :: got_units
       logical, dimension(2) :: foundit
 !
-      integer :: ind, lstr, my_ncid, status, varid
+      integer :: my_ncid, my_grpid, nfid
+      integer :: ind, lstr, status, varid
       integer :: year, month, day, hour, minutes
 
 #if !defined PARALLEL_IO && defined DISTRIBUTE
@@ -5933,13 +6091,19 @@
 !  Read in variable.
 !
       IF (InpThread) THEN
-        status=nf90_inq_varid(my_ncid, TRIM(myVarName), varid)
+        IF (PRESENT(GrpName)) THEN
+          status=nf90_inq_ncid(my_ncid, TRIM(GrpName), my_grpid)
+          nfid=my_grpid
+        ELSE
+          nfid=my_ncid
+        END IF
+        status=nf90_inq_varid(nfid, TRIM(myVarName), varid)
         IF (status.eq.nf90_noerr) THEN
           IF (PRESENT(start).and.PRESENT(total)) THEN
-            status=nf90_get_var(my_ncid, varid, my_A, start, total)
+            status=nf90_get_var(nfid, varid, my_A, start, total)
             A=my_A(1)
           ELSE
-            status=nf90_get_var(my_ncid, varid, A)
+            status=nf90_get_var(nfid, varid, A)
           END IF
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
             WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
@@ -5987,7 +6151,7 @@
 
       CALL netcdf_get_fatt (ng, model, ncname, varid, AttName,          &
      &                      AttValue, foundit,                          &
-     &                      ncid = my_ncid)
+     &                      ncid = nfid)
 
       IF (exit_flag.eq.NoError) THEN
         IF (.not.foundit(1)) THEN
@@ -6020,7 +6184,7 @@
 
       CALL netcdf_get_satt (ng, model, ncname, varid, UnitsAtt,         &
      &                      UnitsValue, got_units,                      &
-     &                      ncid = my_ncid)
+     &                      ncid = nfid)
 
       IF (exit_flag.eq.NoError) THEN
         IF (got_units(1)) THEN
@@ -6127,7 +6291,7 @@
 !
       SUBROUTINE netcdf_get_time_1d (ng, model, ncname, myVarName,      &
      &                               Rdate, A,                          &
-     &                               ncid, start, total,                &
+     &                               GrpName, ncid, start, total,       &
      &                               min_val, max_val)
 !
 !=======================================================================
@@ -6147,6 +6311,7 @@
 !     ncname       NetCDF file name (string)                           !
 !     myVarName    time variable name (string)                         !
 !     Rdate        Reference date (real; [1] seconds, [2] days)        !
+!     GrpName      Group name (string, OPTIONAL)                       !
 !     ncid         NetCDF file ID (integer, OPTIONAL)                  !
 !     start        Starting index where the first of the data values   !
 !                    will be read along each dimension (integer,       !
@@ -6181,6 +6346,7 @@
 !
       character (len=*), intent(in) :: ncname
       character (len=*), intent(in) :: myVarName
+      character (len=*), intent(in), optional :: GrpName
 !
       real(dp), intent(in) :: Rdate(2)
 
@@ -6197,7 +6363,8 @@
       logical, dimension(1) :: got_units
       logical, dimension(2) :: foundit
 !
-      integer :: i, ind, lstr, my_ncid, status, varid
+      integer :: my_ncid, my_grpid, nfid
+      integer :: i, ind, lstr, status, varid
       integer :: year, month, day, hour, minutes
 
       integer, dimension(1) :: Asize
@@ -6243,12 +6410,18 @@
 !  Read in time variable.
 !
       IF (InpThread) THEN
-        status=nf90_inq_varid(my_ncid, TRIM(myVarName), varid)
+        IF (PRESENT(GrpName)) THEN
+          status=nf90_inq_ncid(my_ncid, TRIM(GrpName), my_grpid)
+          nfid=my_grpid
+        ELSE
+          nfid=my_ncid
+        END IF
+        status=nf90_inq_varid(nfid, TRIM(myVarName), varid)
         IF (status.eq.nf90_noerr) THEN
           IF (PRESENT(start).and.PRESENT(total)) THEN
-            status=nf90_get_var(my_ncid, varid, A, start, total)
+            status=nf90_get_var(nfid, varid, A, start, total)
           ELSE
-            status=nf90_get_var(my_ncid, varid, A)
+            status=nf90_get_var(nfid, varid, A)
           END IF
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
             WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
@@ -6296,7 +6469,7 @@
 
       CALL netcdf_get_fatt (ng, model, ncname, varid, AttName,          &
      &                      AttValue, foundit,                          &
-     &                      ncid = my_ncid)
+     &                      ncid = nfid)
 
       IF (exit_flag.eq.NoError) THEN
         IF (.not.foundit(1)) THEN
@@ -6332,7 +6505,7 @@
 
       CALL netcdf_get_satt (ng, model, ncname, varid, UnitsAtt,         &
      &                      UnitsValue, got_units,                      &
-     &                      ncid = my_ncid)
+     &                      ncid = nfid)
 
       IF (exit_flag.eq.NoError) THEN
         IF (got_units(1)) THEN

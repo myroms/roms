@@ -43,10 +43,12 @@
       integer :: Mval, Npts, Nval
       integer :: i, ib, igrid, itrc, k, ng, status
       integer :: Cdim, Clen, Rdim
-      integer :: obs_lib
+      integer :: iobsfile, obs_lib
       integer :: Ivalue(1)
 
       integer :: Nfiles(Ngrids)
+      integer, allocatable :: NOBScount(:,:)
+
 # if defined FOUR_DVAR  || defined VERIFICATION || \
     (defined HESSIAN_SV && defined BNORM)
       logical, dimension(MT) :: Ltracer
@@ -82,7 +84,8 @@
 !  Initialize.
 !-----------------------------------------------------------------------
 !
-      igrid=1
+      igrid=1                            ! nested grid counter
+      iobsfile=1                         ! multiple OBS file counter
       Nfiles(1:Ngrids)=0
       DO i=1,LEN(label)
         label(i:i)=blank
@@ -699,6 +702,35 @@
               label='OBS - data assimilation observations'
               Npts=load_s1d(Nval, Cval, Cdim, line, label, igrid,       &
      &                      Ngrids, Nfiles, obs_lib, OBS)
+            CASE ('NOBSFILES')
+              Npts=load_i(Nval, Rval, Ngrids, nOBSfiles)              
+              DO ng=1,Ngrids
+                IF (nOBSfiles(ng).le.0) THEN
+                  IF (Master) WRITE (out,250) 'NOBSFILES',              &
+     &                                        nOBSfiles(ng),            &
+     &               'Must be equal or greater than one.'
+                  exit_flag=4
+                  RETURN
+                END IF
+              END DO
+              allocate ( OBS2(MAXVAL(nOBSfiles),Ngrids) )
+              allocate ( NOBScount(MAXVAL(nOBSfiles),Ngrids) )
+              NOBScount=0
+            CASE ('OBS2name')
+              label='OBS2 - data assimilation observations'
+              DO ng=1,Ngrids
+                IF (nOBSfiles(ng).lt.0) THEN
+                  IF (Master) WRITE (out,260) 'nOBSfiles = ',           &
+     &                                        nOBSfiles,                &
+     &               'KeyWord ''NOBSFILES'' unread or misssing from '// &
+     &               'input script ''s4dvar.in''.'
+                  exit_flag=4
+                  RETURN
+                END IF
+              END DO
+              Npts=load_s2d(Nval, Cval, Cdim, line, label, iobsfile,    &
+     &                      igrid, Ngrids, nOBSfiles, NOBScount,        &
+     &                      nOBSfiles(1), inp_lib, OBS2)
             CASE ('HSSname')
               label='HSS - Hessian eigenvectors'
               Npts=load_s1d(Nval, Cval, Cdim, line, label, igrid,       &
@@ -1682,6 +1714,11 @@
      &        /,15x,a,/,15x,a)
  240  FORMAT (/,' READ_ASSPAR - Illegal parameter, ', a, ' = ', 1x, i2, &
      &        /,15x,a)
+ 250  FORMAT (/,' READ_PHYPAR - Invalid input parameter, ',a,i0,        &
+     &        /,15x,a)
+ 260  FORMAT (/,' READ_PHYPAR - Invalid dimension parameter, ',a,i0,    &
+     &        /,15x,a)
+
 # endif
 
       RETURN

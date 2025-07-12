@@ -40,6 +40,8 @@
       SUBROUTINE obs_initial (ng, model, backward)
 !***********************************************************************
 !
+      USE roms_obs_mod, ONLY : obs_pool, roms_obs_initialize 
+!
 !  Imported variable declarations.
 !
       logical, intent(in) :: backward
@@ -48,12 +50,18 @@
 !
 !  Local variable declarations.
 !
+      TYPE (obs_pool) :: OS
+!
       character (len=*), parameter :: MyFile =                          &
      &  __FILE__
 !
 !-----------------------------------------------------------------------
 !  Write out time-averaged fields according to IO type.
 !-----------------------------------------------------------------------
+!
+!  New observation operator.
+!
+      CALL roms_obs_initialize (OS, ng, model, nOBSfiles(ng))
 !
       SELECT CASE (OBS(ng)%IOtype)
         CASE (io_nf90)

@@ -234,7 +234,6 @@
       TYPE(T_IO), allocatable :: LZE(:)     ! evolved Lanczos vectors
       TYPE(T_IO), allocatable :: NRM(:,:)   ! normalization
       TYPE(T_IO), allocatable :: NUD(:)     ! nudging coefficients
-      TYPE(T_IO), allocatable :: OBS(:)     ! observations
 #if defined RBL4DVAR_FCT_SENSITIVITY && defined OBS_SPACE
       TYPE(T_IO), allocatable :: OIFA(:)    ! observation impacts, A
       TYPE(T_IO), allocatable :: OIFB(:)    ! observation impacts, B
@@ -284,6 +283,13 @@
       TYPE (File_desc_t), allocatable :: FRCdesc(:,:)
 #endif
       TYPE(T_IO), allocatable :: FRC(:,:)
+!
+!  Input observations data.
+!
+      integer, allocatable :: nOBSfiles(:)
+!
+      TYPE(T_IO), allocatable :: OBS(:)
+      TYPE(T_IO), allocatable :: OBS2(:,:)
 !
 !  Error messages.
 !
@@ -509,6 +515,9 @@
       IF (.not.allocated(nFfiles)) THEN
         allocate ( nFfiles(Ngrids) )
       END IF
+      IF (.not.allocated(nOBSfiles)) THEN
+        allocate ( nOBSfiles(Ngrids) )
+      END IF
 !
 !-----------------------------------------------------------------------
 !  Initialize I/O NetCDF files ID to close state.
@@ -566,6 +575,7 @@
         nBCfiles(ng)=-1
         nCLMfiles(ng)=-1
         nFfiles(ng)=-1
+        nOBSfiles(ng)=-1
       END DO
 !
 !-----------------------------------------------------------------------

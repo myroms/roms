@@ -1930,8 +1930,8 @@
       END SUBROUTINE pio_netcdf_check_var
 !
       SUBROUTINE pio_netcdf_inq_var (ng, model, ncname, pioFile,        &
-     &                               myVarName, SearchVar, pioVar,      &
-     &                               nVarDim, nVarAtt)
+     &                               myVarName, GrpName, SearchVar,     &
+     &                               pioVar, nVarDim, nVarAtt)
 !
 !=======================================================================
 !                                                                      !
@@ -1950,6 +1950,7 @@
 !                    pioFile%fh         file handler                   !
 !                    pioFile%iosystem   IO system descriptor (struct)  !
 !     myVarName    Requested variable name (string, OPTIONAL)          !
+!     GrpName      Group name (string, OPTIONAL)                       !
 !     SearchVar    Switch used when searching a variable over          !
 !                    multiple NetCDF files (logical, OPTIONAL)         !
 !                                                                      !
@@ -2003,6 +2004,7 @@
 !
       character (len=*), intent(in) :: ncname
       character (len=*), intent(in), optional :: myVarName
+      character (len=*), intent(in), optional :: GrpName
 !
       TYPE (File_desc_t), intent(in),  optional :: pioFile
       TYPE (Var_desc_t),  intent(out), optional :: pioVar

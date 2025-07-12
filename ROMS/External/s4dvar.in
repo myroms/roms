@@ -434,7 +434,7 @@ Sigma_max(isTvar) == 0.33d0   0.056d0  ! 1:NT tracers maximum STD
                    F   F   F   F
 
 ! Input model, initial conditions, boundary conditions, and surface forcing
-! standard deviation file names, [1:Ngrids].
+! standard deviation filenames, [1:Ngrids].
 
        STDnameM == roms_std_m.nc
        STDnameI == roms_std_i.nc
@@ -443,40 +443,42 @@ Sigma_max(isTvar) == 0.33d0   0.056d0  ! 1:NT tracers maximum STD
 
 ! If computing the standard deviation from the background (prior) state
 ! vector as an alternative to climatological values read from the
-! input NetCDF file, enter output standard deviation file name,
+! input NetCDF file, enter output standard deviation filename,
 ! [1:Ngrids].
 
        STDnameC == roms_std_c.nc
 
 ! Input/output model, initial conditions, boundary conditions, and surface
-! forcing error covariance normalization factors file name, [1:Ngrids].
+! forcing error covariance normalization factors filename, [1:Ngrids].
 
        NRMnameM == roms_nrm_m.nc
        NRMnameI == roms_nrm_i.nc
        NRMnameB == roms_nrm_b.nc
        NRMnameF == roms_nrm_f.nc
 
-! Input/output observation file name, [1:Ngrids].
+! Input observation filename(s), [1:Ngrids].
+
+      NOBSFILES =  1
 
         OBSname == roms_obs.nc
 
-! Input/output Hessian eigenvectors file name, [1:Ngrids].
+! Input/output Hessian eigenvectors filename, [1:Ngrids].
 
         HSSname == roms_hss.nc
 
-! Input/output Lanczos vectors file name, [1:Ngrids].
+! Input/output Lanczos vectors filename, [1:Ngrids].
 
         LCZname == roms_lcz.nc
 
-! Output time-evolved Lanczos vectors file name, [1:Ngrids].
+! Output time-evolved Lanczos vectors filename, [1:Ngrids].
 
         LZEname == roms_lze.nc
 
-! Output model data at observation locations file name, [1:Ngrids].
+! Output model data at observation locations filename, [1:Ngrids].
 
         MODname == roms_mod.nc
 
-! Output posterior error covariance matrix file name, [1:Ngrids].
+! Output posterior error covariance matrix filename, [1:Ngrids].
 
         ERRname == roms_err.nc
 
@@ -487,7 +489,7 @@ Sigma_max(isTvar) == 0.33d0   0.056d0  ! 1:NT tracers maximum STD
        OIFnameA == roms_oif_a.nc
        OIFnameB == roms_oif_b.nc
 
-! Input coarser grid increment file name, [1:Ngrids]. It is used in
+! Input coarser grid increment filename, [1:Ngrids]. It is used in
 ! mixed-resolution split 4D-Var for regridding (coarse-to-fine), where
 ! the inner loops are run at lower resolution to accelerate the computations.
 
@@ -1028,50 +1030,60 @@ Sigma_max(isTvar) == 0.33d0   0.056d0  ! 1:NT tracers maximum STD
 !  Input/Output NetCDF files (a string with a maximum of 256 characters).
 !------------------------------------------------------------------------------
 !
+!  NOBSFILES      Number of observation files, usually NOBSFILES=1.
+!
+!  OBSname        Input/Output observations data filename(s).
+!
+!                 Users can utilize the original native 4D-Var NetCDF file,
+!                 which consolidates all observations into a single vector
+!                 sorted in ascending order of time. As the observation
+!                 operators and filters become increasingly complex,
+!                 separating the observations into multiple files can be
+!                 beneficial. Alternatively, IODA enhanced-NetCDF4 files
+!                 with "Groups" are also acceptable.
+!
 !  STDnameM       Input model error covariance
-!                   standard deviation file name.
+!                   standard deviation filename.
 !
 !  STDnameI       Input initial conditions error covariance
-!                   standard deviation file name.
+!                   standard deviation filename.
 !
 !  STDnameB       Input open boundary conditions error covariance
-!                   standard deviation file name.
+!                   standard deviation filename.
 !
 !  STDnameF       Input surface forcing error covariance
-!                   standard deviation file name.
+!                   standard deviation filename.
 !
-!  STDnameC       Output standard deviation file name
+!  STDnameC       Output standard deviation filename
 !                   computed from  background (prior) state
 !
 !  NRMnameM       Input/output model error covariance
-!                   normalization factors file name.
+!                   normalization factors filename.
 !
 !  NRMnameI       Input/output initial conditions error covariance
-!                   normalization factors file name.
+!                   normalization factors filename.
 !
 !  NRMnameB       Input/output open boundary conditions error covariance
-!                   normalization factors file name.
+!                   normalization factors filename.
 !
 !  NRMnameF       Input/output surface forcing error covariance
-!                   normalization factors file name.
+!                   normalization factors filename.
 !
-!  OBSname        Input/Output observations data file name.
+!  HSSname        Input/Output Hessian eigenvectors filename.
 !
-!  HSSname        Input/Output Hessian eigenvectors file name.
+!  LCZname        Input/output Lanczos vectors filename.
 !
-!  LCZname        Input/output Lanczos vectors file name.
+!  LZEname        Output time-evolved Lanczos vectors filename.
 !
-!  LZEname        Output time-evolved Lanczos vectors file name.
+!  MODname        Output model data at observations locations filename.
 !
-!  MODname        Output model data at observations locations file name.
+!  ERRname        Output posterior error covariance matrix filename.
 !
-!  ERRname        Output posterior error covariance matrix file name.
-!
-! Input coarser grid increment file name, [1:Ngrids]. It is used in
+! Input coarser grid increment filename, [1:Ngrids]. It is used in
 ! mixed-resolution split 4D-Var for regridding (coarse-to-fine), where
 ! the inner loops are run at lower resolution to accelerate the computations.
 !
-!  INCname        Coarse grid increment file name.
+!  INCname        Coarse grid increment filename.
 !
 ! Input forcing filenames at observation locations for computing observations
 ! impacts during the analysis-forecast cycle when RBL4DVAR_FCT_SENSITIVITY and

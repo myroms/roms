@@ -479,7 +479,9 @@
 !
       CALL netcdf_get_time (ng, model, ncname, Vname(1,idtime),         &
      &                      Rclock%DateNumber, stime,                   &
-     &                      my_ncid, (/rec/), (/1/))
+     &                      ncid = my_ncid,                             &
+     &                      start = (/rec/),                            &
+     &                      total = (/1/))
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Report information.
@@ -1187,7 +1189,9 @@
 !
       CALL pio_netcdf_get_time (ng, model, ncname, Vname(1,idtime),     &
      &                          Rclock%DateNumber, stime,               &
-     &                          my_pioFile, (/rec/), (/1/))
+     &                          pioFile = my_pioFile,
+     &                          start = (/rec/),
+     &                          total = (/1/))
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Report information.
