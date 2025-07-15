@@ -382,7 +382,9 @@
 # endif
       END IF     
 !
-!  Read in observation variables in Group ObsError.
+!  Read the observation variables in Group ObsError. If the IODA file is
+!  created with the "roms2ioda.m" script, the observation error is in
+!  terms of standard deviations and has the same units as its value.
 !
       IF (IOtype.eq.io_nf90) THEN
         CALL netcdf_inq_var (ng, model, self%ncname,                    &
@@ -393,6 +395,7 @@
           CALL netcdf_get_fvar (ng, model, self%ncname,                 &
      &                          var_name(i), self%error(:,i),           &
      &                          GrpName = 'ObsError')
+          self%error(:,i)=self%error(:,i)*self%error(:,i)
           ncount=SIZE(self%error,1)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
           IF (Master) WRITE (stdout,30) 'ObsError', TRIM(var_name(i)),  &
