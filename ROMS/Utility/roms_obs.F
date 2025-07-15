@@ -17,12 +17,18 @@
 !
       USE mod_param
       USE mod_parallel
+      USE mod_grid
       USE mod_iounits
       USE mod_netcdf
       USE mod_scalars
 !
-      USE dateclock_mod, ONLY : datestr
-      USE unique_mod,    ONLY : unique
+      USE dateclock_mod,        ONLY : datestr
+#ifdef DISTRIBUTE
+      USE distribute_mod,       ONLY : mp_assemble
+#endif
+      USE get_hash_mod,         ONLY : get_hash
+      USE roms_interpolate_mod, ONLY : hindices
+      USE unique_mod,           ONLY : unique
 !     
       implicit none
 !
@@ -34,10 +40,11 @@
 
         integer :: nlocs                        ! number of observations
         integer :: nsurvey                      ! number of time surveys
+        integer :: nvars                        ! number of variables
         integer :: poolID                       ! observation pool ID
 !
 !  Observation origin identifier. Repetitive observations have their
-!  provenance multiplied by -1 so they can quickly identified during
+!  provenance multiplied by -1 so they can be quickly identified during
 !  processing.
 !
         integer, allocatable :: provenance(:)
@@ -73,7 +80,26 @@
 !
         character (len=:), allocatable :: vars(:) ! NetCDF variable name
 !
-!  Internal observation data object name:
+!  Observation statistics.
+!
+        integer (i8b), allocatable :: error_hash(:)
+        integer (i8b), allocatable :: value_hash(:)
+!
+        real (r8),     allocatable :: error_avg(:)
+        real (r8),     allocatable :: error_min(:)
+        real (r8),     allocatable :: error_max(:)
+
+        real (r8),     allocatable :: value_avg(:)
+        real (r8),     allocatable :: value_min(:)
+        real (r8),     allocatable :: value_max(:)
+!
+        real (r8) :: time_min
+        real (r8) :: time_max
+!
+        character (len=22) :: date_min
+        character (len=22) :: date_max
+!
+!  Internal observation data object name.
 !
         character (len=:), allocatable :: name
 !
@@ -187,9 +213,50 @@
 !  If not available, it computes observation object fractional
 !  coordinates.
 !
-      SUBROUTINE obs_data_frac_coords (self)
+      SUBROUTINE obs_data_frac_coords (self, ng, model, tile)
 !
       CLASS (obs_data), intent(inout) :: self     ! observation object
+      integer,          intent(in   ) :: ng       ! nested grid number
+      integer,          intent(in   ) :: model    ! kernel identifier
+      integer,          intent(in   ) :: tile     ! domain partition
+!
+      logical                         :: rectangular
+      integer                         :: LBi, UBi, LBj, UBj
+      integer                         :: IstrR, IendR, JstrR, JendR
+!
+!  Compute observation fractional coordinates.
+!
+      LBi=BOUNDS(ng)%LBi(tile)
+      UBi=BOUNDS(ng)%UBi(tile)
+      LBj=BOUNDS(ng)%LBj(tile)
+      UBj=BOUNDS(ng)%UBj(tile)
+!
+      IstrR=BOUNDS(ng)%IstrR(tile)
+      IendR=BOUNDS(ng)%IendR(tile)
+      JstrR=BOUNDS(ng)%JstrR(tile)
+      JendR=BOUNDS(ng)%JendR(tile)
+!
+      rectangular=.FALSE.
+!
+      self%Xgrid=0.0_r8
+      self%Ygrid=0.0_r8
+!
+      CALL hindices (ng, LBi, UBi, LBj, UBj,                            &
+     &               IstrR, IendR, JstrR, JendR,                        &
+     &               GRID(ng)%angler, GRID(ng)%lonr, GRID(ng)%latr,     &
+     &               1, self%nlocs, 1, 1,                               &
+     &               1, self%nlocs, 1, 1,                               &
+     &               self%lon, self%lat,                                &
+     &               self%Xgrid, self%Ygrid,                            & 
+     &               spval, rectangular)
+
+#ifdef DISTRIBUTE
+!
+!  Collect fractional coordinates.
+!
+      CALL mp_assemble (ng, model, self%nlocs, spval, self%Xgrid)
+      CALL mp_assemble (ng, model, self%nlocs, spval, self%Ygrid)
+#endif
 !
       RETURN
       END SUBROUTINE obs_data_frac_coords
@@ -200,13 +267,13 @@
 !
       SUBROUTINE obs_data_populate_ioda (self, ng, model, mvar, IOtype)
 !
-      CLASS (obs_data), intent(inout) :: self     ! observation object
+      CLASS (obs_data),  intent(inout) :: self    ! observation object
       integer,           intent(in   ) :: ng      ! nested grid number
       integer,           intent(in   ) :: model   ! kernel identifier
       integer,           intent(in   ) :: mvar    ! number of variables
       integer,           intent(in   ) :: IOtype  ! NetCDF IO type
 !
-      logical                          :: Loaded
+      logical                          :: Loaded, isDayUnits
       integer                          :: i, lstr, ncount
       real(r8),           dimension(2) :: Tmin, Tmax
       character (len=22), dimension(2) :: Dmin, Dmax
@@ -237,8 +304,8 @@
      &                              max_val = Tmax(1))
               Loaded=.TRUE.
               ncount=SIZE(self%time)
-              CALL datestr (Tmin(1), .FALSE.,  Dmin(1))
-              CALL datestr (Tmax(1), .FALSE.,  Dmax(1))
+              CALL datestr (Tmin(1), .FALSE., Dmin(1))
+              CALL datestr (Tmax(1), .FALSE., Dmax(1))
             CASE ('depth')
               CALL netcdf_get_fvar (ng, model, self%ncname,             &
      &                              var_name(i), self%depth,            &
@@ -282,8 +349,8 @@
      &                              max_val = Tmax(2))
               Loaded=.TRUE.
               ncount=SIZE(self%surveyTime)
-              CALL datestr (Tmin(2), .FALSE.,  Dmin(2))
-              CALL datestr (Tmax(2), .FALSE.,  Dmax(2))
+              CALL datestr (Tmin(2), .FALSE., Dmin(2))
+              CALL datestr (Tmax(2), .FALSE., Dmax(2))
             CASE ('x_grid')
               CALL netcdf_get_fvar (ng, model, self%ncname,             &
      &                              var_name(i), self%Xgrid,            &
@@ -364,12 +431,6 @@
 !
 # endif
       END IF
-      IF (Master) THEN
-        WRITE (stdout,40) 'DateTime Range:   ',                         &
-     &                    TRIM(Dmin(1)), TRIM(Dmax(1))
-        WRITE (stdout,40) 'SurveyTime Range: ',                         &
-     &                    TRIM(Dmin(2)), TRIM(Dmax(2))
-      END IF
 !
 !  Load observation NetCDF variable name(s).
 !
@@ -380,39 +441,83 @@
         self%vars(i)=TRIM(var_name(i))
       END DO
 !
+!  Compute statistics.
+!
+      isDayUnits=.FALSE.
+      CALL self%stats (isDayUnits)
+!
+!  Report information.
+!
+      IF (Master) THEN
+        WRITE (stdout,'(1x)')
+        DO i=1,mvar
+          WRITE (stdout,40) TRIM(self%vars(i)),                         &
+     &                      self%value_min(i), self%value_max(i),       &
+     &                      self%value_avg(i), self%value_hash(i),      &
+     &                      self%error_min(i), self%error_max(i),       &
+     &                      self%error_avg(i)
+          WRITE (stdout,50) 'DateTime Range:   ',                       &
+     &                      TRIM(Dmin(1)), TRIM(Dmax(1))
+          WRITE (stdout,50) 'SurveyTime Range: ',                       &
+     &                      TRIM(Dmin(2)), TRIM(Dmax(2))
+        END DO
+      END IF
+!
   10  FORMAT (/,2x,'ROMS_OBS         - Processing: ',a)
   20  FORMAT (t23,'Group: ',a,'::',a,t75,'Count = ',i0)
   30  FORMAT (t23,'Group: ',a,'::',a,t75,'Count = ',i0,t90,'ID = ',i0)
-  40  FORMAT (t23,a,a,' to ',a)
+  40  FORMAT (t21,'- ',a,/,t23,'(ValMin = ',1p,e12.5,' ValMax = ',      &
+     &        1p,e12.5,' ValAvg = ',1p,e12.5,' CheckSum = ',i0,')',     &
+     &        /,t23,'(ErrMin = ',1p,e12.5,' ErrMax = ',1p,e12.5,        &
+     &        ' ErrAvg = ',1p,e12.5,')')
+  50  FORMAT (t23,a,a,' to ',a)
 !
       RETURN
       END SUBROUTINE obs_data_populate_ioda
 !
 !-----------------------------------------------------------------------
-!  It reads data from input observation file(s) for the requeste state
-!  variable ID, allocates object vectors, and populates data into the
-!  structure.
+!  It computes and reports observation object statistics.
 !
-      SUBROUTINE obs_data_read (self, typeID)
+      SUBROUTINE obs_data_stats (self, isDayUnits)
 !
-      CLASS (obs_data), intent(inout) :: self     ! observation object
-      integer,          intent(in   ) :: typeID   ! state variable ID
+      CLASS (obs_data), intent(inout) :: self       ! observation object
+      logical,          intent(in   ) :: isDayUnits ! days or seconds
 !
-      character (len=*), parameter :: MyFile =                          &
-     &    __FILE__//", obs_data_read"
+      integer (i8b)                   :: checksum
+      integer                         :: i
+!
+      character (len=*),    parameter :: MyFile =                       &
+     &    __FILE__//", obs_data_stats"
 !
       SourceFile=MyFile
 !
-      RETURN
-      END SUBROUTINE obs_data_read
+!  Compute observation statistics.
 !
-!-----------------------------------------------------------------------
-!  It computes and reports observation object statistics/.
+      self%time_min=MINVAL(self%time)
+      self%time_max=MAXVAL(self%time)
 !
-      SUBROUTINE obs_data_stats (self)
+      IF (isDayUnits) THEN
+        CALL datestr (self%time_min, .TRUE., self%date_min)
+        CALL datestr (self%time_max, .TRUE., self%date_max)
+      ELSE
+        CALL datestr (self%time_min, .FALSE., self%date_min)
+        CALL datestr (self%time_max, .FALSE., self%date_max)
+      END IF
 !
-      CLASS (obs_data), intent(inout) :: self     ! observation object
+      DO i=1,self%nvars
+        self%error_avg(i)=SUM(self%error(:,i))/REAL(self%nlocs, r8)
+        self%error_min(i)=MINVAL(self%error(:,i))
+        self%error_max(i)=MAXVAL(self%error(:,i))
+        CALL get_hash (self%error(:,i), self%nvars, checksum, .FALSE.)
+        self%error_hash(i)=checksum
 !
+        self%value_avg(i)=SUM(self%value(:,i))/REAL(self%nlocs, r8)
+        self%value_min(i)=MINVAL(self%value(:,i))
+        self%value_max(i)=MAXVAL(self%value(:,i))
+        CALL get_hash (self%value(:,i), self%nvars, checksum, .FALSE.)
+        self%value_hash(i)=checksum
+      END DO
+!      
       RETURN
       END SUBROUTINE obs_data_stats
 !
@@ -630,6 +735,7 @@
 !
       self%pool(iobs)%nlocs   = mobs
       self%pool(iobs)%nsurvey = msurvey
+      self%pool(iobs)%nvars   = mvar
       self%pool(iobs)%poolID  = myID
 !
       IF (.not.allocated(self%pool(iobs)%ncname)) THEN
@@ -707,6 +813,44 @@
       IF (.not.allocated(self%pool(iobs)%value)) THEN
         allocate ( self%pool(iobs)%value(mobs,mvar) )
         self%pool(iobs)%value = 0.0_r8
+      END IF
+!
+!  Allocate statistics variables.
+!
+      IF (.not.allocated(self%pool(iobs)%error_hash)) THEN
+        allocate ( self%pool(iobs)%error_hash(mvar) )
+        self%pool(iobs)%error_hash=0_i8b
+      END IF
+      IF (.not.allocated(self%pool(iobs)%value_hash)) THEN
+        allocate ( self%pool(iobs)%value_hash(mvar) )
+        self%pool(iobs)%value_hash=0_i8b
+      END IF
+
+      IF (.not.allocated(self%pool(iobs)%error_avg)) THEN
+        allocate ( self%pool(iobs)%error_avg(mvar) )
+        self%pool(iobs)%error_avg=0.0_r8
+      END IF
+      IF (.not.allocated(self%pool(iobs)%value_avg)) THEN
+        allocate ( self%pool(iobs)%value_avg(mvar) )
+        self%pool(iobs)%value_avg=0.0_r8
+      END IF
+
+      IF (.not.allocated(self%pool(iobs)%error_min)) THEN
+        allocate ( self%pool(iobs)%error_min(mvar) )
+        self%pool(iobs)%error_min=0.0_r8
+      END IF
+      IF (.not.allocated(self%pool(iobs)%value_min)) THEN
+        allocate ( self%pool(iobs)%value_min(mvar) )
+        self%pool(iobs)%value_min=0.0_r8
+      END IF
+
+      IF (.not.allocated(self%pool(iobs)%error_max)) THEN
+        allocate ( self%pool(iobs)%error_max(mvar) )
+        self%pool(iobs)%error_max=0.0_r8
+      END IF
+      IF (.not.allocated(self%pool(iobs)%value_max)) THEN
+        allocate ( self%pool(iobs)%value_max(mvar) )
+        self%pool(iobs)%value_max=0.0_r8
       END IF
 !
 !  Read in IODA NetCDF file and populate observation data.
@@ -818,6 +962,7 @@
         END IF
 !
         self%pool(iobs)%nlocs   = mysize
+        self%pool(iobs)%nvars   = mymvar
         self%pool(iobs)%poolID  = self%stateID(iobs)
 !
         IF (.not.allocated(self%pool(iobs)%ncname)) THEN
@@ -880,6 +1025,44 @@
           allocate ( self%pool(iobs)%value(mysize,mymvar) )
           self%pool(iobs)%value = 0.0_r8
         END IF
+!
+!  Allocate statistics variables.
+!
+        IF (.not.allocated(self%pool(iobs)%error_hash)) THEN
+          allocate ( self%pool(iobs)%error_hash(mymvar) )
+          self%pool(iobs)%error_hash=0_i8b
+        END IF
+        IF (.not.allocated(self%pool(iobs)%value_hash)) THEN
+          allocate ( self%pool(iobs)%value_hash(mymvar) )
+          self%pool(iobs)%value_hash=0_i8b
+        END IF
+
+        IF (.not.allocated(self%pool(iobs)%error_avg)) THEN
+          allocate ( self%pool(iobs)%error_avg(mymvar) )
+          self%pool(iobs)%error_avg=0.0_r8
+        END IF
+        IF (.not.allocated(self%pool(iobs)%value_avg)) THEN
+          allocate ( self%pool(iobs)%value_avg(mymvar) )
+          self%pool(iobs)%value_avg=0.0_r8
+        END IF
+
+        IF (.not.allocated(self%pool(iobs)%error_min)) THEN
+          allocate ( self%pool(iobs)%error_min(mymvar) )
+          self%pool(iobs)%error_min=0.0_r8
+        END IF
+        IF (.not.allocated(self%pool(iobs)%value_min)) THEN
+          allocate ( self%pool(iobs)%value_min(mymvar) )
+          self%pool(iobs)%value_min=0.0_r8
+        END IF
+
+        IF (.not.allocated(self%pool(iobs)%error_max)) THEN
+          allocate ( self%pool(iobs)%error_max(mymvar) )
+          self%pool(iobs)%error_max=0.0_r8
+        END IF
+        IF (.not.allocated(self%pool(iobs)%value_max)) THEN
+          allocate ( self%pool(iobs)%value_max(mymvar) )
+          self%pool(iobs)%value_max=0.0_r8
+        END IF
 
       END DO
 !
@@ -915,7 +1098,7 @@
       integer,           intent(in   ) :: typeID(:)  ! observation type
       real (r8),         intent(in   ) :: Zgrid(:)   ! fractional Zgrid
 !
-      logical                          :: Loaded
+      logical                          :: Loaded, isDayUnits
       integer,         dimension(mobs) :: obs_idata
       integer,             allocatable :: surveyIndex(:)
       integer                          :: Ninp, Nout
@@ -1034,13 +1217,13 @@
 !
         Tmin(1)=MINVAL(self%pool(iobs)%time)
         Tmax(1)=MAXVAL(self%pool(iobs)%time)
-        CALL datestr (Tmin(1), .TRUE.,  Dmin(1))
-        CALL datestr (Tmax(1), .TRUE.,  Dmax(1))
+        CALL datestr (Tmin(1), .TRUE., Dmin(1))
+        CALL datestr (Tmax(1), .TRUE., Dmax(1))
 !
         Tmin(2)=MINVAL(self%pool(iobs)%surveyTime)
         Tmax(2)=MAXVAL(self%pool(iobs)%surveyTime)
-        CALL datestr (Tmin(2), .TRUE.,  Dmin(2))
-        CALL datestr (Tmax(2), .TRUE.,  Dmax(2))
+        CALL datestr (Tmin(2), .TRUE., Dmin(2))
+        CALL datestr (Tmax(2), .TRUE., Dmax(2))
 !
         IF (.not.allocated(self%pool(iobs)%ncname)) THEN
           lstr=LEN_TRIM(ncname)
@@ -1100,6 +1283,13 @@
           END DO
         END IF
 !
+!  Compute statistics.
+!
+        isDayUnits=.TRUE.
+        CALL self%pool(iobs)%stats (isDayUnits)
+!
+!  Report processing information.
+!
         IF (Master) THEN
           WRITE (stdout,10) TRIM(ncname)
           WRITE (stdout,20) 'MetaData', 'obs_time',      Ninp
@@ -1120,17 +1310,33 @@
             WRITE (stdout,30) 'ObsValue', TRIM(vars(i)), Ninp,          &
      &                        self%pool(iobs)%stateID(i)
           END DO
-          WRITE (stdout,40) 'DateTime Range:   ',                       &
-     &                      TRIM(Dmin(1)), TRIM(Dmax(1))
-          WRITE (stdout,40) 'SurveyTime Range: ',                       &
-     &                      TRIM(Dmin(2)), TRIM(Dmax(2))
+!
+          WRITE (stdout,'(1x)')
+          DO i=1,mvar
+            WRITE (stdout,40) TRIM(self%pool(iobs)%vars(i)),            &
+     &                        self%pool(iobs)%value_min(i),             &
+     &                        self%pool(iobs)%value_max(i),             &
+     &                        self%pool(iobs)%value_avg(i),             &
+     &                        self%pool(iobs)%value_hash(i),            &
+     &                        self%pool(iobs)%error_min(i),             &
+     &                        self%pool(iobs)%error_max(i),             &
+     &                        self%pool(iobs)%error_avg(i)
+            WRITE (stdout,50) 'DateTime Range:   ',                     &
+     &                        TRIM(Dmin(1)), TRIM(Dmax(1))
+            WRITE (stdout,50) 'SurveyTime Range: ',                     &
+     &                        TRIM(Dmin(2)), TRIM(Dmax(2))
+          END DO
         END IF
       END DO
 !
   10  FORMAT (/,2x,'ROMS_OBS         - Processing: ',a)
   20  FORMAT (t23,a,'::',a,t75,'Count = ',i0)
   30  FORMAT (t23,a,'::',a,t75,'Count = ',i0,t90,'ID = ',i0)
-  40  FORMAT (t23,a,a,' to ',a)
+  40  FORMAT (t21,'- ',a,/,t23,'(ValMin = ',1p,e12.5,' ValMax = ',      &
+     &        1p,e12.5,' ValAvg = ',1p,e12.5,' CheckSum = ',i0,')',     &
+     &        /,t23,'(ErrMin = ',1p,e12.5,' ErrMax = ',1p,e12.5,        &
+     &        ' ErrAvg = ',1p,e12.5,')')
+  50  FORMAT (t23,a,a,' to ',a)
 !
       RETURN
       END SUBROUTINE obs_pool_populate_native
@@ -1597,7 +1803,7 @@
       character (len=*), intent(in   ) :: VarName    ! variable name
 !
       logical                          :: mask(ND), msk2(ND)
-      integer                          :: Lsur, iobs, mvar, npool
+      integer                          :: Lsur, i, iobs, mvar, npool
       integer                          :: poolID
 
       character (len=*),     parameter :: MyFile =                      &
@@ -1662,15 +1868,19 @@
           CASE ('obs_Zgrid')
             self%pool(iobs)%Zgrid = PACK(rdata, mask)
           CASE ('obs_error')
-            self%pool(iobs)%error(:,mvar)   = PACK(rdata, mask)
-            IF (mvar.eq.2) THEN
-              self%pool(iobs)%error(:,mvar) = PACK(rdata, msk2)
-            END IF
+            DO i=1,mvar
+              self%pool(iobs)%error(:,i)   = PACK(rdata, mask)
+              IF (i.eq.2) THEN
+                self%pool(iobs)%error(:,i) = PACK(rdata, msk2)
+              END IF
+            END DO
           CASE ('obs_value')
-            self%pool(iobs)%value(:,mvar)   = PACK(rdata, mask)
-            IF (mvar.eq.2) THEN
-              self%pool(iobs)%error(:,mvar) = PACK(rdata, msk2)
-            END IF
+            DO i=1,mvar
+              self%pool(iobs)%value(:,i)   = PACK(rdata, mask)
+              IF (i.eq.2) THEN
+                self%pool(iobs)%value(:,i) = PACK(rdata, msk2)
+              END IF
+            END DO
           CASE DEFAULT
             IF (Master) WRITE (stdout,20) TRIM(VarName)
             exit_flag=5
