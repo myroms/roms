@@ -118,6 +118,7 @@
       PUBLIC :: netcdf_create           ! creates file
       PUBLIC :: netcdf_enddef           ! ends definition mode
       PUBLIC :: netcdf_get_dim          ! reads dimension names/values
+      PUBLIC :: netcdf_get_grp          ! gets group ids/names/variables
       PUBLIC :: netcdf_get_satt         ! reads string attributes
       PUBLIC :: netcdf_inq_var          ! inquires variables
       PUBLIC :: netcdf_inq_varid        ! inquires variable ID
@@ -141,6 +142,8 @@
 !
       integer, parameter :: Matts = 50  ! maximum number of attributes
       integer, parameter :: Mdims = 50  ! maximum number of dimensions
+      integer, parameter :: Mgrps = 50  ! maximum number of groups
+      integer, parameter :: Mgvar = 20  ! maximun number of group vars
       integer, parameter :: Mvars = 900 ! maximum number of variables
       integer, parameter :: NvarD = 5   ! number of variable dimensions
       integer, parameter :: NvarA = 50  ! number of variable attributes
@@ -149,6 +152,8 @@
 !  all variables.
 !
       integer :: n_dim                  ! number of dimensions
+      integer :: n_grp                  ! number of groups
+      integer :: n_gvar(Mgrps)          ! number of variables per group
       integer :: n_var                  ! number of variables
       integer :: n_gatt                 ! number of global attributes
       integer :: ncformat               ! file format number (version)
@@ -157,6 +162,14 @@
       integer :: att_kind(Matts)        ! attribute data type
       integer :: dim_id(Mdims)          ! dimensions ID
       integer :: dim_size(Mdims)        ! dimensions value
+!
+      integer :: grp_id(Mgrps)          ! groups ID
+      integer :: grp_nvatt(Mgvar,Mgrps) ! number of group var attributes
+      integer :: grp_nvdim(Mgvar,Mgrps) ! number of group var dimensions
+      integer :: grp_vdim(5,Mgvar,Mgrps)! group variables dimensions ID
+      integer :: grp_vid(Mgvar,Mgrps)   ! group variables ID
+      integer :: grp_vtype(Mgvar,Mgrps) ! group var external data type
+!
       integer :: var_id(Mvars)          ! variables ID
       integer :: var_natt(Mvars)        ! variables number of attributes
       integer :: var_flag(Mvars)        ! Variables water points flag
@@ -164,9 +177,12 @@
       integer :: var_ndim(Mvars)        ! variables number of dimensions
       integer :: var_dim(NvarD,Mvars)   ! variables dimensions ID
 !
-      character (len=100) :: att_name(Matts)     ! attribute names
-      character (len=100) :: dim_name(Mdims)     ! dimension names
-      character (len=100) :: var_name(Mvars)     ! variable names
+      character (len=100) :: att_name(Matts)          ! attribute names
+      character (len=100) :: dim_name(Mdims)          ! dimension names
+      character (len=100) :: grp_name(Mgrps)          ! group names
+      character (len=100) :: grp_aname(20,Mgvar,Mgrps)! group attributes
+      character (len=100) :: grp_vname(Mgvar,Mgrps)   ! group variables
+      character (len=100) :: var_name(Mvars)          ! variable names
 !
 !  Generic information about requested current variable.
 !
@@ -383,7 +399,7 @@
       integer :: myID, myValue
 
 #if !defined PARALLEL_IO && defined DISTRIBUTE
-      integer, dimension(5) :: ibuffer
+      integer, dimension(6) :: ibuffer
 #endif
 !
       character (len=*), parameter :: MyFile =                          &
@@ -421,18 +437,15 @@
 !  Inquire file.
 !
       IF (InpThread) THEN
-#ifdef HDF5
         status=nf90_inquire(my_ncid, n_dim, n_var, n_gatt, rec_id,      &
-     &                      ncformat)
-#else
-        status=nf90_inquire(my_ncid, n_dim, n_var, n_gatt, rec_id)
-#endif
+     &                      formatNum = ncformat)
         IF ((status.eq.nf90_noerr).and.(n_dim.le.Mdims)) THEN
 #if !defined PARALLEL_IO && defined DISTRIBUTE
           ibuffer(1)=n_dim
           ibuffer(2)=n_var
           ibuffer(3)=n_gatt
           ibuffer(4)=rec_id
+          ibuffer(5)=ncformat
 #endif
 !
 !  Inquire about dimensions: names, ID, and size.
@@ -452,7 +465,7 @@
             IF (dim_id(i).eq.rec_id) THEN
               rec_size=dim_size(i)
 #if !defined PARALLEL_IO && defined DISTRIBUTE
-              ibuffer(5)=rec_size
+              ibuffer(6)=rec_size
 #endif
             END IF
           END DO
@@ -481,7 +494,8 @@
         n_var=ibuffer(2)
         n_gatt=ibuffer(3)
         rec_id=ibuffer(4)
-        rec_size=ibuffer(5)
+        ncformat=ibuffer(5)
+        rec_size=ibuffer(6)
         CALL mp_bcasti (ng, model, dim_id)
         CALL mp_bcasti (ng, model, dim_size)
         CALL mp_bcasts (ng, model, dim_name)
@@ -533,6 +547,277 @@
 !
       RETURN
       END SUBROUTINE netcdf_get_dim
+!
+      SUBROUTINE netcdf_get_grp (ng, model, ncname, ncid, GrpName,      &
+     &                           GrpID)
+!
+!=======================================================================
+!                                                                      !
+!  This routine inquires a NetCDF file number of groups, ids, names,   !
+!  its variables, and its variables names. All the group information   !
+!  is stored in the module variables declared above.                   !
+!                                                                      !
+!  Groups are only available in enhanced NetCDF-4 files having a       !
+!  format=nf90_format_netcdf4 (currently, 3). A group is equivanlent   !
+!  to a sub-directory in a file.                                       !
+!                                                                      !
+!  On Input:                                                           !
+!                                                                      !
+!     ng           Nested grid number (integer)                        !
+!     model        Calling model identifier (integer)                  !
+!     ncname       NetCDF file name (string)                           !
+!     ncid         NetCDF file ID (integer, OPTIONAL)                  !
+!     GrpName      Requested group name (string, OPTIONAL)             !
+!                                                                      !
+!  On Ouput:                                                           !
+!                                                                      !
+!     GrpID        ID of requested group (integer, OPTIONAL)           !
+!                                                                      !
+!  Other information stored in this module:                            !
+!                                                                      !
+!     n_grp        Number of groups                                    !
+!     n_gvar       Number of group variables (1:n_grp)                 !
+!     grp_aname    Group variable attribute name                       !
+!                    (grp_nvatt, 1:n_gvar, 1:n_grp)                    !
+!     grp_id       Group ID (1:n_grp)                                  !
+!     grp_name     Group name (1:n_grp)                                !
+!     grp_nvatt    Number of variable attributes in a group            !
+!                    (1:n_gvar, 1:n_grp)                               !
+!     grp_nvdim    Number of variable dimensions in a group            !
+!                    (1:n_gvar, 1:n_grp)                               !
+!     grp_vdim     Dimension IDs for a group variable                  !
+!                    (grp_nvdim, 1:n_gvar, 1:n_grp)                    !
+!     grp_vid      Group variable ID (1:n_gvar, 1:n_grp)               !
+!     grp_vname    Group variable name (1:n_gvar, 1:n_grp)             !
+!     grp_vtype    Group variable data type (1:n_gvar, 1:n_grp)        !
+!                                                                      !
+!     WARNING: This is information is rewritten during each CALL.      !
+!                                                                      !
+!=======================================================================
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: ng, model
+      integer, intent(in), optional :: ncid
+!
+      character (len=*), intent(in) :: ncname
+      character (len=*), intent(in), optional :: GrpName
+!
+      integer, intent(out), optional :: GrpID
+!
+!  Local variable declarations.
+!
+      logical :: foundit
+!
+      integer :: my_ncid, i, j, k, status
+      integer :: myID
+!
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__//", netcdf_get_grp"
+!
+!-----------------------------------------------------------------------
+!  Inquire about the NetCDF dimensions (names and values).
+!-----------------------------------------------------------------------
+!
+!  Initialize.
+!
+      n_grp=0
+      n_gvar=0
+      ncformat=-1
+      grp_id=0
+      grp_nvatt=0
+      grp_nvdim=0
+      grp_vdim=0
+      grp_vid=0
+      DO i=1,Mgrps
+        DO j=1,LEN(grp_name(1))
+          grp_name(i)(j:j)=' '
+        END DO
+      END DO
+      DO i=1,Mgrps
+        DO j=1,Mgvar        
+          DO k=1,LEN(grp_vname(1,1))
+            grp_vname(j,i)(k:k)=' '
+          END DO
+        END DO
+      END DO
+!
+!  Open file for reading.
+!
+      IF (.not.PRESENT(ncid)) THEN
+         CALL netcdf_open (ng, model, TRIM(ncname), 0, my_ncid)
+         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+      ELSE
+        my_ncid=ncid
+      END IF
+!
+!  Inquire file.
+!
+      IF (InpThread) THEN
+        status=nf90_inquire(my_ncid,                                    &
+     &                      formatNum = ncformat)
+        IF ((status.eq.nf90_noerr).and.                                 &
+     &      (ncformat.eq.nf90_format_netcdf4)) THEN
+          status=nf90_inq_grps(my_ncid, n_grp, grp_id)
+          IF ((status.eq.nf90_noerr).and.(n_grp.le.Mgrps)) THEN
+!
+!  Inquire about group names, number of variables and their IDs, and
+!  group variable names.
+!
+            DO i=1,n_grp
+              status=nf90_inq_grpname(grp_id(i), grp_name(i))
+              IF (status.eq.nf90_noerr) THEN
+                status=nf90_inq_varids(grp_id(i), n_gvar(i),            &
+     &                                 grp_vid(:,i))
+                IF ((status.eq.nf90_noerr).and.                         &
+     &              (n_gvar(i).le.Mgvar)) THEN
+                  DO j=1,n_gvar(i)
+                    status=nf90_inquire_variable(grp_id(i),             &
+     &                                           grp_vid(j,i),          &
+     &                                           grp_vname(j,i),        &
+     &                                           grp_vtype(j,i),        &
+     &                                           grp_nvdim(j,i),        &
+     &                                           grp_vdim(:,j,i),       &
+     &                                           grp_nvatt(j,i))
+                    IF ((status.eq.nf90_noerr).and.                     &
+     &                  (n_gvar(i).le.Mgvar)) THEN
+                      DO k=1,grp_nvatt(j,i)
+                        status=nf90_inq_attname(grp_id(i),              &
+     &                                          grp_vid(j,i), k,        &
+     &                                          grp_Aname(k,j,i))
+                        IF (FoundError(status, nf90_noerr,              &
+     &                                  __LINE__, MyFile)) THEN
+                          WRITE (stdout,10) TRIM(grp_name(i)),          &
+     &                                      TRIM(grp_vname(j,i)),       &
+     &                                      TRIM(ncname),               &
+     &                                      TRIM(SourceFile),           &
+     &                                      nf90_strerror(status)
+                          exit_flag=2
+                          ioerror=status
+                          RETURN
+                        END IF
+                      END DO
+                    ELSE
+                      WRITE (stdout,20) TRIM(grp_name(i)),              &
+     &                                  grp_vid(j,i),                   &
+     &                                  TRIM(ncname), TRIM(SourceFile), &
+     &                                  nf90_strerror(status)
+                      exit_flag=2
+                      ioerror=status
+                      RETURN
+                    END IF
+                  END DO
+                ELSE
+                  WRITE (stdout,30) TRIM(grp_name(i)), TRIM(ncname),    &
+     &                              TRIM(SourceFile),                   &
+     &                              nf90_strerror(status)
+                  exit_flag=2
+                  ioerror=status
+                  RETURN
+                END IF
+              ELSE
+                WRITE (stdout,40) grp_id(i), TRIM(ncname),              &
+     &                            TRIM(SourceFile),                     &
+     &                            nf90_strerror(status)
+                exit_flag=2
+                ioerror=status
+                RETURN
+              END IF
+            END DO
+          ELSE
+            IF (n_grp.gt.Mgrps) THEN
+              WRITE (stdout,50) ' Mgrps = ', Mgrps, n_grp
+              exit_flag=2
+              ioerror=0
+            END IF
+            IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+              WRITE (stdout,60) TRIM(ncname), TRIM(SourceFile)
+              exit_flag=2
+              ioerror=status
+            END IF
+          END IF
+        ELSE
+          WRITE (stdout,70) ncformat, nf90_format_netcdf4,              &
+     &                      TRIM(ncname), TRIM(SourceFile)
+          exit_flag=2
+          ioerror=status
+        END IF
+      END IF
+
+#if !defined PARALLEL_IO && defined DISTRIBUTE
+!
+!  Broadcast dimension to all processors in the group.
+!
+      CALL mp_bcasti (ng, model, exit_flag)
+      IF (exit_flag.eq.NoError) THEN
+        CALL mp_bcasti (ng, model, n_grp)
+        CALL mp_bcasti (ng, model, n_gvar)
+        CALL mp_bcasti (ng, model, grp_id)
+        CALL mp_bcasti (ng, model, grp_nvatt)
+        CALL mp_bcasti (ng, model, grp_nvdim)
+        CALL mp_bcasti (ng, model, grp_vdim)
+        CALL mp_bcasti (ng, model, grp_vid)
+        CALL mp_bcasti (ng, model, grp_vtype)
+        CALL mp_bcasts (ng, model, grp_Aname)
+        CALL mp_bcasts (ng, model, grp_name)
+        CALL mp_bcasts (ng, model, grp_vname)
+      END IF
+#endif
+!
+!  Load requested information.
+!
+      IF (exit_flag.eq.NoError) THEN
+        foundit=.FALSE.
+        IF (PRESENT(GrpName)) THEN
+          DO i=1,n_grp
+            IF (TRIM(grp_name(i)).eq.TRIM(GrpName)) THEN
+              foundit=.TRUE.
+              CYCLE
+            END IF
+          END DO
+          IF (foundit) THEN
+            IF (PRESENT(GrpID)) THEN
+              GrpID=myID
+            END IF
+          ELSE
+            WRITE (stdout,80) TRIM(GrpName), TRIM(ncname),              &
+     &                        TRIM(SourceFile)
+            exit_flag=2
+            ioerror=status
+          END IF
+        END IF
+      END IF
+!
+!  Close input NetCDF file.
+!
+      IF (.not.PRESENT(ncid)) THEN
+        CALL netcdf_close (ng, model, my_ncid, ncname, .FALSE.)
+      END IF
+!
+  10  FORMAT (/,' NETCDF_GET_GRP - error while inquiring variables',    &
+     &        ' attributes, Group:',2x,a,2x,', Variable:',2x,a,         &
+     &        /,18x,'in input file:',2x,a,/,18x,'call from:',2x,a)
+  20  FORMAT (/,' NETCDF_GET_GRP - error while inquiring variables',    &
+     &        ' names, Group:',2x,a,/,18x,'in input file:',2x,a,        &
+     &        /,18x,'call from:',2x,a)
+  30  FORMAT (/,' NETCDF_GET_GRP - error while inquiring variable IDs', &
+     &        ', Group:',2x,a,/,18x,'in input file:',2x,a,              &
+     &        /,18x,'call from:',2x,a)
+  40  FORMAT (/,' NETCDF_GET_GRP - error while inquiring group name',   &
+     &        ', Group ID =',2x,i0,/,18x,'in input file:',2x,a,         &
+     &        /,18x,'call from:',2x,a)
+  50  FORMAT (/,' NETCDF_GET_GRP - too small dimension parameter,',a,   &
+     &        2i5,/,18x,'change file  mod_netcdf.F  and recompile')
+  60  FORMAT (/,' NETCDF_GET_GRP - unable to inquire about Groups',     &
+     &          ' of input NetCDF file:',2x,a,/,18x,'call from:',2x,a)
+  70  FORMAT (/,' NETCDF_GET_GRP - Cannot inquire about Groups ',       &
+     &        ' because of file format = ',i0,2x,'instead of ',i0,      &
+     &        /,18x,'in input file:',2x,a,/,18x,'call from:',2x,a)
+  80  FORMAT (/,' NETCDF_GET_GRP - requested group: ',a,/18x,           &
+     &        'not found in input file:',2x,a,/,18x,'call from:',2x,a)
+!
+      RETURN
+      END SUBROUTINE netcdf_get_grp
 !
       SUBROUTINE netcdf_check_dim (ng, model, ncname, ncid)
 !
@@ -1748,7 +2033,7 @@
                       END IF
                     ELSE IF ((my_Alen.eq.1).and.                        &
      &                       (my_Atype.eq.NF90_FLOAT)) THEN
-                      status=nf90_get_att(nfid, my_id,               &
+                      status=nf90_get_att(nfid, my_id,                  &
      &                                    TRIM(var_Aname(i)),           &
      &                                    my_Afloat)
                       IF (FoundError(status, nf90_noerr,                &
@@ -6623,7 +6908,8 @@
 #ifdef SINGLE_PRECISION
 !
       SUBROUTINE netcdf_put_fvar_0dp (ng, model, ncname, myVarName, A,  &
-     &                                start, total, ncid, varid)
+     &                                start, total, ncid, GrpName,      &
+     &                                varid)
 !
 !=======================================================================
 !                                                                      !
@@ -6643,6 +6929,7 @@
 !     total        Number of data values to be written along each      !
 !                    dimension (integer)                               !
 !     ncid         NetCDF file ID (integer, OPTIONAL)                  !
+!     GrpName      NetCDF4 group name (string, OPTIONAL)               !
 !     varid        NetCDF variable ID (integer, OPTIONAL)              !
 !                                                                      !
 !  On Ouput:                                                           !
@@ -6666,10 +6953,11 @@
 !
       character (len=*), intent(in) :: ncname
       character (len=*), intent(in) :: myVarName
+      character (len=*), intent(in), optional :: GrpName
 !
 !  Local variable declarations.
 !
-      integer :: my_ncid, my_varid, status
+      integer :: my_ncid, my_varid, my_grpid, nfid, status
 
 # if !defined PARALLEL_IO && defined DISTRIBUTE
       integer, dimension(2) :: ibuffer
@@ -6696,8 +6984,14 @@
 !  If variable ID is not provided, inquire its value.
 !
       IF (OutThread) THEN
+        IF (PRESENT(GrpName)) THEN
+          status=nf90_inq_ncid(my_ncid, TRIM(GrpName), my_grpid)
+          nfid=my_grpid
+        ELSE
+          nfid=my_ncid 
+        END IF
         IF (.not.PRESENT(varid)) THEN
-          status=nf90_inq_varid(my_ncid, TRIM(myVarName), my_varid)
+          status=nf90_inq_varid(nfid, TRIM(myVarName), my_varid)
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
             WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
      &                        TRIM(SourceFile), nf90_strerror(status)
@@ -6712,10 +7006,10 @@
 !
         IF (exit_flag.eq.NoError) THEN
           IF ((start(1).eq.0).and.(total(1).eq.0)) THEN
-            status=nf90_put_var(my_ncid, my_varid, A)
+            status=nf90_put_var(nfid, my_varid, A)
           ELSE
             my_A(1)=A
-            status=nf90_put_var(my_ncid, my_varid, my_A, start, total)
+            status=nf90_put_var(nfid, my_varid, my_A, start, total)
           END IF
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
             WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),            &
@@ -6754,7 +7048,8 @@
       END SUBROUTINE netcdf_put_fvar_0dp
 !
       SUBROUTINE netcdf_put_fvar_1dp (ng, model, ncname, myVarName, A,  &
-     &                                start, total, ncid, varid)
+     &                                start, total, ncid, GrpName,      &
+     &                                varid)
 !
 !=======================================================================
 !                                                                      !
@@ -6774,6 +7069,7 @@
 !     total        Number of data values to be written along each      !
 !                    dimension (integer)                               !
 !     ncid         NetCDF file ID (integer, OPTIONAL)                  !
+!     GrpName      NetCDF4 group name (string, OPTIONAL)               !
 !     varid        NetCDF variable ID (integer, OPTIONAL)              !
 !                                                                      !
 !  On Ouput:                                                           !
@@ -6797,10 +7093,11 @@
 !
       character (len=*), intent(in) :: ncname
       character (len=*), intent(in) :: myVarName
+      character (len=*), intent(in), optional :: GrpName
 !
 !  Local variable declarations.
 !
-      integer :: my_ncid, my_varid, status
+      integer :: my_ncid, my_varid, my_grpid, nfid, status
 
 # if !defined PARALLEL_IO && defined DISTRIBUTE
       integer, dimension(2) :: ibuffer
@@ -6825,8 +7122,14 @@
 !  If variable ID is not provided, inquire its value.
 !
       IF (OutThread) THEN
+        IF (PRESENT(GrpName)) THEN
+          status=nf90_inq_ncid(my_ncid, TRIM(GrpName), my_grpid)
+          nfid=my_grpid
+        ELSE
+          nfid=my_ncid 
+        END IF
         IF (.not.PRESENT(varid)) THEN
-          status=nf90_inq_varid(my_ncid, TRIM(myVarName), my_varid)
+          status=nf90_inq_varid(nfid, TRIM(myVarName), my_varid)
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
             WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
      &                        TRIM(SourceFile), nf90_strerror(status)
@@ -6840,7 +7143,7 @@
 !  Write out data.
 !
         IF (exit_flag.eq.NoError) THEN
-          status=nf90_put_var(my_ncid, my_varid, A, start, total)
+          status=nf90_put_var(nfid, my_varid, A, start, total)
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
             WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),            &
      &                        TRIM(SourceFile), nf90_strerror(status)
@@ -6878,7 +7181,8 @@
       END SUBROUTINE netcdf_put_fvar_1dp
 !
       SUBROUTINE netcdf_put_fvar_2dp (ng, model, ncname, myVarName, A,  &
-     &                                start, total, ncid, varid)
+     &                                start, total, ncid, GrpName,      &
+     &                                varid)
 !
 !=======================================================================
 !                                                                      !
@@ -6898,6 +7202,7 @@
 !     total        Number of data values to be written along each      !
 !                    dimension (integer)                               !
 !     ncid         NetCDF file ID (integer, OPTIONAL)                  !
+!     GrpName      NetCDF4 group name (string, OPTIONAL)               !
 !     varid        NetCDF variable ID (integer, OPTIONAL)              !
 !                                                                      !
 !  On Ouput:                                                           !
@@ -6921,10 +7226,11 @@
 
       character (len=*), intent(in) :: ncname
       character (len=*), intent(in) :: myVarName
+      character (len=*), intent(in), optional :: GrpName
 !
 !  Local variable declarations.
 !
-      integer :: my_ncid, my_varid, status
+      integer :: my_ncid, my_varid, my_grpid, nfid, status
 
 # if !defined PARALLEL_IO && defined DISTRIBUTE
       integer, dimension(2) :: ibuffer
@@ -6949,8 +7255,14 @@
 !  If variable ID is not provided, inquire its value.
 !
       IF (OutThread) THEN
+        IF (PRESENT(GrpName)) THEN
+          status=nf90_inq_ncid(my_ncid, TRIM(GrpName), my_grpid)
+          nfid=my_grpid
+        ELSE
+          nfid=my_ncid 
+        END IF
         IF (.not.PRESENT(varid)) THEN
-          status=nf90_inq_varid(my_ncid, TRIM(myVarName), my_varid)
+          status=nf90_inq_varid(nfid, TRIM(myVarName), my_varid)
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
             WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
      &                        TRIM(SourceFile), nf90_strerror(status)
@@ -6964,7 +7276,7 @@
 !  Write out data.
 !
         IF (exit_flag.eq.NoError) THEN
-          status=nf90_put_var(my_ncid, my_varid, A, start, total)
+          status=nf90_put_var(nfid, my_varid, A, start, total)
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
             WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),            &
      &                        TRIM(SourceFile), nf90_strerror(status)
@@ -7002,7 +7314,8 @@
       END SUBROUTINE netcdf_put_fvar_2dp
 !
       SUBROUTINE netcdf_put_fvar_3dp (ng, model, ncname, myVarName, A,  &
-     &                                start, total, ncid, varid)
+     &                                start, total, GrpName, ncid,      &
+     &                                varid)
 !
 !=======================================================================
 !                                                                      !
@@ -7022,6 +7335,7 @@
 !     total        Number of data values to be written along each      !
 !                    dimension (integer)                               !
 !     ncid         NetCDF file ID (integer, OPTIONAL)                  !
+!     GrpName      NetCDF4 group name (string, OPTIONAL)               !
 !     varid        NetCDF variable ID (integer, OPTIONAL)              !
 !                                                                      !
 !  On Ouput:                                                           !
@@ -7045,10 +7359,11 @@
 !
       character (len=*), intent(in) :: ncname
       character (len=*), intent(in) :: myVarName
+      character (len=*), intent(in), optional :: GrpName
 !
 !  Local variable declarations.
 !
-      integer :: my_ncid, my_varid, status
+      integer :: my_ncid, my_varid, my_grpid, nfid, status
 
 # if !defined PARALLEL_IO && defined DISTRIBUTE
       integer, dimension(2) :: ibuffer
@@ -7073,8 +7388,14 @@
 !  If variable ID is not provided, inquire its value.
 !
       IF (OutThread) THEN
+        IF (PRESENT(GrpName)) THEN
+          status=nf90_inq_ncid(my_ncid, TRIM(GrpName), my_grpid)
+          nfid=my_grpid
+        ELSE
+          nfid=my_ncid 
+        END IF
         IF (.not.PRESENT(varid)) THEN
-          status=nf90_inq_varid(my_ncid, TRIM(myVarName), my_varid)
+          status=nf90_inq_varid(nfid, TRIM(myVarName), my_varid)
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
             WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
      &                        TRIM(SourceFile), nf90_strerror(status)
@@ -7088,7 +7409,7 @@
 !  Write out data.
 !
         IF (exit_flag.eq.NoError) THEN
-          status=nf90_put_var(my_ncid, my_varid, A, start, total)
+          status=nf90_put_var(nfid, my_varid, A, start, total)
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
             WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),            &
      &                        TRIM(SourceFile), nf90_strerror(status)
@@ -7127,7 +7448,8 @@
 #endif
 !
       SUBROUTINE netcdf_put_fvar_0d (ng, model, ncname, myVarName, A,   &
-     &                               start, total, ncid, varid)
+     &                               start, total, ncid, GrpName,       &
+     &                               varid)
 !
 !=======================================================================
 !                                                                      !
@@ -7147,6 +7469,7 @@
 !     total        Number of data values to be written along each      !
 !                    dimension (integer)                               !
 !     ncid         NetCDF file ID (integer, OPTIONAL)                  !
+!     GrpName      NetCDF4 group name (string, OPTIONAL)               !
 !     varid        NetCDF variable ID (integer, OPTIONAL)              !
 !                                                                      !
 !  On Ouput:                                                           !
@@ -7170,10 +7493,11 @@
 !
       character (len=*), intent(in) :: ncname
       character (len=*), intent(in) :: myVarName
+      character (len=*), intent(in), optional :: GrpName
 !
 !  Local variable declarations.
 !
-      integer :: my_ncid, my_varid, status
+      integer :: my_ncid, my_varid, my_grpid, nfid, status
 
 #if !defined PARALLEL_IO && defined DISTRIBUTE
       integer, dimension(2) :: ibuffer
@@ -7200,8 +7524,14 @@
 !  If variable ID is not provided, inquire its value.
 !
       IF (OutThread) THEN
+        IF (PRESENT(GrpName)) THEN
+          status=nf90_inq_ncid(my_ncid, TRIM(GrpName), my_grpid)
+          nfid=my_grpid
+        ELSE
+          nfid=my_ncid 
+        END IF
         IF (.not.PRESENT(varid)) THEN
-          status=nf90_inq_varid(my_ncid, TRIM(myVarName), my_varid)
+          status=nf90_inq_varid(nfid, TRIM(myVarName), my_varid)
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
             WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
      &                        TRIM(SourceFile), nf90_strerror(status)
@@ -7216,10 +7546,10 @@
 !
         IF (exit_flag.eq.NoError) THEN
           IF ((start(1).eq.0).and.(total(1).eq.0)) THEN
-            status=nf90_put_var(my_ncid, my_varid, A)
+            status=nf90_put_var(nfid, my_varid, A)
           ELSE
             my_A(1)=A
-            status=nf90_put_var(my_ncid, my_varid, my_A, start, total)
+            status=nf90_put_var(nfid, my_varid, my_A, start, total)
           END IF
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
             WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),            &
@@ -7258,7 +7588,8 @@
       END SUBROUTINE netcdf_put_fvar_0d
 !
       SUBROUTINE netcdf_put_fvar_1d (ng, model, ncname, myVarName, A,   &
-     &                               start, total, ncid, varid)
+     &                               start, total, ncid, GrpName,       &
+     &                               varid)
 !
 !=======================================================================
 !                                                                      !
@@ -7278,6 +7609,7 @@
 !     total        Number of data values to be written along each      !
 !                    dimension (integer)                               !
 !     ncid         NetCDF file ID (integer, OPTIONAL)                  !
+!     GrpName      NetCDF4 group name (string, OPTIONAL)               !
 !     varid        NetCDF variable ID (integer, OPTIONAL)              !
 !                                                                      !
 !  On Ouput:                                                           !
@@ -7301,10 +7633,11 @@
 !
       character (len=*), intent(in) :: ncname
       character (len=*), intent(in) :: myVarName
+      character (len=*), intent(in), optional :: GrpName
 !
 !  Local variable declarations.
 !
-      integer :: my_ncid, my_varid, status
+      integer :: my_ncid, my_varid, my_grpid, nfid, status
 
 #if !defined PARALLEL_IO && defined DISTRIBUTE
       integer, dimension(2) :: ibuffer
@@ -7329,8 +7662,14 @@
 !  If variable ID is not provided, inquire its value.
 !
       IF (OutThread) THEN
+        IF (PRESENT(GrpName)) THEN
+          status=nf90_inq_ncid(my_ncid, TRIM(GrpName), my_grpid)
+          nfid=my_grpid
+        ELSE
+          nfid=my_ncid 
+        END IF
         IF (.not.PRESENT(varid)) THEN
-          status=nf90_inq_varid(my_ncid, TRIM(myVarName), my_varid)
+          status=nf90_inq_varid(nfid, TRIM(myVarName), my_varid)
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
             WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
      &                        TRIM(SourceFile), nf90_strerror(status)
@@ -7344,7 +7683,7 @@
 !  Write out data.
 !
         IF (exit_flag.eq.NoError) THEN
-          status=nf90_put_var(my_ncid, my_varid, A, start, total)
+          status=nf90_put_var(nfid, my_varid, A, start, total)
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
             WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),            &
      &                        TRIM(SourceFile), nf90_strerror(status)
@@ -7382,7 +7721,8 @@
       END SUBROUTINE netcdf_put_fvar_1d
 !
       SUBROUTINE netcdf_put_fvar_2d (ng, model, ncname, myVarName, A,   &
-     &                               start, total, ncid, varid)
+     &                               start, total, ncid, GrpName,       &
+     &                               varid)
 !
 !=======================================================================
 !                                                                      !
@@ -7402,6 +7742,7 @@
 !     total        Number of data values to be written along each      !
 !                    dimension (integer)                               !
 !     ncid         NetCDF file ID (integer, OPTIONAL)                  !
+!     GrpName      NetCDF4 group name (string, OPTIONAL)               !
 !     varid        NetCDF variable ID (integer, OPTIONAL)              !
 !                                                                      !
 !  On Ouput:                                                           !
@@ -7425,10 +7766,11 @@
 !
       character (len=*), intent(in) :: ncname
       character (len=*), intent(in) :: myVarName
+      character (len=*), intent(in), optional :: GrpName
 !
 !  Local variable declarations.
 !
-      integer :: my_ncid, my_varid, status
+      integer :: my_ncid, my_varid, my_grpid, nfid, status
 
 #if !defined PARALLEL_IO && defined DISTRIBUTE
       integer, dimension(2) :: ibuffer
@@ -7453,8 +7795,14 @@
 !  If variable ID is not provided, inquire its value.
 !
       IF (OutThread) THEN
+        IF (PRESENT(GrpName)) THEN
+          status=nf90_inq_ncid(my_ncid, TRIM(GrpName), my_grpid)
+          nfid=my_grpid
+        ELSE
+          nfid=my_ncid 
+        END IF
         IF (.not.PRESENT(varid)) THEN
-          status=nf90_inq_varid(my_ncid, TRIM(myVarName), my_varid)
+          status=nf90_inq_varid(nfid, TRIM(myVarName), my_varid)
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
             WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
      &                        TRIM(SourceFile), nf90_strerror(status)
@@ -7468,7 +7816,7 @@
 !  Write out data.
 !
         IF (exit_flag.eq.NoError) THEN
-          status=nf90_put_var(my_ncid, my_varid, A, start, total)
+          status=nf90_put_var(nfid, my_varid, A, start, total)
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
             WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),            &
      &                        TRIM(SourceFile), nf90_strerror(status)
@@ -7506,7 +7854,8 @@
       END SUBROUTINE netcdf_put_fvar_2d
 !
       SUBROUTINE netcdf_put_fvar_3d (ng, model, ncname, myVarName, A,   &
-     &                               start, total, ncid, varid)
+     &                               start, total, ncid, GrpName,       &
+     &                               varid)
 !
 !=======================================================================
 !                                                                      !
@@ -7526,6 +7875,7 @@
 !     total        Number of data values to be written along each      !
 !                    dimension (integer)                               !
 !     ncid         NetCDF file ID (integer, OPTIONAL)                  !
+!     GrpName      NetCDF4 group name (string, OPTIONAL)               !
 !     varid        NetCDF variable ID (integer, OPTIONAL)              !
 !                                                                      !
 !  On Ouput:                                                           !
@@ -7549,10 +7899,11 @@
 !
       character (len=*), intent(in) :: ncname
       character (len=*), intent(in) :: myVarName
+      character (len=*), intent(in), optional :: GrpName
 !
 !  Local variable declarations.
 !
-      integer :: my_ncid, my_varid, status
+      integer :: my_ncid, my_varid, my_grpid, nfid, status
 
 #if !defined PARALLEL_IO && defined DISTRIBUTE
       integer, dimension(2) :: ibuffer
@@ -7577,8 +7928,14 @@
 !  If variable ID is not provided, inquire its value.
 !
       IF (OutThread) THEN
+        IF (PRESENT(GrpName)) THEN
+          status=nf90_inq_ncid(my_ncid, TRIM(GrpName), my_grpid)
+          nfid=my_grpid
+        ELSE
+          nfid=my_ncid 
+        END IF
         IF (.not.PRESENT(varid)) THEN
-          status=nf90_inq_varid(my_ncid, TRIM(myVarName), my_varid)
+          status=nf90_inq_varid(nfid, TRIM(myVarName), my_varid)
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
             WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
      &                        TRIM(SourceFile), nf90_strerror(status)
@@ -7592,7 +7949,7 @@
 !  Write out data.
 !
         IF (exit_flag.eq.NoError) THEN
-          status=nf90_put_var(my_ncid, my_varid, A, start, total)
+          status=nf90_put_var(nfid, my_varid, A, start, total)
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
             WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),            &
      &                        TRIM(SourceFile), nf90_strerror(status)
@@ -7630,7 +7987,8 @@
       END SUBROUTINE netcdf_put_fvar_3d
 !
       SUBROUTINE netcdf_put_fvar_4d (ng, model, ncname, myVarName, A,   &
-     &                               start, total, ncid, varid)
+     &                               start, total, ncid, GrpName,       &
+     &                               varid)
 !
 !=======================================================================
 !                                                                      !
@@ -7650,6 +8008,7 @@
 !     total        Number of data values to be written along each      !
 !                    dimension (integer)                               !
 !     ncid         NetCDF file ID (integer, OPTIONAL)                  !
+!     GrpName      NetCDF4 group name (string, OPTIONAL)               !
 !     varid        NetCDF variable ID (integer, OPTIONAL)              !
 !                                                                      !
 !  On Ouput:                                                           !
@@ -7673,10 +8032,11 @@
 !
       character (len=*), intent(in) :: ncname
       character (len=*), intent(in) :: myVarName
+      character (len=*), intent(in), optional :: GrpName
 !
 !  Local variable declarations.
 !
-      integer :: my_ncid, my_varid, status
+      integer :: my_ncid, my_varid, my_grpid, nfid, status
 
 #if !defined PARALLEL_IO && defined DISTRIBUTE
       integer, dimension(2) :: ibuffer
@@ -7701,8 +8061,14 @@
 !  If variable ID is not provided, inquire its value.
 !
       IF (OutThread) THEN
+        IF (PRESENT(GrpName)) THEN
+          status=nf90_inq_ncid(my_ncid, TRIM(GrpName), my_grpid)
+          nfid=my_grpid
+        ELSE
+          nfid=my_ncid 
+        END IF
         IF (.not.PRESENT(varid)) THEN
-          status=nf90_inq_varid(my_ncid, TRIM(myVarName), my_varid)
+          status=nf90_inq_varid(nfid, TRIM(myVarName), my_varid)
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
             WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
      &                        TRIM(SourceFile), nf90_strerror(status)
@@ -7716,7 +8082,7 @@
 !  Write out data.
 !
         IF (exit_flag.eq.NoError) THEN
-          status=nf90_put_var(my_ncid, my_varid, A, start, total)
+          status=nf90_put_var(nfid, my_varid, A, start, total)
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
             WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),            &
      &                        TRIM(SourceFile), nf90_strerror(status)
@@ -7754,7 +8120,8 @@
       END SUBROUTINE netcdf_put_fvar_4d
 !
       SUBROUTINE netcdf_put_ivar_0d (ng, model, ncname, myVarName, A,   &
-     &                               start, total, ncid, varid)
+     &                               start, total, ncid, GrpName,       &
+     &                               varid)
 !
 !=======================================================================
 !                                                                      !
@@ -7774,6 +8141,7 @@
 !     total        Number of data values to be written along each      !
 !                    dimension (integer)                               !
 !     ncid         NetCDF file ID (integer, OPTIONAL)                  !
+!     GrpName      NetCDF4 group name (string, OPTIONAL)               !
 !     varid        NetCDF variable ID (integer, OPTIONAL)              !
 !                                                                      !
 !  On Ouput:                                                           !
@@ -7797,10 +8165,11 @@
 !
       character (len=*), intent(in) :: ncname
       character (len=*), intent(in) :: myVarName
+      character (len=*), intent(in), optional :: GrpName
 !
 !  Local variable declarations.
 !
-      integer :: my_ncid, my_varid, status
+      integer :: my_ncid, my_varid, my_grpid, nfid, status
 
       integer, dimension(1) :: my_A
 
@@ -7827,8 +8196,14 @@
 !  If variable ID is not provided, inquire its value.
 !
       IF (OutThread) THEN
+        IF (PRESENT(GrpName)) THEN
+          status=nf90_inq_ncid(my_ncid, TRIM(GrpName), my_grpid)
+          nfid=my_grpid
+        ELSE
+          nfid=my_ncid 
+        END IF
         IF (.not.PRESENT(varid)) THEN
-          status=nf90_inq_varid(my_ncid, TRIM(myVarName), my_varid)
+          status=nf90_inq_varid(nfid, TRIM(myVarName), my_varid)
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
             WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
      &                        TRIM(SourceFile), nf90_strerror(status)
@@ -7843,10 +8218,10 @@
 !
         IF (exit_flag.eq.NoError) THEN
           IF ((start(1).eq.0).and.(total(1).eq.0)) THEN
-            status=nf90_put_var(my_ncid, my_varid, A)
+            status=nf90_put_var(nfid, my_varid, A)
           ELSE
             my_A(1)=A
-            status=nf90_put_var(my_ncid, my_varid, my_A, start, total)
+            status=nf90_put_var(nfid, my_varid, my_A, start, total)
           END IF
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
             WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),            &
@@ -7885,7 +8260,8 @@
       END SUBROUTINE netcdf_put_ivar_0d
 !
       SUBROUTINE netcdf_put_ivar_1d (ng, model, ncname, myVarName, A,   &
-     &                               start, total, ncid, varid)
+     &                               start, total, ncid, GrpName,       &
+     &                               varid)
 !
 !=======================================================================
 !                                                                      !
@@ -7905,6 +8281,7 @@
 !     total        Number of data values to be written along each      !
 !                    dimension (integer)                               !
 !     ncid         NetCDF file ID (integer, OPTIONAL)                  !
+!     GrpName      NetCDF4 group name (string, OPTIONAL)               !
 !     varid        NetCDF variable ID (integer, OPTIONAL)              !
 !                                                                      !
 !  On Ouput:                                                           !
@@ -7928,10 +8305,11 @@
 !
       character (len=*), intent(in) :: ncname
       character (len=*), intent(in) :: myVarName
+      character (len=*), intent(in), optional :: GrpName
 !
 !  Local variable declarations.
 !
-      integer :: my_ncid, my_varid, status
+      integer :: my_ncid, my_varid, my_grpid, nfid, status
 
 #if !defined PARALLEL_IO && defined DISTRIBUTE
       integer, dimension(2) :: ibuffer
@@ -7956,8 +8334,14 @@
 !  If variable ID is not provided, inquire its value.
 !
       IF (OutThread) THEN
+        IF (PRESENT(GrpName)) THEN
+          status=nf90_inq_ncid(my_ncid, TRIM(GrpName), my_grpid)
+          nfid=my_grpid
+        ELSE
+          nfid=my_ncid 
+        END IF
         IF (.not.PRESENT(varid)) THEN
-          status=nf90_inq_varid(my_ncid, TRIM(myVarName), my_varid)
+          status=nf90_inq_varid(nfid, TRIM(myVarName), my_varid)
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
             WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
      &                        TRIM(SourceFile), nf90_strerror(status)
@@ -7971,7 +8355,7 @@
 !  Write out data.
 !
         IF (exit_flag.eq.NoError) THEN
-          status=nf90_put_var(my_ncid, my_varid, A, start, total)
+          status=nf90_put_var(nfid, my_varid, A, start, total)
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
             WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),            &
      &                        TRIM(SourceFile), nf90_strerror(status)
@@ -8009,7 +8393,8 @@
       END SUBROUTINE netcdf_put_ivar_1d
 !
       SUBROUTINE netcdf_put_ivar_2d (ng, model, ncname, myVarName, A,   &
-     &                               start, total, ncid, varid)
+     &                               start, total, ncid, GrpName,       &
+     &                               varid)
 !
 !=======================================================================
 !                                                                      !
@@ -8029,6 +8414,7 @@
 !     total        Number of data values to be written along each      !
 !                    dimension (integer)                               !
 !     ncid         NetCDF file ID (integer, OPTIONAL)                  !
+!     GrpName      NetCDF4 group name (string, OPTIONAL)               !
 !     varid        NetCDF variable ID (integer, OPTIONAL)              !
 !                                                                      !
 !  On Ouput:                                                           !
@@ -8052,10 +8438,11 @@
 !
       character (len=*), intent(in) :: ncname
       character (len=*), intent(in) :: myVarName
+      character (len=*), intent(in), optional :: GrpName
 !
 !  Local variable declarations.
 !
-      integer :: my_ncid, my_varid, status
+      integer :: my_ncid, my_varid, my_grpid, nfid, status
 
 #if !defined PARALLEL_IO && defined DISTRIBUTE
       integer, dimension(2) :: ibuffer
@@ -8080,8 +8467,14 @@
 !  If variable ID is not provided, inquire its value.
 !
       IF (OutThread) THEN
+        IF (PRESENT(GrpName)) THEN
+          status=nf90_inq_ncid(my_ncid, TRIM(GrpName), my_grpid)
+          nfid=my_grpid
+        ELSE
+          nfid=my_ncid 
+        END IF
         IF (.not.PRESENT(varid)) THEN
-          status=nf90_inq_varid(my_ncid, TRIM(myVarName), my_varid)
+          status=nf90_inq_varid(nfid, TRIM(myVarName), my_varid)
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
             WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
      &                        TRIM(SourceFile), nf90_strerror(status)
@@ -8095,7 +8488,7 @@
 !  Write out data.
 !
         IF (exit_flag.eq.NoError) THEN
-          status=nf90_put_var(my_ncid, my_varid, A, start, total)
+          status=nf90_put_var(nfid, my_varid, A, start, total)
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
             WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),            &
      &                        TRIM(SourceFile), nf90_strerror(status)
@@ -8133,7 +8526,8 @@
       END SUBROUTINE netcdf_put_ivar_2d
 !
       SUBROUTINE netcdf_put_lvar_0d (ng, model, ncname, myVarName, A,   &
-     &                               start, total, ncid, varid)
+     &                               start, total, ncid, GrpName,       &
+     &                               varid)
 !
 !=======================================================================
 !                                                                      !
@@ -8156,6 +8550,7 @@
 !     total        Number of data values to be written along each      !
 !                    dimension (integer)                               !
 !     ncid         NetCDF file ID (integer, OPTIONAL)                  !
+!     GrpName      NetCDF4 group name (string, OPTIONAL)               !
 !     varid        NetCDF variable ID (integer, OPTIONAL)              !
 !                                                                      !
 !  On Ouput:                                                           !
@@ -8179,10 +8574,11 @@
 !
       character (len=*), intent(in) :: ncname
       character (len=*), intent(in) :: myVarName
+      character (len=*), intent(in), optional :: GrpName
 !
 !  Local variable declarations.
 !
-      integer :: my_ncid, my_varid, status
+      integer :: my_ncid, my_varid, my_grpid, nfid, status
 
       integer :: AI
       integer, dimension(1) :: my_AI
@@ -8210,8 +8606,14 @@
 !  If variable ID is not provided, inquire its value.
 !
       IF (OutThread) THEN
+        IF (PRESENT(GrpName)) THEN
+          status=nf90_inq_ncid(my_ncid, TRIM(GrpName), my_grpid)
+          nfid=my_grpid
+        ELSE
+          nfid=my_ncid 
+        END IF
         IF (.not.PRESENT(varid)) THEN
-          status=nf90_inq_varid(my_ncid, TRIM(myVarName), my_varid)
+          status=nf90_inq_varid(nfid, TRIM(myVarName), my_varid)
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
             WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
      &                        TRIM(SourceFile), nf90_strerror(status)
@@ -8235,10 +8637,10 @@
 !
         IF (exit_flag.eq.NoError) THEN
           IF ((start(1).eq.0).and.(total(1).eq.0)) THEN
-            status=nf90_put_var(my_ncid, my_varid, AI)
+            status=nf90_put_var(nfid, my_varid, AI)
           ELSE
             my_AI(1)=AI
-            status=nf90_put_var(my_ncid, my_varid, my_AI, start, total)
+            status=nf90_put_var(nfid, my_varid, my_AI, start, total)
           END IF
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
             WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),            &
@@ -8277,7 +8679,8 @@
       END SUBROUTINE netcdf_put_lvar_0d
 !
       SUBROUTINE netcdf_put_lvar_1d (ng, model, ncname, myVarName, A,   &
-     &                               start, total, ncid, varid)
+     &                               start, total, ncid, GrpName,       &
+     &                               varid)
 !
 !=======================================================================
 !                                                                      !
@@ -8300,6 +8703,7 @@
 !     total        Number of data values to be written along each      !
 !                    dimension (integer)                               !
 !     ncid         NetCDF file ID (integer, OPTIONAL)                  !
+!     GrpName      NetCDF4 group name (string, OPTIONAL)               !
 !     varid        NetCDF variable ID (integer, OPTIONAL)              !
 !                                                                      !
 !  On Ouput:                                                           !
@@ -8323,10 +8727,11 @@
 !
       character (len=*), intent(in) :: ncname
       character (len=*), intent(in) :: myVarName
+      character (len=*), intent(in), optional :: GrpName
 !
 !  Local variable declarations.
 !
-      integer :: i, my_ncid, my_varid, status
+      integer :: i, my_ncid, my_varid, my_grpid, nfid, status
 
       integer, dimension(SIZE(A,1)) :: AI
 
@@ -8353,8 +8758,14 @@
 !  If variable ID is not provided, inquire its value.
 !
       IF (OutThread) THEN
+        IF (PRESENT(GrpName)) THEN
+          status=nf90_inq_ncid(my_ncid, TRIM(GrpName), my_grpid)
+          nfid=my_grpid
+        ELSE
+          nfid=my_ncid 
+        END IF
         IF (.not.PRESENT(varid)) THEN
-          status=nf90_inq_varid(my_ncid, TRIM(myVarName), my_varid)
+          status=nf90_inq_varid(nfid, TRIM(myVarName), my_varid)
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
             WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
      &                        TRIM(SourceFile), nf90_strerror(status)
@@ -8379,7 +8790,7 @@
 !  Write out logical data as integers.
 !
         IF (exit_flag.eq.NoError) THEN
-          status=nf90_put_var(my_ncid, my_varid, AI, start, total)
+          status=nf90_put_var(nfid, my_varid, AI, start, total)
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
             WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),            &
      &                        TRIM(SourceFile), nf90_strerror(status)
@@ -8417,7 +8828,8 @@
       END SUBROUTINE netcdf_put_lvar_1d
 !
       SUBROUTINE netcdf_put_lvar_2d (ng, model, ncname, myVarName, A,   &
-     &                               start, total, ncid, varid)
+     &                               start, total, ncid, GrpName,       &
+     &                               varid)
 !
 !=======================================================================
 !                                                                      !
@@ -8440,6 +8852,7 @@
 !     total        Number of data values to be written along each      !
 !                    dimension (integer)                               !
 !     ncid         NetCDF file ID (integer, OPTIONAL)                  !
+!     GrpName      NetCDF4 group name (string, OPTIONAL)               !
 !     varid        NetCDF variable ID (integer, OPTIONAL)              !
 !                                                                      !
 !  On Ouput:                                                           !
@@ -8463,10 +8876,11 @@
 !
       character (len=*), intent(in) :: ncname
       character (len=*), intent(in) :: myVarName
+      character (len=*), intent(in), optional :: GrpName
 !
 !  Local variable declarations.
 !
-      integer :: i, j, my_ncid, my_varid, status
+      integer :: i, j, my_ncid, my_varid, my_grpid, nfid, status
 
       integer, dimension(SIZE(A,1),SIZE(A,2)) :: AI
 
@@ -8493,8 +8907,14 @@
 !  If variable ID is not provided, inquire its value.
 !
       IF (OutThread) THEN
+        IF (PRESENT(GrpName)) THEN
+          status=nf90_inq_ncid(my_ncid, TRIM(GrpName), my_grpid)
+          nfid=my_grpid
+        ELSE
+          nfid=my_ncid 
+        END IF
         IF (.not.PRESENT(varid)) THEN
-          status=nf90_inq_varid(my_ncid, TRIM(myVarName), my_varid)
+          status=nf90_inq_varid(nfid, TRIM(myVarName), my_varid)
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
             WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
      &                        TRIM(SourceFile), nf90_strerror(status)
@@ -8521,7 +8941,7 @@
 !  Write out logical data as integers.
 !
         IF (exit_flag.eq.NoError) THEN
-          status=nf90_put_var(my_ncid, my_varid, AI, start, total)
+          status=nf90_put_var(nfid, my_varid, AI, start, total)
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
             WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),            &
      &                        TRIM(SourceFile), nf90_strerror(status)
@@ -8559,7 +8979,8 @@
       END SUBROUTINE netcdf_put_lvar_2d
 !
       SUBROUTINE netcdf_put_svar_0d (ng, model, ncname, myVarName, A,   &
-     &                               start, total, ncid, varid)
+     &                               start, total, ncid, GrpName,       &
+     &                               varid)
 !
 !=======================================================================
 !                                                                      !
@@ -8590,6 +9011,7 @@
 !     total        Number of data values to be written along each      !
 !                    dimension (1D vector integer)                     !
 !     ncid         NetCDF file ID (integer, OPTIONAL)                  !
+!     GrpName      NetCDF4 group name (string, OPTIONAL)               !
 !     varid        NetCDF variable ID (integer, OPTIONAL)              !
 !                                                                      !
 !  On Ouput:                                                           !
@@ -8610,10 +9032,11 @@
       character (len=*), intent(in) :: A
       character (len=*), intent(in) :: ncname
       character (len=*), intent(in) :: myVarName
+      character (len=*), intent(in), optional :: GrpName
 !
 !  Local variable declarations.
 !
-      integer :: my_ncid, my_varid, status
+      integer :: my_ncid, my_varid, my_grpid, nfid, status
 
 #if !defined PARALLEL_IO && defined DISTRIBUTE
       integer, dimension(2) :: ibuffer
@@ -8640,8 +9063,14 @@
 !  If variable ID is not provided, inquire its value.
 !
       IF (OutThread) THEN
+        IF (PRESENT(GrpName)) THEN
+          status=nf90_inq_ncid(my_ncid, TRIM(GrpName), my_grpid)
+          nfid=my_grpid
+        ELSE
+          nfid=my_ncid 
+        END IF
         IF (.not.PRESENT(varid)) THEN
-          status=nf90_inq_varid(my_ncid, TRIM(myVarName), my_varid)
+          status=nf90_inq_varid(nfid, TRIM(myVarName), my_varid)
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
             WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
      &                        TRIM(SourceFile), nf90_strerror(status)
@@ -8656,10 +9085,10 @@
 !
         IF (exit_flag.eq.NoError) THEN
           IF ((start(1).eq.1).and.(total(1).eq.1)) THEN
-             status=nf90_put_var(my_ncid, my_varid, A)
+             status=nf90_put_var(nfid, my_varid, A)
           ELSE
             my_A(1)=A
-            status=nf90_put_var(my_ncid, my_varid, my_A, start, total)
+            status=nf90_put_var(nfid, my_varid, my_A, start, total)
           END IF
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
             WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),            &
@@ -8698,7 +9127,8 @@
       END SUBROUTINE netcdf_put_svar_0d
 !
       SUBROUTINE netcdf_put_svar_1d (ng, model, ncname, myVarName, A,   &
-     &                               start, total, ncid, varid)
+     &                               start, total, ncid, GrpName,       &
+     &                               varid)
 !
 !=======================================================================
 !                                                                      !
@@ -8730,6 +9160,7 @@
 !     total        Number of data values to be written along each      !
 !                    dimension (2D vector integer)                     !
 !     ncid         NetCDF file ID (integer, OPTIONAL)                  !
+!     GrpName      NetCDF4 group name (string, OPTIONAL)               !
 !     varid        NetCDF variable ID (integer, OPTIONAL)              !
 !                                                                      !
 !  On Ouput:                                                           !
@@ -8751,10 +9182,11 @@
 
       character (len=*), intent(in) :: ncname
       character (len=*), intent(in) :: myVarName
+      character (len=*), intent(in), optional :: GrpName
 !
 !  Local variable declarations.
 !
-      integer :: my_ncid, my_varid, status
+      integer :: my_ncid, my_varid, my_grpid, nfid, status
 
 #if !defined PARALLEL_IO && defined DISTRIBUTE
       integer, dimension(2) :: ibuffer
@@ -8779,8 +9211,14 @@
 !  If variable ID is not provided, inquire its value.
 !
       IF (OutThread) THEN
+        IF (PRESENT(GrpName)) THEN
+          status=nf90_inq_ncid(my_ncid, TRIM(GrpName), my_grpid)
+          nfid=my_grpid
+        ELSE
+          nfid=my_ncid 
+        END IF
         IF (.not.PRESENT(varid)) THEN
-          status=nf90_inq_varid(my_ncid, TRIM(myVarName), my_varid)
+          status=nf90_inq_varid(nfid, TRIM(myVarName), my_varid)
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
             WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
      &                        TRIM(SourceFile), nf90_strerror(status)
@@ -8794,7 +9232,7 @@
 !  Write out data.
 !
         IF (exit_flag.eq.NoError) THEN
-          status=nf90_put_var(my_ncid, my_varid, A, start, total)
+          status=nf90_put_var(nfid, my_varid, A, start, total)
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
             WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),            &
      &                        TRIM(SourceFile), nf90_strerror(status)
@@ -8832,7 +9270,8 @@
       END SUBROUTINE netcdf_put_svar_1d
 !
       SUBROUTINE netcdf_put_svar_2d (ng, model, ncname, myVarName, A,   &
-     &                               start, total, ncid, varid)
+     &                               start, total, ncid, GrpName,       &
+     &                               varid)
 !
 !=======================================================================
 !                                                                      !
@@ -8864,6 +9303,7 @@
 !     total        Number of data values to be written along each      !
 !                    dimension (3D vector integer)                     !
 !     ncid         NetCDF file ID (integer, OPTIONAL)                  !
+!     GrpName      NetCDF4 group name (string, OPTIONAL)               !
 !     varid        NetCDF variable ID (integer, OPTIONAL)              !
 !                                                                      !
 !  On Ouput:                                                           !
@@ -8885,10 +9325,11 @@
 
       character (len=*), intent(in) :: ncname
       character (len=*), intent(in) :: myVarName
+      character (len=*), intent(in), optional :: GrpName
 !
 !  Local variable declarations.
 !
-      integer :: my_ncid, my_varid, status
+      integer :: my_ncid, my_varid, my_grpid, nfid, status
 
 #if !defined PARALLEL_IO && defined DISTRIBUTE
       integer, dimension(2) :: ibuffer
@@ -8913,8 +9354,14 @@
 !  If variable ID is not provided, inquire its value.
 !
       IF (OutThread) THEN
+        IF (PRESENT(GrpName)) THEN
+          status=nf90_inq_ncid(my_ncid, TRIM(GrpName), my_grpid)
+          nfid=my_grpid
+        ELSE
+          nfid=my_ncid 
+        END IF
         IF (.not.PRESENT(varid)) THEN
-          status=nf90_inq_varid(my_ncid, TRIM(myVarName), my_varid)
+          status=nf90_inq_varid(nfid, TRIM(myVarName), my_varid)
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
             WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
      &                        TRIM(SourceFile), nf90_strerror(status)
@@ -8928,7 +9375,7 @@
 !  Write out data.
 !
         IF (exit_flag.eq.NoError) THEN
-          status=nf90_put_var(my_ncid, my_varid, A, start, total)
+          status=nf90_put_var(nfid, my_varid, A, start, total)
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
             WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),            &
      &                        TRIM(SourceFile), nf90_strerror(status)
@@ -8966,7 +9413,8 @@
       END SUBROUTINE netcdf_put_svar_2d
 !
       SUBROUTINE netcdf_put_svar_3d (ng, model, ncname, myVarName, A,   &
-     &                               start, total, ncid, varid)
+     &                               start, total, ncid, GrpName,       &
+     &                               varid)
 !
 !=======================================================================
 !                                                                      !
@@ -8998,6 +9446,7 @@
 !     total        Number of data values to be written along each      !
 !                    dimension (4D vector integer)                     !
 !     ncid         NetCDF file ID (integer, OPTIONAL)                  !
+!     GrpName      NetCDF4 group name (string, OPTIONAL)               !
 !     varid        NetCDF variable ID (integer, OPTIONAL)              !
 !                                                                      !
 !  On Ouput:                                                           !
@@ -9019,10 +9468,11 @@
 
       character (len=*), intent(in) :: ncname
       character (len=*), intent(in) :: myVarName
+      character (len=*), intent(in), optional :: GrpName
 !
 !  Local variable declarations.
 !
-      integer :: my_ncid, my_varid, status
+      integer :: my_ncid, my_varid, my_grpid, nfid, status
 
 #if !defined PARALLEL_IO && defined DISTRIBUTE
       integer, dimension(2) :: ibuffer
@@ -9047,8 +9497,14 @@
 !  If variable ID is not provided, inquire its value.
 !
       IF (OutThread) THEN
+        IF (PRESENT(GrpName)) THEN
+          status=nf90_inq_ncid(my_ncid, TRIM(GrpName), my_grpid)
+          nfid=my_grpid
+        ELSE
+          nfid=my_ncid 
+        END IF
         IF (.not.PRESENT(varid)) THEN
-          status=nf90_inq_varid(my_ncid, TRIM(myVarName), my_varid)
+          status=nf90_inq_varid(nfid, TRIM(myVarName), my_varid)
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
             WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
      &                        TRIM(SourceFile), nf90_strerror(status)
@@ -9062,7 +9518,7 @@
 !  Write out data.
 !
         IF (exit_flag.eq.NoError) THEN
-          status=nf90_put_var(my_ncid, my_varid, A, start, total)
+          status=nf90_put_var(nfid, my_varid, A, start, total)
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
             WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),            &
      &                        TRIM(SourceFile), nf90_strerror(status)
@@ -9258,7 +9714,7 @@
       RETURN
       END SUBROUTINE netcdf_close
 !
-      SUBROUTINE netcdf_create (ng, model, ncname, ncid)
+      SUBROUTINE netcdf_create (ng, model, ncname, ncid, ncmode)
 !
 !=======================================================================
 !                                                                      !
@@ -9271,6 +9727,7 @@
 !     ng           Nested grid number (integer)                        !
 !     model        Calling model identifier (integer)                  !
 !     ncname       Name of the new NetCDF file (string)                !
+!     ncmode       Creation mode flag (integer, OPTIONAL)              !
 !                                                                      !
 !  On Output:                                                          !
 !                                                                      !
@@ -9281,7 +9738,8 @@
 !  Imported variable declarations.
 !
       integer, intent(in) :: ng, model
-
+      integer, optional, intent(in) :: ncmode
+!
       integer, intent(out) :: ncid
 !
       character (len=*), intent(in) :: ncname
@@ -9301,6 +9759,14 @@
 !  Create requested NetCDF file.
 !-----------------------------------------------------------------------
 !
+!  Set file creation mode.
+!
+      IF (PRESENT(ncmode)) THEN
+        my_cmode=ncmode
+      ELSE
+        my_cmode=CMODE
+      END IF        
+
 #if defined PARALLEL_IO && defined DISTRIBUTE
 
 !  Create a netCDF-4/HDF5  format file. Since nf90_clobber=0, then
@@ -9308,7 +9774,7 @@
 !  is to overwrite an existing file on disk with the same file name.
 !  This is what we usually do anyway.
 !
-      my_cmode=IOR(CMODE, nf90_mpiio)
+      my_cmode=IOR(my_cmode, nf90_mpiio)
       my_cmode=IOR(my_cmode, nf90_clobber)
       status=nf90_create(path = TRIM(ncname),                           &
      &                   cmode = my_cmode,                              &
@@ -9334,7 +9800,7 @@
         END IF
       END IF
 #else
-      my_cmode=IOR(nf90_clobber, CMODE)
+      my_cmode=IOR(nf90_clobber, my_cmode)
 # if defined DISTRIBUTE        && !defined HDF5       && \
     (defined CONCURRENT_KERNEL || defined DISJOINTED)
       my_cmode=IOR(my_cmode, nf90_share)

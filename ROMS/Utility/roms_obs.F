@@ -24,13 +24,30 @@
 !
       USE dateclock_mod,        ONLY : datestr
 #ifdef DISTRIBUTE
-      USE distribute_mod,       ONLY : mp_assemble
+      USE distribute_mod,       ONLY : mp_assemble, mp_bcasti
 #endif
       USE get_hash_mod,         ONLY : get_hash
       USE roms_interpolate_mod, ONLY : hindices
+      USE strings_mod,          ONLY : FoundError, nc_error
       USE unique_mod,           ONLY : unique
 !     
       implicit none
+!
+!-----------------------------------------------------------------------
+!  Enhanced NetCDF-4 group object.
+!-----------------------------------------------------------------------
+!
+      TYPE, PUBLIC :: nc_group
+
+        integer :: gid                             ! group ID
+        integer :: nvars                           ! number of variables
+!
+        integer, allocatable :: vid(:)             ! variables ID
+        
+        character (len=:), allocatable :: name     ! group name
+        character (len=:), allocatable :: vname(:) ! variables name
+
+      END TYPE nc_group
 !
 !-----------------------------------------------------------------------
 !  Observation Data Type Structures/Objects: CLASS(obs_data).
@@ -57,6 +74,19 @@
 !  variable.
 !
         integer, allocatable :: surveyIndex(:)
+!
+!  Starting and ending observation vector indices available for
+!  requested model time interval, time-0.5*dt to time+0.5*dt. They
+!  are zero, if no observations are available in the time window.
+!
+        integer :: NstrObs
+        integer :: NendObs
+!
+!  Mapping indices for the packed observations vector. It is used
+!  when computing H(x), cost function, and minimization where all
+!  the observations are clustered in 1D array.
+!
+        integer, allocatable :: pack_mapping(:,:)
 !
 !  Observation spatial and time coordinates. The fractional values are
 !  used for efficient interpolation in the H(x) operator.
@@ -106,7 +136,17 @@
 !  Input observation filename. It supportss native ROMS 4D-Var NetCDF
 !  files and IODA enhanced NetCDF-4 files with Groups.
 !
-        character (len=:), allocatable :: ncname
+        character (len=:), allocatable :: ncname_inp
+!
+!  Output observation plus H(x) operator enhanced NetCDF-4 file
+!  information.
+!
+        integer :: ncid                                ! NetCDF file ID
+        integer :: ngroups                             ! groups size
+!
+        TYPE (nc_group), allocatable :: group(:)       ! group object
+!
+        character (len=:),  allocatable :: ncname_out  ! output filename
 !
         CONTAINS
 !
@@ -122,6 +162,10 @@
 !-----------------------------------------------------------------------
 !
       TYPE, PUBLIC :: obs_pool
+!
+!  Total number of observations in pool depot.
+!
+        integer :: ndatum
 !
 !  Observation ID associated with control state variable, [1:ntype].
 !  (zeta=1, ubar=2, vbar=3, u=4, v=5, temperature=6, salinity=7)
@@ -141,9 +185,12 @@
         PROCEDURE :: has              => obs_pool_has
         PROCEDURE :: load_ioda        => obs_pool_load_ioda
         PROCEDURE :: load_native      => obs_pool_load_native
+        PROCEDURE :: nc_create        => obs_pool_nc_create
+        PROCEDURE :: nc_read          => obs_pool_nc_read
+        PROCEDURE :: nc_write         => obs_pool_nc_write
         PROCEDURE :: populate_native  => obs_pool_populate_native
-        PROCEDURE :: read             => obs_pool_read
         PROCEDURE :: size             => obs_pool_size
+        PROCEDURE :: tally            => obs_pool_tally
         PROCEDURE :: unpack_i         => obs_pool_unpack_i
         PROCEDURE :: unpack_r         => obs_pool_unpack_r
 !
@@ -192,19 +239,36 @@
 
 !  Deallocate observation data object variables.
 !
-      IF (allocated(self%provenance))  deallocate (self%provenance)
-      IF (allocated(self%lon))         deallocate (self%lon)
-      IF (allocated(self%lat))         deallocate (self%lat)
-      IF (allocated(self%depth))       deallocate (self%depth)
-      IF (allocated(self%time))        deallocate (self%time)
+      IF (allocated(self%pack_mapping)) deallocate (self%pack_mapping)
+      IF (allocated(self%provenance))   deallocate (self%provenance)
+      IF (allocated(self%lon))          deallocate (self%lon)
+      IF (allocated(self%lat))          deallocate (self%lat)
+      IF (allocated(self%depth))        deallocate (self%depth)
+      IF (allocated(self%time))         deallocate (self%time)
+      IF (allocated(self%stateID))      deallocate (self%stateID)
       IF (allocated(self%surveyIndex))  deallocate (self%surveyIndex)
-      IF (allocated(self%surveyTime))  deallocate (self%surveyTime)
-      IF (allocated(self%Xgrid))       deallocate (self%Xgrid)
-      IF (allocated(self%Ygrid))       deallocate (self%Ygrid) 
-      IF (allocated(self%Zgrid))       deallocate (self%Zgrid)
+      IF (allocated(self%surveyTime))   deallocate (self%surveyTime)
+      IF (allocated(self%vars))         deallocate (self%vars)
+      IF (allocated(self%Xgrid))        deallocate (self%Xgrid)
+      IF (allocated(self%Ygrid))        deallocate (self%Ygrid) 
+      IF (allocated(self%Zgrid))        deallocate (self%Zgrid)
 !
-      IF (allocated(self%error))       deallocate (self%error)
-      IF (allocated(self%value))       deallocate (self%value)
+      IF (allocated(self%error))        deallocate (self%error)
+      IF (allocated(self%value))        deallocate (self%value)
+!
+      IF (allocated(self%error_avg))    deallocate (self%error_avg)
+      IF (allocated(self%error_hash))   deallocate (self%error_hash)
+      IF (allocated(self%error_min))    deallocate (self%error_min)
+      IF (allocated(self%error_max))    deallocate (self%error_max)
+
+      IF (allocated(self%value_avg))    deallocate (self%value_avg)
+      IF (allocated(self%value_hash))   deallocate (self%value_hash)
+      IF (allocated(self%value_min))    deallocate (self%value_min)
+      IF (allocated(self%value_max))    deallocate (self%value_max)
+!
+      IF (allocated(self%name))         deallocate (self%name)
+      IF (allocated(self%ncname_inp))   deallocate (self%ncname_inp)
+      IF (allocated(self%ncname_out))   deallocate (self%ncname_out)
 !
       RETURN
       END SUBROUTINE obs_data_destroy
@@ -285,10 +349,10 @@
 !
 !  Read in observation variables in Group MetaData.
 !
-      IF (Master) WRITE (stdout,10) TRIM(self%ncname)
+      IF (Master) WRITE (stdout,10) TRIM(self%ncname_inp)
 !      
       IF (IOtype.eq.io_nf90) THEN
-        CALL netcdf_inq_var (ng, model, self%ncname,                    &
+        CALL netcdf_inq_var (ng, model, self%ncname_inp,                &
                              GrpName = 'MetaData')
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
@@ -296,7 +360,7 @@
           Loaded=.FALSE.
           SELECT CASE (TRIM(var_name(i)))
             CASE ('dateTime')
-              CALL netcdf_get_time (ng, model, self%ncname,             &
+              CALL netcdf_get_time (ng, model, self%ncname_inp,         &
      &                              var_name(i), Rclock%DateNumber,     &
      &                              self%time,                          &
      &                              GrpName = 'MetaData',               &
@@ -307,41 +371,41 @@
               CALL datestr (Tmin(1), .FALSE., Dmin(1))
               CALL datestr (Tmax(1), .FALSE., Dmax(1))
             CASE ('depth')
-              CALL netcdf_get_fvar (ng, model, self%ncname,             &
+              CALL netcdf_get_fvar (ng, model, self%ncname_inp,         &
      &                              var_name(i), self%depth,            &
      &                              GrpName = 'MetaData')
               Loaded=.TRUE.
               ncount=SIZE(self%depth)
             CASE ('latitude')
-              CALL netcdf_get_fvar (ng, model, self%ncname,             &
+              CALL netcdf_get_fvar (ng, model, self%ncname_inp,         &
      &                              var_name(i), self%lat,              &
      &                              GrpName = 'MetaData')
               Loaded=.TRUE.
               ncount=SIZE(self%lat)
             CASE ('longitude')
-              CALL netcdf_get_fvar (ng, model, self%ncname,             &
+              CALL netcdf_get_fvar (ng, model, self%ncname_inp,         &
      &                              var_name(i), self%lon,              &
      &                              GrpName = 'MetaData')
               Loaded=.TRUE.
               ncount=SIZE(self%lon)
             CASE ('provenance')
-              CALL netcdf_get_ivar (ng, model, self%ncname,             &
+              CALL netcdf_get_ivar (ng, model, self%ncname_inp,         &
      &                              var_name(i), self%provenance,       &
      &                              GrpName = 'MetaData')
               Loaded=.TRUE.
               ncount=SIZE(self%provenance)
             CASE ('stateID')
-              CALL netcdf_get_ivar (ng, model, self%ncname,             &
+              CALL netcdf_get_ivar (ng, model, self%ncname_inp,         &
      &                              var_name(i), self%stateID,          &
      &                              GrpName = 'MetaData')
             CASE ('surveyIndex')
-              CALL netcdf_get_ivar (ng, model, self%ncname,             &
+              CALL netcdf_get_ivar (ng, model, self%ncname_inp,         &
      &                              var_name(i), self%surveyIndex,      &
      &                              GrpName = 'MetaData')
               Loaded=.TRUE.
               ncount=SIZE(self%surveyIndex)
             CASE ('surveyTime')
-              CALL netcdf_get_time (ng, model, self%ncname,             &
+              CALL netcdf_get_time (ng, model, self%ncname_inp,         &
      &                              var_name(i), Rclock%DateNumber,     &
      &                              self%surveyTime,                    &
      &                              GrpName = 'MetaData',               &
@@ -352,19 +416,19 @@
               CALL datestr (Tmin(2), .FALSE., Dmin(2))
               CALL datestr (Tmax(2), .FALSE., Dmax(2))
             CASE ('x_grid')
-              CALL netcdf_get_fvar (ng, model, self%ncname,             &
+              CALL netcdf_get_fvar (ng, model, self%ncname_inp,         &
      &                              var_name(i), self%Xgrid,            &
      &                              GrpName = 'MetaData')
               Loaded=.TRUE.
               ncount=SIZE(self%Xgrid)
             CASE ('y_grid')
-              CALL netcdf_get_fvar (ng, model, self%ncname,             &
+              CALL netcdf_get_fvar (ng, model, self%ncname_inp,         &
      &                              var_name(i), self%Ygrid,            &
      &                              GrpName = 'MetaData')
               Loaded=.TRUE.
               ncount=SIZE(self%Ygrid)
             CASE ('z_grid')
-              CALL netcdf_get_fvar (ng, model, self%ncname,             &
+              CALL netcdf_get_fvar (ng, model, self%ncname_inp,         &
      &                              var_name(i), self%Zgrid,            &
      &                              GrpName = 'MetaData')
               Loaded=.TRUE.
@@ -387,12 +451,12 @@
 !  terms of standard deviations and has the same units as its value.
 !
       IF (IOtype.eq.io_nf90) THEN
-        CALL netcdf_inq_var (ng, model, self%ncname,                    &
+        CALL netcdf_inq_var (ng, model, self%ncname_inp,                &
                              GrpName = 'ObsError')
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
         DO i=1,n_var
-          CALL netcdf_get_fvar (ng, model, self%ncname,                 &
+          CALL netcdf_get_fvar (ng, model, self%ncname_inp,             &
      &                          var_name(i), self%error(:,i),           &
      &                          GrpName = 'ObsError')
           self%error(:,i)=self%error(:,i)*self%error(:,i)
@@ -412,13 +476,13 @@
 !  Read in observation variables in Group ObsValue.
 !
       IF (IOtype.eq.io_nf90) THEN
-        CALL netcdf_inq_var (ng, model, self%ncname,                    &
+        CALL netcdf_inq_var (ng, model, self%ncname_inp,                &
                              GrpName = 'ObsValue')
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
         lstr=0
         DO i=1,n_var
-          CALL netcdf_get_fvar (ng, model, self%ncname,                 &
+          CALL netcdf_get_fvar (ng, model, self%ncname_inp,             &
      &                          var_name(i), self%value(:,i),           &
      &                          GrpName = 'ObsValue')
           lstr=MAX(lstr, LEN_TRIM(var_name(i)))
@@ -511,13 +575,13 @@
         self%error_avg(i)=SUM(self%error(:,i))/REAL(self%nlocs, r8)
         self%error_min(i)=MINVAL(self%error(:,i))
         self%error_max(i)=MAXVAL(self%error(:,i))
-        CALL get_hash (self%error(:,i), self%nvars, checksum, .FALSE.)
+        CALL get_hash (self%error(:,i), self%nlocs, checksum, .FALSE.)
         self%error_hash(i)=checksum
 !
         self%value_avg(i)=SUM(self%value(:,i))/REAL(self%nlocs, r8)
         self%value_min(i)=MINVAL(self%value(:,i))
         self%value_max(i)=MAXVAL(self%value(:,i))
-        CALL get_hash (self%value(:,i), self%nvars, checksum, .FALSE.)
+        CALL get_hash (self%value(:,i), self%nlocs, checksum, .FALSE.)
         self%value_hash(i)=checksum
       END DO
 !      
@@ -537,6 +601,9 @@
       integer,          intent(in   ) :: model    ! kernel identifier
       integer,          intent(in   ) :: nfiles   ! number of files
 !
+# ifdef DISTRIBUTE
+      integer,           dimension(2) :: ibuffer
+# endif
       character (len=*),    parameter :: MyFile =                       &
      &    __FILE__//", obs_pool_create"
 !
@@ -551,8 +618,32 @@
 !  Read in observation files, allocate arrays in pool structure, and
 !  populate data into object.
 !
-      CALL self%read (ng, model, nfiles)
+      CALL self%nc_read (ng, model, nfiles)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+!
+!  If input multiple IODA observation files, create output IODA files
+!  containing processed observations plus H(x) operators. The files are
+!  created serially by the output thread.
+!
+      IF (nfiles.gt.1) THEN
+        CALL self%nc_create (ng, model)
+# ifdef DISTRIBUTE
+!
+        ibuffer(1)=exit_flag
+        ibuffer(2)=ioerror
+        CALL mp_bcasti (ng, model, ibuffer)
+        exit_flag=ibuffer(1)
+        ioerror=ibuffer(2)
+# endif
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+      END IF
+!
+! HGA: For now test writing of output IODA files here.
+!
+      IF (nfiles.gt.1) THEN
+        CALL self%nc_write (ng, model)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+      END IF
 !
       RETURN
       END SUBROUTINE obs_pool_create
@@ -617,28 +708,64 @@
 !
 !-----------------------------------------------------------------------
 !
-!  It inquires if provided observation name exists in the pool object.
+!  It inquires about available observation for current model time, and
+!  their starting and ending indices on pool set.
 !
-      FUNCTION obs_pool_has (self, name, findex)  RESULT (foundit)
+      FUNCTION obs_pool_has (self, ng, model) RESULT (foundit)
 !
-      CLASS (obs_pool),  intent(in   ) :: self   ! observation set
-      character (len=*), intent(in   ) :: name   ! observation name
-      integer, optional, intent(out  ) :: findex ! field index in set
+      CLASS (obs_pool), intent(inout) :: self     ! observation set
+      integer,          intent(in   ) :: ng       ! nested grid number
+      integer,          intent(in   ) :: model    ! observation name
 !
-      logical                          :: foundit
-      integer                          :: i
+      logical                         :: foundit
+      integer                         :: Nend, iobs, i, nsurvey
+      real (r8)                       :: TimeStr, TimeEnd
 !
 !  Check if requested observation name exists in the pool object.
 !
       foundit=.FALSE.
-      DO i=1,SIZE(self%pool)
-        IF (TRIM(name).eq.self%pool(i)%name) THEN
-          foundit=.TRUE.
-          IF (PRESENT(findex)) findex=1
-          RETURN
+      TimeStr=time(ng)-0.5_r8*dt(ng)
+      TimeEnd=time(ng)+0.5_r8*dt(ng)
+!
+      DO iobs=1,SIZE(self%pool)
+        nsurvey=self%pool(iobs)%nsurvey
+        self%pool(iobs)%NstrObs=0
+        self%pool(iobs)%NendObs=0
+!
+        IF (model.eq.iADM) THEN                   ! backward search
+          DO i=nsurvey,1,-1
+            IF ((TimeStr.le.self%pool(iobs)%surveyTime(i)).and.         &
+     &          (self%pool(iobs)%surveyTime(i).lt.TimeEnd)) THEN
+              self%pool(iobs)%NstrObs=i
+              IF (i.ne.1) THEN
+                Nend=self%pool(iobs)%surveyIndex(i-1)-1
+                self%pool(iobs)%NendObs=Nend
+              ELSE
+                self%pool(iobs)%NendObs=i
+              END IF
+              foundit=.TRUE.
+              CYCLE
+            END IF
+          END DO
+        ELSE 
+          DO i=1,nsurvey
+            IF ((TimeStr.le.self%pool(iobs)%surveyTime(i)).and.         &
+     &          (self%pool(iobs)%surveyTime(i).lt.TimeEnd)) THEN
+              self%pool(iobs)%NstrObs=i
+              IF (i.ne.nsurvey) THEN
+                Nend=self%pool(iobs)%surveyIndex(i+1)-1
+                self%pool(iobs)%NendObs=Nend
+              ELSE
+                self%pool(iobs)%NendObs=i
+              END IF
+              foundit=.TRUE.
+              CYCLE
+            END IF
+          END DO
         END IF
       END DO
 !
+      RETURN
       END FUNCTION obs_pool_has
 !
 !-----------------------------------------------------------------------
@@ -661,7 +788,10 @@
 !
       logical                          :: haveSST, haveSSS, haveVector
       integer,         dimension(mvar) :: myStateID
+      integer                          :: Idot, Islash
       integer                          :: i, iobs, lstr, myID, mvatt
+!
+      character (len=80)               :: string
 
       character (len=*),     parameter :: MyFile =                      &
      &    __FILE__//", obs_pool_load_ioda"
@@ -705,7 +835,7 @@
       END SELECT
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
-!  Determine pool vector element to process.
+!  Determine pool vector element to process, U- and V-velocity.
 !
       haveVector=.FALSE.
       IF (mvar.gt.1) THEN
@@ -741,10 +871,19 @@
       self%pool(iobs)%nvars   = mvar
       self%pool(iobs)%poolID  = myID
 !
-      IF (.not.allocated(self%pool(iobs)%ncname)) THEN
+      IF (.not.allocated(self%pool(iobs)%ncname_inp)) THEN
         lstr=LEN_TRIM(ncname)
-        allocate ( character(LEN=lstr) :: self%pool(iobs)%ncname )
-        self%pool(iobs)%ncname = TRIM(ncname)
+
+        self%pool(iobs)%ncname_inp = TRIM(ncname)
+      END IF
+!
+      IF (.not.allocated(self%pool(iobs)%ncname_out)) THEN
+        Idot  =INDEX(ncname,CHAR(46),BACK=.TRUE.)-1
+        Islash=INDEX(ncname,CHAR(47),BACK=.TRUE.)+1
+        string=ncname(Islash:Idot)//'_hofx.nc4'
+        lstr=LEN_TRIM(string)
+        allocate ( character(LEN=lstr) :: self%pool(iobs)%ncname_out )
+        self%pool(iobs)%ncname_out = TRIM(string)
       END IF
 !
 !  Allocate pool vector element structure, Group MetaData.
@@ -950,17 +1089,17 @@
 !
       DO iobs=1,SIZE(self%stateID)
         id=self%stateID(iobs)
-        IF (id.eq.45) THEN
+        IF (id.eq.45) THEN              ! U-, V-Velocity
           mysize=mvar(4)
           mymvar=2
-        ELSE IF (id.eq.60) THEN
+        ELSE IF (id.eq.60) THEN         ! SST
           mysize=mSST
           mymvar=1
-        ELSE IF (id.eq.70) THEN
+        ELSE IF (id.eq.70) THEN         ! SSS
           mysize=mSSS
           mymvar=1
         ELSE
-          mysize=mvar(id)
+          mysize=mvar(id)               ! SSH, T, S
           mymvar=1
         END IF
 !
@@ -968,10 +1107,10 @@
         self%pool(iobs)%nvars   = mymvar
         self%pool(iobs)%poolID  = self%stateID(iobs)
 !
-        IF (.not.allocated(self%pool(iobs)%ncname)) THEN
+        IF (.not.allocated(self%pool(iobs)%ncname_inp)) THEN
           lstr=LEN_TRIM(ncname)
-          allocate ( character(LEN=lstr) :: self%pool(iobs)%ncname )
-          self%pool(iobs)%ncname = TRIM(ncname)
+          allocate ( character(LEN=lstr) :: self%pool(iobs)%ncname_inp )
+          self%pool(iobs)%ncname_inp = TRIM(ncname)
         END IF
 !
         IF (.not.allocated(self%pool(iobs)%provenance)) THEN
@@ -1081,6 +1220,657 @@
 !
       RETURN
       END SUBROUTINE obs_pool_load_native
+!
+!-----------------------------------------------------------------------
+!
+!  It creates ouput IODA-type observations plus H(x) variables NetCDF4
+!  enhanced file(s). It inquires input IODA-type observation files to
+!  copy their schema, and adds Groups associated with the H(x) operator.
+!
+      SUBROUTINE obs_pool_nc_create (self, ng, model)
+!
+      CLASS (obs_pool),  intent(inout) :: self     ! observation set
+      integer,           intent(in   ) :: ng       ! nested grid number
+      integer,           intent(in   ) :: model    ! kernel identifier
+!
+      integer                          :: ncid_inp, ncid_out, npool
+      integer                          :: dimid, grpid, varid, vtype
+      integer                          :: indx, gindex, qcindex
+      integer                          :: i, iobs, j, k, kc
+      integer                          :: lstr, vlstr
+      integer                          :: ngroups, nvars, nvdim
+      integer,            dimension(5) :: vdims
+!
+      character (len=80)               :: string
+
+# ifdef VERIFICATION
+      character (len=15), dimension(2) :: new_group =                   &
+     &                                    (/ 'ObsVetting     ',         &
+     &                                       'hofx           ' /)
+# else
+      character (len=15), dimension(7) :: new_group =                   &
+     &                                    (/ 'ObsVetting     ',         &
+     &                                       'BackgroundError',         &
+     &                                       'hofxInitial    ',         &
+     &                                       'hofxFinal      ',         &
+     &                                       'Innovation     ',         &
+     &                                       'Increment      ',         &
+     &                                       'Residual       ' /)
+#endif
+      character (len=*),     parameter :: MyFile =                      &
+     &    __FILE__//", obs_pool_nc_create"
+!
+      SourceFile=MyFile
+!
+!  Loop over all available files.
+!
+      npool=SIZE(self%pool)
+      IF (Master) WRITE (stdout,'(1x)')
+!
+      FILE_LOOP : DO iobs=1,npool
+!
+!  Open input observation file.
+!
+        CALL netcdf_open (ng, model, self%pool(iobs)%ncname_inp, 0,     &
+     &                    ncid_inp)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+!
+!  Inquire about input file dimensions and format.
+!
+        CALL netcdf_get_dim (ng, model, self%pool(iobs)%ncname_inp,     &
+     &                       ncid = ncid_inp)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+!
+!  Inquire about input file groups.
+!
+        IF (ncformat.eq.nf90_format_netcdf4) THEN
+          CALL netcdf_get_grp (ng, model, self%pool(iobs)%ncname_inp,   &
+     &                         ncid = ncid_inp)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        ELSE
+          IF (Master) WRITE (stdout,10) ncformat,                       &
+     &                                  self%pool(iobs)%ncname_inp
+          exit_flag=5
+          RETURN
+        END IF
+!
+!  Inquire about the variables.
+!
+        CALL netcdf_inq_var (ng, model, self%pool(iobs)%ncname_inp,     &
+     &                       ncid = ncid_inp)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+!
+!-----------------------------------------------------------------------
+!  Copy NetCDF4 file schema (serial, only output thread).
+!-----------------------------------------------------------------------
+!
+        DEFINE : IF ((ncformat.eq.nf90_format_netcdf4).and.             &
+     &               OutThread) THEN
+!
+!  Create NetCDF4 file.
+!
+          IF (nc_error(nf90_create(self%pool(iobs)%ncname_out,          &
+     &                             nf90_netcdf4, ncid_out),             &
+     &                 nf90_noerr, __LINE__, MyFile)) RETURN
+          self%pool(iobs)%ncID=ncid_out
+          WRITE (stdout,20) ng, self%pool(iobs)%ncname_out
+!
+!  Define dimensions.
+!
+          DO i=1,n_dim
+            IF (nc_error(nf90_def_dim(ncid_out, TRIM(dim_name(i)),      &
+     &                                dim_size(i), dimid),              &
+     &                   nf90_noerr, __LINE__, MyFile)) RETURN
+          END DO
+!
+!  Allocate ouput NetCDF group structure in pool object.
+!
+          ngroups=n_grp+SIZE(new_group)
+          self%pool(iobs)%ngroups=ngroups
+          IF (.not.allocated(self%pool(iobs)%group)) THEN
+            allocate ( self%pool(iobs)%group(ngroups) )
+          END IF
+!
+!  Define variables.
+!
+          IF (n_grp.gt.0) THEN
+            DO k=1,n_grp
+              nvars=n_gvar(k)
+              IF (nc_error(nf90_def_grp(ncid_out, TRIM(grp_name(k)),    &
+     &                                  grpid),                         &
+     &                     nf90_noerr, __LINE__, MyFile)) RETURN
+!
+              self%pool(iobs)%group(k)%gid=grpid
+              IF (.not.allocated(self%pool(iobs)%group(k)%name)) THEN
+                lstr=LEN_TRIM(grp_name(k))
+                allocate ( character(LEN=lstr) ::                       &
+     &                     self%pool(iobs)%group(k)%name )
+                self%pool(iobs)%group(k)%name=TRIM(grp_name(k))
+              END IF
+              self%pool(iobs)%group(k)%nvars=nvars
+!
+              IF (TRIM(grp_name(k)).eq.'ObsValue') THEN
+                gindex=k     ! used to duplicate variables in new groups
+              ELSE IF (TRIM(grp_name(k)).eq.'PreQC') THEN
+                qcindex=k    ! used to duplicate interger flags
+              END IF
+!
+              vlstr=0
+              DO j=1,nvars
+                vlstr=MAX(vlstr, LEN_TRIM(grp_vname(j,k)))
+              END DO
+!
+              vdims=0
+              DO j=1,nvars
+                nvdim=grp_nvdim(j,k)
+                vdims(1:nvdim)=grp_vdim(1:nvdim,j,k)
+                vtype=grp_vtype(j,k)
+                IF (nc_error(nf90_def_var(grpid, TRIM(grp_vname(j,k)),  &
+     &                                    vtype, vdims(1:nvdim),        &
+     &                                    varid),                       &
+     &                       nf90_noerr, __LINE__, MyFile)) RETURN
+!
+                IF (.not.allocated(self%pool(iobs)%group(k)%vid)) THEN
+                  allocate ( self%pool(iobs)%group(k)%vid(nvars) )
+                  self%pool(iobs)%group(k)%vid=0
+                END IF
+                self%pool(iobs)%group(k)%vid(j)=varid
+!
+                IF (.not.allocated(self%pool(iobs)%group(k)%vname)) THEN
+                  allocate ( character(LEN=vlstr) ::                    &
+     &                       self%pool(iobs)%group(k)%vname(nvars) )
+                END IF
+                self%pool(iobs)%group(k)%vname(j)=TRIM(grp_vname(j,k))
+!
+                DO i=1,grp_nvatt(j,k)
+                  IF (nc_error(nf90_copy_att(grp_id(k), grp_vid(j,k),   &
+     &                                       TRIM(grp_aname(i,j,k)),    &
+     &                                       grpid, varid),             &
+     &                         nf90_noerr, __LINE__, MyFile)) RETURN
+                END DO
+              END DO
+            END DO
+          ELSE
+            WRITE (stdout,30) n_grp, self%pool(iobs)%ncname_out
+            exit_flag=5
+            RETURN
+          END IF
+!
+!  Add new groups: hofx_initial, hofx_final, innovation, increment, and
+!  residual.
+!
+          DO k=1,SIZE(new_group)
+            IF (nc_error(nf90_def_grp(ncid_out, TRIM(new_group(k)),     &
+     &                                grpid),                           &
+     &                   nf90_noerr, __LINE__, MyFile)) RETURN 
+!
+            IF (k.eq.1) THEN
+              indx=qcindex         ! integer variables like PreQC
+            ELSE
+              indx=gindex          ! float variables like ObsValue
+            END IF
+            nvars=n_gvar(indx)
+!
+            kc=n_grp+k
+            self%pool(iobs)%group(kc)%gid=grpid
+            IF (.not.allocated(self%pool(iobs)%group(kc)%name)) THEN
+              lstr=LEN_TRIM(new_group(k))
+              allocate ( character(LEN=lstr) ::                         &
+     &                   self%pool(iobs)%group(kc)%name )
+              self%pool(iobs)%group(kc)%name=TRIM(new_group(k))
+            END IF
+            self%pool(iobs)%group(kc)%nvars=n_gvar(indx)
+!
+            vlstr=0
+            DO j=1,nvars
+              vlstr=MAX(vlstr, LEN_TRIM(grp_vname(j,indx)))
+            END DO
+!
+            IF (.not.allocated(self%pool(iobs)%group(kc)%vid)) THEN
+              allocate ( self%pool(iobs)%group(kc)%vid(nvars) )
+              self%pool(iobs)%group(kc)%vid=0
+            END IF
+            IF (.not.allocated(self%pool(iobs)%group(kc)%vname)) THEN
+              allocate ( character(LEN=vlstr) ::                        &
+     &                   self%pool(iobs)%group(kc)%vname(nvars) )
+            END IF
+!
+            vdims=0
+            DO j=1,nvars
+              nvdim=grp_nvdim(j,indx)
+              vdims(1:nvdim)=grp_vdim(1:nvdim,j,indx)
+              vtype=grp_vtype(j,indx)
+              IF (nc_error(nf90_def_var(grpid, TRIM(grp_vname(j,indx)), &
+     &                                  vtype, vdims(1:nvdim), varid),  &
+     &                     nf90_noerr, __LINE__, MyFile)) RETURN
+!
+              self%pool(iobs)%group(kc)%vid(j)=varid
+              self%pool(iobs)%group(kc)%vname(j)=TRIM(grp_vname(j,indx))
+!
+              DO i=1,grp_nvatt(j,indx)
+                IF (TRIM(grp_aname(i,j,indx)).eq.'long_name') THEN
+                  SELECT CASE (k)
+                    CASE (1)
+                      string='Observation screening flag, '//           &
+     &                       '0:reject and 1:accept'
+                    CASE (2)
+                      string='background error at observation locations'
+                    CASE (3)
+                      string='model background at observation locations'
+                    CASE (4)
+                      string='model analysis at observation locations'
+                    CASE (5)
+                      string='observation minus background'
+                    CASE (6)
+                      string='analysis minus background'
+                    CASE (7)
+                      string='observation minus analysis'
+                  END SELECT
+                  IF (nc_error(nf90_put_att(grpid, varid, 'long_name',  &
+     &                                      TRIM(string)),              &
+     &                         nf90_noerr, __LINE__, MyFile)) RETURN
+                ELSE
+                  IF (nc_error(nf90_copy_att(grp_id(indx),              &
+     &                                       grp_vid(j,indx),           &
+     &                                       TRIM(grp_aname(i,j,indx)), &
+     &                                       grpid, varid),             &
+     &                         nf90_noerr, __LINE__, MyFile)) RETURN
+                END IF
+              END DO
+            END DO
+          END DO
+!
+!  Copy global attributes.
+!
+          DO i=1,n_gatt
+            IF (nc_error(nf90_inq_attname(ncid_inp, nf90_global, i,     &
+     &                                    string),                      &
+     &                   nf90_noerr, __LINE__, MyFile)) RETURN
+            IF (nc_error(nf90_copy_att(ncid_inp, nf90_global,           &
+     &                                 TRIM(string),                    &
+     &                                 ncid_out, nf90_global),          &
+     &                   nf90_noerr, __LINE__, MyFile)) RETURN
+          END DO
+!
+!  End Definition.
+!
+          IF (nc_error(nf90_enddef(ncid_out),                           &
+     &                 nf90_noerr, __LINE__, MyFile)) RETURN
+!
+!  Close output to syncronize to disk and allow parallel access.
+!
+          IF (nc_error(nf90_close(ncid_out),                             &
+     &                 nf90_noerr, __LINE__, MyFile)) RETURN
+        END IF DEFINE
+!
+!  Close input file.
+!
+        CALL netcdf_close (ng, model, ncid_inp,                         &
+     &                     self%pool(iobs)%ncname_inp, .FALSE.)
+
+# ifdef DISTRIBUTE
+!
+!  In distribute-memory applications, only the master process have the
+!  ouput file information and allocated the "nc_group" structure. Thus,
+!  inquire created output file and allocate values for other processes.
+!
+        CALL netcdf_get_grp (ng, model, self%pool(iobs)%ncname_out)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+!
+        IF (MyRank.ne.MyMaster) THEN
+          IF (.not.allocated(self%pool(iobs)%group)) THEN
+            allocate ( self%pool(iobs)%group(n_grp) )
+          END IF
+          DO k=1,n_grp
+            nvars=n_gvar(k)
+            IF (.not.allocated(self%pool(iobs)%group(k)%name)) THEN
+              lstr=LEN_TRIM(grp_name(k))
+              allocate ( character(LEN=lstr) ::                         &
+     &                   self%pool(iobs)%group(k)%name )
+              self%pool(iobs)%group(k)%name=TRIM(grp_name(k))
+            END IF
+            self%pool(iobs)%group(k)%nvars=nvars
+!
+            vlstr=0
+            DO j=1,nvars
+              vlstr=MAX(vlstr, LEN_TRIM(grp_vname(j,k)))
+            END DO
+!
+            IF (.not.allocated(self%pool(iobs)%group(k)%vid)) THEN
+              allocate ( self%pool(iobs)%group(k)%vid(nvars) )
+              self%pool(iobs)%group(k)%vid=0
+            END IF
+!
+            IF (.not.allocated(self%pool(iobs)%group(k)%vname)) THEN
+              allocate ( character(LEN=vlstr) ::                        &
+     &                   self%pool(iobs)%group(k)%vname(nvars) )
+            END IF
+!
+            DO j=1,nvars
+              self%pool(iobs)%group(k)%vid(j)=grp_vid(j,k)
+              self%pool(iobs)%group(k)%vname(j)=TRIM(grp_vname(j,k))
+            END DO
+          END DO
+        END IF
+# endif
+      END DO FILE_LOOP
+!
+  10  FORMAT (/,'OBS_POOL_NC_CREATE - non-IODA-type observation file,', &
+     &        ' Format = ',i0,/,t21,'File: ',a)
+  20  FORMAT (2x,'OBS_POOL         - NC_CREATE: creating H(x) file,',   &
+     &        t56,'Grid ',i2.2,': ',a)
+  30  FORMAT (/,'OBS_POOL_NC_CREATE - Cannot find Groups in ',          &
+     &        'observation NetCDF file, n_grp = ',i0,/,t21,a)     
+!
+      RETURN
+      END SUBROUTINE obs_pool_nc_create
+!
+!-----------------------------------------------------------------------
+!
+!  It reads the input observation file(s) to populate the data into
+!  the pool object. Each element of the pool vector stores a scalar
+!  or vector variable(s) associated with the data assimilation control
+!  vector.
+!
+      SUBROUTINE obs_pool_nc_read (self, ng, model, nfiles)
+!
+      CLASS (obs_pool), intent(inout) :: self     ! observation set
+      integer,          intent(in   ) :: ng       ! nested grid number
+      integer,          intent(in   ) :: model    ! kernel identifier
+      integer,          intent(in   ) :: nfiles   ! number of files
+!
+      logical                         :: isNative
+      integer                         :: mobs, msurvey, mvar
+      integer                         :: IOtype, i, nf
+      character (len=256)             :: ncname
+
+      character (len=*),    parameter :: MyFile =                       &
+     &    __FILE__//", obs_pool_nc_read"
+!
+      SourceFile=MyFile
+!
+!  Initialize.
+!
+      isNative=.FALSE.
+      mobs=0
+      msurvey=0
+      mvar=0
+!
+!  Inquire input observation NetCDF file(s).
+!
+      FILES_LOOP : DO nf=1,nfiles
+        ncname=OBS2(nf,ng)%name
+        IOtype=OBS2(nf,ng)%IOtype
+!
+        SELECT CASE (IOtype)
+          CASE (io_nf90)
+            CALL netcdf_get_dim (ng, model, ncname)
+# if defined PIO_LIB && defined DISTRIBUTE
+          CASE (io_pio)
+            CALL pio_netcdf_get_dim (ng, model, ncname)
+# endif
+          CASE DEFAULT
+            IF (Master) WRITE (stdout,10) IOtype
+            exit_flag=3
+        END SELECT
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+!
+!  Get number of observations from its dimensions, and determine if
+!  native or IODA file.
+!
+        DO i=1,n_dim
+          IF (TRIM(dim_name(i)).eq.'datum') then
+            mobs=dim_size(i)
+            isNative=.TRUE.                             ! only in native
+          ELSE IF (TRIM(dim_name(i)).eq.'survey') THEN
+            msurvey=dim_size(i)                         ! in both
+          ELSE IF (TRIM(dim_name(i)).eq.'Location') THEN
+            mobs=dim_size(i)
+            isNative=.FALSE.                            ! only in IODA
+          ELSE IF (TRIM(dim_name(i)).eq.'nvars') THEN
+            mvar=dim_size(i)                            ! only in IODA
+          END IF
+        END DO
+!
+!  Populate data into observation pool object.
+!
+        IF (isNative) THEN
+          CALL self%load_native (ng, model, mobs, msurvey,              &
+     &                           IOtype, TRIM(ncname))
+        ELSE
+          CALL self%load_ioda (ng, model, mobs, msurvey, mvar,          &
+     &                         IOtype, TRIM(ncname))
+        END IF
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+
+      END DO FILES_LOOP
+!
+  10  FORMAT (' OBS_POOL_READ - Illegal output file type, io_type = ',  &
+     &        i0,/,17x,'Check KeyWord ''OUT_LIB'' in ''roms.in''.')
+!
+      RETURN
+      END SUBROUTINE obs_pool_nc_read
+!
+!-----------------------------------------------------------------------
+!
+!  It writes observation data ouput IODA-type files. The H(x) operator
+!  variables will be written elsewhere.
+!
+      SUBROUTINE obs_pool_nc_write (self, ng, model)
+!
+      CLASS (obs_pool),  intent(inout) :: self     ! observation set
+      integer,           intent(in   ) :: ng       ! nested grid number
+      integer,           intent(in   ) :: model    ! kernel identifier
+!
+      integer,             allocatable :: Iwork(:)
+      integer                          :: i, j, k, ncid, npool
+      integer                          :: nlocs, nsurvey, nvars
+      character (len=40)               :: grpname, varname
+      character (len=256)              :: ncname
+
+      character (len=*),     parameter :: MyFile =                      &
+     &    __FILE__//", obs_pool_nc_write"
+!
+      SourceFile=MyFile
+!
+!  Loop over all available files.
+!
+      npool=SIZE(self%pool)
+!
+      FILE_LOOP : DO i=1,npool
+!
+!  Open output observation plus H(x) file in the pool depot.
+!
+        ncname=TRIM(self%pool(i)%ncname_out)
+        CALL netcdf_open (ng, model, TRIM(ncname), 1, ncid)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        self%pool(i)%ncid=ncid
+!
+!  Write out observation variables.
+!
+        DO k=1,self%pool(i)%ngroups
+          grpname=TRIM(self%pool(i)%group(k)%name)
+          nlocs=self%pool(i)%nlocs
+          nsurvey=self%pool(i)%nsurvey
+          nvars=self%pool(i)%nvars
+          DO j=1,self%pool(i)%group(k)%nvars
+            varname=TRIM(self%pool(i)%group(k)%vname(j))
+            IF (TRIM(grpname).eq.'MetaData') THEN
+              SELECT CASE (TRIM(varname))
+                CASE ('dateTime')
+                  IF (.not.allocated(Iwork)) THEN
+                    allocate ( Iwork(nlocs) )
+                  END IF
+                  CALL netcdf_get_ivar (ng, model,                      &
+     &                                  self%pool(i)%ncname_inp,        &
+     &                                  TRIM(varname), Iwork,           &
+     &                                  GrpName = TRIM(grpname))
+                  IF (FoundError(exit_flag, NoError,                    &
+     &                           __LINE__, MyFile)) RETURN
+!
+                  CALL netcdf_put_ivar (ng, model, TRIM(ncname),        &
+     &                                  TRIM(varname),                  &
+     &                                  Iwork,                          &
+     &                                  (/1/), (/nlocs/),               &
+     &                                  ncid = ncid,                    &       
+     &                                  GrpName = TRIM(grpname))
+                  deallocate (Iwork)
+                CASE ('depth')
+                  CALL netcdf_put_fvar (ng, model, TRIM(ncname),        &
+     &                                  TRIM(varname),                  &
+     &                                  self%pool(i)%depth,             &
+     &                                  (/1/), (/nlocs/),               &
+     &                                  ncid = ncid,                    &       
+     &                                  GrpName = TRIM(grpname))
+                CASE ('latitude')
+                  CALL netcdf_put_fvar (ng, model, TRIM(ncname),        &
+     &                                  TRIM(varname),                  &
+     &                                  self%pool(i)%lat,               &
+     &                                  (/1/), (/nlocs/),               &
+     &                                  ncid = ncid,                    &       
+     &                                  GrpName = TRIM(grpname))
+                CASE ('longitude')
+                  CALL netcdf_put_fvar (ng, model, TRIM(ncname),        &
+     &                                  TRIM(varname),                  &
+     &                                  self%pool(i)%lon,               &
+     &                                  (/1/), (/nlocs/),               &
+     &                                  ncid = ncid,                    &       
+     &                                  GrpName = TRIM(grpname))
+                CASE ('provenance')
+                  CALL netcdf_put_ivar (ng, model, TRIM(ncname),        &
+     &                                  TRIM(varname),                  &
+     &                                  self%pool(i)%provenance,        &
+     &                                  (/1/), (/nlocs/),               &
+     &                                  ncid = ncid,                    &       
+     &                                  GrpName = TRIM(grpname))
+                CASE ('sequenceNumber')
+                  IF (.not.allocated(Iwork)) THEN
+                    allocate ( Iwork(nlocs) )
+                  END IF
+                  CALL netcdf_get_ivar (ng, model,                      &
+     &                                  self%pool(i)%ncname_inp,        &
+     &                                  TRIM(varname), Iwork,           &
+     &                                  GrpName = TRIM(grpname))
+                  IF (FoundError(exit_flag, NoError,                    &
+     &                           __LINE__, MyFile)) RETURN
+!
+                  CALL netcdf_put_ivar (ng, model, TRIM(ncname),        &
+     &                                  TRIM(varname),                  &
+     &                                  Iwork,                          &
+     &                                  (/1/), (/nlocs/),               &
+     &                                  ncid = ncid,                    &       
+     &                                  GrpName = TRIM(grpname))
+                  deallocate (Iwork)
+                CASE ('stateID')
+                  CALL netcdf_put_ivar (ng, model, TRIM(ncname),        &
+     &                                  TRIM(varname),                  &
+     &                                  self%pool(i)%stateID,           &
+     &                                  (/1/), (/nvars/),               &
+     &                                  ncid = ncid,                    &       
+     &                                  GrpName = TRIM(grpname))
+                CASE ('surveyIndex')
+                  CALL netcdf_put_ivar (ng, model, TRIM(ncname),        &
+     &                                  TRIM(varname),                  &
+     &                                  self%pool(i)%surveyIndex,       &
+     &                                  (/1/), (/nsurvey/),             &
+     &                                  ncid = ncid,                    &       
+     &                                  GrpName = TRIM(grpname))
+                CASE ('surveyTime')
+                  IF (.not.allocated(Iwork)) THEN
+                    allocate ( Iwork(nsurvey) )
+                  END IF
+                  CALL netcdf_get_ivar (ng, model,                      &
+     &                                  self%pool(i)%ncname_inp,        &
+     &                                  TRIM(varname), Iwork,           &
+     &                                  GrpName = TRIM(grpname))
+                  IF (FoundError(exit_flag, NoError,                    &
+     &                           __LINE__, MyFile)) RETURN
+
+                  CALL netcdf_put_ivar (ng, model, TRIM(ncname),        &
+     &                                  TRIM(varname),                  &
+     &                                  Iwork,                          &
+     &                                  (/1/), (/nsurvey/),             &
+     &                                  ncid = ncid,                    &       
+     &                                  GrpName = TRIM(grpname))
+                  deallocate (Iwork)
+                CASE ('x_grid')
+                  CALL netcdf_put_fvar (ng, model, TRIM(ncname),        &
+     &                                  TRIM(varname),                  &
+     &                                  self%pool(i)%Xgrid,             &
+     &                                  (/1/), (/nlocs/),               &
+     &                                  ncid = ncid,                    &       
+     &                                  GrpName = TRIM(grpname))
+                CASE ('y_grid')
+                  CALL netcdf_put_fvar (ng, model, TRIM(ncname),        &
+     &                                  TRIM(varname),                  &
+     &                                  self%pool(i)%Ygrid,             &
+     &                                  (/1/), (/nlocs/),               &
+     &                                  ncid = ncid,                    &       
+     &                                  GrpName = TRIM(grpname))
+                CASE ('z_grid')
+                  CALL netcdf_put_fvar (ng, model, TRIM(ncname),        &
+     &                                  TRIM(varname),                  &
+     &                                  self%pool(i)%Zgrid,             &
+     &                                  (/1/), (/nlocs/),               &
+     &                                  ncid = ncid,                    &       
+     &                                  GrpName = TRIM(grpname))
+              END SELECT
+            ELSE IF (TRIM(grpname).eq.'ObsError') THEN
+              CALL netcdf_put_fvar (ng, model, TRIM(ncname),            &
+     &                              TRIM(varname),                      &
+     &                              self%pool(i)%error(:,j),            &
+     &                              (/1/), (/nlocs/),                   &
+     &                              ncid = ncid,                        &       
+     &                              GrpName = TRIM(grpname))
+            ELSE IF (TRIM(grpname).eq.'ObsValue') THEN
+              CALL netcdf_put_fvar (ng, model, TRIM(ncname),            &
+     &                              TRIM(varname),                      &
+     &                              self%pool(i)%value(:,j),            &
+     &                              (/1/), (/nlocs/),                   &
+     &                              ncid = ncid,                        &       
+     &                              GrpName = TRIM(grpname))
+            ELSE IF (TRIM(grpname).eq.'PreQC') THEN
+              IF (.not.allocated(Iwork)) THEN
+                allocate ( Iwork(nlocs) )
+               END IF
+               CALL netcdf_get_ivar (ng, model,                         &
+     &                               self%pool(i)%ncname_inp,           &
+     &                               TRIM(varname), Iwork,              &
+     &                               GrpName = TRIM(grpname))
+               IF (FoundError(exit_flag, NoError,                       &
+     &                        __LINE__, MyFile)) RETURN
+!
+               CALL netcdf_put_ivar (ng, model, TRIM(ncname),           &
+     &                               TRIM(varname),                     &
+     &                               Iwork,                             &
+     &                               (/1/), (/nlocs/),                  &
+     &                               ncid = ncid,                       &       
+     &                               GrpName = TRIM(grpname))
+               deallocate (Iwork)
+            END IF
+!
+            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) THEN
+              IF (Master) WRITE (stdout,10) TRIM(grpname),              &
+     &                                      TRIM(varname), TRIM(ncname)
+              exit_flag=3
+              RETURN
+            END IF
+          END DO
+        END DO
+!
+!  Close output NetCDF.  HGA: Need to check why I need to close to
+!  use ncdump while ROMS is still running.
+!
+        CALL netcdf_close (ng, model, ncid, ncname, .FALSE.)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+
+      END DO FILE_LOOP
+!
+ 10   FORMAT (/,'OBS_POOL - NC_WRITE: unable to write, Group = ',a,     &
+     &        ', Variable = ',a,/,11x,'File: ',a)
+!
+      RETURN
+      END SUBROUTINE obs_pool_nc_write
 !
 !-----------------------------------------------------------------------
 !
@@ -1228,10 +2018,10 @@
         CALL datestr (Tmin(2), .TRUE., Dmin(2))
         CALL datestr (Tmax(2), .TRUE., Dmax(2))
 !
-        IF (.not.allocated(self%pool(iobs)%ncname)) THEN
+        IF (.not.allocated(self%pool(iobs)%ncname_inp)) THEN
           lstr=LEN_TRIM(ncname)
-          allocate ( character(LEN=lstr) :: self%pool(iobs)%ncname )
-          self%pool(iobs)%ncname=TRIM(ncname)
+          allocate ( character(LEN=lstr) :: self%pool(iobs)%ncname_inp )
+          self%pool(iobs)%ncname_inp=TRIM(ncname)
         END IF
 !
         SELECT CASE (self%stateID(iobs))
@@ -1343,92 +2133,6 @@
 !
       RETURN
       END SUBROUTINE obs_pool_populate_native
-!
-!-----------------------------------------------------------------------
-!
-!  It reads the input observation file(s) to populate the data into
-!  the pool object. Each element of the pool vector stores a scalar
-!  or vector variable(s) associated with the data assimilation control
-!  vector.
-!
-      SUBROUTINE obs_pool_read (self, ng, model, nfiles)
-!
-      CLASS (obs_pool), intent(inout) :: self     ! observation set
-      integer,          intent(in   ) :: ng       ! nested grid number
-      integer,          intent(in   ) :: model    ! kernel identifier
-      integer,          intent(in   ) :: nfiles   ! number of files
-!
-      logical                         :: isNative
-      integer                         :: mobs, msurvey, mvar
-      integer                         :: IOtype, i, nf
-      character (len=256)             :: ncname
-
-      character (len=*),    parameter :: MyFile =                       &
-     &    __FILE__//", obs_pool_read"
-!
-      SourceFile=MyFile
-!
-!  Initialize.
-!
-      isNative=.FALSE.
-      mobs=0
-      msurvey=0
-      mvar=0
-!
-!  Inquire input observation NetCDF file(s).
-!
-      FILES_LOOP : DO nf=1,nfiles
-        ncname=OBS2(nf,ng)%name
-        IOtype=OBS2(nf,ng)%IOtype
-!
-        SELECT CASE (IOtype)
-          CASE (io_nf90)
-            CALL netcdf_get_dim (ng, model, ncname)
-# if defined PIO_LIB && defined DISTRIBUTE
-          CASE (io_pio)
-            CALL pio_netcdf_get_dim (ng, model, ncname)
-# endif
-          CASE DEFAULT
-            IF (Master) WRITE (stdout,10) IOtype
-            exit_flag=3
-        END SELECT
-        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-!
-!  Get number of observations from its dimensions, and determine if
-!  native or IODA file.
-!
-        DO i=1,n_dim
-          IF (TRIM(dim_name(i)).eq.'datum') then
-            mobs=dim_size(i)
-            isNative=.TRUE.                             ! only in native
-          ELSE IF (TRIM(dim_name(i)).eq.'survey') THEN
-            msurvey=dim_size(i)                         ! in both
-          ELSE IF (TRIM(dim_name(i)).eq.'Location') THEN
-            mobs=dim_size(i)
-            isNative=.FALSE.                            ! only in IODA
-          ELSE IF (TRIM(dim_name(i)).eq.'nvars') THEN
-            mvar=dim_size(i)                            ! only in IODA
-          END IF
-        END DO
-!
-!  Populate data into observation pool object.
-!
-        IF (isNative) THEN
-          CALL self%load_native (ng, model, mobs, msurvey,              &
-     &                           IOtype, TRIM(ncname))
-        ELSE
-          CALL self%load_ioda (ng, model, mobs, msurvey, mvar,          &
-     &                         IOtype, TRIM(ncname))
-        END IF
-        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-
-      END DO FILES_LOOP
-!
-  10  FORMAT (' OBS_POOL_READ - Illegal output file type, io_type = ',  &
-     &        i0,/,17x,'Check KeyWord ''OUT_LIB'' in ''roms.in''.')
-!
-      RETURN
-      END SUBROUTINE obs_pool_read
 !
 !-----------------------------------------------------------------------
 !
@@ -1711,6 +2415,57 @@
 !
 !-----------------------------------------------------------------------
 !
+!  It determines the total number of observatos in the pool depot.
+!
+      SUBROUTINE obs_pool_tally (self)
+!
+      CLASS (obs_pool),  intent(inout) :: self       ! observation set
+!
+      integer,             allocatable :: ObsCount(:)
+      integer                          :: mvars, ndatum, npool
+      integer                          :: i, ic, j, m, nc
+!
+!  Count the total number of observations.
+!
+      ndatum=0
+      npool=SIZE(self%pool)
+      IF (.not.allocated(ObsCount)) THEN
+        allocate ( ObsCount(npool) )
+        ObsCount=0
+      END IF
+!
+      DO i=1,npool
+        ObsCount(i)=self%pool(i)%nlocs*self%pool(i)%nvars
+        ndatum=ndatum+ObsCount(i)
+      END DO
+      self%ndatum=ndatum
+!
+!  Set mapping indices to packed observations vector. It is used in the
+!  H(x) object.
+!
+      ic=0
+      DO i=1,npool
+        mvars=self%pool(i)%nvars
+        IF (.not.allocated(self%pool(i)%pack_mapping)) THEN
+          allocate ( self%pool(i)%pack_mapping(ObsCount(i),mvars) )
+          self%pool(i)%pack_mapping=0
+        END IF
+        nc=0
+        DO m=1,mvars
+          DO j=1,self%pool(i)%nlocs
+            ic=ic+1
+            nc=nc+1
+            self%pool(i)%pack_mapping(nc,m)=ic
+          END DO
+        END DO
+      END DO
+      IF (allocated(ObsCount)) deallocate (ObsCount)
+!
+      RETURN
+      END SUBROUTINE obs_pool_tally
+!
+!-----------------------------------------------------------------------
+!
 !  It unpacks native observation integer data into pool object.
 !
       SUBROUTINE obs_pool_unpack_i (self, ng, ND, typeID, Zgrid, idata, &
@@ -1746,22 +2501,22 @@
         poolID=self%pool(iobs)%poolID
 !
         SELECT CASE (poolID)
-          CASE (1)
+          CASE (1)                                      ! SSH
             mask=(typeID.eq.1)
             mvar=1
-          CASE (6)
+          CASE (6)                                      ! Temperature
             mask=(typeID.eq.6).and.(INT(Zgrid).ne.Lsur)
             mvar=1
-          CASE (7)
+          CASE (7)                                      ! Salinity
             mask=(typeID.eq.7)
             mvar=1
-          CASE (45)                   
-            mask=(typeID.eq.4)
+          CASE (45)                                     ! U-,V-velocity
+            mask=(typeID.eq.4)                          ! U-Velocity
             mvar=2
-          CASE (60)
+          CASE (60)                                     ! SST, z=0
             mask=(typeID.eq.6).and.(INT(Zgrid).eq.Lsur)
             mvar=1
-          CASE (70)
+          CASE (70)                                     ! SSS, z=0
             mask=(typeID.eq.7).and.(INT(Zgrid).eq.Lsur)
             mvar=1
           CASE DEFAULT
@@ -1828,23 +2583,23 @@
         poolID=self%pool(iobs)%poolID
 !
         SELECT CASE (poolID)
-          CASE (1)
+          CASE (1)                                      ! SSH
             mask=(typeID.eq.1)
             mvar=1
-          CASE (6)
+          CASE (6)                                      ! Temperature
             mask=(typeID.eq.6).and.(INT(Zgrid).ne.Lsur)
             mvar=1
-          CASE (7)
+          CASE (7)                                      ! Salinity
             mask=(typeID.eq.7)
             mvar=1
-          CASE (45)                   
-            mask=(typeID.eq.4)
-            msk2=(typeID.eq.5)
+          CASE (45)                                     ! U-,V-velocity
+            mask=(typeID.eq.4)                          ! U-velocity
+            msk2=(typeID.eq.5)                          ! V-velocity
             mvar=2
-          CASE (60)
+          CASE (60)                                     ! SST. z=0
             mask=(typeID.eq.6).and.(INT(Zgrid).eq.Lsur)
             mvar=1
-          CASE (70)
+          CASE (70)                                     ! SSS, z=0
             mask=(typeID.eq.7).and.(INT(Zgrid).eq.Lsur)
             mvar=1
           CASE DEFAULT
