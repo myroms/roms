@@ -59,6 +59,12 @@
         integer :: nsurvey                      ! number of time surveys
         integer :: nvars                        ! number of variables
         integer :: poolID                       ! observation pool ID
+        integer :: timeWindow                   ! time-averaged windows
+!
+!  Switches indicating area-averaged and time-averaged observations.
+!
+        logical :: IsAreaAveraged
+        logical :: IsTimeAveraged
 !
 !  Observation origin identifier. Repetitive observations have their
 !  provenance multiplied by -1 so they can be quickly identified during
@@ -83,10 +89,19 @@
         integer :: NendObs
 !
 !  Mapping indices for the packed observations vector. It is used
-!  when computing H(x), cost function, and minimization where all
-!  the observations are clustered in 1D array.
+!  when computing H(x), the cost function, and minimization where
+!  and the observations are clustered in a 1D array.
 !
         integer, allocatable :: pack_mapping(:,:)
+!
+!  Half-length spatial scale (m) for area-averaged operator.
+!
+        real (r8) :: spatialAverage
+!
+!  Starting and ending times for time-averaged operator.
+!
+        real (r8), allocatable :: TimeStr(:)
+        real (r8), allocatable :: TimeEnd(:)
 !
 !  Observation spatial and time coordinates. The fractional values are
 !  used for efficient interpolation in the H(x) operator.
@@ -133,7 +148,7 @@
 !
         character (len=:), allocatable :: name
 !
-!  Input observation filename. It supportss native ROMS 4D-Var NetCDF
+!  Input observation filename. It supports native ROMS 4D-Var NetCDF
 !  files and IODA enhanced NetCDF-4 files with Groups.
 !
         character (len=:), allocatable :: ncname_inp
