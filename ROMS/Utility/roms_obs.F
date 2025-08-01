@@ -55,11 +55,11 @@
 !
       TYPE, PUBLIC :: obs_data
 
-        integer :: nlocs                        ! number of observations
-        integer :: nsurvey                      ! number of time surveys
-        integer :: nvars                        ! number of variables
-        integer :: poolID                       ! observation pool ID
-        integer :: timeWindow                   ! time-averaged windows
+        integer :: nlocs                       ! number of observations
+        integer :: nsurvey                     ! number of times surveys
+        integer :: nvars                       ! number of variables
+        integer :: poolID                      ! observation pool ID
+        integer :: timeWindow                  ! time-averaged windows
 !
 !  Switches indicating area-averaged and time-averaged observations.
 !
@@ -76,10 +76,11 @@
 !
         integer, allocatable :: stateID(:)
 !
-!  Observation survey time indices as they appear in the "time"
-!  variable.
+!  Observation survey time and average window indices as they appear in
+!  the "time" variable.
 !
-        integer, allocatable :: surveyIndex(:)
+        integer, allocatable :: surveyIndex(:)   ! unique survey time
+        integer, allocatable :: WindowIndex(:)   ! unique average window
 !
 !  Starting and ending observation vector indices available for
 !  requested model time interval, time-0.5*dt to time+0.5*dt. They
@@ -100,8 +101,8 @@
 !
 !  Starting and ending times for time-averaged operator.
 !
-        real (r8), allocatable :: TimeStr(:)
-        real (r8), allocatable :: TimeEnd(:)
+        real (r8), allocatable :: TimeStr(:)    ! starting time
+        real (r8), allocatable :: TimeEnd(:)    ! ending time
 !
 !  Observation spatial and time coordinates. The fractional values are
 !  used for efficient interpolation in the H(x) operator.
@@ -147,6 +148,7 @@
 !  Internal observation data object name.
 !
         character (len=:), allocatable :: name
+        character (len=:), allocatable :: vname(:)
 !
 !  Input observation filename. It supports native ROMS 4D-Var NetCDF
 !  files and IODA enhanced NetCDF-4 files with Groups.
@@ -165,10 +167,11 @@
 !
         CONTAINS
 !
-        PROCEDURE :: destroy          => obs_data_destroy
-        PROCEDURE :: frac_coords      => obs_data_frac_coords
-        PROCEDURE :: populate_ioda    => obs_data_populate_ioda
-        PROCEDURE :: stats            => obs_data_stats
+        PROCEDURE :: destroy             => obs_data_destroy
+        PROCEDURE :: frac_coords         => obs_data_frac_coords
+        PROCEDURE :: averaging_timesteps => obs_data_averaging_timesteps
+        PROCEDURE :: populate_ioda       => obs_data_populate_ioda
+        PROCEDURE :: stats               => obs_data_stats
 !
       END TYPE obs_data
 !
@@ -213,7 +216,7 @@
 !
 !:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 !
-      PUBLIC  :: roms_obs_initialize
+      PUBLIC  :: ROMS_obs_initialize
       PRIVATE
 !
 !:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -224,10 +227,10 @@
 !
 !  It initialzes the observation set object.
 !
-      SUBROUTINE roms_obs_initialize (self, ng, model, nfiles)
+      SUBROUTINE ROMS_obs_initialize (self, ng, model, nfiles)
 !
       CLASS (obs_pool), intent(inout) :: self     ! observation set
-      integer,          intent(in   ) :: ng       ! nested grid number
+      integer,          intent(in   ) :: ng       ! nested grid
       integer,          intent(in   ) :: model    ! kernel identifier
       integer,          intent(in   ) :: nfiles   ! number of files
 !
@@ -242,7 +245,7 @@
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
       RETURN
-      END SUBROUTINE roms_obs_initialize
+      END SUBROUTINE ROMS_obs_initialize
 !
 !<><><><><><><><><><><><><><><><><><><><><><><><>  CLASS OBS_DATA <><><>
 !
@@ -282,6 +285,7 @@
       IF (allocated(self%value_max))    deallocate (self%value_max)
 !
       IF (allocated(self%name))         deallocate (self%name)
+      IF (allocated(self%vname))        deallocate (self%vname)
       IF (allocated(self%ncname_inp))   deallocate (self%ncname_inp)
       IF (allocated(self%ncname_out))   deallocate (self%ncname_out)
 !
@@ -295,7 +299,7 @@
       SUBROUTINE obs_data_frac_coords (self, ng, model, tile)
 !
       CLASS (obs_data), intent(inout) :: self     ! observation object
-      integer,          intent(in   ) :: ng       ! nested grid number
+      integer,          intent(in   ) :: ng       ! nested grid
       integer,          intent(in   ) :: model    ! kernel identifier
       integer,          intent(in   ) :: tile     ! domain partition
 !
@@ -341,21 +345,65 @@
       END SUBROUTINE obs_data_frac_coords
 !
 !-----------------------------------------------------------------------
+!  If time-averaged observations, return current averaging window
+!  timesteps.
+!
+      SUBROUTINE obs_data_averaging_timesteps (self, ng, model,         &
+     &                                         iTstr, iTend)
+!
+      CLASS (obs_data), intent(inout) :: self     ! observation object
+      integer,          intent(in   ) :: ng       ! nested grid
+      integer,          intent(in   ) :: model    ! kernel identifier
+      integer,          intent(out  ) :: iTstr    ! starting timestep
+      integer,          intent(out  ) :: iTend    ! ending   timestep
+!
+      integer                         :: i
+!
+!  Given current model time, get averaging window starting and ending
+!  times.
+!
+      iTstr=-1
+      iTend=-1
+!
+      IF (self%IsTimeAveraged) THEN
+        DO i=1,self%timeWindow
+          IF (model.eq.iADM) THEN
+            IF ((self%TimeStr(i).le.time(ng)).and.                      &
+     &          (time(ng).lt.self%TimeEnd(i))) THEN
+              iTstr=INT((self%TimeStr(i)-dstart*day2sec)/dt(ng))+1
+              iTend=INT((self%TimeEnd(i)-dstart*day2sec)/dt(ng))
+            END IF
+          ELSE 
+            IF ((self%TimeStr(i).le.time(ng)).and.                      &
+     &          (time(ng).lt.self%TimeEnd(i))) THEN
+              iTstr=INT((self%TimeStr(i)-dstart*day2sec)/dt(ng))
+              iTend=INT((self%TimeEnd(i)-dstart*day2sec)/dt(ng))
+              EXIT
+            END IF
+          END IF
+        END DO
+      END IF
+!
+      RETURN
+      END SUBROUTINE obs_data_averaging_timesteps
+!
+!-----------------------------------------------------------------------
 !  If not available, it computes observation object fractional
 !  coordinates.
 !
       SUBROUTINE obs_data_populate_ioda (self, ng, model, mvar, IOtype)
 !
       CLASS (obs_data),  intent(inout) :: self    ! observation object
-      integer,           intent(in   ) :: ng      ! nested grid number
+      integer,           intent(in   ) :: ng      ! nested grid
       integer,           intent(in   ) :: model   ! kernel identifier
       integer,           intent(in   ) :: mvar    ! number of variables
       integer,           intent(in   ) :: IOtype  ! NetCDF IO type
 !
       logical                          :: Loaded, isDayUnits
-      integer                          :: i, lstr, ncount
-      real(r8),           dimension(2) :: Tmin, Tmax
-      character (len=22), dimension(2) :: Dmin, Dmax
+      integer,             allocatable :: wcount(:)
+      integer                          :: i, ic, j, lstr, ncount
+      real(r8),           dimension(4) :: Tmin, Tmax
+      character (len=22), dimension(4) :: Dmin, Dmax
 
       character (len=*),     parameter :: MyFile =                      &
      &    __FILE__//", obs_data_populate_ioda"
@@ -430,6 +478,34 @@
               ncount=SIZE(self%surveyTime)
               CALL datestr (Tmin(2), .FALSE., Dmin(2))
               CALL datestr (Tmax(2), .FALSE., Dmax(2))
+            CASE ('dateTimeAverageStart')
+              CALL netcdf_get_time (ng, model, self%ncname_inp,         &
+     &                              var_name(i), Rclock%DateNumber,     &
+     &                              self%TimeStr,                       &
+     &                              GrpName = 'MetaData',               &
+     &                              min_val = Tmin(3),                  &
+     &                              max_val = Tmax(3))
+              Loaded=.TRUE.
+              ncount=SIZE(self%TimeStr)
+              CALL datestr (Tmin(3), .FALSE., Dmin(3))
+              CALL datestr (Tmax(3), .FALSE., Dmax(3))
+            CASE ('dateTimeAverageEnd')
+              CALL netcdf_get_time (ng, model, self%ncname_inp,         &
+     &                              var_name(i), Rclock%DateNumber,     &
+     &                              self%TimeEnd,                       &
+     &                              GrpName = 'MetaData',               &
+     &                              min_val = Tmin(4),                  &
+     &                              max_val = Tmax(4))
+              Loaded=.TRUE.
+              ncount=SIZE(self%TimeEnd)
+              CALL datestr (Tmin(4), .FALSE., Dmin(4))
+              CALL datestr (Tmax(4), .FALSE., Dmax(4))
+            CASE ('spatialAverage')
+              CALL netcdf_get_fvar (ng, model, self%ncname_inp,         &
+     &                              var_name(i), self%spatialAverage,   &
+     &                              GrpName = 'MetaData')
+              Loaded=.TRUE.
+              ncount=1
             CASE ('x_grid')
               CALL netcdf_get_fvar (ng, model, self%ncname_inp,         &
      &                              var_name(i), self%Xgrid,            &
@@ -523,6 +599,29 @@
         self%vars(i)=TRIM(var_name(i))
       END DO
 !
+!  If time-averaged observations count the number of observations for
+!  each averaging time window and the starting indices as they appear
+!  in the observation time coordinate.
+!
+      IF (self%IsTimeAveraged) THEN
+        IF (.not.allocated(wcount)) THEN
+          allocate ( wcount(self%timeWindow) )
+          wcount=0
+        END IF
+!
+        DO j=1,self%nlocs
+          DO i=1,self%timeWindow
+            IF ((self%TimeStr(i).le.self%time(j)).and.                  &
+     &          (self%time(j).lt.self%TimeEnd(i))) THEN
+              wcount(i)=wcount(i)+1
+              IF (wcount(i).eq.1) self%WindowIndex(i)=j
+            ELSE
+              CYCLE
+            END IF
+          END DO
+        END DO
+      END IF
+!
 !  Compute statistics.
 !
       isDayUnits=.FALSE.
@@ -544,6 +643,10 @@
      &                      TRIM(Dmin(2)), TRIM(Dmax(2))
         END DO
       END IF
+!
+!  Deallocate local variable.
+!
+      IF (allocated(wcount)) deallocate (wcount)
 !
   10  FORMAT (/,2x,'ROMS_OBS         - Processing: ',a)
   20  FORMAT (t23,'Group: ',a,'::',a,t75,'Count = ',i0)
@@ -612,7 +715,7 @@
       SUBROUTINE obs_pool_create (self, ng, model, nfiles)
 !
       CLASS (obs_pool), intent(inout) :: self     ! observation set
-      integer,          intent(in   ) :: ng       ! nested grid number
+      integer,          intent(in   ) :: ng       ! nested grid
       integer,          intent(in   ) :: model    ! kernel identifier
       integer,          intent(in   ) :: nfiles   ! number of files
 !
@@ -664,7 +767,6 @@
       END SUBROUTINE obs_pool_create
 !
 !-----------------------------------------------------------------------
-!
 !  It destroys a set observation-type objects.
 !
       SUBROUTINE obs_pool_destroy (self)
@@ -684,7 +786,6 @@
       END SUBROUTINE obs_pool_destroy
 !
 !-----------------------------------------------------------------------
-!
 !  Given internal observation name, it returns an observation data
 !  object pointer.
 !
@@ -694,7 +795,7 @@
       character (len=*),        intent(in ) :: name   ! observation name
       TYPE (obs_data), pointer, intent(out) :: field  ! data pointer
 !
-      integer                               :: i
+      integer                               :: i, iobs
 
       character (len=*),          parameter :: MyFile =                 &
      &    __FILE__//", obs_pool_get"
@@ -703,8 +804,8 @@
 !
 !  Get requested field pointer.
 !
-      DO i=1,SIZE(self%pool)
-        IF (TRIM(name).eq.self%pool(i)%name) THEN
+      DO iobs=1,SIZE(self%pool)
+        IF (TRIM(name).eq.self%pool(iobs)%name) THEN
           field => self%pool(i)
           RETURN
         END IF
@@ -722,61 +823,100 @@
       END SUBROUTINE obs_pool_get
 !
 !-----------------------------------------------------------------------
-!
 !  It inquires about available observation for current model time, and
 !  their starting and ending indices on pool set.
 !
       FUNCTION obs_pool_has (self, ng, model) RESULT (foundit)
 !
       CLASS (obs_pool), intent(inout) :: self     ! observation set
-      integer,          intent(in   ) :: ng       ! nested grid number
+      integer,          intent(in   ) :: ng       ! nested grid
       integer,          intent(in   ) :: model    ! observation name
 !
       logical                         :: foundit
-      integer                         :: Nend, iobs, i, nsurvey
-      real (r8)                       :: TimeStr, TimeEnd
+      integer                         :: Nstr, Nend, iobs, i
+      integer                         :: nsurvey, nwindow
+      real (r8)                       :: Tstr, Tend
 !
 !  Check if requested observation name exists in the pool object.
 !
       foundit=.FALSE.
-      TimeStr=time(ng)-0.5_r8*dt(ng)
-      TimeEnd=time(ng)+0.5_r8*dt(ng)
+      Tstr=time(ng)-0.5_r8*dt(ng)
+      Tend=time(ng)+0.5_r8*dt(ng)
 !
       DO iobs=1,SIZE(self%pool)
         nsurvey=self%pool(iobs)%nsurvey
+        nwindow=self%pool(iobs)%timeWindow
         self%pool(iobs)%NstrObs=0
         self%pool(iobs)%NendObs=0
 !
         IF (model.eq.iADM) THEN                   ! backward search
-          DO i=nsurvey,1,-1
-            IF ((TimeStr.le.self%pool(iobs)%surveyTime(i)).and.         &
-     &          (self%pool(iobs)%surveyTime(i).lt.TimeEnd)) THEN
-              self%pool(iobs)%NstrObs=i
-              IF (i.ne.1) THEN
-                Nend=self%pool(iobs)%surveyIndex(i-1)-1
+          IF (self%pool(iobs)%IsTimeAveraged) THEN
+             DO i=nwindow,1,-1
+              IF ((self%pool(iobs)%TimeStr(i).le.time(ng)).and.         &
+     &            (time(ng).lt.self%pool(iobs)%TimeEnd(i))) THEN
+                Nstr=self%pool(iobs)%WindowIndex(i)
+                IF (i.ne.1) THEN
+                  Nend=self%pool(iobs)%WindowIndex(i-1)-1
+                ELSE
+                  Nend=self%pool(iobs)%WindowIndex(i)
+                END IF
+                self%pool(iobs)%NstrObs=Nstr
                 self%pool(iobs)%NendObs=Nend
-              ELSE
-                self%pool(iobs)%NendObs=i
+                foundit=.TRUE.
+                CYCLE
               END IF
-              foundit=.TRUE.
-              CYCLE
-            END IF
-          END DO
-        ELSE 
-          DO i=1,nsurvey
-            IF ((TimeStr.le.self%pool(iobs)%surveyTime(i)).and.         &
-     &          (self%pool(iobs)%surveyTime(i).lt.TimeEnd)) THEN
-              self%pool(iobs)%NstrObs=i
-              IF (i.ne.nsurvey) THEN
-                Nend=self%pool(iobs)%surveyIndex(i+1)-1
+            END DO
+          ELSE
+            DO i=nsurvey,1,-1
+              IF ((Tstr.le.self%pool(iobs)%surveyTime(i)).and.          &
+     &            (self%pool(iobs)%surveyTime(i).lt.Tend)) THEN
+                Nstr=self%pool(iobs)%surveyTime(i)
+                IF (i.ne.1) THEN
+                  Nend=self%pool(iobs)%surveyIndex(i-1)-1
+                ELSE
+                  Nend=self%pool(iobs)%surveyIndex(i)
+                END IF
+                self%pool(iobs)%NstrObs=Nstr
                 self%pool(iobs)%NendObs=Nend
-              ELSE
-                self%pool(iobs)%NendObs=i
+                foundit=.TRUE.
+                CYCLE
               END IF
-              foundit=.TRUE.
-              CYCLE
-            END IF
-          END DO
+            END DO
+          END IF
+        ELSE                                      ! forward search
+          IF (self%pool(iobs)%IsTimeAveraged) THEN
+            DO i=1,nwindow
+              IF ((self%pool(iobs)%TimeStr(i).le.time(ng)).and.         &
+     &            (time(ng).lt.self%pool(iobs)%TimeEnd(i))) THEN
+                Nstr=self%pool(iobs)%WindowIndex(i)
+                IF (i.ne.nwindow) THEN
+                  Nend=self%pool(iobs)%WindowIndex(i+1)-1
+                ELSE
+                  Nend=self%pool(iobs)%WindowIndex(i)
+                END IF
+                self%pool(iobs)%NstrObs=Nstr
+                self%pool(iobs)%NendObs=Nend
+                foundit=.TRUE.
+                CYCLE
+              END IF
+            END DO
+          ELSE
+            DO i=1,nsurvey
+              IF ((Tstr.le.self%pool(iobs)%surveyTime(i)).and.          &
+     &            (self%pool(iobs)%surveyTime(i).lt.Tend)) THEN
+                Nstr=self%pool(iobs)%surveyTime(i)
+                IF (i.ne.nsurvey) THEN
+                  Nend=self%pool(iobs)%surveyIndex(i+1)-1
+                ELSE
+                  Nend=self%pool(iobs)%surveyIndex(i)
+                END IF
+                self%pool(iobs)%NstrObs=Nstr
+                self%pool(iobs)%NendObs=Nend
+                foundit=.TRUE.
+                CYCLE
+              END IF
+            END DO
+          END IF
         END IF
       END DO
 !
@@ -784,7 +924,6 @@
       END FUNCTION obs_pool_has
 !
 !-----------------------------------------------------------------------
-!
 !  It allocates the observation arrays in the appropiate pool vector
 !  element, and then reads the specified IODA observation file to
 !  populate the data.
@@ -793,7 +932,7 @@
      &                               mvar, IOtype, ncname)
 !
       CLASS (obs_pool),  intent(inout) :: self     ! observation set
-      integer,           intent(in   ) :: ng       ! nested grid number
+      integer,           intent(in   ) :: ng       ! nested grid
       integer,           intent(in   ) :: model    ! kernel identifier
       integer,           intent(in   ) :: mobs     ! observations number
       integer,           intent(in   ) :: msurvey  ! time surveys
@@ -804,8 +943,10 @@
       logical                          :: haveSST, haveSSS, haveVector
       integer,         dimension(mvar) :: myStateID
       integer                          :: Idot, Islash
-      integer                          :: i, iobs, lstr, myID, mvatt
+      integer                          :: i, iobs, lstr, myID
+      integer                          :: mtimes, mvatt
 !
+      character (len=40)               :: varname(mvar)
       character (len=80)               :: string
 
       character (len=*),     parameter :: MyFile =                      &
@@ -831,6 +972,7 @@
      &                         nVarAtt = mvatt)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
+
           DO i=1,mvatt
             IF (TRIM(var_Aname(i)).eq.'surface_level') THEN
               IF (ANY(myStateID.eq.6)) haveSST=.TRUE.
@@ -888,7 +1030,7 @@
 !
       IF (.not.allocated(self%pool(iobs)%ncname_inp)) THEN
         lstr=LEN_TRIM(ncname)
-
+        allocate ( character(LEN=lstr) :: self%pool(iobs)%ncname_inp )
         self%pool(iobs)%ncname_inp = TRIM(ncname)
       END IF
 !
@@ -926,6 +1068,22 @@
       IF (.not.allocated(self%pool(iobs)%time)) THEN
         allocate ( self%pool(iobs)%time(mobs) )
         self%pool(iobs)%time = 0.0_r8
+      END IF
+
+      IF (self%pool(iobs)%timeWindow.gt.0) THEN
+        mtimes=self%pool(iobs)%timeWindow
+        IF (.not.allocated(self%pool(iobs)%TimeStr)) THEN
+          allocate ( self%pool(iobs)%TimeStr(mtimes) )
+          self%pool(iobs)%TimeStr=0.0_r8
+        END IF
+        IF (.not.allocated(self%pool(iobs)%TimeEnd)) THEN
+          allocate ( self%pool(iobs)%TimeEnd(mtimes) )
+          self%pool(iobs)%TimeEnd=0.0_r8
+        END IF
+        IF (.not.allocated(self%pool(iobs)%WindowIndex)) THEN
+          allocate ( self%pool(iobs)%WindowIndex(mtimes) )
+          self%pool(iobs)%WindowIndex=0.0_r8
+        END IF
       END IF
 
       IF (.not.allocated(self%pool(iobs)%stateID)) THEN
@@ -1010,6 +1168,36 @@
         self%pool(iobs)%value_max=0.0_r8
       END IF
 !
+!  Allocate internal variable name(s).
+!
+      SELECT CASE (self%stateID(iobs))
+        CASE (1)
+          varname(1)='SSH'
+        CASE (6)
+          varname(1)='temp'
+        CASE (7)
+          varname(1)='salt'
+        CASE (45)
+          varname(1)='Ucodar'
+          Varname(2)='Vcodar'
+        CASE (60)
+          varname(1)='SST'
+        CASE (67)
+          varname(1)='temp'
+          varname(2)='salt'
+        CASE (70)
+          varname(1)='SSS'
+      END SELECT        
+!
+      lstr=0
+      DO i=1,mvar
+        lstr=MAX(lstr, LEN_TRIM(varname(i)))
+      END DO
+      allocate ( character(LEN=lstr) :: self%pool(iobs)%vname(mvar) )
+      DO i=1,mvar
+        self%pool(iobs)%vname(i)=TRIM(varname(i))
+      END DO
+!
 !  Read in IODA NetCDF file and populate observation data.
 !
       CALL self%pool(iobs)%populate_ioda (ng, model, mvar, IOtype)
@@ -1023,7 +1211,6 @@
       END SUBROUTINE obs_pool_load_ioda
 !
 !-----------------------------------------------------------------------
-!
 !  It allocates the observation arrays in the appropiate pool vector
 !  element, and then reads the specified native observation file to
 !  populate the data.
@@ -1032,7 +1219,7 @@
      &                                 IOtype, ncname)
 !
       CLASS (obs_pool),  intent(inout) :: self     ! observation set
-      integer,           intent(in   ) :: ng       ! nested grid number
+      integer,           intent(in   ) :: ng       ! nested grid
       integer,           intent(in   ) :: model    ! kernel identifier
       integer,           intent(in   ) :: mobs     ! observations number
       integer,           intent(in   ) :: msurvey  ! time surveys
@@ -1237,7 +1424,6 @@
       END SUBROUTINE obs_pool_load_native
 !
 !-----------------------------------------------------------------------
-!
 !  It creates ouput IODA-type observations plus H(x) variables NetCDF4
 !  enhanced file(s). It inquires input IODA-type observation files to
 !  copy their schema, and adds Groups associated with the H(x) operator.
@@ -1245,7 +1431,7 @@
       SUBROUTINE obs_pool_nc_create (self, ng, model)
 !
       CLASS (obs_pool),  intent(inout) :: self     ! observation set
-      integer,           intent(in   ) :: ng       ! nested grid number
+      integer,           intent(in   ) :: ng       ! nested grid
       integer,           intent(in   ) :: model    ! kernel identifier
 !
       integer                          :: ncid_inp, ncid_out, npool
@@ -1581,7 +1767,6 @@
       END SUBROUTINE obs_pool_nc_create
 !
 !-----------------------------------------------------------------------
-!
 !  It reads the input observation file(s) to populate the data into
 !  the pool object. Each element of the pool vector stores a scalar
 !  or vector variable(s) associated with the data assimilation control
@@ -1590,7 +1775,7 @@
       SUBROUTINE obs_pool_nc_read (self, ng, model, nfiles)
 !
       CLASS (obs_pool), intent(inout) :: self     ! observation set
-      integer,          intent(in   ) :: ng       ! nested grid number
+      integer,          intent(in   ) :: ng       ! nested grid
       integer,          intent(in   ) :: model    ! kernel identifier
       integer,          intent(in   ) :: nfiles   ! number of files
 !
@@ -1616,6 +1801,11 @@
       FILES_LOOP : DO nf=1,nfiles
         ncname=OBS2(nf,ng)%name
         IOtype=OBS2(nf,ng)%IOtype
+!
+        self%pool(nf)%timeWindow=0
+        self%pool(nf)%spatialAverage=0.0_r8
+        self%pool(nf)%IsAreaAveraged=.FALSE.
+        self%pool(nf)%IsTimeAveraged=.FALSE.
 !
         SELECT CASE (IOtype)
           CASE (io_nf90)
@@ -1644,6 +1834,9 @@
             isNative=.FALSE.                            ! only in IODA
           ELSE IF (TRIM(dim_name(i)).eq.'nvars') THEN
             mvar=dim_size(i)                            ! only in IODA
+          ELSE IF (TRIM(dim_name(i)).eq.'timeWindow') THEN
+            self%pool(nf)%timeWindow=dim_size(i)        ! only in IODA
+            self%pool(nf)%IsTimeAveraged=.TRUE.
           END IF
         END DO
 !
@@ -1667,14 +1860,13 @@
       END SUBROUTINE obs_pool_nc_read
 !
 !-----------------------------------------------------------------------
-!
 !  It writes observation data ouput IODA-type files. The H(x) operator
 !  variables will be written elsewhere.
 !
       SUBROUTINE obs_pool_nc_write (self, ng, model)
 !
       CLASS (obs_pool),  intent(inout) :: self     ! observation set
-      integer,           intent(in   ) :: ng       ! nested grid number
+      integer,           intent(in   ) :: ng       ! nested grid
       integer,           intent(in   ) :: model    ! kernel identifier
 !
       integer,             allocatable :: Iwork(:)
@@ -1888,7 +2080,6 @@
       END SUBROUTINE obs_pool_nc_write
 !
 !-----------------------------------------------------------------------
-!
 !  It allocates the observation arrays in the appropiate pool vector
 !  element, and then reads the specified native observation file to
 !  populate the data.
@@ -1915,7 +2106,7 @@
       real (r8),           allocatable :: surveyTime(:)
       real (r8),          dimension(2) :: Tmin, Tmax
       character (len=22), dimension(2) :: Dmin, Dmax
-      character (len=40)               :: name, vars(2)
+      character (len=40)               :: name, varname(2), vars(2)
 
       character (len=*),     parameter :: MyFile =                      &
      &    __FILE__//", obs_pool_populate_native"
@@ -2043,21 +2234,26 @@
           CASE (1)
             mvar=1
             name='SSH'
+            varname(mvar)='SSH'
             vars(mvar)='absoluteDynamicTopography'
             self%pool(iobs)%stateID(mvar)=1
           CASE (6)
             mvar=1
             name='temp'
+            varname(mvar)='temp'
             vars(mvar)='waterTemperature'
             self%pool(iobs)%stateID(mvar)=6
           CASE (7)
             mvar=1
             name='salt'
+            varname(mvar)='salt'
             vars(mvar)='Salinity'
             self%pool(iobs)%stateID(mvar)=7
           CASE (45)
             mvar=2
             name='uv'
+            varname(1)='u'
+            varname(2)='v'
             vars(1)='waterSurfaceZonalVelocity'
             vars(2)='waterSurfaceMeridionalVelocity'
             self%pool(iobs)%stateID(1)=4
@@ -2065,11 +2261,13 @@
           CASE (60)
             mvar=1
             name='SST'
+            varname(mvar)='SST'
             vars(mvar)='seaSurfaceTemperature'
             self%pool(iobs)%stateID(1)=6
           CASE (70)
             mvar=1
             name='SSS'
+            varname(mvar)='SSS'
             vars(mvar)='seaSurfaceSalinity'
             self%pool(iobs)%stateID(1)=7
         END SELECT
@@ -2080,6 +2278,17 @@
           self%pool(iobs)%name=TRIM(name)
         END IF
 ! 
+        IF (.not.allocated(self%pool(iobs)%vname)) THEN
+          lstr=0
+          DO i=1,mvar          
+            lstr=MAX(lstr, LEN_TRIM(varname(i)))
+          END DO
+          allocate (character(LEN=lstr) :: self%pool(iobs)%vname(mvar) )
+          DO i=1,mvar          
+            self%pool(iobs)%vname(i)=TRIM(varname(i))
+          END DO
+        END IF
+!
         IF (.not.allocated(self%pool(iobs)%vars)) THEN
           lstr=0
           DO i=1,mvar          
@@ -2150,7 +2359,6 @@
       END SUBROUTINE obs_pool_populate_native
 !
 !-----------------------------------------------------------------------
-!
 !  Define the size of the observation pool vector as the number of
 !  variables in the state control vector that are directly or
 !  indirectly linked to the measurements. Retrieve the state variable
@@ -2160,7 +2368,7 @@
       SUBROUTINE obs_pool_size (self, ng, model, nfiles)
 !
       CLASS (obs_pool), intent(inout) :: self     ! observation set
-      integer,          intent(in   ) :: ng       ! nested grid number
+      integer,          intent(in   ) :: ng       ! nested grid
       integer,          intent(in   ) :: model    ! kernel identifier
       integer,          intent(in   ) :: nfiles   ! number of files
 !
@@ -2237,8 +2445,8 @@
           END IF
         END DO
 !
-!  If native observation file, read in "obs_type" variable to determine
-!  the observed variables and its IDs.
+!  If native observation file, read in "obs_type" and "obs_Zgrid" to
+!  determine the observed variables and its IDs.
 !
         IF (isNative(nf)) THEN
           IF (.not.allocated(obs_type)) THEN
@@ -2429,7 +2637,6 @@
       END SUBROUTINE obs_pool_size
 !
 !-----------------------------------------------------------------------
-!
 !  It determines the total number of observatos in the pool depot.
 !
       SUBROUTINE obs_pool_tally (self)
@@ -2480,7 +2687,6 @@
       END SUBROUTINE obs_pool_tally
 !
 !-----------------------------------------------------------------------
-!
 !  It unpacks native observation integer data into pool object.
 !
       SUBROUTINE obs_pool_unpack_i (self, ng, ND, typeID, Zgrid, idata, &
@@ -2561,7 +2767,6 @@
       END SUBROUTINE obs_pool_unpack_i
 !
 !-----------------------------------------------------------------------
-!
 !  It unpacks native observation floatin-point data into pool object.
 !
       SUBROUTINE obs_pool_unpack_r (self, ng, ND, typeID, Zgrid, rdata, &

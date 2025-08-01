@@ -89,6 +89,10 @@
         integer :: LBi,   UBi,   LBj,   UBj         ! array bounds
         integer :: IstrR, IendR, JstrR, JendR       ! partition bounds
 !
+!  H(x) operator name.
+!
+        character (len=:), allocatable :: name
+!
 !  Contol vector to store state variables at the aggregated observation
 !  locations.
 !
@@ -110,15 +114,16 @@
         PROCEDURE :: create              => obs_hofx_create
         PROCEDURE :: destroy             => obs_hofx_destroy
 !
-!  Operations.
-!
-        PROCEDURE :: add                 => obs_hofx_add
-        PROCEDURE :: rms                 => obs_hofx_rms
-        PROCEDURE :: zeros               => obs_hofx_zeros
-!
-!  Model at observation locations, no filters.
+!  H(x) Operators: Extract model at observation locations drivers.
 !
         PROCEDURE :: extract             => obs_hofx_extract
+        PROCEDURE :: extract2d           => obs_hofx_extract2d
+# ifdef SOLVE3D
+        PROCEDURE :: extract3d           => obs_hofx_extract3d
+# endif
+!
+!  H(x) operators: Interpolation without filters.
+!
         PROCEDURE :: interp2d            => obs_hofx_interp2d
 # ifdef ADJOINT
         PROCEDURE :: interp2d_ad         => obs_hofx_interp2d_ad
@@ -130,7 +135,7 @@
 #  endif
 # endif
 !
-!  Spatial and/or temporal H(X) filters: averaging.
+!  H(x) Operators: Spatial and/or temporal H(X) average filters.
 !
         PROCEDURE :: area_avg2d          => obs_hofx_area_avg2d
 # ifdef ADJOINT
@@ -152,10 +157,13 @@
 #  endif
 # endif
 !
-!  Parallel exchanges and writting.
+!  H(x) Utility: Operations, exchanges, and  writing.
 !
+        PROCEDURE :: add                 => obs_hofx_add
+        PROCEDURE :: rms                 => obs_hofx_rms
         PROCEDURE :: nc_write            => obs_hofx_nc_write
         PROCEDURE :: update              => obs_hofx_update
+        PROCEDURE :: zeros               => obs_hofx_zeros
         
       END TYPE obs_hofx
 !
@@ -180,13 +188,92 @@
       TYPE (obs_hofx), allocatable :: tlm_hofx(:)     ! tangent linear
 # endif
 !
+!  Geometry for area-averaged observations.
+!
+      TYPE (obs_filter), allocatable :: nlm_geom(:)
+!
 !:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 !
+      PUBLIC  :: ROMS_hofx_initialize
       PRIVATE
 !
 !:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 !
       CONTAINS
+!
+! <><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>
+!
+!  It allocates and initializes the H(x) objects.
+!
+      SUBROUTINE ROMS_hofx_initialize (tile, model, ntotal, AreaAvgObs)
+!
+      integer,          intent(in   ) :: tile       ! domain partition
+      integer,          intent(in   ) :: model      ! kernel identifier
+      integer,          intent(in   ) :: ntotal     ! total observations
+      logical,          intent(in   ) :: AreaAvgObs ! area-averaged obs
+!
+      integer                         :: ng
+!
+!  Allocate and create nonlinear H(x) object.
+!
+      IF (model.eq.iNLM) THEN
+        IF (.not.allocated(nlm_hofx)) THEN
+          allocate ( nlm_hofx(Ngrids) )
+        END IF
+# if defined FOUR_DVAR && !defined VERIFICATION
+        IF (.not.allocated(berr_hofx)) THEN
+          allocate ( berr_hofx(Ngrids) )
+        END IF
+# endif
+        IF (AreaAvgObs) THEN
+          IF (.not.allocated(nlm_geom)) THEN
+            allocate ( nlm_geom(Ngrids) )
+          END IF
+        END IF
+!
+        DO ng=1,Ngrids
+          CALL nlm_hofx(ng)%create  (ng, tile, model, ntotal)
+# if defined FOUR_DVAR && !defined VERIFICATION
+          CALL berr_hofx(ng)%create (ng, tile, model, ntotal)
+# endif
+          IF (AreaAvgObs) THEN
+            CALL nlm_geom(ng)% create (ng, tile, model)
+          END IF
+        END DO
+      END IF
+
+# if defined FOUR_DVAR && defined TLM_OBS
+!
+!  Allocate and create tangent linear H(x) object.
+!
+      IF ((model.eq.iTLM).or.(model.eq.iRPM)) THEN
+        IF (.not.allocated(nlm_hofx)) THEN
+          allocate ( tlm_hofx(Ngrids) )
+        END IF
+!
+        DO ng=1,Ngrids
+          CALL tlm_hofx(ng)%create  (ng, tile, model, ntotal)
+        END DO
+      END IF
+# endif
+
+# if defined FOUR_DVAR && defined ADJOINT
+!
+!  Allocate and create adjoint H^(x) object.
+!
+      IF (model.eq.iADM) THEN
+        IF (.not.allocated(nlm_hofx)) THEN
+          allocate ( adm_hofx(Ngrids) )
+        END IF
+!
+        DO ng=1,Ngrids
+          CALL adm_hofx(ng)%create  (ng, tile, model, ntotal)
+        END DO
+      END IF
+# endif
+!
+      RETURN
+      END SUBROUTINE ROMS_hofx_initialize
 !
 ! <><><><><><><><><><><><><><><><><><><><><><><> CLASS OBS_FILTER <><><>
 !
@@ -195,7 +282,7 @@
       SUBROUTINE obs_filter_create (self, ng, tile, model)
 !
       CLASS (obs_filter), intent(inout) :: self   ! H(x) object
-      integer,            intent(in   ) :: ng     ! nested grid number
+      integer,            intent(in   ) :: ng     ! nested grid
       integer,            intent(in   ) :: tile   ! domain partition
       integer,            intent(in   ) :: model  ! kernel identifier
 !
@@ -275,7 +362,6 @@
       END SUBROUTINE obs_filter_create
 !
 !-----------------------------------------------------------------------
-!
 !  It destroys observation filter object.
 !
       SUBROUTINE obs_filter_destroy (self)
@@ -303,7 +389,7 @@
       SUBROUTINE obs_hofx_create (self, ng, tile, model, ntotal)
 !
       CLASS (obs_hofx), intent(inout) :: self     ! H(x) object
-      integer,          intent(in   ) :: ng       ! nested grid number
+      integer,          intent(in   ) :: ng       ! nested grid
       integer,          intent(in   ) :: tile     ! domain partition
       integer,          intent(in   ) :: model    ! kernel identifier
       integer,          intent(in   ) :: ntotal   ! total observations
@@ -354,7 +440,6 @@
       END SUBROUTINE obs_hofx_create
 !
 !-----------------------------------------------------------------------
-!
 !  It destroys H(x) operator object.
 !
       SUBROUTINE obs_hofx_destroy (self)
@@ -377,43 +462,23 @@
       RETURN
       END SUBROUTINE obs_hofx_destroy
 !
-!-----------------------------------------------------------------------
-!
-!  It adds two state vectors: self = self + c * rhs.
-!
-      SUBROUTINE obs_hofx_add (self, c, rhs)
-!
-      CLASS (obs_hofx), intent(inout) :: self     ! LHS H(x) object
-      CLASS (obs_hofx), intent(in   ) :: rhs      ! RHS H(x) object
-      real (r8),        intent(in   ) :: c        ! scale factor
-!
-      integer                         :: i
-!
-!  Add states vectors.
-!
-      DO i=1,SIZE(self%state)
-        self%state(i)=self%state(i)+rhs%state(i)
-      END DO
-!
-      RETURN
-      END SUBROUTINE obs_hofx_add
-!
-!-----------------------------------------------------------------------
+! <><><><><><><><><><><><><><><><><><><><><><><><> HOFX OPERATORS <><><>
 !
 !  It computes the H(x) operator, which interpolates model variables to
 !  observation locations in space and time. If adjoint model kernel, it
-!  computes transpose(H)x.
+!  computes its transpose, H^(x). Area-averaged and/or time-averaged
+!  operators are available.
 !
-      SUBROUTINE obs_hofx_extract (self, obs, ng, model)
+      SUBROUTINE obs_hofx_extract (self, obs, geom, ng, model)
 !
-      CLASS (obs_hofx), intent(inout) :: self     ! H(x) object
-      TYPE (obs_pool),  intent(inout) :: obs      ! observation object
-      integer,          intent(in   ) :: ng       ! nested grid number
-      integer,          intent(in   ) :: model    ! kernel identifier
+      CLASS (obs_hofx),  intent(inout) :: self     ! H(x) object
+      TYPE (obs_pool),   intent(inout) :: obs      ! observation object
+      TYPE (obs_filter), intent(inout) :: geom     ! geometry object
+      integer,           intent(in   ) :: ng       ! nested grid
+      integer,           intent(in   ) :: model    ! kernel identifier
 !
       TYPE (obs_data),        pointer :: depot
-      integer                         :: TrcIndex, iobs, ivar
-      character (len=40)              :: pool_name
+      integer                         :: iobs
 
       character (len=*),    parameter :: MyFile =                       &
      &    __FILE__//", roms_hofx_extract"
@@ -421,68 +486,26 @@
       SourceFile=MyFile
 !
 !  If observations are available for the (time-0.5*dt) to (time+0.5*dt)
-!  window, interpolate model variables to the observation locations.
-!  The "ivar" is a counter for "obs%pool(iobs)%nvars", and the logic
-!  below must be generalized.
+!  interval or time-averaged window, it extracts model control variables
+!  to the observation locations.
 !
       IF (obs%has(ng, model)) THEN
         DO iobs=1,SIZE(obs%pool)
           IF ((obs%pool(iobs)%NstrObs.gt.0).and.                        &
      &        (obs%pool(iobs)%NendObs.gt.0)) THEN
-            pool_name=obs%pool(iobs)%name
-            SELECT CASE (TRIM(pool_name))
-              CASE ('SSH')
-                ivar=1
-                CALL obs_pool_get (obs, TRIM(pool_name), depot) 
-                IF (model.ne.iADM) THEN
-                  CALL self%interp2d (depot, 'SSH', ng, model, ivar,    &
-     &                                KOUT)
-# ifdef ADJOINT
-                ELSE
-                  CALL self%interp2d_ad (depot, 'SSH', ng, model, ivar)
-# endif
-                END IF
+            SELECT CASE (obs%pool(iobs)%name)
+              CASE ('SSH', 'SSS', 'SST')
+                CALL obs_pool_get (obs, obs%pool(iobs)%name, depot) 
+                CALL self%extract2d (depot, geom, ng, model,            &
+     &                               obs%pool(iobs)%name)
 # ifdef SOLVE3D
-              CASE ('SSS', 'salt', 'SST', 'temp')
-                ivar=1
-                CALL obs_pool_get (obs, TRIM(pool_name), depot) 
-                TrcIndex=tracer_index(obs%pool(iobs)%name)
-                IF (model.ne.iADM) THEN
-                  CALL self%interp3d (depot, 'tracer', ng, model, ivar, &
-     &                                NOUT,                             &
-     &                                itrc = TrcIndex)
-#  ifdef ADJOINT
-                ELSE
-                  CALL self%interp3d_ad (depot, 'tracer', ng, model,    &
-     &                                   ivar,                          &
-     &                                   itrc = TrcIndex)
-#  endif
-                END IF
-              CASE ('uv')
-                CALL obs_pool_get (obs, TRIM(pool_name), depot) 
-                ivar=1
-                IF (model.ne.iADM) THEN
-                  CALL self%interp3d (depot, 'u', ng, model, ivar,      &
-     &                                NOUT)
-#  ifdef ADJOINT
-                ELSE
-                  CALL self%interp3d_ad (depot, 'u', ng, model, ivar)
-#  endif
-                END IF
-!
-                ivar=2
-                CALL obs_pool_get (obs, TRIM(pool_name), depot) 
-                IF (model.ne.iADM) THEN
-                  CALL self%interp3d (depot, 'v', ng, model, ivar,      &
-     &                                NOUT)
-#  ifdef ADJOINT
-                ELSE
-                  CALL self%interp3d_ad (depot, 'v', ng, model, ivar)
-#  endif
-                END IF
+              CASE ('salt', 'temp', 'uv')
+                CALL obs_pool_get (obs, obs%pool(iobs)%name, depot) 
+                CALL self%extract3d (depot, geom, ng, model,            &
+     &                               obs%pool(iobs)%name)
 # endif
               CASE DEFAULT
-                IF (Master) WRITE (stdout,10) TRIM(pool_name), iobs
+                IF (Master) WRITE (stdout,10) obs%pool(iobs)%name, iobs
                 exit_flag=5
                 IF (FoundError(exit_flag, NoError,                      &
      &                         __LINE__, MyFile)) RETURN
@@ -498,7 +521,317 @@
       END SUBROUTINE obs_hofx_extract
 !
 !-----------------------------------------------------------------------
+!  It computes 2D control variables H(x) operator. If adjoint kernel,
+!  model=iADM, it computes the transport operator, H^(x). Area-averaged
+!  and/or time-averaged operators are available.
 !
+      SUBROUTINE obs_hofx_extract2d (self, obs, geom, ng, model, name)
+!
+      CLASS (obs_hofx),  intent(inout) :: self   ! H(x) object
+      TYPE (obs_data),   intent(inout) :: obs    ! observation depot
+      TYPE (obs_filter), intent(inout) :: geom   ! geometry object
+      integer,           intent(in   ) :: ng     ! nested grid
+      integer,           intent(in   ) :: model  ! kernel identifier
+      character (len=*), intent(in   ) :: name   ! observation pool name
+!
+      logical                          :: IsAreaTimeAveraged
+      logical                          :: IsAreaAveraged
+      logical                          :: IsTimeAveraged
+      integer                          :: LBi, UBi, LBj, UBj
+      integer                          :: iTstr, iTend, ivar
+# ifdef SOLVE3D
+      integer                          :: itrc
+# endif
+!
+      real (r8),               pointer :: field(:,:) => NULL()
+
+      character (len=*),     parameter :: MyFile =                      &
+     &    __FILE__//", roms_hofx_extract2d"
+!
+      SourceFile=MyFile
+!
+!  Set pointer to kernel variable.
+!
+      VAR_LOOP : DO ivar=1,obs%nvars
+        SELECT CASE (TRIM(obs%vname(ivar)))
+          CASE ('ssh', 'SSH')
+            IF (model.eq.iNLM) THEN
+              field => OCEAN(ng)%zeta(:,:,KOUT)
+# ifdef ADJOINT
+            ELSE IF (model.eq.iADM) THEN
+              field => OCEAN(ng)%f_zeta
+# endif
+# ifdef TLM_OBS
+            ELSE IF ((model.eq.iTLM).or.(model.eq.iRPM)) THEN
+              field => OCEAN(ng)%tl_zeta(:,:,KOUT)
+# endif
+# ifndef VERIFICATION
+            ELSE IF (model.eq.iSTD) THEN
+              field => OCEAN(ng)%e_zeta(:,:,1)          ! NSA=1 array
+# endif
+            END IF
+# ifdef SOLVE3D
+          CASE ('sss', 'sst', 'SSS', 'SST')
+            itrc=tracer_index(obs%name)
+            IF (model.eq.iNLM) THEN
+              field => OCEAN(ng)%t(:,:,N(ng),itrc,NOUT)
+#  ifdef ADJOINT
+            ELSE IF (model.eq.iADM) THEN
+              field => OCEAN(ng)%f_t(:,:,N(ng),itrc)
+#  endif
+#  ifdef TLM_OBS
+            ELSE IF ((model.eq.iTLM).or.(model.eq.iRPM)) THEN
+              field => OCEAN(ng)%tl_t(:,:,N(ng),itrc, NOUT)
+#  endif
+#  ifndef VERIFICATION
+            ELSE IF (model.eq.iSTD) THEN
+              field => OCEAN(ng)%e_t(:,:,N(ng),itrc,1) ! NSA=1 array
+#  endif
+            END IF
+          CASE ('u', 'Ua', 'Ucodar')
+            IF (model.eq.iNLM) THEN
+              field => OCEAN(ng)%ua(:,:,N(ng))
+#  ifdef ADJOINT
+            ELSE IF (model.eq.iADM) THEN
+              field => OCEAN(ng)%f_u(:,:,N(ng))
+#  endif
+#  ifdef TLM_OBS
+            ELSE IF ((model.eq.iTLM).or.(model.eq.iRPM)) THEN
+              field => OCEAN(ng)%tl_ua(:,:,N(ng))
+#  endif
+#  ifndef VERIFICATION
+            ELSE IF (model.eq.iSTD) THEN
+              field => OCEAN(ng)%e_u(:,:,N(ng), 1)      ! NSA=1 array
+#  endif
+            END IF
+          CASE ('v', 'Va', 'Vcodar')
+            IF (model.eq.iNLM) THEN
+              field => OCEAN(ng)%va(:,:,N(ng))
+#  ifdef ADJOINT
+            ELSE IF (model.eq.iADM) THEN
+              field => OCEAN(ng)%f_v(:,:,N(ng))
+#  endif
+#  ifdef TLM_OBS
+            ELSE IF ((model.eq.iTLM).or.(model.eq.iRPM)) THEN
+              field => OCEAN(ng)%tl_va(:,:,N(ng))
+#  endif
+#  ifndef VERIFICATION
+            ELSE IF (model.eq.iSTD) THEN
+              field => OCEAN(ng)%e_v(:,:,N(ng), 1)      ! NSA=1 array
+#  endif
+            END IF
+# endif
+          CASE DEFAULT
+            IF (Master) WRITE (stdout,10) TRIM(obs%name)
+            exit_flag=5
+            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        END SELECT
+!
+!  Set switch for filters.
+!
+        IsAreaTimeAveraged = obs%IsAreaAveraged.and.                    &
+     &                       obs%IsTimeAveraged
+        IsAreaAveraged     = .not.obs%IsTimeAveraged.and.               &
+     &                            obs%IsAreaAveraged
+        IsTimeAveraged     = .not.obs%IsAreaAveraged.and.               &
+     &                            obs%IsTimeAveraged
+        IF (obs%IsTimeAveraged) THEN
+          CALL obs_data_averaging_timesteps (obs, ng, model,            &
+     &                                       iTstr, iTend)
+        END IF
+!
+!  Compute 2D control variable H(x) operator.
+!
+        LBi=self%LBi
+        UBi=self%UBi
+        LBj=self%LBj
+        UBj=self%UBj
+!
+        IF (model.ne.iADM) THEN
+          IF (IsAreaTimeAveraged) THEN
+            CALL self%area_time_avg2d (obs, geom, ng, model, ivar,      &
+     &                                 iTstr, iTend,                    &
+     &                                 LBi, UBi, LBj, UBj, field)
+          ELSE IF (IsAreaAveraged) THEN
+            CALL self%area_avg2d (obs, geom, ng, model, ivar,           &
+     &                            LBi, UBi, LBj, UBj, field)
+          ELSE IF (IsTimeAveraged) THEN
+            CALL self%time_avg2d (obs, ng, model, ivar,                 &
+     &                            iTstr, iTend,                         &
+     &                            LBi, UBi, LBj, UBj, field)
+          ELSE
+            CALL self%interp2d (obs, ng, model, ivar,                   &
+     &                          LBi, UBi, LBj, UBj, field)
+          END IF
+# ifdef ADJOINT
+        ELSE IF (model.eq.iADM) THEN
+          IF (IsAreaTimeAveraged) THEN
+            CALL self%area_time_avg2d_ad (obs, geom, ng, model, ivar,   &
+     &                                    iTstr, iTend,                 &
+     &                                    LBi, UBi, LBj, UBj, field)
+          ELSE IF (IsAreaAveraged) THEN
+            CALL self%area_avg2d_ad (obs, geom, ng, model, ivar,        &
+     &                               LBi, UBi, LBj, UBj, field)
+          ELSE IF (IsTimeAveraged) THEN
+            CALL self%time_avg2d_ad (obs, ng, model, ivar,              &
+     &                               iTstr, iTend,                      &
+     &                               LBi, UBi, LBj, UBj, field)
+          ELSE
+            CALL self%interp2d_ad (obs, ng, model, ivar,                &
+     &                             LBi, UBi, LBj, UBj, field)
+          END IF
+# endif
+        END IF
+      END DO VAR_LOOP
+!
+!  Nullify pointer.
+!
+      IF (associated(field)) nullify (field)
+!
+  10  FORMAT (/,' ROMS_HOFX::extract2d: Cannot find name = ',a,2x,       &
+     &        'in observation depot.')
+!
+      RETURN
+      END SUBROUTINE obs_hofx_extract2d
+
+# ifdef SOLVE3D
+!
+!-----------------------------------------------------------------------
+!  It computes 3D control variables H(x) operator. If adjoint kernel,
+!  model=iADM, it computes the transport operator, H^(x). Area-averaged
+!  and/or time-averaged operators are available.
+!
+      SUBROUTINE obs_hofx_extract3d (self, obs, geom, ng, model, name)
+!
+      CLASS (obs_hofx),  intent(inout) :: self   ! H(x) object
+      TYPE (obs_data),   intent(inout) :: obs    ! observation depot
+      TYPE (obs_filter), intent(inout) :: geom   ! geometry object
+      integer,           intent(in   ) :: ng     ! nested grid
+      integer,           intent(in   ) :: model  ! kernel identifier
+      character (len=*), intent(in   ) :: name   ! observation pool name
+!
+      logical                          :: IsTimeAveraged
+      integer                          :: LBi, UBi, LBj, UBj
+      integer                          :: iTstr, iTend
+      integer                          :: itrc, ivar
+!
+      real (r8),               pointer :: field(:,:,:) => NULL()
+
+      character (len=*),     parameter :: MyFile =                      &
+     &    __FILE__//", roms_hofx_extract3d"
+!
+      SourceFile=MyFile
+!
+!  Set pointer to kernel variable.
+!
+      VAR_LOOP : DO ivar=1,obs%nvars
+        SELECT CASE (TRIM(obs%vname(ivar)))
+          CASE ('salt', 'temp', 'tracer')
+            itrc=tracer_index(obs%name)
+            IF (model.eq.iNLM) THEN
+              field => OCEAN(ng)%t(:,:,:,itrc,NOUT)
+#  ifdef ADJOINT
+            ELSE IF (model.eq.iADM) THEN
+              field => OCEAN(ng)%f_t(:,:,:,itrc)
+#  endif
+#  ifdef TLM_OBS
+            ELSE IF ((model.eq.iTLM).or.(model.eq.iRPM)) THEN
+              field => OCEAN(ng)%tl_t(:,:,:,itrc, NOUT)
+#  endif
+#  ifndef VERIFICATION
+            ELSE IF (model.eq.iSTD) THEN
+              field => OCEAN(ng)%e_t(:,:,:,itrc,1)      ! NSA=1 array
+#  endif
+            END IF
+          CASE ('u', 'Ua')
+            IF (model.eq.iNLM) THEN
+              field => OCEAN(ng)%ua
+#  ifdef ADJOINT
+            ELSE IF (model.eq.iADM) THEN
+              field => OCEAN(ng)%f_u
+#  endif
+#  ifdef TLM_OBS
+            ELSE IF ((model.eq.iTLM).or.(model.eq.iRPM)) THEN
+              field => OCEAN(ng)%tl_ua
+#  endif
+#  ifndef VERIFICATION
+            ELSE IF (model.eq.iSTD) THEN
+              field => OCEAN(ng)%e_u(:,:,:, 1)          ! NSA=1 array
+#  endif
+            END IF
+          CASE ('v', 'Va')
+            IF (model.eq.iNLM) THEN
+              field => OCEAN(ng)%va
+#  ifdef ADJOINT
+            ELSE IF (model.eq.iADM) THEN
+              field => OCEAN(ng)%f_v
+#  endif
+#  ifdef TLM_OBS
+            ELSE IF ((model.eq.iTLM).or.(model.eq.iRPM)) THEN
+              field => OCEAN(ng)%tl_va
+#  endif
+#  ifndef VERIFICATION
+            ELSE IF (model.eq.iSTD) THEN
+              field => OCEAN(ng)%e_v(:,:,:, 1)          ! NSA=1 array
+#  endif
+            END IF
+          CASE DEFAULT
+            IF (Master) WRITE (stdout,10) TRIM(obs%name)
+            exit_flag=5
+            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        END SELECT
+!
+!  Set switch for filters.
+!
+        IsTimeAveraged = .not.obs%IsAreaAveraged.and.                   &
+     &                        obs%IsTimeAveraged
+        IF (obs%IsTimeAveraged) THEN
+          CALL obs_data_averaging_timesteps (obs, ng, model,            &
+     &                                       iTstr, iTend)
+        END IF
+!
+!  Compute 3D control variable H(x) operator.
+!
+        LBi=self%LBi
+        UBi=self%UBi
+        LBj=self%LBj
+        UBj=self%UBj
+!
+        IF (model.ne.iADM) THEN
+          IF (IsTimeAveraged) THEN
+            CALL self%time_avg3d (obs, ng, model, ivar,                 &
+     &                            iTstr, iTend,                         &
+     &                            LBi, UBi, LBj, UBj, field)
+          ELSE
+            CALL self%interp3d (obs, ng, model, ivar,                   &
+     &                          LBi, UBi, LBj, UBj, field)
+          END IF
+#  ifdef ADJOINT
+        ELSE IF (model.eq.iADM) THEN
+          IF (IsTimeAveraged) THEN
+            CALL self%time_avg3d_ad (obs, ng, model, ivar,              &
+     &                               iTstr, iTend,                      &
+     &                               LBi, UBi, LBj, UBj, field)
+          ELSE
+            CALL self%interp3d_ad (obs, ng, model, ivar,                &
+     &                             LBi, UBi, LBj, UBj, field)
+          END IF
+#  endif
+        END IF
+      END DO VAR_LOOP
+!
+!  Nullify pointer.
+!
+      IF (associated(field)) nullify (field)
+!
+  10  FORMAT (/,' ROMS_HOFX::extract3d: Cannot find name = ',a,2x,       &
+     &        'in observation depot.')
+!
+      RETURN
+      END SUBROUTINE obs_hofx_extract3d
+# endif
+!
+!-----------------------------------------------------------------------
 !  It interpolates 2D state variables at the observation locations.
 !  Observations are assumed to be at RHO-points (A-grid). The staggering
 !  of state variables is solely done for numerical accuracy and to
@@ -513,47 +846,21 @@
 !                             |____________|
 !                    (i1,j1)  1            2
 !
-      SUBROUTINE obs_hofx_interp2d (self, obs, name, ng, model, ivar,   &
-     &                              Tindex)
+      SUBROUTINE obs_hofx_interp2d (self, obs, ng, model, ivar,         &
+     &                              LBi, UBi, LBj, UBj, field)
 !
-      CLASS (obs_hofx),  intent(inout) :: self     ! H(x) object
-      TYPE  (obs_data),  intent(in   ) :: obs      ! observation store
-      character (len=*), intent(in   ) :: name     ! state variable name
-      integer,           intent(in   ) :: ng       ! nested grid number
-      integer,           intent(in   ) :: model    ! kernel identifier
-      integer,           intent(in   ) :: ivar     ! variable counter
-      integer,           intent(in   ) :: Tindex   ! time level index
+      CLASS (obs_hofx),  intent(inout) :: self       ! H(x) object
+      TYPE  (obs_data),  intent(in   ) :: obs        ! observation depot
+      integer,           intent(in   ) :: ng         ! nested grid
+      integer,           intent(in   ) :: model      ! kernel identifier
+      integer,           intent(in   ) :: ivar       ! variable counter
+      integer,           intent(in   ) :: LBi, UBi   ! field I-bounds
+      integer,           intent(in   ) :: LBj, UBj   ! field J-bounds
+      real (r8),         intent(in   ) :: field(LBi:,LBj:)
 !
-      integer                         :: i, ic, iobs, i1, i2, j1, j2
-      real (r8)                       :: p1, p2, q1, q2, wsum
-      real (r8),         dimension(4) :: Hmat
-      real (r8),              pointer :: field(:,:)
-
-      character (len=*),     parameter :: MyFile =                      &
-     &    __FILE__//", roms_hofx_interp2d"
-!
-      SourceFile=MyFile
-!
-!  Set pointer to kernel variable.
-!
-      SELECT CASE (TRIM(name))
-        CASE ('ssh', 'SSH')
-          IF (model.eq.iNLM) THEN
-            field => OCEAN(ng)%zeta(:,:,Tindex)
-# ifdef TLM_OBS
-          ELSE IF ((model.eq.iTLM).or.(model.eq.iRPM)) THEN
-            field => OCEAN(ng)%tl_zeta(:,:,Tindex)
-# endif
-# ifndef VERIFICATION
-          ELSE IF (model.eq.iSTD) THEN
-            field => OCEAN(ng)%e_zeta(:,:,1)          ! NSA=1 array
-# endif
-          END IF
-        CASE DEFAULT
-          IF (Master) WRITE (stdout,10) TRIM(obs%name)
-          exit_flag=5
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-      END SELECT
+      integer                          :: i, ic, iobs, i1, i2, j1, j2
+      real (r8)                        :: p1, p2, q1, q2, wsum
+      real (r8),          dimension(4) :: Hmat
 !
 !  Interpolate 2D model state variable at the observation locations.
 !
@@ -611,20 +918,12 @@
         END IF
       END DO
 !
-!  Nullify pointer.
-!
-      IF (associated(field)) nullify (field)
-!
-  10  FORMAT (/,' ROMS_HOFX::interp2d: Cannot find name = ',a,2x,        &
-     &        'in obs%data observation depot object.')
-!
       RETURN
       END SUBROUTINE obs_hofx_interp2d
 
 # ifdef SOLVE3D
 !
 !-----------------------------------------------------------------------
-!
 !  It interpolates 3D state variables at the observation locations.
 !  Observations are assumed to be at RHO-points (A-grid). The staggering
 !  of state variables is solely done for numerical accuracy and to
@@ -644,17 +943,17 @@
 !                  (i1,j1,k1) |_____________|/
 !                             1           2
 !
-      SUBROUTINE obs_hofx_interp3d (self, obs, name, ng, model, ivar,   &
-     &                              Tindex, itrc)
+      SUBROUTINE obs_hofx_interp3d (self, obs, ng, model, ivar,         &
+     &                              LBi, UBi, LBj, UBj, field)
 !
-      CLASS (obs_hofx),  intent(inout) :: self     ! H(x) object
-      TYPE  (obs_data),  intent(inout) :: obs      ! observation store
-      character (len=*), intent(in   ) :: name     ! state variable name
-      integer,           intent(in   ) :: ng       ! nested grid number
-      integer,           intent(in   ) :: model    ! kernel identifier
-      integer,           intent(in   ) :: ivar     ! variable counter
-      integer,           intent(in   ) :: Tindex   ! time level index
-      integer, optional, intent(in   ) :: itrc     ! tracer index
+      CLASS (obs_hofx),  intent(inout) :: self       ! H(x) object
+      TYPE  (obs_data),  intent(inout) :: obs        ! observation depot
+      integer,           intent(in   ) :: ng         ! nested grid
+      integer,           intent(in   ) :: model      ! kernel identifier
+      integer,           intent(in   ) :: ivar       ! variable counter
+      integer,           intent(in   ) :: LBi, UBi   ! field I-bounds
+      integer,           intent(in   ) :: LBj, UBj   ! field I-bounds
+      real (r8),         intent(in   ) :: field(LBi:,LBj:,:)
 !
       integer                          :: i, ic, iobs, k
       integer                          :: i1, i2, j1, j2, k1, k2
@@ -662,57 +961,6 @@
       real (r8)                        :: w11, w12, w21, w22, wsum
       real (r8)                        :: Zbot, Ztop, dz
       real (r8),          dimension(8) :: Hmat
-      real (r8),               pointer :: field(:,:,:) => NULL()
-
-      character (len=*),     parameter :: MyFile =                      &
-     &    __FILE__//", roms_hofx_interp3d"
-!
-      SourceFile=MyFile
-!
-!  Set pointer to kernel variable.
-!
-      SELECT CASE (TRIM(name))
-        CASE ('tracer', 'TRACER')
-          IF (model.eq.iNLM) THEN
-            field => OCEAN(ng)%t(:,:,:,itrc,Tindex)
-#  ifdef TLM_OBS
-          ELSE IF ((model.eq.iTLM).or.(model.eq.iRPM)) THEN
-            field => OCEAN(ng)%tl_t(:,:,:,itrc,Tindex)
-#  endif
-#  ifndef VERIFICATION
-          ELSE IF (model.eq.iSTD) THEN
-            field => OCEAN(ng)%e_t(:,:,:,itrc,1)      ! NSA=1 array
-#  endif
-          END IF
-        CASE ('ua', 'Ua')
-          IF (model.eq.iNLM) THEN
-            field => OCEAN(ng)%ua
-#  ifdef TLM_OBS
-          ELSE IF ((model.eq.iTLM).or.(model.eq.iRPM)) THEN
-            field => OCEAN(ng)%tl_ua
-#  endif
-#  ifndef VERIFICATION
-          ELSE IF (model.eq.iSTD) THEN
-            field => OCEAN(ng)%e_u(:,:,:,1)           ! NSA=1 array
-#  endif
-          END IF
-        CASE ('va', 'Va')
-          IF (model.eq.iNLM) THEN
-            field => OCEAN(ng)%va
-#  ifdef TLM_OBS
-          ELSE IF ((model.eq.iTLM).or.(model.eq.iRPM)) THEN
-            field => OCEAN(ng)%tl_va
-#  endif
-#  ifndef VERIFICATION
-          ELSE IF (model.eq.iSTD) THEN
-            field => OCEAN(ng)%e_v(:,:,:,1)           ! NSA=1 array
-#  endif
-          END IF
-        CASE DEFAULT
-          IF (Master) WRITE (stdout,10) TRIM(obs%name)
-          exit_flag=5
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-      END SELECT
 !
 !  Interpolate 3D model state variable at the observation locations.
 !
@@ -834,13 +1082,6 @@
         END IF
       END DO
 !
-!  Nullify pointer.
-!
-      IF (associated(field)) nullify (field)
-!
-  10  FORMAT (/,' ROMS_HOFX::interp3d: Cannot find name = ',a,2x,        &
-     &        'in obs%data observation depot object.')
-!
       RETURN
       END SUBROUTINE obs_hofx_interp3d
 # endif
@@ -848,7 +1089,6 @@
 # ifdef ADJOINT
 !
 !-----------------------------------------------------------------------
-!
 !  Adjoint of interpolating 2D state variables at the observation
 !  locations. Observations are assumed to be at RHO-points (A-grid).
 !  The staggering of state variables is solely done for numerical
@@ -863,37 +1103,21 @@
 !                             |____________|
 !                    (i1,j1)  1            2
 !
-      SUBROUTINE obs_hofx_interp2d_ad (ad_self, obs, name, ng, model,   &
-     &                                 ivar)
+      SUBROUTINE obs_hofx_interp2d_ad (ad_self, obs, ng, model, ivar,   &
+     &                                 LBi, UBi, LBj, UBj, ad_field)
 !
-      CLASS (obs_hofx),  intent(inout) :: ad_self  ! H^(x) object
-      TYPE  (obs_data),  intent(in   ) :: obs      ! observation store
-      character (len=*), intent(in   ) :: name     ! state variable name
-      integer,           intent(in   ) :: ng       ! nested grid number
-      integer,           intent(in   ) :: model    ! kernel identifier
-      integer,           intent(in   ) :: ivar     ! variable counter
+      CLASS (obs_hofx),  intent(inout) :: ad_self    ! H^(x) object
+      TYPE  (obs_data),  intent(in   ) :: obs        ! observation depot
+      integer,           intent(in   ) :: ng         ! nested grid
+      integer,           intent(in   ) :: model      ! kernel identifier
+      integer,           intent(in   ) :: ivar       ! variable counter
+      integer,           intent(in   ) :: LBi, UBi   ! field I-bounds
+      integer,           intent(in   ) :: LBj, UBj   ! field J-bounds
+      real (r8),         intent(inout) :: ad_field(LBi:,LBj:)
 !
       integer                         :: i, ic, iobs, i1, i2, j1, j2
       real (r8)                       :: p1, p2, q1, q2, wsum
       real (r8),         dimension(4) :: Hmat
-      real (r8),              pointer :: ad_field(:,:)
-
-      character (len=*),     parameter :: MyFile =                      &
-     &    __FILE__//", roms_hofx_interp2d_ad"
-!
-      SourceFile=MyFile
-!
-!  Set pointer to kernel variable. The adjoint H^(x) is loaded into the
-!  working OCEAN(ng)%f_* arrays, which are used in "ad_force_dual".
-!
-      SELECT CASE (TRIM(name))
-        CASE ('ssh', 'SSH')
-          ad_field => OCEAN(ng)%f_zeta
-        CASE DEFAULT
-          IF (Master) WRITE (stdout,10) TRIM(obs%name)
-          exit_flag=5
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-      END SELECT
 !
 !  Interpolate 2D model state variable at the observation locations.
 !
@@ -973,10 +1197,6 @@
      &                       ad_field)
 #  endif
 !
-!  Nullify pointer.
-!
-      IF (associated(ad_field)) nullify (ad_field)
-!
   10  FORMAT (/,' ROMS_HOFX::interp2d_ad: Cannot find name = ',a,2x,    &
      &        'in obs%data observation depot object.')
 !
@@ -986,7 +1206,6 @@
 #  ifdef SOLVE3D
 !
 !-----------------------------------------------------------------------
-!
 !  It interpolates 3D state variables at the observation locations.
 !  Observations are assumed to be at RHO-points (A-grid). The staggering
 !  of state variables is solely done for numerical accuracy and to
@@ -1004,18 +1223,19 @@
 !                             | .           |  /
 !                             |.            | /
 !                  (i1,j1,k1) |_____________|/
-!                             1           2
+!                             1             2
 !
-      SUBROUTINE obs_hofx_interp3d_ad (ad_self, obs, name, ng, model,   &
-     &                                 ivar, itrc)
+      SUBROUTINE obs_hofx_interp3d_ad (ad_self, obs, ng, model, ivar,   &
+     &                                 LBi, UBi, LBj, UBj, ad_field)
 !
-      CLASS (obs_hofx),  intent(inout) :: ad_self  ! H^(x) object
-      TYPE  (obs_data),  intent(inout) :: obs      ! observation store
-      character (len=*), intent(in   ) :: name     ! state variable name
-      integer,           intent(in   ) :: ng       ! nested grid number
-      integer,           intent(in   ) :: model    ! kernel identifier
-      integer,           intent(in   ) :: ivar     ! variable counter
-      integer, optional, intent(in   ) :: itrc     ! tracer index
+      CLASS (obs_hofx),  intent(inout) :: ad_self    ! H^(x) object
+      TYPE  (obs_data),  intent(inout) :: obs        ! observation depot
+      integer,           intent(in   ) :: ng         ! nested grid
+      integer,           intent(in   ) :: model      ! kernel identifier
+      integer,           intent(in   ) :: ivar       ! variable counter
+      integer,           intent(in   ) :: LBi, UBi   ! field I-bounds
+      integer,           intent(in   ) :: LBj, UBj   ! field J-bounds
+      real (r8),         intent(inout) :: ad_field(LBi:,LBj:,:)
 !
       integer                          :: i, ic, iobs, k
       integer                          :: i1, i2, j1, j2, k1, k2
@@ -1023,28 +1243,6 @@
       real (r8)                        :: w11, w12, w21, w22, wsum
       real (r8)                        :: Zbot, Ztop, dz
       real (r8),          dimension(8) :: Hmat
-      real (r8),               pointer :: ad_field(:,:,:) => NULL()
-
-      character (len=*),     parameter :: MyFile =                      &
-     &    __FILE__//", roms_hofx_interp3d_ad"
-!
-      SourceFile=MyFile
-!
-!  Set pointer to kernel variable. The adjoint H^(x) is loaded into the
-!  working OCEAN(ng)%f_* arrays, which are used in "ad_force_dual".
-!
-      SELECT CASE (TRIM(name))
-        CASE ('tracer', 'TRACER')
-          ad_field => OCEAN(ng)%f_t(:,:,:,itrc)
-        CASE ('ua', 'Ua')
-          ad_field => OCEAN(ng)%f_u
-        CASE ('va', 'Va')
-          ad_field => OCEAN(ng)%f_v
-        CASE DEFAULT
-          IF (Master) WRITE (stdout,10) TRIM(obs%name)
-          exit_flag=5
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-      END SELECT
 !
 !  Interpolate 2D model state variable at the observation locations.
 !
@@ -1184,18 +1382,10 @@
      &                       ad_field)
 #   endif
 !
-!  Nullify pointer.
-!
-      IF (associated(ad_field)) nullify (ad_field)
-!
-  10  FORMAT (/,' ROMS_HOFX::interp3d_ad: Cannot find name = ',a,2x,    &
-     &        'in obs%data observation depot object.')
-!
       RETURN
       END SUBROUTINE obs_hofx_interp3d_ad
 #  endif
 # endif
-!
 !
 !<><><><><><><><><><><><><><><><><><><><><><><> HOFX WITH FILTERS <><><>
 !
@@ -1215,49 +1405,23 @@
 !                             |____________|
 !                    (i1,j1)  1            2
 !
-      SUBROUTINE obs_hofx_area_avg2d (self, obs, geom, name, ng, model, &
-     &                                ivar, Tindex)
+      SUBROUTINE obs_hofx_area_avg2d (self, obs, geom, ng, model, ivar, &
+     &                                LBi, UBi, LBj, UBj, field)
 !
-      CLASS (obs_hofx),   intent(inout) :: self    ! H(x) object
-      TYPE  (obs_data),   intent(in   ) :: obs     ! observation store
-      TYPE  (obs_filter), intent(inout) :: geom    ! geometry for filter
-      character (len=*),  intent(in   ) :: name    ! state variable name
-      integer,            intent(in   ) :: ng      ! nested grid number
-      integer,            intent(in   ) :: model   ! kernel identifier
-      integer,            intent(in   ) :: ivar    ! variable counter
-      integer,            intent(in   ) :: Tindex  ! time level index
+      CLASS (obs_hofx),   intent(inout) :: self      ! H(x) object
+      TYPE  (obs_data),   intent(in   ) :: obs       ! observation depot
+      TYPE  (obs_filter), intent(inout) :: geom      ! geometry
+      integer,            intent(in   ) :: ng        ! nested grid
+      integer,            intent(in   ) :: model     ! kernel identifier
+      integer,            intent(in   ) :: ivar      ! variable counter
+      integer,            intent(in   ) :: LBi, UBi  ! field I-bounds
+      integer,            intent(in   ) :: LBj, UBj  ! field J-bounds
+      real (r8),          intent(in   ) :: field(LBi:,LBj:)
 !
       integer                         :: iobs, i1, j1, m, nscope
       integer                         :: i, is, ie, j, js, je
       real (r8)                       :: dfr, dfx, dfy
       real (r8)                       :: area_sum, resol
-      real (r8),              pointer :: field(:,:)
-
-      character (len=*),     parameter :: MyFile =                      &
-     &    __FILE__//", roms_hofx_area_avg2d"
-!
-      SourceFile=MyFile
-!
-!  Set pointer to kernel variable.
-!
-      SELECT CASE (TRIM(name))
-        CASE ('ssh', 'SSH')
-          IF (model.eq.iNLM) THEN
-            field => OCEAN(ng)%zeta(:,:,Tindex)
-# ifdef TLM_OBS
-          ELSE IF ((model.eq.iTLM).or.(model.eq.iRPM)) THEN
-            field => OCEAN(ng)%tl_zeta(:,:,Tindex)
-# endif
-# ifndef VERIFICATION
-          ELSE IF (model.eq.iSTD) THEN
-            field => OCEAN(ng)%e_zeta(:,:,1)          ! NSA=1 array
-# endif
-          END IF
-        CASE DEFAULT
-          IF (Master) WRITE (stdout,10) TRIM(obs%name)
-          exit_flag=5
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-      END SELECT
 
 # ifdef DISTRIBUTE
 !
@@ -1329,11 +1493,6 @@
         END IF
       END DO
 !
-!  Clear/reset global array and nullify local pointer.
-!
-      geom%global2d=0.0_r8
-      IF (associated(field)) nullify (field)
-!
   10  FORMAT (/,' ROMS_HOFX::AREA_AVG2d: Cannot find name = ',a,2x,     &
      &        'in obs%data observation depot object.')
 !
@@ -1341,7 +1500,6 @@
       END SUBROUTINE obs_hofx_area_avg2d
 !
 !-----------------------------------------------------------------------
-!
 !  It computes 2D state variables at the area-averaged and time-averaged
 !  observation locations. The 2D state variable is area-averaged using
 !  the "spatialAverage" half-length scale, LS, and then time-averaged
@@ -1359,53 +1517,31 @@
 !                             |____________|
 !                    (i1,j1)  1            2
 !
-      SUBROUTINE obs_hofx_area_time_avg2d (self, obs, geom, name,       &
-     &                                     ng, model, TimeStr, timeEnd, &
-     &                                     ivar, Tindex)
+      SUBROUTINE obs_hofx_area_time_avg2d (self, obs, geom, ng, model,  &
+     &                                     ivar, iTstr, iTend,          &
+     &                                     LBi, UBi, LBj, UBj, field)
 !
-      CLASS (obs_hofx),   intent(inout) :: self    ! H(x) object
-      TYPE  (obs_data),   intent(in   ) :: obs     ! observation store
-      TYPE  (obs_filter), intent(inout) :: geom    ! geometry for filter
-      character (len=*),  intent(in   ) :: name    ! state variable name
-      integer,            intent(in   ) :: ng      ! nested grid number
-      integer,            intent(in   ) :: model   ! kernel identifier
-      real (r8),          intent(in   ) :: TimeStr ! start averaging time
-      real (r8),          intent(in   ) :: TimeEnd ! end   averaging time
-      integer,            intent(in   ) :: ivar    ! variable counter
-      integer,            intent(in   ) :: Tindex  ! time level index
+      CLASS (obs_hofx),   intent(inout) :: self      ! H(x) object
+      TYPE  (obs_data),   intent(in   ) :: obs       ! observation depot
+      TYPE  (obs_filter), intent(inout) :: geom      ! geometry object
+      integer,            intent(in   ) :: ng        ! nested grid
+      integer,            intent(in   ) :: model     ! kernel identifier
+      integer,            intent(in   ) :: ivar      ! variable counter
+      integer,            intent(in   ) :: iTstr     ! starting timestep
+      integer,            intent(in   ) :: iTend     ! ending   timestep
+      integer,            intent(in   ) :: LBi, UBi  ! field I-bounds
+      integer,            intent(in   ) :: LBj, UBj  ! field J-bounds
+      real (r8),          intent(in   ) :: field(LBi:,LBj:)
 !
       integer                           :: iobs, i1, j1, m, nscope
-      integer                           :: itstr, itend
       integer                           :: i, is, ie, j, js, je
       real (r8)                         :: dfr, dfx, dfy
       real (r8)                         :: Tsteps, area_sum, resol
-      real (r8),                pointer :: field(:,:)
 
       character (len=*),      parameter :: MyFile =                      &
      &    __FILE__//", roms_hofx_area_time_avg2d"
 !
       SourceFile=MyFile
-!
-!  Set pointer to kernel variable.
-!
-      SELECT CASE (TRIM(name))
-        CASE ('ssh', 'SSH')
-          IF (model.eq.iNLM) THEN
-            field => OCEAN(ng)%zeta(:,:,Tindex)
-# ifdef TLM_OBS
-          ELSE IF ((model.eq.iTLM).or.(model.eq.iRPM)) THEN
-            field => OCEAN(ng)%tl_zeta(:,:,Tindex)
-# endif
-# ifndef VERIFICATION
-          ELSE IF (model.eq.iSTD) THEN
-            field => OCEAN(ng)%e_zeta(:,:,1)          ! NSA=1 array
-# endif
-          END IF
-        CASE DEFAULT
-          IF (Master) WRITE (stdout,10) TRIM(obs%name)
-          exit_flag=5
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-      END SELECT
 
 # ifdef DISTRIBUTE
 !
@@ -1416,6 +1552,7 @@
      &                     geom%LBi, geom%UBi, geom%LBj, geom%UBj,      &
      &                     geom%Imin, geom%Imax, geom%Jmin, geom%Jmax,  &
      &                     field, geom%global2d)
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 # endif
 !
 !  Compute area-averaged 2D model state variable at the area_averaged
@@ -1442,14 +1579,12 @@
           js=MAX(geom%Jmin, j1-nscope)
           je=MIN(j1+nscope, geom%Jmax)
 !
-          itstr=INT((TimeStr-dstart)/dt(ng))
-          itend=INT((TimeEnd-dstart)/dt(ng))
-          Tsteps=REAL(itend-itstr, r8)
+          Tsteps=REAL(iTend-iTstr, r8)
 !
 !  Average state variable over the area of influence and time window.
 !
           area_sum=0.0_r8
-          IF ((itstr.le.iic(ng)).and.(iic(ng).le.itend)) THEN
+          IF ((iTstr.le.iic(ng)).and.(iic(ng).le.iTend)) THEN
             DO j=js,je
               dfy=REAL(j-j1, r8)
               DO i=is,ie
@@ -1473,17 +1608,16 @@
 !
 !  Compute area-weighted average.
 !
-          IF ((area_sum.gt.0.0_r8).and.(iic(ng).eq.itend)) THEN
+          IF ((area_sum.gt.0.0_r8).and.(iic(ng).eq.iTend)) THEN
             self%state(iobs)=self%state(iobs)/(area_sum*Tsteps)
           END IF
         END IF
         self%ObsVetting(iobs)=1
       END DO
 !
-!  Clear/reset global array and nullify local pointer.
+!  Clear/reset global array.
 !
       geom%global2d=0.0_r8
-      IF (associated(field)) nullify (field)
 !
   10  FORMAT (/,' ROMS_HOFX::AREA_TIME_AVG2D: Cannot find name = ',a,   &
      &        2x,'in obs%data observation depot object.')
@@ -1494,7 +1628,6 @@
 # ifdef ADJOINT
 !
 !-----------------------------------------------------------------------
-!
 !  Adjoint of computing 2D state variables at the area-averaged
 !  observation locations. The 2D state variable is area-averaged
 !  according to the "spatialAverage" half-length scale, LS, specified
@@ -1511,38 +1644,24 @@
 !                             |____________|
 !                    (i1,j1)  1            2
 !
-      SUBROUTINE obs_hofx_area_avg2d_ad (ad_self, obs, geom, name, ng,  &
-     &                                   model, ivar)
+      SUBROUTINE obs_hofx_area_avg2d_ad (ad_self, obs, geom, ng,        &
+     &                                   model, ivar,                   &
+     &                                   LBi, UBi, LBj, UBj, ad_field)
 !
-      CLASS (obs_hofx),   intent(inout) :: ad_self ! H'(x) object
-      TYPE  (obs_data),   intent(in   ) :: obs     ! observation store
-      TYPE  (obs_filter), intent(inout) :: geom    ! geometry for filter
-      character (len=*),  intent(in   ) :: name    ! state variable name
-      integer,            intent(in   ) :: ng      ! nested grid number
-      integer,            intent(in   ) :: model   ! kernel identifier
-      integer,            intent(in   ) :: ivar    ! variable counter
+      CLASS (obs_hofx),   intent(inout) :: ad_self   ! H'(x) object
+      TYPE  (obs_data),   intent(in   ) :: obs       ! observation depot
+      TYPE  (obs_filter), intent(inout) :: geom      ! geometry object
+      integer,            intent(in   ) :: ng        ! nested grid
+      integer,            intent(in   ) :: model     ! kernel identifier
+      integer,            intent(in   ) :: ivar      ! variable counter
+      integer,            intent(in   ) :: LBi, UBi  ! field I-bounds
+      integer,            intent(in   ) :: LBj, UBj  ! field J-bounds
+      real (r8),          intent(inout) :: ad_field(LBi:,LBj:)
 !
       integer                         :: iobs, i1, j1, m, nscope
       integer                         :: i, is, ie, j, js, je
       real (r8)                       :: dfr, dfx, dfy
       real (r8)                       :: area_sum, resol
-      real (r8),              pointer :: ad_field(:,:)
-
-      character (len=*),     parameter :: MyFile =                      &
-     &    __FILE__//", roms_hofx_area_avg2d"
-!
-      SourceFile=MyFile
-!
-!  Set pointer to kernel variable.
-!
-      SELECT CASE (TRIM(name))
-        CASE ('ssh', 'SSH')
-          ad_field => OCEAN(ng)%f_zeta
-        CASE DEFAULT
-          IF (Master) WRITE (stdout,10) TRIM(obs%name)
-          exit_flag=5
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-      END SELECT
 !
 !  Clear work global 2D array to hold the adjoint of the area of
 !  influence data.
@@ -1632,18 +1751,10 @@
         END DO
       END DO
 !
-!  Nullify local pointer.
-!
-      IF (associated(ad_field)) nullify (ad_field)
-!
-  10  FORMAT (/,' ROMS_HOFX::AREA_AVG2D_AD: Cannot find name = ',a,2x,  &
-     &        'in obs%data observation depot object.')
-!
       RETURN
       END SUBROUTINE obs_hofx_area_avg2d_ad
 !
 !-----------------------------------------------------------------------
-!
 !  Adjoint of computing 2D state variables at the area-averaged and
 !  time-averaged observation locations. The 2D state variable is
 !  area-averaged using the "spatialAverage" half-length scale, LS, and
@@ -1661,44 +1772,28 @@
 !                             |____________|
 !                    (i1,j1)  1            2
 !
-      SUBROUTINE obs_hofx_area_time_avg2d_ad (ad_self, obs, geom, name, &
-     &                                        ng, model,                &
-     &                                        TimeStr, TimeEnd,         &
-     &                                        ivar)
+      SUBROUTINE obs_hofx_area_time_avg2d_ad (ad_self, obs, geom,       &
+     &                                        ng, model, ivar,          &
+     &                                        iTstr, iTend,             &
+     &                                        LBi, UBi, LBj, UBj,       &
+     &                                        ad_field)
 !
-      CLASS (obs_hofx),   intent(inout) :: ad_self ! H(x) object
-      TYPE  (obs_data),   intent(in   ) :: obs     ! observation store
-      TYPE  (obs_filter), intent(inout) :: geom    ! geometry for filter
-      character (len=*),  intent(in   ) :: name    ! state variable name
-      integer,            intent(in   ) :: ng      ! nested grid number
-      integer,            intent(in   ) :: model   ! kernel identifier
-      real (r8),          intent(in   ) :: TimeStr ! start averaging time
-      real (r8),          intent(in   ) :: TimeEnd ! end   averaging time
-      integer,            intent(in   ) :: ivar    ! variable counter
+      CLASS (obs_hofx),   intent(inout) :: ad_self   ! H^(x) object
+      TYPE  (obs_data),   intent(in   ) :: obs       ! observation depot
+      TYPE  (obs_filter), intent(inout) :: geom      ! geometry object
+      integer,            intent(in   ) :: ng        ! nested grid
+      integer,            intent(in   ) :: model     ! kernel identifier
+      integer,            intent(in   ) :: ivar      ! variable counter
+      integer,            intent(in   ) :: iTstr     ! starting timestep
+      integer,            intent(in   ) :: iTend     ! ending   timestep
+      integer,            intent(in   ) :: LBi, UBi  ! field I-bounds
+      integer,            intent(in   ) :: LBj, UBj  ! field J-bounds
+      real (r8),          intent(inout) :: ad_field(LBi:,LBj:)
 !
       integer                           :: iobs, i1, j1, m, nscope
-      integer                           :: itstr, itend
       integer                           :: i, is, ie, j, js, je
       real (r8)                         :: dfr, dfx, dfy
       real (r8)                         :: Tsteps, area_sum, resol
-      real (r8),                pointer :: ad_field(:,:)
-
-      character (len=*),      parameter :: MyFile =                      &
-     &    __FILE__//", roms_hofx_area_time_avg2d_ad"
-!
-      SourceFile=MyFile
-!
-!  Set pointer to kernel variable. The adjoint H^(x) is loaded into the
-!  working OCEAN(ng)%f_* arrays, which are used in "ad_force_dual".
-!
-      SELECT CASE (TRIM(name))
-        CASE ('ssh', 'SSH')
-          ad_field => OCEAN(ng)%f_zeta
-        CASE DEFAULT
-          IF (Master) WRITE (stdout,10) TRIM(obs%name)
-          exit_flag=5
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-      END SELECT
 !
 !  Clear work global 2D array to hold the adjoint of the area of
 !  influence data.
@@ -1729,9 +1824,7 @@
           js=MAX(geom%Jmin, j1-nscope)
           je=MIN(j1+nscope, geom%Jmax)
 !
-          itstr=INT((TimeStr-dstart)/dt(ng))
-          itend=INT((TimeEnd-dstart)/dt(ng))
-          Tsteps=REAL(itend-itstr, r8)
+          Tsteps=REAL(iTend-iTstr, r8)
 !
 !  Adjoint of average state variable over the area of influence and time
 !  window.
@@ -1751,14 +1844,14 @@
             END DO
           END DO
 !
-          IF ((area_sum.gt.0.0_r8).and.(iic(ng).eq.itend)) THEN
+          IF ((area_sum.gt.0.0_r8).and.(iic(ng).eq.iTend)) THEN
 !>          self%state(iobs)=self%state(iobs)/(area_sum*Tsteps)
 !>
             ad_self%state(iobs)=ad_self%state(iobs)/(area_sum*Tsteps)
           END IF
           ad_self%ObsVetting(iobs)=1
 !
-          IF ((itstr.le.iic(ng)).and.(iic(ng).le.itend)) THEN
+          IF ((iTstr.le.iic(ng)).and.(iic(ng).le.iTend)) THEN
             DO j=js,je
               dfy=REAL(j-j1, r8)
               DO i=is,ie
@@ -1771,7 +1864,7 @@
 !>                self%state(iobs)=self%state(iobs)+                    &
 !>   &                             geom%area(i,j)*geom%global2d(i,j)
 !>
-                  geom%global2d(i,j)=geom%global2d(i,j)+                &                
+                  geom%global2d(i,j)=geom%global2d(i,j)+                &
      &                               geom%area(i,j)*ad_self%state(iobs)
                 END IF
               END DO
@@ -1790,11 +1883,6 @@
         END DO
       END DO
 !
-!  Nullify local pointer.
-!
-      geom%global2d=0.0_r8
-      IF (associated(ad_field)) nullify (ad_field)
-!
   10  FORMAT (/,' ROMS_HOFX::AREA_TIME_AVG2D_AD: Cannot find name = ',  &
      &        a,2x,'in obs%data observation depot object.')
 !
@@ -1803,7 +1891,6 @@
 # endif
 !
 !-----------------------------------------------------------------------
-!
 !  It interpolates 2D state variables at the time-averaged observation
 !  locations. The 2D state variable is time-averaged according to the
 !  starting and ending time window values specified in the IODA-type 
@@ -1819,58 +1906,30 @@
 !                             |____________|
 !                    (i1,j1)  1            2
 !
-      SUBROUTINE obs_hofx_time_avg2d (self, obs, name, ng, model,       &
-     &                                TimeStr, TimeEnd, ivar, Tindex)
+      SUBROUTINE obs_hofx_time_avg2d (self, obs, ng, model, ivar,       &
+     &                                iTstr, iTend,                     &
+     &                                LBi, UBi, LBj, UBj, field)
 !
-      CLASS (obs_hofx),  intent(inout) :: self    ! H(x) object
-      TYPE  (obs_data),  intent(in   ) :: obs     ! observation store
-      character (len=*), intent(in   ) :: name    ! state variable name
-      integer,           intent(in   ) :: ng      ! nested grid number
-      integer,           intent(in   ) :: model   ! kernel identifier 
-      real (r8),         intent(in   ) :: TimeStr ! start averaging time
-      real (r8),         intent(in   ) :: TimeEnd ! end   averaging time
-      integer,           intent(in   ) :: ivar    ! variable counter
-      integer,           intent(in   ) :: Tindex  ! time level index
+      CLASS (obs_hofx),  intent(inout) :: self       ! H(x) object
+      TYPE  (obs_data),  intent(in   ) :: obs        ! observation depot
+      integer,           intent(in   ) :: ng         ! nested grid
+      integer,           intent(in   ) :: model      ! kernel identifier 
+      integer,           intent(in   ) :: ivar       ! variable counter
+      integer,           intent(in   ) :: iTstr      ! starting timestep
+      integer,           intent(in   ) :: iTend      ! ending   timestep
+      integer,           intent(in   ) :: LBi, UBi   ! field I-bounds
+      integer,           intent(in   ) :: LBj, UBj   ! field J-bounds
+      real (r8),         intent(in   ) :: field(LBi:,LBj:)
 !
       integer                          :: i, ic, iobs, i1, i2, j1, j2
-      integer                          :: itstr, itend
       real (r8)                        :: p1, p2, q1, q2, wsum
       real (r8)                        :: Tsteps
       real (r8),          dimension(4) :: Hmat
-      real (r8),               pointer :: field(:,:)
-
-      character (len=*),     parameter :: MyFile =                      &
-     &    __FILE__//", roms_hofx_time_avg2d"
-!
-      SourceFile=MyFile
-!
-!  Set pointer to kernel variable.
-!
-      SELECT CASE (TRIM(name))
-        CASE ('ssh', 'SSH')
-          IF (model.eq.iNLM) THEN
-            field => OCEAN(ng)%zeta(:,:,Tindex)
-# ifdef TLM_OBS
-          ELSE IF ((model.eq.iTLM).or.(model.eq.iRPM)) THEN
-            field => OCEAN(ng)%tl_zeta(:,:,Tindex)
-# endif
-# ifndef VERIFICATION
-          ELSE IF (model.eq.iSTD) THEN
-            field => OCEAN(ng)%e_zeta(:,:,1)          ! NSA=1 array
-# endif
-          END IF
-        CASE DEFAULT
-          IF (Master) WRITE (stdout,10) TRIM(obs%name)
-          exit_flag=5
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-      END SELECT
 !
 !  Interpolate 2D model state variable at the time-averaged observation
 !  locations.
 !
-      itstr=INT((TimeStr-dstart)/dt(ng))
-      itend=INT((TimeEnd-dstart)/dt(ng))
-      Tsteps=REAL(itend-itstr, r8)
+      Tsteps=REAL(iTend-iTstr, r8)
 !
       DO i=obs%NstrObs,obs%NendObs
         IF ((rXmin(ng).le.obs%Xgrid(i)).and.                            &
@@ -1917,14 +1976,14 @@
 !
 !  Average resulting H(x) over the specified time window.
 !
-          IF ((itstr.le.iic(ng)).and.(iic(ng).le.itend)) THEN
+          IF ((iTstr.le.iic(ng)).and.(iic(ng).le.iTend)) THEN
             self%state(iobs)=self%state(iobs)+                          &
      &                       Hmat(1)*field(i1,j1)+                      &
      &                       Hmat(2)*field(i2,j1)+                      &
      &                       Hmat(3)*field(i2,j2)+                      &
      &                       Hmat(4)*field(i1,j2)
           END IF
-          IF (iic(ng).eq.itend) THEN
+          IF (iic(ng).eq.iTend) THEN
             self%state(iobs)=self%state(iobs)/Tsteps
           END IF
 # ifdef MASKING
@@ -1935,20 +1994,12 @@
         END IF
       END DO
 !
-!  Nullify pointer.
-!
-      IF (associated(field)) nullify (field)
-!
-  10  FORMAT (/,' ROMS_HOFX::TIME_AVG2D: Cannot find name = ',a,2x,     &
-     &        'in obs%data observation depot object.')
-!
       RETURN
       END SUBROUTINE obs_hofx_time_avg2d
 
 # ifdef SOLVE3D
 !
 !-----------------------------------------------------------------------
-!
 !  It interpolates 3D state variables at the time-averaged observation
 !  locations. The 3D state variable is time-averaged according to the
 !  starting and ending time window values specified in the IODA-type 
@@ -1969,87 +2020,33 @@
 !                  (i1,j1,k1) |_____________|/
 !                             1           2
 !
-      SUBROUTINE obs_hofx_time_avg3d (self, obs, name, ng, model,       &
-     &                                TimeStr, TimeEnd,                 &
-     &                                ivar, Tindex, itrc)
+      SUBROUTINE obs_hofx_time_avg3d (self, obs, ng, model, ivar,       &
+     &                                iTstr, iTend,                     &
+     &                                LBi, UBi, LBj, UBj, field)
 !
-      CLASS (obs_hofx),  intent(inout) :: self    ! H(x) object
-      TYPE  (obs_data),  intent(inout) :: obs     ! observation store
-      character (len=*), intent(in   ) :: name    ! state variable name
-      integer,           intent(in   ) :: ng      ! nested grid number
-      integer,           intent(in   ) :: model   ! kernel identifier 
-      real (r8),         intent(in   ) :: TimeStr ! start averaging time
-      real (r8),         intent(in   ) :: TimeEnd ! end   averaging time
-      integer,           intent(in   ) :: ivar    ! variable counter
-      integer,           intent(in   ) :: Tindex  ! time level index
-      integer, optional, intent(in   ) :: itrc    ! tracer index
+      CLASS (obs_hofx),  intent(inout) :: self       ! H(x) object
+      TYPE  (obs_data),  intent(inout) :: obs        ! observation depot
+      integer,           intent(in   ) :: ng         ! nested grid
+      integer,           intent(in   ) :: model      ! kernel identifier
+      integer,           intent(in   ) :: ivar       ! variable counter
+      integer,           intent(in   ) :: iTstr      ! starting timestep
+      integer,           intent(in   ) :: iTend      ! ending   timestep
+      integer,           intent(in   ) :: LBi, UBi   ! field I-bounds
+      integer,           intent(in   ) :: LBj, UBj   ! field J-bounds
+      real (r8),         intent(in   ) :: field(LBi:,LBj:,:)
 !
       integer                          :: i, ic, iobs, k
       integer                          :: i1, i2, j1, j2, k1, k2
-      integer                          :: itstr, itend
       real (r8)                        :: p1, p2, q1, q2, r1, r2
       real (r8)                        :: w11, w12, w21, w22, wsum
       real (r8)                        :: Zbot, Ztop, dz
       real (r8)                        :: Tsteps
       real (r8),          dimension(8) :: Hmat
-      real (r8),               pointer :: field(:,:,:) => NULL()
-
-      character (len=*),     parameter :: MyFile =                      &
-     &    __FILE__//", roms_hofx_time_avg3d"
-!
-      SourceFile=MyFile
-!
-!  Set pointer to kernel variable.
-!
-      SELECT CASE (TRIM(name))
-        CASE ('tracer', 'TRACER')
-          IF (model.eq.iNLM) THEN
-            field => OCEAN(ng)%t(:,:,:,itrc,Tindex)
-#  ifdef TLM_OBS
-          ELSE IF ((model.eq.iTLM).or.(model.eq.iRPM)) THEN
-            field => OCEAN(ng)%tl_t(:,:,:,itrc,Tindex)
-#  endif
-#  ifndef VERIFICATION
-          ELSE IF (model.eq.iSTD) THEN
-            field => OCEAN(ng)%e_t(:,:,:,itrc,1)      ! NSA=1 array
-#  endif
-          END IF
-        CASE ('ua', 'Ua')
-          IF (model.eq.iNLM) THEN
-            field => OCEAN(ng)%ua
-#  ifdef TLM_OBS
-          ELSE IF ((model.eq.iTLM).or.(model.eq.iRPM)) THEN
-            field => OCEAN(ng)%tl_ua
-#  endif
-#  ifndef VERIFICATION
-          ELSE IF (model.eq.iSTD) THEN
-            field => OCEAN(ng)%e_u(:,:,:,1)           ! NSA=1 array
-#  endif
-          END IF
-        CASE ('va', 'Va')
-          IF (model.eq.iNLM) THEN
-            field => OCEAN(ng)%va
-#  ifdef TLM_OBS
-          ELSE IF ((model.eq.iTLM).or.(model.eq.iRPM)) THEN
-            field => OCEAN(ng)%tl_va
-#  endif
-#  ifndef VERIFICATION
-          ELSE IF (model.eq.iSTD) THEN
-            field => OCEAN(ng)%e_v(:,:,:,1)           ! NSA=1 array
-#  endif
-          END IF
-        CASE DEFAULT
-          IF (Master) WRITE (stdout,10) TRIM(obs%name)
-          exit_flag=5
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-      END SELECT
 !
 !  Interpolate 3D model state variable at the time-averaged observation
 !  locations.
 !
-      itstr=INT((TimeStr-dstart)/dt(ng))
-      itend=INT((TimeEnd-dstart)/dt(ng))
-      Tsteps=REAL(itend-itstr, r8)
+      Tsteps=REAL(iTend-iTstr, r8)
 !
       DO i=obs%NstrObs,obs%NendObs
         IF ((rXmin(ng).le.obs%Xgrid(i)).and.                            &
@@ -2143,7 +2140,7 @@
 !
 !  Average resulting H(x) over the specified time window.
 !
-            IF ((itstr.le.iic(ng)).and.(iic(ng).le.itend)) THEN
+            IF ((iTstr.le.iic(ng)).and.(iic(ng).le.iTend)) THEN
               self%state(iobs)=self%state(iobs)+                       &
      &                         Hmat(1)*field(i1,j1,k1)+                &
      &                         Hmat(2)*field(i2,j1,k1)+                &
@@ -2154,7 +2151,7 @@
      &                         Hmat(7)*field(i2,j2,k2)+                &
      &                         Hmat(8)*field(i1,j2,k2)
             END IF
-            IF (iic(ng).eq.itend) THEN
+            IF (iic(ng).eq.iTend) THEN
               self%state(iobs)=self%state(iobs)/Tsteps
             END IF
 #  ifdef MASKING
@@ -2178,13 +2175,6 @@
         END IF
       END DO
 !
-!  Nullify pointer.
-!
-      IF (associated(field)) nullify (field)
-!
-  10  FORMAT (/,' ROMS_HOFX::TIME_AVG3d: Cannot find name = ',a,2x,     &
-     &        'in obs%data observation depot object.')
-!
       RETURN
       END SUBROUTINE obs_hofx_time_avg3d
 # endif
@@ -2192,7 +2182,6 @@
 # ifdef ADJOINT
 !
 !-----------------------------------------------------------------------
-!
 !  Adjoint of interpolating 2D state variables at the time-averaged
 !  observation locations. The 2D state variable is time-averaged
 !  according to the starting and ending time window values specified
@@ -2208,48 +2197,30 @@
 !                             |____________|
 !                    (i1,j1)  1            2
 !
-      SUBROUTINE obs_hofx_time_avg2d_ad (ad_self, obs, name, ng, model, &
-     &                                   TimeStr, TimeEnd, ivar)
+      SUBROUTINE obs_hofx_time_avg2d_ad (ad_self, obs, ng, model, ivar, &
+     &                                   iTstr, iTend,                  &
+     &                                   LBi, UBi, LBj, UBj, ad_field)
 !
-      CLASS (obs_hofx),  intent(inout) :: ad_self ! H^(x) object
-      TYPE  (obs_data),  intent(in   ) :: obs     ! observation store
-      character (len=*), intent(in   ) :: name    ! state variable name
-      integer,           intent(in   ) :: ng      ! nested grid number
-      integer,           intent(in   ) :: model   ! kernel identifier 
-      real (r8),         intent(in   ) :: TimeStr ! start averaging time
-      real (r8),         intent(in   ) :: TimeEnd ! end   averaging time
-      integer,           intent(in   ) :: ivar    ! variable counter
+      CLASS (obs_hofx),  intent(inout) :: ad_self    ! H^(x) object
+      TYPE  (obs_data),  intent(in   ) :: obs        ! observation depot
+      integer,           intent(in   ) :: ng         ! nested grid
+      integer,           intent(in   ) :: model      ! kernel identifier
+      integer,           intent(in   ) :: ivar       ! variable counter
+      integer,           intent(in   ) :: iTstr      ! starting timestep
+      integer,           intent(in   ) :: iTend      ! ending   timestep
+      integer,           intent(in   ) :: LBi, UBi   ! field I-bounds
+      integer,           intent(in   ) :: LBj, UBj   ! field J-bounds
+      real (r8),         intent(inout) :: ad_field(LBi:,LBj:)
 !
       integer                          :: i, ic, iobs, i1, i2, j1, j2
-      integer                          :: itstr, itend
       real (r8)                        :: p1, p2, q1, q2, wsum
       real (r8)                        :: Tsteps
       real (r8),          dimension(4) :: Hmat
-      real (r8),               pointer :: ad_field(:,:)
-
-      character (len=*),     parameter :: MyFile =                      &
-     &    __FILE__//", roms_hofx_time_avg2d_ad"
-!
-      SourceFile=MyFile
-!
-!  Set pointer to kernel variable. The adjoint H^(x) is loaded into the
-!  working OCEAN(ng)%f_* arrays, which are used in "ad_force_dual".
-!
-      SELECT CASE (TRIM(name))
-        CASE ('ssh', 'SSH')
-          ad_field => OCEAN(ng)%f_zeta
-        CASE DEFAULT
-          IF (Master) WRITE (stdout,10) TRIM(obs%name)
-          exit_flag=5
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-      END SELECT
 !
 !  Adjoint of interpolate 2D model state variable at the time-averaged
 !  observation locations.
 !
-      itstr=INT((TimeStr-dstart)/dt(ng))
-      itend=INT((TimeEnd-dstart)/dt(ng))
-      Tsteps=REAL(itend-itstr, r8)
+      Tsteps=REAL(iTend-iTstr, r8)
 !
       DO i=obs%NstrObs,obs%NendObs
         IF ((rXmin(ng).le.obs%Xgrid(i)).and.                            &
@@ -2296,13 +2267,13 @@
 !
 !  Adjoint of average resulting H^(x) over the specified time window.
 !
-          IF (iic(ng).eq.itend) THEN
+          IF (iic(ng).eq.iTend) THEN
 !>          self%state(iobs)=self%state(iobs)/Tsteps
 !>
             ad_self%state(iobs)=ad_self%state(iobs)/Tsteps
           END IF
 !
-          IF ((itstr.le.iic(ng)).and.(iic(ng).le.itend)) THEN
+          IF ((iTstr.le.iic(ng)).and.(iic(ng).le.iTend)) THEN
 !>          self%state(iobs)=self%state(iobs)+                          &
 !>   &                       Hmat(1)*field(i1,j1)+                      &
 !>   &                       Hmat(2)*field(i2,j1)+                      &
@@ -2318,7 +2289,7 @@
              ad_field(i1,j2)=ad_field(i1,j2)+                           &
      &                       Hmat(4)*ad_self%state(iobs)
           END IF
-          IF (iic(ng).eq.itend) THEN
+          IF (iic(ng).eq.iTend) THEN
             ad_self%state(iobs)=0.0_r8
           END IF
 #  ifdef MASKING
@@ -2329,20 +2300,12 @@
         END IF
       END DO
 !
-!  Nullify pointer.
-!
-      IF (associated(ad_field)) nullify (ad_field)
-!
-  10  FORMAT (/,' ROMS_HOFX::TIME_AVG2D_AD: Cannot find name = ',a,2x,  &
-     &        'in obs%data observation depot object.')
-!
       RETURN
       END SUBROUTINE obs_hofx_time_avg2d_ad
 
 #  ifdef SOLVE3D
 !
 !-----------------------------------------------------------------------
-!
 !  Adjoint of interpolating 3D state variables at the time-averaged
 !  observation locations. The 3D state variable is time-averaged
 !  according to the starting and ending time window values specified
@@ -2363,56 +2326,33 @@
 !                  (i1,j1,k1) |_____________|/
 !                             1           2
 !
-      SUBROUTINE obs_hofx_time_avg3d_ad (ad_self, obs, name, ng, model, &
-     &                                   TimeStr, TimeEnd, ivar, itrc)
+      SUBROUTINE obs_hofx_time_avg3d_ad (ad_self, obs, ng, model, ivar, &
+     &                                   iTstr, iTend,                  &
+     &                                   LBi, UBi, LBj, UBj, ad_field)
 !
-      CLASS (obs_hofx),  intent(inout) :: ad_self ! H^(x) object
-      TYPE  (obs_data),  intent(inout) :: obs     ! observation store
-      character (len=*), intent(in   ) :: name    ! state variable name
-      integer,           intent(in   ) :: ng      ! nested grid number
-      integer,           intent(in   ) :: model   ! kernel identifier 
-      real (r8),         intent(in   ) :: TimeStr ! start averaging time
-      real (r8),         intent(in   ) :: TimeEnd ! end   averaging time
-      integer,           intent(in   ) :: ivar    ! variable counter
-      integer, optional, intent(in   ) :: itrc    ! tracer index
+      CLASS (obs_hofx),  intent(inout) :: ad_self    ! H^(x) object
+      TYPE  (obs_data),  intent(inout) :: obs        ! observation depot
+      integer,           intent(in   ) :: ng         ! nested grid
+      integer,           intent(in   ) :: model      ! kernel identifier 
+      integer,           intent(in   ) :: ivar       ! variable counter
+      integer,           intent(in   ) :: iTstr      ! starting timestep
+      integer,           intent(in   ) :: iTend      ! ending   timestep
+      integer,           intent(in   ) :: LBi, UBi   ! field I-bounds
+      integer,           intent(in   ) :: LBj, UBj   ! field J-bounds
+      real (r8),         intent(inout) :: ad_field(LBi:,LBj:,:)
 !
       integer                          :: i, ic, iobs, k
       integer                          :: i1, i2, j1, j2, k1, k2
-      integer                          :: itstr, itend
       real (r8)                        :: p1, p2, q1, q2, r1, r2
       real (r8)                        :: w11, w12, w21, w22, wsum
       real (r8)                        :: Zbot, Ztop, dz
       real (r8)                        :: Tsteps
       real (r8),          dimension(8) :: Hmat
-      real (r8),               pointer :: ad_field(:,:,:) => NULL()
-
-      character (len=*),     parameter :: MyFile =                      &
-     &    __FILE__//", roms_hofx_time_avg3d_ad"
-!
-      SourceFile=MyFile
-!
-!  Set pointer to kernel variable. The adjoint H^(x) is loaded into the
-!  working OCEAN(ng)%f_* arrays, which are used in "ad_force_dual".
-!
-      SELECT CASE (TRIM(name))
-        CASE ('tracer', 'TRACER')
-          ad_field => OCEAN(ng)%f_t(:,:,:,itrc)
-        CASE ('ua', 'Ua')
-          ad_field => OCEAN(ng)%f_u
-        CASE ('va', 'Va')
-          ad_field => OCEAN(ng)%f_v
-        CASE DEFAULT
-          IF (Master) WRITE (stdout,10) TRIM(obs%name)
-          exit_flag=5
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-      END SELECT
 !
 !  Adjoint of interpolate 3D model state variable at the time-averaged
 !  observation locations.
 !
-      itstr=INT((TimeStr-dstart)/dt(ng))
-      itend=INT((TimeEnd-dstart)/dt(ng))
-      Tsteps=REAL(itend-itstr, r8)
+      Tsteps=REAL(iTend-iTstr, r8)
 !
       DO i=obs%NstrObs,obs%NendObs
         IF ((rXmin(ng).le.obs%Xgrid(i)).and.                            &
@@ -2506,13 +2446,13 @@
 !
 !  Adjoint of average resulting H^(x) over the specified time window.
 !
-            IF (iic(ng).eq.itend) THEN
+            IF (iic(ng).eq.iTend) THEN
 !>            self%state(iobs)=self%state(iobs)/Tsteps
 !>
               ad_self%state(iobs)=ad_self%state(iobs)/Tsteps
             END IF
 !
-            IF ((itstr.le.iic(ng)).and.(iic(ng).le.itend)) THEN
+            IF ((iTstr.le.iic(ng)).and.(iic(ng).le.iTend)) THEN
 !>            self%state(iobs)=self%state(iobs)+                       &
 !>   &                         Hmat(1)*field(i1,j1,k1)+                &
 !>   &                         Hmat(2)*field(i2,j1,k1)+                &
@@ -2540,7 +2480,7 @@
               ad_field(i1,j2,k2)=ad_field(i1,j2,k2)+                   &
      &                           Hmat(8)*ad_self%state(iobs)
             END IF
-            IF (iic(ng).eq.itend) THEN
+            IF (iic(ng).eq.iTend) THEN
               ad_self%state(iobs)=0.0_r8
             END IF
 #   ifdef MASKING
@@ -2564,27 +2504,40 @@
         END IF
       END DO
 !
-!  Nullify pointer.
-!
-      IF (associated(ad_field)) nullify (ad_field)
-!
-  10  FORMAT (/,' ROMS_HOFX::TIME_AVG3D_AD: Cannot find name = ',a,2x,  &
-     &        'in obs%data observation depot object.')
-!
       RETURN
       END SUBROUTINE obs_hofx_time_avg3d_ad
 #  endif
 # endif
 !
-!-----------------------------------------------------------------------
+! <><><><><><><><><><><><><><><><><><><><><><><><><> HOFX UTILITY <><><>
 !
+!  It adds two state vectors: self = self + c * rhs.
+!
+      SUBROUTINE obs_hofx_add (self, c, rhs)
+!
+      CLASS (obs_hofx), intent(inout) :: self     ! LHS H(x) object
+      CLASS (obs_hofx), intent(in   ) :: rhs      ! RHS H(x) object
+      real (r8),        intent(in   ) :: c        ! scale factor
+!
+      integer                         :: i
+!
+!  Add states vectors.
+!
+      DO i=1,SIZE(self%state)
+        self%state(i)=self%state(i)+rhs%state(i)
+      END DO
+!
+      RETURN
+      END SUBROUTINE obs_hofx_add
+!
+!-----------------------------------------------------------------------
 !  It writes H(x) variables into single or multiple output NetCDF
 !  file(s).
 !
       SUBROUTINE obs_hofx_nc_write (self, ng, model, ncname)
 !
       CLASS (obs_hofx),   intent(in   ) :: self   ! H(x) object
-      integer,            intent(in   ) :: ng     ! nested grid number
+      integer,            intent(in   ) :: ng     ! nested grid
       integer,            intent(in   ) :: model  ! kernel identifier
       character (len=*) , intent(in   ) :: ncname ! NetCDF filename
 !
@@ -2597,7 +2550,6 @@
       END SUBROUTINE obs_hofx_nc_write
 !
 !-----------------------------------------------------------------------
-!
 !  It computes the root-mean-square value of the H(x) vector.
 !
       SUBROUTINE obs_hofx_rms (self, rms)
@@ -2623,14 +2575,13 @@
       END SUBROUTINE obs_hofx_rms
 !
 !-----------------------------------------------------------------------
-!
 !  It collects H(x) values from all tasks in the distributed-memory
 !  group.
 !
       SUBROUTINE obs_hofx_update (self, ng, model)
 !
       CLASS (obs_hofx), intent(inout) :: self     ! H(x) object
-      integer,          intent(in   ) :: ng       ! nested grid number
+      integer,          intent(in   ) :: ng       ! nested grid
       integer,          intent(in   ) :: model    ! kernel identifier
 !
       integer,              parameter :: Ivalue = 0
@@ -2656,7 +2607,6 @@
       END SUBROUTINE obs_hofx_update
 !
 !-----------------------------------------------------------------------
-!
 !  It zeroth out H(x) vector variables.
 !
       SUBROUTINE obs_hofx_zeros (self)
