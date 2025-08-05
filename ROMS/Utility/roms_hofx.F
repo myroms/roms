@@ -5,7 +5,7 @@
 !
 !git $Id$
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2025 The ROMS Group                              !
+!  Copyright (c) 2002-2025 The ROMS Group            Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.md                                               !
 !=======================================================================
@@ -28,10 +28,15 @@
       USE roms_obs_mod
 !
 # ifdef DISTRIBUTE
-      USE distribute_mod,   ONLY : mp_aggregate2d, mp_collect
+      USE distribute_mod,   ONLY : mp_aggregate2d,                      &
+     &                             mp_collect,                          &
+     &                             mp_reduce
 # endif
 # if defined ADJOINT && defined DISTRIBUTE
-      USE mp_exchange_mod,  ONLY : ad_mp_exchange2d, ad_mp_exchange3d
+      USE mp_exchange_mod,  ONLY : ad_mp_exchange2d
+#  ifdef SOLVE3D
+      USE mp_exchange_mod,  ONLY : ad_mp_exchange3d
+#  endif
 # endif
       USE strings_mod,      ONLY : FoundError
       USE tracer_index_mod, ONLY : tracer_index
@@ -88,6 +93,11 @@
         integer :: tile                             ! domain partition
         integer :: LBi,   UBi,   LBj,   UBj         ! array bounds
         integer :: IstrR, IendR, JstrR, JendR       ! partition bounds
+!
+!  Tally of processed observations.
+!
+        integer (i8b) :: ObsCount                   ! approved
+        integer (i8b) :: ObsReject                  ! rejected
 !
 !  H(x) operator name.
 !
@@ -164,7 +174,7 @@
         PROCEDURE :: nc_write            => obs_hofx_nc_write
         PROCEDURE :: update              => obs_hofx_update
         PROCEDURE :: zeros               => obs_hofx_zeros
-        
+
       END TYPE obs_hofx
 !
 !-----------------------------------------------------------------------
@@ -190,12 +200,13 @@
 !
 !  Geometry for area-averaged observations.
 !
-      TYPE (obs_filter), allocatable :: nlm_geom(:)
+      TYPE (obs_filter), allocatable :: geom_hofx(:)
 !
 !:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 !
-      PUBLIC  :: ROMS_hofx_initialize
-      PRIVATE
+      PUBLIC  :: hofx_initialize
+      PUBLIC  :: hofx_run
+      PUBLIC  :: hofx_finalize
 !
 !:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 !
@@ -205,14 +216,38 @@
 !
 !  It allocates and initializes the H(x) objects.
 !
-      SUBROUTINE ROMS_hofx_initialize (tile, model, ntotal, AreaAvgObs)
+      SUBROUTINE hofx_initialize (model)
 !
-      integer,          intent(in   ) :: tile       ! domain partition
       integer,          intent(in   ) :: model      ! kernel identifier
-      integer,          intent(in   ) :: ntotal     ! total observations
-      logical,          intent(in   ) :: AreaAvgObs ! area-averaged obs
 !
-      integer                         :: ng
+      logical                         :: IsAreaAveraged
+      integer                         :: i, ng, ntotal, tile
+!
+!  Get total observations count and area-averaged switch.
+!
+      ntotal=obs_store%ndatum
+      IsAreaAveraged=.FALSE.
+      DO i=1,SIZE(obs_store%pool)
+        IF (obs_store%pool(i)%IsAreaAveraged) THEN
+          IsAreaAveraged=.TRUE.
+          EXIT
+        END IF
+      END DO
+!
+!  If applicable, allocate and initialize global grid geometry needed
+!  for area-averaged Hofx operators.
+!
+      IF (IsAreaAveraged) THEN
+        IF (.not.allocated(geom_hofx)) THEN
+          allocate ( geom_hofx(Ngrids) )
+        END IF
+!
+        DO ng=1,Ngrids
+          DO tile=first_tile(ng),last_tile(ng),+1
+            CALL geom_hofx(ng)% create (ng, tile, model)
+          END DO
+        END DO
+      END IF
 !
 !  Allocate and create nonlinear H(x) object.
 !
@@ -220,25 +255,19 @@
         IF (.not.allocated(nlm_hofx)) THEN
           allocate ( nlm_hofx(Ngrids) )
         END IF
-# if defined FOUR_DVAR && !defined VERIFICATION
+# ifndef VERIFICATION
         IF (.not.allocated(berr_hofx)) THEN
           allocate ( berr_hofx(Ngrids) )
         END IF
 # endif
-        IF (AreaAvgObs) THEN
-          IF (.not.allocated(nlm_geom)) THEN
-            allocate ( nlm_geom(Ngrids) )
-          END IF
-        END IF
 !
         DO ng=1,Ngrids
-          CALL nlm_hofx(ng)%create  (ng, tile, model, ntotal)
-# if defined FOUR_DVAR && !defined VERIFICATION
-          CALL berr_hofx(ng)%create (ng, tile, model, ntotal)
+          DO tile=first_tile(ng),last_tile(ng),+1
+            CALL nlm_hofx(ng)%create  (ng, tile, model, ntotal)
+# ifndef VERIFICATION
+            CALL berr_hofx(ng)%create (ng, tile, model, ntotal)
 # endif
-          IF (AreaAvgObs) THEN
-            CALL nlm_geom(ng)% create (ng, tile, model)
-          END IF
+          END DO
         END DO
       END IF
 
@@ -252,7 +281,9 @@
         END IF
 !
         DO ng=1,Ngrids
-          CALL tlm_hofx(ng)%create  (ng, tile, model, ntotal)
+          DO tile=first_tile(ng),last_tile(ng),+1
+            CALL tlm_hofx(ng)%create  (ng, tile, model, ntotal)
+          END DO
         END DO
       END IF
 # endif
@@ -267,13 +298,113 @@
         END IF
 !
         DO ng=1,Ngrids
-          CALL adm_hofx(ng)%create  (ng, tile, model, ntotal)
+          DO tile=first_tile(ng),last_tile(ng),+1
+            CALL adm_hofx(ng)%create  (ng, tile, model, ntotal)
+          END DO
         END DO
       END IF
 # endif
 !
       RETURN
-      END SUBROUTINE ROMS_hofx_initialize
+      END SUBROUTINE hofx_initialize
+!
+!-----------------------------------------------------------------------
+!  It computes the H(x) for the specified model kernel.
+!
+      SUBROUTINE hofx_run (ng, tile, model)
+!
+      integer,            intent(in   ) :: ng     ! nested grid
+      integer,            intent(in   ) :: tile   ! domain partition
+      integer,            intent(in   ) :: model  ! kernel identifier
+!
+      character (len=*),     parameter :: MyFile =                      &
+     &    __FILE__//", obs_initialize"
+!
+      SourceFile=MyFile
+!
+!  Compute model at the observation locations.
+!
+      SELECT CASE (model)
+        CASE (iNLM)                                  ! nonlinear
+          CALL obs_hofx_extract (nlm_hofx(ng),                          &
+     &                           obs_store, geom_hofx(ng), ng, model)
+
+# ifndef VERIFICATION
+        CASE (iSTD)                                  ! background error
+          CALL obs_hofx_extract (berr_hofx(ng),                         &
+     &                           obs_store, geom_hofx(ng), ng, model)
+# endif
+# if defined FOUR_DVAR && defined TLM_OBS
+        CASE (iTLM, iRPM)                            ! tangent linear
+          CALL obs_hofx_extract (tlm_hofx(ng),                          &
+     &                           obs_store, geom_hofx(ng), ng, model)
+# endif
+# if defined FOUR_DVAR && defined ADJOINT
+        CASE (iADM)                                  ! adjoint
+          CALL obs_hofx_extract (adm_hofx(ng),                          &
+     &                           obs_store, geom_hofx(ng), ng, model)
+# endif
+        CASE DEFAULT
+          IF (Master) WRITE (stdout,10) model
+          exit_flag=5
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+      END SELECT
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+!
+
+  10  FORMAT (/,' ROMS_HOFX::HOFX_RUN: illegal identifier, model = ',i0)
+!
+      RETURN
+      END SUBROUTINE hofx_run
+!
+!-----------------------------------------------------------------------
+!  It finalizes the H(x) computation.
+!
+      SUBROUTINE hofx_finalize (model)
+!
+      integer,           intent(in   ) :: model  ! kernel identifier
+!
+      integer                          :: ng
+
+      character (len=*),     parameter :: MyFile =                      &
+     &    __FILE__//", obs_finalize"
+!
+      SourceFile=MyFile
+!
+!  If appropiate, collect H(x) data from all tasks.  Then, write out to
+!  output NetCDF files.
+!
+      SELECT CASE (model)
+        CASE (iNLM)                                  ! nonlinear
+          DO ng=1,Ngrids
+# ifdef DISTRIBUTE
+            CALL obs_hofx_update (nlm_hofx(ng), ng, model)
+# endif
+            CALL obs_hofx_nc_write (nlm_hofx(ng), obs_store, ng, model)
+          END DO
+
+# ifndef VERIFICATION
+        CASE (iSTD)                                  ! background error
+          DO ng=1,Ngrids
+#  ifdef DISTRIBUTE
+            CALL obs_hofx_update (berr_hofx(ng), ng, model)
+#  endif
+            CALL obs_hofx_nc_write (berr_hofx(ng), obs_store, ng, model)
+          END DO
+# endif
+        CASE DEFAULT
+          IF (Master) WRITE (stdout,10) model
+          exit_flag=5
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+      END SELECT
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+!
+
+  10  FORMAT (/,' ROMS_HOFX::HOFX_FINALIZE: illegal identifier, '       &
+     &        'model = ',i0)
+!
+      RETURN
+      END SUBROUTINE hofx_finalize
 !
 ! <><><><><><><><><><><><><><><><><><><><><><><> CLASS OBS_FILTER <><><>
 !
@@ -285,6 +416,8 @@
       integer,            intent(in   ) :: ng     ! nested grid
       integer,            intent(in   ) :: tile   ! domain partition
       integer,            intent(in   ) :: model  ! kernel identifier
+!
+      real (r8)                         :: size2d
 !
 !  Set tiled and global array bounds.
 !
@@ -299,6 +432,7 @@
       self%Imax=Lm(ng)+1
       self%Jmin=0
       self%Jmax=Mm(ng)+1
+      size2d=REAL((Lm(ng)+2)*(Mm(ng)+2),r8)
 !
 !  Set global area, grid spacing mask required in the spatial averaging
 !  filter.
@@ -307,19 +441,23 @@
       IF (.not.associated(self%area)) THEN
         allocate ( self%area(self%Imin:self%Imax, self%Jmin:self%Jmax) )
         self%area = 0.0_r8
+        Dmem(ng)=Dmem(ng)+size2d
       END IF
       IF (.not.associated(self%dx)) THEN
         allocate ( self%dx(self%Imin:self%Imax, self%Jmin:self%Jmax) )
         self%dx = 0.0_r8
+        Dmem(ng)=Dmem(ng)+size2d
       END IF
       IF (.not.associated(self%dy)) THEN
         allocate ( self%dy(self%Imin:self%Imax, self%Jmin:self%Jmax) )
         self%dy = 0.0_r8
+        Dmem(ng)=Dmem(ng)+size2d
       END IF
 #  ifdef MASKING
       IF (.not.associated(self%mask)) THEN
         allocate ( self%mask(self%Imin:self%Imax, self%Jmin:self%Jmax) )
         self%mask = 0.0_r8
+        Dmem(ng)=Dmem(ng)+size2d
       END IF
 #  endif
 !
@@ -344,7 +482,7 @@
 # else
       self%area => GRID(ng)%omn
       self%dx   => GRID(ng)%om_r
-      self%dy   => GRID(ng)%on_r 
+      self%dy   => GRID(ng)%on_r
 #  ifdef MASKING
       self%mask => GRID(ng)%rmask
 #  endif
@@ -356,6 +494,7 @@
         allocate ( self%global2d(self%Imin:self%Imax,                   &
      &                           self%Jmin:self%Jmax) )
         self%global2d = 0.0_r8
+        Dmem(ng)=Dmem(ng)+size2d
       END IF
 !
       RETURN
@@ -413,13 +552,15 @@
 !
       IF (.not.allocated(self%state)) THEN
         allocate ( self%state(ntotal) )
+        Dmem(ng)=Dmem(ng)+REAL(ntotal,r8)
       END IF
 !
-!  Allocate processing flag to reject (zero) or accept (unity) 
+!  Allocate processing flag to reject (zero) or accept (unity)
 !  observations.
 !
       IF (.not.allocated(self%ObsVetting)) THEN
         allocate ( self%ObsVetting(ntotal) )
+        Dmem(ng)=Dmem(ng)+REAL(ntotal,r8)
       END IF
 !
 !  Set geometry arrays pointers.
@@ -477,10 +618,13 @@
       integer,           intent(in   ) :: ng       ! nested grid
       integer,           intent(in   ) :: model    ! kernel identifier
 !
-      TYPE (obs_data),        pointer :: depot
-      integer                         :: iobs
+      TYPE (obs_data),         pointer :: depot
+      integer (i8b),       allocatable :: reject(:)
+      integer                          :: i, iobs, mvars, nvars
+      integer                          :: is, ie, ObsSum, ObsReject
 
-      character (len=*),    parameter :: MyFile =                       &
+      character (len=3),   allocatable :: op_handle(:)
+      character (len=*),     parameter :: MyFile =                       &
      &    __FILE__//", roms_hofx_extract"
 !
       SourceFile=MyFile
@@ -490,32 +634,87 @@
 !  to the observation locations.
 !
       IF (obs%has(ng, model)) THEN
+        mvars=MAXVAL(obs%pool(:)%nvars)
+        IF (.not.allocated(reject)) THEN
+          allocate ( reject(mvars) )
+        END IF
+        IF (.not.allocated(reject)) THEN
+          allocate ( op_handle(mvars) )
+          DO i=1,mvars
+            op_handle(i)='SUM'
+          END DO
+        END IF
+        ObsSum=0
+        ObsReject=0
+!
+        IF (Master) WRITE(stdout,10) tdays(ng), time_code(ng)
+!
         DO iobs=1,SIZE(obs%pool)
           IF ((obs%pool(iobs)%NstrObs.gt.0).and.                        &
      &        (obs%pool(iobs)%NendObs.gt.0)) THEN
+            nvars=obs%pool(iobs)%nvars
+            reject=0
+!
             SELECT CASE (obs%pool(iobs)%name)
               CASE ('SSH', 'SSS', 'SST')
-                CALL obs_pool_get (obs, obs%pool(iobs)%name, depot) 
-                CALL self%extract2d (depot, geom, ng, model,            &
+                CALL obs_pool_get (obs, obs%pool(iobs)%name, depot)
+                CALL self%extract2d (depot, geom, ng, model, reject,    &
      &                               obs%pool(iobs)%name)
 # ifdef SOLVE3D
               CASE ('salt', 'temp', 'uv')
-                CALL obs_pool_get (obs, obs%pool(iobs)%name, depot) 
-                CALL self%extract3d (depot, geom, ng, model,            &
+                CALL obs_pool_get (obs, obs%pool(iobs)%name, depot)
+                CALL self%extract3d (depot, ng, model, reject,          &
      &                               obs%pool(iobs)%name)
 # endif
               CASE DEFAULT
-                IF (Master) WRITE (stdout,10) obs%pool(iobs)%name, iobs
+                IF (Master) WRITE (stdout,20) obs%pool(iobs)%name, iobs
                 exit_flag=5
                 IF (FoundError(exit_flag, NoError,                      &
      &                         __LINE__, MyFile)) RETURN
             END SELECT
+!
+!  Store processing tally.
+!
+# ifdef DISTRIBUTE
+            CALL mp_reduce (ng, model, mvars, reject, op_handle)
+# endif
+            is=obs%pool(iobs)%NstrObs
+            ie=obs%pool(iobs)%NendObs
+            DO i=1,nvars
+              self%ObsCount=self%ObsCount+(ie-is+1)
+              self%ObsReject=self%ObsReject+reject(i)
+            END DO
+!
+!  Report.
+!
+            IF (Master) THEN
+              DO i=1,nvars
+                WRITE (stdout,30) obs%pool(iobs)%name, is, ie,          &
+     &                            ie-is+1, reject(i)
+                ObsSum=ObsSum+ie-is+1
+                ObsReject=ObsReject+reject(i)
+              END DO
+            END IF
           END IF
         END DO
+        IF (Master) WRITE (stdout,40) ObsSum, ObsReject,                &
+     &                                self%ObsCount, self%ObsReject
+!
+!  Deallocate local arrays.
+!
+        IF (allocated(reject))    deallocate (reject)
+        IF (allocated(op_handle)) deallocate (op_handle)
       END IF
 !
-  10  FORMAT (/,' ROMS_HOFX::extract: Cannot find name = ',a,2x,        &
+  10  FORMAT (/,' Number of State Observations Processed:',2x,          &
+     &        'ObsTime = ',f12.4,',',t68,a,/,/,                         &
+     &        10x,'Variable',10x,'IstrObs',4x,'IendObs',6x,'Count',     &
+     &        3x,'Rejected',/)
+  20  FORMAT (/,' ROMS_HOFX::extract: Cannot find name = ',a,2x,        &
      &        'in obs%pool(',i0,').')
+  30  FORMAT (10x,a,t25,4(1x,i10))
+  40  FORMAT (/,10x,'Total',t47,2(1x,i10),                              &
+     &        /,10x,'Obs Tally',t47,2(1x,i10),/)
 !
       RETURN
       END SUBROUTINE obs_hofx_extract
@@ -525,14 +724,16 @@
 !  model=iADM, it computes the transport operator, H^(x). Area-averaged
 !  and/or time-averaged operators are available.
 !
-      SUBROUTINE obs_hofx_extract2d (self, obs, geom, ng, model, name)
+      SUBROUTINE obs_hofx_extract2d (self, obs, geom, ng, model,        &
+     &                               reject, name)
 !
-      CLASS (obs_hofx),  intent(inout) :: self   ! H(x) object
-      TYPE (obs_data),   intent(inout) :: obs    ! observation depot
-      TYPE (obs_filter), intent(inout) :: geom   ! geometry object
-      integer,           intent(in   ) :: ng     ! nested grid
-      integer,           intent(in   ) :: model  ! kernel identifier
-      character (len=*), intent(in   ) :: name   ! observation pool name
+      CLASS (obs_hofx),  intent(inout) :: self      ! H(x) object
+      TYPE (obs_data),   intent(inout) :: obs       ! observation depot
+      TYPE (obs_filter), intent(inout) :: geom      ! geometry object
+      integer,           intent(in   ) :: ng        ! nested grid
+      integer,           intent(in   ) :: model     ! kernel identifier
+      integer (i8b),     intent(out  ) :: reject(:) ! obs reject count
+      character (len=*), intent(in   ) :: name      ! obs pool name
 !
       logical                          :: IsAreaTimeAveraged
       logical                          :: IsAreaAveraged
@@ -649,35 +850,43 @@
 !
         IF (model.ne.iADM) THEN
           IF (IsAreaTimeAveraged) THEN
-            CALL self%area_time_avg2d (obs, geom, ng, model, ivar,      &
+            CALL self%area_time_avg2d (obs, geom, ng, model,            &
+     &                                 ivar, reject(ivar),              &
      &                                 iTstr, iTend,                    &
      &                                 LBi, UBi, LBj, UBj, field)
           ELSE IF (IsAreaAveraged) THEN
-            CALL self%area_avg2d (obs, geom, ng, model, ivar,           &
+            CALL self%area_avg2d (obs, geom, ng, model,                 &
+     &                            ivar, reject(ivar),                   &
      &                            LBi, UBi, LBj, UBj, field)
           ELSE IF (IsTimeAveraged) THEN
-            CALL self%time_avg2d (obs, ng, model, ivar,                 &
+            CALL self%time_avg2d (obs, ng, model,                       &
+     &                            ivar, reject(ivar),                   &
      &                            iTstr, iTend,                         &
      &                            LBi, UBi, LBj, UBj, field)
           ELSE
-            CALL self%interp2d (obs, ng, model, ivar,                   &
+            CALL self%interp2d (obs, ng, model,                         &
+     &                          ivar, reject(ivar),                     &
      &                          LBi, UBi, LBj, UBj, field)
           END IF
 # ifdef ADJOINT
         ELSE IF (model.eq.iADM) THEN
           IF (IsAreaTimeAveraged) THEN
-            CALL self%area_time_avg2d_ad (obs, geom, ng, model, ivar,   &
+            CALL self%area_time_avg2d_ad (obs, geom, ng, model,         &
+     &                                    ivar, reject(ivar),           &
      &                                    iTstr, iTend,                 &
      &                                    LBi, UBi, LBj, UBj, field)
           ELSE IF (IsAreaAveraged) THEN
-            CALL self%area_avg2d_ad (obs, geom, ng, model, ivar,        &
+            CALL self%area_avg2d_ad (obs, geom, ng, model,              &
+     &                               ivar, reject(ivar),                &
      &                               LBi, UBi, LBj, UBj, field)
           ELSE IF (IsTimeAveraged) THEN
-            CALL self%time_avg2d_ad (obs, ng, model, ivar,              &
+            CALL self%time_avg2d_ad (obs, ng, model,                    &
+     &                               ivar, reject(ivar),                &
      &                               iTstr, iTend,                      &
      &                               LBi, UBi, LBj, UBj, field)
           ELSE
-            CALL self%interp2d_ad (obs, ng, model, ivar,                &
+            CALL self%interp2d_ad (obs, ng, model,                      &
+     &                             ivar, reject(ivar),                  &
      &                             LBi, UBi, LBj, UBj, field)
           END IF
 # endif
@@ -688,7 +897,7 @@
 !
       IF (associated(field)) nullify (field)
 !
-  10  FORMAT (/,' ROMS_HOFX::extract2d: Cannot find name = ',a,2x,       &
+  10  FORMAT (/,' ROMS_HOFX::extract2d: Cannot find name = ',a,2x,      &
      &        'in observation depot.')
 !
       RETURN
@@ -701,14 +910,15 @@
 !  model=iADM, it computes the transport operator, H^(x). Area-averaged
 !  and/or time-averaged operators are available.
 !
-      SUBROUTINE obs_hofx_extract3d (self, obs, geom, ng, model, name)
+      SUBROUTINE obs_hofx_extract3d (self, obs, ng, model,              &
+     &                               reject, name)
 !
-      CLASS (obs_hofx),  intent(inout) :: self   ! H(x) object
-      TYPE (obs_data),   intent(inout) :: obs    ! observation depot
-      TYPE (obs_filter), intent(inout) :: geom   ! geometry object
-      integer,           intent(in   ) :: ng     ! nested grid
-      integer,           intent(in   ) :: model  ! kernel identifier
-      character (len=*), intent(in   ) :: name   ! observation pool name
+      CLASS (obs_hofx),  intent(inout) :: self      ! H(x) object
+      TYPE (obs_data),   intent(inout) :: obs       ! observation depot
+      integer,           intent(in   ) :: ng        ! nested grid
+      integer,           intent(in   ) :: model     ! kernel identifier
+      integer (i8b),     intent(out  ) :: reject(:) ! obs reject count
+      character (len=*), intent(in   ) :: name      ! obs pool name
 !
       logical                          :: IsTimeAveraged
       integer                          :: LBi, UBi, LBj, UBj
@@ -799,21 +1009,25 @@
 !
         IF (model.ne.iADM) THEN
           IF (IsTimeAveraged) THEN
-            CALL self%time_avg3d (obs, ng, model, ivar,                 &
+            CALL self%time_avg3d (obs, ng, model,                       &
+     &                            ivar, reject(ivar),                   &
      &                            iTstr, iTend,                         &
      &                            LBi, UBi, LBj, UBj, field)
           ELSE
-            CALL self%interp3d (obs, ng, model, ivar,                   &
+            CALL self%interp3d (obs, ng, model,                         &
+     &                          ivar, reject(ivar),                     &
      &                          LBi, UBi, LBj, UBj, field)
           END IF
 #  ifdef ADJOINT
         ELSE IF (model.eq.iADM) THEN
           IF (IsTimeAveraged) THEN
-            CALL self%time_avg3d_ad (obs, ng, model, ivar,              &
+            CALL self%time_avg3d_ad (obs, ng, model,                    &
+     &                               ivar, reject(ivar),                &
      &                               iTstr, iTend,                      &
      &                               LBi, UBi, LBj, UBj, field)
           ELSE
-            CALL self%interp3d_ad (obs, ng, model, ivar,                &
+            CALL self%interp3d_ad (obs, ng, model,                      &
+     &                             ivar, reject(ivar),                  &
      &                             LBi, UBi, LBj, UBj, field)
           END IF
 #  endif
@@ -846,7 +1060,8 @@
 !                             |____________|
 !                    (i1,j1)  1            2
 !
-      SUBROUTINE obs_hofx_interp2d (self, obs, ng, model, ivar,         &
+      SUBROUTINE obs_hofx_interp2d (self, obs, ng, model,               &
+     &                              ivar, reject,                       &
      &                              LBi, UBi, LBj, UBj, field)
 !
       CLASS (obs_hofx),  intent(inout) :: self       ! H(x) object
@@ -854,6 +1069,7 @@
       integer,           intent(in   ) :: ng         ! nested grid
       integer,           intent(in   ) :: model      ! kernel identifier
       integer,           intent(in   ) :: ivar       ! variable counter
+      integer (i8b),     intent(out  ) :: reject     ! obs reject count
       integer,           intent(in   ) :: LBi, UBi   ! field I-bounds
       integer,           intent(in   ) :: LBj, UBj   ! field J-bounds
       real (r8),         intent(in   ) :: field(LBi:,LBj:)
@@ -864,6 +1080,7 @@
 !
 !  Interpolate 2D model state variable at the observation locations.
 !
+      reject=0
       DO i=obs%NstrObs,obs%NendObs
         IF ((rXmin(ng).le.obs%Xgrid(i)).and.                            &
             (obs%Xgrid(i).lt.rXmax(ng)).and.                            &
@@ -911,7 +1128,12 @@
      &                     Hmat(3)*field(i2,j2)+                        &
      &                     Hmat(4)*field(i1,j2)
 # ifdef MASKING
-          IF (wsum.gt.0.0_r8) self%obsVetting(iobs)=1
+          IF (wsum.gt.0.0_r8) THEN
+            self%obsVetting(iobs)=1
+          ELSE
+            self%obsVetting(iobs)=0
+            reject=reject+1
+          END IF
 # else
           self%ObsVetting(iobs)=1
 # endif
@@ -943,7 +1165,8 @@
 !                  (i1,j1,k1) |_____________|/
 !                             1           2
 !
-      SUBROUTINE obs_hofx_interp3d (self, obs, ng, model, ivar,         &
+      SUBROUTINE obs_hofx_interp3d (self, obs, ng, model,               &
+     &                              ivar, reject,                       &
      &                              LBi, UBi, LBj, UBj, field)
 !
       CLASS (obs_hofx),  intent(inout) :: self       ! H(x) object
@@ -951,8 +1174,9 @@
       integer,           intent(in   ) :: ng         ! nested grid
       integer,           intent(in   ) :: model      ! kernel identifier
       integer,           intent(in   ) :: ivar       ! variable counter
+      integer (i8b),     intent(out  ) :: reject     ! obs reject count
       integer,           intent(in   ) :: LBi, UBi   ! field I-bounds
-      integer,           intent(in   ) :: LBj, UBj   ! field I-bounds
+      integer,           intent(in   ) :: LBj, UBj   ! field J-bounds
       real (r8),         intent(in   ) :: field(LBi:,LBj:,:)
 !
       integer                          :: i, ic, iobs, k
@@ -964,6 +1188,7 @@
 !
 !  Interpolate 3D model state variable at the observation locations.
 !
+      reject=0
       DO i=obs%NstrObs,obs%NendObs
         IF ((rXmin(ng).le.obs%Xgrid(i)).and.                            &
             (obs%Xgrid(i).lt.rXmax(ng)).and.                            &
@@ -1008,6 +1233,7 @@
               r1=0.0_r8                        ! If deeper, ignore.
               r2=0.0_r8
               self%ObsVetting(iobs)=0
+              reject=reject+1
             ELSE
               DO k=N(ng),2,-1                  ! Otherwise, interpolate
                 Ztop=self%depth(i1,j1,k  )     ! to fractional level
@@ -1062,7 +1288,12 @@
      &                       Hmat(7)*field(i2,j2,k2)+                  &
      &                       Hmat(8)*field(i1,j2,k2)
 #  ifdef MASKING
-            IF (wsum.gt.0.0_r8) self%ObsVetting(iobs)=1
+            IF (wsum.gt.0.0_r8) THEN
+              self%ObsVetting(iobs)=1
+            ELSE
+              self%ObsVetting(iobs)=0
+              reject=reject+1
+            END IF
 #  else
             self%ObsVetting(iobs)=1
 #  endif
@@ -1076,6 +1307,7 @@
             IF ((obs%Zgrid(i).gt.0.0_r8).and.                           &
      &          (obs%Zgrid(i).le.1.0_r8)) THEN
               self%ObsVetting(iobs)=0
+              reject=reject+1
             END IF
 #  endif
           END IF
@@ -1103,7 +1335,8 @@
 !                             |____________|
 !                    (i1,j1)  1            2
 !
-      SUBROUTINE obs_hofx_interp2d_ad (ad_self, obs, ng, model, ivar,   &
+      SUBROUTINE obs_hofx_interp2d_ad (ad_self, obs, ng, model,         &
+     &                                 ivar, reject,                    &
      &                                 LBi, UBi, LBj, UBj, ad_field)
 !
       CLASS (obs_hofx),  intent(inout) :: ad_self    ! H^(x) object
@@ -1111,16 +1344,18 @@
       integer,           intent(in   ) :: ng         ! nested grid
       integer,           intent(in   ) :: model      ! kernel identifier
       integer,           intent(in   ) :: ivar       ! variable counter
+      integer (i8b),     intent(out  ) :: reject     ! obs reject count
       integer,           intent(in   ) :: LBi, UBi   ! field I-bounds
       integer,           intent(in   ) :: LBj, UBj   ! field J-bounds
       real (r8),         intent(inout) :: ad_field(LBi:,LBj:)
 !
-      integer                         :: i, ic, iobs, i1, i2, j1, j2
-      real (r8)                       :: p1, p2, q1, q2, wsum
-      real (r8),         dimension(4) :: Hmat
+      integer                          :: i, ic, iobs, i1, i2, j1, j2
+      real (r8)                        :: p1, p2, q1, q2, wsum
+      real (r8),          dimension(4) :: Hmat
 !
 !  Interpolate 2D model state variable at the observation locations.
 !
+      reject=0
       DO i=obs%NstrObs,obs%NendObs
         IF ((rXmin(ng).le.obs%Xgrid(i)).and.                            &
             (obs%Xgrid(i).lt.rXmax(ng)).and.                            &
@@ -1178,7 +1413,12 @@
      &                    Hmat(4)*ad_self%state(iobs)
           ad_self%state(iobs)=0.0_r8
 #  ifdef MASKING
-          IF (wsum.gt.0.0_r8) ad_self%ObsVetting(iobs)=1
+          IF (wsum.gt.0.0_r8) THEN
+            ad_self%ObsVetting(iobs)=1
+          ELSE
+            ad_self%ObsVetting(iobs)=0
+            reject=reject+1
+          END IF
 #  else
           ad_self%ObsVetting(iobs)=1
 #  endif
@@ -1225,7 +1465,8 @@
 !                  (i1,j1,k1) |_____________|/
 !                             1             2
 !
-      SUBROUTINE obs_hofx_interp3d_ad (ad_self, obs, ng, model, ivar,   &
+      SUBROUTINE obs_hofx_interp3d_ad (ad_self, obs, ng, model,         &
+     &                                 ivar, reject,                    &
      &                                 LBi, UBi, LBj, UBj, ad_field)
 !
       CLASS (obs_hofx),  intent(inout) :: ad_self    ! H^(x) object
@@ -1233,6 +1474,7 @@
       integer,           intent(in   ) :: ng         ! nested grid
       integer,           intent(in   ) :: model      ! kernel identifier
       integer,           intent(in   ) :: ivar       ! variable counter
+      integer (i8b),     intent(out  ) :: reject     ! obs reject count
       integer,           intent(in   ) :: LBi, UBi   ! field I-bounds
       integer,           intent(in   ) :: LBj, UBj   ! field J-bounds
       real (r8),         intent(inout) :: ad_field(LBi:,LBj:,:)
@@ -1246,6 +1488,7 @@
 !
 !  Interpolate 2D model state variable at the observation locations.
 !
+      reject=0
       DO i=obs%NstrObs,obs%NendObs
         IF ((rXmin(ng).le.obs%Xgrid(i)).and.                            &
             (obs%Xgrid(i).lt.rXmax(ng)).and.                            &
@@ -1290,6 +1533,7 @@
               r1=0.0_r8                        ! If deeper, ignore.
               r2=0.0_r8
               ad_self%ObsVetting(iobs)=0
+              reject=reject+1
             ELSE
               DO k=N(ng),2,-1                  ! Otherwise, interpolate
                 Ztop=ad_self%depth(i1,j1,k  )  ! to fractional level
@@ -1362,7 +1606,12 @@
      &                         Hmat(8)*ad_self%state(iobs)
             ad_self%state(iobs)=0.0_r8
 #   ifdef MASKING
-            IF (wsum.gt.0.0_r8) ad_self%ObsVetting(iobs)=1
+            IF (wsum.gt.0.0_r8) THEN
+              ad_self%ObsVetting(iobs)=1
+            ELSE
+              ad_self%ObsVetting(iobs)=0
+              reject=reject+1
+            END IF
 #   else
             ad_self%ObsVetting(iobs)=1
 #   endif
@@ -1405,7 +1654,8 @@
 !                             |____________|
 !                    (i1,j1)  1            2
 !
-      SUBROUTINE obs_hofx_area_avg2d (self, obs, geom, ng, model, ivar, &
+      SUBROUTINE obs_hofx_area_avg2d (self, obs, geom, ng, model,       &
+     &                                ivar, reject,                     &
      &                                LBi, UBi, LBj, UBj, field)
 !
       CLASS (obs_hofx),   intent(inout) :: self      ! H(x) object
@@ -1414,6 +1664,7 @@
       integer,            intent(in   ) :: ng        ! nested grid
       integer,            intent(in   ) :: model     ! kernel identifier
       integer,            intent(in   ) :: ivar      ! variable counter
+      integer (i8b),      intent(out  ) :: reject    ! obs reject count
       integer,            intent(in   ) :: LBi, UBi  ! field I-bounds
       integer,            intent(in   ) :: LBj, UBj  ! field J-bounds
       real (r8),          intent(in   ) :: field(LBi:,LBj:)
@@ -1437,6 +1688,7 @@
 !  Compute area-averaged 2D model state variable at the area_averaged
 !  observation locations.
 !
+      reject=0
       DO m=obs%NstrObs,obs%NendObs
         IF ((rXmin(ng).le.obs%Xgrid(m)).and.                            &
             (obs%Xgrid(m).lt.rXmax(ng)).and.                            &
@@ -1489,6 +1741,7 @@
             self%ObsVetting(iobs)=1
           ELSE
             self%ObsVetting(iobs)=0
+            reject=reject+1
           END IF
         END IF
       END DO
@@ -1518,7 +1771,7 @@
 !                    (i1,j1)  1            2
 !
       SUBROUTINE obs_hofx_area_time_avg2d (self, obs, geom, ng, model,  &
-     &                                     ivar, iTstr, iTend,          &
+     &                                     ivar, reject, iTstr, iTend,  &
      &                                     LBi, UBi, LBj, UBj, field)
 !
       CLASS (obs_hofx),   intent(inout) :: self      ! H(x) object
@@ -1527,6 +1780,7 @@
       integer,            intent(in   ) :: ng        ! nested grid
       integer,            intent(in   ) :: model     ! kernel identifier
       integer,            intent(in   ) :: ivar      ! variable counter
+      integer (i8b),      intent(out  ) :: reject    ! obs reject count
       integer,            intent(in   ) :: iTstr     ! starting timestep
       integer,            intent(in   ) :: iTend     ! ending   timestep
       integer,            intent(in   ) :: LBi, UBi  ! field I-bounds
@@ -1558,6 +1812,7 @@
 !  Compute area-averaged 2D model state variable at the area_averaged
 !  observation locations.
 !
+      reject=0
       DO m=obs%NstrObs,obs%NendObs
         IF ((rXmin(ng).le.obs%Xgrid(m)).and.                            &
             (obs%Xgrid(m).lt.rXmax(ng)).and.                            &
@@ -1645,7 +1900,7 @@
 !                    (i1,j1)  1            2
 !
       SUBROUTINE obs_hofx_area_avg2d_ad (ad_self, obs, geom, ng,        &
-     &                                   model, ivar,                   &
+     &                                   model, ivar, reject,           &
      &                                   LBi, UBi, LBj, UBj, ad_field)
 !
       CLASS (obs_hofx),   intent(inout) :: ad_self   ! H'(x) object
@@ -1654,6 +1909,7 @@
       integer,            intent(in   ) :: ng        ! nested grid
       integer,            intent(in   ) :: model     ! kernel identifier
       integer,            intent(in   ) :: ivar      ! variable counter
+      integer (i8b),      intent(out  ) :: reject    ! obs reject count
       integer,            intent(in   ) :: LBi, UBi  ! field I-bounds
       integer,            intent(in   ) :: LBj, UBj  ! field J-bounds
       real (r8),          intent(inout) :: ad_field(LBi:,LBj:)
@@ -1671,6 +1927,7 @@
 !  Compute area-averaged 2D model state variable at the area_averaged
 !  observation locations.
 !
+      reject=0
       DO m=obs%NstrObs,obs%NendObs
         IF ((rXmin(ng).le.obs%Xgrid(m)).and.                            &
             (obs%Xgrid(m).lt.rXmax(ng)).and.                            &
@@ -1692,7 +1949,7 @@
           js=MAX(geom%Jmin, j1-nscope)
           je=MIN(j1+nscope, geom%Jmax)
 !
-!  Adjoint of verage state variable over the area of influence.
+!  Adjoint of average state variable over the area of influence.
 !
           area_sum=0.0_r8               ! compute area weights
           DO j=js,je
@@ -1719,6 +1976,7 @@
 !>          ad_self%ObsVetting(iobs)=0
 !>
             ad_self%ObsVetting(iobs)=0
+            reject=reject+1
           END IF
 !
           DO j=js,je
@@ -1773,7 +2031,7 @@
 !                    (i1,j1)  1            2
 !
       SUBROUTINE obs_hofx_area_time_avg2d_ad (ad_self, obs, geom,       &
-     &                                        ng, model, ivar,          &
+     &                                        ng, model, ivar, reject,  &
      &                                        iTstr, iTend,             &
      &                                        LBi, UBi, LBj, UBj,       &
      &                                        ad_field)
@@ -1784,6 +2042,7 @@
       integer,            intent(in   ) :: ng        ! nested grid
       integer,            intent(in   ) :: model     ! kernel identifier
       integer,            intent(in   ) :: ivar      ! variable counter
+      integer (i8b),      intent(out  ) :: reject    ! obs reject count
       integer,            intent(in   ) :: iTstr     ! starting timestep
       integer,            intent(in   ) :: iTend     ! ending   timestep
       integer,            intent(in   ) :: LBi, UBi  ! field I-bounds
@@ -1803,6 +2062,7 @@
 !  Compute area-averaged 2D model state variable at the area_averaged
 !  observation locations.
 !
+      reject=0
       DO m=obs%NstrObs,obs%NendObs
         IF ((rXmin(ng).le.obs%Xgrid(m)).and.                            &
             (obs%Xgrid(m).lt.rXmax(ng)).and.                            &
@@ -1893,7 +2153,7 @@
 !-----------------------------------------------------------------------
 !  It interpolates 2D state variables at the time-averaged observation
 !  locations. The 2D state variable is time-averaged according to the
-!  starting and ending time window values specified in the IODA-type 
+!  starting and ending time window values specified in the IODA-type
 !  observation file. Time-averaged observations are assumed to be at
 !  RHO-points (A-grid).
 !
@@ -1906,15 +2166,16 @@
 !                             |____________|
 !                    (i1,j1)  1            2
 !
-      SUBROUTINE obs_hofx_time_avg2d (self, obs, ng, model, ivar,       &
-     &                                iTstr, iTend,                     &
+      SUBROUTINE obs_hofx_time_avg2d (self, obs, ng, model,             &
+     &                                ivar, reject, iTstr, iTend,       &
      &                                LBi, UBi, LBj, UBj, field)
 !
       CLASS (obs_hofx),  intent(inout) :: self       ! H(x) object
       TYPE  (obs_data),  intent(in   ) :: obs        ! observation depot
       integer,           intent(in   ) :: ng         ! nested grid
-      integer,           intent(in   ) :: model      ! kernel identifier 
+      integer,           intent(in   ) :: model      ! kernel identifier
       integer,           intent(in   ) :: ivar       ! variable counter
+      integer (i8b),     intent(out  ) :: reject     ! obs reject count
       integer,           intent(in   ) :: iTstr      ! starting timestep
       integer,           intent(in   ) :: iTend      ! ending   timestep
       integer,           intent(in   ) :: LBi, UBi   ! field I-bounds
@@ -1931,6 +2192,7 @@
 !
       Tsteps=REAL(iTend-iTstr, r8)
 !
+      reject=0
       DO i=obs%NstrObs,obs%NendObs
         IF ((rXmin(ng).le.obs%Xgrid(i)).and.                            &
      &      (obs%Xgrid(i).lt.rXmax(ng)).and.                            &
@@ -1987,7 +2249,12 @@
             self%state(iobs)=self%state(iobs)/Tsteps
           END IF
 # ifdef MASKING
-          IF (wsum.gt.0.0_r8) self%obsVetting(iobs)=1
+          IF (wsum.gt.0.0_r8) THEN
+            self%obsVetting(iobs)=1
+          ELSE
+            self%ObsVetting(iobs)=0
+            reject=reject+1
+          END IF
 # else
           self%ObsVetting(iobs)=1
 # endif
@@ -2002,7 +2269,7 @@
 !-----------------------------------------------------------------------
 !  It interpolates 3D state variables at the time-averaged observation
 !  locations. The 3D state variable is time-averaged according to the
-!  starting and ending time window values specified in the IODA-type 
+!  starting and ending time window values specified in the IODA-type
 !  observation file. Time-averaged observations are assumed to be at
 !  RHO-points (A-grid).
 !
@@ -2020,8 +2287,8 @@
 !                  (i1,j1,k1) |_____________|/
 !                             1           2
 !
-      SUBROUTINE obs_hofx_time_avg3d (self, obs, ng, model, ivar,       &
-     &                                iTstr, iTend,                     &
+      SUBROUTINE obs_hofx_time_avg3d (self, obs, ng, model,             &
+     &                                ivar, reject, iTstr, iTend,       &
      &                                LBi, UBi, LBj, UBj, field)
 !
       CLASS (obs_hofx),  intent(inout) :: self       ! H(x) object
@@ -2029,6 +2296,7 @@
       integer,           intent(in   ) :: ng         ! nested grid
       integer,           intent(in   ) :: model      ! kernel identifier
       integer,           intent(in   ) :: ivar       ! variable counter
+      integer (i8b),     intent(out  ) :: reject     ! obs reject count
       integer,           intent(in   ) :: iTstr      ! starting timestep
       integer,           intent(in   ) :: iTend      ! ending   timestep
       integer,           intent(in   ) :: LBi, UBi   ! field I-bounds
@@ -2048,6 +2316,7 @@
 !
       Tsteps=REAL(iTend-iTstr, r8)
 !
+      reject=0
       DO i=obs%NstrObs,obs%NendObs
         IF ((rXmin(ng).le.obs%Xgrid(i)).and.                            &
             (obs%Xgrid(i).lt.rXmax(ng)).and.                            &
@@ -2092,6 +2361,7 @@
               r1=0.0_r8                        ! If deeper, ignore.
               r2=0.0_r8
               self%ObsVetting(iobs)=0
+              reject=reject+1
             ELSE
               DO k=N(ng),2,-1                  ! Otherwise, interpolate
                 Ztop=self%depth(i1,j1,k  )     ! to fractional level
@@ -2155,7 +2425,12 @@
               self%state(iobs)=self%state(iobs)/Tsteps
             END IF
 #  ifdef MASKING
-            IF (wsum.gt.0.0_r8) self%ObsVetting(iobs)=1
+            IF (wsum.gt.0.0_r8) THEN
+              self%ObsVetting(iobs)=1
+            ELSE
+              self%ObsVetting(iobs)=0
+              reject=reject+1
+            END IF
 #  else
             self%ObsVetting(iobs)=1
 #  endif
@@ -2169,6 +2444,7 @@
             IF ((obs%Zgrid(i).gt.0.0_r8).and.                           &
      &          (obs%Zgrid(i).le.1.0_r8)) THEN
               self%ObsVetting(iobs)=0
+              reject=reject+1
             END IF
 #  endif
           END IF
@@ -2197,8 +2473,8 @@
 !                             |____________|
 !                    (i1,j1)  1            2
 !
-      SUBROUTINE obs_hofx_time_avg2d_ad (ad_self, obs, ng, model, ivar, &
-     &                                   iTstr, iTend,                  &
+      SUBROUTINE obs_hofx_time_avg2d_ad (ad_self, obs, ng, model,       &
+     &                                   ivar, reject, iTstr, iTend,    &
      &                                   LBi, UBi, LBj, UBj, ad_field)
 !
       CLASS (obs_hofx),  intent(inout) :: ad_self    ! H^(x) object
@@ -2206,6 +2482,7 @@
       integer,           intent(in   ) :: ng         ! nested grid
       integer,           intent(in   ) :: model      ! kernel identifier
       integer,           intent(in   ) :: ivar       ! variable counter
+      integer (i8b),     intent(out  ) :: reject     ! obs reject count
       integer,           intent(in   ) :: iTstr      ! starting timestep
       integer,           intent(in   ) :: iTend      ! ending   timestep
       integer,           intent(in   ) :: LBi, UBi   ! field I-bounds
@@ -2222,6 +2499,7 @@
 !
       Tsteps=REAL(iTend-iTstr, r8)
 !
+      reject=0
       DO i=obs%NstrObs,obs%NendObs
         IF ((rXmin(ng).le.obs%Xgrid(i)).and.                            &
      &      (obs%Xgrid(i).lt.rXmax(ng)).and.                            &
@@ -2293,7 +2571,12 @@
             ad_self%state(iobs)=0.0_r8
           END IF
 #  ifdef MASKING
-          IF (wsum.gt.0.0_r8) ad_self%obsVetting(iobs)=1
+          IF (wsum.gt.0.0_r8) THEN
+            ad_self%ObsVetting(iobs)=1
+          ELSE
+            ad_self%ObsVetting(iobs)=0
+            reject=reject+1
+          END IF
 #  else
           ad_self%ObsVetting(iobs)=1
 #  endif
@@ -2326,15 +2609,16 @@
 !                  (i1,j1,k1) |_____________|/
 !                             1           2
 !
-      SUBROUTINE obs_hofx_time_avg3d_ad (ad_self, obs, ng, model, ivar, &
-     &                                   iTstr, iTend,                  &
+      SUBROUTINE obs_hofx_time_avg3d_ad (ad_self, obs, ng, model,       &
+     &                                   ivar, iTstr, iTend, reject,    &
      &                                   LBi, UBi, LBj, UBj, ad_field)
 !
       CLASS (obs_hofx),  intent(inout) :: ad_self    ! H^(x) object
       TYPE  (obs_data),  intent(inout) :: obs        ! observation depot
       integer,           intent(in   ) :: ng         ! nested grid
-      integer,           intent(in   ) :: model      ! kernel identifier 
+      integer,           intent(in   ) :: model      ! kernel identifier
       integer,           intent(in   ) :: ivar       ! variable counter
+      integer (i8b),     intent(out  ) :: reject     ! obs reject count
       integer,           intent(in   ) :: iTstr      ! starting timestep
       integer,           intent(in   ) :: iTend      ! ending   timestep
       integer,           intent(in   ) :: LBi, UBi   ! field I-bounds
@@ -2354,6 +2638,7 @@
 !
       Tsteps=REAL(iTend-iTstr, r8)
 !
+      reject=0
       DO i=obs%NstrObs,obs%NendObs
         IF ((rXmin(ng).le.obs%Xgrid(i)).and.                            &
             (obs%Xgrid(i).lt.rXmax(ng)).and.                            &
@@ -2398,6 +2683,7 @@
               r1=0.0_r8                        ! If deeper, ignore.
               r2=0.0_r8
               ad_self%ObsVetting(iobs)=0
+              reject=reject+1
             ELSE
               DO k=N(ng),2,-1                  ! Otherwise, interpolate
                 Ztop=ad_self%depth(i1,j1,k  )  ! to fractional level
@@ -2484,7 +2770,12 @@
               ad_self%state(iobs)=0.0_r8
             END IF
 #   ifdef MASKING
-            IF (wsum.gt.0.0_r8) ad_self%ObsVetting(iobs)=1
+            IF (wsum.gt.0.0_r8) THEN
+              ad_self%ObsVetting(iobs)=1
+            ELSE
+              ad_self%ObsVetting(iobs)=0
+              reject=reject+1
+            END IF
 #   else
             ad_self%ObsVetting(iobs)=1
 #   endif
@@ -2498,6 +2789,7 @@
             IF ((obs%Zgrid(i).gt.0.0_r8).and.                           &
      &          (obs%Zgrid(i).le.1.0_r8)) THEN
               ad_self%ObsVetting(iobs)=0
+              reject=reject+1
             END IF
 #   endif
           END IF
@@ -2534,12 +2826,12 @@
 !  It writes H(x) variables into single or multiple output NetCDF
 !  file(s).
 !
-      SUBROUTINE obs_hofx_nc_write (self, ng, model, ncname)
+      SUBROUTINE obs_hofx_nc_write (self, obs, ng, model)
 !
       CLASS (obs_hofx),   intent(in   ) :: self   ! H(x) object
+      TYPE (obs_pool),    intent(in   ) :: obs    ! observation depot
       integer,            intent(in   ) :: ng     ! nested grid
       integer,            intent(in   ) :: model  ! kernel identifier
-      character (len=*) , intent(in   ) :: ncname ! NetCDF filename
 !
       character (len=*),     parameter :: MyFile =                      &
      &    __FILE__//", roms_hofx_nc_write"

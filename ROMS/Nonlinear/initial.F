@@ -63,6 +63,10 @@
       USE set_massflux_mod,  ONLY : set_massflux
 #endif
 #if defined OBSERVATIONS && !defined RBL4DVAR_FCT_SENSITIVITY
+# ifdef MODERN_OBS
+      USE roms_hofx_mod,     ONLY : hofx_initialize
+      USE roms_obs_mod,      ONLY : obs_initialize
+# endif
       USE obs_initial_mod,   ONLY : obs_initial
 #endif
 #ifdef MASKING
@@ -502,6 +506,19 @@
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
       END DO
 !$OMP BARRIER
+# ifdef MODERN_OBS
+!
+!  Allocate and populate observation pool object.
+!
+      DO ng=1,Ngrids
+        CALL obs_initialize (ng, iNLM, nOBSfiles(ng))
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+      END DO
+!
+!  Allocate and initialize H(x) objects.
+!
+      CALL hofx_initialize (iNLM)
+# endif
 #endif
 
 #if (defined ADJUST_BOUNDARY          || \
