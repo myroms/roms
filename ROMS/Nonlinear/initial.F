@@ -63,11 +63,13 @@
       USE set_massflux_mod,  ONLY : set_massflux
 #endif
 #if defined OBSERVATIONS && !defined RBL4DVAR_FCT_SENSITIVITY
+# ifdef ARCHAIC_OBS
+      USE obs_initial_mod,   ONLY : obs_initial
+# endif
 # ifdef MODERN_OBS
       USE roms_hofx_mod,     ONLY : hofx_initialize
       USE roms_obs_mod,      ONLY : obs_initialize
 # endif
-      USE obs_initial_mod,   ONLY : obs_initial
 #endif
 #ifdef MASKING
       USE set_masks_mod,     ONLY : set_masks
@@ -490,6 +492,7 @@
 #endif
 
 #if defined OBSERVATIONS && !defined RBL4DVAR_FCT_SENSITIVITY
+# ifdef ARCHAIC_OBS
 !
 !-----------------------------------------------------------------------
 !  Open observations NetCDF file and initialize various variables
@@ -506,7 +509,17 @@
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
       END DO
 !$OMP BARRIER
+# endif
 # ifdef MODERN_OBS
+!
+!-----------------------------------------------------------------------
+!  Open IODA-type observation enhanced NetCDF-4 files with first-level
+!  "Groups" (MetaData, ObsError, ObsValue, PreQC). Multiple files can
+!  separate control vector variables, observation types, complex
+!  operators, and area-averaged and/or time-averaged filters. All the
+!  observations are read and stored in the "obs_pool" object to
+!  facilitate processing by the "obs_hofx" operators
+!-----------------------------------------------------------------------
 !
 !  Allocate and populate observation pool object.
 !

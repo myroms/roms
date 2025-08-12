@@ -138,6 +138,7 @@ list( APPEND _files
       ROMS/Utility/roms_hofx.F
       ROMS/Utility/roms_interp.F
       ROMS/Utility/roms_obs.F
+      ROMS/Utility/roms_vchange.F
       ROMS/Utility/round.F
       ROMS/Utility/rpcg_lanczos.F
       ROMS/Utility/set_2dfld.F

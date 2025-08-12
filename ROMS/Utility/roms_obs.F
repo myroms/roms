@@ -77,11 +77,26 @@
 !
         integer, allocatable :: stateID(:)
 !
-!  Observation survey time and average window indices as they appear in
-!  the "time" variable.
+!  Observation survey time indices as they appear in the "time"
+!  variable.
 !
-        integer, allocatable :: surveyIndex(:)   ! unique survey time
-        integer, allocatable :: WindowIndex(:)   ! unique average window
+        integer, allocatable :: surveyIndex(:)
+!
+!  Starting and ending indices for time-averaging are determined by the
+!  specified "TimeStr" and "TimeEnd" range values. A value of zero
+!  indicates that there are no time-averaged observations available for
+!  that period.
+!
+        integer, allocatable :: beginIndex(:)    ! time-averaging start
+        integer, allocatable :: finishIndex(:)   ! time-averagind end
+!
+!  Starting and ending timestep and times for time-averaged operator.
+!
+        integer :: TimeStepStr                   ! starting timestep
+        integer :: TimeStepEnd                   ! ending timestep
+!
+        real (r8), allocatable :: TimeStr(:)     ! starting time
+        real (r8), allocatable :: TimeEnd(:)     ! ending time
 !
 !  Starting and ending observation vector indices available for
 !  requested model time interval, time-0.5*dt to time+0.5*dt. They
@@ -100,30 +115,25 @@
 !
         real (r8) :: spatialAverage
 !
-!  Starting and ending times for time-averaged operator.
-!
-        real (r8), allocatable :: TimeStr(:)    ! starting time
-        real (r8), allocatable :: TimeEnd(:)    ! ending time
-!
 !  Observation spatial and time coordinates. The fractional values are
 !  used for efficient interpolation in the H(x) operator.
 !
-        real(r8), allocatable :: lon(:)         ! observation longitude
-        real(r8), allocatable :: lat(:)         ! observation latitude
-        real(r8), allocatable :: depth(:)       ! depth of observation
-        real(r8), allocatable :: time(:)        ! time  of observation
-        real(r8), allocatable :: surveyTime(:)  ! survey time
+        real (r8), allocatable :: lon(:)        ! observation longitude
+        real (r8), allocatable :: lat(:)        ! observation latitude
+        real (r8), allocatable :: depth(:)      ! depth of observation
+        real (r8), allocatable :: time(:)       ! time  of observation
+        real (r8), allocatable :: surveyTime(:) ! survey time
 !
-        real(r8), allocatable :: Xgrid(:)       ! fractional X-grid
-        real(r8), allocatable :: Ygrid(:)       ! fractional Y-grid
-        real(r8), allocatable :: Zgrid(:)       ! fractional Z-grid
+        real (r8), allocatable :: Xgrid(:)      ! fractional X-grid
+        real (r8), allocatable :: Ygrid(:)      ! fractional Y-grid
+        real (r8), allocatable :: Zgrid(:)      ! fractional Z-grid
 !
 !  If the observations are scalar, the second dimension is unity.
 !  Otherwise, it is used for vectors or multiple observations at the
 !  exact spatial and time coordinates.
 !
-        real(r8), allocatable :: error(:,:)     ! observation error(s)
-        real(r8), allocatable :: value(:,:)     ! observation value(s)
+        real (r8), allocatable :: error(:,:)    ! observation error(s)
+        real (r8), allocatable :: value(:,:)    ! observation value(s)
 !
         character (len=:), allocatable :: vars(:) ! NetCDF variable name
 !
@@ -387,7 +397,7 @@
           ELSE
             IF ((self%TimeStr(i).le.time(ng)).and.                      &
      &          (time(ng).lt.self%TimeEnd(i))) THEN
-              iTstr=INT((self%TimeStr(i)-dstart*day2sec)/dt(ng))
+              iTstr=INT((self%TimeStr(i)-dstart*day2sec)/dt(ng))+1
               iTend=INT((self%TimeEnd(i)-dstart*day2sec)/dt(ng))
               EXIT
             END IF
@@ -413,7 +423,7 @@
       logical                          :: Loaded, isDayUnits
       integer,             allocatable :: wcount(:)
       integer                          :: i, ic, j, lstr, ncount
-      real(r8),           dimension(4) :: Tmin, Tmax
+      real (r8),          dimension(4) :: Tmin, Tmax
       character (len=22), dimension(4) :: Dmin, Dmax
 
       character (len=*),     parameter :: MyFile =                      &
@@ -626,7 +636,8 @@
             IF ((self%TimeStr(i).le.self%time(j)).and.                  &
      &          (self%time(j).lt.self%TimeEnd(i))) THEN
               wcount(i)=wcount(i)+1
-              IF (wcount(i).eq.1) self%WindowIndex(i)=j
+              IF (wcount(i).eq.1) self%beginIndex(i)=j
+              self%finishIndex(i)=wcount(i)
             ELSE
               CYCLE
             END IF
@@ -751,6 +762,10 @@
       CALL self%nc_read (ng, model, nfiles)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
+!  Count total number of observations.
+!
+      CALL self%tally ()
+!
 !  If input multiple IODA observation files, create output IODA files
 !  containing processed observations plus H(x) operators. The files are
 !  created serially by the output thread.
@@ -807,7 +822,7 @@
       character (len=*),        intent(in ) :: name   ! observation name
       TYPE (obs_data), pointer, intent(out) :: field  ! data pointer
 !
-      integer                               :: i, iobs
+      integer                               :: iobs
 
       character (len=*),          parameter :: MyFile =                 &
      &    __FILE__//", obs_pool_get"
@@ -818,7 +833,7 @@
 !
       DO iobs=1,SIZE(self%pool)
         IF (TRIM(name).eq.self%pool(iobs)%name) THEN
-          field => self%pool(i)
+          field => self%pool(iobs)
           RETURN
         END IF
       END DO
@@ -866,23 +881,22 @@
              DO i=nwindow,1,-1
               IF ((self%pool(iobs)%TimeStr(i).le.time(ng)).and.         &
      &            (time(ng).lt.self%pool(iobs)%TimeEnd(i))) THEN
-                Nstr=self%pool(iobs)%WindowIndex(i)
-                IF (i.ne.1) THEN
-                  Nend=self%pool(iobs)%WindowIndex(i-1)-1
-                ELSE
-                  Nend=self%pool(iobs)%WindowIndex(i)
+                IF ((self%pool(iobs)%beginIndex(i).gt.0).and.           &
+     &              (self%pool(iobs)%finishIndex(i).gt.0)) THEN
+                  Nstr=self%pool(iobs)%beginIndex(i)
+                  Nend=self%pool(iobs)%finishIndex(i)
+                  self%pool(iobs)%NstrObs=Nstr
+                  self%pool(iobs)%NendObs=Nend
+                  foundit=.TRUE.
+                  CYCLE
                 END IF
-                self%pool(iobs)%NstrObs=Nstr
-                self%pool(iobs)%NendObs=Nend
-                foundit=.TRUE.
-                CYCLE
               END IF
             END DO
           ELSE
             DO i=nsurvey,1,-1
               IF ((Tstr.le.self%pool(iobs)%surveyTime(i)).and.          &
      &            (self%pool(iobs)%surveyTime(i).lt.Tend)) THEN
-                Nstr=self%pool(iobs)%surveyTime(i)
+                Nstr=self%pool(iobs)%surveyIndex(i)
                 IF (i.ne.1) THEN
                   Nend=self%pool(iobs)%surveyIndex(i-1)-1
                 ELSE
@@ -900,23 +914,22 @@
             DO i=1,nwindow
               IF ((self%pool(iobs)%TimeStr(i).le.time(ng)).and.         &
      &            (time(ng).lt.self%pool(iobs)%TimeEnd(i))) THEN
-                Nstr=self%pool(iobs)%WindowIndex(i)
-                IF (i.ne.nwindow) THEN
-                  Nend=self%pool(iobs)%WindowIndex(i+1)-1
-                ELSE
-                  Nend=self%pool(iobs)%WindowIndex(i)
+                IF ((self%pool(iobs)%beginIndex(i).gt.0).and.           &
+     &              (self%pool(iobs)%finishIndex(i).gt.0)) THEN
+                  Nstr=self%pool(iobs)%beginIndex(i)
+                  Nend=self%pool(iobs)%finishIndex(i)
+                  self%pool(iobs)%NstrObs=Nstr
+                  self%pool(iobs)%NendObs=Nend
+                  foundit=.TRUE.
+                  CYCLE
                 END IF
-                self%pool(iobs)%NstrObs=Nstr
-                self%pool(iobs)%NendObs=Nend
-                foundit=.TRUE.
-                CYCLE
               END IF
             END DO
           ELSE
             DO i=1,nsurvey
               IF ((Tstr.le.self%pool(iobs)%surveyTime(i)).and.          &
      &            (self%pool(iobs)%surveyTime(i).lt.Tend)) THEN
-                Nstr=self%pool(iobs)%surveyTime(i)
+                Nstr=self%pool(iobs)%surveyIndex(i)
                 IF (i.ne.nsurvey) THEN
                   Nend=self%pool(iobs)%surveyIndex(i+1)-1
                 ELSE
@@ -958,7 +971,7 @@
       integer                          :: i, iobs, lstr, myID
       integer                          :: mtimes, mvatt
 !
-      character (len=40)               :: varname(mvar)
+      character (len=40)               :: poolname, varname(mvar)
       character (len=80)               :: string
 
       character (len=*),     parameter :: MyFile =                      &
@@ -1099,9 +1112,15 @@
           self%pool(iobs)%TimeEnd=0.0_r8
           Dmem(ng)=Dmem(ng)+REAL(mtimes,r8)
         END IF
-        IF (.not.allocated(self%pool(iobs)%WindowIndex)) THEN
-          allocate ( self%pool(iobs)%WindowIndex(mtimes) )
-          self%pool(iobs)%WindowIndex=0.0_r8
+
+        IF (.not.allocated(self%pool(iobs)%beginIndex)) THEN
+          allocate ( self%pool(iobs)%beginIndex(mtimes) )
+          self%pool(iobs)%beginIndex=0
+          Dmem(ng)=Dmem(ng)+REAL(mtimes,r8)
+        END IF
+        IF (.not.allocated(self%pool(iobs)%finishIndex)) THEN
+          allocate ( self%pool(iobs)%finishIndex(mtimes) )
+          self%pool(iobs)%finishIndex=0
           Dmem(ng)=Dmem(ng)+REAL(mtimes,r8)
         END IF
       END IF
@@ -1208,22 +1227,33 @@
 !
       SELECT CASE (self%stateID(iobs))
         CASE (1)
+          poolname='SSH'
           varname(1)='SSH'
         CASE (6)
+          poolname='temp'
           varname(1)='temp'
         CASE (7)
+          poolname='salt'
           varname(1)='salt'
         CASE (45)
+          poolname='uv'
           varname(1)='Ucodar'
           Varname(2)='Vcodar'
         CASE (60)
+          poolname='SST'
           varname(1)='SST'
         CASE (67)
+          poolname='TS'
           varname(1)='temp'
           varname(2)='salt'
         CASE (70)
+          poolname='SSS'
           varname(1)='SSS'
       END SELECT
+!
+      lstr=LEN_TRIM(poolname)
+      allocate ( character(LEN=lstr) :: self%pool(iobs)%name )
+      self%pool(iobs)%name=TRIM(poolname)
 !
       lstr=0
       DO i=1,mvar
@@ -2748,8 +2778,8 @@
       END IF
 !
       DO i=1,npool
-        ObsCount(i)=self%pool(i)%nlocs*self%pool(i)%nvars
-        ndatum=ndatum+ObsCount(i)
+        ObsCount(i)=self%pool(i)%nlocs
+        ndatum=ndatum+ObsCount(i)*self%pool(i)%nvars
       END DO
       self%ndatum=ndatum
 !
@@ -2763,8 +2793,8 @@
           allocate ( self%pool(i)%pack_mapping(ObsCount(i),mvars) )
           self%pool(i)%pack_mapping=0
         END IF
-        nc=0
         DO m=1,mvars
+          nc=0
           DO j=1,self%pool(i)%nlocs
             ic=ic+1
             nc=nc+1

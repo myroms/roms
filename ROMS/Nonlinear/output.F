@@ -21,7 +21,7 @@
 # ifdef FLOATS
       USE mod_floats
 # endif
-# if defined FOUR_DVAR || defined VERIFICATION
+# if (defined FOUR_DVAR || defined VERIFICATION) && defined ARCHAIC_OBS
       USE mod_fourdvar
 # endif
       USE mod_iounits
@@ -50,9 +50,12 @@
 # ifdef DISTRIBUTE
       USE distribute_mod,  ONLY : mp_bcasts
 # endif
-# ifdef OBSERVATIONS
+# if defined OBSERVATIONS && defined ARCHAIC_OBS
       USE obs_read_mod,    ONLY : obs_read
       USE obs_write_mod,   ONLY : obs_write
+# endif
+# if defined OBSERVATIONS && defined MODERN_OBS
+      USE roms_hofx_mod,   ONLY : hofx_run
 # endif
       USE strings_mod,     ONLY : FoundError
 # ifdef AVERAGES
@@ -708,7 +711,7 @@
 # if (defined FOUR_DVAR              || \
       defined VERIFICATION)          && \
      !defined I4DVAR_ANA_SENSITIVITY
-#  ifdef OBSERVATIONS
+#  if defined OBSERVATIONS && ARCHAIC_OBS
 !
 !-----------------------------------------------------------------------
 !  If appropriate, process and write model state at observation
@@ -733,6 +736,16 @@
       ELSE
         ProcessObs=.FALSE.
       END IF
+#  endif
+
+#  ifdef MODERN_OBS
+!
+!-----------------------------------------------------------------------
+!  Execute the H(x) operator: If applicable, extract nonlinear model
+!  control variables at the observation locations.
+!-----------------------------------------------------------------------
+!
+      CALL hofx_run (ng, tile, iNLM)
 #  endif
 # endif
 # ifdef PROFILE

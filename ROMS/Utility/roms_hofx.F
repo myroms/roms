@@ -78,7 +78,7 @@
       END TYPE obs_filter
 !
 !-----------------------------------------------------------------------
-!  Observation Operator HofX Object: CLASS(obs_hofx).
+!  Observation Operator H(x) Object: CLASS(obs_hofx).
 !-----------------------------------------------------------------------
 !
       TYPE, PUBLIC :: obs_hofx
@@ -90,14 +90,14 @@
 !  Kernel variables lower and upper bound array dimensions, and parallel
 !  tile partition indices.
 !
-        integer :: tile                             ! domain partition
-        integer :: LBi,   UBi,   LBj,   UBj         ! array bounds
-        integer :: IstrR, IendR, JstrR, JendR       ! partition bounds
+        integer :: tile                              ! domain partition
+        integer :: LBi,   UBi,   LBj,   UBj          ! array bounds
+        integer :: IstrR, IendR, JstrR, JendR        ! partition bounds
 !
 !  Tally of processed observations.
 !
-        integer (i8b) :: ObsCount                   ! approved
-        integer (i8b) :: ObsReject                  ! rejected
+        integer (i8b) :: ObsCount                    ! approved
+        integer (i8b) :: ObsReject                   ! rejected
 !
 !  H(x) operator name.
 !
@@ -106,15 +106,15 @@
 !  Contol vector to store state variables at the aggregated observation
 !  locations.
 !
-        real(r8), allocatable :: state(:)           ! state vector
-        integer,  allocatable :: ObsVetting(:)      ! reject/accept flag
+        real (r8), allocatable :: state(:)           ! state vector
+        integer,   allocatable :: ObsVetting(:)      ! reject/accept flag
 !
 !  Pointers for geometry variables.
 !
-        real(r8), pointer :: angle(:,:)   => NULL() ! curvilinear angle
-        real(r8), pointer :: mask(:,:)    => NULL() ! land-sea mask
+        real (r8), pointer :: angle(:,:)   => NULL() ! curvilinear angle
+        real (r8), pointer :: mask(:,:)    => NULL() ! land-sea mask
 # ifdef SOLVE3D
-        real(r8), pointer :: depth(:,:,:) => NULL() ! depths (m)
+        real (r8), pointer :: depth(:,:,:) => NULL() ! depths (m)
 # endif
 !
         CONTAINS
@@ -624,6 +624,7 @@
       integer                          :: is, ie, ObsSum, ObsReject
 
       character (len=3),   allocatable :: op_handle(:)
+      character (len=40)               :: varname
       character (len=*),     parameter :: MyFile =                       &
      &    __FILE__//", roms_hofx_extract"
 !
@@ -638,7 +639,7 @@
         IF (.not.allocated(reject)) THEN
           allocate ( reject(mvars) )
         END IF
-        IF (.not.allocated(reject)) THEN
+        IF (.not.allocated(op_handle)) THEN
           allocate ( op_handle(mvars) )
           DO i=1,mvars
             op_handle(i)='SUM'
@@ -681,16 +682,37 @@
             is=obs%pool(iobs)%NstrObs
             ie=obs%pool(iobs)%NendObs
             DO i=1,nvars
-              self%ObsCount=self%ObsCount+(ie-is+1)
-              self%ObsReject=self%ObsReject+reject(i)
+              IF (obs%pool(iobs)%IsTimeAveraged.and.                    &
+     &            (obs%pool(iobs)%TimeStepStr.eq.iic(ng))) THEN
+                self%ObsCount=self%ObsCount+(ie-is+1)
+                self%ObsReject=self%ObsReject+reject(i)
+              ELSE IF (.not.obs%pool(iobs)%IsTimeAveraged) THEN
+                self%ObsCount=self%ObsCount+(ie-is+1)
+                self%ObsReject=self%ObsReject+reject(i)
+              END IF
             END DO
 !
 !  Report.
 !
             IF (Master) THEN
               DO i=1,nvars
-                WRITE (stdout,30) obs%pool(iobs)%name, is, ie,          &
-     &                            ie-is+1, reject(i)
+                IF (obs%pool(iobs)%IsAreaAveraged.and.                  &
+     &              obs%pool(iobs)%IsTimeAveraged) THEN
+                  varname=TRIM(obs%pool(iobs)%vname(i)) //              &
+     &                    ' (AreaTimeAvg)'
+                ELSE IF (obs%pool(iobs)%IsAreaAveraged) THEN
+                  varname=TRIM(obs%pool(iobs)%vname(i)) //              &
+     &                    ' (AreaAvg)'
+                ELSE IF (obs%pool(iobs)%IsTimeAveraged) THEN
+                  varname=TRIM(obs%pool(iobs)%vname(i)) //              &
+     &                    ' (TimeAvg)'
+                ELSE
+                  varname=TRIM(obs%pool(iobs)%vname(i))
+                END IF
+                WRITE (stdout,30) TRIM(varname),                        &
+     &                            obs%pool(iobs)%TimeStepStr,           &
+     &                            obs%pool(iobs)%TimeStepEnd,           &
+     &                            is, ie, ie-is+1, reject(i)
                 ObsSum=ObsSum+ie-is+1
                 ObsReject=ObsReject+reject(i)
               END DO
@@ -708,13 +730,13 @@
 !
   10  FORMAT (/,' Number of State Observations Processed:',2x,          &
      &        'ObsTime = ',f12.4,',',t68,a,/,/,                         &
-     &        10x,'Variable',10x,'IstrObs',4x,'IendObs',6x,'Count',     &
-     &        3x,'Rejected',/)
+     &        3x,'Variable',14x,'IstrStep',3x,'IendStep',4x,'IstrObs',  &
+     &        4x,'IendObs',6x,'Count',3x,'Rejected',/)
   20  FORMAT (/,' ROMS_HOFX::extract: Cannot find name = ',a,2x,        &
      &        'in obs%pool(',i0,').')
-  30  FORMAT (10x,a,t25,4(1x,i10))
-  40  FORMAT (/,10x,'Total',t47,2(1x,i10),                              &
-     &        /,10x,'Obs Tally',t47,2(1x,i10),/)
+  30  FORMAT (3x,a,t23,6(1x,i10))
+  40  FORMAT (/,3x,'Total',t67,2(1x,i10),                               &
+     &        /,3x,'Obs Tally',t67,2(1x,i10),/)
 !
       RETURN
       END SUBROUTINE obs_hofx_extract
@@ -839,6 +861,11 @@
         IF (obs%IsTimeAveraged) THEN
           CALL obs_data_averaging_timesteps (obs, ng, model,            &
      &                                       iTstr, iTend)
+          obs%TimeStepStr=iTstr
+          obs%TimeStepEnd=iTend
+        ELSE
+          obs%TimeStepStr=iic(ng)
+          obs%TimeStepEnd=iic(ng)
         END IF
 !
 !  Compute 2D control variable H(x) operator.
@@ -953,7 +980,7 @@
               field => OCEAN(ng)%e_t(:,:,:,itrc,1)      ! NSA=1 array
 #  endif
             END IF
-          CASE ('u', 'Ua')
+          CASE ('u', 'Ua', 'Ucodar')
             IF (model.eq.iNLM) THEN
               field => OCEAN(ng)%ua
 #  ifdef ADJOINT
@@ -969,7 +996,7 @@
               field => OCEAN(ng)%e_u(:,:,:, 1)          ! NSA=1 array
 #  endif
             END IF
-          CASE ('v', 'Va')
+          CASE ('v', 'Va', 'Vcodar')
             IF (model.eq.iNLM) THEN
               field => OCEAN(ng)%va
 #  ifdef ADJOINT
@@ -986,7 +1013,7 @@
 #  endif
             END IF
           CASE DEFAULT
-            IF (Master) WRITE (stdout,10) TRIM(obs%name)
+            IF (Master) WRITE (stdout,10) TRIM(obs%vname(ivar))
             exit_flag=5
             IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END SELECT
@@ -998,6 +1025,11 @@
         IF (obs%IsTimeAveraged) THEN
           CALL obs_data_averaging_timesteps (obs, ng, model,            &
      &                                       iTstr, iTend)
+          obs%TimeStepStr=iTstr
+          obs%TimeStepEnd=iTend
+        ELSE
+          obs%TimeStepStr=iic(ng)
+          obs%TimeStepEnd=iic(ng)
         END IF
 !
 !  Compute 3D control variable H(x) operator.
@@ -1038,7 +1070,7 @@
 !
       IF (associated(field)) nullify (field)
 !
-  10  FORMAT (/,' ROMS_HOFX::extract3d: Cannot find name = ',a,2x,       &
+  10  FORMAT (/,' ROMS_HOFX::extract3d: Cannot find name = ',a,2x,      &
      &        'in observation depot.')
 !
       RETURN
@@ -1279,13 +1311,13 @@
               END DO
             END IF
 #  endif
-            self%state(iobs)=Hmat(1)*field(i1,j1,k1)+                  &
-     &                       Hmat(2)*field(i2,j1,k1)+                  &
-     &                       Hmat(3)*field(i2,j2,k1)+                  &
-     &                       Hmat(4)*field(i1,j2,k1)+                  &
-     &                       Hmat(5)*field(i1,j1,k2)+                  &
-     &                       Hmat(6)*field(i2,j1,k2)+                  &
-     &                       Hmat(7)*field(i2,j2,k2)+                  &
+            self%state(iobs)=Hmat(1)*field(i1,j1,k1)+                   &
+     &                       Hmat(2)*field(i2,j1,k1)+                   &
+     &                       Hmat(3)*field(i2,j2,k1)+                   &
+     &                       Hmat(4)*field(i1,j2,k1)+                   &
+     &                       Hmat(5)*field(i1,j1,k2)+                   &
+     &                       Hmat(6)*field(i2,j1,k2)+                   &
+     &                       Hmat(7)*field(i2,j2,k2)+                   &
      &                       Hmat(8)*field(i1,j2,k2)
 #  ifdef MASKING
             IF (wsum.gt.0.0_r8) THEN
@@ -1579,30 +1611,30 @@
               END DO
             END IF
 #   endif
-!^          self%state(iobs)=Hmat(1)*field(i1,j1,k1)+                  &
-!^   &                       Hmat(2)*field(i2,j1,k1)+                  &
-!^   &                       Hmat(3)*field(i2,j2,k1)+                  &
-!^   &                       Hmat(4)*field(i1,j2,k1)+                  &
-!^   &                       Hmat(5)*field(i1,j1,k2)+                  &
-!^   &                       Hmat(6)*field(i2,j1,k2)+                  &
-!^   &                       Hmat(7)*field(i2,j2,k2)+                  &
+!^          self%state(iobs)=Hmat(1)*field(i1,j1,k1)+                   &
+!^   &                       Hmat(2)*field(i2,j1,k1)+                   &
+!^   &                       Hmat(3)*field(i2,j2,k1)+                   &
+!^   &                       Hmat(4)*field(i1,j2,k1)+                   &
+!^   &                       Hmat(5)*field(i1,j1,k2)+                   &
+!^   &                       Hmat(6)*field(i2,j1,k2)+                   &
+!^   &                       Hmat(7)*field(i2,j2,k2)+                   &
 !^   &                       Hmat(8)*field(i1,j2,k2)
 !^
-            ad_field(i1,j1,k1)=ad_field(i1,j1,k1)+                     &
+            ad_field(i1,j1,k1)=ad_field(i1,j1,k1)+                      &
      &                         Hmat(1)*ad_self%state(iobs)
-            ad_field(i2,j1,k1)=ad_field(i2,j1,k1)+                     &
+            ad_field(i2,j1,k1)=ad_field(i2,j1,k1)+                      &
      &                         Hmat(2)*ad_self%state(iobs)
-            ad_field(i2,j2,k1)=ad_field(i2,j2,k1)+                     &
+            ad_field(i2,j2,k1)=ad_field(i2,j2,k1)+                      &
      &                         Hmat(3)*ad_self%state(iobs)
-            ad_field(i1,j2,k1)=ad_field(i1,j2,k1)+                     &
+            ad_field(i1,j2,k1)=ad_field(i1,j2,k1)+                      &
      &                         Hmat(4)*ad_self%state(iobs)
-            ad_field(i1,j1,k2)=ad_field(i1,j1,k2)+                     &
+            ad_field(i1,j1,k2)=ad_field(i1,j1,k2)+                      &
      &                         Hmat(5)*ad_self%state(iobs)
-            ad_field(i2,j1,k2)=ad_field(i2,j1,k2)+                     &
+            ad_field(i2,j1,k2)=ad_field(i2,j1,k2)+                      &
      &                         Hmat(6)*ad_self%state(iobs)
-            ad_field(i2,j2,k2)=ad_field(i2,j2,k2)+                     &
+            ad_field(i2,j2,k2)=ad_field(i2,j2,k2)+                      &
      &                         Hmat(7)*ad_self%state(iobs)
-            ad_field(i1,j2,k2)=ad_field(i1,j2,k2)+                     &
+            ad_field(i1,j2,k2)=ad_field(i1,j2,k2)+                      &
      &                         Hmat(8)*ad_self%state(iobs)
             ad_self%state(iobs)=0.0_r8
 #   ifdef MASKING
@@ -1792,7 +1824,7 @@
       real (r8)                         :: dfr, dfx, dfy
       real (r8)                         :: Tsteps, area_sum, resol
 
-      character (len=*),      parameter :: MyFile =                      &
+      character (len=*),      parameter :: MyFile =                     &
      &    __FILE__//", roms_hofx_area_time_avg2d"
 !
       SourceFile=MyFile
@@ -2411,14 +2443,14 @@
 !  Average resulting H(x) over the specified time window.
 !
             IF ((iTstr.le.iic(ng)).and.(iic(ng).le.iTend)) THEN
-              self%state(iobs)=self%state(iobs)+                       &
-     &                         Hmat(1)*field(i1,j1,k1)+                &
-     &                         Hmat(2)*field(i2,j1,k1)+                &
-     &                         Hmat(3)*field(i2,j2,k1)+                &
-     &                         Hmat(4)*field(i1,j2,k1)+                &
-     &                         Hmat(5)*field(i1,j1,k2)+                &
-     &                         Hmat(6)*field(i2,j1,k2)+                &
-     &                         Hmat(7)*field(i2,j2,k2)+                &
+              self%state(iobs)=self%state(iobs)+                        &
+     &                         Hmat(1)*field(i1,j1,k1)+                 &
+     &                         Hmat(2)*field(i2,j1,k1)+                 &
+     &                         Hmat(3)*field(i2,j2,k1)+                 &
+     &                         Hmat(4)*field(i1,j2,k1)+                 &
+     &                         Hmat(5)*field(i1,j1,k2)+                 &
+     &                         Hmat(6)*field(i2,j1,k2)+                 &
+     &                         Hmat(7)*field(i2,j2,k2)+                 &
      &                         Hmat(8)*field(i1,j2,k2)
             END IF
             IF (iic(ng).eq.iTend) THEN
@@ -2739,31 +2771,31 @@
             END IF
 !
             IF ((iTstr.le.iic(ng)).and.(iic(ng).le.iTend)) THEN
-!>            self%state(iobs)=self%state(iobs)+                       &
-!>   &                         Hmat(1)*field(i1,j1,k1)+                &
-!>   &                         Hmat(2)*field(i2,j1,k1)+                &
-!>   &                         Hmat(3)*field(i2,j2,k1)+                &
-!>   &                         Hmat(4)*field(i1,j2,k1)+                &
-!>   &                         Hmat(5)*field(i1,j1,k2)+                &
-!>   &                         Hmat(6)*field(i2,j1,k2)+                &
-!>   &                         Hmat(7)*field(i2,j2,k2)+                &
+!>            self%state(iobs)=self%state(iobs)+                        &
+!>   &                         Hmat(1)*field(i1,j1,k1)+                 &
+!>   &                         Hmat(2)*field(i2,j1,k1)+                 &
+!>   &                         Hmat(3)*field(i2,j2,k1)+                 &
+!>   &                         Hmat(4)*field(i1,j2,k1)+                 &
+!>   &                         Hmat(5)*field(i1,j1,k2)+                 &
+!>   &                         Hmat(6)*field(i2,j1,k2)+                 &
+!>   &                         Hmat(7)*field(i2,j2,k2)+                 &
 !>   &                         Hmat(8)*field(i1,j2,k2)
 !>
-              ad_field(i1,j1,k1)=ad_field(i1,j1,k1)+                   &
+              ad_field(i1,j1,k1)=ad_field(i1,j1,k1)+                    &
      &                           Hmat(1)*ad_self%state(iobs)
-              ad_field(i2,j1,k1)=ad_field(i2,j1,k1)+                   &
+              ad_field(i2,j1,k1)=ad_field(i2,j1,k1)+                    &
      &                           Hmat(2)*ad_self%state(iobs)
-              ad_field(i2,j2,k1)=ad_field(i2,j2,k1)+                   &
+              ad_field(i2,j2,k1)=ad_field(i2,j2,k1)+                    &
      &                           Hmat(3)*ad_self%state(iobs)
-              ad_field(i1,j2,k1)=ad_field(i1,j2,k1)+                   &
+              ad_field(i1,j2,k1)=ad_field(i1,j2,k1)+                    &
      &                           Hmat(4)*ad_self%state(iobs)
-              ad_field(i1,j1,k2)=ad_field(i1,j1,k2)+                   &
+              ad_field(i1,j1,k2)=ad_field(i1,j1,k2)+                    &
      &                           Hmat(5)*ad_self%state(iobs)
-              ad_field(i2,j1,k2)=ad_field(i2,j1,k2)+                   &
+              ad_field(i2,j1,k2)=ad_field(i2,j1,k2)+                    &
      &                           Hmat(6)*ad_self%state(iobs)
-              ad_field(i2,j2,k2)=ad_field(i2,j2,k2)+                   &
+              ad_field(i2,j2,k2)=ad_field(i2,j2,k2)+                    &
      &                           Hmat(7)*ad_self%state(iobs)
-              ad_field(i1,j2,k2)=ad_field(i1,j2,k2)+                   &
+              ad_field(i1,j2,k2)=ad_field(i1,j2,k2)+                    &
      &                           Hmat(8)*ad_self%state(iobs)
             END IF
             IF (iic(ng).eq.iTend) THEN

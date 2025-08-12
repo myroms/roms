@@ -1,6 +1,7 @@
 #include "cppdefs.h"
       MODULE obs_read_mod
-#if (defined FOUR_DVAR || defined VERIFICATION) && defined OBSERVATIONS
+#if (defined FOUR_DVAR   || defined VERIFICATION) && \
+    defined OBSERVATIONS && defined ARCHAIC_OBS
 !
 !git $Id$
 !================================================== Hernan G. Arango ===
