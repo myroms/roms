@@ -26,6 +26,7 @@
       USE mod_stepping
 !
       USE roms_obs_mod
+      USE roms_vchange_mod
 !
 # ifdef DISTRIBUTE
       USE distribute_mod,   ONLY : mp_aggregate2d,                      &
@@ -39,7 +40,6 @@
 #  endif
 # endif
       USE strings_mod,      ONLY : FoundError
-      USE tracer_index_mod, ONLY : tracer_index
 !
       implicit none
 !
@@ -204,9 +204,9 @@
 !
 !:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 !
-      PUBLIC  :: hofx_initialize
-      PUBLIC  :: hofx_run
-      PUBLIC  :: hofx_finalize
+      PUBLIC :: hofx_initialize
+      PUBLIC :: hofx_run
+      PUBLIC :: hofx_finalize
 !
 !:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 !
@@ -326,23 +326,23 @@
 !
       SELECT CASE (model)
         CASE (iNLM)                                  ! nonlinear
-          CALL obs_hofx_extract (nlm_hofx(ng),                          &
-     &                           obs_store, geom_hofx(ng), ng, model)
+          CALL obs_hofx_extract (nlm_hofx(ng), obs_store,               &
+     &                           VarCha(ng), geom_hofx(ng), ng, model)
 
 # ifndef VERIFICATION
         CASE (iSTD)                                  ! background error
-          CALL obs_hofx_extract (berr_hofx(ng),                         &
-     &                           obs_store, geom_hofx(ng), ng, model)
+          CALL obs_hofx_extract (berr_hofx(ng), obs_store,              &
+     &                           VarCha(ng), geom_hofx(ng), ng, model)
 # endif
 # if defined FOUR_DVAR && defined TLM_OBS
         CASE (iTLM, iRPM)                            ! tangent linear
-          CALL obs_hofx_extract (tlm_hofx(ng),                          &
-     &                           obs_store, geom_hofx(ng), ng, model)
+          CALL obs_hofx_extract (tlm_hofx(ng), obs_store,               &
+     &                           VarCha(ng), geom_hofx(ng), ng, model)
 # endif
 # if defined FOUR_DVAR && defined ADJOINT
         CASE (iADM)                                  ! adjoint
-          CALL obs_hofx_extract (adm_hofx(ng),                          &
-     &                           obs_store, geom_hofx(ng), ng, model)
+          CALL obs_hofx_extract (adm_hofx(ng), obs_store,               &
+     &                           VarCha(ng), geom_hofx(ng), ng, model)
 # endif
         CASE DEFAULT
           IF (Master) WRITE (stdout,10) model
@@ -610,13 +610,14 @@
 !  computes its transpose, H^(x). Area-averaged and/or time-averaged
 !  operators are available.
 !
-      SUBROUTINE obs_hofx_extract (self, obs, geom, ng, model)
+      SUBROUTINE obs_hofx_extract (self, obs, vchange, geom, ng, model)
 !
-      CLASS (obs_hofx),  intent(inout) :: self     ! H(x) object
-      TYPE (obs_pool),   intent(inout) :: obs      ! observation object
-      TYPE (obs_filter), intent(inout) :: geom     ! geometry object
-      integer,           intent(in   ) :: ng       ! nested grid
-      integer,           intent(in   ) :: model    ! kernel identifier
+      CLASS (obs_hofx),   intent(inout) :: self     ! H(x) object
+      CLASS (obs_pool),   intent(inout) :: obs      ! observation object
+      CLASS (obs_VarCha), intent(inout) :: vchange  ! variable change
+      TYPE (obs_filter),  intent(inout) :: geom     ! geometry object
+      integer,            intent(in   ) :: ng       ! nested grid
+      integer,            intent(in   ) :: model    ! kernel identifier
 !
       TYPE (obs_data),         pointer :: depot
       integer (i8b),       allocatable :: reject(:)
@@ -659,13 +660,13 @@
             SELECT CASE (obs%pool(iobs)%name)
               CASE ('SSH', 'SSS', 'SST')
                 CALL obs_pool_get (obs, obs%pool(iobs)%name, depot)
-                CALL self%extract2d (depot, geom, ng, model, reject,    &
-     &                               obs%pool(iobs)%name)
+                CALL self%extract2d (depot, vchange, geom, ng, model,   &
+     &                               reject, obs%pool(iobs)%name)
 # ifdef SOLVE3D
               CASE ('salt', 'temp', 'uv')
                 CALL obs_pool_get (obs, obs%pool(iobs)%name, depot)
-                CALL self%extract3d (depot, ng, model, reject,          &
-     &                               obs%pool(iobs)%name)
+                CALL self%extract3d (depot, vchange, ng, model,         &
+     &                               reject, obs%pool(iobs)%name)
 # endif
               CASE DEFAULT
                 IF (Master) WRITE (stdout,20) obs%pool(iobs)%name, iobs
@@ -746,109 +747,50 @@
 !  model=iADM, it computes the transport operator, H^(x). Area-averaged
 !  and/or time-averaged operators are available.
 !
-      SUBROUTINE obs_hofx_extract2d (self, obs, geom, ng, model,        &
-     &                               reject, name)
+      SUBROUTINE obs_hofx_extract2d (self, obs, vchange, geom,          &
+     &                               ng, model, reject, name)
 !
-      CLASS (obs_hofx),  intent(inout) :: self      ! H(x) object
-      TYPE (obs_data),   intent(inout) :: obs       ! observation depot
-      TYPE (obs_filter), intent(inout) :: geom      ! geometry object
-      integer,           intent(in   ) :: ng        ! nested grid
-      integer,           intent(in   ) :: model     ! kernel identifier
-      integer (i8b),     intent(out  ) :: reject(:) ! obs reject count
-      character (len=*), intent(in   ) :: name      ! obs pool name
+      CLASS (obs_hofx),   intent(inout) :: self      ! H(x) object
+      CLASS (obs_data),   intent(inout) :: obs       ! observation depot
+      CLASS (obs_VarCha), intent(inout) :: vchange   ! variable change
+      TYPE (obs_filter),  intent(inout) :: geom      ! geometry object
+      integer,            intent(in   ) :: ng        ! nested grid
+      integer,            intent(in   ) :: model     ! kernel identifier
+      integer (i8b),      intent(out  ) :: reject(:) ! obs reject count
+      character (len=*),  intent(in   ) :: name      ! obs pool name
 !
-      logical                          :: IsAreaTimeAveraged
-      logical                          :: IsAreaAveraged
-      logical                          :: IsTimeAveraged
-      integer                          :: LBi, UBi, LBj, UBj
-      integer                          :: iTstr, iTend, ivar
+      logical                           :: IsAreaTimeAveraged
+      logical                           :: IsAreaAveraged
+      logical                           :: IsTimeAveraged
+      integer                           :: LBi, UBi, LBj, UBj
+      integer                           :: iTstr, iTend, ivar, tile
 # ifdef SOLVE3D
-      integer                          :: itrc
+      integer                           :: itrc
 # endif
 !
-      real (r8),               pointer :: field(:,:) => NULL()
+      real (r8),                pointer :: field(:,:) => NULL()
 
-      character (len=*),     parameter :: MyFile =                      &
+      character (len=*),      parameter :: MyFile =                     &
      &    __FILE__//", roms_hofx_extract2d"
 !
       SourceFile=MyFile
 !
-!  Set pointer to kernel variable.
+!  Initialize.
+!
+      tile=self%tile
+      LBi=self%LBi
+      UBi=self%UBi
+      LBj=self%LBj
+      UBj=self%UBj
+!
+!  Compute 2D H(x) operator.
 !
       VAR_LOOP : DO ivar=1,obs%nvars
-        SELECT CASE (TRIM(obs%vname(ivar)))
-          CASE ('ssh', 'SSH')
-            IF (model.eq.iNLM) THEN
-              field => OCEAN(ng)%zeta(:,:,KOUT)
-# ifdef ADJOINT
-            ELSE IF (model.eq.iADM) THEN
-              field => OCEAN(ng)%f_zeta
-# endif
-# ifdef TLM_OBS
-            ELSE IF ((model.eq.iTLM).or.(model.eq.iRPM)) THEN
-              field => OCEAN(ng)%tl_zeta(:,:,KOUT)
-# endif
-# ifndef VERIFICATION
-            ELSE IF (model.eq.iSTD) THEN
-              field => OCEAN(ng)%e_zeta(:,:,1)          ! NSA=1 array
-# endif
-            END IF
-# ifdef SOLVE3D
-          CASE ('sss', 'sst', 'SSS', 'SST')
-            itrc=tracer_index(obs%name)
-            IF (model.eq.iNLM) THEN
-              field => OCEAN(ng)%t(:,:,N(ng),itrc,NOUT)
-#  ifdef ADJOINT
-            ELSE IF (model.eq.iADM) THEN
-              field => OCEAN(ng)%f_t(:,:,N(ng),itrc)
-#  endif
-#  ifdef TLM_OBS
-            ELSE IF ((model.eq.iTLM).or.(model.eq.iRPM)) THEN
-              field => OCEAN(ng)%tl_t(:,:,N(ng),itrc, NOUT)
-#  endif
-#  ifndef VERIFICATION
-            ELSE IF (model.eq.iSTD) THEN
-              field => OCEAN(ng)%e_t(:,:,N(ng),itrc,1) ! NSA=1 array
-#  endif
-            END IF
-          CASE ('u', 'Ua', 'Ucodar')
-            IF (model.eq.iNLM) THEN
-              field => OCEAN(ng)%ua(:,:,N(ng))
-#  ifdef ADJOINT
-            ELSE IF (model.eq.iADM) THEN
-              field => OCEAN(ng)%f_u(:,:,N(ng))
-#  endif
-#  ifdef TLM_OBS
-            ELSE IF ((model.eq.iTLM).or.(model.eq.iRPM)) THEN
-              field => OCEAN(ng)%tl_ua(:,:,N(ng))
-#  endif
-#  ifndef VERIFICATION
-            ELSE IF (model.eq.iSTD) THEN
-              field => OCEAN(ng)%e_u(:,:,N(ng), 1)      ! NSA=1 array
-#  endif
-            END IF
-          CASE ('v', 'Va', 'Vcodar')
-            IF (model.eq.iNLM) THEN
-              field => OCEAN(ng)%va(:,:,N(ng))
-#  ifdef ADJOINT
-            ELSE IF (model.eq.iADM) THEN
-              field => OCEAN(ng)%f_v(:,:,N(ng))
-#  endif
-#  ifdef TLM_OBS
-            ELSE IF ((model.eq.iTLM).or.(model.eq.iRPM)) THEN
-              field => OCEAN(ng)%tl_va(:,:,N(ng))
-#  endif
-#  ifndef VERIFICATION
-            ELSE IF (model.eq.iSTD) THEN
-              field => OCEAN(ng)%e_v(:,:,N(ng), 1)      ! NSA=1 array
-#  endif
-            END IF
-# endif
-          CASE DEFAULT
-            IF (Master) WRITE (stdout,10) TRIM(obs%name)
-            exit_flag=5
-            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END SELECT
+!
+!  Get pointer (vchange%field2d) of the state variable associated with
+!  the observations. If necessary apply the required variable changes.
+!
+        CALL vchange%apply (ng, tile, model, TRIM(obs%vname(ivar)))
 !
 !  Set switch for filters.
 !
@@ -870,62 +812,63 @@
 !
 !  Compute 2D control variable H(x) operator.
 !
-        LBi=self%LBi
-        UBi=self%UBi
-        LBj=self%LBj
-        UBj=self%UBj
-!
         IF (model.ne.iADM) THEN
           IF (IsAreaTimeAveraged) THEN
             CALL self%area_time_avg2d (obs, geom, ng, model,            &
      &                                 ivar, reject(ivar),              &
      &                                 iTstr, iTend,                    &
-     &                                 LBi, UBi, LBj, UBj, field)
+     &                                 LBi, UBi, LBj, UBj,              &
+     &                                 vchange%field2d)
           ELSE IF (IsAreaAveraged) THEN
             CALL self%area_avg2d (obs, geom, ng, model,                 &
      &                            ivar, reject(ivar),                   &
-     &                            LBi, UBi, LBj, UBj, field)
+     &                            LBi, UBi, LBj, UBj,                   &
+     &                            vchange%field2d)
           ELSE IF (IsTimeAveraged) THEN
             CALL self%time_avg2d (obs, ng, model,                       &
      &                            ivar, reject(ivar),                   &
      &                            iTstr, iTend,                         &
-     &                            LBi, UBi, LBj, UBj, field)
+     &                            LBi, UBi, LBj, UBj,                   &
+     &                            vchange%field2d)
           ELSE
             CALL self%interp2d (obs, ng, model,                         &
      &                          ivar, reject(ivar),                     &
-     &                          LBi, UBi, LBj, UBj, field)
+     &                          LBi, UBi, LBj, UBj,                     &
+     &                          vchange%field2d)
           END IF
 # ifdef ADJOINT
-        ELSE IF (model.eq.iADM) THEN
+        ELSE IF (model.eq.iADM) THEN                ! transpose, H^(x)
           IF (IsAreaTimeAveraged) THEN
             CALL self%area_time_avg2d_ad (obs, geom, ng, model,         &
      &                                    ivar, reject(ivar),           &
      &                                    iTstr, iTend,                 &
-     &                                    LBi, UBi, LBj, UBj, field)
+     &                                    LBi, UBi, LBj, UBj,           &
+     &                                    vchange%field2d)
+
           ELSE IF (IsAreaAveraged) THEN
             CALL self%area_avg2d_ad (obs, geom, ng, model,              &
      &                               ivar, reject(ivar),                &
-     &                               LBi, UBi, LBj, UBj, field)
+     &                               LBi, UBi, LBj, UBj,                &
+     &                               vchange%field2d)
           ELSE IF (IsTimeAveraged) THEN
             CALL self%time_avg2d_ad (obs, ng, model,                    &
      &                               ivar, reject(ivar),                &
      &                               iTstr, iTend,                      &
-     &                               LBi, UBi, LBj, UBj, field)
+     &                               LBi, UBi, LBj, UBj,                &
+     &                               vchange%field2d)
           ELSE
             CALL self%interp2d_ad (obs, ng, model,                      &
      &                             ivar, reject(ivar),                  &
-     &                             LBi, UBi, LBj, UBj, field)
+     &                             LBi, UBi, LBj, UBj,                  &
+     &                             vchange%field2d)
           END IF
+!
+!  Adjoint of variables changes, if any.
+!
+          CALL vchange%apply_ad (ng, tile, model, TRIM(obs%vname(ivar)))
 # endif
         END IF
       END DO VAR_LOOP
-!
-!  Nullify pointer.
-!
-      IF (associated(field)) nullify (field)
-!
-  10  FORMAT (/,' ROMS_HOFX::extract2d: Cannot find name = ',a,2x,      &
-     &        'in observation depot.')
 !
       RETURN
       END SUBROUTINE obs_hofx_extract2d
@@ -937,86 +880,43 @@
 !  model=iADM, it computes the transport operator, H^(x). Area-averaged
 !  and/or time-averaged operators are available.
 !
-      SUBROUTINE obs_hofx_extract3d (self, obs, ng, model,              &
-     &                               reject, name)
+      SUBROUTINE obs_hofx_extract3d (self, obs, vchange,                &
+     &                               ng, model, reject, name)
 !
-      CLASS (obs_hofx),  intent(inout) :: self      ! H(x) object
-      TYPE (obs_data),   intent(inout) :: obs       ! observation depot
-      integer,           intent(in   ) :: ng        ! nested grid
-      integer,           intent(in   ) :: model     ! kernel identifier
-      integer (i8b),     intent(out  ) :: reject(:) ! obs reject count
-      character (len=*), intent(in   ) :: name      ! obs pool name
+      CLASS (obs_hofx),   intent(inout) :: self      ! H(x) object
+      CLASS (obs_data),   intent(inout) :: obs       ! observation depot
+      CLASS (obs_VarCha), intent(inout) :: vchange   ! variable change
+      integer,            intent(in   ) :: ng        ! nested grid
+      integer,            intent(in   ) :: model     ! kernel identifier
+      integer (i8b),      intent(out  ) :: reject(:) ! obs reject count
+      character (len=*),  intent(in   ) :: name      ! obs pool name
 !
-      logical                          :: IsTimeAveraged
-      integer                          :: LBi, UBi, LBj, UBj
-      integer                          :: iTstr, iTend
-      integer                          :: itrc, ivar
+      logical                           :: IsTimeAveraged
+      integer                           :: LBi, UBi, LBj, UBj, tile
+      integer                           :: iTstr, iTend
+      integer                           :: itrc, ivar
 !
-      real (r8),               pointer :: field(:,:,:) => NULL()
-
-      character (len=*),     parameter :: MyFile =                      &
+      character (len=*),      parameter :: MyFile =                     &
      &    __FILE__//", roms_hofx_extract3d"
 !
       SourceFile=MyFile
 !
-!  Set pointer to kernel variable.
+!  Initialize.
+!
+      tile=self%tile
+      LBi=self%LBi
+      UBi=self%UBi
+      LBj=self%LBj
+      UBj=self%UBj
+!
+!  Compute the 3D H(x) operator.
 !
       VAR_LOOP : DO ivar=1,obs%nvars
-        SELECT CASE (TRIM(obs%vname(ivar)))
-          CASE ('salt', 'temp', 'tracer')
-            itrc=tracer_index(obs%name)
-            IF (model.eq.iNLM) THEN
-              field => OCEAN(ng)%t(:,:,:,itrc,NOUT)
-#  ifdef ADJOINT
-            ELSE IF (model.eq.iADM) THEN
-              field => OCEAN(ng)%f_t(:,:,:,itrc)
-#  endif
-#  ifdef TLM_OBS
-            ELSE IF ((model.eq.iTLM).or.(model.eq.iRPM)) THEN
-              field => OCEAN(ng)%tl_t(:,:,:,itrc, NOUT)
-#  endif
-#  ifndef VERIFICATION
-            ELSE IF (model.eq.iSTD) THEN
-              field => OCEAN(ng)%e_t(:,:,:,itrc,1)      ! NSA=1 array
-#  endif
-            END IF
-          CASE ('u', 'Ua', 'Ucodar')
-            IF (model.eq.iNLM) THEN
-              field => OCEAN(ng)%ua
-#  ifdef ADJOINT
-            ELSE IF (model.eq.iADM) THEN
-              field => OCEAN(ng)%f_u
-#  endif
-#  ifdef TLM_OBS
-            ELSE IF ((model.eq.iTLM).or.(model.eq.iRPM)) THEN
-              field => OCEAN(ng)%tl_ua
-#  endif
-#  ifndef VERIFICATION
-            ELSE IF (model.eq.iSTD) THEN
-              field => OCEAN(ng)%e_u(:,:,:, 1)          ! NSA=1 array
-#  endif
-            END IF
-          CASE ('v', 'Va', 'Vcodar')
-            IF (model.eq.iNLM) THEN
-              field => OCEAN(ng)%va
-#  ifdef ADJOINT
-            ELSE IF (model.eq.iADM) THEN
-              field => OCEAN(ng)%f_v
-#  endif
-#  ifdef TLM_OBS
-            ELSE IF ((model.eq.iTLM).or.(model.eq.iRPM)) THEN
-              field => OCEAN(ng)%tl_va
-#  endif
-#  ifndef VERIFICATION
-            ELSE IF (model.eq.iSTD) THEN
-              field => OCEAN(ng)%e_v(:,:,:, 1)          ! NSA=1 array
-#  endif
-            END IF
-          CASE DEFAULT
-            IF (Master) WRITE (stdout,10) TRIM(obs%vname(ivar))
-            exit_flag=5
-            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END SELECT
+!
+!  Get pointer (vchange%field3d) of the state variable associated with
+!  the observations. If necessary apply the required variable changes.
+!
+        CALL vchange%apply (ng, tile, model, TRIM(obs%vname(ivar)))
 !
 !  Set switch for filters.
 !
@@ -1034,44 +934,43 @@
 !
 !  Compute 3D control variable H(x) operator.
 !
-        LBi=self%LBi
-        UBi=self%UBi
-        LBj=self%LBj
-        UBj=self%UBj
-!
         IF (model.ne.iADM) THEN
           IF (IsTimeAveraged) THEN
             CALL self%time_avg3d (obs, ng, model,                       &
      &                            ivar, reject(ivar),                   &
      &                            iTstr, iTend,                         &
-     &                            LBi, UBi, LBj, UBj, field)
+     &                            LBi, UBi, LBj, UBj,                   &
+     &                            vchange%field3d)
           ELSE
             CALL self%interp3d (obs, ng, model,                         &
      &                          ivar, reject(ivar),                     &
-     &                          LBi, UBi, LBj, UBj, field)
+     &                          LBi, UBi, LBj, UBj,                     &
+     &                          vchange%field3d)
+
           END IF
 #  ifdef ADJOINT
-        ELSE IF (model.eq.iADM) THEN
+        ELSE IF (model.eq.iADM) THEN                ! transpose, H^(x)
           IF (IsTimeAveraged) THEN
             CALL self%time_avg3d_ad (obs, ng, model,                    &
      &                               ivar, reject(ivar),                &
      &                               iTstr, iTend,                      &
-     &                               LBi, UBi, LBj, UBj, field)
+     &                               LBi, UBi, LBj, UBj,                &
+     &                               vchange%field3d)
+
           ELSE
             CALL self%interp3d_ad (obs, ng, model,                      &
      &                             ivar, reject(ivar),                  &
-     &                             LBi, UBi, LBj, UBj, field)
+     &                             LBi, UBi, LBj, UBj,                  &
+     &                             vchange%field3d)
+
           END IF
+!
+!  Adjoint of variables changes, if any.
+!
+          CALL vchange%apply_ad (ng, tile, model, TRIM(obs%vname(ivar)))
 #  endif
         END IF
       END DO VAR_LOOP
-!
-!  Nullify pointer.
-!
-      IF (associated(field)) nullify (field)
-!
-  10  FORMAT (/,' ROMS_HOFX::extract3d: Cannot find name = ',a,2x,      &
-     &        'in observation depot.')
 !
       RETURN
       END SUBROUTINE obs_hofx_extract3d
@@ -1097,7 +996,7 @@
      &                              LBi, UBi, LBj, UBj, field)
 !
       CLASS (obs_hofx),  intent(inout) :: self       ! H(x) object
-      TYPE  (obs_data),  intent(in   ) :: obs        ! observation depot
+      CLASS (obs_data),  intent(in   ) :: obs        ! observation depot
       integer,           intent(in   ) :: ng         ! nested grid
       integer,           intent(in   ) :: model      ! kernel identifier
       integer,           intent(in   ) :: ivar       ! variable counter
@@ -1202,7 +1101,7 @@
      &                              LBi, UBi, LBj, UBj, field)
 !
       CLASS (obs_hofx),  intent(inout) :: self       ! H(x) object
-      TYPE  (obs_data),  intent(inout) :: obs        ! observation depot
+      CLASS (obs_data),  intent(inout) :: obs        ! observation depot
       integer,           intent(in   ) :: ng         ! nested grid
       integer,           intent(in   ) :: model      ! kernel identifier
       integer,           intent(in   ) :: ivar       ! variable counter
@@ -1372,7 +1271,7 @@
      &                                 LBi, UBi, LBj, UBj, ad_field)
 !
       CLASS (obs_hofx),  intent(inout) :: ad_self    ! H^(x) object
-      TYPE  (obs_data),  intent(in   ) :: obs        ! observation depot
+      CLASS (obs_data),  intent(in   ) :: obs        ! observation depot
       integer,           intent(in   ) :: ng         ! nested grid
       integer,           intent(in   ) :: model      ! kernel identifier
       integer,           intent(in   ) :: ivar       ! variable counter
@@ -1502,7 +1401,7 @@
      &                                 LBi, UBi, LBj, UBj, ad_field)
 !
       CLASS (obs_hofx),  intent(inout) :: ad_self    ! H^(x) object
-      TYPE  (obs_data),  intent(inout) :: obs        ! observation depot
+      CLASS (obs_data),  intent(inout) :: obs        ! observation depot
       integer,           intent(in   ) :: ng         ! nested grid
       integer,           intent(in   ) :: model      ! kernel identifier
       integer,           intent(in   ) :: ivar       ! variable counter
@@ -1691,7 +1590,7 @@
      &                                LBi, UBi, LBj, UBj, field)
 !
       CLASS (obs_hofx),   intent(inout) :: self      ! H(x) object
-      TYPE  (obs_data),   intent(in   ) :: obs       ! observation depot
+      CLASS (obs_data),   intent(in   ) :: obs       ! observation depot
       TYPE  (obs_filter), intent(inout) :: geom      ! geometry
       integer,            intent(in   ) :: ng        ! nested grid
       integer,            intent(in   ) :: model     ! kernel identifier
@@ -1807,7 +1706,7 @@
      &                                     LBi, UBi, LBj, UBj, field)
 !
       CLASS (obs_hofx),   intent(inout) :: self      ! H(x) object
-      TYPE  (obs_data),   intent(in   ) :: obs       ! observation depot
+      CLASS (obs_data),   intent(in   ) :: obs       ! observation depot
       TYPE  (obs_filter), intent(inout) :: geom      ! geometry object
       integer,            intent(in   ) :: ng        ! nested grid
       integer,            intent(in   ) :: model     ! kernel identifier
@@ -1936,7 +1835,7 @@
      &                                   LBi, UBi, LBj, UBj, ad_field)
 !
       CLASS (obs_hofx),   intent(inout) :: ad_self   ! H'(x) object
-      TYPE  (obs_data),   intent(in   ) :: obs       ! observation depot
+      CLASS (obs_data),   intent(in   ) :: obs       ! observation depot
       TYPE  (obs_filter), intent(inout) :: geom      ! geometry object
       integer,            intent(in   ) :: ng        ! nested grid
       integer,            intent(in   ) :: model     ! kernel identifier
@@ -2069,7 +1968,7 @@
      &                                        ad_field)
 !
       CLASS (obs_hofx),   intent(inout) :: ad_self   ! H^(x) object
-      TYPE  (obs_data),   intent(in   ) :: obs       ! observation depot
+      CLASS (obs_data),   intent(in   ) :: obs       ! observation depot
       TYPE  (obs_filter), intent(inout) :: geom      ! geometry object
       integer,            intent(in   ) :: ng        ! nested grid
       integer,            intent(in   ) :: model     ! kernel identifier
@@ -2203,7 +2102,7 @@
      &                                LBi, UBi, LBj, UBj, field)
 !
       CLASS (obs_hofx),  intent(inout) :: self       ! H(x) object
-      TYPE  (obs_data),  intent(in   ) :: obs        ! observation depot
+      CLASS (obs_data),  intent(in   ) :: obs        ! observation depot
       integer,           intent(in   ) :: ng         ! nested grid
       integer,           intent(in   ) :: model      ! kernel identifier
       integer,           intent(in   ) :: ivar       ! variable counter
@@ -2324,7 +2223,7 @@
      &                                LBi, UBi, LBj, UBj, field)
 !
       CLASS (obs_hofx),  intent(inout) :: self       ! H(x) object
-      TYPE  (obs_data),  intent(inout) :: obs        ! observation depot
+      CLASS (obs_data),  intent(inout) :: obs        ! observation depot
       integer,           intent(in   ) :: ng         ! nested grid
       integer,           intent(in   ) :: model      ! kernel identifier
       integer,           intent(in   ) :: ivar       ! variable counter
@@ -2510,7 +2409,7 @@
      &                                   LBi, UBi, LBj, UBj, ad_field)
 !
       CLASS (obs_hofx),  intent(inout) :: ad_self    ! H^(x) object
-      TYPE  (obs_data),  intent(in   ) :: obs        ! observation depot
+      CLASS (obs_data),  intent(in   ) :: obs        ! observation depot
       integer,           intent(in   ) :: ng         ! nested grid
       integer,           intent(in   ) :: model      ! kernel identifier
       integer,           intent(in   ) :: ivar       ! variable counter
@@ -2646,7 +2545,7 @@
      &                                   LBi, UBi, LBj, UBj, ad_field)
 !
       CLASS (obs_hofx),  intent(inout) :: ad_self    ! H^(x) object
-      TYPE  (obs_data),  intent(inout) :: obs        ! observation depot
+      CLASS (obs_data),  intent(inout) :: obs        ! observation depot
       integer,           intent(in   ) :: ng         ! nested grid
       integer,           intent(in   ) :: model      ! kernel identifier
       integer,           intent(in   ) :: ivar       ! variable counter
@@ -2861,7 +2760,7 @@
       SUBROUTINE obs_hofx_nc_write (self, obs, ng, model)
 !
       CLASS (obs_hofx),   intent(in   ) :: self   ! H(x) object
-      TYPE (obs_pool),    intent(in   ) :: obs    ! observation depot
+      CLASS (obs_pool),   intent(in   ) :: obs    ! observation depot
       integer,            intent(in   ) :: ng     ! nested grid
       integer,            intent(in   ) :: model  ! kernel identifier
 !
