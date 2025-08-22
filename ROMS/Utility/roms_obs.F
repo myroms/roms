@@ -51,6 +51,18 @@
       END TYPE nc_group
 !
 !-----------------------------------------------------------------------
+!  Observation Cost Function Object.
+!-----------------------------------------------------------------------
+!
+      TYPE, PUBLIC :: obs_cost
+
+        integer :: nvars                       ! number of variables
+!
+        real (r8), allocatable :: value(:)     ! cost function value
+
+      END TYPE obs_cost
+!
+!-----------------------------------------------------------------------
 !  Observation Data Type Structures/Objects: CLASS(obs_data).
 !-----------------------------------------------------------------------
 !
@@ -182,6 +194,7 @@
         PROCEDURE :: frac_coords         => obs_data_frac_coords
         PROCEDURE :: averaging_timesteps => obs_data_averaging_timesteps
         PROCEDURE :: populate_ioda       => obs_data_populate_ioda
+        PROCEDURE :: qc_threshold        => obs_data_qc_threshold
         PROCEDURE :: stats               => obs_data_stats
 !
       END TYPE obs_data
@@ -422,7 +435,7 @@
 !
       logical                          :: Loaded, isDayUnits
       integer,             allocatable :: wcount(:)
-      integer                          :: i, ic, j, lstr, ncount
+      integer                          :: i, ic, is, j, lstr, ncount
       real (r8),          dimension(4) :: Tmin, Tmax
       character (len=22), dimension(4) :: Dmin, Dmax
 
@@ -631,15 +644,22 @@
           wcount=0
         END IF
 !
-        DO j=1,self%nlocs
-          DO i=1,self%timeWindow
-            IF ((self%TimeStr(i).le.self%time(j)).and.                  &
-     &          (self%time(j).lt.self%TimeEnd(i))) THEN
-              wcount(i)=wcount(i)+1
-              IF (wcount(i).eq.1) self%beginIndex(i)=j
-              self%finishIndex(i)=wcount(i)
+        ic=0
+        is=1
+        DO j=1,self%timeWindow
+          wcount(j)=ic
+          DO i=is,self%nlocs
+            IF ((self%TimeStr(j).le.self%time(i)).and.                  &
+     &          (self%time(i).lt.self%TimeEnd(j))) THEN
+              wcount(j)=wcount(j)+1
+              IF (i.eq.is) THEN
+                self%beginIndex(j)=i
+              END IF
+              self%finishIndex(j)=wcount(j)
             ELSE
-              CYCLE
+              is=i
+              ic=is-1
+              EXIT
             END IF
           END DO
         END DO
@@ -682,6 +702,48 @@
 !
       RETURN
       END SUBROUTINE obs_data_populate_ioda
+!
+!-----------------------------------------------------------------------
+!  It sets the background quality control threshold in terms of the
+!  squared number of standard deviations to use for accepting or
+!  rejecting observations according specified input parameters.
+!
+      SUBROUTINE obs_data_qc_threshold (self, ng, model, ivar, Bthresh)
+!
+      CLASS (obs_data), intent(in   ) :: self       ! observation object
+      integer,          intent(in   ) :: ng         ! nested grid
+      integer,          intent(in   ) :: model      ! kernel identifier
+      integer,          intent(in   ) :: ivar       ! variable counter
+      real (r8),        intent(out  ) :: Bthresh(:) ! threshold
+!
+      integer                         :: i, iloc
+!
+!  Background quality control in terms of state variable indices.
+!
+      IF (bgqc_type(ng).eq.1) THEN
+        DO i=1,MstateVar
+          IF (self%stateID(ivar).eq.i) THEN
+            Bthresh=S_bgqc(i,ng)
+            EXIT
+          END IF
+        END DO
+!
+!  Background quality control in term of observation provenance.
+!
+      ELSE IF (bgqc_type(ng).eq.2) THEN
+        DO iloc=1,self%nlocs
+          Bthresh(iloc)=bgqc_large            ! do not reject
+          DO i=1,Nprovenance(ng)
+            IF (self%provenance(iloc).eq.Iprovenance(i,ng)) THEN
+              Bthresh(iloc)=P_bgqc(i,ng)
+              EXIT
+            END IF
+          END DO
+        END DO
+      END IF
+!
+      RETURN
+      END SUBROUTINE obs_data_qc_threshold
 !
 !-----------------------------------------------------------------------
 !  It computes and reports observation object statistics.

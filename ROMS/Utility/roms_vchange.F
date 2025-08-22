@@ -25,6 +25,8 @@
       USE mod_scalars
       USE mod_stepping
 !
+      USE roms_obs_mod
+!
 # ifdef DISTRIBUTE
 #  ifdef ADJOIN
       USE mp_exchange_mod,  ONLY : ad_mp_exchange3d
@@ -66,9 +68,15 @@
 !
 !  Execution.
 !
-        PROCEDURE :: apply          => var_change_apply
+        PROCEDURE :: apply2d        => var_change_apply2d
+# ifdef SOLVE3D
+        PROCEDURE :: apply3d        => var_change_apply3d
+# endif
 # ifdef AJOINT
-        PROCEDURE :: apply_ad       => var_change_apply_ad
+        PROCEDURE :: apply2d_ad     => var_change_apply2d_ad
+#  ifdef SOLVE3D
+        PROCEDURE :: apply3d_ad     => var_change_apply3d_ad
+#  endif
 # endif
 # ifdef SOLVE3D
 !
@@ -101,8 +109,8 @@
 !
 !:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 !
-      PUBLIC :: roms_vchange_initialize
-      PUBLIC :: roms_vchange_finalize
+      PUBLIC :: vchange_initialize
+      PUBLIC :: avchange_finalize
 !
 !:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 !
@@ -112,7 +120,7 @@
 !
 !  It allocates the variable change object.
 !
-      SUBROUTINE roms_vchange_initialize (model)
+      SUBROUTINE vchange_initialize (model)
 !
       integer,          intent(in   ) :: model      ! kernel identifier
 !
@@ -123,12 +131,12 @@
       END IF
 !
       RETURN
-      END SUBROUTINE roms_vchange_initialize
+      END SUBROUTINE vchange_initialize
 !
 !-----------------------------------------------------------------------
 !  It destoys variable change object.
 !
-      SUBROUTINE roms_vchange_finalize (ng, model)
+      SUBROUTINE vchange_finalize (ng, model)
 !
       integer,          intent(in   ) :: ng         ! nested grid
       integer,          intent(in   ) :: model      ! kernel identifier
@@ -147,32 +155,29 @@
 # endif
 !
       RETURN
-      END SUBROUTINE roms_vchange_finalize
+      END SUBROUTINE vchange_finalize
 !
 ! <><><><><><><><><><><><><><><><><><><><><><><> CLASS OBS_VARCHA <><><>
 !
-!  Given an observation type, it retuns a 2D or 3D pointer for the
-!  state variable associated with the observation, which is used to
-!  compute model at the observtion locations, H(x). If appropriate,
-!  it applies the necessary nonlinear or linear variable changes.
-!  If no variable changes, the transformation is an identity operator.
+!  Given an observation type, it retuns a pointer for the 2D state
+!  variable associated with the observation, which is used to compute
+!  the model at the observtion locations, H(x). If appropriate, it
+!  applies the necessary nonlinear or linear variable changes. If no
+!  variable changes, the transformation is an identity operator.
 !
-      SUBROUTINE var_change_apply (self, ng, tile, model, varname)
+      SUBROUTINE var_change_apply2d (self, ng, tile, model, varname)
 !
       CLASS (obs_VarCha), intent(inout) :: self     ! VarChan object
       integer,            intent(in   ) :: ng       ! nested grid
       integer,            intent(in   ) :: tile     ! domain partition
       integer,            intent(in   ) :: model    ! kernel identifier
-      character (len=*),  intent(in   ) :: varname  
+      character (len=*),  intent(in   ) :: varname  ! state variable
 !
       integer                           :: LBi, UBi, LBj, UBj
-      integer                           :: nz
+      integer                           :: i, itrc, j, nz
 !
       real (r8),    target, allocatable :: field(:,:,:)
       real (r8),            allocatable :: Zeven(:)
-!
-      character (len=*),      parameter :: MyFile =                     &
-     &    __FILE__//", var_change_apply"
 !
 !  Initialize.
 !
@@ -181,12 +186,16 @@
       LBj=BOUNDS(ng)%LBj(tile)
       UBj=BOUNDS(ng)%UBj(tile)
 !
-!  Set pointer (VarCha%field2d or VarCha%field2d) to state variable
-!  associated with the observations. Compute the appropriate variable
-!  change(s), if any. Otherwise, the default is the identity operator.
+      IstrR=BOUNDS(ng)%IstrR(tile)
+      IendR=BOUNDS(ng)%IendR(tile)
+      JstrR=BOUNDS(ng)%JstrR(tile)
+      JendR=BOUNDS(ng)%JendR(tile)
+!
+!  Set pointer (VarCha%field2d) to state variable associated with the
+!  observations. Compute the appropriate variable change(s), if any.
+!  Otherwise, the default is the identity operator.
 !
       IF (associated(self%field2d)) nullify (self%field2d)
-      IF (associated(self%field3d)) nullify (self%field3d)
 !
       SELECT CASE (TRIM(varname))
 !
@@ -203,7 +212,7 @@
 # endif
 # ifndef VERIFICATION
           ELSE IF (model.eq.iSTD) THEN
-            self%field2d => OCEAN(ng)%e_zeta(:,:,1)
+            self%field2d => OCEAN(ng)%e_zeta(i,j,1)
 # endif
           END IF
 
@@ -212,36 +221,18 @@
         CASE ('sss', 'sst', 'SSS', 'SST')
           itrc=tracer_index(varname)
           IF (model.eq.iNLM) THEN
-            self%field2d => OCEAN(ng)%t(:,:,N(ng),itrc,NOUT)
+            self%field2d => OCEAN(ng)%t(:,:,N(ng),NOUT,itrc)
 #  ifdef ADJOINT
           ELSE IF (model.eq.iADM) THEN
             self%field2d => OCEAN(ng)%f_t(:,:,N(ng),itrc)
 #  endif
 #  ifdef TLM_OBS
           ELSE IF ((model.eq.iTLM).or.(model.eq.iRPM)) THEN
-            self%field2d => OCEAN(ng)%tl_t(:,:,N(ng),itrc, NOUT)
+            self%field2d => OCEAN(ng)%tl_t(:,:,N(ng),NOUT,itrc)
 #  endif
 #  ifndef VERIFICATION
           ELSE IF (model.eq.iSTD) THEN
-            self%field2d => OCEAN(ng)%e_t(:,:,N(ng),itrc,1)
-#  endif
-          END IF
-!
-        CASE ('salt', 'temp', 'tracer')
-          itrc=tracer_index(varname)
-          IF (model.eq.iNLM) THEN
-            self%field3d => OCEAN(ng)%t(:,:,:,itrc,NOUT)
-#  ifdef ADJOINT
-          ELSE IF (model.eq.iADM) THEN
-            self%field3d => OCEAN(ng)%f_t(:,:,:,itrc)
-#  endif
-#  ifdef TLM_OBS
-          ELSE IF ((model.eq.iTLM).or.(model.eq.iRPM)) THEN
-            self%field3d => OCEAN(ng)%tl_t(:,:,:,itrc, NOUT)
-#  endif
-#  ifndef VERIFICATION
-          ELSE IF (model.eq.iSTD) THEN
-            self%field2d => OCEAN(ng)%e_t(:,:,:,itrc,1)
+            self%field2d => OCEAN(ng)%e_t(:,:,N(ng),1,itrc)
 #  endif
           END IF
 !
@@ -249,7 +240,7 @@
 !
 !  Transform u- and v-momentum component from C-grid to A-grid. The
 !  A-grid velocities are computed once during the "Ucodar" case.
-!      
+!
           IF (TRIM(varname).eq.'Ucodar') THEN
             IF (model.eq.iNLM) THEN
               self%Uc = OCEAN(ng)%u(:,:,:,NOUT)
@@ -296,34 +287,77 @@
           self%field2d => field(:,:,1)
           deallocate (field)
 # endif
-!
-        CASE DEFAULT
-          IF (Master) WRITE (stdout,10) TRIM(varname)
-          exit_flag=5
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
       END SELECT
 !
-  10  FORMAT (/,' VAR_CHANGE::APPLY: Cannot find name = ',a,2x,         &
-     &        'in observation depot.')
+      RETURN
+      END SUBROUTINE var_change_apply2d
+
+# ifdef SOLVE3D
+!
+!-----------------------------------------------------------------------
+!  Given an observation type, it retuns a pointer for the 3D state
+!  variable associated with the observation, which is used to compute
+!  the model at the observtion locations, H(x). If appropriate, it
+!  applies the necessary nonlinear or linear variable changes. If no
+!  variable changes, the transformation is an identity operator.
+!
+      SUBROUTINE var_change_apply3d (self, ng, tile, model, varname)
+!
+      CLASS (obs_VarCha), intent(inout) :: self     ! VarChan object
+      integer,            intent(in   ) :: ng       ! nested grid
+      integer,            intent(in   ) :: tile     ! domain partition
+      integer,            intent(in   ) :: model    ! kernel identifier
+      character (len=*),  intent(in   ) :: varname
+!
+      integer                           :: itrc
+!
+!  Set pointer (VarCha%field3d) to state variable associated with the
+!  observations. Compute the appropriate variable change(s), if any.
+!  Otherwise, the default is the identity operator.
+!
+      IF (associated(self%field3d)) nullify (self%field3d)
+!
+      SELECT CASE (TRIM(varname))
+!
+        CASE ('salt', 'temp', 'tracer')
+          itrc=tracer_index(varname)
+          IF (model.eq.iNLM) THEN
+            self%field3d => OCEAN(ng)%t(:,:,:,NOUT,itrc)
+#  ifdef ADJOINT
+          ELSE IF (model.eq.iADM) THEN
+            self%field3d => OCEAN(ng)%f_t(:,:,:,itrc)
+#  endif
+#  ifdef TLM_OBS
+          ELSE IF ((model.eq.iTLM).or.(model.eq.iRPM)) THEN
+            self%field3d => OCEAN(ng)%tl_t(:,:,:,NOUT,itrc)
+#  endif
+#  ifndef VERIFICATION
+          ELSE IF (model.eq.iSTD) THEN
+            self%field2d => OCEAN(ng)%e_t(:,:,:,1,itrc)
+#  endif
+          END IF
+      END SELECT
 !
       RETURN
-      END SUBROUTINE var_change_apply
+      END SUBROUTINE var_change_apply3d
+# endif
 
 # ifdef ADJOINT
 !
 !-----------------------------------------------------------------------
-!  Adjoint of applying the necessary linear variable changes.  
+!  Adjoint of applying the necessary linear 2D variable changes.
 !
-      SUBROUTINE var_change_apply_ad (ad_self, ng, tile, model, varname)
+      SUBROUTINE var_change_apply2d_ad (ad_self, ng, tile, model,       &
+     &                                  varname)
 !
       CLASS (obs_VarCha), intent(inout) :: ad_self  ! VarChan object
       integer,            intent(in   ) :: ng       ! nested grid
       integer,            intent(in   ) :: tile     ! domain partition
       integer,            intent(in   ) :: model    ! kernel identifier
-      character (len=*),  intent(in   ) :: varname  
+      character (len=*),  intent(in   ) :: varname
 !
       integer                           :: LBi, UBi, LBj, UBj
-      integer                           :: nz
+      integer                           :: i, j, nz
 !
       real (r8),    target, allocatable :: ad_field(:,:,:)
       real (r8),            allocatable :: Zeven(:)
@@ -335,13 +369,13 @@
       LBj=BOUNDS(ng)%LBj(tile)
       UBj=BOUNDS(ng)%UBj(tile)
 !
-!  Set pointer (VarCha%field2d or VarCha%field2d) to state variable
-!  associated with the observations. Compute the appropriate variable
-!  change(s), if any. Otherwise, the default is the identity operator.
+!  Set pointer (ad_self%field2d) to state variable associated with the
+!  observations. Compute the appropriate variable  change(s), if any.
+!  Otherwise, the default is the identity operator.
 !
       SELECT CASE (TRIM(varname))
 
-# ifdef SOLVE3D
+#  ifdef SOLVE3D
         CASE ('Ucodar', 'Vcodar')
 !
 !  Adjoint of pointer association.
@@ -394,7 +428,7 @@
 !  Adjoint of transforming u- and v-momentum component from C-grid to
 !  A-grid.
 !
-!>        IF (TRIM(varname).eq.'Ucodar') THEN 
+!>        IF (TRIM(varname).eq.'Ucodar') THEN
 !>
           IF (TRIM(varname).eq.'Vcodar') THEN
 !>          CALL self%uv_c2a (ng, tile, model)
@@ -403,16 +437,48 @@
             ad_self%Ua = ad_self%Ua + ad_self%Uc
             ad_self%Va = ad_self%Va + ad_self%Vc
           END IF
-# endif
+#  endif
       END SELECT
 !
       RETURN
-      END SUBROUTINE var_change_apply_ad
+      END SUBROUTINE var_change_apply2d_ad
+
+#  ifdef SOLVE3D
+!
+!-----------------------------------------------------------------------
+!  Adjoint of applying the necessary linear 3D variable changes.
+!
+      SUBROUTINE var_change_apply3d_ad (ad_self, ng, tile, model,       &
+     &                                  varname)
+!
+      CLASS (obs_VarCha), intent(inout) :: ad_self  ! VarChan object
+      integer,            intent(in   ) :: ng       ! nested grid
+      integer,            intent(in   ) :: tile     ! domain partition
+      integer,            intent(in   ) :: model    ! kernel identifier
+      character (len=*),  intent(in   ) :: varname
+!
+      integer                           :: itrc
+!
+!  Set pointer (ad_self%field2d) to state variable associated with the
+!  observations. Compute the appropriate variable  change(s), if any.
+!  Otherwise, the default is the identity operator.
+!
+      SELECT CASE (TRIM(varname))
+        CASE ('salt', 'temp', 'tracer')
+          itrc=tracer_index(varname)
+!>
+!> Currently, no variable changes are needed for 3D variables.
+!>
+      END SELECT
+!
+      RETURN
+      END SUBROUTINE var_change_apply3d_ad
+#  endif
 # endif
+
 # ifdef SOLVE3D
 !
-! <><><><><><><><><><><><><><><><><><><><><><><> CLASS OBS_VarCha <><><>
-!
+!-----------------------------------------------------------------------
 !  It vertically interpolates a 3D terrain-following field to specied
 !  constant depth or depths.
 !

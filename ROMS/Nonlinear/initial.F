@@ -69,6 +69,7 @@
 # ifdef MODERN_OBS
       USE roms_hofx_mod,     ONLY : hofx_initialize
       USE roms_obs_mod,      ONLY : obs_initialize
+      USE roms_vchange_mod,  ONLY : vchange_initialize
 # endif
 #endif
 #ifdef MASKING
@@ -528,9 +529,10 @@
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
       END DO
 !
-!  Allocate and initialize H(x) objects.
+!  Allocate and initialize H(x) and variable change objects.
 !
       CALL hofx_initialize (iNLM)
+      CALL vchange_initialize (iNLM)
 # endif
 #endif
 

@@ -55,7 +55,7 @@
       USE obs_write_mod,   ONLY : obs_write
 # endif
 # if defined OBSERVATIONS && defined MODERN_OBS
-      USE roms_hofx_mod,   ONLY : hofx_run
+      USE roms_hofx_mod,   ONLY : hofx_run, iSTD
 # endif
       USE strings_mod,     ONLY : FoundError
 # ifdef AVERAGES
@@ -743,6 +743,10 @@
 !-----------------------------------------------------------------------
 !  Execute the H(x) operator: If applicable, extract nonlinear model
 !  control variables at the observation locations.
+#   ifdef BGQC
+!  Extract background error at the observation location to accept or
+!  reject observation in terms of background error quality control.
+#   endif
 !-----------------------------------------------------------------------
 !
       CALL hofx_run (ng, tile, iNLM)

@@ -18,6 +18,7 @@
 !
       USE mod_param
       USE mod_parallel
+      USE mod_fourdvar
       USE mod_grid
       USE mod_iounits
       USE mod_netcdf
@@ -109,6 +110,10 @@
         real (r8), allocatable :: state(:)           ! state vector
         integer,   allocatable :: ObsVetting(:)      ! reject/accept flag
 !
+!  Cost Function values per observations in the pool depot.
+!
+        TYPE (obs_cost), allocatable :: ObsCost(:)
+!
 !  Pointers for geometry variables.
 !
         real (r8), pointer :: angle(:,:)   => NULL() ! curvilinear angle
@@ -123,6 +128,13 @@
 !
         PROCEDURE :: create              => obs_hofx_create
         PROCEDURE :: destroy             => obs_hofx_destroy
+
+# ifdef FOUR_DVAR
+!
+!  Data assimilation cost functtion or data penalty functional.
+!
+        PROCEDURE :: cost_function       => obs_hofx_cost_function
+# endif
 !
 !  H(x) Operators: Extract model at observation locations drivers.
 !
@@ -170,8 +182,15 @@
 !  H(x) Utility: Operations, exchanges, and  writing.
 !
         PROCEDURE :: add                 => obs_hofx_add
-        PROCEDURE :: rms                 => obs_hofx_rms
+# ifdef BGQC
+        PROCEDURE :: background_QC       => obs_hofx_background_QC
+# endif
+        PROCEDURE :: increment           => obs_hofx_increment
+        PROCEDURE :: innovation          => obs_hofx_innovation
         PROCEDURE :: nc_write            => obs_hofx_nc_write
+        PROCEDURE :: residual            => obs_hofx_residual
+        PROCEDURE :: rms                 => obs_hofx_rms
+        PROCEDURE :: stats               => obs_hofx_stats
         PROCEDURE :: update              => obs_hofx_update
         PROCEDURE :: zeros               => obs_hofx_zeros
 
@@ -326,23 +345,23 @@
 !
       SELECT CASE (model)
         CASE (iNLM)                                  ! nonlinear
-          CALL obs_hofx_extract (nlm_hofx(ng), obs_store,               &
-     &                           VarCha(ng), geom_hofx(ng), ng, model)
+          CALL nlm_hofx(ng)%extract (obs_store, VarCha(ng),             &
+     &                               geom_hofx(ng), ng, model)
 
 # ifndef VERIFICATION
         CASE (iSTD)                                  ! background error
-          CALL obs_hofx_extract (berr_hofx(ng), obs_store,              &
-     &                           VarCha(ng), geom_hofx(ng), ng, model)
+          CALL berr_hofx(ng)%extract (obs_store, VarCha(ng),            &
+     &                                geom_hofx(ng), ng, model)
 # endif
 # if defined FOUR_DVAR && defined TLM_OBS
         CASE (iTLM, iRPM)                            ! tangent linear
-          CALL obs_hofx_extract (tlm_hofx(ng), obs_store,               &
-     &                           VarCha(ng), geom_hofx(ng), ng, model)
+          CALL tlm_hofx(ng)%extract (obs_store, VarCha(ng),             &
+     &                               geom_hofx(ng), ng, model)
 # endif
 # if defined FOUR_DVAR && defined ADJOINT
         CASE (iADM)                                  ! adjoint
-          CALL obs_hofx_extract (adm_hofx(ng), obs_store,               &
-     &                           VarCha(ng), geom_hofx(ng), ng, model)
+          CALL adm_hofx(ng)%extract (obs_store, VarCha(ng),             &
+     &                               geom_hofx(ng), ng, model)
 # endif
         CASE DEFAULT
           IF (Master) WRITE (stdout,10) model
@@ -374,33 +393,82 @@
 !  If appropiate, collect H(x) data from all tasks.  Then, write out to
 !  output NetCDF files.
 !
+      IF (Master) WRITE (stdout,10) KernelString(model)
+!
       SELECT CASE (model)
         CASE (iNLM)                                  ! nonlinear
           DO ng=1,Ngrids
 # ifdef DISTRIBUTE
-            CALL obs_hofx_update (nlm_hofx(ng), ng, model)
+            CALL nlm_hofx(ng)%update (ng, model)
 # endif
-            CALL obs_hofx_nc_write (nlm_hofx(ng), obs_store, ng, model)
+            IF (wrtNLmod(ng)) THEN
+              IF (Nrun.eq.1) THEN
+                CALL nlm_hofx(ng)%nc_write (obs_store, ng, model,       &
+# ifdef VERIFICATION
+     &                                      'hofx')
+# else
+     &                                      'hofxInitial')
+# endif
+                IF (FoundError(exit_flag, NoError,                      &
+     &                         __LINE__, MyFile)) RETURN
+!
+                CALL nlm_hofx(ng)%nc_write (obs_store, ng, model,       &
+     &                                      'ObsVetting')
+                IF (FoundError(exit_flag, NoError,                      &
+     &                         __LINE__, MyFile)) RETURN
+# ifdef FOUR_DVAR
+!
+                CALL nlm_hofx(ng)%innovation (obs_store, ng, model)
+                IF (FoundError(exit_flag, NoError,                      &
+     &                         __LINE__, MyFile)) RETURN
+# endif
+              END IF
+# ifdef FOUR_DVAR
+!
+              IF (outer.eq.Nouter) THEN
+                CALL nlm_hofx(ng)%nc_write (obs_store, ng, model,       &
+     &                                      'hofxFinal')
+                IF (FoundError(exit_flag, NoError,                      &
+     &                         __LINE__, MyFile)) RETURN
+!
+                CALL nlm_hofx(ng)%increment (obs_store, ng, model)
+                IF (FoundError(exit_flag, NoError,                      &
+     &                         __LINE__, MyFile)) RETURN
+!
+                CALL nlm_hofx(ng)%residual (obs_store, ng, model)
+                IF (FoundError(exit_flag, NoError,                      &
+     &                         __LINE__, MyFile)) RETURN
+              END IF
+# endif
+            END IF
           END DO
 
 # ifndef VERIFICATION
         CASE (iSTD)                                  ! background error
           DO ng=1,Ngrids
 #  ifdef DISTRIBUTE
-            CALL obs_hofx_update (berr_hofx(ng), ng, model)
+            CALL berr_hofx(ng)%update (ng, model)
 #  endif
-            CALL obs_hofx_nc_write (berr_hofx(ng), obs_store, ng, model)
           END DO
 # endif
         CASE DEFAULT
-          IF (Master) WRITE (stdout,10) model
+          IF (Master) WRITE (stdout,20) model
           exit_flag=5
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
       END SELECT
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
-
-  10  FORMAT (/,' ROMS_HOFX::HOFX_FINALIZE: illegal identifier, '       &
+!  Report observation-model statistics.
+!
+      IF (model.eq.iNLM) THEN
+        DO ng=1,Ngrids
+          CALL nlm_hofx(ng)%stats (obs_store, ng, model)
+        END DO
+      END IF
+!
+  10  FORMAT (/,2x,'ROMS_HOFX        - ',a,': ',                        &
+     &        'Finalizing and writing H(x)')
+  20  FORMAT (/,' ROMS_HOFX::HOFX_FINALIZE: illegal identifier, '       &
      &        'model = ',i0)
 !
       RETURN
@@ -533,6 +601,8 @@
       integer,          intent(in   ) :: model    ! kernel identifier
       integer,          intent(in   ) :: ntotal   ! total observations
 !
+      integer                         :: i, mvars, npool
+!
 !  Initialize scalar variables.
 !
       self%ndatum=ntotal
@@ -562,6 +632,20 @@
         allocate ( self%ObsVetting(ntotal) )
         Dmem(ng)=Dmem(ng)+REAL(ntotal,r8)
       END IF
+!
+!  Allocate cost function object.
+!
+      npool=SIZE(obs_store%pool)
+      IF (.not.allocated(self%ObsCost)) THEN
+        allocate ( self%ObsCost(npool) )
+      END IF
+      DO i=1,npool
+        mvars=obs_store%pool(i)%nvars
+        IF (.not.allocated(self%ObsCost(i)%value)) THEN
+          allocate ( self%ObsCost(i)%value(mvars) )
+          self%ObsCost(i)%value=0.0_r8
+        END IF
+      END DO
 !
 !  Set geometry arrays pointers.
 !
@@ -602,6 +686,188 @@
 !
       RETURN
       END SUBROUTINE obs_hofx_destroy
+
+# ifndef VERIFICATION
+!
+! <><><><><><><><><><><><><><><><><><><><><><><><> COST FUNCTIONS <><><>
+!
+!  It computes the data assimilation cost function according to the
+!  selected 4D-Var formulation methodology in ROMS: Indirect Representer
+!  Approach (R4D-Var), Restricted B-preconditioning Lanczos (RBL4D-Var),
+!  Saddle-Point (SP4D-Var), or Incremental Approach (I4D-Var).
+!
+!  Currently, we use the dual formulation RBL4D-Var because of its
+!  advanced capabilities. The R4D-Var and I4D-Var algorithms are now
+!  deprecated and no futher developed, but are keep for historical
+!  purposes.
+
+#  if defined R4DVAR    || defined R4DVAR_ANA_SENSITIVITY || \
+      defined TL_R4DVAR
+!
+!  Data penalty functional:
+!
+!         Jdata = transpose[H(X) - y] * O^(-1) * [H(X) - y]
+!
+!         y  : observations vector
+!       H(X) : representer model at observation locations
+!         O  : observations error covariance
+!
+#  elif defined RBL4DVAR || defined RBL4DVAR_ANA_SENSITIVITY || \
+        defined SP4DVAR  || defined TL_RBL4DVAR
+!
+!  Observation cost function (Jo) as the misfit (square difference)
+!  between model and observations:
+!
+!         Jo = 1/2 transpose[H(X) - y] * O^(-1) * [H(X) - y]
+!
+!         y  : observations vector
+!       H(X) : nolinear model at observation locations
+!         O  : observations error covariance
+!
+#  else
+!
+!  Incremental, strong constraint observation cost function (Jo):
+!
+!         Jo = 1/2 transpose[H(dX) - d] * O^(-1) * [H(dX) - d]
+!
+!         d  : innovation vector, [y - H(Xb)]
+!      H(Xb) : background at observation locations
+!          y : observations vector
+!      H(dX) : increment at observation locations
+!         O  : observations error covariance
+!
+#  endif
+
+      SUBROUTINE obs_hofx_cost_function (self, obs, ng, model)
+!
+      CLASS (obs_hofx),   intent(inout) :: self     ! H(x) object
+      CLASS (obs_pool),   intent(inout) :: obs      ! observation object
+      integer,            intent(in   ) :: ng       ! nested grid
+      integer,            intent(in   ) :: model    ! kernel identifier
+!
+      integer                           :: nlocs, npool, mvars
+      integer                           :: iloc, iobs, ipool, ivar
+      real (r8)                         :: ObsError, ObsCost, misfit
+#  ifdef DATALESS_LOOPS
+      real (r8)                         :: nlmObsCost
+#  endif
+
+#  if defined R4DVAR    || defined R4DVAR_ANA_SENSITIVITY || \
+      defined TL_R4DVAR
+!
+!  Compute data penalty functional, Jdata.
+!
+      IF (model.eq.iRPM) THEN
+        npool=SIZE(obs%pool)
+        DO ipool=1,npool
+          mvars=obs%pool(ipool)%nvars
+          nlocs=obs%pool(ipool)%nlocs
+          ObsCost=0.0_r8
+          DO ivar=1,mvars
+            DO iloc=1,nlocs
+              iobs=obs%pool(ipool)%pack_mapping(iloc,ivar)
+              ObsError=obs%pool(ipool)%error(iloc,ivar)
+              IF ((self%ObsVetting(iobs).gt.0).and.                     &
+     &            (ObsError.ne.0.0_r8)) THEN
+                misfit=self%state(iobs)-                                &
+     &                 obs%pool(ipool)%value(iloc,ivar)
+                ObsCost=ObsCost+                                        &
+     &                  misfit*misfit/(ObsError*ObsError)
+#   ifdef DATALESS_LOOPS
+                misfit=nlm_hofx(ng)%state(iobs)-                        &
+                nlmObsCost=nlmObsCost+                                  &
+     &                     misfit*misfit/(ObsError*ObsError)
+#   endif
+              END IF
+            END DO
+            self%ObsCost(ipool)%value(ivar)=ObsCost
+#   ifdef DATALESS_LOOPS
+            nlm_hofx(ng)%ObsCost(ipool)%value(ivar)=nlmObsCost
+#   endif
+          END DO
+        END DO
+      END IF
+
+#  elif defined RBL4DVAR || defined RBL4DVAR_ANA_SENSITIVITY || \
+        defined SP4DVAR  || defined TL_RBL4DVAR
+!
+!  Compute observation cost function, Jo.
+!
+      IF (model.eq.iNLM) THEN
+        npool=SIZE(obs%pool)
+        DO ipool=1,npool
+          mvars=obs%pool(ipool)%nvars
+          nlocs=obs%pool(ipool)%nlocs
+          ObsCost=0.0_r8
+          DO ivar=1,mvars
+            DO iloc=1,nlocs
+              iobs=obs%pool(ipool)%pack_mapping(iloc,ivar)
+              ObsError=obs%pool(ipool)%error(iloc,ivar)
+              IF ((self%ObsVetting(iobs).gt.0).and.                     &
+     &            (ObsError.ne.0.0_r8)) THEN
+                misfit=self%state(iobs)-                                &
+     &                 obs%pool(ipool)%value(iloc,ivar)
+                ObsCost=ObsCost+                                        &
+     &                  misfit*misfit/(ObsError*ObsError)
+              END IF
+            END DO
+            self%ObsCost(ipool)%value(ivar)=ObsCost
+          END DO
+        END DO
+      END IF
+#  else
+!
+!  Incremental, strong constraint observation cost function, Jo.
+!
+      IF (model.eq.iNLM) THEN
+        npool=SIZE(obs%pool)
+        DO ipool=1,npool
+          mvars=obs%pool(ipool)%nvars
+          nlocs=obs%pool(ipool)%nlocs
+          ObsCost=0.0_r8
+          DO ivar=1,mvars
+            DO iloc=1,nlocs
+              iobs=obs%pool(ipool)%pack_mapping(iloc,ivar)
+              ObsError=obs%pool(ipool)%error(iloc,ivar)
+              IF ((self%ObsVetting(iobs).gt.0).and.                     &
+     &            (ObsError.ne.0.0_r8)) THEN
+                misfit=self%state(iobs)-                                &
+     &                 obs%pool(ipool)%value(iloc,ivar)
+                ObsCost=ObsCost+                                        &
+     &                  misfit*misfit/(ObsError*ObsError)
+              END IF
+            END DO
+            self%ObsCost(ipool)%value(ivar)=ObsCost
+          END DO
+        END DO
+      ELSE IF (model.eq.iTLM) THEN
+        npool=SIZE(obs%pool)
+        DO ipool=1,npool
+          mvars=obs%pool(ipool)%nvars
+          nlocs=obs%pool(ipool)%nlocs
+          ObsCost=0.0_r8
+          DO ivar=1,mvars
+            DO iloc=1,nlocs
+              iobs=obs%pool(ipool)%pack_mapping(iloc,ivar)
+              ObsError=obs%pool(ipool)%error(iloc,ivar)
+              IF ((self%ObsVetting(iobs).gt.0).and.                     &
+     &            (ObsError.ne.0.0_r8)) THEN
+                misfit=nlm_hofx(ng)%state(iobs)+self%state(iobs)-       &
+     &                 obs%pool(ipool)%value(iloc,ivar)
+                ObsCost=ObsCost+                                        &
+                        misfit*misfit/(ObsError*ObsError)
+              END IF
+            END DO
+            self%ObsCost(ipool)%value(ivar)=ObsCost
+          END DO
+        END DO
+      END IF
+#  endif
+!
+      RETURN
+      END SUBROUTINE obs_hofx_cost_function
+# endif
+
 !
 ! <><><><><><><><><><><><><><><><><><><><><><><><> HOFX OPERATORS <><><>
 !
@@ -790,7 +1056,7 @@
 !  Get pointer (vchange%field2d) of the state variable associated with
 !  the observations. If necessary apply the required variable changes.
 !
-        CALL vchange%apply (ng, tile, model, TRIM(obs%vname(ivar)))
+        CALL vchange%apply2d (ng, tile, model, obs%vname(ivar))
 !
 !  Set switch for filters.
 !
@@ -865,7 +1131,7 @@
 !
 !  Adjoint of variables changes, if any.
 !
-          CALL vchange%apply_ad (ng, tile, model, TRIM(obs%vname(ivar)))
+          CALL vchange%apply2d_ad (ng, tile, model, obs%vname(ivar))
 # endif
         END IF
       END DO VAR_LOOP
@@ -916,7 +1182,7 @@
 !  Get pointer (vchange%field3d) of the state variable associated with
 !  the observations. If necessary apply the required variable changes.
 !
-        CALL vchange%apply (ng, tile, model, TRIM(obs%vname(ivar)))
+        CALL vchange%apply3d (ng, tile, model, obs%vname(ivar))
 !
 !  Set switch for filters.
 !
@@ -967,7 +1233,7 @@
 !
 !  Adjoint of variables changes, if any.
 !
-          CALL vchange%apply_ad (ng, tile, model, TRIM(obs%vname(ivar)))
+          CALL vchange%apply3d_ad (ng, tile, model, obs%vname(ivar))
 #  endif
         END IF
       END DO VAR_LOOP
@@ -1600,10 +1866,16 @@
       integer,            intent(in   ) :: LBj, UBj  ! field J-bounds
       real (r8),          intent(in   ) :: field(LBi:,LBj:)
 !
-      integer                         :: iobs, i1, j1, m, nscope
-      integer                         :: i, is, ie, j, js, je
-      real (r8)                       :: dfr, dfx, dfy
-      real (r8)                       :: area_sum, resol
+      integer                           :: iobs, i1, j1, m, nscope
+      integer                           :: i, is, ie, j, js, je
+      real (r8)                         :: dfr, dfx, dfy
+      real (r8)                         :: area_sum, resol
+      real (r8)                         :: my_field
+!
+      character (len=*),      parameter :: MyFile =                     &
+     &    __FILE__//", roms_hofx_area_avg2d"
+!
+      SourceFile=MyFile
 
 # ifdef DISTRIBUTE
 !
@@ -1614,6 +1886,7 @@
      &                     geom%LBi, geom%UBi, geom%LBj, geom%UBj,      &
      &                     geom%Imin, geom%Imax, geom%Jmin, geom%Jmax,  &
      &                     field, geom%global2d)
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 # endif
 !
 !  Compute area-averaged 2D model state variable at the area_averaged
@@ -1641,7 +1914,9 @@
           js=MAX(geom%Jmin, j1-nscope)
           je=MIN(j1+nscope, geom%Jmax)
 !
-!  Average state variable over the area of influence.
+!  Average state variable over the area of influence. If model standard
+!  deviations, square their values to obtain variances. Afterwards, take
+!  the square root to convert back to standard deviations.
 !
           area_sum=0.0_r8
           self%state(iobs)=0.0_r8
@@ -1655,12 +1930,21 @@
               dfr=REAL(nscope, r8)
               IF (SQRT(dfx*dfx+dfy*dfy).le.dfr) THEN
                 area_sum=area_sum+geom%area(i,j)
-                self%state(iobs)=self%state(iobs)+                      &
+                IF (model.eq.iSTD) THEN     ! sum over the square values
 # ifdef DISTRIBUTE
-     &                           geom%area(i,j)*geom%global2d(i,j)
+                  my_field=geom%global2d(i,j)*geom%global2d(i,j)
 # else
-     &                           geom%area(i,j)*field(i,j)
+                  my_field=field(i,j)*field(i,j)
 # endif
+                ELSE
+# ifdef DISTRIBUTE
+                  my_field=geom%global2d(i,j)
+# else
+                  my_field=field(i,j)
+# endif
+                END IF
+                self%state(iobs)=self%state(iobs)+                      &
+     &                           geom%area(i,j)*my_field
               END IF
             END DO
           END DO
@@ -1669,6 +1953,9 @@
 !
           IF (area_sum.gt.0.0_r8) THEN
             self%state(iobs)=self%state(iobs)/area_sum
+            IF (model.eq.iSTD) THEN         ! take the square root
+              self%state(iobs)=SQRT(self%state(iobs))
+            END IF
             self%ObsVetting(iobs)=1
           ELSE
             self%ObsVetting(iobs)=0
@@ -1722,7 +2009,8 @@
       integer                           :: i, is, ie, j, js, je
       real (r8)                         :: dfr, dfx, dfy
       real (r8)                         :: Tsteps, area_sum, resol
-
+      real (r8)                         :: my_field
+!
       character (len=*),      parameter :: MyFile =                     &
      &    __FILE__//", roms_hofx_area_time_avg2d"
 !
@@ -1768,6 +2056,9 @@
           Tsteps=REAL(iTend-iTstr, r8)
 !
 !  Average state variable over the area of influence and time window.
+!  If model standard deviations, square their values to obtain
+!  variances. Afterwards, take the square root to convert back to
+!  standard deviations.
 !
           area_sum=0.0_r8
           IF ((iTstr.le.iic(ng)).and.(iic(ng).le.iTend)) THEN
@@ -1781,12 +2072,21 @@
                 dfr=REAL(nscope, r8)
                 IF (SQRT(dfx*dfx+dfy*dfy).le.dfr) THEN
                   area_sum=area_sum+geom%area(i,j)
-                  self%state(iobs)=self%state(iobs)+                    &
+                  IF (model.eq.iSTD) THEN   ! sum over the square values
 # ifdef DISTRIBUTE
-     &                             geom%area(i,j)*geom%global2d(i,j)
+                    my_field=geom%global2d(i,j)*geom%global2d(i,j)
 # else
-     &                             geom%area(i,j)*field(i,j)
+                    my_field=field(i,j)*field(i,j)
 # endif
+                  ELSE
+# ifdef DISTRIBUTE
+                    my_field=geom%global2d(i,j)
+# else
+                    my_field=field(i,j)
+# endif
+                  END IF
+                  self%state(iobs)=self%state(iobs)+                    &
+     &                             geom%area(i,j)*my_field
                 END IF
               END DO
             END DO
@@ -1796,6 +2096,9 @@
 !
           IF ((area_sum.gt.0.0_r8).and.(iic(ng).eq.iTend)) THEN
             self%state(iobs)=self%state(iobs)/(area_sum*Tsteps)
+            IF (model.eq.iSTD) THEN         ! take the square root
+              self%state(iobs)=SQRT(self%state(iobs))
+            END IF
           END IF
         END IF
         self%ObsVetting(iobs)=1
@@ -2115,7 +2418,7 @@
 !
       integer                          :: i, ic, iobs, i1, i2, j1, j2
       real (r8)                        :: p1, p2, q1, q2, wsum
-      real (r8)                        :: Tsteps
+      real (r8)                        :: Tsteps, my_field
       real (r8),          dimension(4) :: Hmat
 !
 !  Interpolate 2D model state variable at the time-averaged observation
@@ -2167,17 +2470,31 @@
           END IF
 # endif
 !
-!  Average resulting H(x) over the specified time window.
+!  Average resulting H(x) over the specified time window. If model
+!  standard deviations, square their values to obtain variances.
+!  Afterwards, take the square root to convert back to standard
+!  deviations. Probably, unnecessary since it is time independent.
 !
           IF ((iTstr.le.iic(ng)).and.(iic(ng).le.iTend)) THEN
-            self%state(iobs)=self%state(iobs)+                          &
-     &                       Hmat(1)*field(i1,j1)+                      &
-     &                       Hmat(2)*field(i2,j1)+                      &
-     &                       Hmat(3)*field(i2,j2)+                      &
-     &                       Hmat(4)*field(i1,j2)
+            IF (model.eq.iSTD) THEN         ! use squared values
+              self%state(iobs)=self%state(iobs)+                        &
+     &                         Hmat(1)*field(i1,j1)*field(i1,j1)+       &
+     &                         Hmat(2)*field(i2,j1)*field(i2,j1)+       &
+     &                         Hmat(3)*field(i2,j2)*field(i2,j2)+       &
+     &                         Hmat(4)*field(i1,j2)*field(i1,j2)
+            ELSE
+              self%state(iobs)=self%state(iobs)+                        &
+     &                         Hmat(1)*field(i1,j1)+                    &
+     &                         Hmat(2)*field(i2,j1)+                    &
+     &                         Hmat(3)*field(i2,j2)+                    &
+     &                         Hmat(4)*field(i1,j2)
+            END IF
           END IF
           IF (iic(ng).eq.iTend) THEN
             self%state(iobs)=self%state(iobs)/Tsteps
+            IF (model.eq.iSTD) THEN         ! take the square root
+              self%state(iobs)=SQRT(self%state(iobs))
+            END IF
           END IF
 # ifdef MASKING
           IF (wsum.gt.0.0_r8) THEN
@@ -2339,18 +2656,33 @@
             END IF
 #  endif
 !
-!  Average resulting H(x) over the specified time window.
+!  Average resulting H(x) over the specified time window.  If model
+!  standard deviations, square their values to obtain variances.
+!  Afterwards, take the square root to convert back to standard
+!  deviations. Probably, unnecessary since it is time independent.
 !
             IF ((iTstr.le.iic(ng)).and.(iic(ng).le.iTend)) THEN
-              self%state(iobs)=self%state(iobs)+                        &
-     &                         Hmat(1)*field(i1,j1,k1)+                 &
-     &                         Hmat(2)*field(i2,j1,k1)+                 &
-     &                         Hmat(3)*field(i2,j2,k1)+                 &
-     &                         Hmat(4)*field(i1,j2,k1)+                 &
-     &                         Hmat(5)*field(i1,j1,k2)+                 &
-     &                         Hmat(6)*field(i2,j1,k2)+                 &
-     &                         Hmat(7)*field(i2,j2,k2)+                 &
-     &                         Hmat(8)*field(i1,j2,k2)
+              IF (model.eq.iSTD) THEN       ! use squared values
+                self%state(iobs)=self%state(iobs)+                      &
+     &                         Hmat(1)*field(i1,j1,k1)*field(i1,j1,k1)+ &
+     &                         Hmat(2)*field(i2,j1,k1)*field(i2,j1,k1)+ &
+     &                         Hmat(3)*field(i2,j2,k1)*field(i2,j2,k1)+ &
+     &                         Hmat(4)*field(i1,j2,k1)*field(i1,j2,k1)+ &
+     &                         Hmat(5)*field(i1,j1,k2)*field(i1,j1,k2)+ &
+     &                         Hmat(6)*field(i2,j1,k2)*field(i2,j1,k2)+ &
+     &                         Hmat(7)*field(i2,j2,k2)*field(i2,j2,k2)+ &
+     &                         Hmat(8)*field(i1,j2,k2)*field(i1,j2,k2)
+              ELSE
+                self%state(iobs)=self%state(iobs)+                      &
+     &                           Hmat(1)*field(i1,j1,k1)+               &
+     &                           Hmat(2)*field(i2,j1,k1)+               &
+     &                           Hmat(3)*field(i2,j2,k1)+               &
+     &                           Hmat(4)*field(i1,j2,k1)+               &
+     &                           Hmat(5)*field(i1,j1,k2)+               &
+     &                           Hmat(6)*field(i2,j1,k2)+               &
+     &                           Hmat(7)*field(i2,j2,k2)+               &
+     &                           Hmat(8)*field(i1,j2,k2)
+              END IF
             END IF
             IF (iic(ng).eq.iTend) THEN
               self%state(iobs)=self%state(iobs)/Tsteps
@@ -2358,6 +2690,9 @@
 #  ifdef MASKING
             IF (wsum.gt.0.0_r8) THEN
               self%ObsVetting(iobs)=1
+              IF (model.eq.iSTD) THEN       ! take the square root
+                self%state(iobs)=SQRT(self%state(iobs))
+              END IF
             ELSE
               self%ObsVetting(iobs)=0
               reject=reject+1
@@ -2752,25 +3087,380 @@
 !
       RETURN
       END SUBROUTINE obs_hofx_add
+
+# ifdef BGQC
 !
 !-----------------------------------------------------------------------
-!  It writes H(x) variables into single or multiple output NetCDF
+!  It rejects observations that fail the background quality contol by
+!  setting ObsVetting to zero.
+!
+      SUBROUTINE obs_hofx_background_QC (self, obs, berr, ng, model)
+!
+      CLASS (obs_hofx), intent(inout) :: self   ! H(x) object
+      CLASS (obs_pool), intent(in   ) :: obs    ! observation depot
+      CLASS (obs_hofx), intent(in   ) :: Berr   ! H(x) background error
+      integer,          intent(in   ) :: ng     ! nested grid
+      integer,          intent(in   ) :: model  ! kernel identifier
+!
+      integer                         :: nlocs, npool, mvars
+      integer                         :: i, iloc, iobs, ivar
+      real (r8)                       :: BerrInv, obs_err, obs_val
+      real (r8)                       :: df1, df2, thresh
+      real (r8),          allocatable :: Bthresh(:)
+!
+!  Perform background quality control of the observations. Here, "self"
+!  is the nonlinear H(x), except in the inverse representers alogorithm
+!  where H(x) is for the finite amplitude tangent linear model.
+!
+      npool=SIZE(obs%pool)
+      DO i=1,npool
+        mvars=obs%pool(i)%nvars
+        nlocs=obs%pool(i)%nlocs
+!
+        IF (.not.allocated(Bthresh)) THEN
+          allocate ( Bthresh(nlocs) )
+          Bthresh=bgqc_large
+        END IF
+!
+        DO ivar=1,mvars
+          CALL obs%pool(i)%qc_threshold (ng, model, ivar, Bthresh)
+          DO iloc=1,nlocs
+            iobs=obs%pool(i)%pack_mapping(iloc,ivar)
+            IF (self%ObsVetting(iobs).ne.0) THEN
+              obs_val=obs%pool(i)%value(iloc,ivar)
+              obs_err=obs%pool(i)%error(iloc,ivar)
+              BerrInv=1.0_r8/Berr%state(iobs)
+!
+              df1=(obs_val-self%state(iobs))*BerrInv
+              df2=(1.0_r8/obs_err)/(BerrInv*BerrInv)
+!
+              thresh=Bthresh(iloc)*(1.0_r8+df2)
+              IF (df1*df1.gt.thresh) THEN
+                self%ObsVetting(iobs)=0
+              END IF
+            END IF
+          END DO
+        END DO
+        IF (allocated(Bthresh)) deallocate (Bthresh)
+      END DO
+!
+      RETURN
+      END SUBROUTINE obs_hofx_background_QC
+# endif
+!
+!-----------------------------------------------------------------------
+!  It computes and writes the increment (analysis minus background) at
+!  the observation locations into multiple output NetCDF-4 files.
+!
+      SUBROUTINE obs_hofx_increment (self, obs, ng, model)
+!
+      CLASS (obs_hofx), intent(in   ) :: self   ! H(x) analysis object
+      CLASS (obs_pool), intent(in   ) :: obs    ! observation depot
+      integer,          intent(in   ) :: ng     ! nested grid
+      integer,          intent(in   ) :: model  ! kernel identifier
+!
+      integer                         :: nlocs, npool, mvars
+      integer                         :: i, iloc, iobs, ivar
+      real (r8)                       :: Wmin, Wmax
+      real (r8),          allocatable :: work(:)
+!
+      character (len=*),    parameter :: MyFile =                       &
+     &    __FILE__//", roms_hofx_increment"
+!
+      SourceFile=MyFile
+!
+!  Process increment at the observation locations.
+!
+      npool=SIZE(obs%pool)
+      DO i=1,npool
+        mvars=obs%pool(i)%nvars
+        nlocs=obs%pool(i)%nlocs
+        allocate ( work(nlocs) )
+        DO ivar=1,mvars
+          work=0.0_r8
+!
+!  Read in background.
+!
+          CALL netcdf_get_fvar (ng, model, obs%pool(i)%ncname_out,      &
+     &                          TRIM(obs%pool(i)%vars(ivar)), work,     &
+     &                          GrpName = 'hofxInitial')
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+!
+!  Compute increment.
+!
+          Wmin=spval
+          Wmax=-spval
+          DO iloc=1,nlocs
+            iobs=obs%pool(i)%pack_mapping(iloc,ivar)
+            work(iloc)=REAL(self%ObsVetting(iobs), r8)*                 &
+     &                 (self%state(iobs)-work(iloc))
+            IF (self%ObsVetting(iobs).gt.0) THEN
+              Wmin=MIN(Wmin, work(iloc))
+              Wmax=MAX(Wmax, work(iloc))
+            END IF
+          END DO
+!
+!  Write out increment.
+!
+          CALL netcdf_put_fvar (ng, model, obs%pool(i)%ncname_out,      &
+     &                          TRIM(obs%pool(i)%vars(ivar)), work,     &
+     &                          (/1/), (/nlocs/),                       &
+     &                          GrpName = 'Increment')
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+!
+          IF (Master) THEN
+             WRITE (stdout,10) 'Increment',                             &
+     &                         TRIM(obs%pool(i)%vars(ivar)),            &
+     &                         Wmin, Wmax, TRIM(obs%pool(i)%ncname_out)
+          END IF
+          deallocate (work)
+        END DO
+      END DO
+!
+ 10   FORMAT (t22,'Group:',a,'::',a,/,t23,'(Min = ',1p,e12.5,           &
+     &        ' Max = ', 1p,e12.5,')   File: ',a)
+!
+      RETURN
+      END SUBROUTINE obs_hofx_increment
+!
+!-----------------------------------------------------------------------
+!  It computes and writes the innovation (observations minus analysis)
+!  at the observation locations into multiple output NetCDF-4 files.
+!
+      SUBROUTINE obs_hofx_innovation (self, obs, ng, model)
+!
+      CLASS (obs_hofx), intent(in   ) :: self   ! H(x) backgrouns object
+      CLASS (obs_pool), intent(in   ) :: obs    ! observation depot
+      integer,          intent(in   ) :: ng     ! nested grid
+      integer,          intent(in   ) :: model  ! kernel identifier
+!
+      integer                         :: nlocs, npool, mvars
+      integer                         :: i, iloc, iobs, ivar
+      real (r8)                       :: Wmin, Wmax
+      real (r8),          allocatable :: work(:)
+!
+      character (len=*),    parameter :: MyFile =                       &
+     &    __FILE__//", roms_hofx_innovation"
+!
+      SourceFile=MyFile
+!
+!  Process innovation at the observation locations.
+!
+      npool=SIZE(obs%pool)
+      DO i=1,npool
+        mvars=obs%pool(i)%nvars
+        nlocs=obs%pool(i)%nlocs
+        allocate ( work(nlocs) )
+        DO ivar=1,mvars
+          work=0.0_r8
+!
+!  Compute innovation.
+!
+          Wmin=spval
+          Wmax=-spval
+          DO iloc=1,nlocs
+            iobs=obs%pool(i)%pack_mapping(iloc,ivar)
+            work(iloc)=REAL(self%ObsVetting(iobs), r8)*                 &
+     &                 (obs%pool(i)%value(iloc,ivar)-self%state(iobs))
+            IF (self%ObsVetting(iobs).gt.0) THEN
+              Wmin=MIN(Wmin, work(iloc))
+              Wmax=MAX(Wmax, work(iloc))
+            END IF
+          END DO
+!
+!  Write out innovation.
+!
+          CALL netcdf_put_fvar (ng, model, obs%pool(i)%ncname_out,      &
+     &                          TRIM(obs%pool(i)%vars(ivar)), work,     &
+     &                          (/1/), (/nlocs/),                       &
+     &                          GrpName = 'Innovation')
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+!
+          IF (Master) THEN
+             WRITE (stdout,10) 'Innovation',                            &
+     &                         TRIM(obs%pool(i)%vars(ivar)),            &
+     &                         Wmin, Wmax, TRIM(obs%pool(i)%ncname_out)
+          END IF
+          deallocate (work)
+        END DO
+      END DO
+!
+ 10   FORMAT (t22,'Group:',a,'::',a,/,t23,'(Min = ',1p,e12.5,           &
+     &        ' Max = ', 1p,e12.5,')   File: ',a)
+!
+      RETURN
+      END SUBROUTINE obs_hofx_innovation
+!
+!-----------------------------------------------------------------------
+!  It writes generic H(x) variables into multiple output NetCDF-4 files
 !  file(s).
 !
-      SUBROUTINE obs_hofx_nc_write (self, obs, ng, model)
+      SUBROUTINE obs_hofx_nc_write (self, obs, ng, model, grpname)
 !
-      CLASS (obs_hofx),   intent(in   ) :: self   ! H(x) object
-      CLASS (obs_pool),   intent(in   ) :: obs    ! observation depot
-      integer,            intent(in   ) :: ng     ! nested grid
-      integer,            intent(in   ) :: model  ! kernel identifier
+      CLASS (obs_hofx),  intent(in   ) :: self     ! H(x) object
+      CLASS (obs_pool),  intent(in   ) :: obs      ! observation depot
+      integer,           intent(in   ) :: ng       ! nested grid
+      integer,           intent(in   ) :: model    ! kernel identifier
+      character (len=*), intent(in   ) :: grpname  ! NetCDF group name
+!
+      integer                          :: nlocs, npool, mvars
+      integer                          :: i, iloc, iobs, ivar
+      integer (i8b),       allocatable :: iwork(:)
+      real (r8)                        :: Wmin, Wmax
+      real (r8),           allocatable :: work(:)
 !
       character (len=*),     parameter :: MyFile =                      &
      &    __FILE__//", roms_hofx_nc_write"
 !
       SourceFile=MyFile
 !
+!  Write out generic field.
+!
+      SELECT CASE (TRIM(GrpName))
+        CASE ('ObsVetting')
+          npool=SIZE(obs%pool)
+          DO i=1,npool
+            mvars=obs%pool(i)%nvars
+            nlocs=obs%pool(i)%nlocs
+            allocate ( iwork(nlocs) )
+!
+            DO ivar=1,mvars
+              iwork=0_i8b
+              DO iloc=1,nlocs
+                iobs=obs%pool(i)%pack_mapping(iloc,ivar)
+                iwork(iloc)=self%ObsVetting(iobs)
+              END DO
+!
+              CALL netcdf_put_ivar (ng, model, obs%pool(i)%ncname_out,  &
+     &                              obs%pool(i)%vars(ivar), iwork,      &
+     &                              (/1/), (/nlocs/),                   &
+     &                              GrpName = TRIM(grpname))
+              IF (FoundError(exit_flag, NoError,                        &
+     &            __LINE__, MyFile)) RETURN
+!
+              IF (Master) THEN
+                WRITE (stdout,10) TRIM(grpname),                        &
+     &                            TRIM(obs%pool(i)%vars(ivar)),         &
+     &                            MINVAL(iwork), MAXVAL(iwork),         &
+     &                            TRIM(obs%pool(i)%ncname_out)
+              END IF
+              deallocate (iwork)
+            END DO
+          END DO
+!
+        CASE DEFAULT
+          npool=SIZE(obs%pool)
+          DO i=1,npool
+            mvars=obs%pool(i)%nvars
+            nlocs=obs%pool(i)%nlocs
+            allocate ( work(nlocs) )
+!
+            Wmin=spval
+            Wmax=-spval
+            DO ivar=1,mvars
+              work=0.0_r8
+              DO iloc=1,nlocs
+                iobs=obs%pool(i)%pack_mapping(iloc,ivar)
+                work(iloc)=self%state(iobs)
+                IF (self%ObsVetting(iobs).gt.0) THEN
+                  Wmin=MIN(Wmin, work(iloc))
+                  Wmax=MAX(Wmax, work(iloc))
+                END IF
+              END DO
+!
+              CALL netcdf_put_fvar (ng, model, obs%pool(i)%ncname_out,  &
+     &                              obs%pool(i)%vars(ivar), work,       &
+     &                              (/1/), (/nlocs/),                   &
+     &                              GrpName = TRIM(grpname))
+              IF (FoundError(exit_flag, NoError,                        &
+     &            __LINE__, MyFile)) RETURN
+!
+              IF (Master) THEN
+                WRITE (stdout,20) TRIM(grpname),                        &
+     &                            TRIM(obs%pool(i)%vars(ivar)),         &
+     &                            Wmin, Wmax,                           &
+     &                            TRIM(obs%pool(i)%ncname_out)
+              END IF
+              deallocate (work)
+            END DO
+          END DO
+      END SELECT
+!
+ 10   FORMAT (t22,'Group:',a,'::',a,/,t23,'(Min = ',i12,              &
+     &        ' Max = ',i12,')   File: ',a)
+ 20   FORMAT (t22,'Group:',a,'::',a,/,t23,'(Min = ',1p,e12.5,         &
+     &        ' Max = ', 1p,e12.5,')   File: ',a)
+!
       RETURN
       END SUBROUTINE obs_hofx_nc_write
+!
+!-----------------------------------------------------------------------
+!  It computes and writes the residual (observations minus analysis)
+!  at the observation locations into multiple output NetCDF-4 files.
+!
+      SUBROUTINE obs_hofx_residual (self, obs, ng, model)
+!
+      CLASS (obs_hofx), intent(in   ) :: self   ! H(x) analysis object
+      CLASS (obs_pool), intent(in   ) :: obs    ! observation depot
+      integer,          intent(in   ) :: ng     ! nested grid
+      integer,          intent(in   ) :: model  ! kernel identifier
+!
+      integer                         :: nlocs, npool, mvars
+      integer                         :: i, iloc, iobs, ivar
+      real (r8)                       :: Wmin, Wmax
+      real (r8),          allocatable :: work(:)
+!
+      character (len=*),    parameter :: MyFile =                       &
+     &    __FILE__//", roms_hofx_residual"
+!
+      SourceFile=MyFile
+!
+!  Process residual at the observation locations.
+!
+      npool=SIZE(obs%pool)
+      DO i=1,npool
+        mvars=obs%pool(i)%nvars
+        nlocs=obs%pool(i)%nlocs
+        allocate ( work(nlocs) )
+        DO ivar=1,mvars
+          work=0.0_r8
+!
+!  Compute residual.
+!
+          Wmin=spval
+          Wmax=-spval
+          DO iloc=1,nlocs
+            iobs=obs%pool(i)%pack_mapping(iloc,ivar)
+            work(iloc)=REAL(self%ObsVetting(iobs), r8)*                 &
+     &                 (obs%pool(i)%value(iloc,ivar)-self%state(iobs))
+            IF (self%ObsVetting(iobs).gt.0) THEN
+              Wmin=MIN(Wmin, work(iloc))
+              Wmax=MAX(Wmax, work(iloc))
+            END IF
+          END DO
+!
+!  Write out residual.
+!
+          CALL netcdf_put_fvar (ng, model, obs%pool(i)%ncname_out,      &
+     &                          TRIM(obs%pool(i)%vars(ivar)), work,     &
+     &                          (/1/), (/nlocs/),                       &
+     &                          GrpName = 'Residual')
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+!
+          IF (Master) THEN
+             WRITE (stdout,10) 'Residual',                              &
+     &                         TRIM(obs%pool(i)%vars(ivar)),            &
+     &                         Wmin, Wmax, TRIM(obs%pool(i)%ncname_out)
+          END IF
+          deallocate (work)
+        END DO
+      END DO
+!
+ 10   FORMAT (t22,'Group:',a,'::',a,/,t23,'(Min = ',1p,e12.5,           &
+     &        ' Max = ', 1p,e12.5,')   File: ',a)
+!
+      RETURN
+      END SUBROUTINE obs_hofx_residual
 !
 !-----------------------------------------------------------------------
 !  It computes the root-mean-square value of the H(x) vector.
@@ -2796,6 +3486,138 @@
 !
       RETURN
       END SUBROUTINE obs_hofx_rms
+!
+!-----------------------------------------------------------------------
+!  It computes several statistics between model and observarions
+!  (Oke et al., 2002).
+!
+      SUBROUTINE obs_hofx_stats (self, obs, ng, model)
+!
+      CLASS (obs_hofx),   intent(in   ) :: self    ! H(x) object
+      CLASS (obs_pool),   intent(in   ) :: obs     ! observation depot
+      integer,            intent(in   ) :: ng      ! nested grid
+      integer,            intent(in   ) :: model   ! kernel identifier
+!
+      integer                           :: i, ic, iloc, iobs, ivar
+      integer                           :: mvars, nlocs, npool
+      integer,   dimension(NobsVar(ng)) :: Ncount
+!
+      real (r8)                         :: cff1, cff2, mod_val, obs_val
+      real (r8), dimension(NobsVar(ng)) :: CC, MB, MSE, SDE
+      real (r8), dimension(NobsVar(ng)) :: mod_min, mod_max
+      real (r8), dimension(NobsVar(ng)) :: mod_mean, mod_std
+      real (r8), dimension(NobsVar(ng)) :: obs_min, obs_max
+      real (r8), dimension(NobsVar(ng)) :: obs_mean, obs_std
+!
+      character (len=11)                :: svar_name(NobsVar(ng))
+      character (len=11)                :: text(NobsVar(ng))
+!
+!  Initialize.
+!
+      CC=0.0_r8
+      MB=0.0_r8
+      MSE=0.0_r8
+      SDE=0.0_r8
+      mod_min=Large
+      mod_max=-Large
+      mod_mean=0.0_r8
+      obs_min=Large
+      obs_max=-Large
+      obs_mean=0.0_r8
+      mod_std=0.0_r8
+      obs_std=0.0_r8
+      Ncount=0
+!
+!  Compute statistics.
+!
+      ic=0
+      npool=SIZE(obs%pool)
+      DO i=1,npool
+        mvars=obs%pool(i)%nvars
+        nlocs=obs%pool(i)%nlocs
+        DO ivar=1,mvars
+          ic=ic+1
+          svar_name(ic)=obs%pool(i)%vname(ivar)
+          text(ic)='-----------'
+!
+!  Compute min, max, and mean values.
+!
+          DO iloc=1,nlocs
+            iobs=obs%pool(i)%pack_mapping(iloc,ivar)
+            IF (self%ObsVetting(iobs).gt.0) THEN
+              mod_val=self%state(iobs)
+              obs_val=obs%pool(i)%value(iloc,ivar)
+              Ncount(ic)=Ncount(ic)+1
+              mod_min(ic)=MIN(mod_min(ic), mod_val)
+              obs_min(ic)=MIN(obs_min(ic), obs_val)
+              mod_max(ic)=MAX(mod_max(ic), mod_val)
+              obs_max(ic)=MAX(obs_max(ic), obs_val)
+              mod_mean(ic)=mod_mean(ic)+mod_val
+              obs_mean(ic)=obs_mean(ic)+obs_val
+            END IF
+          END DO
+          mod_mean(ic)=mod_mean(ic)/REAL(Ncount(ic),r8)
+          obs_mean(ic)=obs_mean(ic)/REAL(Ncount(ic),r8)
+!
+!  Compute standard deviation and cross-correlation between model and
+!  observations (CC).
+!
+          DO iloc=1,nlocs
+            iobs=obs%pool(i)%pack_mapping(iloc,ivar)
+            IF (self%ObsVetting(iobs).gt.0) THEN
+              mod_val=self%state(iobs)
+              obs_val=obs%pool(i)%value(iloc,ivar)
+              cff1=mod_val-mod_mean(ic)
+              cff2=obs_val-obs_mean(ic)
+              mod_std(ic)=mod_std(ic)+cff1*cff1
+              obs_std(ic)=obs_std(ic)+cff2*cff2
+              CC(ic)=CC(ic)+cff1*cff2
+            END IF
+          END DO
+          mod_std(ic)=SQRT(mod_std(ic)/REAL(Ncount(ic)-1,r8))
+          obs_std(ic)=SQRT(obs_std(ic)/REAL(Ncount(ic)-1,r8))
+          CC(ic)=(CC(ic)/REAL(Ncount(ic),r8))/(mod_std(ic)*obs_std(ic))
+!
+!  Compute model bias (MB), standard deviation error (SDE), and mean
+!  squared error (MSE).
+!
+          MB(ic)=mod_mean(ic)-obs_mean(ic)
+          SDE(ic)=mod_std(ic)-obs_std(ic)
+          MSE(ic)=MB(ic)*MB(ic)+                                        &
+     &            SDE(ic)*SDE(ic)+                                      &
+     &            2.0_r8*mod_std(ic)*obs_std(ic)*(1.0_r8-CC(ic))
+        END DO
+      END DO
+!
+!  Report.
+!
+      IF (Master) THEN
+        WRITE (stdout,10)
+        WRITE (stdout,20) (svar_name(i),i=1,ic)
+        WRITE (stdout,30) (text(i),i=1,ic)
+        WRITE (stdout,40) 'Observation Min   ', (obs_min (i),i=1,ic)
+        WRITE (stdout,40) 'Observation Max   ', (obs_max (i),i=1,ic)
+        WRITE (stdout,40) 'Observation Mean  ', (obs_mean(i),i=1,ic)
+        WRITE (stdout,40) 'Observation STD   ', (obs_std (i),i=1,ic)
+        WRITE (stdout,40) 'Model Min         ', (mod_min (i),i=1,ic)
+        WRITE (stdout,40) 'Model Max         ', (mod_max (i),i=1,ic)
+        WRITE (stdout,40) 'Model Mean        ', (mod_mean(i),i=1,ic)
+        WRITE (stdout,40) 'Model STD         ', (mod_std (i),i=1,ic)
+        WRITE (stdout,40) 'Model Bias        ', (MB(i),i=1,ic)
+        WRITE (stdout,40) 'STD Error         ', (SDE(i),i=1,ic)
+        WRITE (stdout,40) 'Cross-Correlation ', (CC(i),i=1,ic)
+        WRITE (stdout,40) 'Mean Squared Error', (MSE(i),i=1,ic)
+        WRITE (stdout,50) 'Observation Count ', (Ncount(i),i=1,ic)
+      END IF
+!
+ 10   FORMAT (/,' Model-Observations Comparison Statistics:',/)
+ 20   FORMAT (t22,*(a11,1x))
+ 30   FORMAT (t22,*(a11,1x),/)
+ 40   FORMAT (a,3x,*(1p,e11.4,0p,1x))
+ 50   FORMAT (a,3x,*(i11,1x))
+!
+      RETURN
+      END SUBROUTINE obs_hofx_stats
 !
 !-----------------------------------------------------------------------
 !  It collects H(x) values from all tasks in the distributed-memory

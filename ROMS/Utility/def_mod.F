@@ -1,6 +1,6 @@
 #include "cppdefs.h"
       MODULE def_mod_mod
-#if defined FOUR_DVAR || defined VERIFICATION
+#if defined FOUR_DVAR || (defined VERIFICATION && defined ARCHAIC_OBS)
 !
 !git $Id$
 !================================================== Hernan G. Arango ===

@@ -29,7 +29,7 @@
       USE mod_ncparam
       USE mod_scalars
 !
-#ifdef VERIFICATION
+#if defined VERIFICATION && defined ARCHAIC_OBS
       USE def_mod_mod,       ONLY : def_mod
 #endif
       USE close_io_mod,      ONLY : close_inp, close_out
@@ -43,7 +43,12 @@
 # endif
 #endif
 #ifdef VERIFICATION
+# ifdef MODERN_OBS
+      USE roms_hofx_mod,     ONLY : hofx_finalize
+# endif
+# ifdef ARCHAIC_OBS
       USE stats_modobs_mod,  ONLY : stats_modobs
+# endif
 #endif
       USE stdout_mod,        ONLY : Set_StdOutUnit, stdout_unit
       USE strings_mod,       ONLY : FoundError
@@ -215,6 +220,7 @@
       Nrun=1
 
 #ifdef VERIFICATION
+# ifdef ARCHAIC_OBS
 !
 !  Create NetCDF file for model solution at observation locations.
 !
@@ -227,6 +233,19 @@
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END DO
       END IF
+# endif
+# ifdef MODERN_OBS
+!
+!  Set switches to compute and write model at observation locations.
+!
+      IF (Nrun.eq.1) THEN
+        DO ng=1,Ngrids
+          LdefMOD(ng)=.TRUE.
+          wrtNLmod(ng)=.TRUE.
+          wrtObsScale(ng)=.TRUE.
+        END DO
+      END IF
+# endif
 #endif
 #ifdef ENKF_RESTART
 !
@@ -350,18 +369,29 @@
       END IF
 #endif
 #ifdef VERIFICATION
+# ifdef ARCHAIC_OBS
 !
 !-----------------------------------------------------------------------
 !  Compute and report model-observation comparison statistics.
 !-----------------------------------------------------------------------
 !
       DO ng=1,Ngrids
-# ifdef DISTRIBUTE
+#  ifdef DISTRIBUTE
         CALL stats_modobs (ng, MyRank)
-# else
+#  else
         CALL stats_modobs (ng, -1)
-# endif
+#  endif
       END DO
+# endif
+# ifdef MODERN_OBS
+!
+!-----------------------------------------------------------------------
+!  Finalize model at observation locations, H(x). Then, write ouput
+!  enhanced NetCDF-4 files.
+!-----------------------------------------------------------------------
+!
+      CALL hofx_finalize (iNLM)
+# endif
 #endif
 !
 !-----------------------------------------------------------------------
