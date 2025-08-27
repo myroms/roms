@@ -2428,11 +2428,16 @@
 !  If activated IAU, compute the NLM model forcing contribution
 !  (f_state arrays) for the incremental analysis update. The tangent
 !  linear state is needed during the "timeIAU" interval if weak
-!  constraint is also activated (FrequentImpulse=TRUE).
+!  constraint is also activated (FrequentImpulse=TRUE). The IAU
+!  contribution is need in the work d_state array. Thus, a pointer
+!  association with TLM arrays is needed.
 !
       DO ng=1,Ngrids
         IF (timeIAU(ng).gt.0.0_dp) THEN
           IAUswitch(ng)=.TRUE.
+          CALL get_state (ng, 19, 19, ITL(ng), Rec3, LTLM1)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+!
           DO tile=first_tile(ng),last_tile(ng),+1
             CALL frc_iau_ini (ng, tile, iTLM, LTLM1)
           END DO
@@ -2477,26 +2482,27 @@
 
 #  ifdef RPCG
 !
-!  Compute the incremental analysis update forcing for the NLM.
-!  Read the accumulated increment from Rec3 of the ITL file.
+!  Read in cummulative increment (ITL, Rec3) for current outer loop and
+!  load it to the work d_state arrays. It is needed to compute the
+!  Incremental Analysis Update (IAU) forcing contribution.
 !
-        DO ng=1,Ngrids
-          IF (timeIAU(ng).gt.0.0_dp) THEN
-            IAUswitch(ng)=.TRUE.
-            CALL get_state (ng, iADM, 4, ITL(ng), Rec3, LTLM1)
-          END IF
-        END DO
+      DO ng=1,Ngrids
+        IF (timeIAU(ng).gt.0.0_dp) THEN
+          IAUswitch(ng)=.TRUE.
+          CALL get_state (ng, 19, 19, ITL(ng), Rec3, LTLM1)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        END IF
+      END DO
 !
-!    Set up the NL model forcing contribution for the incremental
-!    analysis update.
+!  Initialize NL model Incremental Analysis Update forcing terms.
 !
-        DO ng=1,Ngrids
-          IF (timeIAU(ng).gt.0.0_dp) THEN
-            DO tile=first_tile(ng),last_tile(ng),+1
-              CALL frc_iau_ini (ng, tile, iTLM, LTLM1)
-            END DO
-          END IF
-        END DO
+      DO ng=1,Ngrids
+        IF (timeIAU(ng).gt.0.0_dp) THEN
+          DO tile=first_tile(ng),last_tile(ng),+1
+            CALL frc_iau_ini (ng, tile, iTLM, LTLM1)
+          END DO
+        END IF
+      END DO
 #  endif
 # endif
 !

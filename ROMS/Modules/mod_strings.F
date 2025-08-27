@@ -139,7 +139,7 @@
         integer, parameter :: Mregion = 60      ! start of mpi-region
         integer, parameter :: Nregion = 88
 !
-        character (len=48), dimension(18) :: StateMsg =                 &
+        character (len=48), dimension(19) :: StateMsg =                 &
      &    (/'state initial conditions,                       ',         & !01
      &      'previous state initial conditions,              ',         & !02
      &      'previous adjoint state solution,                ',         & !03
@@ -157,7 +157,8 @@
      &      'model error normalization factors,              ',         & !15
      &      'OBC normalization factors,                      ',         & !16
      &      'surface forcing normalization factors,          ',         & !17
-     &      'saddle-point Arnoldi state vector,              '/)          !18
+     &      'saddle-point Arnoldi state vector,              ',         & !18
+     &      'cummulative increments for IAU,                 '/)          !19
 !
         character (len=50), dimension(Nregion) :: Pregion =             &
      &    (/'Allocation and array initialization ..............',       & !01
