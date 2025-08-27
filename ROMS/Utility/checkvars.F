@@ -142,7 +142,8 @@
 !  process open boundary condition or surface forcing variable in the
 !  4D-Var control vector.
 !
-      IF ((model.le.11).or.(model.eq.14).or.(model.eq.15)) THEN
+      IF ((model.le.11).or.                                             &
+     &    (model.eq.14).or.(model.eq.15).or.(model.eq.19)) THEN
 #ifdef ANA_INITIAL
         IF (nrrec(ng).ne.0) THEN
           get_var(idFsur)=.TRUE.
