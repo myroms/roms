@@ -1118,7 +1118,8 @@
         END DO
       END IF
 
-# if defined BGQC && !defined I4DVAR_ANA_SENSITIVITY
+# if defined BGQC && !(defined I4DVAR_ANA_SENSITIVITY || \
+                       defined VERIFICATION)
 !
 !-----------------------------------------------------------------------
 !  Perform the background quality control: check and reject observations
