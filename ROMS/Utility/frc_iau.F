@@ -83,14 +83,14 @@
      &                       GRID(ng) % vmask,                          &
 # endif
 # ifdef SOLVE3D
-     &                       OCEAN(ng) % tl_u,                          &
-     &                       OCEAN(ng) % tl_v,                          &
-     &                       OCEAN(ng) % tl_t,                          &
+     &                       OCEAN(ng) % d_u,                           &
+     &                       OCEAN(ng) % d_v,                           &
+     &                       OCEAN(ng) % d_t,                           &
 # else
-     &                       OCEAN(ng) % tl_ubar,                       &
-     &                       OCEAN(ng) % tl_vbar,                       &
+     &                       OCEAN(ng) % d_ubar,                        &
+     &                       OCEAN(ng) % d_vbar,                        &
 # endif
-     &                       OCEAN(ng) % tl_zeta,                       &
+     &                       OCEAN(ng) % d_zeta,                        &
 # ifdef SOLVE3D
      &                       OCEAN(ng) % f_u,                           &
      &                       OCEAN(ng) % f_v,                           &
@@ -114,11 +114,11 @@
      &                             rmask, umask, vmask,                 &
 # endif
 # ifdef SOLVE3D
-     &                             tl_u, tl_v, tl_t,                    &
+     &                             d_u, d_v, d_t,                       &
 # else
-     &                             tl_ubar, tl_vbar,                    &
+     &                             d_ubar, d_vbar,                      &
 # endif
-     &                             tl_zeta,                             &
+     &                             d_zeta,                              &
 # ifdef SOLVE3D
      &                             f_u, f_v, f_t,                       &
 # else
@@ -139,14 +139,14 @@
       real(r8), intent(in   ) :: vmask(LBi:,LBj:)
 #  endif
 #  ifdef SOLVE3D
-      real(r8), intent(inout) :: tl_u(LBi:,LBj:,:,:)
-      real(r8), intent(inout) :: tl_v(LBi:,LBj:,:,:)
-      real(r8), intent(inout) :: tl_t(LBi:,LBj:,:,:,:)
+      real(r8), intent(inout) :: d_u(LBi:,LBj:,:)
+      real(r8), intent(inout) :: d_v(LBi:,LBj:,:)
+      real(r8), intent(inout) :: d_t(LBi:,LBj:,:,:)
 #  else
-      real(r8), intent(inout) :: tl_ubar(LBi:,LBj:,:)
-      real(r8), intent(inout) :: tl_vbar(LBi:,LBj:,:)
+      real(r8), intent(inout) :: d_ubar(LBi:,LBj:)
+      real(r8), intent(inout) :: d_vbar(LBi:,LBj:)
 #  endif
-      real(r8), intent(inout) :: tl_zeta(LBi:,LBj:,:)
+      real(r8), intent(inout) :: d_zeta(LBi:,LBj:)
 #  ifdef SOLVE3D
       real(r8), intent(inout) :: f_u(LBi:,LBj:,:)
       real(r8), intent(inout) :: f_v(LBi:,LBj:,:)
@@ -165,14 +165,14 @@
       real(r8), intent(in   ) :: vmask(LBi:UBi,LBj:UBj)
 #  endif
 #  ifdef SOLVE3D
-      real(r8), intent(inout) :: tl_u(LBi:UBi,LBj:UBj,N(ng),2)
-      real(r8), intent(inout) :: tl_v(LBi:UBi,LBj:UBj,N(ng),2)
-      real(r8), intent(inout) :: tl_t(LBi:UBi,LBj:UBj,N(ng),2,NT(ng))
+      real(r8), intent(inout) :: d_u(LBi:UBi,LBj:UBj,N(ng))
+      real(r8), intent(inout) :: d_v(LBi:UBi,LBj:UBj,N(ng))
+      real(r8), intent(inout) :: d_t(LBi:UBi,LBj:UBj,N(ng),NT(ng))
 #  else
-      real(r8), intent(inout) :: tl_ubar(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(inout) :: tl_vbar(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(inout) :: d_ubar(LBi:UBi,LBj:UBj)
+      real(r8), intent(inout) :: d_vbar(LBi:UBi,LBj:UBj)
 #  endif
-      real(r8), intent(inout) :: tl_zeta(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(inout) :: d_zeta(LBi:UBi,LBj:UBj)
 #  ifdef SOLVE3D
       real(r8), intent(inout) :: f_u(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(inout) :: f_v(LBi:UBi,LBj:UBj,N(ng))
@@ -184,8 +184,7 @@
       real(r8), intent(inout) :: f_zeta(LBi:UBi,LBj:UBj)
 # endif
 !
-!  Local variable declarations.
-!
+!  Local variable declarations
       integer :: i, it1, it2, j, k
 # ifdef SOLVE3D
       integer :: itrc
@@ -195,10 +194,13 @@
 # include "set_bounds.h"
 !
 !-----------------------------------------------------------------------
-!  Compute IAU forcing terms used in the nonlinear model.
-!  Use tl_var arrays as temporary storage for incremental analysis
-!  update forcing - needed when weak constraing is also activated
-!  and used in in the routine frc_iau.
+!  Initialize Incremental Analysis Update (IAU) forcing terms used in
+!  the nonlinear model. The cummulative increment from 4D-Var outer
+!  loop is stored in the work "d_*" arrays, and it is gradually added
+!  over the specified time interval. 
+!
+!  The "d_*" arrays are overwritten by the fractional increment to be
+!  added during time-stepping until the end filtering period.
 !-----------------------------------------------------------------------
 !
 !  Set uniform weights in time.
@@ -206,77 +208,79 @@
       fac1=REAL(timeIAU(ng)/dt(ng),r8)
       fac1=1.0_r8/fac1
 !
+!  Compute free-surface IAU forcing term.
+!
       DO j=JstrT,JendT
         DO i=IstrT,IendT
-          f_zeta(i,j)=fac1*tl_zeta(i,j,Linp)
+          f_zeta(i,j)=fac1*d_zeta(i,j)
 # ifdef MASKING
           f_zeta(i,j)=f_zeta(i,j)*rmask(i,j)
 # endif
-          tl_zeta(i,j,Linp)=f_zeta(i,j)
+          d_zeta(i,j)=f_zeta(i,j)
         END DO
       END DO
 
 # ifndef SOLVE3D
 !
-!  Compute 2D-momentum iau forcing terms.
+!  Compute 2D-momentum IAU forcing terms.
 !
       DO j=JstrT,JendT
         DO i=IstrP,IendT
-          f_ubar(i,j)=fac1*tl_ubar(i,j,Linp)
+          f_ubar(i,j)=fac1*d_ubar(i,j)
 #  ifdef MASKING
           f_ubar(i,j)=f_ubar(i,j)*umask(i,j)
 #  endif
-          tl_ubar(i,j,Linp)=f_ubar(i,j)
+          d_ubar(i,j)=f_ubar(i,j)
         END DO
       END DO
       DO j=JstrP,JendT
         DO i=IstrT,IendT
-          f_vbar(i,j)=fac1*tl_vbar(i,j,Linp)
+          f_vbar(i,j)=fac1*d_vbar(i,j)
 #  ifdef MASKING
           f_vbar(i,j)=f_vbar(i,j)*vmask(i,j)
 #  endif
-          tl_vbar(i,j,Linp)=f_vbar(i,j)
+          d_vbar(i,j)=f_vbar(i,j)
         END DO
       END DO
 # endif
 # ifdef SOLVE3D
 !
-!  Compute 3D-momentum iau forcing terms.
+!  Compute 3D-momentum IAU forcing terms.
 !
       DO k=1,N(ng)
         DO j=JstrT,JendT
           DO i=IstrP,IendT
-            f_u(i,j,k)=fac1*tl_u(i,j,k,Linp)
+            f_u(i,j,k)=fac1*d_u(i,j,k)
 #  ifdef MASKING
             f_u(i,j,k)=f_u(i,j,k)*umask(i,j)
 #  endif
-            tl_u(i,j,k,Linp)=f_u(i,j,k)
+            d_u(i,j,k)=f_u(i,j,k)
           END DO
         END DO
       END DO
       DO k=1,N(ng)
         DO j=JstrP,JendT
           DO i=IstrT,IendT
-            f_v(i,j,k)=fac1*tl_v(i,j,k,Linp)
+            f_v(i,j,k)=fac1*d_v(i,j,k)
 #  ifdef MASKING
             f_v(i,j,k)=f_v(i,j,k)*vmask(i,j)
 #  endif
-            tl_v(i,j,k,Linp)=f_v(i,j,k)
+            d_v(i,j,k)=f_v(i,j,k)
           END DO
         END DO
       END DO
 !
-!  Compute tracer iau forcing terms.
+!  Compute tracer IAU forcing terms.
 !
       DO itrc=1,NT(ng)
         DO k=1,N(ng)
           DO j=JstrT,JendT
             DO i=IstrT,IendT
-              f_t(i,j,k,itrc)=fac1*tl_t(i,j,k,Linp,itrc)
+              f_t(i,j,k,itrc)=fac1*d_t(i,j,k,itrc)
 #  ifdef MASKING
               f_t(i,j,k,itrc)=f_t(i,j,k,itrc)*rmask(i,j)
 #  endif
-              tl_t(i,j,k,Linp,itrc)=f_t(i,j,k,itrc)
+              d_t(i,j,k,itrc)=f_t(i,j,k,itrc)
             END DO
           END DO
         END DO
@@ -328,14 +332,14 @@
      &                   GRID(ng) % vmask,                              &
 # endif
 # ifdef SOLVE3D
-     &                   OCEAN(ng) % tl_u,                              &
-     &                   OCEAN(ng) % tl_v,                              &
-     &                   OCEAN(ng) % tl_t,                              &
+     &                   OCEAN(ng) % d_u,                               &
+     &                   OCEAN(ng) % d_v,                               &
+     &                   OCEAN(ng) % d_t,                               &
 # else
-     &                   OCEAN(ng) % tl_ubar,                           &
-     &                   OCEAN(ng) % tl_vbar,                           &
+     &                   OCEAN(ng) % d_ubar,                            &
+     &                   OCEAN(ng) % d_vbar,                            &
 # endif
-     &                   OCEAN(ng) % tl_zeta,                           &
+     &                   OCEAN(ng) % d_zeta,                            &
 # ifdef SOLVE3D
      &                   OCEAN(ng) % f_u,                               &
      &                   OCEAN(ng) % f_v,                               &
@@ -359,11 +363,11 @@
      &                         rmask, umask, vmask,                     &
 # endif
 # ifdef SOLVE3D
-     &                         tl_u, tl_v, tl_t,                        &
+     &                         d_u, d_v, d_t,                           &
 # else
-     &                         tl_ubar, tl_vbar,                        &
+     &                         d_ubar, d_vbar,                          &
 # endif
-     &                         tl_zeta,                                 &
+     &                         d_zeta,                                  &
 # ifdef SOLVE3D
      &                         f_u, f_v, f_t,                           &
 # else
@@ -384,14 +388,14 @@
       real(r8), intent(in   ) :: vmask(LBi:,LBj:)
 #  endif
 #  ifdef SOLVE3D
-      real(r8), intent(in   ) :: tl_u(LBi:,LBj:,:,:)
-      real(r8), intent(in   ) :: tl_v(LBi:,LBj:,:,:)
-      real(r8), intent(in   ) :: tl_t(LBi:,LBj:,:,:,:)
+      real(r8), intent(in   ) :: d_u(LBi:,LBj:,:)
+      real(r8), intent(in   ) :: d_v(LBi:,LBj:,:)
+      real(r8), intent(in   ) :: d_t(LBi:,LBj:,:,:)
 #  else
-      real(r8), intent(in   ) :: tl_ubar(LBi:,LBj:,:)
-      real(r8), intent(in   ) :: tl_vbar(LBi:,LBj:,:)
+      real(r8), intent(in   ) :: d_ubar(LBi:,LBj:)
+      real(r8), intent(in   ) :: d_vbar(LBi:,LBj:)
 #  endif
-      real(r8), intent(in   ) :: tl_zeta(LBi:,LBj:,:)
+      real(r8), intent(in   ) :: d_zeta(LBi:,LBj:)
 #  ifdef SOLVE3D
       real(r8), intent(inout) :: f_u(LBi:,LBj:,:)
       real(r8), intent(inout) :: f_v(LBi:,LBj:,:)
@@ -410,14 +414,14 @@
       real(r8), intent(in   ) :: vmask(LBi:UBi,LBj:UBj)
 #  endif
 #  ifdef SOLVE3D
-      real(r8), intent(in   ) :: tl_u(LBi:UBi,LBj:UBj,N(ng),2)
-      real(r8), intent(in   ) :: tl_v(LBi:UBi,LBj:UBj,N(ng),2)
-      real(r8), intent(in   ) :: tl_t(LBi:UBi,LBj:UBj,N(ng),2,NT(ng))
+      real(r8), intent(in   ) :: d_u(LBi:UBi,LBj:UBj,N(ng))
+      real(r8), intent(in   ) :: d_v(LBi:UBi,LBj:UBj,N(ng))
+      real(r8), intent(in   ) :: d_t(LBi:UBi,LBj:UBj,N(ng),NT(ng))
 #  else
-      real(r8), intent(in   ) :: tl_ubar(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(in   ) :: tl_vbar(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(in   ) :: d_ubar(LBi:UBi,LBj:UBj)
+      real(r8), intent(in   ) :: d_vbar(LBi:UBi,LBj:UBj)
 #  endif
-      real(r8), intent(in   ) :: tl_zeta(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(in   ) :: d_zeta(LBi:UBi,LBj:UBj)
 #  ifdef SOLVE3D
       real(r8), intent(inout) :: f_u(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(inout) :: f_v(LBi:UBi,LBj:UBj,N(ng))
@@ -439,13 +443,13 @@
 # include "set_bounds.h"
 !
 !-----------------------------------------------------------------------
-!  Update the weak constraint forcing arrays with the IAU forcing
-!  which is stored in the tl_var(Linp) arrays.
+!  Update the weak constraint forcing arrays with the IAU frational
+!  forcing contribution, which is stored in the work "d_*" arrays.
 !-----------------------------------------------------------------------
 !
       DO j=JstrT,JendT
         DO i=IstrT,IendT
-          f_zeta(i,j)=f_zeta(i,j)+tl_zeta(i,j,Linp)
+          f_zeta(i,j)=f_zeta(i,j)+d_zeta(i,j)
 # ifdef MASKING
           f_zeta(i,j)=f_zeta(i,j)*rmask(i,j)
 # endif
@@ -458,7 +462,7 @@
 !
       DO j=JstrT,JendT
         DO i=IstrP,IendT
-          f_ubar(i,j)=f_ubar(i,j)+tl_ubar(i,j,Linp)
+          f_ubar(i,j)=f_ubar(i,j)+d_ubar(i,j)
 #  ifdef MASKING
           f_ubar(i,j)=f_ubar(i,j)*umask(i,j)
 #  endif
@@ -466,7 +470,7 @@
       END DO
       DO j=JstrP,JendT
         DO i=IstrT,IendT
-          f_vbar(i,j)=f_vbar(i,j)+tl_vbar(i,j,Linp)
+          f_vbar(i,j)=f_vbar(i,j)+d_vbar(i,j)
 #  ifdef MASKING
           f_vbar(i,j)=f_vbar(i,j)*vmask(i,j)
 #  endif
@@ -480,7 +484,7 @@
       DO k=1,N(ng)
         DO j=JstrT,JendT
           DO i=IstrP,IendT
-            f_u(i,j,k)=f_u(i,j,k)+tl_u(i,j,k,Linp)
+            f_u(i,j,k)=f_u(i,j,k)+d_u(i,j,k)
 #  ifdef MASKING
             f_u(i,j,k)=f_u(i,j,k)*umask(i,j)
 #  endif
@@ -490,9 +494,9 @@
       DO k=1,N(ng)
         DO j=JstrP,JendT
           DO i=IstrT,IendT
-            f_v(i,j,k)=f_v(i,j,k)+tl_v(i,j,k,Linp)
+            f_v(i,j,k)=f_v(i,j,k)+d_v(i,j,k)
 #  ifdef MASKING
-           f_v(i,j,k)=f_v(i,j,k)*vmask(i,j)
+            f_v(i,j,k)=f_v(i,j,k)*vmask(i,j)
 #  endif
           END DO
         END DO
@@ -504,7 +508,7 @@
         DO k=1,N(ng)
           DO j=JstrT,JendT
             DO i=IstrT,IendT
-              f_t(i,j,k,itrc)=f_t(i,j,k,itrc)+tl_t(i,j,k,Linp,itrc)
+              f_t(i,j,k,itrc)=f_t(i,j,k,itrc)+d_t(i,j,k,itrc)
 #  ifdef MASKING
               f_t(i,j,k,itrc)=f_t(i,j,k,itrc)*rmask(i,j)
 #  endif
