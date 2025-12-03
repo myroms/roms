@@ -592,7 +592,7 @@
       integer :: idiag
 #endif
 !
-      real(r8) :: cff, cff1, cff2, cff3, cff4, cff5, cff6, cff7
+      real(r8) :: cff, cff1, cff2, cff3, cff4, cff5, cff6, cff7, cff8
       real(r8) :: fac, fac1, fac2, fac3
 !
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Dgrad
