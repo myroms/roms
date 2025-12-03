@@ -2658,7 +2658,7 @@
               IF (FoundError(exit_flag,NoError,__LINE__,MyFile)) RETURN
 !
               CALL pio_netcdf_get_fvar (ng, model, OBS2(nf,ng)%name,    &
-     &                                  'obs_Zgrid', obs_Zgris)
+     &                                  'obs_Zgrid', obs_Zgrid)
               IF (FoundError(exit_flag,NoError,__LINE__,MyFile)) RETURN
 # endif
           END SELECT
