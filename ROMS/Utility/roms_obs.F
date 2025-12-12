@@ -13,6 +13,10 @@
 !  It contains several routines to process input 4D-Var observation    !
 !  file(s).                                                            !
 !                                                                      !
+!  Currently, the PIO library does not support the processing of       !
+!  Group variables in enhanced NetCDF-4 (IODA) files.  Thus, ROMS      !
+!  uses the standard NetCDF library for processing observations.       !
+!                                                                      !
 !=======================================================================
 !
       USE mod_param
@@ -72,7 +76,6 @@
         integer :: nsurvey                     ! number of times surveys
         integer :: nvars                       ! number of variables
         integer :: poolID                      ! observation pool ID
-        integer :: timeWindow                  ! time-averaged windows
 !
 !  Switches indicating area-averaged and time-averaged observations.
 !
@@ -94,18 +97,7 @@
 !
         integer, allocatable :: surveyIndex(:)
 !
-!  Starting and ending indices for time-averaging are determined by the
-!  specified "TimeStr" and "TimeEnd" range values. A value of zero
-!  indicates that there are no time-averaged observations available for
-!  that period.
-!
-        integer, allocatable :: beginIndex(:)    ! time-averaging start
-        integer, allocatable :: finishIndex(:)   ! time-averagind end
-!
-!  Starting and ending timestep and times for time-averaged operator.
-!
-        integer :: TimeStepStr                   ! starting timestep
-        integer :: TimeStepEnd                   ! ending timestep
+!  Starting and ending times for time-averaged operator.
 !
         real (r8), allocatable :: TimeStr(:)     ! starting time
         real (r8), allocatable :: TimeEnd(:)     ! ending time
@@ -125,7 +117,7 @@
 !
 !  Half-length spatial scale (m) for area-averaged operator.
 !
-        real (r8) :: spatialAverage
+        real (r8), allocatable :: spatialAverage(:)
 !
 !  Observation spatial and time coordinates. The fractional values are
 !  used for efficient interpolation in the H(x) operator.
@@ -190,12 +182,11 @@
 !
         CONTAINS
 !
-        PROCEDURE :: destroy             => obs_data_destroy
-        PROCEDURE :: frac_coords         => obs_data_frac_coords
-        PROCEDURE :: averaging_timesteps => obs_data_averaging_timesteps
-        PROCEDURE :: populate_ioda       => obs_data_populate_ioda
-        PROCEDURE :: qc_threshold        => obs_data_qc_threshold
-        PROCEDURE :: stats               => obs_data_stats
+        PROCEDURE :: destroy          => obs_data_destroy
+        PROCEDURE :: frac_coords      => obs_data_frac_coords
+        PROCEDURE :: populate_ioda    => obs_data_populate_ioda
+        PROCEDURE :: qc_threshold     => obs_data_qc_threshold
+        PROCEDURE :: stats            => obs_data_stats
 !
       END TYPE obs_data
 !
@@ -379,49 +370,6 @@
       END SUBROUTINE obs_data_frac_coords
 !
 !-----------------------------------------------------------------------
-!  If time-averaged observations, return current averaging window
-!  timesteps.
-!
-      SUBROUTINE obs_data_averaging_timesteps (self, ng, model,         &
-     &                                         iTstr, iTend)
-!
-      CLASS (obs_data), intent(inout) :: self     ! observation object
-      integer,          intent(in   ) :: ng       ! nested grid
-      integer,          intent(in   ) :: model    ! kernel identifier
-      integer,          intent(out  ) :: iTstr    ! starting timestep
-      integer,          intent(out  ) :: iTend    ! ending   timestep
-!
-      integer                         :: i
-!
-!  Given current model time, get averaging window starting and ending
-!  times.
-!
-      iTstr=-1
-      iTend=-1
-!
-      IF (self%IsTimeAveraged) THEN
-        DO i=1,self%timeWindow
-          IF (model.eq.iADM) THEN
-            IF ((self%TimeStr(i).le.time(ng)).and.                      &
-     &          (time(ng).lt.self%TimeEnd(i))) THEN
-              iTstr=INT((self%TimeStr(i)-dstart*day2sec)/dt(ng))+1
-              iTend=INT((self%TimeEnd(i)-dstart*day2sec)/dt(ng))
-            END IF
-          ELSE
-            IF ((self%TimeStr(i).le.time(ng)).and.                      &
-     &          (time(ng).lt.self%TimeEnd(i))) THEN
-              iTstr=INT((self%TimeStr(i)-dstart*day2sec)/dt(ng))+1
-              iTend=INT((self%TimeEnd(i)-dstart*day2sec)/dt(ng))
-              EXIT
-            END IF
-          END IF
-        END DO
-      END IF
-!
-      RETURN
-      END SUBROUTINE obs_data_averaging_timesteps
-!
-!-----------------------------------------------------------------------
 !  If not available, it computes observation object fractional
 !  coordinates.
 !
@@ -434,8 +382,7 @@
       integer,           intent(in   ) :: IOtype  ! NetCDF IO type
 !
       logical                          :: Loaded, isDayUnits
-      integer,             allocatable :: wcount(:)
-      integer                          :: i, ic, is, j, lstr, ncount
+      integer                          :: i, lstr, ncount
       real (r8),          dimension(4) :: Tmin, Tmax
       character (len=22), dimension(4) :: Dmin, Dmax
 
@@ -444,7 +391,7 @@
 !
       SourceFile=MyFile
 !
-!  Read in observation variables in Group MetaData.
+      !  Read in observation variables in Group MetaData.
 !
       IF (Master) WRITE (stdout,10) TRIM(self%ncname_inp)
 !
@@ -539,8 +486,7 @@
      &                              var_name(i), self%spatialAverage,   &
      &                              GrpName = 'MetaData')
               Loaded=.TRUE.
-              self%IsAreaAveraged=.TRUE.
-              ncount=1
+              ncount=SIZE(self%spatialAverage)
             CASE ('x_grid')
               CALL netcdf_get_fvar (ng, model, self%ncname_inp,         &
      &                              var_name(i), self%Xgrid,            &
@@ -564,12 +510,6 @@
           IF (Master.and.Loaded) WRITE (stdout,20) 'MetaData',          &
      &                                 TRIM(var_name(i)), ncount
         END DO
-# if defined PIO_LIB && defined DISTRIBUTE
-      ELSE IF (IOtype.eq.io_pio) THEN
-!
-!  HGA: Is possible to read Group variables with PIO?
-!
-# endif
       END IF
 !
 !  Read the observation variables in Group ObsError. If the IODA file is
@@ -591,12 +531,6 @@
           IF (Master) WRITE (stdout,30) 'ObsError', TRIM(var_name(i)),  &
      &                                  ncount, self%stateID(i)
         END DO
-# if defined PIO_LIB && defined DISTRIBUTE
-      ELSE IF (IOtype.eq.io_pio) THEN
-!
-!  HGA: Is possible to read Group variables with PIO?
-!
-# endif
       END IF
 !
 !  Read in observation variables in Group ObsValue.
@@ -617,12 +551,6 @@
           IF (Master) WRITE (stdout,30) 'ObsValue', TRIM(var_name(i)),  &
      &                                  ncount, self%stateID(i)
         END DO
-# if defined PIO_LIB && defined DISTRIBUTE
-      ELSE IF (IOtype.eq.io_pio) THEN
-!
-!  HGA: Is possible to read Group variables with PIO?
-!
-# endif
       END IF
 !
 !  Load observation NetCDF variable name(s).
@@ -633,37 +561,6 @@
       DO i=1,n_var
         self%vars(i)=TRIM(var_name(i))
       END DO
-!
-!  If time-averaged observations count the number of observations for
-!  each averaging time window and the starting indices as they appear
-!  in the observation time coordinate.
-!
-      IF (self%IsTimeAveraged) THEN
-        IF (.not.allocated(wcount)) THEN
-          allocate ( wcount(self%timeWindow) )
-          wcount=0
-        END IF
-!
-        ic=0
-        is=1
-        DO j=1,self%timeWindow
-          wcount(j)=ic
-          DO i=is,self%nlocs
-            IF ((self%TimeStr(j).le.self%time(i)).and.                  &
-     &          (self%time(i).lt.self%TimeEnd(j))) THEN
-              wcount(j)=wcount(j)+1
-              IF (i.eq.is) THEN
-                self%beginIndex(j)=i
-              END IF
-              self%finishIndex(j)=wcount(j)
-            ELSE
-              is=i
-              ic=is-1
-              EXIT
-            END IF
-          END DO
-        END DO
-      END IF
 !
 !  Compute statistics.
 !
@@ -686,10 +583,6 @@
      &                      TRIM(Dmin(2)), TRIM(Dmax(2))
         END DO
       END IF
-!
-!  Deallocate local variable.
-!
-      IF (allocated(wcount)) deallocate (wcount)
 !
   10  FORMAT (/,2x,'ROMS_OBS         - Processing: ',a)
   20  FORMAT (t23,'Group: ',a,'::',a,t75,'Count = ',i0)
@@ -923,7 +816,7 @@
 !
       logical                         :: foundit
       integer                         :: Nstr, Nend, iobs, i
-      integer                         :: nsurvey, nwindow
+      integer                         :: nlocs, nsurvey
       real (r8)                       :: Tstr, Tend
 !
 !  Check if requested observation name exists in the pool object.
@@ -933,27 +826,16 @@
       Tend=time(ng)+0.5_r8*dt(ng)
 !
       DO iobs=1,SIZE(self%pool)
+        nlocs  =self%pool(iobs)%nlocs
         nsurvey=self%pool(iobs)%nsurvey
-        nwindow=self%pool(iobs)%timeWindow
         self%pool(iobs)%NstrObs=0
         self%pool(iobs)%NendObs=0
 !
         IF (model.eq.iADM) THEN                   ! backward search
           IF (self%pool(iobs)%IsTimeAveraged) THEN
-             DO i=nwindow,1,-1
-              IF ((self%pool(iobs)%TimeStr(i).le.time(ng)).and.         &
-     &            (time(ng).lt.self%pool(iobs)%TimeEnd(i))) THEN
-                IF ((self%pool(iobs)%beginIndex(i).gt.0).and.           &
-     &              (self%pool(iobs)%finishIndex(i).gt.0)) THEN
-                  Nstr=self%pool(iobs)%beginIndex(i)
-                  Nend=self%pool(iobs)%finishIndex(i)
-                  self%pool(iobs)%NstrObs=Nstr
-                  self%pool(iobs)%NendObs=Nend
-                  foundit=.TRUE.
-                  CYCLE
-                END IF
-              END IF
-            END DO
+            self%pool(iobs)%NstrObs=1
+            self%pool(iobs)%NendObs=nlocs
+            foundit=.TRUE.
           ELSE
             DO i=nsurvey,1,-1
               IF ((Tstr.le.self%pool(iobs)%surveyTime(i)).and.          &
@@ -973,20 +855,9 @@
           END IF
         ELSE                                      ! forward search
           IF (self%pool(iobs)%IsTimeAveraged) THEN
-            DO i=1,nwindow
-              IF ((self%pool(iobs)%TimeStr(i).le.time(ng)).and.         &
-     &            (time(ng).lt.self%pool(iobs)%TimeEnd(i))) THEN
-                IF ((self%pool(iobs)%beginIndex(i).gt.0).and.           &
-     &              (self%pool(iobs)%finishIndex(i).gt.0)) THEN
-                  Nstr=self%pool(iobs)%beginIndex(i)
-                  Nend=self%pool(iobs)%finishIndex(i)
-                  self%pool(iobs)%NstrObs=Nstr
-                  self%pool(iobs)%NendObs=Nend
-                  foundit=.TRUE.
-                  CYCLE
-                END IF
-              END IF
-            END DO
+            self%pool(iobs)%NstrObs=1
+            self%pool(iobs)%NendObs=nlocs
+            foundit=.TRUE.
           ELSE
             DO i=1,nsurvey
               IF ((Tstr.le.self%pool(iobs)%surveyTime(i)).and.          &
@@ -1028,10 +899,11 @@
       character (len=*), intent(in   ) :: ncname   ! NetCDF filename
 !
       logical                          :: haveSST, haveSSS, haveVector
+      logical                          :: IsAreaAveraged, IsTimeAveraged
       integer,         dimension(mvar) :: myStateID
       integer                          :: Idot, Islash
       integer                          :: i, iobs, lstr, myID
-      integer                          :: mtimes, mvatt
+      integer                          :: mvatt
 !
       character (len=40)               :: poolname, varname(mvar)
       character (len=80)               :: string
@@ -1045,9 +917,24 @@
 !
       haveSST=.FALSE.
       haveSSS=.FALSE.
+      IsAreaAveraged=.FALSE.
+      IsTimeAveraged=.FALSE.
 !
       SELECT CASE (IOtype)
         CASE (io_nf90)
+          CALL netcdf_inq_var (ng, model, TRIM(ncname),                 &
+                               GrpName = 'MetaData')
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+!
+          DO i=1,n_var
+            SELECT CASE (TRIM(var_name(i)))
+              CASE ('dateTimeAverageBegin', 'dateTimeAverageEnd')
+                IsTimeAveraged=.TRUE.
+              CASE ('spatialAverage')
+                IsAreaAveraged=.TRUE.
+            END SELECT
+          END DO
+!
           CALL netcdf_get_ivar (ng, model, TRIM(ncname),                &
      &                          'stateID', myStateID,                   &
      &                          GrpName = 'MetaData')
@@ -1067,12 +954,6 @@
             END IF
           END DO
 
-# if defined PIO_LIB && defined DISTRIBUTE
-        CASE (io_pio)
-          CALL pio_netcdf_get_ivar (ng, model, TRIM(ncname),            &
-     &                              'stateID', myStateID,               &
-     &                              GrpName = 'MetaData')
-# endif
         CASE DEFAULT
           IF (Master) WRITE (stdout,10) IOtype
           exit_flag=3
@@ -1110,10 +991,12 @@
 !
 !  Initialize scalar variables in observation pool object.
 !
-      self%pool(iobs)%nlocs   = mobs
-      self%pool(iobs)%nsurvey = msurvey
-      self%pool(iobs)%nvars   = mvar
-      self%pool(iobs)%poolID  = myID
+      self%pool(iobs)%nlocs          = mobs
+      self%pool(iobs)%nsurvey        = msurvey
+      self%pool(iobs)%nvars          = mvar
+      self%pool(iobs)%poolID         = myID
+      self%pool(iobs)%IsAreaAveraged = IsAreaAveraged
+      self%pool(iobs)%IsTimeAveraged = IsTimeAveraged
 !
       IF (.not.allocated(self%pool(iobs)%ncname_inp)) THEN
         lstr=LEN_TRIM(ncname)
@@ -1162,28 +1045,24 @@
         Dmem(ng)=Dmem(ng)+REAL(mobs,r8)
       END IF
 
-      IF (self%pool(iobs)%timeWindow.gt.0) THEN
-        mtimes=self%pool(iobs)%timeWindow
+      IF (self%pool(iobs)%IsAreaAveraged) THEN
+        IF (.not.allocated(self%pool(iobs)%spatialAverage)) THEN
+          allocate ( self%pool(iobs)%spatialAverage(mvar) )
+          self%pool(iobs)%spatialAverage=0.0_r8
+          Dmem(ng)=Dmem(ng)+REAL(mvar,r8)
+        END IF
+      END IF
+
+      IF (self%pool(iobs)%IsTimeAveraged) THEN
         IF (.not.allocated(self%pool(iobs)%TimeStr)) THEN
-          allocate ( self%pool(iobs)%TimeStr(mtimes) )
+          allocate ( self%pool(iobs)%TimeStr(mobs) )
           self%pool(iobs)%TimeStr=0.0_r8
-          Dmem(ng)=Dmem(ng)+REAL(mtimes,r8)
+          Dmem(ng)=Dmem(ng)+REAL(mobs,r8)
         END IF
         IF (.not.allocated(self%pool(iobs)%TimeEnd)) THEN
-          allocate ( self%pool(iobs)%TimeEnd(mtimes) )
+          allocate ( self%pool(iobs)%TimeEnd(mobs) )
           self%pool(iobs)%TimeEnd=0.0_r8
-          Dmem(ng)=Dmem(ng)+REAL(mtimes,r8)
-        END IF
-
-        IF (.not.allocated(self%pool(iobs)%beginIndex)) THEN
-          allocate ( self%pool(iobs)%beginIndex(mtimes) )
-          self%pool(iobs)%beginIndex=0
-          Dmem(ng)=Dmem(ng)+REAL(mtimes,r8)
-        END IF
-        IF (.not.allocated(self%pool(iobs)%finishIndex)) THEN
-          allocate ( self%pool(iobs)%finishIndex(mtimes) )
-          self%pool(iobs)%finishIndex=0
-          Dmem(ng)=Dmem(ng)+REAL(mtimes,r8)
+          Dmem(ng)=Dmem(ng)+REAL(mobs,r8)
         END IF
       END IF
 
@@ -1298,7 +1177,7 @@
           poolname='salt'
           varname(1)='salt'
         CASE (45)
-          poolname='uv'
+          poolname='uv_codar'
           varname(1)='Ucodar'
           Varname(2)='Vcodar'
         CASE (60)
@@ -1378,16 +1257,6 @@
      &                          'obs_Zgrid', obs_Zgrid)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
-# if defined PIO_LIB && defined DISTRIBUTE
-        CASE (io_pio)
-          CALL pio_netcdf_get_ivar (ng, model, ncname,                  &
-     &                              'obs_type', obs_type)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-!
-          CALL pio_netcdf_get_fvar (ng, model, ncname,                  &
-     &                              'obs_Zgrid', obs_type)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-# endif
         CASE DEFAULT
           IF (Master) WRITE (stdout,10) IOtype
           exit_flag=3
@@ -1958,18 +1827,12 @@
         ncname=OBS2(nf,ng)%name
         IOtype=OBS2(nf,ng)%IOtype
 !
-        self%pool(nf)%timeWindow=0
-        self%pool(nf)%spatialAverage=0.0_r8
         self%pool(nf)%IsAreaAveraged=.FALSE.
         self%pool(nf)%IsTimeAveraged=.FALSE.
 !
         SELECT CASE (IOtype)
           CASE (io_nf90)
             CALL netcdf_get_dim (ng, model, ncname)
-# if defined PIO_LIB && defined DISTRIBUTE
-          CASE (io_pio)
-            CALL pio_netcdf_get_dim (ng, model, ncname)
-# endif
           CASE DEFAULT
             IF (Master) WRITE (stdout,10) IOtype
             exit_flag=3
@@ -1990,9 +1853,6 @@
             isNative=.FALSE.                            ! only in IODA
           ELSE IF (TRIM(dim_name(i)).eq.'nvars') THEN
             mvar=dim_size(i)                            ! only in IODA
-          ELSE IF (TRIM(dim_name(i)).eq.'timeWindow') THEN
-            self%pool(nf)%timeWindow=dim_size(i)        ! only in IODA
-            self%pool(nf)%IsTimeAveraged=.TRUE.
           END IF
         END DO
 !
@@ -2027,7 +1887,7 @@
 !
       integer,             allocatable :: Iwork(:)
       integer                          :: i, j, k, ncid, npool
-      integer                          :: nlocs, nsurvey, nvars, nwindow
+      integer                          :: nlocs, nsurvey, nvars
       character (len=40)               :: grpname, varname
       character (len=256)              :: ncname
 
@@ -2056,7 +1916,6 @@
           nlocs=self%pool(i)%nlocs
           nsurvey=self%pool(i)%nsurvey
           nvars=self%pool(i)%nvars
-          nwindow=self%pool(i)%timeWindow
           DO j=1,self%pool(i)%group(k)%nvars
             varname=TRIM(self%pool(i)%group(k)%vname(j))
             IF (TRIM(grpname).eq.'MetaData') THEN
@@ -2082,7 +1941,7 @@
                 CASE ('dateTimeAverageBegin',                           &
      &                'dateTimeAverageEnd')
                   IF (.not.allocated(Iwork)) THEN
-                    allocate ( Iwork(nwindow) )
+                    allocate ( Iwork(nlocs) )
                   END IF
                   CALL netcdf_get_ivar (ng, model,                      &
      &                                  self%pool(i)%ncname_inp,        &
@@ -2094,7 +1953,7 @@
                   CALL netcdf_put_ivar (ng, model, TRIM(ncname),        &
      &                                  TRIM(varname),                  &
      &                                  Iwork,                          &
-     &                                  (/1/), (/nwindow/),             &
+     &                                  (/1/), (/nlocs/),               &
      &                                  ncid = ncid,                    &
      &                                  GrpName = TRIM(grpname))
                   deallocate (Iwork)
@@ -2155,7 +2014,7 @@
                   CALL netcdf_put_fvar (ng, model, TRIM(ncname),        &
      &                                  TRIM(varname),                  &
      &                                  self%pool(i)%spatialAverage,    &
-     &                                  (/0/), (/0/),                   &
+     &                                  (/1/), (/nvars/),               &
      &                                  ncid = ncid,                    &
      &                                  GrpName = TRIM(grpname))
                 CASE ('surveyIndex')
@@ -2334,44 +2193,6 @@
           END SELECT
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END DO
-# if defined PIO_LIB && defined DISTRIBUTE
-      ELSE IF (IOtype.eq.io_pio) THEN
-        CALL pio_netcdf_inq_var (ng, model, ncname)
-        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-!
-        DO i=1,n_var
-          Loaded=.FALSE.
-          SELECT CASE (TRIM(var_name(i)))
-            CASE ('obs_provenance')
-              CALL pio_netcdf_get_ivar (ng, model, ncname,              &
-     &                                  var_name(i), obs_idata)
-!
-              CALL self%unpack_i (ng, mobs, typeID, Zgrid,              &
-     &                            obs_idata, TRIM(var_name(i)))
-            CASE ('obs_time')
-              CALL pio_netcdf_get_time (ng, model, ncname,              &
-     &                                  var_name(i), Rclock%DateNumber, &
-     &                                  obs_rdata)
-!
-              CALL pio_self%unpack_r (ng, mobs, typeID, Zgrid,          &
-     &                                obs_rdata, TRIM(var_name(i)))
-            CASE ('obs_depth',                                          &
-     &            'obs_lon',                                            &
-     &            'obs_lat',                                            &
-     &            'obs_Xgrid',                                          &
-     &            'obs_Ygrid',                                          &
-     &            'obs_Zgrid',                                          &
-     &            'obs_error',                                          &
-     &            'obs_value')
-              CALL pio_netcdf_get_fvar (ng, model, ncname,              &
-     &                                  TRIM(var_name(i)), obs_rdata)
-!
-              CALL self%unpack_r (ng, mobs, typeID, Zgrid,              &
-     &                            obs_rdata, TRIM(var_name(i)))
-          END SELECT
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END DO
-# endif
       END IF
 !
 !  Determine surveyTime and surveyIndex.
@@ -2434,11 +2255,11 @@
             self%pool(iobs)%stateID(mvar)=7
           CASE (45)
             mvar=2
-            name='uv'
+            name='uv_codar'
             varname(1)='u'
             varname(2)='v'
-            vars(1)='waterSurfaceZonalVelocity'
-            vars(2)='waterSurfaceMeridionalVelocity'
+            vars(1)='waterZonalVelocity'
+            vars(2)='waterMeridionalVelocity'
             self%pool(iobs)%stateID(1)=4
             self%pool(iobs)%stateID(2)=5
           CASE (60)
@@ -2600,12 +2421,8 @@
         SELECT CASE (OBS2(nf,ng)%IOtype)
           CASE (io_nf90)
             CALL netcdf_get_dim (ng, model, OBS2(nf,ng)%name)
-# if defined PIO_LIB && defined DISTRIBUTE
-          CASE (io_pio)
-            CALL pio_netcdf_get_dim (ng, model, OBS2(nf,ng)%name)
-# endif
           CASE DEFAULT
-            IF (Master) WRITE (stdout,10) OBS2(i,ng)%IOtype
+            IF (Master) WRITE (stdout,10) OBS2(nf,ng)%IOtype
             exit_flag=3
         END SELECT
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
@@ -2650,17 +2467,6 @@
               CALL netcdf_get_fvar (ng, model, OBS2(nf,ng)%name,        &
      &                              'obs_Zgrid', obs_Zgrid)
               IF (FoundError(exit_flag,NoError,__LINE__,MyFile)) RETURN
-
-# if defined PIO_LIB && defined DISTRIBUTE
-            CASE (io_pio)
-              CALL pio_netcdf_get_ivar (ng, model, OBS2(nf,ng)%name,    &
-     &                                  'obs_type', obs_type)
-              IF (FoundError(exit_flag,NoError,__LINE__,MyFile)) RETURN
-!
-              CALL pio_netcdf_get_fvar (ng, model, OBS2(nf,ng)%name,    &
-     &                                  'obs_Zgrid', obs_Zgrid)
-              IF (FoundError(exit_flag,NoError,__LINE__,MyFile)) RETURN
-# endif
           END SELECT
 !
           uniqueVal=0
@@ -2717,14 +2523,6 @@
                   END IF
                 END IF
               END DO
-
-# if defined PIO_LIB && defined DISTRIBUTE
-            CASE (io_pio)
-              CALL pio_netcdf_get_ivar (ng, model, OBS2(nf,ng)%name,    &
-     &                                  'stateID', myStateID,           &
-     &                                  GrpName = 'MetaData')
-              IF (FoundError(exit_flag,NoError,__LINE__,MyFile)) RETURN
-# endif
           END SELECT
 !
           DO i=1,mvar(nf)
@@ -2950,7 +2748,7 @@
       END SUBROUTINE obs_pool_unpack_i
 !
 !-----------------------------------------------------------------------
-!  It unpacks native observation floatin-point data into pool object.
+!  It unpacks native observation floating-point data into pool object.
 !
       SUBROUTINE obs_pool_unpack_r (self, ng, ND, typeID, Zgrid, rdata, &
      &                              VarName)

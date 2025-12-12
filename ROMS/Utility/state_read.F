@@ -1189,8 +1189,8 @@
 !
       CALL pio_netcdf_get_time (ng, model, ncname, Vname(1,idtime),     &
      &                          Rclock%DateNumber, stime,               &
-     &                          pioFile = my_pioFile,
-     &                          start = (/rec/),
+     &                          pioFile = my_pioFile,                   &
+     &                          start = (/rec/),                        &
      &                          total = (/1/))
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
