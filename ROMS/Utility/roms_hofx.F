@@ -2086,8 +2086,8 @@
               self%state(iobs)=SQRT(self%state(iobs))
             END IF
           END IF
+          self%ObsVetting(iobs)=1
         END IF
-        self%ObsVetting(iobs)=1
       END DO
 !
 !  Clear/reset global array.

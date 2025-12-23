@@ -1517,6 +1517,14 @@
      &                       ncid = ncid_inp)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
+!  Allocate ouput NetCDF group structure in pool object.
+!
+        ngroups=n_grp+SIZE(new_group)
+        self%pool(iobs)%ngroups=ngroups
+        IF (.not.allocated(self%pool(iobs)%group)) THEN
+          allocate ( self%pool(iobs)%group(ngroups) )
+        END IF
+!
 !-----------------------------------------------------------------------
 !  Copy NetCDF4 file schema (serial, only output thread).
 !-----------------------------------------------------------------------
@@ -1539,14 +1547,6 @@
      &                                dim_size(i), dimid),              &
      &                   nf90_noerr, __LINE__, MyFile)) RETURN
           END DO
-!
-!  Allocate ouput NetCDF group structure in pool object.
-!
-          ngroups=n_grp+SIZE(new_group)
-          self%pool(iobs)%ngroups=ngroups
-          IF (.not.allocated(self%pool(iobs)%group)) THEN
-            allocate ( self%pool(iobs)%group(ngroups) )
-          END IF
 !
 !  Define variables.
 !
@@ -1780,6 +1780,7 @@
         END IF
 # endif
       END DO FILE_LOOP
+      IF (Master) WRITE (stdout,'(1x)')
 !
   10  FORMAT (/,'OBS_POOL_NC_CREATE - non-IODA-type observation file,', &
      &        ' Format = ',i0,/,t21,'File: ',a)
@@ -1888,6 +1889,7 @@
       integer,             allocatable :: Iwork(:)
       integer                          :: i, j, k, ncid, npool
       integer                          :: nlocs, nsurvey, nvars
+
       character (len=40)               :: grpname, varname
       character (len=256)              :: ncname
 
@@ -1920,42 +1922,19 @@
             varname=TRIM(self%pool(i)%group(k)%vname(j))
             IF (TRIM(grpname).eq.'MetaData') THEN
               SELECT CASE (TRIM(varname))
-                CASE ('dateTime')
+                CASE ('dateTime',                                       &
+     &                'dateTimeAverageBegin',                           &
+     &                'dateTimeAverageEnd',                             &
+     &                'sequenceNumber')
                   IF (.not.allocated(Iwork)) THEN
                     allocate ( Iwork(nlocs) )
                   END IF
-                  CALL netcdf_get_ivar (ng, model,                      &
+                  CALL netcdf_copy_var (ng, model,                      &
      &                                  self%pool(i)%ncname_inp,        &
-     &                                  TRIM(varname), Iwork,           &
-     &                                  GrpName = TRIM(grpname))
-                  IF (FoundError(exit_flag, NoError,                    &
-     &                           __LINE__, MyFile)) RETURN
-!
-                  CALL netcdf_put_ivar (ng, model, TRIM(ncname),        &
-     &                                  TRIM(varname),                  &
+     &                                  TRIM(ncname), TRIM(varname),    &
      &                                  Iwork,                          &
-     &                                  (/1/), (/nlocs/),               &
-     &                                  ncid = ncid,                    &
-     &                                  GrpName = TRIM(grpname))
-                  deallocate (Iwork)
-                CASE ('dateTimeAverageBegin',                           &
-     &                'dateTimeAverageEnd')
-                  IF (.not.allocated(Iwork)) THEN
-                    allocate ( Iwork(nlocs) )
-                  END IF
-                  CALL netcdf_get_ivar (ng, model,                      &
-     &                                  self%pool(i)%ncname_inp,        &
-     &                                  TRIM(varname), Iwork,           &
-     &                                  GrpName = TRIM(grpname))
-                  IF (FoundError(exit_flag, NoError,                    &
-     &                           __LINE__, MyFile)) RETURN
-!
-                  CALL netcdf_put_ivar (ng, model, TRIM(ncname),        &
-     &                                  TRIM(varname),                  &
-     &                                  Iwork,                          &
-     &                                  (/1/), (/nlocs/),               &
-     &                                  ncid = ncid,                    &
-     &                                  GrpName = TRIM(grpname))
+     &                                  GrpName = TRIM(grpname),        &
+     &                                  ncid = ncid)
                   deallocate (Iwork)
                 CASE ('depth')
                   CALL netcdf_put_fvar (ng, model, TRIM(ncname),        &
@@ -1985,24 +1964,6 @@
      &                                  (/1/), (/nlocs/),               &
      &                                  ncid = ncid,                    &
      &                                  GrpName = TRIM(grpname))
-                CASE ('sequenceNumber')
-                  IF (.not.allocated(Iwork)) THEN
-                    allocate ( Iwork(nlocs) )
-                  END IF
-                  CALL netcdf_get_ivar (ng, model,                      &
-     &                                  self%pool(i)%ncname_inp,        &
-     &                                  TRIM(varname), Iwork,           &
-     &                                  GrpName = TRIM(grpname))
-                  IF (FoundError(exit_flag, NoError,                    &
-     &                           __LINE__, MyFile)) RETURN
-!
-                  CALL netcdf_put_ivar (ng, model, TRIM(ncname),        &
-     &                                  TRIM(varname),                  &
-     &                                  Iwork,                          &
-     &                                  (/1/), (/nlocs/),               &
-     &                                  ncid = ncid,                    &
-     &                                  GrpName = TRIM(grpname))
-                  deallocate (Iwork)
                 CASE ('stateID')
                   CALL netcdf_put_ivar (ng, model, TRIM(ncname),        &
      &                                  TRIM(varname),                  &
@@ -2028,19 +1989,12 @@
                   IF (.not.allocated(Iwork)) THEN
                     allocate ( Iwork(nsurvey) )
                   END IF
-                  CALL netcdf_get_ivar (ng, model,                      &
+                  CALL netcdf_copy_var (ng, model,                      &
      &                                  self%pool(i)%ncname_inp,        &
-     &                                  TRIM(varname), Iwork,           &
-     &                                  GrpName = TRIM(grpname))
-                  IF (FoundError(exit_flag, NoError,                    &
-     &                           __LINE__, MyFile)) RETURN
-
-                  CALL netcdf_put_ivar (ng, model, TRIM(ncname),        &
-     &                                  TRIM(varname),                  &
+     &                                  TRIM(ncname), TRIM(varname),    &
      &                                  Iwork,                          &
-     &                                  (/1/), (/nsurvey/),             &
-     &                                  ncid = ncid,                    &
-     &                                  GrpName = TRIM(grpname))
+     &                                  GrpName = TRIM(grpname),        &
+     &                                  ncid = ncid)
                   deallocate (Iwork)
                 CASE ('x_grid')
                   CALL netcdf_put_fvar (ng, model, TRIM(ncname),        &
@@ -2081,21 +2035,14 @@
             ELSE IF (TRIM(grpname).eq.'PreQC') THEN
               IF (.not.allocated(Iwork)) THEN
                 allocate ( Iwork(nlocs) )
-               END IF
-               CALL netcdf_get_ivar (ng, model,                         &
-     &                               self%pool(i)%ncname_inp,           &
-     &                               TRIM(varname), Iwork,              &
-     &                               GrpName = TRIM(grpname))
-               IF (FoundError(exit_flag, NoError,                       &
-     &                        __LINE__, MyFile)) RETURN
-!
-               CALL netcdf_put_ivar (ng, model, TRIM(ncname),           &
-     &                               TRIM(varname),                     &
-     &                               Iwork,                             &
-     &                               (/1/), (/nlocs/),                  &
-     &                               ncid = ncid,                       &
-     &                               GrpName = TRIM(grpname))
-               deallocate (Iwork)
+              END IF
+              CALL netcdf_copy_var (ng, model,                          &
+     &                              self%pool(i)%ncname_inp,            &
+     &                              TRIM(ncname), TRIM(varname),        &
+     &                              Iwork,                              &
+     &                              GrpName = TRIM(grpname),            &
+     &                              ncid = ncid)
+              deallocate (Iwork)
             END IF
 !
             IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) THEN

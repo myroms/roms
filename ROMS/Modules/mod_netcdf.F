@@ -35,6 +35,11 @@
 !  Interfaces for same name routine overloading. They differ in the kind
 !  type parameter and data array rank.
 !
+      INTERFACE netcdf_copy_var                  ! copy between files
+        MODULE PROCEDURE netcdf_copy_fvar_1d
+        MODULE PROCEDURE netcdf_copy_ivar_1d
+      END INTERFACE netcdf_copy_var
+!
       INTERFACE netcdf_get_fatt                  ! reads attributes
 #ifdef SINGLE_PRECISION
         MODULE PROCEDURE netcdf_get_fatt_dp
@@ -1650,6 +1655,316 @@
 !
       RETURN
       END SUBROUTINE netcdf_check_var
+!
+      SUBROUTINE netcdf_copy_fvar_1d (ng, model, ncinpName, ncoutName,  &
+     &                                myVarName, A,                     &
+     &                                GrpName, varid, ncid)
+!
+!=======================================================================
+!                                                                      !
+!  This routine copies a 1D-array variable from input to output        !
+!  NetCDF files. It always opens and closes the file to read the       !
+!  variable data. If the output NetCDF ID is not provided, it opens    !
+!  that file, writes the data, and then closes such file.              !
+!                                                                      !
+!  On Input:                                                           !
+!                                                                      !
+!     ng           Nested grid number (integer)                        !
+!     model        Calling model identifier (integer)                  !
+!     ncinpName    Input NetCDF file name (string)                     !
+!     ncoutName    Output NetCDF file name (string)                    !
+!     myVarName    Variable name (string)                              !
+!     A            Temporaty 1D variable (integer)                     !
+!     ncid         Output NetCDF file ID (integer, OPTIONAL)           !
+!     GrpName      NetCDF4 group name (string, OPTIONAL)               !
+!     varid        NetCDF variable ID (integer, OPTIONAL)              !
+!                                                                      !
+!  On Ouput:                                                           !
+!                                                                      !
+!     exit_flag    Error flag (integer) stored in MOD_SCALARS          !
+!     ioerror      NetCDF return code (integer) stored in MOD_IOUNITS  !
+!                                                                      !
+!  Notice: This routine must be used to write only nontiled variables. !
+!                                                                      !
+!=======================================================================
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: ng, model
+
+      real (r8), intent(inout) :: A(:)
+
+      integer, intent(in), optional :: ncid, varid
+!
+      character (len=*), intent(in) :: ncinpName, ncoutName
+      character (len=*), intent(in) :: myVarName
+      character (len=*), intent(in), optional :: GrpName
+!
+!  Local variable declarations.
+!
+      integer :: my_inpncid, my_inpgrpid, my_inpvarid, nfrid
+      integer :: my_outncid, my_outgrpid, my_outvarid, nfwid
+      integer :: status
+
+#if !defined PARALLEL_IO && defined DISTRIBUTE
+      integer, dimension(2) :: ibuffer
+#endif
+!
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__//", netcdf_copy_fvar_1d"
+!
+!-----------------------------------------------------------------------
+!  Copy 1D integer array from input to output NetCDF files.
+!-----------------------------------------------------------------------
+!
+!  Open input NetCDF file.
+!
+      CALL netcdf_open (ng, model, TRIM(ncinpName), 0, my_inpncid)
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+!
+!  Read in variable from input NetCDF file.
+!
+      IF (InpThread) THEN
+        IF (PRESENT(GrpName)) THEN
+          status=nf90_inq_ncid(my_inpncid, TRIM(GrpName), my_inpgrpid)
+          nfrid=my_inpgrpid
+        ELSE
+          nfrid=my_inpncid 
+        END IF
+        status=nf90_inq_varid(nfrid, TRIM(myVarName), my_inpvarid)
+        IF (status.eq.nf90_noerr) THEN
+          status=nf90_get_var(nfrid, my_inpvarid, A)
+          IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+            WRITE (stdout,10) TRIM(myVarName), TRIM(ncinpName),        &
+     &                        TRIM(SourceFile), nf90_strerror(status)
+            exit_flag=2
+            ioerror=status
+          END IF
+        END IF
+      END IF
+!
+!  Write out variable into output NetCDF file.
+!
+      IF (InpThread) THEN
+        IF (.not.PRESENT(ncid)) THEN
+          CALL netcdf_open (ng, model, TRIM(ncoutname), 1, my_outncid)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        ELSE
+          my_outncid=ncid
+        END IF
+!
+        IF (PRESENT(GrpName)) THEN
+          status=nf90_inq_ncid(my_outncid, TRIM(GrpName), my_outgrpid)
+          nfwid=my_outgrpid
+        ELSE
+          nfwid=my_outncid 
+        END IF
+!
+        IF (.not.PRESENT(varid)) THEN
+          status=nf90_inq_varid(nfwid, TRIM(myVarName), my_outvarid)
+          IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+            WRITE (stdout,10) TRIM(myVarName), TRIM(ncoutname),         &
+     &                        TRIM(SourceFile), nf90_strerror(status)
+            exit_flag=3
+            ioerror=status
+          END IF
+        ELSE
+          my_outvarid=varid
+        END IF
+!
+        IF (exit_flag.eq.NoError) THEN
+          status=nf90_put_var(nfwid, my_outvarid, A)
+          IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+            WRITE (stdout,20) TRIM(myVarName), TRIM(ncoutname),         &
+     &                        TRIM(SourceFile), nf90_strerror(status)
+            exit_flag=3
+            ioerror=status
+          END IF
+        END IF
+      END IF
+
+#if !defined PARALLEL_IO && defined DISTRIBUTE
+!
+!  Broadcast error flags to all processors in the group.
+!
+      ibuffer(1)=exit_flag
+      ibuffer(2)=ioerror
+      CALL mp_bcasti (ng, model, ibuffer)
+      exit_flag=ibuffer(1)
+      ioerror=ibuffer(2)
+#endif
+!
+!  Close files.
+!
+      CALL netcdf_close (ng, model, my_inpncid, ncinpName, .FALSE.)
+      IF (.not.PRESENT(ncid)) THEN
+        CALL netcdf_close (ng, model, my_outncid, ncoutname, .FALSE.)
+      END IF
+!
+  10  FORMAT (/,' NETCDF_COPY_FVAR_1D - error while inquiring ID for ', &
+     &        'variable:',2x,a,/,23x,'in input file:',2x,a,/,22x,       &
+     &        'call from:',2x,a,/,23x,a)
+  20  FORMAT (/,' NETCDF_COPY_FVAR_1D - error while writing variable:', &
+     &        2x,a,/,22x,'in input file:',2x,a,/,23x,'call from:',2x,a, &
+     &        /,23x,a)
+!
+      RETURN
+      END SUBROUTINE netcdf_copy_fvar_1d
+!
+      SUBROUTINE netcdf_copy_ivar_1d (ng, model, ncinpName, ncoutName,  &
+     &                                myVarName, A,                     &
+     &                                GrpName, varid, ncid)
+!
+!=======================================================================
+!                                                                      !
+!  This routine copies a 1D-array variable from input to output        !
+!  NetCDF files. It always opens and closes the file to read the       !
+!  variable data. If the output NetCDF ID is not provided, it opens    !
+!  that file, writes the data, and then closes such file.              !
+!                                                                      !
+!  On Input:                                                           !
+!                                                                      !
+!     ng           Nested grid number (integer)                        !
+!     model        Calling model identifier (integer)                  !
+!     ncinpName    Input NetCDF file name (string)                     !
+!     ncoutName    Output NetCDF file name (string)                    !
+!     myVarName    Variable name (string)                              !
+!     A            Temporaty 1D variable (integer)                     !
+!     ncid         Output NetCDF file ID (integer, OPTIONAL)           !
+!     GrpName      NetCDF4 group name (string, OPTIONAL)               !
+!     varid        NetCDF variable ID (integer, OPTIONAL)              !
+!                                                                      !
+!  On Ouput:                                                           !
+!                                                                      !
+!     exit_flag    Error flag (integer) stored in MOD_SCALARS          !
+!     ioerror      NetCDF return code (integer) stored in MOD_IOUNITS  !
+!                                                                      !
+!  Notice: This routine must be used to write only nontiled variables. !
+!                                                                      !
+!=======================================================================
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: ng, model
+
+      integer, intent(inout) :: A(:)
+
+      integer, intent(in), optional :: ncid, varid
+!
+      character (len=*), intent(in) :: ncinpName, ncoutName
+      character (len=*), intent(in) :: myVarName
+      character (len=*), intent(in), optional :: GrpName
+!
+!  Local variable declarations.
+!
+      integer :: my_inpncid, my_inpgrpid, my_inpvarid, nfrid
+      integer :: my_outncid, my_outgrpid, my_outvarid, nfwid
+      integer :: status
+
+#if !defined PARALLEL_IO && defined DISTRIBUTE
+      integer, dimension(2) :: ibuffer
+#endif
+!
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__//", netcdf_copy_ivar_1d"
+!
+!-----------------------------------------------------------------------
+!  Copy 1D integer array from input to output NetCDF files.
+!-----------------------------------------------------------------------
+!
+!  Open input NetCDF file.
+!
+      CALL netcdf_open (ng, model, TRIM(ncinpName), 0, my_inpncid)
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+!
+!  Read in variable from input NetCDF file.
+!
+      IF (InpThread) THEN
+        IF (PRESENT(GrpName)) THEN
+          status=nf90_inq_ncid(my_inpncid, TRIM(GrpName), my_inpgrpid)
+          nfrid=my_inpgrpid
+        ELSE
+          nfrid=my_inpncid 
+        END IF
+        status=nf90_inq_varid(nfrid, TRIM(myVarName), my_inpvarid)
+        IF (status.eq.nf90_noerr) THEN
+          status=nf90_get_var(nfrid, my_inpvarid, A)
+          IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+            WRITE (stdout,10) TRIM(myVarName), TRIM(ncinpName),        &
+     &                        TRIM(SourceFile), nf90_strerror(status)
+            exit_flag=2
+            ioerror=status
+          END IF
+        END IF
+      END IF
+!
+!  Write out variable into output NetCDF file.
+!
+      IF (InpThread) THEN
+        IF (.not.PRESENT(ncid)) THEN
+          CALL netcdf_open (ng, model, TRIM(ncoutname), 1, my_outncid)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        ELSE
+          my_outncid=ncid
+        END IF
+!
+        IF (PRESENT(GrpName)) THEN
+          status=nf90_inq_ncid(my_outncid, TRIM(GrpName), my_outgrpid)
+          nfwid=my_outgrpid
+        ELSE
+          nfwid=my_outncid 
+        END IF
+!
+        IF (.not.PRESENT(varid)) THEN
+          status=nf90_inq_varid(nfwid, TRIM(myVarName), my_outvarid)
+          IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+            WRITE (stdout,10) TRIM(myVarName), TRIM(ncoutname),         &
+     &                        TRIM(SourceFile), nf90_strerror(status)
+            exit_flag=3
+            ioerror=status
+          END IF
+        ELSE
+          my_outvarid=varid
+        END IF
+!
+        IF (exit_flag.eq.NoError) THEN
+          status=nf90_put_var(nfwid, my_outvarid, A)
+          IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+            WRITE (stdout,20) TRIM(myVarName), TRIM(ncoutname),         &
+     &                        TRIM(SourceFile), nf90_strerror(status)
+            exit_flag=3
+            ioerror=status
+          END IF
+        END IF
+      END IF
+
+#if !defined PARALLEL_IO && defined DISTRIBUTE
+!
+!  Broadcast error flags to all processors in the group.
+!
+      ibuffer(1)=exit_flag
+      ibuffer(2)=ioerror
+      CALL mp_bcasti (ng, model, ibuffer)
+      exit_flag=ibuffer(1)
+      ioerror=ibuffer(2)
+#endif
+!
+!  Close files.
+!
+      CALL netcdf_close (ng, model, my_inpncid, ncinpName, .FALSE.)
+      IF (.not.PRESENT(ncid)) THEN
+        CALL netcdf_close (ng, model, my_outncid, ncoutname, .FALSE.)
+      END IF
+!
+  10  FORMAT (/,' NETCDF_COPY_IVAR_1D - error while inquiring ID for ', &
+     &        'variable:',2x,a,/,23x,'in input file:',2x,a,/,22x,       &
+     &        'call from:',2x,a,/,23x,a)
+  20  FORMAT (/,' NETCDF_COPY_IVAR_1D - error while writing variable:', &
+     &        2x,a,/,22x,'in input file:',2x,a,/,23x,'call from:',2x,a, &
+     &        /,23x,a)
+!
+      RETURN
+      END SUBROUTINE netcdf_copy_ivar_1d
 !
       SUBROUTINE netcdf_inq_var (ng, model, ncname, ncid, myVarName,    &
      &                           GrpName, SearchVar, VarID, nVarDim,    &
