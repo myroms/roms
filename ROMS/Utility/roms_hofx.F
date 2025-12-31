@@ -97,8 +97,8 @@
 !
 !  Tally of processed observations.
 !
-        integer (i8b) :: ObsCount                    ! approved
-        integer (i8b) :: ObsReject                   ! rejected
+        integer :: ObsCount                          ! approved
+        integer :: ObsReject                         ! rejected
 !
 !  H(x) operator name.
 !
@@ -886,7 +886,7 @@
       integer,            intent(in   ) :: model    ! kernel identifier
 !
       TYPE (obs_data),         pointer :: depot
-      integer (i8b),       allocatable :: tally(:)
+      integer,             allocatable :: tally(:)
       integer                          :: i, iobs, mvars, nvars
       integer                          :: is, ie, mc, ObsSum, ObsReject
 
@@ -905,7 +905,6 @@
         mvars=MAXVAL(obs%pool(:)%nvars)
         IF (.not.allocated(tally)) THEN
           allocate ( tally(2*mvars) )
-          tally=0         
         END IF
         IF (.not.allocated(op_handle)) THEN
           allocate ( op_handle(2*mvars) )
@@ -922,6 +921,7 @@
           IF ((obs%pool(iobs)%NstrObs.gt.0).and.                        &
      &        (obs%pool(iobs)%NendObs.gt.0)) THEN
             nvars=obs%pool(iobs)%nvars
+            tally=0         
 !
             SELECT CASE (obs%pool(iobs)%name)
               CASE ('SSH')
@@ -947,6 +947,8 @@
 !
 !  Store processing: tally(1,nvars)=Count and tally(2,nvars)=Reject.
 !  To facilitate procesing the tally is a remapped vector.
+!  If time-averaged observations, add all the observations at the
+!  beggining into the self%ObsCount to avoid repetitive time sum.
 !
 # ifdef DISTRIBUTE
             CALL mp_reduce (ng, model, 2*mvars, tally, op_handle)
@@ -955,7 +957,14 @@
             ie=obs%pool(iobs)%NendObs
             DO i=1,nvars
               mc=1+(i-1)*2
-              self%ObsCount=self%ObsCount+tally(mc)
+              IF (obs%pool(iobs)%IsTimeAveraged) THEN
+                IF (iic(ng).eq.ntstart(ng)) THEN
+                  self%ObsCount=self%ObsCount+(ie-is+1)
+                  ObsSum=ObsSum+(ie-is+1)
+                END IF
+              ELSE
+                self%ObsCount=self%ObsCount+tally(mc)
+              END IF
               self%ObsReject=self%ObsReject+tally(mc+1)
             END DO
 !
@@ -979,8 +988,10 @@
                 END IF
                 WRITE (stdout,30) TRIM(varname),                        &
      &                            is, ie, tally(mc), tally(mc+1)
-                ObsSum=ObsSum+tally(mc)
-                ObsReject=ObsReject+tally(mc+1)
+                IF (.not.obs%pool(iobs)%IsTimeAveraged) THEN
+                  ObsSum=ObsSum+tally(mc)
+                  ObsReject=ObsReject+tally(mc+1)
+                END IF
               END DO
             END IF
           END IF
@@ -1021,7 +1032,7 @@
       TYPE (obs_filter),  intent(inout) :: geom      ! geometry object
       integer,            intent(in   ) :: ng        ! nested grid
       integer,            intent(in   ) :: model     ! kernel identifier
-      integer (i8b),      intent(inout) :: tally(:)  ! obs count/reject
+      integer,            intent(inout) :: tally(:)  ! obs count/reject
       character (len=*),  intent(in   ) :: name      ! obs pool name
 !
       logical                           :: IsAreaTimeAveraged
@@ -1140,7 +1151,7 @@
       CLASS (obs_VarCha), intent(inout) :: vchange   ! variable change
       integer,            intent(in   ) :: ng        ! nested grid
       integer,            intent(in   ) :: model     ! kernel identifier
-      integer (i8b),      intent(inout) :: tally(:)  ! obs count/reject
+      integer,            intent(inout) :: tally(:)  ! obs count/reject
       character (len=*),  intent(in   ) :: name      ! obs pool name
 !
       logical                           :: IsTimeAveraged
@@ -1241,7 +1252,7 @@
       integer,           intent(in   ) :: ng         ! nested grid
       integer,           intent(in   ) :: model      ! kernel identifier
       integer,           intent(in   ) :: ivar       ! variable counter
-      integer (i8b),     intent(inout) :: tally(:)   ! obs count/reject
+      integer,           intent(inout) :: tally(:)   ! obs count/reject
       integer,           intent(in   ) :: LBi, UBi   ! field I-bounds
       integer,           intent(in   ) :: LBj, UBj   ! field J-bounds
       real (r8),         intent(in   ) :: field(LBi:,LBj:)
@@ -1348,7 +1359,7 @@
       integer,           intent(in   ) :: ng         ! nested grid
       integer,           intent(in   ) :: model      ! kernel identifier
       integer,           intent(in   ) :: ivar       ! variable counter
-      integer (i8b),     intent(inout) :: tally(:)   ! obs count/reject
+      integer,           intent(inout) :: tally(:)   ! obs count/reject
       integer,           intent(in   ) :: LBi, UBi   ! field I-bounds
       integer,           intent(in   ) :: LBj, UBj   ! field J-bounds
       real (r8),         intent(in   ) :: field(LBi:,LBj:,:)
@@ -1519,7 +1530,7 @@
       integer,           intent(in   ) :: ng         ! nested grid
       integer,           intent(in   ) :: model      ! kernel identifier
       integer,           intent(in   ) :: ivar       ! variable counter
-      integer (i8b),     intent(inout) :: tally(:)   ! obs count/reject
+      integer,           intent(inout) :: tally(:)   ! obs count/reject
       integer,           intent(in   ) :: LBi, UBi   ! field I-bounds
       integer,           intent(in   ) :: LBj, UBj   ! field J-bounds
       real (r8),         intent(inout) :: ad_field(LBi:,LBj:)
@@ -1651,7 +1662,7 @@
       integer,           intent(in   ) :: ng         ! nested grid
       integer,           intent(in   ) :: model      ! kernel identifier
       integer,           intent(in   ) :: ivar       ! variable counter
-      integer (i8b),     intent(inout) :: tally(:)   ! obs count/reject
+      integer,           intent(inout) :: tally(:)   ! obs count/reject
       integer,           intent(in   ) :: LBi, UBi   ! field I-bounds
       integer,           intent(in   ) :: LBj, UBj   ! field J-bounds
       real (r8),         intent(inout) :: ad_field(LBi:,LBj:,:)
@@ -1842,14 +1853,14 @@
       integer,            intent(in   ) :: ng        ! nested grid
       integer,            intent(in   ) :: model     ! kernel identifier
       integer,            intent(in   ) :: ivar      ! variable counter
-      integer (i8b),      intent(inout) :: tally(:)  ! obs count/reject
+      integer,            intent(inout) :: tally(:)  ! obs count/reject
       integer,            intent(in   ) :: LBi, UBi  ! field I-bounds
       integer,            intent(in   ) :: LBj, UBj  ! field J-bounds
       real (r8),          intent(in   ) :: field(LBi:,LBj:)
 !
       integer                           :: iobs, i1, j1, m, mc, nscope
       integer                           :: i, is, ie, j, js, je
-      real (r8)                         :: dfr, dfx, dfy
+      real (r8)                         :: dfr, dfx, dfy, dlen
       real (r8)                         :: area_sum, resol
       real (r8)                         :: my_field
 !
@@ -1882,7 +1893,6 @@
           mc=1+(ivar-1)*2                          ! count/reject index
           tally(mc)=tally(mc)+1                    ! obs counted
           iobs=obs%pack_mapping(m,ivar)            ! index mapping
-!
           i1=INT(obs%Xgrid(m))
           j1=INT(obs%Ygrid(m))
 !
@@ -1910,7 +1920,8 @@
 # endif
               dfx=REAL(i-i1, r8)
               dfr=REAL(nscope, r8)
-              IF (SQRT(dfx*dfx+dfy*dfy).le.dfr) THEN
+              dlen=SQRT(dfx*dfx+dfy*dfy)
+              IF (dlen.le.dfr) THEN
                 area_sum=area_sum+geom%area(i,j)
                 IF (model.eq.iSTD) THEN     ! sum over the square values
 # ifdef DISTRIBUTE
@@ -1980,7 +1991,7 @@
       integer,            intent(in   ) :: ng        ! nested grid
       integer,            intent(in   ) :: model     ! kernel identifier
       integer,            intent(in   ) :: ivar      ! variable counter
-      integer (i8b),      intent(inout) :: tally(:)  ! obs count/reject
+      integer,            intent(inout) :: tally(:)  ! obs count/reject
       integer,            intent(in   ) :: LBi, UBi  ! field I-bounds
       integer,            intent(in   ) :: LBj, UBj  ! field J-bounds
       real (r8),          intent(in   ) :: field(LBi:,LBj:)
@@ -1988,7 +1999,7 @@
       integer                           :: iobs, i1, j1, m, mc, nscope
       integer                           :: i, is, ie, j, js, je
       integer                           :: iTstr, iTend
-      real (r8)                         :: dfr, dfx, dfy
+      real (r8)                         :: dfr, dfx, dfy, dlen
       real (r8)                         :: Tsteps, area_sum, resol
       real (r8)                         :: my_field
 !
@@ -2016,9 +2027,7 @@
         IF ((rXmin(ng).le.obs%Xgrid(m)).and.                            &
             (obs%Xgrid(m).lt.rXmax(ng)).and.                            &
      &      (rYmin(ng).le.obs%Ygrid(m)).and.                            &
-     &      (obs%Ygrid(m).lt.rYmax(ng)).and.                            &
-     &      (obs%TimeStr(m).le.time(ng)).and.                           &
-     &      (time(ng).le.obs%TimeEnd(m))) THEN
+     &      (obs%Ygrid(m).lt.rYmax(ng))) THEN
 !
           mc=1+(ivar-1)*2                          ! count/reject index
           tally(mc)=tally(mc)+1                    ! obs counted
@@ -2048,45 +2057,48 @@
 !  variances. Afterwards, take the square root to convert back to
 !  standard deviations.
 !
-          area_sum=0.0_r8
-          DO j=js,je
-            dfy=REAL(j-j1, r8)
-            DO i=is,ie
+          IF ((iTstr.le.iic(ng)).and.(iic(ng).le.iTend)) THEN
+            area_sum=0.0_r8
+            DO j=js,je
+              dfy=REAL(j-j1, r8)
+              DO i=is,ie
 # ifdef MASKING
-              IF (geom%mask(i,j).lt.1.0_r8) CYCLE
+                IF (geom%mask(i,j).lt.1.0_r8) CYCLE
 # endif
-              dfx=REAL(i-i1, r8)
-              dfr=REAL(nscope, r8)
-              IF (SQRT(dfx*dfx+dfy*dfy).le.dfr) THEN
-                area_sum=area_sum+geom%area(i,j)
-                IF (model.eq.iSTD) THEN   ! sum over the square values
+                dfx=REAL(i-i1, r8)
+                dfr=REAL(nscope, r8)
+                dlen=SQRT(dfx*dfx+dfy*dfy)
+                IF (dlen.le.dfr) THEN
+                  area_sum=area_sum+geom%area(i,j)
+                  IF (model.eq.iSTD) THEN   ! sum over the square values
 # ifdef DISTRIBUTE
-                  my_field=geom%global2d(i,j)*geom%global2d(i,j)
+                    my_field=geom%global2d(i,j)*geom%global2d(i,j)
 # else
-                  my_field=field(i,j)*field(i,j)
+                    my_field=field(i,j)*field(i,j)
 # endif
-                ELSE
+                  ELSE
 # ifdef DISTRIBUTE
-                  my_field=geom%global2d(i,j)
+                    my_field=geom%global2d(i,j)
 # else
-                  my_field=field(i,j)
+                    my_field=field(i,j)
 # endif
+                  END IF
+                  self%state(iobs)=self%state(iobs)+                    &
+     &                             geom%area(i,j)*my_field
                 END IF
-                self%state(iobs)=self%state(iobs)+                      &
-     &                           geom%area(i,j)*my_field
-              END IF
+              END DO
             END DO
-          END DO
 !
 !  Compute area-weighted average.
 !
-          IF ((area_sum.gt.0.0_r8).and.(iic(ng).eq.iTend)) THEN
-            self%state(iobs)=self%state(iobs)/(area_sum*Tsteps)
-            IF (model.eq.iSTD) THEN         ! take the square root
-              self%state(iobs)=SQRT(self%state(iobs))
+            IF ((area_sum.gt.0.0_r8).and.(iic(ng).eq.iTend)) THEN
+              self%state(iobs)=self%state(iobs)/(area_sum*Tsteps)
+              IF (model.eq.iSTD) THEN         ! take the square root
+                self%state(iobs)=SQRT(self%state(iobs))
+              END IF
             END IF
+            self%ObsVetting(iobs)=1
           END IF
-          self%ObsVetting(iobs)=1
         END IF
       END DO
 !
@@ -2129,14 +2141,14 @@
       integer,            intent(in   ) :: ng        ! nested grid
       integer,            intent(in   ) :: model     ! kernel identifier
       integer,            intent(in   ) :: ivar      ! variable counter
-      integer (i8b),      intent(inout) :: tally(:)  ! obs count/reject
+      integer,            intent(inout) :: tally(:)  ! obs count/reject
       integer,            intent(in   ) :: LBi, UBi  ! field I-bounds
       integer,            intent(in   ) :: LBj, UBj  ! field J-bounds
       real (r8),          intent(inout) :: ad_field(LBi:,LBj:)
 !
       integer                         :: iobs, i1, j1, m, mc, nscope
       integer                         :: i, is, ie, j, js, je
-      real (r8)                       :: dfr, dfx, dfy
+      real (r8)                       :: dfr, dfx, dfy, dlen
       real (r8)                       :: area_sum, resol
 !
 !  Clear work global 2D array to hold the adjoint of the area of
@@ -2181,7 +2193,8 @@
 #  endif
               dfx=REAL(i-i1, r8)
               dfr=REAL(nscope, r8)
-              IF (SQRT(dfx*dfx+dfy*dfy).le.dfr) THEN
+              dlen=SQRT(dfx*dfx+dfy*dfy)
+              IF (dlen.le.dfr) THEN
                 area_sum=area_sum+geom%area(i,j)
               END IF
             END DO
@@ -2208,7 +2221,8 @@
 #  endif
               dfx=REAL(i-i1, r8)
               dfr=REAL(nscope, r8)
-              IF (SQRT(dfx*dfx+dfy*dfy).le.dfr) THEN
+              dlen=SQRT(dfx*dfx+dfy*dfy)
+              IF (dlen.le.dfr) THEN
 !>              self%state(iobs)=self%state(iobs)+                      &
 !>   &                           geom%area(i,j)*geom%global2d(i,j)
 !>
@@ -2262,7 +2276,7 @@
       integer,            intent(in   ) :: ng        ! nested grid
       integer,            intent(in   ) :: model     ! kernel identifier
       integer,            intent(in   ) :: ivar      ! variable counter
-      integer (i8b),      intent(inout) :: tally(:)  ! obs count/reject
+      integer,            intent(inout) :: tally(:)  ! obs count/reject
       integer,            intent(in   ) :: LBi, UBi  ! field I-bounds
       integer,            intent(in   ) :: LBj, UBj  ! field J-bounds
       real (r8),          intent(inout) :: ad_field(LBi:,LBj:)
@@ -2270,7 +2284,7 @@
       integer                           :: iobs, i1, j1, m, mc, nscope
       integer                           :: i, is, ie, j, js, je
       integer                           :: iTstr, iTend
-      real (r8)                         :: dfr, dfx, dfy
+      real (r8)                         :: dfr, dfx, dfy, dlen
       real (r8)                         :: Tsteps, area_sum, resol
 !
 !  Clear work global 2D array to hold the adjoint of the area of
@@ -2285,9 +2299,7 @@
         IF ((rXmin(ng).le.obs%Xgrid(m)).and.                            &
             (obs%Xgrid(m).lt.rXmax(ng)).and.                            &
      &      (rYmin(ng).le.obs%Ygrid(m)).and.                            &
-     &      (obs%Ygrid(m).lt.rYmax(ng)).and.                            &
-     &      (obs%TimeStr(m).le.time(ng)).and.                           &
-     &      (time(ng).le.obs%TimeEnd(m))) THEN
+     &      (obs%Ygrid(m).lt.rYmax(ng))) THEN
 !
           mc=1+(ivar-1)*2                          ! count/reject index
           tally(mc)=tally(mc)+1                    ! obs counted
@@ -2315,46 +2327,50 @@
 !  Adjoint of average state variable over the area of influence and time
 !  window.
 !
-          area_sum=0.0_r8               ! compute area weights
-          DO j=js,je
-            dfy=REAL(j-j1, r8)
-            DO i=is,ie
+          IF ((iTstr.le.iic(ng)).and.(iic(ng).le.iTend)) THEN
+            area_sum=0.0_r8             ! compute area weights
+            DO j=js,je
+              dfy=REAL(j-j1, r8)
+              DO i=is,ie
 #  ifdef MASKING
-              IF (geom%mask(i,j).lt.1.0_r8) CYCLE
+                IF (geom%mask(i,j).lt.1.0_r8) CYCLE
 #  endif
-              dfx=REAL(i-i1, r8)
-              dfr=REAL(nscope, r8)
-              IF (SQRT(dfx*dfx+dfy*dfy).le.dfr) THEN
-                area_sum=area_sum+geom%area(i,j)
-              END IF
+                dfx=REAL(i-i1, r8)
+                dfr=REAL(nscope, r8)
+                dlen=SQRT(dfx*dfx+dfy*dfy)
+                IF (SQRT(dlen.le.dfr) THEN
+                  area_sum=area_sum+geom%area(i,j)
+                END IF
+              END DO
             END DO
-          END DO
 !
-          IF ((area_sum.gt.0.0_r8).and.(iic(ng).eq.iTend)) THEN
-!>          self%state(iobs)=self%state(iobs)/(area_sum*Tsteps)
+            IF ((area_sum.gt.0.0_r8).and.(iic(ng).eq.iTend)) THEN
+!>            self%state(iobs)=self%state(iobs)/(area_sum*Tsteps)
 !>
-            ad_self%state(iobs)=ad_self%state(iobs)/(area_sum*Tsteps)
+              ad_self%state(iobs)=ad_self%state(iobs)/(area_sum*Tsteps)
+            END IF
+            ad_self%ObsVetting(iobs)=1
+!
+            DO j=js,je
+              dfy=REAL(j-j1, r8)
+              DO i=is,ie
+#  ifdef MASKING
+                IF (geom%mask(i,j).lt.1.0_r8) CYCLE
+#  endif
+                dfx=REAL(i-i1, r8)
+                dfr=REAL(nscope, r8)
+                dlen=SQRT(dfx*dfx+dfy*dfy)
+                IF (dlen.le.dfr) THEN
+!>                self%state(iobs)=self%state(iobs)+                    &
+!>   &                             geom%area(i,j)*geom%global2d(i,j)
+!>
+                  geom%global2d(i,j)=geom%global2d(i,j)+                &
+     &                               geom%area(i,j)*ad_self%state(iobs)
+                END IF
+              END DO
+            END DO
+            ad_self%state(iobs)=0.0_r8
           END IF
-          ad_self%ObsVetting(iobs)=1
-!
-          DO j=js,je
-            dfy=REAL(j-j1, r8)
-            DO i=is,ie
-#  ifdef MASKING
-              IF (geom%mask(i,j).lt.1.0_r8) CYCLE
-#  endif
-              dfx=REAL(i-i1, r8)
-              dfr=REAL(nscope, r8)
-              IF (SQRT(dfx*dfx+dfy*dfy).le.dfr) THEN
-!>              self%state(iobs)=self%state(iobs)+                      &
-!>   &                           geom%area(i,j)*geom%global2d(i,j)
-!>
-                geom%global2d(i,j)=geom%global2d(i,j)+                  &
-     &                             geom%area(i,j)*ad_self%state(iobs)
-              END IF
-            END DO
-          END DO
-          ad_self%state(iobs)=0.0_r8
         END IF
       END DO
 !
@@ -2399,7 +2415,7 @@
       integer,           intent(in   ) :: ng         ! nested grid
       integer,           intent(in   ) :: model      ! kernel identifier
       integer,           intent(in   ) :: ivar       ! variable counter
-      integer (i8b),     intent(inout) :: tally(:)   ! obs count/reject
+      integer,           intent(inout) :: tally(:)   ! obs count/reject
       integer,           intent(in   ) :: LBi, UBi   ! field I-bounds
       integer,           intent(in   ) :: LBj, UBj   ! field J-bounds
       real (r8),         intent(in   ) :: field(LBi:,LBj:)
@@ -2418,53 +2434,7 @@
         IF ((rXmin(ng).le.obs%Xgrid(i)).and.                            &
      &      (obs%Xgrid(i).lt.rXmax(ng)).and.                            &
      &      (rYmin(ng).le.obs%Ygrid(i)).and.                            &
-     &      (obs%Ygrid(i).lt.rYmax(ng)).and.                            &
-     &      (obs%TimeStr(i).le.time(ng)).and.                           &
-     &      (time(ng).le.obs%TimeEnd(i))) THEN
-!
-          mc=1+(ivar-1)*2                          ! count/reject index
-          tally(mc)=tally(mc)+1                    ! obs counted
-          iobs=obs%pack_mapping(i,ivar)            ! index mapping
-!
-          i1=INT(obs%Xgrid(i))
-          j1=INT(obs%Ygrid(i))
-          i2=i1+1
-          j2=j1+1
-          IF (i2.gt.Lm(ng)+1) THEN
-            i2=i1                 ! Observation at the eastern boundary
-          END IF
-          IF (j2.gt.Mm(ng)+1) THEN
-            j2=j1                 ! Observation at the northern boundary
-          END IF
-          p2=REAL(i2-i1,r8)*(obs%Xgrid(i)-REAL(i1,r8))
-          q2=REAL(j2-j1,r8)*(obs%Ygrid(i)-REAL(j1,r8))
-          p1=1.0_r8-p2
-          q1=1.0_r8-q2
-          Hmat(1)=p1*q1
-          Hmat(2)=p2*q1
-          Hmat(3)=p2*q2
-          Hmat(4)=p1*q2
-# ifdef MASKING
-          Hmat(1)=Hmat(1)*self%mask(i1,j1)
-          Hmat(2)=Hmat(2)*self%mask(i2,j1)
-          Hmat(3)=Hmat(3)*self%mask(i2,j2)
-          Hmat(4)=Hmat(4)*self%mask(i1,j2)
-          wsum=0.0_r8
-          DO ic=1,4
-            wsum=wsum+Hmat(ic)
-          END DO
-          IF (wsum.gt.0.0_r8) THEN
-            wsum=1.0_r8/wsum
-            DO ic=1,4
-              Hmat(ic)=Hmat(ic)*wsum
-            END DO
-          END IF
-# endif
-!
-!  Average resulting H(x) over the specified time window. If model
-!  standard deviations, square their values to obtain variances.
-!  Afterwards, take the square root to convert back to standard
-!  deviations. Probably, unnecessary since it is time independent.
+     &      (obs%Ygrid(i).lt.rYmax(ng))) THEN
 !
           iTstr=MAX(ntstart(ng),                                        &
      &              INT((obs%TimeStr(i)-dstart*day2sec)/dt(ng))+1)
@@ -2472,35 +2442,83 @@
      &              INT((obs%TimeEnd(i)-dstart*day2sec)/dt(ng)))
           Tsteps=REAL(iTend-iTstr, r8)
 !
-          IF (model.eq.iSTD) THEN           ! use squared values
-            self%state(iobs)=self%state(iobs)+                          &
-     &                       Hmat(1)*field(i1,j1)*field(i1,j1)+         &
-     &                       Hmat(2)*field(i2,j1)*field(i2,j1)+         &
-     &                       Hmat(3)*field(i2,j2)*field(i2,j2)+         &
-     &                       Hmat(4)*field(i1,j2)*field(i1,j2)
-          ELSE
-            self%state(iobs)=self%state(iobs)+                          &
-     &                       Hmat(1)*field(i1,j1)+                      &
-     &                       Hmat(2)*field(i2,j1)+                      &
-     &                       Hmat(3)*field(i2,j2)+                      &
-     &                       Hmat(4)*field(i1,j2)
-          END IF
-          IF (iic(ng).eq.iTend) THEN
-            self%state(iobs)=self%state(iobs)/Tsteps
-            IF (model.eq.iSTD) THEN         ! take the square root
-              self%state(iobs)=SQRT(self%state(iobs))
+! Spatial interpolation and time avaraging.
+!
+          IF ((iTstr.le.iic(ng)).and.(iic(ng).le.iTend)) THEN
+            mc=1+(ivar-1)*2                        ! count/reject index
+            tally(mc)=tally(mc)+1                  ! obs counted
+            iobs=obs%pack_mapping(i,ivar)          ! index mapping
+!
+            i1=INT(obs%Xgrid(i))
+            j1=INT(obs%Ygrid(i))
+            i2=i1+1
+            j2=j1+1
+            IF (i2.gt.Lm(ng)+1) THEN
+              i2=i1               ! Observation at the eastern boundary
             END IF
-          END IF
+            IF (j2.gt.Mm(ng)+1) THEN
+              j2=j1               ! Observation at the northern boundary
+            END IF
+            p2=REAL(i2-i1,r8)*(obs%Xgrid(i)-REAL(i1,r8))
+            q2=REAL(j2-j1,r8)*(obs%Ygrid(i)-REAL(j1,r8))
+            p1=1.0_r8-p2
+            q1=1.0_r8-q2
+            Hmat(1)=p1*q1
+            Hmat(2)=p2*q1
+            Hmat(3)=p2*q2
+            Hmat(4)=p1*q2
 # ifdef MASKING
-          IF (wsum.gt.0.0_r8) THEN
-            self%obsVetting(iobs)=1
-          ELSE
-            self%ObsVetting(iobs)=0
-            tally(mc+1)=tally(mc+1)+1              ! obs rejected
-          END IF
-# else
-          self%ObsVetting(iobs)=1
+            Hmat(1)=Hmat(1)*self%mask(i1,j1)
+            Hmat(2)=Hmat(2)*self%mask(i2,j1)
+            Hmat(3)=Hmat(3)*self%mask(i2,j2)
+            Hmat(4)=Hmat(4)*self%mask(i1,j2)
+            wsum=0.0_r8
+            DO ic=1,4
+              wsum=wsum+Hmat(ic)
+            END DO
+            IF (wsum.gt.0.0_r8) THEN
+              wsum=1.0_r8/wsum
+              DO ic=1,4
+                Hmat(ic)=Hmat(ic)*wsum
+              END DO
+            END IF
 # endif
+!
+!  Average resulting H(x) over the specified time window. If model
+!  standard deviations, square their values to obtain variances.
+!  Afterwards, take the square root to convert back to standard
+!  deviations. Probably, unnecessary since it is time independent.
+!
+            IF (model.eq.iSTD) THEN         ! use squared values
+              self%state(iobs)=self%state(iobs)+                        &
+     &                         Hmat(1)*field(i1,j1)*field(i1,j1)+       &
+     &                         Hmat(2)*field(i2,j1)*field(i2,j1)+       &
+     &                         Hmat(3)*field(i2,j2)*field(i2,j2)+       &
+     &                         Hmat(4)*field(i1,j2)*field(i1,j2)
+            ELSE
+              self%state(iobs)=self%state(iobs)+                        &
+     &                         Hmat(1)*field(i1,j1)+                    &
+     &                         Hmat(2)*field(i2,j1)+                    &
+     &                         Hmat(3)*field(i2,j2)+                    &
+     &                         Hmat(4)*field(i1,j2)
+            END IF
+            IF (iic(ng).eq.iTend) THEN
+              self%state(iobs)=self%state(iobs)/Tsteps
+              IF (model.eq.iSTD) THEN       ! take the square root
+                self%state(iobs)=SQRT(self%state(iobs))
+              END IF
+            END IF
+# ifdef MASKING
+            IF (wsum.gt.0.0_r8) THEN
+              self%obsVetting(iobs)=1
+            ELSE
+              self%ObsVetting(iobs)=0
+              tally(mc+1)=tally(mc+1)+1            ! obs rejected
+            END IF
+# else
+            self%ObsVetting(iobs)=1
+# endif
+          END IF
         END IF
       END DO
 !
@@ -2539,7 +2557,7 @@
       integer,           intent(in   ) :: ng         ! nested grid
       integer,           intent(in   ) :: model      ! kernel identifier
       integer,           intent(in   ) :: ivar       ! variable counter
-      integer (i8b),     intent(inout) :: tally(:)   ! obs count/reject
+      integer,           intent(inout) :: tally(:)   ! obs count/reject
       integer,           intent(in   ) :: LBi, UBi   ! field I-bounds
       integer,           intent(in   ) :: LBj, UBj   ! field J-bounds
       real (r8),         intent(in   ) :: field(LBi:,LBj:,:)
@@ -2560,95 +2578,102 @@
         IF ((rXmin(ng).le.obs%Xgrid(i)).and.                            &
             (obs%Xgrid(i).lt.rXmax(ng)).and.                            &
      &      (rYmin(ng).le.obs%Ygrid(i)).and.                            &
-     &      (obs%Ygrid(i).lt.rYmax(ng)).and.                            &
-     &      (obs%TimeStr(i).le.time(ng)).and.                           &
-     &      (time(ng).le.obs%TimeEnd(i))) THEN
+     &      (obs%Ygrid(i).lt.rYmax(ng))) THEN
 !
-          mc=1+(ivar-1)*2                          ! count/reject index
-          tally(mc)=tally(mc)+1                    ! obs counted
-          iobs=obs%pack_mapping(i,ivar)            ! index mapping
+          iTstr=MAX(ntstart(ng),                                        &
+     &              INT((obs%TimeStr(i)-dstart*day2sec)/dt(ng))+1)
+          iTend=MIN(ntend(ng),                                          &
+     &              INT((obs%TimeEnd(i)-dstart*day2sec)/dt(ng)))
+          Tsteps=REAL(iTend-iTstr, r8)
 !
-          i1=INT(obs%Xgrid(i))
-          j1=INT(obs%Ygrid(i))
-          i2=i1+1
-          j2=j1+1
-          IF (i2.gt.Lm(ng)+1) THEN
-            i2=i1                 ! Observation at the eastern boundary
-          END IF
-          IF (j2.gt.Mm(ng)+1) THEN
-            j2=j1                 ! Observation at the northern boundary
-          END IF
-          p2=REAL(i2-i1,r8)*(obs%Xgrid(i)-REAL(i1,r8))
-          q2=REAL(j2-j1,r8)*(obs%Ygrid(i)-REAL(j1,r8))
-          p1=1.0_r8-p2
-          q1=1.0_r8-q2
-          w11=p1*q1
-          w21=p2*q1
-          w22=p2*q2
-          w12=p1*q2
-          IF (obs%Zgrid(i).gt.0.0_r8) THEN
-            k1=MAX(1,INT(obs%Zgrid(i)))        ! Positions in fractional
-            k2=MIN(INT(obs%Zgrid(i))+1,N(ng))  ! levels
-            r2=REAL(k2-k1,r8)*(obs%Zgrid(i)-REAL(k1,r8))
-            r1=1.0_r8-r2
-          ELSE
-            Ztop=self%depth(i1,j1,N(ng))
-            Zbot=self%depth(i1,j1,1    )
-            IF (obs%Zgrid(i).ge.Ztop) THEN
-              k1=N(ng)                         ! If shallower, assign to
-              k2=N(ng)                         ! top grid cell. The
-              r1=1.0_r8                        ! observation is located
-              r2=0.0_r8                        ! on the upper cell half
-              obs%Zgrid(i)=REAL(N(ng),r8)      ! above its middle depth.
-            ELSE IF (Zbot.ge.obs%Zgrid(i)) THEN
-              r1=0.0_r8                        ! If deeper, ignore.
-              r2=0.0_r8
-              self%ObsVetting(iobs)=0
-              tally(mc+1)=tally(mc+1)+1        ! obs rejected
-            ELSE
-              DO k=N(ng),2,-1                  ! Otherwise, interpolate
-                Ztop=self%depth(i1,j1,k  )     ! to fractional level
-                Zbot=self%depth(i1,j1,k-1)
-                IF ((Ztop.gt.obs%Zgrid(i)).and.                         &
-     &              (obs%Zgrid(i).ge.Zbot)) THEN
-                  k1=k-1
-                  k2=k
-                END IF
-              END DO
-              dz=self%depth(i1,j1,k2)-self%depth(i1,j1,k1)
-              r2=(obs%Zgrid(i)-self%depth(i1,j1,k1))/dz
+! Spatial interpolation and time avaraging.
+!
+          IF ((iTstr.le.iic(ng)).and.(iic(ng).le.iTend)) THEN
+            mc=1+(ivar-1)*2                        ! count/reject index
+            tally(mc)=tally(mc)+1                  ! obs counted
+            iobs=obs%pack_mapping(i,ivar)          ! index mapping
+!
+            i1=INT(obs%Xgrid(i))
+            j1=INT(obs%Ygrid(i))
+            i2=i1+1
+            j2=j1+1
+            IF (i2.gt.Lm(ng)+1) THEN
+              i2=i1               ! Observation at the eastern boundary
+            END IF
+            IF (j2.gt.Mm(ng)+1) THEN
+              j2=j1               ! Observation at the northern boundary
+            END IF
+            p2=REAL(i2-i1,r8)*(obs%Xgrid(i)-REAL(i1,r8))
+            q2=REAL(j2-j1,r8)*(obs%Ygrid(i)-REAL(j1,r8))
+            p1=1.0_r8-p2
+            q1=1.0_r8-q2
+            w11=p1*q1
+            w21=p2*q1
+            w22=p2*q2
+            w12=p1*q2
+            IF (obs%Zgrid(i).gt.0.0_r8) THEN
+              k1=MAX(1,INT(obs%Zgrid(i)))      ! Positions in fractional
+              k2=MIN(INT(obs%Zgrid(i))+1,N(ng))             ! levels
+              r2=REAL(k2-k1,r8)*(obs%Zgrid(i)-REAL(k1,r8))
               r1=1.0_r8-r2
-              obs%Zgrid(i)=REAL(k1,r8)+r2      ! overwrite
+            ELSE
+              Ztop=self%depth(i1,j1,N(ng))
+              Zbot=self%depth(i1,j1,1    )
+              IF (obs%Zgrid(i).ge.Ztop) THEN
+                k1=N(ng)                       ! If shallower, assign to
+                k2=N(ng)                       ! top grid cell. The
+                r1=1.0_r8                      ! observation is located
+                r2=0.0_r8                      ! on the upper cell half
+                obs%Zgrid(i)=REAL(N(ng),r8)    ! above its middle depth.
+              ELSE IF (Zbot.ge.obs%Zgrid(i)) THEN
+                r1=0.0_r8                      ! If deeper, ignore.
+                r2=0.0_r8
+                self%ObsVetting(iobs)=0
+                tally(mc+1)=tally(mc+1)+1      ! obs rejected
+              ELSE
+                DO k=N(ng),2,-1                ! Otherwise, interpolate
+                  Ztop=self%depth(i1,j1,k  )   ! to fractional level
+                  Zbot=self%depth(i1,j1,k-1)
+                  IF ((Ztop.gt.obs%Zgrid(i)).and.                       &
+     &                (obs%Zgrid(i).ge.Zbot)) THEN
+                    k1=k-1
+                    k2=k
+                  END IF
+                END DO
+                dz=self%depth(i1,j1,k2)-self%depth(i1,j1,k1)
+                r2=(obs%Zgrid(i)-self%depth(i1,j1,k1))/dz
+                r1=1.0_r8-r2
+                obs%Zgrid(i)=REAL(k1,r8)+r2    ! overwrite
+              END IF
             END IF
-          END IF
-          IF ((r1+r2).gt.0.0_r8) THEN
-            Hmat(1)=w11*r1
-            Hmat(2)=w21*r1
-            Hmat(3)=w22*r1
-            Hmat(4)=w12*r1
-            Hmat(5)=w11*r2
-            Hmat(6)=w21*r2
-            Hmat(7)=w22*r2
-            Hmat(8)=w12*r2
+            IF ((r1+r2).gt.0.0_r8) THEN
+              Hmat(1)=w11*r1
+              Hmat(2)=w21*r1
+              Hmat(3)=w22*r1
+              Hmat(4)=w12*r1
+              Hmat(5)=w11*r2
+              Hmat(6)=w21*r2
+              Hmat(7)=w22*r2
+              Hmat(8)=w12*r2
 #  ifdef MASKING
-            Hmat(1)=Hmat(1)*self%mask(i1,j1)
-            Hmat(2)=Hmat(2)*self%mask(i2,j1)
-            Hmat(3)=Hmat(3)*self%mask(i2,j2)
-            Hmat(4)=Hmat(4)*self%mask(i1,j2)
-            Hmat(5)=Hmat(5)*self%mask(i1,j1)
-            Hmat(6)=Hmat(6)*self%mask(i2,j1)
-            Hmat(7)=Hmat(7)*self%mask(i2,j2)
-            Hmat(8)=Hmat(8)*self%mask(i1,j2)
-            wsum=0.0_r8
-            DO ic=1,8
-              wsum=wsum+Hmat(ic)
-            END DO
-            IF (wsum.gt.0.0_r8) THEN
-              wsum=1.0_r8/wsum
+              Hmat(1)=Hmat(1)*self%mask(i1,j1)
+              Hmat(2)=Hmat(2)*self%mask(i2,j1)
+              Hmat(3)=Hmat(3)*self%mask(i2,j2)
+              Hmat(4)=Hmat(4)*self%mask(i1,j2)
+              Hmat(5)=Hmat(5)*self%mask(i1,j1)
+              Hmat(6)=Hmat(6)*self%mask(i2,j1)
+              Hmat(7)=Hmat(7)*self%mask(i2,j2)
+              Hmat(8)=Hmat(8)*self%mask(i1,j2)
+              wsum=0.0_r8
               DO ic=1,8
-                Hmat(ic)=Hmat(ic)*wsum
+                wsum=wsum+Hmat(ic)
               END DO
-            END IF
+              IF (wsum.gt.0.0_r8) THEN
+                wsum=1.0_r8/wsum
+                DO ic=1,8
+                  Hmat(ic)=Hmat(ic)*wsum
+                END DO
+              END IF
 #  endif
 !
 !  Average resulting H(x) over the specified time window.  If model
@@ -2656,48 +2681,50 @@
 !  Afterwards, take the square root to convert back to standard
 !  deviations. Probably, unnecessary since it is time independent.
 !
-            iTstr=MAX(ntstart(ng),                                      &
-     &                INT((obs%TimeStr(i)-dstart*day2sec)/dt(ng))+1)
-            iTend=MIN(ntend(ng),                                        &
-     &                INT((obs%TimeEnd(i)-dstart*day2sec)/dt(ng)))
-            Tsteps=REAL(iTend-iTstr, r8)
-!
-            IF (model.eq.iSTD) THEN         ! use squared values
-              self%state(iobs)=self%state(iobs)+                        &
-     &                         Hmat(1)*field(i1,j1,k1)*field(i1,j1,k1)+ &
-     &                         Hmat(2)*field(i2,j1,k1)*field(i2,j1,k1)+ &
-     &                         Hmat(3)*field(i2,j2,k1)*field(i2,j2,k1)+ &
-     &                         Hmat(4)*field(i1,j2,k1)*field(i1,j2,k1)+ &
-     &                         Hmat(5)*field(i1,j1,k2)*field(i1,j1,k2)+ &
-     &                         Hmat(6)*field(i2,j1,k2)*field(i2,j1,k2)+ &
-     &                         Hmat(7)*field(i2,j2,k2)*field(i2,j2,k2)+ &
-     &                         Hmat(8)*field(i1,j2,k2)*field(i1,j2,k2)
-            ELSE
-              self%state(iobs)=self%state(iobs)+                        &
-     &                         Hmat(1)*field(i1,j1,k1)+                 &
-     &                         Hmat(2)*field(i2,j1,k1)+                 &
-     &                         Hmat(3)*field(i2,j2,k1)+                 &
-     &                         Hmat(4)*field(i1,j2,k1)+                 &
-     &                         Hmat(5)*field(i1,j1,k2)+                 &
-     &                         Hmat(6)*field(i2,j1,k2)+                 &
-     &                         Hmat(7)*field(i2,j2,k2)+                 &
-     &                         Hmat(8)*field(i1,j2,k2)
-            END IF
-            IF (iic(ng).eq.iTend) THEN
-              self%state(iobs)=self%state(iobs)/Tsteps
-            END IF
-#  ifdef MASKING
-            IF (wsum.gt.0.0_r8) THEN
-              self%ObsVetting(iobs)=1
-              IF (model.eq.iSTD) THEN        ! take the square root
-                self%state(iobs)=SQRT(self%state(iobs))
+              IF (model.eq.iSTD) THEN       ! use squared values
+                self%state(iobs)=self%state(iobs)+                      &
+     &                           Hmat(1)*field(i1,j1,k1)*               &
+     &                                   field(i1,j1,k1)+               &
+     &                           Hmat(2)*field(i2,j1,k1)*               &
+     &                                   field(i2,j1,k1)+               &
+     &                           Hmat(3)*field(i2,j2,k1)*               &
+     &                                   field(i2,j2,k1)+               &
+     &                           Hmat(4)*field(i1,j2,k1)*               &
+     &                                   field(i1,j2,k1)+               &
+     &                           Hmat(5)*field(i1,j1,k2)*               &
+     &                                   field(i1,j1,k2)+               &
+     &                           Hmat(6)*field(i2,j1,k2)*               &
+     &                                   field(i2,j1,k2)+               &
+     &                           Hmat(7)*field(i2,j2,k2)*               &
+     &                                   field(i2,j2,k2)+               &
+     &                           Hmat(8)*field(i1,j2,k2)*               &
+     &                                   field(i1,j2,k2)
+              ELSE
+                self%state(iobs)=self%state(iobs)+                      &
+     &                           Hmat(1)*field(i1,j1,k1)+               &
+     &                           Hmat(2)*field(i2,j1,k1)+               &
+     &                           Hmat(3)*field(i2,j2,k1)+               &
+     &                           Hmat(4)*field(i1,j2,k1)+               &
+     &                           Hmat(5)*field(i1,j1,k2)+               &
+     &                           Hmat(6)*field(i2,j1,k2)+               &
+     &                           Hmat(7)*field(i2,j2,k2)+               &
+     &                           Hmat(8)*field(i1,j2,k2)
               END IF
-            ELSE
-              self%ObsVetting(iobs)=0
-              tally(mc+1)=tally(mc+1)+1            ! obs rejected
-            END IF
+              IF (iic(ng).eq.iTend) THEN
+                self%state(iobs)=self%state(iobs)/Tsteps
+              END IF
+#  ifdef MASKING
+              IF (wsum.gt.0.0_r8) THEN
+                self%ObsVetting(iobs)=1
+                IF (model.eq.iSTD) THEN      ! take the square root
+                  self%state(iobs)=SQRT(self%state(iobs))
+                END IF
+              ELSE
+                self%ObsVetting(iobs)=0
+                tally(mc+1)=tally(mc+1)+1          ! obs rejected
+              END IF
 #  else
-            self%ObsVetting(iobs)=1
+              self%ObsVetting(iobs)=1
 #  endif
 #  ifndef ALLOW_BOTTOM_OBS
 !
@@ -2706,12 +2733,13 @@
 !  coarse level half-thickness (-h < Zobs < self%depth(:,:,1)) in deep
 !  water.
 !
-            IF ((obs%Zgrid(i).gt.0.0_r8).and.                           &
-     &          (obs%Zgrid(i).le.1.0_r8)) THEN
-              self%ObsVetting(iobs)=0
-              tally(mc+1)=tally(mc+1)+1            ! obs rejected
-            END IF
+              IF ((obs%Zgrid(i).gt.0.0_r8).and.                         &
+     &            (obs%Zgrid(i).le.1.0_r8)) THEN
+                self%ObsVetting(iobs)=0
+                tally(mc+1)=tally(mc+1)+1          ! obs rejected
+              END IF
 #  endif
+            END IF
           END IF
         END IF
       END DO
@@ -2747,7 +2775,7 @@
       integer,           intent(in   ) :: ng         ! nested grid
       integer,           intent(in   ) :: model      ! kernel identifier
       integer,           intent(in   ) :: ivar       ! variable counter
-      integer (i8b),     intent(inout) :: tally(:)   ! obs count/reject
+      integer,           intent(inout) :: tally(:)   ! obs count/reject
       integer,           intent(in   ) :: LBi, UBi   ! field I-bounds
       integer,           intent(in   ) :: LBj, UBj   ! field J-bounds
       real (r8),         intent(inout) :: ad_field(LBi:,LBj:)
@@ -2888,7 +2916,7 @@
       integer,           intent(in   ) :: ng         ! nested grid
       integer,           intent(in   ) :: model      ! kernel identifier
       integer,           intent(in   ) :: ivar       ! variable counter
-      integer (i8b),     intent(inout) :: tally(:)   ! obs count/reject
+      integer,           intent(inout) :: tally(:)   ! obs count/reject
       integer,           intent(in   ) :: LBi, UBi   ! field I-bounds
       integer,           intent(in   ) :: LBj, UBj   ! field J-bounds
       real (r8),         intent(inout) :: ad_field(LBi:,LBj:,:)
@@ -3313,7 +3341,7 @@
 !
       integer                          :: nlocs, npool, mvars
       integer                          :: i, iloc, iobs, ivar
-      integer (i8b),       allocatable :: iwork(:)
+      integer,             allocatable :: iwork(:)
       real (r8)                        :: Wmin, Wmax
       real (r8),           allocatable :: work(:)
 !
@@ -3330,10 +3358,10 @@
           DO i=1,npool
             mvars=obs%pool(i)%nvars
             nlocs=obs%pool(i)%nlocs
-            allocate ( iwork(nlocs) )
+            IF (.not.allocated(iwork)) allocate ( iwork(nlocs) )
 !
             DO ivar=1,mvars
-              iwork=0_i8b
+              iwork=0
               DO iloc=1,nlocs
                 iobs=obs%pool(i)%pack_mapping(iloc,ivar)
                 iwork(iloc)=self%ObsVetting(iobs)
@@ -3352,8 +3380,8 @@
      &                            MINVAL(iwork), MAXVAL(iwork),         &
      &                            TRIM(obs%pool(i)%ncname_out)
               END IF
-              deallocate (iwork)
             END DO
+            IF (allocated(iwork)) deallocate (iwork)
           END DO
 !
         CASE DEFAULT
@@ -3361,7 +3389,7 @@
           DO i=1,npool
             mvars=obs%pool(i)%nvars
             nlocs=obs%pool(i)%nlocs
-            allocate ( work(nlocs) )
+            IF (.not.allocated(iwork)) allocate ( work(nlocs) )
 !
             Wmin=spval
             Wmax=-spval
@@ -3389,8 +3417,8 @@
      &                            Wmin, Wmax,                           &
      &                            TRIM(obs%pool(i)%ncname_out)
               END IF
-              deallocate (work)
             END DO
+            IF (allocated(work)) deallocate (work)
           END DO
       END SELECT
 !
