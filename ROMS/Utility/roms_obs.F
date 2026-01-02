@@ -122,6 +122,9 @@
 !  Observation spatial and time coordinates. The fractional values are
 !  used for efficient interpolation in the H(x) operator.
 !
+!  Internally, time and surveyTime are in nearest integer seconds since
+!  ROMS reference date and time to avoid roundoff.
+!
         real (r8), allocatable :: lon(:)        ! observation longitude
         real (r8), allocatable :: lat(:)        ! observation latitude
         real (r8), allocatable :: depth(:)      ! depth of observation
@@ -412,6 +415,8 @@
      &                              max_val = Tmax(1))
               Loaded=.TRUE.
               ncount=SIZE(self%time)
+              Tmin(1)=Tmin(1)+Rclock%DateNumber(2)
+              Tmax(1)=Tmax(1)+Rclock%DateNumber(2)
               CALL datestr (Tmin(1), .FALSE., Dmin(1))
               CALL datestr (Tmax(1), .FALSE., Dmax(1))
             CASE ('depth')
@@ -457,6 +462,8 @@
      &                              max_val = Tmax(2))
               Loaded=.TRUE.
               ncount=SIZE(self%surveyTime)
+              Tmin(2)=Tmin(2)+Rclock%DateNumber(2)
+              Tmax(2)=Tmax(2)+Rclock%DateNumber(2)
               CALL datestr (Tmin(2), .FALSE., Dmin(2))
               CALL datestr (Tmax(2), .FALSE., Dmax(2))
             CASE ('dateTimeAverageBegin')
@@ -468,6 +475,8 @@
      &                              max_val = Tmax(3))
               Loaded=.TRUE.
               ncount=SIZE(self%TimeStr)
+              Tmin(3)=Tmin(3)+Rclock%DateNumber(2)
+              Tmax(3)=Tmax(3)+Rclock%DateNumber(2)
               CALL datestr (Tmin(3), .FALSE., Dmin(3))
               CALL datestr (Tmax(3), .FALSE., Dmax(3))
             CASE ('dateTimeAverageEnd')
@@ -479,6 +488,8 @@
      &                              max_val = Tmax(4))
               Loaded=.TRUE.
               ncount=SIZE(self%TimeEnd)
+              Tmin(4)=Tmin(4)+Rclock%DateNumber(2)
+              Tmax(4)=Tmax(4)+Rclock%DateNumber(2)
               CALL datestr (Tmin(4), .FALSE., Dmin(4))
               CALL datestr (Tmax(4), .FALSE., Dmax(4))
             CASE ('spatialAverage')
@@ -648,6 +659,7 @@
 !
       integer (i8b)                   :: checksum
       integer                         :: i
+      real (r8)                       :: Tmin, Tmax
 !
       character (len=*),    parameter :: MyFile =                       &
      &    __FILE__//", obs_data_stats"
@@ -660,11 +672,15 @@
       self%time_max=MAXVAL(self%time)
 !
       IF (isDayUnits) THEN
-        CALL datestr (self%time_min, .TRUE., self%date_min)
-        CALL datestr (self%time_max, .TRUE., self%date_max)
+        Tmin=self%time_min+Rclock%DateNumber(1)
+        Tmax=self%time_max+Rclock%DateNumber(1)
+        CALL datestr (Tmin, .TRUE., self%date_min)
+        CALL datestr (Tmax, .TRUE., self%date_max)
       ELSE
-        CALL datestr (self%time_min, .FALSE., self%date_min)
-        CALL datestr (self%time_max, .FALSE., self%date_max)
+        Tmin=self%time_min+Rclock%DateNumber(2)
+        Tmax=self%time_max+Rclock%DateNumber(2)
+        CALL datestr (Tmin, .FALSE., self%date_min)
+        CALL datestr (Tmax, .FALSE., self%date_max)
       END IF
 !
       DO i=1,self%nvars
@@ -1264,8 +1280,7 @@
 !
 !  Determine the number of observations per control vector variable.
 !
-!     Lsur=N(ng)
-      Lsur=50                    ! HGA: temporary for debugging
+      Lsur=N(ng)
       mSSS=0
       mSST=0
       mvar=0
@@ -1275,6 +1290,12 @@
         IF (id.eq.6) THEN
           IF (INT(obs_Zgrid(i)).eq.Lsur) THEN
             mSST=mSST+1
+          ELSE
+            mvar(id)=mvar(id)+1
+          END IF
+        ELSE IF (id.eq.7) THEN
+          IF (INT(obs_Zgrid(i)).eq.Lsur) THEN
+            mSSS=mSSS+1
           ELSE
             mvar(id)=mvar(id)+1
           END IF
@@ -1302,9 +1323,9 @@
           mymvar=1
         END IF
 !
-        self%pool(iobs)%nlocs   = mysize
-        self%pool(iobs)%nvars   = mymvar
-        self%pool(iobs)%poolID  = self%stateID(iobs)
+        self%pool(iobs)%nlocs  = mysize
+        self%pool(iobs)%nvars  = mymvar
+        self%pool(iobs)%poolID = self%stateID(iobs)
 !
         IF (.not.allocated(self%pool(iobs)%ncname_inp)) THEN
           lstr=LEN_TRIM(ncname)
@@ -2090,12 +2111,12 @@
       integer,         dimension(mobs) :: obs_idata
       integer,             allocatable :: surveyIndex(:)
       integer                          :: Ninp, Nout
-      integer                          :: i, iobs, lstr, mvar, npool
+      integer                          :: i, iobs, j, lstr, mvar, npool
       real (r8),       dimension(mobs) :: obs_rdata
       real (r8),           allocatable :: surveyTime(:)
       real (r8),          dimension(2) :: Tmin, Tmax
       character (len=22), dimension(2) :: Dmin, Dmax
-      character (len=40)               :: name, varname(2), vars(2)
+      character (len=40)               :: poolname, varname(2), vars(2)
 
       character (len=*),     parameter :: MyFile =                      &
      &    __FILE__//", obs_pool_populate_native"
@@ -2121,6 +2142,11 @@
               CALL netcdf_get_time (ng, model, ncname,                  &
      &                              var_name(i), Rclock%DateNumber,     &
      &                              obs_rdata)
+!
+!                           nearest integer seconds since ROMS reference
+              DO j=1,mobs
+                obs_rdata(j)=AINT(obs_rdata(j)*day2sec)
+              END DO
 !
               CALL self%unpack_r (ng, mobs, typeID, Zgrid,              &
      &                            obs_rdata, TRIM(var_name(i)))
@@ -2161,19 +2187,19 @@
         IF (.not.allocated(self%pool(iobs)%surveyIndex)) THEN
           allocate ( self%pool(iobs)%surveyIndex(Nout) )
         END IF
-        self%pool(iobs)%surveyTime=surveyTime
+        self%pool(iobs)%surveyIndex=surveyIndex
 !
         deallocate (SurveyTime, SurveyIndex)
 !
-        Tmin(1)=MINVAL(self%pool(iobs)%time)
-        Tmax(1)=MAXVAL(self%pool(iobs)%time)
-        CALL datestr (Tmin(1), .TRUE., Dmin(1))
-        CALL datestr (Tmax(1), .TRUE., Dmax(1))
+        Tmin(1)=Rclock%DateNumber(2)+MINVAL(self%pool(iobs)%time)
+        Tmax(1)=Rclock%DateNumber(2)+MAXVAL(self%pool(iobs)%time)
+        CALL datestr (Tmin(1), .FALSE., Dmin(1))
+        CALL datestr (Tmax(1), .FALSE., Dmax(1))
 !
-        Tmin(2)=MINVAL(self%pool(iobs)%surveyTime)
-        Tmax(2)=MAXVAL(self%pool(iobs)%surveyTime)
-        CALL datestr (Tmin(2), .TRUE., Dmin(2))
-        CALL datestr (Tmax(2), .TRUE., Dmax(2))
+        Tmin(2)=Rclock%DateNumber(2)+MINVAL(self%pool(iobs)%surveyTime)
+        Tmax(2)=Rclock%DateNumber(2)+MAXVAL(self%pool(iobs)%surveyTime)
+        CALL datestr (Tmin(2), .FALSE., Dmin(2))
+        CALL datestr (Tmax(2), .FALSE., Dmax(2))
 !
         IF (.not.allocated(self%pool(iobs)%ncname_inp)) THEN
           lstr=LEN_TRIM(ncname)
@@ -2184,49 +2210,49 @@
         SELECT CASE (self%stateID(iobs))
           CASE (1)
             mvar=1
-            name='SSH'
+            poolname='SSH'
             varname(mvar)='SSH'
             vars(mvar)='absoluteDynamicTopography'
             self%pool(iobs)%stateID(mvar)=1
           CASE (6)
             mvar=1
-            name='temp'
+            poolname='temp'
             varname(mvar)='temp'
             vars(mvar)='waterTemperature'
             self%pool(iobs)%stateID(mvar)=6
           CASE (7)
             mvar=1
-            name='salt'
+            poolname='salt'
             varname(mvar)='salt'
             vars(mvar)='Salinity'
             self%pool(iobs)%stateID(mvar)=7
           CASE (45)
             mvar=2
-            name='uv_codar'
-            varname(1)='u'
-            varname(2)='v'
+            poolname='uv_codar'
+            varname(1)='Ucodar'
+            varname(2)='Vcodar'
             vars(1)='waterZonalVelocity'
             vars(2)='waterMeridionalVelocity'
             self%pool(iobs)%stateID(1)=4
             self%pool(iobs)%stateID(2)=5
           CASE (60)
             mvar=1
-            name='SST'
+            poolname='SST'
             varname(mvar)='SST'
             vars(mvar)='seaSurfaceTemperature'
             self%pool(iobs)%stateID(1)=6
           CASE (70)
             mvar=1
-            name='SSS'
+            poolname='SSS'
             varname(mvar)='SSS'
             vars(mvar)='seaSurfaceSalinity'
             self%pool(iobs)%stateID(1)=7
         END SELECT
 !
         IF (.not.allocated(self%pool(iobs)%name)) THEN
-          lstr=LEN_TRIM(name)
+          lstr=LEN_TRIM(poolname)
           allocate ( character(LEN=lstr) :: self%pool(iobs)%name )
-          self%pool(iobs)%name=TRIM(name)
+          self%pool(iobs)%name=TRIM(poolname)
         END IF
 !
         IF (.not.allocated(self%pool(iobs)%vname)) THEN
@@ -2253,7 +2279,7 @@
 !
 !  Compute statistics.
 !
-        isDayUnits=.TRUE.
+        isDayUnits=.FALSE.
         CALL self%pool(iobs)%stats (isDayUnits)
 !
 !  Report processing information.
@@ -2359,8 +2385,7 @@
       mvatt=0
       stateID=0
 !
-!     Lsur=N(ng)
-      Lsur=50                    ! HGA: teporary for debugging
+      Lsur=N(ng)
 !
 !  Inquire input observation NetCDF file(s).
 !
@@ -2424,7 +2449,7 @@
             IF ((id.eq.6).and.(INT(obs_Zgrid(i)).eq.Lsur)) THEN
               haveSST(nf)=.TRUE.
               mSST=mSST+1
-            ELSE IF ((id.eq.6).and.(INT(obs_Zgrid(i)).eq.Lsur)) THEN
+            ELSE IF ((id.eq.7).and.(INT(obs_Zgrid(i)).eq.Lsur)) THEN
               haveSSS(nf)=.TRUE.
               mSSS=mSSS+1
             END IF
@@ -2719,8 +2744,7 @@
 !
 !  Unpack native observation integer data.
 !
-!     Lsur=N(ng)
-      Lsur=50                    ! HGA: temporary for debugging
+      Lsur=N(ng)
 !
       mask=.FALSE.
       msk2=.FALSE.
@@ -2738,7 +2762,7 @@
             mask=(typeID.eq.6).and.(INT(Zgrid).ne.Lsur)
             mvar=1
           CASE (7)                                      ! Salinity
-            mask=(typeID.eq.7)
+            mask=(typeID.eq.7).and.(INT(Zgrid).ne.Lsur)
             mvar=1
           CASE (45)                                     ! U-,V-velocity
             mask=(typeID.eq.4)                          ! U-velocity

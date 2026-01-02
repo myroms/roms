@@ -256,11 +256,11 @@
 !  If applicable, allocate and initialize global grid geometry needed
 !  for area-averaged Hofx operators.
 !
-      IF (IsAreaAveraged) THEN
-        IF (.not.allocated(geom_hofx)) THEN
-          allocate ( geom_hofx(Ngrids) )
-        END IF
+      IF (.not.allocated(geom_hofx)) THEN
+        allocate ( geom_hofx(Ngrids) )
+      END IF
 !
+      IF (IsAreaAveraged) THEN
         DO ng=1,Ngrids
           DO tile=first_tile(ng),last_tile(ng),+1
             CALL geom_hofx(ng)% create (ng, tile, model)
