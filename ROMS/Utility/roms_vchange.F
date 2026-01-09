@@ -213,7 +213,7 @@
 !
       SELECT CASE (TRIM(varname))
 !
-        CASE ('ssh', 'SSH')
+        CASE ('adt', 'ssh', 'ADT', 'SSH')
 !
           allocate ( self%field2d(LBi:UBi, LBj:UBj) )
 !

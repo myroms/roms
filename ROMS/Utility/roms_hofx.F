@@ -67,7 +67,8 @@
 # endif
 !
 !  Generic global state variables to facilitate area averaging. The
-!  area averaging is only supported for 2D fields (SSH, SSS, SST, Usur).
+!  area averaging is only supported for 2D fields (ADT/SSH, SSS, SST,
+!  UV_codar).
 !
         real (r8), allocatable :: global2d(:,:)     ! 2D state variable
 !
@@ -924,7 +925,7 @@
             tally=0         
 !
             SELECT CASE (obs%pool(iobs)%name)
-              CASE ('SSH')
+              CASE ('ADT', 'SSH')
                 CALL obs_pool_get (obs, obs%pool(iobs)%name, depot)
                 CALL self%extract2d (depot, vchange, geom, ng, model,   &
      &                               tally, obs%pool(iobs)%name)
