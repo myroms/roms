@@ -3284,7 +3284,7 @@
         CALL mp_bcastf (ng, model, A)
       END IF
 # endif
-      IF (exit_flag.ne.NoError) RETURN
+       IF (exit_flag.ne.NoError) RETURN
 !
 !  Compute minimum and maximum values of read variable. Notice that
 !  the same read value is assigned since a scalar variable was
@@ -5545,6 +5545,7 @@
         CALL mp_bcastl (ng, model, A)
       END IF
 #endif
+      IF (exit_flag.ne.NoError) RETURN
 !
 !  If NetCDF file ID is not provided, close input NetCDF file.
 !
@@ -5731,6 +5732,7 @@
         CALL mp_bcastl (ng, model, A)
       END IF
 #endif
+      IF (exit_flag.ne.NoError) RETURN
 !
 !  If NetCDF file ID is not provided, close input NetCDF file.
 !
@@ -5879,6 +5881,7 @@
         CALL mp_bcasti (ng, model, A)
       END IF
 #endif
+      IF (exit_flag.ne.NoError) RETURN
 !
 !  If NetCDF file ID is not provided, close input NetCDF file.
 !
@@ -6022,6 +6025,7 @@
         CALL mp_bcasti (ng, model, A)
       END IF
 #endif
+      IF (exit_flag.ne.NoError) RETURN
 !
 !  If NetCDF file ID is not provided, close input NetCDF file.
 !
@@ -6166,6 +6170,7 @@
         CALL mp_bcasti (ng, model, A)
       END IF
 #endif
+      IF (exit_flag.ne.NoError) RETURN
 !
 !  If NetCDF file ID is not provided, close input NetCDF file.
 !
@@ -6321,6 +6326,7 @@
         CALL mp_bcasts (ng, model, A)
       END IF
 #endif
+      IF (exit_flag.ne.NoError) RETURN
 !
 !  If NetCDF file ID is not provided, close input NetCDF file.
 !
@@ -6469,6 +6475,7 @@
         CALL mp_bcasts (ng, model, A)
       END IF
 #endif
+      IF (exit_flag.ne.NoError) RETURN
 !
 !  If NetCDF file ID is not provided, close input NetCDF file.
 !
@@ -6617,6 +6624,7 @@
         CALL mp_bcasts (ng, model, A)
       END IF
 #endif
+      IF (exit_flag.ne.NoError) RETURN
 !
 !  If NetCDF file ID is not provided, close input NetCDF file.
 !
@@ -6765,6 +6773,7 @@
         CALL mp_bcasts (ng, model, A)
       END IF
 #endif
+      IF (exit_flag.ne.NoError) RETURN
 !
 !  If NetCDF file ID is not provided, close input NetCDF file.
 !
@@ -6894,9 +6903,17 @@
 !
 !  Read in variable.
 !
-      IF (InpThread) THEN
+      GET_BLOCK : IF (InpThread) THEN
         IF (PRESENT(GrpName)) THEN
           status=nf90_inq_ncid(my_ncid, TRIM(GrpName), my_grpid)
+          IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+            WRITE (stdout,10) TRIM(myVarName), TRIM(GrpName),           &
+     &                        TRIM(ncname), TRIM(SourceFile),           &
+     &                        nf90_strerror(status)
+            exit_flag=3
+            ioerror=status
+            EXIT GET_BLOCK
+          END IF
           nfid=my_grpid
         ELSE
           nfid=my_ncid
@@ -6910,18 +6927,18 @@
             status=nf90_get_var(nfid, varid, A)
           END IF
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-            WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
+            WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),            &
      &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=2
             ioerror=status
           END IF
         ELSE
-          WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),              &
+          WRITE (stdout,30) TRIM(myVarName), TRIM(ncname),              &
      &                      TRIM(SourceFile), nf90_strerror(status)
           exit_flag=2
           ioerror=status
         END IF
-      END IF
+      END IF GET_BLOCK
 
 #if !defined PARALLEL_IO && defined DISTRIBUTE
 !
@@ -6936,6 +6953,7 @@
         CALL mp_bcastf (ng, model, A)
       END IF
 #endif
+      IF (exit_flag.ne.NoError) RETURN
 !
 !  Check if the following attributes: "scale_factor", "add_offset", and
 !  "_FillValue" are present in the input NetCDF variable:
@@ -7083,10 +7101,13 @@
         CALL netcdf_close (ng, model, my_ncid, ncname, .FALSE.)
       END IF
 !
-  10  FORMAT (/,' NETCDF_GET_TIME_0D - error while reading variable:',  &
+  10  FORMAT (/,' NETCDF_GET_TIME_0D - error while inquiring Group ',   &
+     &        'ID:',2x,a,', Group:',2x,a,/,22x,'in input file:',2x,a,   &
+     &        /,22x,'call from:',2x,a,/,22x,a)
+  20  FORMAT (/,' NETCDF_GET_TIME_0D - error while reading variable:',  &
      &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a, &
      &        /,22x,a)
-  20  FORMAT (/,' NETCDF_GET_TIME_0D - error while inquiring ID for ',  &
+  30  FORMAT (/,' NETCDF_GET_TIME_0D - error while inquiring ID for ',  &
      &        'variable:',2x,a,/,22x,'in input file:',2x,a,/,22x,       &
      &        'call from:',2x,a,/,22x,a)
 !
@@ -7213,9 +7234,17 @@
 !
 !  Read in time variable.
 !
-      IF (InpThread) THEN
+      GET_BLOCK : IF (InpThread) THEN
         IF (PRESENT(GrpName)) THEN
           status=nf90_inq_ncid(my_ncid, TRIM(GrpName), my_grpid)
+          IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+            WRITE (stdout,10) TRIM(myVarName), TRIM(GrpName),           &
+     &                        TRIM(ncname), TRIM(SourceFile),           &
+     &                        nf90_strerror(status)
+            exit_flag=3
+            ioerror=status
+            EXIT GET_BLOCK
+          END IF
           nfid=my_grpid
         ELSE
           nfid=my_ncid
@@ -7228,18 +7257,18 @@
             status=nf90_get_var(nfid, varid, A)
           END IF
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-            WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
+            WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),            &
      &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=2
             ioerror=status
           END IF
         ELSE
-          WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),              &
+          WRITE (stdout,30) TRIM(myVarName), TRIM(ncname),              &
      &                      TRIM(SourceFile), nf90_strerror(status)
           exit_flag=2
           ioerror=status
         END IF
-      END IF
+      END IF GET_BLOCK
 
 #if !defined PARALLEL_IO && defined DISTRIBUTE
 !
@@ -7254,6 +7283,7 @@
         CALL mp_bcastf (ng, model, A)
       END IF
 #endif
+      IF (exit_flag.ne.NoError) RETURN
 !
 !  Check if the following attributes: "scale_factor", "add_offset", and
 !  "_FillValue" are present in the input NetCDF variable:
@@ -7414,10 +7444,13 @@
         CALL netcdf_close (ng, model, my_ncid, ncname, .FALSE.)
       END IF
 !
-  10  FORMAT (/,' NETCDF_GET_TIME_1D - error while reading variable:',  &
+  10  FORMAT (/,' NETCDF_GET_TIME_1D - error while inquiring Group ',   &
+     &        'ID:',2x,a,', Group:',2x,a,/,22x,'in input file:',2x,a,   &
+     &        /,22x,'call from:',2x,a,/,22x,a)
+  20  FORMAT (/,' NETCDF_GET_TIME_1D - error while reading variable:',  &
      &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a, &
      &        /,22x,a)
-  20  FORMAT (/,' NETCDF_GET_TIME_1D - error while inquiring ID for ',  &
+  30  FORMAT (/,' NETCDF_GET_TIME_1D - error while inquiring ID for ',  &
      &        'variable:',2x,a,/,22x,'in input file:',2x,a,/,22x,       &
      &        'call from:',2x,a,/,22x,a)
 !
@@ -7557,6 +7590,7 @@
       exit_flag=ibuffer(1)
       ioerror=ibuffer(2)
 # endif
+      IF (exit_flag.ne.NoError) RETURN
 !
 !  Close input file.
 !
@@ -7701,6 +7735,7 @@
       exit_flag=ibuffer(1)
       ioerror=ibuffer(2)
 # endif
+      IF (exit_flag.ne.NoError) RETURN
 !
 !  Close input file.
 !
@@ -7845,6 +7880,7 @@
       exit_flag=ibuffer(1)
       ioerror=ibuffer(2)
 # endif
+      IF (exit_flag.ne.NoError) RETURN
 !
 !  Close input NetCDF file.
 !
@@ -7989,6 +8025,7 @@
       exit_flag=ibuffer(1)
       ioerror=ibuffer(2)
 # endif
+      IF (exit_flag.ne.NoError) RETURN
 !
 !  Close input NetCDF file.
 !
@@ -8141,6 +8178,7 @@
       exit_flag=ibuffer(1)
       ioerror=ibuffer(2)
 #endif
+      IF (exit_flag.ne.NoError) RETURN
 !
 !  Close input file.
 !
@@ -8285,6 +8323,7 @@
       exit_flag=ibuffer(1)
       ioerror=ibuffer(2)
 #endif
+      IF (exit_flag.ne.NoError) RETURN
 !
 !  Close input file.
 !
@@ -8429,6 +8468,7 @@
       exit_flag=ibuffer(1)
       ioerror=ibuffer(2)
 #endif
+      IF (exit_flag.ne.NoError) RETURN
 !
 !  Close input NetCDF file.
 !
@@ -8573,6 +8613,7 @@
       exit_flag=ibuffer(1)
       ioerror=ibuffer(2)
 #endif
+      IF (exit_flag.ne.NoError) RETURN
 !
 !  Close input NetCDF file.
 !
@@ -8717,6 +8758,7 @@
       exit_flag=ibuffer(1)
       ioerror=ibuffer(2)
 #endif
+      IF (exit_flag.ne.NoError) RETURN
 !
 !  Close input NetCDF file.
 !
@@ -8868,6 +8910,7 @@
       exit_flag=ibuffer(1)
       ioerror=ibuffer(2)
 #endif
+      IF (exit_flag.ne.NoError) RETURN
 !
 !  Close file.
 !
@@ -9012,6 +9055,7 @@
       exit_flag=ibuffer(1)
       ioerror=ibuffer(2)
 #endif
+      IF (exit_flag.ne.NoError) RETURN
 !
 !  Close file.
 !
@@ -9156,6 +9200,7 @@
       exit_flag=ibuffer(1)
       ioerror=ibuffer(2)
 #endif
+      IF (exit_flag.ne.NoError) RETURN
 !
 !  Close file.
 !
@@ -9320,6 +9365,7 @@
       exit_flag=ibuffer(1)
       ioerror=ibuffer(2)
 #endif
+      IF (exit_flag.ne.NoError) RETURN
 !
 !  Close file.
 !
@@ -9480,6 +9526,7 @@
       exit_flag=ibuffer(1)
       ioerror=ibuffer(2)
 #endif
+      IF (exit_flag.ne.NoError) RETURN
 !
 !  Close file.
 !
@@ -9642,6 +9689,7 @@
       exit_flag=ibuffer(1)
       ioerror=ibuffer(2)
 #endif
+      IF (exit_flag.ne.NoError) RETURN
 !
 !  Close file.
 !
@@ -9801,6 +9849,7 @@
       exit_flag=ibuffer(1)
       ioerror=ibuffer(2)
 #endif
+      IF (exit_flag.ne.NoError) RETURN
 !
 !  Close input NetCDF file.
 !
@@ -9955,6 +10004,7 @@
       exit_flag=ibuffer(1)
       ioerror=ibuffer(2)
 #endif
+      IF (exit_flag.ne.NoError) RETURN
 !
 !  Close input NetCDF file.
 !
@@ -10109,6 +10159,7 @@
       exit_flag=ibuffer(1)
       ioerror=ibuffer(2)
 #endif
+      IF (exit_flag.ne.NoError) RETURN
 !
 !  Close input NetCDF file.
 !
@@ -10263,6 +10314,7 @@
       exit_flag=ibuffer(1)
       ioerror=ibuffer(2)
 #endif
+      IF (exit_flag.ne.NoError) RETURN
 !
 !  Close input NetCDF file.
 !
