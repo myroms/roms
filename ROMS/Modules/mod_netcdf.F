@@ -3234,9 +3234,17 @@
 !
 !  Read in variable.
 !
-      IF (InpThread) THEN
+      GET_BLOCK : IF (InpThread) THEN
         IF (PRESENT(GrpName)) THEN
           status=nf90_inq_ncid(my_ncid, TRIM(GrpName), my_grpid)
+          IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+            WRITE (stdout,10) TRIM(myVarName), TRIM(GrpName),           &
+     &                        TRIM(ncname), TRIM(SourceFile),           &
+     &                        nf90_strerror(status)
+            exit_flag=3
+            ioerror=status
+            EXIT GET_BLOCK
+          END IF
           nfid=my_grpid
         ELSE
           nfid=my_ncid 
@@ -3250,18 +3258,18 @@
             status=nf90_get_var(nfid, varid, A)
           END IF
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-            WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
+            WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),            &
      &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=2
             ioerror=status
           END IF
         ELSE
-          WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),              &
+          WRITE (stdout,30) TRIM(myVarName), TRIM(ncname),              &
      &                      TRIM(SourceFile), nf90_strerror(status)
           exit_flag=2
           ioerror=status
         END IF
-      END IF
+      END IF GET_BLOCK
 
 # if !defined PARALLEL_IO && defined DISTRIBUTE
 !
@@ -3276,6 +3284,7 @@
         CALL mp_bcastf (ng, model, A)
       END IF
 # endif
+      IF (exit_flag.ne.NoError) RETURN
 !
 !  Compute minimum and maximum values of read variable. Notice that
 !  the same read value is assigned since a scalar variable was
@@ -3294,10 +3303,13 @@
         CALL netcdf_close (ng, model, my_ncid, ncname, .FALSE.)
       END IF
 !
-  10  FORMAT (/,' NETCDF_GET_FVAR_0DP - error while reading variable:', &
+  10  FORMAT (/,' NETCDF_GET_FVAR_0DP - error while inquiring Group ',  &
+     &        'ID:',2x,a,', Group:',2x,a,/,23x,'in input file:',2x,a,   &
+     &        /,23x,'call from:',2x,a,/,23x,a)
+  20  FORMAT (/,' NETCDF_GET_FVAR_0DP - error while reading variable:', &
      &        2x,a,/,23x,'in input file:',2x,a,/,23x,'call from:',2x,a, &
      &        /,23x,a)
-  20  FORMAT (/,' NETCDF_GET_FVAR_0DP - error while inquiring ID for ', &
+  30  FORMAT (/,' NETCDF_GET_FVAR_0DP - error while inquiring ID for ', &
      &        'variable:',2x,a,/,23x,'in input file:',2x,a,/,23x,       &
      &        'call from:',2x,a,/,23x,a)
 !
@@ -3425,9 +3437,17 @@
 !
 !  Read in variable.
 !
-      IF (InpThread) THEN
+      GET_BLOCK : IF (InpThread) THEN
         IF (PRESENT(GrpName)) THEN
           status=nf90_inq_ncid(my_ncid, TRIM(GrpName), my_grpid)
+          IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+            WRITE (stdout,10) TRIM(myVarName), TRIM(GrpName),           &
+     &                        TRIM(ncname), TRIM(SourceFile),           &
+     &                        nf90_strerror(status)
+            exit_flag=3
+            ioerror=status
+            EXIT GET_BLOCK
+          END IF
           nfid=my_grpid
         ELSE
           nfid=my_ncid 
@@ -3440,18 +3460,18 @@
             status=nf90_get_var(nfid, varid, A)
           END IF
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-            WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
+            WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),            &
      &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=2
             ioerror=status
           END IF
         ELSE
-          WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),              &
+          WRITE (stdout,30) TRIM(myVarName), TRIM(ncname),              &
      &                      TRIM(SourceFile), nf90_strerror(status)
           exit_flag=2
           ioerror=status
         END IF
-      END IF
+      END IF GET_BLOCK
 
 # if !defined PARALLEL_IO && defined DISTRIBUTE
 !
@@ -3466,6 +3486,7 @@
         CALL mp_bcastf (ng, model, A)
       END IF
 # endif
+      IF (exit_flag.ne.NoError) RETURN
 !
 !  Check if the following attributes: "scale_factor", "add_offset", and
 !  "_FillValue" are present in the input NetCDF variable:
@@ -3542,10 +3563,10 @@
         CALL netcdf_close (ng, model, my_ncid, ncname, .FALSE.)
       END IF
 !
-  10  FORMAT (/,' NETCDF_GET_FVAR_1DP - error while reading variable:', &
+  20  FORMAT (/,' NETCDF_GET_FVAR_1DP - error while reading variable:', &
      &        2x,a,/,23x,'in input file:',2x,a,/,23x,'call from:',2x,a, &
      &        /,23x,a)
-  20  FORMAT (/,' NETCDF_GET_FVAR_1DP - error while inquiring ID for ', &
+  30  FORMAT (/,' NETCDF_GET_FVAR_1DP - error while inquiring ID for ', &
      &        'variable:',2x,a,/,23x,'in input file:',2x,a,/,23x,       &
      &        'call from:',2x,a,/,23x,a)
 !
@@ -3674,9 +3695,17 @@
 !
 !  Read in variable.
 !
-      IF (InpThread) THEN
+      GET_BLOCK : IF (InpThread) THEN
         IF (PRESENT(GrpName)) THEN
           status=nf90_inq_ncid(my_ncid, TRIM(GrpName), my_grpid)
+          IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+            WRITE (stdout,10) TRIM(myVarName), TRIM(GrpName),           &
+     &                        TRIM(ncname), TRIM(SourceFile),           &
+     &                        nf90_strerror(status)
+            exit_flag=3
+            ioerror=status
+            EXIT GET_BLOCK
+          END IF
           nfid=my_grpid
         ELSE
           nfid=my_ncid 
@@ -3689,19 +3718,19 @@
             status=nf90_get_var(nfid, varid, A)
           END IF
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-            WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
+            WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),            &
      &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=2
             ioerror=status
           END IF
         ELSE
-          WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),              &
+          WRITE (stdout,30) TRIM(myVarName), TRIM(ncname),              &
      &                      TRIM(SourceFile), nf90_strerror(status),    &
      &                      nf90_strerror(status)
           exit_flag=2
           ioerror=status
         END IF
-      END IF
+      END IF GET_BLOCK
 
 # if !defined PARALLEL_IO && defined DISTRIBUTE
 !
@@ -3716,6 +3745,7 @@
         CALL mp_bcastf (ng, model, A)
       END IF
 # endif
+      IF (exit_flag.ne.NoError) RETURN
 !
 !  Check if the following attributes: "scale_factor", "add_offset", and
 !  "_FillValue" are present in the input NetCDF variable:
@@ -3798,10 +3828,13 @@
         CALL netcdf_close (ng, model, my_ncid, ncname, .FALSE.)
       END IF
 !
-  10  FORMAT (/,' NETCDF_GET_FVAR_2DP - error while reading variable:', &
+  10  FORMAT (/,' NETCDF_GET_FVAR_2DP - error while inquiring Group ',  &
+     &        'ID:',2x,a,', Group:',2x,a,/,23x,'in input file:',2x,a,   &
+     &        /,23x,'call from:',2x,a,/,23x,a)
+  20  FORMAT (/,' NETCDF_GET_FVAR_2DP - error while reading variable:', &
      &        2x,a,/,23x,'in input file:',2x,a,/,23x,'call from:',2x,a, &
      &        /,23x,a)
-  20  FORMAT (/,' NETCDF_GET_FVAR_2DP - error while inquiring ID for ', &
+  30  FORMAT (/,' NETCDF_GET_FVAR_2DP - error while inquiring ID for ', &
      &        'variable:',2x,a,/,23x,'in input file:',2x,a,/,23x,       &
      &        'call from:',2x,a,/,23x,a)
 !
@@ -3929,9 +3962,17 @@
 !
 !  Read in variable.
 !
-      IF (InpThread) THEN
+      GET_BLOCK : IF (InpThread) THEN
         IF (PRESENT(GrpName)) THEN
           status=nf90_inq_ncid(my_ncid, TRIM(GrpName), my_grpid)
+          IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+            WRITE (stdout,10) TRIM(myVarName), TRIM(GrpName),           &
+     &                        TRIM(ncname), TRIM(SourceFile),           &
+     &                        nf90_strerror(status)
+            exit_flag=3
+            ioerror=status
+            EXIT GET_BLOCK
+          END IF
           nfid=my_grpid
         ELSE
           nfid=my_ncid 
@@ -3944,18 +3985,18 @@
             status=nf90_get_var(nfid, varid, A)
           END IF
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-            WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
+            WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),            &
      &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=2
             ioerror=status
           END IF
         ELSE
-          WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),              &
+          WRITE (stdout,30) TRIM(myVarName), TRIM(ncname),              &
      &                      TRIM(SourceFile), nf90_strerror(status)
           exit_flag=2
           ioerror=status
         END IF
-      END IF
+      END IF GET_BLOCK
 
 # if !defined PARALLEL_IO && defined DISTRIBUTE
 !
@@ -3970,6 +4011,7 @@
         CALL mp_bcastf (ng, model, A)
       END IF
 # endif
+      IF (exit_flag.ne.NoError) RETURN
 !
 !  Check if the following attributes: "scale_factor", "add_offset", and
 !  "_FillValue" are present in the input NetCDF variable:
@@ -4060,10 +4102,13 @@
         CALL netcdf_close (ng, model, my_ncid, ncname, .FALSE.)
       END IF
 !
-  10  FORMAT (/,' NETCDF_GET_FVAR_3DP - error while reading variable:', &
+  10  FORMAT (/,' NETCDF_GET_FVAR_3DP - error while inquiring Group ',  &
+     &        'ID:',2x,a,', Group:',2x,a,/,23x,'in input file:',2x,a,   &
+     &        /,23x,'call from:',2x,a,/,23x,a)
+  20  FORMAT (/,' NETCDF_GET_FVAR_3DP - error while reading variable:', &
      &        2x,a,/,23x,'in input file:',2x,a,/,23x,'call from:',2x,a, &
      &        /,23x,a)
-  20  FORMAT (/,' NETCDF_GET_FVAR_3DP - error while inquiring ID for ', &
+  30  FORMAT (/,' NETCDF_GET_FVAR_3DP - error while inquiring ID for ', &
      &        'variable:',2x,a,/,23x,'in input file:',2x,a,/,23x,       &
      &        'call from:',2x,a,/,23x,a)
 !
@@ -4174,9 +4219,17 @@
 !
 !  Read in variable.
 !
-      IF (InpThread) THEN
+      GET_BLOCK : IF (InpThread) THEN
         IF (PRESENT(GrpName)) THEN
           status=nf90_inq_ncid(my_ncid, TRIM(GrpName), my_grpid)
+          IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+            WRITE (stdout,10) TRIM(myVarName), TRIM(GrpName),           &
+     &                        TRIM(ncname), TRIM(SourceFile),           &
+     &                        nf90_strerror(status)
+            exit_flag=3
+            ioerror=status
+            EXIT GET_BLOCK
+          END IF
           nfid=my_grpid
         ELSE
           nfid=my_ncid
@@ -4190,18 +4243,18 @@
             status=nf90_get_var(nfid, varid, A)
           END IF
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-            WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
+            WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),            &
      &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=2
             ioerror=status
           END IF
         ELSE
-          WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),              &
+          WRITE (stdout,30) TRIM(myVarName), TRIM(ncname),              &
      &                      TRIM(SourceFile), nf90_strerror(status)
           exit_flag=2
           ioerror=status
         END IF
-      END IF
+      END IF GET_BLOCK
 
 #if !defined PARALLEL_IO && defined DISTRIBUTE
 !
@@ -4216,6 +4269,7 @@
         CALL mp_bcastf (ng, model, A)
       END IF
 #endif
+      IF (exit_flag.ne.NoError) RETURN
 !
 !  Compute minimum and maximum values of read variable. Notice that
 !  the same read value is assigned since a scalar variable was
@@ -4234,10 +4288,13 @@
         CALL netcdf_close (ng, model, my_ncid, ncname, .FALSE.)
       END IF
 !
-  10  FORMAT (/,' NETCDF_GET_FVAR_0D - error while reading variable:',  &
+  10  FORMAT (/,' NETCDF_GET_FVAR_0D - error while inquiring Group ',   &
+     &        'ID:',2x,a,', Group:',2x,a,/,22x,'in input file:',2x,a,   &
+     &        /,22x,'call from:',2x,a,/,22x,a)
+  20  FORMAT (/,' NETCDF_GET_FVAR_0D - error while reading variable:',  &
      &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a, &
      &        /,22x,a)
-  20  FORMAT (/,' NETCDF_GET_FVAR_0D - error while inquiring ID for ',  &
+  30  FORMAT (/,' NETCDF_GET_FVAR_0D - error while inquiring ID for ',  &
      &        'variable:',2x,a,/,22x,'in input file:',2x,a,/,22x,       &
      &        'call from:',2x,a,/,22x,a)
 !
@@ -4365,9 +4422,17 @@
 !
 !  Read in variable.
 !
-      IF (InpThread) THEN
+      GET_BLOCK : IF (InpThread) THEN
         IF (PRESENT(GrpName)) THEN
           status=nf90_inq_ncid(my_ncid, TRIM(GrpName), my_grpid)
+          IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+            WRITE (stdout,10) TRIM(myVarName), TRIM(GrpName),           &
+     &                        TRIM(ncname), TRIM(SourceFile),           &
+     &                        nf90_strerror(status)
+            exit_flag=3
+            ioerror=status
+            EXIT GET_BLOCK
+          END IF
           nfid=my_grpid
         ELSE
           nfid=my_ncid
@@ -4380,18 +4445,18 @@
             status=nf90_get_var(nfid, varid, A)
           END IF
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-            WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
+            WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),            &
      &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=2
             ioerror=status
           END IF
         ELSE
-          WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),              &
+          WRITE (stdout,30) TRIM(myVarName), TRIM(ncname),              &
      &                      TRIM(SourceFile), nf90_strerror(status)
           exit_flag=2
           ioerror=status
         END IF
-      END IF
+      END IF GET_BLOCK
 
 #if !defined PARALLEL_IO && defined DISTRIBUTE
 !
@@ -4406,6 +4471,7 @@
         CALL mp_bcastf (ng, model, A)
       END IF
 #endif
+      IF (exit_flag.ne.NoError) RETURN
 !
 !  Check if the following attributes: "scale_factor", "add_offset", and
 !  "_FillValue" are present in the input NetCDF variable:
@@ -4482,10 +4548,13 @@
         CALL netcdf_close (ng, model, my_ncid, ncname, .FALSE.)
       END IF
 !
-  10  FORMAT (/,' NETCDF_GET_FVAR_1D - error while reading variable:',  &
+  10  FORMAT (/,' NETCDF_GET_FVAR_1D - error while inquiring Group ',   &
+     &        'ID:',2x,a,', Group:',2x,a,/,22x,'in input file:',2x,a,   &
+     &        /,22x,'call from:',2x,a,/,22x,a)
+  20  FORMAT (/,' NETCDF_GET_FVAR_1D - error while reading variable:',  &
      &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a, &
      &        /,22x,a)
-  20  FORMAT (/,' NETCDF_GET_FVAR_1D - error while inquiring ID for ',  &
+  30  FORMAT (/,' NETCDF_GET_FVAR_1D - error while inquiring ID for ',  &
      &        'variable:',2x,a,/,22x,'in input file:',2x,a,/,22x,       &
      &        'call from:',2x,a,/,22x,a)
 !
@@ -4614,9 +4683,17 @@
 !
 !  Read in variable.
 !
-      IF (InpThread) THEN
+      GET_BLOCK : IF (InpThread) THEN
         IF (PRESENT(GrpName)) THEN
           status=nf90_inq_ncid(my_ncid, TRIM(GrpName), my_grpid)
+          IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+            WRITE (stdout,10) TRIM(myVarName), TRIM(GrpName),           &
+     &                        TRIM(ncname), TRIM(SourceFile),           &
+     &                        nf90_strerror(status)
+            exit_flag=3
+            ioerror=status
+            EXIT GET_BLOCK
+          END IF
           nfid=my_grpid
         ELSE
           nfid=my_ncid
@@ -4629,19 +4706,19 @@
             status=nf90_get_var(nfid, varid, A)
           END IF
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-            WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
+            WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),            &
      &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=2
             ioerror=status
           END IF
         ELSE
-          WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),              &
+          WRITE (stdout,30) TRIM(myVarName), TRIM(ncname),              &
      &                      TRIM(SourceFile), nf90_strerror(status),    &
      &                      nf90_strerror(status)
           exit_flag=2
           ioerror=status
         END IF
-      END IF
+      END IF GET_BLOCK
 
 #if !defined PARALLEL_IO && defined DISTRIBUTE
 !
@@ -4656,6 +4733,7 @@
         CALL mp_bcastf (ng, model, A)
       END IF
 #endif
+      IF (exit_flag.ne.NoError) RETURN
 !
 !  Check if the following attributes: "scale_factor", "add_offset", and
 !  "_FillValue" are present in the input NetCDF variable:
@@ -4738,10 +4816,13 @@
         CALL netcdf_close (ng, model, my_ncid, ncname, .FALSE.)
       END IF
 !
-  10  FORMAT (/,' NETCDF_GET_FVAR_2D - error while reading variable:',  &
+  10  FORMAT (/,' NETCDF_GET_FVAR_2D - error while inquiring Group ',   &
+     &        'ID:',2x,a,', Group:',2x,a,/,22x,'in input file:',2x,a,   &
+     &        /,22x,'call from:',2x,a,/,22x,a)
+  20  FORMAT (/,' NETCDF_GET_FVAR_2D - error while reading variable:',  &
      &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a, &
      &        /,22x,a)
-  20  FORMAT (/,' NETCDF_GET_FVAR_2D - error while inquiring ID for ',  &
+  30  FORMAT (/,' NETCDF_GET_FVAR_2D - error while inquiring ID for ',  &
      &        'variable:',2x,a,/,22x,'in input file:',2x,a,/,22x,       &
      &        'call from:',2x,a,/,22x,a)
 !
@@ -4869,9 +4950,17 @@
 !
 !  Read in variable.
 !
-      IF (InpThread) THEN
+      GET_BLOCK : IF (InpThread) THEN
         IF (PRESENT(GrpName)) THEN
           status=nf90_inq_ncid(my_ncid, TRIM(GrpName), my_grpid)
+          IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+            WRITE (stdout,10) TRIM(myVarName), TRIM(GrpName),           &
+     &                        TRIM(ncname), TRIM(SourceFile),           &
+     &                        nf90_strerror(status)
+            exit_flag=3
+            ioerror=status
+            EXIT GET_BLOCK
+          END IF
           nfid=my_grpid
         ELSE
           nfid=my_ncid
@@ -4884,18 +4973,18 @@
             status=nf90_get_var(nfid, varid, A)
           END IF
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-            WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
+            WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),            &
      &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=2
             ioerror=status
           END IF
         ELSE
-          WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),              &
+          WRITE (stdout,30) TRIM(myVarName), TRIM(ncname),              &
      &                      TRIM(SourceFile), nf90_strerror(status)
           exit_flag=2
           ioerror=status
         END IF
-      END IF
+      END IF GET_BLOCK
 
 #if !defined PARALLEL_IO && defined DISTRIBUTE
 !
@@ -4910,6 +4999,7 @@
         CALL mp_bcastf (ng, model, A)
       END IF
 #endif
+      IF (exit_flag.ne.NoError) RETURN
 !
 !  Check if the following attributes: "scale_factor", "add_offset", and
 !  "_FillValue" are present in the input NetCDF variable:
@@ -5000,10 +5090,13 @@
         CALL netcdf_close (ng, model, my_ncid, ncname, .FALSE.)
       END IF
 !
-  10  FORMAT (/,' NETCDF_GET_FVAR_3D - error while reading variable:',  &
+  10  FORMAT (/,' NETCDF_GET_FVAR_3D - error while inquiring Group ',   &
+     &        'ID:',2x,a,', Group:',2x,a,/,22x,'in input file:',2x,a,   &
+     &        /,22x,'call from:',2x,a,/,22x,a)
+  20  FORMAT (/,' NETCDF_GET_FVAR_3D - error while reading variable:',  &
      &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a, &
      &        /,22x,a)
-  20  FORMAT (/,' NETCDF_GET_FVAR_3D - error while inquiring ID for ',  &
+  30  FORMAT (/,' NETCDF_GET_FVAR_3D - error while inquiring ID for ',  &
      &        'variable:',2x,a,/,22x,'in input file:',2x,a,/,22x,       &
      &        'call from:',2x,a,/,22x,a)
 !
@@ -5133,9 +5226,17 @@
 !
 !  Read in variable.
 !
-      IF (InpThread) THEN
+      GET_BLOCK : IF (InpThread) THEN
         IF (PRESENT(GrpName)) THEN
           status=nf90_inq_ncid(my_ncid, TRIM(GrpName), my_grpid)
+          IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+            WRITE (stdout,10) TRIM(myVarName), TRIM(GrpName),           &
+     &                        TRIM(ncname), TRIM(SourceFile),           &
+     &                        nf90_strerror(status)
+            exit_flag=3
+            ioerror=status
+            EXIT GET_BLOCK
+          END IF
           nfid=my_grpid
         ELSE
           nfid=my_ncid 
@@ -5148,18 +5249,18 @@
             status=nf90_get_var(nfid, varid, A)
           END IF
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-            WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
+            WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),            &
      &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=2
             ioerror=status
           END IF
         ELSE
-          WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),              &
+          WRITE (stdout,30) TRIM(myVarName), TRIM(ncname),              &
      &                      TRIM(SourceFile), nf90_strerror(status)
           exit_flag=2
           ioerror=status
         END IF
-      END IF
+      END IF GET_BLOCK
 
 #if !defined PARALLEL_IO && defined DISTRIBUTE
 !
@@ -5174,6 +5275,7 @@
         CALL mp_bcastf (ng, model, A)
       END IF
 #endif
+      IF (exit_flag.ne.NoError) RETURN
 !
 !  Check if the following attributes: "scale_factor", "add_offset", and
 !  "_FillValue" are present in the input NetCDF variable:
@@ -5270,10 +5372,13 @@
         CALL netcdf_close (ng, model, my_ncid, ncname, .FALSE.)
       END IF
 !
-  10  FORMAT (/,' NETCDF_GET_FVAR_4D - error while reading variable:',  &
+  10  FORMAT (/,' NETCDF_GET_FVAR_4D - error while inquiring Group ',   &
+     &        'ID:',2x,a,', Group:',2x,a,/,22x,'in input file:',2x,a,   &
+     &        /,22x,'call from:',2x,a,/,22x,a)
+  20  FORMAT (/,' NETCDF_GET_FVAR_4D - error while reading variable:',  &
      &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a, &
      &        /,22x,a)
-  20  FORMAT (/,' NETCDF_GET_FVAR_4D - error while inquiring ID for ',  &
+  30  FORMAT (/,' NETCDF_GET_FVAR_4D - error while inquiring ID for ',  &
      &        'variable:',2x,a,/,22x,'in input file:',2x,a,/,22x,       &
      &        'call from:',2x,a,/,22x,a)
 !
@@ -5360,9 +5465,17 @@
 !
 !  Read in variable.
 !
-      IF (InpThread) THEN
+      GET_BLOCK : IF (InpThread) THEN
         IF (PRESENT(GrpName)) THEN
           status=nf90_inq_ncid(my_ncid, TRIM(GrpName), my_grpid)
+          IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+            WRITE (stdout,10) TRIM(myVarName), TRIM(GrpName),           &
+     &                        TRIM(ncname), TRIM(SourceFile),           &
+     &                        nf90_strerror(status)
+            exit_flag=3
+            ioerror=status
+            EXIT GET_BLOCK
+          END IF
           nfid=my_grpid
         ELSE
           nfid=my_ncid 
@@ -5400,24 +5513,24 @@
               END IF
             END IF
             IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-              WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),          &
+              WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),          &
      &                          TRIM(SourceFile), nf90_strerror(status)
               exit_flag=2
               ioerror=status
             END IF
           ELSE
-            WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),            &
+            WRITE (stdout,30) TRIM(myVarName), TRIM(ncname),            &
      &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=2
             ioerror=status
           END IF
         ELSE
-          WRITE (stdout,30) TRIM(myVarName), TRIM(ncname),              &
+          WRITE (stdout,40) TRIM(myVarName), TRIM(ncname),              &
      &                      TRIM(SourceFile), nf90_strerror(status)
           exit_flag=2
           ioerror=status
         END IF
-      END IF
+      END IF GET_BLOCK
 
 #if !defined PARALLEL_IO && defined DISTRIBUTE
 !
@@ -5439,13 +5552,16 @@
         CALL netcdf_close (ng, model, my_ncid, ncname, .FALSE.)
       END IF
 !
-  10  FORMAT (/,' NETCDF_GET_LVAR_0D - error while reading variable:',  &
+  10  FORMAT (/,' NETCDF_GET_LVAR_0D - error while inquiring Group ',   &
+     &        'ID:',2x,a,', Group:',2x,a,/,22x,'in input file:',2x,a,   &
+     &        /,22x,'call from:',2x,a,/,22x,a)
+  20  FORMAT (/,' NETCDF_GET_LVAR_0D - error while reading variable:',  &
      &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a, &
      &        /,22x,a)
-  20  FORMAT (/,' NETCDF_GET_LVAR_0D - error while inquiring type for ',&
+  30  FORMAT (/,' NETCDF_GET_LVAR_0D - error while inquiring type for ',&
      &        'variable:',2x,a,/,22x,'in input file:',2x,a,/,22x,       &
      &        'call from:',2x,a,/,22x,a)
-  30  FORMAT (/,' NETCDF_GET_LVAR_0D - error while inquiring ID for ',  &
+  40  FORMAT (/,' NETCDF_GET_LVAR_0D - error while inquiring ID for ',  &
      &        'variable:',2x,a,/,22x,'in input file:',2x,a,/,22x,       &
      &        'call from:',2x,a,/,22x,a)
 !
@@ -5532,9 +5648,17 @@
 !
 !  Read in variable.
 !
-      IF (InpThread) THEN
+      GET_BLOCK : IF (InpThread) THEN
         IF (PRESENT(GrpName)) THEN
           status=nf90_inq_ncid(my_ncid, TRIM(GrpName), my_grpid)
+          IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+            WRITE (stdout,10) TRIM(myVarName), TRIM(GrpName),           &
+     &                        TRIM(ncname), TRIM(SourceFile),           &
+     &                        nf90_strerror(status)
+            exit_flag=3
+            ioerror=status
+            EXIT GET_BLOCK
+          END IF
           nfid=my_grpid
         ELSE
           nfid=my_ncid 
@@ -5575,24 +5699,24 @@
               END IF
             END IF
             IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-              WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),          &
+              WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),          &
      &                          TRIM(SourceFile), nf90_strerror(status)
               exit_flag=2
               ioerror=status
             END IF
           ELSE
-            WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),            &
+            WRITE (stdout,30) TRIM(myVarName), TRIM(ncname),            &
      &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=2
             ioerror=status
           END IF
         ELSE
-          WRITE (stdout,30) TRIM(myVarName), TRIM(ncname),              &
+          WRITE (stdout,40) TRIM(myVarName), TRIM(ncname),              &
      &                      TRIM(SourceFile), nf90_strerror(status)
           exit_flag=2
           ioerror=status
         END IF
-      END IF
+      END IF GET_BLOCK
 
 #if !defined PARALLEL_IO && defined DISTRIBUTE
 !
@@ -5614,13 +5738,16 @@
         CALL netcdf_close (ng, model, my_ncid, ncname, .FALSE.)
       END IF
 !
-  10  FORMAT (/,' NETCDF_GET_LVAR_1D - error while reading variable:',  &
+  10  FORMAT (/,' NETCDF_GET_LVAR_1D - error while inquiring Group ',   &
+     &        'ID:',2x,a,', Group:',2x,a,/,22x,'in input file:',2x,a,   &
+     &        /,22x,'call from:',2x,a,/,22x,a)
+  20  FORMAT (/,' NETCDF_GET_LVAR_1D - error while reading variable:',  &
      &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a, &
      &        /,22x,a)
-  20  FORMAT (/,' NETCDF_GET_LVAR_1D - error while inquiring type for ',&
+  30  FORMAT (/,' NETCDF_GET_LVAR_1D - error while inquiring type for ',&
      &        'variable:',2x,a,/,22x,'in input file:',2x,a,/,22x,       &
      &        'call from:',2x,a,/,22x,a)
-  30  FORMAT (/,' NETCDF_GET_LVAR_1D - error while inquiring ID for ',  &
+  40  FORMAT (/,' NETCDF_GET_LVAR_1D - error while inquiring ID for ',  &
      &        'variable:',2x,a,/,22x,'in input file:',2x,a,/,22x,       &
      &        'call from:',2x,a,/,22x,a)
 !
@@ -5702,9 +5829,17 @@
 !
 !  Read in variable.
 !
-      IF (InpThread) THEN
+      GET_BLOCK : IF (InpThread) THEN
         IF (PRESENT(GrpName)) THEN
           status=nf90_inq_ncid(my_ncid, TRIM(GrpName), my_grpid)
+          IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+            WRITE (stdout,10) TRIM(myVarName), TRIM(GrpName),           &
+     &                        TRIM(ncname), TRIM(SourceFile),           &
+     &                        nf90_strerror(status)
+            exit_flag=3
+            ioerror=status
+            EXIT GET_BLOCK
+          END IF
           nfid=my_grpid
         ELSE
           nfid=my_ncid 
@@ -5718,18 +5853,18 @@
             status=nf90_get_var(nfid, varid, A)
           END IF
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-            WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
+            WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),            &
      &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=2
             ioerror=status
           END IF
         ELSE
-          WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),              &
+          WRITE (stdout,30) TRIM(myVarName), TRIM(ncname),              &
      &                      TRIM(SourceFile), nf90_strerror(status)
           exit_flag=2
           ioerror=status
         END IF
-      END IF
+      END IF GET_BLOCK
 
 #if !defined PARALLEL_IO && defined DISTRIBUTE
 !
@@ -5751,10 +5886,13 @@
         CALL netcdf_close (ng, model, my_ncid, ncname, .FALSE.)
       END IF
 !
-  10  FORMAT (/,' NETCDF_GET_IVAR_0D - error while reading variable:',  &
+  10  FORMAT (/,' NETCDF_GET_IVAR_0D - error while inquiring Group ',   &
+     &        'ID:',2x,a,', Group:',2x,a,/,22x,'in input file:',2x,a,   &
+     &        /,22x,'call from:',2x,a,/,22x,a)
+  20  FORMAT (/,' NETCDF_GET_IVAR_0D - error while reading variable:',  &
      &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a, &
      &        /,22x,a)
-  20  FORMAT (/,' NETCDF_GET_IVAR_0D - error while inquiring ID for ',  &
+  30  FORMAT (/,' NETCDF_GET_IVAR_0D - error while inquiring ID for ',  &
      &        'variable:',2x,a,/,22x,'in input file:',2x,a,/,22x,       &
      &        'call from:',2x,a,/,22x,a)
 !
@@ -5835,9 +5973,17 @@
 !
 !  Read in variable.
 !
-      IF (InpThread) THEN
+      GET_BLOCK : IF (InpThread) THEN
         IF (PRESENT(GrpName)) THEN
           status=nf90_inq_ncid(my_ncid, TRIM(GrpName), my_grpid)
+          IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+            WRITE (stdout,10) TRIM(myVarName), TRIM(GrpName),           &
+     &                        TRIM(ncname), TRIM(SourceFile),           &
+     &                        nf90_strerror(status)
+            exit_flag=3
+            ioerror=status
+            EXIT GET_BLOCK
+          END IF
           nfid=my_grpid
         ELSE
           nfid=my_ncid 
@@ -5850,18 +5996,18 @@
             status=nf90_get_var(nfid, varid, A)
           END IF
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-            WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
+            WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),            &
      &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=2
             ioerror=status
           END IF
         ELSE
-          WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),              &
+          WRITE (stdout,30) TRIM(myVarName), TRIM(ncname),              &
      &                      TRIM(SourceFile), nf90_strerror(status)
           exit_flag=2
           ioerror=status
         END IF
-      END IF
+      END IF GET_BLOCK
 
 #if !defined PARALLEL_IO && defined DISTRIBUTE
 !
@@ -5883,10 +6029,13 @@
         CALL netcdf_close (ng, model, my_ncid, ncname, .FALSE.)
       END IF
 !
-  10  FORMAT (/,' NETCDF_GET_IVAR_1D - error while reading variable:',  &
+  10  FORMAT (/,' NETCDF_GET_IVAR_1D - error while inquiring Group ',   &
+     &        'ID:',2x,a,', Group:',2x,a,/,22x,'in input file:',2x,a,   &
+     &        /,22x,'call from:',2x,a,/,22x,a)
+  20  FORMAT (/,' NETCDF_GET_IVAR_1D - error while reading variable:',  &
      &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a, &
      &        /,22x,a)
-  20  FORMAT (/,' NETCDF_GET_IVAR_1D - error while inquiring ID for ',  &
+  30  FORMAT (/,' NETCDF_GET_IVAR_1D - error while inquiring ID for ',  &
      &        'variable:',2x,a,/,22x,'in input file:',2x,a,/,22x,       &
      &        'call from:',2x,a,/22x,a)
 !
@@ -5968,9 +6117,17 @@
 !
 !  Read in variable.
 !
-      IF (InpThread) THEN
+      GET_BLOCK : IF (InpThread) THEN
         IF (PRESENT(GrpName)) THEN
           status=nf90_inq_ncid(my_ncid, TRIM(GrpName), my_grpid)
+          IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+            WRITE (stdout,10) TRIM(myVarName), TRIM(GrpName),           &
+     &                        TRIM(ncname), TRIM(SourceFile),           &
+     &                        nf90_strerror(status)
+            exit_flag=3
+            ioerror=status
+            EXIT GET_BLOCK
+          END IF
           nfid=my_grpid
         ELSE
           nfid=my_ncid 
@@ -5983,18 +6140,18 @@
             status=nf90_get_var(nfid, varid, A)
           END IF
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-            WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
+            WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),            &
      &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=2
             ioerror=status
           END IF
         ELSE
-          WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),              &
+          WRITE (stdout,30) TRIM(myVarName), TRIM(ncname),              &
      &                      TRIM(SourceFile), nf90_strerror(status)
           exit_flag=2
           ioerror=status
         END IF
-      END IF
+      END IF GET_BLOCK
 
 #if !defined PARALLEL_IO && defined DISTRIBUTE
 !
@@ -6016,10 +6173,13 @@
         CALL netcdf_close (ng, model, my_ncid, ncname, .FALSE.)
       END IF
 !
-  10  FORMAT (/,' NETCDF_GET_IVAR_2D - error while reading variable:',  &
+  10  FORMAT (/,' NETCDF_GET_IVAR_2D - error while inquiring Group ',   &
+     &        'ID:',2x,a,', Group:',2x,a,/,22x,'in input file:',2x,a,   &
+     &        /,22x,'call from:',2x,a,/,22x,a)
+  20  FORMAT (/,' NETCDF_GET_IVAR_2D - error while reading variable:',  &
      &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a, &
      &        /,22x,a)
-  20  FORMAT (/,' NETCDF_GET_IVAR_2D - error while inquiring ID for ',  &
+  30  FORMAT (/,' NETCDF_GET_IVAR_2D - error while inquiring ID for ',  &
      &        'variable:',2x,a,/,22x,'in input file:',2x,a,/,22x,       &
      &        'call from:',2x,a,/,22x,a)
 !
@@ -6111,9 +6271,17 @@
 !
 !  Read in variable.
 !
-      IF (InpThread) THEN
+      GET_BLOCK : IF (InpThread) THEN
         IF (PRESENT(GrpName)) THEN
           status=nf90_inq_ncid(my_ncid, TRIM(GrpName), my_grpid)
+          IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+            WRITE (stdout,10) TRIM(myVarName), TRIM(GrpName),           &
+     &                        TRIM(ncname), TRIM(SourceFile),           &
+     &                        nf90_strerror(status)
+            exit_flag=3
+            ioerror=status
+            EXIT GET_BLOCK
+          END IF
           nfid=my_grpid
         ELSE
           nfid=my_ncid 
@@ -6127,18 +6295,18 @@
             status=nf90_get_var(nfid, varid, A)
           END IF
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-            WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
+            WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),            &
      &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=2
             ioerror=status
           END IF
         ELSE
-          WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),              &
+          WRITE (stdout,30) TRIM(myVarName), TRIM(ncname),              &
      &                      TRIM(SourceFile), nf90_strerror(status)
           exit_flag=2
           ioerror=status
         END IF
-      END IF
+      END IF GET_BLOCK
 
 #if !defined PARALLEL_IO && defined DISTRIBUTE
 !
@@ -6160,10 +6328,13 @@
         CALL netcdf_close (ng, model, my_ncid, ncname, .FALSE.)
       END IF
 !
-  10  FORMAT (/,' NETCDF_GET_SVAR_0D - error while reading variable:',  &
+  10  FORMAT (/,' NETCDF_GET_SVAR_0D - error while inquiring Group ',   &
+     &        'ID:',2x,a,', Group:',2x,a,/,22x,'in input file:',2x,a,   &
+     &        /,22x,'call from:',2x,a,/,22x,a)
+  20  FORMAT (/,' NETCDF_GET_SVAR_0D - error while reading variable:',  &
      &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a, &
      &        /,22x,a)
-  20  FORMAT (/,' NETCDF_GET_SVAR_0D - error while inquiring ID for ',  &
+  30  FORMAT (/,' NETCDF_GET_SVAR_0D - error while inquiring ID for ',  &
      &        'variable:',2x,a,/,22x,'in input file:',2x,a,/,22x,       &
      &        'call from:',2x,a,/,22x,a)
 !
@@ -6249,9 +6420,17 @@
 !
 !  Read in variable.
 !
-      IF (InpThread) THEN
+      GET_BLOCK : IF (InpThread) THEN
         IF (PRESENT(GrpName)) THEN
           status=nf90_inq_ncid(my_ncid, TRIM(GrpName), my_grpid)
+          IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+            WRITE (stdout,10) TRIM(myVarName), TRIM(GrpName),           &
+     &                        TRIM(ncname), TRIM(SourceFile),           &
+     &                        nf90_strerror(status)
+            exit_flag=3
+            ioerror=status
+            EXIT GET_BLOCK
+          END IF
           nfid=my_grpid
         ELSE
           nfid=my_ncid
@@ -6264,18 +6443,18 @@
             status=nf90_get_var(nfid, varid, A)
           END IF
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-            WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
+            WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),            &
      &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=2
             ioerror=status
           END IF
         ELSE
-          WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),              &
+          WRITE (stdout,30) TRIM(myVarName), TRIM(ncname),              &
      &                      TRIM(SourceFile), nf90_strerror(status)
           exit_flag=2
           ioerror=status
         END IF
-      END IF
+      END IF GET_BLOCK
 
 #if !defined PARALLEL_IO && defined DISTRIBUTE
 !
@@ -6297,10 +6476,13 @@
         CALL netcdf_close (ng, model, my_ncid, ncname, .FALSE.)
       END IF
 !
-  10  FORMAT (/,' NETCDF_GET_SVAR_1D - error while reading variable:',  &
+  10  FORMAT (/,' NETCDF_GET_SVAR_1D - error while inquiring Group ',   &
+     &        'ID:',2x,a,', Group:',2x,a,/,22x,'in input file:',2x,a,   &
+     &        /,22x,'call from:',2x,a,/,22x,a)
+  20  FORMAT (/,' NETCDF_GET_SVAR_1D - error while reading variable:',  &
      &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a, &
      &        /,22x,a)
-  20  FORMAT (/,' NETCDF_GET_SVAR_1D - error while inquiring ID for ',  &
+  30  FORMAT (/,' NETCDF_GET_SVAR_1D - error while inquiring ID for ',  &
      &        'variable:',2x,a,/,22x,'in input file:',2x,a,/,22x,       &
      &        'call from:',2x,a,/,22x,a)
 !
@@ -6386,9 +6568,17 @@
 !
 !  Read in variable.
 !
-      IF (InpThread) THEN
+      GET_BLOCK : IF (InpThread) THEN
         IF (PRESENT(GrpName)) THEN
           status=nf90_inq_ncid(my_ncid, TRIM(GrpName), my_grpid)
+          IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+            WRITE (stdout,10) TRIM(myVarName), TRIM(GrpName),           &
+     &                        TRIM(ncname), TRIM(SourceFile),           &
+     &                        nf90_strerror(status)
+            exit_flag=3
+            ioerror=status
+            EXIT GET_BLOCK
+          END IF
           nfid=my_grpid
         ELSE
           nfid=my_ncid 
@@ -6401,18 +6591,18 @@
             status=nf90_get_var(nfid, varid, A)
           END IF
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-            WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
+            WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),            &
      &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=2
             ioerror=status
           END IF
         ELSE
-          WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),              &
+          WRITE (stdout,30) TRIM(myVarName), TRIM(ncname),              &
      &                      TRIM(SourceFile), nf90_strerror(status)
           exit_flag=2
           ioerror=status
         END IF
-      END IF
+      END IF GET_BLOCK
 
 #if !defined PARALLEL_IO && defined DISTRIBUTE
 !
@@ -6434,10 +6624,13 @@
         CALL netcdf_close (ng, model, my_ncid, ncname, .FALSE.)
       END IF
 !
-  10  FORMAT (/,' NETCDF_GET_SVAR_2D - error while reading variable:',  &
+  10  FORMAT (/,' NETCDF_GET_SVAR_2D - error while inquiring Group ',   &
+     &        'ID:',2x,a,', Group:',2x,a,/,22x,'in input file:',2x,a,   &
+     &        /,22x,'call from:',2x,a,/,22x,a)
+  20  FORMAT (/,' NETCDF_GET_SVAR_2D - error while reading variable:',  &
      &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a, &
      &        /,22x,a)
-  20  FORMAT (/,' NETCDF_GET_SVAR_2D - error while inquiring ID for ',  &
+  30  FORMAT (/,' NETCDF_GET_SVAR_2D - error while inquiring ID for ',  &
      &        'variable:',2x,a,/,22x,'in input file:',2x,a,/,22x,       &
      &        'call from:',2x,a,/,22x,a)
 !
@@ -6523,9 +6716,17 @@
 !
 !  Read in variable.
 !
-      IF (InpThread) THEN
+      GET_BLOCK : IF (InpThread) THEN
         IF (PRESENT(GrpName)) THEN
           status=nf90_inq_ncid(my_ncid, TRIM(GrpName), my_grpid)
+          IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+            WRITE (stdout,10) TRIM(myVarName), TRIM(GrpName),           &
+     &                        TRIM(ncname), TRIM(SourceFile),           &
+     &                        nf90_strerror(status)
+            exit_flag=3
+            ioerror=status
+            EXIT GET_BLOCK
+          END IF
           nfid=my_grpid
         ELSE
           nfid=my_ncid
@@ -6538,18 +6739,18 @@
             status=nf90_get_var(nfid, varid, A)
           END IF
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-            WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
+            WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),            &
      &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=2
             ioerror=status
           END IF
         ELSE
-          WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),              &
+          WRITE (stdout,30) TRIM(myVarName), TRIM(ncname),              &
      &                      TRIM(SourceFile), nf90_strerror(status)
           exit_flag=2
           ioerror=status
         END IF
-      END IF
+      END IF GET_BLOCK
 
 #if !defined PARALLEL_IO && defined DISTRIBUTE
 !
@@ -6571,10 +6772,13 @@
         CALL netcdf_close (ng, model, my_ncid, ncname, .FALSE.)
       END IF
 !
-  10  FORMAT (/,' NETCDF_GET_SVAR_3D - error while reading variable:',  &
+  10  FORMAT (/,' NETCDF_GET_SVAR_3D - error while inquiring Group ',   &
+     &        'ID:',2x,a,', Group:',2x,a,/,22x,'in input file:',2x,a,   &
+     &        /,22x,'call from:',2x,a,/,22x,a)
+  20  FORMAT (/,' NETCDF_GET_SVAR_3D - error while reading variable:',  &
      &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a, &
      &        /,22x,a)
-  20  FORMAT (/,' NETCDF_GET_SVAR_3D - error while inquiring ID for ',  &
+  30  FORMAT (/,' NETCDF_GET_SVAR_3D - error while inquiring ID for ',  &
      &        'variable:',2x,a,/,22x,'in input file:',2x,a,/,22x,       &
      &        'call from:',2x,a,/,22x,a)
 !
@@ -7298,9 +7502,17 @@
 !
 !  If variable ID is not provided, inquire its value.
 !
-      IF (OutThread) THEN
+      PUT_BLOCK : IF (OutThread) THEN
         IF (PRESENT(GrpName)) THEN
           status=nf90_inq_ncid(my_ncid, TRIM(GrpName), my_grpid)
+          IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+            WRITE (stdout,10) TRIM(myVarName), TRIM(GrpName),           &
+     &                        TRIM(ncname), TRIM(SourceFile),           &
+     &                        nf90_strerror(status)
+            exit_flag=3
+            ioerror=status
+            EXIT PUT_BLOCK
+          END IF
           nfid=my_grpid
         ELSE
           nfid=my_ncid 
@@ -7308,7 +7520,7 @@
         IF (.not.PRESENT(varid)) THEN
           status=nf90_inq_varid(nfid, TRIM(myVarName), my_varid)
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-            WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
+            WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),            &
      &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=3
             ioerror=status
@@ -7327,13 +7539,13 @@
             status=nf90_put_var(nfid, my_varid, my_A, start, total)
           END IF
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-            WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),            &
+            WRITE (stdout,30) TRIM(myVarName), TRIM(ncname),            &
      &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=3
             ioerror=status
           END IF
         END IF
-      END IF
+      END IF PUT_BLOCK
 
 # if !defined PARALLEL_IO && defined DISTRIBUTE
 !
@@ -7352,10 +7564,13 @@
         CALL netcdf_close (ng, model, my_ncid, ncname, .FALSE.)
       END IF
 !
-  10  FORMAT (/,' NETCDF_PUT_FVAR_0DP - error while inquiring ID for ', &
+  10  FORMAT (/,' NETCDF_PUT_FVAR_0DP - error while inquiring Group ID',&
+     &        ' for variable:',2x,a,', Group:',2x,a/,23x,               &
+     &        'in input file:',2x,a,/,23x,'call from:',2x,a,/,23x,a)
+  20  FORMAT (/,' NETCDF_PUT_FVAR_0DP - error while inquiring ID for ', &
      &        'variable:',2x,a,/,23x,'in input file:',2x,a,/,23x,       &
      &        'call from:',2x,a,/,23x,a)
-  20  FORMAT (/,' NETCDF_PUT_FVAR_0DP - error while writing variable:', &
+  30  FORMAT (/,' NETCDF_PUT_FVAR_0DP - error while writing variable:', &
      &        2x,a,/,23x,'in input file:',2x,a,/,23x,'call from:',2x,a, &
      &        /,23x,a)
 !
@@ -7435,10 +7650,18 @@
       END IF
 !
 !  If variable ID is not provided, inquire its value.
-!
-      IF (OutThread) THEN
+
+      PUT_BLOCK : IF (OutThread) THEN
         IF (PRESENT(GrpName)) THEN
           status=nf90_inq_ncid(my_ncid, TRIM(GrpName), my_grpid)
+          IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+            WRITE (stdout,10) TRIM(myVarName), TRIM(GrpName),           &
+     &                        TRIM(ncname), TRIM(SourceFile),           &
+     &                        nf90_strerror(status)
+            exit_flag=3
+            ioerror=status
+            EXIT PUT_BLOCK
+          END IF
           nfid=my_grpid
         ELSE
           nfid=my_ncid 
@@ -7446,7 +7669,7 @@
         IF (.not.PRESENT(varid)) THEN
           status=nf90_inq_varid(nfid, TRIM(myVarName), my_varid)
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-            WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
+            WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),            &
      &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=3
             ioerror=status
@@ -7460,13 +7683,13 @@
         IF (exit_flag.eq.NoError) THEN
           status=nf90_put_var(nfid, my_varid, A, start, total)
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-            WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),            &
+            WRITE (stdout,30) TRIM(myVarName), TRIM(ncname),            &
      &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=3
             ioerror=status
           END IF
         END IF
-      END IF
+      END IF PUT_BLOCK
 
 # if !defined PARALLEL_IO && defined DISTRIBUTE
 !
@@ -7485,10 +7708,13 @@
         CALL netcdf_close (ng, model, my_ncid, ncname, .FALSE.)
       END IF
 !
-  10  FORMAT (/,' NETCDF_PUT_FVAR_1DP - error while inquiring ID for ', &
+  10  FORMAT (/,' NETCDF_PUT_FVAR_1DP - error while inquiring Group ID',&
+     &        ' for variable:',2x,a,', Group:',2x,a/,23x,               &
+     &        'in input file:',2x,a,/,23x,'call from:',2x,a,/,23x,a)
+  20  FORMAT (/,' NETCDF_PUT_FVAR_1DP - error while inquiring ID for ', &
      &        'variable:',2x,a,/,23x,'in input file:',2x,a,/,23x,       &
      &        'call from:',2x,a,/,23x,a)
-  20  FORMAT (/,' NETCDF_PUT_FVAR_1DP - error while writing variable:', &
+  30  FORMAT (/,' NETCDF_PUT_FVAR_1DP - error while writing variable:', &
      &        2x,a,/,23x,'in input file:',2x,a,/,23x,'call from:',2x,a, &
      &        /,23x,a)
 !
@@ -7569,9 +7795,17 @@
 !
 !  If variable ID is not provided, inquire its value.
 !
-      IF (OutThread) THEN
+      PUT_BLOCK : IF (OutThread) THEN
         IF (PRESENT(GrpName)) THEN
           status=nf90_inq_ncid(my_ncid, TRIM(GrpName), my_grpid)
+          IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+            WRITE (stdout,10) TRIM(myVarName), TRIM(GrpName),           &
+     &                        TRIM(ncname), TRIM(SourceFile),           &
+     &                        nf90_strerror(status)
+            exit_flag=3
+            ioerror=status
+            EXIT PUT_BLOCK
+          END IF
           nfid=my_grpid
         ELSE
           nfid=my_ncid 
@@ -7579,7 +7813,7 @@
         IF (.not.PRESENT(varid)) THEN
           status=nf90_inq_varid(nfid, TRIM(myVarName), my_varid)
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-            WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
+            WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),            &
      &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=3
             ioerror=status
@@ -7593,13 +7827,13 @@
         IF (exit_flag.eq.NoError) THEN
           status=nf90_put_var(nfid, my_varid, A, start, total)
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-            WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),            &
+            WRITE (stdout,30) TRIM(myVarName), TRIM(ncname),            &
      &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=3
             ioerror=status
           END IF
         END IF
-      END IF
+      END IF PUT_BLOCK
 
 # if !defined PARALLEL_IO && defined DISTRIBUTE
 !
@@ -7618,10 +7852,13 @@
         CALL netcdf_close (ng, model, my_ncid, ncname, .FALSE.)
       END IF
 !
-  10  FORMAT (/,' NETCDF_PUT_FVAR_2DP - error while inquiring ID for ', &
+  10  FORMAT (/,' NETCDF_PUT_FVAR_2DP - error while inquiring Group ID',&
+     &        ' for variable:',2x,a,', Group:',2x,a/,23x,               &
+     &        'in input file:',2x,a,/,23x,'call from:',2x,a,/,23x,a)
+  20  FORMAT (/,' NETCDF_PUT_FVAR_2DP - error while inquiring ID for ', &
      &        'variable:',2x,a,/,23x,'in input file:',2x,a,/,22x,       &
      &        'call from:',2x,a,/23x,a)
-  20  FORMAT (/,' NETCDF_PUT_FVAR_2DP - error while writing variable:', &
+  30  FORMAT (/,' NETCDF_PUT_FVAR_2DP - error while writing variable:', &
      &        2x,a,/,23x,'in input file:',2x,a,/,23x,'call from:',2x,a, &
      &        /,23x,a)
 !
@@ -7702,9 +7939,17 @@
 !
 !  If variable ID is not provided, inquire its value.
 !
-      IF (OutThread) THEN
+      PUT_BLOCK : IF (OutThread) THEN
         IF (PRESENT(GrpName)) THEN
           status=nf90_inq_ncid(my_ncid, TRIM(GrpName), my_grpid)
+          IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+            WRITE (stdout,10) TRIM(myVarName), TRIM(GrpName),           &
+     &                        TRIM(ncname), TRIM(SourceFile),           &
+     &                        nf90_strerror(status)
+            exit_flag=3
+            ioerror=status
+            EXIT PUT_BLOCK
+          END IF
           nfid=my_grpid
         ELSE
           nfid=my_ncid 
@@ -7712,7 +7957,7 @@
         IF (.not.PRESENT(varid)) THEN
           status=nf90_inq_varid(nfid, TRIM(myVarName), my_varid)
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-            WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
+            WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),            &
      &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=3
             ioerror=status
@@ -7726,13 +7971,13 @@
         IF (exit_flag.eq.NoError) THEN
           status=nf90_put_var(nfid, my_varid, A, start, total)
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-            WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),            &
+            WRITE (stdout,30) TRIM(myVarName), TRIM(ncname),            &
      &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=3
             ioerror=status
           END IF
         END IF
-      END IF
+      END IF PUT_BLOCK
 
 # if !defined PARALLEL_IO && defined DISTRIBUTE
 !
@@ -7751,10 +7996,13 @@
         CALL netcdf_close (ng, model, my_ncid, ncname, .FALSE.)
       END IF
 !
-  10  FORMAT (/,' NETCDF_PUT_FVAR_3DP - error while inquiring ID for ', &
+  10  FORMAT (/,' NETCDF_PUT_FVAR_3DP - error while inquiring Group ID',&
+     &        ' for variable:',2x,a,', Group:',2x,a/,23x,               &
+     &        'in input file:',2x,a,/,23x,'call from:',2x,a,/,23x,a)
+  20  FORMAT (/,' NETCDF_PUT_FVAR_3DP - error while inquiring ID for ', &
      &        'variable:',2x,a,/,23x,'in input file:',2x,a,/,22x,       &
      &        'call from:',2x,a,/,23x,a)
-  20  FORMAT (/,' NETCDF_PUT_FVAR_3DP - error while writing variable:', &
+  30  FORMAT (/,' NETCDF_PUT_FVAR_3DP - error while writing variable:', &
      &        2x,a,/,23x,'in input file:',2x,a,/,23x,'call from:',2x,a, &
      &        /,23x,a)
 !
@@ -7838,9 +8086,17 @@
 !
 !  If variable ID is not provided, inquire its value.
 !
-      IF (OutThread) THEN
+      PUT_BLOCK : IF (OutThread) THEN
         IF (PRESENT(GrpName)) THEN
           status=nf90_inq_ncid(my_ncid, TRIM(GrpName), my_grpid)
+          IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+            WRITE (stdout,10) TRIM(myVarName), TRIM(GrpName),           &
+     &                        TRIM(ncname), TRIM(SourceFile),           &
+     &                        nf90_strerror(status)
+            exit_flag=3
+            ioerror=status
+            EXIT PUT_BLOCK
+          END IF
           nfid=my_grpid
         ELSE
           nfid=my_ncid 
@@ -7848,7 +8104,7 @@
         IF (.not.PRESENT(varid)) THEN
           status=nf90_inq_varid(nfid, TRIM(myVarName), my_varid)
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-            WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
+            WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),            &
      &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=3
             ioerror=status
@@ -7867,13 +8123,13 @@
             status=nf90_put_var(nfid, my_varid, my_A, start, total)
           END IF
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-            WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),            &
+            WRITE (stdout,30) TRIM(myVarName), TRIM(ncname),            &
      &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=3
             ioerror=status
           END IF
         END IF
-      END IF
+      END IF PUT_BLOCK
 
 #if !defined PARALLEL_IO && defined DISTRIBUTE
 !
@@ -7892,10 +8148,13 @@
         CALL netcdf_close (ng, model, my_ncid, ncname, .FALSE.)
       END IF
 !
-  10  FORMAT (/,' NETCDF_PUT_FVAR_0D - error while inquiring ID for ',  &
+  10  FORMAT (/,' NETCDF_PUT_FVAR_0D - error while inquiring Group ID', &
+     &        ' for variable:',2x,a,', Group:',2x,a/,22x,               &
+     &        'in input file:',2x,a,/,22x,'call from:',2x,a,/,22x,a)
+  20  FORMAT (/,' NETCDF_PUT_FVAR_0D - error while inquiring ID for ',  &
      &        'variable:',2x,a,/,22x,'in input file:',2x,a,/,22x,       &
      &        'call from:',2x,a,/,22x,a)
-  20  FORMAT (/,' NETCDF_PUT_FVAR_0D - error while writing variable:',  &
+  30  FORMAT (/,' NETCDF_PUT_FVAR_0D - error while writing variable:',  &
      &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a, &
      &        /,22x,a)
 !
@@ -7976,9 +8235,17 @@
 !
 !  If variable ID is not provided, inquire its value.
 !
-      IF (OutThread) THEN
+      PUT_BLOCK : IF (OutThread) THEN
         IF (PRESENT(GrpName)) THEN
           status=nf90_inq_ncid(my_ncid, TRIM(GrpName), my_grpid)
+          IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+            WRITE (stdout,10) TRIM(myVarName), TRIM(GrpName),           &
+     &                        TRIM(ncname), TRIM(SourceFile),           &
+     &                        nf90_strerror(status)
+            exit_flag=3
+            ioerror=status
+            EXIT PUT_BLOCK
+          END IF
           nfid=my_grpid
         ELSE
           nfid=my_ncid 
@@ -7986,7 +8253,7 @@
         IF (.not.PRESENT(varid)) THEN
           status=nf90_inq_varid(nfid, TRIM(myVarName), my_varid)
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-            WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
+            WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),            &
      &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=3
             ioerror=status
@@ -8000,13 +8267,13 @@
         IF (exit_flag.eq.NoError) THEN
           status=nf90_put_var(nfid, my_varid, A, start, total)
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-            WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),            &
+            WRITE (stdout,30) TRIM(myVarName), TRIM(ncname),            &
      &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=3
             ioerror=status
           END IF
         END IF
-      END IF
+      END IF PUT_BLOCK
 
 #if !defined PARALLEL_IO && defined DISTRIBUTE
 !
@@ -8025,10 +8292,13 @@
         CALL netcdf_close (ng, model, my_ncid, ncname, .FALSE.)
       END IF
 !
-  10  FORMAT (/,' NETCDF_PUT_FVAR_1D - error while inquiring ID for ',  &
+  10  FORMAT (/,' NETCDF_PUT_FVAR_1D - error while inquiring Group ID', &
+     &        ' for variable:',2x,a,', Group:',2x,a/,22x,               &
+     &        'in input file:',2x,a,/,22x,'call from:',2x,a,/,22x,a)
+  20  FORMAT (/,' NETCDF_PUT_FVAR_1D - error while inquiring ID for ',  &
      &        'variable:',2x,a,/,22x,'in input file:',2x,a,/,22x,       &
      &        'call from:',2x,a,/,22x,a)
-  20  FORMAT (/,' NETCDF_PUT_FVAR_1D - error while writing variable:',  &
+  30  FORMAT (/,' NETCDF_PUT_FVAR_1D - error while writing variable:',  &
      &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a, &
      &        /,22x,a)
 !
@@ -8109,9 +8379,17 @@
 !
 !  If variable ID is not provided, inquire its value.
 !
-      IF (OutThread) THEN
+      PUT_BLOCK : IF (OutThread) THEN
         IF (PRESENT(GrpName)) THEN
           status=nf90_inq_ncid(my_ncid, TRIM(GrpName), my_grpid)
+          IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+            WRITE (stdout,10) TRIM(myVarName), TRIM(GrpName),           &
+     &                        TRIM(ncname), TRIM(SourceFile),           &
+     &                        nf90_strerror(status)
+            exit_flag=3
+            ioerror=status
+            EXIT PUT_BLOCK
+          END IF
           nfid=my_grpid
         ELSE
           nfid=my_ncid 
@@ -8119,7 +8397,7 @@
         IF (.not.PRESENT(varid)) THEN
           status=nf90_inq_varid(nfid, TRIM(myVarName), my_varid)
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-            WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
+            WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),            &
      &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=3
             ioerror=status
@@ -8133,13 +8411,13 @@
         IF (exit_flag.eq.NoError) THEN
           status=nf90_put_var(nfid, my_varid, A, start, total)
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-            WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),            &
+            WRITE (stdout,30) TRIM(myVarName), TRIM(ncname),            &
      &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=3
             ioerror=status
           END IF
         END IF
-      END IF
+      END IF PUT_BLOCK
 
 #if !defined PARALLEL_IO && defined DISTRIBUTE
 !
@@ -8158,10 +8436,13 @@
         CALL netcdf_close (ng, model, my_ncid, ncname, .FALSE.)
       END IF
 !
-  10  FORMAT (/,' NETCDF_PUT_FVAR_2D - error while inquiring ID for ',  &
+  10  FORMAT (/,' NETCDF_PUT_FVAR_2D - error while inquiring Group ID', &
+     &        ' for variable:',2x,a,', Group:',2x,a/,22x,               &
+     &        'in input file:',2x,a,/,22x,'call from:',2x,a,/,22x,a)
+  20  FORMAT (/,' NETCDF_PUT_FVAR_2D - error while inquiring ID for ',  &
      &        'variable:',2x,a,/,22x,'in input file:',2x,a,/,22x,       &
      &        'call from:',2x,a,/,22x,a)
-  20  FORMAT (/,' NETCDF_PUT_FVAR_2D - error while writing variable:',  &
+  30  FORMAT (/,' NETCDF_PUT_FVAR_2D - error while writing variable:',  &
      &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a, &
      &        /,22x,a)
 !
@@ -8242,9 +8523,17 @@
 !
 !  If variable ID is not provided, inquire its value.
 !
-      IF (OutThread) THEN
+      PUT_BLOCK : IF (OutThread) THEN
         IF (PRESENT(GrpName)) THEN
           status=nf90_inq_ncid(my_ncid, TRIM(GrpName), my_grpid)
+          IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+            WRITE (stdout,10) TRIM(myVarName), TRIM(GrpName),           &
+     &                        TRIM(ncname), TRIM(SourceFile),           &
+     &                        nf90_strerror(status)
+            exit_flag=3
+            ioerror=status
+            EXIT PUT_BLOCK
+          END IF
           nfid=my_grpid
         ELSE
           nfid=my_ncid 
@@ -8252,7 +8541,7 @@
         IF (.not.PRESENT(varid)) THEN
           status=nf90_inq_varid(nfid, TRIM(myVarName), my_varid)
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-            WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
+            WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),            &
      &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=3
             ioerror=status
@@ -8266,13 +8555,13 @@
         IF (exit_flag.eq.NoError) THEN
           status=nf90_put_var(nfid, my_varid, A, start, total)
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-            WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),            &
+            WRITE (stdout,30) TRIM(myVarName), TRIM(ncname),            &
      &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=3
             ioerror=status
           END IF
         END IF
-      END IF
+      END IF PUT_BLOCK
 
 #if !defined PARALLEL_IO && defined DISTRIBUTE
 !
@@ -8291,10 +8580,13 @@
         CALL netcdf_close (ng, model, my_ncid, ncname, .FALSE.)
       END IF
 !
-  10  FORMAT (/,' NETCDF_PUT_FVAR_3D - error while inquiring ID for ',  &
+  10  FORMAT (/,' NETCDF_PUT_FVAR_3D - error while inquiring Group ID', &
+     &        ' for variable:',2x,a,', Group:',2x,a/,22x,               &
+     &        'in input file:',2x,a,/,22x,'call from:',2x,a,/,22x,a)
+  20  FORMAT (/,' NETCDF_PUT_FVAR_3D - error while inquiring ID for ',  &
      &        'variable:',2x,a,/,22x,'in input file:',2x,a,/,22x,       &
      &        'call from:',2x,a,/,22x,a)
-  20  FORMAT (/,' NETCDF_PUT_FVAR_3D - error while writing variable:',  &
+  30  FORMAT (/,' NETCDF_PUT_FVAR_3D - error while writing variable:',  &
      &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a, &
      &        /,22x,a)
 !
@@ -8375,9 +8667,17 @@
 !
 !  If variable ID is not provided, inquire its value.
 !
-      IF (OutThread) THEN
+      PUT_BLOCK : IF (OutThread) THEN
         IF (PRESENT(GrpName)) THEN
           status=nf90_inq_ncid(my_ncid, TRIM(GrpName), my_grpid)
+          IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+            WRITE (stdout,10) TRIM(myVarName), TRIM(GrpName),           &
+     &                        TRIM(ncname), TRIM(SourceFile),           &
+     &                        nf90_strerror(status)
+            exit_flag=3
+            ioerror=status
+            EXIT PUT_BLOCK
+          END IF
           nfid=my_grpid
         ELSE
           nfid=my_ncid 
@@ -8385,7 +8685,7 @@
         IF (.not.PRESENT(varid)) THEN
           status=nf90_inq_varid(nfid, TRIM(myVarName), my_varid)
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-            WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
+            WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),            &
      &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=3
             ioerror=status
@@ -8399,13 +8699,13 @@
         IF (exit_flag.eq.NoError) THEN
           status=nf90_put_var(nfid, my_varid, A, start, total)
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-            WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),            &
+            WRITE (stdout,30) TRIM(myVarName), TRIM(ncname),            &
      &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=3
             ioerror=status
           END IF
         END IF
-      END IF
+      END IF PUT_BLOCK
 
 #if !defined PARALLEL_IO && defined DISTRIBUTE
 !
@@ -8424,10 +8724,13 @@
         CALL netcdf_close (ng, model, my_ncid, ncname, .FALSE.)
       END IF
 !
-  10  FORMAT (/,' NETCDF_PUT_FVAR_4D - error while inquiring ID for ',  &
+  10  FORMAT (/,' NETCDF_PUT_FVAR_4D - error while inquiring Group ID', &
+     &        ' for variable:',2x,a,', Group:',2x,a/,22x,               &
+     &        'in input file:',2x,a,/,22x,'call from:',2x,a,/,22x,a)
+  20  FORMAT (/,' NETCDF_PUT_FVAR_4D - error while inquiring ID for ',  &
      &        'variable:',2x,a,/,22x,'in input file:',2x,a,/,22x,       &
      &        'call from:',2x,a,/,22x,a)
-  20  FORMAT (/,' NETCDF_PUT_FVAR_4D - error while writing variable:',  &
+  30  FORMAT (/,' NETCDF_PUT_FVAR_4D - error while writing variable:',  &
      &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a, &
      &        /,22x,a)
 !
@@ -8510,9 +8813,17 @@
 !
 !  If variable ID is not provided, inquire its value.
 !
-      IF (OutThread) THEN
+      PUT_BLOCK : IF (OutThread) THEN
         IF (PRESENT(GrpName)) THEN
           status=nf90_inq_ncid(my_ncid, TRIM(GrpName), my_grpid)
+          IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+            WRITE (stdout,10) TRIM(myVarName), TRIM(GrpName),           &
+     &                        TRIM(ncname), TRIM(SourceFile),           &
+     &                        nf90_strerror(status)
+            exit_flag=3
+            ioerror=status
+            EXIT PUT_BLOCK
+          END IF
           nfid=my_grpid
         ELSE
           nfid=my_ncid 
@@ -8520,7 +8831,7 @@
         IF (.not.PRESENT(varid)) THEN
           status=nf90_inq_varid(nfid, TRIM(myVarName), my_varid)
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-            WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
+            WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),            &
      &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=3
             ioerror=status
@@ -8539,13 +8850,13 @@
             status=nf90_put_var(nfid, my_varid, my_A, start, total)
           END IF
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-            WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),            &
+            WRITE (stdout,30) TRIM(myVarName), TRIM(ncname),            &
      &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=3
             ioerror=status
           END IF
         END IF
-      END IF
+      END IF PUT_BLOCK
 
 #if !defined PARALLEL_IO && defined DISTRIBUTE
 !
@@ -8564,10 +8875,13 @@
         CALL netcdf_close (ng, model, my_ncid, ncname, .FALSE.)
       END IF
 !
-  10  FORMAT (/,' NETCDF_PUT_IVAR_0D - error while inquiring ID for ',  &
+  10  FORMAT (/,' NETCDF_PUT_IVAR_0D - error while inquiring Group ID', &
+     &        ' for variable:',2x,a,', Group:',2x,a,/,22x,              &
+     &        'in input file:',2x,a,/,22x,'call from:',2x,a,/,22x,a)
+  20  FORMAT (/,' NETCDF_PUT_IVAR_0D - error while inquiring ID for ',  &
      &        'variable:',2x,a,/,22x,'in input file:',2x,a,/,22x,       &
      &        'call from:',2x,a,/,22x,a)
-  20  FORMAT (/,' NETCDF_PUT_IVAR_0D - error while writing variable:',  &
+  30  FORMAT (/,' NETCDF_PUT_IVAR_0D - error while writing variable:',  &
      &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a, &
      &        /,22x,a)
 !
@@ -8648,9 +8962,17 @@
 !
 !  If variable ID is not provided, inquire its value.
 !
-      IF (OutThread) THEN
+      PUT_BLOCK : IF (OutThread) THEN
         IF (PRESENT(GrpName)) THEN
           status=nf90_inq_ncid(my_ncid, TRIM(GrpName), my_grpid)
+          IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+            WRITE (stdout,10) TRIM(myVarName), TRIM(GrpName),           &
+     &                        TRIM(ncname), TRIM(SourceFile),           &
+     &                        nf90_strerror(status)
+            exit_flag=3
+            ioerror=status
+            EXIT PUT_BLOCK
+          END IF
           nfid=my_grpid
         ELSE
           nfid=my_ncid 
@@ -8658,7 +8980,7 @@
         IF (.not.PRESENT(varid)) THEN
           status=nf90_inq_varid(nfid, TRIM(myVarName), my_varid)
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-            WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
+            WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),            &
      &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=3
             ioerror=status
@@ -8672,13 +8994,13 @@
         IF (exit_flag.eq.NoError) THEN
           status=nf90_put_var(nfid, my_varid, A, start, total)
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-            WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),            &
+            WRITE (stdout,30) TRIM(myVarName), TRIM(ncname),            &
      &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=3
             ioerror=status
           END IF
         END IF
-      END IF
+      END IF PUT_BLOCK
 
 #if !defined PARALLEL_IO && defined DISTRIBUTE
 !
@@ -8697,10 +9019,13 @@
         CALL netcdf_close (ng, model, my_ncid, ncname, .FALSE.)
       END IF
 !
-  10  FORMAT (/,' NETCDF_PUT_IVAR_1D - error while inquiring ID for ',  &
+  10  FORMAT (/,' NETCDF_PUT_IVAR_1D - error while inquiring Group ID', &
+     &        ' for variable:',2x,a,', Group:',2x,a,/,22x,              &
+     &        'in input file:',2x,a,/,22x,'call from:',2x,a,/,22x,a)
+  20  FORMAT (/,' NETCDF_PUT_IVAR_1D - error while inquiring ID for ',  &
      &        'variable:',2x,a,/,22x,'in input file:',2x,a,/,22x,       &
      &        'call from:',2x,a,/,22x,a)
-  20  FORMAT (/,' NETCDF_PUT_IVAR_1D - error while writing variable:',  &
+  30  FORMAT (/,' NETCDF_PUT_IVAR_1D - error while writing variable:',  &
      &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a, &
      &        /,22x,a)
 !
@@ -8781,9 +9106,17 @@
 !
 !  If variable ID is not provided, inquire its value.
 !
-      IF (OutThread) THEN
+      PUT_BLOCK : IF (OutThread) THEN
         IF (PRESENT(GrpName)) THEN
           status=nf90_inq_ncid(my_ncid, TRIM(GrpName), my_grpid)
+          IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+            WRITE (stdout,10) TRIM(myVarName), TRIM(GrpName),           &
+     &                        TRIM(ncname), TRIM(SourceFile),           &
+     &                        nf90_strerror(status)
+            exit_flag=3
+            ioerror=status
+            EXIT PUT_BLOCK
+          END IF
           nfid=my_grpid
         ELSE
           nfid=my_ncid 
@@ -8791,7 +9124,7 @@
         IF (.not.PRESENT(varid)) THEN
           status=nf90_inq_varid(nfid, TRIM(myVarName), my_varid)
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-            WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
+            WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),            &
      &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=3
             ioerror=status
@@ -8805,13 +9138,13 @@
         IF (exit_flag.eq.NoError) THEN
           status=nf90_put_var(nfid, my_varid, A, start, total)
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-            WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),            &
+            WRITE (stdout,30) TRIM(myVarName), TRIM(ncname),            &
      &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=3
             ioerror=status
           END IF
         END IF
-      END IF
+      END IF PUT_BLOCK
 
 #if !defined PARALLEL_IO && defined DISTRIBUTE
 !
@@ -8830,10 +9163,13 @@
         CALL netcdf_close (ng, model, my_ncid, ncname, .FALSE.)
       END IF
 !
-  10  FORMAT (/,' NETCDF_PUT_IVAR_2D - error while inquiring ID for ',  &
+  10  FORMAT (/,' NETCDF_PUT_IVAR_2D - error while inquiring Group ID', &
+     &        ' for variable:',2x,a,', Group:',2x,a,/,22x,              &
+     &        'in input file:',2x,a,/,22x,'call from:',2x,a,/,22x,a)
+  20  FORMAT (/,' NETCDF_PUT_IVAR_2D - error while inquiring ID for ',  &
      &        'variable:',2x,a,/,22x,'in input file:',2x,a,/,22x,       &
      &        'call from:',2x,a,/,22x,a)
-  20  FORMAT (/,' NETCDF_PUT_IVAR_2D - error while writing variable:',  &
+  30  FORMAT (/,' NETCDF_PUT_IVAR_2D - error while writing variable:',  &
      &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a, &
      &        /,22x,a)
 !
@@ -8920,9 +9256,17 @@
 !
 !  If variable ID is not provided, inquire its value.
 !
-      IF (OutThread) THEN
+      PUT_BLOCK : IF (OutThread) THEN
         IF (PRESENT(GrpName)) THEN
           status=nf90_inq_ncid(my_ncid, TRIM(GrpName), my_grpid)
+          IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+            WRITE (stdout,10) TRIM(myVarName), TRIM(GrpName),           &
+     &                        TRIM(ncname), TRIM(SourceFile),           &
+     &                        nf90_strerror(status)
+            exit_flag=3
+            ioerror=status
+            EXIT PUT_BLOCK
+          END IF
           nfid=my_grpid
         ELSE
           nfid=my_ncid 
@@ -8930,7 +9274,7 @@
         IF (.not.PRESENT(varid)) THEN
           status=nf90_inq_varid(nfid, TRIM(myVarName), my_varid)
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-            WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
+            WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),            &
      &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=3
             ioerror=status
@@ -8958,13 +9302,13 @@
             status=nf90_put_var(nfid, my_varid, my_AI, start, total)
           END IF
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-            WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),            &
+            WRITE (stdout,30) TRIM(myVarName), TRIM(ncname),            &
      &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=3
             ioerror=status
           END IF
         END IF
-      END IF
+      END IF PUT_BLOCK
 
 #if !defined PARALLEL_IO && defined DISTRIBUTE
 !
@@ -8983,10 +9327,13 @@
         CALL netcdf_close (ng, model, my_ncid, ncname, .FALSE.)
       END IF
 !
-  10  FORMAT (/,' NETCDF_PUT_LVAR_0D - error while inquiring ID for ',  &
+  10  FORMAT (/,' NETCDF_PUT_LVAR_0D - error while inquiring Group ID', &
+     &        ' for variable:',2x,a,', Group:',2x,a,/,22x,              &
+     &        'in input file:',2x,a,/,22x,'call from:',2x,a,/,22x,a)
+  20  FORMAT (/,' NETCDF_PUT_LVAR_0D - error while inquiring ID for ',  &
      &        'variable:',2x,a,/,22x,'in input file:',2x,a,/,22x,       &
      &        'call from:',2x,a,/,22x,a)
-  20  FORMAT (/,' NETCDF_PUT_LVAR_0D - error while writing variable:',  &
+  30  FORMAT (/,' NETCDF_PUT_LVAR_0D - error while writing variable:',  &
      &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a, &
      &        /,22x,a)
 !
@@ -9072,9 +9419,17 @@
 !
 !  If variable ID is not provided, inquire its value.
 !
-      IF (OutThread) THEN
+      PUT_BLOCK : IF (OutThread) THEN
         IF (PRESENT(GrpName)) THEN
           status=nf90_inq_ncid(my_ncid, TRIM(GrpName), my_grpid)
+          IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+            WRITE (stdout,10) TRIM(myVarName), TRIM(GrpName),           &
+     &                        TRIM(ncname), TRIM(SourceFile),           &
+     &                        nf90_strerror(status)
+            exit_flag=3
+            ioerror=status
+            EXIT PUT_BLOCK
+          END IF
           nfid=my_grpid
         ELSE
           nfid=my_ncid 
@@ -9082,7 +9437,7 @@
         IF (.not.PRESENT(varid)) THEN
           status=nf90_inq_varid(nfid, TRIM(myVarName), my_varid)
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-            WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
+            WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),            &
      &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=3
             ioerror=status
@@ -9107,13 +9462,13 @@
         IF (exit_flag.eq.NoError) THEN
           status=nf90_put_var(nfid, my_varid, AI, start, total)
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-            WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),            &
+            WRITE (stdout,30) TRIM(myVarName), TRIM(ncname),            &
      &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=3
             ioerror=status
           END IF
         END IF
-      END IF
+      END IF PUT_BLOCK
 
 #if !defined PARALLEL_IO && defined DISTRIBUTE
 !
@@ -9132,10 +9487,13 @@
         CALL netcdf_close (ng, model, my_ncid, ncname, .FALSE.)
       END IF
 !
-  10  FORMAT (/,' NETCDF_PUT_LVAR_1D - error while inquiring ID for ',  &
+  10  FORMAT (/,' NETCDF_PUT_LVAR_1D - error while inquiring Group ID', &
+     &        ' for variable:',2x,a,', Group:',2x,a,/,22x,              &
+     &        'in input file:',2x,a,/,22x,'call from:',2x,a,/,22x,a)
+  20  FORMAT (/,' NETCDF_PUT_LVAR_1D - error while inquiring ID for ',  &
      &        'variable:',2x,a,/,22x,'in input file:',2x,a,/,22x,       &
      &        'call from:',2x,a,/,22x,a)
-  20  FORMAT (/,' NETCDF_PUT_LVAR_1D - error while writing variable:',  &
+  30  FORMAT (/,' NETCDF_PUT_LVAR_1D - error while writing variable:',  &
      &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a, &
      &        /,22x,a)
 !
@@ -9221,9 +9579,17 @@
 !
 !  If variable ID is not provided, inquire its value.
 !
-      IF (OutThread) THEN
+      PUT_BLOCK : IF (OutThread) THEN
         IF (PRESENT(GrpName)) THEN
           status=nf90_inq_ncid(my_ncid, TRIM(GrpName), my_grpid)
+          IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+            WRITE (stdout,10) TRIM(myVarName), TRIM(GrpName),           &
+     &                        TRIM(ncname), TRIM(SourceFile),           &
+     &                        nf90_strerror(status)
+            exit_flag=3
+            ioerror=status
+            EXIT PUT_BLOCK
+          END IF
           nfid=my_grpid
         ELSE
           nfid=my_ncid 
@@ -9231,7 +9597,7 @@
         IF (.not.PRESENT(varid)) THEN
           status=nf90_inq_varid(nfid, TRIM(myVarName), my_varid)
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-            WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
+            WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),            &
      &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=3
             ioerror=status
@@ -9258,13 +9624,13 @@
         IF (exit_flag.eq.NoError) THEN
           status=nf90_put_var(nfid, my_varid, AI, start, total)
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-            WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),            &
+            WRITE (stdout,30) TRIM(myVarName), TRIM(ncname),            &
      &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=3
             ioerror=status
           END IF
         END IF
-      END IF
+      END IF PUT_BLOCK
 
 #if !defined PARALLEL_IO && defined DISTRIBUTE
 !
@@ -9283,10 +9649,13 @@
         CALL netcdf_close (ng, model, my_ncid, ncname, .FALSE.)
       END IF
 !
-  10  FORMAT (/,' NETCDF_PUT_LVAR_2D - error while inquiring ID for ',  &
+  10  FORMAT (/,' NETCDF_PUT_LVAR_2D - error while inquiring Group ID', &
+     &        ' for variable:',2x,a,', Group:',2x,a,/,22x,              &
+     &        'in input file:',2x,a,/,22x,'call from:',2x,a,/,22x,a)
+  20  FORMAT (/,' NETCDF_PUT_LVAR_2D - error while inquiring ID for ',  &
      &        'variable:',2x,a,/,22x,'in input file:',2x,a,/,22x,       &
      &        'call from:',2x,a,/,22x,a)
-  20  FORMAT (/,' NETCDF_PUT_LVAR_2D - error while writing variable:',  &
+  30  FORMAT (/,' NETCDF_PUT_LVAR_2D - error while writing variable:',  &
      &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a, &
      &        /,22x,a)
 !
@@ -9377,9 +9746,17 @@
 !
 !  If variable ID is not provided, inquire its value.
 !
-      IF (OutThread) THEN
+      PUT_BLOCK : IF (OutThread) THEN
         IF (PRESENT(GrpName)) THEN
           status=nf90_inq_ncid(my_ncid, TRIM(GrpName), my_grpid)
+          IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+            WRITE (stdout,10) TRIM(myVarName), TRIM(GrpName),           &
+     &                        TRIM(ncname), TRIM(SourceFile),           &
+     &                        nf90_strerror(status)
+            exit_flag=3
+            ioerror=status
+            EXIT PUT_BLOCK
+          END IF
           nfid=my_grpid
         ELSE
           nfid=my_ncid 
@@ -9387,7 +9764,7 @@
         IF (.not.PRESENT(varid)) THEN
           status=nf90_inq_varid(nfid, TRIM(myVarName), my_varid)
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-            WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
+            WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),            &
      &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=3
             ioerror=status
@@ -9406,13 +9783,13 @@
             status=nf90_put_var(nfid, my_varid, my_A, start, total)
           END IF
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-            WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),            &
+            WRITE (stdout,30) TRIM(myVarName), TRIM(ncname),            &
      &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=3
             ioerror=status
           END IF
         END IF
-      END IF
+      END IF PUT_BLOCK
 
 #if !defined PARALLEL_IO && defined DISTRIBUTE
 !
@@ -9431,10 +9808,13 @@
         CALL netcdf_close (ng, model, my_ncid, ncname, .FALSE.)
       END IF
 !
-  10  FORMAT (/,' NETCDF_PUT_SVAR_0D - error while inquiring ID for ',  &
+  10  FORMAT (/,' NETCDF_PUT_SVAR_0D - error while inquiring Group ID', &
+     &        ' for variable:',2x,a,', Group:',2x,a,/,22x,              &
+     &        'in input file:',2x,a,/,22x,'call from:',2x,a,/,22x,a)
+  20  FORMAT (/,' NETCDF_PUT_SVAR_0D - error while inquiring ID for ',  &
      &        'variable:',2x,a,/,22x,'in input file:',2x,a,/,22x,       &
      &        'call from:',2x,a,/,22x,a)
-  20  FORMAT (/,' NETCDF_PUT_SVAR_0D - error while writing variable:',  &
+  30  FORMAT (/,' NETCDF_PUT_SVAR_0D - error while writing variable:',  &
      &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a, &
      &        /,22x,a)
 !
@@ -9525,9 +9905,17 @@
 !
 !  If variable ID is not provided, inquire its value.
 !
-      IF (OutThread) THEN
+      PUT_BLOCK : IF (OutThread) THEN
         IF (PRESENT(GrpName)) THEN
           status=nf90_inq_ncid(my_ncid, TRIM(GrpName), my_grpid)
+          IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+            WRITE (stdout,10) TRIM(myVarName), TRIM(GrpName),           &
+     &                        TRIM(ncname), TRIM(SourceFile),           &
+     &                        nf90_strerror(status)
+            exit_flag=3
+            ioerror=status
+            EXIT PUT_BLOCK
+          END IF
           nfid=my_grpid
         ELSE
           nfid=my_ncid 
@@ -9535,7 +9923,7 @@
         IF (.not.PRESENT(varid)) THEN
           status=nf90_inq_varid(nfid, TRIM(myVarName), my_varid)
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-            WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
+            WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),            &
      &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=3
             ioerror=status
@@ -9549,13 +9937,13 @@
         IF (exit_flag.eq.NoError) THEN
           status=nf90_put_var(nfid, my_varid, A, start, total)
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-            WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),            &
+            WRITE (stdout,30) TRIM(myVarName), TRIM(ncname),            &
      &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=3
             ioerror=status
           END IF
         END IF
-      END IF
+      END IF PUT_BLOCK
 
 #if !defined PARALLEL_IO && defined DISTRIBUTE
 !
@@ -9574,10 +9962,13 @@
         CALL netcdf_close (ng, model, my_ncid, ncname, .FALSE.)
       END IF
 !
-  10  FORMAT (/,' NETCDF_PUT_SVAR_1D - error while inquiring ID for ',  &
+  10  FORMAT (/,' NETCDF_PUT_SVAR_1D - error while inquiring Group ID', &
+     &        ' for variable:',2x,a,', Group:',2x,a,/,22x,              &
+     &        'in input file:',2x,a,/,22x,'call from:',2x,a,/,22x,a)
+  20  FORMAT (/,' NETCDF_PUT_SVAR_1D - error while inquiring ID for ',  &
      &        'variable:',2x,a,/,22x,'in input file:',2x,a,/,22x,       &
      &        'call from:',2x,a,/,22x,a)
-  20  FORMAT (/,' NETCDF_PUT_SVAR_1D - error while writing variable:',  &
+  30  FORMAT (/,' NETCDF_PUT_SVAR_1D - error while writing variable:',  &
      &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a, &
      &        /,22x,a)
 !
@@ -9668,9 +10059,17 @@
 !
 !  If variable ID is not provided, inquire its value.
 !
-      IF (OutThread) THEN
+      PUT_BLOCK : IF (OutThread) THEN
         IF (PRESENT(GrpName)) THEN
           status=nf90_inq_ncid(my_ncid, TRIM(GrpName), my_grpid)
+          IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+            WRITE (stdout,10) TRIM(myVarName), TRIM(GrpName),           &
+     &                        TRIM(ncname), TRIM(SourceFile),           &
+     &                        nf90_strerror(status)
+            exit_flag=3
+            ioerror=status
+            EXIT PUT_BLOCK
+          END IF
           nfid=my_grpid
         ELSE
           nfid=my_ncid 
@@ -9678,7 +10077,7 @@
         IF (.not.PRESENT(varid)) THEN
           status=nf90_inq_varid(nfid, TRIM(myVarName), my_varid)
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-            WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
+            WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),            &
      &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=3
             ioerror=status
@@ -9692,13 +10091,13 @@
         IF (exit_flag.eq.NoError) THEN
           status=nf90_put_var(nfid, my_varid, A, start, total)
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-            WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),            &
+            WRITE (stdout,30) TRIM(myVarName), TRIM(ncname),            &
      &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=3
             ioerror=status
           END IF
         END IF
-      END IF
+      END IF PUT_BLOCK
 
 #if !defined PARALLEL_IO && defined DISTRIBUTE
 !
@@ -9717,10 +10116,13 @@
         CALL netcdf_close (ng, model, my_ncid, ncname, .FALSE.)
       END IF
 !
-  10  FORMAT (/,' NETCDF_PUT_SVAR_2D - error while inquiring ID for ',  &
+  10  FORMAT (/,' NETCDF_PUT_SVAR_2D - error while inquiring Group ID', &
+     &        ' for variable:',2x,a,', Group:',2x,a,/,22x,              &
+     &        'in input file:',2x,a,/,22x,'call from:',2x,a,/,22x,a)
+  20  FORMAT (/,' NETCDF_PUT_SVAR_2D - error while inquiring ID for ',  &
      &        'variable:',2x,a,/,22x,'in input file:',2x,a,/,22x,       &
      &        'call from:',2x,a,/,22x,a)
-  20  FORMAT (/,' NETCDF_PUT_SVAR_2D - error while writing variable:',  &
+  30  FORMAT (/,' NETCDF_PUT_SVAR_2D - error while writing variable:',  &
      &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a, &
      &        /,22x,a)
 !
@@ -9811,9 +10213,17 @@
 !
 !  If variable ID is not provided, inquire its value.
 !
-      IF (OutThread) THEN
+      PUT_BLOCK : IF (OutThread) THEN
         IF (PRESENT(GrpName)) THEN
           status=nf90_inq_ncid(my_ncid, TRIM(GrpName), my_grpid)
+          IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+            WRITE (stdout,10) TRIM(myVarName), TRIM(GrpName),           &
+     &                        TRIM(ncname), TRIM(SourceFile),           &
+     &                        nf90_strerror(status)
+            exit_flag=3
+            ioerror=status
+            EXIT PUT_BLOCK
+          END IF
           nfid=my_grpid
         ELSE
           nfid=my_ncid 
@@ -9821,7 +10231,7 @@
         IF (.not.PRESENT(varid)) THEN
           status=nf90_inq_varid(nfid, TRIM(myVarName), my_varid)
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-            WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
+            WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),            &
      &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=3
             ioerror=status
@@ -9835,13 +10245,13 @@
         IF (exit_flag.eq.NoError) THEN
           status=nf90_put_var(nfid, my_varid, A, start, total)
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-            WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),            &
+            WRITE (stdout,30) TRIM(myVarName), TRIM(ncname),            &
      &                        TRIM(SourceFile), nf90_strerror(status)
             exit_flag=3
             ioerror=status
           END IF
         END IF
-      END IF
+      END IF PUT_BLOCK
 
 #if !defined PARALLEL_IO && defined DISTRIBUTE
 !
@@ -9860,10 +10270,13 @@
         CALL netcdf_close (ng, model, my_ncid, ncname, .FALSE.)
       END IF
 !
-  10  FORMAT (/,' NETCDF_PUT_SVAR_3D - error while inquiring ID for ',  &
+  10  FORMAT (/,' NETCDF_PUT_SVAR_3D - error while inquiring Group ID', &
+     &        ' for variable:',2x,a,', Group:',2x,a,/,22x,              &
+     &        'in input file:',2x,a,/,22x,'call from:',2x,a,/,22x,a)
+  20  FORMAT (/,' NETCDF_PUT_SVAR_3D - error while inquiring ID for ',  &
      &        'variable:',2x,a,/,22x,'in input file:',2x,a,/,22x,       &
      &        'call from:',2x,a,/,22x,a)
-  20  FORMAT (/,' NETCDF_PUT_SVAR_3D - error while writing variable:',  &
+  30  FORMAT (/,' NETCDF_PUT_SVAR_3D - error while writing variable:',  &
      &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a, &
      &        /,22x,a)
 !

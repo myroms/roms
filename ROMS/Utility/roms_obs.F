@@ -1478,7 +1478,7 @@
       integer                          :: ngroups, nvars, nvdim
       integer,            dimension(5) :: vdims
 # ifdef DISTRIBUTE
-      integer,            dimension(2) :: ibuffer
+      integer,            dimension(3) :: ibuffer
 # endif
 !
       character (len=80)               :: string
@@ -1761,11 +1761,6 @@
 !
           IF (nc_error(nf90_enddef(ncid_out),                           &
      &                 nf90_noerr, __LINE__, MyFile)) EXIT DEFINE
-!
-!  Close output to syncronize to disk and allow parallel access.
-!
-          IF (nc_error(nf90_close(ncid_out),                             &
-     &                 nf90_noerr, __LINE__, MyFile)) EXIT DEFINE
         END IF DEFINE
 
 # ifdef DISTRIBUTE
@@ -1774,9 +1769,11 @@
 !
         ibuffer(1)=exit_flag
         ibuffer(2)=ioerror
+        ibuffer(3)=self%pool(iobs)%ncID
         CALL mp_bcasti (ng, model, ibuffer)
         exit_flag=ibuffer(1)
         ioerror=ibuffer(2)
+        self%pool(iobs)%ncID=ibuffer(3)
 # endif
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
@@ -1862,7 +1859,7 @@
       integer                           :: nlocs, nsurvey, mvars, nvars
       integer,             dimension(3) :: DimSize, DimID
 # ifdef DISTRIBUTE
-      integer,             dimension(2) :: ibuffer
+      integer,             dimension(3) :: ibuffer
 # endif
 !
       character (len=8)                 :: YYMMDD
@@ -2278,8 +2275,6 @@
 !
           IF (nc_error(nf90_enddef(ncid_out),                           &
      &                 nf90_noerr, __LINE__, MyFile)) EXIT DEFINE
-          IF (nc_error(nf90_close(ncid_out),                            &
-     &                 nf90_noerr, __LINE__, MyFile)) EXIT DEFINE
         END IF DEFINE
 
 # ifdef DISTRIBUTE
@@ -2288,9 +2283,11 @@
 !
         ibuffer(1)=exit_flag
         ibuffer(2)=ioerror
+        ibuffer(3)=self%pool(iobs)%ncID
         CALL mp_bcasti (ng, model, ibuffer)
         exit_flag=ibuffer(1)
         ioerror=ibuffer(2)
+        self%pool(iobs)%ncID=ibuffer(3)
 # endif
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
       END DO FILE_LOOP
@@ -2452,9 +2449,13 @@
 !  Open output observation plus H(x) file in the pool depot.
 !
         ncname=TRIM(self%pool(i)%ncname_out)
-        CALL netcdf_open (ng, model, TRIM(ncname), 1, ncid)
-        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        self%pool(i)%ncid=ncid
+        IF (self%pool(i)%ncID.le.0) THEN
+          CALL netcdf_open (ng, model, TRIM(ncname), 1, ncid)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+          self%pool(i)%ncID=ncid
+        ELSE
+          ncid=self%pool(i)%ncID
+        END IF
 !
 !  Write out observation variables.
 !
@@ -2632,7 +2633,8 @@
 !  Close output NetCDF.  HGA: Need to check why I need to close to
 !  use ncdump while ROMS is still running.
 !
-        CALL netcdf_close (ng, model, ncid, ncname, .FALSE.)
+        CALL netcdf_close (ng, model, self%pool(i)%ncID, ncname,        &
+     &                     .FALSE.)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       END DO FILE_LOOP
