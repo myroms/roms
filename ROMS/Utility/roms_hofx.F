@@ -2339,7 +2339,7 @@
                 dfx=REAL(i-i1, r8)
                 dfr=REAL(nscope, r8)
                 dlen=SQRT(dfx*dfx+dfy*dfy)
-                IF (SQRT(dlen.le.dfr) THEN
+                IF (dlen.le.dfr) THEN
                   area_sum=area_sum+geom%area(i,j)
                 END IF
               END DO
@@ -2587,7 +2587,7 @@
      &              INT((obs%TimeEnd(i)-dstart*day2sec)/dt(ng)))
           Tsteps=REAL(iTend-iTstr, r8)
 !
-! Spatial interpolation and time avaraging.
+! Spatial interpolation and time averaging.
 !
           IF ((iTstr.le.iic(ng)).and.(iic(ng).le.iTend)) THEN
             mc=1+(ivar-1)*2                        ! count/reject index
@@ -2938,149 +2938,150 @@
         IF ((rXmin(ng).le.obs%Xgrid(i)).and.                            &
             (obs%Xgrid(i).lt.rXmax(ng)).and.                            &
      &      (rYmin(ng).le.obs%Ygrid(i)).and.                            &
-     &      (obs%Ygrid(i).lt.rYmax(ng)).and.                            &
-     &      (obs%TimeStr(i).le.time(ng)).and.                           &
-     &      (time(ng).le.obs%TimeStepEnd(i))) THEN
+     &      (obs%Ygrid(i).lt.rYmax(ng))) THEN
 !
-          mc=1+(ivar-1)*2                          ! count/reject index
-          tally(mc)=tally(mc)+1                    ! obs counted
-          iobs=obs%pack_mapping(i,ivar)            ! index mapping
+          iTstr=MAX(ntstart(ng),                                        &
+     &              INT((obs%TimeStr(i)-dstart*day2sec)/dt(ng))+1)
+          iTend=MIN(ntend(ng),                                          &
+     &              INT((obs%TimeEnd(i)-dstart*day2sec)/dt(ng)))
+          Tsteps=REAL(iTend-iTstr, r8)
 !
-          i1=INT(obs%Xgrid(i))
-          j1=INT(obs%Ygrid(i))
-          i2=i1+1
-          j2=j1+1
-          IF (i2.gt.Lm(ng)+1) THEN
-            i2=i1                 ! Observation at the eastern boundary
-          END IF
-          IF (j2.gt.Mm(ng)+1) THEN
-            j2=j1                 ! Observation at the northern boundary
-          END IF
-          p2=REAL(i2-i1,r8)*(obs%Xgrid(i)-REAL(i1,r8))
-          q2=REAL(j2-j1,r8)*(obs%Ygrid(i)-REAL(j1,r8))
-          p1=1.0_r8-p2
-          q1=1.0_r8-q2
-          w11=p1*q1
-          w21=p2*q1
-          w22=p2*q2
-          w12=p1*q2
-          IF (obs%Zgrid(i).gt.0.0_r8) THEN
-            k1=MAX(1,INT(obs%Zgrid(i)))        ! Positions in fractional
-            k2=MIN(INT(obs%Zgrid(i))+1,N(ng))  ! levels
-            r2=REAL(k2-k1,r8)*(obs%Zgrid(i)-REAL(k1,r8))
-            r1=1.0_r8-r2
-          ELSE
-            Ztop=ad_self%depth(i1,j1,N(ng))
-            Zbot=ad_self%depth(i1,j1,1    )
-            IF (obs%Zgrid(i).ge.Ztop) THEN
-              k1=N(ng)                         ! If shallower, assign to
-              k2=N(ng)                         ! top grid cell. The
-              r1=1.0_r8                        ! observation is located
-              r2=0.0_r8                        ! on the upper cell half
-              obs%Zgrid(i)=REAL(N(ng),r8)      ! above its middle depth.
-            ELSE IF (Zbot.ge.obs%Zgrid(i)) THEN
-              r1=0.0_r8                        ! If deeper, ignore.
-              r2=0.0_r8
-              ad_self%ObsVetting(iobs)=0
-              tally(mc+1)=tally(mc+1)+1        ! obs reject
-            ELSE
-              DO k=N(ng),2,-1                  ! Otherwise, interpolate
-                Ztop=ad_self%depth(i1,j1,k  )  ! to fractional level
-                Zbot=ad_self%depth(i1,j1,k-1)
-                IF ((Ztop.gt.obs%Zgrid(i)).and.                         &
-     &              (obs%Zgrid(i).ge.Zbot)) THEN
-                  k1=k-1
-                  k2=k
-                END IF
-              END DO
-              dz=ad_self%depth(i1,j1,k2)-ad_self%depth(i1,j1,k1)
-              r2=(obs%Zgrid(i)-ad_self%depth(i1,j1,k1))/dz
+!  Adjoint of spatial interpolation and time averaging.
+!
+          IF ((iTstr.le.iic(ng)).and.(iic(ng).le.iTend)) THEN
+            mc=1+(ivar-1)*2                        ! count/reject index
+            tally(mc)=tally(mc)+1                  ! obs counted
+            iobs=obs%pack_mapping(i,ivar)          ! index mapping
+!
+            i1=INT(obs%Xgrid(i))
+            j1=INT(obs%Ygrid(i))
+            i2=i1+1
+            j2=j1+1
+            IF (i2.gt.Lm(ng)+1) THEN
+              i2=i1               ! Observation at the eastern boundary
+            END IF
+            IF (j2.gt.Mm(ng)+1) THEN
+              j2=j1               ! Observation at the northern boundary
+            END IF
+            p2=REAL(i2-i1,r8)*(obs%Xgrid(i)-REAL(i1,r8))
+            q2=REAL(j2-j1,r8)*(obs%Ygrid(i)-REAL(j1,r8))
+            p1=1.0_r8-p2
+            q1=1.0_r8-q2
+            w11=p1*q1
+            w21=p2*q1
+            w22=p2*q2
+            w12=p1*q2
+            IF (obs%Zgrid(i).gt.0.0_r8) THEN
+              k1=MAX(1,INT(obs%Zgrid(i)))      ! Positions in fractional
+              k2=MIN(INT(obs%Zgrid(i))+1,N(ng))             ! levels
+              r2=REAL(k2-k1,r8)*(obs%Zgrid(i)-REAL(k1,r8))
               r1=1.0_r8-r2
-              obs%Zgrid(i)=REAL(k1,r8)+r2      ! overwrite
+            ELSE
+              Ztop=ad_self%depth(i1,j1,N(ng))
+              Zbot=ad_self%depth(i1,j1,1    )
+              IF (obs%Zgrid(i).ge.Ztop) THEN
+                k1=N(ng)                       ! If shallower, assign to
+                k2=N(ng)                       ! top grid cell. The
+                r1=1.0_r8                      ! observation is located
+                r2=0.0_r8                      ! on the upper cell half
+                obs%Zgrid(i)=REAL(N(ng),r8)    ! above its middle depth.
+              ELSE IF (Zbot.ge.obs%Zgrid(i)) THEN
+                r1=0.0_r8                      ! If deeper, ignore.
+                r2=0.0_r8
+                ad_self%ObsVetting(iobs)=0
+                tally(mc+1)=tally(mc+1)+1      ! obs reject
+              ELSE
+                DO k=N(ng),2,-1                ! Otherwise, interpolate
+                  Ztop=ad_self%depth(i1,j1,k  )  ! to fractional level
+                  Zbot=ad_self%depth(i1,j1,k-1)
+                  IF ((Ztop.gt.obs%Zgrid(i)).and.                       &
+     &                (obs%Zgrid(i).ge.Zbot)) THEN
+                    k1=k-1
+                    k2=k
+                  END IF
+                END DO
+                dz=ad_self%depth(i1,j1,k2)-ad_self%depth(i1,j1,k1)
+                r2=(obs%Zgrid(i)-ad_self%depth(i1,j1,k1))/dz
+                r1=1.0_r8-r2
+                obs%Zgrid(i)=REAL(k1,r8)+r2    ! overwrite
+              END IF
             END IF
-          END IF
-          IF ((r1+r2).gt.0.0_r8) THEN
-            Hmat(1)=w11*r1
-            Hmat(2)=w21*r1
-            Hmat(3)=w22*r1
-            Hmat(4)=w12*r1
-            Hmat(5)=w11*r2
-            Hmat(6)=w21*r2
-            Hmat(7)=w22*r2
-            Hmat(8)=w12*r2
+            IF ((r1+r2).gt.0.0_r8) THEN
+              Hmat(1)=w11*r1
+              Hmat(2)=w21*r1
+              Hmat(3)=w22*r1
+              Hmat(4)=w12*r1
+              Hmat(5)=w11*r2
+              Hmat(6)=w21*r2
+              Hmat(7)=w22*r2
+              Hmat(8)=w12*r2
 #   ifdef MASKING
-            Hmat(1)=Hmat(1)*ad_self%mask(i1,j1)
-            Hmat(2)=Hmat(2)*ad_self%mask(i2,j1)
-            Hmat(3)=Hmat(3)*ad_self%mask(i2,j2)
-            Hmat(4)=Hmat(4)*ad_self%mask(i1,j2)
-            Hmat(5)=Hmat(5)*ad_self%mask(i1,j1)
-            Hmat(6)=Hmat(6)*ad_self%mask(i2,j1)
-            Hmat(7)=Hmat(7)*ad_self%mask(i2,j2)
-            Hmat(8)=Hmat(8)*ad_self%mask(i1,j2)
-            wsum=0.0_r8
-            DO ic=1,8
-              wsum=wsum+Hmat(ic)
-            END DO
-            IF (wsum.gt.0.0_r8) THEN
-              wsum=1.0_r8/wsum
+              Hmat(1)=Hmat(1)*ad_self%mask(i1,j1)
+              Hmat(2)=Hmat(2)*ad_self%mask(i2,j1)
+              Hmat(3)=Hmat(3)*ad_self%mask(i2,j2)
+              Hmat(4)=Hmat(4)*ad_self%mask(i1,j2)
+              Hmat(5)=Hmat(5)*ad_self%mask(i1,j1)
+              Hmat(6)=Hmat(6)*ad_self%mask(i2,j1)
+              Hmat(7)=Hmat(7)*ad_self%mask(i2,j2)
+              Hmat(8)=Hmat(8)*ad_self%mask(i1,j2)
+              wsum=0.0_r8
               DO ic=1,8
-                Hmat(ic)=Hmat(ic)*wsum
+                wsum=wsum+Hmat(ic)
               END DO
-            END IF
+              IF (wsum.gt.0.0_r8) THEN
+                wsum=1.0_r8/wsum
+                DO ic=1,8
+                  Hmat(ic)=Hmat(ic)*wsum
+                END DO
+              END IF
 #   endif
 !
 !  Adjoint of average resulting H^(x) over the specified time window.
 !
-            iTstr=MAX(ntstart(ng),                                      &
-     &                INT((obs%TimeStr(i)-dstart*day2sec)/dt(ng))+1)
-            iTend=MIN(ntend(ng),                                        &
-     &                INT((obs%TimeEnd(i)-dstart*day2sec)/dt(ng)))
-            Tsteps=REAL(iTend-iTstr, r8)
-!
-            IF (iic(ng).eq.iTend) THEN
-!>            self%state(iobs)=self%state(iobs)/Tsteps
+              IF (iic(ng).eq.iTend) THEN
+!>              self%state(iobs)=self%state(iobs)/Tsteps
 !>
-              ad_self%state(iobs)=ad_self%state(iobs)/Tsteps
-            END IF
+                ad_self%state(iobs)=ad_self%state(iobs)/Tsteps
+              END IF
 !
-!>          self%state(iobs)=self%state(iobs)+                          &
-!>   &                       Hmat(1)*field(i1,j1,k1)+                   &
-!>   &                       Hmat(2)*field(i2,j1,k1)+                   &
-!>   &                       Hmat(3)*field(i2,j2,k1)+                   &
-!>   &                       Hmat(4)*field(i1,j2,k1)+                   &
-!>   &                       Hmat(5)*field(i1,j1,k2)+                   &
-!>   &                       Hmat(6)*field(i2,j1,k2)+                   &
-!>   &                       Hmat(7)*field(i2,j2,k2)+                   &
-!>   &                       Hmat(8)*field(i1,j2,k2)
+!>            self%state(iobs)=self%state(iobs)+                        &
+!>   &                         Hmat(1)*field(i1,j1,k1)+                 &
+!>   &                         Hmat(2)*field(i2,j1,k1)+                 &
+!>   &                         Hmat(3)*field(i2,j2,k1)+                 &
+!>   &                         Hmat(4)*field(i1,j2,k1)+                 &
+!>   &                         Hmat(5)*field(i1,j1,k2)+                 &
+!>   &                         Hmat(6)*field(i2,j1,k2)+                 &
+!>   &                         Hmat(7)*field(i2,j2,k2)+                 &
+!>   &                         Hmat(8)*field(i1,j2,k2)
 !>
-            ad_field(i1,j1,k1)=ad_field(i1,j1,k1)+                      &
-     &                         Hmat(1)*ad_self%state(iobs)
-            ad_field(i2,j1,k1)=ad_field(i2,j1,k1)+                      &
-     &                         Hmat(2)*ad_self%state(iobs)
-            ad_field(i2,j2,k1)=ad_field(i2,j2,k1)+                      &
-     &                         Hmat(3)*ad_self%state(iobs)
-            ad_field(i1,j2,k1)=ad_field(i1,j2,k1)+                      &
-     &                         Hmat(4)*ad_self%state(iobs)
-            ad_field(i1,j1,k2)=ad_field(i1,j1,k2)+                      &
-     &                         Hmat(5)*ad_self%state(iobs)
-            ad_field(i2,j1,k2)=ad_field(i2,j1,k2)+                      &
-     &                         Hmat(6)*ad_self%state(iobs)
-            ad_field(i2,j2,k2)=ad_field(i2,j2,k2)+                      &
-     &                         Hmat(7)*ad_self%state(iobs)
-            ad_field(i1,j2,k2)=ad_field(i1,j2,k2)+                      &
-     &                         Hmat(8)*ad_self%state(iobs)
-            IF (iic(ng).eq.iTend) THEN
-              ad_self%state(iobs)=0.0_r8
-            END IF
+              ad_field(i1,j1,k1)=ad_field(i1,j1,k1)+                    &
+     &                           Hmat(1)*ad_self%state(iobs)
+              ad_field(i2,j1,k1)=ad_field(i2,j1,k1)+                    &
+     &                           Hmat(2)*ad_self%state(iobs)
+              ad_field(i2,j2,k1)=ad_field(i2,j2,k1)+                    &
+     &                           Hmat(3)*ad_self%state(iobs)
+              ad_field(i1,j2,k1)=ad_field(i1,j2,k1)+                    &
+     &                           Hmat(4)*ad_self%state(iobs)
+              ad_field(i1,j1,k2)=ad_field(i1,j1,k2)+                    &
+     &                           Hmat(5)*ad_self%state(iobs)
+              ad_field(i2,j1,k2)=ad_field(i2,j1,k2)+                    &
+     &                           Hmat(6)*ad_self%state(iobs)
+              ad_field(i2,j2,k2)=ad_field(i2,j2,k2)+                    &
+     &                           Hmat(7)*ad_self%state(iobs)
+              ad_field(i1,j2,k2)=ad_field(i1,j2,k2)+                    &
+     &                           Hmat(8)*ad_self%state(iobs)
+              IF (iic(ng).eq.iTend) THEN
+                ad_self%state(iobs)=0.0_r8
+              END IF
 #   ifdef MASKING
-            IF (wsum.gt.0.0_r8) THEN
-              ad_self%ObsVetting(iobs)=1
-            ELSE
-              ad_self%ObsVetting(iobs)=0
-              tally(mc+1)=tally(mc+1)+1            ! obs rejected
-            END IF
+              IF (wsum.gt.0.0_r8) THEN
+                ad_self%ObsVetting(iobs)=1
+              ELSE
+                ad_self%ObsVetting(iobs)=0
+                tally(mc+1)=tally(mc+1)+1          ! obs rejected
+              END IF
 #   else
-            ad_self%ObsVetting(iobs)=1
+              ad_self%ObsVetting(iobs)=1
 #   endif
 #   ifndef ALLOW_BOTTOM_OBS
 !
@@ -3089,12 +3090,13 @@
 !  coarse level half-thickness (-h < Zobs < self%depth(:,:,1)) in deep
 !  water.
 !
-            IF ((obs%Zgrid(i).gt.0.0_r8).and.                           &
-     &          (obs%Zgrid(i).le.1.0_r8)) THEN
-              ad_self%ObsVetting(iobs)=0
-              tally(mc+1)=tally(mc+1)+1            ! obs rejected
-            END IF
+              IF ((obs%Zgrid(i).gt.0.0_r8).and.                         &
+     &            (obs%Zgrid(i).le.1.0_r8)) THEN
+                ad_self%ObsVetting(iobs)=0
+                tally(mc+1)=tally(mc+1)+1          ! obs rejected
+              END IF
 #   endif
+            END IF
           END IF
         END IF
       END DO

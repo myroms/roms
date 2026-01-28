@@ -28,7 +28,7 @@
       USE roms_obs_mod
 !
 # ifdef DISTRIBUTE
-#  ifdef ADJOIN
+#  ifdef ADJOINT
       USE mp_exchange_mod,  ONLY : ad_mp_exchange3d
 #  endif
       USE mp_exchange_mod,  ONLY : mp_exchange3d
@@ -77,7 +77,7 @@
 # ifdef SOLVE3D
         PROCEDURE :: apply3d        => var_change_apply3d
 # endif
-# ifdef AJOINT
+# ifdef ADJOINT
         PROCEDURE :: apply2d_ad     => var_change_apply2d_ad
 #  ifdef SOLVE3D
         PROCEDURE :: apply3d_ad     => var_change_apply3d_ad
@@ -494,7 +494,7 @@
 !
           nz=1
 !
-          IF (.not.allocated(field)) THEN
+          IF (.not.allocated(ad_field)) THEN
             allocate ( ad_field(LBi:UBi, LBj:UBj, nz) )
             ad_field=0.0_r8
           END IF
@@ -515,25 +515,25 @@
 !  Zeven = -2m.
 !
           IF (TRIM(varname).eq.'Ucodar') THEN
-!>          CALL VarCha%interp_k2z (ng, tile, model,                    &
-!>   &                              LBi, UBi, LBj, UBj,                 &
-!>   &                              varname, Zeven,                     &
-!>   &                              self%Ua, field)
+!>          CALL self%interp_k2z (ng, tile, model,                      &
+!>   &                            LBi, UBi, LBj, UBj,                   &
+!>   &                            varname, Zeven,                       &
+!>   &                            self%Ua, field)
 !>
-            CALL VarCha%interp_k2z_ad (ng, tile, model,                 &
-     &                                 LBi, UBi, LBj, UBj,              &
-     &                                 varname, Zeven,                  &
-     &                                 ad_self%Ua, ad_field)
+            CALL ad_self%interp_k2z_ad (ng, tile, model,                &
+     &                                  LBi, UBi, LBj, UBj,             &
+     &                                  varname, Zeven,                 &
+     &                                  ad_self%Ua, ad_field)
           ELSE IF (TRIM(varname).eq.'Vcodar') THEN
-!>          CALL VarCha%interp_k2z (ng, tile, model,                    &
-!>   &                              LBi, UBi, LBj, UBj,                 &
-!>   &                              varname, Zeven,                     &
-!>   &                              self%Va, field)
+!>          CALL self%interp_k2z (ng, tile, model,                      &
+!>   &                            LBi, UBi, LBj, UBj,                   &
+!>   &                            varname, Zeven,                       &
+!>   &                            self%Va, field)
 !>
-            CALL VarCha%interp_k2z_ad (ng, tile, model,                 &
-     &                                 LBi, UBi, LBj, UBj,              &
-     &                                 varname, Zeven,                  &
-     &                                 ad_self%Va, ad_field)
+            CALL ad_self%interp_k2z_ad (ng, tile, model,                &
+     &                                  LBi, UBi, LBj, UBj,             &
+     &                                  varname, Zeven,                 &
+     &                                  ad_self%Va, ad_field)
           END IF
           deallocate (ad_field)
 !
@@ -547,10 +547,12 @@
 !>
             CALL ad_self%uv_c2a_ad (ng, tile, model)
 !
-            DO j=LBj,UBj
-              DO i=LBi,UBi
-                ad_self%Ua(i,j)=ad_self%Ua(i,j)+ad_self%Uc(i,j)
-                ad_self%Va(i,j)=ad_self%Va(i,j)+ad_self%Vc(i,j)
+            DO k=1,N(ng)
+              DO j=LBj,UBj
+                DO i=LBi,UBi
+                  ad_self%Ua(i,j,k)=ad_self%Ua(i,j,k)+ad_self%Uc(i,j,k)
+                  ad_self%Va(i,j,k)=ad_self%Va(i,j,k)+ad_self%Vc(i,j,k)
+                END DO
               END DO
             END DO
           END IF
@@ -892,11 +894,11 @@
 !  Adjoint of vertically interpolating a 3D terrain-following field to
 !  specified constant depth or depths.
 !
-      SUBROUTINE var_change_interp_k2z_ad (self, ng, tile, model,       &
+      SUBROUTINE var_change_interp_k2z_ad (ad_self, ng, tile, model,    &
      &                                     LBi, UBi, LBj, UBj,          &
      &                                     name, Zeven, ad_Fk, ad_Fz)
 !
-      CLASS (obs_VarCha), intent(inout) :: self     ! VarChan object
+      CLASS (obs_VarCha), intent(inout) :: ad_self  ! VarChan object
       integer,            intent(in   ) :: ng       ! nested grid
       integer,            intent(in   ) :: tile     ! domain partition
       integer,            intent(in   ) :: model    ! kernel identifier
@@ -904,8 +906,8 @@
       integer,            intent(in   ) :: LBj, UBj ! array J-bounds
       character (len=*),  intent(in   ) :: name     ! field name
       real (r8),          intent(in   ) :: Zeven(:) ! requested depth(s)
-      real (r8),          intent(inout) :: Fk(LBi:,LBj:,:)
-      real (r8),          intent(inout) :: Fz(LBi:,LBj:,:)
+      real (r8),          intent(inout) :: ad_Fk(LBi:,LBj:,:)
+      real (r8),          intent(inout) :: ad_Fz(LBi:,LBj:,:)
 !
       integer                           :: Istr, Iend, Jstr, Jend
       integer                           :: IstrR, IendR, JstrR, JendR
@@ -929,11 +931,11 @@
       DO j=JstrR,JendR
         DO i=IstrR,IendR
 #  ifdef MASKING
-          IF (self%mask(i,j).lt.0.5_r8) CYCLE
+          IF (ad_self%mask(i,j).lt.0.5_r8) CYCLE
 #  endif
           DO iz=1,SIZE(Zeven)
-            Ztop=self%depth(i,j,N(ng))
-            Zbot=self%depth(i,j,1    )
+            Ztop=ad_self%depth(i,j,N(ng))
+            Zbot=ad_self%depth(i,j,1    )
             IF (Zeven(iz).ge.Ztop) THEN        ! If shallower, assign
               k1=N(ng)                         ! to top grid cell. The
               k2=N(ng)                         ! field is located on the
@@ -941,9 +943,9 @@
               r2=0.0_r8                        ! its middle depth.
 !>            Fz(i,j,iz)=Fk(i,j,k1)
 !>
-              ad_Fk(i,j,k1)=adFk(i,j,k1)+ad_Fz(i,j,iz)
+              ad_Fk(i,j,k1)=ad_Fk(i,j,k1)+ad_Fz(i,j,iz)
               ad_Fz(i,j,iz)=0.0_r8
-            ELSE IF (Zbot.ge.obs%Zgrid(i)) THEN
+            ELSE IF (Zbot.ge.Zeven(iz)) THEN
               r1=0.0_r8                        ! If deeper, ignore.
               r2=0.0_r8                        ! return zero value.
 !>            Fz(i,j,iz)=0.0_r8
@@ -951,16 +953,16 @@
               ad_Fz(i,j,iz)=0.0_r8
             ELSE
               DO k=N(ng),2,-1                  ! Otherwise, interpolate
-                Ztop=self%depth(i,j,k  )       ! to requested depth
-                Zbot=self%depth(i1,j1,k-1)
+                Ztop=ad_self%depth(i,j,k    )  ! to requested depth
+                Zbot=ad_self%depth(i1,j1,k-1)
                 IF ((Ztop.gt.Zeven(iz)).and.                            &
      &              (Zeven(i).ge.Zbot)) THEN
                   k1=k-1
                   k2=k
                 END IF
               END DO
-              dz=self%depth(i,j,k2)-self%depth(i,j,k1)
-              r2=(Zeven(iz)-self%depth(i1,j1,k1))/dz
+              dz=ad_self%depth(i,j,k2)-ad_self%depth(i,j,k1)
+              r2=(Zeven(iz)-ad_self%depth(i1,j1,k1))/dz
               r1=1.0_r8-r2
               IF ((r1+r2).gt.0.0_r8) THEN
 !>              Fz(i,j,iz)=r1*Fk(i,j,k1)+r2*Fk(i,j,k2)
@@ -981,7 +983,7 @@
 !  Adjoint of transforming vector components from A-grid (cell center)
 !  to staggered Arakawa C-grid.
 !
-      SUBROUTINE var_change_uv_a2c_ad (self, ng, tile, model)
+      SUBROUTINE var_change_uv_a2c_ad (ad_self, ng, tile, model)
 !
       CLASS (obs_VarCha), intent(inout) :: ad_self ! VarChan object
       integer,            intent(in   ) :: ng      ! nested grid
@@ -1082,7 +1084,7 @@
 #   endif
 !>          self%Uc(i,j,k)=0.5_r8*(Urho(i-1,j)+Urho(i,j))
 !>
-            adfac=0.5_r8*ad_seld%Uc(i,j,k)
+            adfac=0.5_r8*ad_self%Uc(i,j,k)
             ad_Urho(i-1,j)=ad_Urho(i-1,j)+adfac
             ad_Urho(i  ,j)=ad_Urho(i  ,j)+adfac
             ad_self%Uc(i,j,k)=0.0_r8
@@ -1097,8 +1099,8 @@
 !>          Vrho(i,j)=self%Va(i,j,k)*GRID(ng)%CosAngler(i,j)-           &
 !>   &                self%Ua(i,j,k)*GRID(ng)%SinAngler(i,j)
 !>
-            adfac1=GRID(ng)*CosAngler(i,j)*ad_Vrho(i,j)
-            adfac2=GRID(ng)*SinAngler(i,j)*ad_Vrho(i,j)
+            adfac1=GRID(ng)%CosAngler(i,j)*ad_Vrho(i,j)
+            adfac2=GRID(ng)%SinAngler(i,j)*ad_Vrho(i,j)
             ad_self%Va(i,j,k)=ad_self%Va(i,j,k)+adfac1
             ad_self%Ua(i,j,k)=ad_self%Ua(i,j,k)-adfac2
             ad_Vrho(i,j)=0.0_r8
@@ -1116,8 +1118,8 @@
 !
 !  Deallocate local arrays.
 !
-      IF (allocated(Urho)) deallocate (Urho)
-      IF (allocated(Vrho)) deallocate (Vrho)
+      IF (allocated(ad_Urho)) deallocate (ad_Urho)
+      IF (allocated(ad_Vrho)) deallocate (ad_Vrho)
 !
       RETURN
       END SUBROUTINE var_change_uv_a2c_ad
@@ -1126,7 +1128,7 @@
 !  Adjoint of transforming vector components from staggered Arakawa
 !  C-grid to A-grid (cell center).
 !
-      SUBROUTINE var_change_uv_c2a_ad (self, ng, tile, model)
+      SUBROUTINE var_change_uv_c2a_ad (ad_self, ng, tile, model)
 !
       CLASS (obs_VarCha), intent(inout) :: ad_self ! VarChan object
       integer,            intent(in   ) :: ng      ! nested grid
@@ -1195,7 +1197,7 @@
 #   ifdef MASKING
 !>          self%Va(i,j,k)=self%Va(i,j,k)*GRID(ng)%rmask(i,j)
 !>
-            ad_self%Va(i,j,k)=ad_self%Va(i,j,k)*GRID(ng)*rmask(i,j)
+            ad_self%Va(i,j,k)=ad_self%Va(i,j,k)*GRID(ng)%rmask(i,j)
 !>          self%Ua(i,j,k)=self%Ua(i,j,k)*GRID(ng)%rmask(i,j)
 !>
             ad_self%Ua(i,j,k)=ad_self%Ua(i,j,k)*GRID(ng)%rmask(i,j)
@@ -1228,7 +1230,7 @@
             ad_UaSinA=0.0_r8
 !>          UaCosA=self%Ua(i,j,k)*GRID(ng)%CosAngler(i,j)
 !>
-            ad_self%Ua(i,j,k)=ad_self%Ua(i,j,k)+
+            ad_self%Ua(i,j,k)=ad_self%Ua(i,j,k)+                        &
      &                        GRID(ng)%CosAngler(i,j)*ad_UaCosA
             ad_UaCosA=0.0_r8
           END DO
@@ -1271,7 +1273,7 @@
 !>
                 ad_self%Ua(Iend,j,k)=ad_self%Ua(Iend  ,j,k)+            &
      &                               ad_self%Ua(Iend+1,j,k)
-                ad_Ua(Iend+1,j,k)=0.0_r8
+                ad_self%Ua(Iend+1,j,k)=0.0_r8
               END IF
               IF (DOMAIN(ng)%Western_Edge(tile)) THEN
 !>              self%Ua(Istr-1,j,k)=self%Ua(Istr,j,k)
