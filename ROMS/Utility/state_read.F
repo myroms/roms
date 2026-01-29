@@ -1254,15 +1254,13 @@
         my_pioVar%gtype=r2dobc
         IF (KIND(s_zeta_obc).eq.8) THEN
           my_pioVar%dkind=PIO_double
-          my_ioDesc => ioDesc_dp_r2dobc(ng)
         ELSE
           my_pioVar%dkind=PIO_real
-          my_ioDesc => ioDesc_sp_r2dobc(ng)
         END IF
 !
         status=nf_fread2d_bry(ng, model, ncname, my_pioFile,            &
      &                        Vname(1,ifield), my_pioVar,               &
-     &                        rec, my_ioDesc,                           &
+     &                        rec,                                      &
      &                        LBij, UBij, Nbrec(ng),                    &
      &                        scale, Fmin, Fmax,                        &
      &                        s_zeta_obc(:,:,:,Lout))
@@ -1374,15 +1372,13 @@
         my_pioVar%gtype=u2dobc
         IF (KIND(s_ubar_obc).eq.8) THEN
           my_pioVar%dkind=PIO_double
-          my_ioDesc => ioDesc_dp_u2dobc(ng)
         ELSE
           my_pioVar%dkind=PIO_real
-          my_ioDesc => ioDesc_sp_u2dobc(ng)
         END IF
 !
         status=nf_fread2d_bry(ng, model, ncname, my_pioFile,            &
      &                        Vname(1,ifield), my_pioVar,               &
-     &                        rec, my_ioDesc,                           &
+     &                        rec,                                      &
      &                        LBij, UBij, Nbrec(ng),                    &
      &                        scale, Fmin, Fmax,                        &
      &                        s_ubar_obc(:,:,:,Lout))
@@ -1412,15 +1408,13 @@
         my_pioVar%gtype=v2dobc
         IF (KIND(s_vbar_obc).eq.8) THEN
           my_pioVar%dkind=PIO_double
-          my_ioDesc => ioDesc_dp_v2dobc(ng)
         ELSE
           my_pioVar%dkind=PIO_real
-          my_ioDesc => ioDesc_sp_v2dobc(ng)
         END IF
 !
         status=nf_fread2d_bry(ng, model, ncname, my_pioFile,            &
      &                        Vname(1,ifield), my_pioVar,               &
-     &                        rec, my_ioDesc,                           &
+     &                        rec,                                      &
      &                        LBij, UBij, Nbrec(ng),                    &
      &                        scale, Fmin, Fmax,                        &
      &                        s_vbar_obc(:,:,:,Lout))
@@ -1570,15 +1564,13 @@
         my_pioVar%gtype=u3dobc
         IF (KIND(s_u_obc).eq.8) THEN
           my_pioVar%dkind=PIO_double
-          my_ioDesc => ioDesc_dp_u3dobc(ng)
         ELSE
           my_pioVar%dkind=PIO_real
-          my_ioDesc => ioDesc_sp_u3dobc(ng)
         END IF
 !
         status=nf_fread3d_bry (ng, model, ncname, my_pioFile,           &
      &                         Vname(1,ifield), my_pioVar,              &
-     &                         rec, my_ioDesc,                          &
+     &                         rec,                                     &
      &                         LBij, UBij, 1, N(ng), Nbrec(ng),         &
      &                         scale, Fmin, Fmax,                       &
      &                         s_u_obc(:,:,:,:,Lout))
@@ -1649,15 +1641,13 @@
         my_pioVar%gtype=v3dobc
         IF (KIND(s_v_obc).eq.8) THEN
           my_pioVar%dkind=PIO_double
-          my_ioDesc => ioDesc_dp_v3dobc(ng)
         ELSE
           my_pioVar%dkind=PIO_real
-          my_ioDesc => ioDesc_sp_v3dobc(ng)
         END IF
 !
         status=nf_fread3d_bry(ng, model, ncname, my_pioFile,            &
      &                        Vname(1,ifield), my_pioVar,               &
-     &                        rec, my_ioDesc,                           &
+     &                        rec,                                      &
      &                        LBij, UBij, 1, N(ng), Nbrec(ng),          &
      &                        scale, Fmin, Fmax,                        &
      &                        s_v_obc(:,:,:,:,Lout))
@@ -1734,15 +1724,13 @@
           my_pioVar%gtype=r3dobc
           IF (KIND(s_t_obc).eq.8) THEN
             my_pioVar%dkind=PIO_double
-            my_ioDesc => ioDesc_dp_r3dobc(ng)
           ELSE
             my_pioVar%dkind=PIO_real
-            my_ioDesc => ioDesc_sp_r3dobc(ng)
           END IF
 !
           status=nf_fread3d_bry (ng, model, ncname, my_pioFile,         &
      &                           Vname(1,ifield), my_pioVar,            &
-     &                           rec, my_ioDesc,                        &
+     &                           rec,                                   &
      &                           LBij, UBij, 1, N(ng), Nbrec(ng),       &
      &                           scale, Fmin, Fmax,                     &
      &                           s_t_obc(:,:,:,:,Lout,itrc))

@@ -311,11 +311,6 @@
         DO ng=1,Ngrids
           DO i=1,NpioComps
             CALL PIO_freedecomp (pioSystem(i,ng), ioDesc_sp_p2dvar(ng))
-# ifdef ADJUST_BOUNDARY
-            CALL PIO_freedecomp (pioSystem(i,ng), ioDesc_sp_r2dobc(ng))
-            CALL PIO_freedecomp (pioSystem(i,ng), ioDesc_sp_u2dobc(ng))
-            CALL PIO_freedecomp (pioSystem(i,ng), ioDesc_sp_v2dobc(ng))
-# endif
             CALL PIO_freedecomp (pioSystem(i,ng), ioDesc_sp_r2dvar(ng))
             CALL PIO_freedecomp (pioSystem(i,ng), ioDesc_sp_u2dvar(ng))
             CALL PIO_freedecomp (pioSystem(i,ng), ioDesc_sp_v2dvar(ng))
@@ -334,11 +329,6 @@
             CALL PIO_freedecomp (pioSystem(i,ng), ioDesc_sp_l4dvar(ng))
 #  endif
             CALL PIO_freedecomp (pioSystem(i,ng), ioDesc_sp_p3dvar(ng))
-# ifdef ADJUST_BOUNDARY
-            CALL PIO_freedecomp (pioSystem(i,ng), ioDesc_sp_r3dobc(ng))
-            CALL PIO_freedecomp (pioSystem(i,ng), ioDesc_sp_u3dobc(ng))
-            CALL PIO_freedecomp (pioSystem(i,ng), ioDesc_sp_v3dobc(ng))
-# endif
             CALL PIO_freedecomp (pioSystem(i,ng), ioDesc_sp_r3dvar(ng))
             CALL PIO_freedecomp (pioSystem(i,ng), ioDesc_sp_u3dvar(ng))
             CALL PIO_freedecomp (pioSystem(i,ng), ioDesc_sp_v3dvar(ng))
@@ -359,11 +349,6 @@
         DO ng=1,Ngrids
           DO i=1,NpioComps
             CALL PIO_freedecomp (pioSystem(i,ng), ioDesc_dp_p2dvar(ng))
-# ifdef ADJUST_BOUNDARY
-            CALL PIO_freedecomp (pioSystem(i,ng), ioDesc_dp_r2dobc(ng))
-            CALL PIO_freedecomp (pioSystem(i,ng), ioDesc_dp_u2dobc(ng))
-            CALL PIO_freedecomp (pioSystem(i,ng), ioDesc_dp_v2dobc(ng))
-# endif
             CALL PIO_freedecomp (pioSystem(i,ng), ioDesc_dp_r2dvar(ng))
             CALL PIO_freedecomp (pioSystem(i,ng), ioDesc_dp_u2dvar(ng))
             CALL PIO_freedecomp (pioSystem(i,ng), ioDesc_dp_v2dvar(ng))
@@ -382,11 +367,6 @@
             CALL PIO_freedecomp (pioSystem(i,ng), ioDesc_dp_l4dvar(ng))
 #  endif
             CALL PIO_freedecomp (pioSystem(i,ng), ioDesc_dp_p3dvar(ng))
-# ifdef ADJUST_BOUNDARY
-            CALL PIO_freedecomp (pioSystem(i,ng), ioDesc_dp_r3dobc(ng))
-            CALL PIO_freedecomp (pioSystem(i,ng), ioDesc_dp_u3dobc(ng))
-            CALL PIO_freedecomp (pioSystem(i,ng), ioDesc_dp_v3dobc(ng))
-# endif
             CALL PIO_freedecomp (pioSystem(i,ng), ioDesc_dp_r3dvar(ng))
             CALL PIO_freedecomp (pioSystem(i,ng), ioDesc_dp_u3dvar(ng))
             CALL PIO_freedecomp (pioSystem(i,ng), ioDesc_dp_v3dvar(ng))
@@ -536,8 +516,6 @@
 !
 !  Local variable declarations.
 !
-      logical :: Lboundary
-!
       integer :: Cgrid, ghost
       integer :: i, ic, j, jc, k, kc, l, lc, np
       integer :: Is, Ie, Js, Je
@@ -555,30 +533,10 @@
 !  from storage order to memory order.
 !-----------------------------------------------------------------------
 !
-      Lboundary=.FALSE.
-
 !  Get GLOBAL lower and upper bounds for each variable type in input
 !  or ouput NetCDF files.
 !
       SELECT CASE (gtype)
-        CASE (r2dobc, u2dobc, v2dobc)
-          Lboundary=.TRUE.
-          Cgrid=2
-          Is=0
-          Ie=IOBOUNDS(ng) % IorJ
-          Js=1
-          Je=4
-          Ioff=1
-          Joff=0
-        CASE (r3dobc, u3dobc, v3dobc)
-          Lboundary=.TRUE.
-          Cgrid=2
-          Is=0
-          Ie=IOBOUNDS(ng) % IorJ
-          Js=1
-          Je=4
-          Ioff=1
-          Joff=0
         CASE (p2dvar, p3dvar)
           Cgrid=1
           Is=IOBOUNDS(ng) % ILB_psi
@@ -651,18 +609,11 @@
 !  Starting/ending I- and J-indices for each decomposition tile
 !  according to C-grid locatation, excluding ghost points.
 !
-      IF (Lboundary) THEN
-        Imin=Is
-        Imax=Ie
-        Jmin=Js
-        Jmax=Je
-      ELSE
-        ghost=0
-        Imin=BOUNDS(ng) % Imin(Cgrid,ghost,MyRank)
-        Imax=BOUNDS(ng) % Imax(Cgrid,ghost,MyRank)
-        Jmin=BOUNDS(ng) % Jmin(Cgrid,ghost,MyRank)
-        Jmax=BOUNDS(ng) % Jmax(Cgrid,ghost,MyRank)
-      END IF
+      ghost=0
+      Imin=BOUNDS(ng) % Imin(Cgrid,ghost,MyRank)
+      Imax=BOUNDS(ng) % Imax(Cgrid,ghost,MyRank)
+      Jmin=BOUNDS(ng) % Jmin(Cgrid,ghost,MyRank)
+      Jmax=BOUNDS(ng) % Jmax(Cgrid,ghost,MyRank)
 !
 !  Allocate 1D array for mapping of the storage order of the variable to
 !  its memory order.
@@ -771,11 +722,6 @@
       allocate ( ioDesc_sp_u2dfrc(Ngrids) )
       allocate ( ioDesc_sp_v2dfrc(Ngrids) )
 # endif
-# ifdef ADJUST_BOUNDARY
-      allocate ( ioDesc_sp_r2dobc(Ngrids) )
-      allocate ( ioDesc_sp_u2dobc(Ngrids) )
-      allocate ( ioDesc_sp_v2dobc(Ngrids) )
-# endif
       allocate ( ioDesc_sp_r2dvar(Ngrids) )
       allocate ( ioDesc_sp_u2dvar(Ngrids) )
       allocate ( ioDesc_sp_v2dvar(Ngrids) )
@@ -797,11 +743,6 @@
 #  ifdef ADJUST_STFLUX
       allocate ( ioDesc_sp_r2dfrc(Ngrids) )
 #  endif
-#  ifdef ADJUST_BOUNDARY
-      allocate ( ioDesc_sp_r3dobc(Ngrids) )
-      allocate ( ioDesc_sp_u3dobc(Ngrids) )
-      allocate ( ioDesc_sp_v3dobc(Ngrids) )
-#  endif
       allocate ( ioDesc_sp_r3dvar(Ngrids) )
       allocate ( ioDesc_sp_u3dvar(Ngrids) )
       allocate ( ioDesc_sp_v3dvar(Ngrids) )
@@ -821,11 +762,6 @@
 # ifdef ADJUST_WSTRESS
       allocate ( ioDesc_dp_u2dfrc(Ngrids) )
       allocate ( ioDesc_dp_v2dfrc(Ngrids) )
-# endif
-# ifdef ADJUST_BOUNDARY
-      allocate ( ioDesc_dp_r2dobc(Ngrids) )
-      allocate ( ioDesc_dp_u2dobc(Ngrids) )
-      allocate ( ioDesc_dp_v2dobc(Ngrids) )
 # endif
       allocate ( ioDesc_dp_r2dvar(Ngrids) )
       allocate ( ioDesc_dp_u2dvar(Ngrids) )
@@ -847,11 +783,6 @@
       allocate ( ioDesc_dp_p3dvar(Ngrids) )
 #  ifdef ADJUST_STFLUX
       allocate ( ioDesc_dp_r2dfrc(Ngrids) )
-#  endif
-#  ifdef ADJUST_BOUNDARY
-      allocate ( ioDesc_dp_r3dobc(Ngrids) )
-      allocate ( ioDesc_dp_u3dobc(Ngrids) )
-      allocate ( ioDesc_dp_v3dobc(Ngrids) )
 #  endif
       allocate ( ioDesc_dp_r3dvar(Ngrids) )
       allocate ( ioDesc_dp_u3dvar(Ngrids) )
@@ -1032,28 +963,6 @@
      &                       ioDesc_sp_v2dfrc(ng),                      &
      &                       v2dvar, 3, 1, Nfrec(ng))
 # endif
-# ifdef ADJUST_BOUNDARY
-        CALL field_iodecomp (ng, pioSystem(IpioROMS,ng), PIO_real,      &
-     &                       ioDesc_sp_r2dobc(ng),                      &
-     &                       r2dobc, 3, 1, Nbrec(ng))
-        CALL field_iodecomp (ng, pioSystem(IpioROMS,ng), PIO_real,      &
-     &                       ioDesc_sp_u2dobc(ng),                      &
-     &                       u2dobc, 3, 1, Nbrec(ng))
-        CALL field_iodecomp (ng, pioSystem(IpioROMS,ng), PIO_real,      &
-     &                       ioDesc_sp_v2dobc(ng),                      &
-     &                       v2dobc, 3, 1, Nbrec(ng))
-#  ifdef SOLVE3D
-        CALL field_iodecomp (ng, pioSystem(IpioROMS,ng), PIO_real,      &
-     &                       ioDesc_sp_r3dobc(ng),                      &
-     &                       r3dobc, 4, 1, N(ng), 1, Nbrec(ng))
-        CALL field_iodecomp (ng, pioSystem(IpioROMS,ng), PIO_real,      &
-     &                       ioDesc_sp_u3dobc(ng),                      &
-     &                       u3dobc, 4, 1, N(ng), 1, Nbrec(ng))
-        CALL field_iodecomp (ng, pioSystem(IpioROMS,ng), PIO_real,      &
-     &                       ioDesc_sp_v3dobc(ng),                      &
-     &                       v3dobc, 4, 1, N(ng), 1, Nbrec(ng))
-#  endif
-# endif
       END DO
 !
 !  Set IO decomposition descriptors for double precision data.
@@ -1138,28 +1047,6 @@
         CALL field_iodecomp (ng, pioSystem(IpioROMS,ng), PIO_double,    &
      &                       ioDesc_dp_v2dfrc(ng),                      &
      &                       v2dvar, 3, 1, Nfrec(ng))
-# endif
-# ifdef ADJUST_BOUNDARY
-        CALL field_iodecomp (ng, pioSystem(IpioROMS,ng), PIO_double,    &
-     &                       ioDesc_dp_r2dobc(ng),                      &
-     &                       r2dobc, 3, 1, Nbrec(ng))
-        CALL field_iodecomp (ng, pioSystem(IpioROMS,ng), PIO_double,    &
-     &                       ioDesc_dp_u2dobc(ng),                      &
-     &                       u2dobc, 3, 1, Nbrec(ng))
-        CALL field_iodecomp (ng, pioSystem(IpioROMS,ng), PIO_double,    &
-     &                       ioDesc_dp_v2dobc(ng),                      &
-     &                       v2dobc, 3, 1, Nbrec(ng))
-#  ifdef SOLVE3D
-        CALL field_iodecomp (ng, pioSystem(IpioROMS,ng), PIO_double,    &
-     &                       ioDesc_dp_r3dobc(ng),                      &
-     &                       r3dobc, 4, 1, N(ng), 1, Nbrec(ng))
-        CALL field_iodecomp (ng, pioSystem(IpioROMS,ng), PIO_double,    &
-     &                       ioDesc_dp_u3dobc(ng),                      &
-     &                       u3dobc, 4, 1, N(ng), 1, Nbrec(ng))
-        CALL field_iodecomp (ng, pioSystem(IpioROMS,ng), PIO_double,    &
-     &                       ioDesc_dp_v3dobc(ng),                      &
-     &                       v3dobc, 4, 1, N(ng), 1, Nbrec(ng))
-#  endif
 # endif
       END DO
 !
