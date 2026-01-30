@@ -581,6 +581,7 @@
 #  if defined WRITE_WATER && defined MASKING
         Vinfo(20)='mask_u'
 #  endif
+        Vinfo(21)=Vname(6,idUsms)
         Vinfo(22)='coordinates'
         Aval(5)=REAL(Iinfo(1,idUsms,ng),r8)
         status=def_var(ng, model, ADM(ng)%ncid, ADM(ng)%Vid(idUsms),    &
@@ -598,6 +599,7 @@
 #  if defined WRITE_WATER && defined MASKING
         Vinfo(20)='mask_v'
 #  endif
+        Vinfo(21)=Vname(6,idVsms)
         Vinfo(22)='coordinates'
         Aval(5)=REAL(Iinfo(1,idVsms,ng),r8)
         status=def_var(ng, model, ADM(ng)%ncid, ADM(ng)%Vid(idVsms),    &
@@ -627,6 +629,7 @@
 #  if defined WRITE_WATER && defined MASKING
             Vinfo(20)='mask_rho'
 #  endif
+            Vinfo(21)=Vname(6,idTsur(itrc))
             Vinfo(22)='coordinates'
             Aval(5)=REAL(Iinfo(1,idTsur(itrc),ng),r8)
             status=def_var(ng, model, ADM(ng)%ncid,                     &
@@ -732,7 +735,7 @@
           Vinfo( 3)='meter-1'
           Vinfo(14)=Vname(4,ifield)
           Vinfo(16)=Vname(1,idtime)
-          Vinfo(21)=Vname(6,ifield)
+          Vinfo(21)=Vname(6,idFsur)
           Aval(5)=REAL(Iinfo(1,ifield,ng),r8)
           status=def_var(ng, model, ADM(ng)%ncid, ADM(ng)%Vid(ifield),  &
      &                   NF_FOUT, 4, t2dobc, Aval, Vinfo, ncname,       &
@@ -771,7 +774,7 @@
           Vinfo( 3)='second meter-1'
           Vinfo(14)=Vname(4,ifield)
           Vinfo(16)=Vname(1,idtime)
-          Vinfo(21)=Vname(6,ifield)
+          Vinfo(21)=Vname(6,idUbar)
           Aval(5)=REAL(Iinfo(1,ifield,ng),r8)
           status=def_var(ng, model, ADM(ng)%ncid, ADM(ng)%Vid(ifield),  &
      &                   NF_FOUT, 4, t2dobc, Aval, Vinfo, ncname,       &
@@ -810,7 +813,7 @@
           Vinfo( 3)='second meter-1'
           Vinfo(14)=Vname(4,ifield)
           Vinfo(16)=Vname(1,idtime)
-          Vinfo(21)=Vname(6,ifield)
+          Vinfo(21)=Vname(6,idVbar)
           Aval(5)=REAL(Iinfo(1,ifield,ng),r8)
           status=def_var(ng, model, ADM(ng)%ncid, ADM(ng)%Vid(ifield),  &
      &                   NF_FOUT, 4, t2dobc, Aval, Vinfo, ncname,       &
@@ -850,7 +853,7 @@
           Vinfo( 3)='second meter-1'
           Vinfo(14)=Vname(4,ifield)
           Vinfo(16)=Vname(1,idtime)
-          Vinfo(21)=Vname(6,ifield)
+          Vinfo(21)=Vname(6,idUvel)
           Aval(5)=REAL(Iinfo(1,ifield,ng),r8)
           status=def_var(ng, model, ADM(ng)%ncid, ADM(ng)%Vid(ifield),  &
      &                   NF_FOUT, 5, t3dobc, Aval, Vinfo, ncname,       &
@@ -889,7 +892,7 @@
           Vinfo( 3)='second meter-1'
           Vinfo(14)=Vname(4,ifield)
           Vinfo(16)=Vname(1,idtime)
-          Vinfo(21)=Vname(6,ifield)
+          Vinfo(21)=Vname(6,idVvel)
           Aval(5)=REAL(Iinfo(1,ifield,ng),r8)
           status=def_var(ng, model, ADM(ng)%ncid, ADM(ng)%Vid(ifield),  &
      &                   NF_FOUT, 5, t3dobc, Aval, Vinfo, ncname,       &
@@ -1001,7 +1004,7 @@
               END IF
             END DO
 #   endif
-            Vinfo(21)=Vname(6,ifield)
+            Vinfo(21)=Vname(6,idTvar(itrc))
             Aval(5)=REAL(Iinfo(1,ifield,ng),r8)
             status=def_var(ng, model, ADM(ng)%ncid, ADM(ng)%Vid(ifield),&
      &                     NF_FOUT, 5, t3dobc, Aval, Vinfo, ncname,     &
@@ -2052,6 +2055,7 @@
 #   if defined WRITE_WATER && defined MASKING
         Vinfo(20)='mask_u'
 #   endif
+        Vinfo(21)=Vname(6,idUsms)
         Vinfo(22)='coordinates'
         Aval(5)=REAL(Iinfo(1,idUsms,ng),r8)
         ADM(ng)%pioVar(idUsms)%dkind=PIO_FOUT
@@ -2073,6 +2077,7 @@
 #   if defined WRITE_WATER && defined MASKING
         Vinfo(20)='mask_v'
 #   endif
+        Vinfo(21)=Vname(6,idVsms)
         Vinfo(22)='coordinates'
         Aval(5)=REAL(Iinfo(1,idVsms,ng),r8)
         ADM(ng)%pioVar(idVsms)%dkind=PIO_FOUT
@@ -2106,6 +2111,7 @@
 #   if defined WRITE_WATER && defined MASKING
             Vinfo(20)='mask_rho'
 #   endif
+            Vinfo(21)=Vname(6,idTsur(itrc))
             Vinfo(22)='coordinates'
             Aval(5)=REAL(Iinfo(1,idTsur(itrc),ng),r8)
             ADM(ng)%pioVar(idTsur(itrc))%dkind=PIO_FOUT
@@ -2230,7 +2236,7 @@
           Vinfo( 3)='meter-1'
           Vinfo(14)=Vname(4,ifield)
           Vinfo(16)=Vname(1,idtime)
-          Vinfo(21)=Vname(6,ifield)
+          Vinfo(21)=Vname(6,idFsur)
           Aval(5)=REAL(Iinfo(1,ifield,ng),r8)
           ADM(ng)%pioVar(ifield)%dkind=PIO_FOUT
           ADM(ng)%pioVar(ifield)%gtype=r2dobc
@@ -2277,7 +2283,7 @@
           Vinfo( 3)='second meter-1'
           Vinfo(14)=Vname(4,ifield)
           Vinfo(16)=Vname(1,idtime)
-          Vinfo(21)=Vname(6,ifield)
+          Vinfo(21)=Vname(6,idUbar)
           Aval(5)=REAL(Iinfo(1,ifield,ng),r8)
           ADM(ng)%pioVar(ifield)%dkind=PIO_FOUT
           ADM(ng)%pioVar(ifield)%gtype=u2dobc
@@ -2324,7 +2330,7 @@
           Vinfo( 3)='second meter-1'
           Vinfo(14)=Vname(4,ifield)
           Vinfo(16)=Vname(1,idtime)
-          Vinfo(21)=Vname(6,ifield)
+          Vinfo(21)=Vname(6,idVbar)
           Aval(5)=REAL(Iinfo(1,ifield,ng),r8)
           ADM(ng)%pioVar(ifield)%dkind=PIO_FOUT
           ADM(ng)%pioVar(ifield)%gtype=v2dobc
@@ -2372,7 +2378,7 @@
           Vinfo( 3)='second meter-1'
           Vinfo(14)=Vname(4,ifield)
           Vinfo(16)=Vname(1,idtime)
-          Vinfo(21)=Vname(6,ifield)
+          Vinfo(21)=Vname(6,idUvel)
           Aval(5)=REAL(Iinfo(1,ifield,ng),r8)
           ADM(ng)%pioVar(ifield)%dkind=PIO_FOUT
           ADM(ng)%pioVar(ifield)%gtype=u3dobc
@@ -2419,7 +2425,7 @@
           Vinfo( 3)='second meter-1'
           Vinfo(14)=Vname(4,ifield)
           Vinfo(16)=Vname(1,idtime)
-          Vinfo(21)=Vname(6,ifield)
+          Vinfo(21)=Vname(6,idVvel)
           Aval(5)=REAL(Iinfo(1,ifield,ng),r8)
           ADM(ng)%pioVar(ifield)%dkind=PIO_FOUT
           ADM(ng)%pioVar(ifield)%gtype=v3dvar
@@ -2496,7 +2502,7 @@
 !
           status=def_var(ng, model, ADM(ng)%pioFile,                    &
      &                   ADM(ng)%pioVar(idOvel)%vd,                     &
-     &                   PIO_FOUT, nvd4, v3dgrd, Aval, Vinfo, ncname)
+     &                   PIO_FOUT, nvd4, w3dgrd, Aval, Vinfo, ncname)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 !
@@ -2551,7 +2557,7 @@
               END IF
             END DO
 #    endif
-            Vinfo(21)=Vname(6,ifield)
+            Vinfo(21)=Vname(6,idTvar(itrc))
             Aval(5)=REAL(Iinfo(1,ifield,ng),r8)
             ADM(ng)%pioVar(ifield)%dkind=PIO_FOUT
             ADM(ng)%pioVar(ifield)%gtype=r2dvar
