@@ -422,6 +422,8 @@ fi
 if [ ! -z "${FORT}" ]; then
   if [ ${FORT} == "ifort" ]; then
     compiler="-DCMAKE_Fortran_COMPILER=ifort"
+  elif [ ${FORT} == "ifx" ]; then
+    compiler="-DCMAKE_Fortran_COMPILER=ifx"
   elif [ ${FORT} == "gfortran" ]; then
     compiler="-DCMAKE_Fortran_COMPILER=gfortran"
   else
