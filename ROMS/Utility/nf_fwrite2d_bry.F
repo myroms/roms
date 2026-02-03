@@ -215,6 +215,7 @@
      &                           tindex,                                &
      &                           LBij, UBij, Nrec,                      &
      &                           Ascl, Abry,                            &
+     &                           ExtractField,                          &
      &                           MinValue, MaxValue)  RESULT(status)
 !***********************************************************************
 !
@@ -224,6 +225,8 @@
 !
       integer, intent(in) :: ng, model, tindex
       integer, intent(in) :: LBij, UBij, Nrec
+!
+      integer, intent(in), optional :: ExtractField
 !
       real(dp), intent(in) :: Ascl
 !

@@ -151,19 +151,19 @@
         CASE (io_nf90)
           CALL wrt_extract_nf90 (ng, iNLM, tile,                        &
 # ifdef ADJUST_BOUNDARY
-     &                       LBij, UBij,                                &
+     &                           LBij, UBij,                            &
 # endif
-     &                       LBi, UBi, LBj, UBj,                        &
-     &                       iLB, iUB, jLB, jUB)
+     &                           LBi, UBi, LBj, UBj,                    &
+     &                           iLB, iUB, jLB, jUB)
 
 # if defined PIO_LIB && defined DISTRIBUTE
         CASE (io_pio)
           CALL wrt_extract_pio (ng, iNLM, tile,                         &
 #  ifdef ADJUST_BOUNDARY
-     &                      LBij, UBij,                                 &
+     &                          LBij, UBij,                             &
 #  endif
-     &                      LBi, UBi, LBj, UBj,                         &
-     &                      iLB, iUB, jLB, jUB)
+     &                          LBi, UBi, LBj, UBj,                     &
+     &                          iLB, iUB, jLB, jUB)
 # endif
         CASE DEFAULT
           IF (Master) WRITE (stdout,10) XTR(ng)%IOtype
@@ -180,10 +180,10 @@
 !***********************************************************************
       SUBROUTINE wrt_extract_nf90 (ng, model, tile,                     &
 # ifdef ADJUST_BOUNDARY
-     &                         LBij, UBij,                              &
+     &                             LBij, UBij,                          &
 # endif
-     &                         LBi, UBi, LBj, UBj,                      &
-     &                         iLB, iUB, jLB, jUB)
+     &                             LBi, UBi, LBj, UBj,                  &
+     &                             iLB, iUB, jLB, jUB)
 !***********************************************************************
 !
       USE mod_netcdf
@@ -2161,13 +2161,11 @@
 !
 !***********************************************************************
       SUBROUTINE wrt_extract_pio (ng, model, tile,                      &
-# ifdef ADJUST_BOUNDARY
-     &                        LBij, UBij,                               &
-     &                        ijLB, ijUB,                               &
-
-# endif
-     &                        LBi, UBi, LBj, UBj,                       &
-     &                        iLB, iUB, jLB, jUB)
+#  ifdef ADJUST_BOUNDARY
+     &                            LBij, UBij,                           &
+#  endif
+     &                            LBi, UBi, LBj, UBj,                   &
+     &                            iLB, iUB, jLB, jUB)
 !***********************************************************************
 !
       USE mod_pio_netcdf
@@ -2177,7 +2175,6 @@
       integer, intent(in) :: ng, model, tile
 #  ifdef ADJUST_BOUNDARY
       integer, intent(in) :: LBij, UBij
-      integer, intent(in) :: ijLB, ijUB
 #  endif
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: iLB, iUB, jLB, jUB
@@ -3417,7 +3414,7 @@
      &                            scale,                                &
      &                            BOUNDARY(ng) % t_obc(LBij:,:,:,:,     &
      &                                                 Lbout(ng),itrc), &
-     &                          ExtractField = ExtractFlag(ng))
+     &                            ExtractField = ExtractFlag(ng))
           IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
             IF (Master) THEN
               WRITE (stdout,20) TRIM(Vname(1,ifield)), XTR(ng)%Rindex

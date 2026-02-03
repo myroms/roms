@@ -192,7 +192,7 @@
       integer :: gtype, i, it1, it2, j
       integer :: method
 #  if defined ADJUST_STFLUX && defined SOLVE3D
-      integer :: itrc
+      integer :: ifield, itrc
 #  endif
 !
       real(r8) :: fac, fac1, fac2
@@ -319,16 +319,16 @@
       DO j=JstrR,JendR
         DO i=Istr,IendR
           nl_sustr(i,j)=nl_sustr(i,j)+                                  &
-     &                  fac1*tl_ustr(i,j,it1,Lout)+                     &
-     &                  fac2*tl_ustr(i,j,it2,Lout)
+     &                  fac1*ustr(i,j,it1,Lout)+                        &
+     &                  fac2*ustr(i,j,it2,Lout)
         END DO
       END DO
 !
       DO j=Jstr,JendR
         DO i=IstrR,IendR
-          svstr(i,j)=svstr(i,j)+                                        &
-     &               fac1*tl_vstr(i,j,it1,Lout)+                        &
-     &               fac2*tl_vstr(i,j,it2,Lout)
+          nl_svstr(i,j)=nl_svstr(i,j)+                                  &
+     &                  fac1*vstr(i,j,it1,Lout)+                        &
+     &                  fac2*vstr(i,j,it2,Lout)
         END DO
       END DO
 #  endif
@@ -342,9 +342,9 @@
         IF (Lstflux(itrc,ng)) THEN
           DO j=JstrR,JendR
             DO i=IstrR,IendR
-              nl_stflx(i,j,itrc)=stflx(i,j,itrc)+                       &
-     &                           fac1*tl_tflux(i,j,it1,Lout,itrc)+      &
-     &                           fac2*tl_tflux(i,j,it2,Lout,itrc)
+              nl_stflx(i,j,itrc)=nl_stflx(i,j,itrc)+                    &
+     &                           fac1*tflux(i,j,it1,Lout,itrc)+         &
+     &                           fac2*tflux(i,j,it2,Lout,itrc)
             END DO
           END DO
         END IF
