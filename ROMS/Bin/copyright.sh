@@ -30,6 +30,12 @@
 search="2002-2025 The ROMS"
 replace="2002-2026 The ROMS"
 
+# Special case for License_ROMS.md
+
+searchL="2002-2025 Regional"
+replaceL="2002-2026 Regional"
+
+
 # Directories to search for replacements.
 
 c_dirs="Compilers Data docs ESM Master ROMS User"
@@ -88,6 +94,10 @@ do
     echo "There is a .svn in the path: $FILE skipped"
   fi
 done
+
+sed -i -e "s|${search}|${replace}|g" CMakeLists.txt
+sed -i -e "s|${searchL}|${replaceL}|g" License_ROMS.md
+sed -i -e "s|${search}|${replace}|g" makefile
 
 echo -e "\nDone.\n"
 

@@ -30,6 +30,11 @@
 set search = "2002-2025 The ROMS"
 set replace = "2002-2026 The ROMS"
 
+# Special case for License_ROMS.md
+
+set searchL = "2002-2025 Regional"
+set replaceL = "2002-2026 Regional"
+
 # Directories to search for replacements.
 
 set c_dirs = "Compilers Data docs ESM Master ROMS User"
@@ -94,6 +99,10 @@ foreach FILE ( `find ${c_dirs} ! -path '*/.svn/*' ! -name 'copyright.*' -type f 
   endif
 
 end
+
+sed -i -e "s|${search}|${replace}|g" CMakeLists.txt
+sed -i -e "s|${searchL}|${replaceL}|g" License_ROMS.md
+sed -i -e "s|${search}|${replace}|g" makefile
 
 echo ""
 echo "Done."
