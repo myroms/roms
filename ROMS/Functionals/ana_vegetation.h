@@ -5,7 +5,7 @@
 !!================================================== John C. Warner ====
 !! Copyright (c) 2002-2026 The ROMS Group             Neil K. Ganju    !
 !!   Licensed under a MIT/X style license             Alexis Beudin    !
-!!   See License_ROMS.txt                        Tarandeep S. Kalra    !
+!!   See License_ROMS.md                         Tarandeep S. Kalra    !
 !=======================================================================
 !                                                                      !
 !  It sets analytical initial condition for the submerge aquatic       !

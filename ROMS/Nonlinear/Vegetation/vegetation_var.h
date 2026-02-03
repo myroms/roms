@@ -3,7 +3,7 @@
 *************************************************** Hernan G. Arango ***
 ** Copyright (c) 2002-2026 The ROMS Group             John C. Warner  **
 **   Licensed under a MIT/X style license              Neil K. Ganju  **
-**   See License_ROMS.txt                              Alexis Beudin  **
+**   See License_ROMS.md                               Alexis Beudin  **
 ************************************************* Tarandeep S. Kalra *** 
 **                                                                    **
 **  Assigns metadata indices for the vegetation module variables that **
