@@ -2,7 +2,7 @@
 !
 !git $Id$
 !=======================================================================
-!  Copyright (c) 2002-2025 The ROMS Group            VIMS Colleagues   !
+!  Copyright (c) 2002-2026 The ROMS Group            VIMS Colleagues   !
 !    Licensed under a MIT/X style license           Hernan G. Arango   !
 !    See License_ROMS.md                                Katja Fennel   !
 !=======================================================================
