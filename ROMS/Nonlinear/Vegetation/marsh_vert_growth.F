@@ -5,9 +5,9 @@
 !
 !git $Id$
 !=============================================== Tarandeep S. Kalra ===!
-!  Copyright (c) 2002-2025 The ROMS Group                 Joel Carr    !
+!  Copyright (c) 2002-2026 The ROMS Group                 Joel Carr    !
 !    Licensed under a MIT/X style license             Neil K. Ganju    !
-!    See License_ROMS.txt                      Alfredo Aretxabaleta    !
+!    See License_ROMS.md                       Alfredo Aretxabaleta    !
 !==================================================  John C. Warner ====
 !                                                                      !
 !  It Calculates vertical growth of marsh through biomass production.  !
