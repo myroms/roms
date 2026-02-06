@@ -437,7 +437,7 @@ if ( $?FORT ) then
   if ( "${FORT}" == "ifort" ) then
     set compiler="-DCMAKE_Fortran_COMPILER=ifort"
   elif ( "${FORT}" == "ifx" ) then
-    set compiler="-DCMAKE_Fortran_COMPILER=ifort"
+    set compiler="-DCMAKE_Fortran_COMPILER=ifx"
   else if ( "${FORT}" == "gfortran" ) then
     set compiler="-DCMAKE_Fortran_COMPILER=gfortran"
   else

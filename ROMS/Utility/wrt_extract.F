@@ -151,19 +151,19 @@
         CASE (io_nf90)
           CALL wrt_extract_nf90 (ng, iNLM, tile,                        &
 # ifdef ADJUST_BOUNDARY
-     &                       LBij, UBij,                                &
+     &                           LBij, UBij,                            &
 # endif
-     &                       LBi, UBi, LBj, UBj,                        &
-     &                       iLB, iUB, jLB, jUB)
+     &                           LBi, UBi, LBj, UBj,                    &
+     &                           iLB, iUB, jLB, jUB)
 
 # if defined PIO_LIB && defined DISTRIBUTE
         CASE (io_pio)
           CALL wrt_extract_pio (ng, iNLM, tile,                         &
 #  ifdef ADJUST_BOUNDARY
-     &                      LBij, UBij,                                 &
+     &                          LBij, UBij,                             &
 #  endif
-     &                      LBi, UBi, LBj, UBj,                         &
-     &                      iLB, iUB, jLB, jUB)
+     &                          LBi, UBi, LBj, UBj,                     &
+     &                          iLB, iUB, jLB, jUB)
 # endif
         CASE DEFAULT
           IF (Master) WRITE (stdout,10) XTR(ng)%IOtype
@@ -180,10 +180,10 @@
 !***********************************************************************
       SUBROUTINE wrt_extract_nf90 (ng, model, tile,                     &
 # ifdef ADJUST_BOUNDARY
-     &                         LBij, UBij,                              &
+     &                             LBij, UBij,                          &
 # endif
-     &                         LBi, UBi, LBj, UBj,                      &
-     &                         iLB, iUB, jLB, jUB)
+     &                             LBi, UBi, LBj, UBj,                  &
+     &                             iLB, iUB, jLB, jUB)
 !***********************************************************************
 !
       USE mod_netcdf
@@ -2161,13 +2161,11 @@
 !
 !***********************************************************************
       SUBROUTINE wrt_extract_pio (ng, model, tile,                      &
-# ifdef ADJUST_BOUNDARY
-     &                        LBij, UBij,                               &
-     &                        ijLB, ijUB,                               &
-
-# endif
-     &                        LBi, UBi, LBj, UBj,                       &
-     &                        iLB, iUB, jLB, jUB)
+#  ifdef ADJUST_BOUNDARY
+     &                            LBij, UBij,                           &
+#  endif
+     &                            LBi, UBi, LBj, UBj,                   &
+     &                            iLB, iUB, jLB, jUB)
 !***********************************************************************
 !
       USE mod_pio_netcdf
@@ -2177,7 +2175,6 @@
       integer, intent(in) :: ng, model, tile
 #  ifdef ADJUST_BOUNDARY
       integer, intent(in) :: LBij, UBij
-      integer, intent(in) :: ijLB, ijUB
 #  endif
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: iLB, iUB, jLB, jUB
@@ -2556,17 +2553,11 @@
 !
       IF (ANY(Lobc(:,isFsur,ng))) THEN
         scale=1.0_dp
-        IF (XTR(ng)%pioVar(idSbry(isFsur))%dkind.eq.PIO_double) THEN
-          ioDesX => ioDesX_dp_r2dobc(ng)
-        ELSE
-          ioDesX => ioDesX_sp_r2dobc(ng)
-        END IF
         status=nf_fwrite2d_bry (ng, model, XTR(ng)%name,                &
      &                          XTR(ng)%pioFile,                        &
      &                          Vname(1,idSbry(isFsur)),                &
      &                          XTR(ng)%pioVar(idSbry(isFsur)),         &
      &                          XTR(ng)%Rindex,                         &
-     &                          ioDesX,                                 &
      &                          LBij, UBij, Nbrec(ng), scale,           &
      &                          BOUNDARY(ng) % zeta_obc(LBij:,:,:,      &
      &                                                  Lbout(ng)),     &
@@ -2736,17 +2727,11 @@
 !
       IF (ANY(Lobc(:,isUbar,ng))) THEN
         scale=1.0_dp
-        IF (XTR(ng)%pioVar(idSbry(isUbar))%dkind.eq.PIO_double) THEN
-          ioDesX => ioDesX_dp_u2dobc(ng)
-        ELSE
-          ioDesX => ioDesX_sp_u2dobc(ng)
-        END IF
         status=nf_fwrite2d_bry (ng, model, XTR(ng)%name,                &
      &                          XTR(ng)%pioFile,                        &
      &                          Vname(1,idSbry(isUbar)),                &
      &                          XTR(ng)%pioVar(idSbry(isUbar)),         &
      &                          XTR(ng)%Rindex,                         &
-     &                          ioDesX,                                 &
      &                          LBij, UBij, Nbrec(ng), scale,           &
      &                          BOUNDARY(ng) % ubar_obc(LBij:,:,:,      &
      &                                                  Lbout(ng)),     &
@@ -2917,17 +2902,11 @@
 !
       IF (ANY(Lobc(:,isVbar,ng))) THEN
         scale=1.0_dp
-        IF (XTR(ng)%pioVar(idSbry(isVbar))%dkind.eq.PIO_double) THEN
-          ioDesX => ioDesX_dp_v2dobc(ng)
-        ELSE
-          ioDesX => ioDesX_sp_v2dobc(ng)
-        END IF
         status=nf_fwrite2d_bry (ng, model, XTR(ng)%name,                &
      &                          XTR(ng)%pioFile,                        &
      &                          Vname(1,idSbry(isVbar)),                &
      &                          XTR(ng)%pioVar(idSbry(isVbar)),         &
      &                          XTR(ng)%Rindex,                         &
-     &                          ioDesX,                                 &
      &                          LBij, UBij, Nbrec(ng), scale,           &
      &                          BOUNDARY(ng) % vbar_obc(LBij:,:,:,      &
      &                                                  Lbout(ng)),     &
@@ -3087,17 +3066,11 @@
 !
       IF (ANY(Lobc(:,isUvel,ng))) THEN
         scale=1.0_dp
-        IF (XTR(ng)%pioVar(idSbry(isUvel))%dkind.eq.PIO_double) THEN
-          ioDesX => ioDesX_dp_u3dobc(ng)
-        ELSE
-          ioDesX => ioDesX_sp_u3dobc(ng)
-        END IF
         status=nf_fwrite3d_bry (ng, model, XTR(ng)%name,                &
      &                          XTR(ng)%pioFile,                        &
      &                          Vname(1,idSbry(isUvel)),                &
      &                          XTR(ng)%pioVar(idSbry(isUvel)),         &
      &                          XTR(ng)%Rindex,                         &
-     &                          ioDesX,                                 &
      &                          LBij, UBij, 1, N(ng), Nbrec(ng), scale, &
      &                          BOUNDARY(ng) % u_obc(LBij:,:,:,:,       &
      &                                               Lbout(ng)),        &
@@ -3178,17 +3151,11 @@
 !
       IF (ANY(Lobc(:,isVvel,ng))) THEN
         scale=1.0_dp
-        IF (XTR(ng)%pioVar(idSbry(isVvel))%dkind.eq.PIO_double) THEN
-          ioDesX => ioDesX_dp_v3dobc(ng)
-        ELSE
-          ioDesX => ioDesX_sp_v3dobc(ng)
-        END IF
         status=nf_fwrite3d_bry (ng, model, XTR(ng)%name,                &
      &                          XTR(ng)%pioFile,                        &
      &                          Vname(1,idSbry(isVvel)),                &
      &                          XTR(ng)%pioVar(idSbry(isVvel)),         &
      &                          XTR(ng)%Rindex,                         &
-     &                          ioDesX,                                 &
      &                          LBij, UBij, 1, N(ng), Nbrec(ng), scale, &
      &                          BOUNDARY(ng) % v_obc(LBij:,:,:,:,       &
      &                                               Lbout(ng)),        &
@@ -3438,22 +3405,16 @@
         IF (ANY(Lobc(:,isTvar(itrc),ng))) THEN
           scale=1.0_dp
           ifield=idSbry(isTvar(itrc))
-          IF (XTR(ng)%pioVar(ifield)%dkind.eq.PIO_double) THEN
-            ioDesX => ioDesX_dp_r3dobc(ng)
-          ELSE
-            ioDesX => ioDesX_sp_r3dobc(ng)
-          END IF
           status=nf_fwrite3d_bry (ng, model, XTR(ng)%name,              &
      &                            XTR(ng)%pioFile,                      &
      &                            Vname(1,ifield),                      &
      &                            XTR(ng)%pioVar(ifield),               &
      &                            XTR(ng)%Rindex,                       &
-     &                            ioDesX,                               &
      &                            LBij, UBij, 1, N(ng), Nbrec(ng),      &
      &                            scale,                                &
      &                            BOUNDARY(ng) % t_obc(LBij:,:,:,:,     &
      &                                                 Lbout(ng),itrc), &
-     &                          ExtractField = ExtractFlag(ng))
+     &                            ExtractField = ExtractFlag(ng))
           IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
             IF (Master) THEN
               WRITE (stdout,20) TRIM(Vname(1,ifield)), XTR(ng)%Rindex

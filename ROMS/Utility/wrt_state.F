@@ -761,7 +761,7 @@
           status=nf_fwrite3d_bry(ng, model, S(ng)%name, ncid,           &
      &                           Vname(1,idSbry(isVvel)),               &
      &                           S(ng)%Vid(idSbry(isVvel)),             &
-     &                           OutRec , v3dvar,                       &
+     &                           OutRec, v3dvar,                        &
      &                           LBij, UBij, 1, N(ng), Nbrec(ng), scale,&
      &                           BOUNDARY(ng) % ad_v_obc(LBij:,:,:,:,   &
      &                                                   Lbout(ng)),    &
@@ -771,7 +771,7 @@
           status=nf_fwrite3d_bry(ng, model, S(ng)%name, ncid,           &
      &                           Vname(1,idSbry(isVvel)),               &
      &                           S(ng)%Vid(idSbry(isVvel)),             &
-     &                           OutRec , v3dvar,                       &
+     &                           OutRec, v3dvar,                        &
      &                           LBij, UBij, 1, N(ng), Nbrec(ng), scale,&
      &                           BOUNDARY(ng) % ad_v_obc(LBij:,:,:,:,   &
      &                                                   Lbout(ng)),    &
@@ -1148,17 +1148,11 @@
       IF (ANY(Lobc(:,isFsur,ng))) THEN
         scale=1.0_dp
         ifield=idSbry(isFsur)
-        IF (S(ng)%pioVar(ifield)%dkind.eq.PIO_double) THEN
-          ioDesc => ioDesc_dp_r2dobc(ng)
-        ELSE
-          ioDesc => ioDesc_sp_r2dobc(ng)
-        END IF
 !
         IF (model.eq.iTLM) THEN
           status=nf_fwrite2d_bry(ng, model, S(ng)%name, pioFile,        &
      &                           Vname(1,ifield),                       &
      &                           S(ng)%pioVar(ifield), OutRec,          &
-     &                           ioDesc,                                &
      &                           LBij, UBij, Nbrec(ng), scale,          &
      &                           BOUNDARY(ng) % tl_zeta_obc(LBij:,:,:,  &
      &                                                      Lbout(ng)), &
@@ -1168,7 +1162,6 @@
           status=nf_fwrite2d_bry(ng, model, S(ng)%name, pioFile,        &
      &                           Vname(1,ifield),                       &
      &                           S(ng)%pioVar(ifield), OutRec,          &
-     &                           ioDesc,                                &
      &                           LBij, UBij, Nbrec(ng), scale,          &
      &                           BOUNDARY(ng) % ad_zeta_obc(LBij:,:,:,  &
      &                                                      Lbout(ng)), &
@@ -1245,17 +1238,11 @@
       IF (ANY(Lobc(:,isUbar,ng))) THEN
         scale=1.0_dp
         ifield=idSbry(isUbar)
-        IF (S(ng)%pioVar(ifield)%dkind.eq.PIO_double) THEN
-          ioDesc => ioDesc_dp_u2dobc(ng)
-        ELSE
-          ioDesc => ioDesc_sp_u2dobc(ng)
-        END IF
 !
         IF (model.eq.iTLM) THEN
           status=nf_fwrite2d_bry(ng, model, S(ng)%name, pioFile,        &
      &                           Vname(1,ifield),                       &
      &                           S(ng)%pioVar(ifield), OutRec,          &
-     &                           ioDesc,                                &
      &                           LBij, UBij, Nbrec(ng), scale,          &
      &                           BOUNDARY(ng) % tl_ubar_obc(LBij:,:,:,  &
      &                                                      Lbout(ng)), &
@@ -1265,7 +1252,6 @@
           status=nf_fwrite2d_bry(ng, model, S(ng)%name, pioFile,        &
      &                           Vname(1,ifield),                       &
      &                           S(ng)%pioVar(ifield), OutRec,          &
-     &                           ioDesc,                                &
      &                           LBij, UBij, Nbrec(ng), scale,          &
      &                           BOUNDARY(ng) % ad_ubar_obc(LBij:,:,:,  &
      &                                                      Lbout(ng)), &
@@ -1341,17 +1327,11 @@
       IF (ANY(Lobc(:,isVbar,ng))) THEN
         scale=1.0_dp
         ifield=idSbry(isVbar)
-        IF (S(ng)%pioVar(ifield)%dkind.eq.PIO_double) THEN
-          ioDesc => ioDesc_dp_v2dobc(ng)
-        ELSE
-          ioDesc => ioDesc_sp_v2dobc(ng)
-        END IF
 !
         IF (model.eq.iTLM) THEN
           status=nf_fwrite2d_bry(ng, model, S(ng)%name, pioFile,        &
      &                           Vname(1,ifield),                       &
      &                           S(ng)%pioVar(ifield), OutRec,          &
-     &                           ioDesc,                                &
      &                           LBij, UBij, Nbrec(ng), scale,          &
      &                           BOUNDARY(ng) % tl_vbar_obc(LBij:,:,:,  &
      &                                                      Lbout(ng)), &
@@ -1361,7 +1341,6 @@
           status=nf_fwrite2d_bry(ng, model, S(ng)%name, pioFile,        &
      &                           Vname(1,ifield),                       &
      &                           S(ng)%pioVar(ifield), OutRec,          &
-     &                           ioDesc,                                &
      &                           LBij, UBij, Nbrec(ng), scale,          &
      &                           BOUNDARY(ng) % ad_vbar_obc(LBij:,:,:,  &
      &                                                      Lbout(ng)), &
@@ -1538,17 +1517,11 @@
       IF (ANY(Lobc(:,isUvel,ng))) THEN
         scale=1.0_dp
         ifield=idSbry(isUvel)
-        IF (S(ng)%pioVar(ifield)%dkind.eq.PIO_double) THEN
-          ioDesc => ioDesc_dp_u3dobc(ng)
-        ELSE
-          ioDesc => ioDesc_sp_u3dobc(ng)
-        END IF
 !
         IF (model.eq.iTLM) THEN
           status=nf_fwrite3d_bry(ng, model, S(ng)%name, pioFile,        &
      &                           Vname(1,ifield),                       &
      &                           S(ng)%pioVar(ifield), OutRec,          &
-     &                           ioDesc,                                &
      &                           LBij, UBij, 1, N(ng), Nbrec(ng), scale,&
      &                           BOUNDARY(ng) % tl_u_obc(LBij:,:,:,:,   &
      &                                                   Lbout(ng)),    &
@@ -1558,7 +1531,6 @@
           status=nf_fwrite3d_bry(ng, model, S(ng)%name, pioFile,        &
      &                           Vname(1,ifield),                       &
      &                           S(ng)%pioVar(ifield), OutRec,          &
-     &                           ioDesc,                                &
      &                           LBij, UBij, 1, N(ng), Nbrec(ng), scale,&
      &                           BOUNDARY(ng) % ad_u_obc(LBij:,:,:,:,   &
      &                                                   Lbout(ng)),    &
@@ -1634,17 +1606,11 @@
       IF (ANY(Lobc(:,isVvel,ng))) THEN
         scale=1.0_dp
         ifield=idSbry(isVvel)
-        IF (S(ng)%pioVar(ifield)%dkind.eq.PIO_double) THEN
-          ioDesc => ioDesc_dp_v3dobc(ng)
-        ELSE
-          ioDesc => ioDesc_sp_v3dobc(ng)
-        END IF
 !
         IF (model.eq.iTLM) THEN
           status=nf_fwrite3d_bry(ng, model, S(ng)%name, pioFile,        &
      &                           Vname(1,ifield),                       &
      &                           S(ng)%pioVar(ifield), OutRec,          &
-     &                           ioDesc,                                &
      &                           LBij, UBij, 1, N(ng), Nbrec(ng), scale,&
      &                           BOUNDARY(ng) % ad_v_obc(LBij:,:,:,:,   &
      &                                                   Lbout(ng)),    &
@@ -1654,7 +1620,6 @@
           status=nf_fwrite3d_bry(ng, model, S(ng)%name, pioFile,        &
      &                           Vname(1,ifield),                       &
      &                           S(ng)%pioVar(ifield), OutRec,          &
-     &                           ioDesc,                                &
      &                           LBij, UBij, 1, N(ng), Nbrec(ng), scale,&
      &                           BOUNDARY(ng) % ad_v_obc(LBij:,:,:,:,   &
      &                                                   Lbout(ng)),    &
@@ -1734,17 +1699,12 @@
         IF (ANY(Lobc(:,isTvar(itrc),ng))) THEN
           scale=1.0_dp
           ifield=idSbry(isTvar(itrc))
-          IF (S(ng)%pioVar(ifield)%dkind.eq.PIO_double) THEN
-            ioDesc => ioDesc_dp_r3dobc(ng)
-          ELSE
-            ioDesc => ioDesc_sp_r3dobc(ng)
-          END IF
 !
           IF (model.eq.iTLM) THEN
             status=nf_fwrite3d_bry (ng, model, S(ng)%name, pioFile,     &
      &                              Vname(1,ifield),                    &
      &                              S(ng)%pioVar(ifield),               &
-     &                              OutRec, ioDesc,                     &
+     &                              OutRec,                             &
      &                              LBij, UBij, 1, N(ng), Nbrec(ng),    &
      &                              scale,                              &
      &                              BOUNDARY(ng) % tl_t_obc(LBij:,:,:,:,&
@@ -1755,7 +1715,7 @@
             status=nf_fwrite3d_bry (ng, model, S(ng)%name, pioFile,     &
      &                              Vname(1,ifield),                    &
      &                              S(ng)%pioVar(ifield),               &
-     &                              OutRec, ioDesc,                     &
+     &                              OutRec,                             &
      &                              LBij, UBij, 1, N(ng), Nbrec(ng),    &
      &                              scale,                              &
      &                              BOUNDARY(ng) % ad_t_obc(LBij:,:,:,:,&
