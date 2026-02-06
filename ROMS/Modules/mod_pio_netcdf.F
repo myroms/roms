@@ -216,16 +216,6 @@
       TYPE (IO_desc_t), pointer :: ioDesZ_sp_u3dvar(:) ! (i,j,Nslice)
       TYPE (IO_desc_t), pointer :: ioDesZ_sp_v3dvar(:) ! (i,j,Nslice)
 # endif
-# ifdef ADJUST_BOUNDARY
-      TYPE (IO_desc_t), pointer :: ioDesc_sp_r2dobc(:) ! (ij,4,Nbrec)
-      TYPE (IO_desc_t), pointer :: ioDesc_sp_u2dobc(:) ! (ij,4,Nbrec)
-      TYPE (IO_desc_t), pointer :: ioDesc_sp_v2dobc(:) ! (ij,4,Nbrec)
-#  ifdef SOLVE3D
-      TYPE (IO_desc_t), pointer :: ioDesc_sp_r3dobc(:) ! (ij,N,4,Nbrec)
-      TYPE (IO_desc_t), pointer :: ioDesc_sp_u3dobc(:) ! (ij,N,4,Nbrec)
-      TYPE (IO_desc_t), pointer :: ioDesc_sp_v3dobc(:) ! (ij,N,4,Nbrec)
-#  endif
-# endif
 # ifdef ADJUST_STFLUX
       TYPE (IO_desc_t), pointer :: ioDesc_sp_r2dfrc(:) ! (i,j,Nfrec)
 # endif
@@ -263,16 +253,6 @@
       TYPE (IO_desc_t), pointer :: ioDesZ_dp_u3dvar(:) ! (i,j,Nslice)
       TYPE (IO_desc_t), pointer :: ioDesZ_dp_v3dvar(:) ! (i,j,Nslice)
 # endif
-# ifdef ADJUST_BOUNDARY
-      TYPE (IO_desc_t), pointer :: ioDesc_dp_r2dobc(:) ! (ij,4,Nbrec)
-      TYPE (IO_desc_t), pointer :: ioDesc_dp_u2dobc(:) ! (ij,4,Nbrec)
-      TYPE (IO_desc_t), pointer :: ioDesc_dp_v2dobc(:) ! (ij,4,Nbrec)
-#  ifdef SOLVE3D
-      TYPE (IO_desc_t), pointer :: ioDesc_dp_r3dobc(:) ! (ij,N,4,Nbrec)
-      TYPE (IO_desc_t), pointer :: ioDesc_dp_u3dobc(:) ! (ij,N,4,Nbrec)
-      TYPE (IO_desc_t), pointer :: ioDesc_dp_v3dobc(:) ! (ij,N,4,Nbrec)
-#  endif
-# endif
 # ifdef ADJUST_STFLUX
       TYPE (IO_desc_t), pointer :: ioDesc_dp_r2dfrc(:) ! (i,j,Nfrec)
 # endif
@@ -309,16 +289,6 @@
       TYPE (IO_desc_t), pointer :: ioDesX_sp_v3dvar(:) ! (i,j,N)
       TYPE (IO_desc_t), pointer :: ioDesX_sp_w3dvar(:) ! (i,j,0:N)
 #  endif
-#  ifdef ADJUST_BOUNDARY
-      TYPE (IO_desc_t), pointer :: ioDesX_sp_r2dobc(:) ! (ij,4,Nbrec)
-      TYPE (IO_desc_t), pointer :: ioDesX_sp_u2dobc(:) ! (ij,4,Nbrec)
-      TYPE (IO_desc_t), pointer :: ioDesX_sp_v2dobc(:) ! (ij,4,Nbrec)
-#   ifdef SOLVE3D
-      TYPE (IO_desc_t), pointer :: ioDesX_sp_r3dobc(:) ! (ij,N,4,Nbrec)
-      TYPE (IO_desc_t), pointer :: ioDesX_sp_u3dobc(:) ! (ij,N,4,Nbrec)
-      TYPE (IO_desc_t), pointer :: ioDesX_sp_v3dobc(:) ! (ij,N,4,Nbrec)
-#   endif
-#  endif
 #  ifdef ADJUST_STFLUX
       TYPE (IO_desc_t), pointer :: ioDesX_sp_r2dfrc(:) ! (i,j,Nfrec)
 #  endif
@@ -347,16 +317,6 @@
       TYPE (IO_desc_t), pointer :: ioDesX_dp_u3dvar(:) ! (i,j,N)
       TYPE (IO_desc_t), pointer :: ioDesX_dp_v3dvar(:) ! (i,j,N)
       TYPE (IO_desc_t), pointer :: ioDesX_dp_w3dvar(:) ! (i,j,0:N)
-#  endif
-#  ifdef ADJUST_BOUNDARY
-      TYPE (IO_desc_t), pointer :: ioDesX_dp_r2dobc(:) ! (ij,4,Nbrec)
-      TYPE (IO_desc_t), pointer :: ioDesX_dp_u2dobc(:) ! (ij,4,Nbrec)
-      TYPE (IO_desc_t), pointer :: ioDesX_dp_v2dobc(:) ! (ij,4,Nbrec)
-#   ifdef SOLVE3D
-      TYPE (IO_desc_t), pointer :: ioDesX_dp_r3dobc(:) ! (ij,N,4,Nbrec)
-      TYPE (IO_desc_t), pointer :: ioDesX_dp_u3dobc(:) ! (ij,N,4,Nbrec)
-      TYPE (IO_desc_t), pointer :: ioDesX_dp_v3dobc(:) ! (ij,N,4,Nbrec)
-#   endif
 #  endif
 #  ifdef ADJUST_STFLUX
       TYPE (IO_desc_t), pointer :: ioDesX_dp_r2dfrc(:) ! (i,j,Nfrec)

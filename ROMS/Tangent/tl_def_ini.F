@@ -486,7 +486,7 @@
           Vinfo( 3)=Vname(3,ifield)
           Vinfo(14)=Vname(4,ifield)
           Vinfo(16)=Vname(1,idtime)
-          Vinfo(21)=Vname(6,ifield)
+          Vinfo(21)=Vname(6,idFsur)
           Aval(5)=REAL(Iinfo(1,ifield,ng),r8)
           status=def_var(ng, iTLM, ITL(ng)%ncid, ITL(ng)%Vid(ifield),   &
      &                   NF_FOUT, 4, t2dobc, Aval, Vinfo, ncname,       &
@@ -523,7 +523,7 @@
           Vinfo( 3)=Vname(3,ifield)
           Vinfo(14)=Vname(4,ifield)
           Vinfo(16)=Vname(1,idtime)
-          Vinfo(21)=Vname(6,ifield)
+          Vinfo(21)=Vname(6,idUbar)
           Aval(5)=REAL(Iinfo(1,ifield,ng),r8)
           status=def_var(ng, iTLM, ITL(ng)%ncid, ITL(ng)%Vid(ifield),   &
      &                   NF_FOUT, 4, t2dobc, Aval, Vinfo, ncname,       &
@@ -560,7 +560,7 @@
           Vinfo( 3)=Vname(3,ifield)
           Vinfo(14)=Vname(4,ifield)
           Vinfo(16)=Vname(1,idtime)
-          Vinfo(21)=Vname(6,ifield)
+          Vinfo(21)=Vname(6,idVbar)
           Aval(5)=REAL(Iinfo(1,ifield,ng),r8)
           status=def_var(ng, iTLM, ITL(ng)%ncid, ITL(ng)%Vid(ifield),   &
      &                   NF_FOUT, 4, t2dobc, Aval, Vinfo, ncname,       &
@@ -635,7 +635,7 @@
           Vinfo( 3)=Vname(3,ifield)
           Vinfo(14)=Vname(4,ifield)
           Vinfo(16)=Vname(1,idtime)
-          Vinfo(21)=Vname(6,ifield)
+          Vinfo(21)=Vname(6,idUvel)
           Aval(5)=REAL(Iinfo(1,ifield,ng),r8)
           status=def_var(ng, iTLM, ITL(ng)%ncid, ITL(ng)%Vid(ifield),   &
      &                   NF_FOUT, 5, t3dobc, Aval, Vinfo, ncname,       &
@@ -672,7 +672,7 @@
           Vinfo( 3)=Vname(3,ifield)
           Vinfo(14)=Vname(4,ifield)
           Vinfo(16)=Vname(1,idtime)
-          Vinfo(21)=Vname(6,ifield)
+          Vinfo(21)=Vname(6,idVvel)
           Aval(5)=REAL(Iinfo(1,ifield,ng),r8)
           status=def_var(ng, iTLM, ITL(ng)%ncid, ITL(ng)%Vid(ifield),   &
      &                   NF_FOUT, 5, t3dobc, Aval, Vinfo, ncname,       &
@@ -726,7 +726,7 @@
               END IF
             END DO
 #   endif
-            Vinfo(21)=Vname(6,ifield)
+            Vinfo(21)=Vname(6,idTvar(itrc))
             Aval(5)=REAL(Iinfo(1,ifield,ng),r8)
             status=def_var(ng, iTLM, ITL(ng)%ncid, ITL(ng)%Vid(ifield), &
      &                     NF_FOUT, 5, t3dobc, Aval, Vinfo, ncname,     &
@@ -1463,7 +1463,7 @@
           Vinfo( 3)=Vname(3,ifield)
           Vinfo(14)=Vname(4,ifield)
           Vinfo(16)=Vname(1,idtime)
-          Vinfo(21)=Vname(6,ifield)
+          Vinfo(21)=Vname(6,idFsur)
           Aval(5)=REAL(Iinfo(1,ifield,ng),r8)
           ITL(ng)%pioVar(ifield)%dkind=PIO_FOUT
           ITL(ng)%pioVar(ifield)%gtype=r2dobc
@@ -1508,7 +1508,7 @@
           Vinfo( 3)=Vname(3,ifield)
           Vinfo(14)=Vname(4,ifield)
           Vinfo(16)=Vname(1,idtime)
-          Vinfo(21)=Vname(6,ifield)
+          Vinfo(21)=Vname(6,idUbar)
           Aval(5)=REAL(Iinfo(1,ifield,ng),r8)
           ITL(ng)%pioVar(ifield)%dkind=PIO_FOUT
           ITL(ng)%pioVar(ifield)%gtype=u2dobc
@@ -1553,7 +1553,7 @@
           Vinfo( 3)=Vname(3,ifield)
           Vinfo(14)=Vname(4,ifield)
           Vinfo(16)=Vname(1,idtime)
-          Vinfo(21)=Vname(6,ifield)
+          Vinfo(21)=Vname(6,idVbar)
           Aval(5)=REAL(Iinfo(1,ifield,ng),r8)
           ITL(ng)%pioVar(ifield)%dkind=PIO_FOUT
           ITL(ng)%pioVar(ifield)%gtype=v2dobc
@@ -1644,7 +1644,7 @@
           Vinfo( 3)=Vname(3,ifield)
           Vinfo(14)=Vname(4,ifield)
           Vinfo(16)=Vname(1,idtime)
-          Vinfo(21)=Vname(6,ifield)
+          Vinfo(21)=Vname(6,idUvel)
           Aval(5)=REAL(Iinfo(1,ifield,ng),r8)
           ITL(ng)%pioVar(ifield)%dkind=PIO_FOUT
           ITL(ng)%pioVar(ifield)%gtype=u3dobc
@@ -1689,7 +1689,7 @@
           Vinfo( 3)=Vname(3,ifield)
           Vinfo(14)=Vname(4,ifield)
           Vinfo(16)=Vname(1,idtime)
-          Vinfo(21)=Vname(6,ifield)
+          Vinfo(21)=Vname(6,idVvel)
           Aval(5)=REAL(Iinfo(1,ifield,ng),r8)
           ITL(ng)%pioVar(ifield)%dkind=PIO_FOUT
           ITL(ng)%pioVar(ifield)%gtype=v3dobc
@@ -1751,7 +1751,7 @@
               END IF
             END DO
 #   endif
-            Vinfo(21)=Vname(6,ifield)
+            Vinfo(21)=Vname(6,idTvar(itrc))
             Aval(5)=REAL(Iinfo(1,ifield,ng),r8)
             ITL(ng)%pioVar(ifield)%dkind=PIO_FOUT
             ITL(ng)%pioVar(ifield)%gtype=r3dobc
