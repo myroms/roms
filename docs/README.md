@@ -8,6 +8,10 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
+# Change Logs
+
+[ROMS Change Logs](ROMS_ChangeLog.md)
+
 # Overview
 
 **ROMS** solves the free-surface, hydrostatic, flux form of the primitive

@@ -33,9 +33,6 @@
 #endif
 !     tindex       NetCDF time record index to write (integer)         !
 !     gtype        Grid type (integer)                                 !
-#if defined PIO_LIB && defined DISTRIBUTE
-!or   pioDesc      IO data decomposition descriptor, TYPE(IO_desc_t)   !
-#endif
 !     LBij         IJ-dimension Lower bound (integer)                  !
 !     UBij         IJ-dimension Upper bound (integer)                  !
 !     Nrec         Number of boundary records (integer)                !
@@ -358,7 +355,7 @@
 !***********************************************************************
       FUNCTION pio_fread2d_bry (ng, model, ncname, pioFile,             &
      &                          ncvname, pioVar,                        &
-     &                          tindex, pioDesc,                        &
+     &                          tindex,                                 &
      &                          LBij, UBij, Nrec,                       &
      &                          Ascl, Amin, Amax,                       &
      &                          Abry, checksum)  RESULT(status)
@@ -387,7 +384,6 @@
 # endif
 !
       TYPE (File_desc_t), intent(inout) :: pioFile
-      TYPE (IO_Desc_t),   intent(inout) :: pioDesc
       TYPE (My_VarDesc),  intent(inout) :: pioVar
 !
 !  Local variable declarations.
