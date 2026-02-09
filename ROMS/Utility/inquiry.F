@@ -92,7 +92,7 @@
       logical :: foundit, got_var, got_time, special
 !
       integer :: Fcount, Nrec, Tid, Tindex, Trec, Vid, Vtype
-      integer :: i, ifile, lstr, my_ncid, nvatt, nvdim
+      integer :: i, ic, ifile, lstr, my_ncid, nvatt, nvdim
       integer :: Vsize(4)
 !
       real(dp) :: Clength, Tend, Tmax, Tmin, Tmono, Tscale, Tstr, Tval
@@ -100,7 +100,7 @@
 !
       character (len=1  ), parameter :: blank = ' '
       character (len=3  ) :: label
-      character (len=256) :: Fname
+      character (len=256) :: Fname, Pname
 
       character (len=*), parameter :: MyFile =                          &
      &  __FILE__//", inquiry_nf90"
@@ -136,6 +136,8 @@
       IF (Lmulti) THEN
         DO ifile=1,nfiles
           IF (TRIM(Cinfo(ifield,ng)).eq.TRIM(S(ifile)%name)) THEN
+            ic=S(ifile)%Fcount
+            Pname=TRIM(S(ifile)%files(ic))            ! previous file
             IF (job.gt.0) THEN
               Fcount=S(ifile)%Fcount+1
             ELSE
@@ -152,7 +154,7 @@
             END IF
             S(ifile)%Fcount=Fcount
             S(ifile)%name=TRIM(S(ifile)%files(Fcount))
-            CALL netcdf_close (ng, model, ncid)
+            CALL netcdf_close (ng, model, ncid, Pname, .FALSE.)
             IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
             IF (label(1:3).eq.'FRC') THEN
               FRCids(ifile,ng)=-1
@@ -677,7 +679,7 @@
       logical :: foundit, got_var, got_time, special
 !
       integer :: Fcount, Nrec, Tindex, Trec, Vtype
-      integer :: i, ifile, lstr, nvatt, nvdim
+      integer :: i, ic, ifile, lstr, nvatt, nvdim
       integer :: Vsize(4)
 !
       real(dp) :: Clength, Tend, Tmax, Tmin, Tmono, Tscale, Tstr, Tval
@@ -685,7 +687,7 @@
 !
       character (len=1  ), parameter :: blank = ' '
       character (len=3  ) :: label
-      character (len=256) :: Fname
+      character (len=256) :: Fname, Pname
 
       character (len=*), parameter :: MyFile =                          &
      &  __FILE__//", inquiry_pio"
@@ -724,6 +726,8 @@
       IF (Lmulti) THEN
         DO ifile=1,nfiles
           IF (TRIM(Cinfo(ifield,ng)).eq.TRIM(S(ifile)%name)) THEN
+            ic=S(ifile)%Fcount
+            Pname=TRIM(S(ifile)%files(ic))            ! previous file
             IF (job.gt.0) THEN
               Fcount=S(ifile)%Fcount+1
             ELSE
@@ -740,7 +744,7 @@
             END IF
             S(ifile)%Fcount=Fcount
             S(ifile)%name=TRIM(S(ifile)%files(Fcount))
-            CALL pio_netcdf_close (ng, model, pioFile)
+            CALL pio_netcdf_close (ng, model, pioFile, Pname, .FALSE.)
             IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
             IF (label(1:3).eq.'FRC') THEN
               FRCdesc(ifile,ng)%fh=-1

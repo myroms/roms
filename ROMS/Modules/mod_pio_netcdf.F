@@ -8884,13 +8884,10 @@
           my_ncname(i:i)=' '
         END DO
 !
+!  Get filename, if any.
+!
         IF (.not.PRESENT(ncname)) THEN
-!
-!  Get filename, if any. It will be nice if there is a function in
-!  the NetCDF library to do this. Fortunately, the filename is
-!  written as a global attribute.
-!
-          status=PIO_get_att(pioFile, PIO_global, 'file', my_ncname)
+          my_ncname='Unknown'
         ELSE
           my_ncname=TRIM(ncname)
         END IF
