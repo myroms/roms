@@ -105,6 +105,22 @@
           CASE ('idW_ro')
             idW_ro=varid
             iFice(icW_io)=idW_io
+          CASE ('idEnth')
+            idEnth=varid
+            iSice(isEnth)=idEnth
+          CASE ('idUevp')
+            idUevp=varid
+            iSice(isUevp)=idUevp
+          CASE ('idVevp')
+            idVevp=varid
+            iSice(isVevp)=idVevp
+          CASE ('idQcon')
+            idQcon=varid
+            iFice(icQcon)=idQcon
+          CASE ('idQrhs')
+            idQrhs=varid
+            iFice(icQrhs)=idQrhs
+
 /*
 **  Ice model open boundary conditions.
 */
@@ -207,3 +223,39 @@
             iceOBC(isouth,isVice)=varid
           CASE ('isVice(inorth)')
             iceOBC(inorth,isVice)=varid
+
+          CASE ('isEnth(iwest)')
+            iceOBC(iwest,isEnth)=varid
+          CASE ('isEnth(ieast)')
+            iceOBC(ieast,isEnth)=varid
+          CASE ('isEnth(isouth)')
+            iceOBC(isouth,isEnth)=varid
+          CASE ('isEnth(inorth)')
+            iceOBC(inorth,isEnth)=varid
+
+          CASE ('isHage(iwest)')
+            iceOBC(iwest,isHage)=varid
+          CASE ('isHage(ieast)')
+            iceOBC(ieast,isHage)=varid
+          CASE ('isHage(isouth)')
+            iceOBC(isouth,isHage)=varid
+          CASE ('isHage(inorth)')
+            iceOBC(inorth,isHage)=varid
+
+          CASE ('isUevp(iwest)')
+            iceOBC(iwest,isUevp)=varid
+          CASE ('isUevp(ieast)')
+            iceOBC(ieast,isUevp)=varid
+          CASE ('isUevp(isouth)')
+            iceOBC(isouth,isUevp)=varid
+          CASE ('isUevp(inorth)')
+            iceOBC(inorth,isUevp)=varid
+
+          CASE ('isVevp(iwest)')
+            iceOBC(iwest,isVevp)=varid
+          CASE ('isVevp(ieast)')
+            iceOBC(ieast,isVevp)=varid
+          CASE ('isVevp(isouth)')
+            iceOBC(isouth,isVevp)=varid
+          CASE ('isVevp(inorth)')
+            iceOBC(inorth,isVevp)=varid

@@ -87,6 +87,8 @@
               Npts=load_r(Nval, Rval, Ngrids, Cd_io)
             CASE ('Astrength')
               Npts=load_r(Nval, Rval, Ngrids, Astrength)
+            CASE ('Pstar')
+              Npts=load_r(Nval, Rval, Ngrids, Pstar)
             CASE ('zetaMin')
               Npts=load_r(Nval, Rval, Ngrids, zetaMin)
             CASE ('zetaMax')
@@ -293,6 +295,20 @@
                 RETURN
               END IF
               Npts=load_l(Nval, Cval, Ngrids, Hout(idW_ro,:))
+            CASE ('Hout(idQcon)')
+              IF (idQcon.eq.0) THEN
+                IF (Master) WRITE (out,80) 'idQcon'
+                exit_flag=5
+                RETURN
+              END IF
+              Npts=load_l(Nval, Cval, Ngrids, Hout(idQcon,:))
+            CASE ('Hout(idQrhs)')
+              IF (idQrhs.eq.0) THEN
+                IF (Master) WRITE (out,80) 'idQrhs'
+                exit_flag=5
+                RETURN
+              END IF
+              Npts=load_l(Nval, Cval, Ngrids, Hout(idQrhs,:))
             CASE ('Qout(idUice)')
               Npts=load_l(Nval, Cval, Ngrids, Qout(idUice,:))
             CASE ('Qout(idVice)')

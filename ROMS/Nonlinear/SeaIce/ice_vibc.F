@@ -18,6 +18,7 @@
       USE mod_grid
       USE mod_ice
       USE mod_scalars
+      USE mod_boundary
 !
       implicit none
 !
@@ -142,7 +143,7 @@
      &                         (cff+Cx)
             IF (LBC(iwest,ibICE(isVice),ng)%nudging) THEN
               vi(Istr-1,j,liunw)=vi(Istr-1,j,liunw)+                    &
-     &                           tau*(ICE_LOBC(isVice,ng)%ice_west(j)-  &
+     &                           tau*(BOUNDARY(ng)%ice_west(isVice,j)-  &
      &                                vi(Istr-1,j,know))
             END IF
 # ifdef MASKING
@@ -155,7 +156,7 @@
 !
         ELSE IF (LBC(iwest,ibICE(isVice),ng)%clamped) THEN
           DO j=JstrP,Jend
-            vi(Istr-1,j,liunw)=ICE_LOBC(isVice,ng)%ice_west(j)
+            vi(Istr-1,j,liunw)=BOUNDARY(ng)%ice_west(isVice,j)
 # ifdef MASKING
             vi(Istr-1,j,liunw)=vi(Istr-1,j,liunw)*                      &
      &                         GRID(ng)%vmask(Istr-1,j)
@@ -252,7 +253,7 @@
      &                         (cff+Cx)
             IF (LBC(ieast,ibICE(isVice),ng)%nudging) THEN
               vi(Iend+1,j,liunw)=vi(Iend+1,j,liunw)+                    &
-     &                           tau*(ICE_LOBC(isVice,ng)%ice_east(j)-  &
+     &                           tau*(BOUNDARY(ng)%ice_east(isVice,j)-  &
      &                                vi(Iend+1,j,know))
             END IF
 # ifdef MASKING
@@ -265,7 +266,7 @@
 !
         ELSE IF (LBC(ieast,ibICE(isVice),ng)%clamped) THEN
           DO j=JstrP,Jend
-            vi(Iend+1,j,liunw)=ICE_LOBC(isVice,ng)%ice_east(j)
+            vi(Iend+1,j,liunw)=BOUNDARY(ng)%ice_east(isVice,j)
 # ifdef MASKING
             vi(Iend+1,j,liunw)=vi(Iend+1,j,liunw)*                      &
      &                         GRID(ng)%vmask(Iend+1,j)
@@ -362,7 +363,7 @@
      &                       (cff+Ce)
             IF (LBC(isouth,ibICE(isVice),ng)%nudging) THEN
               vi(i,Jstr,liunw)=vi(i,Jstr,liunw)+                        &
-     &                         tau*(ICE_LOBC(isVice,ng)%ice_south(i)-   &
+     &                         tau*(BOUNDARY(ng)%ice_south(isVice,i)-   &
      &                              vi(i,Jstr,know))
             END IF
 # ifdef MASKING
@@ -375,7 +376,7 @@
 !
         ELSE IF (LBC(isouth,ibICE(isVice),ng)%clamped) THEN
           DO i=Istr,Iend
-            vi(i,Jstr,liunw)=ICE_LOBC(isVice,ng)%ice_south(i)
+            vi(i,Jstr,liunw)=BOUNDARY(ng)%ice_south(isVice,i)
 # ifdef MASKING
             vi(i,Jstr,liunw)=vi(i,Jstr,liunw)*                          &
      &                       GRID(ng)%vmask(i,Jstr)
@@ -456,7 +457,7 @@
      &                         (cff+Ce)
             IF (LBC(inorth,ibICE(isVice),ng)%nudging) THEN
               vi(i,Jend+1,liunw)=vi(i,Jend+1,liunw)+                    &
-     &                           tau*(ICE_LOBC(isVice,ng)%ice_north(i)- &
+     &                           tau*(BOUNDARY(ng)%ice_north(isVice,i)- &
      &                                vi(i,Jend+1,know))
             END IF
 # ifdef MASKING
@@ -469,7 +470,7 @@
 !
         ELSE IF (LBC(inorth,ibICE(isVice),ng)%clamped) THEN
           DO i=Istr,Iend
-            vi(i,Jend+1,liunw)=ICE_LOBC(isVice,ng)%ice_north(i)
+            vi(i,Jend+1,liunw)=BOUNDARY(ng)%ice_north(isVice,i)
 # ifdef MASKING
             vi(i,Jend+1,liunw)=vi(i,Jend+1,liunw)*                      &
      &                         GRID(ng)%vmask(i,Jend)
