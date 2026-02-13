@@ -740,8 +740,9 @@
               Npts=load_i(Nval, Rval, Ngrids, ndefXTR)
             CASE ('NQCK')
               Npts=load_i(Nval, Rval, Ngrids, nQCK)
-#if defined FORWARD_FLUXES && \
-   (defined BULK_FLUXES    || defined FRC_COUPLING)
+#if !(defined GRID_EXTRACT   && defined SPLIT_EXECUTABLE) && \
+      defined FORWARD_FLUXES && \
+     (defined BULK_FLUXES    || defined FRC_COUPLING)
               DO ng=1,Ngrids
                 IF (nQCK(ng).le.0) THEN
                   WRITE (text,'(a,i2.2,a)') 'nQCK(', ng, ') = '

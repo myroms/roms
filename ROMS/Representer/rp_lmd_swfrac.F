@@ -72,12 +72,12 @@
 !
 !-----------------------------------------------------------------------
 !  Use Paulson and Simpson (1977) two wavelength bands solar
-!  absorption model.
+!  absorption model. Jerlov water type, Jwtype, has values 1 to 9.
 !-----------------------------------------------------------------------
 !
       DO j=Jstr,Jend
         DO i=Istr,Iend
-          Jindex=INT(MIXING(ng)%Jwtype(i,j))
+          Jindex=MAX(1, MIN(INT(MIXING(ng)%Jwtype(i,j)), 9))
           fac1(i)=Zscale/lmd_mu1(Jindex)
           fac2(i)=Zscale/lmd_mu2(Jindex)
           fac3(i)=lmd_r1(Jindex)
