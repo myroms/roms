@@ -14,6 +14,12 @@
 !  are replaced by the _FillValue in the output files to  facilitate   !
 !  post-processing with generic tools.                                 !
 !                                                                      !
+!  Note the *_full masks are added to simplify logic in applications   !
+!  involving wetting and drying, including the time-independent and    !
+!  time-dependent parts of the mask. They are onlu used for output     !
+!  and umask_full and vmask_full require a different rationale to      !
+!  properly address the normal component when LandFill=TRUE.           !
+!                                                                      !
 !  If point sources, insure that masks at point source locations are   !
 !  set to water to avoid masking with _FillValue at those locations.   !
 # ifdef WET_DRY
@@ -203,14 +209,26 @@
           rmask_full(i,j)=rmask(i,j)
         END DO
       END DO
+!
+!  The U- and V-grid variables with LandFill=.TRUE. require a
+!  different rationale to properly address the normal component. 
+!
       DO j=JstrT,JendT
         DO i=IstrP,IendT
-          umask_full(i,j)=umask(i,j)
+          IF ((rmask(i-1,j).eq.0.0_r8).or.(rmask(i,j).eq.0.0_r8)) THEN
+            umask_full(i,j)=0.0_r8
+          ELSE
+            umask_full(i,j)=1.0_r8
+          END IF
         END DO
       END DO
       DO j=JstrP,JendT
         DO i=IstrT,IendT
-          vmask_full(i,j)=vmask(i,j)
+          IF ((rmask(i,j-1).eq.0.0_r8).or.(rmask(i,j).eq.0.0_r8)) THEN
+            vmask_full(i,j)=0.0_r8
+          ELSE
+            vmask_full(i,j)=1.0_r8
+          END IF
         END DO
       END DO
 !
