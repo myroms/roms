@@ -2120,6 +2120,13 @@
       idriver=idriver+1
 #endif
 #if defined PIO_LIB && defined DISTRIBUTE
+# ifdef PIO_DELAYED_SYNC
+!
+      IF (Master) WRITE (stdout,20) 'PIO_DELAYED_SYNC',                  &
+     &   'Delaying file disk synchonization until calling PIO_closefile'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+18)=' PIO_DELAYED_SYNC,'
+# endif
 !
       IF (Master) WRITE (stdout,20) 'PIO_LIB',                          &
      &   'Using Parallel-IO from the PIO library'

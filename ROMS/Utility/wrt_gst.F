@@ -592,6 +592,8 @@
      &                          SworkL(:,ng), (/1/), (/LworkL/),        &
      &                          pioFile = GST(ng)%pioFile)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+
+#  ifndef PIO_DELAYED_SYNC
 !
 !-----------------------------------------------------------------------
 !  Synchronize GST checkpointing NetCDF file to disk so the file
@@ -600,6 +602,7 @@
 !
       CALL pio_netcdf_sync (ng, model, GST(ng)%name, GST(ng)%pioFile)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+#  endif
 !
   10  FORMAT (2x,'WRT_GST_PIO      - writing GST checkpointing fields', &
      &        ' at iteration: ', i0)

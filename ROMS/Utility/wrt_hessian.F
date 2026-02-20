@@ -1080,6 +1080,7 @@
         RETURN
       END IF
 #  endif
+#  ifndef PIO_DELAYED_SYNC
 !
 !-----------------------------------------------------------------------
 !  Synchronize Hessian eigenvectors NetCDF file to disk to allow other
@@ -1088,6 +1089,7 @@
 !
       CALL pio_netcdf_sync (ng, iADM, HSS(ng)%name, HSS(ng)%pioFile)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+#  endif
 !
   10  FORMAT (2x,'WRT_HESSIAN_PIO  - writing Hessian', t42,            &
 #  ifdef SOLVE3D

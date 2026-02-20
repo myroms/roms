@@ -1017,6 +1017,7 @@
       END IF
 #   endif
 #  endif
+#  ifndef PIO_DELAYED_SYNC
 !
 !-----------------------------------------------------------------------
 !  Synchronize restart NetCDF file to disk.
@@ -1024,6 +1025,7 @@
 !
       CALL pio_netcdf_sync (ng, iNLM, DAI(ng)%name, DAI(ng)%pioFile)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+#  endif
 !
   10  FORMAT (2x,'WRT_DAI_PIO      - writing DA INI/RST', t42,          &
 #  ifdef SOLVE3D

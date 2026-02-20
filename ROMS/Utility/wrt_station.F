@@ -1984,13 +1984,17 @@
     &                           Sout, STA)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #  endif
+
+#  ifndef PIO_DELAYED_SYNC
+
 !
 !-----------------------------------------------------------------------
 !  Synchronize stations NetCDF file to disk.
 !-----------------------------------------------------------------------
 !
       CALL pio_netcdf_sync (ng, model, STA(ng)%name, STA(ng)%pioFile)
-
+#  endif
+!
       RETURN
       END SUBROUTINE wrt_station_pio
 # endif

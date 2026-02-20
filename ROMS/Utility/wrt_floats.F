@@ -614,12 +614,14 @@
      &                          pioVar = FLT(ng)%pioVar(idwsin)%vd)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #  endif
+#  ifndef PIO_DELAYED_SYNC
 !
 !-----------------------------------------------------------------------
 !  Synchronize floats NetCDF file to disk.
 !-----------------------------------------------------------------------
 !
       CALL pio_netcdf_sync (ng, iNLM, FLT(ng)%name, FLT(ng)%pioFile)
+#  endif
 !
       RETURN
       END SUBROUTINE wrt_floats_pio

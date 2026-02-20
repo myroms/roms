@@ -4001,6 +4001,7 @@
     &                   Qout, QCK)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 # endif
+# ifndef PIO_DELAYED_SYNC
 !
 !-----------------------------------------------------------------------
 !  Synchronize quicksave NetCDF file to disk to allow other processes
@@ -4009,6 +4010,7 @@
 !
       CALL pio_netcdf_sync (ng, model, QCK(ng)%name, QCK(ng)%pioFile)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+# endif
 !
   10  FORMAT (2x,'WRT_QUICK_PIO    - writing quicksave', t42,           &
 # ifdef SOLVE3D

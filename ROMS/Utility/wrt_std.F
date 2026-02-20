@@ -561,6 +561,7 @@
         END IF
       END DO
 #  endif
+#  ifndef PIO_DELAYED_SYNC
 !
 !-----------------------------------------------------------------------
 !  Synchronize Background standard deviation NetCDF file to disk to
@@ -570,6 +571,7 @@
       CALL pio_netcdf_sync (ng, iNLM, STD(5,ng)%name,                   &
      &                      STD(5,ng)%pioFile)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+#  endif
 !
   10  FORMAT (2x,'WRT_STD_PIO      - writing standard deviation', t42,  &
 #  ifdef SOLVE3D

@@ -2549,6 +2549,7 @@
      &                    Hout, RST)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 # endif
+# ifndef PIO_DELAYED_SYNC
 !
 !-----------------------------------------------------------------------
 !  Synchronize restart NetCDF file to disk.
@@ -2556,6 +2557,7 @@
 !
       CALL pio_netcdf_sync (ng, model, RST(ng)%name, RST(ng)%pioFile)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+# endif
 !
   10  FORMAT (2x,'WRT_RST_PIO      - writing re-start', t42,            &
 # ifdef SOLVE3D

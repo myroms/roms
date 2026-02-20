@@ -1249,6 +1249,8 @@
         WRITE (stdout,70) TRIM(INPncname)
         RETURN
       END IF
+
+#  ifndef PIO_DELAYED_SYNC
 !
 !-----------------------------------------------------------------------
 !  Synchronize impulse NetCDF file to disk to allow other processes
@@ -1257,6 +1259,7 @@
 !
       CALL pio_netcdf_sync (ng, model, INPncname, TLF(ng)%pioFile)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+#  endif
 !
   10  FORMAT (2x,'WRT_IMPULSE_PIO  - processing convolved adjoint',     &
      &        ' impulses, records: 1 to ',i0,/,21x,'file: ',a)

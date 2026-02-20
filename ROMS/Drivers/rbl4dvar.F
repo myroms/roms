@@ -104,6 +104,9 @@
 # ifdef STD_MODEL
       USE background_std_mod, ONLY : background_std
 # endif
+# if defined PIO_LIB && defined PIO_DELAYED_SYNC && defined DISTRIBUTE
+      USE close_io_mod,       ONLY : close_forward
+# endif
 # ifndef RPCG
       USE congrad_mod,        ONLY : congrad
 #  ifdef SPLIT_4DVAR
@@ -605,6 +608,15 @@
           FOURDVAR(ng)%NLPenalty=0.0_r8
         END DO
       END IF
+
+# if defined PIO_LIB && defined PIO_DELAYED_SYNC && defined DISTRIBUTE
+!
+!  If delayed PIO file synchronization for maximize performance, close
+!  forward trajectory and forward fluxes file to allow the ADM and TLM
+!  kernels to access then within the inner loops.
+!
+       CALL close_forward
+# endif
 
 # ifdef PROFILE
 !

@@ -4436,6 +4436,7 @@
     &                   Hout, XTR)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #  endif
+#  ifndef PIO_DELAYED_SYNC
 !
 !-----------------------------------------------------------------------
 !  Synchronize decimate NetCDF file to disk to allow other processes
@@ -4444,6 +4445,7 @@
 !
       CALL pio_netcdf_sync (ng, model, XTR(ng)%name, XTR(ng)%pioFile)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+#  endif
 !
   10  FORMAT (2x,'WRT_EXTRACT_PIO  - writing extract', t42,             &
 #  ifdef SOLVE3D

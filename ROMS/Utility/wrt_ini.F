@@ -980,6 +980,7 @@
 #    endif
 #   endif
 #  endif
+#  ifndef PIO_DELAYED_SYNC
 !
 !-----------------------------------------------------------------------
 !  Synchronize initial NetCDF file to disk to allow other processes
@@ -988,6 +989,7 @@
 !
       CALL pio_netcdf_sync (ng, iNLM, INI(ng)%name, INI(ng)%pioFile)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+#  endif
 !
   10  FORMAT (/,' WRT_INI_PIO - error while writing variable: ',a,      &
      &        /,15x,'into initial NetCDF file for time record: ',i0)

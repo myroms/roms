@@ -4969,6 +4969,7 @@
     &                   Hout, HIS)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 # endif
+# ifndef PIO_DELAYED_SYNC
 !
 !-----------------------------------------------------------------------
 !  Synchronize history NetCDF file to disk to allow other processes
@@ -4977,6 +4978,7 @@
 !
       CALL pio_netcdf_sync (ng, model, HIS(ng)%name, HIS(ng)%pioFile)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+# endif
 !
   10  FORMAT (2x,'WRT_HIS_PIO      - writing history', t42,             &
 # ifdef SOLVE3D
