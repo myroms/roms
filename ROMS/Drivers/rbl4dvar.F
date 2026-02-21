@@ -611,9 +611,10 @@
 
 # if defined PIO_LIB && defined PIO_DELAYED_SYNC && defined DISTRIBUTE
 !
-!  If delayed PIO file synchronization for maximize performance, close
-!  forward trajectory and forward fluxes file to allow the ADM and TLM
-!  kernels to access then within the inner loops.
+!  If delayed PIO file synchronization is required to maximize
+!  performance, close forward trajectory and forward fluxes file
+!  to allow the ADM and TLM kernels to access them within the
+!  inner loops.
 !
        CALL close_forward
 # endif

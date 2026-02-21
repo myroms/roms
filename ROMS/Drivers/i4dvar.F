@@ -108,6 +108,9 @@
       USE cgradient_mod,      ONLY : cg_read_cgradient
 # endif
       USE close_io_mod,       ONLY : close_file
+# if defined PIO_LIB && defined PIO_DELAYED_SYNC && defined DISTRIBUTE
+      USE close_io_mod,       ONLY : close_forward
+# endif
       USE cost_grad_mod,      ONLY : cost_grad
       USE def_hessian_mod,    ONLY : def_hessian
 # ifdef SPLIT_4DVAR
@@ -743,6 +746,16 @@
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END DO
       END IF
+
+# if defined PIO_LIB && defined PIO_DELAYED_SYNC && defined DISTRIBUTE
+!
+!  If delayed PIO file synchronization is required to maximize
+!  performance, close forward trajectory and forward fluxes file
+!  to allow the ADM and TLM kernels to access them within the
+!  inner loops.
+!
+       CALL close_forward
+# endif
 
 # ifdef PROFILE
 !
