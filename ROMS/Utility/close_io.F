@@ -146,6 +146,9 @@
 #ifdef AVERAGES
         CALL close_file (ng, iNLM, AVG(ng), AVG(ng)%name, Lupdate)
 #endif
+#ifdef DIAGNOSTICS
+        CALL close_file (ng, iNLM, DIA(ng), DIA(ng)%name, Lupdate)
+#endif
       END DO
 !
       RETURN

@@ -216,12 +216,6 @@
       integer :: CMODE = nf90_64bit_offset ! NetCDF 64-bit offset format
 !                                            (large file support)
 #endif
-!
-!  Set NetCDF-4/HDF5 deflate (file compression) parameters.
-!
-      integer :: shuffle = 1
-      integer :: deflate = 1
-      integer :: deflate_level = 1
 
 #ifdef PARALLEL_IO
 !

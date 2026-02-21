@@ -975,7 +975,7 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+17)=' DEEPWATER_WAVES,'
 #endif
-#if defined DEFLATE && defined HDF5
+#if defined DEFLATE && (PARALLEL_IO || defined PIO_LIB)
 !
       IF (Master) WRITE (stdout,20) 'DEFLATE',                          &
      &   'Setting compression in output NetCDF-4/HDF5 files'
