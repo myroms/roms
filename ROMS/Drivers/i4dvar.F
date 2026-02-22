@@ -108,7 +108,8 @@
       USE cgradient_mod,      ONLY : cg_read_cgradient
 # endif
       USE close_io_mod,       ONLY : close_file
-# if defined PIO_LIB && defined PIO_DELAYED_SYNC && defined DISTRIBUTE
+# if defined OUT_NETCDF4 && defined DELAYED_SYNC_NF90 || \
+     defined PIO_LIB     && defined DELAYED_SYNC_PIO
       USE close_io_mod,       ONLY : close_forward
 # endif
       USE cost_grad_mod,      ONLY : cost_grad
@@ -747,9 +748,10 @@
         END DO
       END IF
 
-# if defined PIO_LIB && defined PIO_DELAYED_SYNC && defined DISTRIBUTE
+# if defined OUT_NETCDF4 && defined DELAYED_SYNC_NF90 || \
+     defined PIO_LIB     && defined DELAYED_SYNC_PIO
 !
-!  If delayed PIO file synchronization is required to maximize
+!  If delayed NetCDF4 file synchronization is required to maximize
 !  performance, close forward trajectory and forward fluxes file
 !  to allow the ADM and TLM kernels to access them within the
 !  inner loops.

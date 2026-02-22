@@ -104,7 +104,8 @@
 # ifdef STD_MODEL
       USE background_std_mod, ONLY : background_std
 # endif
-# if defined PIO_LIB && defined PIO_DELAYED_SYNC && defined DISTRIBUTE
+# if defined OUT_NETCDF4 && defined DELAYED_SYNC_NF90 || \
+     defined PIO_LIB     && defined DELAYED_SYNC_PIO
       USE close_io_mod,       ONLY : close_forward
 # endif
 # ifndef RPCG
@@ -609,9 +610,10 @@
         END DO
       END IF
 
-# if defined PIO_LIB && defined PIO_DELAYED_SYNC && defined DISTRIBUTE
+# if defined OUT_NETCDF4 && defined DELAYED_SYNC_NF90 || \
+     defined PIO_LIB     && defined DELAYED_SYNC_PIO
 !
-!  If delayed PIO file synchronization is required to maximize
+!  If delayed NetCDF4 file synchronization is required to maximize
 !  performance, close forward trajectory and forward fluxes file
 !  to allow the ADM and TLM kernels to access them within the
 !  inner loops.

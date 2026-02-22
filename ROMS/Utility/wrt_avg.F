@@ -1805,6 +1805,8 @@
     &                    Aout, AVG)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 # endif
+
+# if !(defined OUT_NETCDF4 && defined DELAYED_SYNC_NF90)
 !
 !-----------------------------------------------------------------------
 !  Synchronize time-average NetCDF file to disk to allow other processes
@@ -1813,6 +1815,7 @@
 !
       CALL netcdf_sync (ng, model, AVG(ng)%name, AVG(ng)%ncid)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+# endif
 !
   10  FORMAT (2x,'WRT_AVG_NF90     - writing averaged',t42,'fields',t61,&
 # ifdef NESTING
@@ -3818,7 +3821,7 @@
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #  endif
 
-#  ifndef PIO_DELAYED_SYNC
+#  ifndef DELAYED_SYNC_PIO
 !
 !-----------------------------------------------------------------------
 !  Synchronize time-average NetCDF file to disk to allow other processes

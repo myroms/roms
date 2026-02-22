@@ -516,6 +516,7 @@
 #   endif
 #  endif
 # endif
+# if !(defined OUT_NETCDF4 && defined DELAYED_SYNC_NF90)
 !
 !-----------------------------------------------------------------------
 !  Synchronize initial NetCDF file to disk to allow other processes
@@ -524,6 +525,7 @@
 !
       CALL netcdf_sync (ng, iNLM, INI(ng)%name, INI(ng)%ncid)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+# endif
 !
   10  FORMAT (/,' WRT_INI_NF90 - error while writing variable: ',a,     &
      &        /,16x,'into initial NetCDF file for time record: ',i0)
@@ -980,7 +982,7 @@
 #    endif
 #   endif
 #  endif
-#  ifndef PIO_DELAYED_SYNC
+#  ifndef DELAYED_SYNC_PIO
 !
 !-----------------------------------------------------------------------
 !  Synchronize initial NetCDF file to disk to allow other processes

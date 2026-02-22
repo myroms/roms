@@ -2356,6 +2356,8 @@
     &                    Hout, HIS)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #endif
+
+#if !(defined OUT_NETCDF4 && defined DELAYED_SYNC_NF90)
 !
 !-----------------------------------------------------------------------
 !  Synchronize history NetCDF file to disk to allow other processes
@@ -2364,6 +2366,7 @@
 !
       CALL netcdf_sync (ng, model, HIS(ng)%name, HIS(ng)%ncid)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+#endif
 !
   10  FORMAT (2x,'WRT_HIS_NF90     - writing history', t42,             &
 #ifdef SOLVE3D
@@ -4969,7 +4972,8 @@
     &                   Hout, HIS)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 # endif
-# ifndef PIO_DELAYED_SYNC
+
+# ifndef DELAYED_SYNC_PIO
 !
 !-----------------------------------------------------------------------
 !  Synchronize history NetCDF file to disk to allow other processes

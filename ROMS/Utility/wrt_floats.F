@@ -330,12 +330,16 @@
      &                      varid = FLT(ng)%Vid(idwsin))
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 # endif
+
+# if !(defined OUT_NETCDF4 && defined DELAYED_SYNC_NF90)
 !
 !-----------------------------------------------------------------------
 !  Synchronize floats NetCDF file to disk.
 !-----------------------------------------------------------------------
 !
       CALL netcdf_sync (ng, iNLM, FLT(ng)%name, FLT(ng)%ncid)
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+# endif
 !
       RETURN
       END SUBROUTINE wrt_floats_nf90
@@ -614,13 +618,15 @@
      &                          pioVar = FLT(ng)%pioVar(idwsin)%vd)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #  endif
-#  ifndef PIO_DELAYED_SYNC
+
+#  ifndef DELAYED_SYNC_PIO
 !
 !-----------------------------------------------------------------------
 !  Synchronize floats NetCDF file to disk.
 !-----------------------------------------------------------------------
 !
       CALL pio_netcdf_sync (ng, iNLM, FLT(ng)%name, FLT(ng)%pioFile)
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #  endif
 !
       RETURN

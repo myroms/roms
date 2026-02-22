@@ -172,13 +172,9 @@
           END IF
         END IF
 
-#if !defined PARALLEL_IO && (defined HDF5 && defined DEFLATE)
+#if defined DEFLATE && defined OUT_NETCDF4
 !
-!  Define deflate (file compression) parameters. Notice that deflation
-!  cannot be used in parallel I/O for writing data. This is because
-!  the compression makes it impossible for the HDF5 library to exactly
-!  map the data to the disk location. However, deflated data can be
-!  read with parallel I/O
+!  Define deflate (file compression) parameters.
 !
         IF (exit_flag.eq.NoError) THEN
           IF (LEN_TRIM(Vinfo(1)).gt.0) THEN

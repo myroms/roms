@@ -212,6 +212,8 @@
 !
 #if defined HDF5 || defined PARALLEL_IO
       integer :: CMODE = nf90_netcdf4      ! NetCDF-4/HDF5 format file
+#elif defined OUT_NETCDF4
+      integer :: CMODE = nf90_netcdf4      ! NetCDF-4/HDF5 format file
 #else
       integer :: CMODE = nf90_64bit_offset ! NetCDF 64-bit offset format
 !                                            (large file support)
@@ -9125,6 +9127,10 @@
 !  OR(nf90_clobber, nf90_netcdf4)=nf90_netcdf.  Therefore, the default
 !  is to overwrite an existing file on disk with the same file name.
 !  This is what we usually do anyway.
+!
+!  Note that deflation cannot be used in parallel I/O for writing data.
+!  This is because the compression makes it impossible for the HDF5
+!  library to exactly map the data to the disk location.
 !
       my_cmode=IOR(CMODE, nf90_mpiio)
       my_cmode=IOR(my_cmode, nf90_clobber)

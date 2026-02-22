@@ -611,6 +611,8 @@
         WRITE (stdout,70) TRIM(INPncname)
         RETURN
       END IF
+
+# if !(defined OUT_NETCDF4 && defined DELAYED_SYNC_NF90)
 !
 !-----------------------------------------------------------------------
 !  Synchronize impulse NetCDF file to disk to allow other processes
@@ -619,6 +621,7 @@
 !
       CALL netcdf_sync (ng, model, INPncname, TLF(ng)%ncid)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+# endif
 !
   10  FORMAT (2x,'WRT_IMPULSE_NF90 - processing convolved adjoint',     &
      &        ' impulses, records: 1 to ',i0,/,21x,'file: ',a)
@@ -1250,7 +1253,7 @@
         RETURN
       END IF
 
-#  ifndef PIO_DELAYED_SYNC
+#  ifndef DELAYED_SYNC_PIO
 !
 !-----------------------------------------------------------------------
 !  Synchronize impulse NetCDF file to disk to allow other processes

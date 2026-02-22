@@ -1203,6 +1203,7 @@
      &                     Hout, RST)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #endif
+#if !(defined OUT_NETCDF4 && defined DELAYED_SYNC_NF90)
 !
 !-----------------------------------------------------------------------
 !  Synchronize restart NetCDF file to disk.
@@ -1210,6 +1211,7 @@
 !
       CALL netcdf_sync (ng, model, RST(ng)%name, RST(ng)%ncid)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+#endif
 !
   10  FORMAT (2x,'WRT_RST_NF90     - writing re-start', t42,            &
 #ifdef SOLVE3D
@@ -2549,7 +2551,7 @@
      &                    Hout, RST)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 # endif
-# ifndef PIO_DELAYED_SYNC
+# ifndef DELAYED_SYNC_PIO
 !
 !-----------------------------------------------------------------------
 !  Synchronize restart NetCDF file to disk.
