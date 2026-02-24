@@ -266,6 +266,8 @@
         END IF
       END DO
 # endif
+
+# if !(defined OUT_NETCDF4 && defined DELAYED_SYNC_NF90)
 !
 !-----------------------------------------------------------------------
 !  Synchronize impulse NetCDF file to disk to allow other processes
@@ -274,6 +276,7 @@
 !
       CALL netcdf_sync (ng, model, TLF(ng)%name, TLF(ng)%ncid)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+# endif
 !
   10  FORMAT (2x,'WRT_AUG_IMP_NF90 - writing augmented adjoint',        &
      &        ' impulses, record: ',i0,/,22x,'file: ',a)
@@ -491,6 +494,8 @@
         END IF
       END DO
 #  endif
+
+#  ifndef DELAYED_SYNC_PIO
 !
 !-----------------------------------------------------------------------
 !  Synchronize impulse NetCDF file to disk to allow other processes
@@ -499,6 +504,7 @@
 !
       CALL pio_netcdf_sync (ng, model, TLF(ng)%name, TLF(ng)%pioFile)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+#  endif
 !
   10  FORMAT (2x,'WRT_AUG_IMP_PIO  - writing augmented adjoint',        &
      &        ' impulses, record: ',i0,/,22x,'file: ',a)

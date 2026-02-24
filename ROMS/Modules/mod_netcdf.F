@@ -212,16 +212,12 @@
 !
 #if defined HDF5 || defined PARALLEL_IO
       integer :: CMODE = nf90_netcdf4      ! NetCDF-4/HDF5 format file
+#elif defined OUT_NETCDF4
+      integer :: CMODE = nf90_netcdf4      ! NetCDF-4/HDF5 format file
 #else
       integer :: CMODE = nf90_64bit_offset ! NetCDF 64-bit offset format
 !                                            (large file support)
 #endif
-!
-!  Set NetCDF-4/HDF5 deflate (file compression) parameters.
-!
-      integer :: shuffle = 1
-      integer :: deflate = 1
-      integer :: deflate_level = 1
 
 #ifdef PARALLEL_IO
 !
@@ -383,7 +379,7 @@
       integer :: myID, myValue
 
 #if !defined PARALLEL_IO && defined DISTRIBUTE
-      integer, dimension(5) :: ibuffer
+      integer, dimension(6) :: ibuffer
 #endif
 !
       character (len=*), parameter :: MyFile =                          &
@@ -421,7 +417,7 @@
 !  Inquire file.
 !
       IF (InpThread) THEN
-#ifdef HDF5
+#ifdef OUT_NETCDF4
         status=nf90_inquire(my_ncid, n_dim, n_var, n_gatt, rec_id,      &
      &                      ncformat)
 #else
@@ -433,6 +429,7 @@
           ibuffer(2)=n_var
           ibuffer(3)=n_gatt
           ibuffer(4)=rec_id
+          ibuffer(5)=ncformat
 #endif
 !
 !  Inquire about dimensions: names, ID, and size.
@@ -452,7 +449,7 @@
             IF (dim_id(i).eq.rec_id) THEN
               rec_size=dim_size(i)
 #if !defined PARALLEL_IO && defined DISTRIBUTE
-              ibuffer(5)=rec_size
+              ibuffer(6)=rec_size
 #endif
             END IF
           END DO
@@ -481,7 +478,8 @@
         n_var=ibuffer(2)
         n_gatt=ibuffer(3)
         rec_id=ibuffer(4)
-        rec_size=ibuffer(5)
+        ncformat=ibuffer(5)
+        rec_size=ibuffer(6)
         CALL mp_bcasti (ng, model, dim_id)
         CALL mp_bcasti (ng, model, dim_size)
         CALL mp_bcasts (ng, model, dim_name)
@@ -9131,6 +9129,10 @@
 !  OR(nf90_clobber, nf90_netcdf4)=nf90_netcdf.  Therefore, the default
 !  is to overwrite an existing file on disk with the same file name.
 !  This is what we usually do anyway.
+!
+!  Note that deflation cannot be used in parallel I/O for writing data.
+!  This is because the compression makes it impossible for the HDF5
+!  library to exactly map the data to the disk location.
 !
       my_cmode=IOR(CMODE, nf90_mpiio)
       my_cmode=IOR(my_cmode, nf90_clobber)

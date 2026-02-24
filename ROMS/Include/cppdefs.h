@@ -620,12 +620,14 @@
 ** CHECKSUM                to report checksum when processing I/O            **
 ** CHECK_OPEN_FILES        to report number opened/closed/created files      **
 ** DEFLATE                 to set compression NetCDF-4/HDF5 format files     **
-** HDF5                    to create NetCDF-4/HDF5 format files              **
+** DELAYED_SYNC_NF90       if delayed NetCDF4 sychronization, NF90 library   **
+** DELAYED_SYNC_PIO        if delayed NetCDF4 sychronization, PIO library    **
 ** METADATA_REPORT         to report/dump YAML metadata dictionary           **
 ** NO_LBC_ATT              to not check NLM_LBC global attribute on restart  **
 ** NO_READ_GHOST           to not include ghost points during read/scatter   **
 ** NO_WRITE_GRID           if not writing grid arrays                        **
 ** OUT_DOUBLE              if writing double precision output fields         **
+** OUT_NETCDF4             to create ouput NetCDF4/HDF5 format files         **
 ** OUTPUT_STATS            to report NetCDF output fields statistics         **
 ** PARALLEL_IO             if parallel I/O via HDF5 or pnetcdf libraries     **
 ** PERFECT_RESTART         to include perfect restart variables              **

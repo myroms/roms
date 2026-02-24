@@ -1395,7 +1395,7 @@
      &                OCEAN(ng) % uG)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
-      CALL get_3dfld (ng, iRPM, idVvel, FWD(ng)%ncid,                   &
+      CALL get_3dfld (ng, iTLM, idVvel, FWD(ng)%ncid,                   &
 #   if defined PIO_LIB && defined DISTRIBUTE
      &                FWD(ng)%pioFile,                                  &
 #   endif

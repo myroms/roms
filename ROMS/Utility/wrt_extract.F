@@ -2128,6 +2128,8 @@
     &                    Hout, XTR)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 # endif
+
+# if !(defined OUT_NETCDF4 && defined DELAYED_SYNC_NF90)
 !
 !-----------------------------------------------------------------------
 !  Synchronize decimate NetCDF file to disk to allow other processes
@@ -2136,6 +2138,7 @@
 !
       CALL netcdf_sync (ng, model, XTR(ng)%name, XTR(ng)%ncid)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+# endif
 !
   10  FORMAT (2x,'WRT_EXTRACT_NF90 - writing decimate', t42,            &
 # ifdef SOLVE3D
@@ -4436,6 +4439,8 @@
     &                   Hout, XTR)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #  endif
+
+#  ifndef DELAYED_SYNC_PIO
 !
 !-----------------------------------------------------------------------
 !  Synchronize decimate NetCDF file to disk to allow other processes
@@ -4444,6 +4449,7 @@
 !
       CALL pio_netcdf_sync (ng, model, XTR(ng)%name, XTR(ng)%pioFile)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+#  endif
 !
   10  FORMAT (2x,'WRT_EXTRACT_PIO  - writing extract', t42,             &
 #  ifdef SOLVE3D

@@ -349,6 +349,7 @@
         END IF
       END DO
 # endif
+# if !(defined OUT_NETCDF4 && defined DELAYED_SYNC_NF90)
 !
 !-----------------------------------------------------------------------
 !  Synchronize tide forcing NetCDF file to disk to allow other processes
@@ -357,6 +358,7 @@
 !
       CALL netcdf_sync (ng, iNLM, HAR(ng)%name, HAR(ng)%ncid)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+# endif
 !
   10  FORMAT (2x,'WRT_TIDES_NF90   - writing time-accumulated tide ',   &
      &        'harmonics, Grid ',i2.2)
@@ -664,6 +666,7 @@
         END IF
       END DO
 # endif
+# ifndef DELAYED_SYNC_PIO
 !
 !-----------------------------------------------------------------------
 !  Synchronize tide forcing NetCDF file to disk to allow other processes
@@ -672,6 +675,7 @@
 !
       CALL pio_netcdf_sync (ng, iNLM, HAR(ng)%name, HAR(ng)%pioFile)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+# endif
 !
   10  FORMAT (2x,'WRT_TIDES_PIO    - writing time-accumulated tide ',   &
      &        'harmonics, Grid ',i2.2)
