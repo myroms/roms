@@ -438,12 +438,17 @@
       END DO
 #  endif
 # endif
+
+# if !(defined OUT_NETCDF4 && defined DELAYED_SYNC_NF90)
 !
+!-----------------------------------------------------------------------
 !  Synchronize time-average NetCDF file to disk to allow other processes
 !  to access data immediately after it is written.
+!-----------------------------------------------------------------------
 !
       CALL netcdf_sync (ng, iNLM, DIA(ng)%name, DIA(ng)%ncid)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+# endif
 !
   10  FORMAT (2x,'WRT_DIAGS_NF90   - writing diagnostics fields',t61,   &
 # ifdef NESTING
@@ -848,12 +853,17 @@
       END DO
 #   endif
 #  endif
+
+#  ifndef DELAYED_SYNC_PIO
 !
+!-----------------------------------------------------------------------
 !  Synchronize time-average NetCDF file to disk to allow other processes
 !  to access data immediately after it is written.
+!-----------------------------------------------------------------------
 !
       CALL pio_netcdf_sync (ng, iNLM, DIA(ng)%name, DIA(ng)%pioFile)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+#  endif
 !
   10  FORMAT (2x,'WRT_DIAGS_PIO    - writing diagnostics fields',t61,   &
 #  ifdef NESTING

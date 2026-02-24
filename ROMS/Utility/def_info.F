@@ -250,20 +250,19 @@
 !  Define NetCDF format type.
 !
         IF (exit_flag.eq.NoError) THEN
-# ifdef HDF5
-          status=nf90_put_att(ncid, nf90_global, 'format',              &
-     &                        'netCDF-4/HDF5 file')
-# else
-          status=nf90_put_att(ncid, nf90_global, 'format',              &
-     &                        'netCDF-3 64bit offset file')
-# endif
+          IF (CMODE.eq.nf90_netcdf4) THEN
+            status=nf90_put_att(ncid, nf90_global, 'format',            &
+     &                          'netCDF-4/HDF5 file')
+          ELSE IF (CMODE.eq.nf90_64bit_offset) THEN
+            status=nf90_put_att(ncid, nf90_global, 'format',            &
+     &                          'netCDF-3 64bit offset file')
+          END IF
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
             IF (Master) WRITE (stdout,20) 'format', TRIM(ncname)
             exit_flag=3
             ioerror=status
           END IF
         END IF
-
 #endif
 !
 !  Define file climate and forecast metadata convention global
@@ -3808,20 +3807,20 @@
 !  Define NetCDF format type.
 !
       IF (exit_flag.eq.NoError) THEN
-#  ifdef HDF5
+        SELECT CASE (pio_method)
+          CASE (1, 2)
+            type='netCDF-3 64bit offset file'
+          CASE (3, 4)
+            type='netCDF-4/HDF5 file'
+        END SELECT
         status=PIO_put_att(pioFile, PIO_global, 'format',               &
-     &                     'netCDF-4/HDF5 file')
-#  else
-        status=PIO_put_att(pioFile, PIO_global, 'format',               &
-     &                     'netCDF-3 64bit offset file')
-#  endif
+     &                     TRIM(type))
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) WRITE (stdout,20) 'format', TRIM(ncname)
           exit_flag=3
           ioerror=status
         END IF
       END IF
-
 # endif
 !
 !  Define file climate and forecast metadata convention global

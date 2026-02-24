@@ -975,12 +975,27 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+17)=' DEEPWATER_WAVES,'
 #endif
-#if defined DEFLATE && defined HDF5
+#if defined DEFLATE && (defined OUT_NETCDF4 || defined PARALLEL_IO || \
+                        defined PIO_LIB)
 !
       IF (Master) WRITE (stdout,20) 'DEFLATE',                          &
      &   'Setting compression in output NetCDF-4/HDF5 files'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+9)=' DEFLATE,'
+#endif
+#if defined DELAYED_SYNC_NF90 && defined OUT_NETCDF4
+!
+      IF (Master) WRITE (stdout,20) 'DELAYED_SYNC_NF90',                &
+     &   'Delaying file disk synchonization until calling nf90_close'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+18)=' DELAYED_SYNC_NF90,'
+#endif
+#if defined DELAYED_SYNC_PIO && defined PIO_LIB
+!
+      IF (Master) WRITE (stdout,20) 'DELAYED_SYNC_PIO',                 &
+     &   'Delaying file disk synchonization until calling PIO_closefile'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+18)=' DELAYED_SYNC_PIO,'
 #endif
 #if defined DENITRIFICATION && (defined BIO_FENNEL || defined ECB)
 !
@@ -2025,6 +2040,17 @@
      &   'Double precision output fields in NetCDF files'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+12)=' OUT_DOUBLE,'
+#endif
+#ifdef OUT_NETCDF4
+!
+      IF (Master) WRITE (stdout,20) 'OUT_NETCDF4',                      &
+# ifdef DEFLATE
+     &   'Creating output compressed Netcdf4/HDF5 files'
+# else
+     &   'Creating output Netcdf4/HDF5 files'
+# endif
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+13)=' OUT_NETCDF4,'
 #endif
 #ifdef OUTPUT_STATS
 !
