@@ -416,7 +416,7 @@
 !    PIO_iotype_netcdf4c => parallel read/serial write of NetCDF4 (HDF5)
 !    PIO_iotype_netcdf4p => parallel read/write of NETCDF4 (HDF5)
 !
-      integer pio_method
+      integer :: pio_method
 !
 !  PIO supported method names:
 !

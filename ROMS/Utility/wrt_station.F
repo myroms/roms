@@ -1033,13 +1033,16 @@
     &                            Sout, STA)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 # endif
+
+# if !(defined OUT_NETCDF4 && defined DELAYED_SYNC_NF90)
 !
 !-----------------------------------------------------------------------
 !  Synchronize stations NetCDF file to disk.
 !-----------------------------------------------------------------------
 !
       CALL netcdf_sync (ng, model, STA(ng)%name, STA(ng)%ncid)
-
+# endif
+!
       RETURN
       END SUBROUTINE wrt_station_nf90
 
@@ -1984,13 +1987,16 @@
     &                           Sout, STA)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #  endif
+
+#  ifndef DELAYED_SYNC_PIO
 !
 !-----------------------------------------------------------------------
 !  Synchronize stations NetCDF file to disk.
 !-----------------------------------------------------------------------
 !
       CALL pio_netcdf_sync (ng, model, STA(ng)%name, STA(ng)%pioFile)
-
+#  endif
+!
       RETURN
       END SUBROUTINE wrt_station_pio
 # endif

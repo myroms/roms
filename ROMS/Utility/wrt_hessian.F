@@ -555,6 +555,7 @@
         RETURN
       END IF
 # endif
+# if !(defined OUT_NETCDF4 && defined DELAYED_SYNC_NF90)
 !
 !-----------------------------------------------------------------------
 !  Synchronize Hessian eigenvectors NetCDF file to disk to allow other
@@ -563,6 +564,7 @@
 !
       CALL netcdf_sync (ng, iADM, HSS(ng)%name, HSS(ng)%ncid)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+# endif
 !
   10  FORMAT (2x,'WRT_HESSIAN_NF90 - writing Hessian', t42,             &
 # ifdef SOLVE3D
@@ -1080,6 +1082,7 @@
         RETURN
       END IF
 #  endif
+#  ifndef DELAYED_SYNC_PIO
 !
 !-----------------------------------------------------------------------
 !  Synchronize Hessian eigenvectors NetCDF file to disk to allow other
@@ -1088,6 +1091,7 @@
 !
       CALL pio_netcdf_sync (ng, iADM, HSS(ng)%name, HSS(ng)%pioFile)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+#  endif
 !
   10  FORMAT (2x,'WRT_HESSIAN_PIO  - writing Hessian', t42,            &
 #  ifdef SOLVE3D

@@ -290,14 +290,29 @@
             pmask_full(i,j)=MAX(pmask_wet(i,j)*pmask(i,j), 2.0_r8)
           END DO
         END DO
+!
+!  The umask_full and vmask_full arrays require a different rationale to
+!  properly address the normal component when LandFill=TRUE at output,
+!  which replace land values with _FillValue. 
+!
         DO j=JstrR,JendR
           DO i=Istr,IendR
-            umask_full(i,j)=umask_wet(i,j)*umask(i,j)
+            IF ((rmask_wet(i-1,j).eq.0.0_r8).or.                        &
+     &          (rmask_wet(i  ,j).eq.0.0_r8)) THEN
+              umask_full(i,j)=1.0_r8
+            ELSE
+              umask_full(i,j)=1.0_r8
+            END IF
           END DO
         END DO
         DO j=Jstr,JendR
           DO i=IstrR,IendR
-            vmask_full(i,j)=vmask_wet(i,j)*vmask(i,j)
+            IF ((rmask_wet(i,j-1).eq.0.0_r8).or.                        &
+     &          (rmask_wet(i,j  ).eq.0.0_r8)) THEN
+              vmask_full(i,j)=1.0_r8
+            ELSE
+              vmask_full(i,j)=1.0_r8
+            END IF
           END DO
         END DO
 !

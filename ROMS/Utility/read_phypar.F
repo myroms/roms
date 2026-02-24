@@ -7633,7 +7633,7 @@
           WRITE (out,120) pio_rearr_I2C_PR, 'pio_rearr_I2C_PR',         &
      &          'Maximum I2C rearranger pending requests.'
 #endif
-#if defined HDF5 && defined DEFLATE
+#if defined DEFLATE && (defined PARALLEL_IO || defined PIO_LIB)
           WRITE (out,120) shuffle, 'shuffle',                           &
      &          'NetCDF-4/HDF5 file format shuffle filer flag.'
           WRITE (out,120) deflate, 'deflate',                           &

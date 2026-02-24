@@ -548,6 +548,8 @@
         RETURN
       END IF
 # endif
+
+# if !(defined OUT_NETCDF4 && defined DELAYED_SYNC_NF90)
 !
 !-----------------------------------------------------------------------
 !  Synchronize evolved vectors NetCDF file to disk to allow other
@@ -556,6 +558,7 @@
 !
       CALL netcdf_sync (ng, iADM, LZE(ng)%name, LZE(ng)%ncid)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+# endif
 !
   10  FORMAT (2x,'WRT_EVOLVED_NF90 - writing evolved LCZ',t42,          &
 # ifdef SOLVE3D
@@ -1077,6 +1080,8 @@
         RETURN
       END IF
 #  endif
+
+#  ifndef DELAYED_SYNC_PIO
 !
 !-----------------------------------------------------------------------
 !  Synchronize evolved vectors NetCDF file to disk to allow other
@@ -1085,6 +1090,7 @@
 !
       CALL pio_netcdf_sync (ng, iADM, LZE(ng)%name, LZE(ng)%pioFile)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+#  endif
 !
   10  FORMAT (2x,'WRT_EVOLVED_PIO  - writing evolved LCZ',t42,          &
 #  ifdef SOLVE3D
