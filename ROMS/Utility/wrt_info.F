@@ -3391,6 +3391,8 @@
         END IF
 #endif
       END IF GRID_VARS
+
+#if !(defined OUT_NETCDF4 && defined DELAYED_SYNC_NF90)
 !
 !-----------------------------------------------------------------------
 !  Synchronize NetCDF file to disk to allow other processes to access
@@ -3399,7 +3401,7 @@
 !
       CALL netcdf_sync (ng, model, ncname, ncid)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-
+#endif
 #if !defined PARALLEL_IO  && defined DISTRIBUTE
 !
 !  Broadcast error flags to all processors in the group.
@@ -6165,6 +6167,8 @@
         END IF
 # endif
       END IF GRID_VARS
+
+# ifndef DELAYED_SYNC_PIO
 !
 !-----------------------------------------------------------------------
 !  Synchronize NetCDF file to disk to allow other processes to access
@@ -6173,6 +6177,7 @@
 !
       CALL pio_netcdf_sync (ng, model, ncname, pioFile)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+# endif
 !
   10  FORMAT (/,' WRT_INFO_PIO - error while writing variable: ',a,/,   &
      &        16x,'into file: ',a)

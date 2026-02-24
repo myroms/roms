@@ -74,6 +74,10 @@
 # ifdef STD_MODEL
       USE background_std_mod, ONLY : background_std
 # endif
+# if defined OUT_NETCDF4 && defined DELAYED_SYNC_NF90 || \
+     defined PIO_LIB     && defined DELAYED_SYNC_PIO
+      USE close_io_mod,       ONLY : close_forward
+# endif
       USE close_io_mod,       ONLY : close_file
       USE congrad_mod,        ONLY : congrad
 # ifdef SPLIT_4DVAR
@@ -356,6 +360,17 @@
         wrtNLmod(ng)=.FALSE.
         wrtObsScale(ng)=.FALSE.
       END DO
+
+# if defined OUT_NETCDF4 && defined DELAYED_SYNC_NF90 || \
+     defined PIO_LIB     && defined DELAYED_SYNC_PIO
+!
+!  If delayed NetCDF4 file synchronization is required to maximize
+!  performance, close forward trajectory and forward fluxes file
+!  to allow the ADM and TLM kernels to access them within the
+!  inner loops.
+!
+       CALL close_forward
+# endif
 
 # ifdef PROFILE
 !

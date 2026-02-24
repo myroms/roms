@@ -575,6 +575,8 @@
         RETURN
       END IF
 # endif
+
+# if !(defined OUT_NETCDF4 && defined DELAYED_SYNC_NF90)
 !
 !-----------------------------------------------------------------------
 !  Synchronize posterior error covariance NetCDF file to disk to allow
@@ -583,6 +585,7 @@
 !
       CALL netcdf_sync (ng, iTLM, ERR(ng)%name, ERR(ng)%ncid)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+# endif
 !
   10  FORMAT (2x,'WRT_ERROR_NF90   - writing error', t42,               &
 #  ifdef SOLVE3D
@@ -1124,6 +1127,8 @@
         RETURN
       END IF
 #  endif
+
+#  ifndef DELAYED_SYNC_PIO
 !
 !-----------------------------------------------------------------------
 !  Synchronize posterior error covariance NetCDF file to disk to allow
@@ -1132,6 +1137,7 @@
 !
       CALL pio_netcdf_sync (ng, iTLM, ERR(ng)%name, ERR(ng)%pioFile)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+#  endif
 !
   10  FORMAT (2x,'WRT_ERROR_PIO    - writing error', t42,               &
 #  ifdef SOLVE3D
