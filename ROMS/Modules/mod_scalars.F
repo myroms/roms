@@ -547,6 +547,13 @@
         logical, allocatable :: LwSrc(:)             ! mass
         logical, allocatable :: LtracerSrc(:,:)      ! tracers
 !
+!  Initialize NetCDF-4/HDF5 deflate (file compression) parameters. They
+!  overwritten with standard input values.
+!
+        integer :: shuffle = 1
+        integer :: deflate = 1
+        integer :: deflate_level = 1
+!
 !  Execution termination flag.
 !
 !    exit_flag = 0   No error

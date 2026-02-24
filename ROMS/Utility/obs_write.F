@@ -1769,6 +1769,8 @@
         wrtZetaRef(ng)=.FALSE.
       END IF
 # endif
+
+# if !(defined OUT_NETCDF4 && defined DELAYED_SYNC_NF90)
 !
 !-----------------------------------------------------------------------
 !  Synchronize observations NetCDF file to disk.
@@ -1778,13 +1780,14 @@
         CALL netcdf_sync (ng, model, DAV(ng)%name, DAV(ng)%ncid)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
-# ifdef SOLVE3D
+#  ifdef SOLVE3D
         IF (Nrun.eq.1) THEN
           CALL netcdf_sync (ng, model, OBS(ng)%name, OBS(ng)%ncid)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
-# endif
+#  endif
       END IF
+# endif
       IF (Master.and.(Mstr.eq.1)) WRITE (stdout,'(1x)')
 !
  10   FORMAT (2x,'OBS_WRITE_NF90   - procesing and writing, outer = ',  &
@@ -2268,6 +2271,8 @@
         wrtZetaRef(ng)=.FALSE.
       END IF
 #  endif
+
+#  ifndef DELAYED_SYNC_PIO
 !
 !-----------------------------------------------------------------------
 !  Synchronize observations NetCDF file to disk.
@@ -2278,14 +2283,15 @@
      &                        DAV(ng)%pioFile)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
-#  ifdef SOLVE3D
+#   ifdef SOLVE3D
         IF (Nrun.eq.1) THEN
           CALL pio_netcdf_sync (ng, model, OBS(ng)%name,                &
      &                          OBS(ng)%pioFile)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
-#  endif
+#   endif
       END IF
+#  endif
       IF (Master.and.(Mstr.eq.1)) WRITE (stdout,'(1x)')
 !
  10   FORMAT (2x,'OBS_WRITE_PIO    - procesing and writing, outer = ',  &

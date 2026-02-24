@@ -83,6 +83,8 @@
       USE mod_ncparam
       USE mod_scalars
 !
+      USE strings_mod, ONLY : FoundError
+!
       implicit none
 !
       INTERFACE def_var
@@ -106,7 +108,6 @@
 #if !defined PARALLEL_IO  && defined DISTRIBUTE
       USE distribute_mod, ONLY : mp_bcasti
 #endif
-      USE strings_mod,    ONLY : FoundError
 !
 !  Imported variable declarations.
 !
@@ -171,13 +172,9 @@
           END IF
         END IF
 
-#if !defined PARALLEL_IO && (defined HDF5 && defined DEFLATE)
+#if defined DEFLATE && defined OUT_NETCDF4
 !
-!  Define deflate (file compresion) parameters. Notice that deflation
-!  cannot be used in parallel I/O for writing data. This is because
-!  the compression makes it impossible for the HDF5 library to exactly
-!  map the data to the disk location. However, deflated data can be
-!  read with parallel I/O
+!  Define deflate (file compression) parameters.
 !
         IF (exit_flag.eq.NoError) THEN
           IF (LEN_TRIM(Vinfo(1)).gt.0) THEN
@@ -1114,9 +1111,7 @@
      &                      SetFillVal, SetParAccess) RESULT (status)
 !***********************************************************************
 !
-      USE pio
-!
-      USE strings_mod, ONLY : FoundError
+      USE mod_pio_netcdf
 !
 !  Imported variable declarations.
 !
@@ -1185,6 +1180,28 @@
           END IF
         END IF
       END IF
+
+# ifdef DEFLATE
+!
+!  Define deflate (file compression) parameters. It is only possible for
+!  output NetCDF4/HD5 files (pio_method=3 or pio_method=4).
+!
+      IF (exit_flag.eq.NoError) THEN
+        IF (LEN_TRIM(Vinfo(1)).gt.0) THEN
+          IF ((nVdim.gt.1).and.(Vdim(1).ne.0).and.                      &
+     &        (pio_method.gt.2)) THEN
+            status=PIO_def_var_deflate(pioFile, pioVar, shuffle,        &
+     &                                 deflate, deflate_level)
+            IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
+              IF (Master) WRITE (stdout,20) TRIM(Vinfo(1)),             &
+     &                                      TRIM(ncname)
+              exit_flag=3
+              ioerror=status
+            END IF
+          END IF
+        END IF
+      END IF
+# endif
 !
 !  Define special attributes for SGRID conventions variable "grid".
 !
