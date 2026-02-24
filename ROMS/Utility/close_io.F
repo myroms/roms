@@ -149,6 +149,9 @@
 #ifdef DIAGNOSTICS
         CALL close_file (ng, iNLM, DIA(ng), DIA(ng)%name, Lupdate)
 #endif
+#ifdef GRID_EXTRACT
+        CALL close_file (ng, iNLM, XTR(ng), XTR(ng)%name, Lupdate)
+#endif
       END DO
 !
       RETURN
@@ -352,6 +355,9 @@
    (defined POSTERIOR_ERROR_F || defined POSTERIOR_ERROR_I)
         CALL close_file (ng, iTLM, ERR(ng), ERR(ng)%name, Lupdate)
 #endif
+#ifdef GRID_EXTRACT
+        CALL close_file (ng, iNLM, XTR(ng), XTR(ng)%name, Lupdate)
+#endif
 !
 !  Report number of time records written.
 !
@@ -426,6 +432,14 @@
           IF (associated(ERR(ng)%Nrec)) THEN
             IF (ANY(ERR(ng)%Nrec.gt.0)) THEN
               WRITE (stdout,20) 'ERROR  ', SUM(ERR(ng)%Nrec)
+            END IF
+          END IF
+#endif
+
+#ifdef GRID_EXTRACT
+          IF (associated(XTR(ng)%Nrec)) THEN
+            IF (ANY(XTR(ng)%Nrec.gt.0)) THEN
+              WRITE (stdout,20) 'EXTRACT', SUM(XTR(ng)%Nrec)
             END IF
           END IF
 #endif

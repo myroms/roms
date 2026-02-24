@@ -151,6 +151,20 @@
       CALL netcdf_check_dim (ng, iNLM, ncname,                          &
      &                       ncid = INI(ng)%ncid)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+
+# ifdef OUT_NETCDF4
+!
+!  If writing output NetCDF4/HDF5 files, ensure that the INI(ng)%name
+!  is a NetCDF4/HDF5 file. Otherwise, ROMS I/O will fail because
+!  inconsistent file processing with library calls.
+!
+      IF (ncformat.ne.nf90_format_netcdf4) THEN
+        IF (Master) WRITE (stdout,20) ncformat, nf90_format_netcdf4,    &
+     &                                TRIM(ncname)
+        exit_flag=2
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+      END IF
+# endif
 !
 !  Inquire about the variables.
 !
@@ -205,7 +219,7 @@
           INI(ng)%Vid(idUsms)=var_id(i)
           IF (var_ndim(i).ne.4) THEN
             IF (Master) THEN
-              WRITE (stdout,20) TRIM(Vname(1,idUsms)),                  &
+              WRITE (stdout,30) TRIM(Vname(1,idUsms)),                  &
      &                          var_ndim(i), 'frc_adjust',              &
      &                          TRIM(ncname)
             END IF
@@ -217,7 +231,7 @@
           INI(ng)%Vid(idVsms)=var_id(i)
           IF (var_ndim(i).ne.4) THEN
             IF (Master) THEN
-              WRITE (stdout,20) TRIM(Vname(1,idUsms)),                  &
+              WRITE (stdout,30) TRIM(Vname(1,idUsms)),                  &
      &                          var_ndim(i), 'frc_adjust',              &
      &                          TRIM(ncname)
             END IF
@@ -234,7 +248,7 @@
               INI(ng)%Vid(idTsur(itrc))=var_id(i)
               IF (var_ndim(i).ne.4) THEN
                 IF (Master) THEN
-                  WRITE (stdout,20) TRIM(Vname(1,idTsur(itrc))),        &
+                  WRITE (stdout,30) TRIM(Vname(1,idTsur(itrc))),        &
      &                              var_ndim(i), 'frc_adjust',          &
      &                              TRIM(ncname)
                  END IF
@@ -277,7 +291,7 @@
       IF (Ldefine) THEN
         CALL netcdf_redef (ng, iNLM, ncname, INI(ng)%ncid)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) THEN
-          IF (Master) WRITE (stdout,30) TRIM(ncname)
+          IF (Master) WRITE (stdout,40) TRIM(ncname)
           RETURN
         END IF
       END IF
@@ -638,6 +652,20 @@
         CALL netcdf_check_dim (ng, iNLM, ncname,                        &
      &                         ncid = INI(ng)%ncid)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+
+# ifdef OUT_NETCDF4
+!
+!  If writing output NetCDF4/HDF5 files, ensure that the INI(ng)%name
+!  is a NetCDF4/HDF5 file. Otherwise, ROMS I/O will fail because
+!  inconsistent file processing with library calls.
+!
+      IF (ncformat.ne.nf90_format_netcdf4) THEN
+        IF (Master) WRITE (stdout,20) ncformat, nf90_format_netcdf4,    &
+     &                                TRIM(ncname)
+        exit_flag=2
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+      END IF
+# endif
 !
 !  Inquire about the variables.
 !
@@ -746,25 +774,25 @@
 !  file.
 !
         IF (.not.got_var(idtime)) THEN
-          IF (Master) WRITE (stdout,40) TRIM(Vname(1,idtime)),          &
+          IF (Master) WRITE (stdout,50) TRIM(Vname(1,idtime)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idFsur)) THEN
-          IF (Master) WRITE (stdout,40) TRIM(Vname(1,idFsur)),          &
+          IF (Master) WRITE (stdout,50) TRIM(Vname(1,idFsur)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idUbar)) THEN
-          IF (Master) WRITE (stdout,40) TRIM(Vname(1,idUbar)),          &
+          IF (Master) WRITE (stdout,50) TRIM(Vname(1,idUbar)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idVbar)) THEN
-          IF (Master) WRITE (stdout,40) TRIM(Vname(1,idVbar)),          &
+          IF (Master) WRITE (stdout,50) TRIM(Vname(1,idVbar)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
@@ -772,21 +800,21 @@
 # if defined ADJUST_BOUNDARY && !defined RBL4DVAR_FCT_SENSITIVITY
         IF (.not.got_var(idSbry(isFsur)).and.                           &
      &      ANY(Lobc(:,isFsur,ng))) THEN
-          IF (Master) WRITE (stdout,40) TRIM(Vname(1,idSbry(isFsur))),  &
+          IF (Master) WRITE (stdout,50) TRIM(Vname(1,idSbry(isFsur))),  &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idSbry(isUbar)).and.                           &
      &      ANY(Lobc(:,isUbar,ng))) THEN
-          IF (Master) WRITE (stdout,40) TRIM(Vname(1,idSbry(isUbar))),  &
+          IF (Master) WRITE (stdout,50) TRIM(Vname(1,idSbry(isUbar))),  &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idSbry(isVbar)).and.                           &
      &      ANY(Lobc(:,isVbar,ng))) THEN
-          IF (Master) WRITE (stdout,40) TRIM(Vname(1,idSbry(isVbar))),  &
+          IF (Master) WRITE (stdout,50) TRIM(Vname(1,idSbry(isVbar))),  &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
@@ -794,13 +822,13 @@
 # endif
 # ifdef ADJUST_WSTRESS
         IF (.not.got_var(idUsms)) THEN
-          IF (Master) WRITE (stdout,40) TRIM(Vname(1,idUsms)),          &
+          IF (Master) WRITE (stdout,50) TRIM(Vname(1,idUsms)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idVsms)) THEN
-          IF (Master) WRITE (stdout,40) TRIM(Vname(1,idVsms)),          &
+          IF (Master) WRITE (stdout,50) TRIM(Vname(1,idVsms)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
@@ -808,13 +836,13 @@
 # endif
 # ifdef SOLVE3D
         IF (.not.got_var(idUvel)) THEN
-          IF (Master) WRITE (stdout,40) TRIM(Vname(1,idUvel)),          &
+          IF (Master) WRITE (stdout,50) TRIM(Vname(1,idUvel)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idVvel)) THEN
-          IF (Master) WRITE (stdout,40) TRIM(Vname(1,idVvel)),          &
+          IF (Master) WRITE (stdout,50) TRIM(Vname(1,idVvel)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
@@ -822,14 +850,14 @@
 #  if defined ADJUST_BOUNDARY && !defined RBL4DVAR_FCT_SENSITIVITY
         IF (.not.got_var(idSbry(isUvel)).and.                           &
      &      ANY(Lobc(:,isUvel,ng))) THEN
-          IF (Master) WRITE (stdout,40) TRIM(Vname(1,idSbry(isUvel))),  &
+          IF (Master) WRITE (stdout,50) TRIM(Vname(1,idSbry(isUvel))),  &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idSbry(isVvel)).and.                           &
      &      ANY(Lobc(:,isVvel,ng))) THEN
-          IF (Master) WRITE (stdout,40) TRIM(Vname(1,idSbry(isVvel))),  &
+          IF (Master) WRITE (stdout,50) TRIM(Vname(1,idSbry(isVvel))),  &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
@@ -837,7 +865,7 @@
 #  endif
         DO itrc=1,NT(ng)
           IF (.not.got_var(idTvar(itrc))) THEN
-            IF (Master) WRITE (stdout,40) TRIM(Vname(1,idTvar(itrc))),  &
+            IF (Master) WRITE (stdout,50) TRIM(Vname(1,idTvar(itrc))),  &
      &                                    TRIM(ncname)
             exit_flag=3
             RETURN
@@ -845,7 +873,7 @@
 #  if defined ADJUST_BOUNDARY && !defined RBL4DVAR_FCT_SENSITIVITY
           IF (.not.got_var(idSbry(isTvar(itrc))).and.                   &
      &        ANY(Lobc(:,isTvar(itrc),ng))) THEN
-            IF (Master) WRITE (stdout,40)                               &
+            IF (Master) WRITE (stdout,50)                               &
      &                        TRIM(Vname(1,idSbry(isTvar(itrc)))),      &
      &                        TRIM(ncname)
             exit_flag=3
@@ -854,7 +882,7 @@
 #  endif
 #  ifdef ADJUST_STFLUX
           IF (.not.got_var(idTsur(itrc)).and.Lstflux(itrc,ng)) THEN
-            IF (Master) WRITE (stdout,40) TRIM(Vname(1,idTsur(itrc))),  &
+            IF (Master) WRITE (stdout,50) TRIM(Vname(1,idTsur(itrc))),  &
      &                                    TRIM(ncname)
             exit_flag=3
             RETURN
@@ -872,13 +900,16 @@
 !
   10  FORMAT (/,' DEF_INI_NF90 - unable to open initial NetCDF',        &
      &        ' file: ',a)
-  20  FORMAT (/,' DEF_INI_NF90 - illegal dimensions for variable : ',a, &
+  20  FORMAT (/,' DEF_INI_NF90 - inconsistent NetCDF file format: ',    &
+     &        'ncformat = ',i0,' instead of ',i0,/,16x,'infile: ',a,    &
+     &        /,16x,'A NetCDF4/HDF5 is needed for modifications')
+  30  FORMAT (/,' DEF_INI_NF90 - illegal dimensions for variable : ',a, &
      &        /,16x,'Nvardims = ',i0,', missing dimension: ''',a,'''',  &
      &        /,16x,'in file: ',a,                                      &
      &        /,16x,'Remove such variable from input file.')
-  30  FORMAT (/,' DEF_INI_NF90 - unable to put in define mode initial', &
+  40  FORMAT (/,' DEF_INI_NF90 - unable to put in define mode initial', &
      &        ' NetCDF file: ',a)
-  40  FORMAT (/,' DEF_INI_NF90 - unable to find variable: ',a,2x,       &
+  50  FORMAT (/,' DEF_INI_NF90 - unable to find variable: ',a,2x,       &
      &        ' in file: ',a)
 !
       RETURN
