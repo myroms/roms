@@ -8043,6 +8043,9 @@
       ELSE IF (model.eq.17) THEN
         string='NRM: '                     ! normalization factor
         IDmod=iNLM                         ! surface forcing
+      ELSE IF (model.eq.19) THEN
+        string='ITL: '                     ! cummulative increments for
+        IDmod=iTLM                         ! Incremental Analysis Update
       END IF
 
 # ifdef PROFILE
