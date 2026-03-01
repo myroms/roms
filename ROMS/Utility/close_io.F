@@ -123,7 +123,7 @@
 #endif
 !
 !  Close forward trajectory and fluxes files.
-
+!
       DO ng=1,Ngrids
 #if defined FORWARD_WRITE
         IF (FWD(ng)%IOtype.eq.io_nf90) THEN
@@ -188,7 +188,11 @@
 !  to closed state.
 !
       DO i=1,nFfiles(ng)
-        IF ((FRC(i,ng)%Nfiles.gt.0).and.(FRC(i,ng)%ncid.ne.-1)) THEN
+        IF ((FRC(i,ng)%Nfiles.gt.0).and.                                &
+     &      (((FRC(i,ng)%IOtype.eq.io_nf90).and.                        &
+     &        (FRC(i,ng)%ncid.ne.-1)).or.                               &
+     &       ((FRC(i,ng)%IOtype.eq.io_pio).and.                         &
+     &        (FRC(i,ng)%pioFile%fh.ne.-1)))) THEN
           Fcount=FRC(i,ng)%Fcount
           CALL close_file (ng, model, FRC(i,ng),                        &
      &                     FRC(i,ng)%files(Fcount), .FALSE.)
@@ -206,7 +210,11 @@
 !
       IF (ObcData(ng)) THEN
         DO i=1,nBCfiles(ng)
-          IF ((BRY(i,ng)%Nfiles.gt.0).and.(BRY(i,ng)%ncid.ne.-1)) THEN
+          IF ((BRY(i,ng)%Nfiles.gt.0).and.                              &
+     &        (((BRY(i,ng)%IOtype.eq.io_nf90).and.                      &
+     &          (BRY(i,ng)%ncid.ne.-1)).or.                             &
+     &         ((BRY(i,ng)%IOtype.eq.io_pio).and.                       &
+     &          (BRY(i,ng)%pioFile%fh.ne.-1)))) THEN
             Fcount=BRY(i,ng)%Fcount
             CALL close_file (ng, model, BRY(i,ng),                      &
      &                       BRY(i,ng)%files(Fcount), .FALSE.)
@@ -224,7 +232,11 @@
 !
       IF (CLM_FILE(ng)) THEN
         DO i=1,nCLMfiles(ng)
-          IF ((CLM(i,ng)%Nfiles.gt.0).and.(CLM(i,ng)%ncid.ne.-1)) THEN
+          IF ((CLM(i,ng)%Nfiles.gt.0).and.                              &
+     &        (((CLM(i,ng)%IOtype.eq.io_nf90).and.                      &
+     &          (CLM(i,ng)%ncid.ne.-1)).or.                             &
+     &         ((CLM(i,ng)%IOtype.eq.io_pio).and.                       &
+     &          (CLM(i,ng)%pioFile%fh.ne.-1)))) THEN
             Fcount=CLM(i,ng)%Fcount
             CALL close_file (ng, model, CLM(i,ng),                      &
      &                       CLM(i,ng)%files(Fcount), .FALSE.)
@@ -359,6 +371,16 @@
         CALL close_file (ng, iNLM, XTR(ng), XTR(ng)%name, Lupdate)
 #endif
 !
+!  Close several input files that may be open.
+!
+#ifdef FOUR_DVAR
+        CALL close_file (ng, iNLM, INI(ng), INI(ng)%name, .FALSE.)
+#endif
+        CALL close_file (ng, iNLM, NUD(ng), NUD(ng)%name, .FALSE.)
+        CALL close_file (ng, iNLM, OBS(ng), OBS(ng)%name, .FALSE.)
+        CALL close_file (ng, iNLM, SSF(ng), SSF(ng)%name, .FALSE.)
+        CALL close_file (ng, iNLM, TIDE(ng), TIDE(ng)%name, .FALSE.)
+!
 !  Report number of time records written.
 !
         IF (Master) THEN
@@ -404,6 +426,18 @@
           IF (associated(TLM(ng)%Nrec)) THEN
             IF (ANY(TLM(ng)%Nrec.gt.0)) THEN
               WRITE (stdout,20) 'TANGENT', SUM(TLM(ng)%Nrec)
+            END IF
+          END IF
+
+          IF (associated(ITL(ng)%Nrec)) THEN
+            IF (ANY(ITL(ng)%Nrec.gt.0)) THEN
+              WRITE (stdout,20) 'TLM ITL', SUM(ITL(ng)%Nrec)
+            END IF
+          END IF
+
+          IF (associated(TLF(ng)%Nrec)) THEN
+            IF (ANY(TLF(ng)%Nrec.gt.0)) THEN
+              WRITE (stdout,20) 'TLM TLF', SUM(TLF(ng)%Nrec)
             END IF
           END IF
 #endif
