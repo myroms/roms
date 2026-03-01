@@ -813,7 +813,7 @@
 !  If appropriate, open source NetCDF, inquire about dimesions and
 !  variables.
 !
-      IF (self%pioFile%fh.eq.0) THEN
+      IF (self%pioFile%fh.eq.-1) THEN
         IF (FoundError(assign_string(self%ncname, ncname),              &
      &                 NoError, __LINE__, MyFile)) RETURN
 !
