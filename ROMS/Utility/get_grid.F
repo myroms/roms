@@ -120,9 +120,9 @@
 # if defined UV_DRAG_GRID && !defined ANA_DRAG
       integer :: varid_dragL, varid_dragQ, varid_ZoBL
 # endif
-#if defined UV_WAVEDRAG
+# if defined UV_WAVEDRAG
       integer :: varid_dragW
-#endif
+# endif
       integer :: Vsize(4)
 # ifdef CHECKSUM
       integer(i8b) :: Fhash
@@ -131,6 +131,12 @@
       real(dp), parameter :: Fscl = 1.0_dp
 
       real(r8) :: Fmax, Fmin
+
+# if defined WTYPE_GRID && \
+    (defined LMD_SKPP   || defined SOLAR_SOURCE) && \
+    !defined ANA_WTYPE
+      real(r8) :: wtype(LBi:UBi,LBj:UBj)
+# endif
 !
       character (len=256) :: ncname
 
@@ -696,10 +702,10 @@
      &                        GRID(ng) % rmask,                         &
 #  endif
 #  ifdef CHECKSUM
-     &                        MIXING(ng) % Jwtype,                      &
+     &                        wtype,                                    &
      &                        checksum = Fhash)
 #  else
-     &                        MIXING(ng) % Jwtype)
+     &                        wtype)
 #  endif
             IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
               exit_flag=2
@@ -717,15 +723,16 @@
             IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
               CALL exchange_r2d_tile (ng, tile,                         &
      &                                LBi, UBi, LBj, UBj,               &
-     &                                MIXING(ng) % Jwtype)
+     &                                wtype)
             END IF
 #  ifdef DISTRIBUTE
             CALL mp_exchange2d (ng, tile, model, 1,                     &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          NghostPoints,                           &
      &                          EWperiodic(ng), NSperiodic(ng),         &
-     &                          MIXING(ng) % Jwtype)
+     &                          wtype)
 #  endif
+            MIXING(ng) % Jwtype = NINT(wtype)   ! nearest integer
 # endif
 # ifndef ANA_SPONGE
 !
@@ -2531,6 +2538,12 @@
       real(dp), parameter :: Fscl = 1.0_dp
 
       real(r8) :: Fmax, Fmin
+
+# if defined WTYPE_GRID && \
+    (defined LMD_SKPP   || defined SOLAR_SOURCE) && \
+    !defined ANA_WTYPE
+      real(r8) :: wtype(LBi:UBi,LBj:UBj)
+# endif
 !
       character (len=256) :: ncname
 
@@ -3152,7 +3165,7 @@
           CASE ('wtype_grid')
             pioVar%vd=var_desc(i)
             pioVar%gtype=r2dvar
-            IF (KIND(MIXING(ng)%Jwtype).eq.8) THEN
+            IF (KIND(wtype).eq.8) THEN
               pioVar%dkind=PIO_double
               ioDesc => ioDesc_dp_r2dvar(ng)
             ELSE
@@ -3169,10 +3182,10 @@
      &                        GRID(ng) % rmask,                         &
 #   endif
 #   ifdef CHECKSUM
-     &                        MIXING(ng) % Jwtype,                      &
+     &                        wtype,                                    &
      &                        checksum = Fhash)
 #   else
-     &                        MIXING(ng) % Jwtype)
+     &                        wtype)
 #   endif
             IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
               exit_flag=2
@@ -3190,15 +3203,16 @@
             IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
               CALL exchange_r2d_tile (ng, tile,                         &
      &                                LBi, UBi, LBj, UBj,               &
-     &                                MIXING(ng) % Jwtype)
+     &                                wtype)
             END IF
 #   ifdef DISTRIBUTE
             CALL mp_exchange2d (ng, tile, model, 1,                     &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          NghostPoints,                           &
      &                          EWperiodic(ng), NSperiodic(ng),         &
-     &                          MIXING(ng) % Jwtype)
+     &                          wtype)
 #   endif
+            MIXING(ng) % Jwtype = NINT(wtype)   ! nearest integer
 #  endif
 #  ifndef ANA_SPONGE
 !
