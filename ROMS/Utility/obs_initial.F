@@ -100,7 +100,7 @@
       real(r8) :: tend
 !
       character (len=*), parameter :: MyFile =                          &
-     &  __FILE__//"obs_initial_nf90"
+     &  __FILE__//", obs_initial_nf90"
 !
       SourceFile=MyFile
 !
@@ -408,7 +408,7 @@
       real(r8) :: tend
 !
       character (len=*), parameter :: MyFile =                          &
-     &  __FILE__//"obs_initial_nf90"
+     &  __FILE__//", obs_initial_pio"
 !
       SourceFile=MyFile
 !
@@ -417,7 +417,7 @@
 !  the dimensions and variables.
 !-----------------------------------------------------------------------
 !
-      QUERY : IF (OBS(ng)%ncid.eq.-1) THEN
+      QUERY : IF (OBS(ng)%pioFile%fh.eq.-1) THEN
 !
 !  Open observations NetCDF file.
 !

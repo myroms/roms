@@ -96,11 +96,11 @@
       integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
 !
 #ifdef ASSUMED_SHAPE
-      real(r8), intent(in)  :: h(LBi:,LBj:)
-      real(r8), intent(out) :: Jwtype(LBi:,LBj:)
+      integer, intent(out) :: Jwtype(LBi:,LBj:)
+      real(r8), intent(in) :: h(LBi:,LBj:)
 #else
-      real(r8), intent(in)  :: h(LBi:UBi,LBj:UBj)
-      real(r8), intent(out) :: Jwtype(LBi:UBi,LBj:UBj)
+      integer, intent(out) :: Jwtype(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: h(LBi:UBi,LBj:UBj)
 #endif
 !
 !  Local variable declarations.

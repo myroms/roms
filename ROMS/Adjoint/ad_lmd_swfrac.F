@@ -84,7 +84,7 @@
 !
       DO j=Jstr,Jend
         DO i=Istr,Iend
-          Jindex=MAX(1, MIN(INT(MIXING(ng)%Jwtype(i,j)), 9))
+          Jindex=MAX(1, MIN(MIXING(ng)%Jwtype(i,j), 9))
           fac1(i)=Zscale/lmd_mu1(Jindex)
           fac2(i)=Zscale/lmd_mu2(Jindex)
           fac3(i)=lmd_r1(Jindex)
