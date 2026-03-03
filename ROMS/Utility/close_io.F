@@ -188,11 +188,13 @@
 !  to closed state.
 !
       DO i=1,nFfiles(ng)
-        IF ((FRC(i,ng)%Nfiles.gt.0).and.                                &
-     &      (((FRC(i,ng)%IOtype.eq.io_nf90).and.                        &
-     &        (FRC(i,ng)%ncid.ne.-1)).or.                               &
-     &       ((FRC(i,ng)%IOtype.eq.io_pio).and.                         &
-     &        (FRC(i,ng)%pioFile%fh.ne.-1)))) THEN
+        IF ((FRC(i,ng)%Nfiles.gt.0).and.(                               &
+# if defined PIO_LIB && defined DISTRIBUTE
+     &      ((FRC(i,ng)%IOtype.eq.io_pio).and.                          &
+     &       (FRC(i,ng)%pioFile%fh.ne.-1)).or.                          &
+# endif
+     &      ((FRC(i,ng)%IOtype.eq.io_nf90).and.                         &
+     &       (FRC(i,ng)%ncid.ne.-1)))) THEN
           Fcount=FRC(i,ng)%Fcount
           CALL close_file (ng, model, FRC(i,ng),                        &
      &                     FRC(i,ng)%files(Fcount), .FALSE.)
@@ -210,11 +212,13 @@
 !
       IF (ObcData(ng)) THEN
         DO i=1,nBCfiles(ng)
-          IF ((BRY(i,ng)%Nfiles.gt.0).and.                              &
-     &        (((BRY(i,ng)%IOtype.eq.io_nf90).and.                      &
-     &          (BRY(i,ng)%ncid.ne.-1)).or.                             &
-     &         ((BRY(i,ng)%IOtype.eq.io_pio).and.                       &
-     &          (BRY(i,ng)%pioFile%fh.ne.-1)))) THEN
+          IF ((BRY(i,ng)%Nfiles.gt.0).and.(                             &
+# if defined PIO_LIB && defined DISTRIBUTE
+     &        ((BRY(i,ng)%IOtype.eq.io_pio).and.                        &
+     &         (BRY(i,ng)%pioFile%fh.ne.-1)).or.                        &
+# endif
+     &        ((BRY(i,ng)%IOtype.eq.io_nf90).and.                       &
+     &         (BRY(i,ng)%ncid.ne.-1)))) THEN
             Fcount=BRY(i,ng)%Fcount
             CALL close_file (ng, model, BRY(i,ng),                      &
      &                       BRY(i,ng)%files(Fcount), .FALSE.)
@@ -232,11 +236,13 @@
 !
       IF (CLM_FILE(ng)) THEN
         DO i=1,nCLMfiles(ng)
-          IF ((CLM(i,ng)%Nfiles.gt.0).and.                              &
-     &        (((CLM(i,ng)%IOtype.eq.io_nf90).and.                      &
-     &          (CLM(i,ng)%ncid.ne.-1)).or.                             &
-     &         ((CLM(i,ng)%IOtype.eq.io_pio).and.                       &
-     &          (CLM(i,ng)%pioFile%fh.ne.-1)))) THEN
+          IF ((CLM(i,ng)%Nfiles.gt.0).and.(                             &
+# if defined PIO_LIB && defined DISTRIBUTE
+     &        ((CLM(i,ng)%IOtype.eq.io_pio).and.                        &
+     &         (CLM(i,ng)%pioFile%fh.ne.-1)).or.                        &
+# endif
+     &        ((CLM(i,ng)%IOtype.eq.io_nf90).and.                       &
+     &         (CLM(i,ng)%ncid.ne.-1)))) THEN
             Fcount=CLM(i,ng)%Fcount
             CALL close_file (ng, model, CLM(i,ng),                      &
      &                       CLM(i,ng)%files(Fcount), .FALSE.)
