@@ -1261,7 +1261,7 @@
 !  Seaice model variables open boundary conditions.
 !
       IF (LprocessOBC(ng)) THEN
-        DO i=1,isVevp
+        DO i=1,nIceS
           IF (i.eq.isUice) THEN           ! U-point
             iceIstrL=1
             iceIstrM=0

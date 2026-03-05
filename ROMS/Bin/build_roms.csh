@@ -242,6 +242,7 @@ endif
 if ( $g_flags == 1 ) then
  setenv USE_DEBUG           on          # use Fortran debugging flags
 endif
+
  setenv USE_LARGE           on          # activate 64-bit compilation
 
 #--------------------------------------------------------------------------

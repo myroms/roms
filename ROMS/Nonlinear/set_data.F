@@ -1236,7 +1236,7 @@
 !!      CALL ana_fsobc (ng, tile, iNLM)
 # else
         IF (DOMAIN(ng)%SouthWest_Test(tile)) THEN
-          DO i=1,isVevp
+          DO i=1,nIceS
             IF (i.eq.isUice) THEN         ! U-point
               iceIstrL=1
               iceIstrM=0

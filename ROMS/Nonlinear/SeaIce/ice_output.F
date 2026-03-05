@@ -145,12 +145,12 @@
               Aval(5)=REAL(Iinfo(1,ifield,ng),r8)
 !
               SELECT CASE (nf)
-                CASE (isUice)
+                CASE (isUice, isUevp)
                   icegrd(1:3)=u2dgrd(1:3)
 # if defined WRITE_WATER && defined MASKING
                   Vinfo(20)='mask_u'
 # endif
-                CASE (isVice)
+                CASE (isVice, isVevp)
                   icegrd(1:3)=v2dgrd(1:3)
 # if defined WRITE_WATER && defined MASKING
                   Vinfo(20)='mask_v'
@@ -424,12 +424,12 @@
             END IF
 !
             SELECT CASE (ifld)
-              CASE (isUice)
+              CASE (isUice, isUevp)
                 gtype=gfactor*u2dvar
 # ifdef MASKING
                 iceMask => GRID(ng) % umask_full
 # endif
-              CASE (isVice)
+              CASE (isVice, isVevp)
                 gtype=gfactor*v2dvar
 # ifdef MASKING
                 iceMask => GRID(ng) % vmask_full
@@ -959,13 +959,13 @@
               S(ng)%pioVar(ifield)%dkind=PIO_FOUT
 !
               SELECT CASE (nf)
-                CASE (isUice)
+                CASE (isUice, isUevp)
                   icegrd(1:3)=u2dgrd(1:3)
 # if defined WRITE_WATER && defined MASKING
                   Vinfo(20)='mask_u'
 # endif
                   S(ng)%pioVar(ifield)%gtype=u2dvar
-                CASE (isVice)
+                CASE (isVice, isVevp)
                   icegrd(1:3)=v2dgrd(1:3)
 # if defined WRITE_WATER && defined MASKING
                   Vinfo(20)='mask_v'
@@ -1278,7 +1278,7 @@
             END IF
 !
             SELECT CASE (ifld)
-              CASE (isUice)
+              CASE (isUice, isUevp)
                 IF (S(ng)%pioVar(ifield)%dkind.eq.PIO_double) THEN
                   ioDesc => ioDesc_dp_u2dvar(ng)
                 ELSE
@@ -1287,7 +1287,7 @@
 # ifdef MASKING
                 iceMask => GRID(ng) % umask_full
 # endif
-              CASE (isVice)
+              CASE (isVice, isVevp)
                 IF (S(ng)%pioVar(ifield)%dkind.eq.PIO_double) THEN
                   ioDesc => ioDesc_dp_v2dvar(ng)
                 ELSE

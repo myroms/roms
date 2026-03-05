@@ -3356,10 +3356,10 @@
 #endif
 #ifdef ICE_MODEL
 !
-!  Set ice model state boundary indices, last variable isVevp=15.
+!  Set ice model state boundary indices, nIceS state variables.
 !
       ic=ic_brylast
-      DO i=1,isVevp
+      DO i=1,nIceS
         ic=ic+1
         idBvar(ic)=iSice(i)
         ibICE(i)=ic
