@@ -566,6 +566,8 @@
      &          'Ice-Ocean drag coefficient (nondimensional).'
           WRITE (out,60) Astrength(ng), 'Astrength',                    &
      &          'Ice strength exponential weighting (nondimensional).'
+          WRITE (out,60) Pstar(ng), 'Pstar',                            &
+     &          'Compressive ice strength parameter, Hibler (1979).'
           WRITE (out,60) ZetaMin(ng), 'zetaMin',                        &
      &          'Minimum ice shear strength (N/m2) limiter.'
           WRITE (out,60) ZetaMax(ng), 'zetaMax',                        &

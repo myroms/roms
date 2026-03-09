@@ -53,10 +53,12 @@
         Cd_ai == 3.0d-3                  ! Air-Ice   drag
         Cd_io == 7.5d-3                  ! Ice-Ocean drag
 
-! Ice strength exponential weighting coefficient on concentration
-! (nondimensional)
+! Ice strength exponential weighting coefficient and compressive
+! ice strength parameter on concentration (nondimensional),
+! Hibler (1979) parameterization.
 
     Astrength == 20.d0
+        Pstar == 25000.0d0
 
 ! Minimum and Maximum shear strength [N/m2].
 
@@ -305,6 +307,8 @@ Aout(idW_ro) == T     ! Fi_avg(...,icW_ro) melt/freeze rate runoff into ocean
 !
 !  Astrength      Exponential weighting coefficient for ice strengh (pressure)
 !                   parameterization as function of ice concentration.
+!
+!  Pstar          Compressive ice strength parameter, Hibler (1979). 
 !
 !  zetaMin        Minimum shear stregth threshold (N/m2) in the computation of
 !                   bulk viscosity in the EVP formulation.

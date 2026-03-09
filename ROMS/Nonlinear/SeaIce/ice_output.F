@@ -134,6 +134,7 @@
               LdefVar=VarOut(ifield,ng)
               vtype=NF_FOUT
             END IF
+!
             IF (Ldefvar) THEN
               Vinfo( 1)=Vname(1,ifield)
               Vinfo( 2)=Vname(2,ifield)
@@ -218,7 +219,15 @@
         DO nf=1,nIceF
           IF (iFice(nf).gt.0) THEN
             ifield=iFice(nf)
-            IF (VarOut(ifield,ng)) THEN
+            IF (S(ng)%ncid.eq.RST(ng)%ncid) THEN
+              LdefVar=.TRUE.
+              vtype=NF_FRST
+            ELSE
+              LdefVar=VarOut(ifield,ng)
+              vtype=NF_FOUT
+            END IF
+!
+            IF (LdefVar) THEN
               Vinfo( 1)=Vname(1,ifield)
               Vinfo( 2)=Vname(2,ifield)
               Vinfo( 3)=Vname(3,ifield)
@@ -945,8 +954,8 @@
             ELSE
               LdefVar=VarOut(ifield,ng)
               vtype=PIO_FOUT
-           END IF
-
+            END IF
+!
             IF (Ldefvar) THEN
               Vinfo( 1)=Vname(1,ifield)
               Vinfo( 2)=Vname(2,ifield)
@@ -1042,7 +1051,15 @@
         DO nf=1,nIceF
           IF (iFice(nf).gt.0) THEN
             ifield=iFice(nf)
-            IF (VarOut(ifield,ng)) THEN
+            IF (FileH.eq.ABS(RST(ng)%pioFile%fh)) THEN
+              LdefVar=.TRUE.
+              vtype=PIO_FRST
+            ELSE
+              LdefVar=VarOut(ifield,ng)
+              vtype=PIO_FOUT
+            END IF
+!
+            IF (LdefVar) THEN
               Vinfo( 1)=Vname(1,ifield)
               Vinfo( 2)=Vname(2,ifield)
               Vinfo( 3)=Vname(3,ifield)
