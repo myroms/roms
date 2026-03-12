@@ -244,6 +244,7 @@ fi
 if [ $g_flags -eq 1 ]; then
  export         USE_DEBUG=on            # use Fortran debugging flags
 fi
+
  export         USE_LARGE=on            # activate 64-bit compilation
 
 #--------------------------------------------------------------------------
@@ -369,7 +370,7 @@ if [ $branch -eq 1 ]; then
     echo ""
     echo "Downloading ROMS source code from GitHub: https://github.com/myroms"
     echo ""
-    git clone https://www.github.com/myroms/roms.git src
+    git clone https://github.com/myroms/roms.git src
   fi
   echo ""
   echo "Checking out ROMS GitHub branch: $branch_name"

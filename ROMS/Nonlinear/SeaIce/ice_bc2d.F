@@ -19,6 +19,7 @@
       USE mod_grid
       USE mod_ice
       USE mod_scalars
+      USE mod_boundary
 !
       implicit none
 !
@@ -118,8 +119,8 @@
      &                            (cff+Cx)
             IF (S(iwest)%nudging) THEN
               field(Istr-1,j,linew)=field(Istr-1,j,linew)+              &
-     &                              tau*(ICE_LOBC(ifld,ng)%ice_west(j)- &
-     &                                   field(Istr-1,j,know))
+     &                            tau*(BOUNDARY(ng)%ice_west(ifld,j)-   &
+     &                                 field(Istr-1,j,know))
             END IF
 # ifdef MASKING
             field(Istr-1,j,linew)=field(Istr-1,j,linew)*                &
@@ -131,7 +132,7 @@
 !
         ELSE IF (S(iwest)%clamped) THEN
           DO j=Jstr,Jend
-            field(Istr-1,j,linew)=ICE_LOBC(ifld,ng)%ice_west(j)
+            field(Istr-1,j,linew)=BOUNDARY(ng)%ice_west(ifld,j)
 # ifdef MASKING
             field(Istr-1,j,linew)=field(Istr-1,j,linew)*                &
      &                            GRID(ng)%rmask(Istr-1,j)
@@ -147,7 +148,7 @@
         ELSE IF (S(iwest)%mixed) THEN
           DO j=Jstr,Jend
             IF (ui(1,j,linew).ge.0.0_r8) THEN
-              field(Istr-1,j,linew)=ICE_LOBC(ifld,ng)%ice_west(j)
+              field(Istr-1,j,linew)=BOUNDARY(ng)%ice_west(ifld,j)
 # ifdef MASKING
               field(Istr-1,j,linew)=field(Istr-1,j,linew)*              &
      &                              GRID(ng)%rmask(Istr-1,j)
@@ -233,8 +234,8 @@
      &                            (cff+Cx)
             IF (S(ieast)%nudging) THEN
               field(Iend+1,j,linew)=field(Iend+1,j,linew)+              &
-     &                              tau*(ICE_LOBC(ifld,ng)%ice_east(j)- &
-     &                                   field(Iend+1,j,know))
+     &                            tau*(BOUNDARY(ng)%ice_east(ifld,j)-   &
+     &                                 field(Iend+1,j,know))
             END IF
 # ifdef MASKING
             field(Iend+1,j,linew)=field(Iend+1,j,linew)*                &
@@ -246,7 +247,7 @@
 !
         ELSE IF (S(ieast)%clamped) THEN
           DO j=Jstr,Jend
-            field(Iend+1,j,linew)=ICE_LOBC(ifld,ng)%ice_east(j)
+            field(Iend+1,j,linew)=BOUNDARY(ng)%ice_east(ifld,j)
 # ifdef MASKING
             field(Iend+1,j,linew)=field(Iend+1,j,linew)*                &
      &                            GRID(ng)%rmask(Iend+1,j)
@@ -262,7 +263,7 @@
         ELSE IF (S(ieast)%mixed) THEN
           DO j=Jstr,Jend
             IF (ui(Iend+1,j,linew).le.0.0_r8) THEN
-              field(Iend+1,j,linew)=ICE_LOBC(ifld,ng)%ice_east(j)
+              field(Iend+1,j,linew)=BOUNDARY(ng)%ice_east(ifld,j)
 # ifdef MASKING
               field(Iend+1,j,linew)=field(Iend+1,j,linew)*              &
      &                              GRID(ng)%rmask(Iend+1,j)
@@ -348,8 +349,8 @@
      &                            (cff+Ce)
             IF (S(isouth)%nudging) THEN
               field(i,Jstr-1,linew)=field(i,Jstr-1,linew)+              &
-     &                              tau*(ICE_LOBC(ifld,ng)%ice_south(i)-&
-     &                                   field(i,Jstr-1,know))
+     &                            tau*(BOUNDARY(ng)%ice_south(ifld,i)-  &
+     &                                 field(i,Jstr-1,know))
             END IF
 # ifdef MASKING
             field(i,Jstr-1,linew)=field(i,Jstr-1,linew)*                &
@@ -361,7 +362,7 @@
 !
         ELSE IF (S(isouth)%clamped) THEN
           DO i=Istr,Iend
-            field(i,Jstr-1,linew)=ICE_LOBC(ifld,ng)%ice_south(i)
+            field(i,Jstr-1,linew)=BOUNDARY(ng)%ice_south(ifld,i)
 # ifdef MASKING
             field(i,Jstr-1,linew)=field(i,Jstr-1,linew)*                &
      &                            GRID(ng)%rmask(i,Jstr-1)
@@ -377,7 +378,7 @@
         ELSE IF (S(isouth)%mixed) THEN
           DO i=Istr,Iend
             IF (vi(i,1,linew).ge.0._r8) THEN
-              field(i,Jstr-1,linew)=ICE_LOBC(ifld,ng)%ice_south(i)
+              field(i,Jstr-1,linew)=BOUNDARY(ng)%ice_south(ifld,i)
 # ifdef MASKING
               field(i,Jstr-1,linew)=field(i,Jstr-1,linew)*              &
      &                              GRID(ng)%rmask(i,Jstr-1)
@@ -463,7 +464,7 @@
      &                            (cff+Ce)
             IF (S(inorth)%nudging) THEN
               field(i,Jend+1,linew)=field(i,Jend+1,linew)+              &
-     &                              tau*(ICE_LOBC(ifld,ng)%ice_north(i)-&
+     &                              tau*(BOUNDARY(ng)%ice_north(ifld,i)-&
      &                                   field(i,Jend+1,know))
             END IF
 # ifdef MASKING
@@ -476,7 +477,7 @@
 !
         ELSE IF (S(inorth)%clamped) THEN
           DO i=Istr,Iend
-            field(i,Jend+1,linew)=ICE_LOBC(ifld,ng)%ice_north(i)
+            field(i,Jend+1,linew)=BOUNDARY(ng)%ice_north(ifld,i)
 # ifdef MASKING
             field(i,Jend+1,linew)=field(i,Jend+1,linew)*                &
      &                            GRID(ng)%rmask(i,Jend+1)
@@ -492,7 +493,7 @@
         ELSE IF (S(inorth)%mixed) THEN
           DO i=Istr,Iend
             IF (vi(i,Jend+1,linew).le.0.0_r8) THEN
-              field(i,Jend+1,linew)=ICE_LOBC(ifld,ng)%ice_north(i)
+              field(i,Jend+1,linew)=BOUNDARY(ng)%ice_north(ifld,i)
 # ifdef MASKING
               field(i,Jend+1,linew)=field(i,Mm(ng)+1,linew)*            &
      &                              GRID(ng)%rmask(i,Jend+1)

@@ -1686,6 +1686,314 @@ metadata:
     add_offset:     0.0d0
     scale:          1.0d0
 
+  - variable:       Aice_west                                        # Input
+    standard_name:  sea_ice_area_fraction
+    long_name:      ice concentration western boundary condition
+    units:          nondimensional
+    field:          ice concentration western-boundary
+    time:           Aice_time
+    index_code:     isAice(iwest)
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       Aice_east                                        # Input
+    standard_name:  sea_ice_area_fraction
+    long_name:      ice concentration eastern boundary condition
+    units:          nondimensional
+    field:          ice concentration eastern-boundary
+    time:           Aice_time
+    index_code:     isAice(ieast)
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+ 
+  - variable:       Aice_south                                       # Input
+    standard_name:  sea_ice_area_fraction
+    long_name:      ice concentration southern boundary condition
+    units:          nondimensional
+    field:          ice concentration southern-boundary
+    time:           Aice_time
+    index_code:     isAice(isouth)
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       Aice_north                                       # Input
+    standard_name:  sea_ice_area_fraction
+    long_name:      ice concentration northern boundary condition
+    units:          nondimensional
+    field:          ice concentration northern-boundary
+    time:           Aice_time
+    index_code:     isAice(inorth)
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       ice_thickness_west                               # Input
+    standard_name:  sea_ice_thickness
+    long_name:      ice thickness western boundary condition
+    units:          meter
+    field:          ice thickness western-boundary
+    time:           ocean_time
+    index_code:     isHice(iwest)
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       ice_thickness_east                               # Input
+    standard_name:  sea_ice_thickness
+    long_name:      ice thickness eastern boundary condition
+    units:          meter
+    field:          ice thickness eastern-boundary
+    time:           ocean_time
+    index_code:     isHice(ieast)
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       ice_thickness_south                              # Input
+    standard_name:  sea_ice_thickness
+    long_name:      ice thickness southern boundary condition
+    units:          meter
+    field:          ice thickness southern-boundary
+    time:           ocean_time
+    index_code:     isHice(isouth)
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       ice_thickness_north                              # Input
+    standard_name:  sea_ice_thickness
+    long_name:      ice thickness northern boundary condition
+    units:          meter
+    field:          ice thickness northern-boundary
+    time:           ocean_time
+    index_code:     isHice(inorth)
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       meltpond_thickness_west                               # Input
+    standard_name:  meltpond_thickness
+    long_name:      meltpond_thickness western boundary condition
+    units:          meter
+    field:          meltpond_thickness western-boundary
+    time:           ocean_time
+    index_code:     isHmel(iwest)
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       meltpond_thickness_east                               # Input
+    standard_name:  meltpond_thickness
+    long_name:      meltpond_thickness eastern boundary condition
+    units:          meter
+    field:          meltpond_thickness eastern-boundary
+    time:           ocean_time
+    index_code:     isHmel(ieast)
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+    
+  - variable:       meltpond_thickness_south                              # Input
+    standard_name:  meltpond_thickness
+    long_name:      meltpond_thickness southern boundary condition
+    units:          meter
+    field:          meltpond_thickness southern-boundary
+    time:           ocean_time
+    index_code:     isHmel(isouth)
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+    
+  - variable:       meltpond_thickness_north                              # Input
+    standard_name:  meltpond_thickness
+    long_name:      meltpond_thickness northern boundary condition
+    units:          meter
+    field:          meltpond_thickness northern-boundary
+    time:           ocean_time
+    index_code:     isHmel(inorth)
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       ice_age_west                               # Input
+    standard_name:  age_of_sea_ice
+    long_name:      age of sea ice western boundary condition
+    units:          second
+    field:          age of sea ice western-boundary
+    time:           ocean_time
+    index_code:     isIage(iwest)
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       ice_age_east                                # Input
+    standard_name:  age_of_sea_ice
+    long_name:      age of sea ice eastern boundary condition
+    units:          second
+    field:          age of sea ice eastern-boundary
+    time:           ocean_time
+    index_code:     isIage(ieast)
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+    
+  - variable:       ice_age_south                                # Input
+    standard_name:  age_of_sea_ice
+    long_name:      age of sea ice southern boundary condition
+    units:          second
+    field:          age of sea ice southern-boundary
+    time:           ocean_time
+    index_code:     isIage(isouth)
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+    
+  - variable:       ice_age_north                                # Input
+    standard_name:  age_of_sea_ice
+    long_name:      age of sea ice northern boundary condition
+    units:          second
+    field:          age of sea ice northern-boundary
+    time:           ocean_time
+    index_code:     isIage(inorth)
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       snow_thickness_west                          # Input
+    standard_name:  snowfall_thickness_above_sea_ice
+    long_name:      thickness of snow cover western boundary condition
+    units:          meter
+    field:          snow thickness western-boundary
+    time:           ocean_time
+    index_code:     isHsno(iwest)
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       snow_thickness_east                          # Input
+    standard_name:  snowfall_thickness_above_sea_ice
+    long_name:      thickness of snow cover eastern boundary condition
+    units:          meter
+    field:          snow thickness eastern-boundary
+    time:           ocean_time
+    index_code:     isHsno(ieast)
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       snow_thickness_south                          # Input
+    standard_name:  snowfall_thickness_above_sea_ice
+    long_name:      thickness of snow cover southern boundary condition
+    units:          meter
+    field:          snow thickness southern-boundary
+    time:           ocean_time
+    index_code:     isHsno(isouth)
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+    
+  - variable:       snow_thickness_north                          # Input
+    standard_name:  snowfall_thickness_above_sea_ice
+    long_name:      thickness of snow cover northern boundary condition
+    units:          meter
+    field:          snow thickness northern-boundary
+    time:           ocean_time
+    index_code:     isHsno(inorth)
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       Uice_west                          # Input
+    standard_name:  sea_ice_x_velocity
+    long_name:      u-component of ice velocity western boundary condition
+    units:          meter second-1
+    field:          sea ice x-velocity western-boundary
+    time:           ocean_time
+    index_code:     isUice(iwest)
+    type:           u2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       Uice_east                          # Input
+    standard_name:  sea_ice_x_velocity
+    long_name:      u-component of ice velocity eastern boundary condition
+    units:          meter second-1
+    field:          sea ice x-velocity eastern-boundary
+    time:           ocean_time
+    index_code:     isUice(ieast)
+    type:           u2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       Uice_south                          # Input
+    standard_name:  sea_ice_x_velocity
+    long_name:      u-component of ice velocity southern boundary condition
+    units:          meter second-1
+    field:          sea ice x-velocity southern-boundary
+    time:           ocean_time
+    index_code:     isUice(isouth)
+    type:           u2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+    
+  - variable:       Uice_north                          # Input
+    standard_name:  sea_ice_x_velocity
+    long_name:      u-component of ice velocity northern boundary condition
+    units:          meter second-1
+    field:          sea ice x-velocity northern-boundary
+    time:           ocean_time
+    index_code:     isUice(inorth)
+    type:           u2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       Vice_west                          # Input
+    standard_name:  sea_ice_y_velocity
+    long_name:      v-component of ice velocity western boundary condition
+    units:          meter second-1
+    field:          sea ice y-velocity western-boundary
+    time:           ocean_time
+    index_code:     isVice(iwest)
+    type:           u2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       Vice_east                          # Input
+    standard_name:  sea_ice_y_velocity
+    long_name:      v-component of ice velocity eastern boundary condition
+    units:          meter second-1
+    field:          sea ice y-velocity eastern-boundary
+    time:           ocean_time
+    index_code:     isVice(ieast)
+    type:           u2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       Vice_south                          # Input
+    standard_name:  sea_ice_y_velocity
+    long_name:      v-component of ice velocity southern boundary condition
+    units:          meter second-1
+    field:          sea ice y-velocity southern-boundary
+    time:           ocean_time
+    index_code:     isVice(isouth)
+    type:           u2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+    
+  - variable:       Vice_north                          # Input
+    standard_name:  sea_ice_y_velocity
+    long_name:      v-component of ice velocity northern boundary condition
+    units:          meter second-1
+    field:          sea ice y-velocity northern-boundary
+    time:           ocean_time
+    index_code:     isVice(inorth)
+    type:           u2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
   #######################################
   ###  Atmospheric Forcing Variables  ###
   #######################################
@@ -7438,6 +7746,50 @@ metadata:
     add_offset:     0.0d0
     scale:          1.0d0
 
+  - variable:       Uevp                                             # Input/Output
+    standard_name:  sea_ice_elastic_viscous_plastic_rheology_x_velocity
+    long_name:      u-component of ice elastic-viscous-plastic rheology velocity
+    units:          meter second-1                                   # [m/s]
+    field:          sea ice EVP x-velocity
+    time:           ocean_time
+    index_code:     idUevp
+    type:           u2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       Vevp                                             # Input/Output
+    standard_name:  sea_ice_elastic_viscous_plastic_rheology_y_velocity
+    long_name:      v-component of ice elastic-viscous-plastic rheology velocity
+    units:          meter second-1                                   # [m/s]
+    field:          sea ice EVP y-velocity
+    time:           ocean_time
+    index_code:     idVevp
+    type:           v2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       ice_enthalpy                                     # Input/Output
+    standard_name:  sea_ice_and_brine_enthalpy
+    long_name:      ice-brine enthalpy
+    units:          Joules kilogram-1                                # [J/kg]
+    field:          ice-brine enthalpy
+    time:           ocean_time
+    index_code:     idEnth
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       ice_age_thickness                                # Input/Output
+    standard_name:  thickness_linked_with_sea_ice_age
+    long_name:      thickness linked with sea ice age
+    units:          meter                                            # [m]
+    field:          thickness linked with sea ice age
+    time:           ocean_time
+    index_code:     idHage
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
   - variable:       ice_Sxx                                          # Input/Output
     standard_name:  sea_ice_internal_xx_stress
     long_name:      internal ice stress xx-component
@@ -7566,6 +7918,28 @@ metadata:
     field:          melt/freeze runoff rate
     time:           ocean_time
     index_code:     idW_ro
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       ice_snow_heat_conductivity                       # Output
+    standard_name:  ice_snow_heat_conductivity
+    long_name:      ice/snow heat conductivity
+    units:          Watts meter-1 K-1                                    
+    field:          ice/snow heat conductivity
+    time:           ocean_time
+    index_code:     idQcon
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       ice_snow_heat_flux                               # Output
+    standard_name:  heat_flux_over_ice_snow
+    long_name:      heat flux over ice/snow, RHS equation
+    units:          Watts meter2                                  
+    field:          RHS heat flux over ice/snow
+    time:           ocean_time
+    index_code:     idQrhs
     type:           r2dvar
     add_offset:     0.0d0
     scale:          1.0d0

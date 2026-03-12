@@ -134,6 +134,7 @@
               LdefVar=VarOut(ifield,ng)
               vtype=NF_FOUT
             END IF
+!
             IF (Ldefvar) THEN
               Vinfo( 1)=Vname(1,ifield)
               Vinfo( 2)=Vname(2,ifield)
@@ -145,12 +146,12 @@
               Aval(5)=REAL(Iinfo(1,ifield,ng),r8)
 !
               SELECT CASE (nf)
-                CASE (isUice)
+                CASE (isUice, isUevp)
                   icegrd(1:3)=u2dgrd(1:3)
 # if defined WRITE_WATER && defined MASKING
                   Vinfo(20)='mask_u'
 # endif
-                CASE (isVice)
+                CASE (isVice, isVevp)
                   icegrd(1:3)=v2dgrd(1:3)
 # if defined WRITE_WATER && defined MASKING
                   Vinfo(20)='mask_v'
@@ -218,7 +219,15 @@
         DO nf=1,nIceF
           IF (iFice(nf).gt.0) THEN
             ifield=iFice(nf)
-            IF (VarOut(ifield,ng)) THEN
+            IF (S(ng)%ncid.eq.RST(ng)%ncid) THEN
+              LdefVar=.TRUE.
+              vtype=NF_FRST
+            ELSE
+              LdefVar=VarOut(ifield,ng)
+              vtype=NF_FOUT
+            END IF
+!
+            IF (LdefVar) THEN
               Vinfo( 1)=Vname(1,ifield)
               Vinfo( 2)=Vname(2,ifield)
               Vinfo( 3)=Vname(3,ifield)
@@ -424,12 +433,12 @@
             END IF
 !
             SELECT CASE (ifld)
-              CASE (isUice)
+              CASE (isUice, isUevp)
                 gtype=gfactor*u2dvar
 # ifdef MASKING
                 iceMask => GRID(ng) % umask_full
 # endif
-              CASE (isVice)
+              CASE (isVice, isVevp)
                 gtype=gfactor*v2dvar
 # ifdef MASKING
                 iceMask => GRID(ng) % vmask_full
@@ -530,7 +539,7 @@
         IF (iFice(ifld).gt.0) THEN
           ifield=iFice(ifld)
           IF (S(ng)%ncid.eq.RST(ng)%ncid) THEN
-            LwrtVar=.FALSE.
+            LwrtVar=.TRUE.
           ELSE
             LwrtVar=VarOut(ifield,ng)
           END IF
@@ -945,8 +954,8 @@
             ELSE
               LdefVar=VarOut(ifield,ng)
               vtype=PIO_FOUT
-           END IF
-
+            END IF
+!
             IF (Ldefvar) THEN
               Vinfo( 1)=Vname(1,ifield)
               Vinfo( 2)=Vname(2,ifield)
@@ -959,13 +968,13 @@
               S(ng)%pioVar(ifield)%dkind=PIO_FOUT
 !
               SELECT CASE (nf)
-                CASE (isUice)
+                CASE (isUice, isUevp)
                   icegrd(1:3)=u2dgrd(1:3)
 # if defined WRITE_WATER && defined MASKING
                   Vinfo(20)='mask_u'
 # endif
                   S(ng)%pioVar(ifield)%gtype=u2dvar
-                CASE (isVice)
+                CASE (isVice, isVevp)
                   icegrd(1:3)=v2dgrd(1:3)
 # if defined WRITE_WATER && defined MASKING
                   Vinfo(20)='mask_v'
@@ -1042,7 +1051,15 @@
         DO nf=1,nIceF
           IF (iFice(nf).gt.0) THEN
             ifield=iFice(nf)
-            IF (VarOut(ifield,ng)) THEN
+            IF (FileH.eq.ABS(RST(ng)%pioFile%fh)) THEN
+              LdefVar=.TRUE.
+              vtype=PIO_FRST
+            ELSE
+              LdefVar=VarOut(ifield,ng)
+              vtype=PIO_FOUT
+            END IF
+!
+            IF (LdefVar) THEN
               Vinfo( 1)=Vname(1,ifield)
               Vinfo( 2)=Vname(2,ifield)
               Vinfo( 3)=Vname(3,ifield)
@@ -1278,7 +1295,7 @@
             END IF
 !
             SELECT CASE (ifld)
-              CASE (isUice)
+              CASE (isUice, isUevp)
                 IF (S(ng)%pioVar(ifield)%dkind.eq.PIO_double) THEN
                   ioDesc => ioDesc_dp_u2dvar(ng)
                 ELSE
@@ -1287,7 +1304,7 @@
 # ifdef MASKING
                 iceMask => GRID(ng) % umask_full
 # endif
-              CASE (isVice)
+              CASE (isVice, isVevp)
                 IF (S(ng)%pioVar(ifield)%dkind.eq.PIO_double) THEN
                   ioDesc => ioDesc_dp_v2dvar(ng)
                 ELSE
@@ -1405,7 +1422,7 @@
         IF (iFice(ifld).gt.0) THEN
           ifield=iFice(ifld)
           IF (FileH.eq.ABS(RST(ng)%pioFile%fh)) THEN
-            LwrtVar=.FALSE.
+            LwrtVar=.TRUE.
           ELSE
             LwrtVar=VarOut(ifield,ng)
           END IF

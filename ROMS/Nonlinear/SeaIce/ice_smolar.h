@@ -272,6 +272,7 @@
 !  Advect the interior ice temperature, isTice.
 !-----------------------------------------------------------------------
 !
+      ICE(ng) % Si(:,:,:,isEnth) = -ICE(ng) % Si(:,:,:,isEnth)
       CALL ice_mpdata_tile (ng, tile, model,                            &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      IminS, ImaxS, JminS, JmaxS,                 &
@@ -300,14 +301,15 @@
      &                      ICE(ng) % Si(:,:,:,isVice),                 &
      &                      ICE(ng) % Si(:,:,:,isEnth))
 !
+      ICE(ng) % Si(:,:,:,isEnth) = -ICE(ng) % Si(:,:,:,isEnth)
       DO j=JstrT,JendT
         DO i=IstrT,IendT
           ICE(ng)%Si(i,j,linew,isTice)=ICE(ng)%Si(i,j,linew,isEnth)/    &
      &                                 MAX(ICE(ng)%Si(i,j,linew,isHice),&
      &                                     1.0E-6_r8)
-          IF (ICE(ng)%Si(i,j,linew,isHice).le.min_hi(ng)) THEN
+          IF (ICE(ng)%Si(i,j,linew,isAice).le.min_ai(ng)) THEN
             ICE(ng)%Si(i,j,linew,isEnth)=0.0_r8
-            ICE(ng)%Si(i,j,linew,isTice)=0.0_r8
+            ICE(ng)%Si(i,j,linew,isTice)=-2.0_r8
           END IF
         END DO
       END DO
@@ -847,7 +849,7 @@
 !  and therefore no additional masking is required.
 !
       DO j=Jstr,Jend+1
-        DO i=Istr,Iend+1
+        DO i=Istr-1,Iend+1
           FE(i,j)=0.5*                                                  &
 # ifdef MASKING
      &            vmask(i,j)*                                           &
@@ -856,7 +858,11 @@
      &            vmask_wet(i,j)*                                       &
 # endif
      &            (aif(i,j)-aif(i,j-1))
+        END DO
+      END DO
 !
+      DO j=Jstr-1,Jend+1
+        DO i=Istr,Iend+1
           FX(i,j)=0.5*                                                  &
 # ifdef MASKING
      &            umask(i,j)*                                           &

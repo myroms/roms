@@ -17,9 +17,6 @@
 #ifdef BIOLOGY
       USE mod_biology
 #endif
-#ifdef ICE_MODEL
-      USE mod_ice
-#endif
 #if defined MODEL_COUPLING && defined MCT_LIB
       USE mod_coupler
 #endif
@@ -97,10 +94,7 @@
       integer :: nPETs, maxPETs
       integer :: OutFiles
       integer :: Ivalue(1)
-#ifdef ICE_MODEL
-      integer :: ioff
-#endif
-
+!
       integer, allocatable :: Nfiles(:)
       integer, allocatable :: Ncount(:,:)
       integer, allocatable :: NBCcount(:,:)
@@ -523,52 +517,6 @@
               ifield=isTvar(itracer)
               Npts=load_lbc(Nval, Cval, line, nline, ifield, igrid,     &
      &                      1, NAT+NPT, Vname(1,idTvar(itracer)), LBC)
-# ifdef ICE_MODEL
-            CASE ('LBC(isAice)')
-              ioff = isAice+(nLBCvar-11)
-              Npts=load_lbc(Nval, Cval, line, nline, ioff, igrid,       &
-     &                      0, 0, Vname(1,idAice), LBC)
-            CASE ('LBC(isHice)')
-              ioff = isHice+(nLBCvar-11)
-              Npts=load_lbc(Nval, Cval, line, nline, ioff, igrid,       &
-     &                      0, 0, Vname(1,idHice), LBC)
-            CASE ('LBC(isHsno)')
-              ioff = isHsno+(nLBCvar-11)
-              Npts=load_lbc(Nval, Cval, line, nline, ioff, igrid,       &
-     &                      0, 0, Vname(1,idHsno), LBC)
-            CASE ('LBC(isTice)')
-              ioff = isTice+(nLBCvar-11)
-              Npts=load_lbc(Nval, Cval, line, nline, ioff, igrid,       &
-     &                      0, 0, Vname(1,idTice), LBC)
-            CASE ('LBC(isHmel)')
-              ioff = isHmel+(nLBCvar-11)
-              Npts=load_lbc(Nval, Cval, line, nline, ioff, igrid,       &
-     &                      0, 0, Vname(1,idHmel), LBC)
-            CASE ('LBC(isIage)')
-              ioff = isIage+(nLBCvar-11)
-              Npts=load_lbc(Nval, Cval, line, nline, ioff, igrid,       &
-     &                      0, 0, Vname(1,idIage), LBC)
-            CASE ('LBC(isISxx)')
-              ioff = isISxx+(nLBCvar-11)
-              Npts=load_lbc(Nval, Cval, line, nline, ioff, igrid,       &
-     &                      0, 0, Vname(1,idISxx), LBC)
-            CASE ('LBC(isISxy)')
-              ioff = isISxy+(nLBCvar-11)
-              Npts=load_lbc(Nval, Cval, line, nline, ioff, igrid,       &
-     &                      0, 0, Vname(1,idISxy), LBC)
-            CASE ('LBC(isISyy)')
-              ioff = isISyy+(nLBCvar-11)
-              Npts=load_lbc(Nval, Cval, line, nline, ioff, igrid,       &
-     &                      0, 0, Vname(1,idISyy), LBC)
-            CASE ('LBC(isUice)')
-              ioff = isUice+(nLBCvar-11)
-              Npts=load_lbc(Nval, Cval, line, nline, ioff, igrid,       &
-     &                      0, 0, Vname(1,idUice), LBC)
-            CASE ('LBC(isVice)')
-              ioff = isVice+(nLBCvar-11)
-              Npts=load_lbc(Nval, Cval, line, nline, ioff, igrid,       &
-     &                      0, 0, Vname(1,idVice), LBC)
-# endif
 #endif
 #if defined ADJOINT || defined TANGENT || defined TL_IOMS
             CASE ('ad_LBC(isFsur)')
