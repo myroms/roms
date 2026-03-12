@@ -967,7 +967,7 @@
      &                  LBi, UBi, LBj, UBj,                             &
      &                  stflx(:,:,itemp))
 
-      CALL ice_bc2d_tile (ng, tile, model, IsAice,                      &
+      CALL ice_bc2d_tile (ng, tile, model, isAice,                      &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    IminS, ImaxS, JminS, JmaxS,                   &
      &                    liold, linew,                                 &

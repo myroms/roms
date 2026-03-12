@@ -104,6 +104,7 @@
           Si(i,j,linew,isHsno)=MAX(Si(i,j,linew,isHsno), 0.0_r8)
           Si(i,j,linew,isHmel)=MAX(Si(i,j,linew,isHmel), 0.0_r8)
           Si(i,j,linew,isTice)=MAX(Si(i,j,linew,isTice),-70.0_r8)
+          Si(i,j,linew,isTice)=MIN(Si(i,j,linew,isTice), 0.0_r8)
           Si(i,j,linew,isIage)=MAX(Si(i,j,linew,isIage), 0.0_r8)
           IF ((Si(i,j,linew,isAice).le.0.0_r8).or.                      &
      &        (Si(i,j,linew,isHice).le.0.0_r8)) THEN

@@ -623,6 +623,23 @@
 # endif
 #endif
 
+#ifdef ICE_MODEL
+!
+!  Ice model boundary states for all ice state variables
+!
+          real(r8), pointer :: ice_west(:,:)
+          real(r8), pointer :: ice_east(:,:)
+          real(r8), pointer :: ice_south(:,:)
+          real(r8), pointer :: ice_north(:,:)
+
+# ifndef ANA_AIOBC
+          real(r8), pointer :: iceG_west(:,:,:)
+          real(r8), pointer :: iceG_east(:,:,:)
+          real(r8), pointer :: iceG_south(:,:,:)
+          real(r8), pointer :: iceG_north(:,:,:)
+# endif
+#endif
+
 #if defined TANGENT || defined TL_IOMS
 !
 !  Tangent linear model state.
@@ -759,6 +776,9 @@
       USE mod_param
       USE mod_ncparam
       USE mod_scalars
+#ifdef ICE_MODEL
+      USE mod_ice
+#endif
 !
 !  Imported variable declarations.
 !
@@ -1921,6 +1941,48 @@
       allocate ( BOUNDARY(ng) % e_zeta_obc(LBij:UBij,4) )
       Dmem(ng)=Dmem(ng)+4.0_r8*XYsize
 #endif
+
+#ifdef ICE_MODEL
+!
+!-----------------------------------------------------------------------
+!  Open boundaries arrays used in the ice model
+!-----------------------------------------------------------------------
+!
+      allocate ( BOUNDARY(ng) % ice_west(nIceS,LBj:UBj) )
+      Dmem(ng)=Dmem(ng)+REAL(nIceS,r8)*Ysize
+
+      allocate ( BOUNDARY(ng) % ice_east(nIceS,LBj:UBj) )
+      Dmem(ng)=Dmem(ng)+REAL(nIceS,r8)*Ysize
+
+      allocate ( BOUNDARY(ng) % ice_south(nIceS,LBi:UBi) )
+      Dmem(ng)=Dmem(ng)+REAL(nIceS,r8)*Xsize
+
+      allocate ( BOUNDARY(ng) % ice_north(nIceS,LBi:UBi) )
+      Dmem(ng)=Dmem(ng)+REAL(nIceS,r8)*Xsize
+
+# ifndef ANA_AIOBC
+!
+      IF (ANY (LBC(iwest,ibICE(1):ibICE(15),ng)%acquire)) THEN
+        allocate ( BOUNDARY(ng) % iceG_west(nIceS,LBj:UBj,2) )
+        Dmem(ng)=Dmem(ng)+REAL(nIceS*2,r8)*Ysize
+      END IF
+
+      IF (ANY (LBC(ieast,ibICE(1):ibICE(15),ng)%acquire)) THEN
+        allocate ( BOUNDARY(ng) % iceG_east(nIceS,LBj:UBj,2) )
+        Dmem(ng)=Dmem(ng)+REAL(nIceS*2,r8)*Ysize
+      END IF
+
+      IF (ANY (LBC(isouth,ibICE(1):ibICE(15),ng)%acquire)) THEN
+        allocate ( BOUNDARY(ng) % iceG_south(nIceS,LBi:UBi,2) )
+        Dmem(ng)=Dmem(ng)+REAL(nIceS*2,r8)*Xsize
+      END IF
+
+      IF (ANY (LBC(inorth,ibICE(1):ibICE(15),ng)%acquire)) THEN
+        allocate ( BOUNDARY(ng) % iceG_north(nIceS,LBi:UBi,2) )
+        Dmem(ng)=Dmem(ng)+REAL(nIceS*2,r8)*Xsize
+      END IF
+# endif
+#endif
 !
       RETURN
       END SUBROUTINE allocate_boundary
@@ -1937,6 +1999,9 @@
       USE mod_param
       USE mod_ncparam
       USE mod_scalars
+#ifdef ICE_MODEL
+      USE mod_ice
+#endif
 
 #ifdef SUBOBJECT_DEALLOCATION
 !
@@ -3067,6 +3132,50 @@
       IF (.not.destroy(ng, BOUNDARY(ng)%e_zeta_obc, MyFile,             &
      &                 __LINE__, 'BOUNDARY(ng)%e_zeta_obc')) RETURN
 # endif
+
+# ifdef ICE_MODEL
+!
+!-----------------------------------------------------------------------
+!  Open boundaries arrays used in the ice model
+!-----------------------------------------------------------------------
+!
+      IF (.not.destroy(ng, BOUNDARY(ng)%ice_west, MyFile,               &
+     &                 __LINE__, 'BOUNDARY(ng)%ice_west')) RETURN
+#   ifndef ANA_AIOBC
+        IF (ANY (LBC(iwest,ibICE(1):ibICE(15),ng)%acquire)) THEN
+          IF (.not.destroy(ng, BOUNDARY(ng)%iceG_west, MyFile,             &
+     &                     __LINE__, 'BOUNDARY(ng)%iceG_west')) RETURN
+        END IF
+#   endif
+!
+      IF (.not.destroy(ng, BOUNDARY(ng)%ice_east, MyFile,               &
+     &                 __LINE__, 'BOUNDARY(ng)%ice_east')) RETURN
+#   ifndef ANA_AIOBC
+        IF (ANY (LBC(ieast,ibICE(1):ibICE(15),ng)%acquire)) THEN
+          IF (.not.destroy(ng, BOUNDARY(ng)%iceG_east, MyFile,             &
+     &                     __LINE__, 'BOUNDARY(ng)%iceG_east')) RETURN
+        END IF
+#   endif
+!
+      IF (.not.destroy(ng, BOUNDARY(ng)%ice_south, MyFile,               &
+     &                 __LINE__, 'BOUNDARY(ng)%ice_south')) RETURN
+#   ifndef ANA_AIOBC
+        IF (ANY (LBC(isouth,ibICE(1):ibICE(15),ng)%acquire)) THEN
+          IF (.not.destroy(ng, BOUNDARY(ng)%iceG_south, MyFile,             &
+     &                     __LINE__, 'BOUNDARY(ng)%iceG_south')) RETURN
+        END IF
+#   endif
+!
+      IF (.not.destroy(ng, BOUNDARY(ng)%ice_north, MyFile,               &
+     &                 __LINE__, 'BOUNDARY(ng)%ice_north')) RETURN
+#   ifndef ANA_AIOBC
+        IF (ANY (LBC(inorth,ibICE(1):ibICE(15),ng)%acquire)) THEN
+          IF (.not.destroy(ng, BOUNDARY(ng)%iceG_north, MyFile,             &
+     &                     __LINE__, 'BOUNDARY(ng)%iceG_north')) RETURN
+        END IF
+#   endif
+# endif
+
 #endif
 !
 !-----------------------------------------------------------------------
@@ -3096,7 +3205,10 @@
       USE mod_param
       USE mod_ncparam
       USE mod_scalars
-!
+#ifdef ICE_MODEL
+      USE mod_ice
+#endif
+
 !  Imported variable declarations.
 !
       integer, intent(in) :: ng, tile, model
@@ -3789,6 +3901,47 @@
           BOUNDARY(ng) % ad_t_north = IniVal
         END IF
 # endif
+      END IF
+#endif
+
+#ifdef ICE_MODEL
+!
+!-----------------------------------------------------------------------
+!  Open boundaries arrays used in the ice model
+!-----------------------------------------------------------------------
+!
+      IF ((model.eq.0).or.(model.eq.iNLM)) THEN
+        IF (DOMAIN(ng)%NorthWest_Test(tile).and.                        &
+     &      ANY (LBC(iwest,ibICE(1):ibICE(15),ng)%acquire)) THEN
+          BOUNDARY(ng) % ice_west = IniVal
+# ifndef ANA_AIOBC
+          BOUNDARY(ng) % iceG_west = IniVal
+# endif
+        END IF
+!
+        IF (DOMAIN(ng)%SouthEast_Test(tile).and.                        &
+     &      ANY (LBC(ieast,ibICE(1):ibICE(15),ng)%acquire)) THEN
+          BOUNDARY(ng) % ice_east = IniVal
+# ifndef ANA_AIOBC
+          BOUNDARY(ng) % iceG_east = IniVal
+# endif
+        END IF
+!
+        IF (DOMAIN(ng)%SouthWest_Test(tile).and.                        &
+     &      ANY (LBC(isouth,ibICE(1):ibICE(15),ng)%acquire)) THEN
+          BOUNDARY(ng) % ice_south = IniVal
+# ifndef ANA_AIOBC
+          BOUNDARY(ng) % iceG_south = IniVal
+# endif
+        END IF
+!
+        IF (DOMAIN(ng)%NorthEast_Test(tile).and.                        &
+     &      ANY (LBC(inorth,ibICE(1):ibICE(15),ng)%acquire)) THEN
+          BOUNDARY(ng) % ice_north = IniVal
+# ifndef ANA_AIOBC
+          BOUNDARY(ng) % iceG_north = IniVal
+# endif
+        END IF
       END IF
 #endif
 
