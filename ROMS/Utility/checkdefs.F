@@ -1836,6 +1836,13 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+14)=' MULTIPLE_TLM,'
 #endif
+#if defined MULTI_SCALE_B && defined FOUR_DVAR
+!
+      IF (Master) WRITE (stdout,20) 'MULTI_SCALE_B',                    &
+     &   'Multi-scale background error covariance matrix'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+15)=' MULTI_SCALE_B,'
+#endif
 #ifdef MY25_MIXING
 !
       IF (Master) WRITE (stdout,20) 'MY25_MIXING',                      &

@@ -186,7 +186,9 @@
         IF ((boundary.eq.iwest).or.(boundary.eq.ieast)) THEN
           i=edge(boundary)
           DO j=Jstr-1,Jend+1
+# ifndef MULTI_SCALE_B
             Hfac(j)=DTsizeH*pm(i,j)*pn(i,j)
+# endif
 # ifdef VCONVOLUTION
 #  ifndef SPLINES_VCONV
             FC(j,N(ng))=0.0_r8
@@ -241,6 +243,7 @@
       Nold=1
       Nnew=2
 
+# ifndef MULTI_SCALE_B
 !^    CALL bc_r3d_bry_tile (ng, tile, boundary,                         &
 !^   &                      LBij, UBij, 1, N(ng),                       &
 !^   &                      A)
@@ -248,6 +251,7 @@
       CALL bc_r3d_bry_tile (ng, tile, boundary,                         &
      &                      LBij, UBij, 1, N(ng),                       &
      &                      tl_A)
+# endif
 # ifdef DISTRIBUTE
 !^    CALL mp_exchange3d_bry (ng, tile, model, 1, boundary,             &
 !^   &                        LBij, UBij, 1, N(ng),                     &
@@ -280,6 +284,8 @@
           END DO
         END IF
       END IF
+
+# ifndef MULTI_SCALE_B
 !
 !-----------------------------------------------------------------------
 !  Integrate horizontal diffusion equation.
@@ -301,11 +307,11 @@
                 tl_FE(j,k)=pnom_v(i,j)*0.5_r8*(Kh(i,j-1)+Kh(i,j))*      &
      &                     (tl_Awrk(j  ,k,Nold)-                        &
      &                      tl_Awrk(j-1,k,Nold))
-# ifdef MASKING
+#  ifdef MASKING
 !^              FE(j,k)=FE(j,k)*vmask(i,j)
 !^
                 tl_FE(j,k)=tl_FE(j,k)*vmask(i,j)
-# endif
+#  endif
               END DO
             END DO
           ELSE IF ((boundary.eq.isouth).or.(boundary.eq.inorth)) THEN
@@ -319,11 +325,11 @@
                 tl_FX(i,k)=pmon_u(i,j)*0.5_r8*(Kh(i-1,j)+Kh(i,j))*      &
      &                     (tl_Awrk(i  ,k,Nold)-                        &
      &                      tl_Awrk(i-1,k,Nold))
-# ifdef MASKING
+#  ifdef MASKING
 !^              FX(i,k)=FX(i,k)*umask(i,j)
 !^
                 tl_FX(i,k)=tl_FX(i,k)*umask(i,j)
-# endif
+#  endif
               END DO
             END DO
           END IF
@@ -368,7 +374,7 @@
         CALL bc_r3d_bry_tile (ng, tile, boundary,                       &
      &                        LBij, UBij, 1, N(ng),                     &
      &                        tl_Awrk(:,:,Nnew))
-# ifdef DISTRIBUTE
+#  ifdef DISTRIBUTE
 !^      CALL mp_exchange3d_bry (ng, tile, model, 1, boundary,           &
 !^   &                          LBij, UBij, 1, N(ng),                   &
 !^   &                          Nghost,                                 &
@@ -380,7 +386,7 @@
      &                          Nghost,                                 &
      &                          EWperiodic(ng), NSperiodic(ng),         &
      &                          tl_Awrk(:,:,Nnew))
-# endif
+#  endif
 !
 !  Update integration indices.
 !
@@ -388,6 +394,7 @@
         Nold=Nnew
         Nnew=Nsav
       END DO
+# endif
 
 # ifdef VCONVOLUTION
 #  ifdef IMPLICIT_VCONV
@@ -824,6 +831,7 @@
           END DO
         END IF
       END IF
+# ifndef MULTI_SCALE_B
 !^    CALL bc_r3d_bry_tile (ng, tile, boundary,                         &
 !^   &                      LBij, UBij, 1, N(ng),                       &
 !^   &                      A)
@@ -831,6 +839,7 @@
       CALL bc_r3d_bry_tile (ng, tile, boundary,                         &
      &                      LBij, UBij, 1, N(ng),                       &
      &                      tl_A)
+# endif
 # ifdef DISTRIBUTE
 !^    CALL mp_exchange3d_bry (ng, tile, model, 1, boundary,             &
 !^   &                        LBij, UBij, 1, N(ng),                     &
@@ -969,7 +978,9 @@
         IF ((boundary.eq.iwest).or.(boundary.eq.ieast)) THEN
           i=edge(boundary)
           DO j=Jstr-1,Jend+1
+# ifndef MULTI_SCALE_B
             Hfac(j)=cff*(pm(i-1,j)+pm(i,j))*(pn(i-1,j)+pn(i,j))
+# endif
 # ifdef VCONVOLUTION
 #  ifndef SPLINES_VCONV
             FC(j,N(ng))=0.0_r8
@@ -1028,6 +1039,7 @@
       Nold=1
       Nnew=2
 
+# ifndef MULTI_SCALE_B
 !^    CALL bc_u3d_bry_tile (ng, tile, boundary,                         &
 !^   &                      LBij, UBij, 1, N(ng),                       &
 !^   &                      A)
@@ -1035,6 +1047,7 @@
       CALL bc_u3d_bry_tile (ng, tile, boundary,                         &
      &                      LBij, UBij, 1, N(ng),                       &
      &                      tl_A)
+# endif
 # ifdef DISTRIBUTE
 !^    CALL mp_exchange3d_bry (ng, tile, model, 1, boundary,             &
 !^   &                        LBij, UBij, 1, N(ng),                     &
@@ -1067,6 +1080,8 @@
           END DO
         END IF
       END IF
+
+# ifndef MULTI_SCALE_B
 !
 !-----------------------------------------------------------------------
 !  Integrate horizontal diffusion equation.
@@ -1092,11 +1107,11 @@
      &                              Kh(i-1,j-1)+Kh(i,j-1))*             &
      &                     (tl_Awrk(j  ,k,Nold)-                        &
      &                      tl_Awrk(j-1,k,Nold))
-# ifdef MASKING
+#  ifdef MASKING
 !^              FE(j,k)=FE(j,k)*pmask(i,j)
 !^
                 tl_FE(j,k)=tl_FE(j,k)*pmask(i,j)
-# endif
+#  endif
               END DO
             END DO
           ELSE IF ((boundary.eq.isouth).or.(boundary.eq.inorth)) THEN
@@ -1152,7 +1167,7 @@
         CALL bc_u3d_bry_tile (ng, tile, boundary,                       &
      &                        LBij, UBij, 1, N(ng),                     &
      &                        tl_Awrk(:,:,Nnew))
-# ifdef DISTRIBUTE
+#  ifdef DISTRIBUTE
 !^      CALL mp_exchange3d_bry (ng, tile, model, 1, boundary,           &
 !^   &                          LBij, UBij, 1, N(ng),                   &
 !^   &                          Nghost,                                 &
@@ -1164,7 +1179,7 @@
      &                          Nghost,                                 &
      &                          EWperiodic(ng), NSperiodic(ng),         &
      &                          tl_Awrk(:,:,Nnew))
-# endif
+#  endif
 !
 !  Update integration indices.
 !
@@ -1172,6 +1187,7 @@
         Nold=Nnew
         Nnew=Nsav
       END DO
+# endif
 
 # ifdef VCONVOLUTION
 #  ifdef IMPLICIT_VCONV
@@ -1612,6 +1628,7 @@
           END DO
         END IF
       END IF
+# ifndef MULTI_SCALE_B
 !^    CALL bc_u3d_bry_tile (ng, tile, boundary,                         &
 !^   &                      LBij, UBij, 1, N(ng),                       &
 !^   &                      A)
@@ -1619,6 +1636,7 @@
       CALL bc_u3d_bry_tile (ng, tile, boundary,                         &
      &                      LBij, UBij, 1, N(ng),                       &
      &                      tl_A)
+# endif
 # ifdef DISTRIBUTE
 !^    CALL mp_exchange3d_bry (ng, tile, model, 1, boundary,             &
 !^   &                        LBij, UBij, 1, N(ng),                     &
@@ -1757,7 +1775,9 @@
         IF ((boundary.eq.iwest).or.(boundary.eq.ieast)) THEN
           i=edge(boundary)
           DO j=JstrV-1,Jend+1
+# ifndef MULTI_SCALE_B
             Hfac(j)=cff*(pm(i,j-1)+pm(i,j))*(pn(i,j-1)+pn(i,j))
+# endif
 # ifdef VCONVOLUTION
 #  ifndef SPLINES_VCONV
             FC(j,N(ng))=0.0_r8
@@ -1816,6 +1836,7 @@
       Nold=1
       Nnew=2
 
+# ifndef MULTI_SCALE_B
 !^    CALL bc_v3d_bry_tile (ng, tile, boundary,                         &
 !^   &                      LBij, UBij, 1, N(ng),                       &
 !^   &                      A)
@@ -1823,6 +1844,7 @@
       CALL bc_v3d_bry_tile (ng, tile, boundary,                         &
      &                      LBij, UBij, 1, N(ng),                       &
      &                      tl_A)
+# endif
 # ifdef DISTRIBUTE
 !^    CALL mp_exchange3d_bry (ng, tile, model, 1, boundary,             &
 !^   &                        LBij, UBij, 1, N(ng),                     &
@@ -1855,6 +1877,8 @@
           END DO
         END IF
       END IF
+
+# ifndef MULTI_SCALE_B
 !
 !-----------------------------------------------------------------------
 !  Integrate horizontal diffusion equation.
@@ -1893,11 +1917,11 @@
      &                              Kh(i-1,j-1)+Kh(i,j-1))*             &
      &                     (tl_Awrk(i  ,k,Nold)-                        &
      &                      tl_Awrk(i-1,k,Nold))
-# ifdef MASKING
+#  ifdef MASKING
 !^              FX(i,k)=FX(i,k)*pmask(i,j)
 !^
                 tl_FX(i,k)=tl_FX(i,k)*pmask(i,j)
-# endif
+#  endif
               END DO
             END DO
           END IF
@@ -1942,7 +1966,7 @@
         CALL bc_v3d_bry_tile (ng, tile, boundary,                       &
      &                        LBij, UBij, 1, N(ng),                     &
      &                        tl_Awrk(:,:,Nnew))
-# ifdef DISTRIBUTE
+#  ifdef DISTRIBUTE
 !^      CALL mp_exchange3d_bry (ng, tile, model, 1, boundary,           &
 !^   &                          LBij, UBij, 1, N(ng),                   &
 !^   &                          Nghost,                                 &
@@ -1954,7 +1978,7 @@
      &                          Nghost,                                 &
      &                          EWperiodic(ng), NSperiodic(ng),         &
      &                          tl_Awrk(:,:,Nnew))
-# endif
+#  endif
 !
 !  Update integration indices.
 !
@@ -1962,6 +1986,7 @@
         Nold=Nnew
         Nnew=Nsav
       END DO
+# endif
 
 # ifdef VCONVOLUTION
 #  ifdef IMPLICIT_VCONV
@@ -2402,6 +2427,7 @@
           END DO
         END IF
       END IF
+# ifndef MULTI_SCALE_B
 !^    CALL bc_v3d_bry_tile (ng, tile, boundary,                         &
 !^   &                      LBij, UBij, 1, N(ng),                       &
 !^   &                      A)
@@ -2409,6 +2435,7 @@
       CALL bc_v3d_bry_tile (ng, tile, boundary,                         &
      &                      LBij, UBij, 1, N(ng),                       &
      &                      tl_A)
+# endif
 # ifdef DISTRIBUTE
 !^    CALL mp_exchange3d_bry (ng, tile, model, 1, boundary,             &
 !^   &                        LBij, UBij, 1, N(ng),                     &

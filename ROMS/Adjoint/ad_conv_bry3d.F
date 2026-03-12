@@ -206,7 +206,9 @@
         IF ((boundary.eq.iwest).or.(boundary.eq.ieast)) THEN
           i=edge(boundary)
           DO j=Jstr-1,Jend+1
+# ifndef MULTI_SCALE_B
             Hfac(j)=DTsizeH*pm(i,j)*pn(i,j)
+# endif
 # ifdef VCONVOLUTION
 #  ifndef SPLINES_VCONV
             FC(j,N(ng))=0.0_r8
@@ -273,6 +275,7 @@
      &                           EWperiodic(ng), NSperiodic(ng),        &
      &                           ad_A)
 # endif
+# ifndef MULTI_SCALE_B
 !^    CALL bc_r3d_bry_tile (ng, tile, boundary,                         &
 !^   &                      LBij, UBij, 1, N(ng),                       &
 !^   &                      tl_A)
@@ -280,6 +283,7 @@
       CALL ad_bc_r3d_bry_tile (ng, tile, boundary,                      &
      &                         LBij, UBij, 1, N(ng),                    &
      &                         ad_A)
+# endif
       IF (Lconvolve(boundary)) THEN
         IF ((boundary.eq.iwest).or.(boundary.eq.ieast)) THEN
           DO k=1,N(ng)
@@ -819,6 +823,8 @@
       END DO
 #  endif
 # endif
+
+# ifndef MULTI_SCALE_B
 !
 !-----------------------------------------------------------------------
 !  Integrate adjoint horizontal diffusion equation.
@@ -834,7 +840,7 @@
 !
 !  Apply adjoint boundary conditions.
 !
-# ifdef DISTRIBUTE
+#  ifdef DISTRIBUTE
 !^      CALL mp_exchange3d_bry (ng, tile, model, 1, boundary,           &
 !^   &                          LBij, UBij, 1, N(ng),                   &
 !^   &                          Nghost,                                 &
@@ -846,7 +852,7 @@
      &                             Nghost,                              &
      &                             EWperiodic(ng), NSperiodic(ng),      &
      &                             ad_Awrk(:,:,Nnew))
-# endif
+#  endif
 !^      CALL bc_r3d_bry_tile (ng, tile, boundary,                       &
 !^   &                        LBij, UBij, 1, N(ng),                     &
 !^   &                        tl_Awrk(:,:,Nnew))
@@ -896,11 +902,11 @@
             i=edge(boundary)
             DO k=1,N(ng)
               DO j=Jstr,Jend+1
-# ifdef MASKING
+#  ifdef MASKING
 !^              tl_FE(j,k)=tl_FE(j,k)*vmask(i,j)
 !^
                 ad_FE(j,k)=ad_FE(j,k)*vmask(i,j)
-# endif
+#  endif
 !^              tl_FE(j,k)=pnom_v(i,j)*0.5_r8*(Kh(i,j-1)+Kh(i,j))*      &
 !^   &                     (tl_Awrk(j  ,k,Nold)-                        &
 !^   &                      tl_Awrk(j-1,k,Nold))
@@ -915,11 +921,11 @@
             j=edge(boundary)
             DO k=1,N(ng)
               DO i=Istr,Iend+1
-# ifdef MASKING
+#  ifdef MASKING
 !^              tl_FX(i,k)=tl_FX(i,k)*umask(i,j)
 !^
                 ad_FX(i,k)=ad_FX(i,k)*umask(i,j)
-# endif
+#  endif
 !^              tl_FX(i,k)=pmon_u(i,j)*0.5_r8*(Kh(i-1,j)+Kh(i,j))*      &
 !^   &                     (tl_Awrk(i  ,k,Nold)-                        &
 !^   &                      tl_Awrk(i-1,k,Nold))
@@ -933,6 +939,7 @@
           END IF
         END IF
       END DO
+# endif
 !
 !-----------------------------------------------------------------------
 !  Set adjoint initial conditions.
@@ -972,6 +979,7 @@
      &                           EWperiodic(ng), NSperiodic(ng),        &
      &                           ad_A)
 # endif
+# ifndef MULTI_SCALE_B
 !^    CALL bc_r3d_bry_tile (ng, tile, boundary,                         &
 !^   &                      LBij, UBij, 1, N(ng),                       &
 !^   &                      tl_A)
@@ -979,7 +987,8 @@
       CALL ad_bc_r3d_bry_tile (ng, tile, boundary,                      &
      &                         LBij, UBij, 1, N(ng),                    &
      &                         ad_A)
-
+# endif
+!
       RETURN
       END SUBROUTINE ad_conv_r3d_bry_tile
 
@@ -1125,7 +1134,9 @@
         IF ((boundary.eq.iwest).or.(boundary.eq.ieast)) THEN
           i=edge(boundary)
           DO j=Jstr-1,Jend+1
+# ifndef MULTI_SCALE_B
             Hfac(j)=cff*(pm(i-1,j)+pm(i,j))*(pn(i-1,j)+pn(i,j))
+# endif
 # ifdef VCONVOLUTION
 #  ifndef SPLINES_VCONV
             FC(j,N(ng))=0.0_r8
@@ -1196,6 +1207,7 @@
      &                           EWperiodic(ng), NSperiodic(ng),        &
      &                           ad_A)
 # endif
+# ifndef MULTI_SCALE_B
 !^    CALL bc_u3d_bry_tile (ng, tile, boundary,                         &
 !^   &                      LBij, UBij, 1, N(ng),                       &
 !^   &                      tl_A)
@@ -1203,6 +1215,7 @@
       CALL ad_bc_u3d_bry_tile (ng, tile, boundary,                      &
      &                         LBij, UBij, 1, N(ng),                    &
      &                         ad_A)
+# endif
       IF (Lconvolve(boundary)) THEN
         IF ((boundary.eq.iwest).or.(boundary.eq.ieast)) THEN
           DO k=1,N(ng)
@@ -1747,6 +1760,8 @@
       END DO
 #  endif
 # endif
+
+# ifndef MULTI_SCALE_B
 !
 !-----------------------------------------------------------------------
 !  Integrate adjoint horizontal diffusion equation.
@@ -1762,7 +1777,7 @@
 !
 !  Apply boundary conditions.
 !
-# ifdef DISTRIBUTE
+#  ifdef DISTRIBUTE
 !^      CALL mp_exchange3d_bry (ng, tile, model, 1, boundary,           &
 !^   &                          LBij, UBij, 1, N(ng),                   &
 !^   &                          Nghost,                                 &
@@ -1774,7 +1789,7 @@
      &                             Nghost,                              &
      &                             EWperiodic(ng), NSperiodic(ng),      &
      &                             ad_Awrk(:,:,Nnew))
-# endif
+#  endif
 !^      CALL bc_u3d_bry_tile (ng, tile, boundary,                       &
 !^   &                        LBij, UBij, 1, N(ng),                     &
 !^   &                        tl_Awrk(:,:,Nnew))
@@ -1824,11 +1839,11 @@
             i=edge(boundary)
             DO k=1,N(ng)
               DO j=Jstr,Jend+1
-# ifdef MASKING
+#  ifdef MASKING
 !^              tl_FE(j,k)=tl_FE(j,k)*pmask(i,j)
 !^
                 ad_FE(j,k)=ad_FE(j,k)*pmask(i,j)
-# endif
+#  endif
 !^              tl_FE(j,k)=pnom_p(i,j)*                                 &
 !^   &                     0.25_r8*(Kh(i-1,j  )+Kh(i,j  )+              &
 !^   &                              Kh(i-1,j-1)+Kh(i,j-1))*             &
@@ -1860,6 +1875,7 @@
           END IF
         END IF
       END DO
+# endif
 !
 !-----------------------------------------------------------------------
 !  Set adjoint initial conditions.
@@ -1886,7 +1902,7 @@
           END DO
         END IF
       END IF
-# ifdef DISTRIBUTE
+#  ifdef DISTRIBUTE
 !^    CALL mp_exchange3d_bry (ng, tile, model, 1, boundary,             &
 !^   &                        LBij, UBij, 1, N(ng),                     &
 !^   &                        Nghost,                                   &
@@ -1899,6 +1915,7 @@
      &                           EWperiodic(ng), NSperiodic(ng),        &
      &                           ad_A)
 # endif
+# ifndef MULTI_SCALE_B
 !^    CALL bc_u3d_bry_tile (ng, tile, boundary,                         &
 !^   &                      LBij, UBij, 1, N(ng),                       &
 !^   &                      tl_A)
@@ -1906,7 +1923,8 @@
       CALL ad_bc_u3d_bry_tile (ng, tile, boundary,                      &
      &                         LBij, UBij, 1, N(ng),                    &
      &                         ad_A)
-
+# endif
+!
       RETURN
       END SUBROUTINE ad_conv_u3d_bry_tile
 
@@ -2051,7 +2069,9 @@
         IF ((boundary.eq.iwest).or.(boundary.eq.ieast)) THEN
           i=edge(boundary)
           DO j=JstrV-1,Jend+1
+# ifndef MULTI_SCALE_B
             Hfac(j)=cff*(pm(i,j-1)+pm(i,j))*(pn(i,j-1)+pn(i,j))
+# endif
 # ifdef VCONVOLUTION
 #  ifndef SPLINES_VCONV
             FC(j,N(ng))=0.0_r8
@@ -2122,6 +2142,7 @@
      &                           EWperiodic(ng), NSperiodic(ng),        &
      &                           ad_A)
 # endif
+# ifndef MULTI_SCALE_B
 !^    CALL bc_v3d_bry_tile (ng, tile, boundary,                         &
 !^   &                      LBij, UBij, 1, N(ng),                       &
 !^   &                      tl_A)
@@ -2129,6 +2150,7 @@
       CALL ad_bc_v3d_bry_tile (ng, tile, boundary,                      &
      &                         LBij, UBij, 1, N(ng),                    &
      &                         ad_A)
+# endif
       IF (Lconvolve(boundary)) THEN
         IF ((boundary.eq.iwest).or.(boundary.eq.ieast)) THEN
           DO k=1,N(ng)
@@ -2671,6 +2693,8 @@
       END DO
 #  endif
 # endif
+
+# ifndef MULTI_SCALE_B
 !
 !-----------------------------------------------------------------------
 !  Integrate adjoint horizontal diffusion equation.
@@ -2686,7 +2710,7 @@
 !
 !  Apply boundary conditions.
 !
-# ifdef DISTRIBUTE
+#  ifdef DISTRIBUTE
 !^      CALL mp_exchange3d_bry (ng, tile, model, 1, boundary,           &
 !^   &                          LBij, UBij, 1, N(ng),                   &
 !^   &                          Nghost,                                 &
@@ -2698,7 +2722,7 @@
      &                             Nghost,                              &
      &                             EWperiodic(ng), NSperiodic(ng),      &
      &                             ad_Awrk(:,:,Nnew))
-# endif
+#  endif
 !^      CALL bc_v3d_bry_tile (ng, tile, boundary,                       &
 !^   &                        LBij, UBij, 1, N(ng),                     &
 !^   &                        tl_Awrk(:,:,Nnew))
@@ -2762,11 +2786,11 @@
             j=edge(boundary)
             DO k=1,N(ng)
               DO i=Istr,Iend+1
-# ifdef MASKING
+#  ifdef MASKING
 !^              tl_FX(i,k)=tl_FX(i,k)*pmask(i,j)
 !^
                 ad_FX(i,k)=ad_FX(i,k)*pmask(i,j)
-# endif
+#  endif
 !^              tl_FX(i,k)=pmon_p(i,j)*                                 &
 !^   &                     0.25_r8*(Kh(i-1,j  )+Kh(i,j  )+              &
 !^   &                              Kh(i-1,j-1)+Kh(i,j-1))*             &
@@ -2784,6 +2808,7 @@
           END IF
         END IF
       END DO
+# endif
 !
 !-----------------------------------------------------------------------
 !  Set adjoint initial conditions.
@@ -2823,6 +2848,7 @@
      &                           EWperiodic(ng), NSperiodic(ng),        &
      &                           ad_A)
 # endif
+# ifndef MULTI_SCALE_B
 !^    CALL bc_v3d_bry_tile (ng, tile, boundary,                         &
 !^   &                      LBij, UBij, 1, N(ng),                       &
 !^   &                      tl_A)
@@ -2830,7 +2856,8 @@
       CALL ad_bc_v3d_bry_tile (ng, tile, boundary,                      &
      &                         LBij, UBij, 1, N(ng),                    &
      &                         ad_A)
-
+# endif
+!
       RETURN
       END SUBROUTINE ad_conv_v3d_bry_tile
 
