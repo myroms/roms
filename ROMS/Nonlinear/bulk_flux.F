@@ -977,8 +977,10 @@
           Wspeed=SQRT(Wmag(i)*Wmag(i)+Wgus(i)*Wgus(i))
 !         Cd=Wstar(i)*Wstar(i)/(Wspeed*Wspeed+eps) ! used prior to 02/2024
 # if defined ICE_MODEL && defined ICE_BULK_FLUXES && defined ICE_THERMO
-          Ch=Wstar(i)*Tstar(i)/(-Wspeed*delT(i)+0.0098_r8*blk_ZT(ng))
-          Ce=Wstar(i)*Qstar(i)/(-Wspeed*delQ(i)+eps)
+!         Ch=Wstar(i)*Tstar(i)/(-Wspeed*delT(i)+0.0098_r8*blk_ZT(ng))
+!         Ce=Wstar(i)*Qstar(i)/(-Wspeed*delQ(i)+eps)
+          Ch = 1.75E-3_r8                     ! Tale Bakken Ulfsby, 2025
+          Ce = 1.75E-3_r8
 # endif
 !
 !  Compute turbulent sensible heat flux (W/m2), Hs.

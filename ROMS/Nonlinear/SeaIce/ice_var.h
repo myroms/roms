@@ -24,9 +24,6 @@
           CASE ('idAice')
             idAice=varid
             iSice(isAice)=idAice
-          CASE ('idHage')
-            idHage=varid
-            iSice(isHage)=idHage
           CASE ('idHice')
             idHice=varid
             iSice(isHice)=idHice
@@ -57,10 +54,23 @@
           CASE ('idVice')
             idVice=varid
             iSice(isVice)=idVice
-          CASE ('idAiCL')
-            idAiCL=varid
-          CASE ('idHiCL')
-            idHiCL=varid
+          CASE ('idEnth')
+            idEnth=varid
+            iSice(isEnth)=idEnth
+          CASE ('idHage')
+            idHage=varid
+            iSice(isHage)=idHage
+          CASE ('idUevp')
+            idUevp=varid
+            iSice(isUevp)=idUevp
+          CASE ('idVevp')
+            idVevp=varid
+            iSice(isVevp)=idVevp
+
+/*
+**  Ice model internal variables.
+*/
+
           CASE ('idIOfv')
             idIOfv=varid
             iFice(icIOfv)=idIOfv
@@ -73,18 +83,20 @@
           CASE ('idIsst')
             idIsst=varid
             iFice(icIsst)=idIsst
+          CASE ('idQcon')
+            idQcon=varid
+            iFice(icQcon)=idQcon
+          CASE ('idQrhs')
+            idQrhs=varid
+            iFice(icQrhs)=idQrhs
           CASE ('idS0mk')
             idS0mk=varid
             iFice(icS0mk)=idS0mk
           CASE ('idT0mk')
             idT0mk=varid
             iFice(icT0mk)=idT0mk
-          CASE ('idUiCL')
-            idUiCL=varid
           CASE ('idUiER')
             idUiER=varid
-          CASE ('idViCL')
-            idViCL=varid
           CASE ('idViNR')
             idViNR=varid
           CASE ('idWdiv')
@@ -105,6 +117,20 @@
           CASE ('idW_ro')
             idW_ro=varid
             iFice(icW_io)=idW_io
+
+/*
+**  Ice model climatology variables.
+*/
+
+          CASE ('idAiCL')
+            idAiCL=varid
+          CASE ('idHiCL')
+            idHiCL=varid
+          CASE ('idUiCL')
+            idUiCL=varid
+          CASE ('idViCL')
+            idViCL=varid
+
 /*
 **  Ice model open boundary conditions.
 */
@@ -207,3 +233,39 @@
             iceOBC(isouth,isVice)=varid
           CASE ('isVice(inorth)')
             iceOBC(inorth,isVice)=varid
+
+          CASE ('isEnth(iwest)')
+            iceOBC(iwest,isEnth)=varid
+          CASE ('isEnth(ieast)')
+            iceOBC(ieast,isEnth)=varid
+          CASE ('isEnth(isouth)')
+            iceOBC(isouth,isEnth)=varid
+          CASE ('isEnth(inorth)')
+            iceOBC(inorth,isEnth)=varid
+
+          CASE ('isHage(iwest)')
+            iceOBC(iwest,isHage)=varid
+          CASE ('isHage(ieast)')
+            iceOBC(ieast,isHage)=varid
+          CASE ('isHage(isouth)')
+            iceOBC(isouth,isHage)=varid
+          CASE ('isHage(inorth)')
+            iceOBC(inorth,isHage)=varid
+
+          CASE ('isUevp(iwest)')
+            iceOBC(iwest,isUevp)=varid
+          CASE ('isUevp(ieast)')
+            iceOBC(ieast,isUevp)=varid
+          CASE ('isUevp(isouth)')
+            iceOBC(isouth,isUevp)=varid
+          CASE ('isUevp(inorth)')
+            iceOBC(inorth,isUevp)=varid
+
+          CASE ('isVevp(iwest)')
+            iceOBC(iwest,isVevp)=varid
+          CASE ('isVevp(ieast)')
+            iceOBC(ieast,isVevp)=varid
+          CASE ('isVevp(isouth)')
+            iceOBC(isouth,isVevp)=varid
+          CASE ('isVevp(inorth)')
+            iceOBC(inorth,isVevp)=varid
