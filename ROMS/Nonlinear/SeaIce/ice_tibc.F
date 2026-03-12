@@ -19,6 +19,7 @@
       USE mod_grid
       USE mod_ice
       USE mod_scalars
+      USE mod_boundary
 !
       implicit none
 !
@@ -113,8 +114,8 @@
 !
         IF (LBC(iwest,ibICE(isTice),ng)%clamped) THEN
           DO j=Jstr,Jend
-            enthalpy(Istr-1,j,linew)=ICE_LOBC(isHice,ng)%ice_west(j)*   &
-     &                               ICE_LOBC(isTice,ng)%ice_west(j)
+            enthalpy(Istr-1,j,linew)=BOUNDARY(ng)%ice_west(isHice,j)*   &
+     &                               BOUNDARY(ng)%ice_west(isTice,j)
 # ifdef MASKING
             enthalpy(Istr-1,j,linew)=enthalpy(Istr-1,j,linew)*          &
      &                               GRID(ng)%rmask(Istr-1,j)
@@ -136,8 +137,8 @@
         ELSE IF (LBC(iwest,ibICE(isTice),ng)%mixed) THEN
           DO j=Jstr,Jend
             IF (ui(Istr,j,linew).ge.0.0_r8) THEN
-              enthalpy(Istr-1,j,linew)=ICE_LOBC(isHice,ng)%ice_west(j)* &
-     &                                 ICE_LOBC(isTice,ng)%ice_west(j)
+              enthalpy(Istr-1,j,linew)=BOUNDARY(ng)%ice_west(isHice,j)* &
+     &                                 BOUNDARY(ng)%ice_west(isTice,j)
 # ifdef MASKING
               enthalpy(Istr-1,j,linew)=enthalpy(Istr-1,j,linew)*        &
      &                                 GRID(ng)%rmask(Istr-1,j)
@@ -193,16 +194,21 @@
           DO j=Jstr,Jend
             enthalpy(Istr-1,j,linew)=hi(Istr,j,linew)*                  &
      &                               ti(Istr,j,linew)
+!           ti(Istr-1,j,linew)=enthalpy(Istr-1,j,linew)/                &
+!    &                         MAX(hi(Istr-1,j,linew),eps)
+             ti(Istr-1,j,linew)=ti(Istr,j,linew)
 # ifdef MASKING
             enthalpy(Istr-1,j,linew)=enthalpy(Istr-1,j,linew)*          &
      &                               GRID(ng)%rmask(Istr-1,j)
+            ti(Istr-1,j,linew)=ti(Istr-1,j,linew)*                      &
+     &                         GRID(ng)%rmask(Istr-1,j)
 # endif
 # ifdef WET_DRY
             enthalpy(Istr-1,j,linew)=enthalpy(Istr-1,j,linew)*          &
      &                               GRID(ng)%rmask_wet(Istr-1,j)
+            ti(Istr-1,j,linew)=ti(Istr-1,j,linew)*                      &
+     &                         GRID(ng)%rmask_wet(Istr-1,j)
 # endif
-            ti(Istr-1,j,linew)=enthalpy(Istr-1,j,linew)/                &
-     &                         MAX(hi(Istr-1,j,linew),eps)
             IF (hi(Istr-1,j,linew).le.min_hi(ng)) THEN
               enthalpy(Istr-1,j,linew)=0.0_r8
               ti(Istr-1,j,linew)=0.0_r8
@@ -221,8 +227,8 @@
 !  Eastern edge, clamped boundary condition.
 !
           DO j=Jstr,Jend
-            enthalpy(Iend+1,j,linew)=ICE_LOBC(isHice,ng)%ice_east(j)*   &
-     &                               ICE_LOBC(isTice,ng)%ice_east(j)
+            enthalpy(Iend+1,j,linew)=BOUNDARY(ng)%ice_east(isHice,j)*   &
+     &                               BOUNDARY(ng)%ice_east(isTice,j)
 # ifdef MASKING
             enthalpy(Iend+1,j,linew)=enthalpy(Iend+1,j,linew)*          &
      &                               GRID(ng)%rmask(Iend+1,j)
@@ -244,8 +250,8 @@
         ELSE IF (LBC(ieast,ibICE(isTice),ng)%mixed) THEN
           DO j=Jstr,Jend
             IF (ui(Iend+1,j,linew).le.0.0_r8) THEN
-              enthalpy(Iend+1,j,linew)=ICE_LOBC(isHice,ng)%ice_east(j)* &
-     &                                 ICE_LOBC(isTice,ng)%ice_east(j)
+              enthalpy(Iend+1,j,linew)=BOUNDARY(ng)%ice_east(isHice,j)* &
+     &                                 BOUNDARY(ng)%ice_east(isTice,j)
 # ifdef MASKING
               enthalpy(Iend+1,j,linew)=enthalpy(Iend+1,j,linew)*        &
      &                                 GRID(ng)%rmask(Iend+1,j)
@@ -302,16 +308,21 @@
           DO j=Jstr,Jend
             enthalpy(Iend+1,j,linew)=hi(Iend,j,linew)*                  &
      &                               ti(Iend,j,linew)
+!           ti(Iend+1,j,linew)=enthalpy(Iend+1,j,linew)/                &
+!    &                         MAX(hi(Iend+1,j,linew),eps)
+            ti(Iend+1,j,linew)=ti(Iend,j,linew)
 # ifdef MASKING
             enthalpy(Iend+1,j,linew)=enthalpy(Iend+1,j,linew)*          &
      &                               GRID(ng)%rmask(Iend+1,j)
+            ti(Iend+1,j,linew)=ti(Iend+1,j,linew)*                      &
+     &                         GRID(ng)%rmask(Iend+1,j)
 # endif
 # ifdef WET_DRY
             enthalpy(Iend+1,j,linew)=enthalpy(Iend+1,j,linew)*          &
      &                               GRID(ng)%rmask_wet(Iend+1,j)
+            ti(Iend+1,j,linew)=ti(Iend+1,j,linew)*                      &
+     &                         GRID(ng)%rmask_wet(Iend+1,j)
 # endif
-            ti(Iend+1,j,linew)=enthalpy(Iend+1,j,linew)/                &
-     &                         MAX(hi(Iend+1,j,linew),eps)
             IF (hi(Iend+1,j,linew).le.min_hi(ng)) THEN
               enthalpy(Iend+1,j,linew)=0.0_r8
               ti(Iend+1,j,linew)=0.0_r8
@@ -330,8 +341,8 @@
 !  Southern edge, clamped boundary condition.
 !
           DO i=Istr,Iend
-            enthalpy(i,Jstr-1,linew)=ICE_LOBC(isHice,ng)%ice_south(i)*  &
-     &                               ICE_LOBC(isTice,ng)%ice_south(i)
+            enthalpy(i,Jstr-1,linew)=BOUNDARY(ng)%ice_south(isHice,i)*  &
+     &                               BOUNDARY(ng)%ice_south(isTice,i)
 # ifdef MASKING
             enthalpy(i,Jstr-1,linew)=enthalpy(i,Jstr-1,linew)*          &
      &                               GRID(ng)%rmask(i,Jstr-1)
@@ -353,8 +364,8 @@
         ELSE IF (LBC(isouth,ibICE(isTice),ng)%mixed) THEN
           DO i=Istr,Iend
             IF (vi(i,1,linew).ge.0.0_r8) THEN
-              enthalpy(i,Jstr-1,linew)=ICE_LOBC(isHice,ng)%ice_south(i)*&
-     &                                 ICE_LOBC(isTice,ng)%ice_south(i)
+              enthalpy(i,Jstr-1,linew)=BOUNDARY(ng)%ice_south(isHice,i)*&
+     &                                 BOUNDARY(ng)%ice_south(isTice,i)
 # ifdef MASKING
               enthalpy(i,Jstr-1,linew)=enthalpy(i,Jstr-1,linew)*        &
      &                                 GRID(ng)%rmask(i,Jstr-1)
@@ -409,16 +420,21 @@
         ELSE IF (LBC(isouth,ibICE(isTice),ng)%closed) THEN
           DO i=Istr,Iend
             enthalpy(i,Jstr-1,linew)=enthalpy(i,Jstr,linew)
+!           ti(i,Jstr-1,linew)=enthalpy(i,Jstr-1,linew)/                &
+!     &                         MAX(hi(i,Jstr-1,linew),eps)
+            ti(i,Jstr-1,linew)=ti(i,Jstr,linew)
 # ifdef MASKING
             enthalpy(i,Jstr-1,linew)=enthalpy(i,Jstr-1,linew)*          &
      &                               GRID(ng)%rmask(i,Jstr-1)
+            ti(i,Jstr-1,linew)=ti(i,Jstr-1,linew)*                      &
+     &                         GRID(ng)%rmask(i,Jstr-1)
 # endif
 # ifdef WET_DRY
             enthalpy(i,Jstr-1,linew)=enthalpy(i,Jstr-1,linew)*          &
      &                               GRID(ng)%rmask_wet(i,Jstr-1)
+            ti(i,Jstr-1,linew)=ti(i,Jstr-1,linew)*                      &
+     &                         GRID(ng)%rmask_wet(i,Jstr-1)
 # endif
-            ti(i,Jstr-1,linew)=enthalpy(i,Jstr-1,linew)/                &
-     &                         MAX(hi(i,Jstr-1,linew),eps)
             IF (hi(i,Jstr-1,linew).le.min_hi(ng)) THEN
               enthalpy(i,Jstr-1,linew)=0.0_r8
               ti(i,Jstr-1,linew)=0.0_r8
@@ -437,8 +453,8 @@
 !  Northern edge, clamped boundary condition.
 !
           DO i=Istr,Iend
-            enthalpy(i,Jend+1,linew)=ICE_LOBC(isHice,ng)%ice_north(i)*  &
-     &                               ICE_LOBC(isTice,ng)%ice_north(i)
+            enthalpy(i,Jend+1,linew)=BOUNDARY(ng)%ice_north(isHice,i)*  &
+     &                               BOUNDARY(ng)%ice_north(isTice,i)
 # ifdef MASKING
             enthalpy(i,Jend+1,linew)=enthalpy(i,Jend+1,linew)*          &
      &                               GRID(ng)%rmask(i,Jend+1)
@@ -460,8 +476,8 @@
         ELSE IF (LBC(inorth,ibICE(isTice),ng)%mixed) THEN
           DO i=Istr,Iend
             IF (vi(i,Jend+1,linew).le.0.0_r8) THEN
-              enthalpy(i,Jend+1,linew)=ICE_LOBC(isHice,ng)%ice_north(i)*&
-     &                                 ICE_LOBC(isTice,ng)%ice_north(i)
+              enthalpy(i,Jend+1,linew)=BOUNDARY(ng)%ice_north(isHice,i)*&
+     &                                 BOUNDARY(ng)%ice_north(isTice,i)
 # ifdef MASKING
               enthalpy(i,Jend+1,linew)=enthalpy(i,Jend+1,linew)*        &
      &                                 GRID(ng)%rmask(i,Jend+1)
@@ -522,16 +538,21 @@
           DO i=Istr,Iend
             enthalpy(i,Jend+1,linew)=hi(i,Jend,linew)*                  &
      &                               ti(i,Jend,linew)
+!           ti(i,Jend+1,linew)=enthalpy(i,Jend+1,linew)/                &
+!     &                        MAX(hi(i,Jend+1,linew),eps)
+            ti(i,Jend+1,linew)=ti(i,Jend,linew)
 # ifdef MASKING
             enthalpy(i,Jend+1,linew)=enthalpy(i,Jend+1,linew)*          &
      &                               GRID(ng)%rmask(i,Jend+1)
+            ti(i,Jend+1,linew)=ti(i,Jend+1,linew)*                      &
+     &                         GRID(ng)%rmask(i,Jend+1)
 # endif
 # ifdef WET_DRY
             enthalpy(i,Jend+1,linew)=enthalpy(i,Jend+1,linew)*          &
      &                               GRID(ng)%rmask_wet(i,Jend+1)
+            ti(i,Jend+1,linew)=ti(i,Jend+1,linew)*                      &
+     &                         GRID(ng)%rmask_wet(i,Jend+1)
 # endif
-            ti(i,Jend+1,linew)=enthalpy(i,Jend+1,linew)/                &
-     &                         MAX(hi(i,Jend+1,linew),eps)
             IF (hi(i,Jend+1,linew).le.min_hi(ng)) THEN
               enthalpy(i,Jend+1,linew)=0.0_r8
               ti(i,Jend+1,linew)=0.0_r8
@@ -549,16 +570,22 @@
           enthalpy(Istr-1,Jstr-1,linew)=0.5_r8*                         &
      &                                  (enthalpy(Istr  ,Jstr-1,linew)+ &
      &                                   enthalpy(Istr-1,Jstr  ,linew))
+!         ti(Istr-1,Jstr-1,linew)=enthalpy(Istr-1,Jstr-1,linew)/        &
+!    &                            MAX(hi(Istr-1,Jstr-1,linew),eps)
+          ti(Istr-1,Jstr-1,linew)=0.5_r8*(ti(Istr  ,Jstr-1,linew)+      &
+     &                                    ti(Istr-1,Jstr  ,linew))
 # ifdef MASKING
           enthalpy(Istr-1,Jstr-1,linew)=enthalpy(Istr-1,Jstr-1,linew)*  &
      &                                  GRID(ng)%rmask(Istr-1,Jstr-1)
+          ti(Istr-1,Jstr-1,linew)=ti(Istr-1,Jstr-1,linew)*              &
+     &                            GRID(ng)%rmask(Istr-1,Jstr-1)
 # endif
 # ifdef WET_DRY
           enthalpy(Istr-1,Jstr-1,linew)=enthalpy(Istr-1,Jstr-1,linew)*  &
      &                                 GRID(ng)%rmask_wet(Istr-1,Jstr-1)
+          ti(Istr-1,Jstr-1,linew)=ti(Istr-1,Jstr-1,linew)*              &
+     &                            GRID(ng)%rmask_wet(Istr-1,Jstr-1)
 # endif
-          ti(Istr-1,Jstr-1,linew)=enthalpy(Istr-1,Jstr-1,linew)/        &
-     &                            MAX(hi(Istr-1,Jstr-1,linew),eps)
           IF (hi(Istr-1,Jstr-1,linew).le.min_hi(ng)) THEN
             enthalpy(Istr-1,Jstr-1,linew)=0.0_r8
               ti(Istr-1,Jstr-1,linew)=0.0_r8
@@ -568,16 +595,22 @@
           enthalpy(Iend+1,Jstr-1,linew)=0.5_r8*                         &
      &                                  (enthalpy(Iend+1,Jstr  ,linew)+ &
      &                                   enthalpy(Iend  ,Jstr-1,linew))
+!         ti(Iend+1,Jstr-1,linew)=enthalpy(Iend+1,Jstr-1,linew)/        &
+!    &                            MAX(hi(Iend+1,Jstr-1,linew),eps)
+          ti(Iend+1,Jstr-1,linew)=0.5_r8*(ti(Iend+1,Jstr  ,linew)+      &
+     &                                    ti(Iend  ,Jstr-1,linew))
 # ifdef MASKING
           enthalpy(Iend+1,Jstr-1,linew)=enthalpy(Iend+1,Jstr-1,linew)*  &
      &                                  GRID(ng)%rmask(Iend+1,Jstr-1)
+          ti(Iend+1,Jstr-1,linew)=ti(Iend+1,Jstr-1,linew)*              &
+     &                            GRID(ng)%rmask(Iend+1,Jstr-1)
 # endif
 # ifdef WET_DRY
           enthalpy(Iend+1,Jstr-1,linew)=enthalpy(Iend+1,Jstr-1,linew)*  &
      &                                 GRID(ng)%rmask_wet(Iend+1,Jstr-1)
+          ti(Iend+1,Jstr-1,linew)=ti(Iend+1,Jstr-1,linew)*              &
+     &                            GRID(ng)%rmask_wet(Iend+1,Jstr-1)
 # endif
-          ti(Iend+1,Jstr-1,linew)=enthalpy(Iend+1,Jstr-1,linew)/        &
-     &                            MAX(hi(Iend+1,Jstr-1,linew),eps)
           IF (hi(Iend+1,Jstr-1,linew).LE.min_hi(ng)) THEN
             enthalpy(Iend+1,Jstr-1,linew)=0.0_r8
             ti(Iend+1,Jstr-1,linew)=0.0_r8
@@ -587,16 +620,22 @@
           enthalpy(Istr-1,Jend+1,linew)=0.5_r8*                         &
      &                                  (enthalpy(Istr-1,Jend  ,linew)+ &
      &                                   enthalpy(Istr  ,Jend+1,linew))
+!         ti(Istr-1,Jend+1,linew)=enthalpy(Istr-1,Jend+1,linew)/        &
+!    &                            MAX(hi(Istr-1,Jend+1,linew),eps)
+          ti(Istr-1,Jend+1,linew)=0.5_r8*(ti(Istr-1,Jend  ,linew)+      &
+     &                                    ti(Istr  ,Jend+1,linew))
 # ifdef MASKING
           enthalpy(Istr-1,Jend+1,linew)=enthalpy(Istr-1,Jend+1,linew)*  &
      &                                  GRID(ng)%rmask(Istr-1,Jend+1)
+          ti(Istr-1,Jend+1,linew)=ti(Istr-1,Jend+1,linew)*              &
+     &                            GRID(ng)%rmask(Istr-1,Jend+1)
 # endif
 # ifdef WET_DRY
           enthalpy(Istr-1,Jend+1,linew)=enthalpy(Istr-1,Jend+1,linew)*  &
      &                                 GRID(ng)%rmask_wet(Istr-1,Jend+1)
+          ti(Istr-1,Jend+1,linew)=ti(Istr-1,Jend+1,linew)*              &
+     &                            GRID(ng)%rmask_wet(Istr-1,Jend+1)
 # endif
-          ti(Istr-1,Jend+1,linew)=enthalpy(Istr-1,Jend+1,linew)/        &
-     &                            MAX(hi(Istr-1,Jend+1,linew),eps)
           IF (hi(Istr-1,Jend+1,linew).le.min_hi(ng)) THEN
             enthalpy(Istr-1,Jend+1,linew)=0.0_r8
             ti(Istr-1,Jend+1,linew)=0.0_r8
@@ -606,16 +645,22 @@
           enthalpy(Iend+1,Jend+1,linew)=0.5_r8*                         &
      &                                  (enthalpy(Iend+1,Jend  ,linew)+ &
      &                                   enthalpy(Iend  ,Jend+1,linew))
+!         ti(Iend+1,Jend+1,linew)=enthalpy(Iend+1,Jend+1,linew)/        &
+!    &                            MAX(hi(Iend+1,Jend+1,linew),eps)
+          ti(Iend+1,Jend+1,linew)=0.5_r8*(ti(Iend+1,Jend  ,linew)+      &
+     &                                    ti(Iend  ,Jend+1,linew))
 # ifdef MASKING
           enthalpy(Iend+1,Jend+1,linew)=enthalpy(Iend+1,Jend+1,linew)*  &
      &                                  GRID(ng)%rmask(Iend+1,Jend+1)
+          ti(Iend+1,Jend+1,linew)=ti(Iend+1,Jend+1,linew)*              &
+     &                            GRID(ng)%rmask(Iend+1,Jend+1)
 # endif
 # ifdef WET_DRY
           enthalpy(Iend+1,Jend+1,linew)=enthalpy(Iend+1,Jend+1,linew)*  &
      &                                 GRID(ng)%rmask_wet(Iend+1,Jend+1)
+          ti(Iend+1,Jend+1,linew)=ti(Iend+1,Jend+1,linew)*              &
+     &                            GRID(ng)%rmask_wet(Iend+1,Jend+1)
 # endif
-          ti(Iend+1,Jend+1,linew)=enthalpy(Iend+1,Jend+1,linew)/        &
-     &                            MAX(hi(Iend+1,Jend+1,linew),eps)
           IF (hi(Iend+1,Jend+1,linew).le.min_hi(ng)) THEN
             enthalpy(Iend+1,Jend+1,linew)=0.0_r8
             ti(Iend+1,Jend+1,linew)=0.0_r8
