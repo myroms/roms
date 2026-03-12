@@ -28,7 +28,8 @@
 !
 !  Local variable declarations.
 !
-      integer :: Npts, Nval, ng, status
+      integer :: Npts, Nval, icevar, igrid, ng, nline, status
+      integer :: Bindex
 #ifdef AVERAGES
       integer :: nf, ns
 #endif
@@ -66,6 +67,11 @@
 !  Read in ice model parameters.
 !-----------------------------------------------------------------------
 !
+      iceVar=0
+      igrid=1
+      nline=0
+      Nval=0
+!
       DO WHILE (.true.)
         READ (inp,'(a)',ERR=10,END=20) line
         status=decode_line(line, KeyWord, Nval, Cval, Rval)
@@ -87,6 +93,8 @@
               Npts=load_r(Nval, Rval, Ngrids, Cd_io)
             CASE ('Astrength')
               Npts=load_r(Nval, Rval, Ngrids, Astrength)
+            CASE ('Pstar')
+              Npts=load_r(Nval, Rval, Ngrids, Pstar)
             CASE ('zetaMin')
               Npts=load_r(Nval, Rval, Ngrids, zetaMin)
             CASE ('zetaMax')
@@ -118,6 +126,66 @@
             CASE ('sublimation')
               Npts=load_r(Nval, Rval, 1, Rvalue)
               sublimation=Rvalue(1)
+            CASE ('LBC(isAice)')
+              Bindex=isAice+(nLBCvar-nIceS)
+              Npts=load_lbc(Nval, Cval, line, nline, Bindex, igrid,     &
+     &                      0, 0, Vname(1,idAice), LBC)
+            CASE ('LBC(isHice)')
+              Bindex=isHice+(nLBCvar-nIceS)
+              Npts=load_lbc(Nval, Cval, line, nline, Bindex, igrid,     &
+     &                      0, 0, Vname(1,idHice), LBC)
+            CASE ('LBC(isHmel)')
+              Bindex=isHmel+(nLBCvar-nIceS)
+              Npts=load_lbc(Nval, Cval, line, nline, Bindex, igrid,     &
+     &                      0, 0, Vname(1,idHmel), LBC)
+            CASE ('LBC(isHsno)')
+              Bindex=isHsno+(nLBCvar-nIceS)
+              Npts=load_lbc(Nval, Cval, line, nline, Bindex, igrid,     &
+     &                      0, 0, Vname(1,idHsno), LBC)
+            CASE ('LBC(isIage)')
+              Bindex=isIage+(nLBCvar-nIceS)
+              Npts=load_lbc(Nval, Cval, line, nline, Bindex, igrid,     &
+     &                      0, 0, Vname(1,idIage), LBC)
+            CASE ('LBC(isISxx)')
+              Bindex=isISxx+(nLBCvar-nIceS)
+              Npts=load_lbc(Nval, Cval, line, nline, Bindex, igrid,     &
+     &                      0, 0, Vname(1,idISxx), LBC)
+            CASE ('LBC(isISxy)')
+              Bindex=isISxy+(nLBCvar-nIceS)
+              Npts=load_lbc(Nval, Cval, line, nline, Bindex, igrid,     &
+     &                      0, 0, Vname(1,idISxy), LBC)
+            CASE ('LBC(isISyy)')
+              Bindex=isISyy+(nLBCvar-nIceS)
+              Npts=load_lbc(Nval, Cval, line, nline, Bindex, igrid,     &
+     &                      0, 0, Vname(1,idISyy), LBC)
+            CASE ('LBC(isTice)')
+              Bindex=isTice+(nLBCvar-nIceS)
+              Npts=load_lbc(Nval, Cval, line, nline, Bindex, igrid,     &
+     &                      0, 0, Vname(1,idTice), LBC)
+            CASE ('LBC(isUice)')
+              Bindex=isUice+(nLBCvar-nIceS)
+              Npts=load_lbc(Nval, Cval, line, nline, Bindex, igrid,     &
+     &                      0, 0, Vname(1,idUice), LBC)
+            CASE ('LBC(isVice)')
+              Bindex=isVice+(nLBCvar-nIceS)
+              Npts=load_lbc(Nval, Cval, line, nline, Bindex, igrid,     &
+     &                      0, 0, Vname(1,idVice), LBC)
+            CASE ('LBC(isEnth)')
+              Bindex=isEnth+(nLBCvar-nIceS)
+              Npts=load_lbc(Nval, Cval, line, nline, Bindex, igrid,     &
+     &                      0, 0, Vname(1,idEnth), LBC)
+            CASE ('LBC(isHage)')
+              Bindex=isHage+(nLBCvar-nIceS)
+              Npts=load_lbc(Nval, Cval, line, nline, Bindex, igrid,     &
+     &                      0, 0, Vname(1,idHage), LBC)
+            CASE ('LBC(isUevp)')
+              Bindex=isUevp+(nLBCvar-nIceS)
+              Npts=load_lbc(Nval, Cval, line, nline, Bindex, igrid,     &
+     &                      0, 0, Vname(1,idUevp), LBC)
+            CASE ('LBC(isVevp)')
+              Bindex=isVevp+(nLBCvar-nIceS)
+              Npts=load_lbc(Nval, Cval, line, nline, Bindex, igrid,     &
+     &                      0, 0, Vname(1,idVevp), LBC)
             CASE ('Hout(idUice)')
               IF (idUice.eq.0) THEN
                 IF (Master) WRITE (out,80) 'idUice'
@@ -209,6 +277,34 @@
                 RETURN
               END IF
               Npts=load_l(Nval, Cval, Ngrids, Hout(idISyy,:))
+            CASE ('Hout(idEnth)')
+              IF (idEnth.eq.0) THEN
+                IF (Master) WRITE (out,80) 'idEnth'
+                exit_flag=5
+                RETURN
+              END IF
+              Npts=load_l(Nval, Cval, Ngrids, Hout(idEnth,:))
+            CASE ('Hout(idHage)')
+              IF (idHage.eq.0) THEN
+                IF (Master) WRITE (out,80) 'idHage'
+                exit_flag=5
+                RETURN
+              END IF
+              Npts=load_l(Nval, Cval, Ngrids, Hout(idHage,:))
+            CASE ('Hout(idUevp)')
+              IF (idUevp.eq.0) THEN
+                IF (Master) WRITE (out,80) 'idUevp'
+                exit_flag=5
+                RETURN
+              END IF
+              Npts=load_l(Nval, Cval, Ngrids, Hout(idUevp,:))
+            CASE ('Hout(idVevp)')
+              IF (idVevp.eq.0) THEN
+                IF (Master) WRITE (out,80) 'idVevp'
+                exit_flag=5
+                RETURN
+              END IF
+              Npts=load_l(Nval, Cval, Ngrids, Hout(idVevp,:))
             CASE ('Hout(idIsst)')
               IF (idIsst.eq.0) THEN
                 IF (Master) WRITE (out,80) 'idIsst'
@@ -293,6 +389,20 @@
                 RETURN
               END IF
               Npts=load_l(Nval, Cval, Ngrids, Hout(idW_ro,:))
+            CASE ('Hout(idQcon)')
+              IF (idQcon.eq.0) THEN
+                IF (Master) WRITE (out,80) 'idQcon'
+                exit_flag=5
+                RETURN
+              END IF
+              Npts=load_l(Nval, Cval, Ngrids, Hout(idQcon,:))
+            CASE ('Hout(idQrhs)')
+              IF (idQrhs.eq.0) THEN
+                IF (Master) WRITE (out,80) 'idQrhs'
+                exit_flag=5
+                RETURN
+              END IF
+              Npts=load_l(Nval, Cval, Ngrids, Hout(idQrhs,:))
             CASE ('Qout(idUice)')
               Npts=load_l(Nval, Cval, Ngrids, Qout(idUice,:))
             CASE ('Qout(idVice)')
@@ -319,6 +429,14 @@
               Npts=load_l(Nval, Cval, Ngrids, Qout(idISxy,:))
             CASE ('Qout(idISyy)')
               Npts=load_l(Nval, Cval, Ngrids, Qout(idISyy,:))
+            CASE ('Qout(idEnth)')
+              Npts=load_l(Nval, Cval, Ngrids, Qout(idEnth,:))
+            CASE ('Qout(idHage)')
+              Npts=load_l(Nval, Cval, Ngrids, Qout(idHage,:))
+            CASE ('Qout(idUevp)')
+              Npts=load_l(Nval, Cval, Ngrids, Qout(idUevp,:))
+            CASE ('Qout(idVevp)')
+              Npts=load_l(Nval, Cval, Ngrids, Qout(idVevp,:))
             CASE ('Qout(idIsst)')
               Npts=load_l(Nval, Cval, Ngrids, Qout(idIsst,:))
             CASE ('Qout(idIOmf)')
@@ -327,6 +445,10 @@
               Npts=load_l(Nval, Cval, Ngrids, Qout(idIOfv,:))
             CASE ('Qout(idIOmt)')
               Npts=load_l(Nval, Cval, Ngrids, Qout(idIOmt,:))
+            CASE ('Qout(idQcon)')
+              Npts=load_l(Nval, Cval, Ngrids, Qout(idQcon,:))
+            CASE ('Qout(idQrhs)')
+              Npts=load_l(Nval, Cval, Ngrids, Qout(idQrhs,:))
             CASE ('Qout(idS0mk)')
               Npts=load_l(Nval, Cval, Ngrids, Qout(idS0mk,:))
             CASE ('Qout(idT0mk)')
@@ -368,6 +490,14 @@
               Npts=load_l(Nval, Cval, Ngrids, Aout(idISxy,:))
             CASE ('Aout(idISyy)')
               Npts=load_l(Nval, Cval, Ngrids, Aout(idISyy,:))
+            CASE ('Aout(idEnth)')
+              Npts=load_l(Nval, Cval, Ngrids, Aout(idEnth,:))
+            CASE ('Aout(idHage)')
+              Npts=load_l(Nval, Cval, Ngrids, Aout(idHage,:))
+            CASE ('Aout(idUevp)')
+              Npts=load_l(Nval, Cval, Ngrids, Aout(idUevp,:))
+            CASE ('Aout(idVevp)')
+              Npts=load_l(Nval, Cval, Ngrids, Aout(idVevp,:))
             CASE ('Aout(idIsst)')
               Npts=load_l(Nval, Cval, Ngrids, Aout(idIsst,:))
             CASE ('Aout(idIOmf)')
@@ -378,6 +508,10 @@
               Npts=load_l(Nval, Cval, Ngrids, Aout(idIOmt,:))
             CASE ('Aout(idIage)')
               Npts=load_l(Nval, Cval, Ngrids, Aout(idIage,:))
+            CASE ('Aout(idQcon)')
+              Npts=load_l(Nval, Cval, Ngrids, Aout(idQcon,:))
+            CASE ('Aout(idQrhs)')
+              Npts=load_l(Nval, Cval, Ngrids, Aout(idQrhs,:))
             CASE ('Aout(idS0mk)')
               Npts=load_l(Nval, Cval, Ngrids, Aout(idS0mk,:))
             CASE ('Aout(idT0mk)')
@@ -432,6 +566,8 @@
      &          'Ice-Ocean drag coefficient (nondimensional).'
           WRITE (out,60) Astrength(ng), 'Astrength',                    &
      &          'Ice strength exponential weighting (nondimensional).'
+          WRITE (out,60) Pstar(ng), 'Pstar',                            &
+     &          'Compressive ice strength parameter, Hibler (1979).'
           WRITE (out,60) ZetaMin(ng), 'zetaMin',                        &
      &          'Minimum ice shear strength (N/m2) limiter.'
           WRITE (out,60) ZetaMax(ng), 'zetaMax',                        &
@@ -496,6 +632,18 @@
           IF (Hout(idISyy,ng)) WRITE (out,70) Hout(idISyy,ng),          &
      &       'Hout(idISyy)',                                            &
      &       'Write out internal ice stress tensor, yy-component.'
+          IF (Hout(idEnth,ng)) WRITE (out,70) Hout(idEnth,ng),          &
+     &       'Hout(idEnth)',                                            &
+     &       'Write out ice-brine enthalpy.'
+          IF (Hout(idHage,ng)) WRITE (out,70) Hout(idHage,ng),          &
+     &       'Hout(idHage)',                                            &
+     &       'Write out thickness linked sea ice age.'
+          IF (Hout(idUevp,ng)) WRITE (out,70) Hout(idUevp,ng),          &
+     &       'Hout(idUevp)',                                            &
+     &       'Write out elastic-viscous-plastic rheology U-velocity.'
+          IF (Hout(idVevp,ng)) WRITE (out,70) Hout(idVevp,ng),          &
+     &       'Hout(idVevp)',                                            &
+     &       'Write out elastic-viscous-plastic rheology V-velocity.'
           IF (Hout(idIsst,ng)) WRITE (out,70) Hout(idIsst,ng),          &
      &       'Hout(idIsst)',                                            &
      &       'Write out ice/snow surface temperature.'
@@ -508,6 +656,12 @@
           IF (Hout(idIOmt,ng)) WRITE (out,70) Hout(idIOmt,ng),          &
      &       'Hout(idIOmt)',                                            &
      &       'Write out ice-ocean momentum transfer coefficient.'
+          IF (Hout(idQcon,ng)) WRITE (out,70) Hout(idQcon,ng),          &
+     &       'Hout(idQcon)',                                            &
+     &       'Write out ice-snow heat conductivity.'
+          IF (Hout(idQrhs,ng)) WRITE (out,70) Hout(idQrhs,ng),          &
+     &       'Hout(idQrhs)',                                            &
+     &       'Write out RHS heat flux over ice/snow.'
           IF (Hout(idS0mk,ng)) WRITE (out,70) Hout(idS0mk,ng),          &
      &       'Hout(idS0mk)',                                            &
      &       'Write out salinity of molecular sublayer under ice.'
@@ -572,6 +726,18 @@
           IF (Qout(idISyy,ng)) WRITE (out,70) Qout(idISyy,ng),          &
      &       'Qout(idISyy)',                                            &
      &       'Write out internal ice stress tensor, yy-component.'
+          IF (Qout(idEnth,ng)) WRITE (out,70) Qout(idEnth,ng),          &
+     &       'Qout(idEnth)',                                            &
+     &       'Write out ice-brine enthalpy.'
+          IF (Qout(idHage,ng)) WRITE (out,70) Qout(idHage,ng),          &
+     &       'Qout(idHage)',                                            &
+     &       'Write out thickness linked sea ice age.'
+          IF (Qout(idUevp,ng)) WRITE (out,70) Qout(idUevp,ng),          &
+     &       'Qout(idUevp)',                                            &
+     &       'Write out elastic-viscous-plastic rheology U-velocity.'
+          IF (Qout(idVevp,ng)) WRITE (out,70) Qout(idVevp,ng),          &
+     &       'Qout(idVevp)',                                            &
+     &       'Write out elastic-viscous-plastic rheology V-velocity.'
           IF (Qout(idIsst,ng)) WRITE (out,70) Qout(idIsst,ng),          &
      &       'Qout(idIsst)',                                            &
      &       'Write out ice/snow surface temperature.'
@@ -584,6 +750,12 @@
           IF (Qout(idIOmt,ng)) WRITE (out,70) Qout(idIOmt,ng),          &
      &       'Qout(idIOmt)',                                            &
      &       'Write out ice-ocean momentum transfer coefficient.'
+          IF (Qout(idQcon,ng)) WRITE (out,70) Qout(idQcon,ng),          &
+     &       'Qout(idQcon)',                                            &
+     &       'Write out ice-snow heat conductivity.'
+          IF (Qout(idQrhs,ng)) WRITE (out,70) Qout(idQrhs,ng),          &
+     &       'Qout(idQrhs)',                                            &
+     &       'Write out RHS heat flux over ice/snow.'
           IF (Qout(idS0mk,ng)) WRITE (out,70) Qout(idS0mk,ng),          &
      &       'Qout(idS0mk)',                                            &
      &       'Write out salinity of molecular sublayer under ice.'
@@ -649,6 +821,18 @@
           IF (Aout(idISyy,ng)) WRITE (out,70) Aout(idISyy,ng),          &
      &       'Aout(idISyy)',                                            &
      &       'Write out internal ice stress tensor, yy-component.'
+          IF (Aout(idEnth,ng)) WRITE (out,70) Aout(idEnth,ng),          &
+     &       'Aout(idEnth)',                                            &
+     &       'Write out ice-brine enthalpy.'
+          IF (Aout(idHage,ng)) WRITE (out,70) Aout(idHage,ng),          &
+     &       'Aout(idHage)',                                            &
+     &       'Write out thickness linked sea ice age.'
+          IF (Aout(idUevp,ng)) WRITE (out,70) Aout(idUevp,ng),          &
+     &       'Aout(idUevp)',                                            &
+     &       'Write out elastic-viscous-plastic rheology U-velocity.'
+          IF (Aout(idVevp,ng)) WRITE (out,70) Aout(idVevp,ng),          &
+     &       'Aout(idVevp)',                                            &
+     &       'Write out elastic-viscous-plastic rheology V-velocity.'
           IF (Aout(idIsst,ng)) WRITE (out,70) Aout(idisst,ng),          &
      &       'Aout(idIsst)',                                            &
      &       'Write out ice/snow surface temperature.'
@@ -661,6 +845,12 @@
           IF (Aout(idIOmt,ng)) WRITE (out,70) Aout(idIOmt,ng),          &
      &       'Aout(idIOmt)',                                            &
      &       'Write out ice-ocean momentum transfer coefficient.'
+          IF (Aout(idQcon,ng)) WRITE (out,70) Aout(idQcon,ng),          &
+     &       'Aout(idQcon)',                                            &
+     &       'Write out ice-snow heat conductivity.'
+          IF (Aout(idQrhs,ng)) WRITE (out,70) Aout(idQrhs,ng),          &
+     &       'Aout(idQrhs)',                                            &
+     &       'Write out RHS heat flux over ice/snow.'
           IF (Aout(idS0mk,ng)) WRITE (out,70) Aout(idS0mk,ng),          &
      &       'Aout(idS0mk)',                                            &
      &       'Write out salinity of molecular sublayer under ice.'
