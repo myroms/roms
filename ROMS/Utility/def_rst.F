@@ -328,6 +328,12 @@
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #endif
 
+#ifdef MULTI_SCALE_B
+        status=def_dim(ng, model, RST(ng)%ncid, ncname, 'Nscale',       &
+     &                 Nscale(ng), DimIDs(36))
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+#endif
+
 #ifdef PERFECT_RESTART
         status=def_dim(ng, model, RST(ng)%ncid, ncname, 'two',          &
      &                 2, DimIDs(30))
@@ -2368,6 +2374,12 @@
 # ifdef FOUR_DVAR
         status=def_dim(ng, model, RST(ng)%pioFile, ncname, 'Nstate',    &
      &                 NstateVar(ng), DimIDs(29))
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+# endif
+
+# ifdef MULTI_SCALE_B
+        status=def_dim(ng, model, RST(ng)%pioFile, ncname, 'Nscale',    &
+     &                 Nscale(ng), DimIDs(36))
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 # endif
 

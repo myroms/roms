@@ -2970,7 +2970,7 @@
             ad_Awrk(i,j,k,Nold)=0.0_r8
           END DO
         END DO
-!      END DO
+      END DO
 # ifdef DISTRIBUTE
 !^    CALL mp_exchange3d (ng, tile, model, 1,                           &
 !^   &                    LBi, UBi, LBj, UBj, LBk, UBk,                 &

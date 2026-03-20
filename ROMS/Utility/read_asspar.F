@@ -41,12 +41,18 @@
       logical :: Lvalue(4)
 
       integer :: Mval, Npts, Nval
-      integer :: i, ib, igrid, itrc, k, ng, status
-      integer :: Cdim, Clen, Rdim
+      integer :: i, ib, igrid, itrc, k, ng, ns, status
+      integer :: Cdim, Clen, Mscale, Rdim
       integer :: obs_lib
       integer :: Ivalue(1)
-
+!
       integer :: Nfiles(Ngrids)
+# ifdef MULTI_SCALE_B
+      integer, allocatable :: Miter(:,:)
+#  ifdef SOLVE3D
+      integer, allocatable :: MiterT(:,:,:)
+#  endif
+# endif
 # if defined FOUR_DVAR  || defined VERIFICATION || \
     (defined HESSIAN_SV && defined BNORM)
       logical, dimension(MT) :: Ltracer
@@ -65,7 +71,15 @@
 # endif
       real(dp), dimension(nRval) :: Rval
       real(r8) :: Rvalue(1)
-
+# ifdef MULTI_SCALE_B
+      real(r8), allocatable :: Bscale(:,:)
+      real(r8), allocatable :: BscaleB(:,:,:)
+#  ifdef SOLVE3D
+      real(r8), allocatable :: BscaleBT(:,:,:,:)
+      real(r8), allocatable :: BscaleT(:,:,:)
+#  endif
+# endif
+!
       character (len=1 ), parameter :: blank = ' '
 # ifdef ADJUST_BOUNDARY
       character (len=7) :: Text
@@ -379,13 +393,331 @@
             CASE ('Vgamma')
               Npts=load_r(Nval, Rval, 4, Vgamma)
 #  endif
+#  ifdef MULTI_SCALE_B
+            CASE ('Nscale')
+              Npts=load_i(Nval, Rval, Ngrids, Nscale)
+              Mscale=MAXVAL(Nscale)
+!                                                  local arrays
+              IF (.not.allocated(Miter)) THEN
+                allocate ( Miter(Mscale,Ngrids) )
+                Miter=0
+              END IF
+              IF (.not.allocated(MiterT)) THEN
+                allocate ( MiterT(MT,Mscale,Ngrids) )
+                MiterT=0
+              END IF
+              IF (.not.allocated(Bscale)) THEN
+                allocate ( Bscale(Mscale,Ngrids) )
+                Bscale=0.0_r8
+              END IF
+              IF (.not.allocated(BscaleT)) THEN
+                allocate ( BscaleT(MT,Mscale,Ngrids) )
+                BscaleT=0.0_r8
+              END IF
+              IF (.not.allocated(BscaleB)) THEN
+                allocate ( BscaleB(Mscale,4,Ngrids) )
+                BscaleB=0.0_r8
+              END IF
+              IF (.not.allocated(BscaleBT)) THEN
+                allocate ( BscaleBT(Mscale,4,MT,Ngrids) )
+                BscaleBT=0.0_r8
+              END IF
+!                                                  global arrays
+              IF (.not.allocated(Mlap)) THEN
+                allocate ( Mlap(MstateVar,Mscale,Ngrids) )
+                Mlap=0
+              END IF
+              IF (.not.allocated(Bwgt)) THEN
+                allocate ( Bwgt(MstateVar,Mscale,Ngrids) )
+                Bwgt=0.0_r8
+              END IF
+              IF (.not.allocated(NiterCG)) THEN
+                allocate ( NiterCG(Mscale,Ngrids) )
+                NiterCG=0
+              END IF
+              IF (.not.allocated(NiterCI)) THEN
+                allocate ( NiterCI(Mscale,Ngrids) )
+                NiterCI=0
+              END IF
+              IF (.not.allocated(HdecayX)) THEN
+                allocate ( HdecayX(2,MstateVar,Mscale,Ngrids) )
+                HdecayX=0.0_r8
+              END IF
+              IF (.not.allocated(HdecayY)) THEN
+                allocate ( HdecayY(2,MstateVar,Mscale,Ngrids) )
+                HdecayY=0.0_r8
+              END IF
+              IF (.not.allocated(HdecayB)) THEN
+                allocate ( HdecayB(MstateVar,Mscale,4,Ngrids) )
+                HdecayB=0.0_r8
+              END IF
+            CASE ('Mlap(isFsur)')
+              Npts=load_i(Nval, Rval, Mscale, Ngrids, Miter)
+              DO ng=1,Ngrids
+                DO ns=1,Nscale(ng)
+                  Mlap(isFsur,ns,ng)=Miter(ns,ng)
+                END DO
+              END DO
+            CASE ('Mlap(isUbar)')
+              Npts=load_i(Nval, Rval, Mscale, Ngrids, Miter)
+              DO ng=1,Ngrids
+                DO ns=1,Nscale(ng)
+                  Mlap(isUbar,ns,ng)=Miter(ns,ng)
+                END DO
+              END DO
+            CASE ('Mlap(isVbar)')
+              Npts=load_i(Nval, Rval, Mscale, Ngrids, Miter)
+              DO ng=1,Ngrids
+                DO ns=1,Nscale(ng)
+                  Mlap(isVbar,ns,ng)=Miter(ns,ng)
+                END DO
+              END DO
+#   ifdef SOLVE3D
+            CASE ('Mlap(isUvel)')
+              Npts=load_i(Nval, Rval, Mscale, Ngrids, Miter)
+              DO ng=1,Ngrids
+                DO i=ns,Nscale(ng)
+                  Mlap(isUvel,ns,ng)=Miter(ns,ng)
+                END DO
+              END DO
+            CASE ('Mlap(isVvel)')
+              Npts=load_i(Nval, Rval, Mscale, Ngrids, Miter)
+              DO ng=1,Ngrids
+                DO ns=1,Nscale(ng)
+                  Mlap(isVvel,ns,ng)=Miter(ns,ng)
+                END DO
+              END DO
+            CASE ('Mlap(isTvar)')
+              Npts=load_i(Nval, Rval, MT, Mscale, Ngrids, MiterT)
+              DO ng=1,Ngrids
+                DO ns=1,Nscale(ng)
+                  DO itrc=1,NT(ng)
+                    i=isTvar(itrc)
+                    Mlap(i,ns,ng)=MiterT(itrc,ns,ng)
+                  END DO
+                END DO
+              END DO
+#   endif
+#   ifdef ADJUST_WSTRESS
+            CASE ('Mlap(isUstr)')
+              Npts=load_i(Nval, Rval, Mscale, Ngrids, Miter)
+              DO ng=1,Ngrids
+                DO ns=1,Nscale(ng)
+                  Mlap(isUstr,ns,ng)=Miter(ns,ng)
+                END DO
+              END DO
+            CASE ('Mlap(isVstr)')
+              Npts=load_i(Nval, Rval, Mscale, Ngrids, Miter)
+              DO ng=1,Ngrids
+                DO ns=1,Nscale(ng)
+                  Mlap(isVstr,ns,ng)=Miter(ns,ng)
+                END DO
+              END DO
+#   endif
+#   if defined ADJUST_STFLUX && defined SOLVE3D
+            CASE ('Mlap(isTsur)')
+              Npts=load_i(Nval, Rval, MT, Mscale, Ngrids, MiterT)
+              DO ng=1,Ngrids
+                DO ns=1,Nscale(ng)
+                  DO itrc=1,NT(ng)
+                    i=isTsur(itrc)
+                    Mlap(i,ns,ng)=MiterT(itrc,ns,ng)
+                  END DO
+                END DO
+              END DO
+#   endif
+            CASE ('Bwgt(isFsur)')
+              Npts=load_r(Nval, Rval, Mscale, Ngrids, Bscale)
+              DO ng=1,Ngrids
+                DO i=ns,Nscale(ng)
+                  Bwgt(isFsur,ns,ng)=Bscale(ns,ng)
+                END DO
+              END DO
+            CASE ('Bwgt(isUbar)')
+              Npts=load_r(Nval, Rval, Mscale, Ngrids, Bscale)
+              DO ng=1,Ngrids
+                DO ns=1,Nscale(ng)
+                  Bwgt(isUbar,ns,ng)=Bscale(ns,ng)
+                END DO
+              END DO
+            CASE ('Bwgt(isVbar)')
+              Npts=load_r(Nval, Rval, Mscale, Ngrids, Bscale)
+              DO ng=1,Ngrids
+                DO ns=1,Nscale(ng)
+                  Bwgt(isVbar,ns,ng)=Bscale(ns,ng)
+                END DO
+              END DO
+#   ifdef SOLVE3D
+            CASE ('Bwgt(isUvel)')
+              Npts=load_r(Nval, Rval, Mscale, Ngrids, Bscale)
+              DO ng=1,Ngrids
+                DO ns=1,Nscale(ng)
+                  Bwgt(isUvel,ns,ng)=Bscale(ns,ng)
+                END DO
+              END DO
+            CASE ('Bwgt(isVvel)')
+              Npts=load_r(Nval, Rval, Mscale, Ngrids, Bscale)
+              DO ng=1,Ngrids
+                DO ns=1,Nscale(ng)
+                  Bwgt(isVvel,ns,ng)=Bscale(ns,ng)
+                END DO
+              END DO
+            CASE ('Bwgt(isTvar)')
+              Npts=load_r(Nval, Rval, MT, Mscale, Ngrids, BscaleT)
+              DO ng=1,Ngrids
+                DO ns=1,Nscale(ng)
+                  DO itrc=1,NT(ng)
+                    i=isTvar(itrc)
+                    Bwgt(i,ns,ng)=BscaleT(itrc,ns,ng)
+                  END DO
+                END DO
+              END DO
+#   endif
+#   ifdef ADJUST_WSTRESS
+            CASE ('Bwgt(isUstr)')
+              Npts=load_r(Nval, Rval, Mscale, Ngrids, Bscale)
+              DO ng=1,Ngrids
+                DO ns=1,Nscale(ng)
+                  Bwgt(isUstr,ns,ng)=Bscale(ns,ng)
+                END DO
+              END DO
+            CASE ('Bwgt(isVstr)')
+              Npts=load_r(Nval, Rval, Mscale, Ngrids, Bscale)
+              DO ng=1,Ngrids
+                DO ns=1,Nscale(ng)
+                  Bwgt(isVstr,ns,ng)=Bscale(ns,ng)
+                END DO
+              END DO
+#   endif
+#   if defined ADJUST_STFLUX && defined SOLVE3D
+            CASE ('Bwgt(isTsur)')
+              Npts=load_r(Nval, Rval, MT, Mscale, Ngrids, BscaleT)
+              DO ng=1,Ngrids
+                DO ns=1,Nscale(ng)
+                  DO itrc=1,NT(ng)
+                    i=isTsur(itrc)
+                    Bwgt(i,ns,ng)=BscaleT(itrc,ns,ng)
+                  END DO
+                END DO
+              END DO
+#   endif
+            CASE ('NiterCG')
+              Npts=load_i(Nval, Rval, Mscale, Ngrids, Miter)
+              DO ng=1,Ngrids
+                DO ns=1,Nscale(ng)
+                  NiterCG(ns,ng)=Miter(ns,ng)
+                END DO
+              END DO
+            CASE ('NiterCI')
+              Npts=load_i(Nval, Rval, Mscale, Ngrids, Miter)
+              DO ng=1,Ngrids
+                DO ns=1,Nscale(ng)
+                  NiterCI(ns,ng)=Miter(ns,ng)
+                END DO
+              END DO
+#  endif
+#  ifdef MULTI_SCALE_B
+            CASE ('HdecayMX(isFsur)')
+              Npts=load_r(Nval, Rval, Mscale, Ngrids, Bscale)
+              DO ng=1,Ngrids
+                DO ns=1,Nscale(ng)
+                  HdecayX(2,isFsur,ns,ng)=Bscale(ns,ng)
+                END DO
+              END DO
+            CASE ('HdecayMY(isFsur)')
+              Npts=load_r(Nval, Rval, Mscale, Ngrids, Bscale)
+              DO ng=1,Ngrids
+                DO ns=1,Nscale(ng)
+                  HdecayY(2,isFsur,ns,ng)=Bscale(ns,ng)
+                END DO
+              END DO
+            CASE ('HdecayMX(isUbar)')
+              Npts=load_r(Nval, Rval, Mscale, Ngrids, Bscale)
+              DO ng=1,Ngrids
+                DO ns=1,Nscale(ng)
+                  HdecayX(2,isUbar,ns,ng)=Bscale(ns,ng)
+                END DO
+              END DO
+            CASE ('HdecayMY(isUbar)')
+              Npts=load_r(Nval, Rval, Mscale, Ngrids, Bscale)
+              DO ng=1,Ngrids
+                DO ns=1,Nscale(ng)
+                  HdecayY(2,isUbar,ns,ng)=Bscale(ns,ng)
+                END DO
+              END DO
+            CASE ('HdecayMX(isVbar)')
+              Npts=load_r(Nval, Rval, Mscale, Ngrids, Bscale)
+              DO ng=1,Ngrids
+                DO ns=1,Nscale(ng)
+                  HdecayX(2,isVbar,ns,ng)=Bscale(ns,ng)
+                END DO
+              END DO
+            CASE ('HdecayMY(isVbar)')
+              Npts=load_r(Nval, Rval, Mscale, Ngrids, Bscale)
+              DO ng=1,Ngrids
+                DO ns=1,Nscale(ng)
+                  HdecayY(2,isVbar,ns,ng)=Bscale(ns,ng)
+                END DO
+              END DO
+#  else
             CASE ('HdecayM(isFsur)')
               Npts=load_r(Nval, Rval, Ngrids, Hdecay(2,isFsur,:))
             CASE ('HdecayM(isUbar)')
               Npts=load_r(Nval, Rval, Ngrids, Hdecay(2,isUbar,:))
             CASE ('HdecayM(isVbar)')
               Npts=load_r(Nval, Rval, Ngrids, Hdecay(2,isVbar,:))
+#  endif
 #  ifdef SOLVE3D
+#   ifdef MULTI_SCALE_B
+            CASE ('HdecayMX(isUvel)')
+              Npts=load_r(Nval, Rval, Mscale, Ngrids, Bscale)
+              DO ng=1,Ngrids
+                DO ns=1,Nscale(ng)
+                  HdecayX(2,isUvel,ns,ng)=Bscale(ns,ng)
+                END DO
+              END DO
+            CASE ('HdecayMY(isUvel)')
+              Npts=load_r(Nval, Rval, Mscale, Ngrids, Bscale)
+              DO ng=1,Ngrids
+                DO ns=1,Nscale(ng)
+                  HdecayY(2,isUvel,ns,ng)=Bscale(ns,ng)
+                END DO
+              END DO
+            CASE ('HdecayMX(isVvel)')
+              Npts=load_r(Nval, Rval, Mscale, Ngrids, Bscale)
+              DO ng=1,Ngrids
+                DO ns=1,Nscale(ng)
+                  HdecayX(2,isVvel,ns,ng)=Bscale(ns,ng)
+                END DO
+              END DO
+            CASE ('HdecayMY(isVvel)')
+              Npts=load_r(Nval, Rval, Mscale, Ngrids, Bscale)
+              DO ng=1,Ngrids
+                DO ns=1,Nscale(ng)
+                  HdecayY(2,isVvel,ns,ng)=Bscale(ns,ng)
+                END DO
+              END DO
+            CASE ('HdecayMX(isTvar)')
+              Npts=load_r(Nval, Rval, MT, Mscale, Ngrids, BscaleT)
+              DO ng=1,Ngrids
+                DO ns=1,Nscale(ng)
+                  DO itrc=1,NT(ng)
+                    i=isTvar(itrc)
+                    HdecayX(2,i,ns,ng)=BscaleT(itrc,ns,ng)
+                  END DO
+                END DO
+              END DO
+            CASE ('HdecayMY(isTvar)')
+              Npts=load_r(Nval, Rval, MT, Mscale, Ngrids, BscaleT)
+              DO ng=1,Ngrids
+                DO ns=1,Nscale(ng)
+                  DO itrc=1,NT(ng)
+                    i=isTvar(itrc)
+                    HdecayY(2,i,ns,ng)=BscaleT(itrc,ns,ng)
+                  END DO
+                END DO
+              END DO
+#   else
             CASE ('HdecayM(isUvel)')
               Npts=load_r(Nval, Rval, Ngrids, Hdecay(2,isUvel,:))
             CASE ('HdecayM(isVvel)')
@@ -397,6 +729,7 @@
                   Hdecay(2,isTvar(itrc),ng)=Rtracer(itrc,ng)
                 END DO
               END DO
+#   endif
             CASE ('VdecayM(isUvel)')
               Npts=load_r(Nval, Rval, Ngrids, Vdecay(2,isUvel,:))
             CASE ('VdecayM(isVvel)')
@@ -428,13 +761,108 @@
                 END DO
               END DO
 #  endif
+#  ifdef MULTI_SCALE_B
+            CASE ('HdecayIX(isFsur)')
+              Npts=load_r(Nval, Rval, Mscale, Ngrids, Bscale)
+              DO ng=1,Ngrids
+                DO ns=1,Nscale(ng)
+                  HdecayX(1,isFsur,ns,ng)=Bscale(ns,ng)
+                END DO
+              END DO
+            CASE ('HdecayIY(isFsur)')
+              Npts=load_r(Nval, Rval, Mscale, Ngrids, Bscale)
+              DO ng=1,Ngrids
+                DO ns=1,Nscale(ng)
+                  HdecayY(1,isFsur,ns,ng)=Bscale(ns,ng)
+                END DO
+              END DO
+            CASE ('HdecayIX(isUbar)')
+              Npts=load_r(Nval, Rval, Mscale, Ngrids, Bscale)
+              DO ng=1,Ngrids
+                DO ns=1,Nscale(ng)
+                  HdecayX(1,isUbar,ns,ng)=Bscale(ns,ng)
+                END DO
+              END DO
+            CASE ('HdecayIY(isUbar)')
+              Npts=load_r(Nval, Rval, Mscale, Ngrids, Bscale)
+              DO ng=1,Ngrids
+                DO ns=1,Nscale(ng)
+                  HdecayY(1,isUbar,ns,ng)=Bscale(ns,ng)
+                END DO
+              END DO
+            CASE ('HdecayIX(isVbar)')
+              Npts=load_r(Nval, Rval, Mscale, Ngrids, Bscale)
+              DO ng=1,Ngrids
+                DO ns=1,Nscale(ng)
+                  HdecayX(1,isVbar,ns,ng)=Bscale(ns,ng)
+                END DO
+              END DO
+            CASE ('HdecayIY(isVbar)')
+              Npts=load_r(Nval, Rval, Mscale, Ngrids, Bscale)
+              DO ng=1,Ngrids
+                DO ns=1,Nscale(ng)
+                  HdecayY(1,isVbar,ns,ng)=Bscale(ns,ng)
+                END DO
+              END DO
+#  else
             CASE ('HdecayI(isFsur)')
               Npts=load_r(Nval, Rval, Ngrids, Hdecay(1,isFsur,:))
             CASE ('HdecayI(isUbar)')
               Npts=load_r(Nval, Rval, Ngrids, Hdecay(1,isUbar,:))
             CASE ('HdecayI(isVbar)')
               Npts=load_r(Nval, Rval, Ngrids, Hdecay(1,isVbar,:))
+#  endif
 #  ifdef SOLVE3D
+#   ifdef MULTI_SCALE_B
+            CASE ('HdecayIX(isUvel)')
+              Npts=load_r(Nval, Rval, Mscale, Ngrids, Bscale)
+              DO ng=1,Ngrids
+                DO ns=1,Nscale(ng)
+                  HdecayX(1,isUvel,ns,ng)=Bscale(ns,ng)
+                END DO
+              END DO
+            CASE ('HdecayIY(isUvel)')
+              Npts=load_r(Nval, Rval, Mscale, Ngrids, Bscale)
+              DO ng=1,Ngrids
+                DO ns=1,Nscale(ng)
+                  HdecayY(1,isUvel,ns,ng)=Bscale(ns,ng)
+                END DO
+              END DO
+            CASE ('HdecayIX(isVvel)')
+              Npts=load_r(Nval, Rval, Mscale, Ngrids, Bscale)
+              DO ng=1,Ngrids
+                DO ns=1,Nscale(ng)
+                  HdecayX(1,isVvel,ns,ng)=Bscale(ns,ng)
+                END DO
+              END DO
+            CASE ('HdecayIY(isVvel)')
+              Npts=load_r(Nval, Rval, Mscale, Ngrids, Bscale)
+              DO ng=1,Ngrids
+                DO ns=1,Nscale(ng)
+                  HdecayY(1,isVvel,i,ng)=Bscale(ns,ng)
+                END DO
+              END DO
+            CASE ('HdecayIX(isTvar)')
+              Npts=load_r(Nval, Rval, MT, Mscale, Ngrids, BscaleT)
+              DO ng=1,Ngrids
+                DO ns=1,Nscale(ng)
+                  DO itrc=1,NT(ng)
+                    i=isTvar(itrc)
+                    HdecayX(1,i,ns,ng)=BscaleT(itrc,ns,ng)
+                  END DO
+                END DO
+              END DO
+            CASE ('HdecayIY(isTvar)')
+              Npts=load_r(Nval, Rval, MT, Mscale, Ngrids, BscaleT)
+              DO ng=1,Ngrids
+                DO ns=1,Nscale(ng)
+                  DO itrc=1,NT(ng)
+                    i=isTvar(itrc)
+                    HdecayY(1,i,ns,ng)=BscaleT(itrc,ns,ng)
+                  END DO
+                END DO
+              END DO
+#   else
             CASE ('HdecayI(isUvel)')
               Npts=load_r(Nval, Rval, Ngrids, Hdecay(1,isUvel,:))
             CASE ('HdecayI(isVvel)')
@@ -446,6 +874,7 @@
                   Hdecay(1,isTvar(itrc),ng)=Rtracer(itrc,ng)
                 END DO
               END DO
+#   endif
             CASE ('VdecayI(isUvel)')
               Npts=load_r(Nval, Rval, Ngrids, Vdecay(1,isUvel,:))
             CASE ('VdecayI(isVvel)')
@@ -459,13 +888,75 @@
               END DO
 #  endif
 #  ifdef ADJUST_BOUNDARY
+#   ifdef MULTI_SCALE_B
+            CASE ('HdecayB(isFsur)')
+              Npts=load_r(Nval, Rval, Mscale, 4, Ngrids, BscaleB)
+              DO ng=1,Ngrids
+                DO ib=1,4
+                  DO ns=1,Nscale(ng)
+                    HdecayB(isFsur,ns,ib,ng)=BscaleB(ns,ib,ng)
+                  END DO
+                END DO
+              END DO
+            CASE ('HdecayB(isUbar)')
+              Npts=load_r(Nval, Rval, Mscale, 4, Ngrids, BscaleB)
+              DO ng=1,Ngrids
+                DO ib=1,4
+                  DO ns=1,Nscale(ng)
+                    HdecayB(isUbar,ns,ib,ng)=BscaleB(ns,ib,ng)
+                  END DO
+                END DO
+              END DO
+            CASE ('HdecayB(isVbar)')
+              Npts=load_r(Nval, Rval, Mscale, 4, Ngrids, BscaleB)
+              DO ng=1,Ngrids
+                DO ib=1,4
+                  DO ns=1,Nscale(ng)
+                    HdecayB(isVbar,ns,ib,ng)=BscaleB(ns,ib,ng)
+                  END DO
+                END DO
+              END DO
+#   else
             CASE ('HdecayB(isFsur)')
               Npts=load_r(Nval, Rval, 4, Ngrids, HdecayB(isFsur,:,:))
             CASE ('HdecayB(isUbar)')
               Npts=load_r(Nval, Rval, 4, Ngrids, HdecayB(isUbar,:,:))
             CASE ('HdecayB(isVbar)')
               Npts=load_r(Nval, Rval, 4, Ngrids, HdecayB(isVbar,:,:))
+#   endif
 #   ifdef SOLVE3D
+#    ifdef MULTI_SCALE_B
+            CASE ('HdecayB(isUvel)')
+              Npts=load_r(Nval, Rval, Mscale, 4, Ngrids, BscaleB)
+              DO ng=1,Ngrids
+                DO ib=1,4
+                  DO ns=1,Nscale(ng)
+                    HdecayB(isUvel,ns,ib,ng)=BscaleB(ns,ib,ng)
+                  END DO
+                END DO
+              END DO
+            CASE ('HdecayB(isVvel)')
+              Npts=load_r(Nval, Rval, Mscale, 4, Ngrids, BscaleB)
+              DO ng=1,Ngrids
+                DO ib=1,4
+                  DO ns=1,Nscale(ng)
+                    HdecayB(isVvel,ns,ib,ng)=BscaleB(ns,ib,ng)
+                  END DO
+                END DO
+              END DO
+            CASE ('HdecayB(isTvar)')
+              Npts=load_r(Nval, Rval, Mscale, 4, MT, Ngrids, BscaleBT)
+              DO ng=1,Ngrids
+                DO itrc=1,NT(ng)
+                  DO ib=1,4
+                    DO ns=1,Nscale(ng)
+                      i=isTvar(itrc)
+                      HdecayB(i,ns,ib,ng)=BscaleBT(ns,ib,itrc,ng)
+                    END DO
+                  END DO
+                END DO
+              END DO
+#    else
             CASE ('HdecayB(isUvel)')
               Npts=load_r(Nval, Rval, 4, Ngrids, HdecayB(isUvel,:,:))
             CASE ('HdecayB(isVvel)')
@@ -479,6 +970,7 @@
                   END DO
                 END DO
               END DO
+#    endif
             CASE ('VdecayB(isUvel)')
               Npts=load_r(Nval, Rval, 4, Ngrids, VdecayB(isUvel,:,:))
             CASE ('VdecayB(isVvel)')
@@ -495,12 +987,65 @@
 #   endif
 #  endif
 #  ifdef ADJUST_WSTRESS
+#   ifdef MULTI_SCALE_B
+            CASE ('HdecayFX(isUstr)')
+              Npts=load_r(Nval, Rval, Mscale, Ngrids, Bscale)
+              DO ng=1,Ngrids
+                DO ns=1,Nscale(ng)
+                  HdecayX(1,isUstr,ns,ng)=Bscale(ns,ng)
+                END DO
+              END DO
+            CASE ('HdecayFY(isUstr)')
+              Npts=load_r(Nval, Rval, Mscale, Ngrids, Bscale)
+              DO ng=1,Ngrids
+                DO ns=1,Nscale(ng)
+                  HdecayY(1,isUstr,ns,ng)=Bscale(ns,ng)
+                END DO
+              END DO
+            CASE ('HdecayFX(isVstr)')
+              Npts=load_r(Nval, Rval, Mscale, Ngrids, Bscale)
+              DO ng=1,Ngrids
+                DO ns=1,Nscale(ng)
+                  HdecayX(1,isVstr,ns,ng)=Bscale(ns,ng)
+                END DO
+              END DO
+            CASE ('HdecayFY(isVstr)')
+              Npts=load_r(Nval, Rval, Mscale, Ngrids, Bscale)
+              DO ng=1,Ngrids
+                DO ns=1,Nscale(ng)
+                  HdecayY(1,isVstr,ns,ng)=Bscale(ns,ng)
+                END DO
+              END DO
+#   else
             CASE ('HdecayF(isUstr)')
               Npts=load_r(Nval, Rval, Ngrids, Hdecay(1,isUstr,:))
             CASE ('HdecayF(isVstr)')
               Npts=load_r(Nval, Rval, Ngrids, Hdecay(1,isVstr,:))
+#   endif
 #  endif
 #  if defined ADJUST_STFLUX && defined SOLVE3D
+#   ifdef MULTI_SCALE_B
+            CASE ('HdecayFX(isTsur)')
+              Npts=load_r(Nval, Rval, MT, Mscale, Ngrids, BscaleT)
+              DO ng=1,Ngrids
+                DO ns=1,Nscale(ng)
+                  DO itrc=1,NT(ng)
+                    i=isTsur(itrc)
+                    HdecayX(1,i,ns,ng)=BscaleT(itrc,ns,ng)
+                  END DO
+                END DO
+              END DO
+            CASE ('HdecayFY(isTsur)')
+              Npts=load_r(Nval, Rval, MT, Mscale, Ngrids, BscaleT)
+              DO ng=1,Ngrids
+                DO ns=1,Nscale(ng)
+                  DO itrc=1,NT(ng)
+                    i=isTsur(itrc)
+                    HdecayY(1,i,ns,ng)=BscaleT(itrc,ns,ng)
+                  END DO
+                END DO
+              END DO
+#   else
             CASE ('HdecayF(isTsur)')
               Npts=load_r(Nval, Rval, MT, Ngrids, Rtracer)
               DO ng=1,Ngrids
@@ -508,6 +1053,7 @@
                   Hdecay(1,isTsur(itrc),ng)=Rtracer(itrc,ng)
                 END DO
               END DO
+#   endif
 #  endif
 
 #  ifdef STD_MODEL
@@ -656,6 +1202,12 @@
                 END DO
               END DO
 #   endif
+#  endif
+#  if defined MULTI_SCALE_B && defined READ_SCALES
+            CASE ('MSBname')
+              label='MSB - Background decorrelation length scales'
+              Npts=load_s1d(Nval, Cval, Cdim, line, label, igrid,       &
+     &                      Ngrids, Nfiles, out_lib, MSB)
 #  endif
             CASE ('STDnameI')
               label='STD - initial conditions standard deviation'
@@ -1113,6 +1665,78 @@
 #    if defined RBL4DVAR           || defined R4DVAR    || \
         defined SENSITIVITY_4DVAR  || defined SP4DVAR   || \
         defined TL_RBL4DVAR        || defined TL_R4DVAR
+#     ifdef MULTI_SCALE_B
+          WRITE (out,80) Nscale(ng), 'Number of multiscales for B.'
+          DO ns=1,Nscale(ng)
+            WRITE (out,90) Mlap(isFsur,ns,ng), 'Mlap(isFsur)',          &
+     &            'Scale ', ns, ', smoother applications: '//           &
+     &            'free-surface.'
+            WRITE (out,90) Mlap(isUbar,ns,ng), 'Mlap(isUbar)',          &
+     &            'Scale ', ns, ', smoother applications: '//           &
+     &            '2D U-momentum.'
+            WRITE (out,90) Mlap(isVbar,ns,ng), 'Mlap(isVbar)',          &
+     &            'Scale ', ns, ', smoother applications: '//           &
+     &            '2D V-momentum.'
+#      ifdef SOLVE3D
+            WRITE (out,90) Mlap(isUvel,ns,ng), 'Mlap(isUvel)',          &
+     &            'Scale ', ns, ', smoother applications: '//           &
+     &            '3D U-momentum.'
+            WRITE (out,90) Mlap(isVvel,ns,ng), 'Mlap(isVvel)',          &
+     &            'Scale ', ns, ', smoother applications: '//           &
+     &            '3D V-momentum.'
+            DO itrc=1,NT(ng)
+              WRITE (out,90) Mlap(isTvar(itrc),ns,ng), 'Mlap(idTvar)',  &
+     &            'Scale ', ns, ', smoother applications: '//           &
+     &            TRIM(Vname(1,idTvar(itrc)))
+            END DO
+#      endif
+#      ifdef ADJUST_WSTRESS
+            WRITE (out,90) Mlap(isUstr,ns,ng), 'Mlap(isUstr)',          &
+     &            'Scale ', ns, ', smoother applications: '//           &
+     &            'Surface U-stress.'
+            WRITE (out,90) Mlap(isVstr,ns,ng), 'Mlap(isVstr)',          &
+     &            'Scale ', ns, ', smoother applications: '//           &
+     &            'Surface V-stress.'
+#      endif
+#      if defined ADJUST_STFLUX && defined SOLVE3D
+            DO itrc=1,NT(ng)
+              WRITE (out,90) Mlap(isTsur(itrc),ns,ng), 'Mlap(idTvar)',  &
+     &            'Scale ', ns, ', smoother applications: '//           &
+     &            'Surface flux, '//TRIM(Vname(1,idTvar(itrc)))//'.'
+            END DO
+#      endif
+            WRITE (out,120) Bwgt(isFsur,ns,ng), 'Bwgt(isFsur)',         &
+     &            'Multiscale B-weight, free-surface.'
+            WRITE (out,120) Bwgt(isUbar,ns,ng), 'Bwgt(isUbar)',         &
+     &            'Multiscale B-weight, 2D U-momentum.'
+            WRITE (out,120) Bwgt(isVbar,ns,ng), 'Bwgt(isVbar)',         &
+     &            'Multiscale B-weight, 2D V-momentum.'
+#      ifdef SOLVE3D
+            WRITE (out,120) Bwgt(isUvel,ns,ng), 'Bwgt(isUvel)',         &
+     &            'Multiscale B-weight, 3D U-momentum.'
+            WRITE (out,120) Bwgt(isVvel,ns,ng), 'Bwgt(isVvel)',         &
+     &            'Multiscale B-weight, 3D V-momentum.'
+            DO itrc=1,NT(ng)
+              WRITE (out,120) Bwgt(isTvar(itrc),ns,ng), 'Bwgt(idTvar)', &
+     &            'Multiscale B-weight, '//                             &
+     &            TRIM(Vname(1,idTvar(itrc)))//'.'
+            END DO
+#      endif
+#      ifdef ADJUST_WSTRESS
+            WRITE (out,120) Bwgt(isUstr,ns,ng), 'Bwgt(isUstr)',         &
+     &            'Multiscale B-weight, surface U-stress.'
+            WRITE (out,120) Bwgt(isVstr,ns,ng), 'Bwgt(isVstr)',         &
+     &            'Multiscale B-weight, surface V-stress.'
+#      endif
+#      if defined ADJUST_STFLUX && defined SOLVE3D
+            DO itrc=1,NT(ng)
+              WRITE (out,120) Bwgt(isTsur(itrc),ns,ng), 'Bwgt(idTvar)', &
+     &            'Multiscale B-weight, surface flux: '//               &
+     &            TRIM(Vname(1,idTvar(itrc)))//'.'
+            END DO
+#      endif
+          END DO
+#     endif
           IF (nADJ(ng).lt.ntimes(ng)) THEN
             WRITE (out,120) Hdecay(2,isFsur,ng), 'HdecayM(isFsur)',     &
      &            'Model decorrelation H-scale (m), free-surface.'
@@ -1659,7 +2283,7 @@
   70  FORMAT (10x,l1,2x,a,t32,a)
   80  FORMAT (1x,i10,2x,a,t32,a)
   85  FORMAT (1x,i10,2x,a,'(',i2.2,')',t32,a)
-  90  FORMAT (1x,i10,2x,a,t32,a,/,t34,a)
+  90  FORMAT (1x,i10,2x,a,t32,a,i0,a)
   95  FORMAT (1x,a,2x,a,t32,a)
  100  FORMAT (1p,e11.4,2x,a,t32,a)
  110  FORMAT (10x,l1,2x,a,t32,a,i2.2,':',1x,a)

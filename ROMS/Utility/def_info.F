@@ -47,6 +47,7 @@
 !    DimIDs(33) => Number of light spectral bands                      !
 !    DimIDs(34) => Number constant depth slices in 'extract_slice'     !
 !    DimIDs(35) => Number of submerged acuatic vegetation types        !                     
+!    DimIDs(36) => Number of correlation functions to be combined      !
 !                                                                      !
 !=======================================================================
 !
@@ -132,6 +133,9 @@
 
       integer :: biodim(2)
 #endif
+#ifdef MULTI_SCALE_B
+      integer :: scaledim
+#endif
 #if !defined PARALLEL_IO  && defined DISTRIBUTE
       integer :: ibuffer(2)
 #endif
@@ -178,6 +182,9 @@
 #endif
       stadim=DimIDs(13)
       brydim=DimIDs(14)
+#ifdef MULTI_SCALE_B
+      scaledim=DimIDs(36)
+#endif
 #ifdef FOUR_DVAR
       statedim=DimIDs(29)
 #endif
@@ -2449,6 +2456,25 @@
 #  endif
 # endif
 
+# ifdef MULTI_SCALE_B
+      Vinfo( 1)='HdecayX'
+      Vinfo( 2)='initial conditions error covariance '//                &
+     &          'horizontal decorrelation x-scale'
+      Vinfo( 3)='meter'
+      status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
+     &               1, (/statedim, scaledim/), Aval, Vinfo, ncname,    &
+     &               SetParAccess = .FALSE.)
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+
+      Vinfo( 1)='HdecayY'
+      Vinfo( 2)='initial conditions error covariance '//                &
+     &          'horizontal decorrelation y-scale'
+      Vinfo( 3)='meter'
+      status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
+     &               1, (/statedim, scaledim/), Aval, Vinfo, ncname,    &
+     &               SetParAccess = .FALSE.)
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+# else
       Vinfo( 1)='Hdecay'
       Vinfo( 2)='initial conditions error covariance '//                &
      &          'horizontal decorrelation scale'
@@ -2457,6 +2483,7 @@
      &               1, (/statedim/), Aval, Vinfo, ncname,              &
      &               SetParAccess = .FALSE.)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+# endif
 
 # ifdef SOLVE3D
       Vinfo( 1)='Vdecay'
@@ -2470,6 +2497,25 @@
 # endif
 
       IF (NSA.eq.2) THEN
+# ifdef MULTI_SCALE_B
+        Vinfo( 1)='HdecayMX'
+        Vinfo( 2)='model error covariance ' //                          &
+     &            'horizontal decorrelation x-scale'
+        Vinfo( 3)='meter'
+        status=def_var(ng, model, ncid, varid, NF_TYPE,                 &
+     &                 1, (/statedim, scaledim/), Aval, Vinfo, ncname,  &
+     &                 SetParAccess = .FALSE.)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+
+        Vinfo( 1)='HdecayMY'
+        Vinfo( 2)='model error covariance ' //                          &
+     &            'horizontal decorrelation y-scale'
+        Vinfo( 3)='meter'
+        status=def_var(ng, model, ncid, varid, NF_TYPE,                 &
+     &                 1, (/statedim, scaledim/), Aval, Vinfo, ncname,  &
+     &                 SetParAccess = .FALSE.)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+# else
         Vinfo( 1)='HdecayM'
         Vinfo( 2)='model error covariance ' //                          &
      &            'horizontal decorrelation scale'
@@ -2478,6 +2524,7 @@
      &                 1, (/statedim/), Aval, Vinfo, ncname,            &
      &                 SetParAccess = .FALSE.)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+# endif
 
 # ifdef SOLVE3D
         Vinfo( 1)='VdecayM'
@@ -2496,10 +2543,17 @@
       Vinfo( 2)='open boundary conditions error covariance '//          &
      &          'horizontal decorrelation scale'
       Vinfo( 3)='meter'
+#  ifdef MULTI_SCALE_B
+      status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
+     &               2, (/statedim, scaledim, brydim/), Aval,           &
+     &               Vinfo, ncname, SetParAccess = .FALSE.)
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+#  else
       status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
      &               2, (/statedim, brydim/), Aval, Vinfo, ncname,      &
      &               SetParAccess = .FALSE.)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+#  endif
 
 #  ifdef SOLVE3D
       Vinfo( 1)='VdecayB'
@@ -3681,6 +3735,9 @@
 
       integer :: biodim(2)
 # endif
+# ifdef MULTI_SCALE_B
+      integer :: scaledim
+# endif
 # if !defined PARALLEL_IO  && defined DISTRIBUTE
       integer :: ibuffer(2)
 # endif
@@ -3729,6 +3786,9 @@
 # endif
       stadim=DimIDs(13)
       brydim=DimIDs(14)
+# ifdef MULTI_SCALE_B
+      scaledim=DimIDs(36)
+# endif
 # ifdef FOUR_DVAR
       statedim=DimIDs(29)
 # endif
@@ -5992,6 +6052,25 @@
 #   endif
 #  endif
 
+#  ifdef MULTI_SCALE_B
+      Vinfo( 1)='HdecayX'
+      Vinfo( 2)='initial conditions error covariance '//                &
+     &          'horizontal decorrelation x-scale'
+      Vinfo( 3)='meter'
+      status=def_var(ng, model, pioFile, pioVar, PIO_TYPE,              &
+     &               1, (/statedim, scaledim/), Aval, Vinfo, ncname,    &
+     &               SetParAccess = .FALSE.)
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+
+      Vinfo( 1)='HdecayY'
+      Vinfo( 2)='initial conditions error covariance '//                &
+     &          'horizontal decorrelation y-scale'
+      Vinfo( 3)='meter'
+      status=def_var(ng, model, pioFile, pioVar, PIO_TYPE,              &
+     &               1, (/statedim, scaledim/), Aval, Vinfo, ncname,    &
+     &               SetParAccess = .FALSE.)
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+#  else
       Vinfo( 1)='Hdecay'
       Vinfo( 2)='initial conditions error covariance '//                &
      &          'horizontal decorrelation scale'
@@ -6000,6 +6079,7 @@
      &               1, (/statedim/), Aval, Vinfo, ncname,              &
      &               SetParAccess = .FALSE.)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+#  endif
 
 #  ifdef SOLVE3D
       Vinfo( 1)='Vdecay'
@@ -6013,6 +6093,25 @@
 #  endif
 
       IF (NSA.eq.2) THEN
+#  ifdef MULTI_SCALE_B
+        Vinfo( 1)='HdecayMX'
+        Vinfo( 2)='model error covariance ' //                          &
+     &            'horizontal decorrelation x-scale'
+        Vinfo( 3)='meter'
+        status=def_var(ng, model, pioFile, pioVar, PIO_TYPE,            &
+     &                 1, (/statedim, scaledim/), Aval, Vinfo, ncname,  &
+     &                 SetParAccess = .FALSE.)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+
+        Vinfo( 1)='HdecayMY'
+        Vinfo( 2)='model error covariance ' //                          &
+     &            'horizontal decorrelation y-scale'
+        Vinfo( 3)='meter'
+        status=def_var(ng, model, pioFile, pioVar, PIO_TYPE,            &
+     &                 1, (/statedim, scaledim/), Aval, Vinfo, ncname,  &
+     &                 SetParAccess = .FALSE.)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+#  else
         Vinfo( 1)='HdecayM'
         Vinfo( 2)='model error covariance ' //                          &
      &            'horizontal decorrelation scale'
@@ -6021,6 +6120,7 @@
      &                 1, (/statedim/), Aval, Vinfo, ncname,            &
      &                 SetParAccess = .FALSE.)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+#  endif
 
 #  ifdef SOLVE3D
         Vinfo( 1)='VdecayM'
@@ -6040,8 +6140,13 @@
      &          'horizontal decorrelation scale'
       Vinfo( 3)='meter'
       status=def_var(ng, model, pioFile, pioVar, PIO_TYPE,              &
+#   ifdef MULTI_SCALE_B
+     &               2, (/statedim, scaledim, brydim/), Aval,           &
+     &               Vinfo, ncname, SetParAccess = .FALSE.)
+#   else
      &               2, (/statedim, brydim/), Aval, Vinfo, ncname,      &
      &               SetParAccess = .FALSE.)
+#   endif
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
 #   ifdef SOLVE3D

@@ -1028,10 +1028,24 @@
 #  endif
 # endif
 
+# ifdef MULTI_SCALE_B
+      CALL netcdf_put_fvar (ng, model, ncname, 'HdecayX',               &
+     &                      HdecayX(1,:,:,ng),                          &
+     &                      (/1,1/), (/NstateVar(ng),Nscale(ng)/),      &
+     &                      ncid = ncid)
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+
+      CALL netcdf_put_fvar (ng, model, ncname, 'HdecayY',               &
+     &                      HdecayY(1,:,:,ng),                          &
+     &                      (/1,1/), (/NstateVar(ng),Nscale(ng)/),      &
+     &                      ncid = ncid)
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+# else
       CALL netcdf_put_fvar (ng, model, ncname, 'Hdecay',                &
      &                      Hdecay(1,:,ng), (/1/), (/NstateVar(ng)/),   &
      &                      ncid = ncid)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+# endif
 
 # ifdef SOLVE3D
       CALL netcdf_put_fvar (ng, model, ncname, 'Vdecay',                &
@@ -1041,10 +1055,24 @@
 # endif
 
       IF (NSA.eq.2) THEN
+# ifdef MULTI_SCALE_B
+        CALL netcdf_put_fvar (ng, model, ncname, 'HdecayMX',            &
+     &                        HdecayX(2,:,:,ng),                        &
+     &                        (/1,1/), (/NstateVar(ng),Nscale(ng)/),    &
+     &                        ncid = ncid)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+
+        CALL netcdf_put_fvar (ng, model, ncname, 'HdecayMY',            &
+     &                        HdecayY(2,:,:,ng),                        &
+     &                        (/1,1/), (/NstateVar(ng),Nscale(ng)/),    &
+     &                        ncid = ncid)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+# else
         CALL netcdf_put_fvar (ng, model, ncname, 'HdecayM',             &
      &                        Hdecay(2,:,ng), (/1/), (/NstateVar(ng)/), &
      &                        ncid = ncid)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+# endif
 
 # ifdef SOLVE3D
         CALL netcdf_put_fvar (ng, model, ncname, 'VdecayM',             &
@@ -1055,11 +1083,19 @@
       END IF
 
 # ifdef ADJUST_BOUNDARY
+#  ifdef MULTI_SCALE_B
+      CALL netcdf_put_fvar (ng, model, ncname, 'HdecayB',               &
+     &                      HdecayB(:,:,:,ng),                          &
+     &                      (/1,1,1/), (/NstateVar(ng),Nscale(ng),4/),  &
+     &                      ncid = ncid)
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+#  else
       CALL netcdf_put_fvar (ng, model, ncname, 'HdecayB',               &
      &                      HdecayB(:,:,ng),                            &
      &                      (/1,1/), (/NstateVar(ng),4/),               &
      &                      ncid = ncid)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+#  endif
 
 #  ifdef SOLVE3D
       CALL netcdf_put_fvar (ng, model, ncname, 'VdecayB',               &
@@ -4388,11 +4424,24 @@
 #   endif
 #  endif
 
+#  ifdef MULTI_SCALE_B
+      CALL pio_netcdf_put_fvar (ng, model, ncname, 'HdecayX',           &
+     &                          HdecayX(1,:,:,ng),                      &
+     &                          (/1,1/), (/NstateVar(ng),Nscale(ng)/),  &
+     &                          pioFile = pioFile)
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+
+      CALL pio_netcdf_put_fvar (ng, model, ncname, 'HdecayY',           &
+     &                          HdecayY(1,:,:,ng),                      &
+     &                          (/1,1/), (/NstateVar(ng),Nscale(ng)/),  &
+     &                          pioFile = pioFile)
+#  else
       CALL pio_netcdf_put_fvar (ng, model, ncname, 'Hdecay',            &
      &                          Hdecay(1,:,ng),                         &
      &                          (/1/), (/NstateVar(ng)/),               &
      &                          pioFile = pioFile)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+#  endif
 
 #  ifdef SOLVE3D
       CALL pio_netcdf_put_fvar (ng, model, ncname, 'Vdecay',            &
@@ -4403,11 +4452,27 @@
 #  endif
 
       IF (NSA.eq.2) THEN
+#  ifdef MULTI_SCALE_B
+        CALL pio_netcdf_put_fvar (ng, model, ncname, 'HdecayMX',        &
+     &                            HdecayX(2,:,:,ng),                    &
+     &                            (/1,1/),                              &
+     &                            (/NstateVar(ng),Nscale(ng)/),         &
+     &                            pioFile = pioFile)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+
+        CALL pio_netcdf_put_fvar (ng, model, ncname, 'HdecayMY',        &
+     &                            HdecayY(2,:,:,ng),                    &
+     &                            (/1,1/),                              &
+     &                            (/NstateVar(ng),Nscale(ng)/),         &
+     &                            pioFile = pioFile)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+#  else
         CALL pio_netcdf_put_fvar (ng, model, ncname, 'HdecayM',         &
      &                            Hdecay(2,:,ng),                       &
      &                            (/1/), (/NstateVar(ng)/),             &
      &                            pioFile = pioFile)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+#  endif
 
 #  ifdef SOLVE3D
         CALL pio_netcdf_put_fvar (ng, model, ncname, 'VdecayM',         &
@@ -4419,11 +4484,20 @@
       END IF
 
 #  ifdef ADJUST_BOUNDARY
+#   ifdef MULTI_SCALE_B
+      CALL pio_netcdf_put_fvar (ng, model, ncname, 'HdecayB',           &
+     &                          HdecayB(:,:,:,ng),                      &
+     &                          (/1,1,1/),                              &
+     &                          (/NstateVar(ng),Nscale(ng),4/),         &
+     &                          pioFile = pioFile)
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+#   else
       CALL pio_netcdf_put_fvar (ng, model, ncname, 'HdecayB',           &
      &                          HdecayB(:,:,ng),                        &
      &                          (/1,1/), (/NstateVar(ng),4/),           &
      &                          pioFile = pioFile)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+#   endif
 
 #   ifdef SOLVE3D
       CALL pio_netcdf_put_fvar (ng, model, ncname, 'VdecayB',           &

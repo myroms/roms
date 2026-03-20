@@ -253,17 +253,92 @@ balance(isVvel) =  T                      ! 3D momentum (u, v)
          Hgamma =  0.5      0.5      0.5      0.5         ! horizontal operator
          Vgamma =  0.05     0.05     0.05     0.05        ! vertical operator
 
-! Model error covariance: horizontal, isotropic decorrelation scales (m).
+! The number of horizontal length scales to include in the modeling of
+! multiscale background error covariance, B.
+
+         Nscale = 1
+
+! The number of implicit applications (Mlap) of the inverse horizontal
+! diffusion operator for multiscale background error covariance, B. 
+!
+! Mlap MUST be greater than 2 and EVEN. Choose Mlap > or O(10) to
+! approximate a Gaussian correlation functions. [1:Nscale,1:Ngrids].
+
+   Mlap(isFsur) == 20                                      ! free-surface 
+   Mlap(isUbar) == 20                                      ! 2D U-momentum
+   Mlap(isVbar) == 20                                      ! 2D V-momentum
+
+   Mlap(isUvel) == 20                                      ! 3D U-momentum
+   Mlap(isVvel) == 20                                      ! 3D V-momentum
+   Mlap(isTvar) == 20  20                                  ! 1:NT tracers
+
+   Mlap(isTsur) == 20  20                                  ! 1:NT surface tracer flux
+   Mlap(isUstr) == 20                                      ! surface U-momentum stress
+   Mlap(isVstr) == 20                                      ! surface V-momentum stress
+
+! Weights for the multiscale background error covariance matrix:
+!
+!   B = Bwgt(1)*B(1) + Bwgt(2)*B(2) + ... Bwgt(Nscale)*B(Nscale)
+!
+! where B(1), B(2), etc are the B matrices corresponding to each chosen
+! Daley length scale, and the weights must add to unity. [1:Nscale,1:Ngrids].
+
+   Bwgt(isFsur) == 1.0d0                                   ! free-surface
+   Bwgt(isUbar) == 1.0d0                                   ! 2D U-momentum
+   Bwgt(isVbar) == 1.0d0                                   ! 2D V-momentum
+
+   Bwgt(isUvel) == 1.0d0                                   ! 3D U-momentum
+   Bwgt(isVvel) == 1.0d0                                   ! 3D V-momentum
+   Bwgt(isTvar) == 1.0d0   1.0d0                           ! 1:NT tracers
+
+   Bwgt(isTsur) == 1.0d0   1.0d0                           ! 1:NT surface tracers
+   Bwgt(isUstr) == 1.0d0                                   ! surface U-momentum stress
+   Bwgt(isVstr) == 1.0d0                                   ! surface V-momentum stress
+
+! The number of iterations used in the conjugate gradient solver used to
+! estimate the eigenvalues of the implicit horizontal diffusion operator for B.
+! [1:Nscale] are expected.
+
+        NiterCG =  50
+
+! The number of Chebyshev iterations used to invert the implicit horizontal
+! diffusion operator for B. It MUST be an even value. [1:Nscale] are expected.
+
+        NiterCI =  50
+
+! Model error covariance: horizontal, isotropic (HdecayM) and
+! anisotropic (HdecayMX, HdecayMY) decorrelation length scales (m).
 ! This scales are only used in weak-constraint data assimilation.
 
-HdecayM(isFsur) ==  50.0d+3                               ! free-surface
-HdecayM(isUbar) ==  50.0d+3                               ! 2D U-momentum
-HdecayM(isVbar) ==  50.0d+3                               ! 2D V-momentum
-HdecayM(isUvel) ==  50.0d+3                               ! 3D U-momentum
-HdecayM(isVvel) ==  50.0d+3                               ! 3D V-momentum
-HdecayM(isTvar) ==  50.0d+3   50.0d+3                     ! 1:NT tracers
+HdecayM(isFsur) ==  50.0d+3                                ! free-surface
+HdecayM(isUbar) ==  50.0d+3                                ! 2D U-momentum
+HdecayM(isVbar) ==  50.0d+3                                ! 2D V-momentum
 
-! Model error covariance: vertical, isotropic decorrelation scales (m).
+HdecayM(isUvel) ==  50.0d+3                                ! 3D U-momentum
+HdecayM(isVvel) ==  50.0d+3                                ! 3D V-momentum
+HdecayM(isTvar) ==  50.0d+3   50.0d+3                      ! 1:NT tracers
+
+! [1:Nscale, 1:Ngrids] values are expected.
+
+HdecayMX(isFsur) ==  50.0d+3                               ! free-surface  X-scale
+HdecayMY(isFsur) ==  50.0d+3                               ! free-surface  Y-scale
+
+HdecayMX(isUbar) ==  50.0d+3                               ! 2D U-momentum X-scale
+HdecayMY(isUbar) ==  50.0d+3                               ! 2D U-momentum Y-scale
+
+HdecayMX(isVbar) ==  50.0d+3                               ! 2D V-momentum X-scale
+HdecayMY(isVbar) ==  50.0d+3                               ! 2D V-momentum Y-scale
+
+HdecayMX(isUvel) ==  50.0d+3                               ! 3D U-momentum X-scale
+HdecayMY(isUvel) ==  50.0d+3                               ! 3D U-momentum Y-scale
+
+HdecayMX(isVvel) ==  50.0d+3                               ! 3D V-momentum X-scale
+HdecayMY(isVvel) ==  50.0d+3                               ! 3D V-momentum Y-scale
+
+HdecayMX(isTvar) ==  50.0d+3   50.0d+3                     ! 1:NT tracers  X-scale
+HdecayMY(isTvar) ==  50.0d+3   50.0d+3                     ! 1:NT tracers  Y-scale
+
+! Model error covariance: vertical, isotropic decorrelation length scales (m).
 
 VdecayM(isUvel) == 100.0d0                                ! 3D U-momentum
 VdecayM(isVvel) == 100.0d0                                ! 3D V-momentum
@@ -279,26 +354,49 @@ TdecayM(isUvel) ==  1.0d0                                 ! 3D U-momentum
 TdecayM(isVvel) ==  1.0d0                                 ! 3D V-momentum
 TdecayM(isTvar) ==  1.0d0   1.0d0                         ! 1:NT tracers
 
-! Initial conditions error covariance: horizontal, isotropic decorrelation
-! scales (m).
+! Initial conditions error covariance: horizontal, isotropic (HdecayI) and
+! anisotropic (HdecayIX, HdecayIY) decorrelation length scales (m).
 
-HdecayI(isFsur) == 100.0d+3                               ! free-surface
-HdecayI(isUbar) == 100.0d+3                               ! 2D U-momentum
-HdecayI(isVbar) == 100.0d+3                               ! 2D V-momentum
-HdecayI(isUvel) == 100.0d+3                               ! 3D U-momentum
-HdecayI(isVvel) == 100.0d+3                               ! 3D V-momentum
-HdecayI(isTvar) == 100.0d+3  100.0d+3                     ! 1:NT tracers
+HdecayI(isFsur) ==  50.0d+3                               ! free-surface
+HdecayI(isUbar) ==  50.0d+3                               ! 2D U-momentum
+HdecayI(isVbar) ==  50.0d+3                               ! 2D V-momentum
+
+HdecayI(isUvel) ==  50.0d+3                               ! 3D U-momentum
+HdecayI(isVvel) ==  50.0d+3                               ! 3D V-momentum
+HdecayI(isTvar) ==  50.0d+3  50.0d+3                      ! 1:NT tracers
+
+! [1:Nscale, 1:Ngrids] values are expected.
+
+HdecayIX(isFsur) == 50.0d+3                               ! free-surface  X-scale
+HdecayIY(isFsur) == 50.0d+3                               ! free-surface  Y-scale
+
+HdecayIX(isUbar) == 50.0d+3                               ! 2D U-momentum X-scale
+HdecayIY(isUbar) == 50.0d+3                               ! 2D U-momentum Y-scale
+
+HdecayIX(isVbar) == 50.0d+3                               ! 2D V-momentum X-scale
+HdecayIY(isVbar) == 50.0d+3                               ! 2D V-momentum Y-scale
+
+HdecayIX(isUvel) == 50.0d+3                               ! 3D U-momentum X-scale
+HdecayIY(isUvel) == 50.0d+3                               ! 3D U-momentum Y-scale
+
+HdecayIX(isVvel) == 50.0d+3                               ! 3D V-momentum x-scale
+HdecayIY(isVvel) == 50.0d+3                               ! 3D V-momentum y-scale
+
+HdecayIX(isTvar) == 50.0d+3  50.0d+3                      ! 1:NT tracers  X-scale
+HdecayIY(isTvar) == 50.0d+3  50.0d+3                      ! 1:NT tracers  Y-scale
 
 ! Initial conditions error covariance: vertical, isotropic decorrelation
-! scales (m).
+! length scales (m).
 
 VdecayI(isUvel) == 100.0d0                                ! 3D U-momentum
 VdecayI(isVvel) == 100.0d0                                ! 3D V-momentum
 VdecayI(isTvar) == 100.0d0   100.0d0                      ! 1:NT tracers
 
 ! Boundary conditions error covariance: horizontal, isotropic decorrelation
-! scales (m). A value is expected for each boundary edge in the following
-! order:
+! scales (m). If multiscale B-modeling, enter value for each Nscale since
+! [Nscale,4,Ngrid] must be entered (see Glossary below). Note that a value
+! is expected for each boundary edge in the following order:
+!
 !                  1: west  2: south  3: east  4: north
 
 HdecayB(isFsur) == 100.0d+3 100.0d+3 100.0d+3 100.0d+3    ! free-surface
@@ -317,12 +415,23 @@ VdecayB(isUvel) == 100.0d0  100.0d0  100.0d0  100.0d0     ! 3D U-momentum
 VdecayB(isVvel) == 100.0d0  100.0d0  100.0d0  100.0d0     ! 3D V-momentum
 VdecayB(isTvar) == 4*100.d0  4*100.d0                     ! (4,1:NT) tracers
 
-! Surface forcing error covariance: horizontal, isotropic decorrelation
-! scales (m).
+! Surface forcing error covariance: horizontal, isotropic (HdecayF) and
+! anisotropic (HdecayFX, HdecayFY) decorrelation length scales (m).
 
-HdecayF(isUstr) == 100.0d+3                       ! surface U-momentum stress
-HdecayF(isVstr) == 100.0d+3                       ! surface V-momentum stress
-HdecayF(isTsur) == 100.0d+3  100.0d+3             ! 1:NT surface tracers flux
+HdecayF(isUstr) == 100.0d+3                        ! surface U-momentum stress
+HdecayF(isVstr) == 100.0d+3                        ! surface V-momentum stress
+HdecayF(isTsur) == 100.0d+3  100.0d+3              ! 1:NT surface tracers flux
+
+! [1:Nscale, 1:Ngrids] values are expected.
+
+HdecayFX(isUstr) == 100.0d+3                       ! surface U-momentum stress X-scale
+HdecayFY(isUstr) == 100.0d+3                       ! surface U-momentum stress Y-scale
+
+HdecayFX(isVstr) == 100.0d+3                       ! surface V-momentum stress X-scale
+HdecayFY(isVstr) == 100.0d+3                       ! surface V-momentum stress Y-scale
+
+HdecayFX(isTsur) == 100.0d+3  100.0d+3             ! 1:NT surface tracers flux X-scale
+HdecayFY(isTsur) == 100.0d+3  100.0d+3             ! 1:NT surface tracers flux Y-scale
 
 ! Modeled standard deviation (STD) of Background Error Covarinace parameters.
 !
@@ -433,8 +542,17 @@ Sigma_max(isTvar) == 0.33d0   0.056d0  ! 1:NT tracers maximum STD
   Lobc(isTvar) ==  F   F   F   F  \
                    F   F   F   F
 
+! Specify the input filename containing background error decorrelation
+! horizontal length scales, with values defined for each variable in the
+! control vector. These values are utilized in the multi-scale background
+! error covariance modeling algorithm or when the spatially varying scales
+! option is selected. Both algorithms require an implicit pseudo-diffusion
+! operator, which is solved iteratively using the Chebyshev method.
+
+        MSBname == roms_msb.nc
+
 ! Input model, initial conditions, boundary conditions, and surface forcing
-! standard deviation file names, [1:Ngrids].
+! standard deviation filenames, [1:Ngrids].
 
        STDnameM == roms_std_m.nc
        STDnameI == roms_std_i.nc
@@ -443,40 +561,40 @@ Sigma_max(isTvar) == 0.33d0   0.056d0  ! 1:NT tracers maximum STD
 
 ! If computing the standard deviation from the background (prior) state
 ! vector as an alternative to climatological values read from the
-! input NetCDF file, enter output standard deviation file name,
+! input NetCDF file, enter output standard deviation filename,
 ! [1:Ngrids].
 
        STDnameC == roms_std_c.nc
 
 ! Input/output model, initial conditions, boundary conditions, and surface
-! forcing error covariance normalization factors file name, [1:Ngrids].
+! forcing error covariance normalization factors filename, [1:Ngrids].
 
        NRMnameM == roms_nrm_m.nc
        NRMnameI == roms_nrm_i.nc
        NRMnameB == roms_nrm_b.nc
        NRMnameF == roms_nrm_f.nc
 
-! Input/output observation file name, [1:Ngrids].
+! Input/output observation filename, [1:Ngrids].
 
         OBSname == roms_obs.nc
 
-! Input/output Hessian eigenvectors file name, [1:Ngrids].
+! Input/output Hessian eigenvectors filename, [1:Ngrids].
 
         HSSname == roms_hss.nc
 
-! Input/output Lanczos vectors file name, [1:Ngrids].
+! Input/output Lanczos vectors filename, [1:Ngrids].
 
         LCZname == roms_lcz.nc
 
-! Output time-evolved Lanczos vectors file name, [1:Ngrids].
+! Output time-evolved Lanczos vectors filename, [1:Ngrids].
 
         LZEname == roms_lze.nc
 
-! Output model data at observation locations file name, [1:Ngrids].
+! Output model data at observation locations filename, [1:Ngrids].
 
         MODname == roms_mod.nc
 
-! Output posterior error covariance matrix file name, [1:Ngrids].
+! Output posterior error covariance matrix filename, [1:Ngrids].
 
         ERRname == roms_err.nc
 
@@ -487,7 +605,7 @@ Sigma_max(isTvar) == 0.33d0   0.056d0  ! 1:NT tracers maximum STD
        OIFnameA == roms_oif_a.nc
        OIFnameB == roms_oif_b.nc
 
-! Input coarser grid increment file name, [1:Ngrids]. It is used in
+! Input coarser grid increment filename, [1:Ngrids]. It is used in
 ! mixed-resolution split 4D-Var for regridding (coarse-to-fine), where
 ! the inner loops are run at lower resolution to accelerate the computations.
 
@@ -845,42 +963,110 @@ Sigma_max(isTvar) == 0.33d0   0.056d0  ! 1:NT tracers maximum STD
 !                 modeling for initial conditions (1), model (2), boundary
 !                 conditions (3), and surface forcing (4).
 !
-!  HdecayM        Model error covariance, [1:Ngrids],
-!                   horizontal, isotropic decorrelation scales (m):
+!------------------------------------------------------------------------------
+! Multiscale Background Error Covariance parameters: option MULTI_SCALE_B.
+!------------------------------------------------------------------------------
 !
-!                   HdecayM(isFsur)               free-surface
-!                   HdecayM(isUbar)               2D U-momentum
-!                   HdecayM(isVbar)               2D V-momentum
-!                   HdecayM(isUvel)               3D U-momentum
-!                   HdecayM(isVvel)               3D V-momentum
-!                   HdecayM(isTvar)               tracers (1:NT,1:Ngrids)
+!  Nscale         Number of horizontal length scales to model the Background 
+!                   Error Covariance matrix effects. Such scales can be
+!                   combined to form more complex shaped functions.
+!
+!  Mlap           Number of implicit applications of the inverse horizontal
+!                   diffusion operator for modeling the multiscale Background
+! 
+!                   MOD(Mlap,2) = 0       Mlap must be even
+!                   Mlap > 2              Mlap must be greater than 2
+!                   Mlap > O(10)          to approximate Gausian correlation
+!
+!  Bwgt           The weights assigned to each correlation for each state
+!                   variable in the control vector. The weights for each state
+!                   variable must sum to 1.
+!
+!                   B = Bwgt(1)*B(1) + Bwgt(2)*B(2) + ... Bwgt(Nscale)*B(Nscale)
+!
+!  NiterCG        Number of iterations for the Conjugate Gradient solver to be
+!                   used for each scale to estimate the required eigenvalue of
+!                   the implicit horizontal diffusion operator.
+!
+!  NiterCI        Number of iterations for the Chebyshev solver used for each
+!                   scale. NiterCI must be even. 
+!
+!------------------------------------------------------------------------------
+! Error Covariance decorrelation scales, Daley (1991) length scales.
+!------------------------------------------------------------------------------
+!
+!  HdecayM        Model error covariance, [1:Ngrids],
+!  HdecayMX         horizontal isotropic and anisotropic decorrelation
+!  HdecayMY         length scales (m):
+!
+!                    HdecayM(isFsur)              free-surface
+!                   HdecayMX(isFsur)
+!                   HdecayMY(isFsur)
+!
+!                    HdecayM(isUbar)              2D U-momentum
+!                   HdecayMX(isUbar)
+!                   HdecayMY(isUbar)
+!
+!                    HdecayM(isVbar)              2D V-momentum
+!                   HdecayMX(isVbar)
+!                   HdecayMY(isVbar)
+!
+!                    HdecayM(isUvel)              3D U-momentum
+!                   HdecayMX(isUvel)
+!                   HdecayMY(isUvel)
+!
+!                    HdecayM(isVvel)              3D V-momentum
+!                   HdecayMX(isVvel)
+!                   HdecayMY(isVvel)
+!
+!                    HdecayM(isTvar)              tracers (1:NT,1:Ngrids)
+!                   HdecayMX(isTvar)
+!                   HdecayMY(isTvar)
 !
 !  VdecayM        Model error covariance, [1:Ngrids],
-!                   vertical, isotropic decorrelation scale (m):
+!                   vertical, isotropic decorrelation length scale (m):
 !
 !                   VdecayM(isUvel)               3D U-momentum
 !                   VdecayM(isVvel)               3D V-momentum
 !                   VdecayM(isTvar)               tracers (1:NT,1:Ngrids)
 !
 !  HdecayI        Initial conditions error covariance, [1:Ngrids],
-!                   horizontal, isotropic decorrelation scales (m):
+!  HdecayIX         horizontal, isotropic and anisotropic decorrelation
+!  HdecayIY         length scales (m):
 !
-!                   HdecayI(isFsur)               free-surface
-!                   HdecayI(isUbar)               2D U-momentum
-!                   HdecayI(isVbar)               2D V-momentum
-!                   HdecayI(isUvel)               3D U-momentum
-!                   HdecayI(isVvel)               3D V-momentum
-!                   HdecayI(isTvar)               tracers (1:NT,1:Ngrids)
+!                    HdecayI(isFsur)              free-surface
+!                   HdecayIX(isFsur)
+!                   HdecayIY(isFsur)
+!
+!                    HdecayI(isUbar)              2D U-momentum
+!                   HdecayIX(isUbar)
+!                   HdecayIY(isUbar)
+!
+!                    HdecayI(isVbar)              2D V-momentum
+!                   HdecayIX(isVbar)
+!                   HdecayIY(isVbar)
+!
+!                    HdecayI(isUvel)              3D U-momentum
+!                   HdecayIX(isUvel)
+!                   HdecayIY(isUvel)
+!
+!                    HdecayI(isVvel)              3D V-momentum
+!                   HdecayIX(isVvel)
+!                   HdecayIY(isVvel)
+!
+!                    HdecayI(isTvar)              tracers (1:NT,1:Ngrids)
+!                   HdecayIX(isTvar)
+!                   HdecayIY(isTvar)
 !
 !  VdecayI        Model error covariance, [1:Ngrids],
-!                   vertical, isotropic decorrelation scale (m):
+!                   vertical, isotropic decorrelation length scale (m):
 !
 !                   VdecayI(isUvel)               3D U-momentum
 !                   VdecayI(isVvel)               3D V-momentum
 !                   VdecayI(isTvar)               tracers (1:NT)
 !
 !  HdecayB        Open boundary conditions error covariance, [4,1:Ngrids],
-!                   horizontal, isotropic decorrelation scales (m):
+!                   horizontal, isotropic decorrelation length scales (m):
 !
 !                   HdecayB(:,isFsur)             free-surface
 !                   HdecayB(:,isUbar)             2D U-momentum
@@ -889,10 +1075,18 @@ Sigma_max(isTvar) == 0.33d0   0.056d0  ! 1:NT tracers maximum STD
 !                   HdecayB(:,isVvel)             3D V-momentum
 !                   HdecayB(:,isTvar)             tracers (4,1:NT,1:Ngrids)
 !
-!                   boundary index   1: west  2: south  3: east  4: north
+!                   If multiscale B-modeling, enter value for each Nscale
+!                   [Nscale,4,Ngrid] are expected, for example, if Nscale=3
+!                   we need HdecayB(3,4,isFsur) and so on.
+!
+!                   boundary index     1: west  2: south  3: east  4: north
+!
+!                   HdecayB(isFsur) == 100.0d+3 100.0d+3 100.0d+3 100.0d+3 \
+!                                       80.0d+3  80.0d+3  80.0d+3  80.0d+3 \
+!                                       60.0d+3  60.0d+3  60.0d+3  60.0d+3
 !
 !  VdecayB        Model error covariance, [4,1:Ngrids],
-!                   vertical, isotropic decorrelation scale (m):
+!                   vertical, isotropic decorrelation length scale (m):
 !
 !                   VdecayB(isUvel)               3D U-momentum
 !                   VdecayB(isVvel)               3D V-momentum
@@ -901,11 +1095,20 @@ Sigma_max(isTvar) == 0.33d0   0.056d0  ! 1:NT tracers maximum STD
 !                   boundary index   1: west  2: south  3: east  4: north
 !
 !  HdecayF        Surface forcing error covariance, [1:Ngrids],
-!                   horizontal, isotropic decorrelation scales (m):
+!  HdecayFX         horizontal, isotropic and anisotropic decorrelation
+!  HdecayFY         length scales (m):
 !
-!                   HdecayF(isTsur)               tracers flux (1:NT,1:Ngrids)
-!                   HdecayF(isUstr)               wind U-stress
-!                   HdecayF(isVstr)               wind V-stress
+!                    HdecayF(isTsur)              tracers flux (1:NT,1:Ngrids)
+!                   HdecayFX(isTsur)
+!                   HdecayFY(isTsur)
+!
+!                    HdecayF(isUstr)              wind U-stress
+!                   HdecayFX(isUstr)
+!                   HdecayFY(isUstr)
+!
+!                    HdecayF(isVstr)              wind V-stress
+!                   HdecayFX(isVstr)
+!                   HdecayFY(isVstr)
 !
 !------------------------------------------------------------------------------
 ! Modeled standard deviation (STD) of Background Error Covarinace parameters.
@@ -1028,50 +1231,47 @@ Sigma_max(isTvar) == 0.33d0   0.056d0  ! 1:NT tracers maximum STD
 !  Input/Output NetCDF files (a string with a maximum of 256 characters).
 !------------------------------------------------------------------------------
 !
+!  MSBname        Input background error covariance horizontal
+!                   decorrelation length scales filename.
+!
 !  STDnameM       Input model error covariance
-!                   standard deviation file name.
+!                   standard deviation filename.
 !
 !  STDnameI       Input initial conditions error covariance
-!                   standard deviation file name.
+!                   standard deviation filename.
 !
 !  STDnameB       Input open boundary conditions error covariance
-!                   standard deviation file name.
+!                   standard deviation filename.
 !
 !  STDnameF       Input surface forcing error covariance
-!                   standard deviation file name.
+!                   standard deviation filename.
 !
-!  STDnameC       Output standard deviation file name
+!  STDnameC       Output standard deviation filename
 !                   computed from  background (prior) state
 !
 !  NRMnameM       Input/output model error covariance
-!                   normalization factors file name.
+!                   normalization factors filename.
 !
 !  NRMnameI       Input/output initial conditions error covariance
-!                   normalization factors file name.
+!                   normalization factors filename.
 !
 !  NRMnameB       Input/output open boundary conditions error covariance
-!                   normalization factors file name.
+!                   normalization factors filename.
 !
 !  NRMnameF       Input/output surface forcing error covariance
-!                   normalization factors file name.
+!                   normalization factors filename.
 !
-!  OBSname        Input/Output observations data file name.
+!  OBSname        Input/Output observations data filename.
 !
-!  HSSname        Input/Output Hessian eigenvectors file name.
+!  HSSname        Input/Output Hessian eigenvectors filename.
 !
-!  LCZname        Input/output Lanczos vectors file name.
+!  LCZname        Input/output Lanczos vectors filename.
 !
-!  LZEname        Output time-evolved Lanczos vectors file name.
+!  LZEname        Output time-evolved Lanczos vectors filename.
 !
-!  MODname        Output model data at observations locations file name.
+!  MODname        Output model data at observations locations filename.
 !
-!  ERRname        Output posterior error covariance matrix file name.
-!
-! Input coarser grid increment file name, [1:Ngrids]. It is used in
-! mixed-resolution split 4D-Var for regridding (coarse-to-fine), where
-! the inner loops are run at lower resolution to accelerate the computations.
-!
-!  INCname        Coarse grid increment file name.
+!  ERRname        Output posterior error covariance matrix filename.
 !
 ! Input forcing filenames at observation locations for computing observations
 ! impacts during the analysis-forecast cycle when RBL4DVAR_FCT_SENSITIVITY and
@@ -1081,5 +1281,10 @@ Sigma_max(isTvar) == 0.33d0   0.056d0  ! 1:NT tracers maximum STD
 !
 !  OIFnameA       Forecast initialized with 4D-Var analysis (red curve).
 !
-!  OIFnameB       Forecast initialized with 4D_Var background (blue curve).
+!  OIFnameB       Forecast initialized with 4D-Var background (blue curve).
 !
+! Input coarser grid increment file name, [1:Ngrids]. It is used in
+! mixed-resolution split 4D-Var for regridding (coarse-to-fine), where
+! the inner loops are run at lower resolution to accelerate the computations.
+!
+!  INCname        Coarse grid increment file name.

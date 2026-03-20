@@ -766,7 +766,7 @@
 !  Local variable declarations.
 !
       integer :: IDmod, Npts, i, ib, ic, j, j1, j2, status
-      integer :: IvarS
+      integer :: IvarS, ns
 !
       real(r8), parameter :: RoundOff = 1.0e-7_r8
 
@@ -1104,9 +1104,17 @@
             END IF
 #  endif
 # endif
+# ifdef MULTI_SCALE_B
+          CASE ('HdecayX')
+# else
           CASE ('Hdecay')
+# endif
             IF ((model.eq.5).or.(model.eq.11)) THEN
+# ifdef MULTI_SCALE_B
+              Npts=UBOUND(HdecayX,DIM=2)
+# else
               Npts=UBOUND(Hdecay,DIM=2)
+# endif
               IF (.not.PRESENT(ncid)) THEN
                 CALL netcdf_get_fvar (ng, IDmod, ncname, var_name(i),   &
      &                                FvarV,                            &
@@ -1136,7 +1144,22 @@
 # endif
                 j2=Npts                ! last  state variable to check
               END IF
-
+# ifdef MULTI_SCALE_B
+              DO ns=1,Nscale(ng)
+                DO j=j1,j2
+                  IF (ABS(HdecayX(1,j,ns,ng)-FvarV(j)).gt.RoundOff) THEN
+                    text=TRIM(var_name(i))//                            &
+     &                 '(1,'//TRIM(Vname(1,idSvar(j)))//')'
+                    IF (Master) WRITE (stdout,20) TRIM(text),           &
+     &                                            FvarV(j),             &
+     &                                            HdecayX(1,j,ns,ng),   &
+     &                                            TRIM(ncname)
+                    exit_flag=5
+                    EXIT
+                  END IF
+                END DO
+              END DO
+# else
               DO j=j1,j2
                 IF (ABS(Hdecay(1,j,ng)-FvarV(j)).gt.RoundOff) THEN
                   text=TRIM(var_name(i))//                              &
@@ -1149,7 +1172,57 @@
                   EXIT
                 END IF
               END DO
+# endif
             END IF
+# ifdef MULTI_SCALE_B
+          CASE ('HdecayY')
+            IF ((model.eq.5).or.(model.eq.11)) THEN
+              Npts=UBOUND(HdecayY,DIM=2)
+              IF (.not.PRESENT(ncid)) THEN
+                CALL netcdf_get_fvar (ng, IDmod, ncname, var_name(i),   &
+     &                                FvarV,                            &
+     &                                start = (/1/), total = (/Npts/))
+              ELSE
+                CALL netcdf_get_fvar (ng, IDmod, ncname, var_name(i),   &
+     &                                FvarV,                            &
+     &                                ncid = ncid,                      &
+     &                                start = (/1/), total = (/Npts/))
+              END IF
+              IF (FoundError(exit_flag, NoError,                        &
+     &                       __LINE__, MyFile)) RETURN
+
+              IF (model.eq.5) THEN
+                j1=1                   ! first state variable to check
+#  ifdef SOLVE3D
+                j2=isTvar(NT(ng))      ! last  state variable to check
+#  else
+                j2=3                   ! last  state variable to check
+#  endif
+              ELSE IF (model.eq.11) THEN
+#  ifdef SOLVE3D
+                j1=isTvar(NT(ng))+1    ! first state variable to check
+#  else
+                j1=4                   ! first state variable to check
+#  endif
+                j2=Npts                ! last  state variable to check
+              END IF
+
+              DO ns=1,Nscale(ng)
+                DO j=j1,j2
+                  IF (ABS(HdecayY(1,j,ns,ng)-FvarV(j)).gt.RoundOff) THEN
+                    text=TRIM(var_name(i))//                            &
+     &                 '(1,'//TRIM(Vname(1,idSvar(j)))//')'
+                  IF (Master) WRITE (stdout,20) TRIM(text),             &
+     &                                          FvarV(j),               &
+     &                                          HdecayY(1,j,ns,ng),     &
+     &                                          TRIM(ncname)
+                    exit_flag=5
+                    EXIT
+                  END IF
+                END DO
+              END DO
+            END IF
+# endif
 # ifdef SOLVE3D
           CASE ('Vdecay')
             IF ((model.eq.5).or.(model.eq.11)) THEN
@@ -1190,9 +1263,17 @@
             END IF
 # endif
 # ifdef WEAK_CONSTRAINT
+#  ifdef MULTI_SCALE_B
+          CASE ('HdecayMX')
+#  else
           CASE ('HdecayM')
+#  endif
             IF ((model.eq.5).and.(NSA.eq.2)) THEN
+#  ifdef MULTI_SCALE_B
+              Npts=UBOUND(HdecayX,DIM=2)
+#  else
               Npts=UBOUND(Hdecay,DIM=2)
+#  endif
               IF (.not.PRESENT(ncid)) THEN
                 CALL netcdf_get_fvar (ng, IDmod, ncname, var_name(i),   &
      &                                FvarV,                            &
@@ -1212,6 +1293,23 @@
 #  else
               j2=3                     ! last  state variable to check
 #  endif
+#  ifdef MULTI_SCALE_B
+              DO ns=1,Nscale(ng)
+                DO j=j1,j2
+                  IF (ABS(HdecayX(NSA,j,ns,ng)-FvarV(j)).gt.            &
+     &                RoundOff) THEN
+                    text=TRIM(var_name(i))//                            &
+     &                 '(2,'//TRIM(Vname(1,idSvar(j)))//')'
+                    IF (Master) WRITE (stdout,20) TRIM(text),           &
+     &                                            FvarV(j),             &
+     &                                            HdecayX(NSA,j,ns,ng), &
+     &                                            TRIM(ncname)
+                    exit_flag=5
+                    EXIT
+                  END IF
+                END DO
+              END DO
+#  else
               DO j=j1,j2
                 IF (ABS(Hdecay(NSA,j,ng)-FvarV(j)).gt.RoundOff) THEN
                   text=TRIM(var_name(i))//                              &
@@ -1224,7 +1322,48 @@
                   EXIT
                 END IF
               END DO
+#  endif
             END IF
+#  ifdef MULTI_SCALE_B
+          CASE ('HdecayMY')
+            IF ((model.eq.5).and.(NSA.eq.2)) THEN
+              Npts=UBOUND(HdecayY,DIM=2)
+              IF (.not.PRESENT(ncid)) THEN
+                CALL netcdf_get_fvar (ng, IDmod, ncname, var_name(i),   &
+     &                                FvarV,                            &
+     &                                start = (/1/), total = (/Npts/))
+              ELSE
+                CALL netcdf_get_fvar (ng, IDmod, ncname, var_name(i),   &
+     &                                FvarV,                            &
+     &                                ncid = ncid,                      &
+     &                                start = (/1/), total = (/Npts/))
+              END IF
+              IF (FoundError(exit_flag, NoError,                        &
+     &                       __LINE__, MyFile)) RETURN
+
+              j1=1                     ! first state variable to check
+#   ifdef SOLVE3D
+              j2=isTvar(NT(ng))        ! last  state variable to check
+#   else
+              j2=3                     ! last  state variable to check
+#   endif
+              DO ns=1,Nscale(ng)
+                DO j=j1,j2
+                  IF (ABS(HdecayY(NSA,j,ns,ng)-FvarV(j)).gt.            &
+     &                RoundOff) THEN
+                    text=TRIM(var_name(i))//                            &
+     &                 '(2,'//TRIM(Vname(1,idSvar(j)))//')'
+                    IF (Master) WRITE (stdout,20) TRIM(text),           &
+     &                                            FvarV(j),             &
+     &                                            HdecayY(NSA,j,ns,ng), &
+     &                                            TRIM(ncname)
+                    exit_flag=5
+                    EXIT
+                  END IF
+                END DO
+              END DO
+            END IF
+#  endif
 #  ifdef SOLVE3D
           CASE ('VdecayM')
             IF ((model.eq.5).and.(NSA.eq.2)) THEN
@@ -1287,6 +1426,29 @@
               j1=1                     ! first state variable to check
               j2=Npts                  ! last  state variable to check
 
+#  ifdef MULTI_SCALE_B
+              DO ib=1,4
+                DO ns=1,Nscale(ng)
+                  DO j=j1,j2
+                    ic=ic+1
+                    IF (Lobc(ib,j,ng)) THEN
+                      WRITE (text,"(a,'(',i1,',',a,')')")               &
+     &                          TRIM(var_name(i)), ib,                  &
+     &                          TRIM(Vname(1,idSvar(j)))
+                      IF (ABS(HdecayB(j,ns,ib,ng)-FvarV(ic)).gt.        &
+     &                  RoundOff) THEN
+                        IF (Master) WRITE (stdout,20) TRIM(text),       &
+     &                                                FvarV(ic),        &
+     &                                             HdecayB(j,ns,ib,ng), &
+     &                                                TRIM(ncname)
+                        exit_flag=5
+                        EXIT
+                      END IF
+                    END IF
+                  END DO
+                END DO
+              END DO
+#  else
               DO ib=1,4
                 DO j=j1,j2
                   ic=ic+1
@@ -1306,6 +1468,7 @@
                   END IF
                 END DO
               END DO
+#  endif
             END IF
 #  ifdef SOLVE3D
           CASE ('VdecayB')

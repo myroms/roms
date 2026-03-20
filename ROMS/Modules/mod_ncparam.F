@@ -107,7 +107,7 @@
 !  Maximum number of dimension IDs stored in local array DimIDs used to
 !  defined variable dimensions in output NetCDF files.
 !
-      integer, parameter :: nDimID = 35
+      integer, parameter :: nDimID = 36
 !
 !  Number of horizontal interior and boundary water points.
 !

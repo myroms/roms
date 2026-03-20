@@ -1337,7 +1337,12 @@
 !  Initial conditions, model and surface forcing error covariance
 !  horizontal decorrelation scales (m).
 !
+# ifdef MULTI_SCALE_B
+        real(r8), allocatable :: HdecayX(:,:,:,:)
+        real(r8), allocatable :: HdecayY(:,:,:,:)
+# else
         real(r8), allocatable :: Hdecay(:,:,:)
+# endif
 !
 !  Initial conditions, model and surface forcing error covariance
 !  temporal decorrelation scales (second).
@@ -1352,7 +1357,11 @@
 !  Boundary conditions error covariance horizontal decorrelation
 !  scales (m).
 !
+# ifdef MULTI_SCALE_B
+        real(r8), allocatable :: HdecayB(:,:,:,:)
+# else
         real(r8), allocatable :: HdecayB(:,:,:)
+# endif
 !
 !  Boundary conditions error covariance vertical decorrelation
 !  scales (m).
@@ -1390,6 +1399,24 @@
 !  of state variable indices, [MstateVar,Ngrids]
 !
         real(r8), allocatable :: S_bgqc(:,:)
+
+# ifdef MULTI_SCALE_B
+!
+!  Multiscale background covariance matrix parameters:
+!
+!    Nscale   number of correlation scales to be combined
+!    Mlap     nunber of smoother applications for each variable
+!    NiterCG  number of CG iterations to obtain each scale eigenvalue
+!    NiterCI  number of implicit Chebyshev solver iterations
+!    Bwgt     weights assigned to each correlation function
+!
+        integer, allocatable :: Nscale(:)
+        integer, allocatable :: Mlap(:,:,:)
+        integer, allocatable :: NiterCG(:,:)
+        integer, allocatable :: NiterCI(:,:)
+!
+        real(r8), allocatable :: Bwgt(:,:,:)
+# endif
 
 # ifdef STD_MODEL
 !
@@ -3253,10 +3280,13 @@
         Dmem(1)=Dmem(1)+REAL(MstateVar,r8)
       END IF
 
+# ifndef MULTI_SCALE_B
       IF (.not.allocated(Hdecay)) THEN
         allocate ( Hdecay(2,MstateVar,Ngrids) )
         Dmem(1)=Dmem(1)+2.0_r8*REAL(MstateVar*Ngrids,r8)
       END IF
+# endif
+
       IF (.not.allocated(Vdecay)) THEN
         allocate ( Vdecay(2,MstateVar,Ngrids) )
         Dmem(1)=Dmem(1)+2.0_r8*REAL(MstateVar*Ngrids,r8)
@@ -3267,10 +3297,13 @@
         Dmem(1)=Dmem(1)+REAL(MstateVar*Ngrids,r8)
       END IF
 
+# ifndef MULTI_SCALE_B
       IF (.not.allocated(HdecayB)) THEN
         allocate ( HdecayB(MstateVar,4,Ngrids) )
         Dmem(1)=Dmem(1)+4.0_r8*REAL(MstateVar*Ngrids,r8)
       END IF
+# endif
+
       IF (.not.allocated(VdecayB)) THEN
         allocate ( VdecayB(MstateVar,4,Ngrids) )
         Dmem(1)=Dmem(1)+4.0_r8*REAL(MstateVar*Ngrids,r8)
@@ -3288,6 +3321,13 @@
         allocate ( S_bgqc(MstateVar,Ngrids) )
         Dmem(1)=Dmem(1)+REAL(MstateVar*Ngrids,r8)
       END IF
+
+# ifdef MULTI_SCALE_B
+      IF (.not.allocated(Nscale)) THEN
+        allocate ( Nscale(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
+      END IF
+# endif
 
 # ifdef STD_MODEL
       IF (.not.allocated(Sigma_max)) THEN
@@ -4116,7 +4156,13 @@
 
       IF (allocated(balance))           deallocate ( balance )
 
+# ifdef MULTI_SCALE_B
+      IF (allocated(HdecayX))           deallocate ( HdecayX )
+
+      IF (allocated(HdecayY))           deallocate ( HdecayY )
+# else
       IF (allocated(Hdecay))            deallocate ( Hdecay )
+# endif
 
       IF (allocated(Vdecay))            deallocate ( Vdecay )
 
@@ -4131,6 +4177,18 @@
       IF (allocated(Nprovenance))       deallocate ( Nprovenance )
 
       IF (allocated(S_bgqc))            deallocate ( S_bgqc )
+
+# ifdef MULTI_SCALE_B
+      IF (allocated(Nscale))            deallocate ( Nscale )
+
+      IF (allocated(Mlap))              deallocate ( Mlap )
+
+      IF (allocated(Bwgt))              deallocate ( Bwgt )
+
+      IF (allocated(NiterCG))           deallocate ( NiterCG )
+
+      IF (allocated(NiterCI))           deallocate ( NiterCI )
+# endif
 
 # ifdef STD_MODEL
       IF (allocated(Sigma_max))         deallocate ( Sigma_max )
@@ -4621,6 +4679,9 @@
       balance=.FALSE.
 
       Cnorm=.FALSE.
+# ifndef MULTI_SCALE_B
+      Hdecay=IniVal
+# endif
       Hdecay=IniVal
       Tdecay=IniVal
       Vdecay=IniVal
