@@ -1528,10 +1528,15 @@
             CASE (io_pio)
               self%Cvars(i)%pioFile = self%Cvars(1)%pioFile
 #endif
-        END SELECT
-        self%Cvars(i)%IsRomsFile = self%Cvars(1)%IsRomsFile
-        IF (FoundError(assign_string(self%Cvars(i)%ncname, ncname),     &
+          END SELECT
+          self%Cvars(i)%IsRomsFile = self%Cvars(1)%IsRomsFile
+          IF (FoundError(assign_string(self%Cvars(i)%ncname, ncname),   &
      &                 NoError, __LINE__, MyFile)) RETURN
+        ELSE
+          self%Cvars(1)%ncid = -1        ! force open file on first pass
+#if defined PIO_LIB && defined DISTRIBUTE
+          self%Cvars(1)%pioFile%fh = -1
+#endif
         END IF
 !
         CALL self%Cvars(i)%create (ng, tile, kernel, Ctype(i), ncname)
