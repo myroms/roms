@@ -1,0 +1,4453 @@
+#include "cppdefs.h"
+      MODULE roms_Klaplacian_mod
+
+#ifdef MULTI_SCALE_B
+!
+!git $Id$
+!================================================== Hernan G. Arango ===
+!  Copyright (c) 2002-2026 The ROMS Group            Andrew M. Moore   !
+!    Licensed under a MIT/X style license                              !
+!    See License_ROMS.md                                               !
+!=======================================================================
+!                                                                      !
+! The module computes the K-Laplacian operator, [1 + Del(K*Del)],      !
+! which is subsequently used to determine the minimum and maximum      !
+! eigenvalues required by the implicit diffusion iterative algorithm   !
+! for modeling multiscale background-error covariance matrix effects   !
+! (Weaver et al., 2016).                                               !
+!                                                                      !
+! The horizontal diffusion coefficients (Khx, Khy) are expressed in    !
+! units of correlation length squared. These coefficients are derived  !
+! from Equation (44) of Weaver and Mirouze (2013) for d=2. Thus,       !
+! kappa=D*D/(2*(M-2)). Here, D denotes the Daley length scale, and     !
+! d represents the spatial dimension.                                  !
+!                                                                      !
+! References:                                                          !
+!                                                                      !
+! Weaver, A.T. and I. Mirouze, 2013: On the diffusion equation and     !
+!   its application to isotropic and anisotropic modelling in          !
+!   variational assimilation, Q. J. R. Meteorol. Soc., 139, 242-260,   !
+!   doi:10.1002/qj.1955.                                               !
+!                                                                      !
+! Weaver, A.T., J. Tshimanga, and A. Piacentini, 2016: Correlation     !
+!   operators based on an implicitly formulated diffusion equation     !
+!   solved with the Chebyshev iteration, Q. J. R. Meteorol. Soc., 142, !
+!   455-471, doi:10.1002/qj.2664.                                      !
+!                                                                      !
+!======================================================================!
+!
+      USE mod_param
+      USE mod_grid
+      USE mod_ncparam
+      USE mod_scalars
+!
+      USE ad_bc_2d_mod,        ONLY : ad_dabc_r2d_tile,                 & 
+     &                                ad_dabc_u2d_tile,                 &
+     &                                ad_dabc_v2d_tile
+# ifdef SOLVE3D
+      USE ad_bc_3d_mod,        ONLY : ad_dabc_r3d_tile,                 &
+     &                                ad_dabc_u3d_tile,                 &
+     &                                ad_dabc_v3d_tile
+# endif
+      USE bc_2d_mod,           ONLY : dabc_r2d_tile,                    & 
+     &                                dabc_u2d_tile,                    &
+     &                                dabc_v2d_tile
+# ifdef SOLVE3D
+      USE bc_3d_mod,           ONLY : dabc_r3d_tile,                    &
+     &                                dabc_u3d_tile,                    &
+     &                                dabc_v3d_tile
+# endif
+# ifdef DISTRIBUTE
+      USE mp_exchange_mod,     ONLY : ad_mp_exchange2d
+#  ifdef SOLVE3D
+      USE mp_exchange_mod,     ONLY : ad_mp_exchange3d
+#  endif
+      USE mp_exchange_mod,     ONLY : mp_exchange2d
+#  ifdef SOLVE3D
+      USE mp_exchange_mod,     ONLY : mp_exchange3d
+#  endif
+# endif
+      USE roms_multiscale_mod, ONLY : multiscale      ! CLASS object
+!
+      implicit none
+!
+!-----------------------------------------------------------------------
+!  ROMS multiscale K-Laplacian routines.
+!-----------------------------------------------------------------------
+!
+      PUBLIC  :: tl_multiscale_Klap_r2d
+      PUBLIC  :: tl_multiscale_Klap_u2d
+      PUBLIC  :: tl_multiscale_Klap_v2d
+!
+      PUBLIC  :: ad_multiscale_Klap_r2d
+      PUBLIC  :: ad_multiscale_Klap_u2d
+      PUBLIC  :: ad_multiscale_Klap_v2d
+
+# ifdef SOLVE3D
+      PUBLIC  :: tl_multiscale_Klap_r3d
+      PUBLIC  :: tl_multiscale_Klap_u3d
+      PUBLIC  :: tl_multiscale_Klap_v3d
+!
+      PUBLIC  :: ad_multiscale_Klap_r3d
+      PUBLIC  :: ad_multiscale_Klap_u3d
+      PUBLIC  :: ad_multiscale_Klap_v3d
+# endif
+
+      PRIVATE
+!
+!:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+!
+      CONTAINS
+!
+!:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+!
+!  It computes the tangent linear K-Laplacian, [1 + Del(K*Del)], of a
+!  2D control variable at RHO-points.
+!
+      SUBROUTINE tl_multiscale_Klap_r2d (self, ng, tile, model,         &
+     &                                   ifield, ctype, ms, Lweak,      &
+     &                                   LBi, UBi, LBj, UBj,            &
+     &                                   IminS, ImaxS, JminS, JmaxS,    &
+     &                                   tl_A)
+!
+      CLASS (multiscale), intent(inout) :: self      ! multiscale object
+      integer,            intent(in   ) :: ng        ! nested grid
+      integer,            intent(in   ) :: tile      ! domain partition
+      integer,            intent(in   ) :: model     ! kernel ID
+      integer,            intent(in   ) :: ifield    ! state field ID
+      integer,            intent(in   ) :: ctype     ! C-grid type
+      integer,            intent(in   ) :: ms        ! multiscale index
+      logical,            intent(in   ) :: Lweak     ! weak constraint
+      integer,            intent(in   ) :: LBi, UBi, LBj, UBj
+      integer,            intent(in   ) :: IminS, ImaxS, JminS, JmaxS
+      real (r8),          intent(inout) :: tl_A(LBi:,LBj:)
+!
+      integer                           :: iLap, i, j, rec
+      integer                           :: Istr, Iend, Jstr, Jend
+      real (r8)                         :: cffx, cffy
+
+# ifdef READ_SCALES
+!
+      real (r8), pointer                :: bsclx(:,:) => NULL()
+      real (r8), pointer                :: bscly(:,:) => NULL()
+# endif
+!
+      real(r8), dimension(LBi:UBi,LBj:UBj)         :: tl_Awrk
+!
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Hfac
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Khx
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Khy
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_FE
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_FX
+!
+!  Initialize.
+!
+      Istr=BOUNDS(ng)%Istr(tile)     ! tile computational indices
+      Iend=BOUNDS(ng)%Iend(tile)
+      Jstr=BOUNDS(ng)%Jstr(tile)
+      Jend=BOUNDS(ng)%Jend(tile)
+!
+      IF (Lweak) THEN
+        rec=2                        ! weak constraint correlations
+      ELSE
+        rec=1                        ! strong constraint correlations
+      END IF
+!
+!  Assign contol variable isotropic or anisotropic correlation length
+!  scales.
+!
+      SELECT CASE (ifield)
+        CASE (isFsur)
+# ifdef READ_SCALES
+          bsclx => self%bZscaleX(:,:,ms)
+          bscly => self%bZscaleY(:,:,ms)
+# endif
+          iLap=Mlap(ifield,ms,ng)
+# ifdef SOLVE3D
+        CASE (isTsur(itemp), isTsur(isalt))
+#  ifdef READ_SCALES
+          bsclx => self%bSTFscaleX(:,:,ifield,ms)
+          bscly => self%bSTFscaleY(:,:,ifield,ms)
+#  endif
+          iLap=Mlap(ifield,ms,ng)
+# endif
+      END SELECT
+!
+!  Compute metrics factor.
+!
+      DO j=Jstr,Jend
+        DO i=Istr,Iend
+          Hfac(i,j)=GRID(ng)%pm(i,j)*GRID(ng)%pn(i,j)
+        END DO
+      END DO
+!
+!  Set horizontal diffusion coefficients (Khx, Khy) with units of
+!  correlation length squared.
+!
+      DO j=Jstr-1,Jend+1
+        DO i=Istr-1,Iend+1
+# ifdef READ_SCALES
+          cffx=bsclx(i,j)*bsclx(i,j)       ! spatially varying
+          cffy=bscly(i,j)*bscly(i,j)
+# else
+          cffx=HdecayX(rec,ifield,ms,ng)*HdecayX(rec,ifield,ms,ng)
+          cffy=HdecayY(rec,ifield,ms,ng)*HdecayY(rec,ifield,ms,ng)
+# endif
+          Khx(i,j)=0.5_r8*cffx/REAL(iLap-2,r8)
+          Khy(i,j)=0.5_r8*cffy/REAL(iLap-2,r8)
+        END DO
+      END DO
+!
+!  Set operator initial conditions.
+!
+!^    CALL dabc_r2d_tile (ng, tile,                                     &
+!^   &                    LBi, UBi, LBj, UBj,                           &
+!^   &                    A)
+!^
+      CALL dabc_r2d_tile (ng, tile,                                     &
+     &                    LBi, UBi, LBj, UBj,                           &
+     &                    tl_A)
+# ifdef DISTRIBUTE
+!
+!^    CALL mp_exchange2d (ng, tile, model, 1,                           &
+!^   &                    LBi, UBi, LBj, UBj,                           &
+!^   &                    Nghost,                                       &
+!^   &                    EWperiodic(ng), NSperiodic(ng),               &
+!^   &                    A)
+!^
+      CALL mp_exchange2d (ng, tile, model, 1,                           &
+     &                    LBi, UBi, LBj, UBj,                           &
+     &                    Nghost,                                       &
+     &                    EWperiodic(ng), NSperiodic(ng),               &
+     &                    tl_A)
+# endif
+!
+      DO j=Jstr-1,Jend+1
+        DO i=Istr-1,Iend+1
+!^        Awrk(i,j)=A(i,j)
+!^
+          tl_Awrk(i,j)=tl_A(i,j)
+        END DO
+      END DO
+!
+!  Compute XI- and ETA-components of diffusive flux.
+!
+      DO j=Jstr,Jend
+        DO i=Istr,Iend+1
+!^        FX(i,j)=GRID(ng)%pmon_u(i,j)*                                 &
+!^   &            0.5_r8*(Khx(i-1,j)+Khx(i,j))*                         &
+!^   &            (Awrk(i,j)-Awrk(i-1,j))
+!^
+          tl_FX(i,j)=GRID(ng)%pmon_u(i,j)*                              &
+     &               0.5_r8*(Khx(i-1,j)+Khx(i,j))*                      &
+     &               (tl_Awrk(i,j)-tl_Awrk(i-1,j))
+# ifdef MASKING
+!^        FX(i,j)=FX(i,j)*GRID(ng)%umask(i,j)
+!^
+          tl_FX(i,j)=tl_FX(i,j)*GRID%umask(i,j)
+# endif
+        END DO
+      END DO
+!
+      DO j=Jstr,Jend+1
+        DO i=Istr,Iend
+!^        FE(i,j)=GRID(ng)%pnom_v(i,j)*                                 &
+!^                0.5_r8*(Khy(i,j-1)+Khy(i,j))*                         &
+!^   &              (Awrk(i,j)-Awrk(i,j-1))
+!^
+          tl_FE(i,j)=GRID(ng)%pnom_v(i,j)*                              &
+     &               0.5_r8*(Khy(i,j-1)+Khy(i,j))*                      &
+     &               (tl_Awrk(i,j)-tl_Awrk(i,j-1))
+# ifdef MASKING
+!^        FE(i,j)=FE(i,j)*GRID(ng)%vmask(i,j)
+!^
+          tl_FE(i,j)=tl_FE(i,j)*GRID(ng)%vmask(i,j)
+# endif
+        END DO
+      END DO
+!
+!  Compute K-laplacian.
+!
+      DO j=Jstr,Jend
+        DO i=Istr,Iend
+!^        Awrk(i,j)=Awrk(i,j)-                                          &
+!^   &              Hfac(i,j)*(FX(i+1,j)-FX(i,j)+                       &
+!^   &                         FE(i,j+1)-FE(i,j))
+!^
+          tl_Awrk(i,j)=tl_Awrk(i,j)-                                    &
+     &                 Hfac(i,j)*(tl_FX(i+1,j)-tl_FX(i,j)+              &
+     &                            tl_FE(i,j+1)-tl_FE(i,j))
+        END DO
+      END DO
+
+# ifdef DISTRIBUTE
+!
+!  Exchange boundary data.
+!
+!^    CALL mp_exchange2d (ng, tile, model, 1,                           &
+!^   &                    LBi, UBi, LBj, UBj,                           &
+!^   &                    Nghost,                                       &
+!^   &                    EWperiodic(ng), NSperiodic(ng),               &
+!^   &                    Awrk)
+!^
+      CALL mp_exchange2d (ng, tile, model, 1,                           &
+     &                    LBi, UBi, LBj, UBj,                           &
+     &                    Nghost,                                       &
+     &                    EWperiodic(ng), NSperiodic(ng),               &
+     &                    tl_Awrk)
+# endif
+!
+!  Load K-Laplacian solution.
+!
+      DO j=Jstr,Jend
+        DO i=Istr,Iend
+!^        A(i,j)=Awrk(i,j)
+!^
+          tl_A(i,j)=tl_Awrk(i,j)
+        END DO
+      END DO
+!
+      RETURN
+      END SUBROUTINE tl_multiscale_Klap_r2d
+!
+!-----------------------------------------------------------------------
+!  It computes the adjoint K-Laplacian, [1 + Del(K*Del)], of a
+!  2D control variable at RHO-points.
+!
+      SUBROUTINE ad_multiscale_Klap_r2d (self, ng, tile, model,         &
+     &                                   ifield, ctype, ms, Lweak,      &
+     &                                   LBi, UBi, LBj, UBj,            &
+     &                                   IminS, ImaxS, JminS, JmaxS,    &
+     &                                   ad_A)
+!
+      CLASS (multiscale), intent(inout) :: self      ! multiscale object
+      integer,            intent(in   ) :: ng        ! nested grid
+      integer,            intent(in   ) :: tile      ! domain partition
+      integer,            intent(in   ) :: model     ! kernel ID
+      integer,            intent(in   ) :: ifield    ! state field ID
+      integer,            intent(in   ) :: ctype     ! C-grid type
+      integer,            intent(in   ) :: ms        ! multiscale index
+      logical,            intent(in   ) :: Lweak     ! weak constraint
+      integer,            intent(in   ) :: LBi, UBi, LBj, UBj
+      integer,            intent(in   ) :: IminS, ImaxS, JminS, JmaxS
+      real (r8),          intent(inout) :: ad_A(LBi:,LBj:)
+!
+      integer                           :: iLap, i, j, rec
+      integer                           :: Istr, Iend, Jstr, Jend
+      real (r8)                         :: adfac, cffx, cffy
+
+# ifdef READ_SCALES
+!
+      real (r8), pointer                :: bsclx(:,:) => NULL()
+      real (r8), pointer                :: bscly(:,:) => NULL()
+# endif
+!
+      real(r8), dimension(LBi:UBi,LBj:UBj)         :: ad_Awrk
+!
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Hfac
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Khx
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Khy
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: ad_FE
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: ad_FX
+!
+!  Initialize.
+!
+      Istr=BOUNDS(ng)%Istr(tile)     ! tile computational indices
+      Iend=BOUNDS(ng)%Iend(tile)
+      Jstr=BOUNDS(ng)%Jstr(tile)
+      Jend=BOUNDS(ng)%Jend(tile)
+!
+      IF (Lweak) THEN
+        rec=2                        ! weak constraint correlations
+      ELSE
+        rec=1                        ! strong constraint correlations
+      END IF
+!
+      ad_Awrk(LBi:UBi,LBj:UBj)=0.0_r8
+      ad_FE(IminS:ImaxS,JminS:JmaxS)=0.0_r8
+      ad_FX(IminS:ImaxS,JminS:JmaxS)=0.0_r8
+      Khx(IminS:ImaxS,JminS:JmaxS)=0.0_r8
+      Khy(IminS:ImaxS,JminS:JmaxS)=0.0_r8
+!
+!  Assign contol variable isotropic or anisotropic correlation length
+!  scales.
+!
+      SELECT CASE (ifield)
+        CASE (isFsur)
+# ifdef READ_SCALES
+          bsclx => self%bZscaleX(:,:,ms)
+          bscly => self%bZscaleY(:,:,ms)
+# endif
+          iLap=Mlap(ifield,ms,ng)
+# ifdef SOLVE3D
+        CASE (isTsur(itemp), isTsur(isalt))
+#  ifdef READ_SCALES
+          bsclx => self%bSTFscaleX(:,:,ifield,ms)
+          bscly => self%bSTFscaleY(:,:,ifield,ms)
+#  endif
+          iLap=Mlap(ifield,ms,ng)
+# endif
+      END SELECT
+!
+!  Compute metrics factor.
+!
+      DO j=Jstr,Jend
+        DO i=Istr,Iend
+          Hfac(i,j)=GRID(ng)%pm(i,j)*GRID(ng)%pn(i,j)
+        END DO
+      END DO
+!
+!  Set horizontal diffusion coefficients (Khx, Khy) with units of
+!  correlation length squared.
+!
+      DO j=Jstr-1,Jend+1
+        DO i=Istr-1,Iend+1
+# ifdef READ_SCALES
+          cffx=bsclx(i,j)*bsclx(i,j)       ! spatially varying
+          cffy=bscly(i,j)*bscly(i,j)
+# else
+          cffx=HdecayX(rec,ifield,ms,ng)*HdecayX(rec,ifield,ms,ng)
+          cffy=HdecayY(rec,ifield,ms,ng)*HdecayY(rec,ifield,ms,ng)
+# endif
+          Khx(i,j)=0.5_r8*cffx/REAL(iLap-2,r8)
+          Khy(i,j)=0.5_r8*cffy/REAL(iLap-2,r8)
+        END DO
+      END DO
+!
+!  Adjoint of load K-Laplacian solution.
+!
+      DO j=Jstr,Jend
+        DO i=Istr,Iend
+!^        tl_A(i,j)=tl_Awrk(i,j)
+!^
+          ad_Awrk(i,j)=ad_Awrk(i,j)+ad_A(i,j)
+          ad_A(i,j)=0.0_r8
+        END DO
+      END DO
+
+# ifdef DISTRIBUTE
+!
+!  Adjoint of exchange boundary data.
+!
+!^    CALL mp_exchange2d (ng, tile, model, 1,                           &
+!^   &                    LBi, UBi, LBj, UBj,                           &
+!^   &                    Nghost,                                       &
+!^   &                    EWperiodic(ng), NSperiodic(ng),               &
+!^   &                    tl_Awrk)
+!^
+      CALL ad_mp_exchange2d (ng, tile, model, 1,                        &
+     &                       LBi, UBi, LBj, UBj,                        &
+     &                       Nghost,                                    &
+     &                       EWperiodic(ng), NSperiodic(ng),            &
+     &                       ad_Awrk)
+# endif
+!
+!  Adjoint of compute K-Laplacian.
+!
+      DO j=Jstr,Jend
+        DO i=Istr,Iend
+!^        tl_Awrk(i,j)=tl_Awrk(i,j)-                                    &
+!^   &                 Hfac(i,j)*(tl_FX(i+1,j)-tl_FX(i,j)+              &
+!^   &                            tl_FE(i,j+1)-tl_FE(i,j))
+!^
+          adfac=-Hfac(i,j)*ad_Awrk(i,j)
+          ad_FE(i,j  )=ad_FE(i,j  )-adfac
+          ad_FE(i,j+1)=ad_FE(i,j+1)+adfac
+          ad_FX(i  ,j)=ad_FX(i  ,j)-adfac
+          ad_FX(i+1,j)=ad_FX(i+1,j)+adfac
+        END DO
+      END DO
+!
+!  Compute XI- and ETA-components of the adjoint diffusive flux.
+!
+      DO j=Jstr,Jend+1
+        DO i=Istr,Iend
+# ifdef MASKING
+!^        tl_FE(i,j)=tl_FE(i,j)*GRID(ng)*vmask(i,j)
+!^
+          ad_FE(i,j)=ad_FE(i,j)*GRID(ng)*vmask(i,j)
+# endif
+!^        tl_FE(i,j)=GRID(ng)%pnom_v(i,j)*                              &
+!^   &               0.5_r8*(Khy(i,j-1)+Khy(i,j))*                      &
+!^   &               (tl_Awrk(i,j)-tl_Awrk(i,j-1))
+!^
+          adfac=GRID(ng)%pnom_v(i,j)*                                   &
+     &          0.5_r8*(Khy(i,j-1)+Khy(i,j))*ad_FE(i,j)
+          ad_Awrk(i,j-1)=ad_Awrk(i,j-1)-adfac
+          ad_Awrk(i,j  )=ad_Awrk(i,j  )+adfac
+          ad_FE(i,j)=0.0_r8
+        END DO
+      END DO
+!
+      DO j=Jstr,Jend
+        DO i=Istr,Iend+1
+# ifdef MASKING
+!^        tl_FX(i,j)=tl_FX(i,j)*GRID(ng)%umask(i,j)
+!^
+          ad_FX(i,j)=ad_FX(i,j)*GRID(ng)%umask(i,j)
+# endif
+!^        tl_FX(i,j)=GRID(ng)%pmon_u(i,j)*                              &
+!^   &               0.5_r8*(Khx(i-1,j)+Khx(i,j))*                      &
+!^   &               (tl_Awrk(i,j)-tl_Awrk(i-1,j))
+!^
+          adfac=pmon_u(i,j)*                                            &
+     &          0.5_r8*(Khx(i-1,j)+Khx(i,j))*ad_FX(i,j)
+          ad_Awrk(i-1,j)=ad_Awrk(i-1,j)-adfac
+          ad_Awrk(i  ,j)=ad_Awrk(i  ,j)+adfac
+          ad_FX(i,j)=0.0_r8
+        END DO
+      END DO
+!
+!  Set adjoint initial conditions.
+!
+      DO j=Jstr-1,Jend+1
+        DO i=Istr-1,Iend+1
+!^        tl_Awrk(i,j)=tl_A(i,j)
+!^
+          ad_A(i,j)=ad_A(i,j)+ad_Awrk(i,j)
+          ad_Awrk(i,j)=0.0_r8
+        END DO
+      END DO
+
+# ifdef DISTRIBUTE
+!
+!^    CALL mp_exchange2d (ng, tile, model, 1,                           &
+!^   &                    LBi, UBi, LBj, UBj,                           &
+!^   &                    Nghost,                                       &
+!^                        EWperiodic(ng), NSperiodic(ng),               &
+!^   &                    tl_A)
+!^
+      CALL ad_mp_exchange2d (ng, tile, model, 1,                        &
+     &                       LBi, UBi, LBj, UBj,                        &
+     &                       Nghost,                                    &
+     &                       EWperiodic(ng), NSperiodic(ng),            &
+     &                       ad_A)
+# endif
+!^    CALL dabc_r2d_tile (ng, tile,                                     &
+!^   &                    LBi, UBi, LBj, UBj,                           &
+!^   &                    tl_A)
+!^
+      CALL ad_dabc_r2d_tile (ng, tile,                                  &
+     &                       LBi, UBi, LBj, UBj,                        &
+     &                       ad_A)
+!
+      END SUBROUTINE ad_multiscale_Klap_r2d
+      RETURN
+!
+!-----------------------------------------------------------------------
+!  It computes the tangent linear K-Laplacian, [1 + Del(K*Del)], of a
+!  2D control variable at U-points.
+!
+      SUBROUTINE tl_multiscale_Klap_u2d (self, ng, tile, model,         &
+     &                                   ifield, ctype, ms, Lweak,      &
+     &                                   LBi, UBi, LBj, UBj,            &
+     &                                   IminS, ImaxS, JminS, JmaxS,    &
+     &                                   tl_A)
+!
+      CLASS (multiscale), intent(inout) :: self      ! multiscale object
+      integer,            intent(in   ) :: ng        ! nested grid
+      integer,            intent(in   ) :: tile      ! domain partition
+      integer,            intent(in   ) :: model     ! kernel ID
+      integer,            intent(in   ) :: ifield    ! state field ID
+      integer,            intent(in   ) :: ctype     ! C-grid type
+      integer,            intent(in   ) :: ms        ! multiscale index
+      logical,            intent(in   ) :: Lweak     ! weak constraint
+      integer,            intent(in   ) :: LBi, UBi, LBj, UBj
+      integer,            intent(in   ) :: IminS, ImaxS, JminS, JmaxS
+      real (r8),          intent(inout) :: tl_A(LBi:,LBj:)
+!
+      integer                           :: iLap, i, j, rec
+      integer                           :: IstrU, Iend, Jstr, Jend
+      real (r8)                         :: cffx, cffy
+
+# ifdef READ_SCALES
+!
+      real (r8), pointer                :: bsclx(:,:) => NULL()
+      real (r8), pointer                :: bscly(:,:) => NULL()
+# endif
+!
+      real(r8), dimension(LBi:UBi,LBj:UBj)         :: tl_Awrk
+!
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Hfac
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Khx
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Khy
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_FE
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_FX
+!
+!  Initialize.
+!
+      IstrU=BOUNDS(ng)%IstrU(tile)   ! tile computational indices
+      Iend =BOUNDS(ng)%Iend (tile)
+      Jstr =BOUNDS(ng)%Jstr (tile)
+      Jend =BOUNDS(ng)%Jend (tile)
+!
+      IF (Lweak) THEN
+        rec=2                        ! weak constraint correlations
+      ELSE
+        rec=1                        ! strong constraint correlations
+      END IF
+!
+!  Assign contol variable isotropic or anisotropic correlation length
+!  scales.
+!
+      SELECT CASE (ifield)
+        CASE (isUbar)
+# ifdef READ_SCALES
+          bsclx => self%bU2DscaleX(:,:,ms)
+          bscly => self%bU2DscaleY(:,:,ms)
+# endif
+          iLap=Mlap(ifield,ms,ng)
+        CASE (isUstr)
+# ifdef READ_SCALES
+          bsclx => self%bSUSscaleX(:,:,ms)
+          bscly => self%bSUSscaleY(:,:,ms)
+# endif
+          iLap=Mlap(ifield,ms,ng)
+      END SELECT
+!
+!  Compute metrics factor.
+!
+      DO j=Jstr,Jend
+        DO i=IstrU,Iend
+          Hfac(i,j)=0.25_r8*(GRID(ng)%pm(i-1,j)+GRID(ng)%pm(i,j))*      &
+     &                      (GRID(ng)%pn(i-1,j)+GRID(ng)%pn(i,j))
+        END DO
+      END DO
+!
+!  Set horizontal diffusion coefficients (Khx, Khy) with units of
+!  correlation length squared.
+!
+      DO j=Jstr-1,Jend+1
+        DO i=IstrU-1,Iend+1
+# ifdef READ_SCALES
+          cffx=bsclx(i,j)*bsclx(i,j)       ! spatially varying
+          cffy=bscly(i,j)*bscly(i,j)
+# else
+          cffx=HdecayX(rec,ifield,ms,ng)*HdecayX(rec,ifield,ms,ng)
+          cffy=HdecayY(rec,ifield,ms,ng)*HdecayY(rec,ifield,ms,ng)
+# endif
+          Khx(i,j)=0.5_r8*cffx/REAL(iLap-2,r8)
+          Khy(i,j)=0.5_r8*cffy/REAL(iLap-2,r8)
+        END DO
+      END DO
+!
+!  Set operator initial conditions.
+!
+!^    CALL dabc_u2d_tile (ng, tile,                                     &
+!^   &                    LBi, UBi, LBj, UBj,                           &
+!^   &                    A)
+!^
+      CALL dabc_u2d_tile (ng, tile,                                     &
+     &                    LBi, UBi, LBj, UBj,                           &
+     &                    tl_A)
+# ifdef DISTRIBUTE
+!
+!^    CALL mp_exchange2d (ng, tile, model, 1,                           &
+!^   &                    LBi, UBi, LBj, UBj,                           &
+!^   &                    Nghost,                                       &
+!^   &                    EWperiodic(ng), NSperiodic(ng),               &
+!^   &                    A)
+!^
+      CALL mp_exchange2d (ng, tile, model, 1,                           &
+     &                    LBi, UBi, LBj, UBj,                           &
+     &                    Nghost,                                       &
+     &                    EWperiodic(ng), NSperiodic(ng),               &
+     &                    tl_A)
+# endif
+!
+      DO j=Jstr-1,Jend+1
+        DO i=IstrU-1,Iend+1
+!^        Awrk(i,j)=A(i,j)
+!^
+          tl_Awrk(i,j)=tl_A(i,j)
+        END DO
+      END DO
+!
+!  Compute XI- and ETA-components of diffusive flux.
+!
+      DO j=Jstr,Jend
+        DO i=IstrU-1,Iend
+!^        FX(i,j)=GRID(ng)%pmon_r(i,j)*                                 &
+!^   &            Khx(i,j)*(Awrk(i+1,j)-Awrk(i,j))
+!^
+          tl_FX(i,j)=GRID(ng)%pmon_r(i,j)*                              &
+     &               Khx(i,j)*(tl_Awrk(i+1,j)-tl_Awrk(i,j))
+        END DO
+      END DO
+!
+      DO j=Jstr,Jend+1
+        DO i=IstrU,Iend
+!^        FE(i,j)=GRID(ng)%pnom_p(i,j)*                                 &
+!^   &            0.25_r8*(Khy(i-1,j  )+Khy(i,j  )+                     &
+!^   &                     Khy(i-1,j-1)+Khy(i,j-1))*                    &
+!^   &            (Awrk(i,j)-Awrk(i,j-1))
+!^
+          tl_FE(i,j)=GRID(ng)%pnom_p(i,j)*                              &
+     &               0.25_r8*(Khy(i-1,j  )+Khy(i,j  )+                  &
+     &                        Khy(i-1,j-1)+Khy(i,j-1))*                 &
+     &               (tl_Awrk(i,j)-tl_Awrk(i,j-1))
+# ifdef MASKING
+!^        FE(i,j)=FE(i,j)*GRID(ng)%pmask(i,j)
+!^
+          tl_FE(i,j)=tl_FE(i,j)*GRID(ng)%pmask(i,j)
+# endif
+        END DO
+      END DO
+!
+!  Compute K-Laplacian operator.
+!
+      DO j=Jstr,Jend
+        DO i=IstrU,Iend
+!^        Awrk(i,j)=Awrk(i,j)-                                          &
+!^   &              Hfac(i,j)*(FX(i,j)-FX(i-1,j)+                       &
+!^   &                         FE(i,j+1)-FE(i,j))
+!^
+          tl_Awrk(i,j)=tl_Awrk(i,j)-                                    &
+     &                 Hfac(i,j)*(tl_FX(i,j)-tl_FX(i-1,j)+              &
+     &                            tl_FE(i,j+1)-tl_FE(i,j))
+        END DO
+      END DO
+
+# ifdef DISTRIBUTE
+!
+!  Exchange boundary data.
+!
+!^    CALL mp_exchange2d (ng, tile, model, 1,                           &
+!^   &                    LBi, UBi, LBj, UBj,                           &
+!^   &                    Nghost,                                       &
+!^   &                    EWperiodic(ng), NSperiodic(ng),               &
+!^   &                    Awrk)
+!^
+      CALL mp_exchange2d (ng, tile, model, 1,                           &
+     &                    LBi, UBi, LBj, UBj,                           &
+     &                    Nghost,                                       &
+     &                    EWperiodic(ng), NSperiodic(ng),               &
+     &                    tl_Awrk)
+# endif
+!
+!  Load K-Laplacian solution.
+!
+      DO j=Jstr,Jend
+        DO i=IstrU,Iend
+!^        A(i,j)=Awrk(i,j)
+!^
+          tl_A(i,j)=tl_Awrk(i,j)
+        END DO
+      END DO
+!
+      RETURN
+      END SUBROUTINE tl_multiscale_Klap_u2d
+!
+!-----------------------------------------------------------------------
+!  It computes the adjoint K-Laplacian, [1 + Del(K*Del)], of a
+!  2D control variable at U-points.
+!
+      SUBROUTINE ad_multiscale_Klap_u2d (self, ng, tile, model,         &
+     &                                   ifield, ctype, ms, Lweak,      &
+     &                                   LBi, UBi, LBj, UBj,            &
+     &                                   IminS, ImaxS, JminS, JmaxS,    &
+     &                                   ad_A)
+!
+      CLASS (multiscale), intent(inout) :: self      ! multiscale object
+      integer,            intent(in   ) :: ng        ! nested grid
+      integer,            intent(in   ) :: tile      ! domain partition
+      integer,            intent(in   ) :: model     ! kernel ID
+      integer,            intent(in   ) :: ifield    ! state field ID
+      integer,            intent(in   ) :: ctype     ! C-grid type
+      integer,            intent(in   ) :: ms        ! multiscale index
+      logical,            intent(in   ) :: Lweak     ! weak constraint
+      integer,            intent(in   ) :: LBi, UBi, LBj, UBj
+      integer,            intent(in   ) :: IminS, ImaxS, JminS, JmaxS
+      real (r8),          intent(inout) :: ad_A(LBi:,LBj:)
+!
+      integer                           :: iLap, i, j, rec
+      integer                           :: IstrU, Iend, Jstr, Jend
+      real (r8)                         :: adfac, cffx, cffy
+
+# ifdef READ_SCALES
+!
+      real (r8), pointer                :: bsclx(:,:) => NULL()
+      real (r8), pointer                :: bscly(:,:) => NULL()
+# endif
+!
+      real(r8), dimension(LBi:UBi,LBj:UBj)         :: ad_Awrk
+!
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Hfac
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Khx
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Khy
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: ad_FE
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: ad_FX
+!
+!  Initialize.
+!
+      IstrU=BOUNDS(ng)%IstrU(tile)   ! tile computational indices
+      Iend =BOUNDS(ng)%Iend (tile)
+      Jstr =BOUNDS(ng)%Jstr (tile)
+      Jend =BOUNDS(ng)%Jend (tile)
+!
+      IF (Lweak) THEN
+        rec=2                        ! weak constraint correlations
+      ELSE
+        rec=1                        ! strong constraint correlations
+      END IF
+!
+      ad_Awrk(LBi:UBi,LBj:UBj)=0.0_r8
+      ad_FE(IminS:ImaxS,JminS:JmaxS)=0.0_r8
+      ad_FX(IminS:ImaxS,JminS:JmaxS)=0.0_r8
+      Khx(IminS:ImaxS,JminS:JmaxS)=0.0_r8
+      Khy(IminS:ImaxS,JminS:JmaxS)=0.0_r8
+!
+!  Assign contol variable isotropic or anisotropic correlation length
+!  scales.
+!
+      SELECT CASE (ifield)
+        CASE (isUbar)
+# ifdef READ_SCALES
+          bsclx => self%bU2DscaleX(:,:,ms)
+          bscly => self%bU2DscaleY(:,:,ms)
+# endif
+          iLap=Mlap(ifield,ms,ng)
+        CASE (isUstr)
+# ifdef READ_SCALES
+          bsclx => self%bSUSscaleX(:,:,ms)
+          bscly => self%bSUSscaleY(:,:,ms)
+# endif
+          iLap=Mlap(ifield,ms,ng)
+      END SELECT
+!
+!  Compute metrics factor.
+!
+      DO j=Jstr,Jend
+        DO i=IstrU,Iend
+          Hfac(i,j)=0.25_r8*(GRID(ng)%pm(i-1,j)+GRID(ng)%pm(i,j))*      &
+     &                      (GRID(ng)%pn(i-1,j)+GRID(ng)%pn(i,j))
+        END DO
+      END DO
+!
+!  Set horizontal diffusion coefficients (Khx, Khy) with units of
+!  correlation length squared.
+!
+      DO j=Jstr-1,Jend+1
+        DO i=IstrU-1,Iend+1
+# ifdef READ_SCALES
+          cffx=bsclx(i,j)*bsclx(i,j)       ! spatially varying
+          cffy=bscly(i,j)*bscly(i,j)
+# else
+          cffx=HdecayX(rec,ifield,ms,ng)*HdecayX(rec,ifield,ms,ng)
+          cffy=HdecayY(rec,ifield,ms,ng)*HdecayY(rec,ifield,ms,ng)
+# endif
+          Khx(i,j)=0.5_r8*cffx/REAL(iLap-2,r8)
+          Khy(i,j)=0.5_r8*cffy/REAL(iLap-2,r8)
+        END DO
+      END DO
+!
+!  Adjoint of load K-Laplacian solution.
+!
+      DO j=Jstr,Jend
+        DO i=IstrU,Iend
+!^        tl_A(i,j)=tl_Awrk(i,j)
+!^
+          ad_Awrk(i,j)=ad_Awrk(i,j)+ad_A(i,j)
+          ad_A(i,j)=0.0_r8
+        END DO
+      END DO
+
+# ifdef DISTRIBUTE
+!
+!  Adjoint of Exchange boundary data.
+!
+!^    CALL mp_exchange2d (ng, tile, model, 1,                           &
+!^   &                    LBi, UBi, LBj, UBj,                           &
+!^   &                    Nghost,                                       &
+!^   &                    EWperiodic(ng), NSperiodic(ng),               &
+!^   &                    tl_Awrk)
+!^
+      CALL ad_mp_exchange2d (ng, tile, model, 1,                        &
+     &                       LBi, UBi, LBj, UBj,                        &
+     &                       Nghost,                                    &
+     &                       EWperiodic(ng), NSperiodic(ng),            &
+     &                       ad_Awrk)
+# endif
+!
+!  Adjoint of compute K-Laplacian.
+!
+      DO j=Jstr,Jend
+        DO i=IstrU,Iend
+!^        tl_Awrk(i,j)=tl_Awrk(i,j)-                                    &
+!^   &                 Hfac(i,j)*(tl_FX(i,j)-tl_FX(i-1,j)+              &
+!^   &                            tl_FE(i,j+1)-tl_FE(i,j))
+!^
+          adfac=-Hfac(i,j)*ad_Awrk(i,j)
+          ad_FE(i,j  )=ad_FE(i,j  )-adfac
+          ad_FE(i,j+1)=ad_FE(i,j+1)+adfac
+          ad_FX(i-1,j)=ad_FX(i-1,j)-adfac
+          ad_FX(i  ,j)=ad_FX(i  ,j)+adfac
+        END DO
+      END DO
+!
+!  Compute XI- and ETA-components of the adjoint diffusive flux.
+!
+      DO j=Jstr,Jend+1
+        DO i=IstrU,Iend
+# ifdef MASKING
+!^        tl_FE(i,j)=tl_FE(i,j)*GRID(ng)%pmask(i,j)
+!^
+          ad_FE(i,j)=ad_FE(i,j)*GRID(ng)%pmask(i,j)
+# endif
+!^        tl_FE(i,j)=GRID(ng)%pnom_p(i,j)*                              &
+!^   &               0.25_r8*(Khy(i-1,j  )+Khy(i,j  )+                  &
+!^   &                        Khy(i-1,j-1)+Khy(i,j-1))*                 &
+!^   &               (tl_Awrk(i,j)-tl_Awrk(i,j-1))
+!^
+          adfac=GRID(ng)%pnom_p(i,j)*                                   &
+     &          0.25_r8*(Khy(i-1,j  )+Khy(i,j  )+                       &
+     &                   Khy(i-1,j-1)+Khy(i,j-1))*ad_FE(i,j)
+          ad_Awrk(i,j-1)=ad_Awrk(i,j-1)-adfac
+          ad_Awrk(i,j  )=ad_Awrk(i,j  )+adfac
+          ad_FE(i,j)=0.0_r8
+        END DO
+      END DO
+!
+      DO j=Jstr,Jend
+        DO i=IstrU-1,Iend
+!^        tl_FX(i,j)=GRID(ng)%pmon_r(i,j)*                              &
+!^   &               Khx(i,j)*(tl_Awrk(i+1,j)-tl_Awrk(i,j))
+!^
+          adfac=GRID(ng0%pmon_r(i,j)*Khx(i,j)*ad_FX(i,j)
+          ad_Awrk(i  ,j)=ad_Awrk(i  ,j)-adfac
+          ad_Awrk(i+1,j)=ad_Awrk(i+1,j)+adfac
+          ad_FX(i,j)=0.0_r8
+        END DO
+      END DO
+!
+!  Set adjoint initial conditions.
+!
+      DO j=Jstr-1,Jend+1
+        DO i=IstrU-1,Iend+1
+!^        tl_Awrk(i,j)=tl_A(i,j)
+!^
+          ad_A(i,j)=ad_A(i,j)+ad_Awrk(i,j)
+          ad_Awrk(i,j)=0.0_r8
+        END DO
+      END DO
+# ifdef DISTRIBUTE
+!
+!^    CALL mp_exchange2d (ng, tile, model, 1,                           &
+!^   &                    LBi, UBi, LBj, UBj,                           &
+!^   &                    Nghost,                                       &
+!^   &                    EWperiodic(ng), NSperiodic(ng),               &
+!^   &                    tl_A)
+!^
+      CALL ad_mp_exchange2d (ng, tile, model, 1,                        &
+     &                       LBi, UBi, LBj, UBj,                        &
+     &                       Nghost,                                    &
+     &                       EWperiodic(ng), NSperiodic(ng),            &
+     &                       ad_A)
+# endif
+!
+!^    CALL dabc_u2d_tile (ng, tile,                                     &
+!^   &                    LBi, UBi, LBj, UBj,                           &
+!^   &                    tl_A)
+!^
+      CALL ad_dabc_u2d_tile (ng, tile,                                  &
+     &                       LBi, UBi, LBj, UBj,                        &
+     &                       ad_A)
+!
+      RETURN
+      END SUBROUTINE ad_multiscale_Klap_u2d
+!
+!-----------------------------------------------------------------------
+!  It computes the tangent linear K-Laplacian, [1 + Del(K*Del)], of a
+!  2D control variable at V-points.
+!
+      SUBROUTINE tl_multiscale_Klap_v2d (self, ng, tile, model,         &
+     &                                   ifield, ctype, ms,             &
+     &                                   LBi, UBi, LBj, UBj,            &
+     &                                   IminS, ImaxS, JminS, JmaxS,    &
+     &                                   tl_A)
+!
+      CLASS (multiscale), intent(inout) :: self      ! multiscale object
+      integer,            intent(in   ) :: ng        ! nested grid
+      integer,            intent(in   ) :: tile      ! domain partition
+      integer,            intent(in   ) :: model     ! kernel ID
+      integer,            intent(in   ) :: ifield    ! state field ID
+      integer,            intent(in   ) :: ctype     ! C-grid type
+      integer,            intent(in   ) :: ms        ! multiscale index
+      logical,            intent(in   ) :: Lweak     ! weak constraint
+      integer,            intent(in   ) :: LBi, UBi, LBj, UBj
+      integer,            intent(in   ) :: IminS, ImaxS, JminS, JmaxS
+      real (r8),          intent(inout) :: tl_A(LBi:,LBj:)
+!
+      integer                           :: iLap, i, j, rec
+      integer                           :: Istr, Iend, JstrV, Jend
+      real (r8)                         :: cffx, cffy
+
+# ifdef READ_SCALES
+!
+      real (r8), pointer                :: bsclx(:,:) => NULL()
+      real (r8), pointer                :: bscly(:,:) => NULL()
+# endif
+!
+      real(r8), dimension(LBi:UBi,LBj:UBj)         :: tl_Awrk
+!
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Hfac
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Khx
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Khy
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_FE
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_FX
+!
+!  Initialize.
+!
+      Istr =BOUNDS(ng)%Istr (tile)   ! tile computational indices
+      Iend =BOUNDS(ng)%Iend (tile)
+      JstrV=BOUNDS(ng)%JstrV(tile)
+      Jend =BOUNDS(ng)%Jend (tile)
+!
+      IF (Lweak) THEN
+        rec=2                        ! weak constraint correlations
+      ELSE
+        rec=1                        ! strong constraint correlations
+      END IF
+!
+!  Assign contol variable isotropic or anisotropic correlation length
+!  scales.
+!
+      SELECT CASE (ifield)
+        CASE (isVbar)
+# ifdef READ_SCALES
+          bsclx => self%bV2DscaleX(:,:,ms)
+          bscly => self%bV2DscaleY(:,:,ms)
+# endif
+          iLap=Mlap(ifield,ms,ng)
+        CASE (isVstr)
+# ifdef READ_SCALES
+          bsclx => self%bSVSscaleX(:,:,ms)
+          bscly => self%bSVSscaleY(:,:,ms)
+# endif
+          iLap=Mlap(ifield,ms,ng)
+      END SELECT
+!
+!  Compute metrics factor.
+!
+      DO j=JstrV,Jend
+        DO i=Istr,Iend
+          Hfac(i,j)=0.25_r8*(GRID(ng)%pm(i,j-1)+GRID(ng)%pm(i,j))*      &
+     &                      (GRID(ng)%pn(i,j-1)+GRID(ng)%pn(i,j))
+        END DO
+      END DO
+!
+!  Set horizontal diffusion coefficients (Khx, Khy) with units of
+!  correlation length squared.
+!
+      DO j=JstrV-1,Jend+1
+        DO i=Istr-1,Iend+1
+# ifdef READ_SCALES
+          cffx=bsclx(i,j)*bsclx(i,j)       ! spatially varying
+          cffy=bscly(i,j)*bscly(i,j)
+# else
+          cffx=HdecayX(rec,ifield,ms,ng)*HdecayX(rec,ifield,ms,ng)
+          cffy=HdecayY(rec,ifield,ns,ng)*HdecayY(rec,ifield,ms,ng)
+# endif
+          Khx(i,j)=0.5_r8*cffx/REAL(iLap-2,r8)
+          Khy(i,j)=0.5_r8*cffy/REAL(iLap-2,r8)
+        END DO
+      END DO
+!
+!  Set operator initial conditions.
+!
+!^    CALL dabc_v2d_tile (ng, tile,                                     &
+!^   &                    LBi, UBi, LBj, UBj,                           &
+!^   &                    A)
+!^
+      CALL dabc_v2d_tile (ng, tile,                                     &
+     &                    LBi, UBi, LBj, UBj,                           &
+     &                    tl_A)
+
+# ifdef DISTRIBUTE
+!
+!^    CALL mp_exchange2d (ng, tile, model, 1,                           &
+!^   &                    LBi, UBi, LBj, UBj,                           &
+!^   &                    Nghost,                                       &
+!^   &                    EWperiodic(ng), NSperiodic(ng),               &
+!^   &                    A)
+!^
+      CALL mp_exchange2d (ng, tile, model, 1,                           &
+     &                    LBi, UBi, LBj, UBj,                           &
+     &                    Nghost,                                       &
+     &                    EWperiodic(ng), NSperiodic(ng),               &
+     &                    tl_A)
+# endif
+!
+      DO j=JstrV-1,Jend+1
+        DO i=Istr-1,Iend+1
+!^        Awrk(i,j)=A(i,j)
+!^
+          tl_Awrk(i,j)=tl_A(i,j)
+        END DO
+      END DO
+!
+!  Compute XI- and ETA-components of diffusive flux.
+!
+      DO j=JstrV,Jend
+        DO i=Istr,Iend+1
+!^        FX(i,j)=GRID(ng)%pmon_p(i,j)*                                 &
+!^   &            0.25_r8*(Khx(i-1,j  )+Khx(i,j  )+                     &
+!^   &                     Khx(i-1,j-1)+Khx(i,j-1))*                    &
+!^   &            (Awrk(i,j)-Awrk(i-1,j))
+!^
+          tl_FX(i,j)=GRID(ng)%pmon_p(i,j)*                              &
+     &               0.25_r8*(Khx(i-1,j  )+Khx(i,j  )+                  &
+     &                        Khx(i-1,j-1)+Khx(i,j-1))*                 &
+     &               (tl_Awrk(i,j)-tl_Awrk(i-1,j))
+# ifdef MASKING
+!^        FX(i,j)=FX(i,j)*GRID(ng)*pmask(i,j)
+!^
+          tl_FX(i,j)=tl_FX(i,j)*GRID(ng)*pmask(i,j)
+# endif
+        END DO
+      END DO
+!
+      DO j=JstrV-1,Jend
+        DO i=Istr,Iend
+!^        FE(i,j)=GRID(ng)%pnom_r(i,j)*                                 &
+!^   &            Khy(i,j)*(Awrk(i,j+1)-Awrk(i,j))
+!^
+          tl_FE(i,j)=GRID(ng)%pnom_r(i,j)*                              &
+     &               Khy(i,j)*(tl_Awrk(i,j+1)-tl_Awrk(i,j))
+        END DO
+      END DO
+!
+!  Compute K-Laplacian operator.
+!
+      DO j=JstrV,Jend
+        DO i=Istr,Iend
+!^        Awrk(i,j)=Awrk(i,j)-                                          &
+!^   &              Hfac(i,j)*(FX(i+1,j)-FX(i,j)+                       &
+!^   &                         FE(i,j)-FE(i,j-1))
+!^
+          tl_Awrk(i,j)=tl_Awrk(i,j)-                                    &
+     &                 Hfac(i,j)*(tl_FX(i+1,j)-tl_FX(i,j)+              &
+     &                            tl_FE(i,j)-tl_FE(i,j-1))
+        END DO
+      END DO
+
+# ifdef DISTRIBUTE
+!
+!  Exchange boundary data.
+!
+!^      CALL mp_exchange2d (ng, tile, model, 1,                         &
+!^   &                      LBi, UBi, LBj, UBj,                         &
+!^   &                      Nghost,                                     &
+!^   &                      EWperiodic(ng), NSperiodic(ng),             &
+!^   &                      Awrk)
+!^
+        CALL mp_exchange2d (ng, tile, model, 1,                         &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      Nghost,                                     &
+     &                      EWperiodic(ng), NSperiodic(ng),             &
+     &                      tl_Awrk)
+# endif
+!
+!  Load K-Laplacian solution.
+!
+      DO j=JstrV,Jend
+        DO i=Istr,Iend
+!^        A(i,j)=Awrk(i,j)
+!^
+          tl_A(i,j)=tl_Awrk(i,j)
+        END DO
+      END DO
+!
+      RETURN
+      END SUBROUTINE tl_multiscale_Klap_v2d
+!
+!-----------------------------------------------------------------------
+!  It computes the adjoint K-Laplacian, [1 + Del(K*Del)], of a
+!  2D control variable at V-points.
+!
+      SUBROUTINE ad_multiscale_Klap_v2d (self, ng, tile, model,         &
+     &                                   ifield, ctype, ms, Lweak,      &
+     &                                   LBi, UBi, LBj, UBj,            &
+     &                                   IminS, ImaxS, JminS, JmaxS,    &
+     &                                   ad_A)
+!
+      CLASS (multiscale), intent(inout) :: self      ! multiscale object
+      integer,            intent(in   ) :: ng        ! nested grid
+      integer,            intent(in   ) :: tile      ! domain partition
+      integer,            intent(in   ) :: model     ! kernel ID
+      integer,            intent(in   ) :: ifield    ! state field ID
+      integer,            intent(in   ) :: ctype     ! C-grid type
+      integer,            intent(in   ) :: ms        ! multiscale index
+      logical,            intent(in   ) :: Lweak     ! weak constraint
+      integer,            intent(in   ) :: LBi, UBi, LBj, UBj
+      integer,            intent(in   ) :: IminS, ImaxS, JminS, JmaxS
+      real (r8),          intent(inout) :: ad_A(LBi:,LBj:)
+!
+      integer                           :: iLap, i, j, rec
+      integer                           :: Istr, Iend, JstrV, Jend
+      real (r8)                         :: adfac, cffx, cffy
+
+# ifdef READ_SCALES
+!
+      real (r8), pointer                :: bsclx(:,:) => NULL()
+      real (r8), pointer                :: bscly(:,:) => NULL()
+# endif
+!
+      real(r8), dimension(LBi:UBi,LBj:UBj)         :: ad_Awrk
+!
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Hfac
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Khx
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Khy
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: ad_FE
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: ad_FX
+!
+!  Initialize.
+!
+      Istr =BOUNDS(ng)%Istr (tile)   ! tile computational indices
+      Iend =BOUNDS(ng)%Iend (tile)
+      JstrV=BOUNDS(ng)%JstrV(tile)
+      Jend =BOUNDS(ng)%Jend (tile)
+!
+      IF (Lweak) THEN
+        rec=2                        ! weak constraint correlations
+      ELSE
+        rec=1                        ! strong constraint correlations
+      END IF
+!
+      ad_Awrk(LBi:UBi,LBj:UBj)=0.0_r8
+      ad_FE(IminS:ImaxS,JminS:JmaxS)=0.0_r8
+      ad_FX(IminS:ImaxS,JminS:JmaxS)=0.0_r8
+      Khx(IminS:ImaxS,JminS:JmaxS)=0.0_r8
+      Khy(IminS:ImaxS,JminS:JmaxS)=0.0_r8
+!
+!  Assign contol variable isotropic or anisotropic correlation length
+!  scales.
+!
+      SELECT CASE (ifield)
+        CASE (isVbar)
+# ifdef READ_SCALES
+          bsclx => self%bV2DscaleX(:,:,ms)
+          bscly => self%bV2DscaleY(:,:,ms)
+# endif
+          iLap=Mlap(ifield,ms,ng)
+        CASE (isVstr)
+# ifdef READ_SCALES
+          bsclx => self%bSVSscaleX(:,:,ms)
+          bscly => self%bSVSscaleY(:,:,ms)
+# endif
+          iLap=Mlap(ifield,ms,ng)
+      END SELECT
+!
+!  Compute metrics factor.
+!
+      DO j=Jstr,Jend
+        DO i=IstrU,Iend
+          Hfac(i,j)=0.25_r8*(GRID(ng)%pm(i,j-1)+GRID(ng)%pm(i,j))*      &
+     &                      (GRID(ng)%pn(i,j-1)+GRID(ng)%pn(i,j))
+        END DO
+      END DO
+!
+!  Set horizontal diffusion coefficients (Khx, Khy) with units of
+!  correlation length squared.
+!
+      DO j=JstrV-1,Jend+1
+        DO i=Istr-1,Iend+1
+# ifdef READ_SCALES
+          cffx=bsclx(i,j)*bsclx(i,j)       ! spatially varying
+          cffy=bscly(i,j)*bscly(i,j)
+# else
+          cffx=HdecayX(rec,ifield,ms,ng)*HdecayX(rec,ifield,ms,ng)
+          cffy=HdecayY(rec,ifield,ms,ng)*HdecayY(rec,ifield,ms,ng)
+# endif
+          Khx(i,j)=0.5_r8*cffx/REAL(iLap-2,r8)
+          Khy(i,j)=0.5_r8*cffy/REAL(iLap-2,r8)
+        END DO
+      END DO
+
+# ifdef DISTRIBUTE
+!
+!  Adjoint of exchange boundary data.
+!
+!^    CALL mp_exchange2d (ng, tile, model, 1,                           &
+!^   &                    LBi, UBi, LBj, UBj,                           &
+!^   &                    Nghost,                                       &
+!^   &                    EWperiodic(ng), NSperiodic(ng),               &
+!^   &                    tl_Awrk)
+!^
+      CALL ad_mp_exchange2d (ng, tile, model, 1,                        &
+     &                       LBi, UBi, LBj, UBj,                        &
+     &                       Nghost,                                    &
+     &                       EWperiodic(ng), NSperiodic(ng),            &
+     &                       ad_A)
+# endif
+!
+!  Adjoint of load K-Laplacian solution.
+!
+      DO j=JstrV,Jend
+        DO i=Istr,Iend
+!^        tl_A(i,j)=tl_Awrk(i,j)
+!^
+          ad_Awrk(i,j)=ad_Awrk(i,j)+ad_A(i,j)
+          ad_A(i,j)=0.0_r8
+        END DO
+      END DO
+!
+!  Adjoint of compute K-Laplacian operator.
+!
+      DO j=JstrV,Jend
+        DO i=Istr,Iend
+!^        tl_Awrk(i,j)=tl_Awrk(i,j)-                                    &
+!^   &                 Hfac(i,j)*(tl_FX(i+1,j)-tl_FX(i,j)+              &
+!^   &                            tl_FE(i,j)-tl_FE(i,j-1))
+!^
+          adfac=-Hfac(i,j)*ad_Awrk(i,j)
+          ad_FE(i,j-1)=ad_FE(i,j-1)-adfac
+          ad_FE(i,j  )=ad_FE(i,j  )+adfac
+          ad_FX(i  ,j)=ad_FX(i  ,j)-adfac
+          ad_FX(i+1,j)=ad_FX(i+1,j)+adfac
+        END DO
+      END DO
+!
+!  Compute XI- and ETA-components of the adjoint diffusive flux.
+!
+      DO j=JstrV-1,Jend
+        DO i=Istr,Iend
+!^        tl_FE(i,j)=GRID(ng)%pnom_r(i,j)*                              &
+!^   &               Khy(i,j)*(tl_Awrk(i,j+1)-tl_Awrk(i,j))
+!^
+          adfac=GRID(ng)%pnom_r(i,j)*Khy(i,j)*ad_FE(i,j)
+          ad_Awrk(i,j  )=ad_Awrk(i,j  )-adfac
+          ad_Awrk(i,j+1)=ad_Awrk(i,j+1)+adfac
+          ad_FE(i,j)=0.0_r8
+        END DO
+      END DO
+!
+      DO j=JstrV,Jend
+        DO i=Istr,Iend+1
+# ifdef MASKING
+!^        tl_FX(i,j)=tl_FX(i,j)*GRID(ng)%pmask(i,j)
+!^
+          ad_FX(i,j)=ad_FX(i,j)*GRID(ng)%pmask(i,j)
+# endif
+!^        tl_FX(i,j)=GRID(ng)%pmon_p(i,j)*                              &
+!^   &               0.25_r8*(Khx(i-1,j  )+Khx(i,j  )+                  &
+!^   &                        Khx(i-1,j-1)+Khx(i,j-1))*                 &
+!^   &               (tl_Awrk(i,j)-tl_Awrk(i-1,j))
+!^
+          adfac=GRID(ng)%pmon_p(i,j)*                                   &
+     &          0.25_r8*(Khx(i-1,j  )+Khx(i,j  )+                       &
+     &                   Khx(i-1,j-1)+Khx(i,j-1))*ad_FX(i,j)
+          ad_Awrk(i-1,j)=ad_Awrk(i-1,j)-adfac
+          ad_Awrk(i  ,j)=ad_Awrk(i  ,j)+adfac
+          ad_FX(i,j)=0.0_r8
+        END DO
+      END DO
+!
+!  Set adjoint initial conditions.
+!
+      DO j=JstrV-1,Jend+1
+        DO i=Istr-1,Iend+1
+!^        tl_Awrk(i,j)=tl_A(i,j)
+!^
+          ad_A(i,j)=ad_A(i,j)+ad_Awrk(i,j)
+          ad_Awrk(i,j)=0.0_r8
+        END DO
+      END DO
+# ifdef DISTRIBUTE
+!^    CALL mp_exchange2d (ng, tile, model, 1,                           &
+!^   &                    LBi, UBi, LBj, UBj,                           &
+!^   &                    Nghost,                                       &
+!^   &                    EWperiodic(ng), NSperiodic(ng),               &
+!^   &                    tl_A)
+!^
+      CALL ad_mp_exchange2d (ng, tile, model, 1,                        &
+     &                       LBi, UBi, LBj, UBj,                        &
+     &                       Nghost,                                    &
+     &                       EWperiodic(ng), NSperiodic(ng),            &
+     &                       ad_A)
+# endif
+!^    CALL dabc_v2d_tile (ng, tile,                                     &
+!^   &                    LBi, UBi, LBj, UBj,                           &
+!^   &                    tl_A)
+!^
+      CALL ad_dabc_v2d_tile (ng, tile,                                  &
+     &                       LBi, UBi, LBj, UBj,                        &
+     &                       ad_A)
+!
+      RETURN
+      END SUBROUTINE ad_multiscale_Klap_v2d
+
+# ifdef SOLVE3D
+!
+!-----------------------------------------------------------------------
+!  It computes the tangent linear K-Laplacian, [1 + Del(K*Del)], of a
+!  3D control variable at RHO-points.
+!
+      SUBROUTINE tl_multiscale_Klap_r3d (self, ng, tile, model,         &
+     &                                   ifield, ctype, ms, Lweak,      &
+     &                                   LBi, UBi, LBj, UBj,            &
+     &                                   IminS, ImaxS, JminS, JmaxS,    &
+     &                                   tl_A)
+!
+      CLASS (multiscale), intent(inout) :: self      ! multiscale object
+      integer,            intent(in   ) :: ng        ! nested grid
+      integer,            intent(in   ) :: tile      ! domain partition
+      integer,            intent(in   ) :: model     ! kernel ID
+      integer,            intent(in   ) :: ifield    ! state field ID
+      integer,            intent(in   ) :: ctype     ! C-grid type
+      integer,            intent(in   ) :: ms        ! multiscale index
+      logical,            intent(in   ) :: Lweak     ! weak constraint
+      integer,            intent(in   ) :: LBi, UBi, LBj, UBj
+      integer,            intent(in   ) :: IminS, ImaxS, JminS, JmaxS
+      real (r8),          intent(inout) :: tl_A(LBi:,LBj:,:)
+!
+      integer                           :: iLap, i, j, k, k1, k2, rec
+      integer                           :: Istr, Iend, Jstr, Jend
+      real (r8)                         :: cff, cff1, cff2, cff3, cff4
+      real (r8)                         :: cffx, cffy
+
+#  ifdef READ_SCALES
+!
+      real (r8), pointer                :: bsclx(:,:) => NULL()
+      real (r8), pointer                :: bscly(:,:) => NULL()
+#  endif
+!
+      real(r8), dimension(LBi:UBi,LBj:UBj,1:N(ng)) :: tl_Awrk
+!
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Hfac
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Khx
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Khy
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_FE
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_FX
+#  ifdef GEOPOTENTIAL_HCONV
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,2) :: dZdx
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,2) :: dZde
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,2) :: tl_FZ
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,2) :: tl_dAdz
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,2) :: tl_dAdx
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,2) :: tl_dAde
+#  endif
+!
+!  Initialize.
+!
+      Istr=BOUNDS(ng)%Istr(tile)     ! tile computational indices
+      Iend=BOUNDS(ng)%Iend(tile)
+      Jstr=BOUNDS(ng)%Jstr(tile)
+      Jend=BOUNDS(ng)%Jend(tile)
+!
+      IF (Lweak) THEN
+        rec=2                        ! weak constraint correlations
+      ELSE
+        rec=1                        ! strong constraint correlations
+      END IF
+!
+!  Assign contol variable isotropic or anisotropic correlation length
+!  scales.
+!
+      SELECT CASE (ifield)
+        CASE (isTvar(itemp), isTvar(isalt))
+#  ifdef READ_SCALES
+          bsclx => self%bR3DscaleX(:,:,ifield,ms)
+          bscly => self%bR3DscaleY(:,:,ifield,ms)
+#  endif
+          iLap=Mlap(ifield,ms,ng)
+      END SELECT
+!
+!  Compute metrics factor.
+!
+      DO j=Jstr,Jend
+        DO i=Istr,Iend
+          Hfac(i,j)=GRID(ng)%pm(i,j)*GRID(ng)%pn(i,j)
+        END DO
+      END DO
+!
+!  Set horizontal diffusion coefficients (Khx, Khy) with units of
+!  correlation length squared.
+!
+      DO j=Jstr-1,Jend+1
+        DO i=Istr-1,Iend+1
+#  ifdef READ_SCALES
+          cffx=bsclx(i,j)*bsclx(i,j)       ! spatially varying
+          cffy=bscly(i,j)*bscly(i,j)
+#  else
+          cffx=HdecayX(rec,ifield,ms,ng)*HdecayX(rec,ifield,ms,ng)
+          cffy=HdecayY(rec,ifield,ms,ng)*HdecayY(rec,ifield,ms,ng)
+#  endif
+          Khx(i,j)=0.5_r8*cffx/REAL(iLap-2,r8)
+          Khy(i,j)=0.5_r8*cffy/REAL(iLap-2,r8)
+        END DO
+      END DO
+!
+!  Set operator initial conditions.
+!
+!^    CALL dabc_r3d_tile (ng, tile,                                     &
+!^   &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
+!^   &                    A)
+!^
+      CALL dabc_r3d_tile (ng, tile,                                     &
+     &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
+     &                    tl_A)
+#  ifdef DISTRIBUTE
+!
+!^    CALL mp_exchange3d (ng, tile, model, 1,                           &
+!^   &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
+!^   &                    Nghost,                                       &
+!^   &                    EWperiodic(ng), NSperiodic(ng),               &
+!^   &                    A)
+!^
+      CALL mp_exchange3d (ng, tile, model, 1,                           &
+     &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
+     &                    Nghost,                                       &
+     &                    EWperiodic(ng), NSperiodic(ng),               &
+     &                    tl_A)
+#  endif
+!
+      DO k=1,N(ng)
+        DO j=Jstr-1,Jend+1
+          DO i=Istr-1,Iend+1
+!^          Awrk(i,j,k)=A(i,j,k)
+!^
+            tl_Awrk(i,j,k)=tl_A(i,j,k)
+          END DO
+        END DO
+      END DO
+
+#  ifdef GEOPOTENTIAL_HCONV
+!
+!  Diffusion along geopotential surfaces: Compute horizontal and
+!  vertical gradients.  Notice the recursive blocking sequence.  The
+!  vertical placement of the gradients is:
+!
+!        dAdx,dAde(:,:,k1) k     rho-points
+!        dAdx,dAde(:,:,k2) k+1   rho-points
+!          FZ,dAdz(:,:,k1) k-1/2   W-points
+!          FZ,dAdz(:,:,k2) k+1/2   W-points
+!
+      k2=1
+      K_LOOP : DO k=0,N(ng)
+        k1=k2
+        k2=3-k1
+        IF (k.lt.N(ng)) THEN
+          DO j=Jstr,Jend
+            DO i=Istr,Iend+1
+              cff=0.5_r8*(GRID(ng)%pm(i-1,j)+GRID(ng)%pm(i,j))
+#   ifdef MASKING
+              cff=cff*GRID(ng)%umask(i,j)
+#   endif
+              dZdx(i,j,k2)=cff*(GRID(ng)%z_r(i  ,j,k+1)-                &
+     &                          GRID(ng)%z_r(i-1,j,k+1))
+#   ifdef MASKING
+!^            dAdx(i,j,k2)=cff*                                         &
+!^   &                     (Awrk(i  ,j,k+1)*GRID(ng)%rmask(i  ,j)-      &
+!^   &                      Awrk(i-1,j,k+1)*GRID(ng)%rmask(i-1,j))
+!^
+              tl_dAdx(i,j,k2)=cff*                                      &
+     &                        (tl_Awrk(i  ,j,k+1)*                      &
+     &                            GRID(ng)%rmask(i  ,j)-                &
+     &                         tl_Awrk(i-1,j,k+1)*                      &
+     &                            GRID(ng)%rmask(i-1,j))
+#   else
+!^            dAdx(i,j,k2)=cff*(Awrk(i  ,j,k+1)-                        &
+!^   &                          Awrk(i-1,j,k+1))
+!^
+              tl_dAdx(i,j,k2)=cff*(tl_Awrk(i  ,j,k+1)-                  &
+     &                             tl_Awrk(i-1,j,k+1))
+#   endif
+            END DO
+          END DO
+          DO j=Jstr,Jend+1
+            DO i=Istr,Iend
+              cff=0.5_r8*(GRID(ng)%pn(i,j-1)+GRID(ng)%pn(i,j))
+#   ifdef MASKING
+              cff=cff*GRID(ng)%vmask(i,j)
+#   endif
+              dZde(i,j,k2)=cff*(GRID(ng)%z_r(i,j  ,k+1)-                &
+     &                          GRID(ng)%z_r(i,j-1,k+1))
+#   ifdef MASKING
+!^            dAde(i,j,k2)=cff*
+!^   &                     (Awrk(i,j  ,k+1)*GRID(ng)%rmask(i,j  )-      &
+!^   &                      Awrk(i,j-1,k+1)*GRID(ng)%rmask(i,j-1))
+!^
+              tl_dAde(i,j,k2)=cff*                                      &
+     &                        (tl_Awrk(i,j  ,k+1)*                      &
+     &                            GRID(ng)%rmask(i,j  )-                &
+     &                         tl_Awrk(i,j-1,k+1)*                      &
+     &                            GRID(ng)%rmask(i,j-1))
+#   else
+!^            dAde(i,j,k2)=cff*(Awrk(i,j  ,k+1)-                        &
+!^   &                          Awrk(i,j-1,k+1))
+!^
+              tl_dAde(i,j,k2)=cff*(tl_Awrk(i,j  ,k+1)-                  &
+     &                             tl_Awrk(i,j-1,k+1))
+#   endif
+            END DO
+          END DO
+        END IF
+        IF ((k.eq.0).or.(k.eq.N(ng))) THEN
+          DO j=Jstr-1,Jend+1
+            DO i=Istr-1,Iend+1
+!^            dAdz(i,j,k2)=0.0_r8
+!^
+              tl_dAdz(i,j,k2)=0.0_r8
+!^            FZ(i,j,k2)=0.0_r8
+!^
+              tl_FZ(i,j,k2)=0.0_r8
+            END DO
+          END DO
+        ELSE
+          DO j=Jstr-1,Jend+1
+            DO i=Istr-1,Iend+1
+              cff=1.0_r8/(GRID(ng)%z_r(i,j,k+1)-GRID(ng)%z_r(i,j,k))
+!^            dAdz(i,j,k2)=cff*(Awrk(i,j,k+1)-                          &
+!^   &                          Awrk(i,j,k))
+!^
+              tl_dAdz(i,j,k2)=cff*(tl_Awrk(i,j,k+1)-                    &
+     &                             tl_Awrk(i,j,k))
+#   ifdef MASKING
+!^            dAdz(i,j,k2)=dAdz(i,j,k2)*GRID(ng)%rmask(i,j)
+!^
+              tl_dAdz(i,j,k2)=tl_dAdz(i,j,k2)*GRID(ng)%rmask(i,j)
+#   endif
+            END DO
+          END DO
+        END IF
+!
+!  Compute components of the rotated A flux along geopotential
+!  surfaces.
+!
+        IF (k.gt.0) THEN
+          DO j=Jstr,Jend
+            DO i=Istr,Iend+1
+              cff=0.5_r8*(Khx(i,j)+Khx(i-1,j))*GRID(ng)%on_u(i,j)
+              cff1=MIN(dZdx(i,j,k1),0.0_r8)
+              cff2=MAX(dZdx(i,j,k1),0.0_r8)
+!^            FX(i,j)=cff*                                              &
+!^   &                (dAdx(i,j,k1)-                                    &
+!^   &                 0.5_r8*(cff1*(dAdz(i-1,j,k1)+                    &
+!^   &                               dAdz(i  ,j,k2))+                   &
+!^   &                         cff2*(dAdz(i-1,j,k2)+                    &
+!^   &                               dAdz(i  ,j,k1))))
+!^
+              tl_FX(i,j)=cff*                                           &
+     &                   (tl_dAdx(i,j,k1)-                              &
+     &                    0.5_r8*(cff1*(tl_dAdz(i-1,j,k1)+              &
+     &                                  tl_dAdz(i  ,j,k2))+             &
+     &                            cff2*(tl_dAdz(i-1,j,k2)+              &
+     &                                  tl_dAdz(i  ,j,k1))))
+            END DO
+          END DO
+          DO j=Jstr,Jend+1
+            DO i=Istr,Iend
+              cff=0.5_r8*(Khy(i,j-1)+Khy(i,j))*GRID(ng)%om_v(i,j)
+              cff1=MIN(dZde(i,j,k1),0.0_r8)
+              cff2=MAX(dZde(i,j,k1),0.0_r8)
+!^            FE(i,j)=cff*                                              &
+!^   &                (dAde(i,j,k1)-                                    &
+!^   &                 0.5_r8*(cff1*(dAdz(i,j-1,k1)+                    &
+!^   &                               dAdz(i,j  ,k2))+                   &
+!^   &                         cff2*(dAdz(i,j-1,k2)+                    &
+!^   &                               dAdz(i,j  ,k1))))
+!^
+              tl_FE(i,j)=cff*                                           &
+     &                   (tl_dAde(i,j,k1)-                              &
+     &                    0.5_r8*(cff1*(tl_dAdz(i,j-1,k1)+              &
+     &                                  tl_dAdz(i,j  ,k2))+             &
+     &                            cff2*(tl_dAdz(i,j-1,k2)+              &
+     &                                  tl_dAdz(i,j  ,k1))))
+            END DO
+          END DO
+          IF (k.lt.N(ng)) THEN
+            DO j=Jstr,Jend
+              DO i=Istr,Iend
+                cff=0.5_r8*Khx(i,j)
+                cff1=MIN(dZdx(i  ,j,k1),0.0_r8)
+                cff2=MIN(dZdx(i+1,j,k2),0.0_r8)
+                cff3=MAX(dZdx(i  ,j,k2),0.0_r8)
+                cff4=MAX(dZdx(i+1,j,k1),0.0_r8)
+!^              FZ(i,j,k2)=cff*                                         &
+!^   &                     (cff1*(cff1*dAdz(i,j,k2)-dAdx(i  ,j,k1))+    &
+!^   &                      cff2*(cff2*dAdz(i,j,k2)-dAdx(i+1,j,k2))+    &
+!^   &                      cff3*(cff3*dAdz(i,j,k2)-dAdx(i  ,j,k2))+    &
+!^   &                      cff4*(cff4*dAdz(i,j,k2)-dAdx(i+1,j,k1)))
+!^
+                tl_FZ(i,j,k2)=cff*                                      &
+     &                        (cff1*(cff1*tl_dAdz(i,j,k2)-              &
+     &                               tl_dAdx(i  ,j,k1))+                &
+     &                         cff2*(cff2*tl_dAdz(i,j,k2)-              &
+     &                               tl_dAdx(i+1,j,k2))+                &
+     &                         cff3*(cff3*tl_dAdz(i,j,k2)-              &
+     &                               tl_dAdx(i  ,j,k2))+                &
+     &                         cff4*(cff4*tl_dAdz(i,j,k2)-              &
+     &                               tl_dAdx(i+1,j,k1)))
+!
+                cff1=MIN(dZde(i,j  ,k1),0.0_r8)
+                cff2=MIN(dZde(i,j+1,k2),0.0_r8)
+                cff3=MAX(dZde(i,j  ,k2),0.0_r8)
+                cff4=MAX(dZde(i,j+1,k1),0.0_r8)
+                cff=0.5_r8*Khy(i,j)
+!^              FZ(i,j,k2)=FZ(i,j,k2)+                                  &
+!^   &                     cff*                                         &
+!^   &                     (cff1*(cff1*dAdz(i,j,k2)-dAde(i,j  ,k1))+    &
+!^   &                      cff2*(cff2*dAdz(i,j,k2)-dAde(i,j+1,k2))+    &
+!^   &                      cff3*(cff3*dAdz(i,j,k2)-dAde(i,j  ,k2))+    &
+!^   &                      cff4*(cff4*dAdz(i,j,k2)-dAde(i,j+1,k1)))
+!^
+                tl_FZ(i,j,k2)=tl_FZ(i,j,k2)+                            &
+     &                        cff*                                      &
+     &                        (cff1*(cff1*tl_dAdz(i,j,k2)-              &
+     &                               tl_dAde(i,j  ,k1))+                &
+     &                         cff2*(cff2*tl_dAdz(i,j,k2)-              &
+     &                               tl_dAde(i,j+1,k2))+                &
+     &                         cff3*(cff3*tl_dAdz(i,j,k2)-              &
+     &                               tl_dAde(i,j  ,k2))+                &
+     &                         cff4*(cff4*tl_dAdz(i,j,k2)-              &
+     &                               tl_dAde(i,j+1,k1)))
+              END DO
+            END DO
+          END IF
+!
+          DO j=Jstr,Jend
+            DO i=Istr,Iend
+!^            Awrk(i,j,k)=Awrk(i,j,k)-                                  &
+!^   &                    Hfac(i,j)*                                    &
+!^   &                    (FX(i+1,j  )-FX(i,j)+                         &
+!^   &                     FE(i  ,j+1)-FE(i,j))-                        &
+!^   &                    (FZ(i,j,k2)-FZ(i,j,k1))/GRID(ng)%Hz(i,j,k)
+!^
+              tl_Awrk(i,j,k)=tl_Awrk(i,j,k)-                            &
+     &                       Hfac(i,j)*                                 &
+     &                       (tl_FX(i+1,j  )-tl_FX(i,j)+                &
+     &                        tl_FE(i  ,j+1)-tl_FE(i,j))-               &
+     &                       (tl_FZ(i,j,k2)-tl_FZ(i,j,k1))/             &
+     &                       GRID(ng)%Hz(i,j,k)
+            END DO
+          END DO
+        END IF
+      END DO K_LOOP
+
+# else
+
+!
+!  Diffusion along S-coordinates: compute XI- and ETA-components of
+!  diffusive flux.
+!
+      DO k=1,N(ng)
+        DO j=Jstr,Jend
+          DO i=Istr,Iend+1
+!^          FX(i,j)=GRID(ng)%pmon_u(i,j)*                               &
+!^   &              0.5_r8*(Khx(i-1,j)+Khx(i,j))*                       &
+!^   &              (Awrk(i,j,k)-Awrk(i-1,j,k))
+!^
+            tl_FX(i,j)=GRID(ng)%pmon_u(i,j)*                            &
+     &                 0.5_r8*(Khx(i-1,j)+Khx(i,j))*                    &
+     &                 (tl_Awrk(i,j,k)-tl_Awrk(i-1,j,k))
+#   ifdef MASKING
+!^          FX(i,j)=FX(i,j)*GRID(ng)%umask(i,j)
+!^
+            tl_FX(i,j)=tl_FX(i,j)*GRID(ng)%umask(i,j)
+#   endif
+          END DO
+        END DO
+!
+        DO j=Jstr,Jend+1
+          DO i=Istr,Iend
+!^          FE(i,j)=GRID(ng)%pnom_v(i,j)*                               &
+!^                  0.5_r8*(Khy(i,j-1)+Khy(i,j))*                       &
+!^   &              (Awrk(i,j,k)-Awrk(i,j-1,k))
+!^
+            tl_FE(i,j)=GRID(ng)%pnom_v(i,j)*                            &
+     &                 0.5_r8*(Khy(i,j-1)+Khy(i,j))*                    &
+     &                 (tl_Awrk(i,j,k)-tl_Awrk(i,j-1,k))
+#   ifdef MASKING
+!^          FE(i,j)=FE(i,j)*GRID(ng)%vmask(i,j)
+!^
+            tl_FE(i,j)=tl_FE(i,j)*GRID(ng)%vmask(i,j)
+#   endif
+          END DO
+        END DO
+!
+        DO j=Jstr,Jend
+          DO i=Istr,Iend
+!^          Awrk(i,j,k)=Awrk(i,j,k)-                                    &
+!^   &                  Hfac(i,j)*                                      &
+!^   &                  (FX(i+1,j)-FX(i,j)+                             &
+!^   &                   FE(i,j+1)-FE(i,j))
+!^
+            tl_Awrk(i,j,k)=tl_Awrk(i,j,k)-                              &
+     &                     Hfac(i,j)*                                   &
+     &                     (tl_FX(i+1,j)-tl_FX(i,j)+                    &
+     &                      tl_FE(i,j+1)-tl_FE(i,j))
+          END DO
+        END DO
+      END DO
+#  endif
+
+#  ifdef DISTRIBUTE
+!
+!  Exchange boundary data.
+!
+!^    CALL mp_exchange3d (ng, tile, model, 1,                           &
+!^   &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
+!^   &                    Nghost,                                       &
+!^   &                    EWperiodic(ng), NSperiodic(ng),               &
+!^   &                    Awrk)
+!^
+      CALL mp_exchange3d (ng, tile, model, 1,                           &
+     &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
+     &                    Nghost,                                       &
+     &                    EWperiodic(ng), NSperiodic(ng),               &
+     &                    tl_Awrk)
+#  endif
+!
+!  Load K-Laplacian solution.
+!
+      DO k=1,N(ng)
+        DO j=Jstr,Jend
+          DO i=Istr,Iend
+!^          A(i,j,k)=Awrk(i,j,k)
+!^
+            tl_A(i,j,k)=tl_Awrk(i,j,k)
+          END DO
+        END DO
+      END DO
+!
+      RETURN
+      END SUBROUTINE tl_multiscale_Klap_r3d
+!
+!-----------------------------------------------------------------------
+!  It computes the adjoint K-Laplacian, [1 + Del(K*Del)], of a
+!  3D control variable at RHO-points.
+!
+      SUBROUTINE ad_multiscale_Klap_r3d (self, ng, tile, model,         &
+     &                                   ifield, ctype, ms, Lweak,      &
+     &                                   LBi, UBi, LBj, UBj,            &
+     &                                   IminS, ImaxS, JminS, JmaxS,    &
+     &                                   ad_A)
+!
+      CLASS (multiscale), intent(inout) :: self      ! multiscale object
+      integer,            intent(in   ) :: ng        ! nested grid
+      integer,            intent(in   ) :: tile      ! domain partition
+      integer,            intent(in   ) :: model     ! kernel ID
+      integer,            intent(in   ) :: ifield    ! state field ID
+      integer,            intent(in   ) :: ctype     ! C-grid type
+      integer,            intent(in   ) :: ms        ! multiscale index
+      logical,            intent(in   ) :: Lweak     ! weak constraint
+      integer,            intent(in   ) :: LBi, UBi, LBj, UBj
+      integer,            intent(in   ) :: IminS, ImaxS, JminS, JmaxS
+      real (r8),          intent(inout) :: ad_A(LBi:,LBj:,:)
+!
+      integer                           :: iLap, i, j, k, rec
+      integer                           :: kk, kt, k1, k1b, k2, k2b
+      integer                           :: Istr, Iend, Jstr, Jend
+      real (r8)                         :: adfac, adfac1, adfac2
+      real (r8)                         :: cff, cff1, cff2, cff3, cff4
+      real (r8)                         :: cffx, cffy
+
+#  ifdef READ_SCALES
+!
+      real (r8), pointer                :: bsclx(:,:) => NULL()
+      real (r8), pointer                :: bscly(:,:) => NULL()
+#  endif
+!
+      real(r8), dimension(LBi:UBi,LBj:UBj,1:N(ng)) :: ad_Awrk
+!
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Hfac
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Khx
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Khy
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: ad_FE
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: ad_FX
+#  ifdef GEOPOTENTIAL_HCONV
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,2) :: dZdx
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,2) :: dZde
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,2) :: ad_FZ
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,2) :: ad_dAdz
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,2) :: ad_dAdx
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,2) :: ad_dAde
+#  endif
+!
+!  Initialize.
+!
+      Istr=BOUNDS(ng)%Istr(tile)     ! tile computational indices
+      Iend=BOUNDS(ng)%Iend(tile)
+      Jstr=BOUNDS(ng)%Jstr(tile)
+      Jend=BOUNDS(ng)%Jend(tile)
+!
+      IF (Lweak) THEN
+        rec=2                        ! weak constraint correlations
+      ELSE
+        rec=1                        ! strong constraint correlations
+      END IF
+!
+      ad_Awrk(LBi:UBi,LBj:UBj,LBk:UBk)=0.0_r8
+      ad_FE(IminS:ImaxS,JminS:JmaxS)=0.0_r8
+      ad_FX(IminS:ImaxS,JminS:JmaxS)=0.0_r8
+#  ifdef GEOPOTENTIAL_HCONV
+      ad_FZ(IminS:ImaxS,JminS:JmaxS,1:2)=0.0_r8
+      ad_dAdz(IminS:ImaxS,JminS:JmaxS,1:2)=0.0_r8
+      ad_dAdx(IminS:ImaxS,JminS:JmaxS,1:2)=0.0_r8
+      ad_dAde(IminS:ImaxS,JminS:JmaxS,1:2)=0.0_r8
+#  endif
+!
+!  Assign contol variable isotropic or anisotropic correlation length
+!  scales.
+!
+      SELECT CASE (ifield)
+        CASE (isTvar(itemp), isTvar(isalt))
+#  ifdef READ_SCALES
+          bsclx => self%bR3DscaleX(:,:,ifield,ms)
+          bscly => self%bR3DscaleY(:,:,ifield,ms)
+#  endif
+          iLap=Mlap(ifield,ms,ng)
+      END SELECT
+!
+!  Compute metrics factor.
+!
+      DO j=Jstr,Jend
+        DO i=Istr,Iend
+          Hfac(i,j)=GRID(ng)%pm(i,j)*GRID(ng)%pn(i,j)
+        END DO
+      END DO
+!
+!  Set horizontal diffusion coefficients (Khx, Khy) with units of
+!  correlation length squared.
+!
+      DO j=Jstr-1,Jend+1
+        DO i=Istr-1,Iend+1
+#  ifdef READ_SCALES
+          cffx=bsclx(i,j)*bsclx(i,j)       ! spatially varying
+          cffy=bscly(i,j)*bscly(i,j)
+#  else
+          cffx=HdecayX(rec,ifield,ms,ng)*HdecayX(rec,ifield,ms,ng)
+          cffy=HdecayY(rec,ifield,ms,ng)*HdecayY(rec,ifield,ms,ng)
+#  endif
+          Khx(i,j)=0.5_r8*cffx/REAL(iLap-2,r8)
+          Khy(i,j)=0.5_r8*cffy/REAL(iLap-2,r8)
+        END DO
+      END DO
+!
+!  Adjoint of load K-Laplacian solution.
+!
+      DO k=1,N(ng)
+        DO j=Jstr,Jend
+          DO i=Istr,Iend
+!^          tl_A(i,j,k)=tl_Awrk(i,j,k)
+!^
+            ad_Awrk(i,j,k)=ad_Awrk(i,j,k)+ad_A(i,j,k)
+            ad_A(i,j,k)=0.0_r8
+          END DO
+        END DO
+      END DO
+
+#  ifdef DISTRIBUTE
+!
+!  Adjoint of exchange boundary data.
+!
+!^    CALL mp_exchange3d (ng, tile, model, 1,                           &
+!^   &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
+!^   &                    Nghost,                                       &
+!^   &                    EWperiodic(ng), NSperiodic(ng),               &
+!^   &                    tl_Awrk)
+!^
+      CALL ad_mp_exchange3d (ng, tile, model, 1,                        &
+     &                       LBi, UBi, LBj, UBj, 1, N(ng),              &
+     &                       Nghost,                                    &
+     &                       EWperiodic(ng), NSperiodic(ng),            &
+     &                       ad_Awrk)
+#  endif
+
+#  ifdef GEOPOTENTIAL_HCONV
+!
+!  Diffusion along geopotential surfaces: Compute horizontal and
+!  vertical gradients.  Notice the recursive blocking sequence.  The
+!  vertical placement of the gradients is:
+!
+!        dAdx,dAde(:,:,k1) k     rho-points
+!        dAdx,dAde(:,:,k2) k+1   rho-points
+!          FZ,dAdz(:,:,k1) k-1/2   W-points
+!          FZ,dAdz(:,:,k2) k+1/2   W-points
+!
+!  Compute adjoint of starting values of k1 and k2.
+!
+      k1=2
+      k2=1
+      DO k=0,N(ng)
+!
+!  Note: The following code is equivalent to
+!
+!       kt=k1
+!       k1=k2
+!       k2=kt
+!
+!  We use the adjoint of above code.
+!
+        k1=k2
+        k2=3-k1
+      END DO
+!
+      K_LOOP : DO k=N(ng),0,-1
+!
+!  Compute required BASIC STATE fields. Need to look forward in
+!  recursive kk index.
+!
+        k2b=1
+        DO kk=0,k
+          k1b=k2b
+          k2b=3-k1b
+!
+!  Compute components of the rotated tracer flux (A m3/s) along
+!  geopotential surfaces (required BASIC STATE fields).
+!
+          IF (kk.lt.N(ng)) THEN
+            DO j=Jstr,Jend
+              DO i=Istr,Iend+1
+                cff=0.5_r8*(GRID(ng)%pm(i-1,j)+GRID(ng)%pm(i,j))
+#   ifdef MASKING
+                cff=cff*GRID(ng)%umask(i,j)
+#   endif
+                dZdx(i,j,k2b)=cff*(GRID(ng)%z_r(i  ,j,kk+1)-            &
+     &                             GRID(ng)%z_r(i-1,j,kk+1))
+              END DO
+            END DO
+            IF (kk.eq.0) THEN
+              DO j=Jstr,Jend
+                DO i=Istr,Iend+1
+                  dZdx(i,j,k1b)=0.0_r8
+                END DO
+              END DO
+            END IF
+            DO j=Jstr,Jend+1
+              DO i=Istr,Iend
+                cff=0.5_r8*(GRID(ng)%pn(i,j-1)+GRID(ng)%pn(i,j))
+#   ifdef MASKING
+                cff=cff*GRID(ng)%vmask(i,j)
+#   endif
+                dZde(i,j,k2b)=cff*(GRID(ng)%z_r(i,j  ,kk+1)-            &
+     &                             GRID(ng)%z_r(i,j-1,kk+1))
+              END DO
+            END DO
+            IF (kk.eq.0) THEN
+              DO j=Jstr,Jend+1
+                DO i=Istr,Iend
+                  dZde(i,j,k1b)=0.0_r8
+                END DO
+              END DO
+            END IF
+          END IF
+        END DO
+!
+        IF (k.gt.0) THEN
+!
+!  Compute adjoint K-Laplacian geopotential operator.
+!
+          DO j=Jstr,Jend
+            DO i=Istr,Iend
+!^            tl_Awrk(i,j,k)=tl_Awrk(i,j,k)-                            &
+!^   &                       Hfac(i,j)*                                 &
+!^   &                       (tl_FX(i+1,j  )-tl_FX(i,j)+                &
+!^   &                        tl_FE(i  ,j+1)-tl_FE(i,j))-               &
+!^   &                       (tl_FZ(i,j,k2)-tl_FZ(i,j,k1))/             &
+!^   &                       GRID(ng)%Hz(i,j,k)
+!^
+              adfac1=-Hfac(i,j)*ad_Awrk(i,j,k)
+              adfac2=-ad_Awrk(i,j,k)/Hz(i,j,k)
+              ad_FE(i,j  )=ad_FE(i,j  )-adfac1
+              ad_FE(i,j+1)=ad_FE(i,j+1)+adfac1
+              ad_FX(i  ,j)=ad_FX(i  ,j)-adfac1
+              ad_FX(i+1,j)=ad_FX(i+1,j)+adfac1
+              ad_FZ(i,j,k1)=ad_FZ(i,j,k1)-adfac2
+              ad_FZ(i,j,k2)=ad_FZ(i,j,k2)+adfac2
+            END DO
+          END DO
+!
+!  Compute components of the adjoint rotated A flux (A m3/s) along
+!  geopotential surfaces.
+!
+          IF (k.lt.N(ng)) THEN
+            DO j=Jstr,Jend
+              DO i=Istr,Iend
+                cff=0.5_r8*Khy(i,j)
+                cff1=MIN(dZde(i,j  ,k1),0.0_r8)
+                cff2=MIN(dZde(i,j+1,k2),0.0_r8)
+                cff3=MAX(dZde(i,j  ,k2),0.0_r8)
+                cff4=MAX(dZde(i,j+1,k1),0.0_r8)
+!^              tl_FZ(i,j,k2)=tl_FZ(i,j,k2)+                            &
+!^   &                        cff*                                      &
+!^   &                        (cff1*(cff1*tl_dAdz(i,j,k2)-              &
+!^   &                               tl_dAde(i,j  ,k1))+                &
+!^   &                         cff2*(cff2*tl_dAdz(i,j,k2)-              &
+!^   &                               tl_dAde(i,j+1,k2))+                &
+!^   &                         cff3*(cff3*tl_dAdz(i,j,k2)-              &
+!^   &                               tl_dAde(i,j  ,k2))+                &
+!^   &                         cff4*(cff4*tl_dAdz(i,j,k2)-              &
+!^   &                               tl_dAde(i,j+1,k1)))
+!^
+                adfac=cff*ad_FZ(i,j,k2)
+                ad_dAdz(i,j,k2)=ad_dAdz(i,j,k2)+                        &
+     &                          (cff1*cff1+                             &
+     &                           cff2*cff2+                             &
+     &                           cff3*cff3+                             &
+     &                           cff4*cff4)*adfac
+                ad_dAde(i,j  ,k1)=ad_dAde(i,j  ,k1)-cff1*adfac
+                ad_dAde(i,j+1,k2)=ad_dAde(i,j+1,k2)-cff2*adfac
+                ad_dAde(i,j  ,k2)=ad_dAde(i,j  ,k2)-cff3*adfac
+                ad_dAde(i,j+1,k1)=ad_dade(i,j+1,k1)-cff4*adfac
+!
+                cff1=MIN(dZdx(i  ,j,k1),0.0_r8)
+                cff2=MIN(dZdx(i+1,j,k2),0.0_r8)
+                cff3=MAX(dZdx(i  ,j,k2),0.0_r8)
+                cff4=MAX(dZdx(i+1,j,k1),0.0_r8)
+                cff=0.5_r8*Khx(i,j)
+!
+!^              tl_FZ(i,j,k2)=cff*                                      &
+!^   &                        (cff1*(cff1*tl_dAdz(i,j,k2)-              &
+!^   &                               tl_dAdx(i  ,j,k1))+                &
+!^   &                         cff2*(cff2*tl_dAdz(i,j,k2)-              &
+!^   &                               tl_dAdx(i+1,j,k2))+                &
+!^   &                         cff3*(cff3*tl_dAdz(i,j,k2)-              &
+!^   &                               tl_dAdx(i  ,j,k2))+                &
+!^   &                         cff4*(cff4*tl_dAdz(i,j,k2)-              &
+!^   &                               tl_dAdx(i+1,j,k1)))
+!^
+                ad_dAdz(i,j,k2)=ad_dAdz(i,j,k2)+                        &
+     &                          (cff1*cff1+                             &
+     &                           cff2*cff2+                             &
+     &                           cff3*cff3+                             &
+     &                           cff4*cff4)*adfac
+                ad_dAdx(i  ,j,k1)=ad_dAdx(i  ,j,k1)-cff1*adfac
+                ad_dAdx(i+1,j,k2)=ad_dAdx(i+1,j,k2)-cff2*adfac
+                ad_dAdx(i  ,j,k2)=ad_dAdx(i  ,j,k2)-cff3*adfac
+                ad_dAdx(i+1,j,k1)=ad_dAdx(i+1,j,k1)-cff4*adfac
+                ad_FZ(i,j,k2)=0.0_r8
+              END DO
+            END DO
+          END IF
+!
+          DO j=Jstr,Jend+1
+            DO i=Istr,Iend
+              cff=0.5_r8*(Khy(i,j-1)+Khy(i,j))*GRID(ng)%om_v(i,j)
+              cff1=MIN(dZde(i,j,k1),0.0_r8)
+              cff2=MAX(dZde(i,j,k1),0.0_r8)
+!^            tl_FE(i,j)=cff*                                           &
+!^   &                   (tl_dAde(i,j,k1)-                              &
+!^   &                    0.5_r8*(cff1*(tl_dAdz(i,j-1,k1)+              &
+!^   &                                  tl_dAdz(i,j  ,k2))+             &
+!^   &                            cff2*(tl_dAdz(i,j-1,k2)+              &
+!^   &                                  tl_dAdz(i,j  ,k1))))
+!^
+              adfac=cff*ad_FE(i,j)
+              adfac1=adfac*0.5_r8*cff1
+              adfac2=adfac*0.5_r8*cff2
+              ad_dAde(i,j,k1)=ad_dAde(i,j,k1)+adfac
+              ad_dAdz(i,j-1,k1)=ad_dAdz(i,j-1,k1)-adfac1
+              ad_dAdz(i,j  ,k2)=ad_dAdz(i,j  ,k2)-adfac1
+              ad_dAdz(i,j-1,k2)=ad_dAdz(i,j-1,k2)-adfac2
+              ad_dAdz(i,j  ,k1)=ad_dAdz(i,j  ,k1)-adfac2
+              ad_FE(i,j)=0.0_r8
+            END DO
+          END DO
+!
+          DO j=Jstr,Jend
+            DO i=Istr,Iend+1
+              cff=0.5_r8*(Khx(i,j)+Khx(i-1,j))*GRID(ng)%on_u(i,j)
+              cff1=MIN(dZdx(i,j,k1),0.0_r8)
+              cff2=MAX(dZdx(i,j,k1),0.0_r8)
+!^            tl_FX(i,j)=cff*                                           &
+!^   &                   (tl_dAdx(i,j,k1)-                              &
+!^   &                    0.5_r8*(cff1*(tl_dAdz(i-1,j,k1)+              &
+!^   &                                  tl_dAdz(i  ,j,k2))+             &
+!^   &                            cff2*(tl_dAdz(i-1,j,k2)+              &
+!^   &                                  tl_dAdz(i  ,j,k1))))
+!^
+              adfac=cff*ad_FX(i,j)
+              adfac1=adfac*0.5_r8*cff1
+              adfac2=adfac*0.5_r8*cff2
+              ad_dAdx(i,j,k1)=ad_dAdx(i,j,k1)+adfac
+              ad_dAdz(i-1,j,k1)=ad_dAdz(i-1,j,k1)-adfac1
+              ad_dAdz(i  ,j,k2)=ad_dAdz(i  ,j,k2)-adfac1
+              ad_dAdz(i-1,j,k2)=ad_dAdz(i-1,j,k2)-adfac2
+              ad_dAdz(i  ,j,k1)=ad_dAdz(i  ,j,k1)-adfac2
+              ad_FX(i,j)=0.0_r8
+            END DO
+          END DO
+        END IF
+!
+        IF ((k.eq.0).or.(k.eq.N(ng))) THEN
+          DO j=Jstr-1,Jend+1
+            DO i=Istr-1,Iend+1
+!^            tl_FZ(i,j,k2)=0.0_r8
+!^
+              ad_FZ(i,j,k2)=0.0_r8
+!^            tl_dAdz(i,j,k2)=0.0_r8
+!^
+              ad_dAdz(i,j,k2)=0.0_r8
+            END DO
+          END DO
+        ELSE
+          DO j=Jstr-1,Jend+1
+            DO i=Istr-1,Iend+1
+              cff=1.0_r8/(GRID(ng)%z_r(i,j,k+1)-GRID(ng)%z_r(i,j,k))
+#   ifdef MASKING
+!^            tl_dAdz(i,j,k2)=tl_dAdz(i,j,k2)*GRID(ng)%rmask(i,j)
+!^
+              ad_dAdz(i,j,k2)=ad_dAdz(i,j,k2)*GRID(ng)%rmask(i,j)
+#   endif
+!^            tl_dAdz(i,j,k2)=cff*(tl_Awrk(i,j,k+1)-                    &
+!^   &                             tl_Awrk(i,j,k  ))
+!^
+              adfac=cff*ad_dAdz(i,j,k2)
+              ad_Awrk(i,j,k)=ad_Awrk(i,j,k)-adfac
+              ad_Awrk(i,j,k+1)=ad_Awrk(i,j,k+1)+adfac
+              ad_dAdz(i,j,k2)=0.0_r8
+            END DO
+          END DO
+        END IF
+!
+        IF (k.lt.N(ng)) THEN
+          DO j=Jstr,Jend+1
+            DO i=Istr,Iend
+              cff=0.5_r8*(GRID(ng)%pn(i,j-1)+GRID(ng)%pn(i,j))
+#   ifdef MASKING
+              cff=cff*GRID(ng)%vmask(i,j)
+!^            tl_dAde(i,j,k2)=cff*
+!^   &                        (tl_Awrk(i,j  ,k+1)*                      &
+!^   &                            GRID(ng)%rmask(i,j  )-                &
+!^   &                         tl_Awrk(i,j-1,k+1)*                      &
+!^   &                            GRID(ng)%rmask(i,j-1))
+!^
+              adfac=cff*ad_dAde(i,j,k2)
+              ad_Awrk(i,j-1,k+1)=ad_Awrk(i,j-1,k+1)-                    &
+     &                           GRID(ng)%rmask(i,j-1)*adfac
+              ad_Awrk(i,j  ,k+1)=ad_Awrk(i,j  ,k+1)+                    &
+     &                           GRID(ng)%rmask(i,j  )*adfac
+              ad_dAde(i,j,k2)=0.0_r8
+#   else
+!^            tl_dAde(i,j,k2)=cff*(tl_Awrk(i,j  ,k+1)-                  &
+!^   &                             tl_Awrk(i,j-1,k+1))
+!^
+              adfac=cff*ad_dAde(i,j,k2)
+              ad_Awrk(i,j-1,k+1)=ad_Awrk(i,j-1,k+1)-adfac
+              ad_Awrk(i,j  ,k+1)=ad_Awrk(i,j  ,k+1)+adfac
+              ad_dAde(i,j,k2)=0.0_r8
+#   endif
+            END DO
+          END DO
+!
+          DO j=Jstr,Jend
+            DO i=Istr,Iend+1
+              cff=0.5_r8*(GRID(ng)%pm(i-1,j)+GRID(ng)%pm(i,j))
+#   ifdef MASKING
+              cff=cff*umask(i,j)
+!^            tl_dAdx(i,j,k2)=cff*                                      &
+!^   &                        (tl_Awrk(i  ,j,k+1)*                      &
+!^   &                            GRID(ng)%rmask(i  ,j)-                &
+!^   &                         tl_Awrk(i-1,j,k+1)*                      &
+!^   &                            GRID(ng)%rmask(i-1,j))
+!^
+              adfac=cff*ad_dAdx(i,j,k2)
+              ad_Awrk(i-1,j,k+1)=ad_Awrk(i-1,j,k+1)-                    &
+     &                           GRID(ng)%rmask(i-1,j)*adfac
+              ad_Awrk(i  ,j,k+1)=ad_Awrk(i  ,j,k+1)+                    &
+     &                           GRID(ng)%rmask(i  ,j)*adfac
+              ad_dAdx(i,j,k2)=0.0_r8
+#   else
+!^            tl_dAdx(i,j,k2)=cff*(tl_Awrk(i  ,j,k+1)-                  &
+!^   &                             tl_Awrk(i-1,j,k+1))
+!^
+              adfac=cff*ad_dAdx(i,j,k2)
+              ad_Awrk(i-1,j,k+1)=ad_Awrk(i-1,j,k+1)-adfac
+              ad_Awrk(i  ,j,k+1)=ad_Awrk(i  ,j,k+1)+adfac
+              ad_dAdx(i,j,k2)=0.0_r8
+#   endif
+            END DO
+          END DO
+        END IF
+!
+!  Compute new storage recursive indices.
+!
+        kt=k2
+        k2=k1
+        k1=kt
+      END DO K_LOOP
+
+#  else
+!
+!  Compute adjoint horizontal K-Laplacian operator.
+!
+      DO k=1,N(ng)
+        DO j=Jstr,Jend
+          DO i=Istr,Iend
+!^          tl_Awrk(i,j,k)=tl_Awrk(i,j,k)-                              &
+!^   &                     Hfac(i,j)*                                   &
+!^   &                     (tl_FX(i+1,j)-tl_FX(i,j)+                    &
+!^   &                      tl_FE(i,j+1)-tl_FE(i,j))
+!^
+            adfac=-Hfac(i,j)*ad_Awrk(i,j,k)
+            ad_FE(i,j  )=ad_FE(i,j  )-adfac
+            ad_FE(i,j+1)=ad_FE(i,j+1)+adfac
+            ad_FX(i  ,j)=ad_FX(i  ,j)-adfac
+            ad_FX(i+1,j)=ad_FX(i+1,j)+adfac
+          END DO
+        END DO
+!
+!  Compute XI- and ETA-components of the adjoint diffusive flux.
+!
+        DO j=Jstr,Jend+1
+          DO i=Istr,Iend
+#   ifdef MASKING
+!^          tl_FE(i,j)=tl_FE(i,j)*GRID(ng)%vmask(i,j)
+!^
+            ad_FE(i,j)=ad_FE(i,j)*GRID(ng)%vmask(i,j)
+#   endif
+!^          tl_FE(i,j)=GRID(ng)%pnom_v(i,j)*                            &
+!^   &                 0.5_r8*(Khy(i,j-1)+Khy(i,j))*                    &
+!^   &                 (tl_Awrk(i,j,k)-tl_Awrk(i,j-1,k))
+!^
+            adfac=GRID(ng)%pnom_v(i,j)*                                 &
+     &            0.5_r8*(Khy(i,j-1)+Khy(i,j))*ad_FE(i,j)
+            ad_Awrk(i,j-1,k)=ad_Awrk(i,j-1,k)-adfac
+            ad_Awrk(i,j  ,k)=ad_Awrk(i,j  ,k)+adfac
+            ad_FE(i,j)=0.0_r8
+          END DO
+        END DO
+!
+        DO j=Jstr,Jend
+          DO i=Istr,Iend+1
+#   ifdef MASKING
+!^          tl_FX(i,j)=tl_FX(i,j)*GRID(ng)%umask(i,j)
+!^
+            ad_FX(i,j)=ad_FX(i,j)*GRID(ng)%umask(i,j)
+#   endif
+!^          tl_FX(i,j)=GRID(ng)%pmon_u(i,j)*                            &
+!^   &                 0.5_r8*(Khx(i-1,j)+Khx(i,j))*                    &
+!^   &                 (tl_Awrk(i,j,k)-tl_Awrk(i-1,j,k))
+!^
+            adfac=GRID(ng)%pmon_u(i,j)*                                 &
+     &            0.5_r8*(Khx(i-1,j)+Khx(i,j))*ad_FX(i,j)
+            ad_Awrk(i-1,j,k)=ad_Awrk(i-1,j,k)-adfac
+            ad_Awrk(i  ,j,k)=ad_Awrk(i  ,j,k)+adfac
+            ad_FX(i,j)=0.0_r8
+          END DO
+        END DO
+      END DO
+#  endif
+!
+!  Set adjoint initial conditions.
+!
+      DO k=1,N(ng)
+        DO j=Jstr-1,Jend+1
+          DO i=Istr-1,Iend+1
+!^          tl_Awrk(i,j,k)=tl_A(i,j,k)
+!^
+            ad_A(i,j,k)=ad_A(i,j,k)+ad_Awrk(i,j,k)
+            ad_Awrk(i,j,k)=0.0_r8
+          END DO
+        END DO
+      END DO
+
+#  ifdef DISTRIBUTE
+!
+!^    CALL mp_exchange3d (ng, tile, model, 1,                           &
+!^   &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
+!^   &                    Nghost,                                       &
+!^   &                    EWperiodic(ng), NSperiodic(ng),               &
+!^   &                    tl_A)
+!^
+      CALL ad_mp_exchange3d (ng, tile, model, 1,                        &
+     &                       LBi, UBi, LBj, UBj, 1, N(ng),              &
+     &                       Nghost,                                    &
+     &                       EWperiodic(ng), NSperiodic(ng),            &
+     &                       ad_A)
+#  endif
+!
+!^    CALL dabc_r3d_tile (ng, tile,                                     &
+!^   &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
+!^   &                    tl_A)
+!^
+      CALL ad_dabc_r3d_tile (ng, tile,                                  &
+     &                       LBi, UBi, LBj, UBj, 1, N(ng),              &
+     &                       ad_A)
+!
+      RETURN
+      END SUBROUTINE ad_multiscale_Klap_r3d
+!
+!-----------------------------------------------------------------------
+!  It computes the tangent linear K-Laplacian, [1 + Del(K*Del)], of a
+!  3D control variable at U-points.
+!
+      SUBROUTINE tl_multiscale_Klap_u3d (self, ng, tile, model,         &
+     &                                   ifield, ctype, ms, Lweak,      &
+     &                                   LBi, UBi, LBj, UBj,            &
+     &                                   IminS, ImaxS, JminS, JmaxS,    &
+     &                                   tl_A)
+!
+      CLASS (multiscale), intent(inout) :: self      ! multiscale object
+      integer,            intent(in   ) :: ng        ! nested grid
+      integer,            intent(in   ) :: tile      ! domain partition
+      integer,            intent(in   ) :: model     ! kernel ID
+      integer,            intent(in   ) :: ifield    ! state field ID
+      integer,            intent(in   ) :: ctype     ! C-grid type
+      integer,            intent(in   ) :: ms        ! multiscale index
+      logical,            intent(in   ) :: Lweak     ! weak constraint
+      integer,            intent(in   ) :: LBi, UBi, LBj, UBj
+      integer,            intent(in   ) :: IminS, ImaxS, JminS, JmaxS
+      real (r8),          intent(inout) :: tl_A(LBi:,LBj:,:)
+!
+      integer                           :: iLap, i, j, k, k1, k2, rec
+      integer                           :: IstrU, Iend, Jstr, Jend
+      real (r8)                         :: cff, cff1, cff2, cff3, cff4
+      real (r8)                         :: cffx, cffy
+
+#  ifdef READ_SCALES
+!
+      real (r8), pointer                :: bsclx(:,:) => NULL()
+      real (r8), pointer                :: bscly(:,:) => NULL()
+#  endif
+!
+      real(r8), dimension(LBi:UBi,LBj:UBj,1:N(ng)) :: tl_Awrk
+!
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Hfac
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Khx
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Khy
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_FE
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_FX
+#  ifdef GEOPOTENTIAL_HCONV
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS)   :: dZdx
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS)   :: dZde
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,2) :: dZdx_r
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,2) :: dZde_p
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,2) :: tl_FZ
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,2) :: tl_dAdz
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,2) :: tl_dAdx
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,2) :: tl_dAde
+#  endif
+!
+!  Initialize.
+!
+      IstrU=BOUNDS(ng)%IstrU(tile)   ! tile computational indices
+      Iend =BOUNDS(ng)%Iend (tile)
+      Jstr =BOUNDS(ng)%Jstr (tile)
+      Jend =BOUNDS(ng)%Jend (tile)
+!
+      IF (Lweak) THEN
+        rec=2                        ! weak constraint correlations
+      ELSE
+        rec=1                        ! strong constraint correlations
+      END IF
+!
+!  Assign contol variable isotropic or anisotropic correlation length
+!  scales.
+!
+      SELECT CASE (ifield)
+        CASE (isUvel)
+#  ifdef READ_SCALES
+          bsclx => self%bU3DscaleX(:,:,ifield,ms)
+          bscly => self%bU3DscaleY(:,:,ifield,ms)
+#  endif
+          iLap=Mlap(ifield,ms,ng)
+      END SELECT
+!
+!  Compute metrics factor.
+!
+      DO j=Jstr,Jend
+        DO i=IstrU,Iend
+          Hfac(i,j)=0.25_r8*(GRID(ng)%pm(i-1,j)+GRID(ng)%pm(i,j))*      &
+     &                      (GRID(ng)%pn(i-1,j)+GRID(ng)%pn(i,j))
+        END DO
+      END DO
+!
+!  Set horizontal diffusion coefficients (Khx, Khy) with units of
+!  correlation length squared.
+!
+      DO j=Jstr-1,Jend+1
+        DO i=IstrU-1,Iend+1
+#  ifdef READ_SCALES
+          cffx=bsclx(i,j)*bsclx(i,j)       ! spatially varying
+          cffy=bscly(i,j)*bscly(i,j)
+#  else
+          cffx=HdecayX(rec,ifield,ms,ng)*HdecayX(rec,ifield,ms,ng)
+          cffy=HdecayY(rec,ifield,ms,ng)*HdecayY(rec,ifield,ms,ng)
+#  endif
+          Khx(i,j)=0.5_r8*cffx/REAL(iLap-2,r8)
+          Khy(i,j)=0.5_r8*cffy/REAL(iLap-2,r8)
+        END DO
+      END DO
+!
+!  Set operator initial conditions.
+!
+!^    CALL dabc_u3d_tile (ng, tile,                                     &
+!^   &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
+!^   &                    A)
+!^
+      CALL dabc_u3d_tile (ng, tile,                                     &
+     &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
+     &                    tl_A)
+#  ifdef DISTRIBUTE
+!
+!^    CALL mp_exchange3d (ng, tile, model, 1,                           &
+!^   &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
+!^   &                    Nghost,                                       &
+!^   &                    EWperiodic(ng), NSperiodic(ng),               &
+!^   &                    A)
+!^
+      CALL mp_exchange3d (ng, tile, model, 1,                           &
+     &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
+     &                    Nghost,                                       &
+     &                    EWperiodic(ng), NSperiodic(ng),               &
+     &                    tl_A)
+#  endif
+!
+      DO k=1,N(ng)
+        DO j=Jstr-1,Jend+1
+          DO i=IstrU-1,Iend+1
+!^          Awrk(i,j,k)=A(i,j,k)
+!^
+            tl_Awrk(i,j,k)=tl_A(i,j,k)
+          END DO
+        END DO
+      END DO
+
+#  ifdef GEOPOTENTIAL_HCONV
+!
+!  Diffusion along geopotential surfaces: Compute horizontal and
+!  vertical gradients.  Notice the recursive blocking sequence.  The
+!  vertical placement of the gradients is:
+!
+!        dZdx_r,dAdx,dAde(:,:,k1) k     rho-points
+!        dZdx_r,dAdx,dAde(:,:,k2) k+1   rho-points
+!                  dZde_p(:,:,k1) k     psi-points
+!                  dZde_p(:,:,k2) k+1   psi-points
+!                 FZ,dAdz(:,:,k1) k-1/2   W-points
+!                 FZ,dAdz(:,:,k2) k+1/2   W-points
+!
+      k2=1
+      K_LOOP : DO k=0,N(ng)
+        k1=k2
+        k2=3-k1
+        IF (k.lt.N(ng)) THEN
+          DO j=Jstr,Jend
+            DO i=IstrU-1,Iend+1
+              cff=0.5_r8*(GRID(ng)%pm(i-1,j)+GRID(ng)%pm(i,j))
+#   ifdef MASKING
+              cff=cff*GRID(ng)%umask(i,j)
+#   endif
+              dZdx(i,j)=cff*(GRID(ng)%z_r(i  ,j,k+1)-                   &
+     &                       GRID(ng)%z_r(i-1,j,k+1))
+            END DO
+          END DO
+!
+          DO j=Jstr,Jend+1
+            DO i=IstrU-1,Iend
+              cff=0.5_r8*(GRID(ng)%pn(i,j-1)+GRID(ng)%pn(i,j))
+#   ifdef MASKING
+              cff=cff*GRID(ng)%vmask(i,j)
+#   endif
+              dZde(i,j)=cff*(GRID(ng)%z_r(i,j  ,k+1)-                   &
+     &                       GRID(ng)%z_r(i,j-1,k+1))
+            END DO
+          END DO
+!
+          DO j=Jstr,Jend
+            DO i=IstrU-1,Iend
+#   ifdef MASKING
+!^            dAdx(i,j,k2)=GRID(ng)%pm(i,j)*                            &
+!^   &                     (Awrk(i+1,j,k+1)*GRID(ng)%umask(i+1,j)-      &
+!^   &                      Awrk(i  ,j,k+1)*GRID(ng)%umask(i  ,j))
+!^
+              tl_dAdx(i,j,k2)=GRID(ng)%pm(i,j)*                         &
+     &                        (tl_Awrk(i+1,j,k+1)*                      &
+     &                            GRID(ng)%umask(i+1,j)-                &
+     &                         tl_Awrk(i  ,j,k+1)*                      &
+     &                            GRID(ng)%umask(i  ,j))
+!^            dAdx(i,j,k2)=dAdx(i,j,k2)*GRID(ng)%rmask(i,j)
+!^
+              tl_dAdx(i,j,k2)=tl_dAdx(i,j,k2)*GRID(ng)%rmask(i,j)
+#   else
+!^            dAdx(i,j,k2)=GRID(ng)%pm(i,j)*(Awrk(i+1,j,k+1)-           &
+!^   &                                       Awrk(i  ,j,k+1))
+!^
+              tl_dAdx(i,j,k2)=GRID(ng)%pm(i,j)*(tl_Awrk(i+1,j,k+1)-     &
+     &                                          tl_Awrk(i  ,j,k+1))
+#   endif
+              dZdx_r(i,j,k2)=0.5_r8*(dZdx(i  ,j)+                       &
+     &                               dZdx(i+1,j))
+            END DO
+          END DO
+!
+          DO j=Jstr,Jend+1
+            DO i=IstrU,Iend
+              cff=0.25_r8*(GRID(ng)%pn(i-1,j  )+GRID(ng)%pn(i,j  )+     &
+     &                     GRID(ng)%pn(i-1,j-1)+GRID(ng)%pn(i,j-1))
+#   ifdef MASKING
+!^            dAde(i,j,k2)=cff*                                         &
+!^   &                     (Awrk(i,j  ,k+1)*GRID(ng)%umask(i,j  )-      &
+!^   &                      Awrk(i,j-1,k+1)*GRID(ng)%umask(i,j-1))
+!^
+              tl_dAde(i,j,k2)=cff*                                      &
+     &                        (tl_Awrk(i,j  ,k+1)*                      &
+     &                            GRID(ng)%umask(i,j  )-                &
+     &                         tl_Awrk(i,j-1,k+1)*                      &
+     &                            GRID(ng)%umask(i,j-1))
+!^            dAde(i,j,k2)=dAde(i,j,k2)*GRID(ng)%pmask(i,j)
+!^
+              tl_dAde(i,j,k2)=tl_dAde(i,j,k2)*GRID(ng)%pmask(i,j)
+#   else
+!^            dAde(i,j,k2)=cff*(Awrk(i,j  ,k+1)-                        &
+!^   &                          Awrk(i,j-1,k+1))
+!^
+              tl_dAde(i,j,k2)=cff*(tl_Awrk(i,j  ,k+1)-                  &
+     &                             tl_Awrk(i,j-1,k+1))
+#   endif
+              dZde_p(i,j,k2)=0.5_r8*(dZde(i-1,j)+                       &
+     &                               dZde(i  ,j))
+            END DO
+          END DO
+        END IF
+!
+        IF ((k.eq.0).or.(k.eq.N(ng))) THEN
+          DO j=Jstr-1,Jend+1
+            DO i=IstrU-1,Iend+1
+!^            dAdz(i,j,k2)=0.0_r8
+!^
+              tl_dAdz(i,j,k2)=0.0_r8
+!^            FZ(i,j,k2)=0.0_r8
+!^
+              tl_FZ(i,j,k2)=0.0_r8
+            END DO
+          END DO
+        ELSE
+          DO j=Jstr-1,Jend+1
+            DO i=IstrU-1,Iend+1
+              cff=1.0_r8/(GRID(ng)%z_r(i,j,k+1)-GRID(ng)%z_r(i,j,k))
+!^            dAdz(i,j,k2)=cff*(Awrk(i,j,k+1)-                          &
+!^   &                          Awrk(i,j,k))
+!^
+              tl_dAdz(i,j,k2)=cff*(tl_Awrk(i,j,k+1)-                    &
+     &                             tl_Awrk(i,j,k  ))
+#   ifdef MASKING
+!^            dAdz(i,j,k2)=dAdz(i,j,k2)*GRID(ng)%umask(i,j)
+!^
+              tl_dAdz(i,j,k2)=tl_dAdz(i,j,k2)*GRID(ng)%umask(i,j)
+#   endif
+            END DO
+          END DO
+        END IF
+!
+!  Compute components of the rotated A flux along geopotential
+!  surfaces.
+!
+        IF (k.gt.0) THEN
+          DO j=Jstr,Jend
+            DO i=IstrU-1,Iend
+              cff=Khx(i,j)*GRID(ng)%on_r(i,j)
+              cff1=MIN(dZdx_r(i,j,k1),0.0_r8)
+              cff2=MAX(dZdx_r(i,j,k1),0.0_r8)
+!^            FX(i,j)=cff*                                              &
+!^   &                (dAdx(i,j,k1)-                                    &
+!^   &                 0.5_r8*(cff1*(dAdz(i  ,j,k1)+                    &
+!^   &                               dAdz(i+1,j,k2))+                   &
+!^   &                         cff2*(dAdz(i  ,j,k2)+                    &
+!^   &                               dAdz(i+1,j,k1))))
+!^
+              tl_FX(i,j)=cff*                                           &
+     &                   (tl_dAdx(i,j,k1)-                              &
+     &                    0.5_r8*(cff1*(tl_dAdz(i  ,j,k1)+              &
+     &                                  tl_dAdz(i+1,j,k2))+             &
+     &                            cff2*(tl_dAdz(i  ,j,k2)+              &
+     &                                  tl_dAdz(i+1,j,k1))))
+            END DO
+          END DO
+!
+          DO j=Jstr,Jend+1
+            DO i=IstrU,Iend
+              cff=0.25_r8*(Khy(i-1,j-1)+Khy(i-1,j)+                     &
+     &                     Khy(i  ,j-1)+Khy(i  ,j))*GRID(ng)%om_p(i,j)
+              cff1=MIN(dZde_p(i,j,k1),0.0_r8)
+              cff2=MAX(dZde_p(i,j,k1),0.0_r8)
+!^            FE(i,j)=cff*                                              &
+!^   &                (dAde(i,j,k1)-                                    &
+!^   &                 0.5_r8*(cff1*(dAdz(i,j-1,k1)+                    &
+!^   &                               dAdz(i,j  ,k2))+                   &
+!^   &                         cff2*(dAdz(i,j-1,k2)+                    &
+!^   &                               dAdz(i,j  ,k1))))
+!^
+              tl_FE(i,j)=cff*                                           &
+     &                   (tl_dAde(i,j,k1)-                              &
+     &                    0.5_r8*(cff1*(tl_dAdz(i,j-1,k1)+              &
+     &                                  tl_dAdz(i,j  ,k2))+             &
+     &                            cff2*(tl_dAdz(i,j-1,k2)+              &
+     &                                  tl_dAdz(i,j  ,k1))))
+            END DO
+          END DO
+!
+          IF (k.lt.N(ng)) THEN
+            DO j=Jstr,Jend
+              DO i=IstrU,Iend
+                cff=0.25_r8*(Khx(i-1,j)+Khx(i,j))
+                cff1=MIN(dZdx_r(i-1,j,k1),0.0_r8)
+                cff2=MIN(dZdx_r(i  ,j,k2),0.0_r8)
+                cff3=MAX(dZdx_r(i-1,j,k2),0.0_r8)
+                cff4=MAX(dZdx_r(i  ,j,k1),0.0_r8)
+!^              FZ(i,j,k2)=cff*                                         &
+!^   &                     (cff1*(cff1*dAdz(i,j,k2)-dAdx(i-1,j,k1))+    &
+!^   &                      cff2*(cff2*dAdz(i,j,k2)-dAdx(i  ,j,k2))+    &
+!^   &                      cff3*(cff3*dAdz(i,j,k2)-dAdx(i-1,j,k2))+    &
+!^   &                      cff4*(cff4*dAdz(i,j,k2)-dAdx(i  ,j,k1)))
+!^
+                tl_FZ(i,j,k2)=cff*                                      &
+     &                        (cff1*(cff1*tl_dAdz(i,j,k2)-              &
+     &                               tl_dAdx(i-1,j,k1))+                &
+     &                         cff2*(cff2*tl_dAdz(i,j,k2)-              &
+     &                               tl_dAdx(i  ,j,k2))+                &
+     &                         cff3*(cff3*tl_dAdz(i,j,k2)-              &
+     &                               tl_dAdx(i-1,j,k2))+                &
+     &                         cff4*(cff4*tl_dAdz(i,j,k2)-              &
+     &                               tl_dAdx(i  ,j,k1)))
+!
+                cff1=MIN(dZde_p(i,j  ,k1),0.0_r8)
+                cff2=MIN(dZde_p(i,j+1,k2),0.0_r8)
+                cff3=MAX(dZde_p(i,j  ,k2),0.0_r8)
+                cff4=MAX(dZde_p(i,j+1,k1),0.0_r8)
+                cff=0.25_r8*(Khy(i-1,j)+Khy(i,j))
+!
+!^              FZ(i,j,k2)=FZ(i,j,k2)+                                  &
+!^   &                     cff*                                         &
+!^   &                     (cff1*(cff1*dAdz(i,j,k2)-dAde(i,j  ,k1))+    &
+!^   &                      cff2*(cff2*dAdz(i,j,k2)-dAde(i,j+1,k2))+    &
+!^   &                      cff3*(cff3*dAdz(i,j,k2)-dAde(i,j  ,k2))+    &
+!^   &                      cff4*(cff4*dAdz(i,j,k2)-dAde(i,j+1,k1)))
+!^
+                tl_FZ(i,j,k2)=tl_FZ(i,j,k2)+                            &
+     &                        cff*                                      &
+     &                        (cff1*(cff1*tl_dAdz(i,j,k2)-              &
+     &                               tl_dAde(i,j  ,k1))+                &
+     &                         cff2*(cff2*tl_dAdz(i,j,k2)-              &
+     &                               tl_dAde(i,j+1,k2))+                &
+     &                         cff3*(cff3*tl_dAdz(i,j,k2)-              &
+     &                               tl_dAde(i,j  ,k2))+                &
+     &                         cff4*(cff4*tl_dAdz(i,j,k2)-              &
+     &                               tl_dAde(i,j+1,k1)))
+              END DO
+            END DO
+          END IF
+!
+          DO j=Jstr,Jend
+            DO i=IstrU,Iend
+!^            Awrk(i,j,k)=Awrk(i,j,k)-                                  &
+!^   &                    Hfac(i,j)*                                    &
+!^   &                    (FX(i,j  )-FX(i-1,j)+                         &
+!^   &                     FE(i,j+1)-FE(i  ,j))-                        &
+!^   &                    2.0_r8*(FZ(i,j,k2)-FZ(i,j,k1))/               &
+!^   &                           (GRID(ng)%Hz(i  ,j,k)+                 &
+!^   &                            GRID(ng)%Hz(i-1,j,k))
+!^
+              tl_Awrk(i,j,k)=tl_Awrk(i,j,k)-                            &
+     &                       Hfac(i,j)*                                 &
+     &                       (tl_FX(i,j  )-tl_FX(i-1,j)+                &
+     &                        tl_FE(i,j+1)-tl_FE(i  ,j))-               &
+     &                       2.0_r8*(tl_FZ(i,j,k2)-tl_FZ(i,j,k1))/      &
+     &                              (GRID(ng)%Hz(i  ,j,k)+              &
+                                     GRID(ng)%Hz(i-1,j,k))
+            END DO
+          END DO
+        END IF
+      END DO K_LOOP
+
+#  else
+
+!
+!  Diffusion along S-coordinates: compute XI- and ETA-components of
+!  diffusive flux.
+!
+      DO k=1,N(ng)
+        DO j=Jstr,Jend
+          DO i=IstrU-1,Iend
+!^          FX(i,j)=GRID(ng)%pmon_r(i,j)*                               &
+!^   &              Khx(i,j)*(Awrk(i+1,j,k)-Awrk(i,j,k))
+!^
+            tl_FX(i,j)=GRID(ng)%pmon_r(i,j)*                            &
+     &                 Khx(i,j)*(tl_Awrk(i+1,j,k)-tl_Awrk(i,j,k))
+          END DO
+        END DO
+!
+        DO j=Jstr,Jend+1
+          DO i=IstrU,Iend
+!^          FE(i,j)=GRID(ng)%pnom_p(i,j)*
+!^   &              0.25_r8*(Khy(i-1,j  )+Khy(i,j  )+                   &
+!^   &                       Khy(i-1,j-1)+Khy(i,j-1))*                  &
+!^   &              (Awrk(i,j,k)-Awrk(i,j-1,k))
+!^
+            tl_FE(i,j)=GRID(ng)%pnom_p(i,j)*                            &
+     &                 0.25_r8*(Khy(i-1,j  )+Khy(i,j  )+                &
+     &                          Khy(i-1,j-1)+Khy(i,j-1))*               &
+     &                 (tl_Awrk(i,j,k)-tl_Awrk(i,j-1,k))
+#   ifdef MASKING
+!^          FE(i,j)=FE(i,j)*GRID(ng)%pmask(i,j)
+!^
+            tl_FE(i,j)=tl_FE(i,j)*GRID(ng)%pmask(i,j)
+#   endif
+          END DO
+        END DO
+!
+        DO j=Jstr,Jend
+          DO i=IstrU,Iend
+!^          Awrk(i,j,k)=Awrk(i,j,k)-                                    &
+!^   &                  Hfac(i,j)*                                      &
+!^   &                  (FX(i,j)-FX(i-1,j)+                             &
+!^   &                   FE(i,j+1)-FE(i,j))
+!^
+            tl_Awrk(i,j,k)=tl_Awrk(i,j,k)-                              &
+     &                     Hfac(i,j)*                                   &
+     &                     (tl_FX(i,j)-tl_FX(i-1,j)+                    &
+     &                      tl_FE(i,j+1)-tl_FE(i,j))
+          END DO
+        END DO
+      END DO
+#  endif
+
+#  ifdef DISTRIBUTE
+!
+!  Exchange boundary data.
+!
+!^      CALL mp_exchange3d (ng, tile, model, 1,                         &
+!^   &                      LBi, UBi, LBj, UBj, 1, N(ng),               &
+!^   &                      Nghost,                                     &
+!^   &                      EWperiodic(ng), NSperiodic(ng),             &
+!^   &                      Awrk(:,:,:))
+!^
+        CALL mp_exchange3d (ng, tile, model, 1,                         &
+     &                      LBi, UBi, LBj, UBj, 1, N(ng),               &
+     &                      Nghost,                                     &
+     &                      EWperiodic(ng), NSperiodic(ng),             &
+     &                      tl_Awrk(:,:,:))
+#  endif
+!
+!  Load K-Laplacian solution.
+!
+      DO k=1,N(ng)
+        DO j=Jstr,Jend
+          DO i=IstrU,Iend
+!^          A(i,j,k)=Awrk(i,j,k)
+!^
+            tl_A(i,j,k)=tl_Awrk(i,j,k)
+          END DO
+        END DO
+      END DO
+!
+      RETURN
+      END SUBROUTINE tl_multiscale_Klap_u3d
+!
+!-----------------------------------------------------------------------
+!  It computes the adjoint K-Laplacian, [1 + Del(K*Del)], of a
+!  3D control variable at U-points.
+!
+      SUBROUTINE ad_multiscale_Klap_u3d (self, ng, tile, model,         &
+     &                                   ifield, ctype, ms, Lweak,      &
+     &                                   LBi, UBi, LBj, UBj,            &
+     &                                   IminS, ImaxS, JminS, JmaxS,    &
+     &                                   ad_A)
+!
+      CLASS (multiscale), intent(inout) :: self      ! multiscale object
+      integer,            intent(in   ) :: ng        ! nested grid
+      integer,            intent(in   ) :: tile      ! domain partition
+      integer,            intent(in   ) :: model     ! kernel ID
+      integer,            intent(in   ) :: ifield    ! state field ID
+      integer,            intent(in   ) :: ctype     ! C-grid type
+      integer,            intent(in   ) :: ms        ! multiscale index
+      logical,            intent(in   ) :: Lweak     ! weak constraint
+      integer,            intent(in   ) :: LBi, UBi, LBj, UBj
+      integer,            intent(in   ) :: IminS, ImaxS, JminS, JmaxS
+      real (r8),          intent(inout) :: ad_A(LBi:,LBj:,:)
+!
+      integer                           :: iLap, i, j, k, rec
+      integer                           :: kk, kt, k1, k1b, k2, k2b
+      integer                           :: IstrU, Iend, Jstr, Jend
+      real (r8)                         :: adfac, adfac1, adfac2
+      real (r8)                         :: cff, cff1, cff2, cff3, cff4
+      real (r8)                         :: cffx, cffy
+
+#  ifdef READ_SCALES
+!
+      real (r8), pointer                :: bsclx(:,:) => NULL()
+      real (r8), pointer                :: bscly(:,:) => NULL()
+#  endif
+!
+      real(r8), dimension(LBi:UBi,LBj:UBj,1:N(ng)) :: ad_Awrk
+!
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Hfac
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Khx
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Khy
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: ad_FE
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: ad_FX
+#  ifdef GEOPOTENTIAL_HCONV
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,2) :: dZdx
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,2) :: dZde
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,2) :: ad_FZ
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,2) :: ad_dAdz
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,2) :: ad_dAdx
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,2) :: ad_dAde
+#  endif
+!
+!  Initialize.
+!
+      IstrU=BOUNDS(ng)%IstrU(tile)   ! tile computational indices
+      Iend =BOUNDS(ng)%Iend (tile)
+      Jstr =BOUNDS(ng)%Jstr (tile)
+      Jend =BOUNDS(ng)%Jend (tile)
+!
+      IF (Lweak) THEN
+        rec=2                        ! weak constraint correlations
+      ELSE
+        rec=1                        ! strong constraint correlations
+      END IF
+!
+      ad_Awrk(LBi:UBi,LBj:UBj,LBk:UBk)=0.0_r8
+      ad_FE(IminS:ImaxS,JminS:JmaxS)=0.0_r8
+      ad_FX(IminS:ImaxS,JminS:JmaxS)=0.0_r8
+#  ifdef GEOPOTENTIAL_HCONV
+      ad_FZ(IminS:ImaxS,JminS:JmaxS,1:2)=0.0_r8
+      ad_dAdz(IminS:ImaxS,JminS:JmaxS,1:2)=0.0_r8
+      ad_dAdx(IminS:ImaxS,JminS:JmaxS,1:2)=0.0_r8
+      ad_dAde(IminS:ImaxS,JminS:JmaxS,1:2)=0.0_r8
+#  endif
+!
+!  Assign contol variable isotropic or anisotropic correlation length
+!  scales.
+!
+      SELECT CASE (ifield)
+        CASE (isUvel)
+#  ifdef READ_SCALES
+          bsclx => self%bU3DscaleX(:,:,ifield,ms)
+          bscly => self%bU3DscaleY(:,:,ifield,ms)
+#  endif
+          iLap=Mlap(ifield,ms,ng)
+      END SELECT
+!
+!  Compute metrics factor.
+!
+      DO j=Jstr,Jend
+        DO i=IstrU,Iend
+          Hfac(i,j)=0.25_r8*(GRID(ng)%pm(i-1,j)+GRID(ng)%pm(i,j))*      &
+     &                      (GRID(ng)%pn(i-1,j)+GRID(ng)%pn(i,j))
+        END DO
+      END DO
+!
+!  Set horizontal diffusion coefficients (Khx, Khy) with units of
+!  correlation length squared.
+!
+      DO j=Jstr-1,Jend+1
+        DO i=IstrU-1,Iend+1
+#  ifdef READ_SCALES
+          cffx=bsclx(i,j)*bsclx(i,j)       ! spatially varying
+          cffy=bscly(i,j)*bscly(i,j)
+#  else
+          cffx=HdecayX(rec,ifield,ms,ng)*HdecayX(rec,ifield,ms,ng)
+          cffy=HdecayY(rec,ifield,ms,ng)*HdecayY(rec,ifield,ms,ng)
+#  endif
+          Khx(i,j)=0.5_r8*cffx/REAL(iLap-2,r8)
+          Khy(i,j)=0.5_r8*cffy/REAL(iLap-2,r8)
+        END DO
+      END DO
+!
+!  Adjoint of load K-Laplacian solution.
+!
+      DO k=1,N(ng)
+        DO j=Jstr,Jend
+          DO i=Istr,Iend
+!^          tl_A(i,j,k)=tl_Awrk(i,j,k)
+!^
+            ad_Awrk(i,j,k)=ad_Awrk(i,j,k)+ad_A(i,j,k)
+            ad_A(i,j,k)=0.0_r8
+          END DO
+        END DO
+      END DO
+
+#  ifdef DISTRIBUTE
+!
+!  Adjoint of exchange boundary data.
+!
+!^    CALL mp_exchange3d (ng, tile, model, 1,                           &
+!^   &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
+!^   &                    Nghost,                                       &
+!^   &                    EWperiodic(ng), NSperiodic(ng),               &
+!^   &                    tl_Awrk)
+!^
+      CALL ad_mp_exchange3d (ng, tile, model, 1,                        &
+     &                       LBi, UBi, LBj, UBj, 1, N(ng),              &
+     &                       Nghost,                                    &
+     &                       EWperiodic(ng), NSperiodic(ng),            &
+     &                       ad_Awrk)
+#  endif
+
+#  ifdef GEOPOTENTIAL_HCONV
+!
+!  Diffusion along geopotential surfaces: Compute horizontal and
+!  vertical gradients.  Notice the recursive blocking sequence.  The
+!  vertical placement of the gradients is:
+!
+!        dZdx_r,dAdx,dAde(:,:,k1) k     rho-points
+!        dZdx_r,dAdx,dAde(:,:,k2) k+1   rho-points
+!                  dZde_p(:,:,k1) k     psi-points
+!                  dZde_p(:,:,k2) k+1   psi-points
+!                 FZ,dAdz(:,:,k1) k-1/2   W-points
+!                 FZ,dAdz(:,:,k2) k+1/2   W-points
+!
+!  Compute adjoint of starting values of k1 and k2.
+!
+      k1=2
+      k2=1
+      DO k=0,N(ng)
+!
+!  Note: The following code is equivalent to
+!
+!       kt=k
+!       k1=k2
+!       k2=kt
+!
+!  We use the adjoint of above code.
+!
+        k1=k2
+        k2=3-k1
+      END DO
+!
+      K_LOOP : DO k=N(ng),0,-1
+
+!  Compute required BASIC STATE fields. Need to look forward in
+!  recursive kk index.
+!
+        k2b=1
+        DO kk=0,k
+          k1b=k2b
+          k2b=3-k1b
+!
+!  Compute components of the rotated tracer flux (A m3/s) along
+!  geopotential surfaces (required BASIC STATE fields).
+!
+          IF (kk.lt.N(ng)) THEN
+            DO j=Jstr,Jend
+              DO i=IstrU-1,Iend+1
+                cff=0.5_r8*(GRID(ng)%pm(i-1,j)+GRID(ng)%pm(i,j))
+#   ifdef MASKING
+                cff=cff*GRID(ng)%umask(i,j)
+#   endif
+                dZdx(i,j)=cff*(GRID(ng)%z_r(i  ,j,kk+1)-                &
+     &                         GRID(ng)%z_r(i-1,j,kk+1))
+              END DO
+            END DO
+            DO j=Jstr,Jend
+              DO i=IstrU-1,Iend
+                dZdx_r(i,j,k2b)=0.5_r8*(dZdx(i  ,j)+                    &
+     &                                  dZdx(i+1,j))
+              END DO
+            END DO
+            IF (kk.eq.0) THEN
+              DO j=Jstr,Jend
+                DO i=IstrU-1,Iend
+                  dZdx_r(i,j,k1b)=0.0_r8
+                END DO
+              END DO
+            END IF
+!
+            DO j=Jstr,Jend+1
+              DO i=IstrU-1,Iend
+                cff=0.5_r8*(GRID(ng)%pn(i,j-1)+GRID(ng)%pn(i,j))
+#   ifdef MASKING
+                  cff=cff*GRID(ng)%vmask(i,j)
+#   endif
+                  dZde(i,j)=cff*(GRID(ng)%z_r(i,j  ,kk+1)-              &
+     &                           GRID(ng)%z_r(i,j-1,kk+1))
+              END DO
+            END DO
+            DO j=Jstr,Jend+1
+              DO i=IstrU,Iend
+                dZde_p(i,j,k2b)=0.5_r8*(dZde(i-1,j)+                    &
+     &                                  dZde(i  ,j))
+              END DO
+            END DO
+            IF (kk.eq.0) THEN
+              DO j=Jstr,Jend+1
+                DO i=IstrU,Iend
+                  dZde_p(i,j,k1b)=0.0_r8
+                END DO
+              END DO
+            END IF
+          END IF
+        END DO
+!
+        IF (k.gt.0) THEN
+!
+!  Compute adjoint geopotential K-Laplacian operator.
+!
+          DO j=Jstr,Jend
+            DO i=IstrU,Iend
+!^            tl_Awrk(i,j,k)=tl_Awrk(i,j,k)-                            &
+!^   &                       Hfac(i,j)*                                 &
+!^   &                       (tl_FX(i,j  )-tl_FX(i-1,j)+                &
+!^   &                        tl_FE(i,j+1)-tl_FE(i  ,j))-               &
+!^   &                       2.0_r8*(tl_FZ(i,j,k2)-tl_FZ(i,j,k1))/      &
+!^   &                              (GRID(ng)%Hz(i  ,j,k)+              &
+!^   &                               GRID(ng)%Hz(i-1,j,k))
+!^
+              adfac1=-Hfac(i,j)*ad_Awrk(i,j,k)
+              adfac2=-2.0_r8*ad_Awrk(i,j,k)/                            &
+     &               (GRID(ng)%Hz(i,j,k)+GRID(ng)%Hz(i-1,j,k))
+              ad_FE(i,j  )=ad_FE(i,j  )-adfac1
+              ad_FE(i,j+1)=ad_FE(i,j+1)+adfac1
+              ad_FX(i-1,j)=ad_FX(i-1,j)-adfac1
+              ad_FX(i  ,j)=ad_FX(i  ,j)+adfac1
+              ad_FZ(i,j,k1)=ad_FZ(i,j,k1)-adfac2
+              ad_FZ(i,j,k2)=ad_FZ(i,j,k2)+adfac2
+            END DO
+          END DO
+!
+!  Compute components of the adjoint rotated A flux (A m3/s) along
+!  geopotential surfaces.
+!
+          IF (k.lt.N(ng)) THEN
+            DO j=Jstr,Jend
+              DO i=IstrU,Iend
+                cff=0.25_r8*(Khy(i-1,j)+Khy(i,j))
+                cff1=MIN(dZde_p(i,j  ,k1),0.0_r8)
+                cff2=MIN(dZde_p(i,j+1,k2),0.0_r8)
+                cff3=MAX(dZde_p(i,j  ,k2),0.0_r8)
+                cff4=MAX(dZde_p(i,j+1,k1),0.0_r8)
+!^              tl_FZ(i,j,k2)=tl_FZ(i,j,k2)+                            &
+!^   &                        cff*                                      &
+!^   &                        (cff1*(cff1*tl_dAdz(i,j,k2)-              &
+!^   &                               tl_dAde(i,j  ,k1))+                &
+!^   &                         cff2*(cff2*tl_dAdz(i,j,k2)-              &
+!^   &                               tl_dAde(i,j+1,k2))+                &
+!^   &                         cff3*(cff3*tl_dAdz(i,j,k2)-              &
+!^   &                               tl_dAde(i,j  ,k2))+                &
+!^   &                         cff4*(cff4*tl_dAdz(i,j,k2)-              &
+!^   &                               tl_dAde(i,j+1,k1)))
+!^
+                adfac=cff*ad_FZ(i,j,k2)
+                ad_dAdz(i,j,k2)=ad_dAdz(i,j,k2)+                        &
+     &                          (cff1*cff1+                             &
+     &                           cff2*cff2+                             &
+     &                           cff3*cff3+                             &
+     &                           cff4*cff4)*adfac
+                ad_dAde(i,j  ,k1)=ad_dAde(i,j  ,k1)-cff1*adfac
+                ad_dAde(i,j+1,k2)=ad_dAde(i,j+1,k2)-cff2*adfac
+                ad_dAde(i,j  ,k2)=ad_dAde(i,j  ,k2)-cff3*adfac
+                ad_dAde(i,j+1,k1)=ad_dade(i,j+1,k1)-cff4*adfac
+!
+                cff1=MIN(dZdx_r(i-1,j,k1),0.0_r8)
+                cff2=MIN(dZdx_r(i  ,j,k2),0.0_r8)
+                cff3=MAX(dZdx_r(i-1,j,k2),0.0_r8)
+                cff4=MAX(dZdx_r(i  ,j,k1),0.0_r8)
+                cff=0.25_r8*(Khx(i-1,j)+Khx(i,j))
+!^              tl_FZ(i,j,k2)=cff*                                      &
+!^   &                          (cff1*(cff1*tl_dAdz(i,j,k2)-            &
+!^   &                                 tl_dAdx(i-1,j,k1))+              &
+!^   &                           cff2*(cff2*tl_dAdz(i,j,k2)-            &
+!^   &                                 tl_dAdx(i  ,j,k2))+              &
+!^   &                           cff3*(cff3*tl_dAdz(i,j,k2)-            &
+!^   &                                 tl_dAdx(i-1,j,k2))+              &
+!^   &                           cff4*(cff4*tl_dAdz(i,j,k2)-            &
+!^   &                                 tl_dAdx(i  ,j,k1)))
+!^
+                ad_dAdz(i,j,k2)=ad_dAdz(i,j,k2)+                        &
+     &                          (cff1*cff1+                             &
+     &                           cff2*cff2+                             &
+     &                           cff3*cff3+                             &
+     &                           cff4*cff4)*adfac
+                ad_dAdx(i-1,j,k1)=ad_dAdx(i-1,j,k1)-cff1*adfac
+                ad_dAdx(i  ,j,k2)=ad_dAdx(i  ,j,k2)-cff2*adfac
+                ad_dAdx(i-1,j,k2)=ad_dAdx(i-1,j,k2)-cff3*adfac
+                ad_dAdx(i  ,j,k1)=ad_dAdx(i  ,j,k1)-cff4*adfac
+                ad_FZ(i,j,k2)=0.0_r8
+              END DO
+            END DO
+          END IF
+!
+          DO j=Jstr,Jend+1
+            DO i=IstrU,Iend
+              cff=0.25_r8*(Khy(i-1,j-1)+Khy(i-1,j)+                     &
+     &                     Khy(i  ,j-1)+Khy(i  ,j))*GRID(ng)*om_p(i,j)
+              cff1=MIN(dZde_p(i,j,k1),0.0_r8)
+              cff2=MAX(dZde_p(i,j,k1),0.0_r8)
+!^            tl_FE(i,j)=cff*                                           &
+!^   &                   (tl_dAde(i,j,k1)-                              &
+!^   &                    0.5_r8*(cff1*(tl_dAdz(i,j-1,k1)+              &
+!^   &                                  tl_dAdz(i,j  ,k2))+             &
+!^   &                            cff2*(tl_dAdz(i,j-1,k2)+              &
+!^   &                                  tl_dAdz(i,j  ,k1))))
+!^
+              adfac=cff*ad_FE(i,j)
+              adfac1=adfac*0.5_r8*cff1
+              adfac2=adfac*0.5_r8*cff2
+              ad_dAde(i,j,k1)=ad_dAde(i,j,k1)+adfac
+              ad_dAdz(i,j-1,k1)=ad_dAdz(i,j-1,k1)-adfac1
+              ad_dAdz(i,j  ,k2)=ad_dAdz(i,j  ,k2)-adfac1
+              ad_dAdz(i,j-1,k2)=ad_dAdz(i,j-1,k2)-adfac2
+              ad_dAdz(i,j  ,k1)=ad_dAdz(i,j  ,k1)-adfac2
+              ad_FE(i,j)=0.0_r8
+            END DO
+          END DO
+!
+          DO j=Jstr,Jend
+            DO i=IstrU-1,Iend
+              cff=Khx(i,j)*GRID(ng)*on_r(i,j)
+              cff1=MIN(dZdx_r(i,j,k1),0.0_r8)
+              cff2=MAX(dZdx_r(i,j,k1),0.0_r8)
+!^            tl_FX(i,j)=cff*                                           &
+!^   &                   (tl_dAdx(i,j,k1)-                              &
+!^   &                    0.5_r8*(cff1*(tl_dAdz(i  ,j,k1)+              &
+!^   &                                  tl_dAdz(i+1,j,k2))+             &
+!^   &                            cff2*(tl_dAdz(i  ,j,k2)+              &
+!^   &                                  tl_dAdz(i+1,j,k1))))
+!^
+              adfac=cff*ad_FX(i,j)
+              adfac1=adfac*0.5_r8*cff1
+              adfac2=adfac*0.5_r8*cff2
+              ad_dAdx(i,j,k1)=ad_dAdx(i,j,k1)+adfac
+              ad_dAdz(i  ,j,k1)=ad_dAdz(i  ,j,k1)-adfac1
+              ad_dAdz(i+1,j,k2)=ad_dAdz(i+1,j,k2)-adfac1
+              ad_dAdz(i  ,j,k2)=ad_dAdz(i  ,j,k2)-adfac2
+              ad_dAdz(i+1,j,k1)=ad_dAdz(i+1,j,k1)-adfac2
+              ad_FX(i,j)=0.0_r8
+            END DO
+          END DO
+        END IF
+!
+        IF ((k.eq.0).or.(k.eq.N(ng))) THEN
+          DO j=Jstr-1,Jend+1
+            DO i=IstrU-1,Iend+1
+!^            tl_FZ(i,j,k2)=0.0_r8
+!^
+              ad_FZ(i,j,k2)=0.0_r8
+!^            tl_dAdz(i,j,k2)=0.0_r8
+!^
+              ad_dAdz(i,j,k2)=0.0_r8
+            END DO
+          END DO
+        ELSE
+          DO j=Jstr-1,Jend+1
+            DO i=IstrU-1,Iend+1
+              cff=1.0_r8/(GRID(ng)*z_r(i,j,k+1)-GRID(ng)*z_r(i,j,k))
+#   ifdef MASKING
+!^            tl_dAdz(i,j,k2)=tl_dAdz(i,j,k2)*GRID(ng)*umask(i,j)
+!^
+              ad_dAdz(i,j,k2)=ad_dAdz(i,j,k2)*GRID(ng)*umask(i,j)
+#   endif
+!^            tl_dAdz(i,j,k2)=cff*(tl_Awrk(i,j,k+1)-                    &
+!^   &                             tl_Awrk(i,j,k))
+!^
+              adfac=cff*ad_dAdz(i,j,k2)
+              ad_Awrk(i,j,k)=ad_Awrk(i,j,k)-adfac
+              ad_Awrk(i,j,k+1)=ad_Awrk(i,j,k+1)+adfac
+              ad_dAdz(i,j,k2)=0.0_r8
+            END DO
+          END DO
+        END IF
+!
+        IF (k.lt.N(ng)) THEN
+          DO j=Jstr,Jend+1
+            DO i=IstrU,Iend
+              cff=0.25_r8*(GRID(ng)*pn(i-1,j  )+GRID(ng)*pn(i,j  )+     &
+     &                     GRID(ng)*pn(i-1,j-1)+GRID(ng)*pn(i,j-1))
+#   ifdef MASKING
+!^            tl_dAde(i,j,k2)=tl_dAde(i,j,k2)*GRID(ng)*pmask(i,j)
+!^
+              ad_dAde(i,j,k2)=ad_dAde(i,j,k2)*GRID(ng)*pmask(i,j)
+!^            tl_dAde(i,j,k2)=cff*                                      &
+!^   &                        (tl_Awrk(i,j  ,k+1)*                      &
+!^   &                            GRID(ng)*umask(i,j  )-                &
+!^   &                         tl_Awrk(i,j-1,k+1)*
+!^   &                            GRID(ng)*umask(i,j-1))
+!^
+              adfac=cff*ad_dAde(i,j,k2)
+              ad_Awrk(i,j  ,k+1)=ad_Awrk(i,j  ,k+1)+                    &
+     &                           GRID(ng)*umask(i,j  )*adfac
+              ad_Awrk(i,j-1,k+1)=ad_Awrk(i,j-1,k+1)-                    &
+     &                           GRID(ng)*umask(i,j-1)*adfac
+              ad_dAde(i,j,k2)=0.0_r8
+#   else
+!^            tl_dAde(i,j,k2)=cff*(tl_Awrk(i,j  ,k+1)-                  &
+!^   &                             tl_Awrk(i,j-1,k+1))
+!^
+              adfac=cff*ad_dAde(i,j,k2)
+              ad_Awrk(i,j  ,k+1)=ad_Awrk(i,j  ,k+1)+adfac
+              ad_Awrk(i,j-1,k+1)=ad_Awrk(i,j-1,k+1)-adfac
+              ad_dAde(i,j,k2)=0.0_r8
+#   endif
+            END DO
+          END DO
+!
+          DO j=Jstr,Jend
+            DO i=IstrU-1,Iend
+#   ifdef MASKING
+!^            tl_dAdx(i,j,k2)=tl_dAdx(i,j,k2)*GRID(ng)*rmask(i,j)
+!^
+              ad_dAdx(i,j,k2)=ad_dAdx(i,j,k2)*GRID(ng)*rmask(i,j)
+!^            tl_dAdx(i,j,k2)=GRID(ng)*pm(i,j)*                         &
+!^   &                        (tl_Awrk(i+1,j,k+1)*                      &
+!^   &                            GRID(ng)*umask(i+1,j)-                &
+!^   &                         tl_Awrk(i  ,j,k+1)*                      &
+!^   &                            GRID(ng)*umask(i  ,j))
+!^
+              adfac=GRID(ng)*GRID(ng)*pm(i,j)*ad_dAdx(i,j,k2)
+              ad_Awrk(i  ,j,k+1)=ad_Awrk(i  ,j,k+1)-                    &
+     &                           GRID(ng)*umask(i  ,j)*adfac
+              ad_Awrk(i+1,j,k+1)=ad_Awrk(i+1,j,k+1)+                    &
+     &                           GRID(ng)*umask(i+1,j)*adfac
+              ad_dAdx(i,j,k2)=0.0_r8
+#   else
+!^            tl_dAdx(i,j,k2)=GRID(ng)*pm(i,j)*                         &
+!^   &                        (tl_Awrk(i+1,j,k+1)-                      &
+!^   &                         tl_Awrk(i  ,j,k+1))
+!^
+              adfac=GRID(ng)*pm(i,j)*ad_dAdx(i,j,k2)
+              ad_Awrk(i  ,j,k+1)=ad_Awrk(i  ,j,k+1)-adfac
+              ad_Awrk(i+1,j,k+1)=ad_Awrk(i+1,j,k+1)+adfac
+              ad_dAdx(i,j,k2)=0.0_r8
+#   endif
+            END DO
+          END DO
+        END IF
+!
+!  Compute new storage recursive indices.
+!
+        kt=k2
+        k2=k1
+        k1=kt
+      END DO K_LOOP
+
+#  else
+
+!
+!  Compute horizontal H-Laplacian operator.
+!
+      DO k=1,N(ng)
+        DO j=Jstr,Jend
+          DO i=IstrU,Iend
+!^          tl_Awrk(i,j,k)=tl_Awrk(i,j,k)-                              &
+!^   &                     Hfac(i,j)*                                   &
+!^   &                     (tl_FX(i,j)-tl_FX(i-1,j)+                    &
+!^   &                      tl_FE(i,j+1)-tl_FE(i,j))
+!^
+            adfac=-Hfac(i,j)*ad_Awrk(i,j,k)
+            ad_FE(i,j  )=ad_FE(i,j  )-adfac
+            ad_FE(i,j+1)=ad_FE(i,j+1)+adfac
+            ad_FX(i-1,j)=ad_FX(i-1,j)-adfac
+            ad_FX(i  ,j)=ad_FX(i  ,j)+adfac
+          END DO
+        END DO
+!
+!  Compute XI- and ETA-components of the adjoint diffusive flux.
+!
+        DO j=Jstr,Jend+1
+          DO i=IstrU,Iend
+#   ifdef MASKING
+!^          tl_FE(i,j)=tl_FE(i,j)*GRID(ng)*pmask(i,j)
+!^
+            ad_FE(i,j)=ad_FE(i,j)*GRID(ng)*pmask(i,j)
+#   endif
+!^          tl_FE(i,j)=GRID(ng)*pnom_p(i,j)*                            &
+!^   &                 0.25_r8*(Khy(i-1,j  )+Khy(i,j  )+                &
+!^   &                          Khy(i-1,j-1)+Khy(i,j-1))*               &
+!^   &                   (tl_Awrk(i,j,k)-tl_Awrk(i,j-1,k))
+!^
+            adfac=GRID(ng)*pnom_p(i,j)*                                 &
+     &            0.25_r8*(Khy(i-1,j  )+Khy(i,j  )+                     &
+     &                     Khy(i-1,j-1)+Khy(i,j-1))*ad_FE(i,j)
+            ad_Awrk(i,j-1,k)=ad_Awrk(i,j-1,k)-adfac
+            ad_Awrk(i,j  ,k)=ad_Awrk(i,j  ,k)+adfac
+            ad_FE(i,j)=0.0_r8
+          END DO
+        END DO
+!
+        DO j=Jstr,Jend
+          DO i=IstrU-1,Iend
+!^          tl_FX(i,j)=GRID(ng)*pmon_r(i,j)*                           &
+!^   &                 Khx(i,j)*(tl_Awrk(i+1,j,k)-tl_Awrk(i,j,k))
+!^
+            adfac=GRID(ng)%pmon_r(i,j)*Khx(i,j)*ad_FX(i,j)
+            ad_Awrk(i  ,j,k)=ad_Awrk(i  ,j,k)-adfac
+            ad_Awrk(i+1,j,k)=ad_Awrk(i+1,j,k)+adfac
+            ad_FX(i,j)=0.0_r8
+          END DO
+        END DO
+      END DO
+#  endif
+!
+!  Set adjoint initial conditions.
+!
+      DO k=1,N(ng)
+        DO j=Jstr-1,Jend+1
+          DO i=IstrU-1,Iend+1
+!^          tl_Awrk(i,j,k)=tl_A(i,j,k)
+!^
+            ad_A(i,j,k)=ad_A(i,j,k)+ad_Awrk(i,j,k)
+            ad_Awrk(i,j,k)=0.0_r8
+          END DO
+        END DO
+      END DO
+
+#  ifdef DISTRIBUTE
+!
+!^    CALL mp_exchange3d (ng, tile, model, 1,                           &
+!^   &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
+!^   &                    Nghost,                                       &
+!^   &                    EWperiodic(ng), NSperiodic(ng),               &
+!^   &                    tl_A)
+!^
+      CALL ad_mp_exchange3d (ng, tile, model, 1,                        &
+     &                       LBi, UBi, LBj, UBj, 1, N(ng),              &
+     &                       Nghost,                                    &
+     &                       EWperiodic(ng), NSperiodic(ng),            &
+     &                       ad_A)
+#  endif
+!
+!^    CALL dabc_u3d_tile (ng, tile,                                     &
+!^   &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
+!^   &                    tl_A)
+!^
+      CALL ad_dabc_u3d_tile (ng, tile,                                  &
+     &                       LBi, UBi, LBj, UBj, 1, N(ng),              &
+     &                       ad_A)
+!
+      RETURN
+      END SUBROUTINE ad_multiscale_Klap_u3d
+!
+!-----------------------------------------------------------------------
+!  It computes the tangent linear K-Laplacian, [1 + Del(K*Del)], of a
+!  3D control variable at V-points.
+!
+      SUBROUTINE tl_multiscale_Klap_v3d (self, ng, tile, model,         &
+     &                                   ifield, ctype, ms, Lweak,      &
+     &                                   LBi, UBi, LBj, UBj,            &
+     &                                   IminS, ImaxS, JminS, JmaxS,    &
+     &                                   tl_A)
+!
+      CLASS (multiscale), intent(inout) :: self      ! multiscale object
+      integer,            intent(in   ) :: ng        ! nested grid
+      integer,            intent(in   ) :: tile      ! domain partition
+      integer,            intent(in   ) :: model     ! kernel ID
+      integer,            intent(in   ) :: ifield    ! state field ID
+      integer,            intent(in   ) :: ctype     ! C-grid type
+      integer,            intent(in   ) :: ms        ! multiscale index
+      logical,            intent(in   ) :: Lweak     ! weak constraint
+      integer,            intent(in   ) :: LBi, UBi, LBj, UBj
+      integer,            intent(in   ) :: IminS, ImaxS, JminS, JmaxS
+      real (r8),          intent(inout) :: tl_A(LBi:,LBj:,:)
+!
+      integer                           :: iLap, i, j, k, k1, k2, rec
+      integer                           :: Istr, Iend, JstrV, Jend
+      real (r8)                         :: cff, cff1, cff2, cff3, cff4
+      real (r8)                         :: cffx, cffy
+
+#  ifdef READ_SCALES
+!
+      real (r8), pointer                :: bsclx(:,:) => NULL()
+      real (r8), pointer                :: bscly(:,:) => NULL()
+#  endif
+!
+      real(r8), dimension(LBi:UBi,LBj:UBj,1:N(ng)) :: tl_Awrk
+!
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Hfac
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Khx
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Khy
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_FE
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_FX
+#  ifdef GEOPOTENTIAL_HCONV
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS)   :: dZdx
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS)   :: dZde
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,2) :: dZdx_p
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,2) :: dZde_r
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,2) :: tl_FZ
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,2) :: tl_dAdz
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,2) :: tl_dAdx
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,2) :: tl_dAde
+#  endif
+!
+!  Initialize.
+!
+      Istr =BOUNDS(ng)%Istr (tile)   ! tile computational indices
+      Iend =BOUNDS(ng)%Iend (tile)
+      JstrV=BOUNDS(ng)%JstrV(tile)
+      Jend =BOUNDS(ng)%Jend (tile)
+!
+      IF (Lweak) THEN
+        rec=2                        ! weak constraint correlations
+      ELSE
+        rec=1                        ! strong constraint correlations
+      END IF
+!
+!  Assign contol variable isotropic or anisotropic correlation length
+!  scales.
+!
+      SELECT CASE (ifield)
+        CASE (isVvel)
+#  ifdef READ_SCALES
+          bsclx => self%bV3DscaleX(:,:,ifield,ms)
+          bscly => self%bV3DscaleY(:,:,ifield,ms)
+#  endif
+          iLap=Mlap(ifield,ms,ng)
+      END SELECT
+!
+!  Compute metrics factor.
+!
+      DO j=JstrV,Jend
+        DO i=Istr,Iend
+          Hfac(i,j)=0.25_r8*(GRID(ng)%pm(i,j-1)+GRID(ng)%pm(i,j))*      &
+     &                      (GRID(ng)%pn(i,j-1)+GRID(ng)%pn(i,j))
+        END DO
+      END DO
+!
+!  Set horizontal diffusion coefficients (Khx, Khy) with units of
+!  correlation length squared.
+!
+      DO j=JstrV-1,Jend+1
+        DO i=Istr-1,Iend+1
+#  ifdef READ_SCALES
+          cffx=bsclx(i,j)*bsclx(i,j)       ! spatially varying
+          cffy=bscly(i,j)*bscly(i,j)
+#  else
+          cffx=HdecayX(rec,ifield,ms,ng)*HdecayX(rec,ifield,ms,ng)
+          cffy=HdecayY(rec,ifield,ms,ng)*HdecayY(rec,ifield,ms,ng)
+#  endif
+          Khx(i,j)=0.5_r8*cffx/REAL(iLap-2,r8)
+          Khy(i,j)=0.5_r8*cffy/REAL(iLap-2,r8)
+        END DO
+      END DO
+!
+!  Set operator initial conditions.
+!
+!^    CALL dabc_v3d_tile (ng, tile,                                     &
+!^   &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
+!^   &                    A)
+!^
+      CALL dabc_v3d_tile (ng, tile,                                     &
+     &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
+     &                    tl_A)
+#  ifdef DISTRIBUTE
+!
+!^    CALL mp_exchange3d (ng, tile, model, 1,                           &
+!^   &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
+!^   &                    Nghost,                                       &
+!^   &                    EWperiodic(ng), NSperiodic(ng),               &
+!^   &                    A)
+!^
+      CALL mp_exchange3d (ng, tile, model, 1,                           &
+     &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
+     &                    Nghost,                                       &
+     &                    EWperiodic(ng), NSperiodic(ng),               &
+     &                    tl_A)
+#  endif
+!
+      DO k=1,N(ng)
+        DO j=JstrV-1,Jend+1
+          DO i=Istr-1,Iend+1
+!^          Awrk(i,j,k)=A(i,j,k)
+!^
+            tl_Awrk(i,j,k)=tl_A(i,j,k)
+          END DO
+        END DO
+      END DO
+
+#  ifdef GEOPOTENTIAL_HCONV
+!
+!  Diffusion along geopotential surfaces: Compute horizontal and
+!  vertical gradients.  Notice the recursive blocking sequence.  The
+!  vertical placement of the gradients is:
+!
+!        dZde_r,dAdx,dAde(:,:,k1) k     rho-points
+!        dZde_r,dAdx,dAde(:,:,k2) k+1   rho-points
+!                  dZdx_p(:,:,k1) k     psi-points
+!                  dZdx_p(:,:,k2) k+1   psi-points
+!                 FZ,dAdz(:,:,k1) k-1/2   W-points
+!                 FZ,dAdz(:,:,k2) k+1/2   W-points
+!
+      k2=1
+      K_LOOP : DO k=0,N(ng)
+        k1=k2
+        k2=3-k1
+        IF (k.lt.N(ng)) THEN
+          DO j=JstrV-1,Jend
+            DO i=Istr,Iend+1
+              cff=0.5_r8*(GRID(ng)%pm(i-1,j)+GRID(ng)%pm(i,j))
+#   ifdef MASKING
+              cff=cff*GRID(ng)%umask(i,j)
+#   endif
+              dZdx(i,j)=cff*(GRID(ng)%z_r(i  ,j,k+1)-                   &
+     &                       GRID(ng)%z_r(i-1,j,k+1))
+            END DO
+          END DO
+!
+          DO j=JstrV-1,Jend+1
+            DO i=Istr,Iend
+              cff=0.5_r8*(GRID(ng)%pn(i,j-1)+GRID(ng)%pn(i,j))
+#   ifdef MASKING
+              cff=cff*GRID(ng)%vmask(i,j)
+#   endif
+              dZde(i,j)=cff*(GRID(ng)%z_r(i,j  ,k+1)-                   &
+     &                       GRID(ng)%z_r(i,j-1,k+1))
+            END DO
+          END DO
+!
+          DO j=JstrV,Jend
+            DO i=Istr,Iend+1
+              cff=0.25_r8*(GRID(ng)%pm(i-1,j-1)+GRID(ng)%pm(i-1,j)+     &
+     &                     GRID(ng)%pm(i  ,j-1)+GRID(ng)%pm(i  ,j))
+#   ifdef MASKING
+!^            dAdx(i,j,k2)=cff*                                         &
+!^   &                     (Awrk(i  ,j,k+1)*GRID(ng)%vmask(i  ,j)-      &
+!^   &                      Awrk(i-1,j,k+1)*GRID(ng)%vmask(i-1,j))
+!^
+              tl_dAdx(i,j,k2)=cff*                                      &
+     &                        (tl_Awrk(i  ,j,k+1)*                      &
+     &                            GRID(ng)%vmask(i  ,j)-                &
+     &                         tl_Awrk(i-1,j,k+1)*
+     7                            GRID(ng)%vmask(i-1,j))
+!^            dAdx(i,j,k2)=dAdx(i,j,k2)*GRID(ng)%pmask(i,j)
+!^
+              tl_dAdx(i,j,k2)=tl_dAdx(i,j,k2)*GRID(ng)%pmask(i,j)
+#   else
+!^            dAdx(i,j,k2)=cff*(Awrk(i  ,j,k+1)-                        &
+!^   &                          Awrk(i-1,j,k+1))
+!^
+              tl_dAdx(i,j,k2)=cff*(tl_Awrk(i  ,j,k+1)-                  &
+     &                             tl_Awrk(i-1,j,k+1))
+#   endif
+              dZdx_p(i,j,k2)=0.5_r8*(dZdx(i,j-1)+                       &
+     &                               dZdx(i,j  ))
+            END DO
+          END DO
+!
+          DO j=JstrV-1,Jend
+            DO i=Istr,Iend
+#   ifdef MASKING
+!^            dAde(i,j,k2)=GRID(ng)%pn(i,j)*                            &
+!^   &                     (Awrk(i,j+1,k+1)*GRID(ng)%vmask(i,j+1)-      &
+!^   &                      Awrk(i,j  ,k+1)*GRID(ng)%vmask(i,j  ))
+!^
+              tl_dAde(i,j,k2)=GRID(ng)%pn(i,j)*                         &
+     &                        (tl_Awrk(i,j+1,k+1)*                      &
+     &                            GRID(ng)%vmask(i,j+1)-                &
+     &                         tl_Awrk(i,j  ,k+1)*
+     &                            GRID(ng)%vmask(i,j  ))
+!^            dAde(i,j,k2)=dAde(i,j,k2)*GRID(ng)%rmask(i,j)
+!^
+              tl_dAde(i,j,k2)=tl_dAde(i,j,k2)*GRID(ng)%rmask(i,j)
+#   else
+!^            dAde(i,j,k2)=GRID(ng)%pn(i,j)*(Awrk(i,j+1,k+1)-           &
+!^   &                                       Awrk(i,j  ,k+1))
+!^
+              tl_dAde(i,j,k2)=GRID(ng)%pn(i,j)*(tl_Awrk(i,j+1,k+1)-     &
+     &                                          tl_Awrk(i,j  ,k+1))
+#   endif
+              dZde_r(i,j,k2)=0.5_r8*(dZde(i,j  )+                       &
+     &                               dZde(i,j+1))
+            END DO
+          END DO
+        END IF
+!
+        IF ((k.eq.0).or.(k.eq.N(ng))) THEN
+          DO j=JstrV-1,Jend+1
+            DO i=Istr-1,Iend+1
+!^            dAdz(i,j,k2)=0.0_r8
+!^
+              tl_dAdz(i,j,k2)=0.0_r8
+!^            FZ(i,j,k2)=0.0_r8
+!^
+              tl_FZ(i,j,k2)=0.0_r8
+            END DO
+          END DO
+        ELSE
+          DO j=JstrV-1,Jend+1
+            DO i=Istr-1,Iend+1
+              cff=1.0_r8/(GRID(ng)%z_r(i,j,k+1)-GRID(ng)%z_r(i,j,k))
+!^            dAdz(i,j,k2)=cff*(Awrk(i,j,k+1)-                          &
+!^   &                          Awrk(i,j,k))
+!^
+              tl_dAdz(i,j,k2)=cff*(tl_Awrk(i,j,k+1)-                    &
+     &                             tl_Awrk(i,j,k))
+#   ifdef MASKING
+!^            dAdz(i,j,k2)=dAdz(i,j,k2)*GRID(ng)%vmask(i,j)
+!^
+              tl_dAdz(i,j,k2)=tl_dAdz(i,j,k2)*GRID(ng)%vmask(i,j)
+#   endif
+            END DO
+          END DO
+        END IF
+!
+!  Compute components of the rotated A flux along geopotential
+!  surfaces.
+!
+        IF (k.gt.0) THEN
+          DO j=JstrV,Jend
+            DO i=Istr,Iend+1
+              cff=0.25_r8*(Khx(i-1,j-1)+Khx(i-1,j)+                     &
+     &                     Khx(i  ,j-1)+Khx(i  ,j))*GRID(ng)%on_p(i,j)
+              cff1=MIN(dZdx_p(i,j,k1),0.0_r8)
+              cff2=MAX(dZdx_p(i,j,k1),0.0_r8)
+!^            FX(i,j)=cff*                                              &
+!^   &                (dAdx(i,j,k1)-                                    &
+!^   &                 0.5_r8*(cff1*(dAdz(i-1,j,k1)+                    &
+!^   &                               dAdz(i  ,j,k2))+                   &
+!^   &                         cff2*(dAdz(i-1,j,k2)+                    &
+!^   &                               dAdz(i  ,j,k1))))
+!^
+              tl_FX(i,j)=cff*                                           &
+     &                   (tl_dAdx(i,j,k1)-                              &
+     &                    0.5_r8*(cff1*(tl_dAdz(i-1,j,k1)+              &
+     &                                  tl_dAdz(i  ,j,k2))+             &
+     &                            cff2*(tl_dAdz(i-1,j,k2)+              &
+     &                                  tl_dAdz(i  ,j,k1))))
+            END DO
+          END DO
+!
+          DO j=JstrV-1,Jend
+            DO i=Istr,Iend
+              cff=Khy(i,j)*GRID(ng)%om_r(i,j)
+              cff1=MIN(dZde_r(i,j,k1),0.0_r8)
+              cff2=MAX(dZde_r(i,j,k1),0.0_r8)
+!^            FE(i,j)=cff*                                              &
+!^   &                (dAde(i,j,k1)-                                    &
+!^   &                 0.5_r8*(cff1*(dAdz(i,j  ,k1)+                    &
+!^   &                               dAdz(i,j+1,k2))+                   &
+!^   &                         cff2*(dAdz(i,j  ,k2)+                    &
+!^   &                               dAdz(i,j+1,k1))))
+!^
+              tl_FE(i,j)=cff*                                           &
+     &                   (tl_dAde(i,j,k1)-                              &
+     &                    0.5_r8*(cff1*(tl_dAdz(i,j  ,k1)+              &
+     &                                  tl_dAdz(i,j+1,k2))+             &
+     &                            cff2*(tl_dAdz(i,j  ,k2)+              &
+     &                                  tl_dAdz(i,j+1,k1))))
+            END DO
+          END DO
+!
+          IF (k.lt.N(ng)) THEN
+            DO j=JstrV,Jend
+              DO i=Istr,Iend
+                cff=0.5_r8*(Khx(i,j-1)+Khx(i,j))
+                cff1=MIN(dZdx_p(i  ,j,k1),0.0_r8)
+                cff2=MIN(dZdx_p(i+1,j,k2),0.0_r8)
+                cff3=MAX(dZdx_p(i  ,j,k2),0.0_r8)
+                cff4=MAX(dZdx_p(i+1,j,k1),0.0_r8)
+!^              FZ(i,j,k2)=cff*                                         &
+!^   &                     (cff1*(cff1*dAdz(i,j,k2)-dAdx(i  ,j,k1))+    &
+!^   &                      cff2*(cff2*dAdz(i,j,k2)-dAdx(i+1,j,k2))+    &
+!^   &                      cff3*(cff3*dAdz(i,j,k2)-dAdx(i  ,j,k2))+    &
+!^   &                      cff4*(cff4*dAdz(i,j,k2)-dAdx(i+1,j,k1)))
+!^
+                tl_FZ(i,j,k2)=cff*                                      &
+     &                        (cff1*(cff1*tl_dAdz(i,j,k2)-              &
+     &                               tl_dAdx(i  ,j,k1))+                &
+     &                         cff2*(cff2*tl_dAdz(i,j,k2)-              &
+     &                               tl_dAdx(i+1,j,k2))+                &
+     &                         cff3*(cff3*tl_dAdz(i,j,k2)-              &
+     &                               tl_dAdx(i  ,j,k2))+                &
+     &                         cff4*(cff4*tl_dAdz(i,j,k2)-              &
+     &                               tl_dAdx(i+1,j,k1)))
+!
+                cff1=MIN(dZde_r(i,j-1,k1),0.0_r8)
+                cff2=MIN(dZde_r(i,j  ,k2),0.0_r8)
+                cff3=MAX(dZde_r(i,j-1,k2),0.0_r8)
+                cff4=MAX(dZde_r(i,j  ,k1),0.0_r8)
+                cff=0.5_r8*(Khy(i,j-1)+Khy(i,j))
+!^              FZ(i,j,k2)=FZ(i,j,k2)+                                  &
+!^   &                     cff*                                         &
+!^   &                     (cff1*(cff1*dAdz(i,j,k2)-dAde(i,j-1,k1))+    &
+!^   &                      cff2*(cff2*dAdz(i,j,k2)-dAde(i,j  ,k2))+    &
+!^   &                      cff3*(cff3*dAdz(i,j,k2)-dAde(i,j-1,k2))+    &
+!^   &                      cff4*(cff4*dAdz(i,j,k2)-dAde(i,j  ,k1)))
+!^
+                tl_FZ(i,j,k2)=tl_FZ(i,j,k2)+                            &
+     &                        cff*                                      &
+     &                        (cff1*(cff1*tl_dAdz(i,j,k2)-              &
+     &                               tl_dAde(i,j-1,k1))+                &
+     &                         cff2*(cff2*tl_dAdz(i,j,k2)-              &
+     &                               tl_dAde(i,j  ,k2))+                &
+     &                         cff3*(cff3*tl_dAdz(i,j,k2)-              &
+     &                               tl_dAde(i,j-1,k2))+                &
+     &                         cff4*(cff4*tl_dAdz(i,j,k2)-              &
+     &                               tl_dAde(i,j  ,k1)))
+              END DO
+            END DO
+          END IF
+!
+          DO j=JstrV,Jend
+            DO i=Istr,Iend
+!^            Awrk(i,j,k)=Awrk(i,j,k)-                                  &
+!^   &                    Hfac(i,j)*                                    &
+!^   &                    (FX(i+1,j)-FX(i,j  )+                         &
+!^   &                     FE(i  ,j)-FE(i,j-1))-                        &
+!^   &                    2.0_r8*(FZ(i,j,k2)-FZ(i,j,k1))/               &
+!^   &                           (GRID(ng)%Hz(i,j  ,k)+                 &
+!^   &                            GRID(ng)%Hz(i,j-1,k))
+!^
+              tl_Awrk(i,j,k)=tl_Awrk(i,j,k)-                            &
+     &                       Hfac(i,j)*                                 &
+     &                       (tl_FX(i+1,j)-tl_FX(i,j  )+                &
+     &                        tl_FE(i  ,j)-tl_FE(i,j-1))-               &
+     &                       2.0_r8*(tl_FZ(i,j,k2)-tl_FZ(i,j,k1))/      &
+     &                              (GRID(ng)%Hz(i,j  ,k)+              &
+     &                               GRID(ng)%Hz(i,j-1,k))
+            END DO
+          END DO
+        END IF
+      END DO K_LOOP
+
+#  else
+
+!
+!  Compute XI- and ETA-components of diffusive flux.
+!
+      DO k=1,N(ng)
+        DO j=JstrV,Jend
+          DO i=Istr,Iend+1
+!^          FX(i,j)=GRID(ng)%pmon_p(i,j)*                               &
+!^   &              0.25_r8*(Khx(i-1,j  )+Khx(i,j  )+                   &
+!^   &                       Khx(i-1,j-1)+Khx(i,j-1))*                  &
+!^   &              (Awrk(i,j,k)-Awrk(i-1,j,k))
+!^
+            tl_FX(i,j)=GRID(ng)%pmon_p(i,j)*                            &
+     &                 0.25_r8*(Khx(i-1,j  )+Khx(i,j  )+                &
+     &                          Khx(i-1,j-1)+Khx(i,j-1))*               &
+     &                 (tl_Awrk(i,j,k)-tl_Awrk(i-1,j,k))
+#   ifdef MASKING
+!^          FX(i,j)=FX(i,j)*GRID(ng)%pmask(i,j)
+!^
+            tl_FX(i,j)=tl_FX(i,j)*GRID(ng)%pmask(i,j)
+#   endif
+          END DO
+        END DO
+!
+        DO j=JstrV-1,Jend
+          DO i=Istr,Iend
+!^          FE(i,j)=GRID(ng)%pnom_r(i,j)*                               &
+!^   *              Khy(i,j)*(Awrk(i,j+1,k)-Awrk(i,j,k))
+!^
+              tl_FE(i,j)=GRID(ng)%pnom_r(i,j)*                          &
+     &                   Khy(i,j)*(tl_Awrk(i,j+1,k)-tl_Awrk(i,j,k))
+          END DO
+        END DO
+!
+        DO j=JstrV,Jend
+          DO i=Istr,Iend
+!^          Awrk(i,j,k)=Awrk(i,j,k)-                                    &
+!^   &                  Hfac(i,j)*                                      &
+!^   &                  FX(i+1,j)-FX(i,j)+                              &
+!^   &                  FE(i,j)-FE(i,j-1))
+!^
+            tl_Awrk(i,j,k)=tl_Awrk(i,j,k)-                              &
+     &                     Hfac(i,j)*                                   &
+     &                     (tl_FX(i+1,j)-tl_FX(i,j)+                    &
+     &                      tl_FE(i,j)-tl_FE(i,j-1))
+          END DO
+        END DO
+      END DO
+#  endif
+
+#  ifdef DISTRIBUTE
+!
+!  Exchange boundary data.
+!
+!^      CALL mp_exchange3d (ng, tile, model, 1,                         &
+!^   &                      LBi, UBi, LBj, UBj, 1, N(ng),               &
+!^   &                      Nghost,                                     &
+!^   &                      EWperiodic(ng), NSperiodic(ng),             &
+!^   &                      Awrk(:,:,:))
+!^
+        CALL mp_exchange3d (ng, tile, model, 1,                         &
+     &                      LBi, UBi, LBj, UBj, 1, N(ng),               &
+     &                      Nghost,                                     &
+     &                      EWperiodic(ng), NSperiodic(ng),             &
+     &                      tl_Awrk(:,:,:))
+#  endif
+!
+!  Load K-Laplacian solution.
+!
+      DO k=1,N(ng)
+        DO j=JstrV,Jend
+          DO i=Istr,Iend
+!^          A(i,j,k)=Awrk(i,j,k)
+!^
+            tl_A(i,j,k)=tl_Awrk(i,j,k)
+          END DO
+        END DO
+      END DO
+!
+      RETURN
+      END SUBROUTINE tl_multiscale_Klap_v3d
+!
+!-----------------------------------------------------------------------
+!  It computes the adjoint K-Laplacian, [1 + Del(K*Del)], of a
+!  3D control variable at V-points.
+!
+      SUBROUTINE ad_multiscale_Klap_v3d (self, ng, tile, model,         &
+     &                                   ifield, ctype, ms, Lweak,      &
+     &                                   LBi, UBi, LBj, UBj,            &
+     &                                   IminS, ImaxS, JminS, JmaxS,    &
+     &                                   ad_A)
+!
+      CLASS (multiscale), intent(inout) :: self      ! multiscale object
+      integer,            intent(in   ) :: ng        ! nested grid
+      integer,            intent(in   ) :: tile      ! domain partition
+      integer,            intent(in   ) :: model     ! kernel ID
+      integer,            intent(in   ) :: ifield    ! state field ID
+      integer,            intent(in   ) :: ctype     ! C-grid type
+      integer,            intent(in   ) :: ms        ! multiscale index
+      logical,            intent(in   ) :: Lweak     ! weak constraint
+      integer,            intent(in   ) :: LBi, UBi, LBj, UBj
+      integer,            intent(in   ) :: IminS, ImaxS, JminS, JmaxS
+      real (r8),          intent(inout) :: ad_A(LBi:,LBj:,:)
+!
+      integer                           :: iLap, i, j, k, k1, k2, rec
+      integer                           :: Istr, Iend, JstrV, Jend
+      real (r8)                         :: cff, cff1, cff2, cff3, cff4
+      real (r8)                         :: cffx, cffy
+
+#  ifdef READ_SCALES
+!
+      real (r8), pointer                :: bsclx(:,:) => NULL()
+      real (r8), pointer                :: bscly(:,:) => NULL()
+#  endif
+!
+      real(r8), dimension(LBi:UBi,LBj:UBj,1:N(ng)) :: ad_Awrk
+!
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Hfac
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Khx
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Khy
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: ad_FE
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: ad_FX
+#  ifdef GEOPOTENTIAL_HCONV
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS)   :: dZdx
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS)   :: dZde
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,2) :: dZdx_p
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,2) :: dZde_r
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,2) :: ad_FZ
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,2) :: ad_dAdz
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,2) :: ad_dAdx
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,2) :: ad_dAde
+#  endif
+!
+!  Initialize.
+!
+      Istr =BOUNDS(ng)%Istr (tile)   ! tile computational indices
+      Iend =BOUNDS(ng)%Iend (tile)
+      JstrV=BOUNDS(ng)%JstrV(tile)
+      Jend =BOUNDS(ng)%Jend (tile)
+!
+      IF (Lweak) THEN
+        rec=2                        ! weak constraint correlations
+      ELSE
+        rec=1                        ! strong constraint correlations
+      END IF
+!
+      ad_Awrk(LBi:UBi,LBj:UBj,LBk:UBk)=0.0_r8
+      ad_FE(IminS:ImaxS,JminS:JmaxS)=0.0_r8
+      ad_FX(IminS:ImaxS,JminS:JmaxS)=0.0_r8
+#  ifdef GEOPOTENTIAL_HCONV
+      ad_FZ(IminS:ImaxS,JminS:JmaxS,1:2)=0.0_r8
+      ad_dAdz(IminS:ImaxS,JminS:JmaxS,1:2)=0.0_r8
+      ad_dAdx(IminS:ImaxS,JminS:JmaxS,1:2)=0.0_r8
+      ad_dAde(IminS:ImaxS,JminS:JmaxS,1:2)=0.0_r8
+#  endif
+!
+!  Assign contol variable isotropic or anisotropic correlation length
+!  scales.
+!
+      SELECT CASE (ifield)
+        CASE (isVvel)
+#  ifdef READ_SCALES
+          bsclx => self%bV3DscaleX(:,:,ifield,ms)
+          bscly => self%bV3DscaleY(:,:,ifield,ms)
+#  endif
+          iLap=Mlap(ifield,ms,ng)
+      END SELECT
+!
+!  Compute metrics factor.
+!
+      DO j=JstrV,Jend
+        DO i=Istr,Iend
+          Hfac(i,j)=0.25_r8*(GRID(ng)%pm(i,j-1)+GRID(ng)%pm(i,j))*      &
+     &                      (GRID(ng)%pn(i,j-1)+GRID(ng)%pn(i,j))
+        END DO
+      END DO
+!
+!  Set horizontal diffusion coefficients (Khx, Khy) with units of
+!  correlation length squared.
+!
+      DO j=JstrV-1,Jend+1
+        DO i=Istr-1,Iend+1
+#  ifdef READ_SCALES
+          cffx=bsclx(i,j)*bsclx(i,j)       ! spatially varying
+          cffy=bscly(i,j)*bscly(i,j)
+#  else
+          cffx=HdecayX(rec,ifield,ms,ng)*HdecayX(rec,ifield,ms,ng)
+          cffy=HdecayY(rec,ifield,ms,ng)*HdecayY(rec,ifield,ms,ng)
+#  endif
+          Khx(i,j)=0.5_r8*cffx/REAL(iLap-2,r8)
+          Khy(i,j)=0.5_r8*cffy/REAL(iLap-2,r8)
+        END DO
+      END DO
+!
+!  Adjoint of load K-Laplacian solution.
+!
+      DO k=1,N(ng)
+        DO j=JstrV,Jend
+          DO i=Istr,Iend
+!^          tl_A(i,j,k)=tl_Awrk(i,j,k)
+!^
+            ad_Awrk(i,j,k)=ad_Awrk(i,j,k)+ad_A(i,j,k)
+            ad_A(i,j,k)=0.0_r8
+          END DO
+        END DO
+      END DO
+
+#  ifdef DISTRIBUTE
+!
+!  Adjoint of exchange boundary data.
+!
+!^    CALL mp_exchange3d (ng, tile, model, 1,                           &
+!^   &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
+!^   &                    Nghost,                                       &
+!^   &                    EWperiodic(ng), NSperiodic(ng),               &
+!^   &                    tl_Awrk)
+!^
+      CALL ad_mp_exchange3d (ng, tile, model, 1,                        &
+     &                       LBi, UBi, LBj, UBj, 1, N(ng),              &
+     &                       Nghost,                                    &
+     &                       EWperiodic(ng), NSperiodic(ng),            &
+     &                       ad_Awrk)
+#  endif
+
+#  ifdef GEOPOTENTIAL_HCONV
+!
+!  Diffusion along geopotential surfaces: Compute horizontal and
+!  vertical gradients.  Notice the recursive blocking sequence.  The
+!  vertical placement of the gradients is:
+!
+!        dZde_r,dAdx,dAde(:,:,k1) k     rho-points
+!        dZde_r,dAdx,dAde(:,:,k2) k+1   rho-points
+!                  dZdx_p(:,:,k1) k     psi-points
+!                  dZdx_p(:,:,k2) k+1   psi-points
+!                 FZ,dAdz(:,:,k1) k-1/2   W-points
+!                 FZ,dAdz(:,:,k2) k+1/2   W-points
+!
+!  Compute adjoint of starting values of k1 and k2.
+!
+      k1=2
+      k2=1
+      DO k=0,N(ng)
+!
+!  Note: The following code is equivalent to
+!
+!       kt=k1
+!       k1=k2
+!       k2=kt
+!
+!  We use the adjoint of above code.
+!
+        k1=k2
+        k2=3-k1
+      END DO
+!
+      K_LOOP : DO k=N(ng),0,-1
+
+!  Compute required BASIC STATE fields. Need to look forward in
+!  recursive kk index.
+!
+        k2b=1
+        DO kk=0,k
+          k1b=k2b
+          k2b=3-k1b
+!
+!  Compute components of the rotated tracer flux (A m3/s) along
+!  geopotential surfaces (required BASIC STATE fields).
+!
+          IF (kk.lt.N(ng)) THEN
+            DO j=JstrV-1,Jend
+              DO i=Istr,Iend+1
+                cff=0.5_r8*(GRID(ng)%pm(i-1,j)+GRID(ng)%pm(i,j))
+#   ifdef MASKING
+                cff=cff*GRID(ng)%umask(i,j)
+#   endif
+                dZdx(i,j)=cff*(GRID(ng)%z_r(i  ,j,kk+1)-                  &
+     &                         GRID(ng)%z_r(i-1,j,kk+1))
+              END DO
+            END DO
+            DO j=JstrV,Jend
+              DO i=Istr,Iend+1
+                dZdx_p(i,j,k2b)=0.5_r8*(dZdx(i,j-1)+                      &
+     &                                  dZdx(i,j  ))
+              END DO
+            END DO
+            IF (kk.eq.0) THEN
+              DO j=JstrV,Jend
+                DO i=Istr,Iend+1
+                  dZdx_p(i,j,k1b)=0.0_r8
+                END DO
+              END DO
+            END IF
+!
+            DO j=JstrV-1,Jend+1
+              DO i=Istr,Iend
+                cff=0.5_r8*(GRID(ng)%pn(i,j-1)+GRID(ng)%pn(i,j))
+#   ifdef MASKING
+                cff=cff*GRID(ng)%vmask(i,j)
+#   endif
+                dZde(i,j)=cff*(GRID(ng)%z_r(i,j  ,kk+1)-                &
+     &                         GRID(ng)%z_r(i,j-1,kk+1))
+              END DO
+            END DO
+            DO j=JstrV-1,Jend
+              DO i=Istr,Iend
+                dZde_r(i,j,k2b)=0.5_r8*(dZde(i,j  )+                    &
+     &                                  dZde(i,j+1))
+              END DO
+            END DO
+            IF (kk.eq.0) THEN
+              DO j=JstrV-1,Jend
+                DO i=Istr,Iend
+                  dZde_r(i,j,k1b)=0.0_r8
+                END DO
+              END DO
+            END IF
+          END IF
+        END DO
+!
+        IF (k.gt.0) THEN
+!
+!  Compute adjoint geopotential K-Laplacian operator.
+!
+          DO j=JstrV,Jend
+            DO i=Istr,Iend
+!^            tl_Awrk(i,j,k)=tl_Awrk(i,j,k)-                            &
+!^   &                       Hfac(i,j)*                                 &
+!^   &                       (tl_FX(i+1,j)-tl_FX(i,j  )+                &
+!^   &                        tl_FE(i  ,j)-tl_FE(i,j-1))-               &
+!^   &                       2.0_r8*(tl_FZ(i,j,k2)-tl_FZ(i,j,k1))/
+!^   &                       (GRID(ng)%Hz(i,j,k)+GRID(ng)%Hz(i,j-1,k))
+!^
+              adfac1=-Hfac(i,j)*ad_Awrk(i,j,k)
+              adfac2=-2.0_r8*ad_Awrk(i,j,k)/                            &
+     &               (GRID(ng)%Hz(i,j,k)+GRID(ng)%Hz(i,j-1,k))
+              ad_FE(i,j-1)=ad_FE(i,j-1)-adfac1
+              ad_FE(i,j  )=ad_FE(i,  j)+adfac1
+              ad_FX(i  ,j)=ad_FX(i  ,j)-adfac1
+              ad_FX(i+1,j)=ad_FX(i+1,j)+adfac1
+              ad_FZ(i,j,k1)=ad_FZ(i,j,k1)-adfac2
+              ad_FZ(i,j,k2)=ad_FZ(i,j,k2)+adfac2
+            END DO
+          END DO
+!
+!  Compute components of the adjoint rotated A flux (A m3/s) along
+!  geopotential surfaces.
+!
+          IF (k.lt.N(ng)) THEN
+            DO j=JstrV,Jend
+              DO i=Istr,Iend
+                cff=0.5_r8*(Khy(i,j-1)+Khy(i,j))
+                cff1=MIN(dZde_r(i,j-1,k1),0.0_r8)
+                cff2=MIN(dZde_r(i,j  ,k2),0.0_r8)
+                cff3=MAX(dZde_r(i,j-1,k2),0.0_r8)
+                cff4=MAX(dZde_r(i,j  ,k1),0.0_r8)
+!^              tl_FZ(i,j,k2)=tl_FZ(i,j,k2)+                            &
+!^   &                        cff*                                      &
+!^   &                        (cff1*(cff1*tl_dAdz(i,j,k2)-              &
+!^   &                               tl_dAde(i,j-1,k1))+                &
+!^   &                         cff2*(cff2*tl_dAdz(i,j,k2)-              &
+!^   &                               tl_dAde(i,j  ,k2))+                &
+!^   &                         cff3*(cff3*tl_dAdz(i,j,k2)-              &
+!^   &                               tl_dAde(i,j-1,k2))+                &
+!^   &                         cff4*(cff4*tl_dAdz(i,j,k2)-              &
+!^   &                               tl_dAde(i,j  ,k1)))
+!^
+                adfac=cff*ad_FZ(i,j,k2)
+                ad_dAdz(i,j,k2)=ad_dAdz(i,j,k2)+                        &
+     &                          (cff1*cff1+                             &
+     &                           cff2*cff2+                             &
+     &                           cff3*cff3+                             &
+     &                           cff4*cff4)*adfac
+                ad_dAde(i,j-1,k1)=ad_dAde(i,j-1,k1)-cff1*adfac
+                ad_dAde(i,j  ,k2)=ad_dAde(i,j  ,k2)-cff2*adfac
+                ad_dAde(i,j-1,k2)=ad_dAde(i,j-1,k2)-cff3*adfac
+                ad_dAde(i,j  ,k1)=ad_dade(i,j  ,k1)-cff4*adfac
+!
+                cff1=MIN(dZdx_p(i  ,j,k1),0.0_r8)
+                cff2=MIN(dZdx_p(i+1,j,k2),0.0_r8)
+                cff3=MAX(dZdx_p(i  ,j,k2),0.0_r8)
+                cff4=MAX(dZdx_p(i+1,j,k1),0.0_r8)
+                cff=0.5_r8*(Khx(i,j-1)+Khx(i,j))
+!^              tl_FZ(i,j,k2)=cff*                                      &
+!^   &                          (cff1*(cff1*tl_dAdz(i,j,k2)-            &
+!^   &                                 tl_dAdx(i  ,j,k1))+              &
+!^   &                           cff2*(cff2*tl_dAdz(i,j,k2)-            &
+!^   &                                 tl_dAdx(i+1,j,k2))+              &
+!^   &                           cff3*(cff3*tl_dAdz(i,j,k2)-            &
+!^   &                                 tl_dAdx(i  ,j,k2))+              &
+!^   &                           cff4*(cff4*tl_dAdz(i,j,k2)-            &
+!^   &                                 tl_dAdx(i+1,j,k1)))
+!^
+                ad_dAdz(i,j,k2)=ad_dAdz(i,j,k2)+                        &
+     &                          (cff1*cff1+                             &
+     &                           cff2*cff2+                             &
+     &                           cff3*cff3+                             &
+     &                           cff4*cff4)*adfac
+                ad_dAdx(i  ,j,k1)=ad_dAdx(i  ,j,k1)-cff1*adfac
+                ad_dAdx(i+1,j,k2)=ad_dAdx(i+1,j,k2)-cff2*adfac
+                ad_dAdx(i  ,j,k2)=ad_dAdx(i  ,j,k2)-cff3*adfac
+                ad_dAdx(i+1,j,k1)=ad_dAdx(i+1,j,k1)-cff4*adfac
+                ad_FZ(i,j,k2)=0.0_r8
+              END DO
+            END DO
+          END IF
+!
+          DO j=JstrV-1,Jend
+            DO i=Istr,Iend
+              cff=Khy(i,j)*GRID(ng)%om_r(i,j)
+              cff1=MIN(dZde_r(i,j,k1),0.0_r8)
+              cff2=MAX(dZde_r(i,j,k1),0.0_r8)
+!^            tl_FE(i,j)=cff*                                           &
+!^   &                   (tl_dAde(i,j,k1)-                              &
+!^   &                    0.5_r8*(cff1*(tl_dAdz(i,j  ,k1)+              &
+!^   &                                  tl_dAdz(i,j+1,k2))+             &
+!^   &                            cff2*(tl_dAdz(i,j  ,k2)+              &
+!^   &                                  tl_dAdz(i,j+1,k1))))
+!^
+              adfac=cff*ad_FE(i,j)
+              adfac1=adfac*0.5_r8*cff1
+              adfac2=adfac*0.5_r8*cff2
+              ad_dAde(i,j,k1)=ad_dAde(i,j,k1)+adfac
+              ad_dAdz(i,j  ,k1)=ad_dAdz(i,j  ,k1)-adfac1
+              ad_dAdz(i,j+1,k2)=ad_dAdz(i,j+1,k2)-adfac1
+              ad_dAdz(i,j  ,k2)=ad_dAdz(i,j  ,k2)-adfac2
+              ad_dAdz(i,j+1,k1)=ad_dAdz(i,j+1,k1)-adfac2
+              ad_FE(i,j)=0.0_r8
+            END DO
+          END DO
+!
+          DO j=JstrV,Jend
+            DO i=Istr,Iend+1
+              cff=0.25_r8*(Khx(i-1,j-1)+Khx(i-1,j)+                     &
+     &                     Khx(i  ,j-1)+Khx(i  ,j))*on_p(i,j)
+              cff1=MIN(dZdx_p(i,j,k1),0.0_r8)
+              cff2=MAX(dZdx_p(i,j,k1),0.0_r8)
+!^            tl_FX(i,j)=cff*                                           &
+!^   &                   (tl_dAdx(i,j,k1)-                              &
+!^   &                    0.5_r8*(cff1*(tl_dAdz(i-1,j,k1)+              &
+!^   &                                  tl_dAdz(i  ,j,k2))+             &
+!^   &                            cff2*(tl_dAdz(i-1,j,k2)+              &
+!^   &                                  tl_dAdz(i  ,j,k1))))
+!^
+              adfac=cff*ad_FX(i,j)
+              adfac1=adfac*0.5_r8*cff1
+              adfac2=adfac*0.5_r8*cff2
+              ad_dAdx(i,j,k1)=ad_dAdx(i,j,k1)+adfac
+              ad_dAdz(i-1,j,k1)=ad_dAdz(i-1,j,k1)-adfac1
+              ad_dAdz(i  ,j,k2)=ad_dAdz(i  ,j,k2)-adfac1
+              ad_dAdz(i-1,j,k2)=ad_dAdz(i-1,j,k2)-adfac2
+              ad_dAdz(i  ,j,k1)=ad_dAdz(i  ,j,k1)-adfac2
+              ad_FX(i,j)=0.0_r8
+            END DO
+          END DO
+        END IF
+!
+        IF ((k.eq.0).or.(k.eq.N(ng))) THEN
+          DO j=JstrV-1,Jend+1
+            DO i=Istr-1,Iend+1
+!^            tl_FZ(i,j,k2)=0.0_r8
+!^
+              ad_FZ(i,j,k2)=0.0_r8
+!^            tl_dAdz(i,j,k2)=0.0_r8
+!^
+              ad_dAdz(i,j,k2)=0.0_r8
+            END DO
+          END DO
+        ELSE
+          DO j=JstrV-1,Jend+1
+            DO i=Istr-1,Iend+1
+              cff=1.0_r8/(GRID(ng)%z_r(i,j,k+1)-GRID(ng)%z_r(i,j,k))
+#   ifdef MASKING
+!^            tl_dAdz(i,j,k2)=tl_dAdz(i,j,k2)*GRID(ng)%vmask(i,j)
+!^
+              ad_dAdz(i,j,k2)=ad_dAdz(i,j,k2)*GRID(ng)%vmask(i,j)
+#   endif
+!^            tl_dAdz(i,j,k2)=cff*(tl_Awrk(i,j,k+1)-                    &
+!^   &                             tl_Awrk(i,j,k))
+!^
+              adfac=cff*ad_dAdz(i,j,k2)
+              ad_Awrk(i,j,k)=ad_Awrk(i,j,k)-adfac
+              ad_Awrk(i,j,k+1)=ad_Awrk(i,j,k+1)+adfac
+              ad_dAdz(i,j,k2)=0.0_r8
+            END DO
+          END DO
+        END IF
+!
+        IF (k.lt.N(ng)) THEN
+          DO j=JstrV-1,Jend
+            DO i=Istr,Iend
+#   ifdef MASKING
+!^            tl_dAde(i,j,k2)=tl_dAde(i,j,k2)*GRID(ng)%rmask(i,j)
+!^
+              ad_dAde(i,j,k2)=ad_dAde(i,j,k2)*GRID(ng)%rmask(i,j)
+!^            tl_dAde(i,j,k2)=GRID(ng)%pn(i,j)*                         &
+!^   &                        (tl_Awrk(i,j+1,k+1)*                      &
+!^   &                            GRID(ng)%vmask(i,j+1)-                &
+!^   &                         tl_Awrk(i,j  ,k+1)*                      &
+!^   &                            GRID(ng)%vmask(i,j  ))
+!^
+              adfac=GRID(ng)%pn(i,j)*ad_dAde(i,j,k2)
+              ad_Awrk(i,j  ,k+1)=ad_Awrk(i,j  ,k+1)-                    &
+     &                           GRID(ng)%vmask(i,j  )*adfac
+              ad_Awrk(i,j+1,k+1)=ad_Awrk(i,j+1,k+1)+                    &
+     &                           GRID(ng)%vmask(i,j+1)*adfac
+              ad_dAde(i,j,k2)=0.0_r8
+#   else
+!^            tl_dAde(i,j,k2)=GRID(ng)%pn(i,j)*                         &
+!^   &                        (tl_Awrk(i,j+1,k+1)-                      &
+!^   &                         tl_Awrk(i,j  ,k+1))
+!^
+              adfac=GRID(ng)%pn(i,j)*ad_dAde(i,j,k2)
+              ad_Awrk(i,j  ,k+1)=ad_Awrk(i,j  ,k+1)-adfac
+              ad_Awrk(i,j+1,k+1)=ad_Awrk(i,j+1,k+1)+adfac
+              ad_dAde(i,j,k2)=0.0_r8
+#   endif
+            END DO
+          END DO
+!
+          DO j=JstrV,Jend
+            DO i=Istr,Iend+1
+              cff=0.25_r8*(GRID(ng)%pm(i-1,j-1)+GRID(ng)%pm(i-1,j)+     &
+     &                     GRID(ng)%pm(i  ,j-1)+GRID(ng)%pm(i  ,j))
+#   ifdef MASKING
+!^            tl_dAdx(i,j,k2)=tl_dAdx(i,j,k2)*GRID(ng)%pmask(i,j)
+!^
+              ad_dAdx(i,j,k2)=ad_dAdx(i,j,k2)*GRID(ng)%pmask(i,j)
+!^            tl_dAdx(i,j,k2)=cff*                                      &
+!^   &                        (tl_Awrk(i  ,j,k+1)*                      &
+!^   &                            GRID(ng)%vmask(i  ,j)-                &
+!^   &                         tl_Awrk(i-1,j,k+1)*                      &
+!^   &                            GRID(ng)%vmask(i-1,j))
+!^
+              adfac=cff*ad_dAdx(i,j,k2)
+              ad_Awrk(i-1,j,k+1)=ad_Awrk(i-1,j,k+1)-                    &
+     &                           GRID(ng)%vmask(i-1,j)*adfac
+              ad_Awrk(i  ,j,k+1)=ad_Awrk(i  ,j,k+1)+                    &
+     &                           GRID(ng)%vmask(i  ,j)*adfac
+              ad_dAdx(i,j,k2)=0.0_r8
+#   else
+!^            tl_dAdx(i,j,k2)=cff*(tl_Awrk(i  ,j,k+1)-                  &
+!^   &                             tl_Awrk(i-1,j,k+1))
+!^
+              adfac=cff*ad_dAdx(i,j,k2)
+              ad_Awrk(i-1,j,k+1)=ad_Awrk(i-1,j,k+1)-adfac
+              ad_Awrk(i  ,j,k+1)=ad_Awrk(i  ,j,k+1)+adfac
+              ad_dAdx(i,j,k2)=0.0_r8
+#   endif
+            END DO
+          END DO
+        END IF
+!
+!  Compute new storage recursive indices.
+!
+        kt=k2
+        k2=k1
+        k1=kt
+      END DO K_LOOP
+
+#  else
+
+!
+!  Compute adjoint K-Laplacian operator.
+!
+      DO k=1,N(ng)
+        DO j=JstrV,Jend
+          DO i=Istr,Iend
+!^          tl_Awrk(i,j,k)=tl_Awrk(i,j,k)-                              &
+!^   &                     Hfac(i,j)*                                   &
+!^   &                     (tl_FX(i+1,j)-tl_FX(i,j)+                    &
+!^   &                      tl_FE(i,j)-tl_FE(i,j-1))
+!^
+            adfac=-Hfac(i,j)*ad_Awrk(i,j,k)
+            ad_FE(i,j-1)=ad_FE(i,j-1)-adfac
+            ad_FE(i,j  )=ad_FE(i,j  )+adfac
+            ad_FX(i  ,j)=ad_FX(i  ,j)-adfac
+            ad_FX(i+1,j)=ad_FX(i+1,j)+adfac
+          END DO
+        END DO
+!
+!  Compute XI- and ETA-components of diffusive flux.
+!
+        DO j=JstrV-1,Jend
+          DO i=Istr,Iend
+!^          tl_FE(i,j)=GRID(ng)%pnom_r(i,j)*                            &
+!^   &                 Khy(i,j)*(tl_Awrk(i,j+1,k)-tl_Awrk(i,j,k))
+!^
+            adfac=GRID(ng)%pnom_r(i,j)*Khy(i,j)*ad_FE(i,j)
+            ad_Awrk(i,j  ,k)=ad_Awrk(i,j  ,k)-adfac
+            ad_Awrk(i,j+1,k)=ad_Awrk(i,j+1,k)+adfac
+            ad_FE(i,j)=0.0_r8
+          END DO
+        END DO
+!
+        DO j=JstrV,Jend
+          DO i=Istr,Iend+1
+#   ifdef MASKING
+!^          tl_FX(i,j)=tl_FX(i,j)*GRID(ng)%pmask(i,j)
+!^
+            ad_FX(i,j)=ad_FX(i,j)*GRID(ng)%pmask(i,j)
+#   endif
+!^          tl_FX(i,j)=GRID(ng)%pmon_p(i,j)*                            &
+!^   &                 0.25_r8*(Khx(i-1,j  )+Khx(i,j  )+                &
+!^   &                          Khx(i-1,j-1)+Khx(i,j-1))*               &
+!^   &                 (tl_Awrk(i,j,k)-tl_Awrk(i-1,j,k))
+!^
+            adfac=GRID(ng)%pmon_p(i,j)*                               
+     &            0.25_r8*(Khx(i-1,j  )+Khx(i,j  )+                     &
+     &                     Khx(i-1,j-1)+Khx(i,j-1))*ad_FX(i,j)
+            ad_Awrk(i-1,j,k)=ad_Awrk(i-1,j,k)-adfac
+            ad_Awrk(i  ,j,k)=ad_Awrk(i  ,j,k)+adfac
+            ad_FX(i,j)=0.0_r8
+          END DO
+        END DO
+      END DO
+#  endif
+!
+!  Set adjoint initial conditions.
+!
+      DO k=1,N(ng)
+        DO j=JstrV-1,Jend+1
+          DO i=Istr-1,Iend+1
+!^          tl_Awrk(i,j,k)=tl_A(i,j,k)
+!^
+            ad_A(i,j,k)=ad_A(i,j,k)+ad_Awrk(i,j,k)
+            ad_Awrk(i,j,k)=0.0_r8
+          END DO
+        END DO
+      END DO
+
+#  ifdef DISTRIBUTE
+!
+!^    CALL mp_exchange3d (ng, tile, model, 1,                           &
+!^   &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
+!^   &                    Nghost,                                       &
+!^   &                    EWperiodic(ng), NSperiodic(ng),               &
+!^   &                    tl_A)
+!^
+      CALL ad_mp_exchange3d (ng, tile, model, 1,                        &
+     &                       LBi, UBi, LBj, UBj, 1, N(ng),              &
+     &                       Nghost,                                    &
+     &                       EWperiodic(ng), NSperiodic(ng),            &
+     &                       ad_A)
+#  endif
+!
+!^    CALL dabc_v3d_tile (ng, tile,                                     &
+!^   &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
+!^   &                    tl_A)
+!^
+      CALL ad_dabc_v3d_tile (ng, tile,                                  &
+     &                       LBi, UBi, LBj, UBj, 1, N(ng),              &
+     &                       ad_A)
+!
+      RETURN
+      END SUBROUTINE ad_multiscale_Klap_v3d
+# endif
+#endif
+      END MODULE roms_Klaplacian_mod

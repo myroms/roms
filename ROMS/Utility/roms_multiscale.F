@@ -1,0 +1,2903 @@
+#include "cppdefs.h"
+      MODULE roms_multiscale_mod
+
+#ifdef MULTI_SCALE_B
+!
+!git $Id$
+!================================================== Hernan G. Arango ===
+!  Copyright (c) 2002-2026 The ROMS Group            Andrew M. Moore   !
+!    Licensed under a MIT/X style license                              !
+!    See License_ROMS.md                                               !
+!=======================================================================
+!                                                                      !
+! The module implements routines and objects for modeling multiscale   !
+! background-error covariance (B) through implicit diffusion-based     !
+! operators, as outlined by Weaver et al. (2016, 2018) and Mirouze     !
+! et al. (2016).                                                       !
+!                                                                      !
+! The implicit two-dimensional diffusion solver, applied level by      !
+! level, utilizes Chebyshev iterations (CI), which require estimates   !
+! of the maximum and minimum eigenvalues of the K-Laplacian operator.  !
+! These eigenvalues are precomputed for a fixed grid and specified     !
+! k-values (diffusion coefficient with units of length squared) using  !
+! the Lanczos variant of the conjugate gradients (CG) iterative        !
+! algorithm, initialized with random vectors, to obtain the necessary  !
+! eigenvalue estimates.                                                !
+!                                                                      !
+! This combined CG and CI methodology is employed for modeling the     !
+! implicit multiscale backgrond-error covariance.                      !
+!                                                                      !
+! Horizontal spatially varying isotropic or anisotropic correlation    !
+! scales (HscaleX, HscaleY) can be specified for each variable in the  !
+! control vector (zeta, u, v, T, S). When provided, these correlation  !
+! scales are read from an input NetCDF file. Error correlations are    !
+! assumed to be separable in the horizontal and vertical directions.   !
+!                                                                      !
+! References:                                                          !
+!                                                                      !
+! Mirouze, I., E. Blockley, D.J. Lea, M.J. Martin, and M.J. Bell,      !
+!   2016: A multiple length scale correlation operator for ocean data  !
+!   assimilation, Tellus A, 68, 29744, doi:10.3402/tellusa.v68.29744.  !
+!                                                                      !
+! Weaver, A.T., J. Tshimanga, and A. Piacentini, 2016: Correlation     !
+!   operators based on an implicitly formulated diffusion equation     !
+!   solved with the Chebyshev iteration, Q. J. R. Meteorol. Soc., 142, !
+!   455-471, doi:10.1002/qj.2664.                                      !
+!                                                                      !
+! Weaver, A.T., S. Gurol, J. Tshimanga, M. Chrust, and A. Piacentini,  !
+!   2018: "Time"-parallel diffusion-based correlation operators. Q. J. !
+!   R. Meteorol. Soc., 144, 2067-2088, doi:10.1002/qj.3302.            !
+!                                                                      !
+!=======================================================================
+!
+      USE mod_param
+      USE mod_parallel
+      USE mod_grid
+      USE mod_iounits
+      USE mod_ncparam
+      USE mod_netcdf
+      USE mod_scalars
+!
+# ifdef DISTRIBUTE
+      USE distribute_mod,       ONLY : mp_reduce
+# endif
+      USE strings_mod,          ONLY : assign_string,                   &
+     &                                 find_string,                     &
+     &                                 FoundError
+!
+      implicit none
+!
+!-----------------------------------------------------------------------
+!  ROMS multiscale CLASS object.
+!-----------------------------------------------------------------------
+!
+      TYPE, PUBLIC :: multiscale
+!
+!  Kernel variables lower and upper bound array dimensions, and parallel
+!  tile partition indices.
+!
+        integer :: tile                              ! domain partition
+        integer :: LBi,  UBi,  LBj,  UBj             ! array bounds
+!
+!  Multiscale background covariance matrix parameters:
+!
+!    Nscale   number of correlation scales to be combined
+!    Mlap     nunber of k-Laplacian smoother applications
+!    NiterCG  number of CG iterations to obtain each scale eigenvalue
+!    NiterCI  number of implicit Chebyshev solver iterations
+!    Bwgt     weights assigned to each correlation function
+!
+        integer, allocatable :: Nscale(:)
+        integer, allocatable :: Mlap(:,:,:)
+        integer, allocatable :: NiterCG(:,:)
+        integer, allocatable :: NiterCI(:,:)
+!
+        real(r8), allocatable :: Bwgt(:,:,:)
+!
+!  The maximum and minimum eigenvalues of the K-Laplacian for each 2D
+!  variable in the control vector as functions of both the number of
+!  iterations and the specified correlation functions, [Mlap,Nscales].
+!
+        real(r8), allocatable :: eigMaxR2D(:,:)      ! free surface
+        real(r8), allocatable :: eigMinR2D(:,:)
+!
+        real(r8), allocatable :: eigMaxU2D(:,:)      ! 2D U-momentum
+        real(r8), allocatable :: eigMinU2D(:,:)
+!
+        real(r8), allocatable :: eigMaxV2D(:,:)      ! 2D V-momentum
+        real(r8), allocatable :: eigMinV2D(:,:)
+
+# ifdef ADJUST_WSTRESS
+!
+        real(r8), allocatable :: eigMaxSUS(:,:)      ! surface U-stress
+        real(r8), allocatable :: eigMinSUS(:,:)
+!
+        real(r8), allocatable :: eigMaxSVS(:,:)      ! surface V-stress
+        real(r8), allocatable :: eigMinSVS(:,:)
+# endif
+
+# ifdef SOLVE3D
+!
+!  The maximum and minimum eigenvalues of the K-Laplacian for each 3D
+!  variable in the control vector as functions of both the number of
+!  iterations, vertical levels, and the specified correlation functions,
+!  [Mlap,N,Nscales] and [Mlap,N,NT,Nscale].
+!
+        real(r8), allocatable :: eigMaxR3D(:,:,:,:)  ! tracer variables
+        real(r8), allocatable :: eigMinR3D(:,:,:,:)
+!
+        real(r8), allocatable :: eigMaxU3D(:,:,:)    ! 3D U-momentum
+        real(r8), allocatable :: eigMinU3D(:,:,:)
+!
+        real(r8), allocatable :: eigMaxV3D(:,:,:)    ! 3D V-momentum
+        real(r8), allocatable :: eigMinV3D(:,:,:)
+
+#  ifdef ADJUST_STFLUX
+!
+        real(r8), allocatable :: eigMaxSTF(:,:,:)    ! surf. Tracer flux
+        real(r8), allocatable :: eigMinSTF(:,:,:)
+#  endif
+# endif
+
+# ifdef ADJUST_BOUNDARY
+!
+!  The maximum and minimum eigenvalues of the K-Laplacian for each 2D
+!  variable lateral boundary adjustment in the control vector as
+!  functions of both the number of iterations and the specified
+!  correlation functions, [Mlap,4,Nscales].
+!
+        real(r8), allocatable :: eigMaxR1D(:,:,:)    ! free surface
+        real(r8), allocatable :: eigMinR1D(:,:,:)
+!
+        real(r8), allocatable :: eigMaxU1D(:,:,:)    ! 2D U-momentum
+        real(r8), allocatable :: eigMinU1D(:,:,:)
+!
+        real(r8), allocatable :: eigMaxV1D(:,:,:)    ! 3D V-momentum
+        real(r8), allocatable :: eigMinV1D(:,:,:)
+
+#  ifdef SOLVE3D
+!
+!  The maximum and minimum eigenvalues of the K-Laplacian for each 3D
+!  variable lateral boundary adjustment in the control vector as
+!  functions of both the number of iterations and the specified
+!  correlation functions, [Mlap,N,4,Nscales] and [Mlap,N,NT,4,Nscales].
+!
+        real(r8), allocatable :: eigMaxR1DZ(:,:,:,:,:)  ! tracers
+        real(r8), allocatable :: eigMinR1DZ(:,:,:,:,:)
+!
+        real(r8), allocatable :: eigMaxU1DZ(:,:,:,:)    ! 3D U-momentum
+        real(r8), allocatable :: eigMinU1DZ(:,:,:,:)
+!
+        real(r8), allocatable :: eigMaxV1DZ(:,:,:,:)    ! 3D V-momentum
+        real(r8), allocatable :: eigMinV1DZ(:,:,:,:)
+#  endif
+# endif
+!
+!  K-Laplacian Conjugate Gradient (CG) iterative solver horizontal
+!  vectors, 2D variables in control vector [LBi:UBi,LBj:UBj].
+!
+        real(r8), allocatable :: cg2d_p(:,:)         ! direction, p(k)
+        real(r8), allocatable :: cg2d_q(:,:)         ! auxiliary, A*p(k)
+        real(r8), allocatable :: cg2d_r(:,:)         ! residual,  r(k)
+        real(r8), allocatable :: cg2d_x(:,:)         ! estimate,  x(k)
+
+# ifdef ADJUST_BOUNDARY
+!
+!  K-Laplacian Conjugate Gradient (CG) iterative solver horizontal
+!  vectors, lateral boundary adjustment [LBij:UBij].
+!
+        real(r8), allocatable :: cg_pbs(:)           ! direction, p(k)
+        real(r8), allocatable :: cg_qbs(:)           ! auxiliary, A*p(k)
+        real(r8), allocatable :: cg_rbs(:)           ! residual,  r(k)
+        real(r8), allocatable :: cg_xbs(:)           ! estimate,  x(k)
+# endif
+
+# ifdef SOLVE3D
+!
+!  K-Laplacian Conjugate Gradient (CG) iterative solver horizontal
+!  vectors, 3D variables in control vector [LBi:UBi,LBj:UBj,LBk:UBk].
+!
+        real(r8), allocatable :: cg3d_p(:,:,:)       ! direction, p(k)
+        real(r8), allocatable :: cg3d_q(:,:,:)       ! auxiliary, A*p(k)
+        real(r8), allocatable :: cg3d_r(:,:,:)       ! residual,  r(k)
+        real(r8), allocatable :: cg3d_x(:,:,:)       ! estimate,  x(k)
+# endif
+!
+!  Chebyshev iterations (CI) polynomial-based solver horizontal vectors,
+!  2D variables in control vector, [LBi:UBi,LBj:UBj].
+!
+        real(r8), allocatable :: ci2d_p(:,:)         ! direction, p(k)
+        real(r8), allocatable :: ci2d_q(:,:)         ! auxiliary, A*p(k)
+        real(r8), allocatable :: ci2d_r(:,:)         ! residual,  r(k)
+        real(r8), allocatable :: ci2d_x(:,:)         ! estimate,  x(k)
+
+# ifdef ADJUST_BONDARY
+!
+!  Chebyshev iterations (CI) polynomial-based solver horizontal vectors,
+!  lateral boundary adjustment in control vector, [LBij:UBij].
+!
+        real(r8), allocatable :: ci_pbs(:)           ! direction, p(k)
+        real(r8), allocatable :: ci_qbs(:)           ! auxiliary, A*p(k)
+        real(r8), allocatable :: ci_rbs(:)           ! residual,  r(k)
+        real(r8), allocatable :: ci_xbs(:)           ! estimate,  x(k)
+# endif
+
+# ifdef SOLVE3D
+!
+!  Chebyshev iterations (CI) polynomial-based solver horizontal vectors,
+!  3D variable in control vector, [LBi:UBi,LBj:UBj,LBk:UBk].
+!
+        real(r8), allocatable :: ci3d_p(:,:)         ! direction, p(k)
+        real(r8), allocatable :: ci3d_q(:,:)         ! auxiliary, A*p(k)
+        real(r8), allocatable :: ci3d_r(:,:)         ! residual,  r(k)
+        real(r8), allocatable :: ci3d_x(:,:)         ! estimate,  x(k)
+# endif
+
+# ifdef READ_SCALES
+!
+!  Spatially varying isotropic or anisotropic horizontal Daley length
+!  scales (in meters) are specified for each correlation function and
+!  combined when modeling multiscale background-error covariance matrix
+!  effects. These length scales are read from a specified input NetCDF
+!  file. The algorithm requires (scaleX, scaleY) values for each control
+!  vector variable. Users are responsible for determining appropriate
+!  scale values, such as the first Rossby radius of deformation or
+!  alternative methodologies.
+!
+        real(r8), allocatable :: bZscaleX(:,:,:)     ! free surface
+        real(r8), allocatable :: bZscaleY(:,:,:)
+!
+        real(r8), allocatable :: bU2DscaleX(:,:,:)   ! 2D U-momentum
+        real(r8), allocatable :: bU2DscaleY(:,:,:)
+!
+        real(r8), allocatable :: bV2DscaleX(:,:,:)   ! 2D V-momentum
+        real(r8), allocatable :: bV2DscaleY(:,:,:)
+
+#  ifdef ADJUST_WSTRESS
+!
+        real(r8), allocatable :: bSUSscaleX(:,:,:)   ! surface U-stress
+        real(r8), allocatable :: bSUSscaleY(:,:,:)
+!
+        real(r8), allocatable :: bSVSscaleX(:,:,:)   ! surface V-stress
+        real(r8), allocatable :: bSVSscaleY(:,:,:)
+#  endif
+
+#  ifdef SOLVE3D
+!
+        real(r8), allocatable :: bTscaleX(:,:,:,:)   ! tracer variables
+        real(r8), allocatable :: bTscaleY(:,:,:,:)
+!
+        real(r8), allocatable :: bU3DscaleX(:,:,:)   ! 3D U-momentum
+        real(r8), allocatable :: bU3DscaleY(:,:,:)
+!
+        real(r8), allocatable :: bV3DscaleX(:,:,:)   ! 3D V-momentum
+        real(r8), allocatable :: bV3DscaleY(:,:,:)
+
+#   ifdef ADJUST_STFLUX
+!
+        real(r8), allocatable :: bSTFscaleX(:,:,:,:) ! surf. tracer flux
+        real(r8), allocatable :: bSTFscaleY(:,:,:,:)
+#   endif
+#  endif
+# endif
+!
+        CONTAINS
+!
+        PROCEDURE :: create      => multi_scale_create
+        PROCEDURE :: tl_CG_2d    => multi_scale_CG_2d_tl
+        PROCEDURE :: tl_CI_2d    => multi_scale_CI_2d_tl
+        PROCEDURE :: ad_CI_2d    => multi_scale_CI_2d_tl
+# ifdef SOLVE3D
+        PROCEDURE :: tl_CG_3d    => multi_scale_CG_3d_tl
+        PROCEDURE :: tl_CI_3d    => multi_scale_CI_3d_tl
+        PROCEDURE :: ad_CI_3d    => multi_scale_CI_3d_ad
+# endif
+!
+      END TYPE multiscale
+!
+!-----------------------------------------------------------------------
+!  Module variables.
+!-----------------------------------------------------------------------
+!
+      TYPE (multiscale), allocatable :: B_ms(:)
+!
+!:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+!
+      PUBLIC  :: bms_initialize
+      PUBLIC  :: bms_finalize
+!
+      PRIVATE :: multiscale_print
+      PRIVATE :: dot_prod_1d
+      PRIVATE :: dot_prod_2d
+      PRIVATE
+!
+!:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+!
+      CONTAINS
+!
+! <><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>
+!
+!  It allocates and initializes the background-error covariance (B)
+!  multiscale object.
+!
+      SUBROUTINE bms_initialize (model)
+!
+      integer,          intent(in   ) :: model      ! kernel identifier
+!
+      integer                         :: ng, tile
+!
+!  Allocate and create B-multiscale object.
+!
+      IF (.not.allocated(B_ms)) THEN
+        allocate ( B_ms(Ngrids) )
+      END IF
+!
+      DO ng=1,Ngrids
+        DO tile=first_tile(ng),last_tile(ng),+1
+          CALL B_ms%create (ng, tile, model)
+        END DO
+      END IF 
+!
+      RETURN
+      END SUBROUTINE bms_initialize
+!
+!-----------------------------------------------------------------------
+!  It deallocates background-error covariance multiscale object.
+!
+      SUBROUTINE bms_finalize (model)
+!
+      integer,          intent(in   ) :: model      ! kernel identifier
+!
+      integer                         :: ng, tile
+
+      RETURN
+      END SUBROUTINE bms_finalize
+!
+! <><><><><><><><><><><><><><><><><><><><><><><> CLASS MULTISCALE <><><>
+!
+      SUBROUTINE multiscale_create (self, ng, tile, model)
+!
+      CLASS (multiscale), intent(inout) :: self   ! B-multiscale object
+      integer,            intent(in   ) :: ng     ! nested grid
+      integer,            intent(in   ) :: tile   ! domain partition
+      integer,            intent(in   ) :: model  ! kernel identifier
+!
+      integer                           :: Nlap
+!
+      real (r8), parameter              :: IniVal = 0.0_r8
+      real (r8)                         :: size2d
+!
+!  Set tiled arrays bounds.
+!
+      self%LBi=BOUNDS(ng)%LBi(tile)
+      self%UBi=BOUNDS(ng)%UBi(tile)
+      self%LBj=BOUNDS(ng)%LBj(tile)
+      self%UBj=BOUNDS(ng)%UBj(tile)
+!
+      Nlap=MAXVAL(Mlap)
+      size2d=REAL((UBi-LBi+1)*(UBj-LBj+1),r8)
+!
+!  Allocate the maximum and minimum eigenvalues of the K-Laplacian.
+!
+      IF (.not.allocated(self % eigMaxR2D)) THEN
+        allocate ( self % eigMaxR2D(Nlap,Nscale(ng)) )
+        Dmem(ng)=Dmem(ng)+REAL(Nlap*Nscale(ng),r8)
+        self % eigMaxR2d = IniVal
+      END IF
+      IF (.not.allocated(self % eigMinR2D)) THEN
+        allocate ( self % eigMinR2D(Nlap,Nscale(ng)) )
+        Dmem(ng)=Dmem(ng)+REAL(Nlap*Nscale(ng),r8)
+        self % eigMinR2D = IniVal
+      END IF
+!
+      IF (.not.allocated(self % eigMaxU2D)) THEN
+        allocate ( self % eigMaxU2D(Nlap,Nscale(ng)) )
+        Dmem(ng)=Dmem(ng)+REAL(Nlap*Nscale(ng),r8)
+        self % eigMaxU2D = IniVal
+      END IF
+      IF (.not.allocated(self % eigMinU2D)) THEN
+        allocate ( self % eigMinU2D(Nlap,Nscale(ng)) )
+        Dmem(ng)=Dmem(ng)+REAL(Nlap*Nscale(ng),r8)
+        self % eigMinU2D = IniVal
+      END IF
+!
+      IF (.not.allocated(self % eigMaxV2D)) THEN
+        allocate ( self % eigMaxV2D(Nlap,Nscale(ng)) )
+        Dmem(ng)=Dmem(ng)+REAL(Nlap*Nscale(ng),r8)
+        self % eigMaxV2D = IniVal
+      END IF
+      IF (.not.allocated(self % eigMinV2D)) THEN
+        allocate ( self % eigMinV2D(Nlap,Nscale(ng)) )
+        Dmem(ng)=Dmem(ng)+REAL(Nlap*Nscale(ng),r8)
+        self % eigMinV2D = IniVal
+      END IF
+
+# ifdef ADJUST_WSTRESS
+!
+      IF (.not.allocated(self % eigMaxSUS)) THEN
+        allocate ( self % eigMaxSUS(Nlap,Nscale(ng)) )
+        Dmem(ng)=Dmem(ng)+REAL(Nlap*Nscale(ng),r8)
+        self % eigMaxSUS = IniVal
+      END IF
+      IF (.not.allocated(self % eigMinSUS)) THEN
+        allocate ( self % eigMinSUS(Nlap,Nscale(ng)) )
+        Dmem(ng)=Dmem(ng)+REAL(Nlap*Nscale(ng),r8)
+        self % eigMinSUS = IniVal
+      END IF
+!
+      IF (.not.allocated(self % eigMaxSVS)) THEN
+        allocate ( self % eigMaxSVS(Nlap,Nscale(ng)) )
+        Dmem(ng)=Dmem(ng)+REAL(Nlap*Nscale(ng),r8)
+        self % eigMaxSVS = IniVal
+      END IF
+      IF (.not.allocated(self % eigMinSVS)) THEN
+        allocate ( self % eigMinSVS(Nlap,Nscale(ng)) )
+        Dmem(ng)=Dmem(ng)+REAL(Nlap*Nscale(ng),r8)
+        self % eigMinSVS = IniVal
+      END IF
+# endif
+
+# ifdef SOLVE3D
+!
+      IF (.not.allocated(self % eigMaxR3D)) THEN
+        allocate ( self % eigMaxR3D(Nlap,N(ng),NT(ng),Nscale(ng)) )
+        Dmem(ng)=Dmem(ng)+REAL(Nlap*N(ng)*NT(ng)*Nscale(ng),r8)
+        self % eigMaxR3D = IniVal
+      END IF
+      IF (.not.allocated(self % eigMinR3D)) THEN
+        allocate ( self % eigMinR3D(Nlap,N(ng),NT(ng),Nscale(ng)) )
+        Dmem(ng)=Dmem(ng)+REAL(Nlap*N(ng)*NT(ng)*Nscale(ng),r8)
+        self % eigMinR3D = IniVal
+      END IF
+!
+      IF (.not.allocated(self % eigMaxU3D)) THEN
+        allocate ( self % eigMaxU3D(Nlap,N(ng),Nscale(ng)) )
+        Dmem(ng)=Dmem(ng)+REAL(Nlap*N(ng)*Nscale(ng),r8)
+        self % eigMaxU3D = IniVal
+      END IF
+      IF (.not.allocated(self % eigMinU3D)) THEN
+        allocate ( self % eigMinU3D(Nlap,N(ng),Nscale(ng)) )
+        Dmem(ng)=Dmem(ng)+REAL(Nlap*N(ng)*Nscale(ng),r8)
+        self % eigMinU3D = IniVal
+      END IF
+!
+      IF (.not.allocated(self % eigMaxV3D)) THEN
+        allocate ( self % eigMaxV3D(Nlap,N(ng),Nscale(ng)) )
+        Dmem(ng)=Dmem(ng)+REAL(Nlap*N(ng)*Nscale(ng),r8)
+        self % eigMaxV3D = IniVal
+      END IF
+      IF (.not.allocated(self % eigMinV3D)) THEN
+        allocate ( self % eigMinV3D(Nlap,N(ng),Nscale(ng)) )
+        Dmem(ng)=Dmem(ng)+REAL(Nlap*N(ng)*Nscale(ng),r8)
+        self % eigMinV3D = IniVal
+      END IF
+
+#  ifdef ADJUST_STFLUX
+!
+      IF (.not.allocated(self % eigMaxSTF)) THEN
+        allocate ( self % eigMaxSTF(Nlap,NT(ng),Nscale(ng)) )
+        Dmem(ng)=Dmem(ng)+REAL(Nlap*NT(ng)*Nscale(ng),r8)
+        self % eigMaxSTF = IniVal
+      END IF
+      IF (.not.allocated(self % eigMinSTF)) THEN
+        allocate ( self % eigMinSTF(Nlap,NT(ng),Nscale(ng)) )
+        Dmem(ng)=Dmem(ng)+REAL(Nlap*NT(ng)*Nscale(ng),r8)
+        self % eigMinSTF = IniVal
+      END IF
+#  endif
+# endif
+
+# ifdef BOUNDARY
+!
+      IF (.not.allocated(self % eigMaxR1D)) THEN
+        allocate ( self % eigMaxR1D(Nlap,4,Nscale(ng)) )
+        Dmem(ng)=Dmem(ng)+REAL(Nlap*4*Nscale(ng),r8)
+        self % eigMaxR1D = IniVal
+      END IF
+      IF (.not.allocated(self % eigMinR1D)) THEN
+        allocate ( self % eigMinR1D(Nlap,4,Nscale(ng)) )
+        Dmem(ng)=Dmem(ng)+REAL(Nlap*4*Nscale(ng),r8)
+        self % eigMinR1D = IniVal
+      END IF
+!
+      IF (.not.allocated(self % eigMaxU1D)) THEN
+        allocate ( self % eigMaxU1D(Nlap,4,Nscale(ng)) )
+        Dmem(ng)=Dmem(ng)+REAL(Nlap*4*Nscale(ng),r8)
+        self % eigMaxU1D = IniVal
+      END IF
+      IF (.not.allocated(self % eigMinU1D)) THEN
+        allocate ( self % eigMinU1D(Nlap,4,Nscale(ng)) )
+        Dmem(ng)=Dmem(ng)+REAL(Nlap*4*Nscale(ng),r8)
+        self % eigMinU1D = IniVal
+      END IF
+!
+      IF (.not.allocated(self % eigMaxV1D)) THEN
+        allocate ( self % eigMaxV1D(Nlap,4,Nscale(ng)) )
+        Dmem(ng)=Dmem(ng)+REAL(Nlap*4*Nscale(ng),r8)
+        self % eigMaxV1D = IniVal
+      END IF
+      IF (.not.allocated(self % eigMinV1D)) THEN
+        allocate ( self % eigMinV1D(Nlap,4,Nscale(ng)) )
+        Dmem(ng)=Dmem(ng)+REAL(Nlap*4*Nscale(ng),r8)
+        self % eigMinV1D = IniVal
+      END I
+
+#  ifdef SOLVE3D
+!
+      IF (.not.allocated(self % eigMaxR1DZ)) THEN
+        allocate ( self % eigMaxR1DZ(Nlap,N(ng),NT(ng),4,Nscale(ng)) )
+        Dmem(ng)=Dmem(ng)+REAL(Nlap*N(ng)*NT(ng)*4*Nscale(ng),r8)
+        self % eigMaxR1DZ = IniVal
+      END IF
+      IF (.not.allocated(self % eigMinR1DZ)) THEN
+        allocate ( self % eigMinR1DZ(Nlap,N(ng),NT(ng),4,Nscale(ng)) )
+        Dmem(ng)=Dmem(ng)+REAL(Nlap*N(ng)*NT(ng)*4*Nscale(ng),r8)
+        self % eigMinR1DZ = IniVal
+      END IF
+!
+      IF (.not.allocated(self % eigMaxU1DZ)) THEN
+        allocate ( self % eigMaxU1DZ(Nlap,N(ng),4,Nscale(ng)) )
+        Dmem(ng)=Dmem(ng)+REAL(Nlap*N(ng)*4*Nscale(ng),r8)
+        self % eigMaxU1DZ = IniVal
+      END IF
+      IF (.not.allocated(self % eigMinU1DZ)) THEN
+        allocate ( self % eigMinU1DZ(Nlap,N(ng),4,Nscale(ng)) )
+        Dmem(ng)=Dmem(ng)+REAL(Nlap*N(ng)*4*Nscale(ng),r8)
+        self % eigMinU1DZ = IniVal
+      END IF
+!
+      IF (.not.allocated(self % eigMaxV1DZ)) THEN
+        allocate ( self % eigMaxV1DZ(Nlap,4,Nscale(ng)) )
+        Dmem(ng)=Dmem(ng)+REAL(Nlap*N(ng)*4*Nscale(ng),r8)
+        self % eigMaxV1DZ = IniVal
+      END IF
+      IF (.not.allocated(self % eigMinV1DZ)) THEN
+        allocate ( self % eigMinV1DZ(Nlap,4,Nscale(ng)) )
+        Dmem(ng)=Dmem(ng)+REAL(Nlap*N(ng)*4*Nscale(ng),r8)
+        self % eigMinV1DZ = IniVal
+      END IF
+#  endif
+# endif
+!
+!  K-Laplacian Conjugate Gradient (CG) iterative solver horizontal
+!  vectors.
+!
+      IF (.not.allocated(self % cg2d_p)) THEN
+        allocate ( self % cg2d_p(LBi:UBi,LBj:UBj) )
+        Dmem(ng)=Dmem(ng)+size2d
+        self % cg2d_p = IniVal
+      END IF
+      IF (.not.allocated(self % cg2d_q)) THEN
+        allocate ( self % cg2d_q(LBi:UBi,LBj:UBj) )
+        Dmem(ng)=Dmem(ng)+size2d
+        self % cg2d_q = IniVal
+      END IF
+      IF (.not.allocated(self % cg2d_r)) THEN
+        allocate ( self % cg2d_r(LBi:UBi,LBj:UBj) )
+        Dmem(ng)=Dmem(ng)+size2d
+        self % cg2d_r = IniVal
+      END IF
+      IF (.not.allocated(self % cg2d_x)) THEN
+        allocate ( self % cg2d_x(LBi:UBi,LBj:UBj) )
+        Dmem(ng)=Dmem(ng)+size2d
+        self % cg2d_x = IniVal
+      END IF
+
+# ifdef ADJUST_BOUNDARY
+!
+      IF (.not.allocated(self % cg_pbs)) THEN
+        allocate ( self % cg_pbs(LBij:UBij) )
+        Dmem(ng)=Dmem(ng)+REAL(UBij-LBij+1,r8)
+        self % cg_pbs = IniVal
+      END IF
+      IF (.not.allocated(self % cg_qbs)) THEN
+        allocate ( self % cg_qbs(LBij:UBij) )
+        Dmem(ng)=Dmem(ng)+REAL(UBij-LBij+1,r8)
+        self % cg_qbs = IniVal
+      END IF
+      IF (.not.allocated(self % cg_rbs)) THEN
+        allocate ( self % cg_rbs(LBij:UBij) )
+        Dmem(ng)=Dmem(ng)+REAL(UBij-LBij+1,r8)
+        self % cg_rbs = IniVal
+      END IF
+      IF (.not.allocated(self % cg_xbs)) THEN
+        allocate ( self % cg_xbs(LBij:UBij) )
+        Dmem(ng)=Dmem(ng)+REAL(UBij-LBij+1,r8)
+        self % cg_xbs = IniVal
+      END IF
+# endif
+
+# ifdef SOLVE3D
+!
+      IF (.not.allocated(self % cg3d_p)) THEN
+        allocate ( self % cg3d_p(LBi:UBi,LBj:UBj,N(ng)) )
+        Dmem(ng)=Dmem(ng)+size2d*REAL(N(ng),r8)
+        self % cg3d_p = IniVal
+      END IF
+      IF (.not.allocated(self % cg3d_q)) THEN
+        allocate ( self % cg3d_q(LBi:UBi,LBj:UBj,N(ng)) )
+        Dmem(ng)=Dmem(ng)+size2d*REAL(N(ng),r8)
+        self % cg3d_q = IniVal
+      END IF
+      IF (.not.allocated(self % cg3d_r)) THEN
+        allocate ( self % cg3d_r(LBi:UBi,LBj:UBj,N(ng)) )
+        Dmem(ng)=Dmem(ng)+size2d*REAL(N(ng),r8)
+        self % cg3d_r = IniVal
+      END IF
+      IF (.not.allocated(self % cg3d_x)) THEN
+        allocate ( self % cg3d_x(LBi:UBi,LBj:UBj,N(ng)) )
+        Dmem(ng)=Dmem(ng)+size2d*REAL(N(ng),r8)
+        self % cg3d_x = IniVal
+      END IF
+# endif
+!
+!  Chebyshev iterations (CI) polynomial-based solver horizontal vectors.
+!
+      IF (.not.allocated(self % ci2d_p)) THEN
+        allocate ( self % ci2d_p(LBi:UBi,LBj:UBj) )
+        Dmem(ng)=Dmem(ng)+size2d
+        self % ci2d_p = IniVal
+      END IF
+      IF (.not.allocated(self % ci2d_q)) THEN
+        allocate ( self % ci2d_q(LBi:UBi,LBj:UBj) )
+        Dmem(ng)=Dmem(ng)+size2d
+        self % ci2d_q = IniVal
+      END IF
+      IF (.not.allocated(self % ci2d_r)) THEN
+        allocate ( self % ci2d_r(LBi:UBi,LBj:UBj) )
+        Dmem(ng)=Dmem(ng)+size2d
+        self % ci2d_r = IniVal
+      END IF
+      IF (.not.allocated(self % ci2d_x)) THEN
+        allocate ( self % ci2d_x(LBi:UBi,LBj:UBj) )
+        Dmem(ng)=Dmem(ng)+size2d
+        self % ci2d_x = IniVal
+      END IF
+
+# ifdef ADJUST_BOUNDARY
+!
+      IF (.not.allocated(self % ci_pbs)) THEN
+        allocate ( self % ci_pbs(LBij:UBij) )
+        Dmem(ng)=Dmem(ng)+REAL(UBij-LBij+1,r8)
+        self % ci_pbs = IniVal
+      END IF
+      IF (.not.allocated(self % ci_qbs)) THEN
+        allocate ( self % ci_qbs(LBij:UBij) )
+        Dmem(ng)=Dmem(ng)+REAL(UBij-LBij+1,r8)
+        self % ci_qbs = IniVal
+      END IF
+      IF (.not.allocated(self % ci_rbs)) THEN
+        allocate ( self % ci_rbs(LBij:UBij) )
+        Dmem(ng)=Dmem(ng)+REAL(UBij-LBij+1,r8)
+        self % ci_rbs = IniVal
+      END IF
+      IF (.not.allocated(self % ci_xbs)) THEN
+        allocate ( self % ci_xbs(LBij:UBij) )
+        Dmem(ng)=Dmem(ng)+REAL(UBij-LBij+1,r8)
+        self % ci_xbs = IniVal
+      END IF
+# endif
+
+# ifdef SOLVE3D
+!
+      IF (.not.allocated(self % ci3d_p)) THEN
+        allocate ( self % ci3d_p(LBi:UBi,LBj:UBj,N(ng)) )
+        Dmem(ng)=Dmem(ng)+size2d*REAL(N(ng),r8)
+        self % ci3d_p = IniVal
+      END IF
+      IF (.not.allocated(self % ci3d_q)) THEN
+        allocate ( self % ci3d_q(LBi:UBi,LBj:UBj,N(ng)) )
+        Dmem(ng)=Dmem(ng)+size2d*REAL(N(ng),r8)
+        self % ci3d_q = IniVal
+      END IF
+      IF (.not.allocated(self % ci3d_r)) THEN
+        allocate ( self % ci3d_r(LBi:UBi,LBj:UBj,N(ng)) )
+        Dmem(ng)=Dmem(ng)+size2d*REAL(N(ng),r8)
+        self % ci3d_r = IniVal
+      END IF
+      IF (.not.allocated(self % ci3d_x)) THEN
+        allocate ( self % ci3d_x(LBi:UBi,LBj:UBj,N(ng)) )
+        Dmem(ng)=Dmem(ng)+size2d*REAL(N(ng),r8)
+        self % ci3d_x = IniVal
+      END IF
+# endif
+
+# ifdef READ_SCALES
+!
+!  Spatially varying isotropic or anisotropic horizontal Daley length
+!  scales.
+!
+      IF (.not.allocated(self % bZscaleX)) THEN
+        allocate ( self % bZscaleX(LBi:UBi,LBj:UBj,Nscale(ng)) )
+        Dmem(ng)=Dmem(ng)+size2d*REAL(Nscale(ng),r8)
+        self % bZscaleX = IniVal
+      END IF
+      IF (.not.allocated(self % bZscaleY)) THEN
+        allocate ( self % bZscaleY(LBi:UBi,LBj:UBj,Nscale(ng)) )
+        Dmem(ng)=Dmem(ng)+size2d*REAL(Nscale(ng),r8)
+        self % bZscaleY = IniVal
+      END IF
+!
+      IF (.not.allocated(self % bU2DscaleX)) THEN
+        allocate ( self % bU2DscaleX(LBi:UBi,LBj:UBj,Nscale(ng)) )
+        Dmem(ng)=Dmem(ng)+size2d*REAL(Nscale(ng),r8)
+        self % bU2DscaleX = IniVal
+      END IF
+      IF (.not.allocated(self % bU2DscaleY)) THEN
+        allocate ( self % bU2DscaleY(LBi:UBi,LBj:UBj,Nscale(ng)) )
+        Dmem(ng)=Dmem(ng)+size2d*REAL(Nscale(ng),r8)
+        self % bU2DscaleY = IniVal
+      END IF
+!
+      IF (.not.allocated(self % bV2DscaleX)) THEN
+        allocate ( self % bV2DscaleX(LBi:UBi,LBj:UBj,Nscale(ng)) )
+        Dmem(ng)=Dmem(ng)+size2d*REAL(Nscale(ng),r8)
+        self % bV2DscaleX = IniVal
+      END IF
+      IF (.not.allocated(self % bV2DscaleY)) THEN
+        allocate ( self % bV2DscaleY(LBi:UBi,LBj:UBj,Nscale(ng)) )
+        Dmem(ng)=Dmem(ng)+size2d*REAL(Nscale(ng),r8)
+        self % bV2DscaleY = IniVal
+      END IF
+
+#  ifdef ADJUST_WSTRESS
+!
+      IF (.not.allocated(self % bSUSscaleX)) THEN
+        allocate ( self % bSUSscaleX(LBi:UBi,LBj:UBj,Nscale(ng)) )
+        Dmem(ng)=Dmem(ng)+size2d*REAL(Nscale(ng),r8)
+        self % bSUSscaleX = IniVal
+      END IF
+      IF (.not.allocated(self % bSUSscaleY)) THEN
+        allocate ( self % bSUSscaleY(LBi:UBi,LBj:UBj,Nscale(ng)) )
+        Dmem(ng)=Dmem(ng)+size2d*REAL(Nscale(ng),r8)
+        self % bSUSscaleY = IniVal
+      END IF
+!
+      IF (.not.allocated(self % bSVSscaleX)) THEN
+        allocate ( self % bSVSscaleX(LBi:UBi,LBj:UBj,Nscale(ng)) )
+        Dmem(ng)=Dmem(ng)+size2d*REAL(Nscale(ng),r8)
+        self % bSVSscaleX = IniVal
+      END IF
+      IF (.not.allocated(self % bSVSscaleY)) THEN
+        allocate ( self % bSVSscaleY(LBi:UBi,LBj:UBj,Nscale(ng)) )
+        Dmem(ng)=Dmem(ng)+size2d*REAL(Nscale(ng),r8)
+        self % bSVSscaleY = IniVal
+      END IF
+#  endif
+
+#  ifdef SOLVE3D
+!
+      IF (.not.allocated(self % bTscaleX)) THEN
+        allocate ( self % bTscaleX(LBi:UBi,LBj:UBj,N(ng),NT(ng),Nscale(ng)) )
+        Dmem(ng)=Dmem(ng)+size2d*REAL(N(ng)*NT(ng)*Nscale(ng),r8)
+        self % bTscaleX = IniVal
+      END IF
+      IF (.not.allocated(self % bTscaleY)) THEN
+        allocate ( self % bTscaleY(LBi:UBi,LBj:UBj,N(ng),NT(ng),Nscale(ng)) )
+        Dmem(ng)=Dmem(ng)+size2d*REAL(N(ng)*NT(ng)*Nscale(ng),r8)
+        self % bTscaleY = IniVal
+      END IF
+!
+      IF (.not.allocated(self % bU3DscaleX)) THEN
+        allocate ( self % bU3DscaleX(LBi:UBi,LBj:UBj,N(ng),Nscale(ng)) )
+        Dmem(ng)=Dmem(ng)+size2d*REAL(N(ng)*Nscale(ng),r8)
+        self % bU3DscaleX = IniVal
+      END IF
+      IF (.not.allocated(self % bU3DscaleY)) THEN
+        allocate ( self % bU3DscaleY(LBi:UBi,LBj:UBj,N(ng)*Nscale(ng)) )
+        Dmem(ng)=Dmem(ng)+size2d*REAL(N(ng)*Nscale(ng),r8)
+        self % bU3DscaleY = IniVal
+      END IF
+!
+      IF (.not.allocated(self % bV3DscaleX)) THEN
+        allocate ( self % bV3DscaleX(LBi:UBi,LBj:UBj,N(ng),Nscale(ng)) )
+        Dmem(ng)=Dmem(ng)+size2d*REAL(N(ng)*Nscale(ng),r8)
+        self % bV3DscaleX = IniVal
+      END IF
+      IF (.not.allocated(self % bV3DscaleY)) THEN
+        allocate ( self % bV3DscaleY(LBi:UBi,LBj:UBj,N(ng),Nscale(ng)) )
+        Dmem(ng)=Dmem(ng)+size2d*REAL(N(ng)*Nscale(ng),r8)
+        self % bV3DscaleY = IniVal
+      END IF
+
+#   ifdef ADJUST_STFLUX
+!
+      IF (.not.allocated(self % bSTFscaleX)) THEN
+        allocate ( self % bSTFscaleX(LBi:UBi,LBj:UBj,NT(ng),Nscale(ng)) )
+        Dmem(ng)=Dmem(ng)+size2d*REAL(NT(ng)*Nscale(ng),r8)
+        self % bSTFscaleX = IniVal
+      END IF
+      IF (.not.allocated(self % bSTFscaleY)) THEN
+        allocate ( self % bSTFscaleY(LBi:UBi,LBj:UBj,NT(ng),Nscale(ng)) )
+        Dmem(ng)=Dmem(ng)+size2d*REAL(NT(ng)*Nscale(ng),r8)
+        self % bSTFscaleY = IniVal
+      END IF
+#   endif
+#  endif
+# endif
+!
+      RETURN
+      END SUBROUTINE multiscale_create
+!
+!-----------------------------------------------------------------------
+!  This routine computes the extreme eigenvalues required by the
+!  Chebyshev Iterations (CI) solver, which is applied to implicit
+!  diffusion operators in the modeling of the multiscale background-
+!  error covariance for 2D variables in the control vector.
+!
+!  The minimum and maximum eigenvalues of the K-Laplacian operator
+!  are determined using a Conjugate Gradient (CG) solution to the
+!  corresponding linear system, A x = b.
+!
+      SUBROUTINE multiscale_CG_2d_tl (self, ng, tile, model, ifield,    &
+     &                                ctype, ms, NiterCG, Lweak,        &
+     &                                LBi, UBi, LBj, UBj,               &
+     &                                IminS, ImaxS, JminS, JmaxS,       &
+     &                                tl_A)
+!
+      CLASS (multiscale), intent(inout) :: self      ! multiscale object
+      integer,            intent(in   ) :: ng        ! nested grid
+      integer,            intent(in   ) :: tile      ! domain partition
+      integer,            intent(in   ) :: model     ! kernel ID
+      integer,            intent(in   ) :: ifield    ! state field ID 
+      integer,            intent(in   ) :: ctype     ! C-grid type
+      integer,            intent(in   ) :: ms        ! multiscale index
+      integer,            intent(in   ) :: NiterCG   ! CG iterations
+      logical,            intent(in   ) :: Lweak     ! weak constraint
+      integer,            intent(in   ) :: LBi, UBi, LBj, UBj
+      integer,            intent(in   ) :: IminS, ImaxS, JminS, JmaxS
+      real (r8),          intent(inout) :: tl_A(LBi:,LBj:)
+!
+      integer                           :: Istr, IstrU, Iend, Imin, Imax
+      integer                           :: Jstr, JstrV, Jend, Jmin, Jmax
+      integer                           :: Mlap, iterCG, iterDiff, info
+      integer                           :: i, j
+!
+      real (r8)                         :: dotn, dotpq, dotr, dotrd
+!
+      real (r8), pointer                            :: eigMin(:,:)
+      real (r8), pointer                            :: eigMax(:,:)
+!
+      real (r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_scale
+      real (r8), dimension(0:NiterCG)               :: cg_a
+      real (r8), dimension(0:NiterCG+1)             :: cg_b
+      real (r8), dimension(NiterCG+1)               :: cg_Rv
+      real (r8), dimension(2*(NiterCG+1)-2)         :: work
+      real (r8), dimension(NiterCG)                 :: zwork
+      real (r8), dimension(NiterCG+1,NiterCG+1)     :: zgv
+!
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__//", tl_multiscale_CG_2d"
+!
+!  Initialize.
+!
+      Istr =BOUNDS(ng)%Istr (tile)   ! tile computational range
+      IstrU=BOUNDS(ng)%IstrU(tile)
+      Iend =BOUNDS(ng)%Iend (tile)
+      JstrV=BOUNDS(ng)%JstrV(tile)
+      Jend =BOUNDS(ng)%Jend (tile)
+!
+      Imin=Istr
+      Imax=Iend
+      Jmin=Jstr
+      Jmax=Jend
+      SELECT CASE (ctype)
+        CASE (u2dvar)
+          Imin=IstrU
+        CASE (v2dvar)
+          Jmin=JstrV
+      END SELECT
+!
+      self%cg2d_r=0.0_r8
+      self%cg2d_p=0.0_r8
+      self%cg2d_q=0.0_r8
+      self%cg2d_x=0.0_r8
+!
+!  Select number of K-Laplacian inverse operator applications (Mlap)
+!  for requested variable in the 2D state/control vector and 
+!  multiscale index/counter (ms).
+!
+!  Mlap MUST be greater than 2 and EVEN. Choose Mlap > or O(10) to
+!  approximate a Gaussian correlation functions.
+!
+      SELECT CASE (ifield)
+        CASE (isFsur)                          ! free surface
+          Mlap=self(ifield,ms,ng)
+          eigMin => self%eigMinR2D
+          eigMax => self%eigMaxR2D
+        CASE (isUbar)                          ! 2D u-momentum
+          Mlap=self(ifield,ms,ng)
+          eigMin => self%eigMinU2D
+          eigMax => self%eigMaxU2D
+        CASE (isVbar)                          ! 2D v-momentum
+          Mlap=self(ifield,ms,ng)
+          eigMin => self%eigMinV2D
+          eigMax => self%eigMaxV2D
+        CASE (isUstr)                          ! surface U-stress
+          Mlap=self(ifield,ms,ng)
+          eigMin => self%eigMinSUS
+          eigMax => self%eigMaxSUS
+        CASE (isVstr)                          ! surface V-stress
+          Mlap=self(ifield,ms,ng)
+          eigMin => self%eigMinSVS
+          eigMax => self%eigMaxSVS
+# ifdef SOLVE3D
+        CASE (isTsur(itemp))                   ! surface net heat flux
+          Mlap=self(ifield,ms,ng)
+          eigMin => self%eigMinSTF(:,:,itemp)
+          eigMax => self%eigMaxSTF(:,:,itemp)
+        CASE (isTsur(isalt))                   ! surface freshwater flux
+          Mlap=self(ifield,ms,ng)
+          eigMin => self%eigMinSTF(:,:,isalt)
+          eigMax => self%eigMaxSTF(:,:,isalt)
+# endif
+      END SELECT
+!
+!  Set control variable squared root area scale (2D).
+!
+      SELECT CASE (ctype)
+        CASE (r2dvar)
+          DO j=Jmin,Jmax
+            DO i=Imin,Imax
+              tl_scale(i,j)=SQRT(GRID(ng)%om_r(i,j)*GRID(ng)%on_r(i,j))
+# ifdef MASKING
+              tl_A(i,j)=GRID(ng)%rmask(i,j)*tl_A(i,j)
+# endif
+            END DO
+          END DO
+        CASE (u2dvar)
+          DO j=Jmin,Jmax
+            DO i=Imin,Imax
+              tl_scale(i,j)=SQRT(GRID(ng)%om_u(i,j)*GRID(ng)%on_u(i,j))
+# ifdef MASKING
+              tl_A(i,j)=GRID(ng)%umask(i,j)*tl_A(i,j)
+# endif
+        CASE (v2dvar)
+          DO j=Jmin,Jmax
+            DO i=Imin,Imax
+              tl_scale(i,j)=SQRT(GRID(ng)%om_v(i,j)*GRID(ng)%on_v(i,j))
+# ifdef MASKING
+              tl_A(i,j)=GRID(ng)%vmask(i,j)*tl_A(i,j)
+# endif
+            END DO
+          END DO
+      END SELECT
+!
+!  Advance in K-space implicit pseudo-diffusion 2D equation using 
+!  Weaver et al. (2016) algorithm 1.
+!
+      KDIFF_ITER : DO iterDiff=1,Mlap
+!
+        DO j=Jmin,Jmax
+          DO i=Imin,Imax
+            self%cg2d_x(i,j)=0.0_r8                       ! step 1
+            self%cg2d_r(i,j)=-tl_A(i,j)                   ! step 2
+            self%cg2d_p(i,j)=tl_A(i,j)                    ! step 3                     
+          END DO
+        END DO
+        cg_b(0)=0.0_r8                                    ! step 4
+!
+        dotn = dot_prod_2d (ng, tile, model, ctype,                     &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      self%cg2d_r,                                &
+     &                      self%cg2d_r)
+!
+!  Invert the implicit diffusion equation using CG iterations.
+!
+!     A x = b  linear system
+!
+        KLAP_ITER : DO iterCG=0,NiterCG                   ! steps 6 - 16
+!
+          DO j=Jmin,Jmax
+            DO i=Imin,Imax
+              tl_A(i,j)=tl_A(i,j)/tl_scale(i,j)
+            END DO
+          END DO
+!
+!  Compute K-Laplacian, [1 + Del(K*Del)], operator.
+!
+          SELECT CASE (ctype)
+            CASE (r2dvar)
+              CALL tl_multiscale_Klap_r2d (self, ng, tile, model,       &
+     &                                     ifield, ctype, ms, Lweak,    &
+     &                                     LBi, UBi, LBj, UBj,          &
+     &                                     IminS, ImaxS, JminS, JmaxS,  &
+     &                                     tl_A)
+            CASE (u2dvar)
+              CALL tl_multiscale_Klap_u2d (self, ng, tile, model,       &
+     &                                     ifield, ctype, ms, Lweak,    &
+     &                                     LBi, UBi, LBj, UBj,          &
+     &                                     IminS, ImaxS, JminS, JmaxS,  &
+     &                                     tl_A)
+            CASE (v2dvar)
+              CALL tl_multiscale_Klap_v2d (self, ng, tile, model,       &
+     &                                     ifield, ctype, ms, Lweak,    &
+     &                                     LBi, UBi, LBj, UBj,          &
+     &                                     IminS, ImaxS, JminS, JmaxS,  &
+     &                                     tl_A)
+          END SELECT
+!
+!  Conjugate Gradient (CG) algorithm, (Weaver et al., 2016).
+!
+          DO j=Jmin,Jmax
+            DO i=Imin,Imax
+              tl_A(i,j)=tl_A(i,j)*tl_scale(i,j)
+              self%cg2d_q(i,j)=tl_A(i,j)                  ! step 7
+            END DO
+          END DO
+!
+          dotr = dot_prod_2d (ng, tile, model, ctype,                   &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        self%cg2d_r,                              &
+     &                        self%cg2d_r)
+          dotpq = dot_prod_2d (ng, tile, model, ctype,                  &
+     &                         LBi, UBi, LBj, UBj,                      &
+     &                         self%cg2d_p,                             &
+     &                         self%cg2d_q)
+!
+          cg_a(iterCG)=dotr/dotpq                         ! step 8
+
+# ifdef MULTI_SCALE_DEBUG
+!
+          deps=SQRT(dotr/dotn)
+          status=multiscale_print(ng, ifield, ms, iterDiff, iterCG,     & 
+     &                            NiterCG, 'CG_2d', deps)
+# endif
+!
+          DO j=Jmin,Jmax
+            DO i=Imin,Imax
+              self%cg2d_x(i,j)=self%cg2d_x(i,j)+                        &
+     &                         cg_a(iterCG)*                            &
+     &                         self%cg2d_p(i,j)           ! step 9
+              self%cg2d_r(i,j)=self%cg_r(i,j)+                          &
+     &                         cg_a(iterCG)*                            &
+     &                         self%cg2d_q(i,j)           ! step 10
+            END DO
+          END DO
+!
+!  Reorthogonalize r(k+1) with respect to r(0:k).           step 11
+!
+          dotrd=dotr
+          dotr = dot_prod_2d (ng, tile, model, ctype,                   &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        self%cg2d_r,                              &
+     &                        self%cg2d_r)
+!
+          cg_b(iterCG+1)=dotr/dotrd                       ! step 12
+!
+          DO j=Jmin,Jmax
+            DO i=Imin,Imax
+              self%cg2d_p(i,j)=-self%cg2d_r(i,j)+                       &
+     &                         cg_b(iterCG+1)*                          &
+     &                         self%cg2d_p(i,j)           ! step 13
+              tl_A(i,j)=self%cg2d_p(i,j)
+            END DO
+          END DO
+
+        END DO KLAP_ITER
+!
+!  Update control vector 2D variable with the implicit diffusion
+!  solution iterate.
+!
+        DO j=Jmin,Jmax
+          DO i=Imin,Imax
+            tl_A(i,j)=self%cg2d_x(i,j)
+          END DO
+        END DO
+!
+!  Use the LAPACK routine DSTEQR to compute the Ritz vectors and 
+!  Ritz values of the tridiagonal matrix.
+!
+        DO i=1,NiterCG+1                                  ! step 14
+          cg_Rv(i)=1.0_r8/cg_a(i-1)
+          IF (i.gt.1) THEN
+            cg_Rv(i)=cg_Rv(i)+cg_b(i-1)/cg_a(i-2)
+          END IF
+        END DO
+        DO i=1,NiterCG
+          zwork(i)=-SQRT(cg_b(i))/cg_a(i-1)
+        END DO
+!
+        CALL dsteqr ('I', NiterCG+1, cg_Rv, zwork,                      &
+     &               zgv, NiterCG+1, work, info)
+        IF (info.ne.0) THEN
+          WRITE (stdout,*) ' multiscale_CG_2d_tl - Error in DSTEQR:',   &
+     &                     ' info = ', info
+          exit_flag=8
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        END IF
+!
+        eigMax(iterDiff,ms)=MAXVAL(cg_Rv)  ! maximum Ritz eigenvalue
+        eigMin(iterDiff,ms)=MINVAL(cg_Rv)  ! minimum Ritz eigenvalue
+!
+!  Reset iterative conjugate gradient arrays.
+!
+        DO j=Jmin,Jmax
+          DO i=Imin,Imax
+            self%cg2d_p(i,j)=0.0_r8
+            self%cg2d_r(i,j)=0.0_r8
+            self%cg2d_q(i,j)=0.0_r8
+          END DO
+        END DO
+!
+      END DO KDIFF_ITER
+!
+!  Convert the solution back to physical space.
+!  (cf Eqn 18 of Weaver et al 2016, QJRMS, 143,455-471).
+!  Not needed in the CI algorithm as the tl_scale factors cancel.
+!
+      DO j=Jmin,Jmax
+        DO i=Imin,Imax
+          tl_A(i,j)=self%cg2d_x(i,j)/tl_scale(i,j)
+        END DO
+      END DO
+!
+      RETURN
+      END SUBROUTINE multi_scale_CG_2d_tl
+!
+!-----------------------------------------------------------------------
+!  This routine inverts the implicit diffusion linear operator, Ax = b,
+!  using Chebyshev Iterations (CI) to model the multiscale propagation
+!  of background-error covariance for 2D variables in the control
+!  vector. It operates in conjunction with its adjoint to enforce
+!  symmetry-preserving correlation functions. The algorithm requires
+!  the extreme eigenvalues of matrix A, which are obtained from the
+!  Conjugate Gradient (CG) solver. Additionally, initial values for
+!  the estimate x(0) and its residual r(0) are required.
+!
+      SUBROUTINE multiscale_CI_2d_tl (self, ng, tile, model, ifield,    &
+     &                                ctype, ms, NiterCI, Lweak,        &
+     &                                LBi, UBi, LBj, UBj,               &
+     &                                IminS, ImaxS, JminS, JmaxS,       &
+     &                                tl_A)
+!
+      CLASS (multiscale), intent(inout) :: self      ! multiscale object
+      integer,            intent(in   ) :: ng        ! nested grid
+      integer,            intent(in   ) :: tile      ! domain partition
+      integer,            intent(in   ) :: model     ! kernel ID
+      integer,            intent(in   ) :: ifield    ! state field ID 
+      integer,            intent(in   ) :: ctype     ! C-grid type
+      integer,            intent(in   ) :: ms        ! multiscale index
+      integer,            intent(in   ) :: NiterCI   ! CI iterations
+      logical,            intent(in   ) :: Lweak     ! weak constraint
+      integer,            intent(in   ) :: LBi, UBi, LBj, UBj
+      integer,            intent(in   ) :: IminS, ImaxS, JminS, JmaxS
+      real (r8),          intent(inout) :: tl_A(LBi:,LBj:)
+!
+      integer                           :: Istr, IstrU, Iend, Imin, Imax
+      integer                           :: Jstr, JstrV, Jend, Jmin, Jmax
+      integer                           :: Mlap, iterCI, iterDiff
+      integer                           :: i, j
+!
+      real (r8)                         :: dotn, dotr, deps
+      real (r8)                         :: cff, ci_alpham1, ci_delta
+      real (r8)                         :: ci_sigma
+!
+      real (r8), pointer                            :: eigMin(:,:)
+      real (r8), pointer                            :: eigMax(:,:)
+!
+      real (r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_scale
+      real (r8), dimension(0:NiterCI)               :: cg_alpha
+      real (r8), dimension(0:NiterCI+1)             :: cg_beta
+!
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__//", tl_multiscale_CI_2d"
+!
+!  Initialize.
+!
+      Istr =BOUNDS(ng)%Istr (tile)   ! tile computational range
+      IstrU=BOUNDS(ng)%IstrU(tile)
+      Iend =BOUNDS(ng)%Iend (tile)
+      JstrV=BOUNDS(ng)%JstrV(tile)
+      Jend =BOUNDS(ng)%Jend (tile)
+!
+      Imin=Istr
+      Imax=Iend
+      Jmin=Jstr
+      Jmax=Jend
+      SELECT CASE (ctype)
+        CASE (u2dvar)
+          Imin=IstrU
+        CASE (v2dvar)
+          Jmin=JstrV
+      END SELECT
+!
+      self%ci2d_r=0.0_r8
+      self%ci2d_p=0.0_r8
+      self%ci2d_q=0.0_r8
+      self%ci2d_x=0.0_r8
+!
+!  Select number of K-Laplacian inverse operator applications (Mlap)
+!  for requested variable in the 2D state/control vector and 
+!  multiscale index/counter (ms). Also, select pre-computed extreme
+!  eigenvalues of matrix A.
+!
+!  Mlap MUST be greater than 2 and EVEN. Choose Mlap > or O(10) to
+!  approximate a Gaussian correlation functions.
+!
+      SELECT CASE (ifield)
+        CASE (isFsur)                          ! free surface
+          Mlap=self(ifield,ms,ng)
+          eigMin => self%eigMinR2D
+          eigMax => self%eigMaxR2D
+        CASE (isUbar)                          ! 2D u-momentum
+          Mlap=self(ifield,ms,ng)
+          eigMin => self%eigMinU2D
+          eigMax => self%eigMaxU2D
+        CASE (isVbar)                          ! 2D v-momentum
+          Mlap=self(ifield,ms,ng)
+          eigMin => self%eigMinV2D
+          eigMax => self%eigMaxV2D
+        CASE (isUstr)                          ! surface U-stress
+          Mlap=self(ifield,ms,ng)
+          eigMin => self%eigMinSUS
+          eigMax => self%eigMaxSUS
+        CASE (isVstr)                          ! surface V-stress
+          Mlap=self(ifield,ms,ng)
+          eigMin => self%eigMinSVS
+          eigMax => self%eigMaxSVS
+# ifdef SOLVE3D
+        CASE (isTsur(itemp))                   ! surface net heat flux
+          Mlap=self(ifield,ms,ng)
+          eigMin => self%eigMinSTF(:,:,itemp)
+          eigMax => self%eigMaxSTF(:,:,itemp)
+        CASE (isTsur(isalt))                   ! surface freshwater flux
+          Mlap=self(ifield,ms,ng)
+          eigMin => self%eigMinSTF(:,:,isalt)
+          eigMax => self%eigMaxSTF(:,:,isalt)
+# endif
+      END SELECT
+!
+!  Set control variable squared root area scale (2D).
+!
+      SELECT CASE (ctype)
+        CASE (r2dvar)
+          DO j=Jmin,Jmax
+            DO i=Imin,Imax
+              tl_scale(i,j)=SQRT(GRID(ng)%om_r(i,j)*GRID(ng)%on_r(i,j))
+            END DO
+          END DO
+        CASE (u2dvar)
+          DO j=Jmin,Jmax
+            DO i=Imin,Imax
+              tl_scale(i,j)=SQRT(GRID(ng)%om_u(i,j)*GRID(ng)%on_u(i,j))
+        CASE (v2dvar)
+          DO j=Jmin,Jmax
+            DO i=Imin,Imax
+              tl_scale(i,j)=SQRT(GRID(ng)%om_v(i,j)*GRID(ng)%on_v(i,j))
+            END DO
+          END DO
+      END SELECT
+!
+!  Advance in K-space implicit pseudo-diffusion equation using 
+!  Weaver et al. (2016) algorithm 3 (fixed number of iterations
+!  to a pre-determined value K).
+!
+      KDIFF_ITER : DO iterDiff=1,Mlap
+!
+        ci_sigma=0.5_r8*(eigMax(iterDiff,ms)+                           &
+     &                   eigMin(iterDiff,ms))           ! step 1
+        ci_delta=0.5_r8*(eigMax(iterDiff,ms)-
+     &                   eigMin(iterDiff,ms))           ! step 2
+        ci_alpham1=1.0_r8                               ! step 3
+        ci_beta(0)=0.0_r8                               ! step 4
+!
+!  Invert the implicit diffusion equation using Chebyshev Iterations.
+!
+!     A x = b  linear system
+!
+        DO iterCI=0,NiterCI                             ! steps 5 to 8
+          IF (iterCI.eq.0) THEN
+            ci_alpha(0)=1.0_r8/ci_sigma
+            cff=ci_delta*ci_alpha(0)
+            ci_beta(1)=0.5_r8*cff*cff
+          ELSE
+            ci_alpha(iterCI)=1.0_r8/(ci_sigma-
+                                     ci_beta(iterCI)/ci_alpha(iterCI-1))
+            cff=0.5_r8*ci_delta*ci_alpha(iterCI)
+            ci_beta(iter+1)=cff*cff
+          END IF
+        END DO
+!                                            why r = -tl_A & p = +tl_A?
+        DO j=Jmin,Jmax
+          DO i=Imin,Imax
+            tl_A(i,j)=tl_scale(i,j)*tl_A(i,j)
+            self%ci2d_x(i,j)=0.0_r8                     ! step 9
+            self%ci2d_r(i,j)=-tl_A(i,j)                 ! step 10
+            self%ci2d_p(i,j)=tl_A(i,j)                  ! step 11
+          END DO
+        END DO
+
+# ifdef MULTI_SCALE_DEBUG
+!
+        dotn = dot_prod_2d (ng, tile, model, ctype,                     &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      self%ci2d_r, self%ci2d_r)
+# endif
+!
+!  Compute K-Laplacian, [1 + Del(K*Del)], operator.
+!
+        KLAP_ITER : DO iterCI=0,NiterCI                 ! steps 12 to 17
+!
+          DO j=Jstr,Jend
+            DO i=Istr,Iend
+              tl_A(i,j)=tl_A(i,j)/tl_scale(i,j)
+            END DO
+          END DO
+!
+          SELECT CASE (ctype)                           ! step 12
+            CASE (r2dvar)
+              CALL tl_multiscale_Klap_r2d (self, ng, tile, model,       &
+     &                                     ifield, ctype, ms, Lweak,    &
+     &                                     LBi, UBi, LBj, UBj,          &
+     &                                     IminS, ImaxS, JminS, JmaxS,  &
+     &                                     tl_A)
+            CASE (u2dvar)
+              CALL tl_multiscale_Klap_u2d (self, ng, tile, model,       &
+     &                                     ifield, ctype, ms, Lweak,    &
+     &                                     LBi, UBi, LBj, UBj,          &
+     &                                     IminS, ImaxS, JminS, JmaxS,  &
+     &                                     tl_A)
+            CASE (v2dvar)
+              CALL tl_multiscale_Klap_v2d (self, ng, tile, model,       &
+     &                                     ifield, ctype, ms, Lweak,    &
+     &                                     LBi, UBi, LBj, UBj,          &
+     &                                     IminS, ImaxS, JminS, JmaxS,  &
+     &                                     tl_A)
+          END SELECT
+!                                                        step 13
+          DO j=Jmin,Jmax
+            DO i=Imin,Imax
+              tl_A(i,j)=tl_A(i,j)*tl_scale(i,j)
+              self%ci2d_q(i,j)=tl_A(i,j)
+            END DO
+          END DO
+
+# ifdef MULTI_SCALE_DEBUG
+!
+          dotr = dot_prod_2d (ng, tile, model, ctype,                   &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        self%ci2d_r, self%ci2d_r)
+          deps=SQRT(dotr/dotn)
+!
+          status=multiscale_print(ng, ifield, ms, iterDiff, iterCI,     & 
+     &                            NiterCI, 'CI_2d', deps)
+# endif
+!                                                        steps 14, 15
+          DO j=Jmin,Jmax
+            DO i=Imin,Imax
+              self%ci2d_x(i,j)=self%ci2d_x(i,j)+                        &
+     &                         ci_alpha(iterCI)*self%ci2d_p(i,j)
+              self%ci2d_r(i,j)=self%ci2d_r(i,j)+                        &
+     &                         ci_alpha(iterCI)*self%ci2d_q(i,j)
+            END DO
+          END DO
+!                                                        step 16
+          DO j=Jmin,Jmax
+            DO i=Imin,Imax
+              self%ci2d_p(i,j)=-self%ci2d_r(i,j)+                       &
+     &                         ci_beta(iterCI+1)*self%ci2d_p(i,j)
+              tl_A(i,j)=self%ci2d_p(i,j)
+            END DO
+          END DO
+
+        END DO KLAP_ITER
+!
+!  Reset iterative conjugate gradient arrays.
+!
+        DO j=Jmin,Jmax
+          DO i=Imin,Imax
+            self%ci2d_p(i,j)=0.0_r8
+            self%ci2d_r(i,j)=0.0_r8
+            self%ci2d_q(i,j)=0.0_r8
+          END DO
+        END DO
+!
+!  Update control vector 2D variable with the implicit diffusion
+!  solution iterate.
+!
+        DO j=Jmin,Jmax
+          DO i=Imin,Imax
+            tl_A(i,j)=ci2d_x(i,j)/tl_scale(i,j)
+          END DO
+        END DO
+!
+      END DO KDIFF_ITER
+!
+      RETURN
+      END SUBROUTINE multi_scale_CI_2d_tl
+!
+!-----------------------------------------------------------------------
+!  This routine serves as the adjoint to the inversion of the implicit
+!  diffusion linear operator, Ax = b, utilizing Chebyshev Iterations
+!  (CI) to model the multiscale propagation of background-error
+!  covariance for 2D variables in the control vector. It is needed to
+!  enforce symmetry-preserving correlation functions. The algorithm
+!  requires the extreme eigenvalues of matrix A, which are obtained
+!  from the Conjugate Gradient (CG) solver.
+!
+      SUBROUTINE multiscale_CI_2d_ad (self, ng, tile, model, ifield,    &
+     &                                ctype, ms, NiterCI, Lweak,        &
+     &                                LBi, UBi, LBj, UBj,               &
+     &                                IminS, ImaxS, JminS, JmaxS,       &
+     &                                ad_A)
+!
+      CLASS (multiscale), intent(inout) :: self      ! multiscale object
+      integer,            intent(in   ) :: ng        ! nested grid
+      integer,            intent(in   ) :: tile      ! domain partition
+      integer,            intent(in   ) :: model     ! kernel ID
+      integer,            intent(in   ) :: ifield    ! state field ID 
+      integer,            intent(in   ) :: ctype     ! C-grid type
+      integer,            intent(in   ) :: ms        ! multiscale index
+      integer,            intent(in   ) :: NiterCI   ! CI iterations
+      logical,            intent(in   ) :: Lweak     ! weak constraint
+      integer,            intent(in   ) :: LBi, UBi, LBj, UBj
+      integer,            intent(in   ) :: IminS, ImaxS, JminS, JmaxS
+      real (r8),          intent(inout) :: ad_A(LBi:,LBj:)
+!
+      integer                           :: Istr, IstrU, Iend, Imin, Imax
+      integer                           :: Jstr, JstrV, Jend, Jmin, Jmax
+      integer                           :: Mlap, iterCI, iterDiff
+      integer                           :: i, j
+!
+      real (r8)                         :: dotn, dotr, deps
+      real (r8)                         :: cff, ci_alpham1, ci_delta
+      real (r8)                         :: ci_sigma
+!
+      real (r8), pointer                            :: eigMin(:,:)
+      real (r8), pointer                            :: eigMax(:,:)
+!
+      real (r8), dimension(IminS:ImaxS,JminS:JmaxS) :: ad_scale
+      real (r8), dimension(0:NiterCI)               :: cg_alpha
+      real (r8), dimension(0:NiterCI+1)             :: cg_beta
+!
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__//", tl_multiscale_CI_ad"
+!
+!  Initialize.
+!
+      Istr =BOUNDS(ng)%Istr (tile)   ! tile computational range
+      IstrU=BOUNDS(ng)%IstrU(tile)
+      Iend =BOUNDS(ng)%Iend (tile)
+      JstrV=BOUNDS(ng)%JstrV(tile)
+      Jend =BOUNDS(ng)%Jend (tile)
+!
+      Imin=Istr
+      Imax=Iend
+      Jmin=Jstr
+      Jmax=Jend
+      SELECT CASE (ctype)
+        CASE (u2dvar)
+          Imin=IstrU
+        CASE (v2dvar)
+          Jmin=JstrV
+      END SELECT
+!
+      self%ci2d_r=0.0_r8
+      self%ci2d_p=0.0_r8
+      self%ci2d_q=0.0_r8
+      self%ci2d_x=0.0_r8
+!
+!  Select number of K-Laplacian inverse operator applications (Mlap)
+!  for requested variable in the 2D state/control vector and 
+!  multiscale index/counter (ms). Also, select pre-computed extreme
+!  eigenvalues of matrix A.
+!
+!  Mlap MUST be greater than 2 and EVEN. Choose Mlap > or O(10) to
+!  approximate a Gaussian correlation functions.
+!
+      SELECT CASE (ifield)
+        CASE (isFsur)                          ! free surface
+          Mlap=self(ifield,ms,ng)
+          eigMin => self%eigMinR2D
+          eigMax => self%eigMaxR2D
+        CASE (isUbar)                          ! 2D u-momentum
+          Mlap=self(ifield,ms,ng)
+          eigMin => self%eigMinU2D
+          eigMax => self%eigMaxU2D
+        CASE (isVbar)                          ! 2D v-momentum
+          Mlap=self(ifield,ms,ng)
+          eigMin => self%eigMinV2D
+          eigMax => self%eigMaxV2D
+        CASE (isUstr)                          ! surface U-stress
+          Mlap=self(ifield,ms,ng)
+          eigMin => self%eigMinSUS
+          eigMax => self%eigMaxSUS
+        CASE (isVstr)                          ! surface V-stress
+          Mlap=self(ifield,ms,ng)
+          eigMin => self%eigMinSVS
+          eigMax => self%eigMaxSVS
+# ifdef SOLVE3D
+        CASE (isTsur(itemp))                   ! surface net heat flux
+          Mlap=self(ifield,ms,ng)
+          eigMin => self%eigMinSTF(:,:,itemp)
+          eigMax => self%eigMaxSTF(:,:,itemp)
+        CASE (isTsur(isalt))                   ! surface freshwater flux
+          Mlap=self(ifield,ms,ng)
+          eigMin => self%eigMinSTF(:,:,isalt)
+          eigMax => self%eigMaxSTF(:,:,isalt)
+# endif
+      END SELECT
+!
+!  Set control variable squared root area scale (2D).
+!
+      SELECT CASE (ctype)
+        CASE (r2dvar)
+          DO j=Jmin,Jmax
+            DO i=Imin,Imax
+              ad_scale(i,j)=SQRT(GRID(ng)%om_r(i,j)*GRID(ng)%on_r(i,j))
+            END DO
+          END DO
+        CASE (u2dvar)
+          DO j=Jmin,Jmax
+            DO i=Imin,Imax
+              ad_scale(i,j)=SQRT(GRID(ng)%om_u(i,j)*GRID(ng)%on_u(i,j))
+        CASE (v2dvar)
+          DO j=Jmin,Jmax
+            DO i=Imin,Imax
+              ad_scale(i,j)=SQRT(GRID(ng)%om_v(i,j)*GRID(ng)%on_v(i,j))
+            END DO
+          END DO
+      END SELECT
+!
+!  Adjoint of advance in K-space implicit pseudo-diffusion equation
+!  using  Weaver et al. (2016) algorithm 3 (fixed number of iterations
+!  to a pre-determined value K).
+!
+      KDIFF_ITER : DO iterDiff=Mlap,1,-1
+!
+        ci_sigma=0.5_r8*(eigMax(iterDiff,ms)+                           &
+     &                   eigMin(iterDiff,ms))           ! step 1
+        ci_delta=0.5_r8*(eigMax(iterDiff,ms)-
+     &                   eigMin(iterDiff,ms))           ! step 2
+        ci_alpham1=1.0_r8                               ! step 3
+        ci_beta(0)=0.0_r8                               ! step 4
+!
+        DO j=Jmin,Jmax
+          DO i=Imin,Imax
+            self%ci2d_p(i,j)=0.0_r8
+            self%ci2d_r(i,j)=0.0_r8
+            self%ci2d_q(i,j)=0.0_r8
+            self%ci2d_x(i,j)=0.0_r8
+          END DO
+        END DO
+!
+!  Adjoint of invert the implicit diffusion equation using Chebyshev
+!  Iterations.
+!
+!     A x = b  linear system
+!
+        DO iterCI=0,NiterCI                             ! steps 5 to 8
+          IF (iterCI.eq.0) THEN
+            ci_alpha(0)=1.0_r8/ci_sigma
+            cff=ci_delta*ci_alpha(0)
+            ci_beta(1)=0.5_r8*cff*cff
+          ELSE
+            ci_alpha(iterCI)=1.0_r8/(ci_sigma-
+                                     ci_beta(iterCI)/ci_alpha(iterCI-1))
+            cff=0.5_r8*ci_delta*ci_alpha(iterCI)
+            ci_beta(iter+1)=cff*cff
+          END IF
+        END DO
+!
+!  Adjoint of update control vector 2D variable with the implicit
+!  diffusion solution iterate.
+!
+        DO j=Jmin,Jmax
+          DO i=Imin,Imax
+!^          tl_A(i,j)=ci2d_x(i,j)/tl_scale(i,j)
+!^
+            ci2d_x(i,j)=ad_A(i,j)/ad_scale(i,j)
+            ad_A(i,j)=0.0_r8
+          END DO
+        END DO
+!
+!  Adjoint of reset iterative conjugate gradient arrays.
+!
+        DO j=Jmin,Jmax
+          DO i=Imin,Imax
+!^          self%ci2d_q(i,j)=0.0_r8
+!^
+            self%ci2d_q(i,j)=0.0_r8
+!^          self%ci2d_r(i,j)=0.0_r8
+!^
+            self%ci2d_r(i,j)=0.0_r8
+!^          self%ci2d_p(i,j)=0.0_r8
+!^
+            self%ci2d_p(i,j)=0.0_r8
+          END DO
+        END DO
+!
+!  Adjoint of compute K-Laplacian, [1 + Del(K*Del)], operator.
+!
+        KLAP_ITER : DO iterCI=NiterCI,0,-1              ! steps 17 to 12
+!
+          DO j=Jmin,Jmax                                ! step 16
+            DO i=Imin,Imax
+!^            tl_A(i,j)=self%ci2d_p(i,j)
+!^
+              self%ci2d_p(i,j)=self%ci2d_p(i,j)+ad_A(i,j)
+              ad_A(i,j)=0.0_r8
+!^            self%ci2d_p(i,j)=-self%ci2d_r(i,j)+                       &
+!^   &                         ci_beta(iterCI+1)*self%ci2d_p(i,j)
+!^
+              self%ci2d_r(i,j)=self%ci2d_r(i,j)-self%ci2d_p(i,j)
+              self%ci2d_p(i,j)=ci_beta(iterCI+1)*self%ci2d_p(i,j)
+            END DO
+          END DO
+!                                                        steps 15, 14
+          DO j=Jmin,Jmax
+            DO i=Imin,Imax
+!^            self%ci2d_r(i,j)=self%ci2d_r(i,j)+                        &
+!^   &                         ci_alpha(iterCI)*self%ci2d_q(i,j)
+!^
+              self%ci2d_q(i,j)=self%ci2d_q(i,j)+                        &
+     &                         ci_alpha(iterCI)*self%ci2d_r(i,j)
+!^            self%ci2d_x(i,j)=self%ci2d_x(i,j)+                        &
+!^   &                         ci_alpha(iterCI)*self%ci2d_p(i,j)
+!^
+              self%ci2d_p(i,j)=self%ci2d_p(i,j)+                        &
+     &                         ci_alpha(iterCI)*self%ci2d_x(i,j)
+            END DO
+          END DO
+!                                                        step 13
+          DO j=Jmin,Jmax
+            DO i=Imin,Imax
+!^            self%ci2d_q(i,j)=tl_A(i,j)
+!^
+              ad_A(i,j)=ad_A(i,j)+self%ci2d_q(i,j)
+              ci_q(i,j)=0.0_r8
+!^            tl_A(i,j)=tl_A(i,j)*tl_scale(i,j)
+!^
+              ad_A(i,j)=ad_A(i,j)*ad_scale(i,j)
+            END DO
+          END DO
+!
+          SELECT CASE (ctype)                           ! step 12
+            CASE (r2dvar)
+              CALL ad_multiscale_Klap_r2d (self, ng, tile, model,       &
+     &                                     ifield, ctype, ms, Lweak,    &
+     &                                     LBi, UBi, LBj, UBj,          &
+     &                                     IminS, ImaxS, JminS, JmaxS,  &
+     &                                     ad_A)
+            CASE (u2dvar)
+              CALL ad_multiscale_Klap_u2d (self, ng, tile, model,       &
+     &                                     ifield, ctype, ms, Lweak,    &
+     &                                     LBi, UBi, LBj, UBj,          &
+     &                                     IminS, ImaxS, JminS, JmaxS,  &
+     &                                     ad_A)
+            CASE (v2dvar)
+              CALL ad_multiscale_Klap_v2d (self, ng, tile, model,       &
+     &                                     ifield, ctype, ms, Lweak,    &
+     &                                     LBi, UBi, LBj, UBj,          &
+     &                                     IminS, ImaxS, JminS, JmaxS,  &
+     &                                     ad_A)
+          END SELECT
+!
+          DO j=Jmin,Jmax
+            DO i=Imin,Imax
+!^            tl_A(i,j)=tl_A(i,j)/tl_scale(i,j)
+!^
+              ad_A(i,j)=ad_A(i,j)/ad_scale(i,j)
+            END DO
+          END DO
+
+        END DO KLAP_ITER
+!
+        DO j=Jmin,Jmax
+          DO i=Imin,Imax
+!^          self%cg2d_p(i,j)=tl_A(i,j)                    ! step 3
+!^
+            ad_A(i,j)=ad_A(i,j)+self%ci2d_p(i,j)
+            self%ci2d_p(i,j)=0.0_r8
+!^          self%cg2d_r(i,j)=-tl_A(i,j)                   ! step 2
+!^
+            ad_A(i,j)=ad_A(i,j)-self%ci2d_r(i,j)!
+!^          self%cg2d_x(i,j)=0.0_r8                       ! step 1
+!^
+            self%ci2d_r(i,j)=0.0_r8
+          END DO
+        END DO
+
+      END DO KDIFF_ITER
+!
+      RETURN
+      END SUBROUTINE multi_scale_CI_2d_ad
+
+# ifdef SOLVE3D
+!
+!-----------------------------------------------------------------------
+!  This routine computes the extreme eigenvalues required by the
+!  Chebyshev Iterations (CI) solver, which is applied to implicit
+!  diffusion operators in the modeling of the multiscale background-
+!  error covariance for 3D variables in the control vector.
+!
+!  The minimum and maximum eigenvalues of the K-Laplacian operator
+!  are determined using a Conjugate Gradient (CG) solution to the
+!  corresponding linear system.
+!
+      SUBROUTINE multiscale_CG_3d_tl (self, ng, tile, model, ifield,    &
+     &                                ctype, ms, NiterCG, Lweak,        &
+     &                                LBi, UBi, LBj, UBj,               &
+     &                                IminS, ImaxS, JminS, JmaxS,       &
+     &                                tl_A)
+!
+      CLASS (multiscale), intent(inout) :: self      ! multiscale object
+      integer,            intent(in   ) :: ng        ! nested grid
+      integer,            intent(in   ) :: tile      ! domain partition
+      integer,            intent(in   ) :: model     ! kernel ID
+      integer,            intent(in   ) :: ifield    ! state field ID 
+      integer,            intent(in   ) :: ctype     ! C-grid type
+      integer,            intent(in   ) :: ms        ! multiscale index
+      integer,            intent(in   ) :: NiterCG   ! CG iterations
+      logical,            intent(in   ) :: Lweak     ! weak constraint
+      integer,            intent(in   ) :: LBi, UBi, LBj, UBj
+      integer,            intent(in   ) :: IminS, ImaxS, JminS, JmaxS
+      real (r8),          intent(inout) :: tl_A(LBi:,LBj:,:)
+!
+      integer                           :: Istr, IstrU, Iend, Imin, Imax
+      integer                           :: Jstr, JstrV, Jend, Jmin, Jmax
+      integer                           :: Mlap, iterCG, iterDiff, info
+      integer                           :: i, j, k
+!
+      real (r8)                         :: dotpq, dotr, dotrd
+      real (r8), dimension(N(ng))       :: dotn
+!
+      real (r8), pointer                :: eigMin(:,:,:)
+      real (r8), pointer                :: eigMax(:,:,:)
+!
+      real (r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_scale
+      real (r8), dimension(0:NiterCG,N(ng))         :: cg_a
+      real (r8), dimension(0:NiterCG+1,N(ng))       :: cg_b
+      real (r8), dimension(NiterCG+1)               :: cg_Rv
+      real (r8), dimension(2*(NiterCG+1)-2)         :: work
+      real (r8), dimension(NiterCG)                 :: zwork
+      real (r8), dimension(NiterCG+1,NiterCG+1)     :: zgv
+!
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__//", tl_multiscale_CG_3d"
+!
+!  Initialize.
+!
+      Istr =BOUNDS(ng)%Istr (tile)   ! tile computational range
+      IstrU=BOUNDS(ng)%IstrU(tile)
+      Iend =BOUNDS(ng)%Iend (tile)
+      JstrV=BOUNDS(ng)%JstrV(tile)
+      Jend =BOUNDS(ng)%Jend (tile)
+!
+      Imin=Istr
+      Imax=Iend
+      Jmin=Jstr
+      Jmax=Jend
+      SELECT CASE (ctype)
+        CASE (u3dvar)
+          Imin=IstrU
+        CASE (v3dvar)
+          Jmin=JstrV
+      END SELECT
+!
+      self%cg3d_r=0.0_r8
+      self%cg3d_p=0.0_r8
+      self%cg3d_q=0.0_r8
+      self%cg3d_x=0.0_r8
+!
+!  Select number of K-Laplacian inverse operator applications (Mlap)
+!  for requested variable in the 2D state/control vector and
+!  multiscale index/counter (ms).
+!
+!  Mlap MUST be greater than 2 and EVEN. Choose Mlap > or O(10) to
+!  approximate a Gaussian correlation functions.
+!
+      SELECT CASE (ifield)
+        CASE (isUvel)                          ! 3D u-momentum
+          Mlap=self(ifield,ms,ng)
+          eigMin => self%eigMinU3D
+          eigMax => self%eigMaxU3D
+        CASE (isVvel)                          ! 3D v-momentum
+          Mlap=self(ifield,ms,ng)
+          eigMin => self%eigMinV3D
+          eigMax => self%eigMaxV3D
+        CASE (isTvar(itemp))                   ! temperature
+          Mlap=self(ifield,ms,ng)
+          eigMin => self%eigMinR3D(:,:,:,itemp)
+          eigMax => self%eigMaxR3D(:,:,:,itemp)
+        CASE (isTvar(isalt))                   ! salinity
+          Mlap=self(ifield,ms,ng)
+          eigMin => self%eigMinR3D(:,:,:,isalt)
+          eigMax => self%eigMaxR3D(:,:,:,isalt)
+      END SELECT
+!
+!  Set control variable squared root area scale (2D).
+!
+      SELECT CASE (ctype)
+        CASE (r3dvar)
+          DO j=Jmin,Jmax
+            DO i=Imin,Imax
+              tl_scale(i,j)=SQRT(GRID(ng)%om_r(i,j)*                    &
+     &                           GRID(ng)%on_r(i,j))
+#  ifdef MASKING
+              DO k=1,N(ng)
+                tl_A(i,j,k)=tl_A(i,j,k)*GRID(ng)%rmask(i,j)
+              END DO
+#  endif
+            END DO
+          END DO
+        CASE (u3dvar)
+          DO j=Jmin,Jmax
+            DO i=Imin,Imax
+              tl_scale(i,j)=SQRT(GRID(ng)%om_u(i,j)*                    &
+     &                           GRID(ng)%on_u(i,j))
+#  ifdef MASKING
+              DO k=1,N(ng)
+                tl_A(i,j,k)=tl_A(i,j,k)*GRID(ng)%umask(i,j)
+              END DO
+#  endif
+            END DO
+          END DO
+        CASE (v3dvar)
+          DO j=Jmin,Jmax
+            DO i=Imin,Imax
+              tl_scale(i,j)=SQRT(GRID(ng)%om_v(i,j)*                    &
+     &                           GRID(ng)%on_v(i,j))
+#  ifdef MASKING
+              DO k=1,N(ng)
+                tl_A(i,j,k)=tl_A(i,j,k)*GRID(ng)%vmask(i,j)
+              END DO
+#  endif
+            END DO
+          END DO
+      END SELECT
+!
+!  Advance in K-space implicit pseudo-diffusion 3D equation using 
+!  Weaver et al. (2016) algorithm 1.
+!
+      KDIFF_ITER : DO iterDiff=1,Mlap
+!
+        LEVEL_LOOP1 : DO k=1,N(ng)
+          DO j=Jmin,Jmax
+            DO i=Imin,Imax
+              self%cg3d_x(i,j,k)=0.0_r8                    ! step 1
+              self%cg3d_r(i,j,k)=-tl_A(i,j,k)              ! step 2
+              self%cg3d_p(i,j,k)=tl_A(i,j,k)               ! step 3
+            END DO
+          END DO
+          cg_b(0,k)=0.0_r8                                 ! step 4
+!
+          dotn(k) = dot_prod_2d (ng, tile, model, ctype,                &
+     &                           LBi, UBi, LBj, UBj,                    &
+     &                           self%cg3d_r(:,:,k),                    &
+     &                           self%cg3d_r(:,:,k))
+        END DO LEVEL_LOOP1
+!
+!  Invert the implicit diffusion equation using CG iterations.
+!
+!     A x = b  linear system
+!
+        KLAP_ITER : DO iterCG=0,NiterCG                   ! steps 6 - 16
+!
+          LEVEL_LOOP2 : DO k=1,N(ng)
+            DO j=Jmin,Jmax
+              DO i=Imin,Imax
+                tl_A(i,j)=tl_A(i,j,k)/tl_scale(i,j)
+              END DO
+            END DO
+          END DO LEVEL_LOOP2
+!
+!  Compute K-Laplacian, [1 + Del(K*Del)], operator.
+!
+          SELECT CASE (ctype)
+            CASE (r3dvar)
+              CALL tl_multiscale_Klap_r3d (self, ng, tile, model,       &
+     &                                     ifield, ctype, ms, Lweak,    &
+     &                                     LBi, UBi, LBj, UBj,          &
+     &                                     IminS, ImaxS, JminS, JmaxS,  &
+     &                                     tl_A)
+            CASE (u3dvar)
+              CALL tl_multiscale_Klap_u3d (self, ng, tile, model,       &
+     &                                     ifield, ctype, ms, Lweak,    &
+     &                                     LBi, UBi, LBj, UBj,          &
+     &                                     IminS, ImaxS, JminS, JmaxS,  &
+     &                                     tl_A)
+            CASE (v3dvar)
+              CALL tl_multiscale_Klap_v3d (self, ng, tile, model,       &
+     &                                     ifield, ctype, ms, Lweak,    &
+     &                                     LBi, UBi, LBj, UBj,          &
+     &                                     IminS, ImaxS, JminS, JmaxS,  &
+     &                                     tl_A)
+          END SELECT
+!
+!  Conjugate Gradient (CG) algorithm, (Weaver et al., 2016).
+!
+          LEVEL_LOOP3 : DO k=1,N(ng)
+            DO j=Jmin,Jmax
+              DO i=Imin,Imax
+                tl_A(i,j,k)=tl_A(i,j,k)*tl_scale(i,j)
+                self%cg3d_q(i,j,k)=tl_A(i,j,k)            ! step 7
+              END DO
+            END DO
+!
+            dotr = dot_prod_2d (ng, tile, model, ctype,                 &
+     &                          LBi, UBi, LBj, UBj,                     &
+     &                          self%cg3d_r(:,:,k),                     &
+     &                          self%cg3d_r(:,:,k))
+            dotpq = dot_prod_2d (ng, tile, model, ctype,                &
+     &                           LBi, UBi, LBj, UBj,                    &
+     &                           self%cg3d_p(:,:,k),                    &
+     &                           self%cg3d_q(:,:,k))
+!
+            cg_a(iterCG,k)=dotr/dotpq                     ! step 8
+
+# ifdef MULTI_SCALE_DEBUG
+!
+            deps=SQRT(dotr/dotn(k))
+            status=multiscale_print(ng, ifield, ms, iterDiff, iterCG,   & 
+     &                              NiterCG, 'CG_3d', deps, k)
+# endif
+!
+            DO j=Jmin,Jmax
+              DO i=Imin,Imax
+                self%cg3d_x(i,j,k)=self%cg3d_x(i,j)+                    &
+     &                             cg_a(iterCG,k)*                      &
+     &                             self%cg3d_p(i,j,k)     ! step 9
+                self%cg3d_r(i,j,k)=self%cg3d_r(i,j,k)+                  &
+     &                             cg_a(iterCG,k)*                      &
+     &                             self%cg3d_q(i,j,k)     ! step 10
+              END DO
+            END DO
+!
+!  Reorthogonalize r(k+1) with respect to r(0:k).
+!
+            dotrd=dotr
+            dotr = dot_prod_2d (ng, tile, model, ctype,                 &
+     &                          LBi, UBi, LBj, UBj,                     &
+     &                          self%cg3d_r(:,:,k),
+     &                          self%cg3d_r(:,:,k))
+!
+            cg_b(iterCG+1,k)=dotr/dotrd                     ! step 12
+!
+            DO j=Jmin,Jmax
+              DO i=Imin,Imax
+                self%cg3d_p(i,j,k)=-self%cg3d_r(i,j,k)+                 &
+     &                             cg_b(iterCG+1,k)*                    &
+     &                             self%cg3d_p(i,j,k)       ! step 13
+                tl_A(i,j,k)=self%cg3d_p(i,j,k)
+              END DO
+            END DO
+          END DO LEVEL_LOOP3
+
+        END DO KLAP_ITER
+!
+!  Update control vector 3D variable with the implicit diffusion
+!  solution iterate.
+!
+        LEVEL_LOOP4 : DO k=1,N(ng)
+          DO j=Jmin,Jmax
+            DO i=Imin,Imax
+              tl_A(i,j,k)=self%cg3d_x(i,j,k)
+            END DO
+          END DO
+!
+!  Use the LAPACK routine DSTEQR to compute the Ritz vectors and
+!  Ritz values of the tridiagonal matrix.
+!
+          DO i=1,NiterCG+1
+            cg_Rv(i)=1.0_r8/cg_a(i-1,k)
+            IF (i.gt.1) THEN
+              cg_Rv(i)=cg_Rv(i)+cg_b(i-1,k)/cg_a(i-2,k)
+            END IF
+          END DO
+          DO i=1,NiterCG
+            zwork(i)=-SQRT(cg_b(i,k))/cg_a(i-1,k)
+          END DO
+!
+          CALL dsteqr ('I', NiterCG+1, cg_Rv, zwork,                    &
+     &                 zgv, NiterCG+1, work, info)
+          IF (info.ne.0) THEN
+            WRITE (stdout,*) ' multiscale_CG_2d_tl - Error in DSTEQR:', &
+     &                       ' info = ', info
+            exit_flag=8
+            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+          END IF
+!
+          eigMax(iterDiff,k,ms)=MAXVAL(cg_Rv) ! maximum Ritz eigenvalue
+          eigMin(iterDiff,k,ms)=MINVAL(cg_Rv) ! minimum Ritz eigenvalue
+!
+!  Reset iterative conjugate gradient arrays.
+!
+          DO j=Jmin,Jmax
+            DO i=Imin,Imax
+              self%cg3d_p(i,j,k)=0.0_r8
+              self%cg3d_r(i,j,k)=0.0_r8
+              self%cg3d_q(i,j,k)=0.0_r8
+            END DO
+          END DO
+        END DO LEVEL_LOOP4
+
+      END DO KDIFF_ITER
+!
+!  Convert the solution back to physical space.
+!  (cf Eqn 18 of Weaver et al 2016, QJRMS, 143,455-471).
+!  Not needed in the CI algorithm as the tl_scale factors cancel.
+!
+      DO k=1,N(ng)
+        DO j=Jmin,Jmax
+          DO i=Imin,Imax
+            tl_A(i,j,k)=self%cg3d_x(i,j,k)/tl_scale(i,j)
+          END DO
+        END DO
+      END DO
+!
+      RETURN
+      END SUBROUTINE multiscale_CG_3d_tl
+!
+!-----------------------------------------------------------------------
+!  This routine inverts the implicit diffusion linear operator, Ax = b,
+!  using Chebyshev Iterations (CI) to model the multiscale propagation
+!  of background-error covariance for 3D variables in the control
+!  vector. It operates in conjunction with its adjoint to enforce
+!  symmetry-preserving correlation functions. The algorithm requires
+!  the extreme eigenvalues of matrix A, which are obtained from the
+!  Conjugate Gradient (CG) solver. Additionally, initial values for
+!  the estimate x(0) and its residual r(0) are required.
+!
+      SUBROUTINE multiscale_CI_3d_tl (self, ng, tile, model, ifield,    &
+     &                                ctype, ms, NiterCI, Lweak,        &
+     &                                LBi, UBi, LBj, UBj,               &
+     &                                IminS, ImaxS, JminS, JmaxS,       &
+     &                                tl_A)
+!
+      CLASS (multiscale), intent(inout) :: self      ! multiscale object
+      integer,            intent(in   ) :: ng        ! nested grid
+      integer,            intent(in   ) :: tile      ! domain partition
+      integer,            intent(in   ) :: model     ! kernel ID
+      integer,            intent(in   ) :: ifield    ! state field ID 
+      integer,            intent(in   ) :: ctype     ! C-grid type
+      integer,            intent(in   ) :: ms        ! multiscale index
+      integer,            intent(in   ) :: NiterCI   ! CI iterations
+      logical,            intent(in   ) :: Lweak     ! weak constraint
+      integer,            intent(in   ) :: LBi, UBi, LBj, UBj
+      integer,            intent(in   ) :: IminS, ImaxS, JminS, JmaxS
+      real (r8),          intent(inout) :: tl_A(LBi:,LBj:,:)
+!
+      integer                           :: Istr, IstrU, Iend, Imin, Imax
+      integer                           :: Jstr, JstrV, Jend, Jmin, Jmax
+      integer                           :: Mlap, iterCI, iterDiff
+      integer                           :: i, j, k
+!
+      real (r8)                         :: dotn, dotr, deps
+      real (r8)                         :: cff, ci_alpham1, ci_delta
+      real (r8)                         :: ci_sigma
+!
+      real (r8), pointer                            :: eigMin(:,:,:)
+      real (r8), pointer                            :: eigMax(:,:,:)
+!
+      real (r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_scale
+      real (r8), dimension(0:NiterCI,N(ng))         :: cg_alpha
+      real (r8), dimension(0:NiterCI+1,N(ng))       :: cg_beta
+!
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__//", tl_multiscale_CI_3d"
+!
+!  Initialize.
+!
+      Istr =BOUNDS(ng)%Istr (tile)   ! tile computational range
+      IstrU=BOUNDS(ng)%IstrU(tile)
+      Iend =BOUNDS(ng)%Iend (tile)
+      JstrV=BOUNDS(ng)%JstrV(tile)
+      Jend =BOUNDS(ng)%Jend (tile)
+!
+      Imin=Istr
+      Imax=Iend
+      Jmin=Jstr
+      Jmax=Jend
+      SELECT CASE (ctype)
+        CASE (u3dvar)
+          Imin=IstrU
+        CASE (v3dvar)
+          Jmin=JstrV
+      END SELECT
+!
+      self%ci3d_r=0.0_r8
+      self%ci3d_p=0.0_r8
+      self%ci3d_q=0.0_r8
+      self%ci3d_x=0.0_r8
+!
+!  Select number of K-Laplacian inverse operator applications (Mlap)
+!  for requested variable in the 2D state/control vector and 
+!  multiscale index/counter (ms). Also, select pre-computed extreme
+!  eigenvalues of matrix A.
+!
+!  Mlap MUST be greater than 2 and EVEN. Choose Mlap > or O(10) to
+!  approximate a Gaussian correlation functions.
+!
+      SELECT CASE (ifield)
+         CASE (isUvel)                         ! 3D u-momentum
+          Mlap=self(ifield,ms,ng)
+          eigMin => self%eigMinU3D
+          eigMax => self%eigMaxU3D
+        CASE (isVvel)                          ! 2D v-momentum
+          Mlap=self(ifield,ms,ng)
+          eigMin => self%eigMinV3D
+          eigMax => self%eigMaxV2D
+        CASE (isTvar(itemp))                   ! temperature
+          Mlap=self(ifield,ms,ng)
+          eigMin => self%eigMinR3D(:,:,:,itemp)
+          eigMax => self%eigMaxR3D(:,:,:,itemp)
+        CASE (isTvar(isalt))                   ! salinity
+          Mlap=self(ifield,ms,ng)
+          eigMin => self%eigMinR3D(:,:,:,isalt)
+          eigMax => self%eigMaxR3D(:,:,:,isalt)
+      END SELECT
+!
+!  Set control variable squared root area scale (2D).
+!
+      SELECT CASE (ctype)
+        CASE (r3dvar)
+          DO j=Jmin,Jmax
+            DO i=Imin,Imax
+              tl_scale(i,j)=SQRT(GRID(ng)%om_r(i,j)*GRID(ng)%on_r(i,j))
+            END DO
+          END DO
+        CASE (u3dvar)
+          DO j=Jmin,Jmax
+            DO i=Imin,Imax
+              tl_scale(i,j)=SQRT(GRID(ng)%om_u(i,j)*GRID(ng)%on_u(i,j))
+        CASE (v3dvar)
+          DO j=Jmin,Jmax
+            DO i=Imin,Imax
+              tl_scale(i,j)=SQRT(GRID(ng)%om_v(i,j)*GRID(ng)%on_v(i,j))
+            END DO
+          END DO
+      END SELECT
+!
+!  Advance in K-space implicit pseudo-diffusion equation using 
+!  Weaver et al. (2016) algorithm 3 (fixed number of iterations
+!  to a pre-determined value K).
+!
+      KDIFF_ITER : DO iterDiff=1,Mlap
+!
+        LEVEL_LOOP1 :DO k=1,N(ng)
+          ci_sigma=0.5_r8*(eigMax(iterDiff,k,ms)+                       &
+     &                     eigMin(iterDiff,k,ms))       ! step 1
+          ci_delta=0.5_r8*(eigMax(iterDiff,k,ms)-                       &
+     &                     eigMin(iterDiff,k,ms))       ! step 2
+          ci_alpham1=1.0_r8                             ! step 3
+          ci_beta(0,k)=0.0_r8                           ! step 4
+!
+!  Invert the implicit diffusion equation using Chebyshev Iterations.
+!
+!     A x = b  linear system
+!
+          DO iterCI=0,NiterCI                           ! steps 5 to 8
+            IF (iterCI.eq.0) THEN
+              ci_alpha(0,k)=1.0_r8/ci_sigma
+              cff=ci_delta*ci_alpha(0,k)
+              ci_beta(1,k)=0.5_r8*cff*cff
+            ELSE
+              ci_alpha(iterCI,k)=1.0_r8/(ci_sigma-                      &
+     &                                   ci_beta(iterCI,k)/             &
+     &                                   ci_alpha(iterCI-1))
+              cff=0.5_r8*ci_delta*ci_alpha(iterCI,k)
+              ci_beta(iter+1,k)=cff*cff
+            END IF
+          END DO
+!                                            why r = -tl_A & p = +tl_A?
+          DO j=Jmin,Jmax
+            DO i=Imin,Imax
+              tl_A(i,j,k)=tl_scale(i,j)*tl_A(i,j,k)
+              self%ci3d_x(i,j,k)=0.0_r8                 ! step 9
+              self%ci3d_r(i,j,k)=-tl_A(i,j,k)           ! step 10
+              self%ci3d_p(i,j,k)=tl_A(i,j,k)            ! step 11
+            END DO
+          END DO
+
+# ifdef MULTI_SCALE_DEBUG
+!
+          dotn(k) = dot_prod_2d (ng, tile, model, ctype,                &
+     &                           LBi, UBi, LBj, UBj,                    &
+     &                           self%ci3d_r(:,:,k),                    &
+     &                           self%ci3d_r(:,:,k))
+# endif
+        END DO LEVEL_LOOP1
+!
+!  Compute K-Laplacian, [1 + Del(K*Del)], operator.
+!
+        KLAP_ITER : DO iterCI=0,NiterCI                 ! steps 12 to 17
+!
+          LEVEL_LOOP2 : DO k=1,N(ng)
+            DO j=Jstr,Jend
+              DO i=Istr,Iend
+                tl_A(i,j,k)=tl_A(i,j,k)/tl_scale(i,j)
+              END DO
+            END DO
+          END DO LEVEL_LOOP2
+!
+          SELECT CASE (ctype)                           ! step 12
+            CASE (r3dvar)
+              CALL tl_multiscale_Klap_r3d (self, ng, tile, model,       &
+     &                                     ifield, ctype, ms, Lweak,    &
+     &                                     LBi, UBi, LBj, UBj,          &
+     &                                     IminS, ImaxS, JminS, JmaxS,  &
+     &                                     tl_A)
+            CASE (u3dvar)
+              CALL tl_multiscale_Klap_u3d (self, ng, tile, model,       &
+     &                                     ifield, ctype, ms, Lweak,    &
+     &                                     LBi, UBi, LBj, UBj,          &
+     &                                     IminS, ImaxS, JminS, JmaxS,  &
+     &                                     tl_A)
+            CASE (v3dvar)
+              CALL tl_multiscale_Klap_v3d (self, ng, tile, model,       &
+     &                                     ifield, ctype, ms, Lweak,    &
+     &                                     LBi, UBi, LBj, UBj,          &
+     &                                     IminS, ImaxS, JminS, JmaxS,  &
+     &                                     tl_A)
+          END SELECT
+!                                                        step 13
+          LEVEL_LOOP3 : DO k=1,N(ng)
+            DO j=Jmin,Jmax
+              DO i=Imin,Imax
+                tl_A(i,j,k)=tl_A(i,j,k)*tl_scale(i,j)
+                self%ci3d_q(i,j,k)=tl_A(i,j,k)
+              END DO
+            END DO
+
+# ifdef MULTI_SCALE_DEBUG
+!
+            dotr = dot_prod_2d (ng, tile, model, ctype,                 &
+     &                          LBi, UBi, LBj, UBj,                     &
+     &                          self%ci3d_r(:,:,k),                     &
+     &                          self%ci3d_r(:,:,k))
+            deps=sqrt(dotr/dotn(k))
+!
+            status=multiscale_print(ng, ifield, ms, iterDiff, iterCI,   & 
+     &                              NiterCI, 'CI_3d', deps, k)
+# endif
+!                                                        steps 14, 15
+            DO j=Jmin,Jmax
+              DO i=Imin,Imax
+                self%ci3d_x(i,j,k)=self%ci3d_x(i,j,k)+                  &
+     &                             ci_alpha(iterCI,k)*                  &
+     &                             self%ci3d_p(i,j,k)
+                self%ci3d_r(i,j,k)=self%ci3d_r(i,j,k)+                  &
+     &                             ci_alpha(iterCI,k)*                  &
+     &                             self%ci3d_q(i,j,k)
+              END DO
+            END DO
+!                                                        step 16
+            DO j=Jmin,Jmax
+              DO i=Imin,Imax
+                self%ci3d_p(i,j,k)=-self%ci3d_r(i,j,k)+                &
+     &                             ci_beta(iterCI+1,k)*                &
+     &                             self%ci3d_p(i,j,k)
+                tl_A(i,j,k)=self%ci3d_p(i,j,k)
+              END DO
+            END DO
+          END DO LEVEL_LOOP3
+
+        END DO KLAP_ITER
+!
+!  Reset iterative conjugate gradient arrays.
+!
+        LEVEL_LOOP4 : DO k=1,N(ng)
+          DO j=Jmin,Jmax
+            DO i=Imin,Imax
+              self%ci3d_p(i,j,k)=0.0_r8
+              self%ci3d_r(i,j,k)=0.0_r8
+              self%ci3d_q(i,j,k)=0.0_r8
+            END DO
+          END DO
+!
+!  Update control vector 3D variable with the implicit diffusion
+!  solution iterate.
+!
+          DO j=Jmin,Jmax
+            DO i=Imin,Imax
+              tl_A(i,j,k)=ci3d_x(i,j,k)/tl_scale(i,j)
+            END DO
+          END DO
+        END DO LEVEL_LOOP4
+!
+      END DO KDIFF_ITER
+!
+      RETURN
+      END SUBROUTINE multi_scale_CI_3d_tl
+!
+!-----------------------------------------------------------------------
+!  This routine serves as the adjoint to the inversion of the implicit
+!  diffusion linear operator, Ax = b, utilizing Chebyshev Iterations
+!  (CI) to model the multiscale propagation of background-error
+!  covariance for 3D variables in the control vector. It is needed to
+!  enforce symmetry-preserving correlation functions. The algorithm
+!  requires the extreme eigenvalues of matrix A, which are obtained
+!  from the Conjugate Gradient (CG) solver.
+!
+      SUBROUTINE multiscale_CI_3d_ad (self, ng, tile, model, ifield,    &
+     &                                ctype, ms, NiterCI, Lweak,        &
+     &                                LBi, UBi, LBj, UBj,               &
+     &                                IminS, ImaxS, JminS, JmaxS,       &
+     &                                ad_A)
+!
+      CLASS (multiscale), intent(inout) :: self      ! multiscale object
+      integer,            intent(in   ) :: ng        ! nested grid
+      integer,            intent(in   ) :: tile      ! domain partition
+      integer,            intent(in   ) :: model     ! kernel ID
+      integer,            intent(in   ) :: ifield    ! state field ID 
+      integer,            intent(in   ) :: ctype     ! C-grid type
+      integer,            intent(in   ) :: ms        ! multiscale index
+      integer,            intent(in   ) :: NiterCI   ! CI iterations
+      logical,            intent(in   ) :: Lweak     ! weak constraint
+      integer,            intent(in   ) :: LBi, UBi, LBj, UBj
+      integer,            intent(in   ) :: IminS, ImaxS, JminS, JmaxS
+      real (r8),          intent(inout) :: ad_A(LBi:,LBj:,:)
+!
+      integer                           :: Istr, IstrU, Iend, Imin, Imax
+      integer                           :: Jstr, JstrV, Jend, Jmin, Jmax
+      integer                           :: Mlap, iterCI, iterDiff
+      integer                           :: i, j, k
+!
+      real (r8)                         :: dotn, dotr, deps
+      real (r8)                         :: cff, ci_alpham1, ci_delta
+      real (r8)                         :: ci_sigma
+!
+      real (r8), pointer                            :: eigMin(:,:,:)
+      real (r8), pointer                            :: eigMax(:,:,:)
+!
+      real (r8), dimension(IminS:ImaxS,JminS:JmaxS) :: ad_scale
+      real (r8), dimension(0:NiterCI,N(ng))         :: cg_alpha
+      real (r8), dimension(0:NiterCI+1,N(ng))       :: cg_beta
+!
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__//", multiscale_CI_3d_ad"
+!
+!  Initialize.
+!
+      Istr =BOUNDS(ng)%Istr (tile)   ! tile computational range
+      IstrU=BOUNDS(ng)%IstrU(tile)
+      Iend =BOUNDS(ng)%Iend (tile)
+      JstrV=BOUNDS(ng)%JstrV(tile)
+      Jend =BOUNDS(ng)%Jend (tile)
+!
+      Imin=Istr
+      Imax=Iend
+      Jmin=Jstr
+      Jmax=Jend
+      SELECT CASE (ctype)
+        CASE (u3dvar)
+          Imin=IstrU
+        CASE (v3dvar)
+          Jmin=JstrV
+      END SELECT
+!
+      self%ci3d_r=0.0_r8
+      self%ci3d_p=0.0_r8
+      self%ci3d_q=0.0_r8
+      self%ci3d_x=0.0_r8
+!
+!  Select number of K-Laplacian inverse operator applications (Mlap)
+!  for requested variable in the 2D state/control vector and 
+!  multiscale index/counter (ms). Also, select pre-computed extreme
+!  eigenvalues of matrix A.
+!
+!  Mlap MUST be greater than 2 and EVEN. Choose Mlap > or O(10) to
+!  approximate a Gaussian correlation functions.
+!
+      SELECT CASE (ifield)
+         CASE (isUvel)                         ! 3D u-momentum
+          Mlap=self(ifield,ms,ng)
+          eigMin => self%eigMinU3D
+          eigMax => self%eigMaxU3D
+        CASE (isVvel)                          ! 2D v-momentum
+          Mlap=self(ifield,ms,ng)
+          eigMin => self%eigMinV3D
+          eigMax => self%eigMaxV2D
+        CASE (isTvar(itemp))                   ! temperature
+          Mlap=self(ifield,ms,ng)
+          eigMin => self%eigMinR3D(:,:,:,itemp)
+          eigMax => self%eigMaxR3D(:,:,:,itemp)
+        CASE (isTvar(isalt))                   ! salinity
+          Mlap=self(ifield,ms,ng)
+          eigMin => self%eigMinR3D(:,:,:,isalt)
+          eigMax => self%eigMaxR3D(:,:,:,isalt)
+      END SELECT
+!
+!  Set control variable squared root area scale (2D).
+!
+      SELECT CASE (ctype)
+        CASE (r3dvar)
+          DO j=Jmin,Jmax
+            DO i=Imin,Imax
+              ad_scale(i,j)=SQRT(GRID(ng)%om_r(i,j)*GRID(ng)%on_r(i,j))
+            END DO
+          END DO
+        CASE (u3dvar)
+          DO j=Jmin,Jmax
+            DO i=Imin,Imax
+              ad_scale(i,j)=SQRT(GRID(ng)%om_u(i,j)*GRID(ng)%on_u(i,j))
+        CASE (v3dvar)
+          DO j=Jmin,Jmax
+            DO i=Imin,Imax
+              ad_scale(i,j)=SQRT(GRID(ng)%om_v(i,j)*GRID(ng)%on_v(i,j))
+            END DO
+          END DO
+      END SELECT
+!
+!  Adjoint of advance in K-space implicit pseudo-diffusion equation
+!  using Weaver et al. (2016) algorithm 3 (fixed number of iterations
+!  to a pre-determined value K).
+!
+      KDIFF_ITER : DO iterDiff=Mlap,1,-1
+!
+!  Initialize implicit diffusion operator for the Chebyshev Iterations
+!  solver. Non-adjointable steps.
+!
+        LEVEL_LOOP4 : DO k=1,N(ng)
+          ci_sigma=0.5_r8*(eigMax(iterDiff,k,ms)+                       &
+     &                     eigMin(iterDiff,k,ms))       ! step 1
+          ci_delta=0.5_r8*(eigMax(iterDiff,k,ms)-                       &
+     &                     eigMin(iterDiff,k,ms))       ! step 2
+          ci_alpham1=1.0_r8                             ! step 3
+          ci_beta(0,k)=0.0_r8                           ! step 4
+!
+          DO iterCI=0,NiterCI                           ! steps 5 to 8
+            IF (iterCI.eq.0) THEN
+              ci_alpha(0,k)=1.0_r8/ci_sigma
+              cff=ci_delta*ci_alpha(0,k)
+              ci_beta(1,k)=0.5_r8*cff*cff
+            ELSE
+              ci_alpha(iterCI,k)=1.0_r8/(ci_sigma-                      &
+     &                                   ci_beta(iterCI,k)/             &
+     &                                   ci_alpha(iterCI-1))
+              cff=0.5_r8*ci_delta*ci_alpha(iterCI,k)
+              ci_beta(iter+1,k)=cff*cff
+            END IF
+          END DO
+!
+!  Adjoint of update control vector 3D variable with the implicit
+!  diffusion solution iterate.
+!
+          DO j=Jmin,Jmax
+            DO i=Imin,Imax
+!^            tl_A(i,j,k)=ci3d_x(i,j,k)/tl_scale(i,j)
+!^
+              ci3d_x(i,j,k)=ad_A(i,j,k)/ad_scale(i,j,k)
+              ad_A(i,j,k)=0.0_r8
+            END DO
+          END DO
+!
+!  Reset iterative conjugate gradient arrays.
+!
+          DO j=Jmin,Jmax
+            DO i=Imin,Imax
+!^            self%ci3d_q(i,j,k)=0.0_r8
+!^
+              self%ci3d_q(i,j,k)=0.0_r8
+!^            self%ci3d_r(i,j,k)=0.0_r8
+!^
+              self%ci3d_r(i,j,k)=0.0_r8
+!^            self%ci3d_p(i,j,k)=0.0_r8
+!^
+              self%ci3d_p(i,j,k)=0.0_r8
+            END DO
+          END DO
+        END DO LEVEL_LOOP4
+!
+!  Adjoint of compute K-Laplacian, [1 + Del(K*Del)], operator.
+!
+        KLAP_ITER : DO iterCI=NiterCI,0,-1              ! steps 17 to 12
+!
+          LEVEL_LOOP3 : DO k=1,N(ng)
+!                                                        step 16
+            DO j=Jmin,Jmax
+              DO i=Imin,Imax
+!^              tl_A(i,j,k)=self%ci3d_p(i,j,k)
+!^
+                ci3d_p(i,j,k)=ci3d_p(i,j,k)+ad_A(i,j,k)
+                ad_A(i,j,k)=0.0_r8
+!^              self%ci3d_p(i,j,k)=-self%ci3d_r(i,j,k)+                 &
+!^   &                             ci_beta(iterCI+1,k)*                 &
+!^   &                             self%ci3d_p(i,j,k)
+!^
+                self%ci3d_r(i,j,k)=self%ci3d_r(i,j,k)-                  &
+     &                             self%ci3d_p(i,j,k)
+                self%ci3d_p(i,j,k)=ci_beta(iterCI+1,k)*                 &
+     &                             self%ci3d_p(i,j,k)
+              END DO
+            END DO
+!                                                        steps 15, 14
+            DO j=Jmin,Jmax
+              DO i=Imin,Imax
+!^              self%ci3d_r(i,j,k)=self%ci3d_r(i,j,k)+                  &
+!^   &                             ci_alpha(iterCI,k)*                  &
+!^   &                             self%ci3d_q(i,j,k)
+!^
+                self%ci3d_q(i,j,k)=self%ci_q(i,j,k)+                    &
+     &                             ci_alpha(iterCI,k)*                  &
+     &                             self%ci3d_r(i,j,k)
+!^              self%ci3d_x(i,j,k)=self%ci3d_x(i,j,k)+                  &
+!^   &                             ci_alpha(iterCI,k)*                  &
+!^   &                             self%ci3d_p(i,j,k)
+!^
+                self%ci3d_p(i,j,k)=self%ci3d_p(i,j,k)+                  &
+     &                             ci_alpha(iterCI,k)*                  &
+     &                             self%ci3d_x(i,j,k)
+              END DO
+            END DO
+!                                                        step 13
+            DO j=Jmin,Jmax
+              DO i=Imin,Imax
+!^              self%ci3d_q(i,j,k)=tl_A(i,j,k)
+!^
+                ad_A(i,j,k)=ad_A(i,j,k)+self%ci3d_q(i,j,k)
+                self%ci3d_q(i,j,k)=0.0_r8
+!^              tl_A(i,j,k)=tl_A(i,j,k)*tl_scale(i,j)
+!^
+                ad_A(i,j,k)=ad_A(i,j,k)*ad_scale(i,j,k)
+              END DO
+            END DO
+
+          END DO LEVEL_LOOP3
+!
+          SELECT CASE (ctype)                           ! step 12
+            CASE (r3dvar)
+              CALL ad_multiscale_Klap_r3d (self, ng, tile, model,       &
+     &                                     ifield, ctype, ms, Lweak,    &
+     &                                     LBi, UBi, LBj, UBj,          &
+     &                                     IminS, ImaxS, JminS, JmaxS,  &
+     &                                     ad_A)
+            CASE (u3dvar)
+              CALL ad_multiscale_Klap_u3d (self, ng, tile, model,       &
+     &                                     ifield, ctype, ms, Lweak,    &
+     &                                     LBi, UBi, LBj, UBj,          &
+     &                                     IminS, ImaxS, JminS, JmaxS,  &
+     &                                     ad_A)
+            CASE (v3dvar)
+              CALL ad_multiscale_Klap_v3d (self, ng, tile, model,       &
+     &                                     ifield, ctype, ms, Lweak,    &
+     &                                     LBi, UBi, LBj, UBj,          &
+     &                                     IminS, ImaxS, JminS, JmaxS,  &
+     &                                     ad_A)
+          END SELECT
+!
+          LEVEL_LOOP2 : DO k=1,N(ng)
+            DO j=Jstr,Jend
+              DO i=Istr,Iend
+!^              tl_A(i,j,k)=tl_A(i,j,k)/tl_scale(i,j)
+!^
+                ad_A(i,j,k)=ad_A(i,j,k)/tl_scale(i,j)
+              END DO
+            END DO
+          END DO LEVEL_LOOP2
+
+        END DO KLAP_ITER
+!
+        LEVEL_LOOP1 : DO k=1,N(ng)
+          DO j=Jmin,Jmax
+            DO i=Imin,Imax
+!^            self%ci3d_p(i,j,k)=tl_A(i,j,k)            ! step 11
+!^
+              ad_A(i,j,k)=ad_A(i,j,k)+self%ci3d_p(i,j,k)
+              self%ci3d_p(i,j,k)=0.0_r8
+!^            self%ci3d_r(i,j,k)=-tl_A(i,j,k)           ! step 10
+!^
+              ad_A(i,j,k)=ad_A(i,j,k)-self%ci3d_r(i,j,k)
+              self%ci3d_r(i,j,k)=0.0_r8
+!^            self%ci3d_x(i,j,k)=0.0_r8                 ! step 9
+!^
+              self%ci3d_x(i,j,k)=0.0_r8
+!^            tl_A(i,j,k)=tl_scale(i,j)*tl_A(i,j,k)
+!^
+              ad_A(i,j,k)=ad_scale(i,j,k)*ad_A(i,j,k)
+            END DO
+          END DO
+        END DO LEVEL_LOOP1
+!
+      END DO KDIFF_ITER
+!
+      RETURN
+      END SUBROUTINE multi_scale_CI_3d_ad
+# endif
+
+# ifdef MULTI_SCALE_DEBUG
+!
+!-----------------------------------------------------------------------
+!  It prints valuable diagnostic information about the convergence of
+!  the CG and CI algorithms for tuning the implicit multiscale diffusion
+!  operator.
+!  
+      FUNCTION multiscale_print (ng, ifield, ms, iterDiff, Ndiff,       &
+     &                           iter, Niter, label, deps,              &
+     &                           level) RESULT (status)
+!
+      integer,            intent(in   ) :: ng        ! nested grid
+      integer,            intent(in   ) :: ifield    ! state field ID
+      integer,            intent(in   ) :: ms        ! multiscale index
+      integer,            intent(in   ) :: iterDiff  ! diffusion step
+      integer,            intent(in   ) :: Ndiff     ! diff applications
+      integer,            intent(in   ) :: iter      ! solver iteration
+      integer,            intent(in   ) :: Niter     ! CG/CI iterations
+      integer, optional,  intent(in   ) :: level     ! vertical level
+      real (r8),          intent(in   ) :: deps      ! convergence norm
+      character (len=*),  intent(in   ) :: label     ! solver label
+!
+      integer, parameter                :: iunit = 45
+!
+!  Report CG or CI algorithm convergence, normalized ratio of initial
+!  and iterative inner products.
+!
+      status=0
+!
+      IF (Master) THEN
+        IF ((iterDiff.eq.1).and.(iter.eq.0)) THEN
+          WRITE (iunit,10) label, TRIM(Vname(1,idSvar(ifield))), ms
+        END IF
+        IF (iter.eq.Niter) THEN
+          IF (PRESENT(level)) THEN
+            WRITE (iunit,20) iterDiff, iter, deps, level
+          ELSE
+            WRITE (iunit,30) iterDiff, iter, deps
+          END IF
+        END IF
+        IF (iterDiff.eq.Ndiff) THEN
+          IF (PRESENT(level)) THEN
+            WRITE (iunit,40) iterDiff, iter, deps, level
+          ELSE
+            WRITE (iunit,50) iterDiff, iter, deps
+          END IF
+          FLUSH (iunit)
+        END IF
+      END IF
+!
+  10  FORMAT (a,': Convergence for ''',a,'', ', B-MultiScale = ',i0,/)
+  20  FORMAT (7x,'K-LAP  => iterDiff = ',i3.3,2x,'iter = ',i3.3,2x,     &
+     &        'deps = ',1p,e12.5,2x,'level = ',i0) 
+  30  FORMAT (7x,'K-LAP  => iterDiff = ',i3.3,2x,'iter = ',i3.3,2x,     &
+     &        'deps = ',1p,e12.5) 
+  40  FORMAT (7x,'K-DIFF => iterDiff = ',i3.3,2x,'iter = ',i3.3,2x,     &
+     &        'deps = ',1p,e12.5,2x,'level = ',i0) 
+  50  FORMAT (7x,'K-DIFF => iterDiff = ',i3.3,2x,'iter = ',i3.3,2x,     &
+     &        'deps = ',1p,e12.5) 
+!
+      RETURN
+      END FUNCTION multiscale_print
+# endif
+!
+!-----------------------------------------------------------------------
+!  It compute the dot product between two 1D tiled boundary vectors.
+!  
+      FUNCTION dot_prod_1d (ng, tile, model, ctype, ibry,               &
+     &                      LBij, UBij,                                 &
+     &                      A1, A2) RESULT DotProd
+!
+      integer,            intent(in   ) :: ng        ! nested grid
+      integer,            intent(in   ) :: tile      ! domain partition
+      integer,            intent(in   ) :: model     ! kernel ID
+      integer,            intent(in   ) :: ctype     ! C-grid type
+      integer,            intent(in   ) :: LBij, UBij
+      real (r8),          intent(in   ) :: A1(LBij:)
+      real (r8),          intent(in   ) :: A2(LBij:)
+!
+      logical, dimension(4)             :: Lboundary
+      integer                           :: Istr, IstrU, Iend, Imin, Imax
+      integer                           :: Jstr, JstrV, Jend, Jmin, Jmax
+      integer                           :: NSUB, i, j
+      real (r8)                         :: DotProd
+      real (r8)                         :: cff, my_DotProd
+# ifdef DISTRIBUTE
+      character (len=3)                 :: op_handle
+# endif
+!
+!  Initialize.
+!
+      Lboundary(iwest )=DOMAIN(ng)%Western_Edge (tile)
+      Lboundary(ieast )=DOMAIN(ng)%Eastern_Edge (tile)
+      Lboundary(isouth)=DOMAIN(ng)%Southern_Edge(tile)
+      Lboundary(inorth)=DOMAIN(ng)%Northern_Edge(tile)
+!
+      Istr =BOUNDS(ng)%Istr (tile)   ! tile computational range
+      IstrU=BOUNDS(ng)%IstrU(tile)
+      Iend =BOUNDS(ng)%Iend (tile)
+      JstrV=BOUNDS(ng)%JstrV(tile)
+      Jend =BOUNDS(ng)%Jend (tile)
+!
+      Imin=Istr
+      Imax=Iend
+      Jmin=Jstr
+      Jmax=Jend
+      SELECT CASE (ctype)
+        CASE (u2dvar, u3dvar)
+          Imin=IstrU
+        CASE (v2dvar, v3dvar)
+          Jmin=JstrV
+      END SELECT
+!
+!  Compute dot product between A1 and A2 arrays.
+!
+      my_DotProd=0.0_r8
+!
+      IF (Lboundary(ibry)) THEN
+        SELECT CASE (ibry)
+          CASE (iwest, ieast)
+            DO j=Jmin,Jmax
+              cff=A1(j)*A2(j)
+              my_DotProd=my_DotProd+cff
+            END DO
+          CASE (isouth, inorth)
+            DO i=Imin,Imax
+              cff=A1(i)*A2(i)
+              my_DotProd=my_DotProd+cff
+            END DO
+        END SELECT
+      END IF
+!
+!  Perform parallel global reduction operation.
+!
+# ifdef DISTRIBUTE
+      NSUB=1                             ! distributed-memory
+# else
+      IF (DOMAIN(ng)%SouthWest_Corner(tile).and.                        &
+     &    DOMAIN(ng)%NorthEast_Corner(tile)) THEN
+        NSUB=1                           ! non-tiled application
+      ELSE
+        NSUB=NtileX(ng)*NtileE(ng)       ! tiled application
+      END IF
+# endif
+!$OMP CRITICAL (DOT_PROD)
+      IF (tile_count.eq.0) THEN
+        DotProd=0.0_r8
+      END IF
+      DotProd=DotProd+my_DotProd
+      tile_count=tile_count+1
+      IF (tile_count.eq.NSUB) THEN
+        tile_count=0
+# ifdef DISTRIBUTE
+        op_handle='SUM'
+        CALL mp_reduce (ng, model, 1, DotProd, op_handle)
+# endif
+      END IF
+!$OMP END CRITICAL (DOT_PROD)
+!
+!
+!  Perform parallel global reduction operation.
+!
+# ifdef DISTRIBUTE
+      NSUB=1                             ! distributed-memory
+# else
+      IF (DOMAIN(ng)%SouthWest_Corner(tile).and.                        &
+     &    DOMAIN(ng)%NorthEast_Corner(tile)) THEN
+        NSUB=1                           ! non-tiled application
+      ELSE
+        NSUB=NtileX(ng)*NtileE(ng)       ! tiled application
+      END IF
+# endif
+!$OMP CRITICAL (DOT_PROD)
+      IF (tile_count.eq.0) THEN
+        DotProd=0.0_r8
+      END IF
+      DotProd=DotProd+my_DotProd
+      tile_count=tile_count+1
+      IF (tile_count.eq.NSUB) THEN
+        tile_count=0
+# ifdef DISTRIBUTE
+        op_handle='SUM'
+        CALL mp_reduce (ng, model, 1, DotProd, op_handle)
+# endif
+      END IF
+!$OMP END CRITICAL (DOT_PROD)
+!
+!
+!  Perform parallel global reduction operation.
+!
+# ifdef DISTRIBUTE
+      NSUB=1                             ! distributed-memory
+# else
+      IF (DOMAIN(ng)%SouthWest_Corner(tile).and.                        &
+     &    DOMAIN(ng)%NorthEast_Corner(tile)) THEN
+        NSUB=1                           ! non-tiled application
+      ELSE
+        NSUB=NtileX(ng)*NtileE(ng)       ! tiled application
+      END IF
+# endif
+!$OMP CRITICAL (DOT_PROD)
+      IF (tile_count.eq.0) THEN
+        DotProd=0.0_r8
+      END IF
+      DotProd=DotProd+my_DotProd
+      tile_count=tile_count+1
+      IF (tile_count.eq.NSUB) THEN
+        tile_count=0
+# ifdef DISTRIBUTE
+        op_handle='SUM'
+        CALL mp_reduce (ng, model, 1, DotProd, op_handle)
+# endif
+      END IF
+!$OMP END CRITICAL (DOT_PROD)
+!
+      RETURN
+      END SUBROUTINE dot_prod_1d
+!
+!-----------------------------------------------------------------------
+!  It compute the dot product between two 2D tiled arrays.
+!  
+      FUNCTION dot_prod_2d (ng, tile, model, ctype,                     &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      A1, A2) RESULT DotProd
+!
+      integer,            intent(in   ) :: ng        ! nested grid
+      integer,            intent(in   ) :: tile      ! domain partition
+      integer,            intent(in   ) :: model     ! kernel ID
+      integer,            intent(in   ) :: ctype     ! C-grid type
+      integer,            intent(in   ) :: LBi, UBi, LBj, UBj
+      real (r8),          intent(in   ) :: A1(LBi:,LBj:)
+      real (r8),          intent(in   ) :: A2(LBi:,LBj:)
+!
+      integer                           :: Istr, IstrU, Iend, Imin, Imax
+      integer                           :: Jstr, JstrV, Jend, Jmin, Jmax
+      integer                           :: NSUB, i, j
+      real (r8)                         :: DotProd
+      real (r8)                         :: cff, my_DotProd
+# ifdef DISTRIBUTE
+      character (len=3)                 :: op_handle
+# endif
+!
+!  Initialize.
+!
+      Istr =BOUNDS(ng)%Istr (tile)   ! tile computational range
+      IstrU=BOUNDS(ng)%IstrU(tile)
+      Iend =BOUNDS(ng)%Iend (tile)
+      JstrV=BOUNDS(ng)%JstrV(tile)
+      Jend =BOUNDS(ng)%Jend (tile)
+!
+      Imin=Istr
+      Imax=Iend
+      Jmin=Jstr
+      Jmax=Jend
+      SELECT CASE (ctype)
+        CASE (u2dvar, u3dvar)
+          Imin=IstrU
+        CASE (v2dvar, v3dvar)
+          Jmin=JstrV
+      END SELECT
+!
+!  Compute dot product between A1 and A2 arrays.
+!
+      my_DotProd=0.0_r8
+      DO j=Jmin,Jmax
+        DO i=Imin,Imax
+          cff=A1(i,j)*A2(i,j)
+          my_DotProd=my_DotProd+cff
+        END DO
+      END DO
+!
+!  Perform parallel global reduction operation.
+!
+# ifdef DISTRIBUTE
+      NSUB=1                             ! distributed-memory
+# else
+      IF (DOMAIN(ng)%SouthWest_Corner(tile).and.                        &
+     &    DOMAIN(ng)%NorthEast_Corner(tile)) THEN
+        NSUB=1                           ! non-tiled application
+      ELSE
+        NSUB=NtileX(ng)*NtileE(ng)       ! tiled application
+      END IF
+# endif
+!$OMP CRITICAL (DOT_PROD)
+      IF (tile_count.eq.0) THEN
+        DotProd=0.0_r8
+      END IF
+      DotProd=DotProd+my_DotProd
+      tile_count=tile_count+1
+      IF (tile_count.eq.NSUB) THEN
+        tile_count=0
+# ifdef DISTRIBUTE
+        op_handle='SUM'
+        CALL mp_reduce (ng, model, 1, DotProd, op_handle)
+# endif
+      END IF
+!$OMP END CRITICAL (DOT_PROD)
+!
+      RETURN
+      END SUBROUTINE dot_prod_2d
+
+
+#endif
+      END MODULE roms_multiscale_mod

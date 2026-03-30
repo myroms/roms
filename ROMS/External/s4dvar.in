@@ -297,14 +297,15 @@ balance(isVvel) =  T                      ! 3D momentum (u, v)
 
 ! The number of iterations used in the conjugate gradient solver used to
 ! estimate the eigenvalues of the implicit horizontal diffusion operator for B.
-! [1:Nscale] are expected.
+! [1:Nscale,1:Ngrids] values are expected.
 
-        NiterCG =  50
+        NiterCG == 50
 
 ! The number of Chebyshev iterations used to invert the implicit horizontal
-! diffusion operator for B. It MUST be an even value. [1:Nscale] are expected.
+! diffusion operator for B. It MUST be an even value. [1:Nscale,1:Ngrids] values
+! are expected.
 
-        NiterCI =  50
+        NiterCI == 50
 
 ! Model error covariance: horizontal, isotropic (HdecayM) and
 ! anisotropic (HdecayMX, HdecayMY) decorrelation length scales (m).
