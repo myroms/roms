@@ -254,9 +254,9 @@ balance(isVvel) =  T                      ! 3D momentum (u, v)
          Vgamma =  0.05     0.05     0.05     0.05        ! vertical operator
 
 ! The number of horizontal length scales to include in the modeling of
-! multiscale background error covariance, B.
+! multiscale background error covariance, B. [1:Ngrids].
 
-         Nscale = 1
+         Nscale == 1
 
 ! The number of implicit applications (Mlap) of the inverse horizontal
 ! diffusion operator for multiscale background error covariance, B. 

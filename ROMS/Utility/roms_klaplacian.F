@@ -84,6 +84,7 @@
       PUBLIC  :: ad_multiscale_Klap_v2d
 
 # ifdef SOLVE3D
+!
       PUBLIC  :: tl_multiscale_Klap_r3d
       PUBLIC  :: tl_multiscale_Klap_u3d
       PUBLIC  :: tl_multiscale_Klap_v3d
@@ -93,6 +94,19 @@
       PUBLIC  :: ad_multiscale_Klap_v3d
 # endif
 
+# ifdef ADJUST_BOUNDARY
+!
+      PUBLIC  :: tl_multiscale_Klap_b1d
+#  ifdef SOLVE3D
+      PUBLIC  :: tl_multiscale_Klap_b2d
+#  endif
+!
+      PUBLIC  :: ad_multiscale_Klap_b1d
+#  ifdef SOLVE3D
+      PUBLIC  :: ad_multiscale_Klap_b2d
+#  endif
+# endif
+!
       PRIVATE
 !
 !:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -211,13 +225,13 @@
 !
 !^    CALL mp_exchange2d (ng, tile, model, 1,                           &
 !^   &                    LBi, UBi, LBj, UBj,                           &
-!^   &                    Nghost,                                       &
+!^   &                    NghostPoints,                                 &
 !^   &                    EWperiodic(ng), NSperiodic(ng),               &
 !^   &                    A)
 !^
       CALL mp_exchange2d (ng, tile, model, 1,                           &
      &                    LBi, UBi, LBj, UBj,                           &
-     &                    Nghost,                                       &
+     &                    NghostPoints,                                 &
      &                    EWperiodic(ng), NSperiodic(ng),               &
      &                    tl_A)
 # endif
@@ -286,13 +300,13 @@
 !
 !^    CALL mp_exchange2d (ng, tile, model, 1,                           &
 !^   &                    LBi, UBi, LBj, UBj,                           &
-!^   &                    Nghost,                                       &
+!^   &                    NghostPoints,                                 &
 !^   &                    EWperiodic(ng), NSperiodic(ng),               &
 !^   &                    Awrk)
 !^
       CALL mp_exchange2d (ng, tile, model, 1,                           &
      &                    LBi, UBi, LBj, UBj,                           &
-     &                    Nghost,                                       &
+     &                    NghostPoints,                                 &
      &                    EWperiodic(ng), NSperiodic(ng),               &
      &                    tl_Awrk)
 # endif
@@ -431,13 +445,13 @@
 !
 !^    CALL mp_exchange2d (ng, tile, model, 1,                           &
 !^   &                    LBi, UBi, LBj, UBj,                           &
-!^   &                    Nghost,                                       &
+!^   &                    NghostPoints,                                 &
 !^   &                    EWperiodic(ng), NSperiodic(ng),               &
 !^   &                    tl_Awrk)
 !^
       CALL ad_mp_exchange2d (ng, tile, model, 1,                        &
      &                       LBi, UBi, LBj, UBj,                        &
-     &                       Nghost,                                    &
+     &                       NghostPoints,                              &
      &                       EWperiodic(ng), NSperiodic(ng),            &
      &                       ad_Awrk)
 # endif
@@ -513,13 +527,13 @@
 !
 !^    CALL mp_exchange2d (ng, tile, model, 1,                           &
 !^   &                    LBi, UBi, LBj, UBj,                           &
-!^   &                    Nghost,                                       &
+!^   &                    NghostPoints,                                 &
 !^                        EWperiodic(ng), NSperiodic(ng),               &
 !^   &                    tl_A)
 !^
       CALL ad_mp_exchange2d (ng, tile, model, 1,                        &
      &                       LBi, UBi, LBj, UBj,                        &
-     &                       Nghost,                                    &
+     &                       NghostPoints,                              &
      &                       EWperiodic(ng), NSperiodic(ng),            &
      &                       ad_A)
 # endif
@@ -644,13 +658,13 @@
 !
 !^    CALL mp_exchange2d (ng, tile, model, 1,                           &
 !^   &                    LBi, UBi, LBj, UBj,                           &
-!^   &                    Nghost,                                       &
+!^   &                    NghostPoints,                                 &
 !^   &                    EWperiodic(ng), NSperiodic(ng),               &
 !^   &                    A)
 !^
       CALL mp_exchange2d (ng, tile, model, 1,                           &
      &                    LBi, UBi, LBj, UBj,                           &
-     &                    Nghost,                                       &
+     &                    NghostPoints,                                 &
      &                    EWperiodic(ng), NSperiodic(ng),               &
      &                    tl_A)
 # endif
@@ -714,13 +728,13 @@
 !
 !^    CALL mp_exchange2d (ng, tile, model, 1,                           &
 !^   &                    LBi, UBi, LBj, UBj,                           &
-!^   &                    Nghost,                                       &
+!^   &                    NghostPoints,                                 &
 !^   &                    EWperiodic(ng), NSperiodic(ng),               &
 !^   &                    Awrk)
 !^
       CALL mp_exchange2d (ng, tile, model, 1,                           &
      &                    LBi, UBi, LBj, UBj,                           &
-     &                    Nghost,                                       &
+     &                    NghostPoints,                                 &
      &                    EWperiodic(ng), NSperiodic(ng),               &
      &                    tl_Awrk)
 # endif
@@ -858,13 +872,13 @@
 !
 !^    CALL mp_exchange2d (ng, tile, model, 1,                           &
 !^   &                    LBi, UBi, LBj, UBj,                           &
-!^   &                    Nghost,                                       &
+!^   &                    NghostPoints,                                 &
 !^   &                    EWperiodic(ng), NSperiodic(ng),               &
 !^   &                    tl_Awrk)
 !^
       CALL ad_mp_exchange2d (ng, tile, model, 1,                        &
      &                       LBi, UBi, LBj, UBj,                        &
-     &                       Nghost,                                    &
+     &                       NghostPoints,                              &
      &                       EWperiodic(ng), NSperiodic(ng),            &
      &                       ad_Awrk)
 # endif
@@ -934,13 +948,13 @@
 !
 !^    CALL mp_exchange2d (ng, tile, model, 1,                           &
 !^   &                    LBi, UBi, LBj, UBj,                           &
-!^   &                    Nghost,                                       &
+!^   &                    NghostPoints,                                 &
 !^   &                    EWperiodic(ng), NSperiodic(ng),               &
 !^   &                    tl_A)
 !^
       CALL ad_mp_exchange2d (ng, tile, model, 1,                        &
      &                       LBi, UBi, LBj, UBj,                        &
-     &                       Nghost,                                    &
+     &                       NghostPoints,                              &
      &                       EWperiodic(ng), NSperiodic(ng),            &
      &                       ad_A)
 # endif
@@ -1067,13 +1081,13 @@
 !
 !^    CALL mp_exchange2d (ng, tile, model, 1,                           &
 !^   &                    LBi, UBi, LBj, UBj,                           &
-!^   &                    Nghost,                                       &
+!^   &                    NghostPoints,                                 &
 !^   &                    EWperiodic(ng), NSperiodic(ng),               &
 !^   &                    A)
 !^
       CALL mp_exchange2d (ng, tile, model, 1,                           &
      &                    LBi, UBi, LBj, UBj,                           &
-     &                    Nghost,                                       &
+     &                    NghostPoints,                                 &
      &                    EWperiodic(ng), NSperiodic(ng),               &
      &                    tl_A)
 # endif
@@ -1137,13 +1151,13 @@
 !
 !^      CALL mp_exchange2d (ng, tile, model, 1,                         &
 !^   &                      LBi, UBi, LBj, UBj,                         &
-!^   &                      Nghost,                                     &
+!^   &                      NghostPoints,                               &
 !^   &                      EWperiodic(ng), NSperiodic(ng),             &
 !^   &                      Awrk)
 !^
         CALL mp_exchange2d (ng, tile, model, 1,                         &
      &                      LBi, UBi, LBj, UBj,                         &
-     &                      Nghost,                                     &
+     &                      NghostPoints,                               &
      &                      EWperiodic(ng), NSperiodic(ng),             &
      &                      tl_Awrk)
 # endif
@@ -1270,13 +1284,13 @@
 !
 !^    CALL mp_exchange2d (ng, tile, model, 1,                           &
 !^   &                    LBi, UBi, LBj, UBj,                           &
-!^   &                    Nghost,                                       &
+!^   &                    NghostPoints,                                 &
 !^   &                    EWperiodic(ng), NSperiodic(ng),               &
 !^   &                    tl_Awrk)
 !^
       CALL ad_mp_exchange2d (ng, tile, model, 1,                        &
      &                       LBi, UBi, LBj, UBj,                        &
-     &                       Nghost,                                    &
+     &                       NghostPoints,                              &
      &                       EWperiodic(ng), NSperiodic(ng),            &
      &                       ad_A)
 # endif
@@ -1356,13 +1370,13 @@
 # ifdef DISTRIBUTE
 !^    CALL mp_exchange2d (ng, tile, model, 1,                           &
 !^   &                    LBi, UBi, LBj, UBj,                           &
-!^   &                    Nghost,                                       &
+!^   &                    NghostPoints,                                 &
 !^   &                    EWperiodic(ng), NSperiodic(ng),               &
 !^   &                    tl_A)
 !^
       CALL ad_mp_exchange2d (ng, tile, model, 1,                        &
      &                       LBi, UBi, LBj, UBj,                        &
-     &                       Nghost,                                    &
+     &                       NghostPoints,                              &
      &                       EWperiodic(ng), NSperiodic(ng),            &
      &                       ad_A)
 # endif
@@ -1491,13 +1505,13 @@
 !
 !^    CALL mp_exchange3d (ng, tile, model, 1,                           &
 !^   &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
-!^   &                    Nghost,                                       &
+!^   &                    NghostPoints,                                 &
 !^   &                    EWperiodic(ng), NSperiodic(ng),               &
 !^   &                    A)
 !^
       CALL mp_exchange3d (ng, tile, model, 1,                           &
      &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
-     &                    Nghost,                                       &
+     &                    NghostPoints,                                 &
      &                    EWperiodic(ng), NSperiodic(ng),               &
      &                    tl_A)
 #  endif
@@ -1788,13 +1802,13 @@
 !
 !^    CALL mp_exchange3d (ng, tile, model, 1,                           &
 !^   &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
-!^   &                    Nghost,                                       &
+!^   &                    NghostPoints,                                 &
 !^   &                    EWperiodic(ng), NSperiodic(ng),               &
 !^   &                    Awrk)
 !^
       CALL mp_exchange3d (ng, tile, model, 1,                           &
      &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
-     &                    Nghost,                                       &
+     &                    NghostPoints,                                 &
      &                    EWperiodic(ng), NSperiodic(ng),               &
      &                    tl_Awrk)
 #  endif
@@ -1944,13 +1958,13 @@
 !
 !^    CALL mp_exchange3d (ng, tile, model, 1,                           &
 !^   &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
-!^   &                    Nghost,                                       &
+!^   &                    NghostPoints,                                 &
 !^   &                    EWperiodic(ng), NSperiodic(ng),               &
 !^   &                    tl_Awrk)
 !^
       CALL ad_mp_exchange3d (ng, tile, model, 1,                        &
      &                       LBi, UBi, LBj, UBj, 1, N(ng),              &
-     &                       Nghost,                                    &
+     &                       NghostPoints,                              &
      &                       EWperiodic(ng), NSperiodic(ng),            &
      &                       ad_Awrk)
 #  endif
@@ -2348,13 +2362,13 @@
 !
 !^    CALL mp_exchange3d (ng, tile, model, 1,                           &
 !^   &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
-!^   &                    Nghost,                                       &
+!^   &                    NghostPoints,                                 &
 !^   &                    EWperiodic(ng), NSperiodic(ng),               &
 !^   &                    tl_A)
 !^
       CALL ad_mp_exchange3d (ng, tile, model, 1,                        &
      &                       LBi, UBi, LBj, UBj, 1, N(ng),              &
-     &                       Nghost,                                    &
+     &                       NghostPoints,                              &
      &                       EWperiodic(ng), NSperiodic(ng),            &
      &                       ad_A)
 #  endif
@@ -2485,13 +2499,13 @@
 !
 !^    CALL mp_exchange3d (ng, tile, model, 1,                           &
 !^   &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
-!^   &                    Nghost,                                       &
+!^   &                    NghostPoints,                                 &
 !^   &                    EWperiodic(ng), NSperiodic(ng),               &
 !^   &                    A)
 !^
       CALL mp_exchange3d (ng, tile, model, 1,                           &
      &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
-     &                    Nghost,                                       &
+     &                    NghostPoints,                                 &
      &                    EWperiodic(ng), NSperiodic(ng),               &
      &                    tl_A)
 #  endif
@@ -2810,13 +2824,13 @@
 !
 !^      CALL mp_exchange3d (ng, tile, model, 1,                         &
 !^   &                      LBi, UBi, LBj, UBj, 1, N(ng),               &
-!^   &                      Nghost,                                     &
+!^   &                      NghostPoints,                               &
 !^   &                      EWperiodic(ng), NSperiodic(ng),             &
 !^   &                      Awrk(:,:,:))
 !^
         CALL mp_exchange3d (ng, tile, model, 1,                         &
      &                      LBi, UBi, LBj, UBj, 1, N(ng),               &
-     &                      Nghost,                                     &
+     &                      NghostPoints,                               &
      &                      EWperiodic(ng), NSperiodic(ng),             &
      &                      tl_Awrk(:,:,:))
 #  endif
@@ -2967,13 +2981,13 @@
 !
 !^    CALL mp_exchange3d (ng, tile, model, 1,                           &
 !^   &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
-!^   &                    Nghost,                                       &
+!^   &                    NghostPoints,                                 &
 !^   &                    EWperiodic(ng), NSperiodic(ng),               &
 !^   &                    tl_Awrk)
 !^
       CALL ad_mp_exchange3d (ng, tile, model, 1,                        &
      &                       LBi, UBi, LBj, UBj, 1, N(ng),              &
-     &                       Nghost,                                    &
+     &                       NghostPoints,                              &
      &                       EWperiodic(ng), NSperiodic(ng),            &
      &                       ad_Awrk)
 #  endif
@@ -3389,13 +3403,13 @@
 !
 !^    CALL mp_exchange3d (ng, tile, model, 1,                           &
 !^   &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
-!^   &                    Nghost,                                       &
+!^   &                    NghostPoints,                                 &
 !^   &                    EWperiodic(ng), NSperiodic(ng),               &
 !^   &                    tl_A)
 !^
       CALL ad_mp_exchange3d (ng, tile, model, 1,                        &
      &                       LBi, UBi, LBj, UBj, 1, N(ng),              &
-     &                       Nghost,                                    &
+     &                       NghostPoints,                              &
      &                       EWperiodic(ng), NSperiodic(ng),            &
      &                       ad_A)
 #  endif
@@ -3526,13 +3540,13 @@
 !
 !^    CALL mp_exchange3d (ng, tile, model, 1,                           &
 !^   &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
-!^   &                    Nghost,                                       &
+!^   &                    NghostPoints,                                 &
 !^   &                    EWperiodic(ng), NSperiodic(ng),               &
 !^   &                    A)
 !^
       CALL mp_exchange3d (ng, tile, model, 1,                           &
      &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
-     &                    Nghost,                                       &
+     &                    NghostPoints,                                 &
      &                    EWperiodic(ng), NSperiodic(ng),               &
      &                    tl_A)
 #  endif
@@ -3849,13 +3863,13 @@
 !
 !^      CALL mp_exchange3d (ng, tile, model, 1,                         &
 !^   &                      LBi, UBi, LBj, UBj, 1, N(ng),               &
-!^   &                      Nghost,                                     &
+!^   &                      NghostPoints,                               &
 !^   &                      EWperiodic(ng), NSperiodic(ng),             &
 !^   &                      Awrk(:,:,:))
 !^
         CALL mp_exchange3d (ng, tile, model, 1,                         &
      &                      LBi, UBi, LBj, UBj, 1, N(ng),               &
-     &                      Nghost,                                     &
+     &                      NghostPoints,                               &
      &                      EWperiodic(ng), NSperiodic(ng),             &
      &                      tl_Awrk(:,:,:))
 #  endif
@@ -4006,13 +4020,13 @@
 !
 !^    CALL mp_exchange3d (ng, tile, model, 1,                           &
 !^   &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
-!^   &                    Nghost,                                       &
+!^   &                    NghostPoints,                                 &
 !^   &                    EWperiodic(ng), NSperiodic(ng),               &
 !^   &                    tl_Awrk)
 !^
       CALL ad_mp_exchange3d (ng, tile, model, 1,                        &
      &                       LBi, UBi, LBj, UBj, 1, N(ng),              &
-     &                       Nghost,                                    &
+     &                       NghostPoints,                              &
      &                       EWperiodic(ng), NSperiodic(ng),            &
      &                       ad_Awrk)
 #  endif
@@ -4427,13 +4441,13 @@
 !
 !^    CALL mp_exchange3d (ng, tile, model, 1,                           &
 !^   &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
-!^   &                    Nghost,                                       &
+!^   &                    NghostPoints,                                 &
 !^   &                    EWperiodic(ng), NSperiodic(ng),               &
 !^   &                    tl_A)
 !^
       CALL ad_mp_exchange3d (ng, tile, model, 1,                        &
      &                       LBi, UBi, LBj, UBj, 1, N(ng),              &
-     &                       Nghost,                                    &
+     &                       NghostPoints,                              &
      &                       EWperiodic(ng), NSperiodic(ng),            &
      &                       ad_A)
 #  endif
@@ -4448,6 +4462,1751 @@
 !
       RETURN
       END SUBROUTINE ad_multiscale_Klap_v3d
+# endif
+
+# ifdef ADJUST_BOUNDARY
+!
+!-----------------------------------------------------------------------
+!  It computes the tangent linear K-Laplacian, [1 + Del(K*Del)], of
+!  lateral boundary conditions for a 2D control variable.
+!
+      SUBROUTINE tl_multiscale_Klap_b1d (self, ng, tile, model,         &
+     &                                   ifield, ibry, ctype, ms,       &
+     &                                   LBij, UBij,                    &
+     &                                   IminS, ImaxS, JminS, JmaxS,    &
+     &                                   tl_A)
+!
+      CLASS (multiscale), intent(inout) :: self      ! multiscale object
+      integer,            intent(in   ) :: ng        ! nested grid
+      integer,            intent(in   ) :: tile      ! domain partition
+      integer,            intent(in   ) :: model     ! kernel ID
+      integer,            intent(in   ) :: ifield    ! state field ID
+      integer,            intent(in   ) :: ibry      ! boundary ID
+      integer,            intent(in   ) :: ctype     ! C-grid type
+      integer,            intent(in   ) :: ms        ! multiscale index
+      integer,            intent(in   ) :: LBij, UBij
+      integer,            intent(in   ) :: IminS, ImaxS, JminS, JmaxS
+      real (r8),          intent(inout) :: tl_A(LBij:)
+!
+      logical, dimension(4)             :: Lboundary
+!
+      integer                           :: iLap, i, j
+      integer                           :: Istr, IstrU, Iend, Imin, Imax
+      integer                           :: Jstr, JstrV, Jend, Jmin, Jmax
+!
+      real (r8)                         :: cffx, cffy
+!
+      real (r8), dimension(LBij:UBij)   :: tl_Awrk
+!
+      real (r8), dimension(LBij:UBij)   :: Hfac
+      real (r8), dimension(IminS:ImaxS) :: Khx
+      real (r8), dimension(JminS:JmaxS) :: Khy
+      real (r8), dimension(JminS:JmaxS) :: tl_FE
+      real (r8), dimension(IminS:ImaxS) :: tl_FX
+!
+!  Initialize.
+!
+      Istr =BOUNDS(ng)%Istr (tile)   ! tile computational indices
+      IstrU=BOUNDS(ng)%IstrU(tile)
+      Iend =BOUNDS(ng)%Iend (tile)
+      Jstr =BOUNDS(ng)%Jstr (tile)
+      JstrV=BOUNDS(ng)%JstrV(tile)
+      Jend =BOUNDS(ng)%Jend (tile)
+!
+      Imin=Istr
+      Imax=Iend
+      Jmin=Jstr
+      Jmax=Jend
+      SELECT CASE (ctype)
+        CASE (u2dvar)
+          Imin=IstrU
+        CASE (v2dvar)
+          Jmin=JstrV
+      END SELECT
+!
+      Lboundary(iwest )=DOMAIN(ng)%Western_Edge (tile)
+      Lboundary(ieast )=DOMAIN(ng)%Eastern_Edge (tile)
+      Lboundary(isouth)=DOMAIN(ng)%Southern_Edge(tile)
+      Lboundary(inorth)=DOMAIN(ng)%Northern_Edge(tile)
+!
+!  Assign contol variable isotropic or anisotropic correlation length
+!  scales.
+!
+      SELECT CASE (ifield)
+        CASE (isFsur, isUbar, isVbar)
+          iLap=Mlap(ifield,ms,ng)
+      END SELECT
+!
+!  Compute metrics factor.
+!
+      IF (Lboundary(ibry)) THEN
+        SELECT CASE (cgrid)
+           CASE (r2dvar)
+             IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
+               DO j=Jstr-1,Jend+1
+                 i=BOUNDS(ng)%edge(ibry,r2dvar)
+                 Hfac(j)=GRID(ng)%pm(i,j)*GRID(ng)%pn(i,j)
+               END DO
+             ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
+               DO i=Istr-1,Iend+1
+                 j=BOUNDS(ng)%edge(ibry,r2dvar)
+                 Hfac(i)=GRID(ng)%pm(i,j)*GRID(ng)%pn(i,j)
+               END DO
+             END IF
+           CASE (u2dvar)
+             IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
+               DO j=Jstr-1,Jend+1
+                 i=BOUNDS(ng)%edge(ibry,u2dvar)
+                 Hfac(j)=0.25_r8*(GRID(ng)%pm(i-1,j)+GRID(ng)%pm(i,j))* &
+     &                           (GRID(ng)%pn(i-1,j)+GRID(ng)%pn(i,j))
+               END DO
+             ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
+               DO i=IstrU-1,Iend+1
+                 j=BOUNDS(ng)%edge(ibry,u2dvar)
+                 Hfac(i)=0.25_r8*(GRID(ng)%pm(i-1,j)+GRID(ng)%pm(i,j))* &
+     &                           (GRID(ng)%pn(i-1,j)+GRID(ng)%pn(i,j))
+               END DO
+             END IF
+           CASE (v2dvar)
+             IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
+               DO j=JstrV-1,Jend+1
+                 i=BOUNDS(ng)%edge(ibry,v2dvar)
+                 Hfac(j)=0.25_r8*(GRID(ng)%pm(i,j-1)+GRID(ng)%pm(i,j))* &
+     &                           (GRID(ng)%pn(i,j-1)+GRID(ng)%pn(i,j))
+               END DO
+             ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
+               DO i=Istr-1,Iend+1
+                 j=BOUNDS(ng)%edge(ibry,v2dvar)
+                 Hfac(i)=0.25_r8*(GRID(ng)%pm(i,j-1)+GRID(ng)%pm(i,j))* &
+     &                           (GRID(ng)%pn(i,j-1)+GRID(ng)%pn(i,j))
+               END DO
+             END IF
+        END SELECT
+      END IF
+!
+!  Set horizontal diffusion coefficients (Khx, Khy) with units of
+!  correlation length squared.
+!
+      SELECT CASE (ibry)
+        CASE (iwest, ieast)
+          DO j=Jmin-1,Jmax+1
+            cffy=HdecayB(ifield,ms,ibry,ng)*HdecayB(ifield,ms,ibry,ng)
+            Khy(j)=cffy/REAL(2*iLap-3,r8)
+          END DO
+        CASE (isouth, inorth)
+          DO i=Imin-1,Imax+1
+            cffx=HdecayB(ifield,ms,ibry,ng)*HdecayB(ifield,ms,ibry,ng)
+            Khx(i)=cffx/REAL(2*iLap-3,r8)
+          END DO
+      END SELECT
+!
+!  Set operator initial conditions.
+!
+      SELECT CASE (cgrid)
+        CASE (r2dvar)
+!^        CALL bc_r2d_bry_tile (ng, tile, ibry,                         &
+!^   &                          LBij, UBij,                             &
+!^   &                          A)
+!^
+          CALL bc_r2d_bry_tile (ng, tile, ibry,                         &
+     &                          LBij, UBij,                             &
+     &                          tl_A)
+        CASE (u2dvar)
+!^        CALL bc_u2d_bry_tile (ng, tile, ibry,                         &
+!^   &                          LBij, UBij,                             &
+!^   &                          A)
+!^
+          CALL bc_u2d_bry_tile (ng, tile, ibry,                         &
+     &                          LBij, UBij,                             &
+     &                          tl_A)
+        CASE (v2dvar)
+!^        CALL bc_u2d_bry_tile (ng, tile, ibry,                         &
+!^   &                          LBij, UBij,                             &
+!^   &                          A)
+!^
+          CALL bc_v2d_bry_tile (ng, tile, ibry,                         &
+     &                          LBij, UBij,                             &
+     &                          tl_A)
+      END SELECT
+!
+#  ifdef DISTRIBUTE
+!
+!^    CALL mp_exchange2d_bry (ng, tile, model, 1, ibry,                 &
+!^   &                        LBij, UBij,                               &
+!^   &                        NghostPoints,                             &
+!^   &                        EWperiodic(ng), NSperiodic(ng),           &
+!^   &                        A)
+!^
+      CALL mp_exchange2d_bry (ng, tile, model, 1, ibry,                 &
+     &                        LBij, UBij,                               &
+     &                        NghostPoints,                             &
+     &                        EWperiodic(ng), NSperiodic(ng),           &
+     &                        tl_A)
+#  endif
+!
+      IF (Lboundary(ibry)) THEN
+        IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
+          DO j=Jmin-1,Jmax+1
+!^          Awrk(j)=A(j)
+!^
+            tl_Awrk(j)=tl_A(j)
+          END DO
+        ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
+          DO i=Imin-1,Imax+1
+!^          Awrk(i)=A(i)
+!^
+            tl_Awrk(i)=tl_A(i)
+          END DO
+        END IF
+      END IF
+!
+!  Compute XI- or ETA-components of diffusive flux.
+!
+      SELECT CASE (cgrid)
+!
+        CASE (r2dvar)                           ! 2D RHO-grid variables
+          IF (Lboundary(ibry)) THEN
+            IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
+              i=BOUNDS(ng)%edge(ibry,r2dvar)
+              DO j=Jstr,Jend+1
+!^              FE(j)=GRID(ng)%pnom_v(i,j)*                             &
+!^   &                0.5_r8*(Khy(j-1)+Khy(j))*                         &
+!^   &                (Awrk(j)-Awrk(j-1))
+!^
+                tl_FE(j)=GRID(ng)%pnom_v(i,j)*                          &
+     &                   0.5_r8*(Khy(j-1)+Khy(j))*                      &
+     &                   (tl_Awrk(j)-tl_Awrk(j-1))
+#  ifdef MASKING
+!^              FE(j)=FE(j)*GRID(ng)%vmask(i,j)
+!^
+                tl_FE(j)=tl_FE(j)*GRID(ng)%vmask(i,j)
+#  endif
+              END DO
+            ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
+              j=BOUNDS(ng)%edge(ibry,r2dvar)
+              DO i=Istr,Iend+1
+!^              FX(i)=GRID(ng)%pmon_u(i,j)*                             &
+!^                    0.5_r8*(Khx(i-1)+Khx(i))*                         &
+!^   &                (Awrk(i)-Awrk(i-1))
+!^
+                tl_FX(i)=GRID(ng)%pmon_u(i,j)*                          &
+     &                   0.5_r8*(Khx(i-1)+Khx(i))*                      &
+     &                   (tl_Awrk(i)-tl_Awrk(i-1))
+#  ifdef MASKING
+!^              FX(i)=FX(i)*GRID%umask(i,j)
+!^
+                tl_FX(i)=tl_FX(i)*GRID(ng)%umask(i,j)
+#  endif
+              END DO
+            END IF
+          END IF
+!
+        CASE (u2dvar)                           ! 2D U-grid variables
+!
+          IF (Lboundary(ibry)) THEN
+            IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
+              i=BOUNDS(ng)%edge(ibry,u2dvar)
+              DO j=Jstr,Jend+1
+!^              FE(j)=GRID(ng)%pnom_p(i,j)*                             &
+!^   &                0.5_r8*(Khy(j)+Khy(j-1))*                         &
+!^   &                (Awrk(j)-Awrk(j-1))
+!^
+                tl_FE(j)=GRID(ng)%pnom_p(i,j)*                          &
+     &                   0.5_r8*(Khy(j)+Khy(j-1))*                      &
+     &                   (tl_Awrk(j)-tl_Awrk(j-1))
+#  ifdef MASKING
+!^              FE(j)=FE(j)*GRID(ng)%pmask(i,j)
+!^
+                tl_FE(j)=tl_FE(j)*GRID(ng)%pmask(i,j)
+#  endif
+              END DO
+            ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
+              j=BOUNDS(ng)%edge(ibry,u2dvar)
+              DO i=IstrU-1,Iend
+!^              FX(i)=GRID(ng)%pmon_r(i,j)*                             &
+!^                    Khx(i)*(Awrk(i+1)-Awrk(i))
+!^
+                tl_FX(i)=GRID(ng)%pmon_r(i,j)*                          &
+     &                   Khx(i)*(tl_Awrk(i+1)-tl_Awrk(i))
+              END DO
+            END IF
+          END IF
+!
+        CASE (v2dvar)                           ! 2D V-grid variables
+!
+          IF (Lboundary(ibry)) THEN
+            IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
+              i=BOUNDS(ng)%edge(ibry,v2dvar)
+              DO j=JstrV-1,Jend
+!^              FE(j)=GRID(ng)%pnom_r(i,j)*                             &
+!^   &                Khy(j)*(Awrk(j+1)-Awrk(j))
+!^
+                tl_FE(j)=GRID(ng)%pnom_r(i,j)*                          &
+     &                   Khy(j)*(tl_Awrk(j+1)-tl_Awrk(j))
+              END DO
+            ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
+              j=BOUNDS(ng)%edge(ibry,v2dvar)
+              DO i=Istr,Iend+1
+!^              FX(i)=GRID(ng)%pmon_p(i,j)*                             &
+!^   &                0.5_r8*(Khx(i-1)+Khx(i))*                         &
+!^   &                (Awrk(i)-Awrk(i-1))
+!^
+                tl_FX(i)=GRID(ng)%pmon_p(i,j)*                          &
+     &                   0.5_r8*(Khx(i-1)+Khx(i))*                      &
+     &                   (tl_Awrk(i)-tl_Awrk(i-1))
+#  ifdef MASKING
+!^              FX(i)=FX(i)*GRID(ng)*pmask(i,j)
+!^
+                tl_FX(i)=tl_FX(i)*GRID(ng)%pmask(i,j)
+#  endif
+            END DO
+          END IF
+        END IF
+!
+      END SELECT
+!
+!  Compute K-Laplacian.
+!
+      SELECT CASE (cgrid)
+!
+        CASE (r2dvar)                           ! 2D RHO-grid variables
+          IF (Lboundary(ibry)) THEN
+            IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
+              DO j=Jstr,Jend
+!^              Awrk(j)=Awrk(j)-                                        &
+!^   &                  Hfac(j)*(FE(j+1)-FE(j))
+!^
+                tl_Awrk(j)=tl_Awrk(j)-                                  &
+     &                     Hfac(j)*(tl_FE(j+1)-tl_FE(j))
+              END DO
+            ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
+              DO i=Istr,Iend
+!^              Awrk(i)=Awrk(i)-                                        &
+!^   &                  Hfac(i)*(FX(i+1)-FX(i))
+!^
+                tl_Awrk(i)=tl_Awrk(i)-                                  &
+     &                     Hfac(i)*(tl_FX(i+1)-tl_FX(i))
+              END DO
+            END IF
+          END IF
+!
+        CASE (u2dvar)                           ! 2D U-grid variables
+!
+          IF (Lboundary(ibry)) THEN
+            IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
+              DO j=Jstr,Jend
+!^              Awrk(j)=Awrk(j)-                                        &
+!^   &                  Hfac(j)*(FE(j+1)-FE(j))
+!^
+                tl_Awrk(j)=tl_Awrk(j)-                                  &
+     &                     Hfac(j)*(tl_FE(j+1)-tl_FE(j))
+              END DO
+            ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
+              DO i=IstrU,Iend
+!^              Awrk(i)=Awrk(i)-                                        &
+!^   &                  Hfac(i)*(FX(i)-FX(i-1))
+!^
+                tl_Awrk(i)=tl_Awrk(i)-                                  &
+     &                     Hfac(i)*(tl_FX(i)-tl_FX(i-1))
+              END DO
+            END IF
+          END IF
+!
+        CASE (v2dvar)                           ! 2D V-grid variables
+!
+          IF (Lboundary(ibry)) THEN
+            IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
+              DO j=JstrV,Jend
+!^              Awrk(j)=Awrk(j)-                                        &
+!^   &                  Hfac(j)*(FE(j)-FE(j-1))
+!^
+                tl_Awrk(j)=tl_Awrk(j)-                                  &
+     &                     Hfac(j)*(tl_FE(j)-tl_FE(j-1))
+              END DO
+            ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
+              DO i=Istr,Iend
+!^              Awrk(i)=Awrk(i)-                                        &
+!^   &                  Hfac(i)*(FX(i+1)-FX(i))
+!^
+                tl_Awrk(i)=tl_Awrk(i)-                                  &
+     &                     Hfac(i)*(tl_FX(i+1)-tl_FX(i))
+              END DO
+            END IF
+          END IF
+!
+      END SELECT
+
+#  ifdef DISTRIBUTE
+!
+!  Exchange boundary data.
+!
+!^    CALL mp_exchange2d_bry (ng, tile, model, 1, ibry,                 &
+!^   &                        LBij, UBij,                               &
+!^   &                        NghostPoints,                             &
+!^   &                        EWperiodic(ng), NSperiodic(ng),           &
+!^   &                        Awrk)
+!^
+      CALL mp_exchange2d_bry (ng, tile, model, 1, ibry,                 &
+     &                        LBij, UBij,                               &
+     &                        NghostPoints,                             &
+     &                        EWperiodic(ng), NSperiodic(ng),           &
+     &                        tl_Awrk)
+#  endif
+!
+!  Load K-Laplacian solution.
+!
+      IF (Lboundary(ibry)) THEN
+        IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
+          DO j=Jmin,Jmax
+!^          A(j)=Awrk(j)
+!^
+            tl_A(j)=tl_Awrk(j)
+          END DO
+        ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
+          DO i=Imin,Imax
+!^          A(i)=Awrk(i)
+!^
+            tl_A(i)=tl_Awrk(i)
+          END DO
+        END IF
+      END IF
+!
+      RETURN
+      END SUBROUTINE tl_multiscale_Klap_b1d
+!
+!-----------------------------------------------------------------------
+!  It computes the adjoint K-Laplacian, [1 + Del(K*Del)], of lateral
+!  boundary conditions for a 2D control variable.
+!
+      SUBROUTINE ad_multiscale_Klap_b1d (self, ng, tile, model,         &
+     &                                   ifield, ibry, ctype, ms,       &
+     &                                   LBij, UBij,                    &
+     &                                   IminS, ImaxS, JminS, JmaxS,    &
+     &                                   ad_A)
+!
+      CLASS (multiscale), intent(inout) :: self      ! multiscale object
+      integer,            intent(in   ) :: ng        ! nested grid
+      integer,            intent(in   ) :: tile      ! domain partition
+      integer,            intent(in   ) :: model     ! kernel ID
+      integer,            intent(in   ) :: ifield    ! state field ID
+      integer,            intent(in   ) :: ibry      ! boundary ID
+      integer,            intent(in   ) :: ctype     ! C-grid type
+      integer,            intent(in   ) :: ms        ! multiscale index
+      integer,            intent(in   ) :: LBij, UBij
+      integer,            intent(in   ) :: IminS, ImaxS, JminS, JmaxS
+      real (r8),          intent(inout) :: ad_A(LBij:)
+!
+      logical, dimension(4)             :: Lboundary
+!
+      integer                           :: iLap, i, j
+      integer                           :: Istr, IstrU, Iend, Imin, Imax
+      integer                           :: Jstr, JstrV, Jend, Jmin, Jmax
+!
+      real (r8)                         :: adfac, cffx, cffy
+!
+      real (r8), dimension(LBij:UBij)   :: tl_Awrk
+!
+      real (r8), dimension(LBij:UBij)   :: Hfac
+      real (r8), dimension(IminS:ImaxS) :: Khx
+      real (r8), dimension(JminS:JmaxS) :: Khy
+      real (r8), dimension(JminS:JmaxS) :: ad_FE
+      real (r8), dimension(IminS:ImaxS) :: ad_FX
+
+!  Initialize.
+!
+      Istr =BOUNDS(ng)%Istr (tile)   ! tile computational indices
+      IstrU=BOUNDS(ng)%IstrU(tile)
+      Iend =BOUNDS(ng)%Iend (tile)
+      Jstr =BOUNDS(ng)%Jstr (tile)
+      JstrV=BOUNDS(ng)%JstrV(tile)
+      Jend =BOUNDS(ng)%Jend (tile)
+!
+      Imin=Istr
+      Imax=Iend
+      Jmin=Jstr
+      Jmax=Jend
+      SELECT CASE (ctype)
+        CASE (u2dvar)
+          Imin=IstrU
+        CASE (v2dvar)
+          Jmin=JstrV
+      END SELECT
+!
+      Lboundary(iwest )=DOMAIN(ng)%Western_Edge (tile)
+      Lboundary(ieast )=DOMAIN(ng)%Eastern_Edge (tile)
+      Lboundary(isouth)=DOMAIN(ng)%Southern_Edge(tile)
+      Lboundary(inorth)=DOMAIN(ng)%Northern_Edge(tile)
+!
+!  Assign contol variable isotropic or anisotropic correlation length
+!  scales.
+!
+      SELECT CASE (ifield)
+        CASE (isFsur, isUbar, isVbar)
+          iLap=Mlap(ifield,ms,ng)
+      END SELECT
+!
+!  Compute metrics factor.
+!
+      IF (Lboundary(ibry)) THEN
+        SELECT CASE (cgrid)
+           CASE (r2dvar)
+             IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
+               DO j=Jstr-1,Jend+1
+                 i=BOUNDS(ng)%edge(ibry,r2dvar)
+                 Hfac(j)=GRID(ng)%pm(i,j)*GRID(ng)%pn(i,j)
+               END DO
+             ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
+               DO i=Istr-1,Iend+1
+                 j=BOUNDS(ng)%edge(ibry,r2dvar)
+                 Hfac(i)=GRID(ng)%pm(i,j)*GRID(ng)%pn(i,j)
+               END DO
+             END IF
+           CASE (u2dvar)
+             IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
+               DO j=Jstr-1,Jend+1
+                 i=BOUNDS(ng)%edge(ibry,u2dvar)
+                 Hfac(j)=0.25_r8*(GRID(ng)%pm(i-1,j)+GRID(ng)%pm(i,j))* &
+     &                           (GRID(ng)%pn(i-1,j)+GRID(ng)%pn(i,j))
+               END DO
+             ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
+               DO i=IstrU-1,Iend+1
+                 j=BOUNDS(ng)%edge(ibry,u2dvar)
+                 Hfac(i)=0.25_r8*(GRID(ng)%pm(i-1,j)+GRID(ng)%pm(i,j))* &
+     &                           (GRID(ng)%pn(i-1,j)+GRID(ng)%pn(i,j))
+               END DO
+             END IF
+           CASE (v2dvar)
+             IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
+               DO j=JstrV-1,Jend+1
+                 i=BOUNDS(ng)%edge(ibry,v2dvar)
+                 Hfac(j)=0.25_r8*(GRID(ng)%pm(i,j-1)+GRID(ng)%pm(i,j))* &
+     &                           (GRID(ng)%pn(i,j-1)+GRID(ng)%pn(i,j))
+               END DO
+             ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
+               DO i=Istr-1,Iend+1
+                 j=BOUNDS(ng)%edge(ibry,v2dvar)
+                 Hfac(i)=0.25_r8*(GRID(ng)%pm(i,j-1)+GRID(ng)%pm(i,j))* &
+     &                           (GRID(ng)%pn(i,j-1)+GRID(ng)%pn(i,j))
+               END DO
+             END IF
+        END SELECT
+      END IF
+!
+!  Set horizontal diffusion coefficients (Khx, Khy) with units of
+!  correlation length squared.
+!
+      SELECT CASE (ibry)
+        CASE (iwest, ieast)
+          DO j=Jmin-1,Jmax+1
+            cffy=HdecayB(ifield,ms,ibry,ng)*HdecayB(ifield,ms,ibry,ng)
+            Khy(j)=cffy/REAL(2*iLap-3,r8)
+          END DO
+        CASE (isouth, inorth)
+          DO i=Imin-1,Imax+1
+            cffx=HdecayB(ifield,ms,ibry,ng)*HdecayB(ifield,ms,ibry,ng)
+            Khx(i)=cffx/REAL(2*iLap-3,r8)
+          END DO
+      END SELECT
+!
+!  Load K-Laplacian solution.
+!
+      IF (Lboundary(ibry)) THEN
+        IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
+          DO j=Jmin,Jmax
+!^          tl_A(j)=tl_Awrk(j)
+!^
+            ad_Awrk(j)=ad_Awrk(j)+ad_A(j)
+            ad_A(j)=0.0_r8
+          END DO
+        ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
+          DO i=Imin,Imax
+!^          tl_A(i)=tl_Awrk(i)
+!^
+            ad_Awrk(i)=ad_Awrk(i)+ad_A(i)
+            ad_A(i)=0.0_r8
+          END DO
+        END IF
+      END IF
+#  ifdef DISTRIBUTE
+!
+!  Adjoint of exchange boundary data.
+!
+!^    CALL mp_exchange2d_bry (ng, tile, model, 1, ibry,                 &
+!^   &                        LBij, UBij,                               &
+!^   &                        NghostPoints,                             &
+!^   &                        EWperiodic(ng), NSperiodic(ng),           &
+!^   &                        tl_Awrk)
+!^
+      CALL ad_mp_exchange2d_bry (ng, tile, model, 1, ibry,              &
+     &                           LBij, UBij,                            &
+     &                           NghostPoints,                          &
+     &                           EWperiodic(ng), NSperiodic(ng),        &
+     &                           ad_A)
+#  endif
+!
+!  Adjoint of compute K-Laplacian.
+!
+      SELECT CASE (cgrid)
+!
+        CASE (r2dvar)                           ! 2D RHO-grid variables
+          IF (Lboundary(ibry)) THEN
+            IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
+              DO j=Jstr,Jend
+!^              tl_Awrk(j)=tl_Awrk(j)-                                  &
+!^   &                     Hfac(j)*(tl_FE(j+1)-tl_FE(j))
+!^
+                adfac=-Hfac(j)*ad_Awrk(j)
+                ad_FE(j  )=ad_FE(j  )-adfac
+                ad_FE(j+1)=ad_FE(j+1)+adfac
+              END DO
+            ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
+              DO i=Istr,Iend
+!^              tl_Awrk(i)=tl_Awrk(i)-                                  &
+!^   &                     Hfac(i)*(tl_FX(i+1)-tl_FX(i))
+!^
+                adfac=-Hfac(i)*ad_Awrk(i)
+                ad_FX(i  )=ad_FX(i  )-adfac
+                ad_FX(i+1)=ad_FX(i+1)+adfac
+              END DO
+            END IF
+          END IF
+!
+        CASE (u2dvar)                           ! 2D U-grid variables
+!
+          IF (Lboundary(ibry)) THEN
+            IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
+              DO j=Jstr,Jend
+!^              tl_Awrk(j)=tl_Awrk(j)-                                  &
+!^   &                     Hfac(j)*(tl_FE(j+1)-tl_FE(j))
+!^
+                adfac=-Hfac(j)*ad_Awrk(j)
+                ad_FE(j  )=ad_FE(j  )-adfac
+                ad_FE(j+1)=ad_FE(j+1)+adfac
+              END DO
+            ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
+              DO i=IstrU,Iend
+!^              tl_Awrk(i)=tl_Awrk(i)-                                  &
+!^   &                     Hfac(i)*(tl_FX(i)-tl_FX(i-1))
+!^
+                adfac=-Hfac(i)*ad_Awrk(i)
+                ad_FX(i-1)=ad_FX(i-1)-adfac
+                ad_FX(i  )=ad_FX(i  )+adfac
+              END DO
+            END IF
+          END IF
+!
+        CASE (v2dvar)                           ! 2D V-grid variables
+!
+          IF (Lboundary(ibry)) THEN
+            IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
+              DO j=JstrV,Jend
+!^              tl_Awrk(j)=tl_Awrk(j)-                                  &
+!^   &                     Hfac(j)*(tl_FE(j)-tl_FE(j-1))
+!^
+                adfac=-Hfac(j)*ad_Awrk(j)
+                ad_FE(j-1)=ad_FE(j-1)-adfac
+                ad_FE(j  )=ad_FE(j  )+adfac
+              END DO
+            ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
+              DO i=Istr,Iend
+!^              tl_Awrk(i)=tl_Awrk(i)-                                  &
+!^   &                     Hfac(i)*(tl_FX(i+1)-tl_FX(i))
+!^
+                adfac=-Hfac(i)*ad_Awrk(i)
+                ad_FX(i  )=ad_FX(i  )-adfac
+                ad_FX(i+1)=ad_FX(i+1)+adfac
+              END DO
+            END IF
+          END IF
+!
+      END SELECT
+!
+!  Adjoint of compute XI- or ETA-components of diffusive flux.
+!
+      SELECT CASE (cgrid)
+!
+        CASE (r2dvar)                           ! 2D RHO-grid variables
+          IF (Lboundary(ibry)) THEN
+            IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
+              i=BOUNDS(ng)%edge(ibry,r2dvar)
+              DO j=Jstr,Jend+1
+#  ifdef MASKING
+!^              tl_FE(j)=tl_FE(j)*GRID(ng)%vmask(i,j)
+!^
+                ad_FE(j)=ad_FE(j)*GRID(ng)%vmask(i,j)
+#  endif
+!^              tl_FE(j)=GRID(ng)%pnom_v(i,j)*                          &
+!^   &                   0.5_r8*(Khy(j-1)+Khy(j))*                      &
+!^   &                   (tl_Awrk(j)-tl_Awrk(j-1))
+!^
+                adfac=GRID(ng)%pnom_v(i,j)*                             &
+     &                0.5_r8*(Khy(j-1)+Khy(j))*ad_FE(j)
+                ad_Awrk(j-1)=ad_Awrk(j-1)-adfac
+                ad_Awrk(j  )=ad_Awrk(j  )+adfac
+                ad_FE(j)=0.0_r8
+              END DO
+            ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
+              j=BOUNDS(ng)%edge(ibry,r2dvar)
+              DO i=Istr,Iend+1
+#  ifdef MASKING
+!^              tl_FX(i)=tl_FX(i)*GRID(ng)%umask(i,j)
+!^
+                ad_FX(i)=ad_FX(i)*GRID(ng)%umask(i,j)
+#  endif
+!^              tl_FX(i)=GRID(ng)%pmon_u(i,j)*                          &
+!^   &                   0.5_r8*(Khx(i-1)+Khx(i))*                      &
+!^   &                   (tl_Awrk(i)-tl_Awrk(i-1))
+!^
+                adfac=GRID(ng)%pmon_u(i,j)*                             &
+     &                0.5_r8*(Khx(i-1)+Khx(i))*ad_FX(i)
+                ad_Awrk(i-1)=ad_Awrk(i-1)-adfac
+                ad_Awrk(i  )=ad_Awrk(i  )+adfac
+                ad_FX(i)=0.0_r8
+              END DO
+            END IF
+          END IF
+!
+        CASE (u2dvar)                           ! 2D U-grid variables
+!
+          IF (Lboundary(ibry)) THEN
+            IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
+              i=BOUNDS(ng)%edge(ibry,u2dvar)
+              DO j=Jstr,Jend+1
+#  ifdef MASKING
+!^              tl_FE(j)=tl_FE(j)*GRID(ng)%pmask(i,j)
+!^
+                ad_FE(j)=ad_FE(j)*GRID(ng)%pmask(i,j)
+#  endif
+!^              tl_FE(j)=GRID(ng)%pnom_p(i,j)*                          &
+!^   &                   0.5_r8*(Khy(j)+Khy(j-1))*                      &
+!^   &                   (tl_Awrk(j)-tl_Awrk(j-1))
+!^
+                adfac=GRID(ng)%pnom_p(i,j)*                             &
+     &                0.5_r8*(Khy(j)+Khy(j-1))*ad_FE(j)
+                ad_Awrk(j-1)=ad_Awrk(j-1)-adfac
+                ad_Awrk(j  )=ad_Awrk(j  )+adfac
+                ad_FE(j)=0.0_r8
+              END DO
+            ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
+              j=BOUNDS(ng)%edge(ibry,u2dvar)
+              DO i=IstrU-1,Iend
+!^              tl_FX(i)=GRID(ng)%pmon_r(i,j)*                          &
+!^   &                   Khx(i)*(tl_Awrk(i+1)-tl_Awrk(i))
+!^
+                adfac=GRID(ng)%pmon_r(i,j)*Khx(i)*ad_FX(i)
+                ad_Awrk(i  )=ad_Awrk(i  )-adfac
+                ad_Awrk(i+1)=ad_Awrk(i+1)+adfac
+                ad_FX(i)=0.0_r8
+              END DO
+            END IF
+          END IF
+!
+        CASE (v2dvar)                           ! 2D V-grid variables
+!
+          IF (Lboundary(ibry)) THEN
+            IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
+              i=BOUNDS(ng)%edge(ibry,v2dvar)
+              DO j=JstrV-1,Jend
+!^              tl_FE(j)=GRID(ng)%pnom_r(i,j)*                          &
+!^   &                   Khy(j)*(tl_Awrk(j+1)-tl_Awrk(j))
+!^
+                adfac=GRID(ng)%pnom_r(i,j)*Khy(j)*ad_FE(j)
+                ad_Awrk(j  )=ad_Awrk(j  )-adfac
+                ad_Awrk(j+1)=ad_Awrk(j+1)+adfac
+                ad_FE(j)=0.0_r8
+              END DO
+            ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
+              j=BOUNDS(ng)%edge(ibry,v2dvar)
+              DO i=Istr,Iend+1
+#  ifdef MASKING
+!^              tl_FX(i)=tl_FX(i)*GRID(ng)%pmask(i,j)
+!^
+                ad_FX(i)=ad_FX(i)*GRID(ng)%pmask(i,j)
+#  endif
+!^              tl_FX(i)=GRID(ng)%pmon_p(i,j)*                          &
+!^   &                   0.5_r8*(Khx(i-1)+Khx(i))*                      &
+!^   &                   (tl_Awrk(i)-tl_Awrk(i-1))
+!^
+                adfac=GRID(ng)%pmon_p(i,j)*                             &
+     &                0.5_r8*(Khx(i-1)+Khx(i))*ad_FX(i)
+                ad_Awrk(i-1)=ad_Awrk(i-1)-adfac
+                ad_Awrk(i  )=ad_Awrk(i  )+adfac
+                ad_FX(i)=0.0_r8
+              END DO
+            END IF
+          END IF
+!
+      END SELECT
+!
+!  Set adjoint operator initial conditions.
+!
+      IF (Lboundary(ibry)) THEN
+        IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
+          DO j=Jmin-1,Jmax+1
+!^          Awrk(j)=A(j)
+!^
+            tl_Awrk(j)=tl_A(j)
+          END DO
+        ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
+          DO i=Imin-1,Imax+1
+!^          Awrk(i)=A(i)
+!^
+            tl_Awrk(i)=tl_A(i)
+          END DO
+        END IF
+      END IF
+
+#  ifdef DISTRIBUTE
+!
+!^    CALL mp_exchange2d_bry (ng, tile, model, 1, ibry,                 &
+!^   &                        LBij, UBij,                               &
+!^   &                        NghostPoints,                             &
+!^   &                        EWperiodic(ng), NSperiodic(ng),           &
+!^   &                        tl_A)
+!^
+      CALL ad_mp_exchange2d_bry (ng, tile, model, 1, ibry,              &
+     &                           LBij, UBij,                            &
+     &                           NghostPoints,                          &
+     &                           EWperiodic(ng), NSperiodic(ng),        &
+     &                           ad_A)
+#  endif
+!
+      SELECT CASE (cgrid)
+        CASE (r2dvar)
+!^        CALL bc_r2d_bry_tile (ng, tile, ibry,                         &
+!^   &                          LBij, UBij,                             &
+!^   &                          tl_A)
+!^
+          CALL ad_bc_r2d_bry_tile (ng, tile, ibry,                      &
+     &                             LBij, UBij,                          &
+     &                             ad_A)
+        CASE (u2dvar)
+!^        CALL bc_u2d_bry_tile (ng, tile, ibry,                         &
+!^   &                          LBij, UBij,                             &
+!^   &                          tl_A)
+!^
+          CALL ad_bc_u2d_bry_tile (ng, tile, ibry,                      &
+     &                             LBij, UBij,                          &
+     &                             ad_A)
+        CASE (v2dvar)
+!^        CALL bc_v2d_bry_tile (ng, tile, ibry,                         &
+!^   &                          LBij, UBij,                             &
+!^   &                          tl_A)
+!^
+          CALL ad_bc_v2d_bry_tile (ng, tile, ibry,                      &
+     &                             LBij, UBij,                          &
+     &                             ad_A)
+      END SELECT
+!
+      RETURN
+      END SUBROUTINE ad_multiscale_Klap_b1d
+
+#  ifdef SOLVE3D
+!
+!-----------------------------------------------------------------------
+!  It computes the tangent linear K-Laplacian, [1 + Del(K*Del)], of
+!  lateral boundary conditions for a 3D control variable.
+!
+      SUBROUTINE tl_multiscale_Klap_b2d (self, ng, tile, model,         &
+     &                                   ifield, ibry, ctype, ms,       &
+     &                                   LBij, UBij,                    &
+     &                                   IminS, ImaxS, JminS, JmaxS,    &
+     &                                   tl_A)
+!
+      CLASS (multiscale), intent(inout) :: self      ! multiscale object
+      integer,            intent(in   ) :: ng        ! nested grid
+      integer,            intent(in   ) :: tile      ! domain partition
+      integer,            intent(in   ) :: model     ! kernel ID
+      integer,            intent(in   ) :: ifield    ! state field ID
+      integer,            intent(in   ) :: ibry      ! boundary ID
+      integer,            intent(in   ) :: ctype     ! C-grid type
+      integer,            intent(in   ) :: ms        ! multiscale index
+      integer,            intent(in   ) :: LBij, UBij
+      integer,            intent(in   ) :: IminS, ImaxS, JminS, JmaxS
+      real (r8),          intent(inout) :: tl_A(LBij:,:)
+!
+      logical, dimension(4)             :: Lboundary
+!
+      integer                           :: iLap, i, j, k
+      integer                           :: Istr, IstrU, Iend, Imin, Imax
+      integer                           :: Jstr, JstrV, Jend, Jmin, Jmax
+!
+      real (r8)                         :: cffx, cffy
+!
+      real (r8), dimension(LBij:UBij,N(ng))   :: tl_Awrk
+!
+      real (r8), dimension(LBij:UBij)         :: Hfac
+      real (r8), dimension(IminS:ImaxS)       :: Khx
+      real (r8), dimension(JminS:JmaxS)       :: Khy
+      real (r8), dimension(JminS:JmaxS)       :: tl_FE
+      real (r8), dimension(IminS:ImaxS)       :: tl_FX
+!
+!  Initialize.
+!
+      Istr =BOUNDS(ng)%Istr (tile)   ! tile computational indices
+      IstrU=BOUNDS(ng)%IstrU(tile)
+      Iend =BOUNDS(ng)%Iend (tile)
+      Jstr =BOUNDS(ng)%Jstr (tile)
+      JstrV=BOUNDS(ng)%JstrV(tile)
+      Jend =BOUNDS(ng)%Jend (tile)
+!
+      Imin=Istr
+      Imax=Iend
+      Jmin=Jstr
+      Jmax=Jend
+      SELECT CASE (ctype)
+        CASE (u2dvar)
+          Imin=IstrU
+        CASE (v2dvar)
+          Jmin=JstrV
+      END SELECT
+!
+      Lboundary(iwest )=DOMAIN(ng)%Western_Edge (tile)
+      Lboundary(ieast )=DOMAIN(ng)%Eastern_Edge (tile)
+      Lboundary(isouth)=DOMAIN(ng)%Southern_Edge(tile)
+      Lboundary(inorth)=DOMAIN(ng)%Northern_Edge(tile)
+!
+!  Assign contol variable isotropic or anisotropic correlation length
+!  scales.
+!
+      SELECT CASE (ifield)
+        CASE (isUvel, isVvel)
+          iLap=Mlap(ifield,ms,ng)
+        CASE (isTvar(itemp), isTvar(isalt))
+          iLap=Mlap(ifield,ms,ng)
+      END SELECT
+!
+!  Compute metrics factor.
+!
+      IF (Lboundary(ibry)) THEN
+        SELECT CASE (cgrid)
+           CASE (r3dvar)
+             IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
+               DO j=Jstr-1,Jend+1
+                 i=BOUNDS(ng)%edge(ibry,r2dvar)
+                 Hfac(j)=GRID(ng)%pm(i,j)*GRID(ng)%pn(i,j)
+               END DO
+             ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
+               DO i=Istr-1,Iend+1
+                 j=BOUNDS(ng)%edge(ibry,r2dvar)
+                 Hfac(i)=GRID(ng)%pm(i,j)*GRID(ng)%pn(i,j)
+               END DO
+             END IF
+           CASE (u3dvar)
+             IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
+               DO j=Jstr-1,Jend+1
+                 i=BOUNDS(ng)%edge(ibry,u2dvar)
+                 Hfac(j)=0.25_r8*(GRID(ng)%pm(i-1,j)+GRID(ng)%pm(i,j))* &
+     &                           (GRID(ng)%pn(i-1,j)+GRID(ng)%pn(i,j))
+               END DO
+             ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
+               DO i=IstrU-1,Iend+1
+                 j=BOUNDS(ng)%edge(ibry,u2dvar)
+                 Hfac(i)=0.25_r8*(GRID(ng)%pm(i-1,j)+GRID(ng)%pm(i,j))* &
+     &                           (GRID(ng)%pn(i-1,j)+GRID(ng)%pn(i,j))
+               END DO
+             END IF
+           CASE (v3dvar)
+             IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
+               DO j=JstrV-1,Jend+1
+                 i=BOUNDS(ng)%edge(ibry,v2dvar)
+                 Hfac(j)=0.25_r8*(GRID(ng)%pm(i,j-1)+GRID(ng)%pm(i,j))* &
+     &                           (GRID(ng)%pn(i,j-1)+GRID(ng)%pn(i,j))
+               END DO
+             ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
+               DO i=Istr-1,Iend+1
+                 j=BOUNDS(ng)%edge(ibry,v2dvar)
+                 Hfac(i)=0.25_r8*(GRID(ng)%pm(i,j-1)+GRID(ng)%pm(i,j))* &
+     &                           (GRID(ng)%pn(i,j-1)+GRID(ng)%pn(i,j))
+               END DO
+             END IF
+        END SELECT
+      END IF
+!
+!  Set horizontal diffusion coefficients (Khx, Khy) with units of
+!  correlation length squared.
+!
+      SELECT CASE (ibry)
+        CASE (iwest, ieast)
+          DO j=Jmin-1,Jmax+1
+            cffy=HdecayB(ifield,ms,ibry,ng)*HdecayB(ifield,ms,ibry,ng)
+            Khy(j)=cffy/REAL(2*iLap-3,r8)
+          END DO
+        CASE (isouth, inorth)
+          DO i=Imin-1,Imax+1
+            cffx=HdecayB(ifield,ms,ibry,ng)*HdecayB(ifield,ms,ibry,ng)
+            Khx(i)=cffx/REAL(2*iLap-3,r8)
+          END DO
+      END SELECT
+!
+!  Set operator initial conditions.
+!
+      SELECT CASE (cgrid)
+        CASE (r3dvar)
+!^        CALL bc_r3d_bry_tile (ng, tile, ibry,                         &
+!^   &                          LBij, UBij, 1, N(ng),                   &
+!^   &                          A)
+!^
+          CALL bc_r3d_bry_tile (ng, tile, ibry,                         &
+     &                          LBij, UBij, 1, N(ng),                   &
+     &                          tl_A)
+        CASE (u3dvar)
+!^        CALL bc_u3d_bry_tile (ng, tile, ibry,                         &
+!^   &                          LBij, UBij, 1, N(ng),                   &
+!^   &                          A)
+!^
+          CALL bc_u3d_bry_tile (ng, tile, ibry,                         &
+     &                          LBij, UBij, 1, N(ng),                   &
+     &                          tl_A)
+        CASE (v3dvar)
+!^        CALL bc_u3d_bry_tile (ng, tile, ibry,                         &
+!^   &                          LBij, UBij, 1, N(ng),                   &
+!^   &                          A)
+!^
+          CALL bc_v3d_bry_tile (ng, tile, ibry,                         &
+     &                          LBij, UBij, 1, N(ng),                   &
+     &                          tl_A)
+      END SELECT
+!
+#   ifdef DISTRIBUTE
+!
+!^    CALL mp_exchange3d_bry (ng, tile, model, 1, ibry,                 &
+!^   &                        LBij, UBij, 1, N(ng),                     &
+!^   &                        NghostPoints,                             &
+!^   &                        EWperiodic(ng), NSperiodic(ng),           &
+!^   &                        A)
+!^
+      CALL mp_exchange3d_bry (ng, tile, model, 1, ibry,                 &
+     &                        LBij, UBij, 1, N(ng),                     &
+     &                        NghostPoints,                             &
+     &                        EWperiodic(ng), NSperiodic(ng),           &
+     &                        tl_A)
+#   endif
+!
+      IF (Lboundary(ibry)) THEN
+        IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN 
+          DO k=1,N(ng)
+           DO j=Jmin-1,Jmax+1
+!^            Awrk(j,k)=A(j,k)
+!^
+              tl_Awrk(j,k)=tl_A(j,k)
+            END DO
+          END DO
+        ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
+          DO k=1,N(ng)
+            DO i=Imin-1,Imax+1
+!^            Awrk(i,k)=A(i,k)
+!^
+              tl_Awrk(i,k)=tl_A(i,k)
+            END DO
+          END DO
+        END IF
+      END IF
+!
+!  Compute XI- or ETA-components of diffusive flux.
+!
+      SELECT CASE (cgrid)
+!
+        CASE (r3dvar)                           ! 3D RHO-grid variables
+          IF (Lboundary(ibry)) THEN
+            IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
+              i=BOUNDS(ng)%edge(ibry,r2dvar)
+              DO k=1,N(ng)
+                DO j=Jstr,Jend+1
+!^                FE(j,k)=GRID(ng)%pnom_v(i,j)*                         &
+!^   &                    0.5_r8*(Khy(j-1)+Khy(j))*                     &
+!^   &                    (Awrk(j,k)-Awrk(j-1,k))
+!^
+                  tl_FE(j,k)=GRID(ng)%pnom_v(i,j)*                      &
+     &                       0.5_r8*(Khy(j-1)+Khy(j))*                  &
+     &                       (tl_Awrk(j,k)-tl_Awrk(j-1,k))
+#   ifdef MASKING
+!^                FE(j,k)=FE(j,k)*GRID(ng)%vmask(i,j)
+!^
+                  tl_FE(j,k)=tl_FE(j,k)*GRID(ng)%vmask(i,j)
+#   endif
+                END DO
+              END DO
+            ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
+              j=BOUNDS(ng)%edge(ibry,r2dvar)
+              DO k=1,N(ng)
+                DO i=Istr,Iend+1
+!^                FX(i,k)=GRID(ng)%pmon_u(i,j)*                         &
+!^                        0.5_r8*(Khx(i-1)+Khx(i))*                     &
+!^   &                    (Awrk(i,k)-Awrk(i-1,k))
+!^
+                  tl_FX(i,k)=GRID(ng)%pmon_u(i,j)*                      &
+     &                       0.5_r8*(Khx(i-1)+Khx(i))*                  &
+     &                       (tl_Awrk(i,k)-tl_Awrk(i-1,k))
+#   ifdef MASKING
+!^                FX(i,k)=FX(i,k)*GRID%umask(i,j)
+!^
+                  tl_FX(i,k)=tl_FX(i,k)*GRID(ng)%umask(i,j)
+#   endif
+                END DO
+              END DO
+            END IF
+          END IF
+!
+        CASE (u3dvar)                           ! 3D U-grid variables
+!
+          IF (Lboundary(ibry)) THEN
+            IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
+              i=BOUNDS(ng)%edge(ibry,u2dvar)
+              DO k=1,N(ng)
+                DO j=Jstr,Jend+1
+!^                FE(j,k)=GRID(ng)%pnom_p(i,j)*                         &
+!^   &                    0.5_r8*(Khy(j)+Khy(j-1))*                     &
+!^   &                    (Awrk(j,k)-Awrk(j-1,k))
+!^
+                  tl_FE(j,k)=GRID(ng)%pnom_p(i,j)*                      &
+     &                       0.5_r8*(Khy(j)+Khy(j-1))*                  &
+     &                       (tl_Awrk(j,k)-tl_Awrk(j-1,k))
+#   ifdef MASKING
+!^                FE(j,k)=FE(j,k)*GRID(ng)%pmask(i,j)
+!^
+                  tl_FE(j,k)=tl_FE(j,k)*GRID(ng)%pmask(i,j)
+#   endif
+                END DO
+              END DO
+            ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
+              j=BOUNDS(ng)%edge(ibry,u2dvar)
+              DO k=1,N(ng)
+                DO i=IstrU-1,Iend
+!^                FX(i,k)=GRID(ng)%pmon_r(i,j)*                         &
+!^   &                    Khx(i)*(Awrk(i+1,k)-Awrk(i,k))
+!^
+                  tl_FX(i,k)=GRID(ng)%pmon_r(i,j)*                      &
+     &                       Khx(i)*(tl_Awrk(i+1,k)-tl_Awrk(i,k))
+                END DO
+              END DO
+            END IF
+          END IF
+!
+        CASE (v3dvar)                           ! 3D V-grid variables
+!
+          IF (Lboundary(ibry)) THEN
+            IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
+              i=BOUNDS(ng)%edge(ibry,v2dvar)
+              DO k=1,N(ng)
+                DO j=JstrV-1,Jend
+!^                FE(j,k)=GRID(ng)%pnom_r(i,j)*                         &
+!^   &                    Khy(j)*(Awrk(j+1,k)-Awrk(j,k))
+!^
+                  tl_FE(j,k)=GRID(ng)%pnom_r(i,j)*                      &
+     &                       Khy(j)*(tl_Awrk(j+1,k)-tl_Awrk(j,k))
+                END DO
+              END DO
+            ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
+              j=BOUNDS(ng)%edge(ibry,v2dvar)
+              DO k=1,N(ng)
+                DO i=Istr,Iend+1
+!^                FX(i,k)=GRID(ng)%pmon_p(i,j)*                         &
+!^   &                    0.5_r8*(Khx(i-1)+Khx(i))*                     &
+!^   &                    (Awrk(i,k)-Awrk(i-1,k))
+!^
+                  tl_FX(i,k)=GRID(ng)%pmon_p(i,j)*                      &
+     &                       0.5_r8*(Khx(i-1)+Khx(i))*                  &
+     &                       (tl_Awrk(i,k)-tl_Awrk(i-1,k))
+#   ifdef MASKING
+!^                FX(i,k)=FX(i,k)*GRID(ng)*pmask(i,j)
+!^
+                  tl_FX(i,k)=tl_FX(i,k)*GRID(ng)%pmask(i,j)
+#   endif
+              END DO
+            END DO
+          END IF
+        END IF
+!
+      END SELECT
+!
+!  Compute K-Laplacian.
+!
+      SELECT CASE (cgrid)
+!
+        CASE (r3dvar)                           ! 3D RHO-grid variables
+          IF (Lboundary(ibry)) THEN
+            IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
+              DO k=1,N(ng)
+                DO j=Jstr,Jend
+!^                Awrk(j,k)=Awrk(j,k)-                                  &
+!^   &                      Hfac(j)*(FE(j+1,k)-FE(j,k))
+!^
+                  tl_Awrk(j,k)=tl_Awrk(j,k)-                            &
+     &                         Hfac(j)*(tl_FE(j+1,k)-tl_FE(j,k))
+                END DO
+              END DO
+            ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
+              DO k=1,N(ng)
+                DO i=Istr,Iend
+!^                Awrk(i,k)=Awrk(i,k)-                                  &
+!^   &                      Hfac(i)*(FX(i+1,k)-FX(i,k))
+!^
+                  tl_Awrk(i,k)=tl_Awrk(i,k)-                            &
+     &                         Hfac(i)*(tl_FX(i+1,k)-tl_FX(i,k))
+                END DO
+              END DO
+            END IF
+          END IF
+!
+        CASE (u3dvar)                           ! 3D U-grid variables
+!
+          IF (Lboundary(ibry)) THEN
+            IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
+              DO k=1,N(ng)
+                DO j=Jstr,Jend
+!^                Awrk(j,k)=Awrk(j,k)-                                  &
+!^   &                      Hfac(j)*(FE(j+1,k)-FE(j,k))
+!^
+                  tl_Awrk(j,k)=tl_Awrk(j,k)-                            &
+     &                         Hfac(j)*(tl_FE(j+1,k)-tl_FE(j,k))
+                END DO
+              END DO
+            ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
+              DO k=1,N(ng)
+                DO i=IstrU,Iend
+!^                Awrk(i,k)=Awrk(i,k)-                                  &
+!^   &                      Hfac(i)*(FX(i,k)-FX(i-1,k))
+!^
+                  tl_Awrk(i,k)=tl_Awrk(i,k)-                            &
+     &                         Hfac(i)*(tl_FX(i,k)-tl_FX(i-1,k))
+                END DO
+              END DO
+            END IF
+          END IF
+!
+        CASE (v3dvar)                           ! 3D V-grid variables
+!
+          IF (Lboundary(ibry)) THEN
+            IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
+              DO k=1,N(ng)
+                DO j=JstrV,Jend
+!^                Awrk(j,k)=Awrk(j,k)-                                  &
+!^   &                      Hfac(j)*(FE(j,k)-FE(j-1,k))
+!^
+                  tl_Awrk(j,k)=tl_Awrk(j,k)-                            &
+     &                         Hfac(j)*(tl_FE(j,k)-tl_FE(j-1,k))
+                END DO
+              END DO
+            ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
+              DO k=1,N(ng)
+                DO i=Istr,Iend
+!^                Awrk(i,k)=Awrk(i,k)-                                  &
+!^   &                      Hfac(i)*(FX(i+1,k)-FX(i,k))
+!^
+                  tl_Awrk(i,k)=tl_Awrk(i,k)-                            &
+     &                         Hfac(i)*(tl_FX(i+1,k)-tl_FX(i,k))
+                END DO
+              END DO
+            END IF
+          END IF
+!
+      END SELECT
+
+#   ifdef DISTRIBUTE
+!
+!  Exchange boundary data.
+!
+!^    CALL mp_exchange3d_bry (ng, tile, model, 1, ibry,                 &
+!^   &                        LBij, UBij, 1, N(ng),                     &
+!^   &                        NghostPoints,                             &
+!^   &                        EWperiodic(ng), NSperiodic(ng),           &
+!^   &                        Awrk)
+!^
+      CALL mp_exchange3d_bry (ng, tile, model, 1, ibry,                 &
+     &                        LBij, UBij, 1, N(ng),                     &
+     &                        NghostPoints,                             &
+     &                        EWperiodic(ng), NSperiodic(ng),           &
+     &                        tl_Awrk)
+#   endif
+!
+!  Load K-Laplacian solution.
+!
+      IF (Lboundary(ibry)) THEN
+        IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
+          DO k=1,N(ng)
+            DO j=Jmin,Jmax
+!^            A(j,k)=Awrk(j,k)
+!^
+              tl_A(j,k)=tl_Awrk(j,k)
+            END DO
+          END DO
+        ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
+          DO k=1,N(ng)
+            DO i=Imin,Imax
+!^            A(i,k)=Awrk(i,k)
+!^
+              tl_A(i,k)=tl_Awrk(i,k)
+            END DO
+          END DO
+        END IF
+      END IF
+!
+      RETURN
+      END SUBROUTINE tl_multiscale_Klap_b2d
+!
+!-----------------------------------------------------------------------
+!  It computes the adjoint K-Laplacian, [1 + Del(K*Del)], of lateral
+!  boundary conditions for a 2D control variable.
+!
+      SUBROUTINE ad_multiscale_Klap_b2d (self, ng, tile, model,         &
+     &                                   ifield, ibry, ctype, ms,       &
+     &                                   LBij, UBij,                    &
+     &                                   IminS, ImaxS, JminS, JmaxS,    &
+     &                                   ad_A)
+!
+      CLASS (multiscale), intent(inout) :: self      ! multiscale object
+      integer,            intent(in   ) :: ng        ! nested grid
+      integer,            intent(in   ) :: tile      ! domain partition
+      integer,            intent(in   ) :: model     ! kernel ID
+      integer,            intent(in   ) :: ibry      ! boundary ID
+      integer,            intent(in   ) :: ifield    ! state field ID
+      integer,            intent(in   ) :: ctype     ! C-grid type
+      integer,            intent(in   ) :: ms        ! multiscale index
+      integer,            intent(in   ) :: LBij, UBij
+      integer,            intent(in   ) :: IminS, ImaxS, JminS, JmaxS
+      real (r8),          intent(inout) :: ad_A(LBij:,:)
+!
+      logical, dimension(4)             :: Lboundary
+!
+      integer                           :: iLap, i, j, k
+      integer                           :: Istr, IstrU, Iend, Imin, Imax
+      integer                           :: Jstr, JstrV, Jend, Jmin, Jmax
+!
+      real (r8)                         :: adfac, cffx, cffy
+!
+      real (r8), dimension(LBij:UBij,N(ng))   :: ad_Awrk
+!
+      real (r8), dimension(LBij:UBij)         :: Hfac
+      real (r8), dimension(IminS:ImaxS)       :: Khx
+      real (r8), dimension(JminS:JmaxS)       :: Khy
+      real (r8), dimension(JminS:JmaxS,N(ng)) :: ad_FE
+      real (r8), dimension(IminS:ImaxS,N(ng)) :: ad_FX
+!
+!  Initialize.
+!
+      Istr =BOUNDS(ng)%Istr (tile)   ! tile computational indices
+      IstrU=BOUNDS(ng)%IstrU(tile)
+      Iend =BOUNDS(ng)%Iend (tile)
+      Jstr =BOUNDS(ng)%Jstr (tile)
+      JstrV=BOUNDS(ng)%JstrV(tile)
+      Jend =BOUNDS(ng)%Jend (tile)
+!
+      Imin=Istr
+      Imax=Iend
+      Jmin=Jstr
+      Jmax=Jend
+      SELECT CASE (ctype)
+        CASE (u3dvar)
+          Imin=IstrU
+        CASE (v3dvar)
+          Jmin=JstrV
+      END SELECT
+!
+      Lboundary(iwest )=DOMAIN(ng)%Western_Edge (tile)
+      Lboundary(ieast )=DOMAIN(ng)%Eastern_Edge (tile)
+      Lboundary(isouth)=DOMAIN(ng)%Southern_Edge(tile)
+      Lboundary(inorth)=DOMAIN(ng)%Northern_Edge(tile)
+!
+!  Assign contol variable isotropic or anisotropic correlation length
+!  scales.
+!
+      SELECT CASE (ifield)
+        CASE (isUvel, isVvel)
+          iLap=Mlap(ifield,ms,ng)
+        CASE (isTvar(itemp), isTvar(isalt))
+          iLap=Mlap(ifield,ms,ng)
+      END SELECT
+!
+!  Compute metrics factor.
+!
+      IF (Lboundary(ibry)) THEN
+        SELECT CASE (cgrid)
+           CASE (r3dvar)
+             IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
+               DO j=Jstr-1,Jend+1
+                 i=BOUNDS(ng)%edge(ibry,r2dvar)
+                 Hfac(j)=GRID(ng)%pm(i,j)*GRID(ng)%pn(i,j)
+               END DO
+             ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
+               DO i=Istr-1,Iend+1
+                 j=BOUNDS(ng)%edge(ibry,r2dvar)
+                 Hfac(i)=GRID(ng)%pm(i,j)*GRID(ng)%pn(i,j)
+               END DO
+             END IF
+           CASE (u3dvar)
+             IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
+               DO j=Jstr-1,Jend+1
+                 i=BOUNDS(ng)%edge(ibry,u2dvar)
+                 Hfac(j)=0.25_r8*(GRID(ng)%pm(i-1,j)+GRID(ng)%pm(i,j))* &
+     &                           (GRID(ng)%pn(i-1,j)+GRID(ng)%pn(i,j))
+               END DO
+             ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
+               DO i=IstrU-1,Iend+1
+                 j=BOUNDS(ng)%edge(ibry,u2dvar)
+                 Hfac(i)=0.25_r8*(GRID(ng)%pm(i-1,j)+GRID(ng)%pm(i,j))* &
+     &                           (GRID(ng)%pn(i-1,j)+GRID(ng)%pn(i,j))
+               END DO
+             END IF
+           CASE (v3dvar)
+             IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
+               DO j=JstrV-1,Jend+1
+                 i=BOUNDS(ng)%edge(ibry,v2dvar)
+                 Hfac(j)=0.25_r8*(GRID(ng)%pm(i,j-1)+GRID(ng)%pm(i,j))* &
+     &                           (GRID(ng)%pn(i,j-1)+GRID(ng)%pn(i,j))
+               END DO
+             ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
+               DO i=Istr-1,Iend+1
+                 j=BOUNDS(ng)%edge(ibry,v2dvar)
+                 Hfac(i)=0.25_r8*(GRID(ng)%pm(i,j-1)+GRID(ng)%pm(i,j))* &
+     &                           (GRID(ng)%pn(i,j-1)+GRID(ng)%pn(i,j))
+               END DO
+             END IF
+        END SELECT
+      END IF
+!
+!  Set horizontal diffusion coefficients (Khx, Khy) with units of
+!  correlation length squared.
+!
+      SELECT CASE (ibry)
+        CASE (iwest, ieast)
+          DO j=Jmin-1,Jmax+1
+            cffy=HdecayB(ifield,ms,ibry,ng)*HdecayB(ifield,ms,ibry,ng)
+            Khy(j)=cffy/REAL(2*iLap-3,r8)
+          END DO
+        CASE (isouth, inorth)
+          DO i=Imin-1,Imax+1
+            cffx=HdecayB(ifield,ms,ibry,ng)*HdecayB(ifield,ms,ibry,ng)
+            Khx(i)=cffx/REAL(2*iLap-3,r8)
+          END DO
+      END SELECT
+!
+!  Load K-Laplacian solution.
+!
+      IF (Lboundary(ibry)) THEN
+        IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
+          DO k=1,N(ng)
+            DO j=Jmin,Jmax
+!^            tl_A(j,k)=tl_Awrk(j,k)
+!^
+              ad_Awrk(j,k)=ad_Awrk(j,k)+ad_A(j,k)
+              ad_A(j,k)=0.0_r8
+            END DO
+          END DO
+        ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
+          DO k=1,N(ng)
+            DO i=Imin,Imax
+!^            tl_A(i,k)=tl_Awrk(i,k)
+!^
+              ad_Awrk(i,k)=ad_Awrk(i,k)+ad_A(i,k)
+              ad_A(i,k)=0.0_r8
+            END DO
+          END DO
+        END IF
+      END IF
+
+#   ifdef DISTRIBUTE
+!
+!  Adjoint of exchange boundary data.
+!
+!^    CALL mp_exchange3d_bry (ng, tile, model, 1, ibry,                 &
+!^   &                        LBij, UBij, 1, N(ng),                     &
+!^   &                        NghostPoints,                             &
+!^   &                        EWperiodic(ng), NSperiodic(ng),           &
+!^   &                        tl_Awrk)
+!^
+      CALL ad_mp_exchange3d_bry (ng, tile, model, 1, ibry,              &
+     &                           LBij, UBij, 1, N(ng),                  &
+     &                           NghostPoints,                          &
+     &                           EWperiodic(ng), NSperiodic(ng),        &
+     &                           ad_A)
+#   endif
+!
+!  Adjoint of compute K-Laplacian.
+!
+      SELECT CASE (cgrid)
+!
+        CASE (r3dvar)                           ! 3D RHO-grid variables
+          IF (Lboundary(ibry)) THEN
+            IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
+              DO k=1,N(ng)
+                DO j=Jstr,Jend
+!^                tl_Awrk(j,k)=tl_Awrk(j,k)-                            &
+!^   &                         Hfac(j)*(tl_FE(j+1,k)-tl_FE(j,k))
+!^
+                  adfac=-Hfac(j)*ad_Awrk(j,k)
+                  ad_FE(j  ,k)=ad_FE(j  ,k)-adfac
+                  ad_FE(j+1,k)=ad_FE(j+1,k)+adfac
+                END DO
+              END DO
+            ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
+              DO k=1,N(ng)
+                DO i=Istr,Iend
+!^                tl_Awrk(i,k)=tl_Awrk(i,k)-                            &
+!^   &                         Hfac(i)*(tl_FX(i+1,k)-tl_FX(i,k))
+!^
+                  adfac=-Hfac(i)*ad_Awrk(i,k)
+                  ad_FX(i  ,k)=ad_FX(i  ,k)-adfac
+                  ad_FX(i+1,k)=ad_FX(i+1,k)+adfac
+                END DO
+              END DO
+            END IF
+          END IF
+!
+        CASE (u3dvar)                           ! 3D U-grid variables
+!
+          IF (Lboundary(ibry)) THEN
+            IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
+              DO k=1,N(ng)
+                DO j=Jstr,Jend
+!^                tl_Awrk(j,k)=tl_Awrk(j,k)-                            &
+!^   &                         Hfac(j)*(tl_FE(j+1,k)-tl_FE(j,k))
+!^
+                  adfac=-Hfac(j)*ad_Awrk(j,k)
+                  ad_FE(j  ,k)=ad_FE(j  ,k)-adfac
+                  ad_FE(j+1,k)=ad_FE(j+1,k)+adfac
+                END DO
+              END DO
+            ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
+              DO k=1,N(ng)
+                DO i=IstrU,Iend
+!^                tl_Awrk(i,k)=tl_Awrk(i,k)-                            &
+!^   &                         Hfac(i)*(tl_FX(i,k)-tl_FX(i-1,k))
+!^
+                  adfac=-Hfac(i)*ad_Awrk(i,k)
+                  ad_FX(i-1,k)=ad_FX(i-1,k)-adfac
+                  ad_FX(i  ,k)=ad_FX(i  ,k)+adfac
+                END DO
+              END DO
+            END IF
+          END IF
+!
+        CASE (v3dvar)                           ! 3D V-grid variables
+!
+          IF (Lboundary(ibry)) THEN
+            IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
+              DO k=1,N(ng)
+                DO j=JstrV,Jend
+!^                tl_Awrk(j,k)=tl_Awrk(j,k)-                            &
+!^   &                         Hfac(j)*(tl_FE(j,k)-tl_FE(j-1,k))
+!^
+                  adfac=-Hfac(j)*ad_Awrk(j,k)
+                  ad_FE(j-1,k)=ad_FE(j-1,k)-adfac
+                  ad_FE(j  ,k)=ad_FE(j  ,k)+adfac
+                END DO
+              END DO
+            ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
+              DO k=1,N(ng)
+                DO i=Istr,Iend
+!^                tl_Awrk(i,k)=tl_Awrk(i,k)-                            &
+!^   &                         Hfac(i)*(tl_FX(i+1,k)-tl_FX(i,k))
+!^
+                  adfac=-Hfac(i)*ad_Awrk(i,k)
+                  ad_FX(i  ,k)=ad_FX(i  ,k)-adfac
+                  ad_FX(i+1,k)=ad_FX(i+1,k)+adfac
+                END DO
+              END DO
+            END IF
+          END IF
+!
+      END SELECT
+!
+!  Adjoint of compute XI- or ETA-components of diffusive flux.
+!
+      SELECT CASE (cgrid)
+!
+        CASE (r3dvar)                           ! 3D RHO-grid variables
+          IF (Lboundary(ibry)) THEN
+            IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
+              i=BOUNDS(ng)%edge(ibry,r2dvar)
+              DO k=1,N(ng)
+                DO j=Jstr,Jend+1
+#   ifdef MASKING
+!^                tl_FE(j,k)=tl_FE(j,k)*GRID(ng)%vmask(i,j)
+!^
+                  ad_FE(j,k)=ad_FE(j,k)*GRID(ng)%vmask(i,j)
+#   endif
+!^                tl_FE(j,k)=GRID(ng)%pnom_v(i,j)*                      &
+!^   &                       0.5_r8*(Khy(j-1)+Khy(j))*                  &
+!^   &                       (tl_Awrk(j,k)-tl_Awrk(j-1,k))
+!^
+                  adfac=GRID(ng)%pnom_v(i,j)*                           &
+     &                  0.5_r8*(Khy(j-1)+Khy(j))*ad_FE(j,k)
+                  ad_Awrk(j-1,k)=ad_Awrk(j-1,k)-adfac
+                  ad_Awrk(j  ,k)=ad_Awrk(j  ,k)+adfac
+                  ad_FE(j,k)=0.0_r8
+                END DO
+              END DO
+            ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
+              j=BOUNDS(ng)%edge(ibry,r2dvar)
+              DO k=1,N(ng)
+                DO i=Istr,Iend+1
+#   ifdef MASKING
+!^                tl_FX(i,k)=tl_FX(i,k)*GRID(ng)%umask(i,j)
+!^
+                  ad_FX(i,k)=ad_FX(i,k)*GRID(ng)%umask(i,j)
+#   endif
+!^                tl_FX(i,k)=GRID(ng)%pmon_u(i,j)*                      &
+!^   &                       0.5_r8*(Khx(i-1)+Khx(i))*                  &
+!^   &                       (tl_Awrk(i,k)-tl_Awrk(i-1,k))
+!^
+                  adfac=GRID(ng)%pmon_u(i,j)*                           &
+     &                  0.5_r8*(Khx(i-1)+Khx(i))*ad_FX(i,k)
+                  ad_Awrk(i-1,k)=ad_Awrk(i-1,k)-adfac
+                  ad_Awrk(i  ,k)=ad_Awrk(i  ,k)+adfac
+                  ad_FX(i,k)=0.0_r8
+                END DO
+              END DO
+            END IF
+          END IF
+!
+        CASE (u3dvar)                           ! 3D U-grid variables
+!
+          IF (Lboundary(ibry)) THEN
+            IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
+              i=BOUNDS(ng)%edge(ibry,u2dvar)
+              DO k=1,N(ng)
+                DO j=Jstr,Jend+1
+#   ifdef MASKING
+!^                tl_FE(j,k)=tl_FE(j,k)*GRID(ng)%pmask(i,j)
+!^
+                  ad_FE(j,k)=ad_FE(j,k)*GRID(ng)%pmask(i,j)
+#   endif
+!^                tl_FE(j,k)=GRID(ng)%pnom_p(i,j)*                      &
+!^   &                       0.5_r8*(Khy(j)+Khy(j-1))*                  &
+!^   &                       (tl_Awrk(j,k)-tl_Awrk(j-1,k))
+!^
+                  adfac=GRID(ng)%pnom_p(i,j)*                           &
+     &                  0.5_r8*(Khy(j)+Khy(j-1))*ad_FE(j,k)
+                  ad_Awrk(j-1,k)=ad_Awrk(j-1,k)-adfac
+                  ad_Awrk(j  ,k)=ad_Awrk(j  ,k)+adfac
+                  ad_FE(j,k)=0.0_r8
+                END DO
+              END DO
+            ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
+              j=BOUNDS(ng)%edge(ibry,u2dvar)
+              DO k=1,N(ng)
+                DO i=IstrU-1,Iend
+!^                tl_FX(i,k)=GRID(ng)%pmon_r(i,j)*                      &
+!^   &                       Khx(i)*(tl_Awrk(i+1,k)-tl_Awrk(i,k))
+!^
+                  adfac=GRID(ng)%pmon_r(i,j)*Khx(i)*ad_FX(i,k)
+                  ad_Awrk(i  ,k)=ad_Awrk(i  ,k)-adfac
+                  ad_Awrk(i+1,k)=ad_Awrk(i+1,k)+adfac
+                  ad_FX(i,k)=0.0_r8
+                END DO
+              END DO
+            END IF
+          END IF
+!
+        CASE (v3dvar)                           ! 3D V-grid variables
+!
+          IF (Lboundary(ibry)) THEN
+            IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
+              i=BOUNDS(ng)%edge(ibry,v2dvar)
+              DO k=1,N(ng)
+                DO j=JstrV-1,Jend
+!^                tl_FE(j,k)=GRID(ng)%pnom_r(i,j)*                      &
+!^   &                       Khy(j)*(tl_Awrk(j+1,k)-tl_Awrk(j,k))
+!^
+                  adfac=GRID(ng)%pnom_r(i,j)*Khy(j)*ad_FE(j,k)
+                  ad_Awrk(j  ,k)=ad_Awrk(j  ,k)-adfac
+                  ad_Awrk(j+1,k)=ad_Awrk(j+1,k)+adfac
+                  ad_FE(j,k)=0.0_r8
+                END DO
+              END DO
+            ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
+              j=BOUNDS(ng)%edge(ibry,v2dvar)
+              DO k=1,N(ng)
+                DO i=Istr,Iend+1
+#   ifdef MASKING
+!^                tl_FX(i,k)=tl_FX(i,k)*GRID(ng)%pmask(i,j)
+!^
+                  ad_FX(i,k)=ad_FX(i,k)*GRID(ng)%pmask(i,j)
+#   endif
+!^                tl_FX(i,k)=GRID(ng)%pmon_p(i,j)*                      &
+!^   &                       0.5_r8*(Khx(i-1)+Khx(i))*                  &
+!^   &                       (tl_Awrk(i,k)-tl_Awrk(i-1,k))
+!^
+                  adfac=GRID(ng)%pmon_p(i,j)*                           &
+     &                  0.5_r8*(Khx(i-1)+Khx(i))*ad_FX(i,k)
+                  ad_Awrk(i-1,k)=ad_Awrk(i-1,k)-adfac
+                  ad_Awrk(i  ,k)=ad_Awrk(i  ,k)+adfac
+                  ad_FX(i,k)=0.0_r8
+                END DO
+              END DO
+            END IF
+          END IF
+!
+      END SELECT
+!
+!  Set adjoint operator initial conditions.
+!
+      IF (Lboundary(ibry)) THEN
+        IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
+          DO k=1,N(ng)
+            DO j=Jmin-1,Jmax+1
+!^            Awrk(j,k)=A(j,k)
+!^
+              tl_Awrk(j,k)=tl_A(j,k)
+            END DO
+          END DO
+        ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
+          DO k=1,N(ng)
+            DO i=Imin-1,Imax+1
+!^            Awrk(i,k)=A(i,k)
+!^
+              tl_Awrk(i,k)=tl_A(i,k)
+            END DO
+          END DO
+        END IF
+      END IF
+
+#   ifdef DISTRIBUTE
+!
+!^    CALL mp_exchange3d_bry (ng, tile, model, 1, ibry,                 &
+!^   &                        LBij, UBij, 1, N(ng),                     &
+!^   &                        NghostPoints,                             &
+!^   &                        EWperiodic(ng), NSperiodic(ng),           &
+!^   &                        tl_A)
+!^
+      CALL ad_mp_exchange3d_bry (ng, tile, model, 1, ibry,              &
+     &                           LBij, UBij, 1, N(ng),                  &
+     &                           NghostPoints,                          &
+     &                           EWperiodic(ng), NSperiodic(ng),        &
+     &                           ad_A)
+#   endif
+!
+      SELECT CASE (cgrid)
+        CASE (r3dvar)
+!^        CALL bc_r3d_bry_tile (ng, tile, ibry,                         &
+!^   &                          LBij, UBij, 1, N(ng),                   &
+!^   &                          tl_A)
+!^
+          CALL ad_bc_r3d_bry_tile (ng, tile, ibry,                      &
+     &                             LBij, UBij, 1, N(ng),                &
+     &                             ad_A)
+        CASE (u3dvar)
+!^        CALL bc_u3d_bry_tile (ng, tile, ibry,                         &
+!^   &                          LBij, UBij, 1, N(ng),                   &
+!^   &                          tl_A)
+!^
+          CALL ad_bc_u3d_bry_tile (ng, tile, ibry,                      &
+     &                             LBij, UBij, 1, N(ng),                &
+     &                             ad_A)
+        CASE (v3dvar)
+!^        CALL bc_v3d_bry_tile (ng, tile, ibry,                         &
+!^   &                          LBij, UBij, 1, N(ng),                   &
+!^   &                          tl_A)
+!^
+          CALL ad_bc_v3d_bry_tile (ng, tile, ibry,                      &
+     &                             LBij, UBij, 1, N(ng),                &
+     &                             ad_A)
+      END SELECT
+!
+      RETURN
+      END SUBROUTINE ad_multiscale_Klap_b2d
+#  endif
 # endif
 #endif
       END MODULE roms_Klaplacian_mod

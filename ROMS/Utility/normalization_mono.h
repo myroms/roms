@@ -3338,9 +3338,9 @@
      &                              NRM(ifile,ng)%pioVar(idTsur(itrc)), &
      &                              NRM(ifile,ng)%Rindex,               &
      &                                 ioDesc,                          &
-#  ifdef MASKING
+#   ifdef MASKING
      &                                 rmask,                           &
-#  endif
+#   endif
      &                                 HnormSTF(:,:,itrc))
 #  endif
               END SELECT
@@ -5771,7 +5771,7 @@
 # endif
 # if defined ADJUST_STFLUX && defined SOLVE3D
 !
-!  2D norm at surface treace flux points.
+!  2D norm at surface tracer flux points.
 !
         IF (Master) THEN
           Lsame=.FALSE.
@@ -5924,9 +5924,9 @@
      &                              NRM(ifile,ng)%pioVar(idTsur(itrc)), &
      &                              NRM(ifile,ng)%Rindex,               &
      &                                 ioDesc,                          &
-#  ifdef MASKING
+#   ifdef MASKING
      &                                 rmask,                           &
-#  endif
+#   endif
      &                                 HnormSTF(:,:,itrc))
 #  endif
               END SELECT
