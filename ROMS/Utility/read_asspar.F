@@ -476,7 +476,7 @@
             CASE ('Mlap(isUvel)')
               Npts=load_i(Nval, Rval, Mscale, Ngrids, Miter)
               DO ng=1,Ngrids
-                DO i=ns,Nscale(ng)
+                DO ns=1,Nscale(ng)
                   Mlap(isUvel,ns,ng)=Miter(ns,ng)
                 END DO
               END DO
@@ -529,7 +529,7 @@
             CASE ('Bwgt(isFsur)')
               Npts=load_r(Nval, Rval, Mscale, Ngrids, Bscale)
               DO ng=1,Ngrids
-                DO i=ns,Nscale(ng)
+                DO ns=1,Nscale(ng)
                   Bwgt(isFsur,ns,ng)=Bscale(ns,ng)
                 END DO
               END DO
@@ -839,7 +839,7 @@
               Npts=load_r(Nval, Rval, Mscale, Ngrids, Bscale)
               DO ng=1,Ngrids
                 DO ns=1,Nscale(ng)
-                  HdecayY(1,isVvel,i,ng)=Bscale(ns,ng)
+                  HdecayY(1,isVvel,ns,ng)=Bscale(ns,ng)
                 END DO
               END DO
             CASE ('HdecayIX(isTvar)')
@@ -1666,95 +1666,153 @@
         defined SENSITIVITY_4DVAR  || defined SP4DVAR   || \
         defined TL_RBL4DVAR        || defined TL_R4DVAR
 #     ifdef MULTI_SCALE_B
-          WRITE (out,80) Nscale(ng), 'Number of multiscales for B.'
+          WRITE (out,80) Nscale(ng), 'Nscale',                          &
+     &          'Number of multiscales for modeling B-Error Covariance.'
           DO ns=1,Nscale(ng)
+            WRITE (out,90) NiterCG(ns,ng), 'NiterCG .........',         &
+     &            'B-scale ', ns, ', Number of multiscale Conjugate '// &
+     &            'Gradient solver iterations.'
+            WRITE (out,90) NiterCI(ns,ng), 'NiterCI',                   &
+     &            'B-scale ', ns, ', Number of multiscale implicit '//  &
+     &            'Chebyshev solver iterations.'
             WRITE (out,90) Mlap(isFsur,ns,ng), 'Mlap(isFsur)',          &
-     &            'Scale ', ns, ', smoother applications: '//           &
+     &            'B-scale ', ns, ', smoother applications: '//         &
      &            'free-surface.'
             WRITE (out,90) Mlap(isUbar,ns,ng), 'Mlap(isUbar)',          &
-     &            'Scale ', ns, ', smoother applications: '//           &
+     &            'B-scale ', ns, ', smoother applications: '//         &
      &            '2D U-momentum.'
             WRITE (out,90) Mlap(isVbar,ns,ng), 'Mlap(isVbar)',          &
-     &            'Scale ', ns, ', smoother applications: '//           &
+     &            'B-scale ', ns, ', smoother applications: '//         &
      &            '2D V-momentum.'
 #      ifdef SOLVE3D
             WRITE (out,90) Mlap(isUvel,ns,ng), 'Mlap(isUvel)',          &
-     &            'Scale ', ns, ', smoother applications: '//           &
+     &            'B-scale ', ns, ', smoother applications: '//         &
      &            '3D U-momentum.'
             WRITE (out,90) Mlap(isVvel,ns,ng), 'Mlap(isVvel)',          &
-     &            'Scale ', ns, ', smoother applications: '//           &
+     &            'B-scale ', ns, ', smoother applications: '//         &
      &            '3D V-momentum.'
             DO itrc=1,NT(ng)
               WRITE (out,90) Mlap(isTvar(itrc),ns,ng), 'Mlap(idTvar)',  &
-     &            'Scale ', ns, ', smoother applications: '//           &
+     &            'B-scale ', ns, ', smoother applications: '//         &
      &            TRIM(Vname(1,idTvar(itrc)))
             END DO
 #      endif
 #      ifdef ADJUST_WSTRESS
             WRITE (out,90) Mlap(isUstr,ns,ng), 'Mlap(isUstr)',          &
-     &            'Scale ', ns, ', smoother applications: '//           &
+     &            'B-scale ', ns, ', smoother applications: '//         &
      &            'Surface U-stress.'
             WRITE (out,90) Mlap(isVstr,ns,ng), 'Mlap(isVstr)',          &
-     &            'Scale ', ns, ', smoother applications: '//           &
+     &            'B-scale ', ns, ', smoother applications: '//         &
      &            'Surface V-stress.'
 #      endif
 #      if defined ADJUST_STFLUX && defined SOLVE3D
             DO itrc=1,NT(ng)
               WRITE (out,90) Mlap(isTsur(itrc),ns,ng), 'Mlap(idTvar)',  &
-     &            'Scale ', ns, ', smoother applications: '//           &
+     &            'B-scale ', ns, ', smoother applications: '//         &
      &            'Surface flux, '//TRIM(Vname(1,idTvar(itrc)))//'.'
             END DO
 #      endif
-            WRITE (out,120) Bwgt(isFsur,ns,ng), 'Bwgt(isFsur)',         &
-     &            'Multiscale B-weight, free-surface.'
-            WRITE (out,120) Bwgt(isUbar,ns,ng), 'Bwgt(isUbar)',         &
-     &            'Multiscale B-weight, 2D U-momentum.'
-            WRITE (out,120) Bwgt(isVbar,ns,ng), 'Bwgt(isVbar)',         &
-     &            'Multiscale B-weight, 2D V-momentum.'
+            WRITE (out,125) Bwgt(isFsur,ns,ng), 'Bwgt(isFsur)',         &
+     &            'B-scale ', ns, ', multiscale weight: free-surface.'
+            WRITE (out,125) Bwgt(isUbar,ns,ng), 'Bwgt(isUbar)',         &
+     &            'B-scale ', ns, ', multiscale weight: 2D U-momentum.'
+            WRITE (out,125) Bwgt(isVbar,ns,ng), 'Bwgt(isVbar)',         &
+     &            'B-scale ', ns, ', multiscale weight: 2D V-momentum.'
 #      ifdef SOLVE3D
-            WRITE (out,120) Bwgt(isUvel,ns,ng), 'Bwgt(isUvel)',         &
-     &            'Multiscale B-weight, 3D U-momentum.'
-            WRITE (out,120) Bwgt(isVvel,ns,ng), 'Bwgt(isVvel)',         &
-     &            'Multiscale B-weight, 3D V-momentum.'
+            WRITE (out,125) Bwgt(isUvel,ns,ng), 'Bwgt(isUvel)',         &
+     &            'B-scale ', ns, ', multiscale weight: 3D U-momentum.'
+            WRITE (out,125) Bwgt(isVvel,ns,ng), 'Bwgt(isVvel)',         &
+     &            'B-scale ', ns, ', multiscale weight: 3D V-momentum.'
             DO itrc=1,NT(ng)
-              WRITE (out,120) Bwgt(isTvar(itrc),ns,ng), 'Bwgt(idTvar)', &
-     &            'Multiscale B-weight, '//                             &
+              WRITE (out,125) Bwgt(isTvar(itrc),ns,ng), 'Bwgt(idTvar)', &
+     &            'B-scale ', ns, ', multiscale weight: '//             &
      &            TRIM(Vname(1,idTvar(itrc)))//'.'
             END DO
 #      endif
 #      ifdef ADJUST_WSTRESS
-            WRITE (out,120) Bwgt(isUstr,ns,ng), 'Bwgt(isUstr)',         &
-     &            'Multiscale B-weight, surface U-stress.'
-            WRITE (out,120) Bwgt(isVstr,ns,ng), 'Bwgt(isVstr)',         &
-     &            'Multiscale B-weight, surface V-stress.'
+            WRITE (out,125) Bwgt(isUstr,ns,ng), 'Bwgt(isUstr)',         &
+     &            'B-scale ', ns, ', multiscale weight: '//             &
+     &            'surface U-stress.'
+            WRITE (out,125) Bwgt(isVstr,ns,ng), 'Bwgt(isVstr)',         &
+     &            'B-scale ', ns, ', multiscale weight: '//             &
+     &            'surface V-stress.'
 #      endif
 #      if defined ADJUST_STFLUX && defined SOLVE3D
             DO itrc=1,NT(ng)
-              WRITE (out,120) Bwgt(isTsur(itrc),ns,ng), 'Bwgt(idTvar)', &
-     &            'Multiscale B-weight, surface flux: '//               &
-     &            TRIM(Vname(1,idTvar(itrc)))//'.'
+              WRITE (out,125) Bwgt(isTsur(itrc),ns,ng), 'Bwgt(idTvar)', &
+     &            'B-scale ', ns, ', multiscale weight, '//             &
+     &            'surface flux: '//TRIM(Vname(1,idTvar(itrc)))//'.'
             END DO
 #      endif
           END DO
 #     endif
           IF (nADJ(ng).lt.ntimes(ng)) THEN
+#     ifdef MULTI_SCALE_B
+            DO ns=1,Nscale(ng)
+              WRITE (out,125) HdecayX(2,isFsur,ns,ng),                  &
+     &                        'HdecayMX(isFsur)', 'B-scale ', ns,       &
+     &            ', Model Error X-decorrelation (m), free-surface.'
+              WRITE (out,125) HdecayY(2,isFsur,ns,ng),                  &
+     &                        'HdecayMY(isFsur)', 'B-scale ', ns,       &
+     &            ', Model Error Y-decorrelation (m), free-surface.'
+              WRITE (out,125) HdecayX(2,isUbar,ns,ng),                  &
+     &                        'HdecayMX(isUbar)', 'B-scale ', ns,       &
+     &            ', Model Error X-decorrelation (m), 2D U-momentum.'
+              WRITE (out,125) HdecayY(2,isUbar,ns,ng),                  &
+     &                        'HdecayMY(isUbar)', 'B-scale ', ns,       &
+     &            ', Model Error Y-decorrelation (m), 2D U-momentum.'
+              WRITE (out,125) HdecayX(2,isVbar,ns,ng),                  &
+     &                        'HdecayMX(isVbar)', 'B-scale ', ns,       &
+     &            ', Model Error X-decorrelation (m), 2D V-momentum.'
+              WRITE (out,125) HdecayY(2,isVbar,ns,ng),                  &
+     &                        'HdecayMY(isVbar)', 'B-scale ', ns,       &
+     &            ', Model Error Y-decorrelation (m), 2D V-momentum.'
+#      ifdef SOLVE3D
+              WRITE (out,125) HdecayX(2,isUvel,ns,ng),                  &
+     &                        'HdecayMX(isUvel)', 'B-scale ', ns,       &
+     &            ', Model Error X-decorrelation (m), 3D U-momentum.'
+              WRITE (out,125) HdecayY(2,isUvel,ns,ng),                  &
+     &                        'HdecayMY(isUvel)', 'B-scale ', ns,       &
+     &            ', Model Error Y-decorrelation (m), 3D U-momentum.'
+              WRITE (out,125) HdecayX(2,isVvel,ns,ng),                  &
+     &                        'HdecayMX(isVvel)', 'B-scale ', ns,       &
+     &            'Model Error X-decorrelation (m), 3D V-momentum.'
+              WRITE (out,125) HdecayY(2,isVvel,ns,ng),                  &
+     &                        'HdecayMY(isVvel)', 'B-scale ', ns,       &
+     &            'Model Error Y-decorrelation (m), 3D V-momentum.'
+              DO itrc=1,NT(ng)
+                WRITE (out,125) HdecayX(2,isTvar(itrc),ns,ng),          &
+     &                          'HdecayMX(idTvar)', 'B-scale ', ns,     &
+     &            'Model Error X-decorrelation (m), '//                 &
+     &            TRIM(Vname(1,idTvar(itrc)))//'.'
+                WRITE (out,125) HdecayY(2,isTvar(itrc),ns,ng),          &
+     &                          'HdecayMY(idTvar)', 'Bscale ', ns,      &
+     &            'Model Error Y-decorrelation (m), '//                 &
+     &            TRIM(Vname(1,idTvar(itrc)))//'.'
+              END DO
+#      endif
+            END DO
+#     else
             WRITE (out,120) Hdecay(2,isFsur,ng), 'HdecayM(isFsur)',     &
-     &            'Model decorrelation H-scale (m), free-surface.'
+     &        'Model Error decorrelation H-scale (m), free-surface.'
             WRITE (out,120) Hdecay(2,isUbar,ng), 'HdecayM(isUbar)',     &
-     &            'Model decorrelation H-scale (m), 2D U-momentum.'
+     &        'Model Error decorrelation H-scale (m), 2D U-momentum.'
             WRITE (out,120) Hdecay(2,isVbar,ng), 'HdecayM(isVbar)',     &
-     &            'Model decorrelation H-scale (m), 2D V-momentum.'
-#     ifdef SOLVE3D
+     &        'Model Error decorrelation H-scale (m), 2D V-momentum.'
+#      ifdef SOLVE3D
             WRITE (out,120) Hdecay(2,isUvel,ng), 'HdecayM(isUvel)',     &
-     &            'Model decorrelation H-scale (m), 3D U-momentum.'
+     &        'Model Error decorrelation H-scale (m), 3D U-momentum.'
             WRITE (out,120) Hdecay(2,isVvel,ng), 'HdecayM(isVvel)',     &
-     &            'Model decorrelation H-scale (m), 3D V-momentum.'
+     &        'Model Error decorrelation H-scale (m), 3D V-momentum.'
             DO itrc=1,NT(ng)
               WRITE (out,130) Hdecay(2,isTvar(itrc),ng),                &
      &            'HdecayM(idTvar)',                                    &
-     &            'Model decorrelation H-scale (m), ',                  &
+     &            'Model Error decorrelation H-scale (m), ',            &
      &            TRIM(Vname(1,idTvar(itrc)))
             END DO
+#      endif
+#     endif
+#     ifdef SOLVE3D
             WRITE (out,120) Vdecay(2,isUvel,ng), 'VdecayM(isUvel)',     &
      &            'Model decorrelation V-scale (m), 3D U-momentum.'
             WRITE (out,120) Vdecay(2,isVvel,ng), 'VdecayM(isVvel)',     &
@@ -1787,109 +1845,255 @@
      &          'TdecayM(idTvar)',                                      &
      &          'Model decorrelation T-scale (day), ',                  &
      &          TRIM(Vname(1,idTvar(itrc)))
-            END DO
+          END DO
 #     endif
 #    endif
+#    ifdef MULTI_SCALE_B
+          DO ns=1,Nscale(ng)
+            WRITE (out,125) HdecayX(1,isFsur,ns,ng),                    &
+     &                      'HdecayIX(isFsur)', 'B-scale ', ns,         &
+     &            ', IC Error X-decorrelation (m), free-surface.'
+            WRITE (out,125) HdecayY(1,isFsur,ns,ng),                    &
+     &                        'HdecayIY(isFsur)', 'B-scale ', ns,       &
+     &            ', IC Error Y-decorrelation (m), free-surface.'
+            WRITE (out,125) HdecayX(1,isUbar,ns,ng),                    &
+     &                      'HdecayIX(isUbar)', 'B-scale ', ns,         &
+     &            ', IC Error X-decorrelation (m), 2D U-momentum.'
+            WRITE (out,125) HdecayY(1,isUbar,ns,ng),                    &
+     &                      'HdecayIY(isUbar)', 'B-scale ', ns,         &
+     &            ', IC Error Y-decorrelation (m), 2D U-momentum.'
+            WRITE (out,125) HdecayX(1,isVbar,ns,ng),                    &
+     &                      'HdecayIX(isVbar)', 'B-scale ', ns,         &
+     &            ', IC Error X-decorrelation (m), 2D V-momentum.'
+            WRITE (out,125) HdecayY(1,isVbar,ns,ng),                    &
+     &                      'HdecayIY(isVbar)', 'B-scale ', ns,         &
+     &            ', IC Error Y-decorrelation (m), 2D V-momentum.'
+#      ifdef SOLVE3D
+            WRITE (out,125) HdecayX(1,isUvel,ns,ng),                    &
+     &                      'HdecayIX(isUvel)', 'B-scale ', ns,         &
+     &            ', IC Error X-decorrelation (m), 3D U-momentum.'
+            WRITE (out,125) HdecayY(1,isUvel,ns,ng),                    &
+     &                      'HdecayIY(isUvel)', 'B-scale ', ns,         &
+     &            ', IC Error Y-decorrelation (m), 3D U-momentum.'
+            WRITE (out,125) HdecayX(1,isVvel,ns,ng),                    &
+     &                      'HdecayIX(isVvel)', 'B-scale ', ns,         &
+     &            ', IC Error X-decorrelation (m), 3D V-momentum.'
+            WRITE (out,125) HdecayY(1,isVvel,ns,ng),                    &
+     &                      'HdecayIY(isVvel)', 'B-scale ', ns,         &
+     &            ', IC Error Y-decorrelation (m), 3D V-momentum.'
+            DO itrc=1,NT(ng)
+              WRITE (out,125) HdecayX(1,isTvar(itrc),ns,ng),            &
+     &                        'HdecayIX(idTvar)', 'B-scale ', ns,       &
+     &              ', IC Error X-decorrelation (m), '//                &
+     &              TRIM(Vname(1,idTvar(itrc)))//'.'
+              WRITE (out,125) HdecayY(1,isTvar(itrc),ns,ng),            &
+     &                        'HdecayIY(idTvar)', 'B-scale ', ns,       &
+     &              ', IC Error Y-decorrelation (m), '//                &
+     &              TRIM(Vname(1,idTvar(itrc)))//'.'
+            END DO
+#      endif
+          END DO
+#    else
           WRITE (out,120) Hdecay(1,isFsur,ng), 'HdecayI(isFsur)',       &
-     &            'Initial decorrelation H-scale (m), free-surface.'
+     &            'IC Error decorrelation H-scale (m), free-surface.'
           WRITE (out,120) Hdecay(1,isUbar,ng), 'HdecayI(isUbar)',       &
-     &            'Initial decorrelation H-scale (m), 2D U-momentum.'
+     &            'IC Error decorrelation H-scale (m), 2D U-momentum.'
           WRITE (out,120) Hdecay(1,isVbar,ng), 'HdecayI(isVbar)',       &
-     &            'Initial decorrelation H-scale (m), 2D V-momentum.'
-#    ifdef SOLVE3D
+     &            'IC Error decorrelation H-scale (m), 2D V-momentum.'
+#     ifdef SOLVE3D
           WRITE (out,120) Hdecay(1,isUvel,ng), 'HdecayI(isUvel)',       &
-     &            'Initial decorrelation H-scale (m), 3D U-momentum.'
+     &            'IC Error decorrelation H-scale (m), 3D U-momentum.'
           WRITE (out,120) Hdecay(1,isVvel,ng), 'HdecayI(isVvel)',       &
-     &            'Initial decorrelation H-scale (m), 3D V-momentum.'
+     &            'IC Error decorrelation H-scale (m), 3D V-momentum.'
           DO itrc=1,NT(ng)
             WRITE (out,130) Hdecay(1,isTvar(itrc),ng),                  &
      &            'HdecayI(idTvar)',                                    &
-     &            'Initial decorrelation H-scale (m), ',                &
+     &            'IC Error decorrelation H-scale (m), ',               &
      &            TRIM(Vname(1,idTvar(itrc)))
           END DO
+#     endif
+#    endif
+#    ifdef SOLVE3D      
           WRITE (out,120) Vdecay(1,isUvel,ng), 'VdecayI(isUvel)',       &
-     &            'Initial decorrelation V-scale (m), 3D U-momentum.'
+     &            'IC Error decorrelation V-scale (m), 3D U-momentum.'
           WRITE (out,120) Vdecay(1,isVvel,ng), 'VdecayI(isVvel)',       &
-     &            'Initial decorrelation V-scale (m), 3D V-momentum.'
+     &            'IC Error decorrelation V-scale (m), 3D V-momentum.'
           DO itrc=1,NT(ng)
             WRITE (out,130) Vdecay(1,isTvar(itrc),ng),                  &
      &            'VdecayI(idTvar)',                                    &
-     &            'Initial decorrelation V-scale (m), ',                &
+     &            'IC Error decorrelation V-scale (m), ',               &
      &            TRIM(Vname(1,idTvar(itrc)))
           END DO
 #    endif
 #    ifdef ADJUST_BOUNDARY
+#     ifdef MULTI_SCALE_B
+          DO ib=1,4
+            DO ns=1,Nscale(ng)
+              IF (ib.eq.iwest) THEN
+                Text=', W-bry'
+              ELSE IF (ib.eq.isouth) THEN
+                Text=', S-bry'
+              ELSE IF (ib.eq.ieast) THEN
+                Text=', E-bry'
+              ELSE IF (ib.eq.inorth) THEN
+                Text=', N-bry'
+              END IF
+              IF (Lobc(ib,isFsur,ng)) THEN
+                WRITE (out,125) HdecayB(isFsur,ns,ib,ng),               &
+     &                          'HdecayB(isFsur)', 'B-scale ', ns,      &
+     &              Text//' decorrelation H-scale (m), free-surface.'
+              END IF
+              IF (Lobc(ib,isUbar,ng)) THEN
+                WRITE (out,125) HdecayB(isUbar,ns,ib,ng),               &
+     &                          'HdecayB(isUbar)', 'B-scale ', ns,      &
+     &              Text//' decorrelation H-scale (m), 2D U-momentum.'
+              END IF
+              IF (Lobc(ib,isVbar,ng)) THEN
+                WRITE (out,125) HdecayB(isVbar,ns,ib,ng),               &
+     &                          'HdecayB(isVbar)', 'B-scale ', ns,      &
+     &              Text//' decorrelation H-scale (m), 2D V-momentum.'
+              END IF
+#      ifdef SOLVE3D
+              IF (Lobc(ib,isUvel,ng)) THEN
+                WRITE (out,125) HdecayB(isUvel,ns,ib,ng),               &
+     &                          'HdecayB(isUvel)', 'B-scale ', ns,      &
+     &              Text//' decorrelation H-scale (m), 3D U-momentum.'
+              END IF
+              IF (Lobc(ib,isVvel,ng)) THEN
+                WRITE (out,125) HdecayB(isVvel,ns,ib,ng),               &
+     &                          'HdecayB(isVvel)', 'B-scale ', ns,      &
+     &              Text//' decorrelation H-scale (m), 2D V-momentum.'
+              END IF
+              DO i=1,NT(ng)
+                IF (Lobc(ib,isTvar(i),ng)) THEN
+                  WRITE(out,125) HdecayB(isTvar(i),ns, ib,ng),          &
+     &                           'HdecayB(idTvar)', 'B-scale ', ns,     &
+     &              Text//' decorrelation H-scale (m), '//              &
+     &              TRIM(Vname(1,idTvar(i)))//'.'
+                END IF
+              END DO
+#      endif
+            END DO
+          END DO
+#     else
           DO ib=1,4
             IF (ib.eq.iwest) THEN
-              Text='W-bry  '
+              Text='W-bry'
             ELSE IF (ib.eq.isouth) THEN
-              Text='S-bry  '
+              Text='S-bry'
             ELSE IF (ib.eq.ieast) THEN
-              Text='E-bry  '
+              Text='E-bry'
             ELSE IF (ib.eq.inorth) THEN
-              Text='N-bry  '
+              Text='N-bry'
             END IF
             IF (Lobc(ib,isFsur,ng)) THEN
-              WRITE (out,120) HdecayB(isFsur,ib,ng), 'HdecayB(isFsur)', &
-     &              Text//' decorrelation H-scale (m), free-surface.'
+              WRITE (out,120) HdecayB(isFsur,ib,ng),                    &
+     &                        'HdecayB(isFsur)', TRIM(Text)//           &
+     &              ', decorrelation H-scale (m), free-surface.'
             END IF
             IF (Lobc(ib,isUbar,ng)) THEN
-              WRITE (out,120) HdecayB(isUbar,ib,ng), 'HdecayB(isUbar)', &
-     &              Text//' decorrelation H-scale (m), 2D U-momentum.'
+              WRITE (out,120) HdecayB(isUbar,ib,ng),                    &
+     &                        'HdecayB(isUbar)', TRIM(Text)//           &
+     &              ', decorrelation H-scale (m), 2D U-momentum.'
             END IF
             IF (Lobc(ib,isVbar,ng)) THEN
-              WRITE (out,120) HdecayB(isVbar,ib,ng), 'HdecayB(isVbar)', &
-     &              Text//' decorrelation H-scale (m), 2D V-momentum.'
+              WRITE (out,120) HdecayB(isVbar,ib,ng),                    &
+     &                        'HdecayB(isVbar)', TRIM(Text)//           &
+     &              ', decorrelation H-scale (m), 2D V-momentum.'
             END IF
-#     ifdef SOLVE3D
+#      ifdef SOLVE3D
             IF (Lobc(ib,isUvel,ng)) THEN
-              WRITE (out,120) HdecayB(isUvel,ib,ng), 'HdecayB(isUvel)', &
-     &              Text//' decorrelation H-scale (m), 3D U-momentum.'
+              WRITE (out,120) HdecayB(isUvel,ib,ng),                    &
+     &                        'HdecayB(isUvel)', TRIM(Text)//           &
+     &              ', decorrelation H-scale (m), 3D U-momentum.'
             END IF
             IF (Lobc(ib,isVvel,ng)) THEN
-              WRITE (out,120) HdecayB(isVvel,ib,ng), 'HdecayB(isVvel)', &
-     &              Text//' decorrelation H-scale (m), 3D V-momentum.'
+              WRITE (out,120) HdecayB(isVvel,ib,ng),                    &
+     &                        'HdecayB(isVvel)', TRIM(Text)//           &
+     &              ', decorrelation H-scale (m), 3D V-momentum.'
             END IF
             DO i=1,NT(ng)
               IF (Lobc(ib,isTvar(i),ng)) THEN
                 WRITE(out,130) HdecayB(isTvar(i),ib,ng),                &
-     &              'HdecayB(idTvar)',                                  &
-     &              Text//' decorrelation H-scale (m), ',               &
-     &              TRIM(Vname(1,idTvar(i)))
+     &                         'HdecayB(idTvar)', TRIM(Text)//          &
+     &               ', decorrelation H-scale (m), ',                   &
+     &              TRIM(Vname(1,idTvar(i)))//'.'
               END IF
             END DO
+#      endif
+#         END DO
+#     endif
+#     ifdef SOLVE3D
+          DO ib=1,4
+            IF (ib.eq.iwest) THEN
+              Text='W-bry'
+            ELSE IF (ib.eq.isouth) THEN
+              Text='S-bry'
+            ELSE IF (ib.eq.ieast) THEN
+              Text='E-bry'
+            ELSE IF (ib.eq.inorth) THEN
+              Text='N-bry'
+            END IF
             IF (Lobc(ib,isUvel,ng)) THEN
-              WRITE (out,120) VdecayB(isUvel,ib,ng), 'VdecayB(isUvel)', &
-     &              Text//' decorrelation V-scale (m), 3D U-momentum.'
+              WRITE (out,120) VdecayB(isUvel,ib,ng),                    &
+     &                        'VdecayB(isUvel)', TRIM(Text)//           &
+     &              ', decorrelation V-scale (m), 3D U-momentum.'
             END IF
             IF (Lobc(ib,isVvel,ng)) THEN
-              WRITE (out,120) VdecayB(isVvel,ib,ng), 'VdecayB(isVvel)', &
-     &              Text//' decorrelation V-scale (m), 3D V-momentum.'
+              WRITE (out,120) VdecayB(isVvel,ib,ng),                    &
+     &                        'VdecayB(isVvel)', TRIM(Text)//           &
+     &              ', decorrelation V-scale (m), 3D V-momentum.'
             END IF
             DO i=1,NT(ng)
               IF (Lobc(ib,isTvar(i),ng)) THEN
                 WRITE(out,130) VdecayB(isTvar(i),ib,ng),                &
-     &              'VdecayB(idTvar)',                                  &
-     &              Text//' decorrelation V-scale (m), ',               &
-     &              TRIM(Vname(1,idTvar(i)))
+     &                         'VdecayB(idTvar)', TRIM(Text)//          &
+     &               ', decorrelation V-scale (m), ',                   &
+     &               TRIM(Vname(1,idTvar(i)))
               END IF
             END DO
 #     endif
           END DO
 #    endif
 #    ifdef ADJUST_WSTRESS
+#     ifdef MULTI_SCALE_B
+          DO ns=1,Nscale(ng)
+            WRITE (out,125) HdecayX(1,isUstr,ns,ng),                    &
+     &                      'HdecayFX(isUstr)', 'B-scale ', ns,         &
+     &            ', Forcing Error X-decorrelation (m), U-stress.'
+            WRITE (out,125) HdecayY(1,isVstr,ns,ng),                    &
+     &                      'HdecayFY(isVstr)', 'B-scale ', ns,         &
+     &            ', Forcing Error Y-decorrelation (m), V-stress.'
+          END DO
+#     else
           WRITE (out,120) Hdecay(1,isUstr,ng), 'HdecayF(isUstr)',       &
-     &            'Forcing decorrelation H-scale (m), U-stress.'
+     &            'Forcing Error decorrelation H-scale (m), U-stress.'
           WRITE (out,120) Hdecay(1,isVstr,ng), 'HdecayF(isVstr)',       &
-     &            'Forcing decorrelation H-scale (m), V-stress.'
+     &            'Forcing Error decorrelation H-scale (m), V-stress.'
+#     endif
 #    endif
 #    if defined ADJUST_STFLUX && defined SOLVE3D
+#     ifdef MULTI_SCALE_B
+          DO ns=1,Nscale(ng)
+            DO itrc=1,NT(ng)
+              WRITE (out,125) HdecayX(1,isTsur(itrc),ns,ng),            &
+     &                        'HdecayFX(isTsur)', 'B-scale ', ns,       &
+     &              ', Forcing Error X-decorrelation (m), '//           &
+     &              TRIM(Vname(1,idTvar(itrc)))//'.'
+              WRITE (out,125) HdecayY(1,isTsur(itrc),ns,ng),            &
+     &                        'HdecayFY(isTsur)', 'B-scale ', ns,       &
+     &              ', Forcing Error Y-decorrelation (m), '//           &
+     &              TRIM(Vname(1,idTvar(itrc)))//'.'
+            END DO
+          END DO
+#     else
           DO itrc=1,NT(ng)
             WRITE (out,130) Hdecay(1,isTsur(itrc),ng),                  &
      &            'HdecayF(idTsur)',                                    &
-     &            'Forcing decorrelation H-scale (m), ',                &
-     &            TRIM(Vname(1,idTvar(itrc)))
+     &            'Forcing Error decorrelation H-scale (m), ',          &
+     &            TRIM(Vname(1,idTvar(itrc)))//'.'
           END DO
+#     endif
 #    endif
 #    ifdef STD_MODEL
 #     ifndef COMPUTE_MLD
@@ -2288,6 +2492,7 @@
  100  FORMAT (1p,e11.4,2x,a,t32,a)
  110  FORMAT (10x,l1,2x,a,t32,a,i2.2,':',1x,a)
  120  FORMAT (f11.3,2x,a,t32,a)
+ 125  FORMAT (f11.3,2x,a,t32,a,i0,a)
  130  FORMAT (f11.3,2x,a,t32,a,a,'.')
 #  ifdef VERIFICATION
  150  FORMAT (/,' Input/Output Verification Files:',/)

@@ -63,9 +63,9 @@
 !!======================================================================
 !!
 # ifdef MULTI_SCALE_B
-#  include normalization_multi.h
+#  include "normalization_multi.h"
 # else
-#  include normalization_mono.h
+#  include "normalization_mono.h"
 # endif
 #else
       MODULE normalization_mod

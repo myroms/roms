@@ -170,15 +170,15 @@
 !  Assign contol variable isotropic or anisotropic correlation length
 !  scales.
 !
-      SELECT CASE (ifield)
-        CASE (isFsur)
+      SELECT CASE (TRIM(StateVarName(ifield)))
+        CASE ('zeta')
 # ifdef READ_SCALES
           bsclx => self%bZscaleX(:,:,ms)
           bscly => self%bZscaleY(:,:,ms)
 # endif
           iLap=Mlap(ifield,ms,ng)
 # ifdef SOLVE3D
-        CASE (isTsur(itemp), isTsur(isalt))
+        CASE ('shflux', 'ssflux')
 #  ifdef READ_SCALES
           bsclx => self%bSTFscaleX(:,:,ifield,ms)
           bscly => self%bSTFscaleY(:,:,ifield,ms)
@@ -258,7 +258,7 @@
 # ifdef MASKING
 !^        FX(i,j)=FX(i,j)*GRID(ng)%umask(i,j)
 !^
-          tl_FX(i,j)=tl_FX(i,j)*GRID%umask(i,j)
+          tl_FX(i,j)=tl_FX(i,j)*GRID(ng)%umask(i,j)
 # endif
         END DO
       END DO
@@ -386,15 +386,15 @@
 !  Assign contol variable isotropic or anisotropic correlation length
 !  scales.
 !
-      SELECT CASE (ifield)
-        CASE (isFsur)
+      SELECT CASE (TRIM(StateVarName(ifield)))
+        CASE ('zeta')
 # ifdef READ_SCALES
           bsclx => self%bZscaleX(:,:,ms)
           bscly => self%bZscaleY(:,:,ms)
 # endif
           iLap=Mlap(ifield,ms,ng)
 # ifdef SOLVE3D
-        CASE (isTsur(itemp), isTsur(isalt))
+        CASE ('shflux', 'ssflux')
 #  ifdef READ_SCALES
           bsclx => self%bSTFscaleX(:,:,ifield,ms)
           bscly => self%bSTFscaleY(:,:,ifield,ms)
@@ -477,9 +477,9 @@
       DO j=Jstr,Jend+1
         DO i=Istr,Iend
 # ifdef MASKING
-!^        tl_FE(i,j)=tl_FE(i,j)*GRID(ng)*vmask(i,j)
+!^        tl_FE(i,j)=tl_FE(i,j)*GRID(ng)%vmask(i,j)
 !^
-          ad_FE(i,j)=ad_FE(i,j)*GRID(ng)*vmask(i,j)
+          ad_FE(i,j)=ad_FE(i,j)*GRID(ng)%vmask(i,j)
 # endif
 !^        tl_FE(i,j)=GRID(ng)%pnom_v(i,j)*                              &
 !^   &               0.5_r8*(Khy(i,j-1)+Khy(i,j))*                      &
@@ -504,7 +504,7 @@
 !^   &               0.5_r8*(Khx(i-1,j)+Khx(i,j))*                      &
 !^   &               (tl_Awrk(i,j)-tl_Awrk(i-1,j))
 !^
-          adfac=pmon_u(i,j)*                                            &
+          adfac=GRID(ng)%pmon_u(i,j)*                                   &
      &          0.5_r8*(Khx(i-1,j)+Khx(i,j))*ad_FX(i,j)
           ad_Awrk(i-1,j)=ad_Awrk(i-1,j)-adfac
           ad_Awrk(i  ,j)=ad_Awrk(i  ,j)+adfac
@@ -545,8 +545,8 @@
      &                       LBi, UBi, LBj, UBj,                        &
      &                       ad_A)
 !
-      END SUBROUTINE ad_multiscale_Klap_r2d
       RETURN
+      END SUBROUTINE ad_multiscale_Klap_r2d
 !
 !-----------------------------------------------------------------------
 !  It computes the tangent linear K-Laplacian, [1 + Del(K*Del)], of a
@@ -604,14 +604,14 @@
 !  Assign contol variable isotropic or anisotropic correlation length
 !  scales.
 !
-      SELECT CASE (ifield)
-        CASE (isUbar)
+      SELECT CASE (TRIM(StateVarName(ifield)))
+        CASE ('ubar', 'ubar_eastward')
 # ifdef READ_SCALES
           bsclx => self%bU2DscaleX(:,:,ms)
           bscly => self%bU2DscaleY(:,:,ms)
 # endif
           iLap=Mlap(ifield,ms,ng)
-        CASE (isUstr)
+        CASE ('sustr')
 # ifdef READ_SCALES
           bsclx => self%bSUSscaleX(:,:,ms)
           bscly => self%bSUSscaleY(:,:,ms)
@@ -814,14 +814,14 @@
 !  Assign contol variable isotropic or anisotropic correlation length
 !  scales.
 !
-      SELECT CASE (ifield)
-        CASE (isUbar)
+      SELECT CASE (TRIM(StateVarName(ifield)))
+        CASE ('ubar', 'ubar_eastward')
 # ifdef READ_SCALES
           bsclx => self%bU2DscaleX(:,:,ms)
           bscly => self%bU2DscaleY(:,:,ms)
 # endif
           iLap=Mlap(ifield,ms,ng)
-        CASE (isUstr)
+        CASE ('sustr')
 # ifdef READ_SCALES
           bsclx => self%bSUSscaleX(:,:,ms)
           bscly => self%bSUSscaleY(:,:,ms)
@@ -927,7 +927,7 @@
 !^        tl_FX(i,j)=GRID(ng)%pmon_r(i,j)*                              &
 !^   &               Khx(i,j)*(tl_Awrk(i+1,j)-tl_Awrk(i,j))
 !^
-          adfac=GRID(ng0%pmon_r(i,j)*Khx(i,j)*ad_FX(i,j)
+          adfac=GRID(ng)%pmon_r(i,j)*Khx(i,j)*ad_FX(i,j)
           ad_Awrk(i  ,j)=ad_Awrk(i  ,j)-adfac
           ad_Awrk(i+1,j)=ad_Awrk(i+1,j)+adfac
           ad_FX(i,j)=0.0_r8
@@ -975,7 +975,7 @@
 !  2D control variable at V-points.
 !
       SUBROUTINE tl_multiscale_Klap_v2d (self, ng, tile, model,         &
-     &                                   ifield, ctype, ms,             &
+     &                                   ifield, ctype, ms, Lweak,      &
      &                                   LBi, UBi, LBj, UBj,            &
      &                                   IminS, ImaxS, JminS, JmaxS,    &
      &                                   tl_A)
@@ -1026,14 +1026,14 @@
 !  Assign contol variable isotropic or anisotropic correlation length
 !  scales.
 !
-      SELECT CASE (ifield)
-        CASE (isVbar)
+      SELECT CASE (TRIM(StateVarName(ifield)))
+        CASE ('vbar', 'vbar_northward')
 # ifdef READ_SCALES
           bsclx => self%bV2DscaleX(:,:,ms)
           bscly => self%bV2DscaleY(:,:,ms)
 # endif
           iLap=Mlap(ifield,ms,ng)
-        CASE (isVstr)
+        CASE ('svstr')
 # ifdef READ_SCALES
           bsclx => self%bSVSscaleX(:,:,ms)
           bscly => self%bSVSscaleY(:,:,ms)
@@ -1060,7 +1060,7 @@
           cffy=bscly(i,j)*bscly(i,j)
 # else
           cffx=HdecayX(rec,ifield,ms,ng)*HdecayX(rec,ifield,ms,ng)
-          cffy=HdecayY(rec,ifield,ns,ng)*HdecayY(rec,ifield,ms,ng)
+          cffy=HdecayY(rec,ifield,ms,ng)*HdecayY(rec,ifield,ms,ng)
 # endif
           Khx(i,j)=0.5_r8*cffx/REAL(iLap-2,r8)
           Khy(i,j)=0.5_r8*cffy/REAL(iLap-2,r8)
@@ -1114,9 +1114,9 @@
      &                        Khx(i-1,j-1)+Khx(i,j-1))*                 &
      &               (tl_Awrk(i,j)-tl_Awrk(i-1,j))
 # ifdef MASKING
-!^        FX(i,j)=FX(i,j)*GRID(ng)*pmask(i,j)
+!^        FX(i,j)=FX(i,j)*GRID(ng)%pmask(i,j)
 !^
-          tl_FX(i,j)=tl_FX(i,j)*GRID(ng)*pmask(i,j)
+          tl_FX(i,j)=tl_FX(i,j)*GRID(ng)%pmask(i,j)
 # endif
         END DO
       END DO
@@ -1237,14 +1237,14 @@
 !  Assign contol variable isotropic or anisotropic correlation length
 !  scales.
 !
-      SELECT CASE (ifield)
-        CASE (isVbar)
+      SELECT CASE (TRIM(StateVarName(ifield)))
+        CASE ('vbar', 'vbar_northward')
 # ifdef READ_SCALES
           bsclx => self%bV2DscaleX(:,:,ms)
           bscly => self%bV2DscaleY(:,:,ms)
 # endif
           iLap=Mlap(ifield,ms,ng)
-        CASE (isVstr)
+        CASE ('svstr')
 # ifdef READ_SCALES
           bsclx => self%bSVSscaleX(:,:,ms)
           bscly => self%bSVSscaleY(:,:,ms)
@@ -1254,8 +1254,8 @@
 !
 !  Compute metrics factor.
 !
-      DO j=Jstr,Jend
-        DO i=IstrU,Iend
+      DO j=JstrV,Jend
+        DO i=Istr,Iend
           Hfac(i,j)=0.25_r8*(GRID(ng)%pm(i,j-1)+GRID(ng)%pm(i,j))*      &
      &                      (GRID(ng)%pn(i,j-1)+GRID(ng)%pn(i,j))
         END DO
@@ -1458,8 +1458,8 @@
 !  Assign contol variable isotropic or anisotropic correlation length
 !  scales.
 !
-      SELECT CASE (ifield)
-        CASE (isTvar(itemp), isTvar(isalt))
+      SELECT CASE (TRIM(StateVarName(ifield)))
+        CASE ('temp', 'salt')
 #  ifdef READ_SCALES
           bsclx => self%bR3DscaleX(:,:,ifield,ms)
           bscly => self%bR3DscaleY(:,:,ifield,ms)
@@ -1892,7 +1892,7 @@
         rec=1                        ! strong constraint correlations
       END IF
 !
-      ad_Awrk(LBi:UBi,LBj:UBj,LBk:UBk)=0.0_r8
+      ad_Awrk(LBi:UBi,LBj:UBj,N(ng))=0.0_r8
       ad_FE(IminS:ImaxS,JminS:JmaxS)=0.0_r8
       ad_FX(IminS:ImaxS,JminS:JmaxS)=0.0_r8
 #  ifdef GEOPOTENTIAL_HCONV
@@ -1905,8 +1905,8 @@
 !  Assign contol variable isotropic or anisotropic correlation length
 !  scales.
 !
-      SELECT CASE (ifield)
-        CASE (isTvar(itemp), isTvar(isalt))
+      SELECT CASE (TRIM(StateVarName(ifield)))
+        CASE ('temp', 'salt')
 #  ifdef READ_SCALES
           bsclx => self%bR3DscaleX(:,:,ifield,ms)
           bscly => self%bR3DscaleY(:,:,ifield,ms)
@@ -2451,8 +2451,8 @@
 !  Assign contol variable isotropic or anisotropic correlation length
 !  scales.
 !
-      SELECT CASE (ifield)
-        CASE (isUvel)
+      SELECT CASE (TRIM(StateVarName(ifield)))
+        CASE ('u', 'u_eastward')
 #  ifdef READ_SCALES
           bsclx => self%bU3DscaleX(:,:,ifield,ms)
           bscly => self%bU3DscaleY(:,:,ifield,ms)
@@ -2914,7 +2914,7 @@
         rec=1                        ! strong constraint correlations
       END IF
 !
-      ad_Awrk(LBi:UBi,LBj:UBj,LBk:UBk)=0.0_r8
+      ad_Awrk(LBi:UBi,LBj:UBj,N(ng))=0.0_r8
       ad_FE(IminS:ImaxS,JminS:JmaxS)=0.0_r8
       ad_FX(IminS:ImaxS,JminS:JmaxS)=0.0_r8
 #  ifdef GEOPOTENTIAL_HCONV
@@ -2927,8 +2927,8 @@
 !  Assign contol variable isotropic or anisotropic correlation length
 !  scales.
 !
-      SELECT CASE (ifield)
-        CASE (isUvel)
+      SELECT CASE (TRIM(StateVarName(ifield)))
+        CASE ('u', 'u_eastward')
 #  ifdef READ_SCALES
           bsclx => self%bU3DscaleX(:,:,ifield,ms)
           bscly => self%bU3DscaleY(:,:,ifield,ms)
@@ -2966,7 +2966,7 @@
 !
       DO k=1,N(ng)
         DO j=Jstr,Jend
-          DO i=Istr,Iend
+          DO i=IstrU,Iend
 !^          tl_A(i,j,k)=tl_Awrk(i,j,k)
 !^
             ad_Awrk(i,j,k)=ad_Awrk(i,j,k)+ad_A(i,j,k)
@@ -3178,7 +3178,7 @@
           DO j=Jstr,Jend+1
             DO i=IstrU,Iend
               cff=0.25_r8*(Khy(i-1,j-1)+Khy(i-1,j)+                     &
-     &                     Khy(i  ,j-1)+Khy(i  ,j))*GRID(ng)*om_p(i,j)
+     &                     Khy(i  ,j-1)+Khy(i  ,j))*GRID(ng)%om_p(i,j)
               cff1=MIN(dZde_p(i,j,k1),0.0_r8)
               cff2=MAX(dZde_p(i,j,k1),0.0_r8)
 !^            tl_FE(i,j)=cff*                                           &
@@ -3202,7 +3202,7 @@
 !
           DO j=Jstr,Jend
             DO i=IstrU-1,Iend
-              cff=Khx(i,j)*GRID(ng)*on_r(i,j)
+              cff=Khx(i,j)*GRID(ng)%on_r(i,j)
               cff1=MIN(dZdx_r(i,j,k1),0.0_r8)
               cff2=MAX(dZdx_r(i,j,k1),0.0_r8)
 !^            tl_FX(i,j)=cff*                                           &
@@ -3239,11 +3239,11 @@
         ELSE
           DO j=Jstr-1,Jend+1
             DO i=IstrU-1,Iend+1
-              cff=1.0_r8/(GRID(ng)*z_r(i,j,k+1)-GRID(ng)*z_r(i,j,k))
+              cff=1.0_r8/(GRID(ng)%z_r(i,j,k+1)-GRID(ng)%z_r(i,j,k))
 #   ifdef MASKING
-!^            tl_dAdz(i,j,k2)=tl_dAdz(i,j,k2)*GRID(ng)*umask(i,j)
+!^            tl_dAdz(i,j,k2)=tl_dAdz(i,j,k2)*GRID(ng)%umask(i,j)
 !^
-              ad_dAdz(i,j,k2)=ad_dAdz(i,j,k2)*GRID(ng)*umask(i,j)
+              ad_dAdz(i,j,k2)=ad_dAdz(i,j,k2)*GRID(ng)%umask(i,j)
 #   endif
 !^            tl_dAdz(i,j,k2)=cff*(tl_Awrk(i,j,k+1)-                    &
 !^   &                             tl_Awrk(i,j,k))
@@ -3259,23 +3259,23 @@
         IF (k.lt.N(ng)) THEN
           DO j=Jstr,Jend+1
             DO i=IstrU,Iend
-              cff=0.25_r8*(GRID(ng)*pn(i-1,j  )+GRID(ng)*pn(i,j  )+     &
-     &                     GRID(ng)*pn(i-1,j-1)+GRID(ng)*pn(i,j-1))
+              cff=0.25_r8*(GRID(ng)%pn(i-1,j  )+GRID(ng)%pn(i,j  )+     &
+     &                     GRID(ng)%pn(i-1,j-1)+GRID(ng)%pn(i,j-1))
 #   ifdef MASKING
-!^            tl_dAde(i,j,k2)=tl_dAde(i,j,k2)*GRID(ng)*pmask(i,j)
+!^            tl_dAde(i,j,k2)=tl_dAde(i,j,k2)*GRID(ng)%pmask(i,j)
 !^
-              ad_dAde(i,j,k2)=ad_dAde(i,j,k2)*GRID(ng)*pmask(i,j)
+              ad_dAde(i,j,k2)=ad_dAde(i,j,k2)*GRID(ng)%pmask(i,j)
 !^            tl_dAde(i,j,k2)=cff*                                      &
 !^   &                        (tl_Awrk(i,j  ,k+1)*                      &
-!^   &                            GRID(ng)*umask(i,j  )-                &
+!^   &                            GRID(ng)%umask(i,j  )-                &
 !^   &                         tl_Awrk(i,j-1,k+1)*
-!^   &                            GRID(ng)*umask(i,j-1))
+!^   &                            GRID(ng)%umask(i,j-1))
 !^
               adfac=cff*ad_dAde(i,j,k2)
               ad_Awrk(i,j  ,k+1)=ad_Awrk(i,j  ,k+1)+                    &
-     &                           GRID(ng)*umask(i,j  )*adfac
+     &                           GRID(ng)%umask(i,j  )*adfac
               ad_Awrk(i,j-1,k+1)=ad_Awrk(i,j-1,k+1)-                    &
-     &                           GRID(ng)*umask(i,j-1)*adfac
+     &                           GRID(ng)%umask(i,j-1)*adfac
               ad_dAde(i,j,k2)=0.0_r8
 #   else
 !^            tl_dAde(i,j,k2)=cff*(tl_Awrk(i,j  ,k+1)-                  &
@@ -3292,27 +3292,27 @@
           DO j=Jstr,Jend
             DO i=IstrU-1,Iend
 #   ifdef MASKING
-!^            tl_dAdx(i,j,k2)=tl_dAdx(i,j,k2)*GRID(ng)*rmask(i,j)
+!^            tl_dAdx(i,j,k2)=tl_dAdx(i,j,k2)*GRID(ng)%rmask(i,j)
 !^
-              ad_dAdx(i,j,k2)=ad_dAdx(i,j,k2)*GRID(ng)*rmask(i,j)
-!^            tl_dAdx(i,j,k2)=GRID(ng)*pm(i,j)*                         &
+              ad_dAdx(i,j,k2)=ad_dAdx(i,j,k2)*GRID(ng)%rmask(i,j)
+!^            tl_dAdx(i,j,k2)=GRID(ng)%pm(i,j)*                         &
 !^   &                        (tl_Awrk(i+1,j,k+1)*                      &
-!^   &                            GRID(ng)*umask(i+1,j)-                &
+!^   &                            GRID(ng)%umask(i+1,j)-                &
 !^   &                         tl_Awrk(i  ,j,k+1)*                      &
-!^   &                            GRID(ng)*umask(i  ,j))
+!^   &                            GRID(ng)%umask(i  ,j))
 !^
-              adfac=GRID(ng)*GRID(ng)*pm(i,j)*ad_dAdx(i,j,k2)
+              adfac=GRID(ng)%pm(i,j)*ad_dAdx(i,j,k2)
               ad_Awrk(i  ,j,k+1)=ad_Awrk(i  ,j,k+1)-                    &
-     &                           GRID(ng)*umask(i  ,j)*adfac
+     &                           GRID(ng)%umask(i  ,j)*adfac
               ad_Awrk(i+1,j,k+1)=ad_Awrk(i+1,j,k+1)+                    &
-     &                           GRID(ng)*umask(i+1,j)*adfac
+     &                           GRID(ng)%umask(i+1,j)*adfac
               ad_dAdx(i,j,k2)=0.0_r8
 #   else
-!^            tl_dAdx(i,j,k2)=GRID(ng)*pm(i,j)*                         &
+!^            tl_dAdx(i,j,k2)=GRID(ng)%pm(i,j)*                         &
 !^   &                        (tl_Awrk(i+1,j,k+1)-                      &
 !^   &                         tl_Awrk(i  ,j,k+1))
 !^
-              adfac=GRID(ng)*pm(i,j)*ad_dAdx(i,j,k2)
+              adfac=GRID(ng)%pm(i,j)*ad_dAdx(i,j,k2)
               ad_Awrk(i  ,j,k+1)=ad_Awrk(i  ,j,k+1)-adfac
               ad_Awrk(i+1,j,k+1)=ad_Awrk(i+1,j,k+1)+adfac
               ad_dAdx(i,j,k2)=0.0_r8
@@ -3354,16 +3354,16 @@
         DO j=Jstr,Jend+1
           DO i=IstrU,Iend
 #   ifdef MASKING
-!^          tl_FE(i,j)=tl_FE(i,j)*GRID(ng)*pmask(i,j)
+!^          tl_FE(i,j)=tl_FE(i,j)*GRID(ng)%pmask(i,j)
 !^
-            ad_FE(i,j)=ad_FE(i,j)*GRID(ng)*pmask(i,j)
+            ad_FE(i,j)=ad_FE(i,j)*GRID(ng)%pmask(i,j)
 #   endif
-!^          tl_FE(i,j)=GRID(ng)*pnom_p(i,j)*                            &
+!^          tl_FE(i,j)=GRID(ng)%pnom_p(i,j)*                            &
 !^   &                 0.25_r8*(Khy(i-1,j  )+Khy(i,j  )+                &
 !^   &                          Khy(i-1,j-1)+Khy(i,j-1))*               &
 !^   &                   (tl_Awrk(i,j,k)-tl_Awrk(i,j-1,k))
 !^
-            adfac=GRID(ng)*pnom_p(i,j)*                                 &
+            adfac=GRID(ng)%pnom_p(i,j)*                                 &
      &            0.25_r8*(Khy(i-1,j  )+Khy(i,j  )+                     &
      &                     Khy(i-1,j-1)+Khy(i,j-1))*ad_FE(i,j)
             ad_Awrk(i,j-1,k)=ad_Awrk(i,j-1,k)-adfac
@@ -3374,7 +3374,7 @@
 !
         DO j=Jstr,Jend
           DO i=IstrU-1,Iend
-!^          tl_FX(i,j)=GRID(ng)*pmon_r(i,j)*                           &
+!^          tl_FX(i,j)=GRID(ng)%pmon_r(i,j)*                            &
 !^   &                 Khx(i,j)*(tl_Awrk(i+1,j,k)-tl_Awrk(i,j,k))
 !^
             adfac=GRID(ng)%pmon_r(i,j)*Khx(i,j)*ad_FX(i,j)
@@ -3492,8 +3492,8 @@
 !  Assign contol variable isotropic or anisotropic correlation length
 !  scales.
 !
-      SELECT CASE (ifield)
-        CASE (isVvel)
+      SELECT CASE (TRIM(StateVarName(ifield)))
+        CASE ('v', 'v_northward')
 #  ifdef READ_SCALES
           bsclx => self%bV3DscaleX(:,:,ifield,ms)
           bscly => self%bV3DscaleY(:,:,ifield,ms)
@@ -3914,7 +3914,7 @@
       integer                           :: iLap, i, j, k, k1, k2, rec
       integer                           :: Istr, Iend, JstrV, Jend
       real (r8)                         :: cff, cff1, cff2, cff3, cff4
-      real (r8)                         :: cffx, cffy
+      real (r8)                         :: adfac, cffx, cffy
 
 #  ifdef READ_SCALES
 !
@@ -3953,7 +3953,7 @@
         rec=1                        ! strong constraint correlations
       END IF
 !
-      ad_Awrk(LBi:UBi,LBj:UBj,LBk:UBk)=0.0_r8
+      ad_Awrk(LBi:UBi,LBj:UBj,N(ng))=0.0_r8
       ad_FE(IminS:ImaxS,JminS:JmaxS)=0.0_r8
       ad_FX(IminS:ImaxS,JminS:JmaxS)=0.0_r8
 #  ifdef GEOPOTENTIAL_HCONV
@@ -3966,8 +3966,8 @@
 !  Assign contol variable isotropic or anisotropic correlation length
 !  scales.
 !
-      SELECT CASE (ifield)
-        CASE (isVvel)
+      SELECT CASE (TRIM(StateVarName(ifield)))
+        CASE ('v', 'v_northward')
 #  ifdef READ_SCALES
           bsclx => self%bV3DscaleX(:,:,ifield,ms)
           bscly => self%bV3DscaleY(:,:,ifield,ms)
@@ -4413,7 +4413,7 @@
 !^   &                          Khx(i-1,j-1)+Khx(i,j-1))*               &
 !^   &                 (tl_Awrk(i,j,k)-tl_Awrk(i-1,j,k))
 !^
-            adfac=GRID(ng)%pmon_p(i,j)*                               
+            adfac=GRID(ng)%pmon_p(i,j)*                                 &
      &            0.25_r8*(Khx(i-1,j  )+Khx(i,j  )+                     &
      &                     Khx(i-1,j-1)+Khx(i,j-1))*ad_FX(i,j)
             ad_Awrk(i-1,j,k)=ad_Awrk(i-1,j,k)-adfac
@@ -4462,7 +4462,7 @@
 !
       RETURN
       END SUBROUTINE ad_multiscale_Klap_v3d
-# endif
+# endif /* SOLVE3D */
 
 # ifdef ADJUST_BOUNDARY
 !
@@ -4532,15 +4532,15 @@
 !  Assign contol variable isotropic or anisotropic correlation length
 !  scales.
 !
-      SELECT CASE (ifield)
-        CASE (isFsur, isUbar, isVbar)
+      SELECT CASE (TRIM(StateVarName(ifield)))
+        CASE ('zeta', 'ubar', 'ubar_eastward', 'vbar', 'vbar_northward')
           iLap=Mlap(ifield,ms,ng)
       END SELECT
 !
 !  Compute metrics factor.
 !
       IF (Lboundary(ibry)) THEN
-        SELECT CASE (cgrid)
+        SELECT CASE (ctype)
            CASE (r2dvar)
              IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
                DO j=Jstr-1,Jend+1
@@ -4602,7 +4602,7 @@
 !
 !  Set operator initial conditions.
 !
-      SELECT CASE (cgrid)
+      SELECT CASE (ctype)
         CASE (r2dvar)
 !^        CALL bc_r2d_bry_tile (ng, tile, ibry,                         &
 !^   &                          LBij, UBij,                             &
@@ -4662,7 +4662,7 @@
 !
 !  Compute XI- or ETA-components of diffusive flux.
 !
-      SELECT CASE (cgrid)
+      SELECT CASE (ctype)
 !
         CASE (r2dvar)                           ! 2D RHO-grid variables
           IF (Lboundary(ibry)) THEN
@@ -4693,7 +4693,7 @@
      &                   0.5_r8*(Khx(i-1)+Khx(i))*                      &
      &                   (tl_Awrk(i)-tl_Awrk(i-1))
 #  ifdef MASKING
-!^              FX(i)=FX(i)*GRID%umask(i,j)
+!^              FX(i)=FX(i)*GRID(ng)%umask(i,j)
 !^
                 tl_FX(i)=tl_FX(i)*GRID(ng)%umask(i,j)
 #  endif
@@ -4755,7 +4755,7 @@
      &                   0.5_r8*(Khx(i-1)+Khx(i))*                      &
      &                   (tl_Awrk(i)-tl_Awrk(i-1))
 #  ifdef MASKING
-!^              FX(i)=FX(i)*GRID(ng)*pmask(i,j)
+!^              FX(i)=FX(i)*GRID(ng)%pmask(i,j)
 !^
                 tl_FX(i)=tl_FX(i)*GRID(ng)%pmask(i,j)
 #  endif
@@ -4767,7 +4767,7 @@
 !
 !  Compute K-Laplacian.
 !
-      SELECT CASE (cgrid)
+      SELECT CASE (ctype)
 !
         CASE (r2dvar)                           ! 2D RHO-grid variables
           IF (Lboundary(ibry)) THEN
@@ -4904,7 +4904,7 @@
 !
       real (r8)                         :: adfac, cffx, cffy
 !
-      real (r8), dimension(LBij:UBij)   :: tl_Awrk
+      real (r8), dimension(LBij:UBij)   :: ad_Awrk
 !
       real (r8), dimension(LBij:UBij)   :: Hfac
       real (r8), dimension(IminS:ImaxS) :: Khx
@@ -4940,15 +4940,15 @@
 !  Assign contol variable isotropic or anisotropic correlation length
 !  scales.
 !
-      SELECT CASE (ifield)
-        CASE (isFsur, isUbar, isVbar)
+      SELECT CASE (TRIM(StateVarName(ifield)))
+        CASE ('zeta', 'ubar', 'ubar_eastward', 'vbar', 'vbar_northward')
           iLap=Mlap(ifield,ms,ng)
       END SELECT
 !
 !  Compute metrics factor.
 !
       IF (Lboundary(ibry)) THEN
-        SELECT CASE (cgrid)
+        SELECT CASE (ctype)
            CASE (r2dvar)
              IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
                DO j=Jstr-1,Jend+1
@@ -5046,7 +5046,7 @@
 !
 !  Adjoint of compute K-Laplacian.
 !
-      SELECT CASE (cgrid)
+      SELECT CASE (ctype)
 !
         CASE (r2dvar)                           ! 2D RHO-grid variables
           IF (Lboundary(ibry)) THEN
@@ -5123,7 +5123,7 @@
 !
 !  Adjoint of compute XI- or ETA-components of diffusive flux.
 !
-      SELECT CASE (cgrid)
+      SELECT CASE (ctype)
 !
         CASE (r2dvar)                           ! 2D RHO-grid variables
           IF (Lboundary(ibry)) THEN
@@ -5245,13 +5245,13 @@
           DO j=Jmin-1,Jmax+1
 !^          Awrk(j)=A(j)
 !^
-            tl_Awrk(j)=tl_A(j)
+            ad_Awrk(j)=ad_A(j)
           END DO
         ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
           DO i=Imin-1,Imax+1
 !^          Awrk(i)=A(i)
 !^
-            tl_Awrk(i)=tl_A(i)
+            ad_Awrk(i)=ad_A(i)
           END DO
         END IF
       END IF
@@ -5271,7 +5271,7 @@
      &                           ad_A)
 #  endif
 !
-      SELECT CASE (cgrid)
+      SELECT CASE (ctype)
         CASE (r2dvar)
 !^        CALL bc_r2d_bry_tile (ng, tile, ibry,                         &
 !^   &                          LBij, UBij,                             &
@@ -5338,8 +5338,8 @@
       real (r8), dimension(LBij:UBij)         :: Hfac
       real (r8), dimension(IminS:ImaxS)       :: Khx
       real (r8), dimension(JminS:JmaxS)       :: Khy
-      real (r8), dimension(JminS:JmaxS)       :: tl_FE
-      real (r8), dimension(IminS:ImaxS)       :: tl_FX
+      real (r8), dimension(JminS:JmaxS,N(ng)) :: tl_FE
+      real (r8), dimension(IminS:ImaxS,N(ng)) :: tl_FX
 !
 !  Initialize.
 !
@@ -5369,17 +5369,17 @@
 !  Assign contol variable isotropic or anisotropic correlation length
 !  scales.
 !
-      SELECT CASE (ifield)
-        CASE (isUvel, isVvel)
+      SELECT CASE (TRIM(StateVarName(ifield)))
+        CASE ('u', 'u_eastward', 'v', 'v_northward')
           iLap=Mlap(ifield,ms,ng)
-        CASE (isTvar(itemp), isTvar(isalt))
+        CASE ('temp', 'salt')
           iLap=Mlap(ifield,ms,ng)
       END SELECT
 !
 !  Compute metrics factor.
 !
       IF (Lboundary(ibry)) THEN
-        SELECT CASE (cgrid)
+        SELECT CASE (ctype)
            CASE (r3dvar)
              IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
                DO j=Jstr-1,Jend+1
@@ -5441,7 +5441,7 @@
 !
 !  Set operator initial conditions.
 !
-      SELECT CASE (cgrid)
+      SELECT CASE (ctype)
         CASE (r3dvar)
 !^        CALL bc_r3d_bry_tile (ng, tile, ibry,                         &
 !^   &                          LBij, UBij, 1, N(ng),                   &
@@ -5505,7 +5505,7 @@
 !
 !  Compute XI- or ETA-components of diffusive flux.
 !
-      SELECT CASE (cgrid)
+      SELECT CASE (ctype)
 !
         CASE (r3dvar)                           ! 3D RHO-grid variables
           IF (Lboundary(ibry)) THEN
@@ -5539,7 +5539,7 @@
      &                       0.5_r8*(Khx(i-1)+Khx(i))*                  &
      &                       (tl_Awrk(i,k)-tl_Awrk(i-1,k))
 #   ifdef MASKING
-!^                FX(i,k)=FX(i,k)*GRID%umask(i,j)
+!^                FX(i,k)=FX(i,k)*GRID(ng)%umask(i,j)
 !^
                   tl_FX(i,k)=tl_FX(i,k)*GRID(ng)%umask(i,j)
 #   endif
@@ -5609,7 +5609,7 @@
      &                       0.5_r8*(Khx(i-1)+Khx(i))*                  &
      &                       (tl_Awrk(i,k)-tl_Awrk(i-1,k))
 #   ifdef MASKING
-!^                FX(i,k)=FX(i,k)*GRID(ng)*pmask(i,j)
+!^                FX(i,k)=FX(i,k)*GRID(ng)%pmask(i,j)
 !^
                   tl_FX(i,k)=tl_FX(i,k)*GRID(ng)%pmask(i,j)
 #   endif
@@ -5622,7 +5622,7 @@
 !
 !  Compute K-Laplacian.
 !
-      SELECT CASE (cgrid)
+      SELECT CASE (ctype)
 !
         CASE (r3dvar)                           ! 3D RHO-grid variables
           IF (Lboundary(ibry)) THEN
@@ -5811,17 +5811,17 @@
 !  Assign contol variable isotropic or anisotropic correlation length
 !  scales.
 !
-      SELECT CASE (ifield)
-        CASE (isUvel, isVvel)
+      SELECT CASE (TRIM(StateVarName(ifield)))
+        CASE ('u', 'u_eastward', 'v', 'v_northward')
           iLap=Mlap(ifield,ms,ng)
-        CASE (isTvar(itemp), isTvar(isalt))
+        CASE ('temp', 'salt')
           iLap=Mlap(ifield,ms,ng)
       END SELECT
 !
 !  Compute metrics factor.
 !
       IF (Lboundary(ibry)) THEN
-        SELECT CASE (cgrid)
+        SELECT CASE (ctype)
            CASE (r3dvar)
              IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
                DO j=Jstr-1,Jend+1
@@ -5924,7 +5924,7 @@
 !
 !  Adjoint of compute K-Laplacian.
 !
-      SELECT CASE (cgrid)
+      SELECT CASE (ctype)
 !
         CASE (r3dvar)                           ! 3D RHO-grid variables
           IF (Lboundary(ibry)) THEN
@@ -6013,7 +6013,7 @@
 !
 !  Adjoint of compute XI- or ETA-components of diffusive flux.
 !
-      SELECT CASE (cgrid)
+      SELECT CASE (ctype)
 !
         CASE (r3dvar)                           ! 3D RHO-grid variables
           IF (Lboundary(ibry)) THEN
@@ -6148,7 +6148,7 @@
             DO j=Jmin-1,Jmax+1
 !^            Awrk(j,k)=A(j,k)
 !^
-              tl_Awrk(j,k)=tl_A(j,k)
+              ad_Awrk(j,k)=ad_A(j,k)
             END DO
           END DO
         ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
@@ -6156,7 +6156,7 @@
             DO i=Imin-1,Imax+1
 !^            Awrk(i,k)=A(i,k)
 !^
-              tl_Awrk(i,k)=tl_A(i,k)
+              ad_Awrk(i,k)=ad_A(i,k)
             END DO
           END DO
         END IF
@@ -6177,7 +6177,7 @@
      &                           ad_A)
 #   endif
 !
-      SELECT CASE (cgrid)
+      SELECT CASE (ctype)
         CASE (r3dvar)
 !^        CALL bc_r3d_bry_tile (ng, tile, ibry,                         &
 !^   &                          LBij, UBij, 1, N(ng),                   &
@@ -6206,7 +6206,7 @@
 !
       RETURN
       END SUBROUTINE ad_multiscale_Klap_b2d
-#  endif
-# endif
-#endif
+#  endif /* ADJUST_BOUNDARY */
+# endif /* SOLVE3D */
+#endif /* MULTI_SCALE_B */
       END MODULE roms_Klaplacian_mod

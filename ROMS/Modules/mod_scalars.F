@@ -1275,6 +1275,10 @@
 !
         integer :: MstateVar
 !
+!  State variable names.
+!
+        character (len=40), allocatable :: StateVarName(:)
+!
 !  Logical switch to compute initial conditions, model and surface
 !  forcing error covariance normalization factors.
 !
@@ -3232,6 +3236,10 @@
 #endif
 
 #if defined FOUR_DVAR || defined VERIFICATION
+      IF (.not.allocated(StateVarName)) THEN
+        allocate ( StateVarName(MstateVar) )
+      END IF
+
       IF (.not.allocated(Cnorm)) THEN
         allocate ( Cnorm(2,MstateVar) )
         Dmem(1)=Dmem(1)+2.0_r8*REAL(MstateVar,r8)
