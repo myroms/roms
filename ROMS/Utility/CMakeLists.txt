@@ -136,6 +136,7 @@ list( APPEND _files
       ROMS/Utility/regrid.F
       ROMS/Utility/rep_matrix.F
       ROMS/Utility/roms_interp.F
+      ROMS/Utility/roms_multiscale.F
       ROMS/Utility/round.F
       ROMS/Utility/rpcg_lanczos.F
       ROMS/Utility/set_2dfld.F
