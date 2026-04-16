@@ -257,8 +257,8 @@
      &                        self%ci2d_r, self%ci2d_r)
           deps=SQRT(dotr/dotn)
 !
-          status=multiscale_print(ng, ifield, ms, iterDiff, iterCI,     & 
-     &                            NiterCI, 'CI_2d', deps)
+          status=multiscale_print(ng, ifield, ms, iterDiff, Mlap,       &
+     &                            iterCI, NiterCI, 'CI_2d', deps)
 #endif
 !                                                        steps 14, 15
           DO j=Jmin,Jmax
@@ -643,7 +643,8 @@
       integer                           :: status
 # endif
 !
-      real (r8)                         :: dotn, dotr, deps
+      real (r8)                         :: dotr, deps
+      real (r8), dimension(N(ng))       :: dotn
       real (r8)                         :: cff, ci_alpham1, ci_delta
       real (r8)                         :: ci_sigma
 !
@@ -830,8 +831,8 @@
      &                          self%ci3d_r(:,:,k))
             deps=sqrt(dotr/dotn(k))
 !
-            status=multiscale_print(ng, ifield, ms, iterDiff, iterCI,   & 
-     &                              NiterCI, 'CI_3d', deps, k)
+            status=multiscale_print(ng, ifield, ms, iterDiff, Mlap,     &
+     &                              iterCI, NiterCI, 'CI_3d', deps, k)
 # endif
 !                                                        steps 14, 15
             DO j=Jmin,Jmax
@@ -847,8 +848,8 @@
 !                                                        step 16
             DO j=Jmin,Jmax
               DO i=Imin,Imax
-                self%ci3d_p(i,j,k)=-self%ci3d_r(i,j,k)+                &
-     &                             ci_beta(iterCI+1,k)*                &
+                self%ci3d_p(i,j,k)=-self%ci3d_r(i,j,k)+                 &
+     &                             ci_beta(iterCI+1,k)*                 &
      &                             self%ci3d_p(i,j,k)
                 tl_A(i,j,k)=self%ci3d_p(i,j,k)
               END DO
@@ -916,7 +917,8 @@
       integer                           :: Mlap, iterCI, iterDiff
       integer                           :: i, j, k
 !
-      real (r8)                         :: dotn, dotr, deps
+      real (r8)                         :: dotr, deps
+      real (r8), dimension(N(ng))       :: dotn
       real (r8)                         :: cff, ci_alpham1, ci_delta
       real (r8)                         :: ci_sigma
 !
@@ -1428,8 +1430,8 @@
      &                        self%ciB1d_r)
           deps=SQRT(dotr/dotn)
 !
-          status=multiscale_print(ng, ifield, ms, iterDiff, iterCI,     & 
-     &                            NiterCI, 'CI_B1d', deps)
+          status=multiscale_print(ng, ifield, ms, iterDiff, Mlap,       &
+     &                            iterCI, NiterCI, 'CI_B1d', deps)
 # endif
 !                                                         steps 14, 15
           SELECT CASE (ibry)
@@ -1928,8 +1930,12 @@
       integer                           :: Jstr, JstrV, Jend, Jmin, Jmax
       integer                           :: Mlap, iterCI, iterDiff
       integer                           :: i, j, k
+#  ifdef MULTI_SCALE_DEBUG
+      integer                           :: status
+#  endif
 !
-      real (r8)                         :: dotn, dotr, deps
+      real (r8)                         :: dotr, deps
+      real (r8), dimension(N(ng))       :: dotn
       real (r8)                         :: cff, ci_alpham1, ci_delta
       real (r8)                         :: ci_sigma
 !
@@ -2142,29 +2148,29 @@
      &                          LBij, UBij,                             &
      &                          self%ciB2d_r(:,k),                      &
      &                          self%ciB2d_r(:,k))
-            deps=SQRT(dotr/dotn)
+            deps=SQRT(dotr/dotn(k))
 !
-            status=multiscale_print(ng, ifield, ms, iterDiff, iterCI,   & 
-     &                              NiterCI, 'CI_B2d', deps, k)
+            status=multiscale_print(ng, ifield, ms, iterDiff, Mlap,     &
+     &                              iterCI, NiterCI, 'CI_B2d', deps, k)
 #  endif
 !                                                         steps 14, 15
             SELECT CASE (ibry)
               CASE (iwest, ieast)
                 DO j=Jmin,Jmin
-                  self%ciB2d_x(j,k)=self%ciB2d_x(j,k)+                    &
-     &                              ci_alpha(iterCI,k)*                   &
+                  self%ciB2d_x(j,k)=self%ciB2d_x(j,k)+                  &
+     &                              ci_alpha(iterCI,k)*                 &
      &                              self%ciB2d_p(j,k)
-                  self%ciB2d_r(j,k)=self%ciB2d_r(j,k)+                    &
-     &                              ci_alpha(iterCI,k)*                   &
+                  self%ciB2d_r(j,k)=self%ciB2d_r(j,k)+                  &
+     &                              ci_alpha(iterCI,k)*                 &
      &                              self%ciB2d_q(j,k)
                 END DO
               CASE (isouth, inorth)
                 DO i=Imin,Imin
-                  self%ciB2d_x(i,k)=self%ciB2d_x(i,k)+                    &
-     &                              ci_alpha(iterCI,k)*                   &
+                  self%ciB2d_x(i,k)=self%ciB2d_x(i,k)+                  &
+     &                              ci_alpha(iterCI,k)*                 &
      &                              self%ciB2d_p(i,k)
-                  self%ciB2d_r(i,k)=self%ciB2d_r(i,k)+                    &
-     &                              ci_alpha(iterCI,k)*                   &
+                  self%ciB2d_r(i,k)=self%ciB2d_r(i,k)+                  &
+     &                              ci_alpha(iterCI,k)*                 &
      &                              self%ciB2d_q(i,k)
                 END DO
             END SELECT
@@ -2172,15 +2178,15 @@
             SELECT CASE (ibry)
               CASE (iwest, ieast)
                 DO j=Jmin,Jmin
-                  self%ciB2d_p(j,k)=-self%ciB2d_r(j,k)+                  &
-     &                              ci_beta(iterCI+1,k)*                 &
+                  self%ciB2d_p(j,k)=-self%ciB2d_r(j,k)+                 &
+     &                              ci_beta(iterCI+1,k)*                &
      &                              self%ciB2d_p(j,k)
                   tl_A(j,k)=self%ciB2d_p(j,k)
                 END DO
               CASE (isouth, inorth)
                 DO i=Imin,Imin
-                  self%ciB2d_p(i,k)=-self%ciB2d_r(i,k)+                  &
-     &                              ci_beta(iterCI+1,k)*                 &
+                  self%ciB2d_p(i,k)=-self%ciB2d_r(i,k)+                 &
+     &                              ci_beta(iterCI+1,k)*                &
      &                              self%ciB2d_p(i,k)
                     tl_A(i,k)=self%ciB2d_p(i,k)
                 END DO
@@ -2263,7 +2269,7 @@
       integer                           :: Mlap, iterCI, iterDiff
       integer                           :: i, j, k
 !
-      real (r8)                         :: dotn, dotr, deps
+      real (r8)                         :: dotr, deps
       real (r8)                         :: adfac, cff
       real (r8)                         :: ci_alpham1, ci_delta, ci_sigma
 !

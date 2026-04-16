@@ -9,7 +9,7 @@
 **                                                                    **
 ** Implicit Multiscale Background-error Covariance Solver:            **
 **                                                                    **
-** These routines computes the K-Laplacian operator, [1 + Del(K*Del)],**  
+** These routines computes the K-Laplacian operator, [1 + Del(K*Del)],**
 ** which is subsequently used to determine the minimum and maximum    **
 ** eigenvalues required by the implicit diffusion iterative algorithm **
 ** for modeling multiscale background-error covariance matrix effects **
@@ -4006,13 +4006,13 @@
 #  ifdef MASKING
                 cff=cff*GRID(ng)%umask(i,j)
 #  endif
-                dZdx(i,j)=cff*(GRID(ng)%z_r(i  ,j,kk+1)-                  &
+                dZdx(i,j)=cff*(GRID(ng)%z_r(i  ,j,kk+1)-                &
      &                         GRID(ng)%z_r(i-1,j,kk+1))
               END DO
             END DO
             DO j=JstrV,Jend
               DO i=Istr,Iend+1
-                dZdx_p(i,j,k2b)=0.5_r8*(dZdx(i,j-1)+                      &
+                dZdx_p(i,j,k2b)=0.5_r8*(dZdx(i,j-1)+                    &
      &                                  dZdx(i,j  ))
               END DO
             END DO

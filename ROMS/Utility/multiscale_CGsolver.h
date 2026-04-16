@@ -63,6 +63,9 @@
 #endif
 !
       real (r8)                         :: dotn, dotpq, dotr, dotrd
+#ifdef MULTI_SCALE_DEBUG
+      real (r8)                         :: deps
+#endif
 !
       real (r8), pointer                :: eigMin(:,:) => NULL()
       real (r8), pointer                :: eigMax(:,:) => NULL()
@@ -183,7 +186,7 @@
           DO i=Imin,Imax
             self%cg2d_x(i,j)=0.0_r8                       ! step 1
             self%cg2d_r(i,j)=-tl_A(i,j)                   ! step 2
-            self%cg2d_p(i,j)=tl_A(i,j)                    ! step 3                     
+            self%cg2d_p(i,j)=tl_A(i,j)                    ! step 3
           END DO
         END DO
         cg_b(0)=0.0_r8                                    ! step 4
@@ -251,8 +254,8 @@
 #ifdef MULTI_SCALE_DEBUG
 !
           deps=SQRT(dotr/dotn)
-          status=multiscale_print(ng, ifield, ms, iterDiff, iterCG,     & 
-     &                            NiterCG, 'CG_2d', deps)
+          status=multiscale_print(ng, ifield, ms, iterDiff, Mlap,       &
+     &                            iterCG, NiterCG, 'CG_2d', deps)
 #endif
 !
           DO j=Jmin,Jmax
@@ -385,7 +388,7 @@
       integer                           :: status
 # endif
 !
-      real (r8)                         :: dotpq, dotr, dotrd
+      real (r8)                         :: dotpq, dotr, dotrd, deps
       real (r8), dimension(N(ng))       :: dotn
 !
       real (r8), pointer                :: eigMin(:,:) => NULL()
@@ -575,8 +578,8 @@
 # ifdef MULTI_SCALE_DEBUG
 !
             deps=SQRT(dotr/dotn(k))
-            status=multiscale_print(ng, ifield, ms, iterDiff, iterCG,   & 
-     &                              NiterCG, 'CG_3d', deps, k)
+            status=multiscale_print(ng, ifield, ms, iterDiff, Mlap,     &
+     &                              iterCG, NiterCG, 'CG_3d', deps, k)
 # endif
 !
             DO j=Jmin,Jmax
@@ -719,6 +722,9 @@
 # endif
 !
       real (r8)                         :: dotn, dotpq, dotr, dotrd
+# ifdef MULTI_SCALE_DEBUG
+      real (r8)                         :: deps
+# endif
 !
       real (r8), pointer                :: eigMin(:) => NULL()
       real (r8), pointer                :: eigMax(:) => NULL()
@@ -926,8 +932,8 @@
 # ifdef MULTI_SCALE_DEBUG
 !
           deps=SQRT(dotr/dotn)
-          status=multiscale_print(ng, ifield, ms, iterDiff, iterCG,     & 
-     &                            NiterCG, 'CG_b1d', deps)
+          status=multiscale_print(ng, ifield, ms, iterDiff, Mlap,       &
+     &                            iterCG, NiterCG, 'CG_b1d', deps)
 # endif
 !
           SELECT CASE (ibry)
@@ -1098,7 +1104,7 @@
       integer                           :: status
 #  endif
 !
-      real (r8)                         :: dotpq, dotr, dotrd
+      real (r8)                         :: dotpq, dotr, dotrd, deps
       real (r8), dimension(N(ng))       :: dotn
 !
       real (r8), pointer                :: eigMin(:,:) => NULL()
@@ -1327,9 +1333,9 @@
 
 #  ifdef MULTI_SCALE_DEBUG
 !
-            deps=SQRT(dotr/dotn)
-            status=multiscale_print(ng, ifield, ms, iterDiff, iterCG,   & 
-     &                              NiterCG, 'CG_b2d', deps,k)
+            deps=SQRT(dotr/dotn(k))
+            status=multiscale_print(ng, ifield, ms, iterDiff, Mlap,     &
+     &                              iterCG, NiterCG, 'CG_b2d', deps, k)
 #  endif
 !
             SELECT CASE (ibry)

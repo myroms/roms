@@ -92,6 +92,7 @@
      &                             bc_v3d_bry_tile
 #  endif
 # endif
+      USE lapack_mod,       ONLY : DSTEQR
 # ifdef DISTRIBUTE
       USE mp_exchange_mod,  ONLY : ad_mp_exchange2d
 #  ifdef ADJUST_BOUNDARY
@@ -116,7 +117,6 @@
 #  endif
       USE distribute_mod,   ONLY : mp_reduce
 # endif
-      USE lapack_mod,       ONLY : DSTEQR
       USE strings_mod,      ONLY : FoundError
 !
       implicit none
@@ -133,7 +133,7 @@
         integer :: tile                           ! domain partition
         integer :: LBi,  UBi,  LBj,  UBj          ! array bounds
 # ifdef ADJUST_BOUNDARY
-        integer :: LBij,  UBij                    ! boundary bounds
+        integer :: LBij, UBij                     ! boundary bounds
 # endif
 !
 !  Multiscale background covariance matrix parameters:
@@ -482,11 +482,9 @@
 !-----------------------------------------------------------------------
 !  It deallocates the multiscale background-error covariance object.
 !
-      SUBROUTINE multiscale_finalize (model)
+      SUBROUTINE multiscale_finalize
 !
-      integer,          intent(in   ) :: model      ! kernel identifier
-!
-      integer                         :: ng, tile
+      integer :: ng, tile
 !
 !  Deallocate background-error ocovariance derived-type structure.
 !  Note that it also deallocates its internal arrays.
