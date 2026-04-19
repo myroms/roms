@@ -221,9 +221,7 @@
 !
       DO j=Jstr-1,Jend+1
         DO i=Istr-1,Iend+1
-# ifndef MULTI_SCALE_B
           Hfac(i,j)=DTsizeH*pm(i,j)*pn(i,j)
-# endif
 # ifdef VCONVOLUTION
 #  ifndef SPLINES_VCONV
           FC(i,j,N(ng))=0.0_r8
@@ -264,7 +262,6 @@
      &                       EWperiodic(ng), NSperiodic(ng),            &
      &                       ad_A)
 # endif
-# ifndef MULTI_SCALE_B
 !^    CALL dabc_r3d_tile (ng, tile,                                     &
 !^   &                    LBi, UBi, LBj, UBj, LBk, UBk,                 &
 !^   &                    tl_A)
@@ -272,7 +269,6 @@
       CALL ad_dabc_r3d_tile (ng, tile,                                  &
      &                       LBi, UBi, LBj, UBj, LBk, UBk,              &
      &                       ad_A)
-# endif
       DO k=1,N(ng)
         DO j=Jstr,Jend
           DO i=Istr,Iend
@@ -564,8 +560,6 @@
       END DO
 #  endif
 # endif
-
-# ifndef MULTI_SCALE_B
 !
 !-----------------------------------------------------------------------
 !  Integrate adjoint horizontal diffusion equation.
@@ -581,7 +575,7 @@
 !
 !  Apply adjoint boundary conditions.
 !
-#  ifdef DISTRIBUTE
+# ifdef DISTRIBUTE
 !^      CALL mp_exchange3d (ng, tile, model, 1,                         &
 !^   &                      LBi, UBi, LBj, UBj, LBk, UBk,               &
 !^   &                      Nghost,                                     &
@@ -593,7 +587,7 @@
      &                         Nghost,                                  &
      &                         EWperiodic(ng), NSperiodic(ng),          &
      &                         ad_Awrk(:,:,:,Nnew))
-#  endif
+# endif
 !^      CALL dabc_r3d_tile (ng, tile,                                   &
 !^   &                      LBi, UBi, LBj, UBj, LBk, UBk,               &
 !^   &                      tl_Awrk(:,:,:,Nnew))
@@ -602,7 +596,7 @@
      &                         LBi, UBi, LBj, UBj, LBk, UBk,            &
      &                         ad_Awrk(:,:,:,Nnew))
 
-#  ifdef GEOPOTENTIAL_HCONV
+# ifdef GEOPOTENTIAL_HCONV
 !
 !  Diffusion along geopotential surfaces: Compute horizontal and
 !  vertical gradients.  Notice the recursive blocking sequence.  The
@@ -648,11 +642,11 @@
               DO j=Jstr,Jend
                 DO i=Istr,Iend+1
                   cff=0.5_r8*(pm(i-1,j)+pm(i,j))
-#   ifdef MASKING
+#  ifdef MASKING
                   cff=cff*umask(i,j)
-#   endif
-                  dZdx(i,j,k2b)=cff*(z_r(i  ,j,kk+1)-                   &
-     &                               z_r(i-1,j,kk+1))
+#  endif
+                  dZdx(i,j,k2)=cff*(z_r(i  ,j,kk+1)-                    &
+     &                              z_r(i-1,j,kk+1))
                 END DO
               END DO
               IF (kk.eq.0) THEN
@@ -665,11 +659,11 @@
               DO j=Jstr,Jend+1
                 DO i=Istr,Iend
                   cff=0.5_r8*(pn(i,j-1)+pn(i,j))
-#   ifdef MASKING
+#  ifdef MASKING
                   cff=cff*vmask(i,j)
-#   endif
-                  dZde(i,j,k2b)=cff*(z_r(i,j  ,kk+1)-                   &
-     &                               z_r(i,j-1,kk+1))
+#  endif
+                  dZde(i,j,k2)=cff*(z_r(i,j  ,kk+1)-                    &
+     &                              z_r(i,j-1,kk+1))
                 END DO
               END DO
               IF (kk.eq.0) THEN
@@ -693,12 +687,10 @@
 !^   &                              (tl_FX(i+1,j  )-tl_FX(i,j)+         &
 !^   &                               tl_FE(i  ,j+1)-tl_FE(i,j))+        &
 !^   &                              DTsizeH*                            &
-!^   &                              (tl_FZ(i,j,k2)-tl_FZ(i,j,k1))/      &
-!^   &                              Hz(i,j,k)
-
+!^   &                              (tl_FZ(i,j,k2)-tl_FZ(i,j,k1))
 !^
                 adfac1=Hfac(i,j)*ad_Awrk(i,j,k,Nnew)
-                adfac2=DTsizeH*ad_Awrk(i,j,k,Nnew)/Hz(i,j,k)
+                adfac2=DTsizeH*ad_Awrk(i,j,k,Nnew)
                 ad_FE(i,j  )=ad_FE(i,j  )-adfac1
                 ad_FE(i,j+1)=ad_FE(i,j+1)+adfac1
                 ad_FX(i  ,j)=ad_FX(i  ,j)-adfac1
@@ -773,17 +765,18 @@
             END IF
             DO j=Jstr,Jend+1
               DO i=Istr,Iend
-                cff=0.5_r8*(Kh(i,j-1)+Kh(i,j))*om_v(i,j)
+                cff=0.25_r8*(Kh(i,j-1)+Kh(i,j))*om_v(i,j)
                 cff1=MIN(dZde(i,j,k1),0.0_r8)
                 cff2=MAX(dZde(i,j,k1),0.0_r8)
 !^              tl_FE(i,j)=cff*                                         &
+!^   &                     (Hz(i,j,k)+Hz(i,j-1,k))*                     &
 !^   &                     (tl_dAde(i,j,k1)-                            &
 !^   &                      0.5_r8*(cff1*(tl_dAdz(i,j-1,k1)+            &
 !^   &                                    tl_dAdz(i,j  ,k2))+           &
 !^   &                              cff2*(tl_dAdz(i,j-1,k2)+            &
 !^   &                                    tl_dAdz(i,j  ,k1))))
 !^
-                adfac=cff*ad_FE(i,j)
+                adfac=cff*(Hz(i,j,k)+Hz(i,j-1,k))*ad_FE(i,j)
                 adfac1=adfac*0.5_r8*cff1
                 adfac2=adfac*0.5_r8*cff2
                 ad_dAde(i,j,k1)=ad_dAde(i,j,k1)+adfac
@@ -796,17 +789,18 @@
             END DO
             DO j=Jstr,Jend
               DO i=Istr,Iend+1
-                cff=0.5_r8*(Kh(i,j)+Kh(i-1,j))*on_u(i,j)
+                cff=0.25_r8*(Kh(i-1,j)+Kh(i-1,j))*on_u(i,j)
                 cff1=MIN(dZdx(i,j,k1),0.0_r8)
                 cff2=MAX(dZdx(i,j,k1),0.0_r8)
 !^              tl_FX(i,j)=cff*                                         &
+!^   &                     (Hz(i,j,k)+Hz(i-1,j,k))*                     &
 !^   &                     (tl_dAdx(i,j,k1)-                            &
 !^   &                      0.5_r8*(cff1*(tl_dAdz(i-1,j,k1)+            &
 !^   &                                    tl_dAdz(i  ,j,k2))+           &
 !^   &                              cff2*(tl_dAdz(i-1,j,k2)+            &
 !^   &                                    tl_dAdz(i  ,j,k1))))
 !^
-                adfac=cff*ad_FX(i,j)
+                adfac=cff*(Hz(i,j,k)+Hz(i-1,j,k))*ad_FX(i,j)
                 adfac1=adfac*0.5_r8*cff1
                 adfac2=adfac*0.5_r8*cff2
                 ad_dAdx(i,j,k1)=ad_dAdx(i,j,k1)+adfac
@@ -833,11 +827,11 @@
             DO j=Jstr-1,Jend+1
               DO i=Istr-1,Iend+1
                 cff=1.0_r8/(z_r(i,j,k+1)-z_r(i,j,k))
-#   ifdef MASKING
+#  ifdef MASKING
 !^              tl_dAdz(i,j,k2)=tl_dAdz(i,j,k2)*rmask(i,j)
 !^
                 ad_dAdz(i,j,k2)=ad_dAdz(i,j,k2)*rmask(i,j)
-#   endif
+#  endif
 !^              tl_dAdz(i,j,k2)=cff*(tl_Awrk(i,j,k+1,Nold)-             &
 !^   &                               tl_Awrk(i,j,k  ,Nold))
 !^
@@ -852,7 +846,7 @@
             DO j=Jstr,Jend+1
               DO i=Istr,Iend
                 cff=0.5_r8*(pn(i,j-1)+pn(i,j))
-#   ifdef MASKING
+#  ifdef MASKING
                 cff=cff*vmask(i,j)
 !^              tl_dAde(i,j,k2)=cff*
 !^   &                          (tl_Awrk(i,j  ,k+1,Nold)*rmask(i,j  )-  &
@@ -864,7 +858,7 @@
                 ad_Awrk(i,j  ,k+1,Nold)=ad_Awrk(i,j  ,k+1,Nold)+        &
      &                                  rmask(i,j  )*adfac
                 ad_dAde(i,j,k2)=0.0_r8
-#   else
+#  else
 !^              tl_dAde(i,j,k2)=cff*(tl_Awrk(i,j  ,k+1,Nold)-           &
 !^   &                               tl_Awrk(i,j-1,k+1,Nold))
 !^
@@ -872,13 +866,13 @@
                 ad_Awrk(i,j-1,k+1,Nold)=ad_Awrk(i,j-1,k+1,Nold)-adfac
                 ad_Awrk(i,j  ,k+1,Nold)=ad_Awrk(i,j  ,k+1,Nold)+adfac
                 ad_dAde(i,j,k2)=0.0_r8
-#   endif
+#  endif
               END DO
             END DO
             DO j=Jstr,Jend
               DO i=Istr,Iend+1
                 cff=0.5_r8*(pm(i-1,j)+pm(i,j))
-#   ifdef MASKING
+#  ifdef MASKING
                 cff=cff*umask(i,j)
 !^              dAdx(i,j,k2)=cff*(Awrk(i  ,j,k+1,Nold)*rmask(i  ,j)-    &
 !^   &                            Awrk(i-1,j,k+1,Nold)*rmask(i-1,j))
@@ -889,7 +883,7 @@
                 ad_Awrk(i  ,j,k+1,Nold)=ad_Awrk(i  ,j,k+1,Nold)+        &
      &                                  rmask(i  ,j)*adfac
                 ad_dAdx(i,j,k2)=0.0_r8
-#   else
+#  else
 !^              tl_dAdx(i,j,k2)=cff*(tl_Awrk(i  ,j,k+1,Nold)-           &
 !^   &                               tl_Awrk(i-1,j,k+1,Nold))
 !^
@@ -897,7 +891,7 @@
                 ad_Awrk(i-1,j,k+1,Nold)=ad_Awrk(i-1,j,k+1,Nold)-adfac
                 ad_Awrk(i  ,j,k+1,Nold)=ad_Awrk(i  ,j,k+1,Nold)+adfac
                 ad_dAdx(i,j,k2)=0.0_r8
-#   endif
+#  endif
               END DO
             END DO
           END IF
@@ -909,7 +903,7 @@
           k1=kt
         END DO K_LOOP
 
-#  else
+# else
 !
 !  Time-step adjoint horizontal diffusion equation.
 !
@@ -936,11 +930,11 @@
 !
           DO j=Jstr,Jend+1
             DO i=Istr,Iend
-#   ifdef MASKING
+#  ifdef MASKING
 !^            tl_FE(i,j)=tl_FE(i,j)*vmask(i,j)
 !^
               ad_FE(i,j)=ad_FE(i,j)*vmask(i,j)
-#   endif
+#  endif
 !^            tl_FE(i,j)=pnom_v(i,j)*0.5_r8*(Kh(i,j-1)+Kh(i,j))*        &
 !^   &                   (tl_Awrk(i,j,k,Nold)-tl_Awrk(i,j-1,k,Nold))
 !^
@@ -952,11 +946,11 @@
           END DO
           DO j=Jstr,Jend
             DO i=Istr,Iend+1
-#   ifdef MASKING
+#  ifdef MASKING
 !^            tl_FX(i,j)=tl_FX(i,j)*umask(i,j)
 !^
               ad_FX(i,j)=ad_FX(i,j)*umask(i,j)
-#   endif
+#  endif
 !^            tl_FX(i,j)=pmon_u(i,j)*0.5_r8*(Kh(i-1,j)+Kh(i,j))*        &
 !^   &                   (tl_Awrk(i,j,k,Nold)-tl_Awrk(i-1,j,k,Nold))
 !^
@@ -967,9 +961,8 @@
             END DO
           END DO
         END DO
-#  endif
-      END DO
 # endif
+      END DO
 !
 !-----------------------------------------------------------------------
 !  Set adjoint initial conditions.
@@ -998,7 +991,6 @@
      &                       EWperiodic(ng), NSperiodic(ng),            &
      &                       ad_A)
 # endif
-# ifndef MULTI_SCALE_B
 !^    CALL dabc_r3d_tile (ng, tile,                                     &
 !^   &                    LBi, UBi, LBj, UBj, LBk, UBk,                 &
 !^   &                    tl_A)
@@ -1006,8 +998,7 @@
       CALL ad_dabc_r3d_tile (ng, tile,                                  &
      &                       LBi, UBi, LBj, UBj, LBk, UBk,              &
      &                       ad_A)
-# endif
-!
+
       RETURN
       END SUBROUTINE ad_conv_r3d_tile
 !
@@ -1189,9 +1180,7 @@
       cff=DTsizeH*0.25_r8
       DO j=Jstr-1,Jend+1
         DO i=IstrU-1,Iend+1
-# ifndef MULTI_SCALE_B
           Hfac(i,j)=cff*(pm(i-1,j)+pm(i,j))*(pn(i-1,j)+pn(i,j))
-# endif
 # ifdef VCONVOLUTION
 #  ifndef SPLINES_VCONV
           FC(i,j,N(ng))=0.0_r8
@@ -1236,7 +1225,6 @@
      &                       EWperiodic(ng), NSperiodic(ng),            &
      &                       ad_A)
 # endif
-# ifndef MULTI_SCALE_B
 !^    CALL dabc_u3d_tile (ng, tile,                                     &
 !^   &                    LBi, UBi, LBj, UBj, LBk, UBk,                 &
 !^   &                    tl_A)
@@ -1244,7 +1232,6 @@
       CALL ad_dabc_u3d_tile (ng, tile,                                  &
      &                       LBi, UBi, LBj, UBj, LBk, UBk,              &
      &                       ad_A)
-# endif
       DO k=1,N(ng)
         DO j=Jstr,Jend
           DO i=IstrU,Iend
@@ -1537,8 +1524,6 @@
       END DO
 #  endif
 # endif
-
-# ifndef MULTI_SCALE_B
 !
 !-----------------------------------------------------------------------
 !  Integrate adjoint horizontal diffusion equation.
@@ -1554,7 +1539,7 @@
 !
 !  Apply adjoint boundary conditions.
 !
-#  ifdef DISTRIBUTE
+# ifdef DISTRIBUTE
 !^      CALL mp_exchange3d (ng, tile, model, 1,                         &
 !^   &                      LBi, UBi, LBj, UBj, LBk, UBk,               &
 !^   &                      Nghost,                                     &
@@ -1566,7 +1551,7 @@
      &                         Nghost,                                  &
      &                         EWperiodic(ng), NSperiodic(ng),          &
      &                         ad_Awrk(:,:,:,Nnew))
-#  endif
+# endif
 !^      CALL dabc_u3d_tile (ng, tile,                                   &
 !^   &                      LBi, UBi, LBj, UBj, LBk, UBk,               &
 !^   &                      tl_Awrk(:,:,:,Nnew))
@@ -1575,7 +1560,7 @@
      &                         LBi, UBi, LBj, UBj, LBk, UBk,            &
      &                         ad_Awrk(:,:,:,Nnew))
 
-#  ifdef GEOPOTENTIAL_HCONV
+# ifdef GEOPOTENTIAL_HCONV
 !
 !  Diffusion along geopotential surfaces: Compute horizontal and
 !  vertical gradients.  Notice the recursive blocking sequence.  The
@@ -1621,17 +1606,17 @@
               DO j=Jstr,Jend
                 DO i=IstrU-1,Iend+1
                   cff=0.5_r8*(pm(i-1,j)+pm(i,j))
-#   ifdef MASKING
+#  ifdef MASKING
                   cff=cff*umask(i,j)
-#   endif
+#  endif
                   dZdx(i,j)=cff*(z_r(i  ,j,kk+1)-                       &
      &                           z_r(i-1,j,kk+1))
                 END DO
               END DO
               DO j=Jstr,Jend
                 DO i=IstrU-1,Iend
-                  dZdx_r(i,j,k2b)=0.5_r8*(dZdx(i  ,j)+                  &
-     &                                    dZdx(i+1,j))
+                  dZdx_r(i,j,k2)=0.5_r8*(dZdx(i  ,j)+                   &
+     &                                   dZdx(i+1,j))
                 END DO
               END DO
               IF (kk.eq.0) THEN
@@ -1645,17 +1630,17 @@
               DO j=Jstr,Jend+1
                 DO i=IstrU-1,Iend
                   cff=0.5_r8*(pn(i,j-1)+pn(i,j))
-#   ifdef MASKING
+#  ifdef MASKING
                   cff=cff*vmask(i,j)
-#   endif
+#  endif
                   dZde(i,j)=cff*(z_r(i,j  ,kk+1)-                       &
      &                           z_r(i,j-1,kk+1))
                 END DO
               END DO
               DO j=Jstr,Jend+1
                 DO i=IstrU,Iend
-                  dZde_p(i,j,k2b)=0.5_r8*(dZde(i-1,j)+                  &
-     &                                    dZde(i  ,j))
+                  dZde_p(i,j,k2)=0.5_r8*(dZde(i-1,j)+                   &
+     &                                   dZde(i  ,j))
                 END DO
               END DO
               IF (kk.eq.0) THEN
@@ -1682,8 +1667,7 @@
 !^   &                              (tl_FZ(i,j,k2)-tl_FZ(i,j,k1))
 !^
                 adfac1=Hfac(i,j)*ad_Awrk(i,j,k,Nnew)
-                adfac2=2.0_r8*DTsizeH*ad_Awrk(i,j,k,Nnew)/              &
-     &                                (Hz(i,j,k)+Hz(i-1,j,k))
+                adfac2=DTsizeH*ad_Awrk(i,j,k,Nnew)
                 ad_FE(i,j  )=ad_FE(i,j  )-adfac1
                 ad_FE(i,j+1)=ad_FE(i,j+1)+adfac1
                 ad_FX(i-1,j)=ad_FX(i-1,j)-adfac1
@@ -1758,18 +1742,21 @@
             END IF
             DO j=Jstr,Jend+1
               DO i=IstrU,Iend
-                cff=0.25_r8*(Kh(i-1,j-1)+Kh(i-1,j)+                     &
+                cff=0.0625_r8*(Kh(i-1,j-1)+Kh(i-1,j)+                   &
      &                         Kh(i  ,j-1)+Kh(i  ,j))*om_p(i,j)
                 cff1=MIN(dZde_p(i,j,k1),0.0_r8)
                 cff2=MAX(dZde_p(i,j,k1),0.0_r8)
 !^              tl_FE(i,j)=cff*                                         &
+!^   &                     (Hz(i-1,j-1,k)+Hz(i-1,j,k)+                  &
+!^   &                      Hz(i  ,j-1,k)+Hz(i  ,j,k))*                 &
 !^   &                     (tl_dAde(i,j,k1)-                            &
 !^   &                      0.5_r8*(cff1*(tl_dAdz(i,j-1,k1)+            &
 !^   &                                    tl_dAdz(i,j  ,k2))+           &
 !^   &                              cff2*(tl_dAdz(i,j-1,k2)+            &
 !^   &                                    tl_dAdz(i,j  ,k1))))
 !^
-                adfac=cff*ad_FE(i,j)
+                adfac=cff*(Hz(i-1,j-1,k)+Hz(i-1,j,k)+                   &
+     &                     Hz(i  ,j-1,k)+Hz(i  ,j,k))*ad_FE(i,j)
                 adfac1=adfac*0.5_r8*cff1
                 adfac2=adfac*0.5_r8*cff2
                 ad_dAde(i,j,k1)=ad_dAde(i,j,k1)+adfac
@@ -1786,13 +1773,14 @@
                 cff1=MIN(dZdx_r(i,j,k1),0.0_r8)
                 cff2=MAX(dZdx_r(i,j,k1),0.0_r8)
 !^              tl_FX(i,j)=cff*                                         &
+!^   &                     Hz(i,j,k)*                                   &
 !^   &                     (tl_dAdx(i,j,k1)-                            &
 !^   &                      0.5_r8*(cff1*(tl_dAdz(i  ,j,k1)+            &
 !^   &                                    tl_dAdz(i+1,j,k2))+           &
 !^   &                              cff2*(tl_dAdz(i  ,j,k2)+            &
 !^   &                                    tl_dAdz(i+1,j,k1))))
 !^
-                adfac=cff*ad_FX(i,j)
+                adfac=cff*Hz(i,j,k)*ad_FX(i,j)
                 adfac1=adfac*0.5_r8*cff1
                 adfac2=adfac*0.5_r8*cff2
                 ad_dAdx(i,j,k1)=ad_dAdx(i,j,k1)+adfac
@@ -1819,11 +1807,11 @@
             DO j=Jstr-1,Jend+1
               DO i=IstrU-1,Iend+1
                 cff=1.0_r8/(z_r(i,j,k+1)-z_r(i,j,k))
-#   ifdef MASKING
+#  ifdef MASKING
 !^              tl_dAdz(i,j,k2)=tl_dAdz(i,j,k2)*umask(i,j)
 !^
                 ad_dAdz(i,j,k2)=ad_dAdz(i,j,k2)*umask(i,j)
-#   endif
+#  endif
 !^              tl_dAdz(i,j,k2)=cff*(tl_Awrk(i,j,k+1,Nold)-             &
 !^   &                               tl_Awrk(i,j,k  ,Nold))
 !^
@@ -1839,7 +1827,7 @@
               DO i=IstrU,Iend
                 cff=0.25_r8*(pn(i-1,j  )+pn(i,j  )+                     &
      &                       pn(i-1,j-1)+pn(i,j-1))
-#   ifdef MASKING
+#  ifdef MASKING
 !^              tl_dAde(i,j,k2)=tl_dAde(i,j,k2)*pmask(i,j)
 !^
                 ad_dAde(i,j,k2)=ad_dAde(i,j,k2)*pmask(i,j)
@@ -1853,7 +1841,7 @@
                 ad_Awrk(i,j-1,k+1,Nold)=ad_Awrk(i,j-1,k+1,Nold)-        &
      &                                  umask(i,j-1)*adfac
                 ad_dAde(i,j,k2)=0.0_r8
-#   else
+#  else
 !^              tl_dAde(i,j,k2)=cff*(tl_Awrk(i,j  ,k+1,Nold)-           &
 !^   &                               tl_Awrk(i,j-1,k+1,Nold))
 !^
@@ -1863,12 +1851,12 @@
                 ad_Awrk(i,j-1,k+1,Nold)=ad_Awrk(i,j-1,k+1,Nold)-        &
      &                                  adfac
                 ad_dAde(i,j,k2)=0.0_r8
-#   endif
+#  endif
               END DO
             END DO
             DO j=Jstr,Jend
               DO i=IstrU-1,Iend
-#   ifdef MASKING
+#  ifdef MASKING
 !^              tl_dAdx(i,j,k2)=tl_dAdx(i,j,k2)*rmask(i,j)
 !^
                 ad_dAdx(i,j,k2)=ad_dAdx(i,j,k2)*rmask(i,j)
@@ -1882,7 +1870,7 @@
                 ad_Awrk(i+1,j,k+1,Nold)=ad_Awrk(i+1,j,k+1,Nold)+        &
      &                                  umask(i+1,j)*adfac
                 ad_dAdx(i,j,k2)=0.0_r8
-#   else
+#  else
 !^              tl_dAdx(i,j,k2)=pm(i,j)*(tl_Awrk(i+1,j,k+1,Nold)-       &
 !^   &                                   tl_Awrk(i  ,j,k+1,Nold))
 !^
@@ -1892,7 +1880,7 @@
                 ad_Awrk(i+1,j,k+1,Nold)=ad_Awrk(i+1,j,k+1,Nold)+        &
      &                                  adfac
                 ad_dAdx(i,j,k2)=0.0_r8
-#   endif
+#  endif
               END DO
             END DO
           END IF
@@ -1904,7 +1892,7 @@
           k1=kt
         END DO K_LOOP
 
-#  else
+# else
 !
 !  Time-step adjoint horizontal diffusion equation.
 !
@@ -1931,11 +1919,11 @@
 !
           DO j=Jstr,Jend+1
             DO i=IstrU,Iend
-#   ifdef MASKING
+#  ifdef MASKING
 !^            tl_FE(i,j)=tl_FE(i,j)*pmask(i,j)
 !^
               ad_FE(i,j)=ad_FE(i,j)*pmask(i,j)
-#   endif
+#  endif
 !^            tl_FE(i,j)=pnom_p(i,j)*0.25_r8*(Kh(i-1,j  )+Kh(i,j  )+    &
 !^   &                                        Kh(i-1,j-1)+Kh(i,j-1))*   &
 !^   &                   (tl_Awrk(i,j,k,Nold)-tl_Awrk(i,j-1,k,Nold))
@@ -1960,9 +1948,8 @@
             END DO
           END DO
         END DO
-#  endif
-      END DO
 # endif
+      END DO
 !
 !-----------------------------------------------------------------------
 !  Set adjoint initial conditions.
@@ -1991,7 +1978,6 @@
      &                       EWperiodic(ng), NSperiodic(ng),            &
      &                       ad_A)
 # endif
-# ifndef MULTI_SCALE_B
 !^    CALL dabc_u3d_tile (ng, tile,                                     &
 !^   &                    LBi, UBi, LBj, UBj, LBk, UBk,                 &
 !^   &                    tl_A)
@@ -1999,8 +1985,7 @@
       CALL ad_dabc_u3d_tile (ng, tile,                                  &
      &                       LBi, UBi, LBj, UBj, LBk, UBk,              &
      &                       ad_A)
-# endif
-!
+
       RETURN
       END SUBROUTINE ad_conv_u3d_tile
 !
@@ -2182,9 +2167,7 @@
       cff=DTsizeH*0.25_r8
       DO j=JstrV-1,Jend+1
         DO i=Istr-1,Iend+1
-# ifndef MULTI_SCALE_B
           Hfac(i,j)=cff*(pm(i,j-1)+pm(i,j))*(pn(i,j-1)+pn(i,j))
-# endif
 # ifdef VCONVOLUTION
 #  ifndef SPLINES_VCONV
           FC(i,j,N(ng))=0.0_r8
@@ -2229,7 +2212,6 @@
      &                       EWperiodic(ng), NSperiodic(ng),            &
      &                       ad_A)
 # endif
-# ifndef MULTI_SCALE_B
 !^    CALL dabc_v3d_tile (ng, tile,                                     &
 !^   &                    LBi, UBi, LBj, UBj, LBk, UBk,                 &
 !^   &                    tl_A)
@@ -2237,7 +2219,6 @@
       CALL ad_dabc_v3d_tile (ng, tile,                                  &
      &                       LBi, UBi, LBj, UBj, LBk, UBk,              &
      &                       ad_A)
-# endif
       DO k=1,N(ng)
         DO j=JstrV,Jend
           DO i=Istr,Iend
@@ -2529,8 +2510,6 @@
       END DO
 #  endif
 # endif
-
-# ifndef MULTI_SCALE_B
 !
 !-----------------------------------------------------------------------
 !  Integrate adjoint horizontal diffusion equation.
@@ -2546,7 +2525,7 @@
 !
 !  Apply adjoint boundary conditions.
 !
-#  ifdef DISTRIBUTE
+# ifdef DISTRIBUTE
 !^      CALL mp_exchange3d (ng, tile, model, 1,                         &
 !^   &                      LBi, UBi, LBj, UBj, LBk, UBk,               &
 !^   &                      Nghost,                                     &
@@ -2558,7 +2537,7 @@
      &                         Nghost,                                  &
      &                         EWperiodic(ng), NSperiodic(ng),          &
      &                         ad_Awrk(:,:,:,Nnew))
-#  endif
+# endif
 !^      CALL dabc_v3d_tile (ng, tile,                                   &
 !^   &                      LBi, UBi, LBj, UBj, LBk, UBk,               &
 !^   &                      tl_Awrk(:,:,:,Nnew))
@@ -2567,7 +2546,7 @@
      &                         LBi, UBi, LBj, UBj, LBk, UBk,            &
      &                         ad_Awrk(:,:,:,Nnew))
 
-#  ifdef GEOPOTENTIAL_HCONV
+# ifdef GEOPOTENTIAL_HCONV
 !
 !  Diffusion along geopotential surfaces: Compute horizontal and
 !  vertical gradients.  Notice the recursive blocking sequence.  The
@@ -2613,17 +2592,17 @@
               DO j=JstrV-1,Jend
                 DO i=Istr,Iend+1
                   cff=0.5_r8*(pm(i-1,j)+pm(i,j))
-#   ifdef MASKING
+#  ifdef MASKING
                   cff=cff*umask(i,j)
-#   endif
+#  endif
                   dZdx(i,j)=cff*(z_r(i  ,j,kk+1)-                       &
      &                           z_r(i-1,j,kk+1))
                 END DO
               END DO
               DO j=JstrV,Jend
                 DO i=Istr,Iend+1
-                  dZdx_p(i,j,k2b)=0.5_r8*(dZdx(i,j-1)+                  &
-     &                                    dZdx(i,j  ))
+                  dZdx_p(i,j,k2)=0.5_r8*(dZdx(i,j-1)+                   &
+     &                                   dZdx(i,j  ))
                 END DO
               END DO
               IF (kk.eq.0) THEN
@@ -2637,23 +2616,23 @@
               DO j=JstrV-1,Jend+1
                 DO i=Istr,Iend
                   cff=0.5_r8*(pn(i,j-1)+pn(i,j))
-#   ifdef MASKING
+#  ifdef MASKING
                   cff=cff*vmask(i,j)
-#   endif
-                  dZde(i,j)=cff*(z_r(i,j  ,kk+1)-                       &
-     &                           z_r(i,j-1,kk+1))
+#  endif
+                  dZde(i,j)=cff*(z_r(i,j  ,k+1)-                        &
+     &                           z_r(i,j-1,k+1))
                 END DO
               END DO
               DO j=JstrV-1,Jend
                 DO i=Istr,Iend
-                  dZde_r(i,j,k2b)=0.5_r8*(dZde(i,j  )+                  &
-     &                                    dZde(i,j+1))
+                  dZde_r(i,j,k2)=0.5_r8*(dZde(i,j  )+                   &
+     &                                   dZde(i,j+1))
                 END DO
               END DO
               IF (kk.eq.0) THEN
                 DO j=JstrV-1,Jend
                   DO i=Istr,Iend
-                    dZde_r(i,j,k1b)=0.0_r8
+                    dZde_r(i,j,k2)=0.0_r8
                   END DO
                 END DO
               END IF
@@ -2670,13 +2649,11 @@
 !^   &                              Hfac(i,j)*                          &
 !^   &                              (tl_FX(i+1,j)-tl_FX(i,j  )+         &
 !^   &                               tl_FE(i  ,j)-tl_FE(i,j-1))+        &
-!^   &                              2.0_r8*DTsizeH*                     &
-!^   &                              (tl_FZ(i,j,k2)-tl_FZ(i,j,k1))/      &
-!^   &                              (Hz(i,j,k)+Hz(i,j-1,k))
+!^   &                              DTsizeH*                            &
+!^   &                              (tl_FZ(i,j,k2)-tl_FZ(i,j,k1))
 !^
                 adfac1=Hfac(i,j)*ad_Awrk(i,j,k,Nnew)
-                adfac2=2.0_r8*DTsizeH*ad_Awrk(i,j,k,Nnew)/              &
-     &                                (Hz(i,j,k)+Hz(i,j-1,k))
+                adfac2=DTsizeH*ad_Awrk(i,j,k,Nnew)
                 ad_FE(i,j-1)=ad_FE(i,j-1)-adfac1
                 ad_FE(i,j  )=ad_FE(i,  j)+adfac1
                 ad_FX(i  ,j)=ad_FX(i  ,j)-adfac1
@@ -2755,13 +2732,14 @@
                 cff1=MIN(dZde_r(i,j,k1),0.0_r8)
                 cff2=MAX(dZde_r(i,j,k1),0.0_r8)
 !^              tl_FE(i,j)=cff*                                         &
+!^   &                     Hz(i,j,k)*                                   &
 !^   &                     (tl_dAde(i,j,k1)-                            &
 !^   &                      0.5_r8*(cff1*(tl_dAdz(i,j  ,k1)+            &
 !^   &                                    tl_dAdz(i,j+1,k2))+           &
 !^   &                              cff2*(tl_dAdz(i,j  ,k2)+            &
 !^   &                                    tl_dAdz(i,j+1,k1))))
 !^
-                adfac=cff*ad_FE(i,j)
+                adfac=cff*Hz(i,j,k)*ad_FE(i,j)
                 adfac1=adfac*0.5_r8*cff1
                 adfac2=adfac*0.5_r8*cff2
                 ad_dAde(i,j,k1)=ad_dAde(i,j,k1)+adfac
@@ -2774,18 +2752,21 @@
             END DO
             DO j=JstrV,Jend
               DO i=Istr,Iend+1
-                cff=0.25_r8*(Kh(i-1,j-1)+Kh(i-1,j)+                     &
-     &                       Kh(i  ,j-1)+Kh(i  ,j))*on_p(i,j)
+                cff=0.0625_r8*(Kh(i-1,j-1)+Kh(i-1,j)+                   &
+     &                         Kh(i  ,j-1)+Kh(i  ,j))*on_p(i,j)
                 cff1=MIN(dZdx_p(i,j,k1),0.0_r8)
                 cff2=MAX(dZdx_p(i,j,k1),0.0_r8)
 !^              tl_FX(i,j)=cff*                                         &
+!^   &                     (Hz(i-1,j-1,k)+Hz(i-1,j,k)+                  &
+!^   &                      Hz(i  ,j-1,k)+Hz(i  ,j,k))*                 &
 !^   &                     (tl_dAdx(i,j,k1)-                            &
 !^   &                      0.5_r8*(cff1*(tl_dAdz(i-1,j,k1)+            &
 !^   &                                    tl_dAdz(i  ,j,k2))+           &
 !^   &                              cff2*(tl_dAdz(i-1,j,k2)+            &
 !^   &                                    tl_dAdz(i  ,j,k1))))
 !^
-                adfac=cff*ad_FX(i,j)
+                adfac=cff*(Hz(i-1,j-1,k)+Hz(i-1,j,k)+                   &
+     &                     Hz(i  ,j-1,k)+Hz(i  ,j,k))*ad_FX(i,j)
                 adfac1=adfac*0.5_r8*cff1
                 adfac2=adfac*0.5_r8*cff2
                 ad_dAdx(i,j,k1)=ad_dAdx(i,j,k1)+adfac
@@ -2812,11 +2793,11 @@
             DO j=JstrV-1,Jend+1
               DO i=Istr-1,Iend+1
                 cff=1.0_r8/(z_r(i,j,k+1)-z_r(i,j,k))
-#   ifdef MASKING
+#  ifdef MASKING
 !^              tl_dAdz(i,j,k2)=tl_dAdz(i,j,k2)*vmask(i,j)
 !^
                 ad_dAdz(i,j,k2)=ad_dAdz(i,j,k2)*vmask(i,j)
-#   endif
+#  endif
 !^              tl_dAdz(i,j,k2)=cff*(tl_Awrk(i,j,k+1,Nold)-             &
 !^   &                               tl_Awrk(i,j,k  ,Nold))
 !^
@@ -2830,7 +2811,7 @@
           IF (k.lt.N(ng)) THEN
             DO j=JstrV-1,Jend
               DO i=Istr,Iend
-#   ifdef MASKING
+#  ifdef MASKING
 !^              tl_dAde(i,j,k2)=tl_dAde(i,j,k2)*rmask(i,j)
 !^
                 ad_dAde(i,j,k2)=ad_dAde(i,j,k2)*rmask(i,j)
@@ -2844,7 +2825,7 @@
                 ad_Awrk(i,j+1,k+1,Nold)=ad_Awrk(i,j+1,k+1,Nold)+        &
      &                                  vmask(i,j+1)*adfac
                 ad_dAde(i,j,k2)=0.0_r8
-#   else
+#  else
 !^              tl_dAde(i,j,k2)=pn(i,j)*(tl_Awrk(i,j+1,k+1,Nold)-       &
 !^   &                                   tl_Awrk(i,j  ,k+1,Nold))
 !^
@@ -2854,14 +2835,14 @@
                 ad_Awrk(i,j+1,k+1,Nold)=ad_Awrk(i,j+1,k+1,Nold)+        &
      &                                  adfac
                 ad_dAde(i,j,k2)=0.0_r8
-#   endif
+#  endif
               END DO
             END DO
             DO j=JstrV,Jend
               DO i=Istr,Iend+1
                 cff=0.25_r8*(pm(i-1,j-1)+pm(i-1,j)+                     &
      &                       pm(i  ,j-1)+pm(i  ,j))
-#   ifdef MASKING
+#  ifdef MASKING
 !^              tl_dAdx(i,j,k2)=tl_dAdx(i,j,k2)*pmask(i,j)
 !^
                 ad_dAdx(i,j,k2)=ad_dAdx(i,j,k2)*pmask(i,j)
@@ -2875,7 +2856,7 @@
                 ad_Awrk(i  ,j,k+1,Nold)=ad_Awrk(i  ,j,k+1,Nold)+        &
      &                                  vmask(i  ,j)*adfac
                 ad_dAdx(i,j,k2)=0.0_r8
-#   else
+#  else
 !^              tl_dAdx(i,j,k2)=cff*(tl_Awrk(i  ,j,k+1,Nold)-           &
 !^   &                               tl_Awrk(i-1,j,k+1,Nold))
 !^
@@ -2885,7 +2866,7 @@
                 ad_Awrk(i  ,j,k+1,Nold)=ad_Awrk(i  ,j,k+1,Nold)+        &
      &                                  adfac
                 ad_dAdx(i,j,k2)=0.0_r8
-#   endif
+#  endif
               END DO
             END DO
           END IF
@@ -2897,7 +2878,7 @@
           k1=kt
         END DO K_LOOP
 
-#  else
+# else
 !
 !  Time-step adjoint horizontal diffusion equation.
 !
@@ -2935,11 +2916,11 @@
           END DO
           DO j=JstrV,Jend
             DO i=Istr,Iend+1
-#   ifdef MASKING
+#  ifdef MASKING
 !^            tl_FX(i,j)=tl_FX(i,j)*pmask(i,j)
 !^
               ad_FX(i,j)=ad_FX(i,j)*pmask(i,j)
-#   endif
+#  endif
 !^            tl_FX(i,j)=pmon_p(i,j)*0.25_r8*(Kh(i-1,j  )+Kh(i,j  )+    &
 !^   &                                        Kh(i-1,j-1)+Kh(i,j-1))*   &
 !^   &                   (tl_Awrk(i,j,k,Nold)-tl_Awrk(i-1,j,k,Nold))
@@ -2953,9 +2934,8 @@
             END DO
           END DO
         END DO
-#  endif
-      END DO
 # endif
+      END DO
 !
 !-----------------------------------------------------------------------
 !  Set adjoint initial conditions.
@@ -2984,7 +2964,6 @@
      &                       EWperiodic(ng), NSperiodic(ng),            &
      &                       ad_A)
 # endif
-# ifndef MULTI_SCALE_B
 !^    CALL dabc_v3d_tile (ng, tile,                                     &
 !^   &                    LBi, UBi, LBj, UBj, LBk, UBk,                 &
 !^   &                    tl_A)
@@ -2992,8 +2971,7 @@
       CALL ad_dabc_v3d_tile (ng, tile,                                  &
      &                       LBi, UBi, LBj, UBj, LBk, UBk,              &
      &                       ad_A)
-# endif
-!
+
       RETURN
       END SUBROUTINE ad_conv_v3d_tile
 #endif
