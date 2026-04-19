@@ -43,7 +43,7 @@
 !      sphere using a generalized diffusion equation, Q.J.R. Meteo.    !
 !      Soc, 127, 1815-1846.                                            !
 !                                                                      !
-!======================================================================!
+!=======================================================================
 !
       USE mod_kinds
       USE mod_param
@@ -108,19 +108,30 @@
 !
 #ifdef DISTRIBUTE
 # ifdef ADJUST_BOUNDARY
-      USE distribute_mod,  ONLY : mp_collect
+      USE distribute_mod,      ONLY : mp_collect
 # endif
-      USE distribute_mod,  ONLY : mp_reduce
+      USE distribute_mod,      ONLY : mp_reduce
 #endif
-      USE nf_fwrite2d_mod, ONLY : nf_fwrite2d
-      USE nf_fwrite3d_mod, ONLY : nf_fwrite3d
-      USE strings_mod,     ONLY : FoundError
+      USE nf_fwrite2d_mod,     ONLY : nf_fwrite2d
+      USE nf_fwrite3d_mod,     ONLY : nf_fwrite3d
+      USE strings_mod,         ONLY : FoundError
 !
       implicit none
 !
+! <><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>
+!
+!  Module public and private routines:
+!
       PUBLIC  :: normalization
+!
       PRIVATE :: normalization_tile
       PRIVATE :: randomization_tile
+!
+      PRIVATE :: dot_prod2d
+#ifdef SOLVE3D
+      PRIVATE :: dot_prod3d
+#endif
+!
       PRIVATE :: wrt_norm2d_nf90
 #if defined PIO_LIB && defined DISTRIBUTE
       PRIVATE :: wrt_norm2d_pio
@@ -129,6 +140,8 @@
 #if defined PIO_LIB && defined DISTRIBUTE
       PRIVATE :: wrt_norm3d_pio
 #endif
+!
+! <><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>
 !
       CONTAINS
 !
@@ -149,7 +162,8 @@
 !
       IF (Nmethod(ng).eq.0) THEN
         CALL normalization_tile (ng, tile,                              &
-     &                           LBi, UBi, LBj, UBj, LBij, UBij,        &
+     &                           LBi, UBi, LBj, UBj,                    &
+     &                           LBij, UBij,                            &
      &                           IminS, ImaxS, JminS, JmaxS,            &
      &                           nstp(ng), nnew(ng), ifac,              &
      &                           GRID(ng) % pm,                         &
@@ -221,7 +235,8 @@
 !
       ELSE IF (Nmethod(ng).eq.1) THEN
         CALL randomization_tile (ng, tile,                              &
-     &                           LBi, UBi, LBj, UBj, LBij, UBij,        &
+     &                           LBi, UBi, LBj, UBj,                    &
+     &                           LBij, UBij,                            &
      &                           IminS, ImaxS, JminS, JmaxS,            &
      &                           nstp(ng), nnew(ng), ifac,              &
      &                           GRID(ng) % pm,                         &
@@ -294,7 +309,8 @@
 !
 !***********************************************************************
       SUBROUTINE normalization_tile (ng, tile,                          &
-     &                               LBi, UBi, LBj, UBj, LBij, UBij,    &
+     &                               LBi, UBi, LBj, UBj,                &
+     &                               LBij, UBij,                        &
      &                               IminS, ImaxS, JminS, JmaxS,        &
      &                               nstp, nnew, ifac,                  &
      &                               pm, om_p, om_r, om_u, om_v,        &
@@ -486,13 +502,13 @@
 !
       integer :: Imin, Imax, Jmin, Jmax
       integer :: i, ic, ifile, is, j, jc, rec
-      integer :: NSUB
+      integer :: ifield, nfield
 #ifdef SOLVE3D
       integer :: UBt, itrc, k, kc, ntrc
 #endif
 #ifdef ADJUST_BOUNDARY
-      integer :: Bmin, Bmax, IJlen, IJKlen
-      integer :: ib, ibry, ifield, kb
+      integer :: Bmin, Bmax, IDmeta, IJlen, IJKlen
+      integer :: ib, ibry, kb
 !
       real(r8), parameter :: Aspv = 0.0_r8
 #endif
@@ -546,7 +562,7 @@
 !
       DO i=LBi,UBi
         DO j=LBj,UBj
-          A2d(i,j)=0.0_r8
+          A2d(i,j)=0.0_r8                   ! free surface
         END DO
       END DO
 
@@ -565,20 +581,25 @@
      &                     Hz, z_r, z_w)
 #endif
 !
-!-----------------------------------------------------------------------
-!  Compute initial conditions and model error covariance, B,
-!  normalization factors using the exact method. It involves
-!  computing the filter variance (convolution) at each point
-!  independenly.  That is, each point is perturbed with a delta
-!  function, scaled by the inverse squared root of the area (2D)
-!  or volume (3D), and then convoluted.
-!-----------------------------------------------------------------------
+!:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+!  The prior (initial conditions) and model normalization factors are
+!  computed for modeling the spreading of the multiscale background-
+!  error covariance matrix (B) using the EXACT METHOD. This method
+!  involves convolving an implicit pseudo-diffusion operator within
+!  the correlation-length function in K-space for each spatial grid
+!  point independently.
+!
+!  Specifically, each point is perturbed with a delta function that is
+!  scaled by the inverse square root of the area in two dimensions (2D)
+!  or by the inverse square root of the volume in three dimensions (3D),
+!  followed by spatial convolution.
+!:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 !
       IF (Master) WRITE (stdout,10)
 
       FILE_LOOP : DO ifile=1,NSA
 
-        IF (LwrtNRM(ifile,ng)) THEN
+        LWRITE_NRM : IF (LwrtNRM(ifile,ng)) THEN
           IF (ifile.eq.1) THEN
             Text='initial conditions'
           ELSE IF (ifile.eq.2) THEN
@@ -614,23 +635,27 @@
           END SELECT
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
-!  2D norm at RHO-points.
+!-----------------------------------------------------------------------
+!  2D normalization at RHO-points.
+!-----------------------------------------------------------------------
 !
-          IF (Cnorm(ifile,isFsur)) THEN
+          COMPUTE_R2D : IF (Cnorm(ifile,isFsur)) THEN
             Imin=1
             Imax=Lm(ng)
             Jmin=1
             Jmax=Mm(ng)
             IF (Master) THEN
               WRITE (stdout,20) TRIM(Text),                             &
-     &                          '2D normalization factors at RHO-points'
+     &              '2D normalization factors at RHO-points'
               FLUSH (stdout)
             END IF
+!
             DO j=JstrT,JendT
               DO i=IstrT,IendT
                 Hscale(i,j)=1.0_r8/SQRT(om_r(i,j)*on_r(i,j))
               END DO
             END DO
+!
             DO jc=Jmin,Jmax
               DO ic=Imin,Imax
 #ifdef MASKING
@@ -655,6 +680,9 @@
      &                ((Istr.le.ic).and.(ic.le.Iend))) THEN
                     A2d(ic,jc)=1.0_r8
                   END IF
+!
+!  Explicit horizontal convolution.
+!
                   CALL ad_conv_r2d_tile (ng, tile, iADM,                &
      &                                   LBi, UBi, LBj, UBj,            &
      &                                   IminS, ImaxS, JminS, JmaxS,    &
@@ -667,47 +695,19 @@
      &                                   rmask, umask, vmask,           &
 #endif
      &                                   A2d)
+!
                   DO j=JstrT,JendT
                     DO i=IstrT,IendT
                       A2d(i,j)=A2d(i,j)*Hscale(i,j)
                     END DO
                   END DO
 !
-                  my_dot=0.0_r8
-                  DO j=JstrT,JendT
-                    DO i=IstrT,IendT
-                      my_dot=my_dot+A2d(i,j)*A2d(i,j)
-                    END DO
-                  END DO
+!  Set normalization factors.
 !
-!  Perform parallel global reduction operation: dot product.
-!
-#ifdef DISTRIBUTE
-                  NSUB=1                         ! distributed-memory
-#else
-                  IF (DOMAIN(ng)%SouthWest_Corner(tile).and.            &
-     &                DOMAIN(ng)%NorthEast_Corner(tile)) THEN
-                    NSUB=1                       ! non-tiled application
-                  ELSE
-                    NSUB=NtileX(ng)*NtileE(ng)   ! tiled application
-                  END IF
-#endif
-!$OMP CRITICAL (R2_DOT)
-                  IF (tile_count.eq.0) THEN
-                    Gdotp=my_dot
-                  ELSE
-                    Gdotp=Gdotp+my_dot
-                  END IF
-                  tile_count=tile_count+1
-                  IF (tile_count.eq.NSUB) THEN
-                    tile_count=0
-#ifdef DISTRIBUTE
-                    op_handle='SUM'
-                    CALL mp_reduce (ng, iTLM, 1, Gdotp, op_handle)
-#endif
-                    cff=1.0_r8/SQRT(Gdotp)
-                  END IF
-!$OMP END CRITICAL (R2_DOT)
+                  Gdotp=dot_prod2d (ng, tile, iADM, r2dvar,             &
+     &                              LBi, UBi, LBj, UBj,                 &
+     &                              A2d, A2d)
+                  cff=1.0_r8/SQRT(Gdotp)
                 ELSE
                   cff=0.0_r8
                 END IF
@@ -717,16 +717,22 @@
                 END IF
               END DO
             END DO
+!
+!  Exchange boundary data.
+!
             CALL dabc_r2d_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          HnormR(:,:,ifile))
 #ifdef DISTRIBUTE
+!
             CALL mp_exchange2d (ng, tile, iTLM, 1,                      &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          NghostPoints,                           &
      &                          EWperiodic(ng), NSperiodic(ng),         &
      &                          HnormR(:,:,ifile))
 #endif
+!
+!  Write out into output NetCDF file.
 !
             SELECT CASE (NRM(ifile,ng)%IOtype)
               CASE (io_nf90)
@@ -761,11 +767,13 @@
 #endif
             END SELECT
             IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-          END IF
+          END IF COMPUTE_R2D
 !
-!  2D norm at U-points.
+!-----------------------------------------------------------------------
+!  2D normalization at U-points.
+!-----------------------------------------------------------------------
 !
-          IF (Cnorm(ifile,isUbar)) THEN
+          COMPUTE_U2D : IF (Cnorm(ifile,isUbar)) THEN
             IF (EWperiodic(ng)) THEN
               Imin=1
               Imax=Lm(ng)
@@ -777,16 +785,19 @@
               Jmin=1
               Jmax=Mm(ng)
             END IF
+!
             IF (Master) THEN
               WRITE (stdout,20) TRIM(Text),                             &
-     &                          '2D normalization factors at   U-points'
+     &              '2D normalization factors at   U-points'
               FLUSH (stdout)
             END IF
+!
             DO j=JstrT,JendT
               DO i=IstrP,IendT
                 Hscale(i,j)=1.0_r8/SQRT(om_u(i,j)*on_u(i,j))
               END DO
             END DO
+!
             DO jc=Jmin,Jmax
               DO ic=Imin,Imax
 #ifdef MASKING
@@ -811,6 +822,9 @@
      &                ((Istr.le.ic).and.(ic.le.Iend))) THEN
                     A2d(ic,jc)=1.0_r8
                   END IF
+!
+!  Explicit horizontal convolution.
+!
                   CALL ad_conv_u2d_tile (ng, tile, iADM,                &
      &                                   LBi, UBi, LBj, UBj,            &
      &                                   IminS, ImaxS, JminS, JmaxS,    &
@@ -823,48 +837,19 @@
      &                                   umask, pmask,                  &
 #endif
      &                                   A2d)
+!
                   DO j=JstrT,JendT
                     DO i=IstrP,IendT
                       A2d(i,j)=A2d(i,j)*Hscale(i,j)
                     END DO
                   END DO
 !
-                  my_dot=0.0_r8
-                  DO j=JstrT,JendT
-                    DO i=IstrP,IendT
-                      my_dot=my_dot+A2d(i,j)*A2d(i,j)
-                    END DO
-                  END DO
-
+!  Set normalization factors.
 !
-!  Perform parallel global reduction operation: dot product.
-!
-#ifdef DISTRIBUTE
-                  NSUB=1                         ! distributed-memory
-#else
-                  IF (DOMAIN(ng)%SouthWest_Corner(tile).and.            &
-     &                DOMAIN(ng)%NorthEast_Corner(tile)) THEN
-                    NSUB=1                       ! non-tiled application
-                  ELSE
-                    NSUB=NtileX(ng)*NtileE(ng)   ! tiled application
-                  END IF
-#endif
-!$OMP CRITICAL (U2_DOT)
-                  IF (tile_count.eq.0) THEN
-                    Gdotp=my_dot
-                  ELSE
-                    Gdotp=Gdotp+my_dot
-                  END IF
-                  tile_count=tile_count+1
-                  IF (tile_count.eq.NSUB) THEN
-                    tile_count=0
-#ifdef DISTRIBUTE
-                    op_handle='SUM'
-                    CALL mp_reduce (ng, iTLM, 1, Gdotp, op_handle)
-#endif
-                    cff=1.0_r8/SQRT(Gdotp)
-                  END IF
-!$OMP END CRITICAL (U2_DOT)
+                  Gdotp=dot_prod2d (ng, tile, iADM, u2dvar,             &
+     &                              LBi, UBi, LBj, UBj,                 &
+     &                              A2d, A2d)
+                  cff=1.0_r8/SQRT(Gdotp)
                 ELSE
                   cff=0.0_r8
                 END IF
@@ -874,16 +859,22 @@
                 END IF
               END DO
             END DO
+!
+!  Exchange boundary data.
+!
             CALL dabc_u2d_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          HnormU(:,:,ifile))
 #ifdef DISTRIBUTE
+!
             CALL mp_exchange2d (ng, tile, iTLM, 1,                      &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          NghostPoints,                           &
      &                          EWperiodic(ng), NSperiodic(ng),         &
      &                          HnormU(:,:,ifile))
 #endif
+!
+!  Write out into output NetCDF file.
 !
             SELECT CASE (NRM(ifile,ng)%IOtype)
               CASE (io_nf90)
@@ -918,11 +909,13 @@
 #endif
             END SELECT
             IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-          END IF
+          END IF COMPUTE_U2D
 !
-!  2D norm at V-points.
+!-----------------------------------------------------------------------
+!  2D normalization at V-points.
+!-----------------------------------------------------------------------
 !
-          IF (Cnorm(ifile,isVbar)) THEN
+          COMPUTE_V2D : IF (Cnorm(ifile,isVbar)) THEN
             IF (NSperiodic(ng)) THEN
               Imin=1
               Imax=Lm(ng)
@@ -934,16 +927,19 @@
               Jmin=2
               Jmax=Mm(ng)
             END IF
+!
             IF (Master) THEN
               WRITE (stdout,20) TRIM(Text),                             &
-     &                          '2D normalization factors at   V-points'
+     &              '2D normalization factors at   V-points'
               FLUSH (stdout)
             END IF
+!
             DO j=JstrP,JendT
               DO i=IstrT,IendT
                 Hscale(i,j)=1.0_r8/SQRT(om_v(i,j)*on_v(i,j))
               END DO
             END DO
+!
             DO jc=Jmin,Jmax
               DO ic=Imin,Imax
 #ifdef MASKING
@@ -968,6 +964,9 @@
      &                ((Istr.le.ic).and.(ic.le.Iend))) THEN
                     A2d(ic,jc)=1.0_r8
                   END IF
+!
+!  Explicit horizontal convolution.
+!
                   CALL ad_conv_v2d_tile (ng, tile, iADM,                &
      &                                   LBi, UBi, LBj, UBj,            &
      &                                   IminS, ImaxS, JminS, JmaxS,    &
@@ -980,47 +979,19 @@
      &                                   vmask, pmask,                  &
 #endif
      &                                   A2d)
+!
                   DO j=JstrP,JendT
                     DO i=IstrT,IendT
                       A2d(i,j)=A2d(i,j)*Hscale(i,j)
                     END DO
                   END DO
 !
-                  my_dot=0.0_r8
-                  DO j=JstrP,JendT
-                    DO i=IstrT,IendT
-                      my_dot=my_dot+A2d(i,j)*A2d(i,j)
-                    END DO
-                  END DO
+!  Set normalization factors.
 !
-!  Perform parallel global reduction operation: dot product.
-!
-#ifdef DISTRIBUTE
-                  NSUB=1                         ! distributed-memory
-#else
-                  IF (DOMAIN(ng)%SouthWest_Corner(tile).and.            &
-     &                DOMAIN(ng)%NorthEast_Corner(tile)) THEN
-                    NSUB=1                       ! non-tiled application
-                  ELSE
-                    NSUB=NtileX(ng)*NtileE(ng)   ! tiled application
-                  END IF
-#endif
-!$OMP CRITICAL (V2_DOT)
-                  IF (tile_count.eq.0) THEN
-                    Gdotp=my_dot
-                  ELSE
-                    Gdotp=Gdotp+my_dot
-                  END IF
-                  tile_count=tile_count+1
-                  IF (tile_count.eq.NSUB) THEN
-                    tile_count=0
-#ifdef DISTRIBUTE
-                    op_handle='SUM'
-                    CALL mp_reduce (ng, iTLM, 1, Gdotp, op_handle)
-#endif
-                    cff=1.0_r8/SQRT(Gdotp)
-                  END IF
-!$OMP END CRITICAL (V2_DOT)
+                  Gdotp=dot_prod2d (ng, tile, iADM, v2dvar,             &
+     &                              LBi, UBi, LBj, UBj,                 &
+     &                              A2d, A2d)
+                  cff=1.0_r8/SQRT(Gdotp)
                 ELSE
                   cff=0.0_r8
                 END IF
@@ -1030,16 +1001,22 @@
                 END IF
               END DO
             END DO
+!
+!  Exchange boundary data.
+!
             CALL dabc_v2d_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          HnormV(:,:,ifile))
 #ifdef DISTRIBUTE
+!
             CALL mp_exchange2d (ng, tile, iTLM, 1,                      &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          NghostPoints,                           &
      &                          EWperiodic(ng), NSperiodic(ng),         &
      &                          HnormV(:,:,ifile))
 #endif
+!
+!  Write out into output NetCDF file.
 !
             SELECT CASE (NRM(ifile,ng)%IOtype)
               CASE (io_nf90)
@@ -1074,13 +1051,15 @@
 #endif
             END SELECT
             IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-          END IF
+          END IF COMPUTE_V2D
 
 #ifdef SOLVE3D
 !
-!  3D norm U-points.
+!-----------------------------------------------------------------------
+!  3D normalization U-points.
+!-----------------------------------------------------------------------
 !
-          IF (Cnorm(ifile,isUvel)) THEN
+          COMPUTE_U3D : IF (Cnorm(ifile,isUvel)) THEN
             IF (EWperiodic(ng)) THEN
               Imin=1
               Imax=Lm(ng)
@@ -1092,11 +1071,13 @@
               Jmin=1
               Jmax=Mm(ng)
             END IF
+!
             IF (Master) THEN
               WRITE (stdout,20) TRIM(Text),                             &
-     &                          '3D normalization factors at   U-points'
+     &              '3D normalization factors at   U-points'
               FLUSH (stdout)
             END IF
+!
             DO j=JstrT,JendT
               DO i=IstrP,IendT
                 cff=om_u(i,j)*on_u(i,j)*0.5_r8
@@ -1105,6 +1086,7 @@
                 END DO
               END DO
             END DO
+!
             DO kc=1,N(ng)
               DO jc=Jmin,Jmax
                 DO ic=Imin,Imax
@@ -1132,6 +1114,9 @@
      &                  ((Istr.le.ic).and.(ic.le.Iend))) THEN
                       A3d(ic,jc,kc)=1.0_r8
                     END IF
+!
+!  Explicit horizontal and implicit vertical convolutions.
+!
                     CALL ad_conv_u3d_tile (ng, tile, iADM,              &
      &                                     LBi, UBi, LBj, UBj,          &
      &                                     1, N(ng),                    &
@@ -1157,6 +1142,7 @@
 # endif
      &                                     Hz, z_r,                     &
      &                                     A3d)
+!
                     DO k=1,N(ng)
                       DO j=JstrT,JendT
                         DO i=IstrP,IendT
@@ -1165,43 +1151,12 @@
                       END DO
                     END DO
 !
-                    my_dot=0.0_r8
-                    DO k=1,N(ng)
-                      DO j=JstrT,JendT
-                        DO i=IstrP,IendT
-                          my_dot=my_dot+A3d(i,j,k)*A3d(i,j,k)
-                        END DO
-                      END DO
-                    END DO
+!  Set normalization factors.
 !
-!  Perform parallel global reduction operation: dot product.
-!
-# ifdef DISTRIBUTE
-                    NSUB=1                       ! distributed-memory
-# else
-                    IF (DOMAIN(ng)%SouthWest_Corner(tile).and.          &
-     &                  DOMAIN(ng)%NorthEast_Corner(tile)) THEN
-                      NSUB=1                     ! non-tiled application
-                    ELSE
-                      NSUB=NtileX(ng)*NtileE(ng) ! tiled application
-                    END IF
-# endif
-!$OMP CRITICAL (R3_DOT)
-                    IF (tile_count.eq.0) THEN
-                      Gdotp=my_dot
-                    ELSE
-                      Gdotp=Gdotp+my_dot
-                    END IF
-                    tile_count=tile_count+1
-                    IF (tile_count.eq.NSUB) THEN
-                      tile_count=0
-# ifdef DISTRIBUTE
-                      op_handle='SUM'
-                      CALL mp_reduce (ng, iTLM, 1, Gdotp, op_handle)
-# endif
-                      cff=1.0_r8/SQRT(Gdotp)
-                    END IF
-!$OMP END CRITICAL (R3_DOT)
+                    Gdotp=dot_prod3d (ng, tile, iADM, u3dvar,           &
+     &                                LBi, UBi, LBj, UBj, 1, N(ng),     &
+     &                                A3d, A3d)
+                    cff=1.0_r8/SQRT(Gdotp)
                   ELSE
                     cff=0.0_r8
                   END IF
@@ -1212,16 +1167,22 @@
                 END DO
               END DO
             END DO
+!
+!  Exchange boundary data.
+!
             CALL dabc_u3d_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
      &                          VnormU(:,:,:,ifile))
 # ifdef DISTRIBUTE
+!
             CALL mp_exchange3d (ng, tile, iTLM, 1,                      &
      &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
      &                          NghostPoints,                           &
      &                          EWperiodic(ng), NSperiodic(ng),         &
      &                          VnormU(:,:,:,ifile))
 # endif
+!
+!  Write out into output NetCDF file.
 !
             SELECT CASE (NRM(ifile,ng)%IOtype)
               CASE (io_nf90)
@@ -1256,11 +1217,13 @@
 # endif
             END SELECT
             IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-          END IF
+          END IF COMPUTE_U3D
 !
-!  3D norm at V-points.
+!-----------------------------------------------------------------------
+!  3D normalization at V-points.
+!-----------------------------------------------------------------------
 !
-          IF (Cnorm(ifile,isVvel)) THEN
+          COMPUTE_V3D : IF (Cnorm(ifile,isVvel)) THEN
             IF (NSperiodic(ng)) THEN
               Imin=1
               Imax=Lm(ng)
@@ -1272,11 +1235,13 @@
               Jmin=2
               Jmax=Mm(ng)
             END IF
+!
             IF (Master) THEN
               WRITE (stdout,20) TRIM(Text),                             &
-     &                          '3D normalization factors at   V-points'
+     &              '3D normalization factors at   V-points'
               FLUSH (stdout)
             END IF
+!
             DO j=JstrP,JendT
               DO i=IstrT,IendT
                 cff=om_v(i,j)*on_v(i,j)*0.5_r8
@@ -1285,6 +1250,7 @@
                 END DO
               END DO
             END DO
+!
             DO kc=1,N(ng)
               DO jc=Jmin,Jmax
                 DO ic=Imin,Imax
@@ -1312,6 +1278,9 @@
      &                  ((Istr.le.ic).and.(ic.le.Iend))) THEN
                       A3d(ic,jc,kc)=1.0_r8
                     END IF
+!
+!  Explicit horizontal and implicit vertical convolutions.
+!
                     CALL ad_conv_v3d_tile (ng, tile, iADM,              &
      &                                     LBi, UBi, LBj, UBj,          &
      &                                     1, N(ng),                    &
@@ -1337,6 +1306,7 @@
 # endif
      &                                     Hz, z_r,                     &
      &                                     A3d)
+!
                     DO k=1,N(ng)
                       DO j=JstrP,JendT
                         DO i=IstrT,IendT
@@ -1345,43 +1315,12 @@
                       END DO
                     END DO
 !
-                    my_dot=0.0_r8
-                    DO k=1,N(ng)
-                      DO j=JstrP,JendT
-                        DO i=IstrT,IendT
-                          my_dot=my_dot+A3d(i,j,k)*A3d(i,j,k)
-                        END DO
-                      END DO
-                    END DO
+!  Set normalization factors.
 !
-!  Perform parallel global reduction operation: dot product.
-!
-# ifdef DISTRIBUTE
-                    NSUB=1                       ! distributed-memory
-# else
-                    IF (DOMAIN(ng)%SouthWest_Corner(tile).and.          &
-     &                  DOMAIN(ng)%NorthEast_Corner(tile)) THEN
-                      NSUB=1                     ! non-tiled application
-                    ELSE
-                      NSUB=NtileX(ng)*NtileE(ng) ! tiled application
-                    END IF
-# endif
-!$OMP CRITICAL (V3_DOT)
-                    IF (tile_count.eq.0) THEN
-                      Gdotp=my_dot
-                    ELSE
-                      Gdotp=Gdotp+my_dot
-                    END IF
-                    tile_count=tile_count+1
-                    IF (tile_count.eq.NSUB) THEN
-                      tile_count=0
-# ifdef DISTRIBUTE
-                      op_handle='SUM'
-                      CALL mp_reduce (ng, iTLM, 1, Gdotp, op_handle)
-# endif
-                      cff=1.0_r8/SQRT(Gdotp)
-                    END IF
-!$OMP END CRITICAL (V3_DOT)
+                    Gdotp=dot_prod3d (ng, tile, iADM, v3dvar,           &
+     &                                LBi, UBi, LBj, UBj, 1, N(ng),     &
+     &                                A3d, A3d)
+                    cff=1.0_r8/SQRT(Gdotp)
                   ELSE
                     cff=0.0_r8
                   END IF
@@ -1392,6 +1331,9 @@
                 END DO
               END DO
             END DO
+!
+!  Exchange bounndary data.
+!
             CALL dabc_v3d_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
      &                          VnormV(:,:,:,ifile))
@@ -1402,6 +1344,8 @@
      &                          EWperiodic(ng), NSperiodic(ng),         &
      &                          VnormV(:,:,:,ifile))
 # endif
+!
+!  Write out into output NetCDF file.
 !
             SELECT CASE (NRM(ifile,ng)%IOtype)
               CASE (io_nf90)
@@ -1436,19 +1380,21 @@
 # endif
             END SELECT
             IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-          END IF
+          END IF COMPUTE_V3D
 !
-!  3D norm at RHO-points.
+!-----------------------------------------------------------------------
+!  3D normalization at RHO-points.
+!-----------------------------------------------------------------------
 !
           IF (Master) THEN
             Lsame=.FALSE.
             DO itrc=1,NT(ng)
-              is=isTvar(itrc)
-              IF (Cnorm(ifile,is)) Lsame=.TRUE.
+              ifield=isTvar(itrc)
+              IF (Cnorm(ifile,ifield)) Lsame=.TRUE.
             END DO
             IF (Lsame) THEN
               WRITE (stdout,20) TRIM(Text),                             &
-     &                          '3D normalization factors at RHO-points'
+     &              '3D normalization factors at RHO-points'
               FLUSH (stdout)
             END IF
           END IF
@@ -1487,9 +1433,11 @@
               END DO
             END DO
           END DO
-          DO itrc=1,UBt
-            is=isTvar(itrc)
-            IF (Cnorm(ifile,is)) THEN
+!
+          TRACER_LOOP : DO itrc=1,UBt
+            ifield=isTvar(itrc)
+            COMPUTE_R3D : IF (Cnorm(ifile,ifield)) THEN
+!
               DO kc=1,N(ng)
                 DO jc=Jmin,Jmax
                   DO ic=Imin,Imax
@@ -1517,15 +1465,18 @@
      &                    ((Istr.le.ic).and.(ic.le.Iend))) THEN
                         A3d(ic,jc,kc)=1.0_r8
                       END IF
+!
+!  Explicit horizontal and implicit vertical convolutions.
+!
                       CALL ad_conv_r3d_tile (ng, tile, iADM,            &
      &                                       LBi, UBi, LBj, UBj,        &
      &                                       1, N(ng),                  &
      &                                       IminS, ImaxS, JminS, JmaxS,&
      &                                       NghostPoints,              &
-     &                                       NHsteps(ifile,is)/ifac,    &
-     &                                       NVsteps(ifile,is)/ifac,    &
-     &                                       DTsizeH(ifile,is),         &
-     &                                       DTsizeV(ifile,is),         &
+     &                                       NHsteps(ifile,ifield)/ifac,&
+     &                                       NVsteps(ifile,ifield)/ifac,&
+     &                                       DTsizeH(ifile,ifield),     &
+     &                                       DTsizeV(ifile,ifield),     &
      &                                       Kh, Kv,                    &
      &                                       pm, pn,                    &
 # ifdef GEOPOTENTIAL_HCONV
@@ -1538,6 +1489,7 @@
 # endif
      &                                       Hz, z_r,                   &
      &                                       A3d)
+!
                       DO k=1,N(ng)
                         DO j=JstrT,JendT
                           DO i=IstrT,IendT
@@ -1546,46 +1498,16 @@
                         END DO
                       END DO
 !
-                      my_dot=0.0_r8
-                      DO k=1,N(ng)
-                        DO j=JstrT,JendT
-                          DO i=IstrT,IendT
-                            my_dot=my_dot+A3d(i,j,k)*A3d(i,j,k)
-                          END DO
-                        END DO
-                      END DO
+!  Set normalization factors.
 !
-!  Perform parallel global reduction operation: dot product.
-!
-# ifdef DISTRIBUTE
-                      NSUB=1                     ! distributed-memory
-# else
-                      IF (DOMAIN(ng)%SouthWest_Corner(tile).and.        &
-     &                    DOMAIN(ng)%NorthEast_Corner(tile)) THEN
-                        NSUB=1                   ! non-tiled application
-                      ELSE
-                        NSUB=NtileX(ng)*NtileE(ng)   ! tiled application
-                      END IF
-# endif
-!$OMP CRITICAL (R3_DOT)
-                      IF (tile_count.eq.0) THEN
-                        Gdotp=my_dot
-                      ELSE
-                        Gdotp=Gdotp+my_dot
-                      END IF
-                      tile_count=tile_count+1
-                      IF (tile_count.eq.NSUB) THEN
-                        tile_count=0
-# ifdef DISTRIBUTE
-                        op_handle='SUM'
-                        CALL mp_reduce (ng, iTLM, 1, Gdotp, op_handle)
-# endif
-                        cff=1.0_r8/SQRT(Gdotp)
-                      END IF
-!$OMP END CRITICAL (R3_DOT)
+                      Gdotp=dot_prod3d (ng, tile, iADM, r3dvar,         &
+     &                                  LBi, UBi, LBj, UBj, 1, N(ng),   &
+     &                                  A3d, A3d)
+                      cff=1.0_r8/SQRT(Gdotp)
                     ELSE
                       cff=0.0_r8
                     END IF
+!
                     IF (((Jstr.le.jc).and.(jc.le.Jend)).and.            &
      &                  ((Istr.le.ic).and.(ic.le.Iend))) THEN
                       IF (Lsame) THEN
@@ -1599,21 +1521,27 @@
                   END DO
                 END DO
               END DO
-            END IF
-          END DO
+            END IF COMPUTE_R3D
+          END DO TRACER_LOOP
+!
+!  Exchange boundary data.
+!
           DO itrc=1,NT(ng)
-            is=isTvar(itrc)
-            IF (Cnorm(ifile,is)) THEN
+            ifield=isTvar(itrc)
+            IF (Cnorm(ifile,ifield)) THEN
               CALL dabc_r3d_tile (ng, tile,                             &
      &                            LBi, UBi, LBj, UBj, 1, N(ng),         &
      &                            VnormR(:,:,:,ifile,itrc))
 # ifdef DISTRIBUTE
+!
               CALL mp_exchange3d (ng, tile, iTLM, 1,                    &
      &                            LBi, UBi, LBj, UBj, 1, N(ng),         &
      &                            NghostPoints,                         &
      &                            EWperiodic(ng), NSperiodic(ng),       &
      &                            VnormR(:,:,:,ifile,itrc))
 # endif
+!
+!  Write out into output NetCDF file.
 !
               SELECT CASE (NRM(ifile,ng)%IOtype)
                 CASE (io_nf90)
@@ -1654,18 +1582,18 @@
             END IF
           END DO
 #endif
-        END IF
+        END IF LWRITE_NRM
       END DO FILE_LOOP
 
 #ifdef ADJUST_BOUNDARY
 !
-!-----------------------------------------------------------------------
+!:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 !  Compute open boundaries error covariance, B, normalization factors
 !  using the exact method.
-!-----------------------------------------------------------------------
+!:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 !
       ifile=3
-      IF (LwrtNRM(ifile,ng)) THEN
+      BRY_LWRITE_NRM : IF (LwrtNRM(ifile,ng)) THEN
         Text='boundary conditions'
         IJlen=UBij-LBij+1
 # ifdef SOLVE3D
@@ -1707,48 +1635,55 @@
         END SELECT
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
-!  2D boundary norm at RHO-points.
+!-----------------------------------------------------------------------
+!  2D boundary normalization at RHO-points.
+!-----------------------------------------------------------------------
 !
         HnormRobc=Aspv
 
         IF (Master.and.ANY(CnormB(isFsur,:))) THEN
           WRITE (stdout,20) TRIM(Text),                                 &
-     &                      '2D normalization factors at RHO-points'
+     &          '2D normalization factors at RHO-points'
           FLUSH (stdout)
         END IF
-
-        DO ibry=1,4
+!
+        BRY_LOOP_R2D : DO ibry=1,4
           HscaleB=0.0_r8
-          IF (CnormB(isFsur,ibry)) THEN
-            IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
-              i=BOUNDS(ng)%edge(ibry,r2dvar)
-              Bmin=1
-              Bmax=Mm(ng)
-              IF (Lconvolve(ibry)) THEN
-                DO j=JstrT,JendT
-                  HscaleB(j)=1.0_r8/SQRT(on_r(i,j))
-                END DO
-              END IF
-            ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
-              j=BOUNDS(ng)%edge(ibry,r2dvar)
-              Bmin=1
-              Bmax=Lm(ng)
-              IF (Lconvolve(ibry)) THEN
-                DO i=IstrT,IendT
-                  HscaleB(i)=1.0_r8/SQRT(om_r(i,j))
-                END DO
-              END IF
-            END IF
+          BRY_COMPUTE_R2D : IF (CnormB(isFsur,ibry)) THEN
+!
+            SELECT CASE (ibry)
+              CASE (iwest, ieast)
+                i=BOUNDS(ng)%edge(ibry,r2dvar)
+                Bmin=1
+                Bmax=Mm(ng)
+                IF (Lconvolve(ibry)) THEN
+                  DO j=JstrT,JendT
+                    HscaleB(j)=1.0_r8/SQRT(on_r(i,j))
+                  END DO
+                END IF
+              CASE (isouth, inorth)
+                j=BOUNDS(ng)%edge(ibry,r2dvar)
+                Bmin=1
+                Bmax=Lm(ng)
+                IF (Lconvolve(ibry)) THEN
+                  DO i=IstrT,IendT
+                    HscaleB(i)=1.0_r8/SQRT(om_r(i,j))
+                  END DO
+                END IF
+            END SELECT
+!
             DO ib=Bmin,Bmax
-              IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
-                bounded=Lconvolve(ibry).and.                            &
-     &                  ((Jstr.le.ib).and.(ib.le.Jend))
-                j=ib
-              ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
-                bounded=Lconvolve(ibry).and.                            &
-     &                  ((Istr.le.ib).and.(ib.le.Iend))
-                i=ib
-              END IF
+!
+              SELECT CASE (ibry)
+                CASE (iwest, ieast)
+                  bounded=Lconvolve(ibry).and.                          &
+     &                    ((Jstr.le.ib).and.(ib.le.Jend))
+                  j=ib
+                CASE (isouth, inorth)
+                  bounded=Lconvolve(ibry).and.                          &
+     &                    ((Istr.le.ib).and.(ib.le.Iend))
+                  i=ib
+              END SELECT
 # ifdef MASKING
               IF (bounded) THEN
                 compute=rmask(i,j)
@@ -1766,6 +1701,9 @@
                 IF (bounded) THEN
                   B2d(ib)=1.0_r8
                 END IF
+!
+!  Adjoint explicit horizontal and implicit vertical convolutions.
+!
                 CALL ad_conv_r2d_bry_tile (ng, tile, iADM, ibry,        &
      &                                     BOUNDS(ng)%edge(:,r2dvar),   &
      &                                     LBij, UBij,                  &
@@ -1783,25 +1721,27 @@
 !
 !  HscaleB must be applied twice.
 !
-                IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
-                  DO j=JstrT,JendT
-                    B2d(j)=B2d(j)*HscaleB(j)
-                  END DO
-                ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
-                  DO i=IstrT,IendT
-                    B2d(i)=B2d(i)*HscaleB(i)
-                  END DO
-                END IF
+                SELECT CASE (ibry)
+                  CASE (iwest, ieast)
+                    DO j=JstrT,JendT
+                      B2d(j)=B2d(j)*HscaleB(j)
+                    END DO
 !
-                IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
-                  DO j=JstrT,JendT
-                    B2d(j)=B2d(j)*HscaleB(j)
-                  END DO
-                ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
-                  DO i=IstrT,IendT
-                    B2d(i)=B2d(i)*HscaleB(i)
-                  END DO
-                END IF
+                    DO j=JstrT,JendT
+                      B2d(j)=B2d(j)*HscaleB(j)
+                    END DO
+                  CASE (isouth, inorth)
+                    DO i=IstrT,IendT
+                      B2d(i)=B2d(i)*HscaleB(i)
+                    END DO
+!
+                    DO i=IstrT,IendT
+                      B2d(i)=B2d(i)*HscaleB(i)
+                    END DO
+                END SELECT
+!
+!  Tangent linear explicit horizontal and implicit vertical convolutions.
+!
                 CALL tl_conv_r2d_bry_tile (ng, tile, iTLM, ibry,        &
      &                                     BOUNDS(ng)%edge(:,r2dvar),   &
      &                                     LBij, UBij,                  &
@@ -1816,6 +1756,9 @@
      &                                     rmask, umask, vmask,         &
 # endif
      &                                     B2d)
+!
+!  Set normalization factors.
+!
                 IF (bounded) THEN
                   cff=1.0_r8/SQRT(B2d(ib))
                 END IF
@@ -1826,90 +1769,104 @@
                 HnormRobc(ib,ibry)=cff
               END IF
             END DO
+!
+!  Exchange boundary data.
+!
             CALL bc_r2d_bry_tile (ng, tile, ibry,                       &
      &                            LBij, UBij,                           &
      &                            HnormRobc(:,ibry))
 # ifdef DISTRIBUTE
+!
             CALL mp_collect (ng, iTLM, IJlen, Aspv,                     &
      &                       HnormRobc(LBij:,ibry))
 # endif
-          END IF
-        END DO
+          END IF BRY_COMPUTE_R2D
+        END DO BRY_LOOP_R2D
+!
+!  Write out into output NetCDF file.
+!
         IF (ANY(CnormB(isFsur,:))) THEN
-          ifield=idSbry(isFsur)
-
+          IDmeta=idSbry(isFsur)
+!
           SELECT CASE (NRM(ifile,ng)%IOtype)
             CASE (io_nf90)
               CALL netcdf_put_fvar (ng, iTLM, ncname,                   &
-     &                              Vname(1,ifield),                    &
+     &                              Vname(1,IDmeta),                    &
      &                              HnormRobc(LBij:,:),                 &
      &                         start = (/1,1,NRM(ifile,ng)%Rindex/),    &
      &                         total = (/IJlen,4,1/),                   &
      &                         ncid = NRM(ifile,ng)%ncid,               &
-     &                         varid = NRM(ifile,ng)%Vid(ifield))
+     &                         varid = NRM(ifile,ng)%Vid(IDmeta))
 
 # if defined PIO_LIB && defined DISTRIBUTE
             CASE (io_pio)
               CALL pio_netcdf_put_fvar (ng, iTLM, ncname,               &
-     &                                  Vname(1,ifield),                &
+     &                                  Vname(1,IDmeta),                &
      &                                  HnormRobc(LBij:,:),             &
      &                         start = (/1,1,NRM(ifile,ng)%Rindex/),    &
      &                         total = (/IJlen,4,1/),                   &
      &                         pioFile = NRM(ifile,ng)%pioFile,         &
-     &                         pioVar = NRM(ifile,ng)%pioVar(ifield)%vd)
+     &                         pioVar = NRM(ifile,ng)%pioVar(IDmeta)%vd)
 
 # endif
           END SELECT
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 !
-!  2D boundary norm at U-points.
+!-----------------------------------------------------------------------
+!  2D boundary normalization at U-points.
+!-----------------------------------------------------------------------
 !
         HnormUobc=Aspv
 
         IF (Master.and.ANY(CnormB(isUbar,:))) THEN
           WRITE (stdout,20) TRIM(Text),                                 &
-     &                      '2D normalization factors at   U-points'
+     &          '2D normalization factors at   U-points'
           FLUSH (stdout)
         END IF
-
-        DO ibry=1,4
+!
+        BRY_LOOP_U2D : DO ibry=1,4
           HscaleB=0.0_r8
-          IF (CnormB(isUbar,ibry)) THEN
-            IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
-              i=BOUNDS(ng)%edge(ibry,u2dvar)
-              Bmin=1
-              Bmax=Mm(ng)
-              IF (Lconvolve(ibry)) THEN
-                DO j=JstrT,JendT
-                  HscaleB(j)=1.0_r8/SQRT(on_u(i,j))
-                END DO
-              END IF
-            ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
-              j=BOUNDS(ng)%edge(ibry,u2dvar)
-              IF (EWperiodic(ng)) THEN
+          BRY_COMPUTE_U2D : IF (CnormB(isUbar,ibry)) THEN
+!
+            SELECT CASE (ibry)
+              CASE (iwest, ieast)
+                i=BOUNDS(ng)%edge(ibry,u2dvar)
                 Bmin=1
-                Bmax=Lm(ng)
-              ELSE
-                Bmin=2
-                Bmax=Lm(ng)
-              END IF
-              IF (Lconvolve(ibry)) THEN
-                DO i=IstrP,IendT
-                  HscaleB(i)=1.0_r8/SQRT(om_u(i,j))
-                END DO
-              END IF
-            END IF
+                Bmax=Mm(ng)
+                IF (Lconvolve(ibry)) THEN
+                  DO j=JstrT,JendT
+                    HscaleB(j)=1.0_r8/SQRT(on_u(i,j))
+                  END DO
+                END IF
+              CASE (isouth, inorth)
+                j=BOUNDS(ng)%edge(ibry,u2dvar)
+                IF (EWperiodic(ng)) THEN
+                  Bmin=1
+                  Bmax=Lm(ng)
+                ELSE
+                  Bmin=2
+                  Bmax=Lm(ng)
+                END IF
+                IF (Lconvolve(ibry)) THEN
+                  DO i=IstrP,IendT
+                    HscaleB(i)=1.0_r8/SQRT(om_u(i,j))
+                  END DO
+                END IF
+            END SELECT
+!
             DO ib=Bmin,Bmax
-              IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
-                bounded=Lconvolve(ibry).and.                            &
-     &                  ((Jstr.le.ib).and.(ib.le.Jend))
-                j=ib
-              ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
-                bounded=Lconvolve(ibry).and.                            &
-     &                  ((Istr.le.ib).and.(ib.le.Iend))
-                i=ib
-              END IF
+!
+              SELECT CASE (ibry)
+                CASE (iwest, ieast)
+                  bounded=Lconvolve(ibry).and.                          &
+     &                    ((Jstr.le.ib).and.(ib.le.Jend))
+                  j=ib
+                CASE (isouth, inorth)
+                  bounded=Lconvolve(ibry).and.                          &
+     &                    ((Istr.le.ib).and.(ib.le.Iend))
+                  i=ib
+              END SELECT
 # ifdef MASKING
               IF (bounded) THEN
                 compute=umask(i,j)
@@ -1927,6 +1884,9 @@
                 IF (bounded) THEN
                   B2d(ib)=1.0_r8
                 END IF
+!
+!  Adjoint explicit horizontal and implicit vertical convolutions.
+!
                 CALL ad_conv_u2d_bry_tile (ng, tile, iADM, ibry,        &
      &                                     BOUNDS(ng)%edge(:,u2dvar),   &
      &                                     LBij, UBij,                  &
@@ -1944,25 +1904,25 @@
 !
 !  HscaleB must be applied twice.
 !
-                IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
-                  DO j=JstrT,JendT
-                    B2d(j)=B2d(j)*HscaleB(j)
-                  END DO
-                ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
-                  DO i=IstrP,IendT
-                    B2d(i)=B2d(i)*HscaleB(i)
-                  END DO
-                END IF
+                SELECT CASE (ibry)
+                  CASE (iwest, ieast)
+                    DO j=JstrT,JendT
+                      B2d(j)=B2d(j)*HscaleB(j)
+                    END DO
+                    DO j=JstrT,JendT
+                      B2d(j)=B2d(j)*HscaleB(j)
+                    END DO
+                  CASE (isouth, inorth)
+                    DO i=IstrP,IendT
+                      B2d(i)=B2d(i)*HscaleB(i)
+                    END DO
+                    DO i=IstrP,IendT
+                      B2d(i)=B2d(i)*HscaleB(i)
+                    END DO
+                END SELECT
 !
-                IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
-                  DO j=JstrT,JendT
-                    B2d(j)=B2d(j)*HscaleB(j)
-                  END DO
-                ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
-                  DO i=IstrP,IendT
-                    B2d(i)=B2d(i)*HscaleB(i)
-                  END DO
-                END IF
+!  Tangent linear explicit horizontal and implicit vertical convolutions.
+!
                 CALL tl_conv_u2d_bry_tile (ng, tile, iTLM, ibry,        &
      &                                     BOUNDS(ng)%edge(:,u2dvar),   &
      &                                     LBij, UBij,                  &
@@ -1977,6 +1937,9 @@
      &                                     umask, pmask,                &
 # endif
      &                                     B2d)
+!
+!  Set normalization factors.
+!
                 IF (bounded) THEN
                   cff=1.0_r8/SQRT(B2d(ib))
                 END IF
@@ -1987,6 +1950,9 @@
                 HnormUobc(ib,ibry)=cff
               END IF
             END DO
+!
+!  Exchange boundary data.
+!
             CALL bc_u2d_bry_tile (ng, tile, ibry,                       &
      &                            LBij, UBij,                           &
      &                            HnormUobc(:,ibry))
@@ -1994,82 +1960,92 @@
             CALL mp_collect (ng, iTLM, IJlen, Aspv,                     &
      &                       HnormUobc(LBij:,ibry))
 # endif
-          END IF
-        END DO
+          END IF BRY_COMPUTE_U2D
+        END DO BRY_LOOP_U2D
+!
+!  Write out into output NetCDF file.
+!
         IF (ANY(CnormB(isUbar,:))) THEN
-          ifield=idSbry(isUbar)
-
+          IDmeta=idSbry(isUbar)
+!
           SELECT CASE (NRM(ifile,ng)%IOtype)
             CASE (io_nf90)
               CALL netcdf_put_fvar (ng, iTLM, ncname,                   &
-     &                              Vname(1,ifield),                    &
+     &                              Vname(1,IDmeta),                    &
      &                              HnormUobc(LBij:,:),                 &
      &                         start = (/1,1,NRM(ifile,ng)%Rindex/),    &
      &                         total = (/IJlen,4,1/),                   &
      &                         ncid = NRM(ifile,ng)%ncid,               &
-     &                         varid = NRM(ifile,ng)%Vid(ifield))
+     &                         varid = NRM(ifile,ng)%Vid(IDmeta))
 
 # if defined PIO_LIB && defined DISTRIBUTE
             CASE (io_pio)
               CALL pio_netcdf_put_fvar (ng, iTLM, ncname,               &
-     &                                  Vname(1,ifield),                &
+     &                                  Vname(1,IDmeta),                &
      &                                  HnormUobc(LBij:,:),             &
      &                         start = (/1,1,NRM(ifile,ng)%Rindex/),    &
      &                         total = (/IJlen,4,1/),                   &
      &                         pioFile = NRM(ifile,ng)%pioFile,         &
-     &                         pioVar = NRM(ifile,ng)%pioVar(ifield)%vd)
+     &                         pioVar = NRM(ifile,ng)%pioVar(IDmeta)%vd)
 # endif
           END SELECT
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 !
-!  2D boundary norm at V-points.
+!-----------------------------------------------------------------------
+!  2D boundary normalization at V-points.
+!-----------------------------------------------------------------------
 !
         HnormVobc=Aspv
 
         IF (Master.and.ANY(CnormB(isVbar,:))) THEN
           WRITE (stdout,20) TRIM(Text),                                 &
-     &                      '2D normalization factors at   V-points'
+     &          '2D normalization factors at   V-points'
           FLUSH (stdout)
         END IF
-
-        DO ibry=1,4
+!
+        BRY_LOOP_V2D : DO ibry=1,4
           HscaleB=0.0_r8
-          IF (CnormB(isVbar,ibry)) THEN
-            IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
-              i=BOUNDS(ng)%edge(ibry,v2dvar)
-              IF (NSperiodic(ng)) THEN
+          BRY_COMPUTE_V2D : IF (CnormB(isVbar,ibry)) THEN
+!
+            SELECT CASE (ibry)
+              CASE (iwest, ieast)
+                i=BOUNDS(ng)%edge(ibry,v2dvar)
+                IF (NSperiodic(ng)) THEN
+                  Bmin=1
+                  Bmax=Mm(ng)
+                ELSE
+                  Bmin=2
+                  Bmax=Mm(ng)
+                END IF
+                IF (Lconvolve(ibry)) THEN
+                  DO j=JstrT,JendT
+                    HscaleB(j)=1.0_r8/SQRT(on_v(i,j))
+                  END DO
+                END IF
+              CASE (isouth, inorth)
+                j=BOUNDS(ng)%edge(ibry,v2dvar)
                 Bmin=1
-                Bmax=Mm(ng)
-              ELSE
-                Bmin=2
-                Bmax=Mm(ng)
-              END IF
-              IF (Lconvolve(ibry)) THEN
-                DO j=JstrT,JendT
-                  HscaleB(j)=1.0_r8/SQRT(on_v(i,j))
-                END DO
-              END IF
-            ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
-              j=BOUNDS(ng)%edge(ibry,v2dvar)
-              Bmin=1
-              Bmax=Lm(ng)
-              IF (Lconvolve(ibry)) THEN
-                DO i=IstrT,IendT
-                  HscaleB(i)=1.0_r8/SQRT(om_v(i,j))
-                END DO
-              END IF
-            END IF
+                Bmax=Lm(ng)
+                IF (Lconvolve(ibry)) THEN
+                  DO i=IstrT,IendT
+                    HscaleB(i)=1.0_r8/SQRT(om_v(i,j))
+                  END DO
+                END IF
+            END SELECT
+!
             DO ib=Bmin,Bmax
-              IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
-                bounded=Lconvolve(ibry).and.                            &
-     &                  ((Jstr.le.ib).and.(ib.le.Jend))
-                j=ib
-              ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
-                bounded=Lconvolve(ibry).and.                            &
-     &                  ((Istr.le.ib).and.(ib.le.Iend))
-                i=ib
-              END IF
+!
+              SELECT CASE (ibry)
+                CASE (iwest, ieast)
+                  bounded=Lconvolve(ibry).and.                          &
+     &                    ((Jstr.le.ib).and.(ib.le.Jend))
+                  j=ib
+                CASE (isouth, inorth)
+                  bounded=Lconvolve(ibry).and.                          &
+     &                    ((Istr.le.ib).and.(ib.le.Iend))
+                  i=ib
+              END SELECT
 # ifdef MASKING
               IF (bounded) THEN
                 compute=vmask(i,j)
@@ -2087,6 +2063,9 @@
                 IF (bounded) THEN
                   B2d(ib)=1.0_r8
                 END IF
+!
+!  Adjoint explicit horizontal and implicit vertical convolutions.
+!
                 CALL ad_conv_v2d_bry_tile (ng, tile, iADM, ibry,        &
      &                                     BOUNDS(ng)%edge(:,v2dvar),   &
      &                                     LBij, UBij,                  &
@@ -2104,25 +2083,27 @@
 !
 !  HscaleB must be applied twice.
 !
-                IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
-                  DO j=JstrP,JendT
-                    B2d(j)=B2d(j)*HscaleB(j)
-                  END DO
-                ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
-                  DO i=IstrT,IendT
-                    B2d(i)=B2d(i)*HscaleB(i)
-                  END DO
-                END IF
+                SELECT CASE (ibry)
+                  CASE (iwest, ieast)
+                    DO j=JstrP,JendT
+                      B2d(j)=B2d(j)*HscaleB(j)
+                    END DO
 !
-                IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
-                  DO j=JstrP,JendT
-                    B2d(j)=B2d(j)*HscaleB(j)
-                  END DO
-                ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
-                  DO i=IstrT,IendT
-                    B2d(i)=B2d(i)*HscaleB(i)
-                  END DO
-                END IF
+                    DO j=JstrP,JendT
+                      B2d(j)=B2d(j)*HscaleB(j)
+                    END DO
+                  CASE (isouth, inorth)
+                    DO i=IstrT,IendT
+                      B2d(i)=B2d(i)*HscaleB(i)
+                    END DO
+!
+                    DO i=IstrT,IendT
+                      B2d(i)=B2d(i)*HscaleB(i)
+                    END DO
+                END SELECT
+!
+!  Tangent linear explicit horizontal and implicit vertical convolutions.
+!
                 CALL tl_conv_v2d_bry_tile (ng, tile, iTLM, ibry,        &
      &                                     BOUNDS(ng)%edge(:,v2dvar),   &
      &                                     LBij, UBij,                  &
@@ -2137,6 +2118,9 @@
      &                                     vmask, pmask,                &
 # endif
      &                                     B2d)
+!
+!  Set normalization factors.
+!
                 IF (bounded) THEN
                   cff=1.0_r8/SQRT(B2d(ib))
                 END IF
@@ -2147,37 +2131,44 @@
                 HnormVobc(ib,ibry)=cff
               END IF
             END DO
+!
+!  Exchange boundary data.
+!
             CALL bc_v2d_bry_tile (ng, tile, ibry,                       &
      &                            LBij, UBij,                           &
      &                            HnormVobc(:,ibry))
 # ifdef DISTRIBUTE
+!
             CALL mp_collect (ng, iTLM, IJlen, Aspv,                     &
      &                       HnormVobc(LBij:,ibry))
 # endif
-          END IF
-        END DO
+          END IF BRY_COMPUTE_V2D
+        END DO BRY_LOOP_V2D
+!
+!  Write out into output NetCDF file.
+!
         IF (ANY(CnormB(isVbar,:))) THEN
-          ifield=idSbry(isVbar)
-
+          IDmeta=idSbry(isVbar)
+!
           SELECT CASE (NRM(ifile,ng)%IOtype)
             CASE (io_nf90)
               CALL netcdf_put_fvar (ng, iTLM, ncname,                   &
-     &                              Vname(1,ifield),                    &
+     &                              Vname(1,IDmeta),                    &
      &                              HnormVobc(LBij:,:),                 &
      &                         start = (/1,1,NRM(ifile,ng)%Rindex/),    &
      &                         total = (/IJlen,4,1/),                   &
      &                         ncid = NRM(ifile,ng)%ncid,               &
-     &                         varid = NRM(ifile,ng)%Vid(ifield))
+     &                         varid = NRM(ifile,ng)%Vid(IDmeta))
 
 # if defined PIO_LIB && defined DISTRIBUTE
             CASE (io_pio)
               CALL pio_netcdf_put_fvar (ng, iTLM, ncname,               &
-     &                                  Vname(1,ifield),                &
+     &                                  Vname(1,IDmeta),                &
      &                                  HnormVobc(LBij:,:),             &
      &                         start = (/1,1,NRM(ifile,ng)%Rindex/),    &
      &                         total = (/IJlen,4,1/),                   &
      &                         pioFile = NRM(ifile,ng)%pioFile,         &
-     &                         pioVar = NRM(ifile,ng)%pioVar(ifield)%vd)
+     &                         pioVar = NRM(ifile,ng)%pioVar(IDmeta)%vd)
 # endif
           END SELECT
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
@@ -2185,62 +2176,68 @@
 
 # ifdef SOLVE3D
 !
-!  3D boundary norm at U-points.
+!-----------------------------------------------------------------------
+!  3D boundary normalization at U-points.
+!-----------------------------------------------------------------------
 !
         VnormUobc=Aspv
 
         IF (Master.and.ANY(CnormB(isUvel,:))) THEN
           WRITE (stdout,20) TRIM(Text),                                 &
-     &                      '3D normalization factors at   U-points'
+     &          '3D normalization factors at   U-points'
           FLUSH (stdout)
         END IF
-
-        DO ibry=1,4
+!
+        BRY_LOOP_U3D : DO ibry=1,4
           VscaleB=0.0_r8
-          IF (CnormB(isUvel,ibry)) THEN
-            IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
-              i=BOUNDS(ng)%edge(ibry,u2dvar)
-              Bmin=1
-              Bmax=Mm(ng)
-              IF (Lconvolve(ibry)) THEN
-                DO j=JstrT,JendT
-                  cff=on_u(i,j)*0.5_r8
-                  DO k=1,N(ng)
-                    VscaleB(j,k)=1.0_r8/                                &
-     &                           SQRT(cff*(Hz(i-1,j,k)+Hz(i,j,k)))
-                  END DO
-                END DO
-              END IF
-            ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
-              j=BOUNDS(ng)%edge(ibry,u2dvar)
-              IF (EWperiodic(ng)) THEN
+          BRY_COMPUTE_U3D : IF (CnormB(isUvel,ibry)) THEN
+!
+            SELECT CASE (ibry)
+              CASE (iwest, ieast)
+                i=BOUNDS(ng)%edge(ibry,u2dvar)
                 Bmin=1
-                Bmax=Lm(ng)
-              ELSE
-                Bmin=2
-                Bmax=Lm(ng)
-              END IF
-              IF (Lconvolve(ibry)) THEN
-                DO i=IstrP,IendT
-                  cff=om_u(i,j)*0.5_r8
-                  DO k=1,N(ng)
-                    VscaleB(i,k)=1.0_r8/                                &
-     &                           SQRT(cff*(Hz(i-1,j,k)+Hz(i,j,k)))
+                Bmax=Mm(ng)
+                IF (Lconvolve(ibry)) THEN
+                  DO j=JstrT,JendT
+                    cff=on_u(i,j)*0.5_r8
+                    DO k=1,N(ng)
+                      VscaleB(j,k)=1.0_r8/                              &
+     &                             SQRT(cff*(Hz(i-1,j,k)+Hz(i,j,k)))
+                    END DO
                   END DO
-                END DO
-              END IF
-            END IF
+                END IF
+              CASE (isouth, inorth)
+                j=BOUNDS(ng)%edge(ibry,u2dvar)
+                IF (EWperiodic(ng)) THEN
+                  Bmin=1
+                  Bmax=Lm(ng)
+                ELSE
+                  Bmin=2
+                  Bmax=Lm(ng)
+                END IF
+                IF (Lconvolve(ibry)) THEN
+                  DO i=IstrP,IendT
+                    cff=om_u(i,j)*0.5_r8
+                    DO k=1,N(ng)
+                      VscaleB(i,k)=1.0_r8/                              &
+     &                             SQRT(cff*(Hz(i-1,j,k)+Hz(i,j,k)))
+                    END DO
+                  END DO
+                END IF
+            END SELECT
+!
             DO kb=1,N(ng)
               DO ib=Bmin,Bmax
-                IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
-                  bounded=Lconvolve(ibry).and.                          &
-     &                    ((Jstr.le.ib).and.(ib.le.Jend))
-                  j=ib
-                ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
-                  bounded=Lconvolve(ibry).and.                          &
-     &                    ((Istr.le.ib).and.(ib.le.Iend))
-                  i=ib
-                END IF
+                SELECT CASE (ibry)
+                  CASE (iwest, ieast)
+                    bounded=Lconvolve(ibry).and.                        &
+     &                      ((Jstr.le.ib).and.(ib.le.Jend))
+                    j=ib
+                  CASE (isouth, inorth)
+                    bounded=Lconvolve(ibry).and.                        &
+     &                      ((Istr.le.ib).and.(ib.le.Iend))
+                    i=ib
+                END SELECT
 #  ifdef MASKING
                 IF (bounded) THEN
                   compute=umask(i,j)
@@ -2258,6 +2255,9 @@
                   IF (bounded) THEN
                     B3d(ib,kb)=1.0_r8
                   END IF
+!
+!  Adjoint explicit horizontal and implicit vertical convolutions.
+!
                   CALL ad_conv_u3d_bry_tile (ng, tile, iADM, ibry,      &
      &                                       BOUNDS(ng)%edge(:,u2dvar), &
      &                                       LBij, UBij,                &
@@ -2279,33 +2279,35 @@
 !
 !  VscaleB must be applied twice.
 !
-                  IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
-                    DO k=1,N(ng)
-                      DO j=JstrT,JendT
-                        B3d(j,k)=B3d(j,k)*VscaleB(j,k)
+                  SELECT CASE (ibry)
+                    CASE (iwest, ieast)
+                      DO k=1,N(ng)
+                        DO j=JstrT,JendT
+                          B3d(j,k)=B3d(j,k)*VscaleB(j,k)
+                        END DO
                       END DO
-                    END DO
-                  ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
-                    DO k=1,N(ng)
-                      DO i=IstrP,IendT
-                        B3d(i,k)=B3d(i,k)*VscaleB(i,k)
-                      END DO
-                    END DO
-                  END IF
 !
-                  IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
-                    DO k=1,N(ng)
-                      DO j=JstrT,JendT
-                        B3d(j,k)=B3d(j,k)*VscaleB(j,k)
+                      DO k=1,N(ng)
+                        DO j=JstrT,JendT
+                          B3d(j,k)=B3d(j,k)*VscaleB(j,k)
+                        END DO
                       END DO
-                    END DO
-                  ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
-                    DO k=1,N(ng)
-                      DO i=IstrP,IendT
-                        B3d(i,k)=B3d(i,k)*VscaleB(i,k)
+                    CASE (isouth, inorth)
+                      DO k=1,N(ng)
+                        DO i=IstrP,IendT
+                          B3d(i,k)=B3d(i,k)*VscaleB(i,k)
+                        END DO
                       END DO
-                    END DO
-                  END IF
+!
+                      DO k=1,N(ng)
+                        DO i=IstrP,IendT
+                          B3d(i,k)=B3d(i,k)*VscaleB(i,k)
+                        END DO
+                      END DO
+                  END SELECT
+!
+!  Tangent linear explicit horizontal and implicit vertical convolutions.
+!
                   CALL tl_conv_u3d_bry_tile (ng, tile, iTLM, ibry,      &
      &                                       BOUNDS(ng)%edge(:,u2dvar), &
      &                                       LBij, UBij,                &
@@ -2324,6 +2326,9 @@
 #  endif
      &                                       Hz, z_r,                   &
      &                                       B3d)
+!
+!  Set normalization factors.
+!
                   IF (bounded) THEN
                     cff=1.0_r8/SQRT(B3d(ib,kb))
                   END IF
@@ -2335,10 +2340,14 @@
                 END IF
               END DO
             END DO
+!
+!  Exchange boundary data.
+!
             CALL bc_u3d_bry_tile (ng, tile, ibry,                       &
      &                            LBij, UBij, 1, N(ng),                 &
      &                            VnormUobc(:,:,ibry))
 #  ifdef DISTRIBUTE
+!
             Bwrk=RESHAPE(VnormUobc(:,:,ibry), (/IJKlen/))
             CALL mp_collect (ng, iTLM, IJKlen, Aspv, Bwrk)
             ic=0
@@ -2349,91 +2358,100 @@
               END DO
             END DO
 #  endif
-          END IF
-        END DO
+          END IF BRY_COMPUTE_U3D
+        END DO BRY_LOOP_U3D
+!
+!  Write out into output NetCDF file.
+!
         IF (ANY(CnormB(isUvel,:))) THEN
-          ifield=idSbry(isUvel)
-
+          IDmeta=idSbry(isUvel)
+!
           SELECT CASE (NRM(ifile,ng)%IOtype)
             CASE (io_nf90)
               CALL netcdf_put_fvar (ng, iTLM, ncname,                   &
-     &                              Vname(1,ifield),                    &
+     &                              Vname(1,IDmeta),                    &
      &                              VnormUobc(LBij:,:,:),               &
      &                         start = (/1,1,1,NRM(ifile,ng)%Rindex/),  &
      &                         total = (/IJlen,N(ng),4,1/),             &
      &                         ncid = NRM(ifile,ng)%ncid,               &
-     &                         varid = NRM(ifile,ng)%Vid(ifield))
+     &                         varid = NRM(ifile,ng)%Vid(IDmeta))
 
 #  if defined PIO_LIB && defined DISTRIBUTE
             CASE (io_pio)
               CALL pio_netcdf_put_fvar (ng, iTLM, ncname,               &
-     &                                  Vname(1,ifield),                &
+     &                                  Vname(1,IDmeta),                &
      &                                  VnormUobc(LBij:,:,:),           &
      &                         start = (/1,1,1,NRM(ifile,ng)%Rindex/),  &
      &                         total = (/IJlen,N(ng),4,1/),             &
      &                         pioFile = NRM(ifile,ng)%pioFile,         &
-     &                         pioVar = NRM(ifile,ng)%pioVar(ifield)%vd)
+     &                         pioVar = NRM(ifile,ng)%pioVar(IDmeta)%vd)
 #  endif
           END SELECT
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 !
-!  3D boundary norm at V-points.
+!-----------------------------------------------------------------------
+!  3D boundary normalization at V-points.
+!-----------------------------------------------------------------------
 !
         VnormVobc=Aspv
 
         IF (Master.and.ANY(CnormB(isVvel,:))) THEN
           WRITE (stdout,20) TRIM(Text),                                 &
-     &                      '3D normalization factors at   V-points'
+     &          '3D normalization factors at   V-points'
           FLUSH (stdout)
         END IF
-
-        DO ibry=1,4
+!
+        BRY_LOOP_V3D : DO ibry=1,4
           VscaleB=0.0_r8
-          IF (CnormB(isVvel,ibry)) THEN
-            IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
-              i=BOUNDS(ng)%edge(ibry,v2dvar)
-              IF (NSperiodic(ng)) THEN
+          BRY_COMPUTE_V3D : IF (CnormB(isVvel,ibry)) THEN
+!
+            SELECT CASE (ibry)
+              CASE (iwest, ieast)
+                i=BOUNDS(ng)%edge(ibry,v2dvar)
+                IF (NSperiodic(ng)) THEN
+                  Bmin=1
+                  Bmax=Mm(ng)
+                ELSE
+                  Bmin=2
+                  Bmax=Mm(ng)
+                END IF
+                IF (Lconvolve(ibry)) THEN
+                  DO j=JstrP,JendT
+                    cff=on_v(i,j)*0.5_r8
+                    DO k=1,N(ng)
+                      VscaleB(j,k)=1.0_r8/                              &
+     &                             SQRT(cff*(Hz(i,j-1,k)+Hz(i,j,k)))
+                    END DO
+                  END DO
+                END IF
+              CASE (isouth, inorth)
+                j=BOUNDS(ng)%edge(ibry,v2dvar)
                 Bmin=1
-                Bmax=Mm(ng)
-              ELSE
-                Bmin=2
-                Bmax=Mm(ng)
-              END IF
-              IF (Lconvolve(ibry)) THEN
-                DO j=JstrP,JendT
-                  cff=on_v(i,j)*0.5_r8
-                  DO k=1,N(ng)
-                    VscaleB(j,k)=1.0_r8/                                &
-     &                           SQRT(cff*(Hz(i,j-1,k)+Hz(i,j,k)))
+                Bmax=Lm(ng)
+                IF (Lconvolve(ibry)) THEN
+                  DO i=IstrT,IendT
+                    cff=om_v(i,j)*0.5_r8
+                    DO k=1,N(ng)
+                      VscaleB(i,k)=1.0_r8/                              &
+     &                             SQRT(cff*(Hz(i,j-1,k)+Hz(i,j,k)))
+                    END DO
                   END DO
-                END DO
-              END IF
-            ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
-              j=BOUNDS(ng)%edge(ibry,v2dvar)
-              Bmin=1
-              Bmax=Lm(ng)
-              IF (Lconvolve(ibry)) THEN
-                DO i=IstrT,IendT
-                  cff=om_v(i,j)*0.5_r8
-                  DO k=1,N(ng)
-                    VscaleB(i,k)=1.0_r8/                                &
-     &                           SQRT(cff*(Hz(i,j-1,k)+Hz(i,j,k)))
-                  END DO
-                END DO
-              END IF
-            END IF
+                END IF
+            END SELECT
+!
             DO kb=1,N(ng)
               DO ib=Bmin,Bmax
-                IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
-                  bounded=Lconvolve(ibry).and.                          &
-     &                    ((Jstr.le.ib).and.(ib.le.Jend))
-                  j=ib
-                ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
-                  bounded=Lconvolve(ibry).and.                          &
-     &                    ((Istr.le.ib).and.(ib.le.Iend))
-                  i=ib
-                END IF
+                SELECT CASE (ibry)
+                  CASE (iwest, ieast)
+                    bounded=Lconvolve(ibry).and.                        &
+     &                      ((Jstr.le.ib).and.(ib.le.Jend))
+                    j=ib
+                  CASE (isouth, inorth)
+                    bounded=Lconvolve(ibry).and.                        &
+     &                      ((Istr.le.ib).and.(ib.le.Iend))
+                    i=ib
+                END SELECT
 #  ifdef MASKING
                 IF (bounded) THEN
                   compute=vmask(i,j)
@@ -2451,6 +2469,9 @@
                   IF (bounded) THEN
                     B3d(ib,kb)=1.0_r8
                   END IF
+!
+!  Adjoint explicit horizontal and implicit vertical convolutions.
+!
                   CALL ad_conv_v3d_bry_tile (ng, tile, iADM, ibry,      &
      &                                       BOUNDS(ng)%edge(:,v2dvar), &
      &                                       LBij, UBij,                &
@@ -2472,33 +2493,35 @@
 !
 !  VscaleB must be applied twice.
 !
-                  IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
-                    DO k=1,N(ng)
-                      DO j=JstrP,JendT
-                        B3d(j,k)=B3d(j,k)*VscaleB(j,k)
+                  SELECT CASE (ibry)
+                    CASE (iwest, ieast)
+                      DO k=1,N(ng)
+                        DO j=JstrP,JendT
+                          B3d(j,k)=B3d(j,k)*VscaleB(j,k)
+                        END DO
                       END DO
-                    END DO
-                  ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
-                    DO k=1,N(ng)
-                      DO i=IstrT,IendT
-                        B3d(i,k)=B3d(i,k)*VscaleB(i,k)
-                      END DO
-                    END DO
-                  END IF
 !
-                  IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
-                    DO k=1,N(ng)
-                      DO j=JstrP,JendT
-                        B3d(j,k)=B3d(j,k)*VscaleB(j,k)
+                      DO k=1,N(ng)
+                        DO j=JstrP,JendT
+                          B3d(j,k)=B3d(j,k)*VscaleB(j,k)
+                        END DO
                       END DO
-                    END DO
-                  ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
-                    DO k=1,N(ng)
-                      DO i=IstrT,IendT
-                        B3d(i,k)=B3d(i,k)*VscaleB(i,k)
+                    CASE (isouth, inorth)
+                      DO k=1,N(ng)
+                        DO i=IstrT,IendT
+                          B3d(i,k)=B3d(i,k)*VscaleB(i,k)
+                        END DO
                       END DO
-                    END DO
-                  END IF
+!
+                      DO k=1,N(ng)
+                        DO i=IstrT,IendT
+                          B3d(i,k)=B3d(i,k)*VscaleB(i,k)
+                        END DO
+                      END DO
+                  END SELECT
+!
+!  Tangent linear explicit horizontal and implicit vertical convolutions.
+!
                   CALL tl_conv_v3d_bry_tile (ng, tile, iTLM, ibry,      &
      &                                       BOUNDS(ng)%edge(:,v2dvar), &
      &                                       LBij, UBij,                &
@@ -2517,6 +2540,9 @@
 #  endif
      &                                       Hz, z_r,                   &
      &                                       B3d)
+!
+!  Set normalization factors.
+!
                   IF (bounded) THEN
                     cff=1.0_r8/SQRT(B3d(ib,kb))
                   END IF
@@ -2528,10 +2554,14 @@
                 END IF
               END DO
             END DO
+!
+!  Exchange boundary data.
+!
             CALL bc_v3d_bry_tile (ng, tile, ibry,                       &
      &                            LBij, UBij, 1, N(ng),                 &
      &                            VnormVobc(:,:,ibry))
 #  ifdef DISTRIBUTE
+!
             Bwrk=RESHAPE(VnormVobc(:,:,ibry), (/IJKlen/))
             CALL mp_collect (ng, iTLM, IJKlen, Aspv, Bwrk)
             ic=0
@@ -2542,94 +2572,103 @@
               END DO
             END DO
 #  endif
-          END IF
-        END DO
+          END IF BRY_COMPUTE_V3D
+        END DO BRY_LOOP_V3D
+!
+!  Write out into output NetCDF file.
+!
         IF (ANY(CnormB(isVvel,:))) THEN
-          ifield=idSbry(isVvel)
-
+          IDmeta=idSbry(isVvel)
+!
           SELECT CASE (NRM(ifile,ng)%IOtype)
             CASE (io_nf90)
               CALL netcdf_put_fvar (ng, iTLM, ncname,                   &
-     &                              Vname(1,ifield),                    &
+     &                              Vname(1,IDmeta),                    &
      &                              VnormVobc(LBij:,:,:),               &
      &                         start = (/1,1,1,NRM(ifile,ng)%Rindex/),  &
      &                         total = (/IJlen,N(ng),4,1/),             &
      &                         ncid = NRM(ifile,ng)%ncid,               &
-     &                         varid = NRM(ifile,ng)%Vid(ifield))
+     &                         varid = NRM(ifile,ng)%Vid(IDmeta))
 
 #  if defined PIO_LIB && defined DISTRIBUTE
             CASE (io_pio)
               CALL pio_netcdf_put_fvar (ng, iTLM, ncname,               &
-     &                                  Vname(1,ifield),                &
+     &                                  Vname(1,IDmeta),                &
      &                                  VnormVobc(LBij:,:,:),           &
      &                         start = (/1,1,1,NRM(ifile,ng)%Rindex/),  &
      &                         total = (/IJlen,N(ng),4,1/),             &
      &                         pioFile = NRM(ifile,ng)%pioFile,         &
-     &                         pioVar = NRM(ifile,ng)%pioVar(ifield)%vd)
+     &                         pioVar = NRM(ifile,ng)%pioVar(IDmeta)%vd)
 #  endif
           END SELECT
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 !
-!  3D boundary norm at RHO-points.
+!-----------------------------------------------------------------------
+!  3D boundary normalization at RHO-points.
+!-----------------------------------------------------------------------
 !
         IF (Master) THEN
           DO itrc=1,NT(ng)
-            is=isTvar(itrc)
-            IF (ANY(CnormB(is,:))) THEN
+            ifield=isTvar(itrc)
+            IF (ANY(CnormB(ifield,:))) THEN
               Lsame=.TRUE.
               EXIT
             END IF
           END DO
           IF (Lsame) THEN
             WRITE (stdout,20) TRIM(Text),                               &
-     &                        '3D normalization factors at RHO-points'
+     &            '3D normalization factors at RHO-points'
             FLUSH (stdout)
           END IF
         END IF
-
-        DO itrc=1,NT(ng)
+!
+        BRY_TRACER_LOOP : DO itrc=1,NT(ng)
           VnormRobc=Aspv
-          is=isTvar(itrc)
-          DO ibry=1,4
+          ifield=isTvar(itrc)
+          BRY_LOOP_R3D : DO ibry=1,4
             VscaleB=0.0_r8
-            IF (CnormB(is,ibry)) THEN
-              IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
-                i=BOUNDS(ng)%edge(ibry,r2dvar)
-                Bmin=2
-                Bmax=Mm(ng)
-                IF (Lconvolve(ibry)) THEN
-                  DO j=JstrT,JendT
-                    cff=on_r(i,j)
-                    DO k=1,N(ng)
-                      VscaleB(j,k)=1.0_r8/SQRT(cff*Hz(i,j,k))
+            BRY_COMPUTE_R3D : IF (CnormB(ifield,ibry)) THEN
+!
+              SELECT CASE (ibry)
+                CASE (iwest, ieast)
+                  i=BOUNDS(ng)%edge(ibry,r2dvar)
+                  Bmin=1
+                  Bmax=Mm(ng)
+                  IF (Lconvolve(ibry)) THEN
+                    DO j=JstrT,JendT
+                      cff=on_r(i,j)
+                      DO k=1,N(ng)
+                        VscaleB(j,k)=1.0_r8/SQRT(cff*Hz(i,j,k))
+                      END DO
                     END DO
-                  END DO
-                END IF
-              ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
-                j=BOUNDS(ng)%edge(ibry,r2dvar)
-                Bmin=1
-                Bmax=Lm(ng)
-                IF (Lconvolve(ibry)) THEN
-                  DO i=IstrT,IendT
-                    cff=om_r(i,j)
-                    DO k=1,N(ng)
-                      VscaleB(i,k)=1.0_r8/SQRT(cff*Hz(i,j,k))
+                  END IF
+                CASE (isouth, inorth)
+                  j=BOUNDS(ng)%edge(ibry,r2dvar)
+                  Bmin=1
+                  Bmax=Lm(ng)
+                  IF (Lconvolve(ibry)) THEN
+                    DO i=IstrT,IendT
+                      cff=om_r(i,j)
+                      DO k=1,N(ng)
+                        VscaleB(i,k)=1.0_r8/SQRT(cff*Hz(i,j,k))
+                      END DO
                     END DO
-                  END DO
-                END IF
-              END IF
+                  END IF
+              END SELECT
+!
               DO kb=1,N(ng)
                 DO ib=Bmin,Bmax
-                  IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
-                    bounded=Lconvolve(ibry).and.                        &
-     &                      ((Jstr.le.ib).and.(ib.le.Jend))
-                    j=ib
-                  ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
-                    bounded=Lconvolve(ibry).and.                        &
-     &                      ((Istr.le.ib).and.(ib.le.Iend))
-                    i=ib
-                  END IF
+                  SELECT CASE (ibry)
+                    CASE (iwest, ieast)
+                      bounded=Lconvolve(ibry).and.                      &
+     &                        ((Jstr.le.ib).and.(ib.le.Jend))
+                      j=ib
+                    CASE (isouth, inorth)
+                      bounded=Lconvolve(ibry).and.                      &
+     &                        ((Istr.le.ib).and.(ib.le.Iend))
+                      i=ib
+                  END SELECT
 #  ifdef MASKING
                   IF (bounded) THEN
                     compute=rmask(i,j)
@@ -2647,19 +2686,21 @@
                     IF (bounded) THEN
                       B3d(ib,kb)=1.0_r8
                     END IF
+!
+!  Adjoint explicit horizontal and implicit vertical convolutions.
+!
                     CALL ad_conv_r3d_bry_tile (ng, tile, iADM, ibry,    &
-     &                                         BOUNDS(ng)%edge(:,       &
-     &                                                         r2dvar), &
+     &                                      BOUNDS(ng)%edge(:,r2dvar),  &
      &                                         LBij, UBij,              &
      &                                         LBi, UBi, LBj, UBj,      &
      &                                         1, N(ng),                &
      &                                         IminS, ImaxS,            &
      &                                         JminS, JmaxS,            &
      &                                         NghostPoints,            &
-     &                                         NHstepsB(ibry,is)/ifac,  &
-     &                                         NVstepsB(ibry,is)/ifac,  &
-     &                                         DTsizeHB(ibry,is),       &
-     &                                         DTsizeVB(ibry,is),       &
+     &                                      NHstepsB(ibry,ifield)/ifac, &
+     &                                      NVstepsB(ibry,ifield)/ifac, &
+     &                                         DTsizeHB(ibry,ifield),   &
+     &                                         DTsizeVB(ibry,ifield),   &
      &                                         Kh, Kv,                  &
      &                                         pm, pn, pmon_u, pnom_v,  &
 #  ifdef MASKING
@@ -2670,45 +2711,47 @@
 !
 !  VscaleB must be applied twice.
 !
-                    IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
-                      DO k=1,N(ng)
-                        DO j=JstrT,JendT
-                          B3d(j,k)=B3d(j,k)*VscaleB(j,k)
+                    SELECT CASE (ibry)
+                      CASE (iwest, ieast)
+                        DO k=1,N(ng)
+                          DO j=JstrT,JendT
+                            B3d(j,k)=B3d(j,k)*VscaleB(j,k)
+                          END DO
                         END DO
-                      END DO
-                    ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
-                      DO k=1,N(ng)
-                        DO i=IstrT,IendT
-                          B3d(i,k)=B3d(i,k)*VscaleB(i,k)
+!
+                        DO k=1,N(ng)
+                          DO j=JstrT,JendT
+                            B3d(j,k)=B3d(j,k)*VscaleB(j,k)
+                          END DO
                         END DO
-                      END DO
-                    END IF
-                    IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
-                      DO k=1,N(ng)
-                        DO j=JstrT,JendT
-                          B3d(j,k)=B3d(j,k)*VscaleB(j,k)
+                      CASE (isouth, inorth)
+                        DO k=1,N(ng)
+                          DO i=IstrT,IendT
+                            B3d(i,k)=B3d(i,k)*VscaleB(i,k)
+                          END DO
                         END DO
-                      END DO
-                    ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
-                      DO k=1,N(ng)
-                        DO i=IstrT,IendT
-                          B3d(i,k)=B3d(i,k)*VscaleB(i,k)
+!
+                        DO k=1,N(ng)
+                          DO i=IstrT,IendT
+                            B3d(i,k)=B3d(i,k)*VscaleB(i,k)
+                          END DO
                         END DO
-                      END DO
-                    END IF
+                    END SELECT
+!
+!  Tangent linear explicit horizontal and implicit vertical convolutions.
+!
                     CALL tl_conv_r3d_bry_tile (ng, tile, iTLM, ibry,    &
-     &                                         BOUNDS(ng)%edge(:,       &
-     &                                                         r2dvar), &
+     &                                      BOUNDS(ng)%edge(:,r2dvar),  &
      &                                         LBij, UBij,              &
      &                                         LBi, UBi, LBj, UBj,      &
      &                                         1, N(ng),                &
      &                                         IminS, ImaxS,            &
      &                                         JminS, JmaxS,            &
      &                                         NghostPoints,            &
-     &                                         NHstepsB(ibry,is)/ifac,  &
-     &                                         NVstepsB(ibry,is)/ifac,  &
-     &                                         DTsizeHB(ibry,is),       &
-     &                                         DTsizeVB(ibry,is),       &
+     &                                      NHstepsB(ibry,ifield)/ifac, &
+     &                                      NVstepsB(ibry,ifield)/ifac, &
+     &                                         DTsizeHB(ibry,ifield),   &
+     &                                         DTsizeVB(ibry,ifield),   &
      &                                         Kh, Kv,                  &
      &                                         pm, pn, pmon_u, pnom_v,  &
 #  ifdef MASKING
@@ -2716,6 +2759,9 @@
 #  endif
      &                                         Hz, z_r,                 &
      &                                         B3d)
+!
+!  Set normalization factors.
+!
                     IF (bounded) THEN
                       cff=1.0_r8/SQRT(B3d(ib,kb))
                     END IF
@@ -2727,10 +2773,14 @@
                   END IF
                 END DO
               END DO
+!
+!  Exchange boundary data.
+!
               CALL bc_r3d_bry_tile (ng, tile, ibry,                     &
      &                              LBij, UBij, 1, N(ng),               &
      &                              VnormRobc(:,:,ibry,itrc))
 #  ifdef DISTRIBUTE
+!
               Bwrk=RESHAPE(VnormRobc(:,:,ibry,itrc), (/IJKlen/))
               CALL mp_collect (ng, iTLM, IJKlen, Aspv, Bwrk)
               ic=0
@@ -2741,36 +2791,41 @@
                 END DO
               END DO
 #  endif
-            END IF
-          END DO
+            END IF BRY_COMPUTE_R3D
+          END DO BRY_LOOP_R3D
+!
+!  Write out into output NetCDF file.
+!
           IF (ANY(CnormB(is,:))) THEN
-            ifield=idSbry(isTvar(itrc))
-
+            IDmeta=idSbry(isTvar(itrc))
+!
             SELECT CASE (NRM(ifile,ng)%IOtype)
               CASE (io_nf90)
                 CALL netcdf_put_fvar (ng, iTLM, ncname,                 &
-     &                                Vname(1,ifield),                  &
+     &                                Vname(1,IDmeta),                  &
      &                                VnormRobc(LBij:,:,:,itrc),        &
      &                         start =(/1,1,1,NRM(ifile,ng)%Rindex/),   &
      &                         total = (/IJlen,N(ng),4,1/),             &
      &                         ncid = NRM(ifile,ng)%ncid,               &
-     &                         varid = NRM(ifile,ng)%Vid(ifield))
+     &                         varid = NRM(ifile,ng)%Vid(IDmeta))
 
 #  if defined PIO_LIB && defined DISTRIBUTE
               CASE (io_pio)
                 CALL pio_netcdf_put_fvar (ng, iTLM, ncname,             &
-     &                                    Vname(1,ifield),              &
+     &                                    Vname(1,IDmeta),              &
      &                                    VnormRobc(LBij:,:,:,itrc),    &
      &                         start =(/1,1,1,NRM(ifile,ng)%Rindex/),   &
      &                         total = (/IJlen,N(ng),4,1/),             &
      &                         pioFile = NRM(ifile,ng)%pioFile,         &
-     &                         pioVar = NRM(ifile,ng)%pioVar(ifield)%vd)
+     &                         pioVar = NRM(ifile,ng)%pioVar(IDmeta)%vd)
 #  endif
             END SELECT
             IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
           END IF
-        END DO
-# endif
+
+        END DO BRY_TRACER_LOOP
+
+# endif /* SOLVE3D */
 !
 !  Synchronize open boundaries normalization NetCDF file to disk to
 !  allow other processes to access data immediately after it is
@@ -2787,18 +2842,19 @@
 # endif
         END SELECT
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-      END IF
-#endif
+      END IF BRY_LWRITE_NRM
+
+#endif /* ADJUST_BOUNDARY */
 
 #if defined ADJUST_WSTRESS || defined ADJUST_STFLUX
 !
-!-----------------------------------------------------------------------
+!:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 !  Compute surface forcing error covariance, B, normalization factors
 !  using the exact method.
-!-----------------------------------------------------------------------
+!:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 !
       ifile=4
-      IF (LwrtNRM(ifile,ng)) THEN
+      FRC_LWRITE_NRM : IF (LwrtNRM(ifile,ng)) THEN
         rec=1
         Text='surface forcing'
 !
@@ -2835,9 +2891,11 @@
 
 # ifdef ADJUST_WSTRESS
 !
-!  2D norm at U-stress points.
+!-----------------------------------------------------------------------
+!  2D normalization at U-stress points.
+!-----------------------------------------------------------------------
 !
-        IF (Cnorm(rec,isUstr)) THEN
+        COMPUTE_SUS : IF (Cnorm(rec,isUstr)) THEN
           IF (EWperiodic(ng)) THEN
             Imin=1
             Imax=Lm(ng)
@@ -2849,16 +2907,19 @@
             Jmin=1
             Jmax=Mm(ng)
           END IF
+!
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Text),                               &
-     &                     '2D normalization factors at U-stress points'
+     &            '2D normalization factors at U-stress points'
             FLUSH (stdout)
           END IF
+!
           DO j=JstrT,JendT
             DO i=IstrP,IendT
               Hscale(i,j)=1.0_r8/SQRT(om_u(i,j)*on_u(i,j))
             END DO
           END DO
+!
           DO jc=Jmin,Jmax
             DO ic=Imin,Imax
 #  ifdef MASKING
@@ -2883,6 +2944,9 @@
      &              ((Istr.le.ic).and.(ic.le.Iend))) THEN
                   A2d(ic,jc)=1.0_r8
                 END IF
+!
+!  Adjoint explicit horizontal convolution.
+!
                 CALL ad_conv_u2d_tile (ng, tile, iADM,                  &
      &                                 LBi, UBi, LBj, UBj,              &
      &                                 IminS, ImaxS, JminS, JmaxS,      &
@@ -2895,47 +2959,19 @@
      &                                 umask, pmask,                    &
 #  endif
      &                                 A2d)
+!
                 DO j=JstrT,JendT
                   DO i=IstrP,IendT
                     A2d(i,j)=A2d(i,j)*Hscale(i,j)
                   END DO
                 END DO
 !
-                my_dot=0.0_r8
-                DO j=JstrT,JendT
-                  DO i=IstrP,IendT
-                    my_dot=my_dot+A2d(i,j)*A2d(i,j)
-                  END DO
-                END DO
+!  Set normalization factors.
 !
-!  Perform parallel global reduction operation: dot product.
-!
-#  ifdef DISTRIBUTE
-                NSUB=1                           ! distributed-memory
-#  else
-                IF (DOMAIN(ng)%SouthWest_Corner(tile).and.              &
-     &              DOMAIN(ng)%NorthEast_Corner(tile)) THEN
-                  NSUB=1                         ! non-tiled application
-                ELSE
-                  NSUB=NtileX(ng)*NtileE(ng)     ! tiled application
-                END IF
-#  endif
-!$OMP CRITICAL (USTR_DOT)
-                IF (tile_count.eq.0) THEN
-                  Gdotp=my_dot
-                ELSE
-                  Gdotp=Gdotp+my_dot
-                END IF
-                tile_count=tile_count+1
-                IF (tile_count.eq.NSUB) THEN
-                  tile_count=0
-#  ifdef DISTRIBUTE
-                  op_handle='SUM'
-                  CALL mp_reduce (ng, iTLM, 1, Gdotp, op_handle)
-#  endif
-                  cff=1.0_r8/SQRT(Gdotp)
-                END IF
-!$OMP END CRITICAL (USTR_DOT)
+                Gdotp=dot_prod2d (ng, tile, iADM, u2dvar,               &
+     &                            LBi, UBi, LBj, UBj,                   &
+     &                            A2d, A2d)
+                cff=1.0_r8/SQRT(Gdotp)
               ELSE
                 cff=0.0_r8
               END IF
@@ -2945,16 +2981,22 @@
               END IF
             END DO
           END DO
+!
+!  Exchange boundary data.
+!
           CALL dabc_u2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        HnormSUS)
 #  ifdef DISTRIBUTE
+!
           CALL mp_exchange2d (ng, tile, iTLM, 1,                        &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        NghostPoints,                             &
      &                        EWperiodic(ng), NSperiodic(ng),           &
      &                        HnormSUS)
 #  endif
+!
+!  Write out into output NetCDF file.
 !
           SELECT CASE (NRM(ifile,ng)%IOtype)
             CASE (io_nf90)
@@ -2989,11 +3031,13 @@
 #  endif
           END SELECT
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
+        END IF COMPUTE_SUS
 !
-!  2D norm at V-stress points.
+!-----------------------------------------------------------------------
+!  2D normalization at V-stress points.
+!-----------------------------------------------------------------------
 !
-        IF (Cnorm(rec,isVstr)) THEN
+        COMPUTE_SVS : IF (Cnorm(rec,isVstr)) THEN
           IF (NSperiodic(ng)) THEN
             Imin=1
             Imax=Lm(ng)
@@ -3005,9 +3049,10 @@
             Jmin=2
             Jmax=Mm(ng)
           END IF
+!
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Text),                               &
-     &                     '2D normalization factors at V-stress points'
+     &            '2D normalization factors at V-stress points'
             FLUSH (stdout)
           END IF
           DO j=JstrP,JendT
@@ -3015,6 +3060,7 @@
               Hscale(i,j)=1.0_r8/SQRT(om_v(i,j)*on_v(i,j))
             END DO
           END DO
+!
           DO jc=Jmin,Jmax
             DO ic=Imin,Imax
 #  ifdef MASKING
@@ -3039,6 +3085,9 @@
      &              ((Istr.le.ic).and.(ic.le.Iend))) THEN
                   A2d(ic,jc)=1.0_r8
                 END IF
+!
+!  Adjoint explicit horizontal convolution.
+!
                 CALL ad_conv_v2d_tile (ng, tile, iADM,                  &
      &                                 LBi, UBi, LBj, UBj,              &
      &                                 IminS, ImaxS, JminS, JmaxS,      &
@@ -3051,47 +3100,19 @@
      &                                 vmask, pmask,                    &
 #  endif
      &                                 A2d)
+!
                 DO j=JstrP,JendT
                   DO i=IstrT,IendT
                     A2d(i,j)=A2d(i,j)*Hscale(i,j)
                   END DO
                 END DO
 !
-                my_dot=0.0_r8
-                DO j=JstrP,JendT
-                  DO i=IstrT,IendT
-                    my_dot=my_dot+A2d(i,j)*A2d(i,j)
-                  END DO
-                END DO
+!  Set normalization factors.
 !
-!  Perform parallel global reduction operation: dot product.
-!
-#  ifdef DISTRIBUTE
-                NSUB=1                           ! distributed-memory
-#  else
-                IF (DOMAIN(ng)%SouthWest_Corner(tile).and.              &
-     &              DOMAIN(ng)%NorthEast_Corner(tile)) THEN
-                  NSUB=1                         ! non-tiled application
-                ELSE
-                  NSUB=NtileX(ng)*NtileE(ng)     ! tiled application
-                END IF
-#  endif
-!$OMP CRITICAL (VSTR_DOT)
-                IF (tile_count.eq.0) THEN
-                  Gdotp=my_dot
-                ELSE
-                  Gdotp=Gdotp+my_dot
-                END IF
-                tile_count=tile_count+1
-                IF (tile_count.eq.NSUB) THEN
-                  tile_count=0
-#  ifdef DISTRIBUTE
-                  op_handle='SUM'
-                  CALL mp_reduce (ng, iTLM, 1, Gdotp, op_handle)
-#  endif
-                  cff=1.0_r8/SQRT(Gdotp)
-                END IF
-!$OMP END CRITICAL (VSTR_DOT)
+                Gdotp=dot_prod2d (ng, tile, iADM, v2dvar,               &
+     &                            LBi, UBi, LBj, UBj,                   &
+     &                            A2d, A2d)
+                cff=1.0_r8/SQRT(Gdotp)
               ELSE
                 cff=0.0_r8
               END IF
@@ -3101,16 +3122,22 @@
               END IF
             END DO
           END DO
+!
+!  Exchange boundary data.
+!
           CALL dabc_v2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        HnormSVS)
 #  ifdef DISTRIBUTE
+!
           CALL mp_exchange2d (ng, tile, iTLM, 1,                        &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        NghostPoints,                             &
      &                        EWperiodic(ng), NSperiodic(ng),           &
      &                        HnormSVS)
 #  endif
+!
+!  Write out into output NetCDF file.
 !
           SELECT CASE (NRM(ifile,ng)%IOtype)
             CASE (io_nf90)
@@ -3145,11 +3172,14 @@
 #  endif
           END SELECT
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-# endif
+        END IF COMPUTE_SVS
+# endif /* ADJUST_WSTRESS */
+
 # if defined ADJUST_STFLUX && defined SOLVE3D
 !
-!  2D norm at surface tracer fluxes points.
+!-----------------------------------------------------------------------
+!  2D normalization at surface tracer fluxes points.
+!-----------------------------------------------------------------------
 !
         IF (Master) THEN
           Lsame=.FALSE.
@@ -3161,7 +3191,7 @@
           END DO
           IF (Lsame) THEN
             WRITE (stdout,20) TRIM(Text),                               &
-                              '2D normalization factors at RHO-points'
+                  '2D normalization factors at RHO-points'
             FLUSH (stdout)
           END IF
         END IF
@@ -3195,10 +3225,11 @@
             Hscale(i,j)=1.0_r8/SQRT(om_r(i,j)*on_r(i,j))
           END DO
         END DO
-        DO itrc=1,UBt
+!
+        TRACER_FLUX_LOOP : DO itrc=1,UBt
           IF (Lstflux(itrc,ng)) THEN
-            is=isTsur(itrc)
-            IF (Cnorm(rec,is)) THEN
+            ifield=isTsur(itrc)
+            COMPUTE_STF : IF (Cnorm(rec,ifield)) THEN
               DO jc=Jmin,Jmax
                 DO ic=Imin,Imax
 #  ifdef MASKING
@@ -3223,6 +3254,9 @@
      &                  ((Istr.le.ic).and.(ic.le.Iend))) THEN
                       A2d(ic,jc)=1.0_r8
                     END IF
+!
+!  Adjoint explicit horizontal convolution.
+!
                     CALL ad_conv_r2d_tile (ng, tile, iADM,              &
      &                                     LBi, UBi, LBj, UBj,          &
      &                                     IminS, ImaxS, JminS, JmaxS,  &
@@ -3235,49 +3269,23 @@
      &                                     rmask, umask, vmask,         &
 #  endif
      &                                     A2d)
+!
                     DO j=JstrT,JendT
                       DO i=IstrT,IendT
                         A2d(i,j)=A2d(i,j)*Hscale(i,j)
                       END DO
                     END DO
-                    my_dot=0.0_r8
-                    DO j=JstrT,JendT
-                      DO i=IstrT,IendT
-                        my_dot=my_dot+A2d(i,j)*A2d(i,j)
-                      END DO
-                    END DO
 !
-!  Perform parallel global reduction operation: dot product.
+!  Set normalization factors.
 !
-#  ifdef DISTRIBUTE
-                    NSUB=1                       ! distributed-memory
-#  else
-                    IF (DOMAIN(ng)%SouthWest_Corner(tile).and.          &
-     &                  DOMAIN(ng)%NorthEast_Corner(tile)) THEN
-                      NSUB=1                     ! non-tiled application
-                    ELSE
-                      NSUB=NtileX(ng)*NtileE(ng)     ! tiled application
-                    END IF
-#  endif
-!$OMP CRITICAL (STFLX_DOT)
-                    IF (tile_count.eq.0) THEN
-                      Gdotp=my_dot
-                    ELSE
-                      Gdotp=Gdotp+my_dot
-                    END IF
-                    tile_count=tile_count+1
-                    IF (tile_count.eq.NSUB) THEN
-                      tile_count=0
-#  ifdef DISTRIBUTE
-                      op_handle='SUM'
-                      CALL mp_reduce (ng, iTLM, 1, Gdotp, op_handle)
-#  endif
-                      cff=1.0_r8/SQRT(Gdotp)
-                    END IF
-!$OMP END CRITICAL (STFLX_DOT)
+                    Gdotp=dot_prod2d (ng, tile, iADM, r2dvar,           &
+     &                                LBi, UBi, LBj, UBj,               &
+     &                                A2d, A2d)
+                    cff=1.0_r8/SQRT(Gdotp)
                   ELSE
                     cff=0.0_r8
                   END IF
+!
                   IF (((Jstr.le.jc).and.(jc.le.Jend)).and.              &
      &                ((Istr.le.ic).and.(ic.le.Iend))) THEN
                     IF (Lsame) THEN
@@ -3292,23 +3300,29 @@
                   END IF
                 END DO
               END DO
-            END IF
+            END IF COMPUTE_STF
           END IF
-        END DO
+        END DO TRACER_FLUX_LOOP
+!
+!  Exchange boundary data.
+!
         DO itrc=1,NT(ng)
           IF (Lstflux(itrc,ng)) THEN
-            is=isTsur(itrc)
-            IF (Cnorm(rec,is)) THEN
+            ifield=isTsur(itrc)
+            IF (Cnorm(rec,ifield)) THEN
               CALL dabc_r2d_tile (ng, tile,                             &
      &                            LBi, UBi, LBj, UBj,                   &
      &                            HnormSTF(:,:,itrc))
 #  ifdef DISTRIBUTE
+!
               CALL mp_exchange2d (ng, tile, iTLM, 1,                    &
      &                            LBi, UBi, LBj, UBj,                   &
      &                            NghostPoints,                         &
      &                            EWperiodic(ng), NSperiodic(ng),       &
      &                            HnormSTF(:,:,itrc))
 #  endif
+!
+!  Write out into output NetCDF file.
 !
               SELECT CASE (NRM(ifile,ng)%IOtype)
                 CASE (io_nf90)
@@ -3349,14 +3363,14 @@
             END IF
           END IF
         END DO
-# endif
-      END IF
+# endif /* ADJUST_STFLUX */
+      END IF FRC_LWRITE_NRM
 #endif
 !
       IF (Master) THEN
         WRITE (stdout,30)
       END IF
-
+!
  10   FORMAT (/,' Error Covariance Normalization Factors: ',            &
      &        'Exact Method',/)
  20   FORMAT (4x,'Computing',1x,a,1x,a)
@@ -3368,7 +3382,8 @@
 !
 !***********************************************************************
       SUBROUTINE randomization_tile (ng, tile,                          &
-     &                               LBi, UBi, LBj, UBj, LBij, UBij,    &
+     &                               LBi, UBi, LBj, UBj,                &
+     &                               LBij, UBij,                        &
      &                               IminS, ImaxS, JminS, JmaxS,        &
      &                               nstp, nnew, ifac,                  &
      &                               pm, om_p, om_r, om_u, om_v,        &
@@ -3558,17 +3573,18 @@
 #endif
 !
       integer :: i, ifile, is, iter, j, rec
+      integer :: ifield, nfield
 #ifdef SOLVE3D
       integer :: UBt, itrc, k
 #endif
 #ifdef ADJUST_BOUNDARY
-      integer :: IJlen, IJKlen, ib, ibry, ic, ifield
+      integer :: IDmeta, IJlen, IJKlen, ib, ibry, ic
 #endif
       integer :: start(4), total(4)
 !
       real(dp) :: my_time
       real(r8) :: Aavg, Amax, Amin, Asqr, FacAvg, FacSqr
-      real(r8) :: cff, val
+      real(r8) :: cff
 
 #ifdef ADJUST_BOUNDARY
       real(r8) :: Bavg, Bmin, Bmax, Bsqr
@@ -3627,7 +3643,7 @@
 !
       DO i=LBi,UBi
         DO j=LBj,UBj
-          A2d(i,j)=0.0_r8
+          A2d(i,j)=0.0_r8                   ! free surface
         END DO
       END DO
 
@@ -3646,26 +3662,29 @@
      &                     Hz, z_r, z_w)
 #endif
 !
-!-----------------------------------------------------------------------
-!  Compute initial conditions and model erro covariance, B,
-!  normalization factors using the randomization approach of Fisher
-!  and Courtier (1995). These factors ensure that the diagonal
-!  elements of B are equal to unity. Notice that in applications
-!  with land/sea masking, the boundary conditions will produce
-!  large changes in the covariance structures near the boundary.
+!:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+!  The prior (initial conditions) and model normalization factors are
+!  computed for modeling the spreading of the multiscale background-
+!  error covariance matrix (B) using the computationally efficient
+!  RANDOMIZATION approach described by Fisher and Courtier (1995).
 !
-!  Initialize factors with randon numbers ("white-noise") having an
-!  uniform distribution (zero mean and unity variance). Then, scale
-!  by the inverse squared root area (2D) or volume (3D) and "color"
-!  with the diffusion operator. Iterate this step over a specified
-!  number of ensamble members, Nrandom.
-!-----------------------------------------------------------------------
+!  These factors ensure that the diagonal elements of B are unity. In
+!  applications with land/sea masking, boundary conditions can
+!  substantially modify covariance structures near boundaries.
+!
+!  The factors are initialized with random numbers ("white noise")
+!  sampled from a uniform distribution with zero mean and unit variance.
+!  These values are scaled by the inverse square root of the area (2D)
+!  or volume (3D), then convolved using implicit horizontal and vertical
+!  diffusion operators. This process is repeated for a specified number
+!  of ensemble members, denoted as Nrandom.
+!:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 !
       IF (Master) WRITE (stdout,10)
 
       FILE_LOOP : DO ifile=1,NSA
 
-        IF (LwrtNRM(ifile,ng)) THEN
+        LWRITE_NRM : IF (LwrtNRM(ifile,ng)) THEN
           IF (ifile.eq.1) THEN
             Text='initial conditions'
           ELSE IF (ifile.eq.2) THEN
@@ -3705,14 +3724,17 @@
           END SELECT
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
-!  2D norm at RHO-points.
+!-----------------------------------------------------------------------
+!  2D normalization at RHO-points.
+!-----------------------------------------------------------------------
 !
-          IF (Cnorm(ifile,isFsur)) THEN
+          COMPUTE_R2D : IF (Cnorm(ifile,isFsur)) THEN
             IF (Master) THEN
               WRITE (stdout,20) TRIM(Text),                             &
-     &                          '2D normalization factors at RHO-points'
+     &              '2D normalization factors at RHO-points'
               FLUSH (stdout)
             END IF
+!
             DO j=JstrT,JendT
               DO i=IstrT,IendT
                 A2davg(i,j)=0.0_r8
@@ -3720,16 +3742,21 @@
                 Hscale(i,j)=1.0_r8/SQRT(om_r(i,j)*on_r(i,j))
               END DO
             END DO
-            DO iter=1,Nrandom
+!
+            RANDOM_R2D : DO iter=1,Nrandom
               CALL white_noise2d (ng, iTLM, r2dvar, Rscheme(ng),        &
      &                            IstrR, IendR, JstrR, JendR,           &
      &                            LBi, UBi, LBj, UBj,                   &
      &                            Amin, Amax, A2d)
+!
               DO j=JstrT,JendT
                 DO i=IstrT,IendT
                   A2d(i,j)=A2d(i,j)*Hscale(i,j)
                 END DO
               END DO
+!
+!  Tangent linear explicit horizontal convolution.
+!
               CALL tl_conv_r2d_tile (ng, tile, iTLM,                    &
      &                               LBi, UBi, LBj, UBj,                &
      &                               IminS, ImaxS, JminS, JmaxS,        &
@@ -3742,13 +3769,17 @@
      &                               rmask, umask, vmask,               &
 #endif
      &                               A2d)
+!
               DO j=Jstr,Jend
                 DO i=Istr,Iend
                   A2davg(i,j)=A2davg(i,j)+A2d(i,j)
                   A2dsqr(i,j)=A2dsqr(i,j)+A2d(i,j)*A2d(i,j)
                 END DO
               END DO
-            END DO
+            END DO RANDOM_R2D
+!
+!  Set normalization factors.
+!
             DO j=Jstr,Jend
               DO i=Istr,Iend
                 Aavg=FacAvg*A2davg(i,j)
@@ -3764,16 +3795,22 @@
 #endif
               END DO
             END DO
+!
+!  Exchange boundary data.
+!
             CALL dabc_r2d_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          HnormR(:,:,ifile))
 #ifdef DISTRIBUTE
+!
             CALL mp_exchange2d (ng, tile, iTLM, 1,                      &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          NghostPoints,                           &
      &                          EWperiodic(ng), NSperiodic(ng),         &
      &                          HnormR(:,:,ifile))
 #endif
+!
+!  Write out into output NetCDF file.
 !
             SELECT CASE (NRM(ifile,ng)%IOtype)
               CASE (io_nf90)
@@ -3808,16 +3845,19 @@
 #endif
             END SELECT
             IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-          END IF
+          END IF COMPUTE_R2D
 !
-!  2D norm at U-points.
+!-----------------------------------------------------------------------
+!  2D normalization at U-points.
+!-----------------------------------------------------------------------
 !
-          IF (Cnorm(ifile,isUbar)) THEN
+          COMPUTE_U2D : IF (Cnorm(ifile,isUbar)) THEN
             IF (Master) THEN
               WRITE (stdout,20) TRIM(Text),                             &
-     &                          '2D normalization factors at   U-points'
+     &              '2D normalization factors at   U-points'
               FLUSH (stdout)
             END IF
+!
             DO j=JstrT,JendT
               DO i=IstrP,IendT
                 A2davg(i,j)=0.0_r8
@@ -3825,16 +3865,21 @@
                 Hscale(i,j)=1.0_r8/SQRT(om_u(i,j)*on_u(i,j))
               END DO
             END DO
-            DO iter=1,Nrandom
+!
+            RANDOM_U2D : DO iter=1,Nrandom
               CALL white_noise2d (ng, iTLM, u2dvar, Rscheme(ng),        &
      &                            Istr, IendR, JstrR, JendR,            &
      &                            LBi, UBi, LBj, UBj,                   &
      &                            Amin, Amax, A2d)
+!
               DO j=JstrT,JendT
                 DO i=IstrP,IendT
                   A2d(i,j)=A2d(i,j)*Hscale(i,j)
                 END DO
               END DO
+!
+!  Tangent linear explicit horizontal convolution.
+!
               CALL tl_conv_u2d_tile (ng, tile, iTLM,                    &
      &                               LBi, UBi, LBj, UBj,                &
      &                               IminS, ImaxS, JminS, JmaxS,        &
@@ -3847,13 +3892,17 @@
      &                               umask, pmask,                      &
 #endif
      &                               A2d)
+!
               DO j=Jstr,Jend
                 DO i=IstrU,Iend
                   A2davg(i,j)=A2davg(i,j)+A2d(i,j)
                   A2dsqr(i,j)=A2dsqr(i,j)+A2d(i,j)*A2d(i,j)
                 END DO
               END DO
-            END DO
+            END DO RANDOM_U2D
+!
+!  Set normalization factors.
+!
             DO j=Jstr,Jend
               DO i=IstrU,Iend
                 Aavg=FacAvg*A2davg(i,j)
@@ -3869,16 +3918,22 @@
 #endif
               END DO
             END DO
+!
+!  Exchange boundary data.
+!
             CALL dabc_u2d_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          HnormU(:,:,ifile))
 #ifdef DISTRIBUTE
+!
             CALL mp_exchange2d (ng, tile, iTLM, 1,                      &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          NghostPoints,                           &
      &                          EWperiodic(ng), NSperiodic(ng),         &
      &                          HnormU(:,:,ifile))
 #endif
+!
+!  Write out into output NetCDF file.
 !
             SELECT CASE (NRM(ifile,ng)%IOtype)
               CASE (io_nf90)
@@ -3913,16 +3968,19 @@
 #endif
             END SELECT
             IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-          END IF
+          END IF COMPUTE_U2D
 !
-!  2D norm at V-points.
+!-----------------------------------------------------------------------
+!  2D normalization at V-points.
+!-----------------------------------------------------------------------
 !
-          IF (Cnorm(ifile,isVbar)) THEN
+          COMPUTE_V2D : IF (Cnorm(ifile,isVbar)) THEN
             IF (Master) THEN
               WRITE (stdout,20) TRIM(Text),                             &
-     &                          '2D normalization factors at   V-points'
+     &              '2D normalization factors at   V-points'
               FLUSH (stdout)
             END IF
+!
             DO j=JstrP,JendT
               DO i=IstrT,IendT
                 A2davg(i,j)=0.0_r8
@@ -3930,16 +3988,21 @@
                 Hscale(i,j)=1.0_r8/SQRT(om_v(i,j)*on_v(i,j))
               END DO
             END DO
-            DO iter=1,Nrandom
+!
+            RANDOM_V2D : DO iter=1,Nrandom
               CALL white_noise2d (ng, iTLM, v2dvar, Rscheme(ng),        &
      &                            IstrR, IendR, Jstr, JendR,            &
      &                            LBi, UBi, LBj, UBj,                   &
      &                            Amin, Amax, A2d)
+!
               DO j=JstrP,JendT
                 DO i=IstrT,IendT
                   A2d(i,j)=A2d(i,j)*Hscale(i,j)
                 END DO
               END DO
+!
+!  Tangent linear explicit horizontal convolution.
+!
               CALL tl_conv_v2d_tile (ng, tile, iTLM,                    &
      &                               LBi, UBi, LBj, UBj,                &
      &                               IminS, ImaxS, JminS, JmaxS,        &
@@ -3952,13 +4015,17 @@
      &                               vmask, pmask,                      &
 #endif
      &                               A2d)
+!
               DO j=JstrV,Jend
                 DO i=Istr,Iend
                   A2davg(i,j)=A2davg(i,j)+A2d(i,j)
                   A2dsqr(i,j)=A2dsqr(i,j)+A2d(i,j)*A2d(i,j)
                 END DO
               END DO
-            END DO
+            END DO RANDOM_V2D
+!
+!  Set normalization factors.
+!
             DO j=JstrV,Jend
               DO i=Istr,Iend
                 Aavg=FacAvg*A2davg(i,j)
@@ -3974,16 +4041,22 @@
 #endif
               END DO
             END DO
+!
+!  Exchange boundary data.
+!
             CALL dabc_v2d_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          HnormV(:,:,ifile))
 #ifdef DISTRIBUTE
+!
             CALL mp_exchange2d (ng, tile, iTLM, 1,                      &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          NghostPoints,                           &
      &                          EWperiodic(ng), NSperiodic(ng),         &
      &                          HnormV(:,:,ifile))
 #endif
+!
+!  Write out into output NetCDF file.
 !
             SELECT CASE (NRM(ifile,ng)%IOtype)
               CASE (io_nf90)
@@ -4018,33 +4091,38 @@
 #endif
             END SELECT
             IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-          END IF
+          END IF COMPUTE_V2D
 
 #ifdef SOLVE3D
 !
-!  3D norm U-points.
+!-----------------------------------------------------------------------
+!  3D normalization U-points.
+!-----------------------------------------------------------------------
 !
-          IF (Cnorm(ifile,isUvel)) THEN
+          COMPUTE_U3D : IF (Cnorm(ifile,isUvel)) THEN
             IF (Master) THEN
               WRITE (stdout,20) TRIM(Text),                             &
-     &                          '3D normalization factors at   U-points'
+     &              '3D normalization factors at   U-points'
               FLUSH (stdout)
             END IF
+!
             DO j=JstrT,JendT
               DO i=IstrP,IendT
-                val=om_u(i,j)*on_u(i,j)*0.5_r8
+                cff=om_u(i,j)*on_u(i,j)*0.5_r8
                 DO k=1,N(ng)
                   A3davg(i,j,k)=0.0_r8
                   A3dsqr(i,j,k)=0.0_r8
-                  Vscale(i,j,k)=1.0_r8/SQRT(val*(Hz(i-1,j,k)+Hz(i,j,k)))
+                  Vscale(i,j,k)=1.0_r8/SQRT(cff*(Hz(i-1,j,k)+Hz(i,j,k)))
                 END DO
               END DO
             END DO
-            DO iter=1,Nrandom
+!
+            RANDOM_U3D : DO iter=1,Nrandom
               CALL white_noise3d (ng, iTLM, u3dvar, Rscheme(ng),        &
      &                            Istr, IendR, JstrR, JendR,            &
      &                            LBi, UBi, LBj, UBj, 1, N(ng),         &
      &                            Amin, Amax, A3d)
+!
               DO k=1,N(ng)
                 DO j=JstrT,JendT
                   DO i=IstrP,IendT
@@ -4052,6 +4130,9 @@
                   END DO
                 END DO
               END DO
+!
+!  Tangent linear explicit horizontal convolution.
+!
               CALL tl_conv_u3d_tile (ng, tile, iTLM,                    &
      &                               LBi, UBi, LBj, UBj, 1, N(ng),      &
      &                               IminS, ImaxS, JminS, JmaxS,        &
@@ -4076,6 +4157,7 @@
 # endif
      &                               Hz, z_r,                           &
      &                               A3d)
+!
               DO k=1,N(ng)
                 DO j=Jstr,Jend
                   DO i=IstrU,Iend
@@ -4084,7 +4166,10 @@
                   END DO
                 END DO
               END DO
-            END DO
+            END DO RANDOM_U3D
+!
+!  Set normalization factors.
+!
             DO k=1,N(ng)
               DO j=Jstr,Jend
                 DO i=IstrU,Iend
@@ -4102,16 +4187,22 @@
                 END DO
               END DO
             END DO
+!
+!  Exchange boundary data.
+!
             CALL dabc_u3d_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
      &                          VnormU(:,:,:,ifile))
 # ifdef DISTRIBUTE
+!
             CALL mp_exchange3d (ng, tile, iTLM, 1,                      &
      &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
      &                          NghostPoints,                           &
      &                          EWperiodic(ng), NSperiodic(ng),         &
      &                          VnormU(:,:,:,ifile))
 # endif
+!
+!  Write out into output NetCDF file.
 !
             SELECT CASE (NRM(ifile,ng)%IOtype)
               CASE (io_nf90)
@@ -4146,31 +4237,36 @@
 # endif
             END SELECT
             IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-          END IF
+          END IF COMPUTE_U3D
 !
-!  3D norm at V-points.
+!-----------------------------------------------------------------------
+!  3D normalization at V-points.
+!-----------------------------------------------------------------------
 !
-          IF (Cnorm(ifile,isVvel)) THEN
+          COMPUTE_V3D : IF (Cnorm(ifile,isVvel)) THEN
             IF (Master) THEN
               WRITE (stdout,20) TRIM(Text),                             &
-     &                          '3D normalization factors at   V-points'
+     &              '3D normalization factors at   V-points'
               FLUSH (stdout)
             END IF
+!
             DO j=JstrP,JendT
               DO i=IstrT,IendT
-                val=om_v(i,j)*on_v(i,j)*0.5_r8
+                cff=om_v(i,j)*on_v(i,j)*0.5_r8
                 DO k=1,N(ng)
                   A3davg(i,j,k)=0.0_r8
                   A3dsqr(i,j,k)=0.0_r8
-                  Vscale(i,j,k)=1.0_r8/SQRT(val*(Hz(i,j-1,k)+Hz(i,j,k)))
+                  Vscale(i,j,k)=1.0_r8/SQRT(cff*(Hz(i,j-1,k)+Hz(i,j,k)))
                 END DO
               END DO
             END DO
-            DO iter=1,Nrandom
+!
+            RANDOM_V3D : DO iter=1,Nrandom
               CALL white_noise3d (ng, iTLM, v3dvar, Rscheme(ng),        &
      &                            IstrR, IendR, Jstr, JendR,            &
      &                            LBi, UBi, LBj, UBj, 1, N(ng),         &
      &                            Amin, Amax, A3d)
+!
               DO k=1,N(ng)
                 DO j=JstrP,JendT
                   DO i=IstrT,IendT
@@ -4178,6 +4274,9 @@
                   END DO
                 END DO
               END DO
+!
+!  Tangent linear explicit horizontal convolution.
+!
               CALL tl_conv_v3d_tile (ng, tile, iTLM,                    &
      &                               LBi, UBi, LBj, UBj, 1, N(ng),      &
      &                               IminS, ImaxS, JminS, JmaxS,        &
@@ -4202,6 +4301,7 @@
 # endif
      &                               Hz, z_r,                           &
      &                               A3d)
+!
               DO k=1,N(ng)
                 DO j=JstrV,Jend
                   DO i=Istr,Iend
@@ -4210,7 +4310,10 @@
                   END DO
                 END DO
               END DO
-            END DO
+            END DO RANDOM_V3D
+!
+!  Set normalization factors.
+!
             DO k=1,N(ng)
               DO j=JstrV,Jend
                 DO i=Istr,Iend
@@ -4228,16 +4331,22 @@
                 END DO
               END DO
             END DO
+!
+!  Exchange boundary data.
+!
             CALL dabc_v3d_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
      &                          VnormV(:,:,:,ifile))
 # ifdef DISTRIBUTE
+!
             CALL mp_exchange3d (ng, tile, iTLM, 1,                      &
      &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
      &                          NghostPoints,                           &
      &                          EWperiodic(ng), NSperiodic(ng),         &
      &                          VnormV(:,:,:,ifile))
 # endif
+!
+!  Write out into output NetCDF file.
 !
             SELECT CASE (NRM(ifile,ng)%IOtype)
               CASE (io_nf90)
@@ -4272,9 +4381,11 @@
 # endif
             END SELECT
             IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-          END IF
+          END IF COMPUTE_V3D
 !
-!  3D norm at RHO-points.
+!-----------------------------------------------------------------------
+!  3D normalization at RHO-points.
+!-----------------------------------------------------------------------
 !
           IF (Master) THEN
             Lsame=.FALSE.
@@ -4284,7 +4395,7 @@
             END DO
             IF (Lsame) THEN
               WRITE (stdout,20) TRIM(Text),                             &
-     &                          '3D normalization factors at RHO-points'
+     &              '3D normalization factors at RHO-points'
               FLUSH (stdout)
             END IF
           END IF
@@ -4313,15 +4424,17 @@
 !
           DO j=JstrT,JendT
             DO i=IstrT,IendT
-              val=om_r(i,j)*on_r(i,j)
+              cff=om_r(i,j)*on_r(i,j)
               DO k=1,N(ng)
-                Vscale(i,j,k)=1.0_r8/SQRT(val*Hz(i,j,k))
+                Vscale(i,j,k)=1.0_r8/SQRT(cff*Hz(i,j,k))
               END DO
             END DO
           END DO
-          DO itrc=1,UBt
-            is=isTvar(itrc)
-            IF (Cnorm(ifile,is)) THEN
+!
+          TRACER_LOOP : DO itrc=1,UBt
+            ifield=isTvar(itrc)
+            COMPUTE_R3D : IF (Cnorm(ifile,ifield)) THEN
+!
               DO k=1,N(ng)
                 DO j=JstrT,JendT
                   DO i=IstrT,IendT
@@ -4330,11 +4443,13 @@
                   END DO
                 END DO
               END DO
-              DO iter=1,Nrandom
+!
+              RANDOM_R3D : DO iter=1,Nrandom
                 CALL white_noise3d (ng, iTLM, r3dvar, Rscheme(ng),      &
      &                              IstrR, IendR, JstrR, JendR,         &
      &                              LBi, UBi, LBj, UBj, 1, N(ng),       &
      &                              Amin, Amax, A3d)
+!
                 DO k=1,N(ng)
                   DO j=JstrT,JendT
                     DO i=IstrT,IendT
@@ -4342,6 +4457,9 @@
                     END DO
                   END DO
                 END DO
+!
+!  Tangent linear explicit horizontal convolution.
+!
                 CALL tl_conv_r3d_tile (ng, tile, iTLM,                  &
      &                                 LBi, UBi, LBj, UBj, 1, N(ng),    &
      &                                 IminS, ImaxS, JminS, JmaxS,      &
@@ -4362,6 +4480,7 @@
 # endif
      &                                 Hz, z_r,                         &
      &                                 A3d)
+!
                 DO k=1,N(ng)
                   DO j=Jstr,Jend
                     DO i=Istr,Iend
@@ -4370,7 +4489,10 @@
                     END DO
                   END DO
                 END DO
-              END DO
+              END DO RANDOM_R3D
+!
+!  Set normalization factors.
+!
               DO k=1,N(ng)
                 DO j=Jstr,Jend
                   DO i=Istr,Iend
@@ -4388,8 +4510,12 @@
                   END DO
                 END DO
               END DO
-            END IF
-          END DO
+            END IF COMPUTE_R3D
+          END DO TRACER_LOOP
+!
+!  If same correlation parameters, replicate normalization factors
+!  for the remaining tracer fields.
+!
           IF (Lsame) THEN
             DO itrc=2,NT(ng)
               DO k=1,N(ng)
@@ -4401,19 +4527,25 @@
               END DO
             END DO
           END IF
+!
+!  Exchange boundary data.
+!
           DO itrc=1,NT(ng)
-            is=isTvar(itrc)
-            IF (Cnorm(ifile,is)) THEN
+            ifield=isTvar(itrc)
+            IF (Cnorm(ifile,ifield)) THEN
               CALL dabc_r3d_tile (ng, tile,                             &
      &                            LBi, UBi, LBj, UBj, 1, N(ng),         &
      &                            VnormR(:,:,:,ifile,itrc))
 # ifdef DISTRIBUTE
+!
               CALL mp_exchange3d (ng, tile, iTLM, 1,                    &
      &                            LBi, UBi, LBj, UBj, 1, N(ng),         &
      &                            NghostPoints,                         &
      &                            EWperiodic(ng), NSperiodic(ng),       &
      &                            VnormR(:,:,:,ifile,itrc))
 # endif
+!
+!  Write out into output NetCDF file.
 !
               SELECT CASE (NRM(ifile,ng)%IOtype)
                 CASE (io_nf90)
@@ -4454,18 +4586,19 @@
             END IF
           END DO
 #endif
-        END IF
+        END IF LWRITE_NRM
       END DO FILE_LOOP
 
 #ifdef ADJUST_BOUNDARY
 !
-!-----------------------------------------------------------------------
-!  Compute open boundaries error covariance, B, normalization factors
-!  using the randomization approach of Fisher and Courtier (1995).
-!-----------------------------------------------------------------------
+!:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+!  Compute open boundaries background-error covariance, B, normalization
+!  factors using the randomization approach of Fisher and Courtier
+!  (1995).
+!:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 !
       ifile=3
-      IF (LwrtNRM(ifile,ng)) THEN
+      BRY_LWRITE_NRM : IF (LwrtNRM(ifile,ng)) THEN
         Text='boundary conditions'
         IJlen=UBij-LBij+1
 # ifdef SOLVE3D
@@ -4510,57 +4643,66 @@
         END SELECT
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
-!  2D boundary norm at RHO-points.
+!-----------------------------------------------------------------------
+!  2D boundary normalization at RHO-points.
+!-----------------------------------------------------------------------
 !
         HnormRobc=Aspv
 
         IF (Master.and.ANY(CnormB(isFsur,:))) THEN
           WRITE (stdout,20) TRIM(Text),                                 &
-     &                      '2D normalization factors at RHO-points'
+     &          '2D normalization factors at RHO-points'
           FLUSH (stdout)
         END IF
-
-        DO ibry=1,4
-          IF (CnormB(isFsur,ibry)) THEN
+!
+        BRY_LOOP_R2D : DO ibry=1,4
+          BRY_COMPUTE_R2D : IF (CnormB(isFsur,ibry)) THEN
             HscaleB=0.0_r8
             B2davg=0.0_r8
             B2dsqr=0.0_r8
             B2d=0.0_r8
-            IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
-              i=BOUNDS(ng)%edge(ibry,r2dvar)
-              IF (Lconvolve(ibry)) THEN
-                DO j=JstrT,JendT
-                  HscaleB(j)=1.0_r8/SQRT(on_r(i,j))
-                END DO
-              END IF
-            ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
-              j=BOUNDS(ng)%edge(ibry,r2dvar)
-              IF (Lconvolve(ibry)) THEN
-                DO i=IstrT,IendT
-                  HscaleB(i)=1.0_r8/SQRT(om_r(i,j))
-                END DO
-              END IF
-            END IF
-            DO iter=1,Nrandom
-              IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
-                CALL white_noise2d_bry (ng, tile, iTLM, ibry,           &
-     &                                  Rscheme(ng),                    &
-     &                                  JstrR, JendR,                   &
-     &                                  LBij, UBij,                     &
-     &                                  Bmin, Bmax, B2d)
-                DO j=JstrT,JendT
-                  B2d(j)=B2d(j)*HscaleB(j)
-                END DO
-              ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
-                CALL white_noise2d_bry (ng, tile, iTLM, ibry,           &
-     &                                  Rscheme(ng),                    &
-     &                                  IstrR, IendR,                   &
-     &                                  LBij, UBij,                     &
-     &                                  Bmin, Bmax, B2d)
-                DO i=IstrT,IendT
-                  B2d(i)=B2d(i)*HscaleB(i)
-                END DO
-              END IF
+!
+            SELECT CASE (ibry)
+              CASE (iwest, ieast)
+                i=BOUNDS(ng)%edge(ibry,r2dvar)
+                IF (Lconvolve(ibry)) THEN
+                  DO j=JstrT,JendT
+                    HscaleB(j)=1.0_r8/SQRT(on_r(i,j))
+                  END DO
+                END IF
+              CASE (isouth, inorth)
+                j=BOUNDS(ng)%edge(ibry,r2dvar)
+                IF (Lconvolve(ibry)) THEN
+                  DO i=IstrT,IendT
+                    HscaleB(i)=1.0_r8/SQRT(om_r(i,j))
+                  END DO
+                END IF
+            END SELECT
+!
+            BRY_RANDOM_R2D : DO iter=1,Nrandom
+              SELECT CASE (ibry)
+                CASE (iwest, ieast)
+                  CALL white_noise2d_bry (ng, tile, iTLM, ibry,         &
+     &                                    Rscheme(ng),                  &
+     &                                    JstrR, JendR,                 &
+     &                                    LBij, UBij,                   &
+     &                                    Bmin, Bmax, B2d)
+                  DO j=JstrT,JendT
+                    B2d(j)=B2d(j)*HscaleB(j)
+                  END DO
+                CASE (isouth, inorth)
+                  CALL white_noise2d_bry (ng, tile, iTLM, ibry,         &
+     &                                    Rscheme(ng),                  &
+     &                                    IstrR, IendR,                 &
+     &                                    LBij, UBij,                   &
+     &                                    Bmin, Bmax, B2d)
+                  DO i=IstrT,IendT
+                    B2d(i)=B2d(i)*HscaleB(i)
+                  END DO
+              END SELECT
+!
+!  Tangent linear explicit horizontal convolution.
+!
               CALL tl_conv_r2d_bry_tile (ng, tile, iTLM, ibry,          &
      &                                   BOUNDS(ng)%edge(:,r2dvar),     &
      &                                   LBij, UBij,                    &
@@ -4575,139 +4717,163 @@
      &                                   rmask, umask, vmask,           &
 # endif
      &                                   B2d)
+!
               IF (Lconvolve(ibry)) THEN
-                IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
-                  DO j=Jstr,Jend
-                    B2davg(j)=B2davg(j)+B2d(j)
-                    B2dsqr(j)=B2dsqr(j)+B2d(j)*B2d(j)
-                  END DO
-                ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
-                  DO i=Istr,Iend
-                    B2davg(i)=B2davg(i)+B2d(i)
-                    B2dsqr(i)=B2dsqr(i)+B2d(i)*B2d(i)
-                  END DO
-                END IF
+                SELECT CASE (ibry)
+                  CASE (iwest, ieast)
+                    DO j=Jstr,Jend
+                      B2davg(j)=B2davg(j)+B2d(j)
+                      B2dsqr(j)=B2dsqr(j)+B2d(j)*B2d(j)
+                    END DO
+                  CASE (isouth, inorth)
+                    DO i=Istr,Iend
+                      B2davg(i)=B2davg(i)+B2d(i)
+                      B2dsqr(i)=B2dsqr(i)+B2d(i)*B2d(i)
+                    END DO
+                END SELECT
               END IF
-            END DO
+            END DO BRY_RANDOM_R2D
+!
+!  Set normalization factors.
+!
             IF (Lconvolve(ibry)) THEN
-              IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
-                DO j=Jstr,Jend
-                  Bavg=FacAvg*B2davg(j)
-                  Bsqr=FacAvg*B2dsqr(j)
+              SELECT CASE (ibry)
+                CASE (iwest, ieast)
+                  i=BOUNDS(ng)%edge(ibry,r2dvar)
+                  DO j=Jstr,Jend
+                    Bavg=FacAvg*B2davg(j)
+                    Bsqr=FacAvg*B2dsqr(j)
 # ifdef MASKING
-                  IF (rmask(i,j).gt.0.0_r8) THEN
+                    IF (rmask(i,j).gt.0.0_r8) THEN
+                      HnormRobc(j,ibry)=1.0_r8/SQRT(Bsqr)
+                    ELSE
+                      HnormRobc(j,ibry)=0.0_r8
+                    END IF
+# else
                     HnormRobc(j,ibry)=1.0_r8/SQRT(Bsqr)
-                  ELSE
-                    HnormRobc(j,ibry)=0.0_r8
-                  END IF
-# else
-                  HnormRobc(j,ibry)=1.0_r8/SQRT(Bsqr)
 # endif
-                END DO
-              ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
-                DO i=Istr,Iend
-                  Bavg=FacAvg*B2davg(i)
-                  Bsqr=FacAvg*B2dsqr(i)
+                  END DO
+                CASE (isouth, inorth)
+                  j=BOUNDS(ng)%edge(ibry,r2dvar)
+                  DO i=Istr,Iend
+                    Bavg=FacAvg*B2davg(i)
+                    Bsqr=FacAvg*B2dsqr(i)
 # ifdef MASKING
-                  IF (rmask(i,j).gt.0.0_r8) THEN
-                    HnormRobc(i,ibry)=1.0_r8/SQRT(Bsqr)
-                  ELSE
-                    HnormRobc(i,ibry)=0.0_r8
-                  END IF
+                    IF (rmask(i,j).gt.0.0_r8) THEN
+                      HnormRobc(i,ibry)=1.0_r8/SQRT(Bsqr)
+                    ELSE
+                      HnormRobc(i,ibry)=0.0_r8
+                    END IF
 # else
-                  HnormRobc(i,ibry)=1.0_r8/SQRT(Bsqr)
+                    HnormRobc(i,ibry)=1.0_r8/SQRT(Bsqr)
 # endif
-                END DO
-              END IF
+                  END DO
+              END SELECT
             END IF
+!
+!  Exchange boundary data.
+!
             CALL bc_r2d_bry_tile (ng, tile, ibry,                       &
      &                            LBij, UBij,                           &
      &                            HnormRobc(:,ibry))
 # ifdef DISTRIBUTE
+!
             CALL mp_collect (ng, iTLM, IJlen, Aspv,                     &
      &                       HnormRobc(LBij:,ibry))
 # endif
-          END IF
-        END DO
+          END IF BRY_COMPUTE_R2D
+        END DO BRY_LOOP_R2D
+!
+!  Write out into output NetCDF file.
+!
         IF (ANY(CnormB(isFsur,:))) THEN
-          ifield=idSbry(isFsur)
-
+          IDmeta=idSbry(isFsur)
+!
           SELECT CASE (NRM(ifile,ng)%IOtype)
             CASE (io_nf90)
               CALL netcdf_put_fvar (ng, iTLM, ncname,                   &
-     &                              Vname(1,ifield),                    &
+     &                              Vname(1,IDmeta),                    &
      &                              HnormRobc(LBij:,:),                 &
      &                         start = (/1,1,NRM(ifile,ng)%Rindex/),    &
      &                         total = (/IJlen,4,1/),                   &
      &                         ncid = NRM(ifile,ng)%ncid,               &
-     &                         varid = NRM(ifile,ng)%Vid(ifield))
+     &                         varid = NRM(ifile,ng)%Vid(IDmeta))
 
 # if defined PIO_LIB && defined DISTRIBUTE
             CASE (io_pio)
               CALL pio_netcdf_put_fvar (ng, iTLM, ncname,               &
-     &                                  Vname(1,ifield),                &
+     &                                  Vname(1,IDmeta),                &
      &                                  HnormRobc(LBij:,:),             &
      &                         start = (/1,1,NRM(ifile,ng)%Rindex/),    &
      &                         total = (/IJlen,4,1/),                   &
      &                         pioFile = NRM(ifile,ng)%pioFile,         &
-     &                         pioVar = NRM(ifile,ng)%pioVar(ifield)%vd)
+     &                         pioVar = NRM(ifile,ng)%pioVar(IDmeta)%vd)
 
 # endif
           END SELECT
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 !
-!  2D boundary norm at U-points.
+!-----------------------------------------------------------------------
+!  2D boundary normalization at U-points.
+!-----------------------------------------------------------------------
 !
         HnormUobc=Aspv
 
         IF (Master.and.ANY(CnormB(isUbar,:))) THEN
           WRITE (stdout,20) TRIM(Text),                                 &
-     &                      '2D normalization factors at   U-points'
+     &          '2D normalization factors at   U-points'
           FLUSH (stdout)
         END IF
-
-        DO ibry=1,4
-          IF (CnormB(isUbar,ibry)) THEN
+!
+        BRY_LOOP_U2D : DO ibry=1,4
+          BRY_COMPUTE_U2D : IF (CnormB(isUbar,ibry)) THEN
             HscaleB=0.0_r8
             B2davg=0.0_r8
             B2dsqr=0.0_r8
             B2d=0.0_r8
-            IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
-              i=BOUNDS(ng)%edge(ibry,u2dvar)
-              IF (Lconvolve(ibry)) THEN
-                DO j=JstrT,JendT
-                  HscaleB(j)=1.0_r8/SQRT(on_u(i,j))
-                END DO
-              END IF
-            ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
-              j=BOUNDS(ng)%edge(ibry,u2dvar)
-              IF (Lconvolve(ibry)) THEN
-                DO i=IstrP,IendT
-                  HscaleB(i)=1.0_r8/SQRT(om_u(i,j))
-                END DO
-              END IF
-            END IF
-            DO iter=1,Nrandom
-              IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
-                CALL white_noise2d_bry (ng, tile, iTLM, ibry,           &
-     &                                  Rscheme(ng),                    &
-     &                                  JstrR, JendR,                   &
-     &                                  LBij, UBij,                     &
-     &                                  Bmin, Bmax, B2d)
-                DO j=JstrT,JendT
-                  B2d(j)=B2d(j)*HscaleB(j)
-                END DO
-              ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
-                CALL white_noise2d_bry (ng, tile, iTLM, ibry,           &
-     &                                  Rscheme(ng),                    &
-     &                                  Istr, IendR,                    &
-     &                                  LBij, UBij,                     &
-     &                                  Bmin, Bmax, B2d)
-                DO i=IstrP,IendT
-                  B2d(i)=B2d(i)*HscaleB(i)
-                END DO
-              END IF
+!
+            SELECT CASE (ibry)
+              CASE (iwest, ieast)
+                i=BOUNDS(ng)%edge(ibry,u2dvar)
+                IF (Lconvolve(ibry)) THEN
+                  DO j=JstrT,JendT
+                    HscaleB(j)=1.0_r8/SQRT(on_u(i,j))
+                  END DO
+                END IF
+              CASE (isouth, inorth)
+                j=BOUNDS(ng)%edge(ibry,u2dvar)
+                IF (Lconvolve(ibry)) THEN
+                  DO i=IstrP,IendT
+                    HscaleB(i)=1.0_r8/SQRT(om_u(i,j))
+                  END DO
+                END IF
+            END SELECT
+!
+            BRY_RANDOM_U2D : DO iter=1,Nrandom
+              SELECT CASE (ibry)
+                CASE (iwest, ieast)
+                  CALL white_noise2d_bry (ng, tile, iTLM, ibry,         &
+     &                                    Rscheme(ng),                  &
+     &                                    JstrR, JendR,                 &
+     &                                    LBij, UBij,                   &
+     &                                    Bmin, Bmax, B2d)
+                  DO j=JstrT,JendT
+                    B2d(j)=B2d(j)*HscaleB(j)
+                  END DO
+                CASE (isouth, inorth)
+                  CALL white_noise2d_bry (ng, tile, iTLM, ibry,         &
+     &                                    Rscheme(ng),                  &
+     &                                    Istr, IendR,                  &
+     &                                    LBij, UBij,                   &
+     &                                    Bmin, Bmax, B2d)
+                  DO i=IstrP,IendT
+                    B2d(i)=B2d(i)*HscaleB(i)
+                  END DO
+              END SELECT
+!
+!  Tangent linear explicit horizontal convolution.
+!
               CALL tl_conv_u2d_bry_tile (ng, tile, iTLM, ibry,          &
      &                                   BOUNDS(ng)%edge(:,u2dvar),     &
      &                                   LBij, UBij,                    &
@@ -4722,138 +4888,162 @@
      &                                   umask, pmask,                  &
 # endif
      &                                   B2d)
+!
               IF (Lconvolve(ibry)) THEN
-                IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
-                  DO j=Jstr,Jend
-                    B2davg(j)=B2davg(j)+B2d(j)
-                    B2dsqr(j)=B2dsqr(j)+B2d(j)*B2d(j)
-                  END DO
-                ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
-                  DO i=IstrU,Iend
-                    B2davg(i)=B2davg(i)+B2d(i)
-                    B2dsqr(i)=B2dsqr(i)+B2d(i)*B2d(i)
-                  END DO
-                END IF
+                SELECT CASE (ibry)
+                  CASE (iwest, ieast)
+                    DO j=Jstr,Jend
+                      B2davg(j)=B2davg(j)+B2d(j)
+                      B2dsqr(j)=B2dsqr(j)+B2d(j)*B2d(j)
+                    END DO
+                  CASE (isouth, inorth)
+                    DO i=IstrU,Iend
+                      B2davg(i)=B2davg(i)+B2d(i)
+                      B2dsqr(i)=B2dsqr(i)+B2d(i)*B2d(i)
+                    END DO
+                END SELECT
               END IF
-            END DO
+            END DO BRY_RANDOM_U2D
+!
+!  Set normalization factors.
+!
             IF (Lconvolve(ibry)) THEN
-              IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
-                DO j=Jstr,Jend
-                  Bavg=FacAvg*B2davg(j)
-                  Bsqr=FacAvg*B2dsqr(j)
+              SELECT CASE (ibry)
+                CASE (iwest, ieast)
+                  i=BOUNDS(ng)%edge(ibry,u2dvar)
+                  DO j=Jstr,Jend
+                    Bavg=FacAvg*B2davg(j)
+                    Bsqr=FacAvg*B2dsqr(j)
 # ifdef MASKING
-                  IF (umask(i,j).gt.0.0_r8) THEN
+                    IF (umask(i,j).gt.0.0_r8) THEN
+                      HnormUobc(j,ibry)=1.0_r8/SQRT(Bsqr)
+                    ELSE
+                      HnormUobc(j,ibry)=0.0_r8
+                    END IF
+# else
                     HnormUobc(j,ibry)=1.0_r8/SQRT(Bsqr)
-                  ELSE
-                    HnormUobc(j,ibry)=0.0_r8
-                  END IF
-# else
-                  HnormUobc(j,ibry)=1.0_r8/SQRT(Bsqr)
 # endif
-                END DO
-              ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
-                DO i=IstrU,Iend
-                  Bavg=FacAvg*B2davg(i)
-                  Bsqr=FacAvg*B2dsqr(i)
+                  END DO
+                CASE (isouth, inorth)
+                  j=BOUNDS(ng)%edge(ibry,u2dvar)
+                  DO i=IstrU,Iend
+                    Bavg=FacAvg*B2davg(i)
+                    Bsqr=FacAvg*B2dsqr(i)
 # ifdef MASKING
-                  IF (umask(i,j).gt.0.0_r8) THEN
-                    HnormUobc(i,ibry)=1.0_r8/SQRT(Bsqr)
-                  ELSE
-                    HnormUobc(i,ibry)=0.0_r8
-                  END IF
+                    IF (umask(i,j).gt.0.0_r8) THEN
+                      HnormUobc(i,ibry)=1.0_r8/SQRT(Bsqr)
+                    ELSE
+                      HnormUobc(i,ibry)=0.0_r8
+                    END IF
 # else
-                  HnormUobc(i,ibry)=1.0_r8/SQRT(Bsqr)
+                    HnormUobc(i,ibry)=1.0_r8/SQRT(Bsqr)
 # endif
-                END DO
-              END IF
+                  END DO
+              END SELECT
             END IF
+!
+!  Exchange boundary data.
+!
             CALL bc_u2d_bry_tile (ng, tile, ibry,                       &
      &                            LBij, UBij,                           &
      &                            HnormUobc(:,ibry))
 # ifdef DISTRIBUTE
+!
             CALL mp_collect (ng, iTLM, IJlen, Aspv,                     &
      &                       HnormUobc(LBij:,ibry))
 # endif
-          END IF
-        END DO
+          END IF BRY_COMPUTE_U2D
+        END DO BRY_LOOP_U2D
+!
+!  Write out into output NetCDF file.
+!
         IF (ANY(CnormB(isUbar,:))) THEN
-          ifield=idSbry(isUbar)
-
+          IDmeta=idSbry(isUbar)
+!
           SELECT CASE (NRM(ifile,ng)%IOtype)
             CASE (io_nf90)
               CALL netcdf_put_fvar (ng, iTLM, ncname,                   &
-     &                              Vname(1,ifield),                    &
+     &                              Vname(1,IDmeta),                    &
      &                              HnormUobc(LBij:,:),                 &
      &                         start = (/1,1,NRM(ifile,ng)%Rindex/),    &
      &                         total = (/IJlen,4,1/),                   &
      &                         ncid = NRM(ifile,ng)%ncid,               &
-     &                         varid = NRM(ifile,ng)%Vid(ifield))
+     &                         varid = NRM(ifile,ng)%Vid(IDmeta))
 
 # if defined PIO_LIB && defined DISTRIBUTE
             CASE (io_pio)
               CALL pio_netcdf_put_fvar (ng, iTLM, ncname,               &
-     &                                  Vname(1,ifield),                &
+     &                                  Vname(1,IDmeta),                &
      &                                  HnormUobc(LBij:,:),             &
      &                         start = (/1,1,NRM(ifile,ng)%Rindex/),    &
      &                         total = (/IJlen,4,1/),                   &
      &                         pioFile = NRM(ifile,ng)%pioFile,         &
-     &                         pioVar = NRM(ifile,ng)%pioVar(ifield)%vd)
+     &                         pioVar = NRM(ifile,ng)%pioVar(IDmeta)%vd)
 # endif
           END SELECT
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 !
-!  2D boundary norm at V-points.
+!-----------------------------------------------------------------------
+!  2D boundary normalization at V-points.
+!-----------------------------------------------------------------------
 !
         HnormVobc=Aspv
 
         IF (Master.and.ANY(CnormB(isVbar,:))) THEN
           WRITE (stdout,20) TRIM(Text),                                 &
-     &                      '2D normalization factors at   V-points'
+     &          '2D normalization factors at   V-points'
           FLUSH (stdout)
         END IF
-
-        DO ibry=1,4
-          IF (CnormB(isVbar,ibry)) THEN
+!
+        BRY_LOOP_V2D : DO ibry=1,4
+          BRY_COMPUTE_V2D : IF (CnormB(isVbar,ibry)) THEN
             HscaleB=0.0_r8
             B2davg=0.0_r8
             B2dsqr=0.0_r8
             B2d=0.0_r8
-            IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
-              i=BOUNDS(ng)%edge(ibry,v2dvar)
-              IF (Lconvolve(ibry)) THEN
-                DO j=JstrP,JendT
-                  HscaleB(j)=1.0_r8/SQRT(on_v(i,j))
-                END DO
-              END IF
-            ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
-              j=BOUNDS(ng)%edge(ibry,v2dvar)
-              IF (Lconvolve(ibry)) THEN
-                DO i=IstrT,IendT
-                  HscaleB(i)=1.0_r8/SQRT(om_v(i,j))
-                END DO
-              END IF
-            END IF
-            DO iter=1,Nrandom
-              IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
-                CALL white_noise2d_bry (ng, tile, iTLM, ibry,           &
-     &                                  Rscheme(ng),                    &
-     &                                  Jstr, JendR,                    &
-     &                                  LBij, UBij,                     &
-     &                                  Bmin, Bmax, B2d)
-                DO j=JstrP,JendT
-                  B2d(j)=B2d(j)*HscaleB(j)
-                END DO
-              ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
-                CALL white_noise2d_bry (ng, tile, iTLM, ibry,           &
-     &                                  Rscheme(ng),                    &
-     &                                  IstrR, IendR,                   &
-     &                                  LBij, UBij,                     &
-     &                                  Bmin, Bmax, B2d)
-                DO i=IstrT,IendT
-                  B2d(i)=B2d(i)*HscaleB(i)
-                END DO
-              END IF
+!
+            SELECT CASE (ibry)
+              CASE (iwest, ieast)
+                i=BOUNDS(ng)%edge(ibry,v2dvar)
+                IF (Lconvolve(ibry)) THEN
+                  DO j=JstrP,JendT
+                    HscaleB(j)=1.0_r8/SQRT(on_v(i,j))
+                  END DO
+                END IF
+              CASE (isouth, inorth)
+                j=BOUNDS(ng)%edge(ibry,v2dvar)
+                IF (Lconvolve(ibry)) THEN
+                  DO i=IstrT,IendT
+                    HscaleB(i)=1.0_r8/SQRT(om_v(i,j))
+                  END DO
+                END IF
+            END SELECT
+!
+            BRY_RANDOM_V2D : DO iter=1,Nrandom
+              SELECT CASE (ibry)
+                CASE (iwest, ieast)
+                  CALL white_noise2d_bry (ng, tile, iTLM, ibry,         &
+     &                                    Rscheme(ng),                  &
+     &                                    Jstr, JendR,                  &
+     &                                    LBij, UBij,                   &
+     &                                    Bmin, Bmax, B2d)
+                  DO j=JstrP,JendT
+                    B2d(j)=B2d(j)*HscaleB(j)
+                  END DO
+                CASE (isouth, inorth)
+                  CALL white_noise2d_bry (ng, tile, iTLM, ibry,         &
+     &                                    Rscheme(ng),                  &
+     &                                    IstrR, IendR,                 &
+     &                                    LBij, UBij,                   &
+     &                                    Bmin, Bmax, B2d)
+                  DO i=IstrT,IendT
+                    B2d(i)=B2d(i)*HscaleB(i)
+                  END DO
+              END SELECT
+!
+!  Tangent linear explicit horizontal convolution.
+!
               CALL tl_conv_v2d_bry_tile (ng, tile, iTLM, ibry,          &
      &                                   BOUNDS(ng)%edge(:,v2dvar),     &
      &                                   LBij, UBij,                    &
@@ -4868,82 +5058,97 @@
      &                                   vmask, pmask,                  &
 # endif
      &                                   B2d)
+!
               IF (Lconvolve(ibry)) THEN
-                IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
-                  DO j=JstrV,Jend
-                    B2davg(j)=B2davg(j)+B2d(j)
-                    B2dsqr(j)=B2dsqr(j)+B2d(j)*B2d(j)
-                  END DO
-                ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
-                  DO i=Istr,Iend
-                    B2davg(i)=B2davg(i)+B2d(i)
-                    B2dsqr(i)=B2dsqr(i)+B2d(i)*B2d(i)
-                  END DO
-                END IF
+                SELECT CASE (ibry)
+                  CASE (iwest, ieast)
+                    DO j=JstrV,Jend
+                      B2davg(j)=B2davg(j)+B2d(j)
+                      B2dsqr(j)=B2dsqr(j)+B2d(j)*B2d(j)
+                    END DO
+                  CASE (isouth, inorth)
+                    DO i=Istr,Iend
+                      B2davg(i)=B2davg(i)+B2d(i)
+                      B2dsqr(i)=B2dsqr(i)+B2d(i)*B2d(i)
+                    END DO
+                END SELECT
               END IF
-            END DO
+            END DO BRY_RANDOM_V2D
+!
+!  Set normalization factors.
+!
             IF (Lconvolve(ibry)) THEN
-              IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
-                DO j=JstrV,Jend
-                  Bavg=FacAvg*B2davg(j)
-                  Bsqr=FacAvg*B2dsqr(j)
+              SELECT CASE (ibry)
+                CASE (iwest, ieast)
+                  i=BOUNDS(ng)%edge(ibry,v2dvar)
+                  DO j=JstrV,Jend
+                    Bavg=FacAvg*B2davg(j)
+                    Bsqr=FacAvg*B2dsqr(j)
 # ifdef MASKING
-                  IF (vmask(i,j).gt.0.0_r8) THEN
+                    IF (vmask(i,j).gt.0.0_r8) THEN
+                      HnormVobc(j,ibry)=1.0_r8/SQRT(Bsqr)
+                    ELSE
+                      HnormVobc(j,ibry)=0.0_r8
+                    END IF
+# else
                     HnormVobc(j,ibry)=1.0_r8/SQRT(Bsqr)
-                  ELSE
-                    HnormVobc(j,ibry)=0.0_r8
-                  END IF
-# else
-                  HnormVobc(j,ibry)=1.0_r8/SQRT(Bsqr)
 # endif
-                END DO
-              ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
-                DO i=Istr,Iend
-                  Bavg=FacAvg*B2davg(i)
-                  Bsqr=FacAvg*B2dsqr(i)
+                  END DO
+                CASE (isouth, inorth)
+                  j=BOUNDS(ng)%edge(ibry,v2dvar)
+                  DO i=Istr,Iend
+                    Bavg=FacAvg*B2davg(i)
+                    Bsqr=FacAvg*B2dsqr(i)
 # ifdef MASKING
-                  IF (vmask(i,j).gt.0.0_r8) THEN
-                    HnormVobc(i,ibry)=1.0_r8/SQRT(Bsqr)
-                  ELSE
-                    HnormVobc(i,ibry)=0.0_r8
-                  END IF
+                    IF (vmask(i,j).gt.0.0_r8) THEN
+                      HnormVobc(i,ibry)=1.0_r8/SQRT(Bsqr)
+                    ELSE
+                      HnormVobc(i,ibry)=0.0_r8
+                    END IF
 # else
-                  HnormVobc(i,ibry)=1.0_r8/SQRT(Bsqr)
+                    HnormVobc(i,ibry)=1.0_r8/SQRT(Bsqr)
 # endif
-                END DO
-              END IF
+                  END DO
+              END SELECT
             END IF
+!
+!  Exchange boundary data.
+!
             CALL bc_v2d_bry_tile (ng, tile, ibry,                       &
      &                            LBij, UBij,                           &
      &                            HnormVobc(:,ibry))
 # ifdef DISTRIBUTE
+!
             CALL mp_collect (ng, iTLM, IJlen, Aspv,                     &
      &                       HnormVobc(LBij:,ibry))
 # endif
-          END IF
-        END DO
+          END IF BRY_COMPUTE_V2D
+        END DO BRY_LOOP_V2D
+!
+!  Write out into output NetCDF file.
+!
         IF (ANY(CnormB(isVbar,:))) THEN
-          ifield=idSbry(isVbar)
-
+          IDmeta=idSbry(isVbar)
+!
           SELECT CASE (NRM(ifile,ng)%IOtype)
             CASE (io_nf90)
               CALL netcdf_put_fvar (ng, iTLM, ncname,                   &
-     &                              Vname(1,ifield),                    &
+     &                              Vname(1,IDmeta),                    &
      &                              HnormVobc(LBij:,:),                 &
      &                         start = (/1,1,NRM(ifile,ng)%Rindex/),    &
      &                         total = (/IJlen,4,1/),                   &
      &                         ncid = NRM(ifile,ng)%ncid,               &
-     &                         varid = NRM(ifile,ng)%Vid(ifield))
+     &                         varid = NRM(ifile,ng)%Vid(IDmeta))
 
 # if defined PIO_LIB && defined DISTRIBUTE
             CASE (io_pio)
               CALL pio_netcdf_put_fvar (ng, iTLM, ncname,               &
-     &                                  Vname(1,ifield),                &
+     &                                  Vname(1,IDmeta),                &
      &                                  HnormVobc(LBij:,:),             &
      &                         start = (/1,1,NRM(ifile,ng)%Rindex/),    &
      &                         total = (/IJlen,4,1/),                   &
      &                         pioFile = NRM(ifile,ng)%pioFile,         &
-     &                         pioVar = NRM(ifile,ng)%pioVar(ifield)%vd)
+     &                         pioVar = NRM(ifile,ng)%pioVar(IDmeta)%vd)
 # endif
           END SELECT
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
@@ -4951,69 +5156,78 @@
 
 # ifdef SOLVE3D
 !
-!  3D boundary norm at U-points.
+!-----------------------------------------------------------------------
+!  3D boundary normalization at U-points.
+!-----------------------------------------------------------------------
 !
         VnormUobc=Aspv
 
         IF (Master.and.ANY(CnormB(isUvel,:))) THEN
           WRITE (stdout,20) TRIM(Text),                                 &
-     &                      '3D normalization factors at   U-points'
+     &          '3D normalization factors at   U-points'
           FLUSH (stdout)
         END IF
-
-        DO ibry=1,4
-          IF (CnormB(isUvel,ibry)) THEN
+!
+        BRY_LOOP_U3D : DO ibry=1,4
+          BRY_COMPUTE_U3D : IF (CnormB(isUvel,ibry)) THEN
             VscaleB=0.0_r8
             B3davg=0.0_r8
             B3dsqr=0.0_r8
             B3d=0.0_r8
-            IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
-              i=BOUNDS(ng)%edge(ibry,u2dvar)
-              IF (Lconvolve(ibry)) THEN
-                DO j=JstrT,JendT
-                  val=on_u(i,j)*0.5_r8
-                  DO k=1,N(ng)
-                    VscaleB(j,k)=1.0_r8/                                &
-     &                           SQRT(val*(Hz(i-1,j,k)+Hz(i,j,k)))
-                  END DO
-                END DO
-              END IF
-            ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
-              j=BOUNDS(ng)%edge(ibry,u2dvar)
-              IF (Lconvolve(ibry)) THEN
-                DO i=IstrP,IendT
-                  val=om_u(i,j)*0.5_r8
-                  DO k=1,N(ng)
-                    VscaleB(i,k)=1.0_r8/                                &
-     &                           SQRT(val*(Hz(i-1,j,k)+Hz(i,j,k)))
-                  END DO
-                END DO
-              END IF
-            END IF
-            DO iter=1,Nrandom
-              IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
-                CALL white_noise3d_bry (ng, tile, iTLM, ibry,           &
-     &                                  Rscheme(ng),                    &
-     &                                  JstrR, JendR,                   &
-     &                                  LBij, UBij, 1, N(ng),           &
-     &                                  Bmin, Bmax, B3d)
-                DO k=1,N(ng)
+!
+            SELECT CASE (ibry)
+              CASE (iwest, ieast)
+                i=BOUNDS(ng)%edge(ibry,u2dvar)
+                IF (Lconvolve(ibry)) THEN
                   DO j=JstrT,JendT
-                    B3d(j,k)=B3d(j,k)*VscaleB(j,k)
+                    cff=on_u(i,j)*0.5_r8
+                    DO k=1,N(ng)
+                      VscaleB(j,k)=1.0_r8/                              &
+     &                             SQRT(cff*(Hz(i-1,j,k)+Hz(i,j,k)))
+                    END DO
                   END DO
-                END DO
-              ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
-                CALL white_noise3d_bry (ng, tile, iTLM, ibry,           &
-     &                                  Rscheme(ng),                    &
-     &                                  Istr, IendR,                    &
-     &                                  LBij, UBij, 1, N(ng),           &
-     &                                  Bmin, Bmax, B3d)
-                DO k=1,N(ng)
+                END IF
+              CASE (isouth, inorth)
+                j=BOUNDS(ng)%edge(ibry,u2dvar)
+                IF (Lconvolve(ibry)) THEN
                   DO i=IstrP,IendT
-                    B3d(i,k)=B3d(i,k)*VscaleB(i,k)
+                    cff=om_u(i,j)*0.5_r8
+                    DO k=1,N(ng)
+                      VscaleB(i,k)=1.0_r8/                              &
+     &                             SQRT(cff*(Hz(i-1,j,k)+Hz(i,j,k)))
+                    END DO
                   END DO
-                END DO
-              END IF
+                END IF
+            END SELECT
+!
+            BRY_RANDOM_U3D : DO iter=1,Nrandom
+              SELECT CASE (ibry)
+                CASE (iwest, ieast)
+                  CALL white_noise3d_bry (ng, tile, iTLM, ibry,         &
+     &                                    Rscheme(ng),                  &
+     &                                    JstrR, JendR,                 &
+     &                                    LBij, UBij, 1, N(ng),         &
+     &                                    Bmin, Bmax, B3d)
+                  DO k=1,N(ng)
+                    DO j=JstrT,JendT
+                      B3d(j,k)=B3d(j,k)*VscaleB(j,k)
+                    END DO
+                  END DO
+                CASE (isouth, inorth)
+                  CALL white_noise3d_bry (ng, tile, iTLM, ibry,         &
+     &                                    Rscheme(ng),                  &
+     &                                    Istr, IendR,                  &
+     &                                    LBij, UBij, 1, N(ng),         &
+     &                                    Bmin, Bmax, B3d)
+                  DO k=1,N(ng)
+                    DO i=IstrP,IendT
+                      B3d(i,k)=B3d(i,k)*VscaleB(i,k)
+                    END DO
+                  END DO
+              END SELECT
+!
+!  Tangent linear explicit horizontal convolution.
+!
               CALL tl_conv_u3d_bry_tile (ng, tile, iTLM, ibry,          &
      &                                   BOUNDS(ng)%edge(:,u2dvar),     &
      &                                   LBij, UBij,                    &
@@ -5032,63 +5246,75 @@
 #  endif
      &                                   Hz, z_r,                       &
      &                                   B3d)
+!
               IF (Lconvolve(ibry)) THEN
-                IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
+                SELECT CASE (ibry)
+                  CASE (iwest, ieast)
+                    DO k=1,N(ng)
+                      DO j=Jstr,Jend
+                        B3davg(j,k)=B3davg(j,k)+B3d(j,k)
+                        B3dsqr(j,k)=B3dsqr(j,k)+B3d(j,k)*B3d(j,k)
+                      END DO
+                    END DO
+                  CASE (isouth, inorth)
+                    DO k=1,N(ng)
+                      DO i=IstrU,Iend
+                        B3davg(i,k)=B3davg(i,k)+B3d(i,k)
+                        B3dsqr(i,k)=B3dsqr(i,k)+B3d(i,k)*B3d(i,k)
+                      END DO
+                    END DO
+                END SELECT
+              END IF
+            END DO BRY_RANDOM_U3D
+!
+!  Set normalization factors.
+!
+            IF (Lconvolve(ibry)) THEN
+              SELECT CASE (ibry)
+                CASE (iwest, ieast)
+                  i=BOUNDS(ng)%edge(ibry,u2dvar)
                   DO k=1,N(ng)
                     DO j=Jstr,Jend
-                      B3davg(j,k)=B3davg(j,k)+B3d(j,k)
-                      B3dsqr(j,k)=B3dsqr(j,k)+B3d(j,k)*B3d(j,k)
+                      Bavg=FacAvg*B3davg(j,k)
+                      Bsqr=FacAvg*B3dsqr(j,k)
+#  ifdef MASKING
+                      IF (umask(i,j).gt.0.0_r8) THEN
+                        VnormUobc(j,k,ibry)=1.0_r8/SQRT(Bsqr)
+                      ELSE
+                        VnormUobc(j,k,ibry)=0.0_r8
+                      END IF
+#  else
+                      VnormUobc(j,k,ibry)=1.0_r8/SQRT(Bsqr)
+#  endif
                     END DO
                   END DO
-                ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
+                CASE (isouth, inorth)
+                  j=BOUNDS(ng)%edge(ibry,u2dvar)
                   DO k=1,N(ng)
                     DO i=IstrU,Iend
-                      B3davg(i,k)=B3davg(i,k)+B3d(i,k)
-                      B3dsqr(i,k)=B3dsqr(i,k)+B3d(i,k)*B3d(i,k)
+                      Bavg=FacAvg*B3davg(i,k)
+                      Bsqr=FacAvg*B3dsqr(i,k)
+#  ifdef MASKING
+                      IF (umask(i,j).gt.0.0_r8) THEN
+                        VnormUobc(i,k,ibry)=1.0_r8/SQRT(Bsqr)
+                      ELSE
+                        VnormUobc(i,k,ibry)=0.0_r8
+                      END IF
+#  else
+                      VnormUobc(i,k,ibry)=1.0_r8/SQRT(Bsqr)
+#  endif
                     END DO
                   END DO
-                END IF
-              END IF
-            END DO
-            IF (Lconvolve(ibry)) THEN
-              IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
-                DO k=1,N(ng)
-                  DO j=Jstr,Jend
-                    Bavg=FacAvg*B3davg(j,k)
-                    Bsqr=FacAvg*B3dsqr(j,k)
-#  ifdef MASKING
-                    IF (umask(i,j).gt.0.0_r8) THEN
-                      VnormUobc(j,k,ibry)=1.0_r8/SQRT(Bsqr)
-                    ELSE
-                      VnormUobc(j,k,ibry)=0.0_r8
-                    END IF
-#  else
-                    VnormUobc(j,k,ibry)=1.0_r8/SQRT(Bsqr)
-#  endif
-                  END DO
-                END DO
-              ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
-                DO k=1,N(ng)
-                  DO i=IstrU,Iend
-                    Bavg=FacAvg*B3davg(i,k)
-                    Bsqr=FacAvg*B3dsqr(i,k)
-#  ifdef MASKING
-                    IF (umask(i,j).gt.0.0_r8) THEN
-                      VnormUobc(i,k,ibry)=1.0_r8/SQRT(Bsqr)
-                    ELSE
-                      VnormUobc(i,k,ibry)=0.0_r8
-                    END IF
-#  else
-                    VnormUobc(i,k,ibry)=1.0_r8/SQRT(Bsqr)
-#  endif
-                  END DO
-                END DO
-              END IF
+              END SELECT
             END IF
+!
+!  Exchange boundary data.
+!
             CALL bc_u3d_bry_tile (ng, tile, ibry,                       &
      &                            LBij, UBij, 1, N(ng),                 &
      &                            VnormUobc(:,:,ibry))
 #  ifdef DISTRIBUTE
+!
             Bwrk=RESHAPE(VnormUobc(:,:,ibry), (/IJKlen/))
             CALL mp_collect (ng, iTLM, IJKlen, Aspv, Bwrk)
             ic=0
@@ -5099,98 +5325,110 @@
               END DO
             END DO
 #  endif
-          END IF
-        END DO
+          END IF BRY_COMPUTE_U3D
+        END DO BRY_LOOP_U3D
+!
+!  Write out into output NetCDF file.
+!
         IF (ANY(CnormB(isUvel,:))) THEN
-          ifield=idSbry(isUvel)
-
+          IDmeta=idSbry(isUvel)
+!
           SELECT CASE (NRM(ifile,ng)%IOtype)
             CASE (io_nf90)
               CALL netcdf_put_fvar (ng, iTLM, ncname,                   &
-     &                              Vname(1,ifield),                    &
+     &                              Vname(1,IDmeta),                    &
      &                              VnormUobc(LBij:,:,:),               &
      &                         start = (/1,1,1,NRM(ifile,ng)%Rindex/),  &
      &                         total = (/IJlen,N(ng),4,1/),             &
      &                         ncid = NRM(ifile,ng)%ncid,               &
-     &                         varid = NRM(ifile,ng)%Vid(ifield))
+     &                         varid = NRM(ifile,ng)%Vid(IDmeta))
 
 #  if defined PIO_LIB && defined DISTRIBUTE
             CASE (io_pio)
               CALL pio_netcdf_put_fvar (ng, iTLM, ncname,               &
-     &                                  Vname(1,ifield),                &
+     &                                  Vname(1,IDmeta),                &
      &                                  VnormUobc(LBij:,:,:),           &
      &                         start = (/1,1,1,NRM(ifile,ng)%Rindex/),  &
      &                         total = (/IJlen,N(ng),4,1/),             &
      &                         pioFile = NRM(ifile,ng)%pioFile,         &
-     &                         pioVar = NRM(ifile,ng)%pioVar(ifield)%vd)
+     &                         pioVar = NRM(ifile,ng)%pioVar(IDmeta)%vd)
 #  endif
           END SELECT
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 !
-!  3D boundary norm at V-points.
+!-----------------------------------------------------------------------
+!  3D boundary normalization at V-points.
+!-----------------------------------------------------------------------
 !
         VnormVobc=Aspv
 
         IF (Master.and.ANY(CnormB(isVvel,:))) THEN
           WRITE (stdout,20) TRIM(Text),                                 &
-     &                      '3D normalization factors at   V-points'
+     &          '3D normalization factors at   V-points'
           FLUSH (stdout)
         END IF
-
-        DO ibry=1,4
-          IF (CnormB(isVvel,ibry)) THEN
+!
+        BRY_LOOP_V3D : DO ibry=1,4
+          BRY_COMPUTE_V3D : IF (CnormB(isVvel,ibry)) THEN
             VscaleB=0.0_r8
             B3davg=0.0_r8
             B3dsqr=0.0_r8
             B3d=0.0_r8
-            IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
-              i=BOUNDS(ng)%edge(ibry,v2dvar)
-              IF (Lconvolve(ibry)) THEN
-                DO j=JstrP,JendT
-                  val=on_v(i,j)*0.5_r8
-                  DO k=1,N(ng)
-                    VscaleB(j,k)=1.0_r8/                                &
-     &                           SQRT(val*(Hz(i,j-1,k)+Hz(i,j,k)))
-                  END DO
-                END DO
-              END IF
-            ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
-              j=BOUNDS(ng)%edge(ibry,v2dvar)
-              IF (Lconvolve(ibry)) THEN
-                DO i=IstrT,IendT
-                  val=om_v(i,j)*0.5_r8
-                  DO k=1,N(ng)
-                    VscaleB(i,k)=1.0_r8/                                &
-     &                           SQRT(val*(Hz(i,j-1,k)+Hz(i,j,k)))
-                  END DO
-                END DO
-              END IF
-            END IF
-            DO iter=1,Nrandom
-              IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
-                CALL white_noise3d_bry (ng, tile, iTLM, ibry,           &
-     &                                  Rscheme(ng),                    &
-     &                                  Jstr, JendR,                    &
-     &                                  LBij, UBij, 1, N(ng),           &
-     &                                  Bmin, Bmax, B3d)
-                DO k=1,N(ng)
+!
+            SELECT CASE (ibry)
+              CASE (iwest, ieast)
+                i=BOUNDS(ng)%edge(ibry,v2dvar)
+                IF (Lconvolve(ibry)) THEN
                   DO j=JstrP,JendT
-                    B3d(j,k)=B3d(j,k)*VscaleB(j,k)
+                    cff=on_v(i,j)*0.5_r8
+                    DO k=1,N(ng)
+                      VscaleB(j,k)=1.0_r8/                              &
+     &                             SQRT(cff*(Hz(i,j-1,k)+Hz(i,j,k)))
+                    END DO
                   END DO
-                END DO
-              ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
-                CALL white_noise3d_bry (ng, tile, iTLM, ibry,           &
-     &                                  Rscheme(ng),                    &
-     &                                  IstrR, IendR,                   &
-     &                                  LBij, UBij, 1, N(ng),           &
-     &                                  Bmin, Bmax, B3d)
-                DO k=1,N(ng)
+                END IF
+              CASE (isouth, inorth)
+                j=BOUNDS(ng)%edge(ibry,v2dvar)
+                IF (Lconvolve(ibry)) THEN
                   DO i=IstrT,IendT
-                    B3d(i,k)=B3d(i,k)*VscaleB(i,k)
+                    cff=om_v(i,j)*0.5_r8
+                    DO k=1,N(ng)
+                      VscaleB(i,k)=1.0_r8/                              &
+     &                             SQRT(cff*(Hz(i,j-1,k)+Hz(i,j,k)))
+                    END DO
                   END DO
-                END DO
-              END IF
+                END IF
+            END SELECT
+!
+            BRY_RANDOM_V3D : DO iter=1,Nrandom
+              SELECT CASE (ibry)
+                CASE (iwest, ieast)
+                  CALL white_noise3d_bry (ng, tile, iTLM, ibry,         &
+     &                                    Rscheme(ng),                  &
+     &                                    Jstr, JendR,                  &
+     &                                    LBij, UBij, 1, N(ng),         &
+     &                                    Bmin, Bmax, B3d)
+                  DO k=1,N(ng)
+                    DO j=JstrP,JendT
+                      B3d(j,k)=B3d(j,k)*VscaleB(j,k)
+                    END DO
+                  END DO
+                CASE (isouth, inorth)
+                  CALL white_noise3d_bry (ng, tile, iTLM, ibry,         &
+     &                                    Rscheme(ng),                  &
+     &                                    IstrR, IendR,                 &
+     &                                    LBij, UBij, 1, N(ng),         &
+     &                                    Bmin, Bmax, B3d)
+                  DO k=1,N(ng)
+                    DO i=IstrT,IendT
+                      B3d(i,k)=B3d(i,k)*VscaleB(i,k)
+                    END DO
+                  END DO
+              END SELECT
+!
+!  Tangent linear explicit horizontal convolution.
+!
               CALL tl_conv_v3d_bry_tile (ng, tile, iTLM, ibry,          &
      &                                   BOUNDS(ng)%edge(:,v2dvar),     &
      &                                   LBij, UBij,                    &
@@ -5209,63 +5447,75 @@
 #  endif
      &                                   Hz, z_r,                       &
      &                                   B3d)
+!
               IF (Lconvolve(ibry)) THEN
-                IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
+                SELECT CASE (ibry)
+                  CASE (iwest, ieast)
+                    DO k=1,N(ng)
+                      DO j=JstrV,Jend
+                        B3davg(j,k)=B3davg(j,k)+B3d(j,k)
+                        B3dsqr(j,k)=B3dsqr(j,k)+B3d(j,k)*B3d(j,k)
+                      END DO
+                    END DO
+                  CASE (isouth, inorth)
+                    DO k=1,N(ng)
+                      DO i=Istr,Iend
+                        B3davg(i,k)=B3davg(i,k)+B3d(i,k)
+                        B3dsqr(i,k)=B3dsqr(i,k)+B3d(i,k)*B3d(i,k)
+                      END DO
+                    END DO
+                END SELECT
+              END IF
+            END DO BRY_RANDOM_V3D
+!
+!  Set normalization factors.
+!
+            IF (Lconvolve(ibry)) THEN
+              SELECT CASE (ibry)
+                CASE (iwest, ieast)
+                  i=BOUNDS(ng)%edge(ibry,v2dvar)
                   DO k=1,N(ng)
                     DO j=JstrV,Jend
-                      B3davg(j,k)=B3davg(j,k)+B3d(j,k)
-                      B3dsqr(j,k)=B3dsqr(j,k)+B3d(j,k)*B3d(j,k)
+                      Bavg=FacAvg*B3davg(j,k)
+                      Bsqr=FacAvg*B3dsqr(j,k)
+#  ifdef MASKING
+                      IF (vmask(i,j).gt.0.0_r8) THEN
+                        VnormVobc(j,k,ibry)=1.0_r8/SQRT(Bsqr)
+                      ELSE
+                        VnormVobc(j,k,ibry)=0.0_r8
+                      END IF
+#  else
+                      VnormVobc(j,k,ibry)=1.0_r8/SQRT(Bsqr)
+#  endif
                     END DO
                   END DO
-                ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
+                CASE (isouth, inorth)
+                  j=BOUNDS(ng)%edge(ibry,v2dvar)
                   DO k=1,N(ng)
                     DO i=Istr,Iend
-                      B3davg(i,k)=B3davg(i,k)+B3d(i,k)
-                      B3dsqr(i,k)=B3dsqr(i,k)+B3d(i,k)*B3d(i,k)
+                      Bavg=FacAvg*B3davg(i,k)
+                      Bsqr=FacAvg*B3dsqr(i,k)
+#  ifdef MASKING
+                      IF (vmask(i,j).gt.0.0_r8) THEN
+                        VnormVobc(i,k,ibry)=1.0_r8/SQRT(Bsqr)
+                      ELSE
+                        VnormVobc(i,k,ibry)=0.0_r8
+                      END IF
+#  else
+                      VnormVobc(i,k,ibry)=1.0_r8/SQRT(Bsqr)
+#  endif
                     END DO
                   END DO
-                END IF
-              END IF
-            END DO
-            IF (Lconvolve(ibry)) THEN
-              IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
-                DO k=1,N(ng)
-                  DO j=JstrV,Jend
-                    Bavg=FacAvg*B3davg(j,k)
-                    Bsqr=FacAvg*B3dsqr(j,k)
-#  ifdef MASKING
-                    IF (vmask(i,j).gt.0.0_r8) THEN
-                      VnormVobc(j,k,ibry)=1.0_r8/SQRT(Bsqr)
-                    ELSE
-                      VnormVobc(j,k,ibry)=0.0_r8
-                    END IF
-#  else
-                    VnormVobc(j,k,ibry)=1.0_r8/SQRT(Bsqr)
-#  endif
-                  END DO
-                END DO
-              ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
-                DO k=1,N(ng)
-                  DO i=Istr,Iend
-                    Bavg=FacAvg*B3davg(i,k)
-                    Bsqr=FacAvg*B3dsqr(i,k)
-#  ifdef MASKING
-                    IF (vmask(i,j).gt.0.0_r8) THEN
-                      VnormVobc(i,k,ibry)=1.0_r8/SQRT(Bsqr)
-                    ELSE
-                      VnormVobc(i,k,ibry)=0.0_r8
-                    END IF
-#  else
-                    VnormVobc(i,k,ibry)=1.0_r8/SQRT(Bsqr)
-#  endif
-                  END DO
-                END DO
-              END IF
+              END SELECT
             END IF
+!
+!  Exchange boundary data.
+!
             CALL bc_v3d_bry_tile (ng, tile, ibry,                       &
      &                            LBij, UBij, 1, N(ng),                 &
      &                            VnormVobc(:,:,ibry))
 #  ifdef DISTRIBUTE
+!
             Bwrk=RESHAPE(VnormVobc(:,:,ibry), (/IJKlen/))
             CALL mp_collect (ng, iTLM, IJKlen, Aspv, Bwrk)
             ic=0
@@ -5276,106 +5526,118 @@
               END DO
             END DO
 #  endif
-          END IF
-        END DO
+          END IF BRY_COMPUTE_V3D
+        END DO BRY_LOOP_V3D
+!
+!  Write out into output NetCDF file.
+!
         IF (ANY(CnormB(isVvel,:))) THEN
-          ifield=idSbry(isVvel)
-
+          IDmeta=idSbry(isVvel)
+!
           SELECT CASE (NRM(ifile,ng)%IOtype)
             CASE (io_nf90)
               CALL netcdf_put_fvar (ng, iTLM, ncname,                   &
-     &                              Vname(1,ifield),                    &
+     &                              Vname(1,IDmeta),                    &
      &                              VnormVobc(LBij:,:,:),               &
      &                         start = (/1,1,1,NRM(ifile,ng)%Rindex/),  &
      &                         total = (/IJlen,N(ng),4,1/),             &
      &                         ncid = NRM(ifile,ng)%ncid,               &
-     &                         varid = NRM(ifile,ng)%Vid(ifield))
+     &                         varid = NRM(ifile,ng)%Vid(IDmeta))
 
 #  if defined PIO_LIB && defined DISTRIBUTE
             CASE (io_pio)
               CALL pio_netcdf_put_fvar (ng, iTLM, ncname,               &
-     &                                  Vname(1,ifield),                &
+     &                                  Vname(1,IDmeta),                &
      &                                  VnormVobc(LBij:,:,:),           &
      &                         start = (/1,1,1,NRM(ifile,ng)%Rindex/),  &
      &                         total = (/IJlen,N(ng),4,1/),             &
      &                         pioFile = NRM(ifile,ng)%pioFile,         &
-     &                         pioVar = NRM(ifile,ng)%pioVar(ifield)%vd)
+     &                         pioVar = NRM(ifile,ng)%pioVar(IDmeta)%vd)
 #  endif
           END SELECT
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 !
-!  3D boundary norm at RHO-points.
+!-----------------------------------------------------------------------
+!  3D boundary normalization at RHO-points.
+!-----------------------------------------------------------------------
 !
         IF (Master) THEN
           DO itrc=1,NT(ng)
-            is=isTvar(itrc)
-            IF (ANY(CnormB(is,:))) THEN
+            ifield=isTvar(itrc)
+            IF (ANY(CnormB(ifield,:))) THEN
               Lsame=.TRUE.
               EXIT
             END IF
           END DO
           IF (Lsame) THEN
             WRITE (stdout,20) TRIM(Text),                               &
-     &                        '3D normalization factors at RHO-points'
+     &            '3D normalization factors at RHO-points'
             FLUSH (stdout)
           END IF
         END IF
-
-        DO itrc=1,NT(ng)
+!
+        BRY_TRACER_LOOP : DO itrc=1,NT(ng)
           VnormRobc=Aspv
-          is=isTvar(itrc)
-          DO ibry=1,4
-            IF (CnormB(is,ibry)) THEN
+          ifield=isTvar(itrc)
+          BRY_LOOP_R3D : DO ibry=1,4
+            BRY_COMPUTE_R3D : IF (CnormB(ifield,ibry)) THEN
               VscaleB=0.0_r8
               B3davg=0.0_r8
               B3dsqr=0.0_r8
               B3d=0.0_r8
-              IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
-                i=BOUNDS(ng)%edge(ibry,r2dvar)
-                IF (Lconvolve(ibry)) THEN
-                  DO j=JstrT,JendT
-                    val=on_r(i,j)
-                    DO k=1,N(ng)
-                      VscaleB(j,k)=1.0_r8/SQRT(val*Hz(i,j,k))
-                    END DO
-                  END DO
-                END IF
-              ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
-                j=BOUNDS(ng)%edge(ibry,r2dvar)
-                IF (Lconvolve(ibry)) THEN
-                  DO i=IstrT,IendT
-                    val=om_r(i,j)
-                    DO k=1,N(ng)
-                      VscaleB(i,k)=1.0_r8/SQRT(val*Hz(i,j,k))
-                    END DO
-                  END DO
-                END IF
-              END IF
-              DO iter=1,Nrandom
-                IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
-                  CALL white_noise3d_bry (ng, tile, iTLM, ibry,         &
-     &                                    Rscheme(ng),                  &
-     &                                    JstrR, JendR,                 &
-     &                                    LBij, UBij, 1, N(ng),         &
-     &                                    Bmin, Bmax, B3d)
-                  DO k=1,N(ng)
+!
+              SELECT CASE (ibry)
+                CASE (iwest, ieast)
+                  i=BOUNDS(ng)%edge(ibry,r2dvar)
+                  IF (Lconvolve(ibry)) THEN
                     DO j=JstrT,JendT
-                      B3d(j,k)=B3d(j,k)*VscaleB(j,k)
+                      cff=on_r(i,j)
+                      DO k=1,N(ng)
+                        VscaleB(j,k)=1.0_r8/SQRT(cff*Hz(i,j,k))
+                      END DO
                     END DO
-                  END DO
-                ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
-                  CALL white_noise3d_bry (ng, tile, iTLM, ibry,         &
-     &                                    Rscheme(ng),                  &
-     &                                    IstrR, IendR,                 &
-     &                                    LBij, UBij, 1, N(ng),         &
-     &                                    Bmin, Bmax, B3d)
-                  DO k=1,N(ng)
+                  END IF
+                CASE (isouth, inorth)
+                  j=BOUNDS(ng)%edge(ibry,r2dvar)
+                  IF (Lconvolve(ibry)) THEN
                     DO i=IstrT,IendT
-                      B3d(i,k)=B3d(i,k)*VscaleB(i,k)
+                      cff=om_r(i,j)
+                      DO k=1,N(ng)
+                        VscaleB(i,k)=1.0_r8/SQRT(cff*Hz(i,j,k))
+                      END DO
                     END DO
-                  END DO
-                END IF
+                  END IF
+              END SELECT
+!
+              BRY_RANDOM_R3D : DO iter=1,Nrandom
+                SELECT CASE (ibry)
+                  CASE (iwest, ieast)
+                    CALL white_noise3d_bry (ng, tile, iTLM, ibry,       &
+     &                                      Rscheme(ng),                &
+     &                                      JstrR, JendR,               &
+     &                                      LBij, UBij, 1, N(ng),       &
+     &                                      Bmin, Bmax, B3d)
+                    DO k=1,N(ng)
+                      DO j=JstrT,JendT
+                        B3d(j,k)=B3d(j,k)*VscaleB(j,k)
+                      END DO
+                    END DO
+                  CASE (isouth, inorth)
+                    CALL white_noise3d_bry (ng, tile, iTLM, ibry,       &
+     &                                      Rscheme(ng),                &
+     &                                      IstrR, IendR,               &
+     &                                      LBij, UBij, 1, N(ng),       &
+     &                                      Bmin, Bmax, B3d)
+                    DO k=1,N(ng)
+                      DO i=IstrT,IendT
+                        B3d(i,k)=B3d(i,k)*VscaleB(i,k)
+                      END DO
+                    END DO
+                END SELECT
+!
+!  Tangent linear explicit horizontal convolution.
+!
                 CALL tl_conv_r3d_bry_tile (ng, tile, iTLM, ibry,        &
      &                                     BOUNDS(ng)%edge(:,r2dvar),   &
      &                                     LBij, UBij,                  &
@@ -5395,63 +5657,75 @@
 #  endif
      &                                     Hz, z_r,                     &
      &                                     B3d)
+!
                 IF (Lconvolve(ibry)) THEN
-                  IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
+                  SELECT CASE (ibry)
+                    CASE (iwest, ieast)
+                      DO k=1,N(ng)
+                        DO j=Jstr,Jend
+                          B3davg(j,k)=B3davg(j,k)+B3d(j,k)
+                          B3dsqr(j,k)=B3dsqr(j,k)+B3d(j,k)*B3d(j,k)
+                        END DO
+                      END DO
+                    CASE (isouth, inorth)
+                      DO k=1,N(ng)
+                        DO i=Istr,Iend
+                          B3davg(i,k)=B3davg(i,k)+B3d(i,k)
+                          B3dsqr(i,k)=B3dsqr(i,k)+B3d(i,k)*B3d(i,k)
+                        END DO
+                      END DO
+                  END SELECT
+                END IF
+              END DO BRY_RANDOM_R3D
+!
+!  Set normalization factors.
+!
+              IF (Lconvolve(ibry)) THEN
+                SELECT CASE (ibry)
+                  CASE (iwest, ieast)
+                    i=BOUNDS(ng)%edge(ibry,r2dvar)
                     DO k=1,N(ng)
                       DO j=Jstr,Jend
-                        B3davg(j,k)=B3davg(j,k)+B3d(j,k)
-                        B3dsqr(j,k)=B3dsqr(j,k)+B3d(j,k)*B3d(j,k)
+                        Bavg=FacAvg*B3davg(j,k)
+                        Bsqr=FacAvg*B3dsqr(j,k)
+#  ifdef MASKING
+                        IF (rmask(i,j).gt.0.0_r8) THEN
+                          VnormRobc(j,k,ibry,itrc)=1.0_r8/SQRT(Bsqr)
+                        ELSE
+                          VnormRobc(j,k,ibry,itrc)=0.0_r8
+                        END IF
+#  else
+                        VnormRobc(j,k,ibry,itrc)=1.0_r8/SQRT(Bsqr)
+#  endif
                       END DO
                     END DO
-                  ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
+                  CASE (isouth, inorth)
+                    j=BOUNDS(ng)%edge(ibry,r2dvar)
                     DO k=1,N(ng)
                       DO i=Istr,Iend
-                        B3davg(i,k)=B3davg(i,k)+B3d(i,k)
-                        B3dsqr(i,k)=B3dsqr(i,k)+B3d(i,k)*B3d(i,k)
+                        Bavg=FacAvg*B3davg(i,k)
+                        Bsqr=FacAvg*B3dsqr(i,k)
+#  ifdef MASKING
+                        IF (rmask(i,j).gt.0.0_r8) THEN
+                          VnormRobc(i,k,ibry,itrc)=1.0_r8/SQRT(Bsqr)
+                        ELSE
+                          VnormRobc(i,k,ibry,itrc)=0.0_r8
+                        END IF
+#  else
+                        VnormRobc(i,k,ibry,itrc)=1.0_r8/SQRT(Bsqr)
+#  endif
                       END DO
                     END DO
-                  END IF
-                END IF
-              END DO
-              IF (Lconvolve(ibry)) THEN
-                IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
-                  DO k=1,N(ng)
-                    DO j=Jstr,Jend
-                      Bavg=FacAvg*B3davg(j,k)
-                      Bsqr=FacAvg*B3dsqr(j,k)
-#  ifdef MASKING
-                      IF (rmask(i,j).gt.0.0_r8) THEN
-                        VnormRobc(j,k,ibry,itrc)=1.0_r8/SQRT(Bsqr)
-                      ELSE
-                        VnormRobc(j,k,ibry,itrc)=0.0_r8
-                      END IF
-#  else
-                      VnormRobc(j,k,ibry,itrc)=1.0_r8/SQRT(Bsqr)
-#  endif
-                    END DO
-                  END DO
-                ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
-                  DO k=1,N(ng)
-                    DO i=Istr,Iend
-                      Bavg=FacAvg*B3davg(i,k)
-                      Bsqr=FacAvg*B3dsqr(i,k)
-#  ifdef MASKING
-                      IF (rmask(i,j).gt.0.0_r8) THEN
-                        VnormRobc(i,k,ibry,itrc)=1.0_r8/SQRT(Bsqr)
-                      ELSE
-                        VnormRobc(i,k,ibry,itrc)=0.0_r8
-                      END IF
-#  else
-                      VnormRobc(i,k,ibry,itrc)=1.0_r8/SQRT(Bsqr)
-#  endif
-                    END DO
-                  END DO
-                END IF
+                END SELECT
               END IF
+!
+!  Exchange boundary data.
+!
               CALL bc_r3d_bry_tile (ng, tile, ibry,                     &
      &                              LBij, UBij, 1, N(ng),               &
      &                              VnormRobc(:,:,ibry,itrc))
 #  ifdef DISTRIBUTE
+!
               Bwrk=RESHAPE(VnormRobc(:,:,ibry,itrc), (/IJKlen/))
               CALL mp_collect (ng, iTLM, IJKlen, Aspv, Bwrk)
               ic=0
@@ -5462,36 +5736,41 @@
                 END DO
               END DO
 #  endif
-            END IF
-          END DO
+            END IF BRY_COMPUTE_R3D
+          END DO BRY_LOOP_R3D
+!
+!  Write out into output NetCDF file.
+!
           IF (ANY(CnormB(is,:))) THEN
-            ifield=idSbry(isTvar(itrc))
-
+            IDmeta=idSbry(isTvar(itrc))
+!
             SELECT CASE (NRM(ifile,ng)%IOtype)
               CASE (io_nf90)
                 CALL netcdf_put_fvar (ng, iTLM, ncname,                 &
-     &                                Vname(1,ifield),                  &
+     &                                Vname(1,IDmeta),                  &
      &                                VnormRobc(LBij:,:,:,itrc),        &
      &                         start =(/1,1,1,NRM(ifile,ng)%Rindex/),   &
      &                         total = (/IJlen,N(ng),4,1/),             &
      &                         ncid = NRM(ifile,ng)%ncid,               &
-     &                         varid = NRM(ifile,ng)%Vid(ifield))
+     &                         varid = NRM(ifile,ng)%Vid(IDmeta))
 
 #  if defined PIO_LIB && defined DISTRIBUTE
               CASE (io_pio)
                 CALL pio_netcdf_put_fvar (ng, iTLM, ncname,             &
-     &                                    Vname(1,ifield),              &
+     &                                    Vname(1,IDmeta),              &
      &                                    VnormRobc(LBij:,:,:,itrc),    &
      &                         start =(/1,1,1,NRM(ifile,ng)%Rindex/),   &
      &                         total = (/IJlen,N(ng),4,1/),             &
      &                         pioFile = NRM(ifile,ng)%pioFile,         &
-     &                         pioVar = NRM(ifile,ng)%pioVar(ifield)%vd)
+     &                         pioVar = NRM(ifile,ng)%pioVar(IDmeta)%vd)
 #  endif
             END SELECT
             IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
           END IF
-        END DO
-# endif
+
+        END DO BRY_TRACER_LOOP
+
+# endif /* SOLVE3D */
 !
 !  Synchronize open boundaries normalization NetCDF file to disk to
 !  allow other processes to access data immediately after it is
@@ -5508,18 +5787,19 @@
 # endif
         END SELECT
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-      END IF
-#endif
+      END IF BRY_LWRITE_NRM
+#endif /* ADJUST_BOUNDARY */
 
 #if defined ADJUST_WSTRESS || defined ADJUST_STFLUX
 !
-!-----------------------------------------------------------------------
-!  Compute surface forcing error covariance, B, normalization factors
-!  using the randomization approach of Fisher and Courtier (1995).
-!-----------------------------------------------------------------------
+!:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+!  Compute surface forcing background-error covariance, B, normalization
+!  factors using the randomization approach of Fisher and Courtier
+!  (1995).
+!:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 !
       ifile=4
-      IF (LwrtNRM(ifile,ng)) THEN
+      FRC_LWRITE_NRM : IF (LwrtNRM(ifile,ng)) THEN
         rec=1
         Text='surface forcing'
 !
@@ -5559,14 +5839,17 @@
 
 # ifdef ADJUST_WSTRESS
 !
-!  2D norm at U-stress points.
+!-----------------------------------------------------------------------
+!  2D normalization at U-stress points.
+!-----------------------------------------------------------------------
 !
-        IF (Cnorm(rec,isUstr)) THEN
+        COMPUTE_SUS : IF (Cnorm(rec,isUstr)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Text),                               &
-     &                        '2D normalization factors at U-points'
+     &            '2D normalization factors at U-points'
             FLUSH (stdout)
           END IF
+!
           DO j=JstrT,JendT
             DO i=IstrP,IendT
               A2davg(i,j)=0.0_r8
@@ -5574,16 +5857,21 @@
               Hscale(i,j)=1.0_r8/SQRT(om_u(i,j)*on_u(i,j))
             END DO
           END DO
-          DO iter=1,Nrandom
+!
+          RANDOM_SUS : DO iter=1,Nrandom
             CALL white_noise2d (ng, iTLM, u2dvar, Rscheme(ng),          &
      &                          Istr, IendR, JstrR, JendR,              &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          Amin, Amax, A2d)
+!
             DO j=JstrT,JendT
               DO i=IstrP,IendT
                 A2d(i,j)=A2d(i,j)*Hscale(i,j)
               END DO
             END DO
+!
+!  Tangent linear explicit horizontal convolution.
+!
             CALL tl_conv_u2d_tile (ng, tile, iTLM,                      &
      &                             LBi, UBi, LBj, UBj,                  &
      &                             IminS, ImaxS, JminS, JmaxS,          &
@@ -5596,13 +5884,17 @@
      &                             umask, pmask,                        &
 #  endif
      &                             A2d)
+!
             DO j=Jstr,Jend
               DO i=IstrU,Iend
                 A2davg(i,j)=A2davg(i,j)+A2d(i,j)
                 A2dsqr(i,j)=A2dsqr(i,j)+A2d(i,j)*A2d(i,j)
               END DO
             END DO
-          END DO
+          END DO RANDOM_SUS
+!
+!  Set normalization factors.
+!
           DO j=Jstr,Jend
             DO i=IstrU,Iend
               Aavg=FacAvg*A2davg(i,j)
@@ -5618,16 +5910,22 @@
 #  endif
             END DO
           END DO
+!
+!  Exchange boundary data.
+!
           CALL dabc_u2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        HnormSUS)
 #  ifdef DISTRIBUTE
+!
           CALL mp_exchange2d (ng, tile, iTLM, 1,                        &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        NghostPoints,                             &
      &                        EWperiodic(ng), NSperiodic(ng),           &
      &                        HnormSUS)
 #  endif
+!
+!  Write out into output NetCDF file.
 !
           SELECT CASE (NRM(ifile,ng)%IOtype)
             CASE (io_nf90)
@@ -5662,16 +5960,19 @@
 #  endif
           END SELECT
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
+        END IF COMPUTE_SUS
 !
-!  2D norm at V-stress points.
+!-----------------------------------------------------------------------
+!  2D normalization at V-stress points.
+!-----------------------------------------------------------------------
 !
-        IF (Cnorm(rec,isVstr)) THEN
+        COMPUTE_SVS : IF (Cnorm(rec,isVstr)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Text),                               &
-     &                        '2D normalization factors at V-points'
+     &            '2D normalization factors at V-points'
             FLUSH (stdout)
           END IF
+!
           DO j=JstrP,JendT
             DO i=IstrT,IendT
               A2davg(i,j)=0.0_r8
@@ -5679,16 +5980,21 @@
               Hscale(i,j)=1.0_r8/SQRT(om_v(i,j)*on_v(i,j))
             END DO
           END DO
-          DO iter=1,Nrandom
+!
+          RANDOM_SVS : DO iter=1,Nrandom
             CALL white_noise2d (ng, iTLM, v2dvar, Rscheme(ng),          &
      &                          IstrR, IendR, Jstr, JendR,              &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          Amin, Amax, A2d)
+!
             DO j=JstrP,JendT
               DO i=IstrT,IendT
                 A2d(i,j)=A2d(i,j)*Hscale(i,j)
               END DO
             END DO
+!
+!  Tangent linear explicit horizontal convolution.
+!
             CALL tl_conv_v2d_tile (ng, tile, iTLM,                      &
      &                             LBi, UBi, LBj, UBj,                  &
      &                             IminS, ImaxS, JminS, JmaxS,          &
@@ -5701,13 +6007,17 @@
      &                             vmask, pmask,                        &
 #  endif
      &                             A2d)
+!
             DO j=JstrV,Jend
               DO i=Istr,Iend
                 A2davg(i,j)=A2davg(i,j)+A2d(i,j)
                 A2dsqr(i,j)=A2dsqr(i,j)+A2d(i,j)*A2d(i,j)
               END DO
             END DO
-          END DO
+          END DO RANDOM_SVS
+!
+!  Set normalization factors.
+!
           DO j=JstrV,Jend
             DO i=Istr,Iend
               Aavg=FacAvg*A2davg(i,j)
@@ -5723,16 +6033,22 @@
 #  endif
             END DO
           END DO
+!
+!  Exchange boundary data.
+!
           CALL dabc_v2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        HnormSVS)
 #  ifdef DISTRIBUTE
+!
           CALL mp_exchange2d (ng, tile, iTLM, 1,                        &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        NghostPoints,                             &
      &                        EWperiodic(ng), NSperiodic(ng),           &
      &                        HnormSVS)
 #  endif
+!
+!  Write out into output NetCDF file.
 !
           SELECT CASE (NRM(ifile,ng)%IOtype)
             CASE (io_nf90)
@@ -5767,23 +6083,26 @@
 #  endif
           END SELECT
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-# endif
+        END IF COMPUTE_SVS
+# endif /* ADJUST_WSTRESS */
+
 # if defined ADJUST_STFLUX && defined SOLVE3D
 !
-!  2D norm at surface tracer flux points.
+!-----------------------------------------------------------------------
+!  2D normalization for surface tracer flux.
+!-----------------------------------------------------------------------
 !
         IF (Master) THEN
           Lsame=.FALSE.
           DO itrc=1,NT(ng)
             IF (Lstflux(itrc,ng)) THEN
-              is=isTsur(itrc)
-              IF (Cnorm(rec,is)) Lsame=.TRUE.
+              ifield=isTsur(itrc)
+              IF (Cnorm(rec,ifield)) Lsame=.TRUE.
             END IF
           END DO
           IF (Lsame) THEN
             WRITE (stdout,20) TRIM(Text),                               &
-     &                        '2D normalization factors at RHO-points'
+     &            '2D normalization factors at RHO-points'
             FLUSH (stdout)
           END IF
         END IF
@@ -5813,45 +6132,55 @@
             Hscale(i,j)=1.0_r8/SQRT(om_r(i,j)*on_r(i,j))
           END DO
         END DO
-        DO itrc=1,UBt
+!
+        TRACER_FLUX_LOOP : DO itrc=1,UBt
           IF (Lstflux(itrc,ng)) THEN
-            is=isTsur(itrc)
-            IF (Cnorm(rec,is)) THEN
+            ifield=isTsur(itrc)
+            COMPUTE_STF : IF (Cnorm(rec,ifield)) THEN
               DO j=JstrT,JendT
                 DO i=IstrT,IendT
                   A2davg(i,j)=0.0_r8
                   A2dsqr(i,j)=0.0_r8
                 END DO
               END DO
-              DO iter=1,Nrandom
+!
+              RANDOM_STF : DO iter=1,Nrandom
                 CALL white_noise2d (ng, iTLM, r2dvar, Rscheme(ng),      &
      &                              IstrR, IendR, JstrR, JendR,         &
      &                              LBi, UBi, LBj, UBj,                 &
      &                              Amin, Amax, A2d)
+!
                 DO j=JstrT,JendT
                   DO i=IstrT,IendT
                     A2d(i,j)=A2d(i,j)*Hscale(i,j)
                   END DO
                 END DO
+!
+!  Tangent linear explicit horizontal convolution.
+!
                 CALL tl_conv_r2d_tile (ng, tile, iTLM,                  &
      &                                 LBi, UBi, LBj, UBj,              &
      &                                 IminS, ImaxS, JminS, JmaxS,      &
      &                                 NghostPoints,                    &
-     &                                 NHsteps(rec,is)/ifac,            &
-     &                                 DTsizeH(rec,is),                 &
+     &                                 NHsteps(rec,ifield)/ifac,        &
+     &                                 DTsizeH(rec,ifield),             &
      &                                 Kh,                              &
      &                                 pm, pn, pmon_u, pnom_v,          &
 #  ifdef MASKING
      &                                 rmask, umask, vmask,             &
 #  endif
      &                                 A2d)
+!
                 DO j=Jstr,Jend
                   DO i=Istr,Iend
                     A2davg(i,j)=A2davg(i,j)+A2d(i,j)
                     A2dsqr(i,j)=A2dsqr(i,j)+A2d(i,j)*A2d(i,j)
                   END DO
                 END DO
-              END DO
+              END DO RANDOM_STF
+!
+!  Set normalization factors.
+!
               DO j=Jstr,Jend
                 DO i=Istr,Iend
                   Aavg=FacAvg*A2davg(i,j)
@@ -5867,9 +6196,13 @@
 #  endif
                 END DO
               END DO
-            END IF
+            END IF COMPUTE_STF
           END IF
-        END DO
+        END DO TRACER_FLUX_LOOP
+!
+!  If same correlation parameters, replicate normalization factors
+!  for the remaining tracer fields.
+!
         IF (Lsame) THEN
           DO itrc=2,NT(ng)
             IF (Lstflux(itrc,ng)) THEN
@@ -5881,20 +6214,26 @@
             END IF
           END DO
         END IF
+!
+!  Exchange boundary data.
+!
         DO itrc=1,NT(ng)
           IF (Lstflux(itrc,ng)) THEN
-            is=isTsur(itrc)
-            IF (Cnorm(rec,is)) THEN
+            ifield=isTsur(itrc)
+            IF (Cnorm(rec,ifield)) THEN
               CALL dabc_r2d_tile (ng, tile,                             &
      &                            LBi, UBi, LBj, UBj,                   &
      &                            HnormSTF(:,:,itrc))
 #  ifdef DISTRIBUTE
+!
               CALL mp_exchange2d (ng, tile, iTLM, 1,                    &
      &                            LBi, UBi, LBj, UBj,                   &
      &                            NghostPoints,                         &
      &                            EWperiodic(ng), NSperiodic(ng),       &
      &                            HnormSTF(:,:,itrc))
 #  endif
+!
+!  Write out into output NetCDF file.
 !
               SELECT CASE (NRM(ifile,ng)%IOtype)
                 CASE (io_nf90)
@@ -5935,21 +6274,210 @@
             END IF
           END IF
         END DO
-# endif
-      END IF
+# endif /* ADJUST_STFLUX */
+      END IF FRC_LWRITE_NRM
 #endif
 !
       IF (Master) THEN
         WRITE (stdout,30)
       END IF
-
+!
  10   FORMAT (/,' Error Covariance Factors: Randomization Method',/)
  20   FORMAT (4x,'Computing',1x,a,1x,a)
  30   FORMAT (/)
 !
       RETURN
       END SUBROUTINE randomization_tile
+!
+!:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+!  Support PRIVATE functions.
+!:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+!
+!
+!***********************************************************************
+      FUNCTION dot_prod2d (ng, tile, model, ctype,                      &
+     &                     LBi, UBi, LBj, UBj,                          &
+     &                     A1, A2) RESULT (DotProd)
+!***********************************************************************
+!
+!  Imported variable declarations.
+!
+      integer,   intent(in   ) :: ng                  ! nested grid
+      integer,   intent(in   ) :: tile                ! domain partition
+      integer,   intent(in   ) :: model               ! kernel ID
+      integer,   intent(in   ) :: ctype               ! C-grid type
+      integer,   intent(in   ) :: LBi, UBi, LBj, UBj
+      real (r8), intent(in   ) :: A1(LBi:,LBj:)
+      real (r8), intent(in   ) :: A2(LBi:,LBj:)
+!
+!  Local variable declarations.
+!
+      integer   :: IstrT, IstrP, IendT, Imin, Imax
+      integer   :: JstrT, JstrP, JendT, Jmin, Jmax
+      integer   :: NSUB, i, j
+      real (r8) :: DotProd
+      real (r8) :: cff, my_DotProd
+#ifdef DISTRIBUTE
+      character (len=3) :: op_handle
+#endif
+!
+!-----------------------------------------------------------------------
+!  It computes the dot product between two 2D tiled arrays.
+!-----------------------------------------------------------------------
+!
+!  Initialize.
+!
+      IstrT=BOUNDS(ng)%IstrT(tile)   ! tile computational range
+      IstrP=BOUNDS(ng)%IstrP(tile)
+      IendT=BOUNDS(ng)%IendT(tile)
+      JstrP=BOUNDS(ng)%JstrP(tile)
+      JendT=BOUNDS(ng)%JendT(tile)
+!
+      Imin=IstrT
+      Imax=IendT
+      Jmin=JstrT
+      Jmax=JendT
+      SELECT CASE (ctype)
+        CASE (u2dvar, u3dvar)
+          Imin=IstrP
+        CASE (v2dvar, v3dvar)
+          Jmin=JstrP
+      END SELECT
+!
+!  Compute dot product between A1 and A2 arrays.
+!
+      my_DotProd=0.0_r8
+      DO j=Jmin,Jmax
+        DO i=Imin,Imax
+          cff=A1(i,j)*A2(i,j)
+          my_DotProd=my_DotProd+cff
+        END DO
+      END DO
+!
+!  Perform parallel global reduction operation.
+!
+#ifdef DISTRIBUTE
+      NSUB=1                             ! distributed-memory
+#else
+      IF (DOMAIN(ng)%SouthWest_Corner(tile).and.                        &
+     &    DOMAIN(ng)%NorthEast_Corner(tile)) THEN
+        NSUB=1                           ! non-tiled application
+      ELSE
+        NSUB=NtileX(ng)*NtileE(ng)       ! tiled application
+      END IF
+#endif
+!$OMP CRITICAL (DOT_PROD)
+      IF (tile_count.eq.0) THEN
+        DotProd=0.0_r8
+      END IF
+      DotProd=DotProd+my_DotProd
+      tile_count=tile_count+1
+      IF (tile_count.eq.NSUB) THEN
+        tile_count=0
+#ifdef DISTRIBUTE
+        op_handle='SUM'
+        CALL mp_reduce (ng, model, 1, DotProd, op_handle)
+#endif
+      END IF
+!$OMP END CRITICAL (DOT_PROD)
+!
+      RETURN
+      END FUNCTION dot_prod2d
 
+#ifdef SOLVE3D
+!
+!***********************************************************************
+      FUNCTION dot_prod3d (ng, tile, model, ctype,                      &
+     &                     LBi, UBi, LBj, UBj, LBk, UBk,                &
+     &                     A1, A2) RESULT (DotProd)
+!***********************************************************************
+!
+!  Imported variable declarations.
+!
+      integer,   intent(in   ) :: ng                  ! nested grid
+      integer,   intent(in   ) :: tile                ! domain partition
+      integer,   intent(in   ) :: model               ! kernel ID
+      integer,   intent(in   ) :: ctype               ! C-grid type
+      integer,   intent(in   ) :: LBi, UBi, LBj, UBj, LBk, UBk
+      real (r8), intent(in   ) :: A1(LBi:,LBj:,LBk:)
+      real (r8), intent(in   ) :: A2(LBi:,LBj:,LBk:)
+!
+!  Local variable declarations.
+!
+      integer   :: IstrT, IstrP, IendT, Imin, Imax
+      integer   :: JstrT, JstrP, JendT, Jmin, Jmax
+      integer   :: NSUB, i, j, k
+      real (r8) :: DotProd
+      real (r8) :: cff, my_DotProd
+# ifdef DISTRIBUTE
+      character (len=3) :: op_handle
+# endif
+!
+!-----------------------------------------------------------------------
+!  It computes the dot product between two 2D tiled arrays.
+!-----------------------------------------------------------------------
+!
+!  Initialize.
+!
+      IstrT=BOUNDS(ng)%IstrT(tile)   ! tile computational range
+      IstrP=BOUNDS(ng)%IstrP(tile)
+      IendT=BOUNDS(ng)%IendT(tile)
+      JstrP=BOUNDS(ng)%JstrP(tile)
+      JendT=BOUNDS(ng)%JendT(tile)
+!
+      Imin=IstrT
+      Imax=IendT
+      Jmin=JstrT
+      Jmax=JendT
+      SELECT CASE (ctype)
+        CASE (u2dvar, u3dvar)
+          Imin=IstrP
+        CASE (v2dvar, v3dvar)
+          Jmin=JstrP
+      END SELECT
+!
+!  Compute dot product between A1 and A2 arrays.
+!
+      my_DotProd=0.0_r8
+      DO k=LBk,UBk
+        DO j=Jmin,Jmax
+          DO i=Imin,Imax
+            cff=A1(i,j,k)*A2(i,j,k)
+            my_DotProd=my_DotProd+cff
+          END DO
+        END DO
+      END DO
+!
+!  Perform parallel global reduction operation.
+!
+# ifdef DISTRIBUTE
+      NSUB=1                             ! distributed-memory
+# else
+      IF (DOMAIN(ng)%SouthWest_Corner(tile).and.                        &
+     &    DOMAIN(ng)%NorthEast_Corner(tile)) THEN
+        NSUB=1                           ! non-tiled application
+      ELSE
+        NSUB=NtileX(ng)*NtileE(ng)       ! tiled application
+      END IF
+# endif
+!$OMP CRITICAL (DOT_PROD)
+      IF (tile_count.eq.0) THEN
+        DotProd=0.0_r8
+      END IF
+      DotProd=DotProd+my_DotProd
+      tile_count=tile_count+1
+      IF (tile_count.eq.NSUB) THEN
+        tile_count=0
+# ifdef DISTRIBUTE
+        op_handle='SUM'
+        CALL mp_reduce (ng, model, 1, DotProd, op_handle)
+# endif
+      END IF
+!$OMP END CRITICAL (DOT_PROD)
+!
+      RETURN
+      END FUNCTION dot_prod3d
+#endif
 !
 !***********************************************************************
       SUBROUTINE wrt_norm2d_nf90 (ng, tile, model, ncname,              &

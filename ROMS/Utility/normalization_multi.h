@@ -163,7 +163,12 @@
 !
       implicit none
 !
+! <><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>
+!
+!  Module public and private routines:
+!
       PUBLIC  :: normalization
+!
       PRIVATE :: normalization_tile
       PRIVATE :: randomization_tile
 !
@@ -180,6 +185,8 @@
 #if defined PIO_LIB && defined DISTRIBUTE
       PRIVATE :: wrt_norm3d_pio
 #endif
+!
+! <><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>
 !
       CONTAINS
 !
@@ -202,7 +209,7 @@
 !
       IF (Nmethod(ng).eq.0) THEN
         CALL normalization_tile (B_ms(ng), ng, tile,                    &
-     &                           LBi, UBi, LBj, UBj, 1, N(ng),          &
+     &                           LBi, UBi, LBj, UBj,                    &
      &                           LBij, UBij,                            &
      &                           IminS, ImaxS, JminS, JmaxS,            &
      &                           nstp(ng), nnew(ng), ifac,              &
@@ -241,7 +248,7 @@
 !
       ELSE IF (Nmethod(ng).eq.1) THEN
         CALL randomization_tile (B_ms(ng), ng, tile,                    &
-     &                           LBi, UBi, LBj, UBj, 1, N(ng),          &
+     &                           LBi, UBi, LBj, UBj,                    &
      &                           LBij, UBij,                            &
      &                           IminS, ImaxS, JminS, JmaxS,            &
      &                           nstp(ng), nnew(ng), ifac,              &
@@ -281,7 +288,7 @@
 !
 !***********************************************************************
       SUBROUTINE normalization_tile (self, ng, tile,                    &
-     &                               LBi, UBi, LBj, UBj, LBk, UBk,      &
+     &                               LBi, UBi, LBj, UBj,                &
      &                               LBij, UBij,                        &
      &                               IminS, ImaxS, JminS, JmaxS,        &
      &                               nstp, nnew, ifac,                  &
@@ -312,7 +319,7 @@
       CLASS (multiscale), intent(inout) :: self
 !
       integer, intent(in) :: ng, tile
-      integer, intent(in) :: LBi, UBi, LBj, UBj, LBk, UBk, LBij, UBij
+      integer, intent(in) :: LBi, UBi, LBj, UBj, LBij, UBij
       integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: nstp, nnew, ifac
 !
@@ -443,6 +450,7 @@
 #include "set_bounds.h"
 !
       SourceFile=MyFile
+
       my_time=tdays(ng)*day2sec
 
 #ifdef SOLVE3D
@@ -453,7 +461,7 @@
 !
       DO i=LBi,UBi
         DO j=LBj,UBj
-          A2d(i,j)=0.0_r8                   ! free surface             
+          A2d(i,j)=0.0_r8                   ! free surface
         END DO
       END DO
 
@@ -545,12 +553,14 @@
      &                '2D normalization factors at RHO-points'
                 FLUSH (stdout)
               END IF
+!
               DO j=JstrT,JendT
                 DO i=IstrT,IendT
                   Hscale(i,j)=1.0_r8/SQRT(GRID(ng)%om_r(i,j)*           &
      &                                    GRID(ng)%on_r(i,j))
                 END DO
               END DO
+!
               DO jc=Jmin,Jmax
                 DO ic=Imin,Imax
 #ifdef MASKING
@@ -586,10 +596,11 @@
 !
                     CALL self%ad_CI_2d (ng, tile, iADM, isFsur,         &
      &                                  r2dvar, ns, NiterCI(ns,ng),     &
-     &                                  Lweak,                          & 
+     &                                  Lweak,                          &
      &                                  LBi, UBi, LBj, UBj,             &
      &                                  IminS, ImaxS, JminS, JmaxS,     &
      &                                  A2d)
+!
                     DO j=JstrT,JendT
                       DO i=IstrT,IendT
                         A2d(i,j)=A2d(i,j)*Hscale(i,j)
@@ -682,11 +693,13 @@
                 Jmin=1
                 Jmax=Mm(ng)
               END IF
+!
               IF (Master) THEN
                 WRITE (stdout,20) TRIM(Text),                           &
      &                '2D normalization factors at   U-points'
                 FLUSH (stdout)
               END IF
+!
               DO j=JstrT,JendT
                 DO i=IstrP,IendT
                   Hscale(i,j)=1.0_r8/SQRT(GRID(ng)%om_u(i,j)*           &
@@ -729,10 +742,11 @@
 !
                     CALL self%ad_CI_2d (ng, tile, iADM, isUbar,         &
      &                                  u2dvar, ns, NiterCI(ns,ng),     &
-     &                                  Lweak,                          & 
+     &                                  Lweak,                          &
      &                                  LBi, UBi, LBj, UBj,             &
      &                                  IminS, ImaxS, JminS, JmaxS,     &
      &                                  A2d)
+!
                     DO j=JstrT,JendT
                       DO i=IstrP,IendT
                         A2d(i,j)=A2d(i,j)*Hscale(i,j)
@@ -757,12 +771,13 @@
               END DO
             END DO MS_U2D_LOOP
 !
-!  Exchage boundary data.
+!  Exchange boundary data.
 !
             CALL dabc_u2d_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          HnormU(:,:,ifile))
 #ifdef DISTRIBUTE
+!
             CALL mp_exchange2d (ng, tile, iTLM, 1,                      &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          NghostPoints,                           &
@@ -824,11 +839,13 @@
                 Jmin=2
                 Jmax=Mm(ng)
               END IF
+!
               IF (Master) THEN
                 WRITE (stdout,20) TRIM(Text),                           &
      &                '2D normalization factors at   V-points'
                 FLUSH (stdout)
               END IF
+!
               DO j=JstrP,JendT
                 DO i=IstrT,IendT
                   Hscale(i,j)=1.0_r8/SQRT(GRID(ng)%om_v(i,j)*           &
@@ -871,10 +888,11 @@
 !
                     CALL self%ad_CI_2d (ng, tile, iADM, isVbar,         &
      &                                  v2dvar, ns, NiterCI(ns,ng),     &
-     &                                  Lweak,                          & 
+     &                                  Lweak,                          &
      &                                  LBi, UBi, LBj, UBj,             &
      &                                  IminS, ImaxS, JminS, JmaxS,     &
      &                                  A2d)
+!
                     DO j=JstrP,JendT
                       DO i=IstrT,IendT
                         A2d(i,j)=A2d(i,j)*Hscale(i,j)
@@ -887,7 +905,6 @@
      &                                LBi, UBi, LBj, UBj,               &
      &                                A2d, A2d)
                     cff=1.0_r8/SQRT(Gdotp)
-!
                   ELSE
                     cff=0.0_r8
                   END IF
@@ -906,6 +923,7 @@
      &                          LBi, UBi, LBj, UBj,                     &
      &                          HnormV(:,:,ifile))
 #ifdef DISTRIBUTE
+!
             CALL mp_exchange2d (ng, tile, iTLM, 1,                      &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          NghostPoints,                           &
@@ -969,11 +987,13 @@
                 Jmin=1
                 Jmax=Mm(ng)
               END IF
+!
               IF (Master) THEN
                 WRITE (stdout,20) TRIM(Text),                           &
      &                '3D normalization factors at   U-points'
                 FLUSH (stdout)
               END IF
+!
               DO j=JstrT,JendT
                 DO i=IstrP,IendT
                   cff=GRID(ng)%om_u(i,j)*GRID(ng)%on_u(i,j)*0.5_r8
@@ -1034,7 +1054,7 @@
 !
                       CALL self%ad_CI_3d (ng, tile, iADM, isUvel,       &
      &                                    u3dvar, ns, NiterCI(ns,ng),   &
-     &                                    Lweak,                        & 
+     &                                    Lweak,                        &
      &                                    LBi, UBi, LBj, UBj,           &
      &                                    IminS, ImaxS, JminS, JmaxS,   &
      &                                    A3d)
@@ -1072,6 +1092,7 @@
      &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
      &                          VnormU(:,:,:,ifile))
 # ifdef DISTRIBUTE
+!
             CALL mp_exchange3d (ng, tile, iTLM, 1,                      &
      &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
      &                          NghostPoints,                           &
@@ -1133,11 +1154,13 @@
                   Jmin=2
                 Jmax=Mm(ng)
               END IF
+!
               IF (Master) THEN
                 WRITE (stdout,20) TRIM(Text),                           &
      &                '3D normalization factors at   V-points'
                 FLUSH (stdout)
               END IF
+!
               DO j=JstrP,JendT
                 DO i=IstrT,IendT
                   cff=GRID(ng)%om_v(i,j)*GRID(ng)%on_v(i,j)*0.5_r8
@@ -1198,7 +1221,7 @@
 !
                       CALL self%ad_CI_3d (ng, tile, iADM, isVvel,       &
      &                                    v3dvar, ns, NiterCI(ns,ng),   &
-     &                                    Lweak,                        & 
+     &                                    Lweak,                        &
      &                                    LBi, UBi, LBj, UBj,           &
      &                                    IminS, ImaxS, JminS, JmaxS,   &
      &                                    A3d)
@@ -1287,8 +1310,8 @@
           IF (Master) THEN
             Lsame=.FALSE.
             DO itrc=1,NT(ng)
-              is=isTvar(itrc)
-              IF (Cnorm(ifile,is)) Lsame=.TRUE.
+              ifield=isTvar(itrc)
+              IF (Cnorm(ifile,ifield)) Lsame=.TRUE.
             END DO
             IF (Lsame) THEN
               WRITE (stdout,20) TRIM(Text),                             &
@@ -1390,7 +1413,7 @@
 !
                         CALL self%ad_CI_3d (ng, tile, iADM, ifield,     &
      &                                      r3dvar, ns, NiterCI(ns,ng), &
-     &                                      Lweak,                      & 
+     &                                      Lweak,                      &
      &                                      LBi, UBi, LBj, UBj,         &
      &                                      IminS, ImaxS, JminS, JmaxS, &
      &                                      A3d)
@@ -1437,11 +1460,13 @@
 !  Exchange boundary data.
 !
           DO itrc=1,NT(ng)
-            IF (Cnorm(ifile,is)) THEN
+            ifield=isTvar(itrc)
+            IF (Cnorm(ifile,ifield)) THEN
               CALL dabc_r3d_tile (ng, tile,                             &
      &                            LBi, UBi, LBj, UBj, 1, N(ng),         &
      &                            VnormR(:,:,:,ifile,itrc))
 # ifdef DISTRIBUTE
+!
               CALL mp_exchange3d (ng, tile, iTLM, 1,                    &
      &                            LBi, UBi, LBj, UBj, 1, N(ng),         &
      &                            NghostPoints,                         &
@@ -1551,7 +1576,7 @@
 
         IF (Master.and.ANY(CnormB(isFsur,:))) THEN
           WRITE (stdout,20) TRIM(Text),                                 &
-     &                      '2D normalization factors at RHO-points'
+     &          '2D normalization factors at RHO-points'
           FLUSH (stdout)
         END IF
 !
@@ -1626,6 +1651,7 @@
                       DO j=JstrT,JendT
                         B2d(j)=B2d(j)*HscaleB(j)
                       END DO
+!
                       DO j=JstrT,JendT
                         B2d(j)=B2d(j)*HscaleB(j)
                       END DO
@@ -1633,6 +1659,7 @@
                       DO i=IstrT,IendT
                         B2d(i)=B2d(i)*HscaleB(i)
                       END DO
+!
                       DO i=IstrT,IendT
                         B2d(i)=B2d(i)*HscaleB(i)
                       END DO
@@ -1645,15 +1672,15 @@
      &                                 LBij, UBij,                      &
      &                                 IminS, ImaxS, JminS, JmaxS,      &
      &                                 B2d)
+!
+!  Set normalization factors.
+!
                   IF (bounded) THEN
                     cff=1.0_r8/SQRT(B2d(ib))
                   END IF
                 ELSE
                   cff=0.0_r8
                 END IF
-!
-!  Set normalization factors.
-!
                 IF (bounded) THEN
                   HnormRobc(ib,ibry)=HnormRobc(ib,ibry)+                &
      &                               self%Bwgt(isFsur,ns)*cff
@@ -1667,6 +1694,7 @@
      &                            LBij, UBij,                           &
      &                            HnormRobc(:,ibry))
 # ifdef DISTRIBUTE
+!
             CALL mp_collect (ng, iTLM, IJlen, Aspv,                     &
      &                       HnormRobc(LBij:,ibry))
 # endif
@@ -1711,7 +1739,7 @@
 
         IF (Master.and.ANY(CnormB(isUbar,:))) THEN
           WRITE (stdout,20) TRIM(Text),                                 &
-     &                      '2D normalization factors at   U-points'
+     &          '2D normalization factors at   U-points'
           FLUSH (stdout)
         END IF
 !
@@ -1791,6 +1819,7 @@
                       DO j=JstrT,JendT
                         B2d(j)=B2d(j)*HscaleB(j)
                       END DO
+!
                       DO j=JstrT,JendT
                         B2d(j)=B2d(j)*HscaleB(j)
                       END DO
@@ -1798,6 +1827,7 @@
                       DO i=IstrP,IendT
                         B2d(i)=B2d(i)*HscaleB(i)
                       END DO
+!
                       DO i=IstrP,IendT
                         B2d(i)=B2d(i)*HscaleB(i)
                       END DO
@@ -1805,20 +1835,20 @@
 !
 !  Implicit tangent linear convolution, CG/CI solver.
 !
-                  CALL self%tl_CI_b1d (ng, tile, iADM, isUbar, ibry,    &
+                  CALL self%tl_CI_b1d (ng, tile, iTLM, isUbar, ibry,    &
      &                                 u2dvar, ns, NiterCI(ns,ng),      &
      &                                 LBij, UBij,                      &
      &                                 IminS, ImaxS, JminS, JmaxS,      &
      &                                 B2d)
+!
+!  Set normalization factors.
+!
                   IF (bounded) THEN
                     cff=1.0_r8/SQRT(B2d(ib))
                   END IF
                 ELSE
                   cff=0.0_r8
                 END IF
-!
-!  Set normalization factors.
-!
                 IF (bounded) THEN
                   HnormUobc(ib,ibry)=HnormUobc(ib,ibry)+                &
      &                               self%Bwgt(isUbar,ns)*cff
@@ -1875,7 +1905,7 @@
 
         IF (Master.and.ANY(CnormB(isVbar,:))) THEN
           WRITE (stdout,20) TRIM(Text),                                 &
-     &                      '2D normalization factors at   V-points'
+     &          '2D normalization factors at   V-points'
           FLUSH (stdout)
         END IF
 !
@@ -1886,7 +1916,7 @@
 !
               SELECT CASE (ibry)
                 CASE (iwest, ieast)
-                  i=BOUNDS(ng)%edge(ibry,u2dvar)
+                  i=BOUNDS(ng)%edge(ibry,v2dvar)
                   IF (NSperiodic(ng)) THEN
                     Bmin=1
                     Bmax=Mm(ng)
@@ -1955,6 +1985,7 @@
                       DO j=JstrP,JendT
                         B2d(j)=B2d(j)*HscaleB(j)
                       END DO
+!
                       DO j=JstrP,JendT
                         B2d(j)=B2d(j)*HscaleB(j)
                       END DO
@@ -1962,6 +1993,7 @@
                       DO i=IstrT,IendT
                         B2d(i)=B2d(i)*HscaleB(i)
                       END DO
+!
                       DO i=IstrT,IendT
                         B2d(i)=B2d(i)*HscaleB(i)
                       END DO
@@ -1969,20 +2001,20 @@
 !
 !  Implicit tangent linear convolution, CG/CI solver.
 !
-                  CALL self%tl_CI_b1d (ng, tile, iADM, isVbar, ibry,    &
+                  CALL self%tl_CI_b1d (ng, tile, iTLM, isVbar, ibry,    &
      &                                 v2dvar, ns, NiterCI(ns,ng),      &
      &                                 LBij, UBij,                      &
      &                                 IminS, ImaxS, JminS, JmaxS,      &
      &                                 B2d)
+!
+!  Set normalization factors.
+!
                   IF (bounded) THEN
                     cff=1.0_r8/SQRT(B2d(ib))
                   END IF
                 ELSE
                   cff=0.0_r8
                 END IF
-!
-!  Set normalization factors.
-!
                 IF (bounded) THEN
                   HnormVobc(ib,ibry)=HnormVobc(ib,ibry)+                &
      &                               self%Bwgt(isVbar,ns)*cff
@@ -1996,6 +2028,7 @@
      &                            LBij, UBij,                           &
      &                            HnormVobc(:,ibry))
 # ifdef DISTRIBUTE
+!
             CALL mp_collect (ng, iTLM, IJlen, Aspv,                     &
      &                       HnormVobc(LBij:,ibry))
 # endif
@@ -2034,14 +2067,14 @@
 # ifdef SOLVE3D
 !
 !-----------------------------------------------------------------------
-!  3D boundary norm at U-points.
+!  3D boundary normalization at U-points.
 !-----------------------------------------------------------------------
 !
         VnormUobc=Aspv
 
         IF (Master.and.ANY(CnormB(isUvel,:))) THEN
           WRITE (stdout,20) TRIM(Text),                                 &
-     &                      '3D normalization factors at   U-points'
+     &          '3D normalization factors at   U-points'
           FLUSH (stdout)
         END IF
 !
@@ -2050,7 +2083,7 @@
           BRY_COMPUTE_U3D : IF (CnormB(isUvel,ibry)) THEN
             BRY_MS_LOOP_U3D : DO ns=1,Nscale(ng)
 !
-               SELECT CASE (ibry)
+              SELECT CASE (ibry)
                 CASE (iwest, ieast)
                   i=BOUNDS(ng)%edge(ibry,u2dvar)
                   Bmin=1
@@ -2066,7 +2099,7 @@
                     END DO
                   END IF
                 CASE (isouth, inorth)
-                  j=BOUNDS(ng)%edge(ibry,v2dvar)
+                  j=BOUNDS(ng)%edge(ibry,u2dvar)
                   IF (EWperiodic(ng)) THEN
                     Bmin=1
                     Bmax=Lm(ng)
@@ -2088,15 +2121,16 @@
 !
               DO kb=1,N(ng)
                 DO ib=Bmin,Bmax
-                  IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
-                    bounded=Lconvolve(ibry).and.                        &
-     &                      ((Jstr.le.ib).and.(ib.le.Jend))
-                    j=ib
-                  ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
-                    bounded=Lconvolve(ibry).and.                        &
-     &                      ((Istr.le.ib).and.(ib.le.Iend))
-                    i=ib
-                  END IF
+                  SELECT CASE (ibry)
+                    CASE (iwest, ieast)
+                      bounded=Lconvolve(ibry).and.                      &
+     &                        ((Jstr.le.ib).and.(ib.le.Jend))
+                      j=ib
+                    CASE (isouth, inorth)
+                      bounded=Lconvolve(ibry).and.                      &
+     &                        ((Istr.le.ib).and.(ib.le.Iend))
+                      i=ib
+                  END SELECT
 #   ifdef MASKING
                   IF (bounded) THEN
                     compute=GRID(ng)%umask(i,j)
@@ -2182,15 +2216,14 @@
      &                                      DTsizeVB(ibry,isUvel), Kv,  &
      &                                      B3d)
 !
+!  Set normalization factors.
+!
                     IF (bounded) THEN
                       cff=1.0_r8/SQRT(B3d(ib,kb))
                     END IF
                   ELSE
                     cff=0.0_r8
                   END IF
-!
-!  Set normalization factors.
-!
                   IF (bounded) THEN
                     VnormUobc(ib,kb,ibry)=VnormUobc(ib,kb,ibry)+        &
      &                                    self%Bwgt(isUvel,ns)*cff
@@ -2257,7 +2290,7 @@
 
         IF (Master.and.ANY(CnormB(isVvel,:))) THEN
           WRITE (stdout,20) TRIM(Text),                                 &
-     &                      '3D normalization factors at   V-points'
+     &          '3D normalization factors at   V-points'
           FLUSH (stdout)
         END IF
 !
@@ -2268,7 +2301,7 @@
 !
               SELECT CASE (ibry)
                 CASE (iwest, ieast)
-                  i=BOUNDS(ng)%edge(ibry,u2dvar)
+                  i=BOUNDS(ng)%edge(ibry,v2dvar)
                   IF (NSperiodic(ng)) THEN
                     Bmin=1
                     Bmax=Mm(ng)
@@ -2287,7 +2320,7 @@
                     END DO
                   END IF
                 CASE (isouth, inorth)
-                  j=BOUNDS(ng)%edge(ibry,u2dvar)
+                  j=BOUNDS(ng)%edge(ibry,v2dvar)
                   Bmin=1
                   Bmax=Lm(ng)
                   IF (Lconvolve(ibry)) THEN
@@ -2398,15 +2431,15 @@
      &                                      LBij, UBij,                 &
      &                                      DTsizeVB(ibry,isVvel), Kv,  &
      &                                      B3d)
+!
+!  Set normalization factors.
+!
                     IF (bounded) THEN
                       cff=1.0_r8/SQRT(B3d(ib,kb))
                     END IF
                   ELSE
                     cff=0.0_r8
                   END IF
-!
-!  Set normalization factors.
-!
                   IF (bounded) THEN
                     VnormVobc(ib,kb,ibry)=VnormVobc(ib,kb,ibry)+        &
      &                                    self%Bwgt(isVvel,ns)*cff
@@ -2479,7 +2512,7 @@
           END DO
           IF (Lsame) THEN
             WRITE (stdout,20) TRIM(Text),                               &
-     &                        '3D normalization factors at RHO-points'
+     &            '3D normalization factors at RHO-points'
             FLUSH (stdout)
           END IF
         END IF
@@ -2495,7 +2528,7 @@
                 SELECT CASE (ibry)
                   CASE (iwest, ieast)
                     i=BOUNDS(ng)%edge(ibry,r2dvar)
-                    Bmin=2
+                    Bmin=1
                     Bmax=Mm(ng)
                     IF (Lconvolve(ibry)) THEN
                       DO j=JstrT,JendT
@@ -2618,15 +2651,15 @@
      &                                        LBij, UBij,               &
      &                                        DTsizeVB(ibry,ifield), Kv,&
      &                                        B3d)
+!
+!  Set normalization factors.
+!
                       IF (bounded) THEN
                         cff=1.0_r8/SQRT(B3d(ib,kb))
                       END IF
                     ELSE
                       cff=0.0_r8
                     END IF
-!
-!  Set normalization factors.
-!
                     IF (bounded) THEN
                       VnormRobc(ib,kb,ibry,itrc)=                       &
      &                                     VnormRobc(ib,kb,ibry,itrc)+  &
@@ -2771,11 +2804,13 @@
               Jmin=1
               Jmax=Mm(ng)
             END IF
+!
             IF (Master) THEN
               WRITE (stdout,20) TRIM(Text),                             &
      &              '2D normalization factors at U-stress points'
               FLUSH (stdout)
             END IF
+!
             DO j=JstrT,JendT
               DO i=IstrP,IendT
                 Hscale(i,j)=1.0_r8/SQRT(GRID(ng)%om_u(i,j)*             &
@@ -2816,6 +2851,7 @@
      &                                LBi, UBi, LBj, UBj,               &
      &                                IminS, ImaxS, JminS, JmaxS,       &
      &                                A2d)
+!
                   DO j=JstrT,JendT
                     DO i=IstrP,IendT
                       A2d(i,j)=A2d(i,j)*Hscale(i,j)
@@ -2908,11 +2944,13 @@
               Jmin=2
               Jmax=Mm(ng)
             END IF
+!
             IF (Master) THEN
               WRITE (stdout,20) TRIM(Text),                             &
      &              '2D normalization factors at V-stress points'
               FLUSH (stdout)
             END IF
+!
             DO j=JstrP,JendT
               DO i=IstrT,IendT
                 Hscale(i,j)=1.0_r8/SQRT(GRID(ng)%om_v(i,j)*             &
@@ -2953,6 +2991,7 @@
      &                                LBi, UBi, LBj, UBj,               &
      &                                IminS, ImaxS, JminS, JmaxS,       &
      &                                A2d)
+!
                   DO j=JstrP,JendT
                     DO i=IstrT,IendT
                       A2d(i,j)=A2d(i,j)*Hscale(i,j)
@@ -2983,6 +3022,7 @@
      &                        LBi, UBi, LBj, UBj,                       &
      &                        HnormSVS)
 #  ifdef DISTRIBUTE
+!
           CALL mp_exchange2d (ng, tile, iTLM, 1,                        &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        NghostPoints,                             &
@@ -3044,7 +3084,7 @@
           END DO
           IF (Lsame) THEN
             WRITE (stdout,20) TRIM(Text),                               &
-                              '2D normalization factors at RHO-points'
+                  '2D normalization factors at RHO-points'
             FLUSH (stdout)
           END IF
         END IF
@@ -3084,10 +3124,10 @@
           END DO
         END DO
 !
-        TRACER_FLUX_LOOP : DO itrc=1,NT(ng)
+        TRACER_FLUX_LOOP : DO itrc=1,UBt
           IF (Lstflux(itrc,ng)) THEN
             ifield=isTsur(itrc)
-            MS_COMPUTE_STF : IF (Cnorm(ifile,ifield)) THEN
+            MS_COMPUTE_STF : IF (Cnorm(rec,ifield)) THEN
               MS_STF_LOOP : DO ns=1,Nscale(ng)
                 DO jc=Jmin,Jmax
                   DO ic=Imin,Imax
@@ -3122,6 +3162,7 @@
      &                                    LBi, UBi, LBj, UBj,           &
      &                                    IminS, ImaxS, JminS, JmaxS,   &
      &                                    A2d)
+!
                       DO j=JstrT,JendT
                         DO i=IstrT,IendT
                           A2d(i,j)=A2d(i,j)*Hscale(i,j)
@@ -3137,6 +3178,7 @@
                     ELSE
                       cff=0.0_r8
                     END IF
+!
                     IF (((Jstr.le.jc).and.(jc.le.Jend)).and.            &
      &                  ((Istr.le.ic).and.(ic.le.Iend))) THEN
                       IF (Lsame) THEN
@@ -3238,7 +3280,7 @@
 !
 !***********************************************************************
       SUBROUTINE randomization_tile (self, ng, tile,                    &
-     &                               LBi, UBi, LBj, UBj, LBk, UBk,      &
+     &                               LBi, UBi, LBj, UBj,                &
      &                               LBij, UBij,                        &
      &                               IminS, ImaxS, JminS, JmaxS,        &
      &                               nstp, nnew, ifac,                  &
@@ -3269,7 +3311,7 @@
       CLASS (multiscale), intent(inout) :: self
 !
       integer, intent(in) :: ng, tile
-      integer, intent(in) :: LBi, UBi, LBj, UBj, LBk, UBk, LBij, UBij
+      integer, intent(in) :: LBi, UBi, LBj, UBj, LBij, UBij
       integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: nstp, nnew, ifac
 !
@@ -3359,7 +3401,7 @@
       integer :: UBt, itrc, k
 #endif
 #ifdef ADJUST_BOUNDARY
-      integer :: IJlen, IJKlen, ib, ibry, ic
+      integer :: IDmeta, IJlen, IJKlen, ib, ibry, ic
 #endif
       integer :: start(4), total(4)
 !
@@ -3424,7 +3466,7 @@
 !
       DO i=LBi,UBi
         DO j=LBj,UBj
-          A2d(i,j)=0.0_r8                   ! free surface             
+          A2d(i,j)=0.0_r8                   ! free surface
         END DO
       END DO
 
@@ -3714,7 +3756,7 @@
               END DO
             END DO MS_U2D_LOOP
 !
-!  Apply lateral boundary conditions.
+!  Exchange boundary data.
 !
             CALL dabc_u2d_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj,                     &
@@ -3896,7 +3938,7 @@
 #ifdef SOLVE3D
 !
 !-----------------------------------------------------------------------
-!  3D norm U-points.
+!  3D normalization U-points.
 !-----------------------------------------------------------------------
 !
           MS_COMPUTE_U3D : IF (Cnorm(ifile,isUvel)) THEN
@@ -3993,7 +4035,7 @@
               END DO
             END DO MS_U3D_LOOP
 !
-!  Exchange boundary information.
+!  Exchange boundary data.
 !
             CALL dabc_u3d_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
@@ -4051,7 +4093,7 @@
           MS_COMPUTE_V3D : IF (Cnorm(ifile,isVvel)) THEN
             IF (Master) THEN
               WRITE (stdout,20) TRIM(Text),                             &
-     &                          '3D normalization factors at   V-points'
+     &              '3D normalization factors at   V-points'
               FLUSH (stdout)
             END IF
 !
@@ -4142,7 +4184,7 @@
               END DO
             END DO MS_V3D_LOOP
 !
-!  Exchange boundary information.
+!  Exchange boundary data.
 !
             CALL dabc_v3d_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
@@ -4194,7 +4236,7 @@
           END IF MS_COMPUTE_V3D
 !
 !-----------------------------------------------------------------------
-!  3D norm at RHO-points.
+!  3D normalization at RHO-points.
 !-----------------------------------------------------------------------
 !
           IF (Master) THEN
@@ -4356,8 +4398,8 @@
 !  Exchange boundary data.
 !
           DO itrc=1,NT(ng)
-            is=isTvar(itrc)
-            IF (Cnorm(ifile,is)) THEN
+            ifield=isTvar(itrc)
+            IF (Cnorm(ifile,ifield)) THEN
               CALL dabc_r3d_tile (ng, tile,                             &
      &                            LBi, UBi, LBj, UBj, 1, N(ng),         &
      &                            VnormR(:,:,:,ifile,itrc))
@@ -4476,7 +4518,7 @@
 
         IF (Master.and.ANY(CnormB(isFsur,:))) THEN
           WRITE (stdout,20) TRIM(Text),                                 &
-     &                      '2D normalization factors at RHO-points'
+     &          '2D normalization factors at RHO-points'
           FLUSH (stdout)
         END IF
 !
@@ -4527,7 +4569,7 @@
                     END DO
                 END SELECT
 !
-!  Implicit adjoint convolution, CG/CI solver.
+!  Implicit tangent linear convolution, CG/CI solver.
 !
                 CALL self%tl_CI_b1d (ng, tile, iTLM, isFsur, ibry,      &
      &                               r2dvar, ns, NiterCI(ns,ng),        &
@@ -4611,27 +4653,27 @@
 !  Write out into output NetCDF file.
 !
         IF (ANY(CnormB(isFsur,:))) THEN
-          ifield=idSbry(isFsur)
+          IDmeta=idSbry(isFsur)
 !
           SELECT CASE (NRM(ifile,ng)%IOtype)
             CASE (io_nf90)
               CALL netcdf_put_fvar (ng, iTLM, ncname,                   &
-     &                              Vname(1,ifield),                    &
+     &                              Vname(1,IDmeta),                    &
      &                              HnormRobc(LBij:,:),                 &
      &                         start = (/1,1,NRM(ifile,ng)%Rindex/),    &
      &                         total = (/IJlen,4,1/),                   &
      &                         ncid = NRM(ifile,ng)%ncid,               &
-     &                         varid = NRM(ifile,ng)%Vid(ifield))
+     &                         varid = NRM(ifile,ng)%Vid(IDmeta))
 
 # if defined PIO_LIB && defined DISTRIBUTE
             CASE (io_pio)
               CALL pio_netcdf_put_fvar (ng, iTLM, ncname,               &
-     &                                  Vname(1,ifield),                &
+     &                                  Vname(1,IDmeta),                &
      &                                  HnormRobc(LBij:,:),             &
      &                         start = (/1,1,NRM(ifile,ng)%Rindex/),    &
      &                         total = (/IJlen,4,1/),                   &
      &                         pioFile = NRM(ifile,ng)%pioFile,         &
-     &                         pioVar = NRM(ifile,ng)%pioVar(ifield)%vd)
+     &                         pioVar = NRM(ifile,ng)%pioVar(IDmeta)%vd)
 
 # endif
           END SELECT
@@ -4639,7 +4681,7 @@
         END IF
 !
 !-----------------------------------------------------------------------
-!  2D boundary normalizationa at U-points.
+!  2D boundary normalization at U-points.
 !-----------------------------------------------------------------------
 !
         HnormUobc=Aspv
@@ -4697,7 +4739,7 @@
                     END DO
                 END SELECT
 !
-!  Implicit adjoint convolution, CG/CI solver.
+!  Implicit tangent linear convolution, CG/CI solver.
 !
                 CALL self%tl_CI_b1d (ng, tile, iTLM, isUbar, ibry,      &
      &                               u2dvar, ns, NiterCI(ns,ng),        &
@@ -4781,27 +4823,27 @@
 !  Write out into output NetCDF file.
 !
         IF (ANY(CnormB(isUbar,:))) THEN
-          ifield=idSbry(isUbar)
+          IDmeta=idSbry(isUbar)
 !
           SELECT CASE (NRM(ifile,ng)%IOtype)
             CASE (io_nf90)
               CALL netcdf_put_fvar (ng, iTLM, ncname,                   &
-     &                              Vname(1,ifield),                    &
+     &                              Vname(1,IDmeta),                    &
      &                              HnormUobc(LBij:,:),                 &
      &                         start = (/1,1,NRM(ifile,ng)%Rindex/),    &
      &                         total = (/IJlen,4,1/),                   &
      &                         ncid = NRM(ifile,ng)%ncid,               &
-     &                         varid = NRM(ifile,ng)%Vid(ifield))
+     &                         varid = NRM(ifile,ng)%Vid(IDmeta))
 
 # if defined PIO_LIB && defined DISTRIBUTE
             CASE (io_pio)
               CALL pio_netcdf_put_fvar (ng, iTLM, ncname,               &
-     &                                  Vname(1,ifield),                &
+     &                                  Vname(1,IDmeta),                &
      &                                  HnormUobc(LBij:,:),             &
      &                         start = (/1,1,NRM(ifile,ng)%Rindex/),    &
      &                         total = (/IJlen,4,1/),                   &
      &                         pioFile = NRM(ifile,ng)%pioFile,         &
-     &                         pioVar = NRM(ifile,ng)%pioVar(ifield)%vd)
+     &                         pioVar = NRM(ifile,ng)%pioVar(IDmeta)%vd)
 # endif
           END SELECT
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
@@ -4815,7 +4857,7 @@
 
         IF (Master.and.ANY(CnormB(isVbar,:))) THEN
           WRITE (stdout,20) TRIM(Text),                                 &
-     &                      '2D normalization factors at   V-points'
+     &          '2D normalization factors at   V-points'
           FLUSH (stdout)
         END IF
 !
@@ -4866,15 +4908,14 @@
                     END DO
                 END SELECT
 !
-!  Implicit adjoint convolution, CG/CI solver.
+!  Implicit tangent linear convolution, CG/CI solver.
 !
                 CALL self%tl_CI_b1d (ng, tile, iTLM, isVbar, ibry,      &
      &                               v2dvar, ns, NiterCI(ns,ng),        &
      &                               LBij, UBij,                        &
      &                               IminS, ImaxS, JminS, JmaxS,        &
      &                               B2d)
-
-
+!
                 IF (Lconvolve(ibry)) THEN
                   SELECT CASE (ibry)
                     CASE (iwest, ieast)
@@ -4952,27 +4993,27 @@
 !  Write out into output NetCDF file.
 !
         IF (ANY(CnormB(isVbar,:))) THEN
-          ifield=idSbry(isVbar)
+          IDmeta=idSbry(isVbar)
 !
           SELECT CASE (NRM(ifile,ng)%IOtype)
             CASE (io_nf90)
               CALL netcdf_put_fvar (ng, iTLM, ncname,                   &
-     &                              Vname(1,ifield),                    &
+     &                              Vname(1,IDmeta),                    &
      &                              HnormVobc(LBij:,:),                 &
      &                         start = (/1,1,NRM(ifile,ng)%Rindex/),    &
      &                         total = (/IJlen,4,1/),                   &
      &                         ncid = NRM(ifile,ng)%ncid,               &
-     &                         varid = NRM(ifile,ng)%Vid(ifield))
+     &                         varid = NRM(ifile,ng)%Vid(IDmeta))
 
 # if defined PIO_LIB && defined DISTRIBUTE
             CASE (io_pio)
               CALL pio_netcdf_put_fvar (ng, iTLM, ncname,               &
-     &                                  Vname(1,ifield),                &
+     &                                  Vname(1,IDmeta),                &
      &                                  HnormVobc(LBij:,:),             &
      &                         start = (/1,1,NRM(ifile,ng)%Rindex/),    &
      &                         total = (/IJlen,4,1/),                   &
      &                         pioFile = NRM(ifile,ng)%pioFile,         &
-     &                         pioVar = NRM(ifile,ng)%pioVar(ifield)%vd)
+     &                         pioVar = NRM(ifile,ng)%pioVar(IDmeta)%vd)
 # endif
           END SELECT
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
@@ -5053,7 +5094,7 @@
                     END DO
                 END SELECT
 !
-!  Implicit horizontal convolution, CG/CI solver.
+!  Implicit tangent linear horizontal convolution, CG/CI solver.
 !
                 CALL self%tl_CI_b2d (ng, tile, iTLM, isUvel, ibry,      &
      &                               u3dvar, ns, NiterCI(ns,ng),        &
@@ -5061,7 +5102,7 @@
      &                               IminS, ImaxS, JminS, JmaxS,        &
      &                               B3d)
 !
-!  Implicit vertical convolution.
+!  Implicit tangent linear vertical convolution.
 !
                 CALL self%tl_bry_Vdiff (ng, tile, iTLM, isUvel, ibry,   &
      &                                  u3dvar, NVstepsB(ibry,isUvel),  &
@@ -5163,27 +5204,27 @@
 !  Write out into output NetCDF file.
 !
         IF (ANY(CnormB(isUvel,:))) THEN
-          ifield=idSbry(isUvel)
+          IDmeta=idSbry(isUvel)
 !
           SELECT CASE (NRM(ifile,ng)%IOtype)
             CASE (io_nf90)
               CALL netcdf_put_fvar (ng, iTLM, ncname,                   &
-     &                              Vname(1,ifield),                    &
+     &                              Vname(1,IDmeta),                    &
      &                              VnormUobc(LBij:,:,:),               &
      &                         start = (/1,1,1,NRM(ifile,ng)%Rindex/),  &
      &                         total = (/IJlen,N(ng),4,1/),             &
      &                         ncid = NRM(ifile,ng)%ncid,               &
-     &                         varid = NRM(ifile,ng)%Vid(ifield))
+     &                         varid = NRM(ifile,ng)%Vid(IDmeta))
 
 #  if defined PIO_LIB && defined DISTRIBUTE
             CASE (io_pio)
               CALL pio_netcdf_put_fvar (ng, iTLM, ncname,               &
-     &                                  Vname(1,ifield),                &
+     &                                  Vname(1,IDmeta),                &
      &                                  VnormUobc(LBij:,:,:),           &
      &                         start = (/1,1,1,NRM(ifile,ng)%Rindex/),  &
      &                         total = (/IJlen,N(ng),4,1/),             &
      &                         pioFile = NRM(ifile,ng)%pioFile,         &
-     &                         pioVar = NRM(ifile,ng)%pioVar(ifield)%vd)
+     &                         pioVar = NRM(ifile,ng)%pioVar(IDmeta)%vd)
 #  endif
           END SELECT
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
@@ -5197,7 +5238,7 @@
 
         IF (Master.and.ANY(CnormB(isVvel,:))) THEN
           WRITE (stdout,20) TRIM(Text),                                 &
-     &                      '3D normalization factors at   V-points'
+     &          '3D normalization factors at   V-points'
           FLUSH (stdout)
         END IF
 !
@@ -5262,7 +5303,7 @@
                     END DO
                 END SELECT
 !
-!  Implicit horizontal convolution, CG/CI solver.
+!  Implicit tangent linear horizontal convolution, CG/CI solver.
 !
                 CALL self%tl_CI_b2d (ng, tile, iTLM, isVvel, ibry,      &
      &                               v3dvar, ns, NiterCI(ns,ng),        &
@@ -5270,7 +5311,7 @@
      &                               IminS, ImaxS, JminS, JmaxS,        &
      &                               B3d)
 !
-!  Implicit vertical convolution.
+!  Implicit tangent linnear vertical convolution.
 !
                 CALL self%tl_bry_Vdiff (ng, tile, iTLM, isVvel, ibry,   &
      &                                  v3dvar, NVstepsB(ibry,isVvel),  &
@@ -5372,27 +5413,27 @@
 !  Write out into output NetCDF file.
 !
         IF (ANY(CnormB(isVvel,:))) THEN
-          ifield=idSbry(isVvel)
+          IDmeta=idSbry(isVvel)
 !
           SELECT CASE (NRM(ifile,ng)%IOtype)
             CASE (io_nf90)
               CALL netcdf_put_fvar (ng, iTLM, ncname,                   &
-     &                              Vname(1,ifield),                    &
+     &                              Vname(1,IDmeta),                    &
      &                              VnormVobc(LBij:,:,:),               &
      &                         start = (/1,1,1,NRM(ifile,ng)%Rindex/),  &
      &                         total = (/IJlen,N(ng),4,1/),             &
      &                         ncid = NRM(ifile,ng)%ncid,               &
-     &                         varid = NRM(ifile,ng)%Vid(ifield))
+     &                         varid = NRM(ifile,ng)%Vid(IDmeta))
 
 #  if defined PIO_LIB && defined DISTRIBUTE
             CASE (io_pio)
               CALL pio_netcdf_put_fvar (ng, iTLM, ncname,               &
-     &                                  Vname(1,ifield),                &
+     &                                  Vname(1,IDmeta),                &
      &                                  VnormVobc(LBij:,:,:),           &
      &                         start = (/1,1,1,NRM(ifile,ng)%Rindex/),  &
      &                         total = (/IJlen,N(ng),4,1/),             &
      &                         pioFile = NRM(ifile,ng)%pioFile,         &
-     &                         pioVar = NRM(ifile,ng)%pioVar(ifield)%vd)
+     &                         pioVar = NRM(ifile,ng)%pioVar(IDmeta)%vd)
 #  endif
           END SELECT
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
@@ -5404,8 +5445,8 @@
 !
         IF (Master) THEN
           DO itrc=1,NT(ng)
-            is=isTvar(itrc)
-            IF (ANY(CnormB(is,:))) THEN
+            ifield=isTvar(itrc)
+            IF (ANY(CnormB(ifield,:))) THEN
               Lsame=.TRUE.
               EXIT
             END IF
@@ -5417,11 +5458,11 @@
           END IF
         END IF
 !
-        DO itrc=1,NT(ng)
+        BRY_TRACER_LOOP : DO itrc=1,NT(ng)
           VnormRobc=Aspv
-          is=isTvar(itrc)
+          ifield=isTvar(itrc)
           BRY_LOOP_R3D : DO ibry=1,4
-            BRY_COMPUTE_R3D : IF (CnormB(is,ibry)) THEN
+            BRY_COMPUTE_R3D : IF (CnormB(ifield,ibry)) THEN
               BRY_MS_LOOP_R3D : DO ns=1,Nscale(ng)
                 VscaleB=0.0_r8
                 B3davg=0.0_r8
@@ -5479,7 +5520,7 @@
                       END DO
                   END SELECT
 !
-!  Implicit horizontal convolution, CG/CI solver.
+!  Implicit tangent linear horizontal convolution, CG/CI solver.
 !
                   CALL self%tl_CI_b2d (ng, tile, iTLM, ifield, ibry,    &
      &                                 r3dvar, ns, NiterCI(ns,ng),      &
@@ -5487,7 +5528,7 @@
      &                                 IminS, ImaxS, JminS, JmaxS,      &
      &                                 B3d)
 !
-!  Implicit vertical convolution.
+!  Implicit tangent linear vertical convolution.
 !
                   CALL self%tl_bry_Vdiff (ng, tile, iTLM, ifield, ibry, &
      &                                    r3dvar, NVstepsB(ibry,ifield),&
@@ -5569,7 +5610,7 @@
                       END DO
                   END SELECT
                 END IF
-              END DO BRY_MS_LOOP_R3D 
+              END DO BRY_MS_LOOP_R3D
 !
 !  Exchange boundary data.
 !
@@ -5594,32 +5635,34 @@
 !  Write out into output NetCDF file.
 !
           IF (ANY(CnormB(is,:))) THEN
-            ifield=idSbry(isTvar(itrc))
+            IDmeta=idSbry(isTvar(itrc))
 !
             SELECT CASE (NRM(ifile,ng)%IOtype)
               CASE (io_nf90)
                 CALL netcdf_put_fvar (ng, iTLM, ncname,                 &
-     &                                Vname(1,ifield),                  &
+     &                                Vname(1,IDmeta),                  &
      &                                VnormRobc(LBij:,:,:,itrc),        &
      &                         start =(/1,1,1,NRM(ifile,ng)%Rindex/),   &
      &                         total = (/IJlen,N(ng),4,1/),             &
      &                         ncid = NRM(ifile,ng)%ncid,               &
-     &                         varid = NRM(ifile,ng)%Vid(ifield))
+     &                         varid = NRM(ifile,ng)%Vid(IDmeta))
 
 #  if defined PIO_LIB && defined DISTRIBUTE
               CASE (io_pio)
                 CALL pio_netcdf_put_fvar (ng, iTLM, ncname,             &
-     &                                    Vname(1,ifield),              &
+     &                                    Vname(1,IDmeta),              &
      &                                    VnormRobc(LBij:,:,:,itrc),    &
      &                         start =(/1,1,1,NRM(ifile,ng)%Rindex/),   &
      &                         total = (/IJlen,N(ng),4,1/),             &
      &                         pioFile = NRM(ifile,ng)%pioFile,         &
-     &                         pioVar = NRM(ifile,ng)%pioVar(ifield)%vd)
+     &                         pioVar = NRM(ifile,ng)%pioVar(IDmeta)%vd)
 #  endif
             END SELECT
             IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
           END IF
-        END DO
+
+        END DO BRY_TRACER_LOOP
+
 # endif /* SOLVE3D */
 !
 !  Synchronize open boundaries normalization NetCDF file to disk to
@@ -5644,7 +5687,7 @@
 !
 !:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 !  Compute surface forcing multiscale background-error covariance, B,
-!  normalization factor using the randomization approach of Fisher and
+!  normalization factors using the randomization approach of Fisher and
 !  Courtier (1995).
 !:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 !
@@ -5697,7 +5740,7 @@
         MS_COMPUTE_SUS : IF (Cnorm(rec,isUstr)) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Text),                               &
-     &                      '2D normalization factors at U-points'
+     &            '2D normalization factors at U-points'
             FLUSH (stdout)
           END IF
 !
@@ -5728,7 +5771,7 @@
      &                            LBi, UBi, LBj, UBj,                   &
      &                            A2d)
 !
-!  Implicit horizontal convolution, CG/CI solver.
+!  Implicit tangent linear horizontal convolution, CG/CI solver.
 !
               CALL self%tl_CI_2d (ng, tile, iTLM, isUstr,               &
      &                            u2dvar, ns, NiterCI(ns,ng),           &
@@ -5856,7 +5899,7 @@
      &                            LBi, UBi, LBj, UBj,                   &
      &                            A2d)
 !
-!  Implicit horizontal convolution, CG/CI solver.
+!  Implicit tangent linear horizontal convolution, CG/CI solver.
 !
               CALL self%tl_CI_2d (ng, tile, iTLM, isVstr,               &
      &                            v2dvar, ns, NiterCI(ns,ng),           &
@@ -5864,6 +5907,7 @@
      &                            LBi, UBi, LBj, UBj,                   &
      &                            IminS, ImaxS, JminS, JmaxS,           &
      &                            A2d)
+!
               DO j=JstrV,Jend
                 DO i=Istr,Iend
                   A2davg(i,j)=A2davg(i,j)+A2d(i,j)
@@ -6027,7 +6071,7 @@
      &                                LBi, UBi, LBj, UBj,               &
      &                                A2d)
 !
-!  Implicit horizontal convolution, CG/CI solver.
+!  Implicit tangent linear horizontal convolution, CG/CI solver.
 !
                   CALL self%tl_CI_2d (ng, tile, iTLM, ifield,           &
      &                                r2dvar, ns, NiterCI(ns,ng),       &
@@ -6158,6 +6202,11 @@
 !
       RETURN
       END SUBROUTINE randomization_tile
+!
+!:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+!  Support PRIVATE functions.
+!:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+!
 !
 !***********************************************************************
       FUNCTION dot_prod2d (ng, tile, model, ctype,                      &

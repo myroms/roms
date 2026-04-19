@@ -2021,7 +2021,7 @@
               END IF
             END DO
 #      endif
-#         END DO
+          END DO
 #     endif
 #     ifdef SOLVE3D
           DO ib=1,4
