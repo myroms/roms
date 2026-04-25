@@ -84,113 +84,6 @@
 #SBATCH --error=err.%N.%j                # STDERR output file (optional)
 #SBATCH --export=ALL                     # Export you current env to the job env
 
-########################################################################
-## RBL4D-Var data assimilation input script function.  It generates    #
-## 'rbl4dvar_nl.in' or 'rbl4dvar_nl.in' from the 's4dvar.in' template. #
-########################################################################
-
-## Start of My4DVarScript() function definition
-
-My4DVarScript() {
-
-     DataDir=${1}              # Data directory
-  SUBSTITUTE=${2}              # ROMS Perl subtitution function
-   OuterLoop=${3}              # current outer loop counter
-  Phase4DVAR=${4}              # current 4D-Var computation phase
-     TimeIAU=${5}              # Incremental Analysis Update window
-     OBSname=${6}              # 4D-Var observations NetCDF file
-     Fprefix=${7}              # ROMS output files prefix (use roms_app)
-     Fsuffix=${8}              # ROMS output files suffix
-    Inp4DVAR=${9}              # 4D-Var standard input
-         res=${10}             # Grid resolution
-
-  echo
-  echo "   Creating 4D-Var Input Script from Template: ${Inp4DVAR}" \
-       "  Outer = ${OuterLoop}  Phase = ${Phase4DVAR}"
-  echo "     (Resolution = ${res} km, Fprefix = ${Fprefix}, Fsuffix = ${Fsuffix})"
-  echo
-
-## Set model, initial conditions, boundary conditions and surface
-## forcing error covariance standard deviations files. For model
-## error, use the same as initial condition since we are not
-## running in weak-constraint mode.
-
-if [[ $res -eq 6 ]]; then
- STDnameM=${DataDir}/STD/usec6km_roms_std_i_${Fsuffix}.nc
- STDnameI=${DataDir}/STD/usec6km_roms_std_i_${Fsuffix}.nc
- STDnameB=${DataDir}/STD/usec6km_roms_std_b_${Fsuffix}.nc
- STDnameF=${DataDir}/STD/usec6km_roms_std_f_${Fsuffix}.nc
-else
- STDnameM=${DataDir}/STD/usec3km_roms_std_i_${Fsuffix}.nc
- STDnameI=${DataDir}/STD/usec3km_roms_std_i_${Fsuffix}.nc
- STDnameB=${DataDir}/STD/usec3km_roms_std_b_${Fsuffix}.nc
- STDnameF=${DataDir}/STD/usec3km_roms_std_f_${Fsuffix}.nc
-fi
-
-## Set output file for standard deviation computed/modeled from background
-## (prior) state.
-
-if [[ $res -eq 6 ]]; then
- STDnameC=usec6km_roms_std_computed.nc
-else
- STDnameC=usec3km_roms_std_computed.nc
-fi
-
-## Set model, initial conditions, boundary conditions and surface
-## forcing error covariance normalization factors files. For model
-## error, use the same as initial condition since we are not
-## running in weak-constraint mode.
-
-if [[ $res -eq 6 ]]; then
- NRMnameM=${DataDir}/NRM/usec6km_roms_nrm_i.nc
- NRMnameI=${DataDir}/NRM/usec6km_roms_nrm_i.nc
- NRMnameB=${DataDir}/NRM/usec6km_roms_nrm_b.nc
- NRMnameF=${DataDir}/NRM/usec6km_roms_nrm_f.nc
-else
- NRMnameM=${DataDir}/NRM/usec3km_roms_nrm_i.nc
- NRMnameI=${DataDir}/NRM/usec3km_roms_nrm_i.nc
- NRMnameB=${DataDir}/NRM/usec3km_roms_nrm_b.nc
- NRMnameF=${DataDir}/NRM/usec3km_roms_nrm_f.nc
-fi
-
-## Modify 4D-Var template input script and specify above files.
-
- if [ -f $Inp4DVAR ]; then
-   /bin/rm ${Inp4DVAR}
- fi
-
- cp ../s4dvar.in ${Inp4DVAR}
-
- $SUBSTITUTE $Inp4DVAR MyOuterLoop   ${OuterLoop}
- $SUBSTITUTE $Inp4DVAR MyPhase4DVAR  ${Phase4DVAR}
- $SUBSTITUTE $Inp4DVAR MyTimeIAU     ${TimeIAU}
- $SUBSTITUTE $Inp4DVAR roms_std_i.nc ${STDnameI}
- $SUBSTITUTE $Inp4DVAR roms_std_m.nc ${STDnameM}
- $SUBSTITUTE $Inp4DVAR roms_std_b.nc ${STDnameB}
- $SUBSTITUTE $Inp4DVAR roms_std_f.nc ${STDnameF}
- $SUBSTITUTE $Inp4DVAR roms_std_c.nc ${STDnameC}
- $SUBSTITUTE $Inp4DVAR roms_nrm_i.nc ${NRMnameI}
- $SUBSTITUTE $Inp4DVAR roms_nrm_m.nc ${NRMnameM}
- $SUBSTITUTE $Inp4DVAR roms_nrm_b.nc ${NRMnameB}
- $SUBSTITUTE $Inp4DVAR roms_nrm_f.nc ${NRMnameF}
- $SUBSTITUTE $Inp4DVAR roms_obs.nc   ${OBSname}
- $SUBSTITUTE $Inp4DVAR roms_hss.nc   ${Fprefix}_roms_hss_${Fsuffix}.nc
- $SUBSTITUTE $Inp4DVAR roms_lcz.nc   ${Fprefix}_roms_lcz_${Fsuffix}.nc
- $SUBSTITUTE $Inp4DVAR roms_lze.nc   ${Fprefix}_roms_lze_${Fsuffix}.nc
-
- if [[ $res -eq 6 ]]; then           # same as outer loops grid
-   $SUBSTITUTE $Inp4DVAR roms_mod.nc usec3km_roms_mod_${Fsuffix}.nc
-   $SUBSTITUTE $Inp4DVAR roms_inc.nc ${Fprefix}_roms_inc_${Fsuffix}.nc
- else
-   $SUBSTITUTE $Inp4DVAR roms_mod.nc ${Fprefix}_roms_mod_${Fsuffix}.nc
-   $SUBSTITUTE $Inp4DVAR roms_inc.nc usec6km_roms_itl_${Fsuffix}.nc
- fi
-
- $SUBSTITUTE $Inp4DVAR roms_err.nc   ${Fprefix}_roms_err_${Fsuffix}.nc
-}
-
-## End of My4DVarScript() function definition
-
 ##---------------------------------------------------------------------
 ## Control switches: What do you want to do?
 ##---------------------------------------------------------------------
@@ -199,10 +92,15 @@ fi
        DRYRUN=0                # Run 4D-Var cycle
 
         BATCH=0                # No batch system submission
-#       BATCH=1                # Use batch system SLURM to submit
+#       BATCH=1                # Use batch system SLURM to submit:
+                               #   "sbatch submit_mixres_rbl4dvar.sh"
+
+    ROMS_ROOT=${HOME}/ocean/repository/git/roms    # Set ROMS location:
+                                                   # uses ROMS/Bin
+                                                   # Perl scripts
 
 ##---------------------------------------------------------------------
-## User tunable parameters. If you follow recommendations, this is
+## USER TUNABLE PARAMETERS. If you follow recommendations, this is
 ## the only section that you need to customize..
 ##---------------------------------------------------------------------
 
@@ -215,8 +113,6 @@ fi
 
           ResF=3                       # outer loop resolution
           ResC=6                       # innet loop resolution
-
-     ROMS_ROOT=${HOME}/ocean/repository/git/roms
 
        HereDir=${PWD}                  # current directory
 
@@ -279,9 +175,9 @@ fi
 
      MyINP_LIB=2                       # reading library: [1] standard [2] PIO
      MyOUT_LIB=2                       # writing library: [1] standard [2] PIO
-  MyPIO_METHOD=2                       # [1] NetCDF3, ...
- MyPIO_IOTASKS=1                       # number of I/O processes
-  MyPIO_STRIDE=1                       # stride in MPI-rank between I/O tasks
+  MyPIO_METHOD=3                       # [1] NetCDF3, ...
+ MyPIO_IOTASKS=2                       # number of I/O processes
+  MyPIO_STRIDE=5                       # stride in MPI-rank between I/O tasks
     MyPIO_BASE=0                       # offset for the first I/O task
    MyPIO_REARR=1                       # rearranger method: [1] box [2] subset
 MyPIO_REARRCOM=1                       # rearranger communications: [0] p2p [1] coll
@@ -299,8 +195,8 @@ MyPIO_REARRDIR=0                       # rearranger direction: [0] I2C/C2I, ... 
     ROMS_DAtmp="${ROMS_DApre}.tmpl"                # ROMS ADM/TLM stdinp template
 
  if [[ ${restart} -eq 0 ]]; then
-      ROMSiniF="usec3km_roms_ini_20190827.nc"      # ROMS outer loop IC
-   ROMSgeniniC="usec6km_roms_ini.nc"               # ROMS Generic inner loop IC
+      ROMSiniF="usec3km_roms_ini_20190827.nc4"     # ROMS outer loop IC
+   ROMSgeniniC="usec6km_roms_ini.nc4"              # ROMS Generic inner loop IC
     ROMSiniDir=${DataDir}/INI                      # ROMS IC directory
  else
        ROMSini="usec3km_roms_dai_20190827.nc"      # restart ROMS IC
@@ -351,6 +247,117 @@ MyPIO_REARRDIR=0                       # rearranger direction: [0] I2C/C2I, ... 
      MyNOBC_da=$(( ${MyNOBC_nl} / 2 ))
  fi
 
+##---------------------------------------------------------------------
+## END OF USER TUNABLE PARAMETERS.
+##---------------------------------------------------------------------
+
+########################################################################
+## RBL4D-Var data assimilation input script FUNCTION.  It generates    #
+## 'rbl4dvar_nl.in' or 'rbl4dvar_nl.in' from the 's4dvar.in' template. #
+########################################################################
+
+## Start of My4DVarScript() FUNCTION definition
+
+My4DVarScript() {
+
+     DataDir=${1}              # Data directory
+  SUBSTITUTE=${2}              # ROMS Perl substitution function
+   OuterLoop=${3}              # current outer loop counter
+  Phase4DVAR=${4}              # current 4D-Var computation phase
+     TimeIAU=${5}              # Incremental Analysis Update window
+     OBSname=${6}              # 4D-Var observations NetCDF file
+     Fprefix=${7}              # ROMS output files prefix (use roms_app)
+     Fsuffix=${8}              # ROMS output files suffix
+    Inp4DVAR=${9}              # 4D-Var standard input
+         res=${10}             # Grid resolution
+
+  echo
+  echo "   Creating 4D-Var Input Script from Template: ${Inp4DVAR}" \
+       "  Outer = ${OuterLoop}  Phase = ${Phase4DVAR}"
+  echo "     (Resolution = ${res} km, Fprefix = ${Fprefix}, Fsuffix = ${Fsuffix})"
+  echo
+
+## Set model, initial conditions, boundary conditions and surface
+## forcing error covariance standard deviations files. For model
+## error, use the same as initial condition since we are not
+## running in weak-constraint mode.
+
+if [[ $res -eq 6 ]]; then
+ STDnameM=${DataDir}/STD/usec6km_roms_std_i_${Fsuffix}.nc4
+ STDnameI=${DataDir}/STD/usec6km_roms_std_i_${Fsuffix}.nc4
+ STDnameB=${DataDir}/STD/usec6km_roms_std_b_${Fsuffix}.nc4
+ STDnameF=${DataDir}/STD/usec6km_roms_std_f_${Fsuffix}.nc4
+else
+ STDnameM=${DataDir}/STD/usec3km_roms_std_i_${Fsuffix}.nc4
+ STDnameI=${DataDir}/STD/usec3km_roms_std_i_${Fsuffix}.nc4
+ STDnameB=${DataDir}/STD/usec3km_roms_std_b_${Fsuffix}.nc4
+ STDnameF=${DataDir}/STD/usec3km_roms_std_f_${Fsuffix}.nc4
+fi
+
+## Set output file for standard deviation computed/modeled from background
+## (prior) state.
+
+if [[ $res -eq 6 ]]; then
+ STDnameC=usec6km_roms_std_computed.nc4
+else
+ STDnameC=usec3km_roms_std_computed.nc4
+fi
+
+## Set model, initial conditions, boundary conditions and surface
+## forcing error covariance normalization factors files. For model
+## error, use the same as initial condition since we are not
+## running in weak-constraint mode.
+
+if [[ $res -eq 6 ]]; then
+ NRMnameM=${DataDir}/NRM/usec6km_roms_nrm_i.nc4
+ NRMnameI=${DataDir}/NRM/usec6km_roms_nrm_i.nc4
+ NRMnameB=${DataDir}/NRM/usec6km_roms_nrm_b.nc4
+ NRMnameF=${DataDir}/NRM/usec6km_roms_nrm_f.nc4
+else
+ NRMnameM=${DataDir}/NRM/usec3km_roms_nrm_i.nc4
+ NRMnameI=${DataDir}/NRM/usec3km_roms_nrm_i.nc4
+ NRMnameB=${DataDir}/NRM/usec3km_roms_nrm_b.nc4
+ NRMnameF=${DataDir}/NRM/usec3km_roms_nrm_f.nc4
+fi
+
+## Modify 4D-Var template input script and specify above files.
+
+ if [ -f $Inp4DVAR ]; then
+   /bin/rm ${Inp4DVAR}
+ fi
+
+ cp ../s4dvar.in ${Inp4DVAR}
+
+ $SUBSTITUTE $Inp4DVAR MyOuterLoop   ${OuterLoop}
+ $SUBSTITUTE $Inp4DVAR MyPhase4DVAR  ${Phase4DVAR}
+ $SUBSTITUTE $Inp4DVAR MyTimeIAU     ${TimeIAU}
+ $SUBSTITUTE $Inp4DVAR roms_std_i.nc ${STDnameI}
+ $SUBSTITUTE $Inp4DVAR roms_std_m.nc ${STDnameM}
+ $SUBSTITUTE $Inp4DVAR roms_std_b.nc ${STDnameB}
+ $SUBSTITUTE $Inp4DVAR roms_std_f.nc ${STDnameF}
+ $SUBSTITUTE $Inp4DVAR roms_std_c.nc ${STDnameC}
+ $SUBSTITUTE $Inp4DVAR roms_nrm_i.nc ${NRMnameI}
+ $SUBSTITUTE $Inp4DVAR roms_nrm_m.nc ${NRMnameM}
+ $SUBSTITUTE $Inp4DVAR roms_nrm_b.nc ${NRMnameB}
+ $SUBSTITUTE $Inp4DVAR roms_nrm_f.nc ${NRMnameF}
+ $SUBSTITUTE $Inp4DVAR roms_obs.nc   ${OBSname}
+ $SUBSTITUTE $Inp4DVAR roms_hss.nc   ${Fprefix}_roms_hss_${Fsuffix}.nc
+ $SUBSTITUTE $Inp4DVAR roms_lcz.nc   ${Fprefix}_roms_lcz_${Fsuffix}.nc
+ $SUBSTITUTE $Inp4DVAR roms_lze.nc   ${Fprefix}_roms_lze_${Fsuffix}.nc
+
+ if [[ $res -eq 6 ]]; then           # same as outer loops grid
+   $SUBSTITUTE $Inp4DVAR roms_mod.nc usec3km_roms_mod_${Fsuffix}.nc
+   $SUBSTITUTE $Inp4DVAR roms_inc.nc ${Fprefix}_roms_inc_${Fsuffix}.nc
+ else
+   $SUBSTITUTE $Inp4DVAR roms_mod.nc ${Fprefix}_roms_mod_${Fsuffix}.nc
+   $SUBSTITUTE $Inp4DVAR roms_inc.nc usec6km_roms_itl_${Fsuffix}.nc
+ fi
+
+ $SUBSTITUTE $Inp4DVAR roms_err.nc   ${Fprefix}_roms_err_${Fsuffix}.nc
+}
+
+## End of My4DVarScript() FUNCTION definition
+
 #######################################################################
 ## Main body of script starts here. It is very unlikely that the USER
 ## needs to modify it.
@@ -374,7 +381,7 @@ echo
 
 ##---------------------------------------------------------------------
 ## Compute date number for reference date, and first and last
-## initialization dates.
+## initialization dates. It uses ROMS/Bin/dates Perl script.
 ##---------------------------------------------------------------------
 
          S_DN=`${ROMS_ROOT}/ROMS/Bin/dates datenum ${START_DATE}`
@@ -430,7 +437,7 @@ while [ $SDAY -le $L_DN ]; do
         Fsuffix=`${DATE_EXE} -d "${SDATE}" '+%Y%m%d'`
          RunDir=`${DATE_EXE} -d "${SDATE}" '+%Y.%m.%d'`
      ROMS_INI_F="${ROMSiniF}"
-     ROMS_INI_C="${FprefixC}_roms_ini_${Fsuffix}.nc"
+     ROMS_INI_C="${FprefixC}_roms_ini_${Fsuffix}.nc4"
 
   echo "${separator2}"
   echo
@@ -572,8 +579,8 @@ while [ $SDAY -le $L_DN ]; do
 
 ## Set observations NetCDF filename.
 
-  OBSnameF="${FprefixF}_roms_obs_${Fsuffix}.nc"
-  OBSnameC="${FprefixC}_roms_obs_${Fsuffix}.nc"
+  OBSnameF="${FprefixF}_roms_obs_${Fsuffix}.nc4"
+  OBSnameC="${FprefixC}_roms_obs_${Fsuffix}.nc4"
 
 ## Copy outer loops nonlinear model initial conditions file.
 
@@ -644,7 +651,7 @@ while [ $SDAY -le $L_DN ]; do
     nl_log="log_outer${OuterLoop}.nl"
 
     if [ ${BATCH} -eq 1 ]; then
-      ${SRUN} ${ROMS_EXE_A} ${ROMS_NLinp}
+      ${SRUN} ${ROMS_EXE_A} ${ROMS_NLinp} > ${nl_log}
     else
       ${MPIrun} ${nPETs} ${ROMS_EXE_A} ${ROMS_NLinp} > ${nl_log}
     fi
@@ -654,7 +661,7 @@ while [ $SDAY -le $L_DN ]; do
       echo "Error while running 4D-Var System:  Cycle = ${Cycle}" \
                                              "  Outer = ${OuterLoop}" \
                                              "  Phase = ${Phase4DVAR}"
-      echo "Check ${RunDir}/log.roms for details ..."
+      echo "Check ${nl_log} for details ..."
       exit 1
     fi
   fi
@@ -702,7 +709,7 @@ while [ $SDAY -le $L_DN ]; do
       da_log="log_outer${OuterLoop}.da"
 
       if [ ${BATCH} -eq 1 ]; then
-        ${SRUN} ${ROMS_EXE_B} ${ROMS_DAinp}
+        ${SRUN} ${ROMS_EXE_B} ${ROMS_DAinp} > ${da_log}
       else
         ${MPIrun} ${nPETs} ${ROMS_EXE_B} ${ROMS_DAinp} > ${da_log}
       fi
@@ -712,7 +719,7 @@ while [ $SDAY -le $L_DN ]; do
         echo "Error while running 4D-Var System:  Cycle = ${Cycle}" \
                                                "  Outer = ${OuterLoop}" \
 			                       "  Phase = ${Phase4DVAR}"
-        echo "Check ${RunDir}/log.roms for details ..."
+        echo "Check ${da_log} for details ..."
         exit 1
       fi
     fi
@@ -737,7 +744,7 @@ while [ $SDAY -le $L_DN ]; do
       nl_log="log_outer${OuterLoop}.nl"
 
       if [ ${BATCH} -eq 1 ]; then
-        ${SRUN} ${ROMS_EXE_A} ${ROMS_NLinp}
+        ${SRUN} ${ROMS_EXE_A} ${ROMS_NLinp} > ${nl_log}
       else
         ${MPIrun} ${nPETs} ${ROMS_EXE_A} ${ROMS_NLinp} > ${nl_log}
       fi
@@ -747,7 +754,7 @@ while [ $SDAY -le $L_DN ]; do
         echo "Error while running 4D-Var System:  Cycle = ${Cycle}" \
                                                "  Outer = ${OuterLoop}" \
 			                       "  Phase = ${Phase4DVAR}"
-        echo "Check ${RunDir}/log.roms for details ..."
+        echo "Check ${nl_log} for details ..."
         exit 1
       fi
     fi
