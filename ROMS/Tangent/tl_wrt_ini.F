@@ -148,7 +148,7 @@
 !
 !  Local variable declarations.
 !
-      integer :: gfactor, gtype, i, itrc, status, varid
+      integer :: gfactor, gtype, i, itrc, omode, status, varid
 !
       real(dp) :: my_time, scale
 !
@@ -213,6 +213,14 @@
 # endif
       END IF
 !
+!  If appropriate, open ITL NetCDF for writing.
+!
+      IF (ITL(ng)%ncid.eq.-1) THEN
+        omode=1
+        CALL netcdf_open (ng, iTLM, ITL(ng)%name, omode, ITL(ng)%ncid)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+      END IF
+!
 !  Set grid type factor to write full (gfactor=1) fields or water
 !  points (gfactor=-1) fields only.
 !
@@ -227,7 +235,7 @@
 !
       my_time=tdays(ng)*day2sec
 
-      CALL netcdf_put_fvar (ng, iTLM, ITL(ng)%name,                     &
+      CALL netcdf_put_fvar (ng, iTLM,  ITL(ng)%name,                    &
      &                      TRIM(Vname(1,idtime)), my_time,             &
      &                      (/OutRec/), (/1/),                          &
      &                      ncid = ITL(ng)%ncid,                        &
@@ -647,11 +655,15 @@
 # endif
 !
 !-----------------------------------------------------------------------
-!  Synchronize tangent linear initial NetCDF file to disk to allow other
-!  processes to access data immediately after it is written.
+!  In split 4D-Var and NetCDF4/HDF5 files, it is advantegeous to always
+!  close the tangent linear initial NetCDF file to automatically to
+!  to force buffering and caching and allow other access to data
+!  immediately after it is written. Synchronization with "netcdf_sync"
+!  does not work well with NetCDF4/HDF5 files in various computer
+!  architectures.
 !-----------------------------------------------------------------------
 !
-      CALL netcdf_sync (ng, iTLM, ITL(ng)%name, ITL(ng)%ncid)
+      CALL netcdf_close (ng, iTLM, ITL(ng)%ncid, ITL(ng)%name, .FALSE.)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
 # if defined I4DVAR || defined BACKGROUND
@@ -694,7 +706,7 @@
 !
 !  Local variable declarations.
 !
-      integer :: i, ifield, itrc, status
+      integer :: i, ifield, itrc, omode, status
 !
       real(dp) :: my_time, scale
 !
@@ -759,6 +771,14 @@
 #  else
         WRITE (stdout,10) string, outer, inner, Tindex, OutRec
 #  endif
+      END IF
+!
+!  If appropriate, open ITL NetCDF for writing.
+!
+      IF (ITL(ng)%pioFile%fh.eq.-1) THEN
+        omode=1
+        CALL pio_netcdf_open (ng, iTLM, ITL(ng)%name, omode,            &
+     &                        ITL(ng)%pioFile)
       END IF
 !
 !  Write out model time (s). Use the "tdays" variable here because of
@@ -1243,11 +1263,16 @@
 #  endif
 !
 !-----------------------------------------------------------------------
-!  Synchronize tangent linear initial NetCDF file to disk to allow other
-!  processes to access data immediately after it is written.
+!  In split 4D-Var and NetCDF4/HDF5 files, it is advantegeous to always
+!  close the tangent linear initial NetCDF file to automatically to
+!  to force buffering and caching and allow other access to data
+!  immediately after it is written. Synchronization with "netcdf_sync"
+!  does not work well with NetCDF4/HDF5 files in various computer
+!  architectures.
 !-----------------------------------------------------------------------
 !
-      CALL pio_netcdf_sync (ng, iTLM, ITL(ng)%name, ITL(ng)%pioFile)
+      CALL pio_netcdf_close (ng, iTLM, ITL(ng)%pioFile, ITL(ng)%name,   &
+     &                       .FALSE.)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
 #  if defined I4DVAR || defined BACKGROUND

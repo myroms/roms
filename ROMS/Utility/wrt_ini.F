@@ -152,7 +152,7 @@
 !
       logical :: SetFillVal
 !
-      integer :: Fcount, gfactor, gtype, i, itrc, status, varid
+      integer :: Fcount, gfactor, gtype, i, itrc, omode, status, varid
 !
       real(r8) :: Fmin, Fmax
       real(dp) :: my_time, scale
@@ -198,6 +198,14 @@
       END IF
       Fcount=INI(ng)%Fcount
       INI(ng)%Nrec(Fcount)=INI(ng)%Nrec(Fcount)+1
+!
+!  If appropriate, open INI NetCDF for writing.
+!
+      IF (INI(ng)%ncid.eq.-1) THEN
+        omode=1
+        CALL netcdf_open (ng, iNLM, INI(ng)%name, omode, INI(ng)%ncid)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+      END IF
 !
 !  Write out model time (s). Use the "tdays" variable here because of
 !  the management of the "time" variable due to nesting.
@@ -516,16 +524,17 @@
 #   endif
 #  endif
 # endif
-# if !(defined OUT_NETCDF4 && defined DELAYED_SYNC_NF90)
 !
 !-----------------------------------------------------------------------
-!  Synchronize initial NetCDF file to disk to allow other processes
-!  to access data immediately after it is written.
+!  In split 4D-Var and NetCDF4/HDF5 files, it is advantegeous to always
+!  close the nonlinear initial NetCDF file to automatically to force
+!  buffering and caching and allow other access to datavimmediately
+!  after it is written. Synchronization with "netcdf_sync" does not
+!  work well with NetCDF4/HDF5 files in various computer architectures.
 !-----------------------------------------------------------------------
 !
-      CALL netcdf_sync (ng, iNLM, INI(ng)%name, INI(ng)%ncid)
+      CALL netcdf_close (ng, iNLM, INI(ng)%ncid, INI(ng)%name, .FALSE.)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-# endif
 !
   10  FORMAT (/,' WRT_INI_NF90 - error while writing variable: ',a,     &
      &        /,16x,'into initial NetCDF file for time record: ',i0)
@@ -560,7 +569,7 @@
 !
       logical :: SetFillVal
 !
-      integer :: Fcount, i, itrc, status
+      integer :: Fcount, i, itrc, omode, status
 !
       real(r8) :: Fmin, Fmax
       real(dp) :: my_time, scale
@@ -599,6 +608,15 @@
       END IF
       Fcount=INI(ng)%Fcount
       INI(ng)%Nrec(Fcount)=INI(ng)%Nrec(Fcount)+1
+!
+!  If appropriate, open INI NetCDF for writing.
+!
+      IF (INI(ng)%pioFile%fh.eq.-1) THEN
+        omode=1
+        CALL pio_netcdf_open (ng, iNLM, INI(ng)%name, omode,            &
+     &                        INI(ng)%pioFile)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+      END IF
 !
 !  Write out model time (s). Use the "tdays" variable here because of
 !  the management of the "time" variable due to nesting.
@@ -982,16 +1000,18 @@
 #    endif
 #   endif
 #  endif
-#  ifndef DELAYED_SYNC_PIO
 !
 !-----------------------------------------------------------------------
-!  Synchronize initial NetCDF file to disk to allow other processes
-!  to access data immediately after it is written.
+!  In split 4D-Var and NetCDF4/HDF5 files, it is advantegeous to always
+!  close the nonlinear initial NetCDF file to automatically to force
+!  buffering and caching and allow other access to datavimmediately
+!  after it is written. Synchronization with "pio_netcdf_sync" does not
+!  work well with NetCDF4/HDF5 files in various computer architectures.
 !-----------------------------------------------------------------------
 !
-      CALL pio_netcdf_sync (ng, iNLM, INI(ng)%name, INI(ng)%pioFile)
+      CALL pio_netcdf_close (ng, iNLM, INI(ng)%pioFile, INI(ng)%name,   &
+     &                       .FALSE.)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-#  endif
 !
   10  FORMAT (/,' WRT_INI_PIO - error while writing variable: ',a,      &
      &        /,15x,'into initial NetCDF file for time record: ',i0)
@@ -1088,7 +1108,7 @@
 !
 !  Local variable declarations.
 !
-      integer :: gfactor, gtype, i, itrc, status
+      integer :: gfactor, gtype, i, itrc, omode, status
 !
       real(dp) :: scale
 !
@@ -1121,6 +1141,14 @@
 #  else
       gfactor=1
 #  endif
+!
+!  If appropriate, open INI NetCDF for writing.
+!
+      IF (INI(ng)%ncid.eq.-1) THEN
+        omode=1
+        CALL netcdf_open (ng, iNLM, INI(ng)%name, omode, INI(ng)%ncid)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+      END IF
 
 #  ifdef ADJUST_BOUNDARY
 !
@@ -1345,11 +1373,14 @@
 #  endif
 !
 !-----------------------------------------------------------------------
-!  Synchronize initial NetCDF file to disk to allow other processes
-!  to access data immediately after it is written.
+!  In split 4D-Var and NetCDF4/HDF5 files, it is advantegeous to always
+!  close the nonlinear initial NetCDF file to automatically to force
+!  buffering and caching and allow other access to datavimmediately
+!  after it is written. Synchronization with "netcdf_sync" does not
+!  work well with NetCDF4/HDF5 files in various computer architectures.
 !-----------------------------------------------------------------------
 !
-      CALL netcdf_sync (ng, iNLM, INI(ng)%name, INI(ng)%ncid)
+      CALL netcdf_close (ng, iNLM, INI(ng)%ncid, INI(ng)%name, .FALSE.)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
   10  FORMAT (2x,'WRT_FRC_NF90     - writing forcing  fields',          &
@@ -1388,7 +1419,7 @@
 !
 !  Local variable declarations.
 !
-      integer :: i, ifield, itrc, status
+      integer :: i, ifield, itrc, omode, status
 !
       real(dp) :: scale
 !
@@ -1413,6 +1444,15 @@
 #   else
         WRITE (stdout,10) outer, inner, Tindex, OutRec
 #   endif
+      END IF
+!
+!  If appropriate, open INI NetCDF for writing.
+!
+      IF (INI(ng)%pioFile%fh.eq.-1) THEN
+        omode=1
+        CALL pio_netcdf_open (ng, iNLM, INI(ng)%name, omode,            &
+     &                        INI(ng)%pioFile)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
       END IF
 
 #   ifdef ADJUST_BOUNDARY
@@ -1666,11 +1706,15 @@
 #   endif
 !
 !-----------------------------------------------------------------------
-!  Synchronize initial NetCDF file to disk to allow other processes
-!  to access data immediately after it is written.
+!  In split 4D-Var and NetCDF4/HDF5 files, it is advantegeous to always
+!  close the nonlinear initial NetCDF file to automatically to force
+!  buffering and caching and allow other access to datavimmediately
+!  after it is written. Synchronization with "pio_netcdf_sync" does not
+!  work well with NetCDF4/HDF5 files in various computer architectures.
 !-----------------------------------------------------------------------
 !
-      CALL pio_netcdf_sync (ng, iNLM, INI(ng)%name, INI(ng)%pioFile)
+      CALL pio_netcdf_close (ng, iNLM, INI(ng)%pioFile, INI(ng)%name,   &
+     &                       .FALSE.)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
   10  FORMAT (2x,'WRT_FRC_PIO      - writing forcing  fields',          &
@@ -1767,7 +1811,7 @@
 !
 !  Local variable declarations.
 !
-      integer :: gfactor, gtype, i, itrc, status
+      integer :: gfactor, gtype, i, itrc, omode, status
 !
       real(dp) :: scale
 !
@@ -1800,6 +1844,14 @@
 #  else
       gfactor=1
 #  endif
+!
+!  If appropriate, open INI NetCDF for writing.
+!
+      IF (INI(ng)%ncid.eq.-1) THEN
+        omode=1
+        CALL netcdf_open (ng, iNLM, INI(ng)%name, omode, INI(ng)%ncid)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+      END IF
 
 #  ifdef ADJUST_BOUNDARY
 !
@@ -2020,11 +2072,14 @@
 #  endif
 !
 !-----------------------------------------------------------------------
-!  Synchronize initial NetCDF file to disk to allow other processes
-!  to access data immediately after it is written.
+!  In split 4D-Var and NetCDF4/HDF5 files, it is advantegeous to always
+!  close the nonlinear initial NetCDF file to automatically to force
+!  buffering and caching and allow other access to datavimmediately
+!  after it is written. Synchronization with "netcdf_sync" does not
+!  work well with NetCDF4/HDF5 files in various computer architectures.
 !-----------------------------------------------------------------------
 !
-      CALL netcdf_sync (ng, iNLM, INI(ng)%name, INI(ng)%ncid)
+      CALL netcdf_close (ng, iNLM, INI(ng)%ncid, INI(ng)%name, .FALSE.)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
   10  FORMAT (2x,'WRT_FRC_AD_NF90  - writing forcing  fields',          &
@@ -2063,7 +2118,7 @@
 !
 !  Local variable declarations.
 !
-      integer :: i, ifield, itrc, status
+      integer :: i, ifield, itrc, omode, status
 !
       real(dp) :: scale
 !
@@ -2088,6 +2143,15 @@
 #  else
         WRITE (stdout,10) outer, inner, Tindex, OutRec
 #  endif
+      END IF
+!
+!  If appropriate, open INI NetCDF for writing.
+!
+      IF (INI(ng)%pioFile%fh.eq.-1) THEN
+        omode=1
+        CALL pio_netcdf_open (ng, iNLM, INI(ng)%name, omode,            &
+     &                        INI(ng)%pioFile)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
       END IF
 
 #   ifdef ADJUST_BOUNDARY
@@ -2337,11 +2401,15 @@
 #   endif
 !
 !-----------------------------------------------------------------------
-!  Synchronize initial NetCDF file to disk to allow other processes
-!  to access data immediately after it is written.
+!  In split 4D-Var and NetCDF4/HDF5 files, it is advantegeous to always
+!  close the nonlinear initial NetCDF file to automatically to force
+!  buffering and caching and allow other access to datavimmediately
+!  after it is written. Synchronization with "pio_netcdf_sync" does not
+!  work well with NetCDF4/HDF5 files in various computer architectures.
 !-----------------------------------------------------------------------
 !
-      CALL pio_netcdf_sync (ng, iNLM, INI(ng)%name, INI(ng)%pioFile)
+      CALL pio_netcdf_close (ng, iNLM, INI(ng)%pioFile, INI(ng)%name,   &
+     &                       .FALSE.)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
   10  FORMAT (2x,'WRT_FRC_AD_PIO   - writing forcing  fields',          &
