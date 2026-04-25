@@ -68,7 +68,6 @@
 #if defined SEDIMENT && defined SED_MORPH && defined SOLVE3D
       USE mod_sedbed
 #endif
-      USE mod_stepping
 !
       USE ad_conv_2d_mod
 #ifdef SOLVE3D
@@ -149,6 +148,8 @@
       SUBROUTINE normalization (ng, tile, ifac)
 !***********************************************************************
 !
+      USE mod_stepping, ONLY : nnew, nstp
+!
 !  Imported variable declarations.
 !
       integer, intent(in) :: ng, tile, ifac
@@ -166,40 +167,6 @@
      &                           LBij, UBij,                            &
      &                           IminS, ImaxS, JminS, JmaxS,            &
      &                           nstp(ng), nnew(ng), ifac,              &
-     &                           GRID(ng) % pm,                         &
-     &                           GRID(ng) % om_p,                       &
-     &                           GRID(ng) % om_r,                       &
-     &                           GRID(ng) % om_u,                       &
-     &                           GRID(ng) % om_v,                       &
-     &                           GRID(ng) % pn,                         &
-     &                           GRID(ng) % on_p,                       &
-     &                           GRID(ng) % on_r,                       &
-     &                           GRID(ng) % on_u,                       &
-     &                           GRID(ng) % on_v,                       &
-     &                           GRID(ng) % pmon_p,                     &
-     &                           GRID(ng) % pmon_r,                     &
-     &                           GRID(ng) % pmon_u,                     &
-     &                           GRID(ng) % pnom_p,                     &
-     &                           GRID(ng) % pnom_r,                     &
-     &                           GRID(ng) % pnom_v,                     &
-#ifdef MASKING
-     &                           GRID(ng) % pmask,                      &
-     &                           GRID(ng) % rmask,                      &
-     &                           GRID(ng) % umask,                      &
-     &                           GRID(ng) % vmask,                      &
-#endif
-#ifdef SOLVE3D
-     &                           GRID(ng) % h,                          &
-# ifdef ICESHELF
-     &                           GRID(ng) % zice,                       &
-# endif
-# if defined SEDIMENT && defined SED_MORPH
-     &                           SEDBED(ng) % bed_thick,                &
-# endif
-     &                           GRID(ng) % Hz,                         &
-     &                           GRID(ng) % z_r,                        &
-     &                           GRID(ng) % z_w,                        &
-#endif
      &                           MIXING(ng) % Kh,                       &
 #ifdef SOLVE3D
      &                           MIXING(ng) % Kv,                       &
@@ -239,40 +206,6 @@
      &                           LBij, UBij,                            &
      &                           IminS, ImaxS, JminS, JmaxS,            &
      &                           nstp(ng), nnew(ng), ifac,              &
-     &                           GRID(ng) % pm,                         &
-     &                           GRID(ng) % om_p,                       &
-     &                           GRID(ng) % om_r,                       &
-     &                           GRID(ng) % om_u,                       &
-     &                           GRID(ng) % om_v,                       &
-     &                           GRID(ng) % pn,                         &
-     &                           GRID(ng) % on_p,                       &
-     &                           GRID(ng) % on_r,                       &
-     &                           GRID(ng) % on_u,                       &
-     &                           GRID(ng) % on_v,                       &
-     &                           GRID(ng) % pmon_p,                     &
-     &                           GRID(ng) % pmon_r,                     &
-     &                           GRID(ng) % pmon_u,                     &
-     &                           GRID(ng) % pnom_p,                     &
-     &                           GRID(ng) % pnom_r,                     &
-     &                           GRID(ng) % pnom_v,                     &
-#ifdef MASKING
-     &                           GRID(ng) % pmask,                      &
-     &                           GRID(ng) % rmask,                      &
-     &                           GRID(ng) % umask,                      &
-     &                           GRID(ng) % vmask,                      &
-#endif
-#ifdef SOLVE3D
-     &                           GRID(ng) % h,                          &
-# ifdef ICESHELF
-     &                           GRID(ng) % zice,                       &
-# endif
-# if defined SEDIMENT && defined SED_MORPH
-     &                           SEDBED(ng) % bed_thick,                &
-# endif
-     &                           GRID(ng) % Hz,                         &
-     &                           GRID(ng) % z_r,                        &
-     &                           GRID(ng) % z_w,                        &
-#endif
      &                           MIXING(ng) % Kh,                       &
 #ifdef SOLVE3D
      &                           MIXING(ng) % Kv,                       &
@@ -313,24 +246,6 @@
      &                               LBij, UBij,                        &
      &                               IminS, ImaxS, JminS, JmaxS,        &
      &                               nstp, nnew, ifac,                  &
-     &                               pm, om_p, om_r, om_u, om_v,        &
-     &                               pn, on_p, on_r, on_u, on_v,        &
-     &                               pmon_p, pmon_r, pmon_u,            &
-     &                               pnom_p, pnom_r, pnom_v,            &
-#ifdef MASKING
-     &                               pmask, rmask,                      &
-     &                               umask, vmask,                      &
-#endif
-#ifdef SOLVE3D
-     &                               h,                                 &
-# ifdef ICESHELF
-     &                               zice,                              &
-# endif
-# if defined SEDIMENT && defined SED_MORPH
-     &                               bed_thick,                         &
-# endif
-     &                               Hz, z_r, z_w,                      &
-#endif
      &                               Kh,                                &
 #ifdef SOLVE3D
      &                               Kv,                                &
@@ -361,38 +276,9 @@
       integer, intent(in) :: nstp, nnew, ifac
 !
 #ifdef ASSUMED_SHAPE
-      real(r8), intent(in) :: pm(LBi:,LBj:)
-      real(r8), intent(in) :: om_p(LBi:,LBj:)
-      real(r8), intent(in) :: om_r(LBi:,LBj:)
-      real(r8), intent(in) :: om_u(LBi:,LBj:)
-      real(r8), intent(in) :: om_v(LBi:,LBj:)
-      real(r8), intent(in) :: pn(LBi:,LBj:)
-      real(r8), intent(in) :: on_p(LBi:,LBj:)
-      real(r8), intent(in) :: on_r(LBi:,LBj:)
-      real(r8), intent(in) :: on_u(LBi:,LBj:)
-      real(r8), intent(in) :: on_v(LBi:,LBj:)
-      real(r8), intent(in) :: pmon_p(LBi:,LBj:)
-      real(r8), intent(in) :: pmon_r(LBi:,LBj:)
-      real(r8), intent(in) :: pmon_u(LBi:,LBj:)
-      real(r8), intent(in) :: pnom_p(LBi:,LBj:)
-      real(r8), intent(in) :: pnom_r(LBi:,LBj:)
-      real(r8), intent(in) :: pnom_v(LBi:,LBj:)
-# ifdef MASKING
-      real(r8), intent(in) :: pmask(LBi:,LBj:)
-      real(r8), intent(in) :: rmask(LBi:,LBj:)
-      real(r8), intent(in) :: umask(LBi:,LBj:)
-      real(r8), intent(in) :: vmask(LBi:,LBj:)
-# endif
       real(r8), intent(in) :: Kh(LBi:,LBj:)
 # ifdef SOLVE3D
       real(r8), intent(in) :: Kv(LBi:,LBj:,0:)
-#  ifdef ICESHELF
-      real(r8), intent(in) :: zice(LBi:,LBj:)
-#  endif
-#  if defined SEDIMENT && defined SED_MORPH
-      real(r8), intent(in):: bed_thick(LBi:,LBj:,:)
-#  endif
-      real(r8), intent(inout) :: h(LBi:,LBj:)
 # endif
 # ifdef ADJUST_BOUNDARY
 #  ifdef SOLVE3D
@@ -419,44 +305,12 @@
       real(r8), intent(out) :: HnormR(LBi:,LBj:,:)
       real(r8), intent(out) :: HnormU(LBi:,LBj:,:)
       real(r8), intent(out) :: HnormV(LBi:,LBj:,:)
-# ifdef SOLVE3D
-      real(r8), intent(out) :: Hz(LBi:,LBj:,:)
-      real(r8), intent(out) :: z_r(LBi:,LBj:,:)
-      real(r8), intent(out) :: z_w(LBi:,LBj:,0:)
-# endif
+
 #else
-      real(r8), intent(in) :: pm(LBi:UBi,LBj:UBj)
-      real(r8), intent(in) :: om_p(LBi:UBi,LBj:UBj)
-      real(r8), intent(in) :: om_r(LBi:UBi,LBj:UBj)
-      real(r8), intent(in) :: om_u(LBi:UBi,LBj:UBj)
-      real(r8), intent(in) :: om_v(LBi:UBi,LBj:UBj)
-      real(r8), intent(in) :: pn(LBi:UBi,LBj:UBj)
-      real(r8), intent(in) :: on_p(LBi:UBi,LBj:UBj)
-      real(r8), intent(in) :: on_r(LBi:UBi,LBj:UBj)
-      real(r8), intent(in) :: on_u(LBi:UBi,LBj:UBj)
-      real(r8), intent(in) :: on_v(LBi:UBi,LBj:UBj)
-      real(r8), intent(in) :: pmon_p(LBi:UBi,LBj:UBj)
-      real(r8), intent(in) :: pmon_r(LBi:UBi,LBj:UBj)
-      real(r8), intent(in) :: pmon_u(LBi:UBi,LBj:UBj)
-      real(r8), intent(in) :: pnom_p(LBi:UBi,LBj:UBj)
-      real(r8), intent(in) :: pnom_r(LBi:UBi,LBj:UBj)
-      real(r8), intent(in) :: pnom_v(LBi:UBi,LBj:UBj)
-# ifdef MASKING
-      real(r8), intent(in) :: pmask(LBi:UBi,LBj:UBj)
-      real(r8), intent(in) :: rmask(LBi:UBi,LBj:UBj)
-      real(r8), intent(in) :: umask(LBi:UBi,LBj:UBj)
-      real(r8), intent(in) :: vmask(LBi:UBi,LBj:UBj)
-# endif
+
       real(r8), intent(in) :: Kh(LBi:UBi,LBj:UBj)
 # ifdef SOLVE3D
       real(r8), intent(in) :: Kv(LBi:UBi,LBj:UBj,0:N(ng))
-#  ifdef ICESHELF
-      real(r8), intent(in) :: zice(LBi:UBi,LBj:UBj)
-#  endif
-#  if defined SEDIMENT && defined SED_MORPH
-      real(r8), intent(in):: bed_thick0(LBi:UBi,LBj:UBj,3)
-#  endif
-      real(r8), intent(inout) :: h(LBi:UBi,LBj:UBj)
 # endif
 # ifdef ADJUST_BOUNDARY
 #  ifdef SOLVE3D
@@ -483,11 +337,6 @@
       real(r8), intent(out) :: HnormR(LBi:UBi,LBj:UBj,NSA)
       real(r8), intent(out) :: HnormU(LBi:UBi,LBj:UBj,NSA)
       real(r8), intent(out) :: HnormV(LBi:UBi,LBj:UBj,NSA)
-# ifdef SOLVE3D
-      real(r8), intent(out) :: Hz(LBi:UBi,LBj:UBj,N(ng))
-      real(r8), intent(out) :: z_r(LBi:UBi,LBj:UBj,N(ng))
-      real(r8), intent(out) :: z_w(LBi:UBi,LBj:UBj,0:N(ng))
-# endif
 #endif
 !
 !  Local variable declarations.
@@ -570,15 +419,17 @@
      &                     LBi, UBi, LBj, UBj,                          &
      &                     IminS, ImaxS, JminS, JmaxS,                  &
      &                     nstp, nnew,                                  &
-     &                     h,                                           &
+     &                     GRID(ng) % h,                                &
 # ifdef ICESHELF
-     &                     zice,                                        &
+     &                     GRID(ng) % zice,                             &
 # endif
 # if defined SEDIMENT && defined SED_MORPH
-     &                     bed_thick,                                   &
+     &                     SEDBED(ng) % bed_thick,                      &
 # endif
      &                     A2d,                                         &
-     &                     Hz, z_r, z_w)
+     &                     GRID(ng) % Hz,                               &
+     &                     GRID(ng) % z_r,                              &
+     &                     GRID(ng) % z_w)
 #endif
 !
 !:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -652,7 +503,8 @@
 !
             DO j=JstrT,JendT
               DO i=IstrT,IendT
-                Hscale(i,j)=1.0_r8/SQRT(om_r(i,j)*on_r(i,j))
+                Hscale(i,j)=1.0_r8/SQRT(GRID(ng)%om_r(i,j)*             &
+     &                                  GRID(ng)%on_r(i,j))
               END DO
             END DO
 !
@@ -662,7 +514,7 @@
                 compute=0.0_r8
                 IF (((Jstr.le.jc).and.(jc.le.Jend)).and.                &
      &              ((Istr.le.ic).and.(ic.le.Iend))) THEN
-                  IF (rmask(ic,jc).gt.0) compute=1.0_r8
+                  IF (GRID(ng)%rmask(ic,jc).gt.0) compute=1.0_r8
                 END IF
 # ifdef DISTRIBUTE
                 CALL mp_reduce (ng, iTLM, 1, compute, 'SUM')
@@ -690,9 +542,14 @@
      &                                   NHsteps(ifile,isFsur)/ifac,    &
      &                                   DTsizeH(ifile,isFsur),         &
      &                                   Kh,                            &
-     &                                   pm, pn, pmon_u, pnom_v,        &
+     &                                   GRID(ng) % pm,                 &
+     &                                   GRID(ng) % pn,                 &
+     &                                   GRID(ng) % pmon_u,             &
+     &                                   GRID(ng) % pnom_v,             &
 #ifdef MASKING
-     &                                   rmask, umask, vmask,           &
+     &                                   GRID(ng) % rmask,              &
+     &                                   GRID(ng) % umask,              &
+     &                                   GRID(ng) % vmask,              &
 #endif
      &                                   A2d)
 !
@@ -742,7 +599,7 @@
      &                                NRM(ifile,ng)%Vid(idFsur),        &
      &                                NRM(ifile,ng)%Rindex,             &
 #ifdef MASKING
-     &                                rmask,                            &
+     &                                GRID(ng) % rmask,                 &
 #endif
      &                                HnormR(:,:,ifile))
 
@@ -761,7 +618,7 @@
      &                               NRM(ifile,ng)%Rindex,              &
      &                               ioDesc,                            &
 # ifdef MASKING
-     &                               rmask,                             &
+     &                               GRID(ng) % rmask,                  &
 # endif
      &                               HnormR(:,:,ifile))
 #endif
@@ -794,7 +651,8 @@
 !
             DO j=JstrT,JendT
               DO i=IstrP,IendT
-                Hscale(i,j)=1.0_r8/SQRT(om_u(i,j)*on_u(i,j))
+                Hscale(i,j)=1.0_r8/SQRT(GRID(ng)%om_u(i,j)*             &
+     &                                  GRID(ng)%on_u(i,j))
               END DO
             END DO
 !
@@ -804,7 +662,7 @@
                 compute=0.0_r8
                 IF (((Jstr.le.jc).and.(jc.le.Jend)).and.                &
      &              ((Istr.le.ic).and.(ic.le.Iend))) THEN
-                  IF (umask(ic,jc).gt.0) compute=1.0_r8
+                  IF (GRID(ng)%umask(ic,jc).gt.0) compute=1.0_r8
                 END IF
 # ifdef DISTRIBUTE
                 CALL mp_reduce (ng, iTLM, 1, compute, 'SUM')
@@ -832,9 +690,13 @@
      &                                   NHsteps(ifile,isUbar)/ifac,    &
      &                                   DTsizeH(ifile,isUbar),         &
      &                                   Kh,                            &
-     &                                   pm, pn, pmon_r, pnom_p,        &
+     &                                   GRID(ng) % pm,                 &
+     &                                   GRID(ng) % pn,                 &
+     &                                   GRID(ng) % pmon_r,             &
+     &                                   GRID(ng) % pnom_p,             &
 #ifdef MASKING
-     &                                   umask, pmask,                  &
+     &                                   GRID(ng) % umask,              &
+     &                                   GRID(ng) % pmask,              &
 #endif
      &                                   A2d)
 !
@@ -884,7 +746,7 @@
      &                                NRM(ifile,ng)%Vid(idUbar),        &
      &                                NRM(ifile,ng)%Rindex,             &
 #ifdef MASKING
-     &                                umask,                            &
+     &                                GRID(ng) % umask,                 &
 #endif
      &                                HnormU(:,:,ifile))
 
@@ -903,7 +765,7 @@
      &                               NRM(ifile,ng)%Rindex,              &
      &                               ioDesc,                            &
 # ifdef MASKING
-     &                               umask,                             &
+     &                               GRID(ng) % umask,                  &
 # endif
      &                               HnormU(:,:,ifile))
 #endif
@@ -936,7 +798,8 @@
 !
             DO j=JstrP,JendT
               DO i=IstrT,IendT
-                Hscale(i,j)=1.0_r8/SQRT(om_v(i,j)*on_v(i,j))
+                Hscale(i,j)=1.0_r8/SQRT(GRID(ng)%om_v(i,j)*             &
+     &                                  GRID(ng)%on_v(i,j))
               END DO
             END DO
 !
@@ -946,7 +809,7 @@
                 compute=0.0_r8
                 IF (((Jstr.le.jc).and.(jc.le.Jend)).and.                &
      &              ((Istr.le.ic).and.(ic.le.Iend))) THEN
-                  IF (vmask(ic,jc).gt.0) compute=1.0_r8
+                  IF (GRID(ng)%vmask(ic,jc).gt.0) compute=1.0_r8
                 END IF
 # ifdef DISTRIBUTE
                 CALL mp_reduce (ng, iTLM, 1, compute, 'SUM')
@@ -974,9 +837,13 @@
      &                                   NHsteps(ifile,isVbar)/ifac,    &
      &                                   DTsizeH(ifile,isVbar),         &
      &                                   Kh,                            &
-     &                                   pm, pn, pmon_p, pnom_r,        &
+     &                                   GRID(ng) % pm,                 &
+     &                                   GRID(ng) % pn,                 &
+     &                                   GRID(ng) % pmon_p,             &
+     &                                   GRID(ng) % pnom_r,             &
 #ifdef MASKING
-     &                                   vmask, pmask,                  &
+     &                                   GRID(ng) % vmask,              &
+     &                                   GRID(ng) % pmask,              &
 #endif
      &                                   A2d)
 !
@@ -1026,7 +893,7 @@
      &                                NRM(ifile,ng)%Vid(idVbar),        &
      &                                NRM(ifile,ng)%Rindex,             &
 #ifdef MASKING
-     &                                vmask,                            &
+     &                                GRID(ng) % vmask,                 &
 #endif
      &                                HnormV(:,:,ifile))
 
@@ -1045,7 +912,7 @@
      &                               NRM(ifile,ng)%Rindex,              &
      &                               ioDesc,                            &
 # ifdef MASKING
-     &                               vmask,                             &
+     &                               GRID(ng) % vmask,                  &
 # endif
      &                               HnormV(:,:,ifile))
 #endif
@@ -1080,9 +947,11 @@
 !
             DO j=JstrT,JendT
               DO i=IstrP,IendT
-                cff=om_u(i,j)*on_u(i,j)*0.5_r8
+                cff=GRID(ng)%om_u(i,j)*GRID(ng)%on_u(i,j)*0.5_r8
                 DO k=1,N(ng)
-                  Vscale(i,j,k)=1.0_r8/SQRT(cff*(Hz(i-1,j,k)+Hz(i,j,k)))
+                  Vscale(i,j,k)=1.0_r8/                                 &
+     &                          SQRT(cff*(GRID(ng)%Hz(i-1,j,k)+         &
+     &                                    GRID(ng)%Hz(i  ,j,k)))
                 END DO
               END DO
             END DO
@@ -1094,7 +963,7 @@
                   compute=0.0_r8
                   IF (((Jstr.le.jc).and.(jc.le.Jend)).and.              &
      &                ((Istr.le.ic).and.(ic.le.Iend))) THEN
-                    IF (umask(ic,jc).gt.0) compute=1.0_r8
+                    IF (GRID(ng)%umask(ic,jc).gt.0) compute=1.0_r8
                   END IF
 #  ifdef DISTRIBUTE
                   CALL mp_reduce (ng, iTLM, 1, compute, 'SUM')
@@ -1127,20 +996,28 @@
      &                                     DTsizeH(ifile,isUvel),       &
      &                                     DTsizeV(ifile,isUvel),       &
      &                                     Kh, Kv,                      &
-     &                                     pm, pn,                      &
+     &                                     GRID(ng) % pm,               &
+     &                                     GRID(ng) % pn,               &
 # ifdef GEOPOTENTIAL_HCONV
-     &                                     on_r, om_p,                  &
+     &                                     GRID(ng) % on_r,             &
+     &                                     GRID(ng) % om_p,             &
 # else
-     &                                     pmon_r, pnom_p,              &
+     &                                     GRID(ng) % pmon_r,           &
+     &                                     GRID(ng) % pnom_p,           &
 # endif
 # ifdef MASKING
 #  ifdef GEOPOTENTIAL_HCONV
-     &                                     pmask, rmask, umask, vmask,  &
+     &                                     GRID(ng) % pmask,            &
+     &                                     GRID(ng) % rmask,            &
+     &                                     GRID(ng) % umask,            &
+     &                                     GRID(ng) % vmask,            &
 #  else
-     &                                     umask, pmask,                &
+     &                                     GRID(ng) % umask,            &
+     &                                     GRID(ng) % pmask,            &
 #  endif
 # endif
-     &                                     Hz, z_r,                     &
+     &                                     GRID(ng) % Hz,               &
+     &                                     GRID(ng) % z_r,              &
      &                                     A3d)
 !
                     DO k=1,N(ng)
@@ -1192,7 +1069,7 @@
      &                                NRM(ifile,ng)%Vid(idUvel),        &
      &                                NRM(ifile,ng)%Rindex,             &
 # ifdef MASKING
-     &                                umask,                            &
+     &                                GRID(ng) % umask,                 &
 # endif
      &                                VnormU(:,:,:,ifile))
 
@@ -1211,7 +1088,7 @@
      &                               NRM(ifile,ng)%Rindex,              &
      &                               ioDesc,                            &
 #  ifdef MASKING
-     &                               umask,                             &
+     &                               GRID(ng) % umask,                  &
 #  endif
      &                               VnormU(:,:,:,ifile))
 # endif
@@ -1244,9 +1121,11 @@
 !
             DO j=JstrP,JendT
               DO i=IstrT,IendT
-                cff=om_v(i,j)*on_v(i,j)*0.5_r8
+                cff=GRID(ng)%om_v(i,j)*GRID(ng)%on_v(i,j)*0.5_r8
                 DO k=1,N(ng)
-                  Vscale(i,j,k)=1.0_r8/SQRT(cff*(Hz(i,j-1,k)+Hz(i,j,k)))
+                  Vscale(i,j,k)=1.0_r8/                                 &
+     &                          SQRT(cff*(GRID(ng)%Hz(i,j-1,k)+         &
+     &                                    GRID(ng)%Hz(i,j  ,k)))
                 END DO
               END DO
             END DO
@@ -1258,7 +1137,7 @@
                   compute=0.0_r8
                   IF (((Jstr.le.jc).and.(jc.le.Jend)).and.              &
      &                ((Istr.le.ic).and.(ic.le.Iend))) THEN
-                    IF (vmask(ic,jc).gt.0) compute=1.0_r8
+                    IF (GRID(ng)%vmask(ic,jc).gt.0) compute=1.0_r8
                   END IF
 #  ifdef DISTRIBUTE
                   CALL mp_reduce (ng, iTLM, 1, compute, 'SUM')
@@ -1291,20 +1170,28 @@
      &                                     DTsizeH(ifile,isVvel),       &
      &                                     DTsizeV(ifile,isVvel),       &
      &                                     Kh, Kv,                      &
-     &                                     pm, pn,                      &
+     &                                     GRID(ng) % pm,               &
+     &                                     GRID(ng) % pn,               &
 # ifdef GEOPOTENTIAL_HCONV
-     &                                     on_p, om_r,                  &
+     &                                     GRID(ng) % on_p,             &
+     &                                     GRID(ng) % om_r,             &
 # else
-     &                                     pmon_p, pnom_r,              &
+     &                                     GRID(ng) % pmon_p,           &
+     &                                     GRID(ng) % pnom_r,           &
 # endif
 # ifdef MASKING
 #  ifdef GEOPOTENTIAL_HCONV
-     &                                     pmask, rmask, umask, vmask,  &
+     &                                     GRID(ng) % pmask,            &
+     &                                     GRID(ng) % rmask,            &
+     &                                     GRID(ng) % umask,            &
+     &                                     GRID(ng) % vmask,            &
 #  else
-     &                                     vmask, pmask,                &
+     &                                     GRID(ng) % vmask,            &
+     &                                     GRID(ng) % pmask,            &
 #  endif
 # endif
-     &                                     Hz, z_r,                     &
+     &                                     GRID(ng) % Hz,               &
+     &                                     GRID(ng) % z_r,              &
      &                                     A3d)
 !
                     DO k=1,N(ng)
@@ -1355,7 +1242,7 @@
      &                                NRM(ifile,ng)%Vid(idVvel),        &
      &                                NRM(ifile,ng)%Rindex,             &
 # ifdef MASKING
-     &                                vmask,                            &
+     &                                GRID(ng) % vmask,                 &
 # endif
      &                                VnormV(:,:,:,ifile))
 
@@ -1374,7 +1261,7 @@
      &                               NRM(ifile,ng)%Rindex,              &
      &                               ioDesc,                            &
 #  ifdef MASKING
-     &                               vmask,                             &
+     &                               GRID(ng) % vmask,                  &
 #  endif
      &                               VnormV(:,:,:,ifile))
 # endif
@@ -1427,9 +1314,9 @@
 !
           DO j=JstrT,JendT
             DO i=IstrT,IendT
-              cff=om_r(i,j)*on_r(i,j)
+              cff=GRID(ng)%om_r(i,j)*GRID(ng)%on_r(i,j)
               DO k=1,N(ng)
-                Vscale(i,j,k)=1.0_r8/SQRT(cff*Hz(i,j,k))
+                Vscale(i,j,k)=1.0_r8/SQRT(cff*GRID(ng)%Hz(i,j,k))
               END DO
             END DO
           END DO
@@ -1445,7 +1332,7 @@
                     compute=0.0_r8
                     IF (((Jstr.le.jc).and.(jc.le.Jend)).and.            &
      &                  ((Istr.le.ic).and.(ic.le.Iend))) THEN
-                      IF (rmask(ic,jc).gt.0) compute=1.0_r8
+                      IF (GRID(ng)%rmask(ic,jc).gt.0) compute=1.0_r8
                     END IF
 #  ifdef DISTRIBUTE
                     CALL mp_reduce (ng, iTLM, 1, compute, 'SUM')
@@ -1478,16 +1365,22 @@
      &                                       DTsizeH(ifile,ifield),     &
      &                                       DTsizeV(ifile,ifield),     &
      &                                       Kh, Kv,                    &
-     &                                       pm, pn,                    &
+     &                                       GRID(ng) % pm,             &
+     &                                       GRID(ng) % pn,             &
 # ifdef GEOPOTENTIAL_HCONV
-     &                                       on_u, om_v,                &
+     &                                       GRID(ng) % on_u,           &
+     &                                       GRID(ng) % om_v,           &
 # else
-     &                                       pmon_u, pnom_v,            &
+     &                                       GRID(ng) % pmon_u,         &
+     &                                       GRID(ng) % pnom_v,         &
 # endif
 # ifdef MASKING
-     &                                       rmask, umask, vmask,       &
+     &                                       GRID(ng) % rmask,          &
+     &                                       GRID(ng) % umask,          &
+     &                                       GRID(ng) % vmask,          &
 # endif
-     &                                       Hz, z_r,                   &
+     &                                       GRID(ng) % Hz,             &
+     &                                       GRID(ng) % z_r,            &
      &                                       A3d)
 !
                       DO k=1,N(ng)
@@ -1552,7 +1445,7 @@
      &                              NRM(ifile,ng)%Vid(idTvar(itrc)),    &
      &                              NRM(ifile,ng)%Rindex,               &
 # ifdef MASKING
-     &                                  rmask,                          &
+     &                                  GRID(ng) % rmask,               &
 # endif
      &                                  VnormR(:,:,:,ifile,itrc))
 
@@ -1570,11 +1463,11 @@
      &                              NRM(ifile,ng)%pioFile,              &
      &                              NRM(ifile,ng)%pioTrc(itrc),         &
      &                              NRM(ifile,ng)%Rindex,               &
-     &                                  ioDesc,                         &
+     &                                 ioDesc,                          &
 #  ifdef MASKING
-     &                                  rmask,                          &
+     &                                 GRID(ng) % rmask,                &
 #  endif
-     &                                  VnormR(:,:,:,ifile,itrc))
+     &                                 VnormR(:,:,:,ifile,itrc))
 # endif
               END SELECT
               IF (FoundError(exit_flag, NoError,                        &
@@ -1658,7 +1551,7 @@
                 Bmax=Mm(ng)
                 IF (Lconvolve(ibry)) THEN
                   DO j=JstrT,JendT
-                    HscaleB(j)=1.0_r8/SQRT(on_r(i,j))
+                    HscaleB(j)=1.0_r8/SQRT(GRID(ng)%on_r(i,j))
                   END DO
                 END IF
               CASE (isouth, inorth)
@@ -1667,7 +1560,7 @@
                 Bmax=Lm(ng)
                 IF (Lconvolve(ibry)) THEN
                   DO i=IstrT,IendT
-                    HscaleB(i)=1.0_r8/SQRT(om_r(i,j))
+                    HscaleB(i)=1.0_r8/SQRT(GRID(ng)%om_r(i,j))
                   END DO
                 END IF
             END SELECT
@@ -1678,15 +1571,17 @@
                 CASE (iwest, ieast)
                   bounded=Lconvolve(ibry).and.                          &
      &                    ((Jstr.le.ib).and.(ib.le.Jend))
+                  i=BOUNDS(ng)%edge(ibry,r2dvar)
                   j=ib
                 CASE (isouth, inorth)
                   bounded=Lconvolve(ibry).and.                          &
      &                    ((Istr.le.ib).and.(ib.le.Iend))
                   i=ib
+                  j=BOUNDS(ng)%edge(ibry,r2dvar)
               END SELECT
 # ifdef MASKING
               IF (bounded) THEN
-                compute=rmask(i,j)
+                compute=GRID(ng)%rmask(i,j)
               ELSE
                 compute=0.0_r8
               END IF
@@ -1713,9 +1608,14 @@
      &                                     NHstepsB(ibry,isFsur)/ifac,  &
      &                                     DTsizeHB(ibry,isFsur),       &
      &                                     Kh,                          &
-     &                                     pm, pn, pmon_u, pnom_v,      &
+     &                                     GRID(ng) % pm,               &
+     &                                     GRID(ng) % pn,               &
+     &                                     GRID(ng) % pmon_u,           &
+     &                                     GRID(ng) % pnom_v,           &
 # ifdef MASKING
-     &                                     rmask, umask, vmask,         &
+     &                                     GRID(ng) % rmask,            &
+     &                                     GRID(ng) % umask,            &
+     &                                     GRID(ng) % vmask,            &
 # endif
      &                                     B2d)
 !
@@ -1751,9 +1651,14 @@
      &                                     NHstepsB(ibry,isFsur)/ifac,  &
      &                                     DTsizeHB(ibry,isFsur),       &
      &                                     Kh,                          &
-     &                                     pm, pn, pmon_u, pnom_v,      &
+     &                                     GRID(ng) % pm,               &
+     &                                     GRID(ng) % pn,               &
+     &                                     GRID(ng) % pmon_u,           &
+     &                                     GRID(ng) % pnom_v,           &
 # ifdef MASKING
-     &                                     rmask, umask, vmask,         &
+     &                                     GRID(ng) % rmask,            &
+     &                                     GRID(ng) % umask,            &
+     &                                     GRID(ng) % vmask,            &
 # endif
      &                                     B2d)
 !
@@ -1836,7 +1741,7 @@
                 Bmax=Mm(ng)
                 IF (Lconvolve(ibry)) THEN
                   DO j=JstrT,JendT
-                    HscaleB(j)=1.0_r8/SQRT(on_u(i,j))
+                    HscaleB(j)=1.0_r8/SQRT(GRID(ng)%on_u(i,j))
                   END DO
                 END IF
               CASE (isouth, inorth)
@@ -1850,7 +1755,7 @@
                 END IF
                 IF (Lconvolve(ibry)) THEN
                   DO i=IstrP,IendT
-                    HscaleB(i)=1.0_r8/SQRT(om_u(i,j))
+                    HscaleB(i)=1.0_r8/SQRT(GRID(ng)%om_u(i,j))
                   END DO
                 END IF
             END SELECT
@@ -1861,15 +1766,17 @@
                 CASE (iwest, ieast)
                   bounded=Lconvolve(ibry).and.                          &
      &                    ((Jstr.le.ib).and.(ib.le.Jend))
+                  i=BOUNDS(ng)%edge(ibry,u2dvar)
                   j=ib
                 CASE (isouth, inorth)
                   bounded=Lconvolve(ibry).and.                          &
      &                    ((Istr.le.ib).and.(ib.le.Iend))
                   i=ib
+                  j=BOUNDS(ng)%edge(ibry,u2dvar)
               END SELECT
 # ifdef MASKING
               IF (bounded) THEN
-                compute=umask(i,j)
+                compute=GRID(ng)%umask(i,j)
               ELSE
                 compute=0.0_r8
               END IF
@@ -1896,9 +1803,13 @@
      &                                     NHstepsB(ibry,isUbar)/ifac,  &
      &                                     DTsizeHB(ibry,isUbar),       &
      &                                     Kh,                          &
-     &                                     pm, pn, pmon_r, pnom_p,      &
+     &                                     GRID(ng) % pm,               &
+     &                                     GRID(ng) % pn,               &
+     &                                     GRID(ng) % pmon_r,           &
+     &                                     GRID(ng) % pnom_p,           &
 # ifdef MASKING
-     &                                     umask, pmask,                &
+     &                                     GRID(ng) % umask,            &
+     &                                     GRID(ng) % pmask,            &
 # endif
      &                                     B2d)
 !
@@ -1909,6 +1820,7 @@
                     DO j=JstrT,JendT
                       B2d(j)=B2d(j)*HscaleB(j)
                     END DO
+!
                     DO j=JstrT,JendT
                       B2d(j)=B2d(j)*HscaleB(j)
                     END DO
@@ -1916,6 +1828,7 @@
                     DO i=IstrP,IendT
                       B2d(i)=B2d(i)*HscaleB(i)
                     END DO
+!
                     DO i=IstrP,IendT
                       B2d(i)=B2d(i)*HscaleB(i)
                     END DO
@@ -1932,9 +1845,13 @@
      &                                     NHstepsB(ibry,isUbar)/ifac,  &
      &                                     DTsizeHB(ibry,isUbar),       &
      &                                     Kh,                          &
-     &                                     pm, pn, pmon_r, pnom_p,      &
+     &                                     GRID(ng) % pm,               &
+     &                                     GRID(ng) % pn,               &
+     &                                     GRID(ng) % pmon_r,           &
+     &                                     GRID(ng) % pnom_p,           &
 # ifdef MASKING
-     &                                     umask, pmask,                &
+     &                                     GRID(ng) % umask,            &
+     &                                     GRID(ng) % pmask,            &
 # endif
      &                                     B2d)
 !
@@ -2020,7 +1937,7 @@
                 END IF
                 IF (Lconvolve(ibry)) THEN
                   DO j=JstrT,JendT
-                    HscaleB(j)=1.0_r8/SQRT(on_v(i,j))
+                    HscaleB(j)=1.0_r8/SQRT(GRID(ng)%on_v(i,j))
                   END DO
                 END IF
               CASE (isouth, inorth)
@@ -2029,7 +1946,7 @@
                 Bmax=Lm(ng)
                 IF (Lconvolve(ibry)) THEN
                   DO i=IstrT,IendT
-                    HscaleB(i)=1.0_r8/SQRT(om_v(i,j))
+                    HscaleB(i)=1.0_r8/SQRT(GRID(ng)%om_v(i,j))
                   END DO
                 END IF
             END SELECT
@@ -2040,15 +1957,17 @@
                 CASE (iwest, ieast)
                   bounded=Lconvolve(ibry).and.                          &
      &                    ((Jstr.le.ib).and.(ib.le.Jend))
+                  i=BOUNDS(ng)%edge(ibry,v2dvar)
                   j=ib
                 CASE (isouth, inorth)
                   bounded=Lconvolve(ibry).and.                          &
      &                    ((Istr.le.ib).and.(ib.le.Iend))
                   i=ib
+                  j=BOUNDS(ng)%edge(ibry,v2dvar)
               END SELECT
 # ifdef MASKING
               IF (bounded) THEN
-                compute=vmask(i,j)
+                compute=GRID(ng)%vmask(i,j)
               ELSE
                 compute=0.0_r8
               END IF
@@ -2075,9 +1994,13 @@
      &                                     NHstepsB(ibry,isVbar)/ifac,  &
      &                                     DTsizeHB(ibry,isVbar),       &
      &                                     Kh,                          &
-     &                                     pm, pn, pmon_p, pnom_r,      &
+     &                                     GRID(ng) % pm,               &
+     &                                     GRID(ng) % pn,               &
+     &                                     GRID(ng) % pmon_p,           &
+     &                                     GRID(ng) % pnom_r,           &
 # ifdef MASKING
-     &                                     vmask, pmask,                &
+     &                                     GRID(ng) % vmask,            &
+     &                                     GRID(ng) % pmask,            &
 # endif
      &                                     B2d)
 !
@@ -2113,9 +2036,13 @@
      &                                     NHstepsB(ibry,isVbar)/ifac,  &
      &                                     DTsizeHB(ibry,isVbar),       &
      &                                     Kh,                          &
-     &                                     pm, pn, pmon_p, pnom_r,      &
+     &                                     GRID(ng) % pm,               &
+     &                                     GRID(ng) % pn,               &
+     &                                     GRID(ng) % pmon_p,           &
+     &                                     GRID(ng) % pnom_r,           &
 # ifdef MASKING
-     &                                     vmask, pmask,                &
+     &                                     GRID(ng) % vmask,            &
+     &                                     GRID(ng) % pmask,            &
 # endif
      &                                     B2d)
 !
@@ -2199,10 +2126,11 @@
                 Bmax=Mm(ng)
                 IF (Lconvolve(ibry)) THEN
                   DO j=JstrT,JendT
-                    cff=on_u(i,j)*0.5_r8
+                    cff=GRID(ng)%on_u(i,j)*0.5_r8
                     DO k=1,N(ng)
                       VscaleB(j,k)=1.0_r8/                              &
-     &                             SQRT(cff*(Hz(i-1,j,k)+Hz(i,j,k)))
+     &                             SQRT(cff*(GRID(ng)%Hz(i-1,j,k)+      &
+     &                                       GRID(ng)%Hz(i  ,j,k)))
                     END DO
                   END DO
                 END IF
@@ -2217,10 +2145,11 @@
                 END IF
                 IF (Lconvolve(ibry)) THEN
                   DO i=IstrP,IendT
-                    cff=om_u(i,j)*0.5_r8
+                    cff=GRID(ng)%om_u(i,j)*0.5_r8
                     DO k=1,N(ng)
                       VscaleB(i,k)=1.0_r8/                              &
-     &                             SQRT(cff*(Hz(i-1,j,k)+Hz(i,j,k)))
+     &                             SQRT(cff*(GRID(ng)%Hz(i-1,j,k)+      &
+     &                                       GRID(ng)%Hz(i,  j,k)))
                     END DO
                   END DO
                 END IF
@@ -2232,15 +2161,17 @@
                   CASE (iwest, ieast)
                     bounded=Lconvolve(ibry).and.                        &
      &                      ((Jstr.le.ib).and.(ib.le.Jend))
+                    i=BOUNDS(ng)%edge(ibry,u2dvar)
                     j=ib
                   CASE (isouth, inorth)
                     bounded=Lconvolve(ibry).and.                        &
      &                      ((Istr.le.ib).and.(ib.le.Iend))
                     i=ib
+                    j=BOUNDS(ng)%edge(ibry,u2dvar)
                 END SELECT
 #  ifdef MASKING
                 IF (bounded) THEN
-                  compute=umask(i,j)
+                  compute=GRID(ng)%umask(i,j)
                 ELSE
                   compute=0.0_r8
                 END IF
@@ -2270,11 +2201,16 @@
      &                                       DTsizeHB(ibry,isUvel),     &
      &                                       DTsizeVB(ibry,isUvel),     &
      &                                       Kh, Kv,                    &
-     &                                       pm, pn, pmon_r, pnom_p,    &
+     &                                       GRID(ng) % pm,             &
+     &                                       GRID(ng) % pn,             &
+     &                                       GRID(ng) % pmon_r,         &
+     &                                       GRID(ng) % pnom_p,         &
 #  ifdef MASKING
-     &                                       umask, pmask,              &
+     &                                       GRID(ng) % umask,          &
+     &                                       GRID(ng) % pmask,          &
 #  endif
-     &                                       Hz, z_r,                   &
+     &                                       GRID(ng) % Hz,             &
+     &                                       GRID(ng) % z_r,            &
      &                                       B3d)
 !
 !  VscaleB must be applied twice.
@@ -2320,11 +2256,16 @@
      &                                       DTsizeHB(ibry,isUvel),     &
      &                                       DTsizeVB(ibry,isUvel),     &
      &                                       Kh, Kv,                    &
-     &                                       pm, pn, pmon_r, pnom_p,    &
+     &                                       GRID(ng) % pm,             &
+     &                                       GRID(ng) % pn,             &
+     &                                       GRID(ng) % pmon_r,         &
+     &                                       GRID(ng) % pnom_p,         &
 #  ifdef MASKING
-     &                                       umask, pmask,              &
+     &                                       GRID(ng) % umask,          &
+     &                                       GRID(ng) % pmask,          &
 #  endif
-     &                                       Hz, z_r,                   &
+     &                                       GRID(ng) % Hz,             &
+     &                                       GRID(ng) % z_r,            &
      &                                       B3d)
 !
 !  Set normalization factors.
@@ -2418,10 +2359,11 @@
                 END IF
                 IF (Lconvolve(ibry)) THEN
                   DO j=JstrP,JendT
-                    cff=on_v(i,j)*0.5_r8
+                    cff=GRID(ng)%on_v(i,j)*0.5_r8
                     DO k=1,N(ng)
                       VscaleB(j,k)=1.0_r8/                              &
-     &                             SQRT(cff*(Hz(i,j-1,k)+Hz(i,j,k)))
+     &                             SQRT(cff*(GRID(ng)%Hz(i,j-1,k)+      &
+     &                                       GRID(ng)%Hz(i,j  ,k)))
                     END DO
                   END DO
                 END IF
@@ -2431,10 +2373,11 @@
                 Bmax=Lm(ng)
                 IF (Lconvolve(ibry)) THEN
                   DO i=IstrT,IendT
-                    cff=om_v(i,j)*0.5_r8
+                    cff=GRID(ng)%om_v(i,j)*0.5_r8
                     DO k=1,N(ng)
                       VscaleB(i,k)=1.0_r8/                              &
-     &                             SQRT(cff*(Hz(i,j-1,k)+Hz(i,j,k)))
+     &                             SQRT(cff*(GRID(ng)%Hz(i,j-1,k)+      &
+     &                                       GRID(ng)%Hz(i,j  ,k)))
                     END DO
                   END DO
                 END IF
@@ -2446,15 +2389,17 @@
                   CASE (iwest, ieast)
                     bounded=Lconvolve(ibry).and.                        &
      &                      ((Jstr.le.ib).and.(ib.le.Jend))
+                    i=BOUNDS(ng)%edge(ibry,v2dvar)
                     j=ib
                   CASE (isouth, inorth)
                     bounded=Lconvolve(ibry).and.                        &
      &                      ((Istr.le.ib).and.(ib.le.Iend))
                     i=ib
+                    j=BOUNDS(ng)%edge(ibry,v2dvar)
                 END SELECT
 #  ifdef MASKING
                 IF (bounded) THEN
-                  compute=vmask(i,j)
+                  compute=GRID(ng)%vmask(i,j)
                 ELSE
                   compute=0.0_r8
                 END IF
@@ -2484,11 +2429,16 @@
      &                                       DTsizeHB(ibry,isVvel),     &
      &                                       DTsizeVB(ibry,isVvel),     &
      &                                       Kh, Kv,                    &
-     &                                       pm, pn, pmon_p, pnom_r,    &
+     &                                       GRID(ng) % pm,             &
+     &                                       GRID(ng) % pn,             &
+     &                                       GRID(ng) % pmon_p,         &
+     &                                       GRID(ng) % pnom_r,         &
 #  ifdef MASKING
-     &                                       vmask, pmask,              &
+     &                                       GRID(ng) % vmask,          &
+     &                                       GRID(ng) % pmask,          &
 #  endif
-     &                                       Hz, z_r,                   &
+     &                                       GRID(ng) % Hz,             &
+     &                                       GRID(ng) % z_r,            &
      &                                       B3d)
 !
 !  VscaleB must be applied twice.
@@ -2534,11 +2484,16 @@
      &                                       DTsizeHB(ibry,isVvel),     &
      &                                       DTsizeVB(ibry,isVvel),     &
      &                                       Kh, Kv,                    &
-     &                                       pm, pn, pmon_p, pnom_r,    &
+     &                                       GRID(ng) % pm,             &
+     &                                       GRID(ng) % pn,             &
+     &                                       GRID(ng) % pmon_p,         &
+     &                                       GRID(ng) % pnom_r,         &
 #  ifdef MASKING
-     &                                       vmask, pmask,              &
+     &                                       GRID(ng) % vmask,          &
+     &                                       GRID(ng) % pmask,          &
 #  endif
-     &                                       Hz, z_r,                   &
+     &                                       GRID(ng) % Hz,             &
+     &                                       GRID(ng) % z_r,            &
      &                                       B3d)
 !
 !  Set normalization factors.
@@ -2637,9 +2592,9 @@
                   Bmax=Mm(ng)
                   IF (Lconvolve(ibry)) THEN
                     DO j=JstrT,JendT
-                      cff=on_r(i,j)
+                      cff=GRID(ng)%on_r(i,j)
                       DO k=1,N(ng)
-                        VscaleB(j,k)=1.0_r8/SQRT(cff*Hz(i,j,k))
+                        VscaleB(j,k)=1.0_r8/SQRT(cff*GRID(ng)%Hz(i,j,k))
                       END DO
                     END DO
                   END IF
@@ -2649,9 +2604,9 @@
                   Bmax=Lm(ng)
                   IF (Lconvolve(ibry)) THEN
                     DO i=IstrT,IendT
-                      cff=om_r(i,j)
+                      cff=GRID(ng)%om_r(i,j)
                       DO k=1,N(ng)
-                        VscaleB(i,k)=1.0_r8/SQRT(cff*Hz(i,j,k))
+                        VscaleB(i,k)=1.0_r8/SQRT(cff*GRID(ng)%Hz(i,j,k))
                       END DO
                     END DO
                   END IF
@@ -2663,15 +2618,17 @@
                     CASE (iwest, ieast)
                       bounded=Lconvolve(ibry).and.                      &
      &                        ((Jstr.le.ib).and.(ib.le.Jend))
+                      i=BOUNDS(ng)%edge(ibry,r2dvar)
                       j=ib
                     CASE (isouth, inorth)
                       bounded=Lconvolve(ibry).and.                      &
      &                        ((Istr.le.ib).and.(ib.le.Iend))
                       i=ib
+                      j=BOUNDS(ng)%edge(ibry,r2dvar)
                   END SELECT
 #  ifdef MASKING
                   IF (bounded) THEN
-                    compute=rmask(i,j)
+                    compute=GRID(ng)%rmask(i,j)
                   ELSE
                     compute=0.0_r8
                   END IF
@@ -2702,11 +2659,17 @@
      &                                         DTsizeHB(ibry,ifield),   &
      &                                         DTsizeVB(ibry,ifield),   &
      &                                         Kh, Kv,                  &
-     &                                         pm, pn, pmon_u, pnom_v,  &
+     &                                         GRID(ng) % pm,           &
+     &                                         GRID(ng) % pn,           &
+     &                                         GRID(ng) % pmon_u,       &
+     &                                         GRID(ng) % pnom_v,       &
 #  ifdef MASKING
-     &                                         rmask, umask, vmask,     &
+     &                                         GRID(ng) % rmask,        &
+     &                                         GRID(ng) % umask,        &
+     &                                         GRID(ng) % vmask,        &
 #  endif
-     &                                         Hz, z_r,                 &
+     &                                         GRID(ng) % Hz,           &
+     &                                         GRID(ng) % z_r,          &
      &                                         B3d)
 !
 !  VscaleB must be applied twice.
@@ -2753,11 +2716,17 @@
      &                                         DTsizeHB(ibry,ifield),   &
      &                                         DTsizeVB(ibry,ifield),   &
      &                                         Kh, Kv,                  &
-     &                                         pm, pn, pmon_u, pnom_v,  &
+     &                                         GRID(ng) % pm,           &
+     &                                         GRID(ng) % pn,           &
+     &                                         GRID(ng) % pmon_u,       &
+     &                                         GRID(ng) % pnom_v,       &
 #  ifdef MASKING
-     &                                         rmask, umask, vmask,     &
+     &                                         GRID(ng) % rmask,        &
+     &                                         GRID(ng) % umask,        &
+     &                                         GRID(ng) % vmask,        &
 #  endif
-     &                                         Hz, z_r,                 &
+     &                                         GRID(ng) % Hz,           &
+     &                                         GRID(ng) % z_r,          &
      &                                         B3d)
 !
 !  Set normalization factors.
@@ -2916,7 +2885,8 @@
 !
           DO j=JstrT,JendT
             DO i=IstrP,IendT
-              Hscale(i,j)=1.0_r8/SQRT(om_u(i,j)*on_u(i,j))
+              Hscale(i,j)=1.0_r8/SQRT(GRID(ng)%om_u(i,j)*               &
+     &                                GRID(ng)%on_u(i,j))
             END DO
           END DO
 !
@@ -2926,7 +2896,7 @@
               compute=0.0_r8
               IF (((Jstr.le.jc).and.(jc.le.Jend)).and.                  &
      &            ((Istr.le.ic).and.(ic.le.Iend))) THEN
-                IF (umask(ic,jc).gt.0) compute=1.0_r8
+                IF (GRID(ng)%umask(ic,jc).gt.0) compute=1.0_r8
               END IF
 #   ifdef DISTRIBUTE
               CALL mp_reduce (ng, iTLM, 1, compute, 'SUM')
@@ -2954,9 +2924,13 @@
      &                                 NHsteps(rec,isUstr)/ifac,        &
      &                                 DTsizeH(rec,isUstr),             &
      &                                 Kh,                              &
-     &                                 pm, pn, pmon_r, pnom_p,          &
+     &                                 GRID(ng) % pm,                   &
+     &                                 GRID(ng) % pn,                   &
+     &                                 GRID(ng) % pmon_r,               &
+     &                                 GRID(ng) % pnom_p,               &
 #  ifdef MASKING
-     &                                 umask, pmask,                    &
+     &                                 GRID(ng) % umask,                &
+     &                                 GRID(ng) % pmask,                &
 #  endif
      &                                 A2d)
 !
@@ -3006,7 +2980,7 @@
      &                              NRM(ifile,ng)%Vid(idUsms),          &
      &                              NRM(ifile,ng)%Rindex,               &
 #  ifdef MASKING
-     &                              umask,                              &
+     &                              GRID(ng) % umask,                   &
 #  endif
      &                              HnormSUS)
 
@@ -3025,7 +2999,7 @@
      &                             NRM(ifile,ng)%Rindex,                &
      &                             ioDesc,                              &
 #   ifdef MASKING
-     &                             umask,                               &
+     &                             GRID(ng) % umask,                    &
 #   endif
      &                             HnormSUS)
 #  endif
@@ -3057,7 +3031,8 @@
           END IF
           DO j=JstrP,JendT
             DO i=IstrT,IendT
-              Hscale(i,j)=1.0_r8/SQRT(om_v(i,j)*on_v(i,j))
+              Hscale(i,j)=1.0_r8/SQRT(GRID(ng)%om_v(i,j)*               &
+     &                                GRID(ng)%on_v(i,j))
             END DO
           END DO
 !
@@ -3067,7 +3042,7 @@
               compute=0.0_r8
               IF (((Jstr.le.jc).and.(jc.le.Jend)).and.                  &
      &            ((Istr.le.ic).and.(ic.le.Iend))) THEN
-                IF (vmask(ic,jc).gt.0) compute=1.0_r8
+                IF (GRID(ng)%vmask(ic,jc).gt.0) compute=1.0_r8
               END IF
 #   ifdef DISTRIBUTE
               CALL mp_reduce (ng, iTLM, 1, compute, 'SUM')
@@ -3095,9 +3070,13 @@
      &                                 NHsteps(rec,isVstr)/ifac,        &
      &                                 DTsizeH(rec,isVstr),             &
      &                                 Kh,                              &
-     &                                 pm, pn, pmon_p, pnom_r,          &
+     &                                 GRID(ng) % pm,                   &
+     &                                 GRID(ng) % pn,                   &
+     &                                 GRID(ng) % pmon_p,               &
+      GRID(ng) % pnom_r,          &
 #  ifdef MASKING
-     &                                 vmask, pmask,                    &
+     &                                 GRID(ng) % vmask,                &
+     &                                 GRID(ng) % pmask,                &
 #  endif
      &                                 A2d)
 !
@@ -3147,7 +3126,7 @@
      &                              NRM(ifile,ng)%Vid(idVsms),          &
      &                              NRM(ifile,ng)%Rindex,               &
 #  ifdef MASKING
-     &                              vmask,                              &
+     &                              GRID(ng) % vmask,                   &
 #  endif
      &                              HnormSVS)
 
@@ -3166,7 +3145,7 @@
      &                             NRM(ifile,ng)%Rindex,                &
      &                             ioDesc,                              &
 #   ifdef MASKING
-     &                             vmask,                               &
+     &                             GRID(ng) % vmask,                    &
 #   endif
      &                             HnormSVS)
 #  endif
@@ -3222,7 +3201,8 @@
 !
         DO j=JstrT,JendT
           DO i=IstrT,IendT
-            Hscale(i,j)=1.0_r8/SQRT(om_r(i,j)*on_r(i,j))
+            Hscale(i,j)=1.0_r8/SQRT(GRID(ng)%om_r(i,j)*                 &
+     &                              GRID(ng)%on_r(i,j))
           END DO
         END DO
 !
@@ -3236,7 +3216,7 @@
                   compute=0.0_r8
                   IF (((Jstr.le.jc).and.(jc.le.Jend)).and.              &
      &                ((Istr.le.ic).and.(ic.le.Iend))) THEN
-                    IF (rmask(ic,jc).gt.0) compute=1.0_r8
+                    IF (GRID(ng)%rmask(ic,jc).gt.0) compute=1.0_r8
                   END IF
 #   ifdef DISTRIBUTE
                   CALL mp_reduce (ng, iTLM, 1, compute, 'SUM')
@@ -3264,9 +3244,14 @@
      &                                     NHsteps(rec,is)/ifac,        &
      &                                     DTsizeH(rec,is),             &
      &                                     Kh,                          &
-     &                                     pm, pn, pmon_u, pnom_v,      &
+     &                                     GRID(ng) % pm,               &
+     &                                     GRID(ng) % pn,               &
+     &                                     GRID(ng) % pmon_u,           &
+     &                                     GRID(ng) % pnom_v,           &
 #  ifdef MASKING
-     &                                     rmask, umask, vmask,         &
+     &                                     GRID(ng) % rmask,            &
+     &                                     GRID(ng) % umask,            &
+     &                                     GRID(ng) % vmask,            &
 #  endif
      &                                     A2d)
 !
@@ -3333,7 +3318,7 @@
      &                              NRM(ifile,ng)%Vid(idTsur(itrc)),    &
      &                              NRM(ifile,ng)%Rindex,               &
 #  ifdef MASKING
-     &                                  rmask,                          &
+     &                                  GRID(ng) % rmask,               &
 #  endif
      &                                  HnormSTF(:,:,itrc))
 
@@ -3353,7 +3338,7 @@
      &                              NRM(ifile,ng)%Rindex,               &
      &                                 ioDesc,                          &
 #   ifdef MASKING
-     &                                 rmask,                           &
+     &                                 GRID(ng) % rmask,                &
 #   endif
      &                                 HnormSTF(:,:,itrc))
 #  endif
@@ -3386,24 +3371,6 @@
      &                               LBij, UBij,                        &
      &                               IminS, ImaxS, JminS, JmaxS,        &
      &                               nstp, nnew, ifac,                  &
-     &                               pm, om_p, om_r, om_u, om_v,        &
-     &                               pn, on_p, on_r, on_u, on_v,        &
-     &                               pmon_p, pmon_r, pmon_u,            &
-     &                               pnom_p, pnom_r, pnom_v,            &
-#ifdef MASKING
-     &                               pmask, rmask,                      &
-     &                               umask, vmask,                      &
-#endif
-#ifdef SOLVE3D
-     &                               h,                                 &
-# ifdef ICESHELF
-     &                               zice,                              &
-# endif
-# if defined SEDIMENT && defined SED_MORPH
-     &                               bed_thick,                         &
-# endif
-     &                               Hz, z_r, z_w,                      &
-#endif
      &                               Kh,                                &
 #ifdef SOLVE3D
      &                               Kv,                                &
@@ -3434,38 +3401,9 @@
       integer, intent(in) :: nstp, nnew, ifac
 !
 #ifdef ASSUMED_SHAPE
-      real(r8), intent(in) :: pm(LBi:,LBj:)
-      real(r8), intent(in) :: om_p(LBi:,LBj:)
-      real(r8), intent(in) :: om_r(LBi:,LBj:)
-      real(r8), intent(in) :: om_u(LBi:,LBj:)
-      real(r8), intent(in) :: om_v(LBi:,LBj:)
-      real(r8), intent(in) :: pn(LBi:,LBj:)
-      real(r8), intent(in) :: on_p(LBi:,LBj:)
-      real(r8), intent(in) :: on_r(LBi:,LBj:)
-      real(r8), intent(in) :: on_u(LBi:,LBj:)
-      real(r8), intent(in) :: on_v(LBi:,LBj:)
-      real(r8), intent(in) :: pmon_p(LBi:,LBj:)
-      real(r8), intent(in) :: pmon_r(LBi:,LBj:)
-      real(r8), intent(in) :: pmon_u(LBi:,LBj:)
-      real(r8), intent(in) :: pnom_p(LBi:,LBj:)
-      real(r8), intent(in) :: pnom_r(LBi:,LBj:)
-      real(r8), intent(in) :: pnom_v(LBi:,LBj:)
-# ifdef MASKING
-      real(r8), intent(in) :: pmask(LBi:,LBj:)
-      real(r8), intent(in) :: rmask(LBi:,LBj:)
-      real(r8), intent(in) :: umask(LBi:,LBj:)
-      real(r8), intent(in) :: vmask(LBi:,LBj:)
-# endif
       real(r8), intent(in) :: Kh(LBi:,LBj:)
 # ifdef SOLVE3D
       real(r8), intent(in) :: Kv(LBi:,LBj:,0:)
-#  ifdef ICESHELF
-      real(r8), intent(in) :: zice(LBi:,LBj:)
-#  endif
-#  if defined SEDIMENT && defined SED_MORPH
-      real(r8), intent(in):: bed_thick(LBi:,LBj:,:)
-#  endif
-      real(r8), intent(inout) :: h(LBi:,LBj:)
 # endif
 # ifdef ADJUST_BOUNDARY
 #  ifdef SOLVE3D
@@ -3492,44 +3430,12 @@
       real(r8), intent(out) :: HnormR(LBi:,LBj:,:)
       real(r8), intent(out) :: HnormU(LBi:,LBj:,:)
       real(r8), intent(out) :: HnormV(LBi:,LBj:,:)
-# ifdef SOLVE3D
-      real(r8), intent(out) :: Hz(LBi:,LBj:,:)
-      real(r8), intent(out) :: z_r(LBi:,LBj:,:)
-      real(r8), intent(out) :: z_w(LBi:,LBj:,0:)
-# endif
+
 #else
-      real(r8), intent(in) :: pm(LBi:UBi,LBj:UBj)
-      real(r8), intent(in) :: om_p(LBi:UBi,LBj:UBj)
-      real(r8), intent(in) :: om_r(LBi:UBi,LBj:UBj)
-      real(r8), intent(in) :: om_u(LBi:UBi,LBj:UBj)
-      real(r8), intent(in) :: om_v(LBi:UBi,LBj:UBj)
-      real(r8), intent(in) :: pn(LBi:UBi,LBj:UBj)
-      real(r8), intent(in) :: on_p(LBi:UBi,LBj:UBj)
-      real(r8), intent(in) :: on_r(LBi:UBi,LBj:UBj)
-      real(r8), intent(in) :: on_u(LBi:UBi,LBj:UBj)
-      real(r8), intent(in) :: on_v(LBi:UBi,LBj:UBj)
-      real(r8), intent(in) :: pmon_p(LBi:UBi,LBj:UBj)
-      real(r8), intent(in) :: pmon_r(LBi:UBi,LBj:UBj)
-      real(r8), intent(in) :: pmon_u(LBi:UBi,LBj:UBj)
-      real(r8), intent(in) :: pnom_p(LBi:UBi,LBj:UBj)
-      real(r8), intent(in) :: pnom_r(LBi:UBi,LBj:UBj)
-      real(r8), intent(in) :: pnom_v(LBi:UBi,LBj:UBj)
-# ifdef MASKING
-      real(r8), intent(in) :: pmask(LBi:UBi,LBj:UBj)
-      real(r8), intent(in) :: rmask(LBi:UBi,LBj:UBj)
-      real(r8), intent(in) :: umask(LBi:UBi,LBj:UBj)
-      real(r8), intent(in) :: vmask(LBi:UBi,LBj:UBj)
-# endif
+
       real(r8), intent(in) :: Kh(LBi:UBi,LBj:UBj)
 # ifdef SOLVE3D
       real(r8), intent(in) :: Kv(LBi:UBi,LBj:UBj,0:N(ng))
-#  ifdef ICESHELF
-      real(r8), intent(in) :: zice(LBi:UBi,LBj:UBj)
-#  endif
-#  if defined SEDIMENT && defined SED_MORPH
-      real(r8), intent(in):: bed_thick(LBi:UBi,LBj:UBj,3)
-#  endif
-      real(r8), intent(inout) :: h(LBi:UBi,LBj:UBj)
 # endif
 # ifdef ADJUST_BOUNDARY
 #  ifdef SOLVE3D
@@ -3556,11 +3462,6 @@
       real(r8), intent(out) :: HnormR(LBi:UBi,LBj:UBj,NSA)
       real(r8), intent(out) :: HnormU(LBi:UBi,LBj:UBj,NSA)
       real(r8), intent(out) :: HnormV(LBi:UBi,LBj:UBj,NSA)
-# ifdef SOLVE3D
-      real(r8), intent(out) :: Hz(LBi:UBi,LBj:UBj,N(ng))
-      real(r8), intent(out) :: z_r(LBi:UBi,LBj:UBj,N(ng))
-      real(r8), intent(out) :: z_w(LBi:UBi,LBj:UBj,0:N(ng))
-# endif
 #endif
 !
 !  Local variable declarations.
@@ -3651,15 +3552,17 @@
      &                     LBi, UBi, LBj, UBj,                          &
      &                     IminS, ImaxS, JminS, JmaxS,                  &
      &                     nstp, nnew,                                  &
-     &                     h,                                           &
+     &                     GRID(ng) % h,                                &
 # ifdef ICESHELF
-     &                     zice,                                        &
+     &                     GRID(ng) % zice,                             &
 # endif
 # if defined SEDIMENT && defined SED_MORPH
-     &                     bed_thick,                                   &
+     &                     SEDBED(ng) % bed_thick,                      &
 # endif
      &                     A2d,                                         &
-     &                     Hz, z_r, z_w)
+     &                     GRID(ng) % Hz,                               &
+     &                     GRID(ng) % z_r,                              &
+     &                     GRID(ng) % z_w)
 #endif
 !
 !:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -3739,7 +3642,8 @@
               DO i=IstrT,IendT
                 A2davg(i,j)=0.0_r8
                 A2dsqr(i,j)=0.0_r8
-                Hscale(i,j)=1.0_r8/SQRT(om_r(i,j)*on_r(i,j))
+                Hscale(i,j)=1.0_r8/SQRT(GRID(ng)%om_r(i,j)*             &
+     &                                  GRID(ng)%on_r(i,j))
               END DO
             END DO
 !
@@ -3764,9 +3668,14 @@
      &                               NHsteps(ifile,isFsur)/ifac,        &
      &                               DTsizeH(ifile,isFsur),             &
      &                               Kh,                                &
-     &                               pm, pn, pmon_u, pnom_v,            &
+     &                               GRID(ng) % pm,                     &
+     &                               GRID(ng) % pn,                     &
+     &                               GRID(ng) % pmon_u,                 &
+     &                               GRID(ng) % pnom_v,                 &
 #ifdef MASKING
-     &                               rmask, umask, vmask,               &
+     &                               GRID(ng) % rmask,                  &
+     &                               GRID(ng) % umask,                  &
+     &                               GRID(ng) % vmask,                  &
 #endif
      &                               A2d)
 !
@@ -3785,7 +3694,7 @@
                 Aavg=FacAvg*A2davg(i,j)
                 Asqr=FacAvg*A2dsqr(i,j)
 #ifdef MASKING
-                IF (rmask(i,j).gt.0.0_r8) THEN
+                IF (GRID(ng)%rmask(i,j).gt.0.0_r8) THEN
                   HnormR(i,j,ifile)=1.0_r8/SQRT(Asqr)
                 ELSE
                   HnormR(i,j,ifile)=0.0_r8
@@ -3820,7 +3729,7 @@
      &                                NRM(ifile,ng)%Vid(idFsur),        &
      &                                NRM(ifile,ng)%Rindex,             &
 #ifdef MASKING
-     &                                rmask,                            &
+     &                                GRID(ng) % rmask,                 &
 #endif
      &                                HnormR(:,:,ifile))
 
@@ -3839,7 +3748,7 @@
      &                               NRM(ifile,ng)%Rindex,              &
      &                               ioDesc,                            &
 # ifdef MASKING
-     &                               rmask,                             &
+     &                               GRID(ng) % rmask,                  &
 # endif
      &                               HnormR(:,:,ifile))
 #endif
@@ -3862,7 +3771,8 @@
               DO i=IstrP,IendT
                 A2davg(i,j)=0.0_r8
                 A2dsqr(i,j)=0.0_r8
-                Hscale(i,j)=1.0_r8/SQRT(om_u(i,j)*on_u(i,j))
+                Hscale(i,j)=1.0_r8/SQRT(GRID(ng)%om_u(i,j)*             &
+     &                                  GRID(ng)%on_u(i,j))
               END DO
             END DO
 !
@@ -3887,9 +3797,13 @@
      &                               NHsteps(ifile,isUbar)/ifac,        &
      &                               DTsizeH(ifile,isUbar),             &
      &                               Kh,                                &
-     &                               pm, pn, pmon_r, pnom_p,            &
+     &                               GRID(ng) % pm,                     &
+     &                               GRID(ng) % pn,                     &
+     &                               GRID(ng) % pmon_r,                 &
+     &                               GRID(ng) % pnom_p,                 &
 #ifdef MASKING
-     &                               umask, pmask,                      &
+     &                               GRID(ng) % umask,                  &
+     &                               GRID(ng) % pmask,                  &
 #endif
      &                               A2d)
 !
@@ -3908,7 +3822,7 @@
                 Aavg=FacAvg*A2davg(i,j)
                 Asqr=FacAvg*A2dsqr(i,j)
 #ifdef MASKING
-                IF (umask(i,j).gt.0.0_r8) THEN
+                IF (GRID(ng)%umask(i,j).gt.0.0_r8) THEN
                   HnormU(i,j,ifile)=1.0_r8/SQRT(Asqr)
                 ELSE
                   HnormU(i,j,ifile)=0.0_r8
@@ -3943,7 +3857,7 @@
      &                                NRM(ifile,ng)%Vid(idUbar),        &
      &                                NRM(ifile,ng)%Rindex,             &
 #ifdef MASKING
-     &                                umask,                            &
+     &                                GRID(ng) % umask,                 &
 #endif
      &                                HnormU(:,:,ifile))
 
@@ -3962,7 +3876,7 @@
      &                               NRM(ifile,ng)%Rindex,              &
      &                               ioDesc,                            &
 # ifdef MASKING
-     &                               umask,                             &
+     &                               GRID(ng) % umask,                  &
 # endif
      &                               HnormU(:,:,ifile))
 #endif
@@ -3985,7 +3899,8 @@
               DO i=IstrT,IendT
                 A2davg(i,j)=0.0_r8
                 A2dsqr(i,j)=0.0_r8
-                Hscale(i,j)=1.0_r8/SQRT(om_v(i,j)*on_v(i,j))
+                Hscale(i,j)=1.0_r8/SQRT(GRID(ng)%om_v(i,j)*             &
+     &                                  GRID(ng)%on_v(i,j))
               END DO
             END DO
 !
@@ -4010,9 +3925,13 @@
      &                               NHsteps(ifile,isVbar)/ifac,        &
      &                               DTsizeH(ifile,isVbar),             &
      &                               Kh,                                &
-     &                               pm, pn, pmon_p, pnom_r,            &
+     &                               GRID(ng) % pm,                     &
+     &                               GRID(ng) % pn,                     &
+     &                               GRID(ng) % pmon_p,                 &
+     &                               GRID(ng) % pnom_r,                 &
 #ifdef MASKING
-     &                               vmask, pmask,                      &
+     &                               GRID(ng) % vmask,                  &
+     &                               GRID(ng) % pmask,                  &
 #endif
      &                               A2d)
 !
@@ -4031,7 +3950,7 @@
                 Aavg=FacAvg*A2davg(i,j)
                 Asqr=FacAvg*A2dsqr(i,j)
 #ifdef MASKING
-                IF (vmask(i,j).gt.0.0_r8) THEN
+                IF (GRID(ng)%vmask(i,j).gt.0.0_r8) THEN
                   HnormV(i,j,ifile)=1.0_r8/SQRT(Asqr)
                 ELSE
                   HnormV(i,j,ifile)=0.0_r8
@@ -4066,7 +3985,7 @@
      &                                NRM(ifile,ng)%Vid(idVbar),        &
      &                                NRM(ifile,ng)%Rindex,             &
 #ifdef MASKING
-     &                                vmask,                            &
+     &                                GRID(ng) % vmask,                 &
 #endif
      &                                HnormV(:,:,ifile))
 
@@ -4085,7 +4004,7 @@
      &                               NRM(ifile,ng)%Rindex,              &
      &                               ioDesc,                            &
 # ifdef MASKING
-     &                               vmask,                             &
+     &                               GRID(ng) % vmask,                  &
 # endif
      &                               HnormV(:,:,ifile))
 #endif
@@ -4108,11 +4027,13 @@
 !
             DO j=JstrT,JendT
               DO i=IstrP,IendT
-                cff=om_u(i,j)*on_u(i,j)*0.5_r8
+                cff=GRID(ng)%om_u(i,j)*GRID(ng)%on_u(i,j)*0.5_r8
                 DO k=1,N(ng)
                   A3davg(i,j,k)=0.0_r8
                   A3dsqr(i,j,k)=0.0_r8
-                  Vscale(i,j,k)=1.0_r8/SQRT(cff*(Hz(i-1,j,k)+Hz(i,j,k)))
+                  Vscale(i,j,k)=1.0_r8/                                 &
+     &                          SQRT(cff*(GRID(ng)%Hz(i-1,j,k)+         &
+     &                                    GRID(ng)%Hz(i  ,j,k)))
                 END DO
               END DO
             END DO
@@ -4142,20 +4063,28 @@
      &                               DTsizeH(ifile,isUvel),             &
      &                               DTsizeV(ifile,isUvel),             &
      &                               Kh, Kv,                            &
-     &                               pm, pn,                            &
+     &                               GRID(ng) % pm,                     &
+     &                               GRID(ng) % pn,                     &
 # ifdef GEOPOTENTIAL_HCONV
-     &                               on_r, om_p,                        &
+     &                               GRID(ng) % on_r,                   &
+     &                               GRID(ng) % om_p,                   &
 # else
-     &                               pmon_r, pnom_p,                    &
+     &                               GRID(ng) % pmon_r,                 &
+     &                               GRID(ng) % pnom_p,                 &
 # endif
 # ifdef MASKING
 #  ifdef GEOPOTENTIAL_HCONV
-     &                               pmask, rmask, umask, vmask,        &
+     &                               GRID(ng) % pmask,                  &
+     &                               GRID(ng) % rmask,                  &
+     &                               GRID(ng) % umask,                  &
+     &                               GRID(ng) % vmask,                  &
 #  else
-     &                               umask, pmask,                      &
+     &                               GRID(ng) % umask,                  &
+     &                               GRID(ng) % pmask,                  &
 #  endif
 # endif
-     &                               Hz, z_r,                           &
+     &                               GRID(ng) % Hz,                     &
+     &                               GRID(ng) % z_r,                    &
      &                               A3d)
 !
               DO k=1,N(ng)
@@ -4176,7 +4105,7 @@
                   Aavg=FacAvg*A3davg(i,j,k)
                   Asqr=FacAvg*A3dsqr(i,j,k)
 # ifdef MASKING
-                  IF (umask(i,j).gt.0.0_r8) THEN
+                  IF (GRID(ng)%umask(i,j).gt.0.0_r8) THEN
                     VnormU(i,j,k,ifile)=1.0_r8/SQRT(Asqr)
                   ELSE
                     VnormU(i,j,k,ifile)=0.0_r8
@@ -4212,7 +4141,7 @@
      &                                NRM(ifile,ng)%Vid(idUvel),        &
      &                                NRM(ifile,ng)%Rindex,             &
 # ifdef MASKING
-     &                                umask,                            &
+     &                                GRID(ng) % umask,                 &
 # endif
      &                                VnormU(:,:,:,ifile))
 
@@ -4231,7 +4160,7 @@
      &                               NRM(ifile,ng)%Rindex,              &
      &                               ioDesc,                            &
 #  ifdef MASKING
-     &                               umask,                             &
+     &                               GRID(ng) % umask,                  &
 #  endif
      &                               VnormU(:,:,:,ifile))
 # endif
@@ -4252,11 +4181,13 @@
 !
             DO j=JstrP,JendT
               DO i=IstrT,IendT
-                cff=om_v(i,j)*on_v(i,j)*0.5_r8
+                cff=GRID(ng)%om_v(i,j)*GRID(ng)%on_v(i,j)*0.5_r8
                 DO k=1,N(ng)
                   A3davg(i,j,k)=0.0_r8
                   A3dsqr(i,j,k)=0.0_r8
-                  Vscale(i,j,k)=1.0_r8/SQRT(cff*(Hz(i,j-1,k)+Hz(i,j,k)))
+                  Vscale(i,j,k)=1.0_r8/                                 &
+     &                          SQRT(cff*(GRID(ng)%Hz(i,j-1,k)+         &
+     &                                    GRID(ng)%Hz(i,j  ,k)))
                 END DO
               END DO
             END DO
@@ -4286,20 +4217,28 @@
      &                               DTsizeH(ifile,isVvel),             &
      &                               DTsizeV(ifile,isVvel),             &
      &                               Kh, Kv,                            &
-     &                               pm, pn,                            &
+     &                               GRID(ng) % pm,                     &
+     &                               GRID(ng) % pn,                     &
 # ifdef GEOPOTENTIAL_HCONV
-     &                               on_p, om_r,                        &
+     &                               GRID(ng) % on_p,                   &
+     &                               GRID(ng) % om_r,                   &
 # else
-     &                               pmon_p, pnom_r,                    &
+     &                               GRID(ng) % pmon_p,                 &
+     &                               GRID(ng) % pnom_r,                 &
 # endif
 # ifdef MASKING
 #  ifdef GEOPOTENTIAL_HCONV
-     &                               pmask, rmask, umask, vmask,        &
+     &                               GRID(ng) % pmask,                  &
+     &                               GRID(ng) % rmask,                  &
+     &                               GRID(ng) % umask,                  &
+     &                               GRID(ng) % vmask,                  &
 #  else
-     &                               vmask, pmask,                      &
+     &                               GRID(ng) % vmask,                  &
+     &                               GRID(ng) % pmask,                  &
 #  endif
 # endif
-     &                               Hz, z_r,                           &
+     &                               GRID(ng) % Hz,                     &
+     &                               GRID(ng) % z_r,                    &
      &                               A3d)
 !
               DO k=1,N(ng)
@@ -4320,7 +4259,7 @@
                   Aavg=FacAvg*A3davg(i,j,k)
                   Asqr=FacAvg*A3dsqr(i,j,k)
 # ifdef MASKING
-                  IF (vmask(i,j).gt.0.0_r8) THEN
+                  IF (GRID(ng)%vmask(i,j).gt.0.0_r8) THEN
                     VnormV(i,j,k,ifile)=1.0_r8/SQRT(Asqr)
                   ELSE
                     VnormV(i,j,k,ifile)=0.0_r8
@@ -4356,7 +4295,7 @@
      &                                NRM(ifile,ng)%Vid(idVvel),        &
      &                                NRM(ifile,ng)%Rindex,             &
 # ifdef MASKING
-     &                                vmask,                            &
+     &                                GRID(ng) % vmask,                 &
 # endif
      &                                VnormV(:,:,:,ifile))
 
@@ -4375,7 +4314,7 @@
      &                               NRM(ifile,ng)%Rindex,              &
      &                               ioDesc,                            &
 #  ifdef MASKING
-     &                               vmask,                             &
+     &                               GRID(ng) % vmask,                  &
 #  endif
      &                               VnormV(:,:,:,ifile))
 # endif
@@ -4424,9 +4363,9 @@
 !
           DO j=JstrT,JendT
             DO i=IstrT,IendT
-              cff=om_r(i,j)*on_r(i,j)
+              cff=GRID(ng)%om_r(i,j)*GRID(ng)%on_r(i,j)
               DO k=1,N(ng)
-                Vscale(i,j,k)=1.0_r8/SQRT(cff*Hz(i,j,k))
+                Vscale(i,j,k)=1.0_r8/SQRT(cff*GRID(ng)%Hz(i,j,k))
               END DO
             END DO
           END DO
@@ -4469,16 +4408,22 @@
      &                                 DTsizeH(ifile,is),               &
      &                                 DTsizeV(ifile,is),               &
      &                                 Kh, Kv,                          &
-     &                                 pm, pn,                          &
+     &                                 GRID(ng) % pm,                   &
+     &                                 GRID(ng) % pn,                   &
 # ifdef GEOPOTENTIAL_HCONV
-     &                                 on_u, om_v,                      &
+     &                                 GRID(ng) % on_u,                 &
+     &                                 GRID(ng) % om_v,                 &
 # else
-     &                                 pmon_u, pnom_v,                  &
+     &                                 GRID(ng) % pmon_u,               &
+     &                                 GRID(ng) % pnom_v,               &
 # endif
 # ifdef MASKING
-     &                                 rmask, umask, vmask,             &
+     &                                 GRID(ng) % rmask,                &
+     &                                 GRID(ng) % umask,                &
+     &                                 GRID(ng) % vmask,                &
 # endif
-     &                                 Hz, z_r,                         &
+     &                                 GRID(ng) % Hz,                   &
+     &                                 GRID(ng) % z_r,                  &
      &                                 A3d)
 !
                 DO k=1,N(ng)
@@ -4499,7 +4444,7 @@
                     Aavg=FacAvg*A3davg(i,j,k)
                     Asqr=FacAvg*A3dsqr(i,j,k)
 # ifdef MASKING
-                    IF (rmask(i,j).gt.0.0_r8) THEN
+                    IF (GRID(ng)%rmask(i,j).gt.0.0_r8) THEN
                       VnormR(i,j,k,ifile,itrc)=1.0_r8/SQRT(Asqr)
                     ELSE
                       VnormR(i,j,k,ifile,itrc)=0.0_r8
@@ -4556,7 +4501,7 @@
      &                              NRM(ifile,ng)%Vid(idTvar(itrc)),    &
      &                              NRM(ifile,ng)%Rindex,               &
 # ifdef MASKING
-     &                                  rmask,                          &
+     &                                  GRID(ng) % rmask,               &
 # endif
      &                                  VnormR(:,:,:,ifile,itrc))
 
@@ -4576,7 +4521,7 @@
      &                              NRM(ifile,ng)%Rindex,               &
      &                                 ioDesc,                          &
 #  ifdef MASKING
-     &                                 rmask,                           &
+     &                                 GRID(ng) % rmask,                &
 #  endif
      &                                 VnormR(:,:,:,ifile,itrc))
 # endif
@@ -4667,14 +4612,14 @@
                 i=BOUNDS(ng)%edge(ibry,r2dvar)
                 IF (Lconvolve(ibry)) THEN
                   DO j=JstrT,JendT
-                    HscaleB(j)=1.0_r8/SQRT(on_r(i,j))
+                    HscaleB(j)=1.0_r8/SQRT(GRID(ng)%on_r(i,j))
                   END DO
                 END IF
               CASE (isouth, inorth)
                 j=BOUNDS(ng)%edge(ibry,r2dvar)
                 IF (Lconvolve(ibry)) THEN
                   DO i=IstrT,IendT
-                    HscaleB(i)=1.0_r8/SQRT(om_r(i,j))
+                    HscaleB(i)=1.0_r8/SQRT(GRID(ng)%om_r(i,j))
                   END DO
                 END IF
             END SELECT
@@ -4712,9 +4657,14 @@
      &                                   NHstepsB(ibry,isFsur)/ifac,    &
      &                                   DTsizeHB(ibry,isFsur),         &
      &                                   Kh,                            &
-     &                                   pm, pn, pmon_u, pnom_v,        &
+     &                                   GRID(ng) % pm,                 &
+     &                                   GRID(ng) % pn,                 &
+     &                                   GRID(ng) % pmon_u,             &
+     &                                   GRID(ng) % pnom_v,             &
 # ifdef MASKING
-     &                                   rmask, umask, vmask,           &
+     &                                   GRID(ng) % rmask,              &
+     &                                   GRID(ng) % umask,              &
+     &                                   GRID(ng) % vmask,              &
 # endif
      &                                   B2d)
 !
@@ -4744,7 +4694,7 @@
                     Bavg=FacAvg*B2davg(j)
                     Bsqr=FacAvg*B2dsqr(j)
 # ifdef MASKING
-                    IF (rmask(i,j).gt.0.0_r8) THEN
+                    IF (GRID(ng)%rmask(i,j).gt.0.0_r8) THEN
                       HnormRobc(j,ibry)=1.0_r8/SQRT(Bsqr)
                     ELSE
                       HnormRobc(j,ibry)=0.0_r8
@@ -4759,7 +4709,7 @@
                     Bavg=FacAvg*B2davg(i)
                     Bsqr=FacAvg*B2dsqr(i)
 # ifdef MASKING
-                    IF (rmask(i,j).gt.0.0_r8) THEN
+                    IF (GRID(ng)%rmask(i,j).gt.0.0_r8) THEN
                       HnormRobc(i,ibry)=1.0_r8/SQRT(Bsqr)
                     ELSE
                       HnormRobc(i,ibry)=0.0_r8
@@ -4838,14 +4788,14 @@
                 i=BOUNDS(ng)%edge(ibry,u2dvar)
                 IF (Lconvolve(ibry)) THEN
                   DO j=JstrT,JendT
-                    HscaleB(j)=1.0_r8/SQRT(on_u(i,j))
+                    HscaleB(j)=1.0_r8/SQRT(GRID(ng)%on_u(i,j))
                   END DO
                 END IF
               CASE (isouth, inorth)
                 j=BOUNDS(ng)%edge(ibry,u2dvar)
                 IF (Lconvolve(ibry)) THEN
                   DO i=IstrP,IendT
-                    HscaleB(i)=1.0_r8/SQRT(om_u(i,j))
+                    HscaleB(i)=1.0_r8/SQRT(GRID(ng)%om_u(i,j))
                   END DO
                 END IF
             END SELECT
@@ -4883,9 +4833,13 @@
      &                                   NHstepsB(ibry,isUbar)/ifac,    &
      &                                   DTsizeHB(ibry,isUbar),         &
      &                                   Kh,                            &
-     &                                   pm, pn, pmon_r, pnom_p,        &
+     &                                   GRID(ng) % pm,                 &
+     &                                   GRID(ng) % pn,                 &
+     &                                   GRID(ng) % pmon_r,             &
+     &                                   GRID(ng) % pnom_p,             &
 # ifdef MASKING
-     &                                   umask, pmask,                  &
+     &                                   GRID(ng) % umask,              &
+     &                                   GRID(ng) % pmask,              &
 # endif
      &                                   B2d)
 !
@@ -4915,7 +4869,7 @@
                     Bavg=FacAvg*B2davg(j)
                     Bsqr=FacAvg*B2dsqr(j)
 # ifdef MASKING
-                    IF (umask(i,j).gt.0.0_r8) THEN
+                    IF (GRID(ng)%umask(i,j).gt.0.0_r8) THEN
                       HnormUobc(j,ibry)=1.0_r8/SQRT(Bsqr)
                     ELSE
                       HnormUobc(j,ibry)=0.0_r8
@@ -4930,7 +4884,7 @@
                     Bavg=FacAvg*B2davg(i)
                     Bsqr=FacAvg*B2dsqr(i)
 # ifdef MASKING
-                    IF (umask(i,j).gt.0.0_r8) THEN
+                    IF (GRID(ng)%umask(i,j).gt.0.0_r8) THEN
                       HnormUobc(i,ibry)=1.0_r8/SQRT(Bsqr)
                     ELSE
                       HnormUobc(i,ibry)=0.0_r8
@@ -5008,14 +4962,14 @@
                 i=BOUNDS(ng)%edge(ibry,v2dvar)
                 IF (Lconvolve(ibry)) THEN
                   DO j=JstrP,JendT
-                    HscaleB(j)=1.0_r8/SQRT(on_v(i,j))
+                    HscaleB(j)=1.0_r8/SQRT(GRID(ng)%on_v(i,j))
                   END DO
                 END IF
               CASE (isouth, inorth)
                 j=BOUNDS(ng)%edge(ibry,v2dvar)
                 IF (Lconvolve(ibry)) THEN
                   DO i=IstrT,IendT
-                    HscaleB(i)=1.0_r8/SQRT(om_v(i,j))
+                    HscaleB(i)=1.0_r8/SQRT(GRID(ng)%om_v(i,j))
                   END DO
                 END IF
             END SELECT
@@ -5053,9 +5007,13 @@
      &                                   NHstepsB(ibry,isFsur)/ifac,    &
      &                                   DTsizeHB(ibry,isFsur),         &
      &                                   Kh,                            &
-     &                                   pm, pn, pmon_p, pnom_r,        &
+     &                                   GRID(ng) % pm,                 &
+     &                                   GRID(ng) % pn,                 &
+     &                                   GRID(ng) % pmon_p,             &
+     &                                   GRID(ng) % pnom_r,             &
 # ifdef MASKING
-     &                                   vmask, pmask,                  &
+     &                                   GRID(ng) % vmask,              &
+     &                                   GRID(ng) % pmask,              &
 # endif
      &                                   B2d)
 !
@@ -5085,7 +5043,7 @@
                     Bavg=FacAvg*B2davg(j)
                     Bsqr=FacAvg*B2dsqr(j)
 # ifdef MASKING
-                    IF (vmask(i,j).gt.0.0_r8) THEN
+                    IF (GRID(ng)%vmask(i,j).gt.0.0_r8) THEN
                       HnormVobc(j,ibry)=1.0_r8/SQRT(Bsqr)
                     ELSE
                       HnormVobc(j,ibry)=0.0_r8
@@ -5100,7 +5058,7 @@
                     Bavg=FacAvg*B2davg(i)
                     Bsqr=FacAvg*B2dsqr(i)
 # ifdef MASKING
-                    IF (vmask(i,j).gt.0.0_r8) THEN
+                    IF (GRID(ng)%vmask(i,j).gt.0.0_r8) THEN
                       HnormVobc(i,ibry)=1.0_r8/SQRT(Bsqr)
                     ELSE
                       HnormVobc(i,ibry)=0.0_r8
@@ -5180,10 +5138,11 @@
                 i=BOUNDS(ng)%edge(ibry,u2dvar)
                 IF (Lconvolve(ibry)) THEN
                   DO j=JstrT,JendT
-                    cff=on_u(i,j)*0.5_r8
+                    cff=GRID(ng)%on_u(i,j)*0.5_r8
                     DO k=1,N(ng)
                       VscaleB(j,k)=1.0_r8/                              &
-     &                             SQRT(cff*(Hz(i-1,j,k)+Hz(i,j,k)))
+     &                             SQRT(cff*(GRID(ng)%Hz(i-1,j,k)+      &
+     &                                       GRID(ng)%Hz(i  ,j,k)))
                     END DO
                   END DO
                 END IF
@@ -5191,10 +5150,11 @@
                 j=BOUNDS(ng)%edge(ibry,u2dvar)
                 IF (Lconvolve(ibry)) THEN
                   DO i=IstrP,IendT
-                    cff=om_u(i,j)*0.5_r8
+                    cff=GRID(ng)%om_u(i,j)*0.5_r8
                     DO k=1,N(ng)
                       VscaleB(i,k)=1.0_r8/                              &
-     &                             SQRT(cff*(Hz(i-1,j,k)+Hz(i,j,k)))
+     &                             SQRT(cff*(GRID(ng)%Hz(i-1,j,k)+      &
+     &                                       GRID(ng)%Hz(i  ,j,k)))
                     END DO
                   END DO
                 END IF
@@ -5239,12 +5199,16 @@
      &                                   DTsizeHB(ibry,isUvel),         &
      &                                   DTsizeVB(ibry,isUvel),         &
      &                                   Kh, Kv,                        &
-     &                                   pm, pn,                        &
-     &                                   pmon_r, pnom_p,                &
+     &                                   GRID(ng) % pm,                 &
+     &                                   GRID(ng) % pn,                 &
+     &                                   GRID(ng) % pmon_r,             &
+     &                                   GRID(ng) % pnom_p,             &
 #  ifdef MASKING
-     &                                   umask, pmask,                  &
+     &                                   GRID(ng) % umask,              &
+     &                                   GRID(ng) % pmask,              &
 #  endif
-     &                                   Hz, z_r,                       &
+     &                                   GRID(ng) % Hz,                 &
+     &                                   GRID(ng) % z_r,                &
      &                                   B3d)
 !
               IF (Lconvolve(ibry)) THEN
@@ -5278,7 +5242,7 @@
                       Bavg=FacAvg*B3davg(j,k)
                       Bsqr=FacAvg*B3dsqr(j,k)
 #  ifdef MASKING
-                      IF (umask(i,j).gt.0.0_r8) THEN
+                      IF (GRID(ng)%umask(i,j).gt.0.0_r8) THEN
                         VnormUobc(j,k,ibry)=1.0_r8/SQRT(Bsqr)
                       ELSE
                         VnormUobc(j,k,ibry)=0.0_r8
@@ -5295,7 +5259,7 @@
                       Bavg=FacAvg*B3davg(i,k)
                       Bsqr=FacAvg*B3dsqr(i,k)
 #  ifdef MASKING
-                      IF (umask(i,j).gt.0.0_r8) THEN
+                      IF (GRID(ng)%umask(i,j).gt.0.0_r8) THEN
                         VnormUobc(i,k,ibry)=1.0_r8/SQRT(Bsqr)
                       ELSE
                         VnormUobc(i,k,ibry)=0.0_r8
@@ -5381,10 +5345,11 @@
                 i=BOUNDS(ng)%edge(ibry,v2dvar)
                 IF (Lconvolve(ibry)) THEN
                   DO j=JstrP,JendT
-                    cff=on_v(i,j)*0.5_r8
+                    cff=GRID(ng)%on_v(i,j)*0.5_r8
                     DO k=1,N(ng)
                       VscaleB(j,k)=1.0_r8/                              &
-     &                             SQRT(cff*(Hz(i,j-1,k)+Hz(i,j,k)))
+     &                             SQRT(cff*(GRID(ng)%Hz(i,j-1,k)+      &
+     &                                       GRID(ng)%Hz(i,j  ,k)))
                     END DO
                   END DO
                 END IF
@@ -5392,10 +5357,11 @@
                 j=BOUNDS(ng)%edge(ibry,v2dvar)
                 IF (Lconvolve(ibry)) THEN
                   DO i=IstrT,IendT
-                    cff=om_v(i,j)*0.5_r8
+                    cff=GRID(ng)%om_v(i,j)*0.5_r8
                     DO k=1,N(ng)
                       VscaleB(i,k)=1.0_r8/                              &
-     &                             SQRT(cff*(Hz(i,j-1,k)+Hz(i,j,k)))
+     &                             SQRT(cff*(GRID(ng)%Hz(i,j-1,k)+      &
+     &                                       GRID(ng)%Hz(i,j  ,k)))
                     END DO
                   END DO
                 END IF
@@ -5440,12 +5406,16 @@
      &                                   DTsizeHB(ibry,isVvel),         &
      &                                   DTsizeVB(ibry,isVvel),         &
      &                                   Kh, Kv,                        &
-     &                                   pm, pn,                        &
-     &                                   pmon_p, pnom_r,                &
+     &                                   GRID(ng) % pm,                 &
+     &                                   GRID(ng) % pn,                 &
+     &                                   GRID(ng) % pmon_p,             &
+     &                                   GRID(ng) % pnom_r,             &
 #  ifdef MASKING
-     &                                   vmask, pmask,                  &
+     &                                   GRID(ng) % vmask,              &
+     &                                   GRID(ng) % pmask,              &
 #  endif
-     &                                   Hz, z_r,                       &
+     &                                   GRID(ng) % Hz,                 &
+     &                                   GRID(ng) % z_r,                &
      &                                   B3d)
 !
               IF (Lconvolve(ibry)) THEN
@@ -5479,7 +5449,7 @@
                       Bavg=FacAvg*B3davg(j,k)
                       Bsqr=FacAvg*B3dsqr(j,k)
 #  ifdef MASKING
-                      IF (vmask(i,j).gt.0.0_r8) THEN
+                      IF (GRID(ng)%vmask(i,j).gt.0.0_r8) THEN
                         VnormVobc(j,k,ibry)=1.0_r8/SQRT(Bsqr)
                       ELSE
                         VnormVobc(j,k,ibry)=0.0_r8
@@ -5496,7 +5466,7 @@
                       Bavg=FacAvg*B3davg(i,k)
                       Bsqr=FacAvg*B3dsqr(i,k)
 #  ifdef MASKING
-                      IF (vmask(i,j).gt.0.0_r8) THEN
+                      IF (GRID(ng)%vmask(i,j).gt.0.0_r8) THEN
                         VnormVobc(i,k,ibry)=1.0_r8/SQRT(Bsqr)
                       ELSE
                         VnormVobc(i,k,ibry)=0.0_r8
@@ -5592,9 +5562,9 @@
                   i=BOUNDS(ng)%edge(ibry,r2dvar)
                   IF (Lconvolve(ibry)) THEN
                     DO j=JstrT,JendT
-                      cff=on_r(i,j)
+                      cff=GRID(ng)%on_r(i,j)
                       DO k=1,N(ng)
-                        VscaleB(j,k)=1.0_r8/SQRT(cff*Hz(i,j,k))
+                        VscaleB(j,k)=1.0_r8/SQRT(cff*GRID(ng)%Hz(i,j,k))
                       END DO
                     END DO
                   END IF
@@ -5602,9 +5572,9 @@
                   j=BOUNDS(ng)%edge(ibry,r2dvar)
                   IF (Lconvolve(ibry)) THEN
                     DO i=IstrT,IendT
-                      cff=om_r(i,j)
+                      cff=GRID(ng)%om_r(i,j)
                       DO k=1,N(ng)
-                        VscaleB(i,k)=1.0_r8/SQRT(cff*Hz(i,j,k))
+                        VscaleB(i,k)=1.0_r8/SQRT(cff*GRID(ng)%Hz(i,j,k))
                       END DO
                     END DO
                   END IF
@@ -5650,12 +5620,17 @@
      &                                     DTsizeHB(ibry,is),           &
      &                                     DTsizeVB(ibry,is),           &
      &                                     Kh, Kv,                      &
-     &                                     pm, pn,                      &
-     &                                     pmon_u, pnom_v,              &
+     &                                     GRID(ng) % pm,               &
+     &                                     GRID(ng) % pn,               &
+     &                                     GRID(ng) % pmon_u,           &
+     &                                     GRID(ng) % pnom_v,           &
 #  ifdef MASKING
-     &                                     rmask, umask, vmask,         &
+     &                                     GRID(ng) % rmask,            &
+     &                                     GRID(ng) % umask,            &
+     &                                     GRID(ng) % vmask,            &
 #  endif
-     &                                     Hz, z_r,                     &
+     &                                     GRID(ng) % Hz,               &
+     &                                     GRID(ng) % z_r,              &
      &                                     B3d)
 !
                 IF (Lconvolve(ibry)) THEN
@@ -5689,7 +5664,7 @@
                         Bavg=FacAvg*B3davg(j,k)
                         Bsqr=FacAvg*B3dsqr(j,k)
 #  ifdef MASKING
-                        IF (rmask(i,j).gt.0.0_r8) THEN
+                        IF (GRID(ng)%rmask(i,j).gt.0.0_r8) THEN
                           VnormRobc(j,k,ibry,itrc)=1.0_r8/SQRT(Bsqr)
                         ELSE
                           VnormRobc(j,k,ibry,itrc)=0.0_r8
@@ -5706,7 +5681,7 @@
                         Bavg=FacAvg*B3davg(i,k)
                         Bsqr=FacAvg*B3dsqr(i,k)
 #  ifdef MASKING
-                        IF (rmask(i,j).gt.0.0_r8) THEN
+                        IF (GRID(ng)%rmask(i,j).gt.0.0_r8) THEN
                           VnormRobc(i,k,ibry,itrc)=1.0_r8/SQRT(Bsqr)
                         ELSE
                           VnormRobc(i,k,ibry,itrc)=0.0_r8
@@ -5854,7 +5829,8 @@
             DO i=IstrP,IendT
               A2davg(i,j)=0.0_r8
               A2dsqr(i,j)=0.0_r8
-              Hscale(i,j)=1.0_r8/SQRT(om_u(i,j)*on_u(i,j))
+              Hscale(i,j)=1.0_r8/SQRT(GRID(ng)%om_u(i,j)*               &
+     &                                GRID(ng)%on_u(i,j))
             END DO
           END DO
 !
@@ -5879,9 +5855,13 @@
      &                             NHsteps(rec,isUstr)/ifac,            &
      &                             DTsizeH(rec,isUstr),                 &
      &                             Kh,                                  &
-     &                             pm, pn, pmon_r, pnom_p,              &
+     &                             GRID(ng) % pm,                       &
+     &                             GRID(ng) % pn,                       &
+     &                             GRID(ng) % pmon_r,                   &
+     &                             GRID(ng) % pnom_p,                   &
 #  ifdef MASKING
-     &                             umask, pmask,                        &
+     &                             GRID(ng) % umask,                    &
+     &                             GRID(ng) % pmask,                    &
 #  endif
      &                             A2d)
 !
@@ -5900,7 +5880,7 @@
               Aavg=FacAvg*A2davg(i,j)
               Asqr=FacAvg*A2dsqr(i,j)
 #  ifdef MASKING
-              IF (umask(i,j).gt.0.0_r8) THEN
+              IF (GRID(ng)%umask(i,j).gt.0.0_r8) THEN
                 HnormSUS(i,j)=1.0_r8/SQRT(Asqr)
               ELSE
                 HnormSUS(i,j)=0.0_r8
@@ -5935,7 +5915,7 @@
      &                              NRM(ifile,ng)%Vid(idUsms),          &
      &                              NRM(ifile,ng)%Rindex,               &
 #  ifdef MASKING
-     &                              umask,                              &
+     &                              GRID(ng) % umask,                   &
 #  endif
      &                              HnormSUS)
 
@@ -5954,7 +5934,7 @@
      &                             NRM(ifile,ng)%Rindex,                &
      &                             ioDesc,                              &
 #   ifdef MASKING
-     &                             umask,                               &
+     &                             GRID(ng) % umask,                    &
 #   endif
      &                             HnormSUS)
 #  endif
@@ -5977,7 +5957,8 @@
             DO i=IstrT,IendT
               A2davg(i,j)=0.0_r8
               A2dsqr(i,j)=0.0_r8
-              Hscale(i,j)=1.0_r8/SQRT(om_v(i,j)*on_v(i,j))
+              Hscale(i,j)=1.0_r8/SQRT(GRID(ng)%om_v(i,j)*               &
+     &                                GRID(ng)%on_v(i,j))
             END DO
           END DO
 !
@@ -6002,9 +5983,13 @@
      &                             NHsteps(rec,isVstr)/ifac,            &
      &                             DTsizeH(rec,isVstr),                 &
      &                             Kh,                                  &
-     &                             pm, pn, pmon_p, pnom_r,              &
+     &                             GRID(ng) % pm,                       &
+     &                             GRID(ng) % pn,                       &
+     &                             GRID(ng) % pmon_p,                   &
+     &                             GRID(ng) % pnom_r,                   &
 #  ifdef MASKING
-     &                             vmask, pmask,                        &
+     &                             GRID(ng) % vmask,                    &
+     &                             GRID(ng) % pmask,                    &
 #  endif
      &                             A2d)
 !
@@ -6023,7 +6008,7 @@
               Aavg=FacAvg*A2davg(i,j)
               Asqr=FacAvg*A2dsqr(i,j)
 #  ifdef MASKING
-              IF (vmask(i,j).gt.0.0_r8) THEN
+              IF (GRID(ng)%vmask(i,j).gt.0.0_r8) THEN
                 HnormSVS(i,j)=1.0_r8/SQRT(Asqr)
               ELSE
                 HnormSVS(i,j)=0.0_r8
@@ -6058,7 +6043,7 @@
      &                              NRM(ifile,ng)%Vid(idVsms),          &
      &                              NRM(ifile,ng)%Rindex,               &
 #  ifdef MASKING
-     &                              vmask,                              &
+     &                              GRID(ng) % vmask,                   &
 #  endif
      &                              HnormSVS)
 
@@ -6077,7 +6062,7 @@
      &                             NRM(ifile,ng)%Rindex,                &
      &                             ioDesc,                              &
 #   ifdef MASKING
-     &                             vmask,                               &
+     &                             GRID(ng) % vmask,                    &
 #   endif
      &                             HnormSVS)
 #  endif
@@ -6129,7 +6114,8 @@
 !
         DO j=JstrT,JendT
           DO i=IstrT,IendT
-            Hscale(i,j)=1.0_r8/SQRT(om_r(i,j)*on_r(i,j))
+            Hscale(i,j)=1.0_r8/SQRT(GRID(ng)%om_r(i,j)*                 &
+     &                              GRID(ng)%on_r(i,j))
           END DO
         END DO
 !
@@ -6165,9 +6151,14 @@
      &                                 NHsteps(rec,ifield)/ifac,        &
      &                                 DTsizeH(rec,ifield),             &
      &                                 Kh,                              &
-     &                                 pm, pn, pmon_u, pnom_v,          &
+     &                                 GRID(ng) % pm,                   &
+     &                                 GRID(ng) % pn,                   &
+     &                                 GRID(ng) % pmon_u,               &
+     &                                 GRID(ng) % pnom_v,               &
 #  ifdef MASKING
-     &                                 rmask, umask, vmask,             &
+     &                                 GRID(ng) % rmask,                &
+     &                                 GRID(ng) % umask,                &
+     &                                 GRID(ng) % vmask,                &
 #  endif
      &                                 A2d)
 !
@@ -6186,7 +6177,7 @@
                   Aavg=FacAvg*A2davg(i,j)
                   Asqr=FacAvg*A2dsqr(i,j)
 #  ifdef MASKING
-                  IF (rmask(i,j).gt.0.0_r8) THEN
+                  IF (GRID(ng)%rmask(i,j).gt.0.0_r8) THEN
                     HnormSTF(i,j,itrc)=1.0_r8/SQRT(Asqr)
                   ELSE
                     HnormSTF(i,j,itrc)=0.0_r8
@@ -6244,7 +6235,7 @@
      &                              NRM(ifile,ng)%Vid(idTsur(itrc)),    &
      &                              NRM(ifile,ng)%Rindex,               &
 #  ifdef MASKING
-     &                                  rmask,                          &
+     &                                  GRID(ng) % rmask,               &
 #  endif
      &                                  HnormSTF(:,:,itrc))
 
@@ -6264,7 +6255,7 @@
      &                              NRM(ifile,ng)%Rindex,               &
      &                                 ioDesc,                          &
 #   ifdef MASKING
-     &                                 rmask,                           &
+     &                                 GRID(ng) % rmask,                &
 #   endif
      &                                 HnormSTF(:,:,itrc))
 #  endif

@@ -64,7 +64,7 @@
 !  weighted sum of B values corresponding to various scales. Typically,!
 !  two to four different scales are combined in practical applications.!
 !  The weight coefficients Wi are constrained to sum to unity. The     !
-!  resulting correlation functions belong to the Matýrn-class family,  !
+!  resulting correlation functions belong to the Matern-class family,  !
 !  which accommodates complex functional shapes.                       !
 !                                                                      !
 !  Horizontally spatially varying correlation length scales for the    !
@@ -109,7 +109,6 @@
 #if defined SEDIMENT && defined SED_MORPH && defined SOLVE3D
       USE mod_sedbed
 #endif
-      USE mod_stepping
 !
       USE ad_conv_2d_mod
 #ifdef SOLVE3D
@@ -194,6 +193,7 @@
       SUBROUTINE normalization (ng, tile, ifac)
 !***********************************************************************
 !
+      USE mod_stepping,        ONLY : nnew, nstp
       USE roms_multiscale_mod, ONLY : B_ms
 !
 !  Imported variable declarations.
@@ -594,8 +594,8 @@
 !
 !  Implicit horizontal convolution, CG/CI solver.
 !
-                    CALL self%ad_CI_2d (ng, tile, iADM, isFsur,         &
-     &                                  r2dvar, ns, NiterCI(ns,ng),     &
+                    CALL self%ad_CI_2d (ng, tile, iADM, isFsur, r2dvar, &
+     &                                  ns, NiterCI(ns,ng), ifac,       &
      &                                  Lweak,                          &
      &                                  LBi, UBi, LBj, UBj,             &
      &                                  IminS, ImaxS, JminS, JmaxS,     &
@@ -740,8 +740,8 @@
 !
 !  Implicit horizontal convolution, CG/CI solver.
 !
-                    CALL self%ad_CI_2d (ng, tile, iADM, isUbar,         &
-     &                                  u2dvar, ns, NiterCI(ns,ng),     &
+                    CALL self%ad_CI_2d (ng, tile, iADM, isUbar, u2dvar, &
+     &                                  ns, NiterCI(ns,ng), ifac,       &
      &                                  Lweak,                          &
      &                                  LBi, UBi, LBj, UBj,             &
      &                                  IminS, ImaxS, JminS, JmaxS,     &
@@ -886,8 +886,8 @@
 !
 !  Implicit horizontal convolution, CG/CI solver.
 !
-                    CALL self%ad_CI_2d (ng, tile, iADM, isVbar,         &
-     &                                  v2dvar, ns, NiterCI(ns,ng),     &
+                    CALL self%ad_CI_2d (ng, tile, iADM, isVbar, v2dvar, &
+     &                                  ns, NiterCI(ns,ng), ifac,       &
      &                                  Lweak,                          &
      &                                  LBi, UBi, LBj, UBj,             &
      &                                  IminS, ImaxS, JminS, JmaxS,     &
@@ -1053,7 +1053,8 @@
 !  Implicit horizontal convolution, CG/CI solver.
 !
                       CALL self%ad_CI_3d (ng, tile, iADM, isUvel,       &
-     &                                    u3dvar, ns, NiterCI(ns,ng),   &
+     &                                    u3dvar,                       &
+     &                                    ns, NiterCI(ns,ng), ifac,     &
      &                                    Lweak,                        &
      &                                    LBi, UBi, LBj, UBj,           &
      &                                    IminS, ImaxS, JminS, JmaxS,   &
@@ -1220,7 +1221,8 @@
 !  Implicit horizontal convolution, CG/CI solver.
 !
                       CALL self%ad_CI_3d (ng, tile, iADM, isVvel,       &
-     &                                    v3dvar, ns, NiterCI(ns,ng),   &
+     &                                    v3dvar,                       &
+     &                                    ns, NiterCI(ns,ng), ifac,     &
      &                                    Lweak,                        &
      &                                    LBi, UBi, LBj, UBj,           &
      &                                    IminS, ImaxS, JminS, JmaxS,   &
@@ -1412,7 +1414,8 @@
 !  Implicit horizontal convolution, CG/CI solver.
 !
                         CALL self%ad_CI_3d (ng, tile, iADM, ifield,     &
-     &                                      r3dvar, ns, NiterCI(ns,ng), &
+     &                                      r3dvar,                     &
+     &                                      ns, NiterCI(ns,ng), ifac,   &
      &                                      Lweak,                      &
      &                                      LBi, UBi, LBj, UBj,         &
      &                                      IminS, ImaxS, JminS, JmaxS, &
@@ -1612,11 +1615,13 @@
                   CASE (iwest, ieast)
                     bounded=Lconvolve(ibry).and.                        &
      &                      ((Jstr.le.ib).and.(ib.le.Jend))
+                    i=BOUNDS(ng)%edge(ibry,r2dvar)
                     j=ib
                   CASE (isouth, inorth)
                     bounded=Lconvolve(ibry).and.                        &
      &                      ((Istr.le.ib).and.(ib.le.Iend))
                     i=ib
+                    j=BOUNDS(ng)%edge(ibry,r2dvar)
                 END SELECT
 #  ifdef MASKING
                 IF (bounded) THEN
@@ -1639,7 +1644,8 @@
 !  Implicit adjoint convolution, CG/CI solver.
 !
                   CALL self%ad_CI_b1d (ng, tile, iADM, isFsur, ibry,    &
-     &                                 r2dvar, ns, NiterCI(ns,ng),      &
+     &                                 r2dvar,                          &
+     &                                 ns, NiterCI(ns,ng), ifac,        &
      &                                 LBij, UBij,                      &
      &                                 IminS, ImaxS, JminS, JmaxS,      &
      &                                 B2d)
@@ -1668,7 +1674,8 @@
 !  Implicit tangent linear convolution, CG/CI solver.
 !
                   CALL self%tl_CI_b1d (ng, tile, iTLM, isFsur, ibry,    &
-     &                                 r2dvar, ns, NiterCI(ns,ng),      &
+     &                                 r2dvar,                          &
+     &                                 ns, NiterCI(ns,ng), ifac,        &
      &                                 LBij, UBij,                      &
      &                                 IminS, ImaxS, JminS, JmaxS,      &
      &                                 B2d)
@@ -1780,11 +1787,13 @@
                   CASE (iwest, ieast)
                     bounded=Lconvolve(ibry).and.                        &
      &                      ((Jstr.le.ib).and.(ib.le.Jend))
+                    i=BOUNDS(ng)%edge(ibry,u2dvar)
                     j=ib
                   CASE (isouth, inorth)
                     bounded=Lconvolve(ibry).and.                        &
      &                      ((Istr.le.ib).and.(ib.le.Iend))
                     i=ib
+                    j=BOUNDS(ng)%edge(ibry,u2dvar)
                 END SELECT
 #  ifdef MASKING
                 IF (bounded) THEN
@@ -1807,7 +1816,8 @@
 !  Implicit adjoint convolution, CG/CI solver.
 !
                   CALL self%ad_CI_b1d (ng, tile, iADM, isUbar, ibry,    &
-     &                                 u2dvar, ns, NiterCI(ns,ng),      &
+     &                                 u2dvar,                          &
+     &                                 ns, NiterCI(ns,ng), ifac,        &
      &                                 LBij, UBij,                      &
      &                                 IminS, ImaxS, JminS, JmaxS,      &
      &                                 B2d)
@@ -1836,7 +1846,8 @@
 !  Implicit tangent linear convolution, CG/CI solver.
 !
                   CALL self%tl_CI_b1d (ng, tile, iTLM, isUbar, ibry,    &
-     &                                 u2dvar, ns, NiterCI(ns,ng),      &
+     &                                 u2dvar,                          &
+     &                                 ns, NiterCI(ns,ng), ifac,        &
      &                                 LBij, UBij,                      &
      &                                 IminS, ImaxS, JminS, JmaxS,      &
      &                                 B2d)
@@ -1946,11 +1957,13 @@
                   CASE (iwest, ieast)
                     bounded=Lconvolve(ibry).and.                        &
      &                      ((Jstr.le.ib).and.(ib.le.Jend))
+                    i=BOUNDS(ng)%edge(ibry,v2dvar)
                     j=ib
                   CASE (isouth, inorth)
                     bounded=Lconvolve(ibry).and.                        &
      &                      ((Istr.le.ib).and.(ib.le.Iend))
                     i=ib
+                    j=BOUNDS(ng)%edge(ibry,v2dvar)
                 END SELECT
 #  ifdef MASKING
                 IF (bounded) THEN
@@ -1973,7 +1986,8 @@
 !  Implicit adjoint convolution, CG/CI solver.
 !
                   CALL self%ad_CI_b1d (ng, tile, iADM, isVbar, ibry,    &
-     &                                 v2dvar, ns, NiterCI(ns,ng),      &
+     &                                 v2dvar,                          &
+     &                                 ns, NiterCI(ns,ng), ifac,        &
      &                                 LBij, UBij,                      &
      &                                 IminS, ImaxS, JminS, JmaxS,      &
      &                                 B2d)
@@ -2002,7 +2016,8 @@
 !  Implicit tangent linear convolution, CG/CI solver.
 !
                   CALL self%tl_CI_b1d (ng, tile, iTLM, isVbar, ibry,    &
-     &                                 v2dvar, ns, NiterCI(ns,ng),      &
+     &                                 v2dvar,                          &
+     &                                 ns, NiterCI(ns,ng), ifac,        &
      &                                 LBij, UBij,                      &
      &                                 IminS, ImaxS, JminS, JmaxS,      &
      &                                 B2d)
@@ -2125,11 +2140,13 @@
                     CASE (iwest, ieast)
                       bounded=Lconvolve(ibry).and.                      &
      &                        ((Jstr.le.ib).and.(ib.le.Jend))
+                      i=BOUNDS(ng)%edge(ibry,u2dvar)
                       j=ib
                     CASE (isouth, inorth)
                       bounded=Lconvolve(ibry).and.                      &
      &                        ((Istr.le.ib).and.(ib.le.Iend))
                       i=ib
+                      j=BOUNDS(ng)%edge(ibry,u2dvar)
                   END SELECT
 #   ifdef MASKING
                   IF (bounded) THEN
@@ -2153,7 +2170,7 @@
 !
                     CALL self%ad_bry_Vdiff (ng, tile, iADM,             &
      &                                      isUvel, ibry, u3dvar,       &
-     &                                      NVstepsB(ibry,isUvel),      &
+     &                                      NVstepsB(ibry,isUvel)/ifac, &
      &                                      LBi, UBi, LBj, UBj,         &
      &                                      LBij, UBij,                 &
      &                                      DTsizeVB(ibry,isUvel), Kv,  &
@@ -2163,7 +2180,7 @@
 !
                     CALL self%ad_CI_b2d (ng, tile, iADM,                &
      &                                   isUvel, ibry, u3dvar,          &
-     &                                   ns, NiterCI(ns,ng),            &
+     &                                   ns, NiterCI(ns,ng), ifac,      &
      &                                   LBij, UBij,                    &
      &                                   IminS, ImaxS, JminS, JmaxS,    &
      &                                   B3d)
@@ -2201,7 +2218,7 @@
 !
                     CALL self%tl_CI_b2d (ng, tile, iTLM,                &
      &                                   isUvel, ibry, u3dvar,          &
-     &                                   ns, NiterCI(ns,ng),            &
+     &                                   ns, NiterCI(ns,ng), ifac,      &
      &                                   LBij, UBij,                    &
      &                                   IminS, ImaxS, JminS, JmaxS,    &
      &                                   B3d)
@@ -2210,7 +2227,7 @@
 !
                     CALL self%tl_bry_Vdiff (ng, tile, iTLM,             &
      &                                      isUvel, ibry, u3dvar,       &
-     &                                      NVstepsB(ibry,isUvel),      &
+     &                                      NVstepsB(ibry,isUvel)/ifac, &
      &                                      LBi, UBi, LBj, UBj,         &
      &                                      LBij, UBij,                 &
      &                                      DTsizeVB(ibry,isUvel), Kv,  &
@@ -2341,11 +2358,13 @@
                     CASE (iwest, ieast)
                       bounded=Lconvolve(ibry).and.                      &
      &                        ((Jstr.le.ib).and.(ib.le.Jend))
+                      i=BOUNDS(ng)%edge(ibry,v2dvar)
                       j=ib
                     CASE (isouth, inorth)
                       bounded=Lconvolve(ibry).and.                      &
      &                        ((Istr.le.ib).and.(ib.le.Iend))
                       i=ib
+                      j=BOUNDS(ng)%edge(ibry,v2dvar)
                   END SELECT
 #   ifdef MASKING
                   IF (bounded) THEN
@@ -2369,7 +2388,7 @@
 !
                     CALL self%ad_bry_Vdiff (ng, tile, iADM,             &
      &                                      isVvel, ibry, v3dvar,       &
-     &                                      NVstepsB(ibry,isUvel),      &
+     &                                      NVstepsB(ibry,isUvel)/ifac, &
      &                                      LBi, UBi, LBj, UBj,         &
      &                                      LBij, UBij,                 &
      &                                      DTsizeVB(ibry,isVvel), Kv,  &
@@ -2379,7 +2398,7 @@
 !
                     CALL self%ad_CI_b2d (ng, tile, iADM,                &
      &                                   isVvel, ibry, v3dvar,          &
-     &                                   ns, NiterCI(ns,ng),            &
+     &                                   ns, NiterCI(ns,ng), ifac,      &
      &                                   LBij, UBij,                    &
      &                                   IminS, ImaxS, JminS, JmaxS,    &
      &                                   B3d)
@@ -2417,7 +2436,7 @@
 !
                     CALL self%tl_CI_b2d (ng, tile, iTLM,                &
      &                                   isVvel, ibry, v3dvar,          &
-     &                                   ns, NiterCI(ns,ng),            &
+     &                                   ns, NiterCI(ns,ng), ifac,      &
      &                                   LBij, UBij,                    &
      &                                   IminS, ImaxS, JminS, JmaxS,    &
      &                                   B3d)
@@ -2426,7 +2445,7 @@
 !
                     CALL self%tl_bry_Vdiff (ng, tile, iTLM,             &
      &                                      isVvel, ibry, v3dvar,       &
-     &                                      NVstepsB(ibry,isUvel),      &
+     &                                      NVstepsB(ibry,isUvel)/ifac, &
      &                                      LBi, UBi, LBj, UBj,         &
      &                                      LBij, UBij,                 &
      &                                      DTsizeVB(ibry,isVvel), Kv,  &
@@ -2560,13 +2579,14 @@
                       CASE (iwest, ieast)
                         bounded=Lconvolve(ibry).and.                    &
      &                          ((Jstr.le.ib).and.(ib.le.Jend))
+                        i=BOUNDS(ng)%edge(ibry,r2dvar)
                         j=ib
                       CASE (isouth, inorth)
                         bounded=Lconvolve(ibry).and.                    &
      &                          ((Istr.le.ib).and.(ib.le.Iend))
                         i=ib
+                        j=BOUNDS(ng)%edge(ibry,r2dvar)
                     END SELECT
-!
 #   ifdef MASKING
                     IF (bounded) THEN
                       compute=GRID(ng)%rmask(i,j)
@@ -2589,7 +2609,7 @@
 !
                       CALL self%ad_bry_Vdiff (ng, tile, iADM,           &
      &                                        ifield, ibry, r3dvar,     &
-     &                                        NVstepsB(ibry,ifield),    &
+     &                                      NVstepsB(ibry,ifield)/ifac, &
      &                                        LBi, UBi, LBj, UBj,       &
      &                                        LBij, UBij,               &
      &                                        DTsizeVB(ibry,ifield), Kv,&
@@ -2599,7 +2619,7 @@
 !
                       CALL self%ad_CI_b2d (ng, tile, iADM,              &
      &                                     ifield, ibry, r3dvar,        &
-     &                                     ns, NiterCI(ns,ng),          &
+     &                                     ns, NiterCI(ns,ng), ifac,    &
      &                                     LBij, UBij,                  &
      &                                     IminS, ImaxS, JminS, JmaxS,  &
      &                                     B3d)
@@ -2637,7 +2657,7 @@
 !
                       CALL self%tl_CI_b2d (ng, tile, iTLM,              &
      &                                     ifield, ibry, r3dvar,        &
-     &                                     ns, NiterCI(ns,ng),          &
+     &                                     ns, NiterCI(ns,ng), ifac,    &
      &                                     LBij, UBij,                  &
      &                                     IminS, ImaxS, JminS, JmaxS,  &
      &                                     B3d)
@@ -2646,7 +2666,7 @@
 !
                       CALL self%tl_bry_Vdiff (ng, tile, iTLM,           &
      &                                        ifield, ibry, r3dvar,     &
-     &                                        NVstepsB(ibry,ifield),    &
+     &                                      NVstepsB(ibry,ifield)/ifac, &
      &                                        LBi, UBi, LBj, UBj,       &
      &                                        LBij, UBij,               &
      &                                        DTsizeVB(ibry,ifield), Kv,&
@@ -2845,9 +2865,8 @@
 !
 !  Implicit horizontal convolution, CG/CI solver.
 !
-                  CALL self%ad_CI_2d (ng, tile, iADM, isUstr,           &
-     &                                u2dvar, ns, NiterCI(ns,ng),       &
-     &                                Lweak,                            &
+                  CALL self%ad_CI_2d (ng, tile, iADM, isUstr, u2dvar,   &
+     &                                ns, NiterCI(ns,ng), ifac, Lweak,  &
      &                                LBi, UBi, LBj, UBj,               &
      &                                IminS, ImaxS, JminS, JmaxS,       &
      &                                A2d)
@@ -2985,9 +3004,8 @@
 !
 !  Implicit horizontal convolution, CG/CI solver.
 !
-                  CALL self%ad_CI_2d (ng, tile, iADM, isVstr,           &
-     &                                v2dvar, ns, NiterCI(ns,ng),       &
-     &                                Lweak,                            &
+                  CALL self%ad_CI_2d (ng, tile, iADM, isVstr, v2dvar,   &
+     &                                ns, NiterCI(ns,ng), ifac, Lweak,  &
      &                                LBi, UBi, LBj, UBj,               &
      &                                IminS, ImaxS, JminS, JmaxS,       &
      &                                A2d)
@@ -3002,7 +3020,7 @@
 !
                   Gdotp=dot_prod2d (ng, tile, iADM, v2dvar,             &
      &                              LBi, UBi, LBj, UBj,                 &
-     &                                A2d, A2d)
+     &                              A2d, A2d)
                   cff=1.0_r8/SQRT(Gdotp)
                 ELSE
                   cff=0.0_r8
@@ -3157,7 +3175,8 @@
 !  Implicit horizontal convolution, CG/CI solver.
 !
                       CALL self%ad_CI_2d (ng, tile, iADM, ifield,       &
-     &                                    r2dvar, ns, NiterCI(ns,ng),   &
+     &                                    r2dvar,                       &
+     &                                    ns, NiterCI(ns,ng), ifac,     &
      &                                    Lweak,                        &
      &                                    LBi, UBi, LBj, UBj,           &
      &                                    IminS, ImaxS, JminS, JmaxS,   &
@@ -3592,9 +3611,8 @@
 !
 !  Implicit horizontal convolution, CG/CI solver.
 !
-                CALL self%tl_CI_2d (ng, tile, iTLM, isFsur,             &
-     &                              r2dvar, ns, NiterCI(ns,ng),         &
-     &                              Lweak,                              &
+                CALL self%tl_CI_2d (ng, tile, iTLM, isFsur, r2dvar,     &
+     &                              ns, NiterCI(ns,ng), ifac, Lweak,    &
      &                              LBi, UBi, LBj, UBj,                 &
      &                              IminS, ImaxS, JminS, JmaxS,         &
      &                              A2d)
@@ -3720,9 +3738,8 @@
 !
 !  Implicit horizontal convolution, CG/CI solver.
 !
-                CALL self%tl_CI_2d (ng, tile, iTLM, isUbar,             &
-     &                              u2dvar, ns, NiterCI(ns,ng),         &
-     &                              Lweak,                              &
+                CALL self%tl_CI_2d (ng, tile, iTLM, isUbar, u2dvar,     &
+     &                              ns, NiterCI(ns,ng), ifac, Lweak,    &
      &                              LBi, UBi, LBj, UBj,                 &
      &                              IminS, ImaxS, JminS, JmaxS,         &
      &                              A2d)
@@ -3848,9 +3865,8 @@
 !
 !  Implicit horizontal convolution, CG/CI solver.
 !
-                CALL self%tl_CI_2d (ng, tile, iTLM, isVbar,             &
-     &                              v2dvar, ns, NiterCI(ns,ng),         &
-     &                              Lweak,                              &
+                CALL self%tl_CI_2d (ng, tile, iTLM, isVbar, v2dvar,     &
+     &                              ns, NiterCI(ns,ng), ifac, Lweak,    &
      &                              LBi, UBi, LBj, UBj,                 &
      &                              IminS, ImaxS, JminS, JmaxS,         &
      &                              A2d)
@@ -3984,17 +4000,15 @@
 !
 !  Implicit horizontal convolution, CG/CI solver.
 !
-                CALL self%tl_CI_3d (ng, tile, iTLM, isUvel,             &
-     &                              u3dvar, ns, NiterCI(ns,ng),         &
-     &                              Lweak,                              &
+                CALL self%tl_CI_3d (ng, tile, iTLM, isUvel, u3dvar,     &
+     &                              ns, NiterCI(ns,ng), ifac, Lweak,    &
      &                              LBi, UBi, LBj, UBj,                 &
      &                              IminS, ImaxS, JminS, JmaxS,         &
      &                              A3d)
 !
 !  Implicit vertical convolution.
 !
-                CALL self%ad_Vdiff (ng, tile, iTLM, isUvel,             &
-     &                              u3dvar,                             &
+                CALL self%ad_Vdiff (ng, tile, iTLM, isUvel, u3dvar,     &
      &                              NVsteps(ifile,isUvel)/ifac,         &
      &                              LBi, UBi, LBj, UBj,                 &
      &                              IminS, ImaxS, JminS, JmaxS,         &
@@ -4133,17 +4147,15 @@
 !
 !  Implicit horizontal convolution, CG/CI solver.
 !
-                CALL self%tl_CI_3d (ng, tile, iTLM, isVvel,             &
-     &                              v3dvar, ns, NiterCI(ns,ng),         &
-     &                              Lweak,                              &
+                CALL self%tl_CI_3d (ng, tile, iTLM, isVvel, v3dvar,     &
+     &                              ns, NiterCI(ns,ng), ifac, Lweak,    &
      &                              LBi, UBi, LBj, UBj,                 &
      &                              IminS, ImaxS, JminS, JmaxS,         &
      &                              A3d)
 !
 !  Implicit vertical convolution.
 !
-                CALL self%ad_Vdiff (ng, tile, iTLM, isVvel,             &
-     &                              v3dvar,                             &
+                CALL self%ad_Vdiff (ng, tile, iTLM, isVvel, v3dvar,     &
      &                              NVsteps(ifile,isUvel)/ifac,         &
      &                              LBi, UBi, LBj, UBj,                 &
      &                              IminS, ImaxS, JminS, JmaxS,         &
@@ -4323,17 +4335,15 @@
 !
 !  Implicit horizontal convolution, CG/CI solver.
 !
-                  CALL self%tl_CI_3d (ng, tile, iTLM, ifield,           &
-     &                                r3dvar, ns, NiterCI(ns,ng),       &
-     &                                Lweak,                            &
+                  CALL self%tl_CI_3d (ng, tile, iTLM, ifield, r3dvar,   &
+     &                                ns, NiterCI(ns,ng), ifac, Lweak,  &
      &                                LBi, UBi, LBj, UBj,               &
      &                                IminS, ImaxS, JminS, JmaxS,       &
      &                                A3d)
 !
 !  Implicit vertical convolution.
 !
-                  CALL self%tl_Vdiff (ng, tile, iTLM, ifield,           &
-     &                                r3dvar,                           &
+                  CALL self%tl_Vdiff (ng, tile, iTLM, ifield, r3dvar,   &
      &                                NVsteps(ifile,ifield)/ifac,       &
      &                                LBi, UBi, LBj, UBj,               &
      &                                IminS, ImaxS, JminS, JmaxS,       &
@@ -4572,7 +4582,8 @@
 !  Implicit tangent linear convolution, CG/CI solver.
 !
                 CALL self%tl_CI_b1d (ng, tile, iTLM, isFsur, ibry,      &
-     &                               r2dvar, ns, NiterCI(ns,ng),        &
+     &                               r2dvar,                            &
+     &                               ns, NiterCI(ns,ng), ifac,          &
      &                               LBij, UBij,                        &
      &                               IminS, ImaxS, JminS, JmaxS,        &
      &                               B2d)
@@ -4742,7 +4753,8 @@
 !  Implicit tangent linear convolution, CG/CI solver.
 !
                 CALL self%tl_CI_b1d (ng, tile, iTLM, isUbar, ibry,      &
-     &                               u2dvar, ns, NiterCI(ns,ng),        &
+     &                               u2dvar,                            &
+     &                               ns, NiterCI(ns,ng), ifac,          &
      &                               LBij, UBij,                        &
      &                               IminS, ImaxS, JminS, JmaxS,        &
      &                               B2d)
@@ -4911,7 +4923,8 @@
 !  Implicit tangent linear convolution, CG/CI solver.
 !
                 CALL self%tl_CI_b1d (ng, tile, iTLM, isVbar, ibry,      &
-     &                               v2dvar, ns, NiterCI(ns,ng),        &
+     &                               v2dvar,                            &
+     &                               ns, NiterCI(ns,ng), ifac,          &
      &                               LBij, UBij,                        &
      &                               IminS, ImaxS, JminS, JmaxS,        &
      &                               B2d)
@@ -5097,7 +5110,8 @@
 !  Implicit tangent linear horizontal convolution, CG/CI solver.
 !
                 CALL self%tl_CI_b2d (ng, tile, iTLM, isUvel, ibry,      &
-     &                               u3dvar, ns, NiterCI(ns,ng),        &
+     &                               u3dvar,                            &
+     &                               ns, NiterCI(ns,ng), ifac,          &
      &                               LBij, UBij,                        &
      &                               IminS, ImaxS, JminS, JmaxS,        &
      &                               B3d)
@@ -5105,7 +5119,8 @@
 !  Implicit tangent linear vertical convolution.
 !
                 CALL self%tl_bry_Vdiff (ng, tile, iTLM, isUvel, ibry,   &
-     &                                  u3dvar, NVstepsB(ibry,isUvel),  &
+     &                                  u3dvar,                         &
+     &                                  NVstepsB(ibry,isUvel)/ifac,     &
      &                                  LBi, UBi, LBj, UBj,             &
      &                                  LBij, UBij,                     &
      &                                  DTsizeVB(ibry,isUvel), Kv,      &
@@ -5306,7 +5321,8 @@
 !  Implicit tangent linear horizontal convolution, CG/CI solver.
 !
                 CALL self%tl_CI_b2d (ng, tile, iTLM, isVvel, ibry,      &
-     &                               v3dvar, ns, NiterCI(ns,ng),        &
+     &                               v3dvar,                            &
+     &                               ns, NiterCI(ns,ng), ifac,          &
      &                               LBij, UBij,                        &
      &                               IminS, ImaxS, JminS, JmaxS,        &
      &                               B3d)
@@ -5314,7 +5330,8 @@
 !  Implicit tangent linnear vertical convolution.
 !
                 CALL self%tl_bry_Vdiff (ng, tile, iTLM, isVvel, ibry,   &
-     &                                  v3dvar, NVstepsB(ibry,isVvel),  &
+     &                                  v3dvar,                         &
+     &                                  NVstepsB(ibry,isVvel)/ifac,     &
      &                                  LBi, UBi, LBj, UBj,             &
      &                                  LBij, UBij,                     &
      &                                  DTsizeVB(ibry,isVvel), Kv,      &
@@ -5523,7 +5540,8 @@
 !  Implicit tangent linear horizontal convolution, CG/CI solver.
 !
                   CALL self%tl_CI_b2d (ng, tile, iTLM, ifield, ibry,    &
-     &                                 r3dvar, ns, NiterCI(ns,ng),      &
+     &                                 r3dvar,                          &
+     &                                 ns, NiterCI(ns,ng), ifac,        &
      &                                 LBij, UBij,                      &
      &                                 IminS, ImaxS, JminS, JmaxS,      &
      &                                 B3d)
@@ -5531,7 +5549,8 @@
 !  Implicit tangent linear vertical convolution.
 !
                   CALL self%tl_bry_Vdiff (ng, tile, iTLM, ifield, ibry, &
-     &                                    r3dvar, NVstepsB(ibry,ifield),&
+     &                                    r3dvar,                       &
+     &                                    NVstepsB(ibry,ifield)/ifac,   &
      &                                    LBi, UBi, LBj, UBj,           &
      &                                    LBij, UBij,                   &
      &                                    DTsizeVB(ibry,ifield), Kv,    &
@@ -5773,9 +5792,8 @@
 !
 !  Implicit tangent linear horizontal convolution, CG/CI solver.
 !
-              CALL self%tl_CI_2d (ng, tile, iTLM, isUstr,               &
-     &                            u2dvar, ns, NiterCI(ns,ng),           &
-     &                            Lweak,                                &
+              CALL self%tl_CI_2d (ng, tile, iTLM, isUstr, u2dvar,       &
+     &                            ns, NiterCI(ns,ng), ifac, Lweak,      &
      &                            LBi, UBi, LBj, UBj,                   &
      &                            IminS, ImaxS, JminS, JmaxS,           &
      &                            A2d)
@@ -5901,9 +5919,8 @@
 !
 !  Implicit tangent linear horizontal convolution, CG/CI solver.
 !
-              CALL self%tl_CI_2d (ng, tile, iTLM, isVstr,               &
-     &                            v2dvar, ns, NiterCI(ns,ng),           &
-     &                            Lweak,                                &
+              CALL self%tl_CI_2d (ng, tile, iTLM, isVstr, v2dvar,       &
+     &                            ns, NiterCI(ns,ng), ifac, Lweak,      &
      &                            LBi, UBi, LBj, UBj,                   &
      &                            IminS, ImaxS, JminS, JmaxS,           &
      &                            A2d)
@@ -6073,9 +6090,8 @@
 !
 !  Implicit tangent linear horizontal convolution, CG/CI solver.
 !
-                  CALL self%tl_CI_2d (ng, tile, iTLM, ifield,           &
-     &                                r2dvar, ns, NiterCI(ns,ng),       &
-     &                                Lweak,                            &
+                  CALL self%tl_CI_2d (ng, tile, iTLM, ifield, r2dvar,   &
+     &                                ns, NiterCI(ns,ng), ifac, Lweak,  &
      &                                LBi, UBi, LBj, UBj,               &
      &                                IminS, ImaxS, JminS, JmaxS,       &
      &                                A2d)

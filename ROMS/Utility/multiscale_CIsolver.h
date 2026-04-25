@@ -37,7 +37,7 @@
 !  the estimate x(0) and its residual r(0) are required.
 !
       SUBROUTINE multiscale_CI_2d_tl (self, ng, tile, model, ifield,    &
-     &                                ctype, ms, NiterCI, Lweak,        &
+     &                                ctype, ms, NiterCI, ifac, Lweak,  &
      &                                LBi, UBi, LBj, UBj,               &
      &                                IminS, ImaxS, JminS, JmaxS,       &
      &                                tl_A)
@@ -50,6 +50,7 @@
       integer,            intent(in   ) :: ctype     ! C-grid type
       integer,            intent(in   ) :: ms        ! multiscale index
       integer,            intent(in   ) :: NiterCI   ! CI iterations
+      integer,            intent(in   ) :: ifac      ! iteraction factor
       logical,            intent(in   ) :: Lweak     ! weak constraint
       integer,            intent(in   ) :: LBi, UBi, LBj, UBj
       integer,            intent(in   ) :: IminS, ImaxS, JminS, JmaxS
@@ -109,34 +110,38 @@
 !  Mlap MUST be greater than 2 and EVEN. Choose Mlap > or O(10) to
 !  approximate a Gaussian correlation functions.
 !
+!  Note that Mlap/ifac iterations are used in this approach. When
+!  ifac=2, the pseudo-diffusion operator is applied for only half
+!  of the iterations, resulting in a square-root smoothing filter.
+!
       SELECT CASE (TRIM(StateVarName(ifield)))
         CASE ('zeta')                          ! free surface
-          Mlap=self%Mlap(ifield,ms)
+          Mlap=self%Mlap(ifield,ms)/ifac
           eigMin => self%eigMinR2D(:,ms)
           eigMax => self%eigMaxR2D(:,ms)
         CASE ('ubar', 'ubar_eastward')         ! 2D u-momentum
-          Mlap=self%Mlap(ifield,ms)
+          Mlap=self%Mlap(ifield,ms)/ifac
           eigMin => self%eigMinU2D(:,ms)
           eigMax => self%eigMaxU2D(:,ms)
         CASE ('vbar', 'vbar_northward')        ! 2D v-momentum
-          Mlap=self%Mlap(ifield,ms)
+          Mlap=self%Mlap(ifield,ms)/ifac
           eigMin => self%eigMinV2D(:,ms)
           eigMax => self%eigMaxV2D(:,ms)
         CASE ('sustr')                         ! surface U-stress
-          Mlap=self%Mlap(ifield,ms)
+          Mlap=self%Mlap(ifield,ms)/ifac
           eigMin => self%eigMinSUS(:,ms)
           eigMax => self%eigMaxSUS(:,ms)
         CASE ('svstr')                         ! surface V-stress
-          Mlap=self%Mlap(ifield,ms)
+          Mlap=self%Mlap(ifield,ms)/ifac
           eigMin => self%eigMinSVS(:,ms)
           eigMax => self%eigMaxSVS(:,ms)
 #ifdef SOLVE3D
         CASE ('shflux')                        ! surface net heat flux
-          Mlap=self%Mlap(ifield,ms)
+          Mlap=self%Mlap(ifield,ms)/ifac
           eigMin => self%eigMinSTF(:,itemp,ms)
           eigMax => self%eigMaxSTF(:,itemp,ms)
         CASE ('ssflux')                        ! surface net salt flux
-          Mlap=self%Mlap(ifield,ms)
+          Mlap=self%Mlap(ifield,ms)/ifac
           eigMin => self%eigMinSTF(:,isalt,ms)
           eigMax => self%eigMaxSTF(:,isalt,ms)
 #endif
@@ -314,7 +319,7 @@
 !  from the Conjugate Gradient (CG) solver.
 !
       SUBROUTINE multiscale_CI_2d_ad (self, ng, tile, model, ifield,    &
-     &                                ctype, ms, NiterCI, Lweak,        &
+     &                                ctype, ms, NiterCI, ifac, Lweak,  &
      &                                LBi, UBi, LBj, UBj,               &
      &                                IminS, ImaxS, JminS, JmaxS,       &
      &                                ad_A)
@@ -327,6 +332,7 @@
       integer,            intent(in   ) :: ctype     ! C-grid type
       integer,            intent(in   ) :: ms        ! multiscale index
       integer,            intent(in   ) :: NiterCI   ! CI iterations
+      integer,            intent(in   ) :: ifac      ! iteraction factor
       logical,            intent(in   ) :: Lweak     ! weak constraint
       integer,            intent(in   ) :: LBi, UBi, LBj, UBj
       integer,            intent(in   ) :: IminS, ImaxS, JminS, JmaxS
@@ -383,34 +389,38 @@
 !  Mlap MUST be greater than 2 and EVEN. Choose Mlap > or O(10) to
 !  approximate a Gaussian correlation functions.
 !
+!  Note that Mlap/ifac iterations are used in this approach. When
+!  ifac=2, the pseudo-diffusion operator is applied for only half
+!  of the iterations, resulting in a square-root smoothing filter.
+!
       SELECT CASE (TRIM(StateVarName(ifield)))
         CASE ('zeta')                          ! free surface
-          Mlap=self%Mlap(ifield,ms)
+          Mlap=self%Mlap(ifield,ms)/ifac
           eigMin => self%eigMinR2D(:,ms)
           eigMax => self%eigMaxR2D(:,ms)
         CASE ('ubar', 'ubar_eastward')         ! 2D u-momentum
-          Mlap=self%Mlap(ifield,ms)
+          Mlap=self%Mlap(ifield,ms)/ifac
           eigMin => self%eigMinU2D(:,ms)
           eigMax => self%eigMaxU2D(:,ms)
         CASE ('vbar', 'vbar_northward')        ! 2D v-momentum
-          Mlap=self%Mlap(ifield,ms)
+          Mlap=self%Mlap(ifield,ms)/ifac
           eigMin => self%eigMinV2D(:,ms)
           eigMax => self%eigMaxV2D(:,ms)
         CASE ('sustr')                         ! surface U-stress
-          Mlap=self%Mlap(ifield,ms)
+          Mlap=self%Mlap(ifield,ms)/ifac
           eigMin => self%eigMinSUS(:,ms)
           eigMax => self%eigMaxSUS(:,ms)
         CASE ('svstr')                         ! surface V-stress
-          Mlap=self%Mlap(ifield,ms)
+          Mlap=self%Mlap(ifield,ms)/ifac
           eigMin => self%eigMinSVS(:,ms)
           eigMax => self%eigMaxSVS(:,ms)
 #ifdef SOLVE3D
         CASE ('shflux')                        ! surface net heat flux
-          Mlap=self%Mlap(ifield,ms)
+          Mlap=self%Mlap(ifield,ms)/ifac
           eigMin => self%eigMinSTF(:,itemp,ms)
           eigMax => self%eigMaxSTF(:,itemp,ms)
         CASE ('ssflux')                        ! surface net salt flux
-          Mlap=self%Mlap(ifield,ms)
+          Mlap=self%Mlap(ifield,ms)/ifac
           eigMin => self%eigMinSTF(:,isalt,ms)
           eigMax => self%eigMaxSTF(:,isalt,ms)
 #endif
@@ -617,7 +627,7 @@
 !  the estimate x(0) and its residual r(0) are required.
 !
       SUBROUTINE multiscale_CI_3d_tl (self, ng, tile, model, ifield,    &
-     &                                ctype, ms, NiterCI, Lweak,        &
+     &                                ctype, ms, NiterCI, ifac, Lweak,  &
      &                                LBi, UBi, LBj, UBj,               &
      &                                IminS, ImaxS, JminS, JmaxS,       &
      &                                tl_A)
@@ -630,6 +640,7 @@
       integer,            intent(in   ) :: ctype     ! C-grid type
       integer,            intent(in   ) :: ms        ! multiscale index
       integer,            intent(in   ) :: NiterCI   ! CI iterations
+      integer,            intent(in   ) :: ifac      ! iteraction factor
       logical,            intent(in   ) :: Lweak     ! weak constraint
       integer,            intent(in   ) :: LBi, UBi, LBj, UBj
       integer,            intent(in   ) :: IminS, ImaxS, JminS, JmaxS
@@ -690,21 +701,25 @@
 !  Mlap MUST be greater than 2 and EVEN. Choose Mlap > or O(10) to
 !  approximate a Gaussian correlation functions.
 !
+!  Note that Mlap/ifac iterations are used in this approach. When
+!  ifac=2, the pseudo-diffusion operator is applied for only half
+!  of the iterations, resulting in a square-root smoothing filter.
+!
       SELECT CASE (TRIM(StateVarName(ifield)))
          CASE ('u', 'u_eastward')              ! 3D u-momentum
-          Mlap=self%Mlap(ifield,ms)
+          Mlap=self%Mlap(ifield,ms)/ifac
           eigMin => self%eigMinU3D(:,:,ms)
           eigMax => self%eigMaxU3D(:,:,ms)
         CASE ('v', 'v_northward')              ! 3D v-momentum
-          Mlap=self%Mlap(ifield,ms)
+          Mlap=self%Mlap(ifield,ms)/ifac
           eigMin => self%eigMinV3D(:,:,ms)
           eigMax => self%eigMaxV3D(:,:,ms)
         CASE ('temp')                          ! temperature
-          Mlap=self%Mlap(ifield,ms)
+          Mlap=self%Mlap(ifield,ms)/ifac
           eigMin => self%eigMinR3D(:,:,itemp,ms)
           eigMax => self%eigMaxR3D(:,:,itemp,ms)
         CASE ('salt')                          ! salinity
-          Mlap=self%Mlap(ifield,ms)
+          Mlap=self%Mlap(ifield,ms)/ifac
           eigMin => self%eigMinR3D(:,:,isalt,ms)
           eigMax => self%eigMaxR3D(:,:,isalt,ms)
       END SELECT
@@ -894,7 +909,7 @@
 !  from the Conjugate Gradient (CG) solver.
 !
       SUBROUTINE multiscale_CI_3d_ad (self, ng, tile, model, ifield,    &
-     &                                ctype, ms, NiterCI, Lweak,        &
+     &                                ctype, ms, NiterCI, ifac, Lweak,  &
      &                                LBi, UBi, LBj, UBj,               &
      &                                IminS, ImaxS, JminS, JmaxS,       &
      &                                ad_A)
@@ -907,6 +922,7 @@
       integer,            intent(in   ) :: ctype     ! C-grid type
       integer,            intent(in   ) :: ms        ! multiscale index
       integer,            intent(in   ) :: NiterCI   ! CI iterations
+      integer,            intent(in   ) :: ifac      ! iteraction factor
       logical,            intent(in   ) :: Lweak     ! weak constraint
       integer,            intent(in   ) :: LBi, UBi, LBj, UBj
       integer,            intent(in   ) :: IminS, ImaxS, JminS, JmaxS
@@ -964,21 +980,25 @@
 !  Mlap MUST be greater than 2 and EVEN. Choose Mlap > or O(10) to
 !  approximate a Gaussian correlation functions.
 !
+!  Note that Mlap/ifac iterations are used in this approach. When
+!  ifac=2, the pseudo-diffusion operator is applied for only half
+!  of the iterations, resulting in a square-root smoothing filter.
+!
       SELECT CASE (TRIM(StateVarName(ifield)))
          CASE ('u', 'u_eastward')              ! 3D u-momentum
-          Mlap=self%Mlap(ifield,ms)
+          Mlap=self%Mlap(ifield,ms)/ifac
           eigMin => self%eigMinU3D(:,:,ms)
           eigMax => self%eigMaxU3D(:,:,ms)
         CASE ('v', 'v_northward')              ! 3D v-momentum
-          Mlap=self%Mlap(ifield,ms)
+          Mlap=self%Mlap(ifield,ms)/ifac
           eigMin => self%eigMinV3D(:,:,ms)
           eigMax => self%eigMaxV3D(:,:,ms)
         CASE ('temp')                          ! temperature
-          Mlap=self%Mlap(ifield,ms)
+          Mlap=self%Mlap(ifield,ms)/ifac
           eigMin => self%eigMinR3D(:,:,itemp,ms)
           eigMax => self%eigMaxR3D(:,:,itemp,ms)
         CASE ('salt')                          ! salinity
-          Mlap=self%Mlap(ifield,ms)
+          Mlap=self%Mlap(ifield,ms)/ifac
           eigMin => self%eigMinR3D(:,:,isalt,ms)
           eigMax => self%eigMaxR3D(:,:,isalt,ms)
       END SELECT
@@ -1196,7 +1216,7 @@
 !  required.
 !
       SUBROUTINE multiscale_CI_b1d_tl (self, ng, tile, model, ifield,   &
-     &                                 ibry, ctype, ms, NiterCI,        &
+     &                                 ibry, ctype, ms, NiterCI, ifac,  &
      &                                 LBij, UBij,                      &
      &                                 IminS, ImaxS, JminS, JmaxS,      &
      &                                 tl_A)
@@ -1210,6 +1230,7 @@
       integer,            intent(in   ) :: ctype     ! C-grid type
       integer,            intent(in   ) :: ms        ! multiscale index
       integer,            intent(in   ) :: NiterCI   ! CG iterations
+      integer,            intent(in   ) :: ifac      ! iteraction factor
       integer,            intent(in   ) :: LBij, UBij
       integer,            intent(in   ) :: IminS, ImaxS, JminS, JmaxS
       real (r8),          intent(inout) :: tl_A(LBij:)
@@ -1276,15 +1297,15 @@
 !
       SELECT CASE (TRIM(StateVarName(ifield)))
         CASE ('zeta')                          ! free surface
-          Mlap=self%Mlap(ifield,ms)
+          Mlap=self%Mlap(ifield,ms)/ifac
           eigMin => self%eigMinR1D(:,ibry,ms)
           eigMax => self%eigMaxR1D(:,ibry,ms)
         CASE ('ubar', 'ubar_eastward')         ! 2D u-momentum
-          Mlap=self%Mlap(ifield,ms)
+          Mlap=self%Mlap(ifield,ms)/ifac
           eigMin => self%eigMinU1D(:,ibry,ms)
           eigMax => self%eigMaxU1D(:,ibry,ms)
         CASE ('vbar', 'vbar_northward')        ! 2D v-momentum
-          Mlap=self%Mlap(ifield,ms)
+          Mlap=self%Mlap(ifield,ms)/ifac
           eigMin => self%eigMinV1D(:,ibry,ms)
           eigMax => self%eigMaxV1D(:,ibry,ms)
       END SELECT
@@ -1515,7 +1536,7 @@
 !  required.
 !
       SUBROUTINE multiscale_CI_b1d_ad (self, ng, tile, model, ifield,   &
-     &                                 ibry, ctype, ms, NiterCI,        &
+     &                                 ibry, ctype, ms, NiterCI, ifac,  &
      &                                 LBij, UBij,                      &
      &                                 IminS, ImaxS, JminS, JmaxS,      &
      &                                 ad_A)
@@ -1529,6 +1550,7 @@
       integer,            intent(in   ) :: ctype     ! C-grid type
       integer,            intent(in   ) :: ms        ! multiscale index
       integer,            intent(in   ) :: NiterCI   ! CG iterations
+      integer,            intent(in   ) :: ifac      ! iteraction factor
       integer,            intent(in   ) :: LBij, UBij
       integer,            intent(in   ) :: IminS, ImaxS, JminS, JmaxS
       real (r8),          intent(inout) :: ad_A(LBij:)
@@ -1590,17 +1612,21 @@
 !  Mlap MUST be greater than 2 and EVEN. Choose Mlap > or O(10) to
 !  approximate a Gaussian correlation functions.
 !
+!  Note that Mlap/ifac iterations are used in this approach. When
+!  ifac=2, the pseudo-diffusion operator is applied for only half
+!  of the iterations, resulting in a square-root smoothing filter.
+!
       SELECT CASE (TRIM(StateVarName(ifield)))
         CASE ('zeta')                          ! free surface
-          Mlap=self%Mlap(ifield,ms)
+          Mlap=self%Mlap(ifield,ms)/ifac
           eigMin => self%eigMinR1D(:,ibry,ms)
           eigMax => self%eigMaxR1D(:,ibry,ms)
         CASE ('ubar', 'ubar_eastward')         ! 2D u-momentum
-          Mlap=self%Mlap(ifield,ms)
+          Mlap=self%Mlap(ifield,ms)/ifac
           eigMin => self%eigMinU1D(:,ibry,ms)
           eigMax => self%eigMaxU1D(:,ibry,ms)
         CASE ('vbar', 'vbar_northward')        ! 2D v-momentum
-          Mlap=self%Mlap(ifield,ms)
+          Mlap=self%Mlap(ifield,ms)/ifac
           eigMin => self%eigMinV1D(:,ibry,ms)
           eigMax => self%eigMaxV1D(:,ibry,ms)
       END SELECT
@@ -1906,7 +1932,7 @@
 !  required.
 !
       SUBROUTINE multiscale_CI_b2d_tl (self, ng, tile, model, ifield,   &
-     &                                 ibry, ctype, ms, NiterCI,        &
+     &                                 ibry, ctype, ms, NiterCI, ifac,  &
      &                                 LBij, UBij,                      &
      &                                 IminS, ImaxS, JminS, JmaxS,      &
      &                                 tl_A)
@@ -1920,6 +1946,7 @@
       integer,            intent(in   ) :: ctype     ! C-grid type
       integer,            intent(in   ) :: ms        ! multiscale index
       integer,            intent(in   ) :: NiterCI   ! CI iterations
+      integer,            intent(in   ) :: ifac      ! iteraction factor
       integer,            intent(in   ) :: LBij, UBij
       integer,            intent(in   ) :: IminS, ImaxS, JminS, JmaxS
       real (r8),          intent(inout) :: tl_A(LBij:,:)
@@ -1985,21 +2012,25 @@
 !  Mlap MUST be greater than 2 and EVEN. Choose Mlap > or O(10) to
 !  approximate a Gaussian correlation functions.
 !
+!  Note that Mlap/ifac iterations are used in this approach. When
+!  ifac=2, the pseudo-diffusion operator is applied for only half
+!  of the iterations, resulting in a square-root smoothing filter.
+!
       SELECT CASE (TRIM(StateVarName(ifield)))
         CASE ('u', 'u_eastward')               ! 3D u-momentum
-          Mlap=self%Mlap(ifield,ms)
+          Mlap=self%Mlap(ifield,ms)/ifac
           eigMin => self%eigMinU1DZ(:,:,ibry,ms)
           eigMax => self%eigMaxU1DZ(:,:,ibry,ms)
         CASE ('v', 'v_northward')              ! 3D v-momentum
-          Mlap=self%Mlap(ifield,ms)
+          Mlap=self%Mlap(ifield,ms)/ifac
           eigMin => self%eigMinV1DZ(:,:,ibry,ms)
           eigMax => self%eigMaxV1DZ(:,:,ibry,ms)
         CASE ('temp')                          ! temperature
-          Mlap=self%Mlap(ifield,ms)
+          Mlap=self%Mlap(ifield,ms)/ifac
           eigMin => self%eigMinR1DZ(:,:,itemp,ibry,ms)
           eigMax => self%eigMaxR1DZ(:,:,itemp,ibry,ms)
         CASE ('salt')                          ! salinity
-          Mlap=self%Mlap(ifield,ms)
+          Mlap=self%Mlap(ifield,ms)/ifac
           eigMin => self%eigMinR1DZ(:,:,isalt,ibry,ms)
           eigMax => self%eigMaxR1DZ(:,:,isalt,ibry,ms)
       END SELECT
@@ -2244,7 +2275,7 @@
 !  required.
 !
       SUBROUTINE multiscale_CI_b2d_ad (self, ng, tile, model, ifield,   &
-     &                                 ibry, ctype, ms, NiterCI,        &
+     &                                 ibry, ctype, ms, NiterCI, ifac,  &
      &                                 LBij, UBij,                      &
      &                                 IminS, ImaxS, JminS, JmaxS,      &
      &                                 ad_A)
@@ -2258,6 +2289,7 @@
       integer,            intent(in   ) :: ctype     ! C-grid type
       integer,            intent(in   ) :: ms        ! multiscale index
       integer,            intent(in   ) :: NiterCI   ! CG iterations
+      integer,            intent(in   ) :: ifac      ! iteraction factor
       integer,            intent(in   ) :: LBij, UBij
       integer,            intent(in   ) :: IminS, ImaxS, JminS, JmaxS
       real (r8),          intent(inout) :: ad_A(LBij:,:)
@@ -2319,21 +2351,25 @@
 !  Mlap MUST be greater than 2 and EVEN. Choose Mlap > or O(10) to
 !  approximate a Gaussian correlation functions.
 !
+!  Note that Mlap/ifac iterations are used in this approach. When
+!  ifac=2, the pseudo-diffusion operator is applied for only half
+!  of the iterations, resulting in a square-root smoothing filter.
+!
       SELECT CASE (TRIM(StateVarName(ifield)))
         CASE ('u', 'u_eastward')               ! 3D u-momentum
-          Mlap=self%Mlap(ifield,ms)
+          Mlap=self%Mlap(ifield,ms)/ifac
           eigMin => self%eigMinU1DZ(:,:,ibry,ms)
           eigMax => self%eigMaxU1DZ(:,:,ibry,ms)
         CASE ('v', 'v_northward')              ! 3D v-momentum
-          Mlap=self%Mlap(ifield,ms)
+          Mlap=self%Mlap(ifield,ms)/ifac
           eigMin => self%eigMinV1DZ(:,:,ibry,ms)
           eigMax => self%eigMaxV1DZ(:,:,ibry,ms)
         CASE ('temp')                          ! temperature
-          Mlap=self%Mlap(ifield,ms)
+          Mlap=self%Mlap(ifield,ms)/ifac
           eigMin => self%eigMinR1DZ(:,:,itemp,ibry,ms)
           eigMax => self%eigMaxR1DZ(:,:,itemp,ibry,ms)
         CASE ('salt')                          ! salinity
-          Mlap=self%Mlap(ifield,ms)
+          Mlap=self%Mlap(ifield,ms)/ifac
           eigMin => self%eigMinR1DZ(:,:,isalt,ibry,ms)
           eigMax => self%eigMaxR1DZ(:,:,isalt,ibry,ms)
       END SELECT

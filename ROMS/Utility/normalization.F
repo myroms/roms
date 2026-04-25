@@ -40,7 +40,7 @@
 !! weighted sum of B values corresponding to various scales. Typically,!
 !! two to four different scales are combined in practical applications.!
 !! The weight coefficients Wi are constrained to sum to unity. The     !
-!! resulting correlation functions belong to the Matérn-class family,  !
+!! resulting correlation functions belong to the Matern-class family,  !
 !! which accommodates complex functional shapes.                       !
 !!                                                                     !
 !! Horizontally spatially varying correlation length scales for the    !
