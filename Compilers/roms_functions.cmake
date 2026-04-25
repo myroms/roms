@@ -173,13 +173,40 @@ endfunction()
 
 function(link_netcdf)
   if( DEFINED ENV{NF_CONFIG} )
-    Message( STATUS "Using $ENV{NF_CONFIG}" )
+    set( NF_CONFIG_PATH "$ENV{NF_CONFIG}" )
+  endif()
+
+  if( DEFINED ENV{NC_CONFIG} )
+    set( NC_CONFIG_PATH "$ENV{NC_CONFIG}" )
+  endif()
+
+  if( NOT DEFINED NF_CONFIG_PATH )
+    find_program( NF_CONFIG_PATH "nf-config" )
+    if( NF_CONFIG_PATH )
+      Message( STATUS "nf-config command found at: ${NF_CONFIG_PATH}" )
+    else()
+      Message( WARNING "nf-config command NOT found" )
+    endif()
+  endif()
+
+  if( NOT DEFINED NC_CONFIG_PATH )
+    find_program( NC_CONFIG_PATH "nc-config" )
+    if( NC_CONFIG_PATH )
+      Message( STATUS "nc-config command found at: ${NC_CONFIG_PATH}" )
+    else()
+      Message( WARNING "nc-config command NOT found" )
+    endif()
+  endif()
+
+  if( DEFINED NF_CONFIG_PATH )
+    Message( STATUS "Using ${NF_CONFIG_PATH}" )
 
     # Get link line to break down below
 
-    execute_process( COMMAND $ENV{NF_CONFIG} --flibs
+    execute_process( COMMAND ${NF_CONFIG_PATH} --flibs
                      OUTPUT_VARIABLE tmp
-    )
+                   )
+    string( STRIP "${tmp}" tmp )
 
     if( DEFINED ENV{NETCDF_INCDIR} )
       set( idir "$ENV{NETCDF_INCDIR}" )                          # Set include directory
@@ -187,12 +214,26 @@ function(link_netcdf)
 
       # Retrieve include direcotry
 
-      execute_process( COMMAND $ENV{NF_CONFIG} --includedir
+      execute_process( COMMAND ${NF_CONFIG_PATH} --includedir
                        OUTPUT_VARIABLE idir
-      )
+                     )
     endif()
 
-    string( STRIP "${tmp}" linkline )                            # Strip trailing whitespace
+    if( DEFINED NC_CONFIG_PATH )
+      Message( STATUS "Using ${NC_CONFIG_PATH}" )
+
+      # Get link line to break down below
+
+      execute_process( COMMAND ${NC_CONFIG_PATH} --libs
+                       OUTPUT_VARIABLE tmp2
+                     )
+    string( STRIP "${tmp2}" tmp2 )
+    else()
+      Message( WARNING "nf-config command found but NOT nc-config. This will likely result in linking errors" )
+    endif()
+
+    # Combine the two link lines to break down below
+    string( STRIP "${tmp} ${tmp2}" linkline )                    # Strip trailing whitespace
     string( REGEX MATCHALL "-L[^ \t]*" ldirs ${linkline} )       # Create list of dirs
     string( REGEX MATCHALL "-l[^ \t]*" libs ${linkline} )        # Create list of libs
 
@@ -206,18 +247,19 @@ function(link_netcdf)
     else()
       Message( FATAL_ERROR "NetCDF includes not found!" )
     endif()
+  elseif( DEFINED ENV{NETCDF_INCDIR} AND DEFINED ENV{NETCDF_LIBDIR} )
+    set( ldirs "$ENV{NETCDF_LIBDIR}" )                         # Set lib directory
+    set( libs  "netcdf" )                                      # Set NetCDF3 lib name
+    set( idir  "$ENV{NETCDF_INCDIR}" )                         # Set include directory
   else()
-    if( DEFINED ENV{NETCDF_INCDIR} AND DEFINED ENV{NETCDF_LIBDIR} )
-      set( ldirs "$ENV{NETCDF_LIBDIR}" )                         # Set lib directory
-      set( libs  "netcdf" )                                      # Set NetCDF3 lib name
-      set( idir  "$ENV{NETCDF_INCDIR}" )                         # Set include directory
-    else()
-      Message( FATAL_ERROR "No NetCDF found!" )
-    endif()
+    Message( FATAL_ERROR "No NetCDF found!" )
   endif()
 
   list( TRANSFORM libs  REPLACE "-l([^ \t]*)" "\\1" )           # remove "-l" from libs
   list( TRANSFORM ldirs REPLACE "-L([^ \t]*)" "\\1" )           # remove "-L" from dirs
+
+  list( REMOVE_DUPLICATES libs )
+  list( REMOVE_DUPLICATES ldirs )
 
   if( "${libs}" STREQUAL "" )
     message( FATAL_ERROR "NetCDF library name not found" )

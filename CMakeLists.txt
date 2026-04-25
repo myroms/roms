@@ -146,7 +146,7 @@ endif()
 
 # NetCDF Library.
 
-if(DEFINED ENV{SINGULARITY_COMMAND} AND IN_ECBUILD )
+if( DEFINED ENV{SINGULARITY_COMMAND} AND IN_ECBUILD )
   find_package( NetCDF REQUIRED COMPONENTS Fortran )
   include_directories( ${NETCDF_INCLUDE_DIRS} )
   list( APPEND netcdf_libs "netcdff" "netcdf" )
@@ -182,7 +182,6 @@ add_subdirectory( "ROMS/Utility" )
 include_directories(
   ${CMAKE_CURRENT_BINARY_DIR}
   "/usr/local/include"
-  "$ENV{NETCDF}/include"
   "Master"
   "ROMS/Drivers"
   "ROMS/Functionals"
@@ -201,7 +200,6 @@ include_directories(
 link_directories(
   ${CMAKE_CURRENT_BINARY_DIR}
   "/usr/local/lib"
-  "$ENV{NETCDF}/lib"
 )
 
 list(APPEND srcs
@@ -294,6 +292,13 @@ set_property(
     ${CMAKE_CURRENT_BINARY_DIR}/f90/biology.f90
   APPEND_STRING PROPERTY COMPILE_FLAGS ${ROMS_FREEFLAGS}
 )
+
+if( CMAKE_Fortran_COMPILER_ID MATCHES "GNU" )
+  set_property(
+    SOURCE ${CMAKE_CURRENT_BINARY_DIR}/f90/ran_state.f90
+    APPEND_STRING PROPERTY COMPILE_FLAGS "-fno-strict-overflow"
+  )
+endif()
 
 ###########################################################################
 # Clean-up the dependencies
