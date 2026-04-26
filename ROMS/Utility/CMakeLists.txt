@@ -95,6 +95,7 @@ list( APPEND _files
       ROMS/Utility/metrics.F
       ROMS/Utility/mp_exchange.F
       ROMS/Utility/mp_routines.F
+      ROMS/Utility/multiscale_eigen.F
       ROMS/Utility/nf_fread2d_bry.F
       ROMS/Utility/nf_fread2d_xtr.F
       ROMS/Utility/nf_fread2d.F
