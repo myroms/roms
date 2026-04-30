@@ -64,10 +64,10 @@
       integer                           :: Istr, Iend, Jstr, Jend
       real (r8)                         :: cffx, cffy
 
-#ifdef READ_SCALES
+#ifdef NONUNIFORM_SCALES
 !
-      real (r8), pointer                :: bsclx(:,:) => NULL()
-      real (r8), pointer                :: bscly(:,:) => NULL()
+      real (r8), pointer                :: BscaleX(:,:) => NULL()
+      real (r8), pointer                :: BscaleY(:,:) => NULL()
 #endif
 !
       real(r8), dimension(LBi:UBi,LBj:UBj)         :: tl_Awrk
@@ -96,16 +96,22 @@
 !
       SELECT CASE (TRIM(StateVarName(ifield)))
         CASE ('zeta')
-#ifdef READ_SCALES
-          bsclx => self%bZscaleX(:,:,ms)
-          bscly => self%bZscaleY(:,:,ms)
+#ifdef NONUNIFORM_SCALES
+          BscaleX => self%zeta_Bcorr(:,:,1,ms)
+          BscaleY => self%zeta_Bcorr(:,:,2,ms)
 #endif
           iLap=Mlap(ifield,ms,ng)
 #ifdef SOLVE3D
-        CASE ('shflux', 'ssflux')
-# ifdef READ_SCALES
-          bsclx => self%bSTFscaleX(:,:,ifield,ms)
-          bscly => self%bSTFscaleY(:,:,ifield,ms)
+        CASE ('shflux')
+# ifdef NONUNIFORM_SCALES
+          BscaleX => self%stflux_Bcorr(:,:,1,itemp,ms)
+          BscaleY => self%stflux_Bcorr(:,:,2,itemp,ms)
+# endif
+          iLap=Mlap(ifield,ms,ng)
+        CASE ('ssflux')
+# ifdef NONUNIFORM_SCALES
+          BscaleX => self%stflux_Bcorr(:,:,1,isalt,ms)
+          BscaleY => self%stflux_Bcorr(:,:,2,isalt,ms)
 # endif
           iLap=Mlap(ifield,ms,ng)
 #endif
@@ -124,9 +130,9 @@
 !
       DO j=Jstr-1,Jend+1
         DO i=Istr-1,Iend+1
-#ifdef READ_SCALES
-          cffx=bsclx(i,j)*bsclx(i,j)       ! spatially varying
-          cffy=bscly(i,j)*bscly(i,j)
+#ifdef NONUNIFORM_SCALES
+          cffx=BscaleX(i,j)*BscaleX(i,j)   ! spatially varying
+          cffy=BscaleY(i,j)*BscaleY(i,j)
 #else
           cffx=HdecayX(rec,ifield,ms,ng)*HdecayX(rec,ifield,ms,ng)
           cffy=HdecayY(rec,ifield,ms,ng)*HdecayY(rec,ifield,ms,ng)
@@ -274,10 +280,10 @@
       integer                           :: Istr, Iend, Jstr, Jend
       real (r8)                         :: adfac, cffx, cffy
 
-#ifdef READ_SCALES
+#ifdef NONUNIFORM_SCALES
 !
-      real (r8), pointer                :: bsclx(:,:) => NULL()
-      real (r8), pointer                :: bscly(:,:) => NULL()
+      real (r8), pointer                :: BscaleX(:,:) => NULL()
+      real (r8), pointer                :: BscaleY(:,:) => NULL()
 #endif
 !
       real(r8), dimension(LBi:UBi,LBj:UBj)         :: ad_Awrk
@@ -312,16 +318,22 @@
 !
       SELECT CASE (TRIM(StateVarName(ifield)))
         CASE ('zeta')
-#ifdef READ_SCALES
-          bsclx => self%bZscaleX(:,:,ms)
-          bscly => self%bZscaleY(:,:,ms)
+#ifdef NONUNIFORM_SCALES
+          BscaleX => self%zeta_Bcorr(:,:,1,ms)
+          BscaleY => self%zeta_Bcorr(:,:,2,ms)
 #endif
           iLap=Mlap(ifield,ms,ng)
 #ifdef SOLVE3D
-        CASE ('shflux', 'ssflux')
-# ifdef READ_SCALES
-          bsclx => self%bSTFscaleX(:,:,ifield,ms)
-          bscly => self%bSTFscaleY(:,:,ifield,ms)
+        CASE ('shflux')
+# ifdef NONUNIFORM_SCALES
+          BscaleX => self%stflux_Bcorr(:,:,1,itemp,ms)
+          BscaleY => self%stflux_Bcorr(:,:,2,itemp,ms)
+# endif
+          iLap=Mlap(ifield,ms,ng)
+        CASE ('ssflux')
+# ifdef NONUNIFORM_SCALES
+          BscaleX => self%stflux_Bcorr(:,:,1,isalt,ms)
+          BscaleY => self%stflux_Bcorr(:,:,2,isalt,ms)
 # endif
           iLap=Mlap(ifield,ms,ng)
 #endif
@@ -340,9 +352,9 @@
 !
       DO j=Jstr-1,Jend+1
         DO i=Istr-1,Iend+1
-#ifdef READ_SCALES
-          cffx=bsclx(i,j)*bsclx(i,j)       ! spatially varying
-          cffy=bscly(i,j)*bscly(i,j)
+#ifdef NONUNIFORM_SCALES
+          cffx=BscaleX(i,j)*BscaleX(i,j)   ! spatially varying
+          cffy=BscaleY(i,j)*BscaleY(i,j)
 #else
           cffx=HdecayX(rec,ifield,ms,ng)*HdecayX(rec,ifield,ms,ng)
           cffy=HdecayY(rec,ifield,ms,ng)*HdecayY(rec,ifield,ms,ng)
@@ -498,10 +510,10 @@
       integer                           :: IstrU, Iend, Jstr, Jend
       real (r8)                         :: cffx, cffy
 
-#ifdef READ_SCALES
+#ifdef NONUNIFORM_SCALES
 !
-      real (r8), pointer                :: bsclx(:,:) => NULL()
-      real (r8), pointer                :: bscly(:,:) => NULL()
+      real (r8), pointer                :: BscaleX(:,:) => NULL()
+      real (r8), pointer                :: BscaleY(:,:) => NULL()
 #endif
 !
       real(r8), dimension(LBi:UBi,LBj:UBj)         :: tl_Awrk
@@ -530,15 +542,15 @@
 !
       SELECT CASE (TRIM(StateVarName(ifield)))
         CASE ('ubar', 'ubar_eastward')
-#ifdef READ_SCALES
-          bsclx => self%bU2DscaleX(:,:,ms)
-          bscly => self%bU2DscaleY(:,:,ms)
+#ifdef NONUNIFORM_SCALES
+          BscaleX => self%ubar_Bcorr(:,:,1,ms)
+          BscaleY => self%ubar_Bcorr(:,:,2,ms)
 #endif
           iLap=Mlap(ifield,ms,ng)
         CASE ('sustr')
-#ifdef READ_SCALES
-          bsclx => self%bSUSscaleX(:,:,ms)
-          bscly => self%bSUSscaleY(:,:,ms)
+#ifdef NONUNIFORM_SCALES
+          BscaleX => self%sustr_Bcorr(:,:,1,ms)
+          BscaleY => self%sustr_Bcorr(:,:,2,ms)
 #endif
           iLap=Mlap(ifield,ms,ng)
       END SELECT
@@ -557,9 +569,9 @@
 !
       DO j=Jstr-1,Jend+1
         DO i=IstrU-1,Iend+1
-#ifdef READ_SCALES
-          cffx=bsclx(i,j)*bsclx(i,j)       ! spatially varying
-          cffy=bscly(i,j)*bscly(i,j)
+#ifdef NONUNIFORM_SCALES
+          cffx=BscaleX(i,j)*BscaleX(i,j)   ! spatially varying
+          cffy=BscaleY(i,j)*BscaleY(i,j)
 #else
           cffx=HdecayX(rec,ifield,ms,ng)*HdecayX(rec,ifield,ms,ng)
           cffy=HdecayY(rec,ifield,ms,ng)*HdecayY(rec,ifield,ms,ng)
@@ -702,10 +714,10 @@
       integer                           :: IstrU, Iend, Jstr, Jend
       real (r8)                         :: adfac, cffx, cffy
 
-#ifdef READ_SCALES
+#ifdef NONUNIFORM_SCALES
 !
-      real (r8), pointer                :: bsclx(:,:) => NULL()
-      real (r8), pointer                :: bscly(:,:) => NULL()
+      real (r8), pointer                :: BscaleX(:,:) => NULL()
+      real (r8), pointer                :: BscaleY(:,:) => NULL()
 #endif
 !
       real(r8), dimension(LBi:UBi,LBj:UBj)         :: ad_Awrk
@@ -740,15 +752,15 @@
 !
       SELECT CASE (TRIM(StateVarName(ifield)))
         CASE ('ubar', 'ubar_eastward')
-#ifdef READ_SCALES
-          bsclx => self%bU2DscaleX(:,:,ms)
-          bscly => self%bU2DscaleY(:,:,ms)
+#ifdef NONUNIFORM_SCALES
+          BscaleX => self%ubar_Bcorr(:,:,1,ms)
+          BscaleY => self%ubar_Bcorr(:,:,2,ms)
 #endif
           iLap=Mlap(ifield,ms,ng)
         CASE ('sustr')
-#ifdef READ_SCALES
-          bsclx => self%bSUSscaleX(:,:,ms)
-          bscly => self%bSUSscaleY(:,:,ms)
+#ifdef NONUNIFORM_SCALES
+          BscaleX => self%sustr_Bcorr(:,:,1,ms)
+          BscaleY => self%sustr_Bcorr(:,:,2,ms)
 #endif
           iLap=Mlap(ifield,ms,ng)
       END SELECT
@@ -767,9 +779,9 @@
 !
       DO j=Jstr-1,Jend+1
         DO i=IstrU-1,Iend+1
-#ifdef READ_SCALES
-          cffx=bsclx(i,j)*bsclx(i,j)       ! spatially varying
-          cffy=bscly(i,j)*bscly(i,j)
+#ifdef NONUNIFORM_SCALES
+          cffx=BscaleX(i,j)*BscaleX(i,j)   ! spatially varying
+          cffy=BscaleY(i,j)*BscaleY(i,j)
 #else
           cffx=HdecayX(rec,ifield,ms,ng)*HdecayX(rec,ifield,ms,ng)
           cffy=HdecayY(rec,ifield,ms,ng)*HdecayY(rec,ifield,ms,ng)
@@ -920,10 +932,10 @@
       integer                           :: Istr, Iend, JstrV, Jend
       real (r8)                         :: cffx, cffy
 
-#ifdef READ_SCALES
+#ifdef NONUNIFORM_SCALES
 !
-      real (r8), pointer                :: bsclx(:,:) => NULL()
-      real (r8), pointer                :: bscly(:,:) => NULL()
+      real (r8), pointer                :: BscaleX(:,:) => NULL()
+      real (r8), pointer                :: BscaleY(:,:) => NULL()
 #endif
 !
       real(r8), dimension(LBi:UBi,LBj:UBj)         :: tl_Awrk
@@ -952,15 +964,15 @@
 !
       SELECT CASE (TRIM(StateVarName(ifield)))
         CASE ('vbar', 'vbar_northward')
-#ifdef READ_SCALES
-          bsclx => self%bV2DscaleX(:,:,ms)
-          bscly => self%bV2DscaleY(:,:,ms)
+#ifdef NONUNIFORM_SCALES
+          BscaleX => self%vbar_Bcorr(:,:,1,ms)
+          BscaleY => self%vbar_Bcorr(:,:,2,ms)
 #endif
           iLap=Mlap(ifield,ms,ng)
         CASE ('svstr')
-#ifdef READ_SCALES
-          bsclx => self%bSVSscaleX(:,:,ms)
-          bscly => self%bSVSscaleY(:,:,ms)
+#ifdef NONUNIFORM_SCALES
+          BscaleX => self%svstr_Bcorr(:,:,1,ms)
+          BscaleY => self%svstr_Bcorr(:,:,2,ms)
 #endif
           iLap=Mlap(ifield,ms,ng)
       END SELECT
@@ -979,9 +991,9 @@
 !
       DO j=JstrV-1,Jend+1
         DO i=Istr-1,Iend+1
-#ifdef READ_SCALES
-          cffx=bsclx(i,j)*bsclx(i,j)       ! spatially varying
-          cffy=bscly(i,j)*bscly(i,j)
+#ifdef NONUNIFORM_SCALES
+          cffx=BscaleX(i,j)*BscaleX(i,j)   ! spatially varying
+          cffy=BscaleY(i,j)*BscaleY(i,j)
 #else
           cffx=HdecayX(rec,ifield,ms,ng)*HdecayX(rec,ifield,ms,ng)
           cffy=HdecayY(rec,ifield,ms,ng)*HdecayY(rec,ifield,ms,ng)
@@ -1125,10 +1137,10 @@
       integer                           :: Istr, Iend, JstrV, Jend
       real (r8)                         :: adfac, cffx, cffy
 
-#ifdef READ_SCALES
+#ifdef NONUNIFORM_SCALES
 !
-      real (r8), pointer                :: bsclx(:,:) => NULL()
-      real (r8), pointer                :: bscly(:,:) => NULL()
+      real (r8), pointer                :: BscaleX(:,:) => NULL()
+      real (r8), pointer                :: BscaleY(:,:) => NULL()
 #endif
 !
       real(r8), dimension(LBi:UBi,LBj:UBj)         :: ad_Awrk
@@ -1163,15 +1175,15 @@
 !
       SELECT CASE (TRIM(StateVarName(ifield)))
         CASE ('vbar', 'vbar_northward')
-#ifdef READ_SCALES
-          bsclx => self%bV2DscaleX(:,:,ms)
-          bscly => self%bV2DscaleY(:,:,ms)
+#ifdef NONUNIFORM_SCALES
+          BscaleX => self%vbar_Bcorr(:,:,1,ms)
+          BscaleY => self%vbar_Bcorr(:,:,2,ms)
 #endif
           iLap=Mlap(ifield,ms,ng)
         CASE ('svstr')
-#ifdef READ_SCALES
-          bsclx => self%bSVSscaleX(:,:,ms)
-          bscly => self%bSVSscaleY(:,:,ms)
+#ifdef NONUNIFORM_SCALES
+          BscaleX => self%svstr_Bcorr(:,:,1,ms)
+          BscaleY => self%svstr_Bcorr(:,:,2,ms)
 #endif
           iLap=Mlap(ifield,ms,ng)
       END SELECT
@@ -1190,9 +1202,9 @@
 !
       DO j=JstrV-1,Jend+1
         DO i=Istr-1,Iend+1
-#ifdef READ_SCALES
-          cffx=bsclx(i,j)*bsclx(i,j)       ! spatially varying
-          cffy=bscly(i,j)*bscly(i,j)
+#ifdef NONUNIFORM_SCALES
+          cffx=BscaleX(i,j)*BscaleX(i,j)   ! spatially varying
+          cffy=BscaleY(i,j)*BscaleY(i,j)
 #else
           cffx=HdecayX(rec,ifield,ms,ng)*HdecayX(rec,ifield,ms,ng)
           cffy=HdecayY(rec,ifield,ms,ng)*HdecayY(rec,ifield,ms,ng)
@@ -1344,10 +1356,10 @@
       real (r8)                         :: cff, cff1, cff2, cff3, cff4
       real (r8)                         :: cffx, cffy
 
-# ifdef READ_SCALES
+# ifdef NONUNIFORM_SCALES
 !
-      real (r8), pointer                :: bsclx(:,:) => NULL()
-      real (r8), pointer                :: bscly(:,:) => NULL()
+      real (r8), pointer                :: BscaleX(:,:) => NULL()
+      real (r8), pointer                :: BscaleY(:,:) => NULL()
 # endif
 !
       real(r8), dimension(LBi:UBi,LBj:UBj,1:N(ng)) :: tl_Awrk
@@ -1383,10 +1395,16 @@
 !  scales.
 !
       SELECT CASE (TRIM(StateVarName(ifield)))
-        CASE ('temp', 'salt')
-# ifdef READ_SCALES
-          bsclx => self%bR3DscaleX(:,:,ifield,ms)
-          bscly => self%bR3DscaleY(:,:,ifield,ms)
+        CASE ('temp')
+# ifdef NONUNIFORM_SCALES
+          BscaleX => self%t_Bcorr(:,:,1,itemp,ms)
+          BscaleY => self%t_Bcorr(:,:,2,itemp,ms)
+# endif
+          iLap=Mlap(ifield,ms,ng)
+        CASE ('salt')
+# ifdef NONUNIFORM_SCALES
+          BscaleX => self%t_Bcorr(:,:,1,isalt,ms)
+          BscaleY => self%t_Bcorr(:,:,2,isalt,ms)
 # endif
           iLap=Mlap(ifield,ms,ng)
       END SELECT
@@ -1404,9 +1422,9 @@
 !
       DO j=Jstr-1,Jend+1
         DO i=Istr-1,Iend+1
-# ifdef READ_SCALES
-          cffx=bsclx(i,j)*bsclx(i,j)       ! spatially varying
-          cffy=bscly(i,j)*bscly(i,j)
+# ifdef NONUNIFORM_SCALES
+          cffx=BscaleX(i,j)*BscaleX(i,j)   ! spatially varying
+          cffy=BscaleY(i,j)*BscaleY(i,j)
 # else
           cffx=HdecayX(rec,ifield,ms,ng)*HdecayX(rec,ifield,ms,ng)
           cffy=HdecayY(rec,ifield,ms,ng)*HdecayY(rec,ifield,ms,ng)
@@ -1781,10 +1799,10 @@
       real (r8)                         :: cff, cff1, cff2, cff3, cff4
       real (r8)                         :: cffx, cffy
 
-# ifdef READ_SCALES
+# ifdef NONUNIFORM_SCALES
 !
-      real (r8), pointer                :: bsclx(:,:) => NULL()
-      real (r8), pointer                :: bscly(:,:) => NULL()
+      real (r8), pointer                :: BscaleX(:,:) => NULL()
+      real (r8), pointer                :: BscaleY(:,:) => NULL()
 # endif
 !
       real(r8), dimension(LBi:UBi,LBj:UBj,1:N(ng)) :: ad_Awrk
@@ -1830,10 +1848,16 @@
 !  scales.
 !
       SELECT CASE (TRIM(StateVarName(ifield)))
-        CASE ('temp', 'salt')
-# ifdef READ_SCALES
-          bsclx => self%bR3DscaleX(:,:,ifield,ms)
-          bscly => self%bR3DscaleY(:,:,ifield,ms)
+        CASE ('temp')
+# ifdef NONUNIFORM_SCALES
+          BscaleX => self%t_Bcorr(:,:,1,itemp,ms)
+          BscaleY => self%t_Bcorr(:,:,2,itemp,ms)
+# endif
+          iLap=Mlap(ifield,ms,ng)
+        CASE ('salt')
+# ifdef NONUNIFORM_SCALES
+          BscaleX => self%t_Bcorr(:,:,1,isalt,ms)
+          BscaleY => self%t_Bcorr(:,:,2,isalt,ms)
 # endif
           iLap=Mlap(ifield,ms,ng)
       END SELECT
@@ -1851,9 +1875,9 @@
 !
       DO j=Jstr-1,Jend+1
         DO i=Istr-1,Iend+1
-# ifdef READ_SCALES
-          cffx=bsclx(i,j)*bsclx(i,j)       ! spatially varying
-          cffy=bscly(i,j)*bscly(i,j)
+# ifdef NONUNIFORM_SCALES
+          cffx=BscaleX(i,j)*BscaleX(i,j)   ! spatially varying
+          cffy=BscaleY(i,j)*BscaleY(i,j)
 # else
           cffx=HdecayX(rec,ifield,ms,ng)*HdecayX(rec,ifield,ms,ng)
           cffy=HdecayY(rec,ifield,ms,ng)*HdecayY(rec,ifield,ms,ng)
@@ -2335,10 +2359,10 @@
       real (r8)                         :: cff, cff1, cff2, cff3, cff4
       real (r8)                         :: cffx, cffy
 
-# ifdef READ_SCALES
+# ifdef NONUNIFORM_SCALES
 !
-      real (r8), pointer                :: bsclx(:,:) => NULL()
-      real (r8), pointer                :: bscly(:,:) => NULL()
+      real (r8), pointer                :: BscaleX(:,:) => NULL()
+      real (r8), pointer                :: BscaleY(:,:) => NULL()
 # endif
 !
       real(r8), dimension(LBi:UBi,LBj:UBj,1:N(ng)) :: tl_Awrk
@@ -2377,9 +2401,9 @@
 !
       SELECT CASE (TRIM(StateVarName(ifield)))
         CASE ('u', 'u_eastward')
-# ifdef READ_SCALES
-          bsclx => self%bU3DscaleX(:,:,ifield,ms)
-          bscly => self%bU3DscaleY(:,:,ifield,ms)
+# ifdef NONUNIFORM_SCALES
+          BscaleX => self%u_Bcorr(:,:,1,ms)
+          BscaleY => self%u_Bcorr(:,:,2,ms)
 # endif
           iLap=Mlap(ifield,ms,ng)
       END SELECT
@@ -2398,9 +2422,9 @@
 !
       DO j=Jstr-1,Jend+1
         DO i=IstrU-1,Iend+1
-# ifdef READ_SCALES
-          cffx=bsclx(i,j)*bsclx(i,j)       ! spatially varying
-          cffy=bscly(i,j)*bscly(i,j)
+# ifdef NONUNIFORM_SCALES
+          cffx=BscaleX(i,j)*BscaleX(i,j)   ! spatially varying
+          cffy=BscaleY(i,j)*BscaleY(i,j)
 # else
           cffx=HdecayX(rec,ifield,ms,ng)*HdecayX(rec,ifield,ms,ng)
           cffy=HdecayY(rec,ifield,ms,ng)*HdecayY(rec,ifield,ms,ng)
@@ -2803,10 +2827,10 @@
       real (r8)                         :: cff, cff1, cff2, cff3, cff4
       real (r8)                         :: cffx, cffy
 
-# ifdef READ_SCALES
+# ifdef NONUNIFORM_SCALES
 !
-      real (r8), pointer                :: bsclx(:,:) => NULL()
-      real (r8), pointer                :: bscly(:,:) => NULL()
+      real (r8), pointer                :: BscaleX(:,:) => NULL()
+      real (r8), pointer                :: BscaleY(:,:) => NULL()
 # endif
 !
       real(r8), dimension(LBi:UBi,LBj:UBj,1:N(ng)) :: ad_Awrk
@@ -2853,9 +2877,9 @@
 !
       SELECT CASE (TRIM(StateVarName(ifield)))
         CASE ('u', 'u_eastward')
-# ifdef READ_SCALES
-          bsclx => self%bU3DscaleX(:,:,ifield,ms)
-          bscly => self%bU3DscaleY(:,:,ifield,ms)
+# ifdef NONUNIFORM_SCALES
+          BscaleX => self%u_Bcorr(:,:,1,ms)
+          BscaleY => self%u_Bcorr(:,:,2,ms)
 # endif
           iLap=Mlap(ifield,ms,ng)
       END SELECT
@@ -2874,9 +2898,9 @@
 !
       DO j=Jstr-1,Jend+1
         DO i=IstrU-1,Iend+1
-# ifdef READ_SCALES
-          cffx=bsclx(i,j)*bsclx(i,j)       ! spatially varying
-          cffy=bscly(i,j)*bscly(i,j)
+# ifdef NONUNIFORM_SCALES
+          cffx=BscaleX(i,j)*BscaleX(i,j)   ! spatially varying
+          cffy=BscaleY(i,j)*BscaleY(i,j)
 # else
           cffx=HdecayX(rec,ifield,ms,ng)*HdecayX(rec,ifield,ms,ng)
           cffy=HdecayY(rec,ifield,ms,ng)*HdecayY(rec,ifield,ms,ng)
@@ -3376,10 +3400,10 @@
       real (r8)                         :: cff, cff1, cff2, cff3, cff4
       real (r8)                         :: cffx, cffy
 
-# ifdef READ_SCALES
+# ifdef NONUNIFORM_SCALES
 !
-      real (r8), pointer                :: bsclx(:,:) => NULL()
-      real (r8), pointer                :: bscly(:,:) => NULL()
+      real (r8), pointer                :: BscaleX(:,:) => NULL()
+      real (r8), pointer                :: BscaleY(:,:) => NULL()
 # endif
 !
       real(r8), dimension(LBi:UBi,LBj:UBj,1:N(ng)) :: tl_Awrk
@@ -3418,9 +3442,9 @@
 !
       SELECT CASE (TRIM(StateVarName(ifield)))
         CASE ('v', 'v_northward')
-# ifdef READ_SCALES
-          bsclx => self%bV3DscaleX(:,:,ifield,ms)
-          bscly => self%bV3DscaleY(:,:,ifield,ms)
+# ifdef NONUNIFORM_SCALES
+          BscaleX => self%v_Bcorr(:,:,1,ms)
+          BscaleY => self%v_Bcorr(:,:,2,ms)
 # endif
           iLap=Mlap(ifield,ms,ng)
       END SELECT
@@ -3439,9 +3463,9 @@
 !
       DO j=JstrV-1,Jend+1
         DO i=Istr-1,Iend+1
-# ifdef READ_SCALES
-          cffx=bsclx(i,j)*bsclx(i,j)       ! spatially varying
-          cffy=bscly(i,j)*bscly(i,j)
+# ifdef NONUNIFORM_SCALES
+          cffx=BscaleX(i,j)*BscaleX(i,j)   ! spatially varying
+          cffy=BscaleY(i,j)*BscaleY(i,j)
 # else
           cffx=HdecayX(rec,ifield,ms,ng)*HdecayX(rec,ifield,ms,ng)
           cffy=HdecayY(rec,ifield,ms,ng)*HdecayY(rec,ifield,ms,ng)
@@ -3840,10 +3864,10 @@
       real (r8)                         :: cff, cff1, cff2, cff3, cff4
       real (r8)                         :: adfac, cffx, cffy
 
-# ifdef READ_SCALES
+# ifdef NONUNIFORM_SCALES
 !
-      real (r8), pointer                :: bsclx(:,:) => NULL()
-      real (r8), pointer                :: bscly(:,:) => NULL()
+      real (r8), pointer                :: BscaleX(:,:) => NULL()
+      real (r8), pointer                :: BscaleY(:,:) => NULL()
 # endif
 !
       real(r8), dimension(LBi:UBi,LBj:UBj,1:N(ng)) :: ad_Awrk
@@ -3892,9 +3916,9 @@
 !
       SELECT CASE (TRIM(StateVarName(ifield)))
         CASE ('v', 'v_northward')
-# ifdef READ_SCALES
-          bsclx => self%bV3DscaleX(:,:,ifield,ms)
-          bscly => self%bV3DscaleY(:,:,ifield,ms)
+# ifdef NONUNIFORM_SCALES
+          BscaleX => self%v_Bcorr(:,:,1,ms)
+          BscaleY => self%v_Bcorr(:,:,2,ms)
 # endif
           iLap=Mlap(ifield,ms,ng)
       END SELECT
@@ -3913,9 +3937,9 @@
 !
       DO j=JstrV-1,Jend+1
         DO i=Istr-1,Iend+1
-# ifdef READ_SCALES
-          cffx=bsclx(i,j)*bsclx(i,j)       ! spatially varying
-          cffy=bscly(i,j)*bscly(i,j)
+# ifdef NONUNIFORM_SCALES
+          cffx=BscaleX(i,j)*BscaleX(i,j)   ! spatially varying
+          cffy=BscaleY(i,j)*BscaleY(i,j)
 # else
           cffx=HdecayX(rec,ifield,ms,ng)*HdecayX(rec,ifield,ms,ng)
           cffy=HdecayY(rec,ifield,ms,ng)*HdecayY(rec,ifield,ms,ng)

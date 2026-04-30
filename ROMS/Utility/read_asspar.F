@@ -1203,12 +1203,6 @@
               END DO
 #   endif
 #  endif
-#  if defined MULTI_SCALE_B && defined READ_SCALES
-            CASE ('MSBname')
-              label='MSB - Background decorrelation length scales'
-              Npts=load_s1d(Nval, Cval, Cdim, line, label, igrid,       &
-     &                      Ngrids, Nfiles, out_lib, MSB)
-#  endif
             CASE ('STDnameI')
               label='STD - initial conditions standard deviation'
               Npts=load_s1d(Nval, Cval, Cdim, line, label, igrid,       &
@@ -1288,6 +1282,12 @@
               label='SCA - ADM Arnoldi vectors'
               Npts=load_s1d(Nval, Cval, Cdim, line, label, igrid,       &
      &                      Ngrids, Nfiles, out_lib, SCA)
+#  endif
+#  if defined MULTI_SCALE_B && defined NONUNIFORM_SCALES
+            CASE ('SVCname')
+              label='SVC - Spatially-varying correlation length scales'
+              Npts=load_s1d(Nval, Cval, Cdim, line, label, igrid,       &
+     &                      Ngrids, Nfiles, inp_lib, SVC)
 #  endif
 #  if defined RBL4DVAR_FCT_SENSITIVITY && defined OBS_SPACE
             CASE ('OIFnameA')

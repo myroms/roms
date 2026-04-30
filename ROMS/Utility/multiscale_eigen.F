@@ -12,7 +12,7 @@
 !                                                                      !
 !  Multi-scale, Background-Error Covariace modeling:                   !
 !                                                                      !
-!  This module computes the extreme Ritz eigenvalues required by the   !
+!  This module computes the extrema Ritz eigenvalues required by the   !
 !  Chebyshev Iterations (CI) solver to invert the implicit horizontal  !
 !  pseudo-diffusion operator, which models the spreading and smoothing !
 !  effects of the multiscale background-error covariance matrix B.     !

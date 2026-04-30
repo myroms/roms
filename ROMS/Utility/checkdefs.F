@@ -1894,13 +1894,6 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+10)=' NONLINEAR,'
 #endif
-#if defined NO_SCORRECTION_ICE && defined ICE_MODEL && defined SOLVE3D
-!
-      IF (Master) WRITE (stdout,20) 'NO_SCORRECTION_ICE',               &
-     &   'No salinity correction under the ice'
-      is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+20)=' NO_SCORRECTION_ICE,'
-#endif
 #ifdef SOLVE3D
 # if defined NONLIN_EOS
 !
@@ -1915,6 +1908,20 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+13)=' !NONLIN_EOS,'
 # endif
+#endif
+#if defined NONUNIFORM_SCALES && defined MULTI_SCALE_B
+!
+      IF (Master) WRITE (stdout,20) 'NONUNIFORM_SCALES',                &
+     &   'Spatially-varying decorrelation length scales'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+19)=' NONUNIFORM_SCALES,'
+#endif
+#if defined NO_SCORRECTION_ICE && defined ICE_MODEL && defined SOLVE3D
+!
+      IF (Master) WRITE (stdout,20) 'NO_SCORRECTION_ICE',               &
+     &   'No salinity correction under the ice'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+20)=' NO_SCORRECTION_ICE,'
 #endif
 #if defined NO_CORRECT_TRACER && defined NESTING && defined SOLVE3D
 !

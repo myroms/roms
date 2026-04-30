@@ -10,7 +10,7 @@
 ** Implicit Multiscale Background-error Covariance Solver:            **
 **                                                                    **
 ** Routines to invert the implicit diffusion equation using Conjugate **
-** Gradient (CG) iterations to determine their extreme eigenvalues.   **
+** Gradient (CG) iterations to determine their extrema eigenvalues.   **
 **                                                                    **
 ** Reference:                                                         **
 **                                                                    **
@@ -26,14 +26,19 @@
 **
 */
 
-!  This routine computes the extreme eigenvalues required by the
+!  This routine computes the extrema eigenvalues required by the
 !  Chebyshev Iterations (CI) solver, which is applied to implicit
 !  diffusion operators in the modeling of the multiscale background-
 !  error covariance for 2D variables in the control vector.
 !
-!  The minimum and maximum eigenvalues of the K-Laplacian operator
-!  are determined using a Conjugate Gradient (CG) solution to the
-!  corresponding linear system, A x = b.
+!  The minimum and maximum eigenvalues of the K-Laplacian operator are
+!  computed using a Conjugate Gradient (CG) approach to solve the
+!  associated linear system, Ax = b. The eigenvalue spectrum of this
+!  operator remains invariant for a fixed application grid and a given
+!  value of K. Consequently, estimates can be precomputed via the
+!  Lanczos formulation of the Conjugate Gradient method, initialized
+!  with random vectors, as implemented in the multiscale_eigen.F
+!  module.
 !
       SUBROUTINE multiscale_CG_2d_tl (self, ng, tile, model, ifield,    &
      &                                ctype, ms, NiterCG, ifac, Lweak,  &
@@ -68,8 +73,8 @@
       real (r8)                         :: deps
 #endif
 !
-      real (r8), pointer                :: eigMin(:,:) => NULL()
-      real (r8), pointer                :: eigMax(:,:) => NULL()
+      real (r8), pointer                :: eigMin(:) => NULL()
+      real (r8), pointer                :: eigMax(:) => NULL()
 !
       real (r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_scale
       real (r8), dimension(0:NiterCG)               :: cg_a
@@ -120,33 +125,35 @@
       SELECT CASE (TRIM(StateVarName(ifield)))
         CASE ('zeta')                          ! free surface
           Mlap=self%Mlap(ifield,ms)/ifac
-          eigMin => self%eigMinR2D
-          eigMax => self%eigMaxR2D
+          eigMin => self%zeta_eigen(:,ms,1)
+          eigMax => self%zeta_eigen(:,ms,2)
         CASE ('ubar', 'ubar_eastward')         ! 2D u-momentum
           Mlap=self%Mlap(ifield,ms)/ifac
-          eigMin => self%eigMinU2D
-          eigMax => self%eigMaxU2D
+          eigMin => self%ubar_eigen(:,ms,1)
+          eigMax => self%ubar_eigen(:,ms,2)
         CASE ('vbar', 'vbar_northward')        ! 2D v-momentum
           Mlap=self%Mlap(ifield,ms)/ifac
-          eigMin => self%eigMinV2D
-          eigMax => self%eigMaxV2D
+          eigMin => self%vbar_eigen(:,ms,1)
+          eigMax => self%vbar_eigen(:,ms,2)
+#ifdef ADJUST_WSTRESS
         CASE ('sustr')                         ! surface U-stress
           Mlap=self%Mlap(ifield,ms)/ifac
-          eigMin => self%eigMinSUS
-          eigMax => self%eigMaxSUS
+          eigMin => self%sustr_eigen(:,ms,1)
+          eigMax => self%sustr_eigen(:,ms,2)
         CASE ('svstr')                         ! surface V-stress
           Mlap=self%Mlap(ifield,ms)/ifac
-          eigMin => self%eigMinSVS
-          eigMax => self%eigMaxSVS
-#ifdef SOLVE3D
+          eigMin => self%svstr_eigen(:,ms,1)
+          eigMax => self%svstr_eigen(:,ms,2)
+#endif
+#if defined ADJUST_STFLUX && defined SOLVE3D
         CASE ('shflux')                        ! surface net heat flux
           Mlap=self%Mlap(ifield,ms)/ifac
-          eigMin => self%eigMinSTF(:,:,itemp)
-          eigMax => self%eigMaxSTF(:,:,itemp)
+          eigMin => self%stflux_eigen(:,ms,itemp,1)
+          eigMax => self%stflux_eigen(:,ms,itemp,2)
         CASE ('ssflux')                        ! surface net salt flux
           Mlap=self%Mlap(ifield,ms)/ifac
-          eigMin => self%eigMinSTF(:,:,isalt)
-          eigMax => self%eigMaxSTF(:,:,isalt)
+          eigMin => self%stflux_eigen(:,ms,isalt,1)
+          eigMax => self%stflux_eigen(:,ms,isalt,2)
 #endif
       END SELECT
 !
@@ -326,8 +333,8 @@
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 !
-        eigMax(iterDiff,ms)=MAXVAL(cg_Rv)  ! maximum Ritz eigenvalue
-        eigMin(iterDiff,ms)=MINVAL(cg_Rv)  ! minimum Ritz eigenvalue
+        eigMax(iterDiff)=MAXVAL(cg_Rv)     ! maximum Ritz eigenvalue
+        eigMin(iterDiff)=MINVAL(cg_Rv)     ! minimum Ritz eigenvalue
 !
 !  Reset iterative conjugate gradient arrays.
 !
@@ -357,7 +364,7 @@
 #ifdef SOLVE3D
 !
 !-----------------------------------------------------------------------
-!  This routine computes the extreme eigenvalues required by the
+!  This routine computes the extrema eigenvalues required by the
 !  Chebyshev Iterations (CI) solver, which is applied to implicit
 !  diffusion operators in the modeling of the multiscale background-
 !  error covariance for 3D variables in the control vector.
@@ -449,20 +456,20 @@
       SELECT CASE (TRIM(StateVarName(ifield)))
         CASE ('u', 'u_eastward')               ! 3D u-momentum
           Mlap=self%Mlap(ifield,ms)/ifac
-          eigMin => self%eigMinU3D(:,:,ms)
-          eigMax => self%eigMaxU3D(:,:,ms)
+          eigMin => self%u_eigen(:,:,ms,1)
+          eigMax => self%u_eigen(:,:,ms,2)
         CASE ('v', 'v_northward')              ! 3D v-momentum
           Mlap=self%Mlap(ifield,ms)/ifac
-          eigMin => self%eigMinV3D(:,:,ms)
-          eigMax => self%eigMaxV3D(:,:,ms)
+          eigMin => self%v_eigen(:,:,ms,1)
+          eigMax => self%v_eigen(:,:,ms,2)
         CASE ('temp')                          ! temperature
           Mlap=self%Mlap(ifield,ms)/ifac
-          eigMin => self%eigMinR3D(:,:,itemp,ms)
-          eigMax => self%eigMaxR3D(:,:,itemp,ms)
+          eigMin => self%t_eigen(:,:,itemp,ms,1)
+          eigMax => self%t_eigen(:,:,itemp,ms,2)
         CASE ('salt')                          ! salinity
           Mlap=self%Mlap(ifield,ms)/ifac
-          eigMin => self%eigMinR3D(:,:,isalt,ms)
-          eigMax => self%eigMaxR3D(:,:,isalt,ms)
+          eigMin => self%t_eigen(:,:,isalt,ms,1)
+          eigMax => self%t_eigen(:,:,isalt,ms,2)
       END SELECT
 !
 !  Set control variable squared root area scale (2D).
@@ -692,7 +699,7 @@
 #ifdef ADJUST_BOUNDARY
 !
 !-----------------------------------------------------------------------
-!  This routine computes the extreme eigenvalues required by the
+!  This routine computes the extrema eigenvalues required by the
 !  Chebyshev Iterations (CI) solver, which is applied to implicit
 !  diffusion operators in the modeling of the multiscale background-
 !  error covariance for the boundary adjustments of 2D variables in
@@ -794,16 +801,16 @@
       SELECT CASE (TRIM(StateVarName(ifield)))
         CASE ('zeta')                          ! free surface
           Mlap=self%Mlap(ifield,ms)/ifac
-          eigMin => self%eigMinU1D(:,ibry,ms)
-          eigMax => self%eigMaxU1D(:,ibry,ms)
+          eigMin => self%zeta_obc_eigen(:,ibry,ms,1)
+          eigMax => self%zeta_obc_eigen(:,ibry,ms,2)
         CASE ('ubar','ubar_eastward')          ! 2D u-momentum
           Mlap=self%Mlap(ifield,ms)/ifac
-          eigMin => self%eigMinU1D(:,ibry,ms)
-          eigMax => self%eigMaxU1D(:,ibry,ms)
+          eigMin => self%ubar_obc_eigen(:,ibry,ms,1)
+          eigMax => self%ubar_obc_eigen(:,ibry,ms,2)
         CASE ('vbar', 'vbar_northward')        ! 2D v-momentum
           Mlap=self%Mlap(ifield,ms)/ifac
-          eigMin => self%eigMinV1D(:,ibry,ms)
-          eigMax => self%eigMaxV1D(:,ibry,ms)
+          eigMin => self%vbar_obc_eigen(:,ibry,ms,1)
+          eigMax => self%vbar_obc_eigen(:,ibry,ms,2)
       END SELECT
 !
 !  Set control variable squared root area scale.
@@ -1080,7 +1087,7 @@
 # ifdef SOLVE3D
 !
 !-----------------------------------------------------------------------
-!  This routine computes the extreme eigenvalues required by the
+!  This routine computes the extrema eigenvalues required by the
 !  Chebyshev Iterations (CI) solver, which is applied to implicit
 !  diffusion operators in the modeling of the multiscale background-
 !  error covariance for the boundary adjustments of 3D variables in
@@ -1150,9 +1157,9 @@
       Jmin=Jstr
       Jmax=Jend
       SELECT CASE (ctype)
-        CASE (u2dvar)
+        CASE (u3dvar)
           Imin=IstrU
-        CASE (v2dvar)
+        CASE (v3dvar)
           Jmin=JstrV
       END SELECT
 !
@@ -1180,27 +1187,27 @@
       SELECT CASE (TRIM(StateVarName(ifield)))
         CASE ('u', 'u_eastward')               ! 3D u-momentum
           Mlap=self%Mlap(ifield,ms)/ifac
-          eigMin => self%eigMinU1DZ(:,:,ibry,ms)
-          eigMax => self%eigMaxU1DZ(:,:,ibry,ms)
+          eigMin => self%u_obc_eigen(:,:,ibry,ms,1)
+          eigMax => self%u_obc_eigen(:,:,ibry,ms,2)
         CASE ('v', 'v_northward')              ! 3D v-momentum
           Mlap=self%Mlap(ifield,ms)/ifac
-          eigMin => self%eigMinV1DZ(:,:,ibry,ms)
-          eigMax => self%eigMaxV1DZ(:,:,ibry,ms)
+          eigMin => self%v_obc_eigen(:,:,ibry,ms,1)
+          eigMax => self%v_obc_eigen(:,:,ibry,ms,2)
         CASE ('temp')                          ! temperature
           Mlap=self%Mlap(ifield,ms)/ifac
-          eigMin => self%eigMinR1DZ(:,:,itemp,ibry,ms)
-          eigMax => self%eigMaxR1DZ(:,:,itemp,ibry,ms)
+          eigMin => self%t_obc_eigen(:,:,itemp,ibry,ms,1)
+          eigMax => self%t_obc_eigen(:,:,itemp,ibry,ms,2)
         CASE ('salt')                          ! salinity
           Mlap=self%Mlap(ifield,ms)/ifac
-          eigMin => self%eigMinR1DZ(:,:,isalt,ibry,ms)
-          eigMax => self%eigMaxR1DZ(:,:,isalt,ibry,ms)
+          eigMin => self%t_obc_eigen(:,:,isalt,ibry,ms,1)
+          eigMax => self%t_obc_eigen(:,:,isalt,ibry,ms,2)
       END SELECT
 !
 !  Set control variable squared root area scale.
 !
       IF (Lboundary(ibry)) THEN
         SELECT CASE (ctype)
-           CASE (r2dvar)
+           CASE (r3dvar)
              IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
                i=BOUNDS(ng)%edge(ibry,r2dvar)
                DO j=Jmin,Jmax
@@ -1222,7 +1229,7 @@
 #  endif
                END DO
              END IF
-           CASE (u2dvar)
+           CASE (u3dvar)
              IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
                i=BOUNDS(ng)%edge(ibry,u2dvar)
                DO j=Jmin,Jmax
@@ -1244,7 +1251,7 @@
 #  endif
                END DO
              END IF
-           CASE (v2dvar)
+           CASE (v3dvar)
              IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
                i=BOUNDS(ng)%edge(ibry,v2dvar)
                DO j=Jmin,Jmax

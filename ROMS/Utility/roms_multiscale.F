@@ -151,82 +151,67 @@
 !
         real(r8), allocatable :: Bwgt(:,:)        ! [MstateVar, Nscale]
 !
-!  The maximum and minimum eigenvalues of the K-Laplacian for each 2D
-!  variable in the control vector as functions of both the number of
-!  iterations and the specified correlation functions, [Mlap,Nscales].
+!  The extrema eigenvalues of the K-Laplacian for each 2D variable in
+!  the control vector as functions of both the number of iterations
+!  and specified correlation scales, [Mlap,Nscales,range]. The range
+!  dimension has a value of 2, where 1 corresponds to the minimum and
+!  2 to the maximum eigenvalues.
 !
-        real(r8), pointer :: eigMaxR2D(:,:)       ! free surface
-        real(r8), pointer :: eigMinR2D(:,:)
-!
-        real(r8), pointer :: eigMaxU2D(:,:)       ! 2D U-momentum
-        real(r8), pointer :: eigMinU2D(:,:)
-!
-        real(r8), pointer :: eigMaxV2D(:,:)       ! 2D V-momentum
-        real(r8), pointer :: eigMinV2D(:,:)
+        real(r8), pointer :: zeta_eigen(:,:,:)    ! free surface
+        real(r8), pointer :: ubar_eigen(:,:,:)    ! 2D U-momentum
+        real(r8), pointer :: vbar_eigen(:,:,:)    ! 2D V-momentum
 
 # ifdef ADJUST_WSTRESS
 !
-        real(r8), pointer :: eigMaxSUS(:,:)       ! surface U-stress
-        real(r8), pointer :: eigMinSUS(:,:)
-!
-        real(r8), pointer :: eigMaxSVS(:,:)       ! surface V-stress
-        real(r8), pointer :: eigMinSVS(:,:)
+        real(r8), pointer :: sustr_eigen(:,:,:)   ! surface U-stress
+        real(r8), pointer :: svstr_eigen(:,:,:)   ! surface V-stress
 # endif
 
 # ifdef SOLVE3D
 !
-!  The maximum and minimum eigenvalues of the K-Laplacian for each 3D
-!  variable in the control vector as functions of both the number of
-!  iterations, vertical levels, and the specified correlation functions,
-!  [Mlap,N,Nscales] and [Mlap,N,NT,Nscale].
+!  The extrema eigenvalues of the K-Laplacian for each 3D  variable in
+!  the control vector as functions of both the number of iterations,
+!  number of vertical level, and the specified correlation scales,
+!  [Mlap,N,Nscales,range] and [Mlap,N,NT,Nscale,range]. The range
+!  dimension has a value of 2, where 1 corresponds to the minimum and
+!  2 to the maximum eigenvalues.
 !
-        real(r8), pointer :: eigMaxR3D(:,:,:,:)   ! tracer variables
-        real(r8), pointer :: eigMinR3D(:,:,:,:)
-!
-        real(r8), pointer :: eigMaxU3D(:,:,:)     ! 3D U-momentum
-        real(r8), pointer :: eigMinU3D(:,:,:)
-!
-        real(r8), pointer :: eigMaxV3D(:,:,:)     ! 3D V-momentum
-        real(r8), pointer :: eigMinV3D(:,:,:)
+        real(r8), pointer :: u_eigen(:,:,:,:)      ! 3D U-momentum
+        real(r8), pointer :: v_eigen(:,:,:,:)      ! 3D V-momentum
+        real(r8), pointer :: t_eigen(:,:,:,:,:)    ! tracer variables
 
 #  ifdef ADJUST_STFLUX
 !
-        real(r8), pointer :: eigMaxSTF(:,:,:)     ! surf. Tracer flux
-        real(r8), pointer :: eigMinSTF(:,:,:)
+        real(r8), pointer :: stflux_eigen(:,:,:,:) ! surf. Tracer flux
 #  endif
 # endif
 
 # ifdef ADJUST_BOUNDARY
 !
-!  The maximum and minimum eigenvalues of the K-Laplacian for each 2D
-!  variable lateral boundary adjustment in the control vector as
-!  functions of both the number of iterations and the specified
-!  correlation functions, [Mlap,4,Nscales].
+!  The extrema eigenvalues of the K-Laplacian for each 2D variable
+!  lateral boundary adjustment in the control vector as functions of
+!  number of iterations, boundary index, and the specified correlation
+!  scales, [Mlap,4,Nscales,range]. The range dimension has a value
+!  of 2, where 1 corresponds to the minimum and 2 to the maximum
+!  eigenvalues.
 !
-        real(r8), pointer :: eigMaxR1D(:,:,:)     ! free surface
-        real(r8), pointer :: eigMinR1D(:,:,:)
-!
-        real(r8), pointer :: eigMaxU1D(:,:,:)     ! 2D U-momentum
-        real(r8), pointer :: eigMinU1D(:,:,:)
-!
-        real(r8), pointer :: eigMaxV1D(:,:,:)     ! 3D V-momentum
-        real(r8), pointer :: eigMinV1D(:,:,:)
+        real(r8), pointer :: zeta_obc_eigen(:,:,:,:)  ! free surface
+        real(r8), pointer :: ubar_obc_eigen(:,:,:,:)  ! 2D U-momentum
+        real(r8), pointer :: vbar_obc_eigen(:,:,:,:)  ! 2D V-momentum
 
 #  ifdef SOLVE3D
 !
-!  The maximum and minimum eigenvalues of the K-Laplacian for each 3D
-!  variable lateral boundary adjustment in the control vector as
-!  functions of both the number of iterations and the specified
-!  correlation functions, [Mlap,N,4,Nscales] and [Mlap,N,NT,4,Nscales].
+!  The eextrema eigenvalues of the K-Laplacian for each 3D  variable
+!  lateral boundary adjustment in the control vector as functions of
+!  number of iterations, vertical levels, boundary index, and the
+!  specified correlation scales, [Mlap,4,Nscales,range] and
+!  [Mlap,N,NT,4,Nscales,range]. The range dimension has a value
+!  of 2, where 1 corresponds to the minimum and 2 to the maximum
+!  eigenvalues.
 !
-        real(r8), pointer :: eigMaxR1DZ(:,:,:,:,:)   ! tracers
-        real(r8), pointer :: eigMinR1DZ(:,:,:,:,:)
-!
-        real(r8), pointer :: eigMaxU1DZ(:,:,:,:)     ! 3D U-momentum
-        real(r8), pointer :: eigMinU1DZ(:,:,:,:)
-!
-        real(r8), pointer :: eigMaxV1DZ(:,:,:,:)     ! 3D V-momentum
-        real(r8), pointer :: eigMinV1DZ(:,:,:,:)
+        real(r8), pointer :: u_obc_eigen(:,:,:,:,:)   ! 3D U-momentum
+        real(r8), pointer :: v_obc_eigen(:,:,:,:,:)   ! 3D V-momentum
+        real(r8), pointer :: t_obc_eigen(:,:,:,:,:,:) ! tracers
 #  endif
 # endif
 !
@@ -312,50 +297,45 @@
         real(r8), allocatable :: ci3d_x(:,:,:)       ! estimate,  x(k)
 # endif
 
-# ifdef READ_SCALES
+# ifdef NONUNIFORM_SCALES
 !
-!  Spatially varying isotropic or anisotropic horizontal Daley length
-!  scales (in meters) are specified for each correlation function and
-!  combined when modeling multiscale background-error covariance matrix
-!  effects. These length scales are read from a specified input NetCDF
-!  file. The algorithm requires (scaleX, scaleY) values for each control
-!  vector variable. Users are responsible for determining appropriate
-!  scale values, such as the first Rossby radius of deformation or
-!  alternative methodologies.
+!  Spatially varying isotropic or anisotropic horizontal Daley Length
+!  Scales (in meters) are specified for each correlation function and
+!  are combined to represent multiscale background-error covariance
+!  matrix effects. These length scales are sourced from a designated
+!  input NetCDF file. The data assimilation algorithm requires
+!  correlation scale values for each variable in the control vector.
 !
-        real(r8), pointer :: bZscaleX(:,:,:)     ! free surface
-        real(r8), pointer :: bZscaleY(:,:,:)
+!  Currently, horizontal scale values are applied uniformly across
+!  all vertical levels in the 3D control variables because determining
+!  unique values for each level is complex. This strategy also reduces
+!  memory requirements in large-scale applications.
 !
-        real(r8), pointer :: bU2DscaleX(:,:,:)   ! 2D U-momentum
-        real(r8), pointer :: bU2DscaleY(:,:,:)
+!  Users are responsible for selecting appropriate scale values, such
+!  as the first Rossby radius of deformation, or alternative
+!  methodologies.
 !
-        real(r8), pointer :: bV2DscaleX(:,:,:)   ! 2D V-momentum
-        real(r8), pointer :: bV2DscaleY(:,:,:)
+!  At present, these correlation scales are structured as
+!    (lon, lat, axis, Nscale)      for regular variables and
+!    (lon, lat, axis, NT, Nscale)  for tracer-type variables.
+!  The axis dimension has a value of 2, where 1 corresponds to the
+!  x-axis and 2 to the y-axis of the anisotropic correlation.
+!
+        real(r8), pointer :: zeta_Bcorr(:,:,:,:)      ! free surface
+        real(r8), pointer :: ubar_Bcorr(:,:,:,:)      ! 2D U-momentum
+        real(r8), pointer :: vbar_Bcorr(:,:,:,:)      ! 2D V-momentum
 
 #  ifdef ADJUST_WSTRESS
-!
-        real(r8), pointer :: bSUSscaleX(:,:,:)   ! surface U-stress
-        real(r8), pointer :: bSUSscaleY(:,:,:)
-!
-        real(r8), pointer :: bSVSscaleX(:,:,:)   ! surface V-stress
-        real(r8), pointer :: bSVSscaleY(:,:,:)
+        real(r8), pointer :: sustr_Bcorr(:,:,:,:)     ! surface U-stress
+        real(r8), pointer :: svstr_Bcorr(:,:,:,:)     ! surface V-stress
 #  endif
 
 #  ifdef SOLVE3D
-!
-        real(r8), pointer :: bTscaleX(:,:,:,:)   ! tracer variables
-        real(r8), pointer :: bTscaleY(:,:,:,:)
-!
-        real(r8), pointer :: bU3DscaleX(:,:,:)   ! 3D U-momentum
-        real(r8), pointer :: bU3DscaleY(:,:,:)
-!
-        real(r8), pointer :: bV3DscaleX(:,:,:)   ! 3D V-momentum
-        real(r8), pointer :: bV3DscaleY(:,:,:)
-
+        real(r8), pointer :: u_Bcorr(:,:,:,:)         ! 3D U-momentum
+        real(r8), pointer :: v_Bcorr(:,:,:,:)         ! 3D V-momentum
+        real(r8), pointer :: t_Bcorr(:,:,:,:,:)       ! tracer variables
 #   ifdef ADJUST_STFLUX
-!
-        real(r8), pointer :: bSTFscaleX(:,:,:,:) ! surface tracer flux
-        real(r8), pointer :: bSTFscaleY(:,:,:,:)
+        real(r8), pointer :: stflux_Bcorr(:,:,:,:,:)  ! surf tracer flux
 #   endif
 #  endif
 # endif
@@ -579,182 +559,108 @@
 !
 !  Allocate the maximum and minimum eigenvalues of the K-Laplacian.
 !
-      IF (.not.associated(self % eigMaxR2D)) THEN
-        allocate ( self % eigMaxR2D(Nlap,Nscale(ng)) )
-        Dmem(ng)=Dmem(ng)+REAL(Nlap*Nscale(ng),r8)
-        self % eigMaxR2d = IniVal
-      END IF
-      IF (.not.associated(self % eigMinR2D)) THEN
-        allocate ( self % eigMinR2D(Nlap,Nscale(ng)) )
-        Dmem(ng)=Dmem(ng)+REAL(Nlap*Nscale(ng),r8)
-        self % eigMinR2D = IniVal
+      IF (.not.associated(self % zeta_eigen)) THEN
+        allocate ( self % zeta_eigen(Nlap,Nscale(ng),2) )
+        Dmem(ng)=Dmem(ng)+REAL(Nlap*Nscale(ng)*2,r8)
+        self % zeta_eigen = IniVal
       END IF
 !
-      IF (.not.associated(self % eigMaxU2D)) THEN
-        allocate ( self % eigMaxU2D(Nlap,Nscale(ng)) )
-        Dmem(ng)=Dmem(ng)+REAL(Nlap*Nscale(ng),r8)
-        self % eigMaxU2D = IniVal
-      END IF
-      IF (.not.associated(self % eigMinU2D)) THEN
-        allocate ( self % eigMinU2D(Nlap,Nscale(ng)) )
-        Dmem(ng)=Dmem(ng)+REAL(Nlap*Nscale(ng),r8)
-        self % eigMinU2D = IniVal
+      IF (.not.associated(self % ubar_eigen)) THEN
+        allocate ( self % ubar_eigen(Nlap,Nscale(ng),2) )
+        Dmem(ng)=Dmem(ng)+REAL(Nlap*Nscale(ng)*2,r8)
+        self % ubar_eigen = IniVal
       END IF
 !
-      IF (.not.associated(self % eigMaxV2D)) THEN
-        allocate ( self % eigMaxV2D(Nlap,Nscale(ng)) )
-        Dmem(ng)=Dmem(ng)+REAL(Nlap*Nscale(ng),r8)
-        self % eigMaxV2D = IniVal
-      END IF
-      IF (.not.associated(self % eigMinV2D)) THEN
-        allocate ( self % eigMinV2D(Nlap,Nscale(ng)) )
-        Dmem(ng)=Dmem(ng)+REAL(Nlap*Nscale(ng),r8)
-        self % eigMinV2D = IniVal
+      IF (.not.associated(self % vbar_eigen)) THEN
+        allocate ( self % vbar_eigen(Nlap,Nscale(ng),2) )
+        Dmem(ng)=Dmem(ng)+REAL(Nlap*Nscale(ng)*2,r8)
+        self % vbar_eigen = IniVal
       END IF
 
 # ifdef ADJUST_WSTRESS
 !
-      IF (.not.associated(self % eigMaxSUS)) THEN
-        allocate ( self % eigMaxSUS(Nlap,Nscale(ng)) )
-        Dmem(ng)=Dmem(ng)+REAL(Nlap*Nscale(ng),r8)
-        self % eigMaxSUS = IniVal
-      END IF
-      IF (.not.associated(self % eigMinSUS)) THEN
-        allocate ( self % eigMinSUS(Nlap,Nscale(ng)) )
-        Dmem(ng)=Dmem(ng)+REAL(Nlap*Nscale(ng),r8)
-        self % eigMinSUS = IniVal
+      IF (.not.associated(self % sustr_eigen)) THEN
+        allocate ( self % sustr_eigen(Nlap,Nscale(ng),2) )
+        Dmem(ng)=Dmem(ng)+REAL(Nlap*Nscale(ng)*2,r8)
+        self % sustr_eigen = IniVal
       END IF
 !
-      IF (.not.associated(self % eigMaxSVS)) THEN
-        allocate ( self % eigMaxSVS(Nlap,Nscale(ng)) )
-        Dmem(ng)=Dmem(ng)+REAL(Nlap*Nscale(ng),r8)
-        self % eigMaxSVS = IniVal
-      END IF
-      IF (.not.associated(self % eigMinSVS)) THEN
-        allocate ( self % eigMinSVS(Nlap,Nscale(ng)) )
-        Dmem(ng)=Dmem(ng)+REAL(Nlap*Nscale(ng),r8)
-        self % eigMinSVS = IniVal
+      IF (.not.associated(self % svstr_eigen)) THEN
+        allocate ( self % svstr_eigen(Nlap,Nscale(ng),2) )
+        Dmem(ng)=Dmem(ng)+REAL(Nlap*Nscale(ng)*2,r8)
+        self % svstr_eigen = IniVal
       END IF
 # endif
 
 # ifdef SOLVE3D
 !
-      IF (.not.associated(self % eigMaxR3D)) THEN
-        allocate ( self % eigMaxR3D(Nlap,N(ng),NT(ng),Nscale(ng)) )
-        Dmem(ng)=Dmem(ng)+REAL(Nlap*N(ng)*NT(ng)*Nscale(ng),r8)
-        self % eigMaxR3D = IniVal
-      END IF
-      IF (.not.associated(self % eigMinR3D)) THEN
-        allocate ( self % eigMinR3D(Nlap,N(ng),NT(ng),Nscale(ng)) )
-        Dmem(ng)=Dmem(ng)+REAL(Nlap*N(ng)*NT(ng)*Nscale(ng),r8)
-        self % eigMinR3D = IniVal
+      IF (.not.associated(self % u_eigen)) THEN
+        allocate ( self % u_eigen(Nlap,N(ng),Nscale(ng),2) )
+        Dmem(ng)=Dmem(ng)+REAL(Nlap*N(ng)*Nscale(ng)*2,r8)
+        self % u_eigen = IniVal
       END IF
 !
-      IF (.not.associated(self % eigMaxU3D)) THEN
-        allocate ( self % eigMaxU3D(Nlap,N(ng),Nscale(ng)) )
-        Dmem(ng)=Dmem(ng)+REAL(Nlap*N(ng)*Nscale(ng),r8)
-        self % eigMaxU3D = IniVal
-      END IF
-      IF (.not.associated(self % eigMinU3D)) THEN
-        allocate ( self % eigMinU3D(Nlap,N(ng),Nscale(ng)) )
-        Dmem(ng)=Dmem(ng)+REAL(Nlap*N(ng)*Nscale(ng),r8)
-        self % eigMinU3D = IniVal
+      IF (.not.associated(self % v_eigen)) THEN
+        allocate ( self % v_eigen(Nlap,N(ng),Nscale(ng),2) )
+        Dmem(ng)=Dmem(ng)+REAL(Nlap*N(ng)*Nscale(ng)*2,r8)
+        self % v_eigen = IniVal
       END IF
 !
-      IF (.not.associated(self % eigMaxV3D)) THEN
-        allocate ( self % eigMaxV3D(Nlap,N(ng),Nscale(ng)) )
-        Dmem(ng)=Dmem(ng)+REAL(Nlap*N(ng)*Nscale(ng),r8)
-        self % eigMaxV3D = IniVal
-      END IF
-      IF (.not.associated(self % eigMinV3D)) THEN
-        allocate ( self % eigMinV3D(Nlap,N(ng),Nscale(ng)) )
-        Dmem(ng)=Dmem(ng)+REAL(Nlap*N(ng)*Nscale(ng),r8)
-        self % eigMinV3D = IniVal
+      IF (.not.associated(self % t_eigen)) THEN
+        allocate ( self % t_eigen(Nlap,N(ng),NT(ng),Nscale(ng),2) )
+        Dmem(ng)=Dmem(ng)+REAL(Nlap*N(ng)*NT(ng)*Nscale(ng)*2,r8)
+        self % t_eigen = IniVal
       END IF
 
 #  ifdef ADJUST_STFLUX
 !
-      IF (.not.associated(self % eigMaxSTF)) THEN
-        allocate ( self % eigMaxSTF(Nlap,NT(ng),Nscale(ng)) )
-        Dmem(ng)=Dmem(ng)+REAL(Nlap*NT(ng)*Nscale(ng),r8)
-        self % eigMaxSTF = IniVal
-      END IF
-      IF (.not.associated(self % eigMinSTF)) THEN
-        allocate ( self % eigMinSTF(Nlap,NT(ng),Nscale(ng)) )
-        Dmem(ng)=Dmem(ng)+REAL(Nlap*NT(ng)*Nscale(ng),r8)
-        self % eigMinSTF = IniVal
+      IF (.not.associated(self % stflux_eigen)) THEN
+        allocate ( self % stflux_eigen(Nlap,NT(ng),Nscale(ng),2) )
+        Dmem(ng)=Dmem(ng)+REAL(Nlap*NT(ng)*Nscale(ng)*2,r8)
+        self % stflux_eigen = IniVal
       END IF
 #  endif
 # endif
 
 # ifdef ADJUST_BOUNDARY
 !
-      IF (.not.associated(self % eigMaxR1D)) THEN
-        allocate ( self % eigMaxR1D(Nlap,4,Nscale(ng)) )
-        Dmem(ng)=Dmem(ng)+REAL(Nlap*4*Nscale(ng),r8)
-        self % eigMaxR1D = IniVal
-      END IF
-      IF (.not.associated(self % eigMinR1D)) THEN
-        allocate ( self % eigMinR1D(Nlap,4,Nscale(ng)) )
-        Dmem(ng)=Dmem(ng)+REAL(Nlap*4*Nscale(ng),r8)
-        self % eigMinR1D = IniVal
+      IF (.not.associated(self % zeta_obc_eigen)) THEN
+        allocate ( self % zeta_obc_eigen(Nlap,4,Nscale(ng),2) )
+        Dmem(ng)=Dmem(ng)+REAL(Nlap*4*Nscale(ng)*2,r8)
+        self % zeta_obc_eigen = IniVal
       END IF
 !
-      IF (.not.associated(self % eigMaxU1D)) THEN
-        allocate ( self % eigMaxU1D(Nlap,4,Nscale(ng)) )
-        Dmem(ng)=Dmem(ng)+REAL(Nlap*4*Nscale(ng),r8)
-        self % eigMaxU1D = IniVal
-      END IF
-      IF (.not.associated(self % eigMinU1D)) THEN
-        allocate ( self % eigMinU1D(Nlap,4,Nscale(ng)) )
-        Dmem(ng)=Dmem(ng)+REAL(Nlap*4*Nscale(ng),r8)
-        self % eigMinU1D = IniVal
+      IF (.not.associated(self % ubar_obc_eigen)) THEN
+        allocate ( self % ubar_obc_eigen(Nlap,4,Nscale(ng),2) )
+        Dmem(ng)=Dmem(ng)+REAL(Nlap*4*Nscale(ng)*2,r8)
+        self % ubar_obc_eigen = IniVal
       END IF
 !
-      IF (.not.associated(self % eigMaxV1D)) THEN
-        allocate ( self % eigMaxV1D(Nlap,4,Nscale(ng)) )
-        Dmem(ng)=Dmem(ng)+REAL(Nlap*4*Nscale(ng),r8)
-        self % eigMaxV1D = IniVal
-      END IF
-      IF (.not.associated(self % eigMinV1D)) THEN
-        allocate ( self % eigMinV1D(Nlap,4,Nscale(ng)) )
-        Dmem(ng)=Dmem(ng)+REAL(Nlap*4*Nscale(ng),r8)
-        self % eigMinV1D = IniVal
+      IF (.not.associated(self % vbar_obc_eigen)) THEN
+        allocate ( self % vbar_obc_eigen(Nlap,4,Nscale(ng),2) )
+        Dmem(ng)=Dmem(ng)+REAL(Nlap*4*Nscale(ng)*2,r8)
+        self % vbar_obc_eigen = IniVal
       END IF
 
 #  ifdef SOLVE3D
 !
-      IF (.not.associated(self % eigMaxR1DZ)) THEN
-        allocate ( self % eigMaxR1DZ(Nlap,N(ng),NT(ng),4,Nscale(ng)) )
-        Dmem(ng)=Dmem(ng)+REAL(Nlap*N(ng)*NT(ng)*4*Nscale(ng),r8)
-        self % eigMaxR1DZ = IniVal
-      END IF
-      IF (.not.associated(self % eigMinR1DZ)) THEN
-        allocate ( self % eigMinR1DZ(Nlap,N(ng),NT(ng),4,Nscale(ng)) )
-        Dmem(ng)=Dmem(ng)+REAL(Nlap*N(ng)*NT(ng)*4*Nscale(ng),r8)
-        self % eigMinR1DZ = IniVal
+      IF (.not.associated(self % u_obc_eigen)) THEN
+        allocate ( self % u_obc_eigen(Nlap,N(ng),4,Nscale(ng),2) )
+        Dmem(ng)=Dmem(ng)+REAL(Nlap*N(ng)*4*Nscale(ng)*2,r8)
+        self % u_obc_eigen = IniVal
       END IF
 !
-      IF (.not.associated(self % eigMaxU1DZ)) THEN
-        allocate ( self % eigMaxU1DZ(Nlap,N(ng),4,Nscale(ng)) )
-        Dmem(ng)=Dmem(ng)+REAL(Nlap*N(ng)*4*Nscale(ng),r8)
-        self % eigMaxU1DZ = IniVal
-      END IF
-      IF (.not.associated(self % eigMinU1DZ)) THEN
-        allocate ( self % eigMinU1DZ(Nlap,N(ng),4,Nscale(ng)) )
-        Dmem(ng)=Dmem(ng)+REAL(Nlap*N(ng)*4*Nscale(ng),r8)
-        self % eigMinU1DZ = IniVal
+      IF (.not.associated(self % v_obc_eigen)) THEN
+        allocate ( self % v_obc_eigen(Nlap,N(ng),4,Nscale(ng),2) )
+        Dmem(ng)=Dmem(ng)+REAL(Nlap*N(ng)*4*Nscale(ng)*2,r8)
+        self % v_obc_eigen = IniVal
       END IF
 !
-      IF (.not.associated(self % eigMaxV1DZ)) THEN
-        allocate ( self % eigMaxV1DZ(Nlap,N(ng),4,Nscale(ng)) )
-        Dmem(ng)=Dmem(ng)+REAL(Nlap*N(ng)*4*Nscale(ng),r8)
-        self % eigMaxV1DZ = IniVal
-      END IF
-      IF (.not.associated(self % eigMinV1DZ)) THEN
-        allocate ( self % eigMinV1DZ(Nlap,N(ng),4,Nscale(ng)) )
-        Dmem(ng)=Dmem(ng)+REAL(Nlap*N(ng)*4*Nscale(ng),r8)
-        self % eigMinV1DZ = IniVal
+      IF (.not.associated(self % t_obc_eigen)) THEN
+        allocate ( self % t_obc_eigen(Nlap,N(ng),NT(ng),4,              &
+     &                                Nscale(ng),2) )
+        Dmem(ng)=Dmem(ng)+REAL(Nlap*N(ng)*NT(ng)*4*Nscale(ng)*2,r8)
+        self % t_obc_eigen = IniVal
       END IF
 #  endif
 # endif
@@ -950,119 +856,72 @@
       END IF
 # endif
 
-# ifdef READ_SCALES
+# ifdef NONUNIFORM_SCALES
 !
 !  Spatially varying isotropic or anisotropic horizontal Daley length
 !  scales.
 !
-      IF (.not.associated(self % bZscaleX)) THEN
-        allocate ( self % bZscaleX(LBi:UBi,LBj:UBj,Nscale(ng)) )
-        Dmem(ng)=Dmem(ng)+size2d*REAL(Nscale(ng),r8)
-        self % bZscaleX = IniVal
-      END IF
-      IF (.not.associated(self % bZscaleY)) THEN
-        allocate ( self % bZscaleY(LBi:UBi,LBj:UBj,Nscale(ng)) )
-        Dmem(ng)=Dmem(ng)+size2d*REAL(Nscale(ng),r8)
-        self % bZscaleY = IniVal
+      IF (.not.associated(self % zeta_Bcorr)) THEN
+        allocate ( self % zeta_Bcorr(LBi:UBi,LBj:UBj,2,Nscale(ng)) )
+        Dmem(ng)=Dmem(ng)+size2d*REAL(2*Nscale(ng),r8)
+        self % zeta_Bcorr = IniVal
       END IF
 !
-      IF (.not.associated(self % bU2DscaleX)) THEN
-        allocate ( self % bU2DscaleX(LBi:UBi,LBj:UBj,Nscale(ng)) )
-        Dmem(ng)=Dmem(ng)+size2d*REAL(Nscale(ng),r8)
-        self % bU2DscaleX = IniVal
-      END IF
-      IF (.not.associated(self % bU2DscaleY)) THEN
-        allocate ( self % bU2DscaleY(LBi:UBi,LBj:UBj,Nscale(ng)) )
-        Dmem(ng)=Dmem(ng)+size2d*REAL(Nscale(ng),r8)
-        self % bU2DscaleY = IniVal
+      IF (.not.associated(self % ubar_Bcorr)) THEN
+        allocate ( self % ubar_Bcorr(LBi:UBi,LBj:UBj,2,Nscale(ng)) )
+        Dmem(ng)=Dmem(ng)+size2d*REAL(2*Nscale(ng),r8)
+        self % ubar_Bcorr = IniVal
       END IF
 !
-      IF (.not.associated(self % bV2DscaleX)) THEN
-        allocate ( self % bV2DscaleX(LBi:UBi,LBj:UBj,Nscale(ng)) )
-        Dmem(ng)=Dmem(ng)+size2d*REAL(Nscale(ng),r8)
-        self % bV2DscaleX = IniVal
-      END IF
-      IF (.not.associated(self % bV2DscaleY)) THEN
-        allocate ( self % bV2DscaleY(LBi:UBi,LBj:UBj,Nscale(ng)) )
-        Dmem(ng)=Dmem(ng)+size2d*REAL(Nscale(ng),r8)
-        self % bV2DscaleY = IniVal
+      IF (.not.associated(self % vbar_Bcorr)) THEN
+        allocate ( self % vbar_Bcorr(LBi:UBi,LBj:UBj,2,Nscale(ng)) )
+        Dmem(ng)=Dmem(ng)+size2d*REAL(2*Nscale(ng),r8)
+        self % vbar_Bcorr = IniVal
       END IF
 
 #  ifdef ADJUST_WSTRESS
 !
-      IF (.not.associated(self % bSUSscaleX)) THEN
-        allocate ( self % bSUSscaleX(LBi:UBi,LBj:UBj,Nscale(ng)) )
-        Dmem(ng)=Dmem(ng)+size2d*REAL(Nscale(ng),r8)
-        self % bSUSscaleX = IniVal
-      END IF
-      IF (.not.associated(self % bSUSscaleY)) THEN
-        allocate ( self % bSUSscaleY(LBi:UBi,LBj:UBj,Nscale(ng)) )
-        Dmem(ng)=Dmem(ng)+size2d*REAL(Nscale(ng),r8)
-        self % bSUSscaleY = IniVal
+      IF (.not.associated(self % sustr_Bcorr)) THEN
+        allocate ( self % sustr_Bcorr(LBi:UBi,LBj:UBj,2,Nscale(ng)) )
+        Dmem(ng)=Dmem(ng)+size2d*REAL(2*Nscale(ng),r8)
+        self % sustr_Bcorr = IniVal
       END IF
 !
-      IF (.not.associated(self % bSVSscaleX)) THEN
-        allocate ( self % bSVSscaleX(LBi:UBi,LBj:UBj,Nscale(ng)) )
-        Dmem(ng)=Dmem(ng)+size2d*REAL(Nscale(ng),r8)
-        self % bSVSscaleX = IniVal
-      END IF
-      IF (.not.associated(self % bSVSscaleY)) THEN
-        allocate ( self % bSVSscaleY(LBi:UBi,LBj:UBj,Nscale(ng)) )
-        Dmem(ng)=Dmem(ng)+size2d*REAL(Nscale(ng),r8)
-        self % bSVSscaleY = IniVal
+      IF (.not.associated(self % svstr_Bcorr)) THEN
+        allocate ( self % svstr_Bcorr(LBi:UBi,LBj:UBj,2,Nscale(ng)) )
+        Dmem(ng)=Dmem(ng)+size2d*REAL(2*Nscale(ng),r8)
+        self % svstr_Bcorr = IniVal
       END IF
 #  endif
 
 #  ifdef SOLVE3D
 !
-      IF (.not.associated(self % bTscaleX)) THEN
-        allocate ( self % bTscaleX(LBi:UBi,LBj:UBj,                     &
-     &                             N(ng),NT(ng),Nscale(ng)) )
-        Dmem(ng)=Dmem(ng)+size2d*REAL(N(ng)*NT(ng)*Nscale(ng),r8)
-        self % bTscaleX = IniVal
-      END IF
-      IF (.not.associated(self % bTscaleY)) THEN
-        allocate ( self % bTscaleY(LBi:UBi,LBj:UBj,                     &
-     &                             N(ng),NT(ng),Nscale(ng)) )
-        Dmem(ng)=Dmem(ng)+size2d*REAL(N(ng)*NT(ng)*Nscale(ng),r8)
-        self % bTscaleY = IniVal
+      IF (.not.associated(self % u_Bcorr)) THEN
+        allocate ( self % u_Bcorr(LBi:UBi,LBj:UBj,2,Nscale(ng)) )
+        Dmem(ng)=Dmem(ng)+size2d*REAL(2*Nscale(ng),r8)
+        self % u_Bcorr = IniVal
       END IF
 !
-      IF (.not.associated(self % bU3DscaleX)) THEN
-        allocate ( self % bU3DscaleX(LBi:UBi,LBj:UBj,N(ng),Nscale(ng)) )
-        Dmem(ng)=Dmem(ng)+size2d*REAL(N(ng)*Nscale(ng),r8)
-        self % bU3DscaleX = IniVal
-      END IF
-      IF (.not.associated(self % bU3DscaleY)) THEN
-        allocate ( self % bU3DscaleY(LBi:UBi,LBj:UBj,N(ng)*Nscale(ng)) )
-        Dmem(ng)=Dmem(ng)+size2d*REAL(N(ng)*Nscale(ng),r8)
-        self % bU3DscaleY = IniVal
+      IF (.not.associated(self % v_Bcorr)) THEN
+        allocate ( self % v_Bcorr(LBi:UBi,LBj:UBj,2,Nscale(ng)) )
+        Dmem(ng)=Dmem(ng)+size2d*REAL(2*Nscale(ng),r8)
+        self % v_Bcorr = IniVal
       END IF
 !
-      IF (.not.associated(self % bV3DscaleX)) THEN
-        allocate ( self % bV3DscaleX(LBi:UBi,LBj:UBj,N(ng),Nscale(ng)) )
-        Dmem(ng)=Dmem(ng)+size2d*REAL(N(ng)*Nscale(ng),r8)
-        self % bV3DscaleX = IniVal
-      END IF
-      IF (.not.associated(self % bV3DscaleY)) THEN
-        allocate ( self % bV3DscaleY(LBi:UBi,LBj:UBj,N(ng),Nscale(ng)) )
-        Dmem(ng)=Dmem(ng)+size2d*REAL(N(ng)*Nscale(ng),r8)
-        self % bV3DscaleY = IniVal
+      IF (.not.associated(self % t_Bcorr)) THEN
+        allocate ( self % t_Bcorr(LBi:UBi,LBj:UBj,2,NT(ng),             &
+     &                            Nscale(ng)) )
+        Dmem(ng)=Dmem(ng)+size2d*REAL(2*NT(ng)*Nscale(ng),r8)
+        self % t_Bcorr = IniVal
       END IF
 
 #   ifdef ADJUST_STFLUX
 !
-      IF (.not.associated(self % bSTFscaleX)) THEN
-        allocate ( self % bSTFscaleX(LBi:UBi,LBj:UBj,                   &
-     &                               NT(ng),Nscale(ng)) )
-        Dmem(ng)=Dmem(ng)+size2d*REAL(NT(ng)*Nscale(ng),r8)
-        self % bSTFscaleX = IniVal
-      END IF
-      IF (.not.associated(self % bSTFscaleY)) THEN
-        allocate ( self % bSTFscaleY(LBi:UBi,LBj:UBj,                   &
-     &                               NT(ng),Nscale(ng)) )
-        Dmem(ng)=Dmem(ng)+size2d*REAL(NT(ng)*Nscale(ng),r8)
-        self % bSTFscaleY = IniVal
+      IF (.not.associated(self % stflux_Bcorr)) THEN
+        allocate ( self % stflux_Bcorr(LBi:UBi,LBj:UBj,2,NT(ng),        &
+     &                                 Nscale(ng)) )
+        Dmem(ng)=Dmem(ng)+size2d*REAL(2*Nscale(ng),r8)
+        self % stflux_Bcorr = IniVal
       END IF
 #   endif
 #  endif

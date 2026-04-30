@@ -32,7 +32,7 @@
 !  of background-error covariance for 2D variables in the control
 !  vector. It operates in conjunction with its adjoint to enforce
 !  symmetry-preserving correlation functions. The algorithm requires
-!  the extreme eigenvalues of matrix A, which are obtained from the
+!  the extrema eigenvalues of matrix A, which are obtained from the
 !  Conjugate Gradient (CG) solver. Additionally, initial values for
 !  the estimate x(0) and its residual r(0) are required.
 !
@@ -104,7 +104,7 @@
 !
 !  Select number of K-Laplacian inverse operator applications (Mlap)
 !  for requested variable in the 2D state/control vector and 
-!  multiscale index/counter (ms). Also, select pre-computed extreme
+!  multiscale index/counter (ms). Also, select pre-computed extrema
 !  eigenvalues of matrix A.
 !
 !  Mlap MUST be greater than 2 and EVEN. Choose Mlap > or O(10) to
@@ -117,33 +117,35 @@
       SELECT CASE (TRIM(StateVarName(ifield)))
         CASE ('zeta')                          ! free surface
           Mlap=self%Mlap(ifield,ms)/ifac
-          eigMin => self%eigMinR2D(:,ms)
-          eigMax => self%eigMaxR2D(:,ms)
+          eigMin => self%zeta_eigen(:,ms,1)
+          eigMax => self%zeta_eigen(:,ms,2)
         CASE ('ubar', 'ubar_eastward')         ! 2D u-momentum
           Mlap=self%Mlap(ifield,ms)/ifac
-          eigMin => self%eigMinU2D(:,ms)
-          eigMax => self%eigMaxU2D(:,ms)
+          eigMin => self%ubar_eigen(:,ms,1)
+          eigMax => self%ubar_eigen(:,ms,2)
         CASE ('vbar', 'vbar_northward')        ! 2D v-momentum
           Mlap=self%Mlap(ifield,ms)/ifac
-          eigMin => self%eigMinV2D(:,ms)
-          eigMax => self%eigMaxV2D(:,ms)
+          eigMin => self%vbar_eigen(:,ms,1)
+          eigMax => self%vbar_eigen(:,ms,2)
+#ifdef ADJUST_WSTRESS
         CASE ('sustr')                         ! surface U-stress
           Mlap=self%Mlap(ifield,ms)/ifac
-          eigMin => self%eigMinSUS(:,ms)
-          eigMax => self%eigMaxSUS(:,ms)
+          eigMin => self%sustr_eigen(:,ms,1)
+          eigMax => self%sustr_eigen(:,ms,2)
         CASE ('svstr')                         ! surface V-stress
           Mlap=self%Mlap(ifield,ms)/ifac
-          eigMin => self%eigMinSVS(:,ms)
-          eigMax => self%eigMaxSVS(:,ms)
-#ifdef SOLVE3D
+          eigMin => self%svstr_eigen(:,ms,1)
+          eigMax => self%svstr_eigen(:,ms,2)
+#endif
+#if defined ADJUST_STFLUX && defined SOLVE3D
         CASE ('shflux')                        ! surface net heat flux
           Mlap=self%Mlap(ifield,ms)/ifac
-          eigMin => self%eigMinSTF(:,itemp,ms)
-          eigMax => self%eigMaxSTF(:,itemp,ms)
+          eigMin => self%stflux_eigen(:,ms,itemp,1)
+          eigMax => self%stflux_eigen(:,ms,itemp,2)
         CASE ('ssflux')                        ! surface net salt flux
           Mlap=self%Mlap(ifield,ms)/ifac
-          eigMin => self%eigMinSTF(:,isalt,ms)
-          eigMax => self%eigMaxSTF(:,isalt,ms)
+          eigMin => self%stflux_eigen(:,ms,isalt,1)
+          eigMax => self%stflux_eigen(:,ms,isalt,2)
 #endif
       END SELECT
 !
@@ -315,7 +317,7 @@
 !  (CI) to model the multiscale propagation of background-error
 !  covariance for 2D variables in the control vector. It is needed to
 !  enforce symmetry-preserving correlation functions. The algorithm
-!  requires the extreme eigenvalues of matrix A, which are obtained
+!  requires the extrema eigenvalues of matrix A, which are obtained
 !  from the Conjugate Gradient (CG) solver.
 !
       SUBROUTINE multiscale_CI_2d_ad (self, ng, tile, model, ifield,    &
@@ -383,7 +385,7 @@
 !
 !  Select number of K-Laplacian inverse operator applications (Mlap)
 !  for requested variable in the 2D state/control vector and 
-!  multiscale index/counter (ms). Also, select pre-computed extreme
+!  multiscale index/counter (ms). Also, select pre-computed extrema
 !  eigenvalues of matrix A.
 !
 !  Mlap MUST be greater than 2 and EVEN. Choose Mlap > or O(10) to
@@ -396,33 +398,35 @@
       SELECT CASE (TRIM(StateVarName(ifield)))
         CASE ('zeta')                          ! free surface
           Mlap=self%Mlap(ifield,ms)/ifac
-          eigMin => self%eigMinR2D(:,ms)
-          eigMax => self%eigMaxR2D(:,ms)
+          eigMin => self%zeta_eigen(:,ms,1)
+          eigMax => self%zeta_eigen(:,ms,2)
         CASE ('ubar', 'ubar_eastward')         ! 2D u-momentum
           Mlap=self%Mlap(ifield,ms)/ifac
-          eigMin => self%eigMinU2D(:,ms)
-          eigMax => self%eigMaxU2D(:,ms)
+          eigMin => self%ubar_eigen(:,ms,1)
+          eigMax => self%ubar_eigen(:,ms,2)
         CASE ('vbar', 'vbar_northward')        ! 2D v-momentum
           Mlap=self%Mlap(ifield,ms)/ifac
-          eigMin => self%eigMinV2D(:,ms)
-          eigMax => self%eigMaxV2D(:,ms)
+          eigMin => self%vbar_eigen(:,ms,1)
+          eigMax => self%vbar_eigen(:,ms,2)
+#ifdef ADJUST_WSTRESS
         CASE ('sustr')                         ! surface U-stress
           Mlap=self%Mlap(ifield,ms)/ifac
-          eigMin => self%eigMinSUS(:,ms)
-          eigMax => self%eigMaxSUS(:,ms)
+          eigMin => self%sustr_eigen(:,ms,1)
+          eigMax => self%sustr_eigen(:,ms,2)
         CASE ('svstr')                         ! surface V-stress
           Mlap=self%Mlap(ifield,ms)/ifac
-          eigMin => self%eigMinSVS(:,ms)
-          eigMax => self%eigMaxSVS(:,ms)
-#ifdef SOLVE3D
+          eigMin => self%svstr_eigen(:,ms,1)
+          eigMax => self%svstr_eigen(:,ms,2)
+#endif
+#if defined ADJUST_STFLUX && defined SOLVE3D
         CASE ('shflux')                        ! surface net heat flux
           Mlap=self%Mlap(ifield,ms)/ifac
-          eigMin => self%eigMinSTF(:,itemp,ms)
-          eigMax => self%eigMaxSTF(:,itemp,ms)
+          eigMin => self%stflux_eigen(:,ms,itemp,1)
+          eigMax => self%stflux_eigen(:,ms,itemp,2)
         CASE ('ssflux')                        ! surface net salt flux
           Mlap=self%Mlap(ifield,ms)/ifac
-          eigMin => self%eigMinSTF(:,isalt,ms)
-          eigMax => self%eigMaxSTF(:,isalt,ms)
+          eigMin => self%stflux_eigen(:,ms,isalt,1)
+          eigMax => self%stflux_eigen(:,ms,isalt,2)
 #endif
       END SELECT
 !
@@ -622,7 +626,7 @@
 !  of background-error covariance for 3D variables in the control
 !  vector. It operates in conjunction with its adjoint to enforce
 !  symmetry-preserving correlation functions. The algorithm requires
-!  the extreme eigenvalues of matrix A, which are obtained from the
+!  the extrema eigenvalues of matrix A, which are obtained from the
 !  Conjugate Gradient (CG) solver. Additionally, initial values for
 !  the estimate x(0) and its residual r(0) are required.
 !
@@ -695,7 +699,7 @@
 !
 !  Select number of K-Laplacian inverse operator applications (Mlap)
 !  for requested variable in the 2D state/control vector and 
-!  multiscale index/counter (ms). Also, select pre-computed extreme
+!  multiscale index/counter (ms). Also, select pre-computed extrema
 !  eigenvalues of matrix A.
 !
 !  Mlap MUST be greater than 2 and EVEN. Choose Mlap > or O(10) to
@@ -706,22 +710,22 @@
 !  of the iterations, resulting in a square-root smoothing filter.
 !
       SELECT CASE (TRIM(StateVarName(ifield)))
-         CASE ('u', 'u_eastward')              ! 3D u-momentum
+        CASE ('u', 'u_eastward')               ! 3D u-momentum
           Mlap=self%Mlap(ifield,ms)/ifac
-          eigMin => self%eigMinU3D(:,:,ms)
-          eigMax => self%eigMaxU3D(:,:,ms)
+          eigMin => self%u_eigen(:,:,ms,1)
+          eigMax => self%u_eigen(:,:,ms,2)
         CASE ('v', 'v_northward')              ! 3D v-momentum
           Mlap=self%Mlap(ifield,ms)/ifac
-          eigMin => self%eigMinV3D(:,:,ms)
-          eigMax => self%eigMaxV3D(:,:,ms)
+          eigMin => self%v_eigen(:,:,ms,1)
+          eigMax => self%v_eigen(:,:,ms,2)
         CASE ('temp')                          ! temperature
           Mlap=self%Mlap(ifield,ms)/ifac
-          eigMin => self%eigMinR3D(:,:,itemp,ms)
-          eigMax => self%eigMaxR3D(:,:,itemp,ms)
+          eigMin => self%t_eigen(:,:,itemp,ms,1)
+          eigMax => self%t_eigen(:,:,itemp,ms,2)
         CASE ('salt')                          ! salinity
           Mlap=self%Mlap(ifield,ms)/ifac
-          eigMin => self%eigMinR3D(:,:,isalt,ms)
-          eigMax => self%eigMaxR3D(:,:,isalt,ms)
+          eigMin => self%t_eigen(:,:,isalt,ms,1)
+          eigMax => self%t_eigen(:,:,isalt,ms,2)
       END SELECT
 !
 !  Set control variable squared root area scale (2D).
@@ -905,7 +909,7 @@
 !  (CI) to model the multiscale propagation of background-error
 !  covariance for 3D variables in the control vector. It is needed to
 !  enforce symmetry-preserving correlation functions. The algorithm
-!  requires the extreme eigenvalues of matrix A, which are obtained
+!  requires the extrema eigenvalues of matrix A, which are obtained
 !  from the Conjugate Gradient (CG) solver.
 !
       SUBROUTINE multiscale_CI_3d_ad (self, ng, tile, model, ifield,    &
@@ -974,7 +978,7 @@
 !
 !  Select number of K-Laplacian inverse operator applications (Mlap)
 !  for requested variable in the 2D state/control vector and 
-!  multiscale index/counter (ms). Also, select pre-computed extreme
+!  multiscale index/counter (ms). Also, select pre-computed extrema
 !  eigenvalues of matrix A.
 !
 !  Mlap MUST be greater than 2 and EVEN. Choose Mlap > or O(10) to
@@ -985,22 +989,22 @@
 !  of the iterations, resulting in a square-root smoothing filter.
 !
       SELECT CASE (TRIM(StateVarName(ifield)))
-         CASE ('u', 'u_eastward')              ! 3D u-momentum
+        CASE ('u', 'u_eastward')               ! 3D u-momentum
           Mlap=self%Mlap(ifield,ms)/ifac
-          eigMin => self%eigMinU3D(:,:,ms)
-          eigMax => self%eigMaxU3D(:,:,ms)
+          eigMin => self%u_eigen(:,:,ms,1)
+          eigMax => self%u_eigen(:,:,ms,2)
         CASE ('v', 'v_northward')              ! 3D v-momentum
           Mlap=self%Mlap(ifield,ms)/ifac
-          eigMin => self%eigMinV3D(:,:,ms)
-          eigMax => self%eigMaxV3D(:,:,ms)
+          eigMin => self%v_eigen(:,:,ms,1)
+          eigMax => self%v_eigen(:,:,ms,2)
         CASE ('temp')                          ! temperature
           Mlap=self%Mlap(ifield,ms)/ifac
-          eigMin => self%eigMinR3D(:,:,itemp,ms)
-          eigMax => self%eigMaxR3D(:,:,itemp,ms)
+          eigMin => self%t_eigen(:,:,itemp,ms,1)
+          eigMax => self%t_eigen(:,:,itemp,ms,2)
         CASE ('salt')                          ! salinity
           Mlap=self%Mlap(ifield,ms)/ifac
-          eigMin => self%eigMinR3D(:,:,isalt,ms)
-          eigMax => self%eigMaxR3D(:,:,isalt,ms)
+          eigMin => self%t_eigen(:,:,isalt,ms,1)
+          eigMax => self%t_eigen(:,:,isalt,ms,2)
       END SELECT
 !
 !  Set control variable squared root area scale (2D).
@@ -1210,7 +1214,7 @@
 !  of background-error covariance for the boundary adjustment of 2D
 !  variables in the control vector. It operates in conjunction with
 !  its adjoint to enforce symmetry-preserving correlation functions.
-!  The algorithm requires the extreme eigenvalues of matrix A, which
+!  The algorithm requires the extrema eigenvalues of matrix A, which
 !  are obtained from the Conjugate Gradient (CG) solver. Additionally,
 !  initial values for the estimate x(0) and its residual r(0) are
 !  required.
@@ -1298,16 +1302,16 @@
       SELECT CASE (TRIM(StateVarName(ifield)))
         CASE ('zeta')                          ! free surface
           Mlap=self%Mlap(ifield,ms)/ifac
-          eigMin => self%eigMinR1D(:,ibry,ms)
-          eigMax => self%eigMaxR1D(:,ibry,ms)
-        CASE ('ubar', 'ubar_eastward')         ! 2D u-momentum
+          eigMin => self%zeta_obc_eigen(:,ibry,ms,1)
+          eigMax => self%zeta_obc_eigen(:,ibry,ms,2)
+        CASE ('ubar','ubar_eastward')          ! 2D u-momentum
           Mlap=self%Mlap(ifield,ms)/ifac
-          eigMin => self%eigMinU1D(:,ibry,ms)
-          eigMax => self%eigMaxU1D(:,ibry,ms)
+          eigMin => self%ubar_obc_eigen(:,ibry,ms,1)
+          eigMax => self%ubar_obc_eigen(:,ibry,ms,2)
         CASE ('vbar', 'vbar_northward')        ! 2D v-momentum
           Mlap=self%Mlap(ifield,ms)/ifac
-          eigMin => self%eigMinV1D(:,ibry,ms)
-          eigMax => self%eigMaxV1D(:,ibry,ms)
+          eigMin => self%vbar_obc_eigen(:,ibry,ms,1)
+          eigMax => self%vbar_obc_eigen(:,ibry,ms,2)
       END SELECT
 !
 !  Set control variable squared root area scale.
@@ -1530,7 +1534,7 @@
 !  diffusion linear operator, Ax = b, using Chebyshev Iterations (CI)
 !  to model the multiscale propagation of background-error covariance
 !  for the boundary adjustment of 2D variables in the control vector.
-!  The algorithm requires the extreme eigenvalues of matrix A, which
+!  The algorithm requires the extrema eigenvalues of matrix A, which
 !  are obtained from the Conjugate Gradient (CG) solver. Additionally,
 !  initial values for the estimate x(0) and its residual r(0) are
 !  required.
@@ -1619,16 +1623,16 @@
       SELECT CASE (TRIM(StateVarName(ifield)))
         CASE ('zeta')                          ! free surface
           Mlap=self%Mlap(ifield,ms)/ifac
-          eigMin => self%eigMinR1D(:,ibry,ms)
-          eigMax => self%eigMaxR1D(:,ibry,ms)
-        CASE ('ubar', 'ubar_eastward')         ! 2D u-momentum
+          eigMin => self%zeta_obc_eigen(:,ibry,ms,1)
+          eigMax => self%zeta_obc_eigen(:,ibry,ms,2)
+        CASE ('ubar','ubar_eastward')          ! 2D u-momentum
           Mlap=self%Mlap(ifield,ms)/ifac
-          eigMin => self%eigMinU1D(:,ibry,ms)
-          eigMax => self%eigMaxU1D(:,ibry,ms)
+          eigMin => self%ubar_obc_eigen(:,ibry,ms,1)
+          eigMax => self%ubar_obc_eigen(:,ibry,ms,2)
         CASE ('vbar', 'vbar_northward')        ! 2D v-momentum
           Mlap=self%Mlap(ifield,ms)/ifac
-          eigMin => self%eigMinV1D(:,ibry,ms)
-          eigMax => self%eigMaxV1D(:,ibry,ms)
+          eigMin => self%vbar_obc_eigen(:,ibry,ms,1)
+          eigMax => self%vbar_obc_eigen(:,ibry,ms,2)
       END SELECT
 !
 !  Set control variable squared root area scale.
@@ -1926,7 +1930,7 @@
 !  of background-error covariance for the boundary adjustment of 3D
 !  variables in the control vector. It operates in conjunction with
 !  its adjoint to enforce symmetry-preserving correlation functions.
-!  The algorithm requires the extreme eigenvalues of matrix A, which
+!  The algorithm requires the extrema eigenvalues of matrix A, which
 !  are obtained from the Conjugate Gradient (CG) solver. Additionally,
 !  initial values for the estimate x(0) and its residual r(0) are
 !  required.
@@ -1989,9 +1993,9 @@
       Jmin=Jstr
       Jmax=Jend
       SELECT CASE (ctype)
-        CASE (u2dvar)
+        CASE (u3dvar)
           Imin=IstrU
-        CASE (v2dvar)
+        CASE (v3dvar)
           Jmin=JstrV
       END SELECT
 !
@@ -2019,27 +2023,27 @@
       SELECT CASE (TRIM(StateVarName(ifield)))
         CASE ('u', 'u_eastward')               ! 3D u-momentum
           Mlap=self%Mlap(ifield,ms)/ifac
-          eigMin => self%eigMinU1DZ(:,:,ibry,ms)
-          eigMax => self%eigMaxU1DZ(:,:,ibry,ms)
+          eigMin => self%u_obc_eigen(:,:,ibry,ms,1)
+          eigMax => self%u_obc_eigen(:,:,ibry,ms,2)
         CASE ('v', 'v_northward')              ! 3D v-momentum
           Mlap=self%Mlap(ifield,ms)/ifac
-          eigMin => self%eigMinV1DZ(:,:,ibry,ms)
-          eigMax => self%eigMaxV1DZ(:,:,ibry,ms)
+          eigMin => self%v_obc_eigen(:,:,ibry,ms,1)
+          eigMax => self%v_obc_eigen(:,:,ibry,ms,2)
         CASE ('temp')                          ! temperature
           Mlap=self%Mlap(ifield,ms)/ifac
-          eigMin => self%eigMinR1DZ(:,:,itemp,ibry,ms)
-          eigMax => self%eigMaxR1DZ(:,:,itemp,ibry,ms)
+          eigMin => self%t_obc_eigen(:,:,itemp,ibry,ms,1)
+          eigMax => self%t_obc_eigen(:,:,itemp,ibry,ms,2)
         CASE ('salt')                          ! salinity
           Mlap=self%Mlap(ifield,ms)/ifac
-          eigMin => self%eigMinR1DZ(:,:,isalt,ibry,ms)
-          eigMax => self%eigMaxR1DZ(:,:,isalt,ibry,ms)
+          eigMin => self%t_obc_eigen(:,:,isalt,ibry,ms,1)
+          eigMax => self%t_obc_eigen(:,:,isalt,ibry,ms,2)
       END SELECT
 !
 !  Set control variable squared root area scale.
 !
       IF (Lboundary(ibry)) THEN
         SELECT CASE (ctype)
-           CASE (r2dvar)
+           CASE (r3dvar)
              IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
                i=BOUNDS(ng)%edge(ibry,r2dvar)
                DO j=Jmin,Jmax
@@ -2051,7 +2055,7 @@
                  tl_scale(i)=SQRT(GRID(ng)%on_r(i,j))
                END DO
              END IF
-           CASE (u2dvar)
+           CASE (u3dvar)
              IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
                i=BOUNDS(ng)%edge(ibry,u2dvar)
                DO j=Jmin,Jmax
@@ -2063,7 +2067,7 @@
                  tl_scale(i)=SQRT(GRID(ng)%on_u(i,j))
                END DO
              END IF
-           CASE (v2dvar)
+           CASE (v3dvar)
              IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
                i=BOUNDS(ng)%edge(ibry,v2dvar)
                DO j=Jmin,Jmax
@@ -2269,7 +2273,7 @@
 !  diffusion linear operator, Ax = b, using Chebyshev Iterations (CI)
 !  to model the multiscale propagation of background-error covariance
 !  for the boundary adjustment of 3D variables in the control vector.
-!  The algorithm requires the extreme eigenvalues of matrix A, which
+!  The algorithm requires the extrema eigenvalues of matrix A, which
 !  are obtained from the Conjugate Gradient (CG) solver. Additionally,
 !  initial values for the estimate x(0) and its residual r(0) are
 !  required.
@@ -2328,9 +2332,9 @@
       Jmin=Jstr
       Jmax=Jend
       SELECT CASE (ctype)
-        CASE (u2dvar)
+        CASE (u3dvar)
           Imin=IstrU
-        CASE (v2dvar)
+        CASE (v3dvar)
           Jmin=JstrV
       END SELECT
 !
@@ -2358,27 +2362,27 @@
       SELECT CASE (TRIM(StateVarName(ifield)))
         CASE ('u', 'u_eastward')               ! 3D u-momentum
           Mlap=self%Mlap(ifield,ms)/ifac
-          eigMin => self%eigMinU1DZ(:,:,ibry,ms)
-          eigMax => self%eigMaxU1DZ(:,:,ibry,ms)
+          eigMin => self%u_obc_eigen(:,:,ibry,ms,1)
+          eigMax => self%u_obc_eigen(:,:,ibry,ms,2)
         CASE ('v', 'v_northward')              ! 3D v-momentum
           Mlap=self%Mlap(ifield,ms)/ifac
-          eigMin => self%eigMinV1DZ(:,:,ibry,ms)
-          eigMax => self%eigMaxV1DZ(:,:,ibry,ms)
+          eigMin => self%v_obc_eigen(:,:,ibry,ms,1)
+          eigMax => self%v_obc_eigen(:,:,ibry,ms,2)
         CASE ('temp')                          ! temperature
           Mlap=self%Mlap(ifield,ms)/ifac
-          eigMin => self%eigMinR1DZ(:,:,itemp,ibry,ms)
-          eigMax => self%eigMaxR1DZ(:,:,itemp,ibry,ms)
+          eigMin => self%t_obc_eigen(:,:,itemp,ibry,ms,1)
+          eigMax => self%t_obc_eigen(:,:,itemp,ibry,ms,2)
         CASE ('salt')                          ! salinity
           Mlap=self%Mlap(ifield,ms)/ifac
-          eigMin => self%eigMinR1DZ(:,:,isalt,ibry,ms)
-          eigMax => self%eigMaxR1DZ(:,:,isalt,ibry,ms)
+          eigMin => self%t_obc_eigen(:,:,isalt,ibry,ms,1)
+          eigMax => self%t_obc_eigen(:,:,isalt,ibry,ms,2)
       END SELECT
 !
 !  Set control variable squared root area scale.
 !
       IF (Lboundary(ibry)) THEN
         SELECT CASE (ctype)
-           CASE (r2dvar)
+           CASE (r3dvar)
              IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
                i=BOUNDS(ng)%edge(ibry,r2dvar)
                DO j=Jmin,Jmax
@@ -2390,7 +2394,7 @@
                  ad_scale(i)=SQRT(GRID(ng)%on_r(i,j))
                END DO
              END IF
-           CASE (u2dvar)
+           CASE (u3dvar)
              IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
                i=BOUNDS(ng)%edge(ibry,u2dvar)
                DO j=Jmin,Jmax
@@ -2402,7 +2406,7 @@
                  ad_scale(i)=SQRT(GRID(ng)%on_u(i,j))
                END DO
              END IF
-           CASE (v2dvar)
+           CASE (v3dvar)
              IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
                i=BOUNDS(ng)%edge(ibry,v2dvar)
                DO j=Jmin,Jmax
