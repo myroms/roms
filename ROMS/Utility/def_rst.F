@@ -116,8 +116,6 @@
 !
       logical :: Ldefine, got_var(NV)
 !
-      integer, parameter :: Natt = 25
-
       integer :: i, j, nvd3, nvd4, nvd5
       integer :: recdim, status, varid
 
@@ -2163,8 +2161,6 @@
 !
       logical :: Ldefine, got_var(NV)
 !
-      integer, parameter :: Natt = 25
-
       integer :: i, j, nvd3, nvd4, nvd5
       integer :: recdim, status
 

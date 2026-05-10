@@ -528,11 +528,11 @@ Sigma_max(isTvar) == 0.33d0   0.056d0  ! 1:NT tracers maximum STD
 !                                         |_____S_____|
 !                  1   2   3   4                2
 
-  Lobc(isFsur) ==  F   F   F   F          ! free-surface
-  Lobc(isUbar) ==  F   F   F   F          ! 2D U-momentum
-  Lobc(isVbar) ==  F   F   F   F          ! 2D V-momentum
-  Lobc(isUvel) ==  F   F   F   F          ! 3D U-momentum
-  Lobc(isVvel) ==  F   F   F   F          ! 3D V-momentum
+  Lobc(isFsur) ==  T   T   F   T          ! free-surface
+  Lobc(isUbar) ==  T   T   F   T          ! 2D U-momentum
+  Lobc(isVbar) ==  T   T   F   T          ! 2D V-momentum
+  Lobc(isUvel) ==  T   T   F   T          ! 3D U-momentum
+  Lobc(isVvel) ==  T   T   F   T          ! 3D V-momentum
 
 ! If applicable, set switches to adjust state tracer variables at the
 ! open boundaries.  Notice that a value is expected for each tracer at each
@@ -540,17 +540,18 @@ Sigma_max(isTvar) == 0.33d0   0.056d0  ! 1:NT tracers maximum STD
 ! is the same as above. Notice that the first line has the values for
 ! temperature boundaries, the second is salinity, and so on.
 
-  Lobc(isTvar) ==  F   F   F   F  \
-                   F   F   F   F
+  Lobc(isTvar) ==  T   T   F   T  \
+                   T   T   F   T
 
-! Specify the input filename containing background error decorrelation
-! horizontal length scales, with values defined for each variable in the
-! control vector. These values are utilized in the multi-scale background
-! error covariance modeling algorithm or when the spatially varying scales
-! option is selected. Both algorithms require an implicit pseudo-diffusion
-! operator, which is solved iteratively using the Chebyshev method.
+! Specify the input filename containing background-error spatially-varying
+! horizontal correlations length scales, with values defined for each
+! variable in the control vector. These values are utilized in the multi-
+! scale background error covariance modeling algorithm or when the spatially
+! varying scales option is selected. Both algorithms require an implicit
+! pseudo-diffusion operator, which is solved iteratively using the Chebyshev
+! method.
 
-        MSBname == roms_msb.nc
+        SVCname == roms_svc.nc
 
 ! Input model, initial conditions, boundary conditions, and surface forcing
 ! standard deviation filenames, [1:Ngrids].
@@ -1232,8 +1233,8 @@ Sigma_max(isTvar) == 0.33d0   0.056d0  ! 1:NT tracers maximum STD
 !  Input/Output NetCDF files (a string with a maximum of 256 characters).
 !------------------------------------------------------------------------------
 !
-!  MSBname        Input background error covariance horizontal
-!                   decorrelation length scales filename.
+!  SVCname        Input background-error covariance horizontal
+!                   spatially-varying correlation length scales filename.
 !
 !  STDnameM       Input model error covariance
 !                   standard deviation filename.

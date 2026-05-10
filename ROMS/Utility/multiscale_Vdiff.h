@@ -69,6 +69,7 @@
       Istr =BOUNDS(ng)%Istr (tile)   ! tile computational range
       IstrU=BOUNDS(ng)%IstrU(tile)
       Iend =BOUNDS(ng)%Iend (tile)
+      Jstr =BOUNDS(ng)%Jstr (tile)
       JstrV=BOUNDS(ng)%JstrV(tile)
       Jend =BOUNDS(ng)%Jend (tile)
 !
@@ -377,6 +378,7 @@
       Istr =BOUNDS(ng)%Istr (tile)   ! tile computational range
       IstrU=BOUNDS(ng)%IstrU(tile)
       Iend =BOUNDS(ng)%Iend (tile)
+      Jstr =BOUNDS(ng)%Jstr (tile)
       JstrV=BOUNDS(ng)%JstrV(tile)
       Jend =BOUNDS(ng)%Jend (tile)
 !
@@ -735,6 +737,7 @@
       Istr =BOUNDS(ng)%Istr (tile)   ! tile computational range
       IstrU=BOUNDS(ng)%IstrU(tile)
       Iend =BOUNDS(ng)%Iend (tile)
+      Jstr =BOUNDS(ng)%Jstr (tile)
       JstrV=BOUNDS(ng)%JstrV(tile)
       Jend =BOUNDS(ng)%Jend (tile)
 !
@@ -1245,6 +1248,7 @@
       Istr =BOUNDS(ng)%Istr (tile)   ! tile computational range
       IstrU=BOUNDS(ng)%IstrU(tile)
       Iend =BOUNDS(ng)%Iend (tile)
+      Jstr =BOUNDS(ng)%Jstr (tile)
       JstrV=BOUNDS(ng)%JstrV(tile)
       Jend =BOUNDS(ng)%Jend (tile)
 !

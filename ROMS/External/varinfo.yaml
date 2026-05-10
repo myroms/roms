@@ -8846,9 +8846,211 @@ metadata:
     add_offset:     0.0d0
     scale:          1.0d0
 
-  ################################################
-  ###  Varational Data Assimilation Variables  ###
-  ################################################
+  ####################################################################
+  ###  Multiscale Background-error Covariance Extrema Eigenvalues  ###
+  ####################################################################
+
+  - variable:       zeta_eigen                                       # Output
+    standard_name:  sea_surface_height_above_geopotential_datum
+    long_name:      free-surface extrema eigenvalues
+    units:          nondimensional                                   # [nondimensional]
+    field:          zeta_eigen
+    time:           nulvar
+    index_code:     ieFsur
+    type:           nulvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       ubar_eigen                                       # Output
+    standard_name:  barotropic_sea_water_x_velocity
+    long_name:      vertically integrated u-momentum extrema eigenvalues
+    units:          nondimensional                                   # [nondimensional]
+    field:          ubar_eigen
+    time:           nulvar
+    index_code:     ieUbar
+    type:           nulvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       vbar_eigen                                       # Output
+    standard_name:  barotropic_sea_water_y_velocity
+    long_name:      vertically integrated v-momentum extrema eigenvalues
+    units:          nondimensional                                   # [nondimensional]
+    field:          vbar_eigen
+    time:           nulvar
+    index_code:     ieVbar
+    type:           nulvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       u_eigen                                          # Output
+    standard_name:  sea_water_x_velocity
+    long_name:      u-momentum extrema eigenvalues
+    units:          nondimensional                                   # [nondimensional]
+    field:          u_eigen
+    time:           nulvar
+    index_code:     ieUvel
+    type:           nulvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       v_eigen                                          # Output
+    standard_name:  sea_water_y_velocity
+    long_name:      v-momentum component
+    units:          nondimensional                                   # [nondimensional]
+    field:          v_eigen
+    time:           nulvar
+    index_code:     ieVvel
+    type:           nulvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       temp_eigen                                       # Output
+    standard_name:  sea_water_potential_temperature
+    long_name:      potential temperature extrema eigenvalues
+    units:          nondimensional                                   # [nondimensional]
+    field:          temp_eigen
+    time:           nulvar
+    index_code:     ieTvar(itemp)
+    type:           nulvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       salt_eigen                                       # Output
+    standard_name:  sea_water_practical_salinity
+    long_name:      salinity extrema eigenvalues
+    units:          nondimensional                                   # [nondimensional]
+    field:          salt_eigen
+    time:           nulvar
+    index_code:     ieTvar(isalt)
+    type:           nulvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       sustr_eigen                                      # Output
+    standard_name:  surface_downward_x_stress
+    long_name:      surface u-momentum stress
+    units:          nondimensional                                   # [nondimensional]
+    field:          sustr_eigen
+    time:           nulvar
+    index_code:     ieUsms
+    type:           nulvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       svstr_eigen                                      # Output
+    standard_name:  surface_downward_y_stress
+    long_name:      surface v-momentum stress extrema eigenvalues
+    units:          nondimensional                                   # [nondimensional]
+    field:          svstr_eigen
+    time:           nulvar
+    index_code:     ieVsms
+    type:           nulvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       shflux_eigen                                     # Output
+    standard_name:  surface_downward_heat_flux_in_sea_water
+    long_name:      surface net heat flux extrema eigenvalues
+    units:          nondimensional                                   # [nondimensional]
+    field:          shflux_eigen
+    time:           nulvar
+    index_code:     ieTsur(itemp)
+    type:           nulvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       ssflux_eigen                                     # Output
+    standard_name:  salt_flux_into_sea_water
+    long_name:      kinematic surface net salt flux extrema eigenvalues
+    units:          nondimensional                                   # [nondimensional]
+    field:          ssflux_eigen
+    time:           nulvar
+    index_code:     ieTsur(isalt)
+    type:           nulvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       zeta_bry_eigen                                   # Output
+    standard_name:  sea_surface_elevation_anomaly
+    long_name:      free-surface boundary conditions extrema eigenvalues
+    units:          nondimensional                                   # [nondimensional]
+    field:          zeta_bry_eigen
+    time:           nulvar
+    index_code:     ieZbry
+    type:           nulvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       ubar_bry_eigen                                   # Output
+    standard_name:  barotropic_sea_water_x_velocity
+    long_name:      2D u-momentum boundary conditions extrema eigenvalues
+    units:          nondimensional                                   # [nondimensional]
+    field:          ubar_bry_eigen
+    time:           nulvar
+    index_code:     ieU2bc
+    type:           nulvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       vbar_bry_eigen                                   # Output
+    standard_name:  barotropic_sea_water_y_velocity
+    long_name:      2D v-momentum boundary conditions extrema eigenvalues
+    units:          nondimensional                                   # [nondimensional]
+    field:          vbar_bry_eigen
+    time:           nulvar
+    index_code:     ieV2bc
+    type:           nulvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       u_bry_eigen                                      # Output
+    standard_name:  sea_water_x_velocity
+    long_name:      3D u-momentum boundary conditions extrema eigenvalues
+    units:          nondimensional                                   # [nondimensional]
+    field:          u_bry_eigen
+    time:           nulvar
+    index_code:     ieU3bc
+    type:           nulvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       v_bry_eigen                                      # Output
+    standard_name:  sea_water_y_velocity
+    long_name:      3D v-momentum boundary conditions extrema eigenvalues
+    units:          nondimensional                                   # [nondimensional]
+    field:          v_bry_eigen
+    time:           nulvar
+    index_code:     ieV3bc
+    type:           nulvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       temp_bry_eigen                                   # Output
+    standard_name:  sea_water_potential_temperature
+    long_name:      temperature boundary conditions extrema eigenvalues
+    units:          nondimensional                                   # [nondimensional]
+    field:          temp_bry_eigen
+    time:           nulvar
+    index_code:     ieTbry(itemp)
+    type:           nulvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       salt_bry_eigen                                   # Output
+    standard_name:  sea_water_practical_salinity
+    long_name:      salinity boundary conditions extrema eigenvalues
+    units:          nondimensional                                   # [nondimensional]
+    field:          salt_bry_eigen
+    time:           nulvar
+    index_code:     ieTbry(isalt)
+    type:           nulvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  #################################################
+  ###  Variational Data Assimilation Variables  ###
+  #################################################
 
   - variable:       Nobs                                             # Input
     standard_name:  number_of_observations_per_survey_time

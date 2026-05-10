@@ -54,33 +54,27 @@
       USE mod_scalars
       USE mod_stepping
 !
-#ifdef BALANCE_OPERATOR
-      USE ad_balance_mod,     ONLY : ad_balance
+      USE ad_def_his_mod,       ONLY : ad_def_his
+      USE ad_wrt_his_mod,       ONLY : ad_wrt_his
+      USE analytical_mod,       ONLY : ana_perturb
+      USE close_io_mod,         ONLY : close_inp,                       &
+     &                                 close_out
+      USE  convolve_mod,        ONLY : convolve
+      USE def_norm_mod,         ONLY : def_norm
+      USE get_state_mod,        ONLY : get_state
+      USE inp_par_mod,          ONLY : inp_par
+#ifdef MULTI_SCALE_B
+      USE multiscale_eigen_mod, ONLY : multiscale_eigen,                &
+     &                                 multiscale_eigen_write
 #endif
-      USE ad_convolution_mod, ONLY : ad_convolution
-      USE ad_def_his_mod,     ONLY : ad_def_his
-      USE ad_variability_mod, ONLY : ad_variability
-      USE ad_wrt_his_mod,     ONLY : ad_wrt_his
-      USE analytical_mod,     ONLY : ana_perturb
-      USE close_io_mod,       ONLY : close_inp, close_out
-      USE def_norm_mod,       ONLY : def_norm
-      USE get_state_mod,      ONLY : get_state
-      USE ini_adjust_mod,     ONLY : load_ADtoTL
-      USE ini_adjust_mod,     ONLY : load_TLtoAD
-      USE inp_par_mod,        ONLY : inp_par
-      USE normalization_mod,  ONLY : normalization
-      USE stdout_mod,         ONLY : Set_StdOutUnit, stdout_unit
-      USE strings_mod,        ONLY : FoundError
-#ifdef BALANCE_OPERATOR
-      USE tl_balance_mod,     ONLY : tl_balance
+      USE normalization_mod,    ONLY : normalization
+#ifdef MULTI_SCALE_B
+      USE roms_multiscale_mod,  ONLY : MSB
 #endif
-      USE tl_convolution_mod, ONLY : tl_convolution
-      USE tl_variability_mod, ONLY : tl_variability
-      USE strings_mod,        ONLY : FoundError
-      USE wrt_rst_mod,        ONLY : wrt_rst
-#if defined BALANCE_OPERATOR && defined ZETA_ELLIPTIC
-      USE zeta_balance_mod,   ONLY : balance_ref, biconj
-#endif
+      USE stdout_mod,           ONLY : Set_StdOutUnit,                  &
+     &                                 stdout_unit
+      USE strings_mod,          ONLY : FoundError
+      USE wrt_rst_mod,          ONLY : wrt_rst
 !
       implicit none
 !
@@ -287,37 +281,68 @@
 !  Compute or read in error covariance normalization factors.
 !-----------------------------------------------------------------------
 !
-!  If computing, write out factors to NetCDF. This is an expensive
-!  computation and needs to be computed once for a particular
-!  application grid.
-!
       DO ng=1,Ngrids
+!
+!  If computing, define output normalization NetCDF file(s).
+!
         IF (ANY(LwrtNRM(:,ng))) THEN
           IF (LdefNRM(1,ng).or.LwrtNRM(1,ng)) THEN
             CALL def_norm (ng, iNLM, 1)
             IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
           END IF
-
+!
           IF ((LdefNRM(2,ng).or.LwrtNRM(2,ng)).and.(NSA.eq.2)) THEN
             CALL def_norm (ng, iNLM, 2)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
           END IF
 #ifdef ADJUST_BOUNDARY
+!
           IF (LdefNRM(3,ng).or.LwrtNRM(3,ng)) THEN
             CALL def_norm (ng, iNLM, 3)
             IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
           END IF
 #endif
 #if defined ADJUST_WSTRESS || defined ADJUST_STFLUX
+!
           IF (LdefNRM(4,ng).or.LwrtNRM(4,ng)) THEN
             CALL def_norm (ng, iNLM, 4)
             IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
           END IF
 #endif
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+
+#ifdef MULTI_SCALE_B
+# ifdef NONUNIFORM_SCALES
+!
+!  Read in horizontal, spatially-varying correlation length scales.
+!
+# endif
+!
+!  Compute the extrema eigenvalues of the K-Laplacian operator required
+!  by the Chebyshev Iterations (CI) solver, which is applied to implicit
+!  diffusion operators in the modeling of the multiscale background-
+!  error covariance for variables in the control vector.
+!
+!  The eigenvalue spectrum of the K-Laplacian operator remains invariant
+!  for a fixed application grid and a given value of K. Consequently,
+!  estimates can be precomputed via the Lanczos formulation of the
+!  Conjugate Gradient (CG) method, initialized with random vectors.
+!
+          DO tile=first_tile(ng),last_tile(ng),+1
+            CALL multiscale_eigen (ng, tile, Lnew(ng), 1)
+          END DO
+!
+!  Write out extrema eigenvalues into output normalizations NetCDF
+!  file(s).
+!
+          CALL multiscale_eigen_write (MSB(ng), ng, iTLM)
+#endif
+!
+!  Compute normalization factors.
+!
           DO tile=first_tile(ng),last_tile(ng),+1
             CALL normalization (ng, tile, 2)
           END DO
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
           LdefNRM(1:4,ng)=.FALSE.
           LwrtNRM(1:4,ng)=.FALSE.
         END IF
@@ -340,44 +365,16 @@
 !
 !  Local variable declarations.
 !
-      logical :: Lweak, add
       integer :: i, ng, tile
-#ifdef BALANCE_OPERATOR
-      integer :: Lbck = 1
-#endif
+      integer :: Lini = 1
 !
+      character (len=8) :: driver = 'rbl4dvar'
       character (len=*), parameter :: MyFile =                          &
      &  __FILE__//", ROMS_run"
 !
 !-----------------------------------------------------------------------
-!  Test correlation model.
+!  Test correlation model: Dirac Delta Functions.
 !-----------------------------------------------------------------------
-
-#ifdef BALANCE_OPERATOR
-!
-!  Read background state, use initial conditions.
-!
-      DO ng=1,Ngrids
-        CALL get_state (ng, iNLM, 9, INI(ng), Lbck, Lbck)
-        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-      END DO
-
-# ifdef ZETA_ELLIPTIC
-!
-!  Compute the reference zeta and biconjugate gradient arrays
-!  required for the balance of free surface.
-!
-      IF (balance(isFsur)) THEN
-        DO ng=1,Ngrids
-          DO tile=first_tile(ng),last_tile(ng),+1
-            CALL balance_ref (ng, tile, Lbck)
-            CALL biconj (ng, tile, iNLM, Lbck)
-          END DO
-          wrtZetaRef(ng)=.TRUE.
-        END DO
-      END IF
-# endif
-#endif
 !
 !  Initialize adjoint model state with a delta function at specified
 !  point. Use USER parameters from standard input to perturb solution
@@ -385,35 +382,19 @@
 !  diffusion operator.
 !
       ADmodel=.TRUE.
-      Lweak=.FALSE.
-
+!
       DO ng=1,Ngrids
+        Lold(ng)=1
         Lnew(ng)=1
         DO tile=first_tile(ng),last_tile(ng),+1
           CALL ana_perturb (ng, tile, iADM)
-#ifdef BALANCE_OPERATOR
-          CALL ad_balance (ng, tile, Lbck, Lnew(ng))
-          CALL ad_variability (ng, tile, Lnew(ng), Lweak)
-#endif
-          CALL ad_convolution (ng, tile, Lnew(ng), Lweak, 2)
-        END DO
-
-        ADmodel=.FALSE.
-!
-!  Initialize tangent linear model with convolved adjoint solution.
-!  Then, apply tangent linear convolution.
-!
-        add=.FALSE.
-        DO tile=first_tile(ng),last_tile(ng),+1
-          CALL load_ADtoTL (ng, tile, Lnew(ng), Lnew(ng), add)
-          CALL tl_convolution (ng, tile, Lnew(ng), Lweak, 2)
-#ifdef BALANCE_OPERATOR
-          CALL tl_variability (ng, tile, Lnew(ng), Lweak)
-          CALL tl_balance (ng, tile, Lbck, Lnew(ng))
-#endif
-          CALL load_TLtoAD (ng, tile, Lnew(ng), Lnew(ng), add)
         END DO
       END DO
+!
+!  Apply background-error covariance convolutions.
+!
+      CALL convolve (driver, Lini, Lold, Lnew)
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Write out background error correlation in adjoint history NetCDF
 !  file.

@@ -107,7 +107,11 @@
 !  Maximum number of dimension IDs stored in local array DimIDs used to
 !  defined variable dimensions in output NetCDF files.
 !
-      integer, parameter :: nDimID = 36
+      integer, parameter :: nDimID = 38
+!
+!  Maximum number of variable attributes.
+!
+      integer, parameter :: Natt = 26
 !
 !  Number of horizontal interior and boundary water points.
 !
@@ -453,6 +457,33 @@
       integer  :: id2dRV        ! 2D relative vorticity
       integer  :: id3dPV        ! 3D potential vorticity
       integer  :: id3dRV        ! 3D relative vorticity
+
+#ifdef MULTI_SCALE_B
+!
+!  Input/output identification indices for multiscale background-error
+!  covariance solvers: extrema eigenvalues and dot products.
+!
+      integer  :: ieFsur        ! Free-surface eigenvalues
+      integer  :: ieUbar        ! 2D U-velocity eigenvalues
+      integer  :: ieUsms        ! surface U-momentum stress eigenvalues
+      integer  :: ieUvel        ! 3D U-velocity eigenvalues
+      integer  :: ieU2bc        ! 2D U-velocity boundary eigenvalues
+      integer  :: ieU3bc        ! 3D U-velocity boundary eigenvalues
+      integer  :: ieVbar        ! 2D V-velocity eigenvalues
+      integer  :: ieVsms        ! surface V-momentum stress eigenvalues
+      integer  :: ieVvel        ! 3D V-velocity eigenvalues
+      integer  :: ieV2bc        ! 2D V-velocity boundary eigenvalues
+      integer  :: ieV3bc        ! 3D V-velocity boundary eigenvalues
+      integer  :: ieZbry        ! Free-surface boundary eigenvalues
+!
+# ifdef ADJUST_BOUNDARY
+      integer, allocatable :: ieTbry(:)   ! tracers boundary eigenvalues
+# endif
+# if defined ADJUST_STFLUX && defined SOLVE3D
+      integer, allocatable :: ieTsur(:)   ! tracers flux eigenvalues
+# endif
+      integer, allocatable :: ieTvar(:)   ! tracers eigenvalues
+#endif
 !
 !  Last used variable ID counter.
 !
@@ -988,6 +1019,25 @@
         allocate ( idTrcH(NAT) )
         Dmem(1)=Dmem(1)+REAL(NAT,r8)
       END IF
+
+#ifdef MULTI_SCALE_B
+# ifdef ADJUST_BOUNDARY
+      IF (.not.allocated(ieTbry)) THEN
+        allocate ( ieTbry(MT) )
+        Dmem(1)=Dmem(1)+REAL(MT,r8)
+      END IF
+# endif
+# if defined ADJUST_STFLUX && defined SOLVE3D
+      IF (.not.allocated(ieTsur)) THEN
+        allocate ( ieTsur(MT) )
+        Dmem(1)=Dmem(1)+REAL(MT,r8)
+      END IF
+# endif
+      IF (.not.allocated(ieTvar)) THEN
+        allocate ( ieTvar(MT) )
+        Dmem(1)=Dmem(1)+REAL(MT,r8)
+      END IF
+#endif
 
       IF (.not.allocated(Linfo)) THEN
         allocate ( Linfo(6,NV,Ngrids) )
@@ -1973,6 +2023,60 @@
             idSSSc=varid
           CASE ('idSSTc')
             idSSTc=varid
+#ifdef MULTI_SCALE_B
+          CASE ('ieFsur')
+            ieFsur=varid
+          CASE ('ieUbar')
+            ieUbar=varid
+          CASE ('ieVbar')
+            ieVbar=varid
+# ifdef SOLVE3D
+          CASE ('ieUvel')
+            ieUvel=varid
+          CASE ('ieVvel')
+            ieVvel=varid
+          CASE ('ieTvar(itemp)')
+            ieTvar(itemp)=varid
+#  ifdef SALINITY
+          CASE ('ieTvar(isalt)')
+            ieTvar(isalt)=varid
+#  endif
+# endif
+# ifdef ADJUST_WSTRESS
+          CASE ('ieUsms')
+            ieUsms=varid
+          CASE ('ieVsms')
+            ieVsms=varid
+# endif
+# if defined ADJUST_STFLUX && defined SOLVE3D
+          CASE ('ieTsur(itemp)')
+            ieTsur(itemp)=varid
+#  ifdef SALINITY
+          CASE ('ieTsur(isalt)')
+            ieTsur(isalt)=varid
+#  endif
+# endif
+# ifdef ADJUST_BOUNDARY
+          CASE ('ieZbry')
+            ieZbry=varid
+          CASE ('ieU2bc')
+            ieU2bc=varid
+          CASE ('ieV2bc')
+            ieV2bc=varid
+#  ifdef SOLVE3D
+          CASE ('ieU3bc')
+            ieU3bc=varid
+          CASE ('ieV3bc')
+            ieV3bc=varid
+          CASE ('ieTbry(itemp)')
+            ieTbry(itemp)=varid
+#   ifdef SOLVE3D
+          CASE ('ieTbry(isalt)')
+            ieTbry(isalt)=varid
+#   endif
+#  endif
+# endif
+#endif
 #if defined AD_SENSITIVITY   || defined I4DVAR_ANA_SENSITIVITY || \
     defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR      || \
     defined SO_SEMI
@@ -3286,7 +3390,7 @@
 #endif
 !
 !-----------------------------------------------------------------------
-!  Set model state variables metadata indices.
+!  Set model state variables metadata indices and names.
 !-----------------------------------------------------------------------
 !
       idSvar(isFsur)=idFsur
@@ -3327,6 +3431,48 @@
       idSvar(isMtke)=idMtke
 # endif
       idSvar(isWvel)=idWvel
+#endif
+!
+!  State variable names.
+!
+      StateVarName(isFsur)=TRIM(Vname(1,idSvar(isFsur)))
+      StateVarName(isUbar)=TRIM(Vname(1,idSvar(isUbar)))
+      StateVarName(isVbar)=TRIM(Vname(1,idSvar(isVbar)))
+#ifdef SOLVE3D
+      StateVarName(isUvel)=TRIM(Vname(1,idSvar(isUvel)))
+      StateVarName(isVvel)=TRIM(Vname(1,idSvar(isVvel)))
+      DO i=1,MT
+        StateVarName(isTvar(i))=TRIM(Vname(1,idSvar(isTvar(i))))
+      END DO
+#endif
+#if defined ADJUST_WSTRESS || defined FORCING_SV     || \
+    defined HESSIAN_FSV    || defined SO_SEMI        || \
+    defined STOCHASTIC_OPT
+      StateVarName(isUstr)=TRIM(Vname(1,idSvar(isUstr)))
+      StateVarName(isVstr)=TRIM(Vname(1,idSvar(isVstr)))
+#endif
+#ifdef SOLVE3D
+# if defined ADJUST_STFLUX  || defined FORCING_SV     || \
+     defined HESSIAN_FSV    || defined SO_SEMI        || \
+     defined STOCHASTIC_OPT
+      DO i=1,MT
+        StateVarName(isTsur(i))=TRIM(Vname(1,idSvar(isTsur(i))))
+      END DO
+# endif
+#endif
+#ifdef WEC
+      StateVarName(isU2Sd)=TRIM(Vname(1,idSvar(isU2Sd)))
+      StateVarName(isV2Sd)=TRIM(Vname(1,idSvar(isV2Sd)))
+# ifdef SOLVE3D
+      StateVarName(isU3Sd)=TRIM(Vname(1,idSvar(isU3Sd)))
+      StateVarName(isV3Sd)=TRIM(Vname(1,idSvar(isV3Sd)))
+# endif
+#endif
+#ifdef SOLVE3D
+# if defined GLS_MIXING || defined MY25_MIXING
+      StateVarName(isMtke)=TRIM(Vname(1,idSvar(isMtke)))
+# endif
+      StateVarName(isWvel)=TRIM(Vname(1,idSvar(isWvel)))
 #endif
 !
 !-----------------------------------------------------------------------

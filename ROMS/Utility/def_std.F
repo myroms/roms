@@ -97,8 +97,6 @@
 !
       logical :: got_var(NV)
 !
-      integer, parameter :: Natt = 25
-
       integer :: i, j, ifield, itrc, nrec, nvd, nvd3, nvd4
       integer :: recdim, status, varid
       integer :: NinnerDim
@@ -789,8 +787,6 @@
 !
       logical :: got_var(NV)
 !
-      integer, parameter :: Natt = 25
-
       integer :: i, j, ifield, itrc, nrec, nvd, nvd3, nvd4
       integer :: recdim, status
       integer :: NinnerDim

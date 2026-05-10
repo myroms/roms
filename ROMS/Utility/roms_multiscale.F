@@ -34,9 +34,10 @@
 !                                                                      !
 ! References:                                                          !
 !                                                                      !
-! Mirouze, I., E. Blockley, D.J. Lea, M.J. Martin, and M.J. Bell,      !
-!   2016: A multiple length scale correlation operator for ocean data  !
-!   assimilation, Tellus A, 68, 29744, doi:10.3402/tellusa.v68.29744.  !
+! Weaver, A.T. and I. Mirouze, 2013: On the diffusion equation and     !
+!   its application to isotropic and anisotropic correlation modeling  !
+!   in variational assimilation, Q. J. R. Meteorol. Soc., 139, 242-260,!
+!   doi:10.1002/qj.1955.                                               !
 !                                                                      !
 ! Weaver, A.T., J. Tshimanga, and A. Piacentini, 2016: Correlation     !
 !   operators based on an implicitly formulated diffusion equation     !
@@ -139,7 +140,9 @@
 !  Multiscale background covariance matrix parameters:
 !
 !    Nscale   number of correlation scales to be combined
-!    Mlap     nunber of k-Laplacian smoother applications
+!    Mlap     number of K-Laplacian smoother applications: implicit
+!             M iterations representing Matern d-dimensional correlation
+!             functions approaching a Gaussian in the asymptotic limit
 !    NiterCG  number of CG iterations to obtain each scale eigenvalue
 !    NiterCI  number of implicit Chebyshev solver iterations
 !    Bwgt     weights assigned to each correlation function
@@ -153,7 +156,7 @@
 !
 !  The extrema eigenvalues of the K-Laplacian for each 2D variable in
 !  the control vector as functions of both the number of iterations
-!  and specified correlation scales, [Mlap,Nscales,range]. The range
+!  and specified correlation scales, [Mlap,Nscale,range]. The range
 !  dimension has a value of 2, where 1 corresponds to the minimum and
 !  2 to the maximum eigenvalues.
 !
@@ -172,7 +175,7 @@
 !  The extrema eigenvalues of the K-Laplacian for each 3D  variable in
 !  the control vector as functions of both the number of iterations,
 !  number of vertical level, and the specified correlation scales,
-!  [Mlap,N,Nscales,range] and [Mlap,N,NT,Nscale,range]. The range
+!  [Mlap,N,Nscale,range] and [Mlap,N,NT,Nscale,range]. The range
 !  dimension has a value of 2, where 1 corresponds to the minimum and
 !  2 to the maximum eigenvalues.
 !
@@ -191,7 +194,7 @@
 !  The extrema eigenvalues of the K-Laplacian for each 2D variable
 !  lateral boundary adjustment in the control vector as functions of
 !  number of iterations, boundary index, and the specified correlation
-!  scales, [Mlap,4,Nscales,range]. The range dimension has a value
+!  scales, [Mlap,4,Nscale,range]. The range dimension has a value
 !  of 2, where 1 corresponds to the minimum and 2 to the maximum
 !  eigenvalues.
 !
@@ -204,8 +207,8 @@
 !  The eextrema eigenvalues of the K-Laplacian for each 3D  variable
 !  lateral boundary adjustment in the control vector as functions of
 !  number of iterations, vertical levels, boundary index, and the
-!  specified correlation scales, [Mlap,4,Nscales,range] and
-!  [Mlap,N,NT,4,Nscales,range]. The range dimension has a value
+!  specified correlation scales, [Mlap,4,Nscale,range] and
+!  [Mlap,N,NT,4,Nscale,range]. The range dimension has a value
 !  of 2, where 1 corresponds to the minimum and 2 to the maximum
 !  eigenvalues.
 !
@@ -420,10 +423,10 @@
 !
 !:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 !
-      TYPE (multiscale), allocatable :: B_ms(:)
+      TYPE (multiscale), allocatable :: MSB(:)
 !
-      PUBLIC  :: multiscale_initialize
-      PUBLIC  :: multiscale_finalize
+      PUBLIC  :: deallocate_multiscale
+      PUBLIC  :: initialize_multiscale
 !
 # ifdef MULTI_SCALE_DEBUG
       PRIVATE :: multiscale_print
@@ -440,39 +443,41 @@
 !  It allocates and initializes the background-error covariance (B)
 !  multiscale object.
 !
-     SUBROUTINE multiscale_initialize
+      SUBROUTINE initialize_multiscale (ng, tile, model)
 !
-      integer :: ng, tile
+      integer,            intent(in   ) :: ng       ! nested grid
+      integer,            intent(in   ) :: tile     ! domain partition
+      integer,            intent(in   ) :: model    ! kernel identifier
 !
-!  Allocate and create B-multiscale object.
+!  Allocate multiscale background-error covariance object.
 !
-      IF (.not.allocated(B_ms)) THEN
-        allocate ( B_ms(Ngrids) )
+      IF (ng.eq.1) THEN
+        IF (.not.allocated(MSB)) allocate ( MSB(Ngrids) )
       END IF
 !
-      DO ng=1,Ngrids
-        DO tile=first_tile(ng),last_tile(ng),+1
-          CALL multiscale_create (B_ms(ng), ng, tile)
-        END DO
-      END DO 
+!  Create mutiscale background-error convariance object.
+!
+      CALL multiscale_create (MSB(ng), ng, tile)
 !
       RETURN
-      END SUBROUTINE multiscale_initialize
+      END SUBROUTINE initialize_multiscale
 !
 !-----------------------------------------------------------------------
 !  It deallocates the multiscale background-error covariance object.
 !
-      SUBROUTINE multiscale_finalize
+      SUBROUTINE deallocate_multiscale (ng)
 !
-      integer :: ng, tile
+      integer,            intent(in   ) :: ng       ! nested grid
 !
 !  Deallocate background-error ocovariance derived-type structure.
 !  Note that it also deallocates its internal arrays.
 !
-      IF (allocated(B_ms)) deallocate (B_ms)
+      IF (ng.eq.1) THEN
+        IF (allocated(MSB)) deallocate (MSB)
+      END IF
 !
       RETURN
-      END SUBROUTINE multiscale_finalize
+      END SUBROUTINE deallocate_multiscale
 !
 !-----------------------------------------------------------------------
 !  It allocates and initializes the multiscale background-error
@@ -484,7 +489,7 @@
       integer,            intent(in   ) :: ng       ! nested grid
       integer,            intent(in   ) :: tile     ! domain partition
 !
-      integer                           :: Nlap, is, ms
+      integer                           :: Mlap, is, ms
       integer                           :: LBi, UBi, LBj, UBj
 # ifdef ADJUST_BOUNDARY
       integer                           :: LBij, UBij
@@ -527,7 +532,7 @@
         allocate ( self % Mlap(MstateVar,Nscale(ng)) )
         DO ms=1,Nscale(ng)
           DO is=1,MstateVar
-            self % Mlap(is,ms) = Mlap(is,ms,ng)
+            self % Mlap(is,ms) = Nlap(is,ms,ng)
           END DO
         END DO
       END IF
@@ -555,39 +560,39 @@
         END DO
       END IF
 !
-      Nlap=MAXVAL(self % Mlap)
+      Mlap=MAXVAL(self % Mlap)
 !
 !  Allocate the maximum and minimum eigenvalues of the K-Laplacian.
 !
       IF (.not.associated(self % zeta_eigen)) THEN
-        allocate ( self % zeta_eigen(Nlap,Nscale(ng),2) )
-        Dmem(ng)=Dmem(ng)+REAL(Nlap*Nscale(ng)*2,r8)
+        allocate ( self % zeta_eigen(Mlap,Nscale(ng),2) )
+        Dmem(ng)=Dmem(ng)+REAL(Mlap*Nscale(ng)*2,r8)
         self % zeta_eigen = IniVal
       END IF
 !
       IF (.not.associated(self % ubar_eigen)) THEN
-        allocate ( self % ubar_eigen(Nlap,Nscale(ng),2) )
-        Dmem(ng)=Dmem(ng)+REAL(Nlap*Nscale(ng)*2,r8)
+        allocate ( self % ubar_eigen(Mlap,Nscale(ng),2) )
+        Dmem(ng)=Dmem(ng)+REAL(Mlap*Nscale(ng)*2,r8)
         self % ubar_eigen = IniVal
       END IF
 !
       IF (.not.associated(self % vbar_eigen)) THEN
-        allocate ( self % vbar_eigen(Nlap,Nscale(ng),2) )
-        Dmem(ng)=Dmem(ng)+REAL(Nlap*Nscale(ng)*2,r8)
+        allocate ( self % vbar_eigen(Mlap,Nscale(ng),2) )
+        Dmem(ng)=Dmem(ng)+REAL(Mlap*Nscale(ng)*2,r8)
         self % vbar_eigen = IniVal
       END IF
 
 # ifdef ADJUST_WSTRESS
 !
       IF (.not.associated(self % sustr_eigen)) THEN
-        allocate ( self % sustr_eigen(Nlap,Nscale(ng),2) )
-        Dmem(ng)=Dmem(ng)+REAL(Nlap*Nscale(ng)*2,r8)
+        allocate ( self % sustr_eigen(Mlap,Nscale(ng),2) )
+        Dmem(ng)=Dmem(ng)+REAL(Mlap*Nscale(ng)*2,r8)
         self % sustr_eigen = IniVal
       END IF
 !
       IF (.not.associated(self % svstr_eigen)) THEN
-        allocate ( self % svstr_eigen(Nlap,Nscale(ng),2) )
-        Dmem(ng)=Dmem(ng)+REAL(Nlap*Nscale(ng)*2,r8)
+        allocate ( self % svstr_eigen(Mlap,Nscale(ng),2) )
+        Dmem(ng)=Dmem(ng)+REAL(Mlap*Nscale(ng)*2,r8)
         self % svstr_eigen = IniVal
       END IF
 # endif
@@ -595,28 +600,28 @@
 # ifdef SOLVE3D
 !
       IF (.not.associated(self % u_eigen)) THEN
-        allocate ( self % u_eigen(Nlap,N(ng),Nscale(ng),2) )
-        Dmem(ng)=Dmem(ng)+REAL(Nlap*N(ng)*Nscale(ng)*2,r8)
+        allocate ( self % u_eigen(Mlap,N(ng),Nscale(ng),2) )
+        Dmem(ng)=Dmem(ng)+REAL(Mlap*N(ng)*Nscale(ng)*2,r8)
         self % u_eigen = IniVal
       END IF
 !
       IF (.not.associated(self % v_eigen)) THEN
-        allocate ( self % v_eigen(Nlap,N(ng),Nscale(ng),2) )
-        Dmem(ng)=Dmem(ng)+REAL(Nlap*N(ng)*Nscale(ng)*2,r8)
+        allocate ( self % v_eigen(Mlap,N(ng),Nscale(ng),2) )
+        Dmem(ng)=Dmem(ng)+REAL(Mlap*N(ng)*Nscale(ng)*2,r8)
         self % v_eigen = IniVal
       END IF
 !
       IF (.not.associated(self % t_eigen)) THEN
-        allocate ( self % t_eigen(Nlap,N(ng),NT(ng),Nscale(ng),2) )
-        Dmem(ng)=Dmem(ng)+REAL(Nlap*N(ng)*NT(ng)*Nscale(ng)*2,r8)
+        allocate ( self % t_eigen(Mlap,N(ng),NT(ng),Nscale(ng),2) )
+        Dmem(ng)=Dmem(ng)+REAL(Mlap*N(ng)*NT(ng)*Nscale(ng)*2,r8)
         self % t_eigen = IniVal
       END IF
 
 #  ifdef ADJUST_STFLUX
 !
       IF (.not.associated(self % stflux_eigen)) THEN
-        allocate ( self % stflux_eigen(Nlap,NT(ng),Nscale(ng),2) )
-        Dmem(ng)=Dmem(ng)+REAL(Nlap*NT(ng)*Nscale(ng)*2,r8)
+        allocate ( self % stflux_eigen(Mlap,NT(ng),Nscale(ng),2) )
+        Dmem(ng)=Dmem(ng)+REAL(Mlap*NT(ng)*Nscale(ng)*2,r8)
         self % stflux_eigen = IniVal
       END IF
 #  endif
@@ -625,41 +630,41 @@
 # ifdef ADJUST_BOUNDARY
 !
       IF (.not.associated(self % zeta_obc_eigen)) THEN
-        allocate ( self % zeta_obc_eigen(Nlap,4,Nscale(ng),2) )
-        Dmem(ng)=Dmem(ng)+REAL(Nlap*4*Nscale(ng)*2,r8)
+        allocate ( self % zeta_obc_eigen(Mlap,4,Nscale(ng),2) )
+        Dmem(ng)=Dmem(ng)+REAL(Mlap*4*Nscale(ng)*2,r8)
         self % zeta_obc_eigen = IniVal
       END IF
 !
       IF (.not.associated(self % ubar_obc_eigen)) THEN
-        allocate ( self % ubar_obc_eigen(Nlap,4,Nscale(ng),2) )
-        Dmem(ng)=Dmem(ng)+REAL(Nlap*4*Nscale(ng)*2,r8)
+        allocate ( self % ubar_obc_eigen(Mlap,4,Nscale(ng),2) )
+        Dmem(ng)=Dmem(ng)+REAL(Mlap*4*Nscale(ng)*2,r8)
         self % ubar_obc_eigen = IniVal
       END IF
 !
       IF (.not.associated(self % vbar_obc_eigen)) THEN
-        allocate ( self % vbar_obc_eigen(Nlap,4,Nscale(ng),2) )
-        Dmem(ng)=Dmem(ng)+REAL(Nlap*4*Nscale(ng)*2,r8)
+        allocate ( self % vbar_obc_eigen(Mlap,4,Nscale(ng),2) )
+        Dmem(ng)=Dmem(ng)+REAL(Mlap*4*Nscale(ng)*2,r8)
         self % vbar_obc_eigen = IniVal
       END IF
 
 #  ifdef SOLVE3D
 !
       IF (.not.associated(self % u_obc_eigen)) THEN
-        allocate ( self % u_obc_eigen(Nlap,N(ng),4,Nscale(ng),2) )
-        Dmem(ng)=Dmem(ng)+REAL(Nlap*N(ng)*4*Nscale(ng)*2,r8)
+        allocate ( self % u_obc_eigen(Mlap,N(ng),4,Nscale(ng),2) )
+        Dmem(ng)=Dmem(ng)+REAL(Mlap*N(ng)*4*Nscale(ng)*2,r8)
         self % u_obc_eigen = IniVal
       END IF
 !
       IF (.not.associated(self % v_obc_eigen)) THEN
-        allocate ( self % v_obc_eigen(Nlap,N(ng),4,Nscale(ng),2) )
-        Dmem(ng)=Dmem(ng)+REAL(Nlap*N(ng)*4*Nscale(ng)*2,r8)
+        allocate ( self % v_obc_eigen(Mlap,N(ng),4,Nscale(ng),2) )
+        Dmem(ng)=Dmem(ng)+REAL(Mlap*N(ng)*4*Nscale(ng)*2,r8)
         self % v_obc_eigen = IniVal
       END IF
 !
       IF (.not.associated(self % t_obc_eigen)) THEN
-        allocate ( self % t_obc_eigen(Nlap,N(ng),NT(ng),4,              &
+        allocate ( self % t_obc_eigen(Mlap,N(ng),NT(ng),4,              &
      &                                Nscale(ng),2) )
-        Dmem(ng)=Dmem(ng)+REAL(Nlap*N(ng)*NT(ng)*4*Nscale(ng)*2,r8)
+        Dmem(ng)=Dmem(ng)+REAL(Mlap*N(ng)*NT(ng)*4*Nscale(ng)*2,r8)
         self % t_obc_eigen = IniVal
       END IF
 #  endif
@@ -1058,6 +1063,7 @@
       Istr =BOUNDS(ng)%Istr (tile)   ! tile computational range
       IstrU=BOUNDS(ng)%IstrU(tile)
       Iend =BOUNDS(ng)%Iend (tile)
+      Jstr =BOUNDS(ng)%Jstr (tile)
       JstrV=BOUNDS(ng)%JstrV(tile)
       Jend =BOUNDS(ng)%Jend (tile)
 !
@@ -1150,6 +1156,7 @@
       Istr =BOUNDS(ng)%Istr (tile)   ! tile computational range
       IstrU=BOUNDS(ng)%IstrU(tile)
       Iend =BOUNDS(ng)%Iend (tile)
+      Jstr =BOUNDS(ng)%Jstr (tile)
       JstrV=BOUNDS(ng)%JstrV(tile)
       Jend =BOUNDS(ng)%Jend (tile)
 !

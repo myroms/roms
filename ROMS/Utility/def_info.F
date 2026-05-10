@@ -118,8 +118,6 @@
 !
 !  Local variable declarations.
 !
-      integer, parameter :: Natt = 25
-
       integer :: brydim, i, ie, is, j, lstr, varid
       integer :: slicedim, srdim, stadim, status, swdim, trcdim, usrdim
 #ifdef SEDIMENT
@@ -3720,8 +3718,6 @@
 !
 !  Local variable declarations.
 !
-      integer, parameter :: Natt = 25
-
       integer :: brydim, FileH, i, ie, is, j, lstr
       integer :: slicedim, srdim, stadim, status, swdim, trcdim, usrdim
 # ifdef SEDIMENT

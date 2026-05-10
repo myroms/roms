@@ -47,7 +47,7 @@
       SUBROUTINE sum_multi_B (ng, tile, ns, Linp, Lout)
 !***********************************************************************
 !
-      USE roms_multiscale_mod, ONLY : B_ms
+      USE roms_multiscale_mod, ONLY : MSB
 !
 !  Imported variable declarations.
 !
@@ -57,7 +57,7 @@
 !
 # include "tile.h"
 !
-      CALL sum_multi_B_tile (B_ms(ng), ng, tile,                        &
+      CALL sum_multi_B_tile (MSB(ng), ng, tile,                         &
      &                       ns, Linp, Lout,                            &
      &                       LBi, UBi, LBj, UBj,                        &
 # ifdef ADJUST_BOUNDARY

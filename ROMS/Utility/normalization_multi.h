@@ -150,15 +150,16 @@
 !
 #ifdef DISTRIBUTE
 # ifdef ADJUST_BOUNDARY
-      USE distribute_mod,      ONLY : mp_collect
+      USE distribute_mod,       ONLY : mp_collect
 # endif
-      USE distribute_mod,      ONLY : mp_reduce
+      USE distribute_mod,       ONLY : mp_reduce
 #endif
-      USE roms_multiscale_mod, ONLY : multiscale         ! CLASS object
-
-      USE nf_fwrite2d_mod,     ONLY : nf_fwrite2d
-      USE nf_fwrite3d_mod,     ONLY : nf_fwrite3d
-      USE strings_mod,         ONLY : FoundError
+      USE nf_fwrite2d_mod,      ONLY : nf_fwrite2d
+      USE nf_fwrite3d_mod,      ONLY : nf_fwrite3d
+      USE strings_mod,          ONLY : FoundError
+!
+      USE multiscale_eigen_mod, ONLY : multiscale_eigen  ! Eigenvalues
+      USE roms_multiscale_mod,  ONLY : multiscale        ! CLASS object
 !
       implicit none
 !
@@ -194,13 +195,18 @@
 !***********************************************************************
 !
       USE mod_stepping,        ONLY : nnew, nstp
-      USE roms_multiscale_mod, ONLY : B_ms
+      USE roms_multiscale_mod, ONLY : MSB
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, tile, ifac
+      integer, intent(in) :: ng     ! nested grid
+      integer, intent(in) :: tile   ! domain partition
+      integer, intent(in) :: ifac   ! iteraction factor
+                                    ! (squared-root filter, ifac=2)
 !
 !  Local variable declarations.
+!
+      integer :: my_ifac = 1        ! K-Laplacian iteraction factor
 !
 #include "tile.h"
 !
@@ -208,7 +214,7 @@
 !  the very expensive exact method.
 !
       IF (Nmethod(ng).eq.0) THEN
-        CALL normalization_tile (B_ms(ng), ng, tile,                    &
+        CALL normalization_tile (MSB(ng), ng, tile,                     &
      &                           LBi, UBi, LBj, UBj,                    &
      &                           LBij, UBij,                            &
      &                           IminS, ImaxS, JminS, JmaxS,            &
@@ -247,7 +253,7 @@
 !  the approximated randomization method.
 !
       ELSE IF (Nmethod(ng).eq.1) THEN
-        CALL randomization_tile (B_ms(ng), ng, tile,                    &
+        CALL randomization_tile (MSB(ng), ng, tile,                     &
      &                           LBi, UBi, LBj, UBj,                    &
      &                           LBij, UBij,                            &
      &                           IminS, ImaxS, JminS, JmaxS,            &
@@ -6260,6 +6266,7 @@
       IstrT=BOUNDS(ng)%IstrT(tile)   ! tile computational range
       IstrP=BOUNDS(ng)%IstrP(tile)
       IendT=BOUNDS(ng)%IendT(tile)
+      JstrT=BOUNDS(ng)%JstrT(tile)
       JstrP=BOUNDS(ng)%JstrP(tile)
       JendT=BOUNDS(ng)%JendT(tile)
 !
@@ -6352,6 +6359,7 @@
       IstrT=BOUNDS(ng)%IstrT(tile)   ! tile computational range
       IstrP=BOUNDS(ng)%IstrP(tile)
       IendT=BOUNDS(ng)%IendT(tile)
+      JstrT=BOUNDS(ng)%JstrT(tile)
       JstrP=BOUNDS(ng)%JstrP(tile)
       JendT=BOUNDS(ng)%JendT(tile)
 !

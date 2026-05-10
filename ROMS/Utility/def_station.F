@@ -123,8 +123,6 @@
 !
 !  Local variable declarations.
 !
-      integer, parameter :: Natt = 25
-!
       logical :: got_var(NV)
 !
       integer :: i, j, recdim, stadim
@@ -1589,8 +1587,6 @@
       logical, intent(in) :: ldef
 !
 !  Local variable declarations.
-!
-      integer, parameter :: Natt = 25
 !
       logical :: got_var(NV)
 !

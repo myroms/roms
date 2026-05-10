@@ -89,8 +89,6 @@
 !
       logical :: got_var(NV)
 !
-      integer, parameter :: Natt = 25
-
       integer :: i, j, ifield, itrc, nvd3, nvd4
       integer :: recdim, status, varid
       integer :: Fcount
@@ -1058,8 +1056,6 @@
 !
       logical :: got_var(NV)
 !
-      integer, parameter :: Natt = 25
-
       integer :: i, j, ifield, itrc, nvd3, nvd4
       integer :: recdim, status
       integer :: Fcount

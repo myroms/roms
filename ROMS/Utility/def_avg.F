@@ -137,8 +137,6 @@
 !
       logical :: got_var(NV)
 !
-      integer, parameter :: Natt = 25
-
       integer :: i, ifield, itrc, j, nvd3, nvd4
 # if defined WRITE_WATER && defined MASKING
       integer :: xy_pdim, xyz_pdim
@@ -2718,8 +2716,6 @@
 !
       logical :: got_var(NV)
 !
-      integer, parameter :: Natt = 25
-
       integer :: i, ifield, itrc, j, nvd3, nvd4
 #  if defined WRITE_WATER && defined MASKING
       integer :: xy_pdim, xyz_pdim

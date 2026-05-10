@@ -91,6 +91,7 @@
         MODULE PROCEDURE mp_bcastf_2d
         MODULE PROCEDURE mp_bcastf_3d
         MODULE PROCEDURE mp_bcastf_4d
+        MODULE PROCEDURE mp_bcastf_5d
       END INTERFACE mp_bcastf
 !
       INTERFACE mp_bcastl
@@ -1021,6 +1022,101 @@
 !
       RETURN
       END SUBROUTINE mp_bcastf_4d
+!
+      SUBROUTINE mp_bcastf_5d (ng, model, A, InpComm)
+!
+!***********************************************************************
+!                                                                      !
+!  This routine broadcasts a 5D floating-point, non-tiled, array       !
+!  to all processors in the communicator. It is called by all the      !
+!  members in the group.                                               !
+!                                                                      !
+!  On Input:                                                           !
+!                                                                      !
+!     ng         Nested grid number.                                   !
+!     model      Calling model identifier.                             !
+!     A          4D array to broadcast (real).                         !
+!                                                                      !
+!  On Output:                                                          !
+!                                                                      !
+!     A          Broadcasted 4D array.                                 !
+!                                                                      !
+!***********************************************************************
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: ng, model
+
+      integer, intent(in), optional :: InpComm
+!
+      real(r8), intent(inout) :: A(:,:,:,:,:)
+!
+!  Local variable declarations
+!
+      integer :: Lstr, MyCOMM, MyError, Npts, Serror
+
+      integer :: Asize(5)
+!
+      character (len=MPI_MAX_ERROR_STRING) :: string
+
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__//", mp_bcastf_5d"
+
+# ifdef PROFILE
+!
+!-----------------------------------------------------------------------
+!  Turn on time clocks.
+!-----------------------------------------------------------------------
+!
+      CALL wclock_on (ng, model, 64, __LINE__, MyFile)
+# endif
+# ifdef MPI
+!
+!-----------------------------------------------------------------------
+!  Set distributed-memory communicator handle (context ID).
+!-----------------------------------------------------------------------
+!
+      IF (PRESENT(InpComm)) THEN
+        MyCOMM=InpComm
+      ELSE
+        MyCOMM=OCN_COMM_WORLD
+      END IF
+# endif
+!
+!-----------------------------------------------------------------------
+!  Broadcast requested variable.
+!-----------------------------------------------------------------------
+!
+      Asize(1)=UBOUND(A, DIM=1)
+      Asize(2)=UBOUND(A, DIM=2)
+      Asize(3)=UBOUND(A, DIM=3)
+      Asize(4)=UBOUND(A, DIM=4)
+      Asize(5)=UBOUND(A, DIM=5)
+      Npts=Asize(1)*Asize(2)*Asize(3)*Asize(4)*Asize(5)
+
+# ifdef MPI
+      CALL mpi_bcast (A, Npts, MP_FLOAT, MyMaster, MyCOMM, MyError)
+      IF (MyError.ne.MPI_SUCCESS) THEN
+        CALL mpi_error_string (MyError, string, Lstr, Serror)
+        Lstr=LEN_TRIM(string)
+        WRITE (stdout,10) 'MPI_BCAST', MyRank, MyError, string(1:Lstr)
+ 10     FORMAT (/,' MP_BCASTF_5D - error during ',a,' call, Task = ',   &
+     &          i3.3,' Error = ',i3,/,13x,a)
+        exit_flag=2
+        RETURN
+      END IF
+# endif
+# ifdef PROFILE
+!
+!-----------------------------------------------------------------------
+!  Turn off time clocks.
+!-----------------------------------------------------------------------
+!
+      CALL wclock_off (ng, model, 64, __LINE__, MyFile)
+# endif
+!
+      RETURN
+      END SUBROUTINE mp_bcastf_5d
 !
       SUBROUTINE mp_bcasti_0d (ng, model, A, InpComm)
 !

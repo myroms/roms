@@ -140,7 +140,7 @@
 !***********************************************************************
 !
       USE mod_stepping,        ONLY : nnew, nstp
-      USE roms_multiscale_mod, ONLY : B_ms
+      USE roms_multiscale_mod, ONLY : MSB
 !
 !  Imported variable declarations.
 !
@@ -153,7 +153,7 @@
 !
 #include "tile.h"
 !
-      CALL tl_convolution_tile (B_ms(ng), ng, tile, iTLM,               &
+      CALL tl_convolution_tile (MSB(ng), ng, tile, iTLM,                &
      &                          ns, Lweak, ifac,                        &
      &                          nstp(ng), nnew(ng), Linp,               &
      &                          LBi, UBi, LBj, UBj,                     &

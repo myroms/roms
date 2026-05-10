@@ -423,9 +423,9 @@
                 BscaleBT=0.0_r8
               END IF
 !                                                  global arrays
-              IF (.not.allocated(Mlap)) THEN
-                allocate ( Mlap(MstateVar,Mscale,Ngrids) )
-                Mlap=0
+              IF (.not.allocated(Nlap)) THEN
+                allocate ( Nlap(MstateVar,Mscale,Ngrids) )
+                Nlap=0
               END IF
               IF (.not.allocated(Bwgt)) THEN
                 allocate ( Bwgt(MstateVar,Mscale,Ngrids) )
@@ -455,21 +455,21 @@
               Npts=load_i(Nval, Rval, Mscale, Ngrids, Miter)
               DO ng=1,Ngrids
                 DO ns=1,Nscale(ng)
-                  Mlap(isFsur,ns,ng)=Miter(ns,ng)
+                  Nlap(isFsur,ns,ng)=Miter(ns,ng)
                 END DO
               END DO
             CASE ('Mlap(isUbar)')
               Npts=load_i(Nval, Rval, Mscale, Ngrids, Miter)
               DO ng=1,Ngrids
                 DO ns=1,Nscale(ng)
-                  Mlap(isUbar,ns,ng)=Miter(ns,ng)
+                  Nlap(isUbar,ns,ng)=Miter(ns,ng)
                 END DO
               END DO
             CASE ('Mlap(isVbar)')
               Npts=load_i(Nval, Rval, Mscale, Ngrids, Miter)
               DO ng=1,Ngrids
                 DO ns=1,Nscale(ng)
-                  Mlap(isVbar,ns,ng)=Miter(ns,ng)
+                  Nlap(isVbar,ns,ng)=Miter(ns,ng)
                 END DO
               END DO
 #   ifdef SOLVE3D
@@ -477,14 +477,14 @@
               Npts=load_i(Nval, Rval, Mscale, Ngrids, Miter)
               DO ng=1,Ngrids
                 DO ns=1,Nscale(ng)
-                  Mlap(isUvel,ns,ng)=Miter(ns,ng)
+                  Nlap(isUvel,ns,ng)=Miter(ns,ng)
                 END DO
               END DO
             CASE ('Mlap(isVvel)')
               Npts=load_i(Nval, Rval, Mscale, Ngrids, Miter)
               DO ng=1,Ngrids
                 DO ns=1,Nscale(ng)
-                  Mlap(isVvel,ns,ng)=Miter(ns,ng)
+                  Nlap(isVvel,ns,ng)=Miter(ns,ng)
                 END DO
               END DO
             CASE ('Mlap(isTvar)')
@@ -493,7 +493,7 @@
                 DO ns=1,Nscale(ng)
                   DO itrc=1,NT(ng)
                     i=isTvar(itrc)
-                    Mlap(i,ns,ng)=MiterT(itrc,ns,ng)
+                    Nlap(i,ns,ng)=MiterT(itrc,ns,ng)
                   END DO
                 END DO
               END DO
@@ -503,14 +503,14 @@
               Npts=load_i(Nval, Rval, Mscale, Ngrids, Miter)
               DO ng=1,Ngrids
                 DO ns=1,Nscale(ng)
-                  Mlap(isUstr,ns,ng)=Miter(ns,ng)
+                  Nlap(isUstr,ns,ng)=Miter(ns,ng)
                 END DO
               END DO
             CASE ('Mlap(isVstr)')
               Npts=load_i(Nval, Rval, Mscale, Ngrids, Miter)
               DO ng=1,Ngrids
                 DO ns=1,Nscale(ng)
-                  Mlap(isVstr,ns,ng)=Miter(ns,ng)
+                  Nlap(isVstr,ns,ng)=Miter(ns,ng)
                 END DO
               END DO
 #   endif
@@ -521,7 +521,7 @@
                 DO ns=1,Nscale(ng)
                   DO itrc=1,NT(ng)
                     i=isTsur(itrc)
-                    Mlap(i,ns,ng)=MiterT(itrc,ns,ng)
+                    Nlap(i,ns,ng)=MiterT(itrc,ns,ng)
                   END DO
                 END DO
               END DO
@@ -1538,9 +1538,9 @@
 #   endif
 #   ifndef TLM_CHECK
 #    ifndef I4DVAR_ANA_SENSITIVITY
-          WRITE (out,170) LdefNRM(1:4,ng), 'LdefNRM',                   &
+          WRITE (out,170) (LdefNRM(i,ng),i=1,4), 'LdefNRM',             &
      &            'Switch to create a normalization NetCDF file.'
-          WRITE (out,170) LwrtNRM(1:4,ng), 'LwrtNRM',                   &
+          WRITE (out,170) (LwrtNRM(i,ng),i=1,4), 'LwrtNRM',             &
      &            'Switch to write out normalization factors.'
           IF (ANY(LwrtNRM(:,ng))) THEN
             IF (Nmethod(ng).eq.0) THEN
@@ -1599,20 +1599,21 @@
           END IF
 #     ifdef ADJUST_BOUNDARY
           IF (ANY(LwrtNRM(:,ng))) THEN
-            WRITE (out,170) CnormB(isFsur,1:4), 'CnormB(isFsur)',       &
+            WRITE (out,170) (CnormB(isFsur,i),i=1,4), 'CnormB(isFsur)', &
      &            'Compute boundary 2D RHO-normalization factors.'
-            WRITE (out,170) CnormB(isUbar,1:4), 'CnormB(isUbar)',       &
+            WRITE (out,170) (CnormB(isUbar,i),i=1,4), 'CnormB(isUbar)', &
      &            'Compute boundary 2D U-normalization factors.'
-            WRITE (out,170) CnormB(isVbar,1:4), 'CnormB(isVbar)',       &
-     &            'Compute initial 2D V-normalization factors.'
+            WRITE (out,170) (CnormB(isVbar,i),i=1,4), 'CnormB(isVbar)', &
+     &            'Compute boundary 2D V-normalization factors.'
 #      ifdef SOLVE3D
-            WRITE (out,170) CnormB(isUvel,1:4), 'CnormB(isUvel)',       &
-     &            'Compute initial 3D U-normalization factors.'
-            WRITE (out,170) CnormB(isVvel,1:4), 'CnormI(isVvel)',       &
-     &            'Compute initial 3D V-normalization factors.'
+            WRITE (out,170) (CnormB(isUvel,i),i=1,4), 'CnormB(isUvel)', &
+     &            'Compute boundary 3D U-normalization factors.'
+            WRITE (out,170) (CnormB(isVvel,i),i=1,4), 'CnormB(isVvel)', &
+     &            'Compute boundary 3D V-normalization factors.'
             DO itrc=1,NT(ng)
-              WRITE (out,180) CnormB(isTvar(itrc),1:4),'CnormI(isTvar)',&
-     &            'Compute initial normalization factors for tracer ',  &
+              WRITE (out,180) (CnormB(isTvar(itrc),i),i=1,4),           &
+     &                        'CnormB(isTvar)',                         &
+     &            'Compute boundary normalization factors for tracer ', &
      &            itrc, TRIM(Vname(1,idTvar(itrc)))
             END DO
 #      endif
@@ -1621,9 +1622,9 @@
 #     ifdef ADJUST_WSTRESS
           IF (ANY(LwrtNRM(:,ng))) THEN
             WRITE (out,70) Cnorm(1,isUstr), 'CnormF(isUstr)',           &
-     &            'Compute normalization factors at surface U-stress.'
+     &            'Compute surface U-stress normalization factors.'
             WRITE (out,70) Cnorm(1,isVstr), 'CnormF(isVstr)',           &
-     &            'Compute normalization factors at surface V-stress.'
+     &            'Compute surface V-stress normalization factors.'
           END IF
 #     endif
 #     if defined ADJUST_STFLUX && defined SOLVE3D
@@ -1662,9 +1663,10 @@
      &            'Vertical diffusion factor, boundary conditions.'
 #     endif
 #    endif
-#    if defined RBL4DVAR           || defined R4DVAR    || \
-        defined SENSITIVITY_4DVAR  || defined SP4DVAR   || \
-        defined TL_RBL4DVAR        || defined TL_R4DVAR
+#    if defined NORMALIZATION || defined RBL4DVAR           || \
+        defined R4DVAR        || defined SENSITIVITY_4DVAR  || \
+        defined SP4DVAR       || defined TL_RBL4DVAR        || \
+        defined TL_R4DVAR
 #     ifdef MULTI_SCALE_B
           WRITE (out,80) Nscale(ng), 'Nscale',                          &
      &          'Number of multiscales for modeling B-Error Covariance.'
@@ -1675,39 +1677,39 @@
             WRITE (out,90) NiterCI(ns,ng), 'NiterCI',                   &
      &            'B-scale ', ns, ', Number of multiscale implicit '//  &
      &            'Chebyshev solver iterations.'
-            WRITE (out,90) Mlap(isFsur,ns,ng), 'Mlap(isFsur)',          &
+            WRITE (out,90) Nlap(isFsur,ns,ng), 'Mlap(isFsur)',          &
      &            'B-scale ', ns, ', smoother applications: '//         &
      &            'free-surface.'
-            WRITE (out,90) Mlap(isUbar,ns,ng), 'Mlap(isUbar)',          &
+            WRITE (out,90) Nlap(isUbar,ns,ng), 'Mlap(isUbar)',          &
      &            'B-scale ', ns, ', smoother applications: '//         &
      &            '2D U-momentum.'
-            WRITE (out,90) Mlap(isVbar,ns,ng), 'Mlap(isVbar)',          &
+            WRITE (out,90) Nlap(isVbar,ns,ng), 'Mlap(isVbar)',          &
      &            'B-scale ', ns, ', smoother applications: '//         &
      &            '2D V-momentum.'
 #      ifdef SOLVE3D
-            WRITE (out,90) Mlap(isUvel,ns,ng), 'Mlap(isUvel)',          &
+            WRITE (out,90) Nlap(isUvel,ns,ng), 'Mlap(isUvel)',          &
      &            'B-scale ', ns, ', smoother applications: '//         &
      &            '3D U-momentum.'
-            WRITE (out,90) Mlap(isVvel,ns,ng), 'Mlap(isVvel)',          &
+            WRITE (out,90) Nlap(isVvel,ns,ng), 'Mlap(isVvel)',          &
      &            'B-scale ', ns, ', smoother applications: '//         &
      &            '3D V-momentum.'
             DO itrc=1,NT(ng)
-              WRITE (out,90) Mlap(isTvar(itrc),ns,ng), 'Mlap(idTvar)',  &
+              WRITE (out,90) Nlap(isTvar(itrc),ns,ng), 'Mlap(idTvar)',  &
      &            'B-scale ', ns, ', smoother applications: '//         &
      &            TRIM(Vname(1,idTvar(itrc)))
             END DO
 #      endif
 #      ifdef ADJUST_WSTRESS
-            WRITE (out,90) Mlap(isUstr,ns,ng), 'Mlap(isUstr)',          &
+            WRITE (out,90) Nlap(isUstr,ns,ng), 'Mlap(isUstr)',          &
      &            'B-scale ', ns, ', smoother applications: '//         &
      &            'Surface U-stress.'
-            WRITE (out,90) Mlap(isVstr,ns,ng), 'Mlap(isVstr)',          &
+            WRITE (out,90) Nlap(isVstr,ns,ng), 'Mlap(isVstr)',          &
      &            'B-scale ', ns, ', smoother applications: '//         &
      &            'Surface V-stress.'
 #      endif
 #      if defined ADJUST_STFLUX && defined SOLVE3D
             DO itrc=1,NT(ng)
-              WRITE (out,90) Mlap(isTsur(itrc),ns,ng), 'Mlap(idTvar)',  &
+              WRITE (out,90) Nlap(isTsur(itrc),ns,ng), 'Mlap(idTvar)',  &
      &            'B-scale ', ns, ', smoother applications: '//         &
      &            'Surface flux, '//TRIM(Vname(1,idTvar(itrc)))//'.'
             END DO
@@ -2185,19 +2187,20 @@
           END DO
 #    endif
 #    ifdef ADJUST_BOUNDARY
-          WRITE (out,170) Lobc(1:4,isFsur,ng), 'Lobc(isFsur)',          &
+          WRITE (out,170) (Lobc(i,isFsur,ng),i=1,4), 'Lobc(isFsur)',    &
      &            'Adjusting free-surface boundaries.'
-          WRITE (out,170) Lobc(1:4,isUbar,ng), 'Lobc(isUbar)',          &
+          WRITE (out,170) (Lobc(i,isUbar,ng),i=1,4), 'Lobc(isUbar)',    &
      &            'Adjusting 2D U-momentum boundaries.'
-          WRITE (out,170) Lobc(1:4,isVbar,ng), 'Lobc(isVbar)',          &
+          WRITE (out,170) (Lobc(i,isVbar,ng),i=1,4), 'Lobc(isVbar)',    &
      &            'Adjusting 2D V-momentum boundaries.'
 #     ifdef SOLVE3D
-          WRITE (out,170) Lobc(1:4,isUvel,ng), 'Lobc(isUvel)',          &
+          WRITE (out,170) (Lobc(i,isUvel,ng),i=1,4), 'Lobc(isUvel)',    &
      &            'Adjusting 3D U-momentum boundaries.'
-          WRITE (out,170) Lobc(1:4,isVvel,ng), 'Lobc(isVvel)',          &
+          WRITE (out,170) (Lobc(i,isVvel,ng),i=1,4), 'Lobc(isVvel)',    &
      &            'Adjusting 3D V-momentum boundaries.'
           DO itrc=1,NT(ng)
-            WRITE (out,180) Lobc(1:4,isTvar(itrc),ng),'Lobc(isTvar)',   &
+            WRITE (out,180) (Lobc(i,isTvar(itrc),ng),i=1,4),            &
+     &                      'Lobc(isTvar)',                             &
      &            'Adjusting boundaries for tracer ', itrc,             &
      &            TRIM(Vname(1,idTvar(itrc)))
           END DO

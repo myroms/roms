@@ -91,8 +91,6 @@
 !
 !  Local variable declarations.
 !
-      integer, parameter :: Natt = 25
-!
       integer :: Mstatedim, NCVdim, SworkDdim, SworkLdim
       integer :: char1dim, char2dim, iaitrdim, iaupddim, iaup2dim
       integer :: iparamdim, ipntrdim, laitrdim, laup2dim, raitrdim
@@ -459,8 +457,6 @@
       integer, intent(in) :: ng, model
 !
 !  Local variable declarations.
-!
-      integer, parameter :: Natt = 25
 !
       integer :: Mstatedim, NCVdim, SworkDdim, SworkLdim
       integer :: char1dim, char2dim, iaitrdim, iaupddim, iaup2dim

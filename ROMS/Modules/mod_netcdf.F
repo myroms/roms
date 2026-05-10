@@ -54,6 +54,7 @@
         MODULE PROCEDURE netcdf_get_fvar_2d
         MODULE PROCEDURE netcdf_get_fvar_3d
         MODULE PROCEDURE netcdf_get_fvar_4d
+        MODULE PROCEDURE netcdf_get_fvar_5d
       END INTERFACE netcdf_get_fvar
 !
       INTERFACE netcdf_get_ivar                  ! reads integer
@@ -91,6 +92,7 @@
         MODULE PROCEDURE netcdf_put_fvar_2d
         MODULE PROCEDURE netcdf_put_fvar_3d
         MODULE PROCEDURE netcdf_put_fvar_4d
+        MODULE PROCEDURE netcdf_put_fvar_5d
       END INTERFACE netcdf_put_fvar
 !
       INTERFACE netcdf_put_ivar                  ! writes integer
@@ -513,7 +515,7 @@
         END IF
       END IF
 !
-!  Close input NetCDF file.
+!  Close NetCDF file.
 !
       IF (.not.PRESENT(ncid)) THEN
         CALL netcdf_close (ng, model, my_ncid, ncname, .FALSE.)
@@ -2017,7 +2019,7 @@
         END IF
       END IF
 !
-!  Close input NetCDF file.
+!  Close NetCDF file.
 !
       IF (.not.PRESENT(ncid)) THEN
         CALL netcdf_close (ng, model, my_ncid, ncname, .FALSE.)
@@ -4325,7 +4327,7 @@
      &  __FILE__//", netcdf_get_fvar_3d"
 !
 !-----------------------------------------------------------------------
-!  Read in a floating-point 2D-array variable.
+!  Read in a floating-point 3D-array variable.
 !-----------------------------------------------------------------------
 !
       IF (PRESENT(start).and.PRESENT(total)) THEN
@@ -4579,7 +4581,7 @@
      &  __FILE__//", netcdf_get_fvar_4d"
 !
 !-----------------------------------------------------------------------
-!  Read in a floating-point 2D-array variable.
+!  Read in a floating-point 4D-array variable.
 !-----------------------------------------------------------------------
 !
       IF (PRESENT(start).and.PRESENT(total)) THEN
@@ -4757,6 +4759,276 @@
 !
       RETURN
       END SUBROUTINE netcdf_get_fvar_4d
+!
+      SUBROUTINE netcdf_get_fvar_5d (ng, model, ncname, myVarName, A,   &
+     &                               ncid, start, total, broadcast,     &
+     &                               min_val, max_val)
+!
+!=======================================================================
+!                                                                      !
+!  This routine reads requested floating-point 5D-array variable from  !
+!  specified NetCDF file.                                              !
+!                                                                      !
+!  On Input:                                                           !
+!                                                                      !
+!     ng           Nested grid number (integer)                        !
+!     model        Calling model identifier (integer)                  !
+!     ncname       NetCDF file name (string)                           !
+!     myVarName    Variable name (string)                              !
+!     ncid         NetCDF file ID (integer, OPTIONAL)                  !
+!     start        Starting index where the first of the data values   !
+!                    will be read along each dimension (integer,       !
+!                    OPTIONAL)                                         !
+!     total        Number of data values to be read along each         !
+!                    dimension (integer, OPTIONAL)                     !
+!     broadcast    Switch to broadcast read values from root to all    !
+!                    members of the communicator in distributed-       !
+!                    memory applications (logical, OPTIONAL,           !
+!                    default=TRUE)                                     !
+!                                                                      !
+!  On Ouput:                                                           !
+!                                                                      !
+!     A            Read 5D-array variable (real)                       !
+!     min_val      Read data minimum value (real, OPTIONAL)            !
+!     max_val      Read data maximum value (real, OPTIONAL)            !
+!                                                                      !
+!  Examples:                                                           !
+!                                                                      !
+!    CALL netcdf_get_fvar (ng, iNLM, 'file.nc', 'VarName', fvar)       !
+!                                                                      !
+!=======================================================================
+!
+!  Imported variable declarations.
+!
+      logical, intent(in), optional :: broadcast
+!
+      integer, intent(in) :: ng, model
+
+      integer, intent(in), optional :: ncid
+      integer, intent(in), optional :: start(:)
+      integer, intent(in), optional :: total(:)
+!
+      character (len=*), intent(in) :: ncname
+      character (len=*), intent(in) :: myVarName
+!
+      real(r8), intent(out), optional :: min_val
+      real(r8), intent(out), optional :: max_val
+
+      real(r8), intent(out) :: A(:,:,:,:,:)
+!
+!  Local variable declarations.
+!
+#if !defined PARALLEL_IO && defined DISTRIBUTE
+      logical :: DoBroadcast
+#endif
+      logical, dimension(3) :: foundit
+!
+      integer :: i, j, k, l, m, my_ncid, status, varid
+
+      integer, dimension(5) :: Asize
+
+#if !defined PARALLEL_IO && defined DISTRIBUTE
+      integer, dimension(2) :: ibuffer
+#endif
+!
+      real(r8) :: Afactor, Aoffset, Aspval
+
+      real(r8), parameter :: Aepsilon = 1.0E-8_r8
+
+      real(r8), dimension(3) :: AttValue
+!
+      character (len=12), dimension(3) :: AttName
+
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__//", netcdf_get_fvar_5d"
+!
+!-----------------------------------------------------------------------
+!  Read in a floating-point 5D-array variable.
+!-----------------------------------------------------------------------
+!
+      IF (PRESENT(start).and.PRESENT(total)) THEN
+        Asize(1)=total(1)
+        Asize(2)=total(2)
+        Asize(3)=total(3)
+        Asize(4)=total(4)
+        Asize(5)=total(5)
+      ELSE
+        Asize(1)=UBOUND(A, DIM=1)
+        Asize(2)=UBOUND(A, DIM=2)
+        Asize(3)=UBOUND(A, DIM=3)
+        Asize(4)=UBOUND(A, DIM=4)
+        Asize(5)=UBOUND(A, DIM=5)
+      END IF
+!
+!  If NetCDF file ID is not provided, open NetCDF for reading.
+!
+      IF (.not.PRESENT(ncid)) THEN
+        CALL netcdf_open (ng, model, TRIM(ncname), 0, my_ncid)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+      ELSE
+        my_ncid=ncid
+      END IF
+
+#if !defined PARALLEL_IO && defined DISTRIBUTE
+!
+!  Determine if the read data is only needed and allocated by the master
+!  node ins distribute-memory applications.
+!
+      IF (.not.PRESENT(broadcast)) THEN
+        DoBroadcast=.TRUE.
+      ELSE
+        DoBroadcast=broadcast
+      END IF
+#endif
+!
+!  Read in variable.
+!
+      IF (InpThread) THEN
+        status=nf90_inq_varid(my_ncid, TRIM(myVarName), varid)
+        IF (status.eq.nf90_noerr) THEN
+          IF (PRESENT(start).and.PRESENT(total)) THEN
+            status=nf90_get_var(my_ncid, varid, A, start, total)
+          ELSE
+            status=nf90_get_var(my_ncid, varid, A)
+          END IF
+          IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+            WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
+     &                        TRIM(SourceFile), nf90_strerror(status)
+            exit_flag=2
+            ioerror=status
+          END IF
+        ELSE
+          WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),              &
+     &                      TRIM(SourceFile), nf90_strerror(status)
+          exit_flag=2
+          ioerror=status
+        END IF
+      END IF
+
+#if !defined PARALLEL_IO && defined DISTRIBUTE
+!
+!  Broadcast read variable to all processors in the group.
+!
+      ibuffer(1)=exit_flag
+      ibuffer(2)=ioerror
+      CALL mp_bcasti (ng, model, ibuffer)
+      exit_flag=ibuffer(1)
+      ioerror=ibuffer(2)
+      IF (DoBroadcast.and.(exit_flag.eq.NoError)) THEN
+        CALL mp_bcastf (ng, model, A)
+      END IF
+#endif
+!
+!  Check if the following attributes: "scale_factor", "add_offset", and
+!  "_FillValue" are present in the input NetCDF variable:
+!
+!  If the "scale_value" attribute is present, the data is multiplied by
+!  this factor after reading.
+!  If the "add_offset" attribute is present, this value is added to the
+!  data after reading.
+!  If both "scale_factor" and "add_offset" attributes are present, the
+!  data are first scaled before the offset is added.
+!  If the "_FillValue" attribute is present, the data having this value
+!  is treated as missing and it is replaced with zero. This feature it
+!  is usually related with the land/sea masking.
+!
+      AttName(1)='scale_factor'
+      AttName(2)='add_offset  '
+      AttName(3)='_FillValue  '
+
+      CALL netcdf_get_fatt (ng, model, ncname, varid, AttName,          &
+     &                      AttValue, foundit,                          &
+     &                      ncid = my_ncid)
+
+      IF (exit_flag.eq.NoError) THEN
+        IF (.not.foundit(1)) THEN
+          Afactor=1.0_r8
+        ELSE
+          Afactor=AttValue(1)
+        END IF
+
+        IF (.not.foundit(2)) THEN
+          Aoffset=0.0_r8
+        ELSE
+          Aoffset=AttValue(2)
+        END IF
+
+        IF (.not.foundit(3)) THEN
+          Aspval=spval_check
+        ELSE
+          Aspval=AttValue(3)
+        END IF
+
+        DO m=1,Asize(5)                       ! zero out missing values
+          DO l=1,Asize(4)
+            DO k=1,Asize(3)
+              DO j=1,Asize(2)
+                DO i=1,Asize(1)
+                  IF ((foundit(3).and.                                  &
+     &                 (ABS(A(i,j,k,l,m)-Aspval).lt.Aepsilon)).or.      &
+     &                (.not.foundit(3).and.                             &
+     &                 (ABS(A(i,j,k,l,m)).ge.ABS(Aspval)))) THEN
+                    A(i,j,k,l,m)=0.0_r8
+                  END IF
+                END DO
+              END DO
+            END DO
+          END DO
+        END DO
+
+        IF (foundit(1)) THEN                  ! scale data
+          DO m=1,Asize(5)
+            DO l=1,Asize(4)
+              DO k=1,Asize(3)
+                DO j=1,Asize(2)
+                  DO i=1,Asize(1)
+                    A(i,j,k,l,k)=Afactor*A(i,j,k,l,m)
+                  END DO
+                END DO
+              END DO
+            END DO
+          END DO
+        END IF
+
+        IF (foundit(2)) THEN                  ! add data offset
+          DO m=1,Asize(5)
+            DO l=1,Asize(4)
+              DO k=1,Asize(3)
+                DO j=1,Asize(2)
+                  DO i=1,Asize(1)
+                    A(i,j,k,l,m)=A(i,j,k,l,m)+Aoffset
+                  END DO
+                END DO
+              END DO
+            END DO
+          END DO
+        END IF
+      END IF
+!
+!  Compute minimum and maximum values of read variable.
+!
+      IF (PRESENT(min_val)) THEN
+        min_val=MINVAL(A)
+      END IF
+      IF (PRESENT(max_val)) THEN
+        max_val=MAXVAL(A)
+      END IF
+!
+!  If NetCDF file ID is not provided, close input NetCDF file.
+!
+      IF (.not.PRESENT(ncid)) THEN
+        CALL netcdf_close (ng, model, my_ncid, ncname, .FALSE.)
+      END IF
+!
+  10  FORMAT (/,' NETCDF_GET_FVAR_5D - error while reading variable:',  &
+     &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a, &
+     &        /,22x,a)
+  20  FORMAT (/,' NETCDF_GET_FVAR_5D - error while inquiring ID for ',  &
+     &        'variable:',2x,a,/,22x,'in input file:',2x,a,/,22x,       &
+     &        'call from:',2x,a,/,22x,a)
+!
+      RETURN
+      END SUBROUTINE netcdf_get_fvar_5d
 !
       SUBROUTINE netcdf_get_lvar_0d (ng, model, ncname, myVarName, A,   &
      &                               ncid, start, total)
@@ -6725,18 +6997,18 @@
       ioerror=ibuffer(2)
 # endif
 !
-!  Close input file.
+!  Close NetCDF file.
 !
       IF (.not.PRESENT(ncid)) THEN
         CALL netcdf_close (ng, model, my_ncid, ncname, .FALSE.)
       END IF
 !
   10  FORMAT (/,' NETCDF_PUT_FVAR_0DP - error while inquiring ID for ', &
-     &        'variable:',2x,a,/,23x,'in input file:',2x,a,/,23x,       &
+     &        'variable:',2x,a,/,23x,'in output file:',2x,a,/,23x,      &
      &        'call from:',2x,a,/,23x,a)
   20  FORMAT (/,' NETCDF_PUT_FVAR_0DP - error while writing variable:', &
-     &        2x,a,/,23x,'in input file:',2x,a,/,23x,'call from:',2x,a, &
-     &        /,23x,a)
+     &        2x,a,/,23x,'in output file:',2x,a,/,23x,'call from:',2x,  &
+     &        a,/,23x,a)
 !
       RETURN
       END SUBROUTINE netcdf_put_fvar_0dp
@@ -6849,18 +7121,18 @@
       ioerror=ibuffer(2)
 # endif
 !
-!  Close input file.
+!  Close NetCDF file.
 !
       IF (.not.PRESENT(ncid)) THEN
         CALL netcdf_close (ng, model, my_ncid, ncname, .FALSE.)
       END IF
 !
   10  FORMAT (/,' NETCDF_PUT_FVAR_1DP - error while inquiring ID for ', &
-     &        'variable:',2x,a,/,23x,'in input file:',2x,a,/,23x,       &
+     &        'variable:',2x,a,/,23x,'in output file:',2x,a,/,23x,      &
      &        'call from:',2x,a,/,23x,a)
   20  FORMAT (/,' NETCDF_PUT_FVAR_1DP - error while writing variable:', &
-     &        2x,a,/,23x,'in input file:',2x,a,/,23x,'call from:',2x,a, &
-     &        /,23x,a)
+     &        2x,a,/,23x,'in output file:',2x,a,/,23x,'call from:',2x,  &
+     &        a,/,23x,a)
 !
       RETURN
       END SUBROUTINE netcdf_put_fvar_1dp
@@ -6973,18 +7245,18 @@
       ioerror=ibuffer(2)
 # endif
 !
-!  Close input NetCDF file.
+!  Close NetCDF file.
 !
       IF (.not.PRESENT(ncid)) THEN
         CALL netcdf_close (ng, model, my_ncid, ncname, .FALSE.)
       END IF
 !
   10  FORMAT (/,' NETCDF_PUT_FVAR_2DP - error while inquiring ID for ', &
-     &        'variable:',2x,a,/,23x,'in input file:',2x,a,/,22x,       &
+     &        'variable:',2x,a,/,23x,'in output file:',2x,a,/,22x,      &
      &        'call from:',2x,a,/23x,a)
   20  FORMAT (/,' NETCDF_PUT_FVAR_2DP - error while writing variable:', &
-     &        2x,a,/,23x,'in input file:',2x,a,/,23x,'call from:',2x,a, &
-     &        /,23x,a)
+     &        2x,a,/,23x,'in output file:',2x,a,/,23x,'call from:',2x,  &
+     &        a,/,23x,a)
 !
       RETURN
       END SUBROUTINE netcdf_put_fvar_2dp
@@ -7097,18 +7369,18 @@
       ioerror=ibuffer(2)
 # endif
 !
-!  Close input NetCDF file.
+!  Close NetCDF file.
 !
       IF (.not.PRESENT(ncid)) THEN
         CALL netcdf_close (ng, model, my_ncid, ncname, .FALSE.)
       END IF
 !
   10  FORMAT (/,' NETCDF_PUT_FVAR_3DP - error while inquiring ID for ', &
-     &        'variable:',2x,a,/,23x,'in input file:',2x,a,/,22x,       &
+     &        'variable:',2x,a,/,23x,'in output file:',2x,a,/,22x,      &
      &        'call from:',2x,a,/,23x,a)
   20  FORMAT (/,' NETCDF_PUT_FVAR_3DP - error while writing variable:', &
-     &        2x,a,/,23x,'in input file:',2x,a,/,23x,'call from:',2x,a, &
-     &        /,23x,a)
+     &        2x,a,/,23x,'in output file:',2x,a,/,23x,'call from:',2x,  &
+     &        a,/,23x,a)
 !
       RETURN
       END SUBROUTINE netcdf_put_fvar_3dp
@@ -7229,18 +7501,18 @@
       ioerror=ibuffer(2)
 #endif
 !
-!  Close input file.
+!  Close NetCDF file.
 !
       IF (.not.PRESENT(ncid)) THEN
         CALL netcdf_close (ng, model, my_ncid, ncname, .FALSE.)
       END IF
 !
   10  FORMAT (/,' NETCDF_PUT_FVAR_0D - error while inquiring ID for ',  &
-     &        'variable:',2x,a,/,22x,'in input file:',2x,a,/,22x,       &
+     &        'variable:',2x,a,/,22x,'in output file:',2x,a,/,22x,      &
      &        'call from:',2x,a,/,22x,a)
   20  FORMAT (/,' NETCDF_PUT_FVAR_0D - error while writing variable:',  &
-     &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a, &
-     &        /,22x,a)
+     &        2x,a,/,22x,'in output file:',2x,a,/,22x,'call from:',2x,  &
+     &        a,/,22x,a)
 !
       RETURN
       END SUBROUTINE netcdf_put_fvar_0d
@@ -7353,18 +7625,18 @@
       ioerror=ibuffer(2)
 #endif
 !
-!  Close input file.
+!  Close NetCDF file.
 !
       IF (.not.PRESENT(ncid)) THEN
         CALL netcdf_close (ng, model, my_ncid, ncname, .FALSE.)
       END IF
 !
   10  FORMAT (/,' NETCDF_PUT_FVAR_1D - error while inquiring ID for ',  &
-     &        'variable:',2x,a,/,22x,'in input file:',2x,a,/,22x,       &
+     &        'variable:',2x,a,/,22x,'in output file:',2x,a,/,22x,      &
      &        'call from:',2x,a,/,22x,a)
   20  FORMAT (/,' NETCDF_PUT_FVAR_1D - error while writing variable:',  &
-     &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a, &
-     &        /,22x,a)
+     &        2x,a,/,22x,'in output file:',2x,a,/,22x,'call from:',2x,  &
+     &        a,/,22x,a)
 !
       RETURN
       END SUBROUTINE netcdf_put_fvar_1d
@@ -7477,18 +7749,18 @@
       ioerror=ibuffer(2)
 #endif
 !
-!  Close input NetCDF file.
+!  Close NetCDF file.
 !
       IF (.not.PRESENT(ncid)) THEN
         CALL netcdf_close (ng, model, my_ncid, ncname, .FALSE.)
       END IF
 !
   10  FORMAT (/,' NETCDF_PUT_FVAR_2D - error while inquiring ID for ',  &
-     &        'variable:',2x,a,/,22x,'in input file:',2x,a,/,22x,       &
+     &        'variable:',2x,a,/,22x,'in output file:',2x,a,/,22x,      &
      &        'call from:',2x,a,/,22x,a)
   20  FORMAT (/,' NETCDF_PUT_FVAR_2D - error while writing variable:',  &
-     &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a, &
-     &        /,22x,a)
+     &        2x,a,/,22x,'in output file:',2x,a,/,22x,'call from:',2x,  &
+     &        a,/,22x,a)
 !
       RETURN
       END SUBROUTINE netcdf_put_fvar_2d
@@ -7601,18 +7873,18 @@
       ioerror=ibuffer(2)
 #endif
 !
-!  Close input NetCDF file.
+!  Close NetCDF file.
 !
       IF (.not.PRESENT(ncid)) THEN
         CALL netcdf_close (ng, model, my_ncid, ncname, .FALSE.)
       END IF
 !
   10  FORMAT (/,' NETCDF_PUT_FVAR_3D - error while inquiring ID for ',  &
-     &        'variable:',2x,a,/,22x,'in input file:',2x,a,/,22x,       &
+     &        'variable:',2x,a,/,22x,'in output file:',2x,a,/,22x,      &
      &        'call from:',2x,a,/,22x,a)
   20  FORMAT (/,' NETCDF_PUT_FVAR_3D - error while writing variable:',  &
-     &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a, &
-     &        /,22x,a)
+     &        2x,a,/,22x,'in output file:',2x,a,/,22x,'call from:',2x,  &
+     &        a,/,22x,a)
 !
       RETURN
       END SUBROUTINE netcdf_put_fvar_3d
@@ -7725,21 +7997,145 @@
       ioerror=ibuffer(2)
 #endif
 !
-!  Close input NetCDF file.
+!  Close NetCDF file.
 !
       IF (.not.PRESENT(ncid)) THEN
         CALL netcdf_close (ng, model, my_ncid, ncname, .FALSE.)
       END IF
 !
   10  FORMAT (/,' NETCDF_PUT_FVAR_4D - error while inquiring ID for ',  &
-     &        'variable:',2x,a,/,22x,'in input file:',2x,a,/,22x,       &
+     &        'variable:',2x,a,/,22x,'in output file:',2x,a,/,22x,      &
      &        'call from:',2x,a,/,22x,a)
   20  FORMAT (/,' NETCDF_PUT_FVAR_4D - error while writing variable:',  &
-     &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a, &
-     &        /,22x,a)
+     &        2x,a,/,22x,'in output file:',2x,a,/,22x,'call from:',2x,  &
+     &        a,/,22x,a)
 !
       RETURN
       END SUBROUTINE netcdf_put_fvar_4d
+!
+      SUBROUTINE netcdf_put_fvar_5d (ng, model, ncname, myVarName, A,   &
+     &                               start, total, ncid, varid)
+!
+!=======================================================================
+!                                                                      !
+!  This routine writes a floating-point 5D-array variable into a file. !
+!  If the NetCDF ID is not provided,  it opens the file,  writes data, !
+!  and then closes the file.                                           !
+!                                                                      !
+!  On Input:                                                           !
+!                                                                      !
+!     ng           Nested grid number (integer)                        !
+!     model        Calling model identifier (integer)                  !
+!     ncname       NetCDF file name (string)                           !
+!     myVarName    Variable name (string)                              !
+!     A            Data value(s) to be written (real)                  !
+!     start        Starting index where the first of the data values   !
+!                    will be written along each dimension (integer)    !
+!     total        Number of data values to be written along each      !
+!                    dimension (integer)                               !
+!     ncid         NetCDF file ID (integer, OPTIONAL)                  !
+!     varid        NetCDF variable ID (integer, OPTIONAL)              !
+!                                                                      !
+!  On Ouput:                                                           !
+!                                                                      !
+!     exit_flag    Error flag (integer) stored in MOD_SCALARS          !
+!     ioerror      NetCDF return code (integer) stored in MOD_IOUNITS  !
+!                                                                      !
+!  Notice: This routine must be used to write only nontiled variables. !
+!                                                                      !
+!=======================================================================
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: ng, model
+
+      integer, intent(in) :: start(:), total(:)
+
+      integer, intent(in), optional :: ncid, varid
+!
+      real(r8), intent(in) :: A(:,:,:,:,:)
+!
+      character (len=*), intent(in) :: ncname
+      character (len=*), intent(in) :: myVarName
+!
+!  Local variable declarations.
+!
+      integer :: my_ncid, my_varid, status
+
+#if !defined PARALLEL_IO && defined DISTRIBUTE
+      integer, dimension(2) :: ibuffer
+#endif
+!
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__//", netcdf_put_fvar_5d"
+!
+!-----------------------------------------------------------------------
+!  Read in a floating-point 5D-array variable.
+!-----------------------------------------------------------------------
+!
+!  If NetCDF file ID is not provided, open NetCDF for writing.
+!
+      IF (.not.PRESENT(ncid)) THEN
+        CALL netcdf_open (ng, model, TRIM(ncname), 1, my_ncid)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+      ELSE
+        my_ncid=ncid
+      END IF
+!
+!  If variable ID is not provided, inquire its value.
+!
+      IF (OutThread) THEN
+        IF (.not.PRESENT(varid)) THEN
+          status=nf90_inq_varid(my_ncid, TRIM(myVarName), my_varid)
+          IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+            WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),            &
+     &                        TRIM(SourceFile), nf90_strerror(status)
+            exit_flag=3
+            ioerror=status
+          END IF
+        ELSE
+          my_varid=varid
+        END IF
+!
+!  Write out data.
+!
+        IF (exit_flag.eq.NoError) THEN
+          status=nf90_put_var(my_ncid, my_varid, A, start, total)
+          IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+            WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),            &
+     &                        TRIM(SourceFile), nf90_strerror(status)
+            exit_flag=3
+            ioerror=status
+          END IF
+        END IF
+      END IF
+
+#if !defined PARALLEL_IO && defined DISTRIBUTE
+!
+!  Broadcast error flags to all processors in the group.
+!
+      ibuffer(1)=exit_flag
+      ibuffer(2)=ioerror
+      CALL mp_bcasti (ng, model, ibuffer)
+      exit_flag=ibuffer(1)
+      ioerror=ibuffer(2)
+#endif
+!
+!  Close NetCDF file.
+!
+      IF (.not.PRESENT(ncid)) THEN
+        CALL netcdf_close (ng, model, my_ncid, ncname, .FALSE.)
+      END IF
+!
+  10  FORMAT (/,' NETCDF_PUT_FVAR_5D - error while inquiring ID for ',  &
+     &        'variable:',2x,a,/,22x,'in output file:',2x,a,/,22x,      &
+     &        'call from:',2x,a,/,22x,a)
+  20  FORMAT (/,' NETCDF_PUT_FVAR_5D - error while writing variable:',  &
+     &        2x,a,/,22x,'in output file:',2x,a,/,22x,'call from:',2x,  &
+     &        a,/,22x,a)
+!
+      RETURN
+      END SUBROUTINE netcdf_put_fvar_5d
 !
       SUBROUTINE netcdf_put_ivar_0d (ng, model, ncname, myVarName, A,   &
      &                               start, total, ncid, varid)
@@ -7856,18 +8252,18 @@
       ioerror=ibuffer(2)
 #endif
 !
-!  Close file.
+!  Close NetCDF file.
 !
       IF (.not.PRESENT(ncid)) THEN
         CALL netcdf_close (ng, model, my_ncid, ncname, .FALSE.)
       END IF
 !
   10  FORMAT (/,' NETCDF_PUT_IVAR_0D - error while inquiring ID for ',  &
-     &        'variable:',2x,a,/,22x,'in input file:',2x,a,/,22x,       &
+     &        'variable:',2x,a,/,22x,'in output file:',2x,a,/,22x,      &
      &        'call from:',2x,a,/,22x,a)
   20  FORMAT (/,' NETCDF_PUT_IVAR_0D - error while writing variable:',  &
-     &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a, &
-     &        /,22x,a)
+     &        2x,a,/,22x,'in output file:',2x,a,/,22x,'call from:',2x,  &
+     &        a,/,22x,a)
 !
       RETURN
       END SUBROUTINE netcdf_put_ivar_0d
@@ -7980,18 +8376,18 @@
       ioerror=ibuffer(2)
 #endif
 !
-!  Close file.
+!  Close NetCDF file.
 !
       IF (.not.PRESENT(ncid)) THEN
         CALL netcdf_close (ng, model, my_ncid, ncname, .FALSE.)
       END IF
 !
   10  FORMAT (/,' NETCDF_PUT_IVAR_1D - error while inquiring ID for ',  &
-     &        'variable:',2x,a,/,22x,'in input file:',2x,a,/,22x,       &
+     &        'variable:',2x,a,/,22x,'in output file:',2x,a,/,22x,      &
      &        'call from:',2x,a,/,22x,a)
   20  FORMAT (/,' NETCDF_PUT_IVAR_1D - error while writing variable:',  &
-     &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a, &
-     &        /,22x,a)
+     &        2x,a,/,22x,'in output file:',2x,a,/,22x,'call from:',2x,  &
+     &        a,/,22x,a)
 !
       RETURN
       END SUBROUTINE netcdf_put_ivar_1d
@@ -8104,18 +8500,18 @@
       ioerror=ibuffer(2)
 #endif
 !
-!  Close file.
+!  Close NetCDF file.
 !
       IF (.not.PRESENT(ncid)) THEN
         CALL netcdf_close (ng, model, my_ncid, ncname, .FALSE.)
       END IF
 !
   10  FORMAT (/,' NETCDF_PUT_IVAR_2D - error while inquiring ID for ',  &
-     &        'variable:',2x,a,/,22x,'in input file:',2x,a,/,22x,       &
+     &        'variable:',2x,a,/,22x,'in output file:',2x,a,/,22x,      &
      &        'call from:',2x,a,/,22x,a)
   20  FORMAT (/,' NETCDF_PUT_IVAR_2D - error while writing variable:',  &
-     &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a, &
-     &        /,22x,a)
+     &        2x,a,/,22x,'in output file:',2x,a,/,22x,'call from:',2x,  &
+     &        a,/,22x,a)
 !
       RETURN
       END SUBROUTINE netcdf_put_ivar_2d
@@ -8248,18 +8644,18 @@
       ioerror=ibuffer(2)
 #endif
 !
-!  Close file.
+!  Close NetCDF file.
 !
       IF (.not.PRESENT(ncid)) THEN
         CALL netcdf_close (ng, model, my_ncid, ncname, .FALSE.)
       END IF
 !
   10  FORMAT (/,' NETCDF_PUT_LVAR_0D - error while inquiring ID for ',  &
-     &        'variable:',2x,a,/,22x,'in input file:',2x,a,/,22x,       &
+     &        'variable:',2x,a,/,22x,'in output file:',2x,a,/,22x,      &
      &        'call from:',2x,a,/,22x,a)
   20  FORMAT (/,' NETCDF_PUT_LVAR_0D - error while writing variable:',  &
-     &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a, &
-     &        /,22x,a)
+     &        2x,a,/,22x,'in output file:',2x,a,/,22x,'call from:',2x,  &
+     &        a,/,22x,a)
 !
       RETURN
       END SUBROUTINE netcdf_put_lvar_0d
@@ -8388,18 +8784,18 @@
       ioerror=ibuffer(2)
 #endif
 !
-!  Close file.
+!  Close NetCDF file.
 !
       IF (.not.PRESENT(ncid)) THEN
         CALL netcdf_close (ng, model, my_ncid, ncname, .FALSE.)
       END IF
 !
   10  FORMAT (/,' NETCDF_PUT_LVAR_1D - error while inquiring ID for ',  &
-     &        'variable:',2x,a,/,22x,'in input file:',2x,a,/,22x,       &
+     &        'variable:',2x,a,/,22x,'in output file:',2x,a,/,22x,      &
      &        'call from:',2x,a,/,22x,a)
   20  FORMAT (/,' NETCDF_PUT_LVAR_1D - error while writing variable:',  &
-     &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a, &
-     &        /,22x,a)
+     &        2x,a,/,22x,'in output file:',2x,a,/,22x,'call from:',2x,  &
+     &        a,/,22x,a)
 !
       RETURN
       END SUBROUTINE netcdf_put_lvar_1d
@@ -8530,18 +8926,18 @@
       ioerror=ibuffer(2)
 #endif
 !
-!  Close file.
+!  Close NetCDF file.
 !
       IF (.not.PRESENT(ncid)) THEN
         CALL netcdf_close (ng, model, my_ncid, ncname, .FALSE.)
       END IF
 !
   10  FORMAT (/,' NETCDF_PUT_LVAR_2D - error while inquiring ID for ',  &
-     &        'variable:',2x,a,/,22x,'in input file:',2x,a,/,22x,       &
+     &        'variable:',2x,a,/,22x,'in output file:',2x,a,/,22x,      &
      &        'call from:',2x,a,/,22x,a)
   20  FORMAT (/,' NETCDF_PUT_LVAR_2D - error while writing variable:',  &
-     &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a, &
-     &        /,22x,a)
+     &        2x,a,/,22x,'in output file:',2x,a,/,22x,'call from:',2x,  &
+     &        a,/,22x,a)
 !
       RETURN
       END SUBROUTINE netcdf_put_lvar_2d
@@ -8669,18 +9065,18 @@
       ioerror=ibuffer(2)
 #endif
 !
-!  Close input NetCDF file.
+!  Close NetCDF file.
 !
       IF (.not.PRESENT(ncid)) THEN
         CALL netcdf_close (ng, model, my_ncid, ncname, .FALSE.)
       END IF
 !
   10  FORMAT (/,' NETCDF_PUT_SVAR_0D - error while inquiring ID for ',  &
-     &        'variable:',2x,a,/,22x,'in input file:',2x,a,/,22x,       &
+     &        'variable:',2x,a,/,22x,'in output file:',2x,a,/,22x,      &
      &        'call from:',2x,a,/,22x,a)
   20  FORMAT (/,' NETCDF_PUT_SVAR_0D - error while writing variable:',  &
-     &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a, &
-     &        /,22x,a)
+     &        2x,a,/,22x,'in output file:',2x,a,/,22x,'call from:',2x,  &
+     &        a,/,22x,a)
 !
       RETURN
       END SUBROUTINE netcdf_put_svar_0d
@@ -8803,18 +9199,18 @@
       ioerror=ibuffer(2)
 #endif
 !
-!  Close input NetCDF file.
+!  Close NetCDF file.
 !
       IF (.not.PRESENT(ncid)) THEN
         CALL netcdf_close (ng, model, my_ncid, ncname, .FALSE.)
       END IF
 !
   10  FORMAT (/,' NETCDF_PUT_SVAR_1D - error while inquiring ID for ',  &
-     &        'variable:',2x,a,/,22x,'in input file:',2x,a,/,22x,       &
+     &        'variable:',2x,a,/,22x,'in output file:',2x,a,/,22x,      &
      &        'call from:',2x,a,/,22x,a)
   20  FORMAT (/,' NETCDF_PUT_SVAR_1D - error while writing variable:',  &
-     &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a, &
-     &        /,22x,a)
+     &        2x,a,/,22x,'in output file:',2x,a,/,22x,'call from:',2x,  &
+     &        a,/,22x,a)
 !
       RETURN
       END SUBROUTINE netcdf_put_svar_1d
@@ -8937,18 +9333,18 @@
       ioerror=ibuffer(2)
 #endif
 !
-!  Close input NetCDF file.
+!  Close NetCDF file.
 !
       IF (.not.PRESENT(ncid)) THEN
         CALL netcdf_close (ng, model, my_ncid, ncname, .FALSE.)
       END IF
 !
   10  FORMAT (/,' NETCDF_PUT_SVAR_2D - error while inquiring ID for ',  &
-     &        'variable:',2x,a,/,22x,'in input file:',2x,a,/,22x,       &
+     &        'variable:',2x,a,/,22x,'in output file:',2x,a,/,22x,      &
      &        'call from:',2x,a,/,22x,a)
   20  FORMAT (/,' NETCDF_PUT_SVAR_2D - error while writing variable:',  &
-     &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a, &
-     &        /,22x,a)
+     &        2x,a,/,22x,'in output file:',2x,a,/,22x,'call from:',2x,  &
+     &        a,/,22x,a)
 !
       RETURN
       END SUBROUTINE netcdf_put_svar_2d
@@ -9071,18 +9467,18 @@
       ioerror=ibuffer(2)
 #endif
 !
-!  Close input NetCDF file.
+!  Close NetCDF file.
 !
       IF (.not.PRESENT(ncid)) THEN
         CALL netcdf_close (ng, model, my_ncid, ncname, .FALSE.)
       END IF
 !
   10  FORMAT (/,' NETCDF_PUT_SVAR_3D - error while inquiring ID for ',  &
-     &        'variable:',2x,a,/,22x,'in input file:',2x,a,/,22x,       &
+     &        'variable:',2x,a,/,22x,'in output file:',2x,a,/,22x,      &
      &        'call from:',2x,a,/,22x,a)
   20  FORMAT (/,' NETCDF_PUT_SVAR_3D - error while writing variable:',  &
-     &        2x,a,/,22x,'in input file:',2x,a,/,22x,'call from:',2x,a, &
-     &        /,22x,a)
+     &        2x,a,/,22x,'in output file:',2x,a,/,22x,'call from:',2x,  &
+     &        a,/,22x,a)
 !
       RETURN
       END SUBROUTINE netcdf_put_svar_3d

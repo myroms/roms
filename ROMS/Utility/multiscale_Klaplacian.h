@@ -23,9 +23,10 @@
 **                                                                    **
 ** References:                                                        **
 **                                                                    **
-** Mirouze, I., E. Blockley, D.J. Lea, M.J. Martin, and M.J. Bell,    **
-**   2016: A multiple length scale correlation operator for ocean data**
-**   assimilation, Tellus A, 68, 29744, doi:10.3402/tellusa.v68.29744.**
+** Weaver, A.T. and I. Mirouze, 2013: On the diffusion equation and   **
+**   its application to isotropic and anisotropic correlation         **
+**   modeling in variational assimilation, Q. J. R. Meteorol. Soc.,   **
+**   139, 242-260, doi:10.1002/qj.1955.                               **
 **                                                                    **
 ** Weaver, A.T., J. Tshimanga, and A. Piacentini, 2016: Correlation   **
 **   operators based on an implicitly formulated diffusion equation   **
@@ -60,7 +61,7 @@
       integer,            intent(in   ) :: IminS, ImaxS, JminS, JmaxS
       real (r8),          intent(inout) :: tl_A(LBi:,LBj:)
 !
-      integer                           :: iLap, i, j, rec
+      integer                           :: Mlap, i, j, rec
       integer                           :: Istr, Iend, Jstr, Jend
       real (r8)                         :: cffx, cffy
 
@@ -100,20 +101,20 @@
           BscaleX => self%zeta_Bcorr(:,:,1,ms)
           BscaleY => self%zeta_Bcorr(:,:,2,ms)
 #endif
-          iLap=Mlap(ifield,ms,ng)
+          Mlap=self%Mlap(ifield,ms)
 #ifdef SOLVE3D
         CASE ('shflux')
 # ifdef NONUNIFORM_SCALES
           BscaleX => self%stflux_Bcorr(:,:,1,itemp,ms)
           BscaleY => self%stflux_Bcorr(:,:,2,itemp,ms)
 # endif
-          iLap=Mlap(ifield,ms,ng)
+          Mlap=self%Mlap(ifield,ms)
         CASE ('ssflux')
 # ifdef NONUNIFORM_SCALES
           BscaleX => self%stflux_Bcorr(:,:,1,isalt,ms)
           BscaleY => self%stflux_Bcorr(:,:,2,isalt,ms)
 # endif
-          iLap=Mlap(ifield,ms,ng)
+          Mlap=self%Mlap(ifield,ms)
 #endif
       END SELECT
 !
@@ -137,8 +138,8 @@
           cffx=HdecayX(rec,ifield,ms,ng)*HdecayX(rec,ifield,ms,ng)
           cffy=HdecayY(rec,ifield,ms,ng)*HdecayY(rec,ifield,ms,ng)
 #endif
-          Khx(i,j)=0.5_r8*cffx/REAL(iLap-2,r8)
-          Khy(i,j)=0.5_r8*cffy/REAL(iLap-2,r8)
+          Khx(i,j)=0.5_r8*cffx/REAL(Mlap-2,r8)
+          Khy(i,j)=0.5_r8*cffy/REAL(Mlap-2,r8)
         END DO
       END DO
 !
@@ -276,7 +277,7 @@
       integer,            intent(in   ) :: IminS, ImaxS, JminS, JmaxS
       real (r8),          intent(inout) :: ad_A(LBi:,LBj:)
 !
-      integer                           :: iLap, i, j, rec
+      integer                           :: Mlap, i, j, rec
       integer                           :: Istr, Iend, Jstr, Jend
       real (r8)                         :: adfac, cffx, cffy
 
@@ -322,20 +323,20 @@
           BscaleX => self%zeta_Bcorr(:,:,1,ms)
           BscaleY => self%zeta_Bcorr(:,:,2,ms)
 #endif
-          iLap=Mlap(ifield,ms,ng)
+          Mlap=self%Mlap(ifield,ms)
 #ifdef SOLVE3D
         CASE ('shflux')
 # ifdef NONUNIFORM_SCALES
           BscaleX => self%stflux_Bcorr(:,:,1,itemp,ms)
           BscaleY => self%stflux_Bcorr(:,:,2,itemp,ms)
 # endif
-          iLap=Mlap(ifield,ms,ng)
+          Mlap=self%Mlap(ifield,ms)
         CASE ('ssflux')
 # ifdef NONUNIFORM_SCALES
           BscaleX => self%stflux_Bcorr(:,:,1,isalt,ms)
           BscaleY => self%stflux_Bcorr(:,:,2,isalt,ms)
 # endif
-          iLap=Mlap(ifield,ms,ng)
+          Mlap=self%Mlap(ifield,ms)
 #endif
       END SELECT
 !
@@ -359,8 +360,8 @@
           cffx=HdecayX(rec,ifield,ms,ng)*HdecayX(rec,ifield,ms,ng)
           cffy=HdecayY(rec,ifield,ms,ng)*HdecayY(rec,ifield,ms,ng)
 #endif
-          Khx(i,j)=0.5_r8*cffx/REAL(iLap-2,r8)
-          Khy(i,j)=0.5_r8*cffy/REAL(iLap-2,r8)
+          Khx(i,j)=0.5_r8*cffx/REAL(Mlap-2,r8)
+          Khy(i,j)=0.5_r8*cffy/REAL(Mlap-2,r8)
         END DO
       END DO
 !
@@ -506,7 +507,7 @@
       integer,            intent(in   ) :: IminS, ImaxS, JminS, JmaxS
       real (r8),          intent(inout) :: tl_A(LBi:,LBj:)
 !
-      integer                           :: iLap, i, j, rec
+      integer                           :: Mlap, i, j, rec
       integer                           :: IstrU, Iend, Jstr, Jend
       real (r8)                         :: cffx, cffy
 
@@ -546,13 +547,13 @@
           BscaleX => self%ubar_Bcorr(:,:,1,ms)
           BscaleY => self%ubar_Bcorr(:,:,2,ms)
 #endif
-          iLap=Mlap(ifield,ms,ng)
+          Mlap=self%Mlap(ifield,ms)
         CASE ('sustr')
 #ifdef NONUNIFORM_SCALES
           BscaleX => self%sustr_Bcorr(:,:,1,ms)
           BscaleY => self%sustr_Bcorr(:,:,2,ms)
 #endif
-          iLap=Mlap(ifield,ms,ng)
+          Mlap=self%Mlap(ifield,ms)
       END SELECT
 !
 !  Compute metrics factor.
@@ -576,8 +577,8 @@
           cffx=HdecayX(rec,ifield,ms,ng)*HdecayX(rec,ifield,ms,ng)
           cffy=HdecayY(rec,ifield,ms,ng)*HdecayY(rec,ifield,ms,ng)
 #endif
-          Khx(i,j)=0.5_r8*cffx/REAL(iLap-2,r8)
-          Khy(i,j)=0.5_r8*cffy/REAL(iLap-2,r8)
+          Khx(i,j)=0.5_r8*cffx/REAL(Mlap-2,r8)
+          Khy(i,j)=0.5_r8*cffy/REAL(Mlap-2,r8)
         END DO
       END DO
 !
@@ -710,7 +711,7 @@
       integer,            intent(in   ) :: IminS, ImaxS, JminS, JmaxS
       real (r8),          intent(inout) :: ad_A(LBi:,LBj:)
 !
-      integer                           :: iLap, i, j, rec
+      integer                           :: Mlap, i, j, rec
       integer                           :: IstrU, Iend, Jstr, Jend
       real (r8)                         :: adfac, cffx, cffy
 
@@ -756,13 +757,13 @@
           BscaleX => self%ubar_Bcorr(:,:,1,ms)
           BscaleY => self%ubar_Bcorr(:,:,2,ms)
 #endif
-          iLap=Mlap(ifield,ms,ng)
+          Mlap=self%Mlap(ifield,ms)
         CASE ('sustr')
 #ifdef NONUNIFORM_SCALES
           BscaleX => self%sustr_Bcorr(:,:,1,ms)
           BscaleY => self%sustr_Bcorr(:,:,2,ms)
 #endif
-          iLap=Mlap(ifield,ms,ng)
+          Mlap=self%Mlap(ifield,ms)
       END SELECT
 !
 !  Compute metrics factor.
@@ -786,8 +787,8 @@
           cffx=HdecayX(rec,ifield,ms,ng)*HdecayX(rec,ifield,ms,ng)
           cffy=HdecayY(rec,ifield,ms,ng)*HdecayY(rec,ifield,ms,ng)
 #endif
-          Khx(i,j)=0.5_r8*cffx/REAL(iLap-2,r8)
-          Khy(i,j)=0.5_r8*cffy/REAL(iLap-2,r8)
+          Khx(i,j)=0.5_r8*cffx/REAL(Mlap-2,r8)
+          Khy(i,j)=0.5_r8*cffy/REAL(Mlap-2,r8)
         END DO
       END DO
 !
@@ -928,7 +929,7 @@
       integer,            intent(in   ) :: IminS, ImaxS, JminS, JmaxS
       real (r8),          intent(inout) :: tl_A(LBi:,LBj:)
 !
-      integer                           :: iLap, i, j, rec
+      integer                           :: Mlap, i, j, rec
       integer                           :: Istr, Iend, JstrV, Jend
       real (r8)                         :: cffx, cffy
 
@@ -968,13 +969,13 @@
           BscaleX => self%vbar_Bcorr(:,:,1,ms)
           BscaleY => self%vbar_Bcorr(:,:,2,ms)
 #endif
-          iLap=Mlap(ifield,ms,ng)
+          Mlap=self%Mlap(ifield,ms)
         CASE ('svstr')
 #ifdef NONUNIFORM_SCALES
           BscaleX => self%svstr_Bcorr(:,:,1,ms)
           BscaleY => self%svstr_Bcorr(:,:,2,ms)
 #endif
-          iLap=Mlap(ifield,ms,ng)
+          Mlap=self%Mlap(ifield,ms)
       END SELECT
 !
 !  Compute metrics factor.
@@ -998,8 +999,8 @@
           cffx=HdecayX(rec,ifield,ms,ng)*HdecayX(rec,ifield,ms,ng)
           cffy=HdecayY(rec,ifield,ms,ng)*HdecayY(rec,ifield,ms,ng)
 #endif
-          Khx(i,j)=0.5_r8*cffx/REAL(iLap-2,r8)
-          Khy(i,j)=0.5_r8*cffy/REAL(iLap-2,r8)
+          Khx(i,j)=0.5_r8*cffx/REAL(Mlap-2,r8)
+          Khy(i,j)=0.5_r8*cffy/REAL(Mlap-2,r8)
         END DO
       END DO
 !
@@ -1133,7 +1134,7 @@
       integer,            intent(in   ) :: IminS, ImaxS, JminS, JmaxS
       real (r8),          intent(inout) :: ad_A(LBi:,LBj:)
 !
-      integer                           :: iLap, i, j, rec
+      integer                           :: Mlap, i, j, rec
       integer                           :: Istr, Iend, JstrV, Jend
       real (r8)                         :: adfac, cffx, cffy
 
@@ -1179,13 +1180,13 @@
           BscaleX => self%vbar_Bcorr(:,:,1,ms)
           BscaleY => self%vbar_Bcorr(:,:,2,ms)
 #endif
-          iLap=Mlap(ifield,ms,ng)
+          Mlap=self%Mlap(ifield,ms)
         CASE ('svstr')
 #ifdef NONUNIFORM_SCALES
           BscaleX => self%svstr_Bcorr(:,:,1,ms)
           BscaleY => self%svstr_Bcorr(:,:,2,ms)
 #endif
-          iLap=Mlap(ifield,ms,ng)
+          Mlap=self%Mlap(ifield,ms)
       END SELECT
 !
 !  Compute metrics factor.
@@ -1209,8 +1210,8 @@
           cffx=HdecayX(rec,ifield,ms,ng)*HdecayX(rec,ifield,ms,ng)
           cffy=HdecayY(rec,ifield,ms,ng)*HdecayY(rec,ifield,ms,ng)
 #endif
-          Khx(i,j)=0.5_r8*cffx/REAL(iLap-2,r8)
-          Khy(i,j)=0.5_r8*cffy/REAL(iLap-2,r8)
+          Khx(i,j)=0.5_r8*cffx/REAL(Mlap-2,r8)
+          Khy(i,j)=0.5_r8*cffy/REAL(Mlap-2,r8)
         END DO
       END DO
 
@@ -1351,7 +1352,7 @@
       integer,            intent(in   ) :: IminS, ImaxS, JminS, JmaxS
       real (r8),          intent(inout) :: tl_A(LBi:,LBj:,:)
 !
-      integer                           :: iLap, i, j, k, k1, k2, rec
+      integer                           :: Mlap, i, j, k, k1, k2, rec
       integer                           :: Istr, Iend, Jstr, Jend
       real (r8)                         :: cff, cff1, cff2, cff3, cff4
       real (r8)                         :: cffx, cffy
@@ -1400,13 +1401,13 @@
           BscaleX => self%t_Bcorr(:,:,1,itemp,ms)
           BscaleY => self%t_Bcorr(:,:,2,itemp,ms)
 # endif
-          iLap=Mlap(ifield,ms,ng)
+          Mlap=self%Mlap(ifield,ms)
         CASE ('salt')
 # ifdef NONUNIFORM_SCALES
           BscaleX => self%t_Bcorr(:,:,1,isalt,ms)
           BscaleY => self%t_Bcorr(:,:,2,isalt,ms)
 # endif
-          iLap=Mlap(ifield,ms,ng)
+          Mlap=self%Mlap(ifield,ms)
       END SELECT
 !
 !  Compute metrics factor.
@@ -1429,8 +1430,8 @@
           cffx=HdecayX(rec,ifield,ms,ng)*HdecayX(rec,ifield,ms,ng)
           cffy=HdecayY(rec,ifield,ms,ng)*HdecayY(rec,ifield,ms,ng)
 # endif
-          Khx(i,j)=0.5_r8*cffx/REAL(iLap-2,r8)
-          Khy(i,j)=0.5_r8*cffy/REAL(iLap-2,r8)
+          Khx(i,j)=0.5_r8*cffx/REAL(Mlap-2,r8)
+          Khy(i,j)=0.5_r8*cffy/REAL(Mlap-2,r8)
         END DO
       END DO
 !
@@ -1792,7 +1793,7 @@
       integer,            intent(in   ) :: IminS, ImaxS, JminS, JmaxS
       real (r8),          intent(inout) :: ad_A(LBi:,LBj:,:)
 !
-      integer                           :: iLap, i, j, k, rec
+      integer                           :: Mlap, i, j, k, rec
       integer                           :: kk, kt, k1, k1b, k2, k2b
       integer                           :: Istr, Iend, Jstr, Jend
       real (r8)                         :: adfac, adfac1, adfac2
@@ -1853,13 +1854,13 @@
           BscaleX => self%t_Bcorr(:,:,1,itemp,ms)
           BscaleY => self%t_Bcorr(:,:,2,itemp,ms)
 # endif
-          iLap=Mlap(ifield,ms,ng)
+          Mlap=self%Mlap(ifield,ms)
         CASE ('salt')
 # ifdef NONUNIFORM_SCALES
           BscaleX => self%t_Bcorr(:,:,1,isalt,ms)
           BscaleY => self%t_Bcorr(:,:,2,isalt,ms)
 # endif
-          iLap=Mlap(ifield,ms,ng)
+          Mlap=self%Mlap(ifield,ms)
       END SELECT
 !
 !  Compute metrics factor.
@@ -1882,8 +1883,8 @@
           cffx=HdecayX(rec,ifield,ms,ng)*HdecayX(rec,ifield,ms,ng)
           cffy=HdecayY(rec,ifield,ms,ng)*HdecayY(rec,ifield,ms,ng)
 # endif
-          Khx(i,j)=0.5_r8*cffx/REAL(iLap-2,r8)
-          Khy(i,j)=0.5_r8*cffy/REAL(iLap-2,r8)
+          Khx(i,j)=0.5_r8*cffx/REAL(Mlap-2,r8)
+          Khy(i,j)=0.5_r8*cffy/REAL(Mlap-2,r8)
         END DO
       END DO
 !
@@ -2354,7 +2355,7 @@
       integer,            intent(in   ) :: IminS, ImaxS, JminS, JmaxS
       real (r8),          intent(inout) :: tl_A(LBi:,LBj:,:)
 !
-      integer                           :: iLap, i, j, k, k1, k2, rec
+      integer                           :: Mlap, i, j, k, k1, k2, rec
       integer                           :: IstrU, Iend, Jstr, Jend
       real (r8)                         :: cff, cff1, cff2, cff3, cff4
       real (r8)                         :: cffx, cffy
@@ -2405,7 +2406,7 @@
           BscaleX => self%u_Bcorr(:,:,1,ms)
           BscaleY => self%u_Bcorr(:,:,2,ms)
 # endif
-          iLap=Mlap(ifield,ms,ng)
+          Mlap=self%Mlap(ifield,ms)
       END SELECT
 !
 !  Compute metrics factor.
@@ -2429,8 +2430,8 @@
           cffx=HdecayX(rec,ifield,ms,ng)*HdecayX(rec,ifield,ms,ng)
           cffy=HdecayY(rec,ifield,ms,ng)*HdecayY(rec,ifield,ms,ng)
 # endif
-          Khx(i,j)=0.5_r8*cffx/REAL(iLap-2,r8)
-          Khy(i,j)=0.5_r8*cffy/REAL(iLap-2,r8)
+          Khx(i,j)=0.5_r8*cffx/REAL(Mlap-2,r8)
+          Khy(i,j)=0.5_r8*cffy/REAL(Mlap-2,r8)
         END DO
       END DO
 !
@@ -2820,7 +2821,7 @@
       integer,            intent(in   ) :: IminS, ImaxS, JminS, JmaxS
       real (r8),          intent(inout) :: ad_A(LBi:,LBj:,:)
 !
-      integer                           :: iLap, i, j, k, rec
+      integer                           :: Mlap, i, j, k, rec
       integer                           :: kk, kt, k1, k1b, k2, k2b
       integer                           :: IstrU, Iend, Jstr, Jend
       real (r8)                         :: adfac, adfac1, adfac2
@@ -2881,7 +2882,7 @@
           BscaleX => self%u_Bcorr(:,:,1,ms)
           BscaleY => self%u_Bcorr(:,:,2,ms)
 # endif
-          iLap=Mlap(ifield,ms,ng)
+          Mlap=self%Mlap(ifield,ms)
       END SELECT
 !
 !  Compute metrics factor.
@@ -2905,8 +2906,8 @@
           cffx=HdecayX(rec,ifield,ms,ng)*HdecayX(rec,ifield,ms,ng)
           cffy=HdecayY(rec,ifield,ms,ng)*HdecayY(rec,ifield,ms,ng)
 # endif
-          Khx(i,j)=0.5_r8*cffx/REAL(iLap-2,r8)
-          Khy(i,j)=0.5_r8*cffy/REAL(iLap-2,r8)
+          Khx(i,j)=0.5_r8*cffx/REAL(Mlap-2,r8)
+          Khy(i,j)=0.5_r8*cffy/REAL(Mlap-2,r8)
         END DO
       END DO
 !
@@ -3395,7 +3396,7 @@
       integer,            intent(in   ) :: IminS, ImaxS, JminS, JmaxS
       real (r8),          intent(inout) :: tl_A(LBi:,LBj:,:)
 !
-      integer                           :: iLap, i, j, k, k1, k2, rec
+      integer                           :: Mlap, i, j, k, k1, k2, rec
       integer                           :: Istr, Iend, JstrV, Jend
       real (r8)                         :: cff, cff1, cff2, cff3, cff4
       real (r8)                         :: cffx, cffy
@@ -3446,7 +3447,7 @@
           BscaleX => self%v_Bcorr(:,:,1,ms)
           BscaleY => self%v_Bcorr(:,:,2,ms)
 # endif
-          iLap=Mlap(ifield,ms,ng)
+          Mlap=self%Mlap(ifield,ms)
       END SELECT
 !
 !  Compute metrics factor.
@@ -3470,8 +3471,8 @@
           cffx=HdecayX(rec,ifield,ms,ng)*HdecayX(rec,ifield,ms,ng)
           cffy=HdecayY(rec,ifield,ms,ng)*HdecayY(rec,ifield,ms,ng)
 # endif
-          Khx(i,j)=0.5_r8*cffx/REAL(iLap-2,r8)
-          Khy(i,j)=0.5_r8*cffy/REAL(iLap-2,r8)
+          Khx(i,j)=0.5_r8*cffx/REAL(Mlap-2,r8)
+          Khy(i,j)=0.5_r8*cffy/REAL(Mlap-2,r8)
         END DO
       END DO
 !
@@ -3859,7 +3860,7 @@
       integer,            intent(in   ) :: IminS, ImaxS, JminS, JmaxS
       real (r8),          intent(inout) :: ad_A(LBi:,LBj:,:)
 !
-      integer                           :: iLap, i, j, k, k1, k2, rec
+      integer                           :: Mlap, i, j, k, k1, k2, rec
       integer                           :: Istr, Iend, JstrV, Jend
       real (r8)                         :: cff, cff1, cff2, cff3, cff4
       real (r8)                         :: adfac, cffx, cffy
@@ -3920,7 +3921,7 @@
           BscaleX => self%v_Bcorr(:,:,1,ms)
           BscaleY => self%v_Bcorr(:,:,2,ms)
 # endif
-          iLap=Mlap(ifield,ms,ng)
+          Mlap=self%Mlap(ifield,ms)
       END SELECT
 !
 !  Compute metrics factor.
@@ -3944,8 +3945,8 @@
           cffx=HdecayX(rec,ifield,ms,ng)*HdecayX(rec,ifield,ms,ng)
           cffy=HdecayY(rec,ifield,ms,ng)*HdecayY(rec,ifield,ms,ng)
 # endif
-          Khx(i,j)=0.5_r8*cffx/REAL(iLap-2,r8)
-          Khy(i,j)=0.5_r8*cffy/REAL(iLap-2,r8)
+          Khx(i,j)=0.5_r8*cffx/REAL(Mlap-2,r8)
+          Khy(i,j)=0.5_r8*cffy/REAL(Mlap-2,r8)
         END DO
       END DO
 !
@@ -4438,7 +4439,7 @@
 !
       logical, dimension(4)             :: Lboundary
 !
-      integer                           :: iLap, i, j
+      integer                           :: Mlap, i, j
       integer                           :: Istr, IstrU, Iend, Imin, Imax
       integer                           :: Jstr, JstrV, Jend, Jmin, Jmax
 !
@@ -4482,7 +4483,7 @@
 !
       SELECT CASE (TRIM(StateVarName(ifield)))
         CASE ('zeta', 'ubar', 'ubar_eastward', 'vbar', 'vbar_northward')
-          iLap=Mlap(ifield,ms,ng)
+          Mlap=self%Mlap(ifield,ms)
       END SELECT
 !
 !  Compute metrics factor.
@@ -4491,40 +4492,40 @@
         SELECT CASE (ctype)
            CASE (r2dvar)
              IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
+               i=BOUNDS(ng)%edge(ibry,r2dvar)
                DO j=Jstr-1,Jend+1
-                 i=BOUNDS(ng)%edge(ibry,r2dvar)
                  Hfac(j)=GRID(ng)%pm(i,j)*GRID(ng)%pn(i,j)
                END DO
              ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
+               j=BOUNDS(ng)%edge(ibry,r2dvar)
                DO i=Istr-1,Iend+1
-                 j=BOUNDS(ng)%edge(ibry,r2dvar)
                  Hfac(i)=GRID(ng)%pm(i,j)*GRID(ng)%pn(i,j)
                END DO
              END IF
            CASE (u2dvar)
              IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
+               i=BOUNDS(ng)%edge(ibry,u2dvar)
                DO j=Jstr-1,Jend+1
-                 i=BOUNDS(ng)%edge(ibry,u2dvar)
                  Hfac(j)=0.25_r8*(GRID(ng)%pm(i-1,j)+GRID(ng)%pm(i,j))* &
      &                           (GRID(ng)%pn(i-1,j)+GRID(ng)%pn(i,j))
                END DO
              ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
+               j=BOUNDS(ng)%edge(ibry,u2dvar)
                DO i=IstrU-1,Iend+1
-                 j=BOUNDS(ng)%edge(ibry,u2dvar)
                  Hfac(i)=0.25_r8*(GRID(ng)%pm(i-1,j)+GRID(ng)%pm(i,j))* &
      &                           (GRID(ng)%pn(i-1,j)+GRID(ng)%pn(i,j))
                END DO
              END IF
            CASE (v2dvar)
              IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
+               i=BOUNDS(ng)%edge(ibry,v2dvar)
                DO j=JstrV-1,Jend+1
-                 i=BOUNDS(ng)%edge(ibry,v2dvar)
                  Hfac(j)=0.25_r8*(GRID(ng)%pm(i,j-1)+GRID(ng)%pm(i,j))* &
      &                           (GRID(ng)%pn(i,j-1)+GRID(ng)%pn(i,j))
                END DO
              ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
+               j=BOUNDS(ng)%edge(ibry,v2dvar)
                DO i=Istr-1,Iend+1
-                 j=BOUNDS(ng)%edge(ibry,v2dvar)
                  Hfac(i)=0.25_r8*(GRID(ng)%pm(i,j-1)+GRID(ng)%pm(i,j))* &
      &                           (GRID(ng)%pn(i,j-1)+GRID(ng)%pn(i,j))
                END DO
@@ -4533,18 +4534,20 @@
       END IF
 !
 !  Set horizontal diffusion coefficients (Khx, Khy) with units of
-!  correlation length squared.
+!  correlation length squared (Equation 44, Weaver and Mirouze, 2013).
+!  For d=1, kappa=D*D/(2*M-d-2), where D is the Daley length scale
+!  and d is the space dimension.
 !
       SELECT CASE (ibry)
         CASE (iwest, ieast)
-          DO j=Jmin-1,Jmax+1
+          DO j=JminS,JmaxS
             cffy=HdecayB(ifield,ms,ibry,ng)*HdecayB(ifield,ms,ibry,ng)
-            Khy(j)=cffy/REAL(2*iLap-3,r8)
+            Khy(j)=cffy/REAL(2*Mlap-3,r8)
           END DO
         CASE (isouth, inorth)
-          DO i=Imin-1,Imax+1
+          DO i=IminS,ImaxS
             cffx=HdecayB(ifield,ms,ibry,ng)*HdecayB(ifield,ms,ibry,ng)
-            Khx(i)=cffx/REAL(2*iLap-3,r8)
+            Khx(i)=cffx/REAL(2*Mlap-3,r8)
           END DO
       END SELECT
 !
@@ -4593,19 +4596,20 @@
 # endif
 !
       IF (Lboundary(ibry)) THEN
-        IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
-          DO j=Jmin-1,Jmax+1
-!^          Awrk(j)=A(j)
+        SELECT CASE (ibry)
+          CASE (iwest, ieast)
+            DO j=Jmin-1,Jmax+1
+!^            Awrk(j)=A(j)
 !^
-            tl_Awrk(j)=tl_A(j)
-          END DO
-        ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
-          DO i=Imin-1,Imax+1
-!^          Awrk(i)=A(i)
+              tl_Awrk(j)=tl_A(j)
+            END DO
+          CASE (isouth, inorth)
+            DO i=Imin-1,Imax+1
+!^            Awrk(i)=A(i)
 !^
-            tl_Awrk(i)=tl_A(i)
-          END DO
-        END IF
+              tl_Awrk(i)=tl_A(i)
+            END DO
+        END SELECT
       END IF
 !
 !  Compute XI- or ETA-components of diffusive flux.
@@ -4783,6 +4787,25 @@
           END IF
 !
       END SELECT
+!
+!  Load K-Laplacian solution.
+!
+      IF (Lboundary(ibry)) THEN
+        SELECT CASE (ibry)
+          CASE (iwest, ieast)
+            DO j=Jmin,Jmax
+!^            A(j)=Awrk(j)
+!^
+              tl_A(j)=tl_Awrk(j)
+            END DO
+          CASE (isouth, inorth)
+            DO i=Imin,Imax
+!^            A(i)=Awrk(i)
+!^
+              tl_A(i)=tl_Awrk(i)
+            END DO
+        END SELECT
+      END IF
 
 # ifdef DISTRIBUTE
 !
@@ -4792,32 +4815,14 @@
 !^   &                        LBij, UBij,                               &
 !^   &                        NghostPoints,                             &
 !^   &                        EWperiodic(ng), NSperiodic(ng),           &
-!^   &                        Awrk)
+!^   &                        A)
 !^
       CALL mp_exchange2d_bry (ng, tile, model, 1, ibry,                 &
      &                        LBij, UBij,                               &
      &                        NghostPoints,                             &
      &                        EWperiodic(ng), NSperiodic(ng),           &
-     &                        tl_Awrk)
+     &                        tl_A)
 # endif
-!
-!  Load K-Laplacian solution.
-!
-      IF (Lboundary(ibry)) THEN
-        IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
-          DO j=Jmin,Jmax
-!^          A(j)=Awrk(j)
-!^
-            tl_A(j)=tl_Awrk(j)
-          END DO
-        ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
-          DO i=Imin,Imax
-!^          A(i)=Awrk(i)
-!^
-            tl_A(i)=tl_Awrk(i)
-          END DO
-        END IF
-      END IF
 !
       RETURN
       END SUBROUTINE multiscale_Klap_b1d_tl
@@ -4846,7 +4851,7 @@
 !
       logical, dimension(4)             :: Lboundary
 !
-      integer                           :: iLap, i, j
+      integer                           :: Mlap, i, j
       integer                           :: Istr, IstrU, Iend, Imin, Imax
       integer                           :: Jstr, JstrV, Jend, Jmin, Jmax
 !
@@ -4885,12 +4890,18 @@
       Lboundary(isouth)=DOMAIN(ng)%Southern_Edge(tile)
       Lboundary(inorth)=DOMAIN(ng)%Northern_Edge(tile)
 !
+!  Initizlize private adjoint variables.
+!
+      ad_Awrk(LBij:UBij)=0.0_r8
+      ad_FE(JminS:JmaxS)=0.0_r8
+      ad_FX(IminS:ImaxS)=0.0_r8
+!
 !  Assign contol variable isotropic or anisotropic correlation length
 !  scales.
 !
       SELECT CASE (TRIM(StateVarName(ifield)))
         CASE ('zeta', 'ubar', 'ubar_eastward', 'vbar', 'vbar_northward')
-          iLap=Mlap(ifield,ms,ng)
+          Mlap=self%Mlap(ifield,ms)
       END SELECT
 !
 !  Compute metrics factor.
@@ -4899,40 +4910,40 @@
         SELECT CASE (ctype)
            CASE (r2dvar)
              IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
+               i=BOUNDS(ng)%edge(ibry,r2dvar)
                DO j=Jstr-1,Jend+1
-                 i=BOUNDS(ng)%edge(ibry,r2dvar)
                  Hfac(j)=GRID(ng)%pm(i,j)*GRID(ng)%pn(i,j)
                END DO
              ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
+               j=BOUNDS(ng)%edge(ibry,r2dvar)
                DO i=Istr-1,Iend+1
-                 j=BOUNDS(ng)%edge(ibry,r2dvar)
                  Hfac(i)=GRID(ng)%pm(i,j)*GRID(ng)%pn(i,j)
                END DO
              END IF
            CASE (u2dvar)
              IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
+               i=BOUNDS(ng)%edge(ibry,u2dvar)
                DO j=Jstr-1,Jend+1
-                 i=BOUNDS(ng)%edge(ibry,u2dvar)
                  Hfac(j)=0.25_r8*(GRID(ng)%pm(i-1,j)+GRID(ng)%pm(i,j))* &
      &                           (GRID(ng)%pn(i-1,j)+GRID(ng)%pn(i,j))
                END DO
              ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
+               j=BOUNDS(ng)%edge(ibry,u2dvar)
                DO i=IstrU-1,Iend+1
-                 j=BOUNDS(ng)%edge(ibry,u2dvar)
                  Hfac(i)=0.25_r8*(GRID(ng)%pm(i-1,j)+GRID(ng)%pm(i,j))* &
      &                           (GRID(ng)%pn(i-1,j)+GRID(ng)%pn(i,j))
                END DO
              END IF
            CASE (v2dvar)
              IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
+               i=BOUNDS(ng)%edge(ibry,v2dvar)
                DO j=JstrV-1,Jend+1
-                 i=BOUNDS(ng)%edge(ibry,v2dvar)
                  Hfac(j)=0.25_r8*(GRID(ng)%pm(i,j-1)+GRID(ng)%pm(i,j))* &
      &                           (GRID(ng)%pn(i,j-1)+GRID(ng)%pn(i,j))
                END DO
              ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
+               j=BOUNDS(ng)%edge(ibry,v2dvar)
                DO i=Istr-1,Iend+1
-                 j=BOUNDS(ng)%edge(ibry,v2dvar)
                  Hfac(i)=0.25_r8*(GRID(ng)%pm(i,j-1)+GRID(ng)%pm(i,j))* &
      &                           (GRID(ng)%pn(i,j-1)+GRID(ng)%pn(i,j))
                END DO
@@ -4941,40 +4952,23 @@
       END IF
 !
 !  Set horizontal diffusion coefficients (Khx, Khy) with units of
-!  correlation length squared.
+!  correlation length squared (Equation 44, Weaver and Mirouze, 2013).
+!  For d=1, kappa=D*D/(2*M-d-2), where D is the Daley length scale
+!  and d is the space dimension.
 !
       SELECT CASE (ibry)
         CASE (iwest, ieast)
-          DO j=Jmin-1,Jmax+1
+          DO j=JminS,JmaxS
             cffy=HdecayB(ifield,ms,ibry,ng)*HdecayB(ifield,ms,ibry,ng)
-            Khy(j)=cffy/REAL(2*iLap-3,r8)
+            Khy(j)=cffy/REAL(2*Mlap-3,r8)
           END DO
         CASE (isouth, inorth)
-          DO i=Imin-1,Imax+1
+          DO i=IminS,ImaxS
             cffx=HdecayB(ifield,ms,ibry,ng)*HdecayB(ifield,ms,ibry,ng)
-            Khx(i)=cffx/REAL(2*iLap-3,r8)
+            Khx(i)=cffx/REAL(2*Mlap-3,r8)
           END DO
       END SELECT
-!
-!  Load K-Laplacian solution.
-!
-      IF (Lboundary(ibry)) THEN
-        IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
-          DO j=Jmin,Jmax
-!^          tl_A(j)=tl_Awrk(j)
-!^
-            ad_Awrk(j)=ad_Awrk(j)+ad_A(j)
-            ad_A(j)=0.0_r8
-          END DO
-        ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
-          DO i=Imin,Imax
-!^          tl_A(i)=tl_Awrk(i)
-!^
-            ad_Awrk(i)=ad_Awrk(i)+ad_A(i)
-            ad_A(i)=0.0_r8
-          END DO
-        END IF
-      END IF
+
 # ifdef DISTRIBUTE
 !
 !  Adjoint of exchange boundary data.
@@ -4983,7 +4977,7 @@
 !^   &                        LBij, UBij,                               &
 !^   &                        NghostPoints,                             &
 !^   &                        EWperiodic(ng), NSperiodic(ng),           &
-!^   &                        tl_Awrk)
+!^   &                        tl_A)
 !^
       CALL ad_mp_exchange2d_bry (ng, tile, model, 1, ibry,              &
      &                           LBij, UBij,                            &
@@ -4991,6 +4985,27 @@
      &                           EWperiodic(ng), NSperiodic(ng),        &
      &                           ad_A)
 # endif
+!
+!  Adjoint of load K-Laplacian solution.
+!
+      IF (Lboundary(ibry)) THEN
+        SELECT CASE (ibry)
+          CASE (iwest, ieast)
+            DO j=Jmin,Jmax
+!^            tl_A(j)=tl_Awrk(j)
+!^
+              ad_Awrk(j)=ad_Awrk(j)+ad_A(j)
+              ad_A(j)=0.0_r8
+            END DO
+          CASE (isouth, inorth)
+            DO i=Imin,Imax
+!^            tl_A(i)=tl_Awrk(i)
+!^
+              ad_Awrk(i)=ad_Awrk(i)+ad_A(i)
+              ad_A(i)=0.0_r8
+            END DO
+        END SELECT
+      END IF
 !
 !  Adjoint of compute K-Laplacian.
 !
@@ -5189,19 +5204,22 @@
 !  Set adjoint operator initial conditions.
 !
       IF (Lboundary(ibry)) THEN
-        IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
-          DO j=Jmin-1,Jmax+1
-!^          Awrk(j)=A(j)
+        SELECT CASE (ibry)
+          CASE (iwest, ieast)
+            DO j=Jmin-1,Jmax+1
+!^            Awrk(j)=A(j)
 !^
-            ad_Awrk(j)=ad_A(j)
-          END DO
-        ELSE IF ((ibry.eq.isouth).or.(ibry.eq.inorth)) THEN
-          DO i=Imin-1,Imax+1
-!^          Awrk(i)=A(i)
+              ad_Awrk(j)=ad_A(j)
+              ad_Awrk(j)=0.0_r8
+            END DO
+          CASE (isouth, inorth)
+            DO i=Imin-1,Imax+1
+!^            Awrk(i)=A(i)
 !^
-            ad_Awrk(i)=ad_A(i)
-          END DO
-        END IF
+              ad_Awrk(i)=ad_A(i)
+              ad_Awrk(i)=0.0_r8
+            END DO
+        END SELECT
       END IF
 
 # ifdef DISTRIBUTE
@@ -5275,7 +5293,7 @@
 !
       logical, dimension(4)             :: Lboundary
 !
-      integer                           :: iLap, i, j, k
+      integer                           :: Mlap, i, j, k
       integer                           :: Istr, IstrU, Iend, Imin, Imax
       integer                           :: Jstr, JstrV, Jend, Jmin, Jmax
 !
@@ -5319,9 +5337,9 @@
 !
       SELECT CASE (TRIM(StateVarName(ifield)))
         CASE ('u', 'u_eastward', 'v', 'v_northward')
-          iLap=Mlap(ifield,ms,ng)
+          Mlap=self%Mlap(ifield,ms)
         CASE ('temp', 'salt')
-          iLap=Mlap(ifield,ms,ng)
+          Mlap=self%Mlap(ifield,ms)
       END SELECT
 !
 !  Compute metrics factor.
@@ -5372,18 +5390,20 @@
       END IF
 !
 !  Set horizontal diffusion coefficients (Khx, Khy) with units of
-!  correlation length squared.
+!  correlation length squared (Equation 44, Weaver and Mirouze, 2013).
+!  For d=1, kappa=D*D/(2*M-d-2), where D is the Daley length scale
+!  and d is the space dimension.
 !
       SELECT CASE (ibry)
         CASE (iwest, ieast)
           DO j=Jmin-1,Jmax+1
             cffy=HdecayB(ifield,ms,ibry,ng)*HdecayB(ifield,ms,ibry,ng)
-            Khy(j)=cffy/REAL(2*iLap-3,r8)
+            Khy(j)=cffy/REAL(2*Mlap-3,r8)
           END DO
         CASE (isouth, inorth)
           DO i=Imin-1,Imax+1
             cffx=HdecayB(ifield,ms,ibry,ng)*HdecayB(ifield,ms,ibry,ng)
-            Khx(i)=cffx/REAL(2*iLap-3,r8)
+            Khx(i)=cffx/REAL(2*Mlap-3,r8)
           END DO
       END SELECT
 !
@@ -5717,7 +5737,7 @@
 !
       logical, dimension(4)             :: Lboundary
 !
-      integer                           :: iLap, i, j, k
+      integer                           :: Mlap, i, j, k
       integer                           :: Istr, IstrU, Iend, Imin, Imax
       integer                           :: Jstr, JstrV, Jend, Jmin, Jmax
 !
@@ -5761,9 +5781,9 @@
 !
       SELECT CASE (TRIM(StateVarName(ifield)))
         CASE ('u', 'u_eastward', 'v', 'v_northward')
-          iLap=Mlap(ifield,ms,ng)
+          Mlap=self%Mlap(ifield,ms)
         CASE ('temp', 'salt')
-          iLap=Mlap(ifield,ms,ng)
+          Mlap=self%Mlap(ifield,ms)
       END SELECT
 !
 !  Compute metrics factor.
@@ -5814,18 +5834,20 @@
       END IF
 !
 !  Set horizontal diffusion coefficients (Khx, Khy) with units of
-!  correlation length squared.
+!  correlation length squared (Equation 44, Weaver and Mirouze, 2013).
+!  For d=1, kappa=D*D/(2*M-d-2), where D is the Daley length scale
+!  and d is the space dimension.
 !
       SELECT CASE (ibry)
         CASE (iwest, ieast)
           DO j=Jmin-1,Jmax+1
             cffy=HdecayB(ifield,ms,ibry,ng)*HdecayB(ifield,ms,ibry,ng)
-            Khy(j)=cffy/REAL(2*iLap-3,r8)
+            Khy(j)=cffy/REAL(2*Mlap-3,r8)
           END DO
         CASE (isouth, inorth)
           DO i=Imin-1,Imax+1
             cffx=HdecayB(ifield,ms,ibry,ng)*HdecayB(ifield,ms,ibry,ng)
-            Khx(i)=cffx/REAL(2*iLap-3,r8)
+            Khx(i)=cffx/REAL(2*Mlap-3,r8)
           END DO
       END SELECT
 !

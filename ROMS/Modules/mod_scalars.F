@@ -1409,13 +1409,13 @@
 !  Multiscale background covariance matrix parameters:
 !
 !    Nscale   number of correlation scales to be combined
-!    Mlap     nunber of smoother applications for each variable
+!    Nlap     nunber of K-Laplacian applications for each variable
 !    NiterCG  number of CG iterations to obtain each scale eigenvalue
 !    NiterCI  number of implicit Chebyshev solver iterations
 !    Bwgt     weights assigned to each correlation function
 !
         integer, allocatable :: Nscale(:)
-        integer, allocatable :: Mlap(:,:,:)
+        integer, allocatable :: Nlap(:,:,:)
         integer, allocatable :: NiterCG(:,:)
         integer, allocatable :: NiterCI(:,:)
 !
@@ -4189,7 +4189,7 @@
 # ifdef MULTI_SCALE_B
       IF (allocated(Nscale))            deallocate ( Nscale )
 
-      IF (allocated(Mlap))              deallocate ( Mlap )
+      IF (allocated(Nlap))              deallocate ( Nlap )
 
       IF (allocated(Bwgt))              deallocate ( Bwgt )
 

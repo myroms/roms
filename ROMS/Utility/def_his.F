@@ -132,8 +132,6 @@
 !
       logical :: got_var(NV)
 !
-      integer, parameter :: Natt = 25
-
       integer :: i, j, ifield, itrc, nvd3, nvd4, varid
       integer :: recdim, status
 #ifdef ADJUST_BOUNDARY
@@ -3142,8 +3140,6 @@
 !
       logical :: got_var(NV)
 !
-      integer, parameter :: Natt = 25
-
       integer :: i, j, ifield, itrc, nvd3, nvd4
       integer :: recdim, status
 # ifdef ADJUST_BOUNDARY

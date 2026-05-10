@@ -83,6 +83,7 @@
       Istr =BOUNDS(ng)%Istr (tile)   ! tile computational range
       IstrU=BOUNDS(ng)%IstrU(tile)
       Iend =BOUNDS(ng)%Iend (tile)
+      Jstr =BOUNDS(ng)%Jstr (tile)
       JstrV=BOUNDS(ng)%JstrV(tile)
       Jend =BOUNDS(ng)%Jend (tile)
 !
@@ -140,12 +141,12 @@
 #if defined ADJUST_STFLUX && defined SOLVE3D
         CASE ('shflux')                        ! surface net heat flux
           Mlap=self%Mlap(ifield,ms)/ifac
-          eigMin => self%stflux_eigen(:,ms,itemp,1)
-          eigMax => self%stflux_eigen(:,ms,itemp,2)
+          eigMin => self%stflux_eigen(:,itemp,ms,1)
+          eigMax => self%stflux_eigen(:,itemp,ms,2)
         CASE ('ssflux')                        ! surface net salt flux
           Mlap=self%Mlap(ifield,ms)/ifac
-          eigMin => self%stflux_eigen(:,ms,isalt,1)
-          eigMax => self%stflux_eigen(:,ms,isalt,2)
+          eigMin => self%stflux_eigen(:,isalt,ms,1)
+          eigMax => self%stflux_eigen(:,isalt,ms,2)
 #endif
       END SELECT
 !
@@ -364,6 +365,7 @@
       Istr =BOUNDS(ng)%Istr (tile)   ! tile computational range
       IstrU=BOUNDS(ng)%IstrU(tile)
       Iend =BOUNDS(ng)%Iend (tile)
+      Jstr =BOUNDS(ng)%Jstr (tile)
       JstrV=BOUNDS(ng)%JstrV(tile)
       Jend =BOUNDS(ng)%Jend (tile)
 !
@@ -421,12 +423,12 @@
 #if defined ADJUST_STFLUX && defined SOLVE3D
         CASE ('shflux')                        ! surface net heat flux
           Mlap=self%Mlap(ifield,ms)/ifac
-          eigMin => self%stflux_eigen(:,ms,itemp,1)
-          eigMax => self%stflux_eigen(:,ms,itemp,2)
+          eigMin => self%stflux_eigen(:,itemp,ms,1)
+          eigMax => self%stflux_eigen(:,itemp,ms,2)
         CASE ('ssflux')                        ! surface net salt flux
           Mlap=self%Mlap(ifield,ms)/ifac
-          eigMin => self%stflux_eigen(:,ms,isalt,1)
-          eigMax => self%stflux_eigen(:,ms,isalt,2)
+          eigMin => self%stflux_eigen(:,isalt,ms,1)
+          eigMax => self%stflux_eigen(:,isalt,ms,2)
 #endif
       END SELECT
 !
@@ -678,6 +680,7 @@
       Istr =BOUNDS(ng)%Istr (tile)   ! tile computational range
       IstrU=BOUNDS(ng)%IstrU(tile)
       Iend =BOUNDS(ng)%Iend (tile)
+      Jstr =BOUNDS(ng)%Jstr (tile)
       JstrV=BOUNDS(ng)%JstrV(tile)
       Jend =BOUNDS(ng)%Jend (tile)
 !
@@ -957,6 +960,7 @@
       Istr =BOUNDS(ng)%Istr (tile)   ! tile computational range
       IstrU=BOUNDS(ng)%IstrU(tile)
       Iend =BOUNDS(ng)%Iend (tile)
+      Jstr =BOUNDS(ng)%Jstr (tile)
       JstrV=BOUNDS(ng)%JstrV(tile)
       Jend =BOUNDS(ng)%Jend (tile)
 !
@@ -1268,6 +1272,7 @@
       Istr =BOUNDS(ng)%Istr (tile)   ! tile computational range
       IstrU=BOUNDS(ng)%IstrU(tile)
       Iend =BOUNDS(ng)%Iend (tile)
+      Jstr =BOUNDS(ng)%Jstr (tile)
       JstrV=BOUNDS(ng)%JstrV(tile)
       Jend =BOUNDS(ng)%Jend (tile)
 !
@@ -1390,14 +1395,14 @@
 !
         SELECT CASE (ibry)
           CASE (iwest, ieast)
-            DO j=Jmin,Jmin
+            DO j=Jmin,Jmax
               tl_A(j)=tl_scale(j)*tl_A(j)
               self%ciB1d_x(j)=0.0_r8                    ! step 9
               self%ciB1d_r(j)=-tl_A(j)                  ! step 10
               self%ciB1d_p(j)=tl_A(j)                   ! step 11
             END DO
           CASE (isouth, inorth)
-            DO i=Imin,Imin
+            DO i=Imin,Imax
               tl_A(i)=tl_scale(i)*tl_A(i)
               self%ciB1d_x(i)=0.0_r8                    ! step 9
               self%ciB1d_r(i)=-tl_A(i)                  ! step 10
@@ -1419,11 +1424,11 @@
 !
           SELECT CASE (ibry)
             CASE (iwest, ieast)
-              DO j=Jmin,Jmin
+              DO j=Jmin,Jmax
                 tl_A(j)=tl_A(j)/tl_scale(j)
               END DO
             CASE (isouth, inorth)
-              DO i=Imin,Imin
+              DO i=Imin,Imax
                 tl_A(i)=tl_A(i)/tl_scale(i)
               END DO
           END SELECT
@@ -1436,12 +1441,12 @@
 !
           SELECT CASE (ibry)
             CASE (iwest, ieast)
-              DO j=Jmin,Jmin
+              DO j=Jmin,Jmax
                 tl_A(j)=tl_A(j)*tl_scale(j)
                 self%ciB1d_q(j)=tl_A(j)
               END DO
             CASE (isouth, inorth)
-              DO i=Imin,Imin
+              DO i=Imin,Imax
                 tl_A(i)=tl_A(i)*tl_scale(i)
                 self%ciB1d_q(i)=tl_A(i)
               END DO
@@ -1461,14 +1466,14 @@
 !                                                         steps 14, 15
           SELECT CASE (ibry)
             CASE (iwest, ieast)
-              DO j=Jmin,Jmin
+              DO j=Jmin,Jmax
                 self%ciB1d_x(j)=self%ciB1d_x(j)+                        &
      &                          ci_alpha(iterCI)*self%ciB1d_p(j)
                 self%ciB1d_r(j)=self%ciB1d_r(j)+                        &
      &                          ci_alpha(iterCI)*self%ciB1d_q(j)
               END DO
             CASE (isouth, inorth)
-              DO i=Imin,Imin
+              DO i=Imin,Imax
                 self%ciB1d_x(i)=self%ciB1d_x(i)+                        &
      &                          ci_alpha(iterCI)*self%ciB1d_p(i)
                 self%ciB1d_r(i)=self%ciB1d_r(i)+                        &
@@ -1478,13 +1483,13 @@
 !                                                         step 16
           SELECT CASE (ibry)
             CASE (iwest, ieast)
-              DO j=Jmin,Jmin
+              DO j=Jmin,Jmax
                 self%ciB1d_p(j)=-self%ciB1d_r(j)+                       &
      &                          ci_beta(iterCI+1)*self%ciB1d_p(j)
                 tl_A(j)=self%ciB1d_p(j)
               END DO
             CASE (isouth, inorth)
-              DO i=Imin,Imin
+              DO i=Imin,Imax
                 self%ciB1d_p(i)=-self%ciB1d_r(i)+                       &
      &                          ci_beta(iterCI+1)*self%ciB1d_p(i)
                 tl_A(i)=self%ciB1d_p(i)
@@ -1497,13 +1502,13 @@
 !
         SELECT CASE (ibry)
           CASE (iwest, ieast)
-            DO j=Jmin,Jmin
+            DO j=Jmin,Jmax
               self%ciB1d_p(j)=0.0_r8
               self%ciB1d_r(j)=0.0_r8
               self%ciB1d_q(j)=0.0_r8
             END DO
           CASE (isouth, inorth)
-            DO i=Imin,Imin
+            DO i=Imin,Imax
               self%ciB1d_p(i)=0.0_r8
               self%ciB1d_r(i)=0.0_r8
               self%ciB1d_q(i)=0.0_r8
@@ -1515,11 +1520,11 @@
 !
         SELECT CASE (ibry)
           CASE (iwest, ieast)
-            DO j=Jmin,Jmin
+            DO j=Jmin,Jmax
               tl_A(j)=self%ciB1d_x(j)/tl_scale(j)
             END DO
           CASE (isouth, inorth)
-            DO i=Imin,Imin
+            DO i=Imin,Imax
               tl_A(i)=self%ciB1d_x(i)/tl_scale(i)
             END DO
         END SELECT
@@ -1585,6 +1590,7 @@
       Istr =BOUNDS(ng)%Istr (tile)   ! tile computational range
       IstrU=BOUNDS(ng)%IstrU(tile)
       Iend =BOUNDS(ng)%Iend (tile)
+      Jstr =BOUNDS(ng)%Jstr (tile)
       JstrV=BOUNDS(ng)%JstrV(tile)
       Jend =BOUNDS(ng)%Jend (tile)
 !
@@ -1693,14 +1699,14 @@
 !
         SELECT CASE (ibry)
           CASE (iwest, ieast)
-            DO j=Jmin,Jmin
+            DO j=Jmin,Jmax
               self%ciB1d_p(j)=0.0_r8
               self%ciB1d_r(j)=0.0_r8
               self%ciB1d_q(j)=0.0_r8
               self%ciB1d_x(j)=0.0_r8
             END DO
           CASE (isouth, inorth)
-            DO i=Imin,Imin
+            DO i=Imin,Imax
               self%ciB1d_p(i)=0.0_r8
               self%ciB1d_r(i)=0.0_r8
               self%ciB1d_q(i)=0.0_r8
@@ -1732,14 +1738,14 @@
 !
         SELECT CASE (ibry)
           CASE (iwest, ieast)
-            DO j=Jmin,Jmin
+            DO j=Jmin,Jmax
 !^            tl_A(j)=self%ciB1d_x(j)/tl_scale(j)
 !^
               self%ciB1d_x(j)=ad_A(j)/ad_scale(j)
               ad_A(j)=0.0_r8
             END DO
           CASE (isouth, inorth)
-            DO i=Imin,Imin
+            DO i=Imin,Imax
 !^            tl_A(i)=self%ciB1d_x(i)/tl_scale(i)
 !^
               self%ciB1d_x(i)=ad_A(i)/ad_scale(i)
@@ -1751,7 +1757,7 @@
 !
         SELECT CASE (ibry)
           CASE (iwest, ieast)
-            DO j=Jmin,Jmin
+            DO j=Jmin,Jmax
 !^            self%ciB1d_q(j)=0.0_r8
 !^
               self%ciB1d_q(j)=0.0_r8
@@ -1763,7 +1769,7 @@
               self%ciB1d_p(j)=0.0_r8
             END DO
           CASE (isouth, inorth)
-            DO i=Imin,Imin
+            DO i=Imin,Imax
 !^            self%ciB1d_q(i)=0.0_r8
 !^
               self%ciB1d_q(i)=0.0_r8
@@ -1782,7 +1788,7 @@
 !
           SELECT CASE (ibry)                            ! step 16
             CASE (iwest, ieast)
-              DO j=Jmin,Jmin
+              DO j=Jmin,Jmax
 !^              tl_A(j)=self%ciB1d_p(j)
 !^
                 self%ciB1d_p(j)=self%ciB1d_p(j)+ad_A(j)
@@ -1794,7 +1800,7 @@
                 self%ciB1d_p(j)=ci_beta(iterCI+1)*self%ciB1d_p(j)
               END DO
             CASE (isouth, inorth)
-              DO i=Imin,Imin
+              DO i=Imin,Imax
 !^              tl_A(i)=self%ciB1d_p(i)
 !^
                 self%ciB1d_p(i)=self%ciB1d_p(i)+ad_A(i)
@@ -1809,7 +1815,7 @@
 !                                                         steps 15, 14
           SELECT CASE (ibry)
             CASE (iwest, ieast)
-              DO j=Jmin,Jmin
+              DO j=Jmin,Jmax
 !^              self%ciB1d_r(j)=self%ciB1d_r(j)+                        &
 !^   &                          ci_alpha(iterCI)*self%ciB1d_q(j)
 !^
@@ -1822,7 +1828,7 @@
      &                          ci_alpha(iterCI)*self%ciB1d_x(j)
               END DO
             CASE (isouth, inorth)
-              DO i=Imin,Imin
+              DO i=Imin,Imax
 !^              self%ciB1d_r(i)=self%ciB1d_r(i)+                        &
 !^   &                          ci_alpha(iterCI)*self%ciB1d_q(i)
 !^
@@ -1838,7 +1844,7 @@
 !
           SELECT CASE (ibry)
             CASE (iwest, ieast)
-              DO j=Jmin,Jmin
+              DO j=Jmin,Jmax
 !^              self%ciB1d_q(j)=tl_A(j)
 !^
                 ad_A(j)=ad_A(j)+self%ciB1d_q(j)
@@ -1848,7 +1854,7 @@
                 ad_A(j)=ad_A(j)*ad_scale(j)
               END DO
             CASE (isouth, inorth)
-              DO i=Imin,Imin
+              DO i=Imin,Imax
 !^              self%ciB1d_q(i)=tl_A(i)
 !^
                 ad_A(i)=ad_A(i)+self%ciB1d_q(i)
@@ -1867,13 +1873,13 @@
 !
           SELECT CASE (ibry)
             CASE (iwest, ieast)
-              DO j=Jmin,Jmin
+              DO j=Jmin,Jmax
 !^              tl_A(j)=tl_A(j)/tl_scale(j)
 !^
                 ad_A(j)=ad_A(j)/ad_scale(j)
               END DO
             CASE (isouth, inorth)
-              DO i=Imin,Imin
+              DO i=Imin,Imax
 !^              tl_A(i)=tl_A(i)/tl_scale(i)
 !^
                 ad_A(i)=ad_A(i)/ad_scale(i)
@@ -1884,7 +1890,7 @@
 !
         SELECT CASE (ibry)
           CASE (iwest, ieast)
-            DO j=Jmin,Jmin
+            DO j=Jmin,Jmax
 !^            self%ciB1d_p(j)=tl_A(j)                   ! step 11
 !^
               ad_A(j)=ad_A(j)+self%ciB1d_p(j)
@@ -1900,7 +1906,7 @@
               ad_A(j)=ad_scale(j)*ad_A(j)
             END DO
           CASE (isouth, inorth)
-            DO i=Imin,Imin
+            DO i=Imin,Imax
 !^            self%ciB1d_p(i)=tl_A(i)                   ! step 11
 !^
               ad_A(i)=ad_A(i)+self%ciB1d_p(i)
@@ -1985,6 +1991,7 @@
       Istr =BOUNDS(ng)%Istr (tile)   ! tile computational range
       IstrU=BOUNDS(ng)%IstrU(tile)
       Iend =BOUNDS(ng)%Iend (tile)
+      Jstr =BOUNDS(ng)%Jstr (tile)
       JstrV=BOUNDS(ng)%JstrV(tile)
       Jend =BOUNDS(ng)%Jend (tile)
 !
@@ -2116,14 +2123,14 @@
 !
           SELECT CASE (ibry)
             CASE (iwest, ieast)
-              DO j=Jmin,Jmin
+              DO j=Jmin,Jmax
                 tl_A(j,k)=tl_scale(j)*tl_A(j,k)
                 self%ciB2d_x(j,k)=0.0_r8               ! step 9
                 self%ciB2d_r(j,k)=-tl_A(j,k)           ! step 10
                 self%ciB2d_p(j,k)=tl_A(j,k)            ! step 11
               END DO
             CASE (isouth, inorth)
-              DO i=Imin,Imin
+              DO i=Imin,Imax
                 tl_A(i,k)=tl_scale(i)*tl_A(i,k)
                 self%ciB2d_x(i,k)=0.0_r8               ! step 9
                 self%ciB2d_r(i,k)=-tl_A(i,k)           ! step 10
@@ -2147,11 +2154,11 @@
           LEVEL_LOOP2 : DO k=1,N(ng)
             SELECT CASE (ibry)
               CASE (iwest, ieast)
-                DO j=Jmin,Jmin
+                DO j=Jmin,Jmax
                   tl_A(j,k)=tl_A(j,k)/tl_scale(j)
                 END DO
               CASE (isouth, inorth)
-                DO i=Imin,Imin
+                DO i=Imin,Imax
                   tl_A(i,k)=tl_A(i,k)/tl_scale(i)
                 END DO
             END SELECT
@@ -2166,12 +2173,12 @@
           LEVEL_LOOP3 : DO k=1,N(ng)
             SELECT CASE (ibry)
               CASE (iwest, ieast)
-                DO j=Jmin,Jmin
+                DO j=Jmin,Jmax
                   tl_A(j,k)=tl_A(j,k)*tl_scale(j)
                   self%ciB2d_q(j,k)=tl_A(j,k)
                 END DO
               CASE (isouth, inorth)
-                DO i=Imin,Imin
+                DO i=Imin,Imax
                   tl_A(i,k)=tl_A(i,k)*tl_scale(i)
                   self%ciB2d_q(i,k)=tl_A(i,k)
                 END DO
@@ -2191,7 +2198,7 @@
 !                                                         steps 14, 15
             SELECT CASE (ibry)
               CASE (iwest, ieast)
-                DO j=Jmin,Jmin
+                DO j=Jmin,Jmax
                   self%ciB2d_x(j,k)=self%ciB2d_x(j,k)+                  &
      &                              ci_alpha(iterCI,k)*                 &
      &                              self%ciB2d_p(j,k)
@@ -2200,7 +2207,7 @@
      &                              self%ciB2d_q(j,k)
                 END DO
               CASE (isouth, inorth)
-                DO i=Imin,Imin
+                DO i=Imin,Imax
                   self%ciB2d_x(i,k)=self%ciB2d_x(i,k)+                  &
      &                              ci_alpha(iterCI,k)*                 &
      &                              self%ciB2d_p(i,k)
@@ -2212,14 +2219,14 @@
 !                                                         step 16
             SELECT CASE (ibry)
               CASE (iwest, ieast)
-                DO j=Jmin,Jmin
+                DO j=Jmin,Jmax
                   self%ciB2d_p(j,k)=-self%ciB2d_r(j,k)+                 &
      &                              ci_beta(iterCI+1,k)*                &
      &                              self%ciB2d_p(j,k)
                   tl_A(j,k)=self%ciB2d_p(j,k)
                 END DO
               CASE (isouth, inorth)
-                DO i=Imin,Imin
+                DO i=Imin,Imax
                   self%ciB2d_p(i,k)=-self%ciB2d_r(i,k)+                 &
      &                              ci_beta(iterCI+1,k)*                &
      &                              self%ciB2d_p(i,k)
@@ -2235,13 +2242,13 @@
         LEVEL_LOOP4 : DO k=1,N(ng)
           SELECT CASE (ibry)
             CASE (iwest, ieast)
-              DO j=Jmin,Jmin
+              DO j=Jmin,Jmax
                 self%ciB2d_p(j,k)=0.0_r8
                 self%ciB2d_r(j,k)=0.0_r8
                 self%ciB2d_q(j,k)=0.0_r8
               END DO
             CASE (isouth, inorth)
-              DO i=Imin,Imin
+              DO i=Imin,Imax
                 self%ciB2d_p(i,k)=0.0_r8
                 self%ciB2d_r(i,k)=0.0_r8
                 self%ciB2d_q(i,k)=0.0_r8
@@ -2253,11 +2260,11 @@
 !
           SELECT CASE (ibry)
             CASE (iwest, ieast)
-              DO j=Jmin,Jmin
+              DO j=Jmin,Jmax
                 tl_A(j,k)=self%ciB2d_x(j,k)/tl_scale(j)
               END DO
             CASE (isouth, inorth)
-              DO i=Imin,Imin
+              DO i=Imin,Imax
                 tl_A(i,k)=self%ciB2d_x(i,k)/tl_scale(i)
               END DO
           END SELECT
@@ -2324,6 +2331,7 @@
       Istr =BOUNDS(ng)%Istr (tile)   ! tile computational range
       IstrU=BOUNDS(ng)%IstrU(tile)
       Iend =BOUNDS(ng)%Iend (tile)
+      Jstr =BOUNDS(ng)%Jstr (tile)
       JstrV=BOUNDS(ng)%JstrV(tile)
       Jend =BOUNDS(ng)%Jend (tile)
 !
@@ -2437,14 +2445,14 @@
 !
           SELECT CASE (ibry)
             CASE (iwest, ieast)
-              DO j=Jmin,Jmin
+              DO j=Jmin,Jmax
                 self%ciB2d_p(j,k)=0.0_r8
                 self%ciB2d_r(j,k)=0.0_r8
                 self%ciB2d_q(j,k)=0.0_r8
                 self%ciB2d_x(j,k)=0.0_r8
               END DO
             CASE (isouth, inorth)
-              DO i=Imin,Imin
+              DO i=Imin,Imax
                 self%ciB2d_p(i,k)=0.0_r8
                 self%ciB2d_r(i,k)=0.0_r8
                 self%ciB2d_q(i,k)=0.0_r8
@@ -2476,14 +2484,14 @@
 !
           SELECT CASE (ibry)
             CASE (iwest, ieast)
-              DO j=Jmin,Jmin
+              DO j=Jmin,Jmax
 !^              tl_A(j,k)=self%ciB2d_x(j,k)/tl_scale(j)
 !^
                 self%ciB2d_x(j,k)=ad_A(j,k)/ad_scale(j)
                 ad_A(j,k)=0.0_r8
               END DO
             CASE (isouth, inorth)
-              DO i=Imin,Imin
+              DO i=Imin,Imax
 !^              tl_A(i,k)=self%ciB2d_x(i,k)/tl_scale(i)
 !^
                 self%ciB2d_x(i,k)=ad_A(i,k)/ad_scale(i)
@@ -2495,7 +2503,7 @@
 !
           SELECT CASE (ibry)
             CASE (iwest, ieast)
-              DO j=Jmin,Jmin
+              DO j=Jmin,Jmax
 !^              self%ciB2d_q(j,k)=0.0_r8
 !^
                 self%ciB2d_q(j,k)=0.0_r8
@@ -2507,7 +2515,7 @@
                 self%ciB2d_p(j,k)=0.0_r8
               END DO
             CASE (isouth, inorth)
-              DO i=Imin,Imin
+              DO i=Imin,Imax
 !^              self%ciB2d_q(i,k)=0.0_r8
 !^
                 self%ciB2d_q(i,k)=0.0_r8
@@ -2529,7 +2537,7 @@
 !                                                         step 16
             SELECT CASE (ibry)
               CASE (iwest, ieast)
-                DO j=Jmin,Jmin
+                DO j=Jmin,Jmax
 !^                tl_A(j,k)=self%ciB2d_p(j,k)
 !^
                   self%ciB2d_p(j,k)=self%ciB2d_p(j,k)+ad_A(j,k)
@@ -2544,7 +2552,7 @@
      &                              self%ciB2d_p(j,k)
                 END DO
               CASE (isouth, inorth)
-                DO i=Imin,Imin
+                DO i=Imin,Imax
 !^                tl_A(i,k)=self%ciB2d_p(i,k)
 !^
                   self%ciB2d_p(i,k)=self%ciB2d_p(i,k)+ad_A(i,k)
@@ -2562,7 +2570,7 @@
 !                                                         steps 15, 14
             SELECT CASE (ibry)
               CASE (iwest, ieast)
-                DO j=Jmin,Jmin
+                DO j=Jmin,Jmax
 !^                self%ciB2d_r(j,k)=self%ciB2d_r(j,k)+                  &
 !^   &                              ci_alpha(iterCI,k)*                 &
 !^   &                              self%ciB2d_q(j,k)
@@ -2579,7 +2587,7 @@
      &                              self%ciB2d_x(j,k)
                 END DO
               CASE (isouth, inorth)
-                DO i=Imin,Imin
+                DO i=Imin,Imax
 !^                self%ciB2d_r(i,k)=self%ciB2d_r(i,k)+                  &
 !^   &                              ci_alpha(iterCI,k)*                 &
 !^   &                              self%ciB2d_q(i,k)
@@ -2599,7 +2607,7 @@
 !
             SELECT CASE (ibry)
               CASE (iwest, ieast)
-                DO j=Jmin,Jmin
+                DO j=Jmin,Jmax
 !^                self%ciB2d_q(j,k)=tl_A(j,k)
 !^
                   ad_A(j,k)=ad_A(j,k)+self%ciB2d_q(j,k)
@@ -2609,7 +2617,7 @@
                   ad_A(j,k)=ad_A(j,k)*ad_scale(j)
                 END DO
               CASE (isouth, inorth)
-                DO i=Imin,Imin
+                DO i=Imin,Imax
 !^                self%ciB2d_q(i,k)=tl_A(i,k)
 !^
                   ad_A(i,k)=ad_A(i,k)+self%ciB2d_q(i,k)
@@ -2631,13 +2639,13 @@
           LEVEL_LOOP2 : DO k=1,N(ng)
             SELECT CASE (ibry)
               CASE (iwest, ieast)
-                DO j=Jmin,Jmin
+                DO j=Jmin,Jmax
 !^                tl_A(j,k)=tl_A(j,k)/tl_scale(j)
 !^
                   ad_A(j,k)=ad_A(j,k)/ad_scale(j)
                 END DO
               CASE (isouth, inorth)
-                DO i=Imin,Imin
+                DO i=Imin,Imax
 !^                tl_A(i,k)=tl_A(i,k)/tl_scale(i)
 !^
                   ad_A(i,k)=ad_A(i,k)/ad_scale(i)
@@ -2650,7 +2658,7 @@
         LEVEL_LOOP1 : DO k=1,N(ng)
           SELECT CASE (ibry)
             CASE (iwest, ieast)
-              DO j=Jmin,Jmin
+              DO j=Jmin,Jmax
 !^              self%ciB2d_p(j,k)=tl_A(j,k)             ! step 11
 !^
                 ad_A(j,k)=ad_A(j,k)+self%ciB2d_p(j,k)
@@ -2666,7 +2674,7 @@
                 ad_A(j,k)=ad_scale(j)*ad_A(j,k)
               END DO
             CASE (isouth, inorth)
-              DO i=Imin,Imin
+              DO i=Imin,Imax
 !^              self%ciB2d_p(i,k)=tl_A(i,k)             ! step 11
 !^
                 ad_A(i,k)=ad_A(i,k)+self%ciB2d_p(i,k)
